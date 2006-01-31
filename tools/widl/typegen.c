@@ -2,7 +2,7 @@
  * Format String Generator for IDL Compiler
  *
  * Copyright 2005 Eric Kohl
- * Copyright 2005 Robert Shearman
+ * Copyright 2005-2006 Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -548,7 +548,7 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
 
 static size_t write_string_tfs(FILE *file, const attr_t *attrs,
                                const type_t *type, const expr_t *array,
-                               const char *name)
+                               const char *name, size_t typestring_offset)
 {
     const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
     int has_size = size_is && (size_is->type != EXPR_VOID);
@@ -556,7 +556,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     if ((type->type != RPC_FC_CHAR) && (type->type != RPC_FC_WCHAR))
     {
         error("write_string_tfs: Unimplemented for type 0x%x of name: %s\n", type->type, name);
-        return 0;
+        return typestring_offset;
     }
 
     if (array && array->is_const)
@@ -577,7 +577,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
         print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", array->cval, array->cval);
         typestring_size += 2;
 
-        return typestring_size;
+        return typestring_size + typestring_offset;
     }
     else if (has_size)
     {
@@ -592,7 +592,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
 
         typestring_size += write_conf_or_var_desc(file, current_func, NULL, size_is);
 
-        return typestring_size;
+        return typestring_size + typestring_offset;
     }
     else
     {
@@ -605,13 +605,13 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
         typestring_size = 2;
 
-        return typestring_size;
+        return typestring_size + typestring_offset;
     }
 }
 
 static size_t write_array_tfs(FILE *file, const attr_t *attrs,
                               const type_t *type, const expr_t *array,
-                              const char *name)
+                              const char *name, size_t typestring_offset)
 {
     const expr_t *length_is = get_attrp(attrs, ATTR_LENGTHIS);
     const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
@@ -657,7 +657,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             print_file(file, 2, "FC_END,\n");
             typestring_size += 2;
 
-            return typestring_size;
+            return typestring_size + typestring_offset;
         }
         else if (has_length && !has_size)
         {
@@ -703,7 +703,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             print_file(file, 2, "FC_END,\n");
             typestring_size += 2;
 
-            return typestring_size;
+            return typestring_size + typestring_offset;
         }
         else if (!has_length && has_size)
         {
@@ -727,7 +727,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             print_file(file, 2, "FC_END,\n");
             typestring_size += 2;
 
-            return typestring_size;
+            return typestring_size + typestring_offset;
         }
         else
         {
@@ -754,7 +754,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             print_file(file, 2, "FC_END,\n");
             typestring_size += 2;
 
-            return typestring_size;
+            return typestring_size + typestring_offset;
         }
     }
 }
@@ -773,7 +773,8 @@ static const var_t *find_array_or_string_in_struct(const type_t *type)
     return find_array_or_string_in_struct(last_field->type);
 }
 
-static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
+static size_t write_struct_tfs(FILE *file, const type_t *type,
+                               const char *name, size_t typestring_offset)
 {
     size_t total_size;
     size_t typestring_size;
@@ -800,7 +801,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
         print_file(file, 2, "FC_END,\n");
 
         typestring_size += 2;
-        return typestring_size;
+        return typestring_size + typestring_offset;
     case RPC_FC_CSTRUCT:
         total_size = type_memsize(type, 0, NULL);
 
@@ -820,11 +821,12 @@ static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
 
         array = find_array_or_string_in_struct(type);
         current_structure = type;
-        typestring_size += write_array_tfs(file, array->attrs, array->type,
-                                           array->array, array->name);
+        typestring_offset = write_array_tfs(file, array->attrs, array->type,
+                                            array->array, array->name,
+                                            typestring_size + typestring_offset);
         current_structure = NULL;
 
-        return typestring_size;
+        return typestring_offset;
     case RPC_FC_CVSTRUCT:
         total_size = type_memsize(type, 0, NULL);
 
@@ -845,28 +847,32 @@ static size_t write_struct_tfs(FILE *file, const type_t *type, const char *name)
         array = find_array_or_string_in_struct(type);
         current_structure = type;
         if (is_attr(array->attrs, ATTR_STRING))
-            typestring_size += write_string_tfs(file, array->attrs, array->type,
-                                                array->array, array->name);
+            typestring_offset = write_string_tfs(file, array->attrs, array->type,
+                                                 array->array, array->name,
+                                                 typestring_size + typestring_offset);
         else
-            typestring_size += write_array_tfs(file, array->attrs, array->type,
-                                               array->array, array->name);
+            typestring_offset = write_array_tfs(file, array->attrs, array->type,
+                                                array->array, array->name,
+                                                typestring_size + typestring_offset);
          current_structure = NULL;
 
-        return typestring_size;
+        return typestring_offset;
     default:
         error("write_struct_tfs: Unimplemented for type 0x%x\n", type->type);
         return 0;
     }
 }
 
-static size_t write_union_tfs(FILE *file, const attr_t *attrs, const type_t *type, const char *name)
+static size_t write_union_tfs(FILE *file, const attr_t *attrs,
+                              const type_t *type, const char *name,
+                              size_t typeformat_offset)
 {
     error("write_union_tfs: Unimplemented\n");
     return 0;
 }
 
 static size_t write_typeformatstring_var(FILE *file, int indent,
-    const var_t *var)
+    const var_t *var, size_t typeformat_offset)
 {
     const type_t *type = var->type;
     int ptr_level = var->ptr_level;
@@ -874,19 +880,12 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
     while (TRUE)
     {
         int pointer_type;
-        size_t typeformat_size = 0;
 
         if (is_string_type(var->attrs, ptr_level, var->array))
-        {
-            typeformat_size += write_string_tfs(file, var->attrs, type, var->array, var->name);
-            return typeformat_size;
-        }
+            return write_string_tfs(file, var->attrs, type, var->array, var->name, typeformat_offset);
 
         if (is_array_type(var->attrs, ptr_level, var->array))
-        {
-            typeformat_size += write_array_tfs(file, var->attrs, type, var->array, var->name);
-            return typeformat_size;
-        }
+            return write_array_tfs(file, var->attrs, type, var->array, var->name, typeformat_offset);
 
         if (ptr_level == 0)
         {
@@ -900,7 +899,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
             /* basic types don't need a type format string */
             if (is_base_type(type->type))
-                return typeformat_size;
+                return typeformat_offset;
 
             switch (type->type)
             {
@@ -910,12 +909,10 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
             case RPC_FC_CPSTRUCT:
             case RPC_FC_CVSTRUCT:
             case RPC_FC_BOGUS_STRUCT:
-                typeformat_size += write_struct_tfs(file, type, var->name);
-                return typeformat_size;
+                return write_struct_tfs(file, type, var->name, typeformat_offset);
             case RPC_FC_ENCAPSULATED_UNION:
             case RPC_FC_NON_ENCAPSULATED_UNION:
-                typeformat_size += write_union_tfs(file, var->attrs, type, var->name);
-                return typeformat_size;
+                return write_union_tfs(file, var->attrs, type, var->name, typeformat_offset);
             default:
                 error("write_typeformatstring_var: Unsupported type 0x%x for variable %s\n", type->type, var->name);
             }
@@ -935,8 +932,8 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
                            pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP")); \
                 print_file(file, indent, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
                 print_file(file, indent, "0x5c,          /* FC_PAD */\n"); \
-                typeformat_size += 4; \
-                return typeformat_size
+                typeformat_offset += 4; \
+                return typeformat_offset
             CASE_BASETYPE(FC_BYTE);
             CASE_BASETYPE(FC_CHAR);
             CASE_BASETYPE(FC_SMALL);
@@ -967,6 +964,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
                     pointer_type,
                     pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
         print_file(file, indent, "NdrShort(0x2),    /* 2 */\n");
+        typeformat_offset += 4;
 
         ptr_level--;
     }
@@ -977,6 +975,7 @@ void write_typeformatstring(FILE *file, type_t *iface)
 {
     int indent = 0;
     var_t *var;
+    size_t typeformat_offset;
 
     print_file(file, indent, "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =\n");
     print_file(file, indent, "{\n");
@@ -985,6 +984,7 @@ void write_typeformatstring(FILE *file, type_t *iface)
     print_file(file, indent, "{\n");
     indent++;
     print_file(file, indent, "NdrFcShort(0x0),\n");
+    typeformat_offset = 2;
 
     if (iface->funcs)
     {
@@ -999,7 +999,8 @@ void write_typeformatstring(FILE *file, type_t *iface)
                 while (NEXT_LINK(var)) var = NEXT_LINK(var);
                 while (var)
                 {
-                    write_typeformatstring_var(file, indent, var);
+                    typeformat_offset = write_typeformatstring_var(file,
+                            indent, var, typeformat_offset);
                     var = PREV_LINK(var);
                 }
             }
@@ -1447,7 +1448,7 @@ size_t get_size_procformatstring_var(const var_t *var)
 
 size_t get_size_typeformatstring_var(const var_t *var)
 {
-    return write_typeformatstring_var(NULL, 0, var);
+    return write_typeformatstring_var(NULL, 0, var, 0);
 }
 
 static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
