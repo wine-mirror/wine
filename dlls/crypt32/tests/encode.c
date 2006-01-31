@@ -661,6 +661,54 @@ static const BYTE twoRDNs[] = {
     0x13,0x05,0x4c,0x61,0x6e,0x67,0x00,0x30,0x11,0x06,0x03,0x55,0x04,0x03,
     0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,0x67,0};
 
+static const BYTE us[] = { 0x55, 0x53 };
+static const BYTE minnesota[] = { 0x4d, 0x69, 0x6e, 0x6e, 0x65, 0x73, 0x6f,
+ 0x74, 0x61 };
+static const BYTE minneapolis[] = { 0x4d, 0x69, 0x6e, 0x6e, 0x65, 0x61, 0x70,
+ 0x6f, 0x6c, 0x69, 0x73 };
+static const BYTE codeweavers[] = { 0x43, 0x6f, 0x64, 0x65, 0x57, 0x65, 0x61,
+ 0x76, 0x65, 0x72, 0x73 };
+static const BYTE wine[] = { 0x57, 0x69, 0x6e, 0x65, 0x20, 0x44, 0x65, 0x76,
+ 0x65, 0x6c, 0x6f, 0x70, 0x6d, 0x65, 0x6e, 0x74 };
+static const BYTE localhostAttr[] = { 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f,
+ 0x73, 0x74 };
+static const BYTE aric[] = { 0x61, 0x72, 0x69, 0x63, 0x40, 0x63, 0x6f, 0x64,
+ 0x65, 0x77, 0x65, 0x61, 0x76, 0x65, 0x72, 0x73, 0x2e, 0x63, 0x6f, 0x6d };
+
+#define _blob_of(arr) { sizeof(arr), (LPBYTE)arr }
+const CERT_RDN_ATTR rdnAttrs[] = {
+ { "2.5.4.6", CERT_RDN_PRINTABLE_STRING,        _blob_of(us) },
+ { "2.5.4.8", CERT_RDN_PRINTABLE_STRING,        _blob_of(minnesota) },
+ { "2.5.4.7", CERT_RDN_PRINTABLE_STRING,        _blob_of(minneapolis) },
+ { "2.5.4.10", CERT_RDN_PRINTABLE_STRING,       _blob_of(codeweavers) },
+ { "2.5.4.11", CERT_RDN_PRINTABLE_STRING,       _blob_of(wine) },
+ { "2.5.4.3", CERT_RDN_PRINTABLE_STRING,        _blob_of(localhostAttr) },
+ { "1.2.840.113549.1.9.1", CERT_RDN_IA5_STRING, _blob_of(aric) },
+};
+const CERT_RDN_ATTR decodedRdnAttrs[] = {
+ { "2.5.4.6", CERT_RDN_PRINTABLE_STRING,        _blob_of(us) },
+ { "2.5.4.3", CERT_RDN_PRINTABLE_STRING,        _blob_of(localhostAttr) },
+ { "2.5.4.8", CERT_RDN_PRINTABLE_STRING,        _blob_of(minnesota) },
+ { "2.5.4.7", CERT_RDN_PRINTABLE_STRING,        _blob_of(minneapolis) },
+ { "2.5.4.10", CERT_RDN_PRINTABLE_STRING,       _blob_of(codeweavers) },
+ { "2.5.4.11", CERT_RDN_PRINTABLE_STRING,       _blob_of(wine) },
+ { "1.2.840.113549.1.9.1", CERT_RDN_IA5_STRING, _blob_of(aric) },
+};
+#undef _blob_of
+
+static const BYTE encodedRDNAttrs[] = {
+0x30,0x81,0x96,0x31,0x81,0x93,0x30,0x09,0x06,0x03,0x55,0x04,0x06,0x13,0x02,0x55,
+0x53,0x30,0x10,0x06,0x03,0x55,0x04,0x03,0x13,0x09,0x6c,0x6f,0x63,0x61,0x6c,0x68,
+0x6f,0x73,0x74,0x30,0x10,0x06,0x03,0x55,0x04,0x08,0x13,0x09,0x4d,0x69,0x6e,0x6e,
+0x65,0x73,0x6f,0x74,0x61,0x30,0x12,0x06,0x03,0x55,0x04,0x07,0x13,0x0b,0x4d,0x69,
+0x6e,0x6e,0x65,0x61,0x70,0x6f,0x6c,0x69,0x73,0x30,0x12,0x06,0x03,0x55,0x04,0x0a,
+0x13,0x0b,0x43,0x6f,0x64,0x65,0x57,0x65,0x61,0x76,0x65,0x72,0x73,0x30,0x17,0x06,
+0x03,0x55,0x04,0x0b,0x13,0x10,0x57,0x69,0x6e,0x65,0x20,0x44,0x65,0x76,0x65,0x6c,
+0x6f,0x70,0x6d,0x65,0x6e,0x74,0x30,0x21,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x01,0x09,0x01,0x16,0x14,0x61,0x72,0x69,0x63,0x40,0x63,0x6f,0x64,0x65,0x77,0x65,
+0x61,0x76,0x65,0x72,0x73,0x2e,0x63,0x6f,0x6d
+};
+
 static void test_encodeName(DWORD dwEncoding)
 {
     CERT_RDN_ATTR attrs[2];
@@ -770,6 +818,61 @@ static void test_encodeName(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
+    /* Test a more complex name */
+    rdn.cRDNAttr = sizeof(rdnAttrs) / sizeof(rdnAttrs[0]);
+    rdn.rgRDNAttr = (PCERT_RDN_ATTR)rdnAttrs;
+    info.cRDN = 1;
+    info.rgRDN = &rdn;
+    buf = NULL;
+    size = 0;
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_NAME, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(encodedRDNAttrs), "Expected size %d, got %ld\n",
+         sizeof(encodedRDNAttrs), size);
+        ok(!memcmp(buf, encodedRDNAttrs, size), "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void compareRDNAttrs(const CERT_RDN_ATTR *expected,
+ const CERT_RDN_ATTR *got)
+{
+    if (expected->pszObjId && strlen(expected->pszObjId))
+    {
+        ok(got->pszObjId != NULL, "Expected OID %s, got NULL\n",
+         expected->pszObjId);
+        if (got->pszObjId)
+        {
+            ok(!strcmp(got->pszObjId, expected->pszObjId),
+             "Got unexpected OID %s, expected %s\n", got->pszObjId,
+             expected->pszObjId);
+        }
+    }
+    ok(got->dwValueType == expected->dwValueType,
+     "Expected string type %ld, got %ld\n", expected->dwValueType,
+     got->dwValueType);
+    ok(got->Value.cbData == expected->Value.cbData,
+     "Unexpected data size, got %ld, expected %ld\n", got->Value.cbData,
+     expected->Value.cbData);
+    if (got->Value.cbData && got->Value.pbData)
+        ok(!memcmp(got->Value.pbData, expected->Value.pbData,
+         min(got->Value.cbData, expected->Value.cbData)), "Unexpected value\n");
+}
+
+static void compareRDNs(const CERT_RDN *expected, const CERT_RDN *got)
+{
+    ok(got->cRDNAttr == expected->cRDNAttr,
+     "Expected %ld RDN attrs, got %ld\n", expected->cRDNAttr, got->cRDNAttr);
+    if (got->cRDNAttr)
+    {
+        DWORD i;
+
+        for (i = 0; i < got->cRDNAttr; i++)
+            compareRDNAttrs(&expected->rgRDNAttr[i], &got->rgRDNAttr[i]);
+    }
 }
 
 static void compareNames(const CERT_NAME_INFO *expected,
@@ -779,37 +882,10 @@ static void compareNames(const CERT_NAME_INFO *expected,
      expected->cRDN, got->cRDN);
     if (got->cRDN)
     {
-        ok(got->rgRDN[0].cRDNAttr == expected->rgRDN[0].cRDNAttr,
-         "Expected %ld RDN attrs, got %ld\n", expected->rgRDN[0].cRDNAttr,
-         got->rgRDN[0].cRDNAttr);
-        if (got->rgRDN[0].cRDNAttr)
-        {
-            if (expected->rgRDN[0].rgRDNAttr[0].pszObjId &&
-             strlen(expected->rgRDN[0].rgRDNAttr[0].pszObjId))
-            {
-                ok(got->rgRDN[0].rgRDNAttr[0].pszObjId != NULL,
-                 "Expected OID %s, got NULL\n",
-                 expected->rgRDN[0].rgRDNAttr[0].pszObjId);
-                if (got->rgRDN[0].rgRDNAttr[0].pszObjId)
-                    ok(!strcmp(got->rgRDN[0].rgRDNAttr[0].pszObjId,
-                     expected->rgRDN[0].rgRDNAttr[0].pszObjId),
-                     "Got unexpected OID %s, expected %s\n",
-                     got->rgRDN[0].rgRDNAttr[0].pszObjId,
-                     expected->rgRDN[0].rgRDNAttr[0].pszObjId);
-            }
-            ok(got->rgRDN[0].rgRDNAttr[0].Value.cbData ==
-             expected->rgRDN[0].rgRDNAttr[0].Value.cbData,
-             "Unexpected data size, got %ld, expected %ld\n",
-             got->rgRDN[0].rgRDNAttr[0].Value.cbData,
-             expected->rgRDN[0].rgRDNAttr[0].Value.cbData);
-            if (got->rgRDN[0].rgRDNAttr[0].Value.cbData &&
-             got->rgRDN[0].rgRDNAttr[0].Value.pbData)
-                ok(!memcmp(got->rgRDN[0].rgRDNAttr[0].Value.pbData,
-                 expected->rgRDN[0].rgRDNAttr[0].Value.pbData,
-                 min(got->rgRDN[0].rgRDNAttr[0].Value.cbData,
-                 expected->rgRDN[0].rgRDNAttr[0].Value.cbData)),
-                 "Unexpected value\n");
-        }
+        DWORD i;
+
+        for (i = 0; i < got->cRDN; i++)
+            compareRDNs(&expected->rgRDN[i], &got->rgRDN[i]);
     }
 }
 
@@ -896,6 +972,19 @@ static void test_decodeName(DWORD dwEncoding)
 
         rdn.cRDNAttr = sizeof(attrs) / sizeof(attrs[0]);
         rdn.rgRDNAttr = attrs;
+        compareNames(&info, (CERT_NAME_INFO *)buf);
+        LocalFree(buf);
+    }
+    /* And, a slightly more complicated name */
+    buf = NULL;
+    bufSize = 0;
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_NAME, encodedRDNAttrs,
+     sizeof(encodedRDNAttrs), CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        rdn.cRDNAttr = sizeof(decodedRdnAttrs) / sizeof(decodedRdnAttrs[0]);
+        rdn.rgRDNAttr = (PCERT_RDN_ATTR)decodedRdnAttrs;
         compareNames(&info, (CERT_NAME_INFO *)buf);
         LocalFree(buf);
     }

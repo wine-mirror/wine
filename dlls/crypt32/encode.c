@@ -3554,8 +3554,11 @@ static BOOL WINAPI CRYPT_AsnDecodeRdnAttr(DWORD dwCertEncodingType,
          sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags, NULL,
          attr, pcbStructInfo, attr ? attr->pszObjId : NULL);
         if (attr)
+        {
             TRACE("attr->pszObjId is %p (%s)\n", attr->pszObjId,
              debugstr_a(attr->pszObjId));
+            TRACE("attr->dwValueType is %ld\n", attr->dwValueType);
+        }
         TRACE("returning %d (%08lx)\n", ret, GetLastError());
     }
     __EXCEPT_PAGE_FAULT
@@ -3578,9 +3581,10 @@ static BOOL WINAPI CRYPT_AsnDecodeRdn(DWORD dwCertEncodingType,
         struct AsnArrayDescriptor arrayDesc = { ASN_CONSTRUCTOR | ASN_SETOF,
          CRYPT_AsnDecodeRdnAttr, sizeof(CERT_RDN_ATTR), TRUE,
          offsetof(CERT_RDN_ATTR, pszObjId) };
+        PCERT_RDN rdn = (PCERT_RDN)pvStructInfo;
 
         ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+         pDecodePara, pvStructInfo, pcbStructInfo, rdn ? rdn->rgRDNAttr : NULL);
     }
     __EXCEPT_PAGE_FAULT
     {
