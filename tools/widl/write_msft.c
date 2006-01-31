@@ -1362,18 +1362,28 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
             switch(attr->type) {
             case ATTR_DEFAULTVALUE_EXPR:
               {
+                int vt;
                 expr_t *expr = (expr_t *)attr->u.pval;
+                if (arg->type->type == RPC_FC_ENUM16)
+                    vt = VT_INT;
+                else
+                    vt = get_var_vt(arg);
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
                 chat("default value %ld\n", expr->cval);
-                write_value(typeinfo->typelib, defaultdata, (*paramdata >> 16) & 0x1ff, &expr->cval);
+                write_value(typeinfo->typelib, defaultdata, vt, &expr->cval);
                 break;
               }
             case ATTR_DEFAULTVALUE_STRING:
               {
                 char *s = (char *)attr->u.pval;
+                int vt;
+                if (arg->type->type == RPC_FC_ENUM16)
+                  vt = VT_INT;
+                else
+                  vt = get_var_vt(arg);
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
                 chat("default value '%s'\n", s);
-                write_value(typeinfo->typelib, defaultdata, (*paramdata >> 16) & 0x1ff, s);
+                write_value(typeinfo->typelib, defaultdata, vt, s);
                 break;
               }
             case ATTR_IN:
