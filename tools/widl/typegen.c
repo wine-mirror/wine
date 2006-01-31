@@ -62,6 +62,52 @@ struct expr_eval_routine
 static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array);
 static size_t fields_memsize(const var_t *v);
 
+static int compare_expr(const expr_t *a, const expr_t *b)
+{
+    int ret;
+
+    if (a->type != b->type)
+        return a->type - b->type;
+
+    switch (a->type)
+    {
+        case EXPR_NUM:
+        case EXPR_HEXNUM:
+            return a->u.lval - b->u.lval;
+        case EXPR_IDENTIFIER:
+            return strcmp(a->u.sval, b->u.sval);
+        case EXPR_COND:
+            ret = compare_expr(a->ref, b->ref);
+            if (ret != 0)
+                return ret;
+            ret = compare_expr(a->u.ext, b->u.ext);
+            if (ret != 0)
+                return ret;
+            return compare_expr(a->ext2, b->ext2);
+        case EXPR_OR:
+        case EXPR_AND:
+        case EXPR_ADD:
+        case EXPR_SUB:
+        case EXPR_MUL:
+        case EXPR_DIV:
+        case EXPR_SHL:
+        case EXPR_SHR:
+            ret = compare_expr(a->ref, b->ref);
+            if (ret != 0)
+                return ret;
+            return compare_expr(a->u.ext, b->u.ext);
+        case EXPR_NOT:
+        case EXPR_NEG:
+        case EXPR_PPTR:
+        case EXPR_CAST:
+        case EXPR_SIZEOF:
+            return compare_expr(a->ref, b->ref);
+        case EXPR_VOID:
+            return 0;
+    }
+    return -1;
+}
+
 static int print_file(FILE *file, int indent, const char *format, ...)
 {
     va_list va;
@@ -382,21 +428,31 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
     else
     {
         unsigned int callback_offset = 0;
-        struct list *cursor;
-
-        LIST_FOR_EACH(cursor, &expr_eval_routines)
-            callback_offset++;
-
-        if (callback_offset > USHRT_MAX)
-            error("Maximum number of callback routines reached\n");
 
         if (structure)
         {
-            struct expr_eval_routine *eval = xmalloc(sizeof(*eval));
-            eval->structure = structure;
-            eval->structure_size = fields_memsize(structure->fields);
-            eval->expr = expr;
-            list_add_tail(&expr_eval_routines, &eval->entry);
+            struct expr_eval_routine *eval;
+            int found = 0;
+
+            LIST_FOR_EACH_ENTRY(eval, &expr_eval_routines, struct expr_eval_routine, entry)
+            {
+                if (!strcmp(eval->structure->name, structure->name) &&
+                    !compare_expr(eval->expr, expr))
+                {
+                    found = 1;
+                    break;
+                }
+                callback_offset++;
+            }
+
+            if (!found)
+            {
+                eval = xmalloc(sizeof(*eval));
+                eval->structure = structure;
+                eval->structure_size = fields_memsize(structure->fields);
+                eval->expr = expr;
+                list_add_tail(&expr_eval_routines, &eval->entry);
+            }
 
             correlation_type = RPC_FC_NORMAL_CONFORMANCE;
         }
@@ -405,6 +461,9 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
             error("write_conf_or_var_desc: expression type %d\n", subexpr->type);
             correlation_type = RPC_FC_TOP_LEVEL_CONFORMANCE;
         }
+
+        if (callback_offset > USHRT_MAX)
+            error("Maximum number of callback routines reached\n");
 
         print_file(file, 2, "0x%x, /* Corr desc: %s */\n",
                    correlation_type,
