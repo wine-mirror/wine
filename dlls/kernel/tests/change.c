@@ -314,8 +314,134 @@ static void test_ffcn(void)
     ok( r == TRUE, "failed to remove dir\n");
 }
 
+typedef BOOL (WINAPI *fnReadDirectoryChangesW)(HANDLE,LPVOID,DWORD,BOOL,DWORD,
+                         LPDWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
+
+static void test_readdirectorychanges(void)
+{
+    HANDLE hdir;
+    char buffer[0x1000];
+    DWORD fflags, filter = 0, r;
+    OVERLAPPED ov;
+    WCHAR path[MAX_PATH], subdir[MAX_PATH];
+    static const WCHAR szBoo[] = { '\\','b','o','o',0 };
+    static const WCHAR szHoo[] = { '\\','h','o','o',0 };
+    fnReadDirectoryChangesW pReadDirectoryChangesW;
+    HMODULE hkernel32;
+
+    hkernel32 = GetModuleHandle("kernel32");
+    pReadDirectoryChangesW = (fnReadDirectoryChangesW)
+        GetProcAddress(hkernel32, "ReadDirectoryChangesW");
+    if (!pReadDirectoryChangesW)
+        return;
+
+    r = GetTempPathW( MAX_PATH, path );
+    ok( r != 0, "temp path failed\n");
+    if (!r)
+        return;
+
+    lstrcatW( path, szBoo );
+    lstrcpyW( subdir, path );
+    lstrcatW( subdir, szHoo );
+
+    RemoveDirectoryW( subdir );
+    RemoveDirectoryW( path );
+    
+    r = CreateDirectoryW(path, NULL);
+    ok( r == TRUE, "failed to create directory\n");
+
+    SetLastError(0xd0b00b00);
+    r = pReadDirectoryChangesW(NULL,NULL,0,FALSE,0,NULL,NULL,NULL);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
+    ok(r==FALSE, "should return false\n");
+
+    fflags = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
+    hdir = CreateFileW(path, GENERIC_READ|SYNCHRONIZE, FILE_SHARE_READ, NULL, 
+                        OPEN_EXISTING, fflags, NULL);
+    ok( hdir != INVALID_HANDLE_VALUE, "failed to open directory\n");
+
+    ov.hEvent = CreateEvent( NULL, 0, 0, NULL );
+
+    SetLastError(0xd0b00b00);
+    r = pReadDirectoryChangesW(hdir,NULL,0,FALSE,0,NULL,NULL,NULL);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
+    ok(r==FALSE, "should return false\n");
+
+    SetLastError(0xd0b00b00);
+    r = pReadDirectoryChangesW(hdir,NULL,0,FALSE,0,NULL,&ov,NULL);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
+    ok(r==FALSE, "should return false\n");
+
+    filter = FILE_NOTIFY_CHANGE_FILE_NAME;
+    filter |= FILE_NOTIFY_CHANGE_DIR_NAME;
+    filter |= FILE_NOTIFY_CHANGE_ATTRIBUTES;
+    filter |= FILE_NOTIFY_CHANGE_SIZE;
+    filter |= FILE_NOTIFY_CHANGE_LAST_WRITE;
+    filter |= FILE_NOTIFY_CHANGE_LAST_ACCESS;
+    filter |= FILE_NOTIFY_CHANGE_CREATION;
+    filter |= FILE_NOTIFY_CHANGE_SECURITY;
+
+    SetLastError(0xd0b00b00);
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,-1,NULL,&ov,NULL);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
+    ok(r==FALSE, "should return false\n");
+
+    r = pReadDirectoryChangesW(hdir,NULL,0,FALSE,filter,NULL,&ov,NULL);
+    ok(r==TRUE, "should return true\n");
+
+    r = WaitForSingleObject( ov.hEvent, 0 );
+    ok( r == STATUS_TIMEOUT, "should timeout\n" );
+
+    r = WaitForSingleObject( hdir, 0 );
+    ok( r == STATUS_TIMEOUT, "should timeout\n" );
+
+    r = CreateDirectoryW( subdir, NULL );
+    ok( r == TRUE, "failed to create directory\n");
+
+    r = WaitForSingleObject( hdir, 0 );
+    ok( r == STATUS_TIMEOUT, "should timeout\n" );
+
+    r = WaitForSingleObject( ov.hEvent, 0 );
+    ok( r == WAIT_OBJECT_0, "event should be ready\n" );
+
+    SetLastError(0xd0b00b00);
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,0,NULL,NULL,NULL);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
+    ok(r==FALSE, "should return false\n");
+
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,0,NULL,&ov,NULL);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
+    ok(r==FALSE, "should return false\n");
+
+    filter = FILE_NOTIFY_CHANGE_SIZE;
+
+    CloseHandle( ov.hEvent );
+    ov.hEvent = NULL;
+    r = pReadDirectoryChangesW(hdir,NULL,0,FALSE,filter,NULL,&ov,NULL);
+    ok(r==TRUE, "should return true\n");
+
+    r = WaitForSingleObject( hdir, 0 );
+    ok( r == STATUS_TIMEOUT, "should timeout\n" );
+
+    r = RemoveDirectoryW( subdir );
+    ok( r == TRUE, "failed to remove directory\n");
+
+    r = WaitForSingleObject( hdir, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n" );
+
+    r = WaitForSingleObject( hdir, 0 );
+    ok( r == WAIT_OBJECT_0, "should be ready\n" );
+
+    CloseHandle(hdir);
+
+    r = RemoveDirectoryW( path );
+    ok( r == TRUE, "failed to remove directory\n");
+}
+
+
 START_TEST(change)
 {
     test_FindFirstChangeNotification();
     test_ffcn();
+    test_readdirectorychanges();
 }
