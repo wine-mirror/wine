@@ -257,9 +257,13 @@ unsigned char * WINAPI NdrInterfacePointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   if (pStubMsg->Buffer + sizeof(DWORD) < (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength) {
     stream = RpcStream_Create(pStubMsg, TRUE);
     if (stream) {
-      hr = COM_MarshalInterface(stream, riid, (LPUNKNOWN)pMemory,
-                                pStubMsg->dwDestContext, pStubMsg->pvDestContext,
-                                MSHLFLAGS_NORMAL);
+      if (pMemory)
+        hr = COM_MarshalInterface(stream, riid, (LPUNKNOWN)pMemory,
+                                  pStubMsg->dwDestContext, pStubMsg->pvDestContext,
+                                  MSHLFLAGS_NORMAL);
+      else
+        hr = S_OK;
+
       IStream_Release(stream);
       if (FAILED(hr))
         RpcRaiseException(hr);
