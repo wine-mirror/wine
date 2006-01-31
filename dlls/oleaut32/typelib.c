@@ -1224,7 +1224,7 @@ void dump_Variant(const VARIANT * pvar)
       }
       else if (V_ISARRAY(pvar) || V_ISVECTOR(pvar))
       {
-        TRACE(",FIXME");
+        TRACE(",%p", V_ARRAY(pvar));
       }
       else switch (V_TYPE(pvar))
       {
