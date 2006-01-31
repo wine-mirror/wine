@@ -108,6 +108,14 @@ static int compare_expr(const expr_t *a, const expr_t *b)
     return -1;
 }
 
+#define WRITE_FCTYPE(file, fctype, typestring_offset) \
+    do { \
+        if (file) \
+            fprintf(file, "/* %2u */\n", typestring_offset); \
+        print_file((file), 2, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
+    } \
+    while (0)
+
 static int print_file(FILE *file, int indent, const char *format, ...)
 {
     va_list va;
@@ -568,9 +576,9 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
                   name, USHRT_MAX, array->cval - USHRT_MAX);
 
         if (type->type == RPC_FC_CHAR)
-            print_file(file, 2, "0x%x, /* FC_CSTRING */\n", RPC_FC_C_CSTRING);
+            WRITE_FCTYPE(file, FC_CSTRING, typestring_offset);
         else
-            print_file(file, 2, "0x%x, /* FC_WSTRING */\n", RPC_FC_C_WSTRING);
+            WRITE_FCTYPE(file, FC_WSTRING, typestring_offset);
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
         typestring_size = 2;
 
@@ -584,9 +592,9 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
         size_t typestring_size;
 
         if (type->type == RPC_FC_CHAR)
-            print_file(file, 2, "0x%x, /* FC_C_CSTRING */\n", RPC_FC_C_CSTRING);
+            WRITE_FCTYPE(file, FC_C_CSTRING, typestring_offset);
         else
-            print_file(file, 2, "0x%x, /* FC_C_WSTRING */\n", RPC_FC_C_WSTRING);
+            WRITE_FCTYPE(file, FC_C_WSTRING, typestring_offset);
         print_file(file, 2, "0x%x, /* FC_STRING_SIZED */\n", RPC_FC_STRING_SIZED);
         typestring_size = 2;
 
@@ -599,9 +607,9 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
         size_t typestring_size;
 
         if (type->type == RPC_FC_CHAR)
-            print_file(file, 2, "0x%x, /* FC_C_CSTRING */\n", RPC_FC_C_CSTRING);
+            WRITE_FCTYPE(file, FC_C_CSTRING, typestring_offset);
         else
-            print_file(file, 2, "0x%x, /* FC_C_WSTRING */\n", RPC_FC_C_WSTRING);
+            WRITE_FCTYPE(file, FC_C_WSTRING, typestring_offset);
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
         typestring_size = 2;
 
@@ -634,7 +642,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             size_t size = type_memsize(type, 0, array);
             if (size < USHRT_MAX)
             {
-                print_file(file, 2, "0x%x, /* FC_SMFARRAY */\n", RPC_FC_SMFARRAY);
+                WRITE_FCTYPE(file, FC_SMFARRAY, typestring_offset);
                 /* alignment */
                 print_file(file, 2, "0x%x, /* 0 */\n", 0);
                 /* size */
@@ -643,7 +651,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             }
             else
             {
-                print_file(file, 2, "0x%x, /* FC_LGFARRAY */\n", RPC_FC_LGFARRAY);
+                WRITE_FCTYPE(file, FC_LGFARRAY, typestring_offset);
                 /* alignment */
                 print_file(file, 2, "0x%x, /* 0 */\n", 0);
                 /* size */
@@ -669,7 +677,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
 
             if (total_size < USHRT_MAX)
             {
-                print_file(file, 2, "0x%x, /* FC_SMVARRAY */\n", RPC_FC_SMVARRAY);
+                WRITE_FCTYPE(file, FC_SMVARRAY, typestring_offset);
                 /* alignment */
                 print_file(file, 2, "0x%x, /* 0 */\n", 0);
                 /* total size */
@@ -680,7 +688,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             }
             else
             {
-                print_file(file, 2, "0x%x, /* FC_LGVARRAY */\n", RPC_FC_LGVARRAY);
+                WRITE_FCTYPE(file, FC_LGVARRAY, typestring_offset);
                 /* alignment */
                 print_file(file, 2, "0x%x, /* 0 */\n", 0);
                 /* total size */
@@ -711,7 +719,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             size_t typestring_size;
             size_t element_size = type_memsize(type, 0, NULL);
 
-            print_file(file, 2, "0x%x, /* FC_CARRAY */\n", RPC_FC_CARRAY);
+            WRITE_FCTYPE(file, FC_CARRAY, typestring_offset);
             /* alignment */
             print_file(file, 2, "0x%x, /* 0 */\n", 0);
             /* element size */
@@ -735,7 +743,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             size_t typestring_size;
             size_t element_size = type_memsize(type, 0, NULL);
 
-            print_file(file, 2, "0x%x, /* FC_CARRAY */\n", RPC_FC_CARRAY);
+            WRITE_FCTYPE(file, FC_CVARRAY, typestring_offset);
             /* alignment */
             print_file(file, 2, "0x%x, /* 0 */\n", 0);
             /* element size */
@@ -789,7 +797,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
-        print_file(file, 2, "0x%x, /* %s */\n", RPC_FC_STRUCT, "FC_STRUCT");
+        WRITE_FCTYPE(file, FC_STRUCT, typestring_offset);
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
@@ -809,7 +817,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
-        print_file(file, 2, "0x%x, /* %s */\n", RPC_FC_CSTRUCT, "FC_CSTRUCT");
+        WRITE_FCTYPE(file, FC_CSTRUCT, typestring_offset);
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
@@ -834,7 +842,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
-        print_file(file, 2, "0x%x, /* %s */\n", RPC_FC_CVSTRUCT, "FC_CVSTRUCT");
+        WRITE_FCTYPE(file, FC_CVSTRUCT, typestring_offset);
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
