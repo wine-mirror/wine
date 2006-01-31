@@ -405,8 +405,7 @@ library stdole
         HRESULT LoadPicture([in, optional] VARIANT filename,
                             [in, optional, defaultvalue(0)] int widthDesired,
                             [in, optional, defaultvalue(0)] int heightDesired,
-                            /* FIXME: widl can't cope with a defaultvalue of an enum parameter yet. */
-                            [in, optional/*, defaultvalue(0)*/] enum LoadPictureConstants flags,
+                            [in, optional, defaultvalue(Default)] enum LoadPictureConstants flags,
                             [out, retval] IPictureDisp **retval);
         [
          entry("OleSavePictureFile"),
