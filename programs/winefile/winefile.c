@@ -235,6 +235,22 @@ static void display_network_error(HWND hwnd)
 		MessageBox(hwnd, msg, RS(b2,IDS_WINEFILE), MB_OK);
 }
 
+static VOID WineLicense(HWND Wnd)
+{
+	TCHAR cap[20], text[1024];
+	LoadString(Globals.hInstance, IDS_LICENSE, text, 1024);
+	LoadString(Globals.hInstance, IDS_LICENSE_CAPTION, cap, 20);
+	MessageBox(Wnd, text, cap, MB_ICONINFORMATION | MB_OK);
+}
+
+static VOID WineWarranty(HWND Wnd)
+{
+	TCHAR cap[20], text[1024];
+	LoadString(Globals.hInstance, IDS_WARRANTY, text, 1024);
+	LoadString(Globals.hInstance, IDS_WARRANTY_CAPTION, cap, 20);
+	MessageBox(Wnd, text, cap, MB_ICONEXCLAMATION | MB_OK);
+}
+
 
 #ifdef __WINE__
 

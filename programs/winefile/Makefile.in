@@ -9,7 +9,6 @@ IMPORTS   = shell32 comdlg32 comctl32 ole32 mpr version user32 gdi32 advapi32 ke
 EXTRALIBS = -luuid
 
 C_SRCS = \
-	license.c \
 	splitpath.c \
 	winefile.c
 
