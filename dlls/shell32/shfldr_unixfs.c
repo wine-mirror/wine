@@ -435,7 +435,7 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
     HeapFree(GetProcessHeap(), 0, pszUnixPath);
     if (!pElement) return FALSE;
     strcpy(szPath, pElement);
-    strcat(szPath, "/");
+    if (szPath[strlen(szPath)-1] != '/') strcat(szPath, "/");
     free(pElement);
 
     /* Append the part relative to the drive symbolic link target. */
