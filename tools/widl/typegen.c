@@ -571,75 +571,71 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
 
 static size_t write_string_tfs(FILE *file, const attr_t *attrs,
                                const type_t *type, const expr_t *array,
-                               const char *name, size_t typestring_offset)
+                               const char *name, size_t *typestring_offset)
 {
     const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
     int has_size = size_is && (size_is->type != EXPR_VOID);
+    size_t start_offset = *typestring_offset;
 
     if ((type->type != RPC_FC_CHAR) && (type->type != RPC_FC_WCHAR))
     {
         error("write_string_tfs: Unimplemented for type 0x%x of name: %s\n", type->type, name);
-        return typestring_offset;
+        return start_offset;
     }
 
     if (array && array->is_const)
     {
-        size_t typestring_size;
-
         if (array->cval > USHRT_MAX)
             error("array size for parameter %s exceeds %d bytes by %ld bytes\n",
                   name, USHRT_MAX, array->cval - USHRT_MAX);
 
         if (type->type == RPC_FC_CHAR)
-            WRITE_FCTYPE(file, FC_CSTRING, typestring_offset);
+            WRITE_FCTYPE(file, FC_CSTRING, *typestring_offset);
         else
-            WRITE_FCTYPE(file, FC_WSTRING, typestring_offset);
+            WRITE_FCTYPE(file, FC_WSTRING, *typestring_offset);
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
-        typestring_size = 2;
+        *typestring_offset += 2;
 
         print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", array->cval, array->cval);
-        typestring_size += 2;
+        *typestring_offset += 2;
 
-        return typestring_size + typestring_offset;
+        return start_offset;
     }
     else if (has_size)
     {
-        size_t typestring_size;
-
         if (type->type == RPC_FC_CHAR)
-            WRITE_FCTYPE(file, FC_C_CSTRING, typestring_offset);
+            WRITE_FCTYPE(file, FC_C_CSTRING, *typestring_offset);
         else
-            WRITE_FCTYPE(file, FC_C_WSTRING, typestring_offset);
+            WRITE_FCTYPE(file, FC_C_WSTRING, *typestring_offset);
         print_file(file, 2, "0x%x, /* FC_STRING_SIZED */\n", RPC_FC_STRING_SIZED);
-        typestring_size = 2;
+        *typestring_offset += 2;
 
-        typestring_size += write_conf_or_var_desc(file, current_func, NULL, size_is);
+        *typestring_offset += write_conf_or_var_desc(file, current_func, NULL, size_is);
 
-        return typestring_size + typestring_offset;
+        return start_offset;
     }
     else
     {
-        size_t typestring_size;
-
         if (type->type == RPC_FC_CHAR)
-            WRITE_FCTYPE(file, FC_C_CSTRING, typestring_offset);
+            WRITE_FCTYPE(file, FC_C_CSTRING, *typestring_offset);
         else
-            WRITE_FCTYPE(file, FC_C_WSTRING, typestring_offset);
+            WRITE_FCTYPE(file, FC_C_WSTRING, *typestring_offset);
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
-        typestring_size = 2;
+        *typestring_offset += 2;
 
-        return typestring_size + typestring_offset;
+        return start_offset;
     }
 }
 
 static size_t write_array_tfs(FILE *file, const attr_t *attrs,
                               const type_t *type, const expr_t *array,
-                              const char *name, size_t typestring_offset)
+                              const char *name, size_t *typestring_offset)
 {
     const expr_t *length_is = get_attrp(attrs, ATTR_LENGTHIS);
     const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
     int has_length = length_is && (length_is->type != EXPR_VOID);
     int has_size = size_is && (size_is->type != EXPR_VOID) && !array->is_const;
+    size_t start_offset = *typestring_offset;
 
     /* FIXME: need to analyse type for pointers */
 
@@ -653,131 +649,127 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
         if (!has_length && !has_size)
         {
             /* fixed array */
-            size_t typestring_size;
             size_t size = type_memsize(type, 0, array);
             if (size < USHRT_MAX)
             {
-                WRITE_FCTYPE(file, FC_SMFARRAY, typestring_offset);
+                WRITE_FCTYPE(file, FC_SMFARRAY, *typestring_offset);
                 /* alignment */
                 print_file(file, 2, "0x%x, /* 0 */\n", 0);
                 /* size */
                 print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", size, size);
-                typestring_size = 4;
+                *typestring_offset += 4;
             }
             else
             {
-                WRITE_FCTYPE(file, FC_LGFARRAY, typestring_offset);
+                WRITE_FCTYPE(file, FC_LGFARRAY, *typestring_offset);
                 /* alignment */
                 print_file(file, 2, "0x%x, /* 0 */\n", 0);
                 /* size */
                 print_file(file, 2, "NdrFcLong(0x%x), /* %d */\n", size, size);
-                typestring_size = 6;
+                *typestring_offset += 6;
             }
 
             /* FIXME: write out pointer descriptor if necessary */
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
             print_file(file, 2, "FC_END,\n");
-            typestring_size += 2;
+            *typestring_offset += 2;
 
-            return typestring_size + typestring_offset;
+            return start_offset;
         }
         else if (has_length && !has_size)
         {
             /* varying array */
-            size_t typestring_size;
             size_t element_size = type_memsize(type, 0, NULL);
             size_t elements = array->cval;
             size_t total_size = element_size * elements;
 
             if (total_size < USHRT_MAX)
             {
-                WRITE_FCTYPE(file, FC_SMVARRAY, typestring_offset);
+                WRITE_FCTYPE(file, FC_SMVARRAY, *typestring_offset);
                 /* alignment */
                 print_file(file, 2, "0x%x, /* 0 */\n", 0);
                 /* total size */
                 print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", total_size, total_size);
                 /* number of elements */
                 print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", elements, elements);
-                typestring_size = 6;
+                *typestring_offset += 6;
             }
             else
             {
-                WRITE_FCTYPE(file, FC_LGVARRAY, typestring_offset);
+                WRITE_FCTYPE(file, FC_LGVARRAY, *typestring_offset);
                 /* alignment */
                 print_file(file, 2, "0x%x, /* 0 */\n", 0);
                 /* total size */
                 print_file(file, 2, "NdrFcLong(0x%x), /* %d */\n", total_size, total_size);
                 /* number of elements */
                 print_file(file, 2, "NdrFcLong(0x%x), /* %d */\n", elements, elements);
-                typestring_size = 10;
+                *typestring_offset += 10;
             }
             /* element size */
             print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
-            typestring_size += 2;
+            *typestring_offset += 2;
 
-            typestring_size += write_conf_or_var_desc(file, current_func,
-                                                      current_structure,
-                                                      length_is);
+            *typestring_offset += write_conf_or_var_desc(file, current_func,
+                                                         current_structure,
+                                                         length_is);
 
             /* FIXME: write out pointer descriptor if necessary */
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
             print_file(file, 2, "FC_END,\n");
-            typestring_size += 2;
+            *typestring_offset += 2;
 
-            return typestring_size + typestring_offset;
+            return start_offset;
         }
         else if (!has_length && has_size)
         {
             /* conformant array */
-            size_t typestring_size;
             size_t element_size = type_memsize(type, 0, NULL);
 
-            WRITE_FCTYPE(file, FC_CARRAY, typestring_offset);
+            WRITE_FCTYPE(file, FC_CARRAY, *typestring_offset);
             /* alignment */
             print_file(file, 2, "0x%x, /* 0 */\n", 0);
             /* element size */
             print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
-            typestring_size = 4;
+            *typestring_offset += 4;
 
-            typestring_size += write_conf_or_var_desc(file, current_func,
-                                                      current_structure, size_is);
+            *typestring_offset += write_conf_or_var_desc(file, current_func,
+                                                         current_structure, size_is);
 
             /* FIXME: write out pointer descriptor if necessary */
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
             print_file(file, 2, "FC_END,\n");
-            typestring_size += 2;
+            *typestring_offset += 2;
 
-            return typestring_size + typestring_offset;
+            return start_offset;
         }
         else
         {
             /* conformant varying array */
-            size_t typestring_size;
             size_t element_size = type_memsize(type, 0, NULL);
 
-            WRITE_FCTYPE(file, FC_CVARRAY, typestring_offset);
+            WRITE_FCTYPE(file, FC_CVARRAY, *typestring_offset);
             /* alignment */
             print_file(file, 2, "0x%x, /* 0 */\n", 0);
             /* element size */
             print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
-            typestring_size = 4;
+            *typestring_offset += 4;
 
-            typestring_size += write_conf_or_var_desc(file, current_func,
-                                                      current_structure, size_is);
-            typestring_size += write_conf_or_var_desc(file, current_func,
-                                                      current_structure,
-                                                      length_is);
+            *typestring_offset += write_conf_or_var_desc(file, current_func,
+                                                         current_structure, size_is);
+            *typestring_offset += write_conf_or_var_desc(file, current_func,
+                                                         current_structure,
+                                                         length_is);
 
             /* FIXME: write out pointer descriptor if necessary */
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
             print_file(file, 2, "FC_END,\n");
-            typestring_size += 2;
+            *typestring_offset += 2;
 
-            return typestring_size + typestring_offset;
+            return start_offset;
         }
     }
 }
@@ -797,11 +789,11 @@ static const var_t *find_array_or_string_in_struct(const type_t *type)
 }
 
 static size_t write_struct_tfs(FILE *file, const type_t *type,
-                               const char *name, size_t typestring_offset)
+                               const char *name, size_t *typestring_offset)
 {
     size_t total_size;
-    size_t typestring_size;
     const var_t *array;
+    size_t start_offset;
 
     switch (type->type)
     {
@@ -812,19 +804,20 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
-        WRITE_FCTYPE(file, FC_STRUCT, typestring_offset);
+        start_offset = *typestring_offset;
+        WRITE_FCTYPE(file, FC_STRUCT, *typestring_offset);
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
         print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
-        typestring_size = 4;
+        *typestring_offset += 4;
 
         /* member layout */
         print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
         print_file(file, 2, "FC_END,\n");
 
-        typestring_size += 2;
-        return typestring_size + typestring_offset;
+        *typestring_offset += 2;
+        return start_offset;
     case RPC_FC_CSTRUCT:
         total_size = type_memsize(type, 0, NULL);
 
@@ -832,24 +825,27 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
-        WRITE_FCTYPE(file, FC_CSTRUCT, typestring_offset);
+        start_offset = *typestring_offset;
+        WRITE_FCTYPE(file, FC_CSTRUCT, *typestring_offset);
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
         print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
+        *typestring_offset += 4;
         /* FIXME: a fixed offset won't work when pointer layout is present */
         print_file(file, 2, "NdrShort(0x3), /* 3 */\n");
+        *typestring_offset += 2;
         print_file(file, 2, "FC_END,\n");
-        typestring_size = 7;
+        *typestring_offset += 1;
 
         array = find_array_or_string_in_struct(type);
         current_structure = type;
-        typestring_offset = write_array_tfs(file, array->attrs, array->type,
-                                            array->array, array->name,
-                                            typestring_size + typestring_offset);
+        write_array_tfs(file, array->attrs, array->type,
+                        array->array, array->name,
+                        typestring_offset);
         current_structure = NULL;
 
-        return typestring_offset;
+        return start_offset;
     case RPC_FC_CVSTRUCT:
         total_size = type_memsize(type, 0, NULL);
 
@@ -857,45 +853,48 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
-        WRITE_FCTYPE(file, FC_CVSTRUCT, typestring_offset);
+        start_offset = *typestring_offset;
+        WRITE_FCTYPE(file, FC_CVSTRUCT, *typestring_offset);
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
         print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
+        *typestring_offset += 4;
         /* FIXME: a fixed offset won't work when pointer layout is present */
         print_file(file, 2, "NdrShort(0x3), /* 3 */\n");
+        *typestring_offset += 2;
         print_file(file, 2, "FC_END,\n");
-        typestring_size = 7;
+        *typestring_offset += 1;
 
         array = find_array_or_string_in_struct(type);
         current_structure = type;
         if (is_attr(array->attrs, ATTR_STRING))
-            typestring_offset = write_string_tfs(file, array->attrs, array->type,
-                                                 array->array, array->name,
-                                                 typestring_size + typestring_offset);
+            write_string_tfs(file, array->attrs, array->type,
+                             array->array, array->name,
+                             typestring_offset);
         else
-            typestring_offset = write_array_tfs(file, array->attrs, array->type,
-                                                array->array, array->name,
-                                                typestring_size + typestring_offset);
-         current_structure = NULL;
+            write_array_tfs(file, array->attrs, array->type,
+                            array->array, array->name,
+                            typestring_offset);
+        current_structure = NULL;
 
-        return typestring_offset;
+        return start_offset;
     default:
         error("write_struct_tfs: Unimplemented for type 0x%x\n", type->type);
-        return 0;
+        return *typestring_offset;
     }
 }
 
 static size_t write_union_tfs(FILE *file, const attr_t *attrs,
                               const type_t *type, const char *name,
-                              size_t typeformat_offset)
+                              size_t *typeformat_offset)
 {
     error("write_union_tfs: Unimplemented\n");
-    return 0;
+    return *typeformat_offset;
 }
 
 static size_t write_typeformatstring_var(FILE *file, int indent,
-    const var_t *var, size_t typeformat_offset)
+    const var_t *var, size_t *typeformat_offset)
 {
     const type_t *type = var->type;
     int ptr_level = var->ptr_level;
@@ -922,7 +921,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
             /* basic types don't need a type format string */
             if (is_base_type(type->type))
-                return typeformat_offset;
+                return 0;
 
             switch (type->type)
             {
@@ -946,6 +945,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
         }
         else if (ptr_level == 1 && !type_has_ref(type))
         {
+            size_t start_offset = *typeformat_offset;
             pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
             if (!pointer_type) pointer_type = RPC_FC_RP;
 
@@ -959,8 +959,8 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
                            pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP")); \
                 print_file(file, indent, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
                 print_file(file, indent, "0x5c,          /* FC_PAD */\n"); \
-                typeformat_offset += 4; \
-                return typeformat_offset
+                *typeformat_offset += 4; \
+                return start_offset
             CASE_BASETYPE(FC_BYTE);
             CASE_BASETYPE(FC_CHAR);
             CASE_BASETYPE(FC_SMALL);
@@ -991,7 +991,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
                     pointer_type,
                     pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
         print_file(file, indent, "NdrShort(0x2),    /* 2 */\n");
-        typeformat_offset += 4;
+        *typeformat_offset += 4;
 
         ptr_level--;
     }
@@ -1026,8 +1026,8 @@ void write_typeformatstring(FILE *file, type_t *iface)
                 while (NEXT_LINK(var)) var = NEXT_LINK(var);
                 while (var)
                 {
-                    typeformat_offset = write_typeformatstring_var(file,
-                            indent, var, typeformat_offset);
+                    write_typeformatstring_var(file, indent, var,
+                                               &typeformat_offset);
                     var = PREV_LINK(var);
                 }
             }
@@ -1487,7 +1487,9 @@ size_t get_size_procformatstring_var(const var_t *var)
 
 size_t get_size_typeformatstring_var(const var_t *var)
 {
-    return write_typeformatstring_var(NULL, 0, var, 0);
+    unsigned int type_offset = 0;
+    write_typeformatstring_var(NULL, 0, var, &type_offset);
+    return type_offset;
 }
 
 static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
