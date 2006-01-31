@@ -102,6 +102,7 @@ static void write_function_stubs(type_t *iface)
     {
         var_t *def = func->def;
         unsigned long buffer_size = 0;
+        unsigned int type_offset_func;
 
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
@@ -200,7 +201,10 @@ static void write_function_stubs(type_t *iface)
             indent -= 2;
             fprintf(server, "\n");
 
-            unmarshall_arguments(server, indent, func, &type_offset, PASS_IN);
+            /* make a copy so we don't increment the type offset twice */
+            type_offset_func = type_offset;
+
+            unmarshall_arguments(server, indent, func, &type_offset_func, PASS_IN);
         }
 
         print_server("if (_StubMsg.Buffer > _StubMsg.BufferEnd)\n");

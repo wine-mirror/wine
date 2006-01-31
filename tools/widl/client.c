@@ -103,6 +103,7 @@ static void write_function_stubs(type_t *iface)
     {
         var_t *def = func->def;
         var_t* explicit_handle_var;
+        unsigned int type_offset_func;
 
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
@@ -194,8 +195,11 @@ static void write_function_stubs(type_t *iface)
         fprintf(client, "\n");
 
 
+        /* make a copy so we don't increment the type offset twice */
+        type_offset_func = type_offset;
+
         /* marshal arguments */
-        marshall_arguments(client, indent, func, &type_offset, PASS_IN);
+        marshall_arguments(client, indent, func, &type_offset_func, PASS_IN);
 
         /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */
