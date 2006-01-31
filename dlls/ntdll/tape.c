@@ -30,6 +30,11 @@
 #include <sys/mtio.h>
 #endif
 
+/* FreeBSD, for example, has MTCOMP instead of MTCOMPRESSION. */
+#if !defined(MTCOMPRESSION) && defined(MTCOMP)
+#define MTCOMPRESSION MTCOMP
+#endif
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "ntstatus.h"
@@ -95,6 +100,7 @@ static NTSTATUS TAPE_CreatePartition( int fd, TAPE_CREATE_PARTITION *data )
 
     switch (data->Method)
     {
+#ifdef MTMKPART
     case TAPE_FIXED_PARTITIONS:
     case TAPE_SELECT_PARTITIONS:
         cmd.mt_op = MTMKPART;
@@ -104,6 +110,7 @@ static NTSTATUS TAPE_CreatePartition( int fd, TAPE_CREATE_PARTITION *data )
         cmd.mt_op = MTMKPART;
         cmd.mt_count = data->Size;
         break;
+#endif
     default:
         ERR( "Unhandled method: 0x%08lx\n", data->Method );
         return STATUS_INVALID_PARAMETER;
@@ -240,6 +247,7 @@ static NTSTATUS TAPE_GetPosition( int fd, ULONG type, TAPE_GET_POSITION *data )
         data->Type = type;
         data->Partition = get.mt_resid;
         data->OffsetLow = pos.mt_blkno;
+        break;
     case TAPE_LOGICAL_BLOCK:
     case TAPE_PSEUDO_LOGICAL_BLOCK:
         WARN( "Positioning type not supported\n" );
@@ -269,21 +277,31 @@ static NTSTATUS TAPE_Prepare( int fd, TAPE_PREPARE *data )
 
     switch (data->Operation)
     {
+#ifdef MTLOAD
     case TAPE_LOAD:
         cmd.mt_op = MTLOAD;
         break;
+#endif
+#ifdef MTUNLOAD
     case TAPE_UNLOAD:
         cmd.mt_op = MTUNLOAD;
         break;
+#endif
+#ifdef MTRETEN
     case TAPE_TENSION:
         cmd.mt_op = MTRETEN;
         break;
+#endif
+#ifdef MTLOCK
     case TAPE_LOCK:
         cmd.mt_op = MTLOCK;
         break;
+#endif
+#ifdef MTUNLOCK
     case TAPE_UNLOCK:
         cmd.mt_op = MTUNLOCK;
         break;
+#endif
     case TAPE_FORMAT:
         /* Native ignores this if the drive doesn't support it */
         return STATUS_SUCCESS;
@@ -364,13 +382,17 @@ static NTSTATUS TAPE_SetPosition( int fd, TAPE_SET_POSITION *data )
     case TAPE_REWIND:
         cmd.mt_op = MTREW;
         break;
+#ifdef MTSEEK
     case TAPE_ABSOLUTE_BLOCK:
         cmd.mt_op = MTSEEK;
         cmd.mt_count = data->Offset.u.LowPart;
         break;
+#endif
+#ifdef MTEOM
     case TAPE_SPACE_END_OF_DATA:
         cmd.mt_op = MTEOM;
         break;
+#endif
     case TAPE_SPACE_FILEMARKS:
         if (data->Offset.u.LowPart >= 0) {
             cmd.mt_op = MTFSF;
@@ -380,6 +402,7 @@ static NTSTATUS TAPE_SetPosition( int fd, TAPE_SET_POSITION *data )
             cmd.mt_op = MTBSF;
             cmd.mt_count = -data->Offset.u.LowPart;
         }
+        break;
     case TAPE_SPACE_SETMARKS:
         if (data->Offset.u.LowPart >= 0) {
             cmd.mt_op = MTFSS;
@@ -389,6 +412,7 @@ static NTSTATUS TAPE_SetPosition( int fd, TAPE_SET_POSITION *data )
             cmd.mt_op = MTBSS;
             cmd.mt_count = -data->Offset.u.LowPart;
         }
+        break;
     case TAPE_LOGICAL_BLOCK:
     case TAPE_PSEUDO_LOGICAL_BLOCK:
     case TAPE_SPACE_RELATIVE_BLOCKS:
@@ -421,10 +445,12 @@ static NTSTATUS TAPE_WriteMarks( int fd, TAPE_WRITE_MARKS *data )
 
     switch (data->Type)
     {
+#ifdef MTWSM
     case TAPE_SETMARKS:
         cmd.mt_op = MTWSM;
         cmd.mt_count = data->Count;
         break;
+#endif
     case TAPE_FILEMARKS:
     case TAPE_SHORT_FILEMARKS:
     case TAPE_LONG_FILEMARKS:
