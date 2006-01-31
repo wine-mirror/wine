@@ -796,6 +796,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
     size_t total_size;
     const var_t *array;
     size_t start_offset;
+    size_t array_offset;
 
     switch (type->type)
     {
@@ -827,6 +828,13 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
+        array = find_array_or_string_in_struct(type);
+        current_structure = type;
+        array_offset = write_array_tfs(file, array->attrs, array->type, 
+                                       array->array, array->name,
+                                       typestring_offset);
+        current_structure = NULL;
+
         start_offset = *typestring_offset;
         WRITE_FCTYPE(file, FC_CSTRUCT, *typestring_offset);
         /* alignment */
@@ -834,18 +842,12 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         /* total size */
         print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
-        /* FIXME: a fixed offset won't work when pointer layout is present */
-        print_file(file, 2, "NdrShort(0x3), /* 3 */\n");
+        print_file(file, 2, "NdrShort(0x%x), /* %d */\n",
+                   array_offset - *typestring_offset,
+                   array_offset - *typestring_offset);
         *typestring_offset += 2;
         print_file(file, 2, "FC_END,\n");
         *typestring_offset += 1;
-
-        array = find_array_or_string_in_struct(type);
-        current_structure = type;
-        write_array_tfs(file, array->attrs, array->type,
-                        array->array, array->name,
-                        typestring_offset);
-        current_structure = NULL;
 
         return start_offset;
     case RPC_FC_CVSTRUCT:
@@ -855,6 +857,18 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
 
+        array = find_array_or_string_in_struct(type);
+        current_structure = type;
+        if (is_attr(array->attrs, ATTR_STRING))
+            array_offset = write_string_tfs(file, array->attrs, array->type,
+                                            array->array, array->name,
+                                            typestring_offset);
+        else
+            array_offset = write_array_tfs(file, array->attrs, array->type,
+                                           array->array, array->name,
+                                           typestring_offset);
+        current_structure = NULL;
+
         start_offset = *typestring_offset;
         WRITE_FCTYPE(file, FC_CVSTRUCT, *typestring_offset);
         /* alignment */
@@ -862,23 +876,12 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         /* total size */
         print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
-        /* FIXME: a fixed offset won't work when pointer layout is present */
-        print_file(file, 2, "NdrShort(0x3), /* 3 */\n");
+        print_file(file, 2, "NdrShort(0x%x), /* %d */\n",
+                   array_offset - *typestring_offset,
+                   array_offset - *typestring_offset);
         *typestring_offset += 2;
         print_file(file, 2, "FC_END,\n");
         *typestring_offset += 1;
-
-        array = find_array_or_string_in_struct(type);
-        current_structure = type;
-        if (is_attr(array->attrs, ATTR_STRING))
-            write_string_tfs(file, array->attrs, array->type,
-                             array->array, array->name,
-                             typestring_offset);
-        else
-            write_array_tfs(file, array->attrs, array->type,
-                            array->array, array->name,
-                            typestring_offset);
-        current_structure = NULL;
 
         return start_offset;
     default:
