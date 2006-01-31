@@ -877,6 +877,35 @@ static expr_t *make_exprt(enum expr_type type, typeref_t *tref, expr_t *expr)
   e->is_const = FALSE;
   INIT_LINK(e);
   /* check for cast of constant expression */
+  if (type == EXPR_SIZEOF) {
+    switch (tref->ref->type) {
+      case RPC_FC_BYTE:
+      case RPC_FC_CHAR:
+      case RPC_FC_SMALL:
+      case RPC_FC_USMALL:
+        e->is_const = TRUE;
+        e->cval = 1;
+        break;
+      case RPC_FC_WCHAR:
+      case RPC_FC_USHORT:
+      case RPC_FC_SHORT:
+        e->is_const = TRUE;
+        e->cval = 2;
+        break;
+      case RPC_FC_LONG:
+      case RPC_FC_ULONG:
+      case RPC_FC_FLOAT:
+      case RPC_FC_ERROR_STATUS_T:
+        e->is_const = TRUE;
+        e->cval = 4;
+        break;
+      case RPC_FC_HYPER:
+      case RPC_FC_DOUBLE:
+        e->is_const = TRUE;
+        e->cval = 8;
+        break;
+    }
+  }
   if (type == EXPR_CAST && expr->is_const) {
     e->is_const = TRUE;
     e->cval = expr->cval;
