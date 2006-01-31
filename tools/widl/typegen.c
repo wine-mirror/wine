@@ -443,7 +443,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
                 correlation_type == RPC_FC_TOP_LEVEL_CONFORMANCE ? "parameter, " : "",
                 param_type_string);
         print_file(file, 2, "0x%x, /* %s */\n", operator_type, operator_string);
-        print_file(file, 2, "0x%x, /* %soffset = %d */\n",
+        print_file(file, 2, "NdrShort(0x%x), /* %soffset = %d */\n",
                    offset,
                    correlation_type == RPC_FC_TOP_LEVEL_CONFORMANCE ? "x86 stack size / " : "",
                    offset);
