@@ -1780,10 +1780,10 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 
     /* Restore the old mapping mode */
     SetMapMode(dc->hSelf, mapMode);
-    SetViewportExtEx(dc->hSelf, szViewportExt.cx, szViewportExt.cy, NULL);
-    SetViewportOrgEx(dc->hSelf, ptViewportOrg.x, ptViewportOrg.y, NULL);
     SetWindowExtEx(dc->hSelf, szWindowExt.cx, szWindowExt.cy, NULL);
     SetWindowOrgEx(dc->hSelf, ptWindowOrg.x, ptWindowOrg.y, NULL);
+    SetViewportExtEx(dc->hSelf, szViewportExt.cx, szViewportExt.cy, NULL);
+    SetViewportOrgEx(dc->hSelf, ptViewportOrg.x, ptViewportOrg.y, NULL);
 
     /* Go to GM_ADVANCED temporarily to restore the world transform */
     graphicsMode=GetGraphicsMode(dc->hSelf);
