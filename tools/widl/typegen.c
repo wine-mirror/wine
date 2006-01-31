@@ -842,9 +842,10 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         /* total size */
         print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
-        print_file(file, 2, "NdrShort(0x%x), /* %d */\n",
+        print_file(file, 2, "NdrShort(0x%x), /* offset = %d (%u) */\n",
                    array_offset - *typestring_offset,
-                   array_offset - *typestring_offset);
+                   array_offset - *typestring_offset,
+                   array_offset);
         *typestring_offset += 2;
         print_file(file, 2, "FC_END,\n");
         *typestring_offset += 1;
@@ -876,9 +877,10 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         /* total size */
         print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
-        print_file(file, 2, "NdrShort(0x%x), /* %d */\n",
+        print_file(file, 2, "NdrShort(0x%x), /* offset = %d (%u) */\n",
                    array_offset - *typestring_offset,
-                   array_offset - *typestring_offset);
+                   array_offset - *typestring_offset,
+                   array_offset);
         *typestring_offset += 2;
         print_file(file, 2, "FC_END,\n");
         *typestring_offset += 1;
@@ -992,6 +994,8 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
         pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
         if (!pointer_type) pointer_type = RPC_FC_RP;
 
+        if (file)
+            fprintf(file, "/* %2u */\n", *typeformat_offset);
         print_file(file, indent, "0x%x, 0x00,    /* %s */\n",
                     pointer_type,
                     pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
