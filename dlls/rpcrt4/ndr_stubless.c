@@ -780,11 +780,21 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                         {
                         case PROXY_CALCSIZE:
                             if (pParam->param_attributes & RPC_FC_PROC_PF_IN)
-                                call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
+                            {
+                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                    call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
+                                else
+                                    call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
+                            }
                             break;
                         case PROXY_MARSHAL:
                             if (pParam->param_attributes & RPC_FC_PROC_PF_IN)
-                                call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
+                            {
+                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                    call_marshaller(&stubMsg, pArg, pTypeFormat);
+                                else
+                                    call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
+                            }
                             break;
                         case PROXY_UNMARSHAL:
                             if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
@@ -792,6 +802,8 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                                 unsigned char *pRetVal = (unsigned char *)&RetVal;
                                 if (pParam->param_attributes & RPC_FC_PROC_PF_RETURN)
                                     call_unmarshaller(&stubMsg, &pRetVal, pTypeFormat, 0);
+                                else if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                    call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
                                 else
                                     call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
                             }
@@ -1192,6 +1204,11 @@ long WINAPI NdrStubCall2(
                 pServerInfo->ThunkTable[pRpcMsg->ProcNum](&stubMsg);
                 /* FIXME: RetVal is stored as the last argument - retrieve it */
             }
+            else if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+            {
+                SERVER_ROUTINE *vtbl = *(SERVER_ROUTINE **)((CStdStubBuffer *)pThis)->pvServerObject;
+                RetVal = call_server_func(vtbl[pRpcMsg->ProcNum], args, stack_size);
+            }
             else
                 RetVal = call_server_func(pServerInfo->DispatchTable[pRpcMsg->ProcNum], args, stack_size);
 
@@ -1311,16 +1328,26 @@ long WINAPI NdrStubCall2(
                                 call_marshaller(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
                             else if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
                             {
-                                /* we have to dereference the pointer again for complex types */
-                                call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
-                                stubMsg.pfnFree(*(void **)pArg);
+                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                    call_marshaller(&stubMsg, pArg, pTypeFormat);
+                                else
+                                {
+                                    call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
+                                    stubMsg.pfnFree(*(void **)pArg);
+                                }
                             }
-                            /* FIXME: call call_freer here */
+                            /* FIXME: call call_freer here for IN types */
                             break;
                         case STUBLESS_UNMARSHAL:
                             if (pParam->param_attributes & RPC_FC_PROC_PF_IN)
-                                call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
-                            else if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
+                            {
+                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                    call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
+                                else
+                                    call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
+                            }
+                            else if ((pParam->param_attributes & RPC_FC_PROC_PF_OUT) && 
+                                      !(pParam->param_attributes & RPC_FC_PROC_PF_BYVAL))
                             {
                                 *(void **)pArg = NdrAllocate(&stubMsg, sizeof(void *));
                                 **(void ***)pArg = 0;
@@ -1330,8 +1357,12 @@ long WINAPI NdrStubCall2(
                             if (pParam->param_attributes & RPC_FC_PROC_PF_RETURN)
                                 call_buffer_sizer(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
                             else if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
-                                /* we have to dereference the pointer again for complex types */
-                                call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
+                            {
+                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                    call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
+                                else
+                                    call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
+                            }
                             break;
                         default:
                             RpcRaiseException(RPC_S_INTERNAL_ERROR);
