@@ -296,6 +296,21 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
 
     if (!file) return 4; /* optimisation for sizing pass */
 
+    if (expr->is_const)
+    {
+        if (expr->cval > UCHAR_MAX * (USHRT_MAX + 1) + USHRT_MAX)
+            error("write_conf_or_var_desc: constant value %ld is greater than "
+                  "the maximum constant size of %d\n", expr->cval,
+                  UCHAR_MAX * (USHRT_MAX + 1) + USHRT_MAX);
+
+        print_file(file, 2, "0x%x, /* Corr desc: constant, val = %ld */\n",
+                   RPC_FC_CONSTANT_CONFORMANCE, expr->cval);
+        print_file(file, 2, "0x%x,\n", expr->cval & ~USHRT_MAX);
+        print_file(file, 2, "NdrShort(0x%x),\n", expr->cval & USHRT_MAX);
+
+        return 4;
+    }
+
     switch (subexpr->type)
     {
     case EXPR_PPTR:
@@ -466,7 +481,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
         }
         else
         {
-            error("write_conf_or_var_desc: expression type %d\n", subexpr->type);
+            error("write_conf_or_var_desc: top-level callback conformance unimplemented\n");
             correlation_type = RPC_FC_TOP_LEVEL_CONFORMANCE;
         }
 
