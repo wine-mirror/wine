@@ -509,7 +509,7 @@ var_t* get_explicit_handle_var(func_t* func)
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
-        if (var->type->type == RPC_FC_IGNORE)
+        if (var->type->type == RPC_FC_BIND_PRIMITIVE)
             return var;
 
         var = PREV_LINK(var);

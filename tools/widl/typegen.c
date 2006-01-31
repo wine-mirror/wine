@@ -936,6 +936,10 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
             case RPC_FC_ENCAPSULATED_UNION:
             case RPC_FC_NON_ENCAPSULATED_UNION:
                 return write_union_tfs(file, var->attrs, type, var->name, typeformat_offset);
+            case RPC_FC_IGNORE:
+            case RPC_FC_BIND_PRIMITIVE:
+                /* nothing to do */
+                return 0;
             default:
                 error("write_typeformatstring_var: Unsupported type 0x%x for variable %s\n", type->type, var->name);
             }
@@ -1070,6 +1074,10 @@ static unsigned int get_required_buffer_size_type(
         case RPC_FC_DOUBLE:
             *alignment = 8;
             return 8;
+
+        case RPC_FC_IGNORE:
+        case RPC_FC_BIND_PRIMITIVE:
+            return 0;
 
         case RPC_FC_STRUCT:
         {
@@ -1268,6 +1276,10 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
             case RPC_FC_BOGUS_STRUCT:
                 ndrtype = "ComplexStruct";
                 break;
+            case RPC_FC_IGNORE:
+            case RPC_FC_BIND_PRIMITIVE:
+                /* no marshalling needed */
+                continue;
             default:
                 error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
                     var->name, var->type->type, var->ptr_level);
@@ -1439,6 +1451,10 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
             case RPC_FC_BOGUS_STRUCT:
                 ndrtype = "ComplexStruct";
                 break;
+            case RPC_FC_IGNORE:
+            case RPC_FC_BIND_PRIMITIVE:
+                /* no unmarshalling needed */
+                continue;
             default:
                 error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
                     var->name, var->type->type, var->ptr_level);
