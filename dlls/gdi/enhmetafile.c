@@ -595,6 +595,33 @@ static void EMF_SetMapMode(HDC hdc, enum_emh_data *info)
     }
 }
 
+/***********************************************************************
+ *           EMF_FixIsotropic
+ *
+ * Fix viewport extensions for isotropic mode.
+ */
+
+static void EMF_FixIsotropic(HDC hdc, enum_emh_data *info)
+{
+    double xdim = fabs((double)info->vportExtX * GetDeviceCaps( hdc, HORZSIZE ) /
+                  (GetDeviceCaps( hdc, HORZRES ) * info->wndExtX));
+    double ydim = fabs((double)info->vportExtY * GetDeviceCaps( hdc, VERTSIZE ) /
+                  (GetDeviceCaps( hdc, VERTRES ) * info->wndExtY));
+
+    if (xdim > ydim)
+    {
+        INT mincx = (info->vportExtX >= 0) ? 1 : -1;
+        info->vportExtX = floor(info->vportExtX * ydim / xdim + 0.5);
+        if (!info->vportExtX) info->vportExtX = mincx;
+    }
+    else
+    {
+        INT mincy = (info->vportExtY >= 0) ? 1 : -1;
+        info->vportExtY = floor(info->vportExtY * xdim / ydim + 0.5);
+        if (!info->vportExtY) info->vportExtY = mincy;
+    }
+}
+
 /*****************************************************************************
  *       emr_produces_output
  *
@@ -829,6 +856,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	    break;
         info->wndExtX = pSetWindowExtEx->szlExtent.cx;
         info->wndExtY = pSetWindowExtEx->szlExtent.cy;
+        if (info->mode == MM_ISOTROPIC)
+            EMF_FixIsotropic(hdc, info);
 
         TRACE("SetWindowExtEx: %d,%d\n",info->wndExtX,info->wndExtY);
 	break;
@@ -852,6 +881,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	    break;
         info->vportExtX = pSetViewportExtEx->szlExtent.cx;
         info->vportExtY = pSetViewportExtEx->szlExtent.cy;
+        if (info->mode == MM_ISOTROPIC)
+            EMF_FixIsotropic(hdc, info);
         TRACE("SetViewportExtEx: %d,%d\n",info->vportExtX,info->vportExtY);
 	break;
       }
@@ -1316,8 +1347,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if (info->vportExtX == 0) info->vportExtX = 1;
         if (info->vportExtY == 0) info->vportExtY = 1;
         if (info->mode == MM_ISOTROPIC)
-            FIXME("EMRSCALEVIEWPORTEXTEX MM_ISOTROPIC mapping\n");
-            /* MAPPING_FixIsotropic( dc ); */
+            EMF_FixIsotropic(hdc, info);
 
         TRACE("EMRSCALEVIEWPORTEXTEX %ld/%ld %ld/%ld\n",
              lpScaleViewportExtEx->xNum,lpScaleViewportExtEx->xDenom,
@@ -1342,8 +1372,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if (info->wndExtX == 0) info->wndExtX = 1;
         if (info->wndExtY == 0) info->wndExtY = 1;
         if (info->mode == MM_ISOTROPIC)
-            FIXME("EMRSCALEWINDOWEXTEX MM_ISOTROPIC mapping\n");
-            /* MAPPING_FixIsotropic( dc ); */
+            EMF_FixIsotropic(hdc, info);
 
         TRACE("EMRSCALEWINDOWEXTEX %ld/%ld %ld/%ld\n",
              lpScaleWindowExtEx->xNum,lpScaleWindowExtEx->xDenom,

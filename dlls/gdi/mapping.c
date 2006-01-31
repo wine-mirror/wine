@@ -33,19 +33,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
  */
 void MAPPING_FixIsotropic( DC * dc )
 {
-    double xdim = (double)dc->vportExtX * GetDeviceCaps( dc->hSelf, HORZSIZE ) /
-                  (GetDeviceCaps( dc->hSelf, HORZRES ) * dc->wndExtX);
-    double ydim = (double)dc->vportExtY * GetDeviceCaps( dc->hSelf, VERTSIZE ) /
-                  (GetDeviceCaps( dc->hSelf, VERTRES ) * dc->wndExtY);
+    double xdim = fabs((double)dc->vportExtX * GetDeviceCaps( dc->hSelf, HORZSIZE ) /
+                  (GetDeviceCaps( dc->hSelf, HORZRES ) * dc->wndExtX));
+    double ydim = fabs((double)dc->vportExtY * GetDeviceCaps( dc->hSelf, VERTSIZE ) /
+                  (GetDeviceCaps( dc->hSelf, VERTRES ) * dc->wndExtY));
+
     if (xdim > ydim)
     {
-	dc->vportExtX = floor(dc->vportExtX * fabs( ydim / xdim ) + 0.5);
-	if (!dc->vportExtX) dc->vportExtX = 1;
+        INT mincx = (dc->vportExtX >= 0) ? 1 : -1;
+        dc->vportExtX = floor(dc->vportExtX * ydim / xdim + 0.5);
+        if (!dc->vportExtX) dc->vportExtX = mincx;
     }
     else
     {
-	dc->vportExtY = floor(dc->vportExtY * fabs( xdim / ydim ) + 0.5);
-	if (!dc->vportExtY) dc->vportExtY = 1;
+        INT mincy = (dc->vportExtY >= 0) ? 1 : -1;
+        dc->vportExtY = floor(dc->vportExtY * xdim / ydim + 0.5);
+        if (!dc->vportExtY) dc->vportExtY = mincy;
     }
 }
 
@@ -326,7 +329,10 @@ BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
     }
     dc->wndExtX = x;
     dc->wndExtY = y;
-    /* Windows fixes MM_ISOTROPIC mode only in SetViewportExtEx() */
+    /* The API docs say that you should call SetWindowExtEx before
+       SetViewportExtEx. This advice does not imply that Windows
+       doesn't ensure the isotropic mapping after SetWindowExtEx! */
+    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
  done:
     GDI_ReleaseObj( hdc );
