@@ -129,6 +129,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <dirent.h>
+#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -403,8 +404,8 @@ static BOOL UNIXFS_is_dos_device(const struct stat *statPath) {
 /******************************************************************************
  * UNIXFS_get_unix_path [Internal]
  *
- * Convert an absolute dos path to an absolute canonicalized unix path.
- * Evaluate "/.", "/.." and symbolic links.
+ * Convert an absolute dos path to an absolute unix path.
+ * Evaluate "/.", "/.." and the symbolic links in $WINEPREFIX/dosdevices.
  *
  * PARAMS
  *  pszDosPath       [I] An absolute dos path
@@ -417,18 +418,32 @@ static BOOL UNIXFS_is_dos_device(const struct stat *statPath) {
 static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
 {
     char *pPathTail, *pElement, *pCanonicalTail, szPath[FILENAME_MAX], *pszUnixPath;
-    struct stat fileStat;
+    WCHAR wszDrive[] = { '?', ':', '\\', 0 };
+    int cDriveSymlinkLen;
     
     TRACE("(pszDosPath=%s, pszCanonicalPath=%p)\n", debugstr_w(pszDosPath), pszCanonicalPath);
     
     if (!pszDosPath || pszDosPath[1] != ':')
         return FALSE;
 
-    pszUnixPath = wine_get_unix_file_name(pszDosPath);
-    if (!pszUnixPath) return FALSE;   
-    strcpy(szPath, pszUnixPath);
+    /* Get the canonicalized unix path corresponding to the drive letter. */
+    wszDrive[0] = pszDosPath[0];
+    pszUnixPath = wine_get_unix_file_name(wszDrive);
+    if (!pszUnixPath) return FALSE;
+    cDriveSymlinkLen = strlen(pszUnixPath);
+    pElement = canonicalize_file_name(pszUnixPath);
     HeapFree(GetProcessHeap(), 0, pszUnixPath);
-   
+    if (!pElement) return FALSE;
+    strcpy(szPath, pElement);
+    strcat(szPath, "/");
+    free(pElement);
+
+    /* Append the part relative to the drive symbolic link target. */
+    pszUnixPath = wine_get_unix_file_name(pszDosPath);
+    if (!pszUnixPath) return FALSE;
+    strcat(szPath, pszUnixPath + cDriveSymlinkLen);
+    HeapFree(GetProcessHeap(), 0, pszUnixPath);
+    
     /* pCanonicalTail always points to the end of the canonical path constructed
      * thus far. pPathTail points to the still to be processed part of the input
      * path. pElement points to the path element currently investigated.
@@ -439,7 +454,6 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
 
     do {
         char cTemp;
-        int cLinks = 0;
             
         pElement = pPathTail;
         pPathTail = strchr(pPathTail+1, '/');
@@ -452,69 +466,15 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
         /* Skip "/." path elements */
         if (!strcmp("/.", pElement)) {
             *pPathTail = cTemp;
-            continue;
-        }
-
-        /* Remove last element in canonical path for "/.." elements, then skip. */
-        if (!strcmp("/..", pElement)) {
+        } else if (!strcmp("/..", pElement)) {
+            /* Remove last element in canonical path for "/.." elements, then skip. */
             char *pTemp = strrchr(pszCanonicalPath, '/');
             if (pTemp)
                 pCanonicalTail = pTemp;
             *pCanonicalTail = '\0';
             *pPathTail = cTemp;
-            continue;
-        }
-       
-        /* lstat returns zero on success. */
-        if (lstat(szPath, &fileStat)) 
-            return FALSE;
-
-        if (S_ISLNK(fileStat.st_mode)) {
-            char szSymlink[FILENAME_MAX];
-            int cLinkLen, cTailLen;
-          
-            /* Avoid infinite loop for recursive links. */
-            if (++cLinks > 64) 
-                return FALSE;
-            
-            cLinkLen = readlink(szPath, szSymlink, FILENAME_MAX);
-            if (cLinkLen < 0) 
-                return FALSE;
-
-            *pPathTail = cTemp;
-            cTailLen = strlen(pPathTail);
-           
-            if (szSymlink[0] == '/') {
-                /* Absolute link. Copy to szPath, concat remaining path and start all over. */
-                if (cLinkLen + cTailLen + 1 > FILENAME_MAX)
-                    return FALSE;
-                    
-                /* Avoid double slashes. */
-                if (szSymlink[cLinkLen-1] == '/' && pPathTail[0] == '/') {
-                    szSymlink[cLinkLen-1] = '\0';
-                    cLinkLen--;
-                }
-                
-                memcpy(szSymlink + cLinkLen, pPathTail, cTailLen + 1);
-                memcpy(szPath, szSymlink, cLinkLen + cTailLen + 1);
-                *pszCanonicalPath = '\0';
-                pCanonicalTail = pszCanonicalPath;
-                pPathTail = szPath;
-            } else {
-                /* Relative link. Expand into szPath and continue. */
-                char szTemp[FILENAME_MAX];
-                int cTailLen = strlen(pPathTail);
-
-                if (pElement - szPath + 1 + cLinkLen + cTailLen + 1 > FILENAME_MAX)
-                    return FALSE;
-
-                memcpy(szTemp, pPathTail, cTailLen + 1);
-                memcpy(pElement + 1, szSymlink, cLinkLen);
-                memcpy(pElement + 1 + cLinkLen, szTemp, cTailLen + 1);
-                pPathTail = pElement;
-            }
         } else {
-            /* Regular directory or file. Copy to canonical path */
+            /* Directory or file. Copy to canonical path */
             if (pCanonicalTail - pszCanonicalPath + pPathTail - pElement + 1 > FILENAME_MAX)
                 return FALSE;
                 
