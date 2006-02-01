@@ -55,14 +55,14 @@
 @ stub CertGetPublicKeyLength
 @ stub CertGetSubjectCertificateFromStore
 @ stub CertIsRDNAttrsInCertificateName
-@ stub CertNameToStrA
-@ stub CertNameToStrW
+@ stdcall CertNameToStrA(long ptr long ptr long)
+@ stdcall CertNameToStrW(long ptr long ptr long)
 @ stdcall CertOIDToAlgId(str)
 @ stdcall CertOpenStore(str long long long ptr)
 @ stdcall CertOpenSystemStoreA(long str)
 @ stdcall CertOpenSystemStoreW(long wstr)
-@ stub CertRDNValueToStrA
-@ stub CertRDNValueToStrW
+@ stdcall CertRDNValueToStrA(long ptr ptr long)
+@ stdcall CertRDNValueToStrW(long ptr ptr long)
 @ stub CertRemoveEnhancedKeyUsageIdentifier
 @ stdcall CertRemoveStoreFromCollection(long long)
 @ stdcall CertSaveStore(long long long long ptr long)

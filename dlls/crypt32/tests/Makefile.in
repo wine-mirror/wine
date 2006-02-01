@@ -10,7 +10,8 @@ CTESTS = \
 	encode.c \
 	main.c \
 	oid.c \
-	protectdata.c
+	protectdata.c \
+	str.c
 
 @MAKE_TEST_RULES@
 
