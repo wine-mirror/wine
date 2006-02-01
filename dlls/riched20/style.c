@@ -317,7 +317,7 @@ HFONT ME_SelectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s)
       if (item->nAge > nAge)
         nEmpty = i, nAge = item->nAge;
     }
-    if (ME_IsFontEqual(&item->lfSpecs, &lf))
+    if (item->hFont && ME_IsFontEqual(&item->lfSpecs, &lf))
       break;
   }
   if (i < HFONT_CACHE_SIZE) /* found */
@@ -372,7 +372,7 @@ void ME_UnselectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s, HFONT hOl
   assert(0 == "UnselectStyleFont without SelectStyleFont");
 }
 
-void ME_DestroyStyle(ME_Style *s) {
+static void ME_DestroyStyle(ME_Style *s) {
   if (s->hFont)
   {
     DeleteObject(s->hFont);
