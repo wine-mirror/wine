@@ -639,7 +639,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
 
     /* FIXME: need to analyse type for pointers */
 
-    if (NEXT_LINK(array)) /* multi-dimensional array */
+    if (array && NEXT_LINK(array)) /* multi-dimensional array */
     {
         error("write_array_tfs: Multi-dimensional arrays not implemented yet (param %s)\n", name);
         return 0;
@@ -1170,7 +1170,7 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
             int has_length = length_is && (length_is->type != EXPR_VOID);
             int has_size = (size_is && (size_is->type != EXPR_VOID)) || !var->array->is_const;
 
-            if (NEXT_LINK(var->array)) /* multi-dimensional array */
+            if (var->array && NEXT_LINK(var->array)) /* multi-dimensional array */
                 array_type = "ComplexArray";
             else
             {
@@ -1364,7 +1364,7 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
             int has_length = length_is && (length_is->type != EXPR_VOID);
             int has_size = (size_is && (size_is->type != EXPR_VOID)) || !var->array->is_const;
 
-            if (NEXT_LINK(var->array)) /* multi-dimensional array */
+            if (var->array && NEXT_LINK(var->array)) /* multi-dimensional array */
                 array_type = "ComplexArray";
             else
             {
