@@ -2205,20 +2205,6 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   assert(bResult);
 }
 
-/******************************************************************
- *        CreateTextServices (RICHED20.4)
- */
-HRESULT WINAPI CreateTextServices(IUnknown *punkOuter, ITextHost *pITextHost,
-    IUnknown **ppUnk)
-{
-  FIXME("stub\n");
-  /* FIXME should support aggregation */
-  if (punkOuter)
-    return CLASS_E_NOAGGREGATION;
-    
-  return E_FAIL; /* E_NOTIMPL isn't allowed by MSDN */
-}
-
 LRESULT WINAPI REComboWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   /* FIXME: Not implemented */
   TRACE("hWnd %p msg %04x (%s) %08x %08lx\n",
