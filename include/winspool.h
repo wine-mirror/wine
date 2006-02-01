@@ -28,20 +28,20 @@ extern "C" {
 
 /* DEFINES */
 
-#define PRINTER_ATTRIBUTE_QUEUED         0x00000001
-#define PRINTER_ATTRIBUTE_DIRECT         0x00000002
-#define PRINTER_ATTRIBUTE_DEFAULT        0x00000004
-#define PRINTER_ATTRIBUTE_SHARED         0x00000008
-#define PRINTER_ATTRIBUTE_NETWORK        0x00000010
-#define PRINTER_ATTRIBUTE_HIDDEN         0x00000020
-#define PRINTER_ATTRIBUTE_LOCAL          0x00000040
-
+#define PRINTER_ATTRIBUTE_QUEUED            0x00000001
+#define PRINTER_ATTRIBUTE_DIRECT            0x00000002
+#define PRINTER_ATTRIBUTE_DEFAULT           0x00000004
+#define PRINTER_ATTRIBUTE_SHARED            0x00000008
+#define PRINTER_ATTRIBUTE_NETWORK           0x00000010
+#define PRINTER_ATTRIBUTE_HIDDEN            0x00000020
+#define PRINTER_ATTRIBUTE_LOCAL             0x00000040
 #define PRINTER_ATTRIBUTE_ENABLE_DEVQ       0x00000080
 #define PRINTER_ATTRIBUTE_KEEPPRINTEDJOBS   0x00000100
 #define PRINTER_ATTRIBUTE_DO_COMPLETE_FIRST 0x00000200
-
-#define PRINTER_ATTRIBUTE_WORK_OFFLINE   0x00000400
-#define PRINTER_ATTRIBUTE_ENABLE_BIDI    0x00000800
+#define PRINTER_ATTRIBUTE_WORK_OFFLINE      0x00000400
+#define PRINTER_ATTRIBUTE_ENABLE_BIDI       0x00000800
+#define PRINTER_ATTRIBUTE_RAW_ONLY          0x00001000
+#define PRINTER_ATTRIBUTE_PUBLISHED         0x00002000
 
 #define PRINTER_CONTROL_PAUSE      1
 #define PRINTER_CONTROL_RESUME     2
@@ -69,6 +69,7 @@ extern "C" {
 #define PRINTER_ENUM_ICON6       0x00200000
 #define PRINTER_ENUM_ICON7       0x00400000
 #define PRINTER_ENUM_ICON8       0x00800000
+#define PRINTER_ENUM_HIDE        0x01000000
 
 
 /* various printer statuses */
@@ -301,7 +302,7 @@ DECL_WINELIB_TYPE_AW(PDRIVER_INFO_1)
 DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_1)
 
 typedef struct _DRIVER_INFO_2A {
-  DWORD   cVersion;
+  DWORD     cVersion;
   LPSTR     pName;
   LPSTR     pEnvironment;
   LPSTR     pDriverPath;
@@ -310,7 +311,7 @@ typedef struct _DRIVER_INFO_2A {
 } DRIVER_INFO_2A, *PDRIVER_INFO_2A, *LPDRIVER_INFO_2A;
 
 typedef struct _DRIVER_INFO_2W {
-  DWORD   cVersion;
+  DWORD     cVersion;
   LPWSTR    pName;
   LPWSTR    pEnvironment;
   LPWSTR    pDriverPath;
@@ -351,6 +352,112 @@ typedef struct _DRIVER_INFO_3W {
 DECL_WINELIB_TYPE_AW(DRIVER_INFO_3)
 DECL_WINELIB_TYPE_AW(PDRIVER_INFO_3)
 DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_3)
+
+typedef struct _DRIVER_INFO_4A {
+  DWORD cVersion;
+  LPSTR pName;
+  LPSTR pEnvironment;
+  LPSTR pDriverPath;
+  LPSTR pDataFile;
+  LPSTR pConfigFile;
+  LPSTR pHelpFile;
+  LPSTR pDependentFiles;
+  LPSTR pMonitorName;
+  LPSTR pDefaultDataType;
+  LPSTR pszzPreviousNames;
+} DRIVER_INFO_4A, *PDRIVER_INFO_4A, *LPDRIVER_INFO_4A;
+
+typedef struct _DRIVER_INFO_4W {
+  DWORD cVersion;
+  LPWSTR pName;
+  LPWSTR pEnvironment;
+  LPWSTR pDriverPath;
+  LPWSTR pDataFile;
+  LPWSTR pConfigFile;
+  LPWSTR pHelpFile;
+  LPWSTR pDependentFiles;
+  LPWSTR pMonitorName;
+  LPWSTR pDefaultDataType;
+  LPWSTR pszzPreviousNames;
+} DRIVER_INFO_4W, *PDRIVER_INFO_4W, *LPDRIVER_INFO_4W;
+
+DECL_WINELIB_TYPE_AW(DRIVER_INFO_4)
+DECL_WINELIB_TYPE_AW(PDRIVER_INFO_4)
+DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_4)
+
+
+typedef struct _DRIVER_INFO_5A {
+  DWORD cVersion;
+  LPSTR pName;
+  LPSTR pEnvironment;
+  LPSTR pDriverPath;
+  LPSTR pDataFile;
+  LPSTR pConfigFile;
+  DWORD dwDriverAttributes;
+  DWORD dwConfigVersion;
+  DWORD dwDriverVersion;
+} DRIVER_INFO_5A, *PDRIVER_INFO_5A, *LPDRIVER_INFO_5A;
+
+typedef struct _DRIVER_INFO_5W {
+  DWORD  cVersion;
+  LPWSTR pName;
+  LPWSTR pEnvironment;
+  LPWSTR pDriverPath;
+  LPWSTR pDataFile;
+  LPWSTR pConfigFile;
+  DWORD  dwDriverAttributes;
+  DWORD  dwConfigVersion;
+  DWORD  dwDriverVersion;
+} DRIVER_INFO_5W, *PDRIVER_INFO_5W, *LPDRIVER_INFO_5W;
+
+DECL_WINELIB_TYPE_AW(DRIVER_INFO_5)
+DECL_WINELIB_TYPE_AW(PDRIVER_INFO_5)
+DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_5)
+
+typedef struct _DRIVER_INFO_6A {
+  DWORD     cVersion;
+  LPSTR     pName;
+  LPSTR     pEnvironment;
+  LPSTR     pDriverPath;
+  LPSTR     pDataFile;
+  LPSTR     pConfigFile;
+  LPSTR     pHelpFile;
+  LPSTR     pDependentFiles;
+  LPSTR     pMonitorName;
+  LPSTR     pDefaultDataType;
+  LPSTR     pszzPreviousNames;
+  FILETIME  ftDriverDate;
+  DWORDLONG dwlDriverVersion;
+  LPSTR     pszMfgName;
+  LPSTR     pszOEMUrl;
+  LPSTR     pszHardwareID;
+  LPSTR     pszProvider;
+} DRIVER_INFO_6A, *PDRIVER_INFO_6A, *LPDRIVER_INFO_6A;
+
+typedef struct _DRIVER_INFO_6W {
+  DWORD     cVersion;
+  LPWSTR    pName;
+  LPWSTR    pEnvironment;
+  LPWSTR    pDriverPath;
+  LPWSTR    pDataFile;
+  LPWSTR    pConfigFile;
+  LPWSTR    pHelpFile;
+  LPWSTR    pDependentFiles;
+  LPWSTR    pMonitorName;
+  LPWSTR    pDefaultDataType;
+  LPWSTR    pszzPreviousNames;
+  FILETIME  ftDriverDate;
+  DWORDLONG dwlDriverVersion;
+  LPWSTR    pszMfgName;
+  LPWSTR    pszOEMUrl;
+  LPWSTR    pszHardwareID;
+  LPWSTR    pszProvider;
+} DRIVER_INFO_6W, *PDRIVER_INFO_6W, *LPDRIVER_INFO_6W;
+
+DECL_WINELIB_TYPE_AW(DRIVER_INFO_6)
+DECL_WINELIB_TYPE_AW(PDRIVER_INFO_6)
+DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_6)
+
 
 typedef struct _PRINTER_INFO_1A {
   DWORD   Flags;
@@ -470,6 +577,45 @@ DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_5)
 typedef struct _PRINTER_INFO_6 {
   DWORD dwStatus;
 } PRINTER_INFO_6, *PPRINTER_INFO_6, *LPPRINTER_INFO_6;
+
+typedef struct _PRINTER_INFO_7A {
+  LPSTR     pszObjectGUID;
+  DWORD     dwAction;
+} PRINTER_INFO_7A, *PPRINTER_INFO_7A, *LPPRINTER_INFO_7A;
+
+typedef struct _PRINTER_INFO_7W {
+  LPWSTR    pszObjectGUID;
+  DWORD     dwAction;
+} PRINTER_INFO_7W, *PPRINTER_INFO_7W, *LPPRINTER_INFO_7W;
+
+DECL_WINELIB_TYPE_AW(PRINTER_INFO_7)
+DECL_WINELIB_TYPE_AW(PPRINTER_INFO_7)
+DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_7)
+
+typedef struct _PRINTER_INFO_8A {
+  LPDEVMODEA pDevMode;
+} PRINTER_INFO_8A, *PPRINTER_INFO_8A, *LPPRINTER_INFO_8A;
+
+typedef struct _PRINTER_INFO_8W {
+  LPDEVMODEW pDevMode;
+} PRINTER_INFO_8W, *PPRINTER_INFO_8W, *LPPRINTER_INFO_8W;
+
+DECL_WINELIB_TYPE_AW(PRINTER_INFO_8)
+DECL_WINELIB_TYPE_AW(PPRINTER_INFO_8)
+DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_8)
+
+typedef struct _PRINTER_INFO_9A {
+  LPDEVMODEA pDevMode;
+} PRINTER_INFO_9A, *PPRINTER_INFO_9A, *LPPRINTER_INFO_9A;
+
+typedef struct _PRINTER_INFO_9W {
+  LPDEVMODEW pDevMode;
+} PRINTER_INFO_9W, *PPRINTER_INFO_9W, *LPPRINTER_INFO_9W;
+
+DECL_WINELIB_TYPE_AW(PRINTER_INFO_9)
+DECL_WINELIB_TYPE_AW(PPRINTER_INFO_9)
+DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_9)
+
 
 typedef struct _JOB_INFO_1A {
   DWORD JobId;
