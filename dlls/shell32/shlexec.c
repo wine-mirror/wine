@@ -705,7 +705,7 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
  * launching an application and trying (#2) to connect to it
  *
  */
-static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
+static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
                             const WCHAR* lpFile, WCHAR *env,
 			    LPCWSTR szCommandline, LPITEMIDLIST pidl, SHELL_ExecuteW32 execfunc,
                             LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
@@ -790,7 +790,7 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
      */
     if (unicode)
         hDdeData = DdeClientTransaction((LPBYTE)res, (strlenW(res) + 1) * sizeof(WCHAR), hConv, 0L, 0,
-                                         XTYP_EXECUTE, 10000, &tid);
+                                         XTYP_EXECUTE, 30000, &tid);
     else
     {
         DWORD lenA = WideCharToMultiByte(CP_ACP, 0, res, -1, NULL, 0, NULL, NULL);
@@ -818,17 +818,35 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
  *	execute_from_key [Internal]
  */
 static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR szCommandline,
+                             LPCWSTR executable_name,
 			     SHELL_ExecuteW32 execfunc,
                              LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
-    WCHAR cmd[1024];
+    WCHAR cmd[256];
     LONG cmdlen = sizeof(cmd);
     UINT_PTR retval = 31;
 
+    TRACE("%s %s %s %s %s\n", debugstr_w(key), debugstr_w(lpFile), debugstr_w(env),
+           debugstr_w(szCommandline), debugstr_w(executable_name));
+
     cmd[0] = '\0';
 
-    /* Get the application for the registry */
+    /* Get the application from the registry */
     if (RegQueryValueW(HKEY_CLASSES_ROOT, key, cmd, &cmdlen) == ERROR_SUCCESS)
+    {
+        WCHAR param[1024];
+
+        TRACE("got cmd: %s\n", debugstr_w(cmd));
+
+        param[0] = '\0';
+
+        /* Is there a replace() function anywhere? */
+        cmdlen /= sizeof(WCHAR);
+        cmd[cmdlen] = '\0';
+        SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline);
+        retval = execfunc(param, env, FALSE, psei, psei_out);
+    }
+    else
     {
 	static const WCHAR wCommand[] = {'c','o','m','m','a','n','d',0};
 	static const WCHAR wDdeexec[] = {'d','d','e','e','x','e','c',0};
@@ -844,21 +862,16 @@ static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR
         assert(tmp);
         strcpyW(tmp, wDdeexec);
 
+        TRACE("trying ddeexec cmd: %s\n", debugstr_w(key));
+
         if (RegQueryValueW(HKEY_CLASSES_ROOT, key, param, &paramlen) == ERROR_SUCCESS)
         {
             TRACE("Got ddeexec %s => %s\n", debugstr_w(key), debugstr_w(param));
-            retval = dde_connect(key, cmd, param, lpFile, env, szCommandline, psei->lpIDList, execfunc, psei, psei_out);
+            retval = dde_connect(key, executable_name, param, lpFile, env, szCommandline, psei->lpIDList, execfunc, psei, psei_out);
         }
         else
-        {
-            /* Is there a replace() function anywhere? */
-            cmdlen /= sizeof(WCHAR);
-            cmd[cmdlen] = '\0';
-            SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline);
-            retval = execfunc(param, env, FALSE, psei, psei_out);
-        }
+            WARN("Nothing appropriate found for %s\n", debugstr_w(key));
     }
-    else TRACE("ooch\n");
 
     return retval;
 }
@@ -1448,7 +1461,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         }
         TRACE("%s/%s => %s/%s\n", debugstr_w(wszApplicationName), debugstr_w(sei_tmp.lpVerb), debugstr_w(wszQuotedCmd), debugstr_w(lpstrProtocol));
         if (*lpstrProtocol)
-            retval = execute_from_key(lpstrProtocol, wszApplicationName, env, sei_tmp.lpParameters, execfunc, &sei_tmp, sei);
+            retval = execute_from_key(lpstrProtocol, wszApplicationName, env, sei_tmp.lpParameters, wcmd, execfunc, &sei_tmp, sei);
         else
             retval = execfunc(wszQuotedCmd, env, FALSE, &sei_tmp, sei);
         HeapFree( GetProcessHeap(), 0, env );
@@ -1481,7 +1494,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
             lpFile += iSize;
             while (*lpFile == ':') lpFile++;
         }
-        retval = execute_from_key(lpstrProtocol, lpFile, NULL, sei_tmp.lpParameters, execfunc, &sei_tmp, sei);
+        retval = execute_from_key(lpstrProtocol, lpFile, NULL, sei_tmp.lpParameters, wcmd, execfunc, &sei_tmp, sei);
     }
     /* Check if file specified is in the form www.??????.*** */
     else if (!strncmpiW(lpFile, wWww, 3))
