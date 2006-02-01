@@ -38,6 +38,9 @@
 #include <winuser.h>
 #include <richedit.h>
 #include <commctrl.h>
+#define COBJMACROS
+#include <ole2.h>
+#include <richole.h>
 
 #include "wine/debug.h"
 
@@ -289,6 +292,7 @@ typedef struct tagME_TextEditor
   BOOL bRedraw;
   int nInvalidOfs;
   EDITWORDBREAKPROCW pfnWordBreak;
+  LPRICHEDITOLECALLBACK lpOleCallback;
 } ME_TextEditor;
 
 typedef struct tagME_Context

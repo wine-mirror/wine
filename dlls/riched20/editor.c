@@ -223,8 +223,6 @@
 
 #include "editor.h"
 #include "commdlg.h"
-#include "ole2.h"
-#include "richole.h"
 #include "winreg.h"
 #define NO_SHLWAPI_STREAM 
 #include "shlwapi.h"
@@ -889,6 +887,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->bRedraw = TRUE;
   ed->nInvalidOfs = -1;
   ed->pfnWordBreak = NULL;
+  ed->lpOleCallback = NULL;
   GetClientRect(hWnd, &ed->rcFormat);
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
@@ -985,6 +984,8 @@ void ME_DestroyEditor(ME_TextEditor *editor)
       DeleteObject(editor->pFontCache[i].hFont);
   }
   DeleteObject(editor->hbrBackground);
+  if(editor->lpOleCallback)
+    IUnknown_Release(editor->lpOleCallback);
 
   FREE_OBJ(editor);
 }
@@ -1206,7 +1207,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETEDITSTYLE)
   UNSUPPORTED_MSG(EM_SETFONTSIZE)
   UNSUPPORTED_MSG(EM_SETLANGOPTIONS)
-  UNSUPPORTED_MSG(EM_SETOLECALLBACK)
   UNSUPPORTED_MSG(EM_SETOPTIONS)
   UNSUPPORTED_MSG(EM_SETPALETTE)
   UNSUPPORTED_MSG(EM_SETPASSWORDCHAR)
@@ -2043,6 +2043,13 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     FIXME("EM_GETOLEINTERFACE %p: stub\n", ppvObj);
     return CreateIRichEditOle(ppvObj);
   }
+  case EM_SETOLECALLBACK:
+    if(editor->lpOleCallback)
+      IUnknown_Release(editor->lpOleCallback);
+    editor->lpOleCallback = (LPRICHEDITOLECALLBACK)lParam;
+    if(editor->lpOleCallback)
+      IUnknown_AddRef(editor->lpOleCallback);
+    return TRUE;
   case EM_GETWORDBREAKPROC:
     return (LRESULT)editor->pfnWordBreak;
   case EM_SETWORDBREAKPROC:
