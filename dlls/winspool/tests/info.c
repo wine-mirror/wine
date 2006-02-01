@@ -94,7 +94,7 @@ static LPSTR find_default_printer(VOID)
 }
 
 
-static void test_default_printer(void)
+static void test_GetDefaultPrinter(void)
 {
     BOOL    retval;
     DWORD   exact = DEFAULT_PRINTER_SIZE;
@@ -171,8 +171,9 @@ static void test_default_printer(void)
 	exact, size);
 }
 
-static void test_printer_directory(void)
-{   LPBYTE buffer = NULL;
+static void test_GetPrinterDriverDirectory(void)
+{
+    LPBYTE buffer = NULL;
     DWORD  cbBuf = 0, pcbNeeded = 0;
     BOOL   res;
 
@@ -305,10 +306,23 @@ static void test_printer_directory(void)
         "'len > 0' or '0' with ERROR_INVALID_ENVIRONMENT)\n",
         res, GetLastError(), lstrlenA((char *)buffer));
 
+    /* A Setup-Programm (PDFCreator_0.8.0) use empty strings */
+    SetLastError(MAGIC_DEAD);
+    res = GetPrinterDriverDirectoryA("", "", 1, buffer, cbBuf*2, &pcbNeeded);
+    ok(res, "returned %d with %ld (expected '!=0')\n", res, GetLastError() );
+
+    SetLastError(MAGIC_DEAD);
+    res = GetPrinterDriverDirectoryA(NULL, "", 1, buffer, cbBuf*2, &pcbNeeded);
+    ok(res, "returned %d with %ld (expected '!=0')\n", res, GetLastError() );
+
+    SetLastError(MAGIC_DEAD);
+    res = GetPrinterDriverDirectoryA("", NULL, 1, buffer, cbBuf*2, &pcbNeeded);
+    ok(res, "returned %d with %ld (expected '!=0')\n", res, GetLastError() );
+
     HeapFree( GetProcessHeap(), 0, buffer);
 }
 
-static void test_openprinter(void)
+static void test_OpenPrinter(void)
 {
     PRINTER_DEFAULTSA defaults;
     HANDLE  hprinter;
@@ -458,7 +472,7 @@ START_TEST(info)
 
     find_default_printer();
 
-    test_default_printer();
-    test_printer_directory();
-    test_openprinter();
+    test_GetDefaultPrinter();
+    test_GetPrinterDriverDirectory();
+    test_OpenPrinter();
 }

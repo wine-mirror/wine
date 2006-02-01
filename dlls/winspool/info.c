@@ -204,6 +204,7 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey);
  *  Success:  PTR to printenv_t
  *
  * NOTES
+ *  An empty string is handled the same way as NULL.
  *  SetLastEror(ERROR_INVALID_ENVIRONMENT) is called on Failure
  *  
  */
@@ -218,7 +219,7 @@ static const  printenv_t * validate_envW(LPCWSTR env)
     unsigned int i;
 
     TRACE("testing %s\n", debugstr_w(env));
-    if (env)
+    if (env && env[0])
     {
         for (i = 0; i < sizeof(all_printenv)/sizeof(all_printenv[0]); i++)
         {
@@ -3399,9 +3400,7 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
  *   "%winsysdir%" is the Value from GetSystemDirectoryW()
  *
  * FIXME
- *-  pName != NULL not supported
- *-  pEnvironment != NULL not supported
- *-  Current Implementation returns always "%winsysdir%"
+ *-  Only NULL or "" is supported for pName
  *
  */
 BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
@@ -3413,7 +3412,7 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
 
     TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_w(pName), 
           debugstr_w(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
-    if(pName != NULL) {
+    if(pName != NULL && pName[0]) {
         FIXME("pName unsupported: %s\n", debugstr_w(pName));
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
