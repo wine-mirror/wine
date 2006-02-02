@@ -132,6 +132,15 @@ static char *make_token(const char *name)
   return token;
 }
 
+/* duplicate a basename into a valid C token */
+static char *dup_basename_token(const char *name, const char *ext)
+{
+    char *p, *ret = dup_basename( name, ext );
+    /* map invalid characters to '_' */
+    for (p = ret; *p; p++) if (!isalnum(*p)) *p = '_';
+    return ret;
+}
+
 int main(int argc,char *argv[])
 {
   extern char* optarg;
@@ -244,21 +253,22 @@ int main(int argc,char *argv[])
 
   if (!proxy_name && do_proxies) {
     proxy_name = dup_basename(input_name, ".idl");
-    proxy_token = xstrdup(proxy_name);
     strcat(proxy_name, "_p.c");
   }
 
   if (!client_name && do_client) {
     client_name = dup_basename(input_name, ".idl");
-    client_token = xstrdup(client_name);
     strcat(client_name, "_c.c");
   }
 
   if (!server_name && do_server) {
     server_name = dup_basename(input_name, ".idl");
-    server_token = xstrdup(server_name);
     strcat(server_name, "_s.c");
   }
+
+  if (do_proxies) proxy_token = dup_basename_token(proxy_name,"_p.c");
+  if (do_client) client_token = dup_basename_token(client_name,"_c.c");
+  if (do_server) server_token = dup_basename_token(server_name,"_s.c");
 
   wpp_add_cmdline_define("__WIDL__");
 
