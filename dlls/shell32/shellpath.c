@@ -1229,66 +1229,6 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
     return hr;
 }
 
-/* Helper function for _SHGetDefaultValue 
- *
- *   handing the directories under $HOME:
- *   1) try path under $HOME (such as $HOME/My Documents/My Pictures), if it
- *   exists return it.
- *   2) if not, but $HOME/My Documents exists return path 1 and have it created
- *   3) try $HOME if it exists return it
- *   4) normal fallback to C:/windows/Profiles/...
- */
-static HRESULT expand_home_path(LPWSTR pszPath, LPCWSTR def_path, UINT resource,
-                                BOOL create_lastdir)
-{
-    HRESULT hr = E_FAIL;
-    const char *home = getenv("HOME");
-
-    if (home)
-    {
-        LPWSTR homeW = wine_get_dos_file_name(home);
-
-        if (homeW)
-        {
-            WCHAR resourcePath[MAX_PATH];
-            lstrcpynW(pszPath, homeW, MAX_PATH);
-
-            if (LoadStringW(shell32_hInstance, resource, resourcePath, MAX_PATH))
-                PathAppendW(pszPath, resourcePath);
-            else
-                PathAppendW(pszPath, def_path);
-
-            if (PathIsDirectoryW(pszPath)) hr = S_OK;
-            else if (create_lastdir)
-            {
-                /* attempt 2, try for My Documents */
-
-                WCHAR* ptr = strrchrW(pszPath, '\\');
-                if (ptr)
-                {
-                    *ptr = 0;
-                    if (PathIsDirectoryW(pszPath))
-                    {
-                        *ptr = '\\';
-                        hr = S_OK;
-                    }
-                }
-            }
-
-            if (hr != S_OK)
-            {
-                /* attempt 3 return HOME */
-                lstrcpyW(pszPath,homeW);
-                hr = S_OK;
-            }
-            HeapFree(GetProcessHeap(), 0, homeW);
-        }
-        else
-            hr = HRESULT_FROM_WIN32(GetLastError());
-    }
-    return hr;
-}
-
 /* Gets a 'semi-expanded' default value of the CSIDL with index folder into
  * pszPath, based on the entries in CSIDL_Data.  By semi-expanded, I mean:
  * - The entry's szDefaultPath may be either a string value or an integer
@@ -1316,56 +1256,6 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
     if (!pszPath)
         return E_INVALIDARG;
 
-    /* Try special cases first */
-    hr = E_FAIL;
-    switch (folder)
-    {
-        case CSIDL_MYPICTURES:
-            hr = expand_home_path(pszPath,My_PicturesW,IDS_MYPICTURES,TRUE);
-            break;
-        case CSIDL_PERSONAL:
-            hr = expand_home_path(pszPath,PersonalW,IDS_PERSONAL,FALSE);
-            break;
-        case CSIDL_MYMUSIC:
-            hr = expand_home_path(pszPath,My_MusicW,IDS_MYMUSIC,TRUE);
-            break;
-        case CSIDL_MYVIDEO:
-            hr = expand_home_path(pszPath,My_VideoW,IDS_MYVIDEO,TRUE);
-            break;
-        case CSIDL_DESKTOP:
-        case CSIDL_DESKTOPDIRECTORY:
-        {
-            const char *home = getenv("HOME");
-
-            /* special case for Desktop, map to $HOME/Desktop if it exists */
-            if (home)
-            {
-                LPWSTR homeW = wine_get_dos_file_name(home);
-
-                if (homeW)
-                {
-                    lstrcpynW(pszPath, homeW, MAX_PATH);
-                    if (PathAppendW(pszPath, DesktopW))
-                    {
-                        if (PathIsDirectoryW(pszPath))
-                            hr = S_OK;
-                    }
-                    else
-                        hr = HRESULT_FROM_WIN32(GetLastError());
-                    HeapFree(GetProcessHeap(), 0, homeW);
-                }
-                else
-                    hr = HRESULT_FROM_WIN32(GetLastError());
-            }
-            break;
-        }
-    }
-    if (SUCCEEDED(hr))
-        return hr;
-
-    /* Either the folder was unhandled, or a suitable default wasn't found,
-     * so use one of the resource-based defaults
-     */
     if (CSIDL_Data[folder].szDefaultPath &&
      IS_INTRESOURCE(CSIDL_Data[folder].szDefaultPath))
     {
