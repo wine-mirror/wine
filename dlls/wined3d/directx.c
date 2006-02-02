@@ -543,6 +543,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             } else if (strcmp(ThisExtn, "GL_ARB_occlusion_query") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Occlusion Query support\n");
                 gl_info->supported[ARB_OCCLUSION_QUERY] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_ARB_point_parameters") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB Point parameters support\n");
+                gl_info->supported[ARB_POINT_PARAMETERS] = TRUE;
             /**
              * EXT
              */
