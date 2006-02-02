@@ -480,7 +480,8 @@ enum x11drv_escape_codes
     X11DRV_END_EXPOSURES,    /* end graphics exposures */
     X11DRV_GET_DCE,          /* get the DCE pointer */
     X11DRV_SET_DCE,          /* set the DCE pointer */
-    X11DRV_GET_GLX_DRAWABLE  /* get current glx drawable for a DC */
+    X11DRV_GET_GLX_DRAWABLE, /* get current glx drawable for a DC */
+    X11DRV_SYNC_PIXMAP       /* sync the dibsection to its pixmap */
 };
 
 struct x11drv_escape_set_drawable

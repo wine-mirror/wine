@@ -414,14 +414,20 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                     {
                         if(!physDev->bitmap->glxpixmap)
                             physDev->bitmap->glxpixmap = create_glxpixmap(physDev);
-
-                        X11DRV_CoerceDIBSection(physDev, DIB_Status_GdiMod, FALSE);
                         *(Drawable *)out_data = physDev->bitmap->glxpixmap;
                     }
                     else
                         *(Drawable *)out_data = physDev->drawable;
                     return TRUE;
                 }
+                break;
+            case X11DRV_SYNC_PIXMAP:
+                if(physDev->bitmap)
+                {
+                    X11DRV_CoerceDIBSection(physDev, DIB_Status_GdiMod, FALSE);
+                    return TRUE;
+                }
+                return FALSE;
                 break;
             }
         }

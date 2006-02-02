@@ -58,7 +58,8 @@ extern void (*wine_tsx11_lock_ptr)(void);
 extern void (*wine_tsx11_unlock_ptr)(void);
 
 /* As GLX relies on X, this is needed */
-#define ENTER_GL() wine_tsx11_lock_ptr()
+void enter_gl(void);
+#define ENTER_GL() enter_gl()
 #define LEAVE_GL() wine_tsx11_unlock_ptr()
 
 

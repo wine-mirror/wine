@@ -54,7 +54,8 @@ enum x11drv_escape_codes
     X11DRV_END_EXPOSURES,       /* end graphics exposures */
     X11DRV_GET_DCE,             /* get the DCE pointer */
     X11DRV_SET_DCE,             /* set the DCE pointer */
-    X11DRV_GET_GLX_DRAWABLE     /* get current glx drawable for a DC */
+    X11DRV_GET_GLX_DRAWABLE,    /* get current glx drawable for a DC */
+    X11DRV_SYNC_PIXMAP          /* sync the dibsection to its pixmap */
 };
 
 void (*wine_tsx11_lock_ptr)(void) = NULL;
@@ -86,6 +87,25 @@ static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
     Wine_GLContext *ret;
     for (ret = context_list; ret; ret = ret->next) if (ctx == ret->ctx) break;
     return ret;
+}
+
+void enter_gl(void)
+{
+    GLXContext gl_ctx;
+    Wine_GLContext *ctx;
+    enum x11drv_escape_codes escape = X11DRV_SYNC_PIXMAP;
+
+    wine_tsx11_lock_ptr();
+    gl_ctx = glXGetCurrentContext();
+    if(!gl_ctx) return;
+    ctx = get_context_from_GLXContext(gl_ctx);
+    wine_tsx11_unlock_ptr(); /* unlock before calling GDI apis */
+
+    if(ctx && GetObjectType(ctx->hdc) == OBJ_MEMDC)
+        ExtEscape(ctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL);
+
+    wine_tsx11_lock_ptr();
+    return;
 }
 
 static inline void free_context(Wine_GLContext *context)
