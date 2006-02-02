@@ -739,7 +739,7 @@ static HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
       HINSTANCE hinst;
       if (fodInfos->ofnInfos->Flags  & OFN_ENABLETEMPLATEHANDLE)
       {
-        hinst = 0;
+        hinst = COMDLG32_hInstance;
         if( !(template = LockResource( fodInfos->ofnInfos->hInstance)))
         {
           COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
@@ -771,7 +771,7 @@ static HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
           return NULL;
     	}
       }
-      hChildDlg = CreateDialogIndirectParamA(COMDLG32_hInstance, template, hwnd,
+      hChildDlg = CreateDialogIndirectParamA(hinst, template, hwnd,
                                              IsHooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
                                              (LPARAM)fodInfos->ofnInfos);
       if(hChildDlg)
