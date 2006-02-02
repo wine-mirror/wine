@@ -385,7 +385,7 @@
 385 stub -noname SHLoadRawAccelerators
 386 stub -noname SHQueryRawAccelerator
 387 stub -noname SHQueryRawAcceleratorMsg
-388 stub -noname ShellMessageBoxWrapW
+388 stdcall -noname ShellMessageBoxWrapW(ptr long long wstr long wstr)
 389 stdcall -noname GetSaveFileNameWrapW(ptr)
 390 stdcall -noname WNetRestoreConnectionWrapW(long wstr)
 391 stdcall -noname WNetGetLastErrorWrapW(ptr ptr long ptr long)

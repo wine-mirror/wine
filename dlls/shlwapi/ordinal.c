@@ -4395,3 +4395,28 @@ DWORD WINAPI GetUIVersion(void)
     }
     return version;
 }
+
+/***********************************************************************
+ *              ShellMessageBoxWrapW [SHLWAPI.388]
+ *
+ * loads a string resource for a module, displays the string in a 
+ * message box and writes it into the logfile
+ *
+ * PARAMS
+ *  mod      [I] the module containing the string resource
+ *  unknown1 [I] FIXME
+ *  uId      [I] the id of the string resource
+ *  title    [I] the title of the message box
+ *  unknown2 [I] FIXME
+ *  filename [I] name of the logfile
+ *
+ * RETURNS
+ *  FIXME
+ */
+BOOL WINAPI ShellMessageBoxWrapW(HMODULE mod, DWORD unknown1, UINT uId,
+                                 LPCWSTR title, DWORD unknown2, LPCWSTR filename)
+{
+    FIXME("%p %lx %d %s %lx %s\n",
+          mod, unknown1, uId, debugstr_w(title), unknown2, debugstr_w(filename));
+    return TRUE;
+}
