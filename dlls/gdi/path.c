@@ -1678,8 +1678,12 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 	lb.lbStyle = elp.elpBrushStyle;
 	lb.lbColor = elp.elpColor;
 	lb.lbHatch = elp.elpHatch;
-	hNewPen = ExtCreatePen(elp.elpPenStyle, elp.elpWidth, &lb,
-	                       elp.elpNumEntries, elp.elpStyleEntry);
+        if(elp.elpPenStyle & PS_USERSTYLE)
+	    hNewPen = ExtCreatePen(elp.elpPenStyle, elp.elpWidth, &lb,
+	                           elp.elpNumEntries, elp.elpStyleEntry);
+        else
+	    hNewPen = ExtCreatePen(elp.elpPenStyle, elp.elpWidth, &lb,
+	                           0, NULL);
     } else /* OBJ_PEN */ {
 	LOGPEN lp;
 	GetObjectW(hOldPen, sizeof(LOGPEN), &lp);
