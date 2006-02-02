@@ -67,8 +67,45 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
 DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
  LPWSTR psz, DWORD csz)
 {
-    FIXME("(%ld, %p, %p, %ld): stub\n", dwValueType, pValue, psz, csz);
-    return 0;
+    DWORD ret = 0;
+
+    TRACE("(%ld, %p, %p, %ld)\n", dwValueType, pValue, psz, csz);
+
+    switch (dwValueType)
+    {
+    case CERT_RDN_ANY_TYPE:
+        break;
+    case CERT_RDN_PRINTABLE_STRING:
+    case CERT_RDN_IA5_STRING:
+        if (!psz || !csz)
+            ret = pValue->cbData;
+        else
+        {
+            DWORD chars = min(pValue->cbData, csz - 1);
+
+            if (chars)
+            {
+                DWORD i;
+
+                for (i = 0; i < chars; i++)
+                    psz[i] = pValue->pbData[i];
+                ret += chars;
+                csz -= chars;
+            }
+        }
+        break;
+    default:
+        FIXME("string type %ld unimplemented\n", dwValueType);
+    }
+    if (psz && csz)
+    {
+        *(psz + ret) = '\0';
+        csz--;
+        ret++;
+    }
+    else
+        ret++;
+    return ret;
 }
 
 
@@ -171,6 +208,100 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
 DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
  DWORD dwStrType, LPWSTR psz, DWORD csz)
 {
-    FIXME("(%ld, %p, %p, %ld): stub\n", dwCertEncodingType, pName, psz, csz);
-    return 0;
+    static const DWORD unsupportedFlags = CERT_NAME_STR_NO_QUOTING_FLAG |
+     CERT_NAME_STR_REVERSE_FLAG | CERT_NAME_STR_ENABLE_T61_UNICODE_FLAG;
+    static const WCHAR commaSep[] = { ',',' ',0 };
+    static const WCHAR semiSep[] = { ';',' ',0 };
+    static const WCHAR crlfSep[] = { '\r','\n',0 };
+    static const WCHAR plusSep[] = { ' ','+',' ',0 };
+    static const WCHAR spaceSep[] = { ' ',0 };
+    DWORD ret = 0, bytes = 0;
+    BOOL bRet;
+    CERT_NAME_INFO *info;
+
+    TRACE("(%ld, %p, %p, %ld)\n", dwCertEncodingType, pName, psz, csz);
+    if (dwStrType & unsupportedFlags)
+        FIXME("unsupported flags: %08lx\n", dwStrType & unsupportedFlags);
+
+    bRet = CryptDecodeObjectEx(dwCertEncodingType, X509_NAME, pName->pbData,
+     pName->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &bytes);
+    if (bRet)
+    {
+        DWORD i, j, sepLen, rdnSepLen;
+        LPCWSTR sep, rdnSep;
+
+        if (dwStrType & CERT_NAME_STR_SEMICOLON_FLAG)
+            sep = semiSep;
+        else if (dwStrType & CERT_NAME_STR_CRLF_FLAG)
+            sep = crlfSep;
+        else
+            sep = commaSep;
+        sepLen = lstrlenW(sep);
+        if (dwStrType & CERT_NAME_STR_NO_PLUS_FLAG)
+            rdnSep = spaceSep;
+        else
+            rdnSep = plusSep;
+        rdnSepLen = lstrlenW(rdnSep);
+        for (i = 0; ret < csz && i < info->cRDN; i++)
+        {
+            for (j = 0; ret < csz && j < info->rgRDN[i].cRDNAttr; j++)
+            {
+                DWORD chars;
+
+                if ((dwStrType & 0x000000ff) == CERT_OID_NAME_STR)
+                {
+                    /* - 1 is needed to account for the NULL terminator. */
+                    chars = min(
+                     lstrlenA(info->rgRDN[i].rgRDNAttr[j].pszObjId),
+                     csz - ret - 1);
+                    if (psz && chars)
+                    {
+                        DWORD k;
+
+                        for (k = 0; k < chars; k++)
+                            *(psz + ret + k) =
+                             info->rgRDN[i].rgRDNAttr[j].pszObjId[k];
+                    }
+                    ret += chars;
+                    csz -= chars;
+                    if (csz > 1)
+                    {
+                        if (psz)
+                            *(psz + ret) = '=';
+                        ret++;
+                        csz--;
+                    }
+                }
+                /* FIXME: handle quoting */
+                chars = CertRDNValueToStrW(
+                 info->rgRDN[i].rgRDNAttr[j].dwValueType, 
+                 &info->rgRDN[i].rgRDNAttr[j].Value, psz ? psz + ret : NULL,
+                 csz - ret - 1);
+                if (chars)
+                    ret += chars - 1;
+                if (j < info->rgRDN[i].cRDNAttr - 1)
+                {
+                    if (psz && ret < csz - rdnSepLen - 1)
+                        memcpy(psz + ret, rdnSep, rdnSepLen * sizeof(WCHAR));
+                    ret += rdnSepLen;
+                }
+            }
+            if (i < info->cRDN - 1)
+            {
+                if (psz && ret < csz - sepLen - 1)
+                    memcpy(psz + ret, sep, sepLen * sizeof(WCHAR));
+                ret += sepLen;
+            }
+        }
+        LocalFree(info);
+    }
+    if (psz && csz)
+    {
+        *(psz + ret) = '\0';
+        csz--;
+        ret++;
+    }
+    else
+        ret++;
+    return ret;
 }
