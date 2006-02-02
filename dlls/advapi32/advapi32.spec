@@ -419,7 +419,7 @@
 @ stdcall ObjectCloseAuditAlarmA(str ptr long)
 @ stdcall ObjectCloseAuditAlarmW(wstr ptr long)
 # @ stub ObjectDeleteAuditAlarmA
-# @ stub ObjectDeleteAuditAlarmW
+@ stdcall ObjectDeleteAuditAlarmW(wstr ptr long)
 @ stdcall ObjectOpenAuditAlarmA(str ptr str str ptr long long long ptr long long ptr)
 @ stdcall ObjectOpenAuditAlarmW(wstr ptr wstr wstr ptr long long long ptr long long ptr)
 @ stdcall ObjectPrivilegeAuditAlarmA(str ptr long long ptr long)
