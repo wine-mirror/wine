@@ -1317,6 +1317,30 @@ static void test_WSAStringToAddressW(void)
         "WSAStringToAddressW() failed unexpectedly: %d\n", GLE );
 }
 
+static void test_select(void)
+{
+    SOCKET fd;
+
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd != INVALID_SOCKET)
+    {
+        fd_set readfds;
+        struct timeval select_timeout;
+
+        FD_ZERO(&readfds);
+        FD_SET(fd, &readfds);
+        select_timeout.tv_sec=2;
+        select_timeout.tv_usec=0;
+
+	todo_wine {
+        if (select((int) fd+1, &readfds, NULL, NULL, &select_timeout) != SOCKET_ERROR)
+            ok(!FD_ISSET(fd, &readfds), "FD should not be set\n");
+        }
+
+        closesocket(fd);
+    }
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -1344,5 +1368,7 @@ START_TEST( sock )
     test_WSAStringToAddressA();
     test_WSAStringToAddressW();
 
+    test_select();
+    
     Exit();
 }
