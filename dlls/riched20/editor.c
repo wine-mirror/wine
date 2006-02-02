@@ -852,6 +852,29 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
   return FALSE;
 }
 
+static void ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
+{
+  CHARRANGE selrange;
+  HMENU menu;
+  int seltype = 0;
+  if(!editor->lpOleCallback)
+    return;
+  ME_GetSelection(editor, (int *)&selrange.cpMin, (int *)&selrange.cpMax);
+  if(selrange.cpMin == selrange.cpMax)
+    seltype |= SEL_EMPTY;
+  else
+  {
+    /* FIXME: Handle objects */
+    seltype |= SEL_TEXT;
+    if(selrange.cpMax-selrange.cpMin > 1)
+      seltype |= SEL_MULTICHAR;
+  }
+  if(SUCCEEDED(IRichEditOleCallback_GetContextMenu(editor->lpOleCallback, seltype, NULL, &selrange, &menu)))
+  {
+    TrackPopupMenu(menu, TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, 0, GetParent(editor->hWnd), NULL);
+    DestroyMenu(menu);
+  }
+}
 
 ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
@@ -1841,6 +1864,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     break;
   case WM_LBUTTONDBLCLK:
     ME_SelectWord(editor);
+    break;
+  case WM_CONTEXTMENU:
+    ME_ShowContextMenu(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     break;
   case WM_PAINT:
     if (editor->bRedraw)
