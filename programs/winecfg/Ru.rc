@@ -63,31 +63,29 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT	    "Глубина цвета экрана: ",IDC_STATIC,8,10,120,30
-    COMBOBOX	    IDC_SCREEN_DEPTH,90,8,160,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " Настройки окна ",IDC_STATIC,8,4,244,180
 
-    GROUPBOX        " Настройки окна ",IDC_STATIC,8,25,244,110
+    CONTROL	    "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,235,8
+    CONTROL	    "Включить двойную буферизацию рабочего стола",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
+    CONTROL	    "Разрешить менеджеру окон управлять окнами",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,34,230,8
 
-    CONTROL	    "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,235,8
-    CONTROL	    "Включить двойную буферизацию рабочего стола",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
-    
     /* FIXME: the wording of this explanation could be a lot better */
     LTEXT           "Если включить эмуляцию рабочего стола, то все окна будут отображаться в одном 'виртуальном экране', иначе окна размещаются как обычные, на стандартном рабочем столе.",
-                    IDC_STATIC,15,73,228,28
-    LTEXT           "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
+                    IDC_STATIC,15,125,228,28
+    LTEXT           "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
     CONTROL         "Эмулировать виртуальный рабочий стол",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
-		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
 
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    LTEXT	    "Поддержка Vertex Shader: ",IDC_STATIC,15,150,120,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,120,148,130,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,55
 
-    CONTROL         "Включить Pixel Shader (если поддерживается оборудованием)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
+    LTEXT	    "Поддержка Vertex Shader: ",IDC_STATIC,15,199,120,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,120,197,125,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL         "Включить Pixel Shader (если поддерживается оборудованием)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250

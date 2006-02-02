@@ -63,9 +63,6 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT	    "Дълбочина на цветовете: ",IDC_STATIC,8,10,100,30
-    COMBOBOX	    IDC_SCREEN_DEPTH,110,8,140,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
     GROUPBOX        " Настройка на прозорците ",IDC_STATIC,8,25,244,110
 
     CONTROL	    "Разреши на DirectX приложенията да заключват мишката",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8

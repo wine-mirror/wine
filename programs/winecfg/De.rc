@@ -60,9 +60,6 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Bildschirmfarbtiefe: ",IDC_STATIC,8,10,70,30
-    COMBOBOX        IDC_SCREEN_DEPTH,80,8,170,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
     GROUPBOX        " Fenstereinstellungen ",IDC_STATIC,8,25,244,180
 
     CONTROL         "Erlaube DirectX Anwendungen, dass die Maus ihr Fenster nicht verlassen kann.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
