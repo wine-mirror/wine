@@ -47,6 +47,13 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtre
     return FindFirstChangeNotificationW( pathW, bWatchSubtree, dwNotifyFilter );
 }
 
+/*
+ * NtNotifyChangeDirectoryFile may write back to the IO_STATUS_BLOCK
+ * asynchronously.  We don't care about the contents, but it can't
+ * be placed on the stack since it will go out of scope when we return.
+ */
+static IO_STATUS_BLOCK FindFirstChange_iosb;
+
 /****************************************************************************
  *		FindFirstChangeNotificationW (KERNEL32.@)
  */
@@ -55,7 +62,6 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
 {
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
-    IO_STATUS_BLOCK io;
     NTSTATUS status;
     HANDLE handle = INVALID_HANDLE_VALUE;
 
@@ -74,7 +80,8 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io,
+    status = NtOpenFile( &handle, FILE_LIST_DIRECTORY | SYNCHRONIZE,
+                         &attr, &FindFirstChange_iosb,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
@@ -85,7 +92,8 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
         return INVALID_HANDLE_VALUE;
     }
 
-    status = NtNotifyChangeDirectoryFile( handle, NULL, NULL, NULL, &io,
+    status = NtNotifyChangeDirectoryFile( handle, NULL, NULL, NULL,
+                                          &FindFirstChange_iosb,
                                           NULL, 0, dwNotifyFilter, bWatchSubtree );
     if (status != STATUS_PENDING)
     {
@@ -101,12 +109,12 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtr
  */
 BOOL WINAPI FindNextChangeNotification( HANDLE handle )
 {
-    IO_STATUS_BLOCK io;
     NTSTATUS status;
 
     TRACE("%p\n",handle);
 
-    status = NtNotifyChangeDirectoryFile( handle, NULL, NULL, NULL, &io,
+    status = NtNotifyChangeDirectoryFile( handle, NULL, NULL, NULL,
+                                          &FindFirstChange_iosb,
                                           NULL, 0, FILE_NOTIFY_CHANGE_SIZE, 0 );
     if (status != STATUS_PENDING)
     {
