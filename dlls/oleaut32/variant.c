@@ -2952,7 +2952,6 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 
     /* Do the math */
     hres = S_OK;
-    V_VT(&tv) = tvt;
     V_VT(result) = resvt;
     switch (tvt) {
         case VT_DECIMAL:
@@ -2973,10 +2972,13 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
                 V_VT(result) = VT_R8;
                 V_R8(result) = r8res;
                 goto end;
-            } else
+            } else {
+                V_VT(&tv) = tvt;
                 V_I8(&tv) = V_I8(&lv) + V_I8(&rv);
+            }
             break;
         case VT_R8:
+            V_VT(&tv) = tvt;
             /* FIXME: overflow detection */
             V_R8(&tv) = V_R8(&lv) + V_R8(&rv);
             break;
