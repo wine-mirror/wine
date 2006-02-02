@@ -684,11 +684,11 @@
 # @ stub RtlInvertRangeList
 # @ stub RtlIpv4AddressToStringA
 # @ stub RtlIpv4AddressToStringExA
-# @ stub RtlIpv4AddressToStringExW
+@ stdcall RtlIpv4AddressToStringExW(ptr ptr ptr ptr)
 # @ stub RtlIpv4AddressToStringW
 # @ stub RtlIpv4StringToAddressA
 # @ stub RtlIpv4StringToAddressExA
-# @ stub RtlIpv4StringToAddressExW
+@ stdcall RtlIpv4StringToAddressExW(ptr ptr wstr ptr)
 # @ stub RtlIpv4StringToAddressW
 # @ stub RtlIpv6AddressToStringA
 # @ stub RtlIpv6AddressToStringExA

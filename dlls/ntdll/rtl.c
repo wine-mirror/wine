@@ -860,3 +860,19 @@ void WINAPI RtlCopyLuidAndAttributesArray(
 
     for (i = 0; i < Count; i++) Dest[i] = Src[i];
 }
+
+NTSTATUS WINAPI RtlIpv4StringToAddressExW(PULONG IP, PULONG Port,
+                                          LPCWSTR Buffer, PULONG MaxSize)
+{
+    FIXME("(%p,%p,%p,%p): stub\n", IP, Port, Buffer, MaxSize);
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI RtlIpv4AddressToStringExW (PULONG IP, PULONG Port,
+                                           LPWSTR Buffer, PULONG MaxSize)
+{
+    FIXME("(%p,%p,%p,%p): stub\n", IP, Port, Buffer, MaxSize);
+
+    return STATUS_SUCCESS;
+}
