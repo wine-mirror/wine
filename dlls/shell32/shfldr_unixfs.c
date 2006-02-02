@@ -422,7 +422,7 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
     int cDriveSymlinkLen;
     
     TRACE("(pszDosPath=%s, pszCanonicalPath=%p)\n", debugstr_w(pszDosPath), pszCanonicalPath);
-    
+
     if (!pszDosPath || pszDosPath[1] != ':')
         return FALSE;
 
@@ -431,12 +431,10 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
     pszUnixPath = wine_get_unix_file_name(wszDrive);
     if (!pszUnixPath) return FALSE;
     cDriveSymlinkLen = strlen(pszUnixPath);
-    pElement = canonicalize_file_name(pszUnixPath);
+    pElement = realpath(pszUnixPath, szPath);
     HeapFree(GetProcessHeap(), 0, pszUnixPath);
     if (!pElement) return FALSE;
-    strcpy(szPath, pElement);
     if (szPath[strlen(szPath)-1] != '/') strcat(szPath, "/");
-    free(pElement);
 
     /* Append the part relative to the drive symbolic link target. */
     pszUnixPath = wine_get_unix_file_name(pszDosPath);
