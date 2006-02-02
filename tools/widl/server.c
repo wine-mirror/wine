@@ -306,7 +306,7 @@ static void write_function_stubs(type_t *iface)
             print_server("*(");
             write_type(server, def->type, def, def->tname);
             fprintf(server, " *)_StubMsg.Buffer = _RetVal;\n");
-            fprintf(server, "_StubMsg.Buffer += sizeof(");
+            print_server("_StubMsg.Buffer += sizeof(");
             write_type(server, def->type, def, def->tname);
             fprintf(server, ");\n");
         }
