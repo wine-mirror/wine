@@ -1,6 +1,6 @@
 /*
  * Copyright 2002 Mike McCormack for CodeWeavers
- * Copyright 2004,2005 Juan Lang
+ * Copyright 2004-2006 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -153,8 +153,7 @@ typedef void (*FreeCertFunc)(struct _WINE_CERT_CONTEXT_REF *ref);
 typedef enum _CertStoreType {
     StoreTypeMem,
     StoreTypeCollection,
-    StoreTypeReg,
-    StoreTypeDummy,
+    StoreTypeProvider,
 } CertStoreType;
 
 /* A cert store is polymorphic through the use of function pointers.  A type
@@ -243,22 +242,23 @@ typedef struct _WINE_HASH_TO_DELETE
     struct list entry;
 } WINE_HASH_TO_DELETE, *PWINE_HASH_TO_DELETE;
 
-/* Returned by a reg store during enumeration. */
-typedef struct _WINE_REG_CERT_CONTEXT
+/* Returned by a provider store during enumeration. */
+typedef struct _WINE_PROV_CERT_CONTEXT
 {
     WINE_CERT_CONTEXT_REF  cert;
     PWINE_CERT_CONTEXT_REF childContext;
-} WINE_REG_CERT_CONTEXT, *PWINE_REG_CERT_CONTEXT;
+} WINE_PROV_CERT_CONTEXT, *PWINE_PROV_CERT_CONTEXT;
 
-typedef struct _WINE_REGSTORE
+typedef struct _WINE_REGSTOREINFO
 {
-    WINECRYPT_CERTSTORE  hdr;
+    DWORD                dwOpenFlags;
+    HCRYPTPROV           cryptProv;
     PWINECRYPT_CERTSTORE memStore;
     HKEY                 key;
     BOOL                 dirty;
     CRITICAL_SECTION     cs;
     struct list          certsToDelete;
-} WINE_REGSTORE, *PWINE_REGSTORE;
+} WINE_REGSTOREINFO, *PWINE_REGSTOREINFO;
 
 typedef struct _WINE_STORE_LIST_ENTRY
 {
@@ -288,6 +288,18 @@ typedef struct _WINE_COLLECTIONSTORE
     CRITICAL_SECTION    cs;
     struct list         stores;
 } WINE_COLLECTIONSTORE, *PWINE_COLLECTIONSTORE;
+
+typedef struct _WINE_PROVIDERSTORE
+{
+    WINECRYPT_CERTSTORE             hdr;
+    DWORD                           dwStoreProvFlags;
+    PWINECRYPT_CERTSTORE            memStore;
+    HCERTSTOREPROV                  hStoreProv;
+    PFN_CERT_STORE_PROV_CLOSE       provCloseStore;
+    PFN_CERT_STORE_PROV_WRITE_CERT  provWriteCert;
+    PFN_CERT_STORE_PROV_DELETE_CERT provDeleteCert;
+    PFN_CERT_STORE_PROV_CONTROL     provControl;
+} WINE_PROVIDERSTORE, *PWINE_PROVIDERSTORE;
 
 /* Like CertGetCertificateContextProperty, but operates directly on the
  * WINE_CERT_CONTEXT.  Doesn't support special-case properties, since they
@@ -522,12 +534,7 @@ static BOOL WINAPI CRYPT_MemDeleteCert(HCERTSTORE hCertStore,
              * protected.
              */
             list_remove(&cert->entry);
-            /* FIXME: generally I should do the following, otherwise there is
-             * a memory leak.  But doing so when called by
-             * CertDeleteCertificateFromStore results in a double free, so
-             * leaving commented for now.
             ret = CertFreeCertificateContext((PCCERT_CONTEXT)cert);
-             */
             cert->entry.prev = cert->entry.next = &store->certs;
             break;
         }
@@ -536,15 +543,11 @@ static BOOL WINAPI CRYPT_MemDeleteCert(HCERTSTORE hCertStore,
     return ret;
 }
 
-static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
+static void CRYPT_MemEmptyStore(PWINE_MEMSTORE store)
 {
-    WINE_MEMSTORE *store = (WINE_MEMSTORE *)hCertStore;
     PWINE_CERT_LIST_ENTRY cert, next;
 
-    TRACE("(%p, %08lx)\n", store, dwFlags);
-    if (dwFlags)
-        FIXME("Unimplemented flags: %08lx\n", dwFlags);
-
+    EnterCriticalSection(&store->cs);
     /* Note that CertFreeCertificateContext calls HeapFree on the passed-in
      * pointer if its ref-count reaches zero.  That's okay here because there
      * aren't any allocated data outside of the WINE_CERT_CONTEXT_REF portion
@@ -557,6 +560,18 @@ static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
         list_remove(&cert->entry);
         CertFreeCertificateContext((PCCERT_CONTEXT)cert);
     }
+    LeaveCriticalSection(&store->cs);
+}
+
+static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
+{
+    WINE_MEMSTORE *store = (WINE_MEMSTORE *)hCertStore;
+
+    TRACE("(%p, %08lx)\n", store, dwFlags);
+    if (dwFlags)
+        FIXME("Unimplemented flags: %08lx\n", dwFlags);
+
+    CRYPT_MemEmptyStore(store);
     DeleteCriticalSection(&store->cs);
     CryptMemFree(store);
 }
@@ -586,6 +601,7 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.enumCert      = CRYPT_MemEnumCert;
             store->hdr.deleteCert    = CRYPT_MemDeleteCert;
             store->hdr.freeCert      = NULL;
+            store->hdr.control       = NULL;
             InitializeCriticalSection(&store->cs);
             list_init(&store->certs);
         }
@@ -801,6 +817,222 @@ static WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
     return (PWINECRYPT_CERTSTORE)store;
 }
 
+static void WINAPI CRYPT_ProvCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
+{
+    PWINE_PROVIDERSTORE store = (PWINE_PROVIDERSTORE)hCertStore;
+
+    TRACE("(%p, %08lx)\n", store, dwFlags);
+
+    if (store->provCloseStore)
+        store->provCloseStore(store->hStoreProv, dwFlags);
+    if (!(store->dwStoreProvFlags & CERT_STORE_PROV_EXTERNAL_FLAG))
+        CertCloseStore(store->memStore, dwFlags);
+    CryptMemFree(store);
+}
+
+static BOOL WINAPI CRYPT_ProvAddCert(HCERTSTORE hCertStore, PCCERT_CONTEXT cert,
+ DWORD dwAddDisposition)
+{
+    PWINE_PROVIDERSTORE store = (PWINE_PROVIDERSTORE)hCertStore;
+    BOOL ret;
+
+    TRACE("(%p, %p, %ld)\n", hCertStore, cert, dwAddDisposition);
+
+    if (store->hdr.dwOpenFlags & CERT_STORE_READONLY_FLAG)
+    {
+        SetLastError(ERROR_ACCESS_DENIED);
+        ret = FALSE;
+    }
+    else
+    {
+        ret = TRUE;
+        if (store->provWriteCert)
+            ret = store->provWriteCert(store->hStoreProv, cert,
+             CERT_STORE_PROV_WRITE_ADD_FLAG);
+        if (ret)
+            ret = store->memStore->addCert(store->memStore, cert,
+             dwAddDisposition);
+    }
+    return ret;
+}
+
+static PWINE_CERT_CONTEXT_REF CRYPT_ProvCreateCertRef(
+ PWINE_CERT_CONTEXT context, HCERTSTORE store)
+{
+    PWINE_PROV_CERT_CONTEXT ret = CryptMemAlloc(sizeof(WINE_PROV_CERT_CONTEXT));
+
+    if (ret)
+    {
+        CRYPT_InitCertRef((PWINE_CERT_CONTEXT_REF)ret, context, store);
+        ret->childContext = NULL;
+    }
+    return (PWINE_CERT_CONTEXT_REF)ret;
+}
+
+static PWINE_CERT_CONTEXT_REF CRYPT_ProvEnumCert(PWINECRYPT_CERTSTORE store,
+ PWINE_CERT_CONTEXT_REF pPrev)
+{
+    PWINE_PROVIDERSTORE ps = (PWINE_PROVIDERSTORE)store;
+    PWINE_CERT_CONTEXT_REF child;
+    PWINE_PROV_CERT_CONTEXT prev = (PWINE_PROV_CERT_CONTEXT)pPrev, ret = NULL;
+
+    TRACE("(%p, %p)\n", store, pPrev);
+
+    child = ps->memStore->enumCert(ps->memStore, prev ? prev->childContext
+     : NULL);
+    if (prev)
+    {
+        prev->childContext = NULL;
+        CertFreeCertificateContext((PCCERT_CONTEXT)prev);
+        prev = NULL;
+    }
+    if (child)
+    {
+        ret = (PWINE_PROV_CERT_CONTEXT)CRYPT_ProvCreateCertRef(child->context,
+         store);
+        if (ret)
+            ret->childContext = child;
+        else
+            CertFreeCertificateContext((PCCERT_CONTEXT)child);
+    }
+    return (PWINE_CERT_CONTEXT_REF)ret;
+}
+
+static BOOL WINAPI CRYPT_ProvDeleteCert(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT cert, DWORD dwFlags)
+{
+    PWINE_PROVIDERSTORE store = (PWINE_PROVIDERSTORE)hCertStore;
+    BOOL ret = TRUE;
+
+    TRACE("(%p, %p, %08lx)\n", hCertStore, cert, dwFlags);
+
+    if (store->provDeleteCert)
+        ret = store->provDeleteCert(store->hStoreProv, cert, dwFlags);
+    if (ret)
+        ret = store->memStore->deleteCert(store->memStore, cert, dwFlags);
+    return ret;
+}
+
+static void CRYPT_ProvFreeCert(PWINE_CERT_CONTEXT_REF ref)
+{
+    PWINE_PROV_CERT_CONTEXT context = (PWINE_PROV_CERT_CONTEXT)ref;
+
+    TRACE("(%p)\n", ref);
+
+    if (context->childContext)
+        CertFreeCertificateContext((PCCERT_CONTEXT)context->childContext);
+}
+
+static BOOL WINAPI CRYPT_ProvControl(HCERTSTORE hCertStore, DWORD dwFlags,
+ DWORD dwCtrlType, void const *pvCtrlPara)
+{
+    PWINE_PROVIDERSTORE store = (PWINE_PROVIDERSTORE)hCertStore;
+    BOOL ret = TRUE;
+
+    TRACE("(%p, %08lx, %ld, %p)\n", hCertStore, dwFlags, dwCtrlType,
+     pvCtrlPara);
+
+    if (store->provControl)
+        ret = store->provControl(store->hStoreProv, dwFlags, dwCtrlType,
+         pvCtrlPara);
+    return ret;
+}
+
+static PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(HCRYPTPROV hCryptProv,
+ DWORD dwFlags, PWINECRYPT_CERTSTORE memStore, PCERT_STORE_PROV_INFO pProvInfo)
+{
+    PWINE_PROVIDERSTORE ret = (PWINE_PROVIDERSTORE)CryptMemAlloc(
+     sizeof(WINE_PROVIDERSTORE));
+
+    if (ret)
+    {
+        CRYPT_InitStore(&ret->hdr, hCryptProv, dwFlags,
+         StoreTypeProvider);
+        ret->dwStoreProvFlags = pProvInfo->dwStoreProvFlags;
+        if (ret->dwStoreProvFlags & CERT_STORE_PROV_EXTERNAL_FLAG)
+        {
+            CertCloseStore(memStore, 0);
+            ret->memStore = NULL;
+        }
+        else
+            ret->memStore = memStore;
+        ret->hStoreProv = pProvInfo->hStoreProv;
+        ret->hdr.closeStore = CRYPT_ProvCloseStore;
+        ret->hdr.addCert = CRYPT_ProvAddCert;
+        ret->hdr.createCertRef = CRYPT_ProvCreateCertRef;
+        ret->hdr.enumCert = CRYPT_ProvEnumCert;
+        ret->hdr.deleteCert = CRYPT_ProvDeleteCert;
+        ret->hdr.freeCert = CRYPT_ProvFreeCert;
+        ret->hdr.control = CRYPT_ProvControl;
+        if (pProvInfo->cStoreProvFunc > CERT_STORE_PROV_CLOSE_FUNC)
+            ret->provCloseStore =
+             pProvInfo->rgpvStoreProvFunc[CERT_STORE_PROV_CLOSE_FUNC];
+        else
+            ret->provCloseStore = NULL;
+        if (pProvInfo->cStoreProvFunc >
+         CERT_STORE_PROV_WRITE_CERT_FUNC)
+            ret->provWriteCert = pProvInfo->rgpvStoreProvFunc[
+             CERT_STORE_PROV_WRITE_CERT_FUNC];
+        else
+            ret->provWriteCert = NULL;
+        if (pProvInfo->cStoreProvFunc >
+         CERT_STORE_PROV_DELETE_CERT_FUNC)
+            ret->provDeleteCert = pProvInfo->rgpvStoreProvFunc[
+             CERT_STORE_PROV_DELETE_CERT_FUNC];
+        else
+            ret->provDeleteCert = NULL;
+        if (pProvInfo->cStoreProvFunc >
+         CERT_STORE_PROV_CONTROL_FUNC)
+            ret->provControl = pProvInfo->rgpvStoreProvFunc[
+             CERT_STORE_PROV_CONTROL_FUNC];
+        else
+            ret->provControl = NULL;
+    }
+    return (PWINECRYPT_CERTSTORE)ret;
+}
+
+static PWINECRYPT_CERTSTORE CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
+ DWORD dwEncodingType, HCRYPTPROV hCryptProv, DWORD dwFlags, const void *pvPara)
+{
+    static HCRYPTOIDFUNCSET set = NULL;
+    PFN_CERT_DLL_OPEN_STORE_PROV_FUNC provOpenFunc;
+    HCRYPTOIDFUNCADDR hFunc;
+    PWINECRYPT_CERTSTORE ret = NULL;
+
+    if (!set)
+        set = CryptInitOIDFunctionSet(CRYPT_OID_OPEN_STORE_PROV_FUNC, 0);
+    CryptGetOIDFunctionAddress(set, dwEncodingType, lpszStoreProvider, 0,
+     (void **)&provOpenFunc, &hFunc);
+    if (provOpenFunc)
+    {
+        CERT_STORE_PROV_INFO provInfo = { 0 };
+
+        provInfo.cbSize = sizeof(provInfo);
+        if (dwFlags & CERT_STORE_DELETE_FLAG)
+            provOpenFunc(lpszStoreProvider, dwEncodingType, hCryptProv,
+             dwFlags, pvPara, NULL, &provInfo);
+        else
+        {
+            PWINECRYPT_CERTSTORE memStore;
+
+            memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
+            if (memStore)
+            {
+                if (provOpenFunc(lpszStoreProvider, dwEncodingType, hCryptProv,
+                 dwFlags, pvPara, memStore, &provInfo))
+                    ret = CRYPT_ProvCreateStore(hCryptProv, dwFlags, memStore,
+                     &provInfo);
+                else
+                    CertCloseStore(memStore, 0);
+            }
+        }
+        CryptFreeOIDFunctionAddress(hFunc, 0);
+    }
+    else
+        SetLastError(ERROR_FILE_NOT_FOUND);
+    return ret;
+}
+
 static void CRYPT_HashToStr(LPBYTE hash, LPWSTR asciiHash)
 {
     static const WCHAR fmt[] = { '%','0','2','X',0 };
@@ -819,7 +1051,7 @@ static const WCHAR CRLsW[] = { 'C','R','L','s',0 };
 static const WCHAR CTLsW[] = { 'C','T','L','s',0 };
 static const WCHAR BlobW[] = { 'B','l','o','b',0 };
 
-static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTORE store, HKEY key,
+static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTOREINFO store, HKEY key,
  DWORD contextType)
 {
     LONG rc;
@@ -892,7 +1124,7 @@ static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTORE store, HKEY key,
                                     {
                                         TRACE("hash matches, adding\n");
                                         contextInterface->addContextToStore(
-                                         store, context,
+                                         store->memStore, context,
                                          CERT_STORE_ADD_REPLACE_EXISTING, NULL);
                                     }
                                     else
@@ -912,7 +1144,7 @@ static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTORE store, HKEY key,
     } while (!rc);
 }
 
-static void CRYPT_RegReadFromReg(PWINE_REGSTORE store)
+static void CRYPT_RegReadFromReg(PWINE_REGSTOREINFO store)
 {
     static const WCHAR *subKeys[] = { CertsW, CRLsW, CTLsW };
     static const DWORD contextFlags[] = { CERT_STORE_CERTIFICATE_CONTEXT_FLAG,
@@ -1001,7 +1233,7 @@ static BOOL CRYPT_SerializeContextsToReg(HKEY key,
     return ret;
 }
 
-static BOOL CRYPT_RegWriteToReg(PWINE_REGSTORE store)
+static BOOL CRYPT_RegWriteToReg(PWINE_REGSTOREINFO store)
 {
     static const WCHAR *subKeys[] = { CertsW, CRLsW, CTLsW };
     static const WINE_CONTEXT_INTERFACE *interfaces[] = { &gCertInterface,
@@ -1058,7 +1290,7 @@ static BOOL CRYPT_RegWriteToReg(PWINE_REGSTORE store)
 /* If force is true or the registry store is dirty, writes the contents of the
  * store to the registry.
  */
-static BOOL CRYPT_RegFlushStore(PWINE_REGSTORE store, BOOL force)
+static BOOL CRYPT_RegFlushStore(PWINE_REGSTOREINFO store, BOOL force)
 {
     BOOL ret;
 
@@ -1071,93 +1303,45 @@ static BOOL CRYPT_RegFlushStore(PWINE_REGSTORE store, BOOL force)
 
 static void WINAPI CRYPT_RegCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
-    PWINE_REGSTORE store = (PWINE_REGSTORE)hCertStore;
+    PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
 
     TRACE("(%p, %08lx)\n", store, dwFlags);
     if (dwFlags)
         FIXME("Unimplemented flags: %08lx\n", dwFlags);
 
     CRYPT_RegFlushStore(store, FALSE);
-    /* certsToDelete should already be cleared by this point */
-    store->memStore->closeStore(store->memStore, 0);
     RegCloseKey(store->key);
     DeleteCriticalSection(&store->cs);
     CryptMemFree(store);
 }
 
-static BOOL WINAPI CRYPT_RegAddCert(HCERTSTORE hCertStore, PCCERT_CONTEXT cert,
- DWORD dwAddDisposition)
+static BOOL WINAPI CRYPT_RegWriteCert(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT cert, DWORD dwFlags)
 {
-    PWINE_REGSTORE store = (PWINE_REGSTORE)hCertStore;
+    PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
     BOOL ret;
 
-    TRACE("(%p, %p, %ld)\n", hCertStore, cert, dwAddDisposition);
+    TRACE("(%p, %p, %ld)\n", hCertStore, cert, dwFlags);
 
-    if (store->hdr.dwOpenFlags & CERT_STORE_READONLY_FLAG)
+    if (dwFlags & CERT_STORE_PROV_WRITE_ADD_FLAG)
     {
-        SetLastError(ERROR_ACCESS_DENIED);
-        ret = FALSE;
+        store->dirty = TRUE;
+        ret = TRUE;
     }
     else
-    {
-        ret = store->memStore->addCert(store->memStore, cert, dwAddDisposition);
-        if (ret)
-            store->dirty = TRUE;
-    }
+        ret = FALSE;
     return ret;
-}
-
-static PWINE_CERT_CONTEXT_REF CRYPT_RegCreateCertRef(
- PWINE_CERT_CONTEXT context, HCERTSTORE store)
-{
-    PWINE_REG_CERT_CONTEXT ret = CryptMemAlloc(sizeof(WINE_REG_CERT_CONTEXT));
-
-    if (ret)
-    {
-        CRYPT_InitCertRef((PWINE_CERT_CONTEXT_REF)ret, context, store);
-        ret->childContext = NULL;
-    }
-    return (PWINE_CERT_CONTEXT_REF)ret;
-}
-
-static PWINE_CERT_CONTEXT_REF CRYPT_RegEnumCert(PWINECRYPT_CERTSTORE store,
- PWINE_CERT_CONTEXT_REF pPrev)
-{
-    PWINE_REGSTORE rs = (PWINE_REGSTORE)store;
-    PWINE_CERT_CONTEXT_REF child;
-    PWINE_REG_CERT_CONTEXT prev = (PWINE_REG_CERT_CONTEXT)pPrev, ret = NULL;
-
-    TRACE("(%p, %p)\n", store, pPrev);
-
-    child = rs->memStore->enumCert(rs->memStore, prev ? prev->childContext
-     : NULL);
-    if (prev)
-    {
-        prev->childContext = NULL;
-        CertFreeCertificateContext((PCCERT_CONTEXT)prev);
-        prev = NULL;
-    }
-    if (child)
-    {
-        ret = (PWINE_REG_CERT_CONTEXT)CRYPT_RegCreateCertRef(child->context,
-         store);
-        if (ret)
-            ret->childContext = child;
-        else
-            CertFreeCertificateContext((PCCERT_CONTEXT)child);
-    }
-    return (PWINE_CERT_CONTEXT_REF)ret;
 }
 
 static BOOL WINAPI CRYPT_RegDeleteCert(HCERTSTORE hCertStore,
  PCCERT_CONTEXT pCertContext, DWORD dwFlags)
 {
-    PWINE_REGSTORE store = (PWINE_REGSTORE)hCertStore;
+    PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
     BOOL ret;
 
     TRACE("(%p, %p, %08lx)\n", store, pCertContext, dwFlags);
 
-    if (store->hdr.dwOpenFlags & CERT_STORE_READONLY_FLAG)
+    if (store->dwOpenFlags & CERT_STORE_READONLY_FLAG)
     {
         SetLastError(ERROR_ACCESS_DENIED);
         ret = FALSE;
@@ -1179,8 +1363,6 @@ static BOOL WINAPI CRYPT_RegDeleteCert(HCERTSTORE hCertStore,
                 EnterCriticalSection(&store->cs);
                 list_add_tail(&store->certsToDelete, &toDelete->entry);
                 LeaveCriticalSection(&store->cs);
-                ret = store->memStore->deleteCert(store->memStore, pCertContext,
-                 dwFlags);
             }
             else
                 CryptMemFree(toDelete);
@@ -1193,36 +1375,19 @@ static BOOL WINAPI CRYPT_RegDeleteCert(HCERTSTORE hCertStore,
     return ret;
 }
 
-static void CRYPT_RegFreeCert(PWINE_CERT_CONTEXT_REF ref)
-{
-    PWINE_REG_CERT_CONTEXT context = (PWINE_REG_CERT_CONTEXT)ref;
-
-    TRACE("(%p)\n", ref);
-
-    if (context->childContext)
-        CertFreeCertificateContext((PCCERT_CONTEXT)context->childContext);
-}
-
 static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
  DWORD dwCtrlType, void const *pvCtrlPara)
 {
-    PWINE_REGSTORE store = (PWINE_REGSTORE)hCertStore;
+    PWINE_REGSTOREINFO store = (PWINE_REGSTOREINFO)hCertStore;
     BOOL ret;
 
     switch (dwCtrlType)
     {
     case CERT_STORE_CTRL_RESYNC:
         CRYPT_RegFlushStore(store, FALSE);
-        store->memStore->closeStore(store->memStore, 0);
-        store->memStore = CRYPT_MemOpenStore(store->hdr.cryptProv,
-         store->hdr.dwOpenFlags, NULL);
-        if (store->memStore)
-        {
-            CRYPT_RegReadFromReg(store);
-            ret = TRUE;
-        }
-        else
-            ret = FALSE;
+        CRYPT_MemEmptyStore((PWINE_MEMSTORE)store->memStore);
+        CRYPT_RegReadFromReg(store);
+        ret = TRUE;
         break;
     case CERT_STORE_CTRL_COMMIT:
         ret = CRYPT_RegFlushStore(store,
@@ -1288,10 +1453,27 @@ static DWORD CRYPT_RecurseDeleteKey(HKEY hKey, LPCWSTR lpszSubKey)
     return dwRet;
 }
 
+static void *regProvFuncs[] = {
+    CRYPT_RegCloseStore,
+    NULL, /* CERT_STORE_PROV_READ_CERT_FUNC */
+    CRYPT_RegWriteCert,
+    CRYPT_RegDeleteCert,
+    NULL, /* CERT_STORE_PROV_SET_CERT_PROPERTY_FUNC */
+    NULL, /* CERT_STORE_PROV_READ_CRL_FUNC */
+    NULL, /* CERT_STORE_PROV_WRITE_CRL_FUNC */
+    NULL, /* CERT_STORE_PROV_DELETE_CRL_FUNC */
+    NULL, /* CERT_STORE_PROV_SET_CRL_PROPERTY_FUNC */
+    NULL, /* CERT_STORE_PROV_READ_CTL_FUNC */
+    NULL, /* CERT_STORE_PROV_WRITE_CTL_FUNC */
+    NULL, /* CERT_STORE_PROV_DELETE_CTL_FUNC */
+    NULL, /* CERT_STORE_PROV_SET_CTL_PROPERTY_FUNC */
+    CRYPT_RegControl,
+};
+
 static WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
-    PWINE_REGSTORE store = NULL;
+    PWINECRYPT_CERTSTORE store = NULL;
 
     TRACE("(%ld, %08lx, %p)\n", hCryptProv, dwFlags, pvPara);
 
@@ -1321,31 +1503,34 @@ static WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv,
             memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
             if (memStore)
             {
-                store = CryptMemAlloc(sizeof(WINE_REGSTORE));
-                if (store)
+                PWINE_REGSTOREINFO regInfo = CryptMemAlloc(
+                 sizeof(WINE_REGSTOREINFO));
+
+                if (regInfo)
                 {
-                    memset(store, 0, sizeof(WINE_REGSTORE));
-                    CRYPT_InitStore(&store->hdr, hCryptProv, dwFlags,
-                     StoreTypeReg);
-                    store->hdr.closeStore    = CRYPT_RegCloseStore;
-                    store->hdr.addCert       = CRYPT_RegAddCert;
-                    store->hdr.createCertRef = CRYPT_RegCreateCertRef;
-                    store->hdr.enumCert      = CRYPT_RegEnumCert;
-                    store->hdr.deleteCert    = CRYPT_RegDeleteCert;
-                    store->hdr.freeCert      = CRYPT_RegFreeCert;
-                    store->hdr.control       = CRYPT_RegControl;
-                    store->memStore          = memStore;
-                    store->key               = key;
-                    InitializeCriticalSection(&store->cs);
-                    list_init(&store->certsToDelete);
-                    CRYPT_RegReadFromReg(store);
-                    store->dirty = FALSE;
+                    CERT_STORE_PROV_INFO provInfo = { 0 };
+
+                    regInfo->dwOpenFlags = dwFlags;
+                    regInfo->cryptProv = hCryptProv;
+                    regInfo->memStore = memStore;
+                    regInfo->key = key;
+                    InitializeCriticalSection(&regInfo->cs);
+                    list_init(&regInfo->certsToDelete);
+                    CRYPT_RegReadFromReg(regInfo);
+                    regInfo->dirty = FALSE;
+                    provInfo.cbSize = sizeof(provInfo);
+                    provInfo.cStoreProvFunc = sizeof(regProvFuncs) /
+                     sizeof(regProvFuncs[0]);
+                    provInfo.rgpvStoreProvFunc = regProvFuncs;
+                    provInfo.hStoreProv = regInfo;
+                    store = CRYPT_ProvCreateStore(hCryptProv, dwFlags, memStore,
+                     &provInfo);
                 }
             }
         }
     }
     TRACE("returning %p\n", store);
-    return (WINECRYPT_CERTSTORE *)store;
+    return store;
 }
 
 /* FIXME: this isn't complete for the Root store, in which the top-level
@@ -1625,11 +1810,8 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
     }
 
     if (!openFunc)
-    {
-        /* FIXME: need to look for an installed provider for this type */
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        hcs = NULL;
-    }
+        hcs = CRYPT_ProvOpenStore(lpszStoreProvider, dwMsgAndCertEncodingType,
+         hCryptProv, dwFlags, pvPara);
     else
         hcs = openFunc(hCryptProv, dwFlags, pvPara);
     return (HCERTSTORE)hcs;
@@ -2009,11 +2191,7 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
                 PWINECRYPT_CERTSTORE store =
                  (PWINECRYPT_CERTSTORE)pCertContext->hCertStore;
 
-                /* Take advantage of knowledge of the stores to answer the
-                 * access state question
-                 */
-                if (store->type != StoreTypeReg ||
-                 !(store->dwOpenFlags & CERT_STORE_READONLY_FLAG))
+                if (!(store->dwOpenFlags & CERT_STORE_READONLY_FLAG))
                     state |= CERT_ACCESS_STATE_WRITE_PERSIST_FLAG;
             }
             *(DWORD *)pvData = state;
@@ -2326,16 +2504,11 @@ BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
         PWINECRYPT_CERTSTORE hcs =
          (PWINECRYPT_CERTSTORE)pCertContext->hCertStore;
 
-        if (!hcs)
-            ret = TRUE;
-        else if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
+        if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
             ret = FALSE;
         else
-        {
             ret = hcs->deleteCert(hcs, pCertContext, 0);
-            if (ret)
-                CertFreeCertificateContext(pCertContext);
-        }
+        CertFreeCertificateContext(pCertContext);
     }
     return ret;
 }
