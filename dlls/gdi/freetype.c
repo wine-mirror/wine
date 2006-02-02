@@ -2828,6 +2828,18 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
         needsTransform = TRUE;
     }
 
+    /* Slant transform */
+    if (font->fake_italic) {
+        FT_Matrix slantMat;
+        
+        slantMat.xx = (1 << 16);
+        slantMat.xy = ((1 << 16) >> 2);
+        slantMat.yx = 0;
+        slantMat.yy = (1 << 16);
+        pFT_Matrix_Multiply(&slantMat, &transMat);
+        needsTransform = TRUE;
+    }
+
     /* Rotation transform */
     if(font->orientation) {
         FT_Matrix rotationMat;
