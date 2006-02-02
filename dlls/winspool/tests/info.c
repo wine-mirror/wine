@@ -36,6 +36,18 @@ static char env_win9x_case[] = "windowS 4.0";
 static HANDLE  hwinspool;
 static FARPROC pGetDefaultPrinterA;
 
+/* report common behavior only once */
+static DWORD report_deactivated_spooler = 1;
+#define RETURN_ON_DEACTIVATED_SPOOLER(res) \
+    if((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE)) \
+    { \
+        if(report_deactivated_spooler > 0) { \
+            report_deactivated_spooler--; \
+            trace("The Service 'Spooler' is required for many test\n"); \
+        } \
+        return; \
+    }
+
 
 static LPSTR find_default_printer(VOID)
 {
@@ -177,16 +189,12 @@ static void test_GetPrinterDriverDirectory(void)
     DWORD  cbBuf = 0, pcbNeeded = 0;
     BOOL   res;
 
-    SetLastError(0x00dead00);
+    SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, 0, &cbBuf);
-    trace("GetPrinterDriverDirectoryA: first call returned 0x%04x, "
-	  "buffer size 0x%08lx\n", res, cbBuf);
+    trace("first call returned 0x%04x, with %ld: buffer size 0x%08lx\n",
+    res, GetLastError(), cbBuf);
 
-    if((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))
-    {
-        trace("The Service 'Spooler' is required for this test\n");
-        return;
-    }
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok((res == 0) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
         "returned %d with lasterror=%ld (expected '0' with " \
         "ERROR_INSUFFICIENT_BUFFER)\n", res, GetLastError());
@@ -209,7 +217,7 @@ static void test_GetPrinterDriverDirectory(void)
     ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld\n",
                             pcbNeeded, cbBuf);
  
-    SetLastError(0x00dead00);
+    SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, buffer, cbBuf-1, &pcbNeeded);
     ok( !res , "expected result == 0, got %d\n", res);
     ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld\n",
@@ -219,41 +227,40 @@ static void test_GetPrinterDriverDirectory(void)
         "last error set to %ld instead of ERROR_INSUFFICIENT_BUFFER\n",
         GetLastError());
 
-    SetLastError(0x00dead00);
-    res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, &pcbNeeded);
-    ok( (!res && ERROR_INVALID_USER_BUFFER == GetLastError()) || 
-        ( res && ERROR_INVALID_PARAMETER == GetLastError()) ,
-         "expected either result == 0 and "
-         "last error == ERROR_INVALID_USER_BUFFER "
-         "or result != 0 and last error == ERROR_INVALID_PARAMETER "
-         "got result %d and last error == %ld\n", res, GetLastError());
+/*
+    Do not add the next test:
+    XPsp2: crash in this app, when the spooler is not running 
+    NT3.5: ERROR_INVALID_USER_BUFFER
+    win9x: ERROR_INVALID_PARAMETER
 
-    SetLastError(0x00dead00);
+    pcbNeeded = MAGIC_DEAD;
+    SetLastError(MAGIC_DEAD);
+    res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, &pcbNeeded);
+*/
+
+    SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, buffer, cbBuf, NULL);
     ok( (!res && RPC_X_NULL_REF_POINTER == GetLastError()) || res,
          "expected either result == 0 and "
          "last error == RPC_X_NULL_REF_POINTER or result != 0 "
          "got result %d and last error == %ld\n", res, GetLastError());
 
-    SetLastError(0x00dead00);
+    SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
-    ok( (!res && RPC_X_NULL_REF_POINTER == GetLastError()) || 
-        ( res && ERROR_INVALID_PARAMETER == GetLastError()) ,
-         "expected either result == 0 and "
-         "last error == RPC_X_NULL_REF_POINTER "
-         "or result != 0 and last error == ERROR_INVALID_PARAMETER "
-         "got result %d and last error == %ld\n", res, GetLastError());
-
+    ok(res || (GetLastError() == RPC_X_NULL_REF_POINTER),
+        "returned %d with %ld (expected '!=0' or '0' with " \
+        "RPC_X_NULL_REF_POINTER)", res, GetLastError());
+ 
+ 
     /* with a valid buffer, but level is too large */
     buffer[0] = '\0';
-    SetLastError(0x00dead00);
+    SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA(NULL, NULL, 2, buffer, cbBuf, &pcbNeeded);
 
     /* Level not checked in win9x and wine:*/
     if((res != FALSE) && buffer[0])
     {
-        trace("invalid Level '2' not checked (valid Level is '1') => '%s'\n", 
-                buffer);
+        trace("Level '2' not checked '%s'\n", buffer);
     }
     else
     {
@@ -265,7 +272,7 @@ static void test_GetPrinterDriverDirectory(void)
     /* printing environments are case insensitive */
     /* "Windows 4.0" is valid for win9x and NT */
     buffer[0] = '\0';
-    SetLastError(0x00dead00);
+    SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA(NULL, env_win9x_case, 1, 
                                         buffer, cbBuf*2, &pcbNeeded);
 
@@ -274,7 +281,7 @@ static void test_GetPrinterDriverDirectory(void)
         buffer = HeapReAlloc(GetProcessHeap(), 0, buffer, cbBuf*2);
         if (buffer == NULL)  return ;
 
-        SetLastError(0x00dead00);
+        SetLastError(MAGIC_DEAD);
         res = GetPrinterDriverDirectoryA(NULL, env_win9x_case, 1, 
                                         buffer, cbBuf*2, &pcbNeeded);
     }
@@ -284,7 +291,7 @@ static void test_GetPrinterDriverDirectory(void)
         res, GetLastError(), lstrlenA((char *)buffer));
 
     buffer[0] = '\0';
-    SetLastError(0x00dead00);
+    SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA(NULL, env_x86, 1, 
                                         buffer, cbBuf*2, &pcbNeeded);
 
@@ -294,7 +301,7 @@ static void test_GetPrinterDriverDirectory(void)
         if (buffer == NULL)  return ;
 
         buffer[0] = '\0';
-        SetLastError(0x00dead00);
+        SetLastError(MAGIC_DEAD);
         res = GetPrinterDriverDirectoryA(NULL, env_x86, 1, 
                                         buffer, cbBuf*2, &pcbNeeded);
     }
@@ -334,11 +341,8 @@ static void test_OpenPrinter(void)
 
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, NULL, NULL);    
-    if((res == 0) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))
-    {
-        trace("The Service 'Spooler' is required for this test\n");
-        return;
-    }
+    /* The deactivated Spooler is catched here on NT3.51 */
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok(!res && (GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %ld with %ld (expected '0' with ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
@@ -348,6 +352,8 @@ static void test_OpenPrinter(void)
     hprinter = (HANDLE) MAGIC_DEAD;
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, &hprinter, NULL);
+    /* The deactivated Spooler is catched here on XPsp2 */
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %ld with %ld (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
@@ -411,6 +417,11 @@ static void test_OpenPrinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, NULL);
+        if((!res) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))
+        {
+                trace("The Service 'Spooler' is required for '%s'\n", default_printer);
+            return;
+        }
         ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
         if(res) ClosePrinter(hprinter);
 
@@ -421,7 +432,9 @@ static void test_OpenPrinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
-        ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
+        ok(res || GetLastError() == ERROR_ACCESS_DENIED,
+            "returned %ld with %ld (expected '!=0' or '0' with " \
+            "ERROR_ACCESS_DENIED)\n", res, GetLastError());
         if(res) ClosePrinter(hprinter);
 
         defaults.pDatatype="";
@@ -429,10 +442,10 @@ static void test_OpenPrinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
-        ok(res || (GetLastError() == ERROR_INVALID_DATATYPE ||
-                   GetLastError() == RPC_S_SERVER_UNAVAILABLE),
+        ok(res || ((GetLastError() == ERROR_INVALID_DATATYPE) ||
+                   (GetLastError() == ERROR_ACCESS_DENIED)),
             "returned %ld with %ld (expected '!=0' or '0' with: " \
-            "ERROR_INVALID_DATATYPE or RPC_S_SERVER_UNAVAILABLE)\n",
+            "ERROR_INVALID_DATATYPE or ERROR_ACCESS_DENIED)\n",
             res, GetLastError());
         if(res) ClosePrinter(hprinter);
 
@@ -443,11 +456,9 @@ static void test_OpenPrinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
-        ok(res || (GetLastError() == ERROR_ACCESS_DENIED ||
-                   GetLastError() == RPC_S_SERVER_UNAVAILABLE),
-            "returned %ld with %ld (expected '!=0' or '0' with: " \
-            "ERROR_ACCESS_DENIED or RPC_S_SERVER_UNAVAILABLE)\n",
-            res, GetLastError());
+        ok(res || GetLastError() == ERROR_ACCESS_DENIED,
+            "returned %ld with %ld (expected '!=0' or '0' with " \
+            "ERROR_ACCESS_DENIED)\n", res, GetLastError());
         if(res) ClosePrinter(hprinter);
 
 
@@ -455,11 +466,9 @@ static void test_OpenPrinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
-        ok(res || (GetLastError() == ERROR_ACCESS_DENIED ||
-                   GetLastError() == RPC_S_SERVER_UNAVAILABLE),
-            "returned %ld with %ld (expected '!=0' or '0' with: " \
-            "ERROR_ACCESS_DENIED or RPC_S_SERVER_UNAVAILABLE)\n",
-            res, GetLastError());
+        ok(res || GetLastError() == ERROR_ACCESS_DENIED,
+            "returned %ld with %ld (expected '!=0' or '0' with " \
+            "ERROR_ACCESS_DENIED)\n", res, GetLastError());
         if(res) ClosePrinter(hprinter);
     }
 
