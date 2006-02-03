@@ -989,12 +989,19 @@ static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM
             break;
 
         case CDM_HIDECONTROL:
-        case CDM_SETDEFEXT:
-            FIXME("CDM_HIDECONTROL,CDM_SETCONTROLTEXT,CDM_SETDEFEXT not implemented\n");
-            retval =  -1;
+            /* MSDN states that it should fail for not OFN_EXPLORER case */
+            if (fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+            {
+                HWND control = GetDlgItem( hwnd, wParam );
+                if (control) ShowWindow( control, SW_HIDE );
+                retval = TRUE;
+            }
+            else retval = FALSE;
             break;
 
         default:
+            if (uMsg >= CDM_FIRST && uMsg <= CDM_LAST)
+                FIXME("message CDM_FIRST+%04x not implemented\n", uMsg - CDM_FIRST);
             return FALSE;
     }
     SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, retval);
