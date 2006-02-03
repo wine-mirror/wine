@@ -76,6 +76,14 @@ void CRYPT_FreeFunctionSets(void)
     DeleteCriticalSection(&funcSetCS);
 }
 
+BOOL WINAPI CryptEnumOIDInfo(DWORD dwGroupId, DWORD dwFlags, void *pvArg,
+ PFN_CRYPT_ENUM_OID_INFO pfnEnumOIDInfo)
+{
+    FIXME("(%ld, %08lx, %p, %p): stub\n", dwGroupId, dwFlags, pvArg,
+     pfnEnumOIDInfo);
+    return TRUE;
+}
+
 /* There is no free function associated with this; therefore, the sets are
  * freed when crypt32.dll is unloaded.
  */
