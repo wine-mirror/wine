@@ -537,6 +537,7 @@ TYPE_MARSHAL(ByteCountPointer)
 TYPE_MARSHAL(XmitOrRepAs)
 TYPE_MARSHAL(UserMarshal)
 TYPE_MARSHAL(InterfacePointer)
+TYPE_MARSHAL(Range)
 
 SIMPLE_TYPE_MARSHAL(ConformantString)
 SIMPLE_TYPE_MARSHAL(NonConformantString)
