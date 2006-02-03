@@ -47,9 +47,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
+#define NDR_TABLE_MASK 127
+
 static inline void call_buffer_sizer(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
-    NDR_BUFFERSIZE m = NdrBufferSizer[pFormat[0]];
+    NDR_BUFFERSIZE m = NdrBufferSizer[pFormat[0] & NDR_TABLE_MASK];
     if (m) m(pStubMsg, pMemory, pFormat);
     else
     {
@@ -60,7 +62,7 @@ static inline void call_buffer_sizer(PMIDL_STUB_MESSAGE pStubMsg, unsigned char 
 
 static inline unsigned char *call_marshaller(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
-    NDR_MARSHALL m = NdrMarshaller[pFormat[0]];
+    NDR_MARSHALL m = NdrMarshaller[pFormat[0] & NDR_TABLE_MASK];
     if (m) return m(pStubMsg, pMemory, pFormat);
     else
     {
@@ -72,7 +74,7 @@ static inline unsigned char *call_marshaller(PMIDL_STUB_MESSAGE pStubMsg, unsign
 
 static inline unsigned char *call_unmarshaller(PMIDL_STUB_MESSAGE pStubMsg, unsigned char **ppMemory, PFORMAT_STRING pFormat, unsigned char fMustAlloc)
 {
-    NDR_UNMARSHALL m = NdrUnmarshaller[pFormat[0]];
+    NDR_UNMARSHALL m = NdrUnmarshaller[pFormat[0] & NDR_TABLE_MASK];
     if (m) return m(pStubMsg, ppMemory, pFormat, fMustAlloc);
     else
     {
@@ -84,7 +86,7 @@ static inline unsigned char *call_unmarshaller(PMIDL_STUB_MESSAGE pStubMsg, unsi
 
 static inline void call_freer(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
-    NDR_FREE m = NdrFreer[pFormat[0]];
+    NDR_FREE m = NdrFreer[pFormat[0] & NDR_TABLE_MASK];
     if (m) m(pStubMsg, pMemory, pFormat);
     else
     {
@@ -95,7 +97,7 @@ static inline void call_freer(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemor
 
 static inline unsigned long call_memory_sizer(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
 {
-    NDR_MEMORYSIZE m = NdrMemorySizer[pFormat[0]];
+    NDR_MEMORYSIZE m = NdrMemorySizer[pFormat[0] & NDR_TABLE_MASK];
     if (m) return m(pStubMsg, pFormat);
     else
     {
