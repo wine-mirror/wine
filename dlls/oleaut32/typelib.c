@@ -6396,12 +6396,15 @@ HRESULT WINAPI CreateDispTypeInfo(
         *ppFuncDesc = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppFuncDesc));
         (*ppFuncDesc)->Name = SysAllocString(md->szName);
         (*ppFuncDesc)->funcdesc.memid = md->dispid;
+        (*ppFuncDesc)->funcdesc.funckind = FUNC_DISPATCH;
         (*ppFuncDesc)->funcdesc.invkind = md->wFlags;
         (*ppFuncDesc)->funcdesc.callconv = md->cc;
         (*ppFuncDesc)->funcdesc.cParams = md->cArgs;
         (*ppFuncDesc)->funcdesc.cParamsOpt = 0;
         (*ppFuncDesc)->funcdesc.oVft = md->iMeth;
         (*ppFuncDesc)->funcdesc.wFuncFlags = 0; /*??*/
+        (*ppFuncDesc)->funcdesc.elemdescFunc.u.paramdesc.wParamFlags = PARAMFLAG_NONE;
+        (*ppFuncDesc)->funcdesc.elemdescFunc.u.paramdesc.pparamdescex = NULL;
         (*ppFuncDesc)->funcdesc.elemdescFunc.tdesc.vt = md->vtReturn;
         (*ppFuncDesc)->funcdesc.lprgelemdescParam = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                                               md->cArgs * sizeof(ELEMDESC));
@@ -6417,6 +6420,7 @@ HRESULT WINAPI CreateDispTypeInfo(
         (*ppFuncDesc)->Entry = NULL;
         (*ppFuncDesc)->ctCustData = 0;
         (*ppFuncDesc)->pCustData = NULL;
+        (*ppFuncDesc)->next = NULL;
         ppFuncDesc = &(*ppFuncDesc)->next;
     }        
     *pptinfo = (ITypeInfo*)pTIImpl;
