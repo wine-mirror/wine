@@ -29,12 +29,6 @@
 #define RPC_FC_UP			0x12 /* unique pointer */
 #define RPC_FC_OP			0x13 /* unique pointer in object ? */
 #define RPC_FC_FP			0x14 /* full pointer */
-/* FC_RP/UP/OP/FP: flags, NdrFcShort(typeofs)/basetype */
-#define RPC_FC_P_ALLOCALLNODES		0x01
-#define RPC_FC_P_DONTFREE		0x02
-#define RPC_FC_P_ONSTACK		0x04 /* [alloced_on_stack] */
-#define RPC_FC_P_SIMPLEPOINTER		0x08 /* [simple_pointer] */
-#define RPC_FC_P_DEREF			0x10
 
 #define RPC_FC_STRUCT			0x15 /* simple structure */
 /* FC_STRUCT: align-1, NdrFcShort(size), fields */
@@ -82,47 +76,12 @@
 /* FC_IP: FC_CONSTANT_IID iid */
 /* FC_IP: FC_PAD correlation */
 
-#define RPC_FC_BIND_EXPLICIT		0x00
 #define RPC_FC_BIND_CONTEXT		0x30
 
 #define RPC_FC_BIND_GENERIC		0x31
 #define RPC_FC_BIND_PRIMITIVE		0x32
 #define RPC_FC_AUTO_HANDLE		0x33
 #define RPC_FC_CALLBACK_HANDLE		0x34
-/* proc header: oiflags, NdrFcLong(rpcflags), NdrFcShort(procnum), NdrFcShort(stacksiz),
- *  oi2 header: NdrFcShort(clientbuf), NdrFcShort(servbuf), oi2flags, parmcount
- * oi2 parameters: NdrFcShort(flags), NdrFcShort(stackofs), NdrFcShort(typeofs)/basetype */
-#define RPC_FC_PROC_OIF_FULLPTR         0x01
-#define RPC_FC_PROC_OIF_RPCSSALLOC      0x02
-#define RPC_FC_PROC_OIF_OBJECT          0x04
-#define RPC_FC_PROC_OIF_RPCFLAGS        0x08
-#define RPC_FC_PROC_OIF_OBJ_V2          0x20
-#define RPC_FC_PROC_OIF_NEWINIT         0x40
-
-#define RPC_FC_PROC_OI2F_SRVMUSTSIZE    0x01
-#define RPC_FC_PROC_OI2F_CLTMUSTSIZE    0x02
-#define RPC_FC_PROC_OI2F_HASRETURN      0x04
-#define RPC_FC_PROC_OI2F_HASPIPES       0x08
-#define RPC_FC_PROC_OI2F_HASASYNCUUID   0x20
-#define RPC_FC_PROC_OI2F_HASEXTS        0x40
-#define RPC_FC_PROC_OI2F_HASASYNCHND    0x80
-#define RPC_FC_PROC_PF_MUSTSIZE         0x0001
-#define RPC_FC_PROC_PF_MUSTFREE         0x0002
-#define RPC_FC_PROC_PF_PIPE             0x0004
-#define RPC_FC_PROC_PF_IN               0x0008
-#define RPC_FC_PROC_PF_OUT              0x0010
-#define RPC_FC_PROC_PF_RETURN           0x0020
-#define RPC_FC_PROC_PF_BASETYPE         0x0040
-#define RPC_FC_PROC_PF_BYVAL            0x0080
-#define RPC_FC_PROC_PF_SIMPLEREF        0x0100
-#define RPC_FC_PROC_PF_DONTFREEINST     0x0200
-#define RPC_FC_PROC_PF_SAVEASYNC        0x0400
-#define RPC_FC_PROC_PF_SRVALLOCSIZE     0xe000 /* in 8 byte units */
-#define RPC_FC_PROC_EXT_NEWCORRDESC     0x01
-#define RPC_FC_PROC_EXT_CLIENTCORRCHECK 0x02
-#define RPC_FC_PROC_EXT_SERVERCORRCHECK 0x04
-#define RPC_FC_PROC_EXT_HASNOTIFY       0x08
-#define RPC_FC_PROC_EXT_HASNOTIFY2      0x10
 
 #define RPC_FC_POINTER			0x36
 
@@ -181,6 +140,50 @@
 
 #define RPC_FC_INT3264			0xb8
 #define RPC_FC_UINT3264			0xb9
+
+/* FC_RP/UP/OP/FP: flags, NdrFcShort(typeofs)/basetype */
+#define RPC_FC_P_ALLOCALLNODES		0x01
+#define RPC_FC_P_DONTFREE		0x02
+#define RPC_FC_P_ONSTACK		0x04 /* [alloced_on_stack] */
+#define RPC_FC_P_SIMPLEPOINTER		0x08 /* [simple_pointer] */
+#define RPC_FC_P_DEREF			0x10
+
+#define RPC_FC_BIND_EXPLICIT		0x00
+
+/* proc header: oiflags, NdrFcLong(rpcflags), NdrFcShort(procnum), NdrFcShort(stacksiz),
+ *  oi2 header: NdrFcShort(clientbuf), NdrFcShort(servbuf), oi2flags, parmcount
+ * oi2 parameters: NdrFcShort(flags), NdrFcShort(stackofs), NdrFcShort(typeofs)/basetype */
+#define RPC_FC_PROC_OIF_FULLPTR         0x01
+#define RPC_FC_PROC_OIF_RPCSSALLOC      0x02
+#define RPC_FC_PROC_OIF_OBJECT          0x04
+#define RPC_FC_PROC_OIF_RPCFLAGS        0x08
+#define RPC_FC_PROC_OIF_OBJ_V2          0x20
+#define RPC_FC_PROC_OIF_NEWINIT         0x40
+
+#define RPC_FC_PROC_OI2F_SRVMUSTSIZE    0x01
+#define RPC_FC_PROC_OI2F_CLTMUSTSIZE    0x02
+#define RPC_FC_PROC_OI2F_HASRETURN      0x04
+#define RPC_FC_PROC_OI2F_HASPIPES       0x08
+#define RPC_FC_PROC_OI2F_HASASYNCUUID   0x20
+#define RPC_FC_PROC_OI2F_HASEXTS        0x40
+#define RPC_FC_PROC_OI2F_HASASYNCHND    0x80
+#define RPC_FC_PROC_PF_MUSTSIZE         0x0001
+#define RPC_FC_PROC_PF_MUSTFREE         0x0002
+#define RPC_FC_PROC_PF_PIPE             0x0004
+#define RPC_FC_PROC_PF_IN               0x0008
+#define RPC_FC_PROC_PF_OUT              0x0010
+#define RPC_FC_PROC_PF_RETURN           0x0020
+#define RPC_FC_PROC_PF_BASETYPE         0x0040
+#define RPC_FC_PROC_PF_BYVAL            0x0080
+#define RPC_FC_PROC_PF_SIMPLEREF        0x0100
+#define RPC_FC_PROC_PF_DONTFREEINST     0x0200
+#define RPC_FC_PROC_PF_SAVEASYNC        0x0400
+#define RPC_FC_PROC_PF_SRVALLOCSIZE     0xe000 /* in 8 byte units */
+#define RPC_FC_PROC_EXT_NEWCORRDESC     0x01
+#define RPC_FC_PROC_EXT_CLIENTCORRCHECK 0x02
+#define RPC_FC_PROC_EXT_SERVERCORRCHECK 0x04
+#define RPC_FC_PROC_EXT_HASNOTIFY       0x08
+#define RPC_FC_PROC_EXT_HASNOTIFY2      0x10
 
 /* correlation types */
 #define RPC_FC_NORMAL_CONFORMANCE		0x00
