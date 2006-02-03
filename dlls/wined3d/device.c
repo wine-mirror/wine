@@ -3576,29 +3576,30 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         return D3DERR_INVALIDCALL;
       }
     case WINED3DRS_POINTSPRITEENABLE         :
+    {
         /* TODO: NV_POINT_SPRITE */
-        if (GL_SUPPORT(ARB_POINT_SPRITE)) {
-            if (Value != FALSE) {
-                /* Doesn't work with GL_POINT_SMOOTH on on my ATI 9600, but then ATI drivers are buggered! */
-                glDisable(GL_POINT_SMOOTH);
-        /* Centre the texture on the vertex */
-                VTRACE("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
-                glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
-        
-                VTRACE("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
-                glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
-                checkGLcall("glTexEnvf(...)");
-                VTRACE("glEnable( GL_POINT_SPRITE_ARB )\n");
-                glEnable( GL_POINT_SPRITE_ARB );
-                checkGLcall("glEnable(...)");
-            } else {
-                VTRACE("glDisable( GL_POINT_SPRITE_ARB )\n");
-                glDisable( GL_POINT_SPRITE_ARB );
-                        checkGLcall("glEnable(...)");
-            }
+        if (!GL_SUPPORT(ARB_POINT_SPRITE)) {
+            TRACE("Point sprites not supported\n");
+            break;
         }
-    break;
-        /* Unhandled yet...! */
+
+        /*
+         * Point sprites are always enabled. Value controls texture coordinate
+         * replacement mode. Must be set true for point sprites to use
+         * textures.
+         */
+        glEnable(GL_POINT_SPRITE_ARB);
+        checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
+
+        if (Value) {
+            glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, TRUE);
+            checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, TRUE)");
+        } else {
+            glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, FALSE);
+            checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, FALSE)");
+        }
+        break;
+    }
     case WINED3DRS_EDGEANTIALIAS             :
     {
         if(Value) {
