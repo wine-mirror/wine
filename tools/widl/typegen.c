@@ -569,6 +569,113 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
     return size;
 }
 
+static int write_pointers(FILE *file, const attr_t *attrs,
+                          const type_t *type, int ptr_level,
+                          const expr_t *array, int level,
+                          size_t *typestring_offset)
+{
+    int pointers_written = 0;
+    const var_t *v;
+
+    /* don't generate a pointer for first-level arrays since we want to
+    * descend into them to write their pointers, not stop here */
+    if ((level == 0 || ptr_level == 0) && is_array_type(attrs, ptr_level, array))
+    {
+        return write_pointers(file, NULL, type, 0, NULL, level + 1, typestring_offset);
+    }
+
+    if (ptr_level != 0)
+    {
+        /* FIXME: only general algorithm implemented, not the actual writing */
+        error("write_pointers: Writing type format string for pointer is unimplemented\n");
+        return 1;
+    }
+
+    /* FIXME: search through all refs for pointers too */
+    while(type_has_ref(type))
+        type = type->ref;
+
+    switch (type->type)
+    {
+        /* note: don't descend into complex structures or unions since these
+         * will always be generated as a separate type */
+        case RPC_FC_STRUCT:
+        case RPC_FC_CVSTRUCT:
+        case RPC_FC_CPSTRUCT:
+        case RPC_FC_CSTRUCT:
+        case RPC_FC_PSTRUCT:
+            v = type->fields;
+            if (!v) break;
+            while (NEXT_LINK(v)) v = NEXT_LINK(v);
+            for (; v; v = PREV_LINK(v))
+                pointers_written += write_pointers(file, v->attrs, v->type,
+                                                   v->ptr_level, v->array,
+                                                   level + 1,
+                                                   typestring_offset);
+
+            break;
+
+        default:
+            /* nothing to do */
+            break;
+    }
+
+    return pointers_written;
+}
+
+static size_t write_pointer_description(FILE *file, const attr_t *attrs,
+                                        const type_t *type, int ptr_level,
+                                        const expr_t *array, int level,
+                                        size_t typestring_offset)
+{
+    size_t size = 0;
+    const var_t *v;
+
+    /* don't generate a pointer for first-level arrays since we want to
+     * descend into them to write their pointers, not stop here */
+    if ((level == 0 || ptr_level == 0) && is_array_type(attrs, ptr_level, array))
+    {
+        return write_pointer_description(file, NULL, type, 0, NULL,
+                                         level + 1, typestring_offset);
+    }
+
+    if (ptr_level != 0)
+    {
+        /* FIXME: only general algorithm implemented, not the actual writing */
+        error("write_pointer_description: Writing pointer description is unimplemented\n");
+        return 0;
+    }
+
+    /* FIXME: search through all refs for pointers too */
+
+    switch (type->type)
+    {
+        /* note: don't descend into complex structures or unions since these
+         * will always be generated as a separate type */
+        case RPC_FC_STRUCT:
+        case RPC_FC_CVSTRUCT:
+        case RPC_FC_CPSTRUCT:
+        case RPC_FC_CSTRUCT:
+        case RPC_FC_PSTRUCT:
+            v = type->fields;
+            if (!v) break;
+            while (NEXT_LINK(v)) v = NEXT_LINK(v);
+            for (; v; v = PREV_LINK(v))
+                size += write_pointer_description(file, v->attrs, v->type,
+                                                  v->ptr_level, v->array,
+                                                  level + 1,
+                                                  typestring_offset);
+
+            break;
+
+        default:
+            /* nothing to do */
+            break;
+    }
+
+    return size;
+}
+
 static size_t write_string_tfs(FILE *file, const attr_t *attrs,
                                const type_t *type, const expr_t *array,
                                const char *name, size_t *typestring_offset)
@@ -635,9 +742,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
     const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
     int has_length = length_is && (length_is->type != EXPR_VOID);
     int has_size = (size_is && (size_is->type != EXPR_VOID)) || !array->is_const;
-    size_t start_offset = *typestring_offset;
-
-    /* FIXME: need to analyse type for pointers */
+    size_t start_offset;
 
     if (array && NEXT_LINK(array)) /* multi-dimensional array */
     {
@@ -646,6 +751,14 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
     }
     else
     {
+        size_t pointer_start_offset = *typestring_offset;
+        int has_pointer = 0;
+
+        if (write_pointers(file, attrs, type, 0, array, 0, typestring_offset) > 0)
+            has_pointer = 1;
+
+        start_offset = *typestring_offset;
+
         if (!has_length && !has_size)
         {
             /* fixed array */
@@ -669,7 +782,13 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
                 *typestring_offset += 6;
             }
 
-            /* FIXME: write out pointer descriptor if necessary */
+            if (has_pointer)
+            {
+                print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
+                print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+                write_pointer_description(file, attrs, type, 0, array, 0, pointer_start_offset);
+                print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+            }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
             print_file(file, 2, "FC_END,\n");
@@ -714,7 +833,13 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
                                                          current_structure,
                                                          length_is);
 
-            /* FIXME: write out pointer descriptor if necessary */
+            if (has_pointer)
+            {
+                print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
+                print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+                write_pointer_description(file, attrs, type, 0, array, 0, pointer_start_offset);
+                print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+            }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
             print_file(file, 2, "FC_END,\n");
@@ -738,7 +863,13 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
                                                          current_structure,
                                                          size_is ? size_is : array);
 
-            /* FIXME: write out pointer descriptor if necessary */
+            if (has_pointer)
+            {
+                print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
+                print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+                write_pointer_description(file, attrs, type, 0, array, 0, pointer_start_offset);
+                print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+            }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
             print_file(file, 2, "FC_END,\n");
@@ -765,7 +896,13 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
                                                          current_structure,
                                                          length_is);
 
-            /* FIXME: write out pointer descriptor if necessary */
+            if (has_pointer)
+            {
+                print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
+                print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+                write_pointer_description(file, attrs, type, 0, array, 0, pointer_start_offset);
+                print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+            }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
             print_file(file, 2, "FC_END,\n");
