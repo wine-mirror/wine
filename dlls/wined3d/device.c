@@ -3525,6 +3525,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         } else {
             TRACE("POINT_PARAMETERS not supported in this version of opengl\n");
         }
+	break;
     }
     case WINED3DRS_COLORWRITEENABLE          :
       {
