@@ -3618,6 +3618,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     TRACE("(%p)->(%d,%ld) Texture wraping not yet supported\n",This, State, Value);
     break;
     case WINED3DRS_MULTISAMPLEANTIALIAS      :
+    {
+        if (!GL_SUPPORT(ARB_MULTISAMPLE)) {
+            TRACE("Multisample antialiasing not supported\n");
+            break;
+        }
+
+        if(Value) {
+            glEnable(GL_MULTISAMPLE_ARB);
+            checkGLcall("glEnable(GL_MULTISAMPLE_ARB)");
+        } else {
+            glDisable(GL_MULTISAMPLE_ARB);
+            checkGLcall("glDisable(GL_MULTISAMPLE_ARB)");
+        }
+        break;
+    }
     case WINED3DRS_MULTISAMPLEMASK           :
     case WINED3DRS_PATCHEDGESTYLE            :
     case WINED3DRS_PATCHSEGMENTS             :
