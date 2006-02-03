@@ -93,27 +93,29 @@ typedef struct ucontext SIGCONTEXT;
 
 #endif /* linux */
 
-#define T_UNKNOWN     (-1)  /* Unknown fault (TRAP_sig not defined) */
-#define T_DIVIDE        0   /* Division by zero exception */
-#define T_TRCTRAP       1   /* Single-step exception */
-#define T_NMI           2   /* NMI interrupt */
-#define T_BPTFLT        3   /* Breakpoint exception */
-#define T_OFLOW         4   /* Overflow exception */
-#define T_BOUND         5   /* Bound range exception */
-#define T_PRIVINFLT     6   /* Invalid opcode exception */
-#define T_DNA           7   /* Device not available exception */
-#define T_DOUBLEFLT     8   /* Double fault exception */
-#define T_FPOPFLT       9   /* Coprocessor segment overrun */
-#define T_TSSFLT        10  /* Invalid TSS exception */
-#define T_SEGNPFLT      11  /* Segment not present exception */
-#define T_STKFLT        12  /* Stack fault */
-#define T_PROTFLT       13  /* General protection fault */
-#define T_PAGEFLT       14  /* Page fault */
-#define T_RESERVED      15  /* Unknown exception */
-#define T_ARITHTRAP     16  /* Floating point exception */
-#define T_ALIGNFLT      17  /* Alignment check exception */
-#define T_MCHK          18  /* Machine check exception */
-#define T_CACHEFLT      19  /* Cache flush exception */
+enum i386_trap_code
+{
+    TRAP_x86_UNKNOWN    = -1,  /* Unknown fault (TRAP_sig not defined) */
+    TRAP_x86_DIVIDE     = 0,   /* Division by zero exception */
+    TRAP_x86_TRCTRAP    = 1,   /* Single-step exception */
+    TRAP_x86_NMI        = 2,   /* NMI interrupt */
+    TRAP_x86_BPTFLT     = 3,   /* Breakpoint exception */
+    TRAP_x86_OFLOW      = 4,   /* Overflow exception */
+    TRAP_x86_BOUND      = 5,   /* Bound range exception */
+    TRAP_x86_PRIVINFLT  = 6,   /* Invalid opcode exception */
+    TRAP_x86_DNA        = 7,   /* Device not available exception */
+    TRAP_x86_DOUBLEFLT  = 8,   /* Double fault exception */
+    TRAP_x86_FPOPFLT    = 9,   /* Coprocessor segment overrun */
+    TRAP_x86_TSSFLT     = 10,  /* Invalid TSS exception */
+    TRAP_x86_SEGNPFLT   = 11,  /* Segment not present exception */
+    TRAP_x86_STKFLT     = 12,  /* Stack fault */
+    TRAP_x86_PROTFLT    = 13,  /* General protection fault */
+    TRAP_x86_PAGEFLT    = 14,  /* Page fault */
+    TRAP_x86_ARITHTRAP  = 16,  /* Floating point exception */
+    TRAP_x86_ALIGNFLT   = 17,  /* Alignment check exception */
+    TRAP_x86_MCHK       = 18,  /* Machine check exception */
+    TRAP_x86_CACHEFLT   = 19   /* Cache flush exception */
+};
 
 typedef int (*wine_signal_handler)(unsigned int sig);
 
@@ -226,25 +228,25 @@ static HANDLER_DEF(segv_handler)
 
     switch(TRAP_sig(HANDLER_CONTEXT))
     {
-    case T_OFLOW:   /* Overflow exception */
+    case TRAP_x86_OFLOW:   /* Overflow exception */
         rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
         break;
-    case T_BOUND:   /* Bound range exception */
+    case TRAP_x86_BOUND:   /* Bound range exception */
         rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
         break;
-    case T_PRIVINFLT:   /* Invalid opcode exception */
+    case TRAP_x86_PRIVINFLT:   /* Invalid opcode exception */
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
-    case T_STKFLT:  /* Stack fault */
+    case TRAP_x86_STKFLT:  /* Stack fault */
         rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
         break;
-    case T_SEGNPFLT:  /* Segment not present exception */
-    case T_PROTFLT:   /* General protection fault */
-    case T_UNKNOWN:   /* Unknown fault code */
+    case TRAP_x86_SEGNPFLT:  /* Segment not present exception */
+    case TRAP_x86_PROTFLT:   /* General protection fault */
+    case TRAP_x86_UNKNOWN:   /* Unknown fault code */
         rec.ExceptionCode = ERROR_sig(HANDLER_CONTEXT) ? EXCEPTION_ACCESS_VIOLATION
                                                        : EXCEPTION_PRIV_INSTRUCTION;
         break;
-    case T_PAGEFLT:  /* Page fault */
+    case TRAP_x86_PAGEFLT:  /* Page fault */
         rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
 #ifdef FAULT_ADDRESS
         rec.NumberParameters = 2;
@@ -252,19 +254,18 @@ static HANDLER_DEF(segv_handler)
         rec.ExceptionInformation[1] = (ULONG_PTR)FAULT_ADDRESS;
 #endif
         break;
-    case T_ALIGNFLT:  /* Alignment check exception */
+    case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
         ERR( "Got unexpected trap %ld\n", TRAP_sig(HANDLER_CONTEXT) );
         /* fall through */
-    case T_NMI:       /* NMI interrupt */
-    case T_DNA:       /* Device not available exception */
-    case T_DOUBLEFLT: /* Double fault exception */
-    case T_TSSFLT:    /* Invalid TSS exception */
-    case T_RESERVED:  /* Unknown exception */
-    case T_MCHK:      /* Machine check exception */
-    case T_CACHEFLT:  /* Cache flush exception */
+    case TRAP_x86_NMI:       /* NMI interrupt */
+    case TRAP_x86_DNA:       /* Device not available exception */
+    case TRAP_x86_DOUBLEFLT: /* Double fault exception */
+    case TRAP_x86_TSSFLT:    /* Invalid TSS exception */
+    case TRAP_x86_MCHK:      /* Machine check exception */
+    case TRAP_x86_CACHEFLT:  /* Cache flush exception */
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
