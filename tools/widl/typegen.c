@@ -577,7 +577,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     int has_size = size_is && (size_is->type != EXPR_VOID);
     size_t start_offset = *typestring_offset;
 
-    if ((type->type != RPC_FC_CHAR) && (type->type != RPC_FC_WCHAR))
+    if ((type->type != RPC_FC_BYTE) && (type->type != RPC_FC_CHAR) && (type->type != RPC_FC_WCHAR))
     {
         error("write_string_tfs: Unimplemented for type 0x%x of name: %s\n", type->type, name);
         return start_offset;
