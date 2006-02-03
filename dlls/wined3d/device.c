@@ -3598,6 +3598,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     break;
         /* Unhandled yet...! */
     case WINED3DRS_EDGEANTIALIAS             :
+    {
+        if(Value) {
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_BLEND);
+            checkGLcall("glEnable(GL_BLEND)");
+            glEnable(GL_LINE_SMOOTH);
+            checkGLcall("glEnable(GL_LINE_SMOOTH)");
+        } else {
+            glDisable(GL_BLEND);
+            checkGLcall("glDisable(GL_BLEND)");
+            glDisable(GL_LINE_SMOOTH);
+            checkGLcall("glDisable(GL_LINE_SMOOTH)");
+        }
+        break;
+    }
     case WINED3DRS_WRAP0                     :
     case WINED3DRS_WRAP1                     :
     case WINED3DRS_WRAP2                     :
