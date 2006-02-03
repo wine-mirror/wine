@@ -497,7 +497,13 @@ LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         break;
 
     case DRV_OPEN:
+    {
+        ICINFO *icinfo = (ICINFO *)lParam2;
+
         TRACE("Opened\n");
+
+        if (icinfo && icinfo->fccType != ICTYPE_VIDEO) return 0;
+
         info = HeapAlloc( GetProcessHeap(), 0, sizeof (Msvideo1Context) );
         if( info )
         {
@@ -506,6 +512,7 @@ LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         }
         r = (LRESULT) info;
         break;
+    }
 
     case ICM_GETINFO:
         r = CRAM_GetInfo( info, (ICINFO *)lParam1, (DWORD)lParam2 );

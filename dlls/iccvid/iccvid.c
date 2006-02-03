@@ -961,7 +961,13 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         return 0;
 
     case DRV_OPEN:
+    {
+        ICINFO *icinfo = (ICINFO *)lParam2;
+
         TRACE("Opened\n");
+
+        if (icinfo && icinfo->fccType != ICTYPE_VIDEO) return 0;
+
         info = ICCVID_Alloc( sizeof (ICCVID_Info), 1 );
         if( info )
         {
@@ -969,6 +975,7 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
             info->cvinfo = NULL;
         }
         return (LRESULT) info;
+    }
 
     case ICM_GETINFO:
         return ICCVID_GetInfo( info, (ICINFO *)lParam1, (DWORD)lParam2 );

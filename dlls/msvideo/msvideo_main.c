@@ -400,7 +400,7 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
     icopen.dwSize		= sizeof(ICOPEN);
     icopen.fccType		= fccType;
     icopen.fccHandler	        = fccHandler;
-    icopen.dwVersion            = 0x00001000; /* FIXME */
+    icopen.dwVersion            = ICVERSION;
     icopen.dwFlags		= wMode;
     icopen.dwError              = 0;
     icopen.pV1Reserved          = NULL;

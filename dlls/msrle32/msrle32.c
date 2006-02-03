@@ -1099,6 +1099,8 @@ static CodecInfo* Open(LPICOPEN icinfo)
     return (LPVOID)0xFFFF0000;
   }
 
+  if (icinfo->fccType != ICTYPE_VIDEO) return NULL;
+
   TRACE("(%p = {%lu,0x%08lX(%4.4s),0x%08lX(%4.4s),0x%lX,0x%lX,...})\n", icinfo,
 	icinfo->dwSize,	icinfo->fccType, (char*)&icinfo->fccType,
 	icinfo->fccHandler, (char*)&icinfo->fccHandler,
