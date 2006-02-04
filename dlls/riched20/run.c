@@ -381,7 +381,7 @@ void ME_GetGraphicsSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize)
   pSize->cy = 64;
 }
 
-int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Paragraph *para, ME_Run *run)
+int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run)
 {
   int fit = 0;
   HGDIOBJ hOldFont;
