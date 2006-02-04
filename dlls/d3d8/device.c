@@ -2987,13 +2987,28 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
         /* Default values */
         GLfloat att[3] = {1.0f, 0.0f, 0.0f};
+        
+        /*
+         * Minium valid point size for OpenGL is 1.0f. For Direct3D it is 0.0f.
+         * This means that OpenGL will clamp really small point sizes to 1.0f.
+         * To correct for this we need to multiply by the scale factor when sizes
+         * are less than 1.0f. scale_factor =  1.0f / point_size.
+         */
+        GLfloat pointSize = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSIZE]);
+        GLfloat scaleFactor;
+        if(pointSize < 1.0f) {
+            scaleFactor = pointSize * pointSize;
+        } else {
+            scaleFactor = 1.0f;
+        }
+        
         if(This->StateBlock->renderstate[D3DRS_POINTSCALEENABLE]) {
             att[0] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_A]) /
-                (This->StateBlock->viewport.Height * This->StateBlock->viewport.Height);
+                (This->StateBlock->viewport.Height * This->StateBlock->viewport.Height * scaleFactor);
             att[1] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_B]) /
-                (This->StateBlock->viewport.Height * This->StateBlock->viewport.Height);
+                (This->StateBlock->viewport.Height * This->StateBlock->viewport.Height * scaleFactor);
             att[2] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_C]) /
-                (This->StateBlock->viewport.Height * This->StateBlock->viewport.Height);
+                (This->StateBlock->viewport.Height * This->StateBlock->viewport.Height * scaleFactor);
         }
 
         if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
