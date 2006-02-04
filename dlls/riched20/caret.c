@@ -312,40 +312,6 @@ void ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor,
   ME_InternalDeleteText(editor, ME_GetCursorOfs(editor, nCursor), nChars);
 }
 
-static const WCHAR wszSpace[] = {' ', 0};
-
-/* FIXME this is temporary, just to have something to test how bad graphics handler is */
-void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor)
-{
-  ME_Cursor *pCursor = &editor->pCursors[nCursor];
-  ME_DisplayItem *pItem = NULL;
-  ME_DisplayItem *pNewRun = NULL;
-  ME_Style *pStyle = ME_GetInsertStyle(editor, nCursor);
-  ME_UndoItem *pUndo;
-  
-  /* FIXME no no no */
-  if (ME_IsSelection(editor))
-    ME_DeleteSelection(editor);
-
-  pUndo = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
-  if (pUndo) {
-    pUndo->nStart = pCursor->nOffset + pCursor->pRun->member.run.nCharOfs + ME_GetParagraph(pCursor->pRun)->member.para.nCharOfs;
-    pUndo->nLen = 1;
-  }
-  if (pCursor->nOffset)
-  {
-    ME_SplitRunSimple(editor, pCursor->pRun, pCursor->nOffset);
-  }
-  pItem = pCursor->pRun;
-  pNewRun = ME_MakeRun(pStyle, ME_MakeStringN(wszSpace, 1), MERF_GRAPHICS);
-  pNewRun->member.run.nCharOfs = pCursor->pRun->member.run.nCharOfs;
-  ME_InsertBefore(pCursor->pRun, pNewRun);
-  ME_PropagateCharOffset(pItem, 1);
-  ME_CheckCharOffsets(editor);
-  ME_SendSelChange(editor);
-}
-
-
 static void
 ME_InternalInsertTextFromCursor(ME_TextEditor *editor, int nCursor,
                                 const WCHAR *str, int len, ME_Style *style,
@@ -358,6 +324,22 @@ ME_InternalInsertTextFromCursor(ME_TextEditor *editor, int nCursor,
   assert(p->pRun->type == diRun);
   
   ME_InsertRunAtCursor(editor, p, style, str, len, flags);
+}
+
+
+/* FIXME this is temporary, just to have something to test how bad graphics handler is */
+void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor)
+{
+  ME_Style *pStyle = ME_GetInsertStyle(editor, nCursor);
+  WCHAR space = ' ';
+  
+  /* FIXME no no no */
+  if (ME_IsSelection(editor))
+    ME_DeleteSelection(editor);
+
+  ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, pStyle,
+                                  MERF_GRAPHICS);
+  ME_SendSelChange(editor);
 }
 
 
