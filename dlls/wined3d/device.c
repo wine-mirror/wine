@@ -3506,13 +3506,28 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
 
         /* Default values */
         GLfloat att[3] = {1.0f, 0.0f, 0.0f};
+        
+        /*
+         * Minium valid point size for OpenGL is 1.0f. For Direct3D it is 0.0f.
+         * This means that OpenGL will clamp really small point sizes to 1.0f.
+         * To correct for this we need to multiply by the scale factor when sizes
+         * are less than 1.0f. scale_factor =  1.0f / point_size.
+         */
+        GLfloat pointSize = *((float*)&This->stateBlock->renderState[D3DRS_POINTSIZE]);
+        GLfloat scaleFactor;
+        if(pointSize < 1.0f) {
+            scaleFactor = pointSize * pointSize;
+        } else {
+            scaleFactor = 1.0f;
+        }
+        
         if(This->stateBlock->renderState[WINED3DRS_POINTSCALEENABLE]) {
             att[0] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_A]) /
-                (This->stateBlock->viewport.Height * This->stateBlock->viewport.Height);
+                (This->stateBlock->viewport.Height * This->stateBlock->viewport.Height * scaleFactor);
             att[1] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_B]) /
-                (This->stateBlock->viewport.Height * This->stateBlock->viewport.Height);
+                (This->stateBlock->viewport.Height * This->stateBlock->viewport.Height * scaleFactor);
             att[2] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_C]) /
-                (This->stateBlock->viewport.Height * This->stateBlock->viewport.Height);
+                (This->stateBlock->viewport.Height * This->stateBlock->viewport.Height * scaleFactor);
         }
 
         if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
