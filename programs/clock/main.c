@@ -29,13 +29,28 @@
 #include "commdlg.h"
 
 #include "main.h"
-#include "license.h"
 #include "winclock.h"
 
 #define INITIAL_WINDOW_SIZE 200
 #define TIMER_ID 1
 
 CLOCK_GLOBALS Globals;
+
+static VOID WineLicense(HWND Wnd)
+{
+  char cap[20], text[1024];
+  LoadString(Globals.hInstance, IDS_LICENSE, text, sizeof text);
+  LoadString(Globals.hInstance, IDS_LICENSE_CAPTION, cap, sizeof cap);
+  MessageBox(Wnd, text, cap, MB_ICONINFORMATION | MB_OK);
+}
+
+static VOID WineWarranty(HWND Wnd)
+{
+  char cap[20], text[1024];
+  LoadString(Globals.hInstance, IDS_WARRANTY, text, sizeof text);
+  LoadString(Globals.hInstance, IDS_WARRANTY_CAPTION, cap, sizeof cap);
+  MessageBox(Wnd, text, cap, MB_ICONEXCLAMATION | MB_OK);
+}
 
 static VOID CLOCK_UpdateMenuCheckmarks(VOID)
 {
