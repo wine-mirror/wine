@@ -290,9 +290,27 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_DisplayItem *para)
   char props[STREAMOUT_BUFFER_SIZE] = "";
   int i;
 
+  if (para->member.para.pCells)
+  {
+    ME_TableCell *cell = para->member.para.pCells;
+    
+    if (!ME_StreamOutPrint(editor, "\\trowd"))
+      return FALSE;
+    do {
+      sprintf(props, "\\cellx%d", cell->nRightBoundary);
+      if (!ME_StreamOutPrint(editor, props))
+        return FALSE;
+      cell = cell->next;
+    } while (cell);
+    props[0] = '\0';
+  }
+  
   /* TODO: Don't emit anything if the last PARAFORMAT2 is inherited */
   if (!ME_StreamOutPrint(editor, "\\pard"))
     return FALSE;
+
+  if (para->member.para.bTable)
+    strcat(props, "\\intbl");
   
   /* TODO: PFM_BORDER. M$ does not emit any keywords for these properties, and
    * when streaming border keywords in, PFM_BORDER is set, but wBorder field is
@@ -634,10 +652,13 @@ ME_StreamOutRTFText(ME_TextEditor *editor, WCHAR *text, LONG nChars)
 static BOOL
 ME_StreamOutRTF(ME_TextEditor *editor, int nStart, int nChars, int dwFormat)
 {
-  ME_DisplayItem *p, *pEnd;
-  int nOffset, nEndLen;
+  ME_DisplayItem *p, *pEnd, *pPara;
+  int nOffset, nEndLen; 
+  
   ME_RunOfsFromCharOfs(editor, nStart, &p, &nOffset);
   ME_RunOfsFromCharOfs(editor, nStart+nChars, &pEnd, &nEndLen);
+  
+  pPara = ME_GetParagraph(p);
   
   if (!ME_StreamOutRTFHeader(editor, dwFormat))
     return FALSE;
@@ -669,6 +690,7 @@ ME_StreamOutRTF(ME_TextEditor *editor, int nStart, int nChars, int dwFormat)
       case diParagraph:
         if (!ME_StreamOutRTFParaProps(editor, p))
           return FALSE;
+        pPara = p;
         break;
       case diRun:
         if (p == pEnd && !nEndLen)
@@ -677,9 +699,18 @@ ME_StreamOutRTF(ME_TextEditor *editor, int nStart, int nChars, int dwFormat)
         /* TODO: emit embedded objects */
         if (p->member.run.nFlags & MERF_GRAPHICS)
           FIXME("embedded objects are not handled\n");
-        if (p->member.run.nFlags & MERF_ENDPARA) {
-          if (!ME_StreamOutPrint(editor, "\r\n\\par"))
+        if (p->member.run.nFlags & MERF_CELL) {
+          if (!ME_StreamOutPrint(editor, "\\cell "))
             return FALSE;
+          nChars--;
+        } else if (p->member.run.nFlags & MERF_ENDPARA) {
+          if (pPara->member.para.bTable) {
+            if (!ME_StreamOutPrint(editor, "\\row \r\n"))
+              return FALSE;
+          } else {
+            if (!ME_StreamOutPrint(editor, "\r\n\\par"))
+              return FALSE;
+          }
           nChars--;
           if (editor->bEmulateVersion10 && nChars)
             nChars--;

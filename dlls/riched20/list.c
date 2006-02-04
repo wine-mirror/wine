@@ -112,6 +112,7 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item) {
 /*  TRACE("type=%s\n", ME_GetDITypeName(item->type)); */
   if (item->type==diParagraph || item->type == diUndoSetParagraphFormat) {
     FREE_OBJ(item->member.para.pFmt);
+    ME_DestroyTableCellList(item);
   }
   if (item->type==diRun || item->type == diUndoInsertRun) {
     ME_ReleaseStyle(item->member.run.style);
@@ -121,6 +122,23 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item) {
     ME_ReleaseStyle(item->member.ustyle);
   }
   FREE_OBJ(item);
+}
+
+void
+ME_DestroyTableCellList(ME_DisplayItem *item)
+{
+  if (item->member.para.pCells)
+  {
+    ME_TableCell *pCell = item->member.para.pCells;
+    ME_TableCell *pNext;
+
+    while (pCell) {
+      pNext = pCell->next;
+      FREE_OBJ(pCell);
+      pCell = pNext;
+    }
+    item->member.para.pCells = NULL;
+  }
 }
 
 ME_DisplayItem *ME_MakeDI(ME_DIType type) {

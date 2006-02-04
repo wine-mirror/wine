@@ -312,7 +312,7 @@ void ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor,
   ME_InternalDeleteText(editor, ME_GetCursorOfs(editor, nCursor), nChars);
 }
 
-static void
+static ME_DisplayItem *
 ME_InternalInsertTextFromCursor(ME_TextEditor *editor, int nCursor,
                                 const WCHAR *str, int len, ME_Style *style,
                                 int flags)
@@ -323,7 +323,7 @@ ME_InternalInsertTextFromCursor(ME_TextEditor *editor, int nCursor,
   
   assert(p->pRun->type == diRun);
   
-  ME_InsertRunAtCursor(editor, p, style, str, len, flags);
+  return ME_InsertRunAtCursor(editor, p, style, str, len, flags);
 }
 
 
@@ -340,6 +340,32 @@ void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor)
   ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, pStyle,
                                   MERF_GRAPHICS);
   ME_SendSelChange(editor);
+}
+
+
+void
+ME_InsertTableCellFromCursor(ME_TextEditor *editor, int nCursor)
+{
+  WCHAR tab = '\t';
+  ME_DisplayItem *p, *run;
+  ME_Style *pStyle = ME_GetInsertStyle(editor, nCursor);
+  
+  p = ME_InternalInsertTextFromCursor(editor, nCursor, &tab, 1, pStyle,
+                                      MERF_CELL);
+  run = p;
+  while ((run = ME_FindItemBack(run, diRunOrParagraph))->type == diRun)
+  {
+    if (run->member.run.nFlags & MERF_CELL)
+    {
+      assert(run->member.run.pCell->next);
+      p->member.run.pCell = run->member.run.pCell->next;
+      return;
+    }
+  }
+  assert(run->type == diParagraph);
+  assert(run->member.para.bTable);
+  assert(run->member.para.pCells);
+  p->member.run.pCell = run->member.para.pCells;
 }
 
 

@@ -414,12 +414,24 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   
   switch(info->rtfMinor)
   {
-  case rtfParDef: /* I'm not 100% sure what does it do, but I guess it restores default paragraph attributes */
+  case rtfParDef: /* restores default paragraph attributes */
     fmt.dwMask = PFM_ALIGNMENT | PFM_TABSTOPS | PFM_OFFSET | PFM_STARTINDENT;
     fmt.wAlignment = PFA_LEFT;
     fmt.cTabCount = 0;
     fmt.dxOffset = fmt.dxStartIndent = 0;
+    RTFFlushOutputBuffer(info);
+    ME_GetParagraph(info->editor->pCursors[0].pRun)->member.para.bTable = FALSE;
     break;
+  case rtfInTable:
+  {
+    ME_DisplayItem *para;
+    
+    RTFFlushOutputBuffer(info);
+    para = ME_GetParagraph(info->editor->pCursors[0].pRun);
+    assert(para->member.para.pCells);
+    para->member.para.bTable = TRUE;
+    return;
+  }
   case rtfFirstIndent:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     fmt.dwMask = PFM_STARTINDENT | PFM_OFFSET;
@@ -463,6 +475,38 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     RTFFlushOutputBuffer(info);
     /* FIXME too slow ? how come ?*/
     ME_SetSelectionParaFormat(info->editor, &fmt);
+  }
+}
+
+static void ME_RTFTblAttrHook(RTF_Info *info)
+{
+  ME_DisplayItem *para;
+  
+  switch (info->rtfMinor)
+  {
+    case rtfRowDef:
+      RTFFlushOutputBuffer(info);
+      para = ME_GetParagraph(info->editor->pCursors[0].pRun);
+      
+      para->member.para.pCells = ALLOC_OBJ(ME_TableCell);
+      para->member.para.pCells->nRightBoundary = 0;
+      para->member.para.pCells->next = NULL;
+      para->member.para.pLastCell = para->member.para.pCells;
+      break;
+    case rtfCellPos:
+      RTFFlushOutputBuffer(info);
+      para = ME_GetParagraph(info->editor->pCursors[0].pRun);
+      
+      if (para->member.para.pLastCell->nRightBoundary)
+      {
+        ME_TableCell *pCell = ALLOC_OBJ(ME_TableCell);
+        
+        pCell->next = NULL;
+        para->member.para.pLastCell->next = pCell;
+        para->member.para.pLastCell = pCell;
+      }
+      para->member.para.pLastCell->nRightBoundary = info->rtfParam;
+      break;
   }
 }
 
@@ -513,6 +557,15 @@ static void ME_RTFReadHook(RTF_Info *info) {
         case rtfParAttr:
           ME_RTFParAttrHook(info);
           break;
+        case rtfTblAttr:
+          ME_RTFTblAttrHook(info);
+          break;
+        case rtfSpecialChar:
+          if (info->rtfMinor == rtfCell)
+          {
+            RTFFlushOutputBuffer(info);
+            ME_InsertTableCellFromCursor(info->editor, 0);
+          }
       }
       break;
   }

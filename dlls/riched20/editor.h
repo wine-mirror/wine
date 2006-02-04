@@ -56,6 +56,7 @@ ME_DisplayItem *ME_FindItemFwdOrHere(ME_DisplayItem *di, ME_DIType nTypeOrClass)
 BOOL ME_DITypesEqual(ME_DIType type, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_MakeDI(ME_DIType type);
 void ME_DestroyDisplayItem(ME_DisplayItem *item);
+void ME_DestroyTableCellList(ME_DisplayItem *item);
 void ME_DumpDocument(ME_TextBuffer *buffer);
 const char *ME_GetDITypeName(ME_DIType type);
 
@@ -170,6 +171,7 @@ BOOL ME_IsSelection(ME_TextEditor *editor);
 void ME_DeleteSelection(ME_TextEditor *editor);
 void ME_SendSelChange(ME_TextEditor *editor);
 void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor);
+void ME_InsertTableCellFromCursor(ME_TextEditor *editor, int nCursor);
 void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars);
 int ME_GetTextLength(ME_TextEditor *editor);
 int ME_GetTextLengthEx(ME_TextEditor *editor, GETTEXTLENGTHEX *how);

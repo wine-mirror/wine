@@ -4,6 +4,7 @@
  * Character/pixel conversions.
  *
  * Copyright 2004 by Krzysztof Foltman
+ * Copyright 2006 by Phil Krylov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -256,7 +257,7 @@ ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_DisplayItem *item, i
   int i;
   assert(nVChar > 0 && nVChar < ME_StrVLen(run->strText));
   assert(item->type == diRun);
-  assert(!(item->member.run.nFlags & (MERF_GRAPHICS | MERF_TAB)));
+  assert(!(item->member.run.nFlags & MERF_NONTEXT));
   assert(item->member.run.nCharOfs != -1);
 
   item2 = ME_MakeRun(run->style,
@@ -390,7 +391,7 @@ int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run)
   if (!run->strText->nLen)
     return 0;
 
-  if (run->nFlags & MERF_TAB)
+  if (run->nFlags & (MERF_TAB | MERF_CELL))
   {
     if (cx < run->nWidth/2)
       return 0;
@@ -422,7 +423,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
   if (!run->strText->nLen)
     return 0;
 
-  if (run->nFlags & MERF_TAB)
+  if (run->nFlags & (MERF_TAB | MERF_CELL))
   {
     if (cx < run->nWidth/2)
       return 0;
@@ -494,7 +495,7 @@ SIZE ME_GetRunSizeCommon(ME_Context *c, ME_Paragraph *para, ME_Run *run, int nLe
     nLen = nMaxLen;
 
   /* FIXME the following call also ensures that TEXTMETRIC structure is filled
-   * this is wasteful for graphics and TAB runs, but that shouldn't matter
+   * this is wasteful for MERF_NONTEXT runs, but that shouldn't matter
    * in practice
    */
   ME_GetTextExtent(c, run->strText->szData, nLen, run->style, &size);
@@ -534,7 +535,13 @@ SIZE ME_GetRunSizeCommon(ME_Context *c, ME_Paragraph *para, ME_Run *run, int nLe
     /* descent is unchanged */
     return size;
   }
+  if (run->nFlags & MERF_CELL)
+  {
+    int lpsx = GetDeviceCaps(c->hDC, LOGPIXELSX);
 
+    size.cx = run->pCell->nRightBoundary * lpsx / 1440 - run->pt.x;
+    return size;
+  }
   return size;
 }
 

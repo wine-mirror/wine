@@ -2,6 +2,7 @@
  * RichEdit - functions working on paragraphs of text (diParagraph).
  * 
  * Copyright 2004 by Krzysztof Foltman
+ * Copyright 2006 by Phil Krylov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -133,6 +134,17 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   new_para->member.para.nLeftMargin = run_para->member.para.nLeftMargin;
   new_para->member.para.nRightMargin = run_para->member.para.nRightMargin;
   new_para->member.para.nFirstMargin = run_para->member.para.nFirstMargin;
+
+  new_para->member.para.bTable = run_para->member.para.bTable;
+  new_para->member.para.pCells = NULL;
+
+  /* fix paragraph properties. FIXME only needed when called from RTF reader */
+  if (run_para->member.para.pCells && !run_para->member.para.bTable)
+  {
+    /* Paragraph does not have an \intbl keyword, so any table definition
+     * stored is invalid */
+    ME_DestroyTableCellList(run_para);
+  }
   
   /* insert paragraph into paragraph double linked list */
   new_para->member.para.prev_para = run_para;

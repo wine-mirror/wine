@@ -238,7 +238,7 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
                          start->member.row.nHeight);
           
   /* you can always comment it out if you need visible paragraph marks */
-  if (run->nFlags & (MERF_ENDPARA|MERF_TAB)) 
+  if (run->nFlags & (MERF_ENDPARA | MERF_TAB | MERF_CELL)) 
     return;
 
   if (run->nFlags & MERF_GRAPHICS)

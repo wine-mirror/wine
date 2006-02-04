@@ -2,6 +2,7 @@
  * WINE RTF file reader
  *
  * Portions Copyright 2004 Mike McCormack for CodeWeavers
+ * Portions Copyright 2006 by Phil Krylov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2651,9 +2652,6 @@ static void SpecialChar (RTF_Info *info)
 	case rtfLine:
 	case rtfPar:
 		RTFPutUnicodeChar (info, '\n');
-		break;
-	case rtfCell:
-                RTFPutUnicodeChar (info, ' ');	/* make sure cells are separated */
 		break;
 	case rtfNoBrkSpace:
 		RTFPutUnicodeChar (info, 0x00A0);
