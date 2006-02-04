@@ -20,17 +20,71 @@
  *
  */
 
+#include "config.h"
+
 #define NONAMELESSUNION
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commdlg.h>
+#include <wine/library.h>
 #include <wine/debug.h>
 #include <stdio.h>
+#include <dirent.h>
 #include <assert.h>
+#include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "winecfg.h"
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
+
+/* dlls that shouldn't be configured anything other than builtin; list must be sorted*/
+static const char * const builtin_only[] =
+{
+    "advapi32",
+    "capi2032",
+    "dbghelp",
+    "ddraw",
+    "gdi32",
+    "glu32",
+    "glut32",
+    "icmp",
+    "iphlpapi",
+    "joystick.drv",
+    "kernel32",
+    "mswsock",
+    "ntdll",
+    "opengl32",
+    "stdole2.tlb",
+    "stdole32.tlb",
+    "twain_32",
+    "unicows",
+    "user32",
+    "vdmdbg",
+    "w32skrnl",
+    "winealsa.drv",
+    "winearts.drv",
+    "wineaudioio.drv",
+    "wined3d",
+    "winedos",
+    "wineesd.drv",
+    "winejack.drv",
+    "winemp3.acm",
+    "winenas.drv",
+    "wineoss.drv",
+    "wineps",
+    "wineps.drv",
+    "winex11.drv",
+    "winmm",
+    "wintab32",
+    "wnaspi32",
+    "wow32",
+    "ws2_32",
+    "wsock32",
+};
 
 enum dllmode
 {
@@ -126,6 +180,21 @@ static DWORD mode_to_id(enum dllmode mode)
     }
 }
 
+/* helper for is_builtin_only */
+static int compare_dll( const void *ptr1, const void *ptr2 )
+{
+    const char * const *name1 = ptr1;
+    const char * const *name2 = ptr2;
+    return strcmp( *name1, *name2 );
+}
+
+/* check if dll is recommended as builtin only */
+static inline int is_builtin_only( const char *name )
+{
+    return bsearch( &name, builtin_only, sizeof(builtin_only)/sizeof(builtin_only[0]),
+                    sizeof(builtin_only[0]), compare_dll ) != NULL;
+}
+
 static void set_controls_from_selection(HWND dialog)
 {
     /* FIXME: display/update some information about the selected dll (purpose, recommended loadorder) maybe? */
@@ -146,6 +215,80 @@ static void clear_settings(HWND dialog)
         
         HeapFree(GetProcessHeap(), 0, dll->name);
         HeapFree(GetProcessHeap(), 0, dll);
+    }
+}
+
+/* check if a given dll is 16-bit */
+static int is_16bit_dll( const char *dir, const char *name )
+{
+    char buffer[64];
+    int res;
+    size_t len = strlen(dir) + strlen(name) + 2;
+    char *path = HeapAlloc( GetProcessHeap(), 0, len );
+
+    strcpy( path, dir );
+    strcat( path, "/" );
+    strcat( path, name );
+    res = readlink( path, buffer, sizeof(buffer) );
+    HeapFree( GetProcessHeap(), 0, path );
+
+    if (res == -1) return 0;  /* not a symlink */
+    if (res < 4 || res >= sizeof(buffer)) return 0;
+    buffer[res] = 0;
+    if (strchr( buffer, '/' )) return 0;  /* contains a path, not valid */
+    if (strcmp( buffer + res - 3, ".so" )) return 0;  /* does not end in .so, not valid */
+    return 1;
+}
+
+/* load the list of available libraries from a given dir */
+static void load_library_list_from_dir( HWND dialog, const char *dir_path )
+{
+    char name[256];
+    struct dirent *de;
+    DIR *dir = opendir( dir_path );
+
+    if (!dir) return;
+
+    while ((de = readdir( dir )))
+    {
+        size_t len = strlen(de->d_name);
+        if (len > sizeof(name) || len <= 7 || strcmp( de->d_name + len - 7, ".dll.so")) continue;
+        if (is_16bit_dll( dir_path, de->d_name )) continue;  /* 16-bit dlls can't be configured */
+        len -= 7;
+        memcpy( name, de->d_name, len );
+        name[len] = 0;
+        /* skip dlls that should always be builtin */
+        if (is_builtin_only( name )) continue;
+        SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)name );
+    }
+    closedir( dir );
+}
+
+/* load the list of available libraries */
+static void load_library_list( HWND dialog )
+{
+    unsigned int i = 0;
+    const char *path;
+    char item1[256], item2[256];
+
+    while ((path = wine_dll_enum_load_path( i++ )))
+        load_library_list_from_dir( dialog, path );
+
+    /* get rid of duplicate entries */
+
+    SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_GETLBTEXT, 0, (LPARAM)item1 );
+    i = 1;
+    while (SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_GETLBTEXT, i, (LPARAM)item2 ) >= 0)
+    {
+        if (!strcmp( item1, item2 ))
+        {
+            SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_DELETESTRING, i, 0 );
+        }
+        else
+        {
+            strcpy( item1, item2 );
+            i++;
+        }
     }
 }
 
@@ -218,6 +361,7 @@ static void init_libsheet(HWND dialog)
 {
     /* clear the add dll controls  */
     SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_SETTEXT, 1, (LPARAM) "");
+    load_library_list( dialog );
     disable(IDC_DLLS_ADDDLL);
 }
 
@@ -414,7 +558,10 @@ LibrariesDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
                 case LBN_SELCHANGE:
-                        set_controls_from_selection(hDlg);
+                        if(LOWORD(wParam) == IDC_DLLCOMBO)
+                            on_add_combo_change(hDlg);
+                        else
+                            set_controls_from_selection(hDlg);
                         break;
 		}
 		break;
