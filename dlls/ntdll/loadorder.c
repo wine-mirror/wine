@@ -364,24 +364,62 @@ static inline BOOL get_default_load_order( const WCHAR *module, enum loadorder_t
         return FALSE;
     lo[0] = LOADORDER_BI;
     lo[1] = LOADORDER_INVALID;
+    TRACE( "got compiled-in default %s for %s\n", debugstr_loadorder(lo), debugstr_w(module) );
     return TRUE;
 }
 
 
 /***************************************************************************
- *	open_app_key
+ *	get_standard_key
  *
- * Open the registry key to the app-specific DllOverrides list.
+ * Return a handle to the standard DllOverrides registry section.
  */
-static HANDLE open_app_key( const WCHAR *app_name, const WCHAR *module )
+static HANDLE get_standard_key(void)
+{
+    static const WCHAR DllOverridesW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                          'D','l','l','O','v','e','r','r','i','d','e','s',0};
+    static HANDLE std_key = (HANDLE)-1;
+
+    if (std_key == (HANDLE)-1)
+    {
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING nameW;
+        HANDLE root;
+
+        RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = root;
+        attr.ObjectName = &nameW;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        RtlInitUnicodeString( &nameW, DllOverridesW );
+
+        /* @@ Wine registry key: HKCU\Software\Wine\DllOverrides */
+        if (NtOpenKey( &std_key, KEY_ALL_ACCESS, &attr )) std_key = 0;
+        NtClose( root );
+    }
+    return std_key;
+}
+
+
+/***************************************************************************
+ *	get_app_key
+ *
+ * Get the registry key for the app-specific DllOverrides list.
+ */
+static HANDLE get_app_key( const WCHAR *app_name )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HANDLE root, hkey;
+    HANDLE root;
     WCHAR *str;
     static const WCHAR AppDefaultsW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                          'A','p','p','D','e','f','a','u','l','t','s','\\',0};
     static const WCHAR DllOverridesW[] = {'\\','D','l','l','O','v','e','r','r','i','d','e','s',0};
+    static HANDLE app_key = (HANDLE)-1;
+
+    if (app_key != (HANDLE)-1) return app_key;
 
     str = RtlAllocateHeap( GetProcessHeap(), 0,
                            sizeof(AppDefaultsW) + sizeof(DllOverridesW) +
@@ -390,8 +428,6 @@ static HANDLE open_app_key( const WCHAR *app_name, const WCHAR *module )
     strcpyW( str, AppDefaultsW );
     strcatW( str, app_name );
     strcatW( str, DllOverridesW );
-
-    TRACE( "searching %s in %s\n", debugstr_w(module), debugstr_w(str) );
 
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
@@ -403,10 +439,10 @@ static HANDLE open_app_key( const WCHAR *app_name, const WCHAR *module )
     RtlInitUnicodeString( &nameW, str );
 
     /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\DllOverrides */
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) hkey = 0;
+    if (NtOpenKey( &app_key, KEY_ALL_ACCESS, &attr )) app_key = 0;
     NtClose( root );
     RtlFreeHeap( GetProcessHeap(), 0, str );
-    return hkey;
+    return app_key;
 }
 
 
@@ -461,6 +497,41 @@ static BOOL get_registry_value( HANDLE hkey, const WCHAR *module, enum loadorder
 
 
 /***************************************************************************
+ *	get_load_order_value
+ *
+ * Get the load order for the exact specified module string, looking in:
+ * 1. The WINEDLLOVERRIDES environment variable
+ * 2. The per-application DllOverrides key
+ * 3. The standard DllOverrides key
+ */
+static BOOL get_load_order_value( HANDLE std_key, HANDLE app_key, const WCHAR *module,
+                                  enum loadorder_type loadorder[] )
+{
+    if (get_env_load_order( module, loadorder ))
+    {
+        TRACE( "got environment %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_w(module) );
+        return TRUE;
+    }
+
+    if (app_key && get_registry_value( app_key, module, loadorder ))
+    {
+        TRACE( "got app defaults %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_w(module) );
+        return TRUE;
+    }
+
+    if (std_key && get_registry_value( std_key, module, loadorder ))
+    {
+        TRACE( "got standard key %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_w(module) );
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+/***************************************************************************
  *	MODULE_GetLoadOrderW	(internal)
  *
  * Return the loadorder of a module.
@@ -469,17 +540,16 @@ static BOOL get_registry_value( HANDLE hkey, const WCHAR *module, enum loadorder
 void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_name,
                           const WCHAR *path )
 {
-    static const WCHAR DllOverridesW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                          'D','l','l','O','v','e','r','r','i','d','e','s',0};
+    static const WCHAR wildcardW[] = {'*',0};
 
-    static HANDLE std_key = (HANDLE)-1;  /* key to standard section, cached */
-
-    HANDLE app_key = 0;
+    HANDLE std_key, app_key = 0;
     WCHAR *module, *basename;
     UNICODE_STRING path_str;
     int len;
 
     if (!init_done) init_load_order();
+    std_key = get_standard_key();
+    if (app_name) app_key = get_app_key( app_name );
 
     TRACE("looking for %s\n", debugstr_w(path));
 
@@ -498,145 +568,30 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
     if (!(len = strlenW(path))) return;
     if (!(module = RtlAllocateHeap( GetProcessHeap(), 0, (len + 2) * sizeof(WCHAR) ))) return;
     strcpyW( module+1, path );  /* reserve module[0] for the wildcard char */
+    basename = (WCHAR *)get_basename( module+1 );
 
     if (len >= 4) remove_dll_ext( module + 1 + len - 4 );
 
-    /* check environment variable first */
-    if (get_env_load_order( module+1, loadorder ))
-    {
-        TRACE( "got environment %s for %s\n",
-               debugstr_loadorder(loadorder), debugstr_w(path) );
+    /* first explicit module name */
+    if (get_load_order_value( std_key, app_key, module+1, loadorder ))
         goto done;
-    }
 
-    /* then explicit module name in AppDefaults */
-    if (app_name)
-    {
-        app_key = open_app_key( app_name, module+1 );
-        if (app_key && get_registry_value( app_key, module+1, loadorder ))
-        {
-            TRACE( "got app defaults %s for %s\n",
-                   debugstr_loadorder(loadorder), debugstr_w(path) );
-            goto done;
-        }
-    }
-
-    /* then explicit module name in standard section */
-    if (std_key == (HANDLE)-1)
-    {
-        OBJECT_ATTRIBUTES attr;
-        UNICODE_STRING nameW;
-        HANDLE root;
-
-        RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
-        attr.Length = sizeof(attr);
-        attr.RootDirectory = root;
-        attr.ObjectName = &nameW;
-        attr.Attributes = 0;
-        attr.SecurityDescriptor = NULL;
-        attr.SecurityQualityOfService = NULL;
-        RtlInitUnicodeString( &nameW, DllOverridesW );
-
-        /* @@ Wine registry key: HKCU\Software\Wine\DllOverrides */
-        if (NtOpenKey( &std_key, KEY_ALL_ACCESS, &attr )) std_key = 0;
-        NtClose( root );
-    }
-
-    if (std_key && get_registry_value( std_key, module+1, loadorder ))
-    {
-        TRACE( "got standard entry %s for %s\n",
-               debugstr_loadorder(loadorder), debugstr_w(path) );
-        goto done;
-    }
-
-    /* then module basename preceded by '*' in environment */
-    basename = (WCHAR *)get_basename( module+1 );
+    /* then module basename preceded by '*' */
     basename[-1] = '*';
-    if (get_env_load_order( basename-1, loadorder ))
-    {
-        TRACE( "got environment basename %s for %s\n",
-               debugstr_loadorder(loadorder), debugstr_w(path) );
+    if (get_load_order_value( std_key, app_key, basename-1, loadorder ))
         goto done;
-    }
 
-    /* then module basename preceded by '*' in AppDefaults */
-    if (app_key && get_registry_value( app_key, basename-1, loadorder ))
-    {
-        TRACE( "got app defaults basename %s for %s\n",
-               debugstr_loadorder(loadorder), debugstr_w(path) );
+    /* then module basename without '*' (only if explicit path) */
+    if (basename != module+1 && get_load_order_value( std_key, app_key, basename, loadorder ))
         goto done;
-    }
 
-    /* then module name preceded by '*' in standard section */
-    if (std_key && get_registry_value( std_key, basename-1, loadorder ))
-    {
-        TRACE( "got standard base name %s for %s\n",
-               debugstr_loadorder(loadorder), debugstr_w(path) );
+    /* then compiled-in defaults */
+    if (get_default_load_order( basename, loadorder ))
         goto done;
-    }
 
-    if (basename == module+1)  /* module doesn't contain a path */
-    {
-        static const WCHAR wildcardW[] = {'*',0};
-
-        /* then base name matching compiled-in defaults */
-        if (get_default_load_order( basename, loadorder ))
-        {
-            TRACE( "got compiled-in default %s for %s\n",
-                   debugstr_loadorder(loadorder), debugstr_w(path) );
-            goto done;
-        }
-
-        /* then wildcard entry in AppDefaults (only if no explicit path) */
-        if (app_key && get_registry_value( app_key, wildcardW, loadorder ))
-        {
-            TRACE( "got app defaults wildcard %s for %s\n",
-                   debugstr_loadorder(loadorder), debugstr_w(path) );
-            goto done;
-        }
-
-        /* then wildcard entry in standard section (only if no explicit path) */
-        if (std_key && get_registry_value( std_key, wildcardW, loadorder ))
-        {
-            TRACE( "got standard wildcard %s for %s\n",
-                   debugstr_loadorder(loadorder), debugstr_w(path) );
-            goto done;
-        }
-    }
-    else  /* module contains an explicit path */
-    {
-        /* then base name without '*' in environment */
-        if (get_env_load_order( basename, loadorder ))
-        {
-            TRACE( "got environment basename %s for %s\n",
-                   debugstr_loadorder(loadorder), debugstr_w(path) );
-            goto done;
-        }
-
-        /* then base name without '*' in AppDefaults */
-        if (app_key && get_registry_value( app_key, basename, loadorder ))
-        {
-            TRACE( "got basename app defaults %s for %s\n",
-                   debugstr_loadorder(loadorder), debugstr_w(path) );
-            goto done;
-        }
-
-        /* then base name without '*' in standard section */
-        if (std_key && get_registry_value( std_key, basename, loadorder ))
-        {
-            TRACE( "got basename standard entry %s for %s\n",
-                   debugstr_loadorder(loadorder), debugstr_w(path) );
-            goto done;
-        }
-
-        /* then base name matching compiled-in defaults */
-        if (get_default_load_order( basename, loadorder ))
-        {
-            TRACE( "got compiled-in default %s for %s\n",
-                   debugstr_loadorder(loadorder), debugstr_w(path) );
-            goto done;
-        }
-    }
+    /* then wildcard entry (only if no explicit path) */
+    if (basename == module+1 && get_load_order_value( std_key, app_key, wildcardW, loadorder ))
+        goto done;
 
     /* and last the hard-coded default */
     memcpy( loadorder, default_loadorder, sizeof(default_loadorder) );
@@ -644,6 +599,5 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
            debugstr_loadorder(loadorder), debugstr_w(path) );
 
  done:
-    if (app_key) NtClose( app_key );
     RtlFreeHeap( GetProcessHeap(), 0, module );
 }
