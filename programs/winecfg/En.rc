@@ -204,6 +204,16 @@ BEGIN
     IDS_AUDIO_MISSING       "There is no audio driver currently specified in the registry.\n\nA recommended driver has been selected for you.\nYou can use this driver or select another driver if available.\n\nYou must click Apply for the selection to take effect."
 END
 
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "Changing the load order of this library is not recommended.\nAre you sure you want to do this?"
+    IDS_DLL_WARNING_CAPTION "Warning: system library"
+    IDS_DLL_NATIVE          "native"
+    IDS_DLL_BUILTIN         "builtin"
+    IDS_DLL_NATIVE_BUILTIN  "native, builtin"
+    IDS_DLL_BUILTIN_NATIVE  "builtin, native"
+    IDS_DLL_DISABLED        "disabled"
+END
 
 /****************************************************************/
 /* English neutral resources

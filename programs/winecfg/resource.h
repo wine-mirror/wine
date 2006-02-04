@@ -76,6 +76,13 @@
 #define IDC_DLLS_REMOVEDLL              8003
 #define IDC_DLLCOMBO                    8004
 #define IDD_LOADORDER                   8005
+#define IDS_DLL_WARNING                 8010
+#define IDS_DLL_WARNING_CAPTION         8011
+#define IDS_DLL_NATIVE                  8012
+#define IDS_DLL_BUILTIN                 8013
+#define IDS_DLL_NATIVE_BUILTIN          8014
+#define IDS_DLL_BUILTIN_NATIVE          8015
+#define IDS_DLL_DISABLED                8016
 
 /* drive editing */
 #define IDC_LIST_DRIVES                 1042

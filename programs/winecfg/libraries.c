@@ -148,8 +148,20 @@ static const char* mode_to_string(enum dllmode mode)
 /* Convert a dllmode to a pretty string for display. TODO: use translations. */
 static const char* mode_to_label(enum dllmode mode)
 {
-    WINE_FIXME("translate me\n");
-    return mode_to_string(mode);
+    static char buffer[256];
+    UINT id = 0;
+
+    switch( mode )
+    {
+    case NATIVE: id = IDS_DLL_NATIVE; break;
+    case BUILTIN: id = IDS_DLL_BUILTIN; break;
+    case NATIVE_BUILTIN: id = IDS_DLL_NATIVE_BUILTIN; break;
+    case BUILTIN_NATIVE: id = IDS_DLL_BUILTIN_NATIVE; break;
+    case DISABLE: id = IDS_DLL_DISABLED; break;
+    default: assert(FALSE);
+    }
+    if (!LoadStringA( GetModuleHandleA(NULL), id, buffer, sizeof(buffer) )) buffer[0] = 0;
+    return buffer;
 }
 
 /* Convert a control id (IDC_ constant) to a dllmode */
@@ -417,6 +429,30 @@ static void on_add_click(HWND dialog)
             *ptr = '\0';
         }
     }
+
+    /* check if dll is in the builtin-only list */
+    if (!(ptr = strrchr( buffer, '\\' )))
+    {
+        ptr = buffer;
+        if (*ptr == '*') ptr++;
+    }
+    else ptr++;
+    if (is_builtin_only( ptr ))
+    {
+        MSGBOXPARAMSA params;
+        params.cbSize = sizeof(params);
+        params.hwndOwner = dialog;
+        params.hInstance = GetModuleHandleA( NULL );
+        params.lpszText = MAKEINTRESOURCEA( IDS_DLL_WARNING );
+        params.lpszCaption = MAKEINTRESOURCEA( IDS_DLL_WARNING_CAPTION );
+        params.dwStyle = MB_ICONWARNING | MB_YESNO;
+        params.lpszIcon = NULL;
+        params.dwContextHelpId = 0;
+        params.lpfnMsgBoxCallback = NULL;
+        params.dwLanguageId = 0;
+        if (MessageBoxIndirectA( &params ) != IDYES) return;
+    }
+
     SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_SETTEXT, 0, (LPARAM) "");
     disable(IDC_DLLS_ADDDLL);
     
