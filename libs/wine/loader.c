@@ -492,6 +492,18 @@ void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
 
 
 /***********************************************************************
+ *           wine_dll_enum_load_path
+ *
+ * Enumerate the dll load path.
+ */
+const char *wine_dll_enum_load_path( unsigned int index )
+{
+    if (index >= nb_dll_paths) return NULL;
+    return dll_paths[index];
+}
+
+
+/***********************************************************************
  *           wine_dll_get_owner
  *
  * Retrieve the name of the 32-bit owner dll for a 16-bit dll.

@@ -16,6 +16,7 @@ WINE_1.0
     wine_dbgstr_an;
     wine_dbgstr_wn;
     wine_dlclose;
+    wine_dll_enum_load_path;
     wine_dll_get_owner;
     wine_dll_load;
     wine_dll_load_main_exe;
