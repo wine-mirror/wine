@@ -324,7 +324,8 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
   
   pUI = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
   if (pUI) {
-    pUI->nStart = cursor->pRun->member.run.nCharOfs;
+    pUI->nStart = (ME_GetParagraph(cursor->pRun)->member.para.nCharOfs
+                   + cursor->pRun->member.run.nCharOfs);
     pUI->nLen = len;
   }
   
