@@ -3095,12 +3095,18 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             break;
         }
 
+        /*
+         * Point sprites are always enabled. Value controls texture coordinate
+         * replacement mode. Must be set true for point sprites to use
+         * textures.
+         */
+        glEnable(GL_POINT_SPRITE_ARB);
+        checkGLcall("glEnable GL_POINT_SPRITE_ARB");
+
         if (Value) {
-            glEnable(GL_POINT_SPRITE_ARB);
-            checkGLcall("glEnable GL_POINT_SPRITE_ARB");
+            glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, TRUE);
         } else {
-            glDisable(GL_POINT_SPRITE_ARB);
-            checkGLcall("glDisable GL_POINT_SPRITE_ARB");
+            glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, FALSE);
         }
         break;
     }
