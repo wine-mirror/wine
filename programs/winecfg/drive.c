@@ -73,7 +73,7 @@ long drive_available_mask(char letter)
   for(i = 0; i < 26; i++)
   {
       if (!drives[i].in_use) continue;
-      result |= (1 << (toupper(drives[i].letter) - 'A'));
+      result |= (1 << (letter_to_index(drives[i].letter)));
   }
 
   result = ~result;
