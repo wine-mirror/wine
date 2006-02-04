@@ -2976,32 +2976,39 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_POINTSCALE_B              :
     case D3DRS_POINTSCALE_C              :
     case D3DRS_POINTSCALEENABLE          :
-        {
-            /* If enabled, supply the parameters, otherwise fall back to defaults */
-            if (This->StateBlock->renderstate[D3DRS_POINTSCALEENABLE]) {
-                GLfloat att[3] = {1.0f, 0.0f, 0.0f};
-                att[0] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_A]);
-                att[1] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_B]);
-                att[2] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_C]);
+    {
+        /* 
+         * POINTSCALEENABLE controls how point size value is treated. If set to
+         * true, the point size is scaled with respect to height of viewport.
+         * When set to false point size is in pixels.
+         * 
+         * http://msdn.microsoft.com/library/en-us/directx9_c/point_sprites.asp
+         */
 
-		if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-                  GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
-		  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
-		} else {
-		  TRACE("D3DRS_POINTSCALEENABLE not supported on this opengl\n");
-		}
-            } else {
-                GLfloat att[3] = {1.0f, 0.0f, 0.0f};
-		if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-		  GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
-		  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);");
-		} else {
-		  TRACE("D3DRS_POINTSCALEENABLE not supported, but not on either\n");
-		}
-	    }
-            break;
+        /* Default values */
+        GLfloat att[3] = {1.0f, 0.0f, 0.0f};
+        if(This->StateBlock->renderstate[D3DRS_POINTSCALEENABLE]) {
+            att[0] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_A]) /
+                (This->StateBlock->viewport.Height * This->StateBlock->viewport.Height);
+            att[1] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_B]) /
+                (This->StateBlock->viewport.Height * This->StateBlock->viewport.Height);
+            att[2] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_C]) /
+                (This->StateBlock->viewport.Height * This->StateBlock->viewport.Height);
         }
 
+        if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
+            glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, att);
+            checkGLcall("glPointParameterfvARB(GL_DISTANCE_ATTENUATION_ARB, ...");
+        }
+        else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+            GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
+            checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...");
+        }
+        else {
+            TRACE("POINT_PARAMETERS not supported in this version of opengl\n");
+        }
+        break;
+    }
     case D3DRS_COLORWRITEENABLE          :
       {
         TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n", 
