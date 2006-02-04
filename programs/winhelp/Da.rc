@@ -50,6 +50,7 @@ MAIN_MENU MENU LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
  }
 }
 
+
 /* Strings */
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
@@ -59,7 +60,7 @@ STID_WHERROR, 		"FEJL"
 STID_WARNING,  		"ADVARSEL"
 STID_INFO,  		"Information"
 STID_NOT_IMPLEMENTED, 	"Ikke implementeret"
-STID_HLPFILE_ERROR_s, 	"Fejl ved læsning af filen `%s'"
+STID_HLPFILE_ERROR_s, 	"Fejl ved indlæsning af filen `%s'"
 STID_CONTENTS, 		"&Indhold"
 STID_SEARCH, 		"&Søg"
 STID_BACK, 		"&Tilbage"

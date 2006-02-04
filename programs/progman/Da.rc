@@ -54,7 +54,7 @@
 
 #define MENU_INFO                    "&Om Programstyring..."
 #define MENU_INFO_LICENSE            "&Licens"
-#define MENU_INFO_NO_WARRANTY        "&NO WARRANTY"
+#define MENU_INFO_NO_WARRANTY        "&Ingen Garenti"
 #define MENU_INFO_ABOUT_WINE         "&Om WINE"
 
 /* Dialogs */
