@@ -181,7 +181,6 @@ static BOOL ICInfo_enum_handler(const char *drv, int nr, void *param)
     if ((lpicinfo->fccHandler != nr) && (lpicinfo->fccHandler != fccHandler))
 	return FALSE;
 
-    lpicinfo->fccType = mmioStringToFOURCCA(drv, 0);
     lpicinfo->fccHandler = fccHandler;
     lpicinfo->dwFlags = 0;
     lpicinfo->dwVersion = 0;
@@ -209,6 +208,7 @@ BOOL VFWAPI ICInfo( DWORD fccType, DWORD fccHandler, ICINFO *lpicinfo)
     TRACE("(%s,%s/%08lx,%p)\n", 
           wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), fccHandler, lpicinfo);
 
+    lpicinfo->fccType = fccType;
     lpicinfo->fccHandler = fccHandler;
     return enum_drivers(fccType, ICInfo_enum_handler, lpicinfo);
 }
