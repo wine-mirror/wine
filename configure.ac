@@ -1091,7 +1091,7 @@ case $host_os in
 esac
 
 case $host_os in
-  linux*)
+  linux* | k*bsd*-gnu)
     case $host_cpu in
       *i[[3456789]]86*) AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread wine-preloader") ;;
       *) AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread") ;;

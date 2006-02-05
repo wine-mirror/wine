@@ -1594,7 +1594,7 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
             info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
             break;
         }
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         struct statfs stfs;
 
         /* The proper way to do this in FreeBSD seems to be with the

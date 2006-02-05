@@ -340,7 +340,7 @@ static void set_thread_context_ptrace( struct thread *thread, unsigned int flags
     file_set_error();
 }
 
-#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__NetBSD__)
 #include <machine/reg.h>
 
 /* retrieve a thread context */

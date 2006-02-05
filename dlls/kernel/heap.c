@@ -1138,7 +1138,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 #ifdef linux
     FILE *f;
 #endif
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     int *tmp;
     int size_sys;
     int mib[2] = { CTL_HW };
@@ -1209,7 +1209,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
                                       / (TotalPhysical / 100);
         }
     }
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     mib[1] = HW_PHYSMEM;
     sysctl(mib, 2, NULL, &size_sys, NULL, 0);
     tmp = malloc(size_sys * sizeof(int));

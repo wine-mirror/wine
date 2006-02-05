@@ -199,7 +199,7 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 
     if (!(flags & MAP_FIXED))
     {
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         /* Even FreeBSD 5.3 does not properly support NULL here. */
         if( start == NULL ) start = (void *)0x110000;
 #endif
@@ -283,7 +283,7 @@ void mmap_init(void)
 {
     struct reserved_area *area;
     struct list *ptr;
-#if defined(__i386__) && !defined(__FreeBSD__)  /* commented out until FreeBSD gets fixed */
+#if defined(__i386__) && !defined(__FreeBSD__) && !defined(__FreeBSD_kernel__)  /* commented out until FreeBSD gets fixed */
     char stack;
     char * const stack_ptr = &stack;
     char *user_space_limit = (char *)0x80000000;

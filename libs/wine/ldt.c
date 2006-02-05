@@ -109,7 +109,7 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #endif
 #endif
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
 #include <machine/segments.h>
 
 extern int i386_get_ldt(int, union descriptor *, int);
@@ -203,7 +203,7 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
         if ((ret = modify_ldt(0x11, &ldt_info, sizeof(ldt_info))) < 0)
             perror( "modify_ldt" );
     }
-#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
     {
 	LDT_ENTRY entry_copy = *entry;
 	/* The kernel will only let us set LDTs with user priority level */

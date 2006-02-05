@@ -204,7 +204,7 @@ typedef struct trapframe SIGCONTEXT;
 
 #endif /* bsdi */
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
 
 typedef struct sigcontext SIGCONTEXT;
 
@@ -328,7 +328,7 @@ typedef ucontext_t SIGCONTEXT;
 
 #endif /* __APPLE__ */
 
-#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) ||\
+#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) ||\
     defined(__OpenBSD__) || defined(__EMX__) || defined(__CYGWIN__)
 
 #define EAX_sig(context)     ((context)->sc_eax)
@@ -358,7 +358,7 @@ typedef ucontext_t SIGCONTEXT;
 #define FAULT_ADDRESS        ((void *)HANDLER_CONTEXT->cr2)
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #define EFL_sig(context)     ((context)->sc_efl)
 /* FreeBSD, see i386/i386/traps.c::trap_pfault va->err kludge  */
 #define FAULT_ADDRESS        ((void *)HANDLER_CONTEXT->sc_err)
@@ -1366,7 +1366,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     sigaddset( &sig_act.sa_mask, SIGUSR1 );
     sigaddset( &sig_act.sa_mask, SIGUSR2 );
 
-#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
     sig_act.sa_flags = SA_RESTART;
 #elif defined (__svr4__) || defined(_SCO_DS) || defined(__APPLE__)
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART;

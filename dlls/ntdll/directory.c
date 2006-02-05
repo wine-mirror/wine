@@ -288,7 +288,7 @@ static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
 }
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <fstab.h>
 static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
 {
@@ -391,7 +391,7 @@ static char *get_default_drive_device( const char *root )
     }
     RtlLeaveCriticalSection( &dir_section );
 
-#elif defined( __FreeBSD__ )
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__ )
     char *device = NULL;
     int fd, res = -1;
     struct stat st;
