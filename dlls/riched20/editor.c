@@ -1668,7 +1668,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     gds.nLength = 0;
     es.dwCookie = (DWORD)&gds;
     es.pfnCallback = ME_AppendToHGLOBAL;
-    SendMessageW(hWnd, EM_STREAMOUT, SFF_SELECTION|SF_RTF, (LPARAM)&es);
+    ME_StreamOutRange(editor, SF_RTF, from, to, &es);
     GlobalReAlloc(gds.hData, gds.nLength+1, 0);
     
     SetClipboardData(CF_UNICODETEXT, hData);    
