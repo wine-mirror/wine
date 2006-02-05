@@ -300,7 +300,6 @@ typedef struct tagME_TextEditor
   int nParagraphs;
   int nLastSelStart, nLastSelEnd;
   ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
-  ME_OutStream *pStream;
   BOOL bScrollX, bScrollY;
   int nScrollPosY;
   int nZoomNumerator, nZoomDenominator;
