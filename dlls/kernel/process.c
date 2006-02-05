@@ -1387,7 +1387,7 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
  *           create_user_params
  */
 static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWSTR cmdline,
-                                                        LPCWSTR cur_dir, LPWSTR env,
+                                                        LPCWSTR cur_dir, LPWSTR env, DWORD flags,
                                                         const STARTUPINFOW *startup )
 {
     RTL_USER_PROCESS_PARAMETERS *params;
@@ -1424,6 +1424,8 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
         SetLastError( RtlNtStatusToDosError(status) );
         return NULL;
     }
+
+    if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
 
     params->hStdInput       = startup->hStdInput;
     params->hStdOutput      = startup->hStdOutput;
@@ -1467,7 +1469,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     if (!env) RtlAcquirePebLock();
 
-    if (!(params = create_user_params( filename, cmd_line, cur_dir, env, startup )))
+    if (!(params = create_user_params( filename, cmd_line, cur_dir, env, flags, startup )))
     {
         if (!env) RtlReleasePebLock();
         return FALSE;

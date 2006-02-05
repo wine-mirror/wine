@@ -156,9 +156,6 @@ static BOOL process_attach(void)
          */
     }
 
-    if (main_create_flags & CREATE_NEW_PROCESS_GROUP)
-        SetConsoleCtrlHandler(NULL, TRUE);
-
     /* Create 16-bit task */
     LoadLibrary16( "krnl386.exe" );
     thread_attach();
