@@ -25,7 +25,11 @@
 #include <wincrypt.h>
 
 #include "wine/test.h"
+
+/*#define DUMP_STRINGS*/
+#ifdef DUMP_STRINGS
 #include "wine/debug.h"
+#endif
 
 typedef struct _CertRDNAttrEncoding {
     LPCSTR pszObjId;
@@ -278,8 +282,11 @@ static void test_CertRDNValueToStrW(void)
          buffer, sizeof(buffer) / sizeof(buffer[0]));
         ok(ret == lstrlenW(attrs[i].str) + 1, "Expected length %d, got %ld\n",
          lstrlenW(attrs[i].str) + 1, ret);
-        ok(!lstrcmpW(buffer, attrs[i].str), "Expected %s, got %s\n",
+        ok(!lstrcmpW(buffer, attrs[i].str), "Unexpected value\n");
+#ifdef DUMP_STRINGS
+        trace("Expected %s, got %s\n",
          wine_dbgstr_w(attrs[i].str), wine_dbgstr_w(buffer));
+#endif
     }
 }
 
@@ -357,8 +364,11 @@ static void test_NameToStrConversionW(PCERT_NAME_BLOB pName, DWORD dwStrType,
      sizeof(buffer) / sizeof(buffer[0]));
     ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %ld\n",
      lstrlenW(expected) + 1, i);
-    ok(!lstrcmpW(buffer, expected), "Expected %s, got %s\n",
+    ok(!lstrcmpW(buffer, expected), "Unexpected value\n");
+#ifdef DUMP_STRINGS
+    trace("Expected %s, got %s\n",
      wine_dbgstr_w(expected), wine_dbgstr_w(buffer));
+#endif
 }
 
 static void test_CertNameToStrW(void)
