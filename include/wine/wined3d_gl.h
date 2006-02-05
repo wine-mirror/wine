@@ -51,6 +51,16 @@
  *     #defines and functions pointer
  ****************************************************/
 
+/* GL_ARB_point_parameters */
+#ifndef GL_ARB_point_parameters
+#define GL_ARB_point_parameters 1
+#define GL_POINT_SIZE_MIN_ARB             0x8126
+#define GL_POINT_SIZE_MAX_ARB             0x8127
+#define GL_POINT_FADE_THRESHOLD_SIZE_ARB  0x8128
+#define GL_POINT_DISTANCE_ATTENUATION_ARB 0x8129
+#endif
+typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFARBPROC) (GLenum pname, GLfloat param);
+typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFVARBPROC) (GLenum pname, const GLfloat *params);
 /* GL_ARB_vertex_blend */
 #ifndef GL_ARB_vertex_blend
 #define GL_ARB_vertex_blend 1
@@ -960,6 +970,9 @@ typedef enum _GL_SupportedExt {
  ****************************************************/
 #define GL_EXT_FUNCS_GEN \
     /** ARB Extensions **/ \
+    /* GL_ARB_point_parameters */ \
+    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFARBPROC,       glPointParameterfARB); \
+    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVARBPROC,      glPointParameterfvARB); \
     /* GL_ARB_texture_compression */ \
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE2DPROC,       glCompressedTexImage2DARB); \
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE3DPROC,       glCompressedTexImage3DARB); \

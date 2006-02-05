@@ -3531,7 +3531,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
 
         if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
-            glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, att);
+            GL_EXTCALL(glPointParameterfvARB)(GL_POINT_DISTANCE_ATTENUATION_ARB, att);
             checkGLcall("glPointParameterfvARB(GL_DISTANCE_ATTENUATION_ARB, ...");
         }
         else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
