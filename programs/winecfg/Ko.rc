@@ -205,3 +205,14 @@ BEGIN
     IDS_THEMEFILE_SELECT    "테마 파일 선택"
     IDS_AUDIO_MISSING       "레지스트리에서 지정된  어떤 오디오 드라이버도 없습니다.\n\n당신이 드라이버를 선택하기를 추천합니다.\n당신은 이 드라이버나 가능한 다른 드라이버를 사용할 수 있습니다.\n\n당신은 반드시 선택하고 클릭해야 됩니다."
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "이 라이브러리의 로드 순위를 바꾸는 것을 추천하지 않습니다..\n당신은  정말로 원합니까?"
+    IDS_DLL_WARNING_CAPTION "경고: 시스템 라이브러리"
+    IDS_DLL_NATIVE          "네이티브"
+    IDS_DLL_BUILTIN         "내장"
+    IDS_DLL_NATIVE_BUILTIN  "네이티브, 내장"
+    IDS_DLL_BUILTIN_NATIVE  "내장, 네이티브"
+    IDS_DLL_DISABLED        "불가능"
+END
