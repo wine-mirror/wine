@@ -243,7 +243,6 @@ struct security_descriptor
 /* Retrieve the new process startup info */
 @REQ(get_startup_info)
 @REPLY
-    unsigned int create_flags; /* creation flags */
     obj_handle_t exe_file;     /* file handle for main exe */
     obj_handle_t hstdin;       /* handle for stdin */
     obj_handle_t hstdout;      /* handle for stdout */

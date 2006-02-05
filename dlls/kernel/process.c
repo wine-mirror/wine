@@ -65,7 +65,6 @@ static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
 static DWORD process_dword;
 
-int main_create_flags = 0;
 HMODULE kernel32_handle = 0;
 
 const WCHAR *DIR_Windows = NULL;
@@ -752,7 +751,6 @@ static BOOL init_user_process_params( RTL_USER_PROCESS_PARAMETERS *params )
         if ((ret = !wine_server_call( req )))
         {
             info_size = wine_server_reply_size( reply );
-            main_create_flags = reply->create_flags;
             main_exe_file     = reply->exe_file;
             hstdin            = reply->hstdin;
             hstdout           = reply->hstdout;

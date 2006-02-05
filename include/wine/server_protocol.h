@@ -247,7 +247,6 @@ struct get_startup_info_request
 struct get_startup_info_reply
 {
     struct reply_header __header;
-    unsigned int create_flags;
     obj_handle_t exe_file;
     obj_handle_t hstdin;
     obj_handle_t hstdout;
@@ -4345,6 +4344,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 222
+#define SERVER_PROTOCOL_VERSION 223
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

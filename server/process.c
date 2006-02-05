@@ -946,8 +946,6 @@ DECL_HANDLER(get_startup_info)
 
     if (!info) return;
 
-    reply->create_flags = info->create_flags;
-
     if (info->exe_file &&
         !(reply->exe_file = alloc_handle( process, info->exe_file, GENERIC_READ, 0 ))) return;
 

@@ -624,7 +624,6 @@ static void dump_get_startup_info_request( const struct get_startup_info_request
 
 static void dump_get_startup_info_reply( const struct get_startup_info_reply *req )
 {
-    fprintf( stderr, " create_flags=%08x,", req->create_flags );
     fprintf( stderr, " exe_file=%p,", req->exe_file );
     fprintf( stderr, " hstdin=%p,", req->hstdin );
     fprintf( stderr, " hstdout=%p,", req->hstdout );
