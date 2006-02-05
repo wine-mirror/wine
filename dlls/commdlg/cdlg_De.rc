@@ -1,6 +1,6 @@
 /*
  * Copyright 1994 Martin von Loewis
- * Copyright 2004,2005 Henning Gerhardt
+ * Copyright 2004-2006 Henning Gerhardt
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -172,7 +172,7 @@ FONT 8, "MS Shell Dlg"
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Muster",grp2,98,72,120,36,WS_GROUP
     CTEXT           "AaBbYyZz",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
-    LTEXT           "Scr&ipt (translate):",stc7 ,98,114,80,9
+    LTEXT           "Skr&ipt:",stc7 ,98,114,80,9
     COMBOBOX        cmb5,98,124,120,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |   WS_VSCROLL | WS_TABSTOP
 }
