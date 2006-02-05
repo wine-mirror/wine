@@ -177,7 +177,11 @@ static NTSTATUS TAPE_GetDriveParams( int fd, TAPE_GET_DRIVE_PARAMETERS *data )
     data->Compression = FALSE;
     data->DataPadding = FALSE;
     data->ReportSetmarks = FALSE;
+#ifdef HAVE_STRUCT_MTGET_MT_BLKSIZ
+    data->DefaultBlockSize = get.mt_blksiz;
+#else
     data->DefaultBlockSize = get.mt_dsreg & MT_ST_BLKSIZE_MASK;
+#endif
     data->MaximumBlockSize = data->DefaultBlockSize;
     data->MinimumBlockSize = data->DefaultBlockSize;
     data->MaximumPartitionCount = 1;
@@ -208,9 +212,17 @@ static NTSTATUS TAPE_GetMediaParams( int fd, TAPE_GET_MEDIA_PARAMETERS *data )
 
     data->Capacity.u.LowPart = 1024 * 1024 * 1024;
     data->Remaining.u.LowPart = 1024 * 1024 * 1024;
+#ifdef HAVE_STRUCT_MTGET_MT_BLKSIZ
+    data->BlockSize = get.mt_blksiz;
+#else
     data->BlockSize = get.mt_dsreg & MT_ST_BLKSIZE_MASK;
+#endif
     data->PartitionCount = 1;
+#ifdef HAVE_STRUCT_MTGET_GSTAT
     data->WriteProtected = GMT_WR_PROT(get.mt_gstat);
+#else
+    data->WriteProtected = 0;
+#endif
 
     return status;
 #else

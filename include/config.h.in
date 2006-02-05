@@ -614,6 +614,12 @@
 /* Define to 1 if `msg_accrights' is member of `struct msghdr'. */
 #undef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 
+/* Define to 1 if `mt_blksiz' is member of `struct mtget'. */
+#undef HAVE_STRUCT_MTGET_MT_BLKSIZ
+
+/* Define to 1 if `mt_gstat' is member of `struct mtget'. */
+#undef HAVE_STRUCT_MTGET_MT_GSTAT
+
 /* Define to 1 if `name' is member of `struct option'. */
 #undef HAVE_STRUCT_OPTION_NAME
 

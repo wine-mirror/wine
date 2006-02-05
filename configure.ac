@@ -1427,6 +1427,12 @@ AC_CHECK_MEMBERS([scsireq_t.cmd, sg_io_hdr_t.interface_id],,,
 dnl Check for siginfo_t members
 AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
 
+dnl Check for struct mtget members
+AC_CHECK_MEMBERS([struct mtget.mt_blksiz, struct mtget.mt_gstat],,,
+[#ifdef HAVE_SYS_MTIO_H
+#include <sys/mtio.h>
+#endif])
+
 dnl Check for struct option
 AC_CHECK_MEMBERS([struct option.name],,,
 [#ifdef HAVE_GETOPT_H
