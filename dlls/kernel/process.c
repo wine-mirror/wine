@@ -1426,6 +1426,7 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
     }
 
     if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
+    if (flags & CREATE_NEW_CONSOLE) params->ConsoleHandle = (HANDLE)1;  /* FIXME: cf. kernel_main.c */
 
     params->hStdInput       = startup->hStdInput;
     params->hStdOutput      = startup->hStdOutput;

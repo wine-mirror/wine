@@ -50,8 +50,6 @@
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
 
-extern int main_create_flags;
-
 static CRITICAL_SECTION ldt_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -142,19 +140,17 @@ static BOOL process_attach(void)
     /* finish the process initialisation for console bits, if needed */
     __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);
 
-    if (main_create_flags & CREATE_NEW_CONSOLE)
+    if (NtCurrentTeb()->Peb->ProcessParameters->ConsoleHandle == (HANDLE)1)  /* FIXME */
     {
         HMODULE mod = GetModuleHandleA(0);
         if (RtlImageNtHeader(mod)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
             AllocConsole();
     }
-    else if (!(main_create_flags & DETACHED_PROCESS))
-    {
-        /* 1/ shall inherit console + handles
-         * 2/ shall create std handles, if handles are not inherited
-         * TBD when not using wineserver handles for console handles
-         */
-    }
+    /* else TODO for DETACHED_PROCESS:
+     * 1/ inherit console + handles
+     * 2/ create std handles, if handles are not inherited
+     * TBD when not using wineserver handles for console handles
+     */
 
     /* Create 16-bit task */
     LoadLibrary16( "krnl386.exe" );
