@@ -3012,7 +3012,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         }
 
         if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
-            glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, att);
+            GL_EXTCALL(glPointParameterfvARB)(GL_POINT_DISTANCE_ATTENUATION_ARB, att);
             checkGLcall("glPointParameterfvARB(GL_DISTANCE_ATTENUATION_ARB, ...");
         }
         else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
