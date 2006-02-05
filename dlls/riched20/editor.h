@@ -241,4 +241,5 @@ extern HANDLE me_heap;
 extern void DoWrap(ME_TextEditor *editor);
 
 /* writer.c */
+LRESULT ME_StreamOutRange(ME_TextEditor *editor, DWORD dwFormat, int nStart, int nTo, EDITSTREAM *stream);
 LRESULT ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream);

@@ -810,18 +810,10 @@ ME_StreamOutText(ME_TextEditor *editor, int nStart, int nChars, DWORD dwFormat)
 
 
 LRESULT
-ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream)
+ME_StreamOutRange(ME_TextEditor *editor, DWORD dwFormat, int nStart, int nTo, EDITSTREAM *stream)
 {
-  int nStart, nTo;
-  
   ME_StreamOutInit(editor, stream);
 
-  if (dwFormat & SFF_SELECTION)
-    ME_GetSelection(editor, &nStart, &nTo);
-  else {
-    nStart = 0;
-    nTo = -1;
-  }
   if (nTo == -1)
   {
     nTo = ME_GetTextLength(editor);
@@ -830,7 +822,7 @@ ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream)
       nTo++;
   }
   TRACE("from %d to %d\n", nStart, nTo);
-  
+
   if (dwFormat & SF_RTF)
     ME_StreamOutRTF(editor, nStart, nTo - nStart, dwFormat);
   else if (dwFormat & SF_TEXT || dwFormat & SF_TEXTIZED)
@@ -838,4 +830,18 @@ ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream)
   if (!editor->pStream->stream->dwError)
     ME_StreamOutFlush(editor);
   return ME_StreamOutFree(editor);
+}
+
+LRESULT
+ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream)
+{
+  int nStart, nTo;
+
+  if (dwFormat & SFF_SELECTION)
+    ME_GetSelection(editor, &nStart, &nTo);
+  else {
+    nStart = 0;
+    nTo = -1;
+  }
+  return ME_StreamOutRange(editor, dwFormat, nStart, nTo, stream);
 }
