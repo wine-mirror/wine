@@ -664,14 +664,22 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   }
   
   editor->nUndoMode = nUndoMode;
-  pUI = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
-  TRACE("from %d to %d\n", from, to);
-  if (pUI && from < to)
+  if (format & SFF_SELECTION)
   {
-    pUI->nStart = from;
-    pUI->nLen = to-from;
+    pUI = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
+    TRACE("from %d to %d\n", from, to);
+    if (pUI && from < to)
+    {
+      pUI->nStart = from;
+      pUI->nLen = to-from;
+    }
+    ME_CommitUndo(editor);
   }
-  ME_CommitUndo(editor);
+  else
+  {
+    ME_EmptyUndoStack(editor);
+  }
+
   ME_ReleaseStyle(style); 
   editor->nEventMask = nEventMask;
   if (editor->bRedraw)
