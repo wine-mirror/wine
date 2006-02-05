@@ -122,25 +122,7 @@ static inline int inotify_remove_watch( int fd, int wd )
     return ret;
 }
 
-#else
-
-static inline int inotify_init( void )
-{
-    errno = ENOSYS;
-    return -1;
-}
-
-static inline int inotify_add_watch( int fd, const char *name, unsigned int mask )
-{
-    errno = ENOSYS;
-    return -1;
-}
-
-static inline int inotify_remove_watch( int fd, int wd )
-{
-    errno = ENOSYS;
-    return -1;
-}
+#define USE_INOTIFY
 
 #endif
 
@@ -348,11 +330,7 @@ static void dir_destroy( struct object *obj )
         remove_change( dir );
 
     if (dir->inotify_fd)
-    {
-        if (dir->wd != -1)
-            inotify_remove_watch( get_unix_fd( dir->inotify_fd ), dir->wd );
         release_object( dir->inotify_fd );
-    }
 
     if (dir->event)
     {
@@ -378,6 +356,8 @@ static int dir_get_info( struct fd *fd )
     return 0;
 }
 
+
+#ifdef USE_INOTIFY
 
 static int inotify_get_poll_events( struct fd *fd );
 static void inotify_poll_event( struct fd *fd, int event );
@@ -434,11 +414,26 @@ static int inotify_get_info( struct fd *fd )
     return 0;
 }
 
-static void inotify_adjust_changes( struct dir *dir )
+static inline struct fd *create_inotify_fd( struct dir *dir )
 {
-    int filter = dir->filter;
+    int unix_fd;
+
+    unix_fd = inotify_init();
+    if (unix_fd<0)
+        return NULL;
+    return create_anonymous_fd( &inotify_fd_ops, unix_fd, &dir->obj );
+}
+
+static int inotify_adjust_changes( struct dir *dir )
+{
+    unsigned int filter = dir->filter;
     unsigned int mask = 0;
     char link[32];
+
+    if (!dir->inotify_fd)
+    {
+        if (!(dir->inotify_fd = create_inotify_fd( dir ))) return 0;
+    }
 
     if (filter & FILE_NOTIFY_CHANGE_FILE_NAME)
         mask |= (IN_MOVED_FROM | IN_MOVED_TO | IN_DELETE | IN_CREATE);
@@ -461,17 +456,10 @@ static void inotify_adjust_changes( struct dir *dir )
     dir->wd = inotify_add_watch( get_unix_fd( dir->inotify_fd ), link, mask );
     if (dir->wd != -1)
         set_fd_events( dir->inotify_fd, POLLIN );
+    return 1;
 }
 
-static struct fd *create_inotify_fd( struct dir *dir )
-{
-    int unix_fd;
-
-    unix_fd = inotify_init();
-    if (unix_fd<0)
-        return NULL;
-    return create_anonymous_fd( &inotify_fd_ops, unix_fd, &dir->obj );
-}
+#endif  /* USE_INOTIFY */
 
 /* enable change notifications for a directory */
 DECL_HANDLER(read_directory_changes)
@@ -512,13 +500,10 @@ DECL_HANDLER(read_directory_changes)
     if (dir->signaled>0)
         dir->signaled--;
 
-    if (!dir->inotify_fd)
-        dir->inotify_fd = create_inotify_fd( dir );
-
     /* setup the real notification */
-    if (dir->inotify_fd)
-        inotify_adjust_changes( dir );
-    else
+#ifdef USE_INOTIFY
+    if (!inotify_adjust_changes( dir ))
+#endif
         dnotify_adjust_changes( dir );
 
     set_error(STATUS_PENDING);
