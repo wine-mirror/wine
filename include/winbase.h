@@ -2284,7 +2284,7 @@ static inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatile *de
                           : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
     return ret;
 #else
-    return (PVOID)InterlockedCompareExchange( (PLONG)dest, (LONG)xchg, (LONG)compare );
+    return (PVOID)InterlockedCompareExchange( (LONG volatile*)dest, (LONG)xchg, (LONG)compare );
 #endif
 }
 
@@ -2296,7 +2296,7 @@ static inline PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVO
                           : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
     return ret;
 #else
-    return (PVOID)InterlockedExchange( (PLONG)dest, (LONG)val );
+    return (PVOID)InterlockedExchange( (LONG volatile*)dest, (LONG)val );
 #endif
 }
 

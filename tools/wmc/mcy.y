@@ -465,7 +465,7 @@ static msg_t *add_lanmsg(msg_t *msg, lanmsg_t *lanmsg)
 
 static int sort_lanmsg(const void *p1, const void *p2)
 {
-	return (*(lanmsg_t **)p1)->lan - (*(lanmsg_t **)p2)->lan;
+	return (*(const lanmsg_t * const *)p1)->lan - (*(const lanmsg_t * const*)p2)->lan;
 }
 
 static msg_t *complete_msg(msg_t *mp, int id)
@@ -563,7 +563,7 @@ static int check_languages(node_t *head)
 	return nm;
 }
 
-#define MSGRID(x)	((*(msg_t **)(x))->realid)
+#define MSGRID(x)	((*(const msg_t * const*)(x))->realid)
 static int sort_msg(const void *p1, const void *p2)
 {
 	return MSGRID(p1) > MSGRID(p2) ? 1 : (MSGRID(p1) == MSGRID(p2) ? 0 : -1);
@@ -653,7 +653,7 @@ static lan_blk_t *block_messages(node_t *head)
 
 static int sc_xlat(const void *p1, const void *p2)
 {
-	return ((cp_xlat_t *)p1)->lan - ((cp_xlat_t *)p2)->lan;
+	return ((const cp_xlat_t *)p1)->lan - ((const cp_xlat_t *)p2)->lan;
 }
 
 static void add_cpxlat(int lan, int cpin, int cpout)
