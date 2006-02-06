@@ -1,0 +1,244 @@
+/*
+ * Copyright 2006 Fatih Aþýcý
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
+LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_HTMLDISABLED    "HTML çevirisi devre dýþý."
+    IDS_HTMLDOCUMENT    "HTML Belgesi"
+}
+
+/* FIXME: This should be in shdoclc.dll */
+
+IDR_BROWSE_CONTEXT_MENU MENU
+{
+    POPUP "Default"
+    {
+        MENUITEM "&Geri",                  IDM_BACK
+        MENUITEM "Ý&leri",                 IDM_FORWARD
+        MENUITEM SEPARATOR
+        MENUITEM "&Arkaplaný Farklý Kaydet...", IDM_SAVEBACKGROUNDAS
+        MENUITEM "Arka&plan Yap",     IDM_SETASBACKGROUND
+        MENUITEM "Arkaplaný Ko&pyala",     IDM_COPYBACKGROUND
+        MENUITEM "&Masaüstü Öðesi Yap",   IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Tümünü Seç",            IDM_SELECTALL
+        MENUITEM "&Yapýþtýr",              IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "K&ýsayol Oluþtur",       IDM_CREATESHORTCUT
+        MENUITEM "Sýk Kullanýlanlara Ekle",IDM_ADDTOFAVOURITES
+        MENUITEM "&Kaynaðý Göster",        IDM_VIEWSOURCE
+        MENUITEM SEPARATOR
+        MENUITEM "&Kodlama",               IDM_ENCODING 
+        MENUITEM SEPARATOR
+        MENUITEM "Ya&zdýr",                IDM_PRINT
+        MENUITEM "&Yenile",                IDM_REFRESH 
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Özellikler",            IDM_PROPERTIES
+    }
+
+    POPUP "Image"
+    {
+        MENUITEM "&Baðlantýyý Aç",           IDM_OPENLINK
+        MENUITEM "&Yeni Pencerede Aç", IDM_OPENINNEWWINDOW
+        MENUITEM "Hedefi &Farklý Kaydet...", IDM_SAVETARGETAS
+        MENUITEM "Hedefi Y&azdýr",           IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "Resmi &Göster",            IDM_SHOWPICTURE
+        MENUITEM "&Resmi Farklý Kaydet...",  IDM_SAVEPICTUREAS
+        MENUITEM "Resmi &E-postala...",      IDM_EMAILPICTURE
+        MENUITEM "Resmi Ya&zdýr...",         IDM_PRINTPICTURE
+        MENUITEM "Resimlerim dizinine &Git", IDM_GOTOMYPICTURES
+        MENUITEM "Arka&plan Yap",       IDM_SETASBACKGROUND
+        MENUITEM "Masaüstü Ö&ðesi Yap...",   IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "K&es",                     IDM_CUT
+        MENUITEM "K&opyala",                 IDM_COPY
+        MENUITEM "&Kýsayol Kopyala",         IDM_COPYSHORTCUT
+        MENUITEM "Ya&pýþtýr",                IDM_PASTE 
+        MENUITEM SEPARATOR
+        MENUITEM "Sýk Ku&llanýlanlara Ekle...",     IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Ö&zellikler",              IDM_PROPERTIES
+    }
+
+    POPUP "Control"
+    {
+        MENUITEM "&Geri Al",    IDM_UNDO 
+        MENUITEM SEPARATOR
+        MENUITEM "K&es",        IDM_CUT
+        MENUITEM "&Kopyala",    IDM_COPY
+        MENUITEM "Ya&pýþtýr",   IDM_PASTE
+        MENUITEM "&Sil",        IDM_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Tümünü Seç", IDM_SELECTALL
+    }
+
+    POPUP "Table"
+    {
+        POPUP "&Select"
+        {
+            MENUITEM "&Hücre",        IDM_CELL 
+            MENUITEM "&Satýr",        IDM_ROW
+            MENUITEM "&Sütun",        IDM_COLUMN
+            MENUITEM "&Tablo",        IDM_TABLE
+        }
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Hücre Özellikleri", IDM_CELLPROPERTIES
+        MENUITEM "&Tablo Özellikleri", IDM_TABLEPROPERTIES
+    }
+
+    POPUP "1DSite Select"
+    {
+        MENUITEM "&Kes",        IDM_CUT
+        MENUITEM "K&opyala",    IDM_COPY
+        MENUITEM "Ya&pýþtýr",   IDM_PASTE
+        MENUITEM "&Tümünü Seç", IDM_SELECTALL 
+        MENUITEM "&Yazdýr",     IDM_PRINT
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "Anchor"
+    {
+        MENUITEM "&Aç",                  IDM_OPENLINK
+        MENUITEM "&Yeni Pencerede Aç",   IDM_OPENINNEWWINDOW
+        MENUITEM "Hedefi &Farklý Kaydet...",   IDM_SAVETARGETAS
+        MENUITEM "Hedefi Ya&zdýr",       IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "&Kes",                 IDM_CUT
+        MENUITEM "K&opyala",             IDM_COPY
+        MENUITEM "K&ýsayol Kopyala",     IDM_COPYSHORTCUT
+        MENUITEM "Ya&pýþtýr",            IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Sýk Ku&llanýlanlara Ekle...", IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Özellikler",          IDM_PROPERTIES
+    }
+
+    POPUP "Context Unknown"
+    {
+        MENUITEM SEPARATOR
+    }
+
+    POPUP "DYNSRC Image"
+    {
+        MENUITEM "&Baðlantýyý Aç",           IDM_OPENLINK
+        MENUITEM "&Yeni Pencerede Aç",       IDM_OPENINNEWWINDOW
+        MENUITEM "Hedefi &Farklý Kaydet...", IDM_SAVETARGETAS
+        MENUITEM "Hedefi Ya&zdýr",           IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "Resmi &Göster",            IDM_SHOWPICTURE
+        MENUITEM "&Vidyoyu Farklý Kaydet...",        IDM_SAVEPICTUREAS
+        MENUITEM "Arka&plan Yap",            IDM_SETASBACKGROUND
+        MENUITEM "&Masaüstü Öðesi Yap...",   IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Kes",                     IDM_CUT
+        MENUITEM "K&opyala",                 IDM_COPY
+        MENUITEM "K&ýsayol Kopyala",         IDM_COPYSHORTCUT
+        MENUITEM "&Yapýþtýr",                IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Sýk Ku&llanýlanlara Ekle...",     IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "Yürüt",                    IDM_PLAY
+        MENUITEM "Durdur",                   IDM_STOP
+        MENUITEM "&Özellikler",              IDM_PROPERTIES
+    }
+
+    POPUP "ART Image"
+    {
+        MENUITEM "&Baðlantýyý Aç",           IDM_OPENLINK
+        MENUITEM "&Yeni Pencerede Aç",       IDM_OPENINNEWWINDOW
+        MENUITEM "Hedefi &Farklý Kaydet...", IDM_SAVETARGETAS
+        MENUITEM "Hedefi Ya&zdýr",           IDM_PRINTTARGET
+        MENUITEM SEPARATOR
+        MENUITEM "Resmi &Göster",            IDM_SHOWPICTURE
+        MENUITEM "Resmi &Farklý Kaydet...",  IDM_SAVEPICTUREAS
+        MENUITEM "Arka&plan Yap",            IDM_SETASBACKGROUND
+        MENUITEM "&Masaüstü Öðesi Yap...",   IDM_SETASDESKTOPITEM
+        MENUITEM SEPARATOR
+        MENUITEM "&Kes",                     IDM_CUT
+        MENUITEM "K&opyala",                 IDM_COPY
+        MENUITEM "K&ýsayol Kopyala",         IDM_COPYSHORTCUT
+        MENUITEM "&Yapýþtýr",                IDM_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Sýk Ku&llanýlanlara Ekle...",     IDM_ADDTOFAVOURITES
+        MENUITEM SEPARATOR
+        MENUITEM "Yürüt",                    IDM_PLAY
+        MENUITEM "Durdur",                   IDM_STOP
+        MENUITEM "Geri Çevir",               IDM_REWIND
+        MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Özellikler",              IDM_PROPERTIES
+    }
+
+    POPUP "Debug"
+    { /*FIXME: translate these*/
+        MENUITEM "Trace Tags",         IDM_TRACETAGS 
+        MENUITEM "Resource Failures",  IDM_RESOURCEFAILURES
+        MENUITEM "Dump Tracking Info", IDM_DUMPTRACKINGINFO
+        MENUITEM "Debug Break",        IDM_DEBUGBREAK
+        MENUITEM "Debug View",         IDM_DEBUGVIEW
+        MENUITEM "Dump Tree",          IDM_DUMPTREE
+        MENUITEM "Dump Lines",         IDM_DUMPLINES
+        MENUITEM "Dump DisplayTree",   IDM_DUMPDISPLAYTREE
+        MENUITEM "Dump FormatCaches",  IDM_DUMPFORMATCACHES
+        MENUITEM "Dump LayoutRects",   IDM_DUMPLAYOUTRECTS
+        MENUITEM "Memory Monitor",     IDM_MEMORYMONITOR
+        MENUITEM "Performance Meters", IDM_PERFORMANCEMETERS
+        MENUITEM "Save HTML",          IDM_SAVEHTML
+        MENUITEM SEPARATOR
+        MENUITEM "&Browse View",       IDM_BROWSEVIEW
+        MENUITEM "&Edit View",         IDM_EDITVIEW
+    }
+
+    POPUP "Vertical Scrollbar"
+    {
+        MENUITEM "Buraya Kaydýr", IDM_SCROLLHERE
+        MENUITEM SEPARATOR
+        MENUITEM "Üst",           IDM_TOP
+        MENUITEM "Alt",           IDM_BOTTOM
+        MENUITEM SEPARATOR
+        MENUITEM "Üstteki Sayfa",     IDM_PAGEUP
+        MENUITEM "Alttaki Sayfa",     IDM_PAGEDOWN
+        MENUITEM SEPARATOR
+        MENUITEM "Yukarý Kaydýr", IDM_SCROLLUP
+        MENUITEM "Aþaðý Kaydýr",  IDM_SCROLLDOWN
+    }
+
+    POPUP "Horizontal Scrollbar"
+    {
+        MENUITEM "Buraya Kaydýr", IDM_SCROLLHERE
+        MENUITEM SEPARATOR
+        MENUITEM "Left Edge",    IDM_LEFTEDGE
+        MENUITEM "Right Edge",   IDM_RIGHTEDGE
+        MENUITEM SEPARATOR
+        MENUITEM "Soldaki Sayfa",   IDM_PAGELEFT
+        MENUITEM "Saðdaki Sayfa",   IDM_PAGERIGHT
+        MENUITEM SEPARATOR
+        MENUITEM "Sola Kaydýr",  IDM_SCROLLLEFT
+        MENUITEM "Saða Kaydýr",  IDM_SCROLLRIGHT
+    }
+}
