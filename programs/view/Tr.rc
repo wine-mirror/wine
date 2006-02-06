@@ -1,0 +1,76 @@
+/*
+ * View
+ * Turkish Language Support
+ *
+ * Copyright 2006 Fatih Aþýcý
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
+
+/*
+ *
+ * Menu
+ *
+ */
+
+VIEW MENU
+BEGIN
+    POPUP "&Dosya"
+    BEGIN
+	MENUITEM "&Aç",    			IDM_OPEN
+        MENUITEM "&Çýkýþ",                      IDM_EXIT
+    END
+    POPUP "&Tava"
+    BEGIN
+      MENUITEM "&Pencere Ölçekle",              IDM_SET_EXT_TO_WIN
+      MENUITEM SEPARATOR
+      MENUITEM "S&ol",				IDM_LEFT
+      MENUITEM "S&að",  			IDM_RIGHT
+      MENUITEM "&Yukarý",			IDM_UP
+      MENUITEM "A&þaðý",			IDM_DOWN
+    END
+    POPUP "&Bilgi"
+    BEGIN
+	MENUITEM "&Merhaba",			IDM_HELLO
+    END
+END
+
+
+/*
+ *
+ * Accelerator
+ *
+ */
+
+VIEW ACCELERATORS
+BEGIN
+    "Q", IDM_EXIT, VIRTKEY, CONTROL
+END
+
+
+/*
+ *
+ * String Table
+ *
+ */
+
+/*FIXME: to be completed*/
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APPNAME             "View"
+    IDS_DESCRIPTION         "Regular Metafile Viewer"
+END
