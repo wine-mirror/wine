@@ -30,7 +30,8 @@ CTESTS = \
 	thread.c \
 	time.c \
 	timer.c \
-	virtual.c
+	virtual.c \
+	volume.c
 
 @MAKE_TEST_RULES@
 
