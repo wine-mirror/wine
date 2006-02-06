@@ -64,6 +64,7 @@
 #include "resources/user32_Si.rc"
 #include "resources/user32_Sk.rc"
 #include "resources/user32_Sv.rc"
+#include "resources/user32_Tr.rc"
 #include "resources/user32_Uk.rc"
 #include "resources/user32_Wa.rc"
 #include "resources/user32_Ja.rc"
