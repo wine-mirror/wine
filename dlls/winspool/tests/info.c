@@ -249,7 +249,7 @@ static void test_GetPrinterDriverDirectory(void)
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
     ok(res || (GetLastError() == RPC_X_NULL_REF_POINTER),
         "returned %d with %ld (expected '!=0' or '0' with " \
-        "RPC_X_NULL_REF_POINTER)", res, GetLastError());
+        "RPC_X_NULL_REF_POINTER)\n", res, GetLastError());
  
  
     /* with a valid buffer, but level is too large */

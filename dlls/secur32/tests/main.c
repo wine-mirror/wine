@@ -206,14 +206,14 @@ SECURITY_STATUS setupBuffers(PSecBufferDesc *new_in_buf,
         PSecBuffer sec_buffer = HeapAlloc(GetProcessHeap(), 0,
                 sizeof(SecBuffer));
         if(sec_buffer == NULL){
-            trace("in_buf: sec_buffer == NULL");
+            trace("in_buf: sec_buffer == NULL\n");
             return SEC_E_INSUFFICIENT_MEMORY;
         }
         
         buffer = HeapAlloc(GetProcessHeap(), 0, size);
 
         if(buffer == NULL){
-            trace("in_buf: buffer == NULL");
+            trace("in_buf: buffer == NULL\n");
             return SEC_E_INSUFFICIENT_MEMORY;
         }
 
@@ -239,14 +239,14 @@ SECURITY_STATUS setupBuffers(PSecBufferDesc *new_in_buf,
         PBYTE buffer = NULL;
         
         if(sec_buffer == NULL){
-            trace("out_buf: sec_buffer == NULL");
+            trace("out_buf: sec_buffer == NULL\n");
             return SEC_E_INSUFFICIENT_MEMORY;
         }
 
         buffer = HeapAlloc(GetProcessHeap(), 0, size);
 
         if(buffer == NULL){
-            trace("out_buf: buffer == NULL");
+            trace("out_buf: buffer == NULL\n");
             return SEC_E_INSUFFICIENT_MEMORY;
         }
 
