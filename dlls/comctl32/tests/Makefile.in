@@ -10,6 +10,7 @@ CTESTS = \
 	dpa.c \
 	header.c \
 	imagelist.c \
+	monthcal.c \
 	mru.c \
 	progress.c \
 	subclass.c \
