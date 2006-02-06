@@ -37,6 +37,7 @@
 #include "Si.rc"
 /* #include "Sk.rc" */
 /* #include "Sw.rc" */
+#include "Tr.rc"
 /* #include "Va.rc" */
 /* #include "Wa.rc" */
 #include "Zh.rc"
