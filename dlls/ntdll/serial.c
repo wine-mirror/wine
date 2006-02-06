@@ -211,6 +211,15 @@ static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
     return status;
 }
 
+static NTSTATUS xmit_immediate(HANDLE hDevice, int fd, char* ptr)
+{
+    /* FIXME: not perfect as it should bypass the in-queue */
+    WARN("(%p,'%c') not perfect!\n", hDevice, *ptr);
+    if (write(fd, ptr, 1) != 1)
+        return FILE_GetNtStatus();
+    return STATUS_SUCCESS;
+}
+
 /******************************************************************
  *		COMM_DeviceIoControl
  *
@@ -252,6 +261,12 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
             if (!(status = get_wait_mask(hDevice, (DWORD*)lpOutBuffer)))
                 sz = sizeof(DWORD);
         }
+        else
+            status = STATUS_INVALID_PARAMETER;
+        break;
+    case IOCTL_SERIAL_IMMEDIATE_CHAR:
+        if (lpInBuffer && nInBufferSize == sizeof(CHAR))
+            status = xmit_immediate(hDevice, fd, lpInBuffer);
         else
             status = STATUS_INVALID_PARAMETER;
         break;

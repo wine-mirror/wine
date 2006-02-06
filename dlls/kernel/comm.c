@@ -1652,23 +1652,20 @@ BOOL WINAPI GetCommState(
  *  Transmits a single character in front of any pending characters in the
  *  output buffer.  Usually used to send an interrupt character to a host.
  *
+ * PARAMS
+ *      hComm           [in]    The communication device in need of a command character
+ *      chTransmit      [in]    The character to transmit
+ *
  * RETURNS
  *
  *  True if the call succeeded, false if the previous command character to the
  *  same device has not been sent yet the handle is bad etc.
  *
- * BUGS
- *
- *  Stub.
  */
-BOOL WINAPI TransmitCommChar(
-    HANDLE hComm,      /* [in] The communication device in need of a command character. */
-    CHAR   chTransmit) /* [in] The character to transmit. */
+BOOL WINAPI TransmitCommChar(HANDLE hComm, CHAR chTransmit)
 {
-    DWORD w;
-    WARN("(%p,'%c') not perfect!\n",hComm,chTransmit);
-
-    return WriteFile( hComm, &chTransmit, 1, &w, NULL );
+    return DeviceIoControl(hComm, IOCTL_SERIAL_IMMEDIATE_CHAR,
+                           &chTransmit, sizeof(chTransmit), NULL, 0, NULL, NULL);
 }
 
 
