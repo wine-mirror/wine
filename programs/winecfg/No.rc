@@ -2,7 +2,7 @@
  * WineCfg resources
  * Norwegian Bokmål Language Support
  *
- * Copyright 2005 Alexander N. Sørnes
+ * Copyright 2005-2006 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -198,4 +198,16 @@ BEGIN
     IDS_WINECFG_TITLE       "Oppsett av Wine"
     IDS_THEMEFILE           "Temafiler"
     IDS_THEMEFILE_SELECT    "Velg en temafil"
+    IDS_AUDIO_MISSING       "Ingen lyddriver er oppgitt i registeret.\n\nEn anbefalt driver er valgt for deg;\nbruk den eller velg en annen,\n\nog trykk «Bruk» for at endringene skal tre i kraft."
+    END
+    
+    STRINGTABLE DISCARDABLE
+    BEGIN
+    IDS_DLL_WARNING         "Endring av lastingsrekkefølgen for dette biblioteket anbefales ikke.\nEr du sikker på at du vil gjøre det?"
+    IDS_DLL_WARNING_CAPTION "Advarsel: systembibliotek"
+    IDS_DLL_NATIVE          "innfødt"
+    IDS_DLL_BUILTIN         "innebygget"
+    IDS_DLL_NATIVE_BUILTIN  "innfødt, innebygget"
+    IDS_DLL_BUILTIN_NATIVE  "innebygget, innfødt"
+    IDS_DLL_DISABLED        "slått av"
 END

@@ -1,7 +1,7 @@
 /*
  * Program Manager
  *
- * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2006 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -217,4 +217,28 @@ IDS_PROGRAMS,			"Programmer"
 IDS_LIBRARIES_DLL,		"Biblioteker (*.dll)"
 IDS_SYMBOL_FILES,		"Ikonfiler"
 IDS_SYMBOLS_ICO,		"Ikoner (*.ico)"
+}
+
+STRINGTABLE DISCARDABLE LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
+{
+IDS_LICENSE_CAPTION,            "LISENS"
+IDS_LICENSE,
+"Dette biblioteket er fri programvare; du kan redistribuere det  \
+og/eller endre det under vilkårene i «GNU Lesser General Public \
+License», utgitt av the Free Software Foundation; enten \
+versjon 2.1 av Lisensen, eller (hvis du ønsker det) en nyere versjon.\n\
+Dette biblioteket distribueres i håp om at det er nyttig, \
+men UTEN ENHVER GARANTI; ikke engang en uttrykte garantien for \
+HANDELSDYKTIGHET eller EGNETHET FOR ET SPESIELT FORMÅL. Se «GNU \
+Lesser General Public License» for flere detaljer.\n\
+Du skal ha mottatt et eksemplar av «GNU Lesser General Public \
+License» sammen med dette biblioteket; hvis ikke, skriv til: the Free Software \
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA"
+
+IDS_WARRANTY_CAPTION, "INGEN GARANTI"
+IDS_WARRANTY,
+"Dette biblioteket distribueres i det håp at det er nyttig, \
+men UTEN ENHVER GARANTI; ikke engang en uttrykte garantien for \
+HANDELSDYKTIGHET eller EGNETHET FOR ET SPESIELT FORMÅL. Se «GNU \
+Lesser General Public License» for flere detaljer."
 }
