@@ -968,15 +968,6 @@
 /* Define to the soname of the libXrender library. */
 #undef SONAME_LIBXRENDER
 
-/* Define if the struct statfs is defined by <sys/mount.h> */
-#undef STATFS_DEFINED_BY_SYS_MOUNT
-
-/* Define if the struct statfs is defined by <sys/statfs.h> */
-#undef STATFS_DEFINED_BY_SYS_STATFS
-
-/* Define if the struct statfs is defined by <sys/vfs.h> */
-#undef STATFS_DEFINED_BY_SYS_VFS
-
 /* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
 #undef STAT_MACROS_BROKEN
 

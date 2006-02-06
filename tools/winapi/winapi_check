@@ -581,8 +581,7 @@ foreach my $file (@c_files) {
 			    } elsif($macro =~ /^HAVE_(.*?)_H$/) {
 				my $name = $1;
 				if($header !~ /^alloca\.h$/ &&
-				   $file_dir !~ /tests$/ &&
-				   !$preprocessor->is_def("STATFS_DEFINED_BY_$name"))
+				   $file_dir !~ /tests$/)
 				{
 				    $output->write("$file: #$directive $argument: is a conditional include, " .
 						   "but is not protected\n");

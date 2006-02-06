@@ -1312,76 +1312,6 @@ then
    fi
 fi
 
-dnl **** statfs checks ****
-
-if test "$ac_cv_header_sys_vfs_h" = "yes"
-then
-    AC_CACHE_CHECK( [whether sys/vfs.h defines statfs],
-		    wine_cv_sys_vfs_has_statfs,
-	AC_TRY_COMPILE([
-	#include <sys/types.h>
-	#ifdef HAVE_SYS_PARAM_H
-	# include <sys/param.h>
-	#endif
-	#include <sys/vfs.h>
-	],[
-		struct statfs stfs;
-
-		memset(&stfs,0,sizeof(stfs));
-	],wine_cv_sys_vfs_has_statfs=yes,wine_cv_sys_vfs_has_statfs=no
-	)
-    )
-    if test "$wine_cv_sys_vfs_has_statfs" = "yes"
-    then
-      AC_DEFINE(STATFS_DEFINED_BY_SYS_VFS, 1,
-                [Define if the struct statfs is defined by <sys/vfs.h>])
-    fi
-fi
-
-if test "$ac_cv_header_sys_statfs_h" = "yes"
-then
-    AC_CACHE_CHECK( [whether sys/statfs.h defines statfs],
-		    wine_cv_sys_statfs_has_statfs,
-	AC_TRY_COMPILE([
-	#include <sys/types.h>
-	#ifdef HAVE_SYS_PARAM_H
-	# include <sys/param.h>
-	#endif
-	#include <sys/statfs.h>
-	],[
-		struct statfs stfs;
-	],wine_cv_sys_statfs_has_statfs=yes,wine_cv_sys_statfs_has_statfs=no
-	)
-    )
-    if test "$wine_cv_sys_statfs_has_statfs" = "yes"
-    then
-      AC_DEFINE(STATFS_DEFINED_BY_SYS_STATFS, 1,
-                [Define if the struct statfs is defined by <sys/statfs.h>])
-    fi
-fi
-
-if test "$ac_cv_header_sys_mount_h" = "yes"
-then
-    AC_CACHE_CHECK( [whether sys/mount.h defines statfs],
-		    wine_cv_sys_mount_has_statfs,
-	AC_TRY_COMPILE([
-	#include <sys/types.h>
-	#ifdef HAVE_SYS_PARAM_H
-	# include <sys/param.h>
-	#endif
-	#include <sys/mount.h>
-	],[
-		struct statfs stfs;
-	],wine_cv_sys_mount_has_statfs=yes,wine_cv_sys_mount_has_statfs=no
-	)
-    )
-    if test "$wine_cv_sys_mount_has_statfs" = "yes"
-    then
-      AC_DEFINE(STATFS_DEFINED_BY_SYS_MOUNT, 1,
-                [Define if the struct statfs is defined by <sys/mount.h>])
-    fi
-fi
-
 dnl **** FIXME: what about mixed cases, where we need two of them? ***
 
 dnl Check for statfs members
@@ -1390,16 +1320,14 @@ AC_CHECK_MEMBERS([struct statfs.f_bfree, struct statfs.f_bavail, struct statfs.f
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
-#ifdef STATFS_DEFINED_BY_SYS_MOUNT
+#ifdef HAVE_SYS_MOUNT_H
 # include <sys/mount.h>
-#else
-# ifdef STATFS_DEFINED_BY_SYS_VFS
-#  include <sys/vfs.h>
-# else
-#  ifdef STATFS_DEFINED_BY_SYS_STATFS
-#   include <sys/statfs.h>
-#  endif
-# endif
+#endif
+#ifdef HAVE_SYS_VFS_H
+# include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATFS_H
+# include <sys/statfs.h>
 #endif])
 
 AC_CHECK_MEMBERS([struct statvfs.f_blocks],,,
