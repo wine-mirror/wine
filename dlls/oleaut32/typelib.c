@@ -2314,6 +2314,20 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
 
 /*================== ITypeLib(2) Methods ===================================*/
 
+static ITypeLibImpl* TypeLibImpl_Constructor(void)
+{
+    ITypeLibImpl* pTypeLibImpl;
+
+    pTypeLibImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeLibImpl));
+    if (!pTypeLibImpl) return NULL;
+
+    pTypeLibImpl->lpVtbl = &tlbvt;
+    pTypeLibImpl->lpVtblTypeComp = &tlbtcvt;
+    pTypeLibImpl->ref = 1;
+
+    return pTypeLibImpl;
+}
+
 /****************************************************************************
  *	ITypeLib2_Constructor_MSFT
  *
@@ -2329,12 +2343,8 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 
     TRACE("%p, TLB length = %ld\n", pLib, dwTLBLength);
 
-    pTypeLibImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeLibImpl));
+    pTypeLibImpl = TypeLibImpl_Constructor();
     if (!pTypeLibImpl) return NULL;
-
-    pTypeLibImpl->lpVtbl = &tlbvt;
-    pTypeLibImpl->lpVtblTypeComp = &tlbtcvt;
-    pTypeLibImpl->ref = 1;
 
     /* get pointer to beginning of typelib data */
     cx.pos = 0;
@@ -3155,11 +3165,9 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     TRACE_(typelib)("%p, TLB length = %ld\n", pLib, dwTLBLength);
 
-    pTypeLibImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeLibImpl));
-    if (!pTypeLibImpl) return NULL;
 
-    pTypeLibImpl->lpVtbl = &tlbvt;
-    pTypeLibImpl->ref = 1;
+    pTypeLibImpl = TypeLibImpl_Constructor();
+    if (!pTypeLibImpl) return NULL;
 
     pHeader = pLib;
 
@@ -3475,13 +3483,16 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
     if (!ref)
     {
       /* remove cache entry */
-      TRACE("removing from cache list\n");
-      EnterCriticalSection(&cache_section);
-      if (This->next) This->next->prev = This->prev;
-      if (This->prev) This->prev->next = This->next;
-      else tlb_cache_first = This->next;
-      LeaveCriticalSection(&cache_section);
-
+      if(This->path)
+      {
+          TRACE("removing from cache list\n");
+          EnterCriticalSection(&cache_section);
+          if (This->next) This->next->prev = This->prev;
+          if (This->prev) This->prev->next = This->next;
+          else tlb_cache_first = This->next;
+          LeaveCriticalSection(&cache_section);
+          HeapFree(GetProcessHeap(), 0, This->path);
+      }
       /* FIXME destroy child objects */
       TRACE(" destroying ITypeLib(%p)\n",This);
 
@@ -6368,44 +6379,49 @@ HRESULT WINAPI CreateDispTypeInfo(
 	LCID lcid, /* [I] Locale Id */
 	ITypeInfo **pptinfo) /* [O] Destination for created ITypeInfo object */
 {
-    ITypeInfoImpl *pTIImpl;
+    ITypeInfoImpl *pTIClass, *pTIIface;
+    ITypeLibImpl *pTypeLibImpl;
     int param, func;
     TLBFuncDesc **ppFuncDesc;
 
-    pTIImpl = (ITypeInfoImpl*)ITypeInfo_Constructor();
-    pTIImpl->pTypeLib = NULL;
-    pTIImpl->index = 0;
-    pTIImpl->Name = NULL;
-    pTIImpl->dwHelpContext = -1;
-    memset(&pTIImpl->TypeAttr.guid, 0, sizeof(GUID));
-    pTIImpl->TypeAttr.lcid = lcid;
-    pTIImpl->TypeAttr.typekind = TKIND_COCLASS;
-    pTIImpl->TypeAttr.wMajorVerNum = 0;
-    pTIImpl->TypeAttr.wMinorVerNum = 0;
-    pTIImpl->TypeAttr.cbAlignment = 2;
-    pTIImpl->TypeAttr.cbSizeInstance = -1;
-    pTIImpl->TypeAttr.cbSizeVft = -1;
-    pTIImpl->TypeAttr.cFuncs = 0;
-    pTIImpl->TypeAttr.cImplTypes = 1;
-    pTIImpl->TypeAttr.cVars = 0;
-    pTIImpl->TypeAttr.wTypeFlags = 0;
+    TRACE_(typelib)("\n");
+    pTypeLibImpl = TypeLibImpl_Constructor();
+    if (!pTypeLibImpl) return E_FAIL;
 
-    ppFuncDesc = &pTIImpl->funclist;
+    pTIIface = (ITypeInfoImpl*)ITypeInfo_Constructor();
+    pTIIface->pTypeLib = pTypeLibImpl;
+    pTIIface->index = 0;
+    pTIIface->Name = NULL;
+    pTIIface->dwHelpContext = -1;
+    memset(&pTIIface->TypeAttr.guid, 0, sizeof(GUID));
+    pTIIface->TypeAttr.lcid = lcid;
+    pTIIface->TypeAttr.typekind = TKIND_INTERFACE;
+    pTIIface->TypeAttr.wMajorVerNum = 0;
+    pTIIface->TypeAttr.wMinorVerNum = 0;
+    pTIIface->TypeAttr.cbAlignment = 2;
+    pTIIface->TypeAttr.cbSizeInstance = -1;
+    pTIIface->TypeAttr.cbSizeVft = -1;
+    pTIIface->TypeAttr.cFuncs = 0;
+    pTIIface->TypeAttr.cImplTypes = 0;
+    pTIIface->TypeAttr.cVars = 0;
+    pTIIface->TypeAttr.wTypeFlags = 0;
+
+    ppFuncDesc = &pTIIface->funclist;
     for(func = 0; func < pidata->cMembers; func++) {
         METHODDATA *md = pidata->pmethdata + func;
         *ppFuncDesc = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppFuncDesc));
         (*ppFuncDesc)->Name = SysAllocString(md->szName);
         (*ppFuncDesc)->funcdesc.memid = md->dispid;
-        (*ppFuncDesc)->funcdesc.funckind = FUNC_DISPATCH;
+        (*ppFuncDesc)->funcdesc.funckind = FUNC_VIRTUAL;
         (*ppFuncDesc)->funcdesc.invkind = md->wFlags;
         (*ppFuncDesc)->funcdesc.callconv = md->cc;
         (*ppFuncDesc)->funcdesc.cParams = md->cArgs;
         (*ppFuncDesc)->funcdesc.cParamsOpt = 0;
-        (*ppFuncDesc)->funcdesc.oVft = md->iMeth;
-        (*ppFuncDesc)->funcdesc.wFuncFlags = 0; /*??*/
+        (*ppFuncDesc)->funcdesc.oVft = md->iMeth << 2;
+        (*ppFuncDesc)->funcdesc.wFuncFlags = 0;
+        (*ppFuncDesc)->funcdesc.elemdescFunc.tdesc.vt = md->vtReturn;
         (*ppFuncDesc)->funcdesc.elemdescFunc.u.paramdesc.wParamFlags = PARAMFLAG_NONE;
         (*ppFuncDesc)->funcdesc.elemdescFunc.u.paramdesc.pparamdescex = NULL;
-        (*ppFuncDesc)->funcdesc.elemdescFunc.tdesc.vt = md->vtReturn;
         (*ppFuncDesc)->funcdesc.lprgelemdescParam = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                                               md->cArgs * sizeof(ELEMDESC));
         (*ppFuncDesc)->pParamDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -6422,8 +6438,41 @@ HRESULT WINAPI CreateDispTypeInfo(
         (*ppFuncDesc)->pCustData = NULL;
         (*ppFuncDesc)->next = NULL;
         ppFuncDesc = &(*ppFuncDesc)->next;
-    }        
-    *pptinfo = (ITypeInfo*)pTIImpl;
+    }
+
+    pTypeLibImpl->pTypeInfo = pTIIface;
+    pTypeLibImpl->TypeInfoCount++;
+
+    pTIClass = (ITypeInfoImpl*)ITypeInfo_Constructor();
+    pTIClass->pTypeLib = pTypeLibImpl;
+    pTIClass->index = 1;
+    pTIClass->Name = NULL;
+    pTIClass->dwHelpContext = -1;
+    memset(&pTIClass->TypeAttr.guid, 0, sizeof(GUID));
+    pTIClass->TypeAttr.lcid = lcid;
+    pTIClass->TypeAttr.typekind = TKIND_COCLASS;
+    pTIClass->TypeAttr.wMajorVerNum = 0;
+    pTIClass->TypeAttr.wMinorVerNum = 0;
+    pTIClass->TypeAttr.cbAlignment = 2;
+    pTIClass->TypeAttr.cbSizeInstance = -1;
+    pTIClass->TypeAttr.cbSizeVft = -1;
+    pTIClass->TypeAttr.cFuncs = 0;
+    pTIClass->TypeAttr.cImplTypes = 1;
+    pTIClass->TypeAttr.cVars = 0;
+    pTIClass->TypeAttr.wTypeFlags = 0;
+
+    pTIClass->impltypelist = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pTIClass->impltypelist));
+    pTIClass->impltypelist->hRef = 1;
+
+    pTIClass->reflist = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pTIClass->reflist));
+    pTIClass->reflist->index = 0;
+    pTIClass->reflist->reference = 1;
+    pTIClass->reflist->pImpTLInfo = TLB_REF_INTERNAL;
+
+    pTIIface->next = pTIClass;
+    pTypeLibImpl->TypeInfoCount++;
+
+    *pptinfo = (ITypeInfo*)pTIClass;
     return S_OK;
 
 }
