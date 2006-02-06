@@ -1070,7 +1070,6 @@ IMPORT_SYMLINKS = \
 	libolecli32.$(IMPLIBEXT) \
 	libolesvr32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
-	libw32skrnl.$(IMPLIBEXT) \
 	libwinnls32.$(IMPLIBEXT) \
 	libwnaspi32.$(IMPLIBEXT) \
 	libws2_32.$(IMPLIBEXT) \
@@ -1179,7 +1178,6 @@ IMPORT_LIBS = \
 	uxtheme/libuxtheme.$(IMPLIBEXT) \
 	vdmdbg/libvdmdbg.$(IMPLIBEXT) \
 	version/libversion.$(IMPLIBEXT) \
-	win32s/libw32skrnl.$(IMPLIBEXT) \
 	wined3d/libwined3d.$(IMPLIBEXT) \
 	winedos/libwinedos.$(IMPLIBEXT) \
 	wininet/libwininet.$(IMPLIBEXT) \
@@ -1485,9 +1483,6 @@ vdmdbg/libvdmdbg.$(IMPLIBEXT): vdmdbg/vdmdbg.spec $(WINEBUILD)
 version/libversion.$(IMPLIBEXT): version/version.spec $(WINEBUILD)
 	@cd version && $(MAKE) libversion.$(IMPLIBEXT)
 
-win32s/libw32skrnl.$(IMPLIBEXT): win32s/w32skrnl.spec $(WINEBUILD)
-	@cd win32s && $(MAKE) libw32skrnl.$(IMPLIBEXT)
-
 wined3d/libwined3d.$(IMPLIBEXT): wined3d/wined3d.spec $(WINEBUILD)
 	@cd wined3d && $(MAKE) libwined3d.$(IMPLIBEXT)
 
@@ -1559,9 +1554,6 @@ libolesvr32.$(IMPLIBEXT): olesvr/libolesvr32.$(IMPLIBEXT)
 
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
-
-libw32skrnl.$(IMPLIBEXT): win32s/libw32skrnl.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) win32s/libw32skrnl.$(IMPLIBEXT) $@
 
 libwinnls32.$(IMPLIBEXT): winnls/libwinnls32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) winnls/libwinnls32.$(IMPLIBEXT) $@
