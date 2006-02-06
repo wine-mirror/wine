@@ -238,7 +238,9 @@ static NTSTATUS TAPE_GetPosition( int fd, ULONG type, TAPE_GET_POSITION *data )
 {
 #ifdef HAVE_SYS_MTIO_H
     struct mtget get;
+#ifndef HAVE_STRUCT_MTGET_MT_BLKNO
     struct mtpos pos;
+#endif
     NTSTATUS status;
 
     TRACE( "fd: %d type: 0x%08lx\n", fd, type );
@@ -249,16 +251,22 @@ static NTSTATUS TAPE_GetPosition( int fd, ULONG type, TAPE_GET_POSITION *data )
     if (status != STATUS_SUCCESS)
         return status;
 
+#ifndef HAVE_STRUCT_MTGET_MT_BLKNO
     status = TAPE_GetStatus( ioctl( fd, MTIOCPOS, &pos ) );
     if (status != STATUS_SUCCESS)
         return status;
+#endif
 
     switch (type)
     {
     case TAPE_ABSOLUTE_BLOCK:
         data->Type = type;
         data->Partition = get.mt_resid;
+#ifdef HAVE_STRUCT_MTGET_MT_BLKNO
+        data->OffsetLow = get.mt_blkno;
+#else
         data->OffsetLow = pos.mt_blkno;
+#endif
         break;
     case TAPE_LOGICAL_BLOCK:
     case TAPE_PSEUDO_LOGICAL_BLOCK:
