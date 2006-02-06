@@ -43,6 +43,13 @@ typedef struct
     LPVOID lpFileType;
 } MapiFileDesc, *lpMapiFileDesc;
 
+#ifndef MAPI_ORIG
+#define MAPI_ORIG   0
+#define MAPI_TO     1
+#define MAPI_CC     2
+#define MAPI_BCC    3
+#endif
+
 typedef struct
 {
     ULONG ulReserved;

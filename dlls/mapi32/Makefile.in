@@ -4,13 +4,14 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mapi32.dll
 IMPORTLIB = libmapi32.$(IMPLIBEXT)
-IMPORTS   = shlwapi ole32 user32 kernel32 ntdll
+IMPORTS   = shlwapi shell32 ole32 user32 kernel32 ntdll
 EXTRALIBS = -luuid $(LIBUNICODE)
 
 C_SRCS = \
 	imalloc.c \
 	mapi32_main.c \
 	prop.c \
+	sendmail.c \
 	util.c
 
 SUBDIRS = tests
