@@ -4436,6 +4436,17 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
         return D3DERR_INVALIDCALL;
     }
 
+    if(pTexture != NULL) {
+        /* SetTexture isn't allowed on textures in D3DPOOL_SCRATCH; The same is
+        *  the case for D3DPOOL_SYSTEMMEM textures unless D3DDEVCAPS_TEXTURESYSTEMMORY is set.
+        *  We don't check the caps as GetDeviceCaps is inefficient and we don't set the cap anyway.
+        */
+        if(((IWineD3DTextureImpl*)pTexture)->resource.pool == D3DPOOL_SCRATCH || ((IWineD3DTextureImpl*)pTexture)->resource.pool == D3DPOOL_SYSTEMMEM) {
+            WARN("(%p) Attempt to set scratch texture rejected\n", pTexture);
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
     oldTexture = This->updateStateBlock->textures[Stage];
     TRACE("GL_LIMITS %d\n",GL_LIMITS(textures));
     TRACE("(%p) : oldtexture(%p)\n", This,oldTexture);

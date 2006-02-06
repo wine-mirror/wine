@@ -1456,8 +1456,10 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 
     *pCaps->DevCaps                 = D3DDEVCAPS_DRAWPRIMTLVERTEX    |
                                       D3DDEVCAPS_HWTRANSFORMANDLIGHT |
+                                      D3DDEVCAPS_EXECUTEVIDEOMEMORY  |
                                       D3DDEVCAPS_PUREDEVICE          |
-                                      D3DDEVCAPS_HWRASTERIZATION;
+                                      D3DDEVCAPS_HWRASTERIZATION     |
+                                      D3DDEVCAPS_TEXTUREVIDEOMEMORY;
 
 
     *pCaps->PrimitiveMiscCaps       = D3DPMISCCAPS_CULLCCW               |
