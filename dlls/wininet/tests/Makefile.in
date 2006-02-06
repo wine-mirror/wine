@@ -7,7 +7,8 @@ IMPORTS   = wininet kernel32
 
 CTESTS = \
 	generated.c \
-	http.c
+	http.c \
+	internet.c
 
 @MAKE_TEST_RULES@
 
