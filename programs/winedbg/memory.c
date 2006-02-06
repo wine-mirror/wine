@@ -3,7 +3,7 @@
  *
  * Copyright 1993 Eric Youngdale
  * Copyright 1995 Alexandre Julliard
- * Copyright 2000-2004 Eric Pouech
+ * Copyright 2000-2005 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -569,4 +569,26 @@ void memory_disassemble(const struct dbg_lvalue* xstart,
     for (i = 0; (instruction_count == 0 || i < instruction_count)  &&
                 (stop == 0 || last.Offset <= stop); i++)
         memory_disasm_one_insn(&last);
+}
+
+BOOL memory_get_register(DWORD regno, DWORD** value, char* buffer, int len)
+{
+    const struct dbg_internal_var*  div;
+
+    if (dbg_curr_thread->curr_frame != 0)
+    {
+        if (buffer) snprintf(buffer, len, "<register not in topmost frame>");
+        return FALSE;
+    }
+    for (div = dbg_context_vars; div->name; div++)
+    {
+        if (div->val == regno)
+        {
+            *value = div->pval;
+            snprintf(buffer, len, div->name);
+            return TRUE;
+        }
+    }
+    if (buffer) snprintf(buffer, len, "<unknown register %lu>", regno);
+    return FALSE;
 }

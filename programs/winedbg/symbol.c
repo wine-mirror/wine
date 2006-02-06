@@ -2,7 +2,7 @@
  * Generate hash tables for Wine debugger symbols
  *
  * Copyright (C) 1993, Eric Youngdale.
- *               2004, Eric Pouech.
+ *               2004-2005, Eric Pouech.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -93,22 +93,14 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 
     if (sym->Flags & SYMFLAG_REGISTER)
     {
-        const struct dbg_internal_var*  div;
-
-        if (dbg_curr_thread->curr_frame != 0)
+        char    tmp[32];
+        DWORD*  val;
+        if (!memory_get_register(sym->Register, &val, tmp, sizeof(tmp)))
         {
-            dbg_printf(" %s (register): << cannot display, not in correct frame\n",
-                       sym->Name);
+            dbg_printf(" %s (register): %s\n", sym->Name, tmp);
             return TRUE;
         }
-        for (div = dbg_context_vars; div->name && div->val != sym->Register; div++);
-        if (!div->name)
-        {
-            dbg_printf(" %s (register): couldn't find register %lu\n",
-                       sym->Name, sym->Register);
-            return TRUE;
-        }
-        addr = (ULONG64)(DWORD_PTR)div->pval;
+        addr = (ULONG64)(DWORD_PTR)val;
         cookie = DLV_HOST;
     }
     else if (sym->Flags & SYMFLAG_LOCAL) /* covers both local & parameters */
@@ -537,7 +529,6 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
 static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 {
     ULONG               v, val;
-    const char*         explain = NULL;
     char                buf[128];
     struct dbg_type     type;
 
@@ -546,29 +537,19 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     type.id = sym->TypeIndex;
     types_print_type(&type, FALSE);
 
-    if (sym->Flags & SYMFLAG_PARAMETER) explain = "parameter";
-    else if (sym->Flags & SYMFLAG_LOCAL) explain = "local";
-    else if (sym->Flags & SYMFLAG_REGISTER) explain = buf;
+    buf[0] = '\0';
 
     if (sym->Flags & SYMFLAG_REGISTER)
     {
-        const struct dbg_internal_var*  div;
-
-        if (dbg_curr_thread->curr_frame != 0)
+        char tmp[32];
+        DWORD* pval;
+        if (!memory_get_register(sym->Register, &pval, tmp, sizeof(tmp)))
         {
-            dbg_printf(" %s (register): << cannot display, not in correct frame\n",
-                       sym->Name);
+            dbg_printf(" %s (register): %s\n", sym->Name, tmp);
             return TRUE;
         }
-        for (div = dbg_context_vars; div->name; div++)
-        {
-            if (div->val == sym->Register)
-            {
-                val = *div->pval;
-                sprintf(buf, "local in register %s", div->name);
-                break;
-            }
-        }
+        sprintf(buf, " in register %s", tmp);
+        val = *pval;
     }
     else if (sym->Flags & SYMFLAG_LOCAL)
     {
@@ -577,11 +558,14 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 
         if (!dbg_read_memory((void*)v, &val, sizeof(val)))
         {
-            dbg_printf(" %s (%s) *** cannot read value at 0x%08lx\n", sym->Name, explain, v);
+            dbg_printf(" %s (%s) *** cannot read at 0x%08lx\n", 
+                       sym->Name, (sym->Flags & SYMFLAG_PARAMETER) ? "parameter" : "local",
+                       v);
             return TRUE;
         }
     }
-    dbg_printf(" %s = 0x%8.8lx (%s)\n", sym->Name, val, explain);
+    dbg_printf(" %s = 0x%8.8lx (%s%s)\n", sym->Name, val, 
+               (sym->Flags & SYMFLAG_PARAMETER) ? "parameter" : "local", buf);
 
     return TRUE;
 }

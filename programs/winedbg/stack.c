@@ -174,17 +174,30 @@ struct sym_enum
 static BOOL WINAPI sym_enum_cb(SYMBOL_INFO* sym_info, ULONG size, void* user)
 {
     struct sym_enum*    se = (struct sym_enum*)user;
-    DWORD               addr;
-    unsigned            val;
+    char                tmp[32];
 
-    if ((sym_info->Flags & (SYMFLAG_PARAMETER|SYMFLAG_REGREL)) == (SYMFLAG_PARAMETER|SYMFLAG_REGREL))
+    if (sym_info->Flags & SYMFLAG_PARAMETER)
     {
         if (se->tmp[0]) strcat(se->tmp, ", ");
-        addr = se->frame + sym_info->Address;
-        if (dbg_read_memory((char*)addr, &val, sizeof(val)))
-            sprintf(se->tmp + strlen(se->tmp), "%s=0x%x", sym_info->Name, val);
-        else
-            sprintf(se->tmp + strlen(se->tmp), "%s=<\?\?\?>", sym_info->Name);
+    
+        if (sym_info->Flags & SYMFLAG_REGREL)
+        {
+            unsigned    val;
+            DWORD       addr = se->frame + sym_info->Address;
+
+            if (!dbg_read_memory((char*)addr, &val, sizeof(val)))
+                snprintf(tmp, sizeof(tmp), "<*** cannot read at 0x%lx ***>", addr);
+            else
+                snprintf(tmp, sizeof(tmp), "0x%x", val);
+        }
+        else if (sym_info->Flags & SYMFLAG_REGISTER)
+        {
+            DWORD* pval;
+
+            if (memory_get_register(sym_info->Register, &pval, tmp, sizeof(tmp)))
+                snprintf(tmp, sizeof(tmp), "0x%lx", *pval);
+        }
+        sprintf(se->tmp + strlen(se->tmp), "%s=%s", sym_info->Name, tmp);
     }
     return TRUE;
 }
@@ -240,25 +253,28 @@ static void stack_print_addr_and_args(int nf)
  *
  * Do a backtrace on the the current thread
  */
-static unsigned backtrace(void)
+static void backtrace(void)
 {
-    unsigned                    nf = 0;
+    unsigned                    cf = dbg_curr_thread->curr_frame;
     IMAGEHLP_STACK_FRAME        ihsf;
 
     dbg_printf("Backtrace:\n");
-    for (nf = 0; nf < dbg_curr_thread->num_frames; nf++)
+    for (dbg_curr_thread->curr_frame = 0;
+         dbg_curr_thread->curr_frame < dbg_curr_thread->num_frames;
+         dbg_curr_thread->curr_frame++)
     {
         dbg_printf("%s%d ", 
-                   (nf == dbg_curr_thread->curr_frame ? "=>" : "  "), nf + 1);
-        stack_print_addr_and_args(nf);
+                   (cf == dbg_curr_thread->curr_frame ? "=>" : "  "),
+                   dbg_curr_thread->curr_frame + 1);
+        stack_print_addr_and_args(dbg_curr_thread->curr_frame);
         dbg_printf(" (");
-        print_bare_address(&dbg_curr_thread->frames[nf].addr_pc);
+        print_bare_address(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc);
         dbg_printf(")\n");
     }
     /* reset context to current stack frame */
+    dbg_curr_thread->curr_frame = cf;
     stack_get_frame(dbg_curr_thread->curr_frame, &ihsf);
     SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
-    return nf;
 }
 
 /******************************************************************

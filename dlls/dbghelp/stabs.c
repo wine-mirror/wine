@@ -2,7 +2,7 @@
  * File stabs.c - read stabs information from the modules
  *
  * Copyright (C) 1996,      Eric Youngdale.
- *		 1999-2004, Eric Pouech
+ *		 1999-2005, Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1092,6 +1092,48 @@ struct pending_loc_var
     unsigned            regno;
 };
 
+struct pending_block
+{
+    struct pending_loc_var*     vars;
+    unsigned                    num;
+    unsigned                    allocated;
+};
+
+static inline void pending_add(struct pending_block* pending, const char* name,
+                               int regno, int offset)
+{
+    if (pending->num == pending->allocated)
+    {
+        pending->allocated += 8;
+        if (!pending->vars)
+            pending->vars = HeapAlloc(GetProcessHeap(), 0, 
+                                     pending->allocated * sizeof(pending->vars[0]));
+        else    
+            pending->vars = HeapReAlloc(GetProcessHeap(), 0, pending->vars,
+                                       pending->allocated * sizeof(pending->vars[0]));
+    }
+    stab_strcpy(pending->vars[pending->num].name, 
+                sizeof(pending->vars[pending->num].name), name);
+    pending->vars[pending->num].type   = stabs_parse_type(name);
+    pending->vars[pending->num].offset = offset;
+    pending->vars[pending->num].regno  = regno;
+    pending->num++;
+}
+
+static void pending_flush(struct pending_block* pending, struct module* module, 
+                          struct symt_function* func, struct symt_block* block)
+{
+    int i;
+
+    for (i = 0; i < pending->num; i++)
+    {
+        symt_add_func_local(module, func, pending->vars[i].regno, 
+                            pending->vars[i].offset, block,
+                            pending->vars[i].type, pending->vars[i].name);
+    }
+    pending->num = 0;
+}
+
 /******************************************************************
  *		stabs_finalize_function
  *
@@ -1129,7 +1171,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     struct symt_compiland*      compiland = NULL;
     char                        currpath[PATH_MAX]; /* path to current file */
     char                        srcpath[PATH_MAX]; /* path to directory source file is in */
-    int                         i, j;
+    int                         i;
     int                         nstab;
     const char*                 ptr;
     char*                       stabbuff;
@@ -1141,9 +1183,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     unsigned                    incl[32];
     int                         incl_stk = -1;
     int                         source_idx = -1;
-    struct pending_loc_var*     pending_vars = NULL;
-    unsigned                    num_pending_vars = 0;
-    unsigned                    num_allocated_pending_vars = 0;
+    struct pending_block        pending;
     BOOL                        ret = TRUE;
 
     nstab = stablen / sizeof(struct stab_nlist);
@@ -1151,6 +1191,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
 
     memset(srcpath, 0, sizeof(srcpath));
     memset(stabs_basic, 0, sizeof(stabs_basic));
+    memset(&pending, 0, sizeof(pending));
 
     /*
      * Allocate a buffer into which we can build stab strings for cases
@@ -1254,7 +1295,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                               "rbrac","","","",                 /* e0 */
         };
 
-        FIXME("Got %s<%u> %u/%lu (%s)\n", 
+        FIXME("Got %s<%u> %u/%ld (%s)\n", 
               defs[stab_ptr->n_type / 2], stab_ptr->n_type, stab_ptr->n_desc, stab_ptr->n_value, debugstr_a(ptr));
 #endif
 
@@ -1285,13 +1326,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
         case N_LBRAC:
             block = symt_open_func_block(module, curr_func, block,
                                          stab_ptr->n_value, 0);
-            for (j = 0; j < num_pending_vars; j++)
-            {
-                symt_add_func_local(module, curr_func, pending_vars[j].regno, 
-                                    pending_vars[j].offset,
-                                    block, pending_vars[j].type, pending_vars[j].name);
-            }
-            num_pending_vars = 0;
+            pending_flush(&pending, module, curr_func, block);
             break;
         case N_RBRAC:
             block = symt_close_func_block(module, curr_func, block,
@@ -1316,16 +1351,6 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             {
                 unsigned reg;
 
-                if (num_pending_vars == num_allocated_pending_vars)
-                {
-                    num_allocated_pending_vars += 8;
-                    if (!pending_vars)
-                        pending_vars = HeapAlloc(GetProcessHeap(), 0, 
-                                                 num_allocated_pending_vars * sizeof(pending_vars[0]));
-                    else
-                        pending_vars = HeapReAlloc(GetProcessHeap(), 0, pending_vars,
-                                                   num_allocated_pending_vars * sizeof(pending_vars[0]));
-                }
                 switch (stab_ptr->n_value)
                 {
                 case  0: reg = CV_REG_EAX; break;
@@ -1350,36 +1375,24 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                     reg = CV_REG_NONE;
                     break;
                 }
-
-                stab_strcpy(pending_vars[num_pending_vars].name, 
-                            sizeof(pending_vars[num_pending_vars].name), ptr);
-                pending_vars[num_pending_vars].type   = stabs_parse_type(ptr);
-                pending_vars[num_pending_vars].offset = 0;
-                pending_vars[num_pending_vars].regno  = reg;
-                num_pending_vars++;
+                stab_strcpy(symname, sizeof(symname), ptr);
+                if (ptr[strlen(symname) + 1] == 'P')
+                {
+                    struct symt*    param_type = stabs_parse_type(ptr);
+                    stab_strcpy(symname, sizeof(symname), ptr);
+                    symt_add_func_local(module, curr_func, reg, 1,
+                                        NULL, param_type, symname);
+                    symt_add_function_signature_parameter(module, 
+                                                          (struct symt_function_signature*)curr_func->type, 
+                                                          param_type);
+                }
+                else
+                    pending_add(&pending, ptr, reg, 0);
             }
             break;
         case N_LSYM:
             /* These are local variables */
-            if (curr_func != NULL)
-            {
-                if (num_pending_vars == num_allocated_pending_vars)
-                {
-                    num_allocated_pending_vars += 8;
-                    if (!pending_vars)
-                        pending_vars = HeapAlloc(GetProcessHeap(), 0, 
-                                                 num_allocated_pending_vars * sizeof(pending_vars[0]));
-                    else
-                        pending_vars = HeapReAlloc(GetProcessHeap(), 0, pending_vars,
-                                                   num_allocated_pending_vars * sizeof(pending_vars[0]));
-                }                        
-                stab_strcpy(pending_vars[num_pending_vars].name, 
-                            sizeof(pending_vars[num_pending_vars].name), ptr);
-                pending_vars[num_pending_vars].type   = stabs_parse_type(ptr);
-                pending_vars[num_pending_vars].offset = stab_ptr->n_value;
-                pending_vars[num_pending_vars].regno  = 0;
-                num_pending_vars++;
-            }
+            if (curr_func != NULL) pending_add(&pending, ptr, 0, stab_ptr->n_value);
             break;
         case N_SLINE:
             /*
@@ -1534,7 +1547,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
 done:
     HeapFree(GetProcessHeap(), 0, stabbuff);
     stabs_free_includes();
-    HeapFree(GetProcessHeap(), 0, pending_vars);
+    HeapFree(GetProcessHeap(), 0, pending.vars);
 
     return ret;
 }

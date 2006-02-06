@@ -285,6 +285,19 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
     dli->u.pc_offset    = func->address + offset;
 }
 
+/******************************************************************
+ *		symt_add_func_local
+ *
+ * Adds a new local/parameter to a given function:
+ * If regno it's not 0:
+ *      - then variable is stored in a register
+ *      - if offset is > 0, then it's a parameter to the function (in a register)
+ *      - if offset is = 0, then it's a local variable (in a register)
+ * Otherwise, the variable is stored on the stack:
+ *      - if offset is > 0, then it's a parameter to the function
+ *      - otherwise, it's a local variable
+ * FIXME: this is too i386 centric
+ */
 struct symt_data* symt_add_func_local(struct module* module, 
                                       struct symt_function* func, 
                                       int regno, int offset, 
@@ -304,7 +317,7 @@ struct symt_data* symt_add_func_local(struct module* module,
     locsym->symt.tag      = SymTagData;
     locsym->hash_elt.name = pool_strdup(&module->pool, name);
     locsym->hash_elt.next = NULL;
-    locsym->kind          = (offset < 0) ? DataIsParam : DataIsLocal;
+    locsym->kind          = (offset > 0) ? DataIsParam : DataIsLocal;
     locsym->container     = &block->symt;
     locsym->type          = type;
     if (regno)
@@ -465,8 +478,10 @@ static void symt_fill_sym_info(const struct module* module,
             const struct symt_data*  data = (const struct symt_data*)sym;
             switch (data->kind)
             {
-            case DataIsLocal:
             case DataIsParam:
+                sym_info->Flags |= SYMFLAG_PARAMETER;
+                /* fall through */
+            case DataIsLocal: 
                 if (data->u.s.reg_id)
                 {
                     sym_info->Flags |= SYMFLAG_REGISTER;
@@ -476,8 +491,6 @@ static void symt_fill_sym_info(const struct module* module,
                 else
                 {
                     sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_REGREL;
-                    /* FIXME: this is i386 dependent */
-                    if (data->u.s.offset >= 0) sym_info->Flags |= SYMFLAG_PARAMETER;
                     /* FIXME: needed ? moreover, it's i386 dependent !!! */
                     sym_info->Register = CV_REG_EBP;
                     sym_info->Address = data->u.s.offset / 8;
