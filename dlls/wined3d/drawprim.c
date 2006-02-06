@@ -1779,7 +1779,7 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
             GLint errPos;
             IWineD3DVertexDeclarationImpl *vertexDeclaration;
 
-            FIXME("Using vertex shader\n");
+            TRACE("Using vertex shader\n");
 
             /* Bind the vertex program */
             GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->prgId));
