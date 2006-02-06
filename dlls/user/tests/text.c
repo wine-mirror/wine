@@ -182,7 +182,7 @@ static void strfmt( char *str, char *strout)
 } \
 
 
-static void test_TabbedText()
+static void test_TabbedText(void)
 {
     HWND hwnd;
     HDC hdc;

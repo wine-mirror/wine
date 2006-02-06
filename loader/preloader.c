@@ -153,7 +153,7 @@ struct wld_link_map {
  * build the preloader with "-nostartfiles -nodefaultlibs", we have to
  * provide our own (empty) version, otherwise linker fails.
  */
-void __bb_init_func() { return; }
+void __bb_init_func(void) { return; }
 
 /* similar to the above but for -fstack-protector */
 void *__stack_chk_guard = 0;

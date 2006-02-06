@@ -75,7 +75,7 @@ static void test_swab( void ) {
     ok(memcmp(to,expected3,testsize) == 0, "Testing small size %d returned '%*.*s'\n", testsize, testsize, testsize, to);
 }
 
-void test_ismbblead()
+void test_ismbblead(void)
 {
     unsigned int s = '\354';
 

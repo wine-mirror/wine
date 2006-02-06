@@ -157,7 +157,7 @@ static void unregister_keys(HKEY hRootKey, const struct registry_key *keys, unsi
     }
 }
     
-static void test_ShortcutFolder() {
+static void test_ShortcutFolder(void) {
     LPSHELLFOLDER pDesktopFolder, pWineTestFolder;
     IPersistFolder3 *pWineTestPersistFolder;
     LPITEMIDLIST pidlWineTestFolder, pidlCurFolder;

@@ -1972,7 +1972,7 @@ HMENU WINAPI SHGetMenuFromID(HMENU hMenu, UINT uID)
  * RETURNS
  *  The color depth of the primary display.
  */
-DWORD WINAPI SHGetCurColorRes()
+DWORD WINAPI SHGetCurColorRes(void)
 {
     HDC hdc;
     DWORD ret;
@@ -2813,7 +2813,7 @@ BOOL WINAPI GUIDFromStringW(LPCWSTR idstr, CLSID *id)
  *  either set to TRUE, or removed depending on whether the browser is deemed
  *  to be integrated.
  */
-DWORD WINAPI WhichPlatform()
+DWORD WINAPI WhichPlatform(void)
 {
   static LPCSTR szIntegratedBrowser = "IntegratedBrowser";
   static DWORD dwState = 0;
@@ -3396,7 +3396,7 @@ HICON WINAPI ExtractIconWrapW(HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 /*************************************************************************
  *      @	[SHLWAPI.376]
  */
-LANGID WINAPI MLGetUILanguage()
+LANGID WINAPI MLGetUILanguage(void)
 {
     FIXME("() stub\n");
     /* FIXME: This should be a forward in the .spec file to the win2k function

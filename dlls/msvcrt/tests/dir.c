@@ -31,7 +31,7 @@
 #include <process.h>
 #include <errno.h>
 
-void test_fullpath()
+void test_fullpath(void)
 {
     char full[MAX_PATH];
     char tmppath[MAX_PATH];

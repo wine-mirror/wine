@@ -182,7 +182,7 @@ static void* do_call_func2(void *func, void *_this, void* arg)
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
 
-static void InitFunctionPtrs()
+static void InitFunctionPtrs(void)
 {
   hMsvcrt = LoadLibraryA("msvcrt.dll");
   ok(hMsvcrt != 0, "LoadLibraryA failed\n");

@@ -81,10 +81,10 @@ extern int _crtAssertBusy;
 extern int _crtBreakAlloc;
 extern int _crtDbgFlag;
 
-int   _CrtCheckMemory();
+int   _CrtCheckMemory(void);
 int   _CrtDbgReport(int reportType, const char *filename, int linenumber,
                     const char *moduleName, const char *format, ...);
-int   _CrtDumpMemoryLeaks();
+int   _CrtDumpMemoryLeaks(void);
 int   _CrtSetBreakAlloc(int new);
 int   _CrtSetDbgFlag(int new);
 void *_CrtSetDumpClient(void *dumpClient);

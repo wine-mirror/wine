@@ -58,7 +58,7 @@ static HRESULT (WINAPI *pExtract)(EXTRACTDEST*, LPCSTR);
 
 CHAR CURR_DIR[MAX_PATH];
 
-static void init_function_pointers()
+static void init_function_pointers(void)
 {
     hCabinet = LoadLibraryA("cabinet.dll");
 
@@ -81,7 +81,7 @@ static void createTestFile(const CHAR *name)
     CloseHandle(file);
 }
 
-static void create_test_files()
+static void create_test_files(void)
 {
     int len;
 
@@ -99,7 +99,7 @@ static void create_test_files()
     CreateDirectoryA("dest", NULL);
 }
 
-static void delete_test_files()
+static void delete_test_files(void)
 {
     DeleteFileA("a.txt");
     DeleteFileA("b.txt");
@@ -283,7 +283,7 @@ static void set_cab_parameters(PCCAB pCabParams)
     lstrcpyA(pCabParams->szCab, "extract.cab");
 }
 
-static void create_cab_file()
+static void create_cab_file(void)
 {
     CCAB cabParams;
     HFCI hfci;
@@ -310,7 +310,7 @@ static void create_cab_file()
     ok(res, "Failed to destroy the cabinet\n");
 }
 
-static void test_Extract()
+static void test_Extract(void)
 {
     EXTRACTDEST extractDest;
     HRESULT res;

@@ -838,7 +838,7 @@ static void fill_url_components(LPURL_COMPONENTS lpUrlComponents)
 	lpUrlComponents->dwExtraInfoLength = strlen(lpUrlComponents->lpszExtraInfo);
 }
 
-static void InternetCreateUrlA_test()
+static void InternetCreateUrlA_test(void)
 {
 	URL_COMPONENTS urlComp;
 	LPSTR szUrl;

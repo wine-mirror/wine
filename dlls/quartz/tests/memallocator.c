@@ -27,7 +27,7 @@
 #include "dshow.h"
 #include "control.h"
 
-static void CommitDecommitTest()
+static void CommitDecommitTest(void)
 {
     IMemAllocator* pMemAllocator;
     HRESULT hr;

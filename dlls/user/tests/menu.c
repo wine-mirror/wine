@@ -487,7 +487,7 @@ if( !stop) {\
 #define ER 0
 
 
-static void test_menu_iteminfo(  )
+static void test_menu_iteminfo( void )
 {
   int S=sizeof( MENUITEMINFOA);
   int ansi = TRUE;

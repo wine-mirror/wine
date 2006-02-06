@@ -53,7 +53,7 @@ VOID SetFileName(LPCWSTR szFileName)
  *
  *  Initialize font for the edit window
  */
-static VOID NOTEPAD_InitFont()
+static VOID NOTEPAD_InitFont(void)
 {
     LOGFONT *lf = &Globals.lfFont;
     static const WCHAR systemW[] = { 'S','y','s','t','e','m',0 };

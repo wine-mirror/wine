@@ -2157,7 +2157,7 @@ void __wine_process_init( int argc, char *argv[] )
     WINE_MODREF *wm;
     NTSTATUS status;
     ANSI_STRING func_name;
-    void (* DECLSPEC_NORETURN init_func)();
+    void (* DECLSPEC_NORETURN init_func)(void);
     extern mode_t FILE_umask;
 
     thread_init();

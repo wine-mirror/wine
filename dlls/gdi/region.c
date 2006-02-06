@@ -439,8 +439,6 @@ typedef struct _ScanLineListBlock {
    } \
 }
 
-typedef void (*voidProcp)();
-
 /* Note the parameter order is different from the X11 equivalents */
 
 static void REGION_CopyRegion(WINEREGION *d, WINEREGION *s);
@@ -1563,9 +1561,9 @@ static void REGION_RegionOp(
 	    WINEREGION *newReg, /* Place to store result */
 	    WINEREGION *reg1,   /* First region in operation */
             WINEREGION *reg2,   /* 2nd region in operation */
-	    void (*overlapFunc)(),     /* Function to call for over-lapping bands */
-	    void (*nonOverlap1Func)(), /* Function to call for non-overlapping bands in region 1 */
-	    void (*nonOverlap2Func)()  /* Function to call for non-overlapping bands in region 2 */
+	    void (*overlapFunc)(WINEREGION*, RECT*, RECT*, RECT*, RECT*, INT, INT),     /* Function to call for over-lapping bands */
+	    void (*nonOverlap1Func)(WINEREGION*, RECT*, RECT*, INT, INT), /* Function to call for non-overlapping bands in region 1 */
+	    void (*nonOverlap2Func)(WINEREGION*, RECT*, RECT*, INT, INT)  /* Function to call for non-overlapping bands in region 2 */
 ) {
     RECT *r1;                         /* Pointer into first region */
     RECT *r2;                         /* Pointer into 2d region */
@@ -1909,8 +1907,7 @@ static void REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
 	(!EXTENTCHECK(&reg1->extents, &reg2->extents)))
 	newReg->numRects = 0;
     else
-	REGION_RegionOp (newReg, reg1, reg2,
-	 (voidProcp) REGION_IntersectO, (voidProcp) NULL, (voidProcp) NULL);
+	REGION_RegionOp (newReg, reg1, reg2, REGION_IntersectO, NULL, NULL);
 
     /*
      * Can't alter newReg's extents before we call miRegionOp because
@@ -2088,8 +2085,7 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
 	return;
     }
 
-    REGION_RegionOp (newReg, reg1, reg2, (voidProcp) REGION_UnionO,
-		(voidProcp) REGION_UnionNonO, (voidProcp) REGION_UnionNonO);
+    REGION_RegionOp (newReg, reg1, reg2, REGION_UnionO, REGION_UnionNonO, REGION_UnionNonO);
 
     newReg->extents.left = min(reg1->extents.left, reg2->extents.left);
     newReg->extents.top = min(reg1->extents.top, reg2->extents.top);
@@ -2288,8 +2284,7 @@ static void REGION_SubtractRegion(WINEREGION *regD, WINEREGION *regM,
 	return;
     }
 
-    REGION_RegionOp (regD, regM, regS, (voidProcp) REGION_SubtractO,
-		(voidProcp) REGION_SubtractNonO1, (voidProcp) NULL);
+    REGION_RegionOp (regD, regM, regS, REGION_SubtractO, REGION_SubtractNonO1, NULL);
 
     /*
      * Can't alter newReg's extents before we call miRegionOp because

@@ -68,7 +68,7 @@ static LONG getItem(HWND cbex, int idx, COMBOBOXEXITEM *cbItem) {
     return (LONG)SendMessage(cbex, CBEM_GETITEM, 0, (LPARAM)cbItem);
 }
 
-static void test_comboboxex() {
+static void test_comboboxex(void) {
     HWND myHwnd = 0;
     LONG res = -1;
     COMBOBOXEXITEM cbexItem;

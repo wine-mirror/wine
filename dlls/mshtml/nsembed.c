@@ -241,7 +241,7 @@ static void set_profile(void)
     nsIProfile_Release(profile);
 }
 
-static BOOL load_gecko()
+static BOOL load_gecko(void)
 {
     nsresult nsres;
     nsIObserver *pStartNotif;

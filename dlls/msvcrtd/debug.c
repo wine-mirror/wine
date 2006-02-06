@@ -132,7 +132,7 @@ int _CrtDbgReport(int reportType, const char *filename, int linenumber,
 /*********************************************************************
  *		_CrtDumpMemoryLeaks (MSVCRTD.@)
  */
-int _CrtDumpMemoryLeaks()
+int _CrtDumpMemoryLeaks(void)
 {
     return 0;
 }
@@ -140,7 +140,7 @@ int _CrtDumpMemoryLeaks()
 /*********************************************************************
  *		_CrtCheckMemory (MSVCRTD.@)
  */
-int _CrtCheckMemory()
+int _CrtCheckMemory(void)
 {
     /* Note: maybe we could call here our heap validating functions ? */
     return TRUE;
