@@ -10356,6 +10356,7 @@ IDI_SHELL_MY_DOCUMENTS ICON mydocs.ico
 #include "shell32_Si.rc"
 #include "shell32_Sk.rc"
 #include "shell32_Sv.rc"
+#include "shell32_Tr.rc"
 #include "shell32_Uk.rc"
 #include "shell32_Wa.rc"
 #include "shell32_Zh.rc"
