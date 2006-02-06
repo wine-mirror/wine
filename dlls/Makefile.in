@@ -1159,7 +1159,6 @@ IMPORT_LIBS = \
 	rasapi32/librasapi32.$(IMPLIBEXT) \
 	riched20/libriched20.$(IMPLIBEXT) \
 	rpcrt4/librpcrt4.$(IMPLIBEXT) \
-	rsabase/librsabase.$(IMPLIBEXT) \
 	rsaenh/librsaenh.$(IMPLIBEXT) \
 	secur32/libsecur32.$(IMPLIBEXT) \
 	sensapi/libsensapi.$(IMPLIBEXT) \
@@ -1425,9 +1424,6 @@ riched20/libriched20.$(IMPLIBEXT): riched20/riched20.spec $(WINEBUILD)
 
 rpcrt4/librpcrt4.$(IMPLIBEXT): rpcrt4/rpcrt4.spec $(WINEBUILD)
 	@cd rpcrt4 && $(MAKE) librpcrt4.$(IMPLIBEXT)
-
-rsabase/librsabase.$(IMPLIBEXT): rsabase/rsabase.spec $(WINEBUILD)
-	@cd rsabase && $(MAKE) librsabase.$(IMPLIBEXT)
 
 rsaenh/librsaenh.$(IMPLIBEXT): rsaenh/rsaenh.spec $(WINEBUILD)
 	@cd rsaenh && $(MAKE) librsaenh.$(IMPLIBEXT)

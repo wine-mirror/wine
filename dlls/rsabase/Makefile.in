@@ -4,7 +4,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rsabase.dll
-IMPORTLIB = librsabase.$(IMPLIBEXT)
 IMPORTS   = rsaenh kernel32
 
 SUBDIRS = tests
