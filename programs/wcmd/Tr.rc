@@ -1,0 +1,231 @@
+/*
+ * Wine command prompt
+ * Turkish Language Support
+ *
+ * Copyright (C) 2006 Fatih Aþýcý
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+  WCMD_ATTRIB, "ATTRIB hakkýnda yardým\n"
+  WCMD_CALL,
+"CALL <topluiþlemdosyasý> komutu bir toplu iþlem dosyasýnda baþka bir\n\
+toplu iþlem dosyasýndaki komutlarý çalýþtýrmak için kullanýlýr. Eðer\n\
+dosya mevcutsa, denetim yine onu çaðýran dosyaya döner. CALL komutu\n\
+çaðrýlan yordamlar için parametre verebilir.\n\
+\n\
+Çaðrýlan bir yordamda deðiþtirilen dizinler, çevre deðiþkenleri vb.\n\
+kendisini çaðýran tarafýndan miras alýnýr.\n"
+
+  WCMD_CD,     "CD hakkýnda yardým\n"
+  WCMD_CHDIR,  "CHDIR hakkýnda yardým\n"
+
+  WCMD_CLS,    "CLS konsol ekranýný temizler\n"
+
+  WCMD_COPY,   "COPY hakkýnda yardým\n"
+  WCMD_CTTY,   "CTTY hakkýnda yardým\n"
+  WCMD_DATE,   "DATE hakkýnda yardým\n"
+  WCMD_DEL,    "DEL hakkýnda yardým\n"
+  WCMD_DIR,    "DIR hakkýnda yardým\n"
+
+  WCMD_ECHO,
+"ECHO <ileti> geçerli uçbirim aygýtýnda <ileti>'yi gösterir.\n\
+\n\
+ECHO ON bir toplu iþlem dosyasýnda tüm komutlarýn çalýþtýrýlmadan önce\n\
+uçbirim aygýtýnda görüntülenmesini saðlar\n\
+\n\
+ECHO OFF bir önceki ECHO ON (ECHO öntanýmlý olarak kapalýdýr)komutunun\n\
+tersini yapar. ECHO OFF çýktýsýnýn görüntülenmesini baþýna @ iþareti\n\
+getirerek engelleyebilirsiniz.\n"
+
+  WCMD_ERASE,  "ERASE hakkýnda yardým\n"
+
+  WCMD_FOR,
+"FOR komutu bir dosya kümesinin her öðesi için bir komut çalýþtýrmada\n\
+kullanýlýr.\n\
+\n\
+Sözdizim: FOR %deðiþken IN (küme) DO komut\n\
+\n\
+FOR kullanýmý için toplu iþlem dosyasýnda % iþaretini çift kullanma\n\
+gereksinimi wcmd'de yoktur.\n" 
+
+  WCMD_GOTO,
+"GOTO komutu çalýþma satýrýný toplu iþlem dosyasýndaki baþka bir satýra\n\
+yönlendirir.\n\
+\n\
+GOTO komutunun hedefi olacak etiket en fazla 255 karakterden oluþabilir;\n\
+ancak boþluk içeremez (bu diðer iþletim sistemlerinden farklýdýr). Eðer\n\
+toplu iþlem dosyasýnda ayný etiket bir veya daha fazla yerde kullanýlmýþsa\n\
+her zaman ilk etiket kullanýlacaktýr. GOTO var olmayan bir etiket alýrsa\n\
+toplu iþlem dosyasý sonlanacaktýr.\n\
+\n\
+GOTO komutunun etkileþimli olarak kullanýmýnýn bir etkisi yoktur.\n"
+
+  WCMD_HELP,   "HELP hakkýnda yardým\n"
+
+  WCMD_IF,
+"IF bir komutu koþula baðlý olarak çalýþtýrmada kullanýlýr.\n\
+\n\
+Sözdzimi:   IF [NOT] EXIST dosyaadý komut\n\
+            IF [NOT] dize1==dize2 komut\n\
+            IF [NOT] ERRORLEVEL sayý komut\n\
+\n\
+Ýkinci biçimde dize1 ve dize2 çift týrnak içerisinde olmalýdýr.\n\
+Karþýlaþtýrma BÜYÜK/küçük harf duyarlý deðildir.\n"
+
+  WCMD_LABEL,  "LABEL bir disk bölümüne etiket verir.  \n\
+\n\
+Sözdizimi: LABEL [sürücü:]\n\
+Komut sizden verilen sürücü için yeni bir etiket girmenizi bekleyecektir.\n\
+Disk bölüm etiketini VOL komutu ile gösterebilirsiniz.\n"
+
+  WCMD_MD,     "MD hakkýnda yardým\n"
+  WCMD_MKDIR,  "MKDIR hakkýnda yardým\n"
+  WCMD_MOVE,
+"MOVE bir dosya veya dizini dosya sistemi içinde yeni bir noktaya taþýr.\n\
+\n\
+Eðer taþýnacak öðe bir dizinse dizin içerisindeki tüm dosyalar ve alt\n\
+dizinler de birlikte taþýnacaktýr.\n\
+\n\
+Eðer eski ve yeni konumlar farklý DOS sürücüleri üzerindeyse MOVE hata\n\
+verecektir.\n"
+
+  WCMD_PATH,
+"PATH wcmd arama yolunu gösterir veya deðiþtirir.\n\
+\n\
+Sadece PATH girmek geçerli PATH ayarýný gösterecektir (baþlangýçta bu\n\
+wine.conf dosyanýzda verilen deðer olacaktýr). Ayarý deðiþtirmek için\n\
+PATH komutuna yeni deðeri ekleyin.\n\
+\n\
+Ayrýca PATH ayarýný düzenlemek için PATH çevre deðikenini de\n\
+kullanabilirsiniz, örneðin:\n\
+		PATH %PATH%;c:\\temp \n"
+
+  WCMD_PAUSE,
+"PAUSE 'Devam etmek için bir tuþa basýn' iletisini ekranda gösterip\n\
+kullanýcýnýn bir tuþa basmasýný bekler. Çoðunlukla toplu iþlem\n\
+dosyalarýnda kullanýcýya önceki komutun çýktýsýný ekrandan çýkmadan\n\
+önce okutmak için kullanýlýr.\n"
+
+  WCMD_PROMPT,
+"PROMPT komut istemini deðiþtirir.\n\
+\n\
+PROMPT komutunu izleyen dize (ve hemen ardýndan bir boþluk) wcmd sizden\n\
+komut beklerken satýr baþýnda görünür.\n\
+\n\
+Aþaðýdaki karakter dizeleri gösterilen özel anlamlarý içerir:\n\
+\n\
+$$    Dolar iþareti       $_    Alt satýr           $b    boru iþareti (|)\n\
+$d    Geçerli tarih       $e    Escape              $g    > iþareti\n\
+$l    < iþareti           $n    Geçerli sürücü      $p    Geçerli yol\n\
+$q    Eþittir iþareti     $t    Geçerli saat        $v    wcmd sürümü\n\
+\n\
+Sadece PROMPT komutunu girerseniz komut istemi geçerli dizini (sürücü harfi\n\
+dahil) ve onu izleyen büyüktür (>) iþareti içeren öntanýmlý deðerlere\n\
+dönecektir.\n\
+(PROMPT $p$g komutu gibi).\n\
+\n\
+Komut istemi ayrýca PROMPT çevre deðiþkeni deðiþtirilerek de belirlenebilir.\n\
+Yani 'SET PROMPT=metin' ile 'PROMPT metin' ayný iþi görür.\n"
+
+  WCMD_REM,
+"REM (ardýndan da bir boþluk) ile baþlayan bir komut satýrýnýn\n\
+hiçbir iþlevi yoktur; dolayýsýyla toplu iþlem dosyalarýnda\n\
+açýklama olarak kullanýlabilir.\n"
+
+  WCMD_REN,    "REN hakkýnda yardým\n"
+  WCMD_RENAME, "RENAME hakkýnda yardým\n"
+  WCMD_RD,     "RD hakkýnda yardým\n"
+  WCMD_RMDIR,  "RMDIR hakkýnda yardým\n"
+
+  WCMD_SET,
+"SET wcmd çevre deðiþkenlerini gösterir veya deðiþtirir.\n\
+\n\
+Parametresiz girilen SET geçerli çevrenin tümünü gösterir.\n\
+\n\
+Bir çevre deðiþkenini oluþturmak veya düzenlemek için sözdizimi:\n\
+\n\
+      SET <deðiþken>=<deðer>\n\
+\n\
+<deðiþken> ve <deðer> karakter dizeleridir. Ne eþittir iþaretinden\n\
+önce ne de deðiþken adý içerisinde boþluk bulunabilir.\n\
+\n\
+Wine altýnda, üzerinde çalýþýlan iþletim sistemi çevresi Win32 çevresine\n\
+dahil edilir. Dolayýsýyla doðal bir Win32 gerçeklemesinden daha fazla\n\
+deðer bulunacaktýr. wcmd altýnda iþletim sistemi çevresini deðiþtirmek\n\
+mümkün deðildir.\n"
+
+  WCMD_SHIFT,
+"SHIFT toplu iþlem dosyasýnda parametre listesinin baþýndan bir tanesini\n\
+siler. Böylece 2. parametre 1. parametre olacaktýr. Komut satýrýnda\n\
+çaðrýldýðýnda bir etkisi yoktur.\n"
+
+  WCMD_TIME,   "TIME hakkýnda yardým\n"
+
+  WCMD_TITLE,  "wcmd penceresi için pencere baþlýðýný deðiþtirir. Sözdizimi: TITLE [dize]\n"
+
+  WCMD_TYPE,
+"TYPE <dosyaadý> komutu <dosyaadý>'ný konsol aygýtýna kopyalar (eðer\n\
+yönlendirilmiþse baþka yere). Dosyanýn okunabilirliði denetlenmez.\n"
+
+  WCMD_VERIFY,
+"VERIFY doðrulama bayraðýný açar, kapatýr veya sýnar. Geçerli biçimler:\n\
+\n\
+VERIFY ON	Bayraðý aç\n\
+VERIFY OFF	Bayraðý kaldýr\n\
+VERIFY		Bayraðýn durumunu gösterir.\n\
+\n\
+Doðrulama bayraðýnýn Wine'da bir iþlevi yoktur.\n"
+
+  WCMD_VER,
+"VER kullandýðýnýz wcmd sürümünü gösterir\n"
+
+  WCMD_VOL,    "VOL hakkýnda yardým\n"
+
+  WCMD_EXIT,
+"EXIT geçerli komut oturumunu sonlandýrýr ve wcmd'yi çaðýrdýðýnýz\n\
+yerden iþletim sistemine döner.\n"
+
+  1000, "WCMD dahili komutlarý:\n\
+ATTRIB\t\tDOS dosya özelliklerini göster veya deðiþtir\n\
+CALL\t\tToplu iþlem dosyasý içerisinden bir diðerini çalýþtýr\n\
+CD (CHDIR)\tGeçerli dizini deðiþtir\n\
+CLS\t\tKonsol ekranýný temizle\n\
+COPY\t\tDosya kopyala\n\
+CTTY\t\tGiriþ/çýkýþ aygýtýný deðiþtir\n\
+DATE\t\tSistem tarihini göster veya deðiþtir\n\
+DEL (ERASE)\tBir veya daha fazla dosyayý sil\n\
+DIR\t\tDizin içeriðini listele\n\
+ECHO\t\tMetni doðrudan konsol çýkýþýna kopyala\n\
+HELP\t\tBir konu üzerinde özet yardým göster\n\
+MD (MKDIR)\tAlt dizin oluþtur\n\
+MOVE\t\tBir veya daha fazla dosyayý ya da dizin aðacýný taþý\n\
+PATH\t\tArama yolunu düzenle veya göster\n\
+PROMPT\t\tKomut istemini deðiþtir\n\
+REN (RENAME)\tDosyayý yeniden adlandýr\n\
+RD (RMDIR)\tAlt dizini sil\n\
+SET\t\tÇevre deðiþkenlerini düzenle veya göster\n\
+TIME\t\tGeçerli sistem saatini düzenle veya göster\n\
+TITLE\t\tWCMD oturumu için pencere baþlýðýný belirle\n\
+TYPE\t\tMetin dosyasýnýn içeriðini göster\n\
+VER\t\tGeçerli WCMD sürümünü göster\n\
+VOL\t\tDisk aygýtýnýn bölüm etiketini göster\n\
+EXIT\t\tWCMD'yi kapat\n\n\
+Yukarýdaki komutlar hakkýnda daha fazla bilgi için HELP <komut> girin\n"
+}
