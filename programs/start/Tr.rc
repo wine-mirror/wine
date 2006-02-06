@@ -1,0 +1,63 @@
+/*
+ * Start
+ * Turkish Language Support
+ *
+ * Copyright 2006 Fatih Aþýcý
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
+
+STRINGTABLE DISCARDABLE LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
+{
+STRING_USAGE,    "Bir programý veya uzantýsý ile iliþkili olan program içinde bir belgeyi açar. \n\
+Kullaným: \n\
+start [seçenekler] program_dosyaadý [...] \n\
+start [seçenekler] belge_dosyaadý \n\
+ \n\
+Seçenekler: \n\
+/M[inimized] Simge halinde baþlat. \n\
+/MAX[imized] Ekraný kaplayacak þekilde baþlat. \n\
+/R[estored]  Programý normal bir þekilde baþlat (simge halinde veya büyütülmüþ halde olabilir). \n\
+/W[ait]      Baþlatýlmýþ programýn bitmesini bekle, sonra çýkýþ koduyla çýk. \n\
+/L           Son-kullanýcý lisansýný göster. \n\
+ \n\
+start.exe sürüm 0.2 Telif Hakký (C) 2003, Dan Kegel \n\
+Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option. \n\
+This is free software, and you are welcome to redistribute it \n\
+under certain conditions; run 'start /L' for details. \n\
+"
+
+STRING_LICENSE, "start.exe sürüm 0.2 Telif Hakký (C) 2003, Dan Kegel \n\
+This program is free software; you can redistribute it and/or \n\
+modify it under the terms of the GNU Lesser Public License \n\
+as published by the Free Software Foundation; either version 2.1 \n\
+of the License, or (at your option) any later version. \n\
+ \n\
+This program is distributed in the hope that it will be useful, \n\
+but WITHOUT ANY WARRANTY; without even the implied warranty of \n\
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the \n\
+GNU Lesser Public License for more details. \n\
+ \n\
+You should have received a copy of the GNU Lesser Public License \n\
+along with this program; if not, write to the Free Software \n\
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. \n\
+ \n\
+See the COPYING.LIB file for license information. \n\
+"
+
+STRING_EXECFAIL "Uygulama baþlatýlamadý veya belirtilen dosya ile iliþkili bir uygulama yok.\nShellExecuteEx baþarýsýz"
+}
