@@ -148,8 +148,16 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
 
         /* Recorded => Only update 'changed' values */
         if (This->vertexShader != targetStateBlock->vertexShader) {
+            TRACE("Updating vertex shader from %p to %p\n", This->vertexShader, targetStateBlock->vertexShader);
+
+            if (targetStateBlock->vertexShader) {
+                IWineD3DVertexShader_AddRef(targetStateBlock->vertexShader);
+            }
+            if (This->vertexShader) {
+                IWineD3DVertexShader_Release(This->vertexShader);
+            }
+
             This->vertexShader = targetStateBlock->vertexShader;
-            TRACE("Updating vertex shader to %p\n", targetStateBlock->vertexShader);
         }
 
         /* Vertex Shader Constants */
@@ -204,8 +212,16 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
 
         /* Recorded => Only update 'changed' values */
         if (This->pixelShader != targetStateBlock->pixelShader) {
+            TRACE("Updating pixel shader from %p to %p\n", This->pixelShader, targetStateBlock->pixelShader);
+
+            if (targetStateBlock->pixelShader) {
+                IWineD3DPixelShader_AddRef(targetStateBlock->pixelShader);
+            }
+            if (This->pixelShader) {
+                IWineD3DPixelShader_Release(This->pixelShader);
+            }
+
             This->pixelShader = targetStateBlock->pixelShader;
-            TRACE("Updating pixrl shader to %p\n", targetStateBlock->pixelShader);
         }
 
         /* Pixel Shader Constants */
@@ -244,6 +260,15 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
         }
 
         if(This->set.vertexDecl && This->vertexDecl != targetStateBlock->vertexDecl){
+            TRACE("Updating vertex declaration from %p to %p\n", This->vertexDecl, targetStateBlock->vertexDecl);
+
+            if (targetStateBlock->vertexDecl) {
+                IWineD3DVertexDeclaration_AddRef(targetStateBlock->vertexDecl);
+            }
+            if (This->vertexDecl) {
+                IWineD3DVertexDeclaration_Release(This->vertexDecl);
+            }
+
             This->vertexDecl = targetStateBlock->vertexDecl;
         }
 
