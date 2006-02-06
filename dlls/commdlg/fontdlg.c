@@ -428,7 +428,7 @@ static int AddFontSizeToCombo3(HWND hwnd, UINT h, LPCHOOSEFONTW lpcf)
  */
 static int SetFontSizesToCombo3(HWND hwnd, LPCHOOSEFONTW lpcf)
 {
-    static const BYTE sizes[]={8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
+    static const BYTE sizes[]={6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
     int i;
 
     for (i = 0; i < sizeof(sizes)/sizeof(sizes[0]); i++)
