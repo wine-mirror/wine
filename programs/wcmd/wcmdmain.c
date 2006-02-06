@@ -359,7 +359,7 @@ void WCMD_process_command (char *command)
         WCMD_setshow_attrib ();
         break;
       case WCMD_CALL:
-        WCMD_batch (param1, p, 1);
+        WCMD_run_program (p, 1);
         break;
       case WCMD_CD:
       case WCMD_CHDIR:
@@ -462,7 +462,7 @@ void WCMD_process_command (char *command)
       case WCMD_EXIT:
         ExitProcess (0);
       default:
-        WCMD_run_program (whichcmd);
+        WCMD_run_program (whichcmd, 0);
     }
     HeapFree( GetProcessHeap(), 0, cmd );
     if (old_stdin != INVALID_HANDLE_VALUE) {
@@ -532,11 +532,14 @@ static void init_msvcrt_io_block(STARTUPINFO* st)
  *
  *	Execute a command line as an external program. If no extension given then
  *	precedence is given to .BAT files. Must allow recursion.
+ *	
+ *	called is 1 if the program was invoked with a CALL command - removed
+ *	from command -. It is only used for batch programs.
  *
  *	FIXME: Case sensitivity in suffixes!
  */
 
-void WCMD_run_program (char *command) {
+void WCMD_run_program (char *command, int called) {
 
 STARTUPINFO st;
 PROCESS_INFORMATION pe;
@@ -555,14 +558,14 @@ char filetorun[MAX_PATH];
     if (!ext || !strcasecmp( ext, ".bat"))
     {
       if (SearchPath (NULL, param1, ".bat", sizeof(filetorun), filetorun, NULL)) {
-        WCMD_batch (filetorun, command, 0);
+        WCMD_batch (filetorun, command, called);
         return;
       }
     }
     if (!ext || !strcasecmp( ext, ".cmd"))
     {
       if (SearchPath (NULL, param1, ".cmd", sizeof(filetorun), filetorun, NULL)) {
-        WCMD_batch (filetorun, command, 0);
+        WCMD_batch (filetorun, command, called);
         return;
       }
     }
@@ -571,7 +574,7 @@ char filetorun[MAX_PATH];
     char *ext = strrchr( param1, '.' );
     if (ext && (!strcasecmp( ext, ".bat" ) || !strcasecmp( ext, ".cmd" )))
     {
-      WCMD_batch (param1, command, 0);
+      WCMD_batch (param1, command, called);
       return;
     }
 
@@ -584,7 +587,7 @@ char filetorun[MAX_PATH];
                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
       if (h != INVALID_HANDLE_VALUE) {
         CloseHandle (h);
-        WCMD_batch (param1, command, 0);
+        WCMD_batch (param1, command, called);
         return;
       }
     }

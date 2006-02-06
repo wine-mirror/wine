@@ -69,7 +69,7 @@ BATCH_CONTEXT *prev_context;
     h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
                     NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (h != INVALID_HANDLE_VALUE) {
-      WCMD_run_program (command);
+      WCMD_run_program (command, 0);
     } else {
       SetLastError (ERROR_FILE_NOT_FOUND);
       WCMD_print_error ();

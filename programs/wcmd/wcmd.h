@@ -53,7 +53,7 @@ void WCMD_process_command (char *command);
 int  WCMD_read_console (char *string, int str_len);
 void WCMD_remove_dir (void);
 void WCMD_rename (void);
-void WCMD_run_program (char *command);
+void WCMD_run_program (char *command, int called);
 void WCMD_setlocal (const char *command);
 void WCMD_setshow_attrib (void);
 void WCMD_setshow_date (void);
