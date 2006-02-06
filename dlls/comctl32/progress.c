@@ -132,7 +132,7 @@ static inline int get_bar_position( PROGRESS_INFO *infoPtr, LONG style,
  * PROGRESS_Invalidate
  *
  * Don't be too clever about invalidating the progress bar.
- * Installshield depends on this simple behaviour.
+ * InstallShield depends on this simple behaviour.
  */
 static void PROGRESS_Invalidate( PROGRESS_INFO *infoPtr, INT old, INT new )
 {

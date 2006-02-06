@@ -34,7 +34,7 @@
 /* Get the extra flags from a variant pointer */
 #define V_EXTRA_TYPE(v) (V_VT((v)) & VT_EXTRA_TYPE)
 
-/* Missing in Windows but usefull VTBIT_* defines */
+/* Missing in Windows but useful VTBIT_* defines */
 #define VTBIT_BOOL      (1 << VT_BSTR)
 #define VTBIT_BSTR      (1 << VT_BSTR)
 #define VTBIT_DATE      (1 << VT_DATE)

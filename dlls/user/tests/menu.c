@@ -125,7 +125,7 @@ static void register_menu_check_class(void)
     atomMenuCheckClass = RegisterClass(&wc);
 }
 
-/* demonstrates that windows lock the menu object so that it is still valid
+/* demonstrates that windows locks the menu object so that it is still valid
  * even after a client calls DestroyMenu on it */
 static void test_menu_locked_by_window(void)
 {
@@ -225,7 +225,7 @@ static void test_menu_ownerdraw(void)
             "Height is incorrect. Got %ld expected %d\n",
             MOD_rc[0].bottom - MOD_rc[0].top, MOD_SIZE);
 
-    /* test width/height of a OD menu bar as well */
+    /* test width/height of an ownerdraw menu bar as well */
     ret = DestroyMenu(hmenu);
     ok(ret, "DestroyMenu failed with error %ld\n", GetLastError());
     hmenu = CreateMenu();
@@ -326,7 +326,7 @@ static void test_menu_add_string( void )
     rc = SetMenuItemInfo( hmenu, 0, TRUE, &info );
     ok (!rc, "SetMenuItemInfo unexpectedly worked\n");
 
-    /* Just change ftype back and ensure data hasnt been freed */
+    /* Just change ftype back and ensure data hasn't been freed */
     info.fType= MFT_OWNERDRAW; /* Set as ownerdraw type */
     info.dwTypeData= (char *)0xdeadbee3; 
     rc = SetMenuItemInfo( hmenu, 0, TRUE, &info );
@@ -549,7 +549,7 @@ static void test_menu_iteminfo( void )
         {, S, MIIM_TYPE, MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, NULL, 0, 0, },
         empty, OK, ER )
     TMII_DONE
-    /* can not combine MIIM_TYPE with some other flags */
+    /* cannot combine MIIM_TYPE with some other flags */
     TMII_INSMI( {, S, MIIM_TYPE|MIIM_STRING, MFT_STRING, -1, -1, -1, -1, -1, -1, txt, 6, -1, }, ER)
     TMII_GMII ( {, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, },
         {, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, },
@@ -887,7 +887,7 @@ static void test_menu_iteminfo( void )
 }
 
 /* 
-   The following tests try to confirm the algorithum used to return the menu items 
+   The following tests try to confirm the algorithm used to return the menu items 
    when there is a collision between a menu item and a popup menu
  */
 void test_menu_search_bycommand( void )
@@ -1021,7 +1021,7 @@ void test_menu_search_bycommand( void )
     rc = InsertMenuItem(hmenu, 0, TRUE, &info );
     ok (rc, "Inserting the menuitem failed\n");
 
-    /* Search by id - returns the item which preceeds the popup menu */
+    /* Search by id - returns the item which precedes the popup menu */
     memset( &info, 0, sizeof info );
     strback[0] = 0x00;
     info.cbSize = sizeof(MENUITEMINFO);
@@ -1068,7 +1068,7 @@ void test_menu_search_bycommand( void )
     rc = InsertMenuItem(hmenuSub, 1, TRUE, &info );
     ok (rc, "Inserting the sub menu menuitem 2 failed\n");
 
-    /* Prove that you cant query the id of a popup directly (By position) */
+    /* Prove that you can't query the id of a popup directly (By position) */
     id = GetMenuItemID(hmenu, 0);
     ok (id == -1, "Getting the sub menu id should have failed because its a popup (gave %x)\n", id);
 
