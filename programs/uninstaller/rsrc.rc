@@ -35,6 +35,7 @@
 #include "Ko.rc"
 #include "No.rc"
 #include "Pt.rc"
+#include "Tr.rc"
 
 /* BINRES uninstaller.ico */
 UNINSTALLER ICON MOVEABLE uninstaller.ico

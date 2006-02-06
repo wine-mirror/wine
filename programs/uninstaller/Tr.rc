@@ -1,0 +1,44 @@
+/*
+ * Uninstaller (Turkish Resources)
+ *
+ * Copyright 2006 Fatih Aþýcý
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
+
+IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Wine Uygulama Kaldýrýcý"
+FONT 10, "MS Sans Serif"
+BEGIN
+    LTEXT           "Lütfen kaldýrmak istediðiniz uygulamayý seçin:",IDC_PLEASESELECT,10,10,250,14
+    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
+    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
+                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Kaldýr",IDC_UNINSTALL,270,48,50,14
+    PUSHBUTTON      "&Hakkýnda",IDC_ABOUT,270,65,50,14
+    PUSHBUTTON      "&Çýkýþ",IDC_EXIT,270,81,50,14
+END
+
+
+STRINGTABLE DISCARDABLE {
+     IDS_APPNAME, "Wine Uygulama Kaldýrýcý"
+     IDS_ABOUT, "Wine Uygulama Kaldýrýcý (C) 2005 Andreas Mohr, Hannu Valtonen ve Jonathan Ernst."
+     IDS_ABOUTTITLE, "About Kaldýrýcý"
+     IDS_REGISTRYKEYNOTAVAILABLE, "Sistem kaydýnda kurulu program bilgisi bulunmuyor. Yapýlacak birþey yok!"
+     IDS_UNINSTALLFAILED, "'%s' kaldýrma komutu çalýþtýrýlamadý, çalýþtýrýbilir dosya var olmayabilir.\r\nSistem kaydýndan bu kaldýrma giriþini silmek ister misiniz?"
+}
