@@ -3,7 +3,7 @@
  * Dutch Language Support
  *
  * Copyright 2004 Rein Klazes
- * Copyright 2005 Paul Vriens
+ * Copyright 2005-2006 Paul Vriens
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -61,27 +61,32 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Windowsinstellingen ",IDC_STATIC,8,25,244,120
+    GROUPBOX        " Venster-instellingen ",IDC_STATIC,8,25,244,180
 
-    CONTROL	    "Een DirectX programma kan de muis in een window vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "Een DirectX programma kan de muis in een venster vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL	    "Schakel \"double buffering\" in.",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     
+    LTEXT           "Wanneer de vensters door de window manager worden beheerd hebben deze de standaard kaders, er wordt rekening gehouden met de virtuele desktop en ze staan in de lijst met vensters.\n\nAls de vensters niet worden beheerd, worden ze losgekoppeld van de window manager. Dit betekent dat vensters niet perfect met u desktop integreren. De 'emulatie' is echter exacter en kan ervoor zorgen dat programma's beter werken.",
+                    IDC_STATIC,15,58,228,80
+    CONTROL         "Laat de window manger de vensters beheren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
+    
     /* FIXME: the wording of this explanation could be a lot better */
-    LTEXT           "U kunt kiezen voor een virtuele windows desktop waarop alle windows geplaatst worden, of U kunt er voor kiezen dat de windows op uw standaard desktop geplaatst worden.",
-                    IDC_STATIC,15,73,228,28
-    LTEXT           "Desktop afmetingen:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
+    LTEXT           "U kunt kiezen voor een virtuele windows desktop waarop alle vensters geplaatst worden, of u kunt er voor kiezen dat de vensters op uw standaard desktop geplaatst worden.",
+                    IDC_STATIC,15,146,228,28
+    LTEXT           "Desktop afmetingen:",IDC_DESKTOP_SIZE,15,188,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,188,8,8,WS_DISABLED
     CONTROL         "Emuleer een virtuele desktop",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,173,230,10
 		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    LTEXT	    "Vertex Shader ondersteuning: ",IDC_STATIC,15,150,100,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,120,148,130,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,210,244,50
 
-    CONTROL         "Pixel Shader toestaan (indien ondersteund door de hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
+    LTEXT	    "Vertex Shader ondersteuning: ",IDC_STATIC,15,220,100,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,120,218,130,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL         "Pixel Shader toestaan (indien ondersteund door de hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,237,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -94,7 +99,7 @@ BEGIN
     LTEXT           "Nieuwe override voor dll:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "&Toevoegen",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
-    LTEXT           "Existing overrides:",IDC_STATIC,16,86,100,8
+    LTEXT           "Bestaande overrides:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "&Bewerken",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "&Verwijderen",IDC_DLLS_REMOVEDLL,164,114,82,14 
@@ -133,9 +138,9 @@ BEGIN
 
     LTEXT           "&Soort:",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-                                                                                                                                              
+
     LTEXT           "Naam en serienummer",IDC_LABELSERIAL_STATIC,15,155,131,10
-                                                                                                                                              
+
     PUSHBUTTON      "Toon &Uitgebreid",IDC_BUTTON_SHOW_HIDE_ADVANCED,183,136,65,13
     CONTROL         "Automatisch detecteren van apparaat:",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,150,10
@@ -143,12 +148,12 @@ BEGIN
     PUSHBUTTON      "B&laderen...",IDC_BUTTON_BROWSE_DEVICE,208,176,40,13
     CONTROL         "&Handmatig instellen:",IDC_RADIO_ASSIGN,"Button",
                     BS_AUTORADIOBUTTON,15,195,150,10
-                                                                                                                                              
+
     LTEXT           "&Naam:",IDC_STATIC_LABEL,33,208,60,12
     EDITTEXT        IDC_EDIT_LABEL,94,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
     LTEXT           "S&erie nummer:",IDC_STATIC_SERIAL,33,225,60,12
     EDITTEXT        IDC_EDIT_SERIAL,94,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
-                                                                                                                                              
+
     CONTROL         "Toon \".\" files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 
@@ -196,4 +201,16 @@ BEGIN
     IDS_WINECFG_TITLE       "Wine configuratie"
     IDS_THEMEFILE           "Thema-bestanden"
     IDS_THEMEFILE_SELECT    "Thema-bestanden kiezen"
+    IDS_AUDIO_MISSING       "Op dit moment is er geen audio stuurbestand gespecificeerd in de registry.\n\nEen aanbevolen stuurbestand is voor u geselecteerd.\nU kunt dit stuurbestand gebruiken of (indien beschikbaar) een ander selecteren.\n\nKlik op 'Toepassen' om deze selectie te activeren."
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING "Veranderen van de laadvolgorde van deze bibliotheek wordt niet aanbevolen\n. Weet u zeker dat u dit wilt doen?"
+    IDS_DLL_WARNING_CAPTION "Waarschuwing: systeembibliotheek"
+    IDS_DLL_NATIVE "Native (Windows)"
+    IDS_DLL_BUILTIN "Builtin (Wine)"
+    IDS_DLL_NATIVE_BUILTIN "Native dan builtin"
+    IDS_DLL_BUILTIN_NATIVE "Builtin dan native"
+    IDS_DLL_DISABLED "Uitgeschakeld"
 END
