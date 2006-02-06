@@ -1778,6 +1778,75 @@ done:
     return status;
 }
 
+struct read_changes_info
+{
+    HANDLE FileHandle;
+    HANDLE Event;
+    PIO_APC_ROUTINE ApcRoutine;
+    PVOID ApcContext;
+    PVOID Buffer;
+    ULONG BufferSize;
+};
+
+static void WINAPI read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, ULONG status )
+{
+    struct read_changes_info *info = user;
+    char path[PATH_MAX];
+    NTSTATUS ret = STATUS_SUCCESS;
+    int len, action;
+
+    TRACE("%p %p %p %08lx\n", info, info->ApcContext, iosb, status);
+
+    /*
+     * FIXME: race me!
+     *
+     * hEvent/hDir is set before the output buffer and iosb is updated.
+     * Since the thread that called NtNotifyChangeDirectoryFile is usually
+     * waiting, we'll be safe since we're called in that thread's context.
+     * If a different thread is waiting on our hEvent/hDir we're going to be
+     * in trouble...
+     */
+    SERVER_START_REQ( read_change )
+    {
+        req->handle = info->FileHandle;
+        wine_server_set_reply( req, path, PATH_MAX );
+        ret = wine_server_call( req );
+        action = reply->action;
+        len = wine_server_reply_size( reply );
+    }
+    SERVER_END_REQ;
+
+    if (ret == STATUS_SUCCESS && info->Buffer && 
+        (info->BufferSize > (sizeof (FILE_NOTIFY_INFORMATION) + len*sizeof(WCHAR))))
+    {
+        PFILE_NOTIFY_INFORMATION pfni;
+
+        pfni = (PFILE_NOTIFY_INFORMATION) info->Buffer;
+
+        len = ntdll_umbstowcs( 0, path, len, pfni->FileName,
+                               info->BufferSize - sizeof (*pfni) );
+
+        pfni->NextEntryOffset = 0;
+        pfni->Action = action;
+        pfni->FileNameLength = len * sizeof (WCHAR);
+        pfni->FileName[len] = 0;
+
+        TRACE("action = %ld name = %s\n", pfni->Action,
+              debugstr_w(pfni->FileName) );
+        len = sizeof (*pfni) - sizeof (DWORD) + pfni->FileNameLength;
+    }
+    else
+    {
+        ret = STATUS_NOTIFY_ENUM_DIR;
+        len = 0;
+    }
+
+    iosb->u.Status = ret;
+    iosb->Information = len;
+
+    RtlFreeHeap( GetProcessHeap(), 0, info );
+}
+
 #define FILE_NOTIFY_ALL        (  \
  FILE_NOTIFY_CHANGE_FILE_NAME   | \
  FILE_NOTIFY_CHANGE_DIR_NAME    | \
@@ -1797,6 +1866,7 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer,
         ULONG BufferSize, ULONG CompletionFilter, BOOLEAN WatchTree )
 {
+    struct read_changes_info *info;
     NTSTATUS status;
 
     TRACE("%p %p %p %p %p %p %lu %lu %d\n",
@@ -1809,18 +1879,35 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
     if (CompletionFilter == 0 || (CompletionFilter & ~FILE_NOTIFY_ALL))
         return STATUS_INVALID_PARAMETER;
 
-    if (ApcRoutine || ApcContext || Buffer || BufferSize || WatchTree)
-        FIXME("parameters ignored %p %p %p %lu %d\n",
-              ApcRoutine, ApcContext, Buffer, BufferSize, WatchTree );
+    if (WatchTree || ApcRoutine)
+        FIXME("parameters ignored %p %p %d\n",
+              ApcRoutine, ApcContext, WatchTree );
+
+    info = RtlAllocateHeap( GetProcessHeap(), 0, sizeof *info );
+    if (!info)
+        return STATUS_NO_MEMORY;
+
+    info->FileHandle = FileHandle;
+    info->Event      = Event;
+    info->Buffer     = Buffer;
+    info->BufferSize = BufferSize;
+    info->ApcRoutine = ApcRoutine;
+    info->ApcContext = ApcContext;
 
     SERVER_START_REQ( read_directory_changes )
     {
         req->handle     = FileHandle;
         req->event      = Event;
         req->filter     = CompletionFilter;
+        req->io_apc     = read_changes_apc;
+        req->io_sb      = IoStatusBlock;
+        req->io_user    = info;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
+
+    if (status != STATUS_PENDING)
+        RtlFreeHeap( GetProcessHeap(), 0, info );
 
     return status;
 }

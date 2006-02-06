@@ -1045,6 +1045,17 @@ enum char_info_mode
     obj_handle_t handle;        /* handle to the directory */
     obj_handle_t event;         /* handle to the event */
     unsigned int filter;        /* notification filter */
+    void*        io_apc;        /* APC routine to queue upon end of async */
+    void*        io_sb;         /* I/O status block (unique across all async on this handle) */
+    void*        io_user;       /* data to pass back to caller */
+@END
+
+
+@REQ(read_change)
+    obj_handle_t handle;
+@REPLY
+    int          action;        /* type of change */
+    VARARG(name,string);        /* name of directory entry that changed */
 @END
 
 

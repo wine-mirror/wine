@@ -1401,10 +1401,26 @@ struct read_directory_changes_request
     obj_handle_t handle;
     obj_handle_t event;
     unsigned int filter;
+    void*        io_apc;
+    void*        io_sb;
+    void*        io_user;
 };
 struct read_directory_changes_reply
 {
     struct reply_header __header;
+};
+
+
+struct read_change_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct read_change_reply
+{
+    struct reply_header __header;
+    int          action;
+    /* VARARG(name,string); */
 };
 
 
@@ -3768,6 +3784,7 @@ enum request
     REQ_move_console_output,
     REQ_send_console_signal,
     REQ_read_directory_changes,
+    REQ_read_change,
     REQ_create_mapping,
     REQ_open_mapping,
     REQ_get_mapping_info,
@@ -3986,6 +4003,7 @@ union generic_request
     struct move_console_output_request move_console_output_request;
     struct send_console_signal_request send_console_signal_request;
     struct read_directory_changes_request read_directory_changes_request;
+    struct read_change_request read_change_request;
     struct create_mapping_request create_mapping_request;
     struct open_mapping_request open_mapping_request;
     struct get_mapping_info_request get_mapping_info_request;
@@ -4202,6 +4220,7 @@ union generic_reply
     struct move_console_output_reply move_console_output_reply;
     struct send_console_signal_reply send_console_signal_reply;
     struct read_directory_changes_reply read_directory_changes_reply;
+    struct read_change_reply read_change_reply;
     struct create_mapping_reply create_mapping_reply;
     struct open_mapping_reply open_mapping_reply;
     struct get_mapping_info_reply get_mapping_info_reply;
@@ -4344,6 +4363,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 223
+#define SERVER_PROTOCOL_VERSION 224
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1448,7 +1448,22 @@ static void dump_read_directory_changes_request( const struct read_directory_cha
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " event=%p,", req->event );
-    fprintf( stderr, " filter=%08x", req->filter );
+    fprintf( stderr, " filter=%08x,", req->filter );
+    fprintf( stderr, " io_apc=%p,", req->io_apc );
+    fprintf( stderr, " io_sb=%p,", req->io_sb );
+    fprintf( stderr, " io_user=%p", req->io_user );
+}
+
+static void dump_read_change_request( const struct read_change_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_read_change_reply( const struct read_change_reply *req )
+{
+    fprintf( stderr, " action=%d,", req->action );
+    fprintf( stderr, " name=" );
+    dump_varargs_string( cur_size );
 }
 
 static void dump_create_mapping_request( const struct create_mapping_request *req )
@@ -3274,6 +3289,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_move_console_output_request,
     (dump_func)dump_send_console_signal_request,
     (dump_func)dump_read_directory_changes_request,
+    (dump_func)dump_read_change_request,
     (dump_func)dump_create_mapping_request,
     (dump_func)dump_open_mapping_request,
     (dump_func)dump_get_mapping_info_request,
@@ -3488,6 +3504,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)0,
+    (dump_func)dump_read_change_reply,
     (dump_func)dump_create_mapping_reply,
     (dump_func)dump_open_mapping_reply,
     (dump_func)dump_get_mapping_info_reply,
@@ -3702,6 +3719,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "move_console_output",
     "send_console_signal",
     "read_directory_changes",
+    "read_change",
     "create_mapping",
     "open_mapping",
     "get_mapping_info",

@@ -126,6 +126,13 @@ static inline int inotify_remove_watch( int fd, int wd )
 
 #endif
 
+struct change_record {
+    struct list entry;
+    int action;
+    int len;
+    char name[1];
+};
+
 struct dir
 {
     struct object  obj;      /* object header */
@@ -137,6 +144,8 @@ struct dir
     long           signaled; /* the file changed */
     struct fd     *inotify_fd; /* inotify file descriptor */
     int            wd;       /* inotify watch descriptor */
+    struct list    change_q; /* change readers */
+    struct list    change_records;   /* data for the change */
 };
 
 static struct fd *dir_get_fd( struct object *obj );
@@ -163,6 +172,7 @@ static const struct object_ops dir_ops =
 
 static int dir_get_poll_events( struct fd *fd );
 static int dir_get_info( struct fd *fd );
+static void dir_cancel_async( struct fd *fd );
 
 static const struct fd_ops dir_fd_ops =
 {
@@ -171,7 +181,7 @@ static const struct fd_ops dir_fd_ops =
     no_flush,                 /* flush */
     dir_get_info,             /* get_file_info */
     default_fd_queue_async,   /* queue_async */
-    default_fd_cancel_async   /* cancel_async */
+    dir_cancel_async          /* cancel_async */
 };
 
 static struct list change_list = LIST_INIT(change_list);
@@ -238,6 +248,8 @@ struct object *create_dir_obj( struct fd *fd )
     if (!dir)
         return NULL;
 
+    list_init( &dir->change_q );
+    list_init( &dir->change_records );
     dir->event = NULL;
     dir->filter = 0;
     dir->notified = 0;
@@ -321,8 +333,17 @@ static unsigned int dir_map_access( struct object *obj, unsigned int access )
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
+static struct change_record *get_first_change_record( struct dir *dir )
+{
+    struct list *ptr = list_head( &dir->change_records );
+    if (!ptr) return NULL;
+    list_remove( ptr );
+    return LIST_ENTRY( ptr, struct change_record, entry );
+}
+
 static void dir_destroy( struct object *obj )
 {
+    struct change_record *record;
     struct dir *dir = (struct dir *)obj;
     assert (obj->ops == &dir_ops);
 
@@ -331,6 +352,9 @@ static void dir_destroy( struct object *obj )
 
     if (dir->inotify_fd)
         release_object( dir->inotify_fd );
+
+    async_terminate_queue( &dir->change_q, STATUS_CANCELLED );
+    while ((record = get_first_change_record( dir ))) free( record );
 
     if (dir->event)
     {
@@ -356,6 +380,12 @@ static int dir_get_info( struct fd *fd )
     return 0;
 }
 
+static void dir_cancel_async( struct fd *fd )
+{
+    struct dir *dir = (struct dir *) get_fd_user( fd );
+    async_terminate_queue( &dir->change_q, STATUS_CANCELLED );
+}
+
 
 #ifdef USE_INOTIFY
 
@@ -378,10 +408,32 @@ static int inotify_get_poll_events( struct fd *fd )
     return POLLIN;
 }
 
-static void inotify_do_change_notify( struct dir *dir )
+static void inotify_do_change_notify( struct dir *dir, struct inotify_event *ie )
 {
-    dir->signaled++;
-    dir_signal_changed( dir );
+    struct change_record *record;
+
+    record = malloc( sizeof (*record) + ie->len - 1 ) ;
+    if (!record)
+        return;
+
+    if( ie->mask & IN_CREATE )
+        record->action = FILE_ACTION_ADDED;
+    else if( ie->mask & IN_DELETE )
+        record->action = FILE_ACTION_REMOVED;
+    else
+        record->action = FILE_ACTION_MODIFIED;
+    memcpy( record->name, ie->name, ie->len );
+    record->len = strlen( ie->name );
+
+    list_add_tail( &dir->change_records, &record->entry );
+
+    if (!list_empty( &dir->change_q ))
+        async_terminate_head( &dir->change_q, STATUS_ALERTED );
+    else
+    {
+        dir->signaled++;
+        dir_signal_changed( dir );
+    }
 }
 
 static void inotify_poll_event( struct fd *fd, int event )
@@ -404,7 +456,7 @@ static void inotify_poll_event( struct fd *fd, int event )
         ie = (struct inotify_event*) &buffer[ofs];
         if (!ie->len)
             break;
-        inotify_do_change_notify( dir );
+        inotify_do_change_notify( dir, ie );
         ofs += (sizeof (*ie) + ie->len - 1);
     }
 }
@@ -489,6 +541,11 @@ DECL_HANDLER(read_directory_changes)
     if (dir->event) release_object( dir->event );
     dir->event = event;
 
+    /* requests don't timeout */
+    if ( req->io_apc && !create_async( current, NULL, &dir->change_q,
+                        req->io_apc, req->io_user, req->io_sb ))
+        return;
+
     /* assign it once */
     if (!dir->filter)
     {
@@ -509,5 +566,30 @@ DECL_HANDLER(read_directory_changes)
     set_error(STATUS_PENDING);
 
 end:
+    release_object( dir );
+}
+
+DECL_HANDLER(read_change)
+{
+    struct change_record *record;
+    struct dir *dir;
+
+    dir = get_dir_obj( current->process, req->handle, 0 );
+    if (!dir)
+        return;
+
+    if ((record = get_first_change_record( dir )) != NULL)
+    {
+        reply->action = record->action;
+        set_reply_data( record->name, record->len );
+        free( record );
+    }
+    else
+        set_error( STATUS_NO_DATA_DETECTED );
+
+    /* now signal it */
+    dir->signaled++;
+    dir_signal_changed( dir );
+
     release_object( dir );
 }

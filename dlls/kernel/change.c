@@ -136,33 +136,46 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
                                    DWORD filter, LPDWORD returned, LPOVERLAPPED overlapped,
                                    LPOVERLAPPED_COMPLETION_ROUTINE completion )
 {
-    IO_STATUS_BLOCK io;
+    OVERLAPPED ov, *pov;
+    IO_STATUS_BLOCK *ios;
     NTSTATUS status;
     BOOL ret = TRUE;
-    HANDLE event;
 
     TRACE("%p %p %08lx %d %08lx %p %p %p\n", handle, buffer, len, subtree, filter,
            returned, overlapped, completion );
 
-    if (overlapped)
-        event = overlapped->hEvent;
+    if (!overlapped)
+    {
+        memset( &ov, 0, sizeof ov );
+        ov.hEvent = CreateEventW( NULL, 0, 0, NULL );
+        pov = &ov;
+    }
     else
-        event = CreateEventW( NULL, 0, 0, NULL );
+        pov = overlapped;
 
-    status = NtNotifyChangeDirectoryFile( handle, event, NULL, NULL,
-                                              &io, buffer, len, filter, subtree );
-    if (status != STATUS_PENDING)
+    ios = (PIO_STATUS_BLOCK) pov;
+    ios->Status = STATUS_PENDING;
+    ios->Information = 0;
+
+    status = NtNotifyChangeDirectoryFile( handle, pov->hEvent, NULL, NULL,
+                                          ios, buffer, len, filter, subtree );
+    if (status == STATUS_PENDING)
+    {
+        if (overlapped)
+            return TRUE;
+
+        WaitForSingleObjectEx( ov.hEvent, INFINITE, TRUE );
+        CloseHandle( ov.hEvent );
+        if (returned)
+            *returned = ios->Information;
+        status = ios->Status;
+    }
+
+    if (status != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError(status) );
         ret = FALSE;
     }
-    else if (!overlapped)
-        WaitForSingleObject( event, INFINITE );
-    else
-        overlapped->Internal = STATUS_PENDING;
-
-    if (!overlapped)
-        CloseHandle( event );
 
     return ret;
 }
