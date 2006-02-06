@@ -1639,8 +1639,8 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     gds.nLength = 0;
     es.dwCookie = (DWORD)&gds;
     es.pfnCallback = dwFormat == SF_RTF ? ME_ReadFromHGLOBALRTF : ME_ReadFromHGLOBALUnicode;
-    SendMessageW(hWnd, EM_STREAMIN, dwFormat|SFF_SELECTION, (LPARAM)&es);
-    
+    ME_StreamIn(editor, dwFormat|SFF_SELECTION, &es);
+
     CloseClipboard();
     return 0;
   }
