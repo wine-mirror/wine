@@ -1319,26 +1319,45 @@ static void test_WSAStringToAddressW(void)
 
 static void test_select(void)
 {
-    SOCKET fd;
+    SOCKET fdRead, fdWrite;
+    fd_set readfds, writefds, exceptfds;
+    int maxfd;
+    int ret;
+    struct timeval select_timeout;
 
-    fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd != INVALID_SOCKET)
-    {
-        fd_set readfds;
-        struct timeval select_timeout;
+    fdRead = socket(AF_INET, SOCK_STREAM, 0);
+    ok( (fdRead != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
+    fdWrite = socket(AF_INET, SOCK_STREAM, 0);
+    ok( (fdWrite != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
+ 
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+    FD_ZERO(&exceptfds);
+    FD_SET(fdRead, &readfds);
+    FD_SET(fdWrite, &writefds);
+    FD_SET(fdRead, &exceptfds);
+    FD_SET(fdWrite, &exceptfds);
+    select_timeout.tv_sec=2;
+    select_timeout.tv_usec=0;
 
-        FD_ZERO(&readfds);
-        FD_SET(fd, &readfds);
-        select_timeout.tv_sec=2;
-        select_timeout.tv_usec=0;
-
-	todo_wine {
-        if (select((int) fd+1, &readfds, NULL, NULL, &select_timeout) != SOCKET_ERROR)
-            ok(!FD_ISSET(fd, &readfds), "FD should not be set\n");
-        }
-
-        closesocket(fd);
+    maxfd = fdRead;
+    if (fdWrite > maxfd)
+        maxfd = fdWrite;
+       
+    todo_wine {
+    ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok ( (ret == 0), "select should not return any socket handles\n");
+    ok ( !FD_ISSET(fdRead, &readfds), "FD should not be set\n");
+    ok ( !FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
     }
+
+    ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
+    ok ( !FD_ISSET(fdWrite, &exceptfds), "FD should not be set\n");
+ 
+    ret = closesocket(fdRead);
+    ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", ret);
+    ret = closesocket(fdWrite);
+    ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", ret);
 }
 
 /**************** Main program  ***************/
