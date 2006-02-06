@@ -848,37 +848,19 @@ BOOL WINAPI EscapeCommFunction(
  *  Terminates pending operations and/or discards buffers on a
  *  communication resource.
  *
+ * PARAMS
+ *
+ *      handle  [in] The communication resource to be purged
+ *      flags   [in] Flags for clear pending/buffer on input/output
+ *
  * RETURNS
  *
  *  True on success and false if the communications handle is bad.
  */
-BOOL WINAPI PurgeComm(
-    HANDLE handle, /* [in] The communication resource to be purged. */
-    DWORD  flags)  /* [in] Flags for clear pending/buffer on input/output. */
+BOOL WINAPI PurgeComm(HANDLE handle, DWORD flags)
 {
-     int fd;
-
-     TRACE("handle %p, flags %lx\n", handle, flags);
-
-     fd = get_comm_fd( handle, FILE_READ_DATA );
-     if(fd<0) return FALSE;
-
-     /*
-     ** not exactly sure how these are different
-     ** Perhaps if we had our own internal queues, one flushes them
-     ** and the other flushes the kernel's buffers.
-     */
-     if(flags&PURGE_TXABORT)
-         tcflush(fd,TCOFLUSH);
-     if(flags&PURGE_RXABORT)
-         tcflush(fd,TCIFLUSH);
-     if(flags&PURGE_TXCLEAR)
-         tcflush(fd,TCOFLUSH);
-     if(flags&PURGE_RXCLEAR)
-         tcflush(fd,TCIFLUSH);
-     release_comm_fd( handle, fd );
-
-     return 1;
+    return DeviceIoControl(handle, IOCTL_SERIAL_PURGE, &flags, sizeof(flags),
+                           NULL, 0, NULL, NULL);
 }
 
 /*****************************************************************************

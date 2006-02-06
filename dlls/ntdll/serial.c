@@ -129,6 +129,20 @@ static const char* iocode2str(DWORD ioc)
     }
 }
 
+static NTSTATUS purge(int fd, DWORD flags)
+{
+    /*
+    ** not exactly sure how these are different
+    ** Perhaps if we had our own internal queues, one flushes them
+    ** and the other flushes the kernel's buffers.
+    */
+    if (flags & PURGE_TXABORT) tcflush(fd, TCOFLUSH);
+    if (flags & PURGE_RXABORT) tcflush(fd, TCIFLUSH);
+    if (flags & PURGE_TXCLEAR) tcflush(fd, TCOFLUSH);
+    if (flags & PURGE_RXCLEAR) tcflush(fd, TCIFLUSH);
+    return STATUS_SUCCESS;
+}
+
 /******************************************************************
  *		COMM_DeviceIoControl
  *
@@ -156,6 +170,12 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 
     switch (dwIoControlCode)
     {
+    case IOCTL_SERIAL_PURGE:
+        if (lpInBuffer && nInBufferSize == sizeof(DWORD))
+            status = purge(fd, *(DWORD*)lpInBuffer);
+        else
+            status = STATUS_INVALID_PARAMETER;
+        break;
     case IOCTL_SERIAL_SET_BREAK_OFF:
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
 	if (ioctl(fd, TIOCCBRK, 0) == -1)
