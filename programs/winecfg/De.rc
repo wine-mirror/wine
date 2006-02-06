@@ -2,7 +2,7 @@
  * WineCfg resources
  * German Language Support
  *
- * Copyright 2005 Henning Gerhardt
+ * Copyright 2005, 2006 Henning Gerhardt
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -201,3 +201,15 @@ BEGIN
     IDS_THEMEFILE_SELECT    "Motiv-Datei auswählen"
     IDS_AUDIO_MISSING       "Zur Zeit ist kein Audio Treiber in der Registry eingetragen.\n\nEin bevorzugter Treiber wurde für Sie ausgewählt.\nSie können diesen Treiber nutzen oder einen anderen auswählen, sofern dieser vorhanden ist.\n\nSie müssen auf Anwenden klicken, damit die Änderung übernommen wird."
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "Das Ändern der Ladereihenfolge dieser Bibltiothek wird nicht empfohlen.\nSind Sie sich sicher, dass Sie dies möchten?"
+    IDS_DLL_WARNING_CAPTION "Achtung: Systembibliothek"
+    IDS_DLL_NATIVE          "Native (Windows)"
+    IDS_DLL_BUILTIN         "Builtin (Wine)"
+    IDS_DLL_NATIVE_BUILTIN  "Native, Builtin"
+    IDS_DLL_BUILTIN_NATIVE  "Builtin, Native"
+    IDS_DLL_DISABLED        "ausgeschalten"
+END 
+
