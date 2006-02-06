@@ -32,5 +32,5 @@
 @ stdcall QuerySecurityPackageInfoW(wstr ptr) secur32.QuerySecurityPackageInfoW
 @ stdcall RevertSecurityContext(ptr) secur32.RevertSecurityContext
 @ stdcall SealMessage(ptr long ptr long) secur32.EncryptMessage
-@ stdcall UnsealMessage(ptr ptr long ptr) secur32.DecyptMessage
+@ stdcall UnsealMessage(ptr ptr long ptr) secur32.DecryptMessage
 @ stdcall VerifySignature(ptr ptr long ptr) secur32.VerifySignature
