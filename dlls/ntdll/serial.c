@@ -129,6 +129,20 @@ static const char* iocode2str(DWORD ioc)
     }
 }
 
+static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD* mask)
+{
+    NTSTATUS    status;
+
+    SERVER_START_REQ( get_serial_info )
+    {
+        req->handle = hDevice;
+        if (!(status = wine_server_call( req )))
+            *mask = reply->eventmask;
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
 static NTSTATUS purge(int fd, DWORD flags)
 {
     /*
@@ -141,6 +155,21 @@ static NTSTATUS purge(int fd, DWORD flags)
     if (flags & PURGE_TXCLEAR) tcflush(fd, TCOFLUSH);
     if (flags & PURGE_RXCLEAR) tcflush(fd, TCIFLUSH);
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( set_serial_info )
+    {
+        req->handle    = hDevice;
+        req->flags     = SERIALINFO_SET_MASK;
+        req->eventmask = mask;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return status;
 }
 
 /******************************************************************
@@ -170,6 +199,15 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 
     switch (dwIoControlCode)
     {
+    case IOCTL_SERIAL_GET_WAIT_MASK:
+        if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
+        {
+            if (!(status = get_wait_mask(hDevice, (DWORD*)lpOutBuffer)))
+                sz = sizeof(DWORD);
+        }
+        else
+            status = STATUS_INVALID_PARAMETER;
+        break;
     case IOCTL_SERIAL_PURGE:
         if (lpInBuffer && nInBufferSize == sizeof(DWORD))
             status = purge(fd, *(DWORD*)lpInBuffer);
@@ -199,6 +237,13 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 	FIXME("ioctl not available\n");
 	status = STATUS_NOT_SUPPORTED;
 #endif
+        break;
+    case IOCTL_SERIAL_SET_WAIT_MASK:
+        if (lpInBuffer && nInBufferSize == sizeof(DWORD))
+        {
+            status = set_wait_mask(hDevice, *(DWORD*)lpInBuffer);
+        }
+        else status = STATUS_INVALID_PARAMETER;
         break;
     default:
         FIXME("Unsupported IOCTL %lx (type=%lx access=%lx func=%lx meth=%lx)\n", 

@@ -952,28 +952,20 @@ BOOL WINAPI SetupComm(
  *  Obtain the events associated with a communication device that will cause
  *  a call WaitCommEvent to return.
  *
+ *  PARAMS
+ *
+ *      handle  [in]    The communications device
+ *      evtmask [out]   The events which cause WaitCommEvent to return
+ *
  *  RETURNS
  *
  *   True on success, fail on bad device handle etc.
  */
-BOOL WINAPI GetCommMask(
-    HANDLE  handle,  /* [in] The communications device. */
-    LPDWORD evtmask) /* [out] The events which cause WaitCommEvent to return. */
+BOOL WINAPI GetCommMask(HANDLE handle, LPDWORD evtmask)
 {
-    BOOL ret;
-
     TRACE("handle %p, mask %p\n", handle, evtmask);
-
-    SERVER_START_REQ( get_serial_info )
-    {
-        req->handle = handle;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (evtmask) *evtmask = reply->eventmask;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    return DeviceIoControl(handle, IOCTL_SERIAL_GET_WAIT_MASK,
+                           NULL, 0, evtmask, sizeof(*evtmask), NULL, NULL);
 }
 
 /*****************************************************************************
@@ -983,27 +975,20 @@ BOOL WINAPI GetCommMask(
  *  (Set which events associated with a communication device should cause
  *  a call WaitCommEvent to return.)
  *
+ * PARAMS
+ *
+ *      handle  [in]    The communications device
+ *      evtmask [in]    The events that are to be monitored
+ *
  * RETURNS
  *
  *  True on success, false on bad handle etc.
  */
-BOOL WINAPI SetCommMask(
-    HANDLE handle,  /* [in] The communications device.  */
-    DWORD  evtmask) /* [in] The events that are to be monitored. */
+BOOL WINAPI SetCommMask(HANDLE handle, DWORD evtmask)
 {
-    BOOL ret;
-
     TRACE("handle %p, mask %lx\n", handle, evtmask);
-
-    SERVER_START_REQ( set_serial_info )
-    {
-        req->handle    = handle;
-        req->flags     = SERIALINFO_SET_MASK;
-        req->eventmask = evtmask;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return DeviceIoControl(handle, IOCTL_SERIAL_SET_WAIT_MASK,
+                           &evtmask, sizeof(evtmask), NULL, 0, NULL, NULL);
 }
 
 /*****************************************************************************
