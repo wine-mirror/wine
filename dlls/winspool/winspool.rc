@@ -46,3 +46,4 @@
 #include "Ko.rc"
 #include "Nl.rc"
 #include "Ru.rc"
+#include "Tr.rc"
