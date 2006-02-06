@@ -34,6 +34,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface,R
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DStateBlock)){
         IUnknown_AddRef(iface);
         *ppobj = This;

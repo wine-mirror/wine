@@ -40,6 +40,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID
         ERR("Probably FIXME: Calling query interface with NULL riid\n");
     }
     if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DResource)
         || IsEqualGUID(riid, &IID_IWineD3DSurface)) {
         IUnknown_AddRef((IUnknown*)iface);

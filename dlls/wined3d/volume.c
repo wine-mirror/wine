@@ -34,6 +34,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_QueryInterface(IWineD3DVolume *iface, REFIID r
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DVolume)){
         IUnknown_AddRef(iface);
         *ppobj = This;

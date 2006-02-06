@@ -35,6 +35,7 @@ HRESULT WINAPI IWineD3DIndexBufferImpl_QueryInterface(IWineD3DIndexBuffer *iface
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DResource)
         || IsEqualGUID(riid, &IID_IWineD3DIndexBuffer)){
         IUnknown_AddRef(iface);

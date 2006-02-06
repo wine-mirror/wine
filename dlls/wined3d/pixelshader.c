@@ -62,6 +62,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShader *iface
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DPixelShader)) {
         IUnknown_AddRef(iface);
         *ppobj = This;

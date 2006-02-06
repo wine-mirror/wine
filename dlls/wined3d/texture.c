@@ -34,6 +34,7 @@ HRESULT WINAPI IWineD3DTextureImpl_QueryInterface(IWineD3DTexture *iface, REFIID
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DResource)
         || IsEqualGUID(riid, &IID_IWineD3DBaseTexture)
         || IsEqualGUID(riid, &IID_IWineD3DTexture)){

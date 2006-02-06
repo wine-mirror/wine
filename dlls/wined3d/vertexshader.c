@@ -1980,6 +1980,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *ifa
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown) 
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DVertexShader)) {
         IUnknown_AddRef(iface);
         *ppobj = This;

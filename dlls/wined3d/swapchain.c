@@ -67,6 +67,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, RE
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DSwapChain)){
         IWineD3DSwapChainImpl_AddRef(iface);
         if(ppobj == NULL){

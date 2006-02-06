@@ -38,6 +38,7 @@ HRESULT WINAPI IWineD3DQueryImpl_QueryInterface(IWineD3DQuery *iface, REFIID rii
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DQuery)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
