@@ -1,0 +1,345 @@
+/*
+ * Turkish resources for regedit
+ *
+ * Copyright 2006 Fatih Aþýcý
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
+
+/*
+ * Menu
+ */
+
+IDC_REGEDIT MENU DISCARDABLE
+BEGIN
+    POPUP "&Dosya"
+    BEGIN
+        MENUITEM "&Çýkýþ",                      ID_REGISTRY_EXIT
+    END
+    POPUP "&Yardým"
+    BEGIN
+        MENUITEM "&Hakkýnda...",                ID_HELP_ABOUT
+    END
+END
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "&Kayýt"
+    BEGIN
+        MENUITEM "Kayýt Dosyasý &Al...",        ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "Kayýt Dosyasý &Kaydet...",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "A&ð Kaydýna Baðlan...",       ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "Að Kaydý Baðlantýsýný Kopar...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Ya&zdýr\tCtrl+P",             ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Çýkýþ",                      ID_REGISTRY_EXIT
+    END
+    POPUP "&Düzen"
+    BEGIN
+        MENUITEM "&Deðiþtir",                   ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&Yeni"
+        BEGIN
+            MENUITEM "&Anahtar",                ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Dizge Deðeri",           ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Ýkili Deðer",            ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&Çift Sözcük Deðeri",     ID_EDIT_NEW_DWORDVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Sil\tDel",                   ID_EDIT_DELETE
+        MENUITEM "&Yeniden Adlandýr\tF2",       ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Anahtar Adýný Kopyala",      ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Bul\tCtrl+F",                ID_EDIT_FIND, GRAYED
+        MENUITEM "&Sonrakini Bul\tF3",          ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&Görünüm"
+    BEGIN
+        MENUITEM "Durum &Çubuðu",               ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "A&yraç",                       ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Yenile\tF5",                 ID_VIEW_REFRESH
+    END
+    POPUP "&Sýk Kullanýlanlar"
+    BEGIN
+        MENUITEM "Sýk Kullanýlanlara Ekle",     ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "Sýk Kullanýlanlardan Sil",    ID_FAVORITES_REMOVEFAVORITE
+    END
+    POPUP "&Yardým"
+    BEGIN
+        MENUITEM "&Yardým Konularý\tF1",        ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "Sistem Kayýt Düzenleyicisi &Hakkýnda",      ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Deðiþtir",                   ID_EDIT_MODIFY
+	MENUITEM "Ýkili Veriyi Deðiþtir",       ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&Sil\tDel",                   ID_EDIT_DELETE
+	MENUITEM "&Yeniden Adlandýr",           ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&Yeni"
+        BEGIN
+            MENUITEM "&Anahtar",                    ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Dizge Deðeri",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Ýkili Deðer",                ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&Çift Sözcük Deðeri",         ID_EDIT_NEW_DWORDVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Sil\tDel",                   ID_EDIT_DELETE
+        MENUITEM "&Yeniden Adlandýr\tF2",       ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Anahtar Adýný Kopyala",      ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Bul\tCtrl+F",                ID_EDIT_FIND, GRAYED
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Hakkýnda"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    ICON            IDI_REGEDIT,IDI_REGEDIT,14,9,16,16
+    LTEXT           "ReactOS regedit Sürüm 1.0",IDC_STATIC,49,10,119,8,
+                    SS_NOPREFIX
+    LTEXT           "Copyright (C) 2002 ReactOS Ekibi",IDC_STATIC,49,20,119,8
+    DEFPUSHBUTTON   "Tamam",IDOK,195,6,30,11,WS_GROUP
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Bul"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Bul:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "Konum:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Anahtarlar", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Deðer adlarý", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Deðer içeriði", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Yalnýzca tüm sözcükler", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Bul",IDOK,175,5,30,11,WS_GROUP
+    PUSHBUTTON      "Kapat",IDCANCEL,175,22,30,11, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Sýk Kullanýlanlara Ekle"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ad:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "Tamam",IDOK,140,40,30,11,WS_GROUP
+    PUSHBUTTON      "Ýptal",IDCANCEL,175,40,30,11, WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Sýk Kullanýlanlardan Sil"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ad:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "Tamam",IDOK,140,73,30,11,WS_GROUP
+    PUSHBUTTON      "Ýptal",IDCANCEL,175,73,30,11, WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Dizgeyi Düzenle"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Deðer adý:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Deðer verisi:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "Tamam",IDOK,140,60,30,11,WS_GROUP
+    PUSHBUTTON   "Ýptal",IDCANCEL,175,60,30,11,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Çift Dizgeyi Düzenle"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Deðer adý:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Deðer verisi:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Taban", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Onaltýlý", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Onlu", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "Tamam",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Ýptal",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Ýkiliyi Düzenle"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Deðer adý:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Deðer verisi:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
+    DEFPUSHBUTTON   "Tamam",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Ýptal",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "Ad"
+    IDS_LIST_COLUMN_TYPE    "Tür"
+    IDS_LIST_COLUMN_DATA    "Veri"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Kayýt DÜzenleyici"
+    IDC_REGEDIT             "REGEDIT"
+    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "Tüm kayýtlarla çalýþmak için komutlarý içerir"
+    ID_EDIT_MENU            "Deðerleri veya anahtarlarý düzenlemek için komutlarý içerir"
+    ID_VIEW_MENU            "Kayýt penceresini özelleþtirmek için komutlarý içerir"
+    ID_FAVORITES_MENU       "Sýk kullanýlan anahtarlara eriþmek için komutlarý içerir"
+    ID_HELP_MENU            "Kayýt düzenleyici hakkýnda yardým ve bilgi göstermek için komutlarý içerir"
+    ID_EDIT_NEW_MENU        "Yeni anahtarlar ve deðerler üretmek için komutlarý içerir"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY          "Deðer verisini deðiþtirir"
+    ID_EDIT_NEW_KEY         "Yeni bir anahtar ekler"
+    ID_EDIT_NEW_STRINGVALUE "Yeni bir dize deðeri ekler"
+    ID_EDIT_NEW_BINARYVALUE "Yeni bir ikili deðer ekler"
+    ID_EDIT_NEW_DWORDVALUE  "Yeni bir çift sözcük deðeri ekler"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Sistem kaydýna bir metin dosyasýný aktarýr"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "Sistem kaydýnýn bir kýsmýný veya tümünü bir metin dosyasýna aktarýr"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "Uzak bir bilgisayarýn kaydýna baðlanýr"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "Uzak bir bilgisayarýn kaydýna olan baðlantýyý keser"
+    ID_REGISTRY_PRINT       "Sistem kaydýnýn bir kýsmýný veya tümünü yazdýrýr"
+/*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
+    ID_HELP_ABOUT           "Program bilgisini, sürüm numarasýný ve telif hakkýný gösterir"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "Kayýt düzenleyicisinden çýkar"
+    ID_FAVORITES_ADDTOFAVORITES "Sýk kullanýlanlar listesine anahtarlarý ekler"
+    ID_FAVORITES_REMOVEFAVORITE "Sýk kullanýlanlar listesinden anahtarlarý siler"
+    ID_VIEW_STATUSBAR       "Durum çubuðunu gösterir veya gizler"
+    ID_VIEW_SPLIT           "Ýki panel arasýndaki ayracýn konumunu deðiþtirir"
+    ID_VIEW_REFRESH         "Pencereyi yeniler"
+    ID_EDIT_DELETE          "Seçimi siler"
+    ID_EDIT_RENAME          "Seçimi yeniden adlandýr"
+    ID_EDIT_COPYKEYNAME     "Seçili anahtar adýný panoya kopyalar"
+    ID_EDIT_FIND            "Bir anahtar, deðer veya veri içerisindeki metin dizesini bulur"
+    ID_EDIT_FINDNEXT        "Önceki aramada belirlenen metnin bir sonraki eþleþmesini bulur"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		    "Hata"
+    IDS_BAD_KEY		    "'%s' anahtarý sorgulanamadý"
+    IDS_BAD_VALUE           "'%s' deðeri sorgulanamadý"
+    IDS_UNSUPPORTED_TYPE    "Bu tür (%ld) anahtarlar deðiþtirilemez"
+    IDS_TOO_BIG_VALUE       "Deðer çok büyük (%ld)"
+    IDS_DELETE_BOX_TITLE    "Deðer silmeyi onayla"
+    IDS_DELETE_BOX_TEXT     "'%s' deðerini silmek istediðinizden emin misiniz?"
+    IDS_NEWKEY              "Yeni Anahtar #%d"
+    IDS_NEWVALUE            "Yeni Deðer #%d"
+    IDS_NOTFOUND            "Arama dizesi '%s' bulunamadý"
+END
+
+/*****************************************************************/
+
+
+/*
+ * Dialog
+ */
+
+IDD_DIALOG1 DIALOG DISCARDABLE  50, 50, 268, 98
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+END
+
+IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 187, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Ýletiþim Kutusu"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "Tamam",IDOK,130,7,50,14
+    PUSHBUTTON      "Ýptal",IDCANCEL,130,24,50,14
+END
+
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+
+
+/*
+ * String Table
+ */
+
+/*
+ *STRINGTABLE DISCARDABLE
+ *BEGIN
+ *    ID_HELP_HELPTOPICS      "Opens Registry Editor Help."
+ *    ID_HELP_ABOUT           "Displays program information, version number, and copyright."
+ *END
+ */
+
+/*****************************************************************/
