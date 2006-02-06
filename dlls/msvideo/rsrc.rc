@@ -24,3 +24,4 @@
 #include "msvfw32_En.rc"
 #include "msvfw32_Ko.rc"
 #include "msvfw32_No.rc"
+#include "msvfw32_Tr.rc"
