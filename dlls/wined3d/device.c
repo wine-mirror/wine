@@ -3782,7 +3782,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IW
 
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
     }
 
     if (NULL != pDecl) {
@@ -3814,7 +3813,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3
 
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
     }
 
     if (NULL != pShader) {
@@ -3991,7 +3989,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3D
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
     }
 
     if (NULL != pShader) {
