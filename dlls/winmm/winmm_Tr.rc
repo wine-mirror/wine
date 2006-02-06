@@ -1,0 +1,128 @@
+/*
+ * Turkish Resources
+ *
+ * Copyright 2006 Fatih Aþýcý
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+STRINGTABLE LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
+BEGIN
+
+/* MMSYS errors */
+MMSYSERR_NOERROR, 		"Belirtilen komut gerçekleþtirildi."
+MMSYSERR_ERROR, 		"Tanýmlanamayan dýþ hata."
+MMSYSERR_BADDEVICEID, 		"Sisteminiz için geçerli olmayan bir aygýt kimliði kullanýldý."
+MMSYSERR_NOTENABLED, 		"Sürücü etkinleþtirilmemiþ."
+MMSYSERR_ALLOCATED, 		"Belirtilen aygýt kullanýmda. Boþ kalana kadar bekleyip yeniden deneyin."
+MMSYSERR_INVALHANDLE, 		"Belirtilen aygýt iþleyici geçersiz."
+MMSYSERR_NODRIVER, 		"Sisteminizde yüklü sürücü yok!\n"
+MMSYSERR_NOMEM, 		"Bu görev için yeterli kullanýlabilir bellek yok. Kullanýlabilen belleði arttýrmak için bir veya daha fazla uygulamadan çýkýp yeniden deneyin."
+MMSYSERR_NOTSUPPORTED, 		"Bu iþlev desteklenmiyor. Sürücünün hangi iþlevleri ve iletileri desteklediðini belirlemek için Kapasite iþlevini kullanýn."
+MMSYSERR_BADERRNUM, 		"Sistemde tanýmlanmamýþ bir hata numarasý belirtilmiþ."
+MMSYSERR_INVALFLAG, 		"Bir sistem iþlevine geçersiz bir bayrak geçilmiþ."
+MMSYSERR_INVALPARAM, 		"Bir sistem iþlevine geçersiz bir parametre geçilmiþ."
+
+/* WAVE errors */
+WAVERR_BADFORMAT, 		"Belirtilen biçim desteklenmiyor veya çevrilemiyor. Desteklenen biçimleri belirlemek için Kapasite iþlevini kullanýn"
+WAVERR_STILLPLAYING, 		"Ortam verisi yürütülürken bu iþlem yürütülemez. Aygýtý sýfýrlayýn veya verinin yürütülmesinin tamamlanmasýný bekleyin."
+WAVERR_UNPREPARED, 		"Dalga baþlýðý hazýrlanmamýþ. Baþlýðý hazýrlamak için Hazýrla iþlevini kullanýp yeniden deneyin."
+WAVERR_SYNC, 			"WAVE_ALLOWSYNC bayraðý kullanýlmadan aygýt açýlamýyor. Bayraðý kullanýp yeniden deneyin."
+
+/* MIDI errors */
+MIDIERR_UNPREPARED, 		"MIDI baþlýðý hazýrlanmamýþ. Baþlýðý hazýrlamak için Hazýrla iþlevini kullanýp yeniden deneyin."
+MIDIERR_STILLPLAYING, 		"Ortam verisi yürütülürken bu iþlem yürütülemez. Aygýtý sýfýrlayýn veya verinin yürütülmesinin tamamlanmasýný bekleyin."
+MIDIERR_NOMAP, 			"MIDI haritasý bulunmadý. Sürücüde bir sorun olabilir veya MIDIMAP.CFG dosyasý bozuk veya eksik olabilir."
+MIDIERR_NOTREADY, 		"Baðlantý noktasý aygýta veri gönderiyor. Veri gönderilene kadar bekleyip yeniden deneyin."
+MIDIERR_NODEVICE, 		"Geçerli MIDI Eþleyicisi kurulumu sistemde yüklü olmayan bir MIDI aygýtýný gösteriyor. Kurulumu düzenlemek için MIDI Eþleyicisini kullanýn."
+MIDIERR_INVALIDSETUP, 		"Geçerli MIDI kurulumu zarar görmüþ. Özgün MIDIMAP.CFG dosyasýný Windows SYSTEM dizinine kopyalayýn ve yeniden deneyin."
+
+/* MCI errors */
+MCIERR_INVALID_DEVICE_ID, 	"Geçersiz MCI aygýt tanýtýcýsý. MCI aygýtý açýldýðýnda döndürülen tanýtýcýyý kullanýn."
+MCIERR_UNRECOGNIZED_KEYWORD, 	"Sürücü kullanýlan komut parametresini tanýmýyor."
+MCIERR_UNRECOGNIZED_COMMAND,	"Sürücü kullanýlan komutu tanýmýyor."
+MCIERR_HARDWARE, 		"Ortam aygýtýnýzda bir sorun var. Doðru çalýþtýðýndan emin olun veya aygýt üreticisine baþvurun."
+MCIERR_INVALID_DEVICE_NAME, 	"Belirtilen aygýt açýk deðil veya MCI tarafýndan tanýnmýyor."
+MCIERR_OUT_OF_MEMORY, 		"Bu görev için yeterli kullanýlabilir bellek yok.\nKullanýlabilen belleði arttýrmak için bir veya daha fazla uygulamadan çýkýp yeniden deneyin."
+MCIERR_DEVICE_OPEN, 		"Aygýt adý bu uygulama tarafýndan zaten bir takma ad olarak kullanýlýyor. Benzersiz bir takma ad kullanýn."
+MCIERR_CANNOT_LOAD_DRIVER, 	"Belirtilen aygýt sürücüsü yüklenirken bilinmeyen bir sorun oluþtu."
+MCIERR_MISSING_COMMAND_STRING, 	"Komut belirtilmemiþ."
+MCIERR_PARAM_OVERFLOW, 		"Çýkýþ dizesi dönüþ arabelleðine sýðmayacak kadar büyük. Arabelleðin boyutunu büyütün."
+MCIERR_MISSING_STRING_ARGUMENT, "Belirtilen komut karakter dizisinden oluþan bir parametre gerektiriyor. Lütfen bir tane saðlayýn."
+MCIERR_BAD_INTEGER, 		"Girilen tamsayý bu komut için geçersiz."
+MCIERR_PARSER_INTERNAL, 	"Aygýt sürücüsü geçersiz bir tür döndürdü. Yeni sürücüyü edinmek için aygýt üreticisine baþvurun."
+MCIERR_DRIVER_INTERNAL, 	"Aygýt sürücüsünde bir sorun var. Yeni bir sürücü edinmek için aygýtýn üreticisiyle baðlantý kurun."
+MCIERR_MISSING_PARAMETER, 	"Belirtilen komut için bir parametre gerekir. Lütfen bir tane girin."
+MCIERR_UNSUPPORTED_FUNCTION, 	"Kullandýðýnýz MCI aygýtý belirtilen komutu desteklemiyor."
+MCIERR_FILE_NOT_FOUND, 		"Belirtilen dosya bulunamýyor. Yol ve dosya adýnýn doðru olduðundan emin olun."
+MCIERR_DEVICE_NOT_READY, 	"Aygýt sürücüsü hazýr deðil."
+MCIERR_INTERNAL, 		"MCI baþlatýlýrken bir sorun oluþtu. Windows'u yeniden baþlatmayý deneyin."
+MCIERR_DRIVER, 			"Aygýt sürücüsünde bir sorun var. Sürücü kapatýldý. Hataya ulaþýlamýyor."
+MCIERR_CANNOT_USE_ALL, 		"Belirtilen komut ile 'all' aygýt adý kullanýlamaz."
+MCIERR_MULTIPLE, 		"Birden fazla aygýtta hatalar oluþtu. Hangi aygýtlarýn hataya neden olduðunu belirlemek için her komutu ve aygýtý ayrý ayrý belirleyin"
+MCIERR_EXTENSION_NOT_FOUND, 	"Verilen dosya uzantýsýndan aygýt türü belirlenemiyor."
+MCIERR_OUTOFRANGE, 		"Belirtilen parametre kullanýlan komut için aralýk dýþýnda."
+MCIERR_FLAGS_NOT_COMPATIBLE, 	"Belirtilen parametreler birlikte kullanýlamaz."
+MCIERR_FILE_NOT_SAVED, 		"Belirtilen dosya kaydedilemiyor. Yeterli boþ disk alanýna sahip olduðunuzdan ya da aða baðlý olduðunuzdan emin olun."
+MCIERR_DEVICE_TYPE_REQUIRED, 	"Belirtilen aygýt bulunamadý. Aygýtýn kurulu olduðundan ya da adýnýn doðru yazýldýðýndan emin olun."
+MCIERR_DEVICE_LOCKED, 		"Belirtilen aygýt þimdi kapatýlýyor. Lütfen birkaç saniye bekleyip yeniden deneyin."
+MCIERR_DUPLICATE_ALIAS, 	"Belirtilen takma ad bu uygulamada zaten kullanýlýyor. Benzersiz bir takma ad kullanýn."
+MCIERR_BAD_CONSTANT, 		"Belirtilen parametre bu komut için geçersiz."
+MCIERR_MUST_USE_SHAREABLE, 	"Aygýt sürücüsü zaten kullanýmda. Paylaþmak için her 'open' komutuyla beraber 'shareable' parametresini kullanýn."
+MCIERR_MISSING_DEVICE_NAME, 	"Belirtilen komut bir takma ad, dosya, sürücü veya aygýt adý gerektiriyor. Lütfen bir tane saðlayýn."
+MCIERR_BAD_TIME_FORMAT, 	"Saat biçimi için verilen deðer geçersiz. Geçerli biçimler için MCI belgelerine baþvurun."
+MCIERR_NO_CLOSING_QUOTE, 	"Parametre deðerinde çift týrnak kapatma iþareti eksik. Lütfen týrnaðý kapatýn."
+MCIERR_DUPLICATE_FLAGS, 	"Bir parametre veya deðer iki kez belirtilmiþ. Sadece bir kez tanýmlayýn."
+MCIERR_INVALID_FILE, 		"Belirtilen dosya belirtilen MCI aygýtý üzerinde yürütülemez. Dosya bozulmuþ olabilir veya doðru biçimde olmayabilir."
+MCIERR_NULL_PARAMETER_BLOCK, 	"'MCI'ya bir boþ parametre bloðu geçildi."
+MCIERR_UNNAMED_RESOURCE, 	"Adsýz bir dosya kaydedilemez. Bir dosya adý yazýn."
+MCIERR_NEW_REQUIRES_ALIAS, 	"'yeni' parametresini kullanýrken bir takma ad kullanýn."
+MCIERR_NOTIFY_ON_AUTO_OPEN, 	"Otomatik açýlan aygýtlarla 'bildir' bayraðý kullanýlamaz."
+MCIERR_NO_ELEMENT_ALLOWED, 	"Belirtilen aygýtla bir dosya adý kullanýlamaz."
+MCIERR_NONAPPLICABLE_FUNCTION, 	"Komutlar belirtilen sýrada gerçekleþtirilemiyor. Komut sýralamasýný düzeltip yeniden deneyin."
+MCIERR_ILLEGAL_FOR_AUTO_OPEN, 	"Otomatik açýlan aygýtta belirtilen komut çalýþtýrýlamaz. Aygýt kapanana kadar bekleyin ve yeniden deneyin."
+MCIERR_FILENAME_REQUIRED, 	"Dosya adý geçersiz. Dosya adýnýn 8 karakterden uzun olmadýðýndan ve nokta ve uzantý içerdiðinden emin olun."
+MCIERR_EXTRA_CHARACTERS, 	"Týrnak iþaretleri içindeki bir dizeden sonra fazladan karakterler belirtemezsiniz."
+MCIERR_DEVICE_NOT_INSTALLED, 	"Belirtilen aygýt sistemde yüklü deðil. Aygýtý yüklemek için Denetim Masasý'ndan Sürücüler seçeneðini seçin."
+MCIERR_GET_CD, 			"Belirtilen dosyaya veya MCI aygýtýna eriþilemiyor. Dizinleri deðiþtirmeyi veya bilgisayarýnýzý yeniden baþlatmayý deneyin."
+MCIERR_SET_CD, 			"Belirtilen dosyaya veya MCI aygýtýna eriþilemiyor. Çünkü uygulama dizinleri deðiþtiremiyor."
+MCIERR_SET_DRIVE, 		"Belirtilen dosyaya veya MCI aygýtýna eriþilemiyor. Çünkü uygulama sürücüleri deðiþtiremiyor."
+MCIERR_DEVICE_LENGTH, 		"79 karakterden daha az bir aygýt veya sürücü adý belirtin."
+MCIERR_DEVICE_ORD_LENGTH, 	"69 karakterden daha az bir aygýt veya sürücü adý belirtin."
+MCIERR_NO_INTEGER, 		"Belirtilen komut bir tamsayý parametre gerektiriyor. Lütfen bir tamsayý girin."
+MCIERR_WAVE_OUTPUTSINUSE, 	"Geçerli biçimdeki dosyalarý yürüten tüm dalga aygýtlarý kullanýmda. Bir dalga aygýtý boþalana kadar bekleyin ve yeniden deneyin."
+MCIERR_WAVE_SETOUTPUTINUSE, 	"Geçerli dalga aygýtý kullanýmda olduðundan yürütme için açýlamýyor. Aygýt boþalana kadar bekleyin ve yeniden deneyin."
+MCIERR_WAVE_INPUTSINUSE, 	"Geçerli biçimdeki dosyalarý kaydedebilen tüm dalga aygýtlarý kullanýmda. Bir dalga aygýtý boþalana kadar bekleyin ve yeniden deneyin."
+MCIERR_WAVE_SETINPUTINUSE, 	"Geçerli dalga aygýtý kullanýmda olduðundan kaydetme iþlemi için açýlamýyor. Aygýt boþalana kadar bekleyin ve yeniden deneyin."
+MCIERR_WAVE_OUTPUTUNSPECIFIED,	"Herhangi bir uyumlu dalga çýkýþ aygýtý belirlenmemiþ."
+MCIERR_WAVE_INPUTUNSPECIFIED, 	"Herhangi bir uyumlu dalga giriþ aygýtý belirlenmemiþ."
+MCIERR_WAVE_OUTPUTSUNSUITABLE, 	"Geçerli biçimdeki dosyalarý yürütebilen dalga aygýtý bulunamadý. Dalga aygýtýný yüklemek için Sürücüler seçeneðini kullanýn."
+MCIERR_WAVE_SETOUTPUTUNSUITABLE,"Yürütmeye çalýþtýðýnýz aygýt geçerli dosya biçimini tanýmýyor."
+MCIERR_WAVE_INPUTSUNSUITABLE, 	"Geçerli biçimdeki dosyalarý kaydedebilen dalga aygýtý bulunamadý. Dalga aygýtýný yüklemek için Sürücüler seçeneðini kullanýn."
+MCIERR_WAVE_SETINPUTUNSUITABLE, "Kaydetmeye çalýþtýðýnýz aygýt geçerli dosya biçimini tanýmýyor."
+MCIERR_NO_WINDOW, 		"Hiç görüntü penceresi yok."
+MCIERR_CREATEWINDOW, 		"Pencere oluþturulamýyor veya kullanýlamýyor."
+MCIERR_FILE_READ, 		"Belirtilen dosya okunamadý. Dosyanýn var olduðundan emin olun ya da diskinizi veya að baðlantýzý denetleyin."
+MCIERR_FILE_WRITE, 		"Belirtilen dosyaya yazýlamýyor. Yeterli kullanýlabilir disk alanýna sahip olduðunuzdan veya aða baðlý olduðunuzdan emin olun."
+MCIERR_SEQ_DIV_INCOMPATIBLE, 	"""Þarký iþaretçisi"" saat biçimini ve SMPTE saat biçimini birlikte kullanamazsýnýz."
+MCIERR_SEQ_NOMIDIPRESENT, 	"Sistemde MIDI aygýtý yüklü deðil. Bir MIDI sürücüsü yüklemek için Denetim Masasý'ndan Sürücüler seçeneðini kullanýn."
+MCIERR_SEQ_PORT_INUSE, 		"Belirtilen MIDI aygýtý þu an kullanýmda. Boþalana kadar bekleyip yeniden deneyin."
+MCIERR_SEQ_PORT_MAPNODEVICE, 	"Geçerli MIDI haritalama ayarý sistemde yüklü olmayan bir MIDI aygýtýný iþaret ediyor. Ayarlarý düzenlemek için Denetim Masasý'ndan MIDI haritalama seçeneðini kullanýn."
+MCIERR_SEQ_PORT_MISCERROR, 	"Belirtilen baðlantý noktasýnda hata oluþtu."
+MCIERR_SEQ_PORT_NONEXISTENT, 	"Belirtilen MIDI aygýtý sistemde yüklü deðil. Bir MIDI aygýtý yüklemek için Denetim Masasý'ndan Sürücüler seçeneðini kullanýn."
+MCIERR_SEQ_PORTUNSPECIFIED, 	"Sistemde belirtilen MIDI baðlantý noktasý yok."
+MCIERR_SEQ_TIMER, 		"Tüm çokluortam zamanlayýcýlarý diðer uygulamalar tarafýndan kullanýlýyor. Bu uygulamalardan birini kapatýp yeniden deneyin."
+
+END
