@@ -1801,55 +1801,20 @@ BOOL WINAPI SetCommTimeouts(
  *
  *  Obtains the four control register bits if supported by the hardware.
  *
+ * PARAMS
+ *
+ *      hFile           [in]    The communications device
+ *      lpModemStat     [out]   The control register bits
+ *
  * RETURNS
  *
  *  True if the communications handle was good and for hardware that
  *  control register access, false otherwise.
  */
-BOOL WINAPI GetCommModemStatus(
-    HANDLE  hFile,       /* [in] The communications device. */
-    LPDWORD lpModemStat) /* [out] The control register bits. */
+BOOL WINAPI GetCommModemStatus(HANDLE hFile, LPDWORD lpModemStat)
 {
-	int fd,mstat, result=FALSE;
-
-	*lpModemStat=0;
-#ifdef TIOCMGET
-	fd = get_comm_fd( hFile, FILE_READ_DATA );
-	if(fd<0)
-		return FALSE;
-	result = ioctl(fd, TIOCMGET, &mstat);
-	release_comm_fd( hFile, fd );
-	if (result == -1)
-	  {
-	    WARN("ioctl failed\n");
-	    return FALSE;
-	  }
-#ifdef TIOCM_CTS
-	if (mstat & TIOCM_CTS)
-	    *lpModemStat |= MS_CTS_ON;
-#endif
-#ifdef TIOCM_DSR
-	if (mstat & TIOCM_DSR)
-	  *lpModemStat |= MS_DSR_ON;
-#endif
-#ifdef TIOCM_RNG
-	if (mstat & TIOCM_RNG)
-	  *lpModemStat |= MS_RING_ON;
-#endif
-#ifdef TIOCM_CAR
-	/*FIXME:  Not really sure about RLSD  UB 990810*/
-	if (mstat & TIOCM_CAR)
-	  *lpModemStat |= MS_RLSD_ON;
-#endif
-	TRACE("%04x -> %s%s%s%s\n", mstat,
-	      (*lpModemStat &MS_RLSD_ON)?"MS_RLSD_ON ":"",
-	      (*lpModemStat &MS_RING_ON)?"MS_RING_ON ":"",
-	      (*lpModemStat &MS_DSR_ON)?"MS_DSR_ON ":"",
-	      (*lpModemStat &MS_CTS_ON)?"MS_CTS_ON ":"");
-	return TRUE;
-#else
-	return FALSE;
-#endif
+    return DeviceIoControl(hFile, IOCTL_SERIAL_GET_MODEMSTATUS,
+                           NULL, 0, lpModemStat, sizeof(DWORD), NULL, NULL);
 }
 
 static DWORD WINAPI Comm_CheckEvents(int fd, DWORD mask, serial_irq_info *new, serial_irq_info *old, DWORD new_mstat, DWORD old_mstat)

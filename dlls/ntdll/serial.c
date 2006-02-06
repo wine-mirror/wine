@@ -129,6 +129,45 @@ static const char* iocode2str(DWORD ioc)
     }
 }
 
+static NTSTATUS get_modem_status(int fd, DWORD* lpModemStat)
+{
+    NTSTATUS    status = STATUS_SUCCESS;
+    int         mstat;
+
+#ifdef TIOCMGET
+    if (ioctl(fd, TIOCMGET, &mstat) == -1)
+    {
+        WARN("ioctl failed\n");
+        status = FILE_GetNtStatus();
+    }
+    else
+    {
+        *lpModemStat = 0;
+#ifdef TIOCM_CTS
+        if (mstat & TIOCM_CTS)  *lpModemStat |= MS_CTS_ON;
+#endif
+#ifdef TIOCM_DSR
+        if (mstat & TIOCM_DSR)  *lpModemStat |= MS_DSR_ON;
+#endif
+#ifdef TIOCM_RNG
+        if (mstat & TIOCM_RNG)  *lpModemStat |= MS_RING_ON;
+#endif
+#ifdef TIOCM_CAR
+        /* FIXME: Not really sure about RLSD UB 990810 */
+        if (mstat & TIOCM_CAR)  *lpModemStat |= MS_RLSD_ON;
+#endif
+        TRACE("%04x -> %s%s%s%s\n", mstat,
+              (*lpModemStat & MS_RLSD_ON) ? "MS_RLSD_ON " : "",
+              (*lpModemStat & MS_RING_ON) ? "MS_RING_ON " : "",
+              (*lpModemStat & MS_DSR_ON)  ? "MS_DSR_ON  " : "",
+              (*lpModemStat & MS_CTS_ON)  ? "MS_CTS_ON  " : "");
+    }
+#else
+    status = STATUS_NOT_SUPPORTED;
+#endif
+    return status;
+}
+
 static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD* mask)
 {
     NTSTATUS    status;
@@ -199,6 +238,14 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 
     switch (dwIoControlCode)
     {
+    case IOCTL_SERIAL_GET_MODEMSTATUS:
+        if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
+        {
+            if (!(status = get_modem_status(fd, (DWORD*)lpOutBuffer)))
+                sz = sizeof(DWORD);
+        }
+        else status = STATUS_INVALID_PARAMETER;
+        break;
     case IOCTL_SERIAL_GET_WAIT_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
