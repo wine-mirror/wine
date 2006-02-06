@@ -3773,6 +3773,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, RECT* pR
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration* pDecl) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DVertexDeclaration *oldDecl = This->updateStateBlock->vertexDecl;
 
     TRACE("(%p) : pDecl=%p\n", This, pDecl);
 
@@ -3787,8 +3788,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IW
     if (NULL != pDecl) {
         IWineD3DVertexDeclaration_AddRef(pDecl);
     }
-    if (NULL != This->updateStateBlock->vertexDecl) {
-      IWineD3DVertexDeclaration_Release(This->updateStateBlock->vertexDecl);
+    if (NULL != oldDecl) {
+        IWineD3DVertexDeclaration_Release(oldDecl);
     }
     return D3D_OK;
 }
