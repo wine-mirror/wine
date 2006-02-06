@@ -207,6 +207,15 @@ static void test_NtAtom(void)
         ok(!Name[3], "wrong string termination\n");
         ok(Name[4] == 0x55AA, "buffer overwrite\n");
 
+        Len = lstrlenW(testAtom2) * sizeof(WCHAR);
+        memset(Name, '.', sizeof(Name));
+        res = pRtlQueryAtomInAtomTable( AtomTable, Atom2, NULL, NULL, Name, &Len );
+        ok(!res, "query atom %lx\n", res);
+        ok(Len == (lstrlenW(testAtom2) - 1) * sizeof(WCHAR), "wrong length %lu\n", Len);
+        ok(!memcmp(testAtom2, Name, (lstrlenW(testAtom2) - 1) * sizeof(WCHAR)), "wrong atom name\n");
+        ok(Name[lstrlenW(testAtom2) - 1] == '\0', "wrong char\n");
+        ok(Name[lstrlenW(testAtom2)] == ('.' << 8) + '.', "wrong char\n");
+
         res = pRtlLookupAtomInAtomTable(AtomTable, testAtom2, &testAtom);
         ok(!res, "We can't find our pinned atom!! retval: %lx\n", res);
         ok(testAtom == Atom2, "We found wrong atom!!!\n");

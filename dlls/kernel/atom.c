@@ -485,12 +485,15 @@ UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
     {
         length = min( abi->NameLength / sizeof(WCHAR), count);
         memcpy( buffer, abi->Name, length * sizeof(WCHAR) );
+        /* yes, the string will not be null terminated if the passed buffer
+         * is one WCHAR too small (and it's not an error)
+         */
         if (length < abi->NameLength / sizeof(WCHAR))
         {
             SetLastError( ERROR_MORE_DATA );
             length = count;
         }
-        else buffer[length] = '\0';
+        else if (length < count) buffer[length] = '\0';
     }
     return length;
 }

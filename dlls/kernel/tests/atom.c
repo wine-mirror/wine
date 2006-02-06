@@ -220,6 +220,21 @@ static void test_get_atom_name(void)
 	}
     }
 
+    memset( buf, '.', sizeof(buf) );
+    len = GlobalGetAtomNameA( atom, buf, 6 );
+    ok( len == 0, "bad length %d\n", len );
+    ok( !memcmp( buf, "fooba\0....", 10 ), "bad buffer contents\n");
+    if (unicode_OS)
+    {
+        static const WCHAR resW[] = {'f','o','o','b','a','r','.','.','.','.'};
+        for (len = 0; len < 10; len++) bufW[len] = '.';
+	SetLastError(0xdeadbeef);
+        len = GlobalGetAtomNameW( atom, bufW, 6 );
+        ok( len && GetLastError() == 0xdeadbeef, "GlobalGetAtomNameW failed\n" );
+        ok( len == lstrlenW(foobarW), "bad length %d\n", len );
+        ok( !memcmp( bufW, resW, 10*sizeof(WCHAR) ), "bad buffer contents\n" );
+    }
+
     /* test string limits & overflow */
     do_initA(in, "abcdefghij", 255);
     atom = GlobalAddAtomA(in);
@@ -428,6 +443,24 @@ static void test_local_get_atom_name(void)
         ok( !memcmp( bufW, resultW, 10*sizeof(WCHAR) ), "bad buffer contents\n" );
     }
 
+    /* Get the name of the atom we added above */
+    memset( buf, '.', sizeof(buf) );
+    len = GetAtomNameA( atom, buf, 6 );
+    ok( len == 5, "bad length %d\n", len );
+    ok( !memcmp( buf, "fooba\0....", 10 ), "bad buffer contents\n" );
+ 
+    /* Repeat, unicode-style */
+    if (unicode_OS)
+    {
+        WCHAR resW[] = {'f','o','o','b','a','\0','.','.','.','.'};
+        for (i = 0; i < 10; i++) bufW[i] = '.';
+        SetLastError( 0xdeadbeef );
+        len = GetAtomNameW( atom, bufW, 6 );
+        ok( len && GetLastError() == 0xdeadbeef, "GlobalGetAtomNameW failed\n" );
+        ok( len == 5, "bad length %d\n", len );
+        ok( !memcmp( bufW, resW, 10*sizeof(WCHAR) ), "bad buffer contents\n" );
+    }
+ 
     /* Check error code returns */
     memset(buf, '.', 10);
     ok( !GetAtomNameA( atom, buf,  0 ), "succeeded\n" );
