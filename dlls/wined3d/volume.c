@@ -233,11 +233,22 @@ HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST D3DBO
   return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IUnknown* container){
-  IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
+HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWineD3DBase* container) {
+    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
 
-  This->container = container;
-  return D3D_OK;
+    TRACE("This %p, container %p\n", This, container);
+
+    if (container) {
+        IWineD3DBase_AddRef(container);
+    }
+    if (This->container) {
+        IWineD3DBase_Release(This->container);
+    }
+
+    TRACE("Setting container to %p from %p\n", container, This->container);
+    This->container = container;
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_level) {

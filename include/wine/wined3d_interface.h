@@ -1054,7 +1054,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
     STDMETHOD(LoadTexture)(THIS) PURE;
     STDMETHOD(SaveSnapshot)(THIS_ const char *filename) PURE;
-    STDMETHOD(SetContainer)(THIS_ IUnknown *container) PURE;
+    STDMETHOD(SetContainer)(THIS_ IWineD3DBase *container) PURE;
     STDMETHOD(SetPBufferState)(THIS_ BOOL inPBuffer, BOOL  inTexture) PURE;
     STDMETHOD_(void,SetGlTextureDesc)(THIS_ UINT textureName, int target) PURE;
     STDMETHOD_(void,GetGlDesc)(THIS_ glDescriptor **glDescription) PURE;
@@ -1128,7 +1128,7 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
     STDMETHOD(AddDirtyBox)(THIS_ CONST D3DBOX* pDirtyBox) PURE;
     STDMETHOD(CleanDirtyBox)(THIS) PURE;
     STDMETHOD(LoadTexture)(THIS_ UINT gl_level) PURE;
-    STDMETHOD(SetContainer)(THIS_ IUnknown *container) PURE;
+    STDMETHOD(SetContainer)(THIS_ IWineD3DBase *container) PURE;
 };
 #undef INTERFACE
 

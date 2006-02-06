@@ -725,7 +725,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
 
     /** Create and initialise the surface resource **/
     D3DCREATERESOURCEOBJECTINSTANCE(object,Surface,D3DRTYPE_SURFACE, Size)
-    object->container = (IUnknown*) This;
+    IWineD3DSurface_SetContainer((IWineD3DSurface *)object, (IWineD3DBase *)This);
 
     object->currentDesc.Width      = Width;
     object->currentDesc.Height     = Height;
@@ -888,7 +888,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
             return hr;
         }
 
-        IWineD3DSurface_SetContainer(object->surfaces[i], (IUnknown *)object);
+        IWineD3DSurface_SetContainer(object->surfaces[i], (IWineD3DBase *)object);
         TRACE("Created surface level %d @ %p\n", i, object->surfaces[i]);
         /* calculate the next mipmap level */
         tmpW = max(1, tmpW >> 1);
@@ -958,7 +958,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
                            (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
 
         /* Set it's container to this object */
-        IWineD3DVolume_SetContainer(object->volumes[i], (IUnknown *)object);
+        IWineD3DVolume_SetContainer(object->volumes[i], (IWineD3DBase *)object);
 
         /* calcualte the next mipmap level */
         tmpW = max(1, tmpW >> 1);
@@ -1076,7 +1076,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
                 *ppCubeTexture = NULL;
                 return hr;
             }
-            IWineD3DSurface_SetContainer(object->surfaces[j][i], (IUnknown *)object);
+            IWineD3DSurface_SetContainer(object->surfaces[j][i], (IWineD3DBase *)object);
             TRACE("Created surface level %d @ %p,\n", i, object->surfaces[j][i]);
         }
         tmpW = max(1, tmpW >> 1);
@@ -1402,7 +1402,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
                              &object->frontBuffer,
                              NULL /* pShared (always null)*/);
     if (object->frontBuffer != NULL)
-        IWineD3DSurface_SetContainer(object->frontBuffer, (IUnknown *)object);
+        IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
     TRACE("calling rendertarget CB\n");
     hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
                              object->presentParms.BackBufferWidth,
@@ -1414,7 +1414,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
                              &object->backBuffer,
                              NULL /* pShared (always null)*/);
     if (object->backBuffer != NULL)
-        IWineD3DSurface_SetContainer(object->backBuffer, (IUnknown *)object);
+        IWineD3DSurface_SetContainer(object->backBuffer, (IWineD3DBase *)object);
 
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
     if (pPresentationParameters->EnableAutoDepthStencil) {
@@ -1430,7 +1430,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
                                     &This->depthStencilBuffer,
                                     NULL /* pShared (always null)*/  );
             if (This->depthStencilBuffer != NULL)
-                IWineD3DSurface_SetContainer(This->depthStencilBuffer, (IUnknown *)iface);
+                IWineD3DSurface_SetContainer(This->depthStencilBuffer, (IWineD3DBase *)iface);
         }
 
         /** TODO: A check on width, height and multisample types

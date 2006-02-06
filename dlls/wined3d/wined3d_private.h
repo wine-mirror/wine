@@ -747,7 +747,7 @@ typedef struct IWineD3DVolumeImpl
 
     /* WineD3DVolume Information */
     D3DVOLUME_DESC          currentDesc;
-    IUnknown               *container;
+    IWineD3DBase            *container;
     UINT                    bytesPerPixel;
 
     BOOL                    lockable;
@@ -799,7 +799,7 @@ struct IWineD3DSurfaceImpl
     IWineD3DResourceClass     resource;
 
     /* IWineD3DSurface fields */
-    IUnknown                 *container;
+    IWineD3DBase              *container;
     WINED3DSURFACET_DESC      currentDesc;
 
     UINT                      textureName;

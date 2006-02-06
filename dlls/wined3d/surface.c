@@ -1334,10 +1334,21 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IUnknown *container) {
+HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3DBase *container) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("This %p, container %p\n", This, container);
+
+    if (container) {
+        IWineD3DBase_AddRef(container);
+    }
+    if (This->container) {
+        IWineD3DBase_Release(This->container);
+    }
+
     TRACE("Setting container to %p from %p\n", container, This->container);
     This->container = container;
+
     return D3D_OK;
 }
 
