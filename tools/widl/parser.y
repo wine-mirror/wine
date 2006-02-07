@@ -503,7 +503,7 @@ expr_list_const: expr_const
 
 expr_const: expr				{ $$ = $1;
 						  if (!$$->is_const)
-						      yyerror("expression is not constant\n");
+						      yyerror("expression is not constant");
 						}
 	;
 
@@ -533,7 +533,7 @@ funcdef:
 						  $4->attrs = $1;
 						  $$ = make_func($4, $6);
 						  if (is_attr($4->attrs, ATTR_IN)) {
-						    yyerror("Inapplicable attribute");
+						    yyerror("inapplicable attribute [in] for function '%s'",$$->def->name);
 						  }
 						}
 	;
@@ -625,12 +625,12 @@ dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(0, $2, 0); }
 
 dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
 						  $$ = $2;
-						  if ($$->defined) yyerror("multiple definition error\n");
+						  if ($$->defined) yyerror("multiple definition error");
 						  attrs = make_attr(ATTR_DISPINTERFACE);
 						  LINK(attrs, $1);
 						  $$->attrs = attrs;
 						  $$->ref = find_type("IDispatch", 0);
-						  if (!$$->ref) yyerror("IDispatch is undefined\n");
+						  if (!$$->ref) yyerror("IDispatch is undefined");
 						  $$->defined = TRUE;
 						  if (!parse_only && do_header) write_forward($$);
 						}
@@ -668,7 +668,7 @@ interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); }
 	;
 
 interfacehdr: attributes interface		{ $$ = $2;
-						  if ($$->defined) yyerror("multiple definition error\n");
+						  if ($$->defined) yyerror("multiple definition error");
 						  $$->attrs = $1;
 						  $$->defined = TRUE;
 						  if (!parse_only && do_header) write_forward($$);
@@ -686,7 +686,7 @@ interfacedef: interfacehdr inherit
 	| interfacehdr ':' aIDENTIFIER
 	  '{' import int_statements '}'		{ $$ = $1;
 						  $$->ref = find_type2($3, 0);
-						  if (!$$->ref) yyerror("base class %s not found in import\n", $3);
+						  if (!$$->ref) yyerror("base class '%s' not found in import", $3);
 						  $$->funcs = $6;
 						  if (!parse_only && do_header) write_interface($$);
 						}
@@ -1144,7 +1144,7 @@ static type_t *reg_type(type_t *type, const char *name, int t)
   struct rtype *nt;
   int hash;
   if (!name) {
-    yyerror("registering named type without name\n");
+    yyerror("registering named type without name");
     return type;
   }
   hash = hash_ident(name);
@@ -1215,7 +1215,7 @@ static type_t *find_type(const char *name, int t)
   while (cur && (cur->t != t || strcmp(cur->name, name)))
     cur = cur->next;
   if (!cur) {
-    yyerror("type %s not found\n", name);
+    yyerror("type '%s' not found", name);
     return NULL;
   }
   return cur->type;
@@ -1299,7 +1299,7 @@ static int get_struct_type(var_t *field)
         {
             has_conformance = 1;
             if (PREV_LINK(field))
-                yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
+                yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
                         field->name);
         }
         if (is_attr(field->attrs, ATTR_LENGTHIS))
@@ -1341,7 +1341,7 @@ static int get_struct_type(var_t *field)
     case RPC_FC_CARRAY:
       has_conformance = 1;
       if (PREV_LINK(field))
-          yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
+          yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
                   field->name);
       break;
     case RPC_FC_C_CSTRING:
@@ -1363,7 +1363,7 @@ static int get_struct_type(var_t *field)
     case RPC_FC_CPSTRUCT:
       has_conformance = 1;
       if (PREV_LINK(field))
-          yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
+          yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
                   field->name);
       has_pointer = 1;
       break;
@@ -1371,7 +1371,7 @@ static int get_struct_type(var_t *field)
     case RPC_FC_CSTRUCT:
       has_conformance = 1;
       if (PREV_LINK(field))
-          yyerror("field %s deriving from a conformant array must be the last field in the structure\n",
+          yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
                   field->name);
       break;
 
@@ -1423,7 +1423,7 @@ static var_t *reg_const(var_t *var)
   struct rconst *nc;
   int hash;
   if (!var->name) {
-    yyerror("registering constant without name\n");
+    yyerror("registering constant without name");
     return var;
   }
   hash = hash_ident(var->name);
@@ -1441,7 +1441,7 @@ static var_t *find_const(char *name, int f)
   while (cur && strcmp(cur->name, name))
     cur = cur->next;
   if (!cur) {
-    if (f) yyerror("constant %s not found\n", name);
+    if (f) yyerror("constant '%s' not found", name);
     return NULL;
   }
   return cur->var;
