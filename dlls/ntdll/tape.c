@@ -218,7 +218,7 @@ static NTSTATUS TAPE_GetMediaParams( int fd, TAPE_GET_MEDIA_PARAMETERS *data )
     data->BlockSize = get.mt_dsreg & MT_ST_BLKSIZE_MASK;
 #endif
     data->PartitionCount = 1;
-#ifdef HAVE_STRUCT_MTGET_GSTAT
+#ifdef HAVE_STRUCT_MTGET_MT_GSTAT
     data->WriteProtected = GMT_WR_PROT(get.mt_gstat);
 #else
     data->WriteProtected = 0;
