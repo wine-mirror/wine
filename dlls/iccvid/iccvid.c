@@ -765,7 +765,7 @@ static LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBIT
     ICCVID_dump_BITMAPINFO(in);
 
     if( in->bmiHeader.biCompression != ICCVID_MAGIC )
-        return ICERR_UNSUPPORTED;
+        return ICERR_BADFORMAT;
 
     if( out )
     {
@@ -773,11 +773,11 @@ static LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBIT
         ICCVID_dump_BITMAPINFO(out);
 
         if( in->bmiHeader.biPlanes != out->bmiHeader.biPlanes )
-            return ICERR_UNSUPPORTED;
+            return ICERR_BADFORMAT;
         if( in->bmiHeader.biHeight != out->bmiHeader.biHeight )
-            return ICERR_UNSUPPORTED;
+            return ICERR_BADFORMAT;
         if( in->bmiHeader.biWidth != out->bmiHeader.biWidth )
-            return ICERR_UNSUPPORTED;
+            return ICERR_BADFORMAT;
 
         switch( out->bmiHeader.biBitCount )
         {
@@ -788,7 +788,7 @@ static LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBIT
                      !ICCVID_CheckMask(out->bmiColors, 0xF800, 0x07E0, 0x001F) )
                 {
                     TRACE("unsupported output bit field(s) for 16-bit colors\n");
-                    return ICERR_UNSUPPORTED;
+                    return ICERR_BADFORMAT;
                 }
             }
             break;
@@ -797,7 +797,7 @@ static LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBIT
             break;
         default:
             TRACE("unsupported output bitcount = %d\n", out->bmiHeader.biBitCount );
-            return ICERR_UNSUPPORTED;
+            return ICERR_BADFORMAT;
         }
     }
 
@@ -977,6 +977,9 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         return (LRESULT) info;
     }
 
+    case DRV_CLOSE:
+        return ICCVID_Close( info );
+
     case ICM_GETINFO:
         return ICCVID_GetInfo( info, (ICINFO *)lParam1, (DWORD)lParam2 );
 
@@ -999,8 +1002,9 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
     case ICM_DECOMPRESS_END:
         return ICCVID_DecompressEnd( info );
 
-    case DRV_CLOSE:
-        return ICCVID_Close( info );
+    case ICM_COMPRESS_QUERY:
+        FIXME("compression not implemented\n");
+        return ICERR_BADFORMAT;
 
     default:
         FIXME("Unknown message: %04x %ld %ld\n", msg, lParam1, lParam2);

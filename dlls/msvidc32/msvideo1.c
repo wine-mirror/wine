@@ -514,6 +514,16 @@ LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         break;
     }
 
+    case DRV_CLOSE:
+        HeapFree( GetProcessHeap(), 0, info );
+        break;
+
+    case DRV_DISABLE:
+        break;
+
+    case DRV_FREE:
+        break;
+
     case ICM_GETINFO:
         r = CRAM_GetInfo( info, (ICINFO *)lParam1, (DWORD)lParam2 );
         break;
@@ -551,14 +561,9 @@ LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
                                   (DWORD) lParam2 );
         break;
 
-    case DRV_CLOSE:
-        HeapFree( GetProcessHeap(), 0, info );
-        break;
-
-    case DRV_DISABLE:
-        break;
-
-    case DRV_FREE:
+    case ICM_COMPRESS_QUERY:
+        FIXME("compression not implemented\n");
+        r = ICERR_BADFORMAT;
         break;
 
     default:
