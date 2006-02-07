@@ -216,7 +216,8 @@ end:
 }
 
 /*************************************************************************
- * DllGetClassObject   [SHELL32.@]
+ * DllGetClassObject     [SHELL32.@]
+ * SHDllGetClassObject   [SHELL32.128]
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
