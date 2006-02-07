@@ -75,8 +75,16 @@ static void convert_5x5_asis(int width, int height,
 {
     int y;
 
+    width *= 2;
+
+    if (srclinebytes == dstlinebytes && srclinebytes == width)
+    {
+        memcpy(dstbits, srcbits, height * width);
+        return;
+    }
+
     for (y=0; y<height; y++) {
-        memcpy(dstbits, srcbits, width*2);
+        memcpy(dstbits, srcbits, width);
         srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
@@ -563,8 +571,16 @@ static void convert_888_asis(int width, int height,
 {
     int y;
 
+    width *= 3;
+
+    if (srclinebytes == dstlinebytes && srclinebytes == width)
+    {
+        memcpy(dstbits, srcbits, height * width);
+        return;
+    }
+
     for (y=0; y<height; y++) {
-        memcpy(dstbits, srcbits, width*3);
+        memcpy(dstbits, srcbits, width);
         srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
@@ -953,8 +969,16 @@ static void convert_0888_asis(int width, int height,
 {
     int y;
 
+    width *= 4;
+
+    if (srclinebytes == dstlinebytes && srclinebytes == width)
+    {
+        memcpy(dstbits, srcbits, height * width);
+        return;
+    }
+
     for (y=0; y<height; y++) {
-        memcpy(dstbits, srcbits, width*4);
+        memcpy(dstbits, srcbits, width);
         srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
     }
