@@ -188,7 +188,11 @@ HRESULT WINAPI StdProxy_Construct(REFIID riid,
   This->pChannel = NULL;
   *ppProxy = (LPRPCPROXYBUFFER)&This->lpVtbl;
   *ppvObj = &This->PVtbl;
-  IUnknown_AddRef((IUnknown *)*ppvObj);
+  /* if there is no outer unknown then the caller will control the lifetime
+   * of the proxy object through the proxy buffer, so no need to increment the
+   * ref count of the proxy object */
+  if (pUnkOuter)
+    IUnknown_AddRef((IUnknown *)*ppvObj);
   IPSFactoryBuffer_AddRef(pPSFactory);
 
   return S_OK;
