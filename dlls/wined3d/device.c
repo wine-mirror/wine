@@ -5449,6 +5449,119 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
     return D3D_OK;
 }
 
+/* Used by DirectX 8 */
+HRESULT  WINAPI  IWineD3DDeviceImpl_CopyRects(IWineD3DDevice *iface,
+                                                IWineD3DSurface* pSourceSurface,      CONST RECT* pSourceRectsArray, UINT cRects,
+                                                IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPointsArray) {
+
+    IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
+    HRESULT              hr = D3D_OK;
+    WINED3DFORMAT        srcFormat, destFormat;
+    UINT                 srcWidth,  destWidth;
+    UINT                 srcHeight, destHeight;
+    UINT                 srcSize;
+    WINED3DSURFACE_DESC  winedesc;
+
+    TRACE("(%p) pSrcSur=%p, pSourceRects=%p, cRects=%d, pDstSur=%p, pDestPtsArr=%p\n", This,
+          pSourceSurface, pSourceRectsArray, cRects, pDestinationSurface, pDestPointsArray);
+
+
+    /* Check that the source texture is in D3DPOOL_SYSTEMMEM and the destination texture is in D3DPOOL_DEFAULT */
+    memset(&winedesc, 0, sizeof(winedesc));
+
+    winedesc.Format = &srcFormat;
+    winedesc.Width  = &srcWidth;
+    winedesc.Height = &srcHeight;
+    winedesc.Size   = &srcSize;
+    IWineD3DSurface_GetDesc(pSourceSurface, &winedesc);
+
+    winedesc.Format = &destFormat;
+    winedesc.Width  = &destWidth;
+    winedesc.Height = &destHeight;
+    winedesc.Size   = NULL;
+    IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
+
+    /* Check that the source and destination formats match */
+    if (srcFormat != destFormat && WINED3DFMT_UNKNOWN != destFormat) {
+        WARN("(%p) source %p format must match the dest %p format, returning D3DERR_INVALIDCALL\n", This, pSourceSurface, pDestinationSurface);
+        return D3DERR_INVALIDCALL;
+    } else if (WINED3DFMT_UNKNOWN == destFormat) {
+        TRACE("(%p) : Converting destination surface from WINED3DFMT_UNKNOWN to the source format\n", This);
+        IWineD3DSurface_SetFormat(pDestinationSurface, srcFormat);
+        destFormat = srcFormat;
+    }
+
+    /* Quick if complete copy ... */
+    if (cRects == 0 && pSourceRectsArray == NULL && pDestPointsArray == NULL) {
+
+        if (srcWidth == destWidth && srcHeight == destHeight) {
+            D3DLOCKED_RECT lrSrc;
+            D3DLOCKED_RECT lrDst;
+            IWineD3DSurface_LockRect(pSourceSurface,      &lrSrc, NULL, D3DLOCK_READONLY);
+            IWineD3DSurface_LockRect(pDestinationSurface, &lrDst, NULL, 0L);
+            TRACE("Locked src and dst, Direct copy as surfaces are equal, w=%d, h=%d\n", srcWidth, srcHeight);
+
+            memcpy(lrDst.pBits, lrSrc.pBits, srcSize);
+
+            IWineD3DSurface_UnlockRect(pSourceSurface);
+            IWineD3DSurface_UnlockRect(pDestinationSurface);
+            TRACE("Unlocked src and dst\n");
+
+        } else {
+
+            FIXME("Wanted to copy all surfaces but size not compatible, returning D3DERR_INVALIDCALL\n");
+            hr = D3DERR_INVALIDCALL;
+         }
+
+    } else {
+
+        if (NULL != pSourceRectsArray && NULL != pDestPointsArray) {
+
+            int bytesPerPixel = ((IWineD3DSurfaceImpl *) pSourceSurface)->bytesPerPixel;
+            unsigned int i;
+
+            /* Copy rect by rect */
+            for (i = 0; i < cRects; ++i) {
+                CONST RECT*  r = &pSourceRectsArray[i];
+                CONST POINT* p = &pDestPointsArray[i];
+                int copyperline;
+                int j;
+                D3DLOCKED_RECT lrSrc;
+                D3DLOCKED_RECT lrDst;
+                RECT dest_rect;
+
+                TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (%ld,%ld)\n", i, r->left, r->top, r->right, r->bottom, p->x, p->y);
+                if (srcFormat == WINED3DFMT_DXT1) {
+                    copyperline = ((r->right - r->left) * bytesPerPixel) / 2; /* DXT1 is half byte per pixel */
+                } else {
+                    copyperline = ((r->right - r->left) * bytesPerPixel);
+                }
+
+                IWineD3DSurface_LockRect(pSourceSurface, &lrSrc, r, D3DLOCK_READONLY);
+                dest_rect.left  = p->x;
+                dest_rect.top   = p->y;
+                dest_rect.right = p->x + (r->right - r->left);
+                dest_rect.bottom= p->y + (r->bottom - r->top);
+                IWineD3DSurface_LockRect(pDestinationSurface, &lrDst, &dest_rect, 0L);
+                TRACE("Locked src and dst\n");
+
+                /* Find where to start */
+                for (j = 0; j < (r->bottom - r->top - 1); ++j) {
+                    memcpy((char*) lrDst.pBits + (j * lrDst.Pitch), (char*) lrSrc.pBits + (j * lrSrc.Pitch), copyperline);
+                }
+                IWineD3DSurface_UnlockRect(pSourceSurface);
+                IWineD3DSurface_UnlockRect(pDestinationSurface);
+                TRACE("Unlocked src and dst\n");
+            }
+        } else {
+            FIXME("Wanted to copy partial surfaces not implemented, returning D3DERR_INVALIDCALL\n");
+            hr = D3DERR_INVALIDCALL;
+        }
+    }
+
+    return hr;
+}
+
 /* Implementation details at http://developer.nvidia.com/attach/6494
 and
 http://oss.sgi.com/projects/ogl-sample/registry/NV/evaluators.txt
@@ -6568,6 +6681,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_ColorFill,
     IWineD3DDeviceImpl_UpdateTexture,
     IWineD3DDeviceImpl_UpdateSurface,
+    IWineD3DDeviceImpl_CopyRects,
     IWineD3DDeviceImpl_StretchRect,
     IWineD3DDeviceImpl_GetRenderTargetData,
     IWineD3DDeviceImpl_GetFrontBufferData,

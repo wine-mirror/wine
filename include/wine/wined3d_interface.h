@@ -421,6 +421,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(ColorFill)(THIS_ struct IWineD3DSurface* pSurface, CONST D3DRECT* pRect, D3DCOLOR color) PURE;
     STDMETHOD(UpdateTexture)(THIS_ struct IWineD3DBaseTexture *pSourceTexture, struct IWineD3DBaseTexture *pDestinationTexture) PURE;
     STDMETHOD(UpdateSurface)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, struct IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPoint) PURE;
+    STDMETHOD(CopyRects)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRectsArray, UINT cRects, struct IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPointsArray);
     STDMETHOD(StretchRect)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, struct IWineD3DSurface* pDestinationSurface, CONST RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter) PURE;
     STDMETHOD(GetRenderTargetData)(THIS_ struct IWineD3DSurface* pRenderTarget, struct IWineD3DSurface* pSurface) PURE;
     STDMETHOD(GetFrontBufferData)(THIS_ UINT iSwapChain,struct IWineD3DSurface* pSurface) PURE;
@@ -558,6 +559,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_ColorFill(p,a,b,c)                       (p)->lpVtbl->ColorFill(p,a,b,c)
 #define IWineD3DDevice_UpdateTexture(p,a,b)                     (p)->lpVtbl->UpdateTexture(p,a,b)
 #define IWineD3DDevice_UpdateSurface(p,a,b,c,d)                 (p)->lpVtbl->UpdateSurface(p,a,b,c,d)
+#define IWineD3DDevice_CopyRects(p,a,b,c,d,e)                   (p)->lpVtbl->CopyRects(p,a,b,c,d,e)
 #define IWineD3DDevice_StretchRect(p,a,b,c,d,e)                 (p)->lpVtbl->StretchRect(p,a,b,c,d,e)
 #define IWineD3DDevice_GetRenderTargetData(p,a,b)               (p)->lpVtbl->GetRenderTargetData(p,a,b)
 #define IWineD3DDevice_GetFrontBufferData(p,a,b)                (p)->lpVtbl->GetFrontBufferData(p,a,b)
