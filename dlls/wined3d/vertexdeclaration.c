@@ -479,29 +479,19 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVert
 
 HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDeclaration* iface,  D3DVERTEXELEMENT9* pData, DWORD* pNumElements) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    if (NULL == pData) {
-        *pNumElements = This->declaration9NumElements;
-        TRACE("(%p) : Returning numElements %ld\n", iface, *pNumElements);
+
+    TRACE("(This %p, pData %p, pNumElements %p)\n", This, pData, pNumElements);
+
+    TRACE("Setting *pNumElements to %d\n", This->declaration9NumElements);
+    *pNumElements = This->declaration9NumElements;
+
+    /* Passing a NULL pData is used to just retrieve the number of elements */
+    if (!pData) {
+        TRACE("NULL pData passed. Returning D3D_OK.\n");
         return D3D_OK;
     }
 
-    /* The Incredibles and Teenage Mutant Ninja Turtles require this for NumElements == 0,
-    TODO: this needs to be tested against windows */
-    if(*pNumElements == 0) {
-        TRACE("(%p) : Requested the vertex declaration without specefying the size of the return buffer\n", This);
-        *pNumElements = This->declaration9NumElements;
-        memcpy(pData, This->pDeclaration9, *pNumElements * sizeof(*pData));
-        return D3D_OK;
-    }
-
-    /* just in case there's a similar problem to The Incredibles and Teenage Mutant Ninja Turtles without pNumElements = 0 */
-    if (*pNumElements < This->declaration9NumElements) {
-        *pNumElements = This->declaration9NumElements;
-        FIXME("(%p) : Returning D3DERR_MOREDATA numElements %ld expected %u\n", iface, *pNumElements, This->declaration9NumElements);
-        memcpy(pData, This->pDeclaration9, *pNumElements * sizeof(*pData));
-        return D3DERR_MOREDATA;
-    }
-    TRACE("(%p) : GetVertexDeclaration9 copying to %p\n", This, pData);
+    TRACE("Copying %p to %p\n", This->pDeclaration9, pData);
     memcpy(pData, This->pDeclaration9, This->declaration9NumElements * sizeof(*pData));
     return D3D_OK;
 }
