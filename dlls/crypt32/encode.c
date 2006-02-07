@@ -30,6 +30,10 @@
  * MSDN, especially:
  * http://msdn.microsoft.com/library/en-us/seccrypto/security/constants_for_cryptencodeobject_and_cryptdecodeobject.asp
  */
+
+#include "config.h"
+#include "wine/port.h"
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>

@@ -27,6 +27,10 @@
  *   registering and enumerating physical stores and locations.)
  * - Many flags, options and whatnot are unimplemented.
  */
+
+#include "config.h"
+#include "wine/port.h"
+
 #include <assert.h>
 #include <stdarg.h>
 #include "windef.h"
