@@ -1784,7 +1784,7 @@ BOOL WINAPI IsValidLocale( LCID lcid, DWORD flags )
 
 
 static BOOL CALLBACK enum_lang_proc_a( HMODULE hModule, LPCSTR type,
-                                       LPCSTR name, WORD LangID, LONG lParam )
+                                       LPCSTR name, WORD LangID, LONG_PTR lParam )
 {
     LOCALE_ENUMPROCA lpfnLocaleEnum = (LOCALE_ENUMPROCA)lParam;
     char buf[20];
@@ -1794,7 +1794,7 @@ static BOOL CALLBACK enum_lang_proc_a( HMODULE hModule, LPCSTR type,
 }
 
 static BOOL CALLBACK enum_lang_proc_w( HMODULE hModule, LPCWSTR type,
-                                       LPCWSTR name, WORD LangID, LONG lParam )
+                                       LPCWSTR name, WORD LangID, LONG_PTR lParam )
 {
     static const WCHAR formatW[] = {'%','0','8','x',0};
     LOCALE_ENUMPROCW lpfnLocaleEnum = (LOCALE_ENUMPROCW)lParam;
@@ -3184,12 +3184,46 @@ BOOL WINAPI SetUserGeoID( GEOID GeoID )
     return FALSE;
 }
 
+typedef struct
+{
+    union
+    {
+        UILANGUAGE_ENUMPROCA procA;
+        UILANGUAGE_ENUMPROCW procW;
+    } u;
+    DWORD flags;
+    LONG_PTR param;
+} ENUM_UILANG_CALLBACK;
+
+static BOOL CALLBACK enum_uilang_proc_a( HMODULE hModule, LPCSTR type,
+                                         LPCSTR name, WORD LangID, LONG_PTR lParam )
+{
+    ENUM_UILANG_CALLBACK *enum_uilang = (ENUM_UILANG_CALLBACK *)lParam;
+    char buf[20];
+
+    sprintf(buf, "%08x", (UINT)LangID);
+    return enum_uilang->u.procA( buf, enum_uilang->param );
+}
+
+static BOOL CALLBACK enum_uilang_proc_w( HMODULE hModule, LPCWSTR type,
+                                         LPCWSTR name, WORD LangID, LONG_PTR lParam )
+{
+    static const WCHAR formatW[] = {'%','0','8','x',0};
+    ENUM_UILANG_CALLBACK *enum_uilang = (ENUM_UILANG_CALLBACK *)lParam;
+    WCHAR buf[20];
+
+    sprintfW( buf, formatW, (UINT)LangID );
+    return enum_uilang->u.procW( buf, enum_uilang->param );
+}
+
 /******************************************************************************
  *           EnumUILanguagesA (KERNEL32.@)
  */
 BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA pUILangEnumProc, DWORD dwFlags, LONG_PTR lParam)
 {
-    static char value[] = "0409";
+    ENUM_UILANG_CALLBACK enum_uilang;
+
+    TRACE("%p, %lx, %lx\n", pUILangEnumProc, dwFlags, lParam);
 
     if(!pUILangEnumProc) {
 	SetLastError(ERROR_INVALID_PARAMETER);
@@ -3200,11 +3234,14 @@ BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA pUILangEnumProc, DWORD dwFlags
 	return FALSE;
     }
 
-    FIXME("%p, %lx, %lx calling pUILangEnumProc with %s\n",
-          pUILangEnumProc, dwFlags, lParam, debugstr_a(value));
+    enum_uilang.u.procA = pUILangEnumProc;
+    enum_uilang.flags = dwFlags;
+    enum_uilang.param = lParam;
 
-    pUILangEnumProc( value, lParam );
-    return(TRUE);
+    EnumResourceLanguagesA( kernel32_handle, (LPCSTR)RT_STRING,
+                            (LPCSTR)LOCALE_ILANGUAGE, enum_uilang_proc_a,
+                            (LONG_PTR)&enum_uilang);
+    return TRUE;
 }
 
 /******************************************************************************
@@ -3212,7 +3249,10 @@ BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA pUILangEnumProc, DWORD dwFlags
  */
 BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags, LONG_PTR lParam)
 {
-    static WCHAR value[] = {'0','4','0','9',0};
+    ENUM_UILANG_CALLBACK enum_uilang;
+
+    TRACE("%p, %lx, %lx\n", pUILangEnumProc, dwFlags, lParam);
+
 
     if(!pUILangEnumProc) {
 	SetLastError(ERROR_INVALID_PARAMETER);
@@ -3223,11 +3263,14 @@ BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags
 	return FALSE;
     }
 
-    FIXME("%p, %lx, %lx calling pUILangEnumProc with %s\n",
-          pUILangEnumProc, dwFlags, lParam, debugstr_w(value));
+    enum_uilang.u.procW = pUILangEnumProc;
+    enum_uilang.flags = dwFlags;
+    enum_uilang.param = lParam;
 
-    pUILangEnumProc( value, lParam );
-    return(TRUE);
+    EnumResourceLanguagesW( kernel32_handle, (LPCWSTR)RT_STRING,
+                            (LPCWSTR)LOCALE_ILANGUAGE, enum_uilang_proc_w,
+                            (LONG_PTR)&enum_uilang);
+    return TRUE;
 }
 
 INT WINAPI GetGeoInfoW(GEOID GeoId, GEOTYPE GeoType, LPWSTR lpGeoData, 
