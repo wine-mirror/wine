@@ -840,6 +840,10 @@ static LONG recursive_delete_keyW(HKEY base, WCHAR const *name)
     return res;
 }
 
+
+static GUID const CLSID_PSFactoryBuffer = {
+    0x92a3a302, 0xda7c, 0x4a1f, {0xba,0x7e,0x18,0x02,0xbb,0x5d,0x2d,0x02} };
+
 /***********************************************************************
  *		coclass list
  */
@@ -936,6 +940,56 @@ static struct regsvr_coclass const coclass_list[] = {
  */
 
 static struct regsvr_interface const interface_list[] = {
+    {   &IID_IFilterGraph,
+	"IFilterGraph",
+	NULL,
+	11,
+	NULL,
+	&CLSID_PSFactoryBuffer
+    },
+    {   &IID_IFilterGraph2,
+	"IFilterGraph2",
+	NULL,
+	21,
+	NULL,
+	&CLSID_PSFactoryBuffer
+    },
+    {   &IID_IFilterMapper,
+	"IFilterMapper",
+	NULL,
+	11,
+	NULL,
+	&CLSID_PSFactoryBuffer
+    },
+    {   &IID_IFilterMapper2,
+	"IFilterMapper2",
+	NULL,
+	7,
+	NULL,
+	&CLSID_PSFactoryBuffer
+    },
+    /* FIXME:
+    {   &IID_SeekingPassThru,
+	"ISeekingPassThru",
+	NULL,
+	4,
+	NULL,
+	&CLSID_PSFactoryBuffer
+    },
+    {   &IID_AsyncReader,
+	"IAsyncReader",
+	NULL,
+	11,
+	NULL,
+	&CLSID_PSFactoryBuffer
+    },
+    {   &IID_WAVEParser,
+	"IWAVEParser",
+	NULL,
+	11,
+	NULL,
+	&CLSID_PSFactoryBuffer
+    },*/
     { NULL }			/* list terminator */
 };
 
