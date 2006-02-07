@@ -29,9 +29,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include <windef.h>
 #include <winbase.h>
+#include <winternl.h>
 
 static DWORD CALLBACK NotificationThread(LPVOID arg)
 {
@@ -316,22 +319,19 @@ static void test_ffcn(void)
 
 typedef BOOL (WINAPI *fnReadDirectoryChangesW)(HANDLE,LPVOID,DWORD,BOOL,DWORD,
                          LPDWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
+fnReadDirectoryChangesW pReadDirectoryChangesW;
 
 static void test_readdirectorychanges(void)
 {
     HANDLE hdir;
     char buffer[0x1000];
-    DWORD fflags, filter = 0, r;
+    DWORD fflags, filter = 0, r, dwCount;
     OVERLAPPED ov;
     WCHAR path[MAX_PATH], subdir[MAX_PATH];
     static const WCHAR szBoo[] = { '\\','b','o','o',0 };
     static const WCHAR szHoo[] = { '\\','h','o','o',0 };
-    fnReadDirectoryChangesW pReadDirectoryChangesW;
-    HMODULE hkernel32;
+    PFILE_NOTIFY_INFORMATION pfni;
 
-    hkernel32 = GetModuleHandle("kernel32");
-    pReadDirectoryChangesW = (fnReadDirectoryChangesW)
-        GetProcAddress(hkernel32, "ReadDirectoryChangesW");
     if (!pReadDirectoryChangesW)
         return;
 
@@ -356,11 +356,12 @@ static void test_readdirectorychanges(void)
     ok(r==FALSE, "should return false\n");
 
     fflags = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
-    hdir = CreateFileW(path, GENERIC_READ|SYNCHRONIZE, FILE_SHARE_READ, NULL, 
+    hdir = CreateFileW(path, GENERIC_READ|SYNCHRONIZE|FILE_LIST_DIRECTORY, 
+                        FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, 
                         OPEN_EXISTING, fflags, NULL);
     ok( hdir != INVALID_HANDLE_VALUE, "failed to open directory\n");
 
-    ov.hEvent = CreateEvent( NULL, 0, 0, NULL );
+    ov.hEvent = CreateEvent( NULL, 1, 0, NULL );
 
     SetLastError(0xd0b00b00);
     r = pReadDirectoryChangesW(hdir,NULL,0,FALSE,0,NULL,NULL,NULL);
@@ -382,28 +383,40 @@ static void test_readdirectorychanges(void)
     filter |= FILE_NOTIFY_CHANGE_SECURITY;
 
     SetLastError(0xd0b00b00);
+    ov.Internal = 0;
+    ov.InternalHigh = 0;
+    memset( buffer, 0, sizeof buffer );
+
     r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,-1,NULL,&ov,NULL);
     ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
     ok(r==FALSE, "should return false\n");
 
-    r = pReadDirectoryChangesW(hdir,NULL,0,FALSE,filter,NULL,&ov,NULL);
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,0,NULL,&ov,NULL);
+    ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
+    ok(r==FALSE, "should return false\n");
+
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,filter,NULL,&ov,NULL);
     ok(r==TRUE, "should return true\n");
 
-    r = WaitForSingleObject( ov.hEvent, 0 );
-    ok( r == STATUS_TIMEOUT, "should timeout\n" );
-
-    r = WaitForSingleObject( hdir, 0 );
+    r = WaitForSingleObject( ov.hEvent, 10 );
     ok( r == STATUS_TIMEOUT, "should timeout\n" );
 
     r = CreateDirectoryW( subdir, NULL );
     ok( r == TRUE, "failed to create directory\n");
 
-    r = WaitForSingleObject( hdir, 0 );
-    ok( r == STATUS_TIMEOUT, "should timeout\n" );
-
-    r = WaitForSingleObject( ov.hEvent, 0 );
+    r = WaitForSingleObject( ov.hEvent, INFINITE );
     ok( r == WAIT_OBJECT_0, "event should be ready\n" );
 
+    ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
+    ok( ov.InternalHigh == 0x12, "ov.InternalHigh wrong\n");
+
+    pfni = (PFILE_NOTIFY_INFORMATION) buffer;
+    ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
+    ok( pfni->Action == FILE_ACTION_ADDED, "action wrong\n" );
+    ok( pfni->FileNameLength == 6, "len wrong\n" );
+    ok( !memcmp(pfni->FileName,&szHoo[1],6), "name wrong\n" );
+
+    ResetEvent(ov.hEvent);
     SetLastError(0xd0b00b00);
     r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,0,NULL,NULL,NULL);
     ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
@@ -415,22 +428,39 @@ static void test_readdirectorychanges(void)
 
     filter = FILE_NOTIFY_CHANGE_SIZE;
 
-    CloseHandle( ov.hEvent );
-    ov.hEvent = NULL;
-    r = pReadDirectoryChangesW(hdir,NULL,0,FALSE,filter,NULL,&ov,NULL);
+    SetEvent(ov.hEvent);
+    ov.Internal = 1;
+    ov.InternalHigh = 1;
+    ov.Offset = 0;
+    ov.OffsetHigh = 0;
+    memset( buffer, 0, sizeof buffer );
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,filter,NULL,&ov,NULL);
     ok(r==TRUE, "should return true\n");
 
-    r = WaitForSingleObject( hdir, 0 );
+    ok( ov.Internal == STATUS_PENDING, "ov.Internal wrong\n");
+    ok( ov.InternalHigh == 1, "ov.InternalHigh wrong\n");
+
+    r = WaitForSingleObject( ov.hEvent, 0 );
     ok( r == STATUS_TIMEOUT, "should timeout\n" );
 
     r = RemoveDirectoryW( subdir );
     ok( r == TRUE, "failed to remove directory\n");
 
-    r = WaitForSingleObject( hdir, 0 );
+    r = WaitForSingleObject( ov.hEvent, INFINITE );
     ok( r == WAIT_OBJECT_0, "should be ready\n" );
 
-    r = WaitForSingleObject( hdir, 0 );
-    ok( r == WAIT_OBJECT_0, "should be ready\n" );
+    ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
+    ok( ov.InternalHigh == 0x12, "ov.InternalHigh wrong\n");
+
+    r = GetOverlappedResult( hdir, &ov, &dwCount, TRUE );
+    ok( r == TRUE, "getoverlappedresult failed\n");
+    ok( dwCount == 0x12, "count wrong\n");
+
+    pfni = (PFILE_NOTIFY_INFORMATION) buffer;
+    ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
+    ok( pfni->Action == FILE_ACTION_REMOVED, "action wrong\n" );
+    ok( pfni->FileNameLength == 6, "len wrong\n" );
+    ok( !memcmp(pfni->FileName,&szHoo[1],6), "name wrong\n" );
 
     CloseHandle(hdir);
 
@@ -438,10 +468,106 @@ static void test_readdirectorychanges(void)
     ok( r == TRUE, "failed to remove directory\n");
 }
 
+/* show the behaviour when a null buffer is passed */
+static void test_readdirectorychanges_null(void)
+{
+    NTSTATUS r;
+    HANDLE hdir;
+    char buffer[0x1000];
+    DWORD fflags, filter = 0;
+    OVERLAPPED ov;
+    WCHAR path[MAX_PATH], subdir[MAX_PATH];
+    static const WCHAR szBoo[] = { '\\','b','o','o',0 };
+    static const WCHAR szHoo[] = { '\\','h','o','o',0 };
+    PFILE_NOTIFY_INFORMATION pfni;
+
+    if (!pReadDirectoryChangesW)
+        return;
+
+    r = GetTempPathW( MAX_PATH, path );
+    ok( r != 0, "temp path failed\n");
+    if (!r)
+        return;
+
+    lstrcatW( path, szBoo );
+    lstrcpyW( subdir, path );
+    lstrcatW( subdir, szHoo );
+
+    RemoveDirectoryW( subdir );
+    RemoveDirectoryW( path );
+    
+    r = CreateDirectoryW(path, NULL);
+    ok( r == TRUE, "failed to create directory\n");
+
+    fflags = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
+    hdir = CreateFileW(path, GENERIC_READ|SYNCHRONIZE|FILE_LIST_DIRECTORY, 
+                        FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, 
+                        OPEN_EXISTING, fflags, NULL);
+    ok( hdir != INVALID_HANDLE_VALUE, "failed to open directory\n");
+
+    ov.hEvent = CreateEvent( NULL, 1, 0, NULL );
+
+    filter = FILE_NOTIFY_CHANGE_FILE_NAME;
+    filter |= FILE_NOTIFY_CHANGE_DIR_NAME;
+
+    SetLastError(0xd0b00b00);
+    ov.Internal = 0;
+    ov.InternalHigh = 0;
+    memset( buffer, 0, sizeof buffer );
+
+    r = pReadDirectoryChangesW(hdir,NULL,0,FALSE,filter,NULL,&ov,NULL);
+    ok(r==TRUE, "should return true\n");
+
+    r = WaitForSingleObject( ov.hEvent, 0 );
+    ok( r == STATUS_TIMEOUT, "should timeout\n" );
+
+    r = CreateDirectoryW( subdir, NULL );
+    ok( r == TRUE, "failed to create directory\n");
+
+    r = WaitForSingleObject( ov.hEvent, 0 );
+    ok( r == WAIT_OBJECT_0, "event should be ready\n" );
+
+    ok( ov.Internal == STATUS_NOTIFY_ENUM_DIR, "ov.Internal wrong\n");
+    ok( ov.InternalHigh == 0, "ov.InternalHigh wrong\n");
+
+    ov.Internal = 0;
+    ov.InternalHigh = 0;
+    ov.Offset = 0;
+    ov.OffsetHigh = 0;
+    memset( buffer, 0, sizeof buffer );
+
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,filter,NULL,&ov,NULL);
+    ok(r==TRUE, "should return true\n");
+
+    r = WaitForSingleObject( ov.hEvent, 0 );
+    ok( r == STATUS_TIMEOUT, "should timeout\n" );
+
+    r = RemoveDirectoryW( subdir );
+    ok( r == TRUE, "failed to remove directory\n");
+
+    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    ok( r == WAIT_OBJECT_0, "should be ready\n" );
+
+    ok( ov.Internal == STATUS_NOTIFY_ENUM_DIR, "ov.Internal wrong\n");
+    ok( ov.InternalHigh == 0, "ov.InternalHigh wrong\n");
+
+    pfni = (PFILE_NOTIFY_INFORMATION) buffer;
+    ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
+
+    CloseHandle(hdir);
+
+    r = RemoveDirectoryW( path );
+    ok( r == TRUE, "failed to remove directory\n");
+}
 
 START_TEST(change)
 {
+    HMODULE hkernel32 = GetModuleHandle("kernel32");
+    pReadDirectoryChangesW = (fnReadDirectoryChangesW)
+        GetProcAddress(hkernel32, "ReadDirectoryChangesW");
+
     test_FindFirstChangeNotification();
     test_ffcn();
     test_readdirectorychanges();
+    test_readdirectorychanges_null();
 }
