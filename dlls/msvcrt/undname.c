@@ -374,8 +374,11 @@ static const char* get_modified_type(struct parsed_symbol* sym, char modif)
     switch (modif)
     {
     case 'A': str_modif = " &"; break;
+    case 'B': str_modif = " & volatile"; break;
     case 'P': str_modif = " *"; break;
     case 'Q': str_modif = " * const"; break;
+    case 'R': str_modif = " * volatile"; break;
+    case 'S': str_modif = " * const volatile"; break;
     case '?': str_modif = ""; break;
     default: return NULL;
     }
@@ -645,11 +648,14 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
         /* not all the time is seems */
         if (!(ct->left = get_modified_type(sym, '?'))) goto done;
         break;
-    case 'A':
-        if (!(ct->left = get_modified_type(sym, 'A'))) goto done;
+    case 'A': /* reference */
+    case 'B': /* volatile reference */
+        if (!(ct->left = get_modified_type(sym, dt))) goto done;
         break;
-    case 'Q':
-        if (!(ct->left = get_modified_type(sym, in_args ? 'Q' : 'P'))) goto done;
+    case 'Q': /* const pointer */
+    case 'R': /* volatile pointer */
+    case 'S': /* const volatile pointer */
+        if (!(ct->left = get_modified_type(sym, in_args ? dt : 'P'))) goto done;
         break;
     case 'P': /* Pointer */
         if (isdigit(*sym->current))
