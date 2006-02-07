@@ -66,13 +66,13 @@ static int print_client( const char *format, ... )
 }
 
 
-static void print_message_buffer_size(func_t *func)
+static void print_message_buffer_size(const func_t *func)
 {
     unsigned int total_size = 0;
 
     if (func->args)
     {
-        var_t *var = func->args;
+        const var_t *var = func->args;
         while (NEXT_LINK(var)) var = NEXT_LINK(var);
         while (var)
         {
@@ -90,8 +90,8 @@ static void print_message_buffer_size(func_t *func)
 
 static void write_function_stubs(type_t *iface)
 {
-    func_t *func = iface->funcs;
-    char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    const func_t *func = iface->funcs;
+    const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
     var_t *var;
     int method_count = 0;
@@ -101,8 +101,8 @@ static void write_function_stubs(type_t *iface)
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
     {
-        var_t *def = func->def;
-        var_t* explicit_handle_var;
+        const var_t *def = func->def;
+        const var_t* explicit_handle_var;
         unsigned int type_offset_func;
 
         /* check for a defined binding handle */
@@ -301,7 +301,7 @@ static void write_stubdescdecl(type_t *iface)
 
 static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
 {
-    char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
 
     print_client("static const MIDL_STUB_DESC %s_StubDesc =\n", iface->name);
     print_client("{\n");
@@ -341,7 +341,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
 static void write_clientinterfacedecl(type_t *iface)
 {
     unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
-    UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+    const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
 
     print_client("static const RPC_CLIENT_INTERFACE %s___RpcClientInterface =\n", iface->name );
     print_client("{\n");
@@ -423,7 +423,7 @@ static void write_formatstringsdecl(type_t *iface)
 
 static void write_implicithandledecl(type_t *iface)
 {
-    char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+    const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
 
     if (implicit_handle)
     {

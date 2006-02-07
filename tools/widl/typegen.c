@@ -1338,7 +1338,7 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
     return get_required_buffer_size_type(var->type, var->ptr_level, var->array, var->name, alignment);
 }
 
-void marshall_arguments(FILE *file, int indent, func_t *func,
+void marshall_arguments(FILE *file, int indent, const func_t *func,
                         unsigned int *type_offset, enum pass pass)
 {
     unsigned int last_size = 0;
@@ -1533,7 +1533,7 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
     }
 }
 
-void unmarshall_arguments(FILE *file, int indent, func_t *func,
+void unmarshall_arguments(FILE *file, int indent, const func_t *func,
                           unsigned int *type_offset, enum pass pass)
 {
     unsigned int last_size = 0;

@@ -68,9 +68,9 @@ static int print_server(const char *format, ...)
 }
 
 
-static void write_parameters_init(func_t *func)
+static void write_parameters_init(const func_t *func)
 {
-    var_t *var;
+    const var_t *var;
 
     if (!func->args)
         return;
@@ -91,16 +91,16 @@ static void write_function_stubs(type_t *iface)
 {
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
-    func_t *func = iface->funcs;
-    var_t *var;
-    var_t* explicit_handle_var;
+    const func_t *func = iface->funcs;
+    const var_t *var;
+    const var_t* explicit_handle_var;
     unsigned int proc_offset = 0;
     unsigned int type_offset = 2;
 
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
     {
-        var_t *def = func->def;
+        const var_t *def = func->def;
         unsigned long buffer_size = 0;
         unsigned int type_offset_func;
 
@@ -260,7 +260,7 @@ static void write_function_stubs(type_t *iface)
 
         if (func->args)
         {
-            var_t *var = func->args;
+            const var_t *var = func->args;
             while (NEXT_LINK(var)) var = NEXT_LINK(var);
             while (var)
             {

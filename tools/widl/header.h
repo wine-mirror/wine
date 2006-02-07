@@ -30,7 +30,7 @@ extern const char* get_name(const var_t *v);
 extern void write_type(FILE *h, type_t *t, const var_t *v, const char *n);
 extern int is_object(attr_t *a);
 extern int is_local(attr_t *a);
-extern var_t *is_callas(attr_t *a);
+extern const var_t *is_callas(attr_t *a);
 extern void write_args(FILE *h, var_t *arg, const char *name, int obj, int do_indent);
 extern void write_array(FILE *h, const expr_t *v, int field);
 extern void write_forward(type_t *iface);
@@ -43,7 +43,7 @@ extern void write_constdef(const var_t *v);
 extern void write_externdef(const var_t *v);
 extern void write_library(const char *name, attr_t *attr);
 extern void write_user_types(void);
-extern var_t* get_explicit_handle_var(func_t* func);
+extern const var_t* get_explicit_handle_var(const func_t* func);
 
 static inline int is_string_type(const attr_t *attrs, int ptr_level, const expr_t *array)
 {

@@ -491,16 +491,16 @@ void write_externdef(const var_t *v)
 }
 
 void write_library(const char *name, attr_t *attr) {
-  UUID *uuid = get_attrp(attr, ATTR_UUID);
+  const UUID *uuid = get_attrp(attr, ATTR_UUID);
   fprintf(header, "\n");
   write_guid("LIBID", name, uuid);
   fprintf(header, "\n");
 }
 
 
-var_t* get_explicit_handle_var(func_t* func)
+const var_t* get_explicit_handle_var(const func_t* func)
 {
-    var_t* var;
+    const var_t* var;
 
     if (!func->args)
         return NULL;
@@ -535,7 +535,7 @@ int is_local(attr_t *a)
   return is_attr(a, ATTR_LOCAL);
 }
 
-var_t *is_callas(attr_t *a)
+const var_t *is_callas(attr_t *a)
 {
   return get_attrp(a, ATTR_CALLAS);
 }
@@ -893,7 +893,7 @@ static void write_com_interface(type_t *iface)
 static void write_rpc_interface(const type_t *iface)
 {
   unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
-  char *var = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+  const char *var = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
 
   if (!iface->funcs) return;
 

@@ -889,13 +889,13 @@ static void write_proxy(type_t *iface)
   fprintf(proxy, " * %s interface\n", iface->name);
   fprintf(proxy, " */\n");
   while (cur) {
-    var_t *def = cur->def;
+    const var_t *def = cur->def;
     if (!is_local(def->attrs)) {
-      var_t *cas = is_callas(def->attrs);
+      const var_t *cas = is_callas(def->attrs);
       const char *cname = cas ? cas->name : NULL;
       int idx = cur->idx;
       if (cname) {
-        func_t *m = iface->funcs;
+        const func_t *m = iface->funcs;
         while (m && strcmp(get_name(m->def), cname))
           m = NEXT_LINK(m);
         idx = m->idx;
