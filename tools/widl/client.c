@@ -199,7 +199,7 @@ static void write_function_stubs(type_t *iface)
         type_offset_func = type_offset;
 
         /* marshal arguments */
-        marshall_arguments(client, indent, func, &type_offset_func, PASS_IN);
+        write_remoting_arguments(client, indent, func, &type_offset_func, PASS_IN, PHASE_MARSHAL);
 
         /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */
@@ -214,7 +214,8 @@ static void write_function_stubs(type_t *iface)
         print_client("_StubMsg.BufferStart = (unsigned char *)_RpcMessage.Buffer;\n");
         print_client("_StubMsg.BufferEnd = _StubMsg.BufferStart + _RpcMessage.BufferLength;\n\n");
 
-        unmarshall_arguments(client, indent, func, &type_offset, PASS_OUT);
+        /* unmarshall arguments */
+        write_remoting_arguments(client, indent, func, &type_offset, PASS_OUT, PHASE_UNMARSHAL);
 
         /* unmarshal return value */
         if (!is_void(def->type, NULL))

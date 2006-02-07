@@ -204,7 +204,8 @@ static void write_function_stubs(type_t *iface)
             /* make a copy so we don't increment the type offset twice */
             type_offset_func = type_offset;
 
-            unmarshall_arguments(server, indent, func, &type_offset_func, PASS_IN);
+            /* unmarshall arguments */
+            write_remoting_arguments(server, indent, func, &type_offset_func, PASS_IN, PHASE_UNMARSHAL);
         }
 
         print_server("if (_StubMsg.Buffer > _StubMsg.BufferEnd)\n");
@@ -298,7 +299,8 @@ static void write_function_stubs(type_t *iface)
             fprintf(server, "\n");
         }
 
-        marshall_arguments(server, indent, func, &type_offset, PASS_OUT);
+        /* marshall arguments */
+        write_remoting_arguments(server, indent, func, &type_offset, PASS_OUT, PHASE_MARSHAL);
 
         /* marshall the return value */
         if (!is_void(def->type, NULL))

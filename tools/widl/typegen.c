@@ -1338,8 +1338,25 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
     return get_required_buffer_size_type(var->type, var->ptr_level, var->array, var->name, alignment);
 }
 
-void marshall_arguments(FILE *file, int indent, const func_t *func,
-                        unsigned int *type_offset, enum pass pass)
+static inline const char *function_from_phase(enum remoting_phase phase)
+{
+    switch (phase)
+    {
+    case PHASE_BUFFERSIZE:
+        return "BufferSize";
+    case PHASE_MARSHAL:
+        return "Marshall";
+    case PHASE_UNMARSHAL:
+        return "Unmarshall";
+    case PHASE_FREE:
+        return "Free";
+    }
+    return NULL;
+}
+
+void write_remoting_arguments(FILE *file, int indent, const func_t *func,
+                              unsigned int *type_offset, enum pass pass,
+                              enum remoting_phase phase)
 {
     unsigned int last_size = 0;
     var_t *var;
@@ -1375,12 +1392,12 @@ void marshall_arguments(FILE *file, int indent, const func_t *func,
         {
             if (var->array && var->array->is_const)
                 print_file(file, indent,
-                           "NdrNonConformantStringMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                           var->name, *type_offset);
+                           "NdrNonConformantString%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                           function_from_phase(phase), var->name, *type_offset);
             else
                 print_file(file, indent,
-                           "NdrConformantStringMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                           var->name, *type_offset);
+                           "NdrConformantString%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                           function_from_phase(phase), var->name, *type_offset);
             last_size = 1;
         }
         else if (is_array_type(var->attrs, var->ptr_level, var->array))
@@ -1399,35 +1416,45 @@ void marshall_arguments(FILE *file, int indent, const func_t *func,
                     array_type = "FixedArray";
                 else if (has_length && !has_size)
                 {
-                    print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
-                    print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
-                    write_expr(file, length_is, 1);
-                    fprintf(file, ";\n\n");
+                    if (phase == PHASE_MARSHAL)
+                    {
+                        print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
+                        print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
+                        write_expr(file, length_is, 1);
+                        fprintf(file, ";\n\n");
+                    }
                     array_type = "VaryingArray";
                 }
                 else if (!has_length && has_size)
                 {
-                    print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                    write_expr(file, size_is ? size_is : var->array, 1);
-                    fprintf(file, ";\n\n");
+                    if (phase == PHASE_MARSHAL)
+                    {
+                        print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                        write_expr(file, size_is ? size_is : var->array, 1);
+                        fprintf(file, ";\n\n");
+                    }
                     array_type = "ConformantArray";
                 }
                 else
                 {
-                    print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                    write_expr(file, size_is ? size_is : var->array, 1);
-                    fprintf(file, ";\n");
-                    print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
-                    print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
-                    write_expr(file, length_is, 1);
-                    fprintf(file, ";\n\n");
+                    if (phase == PHASE_MARSHAL)
+                    {
+                        print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                        write_expr(file, size_is ? size_is : var->array, 1);
+                        fprintf(file, ";\n");
+                        print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
+                        print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
+                        write_expr(file, length_is, 1);
+                        fprintf(file, ";\n\n");
+                    }
                     array_type = "ConformantVaryingArray";
                 }
             }
 
             print_file(file, indent,
-                       "Ndr%sMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                       array_type, var->name, *type_offset);
+                       "Ndr%s%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                       array_type, function_from_phase(phase), var->name,
+                       *type_offset);
             last_size = 1;
         }
         else if (var->ptr_level == 0 && is_base_type(var->type->type))
@@ -1474,18 +1501,34 @@ void marshall_arguments(FILE *file, int indent, const func_t *func,
                 continue;
 
             default:
-                error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
+                error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
                 size = 0;
             }
 
             if (alignment != 0)
                 print_file(file, indent, "_StubMsg.Buffer += %u;\n", alignment);
 
-            print_file(file, indent, "*(");
-            write_type(file, var->type, var, var->tname);
-            fprintf(file, " *)_StubMsg.Buffer = ");
-            write_name(file, var);
-            fprintf(file, ";\n");
+            if (phase == PHASE_MARSHAL)
+            {
+                print_file(file, indent, "*(");
+                write_type(file, var->type, var, var->tname);
+                fprintf(file, " *)_StubMsg.Buffer = ");
+                write_name(file, var);
+                fprintf(file, ";\n");
+            }
+            else if (phase == PHASE_UNMARSHAL)
+            {
+                print_file(file, indent, "");
+                write_name(file, var);
+                fprintf(file, " = *(");
+                write_type(file, var->type, var, var->tname);
+                fprintf(file, " *)_StubMsg.Buffer;\n");
+                print_file(file, indent, "_StubMsg.Buffer += sizeof(");
+                write_type(file, var->type, var, var->tname);
+                fprintf(file, ");\n");
+            }
+            else
+                error("write_remoting_arguments: Unimplemented for base types for phase %d\n", phase);
             print_file(file, indent, "_StubMsg.Buffer += sizeof(");
             write_type(file, var->type, var, var->tname);
             fprintf(file, ");\n");
@@ -1512,197 +1555,21 @@ void marshall_arguments(FILE *file, int indent, const func_t *func,
                 ndrtype = "ComplexStruct";
                 break;
             default:
-                error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
+                error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
                     var->name, var->type->type, var->ptr_level);
                 ndrtype = NULL;
             }
 
             print_file(file, indent,
-                "Ndr%sMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                ndrtype, var->name, *type_offset);
+                "Ndr%s%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                ndrtype, function_from_phase(phase), var->name, *type_offset);
             last_size = 1;
         }
         else
         {
             print_file(file, indent,
-                       "NdrPointerMarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                       var->name, *type_offset);
-            last_size = 1;
-        }
-        fprintf(file, "\n");
-    }
-}
-
-void unmarshall_arguments(FILE *file, int indent, const func_t *func,
-                          unsigned int *type_offset, enum pass pass)
-{
-    unsigned int last_size = 0;
-    var_t *var;
-
-    if (!func->args)
-        return;
-
-    var = func->args;
-    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
-    {
-        int in_attr = is_attr(var->attrs, ATTR_IN);
-        int out_attr = is_attr(var->attrs, ATTR_OUT);
-
-        if (!in_attr && !out_attr)
-            in_attr = 1;
-
-        switch (pass)
-        {
-        case PASS_IN:
-            if (!in_attr)
-                continue;
-            break;
-        case PASS_OUT:
-            if (!out_attr)
-                continue;
-            break;
-        case PASS_RETURN:
-            break;
-        }
-
-        if (is_string_type(var->attrs, var->ptr_level, var->array))
-        {
-            if (var->array && var->array->is_const)
-                print_file(file, indent,
-                           "NdrNonConformantStringUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
-                           var->name, *type_offset);
-            else
-                print_file(file, indent,
-                           "NdrConformantStringUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
-                           var->name, *type_offset);
-            last_size = 1;
-        }
-        else if (is_array_type(var->attrs, var->ptr_level, var->array))
-        {
-            const expr_t *length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
-            const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
-            const char *array_type;
-            int has_length = length_is && (length_is->type != EXPR_VOID);
-            int has_size = (size_is && (size_is->type != EXPR_VOID)) || !var->array->is_const;
-
-            if (var->array && NEXT_LINK(var->array)) /* multi-dimensional array */
-                array_type = "ComplexArray";
-            else
-            {
-                if (!has_length && !has_size)
-                    array_type = "FixedArray";
-                else if (has_length && !has_size)
-                    array_type = "VaryingArray";
-                else if (!has_length && has_size)
-                    array_type = "ConformantArray";
-                else
-                    array_type = "ConformantVaryingArray";
-            }
-
-            print_file(file, indent,
-                       "Ndr%sUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
-                       array_type, var->name, *type_offset);
-            last_size = 1;
-        }
-        else if (var->ptr_level == 0 && is_base_type(var->type->type))
-        {
-            unsigned int size;
-            unsigned int alignment = 0;
-
-            switch (var->type->type)
-            {
-            case RPC_FC_BYTE:
-            case RPC_FC_CHAR:
-            case RPC_FC_SMALL:
-            case RPC_FC_USMALL:
-                size = 1;
-                alignment = 0;
-                break;
-
-            case RPC_FC_WCHAR:
-            case RPC_FC_USHORT:
-            case RPC_FC_SHORT:
-                size = 2;
-                if (last_size != 0 && last_size < 2)
-                    alignment = (2 - last_size);
-                break;
-
-            case RPC_FC_ULONG:
-            case RPC_FC_LONG:
-            case RPC_FC_FLOAT:
-            case RPC_FC_ERROR_STATUS_T:
-                size = 4;
-                if (last_size != 0 && last_size < 4)
-                    alignment = (4 - last_size);
-                break;
-
-            case RPC_FC_HYPER:
-            case RPC_FC_DOUBLE:
-                size = 8;
-                if (last_size != 0 && last_size < 4)
-                    alignment = (4 - last_size);
-                break;
-
-            case RPC_FC_IGNORE:
-            case RPC_FC_BIND_PRIMITIVE:
-                /* no unmarshalling needed */
-                continue;
-
-            default:
-                error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
-                size = 0;
-            }
-
-            if (alignment != 0)
-                print_file(file, indent, "_StubMsg.Buffer += %u;\n", alignment);
-
-            print_file(file, indent, "");
-            write_name(file, var);
-            fprintf(file, " = *(");
-            write_type(file, var->type, var, var->tname);
-            fprintf(file, " *)_StubMsg.Buffer;\n");
-            print_file(file, indent, "_StubMsg.Buffer += sizeof(");
-            write_type(file, var->type, var, var->tname);
-            fprintf(file, ");\n");
-
-            last_size = size;
-        }
-        else if (var->ptr_level == 0)
-        {
-            const char *ndrtype;
-
-            switch (var->type->type)
-            {
-            case RPC_FC_STRUCT:
-                ndrtype = "SimpleStruct";
-                break;
-            case RPC_FC_CSTRUCT:
-            case RPC_FC_CPSTRUCT:
-                ndrtype = "ConformantStruct";
-                break;
-            case RPC_FC_CVSTRUCT:
-                ndrtype = "ConformantVaryingStruct";
-                break;
-            case RPC_FC_BOGUS_STRUCT:
-                ndrtype = "ComplexStruct";
-                break;
-            default:
-                error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
-                    var->name, var->type->type, var->ptr_level);
-                ndrtype = NULL;
-            }
-
-            print_file(file, indent,
-                "Ndr%sUnmarshall(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
-                ndrtype, var->name, *type_offset);
-            last_size = 1;
-        }
-        else
-        {
-            print_file(file, indent,
-                       "NdrPointerUnmarshall(&_StubMsg, (unsigned char **)&%s, &__MIDL_TypeFormatString.Format[%d], 0);\n",
-                       var->name, *type_offset);
+                       "NdrPointer%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
+                       function_from_phase(phase), var->name, *type_offset);
             last_size = 1;
         }
         fprintf(file, "\n");

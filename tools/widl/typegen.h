@@ -27,11 +27,18 @@ enum pass
     PASS_RETURN
 };
 
+enum remoting_phase
+{
+    PHASE_BUFFERSIZE,
+    PHASE_MARSHAL,
+    PHASE_UNMARSHAL,
+    PHASE_FREE
+};
+
 void write_procformatstring(FILE *file, type_t *iface);
 void write_typeformatstring(FILE *file, type_t *iface);
 unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment);
-void marshall_arguments(FILE *file, int indent, const func_t *func, unsigned int *type_offset, enum pass pass);
-void unmarshall_arguments(FILE *file, int indent, const func_t *func, unsigned int *type_offset, enum pass pass);
+void write_remoting_arguments(FILE *file, int indent, const func_t *func, unsigned int *type_offset, enum pass pass, enum remoting_phase phase);
 size_t get_size_procformatstring_var(const var_t *var);
 size_t get_size_typeformatstring_var(const var_t *var);
 int write_expr_eval_routines(FILE *file, const char *iface);
