@@ -77,6 +77,7 @@ typedef struct _wine_modref
 struct builtin_load_info
 {
     const WCHAR *load_path;
+    const WCHAR *filename;
     NTSTATUS     status;
     WINE_MODREF *wm;
 };
@@ -1194,6 +1195,48 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
 
 
 /***********************************************************************
+ *           get_builtin_fullname
+ *
+ * Build the full pathname for a builtin dll.
+ */
+static WCHAR *get_builtin_fullname( const WCHAR *path, const char *filename )
+{
+    static const WCHAR soW[] = {'.','s','o',0};
+    WCHAR *p, *fullname;
+    size_t i, len = strlen(filename);
+
+    /* check if path can correspond to the dll we have */
+    if (path && (p = strrchrW( path, '\\' )))
+    {
+        p++;
+        for (i = 0; i < len; i++)
+            if (tolowerW(p[i]) != tolowerW( (WCHAR)filename[i]) ) break;
+        if (i == len && (!p[len] || !strcmpiW( p + len, soW )))
+        {
+            /* the filename matches, use path as the full path */
+            len += p - path;
+            if ((fullname = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+            {
+                memcpy( fullname, path, len * sizeof(WCHAR) );
+                fullname[len] = 0;
+            }
+            return fullname;
+        }
+    }
+
+    if ((fullname = RtlAllocateHeap( GetProcessHeap(), 0,
+                                     system_dir.MaximumLength + (len + 1) * sizeof(WCHAR) )))
+    {
+        memcpy( fullname, system_dir.Buffer, system_dir.Length );
+        p = fullname + system_dir.Length / sizeof(WCHAR);
+        if (p > fullname && p[-1] != '\\') *p++ = '\\';
+        ascii_to_unicode( p, filename, len + 1 );
+    }
+    return fullname;
+}
+
+
+/***********************************************************************
  *           load_builtin_callback
  *
  * Load a library in memory; callback function for wine_dll_register
@@ -1204,7 +1247,7 @@ static void load_builtin_callback( void *module, const char *filename )
     void *addr;
     IMAGE_NT_HEADERS *nt;
     WINE_MODREF *wm;
-    WCHAR *fullname, *p;
+    WCHAR *fullname;
     const WCHAR *load_path;
 
     if (!module)
@@ -1233,17 +1276,12 @@ static void load_builtin_callback( void *module, const char *filename )
 
     /* create the MODREF */
 
-    if (!(fullname = RtlAllocateHeap( GetProcessHeap(), 0,
-                                      system_dir.MaximumLength + (strlen(filename) + 1) * sizeof(WCHAR) )))
+    if (!(fullname = get_builtin_fullname( builtin_load_info->filename, filename )))
     {
         ERR( "can't load %s\n", filename );
         builtin_load_info->status = STATUS_NO_MEMORY;
         return;
     }
-    memcpy( fullname, system_dir.Buffer, system_dir.Length );
-    p = fullname + system_dir.Length / sizeof(WCHAR);
-    if (p > fullname && p[-1] != '\\') *p++ = '\\';
-    ascii_to_unicode( p, filename, strlen(filename) + 1 );
 
     wm = alloc_module( module, fullname );
     RtlFreeHeap( GetProcessHeap(), 0, fullname );
@@ -1385,13 +1423,14 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 /***********************************************************************
  *           load_builtin_dll
  */
-static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, DWORD flags, WINE_MODREF** pwm )
+static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
+                                  DWORD flags, WINE_MODREF** pwm )
 {
     char error[256], dllname[MAX_PATH];
     int file_exists;
     const WCHAR *name, *p;
     DWORD len, i;
-    void *handle;
+    void *handle = NULL;
     struct builtin_load_info info, *prev_info;
 
     /* Fix the name in case we have a full path and extension */
@@ -1399,28 +1438,53 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, DWORD flags, 
     if ((p = strrchrW( name, '\\' ))) name = p + 1;
     if ((p = strrchrW( name, '/' ))) name = p + 1;
 
-    /* we don't want to depend on the current codepage here */
-    len = strlenW( name ) + 1;
-    if (len >= sizeof(dllname)) return STATUS_NAME_TOO_LONG;
-    for (i = 0; i < len; i++)
-    {
-        if (name[i] > 127) return STATUS_DLL_NOT_FOUND;
-        dllname[i] = (char)name[i];
-        if (dllname[i] >= 'A' && dllname[i] <= 'Z') dllname[i] += 'a' - 'A';
-    }
-
     /* load_library will modify info.status. Note also that load_library can be
      * called several times, if the .so file we're loading has dependencies.
      * info.status will gather all the errors we may get while loading all these
      * libraries
      */
     info.load_path = load_path;
+    info.filename  = NULL;
     info.status    = STATUS_SUCCESS;
     info.wm        = NULL;
-    prev_info = builtin_load_info;
-    builtin_load_info = &info;
-    handle = wine_dll_load( dllname, error, sizeof(error), &file_exists );
-    builtin_load_info = prev_info;
+
+    if (file)  /* we have a real file, try to load it */
+    {
+        UNICODE_STRING nt_name;
+        ANSI_STRING unix_name;
+
+        if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
+            return STATUS_DLL_NOT_FOUND;
+
+        if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, FALSE ))
+        {
+            file_exists = 1;
+            prev_info = builtin_load_info;
+            info.filename = nt_name.Buffer + 4;  /* skip \??\ */
+            builtin_load_info = &info;
+            handle = wine_dlopen( unix_name.Buffer, RTLD_NOW, error, sizeof(error) );
+            builtin_load_info = prev_info;
+            RtlFreeHeap( GetProcessHeap(), 0, unix_name.Buffer );
+        }
+        RtlFreeUnicodeString( &nt_name );
+    }
+    else
+    {
+        /* we don't want to depend on the current codepage here */
+        len = strlenW( name ) + 1;
+        if (len >= sizeof(dllname)) return STATUS_NAME_TOO_LONG;
+        for (i = 0; i < len; i++)
+        {
+            if (name[i] > 127) return STATUS_DLL_NOT_FOUND;
+            dllname[i] = (char)name[i];
+            if (dllname[i] >= 'A' && dllname[i] <= 'Z') dllname[i] += 'a' - 'A';
+        }
+
+        prev_info = builtin_load_info;
+        builtin_load_info = &info;
+        handle = wine_dll_load( dllname, error, sizeof(error), &file_exists );
+        builtin_load_info = prev_info;
+    }
 
     if (!handle)
     {
@@ -1449,10 +1513,16 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, DWORD flags, 
     info.wm->ldr.SectionHandle = handle;
     if (strcmpiW( info.wm->ldr.BaseDllName.Buffer, name ))
     {
-        ERR( "loaded .so for %s but got %s instead - probably 16-bit dll\n",
-             debugstr_w(name), debugstr_w(info.wm->ldr.BaseDllName.Buffer) );
-        /* wine_dll_unload( handle );*/
-        return STATUS_INVALID_IMAGE_FORMAT;
+        /* check without .so extension */
+        static const WCHAR soW[] = {'.','s','o',0};
+        DWORD len = info.wm->ldr.BaseDllName.Length / sizeof(WCHAR);
+        if (strncmpiW( info.wm->ldr.BaseDllName.Buffer, name, len ) || strcmpiW( name + len, soW ))
+        {
+            ERR( "loaded .so for %s but got %s instead - probably 16-bit dll\n",
+                 debugstr_w(name), debugstr_w(info.wm->ldr.BaseDllName.Buffer) );
+            /* wine_dll_unload( handle );*/
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
     }
     *pwm = info.wm;
     return STATUS_SUCCESS;
@@ -1576,7 +1646,6 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     WCHAR buffer[32];
     WCHAR *filename;
     ULONG size;
-    const char *filetype = "";
     WINE_MODREF *main_exe;
     HANDLE handle = 0;
     NTSTATUS nts;
@@ -1626,12 +1695,15 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
             TRACE("Trying native dll %s\n", debugstr_w(filename));
             if (!handle) continue;  /* it cannot possibly be loaded */
             nts = load_native_dll( load_path, filename, handle, flags, pwm );
-            filetype = "native";
+            if (nts == STATUS_INVALID_FILE_FOR_SECTION)
+            {
+                /* not in PE format, maybe it's a builtin */
+                nts = load_builtin_dll( load_path, filename, handle, flags, pwm );
+            }
             break;
         case LOADORDER_BI:
             TRACE("Trying built-in %s\n", debugstr_w(filename));
-            nts = load_builtin_dll( load_path, filename, flags, pwm );
-            filetype = "builtin";
+            nts = load_builtin_dll( load_path, filename, 0, flags, pwm );
             break;
         default:
             nts = STATUS_INTERNAL_ERROR;
@@ -1641,8 +1713,9 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         if (nts == STATUS_SUCCESS)
         {
             /* Initialize DLL just loaded */
-            TRACE("Loaded module %s (%s) at %p\n",
-                  debugstr_w(filename), filetype, (*pwm)->ldr.BaseAddress);
+            TRACE("Loaded module %s (%s) at %p\n", debugstr_w(filename),
+                  ((*pwm)->ldr.Flags & LDR_WINE_INTERNAL) ? "builtin" : "native",
+                  (*pwm)->ldr.BaseAddress);
             /* Set the ldr.LoadCount here so that an attach failure will */
             /* decrement the dependencies through the MODULE_FreeLibrary call. */
             (*pwm)->ldr.LoadCount = 1;
@@ -2169,7 +2242,7 @@ void __wine_process_init( int argc, char *argv[] )
     /* setup the load callback and create ntdll modref */
     wine_dll_set_callback( load_builtin_callback );
 
-    if ((status = load_builtin_dll( NULL, kernel32W, 0, &wm )) != STATUS_SUCCESS)
+    if ((status = load_builtin_dll( NULL, kernel32W, 0, 0, &wm )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not load kernel32.dll, status %lx\n", status );
         exit(1);
