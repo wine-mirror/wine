@@ -668,11 +668,15 @@ serialize_param(
 	if (debugout) TRACE_(olerelay)("unk(0x%lx)",*arg);
 	if (writeit)
 	    hres = _marshal_interface(buf,&IID_IUnknown,(LPUNKNOWN)*arg);
+	if (dealloc)
+	    IUnknown_Release((LPUNKNOWN)*arg);
 	return hres;
     case VT_DISPATCH:
 	if (debugout) TRACE_(olerelay)("idisp(0x%lx)",*arg);
 	if (writeit)
 	    hres = _marshal_interface(buf,&IID_IDispatch,(LPUNKNOWN)*arg);
+	if (dealloc)
+	    IUnknown_Release((LPUNKNOWN)*arg);
 	return hres;
     case VT_VOID:
 	if (debugout) TRACE_(olerelay)("<void>");
