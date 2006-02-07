@@ -35,9 +35,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
+# include <sys/mman.h>
 #endif
 
 #define NONAMELESSUNION
