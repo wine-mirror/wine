@@ -132,6 +132,19 @@ BOOL WINAPI FindCloseChangeNotification( HANDLE handle )
     return CloseHandle( handle );
 }
 
+/****************************************************************************
+ *		ReadDirectoryChangesW (KERNEL32.@)
+ *
+ * NOTES
+ *
+ *  The filter is remember from the first run and ignored on successive runs.
+ *
+ *  If there's no output buffer on the first run, it's ignored successive runs
+ *   and STATUS_NOTIFY_ENUM_DIRECTORY is returned with an empty buffer.
+ *
+ *  If a NULL overlapped->hEvent is passed, the directory handle is used
+ *   for signalling.
+ */
 BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL subtree,
                                    DWORD filter, LPDWORD returned, LPOVERLAPPED overlapped,
                                    LPOVERLAPPED_COMPLETION_ROUTINE completion )
@@ -155,7 +168,6 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
 
     ios = (PIO_STATUS_BLOCK) pov;
     ios->Status = STATUS_PENDING;
-    ios->Information = 0;
 
     status = NtNotifyChangeDirectoryFile( handle, pov->hEvent, NULL, NULL,
                                           ios, buffer, len, filter, subtree );

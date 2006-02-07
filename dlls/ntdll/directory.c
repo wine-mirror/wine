@@ -1899,6 +1899,7 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         req->handle     = FileHandle;
         req->event      = Event;
         req->filter     = CompletionFilter;
+        req->want_data  = (Buffer != NULL);
         req->io_apc     = read_changes_apc;
         req->io_sb      = IoStatusBlock;
         req->io_user    = info;

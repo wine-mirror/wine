@@ -1449,6 +1449,7 @@ static void dump_read_directory_changes_request( const struct read_directory_cha
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " event=%p,", req->event );
     fprintf( stderr, " filter=%08x,", req->filter );
+    fprintf( stderr, " want_data=%d,", req->want_data );
     fprintf( stderr, " io_apc=%p,", req->io_apc );
     fprintf( stderr, " io_sb=%p,", req->io_sb );
     fprintf( stderr, " io_user=%p", req->io_user );

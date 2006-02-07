@@ -141,6 +141,7 @@ struct dir
     struct event  *event;
     unsigned int   filter;   /* notification filter */
     int            notified; /* SIGIO counter */
+    int            want_data; /* return change data */
     long           signaled; /* the file changed */
     struct fd     *inotify_fd; /* inotify file descriptor */
     int            wd;       /* inotify watch descriptor */
@@ -254,6 +255,7 @@ struct object *create_dir_obj( struct fd *fd )
     dir->filter = 0;
     dir->notified = 0;
     dir->signaled = 0;
+    dir->want_data = 0;
     dir->inotify_fd = NULL;
     dir->wd = -1;
     grab_object( fd );
@@ -412,20 +414,23 @@ static void inotify_do_change_notify( struct dir *dir, struct inotify_event *ie 
 {
     struct change_record *record;
 
-    record = malloc( sizeof (*record) + ie->len - 1 ) ;
-    if (!record)
-        return;
+    if (dir->want_data)
+    {
+        record = malloc( sizeof (*record) + ie->len - 1 ) ;
+        if (!record)
+            return;
 
-    if( ie->mask & IN_CREATE )
-        record->action = FILE_ACTION_ADDED;
-    else if( ie->mask & IN_DELETE )
-        record->action = FILE_ACTION_REMOVED;
-    else
-        record->action = FILE_ACTION_MODIFIED;
-    memcpy( record->name, ie->name, ie->len );
-    record->len = strlen( ie->name );
+        if( ie->mask & IN_CREATE )
+            record->action = FILE_ACTION_ADDED;
+        else if( ie->mask & IN_DELETE )
+            record->action = FILE_ACTION_REMOVED;
+        else
+            record->action = FILE_ACTION_MODIFIED;
+        memcpy( record->name, ie->name, ie->len );
+        record->len = strlen( ie->name );
 
-    list_add_tail( &dir->change_records, &record->entry );
+        list_add_tail( &dir->change_records, &record->entry );
+    }
 
     if (!list_empty( &dir->change_q ))
         async_terminate_head( &dir->change_q, STATUS_ALERTED );
@@ -551,11 +556,16 @@ DECL_HANDLER(read_directory_changes)
     {
         insert_change( dir );
         dir->filter = req->filter;
+        dir->want_data = req->want_data;
     }
 
     /* remove any notifications */
     if (dir->signaled>0)
         dir->signaled--;
+
+    /* clear the event */
+    if (event)
+        reset_event( event );
 
     /* setup the real notification */
 #ifdef USE_INOTIFY
