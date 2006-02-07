@@ -4667,7 +4667,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
     break;
     
   case D3DFMT_D32:
-    PUSH2(GLX_DEPTH_SIZE,   32);
+    PUSH2(GLX_DEPTH_SIZE,   24);
     break;
 
   default:
