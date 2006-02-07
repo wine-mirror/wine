@@ -1097,6 +1097,18 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
     }
 }
 
+static void write_pointer_only_tfs(FILE *file, const attr_t *attrs, size_t offset, size_t *typeformat_offset)
+{
+    int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
+    if (!pointer_type) pointer_type = RPC_FC_RP;
+
+    print_file(file, 2, "0x%x, 0x00,    /* %s */\n",
+               pointer_type,
+               pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
+    print_file(file, 2, "NdrShort(0x%x),    /* %d */\n", offset, offset);
+    *typeformat_offset += 4;
+}
+
 static size_t write_union_tfs(FILE *file, const attr_t *attrs,
                               const type_t *type, const char *name,
                               size_t *typeformat_offset)
@@ -1113,8 +1125,6 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
     while (TRUE)
     {
-        int pointer_type;
-
         if (is_string_type(var->attrs, ptr_level, var->array))
             return write_string_tfs(file, var->attrs, type, var->array, var->name, typeformat_offset);
 
@@ -1158,7 +1168,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
         else if (ptr_level == 1 && !type_has_ref(type))
         {
             size_t start_offset = *typeformat_offset;
-            pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
+            int pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
             if (!pointer_type) pointer_type = RPC_FC_RP;
 
             /* special case for pointers to base types */
@@ -1196,16 +1206,9 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
         assert(ptr_level > 0);
 
-        pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
-        if (!pointer_type) pointer_type = RPC_FC_RP;
-
         if (file)
             fprintf(file, "/* %2u */\n", *typeformat_offset);
-        print_file(file, indent, "0x%x, 0x00,    /* %s */\n",
-                    pointer_type,
-                    pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
-        print_file(file, indent, "NdrShort(0x2),    /* 2 */\n");
-        *typeformat_offset += 4;
+        write_pointer_only_tfs(file, var->attrs, 2, typeformat_offset);
 
         ptr_level--;
     }
