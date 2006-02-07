@@ -110,6 +110,7 @@ HKCR,Msi.Package\shell\Uninstall\command,,,"msiexec /x %1"
 HKCR,txtfile\shell\open\command,,,"%11%\notepad.exe %1"
 HKCR,txtfile\shell\print\command,,,"%11%\notepad.exe /p %1"
 HKCR,http\shell\open\command,,,"winebrowser"
+HKCR,https\shell\open\command,,,"winebrowser"
 HKCR,mailto\shell\open\command,,,"winebrowser %1"
 ; FIXME: the following should be done by the dll registration
 HKCR,AVIFile\Compressors\auds,,,"{0002000F-0000-0000-C000-000000000046}"
