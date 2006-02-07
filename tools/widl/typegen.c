@@ -786,8 +786,11 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             {
                 print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
                 print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
-                write_pointer_description(file, attrs, type, 0, array, 0, pointer_start_offset);
+                *typestring_offset += 2;
+                *typestring_offset = write_pointer_description(file, attrs,
+                    type, 0, array, 0, pointer_start_offset);
                 print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+                *typestring_offset += 1;
             }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
@@ -837,8 +840,11 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             {
                 print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
                 print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
-                write_pointer_description(file, attrs, type, 0, array, 0, pointer_start_offset);
+                *typestring_offset += 2;
+                *typestring_offset += write_pointer_description(file, attrs,
+                    type, 0, array, 0, pointer_start_offset);
                 print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+                *typestring_offset += 1;
             }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
@@ -867,8 +873,11 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             {
                 print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
                 print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
-                write_pointer_description(file, attrs, type, 0, array, 0, pointer_start_offset);
+                *typestring_offset += 2;
+                *typestring_offset += write_pointer_description(file, attrs,
+                    type, 0, array, 0, pointer_start_offset);
                 print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+                *typestring_offset += 1;
             }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
@@ -900,8 +909,11 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             {
                 print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
                 print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
-                write_pointer_description(file, attrs, type, 0, array, 0, pointer_start_offset);
+                *typestring_offset += 2;
+                *typestring_offset += write_pointer_description(file, attrs,
+                    type, 0, array, 0, pointer_start_offset);
                 print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+                *typestring_offset += 1;
             }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
@@ -934,15 +946,24 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
     const var_t *array;
     size_t start_offset;
     size_t array_offset;
+    size_t pointer_offset;
 
     switch (type->type)
     {
     case RPC_FC_STRUCT:
+    case RPC_FC_PSTRUCT:
         total_size = type_memsize(type, 0, NULL);
 
         if (total_size > USHRT_MAX)
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
                   name, USHRT_MAX, total_size - USHRT_MAX);
+
+        if (type->type == RPC_FC_PSTRUCT)
+        {
+            pointer_offset = *typestring_offset;
+            write_pointers(file, NULL, type, 0, NULL, 0, typestring_offset);
+        }
+        else pointer_offset = 0; /* silence warning */
 
         start_offset = *typestring_offset;
         WRITE_FCTYPE(file, FC_STRUCT, *typestring_offset);
@@ -952,6 +973,17 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
 
+        if (type->type == RPC_FC_PSTRUCT)
+        {
+            print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
+            print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+            *typestring_offset += 2;
+            *typestring_offset += write_pointer_description(file, NULL,
+                type, 0, NULL, 0, pointer_offset);
+            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+            *typestring_offset += 1;
+        }
+
         /* member layout */
         print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
         print_file(file, 2, "FC_END,\n");
@@ -959,6 +991,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         *typestring_offset += 2;
         return start_offset;
     case RPC_FC_CSTRUCT:
+    case RPC_FC_CPSTRUCT:
         total_size = type_memsize(type, 0, NULL);
 
         if (total_size > USHRT_MAX)
@@ -972,6 +1005,13 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
                                        typestring_offset);
         current_structure = NULL;
 
+        if (type->type == RPC_FC_CPSTRUCT)
+        {
+            pointer_offset = *typestring_offset;
+            write_pointers(file, NULL, type, 0, NULL, 0, typestring_offset);
+        }
+        else pointer_offset = 0; /* silence warning */
+
         start_offset = *typestring_offset;
         WRITE_FCTYPE(file, FC_CSTRUCT, *typestring_offset);
         /* alignment */
@@ -984,6 +1024,18 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
                    array_offset - *typestring_offset,
                    array_offset);
         *typestring_offset += 2;
+
+        if (type->type == RPC_FC_CPSTRUCT)
+        {
+            print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
+            print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+            *typestring_offset += 2;
+            *typestring_offset += write_pointer_description(file, NULL,
+                type, 0, NULL, 0, pointer_offset);
+            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+            *typestring_offset += 1;
+        }
+
         print_file(file, 2, "FC_END,\n");
         *typestring_offset += 1;
 
@@ -1007,6 +1059,10 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
                                            typestring_offset);
         current_structure = NULL;
 
+        pointer_offset = *typestring_offset;
+        if (!write_pointers(file, NULL, type, 0, NULL, 0, typestring_offset))
+            pointer_offset = 0;
+
         start_offset = *typestring_offset;
         WRITE_FCTYPE(file, FC_CVSTRUCT, *typestring_offset);
         /* alignment */
@@ -1019,6 +1075,18 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
                    array_offset - *typestring_offset,
                    array_offset);
         *typestring_offset += 2;
+
+        if (pointer_offset != 0)
+        {
+            print_file(file, 2, "0x%x, /* FC_PP */\n", RPC_FC_PP);
+            print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
+            *typestring_offset += 2;
+            *typestring_offset += write_pointer_description(file, NULL,
+                type, 0, NULL, 0, pointer_offset);
+            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
+            *typestring_offset += 1;
+        }
+
         print_file(file, 2, "FC_END,\n");
         *typestring_offset += 1;
 
