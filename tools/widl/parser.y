@@ -1280,14 +1280,20 @@ static int get_struct_type(var_t *field)
     while( (t->type == 0) && t->ref )
       t = t->ref;
 
-    if (is_string_type(field->attrs, field->ptr_level, field->array))
+    if (field->ptr_level > 0)
+    {
+        has_pointer = 1;
+        continue;
+    }
+
+    if (is_string_type(field->attrs, 0, field->array))
     {
         has_conformance = 1;
         has_variance = 1;
         continue;
     }
 
-    if (is_array_type(field->attrs, field->ptr_level, field->array))
+    if (is_array_type(field->attrs, 0, field->array))
     {
         if (field->array && !field->array->is_const)
         {
@@ -1298,13 +1304,6 @@ static int get_struct_type(var_t *field)
         }
         if (is_attr(field->attrs, ATTR_LENGTHIS))
             has_variance = 1;
-        continue;
-    }
-
-    if (field->ptr_level > 0)
-    {
-        has_pointer = 1;
-        continue;
     }
 
     switch (t->type)
