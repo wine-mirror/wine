@@ -90,11 +90,55 @@ static void test_get_set_vertex_declaration(IDirect3DDevice9 *device_ptr, IDirec
         "Expected hret 0x%lx, current_decl_ptr %p, refcount %d.\n", hret, current_decl_ptr, decl_refcount, D3D_OK, decl_ptr, i);
 }
 
+static void test_get_declaration(IDirect3DVertexDeclaration9 *decl_ptr, D3DVERTEXELEMENT9 *vertex_decl, UINT expected_num_elements)
+{
+    int i;
+    UINT num_elements = 0;
+    D3DVERTEXELEMENT9 *decl = 0;
+    HRESULT hret = 0;
+
+    /* First test only getting the number of elements */
+    num_elements = 0x1337c0de;
+    hret = IDirect3DVertexDeclaration9_GetDeclaration(decl_ptr, NULL, &num_elements);
+    ok(hret == D3D_OK && num_elements == expected_num_elements,
+            "GetDeclaration returned: hret 0x%lx, num_elements %d. "
+            "Expected hret 0x%lx, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
+
+    num_elements = 0;
+    hret = IDirect3DVertexDeclaration9_GetDeclaration(decl_ptr, NULL, &num_elements);
+    ok(hret == D3D_OK && num_elements == expected_num_elements,
+            "GetDeclaration returned: hret 0x%lx, num_elements %d. "
+            "Expected hret 0x%lx, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
+
+    /* Also test the returned data */
+    decl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(D3DVERTEXELEMENT9) * expected_num_elements);
+
+    num_elements = 0x1337c0de;
+    hret = IDirect3DVertexDeclaration9_GetDeclaration(decl_ptr, decl, &num_elements);
+    ok(hret == D3D_OK && num_elements == expected_num_elements,
+            "GetDeclaration returned: hret 0x%lx, num_elements %d. "
+            "Expected hret 0x%lx, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
+    i = memcmp(decl, vertex_decl, sizeof(vertex_decl));
+    ok (!i, "Original and returned vertexdeclarations are not the same\n");
+    ZeroMemory(decl, sizeof(D3DVERTEXELEMENT9) * expected_num_elements);
+
+    num_elements = 0;
+    hret = IDirect3DVertexDeclaration9_GetDeclaration(decl_ptr, decl, &num_elements);
+    ok(hret == D3D_OK && num_elements == expected_num_elements,
+            "GetDeclaration returned: hret 0x%lx, num_elements %d. "
+            "Expected hret 0x%lx, num_elements %d.\n", hret, num_elements, D3D_OK, expected_num_elements);
+    i = memcmp(decl, vertex_decl, sizeof(vertex_decl));
+    ok (!i, "Original and returned vertexdeclarations are not the same\n");
+
+    HeapFree(GetProcessHeap(), 0, decl);
+}
+
 START_TEST(vertexdeclaration)
 {
     static D3DVERTEXELEMENT9 simple_decl[] = {
         { 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
         D3DDECL_END()};
+    UINT simple_decl_num_elements = sizeof(simple_decl) / sizeof(*simple_decl);
     IDirect3DDevice9 *device_ptr = 0;
     IDirect3DVertexDeclaration9 *decl_ptr = 0;
 
@@ -120,4 +164,6 @@ START_TEST(vertexdeclaration)
     }
 
     test_get_set_vertex_declaration(device_ptr, decl_ptr);
+
+    test_get_declaration(decl_ptr, simple_decl, simple_decl_num_elements);
 }
