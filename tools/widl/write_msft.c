@@ -1169,7 +1169,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     int num_params = 0, num_defaults = 0;
     var_t *arg, *last_arg = NULL;
     char *namedata;
-    attr_t *attr;
+    const attr_t *attr;
     unsigned int funcflags = 0, callconv = 4 /* CC_STDCALL */;
     unsigned int funckind, invokekind = 1 /* INVOKE_FUNC */;
     int help_context = 0, help_string_context = 0, help_string_offset = -1;
@@ -1350,7 +1350,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     }
 
     for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
-        attr_t *attr;
+        const attr_t *attr;
         int paramflags = 0;
         int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
         int *defaultdata = num_defaults ? typedata + 6 + extra_attr + i : NULL;
@@ -1476,7 +1476,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     int var_type_size, var_kind = 0 /* VAR_PERINSTANCE */; 
     int alignment;
     int varflags = 0;
-    attr_t *attr;
+    const attr_t *attr;
     char *namedata;
     int var_num = (typeinfo->typeinfo->cElement >> 16) & 0xffff;
 
@@ -1637,7 +1637,7 @@ static HRESULT add_impl_type(msft_typeinfo_t *typeinfo, type_t *ref)
 }
 
 static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_kind kind,
-                                             const char *name, attr_t *attr, int idx)
+                                             const char *name, const attr_t *attr, int idx)
 {
     msft_typeinfo_t *msft_typeinfo;
     int nameoffset;
@@ -1823,7 +1823,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     type_t *ref;
     msft_typeinfo_t *msft_typeinfo;
     int num_parents = 0, num_funcs = 0;
-    attr_t *attr;
+    const attr_t *attr;
 
     for(attr = interface->attrs; attr; attr = NEXT_LINK(attr))
         if(attr->type == ATTR_DISPINTERFACE)
@@ -1848,7 +1848,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     for(ref = interface->ref; ref; ref = ref->ref) {
         num_parents++;
         for(func = ref->funcs; func; func = NEXT_LINK(func)) {
-            attr_t *attr;
+            const attr_t *attr;
             for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr))
                 if(attr->type == ATTR_LOCAL)
                     break;
@@ -1911,7 +1911,7 @@ static void add_typedef_typeinfo(msft_typelib_t *typelib, var_t *tdef)
 {
     msft_typeinfo_t *msft_typeinfo;
     int alignment;
-    attr_t *attrs;
+    const attr_t *attrs;
 
     tdef->type->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ALIAS, tdef->name, tdef->type->attrs,
@@ -1931,7 +1931,7 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, class_t *cls)
     int num_ifaces = 0, offset, i;
     MSFT_RefRecord *ref, *first = NULL, *first_source = NULL;
     int have_default = 0, have_default_source = 0;
-    attr_t *attr;
+    const attr_t *attr;
 
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_COCLASS, cls->name, cls->attrs,
                                          typelib->typelib_header.nrtypeinfos);
@@ -2072,7 +2072,7 @@ static void set_name(msft_typelib_t *typelib)
 static void set_version(msft_typelib_t *typelib)
 {
     long version = MAKELONG(0,0);
-    attr_t *attr;
+    const attr_t *attr;
 
     for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
         if(attr->type == ATTR_VERSION) {
@@ -2087,7 +2087,7 @@ static void set_guid(msft_typelib_t *typelib)
 {
     MSFT_GuidEntry guidentry;
     int offset;
-    attr_t *attr;
+    const attr_t *attr;
     GUID guid = {0,0,0,{0,0,0,0,0,0}};
 
     guidentry.guid = guid;
@@ -2111,7 +2111,7 @@ static void set_guid(msft_typelib_t *typelib)
 
 static void set_doc_string(msft_typelib_t *typelib)
 {
-    attr_t *attr;
+    const attr_t *attr;
     int offset;
 
     for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
@@ -2127,7 +2127,7 @@ static void set_doc_string(msft_typelib_t *typelib)
 static void set_help_file_name(msft_typelib_t *typelib)
 {
     int offset;
-    attr_t *attr;
+    const attr_t *attr;
     for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
         if(attr->type == ATTR_HELPFILE) {
             offset = ctl2_alloc_string(typelib, attr->u.pval);
@@ -2141,10 +2141,10 @@ static void set_help_file_name(msft_typelib_t *typelib)
 
 static void set_help_context(msft_typelib_t *typelib)
 {
-    attr_t *attr;
+    const attr_t *attr;
     for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
         if(attr->type == ATTR_HELPCONTEXT) {
-            expr_t *expr = (expr_t *)attr->u.pval;
+            const expr_t *expr = (expr_t *)attr->u.pval;
             typelib->typelib_header.helpcontext = expr->cval;
         }
     }
@@ -2154,7 +2154,7 @@ static void set_help_context(msft_typelib_t *typelib)
 static void set_help_string_dll(msft_typelib_t *typelib)
 {
     int offset;
-    attr_t *attr;
+    const attr_t *attr;
     for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
         if(attr->type == ATTR_HELPSTRINGDLL) {
             offset = ctl2_alloc_string(typelib, attr->u.pval);
@@ -2168,10 +2168,10 @@ static void set_help_string_dll(msft_typelib_t *typelib)
 
 static void set_help_string_context(msft_typelib_t *typelib)
 {
-    attr_t *attr;
+    const attr_t *attr;
     for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
         if(attr->type == ATTR_HELPSTRINGCONTEXT) {
-            expr_t *expr = (expr_t *)attr->u.pval;
+            const expr_t *expr = (expr_t *)attr->u.pval;
             typelib->typelib_header.helpstringcontext = expr->cval;
         }
     }
@@ -2186,7 +2186,7 @@ static void set_lcid(msft_typelib_t *typelib)
 
 static void set_lib_flags(msft_typelib_t *typelib)
 {
-    attr_t *attr;
+    const attr_t *attr;
 
     typelib->typelib_header.flags = 0;
     for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
