@@ -80,7 +80,7 @@ int is_void(const type_t *t, const var_t *v)
   return 0;
 }
 
-static void write_guid(const char *guid_prefix, const char *name, UUID *uuid)
+static void write_guid(const char *guid_prefix, const char *name, const UUID *uuid)
 {
   if (!uuid) return;
   fprintf(header, "DEFINE_GUID(%s_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
@@ -333,7 +333,7 @@ static int user_type_registered(const char *name)
   return 0;
 }
 
-static void check_for_user_types(var_t *v)
+static void check_for_user_types(const var_t *v)
 {
   while (v) {
     type_t *type = v->type;
@@ -355,7 +355,7 @@ static void check_for_user_types(var_t *v)
       }
       else if (type->fields)
       {
-        var_t *fields = type->fields;
+        const var_t *fields = type->fields;
         while (NEXT_LINK(fields)) fields = NEXT_LINK(fields);
         check_for_user_types(fields);
       }
@@ -383,7 +383,7 @@ void write_user_types(void)
 
 void write_typedef(type_t *type, const var_t *names)
 {
-  char *tname = names->tname;
+  const char *tname = names->tname;
   const var_t *lname;
   while (NEXT_LINK(names)) names = NEXT_LINK(names);
   lname = names;
@@ -654,9 +654,9 @@ static void write_cpp_method_def(const type_t *iface)
   }
 }
 
-static void do_write_c_method_def(const type_t *iface, char *name)
+static void do_write_c_method_def(const type_t *iface, const char *name)
 {
-  func_t *cur = iface->funcs;
+  const func_t *cur = iface->funcs;
 
   if (iface->ref) do_write_c_method_def(iface->ref, name);
 
@@ -665,7 +665,7 @@ static void do_write_c_method_def(const type_t *iface, char *name)
   indent(header, 0);
   fprintf(header, "/*** %s methods ***/\n", iface->name);
   while (cur) {
-    var_t *def = cur->def;
+    const var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
       indent(header, 0);
       write_type(header, def->type, def, def->tname);
@@ -692,14 +692,14 @@ static void write_c_disp_method_def(const type_t *iface)
 
 static void write_method_proto(const type_t *iface)
 {
-  func_t *cur = iface->funcs;
+  const func_t *cur = iface->funcs;
 
   if (!cur) return;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
   while (cur) {
-    var_t *def = cur->def;
-    var_t *cas = is_callas(def->attrs);
-    var_t *args;
+    const var_t *def = cur->def;
+    const var_t *cas = is_callas(def->attrs);
+    const var_t *args;
     if (!is_local(def->attrs)) {
       /* proxy prototype */
       write_type(header, def->type, def, def->tname);
@@ -725,11 +725,11 @@ static void write_method_proto(const type_t *iface)
       check_for_user_types(args);
     }
     if (cas) {
-      func_t *m = iface->funcs;
+      const func_t *m = iface->funcs;
       while (m && strcmp(get_name(m->def), cas->name))
         m = NEXT_LINK(m);
       if (m) {
-        var_t *mdef = m->def;
+        const var_t *mdef = m->def;
         /* proxy prototype - use local prototype */
         write_type(header, mdef->type, mdef, mdef->tname);
         fprintf(header, " CALLBACK %s_", iface->name);
@@ -756,9 +756,9 @@ static void write_method_proto(const type_t *iface)
 
 static void write_function_proto(const type_t *iface)
 {
-  char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+  const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
   int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
-  var_t* explicit_handle_var;
+  const var_t* explicit_handle_var;
 
   func_t *cur = iface->funcs;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
@@ -813,19 +813,19 @@ void write_forward(type_t *iface)
 
 static void write_iface_guid(const type_t *iface)
 {
-  UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+  const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
   write_guid("IID", iface->name, uuid);
 } 
 
 static void write_dispiface_guid(const type_t *iface)
 {
-  UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+  const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
   write_guid("DIID", iface->name, uuid);
 }
 
 static void write_coclass_guid(class_t *cocl)
 {
-  UUID *uuid = get_attrp(cocl->attrs, ATTR_UUID);
+  const UUID *uuid = get_attrp(cocl->attrs, ATTR_UUID);
   write_guid("CLSID", cocl->name, uuid);
 }
 

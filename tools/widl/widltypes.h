@@ -206,7 +206,7 @@ struct _var_t {
   expr_t *array;
   type_t *type;
   var_t *args;  /* for function pointers */
-  char *tname;
+  const char *tname;
   attr_t *attrs;
   expr_t *eval;
   long lval;
