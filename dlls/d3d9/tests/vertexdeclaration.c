@@ -55,22 +55,24 @@ static int get_refcount(IUnknown *object)
     return IUnknown_Release(object);
 }
 
-static void test_get_set_vertex_declaration(IDirect3DDevice9 *device_ptr)
+static IDirect3DVertexDeclaration9 *test_create_vertex_declaration(IDirect3DDevice9 *device_ptr, D3DVERTEXELEMENT9 *vertex_decl)
 {
-    static D3DVERTEXELEMENT9 simple_decl[] = {
-        { 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-        D3DDECL_END()};
-    
     IDirect3DVertexDeclaration9 *decl_ptr = 0;
+    HRESULT hret = 0;
+
+    hret = IDirect3DDevice9_CreateVertexDeclaration(device_ptr, vertex_decl, &decl_ptr);
+    ok(hret == D3D_OK && decl_ptr != NULL, "CreateVertexDeclaration returned: hret 0x%lx, decl_ptr %p. "
+        "Expected hret 0x%lx, decl_ptr != %p. Aborting.\n", hret, decl_ptr, D3D_OK, NULL);
+
+    return decl_ptr;
+}
+
+static void test_get_set_vertex_declaration(IDirect3DDevice9 *device_ptr, IDirect3DVertexDeclaration9 *decl_ptr)
+{
     IDirect3DVertexDeclaration9 *current_decl_ptr = 0;
     HRESULT hret = 0;
     int decl_refcount = 0;
     int i = 0;
-    
-    hret = IDirect3DDevice9_CreateVertexDeclaration(device_ptr, simple_decl, &decl_ptr);
-    ok(hret == D3D_OK && decl_ptr != NULL, "CreateVertexDeclaration returned: hret 0x%lx, decl_ptr %p. "
-        "Expected hret 0x%lx, decl_ptr != %p. Aborting.\n", hret, decl_ptr, D3D_OK, NULL);
-    if (hret != D3D_OK || decl_ptr == NULL) return;
     
     /* SetVertexDeclaration should not touch the declaration's refcount. */
     i = get_refcount((IUnknown *)decl_ptr);
@@ -90,7 +92,11 @@ static void test_get_set_vertex_declaration(IDirect3DDevice9 *device_ptr)
 
 START_TEST(vertexdeclaration)
 {
-    IDirect3DDevice9 *device_ptr;
+    static D3DVERTEXELEMENT9 simple_decl[] = {
+        { 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+        D3DDECL_END()};
+    IDirect3DDevice9 *device_ptr = 0;
+    IDirect3DVertexDeclaration9 *decl_ptr = 0;
 
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
@@ -100,7 +106,18 @@ START_TEST(vertexdeclaration)
     }
 
     device_ptr = init_d3d9();
-    if (!device_ptr) return;
-    
-    test_get_set_vertex_declaration(device_ptr);
+    if (!device_ptr)
+    {
+        trace("Failed to initialise d3d9, aborting test.\n");
+        return;
+    }
+
+    decl_ptr = test_create_vertex_declaration(device_ptr, simple_decl);
+    if (!decl_ptr)
+    {
+        trace("Failed to create a vertex declaration, aborting test.\n");
+        return;
+    }
+
+    test_get_set_vertex_declaration(device_ptr, decl_ptr);
 }
