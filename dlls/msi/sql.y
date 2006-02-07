@@ -132,6 +132,14 @@ static struct expr * EXPR_wildcard( void *info );
 %type <column_type> column_type data_type data_type_l data_count
 %type <integer> number
 
+/* Reference: http://mates.ms.mff.cuni.cz/oracle/doc/ora815nt/server.815/a67779/operator.htm */
+%left TK_OR
+%left TK_AND
+%left TK_NOT
+%left TK_EQ TK_NE TK_LT TK_GT TK_LE TK_GE TK_ISNULL TK_LIKE TK_BETWEEN TK_IN
+%left TK_PLUS TK_MINUS TK_CONCAT
+%right TK_NEGATION
+
 %%
 
 query:
@@ -430,12 +438,6 @@ expr:
             if( !$$ )
                 YYABORT;
         }
-  | column_val TK_EQ column_val
-        {
-            $$ = EXPR_complex( info, $1, OP_EQ, $3 );
-            if( !$$ )
-                YYABORT;
-        }
   | expr TK_AND expr
         {
             $$ = EXPR_complex( info, $1, OP_AND, $3 );
@@ -545,7 +547,7 @@ const_val:
             if( !$$ )
                 YYABORT;
         }
-  | TK_MINUS number
+  | TK_MINUS number %prec TK_NEGATION
         {
             $$ = EXPR_ival( info, -$2 );
             if( !$$ )
