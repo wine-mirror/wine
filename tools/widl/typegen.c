@@ -156,6 +156,7 @@ static inline int is_base_type(unsigned char type)
     case RPC_FC_ENUM16:
     case RPC_FC_ENUM32:
     case RPC_FC_ERROR_STATUS_T:
+    case RPC_FC_BIND_PRIMITIVE:
         return TRUE;
 
     default:
@@ -208,6 +209,12 @@ static size_t write_procformatstring_var(FILE *file, int indent,
         CASE_BASETYPE(FC_DOUBLE);
         CASE_BASETYPE(FC_ERROR_STATUS_T);
 #undef CASE_BASETYPE
+
+        case RPC_FC_BIND_PRIMITIVE:
+            print_file(file, indent, "0x%02x,    /* FC_IGNORE */\n", RPC_FC_IGNORE);
+            size = 2; /* includes param type prefix */
+            break;
+
         default:
             error("Unknown/unsupported type: %s (0x%02x)\n", var->name, type->type);
             size = 0;
@@ -1003,7 +1010,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
 
         array = find_array_or_string_in_struct(type);
         current_structure = type;
-        array_offset = write_array_tfs(file, array->attrs, array->type, 
+        array_offset = write_array_tfs(file, array->attrs, array->type,
                                        array->array, array->name,
                                        typestring_offset);
         current_structure = NULL;
@@ -1461,6 +1468,11 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
                     alignment = (4 - last_size);
                 break;
 
+            case RPC_FC_IGNORE:
+            case RPC_FC_BIND_PRIMITIVE:
+                /* no marshalling needed */
+                continue;
+
             default:
                 error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
                 size = 0;
@@ -1499,10 +1511,6 @@ void marshall_arguments(FILE *file, int indent, func_t *func,
             case RPC_FC_BOGUS_STRUCT:
                 ndrtype = "ComplexStruct";
                 break;
-            case RPC_FC_IGNORE:
-            case RPC_FC_BIND_PRIMITIVE:
-                /* no marshalling needed */
-                continue;
             default:
                 error("marshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
                     var->name, var->type->type, var->ptr_level);
@@ -1636,6 +1644,11 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
                     alignment = (4 - last_size);
                 break;
 
+            case RPC_FC_IGNORE:
+            case RPC_FC_BIND_PRIMITIVE:
+                /* no unmarshalling needed */
+                continue;
+
             default:
                 error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
                 size = 0;
@@ -1674,10 +1687,6 @@ void unmarshall_arguments(FILE *file, int indent, func_t *func,
             case RPC_FC_BOGUS_STRUCT:
                 ndrtype = "ComplexStruct";
                 break;
-            case RPC_FC_IGNORE:
-            case RPC_FC_BIND_PRIMITIVE:
-                /* no unmarshalling needed */
-                continue;
             default:
                 error("unmarshall_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
                     var->name, var->type->type, var->ptr_level);
