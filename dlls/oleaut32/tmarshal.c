@@ -517,6 +517,7 @@ serialize_param(
 	return hres;
     case VT_BOOL:
     case VT_ERROR:
+    case VT_INT:
     case VT_UINT:
     case VT_I4:
     case VT_R4:
@@ -841,6 +842,7 @@ deserialize_param(
         case VT_ERROR:
 	case VT_BOOL:
         case VT_I4:
+        case VT_INT:
         case VT_UINT:
         case VT_R4:
         case VT_UI4:
