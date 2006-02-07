@@ -420,6 +420,10 @@ DECLARE_INTERFACE_(ITextHost,IUnknown)
 
 #undef INTERFACE
 
+HRESULT WINAPI CreateTextServices(IUnknown*,ITextHost*,IUnknown**);
+
+typedef HRESULT (WINAPI *PCreateTextServices)(IUnknown*,ITextHost*,IUnknown**);
+
 #ifdef __cplusplus
 }
 #endif
