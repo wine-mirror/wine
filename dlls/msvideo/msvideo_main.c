@@ -705,18 +705,20 @@ struct choose_compressor
     COMPVARS cv;
 };
 
-static BOOL enum_compressors(HWND list)
+static BOOL enum_compressors(HWND list, COMPVARS *pcv)
 {
-    UINT id;
+    UINT id, total = 0;
     ICINFO icinfo;
 
     id = 0;
 
-    while (ICInfo(ICTYPE_VIDEO, id, &icinfo))
+    while (ICInfo(pcv->fccType, id, &icinfo))
     {
         ICINFO *ic;
         DWORD idx;
         HIC hic;
+
+        id++;
 
         hic = ICOpen(icinfo.fccType, icinfo.fccHandler, ICMODE_COMPRESS);
 
@@ -726,6 +728,17 @@ static BOOL enum_compressors(HWND list)
              * doesn't always work, use the one returned by ICInfo instead.
              */
             DWORD fccHandler = icinfo.fccHandler;
+
+            if (pcv->lpbiIn)
+            {
+                if (ICCompressQuery(hic, pcv->lpbiIn, NULL) != ICERR_OK)
+                {
+                    TRACE("fccHandler %s doesn't support input DIB format %ld\n",
+                          wine_dbgstr_fcc(icinfo.fccHandler), pcv->lpbiIn->bmiHeader.biCompression);
+                    ICClose(hic);
+                    continue;
+                }
+            }
 
             ICGetInfo(hic, &icinfo, sizeof(icinfo));
             icinfo.fccHandler = fccHandler;
@@ -737,10 +750,10 @@ static BOOL enum_compressors(HWND list)
             *ic = icinfo;
             SendMessageW(list, CB_SETITEMDATA, idx, (LPARAM)ic);
         }
-        id++;
+        total++;
     }
 
-    return id != 0;
+    return total != 0;
 }
 
 static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -764,7 +777,7 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
         ic->fccHandler = comptypeDIB;
         SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_SETITEMDATA, 0, (LPARAM)ic);
 
-        enum_compressors(GetDlgItem(hdlg, IDC_COMP_LIST));
+        enum_compressors(GetDlgItem(hdlg, IDC_COMP_LIST), &choose_comp->cv);
 
         SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_SETCURSEL, 0, 0);
         SetFocus(GetDlgItem(hdlg, IDC_COMP_LIST));
@@ -795,6 +808,7 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
                 {
                     choose_comp->cv.fccType = ic->fccType;
                     choose_comp->cv.fccHandler = ic->fccHandler;
+                    choose_comp->cv.hic = ICOpen(ic->fccType, ic->fccHandler, ICMODE_COMPRESS);
                     /* FIXME: fill everything else */
                 }
             }
@@ -860,6 +874,7 @@ BOOL VFWAPI ICCompressorChoose(HWND hwnd, UINT uiFlags, LPVOID pvIn,
     if (pc->fccType == 0)
         pc->fccType = ICTYPE_VIDEO;
 
+    choose_comp.cv = *pc;
     choose_comp.flags = uiFlags;
     choose_comp.title = lpszTitle;
 
