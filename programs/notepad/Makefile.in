@@ -10,9 +10,7 @@ MODCFLAGS = @BUILTINFLAG@
 EXTRADEFS = -DNO_LIBWINE_PORT
 
 C_SRCS = \
-	License_En.c \
 	dialog.c \
-	license.c \
 	main.c
 
 RC_SRCS = rsrc.rc

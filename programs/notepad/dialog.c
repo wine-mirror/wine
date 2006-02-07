@@ -28,7 +28,6 @@
 #include <commdlg.h>
 
 #include "main.h"
-#include "license.h"
 #include "dialog.h"
 
 static const WCHAR helpfileW[] = { 'n','o','t','e','p','a','d','.','h','l','p',0 };
@@ -684,12 +683,18 @@ VOID DIALOG_HelpHelp(VOID)
 
 VOID DIALOG_HelpLicense(VOID)
 {
-        WineLicense(Globals.hMainWnd);
+    TCHAR cap[20], text[1024];
+    LoadString(Globals.hInstance, IDS_LICENSE, text, 1024);
+    LoadString(Globals.hInstance, IDS_LICENSE_CAPTION, cap, 20);
+    MessageBox(Globals.hMainWnd, text, cap, MB_ICONINFORMATION | MB_OK);
 }
 
 VOID DIALOG_HelpNoWarranty(VOID)
 {
-        WineWarranty(Globals.hMainWnd);
+    TCHAR cap[20], text[1024];
+    LoadString(Globals.hInstance, IDS_WARRANTY, text, 1024);
+    LoadString(Globals.hInstance, IDS_WARRANTY_CAPTION, cap, 20);
+    MessageBox(Globals.hMainWnd, text, cap, MB_ICONEXCLAMATION | MB_OK);
 }
 
 VOID DIALOG_HelpAboutWine(VOID)

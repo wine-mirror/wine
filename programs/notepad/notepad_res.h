@@ -76,3 +76,8 @@
 
 #define STRING_NOTFOUND 0x17B
 #define STRING_OUT_OF_MEMORY 0x17C
+
+#define IDS_LICENSE_CAPTION       0x180
+#define IDS_LICENSE               0x181
+#define IDS_WARRANTY_CAPTION      0x182
+#define IDS_WARRANTY              0x183
