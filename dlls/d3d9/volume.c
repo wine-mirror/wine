@@ -92,17 +92,37 @@ HRESULT WINAPI IDirect3DVolume9Impl_FreePrivateData(LPDIRECT3DVOLUME9 iface, REF
 
 HRESULT WINAPI IDirect3DVolume9Impl_GetContainer(LPDIRECT3DVOLUME9 iface, REFIID riid, void** ppContainer) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
+    IWineD3DBase *wineD3DContainer = NULL;
+    IUnknown *wineD3DContainerParent = NULL;
     HRESULT res;
-    IUnknown *IWineContainer = NULL;
 
-    TRACE("(%p) Relay\n", This);
-    res = IWineD3DVolume_GetContainer(This->wineD3DVolume, riid, (void **)&IWineContainer);
+    TRACE("(This %p, riid %s, ppContainer %p)\n", This, debugstr_guid(riid), ppContainer);
 
-    /* If this works, the only valid container is a child of resource (volumetexture) */
-    if (res == D3D_OK && NULL != ppContainer) {
-        IWineD3DResource_GetParent((IWineD3DResource *)IWineContainer, (IUnknown **)ppContainer);
-        IWineD3DResource_Release((IWineD3DResource *)IWineContainer);
+    if (!ppContainer) {
+        ERR("Called without a valid ppContainer.\n");
     }
+
+    /* Get the WineD3D container. */
+    res = IWineD3DVolume_GetContainer(This->wineD3DVolume, &IID_IWineD3DBase, (void **)&wineD3DContainer);
+    if (res != D3D_OK) return res;
+
+    if (!wineD3DContainer) {
+        ERR("IWineD3DSurface_GetContainer should never return NULL\n");
+    }
+
+    /* Get the parent */
+    IWineD3DBase_GetParent(wineD3DContainer, &wineD3DContainerParent);
+    IUnknown_Release(wineD3DContainer);
+
+    if (!wineD3DContainerParent) {
+        ERR("IWineD3DBase_GetParent should never return NULL\n");
+    }
+
+    /* Now, query the interface of the parent for the riid */
+    res = IUnknown_QueryInterface(wineD3DContainerParent, riid, ppContainer);
+    IUnknown_Release(wineD3DContainerParent);
+
+    TRACE("Returning ppContainer %p, *ppContainer %p\n", ppContainer, *ppContainer);
 
     return res;
 }

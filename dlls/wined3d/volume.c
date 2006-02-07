@@ -105,10 +105,20 @@ D3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
    ******************************************* */
 HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID riid, void** ppContainer) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->container);
-    *ppContainer = This->container;
-    IUnknown_AddRef(This->container);
-    return D3D_OK;
+
+    TRACE("(This %p, riid %s, ppContainer %p)\n", This, debugstr_guid(riid), ppContainer);
+
+    if (!ppContainer) {
+        ERR("Called without a valid ppContainer.\n");
+    }
+
+    /* Although surfaces can be standalone, volumes can't */
+    if (!This->container) {
+        ERR("Volume without an container. Should not happen.\n");
+    }
+
+    TRACE("Relaying to QueryInterface\n");
+    return IUnknown_QueryInterface(This->container, riid, ppContainer);
 }
 
 HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC* pDesc) {
