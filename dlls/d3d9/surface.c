@@ -114,47 +114,38 @@ D3DRESOURCETYPE WINAPI IDirect3DSurface9Impl_GetType(LPDIRECT3DSURFACE9 iface) {
 /* IDirect3DSurface9 Interface follow: */
 HRESULT WINAPI IDirect3DSurface9Impl_GetContainer(LPDIRECT3DSURFACE9 iface, REFIID riid, void** ppContainer) {
     IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
+    IWineD3DBase *wineD3DContainer = NULL;
+    IUnknown *wineD3DContainerParent = NULL;
     HRESULT res;
-    IUnknown *IWineContainer = NULL;
 
-    TRACE("(%p) Relay\n", This);
+    TRACE("(This %p, riid %s, ppContainer %p)\n", This, debugstr_guid(riid), ppContainer);
 
-    /* The container returned from IWineD3DSurface_GetContainer is either an IWineD3DDevice,
-       one of the subclasses of IWineD3DBaseTexture or an IWineD3DSwapChain  */
-    /* Get the IUnknown container. */
-    res = IWineD3DSurface_GetContainer(This->wineD3DSurface, &IID_IUnknown, (void **)&IWineContainer);    
-    if (res == D3D_OK && IWineContainer != NULL) {
-    
-        /* Now find out what kind of container it is (so that we can get its parent)*/
-        IUnknown  *IUnknownParent = NULL;
-        IUnknown  *myContainer    = NULL;
-        if(D3D_OK == IUnknown_QueryInterface(IWineContainer, &IID_IWineD3DDevice, (void **)&myContainer)){
-            IWineD3DDevice_GetParent((IWineD3DDevice *)IWineContainer, &IUnknownParent);
-            IUnknown_Release(myContainer);
-        } else 
-        if(D3D_OK == IUnknown_QueryInterface(IWineContainer, &IID_IWineD3DBaseTexture, (void **)&myContainer)){
-            IWineD3DBaseTexture_GetParent((IWineD3DBaseTexture *)IWineContainer, &IUnknownParent);            
-            IUnknown_Release(myContainer);
-        } else
-        if(D3D_OK == IUnknown_QueryInterface(IWineContainer, &IID_IWineD3DSwapChain, (void **)&myContainer)){
-            IWineD3DSwapChain_GetParent((IWineD3DSwapChain *)IWineContainer, &IUnknownParent);
-            IUnknown_Release(myContainer);
-        }else{
-            FIXME("Container is of unknown interface\n");
-        }
-        /* Tidy up.. */
-        IUnknown_Release((IWineD3DDevice *)IWineContainer);
-
-        /* Now, query the interface of the parent for the riid */
-        if(IUnknownParent != NULL){                
-            res = IUnknown_QueryInterface(IUnknownParent, riid, ppContainer);            
-            /* Tidy up.. */
-            IUnknown_Release(IUnknownParent);
-        }
-        
+    if (!ppContainer) {
+        ERR("Called without a valid ppContainer\n");
     }
 
-    TRACE("(%p) : returning %p\n", This, *ppContainer);    
+    /* Get the WineD3D container. */
+    res = IWineD3DSurface_GetContainer(This->wineD3DSurface, &IID_IWineD3DBase, (void **)&wineD3DContainer);
+    if (res != D3D_OK) return res;
+
+    if (!wineD3DContainer) {
+        ERR("IWineD3DSurface_GetContainer should never return NULL\n");
+    }
+
+    /* Get the parent */
+    IWineD3DBase_GetParent(wineD3DContainer, &wineD3DContainerParent);
+    IUnknown_Release(wineD3DContainer);
+
+    if (!wineD3DContainerParent) {
+        ERR("IWineD3DBase_GetParent should never return NULL\n");
+    }
+
+    /* Now, query the interface of the parent for the riid */
+    res = IUnknown_QueryInterface(wineD3DContainerParent, riid, ppContainer);
+    IUnknown_Release(wineD3DContainerParent);
+
+    TRACE("Returning ppContainer %p, *ppContainer %p\n", ppContainer, *ppContainer);
+
     return res;
 }
 

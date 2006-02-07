@@ -175,19 +175,27 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFIID riid, void** ppContainer) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    HRESULT hr;
-    if (ppContainer == NULL) {
-            ERR("Get container called witout a null ppContainer\n");
-        return E_NOINTERFACE;
+    IWineD3DBase *container = 0;
+
+    TRACE("(This %p, riid %s, ppContainer %p)\n", This, debugstr_guid(riid), ppContainer);
+
+    if (!ppContainer) {
+        ERR("Called without a valid ppContainer.\n");
     }
-    TRACE("(%p) : Relaying to queryInterface %p %p\n", This, ppContainer, *ppContainer);
+
     /** From MSDN:
      * If the surface is created using CreateImageSurface/CreateOffscreenPlainSurface, CreateRenderTarget,
      * or CreateDepthStencilSurface, the surface is considered stand alone. In this case,
      * GetContainer will return the Direct3D device used to create the surface.
      */
-    hr = IUnknown_QueryInterface(This->container, riid, ppContainer);
-    return hr;
+    if (This->container) {
+        container = This->container;
+    } else {
+        IWineD3DSurface_GetDevice(iface, (IWineD3DDevice **)&container);
+    }
+
+    TRACE("Relaying to QueryInterface\n");
+    return IUnknown_QueryInterface(container, riid, ppContainer);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC *pDesc) {
