@@ -966,7 +966,10 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         else pointer_offset = 0; /* silence warning */
 
         start_offset = *typestring_offset;
-        WRITE_FCTYPE(file, FC_STRUCT, *typestring_offset);
+        if (type->type == RPC_FC_STRUCT)
+            WRITE_FCTYPE(file, FC_STRUCT, *typestring_offset);
+        else
+            WRITE_FCTYPE(file, FC_PSTRUCT, *typestring_offset);
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
@@ -1013,7 +1016,10 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         else pointer_offset = 0; /* silence warning */
 
         start_offset = *typestring_offset;
-        WRITE_FCTYPE(file, FC_CSTRUCT, *typestring_offset);
+        if (type->type == RPC_FC_CSTRUCT)
+            WRITE_FCTYPE(file, FC_CSTRUCT, *typestring_offset);
+        else
+            WRITE_FCTYPE(file, FC_CPSTRUCT, *typestring_offset);
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
