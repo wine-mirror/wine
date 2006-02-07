@@ -793,8 +793,8 @@ static const char main_key_TK[MAIN_LEN][4] =
 static const char main_key_TR[MAIN_LEN][4] =
 {
 "\"\\","1!","2'","3^","4+","5%","6&","7/","8(","9)","0=","*?","-_",
-"qQ","wW","eE","rR","tT","yY","uU","ýI","oO","pP","ðÐ","üÜ",
-"aA","sS","dD","fF","gG","hH","jJ","kK","lL","þÞ","iÝ",",;",
+"qQ","wW","eE","rR","tT","yY","uU","\xb9I","oO","pP","\xbb\xab","üÜ",
+"aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xba\xaa","i\0",",;",
 "zZ","xX","cC","vV","bB","nN","mM","öÖ","çÇ",".:",
 "<>"
 };
@@ -803,8 +803,8 @@ static const char main_key_TR[MAIN_LEN][4] =
 static const char main_key_TR_F[MAIN_LEN][4] =
 {
 "+*","1!","2\"","3^#","4$","5%","6&","7'","8(","9)","0=","/?","-_",
-"fF","gG","ðÐ","ýI","oO","dD","rR","nN","hH","pP","qQ","wW",
-"uU","iÝ","eE","aA","üÜ","tT","kK","mM","lL","yY","þÞ","xX",
+"fF","gG","\xbb\xab","\xb9I","oO","dD","rR","nN","hH","pP","qQ","wW",
+"uU","i\0","eE","aA","üÜ","tT","kK","mM","lL","yY","\xba\xaa","xX",
 "jJ","öÖ","vV","cC","çÇ","zZ","sS","bB",".:",",;",
 "<>"
 };
