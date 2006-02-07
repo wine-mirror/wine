@@ -33,6 +33,99 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
+/* fills the PSP_INF_INFORMATION struct fill_info is TRUE
+ * always returns the required size of the information
+ */
+static BOOL fill_inf_info(HINF inf, PSP_INF_INFORMATION buffer, DWORD size, DWORD *required)
+{
+    LPCWSTR filename = PARSER_get_inf_filename(inf);
+    DWORD total_size = FIELD_OFFSET(SP_INF_INFORMATION, VersionData)
+                        + (lstrlenW(filename) + 1) * sizeof(WCHAR);
+
+    if (required) *required = total_size;
+
+    /* FIXME: we need to parse the INF file to find the correct version info */
+    if (buffer)
+    {
+        if (size < total_size)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+        buffer->InfStyle = INF_STYLE_WIN4;
+        buffer->InfCount = 1;
+        /* put the filename in buffer->VersionData */
+        lstrcpyW((LPWSTR)&buffer->VersionData[0], filename);
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *      SetupGetInfInformationA    (SETUPAPI.@)
+ *
+ * BUGS
+ *   If SearchControl is anything other than INFINFO_INF_SPEC_IS_HINF,
+ *   then InfSpec needs to be converted to unicode.
+ */
+BOOL WINAPI SetupGetInfInformationA(LPCVOID InfSpec, DWORD SearchControl,
+                                    PSP_INF_INFORMATION ReturnBuffer,
+                                    DWORD ReturnBufferSize, PDWORD RequiredSize)
+{
+    return SetupGetInfInformationW(InfSpec, SearchControl, ReturnBuffer,
+                                   ReturnBufferSize, RequiredSize);
+}
+
+/***********************************************************************
+ *      SetupGetInfInformationW    (SETUPAPI.@)
+ * 
+ * BUGS
+ *   Only handles the case when InfSpec is an INF handle.
+ */
+BOOL WINAPI SetupGetInfInformationW(LPCVOID InfSpec, DWORD SearchControl,
+                                     PSP_INF_INFORMATION ReturnBuffer,
+                                     DWORD ReturnBufferSize, PDWORD RequiredSize)
+{
+    HINF inf = (HINF)InfSpec;
+
+    TRACE("(%p, %ld, %p, %ld, %p)\n", InfSpec, SearchControl, ReturnBuffer,
+           ReturnBufferSize, RequiredSize);
+
+    if (!inf)
+    {
+        if (SearchControl == INFINFO_INF_SPEC_IS_HINF)
+            SetLastError(ERROR_INVALID_HANDLE);
+        else
+            SetLastError(ERROR_INVALID_PARAMETER);
+
+        return FALSE;
+    }
+
+    if (inf == INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    if (SearchControl < INFINFO_INF_SPEC_IS_HINF ||
+        SearchControl > INFINFO_INF_PATH_LIST_SEARCH)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (SearchControl != INFINFO_INF_SPEC_IS_HINF)
+    {
+        FIXME("Unhandled search control: %ld\n", SearchControl);
+
+        if (RequiredSize)
+            *RequiredSize = 0;
+
+        return FALSE;
+    }
+
+    return fill_inf_info(inf, ReturnBuffer, ReturnBufferSize, RequiredSize);
+}
+
 /***********************************************************************
  *      SetupQueryInfFileInformationA    (SETUPAPI.@)
  */

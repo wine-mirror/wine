@@ -151,30 +151,6 @@ BOOL WINAPI SetupCopyOEMInfW(PCWSTR sourceinffile, PCWSTR sourcemedialoc,
 }
 
 /***********************************************************************
- *		SetupGetInfInformationA    (SETUPAPI.@)
- */
-BOOL WINAPI SetupGetInfInformationA( LPCVOID InfSpec, DWORD SearchControl,
-                                     PSP_INF_INFORMATION ReturnBuffer,
-                                     DWORD ReturnBufferSize, PDWORD RequiredSize)
-{
-    FIXME("(%p, %ld, %p, %ld, %p) Stub!\n",
-          InfSpec, SearchControl, ReturnBuffer, ReturnBufferSize, RequiredSize );
-    return TRUE;
-}
-
-/***********************************************************************
- *      SetupGetInfInformationW    (SETUPAPI.@)
- */
-BOOL WINAPI SetupGetInfInformationW( LPCVOID InfSpec, DWORD SearchControl,
-                                     PSP_INF_INFORMATION ReturnBuffer,
-                                     DWORD ReturnBufferSize, PDWORD RequiredSize)
-{
-    FIXME("(%p, %ld, %p, %ld, %p) Stub!\n",
-          InfSpec, SearchControl, ReturnBuffer, ReturnBufferSize, RequiredSize );
-    return TRUE;
-}
-
-/***********************************************************************
  *		SetupInitializeFileLogW(SETUPAPI.@)
  */
 HANDLE WINAPI SetupInitializeFileLogW(LPWSTR LogFileName, DWORD Flags)
