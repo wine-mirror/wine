@@ -725,7 +725,8 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
 
     /** Create and initialise the surface resource **/
     D3DCREATERESOURCEOBJECTINSTANCE(object,Surface,D3DRTYPE_SURFACE, Size)
-    IWineD3DSurface_SetContainer((IWineD3DSurface *)object, (IWineD3DBase *)This);
+    /* "Standalone" surface */
+    IWineD3DSurface_SetContainer((IWineD3DSurface *)object, NULL);
 
     object->currentDesc.Width      = Width;
     object->currentDesc.Height     = Height;
