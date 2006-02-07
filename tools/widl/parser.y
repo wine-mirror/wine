@@ -1016,7 +1016,6 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->name = NULL;
   t->type = type;
   t->ref = ref;
-  t->rname = NULL;
   t->attrs = NULL;
   t->funcs = NULL;
   t->fields = NULL;

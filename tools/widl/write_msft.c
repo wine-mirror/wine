@@ -947,7 +947,7 @@ static int encode_type(
 
 static void dump_type(type_t *t)
 {
-    chat("dump_type: %p name %s type %d ref %p rname %s attrs %p\n", t, t->name, t->type, t->ref, t->rname, t->attrs);
+    chat("dump_type: %p name %s type %d ref %p attrs %p\n", t, t->name, t->type, t->ref, t->attrs);
     if(t->ref) dump_type(t->ref);
 }
 
