@@ -490,7 +490,7 @@ void write_externdef(const var_t *v)
   fprintf(header, ";\n\n");
 }
 
-void write_library(const char *name, attr_t *attr) {
+void write_library(const char *name, const attr_t *attr) {
   const UUID *uuid = get_attrp(attr, ATTR_UUID);
   fprintf(header, "\n");
   write_guid("LIBID", name, uuid);
@@ -521,7 +521,7 @@ const var_t* get_explicit_handle_var(const func_t* func)
 
 /********** INTERFACES **********/
 
-int is_object(attr_t *a)
+int is_object(const attr_t *a)
 {
   while (a) {
     if (a->type == ATTR_OBJECT || a->type == ATTR_ODL) return 1;
@@ -530,12 +530,12 @@ int is_object(attr_t *a)
   return 0;
 }
 
-int is_local(attr_t *a)
+int is_local(const attr_t *a)
 {
   return is_attr(a, ATTR_LOCAL);
 }
 
-const var_t *is_callas(attr_t *a)
+const var_t *is_callas(const attr_t *a)
 {
   return get_attrp(a, ATTR_CALLAS);
 }

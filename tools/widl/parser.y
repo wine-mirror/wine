@@ -623,11 +623,12 @@ dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(0, $2, 0); }
 	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(0, $2, 0); }
 	;
 
-dispinterfacehdr: attributes dispinterface	{ $$ = $2;
+dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
+						  $$ = $2;
 						  if ($$->defined) yyerror("multiple definition error\n");
-						  $$->attrs = $1;
-						  $$->attrs = make_attr(ATTR_DISPINTERFACE);
-						  LINK($$->attrs, $1);
+						  attrs = make_attr(ATTR_DISPINTERFACE);
+						  LINK(attrs, $1);
+						  $$->attrs = attrs;
 						  $$->ref = find_type("IDispatch", 0);
 						  if (!$$->ref) yyerror("IDispatch is undefined\n");
 						  $$->defined = TRUE;

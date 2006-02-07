@@ -183,7 +183,7 @@ struct _type_t {
   char *name;
   unsigned char type;
   struct _type_t *ref;
-  attr_t *attrs;
+  const attr_t *attrs;
   func_t *funcs;
   var_t *fields;
   int ignore, is_const, sign;
