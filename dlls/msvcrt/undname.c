@@ -1160,7 +1160,7 @@ char* __unDNameEx(char* buffer, const char* mangled, int buflen,
     struct parsed_symbol        sym;
     const char*                 result;
 
-    TRACE("(%p,%s,%d,%p,%p,%p,%x) stub!\n",
+    TRACE("(%p,%s,%d,%p,%p,%p,%x)\n",
           buffer, mangled, buflen, memget, memfree, unknown, flags);
     
     /* The flags details is not documented by MS. However, it looks exactly
