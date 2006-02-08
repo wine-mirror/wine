@@ -980,7 +980,7 @@ DECL_HANDLER(get_startup_info)
 /* signal the end of the process initialization */
 DECL_HANDLER(init_process_done)
 {
-    struct file *file = NULL;
+    struct process_dll *dll;
     struct process *process = current->process;
 
     if (is_process_init_done(process))
@@ -993,16 +993,29 @@ DECL_HANDLER(init_process_done)
         fatal_protocol_error( current, "init_process_done: module base address cannot be 0\n" );
         return;
     }
-    process->exe.base = req->module;
-    process->exe.size = req->module_size;
-    process->exe.name = req->name;
 
-    if (req->exe_file) file = get_file_obj( process, req->exe_file, FILE_READ_DATA );
     if (process->exe.file) release_object( process->exe.file );
-    process->exe.file = file;
 
-    if ((process->exe.namelen = get_req_data_size()))
-        process->exe.filename = memdup( get_req_data(), process->exe.namelen );
+    /* check if main exe has been registered as a dll already */
+    if ((dll = find_process_dll( process, req->module )))
+    {
+        list_remove( &dll->entry );
+        memcpy( &process->exe, dll, sizeof(*dll) );
+        list_init( &process->exe.entry );
+        free( dll );
+    }
+    else
+    {
+        struct file *file = NULL;
+
+        if (req->exe_file) file = get_file_obj( process, req->exe_file, FILE_READ_DATA );
+        process->exe.base = req->module;
+        process->exe.size = req->module_size;
+        process->exe.name = req->name;
+        process->exe.file = file;
+        if ((process->exe.namelen = get_req_data_size()))
+            process->exe.filename = memdup( get_req_data(), process->exe.namelen );
+    }
 
     generate_startup_debug_events( process, req->entry );
     set_process_startup_state( process, STARTUP_DONE );
