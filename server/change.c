@@ -416,7 +416,8 @@ static void inotify_do_change_notify( struct dir *dir, struct inotify_event *ie 
 
     if (dir->want_data)
     {
-        record = malloc( sizeof (*record) + ie->len - 1 ) ;
+        size_t len = strlen(ie->name);
+        record = malloc( offsetof(struct change_record, name[len]) );
         if (!record)
             return;
 
@@ -426,8 +427,8 @@ static void inotify_do_change_notify( struct dir *dir, struct inotify_event *ie 
             record->action = FILE_ACTION_REMOVED;
         else
             record->action = FILE_ACTION_MODIFIED;
-        memcpy( record->name, ie->name, ie->len );
-        record->len = strlen( ie->name );
+        memcpy( record->name, ie->name, len );
+        record->len = len;
 
         list_add_tail( &dir->change_records, &record->entry );
     }
@@ -456,13 +457,14 @@ static void inotify_poll_event( struct fd *fd, int event )
         return;
     }
 
-    for( ofs = 0; ofs < r; )
+    for( ofs = 0; ofs < r - offsetof(struct inotify_event, name); )
     {
         ie = (struct inotify_event*) &buffer[ofs];
         if (!ie->len)
             break;
+        ofs += offsetof( struct inotify_event, name[ie->len] );
+        if (ofs > r) break;
         inotify_do_change_notify( dir, ie );
-        ofs += (sizeof (*ie) + ie->len - 1);
     }
 }
 
