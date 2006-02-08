@@ -23,25 +23,14 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
-
-#define COBJMACROS
-#define COM_NO_WINDOWS_H
-
-#include "windef.h"
-#include "winbase.h"
-#include "winreg.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "ole2.h"
-#include "shlwapi.h"
-
-#include "shdocvw.h"
-#include "uuids.h"
-#include "urlmon.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
+
+#include "shdocvw.h"
+
+#include "winreg.h"
+#include "shlwapi.h"
 
 #include "initguid.h"
 
