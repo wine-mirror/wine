@@ -297,65 +297,6 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
 }
 
 
-/**********************************************************************
- *           load_pe_exe
- *
- * Load a PE format EXE file.
- */
-static HMODULE load_pe_exe( const WCHAR *name, HANDLE file )
-{
-    IO_STATUS_BLOCK io;
-    FILE_FS_DEVICE_INFORMATION device_info;
-    IMAGE_NT_HEADERS *nt;
-    HANDLE mapping;
-    void *module;
-    OBJECT_ATTRIBUTES attr;
-    LARGE_INTEGER size;
-    SIZE_T len = 0;
-
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-    size.QuadPart = 0;
-
-    if (NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
-                         &attr, &size, 0, SEC_IMAGE, file ) != STATUS_SUCCESS)
-        return NULL;
-
-    module = NULL;
-    if (NtMapViewOfSection( mapping, GetCurrentProcess(), &module, 0, 0, &size, &len,
-                            ViewShare, 0, PAGE_READONLY ) != STATUS_SUCCESS)
-        return NULL;
-
-    NtClose( mapping );
-
-    /* virus check */
-    nt = RtlImageNtHeader( module );
-    if (nt->OptionalHeader.AddressOfEntryPoint)
-    {
-        if (!RtlImageRvaToSection( nt, module, nt->OptionalHeader.AddressOfEntryPoint ))
-            MESSAGE("VIRUS WARNING: PE module %s has an invalid entrypoint (0x%08lx) "
-                    "outside all sections (possibly infected by Tchernobyl/SpaceFiller virus)!\n",
-                    debugstr_w(name), nt->OptionalHeader.AddressOfEntryPoint );
-    }
-
-    if (NtQueryVolumeInformationFile( file, &io, &device_info, sizeof(device_info),
-                                      FileFsDeviceInformation ) == STATUS_SUCCESS)
-    {
-        /* don't keep the file handle open on removable media */
-        if (device_info.Characteristics & FILE_REMOVABLE_MEDIA)
-        {
-            CloseHandle( main_exe_file );
-            main_exe_file = 0;
-        }
-    }
-
-    return module;
-}
-
 /***********************************************************************
  *           build_initial_environment
  *
@@ -1098,8 +1039,10 @@ void __wine_kernel_init(void)
     {
     case BINARY_PE_EXE:
         TRACE( "starting Win32 binary %s\n", debugstr_w(main_exe_name) );
-        if ((peb->ImageBaseAddress = load_pe_exe( main_exe_name, main_exe_file )))
-            goto found;
+        peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES );
+        CloseHandle( main_exe_file );
+        main_exe_file = 0;
+        if (peb->ImageBaseAddress) goto found;
         MESSAGE( "wine: could not load %s as Win32 binary\n", debugstr_w(main_exe_name) );
         ExitProcess(1);
     case BINARY_PE_DLL:
