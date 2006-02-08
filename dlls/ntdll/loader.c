@@ -2023,18 +2023,20 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
     WINE_MODREF *wm;
     LPCWSTR load_path;
     PEB *peb = NtCurrentTeb()->Peb;
-    UNICODE_STRING *main_exe_name = &peb->ProcessParameters->ImagePathName;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
 
-    version_init( main_exe_name->Buffer );
-
-    /* allocate the modref for the main exe */
-    if (!(wm = alloc_module( peb->ImageBaseAddress, main_exe_name->Buffer )))
+    /* allocate the modref for the main exe (if not already done) */
+    if (!(wm = get_modref( peb->ImageBaseAddress )) &&
+        !(wm = alloc_module( peb->ImageBaseAddress, peb->ProcessParameters->ImagePathName.Buffer )))
     {
         status = STATUS_NO_MEMORY;
         goto error;
     }
     wm->ldr.LoadCount = -1;  /* can't unload main exe */
+    wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
+
+    peb->ProcessParameters->ImagePathName = wm->ldr.FullDllName;
+    version_init( wm->ldr.FullDllName.Buffer );
 
     /* the main exe needs to be the first in the load order list */
     RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
@@ -2055,10 +2057,10 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
         req->module_size = wm->ldr.SizeOfImage;
         req->entry       = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
         /* API requires a double indirection */
-        req->name        = &main_exe_name->Buffer;
+        req->name        = &wm->ldr.FullDllName.Buffer;
         req->exe_file    = main_file;
         req->gui         = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
-        wine_server_add_data( req, main_exe_name->Buffer, main_exe_name->Length );
+        wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
         wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -2085,7 +2087,8 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
     return;
 
 error:
-    ERR( "Main exe initialization for %s failed, status %lx\n", debugstr_w(main_exe_name->Buffer), status );
+    ERR( "Main exe initialization for %s failed, status %lx\n",
+         debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), status );
     exit(1);
 }
 
