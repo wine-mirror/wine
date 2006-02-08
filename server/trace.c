@@ -641,7 +641,6 @@ static void dump_init_process_done_request( const struct init_process_done_reque
     fprintf( stderr, " module_size=%lu,", (unsigned long)req->module_size );
     fprintf( stderr, " entry=%p,", req->entry );
     fprintf( stderr, " name=%p,", req->name );
-    fprintf( stderr, " exe_file=%p,", req->exe_file );
     fprintf( stderr, " gui=%d,", req->gui );
     fprintf( stderr, " filename=" );
     dump_varargs_unicode_str( cur_size );

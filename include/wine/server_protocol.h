@@ -264,7 +264,6 @@ struct init_process_done_request
     size_t       module_size;
     void*        entry;
     void*        name;
-    obj_handle_t exe_file;
     int          gui;
     /* VARARG(filename,unicode_str); */
 };
@@ -4364,6 +4363,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 225
+#define SERVER_PROTOCOL_VERSION 226
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

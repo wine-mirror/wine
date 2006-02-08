@@ -258,7 +258,6 @@ struct security_descriptor
     size_t       module_size;  /* main module size */
     void*        entry;        /* process entry point */
     void*        name;         /* ptr to ptr to name (in process addr space) */
-    obj_handle_t exe_file;     /* file handle for main exe */
     int          gui;          /* is it a GUI process? */
     VARARG(filename,unicode_str); /* file name of main exe */
 @END

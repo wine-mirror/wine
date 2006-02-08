@@ -351,9 +351,6 @@ size_t init_process( struct thread *thread )
 
     if (!info) return 0;
 
-    /* retrieve the main exe file */
-    if (info->exe_file) process->exe.file = (struct file *)grab_object( info->exe_file );
-
     /* thread will be actually suspended in init_done */
     if (info->create_flags & CREATE_SUSPENDED) thread->suspend++;
 
@@ -994,8 +991,6 @@ DECL_HANDLER(init_process_done)
         return;
     }
 
-    if (process->exe.file) release_object( process->exe.file );
-
     /* check if main exe has been registered as a dll already */
     if ((dll = find_process_dll( process, req->module )))
     {
@@ -1006,13 +1001,9 @@ DECL_HANDLER(init_process_done)
     }
     else
     {
-        struct file *file = NULL;
-
-        if (req->exe_file) file = get_file_obj( process, req->exe_file, FILE_READ_DATA );
         process->exe.base = req->module;
         process->exe.size = req->module_size;
         process->exe.name = req->name;
-        process->exe.file = file;
         if ((process->exe.namelen = get_req_data_size()))
             process->exe.filename = memdup( get_req_data(), process->exe.namelen );
     }
