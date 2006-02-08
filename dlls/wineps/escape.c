@@ -82,10 +82,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 
     case MFCOMMENT:
     {
-	int i;
 	FIXME("MFCOMMENT(%p, %d)\n", in_data, cbInput);
-	for (i=0;i<cbInput;i++) MESSAGE("%02x ", ((LPBYTE)in_data)[i]);
-	MESSAGE("\n");
 	return 1;
     }
     case DRAWPATTERNRECT:
