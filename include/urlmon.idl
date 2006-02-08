@@ -84,6 +84,12 @@ interface IBindStatusCallback : IUnknown
 
     typedef enum
     {
+        BINDINFOF_URLENCODESTGMEDDATA = 0x00000001,
+        BINDINFOF_URLENCODEDEXTRAINFO = 0x00000002
+    } BINDINFOF;
+
+    typedef enum
+    {
         BINDF_ASYNCHRONOUS = 0x00000001,
         BINDF_ASYNCSTORAGE = 0x00000002,
         BINDF_NOPROGRESSIVERENDERING = 0x00000004,
