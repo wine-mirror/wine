@@ -2015,9 +2015,8 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  *
- * FIXME: the arguments are not correct, main_file is a Wine invention.
  */
-void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3, ULONG unknown4 )
+void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, ULONG unknown4 )
 {
     NTSTATUS status;
     WINE_MODREF *wm;
@@ -2058,14 +2057,11 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
         req->entry       = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
         /* API requires a double indirection */
         req->name        = &wm->ldr.FullDllName.Buffer;
-        req->exe_file    = main_file;
         req->gui         = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
         wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
         wine_server_call( req );
     }
     SERVER_END_REQ;
-
-    if (main_file) NtClose( main_file ); /* we no longer need it */
 
     RtlEnterCriticalSection( &loader_section );
 

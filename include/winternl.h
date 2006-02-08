@@ -1700,7 +1700,7 @@ NTSTATUS  WINAPI LdrFindResourceDirectory_U(HMODULE,const LDR_RESOURCE_INFO*,ULO
 NTSTATUS  WINAPI LdrFindResource_U(HMODULE,const LDR_RESOURCE_INFO*,ULONG,const IMAGE_RESOURCE_DATA_ENTRY**);
 NTSTATUS  WINAPI LdrGetDllHandle(ULONG, ULONG, const UNICODE_STRING*, HMODULE*);
 NTSTATUS  WINAPI LdrGetProcedureAddress(HMODULE, const ANSI_STRING*, ULONG, void**);
-void      WINAPI LdrInitializeThunk(HANDLE,ULONG,ULONG,ULONG);
+void      WINAPI LdrInitializeThunk(ULONG,ULONG,ULONG,ULONG);
 NTSTATUS  WINAPI LdrLoadDll(LPCWSTR, DWORD, const UNICODE_STRING*, HMODULE*);
 void      WINAPI LdrShutdownProcess(void);
 void      WINAPI LdrShutdownThread(void);

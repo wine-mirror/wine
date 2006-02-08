@@ -951,7 +951,7 @@ static void start_process( void *arg )
         IMAGE_NT_HEADERS *nt;
         LPTHREAD_START_ROUTINE entry;
 
-        LdrInitializeThunk( main_exe_file, 0, 0, 0 );
+        LdrInitializeThunk( 0, 0, 0, 0 );
 
         nt = RtlImageNtHeader( peb->ImageBaseAddress );
         entry = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
@@ -1039,10 +1039,8 @@ void __wine_kernel_init(void)
     {
     case BINARY_PE_EXE:
         TRACE( "starting Win32 binary %s\n", debugstr_w(main_exe_name) );
-        peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES );
-        CloseHandle( main_exe_file );
-        main_exe_file = 0;
-        if (peb->ImageBaseAddress) goto found;
+        if ((peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
+            goto found;
         MESSAGE( "wine: could not load %s as Win32 binary\n", debugstr_w(main_exe_name) );
         ExitProcess(1);
     case BINARY_PE_DLL:
@@ -1061,8 +1059,6 @@ void __wine_kernel_init(void)
     case BINARY_WIN16:
     case BINARY_DOS:
         TRACE( "starting Win16/DOS binary %s\n", debugstr_w(main_exe_name) );
-        CloseHandle( main_exe_file );
-        main_exe_file = 0;
         __wine_main_argv--;
         __wine_main_argc++;
         __wine_main_argv[0] = "winevdm.exe";
@@ -1079,8 +1075,6 @@ void __wine_kernel_init(void)
             char *unix_name;
 
             TRACE( "starting Winelib app %s\n", debugstr_w(main_exe_name) );
-            CloseHandle( main_exe_file );
-            main_exe_file = 0;
             if ((unix_name = wine_get_unix_file_name( main_exe_name )) &&
                 wine_dlopen( unix_name, RTLD_NOW, error, sizeof(error) ))
             {
@@ -1100,6 +1094,8 @@ void __wine_kernel_init(void)
     }
 
  found:
+    CloseHandle( main_exe_file );
+
     /* build command line */
     set_library_wargv( __wine_main_argv );
     if (!build_command_line( __wine_main_wargv )) goto error;
