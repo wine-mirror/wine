@@ -2943,6 +2943,21 @@ typedef struct tagICONMETRICSW {
 DECL_WINELIB_TYPE_AW(ICONMETRICS)
 DECL_WINELIB_TYPE_AW(PICONMETRICS)
 DECL_WINELIB_TYPE_AW(LPICONMETRICS)
+
+typedef struct tagUPDATELAYEREDWINDOWINFO
+{
+    DWORD                cbSize;
+    HDC                  hdcDst;
+    POINT CONST*         pptDst;
+    SIZE CONST*          psize;
+    HDC                  hdcSrc;
+    POINT CONST*         pptSrc;
+    COLORREF             crKey;
+    BLENDFUNCTION CONST* pblend;
+    DWORD                dwFlags;
+    RECT CONST*          prcDirty;
+} UPDATELAYEREDWINDOWINFO, *PUPDATELAYEREDWINDOWINFO;
+
 #endif /* defined(_WINGDI_) && !defined(NOGDI) */
 
 #define ARW_BOTTOMLEFT              0x0000L
@@ -3943,6 +3958,8 @@ BOOL        WINAPI EnumDisplaySettingsW(LPCWSTR,DWORD,LPDEVMODEW);
 BOOL        WINAPI EnumDisplaySettingsExA(LPCSTR,DWORD,LPDEVMODEA,DWORD);
 BOOL        WINAPI EnumDisplaySettingsExW(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
 #define     EnumDisplaySettingsEx WINELIB_NAME_AW(EnumDisplaySettingsEx)
+BOOL        WINAPI UpdateLayeredWindow(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
+BOOL        WINAPI UpdateLayeredWindowIndirect(HWND,UPDATELAYEREDWINDOWINFO CONST*);
 #endif /* defined(_WINGDI_) && !defined(NOGDI) */
 
 HKL         WINAPI ActivateKeyboardLayout(HKL,UINT);
@@ -4355,6 +4372,7 @@ BOOL        WINAPI GetKeyboardLayoutNameW(LPWSTR);
 SHORT       WINAPI GetKeyState(INT);
 HWND      WINAPI GetLastActivePopup(HWND);
 BOOL      WINAPI GetLastInputInfo(PLASTINPUTINFO);
+BOOL        WINAPI GetLayeredWindowAttributes(HWND,COLORREF*,BYTE*,DWORD*);
 HMENU     WINAPI GetMenu(HWND);
 INT       WINAPI GetMenuItemCount(HMENU);
 UINT      WINAPI GetMenuItemID(HMENU,INT);
