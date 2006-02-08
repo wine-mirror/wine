@@ -1653,8 +1653,6 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     SIZE szViewportExt, szWindowExt;
     DWORD mapMode, graphicsMode;
     XFORM xform;
-    HGDIOBJ hOldPen;
-    HPEN hNewPen;
     BOOL ret = TRUE;
 
     if(dc->funcs->pStrokePath)
@@ -1662,36 +1660,6 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 
     if(pPath->state != PATH_Closed)
         return FALSE;
-
-    /* Convert pen properties from logical to device units for MWT_IDENTITY */
-    hOldPen = GetCurrentObject(dc->hSelf, OBJ_PEN);
-    if(GetObjectType(hOldPen) == OBJ_EXTPEN) {
-	EXTLOGPEN elp;
-	LOGBRUSH lb;
-	GetObjectW(hOldPen, sizeof(EXTLOGPEN), &elp);
-	if(elp.elpPenStyle & PS_GEOMETRIC) {
-	    INTERNAL_WSTODS(dc, &elp.elpWidth);
-	    if(elp.elpPenStyle & PS_USERSTYLE)
-		for(i = 0; i < elp.elpNumEntries; i++)
-		    INTERNAL_WSTODS(dc, &elp.elpStyleEntry[i]);
-	}
-	lb.lbStyle = elp.elpBrushStyle;
-	lb.lbColor = elp.elpColor;
-	lb.lbHatch = elp.elpHatch;
-        if(elp.elpPenStyle & PS_USERSTYLE)
-	    hNewPen = ExtCreatePen(elp.elpPenStyle, elp.elpWidth, &lb,
-	                           elp.elpNumEntries, elp.elpStyleEntry);
-        else
-	    hNewPen = ExtCreatePen(elp.elpPenStyle, elp.elpWidth, &lb,
-	                           0, NULL);
-    } else /* OBJ_PEN */ {
-	LOGPEN lp;
-	GetObjectW(hOldPen, sizeof(LOGPEN), &lp);
-	if(lp.lopnWidth.x > 0)
-	    INTERNAL_WSTODS(dc, (DWORD*)&lp.lopnWidth.x);
-	hNewPen = CreatePenIndirect(&lp);
-    }
-    SelectObject(dc->hSelf, hNewPen);
     
     /* Save the mapping mode info */
     mapMode=GetMapMode(dc->hSelf);
@@ -1807,10 +1775,6 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
         DPtoLP(dc->hSelf, &pt, 1);
         MoveToEx(dc->hSelf, pt.x, pt.y, NULL);
     }
-
-    /* Restore old pen */
-    DeleteObject(hNewPen);
-    SelectObject(dc->hSelf, hOldPen);
 
     return ret;
 }
