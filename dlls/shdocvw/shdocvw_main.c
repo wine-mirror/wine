@@ -589,3 +589,11 @@ DWORD WINAPI SetQueryNetSessionCount(DWORD arg)
     FIXME("(%lu), stub!\n", arg);
     return 0;
 }
+
+/**********************************************************************
+ * OpenURL  (SHDOCVW.@)
+ */
+void WINAPI OpenURL(HWND hWnd, HINSTANCE hInst, LPCSTR lpcstrUrl, int nShowCmd)
+{
+    FIXME("%p %p %s %d\n", hWnd, hInst, debugstr_a(lpcstrUrl), nShowCmd);
+}

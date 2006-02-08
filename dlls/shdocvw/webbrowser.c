@@ -82,9 +82,6 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
         TRACE("(%p)->(IID_IProvideClassInfo2 %p)\n", This, ppv);
         *ppv = CLASSINFO(This);
-    }else if(IsEqualGUID(&IID_IQuickActivate, riid)) {
-        TRACE("(%p)->(IID_IQuickActivate %p)\n", This, ppv);
-        *ppv = QUICKACT(This);
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = CONPTCONT(This);
@@ -806,7 +803,6 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     WebBrowser_ViewObject_Init(ret);
     WebBrowser_Persist_Init(ret);
     WebBrowser_ClassInfo_Init(ret);
-    WebBrowser_Misc_Init(ret);
     WebBrowser_Events_Init(ret);
     WebBrowser_ClientSite_Init(ret);
     WebBrowser_DocHost_Init(ret);
