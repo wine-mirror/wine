@@ -37,6 +37,7 @@
 #include "shlobj.h"
 #include "exdisp.h"
 #include "mshtmhst.h"
+#include "hlink.h"
 
 /**********************************************************************
  * IClassFactory declaration for SHDOCVW.DLL
@@ -76,6 +77,7 @@ typedef struct {
     const IViewObject2Vtbl              *lpViewObjectVtbl;
     const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
     const IOleCommandTargetVtbl         *lpWBOleCommandTargetVtbl;
+    const IHlinkFrameVtbl               *lpHlinkFrameVtbl;
 
     /* Interfaces available for embeded document */
 
@@ -134,6 +136,7 @@ typedef struct {
 #define VIEWOBJ2(x)     ((IViewObject2*)                &(x)->lpViewObjectVtbl);
 #define ACTIVEOBJ(x)    ((IOleInPlaceActiveObject*)     &(x)->lpOleInPlaceActiveObjectVtbl)
 #define WBOLECMD(x)     ((IOleCommandTarget*)           &(x)->lpWBOleCommandTargetVtbl)
+#define HLINKFRAME(x)   ((IHlinkFrame*)                 &(x)->lpHlinkFrameVtbl)
 
 #define CLIENTSITE(x)   ((IOleClientSite*)              &(x)->lpOleClientSiteVtbl)
 #define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)
@@ -150,6 +153,7 @@ void WebBrowser_ViewObject_Init(WebBrowser*);
 void WebBrowser_Persist_Init(WebBrowser*);
 void WebBrowser_ClassInfo_Init(WebBrowser*);
 void WebBrowser_Events_Init(WebBrowser*);
+void WebBrowser_HlinkFrame_Init(WebBrowser*);
 
 void WebBrowser_ClientSite_Init(WebBrowser*);
 void WebBrowser_DocHost_Init(WebBrowser*);

@@ -97,6 +97,9 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
         *ppv = WBOLECMD(This);
+    }else if(IsEqualGUID(&IID_IHlinkFrame, riid)) {
+        TRACE("(%p)->(IID_IHlinkFrame %p)\n", This, ppv);
+        *ppv = HLINKFRAME(This);
     }
 
     if(*ppv) {
@@ -807,6 +810,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     WebBrowser_ClientSite_Init(ret);
     WebBrowser_DocHost_Init(ret);
     WebBrowser_Frame_Init(ret);
+    WebBrowser_HlinkFrame_Init(ret);
 
     hres = IWebBrowser_QueryInterface(WEBBROWSER(ret), riid, ppv);
     if(SUCCEEDED(hres)) {
