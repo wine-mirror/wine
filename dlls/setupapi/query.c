@@ -63,16 +63,29 @@ static BOOL fill_inf_info(HINF inf, PSP_INF_INFORMATION buffer, DWORD size, DWOR
 /***********************************************************************
  *      SetupGetInfInformationA    (SETUPAPI.@)
  *
- * BUGS
- *   If SearchControl is anything other than INFINFO_INF_SPEC_IS_HINF,
- *   then InfSpec needs to be converted to unicode.
  */
 BOOL WINAPI SetupGetInfInformationA(LPCVOID InfSpec, DWORD SearchControl,
                                     PSP_INF_INFORMATION ReturnBuffer,
                                     DWORD ReturnBufferSize, PDWORD RequiredSize)
 {
-    return SetupGetInfInformationW(InfSpec, SearchControl, ReturnBuffer,
-                                   ReturnBufferSize, RequiredSize);
+    LPWSTR inf = (LPWSTR)InfSpec;
+    DWORD len;
+    BOOL ret;
+
+    if (InfSpec && SearchControl >= INFINFO_INF_NAME_IS_ABSOLUTE)
+    {
+        len = lstrlenA(InfSpec) + 1;
+        inf = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, InfSpec, -1, inf, len);
+    }
+
+    ret = SetupGetInfInformationW(inf, SearchControl, ReturnBuffer,
+                                  ReturnBufferSize, RequiredSize);
+
+    if (SearchControl >= INFINFO_INF_NAME_IS_ABSOLUTE)
+        HeapFree(GetProcessHeap(), 0, inf);
+
+    return ret;
 }
 
 /***********************************************************************
