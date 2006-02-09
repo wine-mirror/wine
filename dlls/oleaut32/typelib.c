@@ -196,7 +196,7 @@ static WCHAR *get_lcid_subkey( LCID lcid, SYSKIND syskind, WCHAR *buffer )
     return buffer;
 }
 
-int TLB_ReadTypeLib(LPCWSTR file, INT index, ITypeLib2 **ppTypelib);
+static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, ITypeLib2 **ppTypeLib);
 
 
 /****************************************************************************
@@ -333,38 +333,14 @@ HRESULT WINAPI LoadTypeLibEx(
     REGKIND  regkind,  /* [in] Specify kind of registration */
     ITypeLib **pptLib) /* [out] Pointer to pointer to loaded type library */
 {
-    WCHAR szPath[MAX_PATH+1], szFileCopy[MAX_PATH+1];
-    WCHAR *pIndexStr;
+    WCHAR szPath[MAX_PATH+1];
     HRESULT res;
-    INT index = 1;
 
     TRACE("(%s,%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
 
-    /* by default try and load using LoadLibrary (for builtin stdole32.tlb) */
-    memcpy(szPath, szFile, (strlenW(szFile)+1)*sizeof(WCHAR));
-    
     *pptLib = NULL;
-    if(!SearchPathW(NULL,szFile,NULL,sizeof(szPath)/sizeof(WCHAR),szPath,
-		    NULL)) {
 
-        /* Look for a trailing '\\' followed by an index */
-        pIndexStr = strrchrW(szFile, '\\');
-	if(pIndexStr && pIndexStr != szFile && *++pIndexStr != '\0') {
-	    index = atoiW(pIndexStr);
-	    memcpy(szFileCopy, szFile,
-		   (pIndexStr - szFile - 1) * sizeof(WCHAR));
-	    szFileCopy[pIndexStr - szFile - 1] = '\0';
-	    if(!SearchPathW(NULL,szFileCopy,NULL,sizeof(szPath)/sizeof(WCHAR),
-			    szPath,NULL))
-	        return TYPE_E_CANTLOADLIBRARY;
-	    if (GetFileAttributesW(szFileCopy) & FILE_ATTRIBUTE_DIRECTORY)
-		return TYPE_E_CANTLOADLIBRARY;
-	}
-    }
-
-    TRACE("File %s index %d\n", debugstr_w(szPath), index);
-
-    res = TLB_ReadTypeLib(szPath, index, (ITypeLib2**)pptLib);
+    res = TLB_ReadTypeLib(szFile, szPath, MAX_PATH + 1, (ITypeLib2**)pptLib);
 
     if (SUCCEEDED(res))
         switch(regkind)
@@ -2188,16 +2164,35 @@ static CRITICAL_SECTION cache_section = { &cache_section_debug, -1, 0, 0, 0, 0 }
  */
 #define MSFT_SIGNATURE 0x5446534D /* "MSFT" */
 #define SLTG_SIGNATURE 0x47544c53 /* "SLTG" */
-int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
+static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, ITypeLib2 **ppTypeLib)
 {
     ITypeLibImpl *entry;
     int ret = TYPE_E_CANTLOADLIBRARY;
     DWORD dwSignature = 0;
     HANDLE hFile;
-
-    TRACE_(typelib)("%s:%d\n", debugstr_w(pszFileName), index);
+    INT index = 1;
 
     *ppTypeLib = NULL;
+
+    if (!SearchPathW(NULL, pszFileName, NULL, cchPath, pszPath, NULL))
+    {
+        WCHAR szFileCopy[MAX_PATH+1];
+        /* Look for a trailing '\\' followed by an index */
+        WCHAR *pIndexStr = strrchrW(pszFileName, '\\');
+        if(pIndexStr && pIndexStr != pszFileName && *++pIndexStr != '\0')
+        {
+            index = atoiW(pIndexStr);
+            memcpy(szFileCopy, pszFileName,
+                   (pIndexStr - pszFileName - 1) * sizeof(WCHAR));
+            szFileCopy[pIndexStr - pszFileName - 1] = '\0';
+            if (!SearchPathW(NULL, szFileCopy, NULL, cchPath, pszPath, NULL))
+                return TYPE_E_CANTLOADLIBRARY;
+            if (GetFileAttributesW(szFileCopy) & FILE_ATTRIBUTE_DIRECTORY)
+                return TYPE_E_CANTLOADLIBRARY;
+        }
+    }
+
+    TRACE_(typelib)("File %s index %d\n", debugstr_w(pszPath), index);
 
     /* We look the path up in the typelib cache. If found, we just addref it, and return the pointer. */
     EnterCriticalSection(&cache_section);
@@ -2215,7 +2210,7 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
     LeaveCriticalSection(&cache_section);
 
     /* check the signature of the file */
-    hFile = CreateFileW( pszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    hFile = CreateFileW( pszPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
     if (INVALID_HANDLE_VALUE != hFile)
     {
       HANDLE hMapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
@@ -2252,7 +2247,7 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
     if (((WORD)dwSignature == IMAGE_DOS_SIGNATURE) || (dwSignature == 0))
     {
       /* find the typelibrary resource*/
-      HINSTANCE hinstDLL = LoadLibraryExW(pszFileName, 0, DONT_RESOLVE_DLL_REFERENCES|
+      HINSTANCE hinstDLL = LoadLibraryExW(pszPath, 0, DONT_RESOLVE_DLL_REFERENCES|
                                           LOAD_LIBRARY_AS_DATAFILE|LOAD_WITH_ALTERED_SEARCH_PATH);
       if (hinstDLL)
       {
