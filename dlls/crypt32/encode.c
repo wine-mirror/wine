@@ -84,10 +84,6 @@ typedef BOOL (WINAPI *CryptDecodeObjectExFunc)(DWORD, LPCSTR, const BYTE *,
  * built-in functions, but the parameters are retained to simplify
  * CryptEncodeObjectEx/CryptDecodeObjectEx, since they must call functions in
  * external DLLs that follow these signatures.
- * FIXME: some built-in functions are suitable to be called directly by
- * CryptEncodeObjectEx/CryptDecodeObjectEx (they implement exception handling
- * and memory allocation if requested), others are only suitable to be called
- * internally.  Comment which are which.
  */
 static BOOL WINAPI CRYPT_AsnEncodeOid(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
@@ -126,7 +122,7 @@ static BOOL WINAPI CRYPT_AsnEncodeChoiceOfTime(DWORD dwCertEncodingType,
 static BOOL WINAPI CRYPT_AsnDecodeChoiceOfTime(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo);
-static BOOL WINAPI CRYPT_AsnDecodePubKeyInfo(DWORD dwCertEncodingType,
+static BOOL WINAPI CRYPT_AsnDecodePubKeyInfoInternal(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo);
 /* Like CRYPT_AsnDecodeExtensions, except assumes rgExtension is set ahead of
@@ -3067,12 +3063,9 @@ static BOOL WINAPI CRYPT_AsnDecodeCertInfo(DWORD dwCertEncodingType,
          { 0, offsetof(CERT_INFO, Subject), CRYPT_AsnDecodeDerBlob,
            sizeof(CRYPT_DER_BLOB), FALSE, TRUE, offsetof(CERT_INFO,
            Subject.pbData) },
-         /* jil FIXME: shouldn't this have an internal version, which expects
-          * the pbData to be set?
-          */
          { ASN_SEQUENCEOF, offsetof(CERT_INFO, SubjectPublicKeyInfo),
-           CRYPT_AsnDecodePubKeyInfo, sizeof(CERT_PUBLIC_KEY_INFO), FALSE,
-           TRUE, offsetof(CERT_INFO,
+           CRYPT_AsnDecodePubKeyInfoInternal, sizeof(CERT_PUBLIC_KEY_INFO),
+           FALSE, TRUE, offsetof(CERT_INFO,
            SubjectPublicKeyInfo.Algorithm.Parameters.pbData), 0 },
          { ASN_BITSTRING, offsetof(CERT_INFO, IssuerUniqueId),
            CRYPT_AsnDecodeBitsInternal, sizeof(CRYPT_BIT_BLOB), TRUE, TRUE,
@@ -3690,6 +3683,29 @@ static BOOL WINAPI CRYPT_AsnDecodeAlgorithmId(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnDecodePubKeyInfoInternal(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret = TRUE;
+    struct AsnDecodeSequenceItem items[] = {
+     { ASN_SEQUENCEOF, offsetof(CERT_PUBLIC_KEY_INFO, Algorithm),
+       CRYPT_AsnDecodeAlgorithmId, sizeof(CRYPT_ALGORITHM_IDENTIFIER),
+       FALSE, TRUE, offsetof(CERT_PUBLIC_KEY_INFO,
+       Algorithm.pszObjId) },
+     { ASN_BITSTRING, offsetof(CERT_PUBLIC_KEY_INFO, PublicKey),
+       CRYPT_AsnDecodeBitsInternal, sizeof(CRYPT_BIT_BLOB), FALSE, TRUE,
+       offsetof(CERT_PUBLIC_KEY_INFO, PublicKey.pbData) },
+    };
+    PCERT_PUBLIC_KEY_INFO info = (PCERT_PUBLIC_KEY_INFO)pvStructInfo;
+
+    ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
+     sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, pcbStructInfo, info ?
+     info->Algorithm.Parameters.pbData : NULL);
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnDecodePubKeyInfo(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
@@ -3698,19 +3714,30 @@ static BOOL WINAPI CRYPT_AsnDecodePubKeyInfo(DWORD dwCertEncodingType,
 
     __TRY
     {
-        struct AsnDecodeSequenceItem items[] = {
-         { ASN_SEQUENCEOF, offsetof(CERT_PUBLIC_KEY_INFO, Algorithm),
-           CRYPT_AsnDecodeAlgorithmId, sizeof(CRYPT_ALGORITHM_IDENTIFIER),
-           FALSE, TRUE, offsetof(CERT_PUBLIC_KEY_INFO,
-           Algorithm.pszObjId) },
-         { ASN_BITSTRING, offsetof(CERT_PUBLIC_KEY_INFO, PublicKey),
-           CRYPT_AsnDecodeBitsInternal, sizeof(CRYPT_BIT_BLOB), FALSE, TRUE,
-           offsetof(CERT_PUBLIC_KEY_INFO, PublicKey.pbData) },
-        };
+        DWORD bytesNeeded;
 
-        ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
-         sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
-         pDecodePara, pvStructInfo, pcbStructInfo, NULL);
+        if ((ret = CRYPT_AsnDecodePubKeyInfoInternal(dwCertEncodingType,
+         lpszStructType, pbEncoded, cbEncoded,
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, &bytesNeeded)))
+        {
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                PCERT_PUBLIC_KEY_INFO info;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                info = (PCERT_PUBLIC_KEY_INFO)pvStructInfo;
+                info->Algorithm.Parameters.pbData = (BYTE *)pvStructInfo +
+                 sizeof(CERT_PUBLIC_KEY_INFO);
+                ret = CRYPT_AsnDecodePubKeyInfoInternal(dwCertEncodingType,
+                 lpszStructType, pbEncoded, cbEncoded,
+                 dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, pvStructInfo,
+                 &bytesNeeded);
+            }
+        }
     }
     __EXCEPT_PAGE_FAULT
     {
