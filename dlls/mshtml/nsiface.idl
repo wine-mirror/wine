@@ -45,6 +45,7 @@ typedef BOOL PRBool;
 typedef LARGE_INTEGER PRInt64;
 typedef ULARGE_INTEGER PRUint64;
 typedef PRUint64 DOMTimeStamp;
+typedef PRUint32 nsLoadFlags;
 
 typedef struct nsCStringContainer nsCStringContainer;
 typedef struct nsStringContainer nsStringContainer;
@@ -73,13 +74,14 @@ typedef nsISupports nsISHistory;
 typedef nsISupports nsISimpleEnumerator;
 typedef nsISupports nsIWidget;
 typedef nsISupports nsIProtocolHandler;
-typedef nsISupports nsIChannel;
 typedef nsISupports nsIDOMElement;
 typedef nsISupports nsIDOMNode;
 typedef nsISupports nsIDOMEventTarget;
 typedef nsISupports nsIDOMAbstractView;
-typedef nsISupports nsIRequest;
 typedef nsISupports nsIStreamListener;
+typedef nsISupports nsILoadGroup;
+typedef nsISupports nsIInterfaceRequestor;
+typedef nsISupports nsIHttpHeaderVisitor;
 
 [
     object,
@@ -158,6 +160,75 @@ interface nsIURI : nsISupports
     nsresult GetAsciiSpec(nsACString *aAsciiSpec);
     nsresult GetAsciiHost(nsACString *aAsciiHost);
     nsresult GetOriginCharset(nsACString *aOriginCharset);
+}
+
+[
+    object,
+    uuid(ef6bfbd2-fd46-48d8-96b7-9f8f0fd387fe)
+]
+interface nsIRequest : nsISupports
+{
+    nsresult GetName(nsACString *aName);
+    nsresult IsPending(PRBool *_retval);
+    nsresult GetStatus(nsresult *aStatus);
+    nsresult Cancel(nsresult aStatus);
+    nsresult Suspend();
+    nsresult Resume();
+    nsresult GetLoadGroup(nsILoadGroup **aLoadGroup);
+    nsresult SetLoadGroup(nsILoadGroup *aLoadGroup);
+    nsresult GetLoadFlags(nsLoadFlags *aLoadFlags);
+    nsresult SetLoadFlags(nsLoadFlags aLoadFlags);
+}
+
+[
+    object,
+    uuid(c63a055a-a676-4e71-bf3c-6cfa11082018)
+]
+interface nsIChannel : nsIRequest
+{
+    nsresult GetOriginalURI(nsIURI **aOriginalURI);
+    nsresult SetOriginalURI(nsIURI *aOriginalURI);
+    nsresult GetURI(nsIURI **aURI);
+    nsresult GetOwner(nsISupports **aOwner);
+    nsresult SetOwner(nsISupports *aOwner);
+    nsresult GetNotificationCallbacks(nsIInterfaceRequestor **aNotificationCallbacks);
+    nsresult SetNotificationCallbacks(nsIInterfaceRequestor *aNotificationCallbacks);
+    nsresult GetSecurityInfo(nsISupports **aSecurityInfo);
+    nsresult GetContentType(nsACString *aContentType);
+    nsresult SetContentType(const nsACString *aContentType);
+    nsresult GetContentCharset(nsACString *aContentCharset);
+    nsresult SetContentCharset(const nsACString *aContentCharset);
+    nsresult GetContentLength(PRInt32 *aContentLength);
+    nsresult SetContentLength(PRInt32 aContentLength);
+    nsresult Open(nsIInputStream **_retval);
+    nsresult AsyncOpen(nsIStreamListener *aListener, nsISupports *aContext);
+}
+
+[
+    object,
+    uuid(9277fe09-f0cc-4cd9-bbce-581dd94b0260)
+]
+interface nsIHttpChannel : nsIChannel
+{
+    nsresult GetRequestMethod(nsACString *aRequestMethod);
+    nsresult SetRequestMethod(const nsACString *aRequestMethod);
+    nsresult GetReferrer(nsIURI **aReferrer);
+    nsresult SetReferrer(nsIURI *aReferrer);
+    nsresult GetRequestHeader(const nsACString *aHeader, nsACString *_retval);
+    nsresult SetRequestHeader(const nsACString *aHeader, const nsACString *aValue, PRBool aMerge);
+    nsresult VisitRequestHeaders(nsIHttpHeaderVisitor *aVisitor);
+    nsresult GetAllowPipelining(PRBool *aAllowPipelining);
+    nsresult SetAllowPipelining(PRBool aAllowPipelining);
+    nsresult GetRedirectionLimit(PRUint32 *aRedirectionLimit);
+    nsresult SetRedirectionLimit(PRUint32 aRedirectionLimit);
+    nsresult GetResponseStatus(PRUint32 *aResponseStatus);
+    nsresult GetResponseStatusText(nsACString *aResponseStatusText);
+    nsresult GetRequestSucceeded(PRBool *aRequestSucceeded);
+    nsresult GetResponseHeader(const nsACString *header, nsACString *_retval);
+    nsresult SetResponseHeader(const nsACString *header, const nsACString *value, PRBool merge);
+    nsresult VisitResponseHeaders(nsIHttpHeaderVisitor *aVisitor);
+    nsresult IsNoStoreResponse(PRBool *_retval);
+    nsresult IsNoCacheResponse(PRBool *_retval);
 }
 
 [
