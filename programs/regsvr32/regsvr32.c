@@ -53,6 +53,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
+#include <ole2.h>
 
 typedef HRESULT (*DLLREGISTER)          (void);
 typedef HRESULT (*DLLUNREGISTER)        (void);
@@ -184,6 +185,7 @@ int main(int argc, char* argv[])
     WCHAR*          wsCommandLine = NULL;
     WCHAR           EmptyLine[1] = {0};
 
+    OleInitialize(NULL);
 
     /* Strictly, the Microsoft version processes all the flags before
      * the files (e.g. regsvr32 file1 /s file2 is silent even for file1.
@@ -277,6 +279,8 @@ int main(int argc, char* argv[])
         else
             return -1;
     }
+
+    OleUninitialize();
 
     return 0;
 }
