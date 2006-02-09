@@ -30,9 +30,11 @@
 #include <sys/mtio.h>
 #endif
 
-/* FreeBSD, for example, has MTCOMP instead of MTCOMPRESSION. */
 #if !defined(MTCOMPRESSION) && defined(MTCOMP)
 #define MTCOMPRESSION MTCOMP
+#endif
+#if !defined(MTSETBLK) && defined(MTSETBSIZ)
+#define MTSETBLK MTSETBSIZ
 #endif
 
 #define NONAMELESSUNION
