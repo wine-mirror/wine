@@ -42,6 +42,320 @@ static IID NS_IOSERVICE_CID =
 
 static nsIIOService *nsio = NULL;
 
+typedef struct {
+    const nsIWineURIVtbl *lpWineURIVtbl;
+
+    LONG ref;
+
+    nsIURI *uri;
+    NSContainer *container;
+} nsURI;
+
+#define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
+
+#define NSURI_THIS(iface) DEFINE_THIS(nsURI, WineURI, iface)
+
+static nsresult NSAPI nsURI_QueryInterface(nsIWineURI *iface, nsIIDRef riid, nsQIResult result)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    *result = NULL;
+
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(%p)->(IID_nsISupports %p)\n", This, result);
+        *result = NSURI(This);
+    }else if(IsEqualGUID(&IID_nsIURI, riid)) {
+        TRACE("(%p)->(IID_nsIURI %p)\n", This, result);
+        *result = NSURI(This);
+    }else if(IsEqualGUID(&IID_nsIWineURI, riid)) {
+        TRACE("(%p)->(IID_nsIWineURI %p)\n", This, result);
+        *result = NSURI(This);
+    }
+
+    if(*result) {
+        nsIURI_AddRef(NSURI(This));
+        return NS_OK;
+    }
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
+    return nsIURI_QueryInterface(This->uri, riid, result);
+}
+
+static nsrefcnt NSAPI nsURI_AddRef(nsIWineURI *iface)
+{
+    nsURI *This = NSURI_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    return ref;
+}
+
+static nsrefcnt NSAPI nsURI_Release(nsIWineURI *iface)
+{
+    nsURI *This = NSURI_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    if(!ref) {
+        nsIURI_Release(This->uri);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static nsresult NSAPI nsURI_GetSpec(nsIWineURI *iface, nsACString *aSpec)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aSpec);
+    return nsIURI_GetSpec(This->uri, aSpec);
+}
+
+static nsresult NSAPI nsURI_SetSpec(nsIWineURI *iface, const nsACString *aSpec)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aSpec);
+    return nsIURI_SetSpec(This->uri, aSpec);
+}
+
+static nsresult NSAPI nsURI_GetPrePath(nsIWineURI *iface, nsACString *aPrePath)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aPrePath);
+    return nsIURI_GetPrePath(This->uri, aPrePath);
+}
+
+static nsresult NSAPI nsURI_GetScheme(nsIWineURI *iface, nsACString *aScheme)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aScheme);
+    return nsIURI_GetScheme(This->uri, aScheme);
+}
+
+static nsresult NSAPI nsURI_SetScheme(nsIWineURI *iface, const nsACString *aScheme)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aScheme);
+    return nsIURI_SetScheme(This->uri, aScheme);
+}
+
+static nsresult NSAPI nsURI_GetUserPass(nsIWineURI *iface, nsACString *aUserPass)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aUserPass);
+    return nsIURI_GetUserPass(This->uri, aUserPass);
+}
+
+static nsresult NSAPI nsURI_SetUserPass(nsIWineURI *iface, const nsACString *aUserPass)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aUserPass);
+    return nsIURI_SetUserPass(This->uri, aUserPass);
+}
+
+static nsresult NSAPI nsURI_GetUsername(nsIWineURI *iface, nsACString *aUsername)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aUsername);
+    return nsIURI_GetUsername(This->uri, aUsername);
+}
+
+static nsresult NSAPI nsURI_SetUsername(nsIWineURI *iface, const nsACString *aUsername)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aUsername);
+    return nsIURI_SetUsername(This->uri, aUsername);
+}
+
+static nsresult NSAPI nsURI_GetPassword(nsIWineURI *iface, nsACString *aPassword)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aPassword);
+    return nsIURI_GetPassword(This->uri, aPassword);
+}
+
+static nsresult NSAPI nsURI_SetPassword(nsIWineURI *iface, const nsACString *aPassword)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aPassword);
+    return nsIURI_SetPassword(This->uri, aPassword);
+}
+
+static nsresult NSAPI nsURI_GetHostPort(nsIWineURI *iface, nsACString *aHostPort)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aHostPort);
+    return nsIURI_GetHostPort(This->uri, aHostPort);
+}
+
+static nsresult NSAPI nsURI_SetHostPort(nsIWineURI *iface, const nsACString *aHostPort)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aHostPort);
+    return nsIURI_SetHostPort(This->uri, aHostPort);
+}
+
+static nsresult NSAPI nsURI_GetHost(nsIWineURI *iface, nsACString *aHost)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aHost);
+    return nsIURI_GetHost(This->uri, aHost);
+}
+
+static nsresult NSAPI nsURI_SetHost(nsIWineURI *iface, const nsACString *aHost)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aHost);
+    return nsIURI_SetHost(This->uri, aHost);
+}
+
+static nsresult NSAPI nsURI_GetPort(nsIWineURI *iface, PRInt32 *aPort)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aPort);
+    return nsIURI_GetPort(This->uri, aPort);
+}
+
+static nsresult NSAPI nsURI_SetPort(nsIWineURI *iface, PRInt32 aPort)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%ld)\n", This, aPort);
+    return nsIURI_SetPort(This->uri, aPort);
+}
+
+static nsresult NSAPI nsURI_GetPath(nsIWineURI *iface, nsACString *aPath)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aPath);
+    return nsIURI_GetPath(This->uri, aPath);
+}
+
+static nsresult NSAPI nsURI_SetPath(nsIWineURI *iface, const nsACString *aPath)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aPath);
+    return nsIURI_SetPath(This->uri, aPath);
+}
+
+static nsresult NSAPI nsURI_Equals(nsIWineURI *iface, nsIURI *other, PRBool *_retval)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p %p)\n", This, other, _retval);
+    return nsIURI_Equals(This->uri, other, _retval);
+}
+
+static nsresult NSAPI nsURI_SchemeIs(nsIWineURI *iface, const char *scheme, PRBool *_retval)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_a(scheme), _retval);
+    return nsIURI_SchemeIs(This->uri, scheme, _retval);
+}
+
+static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, _retval);
+    return nsIURI_Clone(This->uri, _retval);
+}
+
+static nsresult NSAPI nsURI_Resolve(nsIWineURI *iface, const nsACString *arelativePath,
+        nsACString *_retval)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p %p)\n", This, arelativePath, _retval);
+    return nsIURI_Resolve(This->uri, arelativePath, _retval);
+}
+
+static nsresult NSAPI nsURI_GetAsciiSpec(nsIWineURI *iface, nsACString *aAsciiSpec)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aAsciiSpec);
+    return nsIURI_GetAsciiSpec(This->uri, aAsciiSpec);
+}
+
+static nsresult NSAPI nsURI_GetAsciiHost(nsIWineURI *iface, nsACString *aAsciiHost)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aAsciiHost);
+    return nsIURI_GetAsciiHost(This->uri, aAsciiHost);
+}
+
+static nsresult NSAPI nsURI_GetOriginCharset(nsIWineURI *iface, nsACString *aOriginCharset)
+{
+    nsURI *This = NSURI_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, aOriginCharset);
+    return nsIURI_GetOriginCharset(This->uri, aOriginCharset);
+}
+
+static nsresult NSAPI nsURI_GetNSContainer(nsIWineURI *iface, NSContainer **aContainer)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aContainer);
+
+    if(This->container)
+        nsIWebBrowserChrome_AddRef(NSWBCHROME(This->container));
+    *aContainer = This->container;
+
+    return NS_OK;
+}
+
+static nsresult NSAPI nsURI_SetNSContainer(nsIWineURI *iface, NSContainer *aContainer)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aContainer);
+
+    if(This->container) {
+        WARN("Container already set: %p\n", This->container);
+        nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
+    }
+
+    if(aContainer)
+        nsIWebBrowserChrome_AddRef(NSWBCHROME(aContainer));
+    This->container = aContainer;
+
+    return NS_OK;
+}
+
+#undef NSURI_THIS
+
+static const nsIWineURIVtbl nsWineURIVtbl = {
+    nsURI_QueryInterface,
+    nsURI_AddRef,
+    nsURI_Release,
+    nsURI_GetSpec,
+    nsURI_SetSpec,
+    nsURI_GetPrePath,
+    nsURI_GetScheme,
+    nsURI_SetScheme,
+    nsURI_GetUserPass,
+    nsURI_SetUserPass,
+    nsURI_GetUsername,
+    nsURI_SetUsername,
+    nsURI_GetPassword,
+    nsURI_SetPassword,
+    nsURI_GetHostPort,
+    nsURI_SetHostPort,
+    nsURI_GetHost,
+    nsURI_SetHost,
+    nsURI_GetPort,
+    nsURI_SetPort,
+    nsURI_GetPath,
+    nsURI_SetPath,
+    nsURI_Equals,
+    nsURI_SchemeIs,
+    nsURI_Clone,
+    nsURI_Resolve,
+    nsURI_GetAsciiSpec,
+    nsURI_GetAsciiHost,
+    nsURI_GetOriginCharset,
+    nsURI_GetNSContainer,
+    nsURI_SetNSContainer,
+};
+
 static nsresult NSAPI nsIOService_QueryInterface(nsIIOService *iface, nsIIDRef riid,
                                                  nsQIResult result)
 {
@@ -91,8 +405,55 @@ static nsresult NSAPI nsIOService_GetProtocolFlags(nsIIOService *iface, const ch
 static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *aSpec,
         const char *aOriginCharset, nsIURI *aBaseURI, nsIURI **_retval)
 {
-    TRACE("(%p %s %p %p)\n", aSpec, debugstr_a(aOriginCharset), aBaseURI, _retval);
-    return nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, _retval);
+    const char *spec = NULL;
+    nsIURI *uri;
+    nsURI *ret;
+    PRBool is_javascript = FALSE;
+    nsresult nsres;
+
+    nsACString_GetData(aSpec, &spec, NULL);
+
+    TRACE("(%p(%s) %s %p %p)\n", aSpec, debugstr_a(spec), debugstr_a(aOriginCharset),
+          aBaseURI, _retval);
+
+    if(aBaseURI) {
+        nsACString *base_uri_str = nsACString_Create();
+        const char *base_uri = NULL;
+
+        nsres = nsIURI_GetSpec(aBaseURI, base_uri_str);
+        if(NS_SUCCEEDED(nsres)) {
+            nsACString_GetData(base_uri_str, &base_uri, NULL);
+            TRACE("uri=%s\n", debugstr_a(base_uri));
+        }else {
+            ERR("GetSpec failed: %08lx\n", nsres);
+        }
+
+        nsACString_Destroy(base_uri_str);
+    }
+
+    nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
+    if(NS_FAILED(nsres)) {
+        WARN("NewURI failed: %08lx\n", nsres);
+        return nsres;
+    }
+
+    nsIURI_SchemeIs(uri, "javascript", &is_javascript);
+    if(is_javascript) {
+        TRACE("returning javascript uri: %p\n", uri);
+        *_retval = uri;
+        return NS_OK;
+    }
+
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsURI));
+
+    ret->lpWineURIVtbl = &nsWineURIVtbl;
+    ret->ref = 1;
+    ret->uri = uri;
+    ret->container = NULL;
+
+    TRACE("_retval = %p\n", ret);
+    *_retval = NSURI(ret);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsIOService_NewFileURI(nsIIOService *iface, nsIFile *aFile,

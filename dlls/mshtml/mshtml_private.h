@@ -38,7 +38,6 @@
 
 #define NSAPI WINAPI
 
-typedef struct NSContainer NSContainer;
 typedef struct BindStatusCallback BindStatusCallback;
 
 typedef struct {
