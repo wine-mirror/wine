@@ -742,9 +742,11 @@ static void joy_polldev(JoystickImpl *This) {
 	    This->ff_state = ie.value;
 	    break;
 #endif
+#ifdef EV_SYN
 	case EV_SYN:
 	    /* there is nothing to do */
 	    break;
+#endif
 	default:
 	    FIXME("joystick cannot handle type %d event (code %d)\n",ie.type,ie.code);
 	    break;
