@@ -1676,6 +1676,11 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
             typeinfo->datatype1 = offset;
             break;
           }
+
+        case ATTR_DUAL:
+            typeinfo->flags |= 0x40; /* TYPEFLAG_FDUAL */
+            break;
+
         case ATTR_HELPCONTEXT:
           {
             expr_t *expr = (expr_t*)attr->u.pval;
@@ -1704,6 +1709,10 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
             break;
 
         case ATTR_ODL:
+            break;
+
+        case ATTR_OLEAUTOMATION:
+            typeinfo->flags |= 0x100; /* TYPEFLAG_FOLEAUTOMATION */
             break;
 
         case ATTR_PUBLIC:
@@ -1824,6 +1833,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     msft_typeinfo_t *msft_typeinfo;
     int num_parents = 0, num_funcs = 0;
     const attr_t *attr;
+    const type_t *derived;
 
     for(attr = interface->attrs; attr; attr = NEXT_LINK(attr))
         if(attr->type == ATTR_DISPINTERFACE)
@@ -1840,6 +1850,14 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
                                          typelib->typelib_header.nrtypeinfos);
     msft_typeinfo->typeinfo->size = 4;
     msft_typeinfo->typeinfo->typekind |= 0x2200;
+
+    for (derived = interface->ref; derived; derived = derived->ref)
+        if (derived->name && !strcmp(derived->name, "IDispatch"))
+            msft_typeinfo->typeinfo->flags |= 0x1000; /* TYPEFLAG_FDISPATCHABLE */
+
+    /* can't be dual if it doesn't derive from IDispatch */
+    if (!(msft_typeinfo->typeinfo->flags & 0x1000)) /* TYPEFLAG_FDISPATCHABLE */
+        msft_typeinfo->typeinfo->flags &= 0x40; /* TYPEFLAG_FDUAL */
 
     if(interface->ref)
         add_impl_type(msft_typeinfo, interface->ref);
