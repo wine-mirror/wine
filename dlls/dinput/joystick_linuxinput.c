@@ -120,7 +120,9 @@ struct JoystickImpl
 	int				ff_state;
 
 	/* data returned by the EVIOCGABS() ioctl */
-	int				axes[ABS_MAX+1][5];
+	int				axes[ABS_MAX][5];
+	/* LUT for KEY_ to offset in rgbButtons */
+	BYTE				buttons[KEY_MAX];
 
 #define AXE_ABS		0
 #define AXE_ABSMIN	1
@@ -457,7 +459,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
   */
 static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    int		i;
+    int		i,buttons;
     JoystickImpl *This = (JoystickImpl *)iface;
     char	buf[200];
     BOOL	readonly = TRUE;
@@ -529,7 +531,7 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 	if (test_bit(This->absbits,i)) {
 	  if (-1==ioctl(This->joyfd,EVIOCGABS(i),&(This->axes[i])))
 	    continue;
-	  FIXME("axe %d: cur=%d, min=%d, max=%d, fuzz=%d, flat=%d\n",
+	  TRACE("axe %d: cur=%d, min=%d, max=%d, fuzz=%d, flat=%d\n",
 	      i,
 	      This->axes[i][AXE_ABS],
 	      This->axes[i][AXE_ABSMIN],
@@ -541,7 +543,14 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 	  This->havemax[i] = This->axes[i][AXE_ABSMAX];
 	}
     }
-    MESSAGE("\n");
+    buttons = 0;
+    for (i=0;i<KEY_MAX;i++) {
+	    if (test_bit(This->keybits,i)) {
+		    TRACE("button %d: %d\n", i, buttons);
+		    This->buttons[i] = 0x80 | buttons;
+		    buttons++;
+	    }
+    }
 
 	fake_current_js_state(This);
 
@@ -661,6 +670,7 @@ static void joy_polldev(JoystickImpl *This) {
     struct timeval tv;
     fd_set	readfds;
     struct	input_event ie;
+    int         btn;
 
     if (This->joyfd==-1)
 	return;
@@ -680,76 +690,14 @@ static void joy_polldev(JoystickImpl *This) {
 	TRACE("input_event: type %d, code %d, value %d\n",ie.type,ie.code,ie.value);
 	switch (ie.type) {
 	case EV_KEY:	/* button */
-	    switch (ie.code) {
-	    case BTN_TRIGGER:	/* normal flight stick */
-	    case BTN_A:		/* gamepad */
-	    case BTN_1:		/* generic */
-		This->js.rgbButtons[0] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(0),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
+		btn = This->buttons[ie.code];
+		TRACE("(%p) %d -> %d\n", This, ie.code, btn);
+		if (btn&0x80) {
+			btn &= 0x7F;
+			This->js.rgbButtons[btn] = ie.value?0x80:0x00;
+			GEN_EVENT(DIJOFS_BUTTON(btn),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
+		}
 		break;
-	    case BTN_THUMB:
-	    case BTN_B:
-	    case BTN_2:
-		This->js.rgbButtons[1] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(1),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    case BTN_THUMB2:
-	    case BTN_C:
-	    case BTN_3:
-		This->js.rgbButtons[2] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(2),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    case BTN_TOP:
-	    case BTN_X:
-	    case BTN_4:
-		This->js.rgbButtons[3] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(3),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    case BTN_TOP2:
-	    case BTN_Y:
-	    case BTN_5:
-		This->js.rgbButtons[4] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(4),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    case BTN_PINKIE:
-	    case BTN_Z:
-	    case BTN_6:
-		This->js.rgbButtons[5] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(5),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    case BTN_BASE:
-	    case BTN_TL:
-	    case BTN_7:
-		This->js.rgbButtons[6] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(6),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    case BTN_BASE2:
-	    case BTN_TR:
-	    case BTN_8:
-		This->js.rgbButtons[7] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(7),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    case BTN_BASE3:
-	    case BTN_TL2:
-	    case BTN_9:
-		This->js.rgbButtons[8] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(8),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    case BTN_BASE4:
-	    case BTN_TR2:
-		This->js.rgbButtons[9] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(9),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    case BTN_BASE5:
-	    case BTN_SELECT:
-		This->js.rgbButtons[10] = ie.value?0x80:0x00;
-		GEN_EVENT(DIJOFS_BUTTON(10),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
-		break;
-	    default:
-		FIXME("unhandled joystick button %x, value %d\n",ie.code,ie.value);
-		break;
-	    }
-	    break;
 	case EV_ABS:
 	    switch (ie.code) {
 	    case ABS_X:
@@ -794,6 +742,9 @@ static void joy_polldev(JoystickImpl *This) {
 	    This->ff_state = ie.value;
 	    break;
 #endif
+	case EV_SYN:
+	    /* there is nothing to do */
+	    break;
 	default:
 	    FIXME("joystick cannot handle type %d event (code %d)\n",ie.type,ie.code);
 	    break;
@@ -1141,7 +1092,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 
   if ((dwFlags == DIDFT_ALL) ||
       (dwFlags & DIDFT_BUTTON)) {
-    int i;
+    int i, btncount=0;
 
     /*The DInput SDK says that GUID_Button is only for mouse buttons but well*/
 
@@ -1149,74 +1100,10 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 
     for (i = 0; i < KEY_MAX; i++) {
       if (!test_bit(This->keybits,i)) continue;
-
-      switch (i) {
-      case BTN_TRIGGER:
-      case BTN_A:
-      case BTN_1:
-	  ddoi.dwOfs = DIJOFS_BUTTON(0);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 0) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_THUMB:
-	case BTN_B:
-	case BTN_2:
-	  ddoi.dwOfs = DIJOFS_BUTTON(1);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 1) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_THUMB2:
-	case BTN_C:
-	case BTN_3:
-	  ddoi.dwOfs = DIJOFS_BUTTON(2);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 2) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_TOP:
-	case BTN_X:
-	case BTN_4:
-	  ddoi.dwOfs = DIJOFS_BUTTON(3);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 3) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_TOP2:
-	case BTN_Y:
-	case BTN_5:
-	  ddoi.dwOfs = DIJOFS_BUTTON(4);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 4) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_PINKIE:
-	case BTN_Z:
-	case BTN_6:
-	  ddoi.dwOfs = DIJOFS_BUTTON(5);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 5) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_BASE:
-	case BTN_TL:
-	case BTN_7:
-	  ddoi.dwOfs = DIJOFS_BUTTON(6);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 6) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_BASE2:
-	case BTN_TR:
-	case BTN_8:
-	  ddoi.dwOfs = DIJOFS_BUTTON(7);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 7) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_BASE3:
-	case BTN_TL2:
-	case BTN_9:
-	  ddoi.dwOfs = DIJOFS_BUTTON(8);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 8) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_BASE4:
-	case BTN_TR2:
-	  ddoi.dwOfs = DIJOFS_BUTTON(9);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 9) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-	case BTN_BASE5:
-	case BTN_SELECT:
-	  ddoi.dwOfs = DIJOFS_BUTTON(10);
-	  ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << 10) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
-	  break;
-      }
-      sprintf(ddoi.tszName, "%d-Button", i);
+      ddoi.dwOfs = DIJOFS_BUTTON(btncount);
+      ddoi.dwType = DIDFT_MAKEINSTANCE(btncount << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
+      sprintf(ddoi.tszName, "%d-Button", btncount);
+      btncount++;
       _dump_OBJECTINSTANCEA(&ddoi);
       if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) {
 	/* return to unaquired state if that's where we were */
