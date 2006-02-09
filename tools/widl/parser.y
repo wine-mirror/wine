@@ -126,13 +126,15 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token <uuid> aUUID
 %token aEOF
 %token SHL SHR
-%token tAGGREGATABLE tALLOCATE tAPPOBJECT tARRAYS tASYNC tASYNCUUID
+%token tAGGREGATABLE tALLOCATE tAPPOBJECT tASYNC tASYNCUUID
 %token tAUTOHANDLE tBINDABLE tBOOLEAN tBROADCAST tBYTE tBYTECOUNT
 %token tCALLAS tCALLBACK tCASE tCDECL tCHAR tCOCLASS tCODE tCOMMSTATUS
 %token tCONST tCONTEXTHANDLE tCONTEXTHANDLENOSERIALIZE
 %token tCONTEXTHANDLESERIALIZE tCONTROL tCPPQUOTE
 %token tDEFAULT
+%token tDEFAULTCOLLELEM
 %token tDEFAULTVALUE
+%token tDEFAULTVTABLE
 %token tDISPLAYBIND
 %token tDISPINTERFACE
 %token tDLLNAME tDOUBLE tDUAL
@@ -147,18 +149,22 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tHIDDEN
 %token tHYPER tID tIDEMPOTENT
 %token tIIDIS
+%token tIMMEDIATEBIND
 %token tIMPLICITHANDLE
 %token tIMPORT tIMPORTLIB
-%token tIN tINCLUDE tINLINE
+%token tIN tINLINE
 %token tINPUTSYNC
 %token tINT tINT64
 %token tINTERFACE
+%token tLCID
 %token tLENGTHIS tLIBRARY
 %token tLOCAL
 %token tLONG
 %token tMETHODS
 %token tMODULE
+%token tNONBROWSABLE
 %token tNONCREATABLE
+%token tNONEXTENSIBLE
 %token tOBJECT tODL tOLEAUTOMATION
 %token tOPTIONAL
 %token tOUT
@@ -169,6 +175,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tPUBLIC
 %token tRANGE
 %token tREADONLY tREF
+%token tREQUESTEDIT
 %token tRESTRICTED
 %token tRETVAL
 %token tSHORT
@@ -191,9 +198,6 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tVERSION
 %token tVOID
 %token tWCHAR tWIREMARSHAL
-
-/* used in attr_t */
-%token tPOINTERTYPE
 
 %type <attr> m_attributes attributes attrib_list attribute
 %type <expr> m_exprs /* exprs expr_list */ m_expr expr expr_list_const expr_const
@@ -338,7 +342,9 @@ attrib_list: attribute
 	;
 
 attribute:
-	  tASYNC				{ $$ = make_attr(ATTR_ASYNC); }
+	  tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
+	| tAPPOBJECT				{ $$ = make_attr(ATTR_APPOBJECT); }
+	| tASYNC				{ $$ = make_attr(ATTR_ASYNC); }
 	| tAUTOHANDLE				{ $$ = make_attr(ATTR_AUTO_HANDLE); }
 	| tBINDABLE				{ $$ = make_attr(ATTR_BINDABLE); }
 	| tCALLAS '(' ident ')'			{ $$ = make_attrp(ATTR_CALLAS, $3); }
@@ -348,8 +354,10 @@ attribute:
 	| tCONTEXTHANDLESERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
 	| tCONTROL				{ $$ = make_attr(ATTR_CONTROL); }
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
+	| tDEFAULTCOLLELEM			{ $$ = make_attr(ATTR_DEFAULTCOLLELEM); }
 	| tDEFAULTVALUE '(' expr_const ')'	{ $$ = make_attrp(ATTR_DEFAULTVALUE_EXPR, $3); }
 	| tDEFAULTVALUE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DEFAULTVALUE_STRING, $3); }
+	| tDEFAULTVTABLE			{ $$ = make_attr(ATTR_DEFAULTVTABLE); }
 	| tDISPLAYBIND				{ $$ = make_attr(ATTR_DISPLAYBIND); }
 	| tDLLNAME '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DLLNAME, $3); }
 	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
@@ -367,12 +375,15 @@ attribute:
 	| tID '(' expr_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
 	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
 	| tIIDIS '(' ident ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
+	| tIMMEDIATEBIND			{ $$ = make_attr(ATTR_IMMEDIATEBIND); }
 	| tIMPLICITHANDLE '(' tHANDLET aIDENTIFIER ')'	{ $$ = make_attrp(ATTR_IMPLICIT_HANDLE, $4); }
 	| tIN					{ $$ = make_attr(ATTR_IN); }
 	| tINPUTSYNC				{ $$ = make_attr(ATTR_INPUTSYNC); }
 	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
+	| tNONBROWSABLE				{ $$ = make_attr(ATTR_NONBROWSABLE); }
 	| tNONCREATABLE				{ $$ = make_attr(ATTR_NONCREATABLE); }
+	| tNONEXTENSIBLE			{ $$ = make_attr(ATTR_NONEXTENSIBLE); }
 	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }
 	| tODL					{ $$ = make_attr(ATTR_ODL); }
 	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
@@ -385,6 +396,7 @@ attribute:
 	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
 	| tRANGE '(' expr_const ',' expr_const ')' { LINK($5, $3); $$ = make_attrp(ATTR_RANGE, $5); }
 	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
+	| tREQUESTEDIT				{ $$ = make_attr(ATTR_REQUESTEDIT); }
 	| tRESTRICTED				{ $$ = make_attr(ATTR_RESTRICTED); }
 	| tRETVAL				{ $$ = make_attr(ATTR_RETVAL); }
 	| tSIZEIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_SIZEIS, $3); }
@@ -552,6 +564,7 @@ ident:	  aIDENTIFIER				{ $$ = make_var($1); }
 	| aKNOWNTYPE				{ $$ = make_var($<str>1); }
 	| tASYNC				{ $$ = make_var($<str>1); }
 	| tID					{ $$ = make_var($<str>1); }
+	| tLCID					{ $$ = make_var($<str>1); }
 	| tRANGE				{ $$ = make_var($<str>1); }
 	| tRETVAL				{ $$ = make_var($<str>1); }
 	| tVERSION				{ $$ = make_var($<str>1); }

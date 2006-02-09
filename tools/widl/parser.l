@@ -179,7 +179,6 @@ static struct keyword {
 	{"aggregatable",		tAGGREGATABLE},
 	{"allocate",			tALLOCATE},
 	{"appobject",			tAPPOBJECT},
-	{"arrays",			tARRAYS},
 	{"async",			tASYNC},
 	{"async_uuid",			tASYNCUUID},
 	{"auto_handle",			tAUTOHANDLE},
@@ -203,51 +202,45 @@ static struct keyword {
 	{"cpp_quote",			tCPPQUOTE},
 /* ... */
 	{"default",			tDEFAULT},
+	{"defaultcollelem",		tDEFAULTCOLLELEM},
 	{"defaultvalue",		tDEFAULTVALUE},
-/* ... */
+	{"defaultvtable",		tDEFAULTVTABLE},
 	{"dispinterface",		tDISPINTERFACE},
-/* ... */
 	{"displaybind",			tDISPLAYBIND},
 	{"dllname",			tDLLNAME},
 	{"double",			tDOUBLE},
 	{"dual",			tDUAL},
-/* ... */
 	{"endpoint",			tENDPOINT},
 	{"entry",			tENTRY},
 	{"enum",			tENUM},
 	{"error_status_t",		tERRORSTATUST},
 	{"explicit_handle",		tEXPLICITHANDLE},
 	{"extern",			tEXTERN},
-/* ... */
 	{"float",			tFLOAT},
-/* ... */
 	{"handle",			tHANDLE},
 	{"handle_t",			tHANDLET},
-/* ... */
 	{"helpcontext",			tHELPCONTEXT},
 	{"helpfile",			tHELPFILE},
 	{"helpstring",			tHELPSTRING},
 	{"helpstringcontext",		tHELPSTRINGCONTEXT},
 	{"helpstringdll",		tHELPSTRINGDLL},
-/* ... */
 	{"hidden",                      tHIDDEN},
 	{"hyper",			tHYPER},
 	{"id",				tID},
 	{"idempotent",			tIDEMPOTENT},
 /* ... */
 	{"iid_is",			tIIDIS},
-/* ... */
+	{"immediatebind",		tIMMEDIATEBIND},
 	{"implicit_handle",		tIMPLICITHANDLE},
 	{"import",			tIMPORT},
 	{"importlib",			tIMPORTLIB},
 	{"in",				tIN},
-	{"include",			tINCLUDE},
 	{"in_line",			tINLINE},
 	{"input_sync",			tINPUTSYNC},
 	{"int",				tINT},
 /* ... */
 	{"interface",			tINTERFACE},
-/* ... */
+	{"lcid",			tLCID},
 	{"length_is",			tLENGTHIS},
 	{"library",			tLIBRARY},
 /* ... */
@@ -258,7 +251,9 @@ static struct keyword {
 /* ... */
 	{"module",			tMODULE},
 /* ... */
+	{"nonbrowsable",		tNONBROWSABLE},
 	{"noncreatable",		tNONCREATABLE},
+	{"nonextensible",		tNONEXTENSIBLE},
 	{"object",			tOBJECT},
 	{"odl",				tODL},
 	{"oleautomation",		tOLEAUTOMATION},
@@ -279,7 +274,7 @@ static struct keyword {
 /* ... */
 	{"readonly",			tREADONLY},
 	{"ref",				tREF},
-/* ... */
+	{"requestedit",			tREQUESTEDIT},
 	{"restricted",                  tRESTRICTED},
 	{"retval",			tRETVAL},
 /* ... */

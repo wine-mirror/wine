@@ -1667,6 +1667,21 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
 
     for( ; attr; attr = NEXT_LINK(attr)) {
         switch(attr->type) {
+        case ATTR_AGGREGATABLE:
+            if (kind == TKIND_COCLASS)
+                typeinfo->flags |= 0x400; /* TYPEFLAG_FAGGREGATABLE */
+            break;
+
+        case ATTR_APPOBJECT:
+            if (kind == TKIND_COCLASS)
+                typeinfo->flags |= 0x1; /* TYPEFLAG_FAPPOBJECT */
+            break;
+
+        case ATTR_CONTROL:
+            if (kind == TKIND_COCLASS)
+                typeinfo->flags |= 0x20; /* TYPEFLAG_FCONTROL */
+            break;
+
         case ATTR_DISPINTERFACE:
             break;
 
@@ -1678,7 +1693,8 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
           }
 
         case ATTR_DUAL:
-            typeinfo->flags |= 0x40; /* TYPEFLAG_FDUAL */
+            /* FIXME: check interface is compatible */
+            typeinfo->flags |= 0x140; /* TYPEFLAG_FDUAL | TYPEFLAG_FOLEAUTOMATION */
             break;
 
         case ATTR_HELPCONTEXT:
@@ -1706,6 +1722,10 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
 
         case ATTR_NONCREATABLE:
             typeinfo->flags &= ~0x2; /* TYPEFLAG_FCANCREATE */
+            break;
+
+        case ATTR_NONEXTENSIBLE:
+            typeinfo->flags |= 0x80; /* TYPEFLAG_FNONEXTENSIBLE */
             break;
 
         case ATTR_ODL:
