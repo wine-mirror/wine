@@ -151,6 +151,7 @@ void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 nsIURI *get_nsIURI(LPCWSTR);
 
 nsACString *nsACString_Create(void);
+PRUint32 nsACString_GetData(const nsACString*,const char**,PRBool*);
 void nsACString_SetData(nsACString*,const char*);
 void nsACString_Destroy(nsACString*);
 

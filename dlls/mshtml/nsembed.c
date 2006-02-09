@@ -50,6 +50,13 @@ struct nsStringContainer {
     void *d3;
 };
 
+struct nsCStringContainer {
+    void *v;
+    void *d1;
+    PRUint32 d2;
+    void *d3;
+};
+
 static nsresult (*NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
 static nsresult (*NS_ShutdownXPCOM)(nsIServiceManager*);
 static nsresult (*NS_GetComponentRegistrar)(nsIComponentRegistrar**);
@@ -60,7 +67,7 @@ static nsresult (*NS_CStringContainerFinish)(nsCStringContainer*);
 static nsresult (*NS_StringSetData)(nsAString*,const PRUnichar*,PRUint32);
 static nsresult (*NS_CStringSetData)(nsACString*,const char*,PRUint32);
 static nsresult (*NS_NewLocalFile)(const nsAString*,PRBool,nsIFile**);
-static PRUint32 (*NS_CStringGetData)(nsACString*,const char**,PRBool*);
+static PRUint32 (*NS_CStringGetData)(const nsACString*,const char**,PRBool*);
 
 static HINSTANCE hXPCOM = NULL;
 
@@ -370,7 +377,7 @@ void nsACString_SetData(nsACString *str, const char *data)
     NS_CStringSetData(str, data, PR_UINT32_MAX);
 }
 
-static PRUint32 nsACString_GetData(nsACString *str, const char **data, PRBool *termited)
+PRUint32 nsACString_GetData(const nsACString *str, const char **data, PRBool *termited)
 {
     return NS_CStringGetData(str, data, termited);
 }
