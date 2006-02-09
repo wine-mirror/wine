@@ -5112,9 +5112,6 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, 
  *|CC_MPWCDECL
  *|CC_MPWPASCAL
  *
- *  The rgpvarg array contains the parameters, but in the opposite order to
- *  what is usually assumed. The first parameter in rgpvarg is the last
- *  parameter in the function call and vice-versa.
  */
 HRESULT WINAPI
 DispCallFunc(
@@ -5148,11 +5145,10 @@ DispCallFunc(
         argspos++;
     }
 
-    for (i = cActuals - 1; i >= 0; i--)
+    for (i=0;i<cActuals;i++)
     {
         VARIANT *arg = prgpvarg[i];
-        TRACE("Storing arg %d from left (%d as %d)\n", cActuals - 1 - i,
-              V_VT(arg), prgvt[i]);
+        TRACE("Storing arg %d (%d as %d)\n",i,V_VT(arg),prgvt[i]);
         memcpy(&args[argspos], &V_NONE(arg), _argsize(prgvt[i]) * sizeof(DWORD));
         argspos += _argsize(prgvt[i]);
     }
@@ -5239,9 +5235,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             hres = S_OK;
             for (i = 0; i < func_desc->cParams; i++)
             {
-                UINT varindex = func_desc->cParams - 1 - i;
                 TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
-                hres = typedescvt_to_variantvt((ITypeInfo *)iface, tdesc, &rgvt[varindex]);
+                hres = typedescvt_to_variantvt((ITypeInfo *)iface, tdesc, &rgvt[i]);
                 if (FAILED(hres))
                     goto func_fail;
             }
@@ -5250,7 +5245,6 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             for (i = 0; i < func_desc->cParams; i++)
             {
                 USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
-                UINT varindex = func_desc->cParams - 1 - i;
 
                 if (wParamFlags & PARAMFLAG_FRETVAL)
                 {
@@ -5260,9 +5254,9 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     if (i == func_desc->cParams - 1)
                     {
                         VARIANTARG *arg;
-                        arg = prgpvarg[varindex] = &rgvarg[varindex];
+                        arg = prgpvarg[i] = &rgvarg[i];
                         memset(arg, 0, sizeof(*arg));
-                        V_VT(arg) = rgvt[varindex];
+                        V_VT(arg) = rgvt[i];
                         memset(&retval, 0, sizeof(retval));
                         V_BYREF(arg) = &retval;
                     }
@@ -5276,38 +5270,35 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 else if (i < pDispParams->cArgs)
                 {
                     VARIANTARG *src_arg = &pDispParams->rgvarg[pDispParams->cArgs - 1 - i];
-                    V_VT(&rgvarg[varindex]) = V_VT(src_arg);
+                    V_VT(&rgvarg[i]) = V_VT(src_arg);
                     dump_Variant(src_arg);
 
                     /* FIXME: this doesn't work for VT_BYREF arguments if
                      * they are not the same type as in the paramdesc */
-                    if ((rgvt[varindex] & VT_BYREF) && !V_ISBYREF(src_arg))
+                    if ((rgvt[i] & VT_BYREF) && !V_ISBYREF(src_arg))
                     {
                         VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
-                        V_VT(&missing_arg[varindex]) = V_VT(src_arg);
-                        hres = VariantChangeType(&missing_arg[varindex],
-                                                 src_arg, 0,
-                                                 rgvt[varindex] & ~VT_BYREF);
-                        V_BYREF(&rgvarg[varindex]) = &V_NONE(&missing_arg[varindex]);
+                        V_VT(&missing_arg[i]) = V_VT(src_arg);
+                        hres = VariantChangeType(&missing_arg[i], src_arg, 0, rgvt[i] & ~VT_BYREF);
+                        V_BYREF(&rgvarg[i]) = &V_NONE(&missing_arg[i]);
                     }
                     else
-                        hres = VariantChangeType(&rgvarg[varindex], src_arg,
-                                                 0, rgvt[varindex]);
+                        hres = VariantChangeType(&rgvarg[i], src_arg, 0, rgvt[i]);
 
                     if (FAILED(hres))
                     {
                         ERR("failed to convert param %d to %s%s from %s%s\n", i,
-                            debugstr_vt(rgvt[varindex]), debugstr_vf(rgvt[varindex]),
+                            debugstr_vt(rgvt[i]), debugstr_vf(rgvt[i]),
                             debugstr_VT(src_arg), debugstr_VF(src_arg));
                         break;
                     }
-                    V_VT(&rgvarg[varindex]) = rgvt[varindex];
-                    prgpvarg[varindex] = &rgvarg[varindex];
+                    V_VT(&rgvarg[i]) = rgvt[i];
+                    prgpvarg[i] = &rgvarg[i];
                 }
                 else if (wParamFlags & PARAMFLAG_FOPT)
                 {
                     VARIANTARG *arg;
-                    arg = prgpvarg[varindex] = &rgvarg[varindex];
+                    arg = prgpvarg[i] = &rgvarg[i];
                     if (wParamFlags & PARAMFLAG_FHASDEFAULT)
                     {
                         hres = VariantCopy(arg, &func_desc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
@@ -5318,7 +5309,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     {
                         VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
                         V_VT(arg) = VT_VARIANT | VT_BYREF;
-                        V_VARIANTREF(arg) = &missing_arg[varindex];
+                        V_VARIANTREF(arg) = &missing_arg[i];
                         V_VT(V_VARIANTREF(arg)) = VT_ERROR;
                         V_ERROR(V_VARIANTREF(arg)) = DISP_E_PARAMNOTFOUND;
                     }
@@ -5347,44 +5338,38 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
             for (i = 0; i < func_desc->cParams; i++)
             {
-                UINT varindex = func_desc->cParams - 1 - i;
                 USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
                 if (wParamFlags & PARAMFLAG_FRETVAL)
                 {
                     if (TRACE_ON(ole))
                     {
                         TRACE("[retval] value: ");
-                        dump_Variant(prgpvarg[varindex]);
+                        dump_Variant(prgpvarg[i]);
                     }
 
                     if (pVarResult)
-                    {
                         /* deref return value */
-                        hres = VariantCopyInd(pVarResult, prgpvarg[varindex]);
-                        TRACE("derefed [retval] value: ");
-                        dump_Variant(pVarResult);
-                    }
+                        hres = VariantCopyInd(pVarResult, prgpvarg[i]);
 
                     /* free data stored in varresult. Note that
                      * VariantClear doesn't do what we want because we are
                      * working with byref types. */
                     /* FIXME: clear safearrays, bstrs, records and
                      * variants here too */
-                    if ((V_VT(prgpvarg[varindex]) == (VT_UNKNOWN | VT_BYREF)) ||
-                         (V_VT(prgpvarg[varindex]) == (VT_DISPATCH | VT_BYREF)))
+                    if ((V_VT(prgpvarg[i]) == (VT_UNKNOWN | VT_BYREF)) ||
+                         (V_VT(prgpvarg[i]) == (VT_DISPATCH | VT_BYREF)))
                     {
-                        if(*V_UNKNOWNREF(prgpvarg[varindex]))
-                            IUnknown_Release(*V_UNKNOWNREF(prgpvarg[varindex]));
+                        if(*V_UNKNOWNREF(prgpvarg[i]))
+                            IUnknown_Release(*V_UNKNOWNREF(prgpvarg[i]));
                     }
                     break;
                 }
-
-                if (i < pDispParams->cArgs)
+                else if (i < pDispParams->cArgs)
                 {
                     if (wParamFlags & PARAMFLAG_FOUT)
                     {
                         hres = VariantChangeType(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i],
-                                                 &rgvarg[varindex], 0,
+                                                 &rgvarg[i], 0,
                                                  V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i]));
                         if (FAILED(hres))
                         {
@@ -5393,12 +5378,12 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                             break;
                         }
                     }
-                    VariantClear(&rgvarg[varindex]);
+                    VariantClear(&rgvarg[i]);
                 }
                 else if (wParamFlags & PARAMFLAG_FOPT)
                 {
                     if (wParamFlags & PARAMFLAG_FHASDEFAULT)
-                        VariantClear(&rgvarg[varindex]);
+                        VariantClear(&rgvarg[i]);
                 }
             }
 
