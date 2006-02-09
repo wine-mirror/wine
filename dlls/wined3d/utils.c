@@ -35,6 +35,7 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_UNKNOWN);
     FMT_TO_STR(WINED3DFMT_R8G8B8);
     FMT_TO_STR(WINED3DFMT_A8R8G8B8);
+    FMT_TO_STR(WINED3DFMT_A8B8G8R8);
     FMT_TO_STR(WINED3DFMT_X8R8G8B8);
     FMT_TO_STR(WINED3DFMT_R5G6B5);
     FMT_TO_STR(WINED3DFMT_X1R5G5B5);
@@ -1611,6 +1612,7 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
         case WINED3DFMT_X4R4G4B4:         retVal = GL_RGB4; break;
         case WINED3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
+        case WINED3DFMT_A8B8G8R8:         retVal = GL_RGBA8; break;
         case WINED3DFMT_A2R10G10B10:      retVal = GL_RGBA8; break;
         case WINED3DFMT_X8R8G8B8:         retVal = GL_RGB; break;
             /* to see */
@@ -1676,6 +1678,7 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
         case WINED3DFMT_X4R4G4B4:         retVal = GL_BGRA; break;
         case WINED3DFMT_A8R8G8B8:         retVal = GL_BGRA; break;
+        case WINED3DFMT_A8B8G8R8:         retVal = GL_RGBA; break;
         case WINED3DFMT_A2R10G10B10:      retVal = GL_BGRA; break;
         case WINED3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
             /* to see */
@@ -1738,6 +1741,7 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
         case WINED3DFMT_X4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
         case WINED3DFMT_A8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
+        case WINED3DFMT_A8B8G8R8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
         case WINED3DFMT_A2R10G10B10:      retVal = GL_UNSIGNED_INT_2_10_10_10_REV; break;
         case WINED3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
             /* to see */
@@ -1781,6 +1785,7 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     case WINED3DFMT_A4R4G4B4:         retVal = 2; break;
     case WINED3DFMT_X4R4G4B4:         retVal = 2; break;
     case WINED3DFMT_A8R8G8B8:         retVal = 4; break;
+    case WINED3DFMT_A8B8G8R8:         retVal = 4; break;
     case WINED3DFMT_A2R10G10B10:      retVal = 4; break;
     case WINED3DFMT_X8R8G8B8:         retVal = 4; break;
         /* Paletted */
