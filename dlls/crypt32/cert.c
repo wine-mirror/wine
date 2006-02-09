@@ -552,7 +552,7 @@ static void CRYPT_MemEmptyStore(PWINE_MEMSTORE store)
     PWINE_CERT_LIST_ENTRY cert, next;
 
     EnterCriticalSection(&store->cs);
-    /* Note that CertFreeCertificateContext calls HeapFree on the passed-in
+    /* Note that CertFreeCertificateContext calls CryptMemFree on the passed-in
      * pointer if its ref-count reaches zero.  That's okay here because there
      * aren't any allocated data outside of the WINE_CERT_CONTEXT_REF portion
      * of the CertListEntry.
@@ -1939,15 +1939,13 @@ static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
 
     /* First try to decode it as a signed cert. */
     ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT, pbCertEncoded,
-     cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
-     (BYTE *)&signedCert, &size);
+     cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&signedCert, &size);
     if (ret)
     {
         size = 0;
         ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
          signedCert->ToBeSigned.pbData, signedCert->ToBeSigned.cbData,
-         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
-         (BYTE *)&certInfo, &size);
+         CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&certInfo, &size);
         LocalFree(signedCert);
     }
     /* Failing that, try it as an unsigned cert */
@@ -2241,7 +2239,7 @@ static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
         {
             CryptMemFree(prop->pbData);
             prop->hdr.cb = cbData;
-            prop->pbData = cbData ? data : NULL;
+            prop->pbData = data;
             ret = TRUE;
         }
         else
@@ -2253,7 +2251,7 @@ static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
                 prop->hdr.unknown = 1;
                 prop->hdr.cb = cbData;
                 list_init(&prop->entry);
-                prop->pbData = cbData ? data : NULL;
+                prop->pbData = data;
                 list_add_tail(&context->extendedProperties, &prop->entry);
                 ret = TRUE;
             }
