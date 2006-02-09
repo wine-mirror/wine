@@ -168,7 +168,15 @@ BOOL WINAPI SetupQueryInfFileInformationA(PSP_INF_INFORMATION InfInformation,
         *RequiredSize = size;
 
     if (!ReturnBuffer)
+    {
+        if (ReturnBufferSize)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
         return TRUE;
+    }
 
     if (size > ReturnBufferSize)
     {
