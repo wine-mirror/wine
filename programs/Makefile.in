@@ -69,7 +69,6 @@ INSTALLSUBDIRS = \
 	winemenubuilder \
 	winemine \
 	winepath \
-	winetest \
 	winevdm \
 	winhelp \
 	winver
