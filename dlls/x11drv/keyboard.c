@@ -351,14 +351,14 @@ static const char main_key_SG[MAIN_LEN][4] =
  "<>"
 };
 
-/*** Swiss French keyboard layout (contributed by Philippe Froidevaux) */
+/*** Swiss French keyboard layout (setxkbmap ch -variant fr) */
 static const char main_key_SF[MAIN_LEN][4] =
 {
- "§°","1+|","2\"@","3*#","4ç","5%","6&¬","7/¦","8(¢","9)","0=","'?´","^`~",
- "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","èü[","¨!]",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","éö","àä{","$£}",
+ "§°","1+","2\"","3*","4ç","5%","6&","7/","8(","9)","0=","'?","^`",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","èü","¨!",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","éö","àä","$£",
  "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
- "<>\\"
+ "<>"
 };
 
 /*** Norwegian keyboard layout (contributed by Ove Kåven) */
