@@ -1427,7 +1427,6 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
                                   DWORD flags, WINE_MODREF** pwm )
 {
     char error[256], dllname[MAX_PATH];
-    int file_exists;
     const WCHAR *name, *p;
     DWORD len, i;
     void *handle = NULL;
@@ -1456,20 +1455,28 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
         if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
             return STATUS_DLL_NOT_FOUND;
 
-        if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, FALSE ))
+        if (wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, FALSE ))
         {
-            file_exists = 1;
-            prev_info = builtin_load_info;
-            info.filename = nt_name.Buffer + 4;  /* skip \??\ */
-            builtin_load_info = &info;
-            handle = wine_dlopen( unix_name.Buffer, RTLD_NOW, error, sizeof(error) );
-            builtin_load_info = prev_info;
-            RtlFreeHeap( GetProcessHeap(), 0, unix_name.Buffer );
+            RtlFreeUnicodeString( &nt_name );
+            return STATUS_DLL_NOT_FOUND;
         }
+        prev_info = builtin_load_info;
+        info.filename = nt_name.Buffer + 4;  /* skip \??\ */
+        builtin_load_info = &info;
+        handle = wine_dlopen( unix_name.Buffer, RTLD_NOW, error, sizeof(error) );
+        builtin_load_info = prev_info;
         RtlFreeUnicodeString( &nt_name );
+        RtlFreeHeap( GetProcessHeap(), 0, unix_name.Buffer );
+        if (!handle)
+        {
+            WARN( "failed to load .so lib for builtin %s: %s\n", debugstr_w(path), error );
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
     }
     else
     {
+        int file_exists;
+
         /* we don't want to depend on the current codepage here */
         len = strlenW( name ) + 1;
         if (len >= sizeof(dllname)) return STATUS_NAME_TOO_LONG;
@@ -1484,20 +1491,20 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
         builtin_load_info = &info;
         handle = wine_dll_load( dllname, error, sizeof(error), &file_exists );
         builtin_load_info = prev_info;
+        if (!handle)
+        {
+            if (!file_exists)
+            {
+                /* The file does not exist -> WARN() */
+                WARN("cannot open .so lib for builtin %s: %s\n", debugstr_w(name), error);
+                return STATUS_DLL_NOT_FOUND;
+            }
+            /* ERR() for all other errors (missing functions, ...) */
+            ERR("failed to load .so lib for builtin %s: %s\n", debugstr_w(name), error );
+            return STATUS_PROCEDURE_NOT_FOUND;
+        }
     }
 
-    if (!handle)
-    {
-        if (!file_exists)
-        {
-            /* The file does not exist -> WARN() */
-            WARN("cannot open .so lib for builtin %s: %s\n", debugstr_w(name), error);
-            return STATUS_DLL_NOT_FOUND;
-        }
-        /* ERR() for all other errors (missing functions, ...) */
-        ERR("failed to load .so lib for builtin %s: %s\n", debugstr_w(name), error );
-        return STATUS_PROCEDURE_NOT_FOUND;
-    }
     if (info.status != STATUS_SUCCESS) return info.status;
 
     if (!info.wm)
