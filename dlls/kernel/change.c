@@ -26,6 +26,8 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -167,7 +169,7 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
         pov = overlapped;
 
     ios = (PIO_STATUS_BLOCK) pov;
-    ios->Status = STATUS_PENDING;
+    ios->u.Status = STATUS_PENDING;
 
     status = NtNotifyChangeDirectoryFile( handle, pov->hEvent, NULL, NULL,
                                           ios, buffer, len, filter, subtree );
@@ -180,7 +182,7 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
         CloseHandle( ov.hEvent );
         if (returned)
             *returned = ios->Information;
-        status = ios->Status;
+        status = ios->u.Status;
     }
 
     if (status != STATUS_SUCCESS)
