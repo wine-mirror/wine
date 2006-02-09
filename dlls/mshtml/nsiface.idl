@@ -333,13 +333,16 @@ interface nsIIOService : nsISupports
 {
     nsresult GetProtocolHandler(const char *aScheme, nsIProtocolHandler **_retval);
     nsresult GetProtocolFlags(const char *aScheme, PRUint32 *_retval);
-    nsresult NewURI(const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI, nsIURI **_retval);
+    nsresult NewURI(const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI,
+                    nsIURI **_retval);
     nsresult NewFileURI(nsIFile *aFile, nsIURI **_retval);
     nsresult NewChannelFromURI(nsIURI *aURI, nsIChannel **_retval);
-    nsresult NewChannel(const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI, nsIChannel **_retval);
+    nsresult NewChannel(const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI,
+                        nsIChannel **_retval);
     nsresult GetOffline(PRBool *aOffline);
     nsresult SetOffline(PRBool aOffline);
     nsresult AllowPort(PRInt32 aPort, const char *aScheme, PRBool *_retval);
+    nsresult ExtractScheme(const nsACString *urlString, nsACString * _retval);
 }
 
 [

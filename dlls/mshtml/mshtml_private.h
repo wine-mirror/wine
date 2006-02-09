@@ -146,6 +146,7 @@ HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 
 void close_gecko(void);
 void register_nsservice(nsIComponentRegistrar*);
+void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 
 nsIURI *get_nsIURI(LPCWSTR);
 

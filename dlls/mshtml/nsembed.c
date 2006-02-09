@@ -37,7 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NS_APPSTARTUPNOTIFIER_CONTRACTID "@mozilla.org/embedcomp/appstartup-notifier;1"
 #define NS_WEBBROWSER_CONTRACTID "@mozilla.org/embedding/browser/nsWebBrowser;1"
-#define NS_IOSERVICE_CONTRACTID "@mozilla.org/network/io-service;1"
 #define NS_PROFILE_CONTRACTID "@mozilla.org/profile/manager;1"
 
 #define APPSTARTUP_TOPIC "app-startup"
@@ -67,7 +66,6 @@ static HINSTANCE hXPCOM = NULL;
 
 static nsIServiceManager *pServMgr = NULL;
 static nsIComponentManager *pCompMgr = NULL;
-static nsIIOService *pIOService = NULL;
 
 static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','r',0};
 
@@ -348,12 +346,13 @@ static BOOL load_gecko(void)
         ERR("could not get appstartup-notifier: %08lx\n", nsres);
     }
 
+    set_profile();
+
     if(registrar) {
         register_nsservice(registrar);
+        init_nsio(pCompMgr, registrar);
         nsIComponentRegistrar_Release(registrar);
     }
-
-    set_profile();
 
     return TRUE;
 }
@@ -394,38 +393,6 @@ void close_gecko()
 
     if(hXPCOM)
         FreeLibrary(hXPCOM);
-}
-
-nsIURI *get_nsIURI(LPCWSTR url)
-{
-    nsIURI *ret;
-    nsACString *acstr;
-    nsresult nsres;
-    char *urla;
-    int len;
-
-    if(!pIOService) {
-        nsres = nsIServiceManager_GetServiceByContactID(pServMgr, NS_IOSERVICE_CONTRACTID,
-                &IID_nsIIOService, (void**)&pIOService);
-        if(NS_FAILED(nsres))
-            ERR("Failed to create nsIOService: %08lx\n", nsres);
-    }
-
-    len = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, -1, NULL, NULL);
-    urla = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(CP_ACP, 0, url, -1, urla, -1, NULL, NULL);
-
-    acstr = nsACString_Create();
-    nsACString_SetData(acstr, urla);
-
-    nsres = nsIIOService_NewURI(pIOService, acstr, NULL, NULL, &ret);
-    if(NS_FAILED(nsres))
-        FIXME("NewURI failed: %08lx\n", nsres);
-
-    nsACString_Destroy(acstr);
-    HeapFree(GetProcessHeap(), 0, urla);
-
-    return ret;
 }
 
 /**********************************************************

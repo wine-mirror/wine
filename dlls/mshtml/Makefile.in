@@ -14,6 +14,7 @@ C_SRCS = \
 	htmldoc3.c \
 	main.c \
 	nsembed.c \
+	nsio.c \
 	nsservice.c\
 	oleobj.c \
 	olewnd.c \
