@@ -123,11 +123,14 @@ static void IDirectSoundFullDuplex_tests(void)
     rc=CoCreateInstance(&CLSID_DirectSoundFullDuplex, NULL,
                         CLSCTX_INPROC_SERVER, &IID_IDirectSoundFullDuplex,
                         (void**)&dsfdo);
-    ok(rc==S_OK||rc==REGDB_E_CLASSNOTREG,
+    ok(rc==S_OK||rc==REGDB_E_CLASSNOTREG||rc==CLASS_E_CLASSNOTAVAILABLE,
        "CoCreateInstance(CLSID_DirectSoundFullDuplex) failed: %s (0x%08lx)\n",
        DXGetErrorString8(rc), rc);
     if (rc==REGDB_E_CLASSNOTREG) {
         trace("  Class Not Registered\n");
+        return;
+    } else if (rc==CLASS_E_CLASSNOTAVAILABLE) {
+        trace("  Class Not Available\n");
         return;
     }
     if (dsfdo)
