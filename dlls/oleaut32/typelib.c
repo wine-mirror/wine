@@ -2168,28 +2168,39 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
 {
     ITypeLibImpl *entry;
     int ret = TYPE_E_CANTLOADLIBRARY;
-    DWORD dwSignature = 0;
-    HANDLE hFile;
     INT index = 1;
+    HINSTANCE hinstDLL;
 
     *ppTypeLib = NULL;
 
-    if (!SearchPathW(NULL, pszFileName, NULL, cchPath, pszPath, NULL))
+    /* first try loading as a dll and access the typelib as a resource */
+    hinstDLL = LoadLibraryExW(pszFileName, 0, DONT_RESOLVE_DLL_REFERENCES |
+            LOAD_LIBRARY_AS_DATAFILE | LOAD_WITH_ALTERED_SEARCH_PATH);
+    if (!hinstDLL)
     {
-        WCHAR szFileCopy[MAX_PATH+1];
-        /* Look for a trailing '\\' followed by an index */
-        WCHAR *pIndexStr = strrchrW(pszFileName, '\\');
+        /* it may have been specified with resource index appended to the
+         * path, so remove it and try again */
+        const WCHAR *pIndexStr = strrchrW(pszFileName, '\\');
         if(pIndexStr && pIndexStr != pszFileName && *++pIndexStr != '\0')
         {
             index = atoiW(pIndexStr);
-            memcpy(szFileCopy, pszFileName,
+            memcpy(pszPath, pszFileName,
                    (pIndexStr - pszFileName - 1) * sizeof(WCHAR));
-            szFileCopy[pIndexStr - pszFileName - 1] = '\0';
-            if (!SearchPathW(NULL, szFileCopy, NULL, cchPath, pszPath, NULL))
-                return TYPE_E_CANTLOADLIBRARY;
-            if (GetFileAttributesW(szFileCopy) & FILE_ATTRIBUTE_DIRECTORY)
-                return TYPE_E_CANTLOADLIBRARY;
+            pszPath[pIndexStr - pszFileName - 1] = '\0';
+
+            hinstDLL = LoadLibraryExW(pszPath, 0, DONT_RESOLVE_DLL_REFERENCES |
+                    LOAD_LIBRARY_AS_DATAFILE | LOAD_WITH_ALTERED_SEARCH_PATH);
         }
+    }
+
+    /* get the path to the specified typelib file */
+    if (hinstDLL)
+        GetModuleFileNameW(hinstDLL, pszPath, cchPath);
+    else
+    {
+        /* otherwise, try loading as a regular file */
+        if (!SearchPathW(NULL, pszFileName, NULL, cchPath, pszPath, NULL))
+            return TYPE_E_CANTLOADLIBRARY;
     }
 
     TRACE_(typelib)("File %s index %d\n", debugstr_w(pszPath), index);
@@ -2198,7 +2209,7 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
     EnterCriticalSection(&cache_section);
     for (entry = tlb_cache_first; entry != NULL; entry = entry->next)
     {
-        if (!strcmpiW(entry->path, pszFileName) && entry->index == index)
+        if (!strcmpiW(entry->path, pszPath) && entry->index == index)
         {
             TRACE("cache hit\n");
             *ppTypeLib = (ITypeLib2*)entry;
@@ -2209,80 +2220,61 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
     }
     LeaveCriticalSection(&cache_section);
 
-    /* check the signature of the file */
-    hFile = CreateFileW( pszPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
-    if (INVALID_HANDLE_VALUE != hFile)
+    /* now actually load and parse the typelib */
+    if (hinstDLL)
     {
-      HANDLE hMapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
-      if (hMapping)
-      {
-        LPVOID pBase = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
-        if(pBase)
-        {
-	  /* retrieve file size */
-	  DWORD dwTLBLength = GetFileSize(hFile, NULL);
-
-          /* first try to load as *.tlb */
-          dwSignature = FromLEDWord(*((DWORD*) pBase));
-          if ( dwSignature == MSFT_SIGNATURE)
-          {
-            *ppTypeLib = ITypeLib2_Constructor_MSFT(pBase, dwTLBLength);
-          }
-	  else if ( dwSignature == SLTG_SIGNATURE)
-          {
-            *ppTypeLib = ITypeLib2_Constructor_SLTG(pBase, dwTLBLength);
-	  }
-          UnmapViewOfFile(pBase);
-        }
-        CloseHandle(hMapping);
-      }
-      CloseHandle(hFile);
-    }
-    else
-    {
-      TRACE("not found, trying to load %s as library\n", debugstr_w(pszFileName));
-    }
-
-    /* if the file is a DLL or not found, try loading it with LoadLibrary */
-    if (((WORD)dwSignature == IMAGE_DOS_SIGNATURE) || (dwSignature == 0))
-    {
-      /* find the typelibrary resource*/
-      HINSTANCE hinstDLL = LoadLibraryExW(pszPath, 0, DONT_RESOLVE_DLL_REFERENCES|
-                                          LOAD_LIBRARY_AS_DATAFILE|LOAD_WITH_ALTERED_SEARCH_PATH);
-      if (hinstDLL)
-      {
         static const WCHAR TYPELIBW[] = {'T','Y','P','E','L','I','B',0};
         HRSRC hrsrc = FindResourceW(hinstDLL, MAKEINTRESOURCEW(index), TYPELIBW);
         if (hrsrc)
         {
-          HGLOBAL hGlobal = LoadResource(hinstDLL, hrsrc);
-          if (hGlobal)
-          {
-            LPVOID pBase = LockResource(hGlobal);
-            DWORD  dwTLBLength = SizeofResource(hinstDLL, hrsrc);
-
-            if (pBase)
+            HGLOBAL hGlobal = LoadResource(hinstDLL, hrsrc);
+            if (hGlobal)
             {
-              /* try to load as incore resource */
-              dwSignature = FromLEDWord(*((DWORD*) pBase));
-              if ( dwSignature == MSFT_SIGNATURE)
-              {
-                  *ppTypeLib = ITypeLib2_Constructor_MSFT(pBase, dwTLBLength);
-	      }
-	      else if ( dwSignature == SLTG_SIGNATURE)
-	      {
-                  *ppTypeLib = ITypeLib2_Constructor_SLTG(pBase, dwTLBLength);
-	      }
-              else
-              {
-                  FIXME("Header type magic 0x%08lx not supported.\n",dwSignature);
-              }
+                LPVOID pBase = LockResource(hGlobal);
+                DWORD  dwTLBLength = SizeofResource(hinstDLL, hrsrc);
+
+                if (pBase)
+                {
+                    /* try to load as incore resource */
+                    DWORD dwSignature = FromLEDWord(*((DWORD*) pBase));
+                    if (dwSignature == MSFT_SIGNATURE)
+                        *ppTypeLib = ITypeLib2_Constructor_MSFT(pBase, dwTLBLength);
+                    else if (dwSignature == SLTG_SIGNATURE)
+                        *ppTypeLib = ITypeLib2_Constructor_SLTG(pBase, dwTLBLength);
+                    else
+                        FIXME("Header type magic 0x%08lx not supported.\n",dwSignature);
+                }
+                FreeResource( hGlobal );
             }
-            FreeResource( hGlobal );
-          }
         }
         FreeLibrary(hinstDLL);
-      }
+    }
+    else
+    {
+        HANDLE hFile = CreateFileW( pszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+        if (INVALID_HANDLE_VALUE != hFile)
+        {
+            HANDLE hMapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
+            if (hMapping)
+            {
+                LPVOID pBase = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
+                if(pBase)
+                {
+                    /* retrieve file size */
+                    DWORD dwTLBLength = GetFileSize(hFile, NULL);
+                    DWORD dwSignature = FromLEDWord(*((DWORD*) pBase));
+
+                    if (dwSignature == MSFT_SIGNATURE)
+                        *ppTypeLib = ITypeLib2_Constructor_MSFT(pBase, dwTLBLength);
+                    else if (dwSignature == SLTG_SIGNATURE)
+                        *ppTypeLib = ITypeLib2_Constructor_SLTG(pBase, dwTLBLength);
+
+                    UnmapViewOfFile(pBase);
+                }
+                CloseHandle(hMapping);
+            }
+            CloseHandle(hFile);
+        }
     }
 
     if(*ppTypeLib) {
