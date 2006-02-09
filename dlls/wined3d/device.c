@@ -1095,8 +1095,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUER
     if (NULL == ppQuery) {
         /* Just a check to see if we support this type of query */
         HRESULT hr = D3DERR_NOTAVAILABLE;
-        /* Lie and say everything is good (we can return ok fake data from a stub) */
         switch(Type) {
+        case WINED3DQUERYTYPE_OCCLUSION:
+            TRACE("(%p) occlusion query\n", This);
+            if (GL_SUPPORT(ARB_OCCLUSION_QUERY) || GL_SUPPORT(NV_OCCLUSION_QUERY))
+                hr = D3D_OK;
+            else
+                WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
+            break;
         case WINED3DQUERYTYPE_VCACHE:
         case WINED3DQUERYTYPE_RESOURCEMANAGER:
         case WINED3DQUERYTYPE_VERTEXSTATS:
@@ -1110,16 +1116,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUER
         case WINED3DQUERYTYPE_PIXELTIMINGS:
         case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
         case WINED3DQUERYTYPE_CACHEUTILIZATION:
-        break;
-        case WINED3DQUERYTYPE_OCCLUSION:
-            TRACE("(%p) occlusion query\n", This);
-            if (GL_SUPPORT(ARB_OCCLUSION_QUERY) || GL_SUPPORT(NV_OCCLUSION_QUERY))
-                hr = D3D_OK;
-        break;
         default:
-            FIXME("(%p) Unhandled query type %d\n",This , Type);
+            FIXME("(%p) Unhandled query type %d\n", This, Type);
         }
-        FIXME("(%p) : Stub request for query type %d returned %ld\n", This, Type, hr);
         return hr;
     }
 
