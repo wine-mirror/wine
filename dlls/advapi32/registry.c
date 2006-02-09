@@ -2337,8 +2337,8 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
           hEvent, fAsync);
 
     status = NtNotifyChangeKey( hkey, hEvent, NULL, NULL, &iosb,
-                                fdwNotifyFilter, fWatchSubTree, NULL, 0,
-                                fAsync );
+                                fdwNotifyFilter, fAsync, NULL, 0,
+                                fWatchSubTree);
 
     if (status && status != STATUS_TIMEOUT)
         return RtlNtStatusToDosError( status );
