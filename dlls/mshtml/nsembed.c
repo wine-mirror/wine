@@ -663,41 +663,28 @@ static nsrefcnt NSAPI nsURIContentListener_Release(nsIURIContentListener *iface)
     return nsIWebBrowserChrome_Release(NSWBCHROME(This));
 }
 
-static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener *iface, nsIURI *aURI,
-        PRBool *_retval)
+static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener *iface,
+                                                          nsIURI *aURI, PRBool *_retval)
 {
     NSContainer *This = NSURICL_THIS(iface);
-    BOOL do_load = TRUE;
-    nsresult nsres;
+    nsIWineURI *wine_uri;
     nsACString *spec_str = nsACString_Create();
+    const char *spec;
+    nsresult nsres;
 
-    TRACE("(%p)->(%p %p)\n", This, aURI, _retval);
+    nsIURI_GetSpec(aURI, spec_str);
+    nsACString_GetData(spec_str, &spec, NULL);
 
-    nsres = nsIURI_GetSpec(aURI, spec_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const char *spec = NULL;
-        LPWSTR specw;
-        int len;
-
-        nsACString_GetData(spec_str, &spec, NULL);
-
-        len = MultiByteToWideChar(CP_ACP, 0, spec, -1, NULL, 0);
-        specw = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, spec, -1, specw, -1);
-
-        if(strcmpW(This->url, specw)) /* hack */
-            do_load = HTMLDocument_OnLoad(This->doc, specw);
-
-        HeapFree(GetProcessHeap(), 0, specw);
-    }else {
-        ERR("GetSpec failed: %08lx\n", nsres);
-    }
+    TRACE("(%p)->(%p(%s) %p)\n", This, aURI, debugstr_a(spec), _retval);
 
     nsACString_Destroy(spec_str);
 
-    if(!do_load) {
-        *_retval = TRUE;
-        return NS_OK;
+    nsres = nsIURI_QueryInterface(aURI, &IID_nsIWineURI, (void**)&wine_uri);
+    if(NS_SUCCEEDED(nsres)) {
+        nsIWineURI_SetNSContainer(wine_uri, This);
+        nsIWineURI_Release(wine_uri);
+    }else {
+        WARN("Could not get nsIWineURI interface: %08lx\n", nsres);
     }
 
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -977,7 +964,7 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
     if(NS_FAILED(nsres))
         ERR("SetParentURIContentListener failed: %08lx\n", nsres);
 
-    This->nscontainer->url = NULL;
+    This->nscontainer->load_call = FALSE;
 }
 
 void HTMLDocument_NSContainer_Destroy(HTMLDocument *This)
@@ -992,7 +979,4 @@ void HTMLDocument_NSContainer_Destroy(HTMLDocument *This)
         nsIWebBrowserStream_Release(This->nscontainer->stream);
 
     HeapFree(GetProcessHeap(), 0, This->nscontainer);
-
-    if(This->nscontainer->url)
-        CoTaskMemFree(This->nscontainer->url);
 }

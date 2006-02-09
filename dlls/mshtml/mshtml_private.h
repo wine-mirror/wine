@@ -32,6 +32,7 @@
 #define NS_NOINTERFACE            ((nsresult)0x80004002L)
 #define NS_ERROR_NOT_IMPLEMENTED  ((nsresult)0x80004001L)
 #define NS_ERROR_INVALID_ARG      ((nsresult)0x80070057L) 
+#define NS_ERROR_UNEXPECTED       ((nsresult)0x8000ffffL)
 
 #define NS_FAILED(res) ((res) & 0x80000000)
 #define NS_SUCCEEDED(res) (!NS_FAILED(res))
@@ -93,7 +94,7 @@ struct NSContainer {
 
     HWND hwnd;
 
-    LPOLESTR url; /* hack */
+    BOOL load_call; /* hack */
 };
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
@@ -139,7 +140,6 @@ void HTMLDocument_NSContainer_Destroy(HTMLDocument*);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
 void HTMLDocument_ShowContextMenu(HTMLDocument*,DWORD,POINT*);
-BOOL HTMLDocument_OnLoad(HTMLDocument*,LPCWSTR);
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 

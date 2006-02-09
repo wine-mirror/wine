@@ -362,18 +362,15 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
          * It uses Gecko's LoadURI instead of IMoniker's BindToStorage. Should we improve
          * it (to do so we'd have to use not frozen interfaces)?
          */
-        LPOLESTR old_url = This->nscontainer->url;
-
-        This->nscontainer->url = url;
+        This->nscontainer->load_call = TRUE;
         nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, url,
                 LOAD_FLAGS_NONE, NULL, NULL, NULL);
-        if(NS_SUCCEEDED(nsres)) {
-            CoTaskMemFree(old_url);
+        This->nscontainer->load_call = FALSE;
+
+        if(NS_SUCCEEDED(nsres))
             return S_OK;
-        }else {
+        else
             WARN("LoadURI failed: %08lx\n", nsres);
-            This->nscontainer->url = old_url;
-        }
     }    
 
     /* FIXME: Use grfMode */
@@ -562,34 +559,6 @@ static const IPersistFileVtbl PersistFileVtbl = {
     PersistFile_SaveCompleted,
     PersistFile_GetCurFile
 };
-
-BOOL HTMLDocument_OnLoad(HTMLDocument *This, LPCWSTR url)
-{
-    IOleCommandTarget *cmdtrg = NULL;
-    HRESULT hres;
-
-    TRACE("(%p)->(%s)\n", This, debugstr_w(url));
-
-    hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
-    if(SUCCEEDED(hres)) {
-        VARIANT varUrl, varRes;
-
-        V_VT(&varUrl) = VT_BSTR;
-        V_BSTR(&varUrl) = SysAllocString(url);
-        V_VT(&varRes) = VT_BOOL;
-
-        hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 67, 0, &varUrl, &varRes);
-        SysFreeString(V_BSTR(&varUrl));
-
-        if(SUCCEEDED(hres) && !V_BOOL(&varRes)) {
-            TRACE("got VARIANT_FALSE, do not load\n");
-            IOleCommandTarget_Release(cmdtrg);
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
 
 void HTMLDocument_Persist_Init(HTMLDocument *This)
 {

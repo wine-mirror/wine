@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "shlguid.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -33,6 +34,8 @@
 #include "mshtml_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
+
+#define LOAD_INITIAL_DOCUMENT_URI 0x80000
 
 #define NS_IOSERVICE_CLASSNAME "nsIOService"
 #define NS_IOSERVICE_CONTRACTID "@mozilla.org/network/io-service;1"
@@ -64,6 +67,76 @@ typedef struct {
 #define NSCHANNEL(x)     ((nsIChannel*)        &(x)->lpHttpChannelVtbl)
 #define NSHTTPCHANNEL(x) ((nsIHttpChannel*)    &(x)->lpHttpChannelVtbl)
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
+
+static BOOL exec_shldocvw_67(NSContainer *container, LPCWSTR url)
+{
+    IOleCommandTarget *cmdtrg = NULL;
+    HRESULT hres;
+
+    hres = IOleClientSite_QueryInterface(container->doc->client, &IID_IOleCommandTarget,
+                                         (void**)&cmdtrg);
+    if(SUCCEEDED(hres)) {
+        VARIANT varUrl, varRes;
+
+        V_VT(&varUrl) = VT_BSTR;
+        V_BSTR(&varUrl) = SysAllocString(url);
+        V_VT(&varRes) = VT_BOOL;
+
+        hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 67, 0, &varUrl, &varRes);
+
+        IOleCommandTarget_Release(cmdtrg);
+        SysFreeString(V_BSTR(&varUrl));
+
+        if(SUCCEEDED(hres) && !V_BOOL(&varRes)) {
+            TRACE("got VARIANT_FALSE, do not load\n");
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static BOOL before_async_open(nsChannel *This)
+{
+    nsACString *uri_str;
+    NSContainer *container;
+    PRUint32 load_flags = 0;
+    const char *uria;
+    LPWSTR uri;
+    DWORD len;
+    BOOL ret = TRUE;
+
+    nsIChannel_GetLoadFlags(This->channel, &load_flags);
+    TRACE("load_flags = %08lx\n", load_flags);
+    if(!(load_flags & LOAD_INITIAL_DOCUMENT_URI))
+        return TRUE;
+
+    nsIWineURI_GetNSContainer(This->uri, &container);
+    if(!container) {
+        WARN("container = NULL\n");
+        return TRUE;
+    }
+
+    if(container->load_call) {
+        nsIWebBrowserChrome_Release(NSWBCHROME(container));
+        return TRUE;
+    }
+
+    uri_str = nsACString_Create();
+    nsIWineURI_GetSpec(This->uri, uri_str);
+    nsACString_GetData(uri_str, &uria, NULL);
+    len = MultiByteToWideChar(CP_ACP, 0, uria, -1, NULL, 0);
+    uri = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, uria, -1, uri, len);
+    nsACString_Destroy(uri_str);
+
+    ret = exec_shldocvw_67(container, uri);
+
+    nsIWebBrowserChrome_Release(NSWBCHROME(container));
+    HeapFree(GetProcessHeap(), 0, uri);
+
+    return ret;
+}
 
 #define NSCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, HttpChannel, iface)
 
@@ -311,7 +384,14 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                                           nsISupports *aContext)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
+
+    if(!before_async_open(This)) {
+        TRACE("canceled\n");
+        return NS_ERROR_UNEXPECTED;
+    }
+
     return nsIChannel_AsyncOpen(This->channel, aListener, aContext);
 }
 
