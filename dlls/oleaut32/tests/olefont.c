@@ -37,10 +37,13 @@
 #include <winnt.h>
 #include <wtypes.h>
 #include <olectl.h>
+#include <ocidl.h>
 
 static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pOleCreateFontIndirect)(LPFONTDESC,REFIID,LPVOID*);
+
+#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx\n", hr)
 
 /* Create a font with cySize given by lo_size, hi_size,  */
 /* SetRatio to ratio_logical, ratio_himetric,            */
@@ -173,6 +176,114 @@ void test_type_info(void)
 	IFontDisp_Release(fontdisp);
 }
 
+static HRESULT WINAPI FontEventsDisp_QueryInterface(
+        IFontEventsDisp *iface,
+    /* [in] */ REFIID riid,
+    /* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject)
+{
+    if (IsEqualIID(riid, &IID_IFontEventsDisp) || IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch))
+    {
+        IUnknown_AddRef(iface);
+        *ppvObject = iface;
+        return S_OK;
+    }
+    else
+    {
+        *ppvObject = NULL;
+        return E_NOINTERFACE;
+    }
+}
+
+static ULONG WINAPI FontEventsDisp_AddRef(
+    IFontEventsDisp *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI FontEventsDisp_Release(
+        IFontEventsDisp *iface)
+{
+    return 1;
+}
+
+static BOOL fonteventsdisp_invoke_called = FALSE;
+
+static HRESULT WINAPI FontEventsDisp_Invoke(
+        IFontEventsDisp __RPC_FAR * iface,
+    /* [in] */ DISPID dispIdMember,
+    /* [in] */ REFIID riid,
+    /* [in] */ LCID lcid,
+    /* [in] */ WORD wFlags,
+    /* [out][in] */ DISPPARAMS __RPC_FAR *pDispParams,
+    /* [out] */ VARIANT __RPC_FAR *pVarResult,
+    /* [out] */ EXCEPINFO __RPC_FAR *pExcepInfo,
+    /* [out] */ UINT __RPC_FAR *puArgErr)
+{
+    static const WCHAR wszBold[] = {'B','o','l','d',0};
+    ok(wFlags == INVOKE_FUNC, "invoke flags should have been INVOKE_FUNC instead of 0x%x\n", wFlags);
+    ok(dispIdMember == DISPID_FONT_CHANGED, "dispIdMember should have been DISPID_FONT_CHANGED instead of 0x%lx\n", dispIdMember);
+    ok(pDispParams->cArgs == 1, "pDispParams->cArgs should have been 1 instead of %d\n", pDispParams->cArgs);
+    ok(V_VT(&pDispParams->rgvarg[0]) == VT_BSTR, "VT of first param should have been VT_BSTR instead of %d\n", V_VT(&pDispParams->rgvarg[0]));
+    ok(!lstrcmpW(V_BSTR(&pDispParams->rgvarg[0]), wszBold), "String in first param should have been \"Bold\"\n");
+
+    fonteventsdisp_invoke_called = TRUE;
+    return S_OK;
+}
+
+static IFontEventsDispVtbl FontEventsDisp_Vtbl =
+{
+    FontEventsDisp_QueryInterface,
+    FontEventsDisp_AddRef,
+    FontEventsDisp_Release,
+    NULL,
+    NULL,
+    NULL,
+    FontEventsDisp_Invoke
+};
+
+static IFontEventsDisp FontEventsDisp = { &FontEventsDisp_Vtbl };
+
+static void test_font_events_disp(void)
+{
+    IFont *pFont;
+    IConnectionPointContainer *pCPC;
+    IConnectionPoint *pCP;
+    FONTDESC fontdesc;
+    HRESULT hr;
+    DWORD dwCookie;
+    static const WCHAR wszMSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f',0};
+
+    fontdesc.cbSizeofstruct = sizeof(fontdesc);
+    fontdesc.lpstrName = (LPOLESTR)wszMSSansSerif;
+    fontdesc.cySize.int64 = 12 * 10000; /* 12 pt */
+    fontdesc.sWeight = FW_NORMAL;
+    fontdesc.sCharset = 0;
+    fontdesc.fItalic = FALSE;
+    fontdesc.fUnderline = FALSE;
+    fontdesc.fStrikethrough = FALSE;
+
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void **)&pFont);
+    ok_ole_success(hr, "OleCreateFontIndirect");
+
+    hr = IFont_QueryInterface(pFont, &IID_IConnectionPointContainer, (void **)&pCPC);
+    ok_ole_success(hr, "IFont_QueryInterface");
+
+    hr = IConnectionPointContainer_FindConnectionPoint(pCPC, &IID_IFontEventsDisp, &pCP);
+    ok_ole_success(hr, "IConnectionPointContainer_FindConnectionPoint");
+    IConnectionPointContainer_Release(pCPC);
+
+    hr = IConnectionPoint_Advise(pCP, (IUnknown *)&FontEventsDisp, &dwCookie);
+    ok_ole_success(hr, "IConnectionPoint_Advise");
+    IConnectionPoint_Release(pCP);
+
+    hr = IFont_put_Bold(pFont, TRUE);
+    ok_ole_success(hr, "IFont_put_Bold");
+
+    ok(fonteventsdisp_invoke_called, "IFontEventDisp::Invoke wasn't called\n");
+
+    IFont_Release(pFont);
+}
+
 START_TEST(olefont)
 {
 	hOleaut32 = LoadLibraryA("oleaut32.dll");    
@@ -193,4 +304,5 @@ START_TEST(olefont)
 	/* test_ifont_sizes(0, 0, 72, 2540, 0, "zero size");    */      /* zero size */
 	/* test_ifont_sizes(186000, 0, 72, 2540, -19, "rounding"); */   /* test rounding */
 
+	test_font_events_disp();
 }
