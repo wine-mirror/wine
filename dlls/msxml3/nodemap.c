@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _xmlnodemap
 {
     const struct IXMLDOMNamedNodeMapVtbl *lpVtbl;
+    const struct ISupportErrorInfoVtbl *lpSEIVtbl;
     LONG ref;
     IXMLDOMNode *node;
 } xmlnodemap;
@@ -50,18 +51,27 @@ static inline xmlnodemap *impl_from_IXMLDOMNamedNodeMap( IXMLDOMNamedNodeMap *if
     return (xmlnodemap *)((char*)iface - FIELD_OFFSET(xmlnodemap, lpVtbl));
 }
 
+static inline xmlnodemap *impl_from_ISupportErrorInfo( ISupportErrorInfo *iface )
+{
+    return (xmlnodemap *)((char*)iface - FIELD_OFFSET(xmlnodemap, lpSEIVtbl));
+}
+
 static HRESULT WINAPI xmlnodemap_QueryInterface(
     IXMLDOMNamedNodeMap *iface,
     REFIID riid, void** ppvObject )
 {
+    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
     TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
 
-    if( IsEqualGUID( riid, &IID_IXMLDOMElement ) ||
-        IsEqualGUID( riid, &IID_IUnknown ) ||
+    if( IsEqualGUID( riid, &IID_IUnknown ) ||
         IsEqualGUID( riid, &IID_IDispatch ) ||
-        IsEqualGUID( riid, &IID_IXMLDOMNode ) )
+        IsEqualGUID( riid, &IID_IXMLDOMNamedNodeMap ) )
     {
         *ppvObject = iface;
+    }
+    else if( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        *ppvObject = &This->lpSEIVtbl;
     }
     else
     {
@@ -321,6 +331,46 @@ static const struct IXMLDOMNamedNodeMapVtbl xmlnodemap_vtbl =
     xmlnodemap__newEnum,
 };
 
+static HRESULT WINAPI support_error_QueryInterface(
+    ISupportErrorInfo *iface,
+    REFIID riid, void** ppvObject )
+{
+    xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
+    TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
+
+    return IXMLDOMNamedNodeMap_QueryInterface((IXMLDOMNamedNodeMap*)&This->lpVtbl, riid, ppvObject);
+}
+
+static ULONG WINAPI support_error_AddRef(
+    ISupportErrorInfo *iface )
+{
+    xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
+    return IXMLDOMNamedNodeMap_AddRef((IXMLDOMNamedNodeMap*)&This->lpVtbl);
+}
+
+static ULONG WINAPI support_error_Release(
+    ISupportErrorInfo *iface )
+{
+    xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
+    return IXMLDOMNamedNodeMap_Release((IXMLDOMNamedNodeMap*)&This->lpVtbl);
+}
+
+static HRESULT WINAPI support_error_InterfaceSupportsErrorInfo(
+    ISupportErrorInfo *iface,
+    REFIID riid )
+{
+    FIXME("(%p)->(%s)\n", iface, debugstr_guid(riid));
+    return S_FALSE;
+}
+
+static const struct ISupportErrorInfoVtbl support_error_vtbl =
+{
+    support_error_QueryInterface,
+    support_error_AddRef,
+    support_error_Release,
+    support_error_InterfaceSupportsErrorInfo
+};
+
 IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node )
 {
     xmlnodemap *nodemap;
@@ -330,6 +380,7 @@ IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node )
         return NULL;
 
     nodemap->lpVtbl = &xmlnodemap_vtbl;
+    nodemap->lpSEIVtbl = &support_error_vtbl;
     nodemap->node = node;
     nodemap->ref = 1;
 

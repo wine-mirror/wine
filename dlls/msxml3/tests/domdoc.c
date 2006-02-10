@@ -347,6 +347,17 @@ void test_domnode( void )
 
     if (map)
     {
+        ISupportErrorInfo *support_error;
+        r = IXMLDOMNamedNodeMap_QueryInterface( map, &IID_ISupportErrorInfo, (LPVOID*)&support_error );
+        ok( r == S_OK, "ret %08lx\n", r );
+
+        r = ISupportErrorInfo_InterfaceSupportsErrorInfo( support_error, &IID_IXMLDOMNamedNodeMap );
+todo_wine
+{
+        ok( r == S_OK, "ret %08lx\n", r );
+}
+        ISupportErrorInfo_Release( support_error );
+
         str = SysAllocString( szdl );
         r = IXMLDOMNamedNodeMap_getNamedItem( map, str, &node );
         ok( r == S_OK, "getNamedItem returned wrong code\n");
