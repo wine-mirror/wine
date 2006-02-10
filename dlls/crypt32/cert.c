@@ -2110,8 +2110,8 @@ static BOOL WINAPI CRYPT_GetCertificateContextProperty(
                 ret = TRUE;
             }
             found = TRUE;
+            break;
         }
-        break;
     }
     if (!found)
     {
