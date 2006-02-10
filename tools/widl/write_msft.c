@@ -1877,7 +1877,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
 
     /* can't be dual if it doesn't derive from IDispatch */
     if (!(msft_typeinfo->typeinfo->flags & 0x1000)) /* TYPEFLAG_FDISPATCHABLE */
-        msft_typeinfo->typeinfo->flags &= 0x40; /* TYPEFLAG_FDUAL */
+        msft_typeinfo->typeinfo->flags &= ~0x40; /* TYPEFLAG_FDUAL */
 
     if(interface->ref)
         add_impl_type(msft_typeinfo, interface->ref);
