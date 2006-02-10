@@ -1266,11 +1266,11 @@ char *_mktemp(char *pattern)
   pattern++;
   do
   {
+    *pattern = letter++;
     if (GetFileAttributesA(retVal) == INVALID_FILE_ATTRIBUTES &&
         GetLastError() == ERROR_FILE_NOT_FOUND)
       return retVal;
-    *pattern = letter++;
-  } while(letter != '|');
+  } while(letter <= 'z');
   return NULL;
 }
 
