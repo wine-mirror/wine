@@ -55,6 +55,9 @@ ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
+        if (This->container) {
+            IWineD3DBase_Release(This->container);
+        }
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         HeapFree(GetProcessHeap(), 0, This);
     }

@@ -69,6 +69,9 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
             glDeleteTextures(1, &This->glDescription.textureName);
             LEAVE_GL();
         }
+        if (This->container) {
+            IWineD3DBase_Release(This->container);
+        }
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
 
         TRACE("(%p) Released\n", This);
