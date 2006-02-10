@@ -2029,12 +2029,31 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
   EXCEPINFO*  pExepInfo,
   UINT*     puArgErr)
 {
-  FIXME("(dispid: %ld):Stub\n",dispIdMember);
+  OLEPictureImpl *This = impl_from_IDispatch(iface);
+  if (dispIdMember == DISPID_PICT_TYPE)
+  {
+    TRACE("DISPID_PICT_TYPE\n");
+    if (wFlags & ~INVOKE_PROPERTYGET)
+        return DISP_E_PARAMNOTFOUND;
+    if (pDispParams->cArgs != 0)
+        return DISP_E_BADPARAMCOUNT;
+    if (pVarResult)
+    {
+        VariantInit(pVarResult);
+        V_VT(pVarResult) = VT_I2;
+        return OLEPictureImpl_get_Type((IPicture *)&This->lpVtbl, &V_I2(pVarResult));
+    }
+    return S_OK;
+  }
+  else
+  {
+    FIXME("(dispid: %ld):Stub\n",dispIdMember);
 
-  VariantInit(pVarResult);
-  V_VT(pVarResult) = VT_BOOL;
-  V_BOOL(pVarResult) = FALSE;
-  return S_OK;
+    VariantInit(pVarResult);
+    V_VT(pVarResult) = VT_BOOL;
+    V_BOOL(pVarResult) = FALSE;
+    return S_OK;
+  }
 }
 
 
