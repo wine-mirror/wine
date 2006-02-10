@@ -84,6 +84,10 @@ ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                 IWineD3DVertexShader_Release(This->vertexShader);
             }
 
+            if (NULL != This->vertexDecl) {
+                IWineD3DVertexDeclaration_Release(This->vertexDecl);
+            }
+
             /* NOTE: according to MSDN: The applicaion is responsible for making sure the texture references are cleared down */
             for (counter = 0; counter < GL_LIMITS(textures); counter++) {
                 if (This->textures[counter]) {
