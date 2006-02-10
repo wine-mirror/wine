@@ -1964,9 +1964,10 @@ static void MSFT_DoRefType(TLBContext *pcx, ITypeInfoImpl *pTI,
             (*ppRefType)->pImpTLInfo = pImpLib;
             if(impinfo.flags & MSFT_IMPINFO_OFFSET_IS_GUID) {
                 MSFT_ReadGuid(&(*ppRefType)->guid, impinfo.oGuid, pcx);
+                TRACE("importing by guid %s\n", debugstr_guid(&(*ppRefType)->guid));
                 (*ppRefType)->index = TLB_REF_USE_GUID;
             } else
-                (*ppRefType)->index = impinfo.oGuid;               
+                (*ppRefType)->index = impinfo.oGuid;
         }else{
             ERR("Cannot find a reference\n");
             (*ppRefType)->reference=-1;
@@ -2009,6 +2010,7 @@ static void MSFT_DoImplTypes(TLBContext *pcx, ITypeInfoImpl *pTI, int count,
 static ITypeInfoImpl * MSFT_DoTypeInfo(
     TLBContext *pcx,
     int count,
+    INT dispatch_href,
     ITypeLibImpl * pLibInfo)
 {
     MSFT_TypeInfoBase tiBase;
@@ -2089,38 +2091,10 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
 	      ptiRet->impltypelist->hRef = tiBase.datatype1;
             }
             else
-	    { /* FIXME: This is a really bad hack to add IDispatch */
-              const char* szStdOle = "stdole2.tlb\0";
-              int   nStdOleLen = strlen(szStdOle);
-	      TLBRefType **ppRef = &ptiRet->reflist;
-
-	      while(*ppRef) {
-		if((*ppRef)->reference == -1)
-		  break;
-		ppRef = &(*ppRef)->next;
-	      }
-	      if(!*ppRef) {
-		*ppRef = TLB_Alloc(sizeof(**ppRef));
-		(*ppRef)->guid             = IID_IDispatch;
-		(*ppRef)->reference        = -1;
-		(*ppRef)->index            = TLB_REF_USE_GUID;
-		(*ppRef)->pImpTLInfo       = TLB_Alloc(sizeof(TLBImpLib));
-		(*ppRef)->pImpTLInfo->guid = IID_StdOle;
-		(*ppRef)->pImpTLInfo->name = SysAllocStringLen(NULL,
-							      nStdOleLen  + 1);
-
-		MultiByteToWideChar(CP_ACP,
-				    MB_PRECOMPOSED,
-				    szStdOle,
-				    -1,
-				    (*ppRef)->pImpTLInfo->name,
-				    SysStringLen((*ppRef)->pImpTLInfo->name));
-
-		(*ppRef)->pImpTLInfo->lcid          = 0;
-		(*ppRef)->pImpTLInfo->wVersionMajor = 2;
-		(*ppRef)->pImpTLInfo->wVersionMinor = 0;
-	      }
-	    }
+	    {
+              MSFT_DoRefType(pcx, ptiRet, dispatch_href);
+              ptiRet->impltypelist->hRef = dispatch_href;
+            }
             break;
         default:
             ptiRet->impltypelist=TLB_Alloc(sizeof(TLBImplType));
@@ -2342,12 +2316,14 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 
     /* read header */
     MSFT_ReadLEDWords((void*)&tlbHeader, sizeof(tlbHeader), &cx, 0);
-    TRACE("header:\n");
-    TRACE("\tmagic1=0x%08x ,magic2=0x%08x\n",tlbHeader.magic1,tlbHeader.magic2 );
+    TRACE_(typelib)("header:\n");
+    TRACE_(typelib)("\tmagic1=0x%08x ,magic2=0x%08x\n",tlbHeader.magic1,tlbHeader.magic2 );
     if (tlbHeader.magic1 != MSFT_SIGNATURE) {
 	FIXME("Header type magic 0x%08x not supported.\n",tlbHeader.magic1);
 	return NULL;
     }
+    TRACE_(typelib)("\tdispatchpos = 0x%x\n", tlbHeader.dispatchpos);
+
     /* there is a small amount of information here until the next important
      * part:
      * the segment directory . Try to calculate the amount of data */
@@ -2512,7 +2488,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 
         for(i = 0; i<(int)tlbHeader.nrtypeinfos; i++)
         {
-            *ppTI = MSFT_DoTypeInfo(&cx, i, pTypeLibImpl);
+            *ppTI = MSFT_DoTypeInfo(&cx, i, tlbHeader.dispatchpos, pTypeLibImpl);
 
             ppTI = &((*ppTI)->next);
             (pTypeLibImpl->TypeInfoCount)++;
