@@ -132,7 +132,8 @@ static void test_GetDiskFreeSpaceA(void)
                     tot.QuadPart = sectors_per_cluster;
                     tot.QuadPart = (tot.QuadPart * bytes_per_sector) * total_clusters;
                     ret = pGetDiskFreeSpaceExA( drive, &d, &totEx, NULL);
-                    ok( ret, "GetDiskFreeSpaceExA( %s ) failed. GetLastError=%ld\n", drive, GetLastError());
+                    ok( ret || (!ret && ERROR_NOT_READY == GetLastError()),
+                        "GetDiskFreeSpaceExA( %s ) failed. GetLastError=%ld\n", drive, GetLastError());
                     ok( bytes_per_sector == 0 || /* empty cd rom drive */
                         totEx.QuadPart <= tot.QuadPart,
                         "GetDiskFreeSpaceA should report at least as much bytes on disk %s as GetDiskFreeSpaceExA\n", drive);
