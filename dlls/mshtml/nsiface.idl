@@ -68,7 +68,6 @@ interface nsISupports
 /* Currently we don't need a full declaration of these interfaces */
 typedef nsISupports nsIWeakReference;
 typedef nsISupports nsIDOMWindow;
-typedef nsISupports nsIInputStream;
 typedef nsISupports nsIDOMDocument;
 typedef nsISupports nsISHistory;
 typedef nsISupports nsISimpleEnumerator;
@@ -126,6 +125,22 @@ interface nsIComponentManager : nsISupports
             nsQIResult result);
     nsresult CreateInstanceByContractID(nsstring aContractID, nsISupports *aDelegate,
             nsIIDRef aIID, nsQIResult result);
+}
+
+[
+    object,
+    uuid(fa9c7f6c-61b3-11d4-9877-00c04fa0cf4a)
+]
+interface nsIInputStream : nsISupports
+{
+    nsresult Close();
+    nsresult Available(PRUint32 *_retval);
+    nsresult Read(char *aBuf, PRUint32 aCount, PRUint32 *_retval);
+    nsresult ReadSegments(nsresult (*aWriter)(nsIInputStream *aInStream, 
+            void *aClosure, const char *aFromSegment, PRUint32 aToOffset,
+            PRUint32 aCount, PRUint32 *aWriteCount),
+            void *aClosure, PRUint32 aCount, PRUint32 *_retval);
+    nsresult IsNonBlocking(PRBool *_retval);
 }
 
 [
@@ -229,6 +244,17 @@ interface nsIHttpChannel : nsIChannel
     nsresult VisitResponseHeaders(nsIHttpHeaderVisitor *aVisitor);
     nsresult IsNoStoreResponse(PRBool *_retval);
     nsresult IsNoCacheResponse(PRBool *_retval);
+}
+
+[
+    object,
+    uuid(ddf633d8-e9a4-439d-ad88-de636fd9bb75)
+]
+interface nsIUploadChannel : nsISupports
+{
+    nsresult SetUploadStream(nsIInputStream *aStream, const nsACString *aContentType,
+                             PRInt32 aContentLength);
+    nsresult GetUploadStream(nsIInputStream **aUploadStream);
 }
 
 [

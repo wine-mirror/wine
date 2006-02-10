@@ -47,12 +47,14 @@ static nsIIOService *nsio = NULL;
 
 typedef struct {
     const nsIHttpChannelVtbl *lpHttpChannelVtbl;
+    const nsIUploadChannelVtbl *lpUploadChannelVtbl;
 
     LONG ref;
 
     nsIChannel *channel;
     nsIHttpChannel *http_channel;
     nsIWineURI *uri;
+    nsIInputStream *post_data_stream;
 } nsChannel;
 
 typedef struct {
@@ -66,6 +68,7 @@ typedef struct {
 
 #define NSCHANNEL(x)     ((nsIChannel*)        &(x)->lpHttpChannelVtbl)
 #define NSHTTPCHANNEL(x) ((nsIHttpChannel*)    &(x)->lpHttpChannelVtbl)
+#define NSUPCHANNEL(x)   ((nsIUploadChannel*)  &(x)->lpUploadChannelVtbl)
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
 
 static BOOL exec_shldocvw_67(NSContainer *container, LPCWSTR url)
@@ -158,6 +161,9 @@ static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef r
     }else if(This->http_channel && IsEqualGUID(&IID_nsIHttpChannel, riid)) {
         TRACE("(%p)->(IID_nsIHttpChannel %p)\n", This, result);
         *result = NSHTTPCHANNEL(This);
+    }else if(IsEqualGUID(&IID_nsIUploadChannel, riid)) {
+        TRACE("(%p)->(IID_nsIUploadChannel %p)\n", This, result);
+        *result = NSUPCHANNEL(This);
     }
 
     if(*result) {
@@ -189,6 +195,8 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
         nsIWineURI_Release(This->uri);
         if(This->http_channel)
             nsIHttpChannel_Release(This->http_channel);
+        if(This->post_data_stream)
+            nsIInputStream_Release(This->post_data_stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -384,12 +392,29 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                                           nsISupports *aContext)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+    nsresult nsres;
 
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
 
     if(!before_async_open(This)) {
         TRACE("canceled\n");
         return NS_ERROR_UNEXPECTED;
+    }
+
+    if(This->post_data_stream) {
+        nsIUploadChannel *upload_channel;
+
+        nsres = nsIChannel_QueryInterface(This->channel, &IID_nsIUploadChannel,
+                                          (void**)&upload_channel);
+        if(NS_SUCCEEDED(nsres)) {
+            nsACString *empty_string = nsACString_Create();
+            nsACString_SetData(empty_string, "");
+
+            nsres = nsIUploadChannel_SetUploadStream(upload_channel, This->post_data_stream,
+                                                     empty_string, -1);
+            if(NS_FAILED(nsres))
+                WARN("SetUploadStream failed: %08lx\n", nsres);
+        }
     }
 
     return nsIChannel_AsyncOpen(This->channel, aListener, aContext);
@@ -686,6 +711,78 @@ static const nsIHttpChannelVtbl nsChannelVtbl = {
 };
 
 #define NSURI_THIS(iface) DEFINE_THIS(nsURI, WineURI, iface)
+
+#define NSUPCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, UploadChannel, iface)
+
+static nsresult NSAPI nsUploadChannel_QueryInterface(nsIUploadChannel *iface, nsIIDRef riid,
+                                                     nsQIResult result)
+{
+    nsChannel *This = NSUPCHANNEL_THIS(iface);
+    return nsIChannel_QueryInterface(NSCHANNEL(This), riid, result);
+}
+
+static nsrefcnt NSAPI nsUploadChannel_AddRef(nsIUploadChannel *iface)
+{
+    nsChannel *This = NSUPCHANNEL_THIS(iface);
+    return nsIChannel_AddRef(NSCHANNEL(This));
+}
+
+static nsrefcnt NSAPI nsUploadChannel_Release(nsIUploadChannel *iface)
+{
+    nsChannel *This = NSUPCHANNEL_THIS(iface);
+    return nsIChannel_Release(NSCHANNEL(This));
+}
+
+static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
+        nsIInputStream *aStream, const nsACString *aContentType, PRInt32 aContentLength)
+{
+    nsChannel *This = NSUPCHANNEL_THIS(iface);
+    const char *content_type;
+
+    TRACE("(%p)->(%p %p %ld)\n", This, aStream, aContentType, aContentLength);
+
+    if(This->post_data_stream)
+        nsIInputStream_Release(This->post_data_stream);
+
+    if(aContentType) {
+        nsACString_GetData(aContentType, &content_type, NULL);
+        if(*content_type)
+            FIXME("Unsupported aContentType argument: %s\n", debugstr_a(content_type));
+    }
+
+    if(aContentLength != -1)
+        FIXME("Unsupported acontentLength = %ld\n", aContentLength);
+
+    if(aStream)
+        nsIInputStream_AddRef(aStream);
+    This->post_data_stream = aStream;
+
+    return NS_OK;
+}
+
+static nsresult NSAPI nsUploadChannel_GetUploadStream(nsIUploadChannel *iface,
+        nsIInputStream **aUploadStream)
+{
+    nsChannel *This = NSUPCHANNEL_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aUploadStream);
+
+    if(This->post_data_stream)
+        nsIInputStream_AddRef(This->post_data_stream);
+
+    *aUploadStream = This->post_data_stream;
+    return NS_OK;
+}
+
+#undef NSUPCHANNEL_THIS
+
+static const nsIUploadChannelVtbl nsUploadChannelVtbl = {
+    nsUploadChannel_QueryInterface,
+    nsUploadChannel_AddRef,
+    nsUploadChannel_Release,
+    nsUploadChannel_SetUploadStream,
+    nsUploadChannel_GetUploadStream
+};
 
 static nsresult NSAPI nsURI_QueryInterface(nsIWineURI *iface, nsIIDRef riid, nsQIResult result)
 {
@@ -1122,10 +1219,12 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsChannel));
 
     ret->lpHttpChannelVtbl = &nsChannelVtbl;
+    ret->lpUploadChannelVtbl = &nsUploadChannelVtbl;
     ret->ref = 1;
     ret->channel = channel;
     ret->http_channel = NULL;
     ret->uri = wine_uri;
+    ret->post_data_stream = NULL;
 
     nsIChannel_QueryInterface(ret->channel, &IID_nsIHttpChannel, (void**)&ret->http_channel);
 
