@@ -48,6 +48,17 @@ cpp_quote("#define HTMLDLG_VERIFY          0x0100")
 cpp_quote("#define PRINT_DONTBOTHERUSER     0x0001")
 cpp_quote("#define PRINT_WAITFORCOMPLETION  0x0002")
 
+cpp_quote("DEFINE_GUID(CGID_MSHTML, 0xde4ba900,0x59ca,0x11cf,0x95,0x92,0x44,0x45,0x53,0x54,0x00,0x00);")
+cpp_quote("#define CMDSETID_Forms3 CGID_MSHTML")
+
+cpp_quote("#if defined(__GNUC__)")
+cpp_quote("#define SZ_HTML_CLIENTSITE_OBJECTPARAM (const WCHAR[]) {'{','d','4','d','b','6','8','5','0','-','5','3','8','5','-','1','1','d','0','-','8','9','e','9','-','0','0','a','0','c','9','0','a','9','0','a','c','}',0}")
+cpp_quote("#elif defined(_MSC_VER)")
+cpp_quote("#define SZ_HTML_CLIENTSITE_OBJECTPARAM L\"{d4db6850-5385-11d0-89e9-00a0c90a90ac}\"")
+cpp_quote("#else")
+cpp_quote("static const WCHAR SZ_HTML_CLIENTSITE_OBJECTPARAM[] = {'{','d','4','d','b','6','8','5','0','-','5','3','8','5','-','1','1','d','0','-','8','9','e','9','-','0','0','a','0','c','9','0','a','9','0','a','c','}',0};")
+cpp_quote("#endif")
+
 cpp_quote("#ifndef __IHTMLWindow2_FWD_DEFINED__")
 cpp_quote("#define __IHTMLWindow2_FWD_DEFINED__")
 cpp_quote("typedef interface IHTMLWindow2 IHTMLWindow2;")
@@ -194,6 +205,8 @@ interface IDocHostUIHandler : IUnknown
         [in] IDataObject *pDO,
         [out] IDataObject **ppDORet);
 }
+
+cpp_quote("DEFINE_GUID(CGID_DocHostCommandHandler,0xf38bc242,0xb950,0x11d1,0x89,0x18,0x00,0xc0,0x4f,0xc2,0xc8,0x36);")
 
 [
     object,

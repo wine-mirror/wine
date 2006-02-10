@@ -301,10 +301,6 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     if(pibc) {
         IUnknown *unk = NULL;
 
-        static WCHAR wszClientSiteParam[] = {'{','d','4','d','b','6','8','5','0','-',
-            '5','3','8','5','-','1','1','d','0','-','8','9','e','9','-','0','0','a',
-            '0','c','9','0','a','9','0','a','c','}',0};
-
         /* FIXME:
          * Use params:
          * "__PrecreatedObject"
@@ -317,7 +313,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
          * "_EnumFORMATETC_"
          */
 
-        IBindCtx_GetObjectParam(pibc, wszClientSiteParam, &unk);
+        IBindCtx_GetObjectParam(pibc, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM, &unk);
         if(unk) {
             IOleClientSite *client = NULL;
 

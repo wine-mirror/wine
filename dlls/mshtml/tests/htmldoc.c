@@ -34,7 +34,6 @@
 
 #include "initguid.h"
 DEFINE_SHLGUID(CGID_Undocumented, 0x000214D4L, 0, 0);
-DEFINE_GUID(CGID_MSHTML, 0xDE4BA900,0x59CA,0x11CF,0x95,0x92, 0x44,0x45,0x53,0x54,0x00,0x00);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -1262,9 +1261,6 @@ static void test_Load(IPersistMoniker *persist)
     IBindCtx *bind;
     HRESULT hres;
 
-    static WCHAR wszClientSiteParam[] = {'{','d','4','d','b','6','8','5','0','-',
-        '5','3','8','5','-','1','1','d','0','-','8','9','e','9','-','0','0','a',
-        '0','c','9','0','a','9','0','a','c','}',0};
     static const WCHAR wszWineHQ[] =
         {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
 
@@ -1274,7 +1270,8 @@ static void test_Load(IPersistMoniker *persist)
         return;
 
     CreateBindCtx(0, &bind);
-    IBindCtx_RegisterObjectParam(bind, wszClientSiteParam, (IUnknown*)&ClientSite);
+    IBindCtx_RegisterObjectParam(bind, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
+                                 (IUnknown*)&ClientSite);
 
     SET_EXPECT(GetHostInfo);
     SET_EXPECT(GetOptionKeyPath);
