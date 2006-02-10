@@ -21,6 +21,17 @@
 
 static HMODULE d3d9_handle = 0;
 
+static HWND create_window(void)
+{
+    WNDCLASS wc = {0};
+    wc.lpfnWndProc = &DefWindowProc;
+    wc.lpszClassName = "d3d9_test_wc";
+    RegisterClass(&wc);
+
+    return CreateWindow("d3d9_test_wc", "d3d9_test",
+            0, 0, 0, 0, 0, 0, 0, 0, 0);
+}
+
 static IDirect3DDevice9 *init_d3d9(void)
 {
     IDirect3D9 * (__stdcall * d3d9_create)(UINT SDKVersion) = 0;
@@ -39,7 +50,7 @@ static IDirect3DDevice9 *init_d3d9(void)
 
     ZeroMemory(&present_parameters, sizeof(present_parameters));
     present_parameters.Windowed = TRUE;
-    present_parameters.hDeviceWindow = GetDesktopWindow();
+    present_parameters.hDeviceWindow = create_window();
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
 
     hres = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
