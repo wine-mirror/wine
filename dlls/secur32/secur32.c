@@ -703,6 +703,8 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
 {
     SECURITY_STATUS ret = SEC_E_OK;
 
+    TRACE("(%p, %p)\n", pcPackages, ppPackageInfo);
+
     /* windows just crashes if pcPackages or ppPackageInfo is NULL, so will I */
     *pcPackages = 0;
     EnterCriticalSection(&cs);
@@ -737,6 +739,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
                     memcpy(pkgInfo, &package->infoW, sizeof(SecPkgInfoW));
                     if (package->infoW.Name)
                     {
+                        TRACE("Name[%ld] = %s\n", i - 1, debugstr_w(package->infoW.Name));
                         pkgInfo->Name = nextString;
                         lstrcpyW(nextString, package->infoW.Name);
                         nextString += lstrlenW(nextString) + 1;
@@ -745,6 +748,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
                         pkgInfo->Name = NULL;
                     if (package->infoW.Comment)
                     {
+                        TRACE("Comment[%ld] = %s\n", i - 1, debugstr_w(package->infoW.Comment));
                         pkgInfo->Comment = nextString;
                         lstrcpyW(nextString, package->infoW.Comment);
                         nextString += lstrlenW(nextString) + 1;
@@ -758,6 +762,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
         }
     }
     LeaveCriticalSection(&cs);
+    TRACE("<-- 0x%08lx\n", ret);
     return ret;
 }
 
