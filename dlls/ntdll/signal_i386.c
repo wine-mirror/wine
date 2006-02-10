@@ -902,6 +902,34 @@ static inline int is_privileged_instr( CONTEXT86 *context )
 }
 
 
+#include "pshpack1.h"
+struct atl_thunk
+{
+    DWORD movl;  /* movl this,4(%esp) */
+    DWORD this;
+    BYTE  jmp;   /* jmp func */
+    int   func;
+};
+#include "poppack.h"
+
+/**********************************************************************
+ *		check_atl_thunk
+ *
+ * Check if code destination is an ATL thunk, and emulate it if so.
+ */
+static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    struct atl_thunk *thunk = (struct atl_thunk *)rec->ExceptionInformation[1];
+
+    if (thunk->movl != 0x042444c7 || thunk->jmp != 0xe9) return FALSE;
+    *((DWORD *)context->Esp + 1) = thunk->this;
+    context->Eip = (DWORD_PTR)(&thunk->func + 1) + thunk->func;
+    TRACE( "emulating ATL thunk at %p, func=%08lx arg=%08lx\n",
+           thunk, context->Eip, *((DWORD *)context->Esp + 1) );
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           setup_exception
  *
@@ -1026,7 +1054,10 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
     {
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
+        {
+            if ((rec->ExceptionInformation[0] == 8) && check_atl_thunk( rec, context )) goto done;
             rec->ExceptionCode = VIRTUAL_HandleFault( (void *)rec->ExceptionInformation[1] );
+        }
         break;
     case EXCEPTION_DATATYPE_MISALIGNMENT:
         /* FIXME: pass through exception handler first? */
@@ -1175,7 +1206,7 @@ static HANDLER_DEF(segv_handler)
         rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
 #ifdef FAULT_ADDRESS
         rec->NumberParameters = 2;
-        rec->ExceptionInformation[0] = (get_error_code(HANDLER_CONTEXT) & 2) != 0;
+        rec->ExceptionInformation[0] = (get_error_code(HANDLER_CONTEXT) >> 1) & 0x09;
         rec->ExceptionInformation[1] = (ULONG_PTR)FAULT_ADDRESS;
 #endif
         break;
