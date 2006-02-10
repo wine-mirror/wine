@@ -43,17 +43,23 @@ DEFINE_GUID(CGID_MSHTML, 0xDE4BA900,0x59CA,0x11CF,0x95,0x92, 0x44,0x45,0x53,0x54
     expect_ ## func = TRUE
 
 #define CHECK_EXPECT(func) \
-    ok(expect_ ##func, "unexpected call\n"); \
-    expect_ ## func = FALSE; \
-    called_ ## func = TRUE
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        expect_ ## func = FALSE; \
+        called_ ## func = TRUE; \
+    }while(0)
 
 #define CHECK_EXPECT2(func) \
-    ok(expect_ ##func, "unexpected call\n"); \
-    called_ ## func = TRUE
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
 
 #define CHECK_CALLED(func) \
-    ok(called_ ## func, "expected " #func "\n"); \
-    expect_ ## func = called_ ## func = FALSE
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
 
 static IOleDocumentView *view = NULL;
 static HWND container_hwnd = NULL, hwnd = NULL, last_hwnd = NULL;
@@ -95,6 +101,7 @@ DEFINE_EXPECT(Invoke_AMBIENT_USERAGENT);
 DEFINE_EXPECT(Invoke_AMBIENT_PALETTE);
 DEFINE_EXPECT(GetDropTarget);
 DEFINE_EXPECT(UpdateUI);
+DEFINE_EXPECT(Navigate);
 
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
@@ -109,6 +116,100 @@ static enum {
 static LPCOLESTR expect_status_text = NULL;
 
 static HRESULT QueryInterface(REFIID riid, void **ppv);
+
+static HRESULT WINAPI HlinkFrame_QueryInterface(IHlinkFrame *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI HlinkFrame_AddRef(IHlinkFrame *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI HlinkFrame_Release(IHlinkFrame *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI HlinkFrame_SetBrowseContext(IHlinkFrame *iface,
+                                                  IHlinkBrowseContext *pihlbc)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HlinkFrame_GetBrowseContext(IHlinkFrame *iface,
+                                                  IHlinkBrowseContext **ppihlbc)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPBC pbc,
+                                          IBindStatusCallback *pibsc, IHlink *pihlNavigate)
+{
+    HRESULT hres;
+
+    CHECK_EXPECT(Navigate);
+
+    ok(grfHLNF == 0, "grfHLNF=%ld, expected 0\n", grfHLNF);
+    ok(pbc != NULL, "pbc == NULL\n");
+    ok(pibsc != NULL, "pubsc == NULL\n");
+    ok(pihlNavigate != NULL, "puhlNavigate == NULL\n");
+
+    if(pihlNavigate) {
+        LPWSTR frame_name = (LPWSTR)0xdeadbeef;
+        LPWSTR location = (LPWSTR)0xdeadbeef;
+        IHlinkSite *site;
+        IMoniker *mon = NULL;
+        DWORD site_data = 0xdeadbeef;
+
+        hres = IHlink_GetTargetFrameName(pihlNavigate, &frame_name);
+        ok(hres == S_FALSE, "GetTargetFrameName failed: %08lx\n", hres);
+        ok(frame_name == NULL, "frame_name = %p\n", frame_name);
+
+        hres = IHlink_GetMonikerReference(pihlNavigate, 1, &mon, &location);
+        ok(hres == S_OK, "GetMonikerReference failed: %08lx\n", hres);
+        ok(location == NULL, "location = %p\n", location);
+        ok(mon != NULL, "mon == NULL\n");
+
+        hres = IHlink_GetHlinkSite(pihlNavigate, &site, &site_data);
+        ok(hres == S_OK, "GetHlinkSite failed: %08lx\n", hres);
+        ok(site == NULL, "site = %p\n, expected NULL", site);
+        ok(site_data == 0xdeadbeef, "site_data = %lx\n", site_data);
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI HlinkFrame_OnNavigate(IHlinkFrame *iface, DWORD grfHLNF,
+        IMoniker *pimkTarget, LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName, DWORD dwreserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HlinkFrame_UpdateHlink(IHlinkFrame *iface, ULONG uHLID,
+        IMoniker *pimkTarget, LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IHlinkFrameVtbl HlinkFrameVtbl = {
+    HlinkFrame_QueryInterface,
+    HlinkFrame_AddRef,
+    HlinkFrame_Release,
+    HlinkFrame_SetBrowseContext,
+    HlinkFrame_GetBrowseContext,
+    HlinkFrame_Navigate,
+    HlinkFrame_OnNavigate,
+    HlinkFrame_UpdateHlink
+};
+
+static IHlinkFrame HlinkFrame = { &HlinkFrameVtbl };
 
 static HRESULT WINAPI OleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
 {
@@ -1053,6 +1154,68 @@ static IDispatchVtbl DispatchVtbl = {
 
 static IDispatch Dispatch = { &DispatchVtbl };
 
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface,
+                                                     REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
+                                    REFIID riid, void **ppv)
+{
+    /*
+     * Services used by HTMLDocument:
+     *
+     * IOleUndoManager
+     * IInternetSecurityManager
+     * ITargetFrame
+     * {D5F78C80-5252-11CF-90FA-00AA0042106E}
+     * HTMLFrameBase
+     * IShellObject
+     * {3050F312-98B5-11CF-BB82-00AA00BDCE0B}
+     * {53A2D5B1-D2FC-11D0-84E0-006097C9987D}
+     * {AD7F6C62-F6BD-11D2-959B-006097C553C8}
+     * DefView (?)
+     * {6D12FE80-7911-11CF-9534-0000C05BAE0B}
+     * IElementBehaviorFactory
+     * {3050F429-98B5-11CF-BB82-00AA00BDCE0B}
+     * STopLevelBrowser
+     * IHTMLWindow2
+     * IInternetProtocol
+     * IWebBrowserApp
+     * UrlHostory
+     * IHTMLEditHost
+     * IHlinkFrame
+     */
+
+    if(IsEqualGUID(&IID_IHlinkFrame, guidService)) {
+        ok(IsEqualGUID(&IID_IHlinkFrame, riid), "unexpected riid\n");
+        *ppv = &HlinkFrame;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
+static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
+
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -1073,9 +1236,10 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &OleCommandTarget;
     else if(IsEqualGUID(&IID_IDispatch, riid))
         *ppv = &Dispatch;
+    else if(IsEqualGUID(&IID_IServiceProvider, riid))
+        *ppv = &ServiceProvider;
 
     /* TODO:
-     * IServiceProvider
      * IOleInPlaceSiteEx
      * {D48A6EC6-6A4A-11CF-94A7-444553540000}
      * {7BB0B520-B1A7-11D2-BB23-00C04F79ABCD}
