@@ -102,7 +102,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     }
 
     WARN("Unsupported IID %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    return CONNECT_E_NOCONNECTION;
 }
 
 #undef CONPTCONT_THIS

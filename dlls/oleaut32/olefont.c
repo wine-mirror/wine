@@ -1901,8 +1901,8 @@ static HRESULT WINAPI OLEFontImpl_FindConnectionPoint(
                                            &IID_IConnectionPoint,
                                            (LPVOID)ppCp);
   } else {
-    FIXME("Tried to find connection point on %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    FIXME("no connection point for %s\n", debugstr_guid(riid));
+    return CONNECT_E_NOCONNECTION;
   }
 }
 

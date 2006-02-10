@@ -869,8 +869,8 @@ static HRESULT WINAPI OLEPictureImpl_FindConnectionPoint(
   *ppCP = NULL;
   if (IsEqualGUID(riid,&IID_IPropertyNotifySink))
       return IConnectionPoint_QueryInterface(This->pCP,&IID_IConnectionPoint,(LPVOID)ppCP);
-  FIXME("tried to find connection point on %s?\n",debugstr_guid(riid));
-  return 0x80040200;
+  FIXME("no connection point for %s\n",debugstr_guid(riid));
+  return CONNECT_E_NOCONNECTION;
 }
 /************************************************************************
  *    IPersistStream
