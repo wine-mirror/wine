@@ -49,6 +49,8 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Настройка на приложенията ",IDC_STATIC, 8,4,244,240
+ 
+    /* FIXME: Make the explanation comprehensible */
     LTEXT           "Wine може да имитира различни версии на Windows за всяко различно приложение. Тази страница е свързана с настройките в Библиотеки и Графика, за да можете да променяте, освен общосистемните, и специфичните за приложенията настройки.",
                     IDC_STATIC,15,20,227,50
     CONTROL         "Applications",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
@@ -63,28 +65,32 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Настройка на прозорците ",IDC_STATIC,8,25,244,110
+    GROUPBOX        " Настройка на прозорците ",IDC_STATIC,8,10,244,195
 
-    CONTROL	    "Разреши на DirectX приложенията да заключват мишката",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "Включи двойната буферизация на работния плот",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    CONTROL	    "Разреши на DirectX приложенията да заключват мишката",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL	    "Включи двойната буферизация на работния плот",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
+    /* FIXME: the wording is terrible */
+    LTEXT           "Ако прозорците на Wine се упрявляват от вашия мениджър на прозорци, те ще изглеждат и ще се държат като останалите на работния ви плот, и ще се показват в списъка с прозорци. \n\nАко изберете да не се управляват от него, те няма да бъдат интегрирани с работния ви плот, но емулацията ще е по-точна и е възможно някои програми да работят по-добре.",
+                    IDC_STATIC,15,43,228,80
+    CONTROL         "Управлението на прозорците от мениджъра на прозорци",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,117,230,8
     
     /* FIXME: the wording of this explanation could be a lot better */
     LTEXT           "Можете да използвате емулация на виртуален работен плот, в който да сe разполагат прозорците, или може да ги оставите да излизат на вашия стандартен работен плот.",
-                    IDC_STATIC,15,73,228,28
-    LTEXT           "Размер на работния плот:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
+                    IDC_STATIC,15,146,228,28
+    LTEXT           "Размер на работния плот:",IDC_DESKTOP_SIZE,15,188,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,188,8,8,WS_DISABLED
     CONTROL         "Емулирай виртуален работен плот",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,173,230,10
 		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,210,244,50
 
-    LTEXT	    "Поддръжка на Vertex Shader: ",IDC_STATIC,15,150,105,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,115,148,125,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT	    "Поддръжка на Vertex Shader: ",IDC_STATIC,15,220,105,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,115,218,125,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Разреши Pixel Shader (ако се поддържа от хардуера)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
+    CONTROL         "Разреши Pixel Shader (ако се поддържа от хардуера)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,237,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -200,4 +206,15 @@ BEGIN
     IDS_THEMEFILE           "Файлове с теми"
     IDS_THEMEFILE_SELECT    "Изберете файл с тема"
     IDS_AUDIO_MISSING       "Няма настроен звуков драйвер.\n\nЗа вас беше избран драйвер по подразбиране.\nМоже да го използвате или да изберете друг.\n\nТрябва да щракнете на Потвърди, за да влезе в сила избора."
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "Промяната на реда на зареждане не е препоръчителна. Сигурни ли сте, че искате да направите това?"
+    IDS_DLL_WARNING_CAPTION "Внимание: системна библиотека"
+    IDS_DLL_NATIVE          "собствена"
+    IDS_DLL_BUILTIN         "вградена"
+    IDS_DLL_NATIVE_BUILTIN  "собствена, вградена"
+    IDS_DLL_BUILTIN_NATIVE  "вградена, собствена"
+    IDS_DLL_DISABLED        "забранена"
 END
