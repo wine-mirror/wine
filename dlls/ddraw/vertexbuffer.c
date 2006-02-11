@@ -360,7 +360,7 @@ process_vertices_strided(IDirect3DVertexBufferImpl *This,
 	    D3DVALUE *tex_coord =
 	      (D3DVALUE *) (((char *) lpStrideData->textureCoords[tex_index].lpvData) + 
 			    i * lpStrideData->textureCoords[tex_index].dwStride);
-	    copy_and_next(dest_ptr, tex_coord, GET_TEXCOORD_SIZE_FROM_FVF(dwVertexTypeDesc, i) * sizeof(D3DVALUE));
+	    copy_and_next(dest_ptr, tex_coord, GET_TEXCOORD_SIZE_FROM_FVF(dwVertexTypeDesc, tex_index) * sizeof(D3DVALUE));
 	}
 
 	if (TRACE_ON(ddraw_geom)) {
