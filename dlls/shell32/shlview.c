@@ -146,7 +146,7 @@ static inline IShellViewImpl *impl_from_IViewObject( IViewObject *iface )
 #define IDM_VIEW_IDW    (FCIDM_SHVIEWFIRST + 0x501)
 #define IDM_MYFILEITEM  (FCIDM_SHVIEWFIRST + 0x502)
 
-#define ID_LISTVIEW     2000
+#define ID_LISTVIEW     1
 
 #define SHV_CHANGE_NOTIFY WM_USER + 0x1111
 
