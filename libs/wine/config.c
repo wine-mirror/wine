@@ -101,6 +101,103 @@ inline static void remove_trailing_slashes( char *path )
     while (len > 1 && path[len-1] == '/') path[--len] = 0;
 }
 
+/* determine where the destination path is located relative to the 'from' path */
+inline static const char *get_relative_path( const char *from, const char *dest, unsigned int *dotdots )
+{
+#define DIR_END(p)  (*(p) == 0 || *(p) == '/')
+    const char *start;
+
+    *dotdots = 0;
+    for (;;)
+    {
+        while (*from == '/') from++;
+        while (*dest == '/') dest++;
+        start = dest;  /* save start of next path element */
+        if (!*from) break;
+
+        while (!DIR_END(from) && *from == *dest) { from++; dest++; }
+        if (DIR_END(from) && DIR_END(dest)) continue;
+
+        /* count remaining elements in 'from' */
+        do
+        {
+            (*dotdots)++;
+            while (!DIR_END(from)) from++;
+            while (*from == '/') from++;
+        }
+        while (*from);
+        break;
+    }
+    return start;
+#undef DIR_END
+}
+
+/* return the directory that contains the library at run-time */
+static const char *get_runtime_libdir(void)
+{
+    static char *libdir;
+
+#ifdef HAVE_DLADDR
+    Dl_info info;
+    char *p;
+
+    if (!libdir && dladdr( get_runtime_libdir, &info ) && (p = strrchr( info.dli_fname, '/' )))
+    {
+        unsigned int len = p - info.dli_fname;
+        if (!len) len++;  /* include initial slash */
+        libdir = xmalloc( len + 1 );
+        memcpy( libdir, info.dli_fname, len );
+        libdir[len] = 0;
+    }
+#endif /* HAVE_DLADDR */
+    return libdir;
+}
+
+/* determine the proper location of the given path based on the current libdir */
+static char *get_path_from_libdir( const char *path, const char *filename )
+{
+    char *p, *ret;
+    const char *libdir = get_runtime_libdir();
+
+    /* retrieve the library load path */
+
+    if (libdir)
+    {
+        unsigned int dotdots = 0;
+        const char *start = get_relative_path( LIBDIR, path, &dotdots );
+
+        ret = xmalloc( strlen(libdir) + 3 * dotdots + strlen(start) + strlen(filename) + 3 );
+        strcpy( ret, libdir );
+        p = ret + strlen(libdir);
+        if (p[-1] != '/') *p++ = '/';
+
+        while (dotdots--)
+        {
+            p[0] = '.';
+            p[1] = '.';
+            p[2] = '/';
+            p += 3;
+        }
+
+        strcpy( p, start );
+        p += strlen(p);
+    }
+    else
+    {
+        ret = xmalloc( strlen(path) + strlen(filename) + 2 );
+        strcpy( ret, path );
+        p = ret + strlen(ret);
+    }
+
+    if (*filename)
+    {
+        if (p[-1] != '/') *p++ = '/';
+        strcpy( p, filename );
+    }
+    else if (p[-1] == '/') p[-1] = 0;
+    return ret;
+}
+
 /* initialize the server directory value */
 static void init_server_dir( dev_t dev, ino_t ino )
 {
@@ -125,6 +222,15 @@ static void init_server_dir( dev_t dev, ino_t ino )
         sprintf( p, "%lx%08lx", (unsigned long)(ino >> 32), (unsigned long)ino );
     else
         sprintf( p, "%lx", (unsigned long)ino );
+}
+
+/* retrieve the default dll dir */
+const char *get_default_dlldir(void)
+{
+    static const char *dlldir;
+
+    if (!dlldir) dlldir = get_path_from_libdir( DLLDIR, "" );
+    return dlldir;
 }
 
 /* initialize all the paths values */
@@ -314,9 +420,7 @@ void wine_exec_wine_binary( const char *name, char **argv, char **envp, int use_
     else if (!name) name = argv0_name;
 
     /* first, try bin directory */
-    argv[0] = xmalloc( sizeof(BINDIR "/") + strlen(name) );
-    strcpy( argv[0], BINDIR "/" );
-    strcat( argv[0], name );
+    argv[0] = get_path_from_libdir( BINDIR, name );
     preloader_exec( argv, envp, use_preloader );
     free( argv[0] );
 

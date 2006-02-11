@@ -74,13 +74,14 @@ static const IMAGE_NT_HEADERS *main_exe;
 
 static load_dll_callback_t load_dll_callback;
 
-static const char default_dlldir[] = DLLDIR;
+static const char *default_dlldir;
 static const char **dll_paths;
 static int nb_dll_paths;
 static int dll_path_maxlen;
 
 extern void mmap_init(void);
 extern void debug_init(void);
+extern const char *get_default_dlldir(void);
 
 /* build the dll load path from the WINEDLLPATH variable */
 static void build_dll_path(void)
@@ -121,7 +122,8 @@ static void build_dll_path(void)
     }
 
     /* append default dll dir (if not empty) to path */
-    if ((len = sizeof(default_dlldir)-1))
+    default_dlldir = get_default_dlldir();
+    if ((len = strlen(default_dlldir)) > 0)
     {
         if (len > dll_path_maxlen) dll_path_maxlen = len;
         dll_paths[nb_dll_paths++] = default_dlldir;
