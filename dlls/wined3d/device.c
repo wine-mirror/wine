@@ -22,6 +22,7 @@
  */
 
 #include "config.h"
+#include <float.h>
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
@@ -165,7 +166,7 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
     glLightf(GL_LIGHT0+Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
     checkGLcall("glLightf");
 
-    if ((lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range) != 0) {
+    if ((lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range) >= FLT_MIN) {
         quad_att = 1.4/(lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range);
     } else {
         quad_att = 0; /*  0 or  MAX?  (0 seems to be ok) */
