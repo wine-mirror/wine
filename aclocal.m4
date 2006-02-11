@@ -94,6 +94,16 @@ AS_IF([test AS_VAR_GET(ac_var) = yes],
   LINTFLAGS="$LINTFLAGS -D$1"])dnl
 AS_VAR_POPDEF([ac_var])])
 
+dnl **** Check for functions with some extra libraries ****
+dnl
+dnl Usage: WINE_CHECK_LIB_FUNCS(funcs,libs,[action-if-found,[action-if-not-found]])
+dnl
+AC_DEFUN([WINE_CHECK_LIB_FUNCS],
+[ac_wine_check_funcs_save_LIBS="$LIBS"
+LIBS="$LIBS $2"
+AC_CHECK_FUNCS([$1],[$3],[$4])
+LIBS="$ac_wine_check_funcs_save_LIBS"])
+
 dnl **** Check for ln ****
 dnl
 dnl Usage: WINE_PROG_LN

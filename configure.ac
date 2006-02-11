@@ -553,14 +553,12 @@ then
              LDAPLIBS="-lldap_r -llber"],,
              [$LIBPTHREAD])],,
              [$LIBPTHREAD])
-    ac_save_LIBS="$LIBS"
-    LIBS="$LIBS $LDAPLIBS $LIBPTHREAD"
-    AC_CHECK_FUNCS(\
+    WINE_CHECK_LIB_FUNCS(\
 	ldap_count_references \
 	ldap_first_reference \
 	ldap_next_reference \
-	ldap_parse_reference)
-    LIBS="$ac_save_LIBS"
+	ldap_parse_reference,
+        [$LDAPLIBS $LIBPTHREAD])
 fi
 
 dnl **** Check for FreeType 2 ****
@@ -689,14 +687,11 @@ AC_CHECK_TYPES([pthread_rwlock_t, pthread_rwlockattr_t],,,[#define _GNU_SOURCE
 #include <pthread.h>])
 
 dnl **** Check for pthread functions ****
-ac_save_LIBS="$LIBS"
-LIBS="$LIBS $LIBPTHREAD"
-AC_CHECK_FUNCS(\
+WINE_CHECK_LIB_FUNCS(\
         pthread_getattr_np \
         pthread_get_stackaddr_np \
-        pthread_get_stacksize_np \
-)
-LIBS="$ac_save_LIBS"
+        pthread_get_stacksize_np,
+        [$LIBPTHREAD])
 
 dnl **** Check for aRts Sound Server ****
 AC_PATH_PROG(ARTSCCONFIG, artsc-config)

@@ -9757,8 +9757,8 @@ fi
 
 fi
 
-    ac_save_LIBS="$LIBS"
-    LIBS="$LIBS $LDAPLIBS $LIBPTHREAD"
+    ac_wine_check_funcs_save_LIBS="$LIBS"
+LIBS="$LIBS $LDAPLIBS $LIBPTHREAD"
 
 
 
@@ -9867,7 +9867,7 @@ _ACEOF
 fi
 done
 
-    LIBS="$ac_save_LIBS"
+LIBS="$ac_wine_check_funcs_save_LIBS"
 fi
 
 FREETYPELIBS=""
@@ -10567,7 +10567,7 @@ _ACEOF
 fi
 
 
-ac_save_LIBS="$LIBS"
+ac_wine_check_funcs_save_LIBS="$LIBS"
 LIBS="$LIBS $LIBPTHREAD"
 
 
@@ -10575,8 +10575,7 @@ LIBS="$LIBS $LIBPTHREAD"
 for ac_func in \
         pthread_getattr_np \
         pthread_get_stackaddr_np \
-        pthread_get_stacksize_np \
-
+        pthread_get_stacksize_np
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -10676,7 +10675,7 @@ _ACEOF
 fi
 done
 
-LIBS="$ac_save_LIBS"
+LIBS="$ac_wine_check_funcs_save_LIBS"
 
 # Extract the first word of "artsc-config", so it can be a program name with args.
 set dummy artsc-config; ac_word=$2
