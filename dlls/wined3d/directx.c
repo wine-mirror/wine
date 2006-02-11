@@ -299,6 +299,8 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             }
 
             minor = atoi(gl_string_cursor);
+            minor = major*100+minor;
+            major = 10;
 
             break;
 
@@ -366,7 +368,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             minor = 9;
         }
         gl_info->gl_driver_version = MAKEDWORD_VERSION(major, minor);
-        TRACE_(d3d_caps)("found GL_VERSION  (%s)->(0x%08lx)\n", debugstr_a(gl_string), gl_info->gl_driver_version);
+        TRACE_(d3d_caps)("found GL_VERSION  (%s)->%i.%i->(0x%08lx)\n", debugstr_a(gl_string), major, minor, gl_info->gl_driver_version);
 
         /* Fill in the renderer information */
 
@@ -1019,7 +1021,8 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
 
           /* Note dx8 doesn't supply a DeviceName */
           if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
-          pIdentifier->DriverVersion->u.HighPart = 0xa;
+          /* Current Windows drivers have versions like 6.14.... (some older have an earlier version) */
+          pIdentifier->DriverVersion->u.HighPart = MAKEDWORD_VERSION(6, 14);
           pIdentifier->DriverVersion->u.LowPart = This->gl_info.gl_driver_version;
           *(pIdentifier->VendorId) = This->gl_info.gl_vendor;
           *(pIdentifier->DeviceId) = This->gl_info.gl_card;
@@ -1033,8 +1036,10 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
           strcpy(pIdentifier->Driver, "Display");
           strcpy(pIdentifier->Description, "Direct3D HAL");
           if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
-          pIdentifier->DriverVersion->u.HighPart = 0xa;
-          pIdentifier->DriverVersion->u.LowPart = MAKEDWORD_VERSION(76, 76); /* last Linux Nvidia drivers */
+          /* Current Windows Nvidia drivers have versions like e.g. 6.14.10.5672 */
+          pIdentifier->DriverVersion->u.HighPart = MAKEDWORD_VERSION(6, 14);
+          /* 71.74 is a current Linux Nvidia driver version */
+          pIdentifier->DriverVersion->u.LowPart = MAKEDWORD_VERSION(10, (71*100+74));
           *(pIdentifier->VendorId) = VENDOR_NVIDIA;
           *(pIdentifier->DeviceId) = CARD_NVIDIA_GEFORCE4_TI4600;
           *(pIdentifier->SubSysId) = 0;
