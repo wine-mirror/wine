@@ -705,7 +705,13 @@ struct choose_compressor
     COMPVARS cv;
 };
 
-static BOOL enum_compressors(HWND list, COMPVARS *pcv)
+struct codec_info
+{
+    HIC hic;
+    ICINFO icinfo;
+};
+
+static BOOL enum_compressors(HWND list, COMPVARS *pcv, BOOL enum_all)
 {
     UINT id, total = 0;
     ICINFO icinfo;
@@ -714,7 +720,7 @@ static BOOL enum_compressors(HWND list, COMPVARS *pcv)
 
     while (ICInfo(pcv->fccType, id, &icinfo))
     {
-        ICINFO *ic;
+        struct codec_info *ic;
         DWORD idx;
         HIC hic;
 
@@ -729,7 +735,7 @@ static BOOL enum_compressors(HWND list, COMPVARS *pcv)
              */
             DWORD fccHandler = icinfo.fccHandler;
 
-            if (pcv->lpbiIn)
+            if (!enum_all && pcv->lpbiIn)
             {
                 if (ICCompressQuery(hic, pcv->lpbiIn, NULL) != ICERR_OK)
                 {
@@ -742,12 +748,12 @@ static BOOL enum_compressors(HWND list, COMPVARS *pcv)
 
             ICGetInfo(hic, &icinfo, sizeof(icinfo));
             icinfo.fccHandler = fccHandler;
-            ICClose(hic);
 
             idx = SendMessageW(list, CB_ADDSTRING, 0, (LPARAM)icinfo.szDescription);
 
-            ic = HeapAlloc(GetProcessHeap(), 0, sizeof(ICINFO));
-            *ic = icinfo;
+            ic = HeapAlloc(GetProcessHeap(), 0, sizeof(struct codec_info));
+            memcpy(&ic->icinfo, &icinfo, sizeof(ICINFO));
+            ic->hic = hic;
             SendMessageW(list, CB_SETITEMDATA, idx, (LPARAM)ic);
         }
         total++;
@@ -762,22 +768,32 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
     {
     case WM_INITDIALOG:
     {
-        ICINFO *ic;
+        struct codec_info *ic;
         WCHAR buf[128];
         struct choose_compressor *choose_comp = (struct choose_compressor *)lparam;
 
         if (choose_comp->title)
             SetWindowTextA(hdlg, choose_comp->title);
 
+        if (!(choose_comp->flags & ICMF_CHOOSE_DATARATE))
+            EnableWindow(GetDlgItem(hdlg, IDC_DATARATE), FALSE);
+
+        if (!(choose_comp->flags & ICMF_CHOOSE_KEYFRAME))
+            EnableWindow(GetDlgItem(hdlg, IDC_KEYFRAME), FALSE);
+
+        /*if (!(choose_comp->flags & ICMF_CHOOSE_PREVIEW))
+            EnableWindow(GetDlgItem(hdlg, IDC_PREVIEW), FALSE);*/
+
         LoadStringW(MSVFW32_hModule, IDS_FULLFRAMES, buf, 128);
         SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_ADDSTRING, 0, (LPARAM)buf);
 
-        ic = HeapAlloc(GetProcessHeap(), 0, sizeof(ICINFO));
-        ic->fccType = streamtypeVIDEO;
-        ic->fccHandler = comptypeDIB;
+        ic = HeapAlloc(GetProcessHeap(), 0, sizeof(struct codec_info));
+        ic->icinfo.fccType = streamtypeVIDEO;
+        ic->icinfo.fccHandler = comptypeDIB;
+        ic->hic = 0;
         SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_SETITEMDATA, 0, (LPARAM)ic);
 
-        enum_compressors(GetDlgItem(hdlg, IDC_COMP_LIST), &choose_comp->cv);
+        enum_compressors(GetDlgItem(hdlg, IDC_COMP_LIST), &choose_comp->cv, choose_comp->flags & ICMF_CHOOSE_ALLCOMPRESSORS);
 
         SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_SETCURSEL, 0, 0);
         SetFocus(GetDlgItem(hdlg, IDC_COMP_LIST));
@@ -789,28 +805,64 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
     case WM_COMMAND:
         switch (LOWORD(wparam))
         {
+        case IDC_COMP_LIST:
+        {
+            INT cur_sel;
+            struct codec_info *ic;
+            BOOL enable = FALSE;
+
+            if (HIWORD(wparam != CBN_SELCHANGE))
+                break;
+
+            cur_sel = SendMessageW((HWND)lparam, CB_GETCURSEL, 0, 0);
+
+            ic = (struct codec_info *)SendMessageW((HWND)lparam, CB_GETITEMDATA, cur_sel, 0);
+            if (ic && ic->hic)
+            {
+                if (ICQueryConfigure(ic->hic) == DRVCNF_OK)
+                    enable = TRUE;
+            }
+            EnableWindow(GetDlgItem(hdlg, IDC_CONFIGURE), enable);
+            break;
+        }
+
+        case IDC_CONFIGURE:
+        {
+            HWND list = GetDlgItem(hdlg, IDC_COMP_LIST);
+            INT cur_sel;
+            struct codec_info *ic;
+
+            if (HIWORD(wparam != BN_CLICKED))
+                break;
+
+            cur_sel = SendMessageW(list, CB_GETCURSEL, 0, 0);
+
+            ic = (struct codec_info *)SendMessageW(list, CB_GETITEMDATA, cur_sel, 0);
+            if (ic && ic->hic)
+                ICConfigure(ic->hic, hdlg);
+
+            break;
+        }
+
         case IDOK:
         {
             HWND list = GetDlgItem(hdlg, IDC_COMP_LIST);
             INT cur_sel;
-            ICINFO *ic;
+            struct codec_info *ic;
 
             cur_sel = SendMessageW(list, CB_GETCURSEL, 0, 0);
-            ic = (ICINFO *)SendMessageW(list, CB_GETITEMDATA, cur_sel, 0);
+            ic = (struct codec_info *)SendMessageW(list, CB_GETITEMDATA, cur_sel, 0);
             if (ic)
             {
                 struct choose_compressor *choose_comp = (struct choose_compressor *)GetWindowLongPtrW(hdlg, DWLP_USER);
 
-                if (ic->fccHandler != comptypeDIB)
-                    choose_comp->cv.hic = ICOpen(ic->fccType, ic->fccHandler, ICMODE_COMPRESS);
+                choose_comp->cv.hic = ic->hic;
+                choose_comp->cv.fccType = ic->icinfo.fccType;
+                choose_comp->cv.fccHandler = ic->icinfo.fccHandler;
+                /* FIXME: fill everything else */
 
-                if (ic->fccHandler == comptypeDIB || choose_comp->cv.hic)
-                {
-                    choose_comp->cv.fccType = ic->fccType;
-                    choose_comp->cv.fccHandler = ic->fccHandler;
-                    choose_comp->cv.hic = ICOpen(ic->fccType, ic->fccHandler, ICMODE_COMPRESS);
-                    /* FIXME: fill everything else */
-                }
+                /* prevent closing the codec handle below */
+                ic->hic = 0;
             }
         }
         /* fall through */
@@ -821,11 +873,14 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
 
             while (1)
             {
-                LRESULT ret = SendMessageW(list, CB_GETITEMDATA, idx++, 0);
+                struct codec_info *ic;
+    
+                ic = (struct codec_info *)SendMessageW(list, CB_GETITEMDATA, idx++, 0);
 
-                if (!ret || ret == CB_ERR) break;
+                if (!ic || (LONG_PTR)ic == CB_ERR) break;
 
-                HeapFree(GetProcessHeap(), 0, (void *)ret);
+                if (ic->hic) ICClose(ic->hic);
+                HeapFree(GetProcessHeap(), 0, ic);
             }
 
             EndDialog(hdlg, LOWORD(wparam) == IDOK);

@@ -57,4 +57,8 @@ extern LRESULT  (CALLBACK *pFnCallTo16)(HDRVR, HIC, UINT, LPARAM, LPARAM);
 #define HDRAWDIB_16(h32)	(LOWORD(h32))
 #define HIC_16(h32)		(LOWORD(h32))
 
+#define IDC_CONFIGURE 882
+#define IDC_KEYFRAME  888
+#define IDC_DATARATE  895
+
 #endif  /* __WINE_MSVIDEO_PRIVATE_H */
