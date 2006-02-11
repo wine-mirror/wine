@@ -2615,7 +2615,7 @@ GL_IDirect3DDeviceImpl_7_LightEnable(LPDIRECT3DDEVICE7 iface,
 }
 
 HRESULT  WINAPI  
-GL_IDirect3DDeviceImpl_7_SetClipPlane(LPDIRECT3DDEVICE7 iface, DWORD dwIndex, CONST D3DVALUE* pPlaneEquation) 
+GL_IDirect3DDeviceImpl_7_SetClipPlane(LPDIRECT3DDEVICE7 iface, DWORD dwIndex, D3DVALUE* pPlaneEquation) 
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;

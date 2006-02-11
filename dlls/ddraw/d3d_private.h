@@ -957,13 +957,13 @@ Thunk_IDirect3DDeviceImpl_1_DeleteViewport(LPDIRECT3DDEVICE iface,
 					   LPDIRECT3DVIEWPORT lpDirect3DViewport);
 
 HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_NextViewport(LPDIRECT3DDEVICE3 iface,
+Thunk_IDirect3DDeviceImpl_2_NextViewport(LPDIRECT3DDEVICE2 iface,
 					 LPDIRECT3DVIEWPORT2 lpDirect3DViewport2,
 					 LPDIRECT3DVIEWPORT2* lplpDirect3DViewport2,
 					 DWORD dwFlags);
 
 HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_NextViewport(LPDIRECT3DDEVICE3 iface,
+Thunk_IDirect3DDeviceImpl_1_NextViewport(LPDIRECT3DDEVICE iface,
 					 LPDIRECT3DVIEWPORT lpDirect3DViewport,
 					 LPDIRECT3DVIEWPORT* lplpDirect3DViewport,
 					 DWORD dwFlags);
