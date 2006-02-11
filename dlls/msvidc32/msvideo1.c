@@ -566,6 +566,10 @@ LRESULT WINAPI CRAM_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         r = ICERR_BADFORMAT;
         break;
 
+    case ICM_CONFIGURE:
+        r = ICERR_UNSUPPORTED;
+        break;
+
     default:
         FIXME("Unknown message: %04x %ld %ld\n", msg, lParam1, lParam2);
     }

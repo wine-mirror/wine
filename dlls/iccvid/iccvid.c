@@ -1006,6 +1006,9 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         FIXME("compression not implemented\n");
         return ICERR_BADFORMAT;
 
+    case ICM_CONFIGURE:
+        return ICERR_UNSUPPORTED;
+
     default:
         FIXME("Unknown message: %04x %ld %ld\n", msg, lParam1, lParam2);
     }
