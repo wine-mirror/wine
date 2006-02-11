@@ -771,7 +771,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
 
     para = ME_GetParagraph(item);
     while (item
-           && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart + nLen < nMax)
+           && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart + nLen <= nMax)
     {
       ME_DisplayItem *pCurItem = item;
       int nCurStart = nStart;
