@@ -380,11 +380,13 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
  *  file:      0x40400177      FILESYSTEM | CANMONIKER
  *  drive      0xF0400154      FILESYSTEM | HASSUBFOLDER | FOLDER | FILESYSANCESTOR | CANMONIKER | CANRENAME (LABEL)
  *
- * This function does not set flags!! It only resets flags when necessary.
+ * According to the MSDN documentation this function should not set flags. It claimes only to reset flags when necessary.
+ * However it turns out the native shell32.dll _sets_ flags in several cases - so do we.
  */
 HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWORD pdwAttributes)
 {
     DWORD dwAttributes;
+    BOOL has_guid;
     static const DWORD dwSupportedAttr=
                           SFGAO_CANCOPY |           /*0x00000001 */
                           SFGAO_CANMOVE |           /*0x00000002 */
@@ -409,15 +411,25 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
         *pdwAttributes &= dwSupportedAttr;
     }
 
+    has_guid = _ILGetGUIDPointer(pidl) != NULL;
+
     dwAttributes = *pdwAttributes;
 
     if (_ILIsDrive (pidl)) {
         *pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FILESYSTEM|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|
 	    SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANLINK;
-    } else if (_ILGetGUIDPointer (pidl) && HCR_GetFolderAttributes(pidl, &dwAttributes)) {
+    } else if (has_guid && HCR_GetFolderAttributes(pidl, &dwAttributes)) {
 	*pdwAttributes = dwAttributes;
     } else if (_ILGetDataPointer (pidl)) {
 	dwAttributes = _ILGetFileAttributes (pidl, NULL, 0);
+
+        if (!dwAttributes && has_guid) {
+	    WCHAR path[MAX_PATH];
+
+	    /* File attributes are not present in the internal PIDL structure, so get them from the file system. */
+	    if (SHGetPathFromIDListW(pidl, path))
+		dwAttributes = GetFileAttributesW(path);
+        }
 
         /* Set common attributes */
         *pdwAttributes |= SFGAO_FILESYSTEM | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANDELETE | 

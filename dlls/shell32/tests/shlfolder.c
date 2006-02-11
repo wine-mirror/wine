@@ -102,6 +102,9 @@ static void test_ParseDisplayName(void)
         NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
     ok((hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) || (hr == E_FAIL) || (hr == E_INVALIDARG), 
         "ParseDisplayName returned %08lx, expected 80070002, E_FAIL or E_INVALIDARG\n", hr);
+
+    hr = IShellFolder_Release(IDesktopFolder);
+    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
 }
 
 /* creates a file with the specified name for tests */
@@ -602,6 +605,13 @@ static void test_GetAttributesOf(void)
     WCHAR wszMyComputer[] = { 
         ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-',
         'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
+    char  cCurrDirA [MAX_PATH] = {0};
+    WCHAR cCurrDirW [MAX_PATH];
+    static const WCHAR cTestDirW[] = {'t','e','s','t','d','i','r',0};
+    static const WCHAR cBackSlash[] = {'\\',0};
+    IShellFolder *IDesktopFolder, *testIShellFolder;
+    ITEMIDLIST *newPIDL;
+    int len;
 
     hr = SHGetDesktopFolder(&psfDesktop);
     ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
@@ -658,6 +668,69 @@ static void test_GetAttributesOf(void)
                     "Wrong MyComputer attributes: %08lx, expected: %08lx\n", dwFlags, dwMyComputerFlags); }
 
     IShellFolder_Release(psfMyComputer);
+
+    /* create test directory */
+    CreateFilesFolders();
+
+    GetCurrentDirectoryA(MAX_PATH, cCurrDirA);
+    len = lstrlenA(cCurrDirA);
+
+    if (len == 0) {
+	trace("GetCurrentDirectoryA returned empty string. Skipping test_EnumObjects_and_CompareIDs\n");
+	return;
+    }
+    if(cCurrDirA[len-1] == '\\')
+	cCurrDirA[len-1] = 0;
+
+    MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
+ 
+    hr = SHGetDesktopFolder(&IDesktopFolder);
+    ok(hr == S_OK, "SHGetDesktopfolder failed %08lx\n", hr);
+
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0);
+    ok(hr == S_OK, "ParseDisplayName failed %08lx\n", hr);
+
+    hr = IShellFolder_BindToObject(IDesktopFolder, newPIDL, NULL, (REFIID)&IID_IShellFolder, (LPVOID *)&testIShellFolder);
+    ok(hr == S_OK, "BindToObject failed %08lx\n", hr);
+
+    IMalloc_Free(ppM, newPIDL);
+
+    /* get relative PIDL */
+    hr = IShellFolder_ParseDisplayName(testIShellFolder, NULL, NULL, (LPWSTR)cTestDirW, NULL, &newPIDL, 0);
+    ok(hr == S_OK, "ParseDisplayName failed %08lx\n", hr);
+
+    /* test the shell attributes of the test directory using the relative PIDL */
+    dwFlags = SFGAO_FOLDER;
+    hr = IShellFolder_GetAttributesOf(testIShellFolder, 1, (LPCITEMIDLIST*)&newPIDL, &dwFlags);
+    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf() failed! hr = %08lx\n", hr);
+    ok ((dwFlags&SFGAO_FOLDER), "Wrong directory attribute for relative PIDL: %08lx\n", dwFlags);
+
+    /* free memory */
+    IMalloc_Free(ppM, newPIDL);
+
+    /* append testdirectory name to path */
+    strcatW(cCurrDirW, cBackSlash);
+    strcatW(cCurrDirW, cTestDirW);
+
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0);
+    ok(hr == S_OK, "ParseDisplayName failed %08lx\n", hr);
+
+    /* test the shell attributes of the test directory using the absolute PIDL */
+    dwFlags = SFGAO_FOLDER;
+    hr = IShellFolder_GetAttributesOf(IDesktopFolder, 1, (LPCITEMIDLIST*)&newPIDL, &dwFlags);
+    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf() failed! hr = %08lx\n", hr);
+    ok ((dwFlags&SFGAO_FOLDER), "Wrong directory attribute for absolute PIDL: %08lx\n", dwFlags);
+        
+    /* free memory */
+    IMalloc_Free(ppM, newPIDL);
+
+    hr = IShellFolder_Release(testIShellFolder);
+    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
+
+    Cleanup();
+
+    hr = IShellFolder_Release(IDesktopFolder);
+    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
 }    
 
 static void test_SHGetPathFromIDList(void)
@@ -822,6 +895,9 @@ static void test_EnumObjects_and_CompareIDs(void)
     Cleanup();
 
     IMalloc_Free(ppM, newPIDL);
+
+    hr = IShellFolder_Release(IDesktopFolder);
+    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
 }
 
 /* A simple implementation of an IPropertyBag, which returns fixed values for
