@@ -1357,7 +1357,8 @@ AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
 
 dnl Check for struct mtget members
 AC_CHECK_MEMBERS([struct mtget.mt_blksiz, struct mtget.mt_gstat, struct mtget.mt_blkno],,,
-[#ifdef HAVE_SYS_MTIO_H
+[#include <sys/types.h>
+#ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif])
 

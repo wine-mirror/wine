@@ -344,7 +344,7 @@ static NTSTATUS TAPE_Prepare( int fd, TAPE_PREPARE *data )
  */
 static NTSTATUS TAPE_SetDriveParams( int fd, TAPE_SET_DRIVE_PARAMETERS *data )
 {
-#ifdef HAVE_SYS_MTIO_H
+#if defined(HAVE_SYS_MTIO_H) && defined(MTCOMPRESSION)
     struct mtop cmd;
 
     TRACE( "fd: %d ECC: 0x%02x, compression: 0x%02x padding: 0x%02x\n",
@@ -425,6 +425,7 @@ static NTSTATUS TAPE_SetPosition( int fd, TAPE_SET_POSITION *data )
             cmd.mt_count = -data->Offset.u.LowPart;
         }
         break;
+#if defined(MTFSS) && defined(MTBSS)
     case TAPE_SPACE_SETMARKS:
         if (data->Offset.u.LowPart >= 0) {
             cmd.mt_op = MTFSS;
@@ -435,6 +436,7 @@ static NTSTATUS TAPE_SetPosition( int fd, TAPE_SET_POSITION *data )
             cmd.mt_count = -data->Offset.u.LowPart;
         }
         break;
+#endif
     case TAPE_LOGICAL_BLOCK:
     case TAPE_PSEUDO_LOGICAL_BLOCK:
     case TAPE_SPACE_RELATIVE_BLOCKS:

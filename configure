@@ -17836,6 +17836,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+#include <sys/types.h>
 #ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
@@ -17882,6 +17883,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+#include <sys/types.h>
 #ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
@@ -17949,6 +17951,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+#include <sys/types.h>
 #ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
@@ -17995,6 +17998,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+#include <sys/types.h>
 #ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
@@ -18062,6 +18066,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+#include <sys/types.h>
 #ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
@@ -18108,6 +18113,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+#include <sys/types.h>
 #ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
