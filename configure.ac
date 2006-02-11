@@ -937,6 +937,7 @@ case $host_os in
                          [AC_DEFINE(HAVE_DLOPEN,1,[Define if you have dlopen])
                           DLLIBS="-ldl"],
                          [LIBEXT="a"])])
+        WINE_CHECK_LIB_FUNCS(dladdr,[$DLLIBS])
     else
         LIBEXT="a"
     fi
