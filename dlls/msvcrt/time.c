@@ -152,16 +152,18 @@ struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs)
   SYSTEMTIME st;
   DWORD tzid;
   TIME_ZONE_INFORMATION tzinfo;
+  ULONGLONG time;
 
-  ULONGLONG time = *secs * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+  /* time < 0 means a date before midnight of January 1, 1970 */
+  if (*secs < 0) return NULL;
+
+  time = *secs * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
 
   ft.dwHighDateTime = (UINT)(time >> 32);
   ft.dwLowDateTime  = (UINT)time;
 
   FileTimeToLocalFileTime(&ft, &lft);
   FileTimeToSystemTime(&lft, &st);
-
-  if (st.wYear < 1970) return NULL;
 
   data->time_buffer.tm_sec  = st.wSecond;
   data->time_buffer.tm_min  = st.wMinute;
