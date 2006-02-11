@@ -1578,6 +1578,7 @@ dlls/quartz/Makefile
 dlls/quartz/tests/Makefile
 dlls/rasapi32/Makefile
 dlls/riched20/Makefile
+dlls/riched20/tests/Makefile
 dlls/richedit/Makefile
 dlls/rpcrt4/Makefile
 dlls/rpcrt4/tests/Makefile

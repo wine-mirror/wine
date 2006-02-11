@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = riched20.dll
+IMPORTS   = riched20 user32 gdi32 kernel32
+
+CTESTS = \
+	editor.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

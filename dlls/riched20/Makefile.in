@@ -25,6 +25,8 @@ C_SRCS = \
 	wrap.c \
 	writer.c
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
