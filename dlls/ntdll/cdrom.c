@@ -92,6 +92,7 @@
 #include "winioctl.h"
 #include "ntddstor.h"
 #include "ntddcdrm.h"
+#include "ddk/ntddcdvd.h"
 #include "ntddscsi.h"
 #include "ntdll_misc.h"
 #include "wine/server.h"
@@ -109,153 +110,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
 #ifndef CD_FRAMES
 # define CD_FRAMES            75 /* frames per second */
 #endif
-
-/* definitions taken from libdvdcss */
-
-#define IOCTL_DVD_BASE                 FILE_DEVICE_DVD
-
-#define IOCTL_DVD_START_SESSION     CTL_CODE(IOCTL_DVD_BASE, 0x0400, METHOD_BUFFERED, FILE_READ_ACCESS)
-#define IOCTL_DVD_READ_KEY          CTL_CODE(IOCTL_DVD_BASE, 0x0401, METHOD_BUFFERED, FILE_READ_ACCESS)
-#define IOCTL_DVD_SEND_KEY          CTL_CODE(IOCTL_DVD_BASE, 0x0402, METHOD_BUFFERED, FILE_READ_ACCESS)
-#define IOCTL_DVD_END_SESSION       CTL_CODE(IOCTL_DVD_BASE, 0x0403, METHOD_BUFFERED, FILE_READ_ACCESS)
-#define IOCTL_DVD_SET_READ_AHEAD    CTL_CODE(IOCTL_DVD_BASE, 0x0404, METHOD_BUFFERED, FILE_READ_ACCESS)
-#define IOCTL_DVD_GET_REGION        CTL_CODE(IOCTL_DVD_BASE, 0x0405, METHOD_BUFFERED, FILE_READ_ACCESS)
-#define IOCTL_DVD_SEND_KEY2         CTL_CODE(IOCTL_DVD_BASE, 0x0406, METHOD_BUFFERED, FILE_READ_ACCESS | FILE_WRITE_ACCESS)
-
-#define IOCTL_DVD_READ_STRUCTURE    CTL_CODE(IOCTL_DVD_BASE, 0x0450, METHOD_BUFFERED, FILE_READ_ACCESS)
-
-typedef enum {
-    DvdChallengeKey = 0x01,
-    DvdBusKey1,
-    DvdBusKey2,
-    DvdTitleKey,
-    DvdAsf,
-    DvdSetRpcKey = 0x6,
-    DvdGetRpcKey = 0x8,
-    DvdDiskKey = 0x80,
-    DvdInvalidateAGID = 0x3f
-} DVD_KEY_TYPE;
-
-typedef ULONG DVD_SESSION_ID, *PDVD_SESSION_ID;
-
-typedef struct _DVD_COPY_PROTECT_KEY {
-    ULONG KeyLength;
-    DVD_SESSION_ID SessionId;
-    DVD_KEY_TYPE KeyType;
-    ULONG KeyFlags;
-    union {
-        struct {
-            ULONG FileHandle;
-            ULONG Reserved;   /* used for NT alignment */
-        } s;
-        LARGE_INTEGER TitleOffset;
-    } Parameters;
-    UCHAR KeyData[1];
-} DVD_COPY_PROTECT_KEY, *PDVD_COPY_PROTECT_KEY;
-
-typedef struct _DVD_RPC_KEY {
-    UCHAR UserResetsAvailable:3;
-    UCHAR ManufacturerResetsAvailable:3;
-    UCHAR TypeCode:2;
-    UCHAR RegionMask;
-    UCHAR RpcScheme;
-    UCHAR Reserved2[1];
-} DVD_RPC_KEY, * PDVD_RPC_KEY;
-
-typedef struct _DVD_ASF {
-    UCHAR Reserved0[3];
-    UCHAR SuccessFlag:1;
-    UCHAR Reserved1:7;
-} DVD_ASF, * PDVD_ASF;
-
-typedef struct _DVD_REGION
-{
-        unsigned char copy_system;
-        unsigned char region_data;              /* current media region (not playable when set) */
-        unsigned char system_region;    /* current drive region (playable when set) */
-        unsigned char reset_count;              /* number of resets available */
-} DVD_REGION, * PDVD_REGION;
-
-typedef struct _DVD_READ_STRUCTURE {
-        /* Contains an offset to the logical block address of the descriptor to be retrieved. */
-        LARGE_INTEGER block_byte_offset;
-
-        /* 0:Physical descriptor, 1:Copyright descriptor, 2:Disk key descriptor
-           3:BCA descriptor, 4:Manufacturer descriptor, 5:Max descriptor
-         */
-        long format;
-
-        /* Session ID, that is obtained by IOCTL_DVD_START_SESSION */
-        long session;
-
-        /* From 0 to 4 */
-        unsigned char layer_no;
-}DVD_READ_STRUCTURE, * PDVD_READ_STRUCTURE;
-
-typedef struct _DVD_LAYER_DESCRIPTOR
-{
-    unsigned short length;
-
-        unsigned char book_version : 4;
-
-        /* 0:DVD-ROM, 1:DVD-RAM, 2:DVD-R, 3:DVD-RW, 9:DVD-RW */
-        unsigned char book_type : 4;
-
-        unsigned char minimum_rate : 4;
-
-        /* The physical size of the media. 0:120 mm, 1:80 mm. */
-    unsigned char disk_size : 4;
-
-    /* 1:Read-only layer, 2:Recordable layer, 4:Rewritable layer */
-        unsigned char layer_type : 4;
-
-        /* 0:parallel track path, 1:opposite track path */
-    unsigned char track_path : 1;
-
-        /* 0:one layers, 1:two layers, and so on */
-    unsigned char num_of_layers : 2;
-
-    unsigned char reserved1 : 1;
-
-        /* 0:0.74 µm/track, 1:0.80 µm/track, 2:0.615 µm/track */
-    unsigned char track_density : 4;
-
-        /* 0:0.267 µm/bit, 1:0.293 µm/bit, 2:0.409 to 0.435 µm/bit, 4:0.280 to 0.291 µm/bit, 8:0.353 µm/bit */
-    unsigned char linear_density : 4;
-
-        /* Must be either 0x30000:DVD-ROM or DVD-R/-RW or 0x31000:DVD-RAM or DVD+RW */
-    unsigned long starting_data_sector;
-
-    unsigned long end_data_sector;
-    unsigned long end_layer_zero_sector;
-    unsigned char reserved5 : 7;
-
-        /* 0 indicates no BCA data */
-        unsigned char BCA_flag : 1;
-
-        unsigned char reserved6;
-}DVD_LAYER_DESCRIPTOR, * PDVD_LAYER_DESCRIPTOR;
-
-typedef struct _DVD_COPYRIGHT_DESCRIPTOR
-{
-        unsigned char protection;
-    unsigned char region;
-    unsigned short reserved;
-}DVD_COPYRIGHT_DESCRIPTOR, * PDVD_COPYRIGHT_DESCRIPTOR;
-
-typedef struct _DVD_MANUFACTURER_DESCRIPTOR
-{
-        unsigned char manufacturing[2048];
-}DVD_MANUFACTURER_DESCRIPTOR, * PDVD_MANUFACTURER_DESCRIPTOR;
-
-#define DVD_CHALLENGE_KEY_LENGTH    (12 + sizeof(DVD_COPY_PROTECT_KEY) - sizeof(UCHAR))
-
-#define DVD_DISK_KEY_LENGTH         (2048 + sizeof(DVD_COPY_PROTECT_KEY) - sizeof(UCHAR))
-
-#define DVD_KEY_SIZE 5
-#define DVD_CHALLENGE_SIZE 10
-#define DVD_DISCKEY_SIZE 2048
-#define DVD_SECTOR_PROTECTED            0x00000020
 
 static const struct iocodexs
 {
@@ -1934,7 +1788,112 @@ static NTSTATUS DVD_GetRegion(int dev, PDVD_REGION region)
  */
 static NTSTATUS DVD_ReadStructure(int dev, PDVD_READ_STRUCTURE structure, PDVD_LAYER_DESCRIPTOR layer)
 {
+#ifdef DVD_READ_STRUCT
+    dvd_struct s;
+
+    if (structure->BlockByteOffset.u.HighPart || structure->BlockByteOffset.u.LowPart)
+        FIXME(": BlockByteOffset is not handled\n");
+
+    switch (structure->Format)
+    {
+    case DvdPhysicalDescriptor:
+        s.type = DVD_STRUCT_PHYSICAL;
+        s.physical.layer_num = structure->LayerNumber;
+        break;
+
+    case DvdCopyrightDescriptor:
+        s.type = DVD_STRUCT_COPYRIGHT;
+        s.copyright.layer_num = structure->LayerNumber;
+        break;
+
+    case DvdDiskKeyDescriptor:
+        s.type = DVD_STRUCT_DISCKEY;
+        s.disckey.agid = structure->SessionId;
+        break;
+
+    case DvdBCADescriptor:
+        s.type = DVD_STRUCT_BCA;
+        break;
+
+    case DvdManufacturerDescriptor:
+        s.type = DVD_STRUCT_MANUFACT;
+        s.manufact.layer_num = structure->LayerNumber;
+        break;
+
+    case DvdMaxDescriptor: /* This is not a real request, no matter what MSDN says! */
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if (ioctl(dev, DVD_READ_STRUCT, &s) < 0)
+       return STATUS_INVALID_PARAMETER;
+
+    switch (structure->Format)
+    {
+    case DvdPhysicalDescriptor:
+        {
+            DVD_LAYER_DESCRIPTOR *p = layer;
+            struct dvd_layer *l = &s.physical.layer[s.physical.layer_num];
+
+            p->BookVersion = l->book_version;
+            p->BookType = l->book_type;
+            p->MinimumRate = l->min_rate;
+            p->DiskSize = l->disc_size;
+            p->LayerType = l->layer_type;
+            p->TrackPath = l->track_path;
+            p->NumberOfLayers = l->nlayers;
+            p->Reserved1 = 0;
+            p->TrackDensity = l->track_density;
+            p->LinearDensity = l->linear_density;
+            p->StartingDataSector = l->start_sector;
+            p->EndDataSector = l->end_sector;
+            p->EndLayerZeroSector = l->end_sector_l0;
+            p->Reserved5 = 0;
+            p->BCAFlag = l->bca;
+            p->Reserved6 = 0;
+        }
+        break;
+
+    case DvdCopyrightDescriptor:
+        {
+            PDVD_COPYRIGHT_DESCRIPTOR p = (PDVD_COPYRIGHT_DESCRIPTOR) layer;
+
+            p->CopyrightProtectionType = s.copyright.cpst;
+            p->RegionManagementInformation = s.copyright.rmi;
+            p->Reserved = 0;
+        }
+        break;
+
+    case DvdDiskKeyDescriptor:
+        {
+            PDVD_DISK_KEY_DESCRIPTOR p = (PDVD_DISK_KEY_DESCRIPTOR) layer;
+
+            memcpy(p->DiskKeyData, s.disckey.value, 2048);
+        }
+        break;
+
+    case DvdBCADescriptor:
+        {
+            PDVD_BCA_DESCRIPTOR p = (PDVD_BCA_DESCRIPTOR) layer;
+
+            memcpy(p->BCAInformation, s.bca.value, s.bca.len);
+        }
+        break;
+
+    case DvdManufacturerDescriptor:
+        {
+            PDVD_MANUFACTURER_DESCRIPTOR p = (PDVD_MANUFACTURER_DESCRIPTOR) layer;
+
+            memcpy(p->ManufacturingInformation, s.manufact.value, 2048);
+        }
+        break;
+
+    case DvdMaxDescriptor: /* Suppress warning */
+	break;
+    }
+#else
     FIXME("\n");
+#endif
     return STATUS_SUCCESS;
 
 }

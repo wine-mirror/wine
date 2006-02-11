@@ -91,6 +91,7 @@ WINDOWS_INCLUDES = \
 	dde.h \
 	ddeml.h \
 	ddk/cfgmgr32.h \
+	ddk/ntddcdvd.h \
 	ddk/ntddser.h \
 	ddk/ntddtape.h \
 	ddk/wdm.h \
