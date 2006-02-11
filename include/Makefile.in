@@ -120,6 +120,7 @@ WINDOWS_INCLUDES = \
 	dplay8.h \
 	dplobby.h \
 	dplobby8.h \
+	dpnathlp.h \
 	dsconf.h \
 	dsdriver.h \
 	dshow.h \
