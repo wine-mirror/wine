@@ -99,6 +99,34 @@ static BOOL exec_shldocvw_67(NSContainer *container, LPCWSTR url)
     return TRUE;
 }
 
+static BOOL handle_uri(NSContainer *container, nsChannel *channel, LPCWSTR uri)
+{
+    IServiceProvider *service_provider;
+    HRESULT hres;
+
+    if(!exec_shldocvw_67(container, uri))
+        return FALSE;
+
+    hres = IOleClientSite_QueryInterface(container->doc->client, &IID_IServiceProvider,
+                                         (void**)&service_provider);
+    if(SUCCEEDED(hres)) {
+        IHlinkFrame *hlink_frame;
+
+        hres = IServiceProvider_QueryService(service_provider, &IID_IHlinkFrame,
+                                             &IID_IHlinkFrame, (void**)&hlink_frame);
+        if(SUCCEEDED(hres)) {
+            hlink_frame_navigate(container, hlink_frame, uri, channel->post_data_stream);
+            IHlinkFrame_Release(hlink_frame);
+
+            return FALSE;
+        }
+
+        IServiceProvider_Release(service_provider);
+    }
+
+    return TRUE;
+}
+
 static BOOL before_async_open(nsChannel *This)
 {
     nsACString *uri_str;
@@ -107,7 +135,7 @@ static BOOL before_async_open(nsChannel *This)
     const char *uria;
     LPWSTR uri;
     DWORD len;
-    BOOL ret = TRUE;
+    BOOL ret;
 
     nsIChannel_GetLoadFlags(This->channel, &load_flags);
     TRACE("load_flags = %08lx\n", load_flags);
@@ -133,7 +161,7 @@ static BOOL before_async_open(nsChannel *This)
     MultiByteToWideChar(CP_ACP, 0, uria, -1, uri, len);
     nsACString_Destroy(uri_str);
 
-    ret = exec_shldocvw_67(container, uri);
+    ret = handle_uri(container, This, uri);
 
     nsIWebBrowserChrome_Release(NSWBCHROME(container));
     HeapFree(GetProcessHeap(), 0, uri);
@@ -710,8 +738,6 @@ static const nsIHttpChannelVtbl nsChannelVtbl = {
     nsChannel_IsNoCacheResponse
 };
 
-#define NSURI_THIS(iface) DEFINE_THIS(nsURI, WineURI, iface)
-
 #define NSUPCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, UploadChannel, iface)
 
 static nsresult NSAPI nsUploadChannel_QueryInterface(nsIUploadChannel *iface, nsIIDRef riid,
@@ -783,6 +809,8 @@ static const nsIUploadChannelVtbl nsUploadChannelVtbl = {
     nsUploadChannel_SetUploadStream,
     nsUploadChannel_GetUploadStream
 };
+
+#define NSURI_THIS(iface) DEFINE_THIS(nsURI, WineURI, iface)
 
 static nsresult NSAPI nsURI_QueryInterface(nsIWineURI *iface, nsIIDRef riid, nsQIResult result)
 {

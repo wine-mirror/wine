@@ -147,12 +147,16 @@ void close_gecko(void);
 void register_nsservice(nsIComponentRegistrar*);
 void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 
+void hlink_frame_navigate(NSContainer*,IHlinkFrame*,LPCWSTR,nsIInputStream*);
+
 nsIURI *get_nsIURI(LPCWSTR);
 
 nsACString *nsACString_Create(void);
 PRUint32 nsACString_GetData(const nsACString*,const char**,PRBool*);
 void nsACString_SetData(nsACString*,const char*);
 void nsACString_Destroy(nsACString*);
+
+IHlink *Hlink_Create(void);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);

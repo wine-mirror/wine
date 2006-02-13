@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,7 @@
 #include "ole2.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "mshtml_private.h"
 
@@ -115,4 +116,257 @@ static const IHlinkTargetVtbl HlinkTargetVtbl = {
 void HTMLDocument_Hlink_Init(HTMLDocument *This)
 {
     This->lpHlinkTargetVtbl = &HlinkTargetVtbl;
+}
+
+typedef struct {
+    const IHlinkVtbl  *lpHlinkVtbl;
+
+    LONG ref;
+
+    IMoniker *mon;
+    LPWSTR location;
+} Hlink;
+
+#define HLINK(x)  ((IHlink*)  &(x)->lpHlinkVtbl)
+
+#define HLINK_THIS(iface) DEFINE_THIS(Hlink, Hlink, iface)
+
+static HRESULT WINAPI Hlink_QueryInterface(IHlink *iface, REFIID riid, void **ppv)
+{
+    Hlink *This = HLINK_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HLINK(This);
+    }else if(IsEqualGUID(&IID_IHlink, riid)) {
+        TRACE("(%p)->(IID_IHlink %p)\n", This, ppv);
+        *ppv = HLINK(This);
+    }
+
+    if(*ppv) {
+        IHlink_AddRef(HLINK(This));
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Hlink_AddRef(IHlink *iface)
+{
+    Hlink *This = HLINK_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI Hlink_Release(IHlink *iface)
+{
+    Hlink *This = HLINK_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    if(!ref) {
+        if(This->mon)
+            IMoniker_Release(This->mon);
+        HeapFree(GetProcessHeap(), 0, This->location);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI Hlink_SetHlinkSite(IHlink *iface, IHlinkSite *pihlSite, DWORD dwSiteData)
+{
+    Hlink *This = HLINK_THIS(iface);
+    FIXME("(%p)->(%p %ld)\n", This, pihlSite, dwSiteData);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Hlink_GetHlinkSite(IHlink *iface, IHlinkSite **ppihlSite,
+                                         DWORD *pdwSiteData)
+{
+    Hlink *This = HLINK_THIS(iface);
+
+    TRACE("(%p)->(%p %p)\n", This, ppihlSite, pdwSiteData);
+
+    *ppihlSite = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI Hlink_SetMonikerReference(IHlink *iface, DWORD grfHLSETF,
+                                                IMoniker *pimkTarget, LPCWSTR pwzLocation)
+{
+    Hlink *This = HLINK_THIS(iface);
+
+    TRACE("(%p)->(%08lx %p %s)\n", This, grfHLSETF, pimkTarget, debugstr_w(pwzLocation));
+
+    if(grfHLSETF)
+        FIXME("unsupported grfHLSETF=%08lx\n", grfHLSETF);
+
+    if(This->mon)
+        IMoniker_Release(This->mon);
+    if(This->location)
+        HeapFree(GetProcessHeap(), 0, This->location);
+
+    if(pimkTarget)
+        IMoniker_AddRef(pimkTarget);
+    This->mon = pimkTarget;
+
+    if(pwzLocation) {
+        DWORD len = strlenW(pwzLocation)+1;
+
+        This->location = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        memcpy(This->location, pwzLocation, len*sizeof(WCHAR));
+    }else {
+        This->location = NULL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Hlink_GetMonikerReference(IHlink *iface, DWORD dwWhichRef,
+                                                IMoniker **ppimkTarget, LPWSTR *ppwzLocation)
+{
+    Hlink *This = HLINK_THIS(iface);
+
+    TRACE("(%p)->(%ld %p %p)\n", This, dwWhichRef, ppimkTarget, ppwzLocation);
+
+    if(dwWhichRef != 1)
+        FIXME("upsupported dwWhichRef = %ld\n", dwWhichRef);
+
+    if(This->mon)
+        IMoniker_AddRef(This->mon);
+    *ppimkTarget = This->mon;
+
+    if(This->location) {
+        DWORD len = strlenW(This->location)+1;
+
+        *ppwzLocation = CoTaskMemAlloc(len*sizeof(WCHAR));
+        memcpy(*ppwzLocation, This->location, len*sizeof(WCHAR));
+    }else {
+        *ppwzLocation = NULL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Hlink_SetStringReference(IHlink *iface, DWORD grfHLSETF,
+                                               LPCWSTR pwzTarget, LPCWSTR pwzLocation)
+{
+    Hlink *This = HLINK_THIS(iface);
+    FIXME("(%p)->(%08lx %s %s)\n", This, grfHLSETF, debugstr_w(pwzTarget),
+          debugstr_w(pwzLocation));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Hlink_GetStringReference(IHlink *iface, DWORD dwWhichRef,
+                                               LPWSTR *ppwzTarget, LPWSTR *ppwzLocation)
+{
+    Hlink *This = HLINK_THIS(iface);
+    FIXME("(%p)->(%ld %p %p)\n", This, dwWhichRef, ppwzTarget, ppwzLocation);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Hlink_SetFriendlyName(IHlink *iface, LPCWSTR pwzFriendlyName)
+{
+    Hlink *This = HLINK_THIS(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzFriendlyName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Hlink_GetFriendlyName(IHlink *iface, DWORD grfHLNAMEF,
+                                            LPWSTR *ppwzFriendlyName)
+{
+    Hlink *This = HLINK_THIS(iface);
+
+    TRACE("(%p)->(%08lx %p)\n", This, grfHLNAMEF, ppwzFriendlyName);
+
+    *ppwzFriendlyName = NULL;
+    return S_FALSE;
+}
+
+static HRESULT WINAPI Hlink_SetTargetFrameName(IHlink *iface, LPCWSTR pwzTargetFrameName)
+{
+    Hlink *This = HLINK_THIS(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzTargetFrameName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Hlink_GetTargetFrameName(IHlink *iface, LPWSTR *ppwzTargetFrameName)
+{
+    Hlink *This = HLINK_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, ppwzTargetFrameName);
+
+    *ppwzTargetFrameName = NULL;
+    return S_FALSE;
+}
+
+static HRESULT WINAPI Hlink_GetMiscStatus(IHlink *iface, DWORD *pdwStatus)
+{
+    Hlink *This = HLINK_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pdwStatus);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Hlink_Navigate(IHlink *iface, DWORD grfHLNF, LPBC pibc,
+        IBindStatusCallback *pibsc, IHlinkBrowseContext *pihlbc)
+{
+    Hlink *This = HLINK_THIS(iface);
+    FIXME("(%p)->(%08lx %p %p %p)\n", This, grfHLNF, pibc, pibsc, pihlbc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Hlink_SetAdditionalParams(IHlink *iface, LPCWSTR pwzAdditionalParams)
+{
+    Hlink *This = HLINK_THIS(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzAdditionalParams));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Hlink_GetAdditionalParams(IHlink *iface, LPWSTR *ppwzAdditionalParams)
+{
+    Hlink *This = HLINK_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, ppwzAdditionalParams);
+    return E_NOTIMPL;
+}
+
+#undef HLINK_THIS
+
+static const IHlinkVtbl HlinkVtbl = {
+    Hlink_QueryInterface,
+    Hlink_AddRef,
+    Hlink_Release,
+    Hlink_SetHlinkSite,
+    Hlink_GetHlinkSite,
+    Hlink_SetMonikerReference,
+    Hlink_GetMonikerReference,
+    Hlink_SetStringReference,
+    Hlink_GetStringReference,
+    Hlink_SetFriendlyName,
+    Hlink_GetFriendlyName,
+    Hlink_SetTargetFrameName,
+    Hlink_GetTargetFrameName,
+    Hlink_GetMiscStatus,
+    Hlink_Navigate,
+    Hlink_SetAdditionalParams,
+    Hlink_GetAdditionalParams
+};
+
+IHlink *Hlink_Create(void)
+{
+    Hlink *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(Hlink));
+
+    ret->lpHlinkVtbl = &HlinkVtbl;
+    ret->ref = 1;
+    ret->mon = NULL;
+    ret->location = NULL;
+
+    return HLINK(ret);
 }
