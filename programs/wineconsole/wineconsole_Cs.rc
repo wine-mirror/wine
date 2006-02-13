@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Czech resources for wineconsole
  * Copyright 2001 Eric Pouech
  * Copyright 2004 David Kredba
@@ -20,6 +21,8 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
+/* Czech strings in CP1250 */
+
 STRINGTABLE
 BEGIN
 IDS_EDIT,		"Ú&pravy"
@@ -27,17 +30,17 @@ IDS_DEFAULT,		"Nastavit &výchozí"
 IDS_PROPERTIES,		"V&lastnosti"
 IDS_MARK,		"V&ybrat"
 IDS_COPY,		"&Kopírovat"
-IDS_PASTE,		"Vl&o¾it"
-IDS_SELECTALL,		"Vy&brat v¹e"
+IDS_PASTE,		"Vl&ožit"
+IDS_SELECTALL,		"Vy&brat vše"
 IDS_SCROLL,		"Rolova&t"
 IDS_SEARCH,		"Hl&edat"
-IDS_FNT_DISPLAY,	"Ka¾dý znak je %ld pixelù ¹iroký a %ld pixelù vysoký"
+IDS_FNT_DISPLAY,	"Každý znak je %ld pixelù široký a %ld pixelù vysoký"
 IDS_FNT_PREVIEW_1,	"Toto je test"
 IDS_FNT_PREVIEW_2,	""
 IDS_DLG_TIT_DEFAULT,    "Setup - Defaultní nastavení"
 IDS_DLG_TIT_CURRENT,    "Setup - Souèasné nastavení"
 IDS_DLG_TIT_ERROR,	"Chyba nastavení"
-IDS_DLG_ERR_SBWINSIZE,	"Zásobník obrazovky musí být vìt¹í nebo stejnì velký jakzásobník okna."
+IDS_DLG_ERR_SBWINSIZE,	"Zásobník obrazovky musí být vìtší nebo stejnì velký jakzásobník okna."
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
@@ -86,18 +89,18 @@ CAPTION " Nastavení "
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "Oblast zásobníku", -1, 10, 11, 100, 42, BS_GROUPBOX
-	LTEXT "©íø&ka :", -1, 14, 25, 54, 9
+	LTEXT "Šíø&ka :", -1, 14, 25, 54, 9
 	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	LTEXT "&Vý¹ka :", -1, 14, 39, 54, 9
+	LTEXT "&Výška :", -1, 14, 39, 54, 9
 	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
 	GROUPBOX "Velikost okna", -1, 10, 55, 100, 42
-	LTEXT "©íø&ka :", -1, 14, 69, 54, 9
+	LTEXT "Šíø&ka :", -1, 14, 69, 54, 9
 	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	LTEXT "Vý¹k&a :", -1, 14, 83, 54, 9
+	LTEXT "Výšk&a :", -1, 14, 83, 54, 9
 	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
@@ -114,7 +117,7 @@ CAPTION "Parametry konzole"
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "", -1, 10, 10, 120, 31, BS_GROUPBOX
-	AUTORADIOBUTTON "Zachovat tyto zmìny pro dal¹í sezení", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Zachovat tyto zmìny pro další sezení", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
 	AUTORADIOBUTTON "Upravit pouze souèasné sezení", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
 
 	PUSHBUTTON "OK", IDOK, 20, 45, 35, 12
