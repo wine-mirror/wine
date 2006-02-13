@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Wine command prompt
  * Czech Language Support
  *
@@ -22,13 +23,15 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
+/* Czech strings in CP1250 */
+
 STRINGTABLE
 {
   WCMD_ATTRIB, "Nápovìda k ATTRIB\n"
   WCMD_CALL,
-"CALL <dávkovı soubor> je u¾íván ke spu¹tìní pøíkazù\n\
-z jiného dávkového souboru. Kdy¾ se bìh volaného dávkového souboru ukonèí, kontrola se vrátí\n\
-volajícímu souboru. Pøíkaz CALL mù¾e pøedávat parametry\n\
+"CALL <dávkovı soubor> je uíván ke spuštìní pøíkazù\n\
+z jiného dávkového souboru. Kdy se bìh volaného dávkového souboru ukonèí, kontrola se vrátí\n\
+volajícímu souboru. Pøíkaz CALL mùe pøedávat parametry\n\
 volané proceduøe.\n\
 \n\
 Zmìny v defaultním adresáøi, promìnnıch prostøedí atd., udìlané\n\
@@ -37,7 +40,7 @@ volanou procedurou jsou zdìdìny volajícím.\n"
   WCMD_CD,     "Nápovìda k CD\n"
   WCMD_CHDIR,  "Nápovìda k CHDIR\n"
 
-  WCMD_CLS,    "CLS vyma¾e obrazovku terminálu\n"
+  WCMD_CLS,    "CLS vymae obrazovku terminálu\n"
 
   WCMD_COPY,   "Nápovìda k COPY\n"
   WCMD_CTTY,   "Nápovìda k CTTY\n"
@@ -46,40 +49,40 @@ volanou procedurou jsou zdìdìny volajícím.\n"
   WCMD_DIR,    "Nápovìda k DIR\n"
 
   WCMD_ECHO,
-"ECHO <øetìzec> zobrazí <øetìzec> na pou¾ívaném terminálovém zaøízení.\n\
+"ECHO <øetìzec> zobrazí <øetìzec> na pouívaném terminálovém zaøízení.\n\
 \n\
-ECHO ON zpùsobí, ¾e v¹echny následující pøíkazy v dávkovém souboru budou\n\
-zobrazeny na terminálovém zaøízení pøed svım spu¹tìním.\n\
+ECHO ON zpùsobí, e všechny následující pøíkazy v dávkovém souboru budou\n\
+zobrazeny na terminálovém zaøízení pøed svım spuštìním.\n\
 \n\
-ECHO OFF vypisování pøíkazù zaká¾e (ECHO je OFF defaultnì.\n\
+ECHO OFF vypisování pøíkazù zakáe (ECHO je OFF defaultnì.\n\
 Pøedsadí-li se pøíkazu ECHO OFF @ nebude pøíkaz ECHO OFF vypsán\n\
 na terminálové zaøízení.\n"
 
   WCMD_ERASE,  "Nápovìda k ERASE\n"
 
   WCMD_FOR,
-"Pøíkaz FOR vykoná zadanou akci pro ka¾dı ze zadané skupiny souborù.\n\
+"Pøíkaz FOR vykoná zadanou akci pro kadı ze zadané skupiny souborù.\n\
 \n\
 Syntaxe: FOR %promìnná IN (skupina souborù) DO akce\n\
 \n\
-V programu wcmd není tøeba zdvojovat znak % pøed promìnnou pøi pou¾ití pøíkazu\n\ FOR v dávkovém souboru.\n"
+V programu wcmd není tøeba zdvojovat znak % pøed promìnnou pøi pouití pøíkazu\n\ FOR v dávkovém souboru.\n"
 
   WCMD_GOTO,
 "Pøíkaz GOTO pøedá vıkon na jiné místo\n\
 v dávkovém souboru.\n\
 \n\
-Návì¹tí, kterım se oznaèuje cíl skoku GOTO mù¾e bıt a¾ 255 znakù\n\
-dlouhé. Nesmí v¹ak obsahovat mezery (odli¹né chování od jinıch operaèních\n\
-systémù). Existují-li dvì nebo více stejnıch návì¹tí v jednom dávkovém\n\
-souboru, pak první bude vykonáno. Skok GOTO na neexistující návì¹tí\n\
+Návìští, kterım se oznaèuje cíl skoku GOTO mùe bıt a 255 znakù\n\
+dlouhé. Nesmí však obsahovat mezery (odlišné chování od jinıch operaèních\n\
+systémù). Existují-li dvì nebo více stejnıch návìští v jednom dávkovém\n\
+souboru, pak první bude vykonáno. Skok GOTO na neexistující návìští\n\
 ukonèí vıkon dávkového souboru.\n\
 \n\
-GOTO se nedá pou¾ít interaktivnì.\n"
+GOTO se nedá pouít interaktivnì.\n"
 
   WCMD_HELP,   "Nápovìda k HELP\n"
 
   WCMD_IF,
-"IF slou¾í k podmínìnému vıkonu pøíkazù.\n\
+"IF slouí k podmínìnému vıkonu pøíkazù.\n\
 \n\
 Syntaxe: IF [NOT] EXIST soubor pøíkaz\n\
 	 IF [NOT] øetìzec1==øetìzec2 pøíkaz\n\
@@ -92,58 +95,58 @@ uvozovkách. Srovnání není citlivé na velikost písmen.\n"
 \n\
 Syntaxe: LABEL [disk:]\n\
 Budete vyzváni k zadání jmenovky.\n\
-Jmenovku si mù¾ete zobrazit pøíkazem VOL.\n"
+Jmenovku si mùete zobrazit pøíkazem VOL.\n"
 
   WCMD_MD,     "Nápovìda k MD\n"
   WCMD_MKDIR,  "Nápovìda k MKDIR\n"
   WCMD_MOVE,
 "MOVE pøesune soubor èi adresáø na jiné místo v souborovém systému.\n\
 \n\
-Je-li pøesouván adresáø, jsou pøesunuty v¹echny jeho podadresáøe a soubory.\n\
+Je-li pøesouván adresáø, jsou pøesunuty všechny jeho podadresáøe a soubory.\n\
 \n\
-MOVE sel¾e jsou-li zdrojová a cílová oblast na jednotkách s jinımi DOS písmeny diskù.\n"
+MOVE sele jsou-li zdrojová a cílová oblast na jednotkách s jinımi DOS písmeny diskù.\n"
 
   WCMD_PATH,
-"PATH zobrazí èi zmìní cesty, v nich¾ wcmd hledá soubory.\n\
+"PATH zobrazí èi zmìní cesty, v nich wcmd hledá soubory.\n\
 \n\
 PATH bez argumentù zobrazí momentálnì platné nastavení (pøed první zmìnou\n\
 je to hodnota pøevzatá ze souboru wine.conf). Ke zmìnì pøipojte k pøíkazu\n\
 PATH novou cestu.\n\
 \n\
-Je takté¾ mo¾né zmìnit PATH pou¾itím promìnné prostøedí PATH,\n\
+Je takté moné zmìnit PATH pouitím promìnné prostøedí PATH,\n\
 napøíklad:\n\
 		PATH %PATH%;c:\\temp \n"
 
   WCMD_PAUSE,
 "PAUSE zobrazí na obrazovce text 'Press Return key to continue'\n\
-a vyèká, dokud u¾ivatel nestiskne klávesu Enter. Je to u¾iteèné hlavnì\n\
-proto, aby si u¾ivatel mohl pøeèíst vıstup z vıkonu pøedcházejích pøíkazù,\n\
-ne¾ se tyto odrolují z obrazovky.\n"
+a vyèká, dokud uivatel nestiskne klávesu Enter. Je to uiteèné hlavnì\n\
+proto, aby si uivatel mohl pøeèíst vıstup z vıkonu pøedcházejích pøíkazù,\n\
+ne se tyto odrolují z obrazovky.\n"
 
   WCMD_PROMPT,
 "PROMPT nastaví vızvu pøíkazového øádku.\n\
 \n\
 Øetìzec za pøíkazem PROMPT (a mezerou bezprostøednì za PROMPT)\n\
-se zobrazí na zaèátku ka¾dé nové pøíkazové øádky.\n\
+se zobrazí na zaèátku kadé nové pøíkazové øádky.\n\
 \n\
 Tyto znaky mají v øetìzcích speciální vıznam:\n\
 \n\
 $$    Znak dolaru         $_    Odøádkování         $b    Znak roury (|)\n\
-$d    Datum               $e    Escape              $g    Znaménko vìt¹í ne¾\n\
-$l    Znaménko men¹í ne¾  $n    Písmeno disku       $p    Cesta\n\
+$d    Datum               $e    Escape              $g    Znaménko vìtší ne\n\
+$l    Znaménko menší ne  $n    Písmeno disku       $p    Cesta\n\
 $q    Rovnítko            $t    Èas                 $v    Verze wcmd\n\
 \n\
 PROMPT bez parametrù resetuje prompt na defaultní,\n\
-kterı je slo¾en z cesty k souèasnému adresáøi (vèetnì písmena disku\n\
-) a znaménka  vìt¹í ne¾ (>).\n\
+kterı je sloen z cesty k souèasnému adresáøi (vèetnì písmena disku\n\
+) a znaménka  vìtší ne (>).\n\
 (jako je v DOS-u PROMPT $p$g).\n\
 \n\
-Prompt mù¾e bıt zmìnìn i zmìnou promìnné prostøedí PROMPT,\n\
-èili pøíkaz 'SET PROMPT=text' má tentı¾ efekt jako 'PROMPT text'\n"
+Prompt mùe bıt zmìnìn i zmìnou promìnné prostøedí PROMPT,\n\
+èili pøíkaz 'SET PROMPT=text' má tentı efekt jako 'PROMPT text'\n"
 
   WCMD_REM,
 "Øádky zaèínající REM (následovanım mezerou)\n\
-nejsou vykonány. REM je proto pou¾íván jako komentáøovı pøíkaz.\n"
+nejsou vykonány. REM je proto pouíván jako komentáøovı pøíkaz.\n"
 
   WCMD_REN,    "Nápovìda k REN\n"
   WCMD_RENAME, "Nápovìda k RENAME\n"
@@ -153,7 +156,7 @@ nejsou vykonány. REM je proto pou¾íván jako komentáøovı pøíkaz.\n"
   WCMD_SET,
 "SET zobrazí nebo zmìní promìnné prostøedí wcmd.\n\
 \n\
-SET bez argumentù uká¾e souèasné nastavení prostøedí.\n\
+SET bez argumentù ukáe souèasné nastavení prostøedí.\n\
 \n\
 Syntaxe pro nastavení a zmìnu promìnné prostøedí je:\n\
 \n\
@@ -164,13 +167,13 @@ Syntaxe pro nastavení a zmìnu promìnné prostøedí je:\n\
       nesmí bıt mezery.\n\
       \n\
       Ve Wine jsou viditelné promìnné prostøedí operaèního\n\
-      systému, ve kterém je Wine spu¹tìn. Proto uvidíte mnohem víc promìnnıch\n\
-      prostøedí, ne¾ u nativní Win32 implementace. Není mo¾né\n\
+      systému, ve kterém je Wine spuštìn. Proto uvidíte mnohem víc promìnnıch\n\
+      prostøedí, ne u nativní Win32 implementace. Není moné\n\
       mìnit promìnné prostøedí hostitelského operaèního systému z wcmd.\n"
   
   WCMD_SHIFT,
-"SHIFT u¾íván v dávkovıch souborech k odstranìní jednoho parametru ze zaèátku\n\
-jejich seznamu, tak¾e parametr 2 se stane parametrem 1 atd. Nemá ¾ádnı\n\
+"SHIFT uíván v dávkovıch souborech k odstranìní jednoho parametru ze zaèátku\n\
+jejich seznamu, take parametr 2 se stane parametrem 1 atd. Nemá ádnı\n\
 efekt, je-li zadán na pøíkazovou øádku.\n"
 
   WCMD_TIME,   "Nápovìda k TIME\n"
@@ -178,53 +181,53 @@ efekt, je-li zadán na pøíkazovou øádku.\n"
   WCMD_TITLE,  "Nastaví titulek okna wcmd, syntaxe TITLE [øetìzec]\n"
 
   WCMD_TYPE,
-"TYPE <soubor> vypí¹e <soubor> na konzolové zaøízení (nebo jinam,\n\
-je-li vıstup pøemìrován). Není zji¹»ováno, bude-li vypsán èitelnı text.\n"
+"TYPE <soubor> vypíše <soubor> na konzolové zaøízení (nebo jinam,\n\
+je-li vıstup pøemìrován). Není zjišováno, bude-li vypsán èitelnı text.\n"
 
   WCMD_VERIFY,
-"VERIFY je pou¾íván k nastavení nebo zji¹tìní stavu pøíznaku verify.\n\
+"VERIFY je pouíván k nastavení nebo zjištìní stavu pøíznaku verify.\n\
 Syntaxe:\n\
 \n\
 VERIFY ON	Nastaví pøíznak\n\
-VERIFY OFF	Zru¹í pøíznak\n\
+VERIFY OFF	Zruší pøíznak\n\
 VERIFY		Zobrazí aktuální stav.\n\
 \n\
-Pøíznak verify nemá ve Wine ¾ádnou funkci.\n"
+Pøíznak verify nemá ve Wine ádnou funkci.\n"
 
   WCMD_VER,
-"VER zobrazí verzi spu¹tìného programu wcmd.\n"
+"VER zobrazí verzi spuštìného programu wcmd.\n"
 
   WCMD_VOL,    "Nápovìda k VOL\n"
 
   WCMD_EXIT,
-"EXIT ukonèí bì¾ící sezení a vrátí kontrolu\n\
+"EXIT ukonèí bìící sezení a vrátí kontrolu\n\
 operaènímu systému nebo pøíkazovému interpretu,\n\
-ze kterého byl wcmd spu¹tìn.\n"
+ze kterého byl wcmd spuštìn.\n"
 
   1000, "Vestavìné pøíkazy WCMD jsou:\n\
 ATTRIB\t\tZobrazí nebo nastaví DOS-ovské souborové attributy\n\
 CALL\t\tZavolá dávkovı soubor z jiného\n\
 CD (CHDIR)\tZmìní pracovní adresáø\n\
-CLS\t\tVyma¾e okno terminálu\n\
+CLS\t\tVymae okno terminálu\n\
 COPY\t\tKopíruje soubory\n\
 CTTY\t\tZmìní vstupnì/vıstupní zaøízení\n\
-DATE\t\tUká¾e nebo nastaví systémové datum\n\
-DEL (ERASE)\tSma¾e jeden nebo více souborù\n\
-DIR\t\tVypí¹e obsah adresáøe\n\
-ECHO\t\tVypí¹e text na terminál\n\
+DATE\t\tUkáe nebo nastaví systémové datum\n\
+DEL (ERASE)\tSmae jeden nebo více souborù\n\
+DIR\t\tVypíše obsah adresáøe\n\
+ECHO\t\tVypíše text na terminál\n\
 HELP\t\tZobrazí detailní nápovìdu k tématu\n\
 MD (MKDIR)\tVytvoøí adresáø\n\
 MOVE\t\tPøesune soubor, skupinu souborù nebo adresáøovı strom\n\
-PATH\t\tNastaví nebo uká¾e prohledávané cesty\n\
+PATH\t\tNastaví nebo ukáe prohledávané cesty\n\
 PROMPT\t\tZmìní vızvu pøíkazového øádku\n\
 REN (RENAME)\tPøejmenuje soubor\n\
-RD (RMDIR)\tSma¾e adresáø\n\
+RD (RMDIR)\tSmae adresáø\n\
 SET\t\tNastaví nebo zobrazí promìnnou prostøedí\n\
-TIME\t\tUká¾e èi nastaví systémovı èas\n\
-TITLE\t\tNastaví titulek okna bì¾ící WCMD instance\n\
-TYPE\t\tVypí¹e obsah textového souboru\n\
+TIME\t\tUkáe èi nastaví systémovı èas\n\
+TITLE\t\tNastaví titulek okna bìící WCMD instance\n\
+TYPE\t\tVypíše obsah textového souboru\n\
 VER\t\tZobrazí verzi WCMD\n\
-VOL\t\tUká¾e jmenovku disku\n\
+VOL\t\tUkáe jmenovku disku\n\
 EXIT\t\tUkonèí WCMD\n\n\
-Zadejte HELP <pøíkaz> pro podrobnìj¹í informace o nìkterém z vı¹e uvedenıch pøíkazù\n"
+Zadejte HELP <pøíkaz> pro podrobnìjší informace o nìkterém z vıše uvedenıch pøíkazù\n"
 }
