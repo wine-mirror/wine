@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Regedit Czech resources
  *
  * Copyright 2002 Robert Dickenson
@@ -20,6 +21,8 @@
  */
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+
+/* Czech strings in CP1250 */
 
 /*
  * Menu
@@ -45,7 +48,7 @@ BEGIN
         MENUITEM "&Exportovat soubor registru...",    ID_REGISTRY_EXPORTREGISTRYFILE
         MENUITEM SEPARATOR
         MENUITEM "&P¯ipojit registr v sÌti...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
-        MENUITEM "O&dpojit sÌªov˝ registr...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "O&dpojit sÌùov˝ registr...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Tisk\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
         MENUITEM SEPARATOR
@@ -59,9 +62,9 @@ BEGIN
         BEGIN
             MENUITEM "&KlÌË",                        ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "ÿ&etÏzcov· poloæka",               ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&Bin·rnÌ poloæka",               ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "&DWORD poloæka",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "ÿ&etÏzcov· poloûka",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Bin·rnÌ poloûka",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD poloûka",                ID_EDIT_NEW_DWORDVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Smazat\tDel",                ID_EDIT_DELETE
@@ -70,7 +73,7 @@ BEGIN
         MENUITEM "&KopÌrovat n·zev klÌËe",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&NajÌt\tCtrl+F",               ID_EDIT_FIND, GRAYED
-        MENUITEM "NajÌt &dalπÌ\tF3",              ID_EDIT_FINDNEXT, GRAYED
+        MENUITEM "NajÌt &dalöÌ\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&Zobrazit"
     BEGIN
@@ -111,9 +114,9 @@ BEGIN
         BEGIN
             MENUITEM "&KlÌË",                        ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "ÿ&etÏzcov· poloæka",               ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&BinarnÌ poloæka",               ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "&DWORD poloæka",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "ÿ&etÏzcov· poloûka",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&BinarnÌ poloûka",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD poloûka",                ID_EDIT_NEW_DWORDVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Smazat\tDel",                ID_EDIT_DELETE
@@ -165,7 +168,7 @@ BEGIN
     LTEXT           "Obsah:",IDC_STATIC,5,30,90,8
     EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
     GROUPBOX        "Z·klad", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
-    AUTORADIOBUTTON "πestn·ctkov˝", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "öestn·ctkov˝", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
     AUTORADIOBUTTON "Desitkov˝", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
     DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
     PUSHBUTTON   "Storno",IDCANCEL,175,80,30,11,WS_GROUP
@@ -192,20 +195,20 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_MENU        "Obsahuje p¯Ìkazy pro pr·ci se syrov˝m registrem"
-    ID_EDIT_MENU            "Obsahuje p¯Ìkazy pro editaci klÌË˘ a poloæek"
+    ID_EDIT_MENU            "Obsahuje p¯Ìkazy pro editaci klÌË˘ a poloûek"
     ID_VIEW_MENU            "Obsahuje p¯Ìkazy pro ˙pravu vzhledu okna regeditu"
-    ID_FAVORITES_MENU       "Obsahuje p¯Ìkazy pro p¯Ìstup k Ëasto uæÌvan˝m klÌË˘m"
+    ID_FAVORITES_MENU       "Obsahuje p¯Ìkazy pro p¯Ìstup k Ëasto uûÌvan˝m klÌË˘m"
     ID_HELP_MENU            "Obsahuje p¯Ìkazy pro zobrazenÌ n·povÏdy a informacÌo editoru registru"
-    ID_EDIT_NEW_MENU        "Obsahuje p¯Ìkazy pro vytv·¯enÌ nov˝ch klÌË˘ a poloæek"
+    ID_EDIT_NEW_MENU        "Obsahuje p¯Ìkazy pro vytv·¯enÌ nov˝ch klÌË˘ a poloûek"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_EDIT_MODIFY          "ZmÏnÌ data"
     ID_EDIT_NEW_KEY         "P¯id· nov˝ klÌË"
-    ID_EDIT_NEW_STRINGVALUE "P¯id· novou ¯etÏzcovou poloæku"
-    ID_EDIT_NEW_BINARYVALUE "P¯id· novou bin·rnÌ poloæku"
-    ID_EDIT_NEW_DWORDVALUE  "P¯id· novou DWORD poloæku"
+    ID_EDIT_NEW_STRINGVALUE "P¯id· novou ¯etÏzcovou poloûku"
+    ID_EDIT_NEW_BINARYVALUE "P¯id· novou bin·rnÌ poloûku"
+    ID_EDIT_NEW_DWORDVALUE  "P¯id· novou DWORD poloûku"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importuje textov˝ soubor registru"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exportuje cel˝ registr nebo jeho Ë·st do textovÈho souboru"
@@ -223,27 +226,27 @@ BEGIN
     ID_REGISTRY_EXIT        "UkonËÌ regedit"
     ID_FAVORITES_ADDTOFAVORITES "P¯id· klÌË k oblÌben˝m"
     ID_FAVORITES_REMOVEFAVORITE "Odebere klÌË z oblÌben˝ch"
-    ID_VIEW_STATUSBAR       "Uk·æe nebo skryje status bar"
+    ID_VIEW_STATUSBAR       "Uk·ûe nebo skryje status bar"
     ID_VIEW_SPLIT           "Change position of split between two panes"
     ID_VIEW_REFRESH         "P¯ekreslÌ okno"
-    ID_EDIT_DELETE          "Smaæe vybranÈ"
+    ID_EDIT_DELETE          "Smaûe vybranÈ"
     ID_EDIT_RENAME          "P¯ejmenuje vybranÈ"
-    ID_EDIT_COPYKEYNAME     "VloæÌ n·zev vybranÈho klÌËe do schr·nky"
-    ID_EDIT_FIND            "Najde textov˝ ¯etÏzec v klÌËi, poloæce nebo datech"
-    ID_EDIT_FINDNEXT        "Najde dalπÌ v˝skyt textu"
+    ID_EDIT_COPYKEYNAME     "VloûÌ n·zev vybranÈho klÌËe do schr·nky"
+    ID_EDIT_FIND            "Najde textov˝ ¯etÏzec v klÌËi, poloûce nebo datech"
+    ID_EDIT_FINDNEXT        "Najde dalöÌ v˝skyt textu"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR		    "Chyba"
     IDS_BAD_KEY		    "Nelze najÌt klÌË '%s'"
-    IDS_BAD_VALUE           "Nelze najÌt poloæku '%s'"
+    IDS_BAD_VALUE           "Nelze najÌt poloûku '%s'"
     IDS_UNSUPPORTED_TYPE    "Nemohu upravit klÌËe tohoto typu (%ld)"
-    IDS_TOO_BIG_VALUE       "Hodnota je p¯Ìliπ velk· (%ld)"
-    IDS_DELETE_BOX_TITLE    "PotvrÔte smaz·nÌ poloæky"
-    IDS_DELETE_BOX_TEXT     "Opravdu chcete smazat poloæku '%s'?"
+    IDS_TOO_BIG_VALUE       "Hodnota je p¯Ìliö velk· (%ld)"
+    IDS_DELETE_BOX_TITLE    "PotvrÔte smaz·nÌ poloûky"
+    IDS_DELETE_BOX_TEXT     "Opravdu chcete smazat poloûku '%s'?"
     IDS_NEWKEY              "Nov˝ klÌË #%d"
-    IDS_NEWVALUE            "Nov· poloæka #%d"
+    IDS_NEWVALUE            "Nov· poloûka #%d"
 END
 
 /*****************************************************************/
