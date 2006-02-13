@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Uninstaller (Czech Resources)
  *
  *
@@ -19,7 +20,9 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
 
+/* Czech strings in CP1250 */
+
 
 STRINGTABLE DISCARDABLE {
-     IDS_APPNAME, "Deinstaltor"
+     IDS_APPNAME, "Deinstalátor"
 }
