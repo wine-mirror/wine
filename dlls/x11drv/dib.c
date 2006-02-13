@@ -4080,7 +4080,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   descr.physDev   = physDev;
   descr.palentry  = palette;
   descr.bits      = bits;
-  descr.image     = NULL;
+  descr.image     = physBitmap->image;
   descr.infoWidth = width;
   descr.lines     = lines;
   descr.depth     = physBitmap->pixmap_depth;
