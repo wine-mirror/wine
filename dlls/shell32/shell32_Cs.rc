@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Copyright 1998 Juergen Schmied
  * Copyright 2003 Filip Navara
  *
@@ -18,6 +19,8 @@
  */
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+
+/* Czech strings in CP1250 */
 
 MENU_001 MENU DISCARDABLE
 BEGIN
@@ -115,7 +118,7 @@ FONT 10, "MS Shell Dlg"
  ICON "", 1088, 10, 10, 14, 16
  LTEXT "", 100, 30, 10, 137, 10
  LTEXT "", 101, 30, 22, 137, 10
- LTEXT "Wine je d¡lem:", 98, 8, 55, 137, 10
+ LTEXT "Wine je dílem:", 98, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -156,7 +159,7 @@ STRINGTABLE DISCARDABLE
 
 STRINGTABLE DISCARDABLE
 {
-	IDS_CREATEFOLDER_DENIED "Nelze vytvoøit novou složku protože pøistup byl odepøen."
+	IDS_CREATEFOLDER_DENIED "Nelze vytvoøit novou složku protože pøístup byl odepøen."
 	IDS_CREATEFOLDER_CAPTION "Chyba pøi pokusu vytvoøit nový adresáø"
 	IDS_DELETEITEM_CAPTION "Potvrdit odstranìní souboru"
 	IDS_DELETEFOLDER_CAPTION "Potvrdit odstranìní adresáøe"
