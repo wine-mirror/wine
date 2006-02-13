@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Copyright 1996 Roman Dolejsi
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +18,8 @@
  */
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+
+/* Czech strings in CP1250 */
 
 SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
