@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * WineMine
  * Czech Language Support
  *
@@ -23,6 +24,8 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
+/* Czech strings in CP1250 */
+
 STRINGTABLE {
      IDS_APPNAME, "WineMine"
      IDS_NOBODY,  "Nikdo"
@@ -43,7 +46,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "&Konec\tAlt+K",   IDM_EXIT
     }
     POPUP "&Informace" {
-        MENUITEM "Ne&jlep¹í èasy",    IDM_TIMES
+        MENUITEM "Ne&jlepší èasy",    IDM_TIMES
         MENUITEM "&O aplikaci",         IDM_ABOUT
     }
 }
@@ -51,9 +54,9 @@ MENU_WINEMINE MENU DISCARDABLE
 DLG_TIMES DIALOG DISCARDABLE 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Nejlep¹í èasy"
+CAPTION "Nejlepší èasy"
 {
-    GROUPBOX        "Nejlep¹í èasy", IDIGNORE,  10,  10, 140,  45
+    GROUPBOX        "Nejlepší èasy", IDIGNORE,  10,  10, 140,  45
     LTEXT           "Zaèáteèník",      IDIGNORE,  20,  20,  40,   8
     LTEXT           "Pokroèilý",      IDIGNORE,  20,  30,  40,   8
     LTEXT           "Expert",        IDIGNORE,  20,  40,  40,   8
