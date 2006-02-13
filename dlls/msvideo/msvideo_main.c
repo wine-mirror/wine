@@ -811,7 +811,7 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
             struct codec_info *ic;
             BOOL enable = FALSE;
 
-            if (HIWORD(wparam != CBN_SELCHANGE))
+            if (HIWORD(wparam) != CBN_SELCHANGE)
                 break;
 
             cur_sel = SendMessageW((HWND)lparam, CB_GETCURSEL, 0, 0);
@@ -832,7 +832,7 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
             INT cur_sel;
             struct codec_info *ic;
 
-            if (HIWORD(wparam != BN_CLICKED))
+            if (HIWORD(wparam) != BN_CLICKED)
                 break;
 
             cur_sel = SendMessageW(list, CB_GETCURSEL, 0, 0);
@@ -849,6 +849,9 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
             HWND list = GetDlgItem(hdlg, IDC_COMP_LIST);
             INT cur_sel;
             struct codec_info *ic;
+
+            if (HIWORD(wparam) != BN_CLICKED)
+                break;
 
             cur_sel = SendMessageW(list, CB_GETCURSEL, 0, 0);
             ic = (struct codec_info *)SendMessageW(list, CB_GETITEMDATA, cur_sel, 0);
@@ -870,6 +873,9 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
         {
             HWND list = GetDlgItem(hdlg, IDC_COMP_LIST);
             INT idx = 0;
+
+            if (HIWORD(wparam) != BN_CLICKED)
+                break;
 
             while (1)
             {
