@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Czech resource file for MS-RLE
  *
  * Copyright 2002 Michael Günnewig
@@ -20,6 +21,8 @@
  */
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+
+/* Czech strings in CP1250 */
 
 STRINGTABLE DISCARDABLE
 {
