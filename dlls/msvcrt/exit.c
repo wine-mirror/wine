@@ -167,7 +167,7 @@ void MSVCRT__assert(const char* str, const char* file, unsigned int line)
   if (MSVCRT_app_type == 2)
   {
     char text[2048];
-    snprintf(text, sizeof(text), "File: %s\nLine: %d\n\nEpression: \"%s\"", file, line, str);
+    snprintf(text, sizeof(text), "File: %s\nLine: %d\n\nExpression: \"%s\"", file, line, str);
     DoMessageBox("Assertion failed!", text);
   }
   else
