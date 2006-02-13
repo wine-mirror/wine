@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Czech resources for serialui
  * Copyright 2000 Mike McCormack
  * Copyright 2004 David Kredba
@@ -19,6 +20,8 @@
  */
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+
+/* Czech strings in CP1250 */
 
 IDD_SERIALUICONFIG DIALOG DISCARDABLE 0, 0, 160, 159
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE
