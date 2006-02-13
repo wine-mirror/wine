@@ -69,9 +69,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
             glDeleteTextures(1, &This->glDescription.textureName);
             LEAVE_GL();
         }
-        if (This->container) {
-            IWineD3DBase_Release(This->container);
-        }
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
 
         TRACE("(%p) Released\n", This);
@@ -1357,12 +1354,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3D
 
     TRACE("This %p, container %p\n", This, container);
 
-    if (container) {
-        IWineD3DBase_AddRef(container);
-    }
-    if (This->container) {
-        IWineD3DBase_Release(This->container);
-    }
+    /* We can't keep a reference to the container, since the container already keeps a reference to us. */
 
     TRACE("Setting container to %p from %p\n", container, This->container);
     This->container = container;

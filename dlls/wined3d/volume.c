@@ -55,9 +55,6 @@ ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        if (This->container) {
-            IWineD3DBase_Release(This->container);
-        }
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -252,12 +249,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWineD3DBa
 
     TRACE("This %p, container %p\n", This, container);
 
-    if (container) {
-        IWineD3DBase_AddRef(container);
-    }
-    if (This->container) {
-        IWineD3DBase_Release(This->container);
-    }
+    /* We can't keep a reference to the container, since the container already keeps a reference to us. */
 
     TRACE("Setting container to %p from %p\n", container, This->container);
     This->container = container;
