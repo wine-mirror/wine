@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Start
  * Czech Language Support
  *
@@ -22,10 +23,12 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
+/* Czech strings in CP1250 */
+
 STRINGTABLE DISCARDABLE LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 {
-STRING_USAGE,                                   "Spustí program nebo otevøe dokument v programu, který je normálnì pou¾it pro soubory s danou pøíponou. \n\
-Pou¾ití: \n\
+STRING_USAGE,                                   "Spustí program nebo otevøe dokument v programu, který je normálnì použit pro soubory s danou pøíponou. \n\
+Použití: \n\
 start [volby] jméno_programu [...] \n\
 start [volby] jméno_dokumentu \n\
  \n\
@@ -33,7 +36,7 @@ Volby: \n\
 /M[inimalizovanì] Spustí program minimalizovanì. \n\
 /MAX[imalizovanì] Spustí program maximalizovanì. \n\
 /R Spustí program normálnì (ani minimalizovaný ani maximalizovaný). \n\
-/W Èeká na dokonèení spu¹tìného programu, vrací návratový kód. \n\
+/W Èeká na dokonèení spuštìného programu, vrací návratový kód. \n\
 /L Zobrazí licenci. \n\
  \n\
 start.exe verze 0.2 Copyright (C) 2003, Dan Kegel \n\
@@ -60,5 +63,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. \n\
 Pøeètìte si soubor COPYING.LIB pro získání informací o licenci. \n\
 "
 
-STRING_EXECFAIL "Aplikace nemohla být spu¹tìna nebo není ¾ádná aplikace asociována s daným souborem.\nShellExecuteEx selhal"
+STRING_EXECFAIL "Aplikace nemohla být spuštìna nebo není žádná aplikace asociována s daným souborem.\nShellExecuteEx selhal"
 }
