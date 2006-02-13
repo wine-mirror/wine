@@ -3626,7 +3626,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
      descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
      descr->width, descr->height);
 #ifdef HAVE_LIBXXSHM
-    if (descr->useShm)
+    if (descr->image && descr->useShm)
     {
         XShmPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
                       descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
@@ -3670,7 +3670,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     }
 
 #ifdef HAVE_LIBXXSHM
-    if (descr->useShm)
+    if (descr->image && descr->useShm)
     {
         int saveRed, saveGreen, saveBlue;
 
