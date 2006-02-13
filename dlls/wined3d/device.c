@@ -22,7 +22,9 @@
  */
 
 #include "config.h"
-#include <float.h>
+#ifdef HAVE_FLOAT_H
+# include <float.h>
+#endif
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
