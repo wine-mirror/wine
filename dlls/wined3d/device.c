@@ -2695,6 +2695,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONST WINED
         TRACE("Recording... not performing anything\n");
         return D3D_OK;
     }
+    This->viewport_changed = TRUE;
 
     ENTER_GL();
 

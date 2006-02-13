@@ -494,6 +494,7 @@ typedef struct IWineD3DDeviceImpl
     BOOL                    proj_valid;
     BOOL                    view_ident;        /* true iff view matrix is identity                */
     BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
+    BOOL                    viewport_changed;  /* Was the viewport changed since the last draw?   */
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
     LONG                    tracking_color;    /* used iff GL_COLOR_MATERIAL was enabled          */
 #define                         DISABLED_TRACKING  0  /* Disabled                                 */

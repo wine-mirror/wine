@@ -708,10 +708,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             /* glDrawPixels transforms the raster position as though it was a vertex -
                we want to draw at screen position 0,0 - Set up ortho (rhw) mode as
                per drawprim (and leave set - it will sort itself out due to last_was_rhw */
-            if (!myDevice->last_was_rhw) {
+            if ( (!myDevice->last_was_rhw) || (myDevice->viewport_changed) ) {
 
                 double X, Y, height, width, minZ, maxZ;
                 myDevice->last_was_rhw = TRUE;
+                myDevice->viewport_changed = FALSE;
 
                 /* Transformed already into viewport coordinates, so we do not need transform
                    matrices. Reset all matrices to identity and leave the default matrix in world

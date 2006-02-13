@@ -200,10 +200,11 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
     if (!useVS && vtx_transformed) {
 
         /* If the last draw was transformed as well, no need to reapply all the matrixes */
-        if (!This->last_was_rhw) {
+        if ( (!This->last_was_rhw) || (This->viewport_changed) ) {
 
             double X, Y, height, width, minZ, maxZ;
             This->last_was_rhw = TRUE;
+            This->viewport_changed = FALSE;
 
             /* Transformed already into viewport coordinates, so we do not need transform
                matrices. Reset all matrices to identity and leave the default matrix in world
