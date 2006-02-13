@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Copyright 2000 Eric Pouech
  *
  * Czech resources for MS ACM
@@ -21,6 +22,8 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
+/* Czech strings in CP1250 */
+
 DLG_ACMFORMATCHOOSE_ID DIALOG DISCARDABLE  10, 20, 225, 100
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Výbìr zvuku"
@@ -32,7 +35,7 @@ BEGIN
     COMBOBOX        IDD_ACMFORMATCHOOSE_CMB_CUSTOM, 5, 15, 115, 60,
                     CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 
-    PUSHBUTTON      "&Ulo¾it jako", IDD_ACMFORMATCHOOSE_BTN_SETNAME, 125, 14, 45, 14
+    PUSHBUTTON      "&Uložit jako", IDD_ACMFORMATCHOOSE_BTN_SETNAME, 125, 14, 45, 14
     PUSHBUTTON      "Odeb&rat", IDD_ACMFORMATCHOOSE_BTN_DELNAME, 175, 14, 45, 14
 
     LTEXT           "&Formát:", -1, 5, 41, 44, 8, NOT WS_GROUP
