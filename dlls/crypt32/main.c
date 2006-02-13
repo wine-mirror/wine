@@ -364,3 +364,16 @@ BOOL WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
     FIXME("%08lx %08lx %08lx\n", x, y, z);
     return FALSE;
 }
+
+BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void* pvObject,
+    DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags,
+    DWORD dwFlags, DWORD* pdwMsgAndCertEncodingType, DWORD* pdwContentType,
+    DWORD* pdwFormatType, HCERTSTORE* phCertStore, HCRYPTMSG* phMsg,
+    const void** ppvContext)
+{
+    FIXME( "%08lx %p %08lx %08lx %08lx %p %p %p %p %p %p", dwObjectType,
+           pvObject, dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
+           dwFlags, pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType,
+           phCertStore, phMsg, ppvContext);
+    return FALSE;
+}
