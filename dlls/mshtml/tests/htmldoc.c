@@ -176,7 +176,7 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
 
         hres = IHlink_GetHlinkSite(pihlNavigate, &site, &site_data);
         ok(hres == S_OK, "GetHlinkSite failed: %08lx\n", hres);
-        ok(site == NULL, "site = %p\n, expected NULL", site);
+        ok(site == NULL, "site = %p\n, expected NULL\n", site);
         ok(site_data == 0xdeadbeef, "site_data = %lx\n", site_data);
     }
 
