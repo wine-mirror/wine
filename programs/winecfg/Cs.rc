@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * WineCfg resources
  * English Language Support
  *
@@ -25,6 +26,8 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
+/* Czech strings in CP1250 */
+
 IDD_ABOUTCFG DIALOGEX 0, 0, 260, 250
 STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
@@ -44,7 +47,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Nastavení aplikací",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine umí pøedstírat rùzné verze Windows pro ka¾dou jednu applikaci.",
+    LTEXT           "Wine umí pøedstírat rùzné verze Windows pro každou jednu applikaci.",
                     IDC_STATIC,15,20,227,20
     CONTROL         "Aplikace",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,40,230,140
@@ -60,13 +63,13 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    CONTROL	    "Povolit aplikacím DirectX dr¾et ukazatel my¹i ve svém oknì ?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "Povolit aplikacím DirectX držet ukazatel myši ve svém oknì ?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL	    "Povolit double buffering plochy",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     
     GROUPBOX        " Nastavení oken ",IDC_STATIC,8,25,244,120
 
     /* FIXME: the wording of this explanation could be a lot better */
-    LTEXT           "Mù¾ete si vybrat emulaci plochy windows, kde jsou okna aplikací uzavøena v jedné 'virtuální obrazovce' nebo mohou být umístìna na standardním desktopu.",
+    LTEXT           "Mùžete si vybrat emulaci plochy windows, kde jsou okna aplikací uzavøena v jedné 'virtuální obrazovce' nebo mohou být umístìna na standardním desktopu.",
                     IDC_STATIC,15,73,228,28
     LTEXT           "Velikost desktopu:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
@@ -82,7 +85,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Náhrady DLL",IDC_STATIC,8,4,244,240
-    LTEXT           "Mù¾ete vybrat zda budou pou¾ity dynamicky linkované knihovny vestavìné ve Wine nebo nativní (vzaté z Windows nebo poskytnuté aplikací)."
+    LTEXT           "Mùžete vybrat zda budou použity dynamicky linkované knihovny vestavìné ve Wine nebo nativní (vzaté z Windows nebo poskytnuté aplikací)."
                     ,  IDC_STATIC,15,17,228,32
     LISTBOX         IDC_DLLS_LIST,15,50,142,187,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     LTEXT           "Poøadí nahravání:",IDC_STATIC,163,50,37,8
@@ -117,7 +120,7 @@ BEGIN
     PUSHBUTTON      "Odebrat",IDC_BUTTON_REMOVE,55,199,37,14
     PUSHBUTTON      "Upravit...",IDC_BUTTON_EDIT,97,199,37,14
     PUSHBUTTON      "Autodetekovat...",IDC_BUTTON_AUTODETECT,197,199,49,14
-    LTEXT	    "Varování: Vypadá to, ¾e disk C není definován. Kliknìte na 'Pøidat...' a vytvoøte ho.", IDS_DRIVE_NO_C, 7,223,250,110
+    LTEXT	    "Varování: Vypadá to, že disk C není definován. Kliknìte na 'Pøidat...' a vytvoøte ho.", IDS_DRIVE_NO_C, 7,223,250,110
 END
 
 IDD_DRIVE_EDIT DIALOG DISCARDABLE  0, 0, 203, 169
@@ -161,7 +164,7 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WINE_VERSION        "CVS"
-    IDS_TAB_GENERAL         "V¹eobecné"
+    IDS_TAB_GENERAL         "Všeobecné"
     IDS_TAB_DLLS            "Knihovny"
     IDS_TAB_DRIVES          "Disky"
 END
