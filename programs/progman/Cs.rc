@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Program Manager Czech resources
  *
  * Copyright 1996 Ulrich Schmid
@@ -20,6 +21,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* Czech strings in CP1250 */
+
 /* Menu */
 
 MAIN_MENU MENU LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
@@ -39,7 +42,7 @@ MAIN_MENU MENU LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
  POPUP "&Nastavení" {
    MENUITEM "&Uspoøádat automaticky",  PM_AUTO_ARRANGE
    MENUITEM "&Minimalizovat za bìhu",    PM_MIN_ON_RUN
-   MENUITEM "U&lo¾it nastavení pøi ukonèení", PM_SAVE_SETTINGS
+   MENUITEM "U&loit nastavení pøi ukonèení", PM_SAVE_SETTINGS
  }
  POPUP "&Okna" {
    MENUITEM "&Pøekrıvající se\tShift+F5",       PM_OVERLAP
@@ -206,15 +209,15 @@ IDS_NOT_IMPLEMENTED,		"Není podporováno"
 IDS_FILE_READ_ERROR_s,		"Chyba pøi ètení `%s'."
 IDS_FILE_WRITE_ERROR_s,		"Chyba pøi zápisu `%s'."
 IDS_GRPFILE_READ_ERROR_s,	"\
-Soubor skupiny `%s' nemù¾e bıt otevøen.\n\
+Soubor skupiny `%s' nemùe bıt otevøen.\n\
 Mám to zkusit znovu ?"
-IDS_OUT_OF_MEMORY,		"Do¹la pamì»."
+IDS_OUT_OF_MEMORY,		"Došla pamì."
 IDS_WINHELP_ERROR,		"Nápovìda není dostupná."
 IDS_UNKNOWN_FEATURE_s,		"Neznámá vlastnost v %s"
 IDS_FILE_NOT_OVERWRITTEN_s,	"Soubor `%s' existuje. Nebude pøepsán."
-IDS_SAVE_GROUP_AS_s,		"Ulo¾it skupinu jako `%s', aby nebyly pøepsán originální soubory."
-IDS_NO_HOT_KEY,			"®ádná klávesová zkratka."
-IDS_ALL_FILES,			"V¹echny soubory (*.*)"
+IDS_SAVE_GROUP_AS_s,		"Uloit skupinu jako `%s', aby nebyly pøepsán originální soubory."
+IDS_NO_HOT_KEY,			"ádná klávesová zkratka."
+IDS_ALL_FILES,			"Všechny soubory (*.*)"
 IDS_PROGRAMS,			"Programy"
 IDS_LIBRARIES_DLL,		"Knihovny (*.dll)"
 IDS_SYMBOL_FILES,		"Soubory ikon"
