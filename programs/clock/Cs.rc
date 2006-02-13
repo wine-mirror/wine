@@ -1,4 +1,5 @@
-/*
+/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
+ *
  * Clock (Czech resources)
  *
  * Copyright 1998 Marcel Baur
@@ -22,6 +23,8 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
+/* Czech strings in CP1250 */
+
 MAIN_MENU MENU 
 {
  POPUP "&Vlastnosti" {
@@ -35,7 +38,7 @@ MAIN_MENU MENU
   MENUITEM "&Sekund", IDM_SECONDS
   MENUITEM "&Datum", IDM_DATE
   MENUITEM SEPARATOR
-  MENUITEM "V¾dy n&a vrchu", IDM_ONTOP
+  MENUITEM "Vždy n&a vrchu", IDM_ONTOP
  }
  POPUP "&O aplikaci" {
   MENUITEM "&Licence...", IDM_LICENSE
