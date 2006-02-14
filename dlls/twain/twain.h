@@ -57,6 +57,9 @@
 #include "windef.h"
 #include "winbase.h"
 
+/* The Twain structures must be packed on 2 byte alignment */
+#include "pshpack2.h"
+
 #undef FAR
 #define FAR
 #define huge
@@ -1860,5 +1863,8 @@ typedef TW_UINT16 (*DSENTRYPROC)(pTW_IDENTITY,
 #ifdef  __cplusplus
 }
 #endif  /* cplusplus */
+
+/* The Twain structures must be packed on 2 byte alignment */
+#include "poppack.h"
 
 #endif  /* TWAIN */
