@@ -772,17 +772,34 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
         WCHAR buf[128];
         struct choose_compressor *choose_comp = (struct choose_compressor *)lparam;
 
+        SetWindowLongPtrW(hdlg, DWLP_USER, lparam);
+
+        /* FIXME */
+        choose_comp->flags &= ~(ICMF_CHOOSE_DATARATE | ICMF_CHOOSE_KEYFRAME);
+
         if (choose_comp->title)
             SetWindowTextA(hdlg, choose_comp->title);
 
         if (!(choose_comp->flags & ICMF_CHOOSE_DATARATE))
-            EnableWindow(GetDlgItem(hdlg, IDC_DATARATE), FALSE);
+        {
+            ShowWindow(GetDlgItem(hdlg, IDC_DATARATE_CHECKBOX), SW_HIDE);
+            ShowWindow(GetDlgItem(hdlg, IDC_DATARATE), SW_HIDE);
+            ShowWindow(GetDlgItem(hdlg, IDC_DATARATE_KB), SW_HIDE);
+        }
 
         if (!(choose_comp->flags & ICMF_CHOOSE_KEYFRAME))
-            EnableWindow(GetDlgItem(hdlg, IDC_KEYFRAME), FALSE);
+        {
+            ShowWindow(GetDlgItem(hdlg, IDC_KEYFRAME_CHECKBOX), SW_HIDE);
+            ShowWindow(GetDlgItem(hdlg, IDC_KEYFRAME), SW_HIDE);
+            ShowWindow(GetDlgItem(hdlg, IDC_KEYFRAME_FRAMES), SW_HIDE);
+        }
+
+        /* FIXME */
+        EnableWindow(GetDlgItem(hdlg, IDC_QUALITY_SCROLL), FALSE);
+        EnableWindow(GetDlgItem(hdlg, IDC_QUALITY_TXT), FALSE);
 
         /*if (!(choose_comp->flags & ICMF_CHOOSE_PREVIEW))
-            EnableWindow(GetDlgItem(hdlg, IDC_PREVIEW), FALSE);*/
+            ShowWindow(GetDlgItem(hdlg, IDC_PREVIEW), SW_HIDE);*/
 
         LoadStringW(MSVFW32_hModule, IDS_FULLFRAMES, buf, 128);
         SendDlgItemMessageW(hdlg, IDC_COMP_LIST, CB_ADDSTRING, 0, (LPARAM)buf);
@@ -809,10 +826,13 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
         {
             INT cur_sel;
             struct codec_info *ic;
-            BOOL enable = FALSE;
+            BOOL can_configure = FALSE, can_about = FALSE;
+            struct choose_compressor *choose_comp;
 
-            if (HIWORD(wparam) != CBN_SELCHANGE)
+            if (HIWORD(wparam) != CBN_SELCHANGE && HIWORD(wparam) != CBN_SETFOCUS)
                 break;
+
+            choose_comp = (struct choose_compressor *)GetWindowLongPtrW(hdlg, DWLP_USER);
 
             cur_sel = SendMessageW((HWND)lparam, CB_GETCURSEL, 0, 0);
 
@@ -820,13 +840,27 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
             if (ic && ic->hic)
             {
                 if (ICQueryConfigure(ic->hic) == DRVCNF_OK)
-                    enable = TRUE;
+                    can_configure = TRUE;
+                if (ICQueryAbout(ic->hic) == DRVCNF_OK)
+                    can_about = TRUE;
             }
-            EnableWindow(GetDlgItem(hdlg, IDC_CONFIGURE), enable);
+            EnableWindow(GetDlgItem(hdlg, IDC_CONFIGURE), can_configure);
+            EnableWindow(GetDlgItem(hdlg, IDC_ABOUT), can_about);
+
+            if (choose_comp->flags & ICMF_CHOOSE_DATARATE)
+            {
+                /* FIXME */
+            }
+            if (choose_comp->flags & ICMF_CHOOSE_KEYFRAME)
+            {
+                /* FIXME */
+            }
+
             break;
         }
 
         case IDC_CONFIGURE:
+        case IDC_ABOUT:
         {
             HWND list = GetDlgItem(hdlg, IDC_COMP_LIST);
             INT cur_sel;
@@ -839,7 +873,12 @@ static INT_PTR CALLBACK icm_choose_compressor_dlgproc(HWND hdlg, UINT msg, WPARA
 
             ic = (struct codec_info *)SendMessageW(list, CB_GETITEMDATA, cur_sel, 0);
             if (ic && ic->hic)
-                ICConfigure(ic->hic, hdlg);
+            {
+                if (LOWORD(wparam) == IDC_CONFIGURE)
+                    ICConfigure(ic->hic, hdlg);
+                else
+                    ICAbout(ic->hic, hdlg);
+            }
 
             break;
         }
