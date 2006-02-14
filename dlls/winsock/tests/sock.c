@@ -128,6 +128,13 @@ typedef struct client_memory
     char                   *recv_buf;
 } client_memory;
 
+/* SelectReadThread thread parameters */
+typedef struct select_thread_params
+{
+    SOCKET s;
+    BOOL ReadKilled;
+} select_thread_params;
+
 /**************** Static variables ***************/
 
 static DWORD      tls;              /* Thread local storage index */
@@ -1317,13 +1324,38 @@ static void test_WSAStringToAddressW(void)
         "WSAStringToAddressW() failed unexpectedly: %d\n", GLE );
 }
 
+static VOID WINAPI SelectReadThread(select_thread_params *par)
+{
+    fd_set readfds;
+    int ret;
+    struct sockaddr_in addr;
+    struct timeval select_timeout;
+
+    FD_ZERO(&readfds);
+    FD_SET(par->s, &readfds);
+    select_timeout.tv_sec=5;
+    select_timeout.tv_usec=0;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(SERVERIP);
+    addr.sin_port = htons(SERVERPORT);
+
+    do_bind(par->s, (struct sockaddr *)&addr, sizeof(addr));
+    wsa_ok(listen(par->s, SOMAXCONN ), 0 ==, "SelectReadThread (%lx): listen failed: %d\n");
+
+    SetEvent(server_ready);
+    ret = select(par->s+1, &readfds, NULL, NULL, &select_timeout);
+    par->ReadKilled = (ret == 1);
+}
+
 static void test_select(void)
 {
     SOCKET fdRead, fdWrite;
     fd_set readfds, writefds, exceptfds;
-    int maxfd;
+    unsigned int maxfd;
     int ret;
     struct timeval select_timeout;
+    select_thread_params thread_params;
+    HANDLE thread_handle;
 
     fdRead = socket(AF_INET, SOCK_STREAM, 0);
     ok( (fdRead != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
@@ -1337,8 +1369,8 @@ static void test_select(void)
     FD_SET(fdWrite, &writefds);
     FD_SET(fdRead, &exceptfds);
     FD_SET(fdWrite, &exceptfds);
-    select_timeout.tv_sec=2;
-    select_timeout.tv_usec=0;
+    select_timeout.tv_sec=0;
+    select_timeout.tv_usec=500;
 
     maxfd = fdRead;
     if (fdWrite > maxfd)
@@ -1354,10 +1386,28 @@ static void test_select(void)
     ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
     ok ( !FD_ISSET(fdWrite, &exceptfds), "FD should not be set\n");
  
-    ret = closesocket(fdRead);
-    ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", ret);
+    todo_wine {
+    ok ((listen(fdWrite, SOMAXCONN) == SOCKET_ERROR), "listen did not fail\n");
+    }
     ret = closesocket(fdWrite);
     ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", ret);
+
+    thread_params.s = fdRead;
+    thread_params.ReadKilled = FALSE;
+    server_ready = CreateEventW(NULL, TRUE, FALSE, NULL);
+    thread_handle = CreateThread (NULL, 0, (LPTHREAD_START_ROUTINE) &SelectReadThread, &thread_params, 0, NULL );
+    ok ( (thread_handle != NULL), "CreateThread failed unexpectedly: %ld\n", GetLastError());
+
+    WaitForSingleObject (server_ready, INFINITE);
+    Sleep(2000);
+    ret = closesocket(fdRead);
+    ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", ret);
+
+    WaitForSingleObject (thread_handle, TEST_TIMEOUT * 1000);
+    todo_wine {
+    ok ( (thread_params.ReadKilled), "closesocket did not wakeup select\n");
+    }
+
 }
 
 /**************** Main program  ***************/
