@@ -2014,7 +2014,7 @@ BOOL WINAPI ShowScrollBar(HWND hwnd, INT nBar, BOOL fShow)
  *
  * Enables or disables the scroll bars.
  */
-BOOL WINAPI EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
+BOOL WINAPI EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
 {
     BOOL bFineWithMe;
     SCROLLBAR_INFO *infoPtr;

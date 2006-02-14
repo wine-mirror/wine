@@ -4278,7 +4278,7 @@ INT         WINAPI DrawTextExW(HDC,LPWSTR,INT,LPRECT,UINT,LPDRAWTEXTPARAMS);
 #define     DrawTextEx WINELIB_NAME_AW(DrawTextEx)
 BOOL        WINAPI EmptyClipboard(void);
 BOOL        WINAPI EnableMenuItem(HMENU,UINT,UINT);
-BOOL        WINAPI EnableScrollBar(HWND,INT,UINT);
+BOOL        WINAPI EnableScrollBar(HWND,UINT,UINT);
 BOOL        WINAPI EnableWindow(HWND,BOOL);
 BOOL        WINAPI EndDeferWindowPos(HDWP);
 BOOL        WINAPI EndDialog(HWND,INT_PTR);
