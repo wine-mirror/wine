@@ -287,8 +287,11 @@ BOOL HCR_GetClassNameW(REFIID riid, LPWSTR szDest, DWORD len)
  	szDest[0] = 0;
 	if (HCR_RegOpenClassIDKey(riid, &hkey))
 	{
-	  if (!RegQueryValueExW(hkey, swEmpty, 0, NULL, (LPBYTE)szDest, &len))
-	  {
+          static const WCHAR wszLocalizedString[] = 
+            { 'L','o','c','a','l','i','z','e','d','S','t','r','i','n','g', 0 };
+          if (!RegLoadMUIStringW(hkey, wszLocalizedString, szDest, len, NULL, 0, NULL) ||
+              !RegQueryValueExW(hkey, swEmpty, 0, NULL, (LPBYTE)szDest, &len))
+          {
 	    ret = TRUE;
 	  }
 	  RegCloseKey(hkey);
@@ -319,8 +322,9 @@ BOOL HCR_GetClassNameA(REFIID riid, LPSTR szDest, DWORD len)
 	szDest[0] = 0;
 	if (HCR_RegOpenClassIDKey(riid, &hkey))
 	{
-	  if (!RegQueryValueExA(hkey,"",0,NULL,(LPBYTE)szDest,&len))
-	  {
+          if (!RegLoadMUIStringA(hkey,"LocalizedString",szDest,len,NULL,0,NULL) ||
+              !RegQueryValueExA(hkey,"",0,NULL,(LPBYTE)szDest,&len))
+          {
 	    ret = TRUE;
 	  }
 	  RegCloseKey(hkey);
