@@ -2147,6 +2147,8 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
 
     *ppTypeLib = NULL;
 
+    lstrcpynW(pszPath, pszFileName, cchPath);
+
     /* first try loading as a dll and access the typelib as a resource */
     hinstDLL = LoadLibraryExW(pszFileName, 0, DONT_RESOLVE_DLL_REFERENCES |
             LOAD_LIBRARY_AS_DATAFILE | LOAD_WITH_ALTERED_SEARCH_PATH);
@@ -2158,8 +2160,6 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
         if(pIndexStr && pIndexStr != pszFileName && *++pIndexStr != '\0')
         {
             index = atoiW(pIndexStr);
-            memcpy(pszPath, pszFileName,
-                   (pIndexStr - pszFileName - 1) * sizeof(WCHAR));
             pszPath[pIndexStr - pszFileName - 1] = '\0';
 
             hinstDLL = LoadLibraryExW(pszPath, 0, DONT_RESOLVE_DLL_REFERENCES |
@@ -2168,9 +2168,7 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
     }
 
     /* get the path to the specified typelib file */
-    if (hinstDLL)
-        GetModuleFileNameW(hinstDLL, pszPath, cchPath);
-    else
+    if (!hinstDLL)
     {
         /* otherwise, try loading as a regular file */
         if (!SearchPathW(NULL, pszFileName, NULL, cchPath, pszPath, NULL))
@@ -2225,7 +2223,7 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
     }
     else
     {
-        HANDLE hFile = CreateFileW( pszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+        HANDLE hFile = CreateFileW(pszPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
         if (INVALID_HANDLE_VALUE != hFile)
         {
             HANDLE hMapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
@@ -2255,8 +2253,8 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
 	ITypeLibImpl *impl = (ITypeLibImpl*)*ppTypeLib;
 
 	TRACE("adding to cache\n");
-	impl->path = HeapAlloc(GetProcessHeap(), 0, (strlenW(pszFileName)+1) * sizeof(WCHAR));
-	lstrcpyW(impl->path, pszFileName);
+	impl->path = HeapAlloc(GetProcessHeap(), 0, (strlenW(pszPath)+1) * sizeof(WCHAR));
+	lstrcpyW(impl->path, pszPath);
 	/* We should really canonicalise the path here. */
         impl->index = index;
 
