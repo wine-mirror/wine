@@ -111,7 +111,7 @@ BASEDIRS = \
 	olecli32 \
 	oledlg \
 	olepro32 \
-	olesvr \
+	olesvr32 \
 	powrprof \
 	psapi \
 	qcap \
@@ -794,8 +794,8 @@ oledlg.dll.so: oledlg/oledlg.dll.so
 olepro32.dll.so: olepro32/olepro32.dll.so
 	$(RM) $@ && $(LN_S) olepro32/olepro32.dll.so $@
 
-olesvr32.dll.so: olesvr/olesvr32.dll.so
-	$(RM) $@ && $(LN_S) olesvr/olesvr32.dll.so $@
+olesvr32.dll.so: olesvr32/olesvr32.dll.so
+	$(RM) $@ && $(LN_S) olesvr32/olesvr32.dll.so $@
 
 olesvr.dll.so : olesvr32.dll.so
 	$(RM) $@ && $(LN_S) olesvr32.dll.so $@
@@ -1072,7 +1072,6 @@ IMPORT_SYMLINKS = \
 	liblz32.$(IMPLIBEXT) \
 	libmsacm32.$(IMPLIBEXT) \
 	libmsvfw32.$(IMPLIBEXT) \
-	libolesvr32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
 	libwinnls32.$(IMPLIBEXT) \
 	libwnaspi32.$(IMPLIBEXT) \
@@ -1154,7 +1153,7 @@ IMPORT_LIBS = \
 	olecli32/libolecli32.$(IMPLIBEXT) \
 	oledlg/liboledlg.$(IMPLIBEXT) \
 	olepro32/libolepro32.$(IMPLIBEXT) \
-	olesvr/libolesvr32.$(IMPLIBEXT) \
+	olesvr32/libolesvr32.$(IMPLIBEXT) \
 	opengl32/libopengl32.$(IMPLIBEXT) \
 	powrprof/libpowrprof.$(IMPLIBEXT) \
 	psapi/libpsapi.$(IMPLIBEXT) \
@@ -1404,8 +1403,8 @@ oledlg/liboledlg.$(IMPLIBEXT): oledlg/oledlg.spec $(WINEBUILD)
 olepro32/libolepro32.$(IMPLIBEXT): olepro32/olepro32.spec $(WINEBUILD)
 	@cd olepro32 && $(MAKE) libolepro32.$(IMPLIBEXT)
 
-olesvr/libolesvr32.$(IMPLIBEXT): olesvr/olesvr32.spec $(WINEBUILD)
-	@cd olesvr && $(MAKE) libolesvr32.$(IMPLIBEXT)
+olesvr32/libolesvr32.$(IMPLIBEXT): olesvr32/olesvr32.spec $(WINEBUILD)
+	@cd olesvr32 && $(MAKE) libolesvr32.$(IMPLIBEXT)
 
 opengl32/libopengl32.$(IMPLIBEXT): opengl32/opengl32.spec $(WINEBUILD)
 	@cd opengl32 && $(MAKE) libopengl32.$(IMPLIBEXT)
@@ -1554,9 +1553,6 @@ libmsacm32.$(IMPLIBEXT): msacm/libmsacm32.$(IMPLIBEXT)
 libmsvfw32.$(IMPLIBEXT): msvideo/libmsvfw32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.$(IMPLIBEXT) $@
 
-libolesvr32.$(IMPLIBEXT): olesvr/libolesvr32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) olesvr/libolesvr32.$(IMPLIBEXT) $@
-
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
 
@@ -1677,7 +1673,7 @@ oleaut32/oleaut32.dll.so: oleaut32
 olecli32/olecli32.dll.so: olecli32
 oledlg/oledlg.dll.so: oledlg
 olepro32/olepro32.dll.so: olepro32
-olesvr/olesvr32.dll.so: olesvr
+olesvr32/olesvr32.dll.so: olesvr32
 opengl32/opengl32.dll.so: opengl32
 powrprof/powrprof.dll.so: powrprof
 psapi/psapi.dll.so: psapi

@@ -1565,7 +1565,7 @@ dlls/oleaut32/tests/Makefile
 dlls/olecli32/Makefile
 dlls/oledlg/Makefile
 dlls/olepro32/Makefile
-dlls/olesvr/Makefile
+dlls/olesvr32/Makefile
 dlls/opengl32/Makefile
 dlls/powrprof/Makefile
 dlls/psapi/Makefile
