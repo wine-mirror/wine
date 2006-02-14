@@ -639,7 +639,7 @@ int symt_find_nearest(struct module* module, DWORD addr)
     if (high)
     {
         symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_ADDRESS, &ref_addr);
-        if (!symt_get_info(&module->addr_sorttab[high - 1]->symt,  TI_GET_LENGTH, &ref_size) || !ref_size)
+        if (!symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_LENGTH, &ref_size) || !ref_size)
             ref_size = 0x1000; /* arbitrary value */
         if (addr >= ref_addr + ref_size) return -1;
     }

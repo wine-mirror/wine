@@ -214,13 +214,13 @@ static BOOL pe_load_export_debug_info(const struct process* pcs,
 #if 0
     /* Add start of DLL (better use the (yet unimplemented) Exe SymTag for this) */
     /* FIXME: module.ModuleName isn't correctly set yet if it's passed in SymLoadModule */
-    symt_new_public(module, NULL, module->module.ModuleName, base, 0,
+    symt_new_public(module, NULL, module->module.ModuleName, base, 1,
                     TRUE /* FIXME */, TRUE /* FIXME */);
 #endif
     
     /* Add entry point */
     symt_new_public(module, NULL, "EntryPoint", 
-                    base + nth->OptionalHeader.AddressOfEntryPoint, 0,
+                    base + nth->OptionalHeader.AddressOfEntryPoint, 1,
                     TRUE, TRUE);
 #if 0
     /* FIXME: we'd better store addresses linked to sections rather than 
@@ -233,7 +233,7 @@ static BOOL pe_load_export_debug_info(const struct process* pcs,
     {
 	symt_new_public(module, NULL, section->Name, 
                         RtlImageRvaToVa(nth, (void*)mapping, section->VirtualAddress, NULL), 
-                        0, TRUE /* FIXME */, TRUE /* FIXME */);
+                        1, TRUE /* FIXME */, TRUE /* FIXME */);
     }
 #endif
 
@@ -257,7 +257,7 @@ static BOOL pe_load_export_debug_info(const struct process* pcs,
             symt_new_public(module, NULL, 
                             RtlImageRvaToVa(nth, (void*)mapping, names[i], NULL),
                             base + functions[ordinals[i]], 
-                            0, TRUE /* FIXME */, TRUE /* FIXME */);
+                            1, TRUE /* FIXME */, TRUE /* FIXME */);
         }
 	    
         for (i = 0; i < exports->NumberOfFunctions; i++) 
@@ -268,7 +268,7 @@ static BOOL pe_load_export_debug_info(const struct process* pcs,
                 if ((ordinals[j] == i) && names[j]) break;
             if (j < exports->NumberOfNames) continue;
             snprintf(buffer, sizeof(buffer), "%ld", i + exports->Base);
-            symt_new_public(module, NULL, buffer, base + (DWORD)functions[i], 0,
+            symt_new_public(module, NULL, buffer, base + (DWORD)functions[i], 1,
                             TRUE /* FIXME */, TRUE /* FIXME */);
         }
     }

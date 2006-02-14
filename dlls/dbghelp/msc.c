@@ -1206,7 +1206,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 symt_new_public(msc_dbg->module, flt ? flt->compiland : NULL,
                                 terminate_string(&sym->data_v1.p_name), 
                                 codeview_get_address(msc_dbg, sym->data_v1.segment, sym->data_v1.offset),
-                                0, TRUE /* FIXME */, TRUE /* FIXME */);
+                                1, TRUE /* FIXME */, TRUE /* FIXME */);
             }
             break;
 	case S_PUB_V2: /* FIXME is this really a 'data_v2' structure ?? */
@@ -1216,7 +1216,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 symt_new_public(msc_dbg->module, flt ? flt->compiland : NULL,
                                 terminate_string(&sym->data_v2.p_name), 
                                 codeview_get_address(msc_dbg, sym->data_v2.segment, sym->data_v2.offset),
-                                0, TRUE /* FIXME */, TRUE /* FIXME */);
+                                1, TRUE /* FIXME */, TRUE /* FIXME */);
             }
 	    break;
 
@@ -1515,7 +1515,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                 flt ? flt->compiland : NULL,
                                 sym->data_v3.name, 
                                 codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
-                                0, FALSE /* FIXME */, FALSE);
+                                1, FALSE /* FIXME */, FALSE);
             }
             break;
         case S_PUB_FUNC1_V3:
@@ -1527,7 +1527,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                 flt ? flt->compiland : NULL,
                                 sym->data_v3.name, 
                                 codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
-                                0, TRUE /* FIXME */, TRUE);
+                                1, TRUE /* FIXME */, TRUE);
             }
             break;
 
