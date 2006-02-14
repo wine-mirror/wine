@@ -1,0 +1,22 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wordpad.exe
+APPMODE   = -mwindows
+IMPORTS   = comdlg32 shell32 user32 gdi32 msvcrt advapi32 kernel32 comctl32
+EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+EXTRADEFS = -DNO_LIBWINE_PORT
+MODCFLAGS = @BUILTINFLAG@
+
+C_SRCS = \
+	wordpad.c
+
+RC_SRCS = rsrc.rc
+RC_BINSRC = rsrc.rc
+RC_BINARIES = \
+	toolbar.bmp
+
+@MAKE_PROG_RULES@
+
+### Dependencies:

@@ -1697,6 +1697,7 @@ programs/winetest/Makefile
 programs/winevdm/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
+programs/wordpad/Makefile
 server/Makefile
 tools/Makefile
 tools/widl/Makefile

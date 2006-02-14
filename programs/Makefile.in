@@ -38,7 +38,8 @@ SUBDIRS = \
 	winetest \
 	winevdm \
 	winhelp \
-	winver
+	winver \
+	wordpad
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = \
@@ -71,7 +72,8 @@ INSTALLSUBDIRS = \
 	winepath \
 	winevdm \
 	winhelp \
-	winver
+	winver \
+	wordpad
 
 # Programs to install in bin directory
 INSTALLPROGS = \
@@ -128,7 +130,8 @@ SYMLINKS = \
 	winetest.exe$(DLLEXT) \
 	winevdm.exe$(DLLEXT) \
 	winhelp.exe$(DLLEXT) \
-	winver.exe$(DLLEXT)
+	winver.exe$(DLLEXT) \
+	wordpad.exe$(DLLEXT)
 
 @MAKE_RULES@
 
@@ -278,6 +281,9 @@ winhelp.exe$(DLLEXT): winhelp/winhelp.exe$(DLLEXT)
 winver.exe$(DLLEXT): winver/winver.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) winver/winver.exe$(DLLEXT) $@
 
+wordpad.exe$(DLLEXT): wordpad/wordpad.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) wordpad/wordpad.exe$(DLLEXT) $@
+
 avitools/aviinfo.exe$(DLLEXT): avitools
 avitools/aviplay.exe$(DLLEXT): avitools
 clock/clock.exe$(DLLEXT): clock
@@ -313,5 +319,6 @@ winetest/winetest.exe$(DLLEXT): winetest
 winevdm/winevdm.exe$(DLLEXT): winevdm
 winhelp/winhelp.exe$(DLLEXT): winhelp
 winver/winver.exe$(DLLEXT): winver
+wordpad/wordpad.exe$(DLLEXT): wordpad
 
 ### Dependencies:
