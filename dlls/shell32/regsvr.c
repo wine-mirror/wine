@@ -32,6 +32,7 @@
 #include "shlguid.h"
 #include "shell32_main.h"
 #include "shfldr.h"
+#include "shresdef.h"
 
 #include "wine/debug.h"
 
@@ -62,6 +63,7 @@ struct regsvr_coclass
 {
     CLSID const *clsid;		/* NULL for end of list */
     LPCSTR name;		/* can be NULL to omit */
+    UINT idName;                /* can be 0 to omit */
     LPCSTR ips;			/* can be NULL to omit */
     LPCSTR ips32;		/* can be NULL to omit */
     LPCSTR ips32_tmodel;	/* can be NULL to omit */
@@ -128,6 +130,7 @@ static char const tmodel_valuename[] = "ThreadingModel";
 static char const wfparsing_valuename[] = "WantsFORPARSING";
 static char const attributes_valuename[] = "Attributes";
 static char const cfattributes_valuename[] = "CallForAttributes";
+static char const localized_valuename[] = "LocalizedString";
 
 /***********************************************************************
  *		static helper functions
@@ -263,6 +266,14 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 				 strlen(list->name) + 1);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	}
+
+        if (list->idName) {
+            char buffer[64] = "@%SYSTEMROOT%\\system32\\shell32.dll,-";
+            sprintf(buffer+strlen(buffer), "%u", list->idName);
+            res = RegSetValueExA(clsid_key, localized_valuename, 0, REG_EXPAND_SZ,
+                                 (CONST BYTE*)(buffer), strlen(buffer)+1);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
 
 	if (list->ips) {
 	    res = register_key_defvalueA(clsid_key, ips_keyname, list->ips);
@@ -576,24 +587,28 @@ static GUID const CLSID_Shortcut = {
 static struct regsvr_coclass const coclass_list[] = {
     {   &CLSID_Desktop,
 	"Desktop",
+	IDS_DESKTOP,
 	NULL,
 	"shell32.dll",
 	"Apartment"
     },
     {   &CLSID_DragDropHelper,
         "Shell Drag and Drop Helper",
+	0,
         NULL,
         "shell32.dll",
         "Apartment"
     },
     {   &CLSID_MyComputer,
 	"My Computer",
+	IDS_MYCOMPUTER,
 	NULL,
 	"shell32.dll",
 	"Apartment"
     },
     {   &CLSID_Shortcut,
 	"Shortcut",
+	0,
 	NULL,
 	"shell32.dll",
 	"Apartment",
@@ -601,12 +616,14 @@ static struct regsvr_coclass const coclass_list[] = {
     },
     {   &CLSID_AutoComplete,
 	"AutoComplete",
+	0,
 	NULL,
 	"shell32.dll",
 	"Apartment",
     },
     {	&CLSID_UnixFolder,
 	"/",
+	0,
 	NULL,
 	"shell32.dll",
 	"Apartment",
@@ -614,6 +631,7 @@ static struct regsvr_coclass const coclass_list[] = {
     },
     {   &CLSID_UnixDosFolder,
 	"/",
+	0,
 	NULL,
 	"shell32.dll",
 	"Apartment",
@@ -623,6 +641,7 @@ static struct regsvr_coclass const coclass_list[] = {
     },
     {	&CLSID_FolderShortcut,
 	"Foldershortcut",
+	0,
 	NULL,
 	"shell32.dll",
 	"Apartment",
@@ -632,6 +651,7 @@ static struct regsvr_coclass const coclass_list[] = {
     },
     {	&CLSID_MyDocuments,
 	"My Documents",
+	IDS_PERSONAL,
 	NULL,
 	"shell32.dll",
 	"Apartment",
