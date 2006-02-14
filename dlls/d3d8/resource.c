@@ -113,15 +113,15 @@ D3DPOOL WINAPI IDirect3DResource8Impl_GetPool(LPDIRECT3DRESOURCE8 iface) {
 
     switch (This->ResourceType) { 
     case D3DRTYPE_SURFACE:
-      return ((IDirect3DSurface8Impl*) This)->myDesc.Pool;
+      return D3D8_SURFACE(((IDirect3DSurface8Impl*) This))->resource.pool;
     case D3DRTYPE_TEXTURE:
-      return ((IDirect3DTexture8Impl*) This)->surfaces[0]->myDesc.Pool;
+      return D3D8_SURFACE(((IDirect3DTexture8Impl*) This)->surfaces[0])->resource.pool;
     case D3DRTYPE_VOLUME:
       return ((IDirect3DVolume8Impl*) This)->myDesc.Pool;
     case D3DRTYPE_VOLUMETEXTURE:
       return ((IDirect3DVolumeTexture8Impl*) This)->volumes[0]->myDesc.Pool;
     case D3DRTYPE_CUBETEXTURE:
-      return ((IDirect3DCubeTexture8Impl*) This)->surfaces[0][0]->myDesc.Pool;
+      return D3D8_SURFACE(((IDirect3DCubeTexture8Impl*) This)->surfaces[0][0])->resource.pool;
     case D3DRTYPE_VERTEXBUFFER:
       return ((IDirect3DVertexBuffer8Impl*) This)->currentDesc.Pool;
     case D3DRTYPE_INDEXBUFFER:

@@ -120,22 +120,22 @@ void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
     ENTER_GL();
 
     for (i = 0; i < This->levels; i++) {
-      if (i == 0 && This->surfaces[i]->textureName != 0 && This->Dirty == FALSE) {
-	glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
+      if (i == 0 && D3D8_SURFACE(This->surfaces[i])->textureName != 0 && This->Dirty == FALSE) {
+	glBindTexture(GL_TEXTURE_2D, D3D8_SURFACE(This->surfaces[i])->textureName);
 	checkGLcall("glBindTexture");
-	TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, This->surfaces[i]->textureName);
+	TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, D3D8_SURFACE(This->surfaces[i])->textureName);
 	/* No need to walk through all mip-map levels, since already all assigned */
         i = This->levels;
 
       } else {
 	if (i == 0) {
-	  if (This->surfaces[i]->textureName == 0) {
-	    glGenTextures(1, &This->surfaces[i]->textureName);
+	  if (D3D8_SURFACE(This->surfaces[i])->textureName == 0) {
+	    glGenTextures(1, &(D3D8_SURFACE(This->surfaces[i]))->textureName);
 	    checkGLcall("glGenTextures");
-	    TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, This->surfaces[i]->textureName);
+	    TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, D3D8_SURFACE(This->surfaces[i])->textureName);
 	  }
 	  
-	  glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
+	  glBindTexture(GL_TEXTURE_2D, D3D8_SURFACE(This->surfaces[i])->textureName);
 	  checkGLcall("glBindTexture");
 	}
 	IDirect3DSurface8Impl_LoadTexture((LPDIRECT3DSURFACE8) This->surfaces[i], GL_TEXTURE_2D, i); 
@@ -231,7 +231,7 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTURE8 ifa
     IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
     This->Dirty = TRUE;
     TRACE("(%p) : dirtyfication of surface Level (0)\n", This);    
-    return IDirect3DSurface8Impl_AddDirtyRect((LPDIRECT3DSURFACE8) This->surfaces[0], pDirtyRect);
+    return IWineD3DSurface_AddDirtyRect( (IWineD3DSurface*)(This->surfaces[0])->wineD3DSurface, pDirtyRect);
 }
 
 

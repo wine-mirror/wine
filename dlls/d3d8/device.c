@@ -304,6 +304,45 @@ ULONG WINAPI IDirect3DDevice8Impl_AddRef(LPDIRECT3DDEVICE8 iface) {
     return ref;
 }
 
+/* The function below is needed during the D3D8->WineD3D transition
+   in order to release various surfaces like the front- and backBuffer.
+   When the transition is complete code similar to this will be executed
+   by IWineD3DDevice_Release.
+*/
+void IDirect3DDevice8_CleanUp(IDirect3DDevice8Impl *This)
+{
+    LPDIRECT3DSURFACE8 stencilBufferParent;
+    /* Release the buffers (with sanity checks)*/
+    if(This->stencilBufferTarget != NULL && (IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8)This->stencilBufferTarget) >0)){
+        if(This->depthStencilBuffer != This->stencilBufferTarget)
+        TRACE("(%p) Something's still holding the depthStencilBuffer\n",This);
+    }
+    This->stencilBufferTarget = NULL;
+
+    if(This->renderTarget != NULL) {
+        IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8)This->renderTarget);
+        This->renderTarget = NULL;
+    }
+
+    if(This->depthStencilBuffer != NULL) {
+        stencilBufferParent = (LPDIRECT3DSURFACE8)D3D8_SURFACE(This->depthStencilBuffer)->resource.parent;
+        if(stencilBufferParent != NULL) {
+            IDirect3DSurface8_Release(stencilBufferParent);
+            This->depthStencilBuffer = NULL;
+        }
+    }
+
+    if(This->backBuffer != NULL) {
+        IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8)This->backBuffer);
+        This->backBuffer = NULL;
+    }
+
+    if(This->frontBuffer != NULL) {
+        IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8)This->frontBuffer);
+        This->frontBuffer = NULL;
+    }
+}
+
 ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -313,8 +352,8 @@ ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
     if (ref == 0) {
         IDirect3DDevice8Impl_CleanRender(iface);
         IDirect3D8_Release((LPDIRECT3D8) This->direct3d8);
+	IDirect3DDevice8_CleanUp(This);
         IWineD3DDevice_Release(This->WineD3DDevice);
-
         if (glXGetCurrentContext() == This->glCtx) {
             glXMakeCurrent(This->display, None, NULL);
         }
@@ -401,11 +440,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetCursorProperties(LPDIRECT3DDEVICE8 ifac
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
-    if (D3DFMT_A8R8G8B8 != pSur->myDesc.Format) {
+    if (D3DFMT_A8R8G8B8 != D3D8_SURFACE(pSur)->resource.format) {
       ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
     }
-    if (32 != pSur->myDesc.Height || 32 != pSur->myDesc.Width) {
+    if (32 != D3D8_SURFACE(pSur)->currentDesc.Height || 32 != D3D8_SURFACE(pSur)->currentDesc.Width) {
       ERR("(%p) : surface(%p) has an invalid size\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
     }
@@ -655,18 +694,18 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     for (i = 0; i < object->levels; i++) 
     {
         IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpH, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[i]);
-        object->surfaces[i]->Container = (IUnknown*) object;
-        object->surfaces[i]->myDesc.Usage = Usage;
-        object->surfaces[i]->myDesc.Pool = Pool;
+        D3D8_SURFACE(object->surfaces[i])->container = (IUnknown*) object;
+        D3D8_SURFACE(object->surfaces[i])->resource.usage = Usage;
+        D3D8_SURFACE(object->surfaces[i])->resource.pool = Pool;
 	/** 
 	 * As written in msdn in IDirect3DTexture8::LockRect
 	 *  Textures created in D3DPOOL_DEFAULT are not lockable.
 	 */
 	if (D3DPOOL_DEFAULT == Pool) {
-	  object->surfaces[i]->lockable = FALSE;
+	  D3D8_SURFACE(object->surfaces[i])->lockable = FALSE;
 	}
 
-        TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[i], object->surfaces[i]->allocatedMemory);
+        TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[i], D3D8_SURFACE(object->surfaces[i])->resource.allocatedMemory);
         tmpW = max(1, tmpW / 2);
         tmpH = max(1, tmpH / 2);
     }
@@ -805,22 +844,21 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
         /* Create the 6 faces */
         for (j = 0; j < 6; j++) {
            IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpW, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[j][i]);
-           object->surfaces[j][i]->Container = (IUnknown*) object;
-           object->surfaces[j][i]->myDesc.Usage = Usage;
-           object->surfaces[j][i]->myDesc.Pool = Pool;
+           D3D8_SURFACE(object->surfaces[j][i])->container = (IUnknown*) object;
+           D3D8_SURFACE(object->surfaces[j][i])->resource.usage = Usage;
+           D3D8_SURFACE(object->surfaces[j][i])->resource.pool = Pool;
 	   /** 
 	    * As written in msdn in IDirect3DCubeTexture8::LockRect
 	    *  Textures created in D3DPOOL_DEFAULT are not lockable.
 	    */
 	   if (D3DPOOL_DEFAULT == Pool) {
-	     object->surfaces[j][i]->lockable = FALSE;
+	     D3D8_SURFACE(object->surfaces[j][i])->lockable = FALSE;
 	   }
 
-           TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[j][i], object->surfaces[j][i]->allocatedMemory);
+           TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[j][i], D3D8_SURFACE(object->surfaces[j][i])->resource.allocatedMemory);
         }
         tmpW = max(1, tmpW / 2);
     }
-
     TRACE("(%p) : Iface@%p\n", This, object);
     *ppCubeTexture = (LPDIRECT3DCUBETEXTURE8) object;
     return D3D_OK;
@@ -875,233 +913,81 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface,
 
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, BOOL Lockable, IDirect3DSurface8** ppSurface) {
+
+HRESULT  WINAPI IDirect3DDevice8Impl_CreateSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IDirect3DSurface8 **ppSurface,D3DRESOURCETYPE Type, UINT Usage,D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality)  {
+    HRESULT hrc;
     IDirect3DSurface8Impl *object;
-    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    
-    object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
+    IDirect3DDevice8Impl  *This = (IDirect3DDevice8Impl *)iface;
+    TRACE("(%p) Relay\n", This);
+    if(MultisampleQuality < 0) { 
+        FIXME("MultisampleQuality out of range %ld, substituting 0 \n", MultisampleQuality);
+        /*FIXME: Find out what windows does with a MultisampleQuality < 0 */
+        MultisampleQuality=0;
+    }
+
+    if(MultisampleQuality > 0){
+        FIXME("MultisampleQuality set to %ld, bstituting 0  \n" , MultisampleQuality);
+        /*
+        MultisampleQuality
+        [in] Quality level. The valid range is between zero and one less than the level returned by pQualityLevels used by IDirect3D8::CheckDeviceMultiSampleType. Passing a larger value returns the error D3DERR_INVALIDCALL. The MultisampleQuality values of paired render targets, depth stencil surfaces, and the MultiSample type must all match.
+        */
+        MultisampleQuality=0;
+    }
+    /*FIXME: Check MAX bounds of MultisampleQuality*/
+
+    /* Allocate the storage for the device */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
     if (NULL == object) {
-      *ppSurface = NULL;
-      return D3DERR_OUTOFVIDEOMEMORY;
+        FIXME("Allocation of memory failed\n");
+        *ppSurface = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
     }
-    *ppSurface = (LPDIRECT3DSURFACE8) object;
+
     object->lpVtbl = &Direct3DSurface8_Vtbl;
-    object->Device = This;
-    object->ResourceType = D3DRTYPE_SURFACE;
-    object->Container = (IUnknown*) This;
-
     object->ref = 1;
-    object->myDesc.Width  = Width;
-    object->myDesc.Height = Height;
-    object->myDesc.Format = Format;
-    object->myDesc.Type = D3DRTYPE_SURFACE;
-    object->myDesc.Usage = D3DUSAGE_RENDERTARGET;
-    object->myDesc.Pool = D3DPOOL_DEFAULT;
-    object->myDesc.MultiSampleType = MultiSample;
-    object->bytesPerPixel = D3DFmtGetBpp(This, Format);
-    if (Format == D3DFMT_DXT1) { 
-        object->myDesc.Size = (Width * object->bytesPerPixel)/2 * Height;  /* DXT1 is half byte per pixel */
-    } else {
-        object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
-    }
-    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
-    object->lockable = Lockable;
-    object->locked = FALSE;
-    memset(&object->lockedRect, 0, sizeof(RECT));
-    IDirect3DSurface8Impl_CleanDirtyRect((LPDIRECT3DSURFACE8) object);
 
-    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), Lockable, *ppSurface, object->allocatedMemory, object->myDesc.Size);
-    return D3D_OK;
+    TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
+
+    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage, Pool,MultiSample,MultisampleQuality, NULL,(IUnknown *)object);
+    if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
+       /* free up object */
+        FIXME("(%p) call to IWineD3DDevice_CreateSurface failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppSurface = NULL;
+    } else {
+        *ppSurface = (LPDIRECT3DSURFACE8) object;
+    }
+    return hrc;
+}
+
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, BOOL Lockable, IDirect3DSurface8** ppSurface) {
+    TRACE("Relay\n");
+
+    return IDirect3DDevice8Impl_CreateSurface(iface, Width, Height, Format, Lockable, FALSE /* Discard */, 0 /* Level */ , ppSurface, D3DRTYPE_SURFACE, D3DUSAGE_RENDERTARGET, D3DPOOL_DEFAULT, MultiSample, 0);
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, IDirect3DSurface8** ppSurface) {
-    IDirect3DSurface8Impl *object;
-
-    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-
-    object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
-    if (NULL == object) {
-      *ppSurface = NULL;
-      return D3DERR_OUTOFVIDEOMEMORY;
-    }
-    *ppSurface = (LPDIRECT3DSURFACE8) object;
-    object->lpVtbl = &Direct3DSurface8_Vtbl;
-    object->Device = This;
-    object->ResourceType = D3DRTYPE_SURFACE;
-    object->Container = (IUnknown*) This;
-
-    object->ref = 1;
-    object->myDesc.Width  = Width;
-    object->myDesc.Height = Height;
-    object->myDesc.Format = Format;
-    object->myDesc.Type = D3DRTYPE_SURFACE;
-    object->myDesc.Usage = D3DUSAGE_DEPTHSTENCIL;
-    object->myDesc.Pool = D3DPOOL_DEFAULT;
-    object->myDesc.MultiSampleType = MultiSample;
-    object->bytesPerPixel = D3DFmtGetBpp(This, Format);
-    if (Format == D3DFMT_DXT1) { 
-        object->myDesc.Size = (Width * object->bytesPerPixel)/2 * Height; /* DXT1 is half byte per pixel */
-    } else {
-        object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
-    }
-    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
-    object->lockable = (D3DFMT_D16_LOCKABLE == Format) ? TRUE : FALSE;
-    object->locked = FALSE;
-    memset(&object->lockedRect, 0, sizeof(RECT));
-    IDirect3DSurface8Impl_CleanDirtyRect((LPDIRECT3DSURFACE8) object);
-
-    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), *ppSurface, object->allocatedMemory, object->myDesc.Size);
-    return D3D_OK;
+    TRACE("Relay\n");
+    /* TODO: Verify that Discard is false */
+    return IDirect3DDevice8Impl_CreateSurface(iface, Width, Height, Format, TRUE /* Lockable */, FALSE, 0 /* Level */
+                                               ,ppSurface, D3DRTYPE_SURFACE, D3DUSAGE_DEPTHSTENCIL,
+                                                D3DPOOL_DEFAULT, MultiSample, 0);
 }
+
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, IDirect3DSurface8** ppSurface) {
-    IDirect3DSurface8Impl *object;
+    TRACE("Relay\n");
 
+    return IDirect3DDevice8Impl_CreateSurface(iface, Width, Height, Format, TRUE /* Loackable */ , FALSE /*Discard*/ , 0 /* Level */ , ppSurface, D3DRTYPE_SURFACE, 0 /* Usage (undefined/none) */ , D3DPOOL_SCRATCH, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */);
+}
+
+HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8 *pSourceSurface, CONST RECT *pSourceRects, UINT cRects, IDirect3DSurface8 *pDestinationSurface, CONST POINT *pDestPoints) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
-    object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
-    *ppSurface = (LPDIRECT3DSURFACE8) object;
-    object->lpVtbl = &Direct3DSurface8_Vtbl;
-    object->Device = This;
-    object->ResourceType = D3DRTYPE_SURFACE;
-    object->Container = (IUnknown*) This;
+    TRACE("(%p) Relay\n" , This);
 
-    object->ref = 1;
-    object->myDesc.Width  = Width;
-    object->myDesc.Height = Height;
-    object->myDesc.Format = Format;
-    object->myDesc.Type = D3DRTYPE_SURFACE;
-    object->myDesc.Usage = 0;
-    object->myDesc.Pool = D3DPOOL_SYSTEMMEM;
-    object->bytesPerPixel = D3DFmtGetBpp(This, Format);
-    /* DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
-       it is based around 4x4 pixel blocks it requires padding, so allocate enough
-       space!                                                                      */
-    if (Format == D3DFMT_DXT1) { 
-        object->myDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4)) / 2; /* DXT1 is half byte per pixel */
-    } else if (Format == D3DFMT_DXT2 || Format == D3DFMT_DXT3 || 
-               Format == D3DFMT_DXT4 || Format == D3DFMT_DXT5) { 
-        object->myDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4));
-    } else {
-        object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
-    }
-    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
-    object->lockable = TRUE;
-    object->locked = FALSE;
-    memset(&object->lockedRect, 0, sizeof(RECT));
-    IDirect3DSurface8Impl_CleanDirtyRect((LPDIRECT3DSURFACE8) object);
-
-    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, debug_d3dformat(Format), *ppSurface, object->allocatedMemory, object->myDesc.Size);
-    return D3D_OK;
+    return IWineD3DDevice_CopyRects(This->WineD3DDevice, pSourceSurface == NULL ? NULL : ((IDirect3DSurface8Impl *)pSourceSurface)->wineD3DSurface,
+            pSourceRects, cRects, pDestinationSurface == NULL ? NULL : ((IDirect3DSurface8Impl *)pDestinationSurface)->wineD3DSurface, pDestPoints);
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, 
-                                                IDirect3DSurface8* pSourceSurface, CONST RECT* pSourceRectsArray, UINT cRects,
-                                                IDirect3DSurface8* pDestinationSurface, CONST POINT* pDestPointsArray) {
 
-    HRESULT rc = D3D_OK;
-    IDirect3DBaseTexture8* texture = NULL;
-
-
-    IDirect3DSurface8Impl* src = (IDirect3DSurface8Impl*) pSourceSurface;
-    IDirect3DSurface8Impl* dst = (IDirect3DSurface8Impl*) pDestinationSurface;
-
-    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    TRACE("(%p) pSrcSur=%p, pSourceRects=%p, cRects=%d, pDstSur=%p, pDestPtsArr=%p\n", This,
-          pSourceSurface, pSourceRectsArray, cRects, pDestinationSurface, pDestPointsArray);
-
-    /* Note: Not sure about the d3dfmt_unknown bit, but seems to avoid a problem inside
-         a sample and doesn't seem to break anything as far as I can tell               */
-    if (src->myDesc.Format != dst->myDesc.Format && (dst->myDesc.Format != D3DFMT_UNKNOWN)) {
-        TRACE("Formats do not match (%x,%s) / (%x,%s)\n", 
-               src->myDesc.Format, debug_d3dformat(src->myDesc.Format), 
-               dst->myDesc.Format, debug_d3dformat(dst->myDesc.Format));
-        rc = D3DERR_INVALIDCALL;
-
-    } else if (dst->myDesc.Format == D3DFMT_UNKNOWN) {
-        TRACE("Converting dest to same format as source, since dest was unknown\n");
-        dst->myDesc.Format = src->myDesc.Format;
-
-        /* Convert container as well */
-        rc = IDirect3DSurface8Impl_GetContainer((LPDIRECT3DSURFACE8) dst, &IID_IDirect3DBaseTexture8, (void**) &texture); /* FIXME: Which refid? */
-        if (SUCCEEDED(rc) && NULL != texture) {
-            ((IDirect3DBaseTexture8Impl*) texture)->format = src->myDesc.Format;
-	    /** Releasing texture after GetContainer */
-	    IDirect3DBaseTexture8_Release(texture);
-	    texture = NULL;
-        }
-    }
-
-    /* Quick if complete copy ... */
-    if (SUCCEEDED(rc)) {
-      if (cRects == 0 && pSourceRectsArray == NULL && pDestPointsArray == NULL) {
-
-	if (src->myDesc.Width == dst->myDesc.Width && src->myDesc.Height == dst->myDesc.Height) {
-	  
-	  D3DLOCKED_RECT lrSrc;
-	  D3DLOCKED_RECT lrDst;
-	  IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) src, &lrSrc, NULL, D3DLOCK_READONLY);
-	  IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) dst, &lrDst, NULL, 0L);
-	  TRACE("Locked src and dst, Direct copy as surfaces are equal, w=%d, h=%d\n", dst->myDesc.Width, dst->myDesc.Height);
-	  
-	  memcpy(lrDst.pBits, lrSrc.pBits, src->myDesc.Size);
-	  
-	  IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) src);
-	  rc = IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) dst);
-	  TRACE("Unlocked src and dst\n");
-	  
-	} else {
-	  
-	  FIXME("Wanted to copy all surfaces but size not compatible\n");
-	  rc = D3DERR_INVALIDCALL;
-	  
-	}
-
-      } else {
-	
-	if (NULL != pSourceRectsArray && NULL != pDestPointsArray) {
-
-	  int bytesPerPixel = ((IDirect3DSurface8Impl*) pSourceSurface)->bytesPerPixel;
-	  unsigned int i;
-
-	  /* Copy rect by rect */
-	  for (i = 0; i < cRects; i++) {
-            CONST RECT*  r = &pSourceRectsArray[i];
-            CONST POINT* p = &pDestPointsArray[i];
-            int copyperline;
-            int j;
-            D3DLOCKED_RECT lrSrc;
-            D3DLOCKED_RECT lrDst;
-            RECT dest_rect;
- 
-            TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (%ld,%ld)\n", i, r->left, r->top, r->right, r->bottom, p->x, p->y);
-            if (src->myDesc.Format == D3DFMT_DXT1) { 
-	      copyperline = ((r->right - r->left) * bytesPerPixel)/2; /* DXT1 is half byte per pixel */
-            } else {
-                copyperline = ((r->right - r->left) * bytesPerPixel);
-            }
-            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) src, &lrSrc, r, D3DLOCK_READONLY);
-            dest_rect.left  = p->x;
-            dest_rect.top   = p->y;
-            dest_rect.right = p->x + (r->right - r->left);
-            dest_rect.bottom= p->y + (r->bottom - r->top);
-            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) dst, &lrDst, &dest_rect, 0L);
-            TRACE("Locked src and dst\n");
-
-            /* Find where to start */
-            for (j = 0; j < (r->bottom - r->top - 1); j++) {
-	      memcpy((char*) lrDst.pBits + (j * lrDst.Pitch), (char*) lrSrc.pBits + (j * lrSrc.Pitch), copyperline);
-            }
-            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) src);
-            rc = IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) dst);
-            TRACE("Unlocked src and dst\n");
-	  }
-	} else {
-	  FIXME("Wanted to copy partial surfaces not implemented\n");
-	  rc = D3DERR_INVALIDCALL;		  
-	}
-      }
-    }
-
-    return rc;
-}
 HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDirect3DBaseTexture8* pSourceTexture, IDirect3DBaseTexture8* pDestinationTexture) {
     IDirect3DBaseTexture8Impl* src = (IDirect3DBaseTexture8Impl*) pSourceTexture;
     IDirect3DBaseTexture8Impl* dst = (IDirect3DBaseTexture8Impl*) pDestinationTexture;
@@ -1189,7 +1075,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
 
     FIXME("(%p) : Should return whole screen, only returns GL context window in top left corner\n", This);
 
-    if (D3DFMT_A8R8G8B8 != ((IDirect3DSurface8Impl*) pDestSurface)->myDesc.Format) {
+    if (D3DFMT_A8R8G8B8 != D3D8_SURFACE(((IDirect3DSurface8Impl*)pDestSurface))->resource.format) {
       ERR("(%p) : surface(%p) has an invalid format\n", This, pDestSurface);
       return D3DERR_INVALIDCALL;
     }
@@ -1263,8 +1149,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, I
 
     if (SUCCEEDED(hr)) {
 	/* Finally, reset the viewport as the MSDN states. */
-	viewport.Height = ((IDirect3DSurface8Impl*)pRenderTarget)->myDesc.Height;
-	viewport.Width  = ((IDirect3DSurface8Impl*)pRenderTarget)->myDesc.Width;
+	viewport.Height = D3D8_SURFACE(((IDirect3DSurface8Impl*)pRenderTarget))->currentDesc.Height;
+	viewport.Width  = D3D8_SURFACE(((IDirect3DSurface8Impl*)pRenderTarget))->currentDesc.Width;
 	viewport.X      = 0;
 	viewport.Y      = 0;
 	viewport.MaxZ   = 1.0f;
@@ -1318,7 +1204,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
     printf("Hit Enter ...\n");
     getchar();
 #endif
-
     if ((This->frontBuffer != This->renderTarget) && (This->backBuffer != This->renderTarget)) {
 #if 0
 	GLenum prev_read;
@@ -1351,11 +1236,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
       hr = IDirect3DSurface8_GetContainer((LPDIRECT3DSURFACE8) This->renderTarget, &IID_IDirect3DBaseTexture8, (void**) &cont);
       if (SUCCEEDED(hr) && NULL != cont) {
 	/** always dirtify for now. we must find a better way to see that surface have been modified */
-	This->renderTarget->inPBuffer = TRUE;
-	This->renderTarget->inTexture = FALSE;
+	D3D8_SURFACE(This->renderTarget)->inPBuffer = TRUE;
+	D3D8_SURFACE(This->renderTarget)->inTexture = FALSE;
       	IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
 	IDirect3DBaseTexture8_PreLoad(cont);
-	This->renderTarget->inPBuffer = FALSE;
+	D3D8_SURFACE(This->renderTarget)->inPBuffer = FALSE;
 	IDirect3DBaseTexture8Impl_Release(cont);
 	cont = NULL;
       }
@@ -1429,14 +1314,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
             /* Note gl uses lower left, width/height */
             TRACE("(%p) %p Rect=(%ld,%ld)->(%ld,%ld) glRect=(%ld,%ld), len=%ld, hei=%ld\n", This, curRect,
                   curRect->x1, curRect->y1, curRect->x2, curRect->y2,
-                  curRect->x1, (This->renderTarget->myDesc.Height - curRect->y2), 
+                  curRect->x1, (D3D8_SURFACE(This->renderTarget)->currentDesc.Height - curRect->y2), 
                   curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
-            glScissor(curRect->x1, (This->renderTarget->myDesc.Height - curRect->y2), 
+            glScissor(curRect->x1, (D3D8_SURFACE(This->renderTarget)->currentDesc.Height - curRect->y2), 
                       curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             checkGLcall("glScissor");
         } else {
             glScissor(This->StateBlock->viewport.X, 
-                      (This->renderTarget->myDesc.Height - (This->StateBlock->viewport.Y + This->StateBlock->viewport.Height)), 
+                      (D3D8_SURFACE(This->renderTarget)->currentDesc.Height - (This->StateBlock->viewport.Y + This->StateBlock->viewport.Height)), 
                       This->StateBlock->viewport.Width, 
                       This->StateBlock->viewport.Height);
             checkGLcall("glScissor");
@@ -1662,7 +1547,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetViewport(LPDIRECT3DDEVICE8 iface, CONST
     glDepthRange(pViewport->MinZ, pViewport->MaxZ);
     checkGLcall("glDepthRange");
     /* Note: GL requires lower left, DirectX supplies upper left */
-    glViewport(pViewport->X, (This->renderTarget->myDesc.Height - (pViewport->Y + pViewport->Height)), 
+    glViewport(pViewport->X, (D3D8_SURFACE(This->renderTarget)->currentDesc.Height - (pViewport->Y + pViewport->Height)), 
                pViewport->Width, pViewport->Height);
     checkGLcall("glViewport");
 
@@ -4577,10 +4462,10 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
   int nCfgs = 0;
   int attribs[256];
   int nAttribs = 0;
-  D3DFORMAT BackBufferFormat = ((IDirect3DSurface8Impl*) RenderSurface)->myDesc.Format;
-  D3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IDirect3DSurface8Impl*) StencilSurface)->myDesc.Format : 0;
-  UINT Width = ((IDirect3DSurface8Impl*) RenderSurface)->myDesc.Width;
-  UINT Height = ((IDirect3DSurface8Impl*) RenderSurface)->myDesc.Height;
+  D3DFORMAT BackBufferFormat = D3D8_SURFACE(((IDirect3DSurface8Impl*) RenderSurface))->resource.format;
+  D3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? D3D8_SURFACE(((IDirect3DSurface8Impl*) StencilSurface))->resource.format : 0;
+  UINT Width = D3D8_SURFACE(((IDirect3DSurface8Impl*) RenderSurface))->currentDesc.Width;
+  UINT Height = D3D8_SURFACE(((IDirect3DSurface8Impl*) RenderSurface))->currentDesc.Height;
   IDirect3DSurface8Impl* tmp;
 
   IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
@@ -4727,8 +4612,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
 #endif
     }
 
-    if (BackBufferFormat != This->renderTarget->myDesc.Format && 
-	StencilBufferFormat != This->stencilBufferTarget->myDesc.Format) {
+    if (BackBufferFormat != D3D8_SURFACE(This->renderTarget)->resource.format && 
+	StencilBufferFormat != D3D8_SURFACE(This->stencilBufferTarget)->resource.format) {
       nAttribs = 0;
       PUSH2(GLX_PBUFFER_WIDTH,  Width);
       PUSH2(GLX_PBUFFER_HEIGHT, Height);

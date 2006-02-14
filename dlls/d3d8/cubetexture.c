@@ -143,27 +143,27 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
     ENTER_GL();
 
     for (i = 0; i < This->levels; i++) {
-      if (i == 0 && This->surfaces[0][0]->textureName != 0 && This->Dirty == FALSE) {
+      if (i == 0 && D3D8_SURFACE(This->surfaces[0][0])->textureName != 0 && This->Dirty == FALSE) {
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 #if defined(GL_VERSION_1_3)
-	glBindTexture(GL_TEXTURE_CUBE_MAP, This->surfaces[0][0]->textureName);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, D3D8_SURFACE(This->surfaces[0][0])->textureName);
 #else
-        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][0]->textureName);
+        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, D3D8_SURFACE(This->surfaces[0][0])->textureName);
 #endif
 	checkGLcall("glBindTexture");
-	TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][0], i, This->surfaces[0][0]->textureName);
+	TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][0], i, D3D8_SURFACE(This->surfaces[0][0])->textureName);
 	/* No need to walk through all mip-map levels, since already all assigned */
 	i = This->levels;
       } else {
 	if (i == 0) {
-	  if (This->surfaces[0][0]->textureName == 0) {
-	    glGenTextures(1, &This->surfaces[0][0]->textureName);
+	  if (D3D8_SURFACE(This->surfaces[0][0])->textureName == 0) {
+	    glGenTextures(1, &(D3D8_SURFACE(This->surfaces[0][0]))->textureName);
 	    checkGLcall("glGenTextures");
-	    TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][i], i, This->surfaces[0][0]->textureName);
+	    TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][i], i, D3D8_SURFACE(This->surfaces[0][0])->textureName);
 	  }
 
 #if defined(GL_VERSION_1_3)
-	  glBindTexture(GL_TEXTURE_CUBE_MAP, This->surfaces[0][0]->textureName);
+	  glBindTexture(GL_TEXTURE_CUBE_MAP, D3D8_SURFACE(This->surfaces[0][0])->textureName);
 #else
 	  glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][0]->textureName);
 #endif
@@ -275,7 +275,7 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_AddDirtyRect(LPDIRECT3DCUBETEXT
     IDirect3DCubeTexture8Impl *This = (IDirect3DCubeTexture8Impl *)iface;
     This->Dirty = TRUE;
     TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);    
-    return IDirect3DSurface8Impl_AddDirtyRect((LPDIRECT3DSURFACE8) This->surfaces[FaceType][0], pDirtyRect);
+    return IWineD3DSurface_AddDirtyRect( (IWineD3DSurface*)(This->surfaces[FaceType][0])->wineD3DSurface, pDirtyRect);
 }
 
 

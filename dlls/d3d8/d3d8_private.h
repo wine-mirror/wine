@@ -64,8 +64,13 @@ extern int num_lock;
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "wine/debug.h"
 #include "d3d8.h"
 #include "wine/wined3d_interface.h"
 
@@ -674,6 +679,92 @@ extern ULONG WINAPI   IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface
 extern HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion);
 extern HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type,IDirect3DSurface8** ppBackBuffer);
 
+/* Below follow the definitions of some WineD3D structures which are needed during the D3D8->WineD3D transition. */
+typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
+typedef struct PrivateData
+{
+    struct PrivateData* next;
+
+    GUID tag;
+    DWORD flags; /* DDSPD_* */
+    DWORD uniqueness_value;
+
+    union
+    {
+        LPVOID data;
+        LPUNKNOWN object;
+    } ptr;
+
+    DWORD size;
+} PrivateData;
+
+typedef struct IWineD3DResourceClass
+{
+    /* IUnknown fields */
+    LONG                    ref;     /* Note: Ref counting not required */
+
+    /* WineD3DResource Information */
+    IUnknown               *parent;
+    D3DRESOURCETYPE         resourceType;
+    void                   *wineD3DDevice;
+    D3DPOOL                 pool;
+    UINT                    size;
+    DWORD                   usage;
+    WINED3DFORMAT           format;
+    BYTE                   *allocatedMemory;
+    PrivateData            *privateData;
+
+} IWineD3DResourceClass;
+
+typedef struct _WINED3DSURFACET_DESC
+{
+    D3DMULTISAMPLE_TYPE MultiSampleType;
+    DWORD               MultiSampleQuality;
+    UINT                Width;
+    UINT                Height;
+} WINED3DSURFACET_DESC;
+
+struct IWineD3DSurfaceImpl
+{
+    /* IUnknown & IWineD3DResource Information     */
+    const IWineD3DSurfaceVtbl *lpVtbl;
+    IWineD3DResourceClass     resource;
+
+    /* IWineD3DSurface fields */
+    IUnknown                 *container;
+    WINED3DSURFACET_DESC      currentDesc;
+
+    UINT                      textureName;
+    UINT                      bytesPerPixel;
+
+    /* TODO: move this off into a management class(maybe!) */
+    BOOL                      nonpow2;
+
+    UINT                      pow2Width;
+    UINT                      pow2Height;
+    UINT                      pow2Size;
+
+#if 0
+    /* precalculated x and y scalings for texture coords */
+    float                     pow2scalingFactorX; /* =  (Width  / pow2Width ) */
+    float                     pow2scalingFactorY; /* =  (Height / pow2Height) */
+#endif
+
+    BOOL                      lockable;
+    BOOL                      discard;
+    BOOL                      locked;
+    BOOL                      activeLock;
+    
+    RECT                      lockedRect;
+    RECT                      dirtyRect;
+    BOOL                      Dirty;
+    
+    BOOL                      inTexture;
+    BOOL                      inPBuffer;
+
+    glDescriptor              glDescription;
+};
+
 
 /* ----------------- */
 /* IDirect3DSurface8 */
@@ -691,28 +782,12 @@ struct IDirect3DSurface8Impl
 {
     /* IUnknown fields */
     const IDirect3DSurface8Vtbl *lpVtbl;
-    LONG                   ref;
+    LONG                         ref;
 
     /* IDirect3DSurface8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    IUnknown               *Container;
-    D3DSURFACE_DESC         myDesc;
-    BYTE                   *allocatedMemory;
-    UINT                    textureName;
-    UINT                    bytesPerPixel;
-
-    BOOL                    lockable;
-    BOOL                    locked;
-    RECT                    lockedRect;
-    RECT                    dirtyRect;
-    BOOL                    Dirty;
-    BOOL                    inTexture;
-    BOOL                    inPBuffer;
-
-    IWineD3DSurface        *wineD3DSurface;
+    IWineD3DSurface             *wineD3DSurface;
 };
+#define D3D8_SURFACE(a) ((IWineD3DSurfaceImpl*)(a->wineD3DSurface))
 
 /* IUnknown: */
 extern HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface,REFIID refiid,LPVOID *obj);
