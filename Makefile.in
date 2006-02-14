@@ -76,8 +76,8 @@ wine: $(WINEWRAPPER)
 # Installation rules
 
 install-aclocal: dummy
-	$(MKINSTALLDIRS) $(datadir)/aclocal
-	$(INSTALL_DATA) $(SRCDIR)/aclocal.m4 $(datadir)/aclocal/wine.m4
+	$(MKINSTALLDIRS) $(DESTDIR)$(datadir)/aclocal
+	$(INSTALL_DATA) $(SRCDIR)/aclocal.m4 $(DESTDIR)$(datadir)/aclocal/wine.m4
 
 install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-lib__)
 
@@ -86,8 +86,8 @@ install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__in
 install:: install-lib install-dev install-aclocal
 
 uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
-	$(RM) $(datadir)/aclocal/wine.m4
-	-rmdir $(datadir)/wine $(datadir)/aclocal
+	$(RM) $(DESTDIR)$(datadir)/aclocal/wine.m4
+	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(datadir)/aclocal
 
 .PHONY: install-aclocal
 

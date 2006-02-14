@@ -46,18 +46,18 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT)
 .PHONY: install_prog install_prog.so uninstall_prog uninstall_prog.so
 
 install_prog.so: $(MODULE).so dummy
-	$(MKINSTALLDIRS) $(dlldir)
-	$(INSTALL_PROGRAM) $(MODULE).so $(dlldir)/$(MODULE).so
+	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(MODULE).so
 
 install_prog: $(MODULE) dummy
-	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) $(MODULE) $(bindir)/$(MODULE)
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) $(MODULE) $(DESTDIR)$(bindir)/$(MODULE)
 
 uninstall_prog.so: dummy
-	$(RM) $(dlldir)/$(MODULE).so
+	$(RM) $(DESTDIR)$(dlldir)/$(MODULE).so
 
 uninstall_prog: dummy
-	$(RM) $(bindir)/$(MODULE)
+	$(RM) $(DESTDIR)$(bindir)/$(MODULE)
 
 install:: install_prog$(DLLEXT)
 

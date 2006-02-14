@@ -109,19 +109,19 @@ WIN16_INSTALL = $(ALL_SPECS16:%=_install_/%)
 .PHONY: $(ALL_SPECS16:%=_install_/%) $(IMPORTLIB:%=_install_/%) $(IMPLIB_OBJS:%=_install_static_implib_/%)
 
 $(ALL_SPECS16:%=_install_/%): install_lib
-	cd $(dlldir) && $(RM) `basename $@`$(DLLEXT) && $(LN_S) $(MODULE)$(DLLEXT) `basename $@`$(DLLEXT)
+	cd $(DESTDIR)$(dlldir) && $(RM) `basename $@`$(DLLEXT) && $(LN_S) $(MODULE)$(DLLEXT) `basename $@`$(DLLEXT)
 
 install_lib: $(MODULE)$(DLLEXT)
-	$(MKINSTALLDIRS) $(dlldir)
-	$(INSTALL_PROGRAM) $(MODULE)$(DLLEXT) $(dlldir)/$(MODULE)$(DLLEXT)
+	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+	$(INSTALL_PROGRAM) $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir)/$(MODULE)$(DLLEXT)
 
 $(IMPORTLIB:%=_install_/%): $(IMPORTLIB)
-	$(MKINSTALLDIRS) $(dlldir)
-	$(INSTALL_DATA) $(IMPORTLIB) $(dlldir)/$(IMPORTLIB)
+	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+	$(INSTALL_DATA) $(IMPORTLIB) $(DESTDIR)$(dlldir)/$(IMPORTLIB)
 
 install_static_implib_def: $(STATICIMPLIB)
-	$(MKINSTALLDIRS) $(dlldir)
-	$(INSTALL_DATA) $(STATICIMPLIB) $(dlldir)/$(STATICIMPLIB)
+	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+	$(INSTALL_DATA) $(STATICIMPLIB) $(DESTDIR)$(dlldir)/$(STATICIMPLIB)
 
 install_static_implib_a:
 
@@ -132,7 +132,7 @@ install install-lib:: install_lib @WIN16_INSTALL@
 install install-dev:: $(IMPORTLIB:%=_install_/%) $(IMPLIB_OBJS:%=_install_static_implib_/%)
 
 uninstall::
-	[ ! -d $(dlldir) ] || (cd $(dlldir) && $(RM) $(MODULE)$(DLLEXT) $(IMPORTLIB) $(STATICIMPLIB) $(ALL_SPECS16:%=%$(DLLEXT)))
+	-cd $(DESTDIR)$(dlldir) && $(RM) $(MODULE)$(DLLEXT) $(IMPORTLIB) $(STATICIMPLIB) $(ALL_SPECS16:%=%$(DLLEXT))
 
 # Misc. rules
 

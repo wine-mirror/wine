@@ -42,18 +42,18 @@ $(MODULE): $(MAIN_BINARY)
 	$(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
 
 install:: $(WINE_BINARIES) $(MANPAGES)
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 	for f in $(WINE_BINARIES); do \
 	  if [ "$(MAIN_BINARY)" = "$$f" ]; \
-	  then $(INSTALL_PROGRAM) $$f $(bindir)/$(MODULE); \
-	  else $(INSTALL_PROGRAM) $$f $(bindir)/$$f; \
+	  then $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$(MODULE); \
+	  else $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f; \
 	  fi; \
 	done
-	$(INSTALL_DATA) wine.man $(mandir)/man$(prog_manext)/wine.$(prog_manext)
+	$(INSTALL_DATA) wine.man $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 
 uninstall::
-	-cd $(bindir) && $(RM) $(WINE_BINARIES) $(MODULE)
-	$(RM) $(mandir)/man$(prog_manext)/wine.$(prog_manext)
+	-cd $(DESTDIR)$(bindir) && $(RM) $(WINE_BINARIES) $(MODULE)
+	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 
 clean::
 	$(RM) $(WINE_BINARIES) $(MODULE)

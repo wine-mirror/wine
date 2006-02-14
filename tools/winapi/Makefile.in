@@ -7,19 +7,15 @@ MODULE    = none
 @MAKE_RULES@
 
 install::
-	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/make_filter
-	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_check
-	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_cleanup
-	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_extract
-	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_fixup
-	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_test
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(DESTDIR)$(bindir)/make_filter
+	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(DESTDIR)$(bindir)/winapi_check
+	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(DESTDIR)$(bindir)/winapi_cleanup
+	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(DESTDIR)$(bindir)/winapi_extract
+	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(DESTDIR)$(bindir)/winapi_fixup
+	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(DESTDIR)$(bindir)/winapi_test
 
 uninstall::
-	$(RM) $(bindir)/make_filter
-	$(RM) $(bindir)/winapi_check
-	$(RM) $(bindir)/winapi_extract
-	$(RM) $(bindir)/winapi_fixup
-	$(RM) $(bindir)/winapi_test
+	-cd $(DESTDIR)$(bindir) && $(RM) make_filter winapi_check winapi_extract winapi_fixup winapi_test
 
 ### Dependencies:

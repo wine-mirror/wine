@@ -350,7 +350,7 @@ WINE_INCLUDES = \
 
 IDL_SRCS = $(WINDOWS_IDL_SRCS) $(WINE_IDL_SRCS:%=wine/%)
 
-EXTRASUBDIRS = msvcrt msvcrt/sys wine
+EXTRASUBDIRS = ddk msvcrt msvcrt/sys wine
 
 @MAKE_RULES@
 
@@ -361,18 +361,18 @@ IDL_HEADERS = $(IDL_SRCS:.idl=.h)
 all: $(IDL_HEADERS)
 
 install:: $(IDL_HEADERS)
-	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/windows/ddk $(includedir)/msvcrt $(includedir)/msvcrt/sys
-	for f in $(WINDOWS_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/windows/$$f; done
-	for f in $(WINDOWS_IDL_HEADERS); do $(INSTALL_DATA) $$f $(includedir)/windows/$$f; done
-	for f in $(MSVCRT_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done
-	for f in $(WINE_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/wine/$$f $(includedir)/$$f; done
-	for f in $(WINE_IDL_HEADERS); do $(INSTALL_DATA) wine/$$f $(includedir)/$$f; done
+	$(MKINSTALLDIRS) $(DESTDIR)$(includedir) $(DESTDIR)$(includedir)/windows $(DESTDIR)$(includedir)/windows/ddk $(DESTDIR)$(includedir)/msvcrt $(DESTDIR)$(includedir)/msvcrt/sys
+	for f in $(WINDOWS_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/windows/$$f; done
+	for f in $(WINDOWS_IDL_HEADERS); do $(INSTALL_DATA) $$f $(DESTDIR)$(includedir)/windows/$$f; done
+	for f in $(MSVCRT_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/$$f; done
+	for f in $(WINE_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/wine/$$f $(DESTDIR)$(includedir)/$$f; done
+	for f in $(WINE_IDL_HEADERS); do $(INSTALL_DATA) wine/$$f $(DESTDIR)$(includedir)/$$f; done
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out
 # anything extra the user may have put there.
 uninstall::
-	[ -d $(includedir)/windows ] && cd $(includedir)/windows && $(RM) $(WINDOWS_INCLUDES) $(WINDOWS_IDL_HEADERS) || true
-	[ -d $(includedir) ] && cd $(includedir) && $(RM) $(MSVCRT_INCLUDES) $(WINE_INCLUDES) $(WINE_IDL_HEADERS) || true
-	-rmdir $(includedir)/msvcrt/sys $(includedir)/msvcrt $(includedir)/windows/ddk $(includedir)/windows $(includedir)
+	-cd $(DESTDIR)$(includedir)/windows && $(RM) $(WINDOWS_INCLUDES) $(WINDOWS_IDL_HEADERS)
+	-cd $(DESTDIR)$(includedir) && $(RM) $(MSVCRT_INCLUDES) $(WINE_INCLUDES) $(WINE_IDL_HEADERS)
+	-rmdir $(DESTDIR)$(includedir)/msvcrt/sys $(DESTDIR)$(includedir)/msvcrt $(DESTDIR)$(includedir)/windows/ddk $(DESTDIR)$(includedir)/windows $(DESTDIR)$(includedir)
 
 ### Dependencies:

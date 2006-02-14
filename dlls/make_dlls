@@ -348,7 +348,7 @@ install-lib:: \$(INSTALLSUBDIRS:%=%/__install-lib__)
 install-dev:: \$(INSTALLSUBDIRS:%=%/__install-dev__)
 
 uninstall::
-	-rmdir \$(dlldir)
+	-rmdir \$(DESTDIR)\$(dlldir)
 
 clean::
 	\$(RM) \$(IMPORT_SYMLINKS)

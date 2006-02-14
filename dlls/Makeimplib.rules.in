@@ -24,11 +24,11 @@ $(MODULE): $(OBJS) Makefile.in
 # Rules for installation
 
 install install-dev:: $(MODULE)
-	$(MKINSTALLDIRS) $(dlldir)
-	$(INSTALL_DATA) $(MODULE) $(dlldir)/$(MODULE)
+	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+	$(INSTALL_DATA) $(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)
 
 uninstall::
-	[ ! -d $(dlldir) ] || (cd $(dlldir) && $(RM) $(MODULE))
+	$(RM) $(DESTDIR)$(dlldir)/$(MODULE)
 
 # Misc. rules
 

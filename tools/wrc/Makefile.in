@@ -42,11 +42,11 @@ parser.tab.o: parser.tab.h
 @LEX_OUTPUT_ROOT@.o: parser.tab.h
 
 install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
-	$(INSTALL_DATA) wrc.man $(mandir)/man$(prog_manext)/wrc.$(prog_manext)
-	$(INSTALL_PROGRAM) wrc$(EXEEXT) $(bindir)/wrc$(EXEEXT)
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) wrc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
+	$(INSTALL_PROGRAM) wrc$(EXEEXT) $(DESTDIR)$(bindir)/wrc$(EXEEXT)
 
 uninstall::
-	$(RM) $(bindir)/wrc$(EXEEXT) $(mandir)/man$(prog_manext)/wrc.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/wrc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
 
 ### Dependencies:

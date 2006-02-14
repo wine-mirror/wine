@@ -40,34 +40,34 @@ $(LIBNAME).dylib: $(LIBNAME).$(SOVERSION).dylib
 .PHONY: install-lib-so install-lib-dll install-lib-dylib install-dev-so install-dev-dll install-dev-dylib
 
 install-lib-so: $(LIBNAME).so.$(SOVERSION) dummy
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_PROGRAM) $(LIBNAME).so.$(SOVERSION) $(libdir)/$(LIBNAME).so.$(SOVERSION)
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL_PROGRAM) $(LIBNAME).so.$(SOVERSION) $(DESTDIR)$(libdir)/$(LIBNAME).so.$(SOVERSION)
 
 install-lib-dll: $(LIBNAME).dll dummy
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_DATA) $(LIBNAME).dll $(libdir)/$(LIBNAME).dll
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(LIBNAME).dll $(DESTDIR)$(libdir)/$(LIBNAME).dll
 
 install-lib-dylib: $(LIBNAME).$(SOVERSION).dylib dummy
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_PROGRAM) $(LIBNAME).$(SOVERSION).dylib $(libdir)/$(LIBNAME).$(SOVERSION).dylib
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL_PROGRAM) $(LIBNAME).$(SOVERSION).dylib $(DESTDIR)$(libdir)/$(LIBNAME).$(SOVERSION).dylib
 
 install-dev-so: dummy
-	$(MKINSTALLDIRS) $(libdir)
-	cd $(libdir) && $(RM) $(LIBNAME).so && $(LN_S) $(LIBNAME).so.$(SOVERSION) $(LIBNAME).so
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	cd $(DESTDIR)$(libdir) && $(RM) $(LIBNAME).so && $(LN_S) $(LIBNAME).so.$(SOVERSION) $(LIBNAME).so
 
 install-dev-dll: $(LIBNAME).a dummy
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_DATA) $(LIBNAME).a $(libdir)/$(LIBNAME).a
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(LIBNAME).a $(DESTDIR)$(libdir)/$(LIBNAME).a
 
 install-dev-dylib: dummy
-	$(MKINSTALLDIRS) $(libdir)
-	cd $(libdir) && $(RM) $(LIBNAME).dylib && $(LN_S) $(LIBNAME).$(SOVERSION).dylib $(LIBNAME).dylib
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	cd $(DESTDIR)$(libdir) && $(RM) $(LIBNAME).dylib && $(LN_S) $(LIBNAME).$(SOVERSION).dylib $(LIBNAME).dylib
 
 install install-lib:: $(LIBEXT:%=install-lib-%)
 install install-dev:: $(LIBEXT:%=install-dev-%)
 
 uninstall::
-	$(RM) $(libdir)/$(LIBNAME).a $(libdir)/$(LIBNAME).dll $(libdir)/$(LIBNAME).so $(libdir)/$(LIBNAME).so.$(SOVERSION) $(libdir)/$(LIBNAME).dylib $(libdir)/$(LIBNAME).$(SOVERSION).dylib
+	-cd $(DESTDIR)$(libdir) && $(RM) $(LIBNAME).a $(LIBNAME).dll $(LIBNAME).so $(LIBNAME).so.$(SOVERSION) $(LIBNAME).dylib $(LIBNAME).$(SOVERSION).dylib
 
 clean::
 	$(RM) $(LIBNAME).so.$(SOVERSION) $(LIBNAME).dll $(LIBNAME).$(SOVERSION).dylib

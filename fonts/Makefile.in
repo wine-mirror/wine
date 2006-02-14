@@ -289,12 +289,12 @@ cvgasys.fon: system-950-96-16.fnt system-1252-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-950-96-16.fnt system-1252-96-16.fnt $@
 
 install:: $(FONTS)
-	$(MKINSTALLDIRS) $(fontdir)
-	for i in $(FONTS); do $(INSTALL_DATA) $$i $(fontdir)/$$i || exit 1; done
+	$(MKINSTALLDIRS) $(DESTDIR)$(fontdir)
+	for i in $(FONTS); do $(INSTALL_DATA) $$i $(DESTDIR)$(fontdir)/$$i || exit 1; done
 
 uninstall::
-	-cd $(fontdir) && $(RM) $(FONTS)
-	-rmdir $(fontdir)
+	-cd $(DESTDIR)$(fontdir) && $(RM) $(FONTS)
+	-rmdir $(DESTDIR)$(fontdir)
 
 clean::
 	$(RM) *.fon *.fnt *.ttf

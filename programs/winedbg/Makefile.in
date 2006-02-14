@@ -48,10 +48,10 @@ dbg.tab.o: dbg.tab.h
 @LEX_OUTPUT_ROOT@.o: dbg.tab.h
 
 install:: $(MANPAGES)
-	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext)
-	$(INSTALL_DATA) winedbg.man $(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
+	$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) winedbg.man $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
 
 uninstall::
-	$(RM) $(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
+	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
 
 ### Dependencies:

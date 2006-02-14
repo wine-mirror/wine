@@ -44,22 +44,22 @@ $(PROGRAMS:.exe=): $(WINEWRAPPER)
 .PHONY: install_prog install_prog.so uninstall_prog uninstall_prog.so
 
 install_prog.so: $(PROGRAMS:%=%.so)
-	$(MKINSTALLDIRS) $(dlldir)
-	$(INSTALL_PROGRAM) aviinfo.exe.so $(dlldir)/aviinfo.exe.so
-	$(INSTALL_PROGRAM) aviplay.exe.so $(dlldir)/aviplay.exe.so
-	$(INSTALL_PROGRAM) icinfo.exe.so $(dlldir)/icinfo.exe.so
+	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
+	$(INSTALL_PROGRAM) aviinfo.exe.so $(DESTDIR)$(dlldir)/aviinfo.exe.so
+	$(INSTALL_PROGRAM) aviplay.exe.so $(DESTDIR)$(dlldir)/aviplay.exe.so
+	$(INSTALL_PROGRAM) icinfo.exe.so $(DESTDIR)$(dlldir)/icinfo.exe.so
 
 install_prog: $(PROGRAMS)
-	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) aviinfo.exe $(bindir)/aviinfo.exe
-	$(INSTALL_PROGRAM) aviplay.exe $(bindir)/aviplay.exe
-	$(INSTALL_PROGRAM) icinfo.exe $(bindir)/icinfo.exe
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) aviinfo.exe $(DESTDIR)$(bindir)/aviinfo.exe
+	$(INSTALL_PROGRAM) aviplay.exe $(DESTDIR)$(bindir)/aviplay.exe
+	$(INSTALL_PROGRAM) icinfo.exe $(DESTDIR)$(bindir)/icinfo.exe
 
 uninstall_prog.so:
-	$(RM) $(dlldir)/aviinfo.exe.so $(dlldir)/aviplay.exe.so $(dlldir)/icinfo.exe.so
+	$(RM) $(DESTDIR)$(dlldir)/aviinfo.exe.so $(DESTDIR)$(dlldir)/aviplay.exe.so $(DESTDIR)$(dlldir)/icinfo.exe.so
 
 uninstall_prog:
-	$(RM) $(bindir)/aviinfo.exe $(bindir)/aviplay.exe $(bindir)/icinfo.exe
+	$(RM) $(DESTDIR)$(bindir)/aviinfo.exe $(DESTDIR)$(bindir)/aviplay.exe $(DESTDIR)$(bindir)/icinfo.exe
 
 install:: install_prog$(DLLEXT)
 

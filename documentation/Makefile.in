@@ -21,8 +21,8 @@ sgmlpages:
 .PHONY: manpages htmlpages sgmlpages
 
 install:: manpages
-	$(MKINSTALLDIRS) $(mandir)/man$(api_manext)
-	for i in man$(api_manext)/*.$(api_manext); do $(INSTALL_DATA) $$i $(mandir)/$$i; done
+	$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$(api_manext)
+	for i in man$(api_manext)/*.$(api_manext); do $(INSTALL_DATA) $$i $(DESTDIR)$(mandir)/$$i; done
 
 clean::
 	$(RM) -r html api-guide man$(api_manext)

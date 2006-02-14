@@ -27,11 +27,11 @@ winebuild$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPORT) $(LDFLAGS)
 
 install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
-	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(bindir)/winebuild$(EXEEXT)
-	$(INSTALL_DATA) winebuild.man $(mandir)/man$(prog_manext)/winebuild.$(prog_manext)
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)
+	$(INSTALL_DATA) winebuild.man $(DESTDIR)$(mandir)/man$(prog_manext)/winebuild.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/winebuild$(EXEEXT) $(mandir)/man$(prog_manext)/winebuild.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/winebuild$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/winebuild.$(prog_manext)
 
 ### Dependencies:

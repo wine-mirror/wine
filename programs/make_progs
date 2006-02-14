@@ -160,24 +160,24 @@ winelauncher: winelauncher.in
 .PHONY: install-apploader install-progs install-progs.so \$(INSTALLPROGS:%=%/__installprog__)
 
 install-apploader: wineapploader dummy
-	\$(MKINSTALLDIRS) \$(bindir)
-	\$(INSTALL_SCRIPT) wineapploader \$(bindir)/wineapploader
+	\$(MKINSTALLDIRS) \$(DESTDIR)\$(bindir)
+	\$(INSTALL_SCRIPT) wineapploader \$(DESTDIR)\$(bindir)/wineapploader
 
 \$(INSTALLPROGS:%=%/__installprog__): install-apploader
-	\$(RM) \$(bindir)/`dirname \$\@` && \$(LN) \$(bindir)/wineapploader \$(bindir)/`dirname \$\@`
+	\$(RM) \$(DESTDIR)\$(bindir)/`dirname \$\@` && \$(LN) \$(DESTDIR)\$(bindir)/wineapploader \$(DESTDIR)\$(bindir)/`dirname \$\@`
 
 install-progs.so: \$(INSTALLPROGS:%=%/__installprog__)
-	\$(RM) \$(bindir)/wineapploader
+	\$(RM) \$(DESTDIR)\$(bindir)/wineapploader
 
 install-progs: # nothing to do here
 
 install:: winelauncher install-progs\$(DLLEXT)
-	\$(MKINSTALLDIRS) \$(bindir)
-	\$(INSTALL_SCRIPT) winelauncher \$(bindir)/winelauncher
+	\$(MKINSTALLDIRS) \$(DESTDIR)\$(bindir)
+	\$(INSTALL_SCRIPT) winelauncher \$(DESTDIR)\$(bindir)/winelauncher
 
 uninstall::
-	-cd \$(bindir) && \$(RM) wineapploader winelauncher \$(INSTALLPROGS)
-	-rmdir \$(dlldir)
+	-cd \$(DESTDIR)\$(bindir) && \$(RM) wineapploader winelauncher \$(INSTALLPROGS)
+	-rmdir \$(DESTDIR)\$(dlldir)
 
 clean::
 	\$(RM) wineapploader winelauncher \$(SYMLINKS)

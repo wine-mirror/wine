@@ -61,11 +61,11 @@ wineserver: $(OBJS)
 	$(CC) -o $(PROGRAMS) $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LDFLAGS) $(LIBS)
 
 install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
-	$(INSTALL_PROGRAM) wineserver $(bindir)/wineserver
-	$(INSTALL_DATA) wineserver.man $(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_PROGRAM) wineserver $(DESTDIR)$(bindir)/wineserver
+	$(INSTALL_DATA) wineserver.man $(DESTDIR)$(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/wineserver $(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/wineserver $(DESTDIR)$(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
 
 ### Dependencies:

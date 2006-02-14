@@ -32,13 +32,12 @@ winedump$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o winedump$(EXEEXT) $(OBJS) $(LIBPORT) $(LDFLAGS)
 
 install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
-	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(bindir)/winedump$(EXEEXT)
-	$(INSTALL_DATA) winedump.man $(mandir)/man$(prog_manext)/winedump.$(prog_manext)
-	$(INSTALL_SCRIPT) $(SRCDIR)/function_grep.pl $(bindir)/function_grep.pl
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(DESTDIR)$(bindir)/winedump$(EXEEXT)
+	$(INSTALL_DATA) winedump.man $(DESTDIR)$(mandir)/man$(prog_manext)/winedump.$(prog_manext)
+	$(INSTALL_SCRIPT) $(SRCDIR)/function_grep.pl $(DESTDIR)$(bindir)/function_grep.pl
 
 uninstall::
-	$(RM) $(bindir)/function_grep.pl $(bindir)/winedump$(EXEEXT)
-	$(RM) $(mandir)/man$(prog_manext)/winedump.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/function_grep.pl $(DESTDIR)$(bindir)/winedump$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/winedump.$(prog_manext)
 
 ### Dependencies:

@@ -43,11 +43,11 @@ parser.tab.o: parser.tab.h
 @LEX_OUTPUT_ROOT@.o: parser.tab.h
 
 install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
-	$(INSTALL_PROGRAM) widl$(EXEEXT) $(bindir)/widl$(EXEEXT)
-	$(INSTALL_DATA) widl.man $(mandir)/man$(prog_manext)/widl.$(prog_manext)
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_PROGRAM) widl$(EXEEXT) $(DESTDIR)$(bindir)/widl$(EXEEXT)
+	$(INSTALL_DATA) widl.man $(DESTDIR)$(mandir)/man$(prog_manext)/widl.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/widl$(EXEEXT) $(mandir)/man$(prog_manext)/widl.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/widl$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/widl.$(prog_manext)
 
 ### Dependencies:

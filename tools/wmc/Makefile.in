@@ -35,11 +35,11 @@ mcy.tab.h: mcy.tab.c
 mcy.tab.o: mcy.tab.h
 
 install:: $(PROGRAMS) $(MANPAGES)
-	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
-	$(INSTALL_DATA) wmc.man $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
-	$(INSTALL_PROGRAM) wmc$(EXEEXT) $(bindir)/wmc$(EXEEXT)
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) wmc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
+	$(INSTALL_PROGRAM) wmc$(EXEEXT) $(DESTDIR)$(bindir)/wmc$(EXEEXT)
 
 uninstall::
-	$(RM) $(bindir)/wmc$(EXEEXT) $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
+	$(RM) $(DESTDIR)$(bindir)/wmc$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
 
 ### Dependencies:
