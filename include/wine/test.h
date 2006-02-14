@@ -383,7 +383,7 @@ int main( int argc, char **argv )
     winetest_argc = argc;
     winetest_argv = argv;
 
-    if ((p = getenv( "WINETEST_PLATFORM" ))) winetest_platform = p;
+    if ((p = getenv( "WINETEST_PLATFORM" ))) winetest_platform = strdup(p);
     if ((p = getenv( "WINETEST_DEBUG" ))) winetest_debug = atoi(p);
     if ((p = getenv( "WINETEST_INTERACTIVE" ))) winetest_interactive = atoi(p);
     if ((p = getenv( "WINETEST_REPORT_SUCCESS"))) report_success = atoi(p);
