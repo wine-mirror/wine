@@ -1699,7 +1699,11 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
  *           HttpSendRequestExA (WININET.@)
  *
  * Sends the specified request to the HTTP server and allows chunked
- * transfers
+ * transfers.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE, call GetLastError() for more information.
  */
 BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 			       LPINTERNET_BUFFERSA lpBuffersIn,
@@ -1753,6 +1757,10 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
  *
  * Sends the specified request to the HTTP server and allows chunked
  * transfers
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE, call GetLastError() for more information.
  */
 BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
                    LPINTERNET_BUFFERSW lpBuffersIn,
