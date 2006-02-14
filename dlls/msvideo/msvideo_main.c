@@ -924,6 +924,7 @@ BOOL VFWAPI ICCompressorChoose(HWND hwnd, UINT uiFlags, LPVOID pvIn,
         pc->dwFlags   = 0;
         pc->fccType   = pc->fccHandler = 0;
         pc->hic       = NULL;
+        pc->lpbiIn    = NULL;
         pc->lpbiOut   = NULL;
         pc->lpBitsOut = pc->lpBitsPrev = pc->lpState = NULL;
         pc->lQ        = ICQUALITY_DEFAULT;
