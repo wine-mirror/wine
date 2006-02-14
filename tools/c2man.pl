@@ -1341,7 +1341,7 @@ sub output_api_header($)
   if ($opt_output_format eq "h")
   {
       print OUTPUT "<!-- Generated file - DO NOT EDIT! -->\n";
-      print OUTPUT "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n";
+      print OUTPUT "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n";
       print OUTPUT "<HTML>\n<HEAD>\n";
       print OUTPUT "<LINK REL=\"StyleSheet\" href=\"apidoc.css\" type=\"text/css\">\n";
       print OUTPUT "<META NAME=\"GENERATOR\" CONTENT=\"tools/c2man.pl\">\n";
@@ -1368,7 +1368,7 @@ sub output_api_footer($)
   {
       print OUTPUT "<hr><p><i class=\"copy\">Copyright &copy ".$year." The Wine Project.".
                    " All trademarks are the property of their respective owners.".
-                   " Visit <a HREF=http://www.winehq.org>WineHQ</a> for license details.".
+                   " Visit <a href=\"http://www.winehq.org\">WineHQ</a> for license details.".
                    " Generated $date.</i></p>\n</body>\n</html>\n";
   }
   elsif ($opt_output_format eq "s")
