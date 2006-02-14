@@ -128,6 +128,7 @@ DLLs (under dlls/):
 	sensapi/		- System Event Notification Service
 	serialui/		- Serial port property pages
 	setupapi/		- Setup interface
+	sfc/			- System File Checker (Windows File Protection)
 	shdocvw/		- Shell document object and control
 	shell32/		- COM object implementing shell views
 	shfolder/		- Shell folder service

@@ -127,6 +127,7 @@ BASEDIRS = \
 	sensapi \
 	serialui \
 	setupapi \
+	sfc \
 	shdocvw \
 	shell32 \
 	shfolder \
@@ -379,6 +380,7 @@ SYMLINKS_SO = \
 	sensapi.dll.so \
 	serialui.dll.so \
 	setupapi.dll.so \
+	sfc.dll.so \
 	shdocvw.dll.so \
 	shell32.dll.so \
 	shfolder.dll.so \
@@ -852,6 +854,9 @@ setupapi.dll.so: setupapi/setupapi.dll.so
 setupx.dll.so : setupapi.dll.so
 	$(RM) $@ && $(LN_S) setupapi.dll.so $@
 
+sfc.dll.so: sfc/sfc.dll.so
+	$(RM) $@ && $(LN_S) sfc/sfc.dll.so $@
+
 shdocvw.dll.so: shdocvw/shdocvw.dll.so
 	$(RM) $@ && $(LN_S) shdocvw/shdocvw.dll.so $@
 
@@ -1163,6 +1168,7 @@ IMPORT_LIBS = \
 	sensapi/libsensapi.$(IMPLIBEXT) \
 	serialui/libserialui.$(IMPLIBEXT) \
 	setupapi/libsetupapi.$(IMPLIBEXT) \
+	sfc/libsfc.$(IMPLIBEXT) \
 	shdocvw/libshdocvw.$(IMPLIBEXT) \
 	shell32/libshell32.$(IMPLIBEXT) \
 	shfolder/libshfolder.$(IMPLIBEXT) \
@@ -1438,6 +1444,9 @@ serialui/libserialui.$(IMPLIBEXT): serialui/serialui.spec $(WINEBUILD)
 setupapi/libsetupapi.$(IMPLIBEXT): setupapi/setupapi.spec $(WINEBUILD)
 	@cd setupapi && $(MAKE) libsetupapi.$(IMPLIBEXT)
 
+sfc/libsfc.$(IMPLIBEXT): sfc/sfc.spec $(WINEBUILD)
+	@cd sfc && $(MAKE) libsfc.$(IMPLIBEXT)
+
 shdocvw/libshdocvw.$(IMPLIBEXT): shdocvw/shdocvw.spec $(WINEBUILD)
 	@cd shdocvw && $(MAKE) libshdocvw.$(IMPLIBEXT)
 
@@ -1689,6 +1698,7 @@ security/security.dll.so: security
 sensapi/sensapi.dll.so: sensapi
 serialui/serialui.dll.so: serialui
 setupapi/setupapi.dll.so: setupapi
+sfc/sfc.dll.so: sfc
 shdocvw/shdocvw.dll.so: shdocvw
 shell32/shell32.dll.so: shell32
 shfolder/shfolder.dll.so: shfolder
