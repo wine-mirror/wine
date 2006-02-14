@@ -550,25 +550,15 @@ static void check_registry(void)
     RegCloseKey( hkIcmKey );
 }
 
-#define fail_GSCSPA(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
-do {                                                                            \
-    size = dwSz;                                                                \
-    SetLastError(0xfaceabad);                                                   \
-    ret = pGetStandardColorSpaceProfileA(pMachName, dwProfID, pProfName, pdwSz);\
-    GLE = GetLastError();                                                       \
-    ok( !ret && GLE_OK,                                                         \
-        "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );   \
-} while (0)
-
-#define test_GSCSPA(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
-do {                                                                            \
-    size = dwSz;                                                                \
-    SetLastError(0xfaceabad);                                                   \
-    ret = pGetStandardColorSpaceProfileA(pMachName, dwProfID, pProfName, pdwSz);\
-    GLE = GetLastError();                                                       \
-    ok( (!ret && GLE_OK) ||                                                     \
-        (ret && !lstrcmpiA( pProfName, "" ) && GLE == 0xfaceabad),              \
-        "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );   \
+#define fail_GSCSP(AW, pMachName, dwProfID, pProfName, pdwSz, dwSz, bCanSucceed, GLE_MATCHES)\
+do {                                                                                         \
+    size = dwSz;                                                                             \
+    SetLastError(0xfaceabad);                                                                \
+    ret = pGetStandardColorSpaceProfile##AW(pMachName, dwProfID, pProfName, pdwSz);          \
+    GLE = GetLastError();                                                                    \
+    ok( (!ret && GLE_MATCHES) ||                                                             \
+        (bCanSucceed && ret && !lstrcmpi##AW( pProfName, empty##AW ) && GLE == 0xfaceabad),  \
+        "GetStandardColorSpaceProfile%s() returns %d (GLE=%ld)\n", #AW, ret, GLE );          \
 } while (0)
 
 static void test_GetStandardColorSpaceProfileA(void)
@@ -577,30 +567,33 @@ static void test_GetStandardColorSpaceProfileA(void)
     DWORD size, sizeP, GLE;
     CHAR oldprofile[MAX_PATH];
     CHAR newprofile[MAX_PATH];
+    CHAR emptyA[] = "";
 
     sizeP = sizeof(newprofile);
 
     /* Parameter checks */
 
+#define A
     /* Single invalid parameter checks */
-    fail_GSCSPA(machine, SPACE_RGB, newprofile, &size, sizeP, (GLE == ERROR_NOT_SUPPORTED));
+    fail_GSCSP(A, machine, SPACE_RGB, newprofile, &size, sizeP, FALSE, (GLE == ERROR_NOT_SUPPORTED));
     todo_wine
-    fail_GSCSPA(NULL,    (DWORD)-1, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
+    fail_GSCSP(A, NULL,    (DWORD)-1, newprofile, &size, sizeP, FALSE, (GLE == ERROR_FILE_NOT_FOUND));
     todo_wine
-    fail_GSCSPA(NULL,    SPACE_RGB, NULL,       &size, sizeP, (GLE == ERROR_INSUFFICIENT_BUFFER));
+    fail_GSCSP(A, NULL,    SPACE_RGB, newprofile, NULL,  sizeP, FALSE, (GLE == ERROR_INVALID_PARAMETER));
     todo_wine
-    fail_GSCSPA(NULL,    SPACE_RGB, newprofile, NULL,  sizeP, (GLE == ERROR_INVALID_PARAMETER));
+    fail_GSCSP(A, NULL,    SPACE_RGB, NULL,       &size, sizeP, FALSE, (GLE == ERROR_INSUFFICIENT_BUFFER));
     todo_wine
-    fail_GSCSPA(NULL,    SPACE_RGB, newprofile, &size, 0,     (GLE == ERROR_MORE_DATA || GLE == ERROR_INSUFFICIENT_BUFFER));
+    fail_GSCSP(A, NULL,    SPACE_RGB, newprofile, &size, 0,     FALSE, (GLE == ERROR_MORE_DATA || GLE == ERROR_INSUFFICIENT_BUFFER));
 
     /* Several invalid parameter checks */
-    fail_GSCSPA(machine,  0, newprofile, &size, 0,     (GLE == ERROR_INVALID_PARAMETER || GLE == ERROR_NOT_SUPPORTED));
+    fail_GSCSP(A, machine,  0, newprofile, &size, 0,     FALSE, (GLE == ERROR_INVALID_PARAMETER || GLE == ERROR_NOT_SUPPORTED));
     todo_wine 
-    fail_GSCSPA(NULL,     0, newprofile, NULL,  0,     (GLE == ERROR_INVALID_PARAMETER));
+    fail_GSCSP(A, NULL,     0, newprofile, NULL,  0,     FALSE, (GLE == ERROR_INVALID_PARAMETER));
     todo_wine 
-    fail_GSCSPA(NULL,     0, NULL,       &size, 0,     (GLE == ERROR_INSUFFICIENT_BUFFER || GLE == ERROR_FILE_NOT_FOUND));
+    fail_GSCSP(A, NULL,     0, NULL,       &size, 0,     FALSE, (GLE == ERROR_INSUFFICIENT_BUFFER || GLE == ERROR_FILE_NOT_FOUND));
     todo_wine 
-    test_GSCSPA(NULL,     0, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
+    fail_GSCSP(A, NULL,     0, newprofile, &size, sizeP, TRUE,  (GLE == ERROR_FILE_NOT_FOUND));
+    #undef A
 
     /* Functional checks */
 
@@ -626,27 +619,6 @@ static void test_GetStandardColorSpaceProfileA(void)
     }
 }
 
-#define fail_GSCSPW(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
-do {                                                                            \
-    size = dwSz;                                                                \
-    SetLastError(0xfaceabad);                                                   \
-    ret = pGetStandardColorSpaceProfileW(pMachName, dwProfID, pProfName, pdwSz);\
-    GLE = GetLastError();                                                       \
-    ok( !ret && GLE_OK,                                                         \
-        "GetStandardColorSpaceProfileW() returns %d (GLE=%ld)\n", ret, GLE );   \
-} while (0)
-
-#define test_GSCSPW(pMachName, dwProfID, pProfName, pdwSz, dwSz, GLE_OK)        \
-do {                                                                            \
-    size = dwSz;                                                                \
-    SetLastError(0xfaceabad);                                                   \
-    ret = pGetStandardColorSpaceProfileW(pMachName, dwProfID, pProfName, pdwSz);\
-    GLE = GetLastError();                                                       \
-    ok( (!ret && GLE_OK) ||                                                     \
-        (ret && !lstrcmpiW( pProfName, emptyW ) && GLE == 0xfaceabad),          \
-        "GetStandardColorSpaceProfileA() returns %d (GLE=%ld)\n", ret, GLE );   \
-} while (0)
-
 static void test_GetStandardColorSpaceProfileW(void)
 {
     BOOL ret;
@@ -659,25 +631,27 @@ static void test_GetStandardColorSpaceProfileW(void)
 
     /* Parameter checks */
 
+#define W
     /* Single invalid parameter checks */
-    fail_GSCSPW(machineW, SPACE_RGB, newprofile, &size, sizeP, (GLE == ERROR_NOT_SUPPORTED));
+    fail_GSCSP(W, machineW, SPACE_RGB, newprofile, &size, sizeP, FALSE, (GLE == ERROR_NOT_SUPPORTED));
     todo_wine
-    fail_GSCSPW(NULL,     (DWORD)-1, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
+    fail_GSCSP(W, NULL,     (DWORD)-1, newprofile, &size, sizeP, FALSE, (GLE == ERROR_FILE_NOT_FOUND));
     todo_wine
-    fail_GSCSPW(NULL,     SPACE_RGB, NULL,       &size, sizeP, (GLE == ERROR_INSUFFICIENT_BUFFER));
+    fail_GSCSP(W, NULL,     SPACE_RGB, NULL,       &size, sizeP, FALSE, (GLE == ERROR_INSUFFICIENT_BUFFER));
     todo_wine
-    fail_GSCSPW(NULL,     SPACE_RGB, newprofile, NULL,  sizeP, (GLE == ERROR_INVALID_PARAMETER));
+    fail_GSCSP(W, NULL,     SPACE_RGB, newprofile, NULL,  sizeP, FALSE, (GLE == ERROR_INVALID_PARAMETER));
     todo_wine
-    fail_GSCSPW(NULL,     SPACE_RGB, newprofile, &size, 0,     (GLE == ERROR_MORE_DATA || GLE == ERROR_INSUFFICIENT_BUFFER));
+    fail_GSCSP(W, NULL,     SPACE_RGB, newprofile, &size, 0,     FALSE, (GLE == ERROR_MORE_DATA || GLE == ERROR_INSUFFICIENT_BUFFER));
 
     /* Several invalid parameter checks */
-    fail_GSCSPW(machineW,  0, newprofile, &size, 0,     (GLE == ERROR_INVALID_PARAMETER || GLE == ERROR_NOT_SUPPORTED));
+    fail_GSCSP(W, machineW,  0, newprofile, &size, 0,     FALSE, (GLE == ERROR_INVALID_PARAMETER || GLE == ERROR_NOT_SUPPORTED));
     todo_wine 
-    fail_GSCSPW(NULL,      0, newprofile, NULL,  0,     (GLE == ERROR_INVALID_PARAMETER));
+    fail_GSCSP(W, NULL,      0, newprofile, NULL,  0,     FALSE, (GLE == ERROR_INVALID_PARAMETER));
     todo_wine 
-    fail_GSCSPW(NULL,      0, NULL,       &size, 0,     (GLE == ERROR_INSUFFICIENT_BUFFER || GLE == ERROR_FILE_NOT_FOUND));
+    fail_GSCSP(W, NULL,      0, NULL,       &size, 0,     FALSE, (GLE == ERROR_INSUFFICIENT_BUFFER || GLE == ERROR_FILE_NOT_FOUND));
     todo_wine 
-    test_GSCSPW(NULL,      0, newprofile, &size, sizeP, (GLE == ERROR_FILE_NOT_FOUND));
+    fail_GSCSP(W, NULL,      0, newprofile, &size, sizeP, TRUE,  (GLE == ERROR_FILE_NOT_FOUND));
+    #undef W
 
     /* Functional checks */
 
