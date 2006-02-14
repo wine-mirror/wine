@@ -486,6 +486,8 @@
 @ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr)
 @ stdcall RegLoadKeyA(long str str)
 @ stdcall RegLoadKeyW(long wstr wstr)
+@ stdcall RegLoadMUIStringA(long str str long ptr long str)
+@ stdcall RegLoadMUIStringW(long wstr wstr long ptr long wstr)
 @ stdcall RegNotifyChangeKeyValue(long long long long long)
 @ stdcall RegOpenCurrentUser(long ptr)
 @ stdcall RegOpenKeyA(long str ptr)
