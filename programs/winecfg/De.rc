@@ -160,8 +160,8 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Treiber Auswahl ",IDC_STATIC,8,4,244,195
-    LTEXT           "Wählen Sie einen Sound Treiber durch das Auswählen eines verfügbaren Treibers. Der Sound wird deaktiviert, wenn kein Treiber ausgewählt wird. Die Auswahl mehrer Treiber ist nicht empfohlen. Der Treiber kann durch einen Rechtsklick konfiguriert werden.",IDC_STATIC,15,20,227,30
-    CONTROL         "Geräte",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,10,50,140,140
+    LTEXT           "Wählen Sie einen Sound Treiber durch das Auswählen eines verfügbaren Treibers. Der Sound wird deaktiviert, wenn kein Treiber ausgewählt wird. Die Auswahl mehrer Treiber ist nicht empfohlen. Der Treiber kann durch einen Rechtsklick konfiguriert werden.",IDC_STATIC,15,15,227,35
+    CONTROL         "Geräte",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
     PUSHBUTTON      "Kontrollschirm",IDC_AUDIO_CONTROL_PANEL,170,50,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60    
     LTEXT           "Hardware Beschleunigung: ", IDC_STATIC,15,215,90,10
