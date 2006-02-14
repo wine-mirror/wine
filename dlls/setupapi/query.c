@@ -60,6 +60,36 @@ static BOOL fill_inf_info(HINF inf, PSP_INF_INFORMATION buffer, DWORD size, DWOR
     return TRUE;
 }
 
+static HINF search_for_inf(LPCVOID InfSpec, DWORD SearchControl)
+{
+    HINF hInf = INVALID_HANDLE_VALUE;
+    WCHAR inf_path[MAX_PATH];
+
+    static const WCHAR infW[] = {'\\','i','n','f','\\',0};
+    static const WCHAR system32W[] = {'\\','s','y','s','t','e','m','3','2','\\',0};
+
+    if (SearchControl == INFINFO_REVERSE_DEFAULT_SEARCH)
+    {
+        GetWindowsDirectoryW(inf_path, MAX_PATH);
+        lstrcatW(inf_path, system32W);
+        lstrcatW(inf_path, InfSpec);
+
+        hInf = SetupOpenInfFileW(inf_path, NULL,
+                                 INF_STYLE_OLDNT | INF_STYLE_WIN4, NULL);
+        if (hInf != INVALID_HANDLE_VALUE)
+            return hInf;
+
+        GetWindowsDirectoryW(inf_path, MAX_PATH);
+        lstrcpyW(inf_path, infW);
+        lstrcatW(inf_path, InfSpec);
+
+        return SetupOpenInfFileW(inf_path, NULL,
+                                 INF_STYLE_OLDNT | INF_STYLE_WIN4, NULL);
+    }
+
+    return INVALID_HANDLE_VALUE;
+}
+
 /***********************************************************************
  *      SetupGetInfInformationA    (SETUPAPI.@)
  *
@@ -131,6 +161,8 @@ BOOL WINAPI SetupGetInfInformationW(LPCVOID InfSpec, DWORD SearchControl,
                                     INF_STYLE_OLDNT | INF_STYLE_WIN4, NULL);
             break;
         case INFINFO_REVERSE_DEFAULT_SEARCH:
+            inf = search_for_inf(InfSpec, SearchControl);
+            break;
         case INFINFO_INF_PATH_LIST_SEARCH:
             FIXME("Unhandled search control: %ld\n", SearchControl);
 

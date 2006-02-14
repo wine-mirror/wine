@@ -231,11 +231,8 @@ static void test_SetupGetInfInformation(void)
 
     /* test the INFINFO_REVERSE_DEFAULT_SEARCH search flag */
     ret = pSetupGetInfInformationA("test.inf", INFINFO_REVERSE_DEFAULT_SEARCH, info, size, &size);
-    todo_wine
-    {
-        ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
-        ok(check_info_filename(info, inf_two), "Expected returned filename to be equal\n");
-    }
+    ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
+    ok(check_info_filename(info, inf_two), "Expected returned filename to be equal\n");
 
     DeleteFileA(inf_filename);
     DeleteFileA(inf_one);
