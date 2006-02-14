@@ -511,8 +511,18 @@ static OLEFontImpl* OLEFontImpl_Construct(LPFONTDESC fontDesc)
   newObject->fontLock = 0;
   newObject->cyLogical  = 72L;
   newObject->cyHimetric = 2540L;
+  newObject->pPropertyNotifyCP = NULL;
+  newObject->pFontEventsCP = NULL;
+
   CreateConnectionPoint((IUnknown*)newObject, &IID_IPropertyNotifySink, &newObject->pPropertyNotifyCP);
   CreateConnectionPoint((IUnknown*)newObject, &IID_IFontEventsDisp, &newObject->pFontEventsCP);
+
+  if (!newObject->pPropertyNotifyCP || !newObject->pFontEventsCP)
+  {
+    OLEFontImpl_Destroy(newObject);
+    return NULL;
+  }
+
   TRACE("returning %p\n", newObject);
   return newObject;
 }
@@ -532,6 +542,11 @@ static void OLEFontImpl_Destroy(OLEFontImpl* fontDesc)
 
   if (fontDesc->gdiFont!=0)
     DeleteObject(fontDesc->gdiFont);
+
+  if (fontDesc->pPropertyNotifyCP)
+      IConnectionPoint_Release(fontDesc->pPropertyNotifyCP);
+  if (fontDesc->pFontEventsCP)
+      IConnectionPoint_Release(fontDesc->pFontEventsCP);
 
   HeapFree(GetProcessHeap(), 0, fontDesc);
 }
