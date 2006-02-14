@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -83,6 +84,40 @@ TW_UINT16 TWAIN_CloseDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 #endif
 }
 
+/* Sane returns device names that are longer than the 32 bytes allowed
+   by TWAIN.  However, it colon separates them, and the last bit is
+   the most interesting.  So we use the last bit, and add a signature
+   to ensure uniqueness */
+#ifdef HAVE_SANE
+static void copy_sane_short_name(const char *in, char *out, size_t outsize)
+{
+    const char *p;
+    int  signature = 0;
+
+    if (strlen(in) <= outsize - 1)
+    {
+        strcpy(out, in);
+        return;
+    }
+
+    for (p = in; *p; p++)
+        signature += *p;
+
+    p = strrchr(in, ':');
+    if (!p)
+        p = in;
+    else
+        p++;
+
+    if (strlen(p) > outsize - 7 - 1)
+        p += strlen(p) - (outsize - 7 - 1);
+
+    strcpy(out, p);
+    sprintf(out + strlen(out), "(%04X)", signature % 0x10000);
+
+}
+#endif
+
 /* DG_CONTROL/DAT_IDENTITY/MSG_GETDEFAULT */
 TW_UINT16 TWAIN_IdentityGetDefault (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 {
@@ -109,14 +144,16 @@ TW_UINT16 TWAIN_IdentityGetDefault (pTW_IDENTITY pOrigin, TW_MEMREF pData)
     if (device_list && device_list[0])
     {
         pSourceIdentity->Id = DSM_sourceId ++;
-        strcpy (pSourceIdentity->ProductName, device_list[0]->name);
-        strcpy (pSourceIdentity->Manufacturer, device_list[0]->vendor);
-        strcpy (pSourceIdentity->ProductFamily, device_list[0]->model);
+        copy_sane_short_name(device_list[0]->name, pSourceIdentity->ProductName, sizeof(pSourceIdentity->ProductName) - 1);
+        TRACE("got: %s (short [%s]), %s, %s\n", device_list[0]->name, pSourceIdentity->ProductName, device_list[0]->vendor, device_list[0]->model);
+        lstrcpynA (pSourceIdentity->Manufacturer, device_list[0]->vendor, sizeof(pSourceIdentity->Manufacturer) - 1);
+        lstrcpynA (pSourceIdentity->ProductFamily, device_list[0]->model, sizeof(pSourceIdentity->ProductFamily) - 1);
         pSourceIdentity->ProtocolMajor = TWON_PROTOCOLMAJOR;
         pSourceIdentity->ProtocolMinor = TWON_PROTOCOLMINOR;
 
         twRC = TWRC_SUCCESS;
         DSM_twCC = TWCC_SUCCESS;
+
     }
     else
     {
@@ -146,11 +183,11 @@ TW_UINT16 TWAIN_IdentityGetFirst (pTW_IDENTITY pOrigin, TW_MEMREF pData)
     {
         if (device_list[0])
         {
-            TRACE("got: %s, %s, %s\n", device_list[0]->name, device_list[0]->vendor, device_list[0]->model);
             pSourceIdentity->Id = DSM_sourceId ++;
-            strcpy (pSourceIdentity->ProductName, device_list[0]->name);
-            strcpy (pSourceIdentity->Manufacturer, device_list[0]->vendor);
-            strcpy (pSourceIdentity->ProductFamily, device_list[0]->model);
+            copy_sane_short_name(device_list[0]->name, pSourceIdentity->ProductName, sizeof(pSourceIdentity->ProductName) - 1);
+            TRACE("got: %s (short [%s]), %s, %s\n", device_list[0]->name, pSourceIdentity->ProductName, device_list[0]->vendor, device_list[0]->model);
+            lstrcpynA (pSourceIdentity->Manufacturer, device_list[0]->vendor, sizeof(pSourceIdentity->Manufacturer) - 1);
+            lstrcpynA (pSourceIdentity->ProductFamily, device_list[0]->model, sizeof(pSourceIdentity->ProductFamily) - 1);
             pSourceIdentity->ProtocolMajor = TWON_PROTOCOLMAJOR;
             pSourceIdentity->ProtocolMinor = TWON_PROTOCOLMINOR;
 
@@ -199,9 +236,10 @@ TW_UINT16 TWAIN_IdentityGetNext (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         device_list[DSM_currentDevice]->model)
     {
         pSourceIdentity->Id = DSM_sourceId ++;
-        strcpy (pSourceIdentity->ProductName, device_list[DSM_currentDevice]->name);
-        strcpy (pSourceIdentity->Manufacturer, device_list[DSM_currentDevice]->vendor);
-        strcpy (pSourceIdentity->ProductFamily, device_list[DSM_currentDevice]->model);
+        copy_sane_short_name(device_list[DSM_currentDevice]->name, pSourceIdentity->ProductName, sizeof(pSourceIdentity->ProductName) - 1);
+        TRACE("got: %s (short [%s]), %s, %s\n", device_list[DSM_currentDevice]->name, pSourceIdentity->ProductName, device_list[DSM_currentDevice]->vendor, device_list[DSM_currentDevice]->model);
+        lstrcpynA (pSourceIdentity->Manufacturer, device_list[DSM_currentDevice]->vendor, sizeof(pSourceIdentity->Manufacturer) - 1);
+        lstrcpynA (pSourceIdentity->ProductFamily, device_list[DSM_currentDevice]->model, sizeof(pSourceIdentity->ProductFamily) - 1);
         pSourceIdentity->ProtocolMajor = TWON_PROTOCOLMAJOR;
         pSourceIdentity->ProtocolMinor = TWON_PROTOCOLMINOR;
         DSM_currentDevice ++;
@@ -228,6 +266,7 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 #else
     TW_UINT16 twRC = TWRC_SUCCESS, i = 0;
     pTW_IDENTITY pIdentity = (pTW_IDENTITY) pData;
+    TW_STR32 shortname;
     activeDS *newSource;
     SANE_Status status;
 
@@ -251,9 +290,11 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         /* Make sure the source to be opened exists in the device list */
         for (i = 0; device_list[i]; i ++)
         {
-            if (strcmp (device_list[i]->name, pIdentity->ProductName) == 0)
+            copy_sane_short_name(device_list[i]->name, shortname, sizeof(shortname) - 1);
+            if (strcmp (shortname, pIdentity->ProductName) == 0)
                 break;
         }
+
     }
 
     if (device_list[i])
@@ -266,7 +307,7 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
             if (status == SANE_STATUS_GOOD)
             {
                 /* Assign name and id for the opened data source */
-                strcpy (pIdentity->ProductName, device_list[i]->name);
+                lstrcpynA (pIdentity->ProductName, shortname, sizeof(pIdentity->ProductName) - 1);
                 pIdentity->Id = DSM_sourceId ++;
                 /* add the data source to an internal active source list */
                 newSource->next = activeSources;
