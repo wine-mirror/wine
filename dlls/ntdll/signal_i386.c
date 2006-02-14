@@ -56,6 +56,10 @@
 #include "wine/library.h"
 #include "ntdll_misc.h"
 
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
+
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -983,6 +987,9 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     }
 
     stack--;  /* push the stack_layout structure */
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+    VALGRIND_MAKE_WRITABLE(stack, sizeof(*stack));
+#endif
     stack->ret_addr     = (void *)0xdeadbabe;  /* raise_func must not return */
     stack->rec_ptr      = &stack->rec;
     stack->context_ptr  = &stack->context;

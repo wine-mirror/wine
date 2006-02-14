@@ -46,6 +46,10 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(file);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -931,6 +935,11 @@ static void *init_stack(void)
     NtCurrentTeb()->DeallocationStack = base;
     NtCurrentTeb()->Tib.StackBase     = (char *)base + stack_size;
     NtCurrentTeb()->Tib.StackLimit    = (char *)base + page_size;
+
+#ifdef VALGRIND_STACK_REGISTER
+    /* no need to de-register the stack as it's the one of the main thread */
+    VALGRIND_STACK_REGISTER(NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase);
+#endif
 
     /* setup guard page */
     VirtualProtect( base, page_size, PAGE_NOACCESS, NULL );
