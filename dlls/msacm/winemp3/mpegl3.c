@@ -142,6 +142,17 @@ static inline void  W16(unsigned char* dst, short s)
     dst[1] = HIBYTE(s);
 }
 
+static DWORD get_num_buffered_bytes(struct mpstr *mp)
+{
+    DWORD numBuff = 0;
+    struct buf * p = mp->tail;
+    while (p) {
+        numBuff += p->size - p->pos;
+        p = p->next;
+    }
+    return numBuff;
+}
+
 static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
                       const unsigned char* src, LPDWORD nsrc,
                       unsigned char* dst, LPDWORD ndst)
@@ -149,8 +160,13 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
     AcmMpeg3Data*       amd = (AcmMpeg3Data*)adsi->dwDriver;
     int                 size, ret;
     DWORD               dpos = 0;
+    DWORD               buffered_before;
+    DWORD               buffered_during;
+    DWORD               buffered_after;
 
+    buffered_before = get_num_buffered_bytes(&amd->mp);
     ret = decodeMP3(&amd->mp, src, *nsrc, dst, *ndst, &size);
+    buffered_during = get_num_buffered_bytes(&amd->mp);
     if (ret != MP3_OK)
     {
         *ndst = *nsrc = 0;
@@ -163,6 +179,9 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
                         dst + dpos, *ndst - dpos, &size);
     } while (ret == MP3_OK);
     *ndst = dpos;
+
+    buffered_after = get_num_buffered_bytes(&amd->mp);
+    TRACE("before %ld put %ld during %ld after %ld\n", buffered_before, *nsrc, buffered_during, buffered_after);
 }
 
 /***********************************************************************
@@ -466,13 +485,13 @@ static	LRESULT MPEG3_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ad
 	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
         {
 	    /* don't take block overhead into account, doesn't matter too much */
-	    adss->cbSrcLength = adss->cbDstLength * 4;
+	    adss->cbSrcLength = adss->cbDstLength * 12;
 	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
                  adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
 	    FIXME("misses the block header overhead\n");
-	    adss->cbSrcLength = 256 + adss->cbDstLength / 4;
+	    adss->cbSrcLength = 256 + adss->cbDstLength / 12;
 	}
         else
         {
@@ -485,13 +504,13 @@ static	LRESULT MPEG3_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ad
 	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
         {
 	    FIXME("misses the block header overhead\n");
-	    adss->cbDstLength = 256 + adss->cbSrcLength / 4;
+	    adss->cbDstLength = 256 + adss->cbSrcLength / 12;
 	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
                  adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
 	    /* don't take block overhead into account, doesn't matter too much */
-	    adss->cbDstLength = adss->cbSrcLength * 4;
+	    adss->cbDstLength = adss->cbSrcLength * 12;
 	}
         else
         {
