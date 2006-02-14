@@ -697,6 +697,40 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
 }
 
 
+typedef struct tagME_RTFStringStreamStruct
+{
+  char *string;
+  int pos;
+  int length;
+} ME_RTFStringStreamStruct;
+
+static DWORD CALLBACK ME_ReadFromRTFString(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG cb, LONG *pcb)
+{
+  ME_RTFStringStreamStruct *pStruct = (ME_RTFStringStreamStruct *)dwCookie;
+  int count;
+
+  count = min(cb, pStruct->length - pStruct->pos);
+  memmove(lpBuff, pStruct->string + pStruct->pos, count);
+  pStruct->pos += count;
+  *pcb = count;
+  return 0;
+}
+
+static void
+ME_StreamInRTFString(ME_TextEditor *editor, BOOL selection, char *string)
+{
+  EDITSTREAM es;
+  ME_RTFStringStreamStruct data;
+
+  data.string = string;
+  data.length = strlen(string);
+  data.pos = 0;
+  es.dwCookie = (DWORD)&data;
+  es.pfnCallback = ME_ReadFromRTFString;
+  ME_StreamIn(editor, SF_RTF | (selection ? SFF_SELECTION : 0), &es);
+}
+
+
 ME_DisplayItem *
 ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int *nItemOffset)
 {
@@ -1591,15 +1625,23 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
     if (lParam)
     {
-      LPWSTR wszText = ME_ToUnicode(hWnd, (void *)lParam);
       TRACE("WM_SETTEXT lParam==%lx\n",lParam);
-      TRACE("WM_SETTEXT - %s\n", debugstr_w(wszText)); /* debugstr_w() */
-      if (lstrlenW(wszText) > 0)
+      if (!IsWindowUnicode(hWnd) && !strncmp((char *)lParam, "{\\rtf1", 6))
       {
-        /* uses default style! */
-        ME_InsertTextFromCursor(editor, 0, wszText, -1, editor->pBuffer->pDefaultStyle);
+        /* Undocumented: WM_SETTEXT supports RTF text */
+        ME_StreamInRTFString(editor, 0, (char *)lParam);
       }
-      ME_EndToUnicode(hWnd, wszText);
+      else
+      {
+        LPWSTR wszText = ME_ToUnicode(hWnd, (void *)lParam);
+        TRACE("WM_SETTEXT - %s\n", debugstr_w(wszText)); /* debugstr_w() */
+        if (lstrlenW(wszText) > 0)
+        {
+          /* uses default style! */
+          ME_InsertTextFromCursor(editor, 0, wszText, -1, editor->pBuffer->pDefaultStyle);
+        }
+        ME_EndToUnicode(hWnd, wszText);
+      }
     }
     else
       TRACE("WM_SETTEXT - NULL\n");
