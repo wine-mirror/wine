@@ -156,6 +156,55 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleW(
      ptsExpiry);
 }
 
+/***********************************************************************
+ *              InitializeSecurityContextA
+ */
+static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
+ PCredHandle phCredential, PCtxtHandle phContext, SEC_CHAR *pszTargetName,
+ ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+ PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+ PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
+{
+    SECURITY_STATUS ret;
+
+    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+     debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
+     Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+    if(phCredential){
+        ret = SEC_E_UNSUPPORTED_FUNCTION;
+    }
+    else
+    {
+        ret = SEC_E_INVALID_HANDLE;
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *              InitializeSecurityContextW
+ */
+static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
+ PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR *pszTargetName,
+ ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+ PSecBufferDesc pInput,ULONG Reserved2, PCtxtHandle phNewContext,
+ PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
+{
+    SECURITY_STATUS ret;
+
+    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+     debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
+     Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+    if (phCredential)
+    {
+        ret = SEC_E_UNSUPPORTED_FUNCTION;
+    }
+    else
+    {
+        ret = SEC_E_INVALID_HANDLE;
+    }
+    return ret;
+}
+
 static SecurityFunctionTableA schanTableA = {
     1,
     NULL, /* EnumerateSecurityPackagesA */
@@ -163,7 +212,7 @@ static SecurityFunctionTableA schanTableA = {
     schan_AcquireCredentialsHandleA,
     NULL, /* FreeCredentialsHandle */
     NULL, /* Reserved2 */
-    NULL, /* InitializeSecurityContextA */
+    schan_InitializeSecurityContextA, 
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
     NULL, /* DeleteSecurityContext */
@@ -194,7 +243,7 @@ static SecurityFunctionTableW schanTableW = {
     schan_AcquireCredentialsHandleW,
     NULL, /* FreeCredentialsHandle */
     NULL, /* Reserved2 */
-    NULL, /* InitializeSecurityContextW */
+    schan_InitializeSecurityContextW, 
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
     NULL, /* DeleteSecurityContext */
