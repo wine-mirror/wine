@@ -4482,7 +4482,7 @@ BOOL      WINAPI IsClipboardFormatAvailable(UINT);
 BOOL      WINAPI IsDialogMessageA(HWND,LPMSG);
 BOOL      WINAPI IsDialogMessageW(HWND,LPMSG);
 #define     IsDialogMessage WINELIB_NAME_AW(IsDialogMessage)
-UINT      WINAPI IsDlgButtonChecked(HWND,UINT);
+UINT      WINAPI IsDlgButtonChecked(HWND,int);
 BOOL      WINAPI IsHungAppWindow(HWND);
 BOOL      WINAPI IsIconic(HWND);
 BOOL      WINAPI IsMenu(HMENU);

@@ -1344,7 +1344,7 @@ BOOL WINAPI CheckDlgButton( HWND hwnd, INT id, UINT check )
 /***********************************************************************
  *		IsDlgButtonChecked (USER32.@)
  */
-UINT WINAPI IsDlgButtonChecked( HWND hwnd, UINT id )
+UINT WINAPI IsDlgButtonChecked( HWND hwnd, int id )
 {
     return (UINT)SendDlgItemMessageW( hwnd, id, BM_GETCHECK, 0, 0 );
 }
