@@ -220,6 +220,8 @@
 
 #include "nls/mon.nls"   /* 0x0450  LANG_MONGOLIAN, SUBLANG_DEFAULT */
 
+#include "nls/cym.nls"   /* 0x0452  LANG_WELSH, SUBLANG_DEFAULT */
+
 #include "nls/glc.nls"   /* 0x0456  LANG_GALICIAN, SUBLANG_DEFAULT */
 
 #include "nls/knk.nls"   /* 0x0457  LANG_KONKANI, SUBLANG_DEFAULT */
@@ -228,14 +230,12 @@
 
 #include "nls/div.nls"   /* 0x0465  LANG_DIVEHI, SUBLANG_DEFAULT */
 
+#include "nls/brf.nls"   /* 0x047e  LANG_BRETON, SUBLANG_DEFAULT */
+
 
 /* Wine extensions */
 
 #include "nls/nls.nls"   /* 0x0c13  LANG_DUTCH, SUBLANG_DUTCH_SURINAM */
-
-#include "nls/gae.nls"   /* 0x043c  LANG_GAELIC, SUBLANG_GAELIC */
-#include "nls/gdh.nls"   /* 0x083c  LANG_GAELIC, SUBLANG_GAELIC_SCOTTISH */
-#include "nls/gdv.nls"   /* 0x0c3c  LANG_GAELIC, SUBLANG_GAELIC_MANX */
 
 #include "nls/eox.nls"   /* 0x048f  LANG_ESPERANTO, SUBLANG_DEFAULT */
 
@@ -243,6 +243,6 @@
 
 #include "nls/cor.nls"   /* 0x0491  LANG_CORNISH, SUBLANG_DEFAULT */
 
-#include "nls/cym.nls"   /* 0x0492  LANG_WELSH, SUBLANG_DEFAULT */
-
-#include "nls/brf.nls"   /* 0x0493  LANG_BRETON, SUBLANG_DEFAULT */
+#include "nls/gae.nls"   /* 0x0494  LANG_GAELIC, SUBLANG_GAELIC */
+#include "nls/gdh.nls"   /* 0x0894  LANG_GAELIC, SUBLANG_GAELIC_SCOTTISH */
+#include "nls/gdv.nls"   /* 0x0c94  LANG_GAELIC, SUBLANG_GAELIC_MANX */
