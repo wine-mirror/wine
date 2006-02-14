@@ -40,6 +40,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
+static CRITICAL_SECTION mmdriver_lock;
+static CRITICAL_SECTION_DEBUG mmdriver_lock_debug =
+{
+    0, 0, &mmdriver_lock,
+    { &mmdriver_lock_debug.ProcessLocksList, &mmdriver_lock_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": mmdriver_lock") }
+};
+static CRITICAL_SECTION mmdriver_lock = { &mmdriver_lock_debug, -1, 0, 0, 0, 0 };
+
 static LPWINE_DRIVER   lpDrvItemList  /* = NULL */;
 static const WCHAR HKLM_BASE[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
                                   'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
@@ -48,6 +57,24 @@ WINE_MMTHREAD*  (*pFnGetMMThread16)(UINT16 h) /* = NULL */;
 LPWINE_DRIVER   (*pFnOpenDriver16)(LPCWSTR,LPCWSTR,LPARAM) /* = NULL */;
 LRESULT         (*pFnCloseDriver16)(UINT16,LPARAM,LPARAM) /* = NULL */;
 LRESULT         (*pFnSendMessage16)(UINT16,UINT,LPARAM,LPARAM) /* = NULL */;
+
+static void DRIVER_Dump(const char *comment)
+{
+#if 0
+    LPWINE_DRIVER 	lpDrv;
+
+    TRACE("%s\n", comment);
+
+    EnterCriticalSection( &mmdriver_lock );
+
+    for (lpDrv = lpDrvItemList; lpDrv != NULL; lpDrv = lpDrv->lpNextItem)
+    {
+        TRACE("%p, magic %04lx, id %p, next %p\n", lpDrv, lpDrv->dwMagic, (void *)lpDrv->d.d32.dwDriverID, lpDrv->lpNextItem);
+    }
+
+    LeaveCriticalSection( &mmdriver_lock );
+#endif
+}
 
 /**************************************************************************
  *			DRIVER_GetNumberOfModuleRefs		[internal]
@@ -59,6 +86,8 @@ static	unsigned DRIVER_GetNumberOfModuleRefs(HMODULE hModule, WINE_DRIVER** foun
     LPWINE_DRIVER	lpDrv;
     unsigned		count = 0;
 
+    EnterCriticalSection( &mmdriver_lock );
+
     if (found) *found = NULL;
     for (lpDrv = lpDrvItemList; lpDrv; lpDrv = lpDrv->lpNextItem)
     {
@@ -68,6 +97,8 @@ static	unsigned DRIVER_GetNumberOfModuleRefs(HMODULE hModule, WINE_DRIVER** foun
 	    count++;
 	}
     }
+
+    LeaveCriticalSection( &mmdriver_lock );
     return count;
 }
 
@@ -90,6 +121,9 @@ LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
         return NULL;
     }
     __ENDTRY;
+
+    if (d) TRACE("%p -> %p, %p\n", hDrvr, d->d.d32.lpDrvProc, (void *)d->d.d32.dwDriverID);
+    else TRACE("%p -> NULL\n", hDrvr);
 
     return d;
 }
@@ -155,6 +189,8 @@ static	BOOL	DRIVER_RemoveFromList(LPWINE_DRIVER lpDrv)
 	}
     }
 
+    EnterCriticalSection( &mmdriver_lock );
+
     if (lpDrv->lpPrevItem)
 	lpDrv->lpPrevItem->lpNextItem = lpDrv->lpNextItem;
     else
@@ -163,6 +199,11 @@ static	BOOL	DRIVER_RemoveFromList(LPWINE_DRIVER lpDrv)
 	lpDrv->lpNextItem->lpPrevItem = lpDrv->lpPrevItem;
     /* trash magic number */
     lpDrv->dwMagic ^= 0xa5a5a5a5;
+    lpDrv->d.d32.lpDrvProc = NULL;
+    lpDrv->d.d32.dwDriverID = 0;
+    lpDrv->d.d16.hDriver16 = 0;
+
+    LeaveCriticalSection( &mmdriver_lock );
 
     return TRUE;
 }
@@ -187,7 +228,18 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam1, LPARAM lPar
 	    /* returned value is not checked */
 	    DRIVER_SendMessage(lpNewDrv, DRV_ENABLE, 0L, 0L);
 	}
+
+	/* Now just open a new instance of a driver on this module */
+	lpNewDrv->d.d32.dwDriverID = DRIVER_SendMessage(lpNewDrv, DRV_OPEN, lParam1, lParam2);
+
+	if (lpNewDrv->d.d32.dwDriverID == 0)
+        {
+	    TRACE("DRV_OPEN failed on driver %p\n", lpNewDrv);
+	    return FALSE;
+	}
     }
+
+    EnterCriticalSection( &mmdriver_lock );
 
     lpNewDrv->lpNextItem = NULL;
     if (lpDrvItemList == NULL) {
@@ -202,16 +254,7 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam1, LPARAM lPar
 	lpNewDrv->lpPrevItem = lpDrv;
     }
 
-    if (!(lpNewDrv->dwFlags & WINE_GDF_16BIT)) {
-	/* Now just open a new instance of a driver on this module */
-	lpNewDrv->d.d32.dwDriverID = DRIVER_SendMessage(lpNewDrv, DRV_OPEN, lParam1, lParam2);
-
-	if (lpNewDrv->d.d32.dwDriverID == 0) {
-	    TRACE("DRV_OPEN failed on driver %p\n", lpNewDrv);
-	    DRIVER_RemoveFromList(lpNewDrv);
-	    return FALSE;
-	}
-    }
+    LeaveCriticalSection( &mmdriver_lock );
     return TRUE;
 }
 
@@ -226,6 +269,8 @@ BOOL	DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz)
     static const WCHAR wszSystemIni[] = {'S','Y','S','T','E','M','.','I','N','I',0};
     WCHAR       wsznull = '\0';
 
+    TRACE("registry: %s, %s, %p, %d\n", debugstr_w(keyName), debugstr_w(sectName), buf, sz);
+
     lRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, HKLM_BASE, 0, KEY_QUERY_VALUE, &hKey);
     if (lRet == ERROR_SUCCESS) {
 	lRet = RegOpenKeyExW(hKey, sectName, 0, KEY_QUERY_VALUE, &hSecKey);
@@ -237,8 +282,10 @@ BOOL	DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz)
         RegCloseKey( hKey );
     }
     if (lRet == ERROR_SUCCESS) return TRUE;
+
     /* default to system.ini if we can't find it in the registry,
      * to support native installations where system.ini is still used */
+    TRACE("system.ini: %s, %s, %p, %d\n", debugstr_w(keyName), debugstr_w(sectName), buf, sz);
     return GetPrivateProfileStringW(sectName, keyName, &wsznull, buf, sz / sizeof(WCHAR), wszSystemIni);
 }
 
@@ -355,11 +402,13 @@ done:
 HDRVR WINAPI OpenDriver(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lParam)
 {
     LPWINE_DRIVER	lpDrv = NULL;
-    WCHAR 		libName[128];
+    WCHAR 		libName[MAX_PATH + 1];
     LPCWSTR		lsn = lpSectionName;
 
     TRACE("(%s, %s, 0x%08lx);\n", 
           debugstr_w(lpDriverName), debugstr_w(lpSectionName), lParam);
+
+    DRIVER_Dump("BEFORE:");
 
     if (lsn == NULL) {
         static const WCHAR wszDrivers32[] = {'D','r','i','v','e','r','s','3','2',0};
@@ -386,10 +435,12 @@ HDRVR WINAPI OpenDriver(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lPar
     }
     TRACE("Failed to open driver %s from system.ini file, section %s\n", 
           debugstr_w(lpDriverName), debugstr_w(lpSectionName));
-    return 0;
 
- the_end:
-    if (lpDrv)	TRACE("=> %p\n", lpDrv);
+the_end:
+    TRACE("=> %p\n", lpDrv);
+
+    DRIVER_Dump("AFTER:");
+
     return (HDRVR)lpDrv;
 }
 
@@ -399,9 +450,12 @@ HDRVR WINAPI OpenDriver(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lPar
  */
 LRESULT WINAPI CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
+    BOOL ret;
     LPWINE_DRIVER	lpDrv;
 
     TRACE("(%p, %08lX, %08lX);\n", hDrvr, lParam1, lParam2);
+
+    DRIVER_Dump("BEFORE:");
 
     if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL)
     {
@@ -411,35 +465,39 @@ LRESULT WINAPI CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
                 pFnCloseDriver16(lpDrv->d.d16.hDriver16, lParam1, lParam2);
         }
 	else
-        {
 	    DRIVER_SendMessage(lpDrv, DRV_CLOSE, lParam1, lParam2);
-            lpDrv->d.d32.dwDriverID = 0;
-        }
-	if (DRIVER_RemoveFromList(lpDrv)) {
-            if (!(lpDrv->dwFlags & WINE_GDF_16BIT))
-            {
-                LPWINE_DRIVER       lpDrv0;
 
-                if (lpDrv->dwFlags & WINE_GDF_SESSION)
-                    FIXME("Shouldn't happen (%p)\n", lpDrv);
-                /* if driver has an opened session instance, we have to close it too */
-                if (DRIVER_GetNumberOfModuleRefs(lpDrv->d.d32.hModule, &lpDrv0) == 1 &&
-                    (lpDrv0->dwFlags & WINE_GDF_SESSION))
-                {
-                    DRIVER_SendMessage(lpDrv0, DRV_CLOSE, 0L, 0L);
-                    lpDrv0->d.d32.dwDriverID = 0;
-                    DRIVER_RemoveFromList(lpDrv0);
-                    FreeLibrary(lpDrv0->d.d32.hModule);
-                    HeapFree(GetProcessHeap(), 0, lpDrv0);
-                }
-                FreeLibrary(lpDrv->d.d32.hModule);
+        DRIVER_RemoveFromList(lpDrv);
+
+        if (!(lpDrv->dwFlags & WINE_GDF_16BIT))
+        {
+            LPWINE_DRIVER lpDrv0;
+
+            if (lpDrv->dwFlags & WINE_GDF_SESSION)
+                FIXME("WINE_GDF_SESSION: Shouldn't happen (%p)\n", lpDrv);
+            /* if driver has an opened session instance, we have to close it too */
+            if (DRIVER_GetNumberOfModuleRefs(lpDrv->d.d32.hModule, &lpDrv0) == 1 &&
+                (lpDrv0->dwFlags & WINE_GDF_SESSION))
+            {
+                DRIVER_SendMessage(lpDrv0, DRV_CLOSE, 0, 0);
+                DRIVER_RemoveFromList(lpDrv0);
+                FreeLibrary(lpDrv0->d.d32.hModule);
+                HeapFree(GetProcessHeap(), 0, lpDrv0);
             }
-            HeapFree(GetProcessHeap(), 0, lpDrv);
-            return TRUE;
+            FreeLibrary(lpDrv->d.d32.hModule);
         }
+        HeapFree(GetProcessHeap(), 0, lpDrv);
+        ret = TRUE;
     }
-    WARN("Failed to close driver\n");
-    return FALSE;
+    else
+    {
+        WARN("Failed to close driver\n");
+        ret = FALSE;
+    }
+
+    DRIVER_Dump("AFTER:");
+
+    return ret;
 }
 
 /**************************************************************************
@@ -580,11 +638,25 @@ void    DRIVER_UnloadAll(void)
     LPWINE_DRIVER 	lpNextDrv = NULL;
     unsigned            count = 0;
 
+restart:
+    EnterCriticalSection( &mmdriver_lock );
+
     for (lpDrv = lpDrvItemList; lpDrv != NULL; lpDrv = lpNextDrv)
     {
         lpNextDrv = lpDrv->lpNextItem;
-        CloseDriver((HDRVR)lpDrv, 0, 0);
-        count++;
+
+        /* session instances will be unloaded automatically */
+        if (!(lpDrv->dwFlags & WINE_GDF_SESSION))
+        {
+            LeaveCriticalSection( &mmdriver_lock );
+            CloseDriver((HDRVR)lpDrv, 0, 0);
+            count++;
+            /* restart from the beginning of the list */
+            goto restart;
+        }
     }
+
+    LeaveCriticalSection( &mmdriver_lock );
+
     TRACE("Unloaded %u drivers\n", count);
 }
