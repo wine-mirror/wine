@@ -108,7 +108,7 @@ BASEDIRS = \
 	ole32 \
 	oleacc \
 	oleaut32 \
-	olecli \
+	olecli32 \
 	oledlg \
 	olepro32 \
 	olesvr \
@@ -782,8 +782,8 @@ oleaut32.dll.so: oleaut32/oleaut32.dll.so
 ole2disp.dll.so typelib.dll.so : oleaut32.dll.so
 	$(RM) $@ && $(LN_S) oleaut32.dll.so $@
 
-olecli32.dll.so: olecli/olecli32.dll.so
-	$(RM) $@ && $(LN_S) olecli/olecli32.dll.so $@
+olecli32.dll.so: olecli32/olecli32.dll.so
+	$(RM) $@ && $(LN_S) olecli32/olecli32.dll.so $@
 
 olecli.dll.so : olecli32.dll.so
 	$(RM) $@ && $(LN_S) olecli32.dll.so $@
@@ -1072,7 +1072,6 @@ IMPORT_SYMLINKS = \
 	liblz32.$(IMPLIBEXT) \
 	libmsacm32.$(IMPLIBEXT) \
 	libmsvfw32.$(IMPLIBEXT) \
-	libolecli32.$(IMPLIBEXT) \
 	libolesvr32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
 	libwinnls32.$(IMPLIBEXT) \
@@ -1152,7 +1151,7 @@ IMPORT_LIBS = \
 	ole32/libole32.$(IMPLIBEXT) \
 	oleacc/liboleacc.$(IMPLIBEXT) \
 	oleaut32/liboleaut32.$(IMPLIBEXT) \
-	olecli/libolecli32.$(IMPLIBEXT) \
+	olecli32/libolecli32.$(IMPLIBEXT) \
 	oledlg/liboledlg.$(IMPLIBEXT) \
 	olepro32/libolepro32.$(IMPLIBEXT) \
 	olesvr/libolesvr32.$(IMPLIBEXT) \
@@ -1396,8 +1395,8 @@ oleacc/liboleacc.$(IMPLIBEXT): oleacc/oleacc.spec $(WINEBUILD)
 oleaut32/liboleaut32.$(IMPLIBEXT): oleaut32/oleaut32.spec $(WINEBUILD)
 	@cd oleaut32 && $(MAKE) liboleaut32.$(IMPLIBEXT)
 
-olecli/libolecli32.$(IMPLIBEXT): olecli/olecli32.spec $(WINEBUILD)
-	@cd olecli && $(MAKE) libolecli32.$(IMPLIBEXT)
+olecli32/libolecli32.$(IMPLIBEXT): olecli32/olecli32.spec $(WINEBUILD)
+	@cd olecli32 && $(MAKE) libolecli32.$(IMPLIBEXT)
 
 oledlg/liboledlg.$(IMPLIBEXT): oledlg/oledlg.spec $(WINEBUILD)
 	@cd oledlg && $(MAKE) liboledlg.$(IMPLIBEXT)
@@ -1555,9 +1554,6 @@ libmsacm32.$(IMPLIBEXT): msacm/libmsacm32.$(IMPLIBEXT)
 libmsvfw32.$(IMPLIBEXT): msvideo/libmsvfw32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.$(IMPLIBEXT) $@
 
-libolecli32.$(IMPLIBEXT): olecli/libolecli32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) olecli/libolecli32.$(IMPLIBEXT) $@
-
 libolesvr32.$(IMPLIBEXT): olesvr/libolesvr32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) olesvr/libolesvr32.$(IMPLIBEXT) $@
 
@@ -1678,7 +1674,7 @@ odbccp32/odbccp32.dll.so: odbccp32
 ole32/ole32.dll.so: ole32
 oleacc/oleacc.dll.so: oleacc
 oleaut32/oleaut32.dll.so: oleaut32
-olecli/olecli32.dll.so: olecli
+olecli32/olecli32.dll.so: olecli32
 oledlg/oledlg.dll.so: oledlg
 olepro32/olepro32.dll.so: olepro32
 olesvr/olesvr32.dll.so: olesvr

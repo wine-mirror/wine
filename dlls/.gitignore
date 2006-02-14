@@ -9,7 +9,6 @@ libkernel32.def
 liblz32.def
 libmsacm32.def
 libmsvfw32.def
-libolecli32.def
 libolesvr32.def
 libuser32.def
 libw32skrnl.def

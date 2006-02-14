@@ -1562,7 +1562,7 @@ dlls/ole32/tests/Makefile
 dlls/oleacc/Makefile
 dlls/oleaut32/Makefile
 dlls/oleaut32/tests/Makefile
-dlls/olecli/Makefile
+dlls/olecli32/Makefile
 dlls/oledlg/Makefile
 dlls/olepro32/Makefile
 dlls/olesvr/Makefile
