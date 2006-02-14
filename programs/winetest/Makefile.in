@@ -50,6 +50,7 @@ TESTBINS = \
 	oleaut32_test.exe$(DLLEXT) \
 	psapi_test.exe$(DLLEXT) \
 	quartz_test.exe$(DLLEXT) \
+	riched20_test.exe$(DLLEXT) \
 	rpcrt4_test.exe$(DLLEXT) \
 	rsabase_test.exe$(DLLEXT) \
 	rsaenh_test.exe$(DLLEXT) \
@@ -155,6 +156,8 @@ psapi_test.exe$(DLLEXT): $(DLLDIR)/psapi/tests/psapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/psapi/tests/psapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 quartz_test.exe$(DLLEXT): $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT)
 	cp $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT) $@ && $(STRIP) $@
+riched20_test.exe$(DLLEXT): $(DLLDIR)/riched20/tests/riched20_test.exe$(DLLEXT)
+	cp $(DLLDIR)/riched20/tests/riched20_test.exe$(DLLEXT) $@ && $(STRIP) $@
 rpcrt4_test.exe$(DLLEXT): $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT) $@ && $(STRIP) $@
 rsabase_test.exe$(DLLEXT): $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT)
