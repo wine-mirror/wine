@@ -2033,7 +2033,7 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
   if (dispIdMember == DISPID_PICT_TYPE)
   {
     TRACE("DISPID_PICT_TYPE\n");
-    if (wFlags & ~INVOKE_PROPERTYGET)
+    if (!(wFlags & INVOKE_PROPERTYGET))
         return DISP_E_PARAMNOTFOUND;
     if (pDispParams->cArgs != 0)
         return DISP_E_BADPARAMCOUNT;
