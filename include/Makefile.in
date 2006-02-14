@@ -236,6 +236,7 @@ WINDOWS_INCLUDES = \
 	security.h \
 	sensapi.h \
 	setupapi.h \
+	sfc.h \
 	shellapi.h \
 	shlguid.h \
 	shlobj.h \
