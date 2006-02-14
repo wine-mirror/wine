@@ -69,6 +69,7 @@ static void init_thread( struct wine_pthread_thread_info *info )
         pthread_attr_t attr;
         pthread_getattr_np( pthread_self(), &attr );
         pthread_attr_getstack( &attr, &info->stack_base, &info->stack_size );
+        pthread_attr_destroy( &attr );
 #elif defined(HAVE_PTHREAD_GET_STACKSIZE_NP) && defined(HAVE_PTHREAD_GET_STACKADDR_NP)
         char dummy;
         info->stack_size = pthread_get_stacksize_np(pthread_self());
