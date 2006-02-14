@@ -76,7 +76,7 @@ static int syntax_error;
 DIGIT	   [0-9]
 HEXDIGIT   [0-9a-fA-F]
 FORMAT     [ubcdgiswx]
-IDENTIFIER [_a-zA-Z~][_a-zA-Z0-9~@]*
+IDENTIFIER [_a-zA-Z~?][_a-zA-Z0-9~?@]*
 PATHNAME   [-/_a-zA-Z\.~][-/_a-zA-Z0-9\.~@]*
 STRING     \"[^\n"]+\"
 
