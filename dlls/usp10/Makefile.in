@@ -9,6 +9,8 @@ IMPORTS   = kernel32
 C_SRCS = \
 	usp10.c
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

@@ -181,3 +181,34 @@ HRESULT WINAPI ScriptIsComplex(const WCHAR* pwcInChars, int cInChars, DWORD dwFl
   FIXME("(%s,%d,0x%lx): stub\n",  debugstr_w(pwcInChars), cInChars, dwFlags);
    return E_NOTIMPL;
 }
+/***********************************************************************
+ *      ScriptShape (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars, 
+                           int cChars, int cMaxGlyphs,
+                           SCRIPT_ANALYSIS *psa, WORD *pwOutGlyphs, WORD *pwLogClust, 
+                           SCRIPT_VISATTR *psva, int *pcGlyphs)
+{
+    FIXME("(%p,%p,%p,%s,%d,%d, %p, %p, %p, %p): stub\n",  hdc, psc, pwcChars,
+                                       debugstr_w(pwcChars), 
+                                       cChars, cMaxGlyphs,
+                                       psa, pwOutGlyphs, psva, pcGlyphs);
+    return E_NOTIMPL;
+
+}
+/***********************************************************************
+ *      ScriptPlace (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs, 
+                           int cGlyphs, const SCRIPT_VISATTR *psva,
+                           SCRIPT_ANALYSIS *psa, int *piAdvance, GOFFSET *pGoffset, ABC *pABC )
+{
+    FIXME("(%p,%p,%p,%s,%d, %p, %p, %p): stub\n",  hdc, psc, pwGlyphs,
+                                                debugstr_w(pwGlyphs), 
+                                                cGlyphs, psva, psa, 
+                                                piAdvance);
+    return E_NOTIMPL;
+
+}

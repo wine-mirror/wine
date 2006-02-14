@@ -14,9 +14,9 @@
 @ stdcall ScriptItemize(wstr long long ptr ptr ptr ptr)
 @ stub ScriptJustify
 @ stub ScriptLayout
-@ stub ScriptPlace
+@ stdcall ScriptPlace(ptr ptr ptr long ptr ptr ptr ptr ptr)
 @ stdcall ScriptRecordDigitSubstitution(ptr ptr)
-@ stub ScriptShape
+@ stdcall ScriptShape(ptr ptr ptr long long ptr ptr ptr ptr ptr)
 @ stdcall ScriptStringAnalyse(ptr ptr long long long long long ptr ptr ptr ptr ptr ptr)
 @ stub ScriptStringCPtoX
 @ stdcall ScriptStringFree(ptr)
