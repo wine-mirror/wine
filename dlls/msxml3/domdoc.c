@@ -656,8 +656,16 @@ static HRESULT WINAPI domdoc_getElementsByTagName(
     BSTR tagName,
     IXMLDOMNodeList** resultList )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    xmlChar *name;
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_w(tagName), resultList);
+
+    name = xmlChar_from_wchar((WCHAR*)tagName);
+    *resultList = create_filtered_nodelist((xmlNodePtr)get_doc(This), name, TRUE);
+    HeapFree(GetProcessHeap(), 0, name);
+
+    if(!*resultList) return S_FALSE;
+    return S_OK;
 }
 
 static DOMNodeType get_node_type(VARIANT Type)

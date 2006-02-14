@@ -52,7 +52,7 @@ struct xslt_info {
     xsltStylesheetPtr sheet;
 };
 
-static void xlst_info_init( struct xslt_info *info )
+static void xslt_info_init( struct xslt_info *info )
 {
     info->ctxt = NULL;
     info->pattern = NULL;
@@ -86,7 +86,10 @@ void free_xslt_info( struct xslt_info *info )
         xsltFreeTransformContext( info->ctxt );
 }
 
-static HRESULT xslt_next_match( struct xslt_info *info, xmlNodePtr *node )
+
+static xmlNodePtr get_next_node( struct xslt_info *info, xmlNodePtr node, xmlNodePtr *top_level_node );
+
+static HRESULT xslt_next_match( struct xslt_info *info, xmlNodePtr *node, xmlNodePtr *top_level_node )
 {
     if (!info->ctxt)
         return S_FALSE;
@@ -107,7 +110,7 @@ static HRESULT xslt_next_match( struct xslt_info *info, xmlNodePtr *node )
             ERR("Pattern match failed\n");
             return E_FAIL;
         }
-        *node = (*node)->next;
+        *node = get_next_node(info, *node, top_level_node);
     }
     return S_OK;
 }
@@ -118,7 +121,7 @@ struct xslt_info {
     /* empty */
 };
 
-static void xlst_info_init( struct xslt_info *info )
+static void xslt_info_init( struct xslt_info *info )
 {
 }
 
@@ -132,12 +135,33 @@ static int create_xslt_parser( struct xslt_info *info, xmlNodePtr node, const xm
     return 0;
 }
 
-static HRESULT xslt_next_match( struct xslt_info *info, xmlNodePtr *node )
+static HRESULT xslt_next_match( struct xslt_info *info, xmlNodePtr *node, xmlNodePtr *top_level_node )
 {
     return S_FALSE;
 }
 
 #endif
+
+static xmlNodePtr get_next_node( struct xslt_info *info, xmlNodePtr node, xmlNodePtr *top_level_node )
+{
+    if(!top_level_node) return node->next;
+
+    if(node->children) return node->children;
+    if(node->next)
+    {
+        if(node == *top_level_node)
+            *top_level_node = node->next;
+        return node->next;
+    }
+
+    if(node != *top_level_node && node->parent)
+    {
+        if(node->parent == *top_level_node)
+            *top_level_node = node->parent->next;
+        return node->parent->next;
+    }
+    return NULL;
+}
 
 typedef struct _xmlnodelist
 {
@@ -145,6 +169,8 @@ typedef struct _xmlnodelist
     LONG ref;
     xmlNodePtr node;
     xmlNodePtr current;
+    xmlNodePtr top_level_node;
+    BOOL enum_children;
     struct xslt_info xinfo;
 } xmlnodelist;
 
@@ -252,7 +278,8 @@ static HRESULT WINAPI xmlnodelist_get_item(
         IXMLDOMNode** listItem)
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
-    xmlNodePtr curr;
+    xmlNodePtr curr, tmp;
+    xmlNodePtr *top_level_node = NULL;
     long nodeIndex = 0;
     HRESULT r;
 
@@ -265,12 +292,18 @@ static HRESULT WINAPI xmlnodelist_get_item(
 
     curr = This->node;
 
+    if(This->enum_children)
+    {
+        tmp = curr;
+        top_level_node = &tmp;
+    }
+
     while(curr)
     {
-        r = xslt_next_match( &This->xinfo, &curr );
+        r = xslt_next_match( &This->xinfo, &curr, top_level_node);
         if(FAILED(r) || !curr) return S_FALSE;
         if(nodeIndex++ == index) break;
-        curr = curr->next;
+        curr = get_next_node(&This->xinfo, curr, top_level_node);
     }
     if(!curr) return S_FALSE;
 
@@ -284,7 +317,8 @@ static HRESULT WINAPI xmlnodelist_get_length(
         long* listLength)
 {
 
-    xmlNodePtr curr;
+    xmlNodePtr curr, tmp;
+    xmlNodePtr *top_level_node = NULL;
     long nodeCount = 0;
     HRESULT r;
 
@@ -297,9 +331,15 @@ static HRESULT WINAPI xmlnodelist_get_length(
 	return S_OK;
     }
         
-    for(curr = This->node; curr; curr = curr->next)
+    if(This->enum_children)
     {
-        r = xslt_next_match( &This->xinfo, &curr );
+        tmp = curr;
+        top_level_node = &tmp;
+    }
+
+    for(curr = This->node; curr; curr = get_next_node(&This->xinfo, curr, top_level_node))
+    {
+        r = xslt_next_match( &This->xinfo, &curr, top_level_node );
         if(FAILED(r) || !curr) break;
         nodeCount++;
     }
@@ -314,10 +354,14 @@ static HRESULT WINAPI xmlnodelist_nextNode(
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
     HRESULT r;
+    xmlNodePtr *top_level_node = NULL;
 
     TRACE("%p %p\n", This, nextItem );
 
-    r = xslt_next_match( &This->xinfo, &This->current );
+    if(This->enum_children)
+        top_level_node = &This->top_level_node;
+
+    r = xslt_next_match( &This->xinfo, &This->current, top_level_node );
     if (FAILED(r) )
         return r;
 
@@ -325,7 +369,7 @@ static HRESULT WINAPI xmlnodelist_nextNode(
         return S_FALSE;
 
     *nextItem = create_node( This->current );
-    This->current = This->current->next;
+    This->current = get_next_node(&This->xinfo, This->current, top_level_node);
     return S_OK;
 }
 
@@ -375,8 +419,10 @@ static xmlnodelist *new_nodelist( xmlNodePtr node )
     nodelist->lpVtbl = &xmlnodelist_vtbl;
     nodelist->ref = 1;
     nodelist->node = node;
-    nodelist->current = node;
-    xlst_info_init( &nodelist->xinfo );
+    nodelist->current = node; 
+    nodelist->top_level_node = node;
+    nodelist->enum_children = FALSE;
+    xslt_info_init( &nodelist->xinfo );
 
     xmldoc_add_ref( node->doc );
 
@@ -391,12 +437,15 @@ IXMLDOMNodeList* create_nodelist( xmlNodePtr node )
     return (IXMLDOMNodeList*) &nodelist->lpVtbl;
 }
 
-IXMLDOMNodeList* create_filtered_nodelist( xmlNodePtr node, const xmlChar *str )
+IXMLDOMNodeList* create_filtered_nodelist( xmlNodePtr node, const xmlChar *str, BOOL enum_children )
 {
     xmlnodelist *This = new_nodelist( node );
 
     if (create_xslt_parser( &This->xinfo, node, str ))
+    {
+        This->enum_children = enum_children;
         return (IXMLDOMNodeList*) &This->lpVtbl;
+    }
 
     IXMLDOMNodeList_Release( (IXMLDOMNodeList*) &This->lpVtbl );
     return NULL;

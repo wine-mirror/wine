@@ -73,6 +73,7 @@ static const WCHAR szlc[] = { 'l','c',0 };
 static const WCHAR szbs[] = { 'b','s',0 };
 static const WCHAR szstr1[] = { 's','t','r','1',0 };
 static const WCHAR szstr2[] = { 's','t','r','2',0 };
+static const WCHAR szstar[] = { '*',0 };
 
 void test_domdoc( void )
 {
@@ -775,6 +776,64 @@ static void test_create(void)
     IXMLDOMDocument_Release( doc );
 }
 
+static void test_getElementsByTagName(void)
+{
+    HRESULT r;
+    BSTR str;
+    VARIANT_BOOL b;
+    IXMLDOMDocument *doc;
+    IXMLDOMNodeList *node_list;
+    LONG len;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    str = SysAllocString( szstar );
+    r = IXMLDOMDocument_getElementsByTagName(doc, str, &node_list);
+    ok( r == S_OK, "ret %08lx\n", r );
+    r = IXMLDOMNodeList_get_length( node_list, &len );
+    ok( r == S_OK, "ret %08lx\n", r );
+    ok( len == 3, "len %ld\n", len );
+    IXMLDOMNodeList_Release( node_list );
+    SysFreeString( str );
+
+    str = SysAllocString( szbs );
+    r = IXMLDOMDocument_getElementsByTagName(doc, str, &node_list);
+    ok( r == S_OK, "ret %08lx\n", r );
+    r = IXMLDOMNodeList_get_length( node_list, &len );
+    ok( r == S_OK, "ret %08lx\n", r );
+    ok( len == 1, "len %ld\n", len );
+    IXMLDOMNodeList_Release( node_list );
+    SysFreeString( str );
+
+    str = SysAllocString( szdl );
+    r = IXMLDOMDocument_getElementsByTagName(doc, str, &node_list);
+    ok( r == S_OK, "ret %08lx\n", r );
+    r = IXMLDOMNodeList_get_length( node_list, &len );
+    ok( r == S_OK, "ret %08lx\n", r );
+    ok( len == 0, "len %ld\n", len );
+    IXMLDOMNodeList_Release( node_list );
+    SysFreeString( str );
+
+    str = SysAllocString( szstr1 );
+    r = IXMLDOMDocument_getElementsByTagName(doc, str, &node_list);
+    ok( r == S_OK, "ret %08lx\n", r );
+    r = IXMLDOMNodeList_get_length( node_list, &len );
+    ok( r == S_OK, "ret %08lx\n", r );
+    ok( len == 0, "len %ld\n", len );
+    IXMLDOMNodeList_Release( node_list );
+    SysFreeString( str );
+
+    IXMLDOMDocument_Release( doc );
+}
 
 START_TEST(domdoc)
 {
@@ -787,6 +846,7 @@ START_TEST(domdoc)
     test_domnode();
     test_refs();
     test_create();
+    test_getElementsByTagName();
 
     CoUninitialize();
 }

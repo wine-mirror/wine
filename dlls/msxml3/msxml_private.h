@@ -37,7 +37,7 @@ extern IUnknown         *create_element( xmlNodePtr element );
 extern IUnknown         *create_text( xmlNodePtr text );
 extern IXMLDOMNodeList  *create_nodelist( xmlNodePtr node );
 extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
-extern IXMLDOMNodeList  *create_filtered_nodelist( xmlNodePtr, const xmlChar * );
+extern IXMLDOMNodeList  *create_filtered_nodelist( xmlNodePtr, const xmlChar *, BOOL );
 
 extern void attach_xmlnode( IXMLDOMNode *node, xmlNodePtr xmlnode );
 

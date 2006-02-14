@@ -314,11 +314,11 @@ static HRESULT WINAPI xmlnode_get_childNodes(
     switch(This->node->type)
     {
     case XML_ELEMENT_NODE:
-        *childList = create_filtered_nodelist( This->node->children, (const xmlChar *)"*" );
+        *childList = create_filtered_nodelist( This->node->children, (const xmlChar *)"*", FALSE );
         break;
 
     case XML_ATTRIBUTE_NODE:
-        *childList = create_filtered_nodelist( This->node->children, (const xmlChar *)"node()" );
+        *childList = create_filtered_nodelist( This->node->children, (const xmlChar *)"node()", FALSE );
         break;
 
     default:
@@ -620,7 +620,7 @@ static HRESULT WINAPI xmlnode_selectNodes(
     if( !This->node->children )
         return S_FALSE;
 
-    *resultList = create_filtered_nodelist( This->node->children, str );
+    *resultList = create_filtered_nodelist( This->node->children, str, FALSE );
     HeapFree( GetProcessHeap(), 0, str );
     return S_OK;
 }
