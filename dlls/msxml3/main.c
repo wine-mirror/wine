@@ -82,3 +82,10 @@ HRESULT WINAPI DllRegisterServer(void)
                      "msxml3.dll" );
     return r;
 }
+
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    RegDeleteKeyA( HKEY_CLASSES_ROOT, "CLSID\\{2933BF90-7B36-11D2-B20E-00C04F983E60}\\InProcServer32" );
+    RegDeleteKeyA( HKEY_CLASSES_ROOT, "CLSID\\{2933BF90-7B36-11D2-B20E-00C04F983E60}" );
+    return S_OK;
+}
