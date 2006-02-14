@@ -212,3 +212,14 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     return E_NOTIMPL;
 
 }
+
+/***********************************************************************
+ *      ScriptGetCMap (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars,
+			      int cChars, DWORD dwFlags, WORD *pwOutGlyphs)
+{
+    FIXME("(%p,%p,%s,%d,0x%lx,%p): stub\n", hdc, psc, debugstr_w(pwcInChars), cChars, dwFlags, pwOutGlyphs);
+    return E_NOTIMPL;
+}
