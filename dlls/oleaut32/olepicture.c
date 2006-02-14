@@ -279,7 +279,13 @@ static OLEPictureImpl* OLEPictureImpl_Construct(LPPICTDESC pictDesc, BOOL fOwn)
   newObject->lpvtblIPersistStream = &OLEPictureImpl_IPersistStream_VTable;
   newObject->lpvtblIConnectionPointContainer = &OLEPictureImpl_IConnectionPointContainer_VTable;
 
+  newObject->pCP = NULL;
   CreateConnectionPoint((IUnknown*)newObject,&IID_IPropertyNotifySink,&newObject->pCP);
+  if (!newObject->pCP)
+  {
+    HeapFree(GetProcessHeap(), 0, newObject);
+    return NULL;
+  }
 
   /*
    * Start with one reference count. The caller of this function
@@ -348,6 +354,9 @@ static OLEPictureImpl* OLEPictureImpl_Construct(LPPICTDESC pictDesc, BOOL fOwn)
 static void OLEPictureImpl_Destroy(OLEPictureImpl* Obj)
 {
   TRACE("(%p)\n", Obj);
+
+  if (Obj->pCP)
+    IConnectionPoint_Release(Obj->pCP);
 
   if(Obj->fOwn) { /* We need to destroy the picture */
     switch(Obj->desc.picType) {
