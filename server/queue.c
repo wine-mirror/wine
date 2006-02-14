@@ -1222,14 +1222,14 @@ static void queue_hardware_message( struct msg_queue *queue, struct message *msg
 {
     user_handle_t win;
     struct thread *thread;
-    struct thread_input *input;
+    struct thread_input *input = queue ? queue->input : foreground_input;
     unsigned int msg_code;
 
     last_input_time = get_tick_count();
-
-    win = find_hardware_message_window( queue ? queue->input : foreground_input, msg, &msg_code );
+    win = find_hardware_message_window( input, msg, &msg_code );
     if (!win || !(thread = get_window_thread(win)))
     {
+        if (input) update_input_key_state( input, msg );
         free( msg );
         return;
     }
