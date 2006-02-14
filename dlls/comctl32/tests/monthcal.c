@@ -31,13 +31,32 @@
 void test_monthcal(void)
 {
     HWND hwnd;
-    SYSTEMTIME st[2];
+    SYSTEMTIME st[2], st1[2];
     INITCOMMONCONTROLSEX ic = {sizeof(INITCOMMONCONTROLSEX), ICC_DATE_CLASSES};
 
     InitCommonControlsEx(&ic);
     hwnd = CreateWindowA(MONTHCAL_CLASSA, "MonthCal", WS_POPUP | WS_VISIBLE, CW_USEDEFAULT,
                          0, 300, 300, 0, 0, NULL, NULL);
     ok(hwnd != NULL, "Failed to create MonthCal\n");
+    GetSystemTime(&st[0]);
+    st[1] = st[0];
+
+    /* Invalid date/time */
+    st[0].wYear  = 2000;
+    /* Time should not matter */
+    st[1].wHour = st[1].wMinute = st[1].wSecond = 70;
+    ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MAX, (LPARAM)st), "Failed to set MAX limit\n");
+    ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MAX, "No limits should be set\n");
+    ok(st1[0].wYear != 2000, "Lover limit changed\n");
+
+    st[1].wMonth = 0;
+    ok(!SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN | GDTR_MAX, (LPARAM)st), "Should have failed to set limits\n");
+    ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MAX, "No limits should be set\n");
+    ok(st1[0].wYear != 2000, "Lover limit changed\n");
+    ok(!SendMessage(hwnd, MCM_SETRANGE, GDTR_MAX, (LPARAM)st), "Should have failed to set MAX limit\n");
+    ok(SendMessage(hwnd, MCM_GETRANGE, 0, (LPARAM)st1) == GDTR_MAX, "No limits should be set\n");
+    ok(st1[0].wYear != 2000, "Lover limit changed\n");
+
     GetSystemTime(&st[0]);
     st[0].wMonth = 5;
     st[1] = st[0];
