@@ -3,7 +3,6 @@ Makefile
 Makeimplib.rules
 Maketest.rules
 libcomdlg32.def
-libctl3d32.def
 libgdi32.def
 libkernel32.def
 liblz32.def

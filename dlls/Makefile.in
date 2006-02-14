@@ -33,7 +33,7 @@ BASEDIRS = \
 	crtdll \
 	crypt32 \
 	cryptdll \
-	ctl3d \
+	ctl3d32 \
 	d3dim \
 	d3drm \
 	d3dxof \
@@ -502,8 +502,8 @@ crypt32.dll.so: crypt32/crypt32.dll.so
 cryptdll.dll.so: cryptdll/cryptdll.dll.so
 	$(RM) $@ && $(LN_S) cryptdll/cryptdll.dll.so $@
 
-ctl3d32.dll.so: ctl3d/ctl3d32.dll.so
-	$(RM) $@ && $(LN_S) ctl3d/ctl3d32.dll.so $@
+ctl3d32.dll.so: ctl3d32/ctl3d32.dll.so
+	$(RM) $@ && $(LN_S) ctl3d32/ctl3d32.dll.so $@
 
 ctl3d.dll.so ctl3dv2.dll.so : ctl3d32.dll.so
 	$(RM) $@ && $(LN_S) ctl3d32.dll.so $@
@@ -1066,7 +1066,6 @@ STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
 
 IMPORT_SYMLINKS = \
 	libcomdlg32.$(IMPLIBEXT) \
-	libctl3d32.$(IMPLIBEXT) \
 	libgdi32.$(IMPLIBEXT) \
 	libkernel32.$(IMPLIBEXT) \
 	liblz32.$(IMPLIBEXT) \
@@ -1100,7 +1099,7 @@ IMPORT_LIBS = \
 	crtdll/libcrtdll.$(IMPLIBEXT) \
 	crypt32/libcrypt32.$(IMPLIBEXT) \
 	cryptdll/libcryptdll.$(IMPLIBEXT) \
-	ctl3d/libctl3d32.$(IMPLIBEXT) \
+	ctl3d32/libctl3d32.$(IMPLIBEXT) \
 	d3d8/libd3d8.$(IMPLIBEXT) \
 	d3d9/libd3d9.$(IMPLIBEXT) \
 	d3dim/libd3dim.$(IMPLIBEXT) \
@@ -1244,8 +1243,8 @@ crypt32/libcrypt32.$(IMPLIBEXT): crypt32/crypt32.spec $(WINEBUILD)
 cryptdll/libcryptdll.$(IMPLIBEXT): cryptdll/cryptdll.spec $(WINEBUILD)
 	@cd cryptdll && $(MAKE) libcryptdll.$(IMPLIBEXT)
 
-ctl3d/libctl3d32.$(IMPLIBEXT): ctl3d/ctl3d32.spec $(WINEBUILD)
-	@cd ctl3d && $(MAKE) libctl3d32.$(IMPLIBEXT)
+ctl3d32/libctl3d32.$(IMPLIBEXT): ctl3d32/ctl3d32.spec $(WINEBUILD)
+	@cd ctl3d32 && $(MAKE) libctl3d32.$(IMPLIBEXT)
 
 d3d8/libd3d8.$(IMPLIBEXT): d3d8/d3d8.spec $(WINEBUILD)
 	@cd d3d8 && $(MAKE) libd3d8.$(IMPLIBEXT)
@@ -1535,9 +1534,6 @@ wtsapi32/libwtsapi32.$(IMPLIBEXT): wtsapi32/wtsapi32.spec $(WINEBUILD)
 libcomdlg32.$(IMPLIBEXT): commdlg/libcomdlg32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) commdlg/libcomdlg32.$(IMPLIBEXT) $@
 
-libctl3d32.$(IMPLIBEXT): ctl3d/libctl3d32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) ctl3d/libctl3d32.$(IMPLIBEXT) $@
-
 libgdi32.$(IMPLIBEXT): gdi/libgdi32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) gdi/libgdi32.$(IMPLIBEXT) $@
 
@@ -1587,7 +1583,7 @@ commdlg/comdlg32.dll.so: commdlg
 crtdll/crtdll.dll.so: crtdll
 crypt32/crypt32.dll.so: crypt32
 cryptdll/cryptdll.dll.so: cryptdll
-ctl3d/ctl3d32.dll.so: ctl3d
+ctl3d32/ctl3d32.dll.so: ctl3d32
 d3d8/d3d8.dll.so: d3d8
 d3d9/d3d9.dll.so: d3d9
 d3dim/d3dim.dll.so: d3dim

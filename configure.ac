@@ -1457,7 +1457,7 @@ dlls/crtdll/Makefile
 dlls/crypt32/Makefile
 dlls/crypt32/tests/Makefile
 dlls/cryptdll/Makefile
-dlls/ctl3d/Makefile
+dlls/ctl3d32/Makefile
 dlls/d3d8/Makefile
 dlls/d3d9/Makefile
 dlls/d3d9/tests/Makefile
