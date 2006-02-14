@@ -33,12 +33,14 @@
 #define IDS_HIDE_ADVANCED               7
 #define IDS_NOTHEME                     8
 #define IDS_TAB_GRAPHICS                9
-#define IDS_TAB_APPEARANCE              10
+#define IDS_TAB_DESKTOP_INTEGRATION     10
 #define IDS_TAB_AUDIO                   11
 #define IDS_TAB_ABOUT                   12
 #define IDS_WINECFG_TITLE               13
 #define IDS_THEMEFILE                   14
 #define IDS_THEMEFILE_SELECT            15
+#define IDS_SHELL_FOLDER                16
+#define IDS_LINKS_TO                    17
 #define IDD_MAINDLG                     101
 #define IDB_WINE                        104
 #define IDD_ABOUTCFG                    107
@@ -48,7 +50,7 @@
 #define IDD_DLLCFG                      111
 #define IDD_DRIVECFG                    112
 #define IDD_DRIVE_EDIT                  114
-#define IDD_APPEARANCE                  115
+#define IDD_DESKTOP_INTEGRATION         115
 #define IDB_WINE_LOGO                   200
 #define IDC_TABABOUT                    1001
 #define IDC_APPLYBTN                    1002
@@ -149,10 +151,14 @@
 #define IDB_DEVICE                      1307
 #define IDS_AUDIO_MISSING               1308
 
-/* appearance tab */
+/* desktop integration tab */
 #define IDC_THEME_COLORCOMBO            1401
 #define IDC_THEME_COLORTEXT             1402
 #define IDC_THEME_SIZECOMBO             1403
 #define IDC_THEME_SIZETEXT              1404
 #define IDC_THEME_THEMECOMBO            1405
 #define IDC_THEME_INSTALL               1406
+#define IDC_LIST_SFPATHS                1407
+#define IDC_LINK_SFPATH                 1408
+#define IDC_EDIT_SFPATH                 1409
+#define IDC_BROWSE_SFPATH               1410

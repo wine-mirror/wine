@@ -169,17 +169,24 @@ BEGIN
     CONTROL         "Treiber Emulation",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
 END
 
-IDD_APPEARANCE DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Motiv:",IDC_STATIC,8,10,244,8
-    COMBOBOX        IDC_THEME_THEMECOMBO,8,18,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Motiv installieren...",IDC_THEME_INSTALL,152,32,100,14
-    LTEXT           "Farbe:",IDC_THEME_COLORTEXT,8,48,244,8
-    COMBOBOX        IDC_THEME_COLORCOMBO,8,56,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Größe:",IDC_THEME_SIZETEXT,8,74,244,8
-    COMBOBOX        IDC_THEME_SIZECOMBO,8,82,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+   GROUPBOX        " Darstellung ",IDC_STATIC,8,4,244,106
+   LTEXT           "Motiv:",IDC_STATIC,15,16,230,8
+   COMBOBOX        IDC_THEME_THEMECOMBO,15,24,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+   PUSHBUTTON      "Motiv installieren...",IDC_THEME_INSTALL,152,38,93,14
+   LTEXT           "Farbe:",IDC_THEME_COLORTEXT,15,54,230,8
+   COMBOBOX        IDC_THEME_COLORCOMBO,15,62,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+   LTEXT           "Größe:",IDC_THEME_SIZETEXT,15,80,230,8
+   COMBOBOX        IDC_THEME_SIZECOMBO,15,88,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+   GROUPBOX        " Shell Ordner ",IDC_STATIC,8,114,244,100
+   CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
+   CONTROL         "Verknüpfe:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+   EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+   PUSHBUTTON      "Wählen",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -188,18 +195,20 @@ BEGIN
     IDS_TAB_APPLICATIONS    "Anwendungen"
     IDS_TAB_DLLS            "Bibliotheken"
     IDS_TAB_DRIVES          "Laufwerke"
-    IDS_CHOOSE_PATH         "Bitte wählen Sie ein Unix-Verzeichnis für das Laufwerk."
+    IDS_CHOOSE_PATH         "Bitte wählen Sie das Ziel-Unix-Verzeichnis."
     IDS_HIDE_ADVANCED       "Verstecke Erweitert"
     IDS_SHOW_ADVANCED       "Zeige Erweitert"
     IDS_NOTHEME             "(Kein Motiv)"
     IDS_TAB_GRAPHICS        "Grafik"
-    IDS_TAB_APPEARANCE      "Darstellung"
+    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
     IDS_TAB_AUDIO           "Audio"
     IDS_TAB_ABOUT           "Über"
     IDS_WINECFG_TITLE       "Wine-Konfiguration"
     IDS_THEMEFILE           "Motiv-Dateien"
     IDS_THEMEFILE_SELECT    "Motiv-Datei auswählen"
     IDS_AUDIO_MISSING       "Zur Zeit ist kein Audio Treiber in der Registry eingetragen.\n\nEin bevorzugter Treiber wurde für Sie ausgewählt.\nSie können diesen Treiber nutzen oder einen anderen auswählen, sofern dieser vorhanden ist.\n\nSie müssen auf Anwenden klicken, damit die Änderung übernommen wird."
+    IDS_SHELL_FOLDER        "Shell Ordner"
+    IDS_LINKS_TO            "Verknüpft mit"
 END
 
 STRINGTABLE DISCARDABLE

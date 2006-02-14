@@ -21,6 +21,8 @@
  *
  */
 
+#include <stdio.h>
+
 #define WIN32_LEAN_AND_MEAN
 #define COBJMACROS
 
@@ -590,7 +592,7 @@ static void paint(HWND dialog)
     EndPaint(dialog, &ps);
 }
 
-static void browse_for_folder(HWND dialog)
+BOOL browse_for_unix_folder(HWND dialog, char *pszPath)
 {
     static WCHAR wszUnixRootDisplayName[] = 
         { ':',':','{','C','C','7','0','2','E','B','2','-','7','D','C','5','-','1','1','D','9','-',
@@ -613,13 +615,13 @@ static void browse_for_folder(HWND dialog)
     LoadString(GetModuleHandle(NULL), IDS_CHOOSE_PATH, pszChoosePath, 256);
     
     hr = SHGetDesktopFolder(&pDesktop);
-    if (!SUCCEEDED(hr)) return;
+    if (!SUCCEEDED(hr)) return FALSE;
 
     hr = IShellFolder_ParseDisplayName(pDesktop, NULL, NULL, wszUnixRootDisplayName, NULL, 
                                        &pidlUnixRoot, NULL);
     if (!SUCCEEDED(hr)) {
         IShellFolder_Release(pDesktop);
-        return;
+        return FALSE;
     }
 
     bi.pidlRoot = pidlUnixRoot;
@@ -636,17 +638,19 @@ static void browse_for_folder(HWND dialog)
         IShellFolder_Release(pDesktop);
         if (!SUCCEEDED(hr)) {
             SHFree(pidlSelectedPath);
-            return;
+            return FALSE;
         }
 
         hr = StrRetToStr(&strSelectedPath, pidlSelectedPath, &pszSelectedPath);
         SHFree(pidlSelectedPath);
-        if (!SUCCEEDED(hr)) return;
+        if (!SUCCEEDED(hr)) return FALSE;
 
-        set_text(dialog, IDC_EDIT_PATH, pszSelectedPath);
+        lstrcpy(pszPath, pszSelectedPath);
         
         CoTaskMemFree(pszSelectedPath);
+        return TRUE;
     }
+    return FALSE;
 }
 
 static void init_listview_columns(HWND dialog)
@@ -760,8 +764,12 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case IDC_BUTTON_BROWSE_PATH:
-                    browse_for_folder(dialog);
+                {
+                    char szTargetPath[FILENAME_MAX];
+                    if (browse_for_unix_folder(dialog, szTargetPath)) 
+                        set_text(dialog, IDC_EDIT_PATH, szTargetPath);
                     break;
+                }
 
                 case IDC_RADIO_ASSIGN:
                 {

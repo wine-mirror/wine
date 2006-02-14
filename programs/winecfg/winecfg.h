@@ -101,6 +101,7 @@ long drive_available_mask(char letter);
 BOOL add_drive(const char letter, const char *targetpath, const char *label, const char *serial, unsigned int type);
 void delete_drive(struct drive *pDrive);
 void apply_drive_changes(void);
+BOOL browse_for_unix_folder(HWND dialog, char *pszPath);
 extern struct drive drives[26]; /* one for each drive letter */
 
 BOOL gui_mode;

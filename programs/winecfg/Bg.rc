@@ -175,17 +175,24 @@ BEGIN
     CONTROL         "Софтуерна емулация",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
 END
 
-IDD_APPEARANCE DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Тема:",IDC_STATIC,8,10,244,8
-    COMBOBOX        IDC_THEME_THEMECOMBO,8,18,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Инсталирай тема...",IDC_THEME_INSTALL,152,32,100,14
-    LTEXT           "Цвят:",IDC_THEME_COLORTEXT,8,48,244,8
-    COMBOBOX        IDC_THEME_COLORCOMBO,8,56,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Размер:",IDC_THEME_SIZETEXT,8,74,244,8
-    COMBOBOX        IDC_THEME_SIZECOMBO,8,82,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
+    LTEXT           "Тема:",IDC_STATIC,15,16,230,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,24,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Инсталирай тема...",IDC_THEME_INSTALL,152,38,93,14
+    LTEXT           "Цвят:",IDC_THEME_COLORTEXT,15,54,230,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,62,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Размер:",IDC_THEME_SIZETEXT,15,80,230,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,15,88,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " Shell Folder ",IDC_STATIC,8,114,244,100
+    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
+    CONTROL         "Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+    PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -199,13 +206,15 @@ BEGIN
     IDS_SHOW_ADVANCED       "Покажи допълнителните"
     IDS_NOTHEME             "(без тема)"
     IDS_TAB_GRAPHICS        "Графика"
-    IDS_TAB_APPEARANCE      "Външен вид"
+    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
     IDS_TAB_AUDIO           "Звук"
     IDS_TAB_ABOUT           "Относно"
     IDS_WINECFG_TITLE       "Настройка на Wine"
     IDS_THEMEFILE           "Файлове с теми"
     IDS_THEMEFILE_SELECT    "Изберете файл с тема"
     IDS_AUDIO_MISSING       "Няма настроен звуков драйвер.\n\nЗа вас беше избран драйвер по подразбиране.\nМоже да го използвате или да изберете друг.\n\nТрябва да щракнете на Потвърди, за да влезе в сила избора."
+    IDS_SHELL_FOLDER        "Shell Folder"
+    IDS_LINKS_TO            "Links to"
 END
 
 STRINGTABLE DISCARDABLE

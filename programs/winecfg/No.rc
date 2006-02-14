@@ -168,17 +168,24 @@ BEGIN
     CONTROL         "Driveremulering",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
 END
 
-IDD_APPEARANCE DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-LTEXT           "Tema:",IDC_STATIC,8,10,244,8
-COMBOBOX        IDC_THEME_THEMECOMBO,8,18,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Installer tema . . .",IDC_THEME_INSTALL,152,32,100,14
-    LTEXT           "Farge:",IDC_THEME_COLORTEXT,8,48,244,8
-    COMBOBOX        IDC_THEME_COLORCOMBO,8,56,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Størrelse:",IDC_THEME_SIZETEXT,8,74,244,8
-    COMBOBOX        IDC_THEME_SIZECOMBO,8,82,244,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
+    LTEXT           "Tema:",IDC_STATIC,15,16,230,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,24,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Installer tema . . .",IDC_THEME_INSTALL,152,38,93,14
+    LTEXT           "Farge:",IDC_THEME_COLORTEXT,15,54,230,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,62,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Størrelse:",IDC_THEME_SIZETEXT,15,80,230,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,15,88,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " Shell Folder ",IDC_STATIC,8,114,244,100
+    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
+    CONTROL         "Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+    PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -187,19 +194,21 @@ BEGIN
     IDS_TAB_APPLICATIONS    "Programmer"
     IDS_TAB_DLLS            "Biblioteker"
     IDS_TAB_DRIVES          "Stasjoner"
-    IDS_CHOOSE_PATH         "Velg Unix-katalogens som skal kartlegges."
+    IDS_CHOOSE_PATH         "Select the unix target folder, please."
     IDS_HIDE_ADVANCED       "Enkel visning"
     IDS_SHOW_ADVANCED       "Avansert visning"
     IDS_NOTHEME             "(Intet tema)"
     IDS_TAB_GRAPHICS        "Grafikk"
-    IDS_TAB_APPEARANCE      "Utseende"
+    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
     IDS_TAB_AUDIO           "Lyd"
     IDS_TAB_ABOUT           "Om"
     IDS_WINECFG_TITLE       "Oppsett av Wine"
     IDS_THEMEFILE           "Temafiler"
     IDS_THEMEFILE_SELECT    "Velg en temafil"
     IDS_AUDIO_MISSING       "Ingen lyddriver er oppgitt i registeret.\n\nEn anbefalt driver er valgt for deg;\nbruk den eller velg en annen,\n\nog trykk «Bruk» for at endringene skal tre i kraft."
-    END
+    IDS_SHELL_FOLDER        "Shell Folder"
+    IDS_LINKS_TO            "Links to"
+END
     
     STRINGTABLE DISCARDABLE
     BEGIN

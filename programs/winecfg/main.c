@@ -146,10 +146,10 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].dwSize = sizeof (PROPSHEETPAGEW);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_APPEARANCE);
+    psp[pg].u.pszTemplate = MAKEINTRESOURCEW (IDD_DESKTOP_INTEGRATION);
     psp[pg].u2.pszIcon = NULL;
     psp[pg].pfnDlgProc = ThemeDlgProc;
-    psp[pg].pszTitle =  load_string (IDS_TAB_APPEARANCE);
+    psp[pg].pszTitle =  load_string (IDS_TAB_DESKTOP_INTEGRATION);
     psp[pg].lParam = 0;
     pg++;
 
