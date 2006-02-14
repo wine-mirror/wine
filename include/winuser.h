@@ -4352,8 +4352,8 @@ HWND        WINAPI GetDesktopWindow(void);
 INT         WINAPI GetDlgCtrlID(HWND);
 HWND        WINAPI GetDlgItem(HWND,INT);
 UINT        WINAPI GetDlgItemInt(HWND,INT,BOOL*,BOOL);
-INT         WINAPI GetDlgItemTextA(HWND,INT,LPSTR,UINT);
-INT         WINAPI GetDlgItemTextW(HWND,INT,LPWSTR,UINT);
+UINT        WINAPI GetDlgItemTextA(HWND,INT,LPSTR,INT);
+UINT        WINAPI GetDlgItemTextW(HWND,INT,LPWSTR,INT);
 #define     GetDlgItemText WINELIB_NAME_AW(GetDlgItemText)
 UINT        WINAPI GetDoubleClickTime(void);
 HWND        WINAPI GetFocus(void);
