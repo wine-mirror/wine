@@ -98,12 +98,13 @@ BOOL WINAPI SetupGetInfInformationW(LPCVOID InfSpec, DWORD SearchControl,
                                      PSP_INF_INFORMATION ReturnBuffer,
                                      DWORD ReturnBufferSize, PDWORD RequiredSize)
 {
-    HINF inf = (HINF)InfSpec;
+    HINF inf;
+    BOOL ret;
 
     TRACE("(%p, %ld, %p, %ld, %p)\n", InfSpec, SearchControl, ReturnBuffer,
            ReturnBufferSize, RequiredSize);
 
-    if (!inf)
+    if (!InfSpec)
     {
         if (SearchControl == INFINFO_INF_SPEC_IS_HINF)
             SetLastError(ERROR_INVALID_HANDLE);
@@ -113,30 +114,47 @@ BOOL WINAPI SetupGetInfInformationW(LPCVOID InfSpec, DWORD SearchControl,
         return FALSE;
     }
 
+    if (!ReturnBuffer && ReturnBufferSize)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    switch (SearchControl)
+    {
+        case INFINFO_INF_SPEC_IS_HINF:
+            inf = (HINF)InfSpec;
+            break;
+        case INFINFO_INF_NAME_IS_ABSOLUTE:
+        case INFINFO_DEFAULT_SEARCH:
+            inf = SetupOpenInfFileW(InfSpec, NULL,
+                                    INF_STYLE_OLDNT | INF_STYLE_WIN4, NULL);
+            break;
+        case INFINFO_REVERSE_DEFAULT_SEARCH:
+        case INFINFO_INF_PATH_LIST_SEARCH:
+            FIXME("Unhandled search control: %ld\n", SearchControl);
+
+            if (RequiredSize)
+                *RequiredSize = 0;
+
+            return FALSE;
+        default:
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+    }
+
     if (inf == INVALID_HANDLE_VALUE)
     {
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
 
-    if (SearchControl < INFINFO_INF_SPEC_IS_HINF ||
-        SearchControl > INFINFO_INF_PATH_LIST_SEARCH)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    ret = fill_inf_info(inf, ReturnBuffer, ReturnBufferSize, RequiredSize);
 
-    if (SearchControl != INFINFO_INF_SPEC_IS_HINF)
-    {
-        FIXME("Unhandled search control: %ld\n", SearchControl);
+    if (SearchControl >= INFINFO_INF_NAME_IS_ABSOLUTE)
+        SetupCloseInfFile(inf);
 
-        if (RequiredSize)
-            *RequiredSize = 0;
-
-        return FALSE;
-    }
-
-    return fill_inf_info(inf, ReturnBuffer, ReturnBufferSize, RequiredSize);
+    return ret;
 }
 
 /***********************************************************************

@@ -167,31 +167,22 @@ static void test_SetupGetInfInformation(void)
     SetLastError(0xbeefcafe);
     ret = pSetupGetInfInformationA("idontexist", INFINFO_INF_NAME_IS_ABSOLUTE, NULL, 0, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-           "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
-        ok(size == 0xdeadbeef, "Expected size to remain unchanged\n");
-    }
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
+    ok(size == 0xdeadbeef, "Expected size to remain unchanged\n");
 
     /* successfully open the inf file */
     size = 0xdeadbeef;
     ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, 0, &size);
-    todo_wine
-    {
-        ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
-    }
+    ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
     ok(size != 0xdeadbeef, "Expected a valid size on return\n");
 
     /* set ReturnBuffer to NULL and ReturnBufferSize to non-zero */
     SetLastError(0xbeefcafe);
     ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, size, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
     info = HeapAlloc(GetProcessHeap(), 0, size);
 
@@ -199,19 +190,13 @@ static void test_SetupGetInfInformation(void)
     SetLastError(0xbeefcafe);
     ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, info, size - 1, &size);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-           "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
 
     /* successfully get the inf information */
     ret = pSetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, info, size, &size);
-    todo_wine
-    {
-        ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
-        ok(check_info_filename(info, inf_filename), "Expected returned filename to be equal\n");
-    }
+    ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
+    ok(check_info_filename(info, inf_filename), "Expected returned filename to be equal\n");
 
     HeapFree(GetProcessHeap(), 0, info);
 
@@ -238,11 +223,8 @@ static void test_SetupGetInfInformation(void)
 
     /* test the INFINFO_DEFAULT_SEARCH search flag */
     ret = pSetupGetInfInformationA("test.inf", INFINFO_DEFAULT_SEARCH, info, size, &size);
-    todo_wine
-    {
-        ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
-        ok(check_info_filename(info, inf_one), "Expected returned filename to be equal\n");
-    }
+    ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
+    ok(check_info_filename(info, inf_one), "Expected returned filename to be equal\n");
 
     HeapFree(GetProcessHeap(), 0, info);
     info = alloc_inf_info("test.inf", INFINFO_REVERSE_DEFAULT_SEARCH, &size);
