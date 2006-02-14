@@ -4141,7 +4141,7 @@ BOOL      WINAPI CharToOemBuffW(LPCWSTR,LPSTR,DWORD);
 BOOL      WINAPI CheckDlgButton(HWND,INT,UINT);
 DWORD       WINAPI CheckMenuItem(HMENU,UINT,UINT);
 BOOL      WINAPI CheckMenuRadioItem(HMENU,UINT,UINT,UINT,UINT);
-BOOL      WINAPI CheckRadioButton(HWND,UINT,UINT,UINT);
+BOOL      WINAPI CheckRadioButton(HWND,int,int,int);
 HWND      WINAPI ChildWindowFromPoint(HWND,POINT);
 HWND      WINAPI ChildWindowFromPointEx(HWND,POINT,UINT);
 BOOL      WINAPI ClientToScreen(HWND,LPPOINT);

@@ -1381,8 +1381,8 @@ static BOOL CALLBACK CheckRB(HWND hwndChild, LPARAM lParam)
 /***********************************************************************
  *		CheckRadioButton (USER32.@)
  */
-BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
-                              UINT lastID, UINT checkID )
+BOOL WINAPI CheckRadioButton( HWND hwndDlg, int firstID,
+                              int lastID, int checkID )
 {
     RADIOGROUP radioGroup;
 
