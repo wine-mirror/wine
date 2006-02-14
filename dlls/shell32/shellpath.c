@@ -2223,6 +2223,10 @@ HRESULT WINAPI SHGetFolderLocation(
             *ppidl = _ILCreateDesktop();
             break;
 
+        case CSIDL_PERSONAL:
+            *ppidl = _ILCreateMyDocuments();
+            break;
+
         case CSIDL_INTERNET:
             *ppidl = _ILCreateIExplore();
             break;

@@ -1380,6 +1380,12 @@ LPITEMIDLIST _ILCreateMyComputer()
     return _ILCreateGuid(PT_GUID, &CLSID_MyComputer);
 }
 
+LPITEMIDLIST _ILCreateMyDocuments()
+{
+    TRACE("()\n");
+    return _ILCreateGuid(PT_GUID, &CLSID_MyDocuments);
+}
+
 LPITEMIDLIST _ILCreateIExplore()
 {
     TRACE("()\n");

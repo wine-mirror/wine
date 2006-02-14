@@ -240,6 +240,7 @@ HRESULT		_ILCreateFromPathW	(LPCWSTR szPath, LPITEMIDLIST* ppidl);
 
 /* Other helpers */
 LPITEMIDLIST	_ILCreateMyComputer	(void);
+LPITEMIDLIST	_ILCreateMyDocuments	(void);
 LPITEMIDLIST	_ILCreateIExplore	(void);
 LPITEMIDLIST	_ILCreateControlPanel	(void);
 LPITEMIDLIST	_ILCreatePrinters	(void);
