@@ -271,7 +271,7 @@ int get_thread_single_step( struct thread *thread )
 }
 
 /* send a signal to a specific thread */
-int tkill( int pid, int sig )
+int tkill( int tgid, int pid, int sig )
 {
 #ifdef __linux__
     int ret;
