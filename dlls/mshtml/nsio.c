@@ -856,6 +856,8 @@ static nsrefcnt NSAPI nsURI_Release(nsIWineURI *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
+        if(This->container)
+            nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
         nsIURI_Release(This->uri);
         HeapFree(GetProcessHeap(), 0, This);
     }

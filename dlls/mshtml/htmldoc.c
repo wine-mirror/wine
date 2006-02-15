@@ -142,8 +142,10 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
         if(This->hwnd)
             DestroyWindow(This->hwnd);
+
         if(This->nscontainer)
-            HTMLDocument_NSContainer_Destroy(This);
+            NSContainer_Release(This->nscontainer);
+
         HeapFree(GetProcessHeap(), 0, This);
 
         UNLOCK_MODULE();
@@ -979,6 +981,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLDocument));
     ret->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
     ret->ref = 0;
+    ret->nscontainer = NULL;
 
     hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
     if(FAILED(hres)) {
@@ -995,7 +998,8 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_Window_Init(ret);
     HTMLDocument_Service_Init(ret);
     HTMLDocument_Hlink_Init(ret);
-    HTMLDocument_NSContainer_Init(ret);
+
+    NSContainer_Create(ret);
 
     return hres;
 }

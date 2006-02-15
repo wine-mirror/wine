@@ -90,6 +90,8 @@ struct NSContainer {
     nsIWebBrowserStream *stream;
     nsIWebBrowserFocus *focus;
 
+    LONG ref;
+
     HTMLDocument *doc;
 
     HWND hwnd;
@@ -134,9 +136,9 @@ void HTMLDocument_View_Init(HTMLDocument*);
 void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
-void HTMLDocument_NSContainer_Init(HTMLDocument*);
 
-void HTMLDocument_NSContainer_Destroy(HTMLDocument*);
+void NSContainer_Create(HTMLDocument *doc);
+void NSContainer_Release(NSContainer*);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
 void HTMLDocument_ShowContextMenu(HTMLDocument*,DWORD,POINT*);

@@ -427,12 +427,14 @@ static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *ifa
         TRACE("(%p)->(IID_nsIURIContentListener %p)\n", This, result);
         *result = NSURICL(This);
     }else if(IsEqualGUID(&IID_nsIEmbeddingSiteWindow, riid)) {
-        TRACE("(%p)->(IIS_nsIEmbeddingSiteWindow %p)\n", This, result);
+        TRACE("(%p)->(IID_nsIEmbeddingSiteWindow %p)\n", This, result);
         *result = NSEMBWNDS(This);
     }
 
-    if(*result)
+    if(*result) {
+        nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
         return NS_OK;
+    }
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
     return NS_NOINTERFACE;
@@ -441,15 +443,24 @@ static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *ifa
 static nsrefcnt NSAPI nsWebBrowserChrome_AddRef(nsIWebBrowserChrome *iface)
 {
     NSContainer *This = NSWBCHROME_THIS(iface);
-    TRACE("(%p)\n", This);
-    return 2;  /* Should we implement ref conunting here? */
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    return ref;
 }
 
 static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
 {
     NSContainer *This = NSWBCHROME_THIS(iface);
-    TRACE("(%p)\n", This);
-    return 1;
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
 }
 
 static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
@@ -470,6 +481,8 @@ static nsresult NSAPI nsWebBrowserChrome_GetWebBrowser(nsIWebBrowserChrome *ifac
     if(!aWebBrowser)
         return NS_ERROR_INVALID_ARG;
 
+    if(This->webbrowser)
+        nsIWebBrowser_AddRef(This->webbrowser);
     *aWebBrowser = This->webbrowser;
     return S_OK;
 }
@@ -875,42 +888,44 @@ static const nsIEmbeddingSiteWindowVtbl nsEmbeddingSiteWindowVtbl = {
     nsEmbeddingSiteWindow_GetSiteWindow
 };
 
-void HTMLDocument_NSContainer_Init(HTMLDocument *This)
+void NSContainer_Create(HTMLDocument *doc)
 {
     nsIWebBrowserSetup *wbsetup;
+    NSContainer *ret;
     nsresult nsres;
-
-    This->nscontainer = NULL;
 
     if(!load_gecko())
         return;
 
-    This->nscontainer = HeapAlloc(GetProcessHeap(), 0, sizeof(NSContainer));
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(NSContainer));
 
-    This->nscontainer->lpWebBrowserChromeVtbl    = &nsWebBrowserChromeVtbl;
-    This->nscontainer->lpContextMenuListenerVtbl = &nsContextMenuListenerVtbl;
-    This->nscontainer->lpURIContentListenerVtbl  = &nsURIContentListenerVtbl;
-    This->nscontainer->lpEmbeddingSiteWindowVtbl = &nsEmbeddingSiteWindowVtbl;
+    ret->lpWebBrowserChromeVtbl    = &nsWebBrowserChromeVtbl;
+    ret->lpContextMenuListenerVtbl = &nsContextMenuListenerVtbl;
+    ret->lpURIContentListenerVtbl  = &nsURIContentListenerVtbl;
+    ret->lpEmbeddingSiteWindowVtbl = &nsEmbeddingSiteWindowVtbl;
 
-    This->nscontainer->doc = This;
+    ret->doc = doc;
+    ret->ref = 1;
+    ret->load_call = FALSE;
+
+    doc->nscontainer = ret;
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
-            NULL, &IID_nsIWebBrowser, (void**)&This->nscontainer->webbrowser);
+            NULL, &IID_nsIWebBrowser, (void**)&ret->webbrowser);
     if(NS_FAILED(nsres))
         ERR("Creating WebBrowser failed: %08lx\n", nsres);
 
-    nsres = nsIWebBrowser_SetContainerWindow(This->nscontainer->webbrowser,
-            NSWBCHROME(This->nscontainer));
+    nsres = nsIWebBrowser_SetContainerWindow(ret->webbrowser, NSWBCHROME(ret));
     if(NS_FAILED(nsres))
         ERR("SetContainerWindow failed: %08lx\n", nsres);
 
-    nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser, &IID_nsIBaseWindow,
-            (void**)&This->nscontainer->window);
+    nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIBaseWindow,
+            (void**)&ret->window);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIBaseWindow interface: %08lx\n", nsres);
 
-    nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser,
-            &IID_nsIWebBrowserSetup, (void**)&wbsetup);
+    nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIWebBrowserSetup,
+                                         (void**)&wbsetup);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWebBrowserSetup_SetProperty(wbsetup, SETUP_IS_CHROME_WRAPPER, TRUE);
         nsIWebBrowserSetup_Release(wbsetup);
@@ -920,63 +935,89 @@ void HTMLDocument_NSContainer_Init(HTMLDocument *This)
         ERR("Could not get nsIWebBrowserSetup interface\n");
     }
 
-    nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser, &IID_nsIWebNavigation,
-            (void**)&This->nscontainer->navigation);
+    nsres = nsIWebBrowser_QueryInterface(ret->webbrowser, &IID_nsIWebNavigation,
+            (void**)&ret->navigation);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIWebNavigation interface: %08lx\n", nsres);
 
-    nsres = nsIWebBrowserFocus_QueryInterface(This->nscontainer->webbrowser, &IID_nsIWebBrowserFocus,
-            (void**)&This->nscontainer->focus);
+    nsres = nsIWebBrowserFocus_QueryInterface(ret->webbrowser, &IID_nsIWebBrowserFocus,
+            (void**)&ret->focus);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIWebBrowserFocus interface: %08lx\n", nsres);
 
 #if 0
-    nsres = nsIWebBrowserStream_QueryInterface(This->nscontainer->webbrowser, &IID_nsIWebBrowserStream,
-            (void**)&This->nscontainer->stream);
+    nsres = nsIWebBrowserStream_QueryInterface(ret->webbrowser, &IID_nsIWebBrowserStream,
+            (void**)&ret->stream);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIWebBrowserStream interface: %08lx\n", nsres);
 #else
-    This->nscontainer->stream = NULL;
+    ret->stream = NULL;
 #endif
 
     if(!nscontainer_class)
         register_nscontainer_class();
 
-    This->nscontainer->hwnd = CreateWindowExW(0, wszNsContainer, NULL,
+    ret->hwnd = CreateWindowExW(0, wszNsContainer, NULL,
             WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, 100, 100,
-            GetDesktopWindow(), NULL, hInst, This);
+            GetDesktopWindow(), NULL, hInst, doc);
 
-    nsres = nsIBaseWindow_InitWindow(This->nscontainer->window, This->nscontainer->hwnd, NULL,
-            0, 0, 100, 100);
+    nsres = nsIBaseWindow_InitWindow(ret->window, ret->hwnd, NULL, 0, 0, 100, 100);
     if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIBaseWindow_Create(This->nscontainer->window);
+        nsres = nsIBaseWindow_Create(ret->window);
         if(NS_FAILED(nsres))
             WARN("Creating window failed: %08lx\n", nsres);
 
-        nsIBaseWindow_SetVisibility(This->nscontainer->window, FALSE);
-        nsIBaseWindow_SetEnabled(This->nscontainer->window, FALSE);
+        nsIBaseWindow_SetVisibility(ret->window, FALSE);
+        nsIBaseWindow_SetEnabled(ret->window, FALSE);
     }else {
         ERR("InitWindow failed: %08lx\n", nsres);
     }
 
-    nsres = nsIWebBrowser_SetParentURIContentListener(This->nscontainer->webbrowser,
-            NSURICL(This->nscontainer));
+    nsres = nsIWebBrowser_SetParentURIContentListener(ret->webbrowser, NSURICL(ret));
     if(NS_FAILED(nsres))
         ERR("SetParentURIContentListener failed: %08lx\n", nsres);
-
-    This->nscontainer->load_call = FALSE;
 }
 
-void HTMLDocument_NSContainer_Destroy(HTMLDocument *This)
+void NSContainer_Release(NSContainer *This)
 {
+    nsIBaseWindow *base_window;
+    nsresult nsres;
+
     TRACE("(%p)\n", This);
 
-    nsIWebBrowser_Release(This->nscontainer->webbrowser);
-    nsIWebNavigation_Release(This->nscontainer->navigation);
-    nsIBaseWindow_Release(This->nscontainer->window);
+    ShowWindow(This->hwnd, SW_HIDE);
+    SetParent(This->hwnd, NULL);
 
-    if(This->nscontainer->stream)
-        nsIWebBrowserStream_Release(This->nscontainer->stream);
+    nsres = nsIWebBrowser_QueryInterface(This->webbrowser, &IID_nsIBaseWindow,
+                                         (void**)&base_window);
+    if(NS_SUCCEEDED(nsres)) {
+        nsIBaseWindow_SetVisibility(base_window, FALSE);
+        nsIBaseWindow_Destroy(base_window);
+        nsIBaseWindow_Release(base_window);
+    }else {
+        ERR("Could not get nsIBaseWindow interface: %08lx\n", nsres);
+    }
 
-    HeapFree(GetProcessHeap(), 0, This->nscontainer);
+    nsIWebBrowser_SetContainerWindow(This->webbrowser, NULL);
+
+    nsIWebBrowser_Release(This->webbrowser);
+    This->webbrowser = NULL;
+
+    nsIWebNavigation_Release(This->navigation);
+    This->navigation = NULL;
+
+    nsIBaseWindow_Release(This->window);
+    This->window = NULL;
+
+    if(This->stream) {
+        nsIWebBrowserStream_Release(This->stream);
+        This->stream = NULL;
+    }
+
+    if(This->hwnd) {
+        DestroyWindow(This->hwnd);
+        This->hwnd = NULL;
+    }
+
+    nsIWebBrowserChrome_Release(NSWBCHROME(This));
 }
