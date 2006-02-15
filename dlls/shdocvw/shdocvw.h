@@ -169,6 +169,7 @@ HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 void create_doc_view_hwnd(WebBrowser *This);
 void deactivate_document(WebBrowser*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
+HRESULT navigate_url(WebBrowser*,LPCWSTR,PBYTE,ULONG,LPWSTR);
 
 #define WB_WM_NAVIGATE2 (WM_USER+100)
 

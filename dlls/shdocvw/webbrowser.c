@@ -21,8 +21,6 @@
 
 #include "wine/debug.h"
 #include "shdocvw.h"
-#include "mshtml.h"
-
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -508,9 +506,9 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
         VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    IPersistMoniker *persist;
-    IOleObject *oleobj;
-    IMoniker *mon;
+    PBYTE post_data = NULL;
+    ULONG post_data_len = 0;
+    LPWSTR headers = NULL;
     HRESULT hres;
 
     TRACE("(%p)->(%p %p %p %p %p)\n", This, URL, Flags, TargetFrameName, PostData, Headers);
@@ -519,61 +517,41 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
         return E_FAIL;
 
     if((Flags && V_VT(Flags) != VT_EMPTY) 
-       || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY)
-       || (PostData && V_VT(PostData) != VT_EMPTY) 
-       || (Headers && V_VT(Headers) != VT_EMPTY))
+       || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY))
         FIXME("Unsupported arguments\n");
+
 
     if(!URL)
         return S_OK;
+
     if(V_VT(URL) != VT_BSTR)
         return E_INVALIDARG;
+
+    if(PostData && V_VT(PostData) != VT_EMPTY) {
+        if(V_VT(PostData) != (VT_ARRAY | VT_UI1)
+           || V_ARRAY(PostData)->cDims != 1) {
+            WARN("Invalid PostData\n");
+            return E_INVALIDARG;
+        }
+
+        SafeArrayAccessData(V_ARRAY(PostData), (void**)&post_data);
+        post_data_len = V_ARRAY(PostData)->rgsabound[0].cElements;
+    }
+
+    if(Headers && V_VT(Headers) != VT_EMPTY) {
+        if(V_VT(Headers) != VT_BSTR)
+            return E_INVALIDARG;
+
+        headers = V_BSTR(Headers);
+        FIXME("Headers: %s\n", debugstr_w(headers));
+    }
 
     if(!This->doc_view_hwnd)
         create_doc_view_hwnd(This);
 
-    /*
-     * FIXME:
-     * We should use URLMoniker's BindToObject instead creating HTMLDocument here.
-     * This should be fixed when mshtml.dll and urlmon.dll will be good enough.
-     */
+    hres = navigate_url(This, V_BSTR(URL), post_data, post_data_len, headers);
 
-    if(!This->document) {
-        hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
-                                CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-                                &IID_IUnknown, (void**)&This->document);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    hres = IUnknown_QueryInterface(This->document, &IID_IPersistMoniker, (void**)&persist);
-    if(FAILED(hres))
-        return hres;
-
-    hres = CreateURLMoniker(NULL, V_BSTR(URL), &mon);
-    if(FAILED(hres)) {
-        IPersistMoniker_Release(persist);
-        return hres;
-    }
-
-    hres = IPersistMoniker_Load(persist, FALSE, mon, NULL /* FIXME */, 0);
-    IMoniker_Release(mon);
-    IPersistMoniker_Release(persist);
-    if(FAILED(hres)) {
-        WARN("Load failed: %08lx\n", hres);
-        return hres;
-    }
-
-    This->url = SysAllocString(V_BSTR(URL));
-
-    hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&oleobj);
-    if(FAILED(hres))
-        return hres;
-
-    hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This));
-    IOleObject_Release(oleobj);
-
-    PostMessageW(This->doc_view_hwnd, WB_WM_NAVIGATE2, 0, 0);
+    SafeArrayUnaccessData(V_ARRAY(PostData));
 
     return hres;
 }
