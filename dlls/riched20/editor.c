@@ -789,11 +789,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
     nMax = max(chrg->cpMin, chrg->cpMax);
   }
   
-  if (!nLen)
+  if (!nLen || nMin < 0 || nMax < 0)
   {
     if (chrgText)
-      chrgText->cpMin = chrgText->cpMax = ((flags & FR_DOWN) ? nMin : nMax);
-    return chrgText->cpMin;
+      chrgText->cpMin = chrgText->cpMax = -1;
+    return -1;
   }
  
   if (flags & FR_DOWN) /* Forward search */
@@ -801,7 +801,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
     nStart = nMin;
     item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
     if (!item)
+    {
+      if (chrgText)
+        chrgText->cpMin = chrgText->cpMax = -1;
       return -1;
+    }
 
     para = ME_GetParagraph(item);
     while (item
@@ -845,8 +849,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
   {
     nEnd = nMax;
     item = ME_FindItemAtOffset(editor, diRun, nEnd, &nEnd);
-    if (!item)
+    if (!item) {
+      if (chrgText)
+        chrgText->cpMin = chrgText->cpMax = -1;
       return -1;
+    }
     
     para = ME_GetParagraph(item);
     
@@ -888,6 +895,8 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
     }
   }
   TRACE("not found\n");
+  if (chrgText)
+    chrgText->cpMin = chrgText->cpMax = -1;
   return -1;
 }
 

@@ -24,19 +24,11 @@
 #include <time.h>
 
 static HMODULE hmoduleRichEdit;
-static const char haystack[] = "Think of Wine as a compatibility layer for "
-  "running Windows programs. Wine does not require Microsoft Windows, as it "
-  "is a completely free alternative implementation of the Windows API "
-  "consisting of 100% non-Microsoft code, however Wine can optionally use "
-  "native Windows DLLs if they are available. Wine provides both a "
-  "development toolkit for porting Windows source code to Unix as well as a "
-  "program loader, allowing many unmodified Windows programs to run on "
-  "x86-based Unixes, including Linux, FreeBSD, and Solaris.";
 
 static HWND new_window(LPCTSTR lpClassName, DWORD dwStyle, HWND parent) {
   HWND hwnd;
   hwnd = CreateWindow(lpClassName, NULL, dwStyle|WS_POPUP|WS_HSCROLL|WS_VSCROLL
-                      |WS_VISIBLE, 0, 0, 200, 50, parent, NULL,
+                      |WS_VISIBLE, 0, 0, 200, 60, parent, NULL,
                       hmoduleRichEdit, NULL);
   ok(hwnd != NULL, "class: %s, error: %d\n", lpClassName, (int) GetLastError());
   return hwnd;
@@ -46,113 +38,147 @@ static HWND new_richedit(HWND parent) {
   return new_window(RICHEDIT_CLASS, ES_MULTILINE, parent);
 }
 
-static void check_EM_FINDTEXT(HWND hwnd, int start, int end, char needle[],
-                              int flags, int expected_start) {
+static const char haystack[] = "WINEWine wineWine wine WineWine";
+                             /* ^0        ^10       ^20       ^30 */
+
+struct find_s {
+  int start;
+  int end;
+  char *needle;
+  int flags;
+  int expected_loc;
+  int _todo_wine;
+};
+
+struct find_s find_tests[] = {
+  /* Find in empty text */
+  {0, -1, "foo", FR_DOWN, -1, 0},
+  {0, -1, "foo", 0, -1, 0},
+  {0, -1, "", FR_DOWN, -1, 0},
+  {20, 5, "foo", FR_DOWN, -1, 0},
+  {5, 20, "foo", FR_DOWN, -1, 0}
+};
+
+struct find_s find_tests2[] = {
+  /* No-result find */
+  {0, -1, "foo", FR_DOWN | FR_MATCHCASE, -1, 0},
+  {5, 20, "WINE", FR_DOWN | FR_MATCHCASE, -1, 0},
+
+  /* Subsequent finds */
+  {0, -1, "Wine", FR_DOWN | FR_MATCHCASE, 4, 0},
+  {5, 31, "Wine", FR_DOWN | FR_MATCHCASE, 13, 0},
+  {14, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23, 0},
+  {24, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
+
+  /* Find backwards */
+  {19, 20, "Wine", FR_MATCHCASE, 13, 1},
+  {10, 20, "Wine", FR_MATCHCASE, 4, 1},
+  {20, 10, "Wine", FR_MATCHCASE, 13, 0},
+
+  /* Case-insensitive */
+  {1, 31, "wInE", FR_DOWN, 4, 1},
+  {1, 31, "Wine", FR_DOWN, 4, 0},
+
+  /* High-to-low ranges */
+  {20, 5, "Wine", FR_DOWN, -1, 1},
+  {2, 1, "Wine", FR_DOWN, -1, 0},
+  {30, 29, "Wine", FR_DOWN, -1, 0},
+  {20, 5, "Wine", 0, 13, 0},
+
+  /* Find nothing */
+  {5, 10, "", FR_DOWN, -1, 0},
+  {10, 5, "", FR_DOWN, -1, 0},
+  {0, -1, "", FR_DOWN, -1, 0},
+  {10, 5, "", 0, -1, 0},
+
+  /* Whole-word search */
+  {0, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 1},
+  {0, -1, "win", FR_DOWN | FR_WHOLEWORD, -1, 1},
+  
+  /* Bad ranges */
+  {-20, 20, "Wine", FR_DOWN, -1, 0},
+  {-20, 20, "Wine", FR_DOWN, -1, 0},
+  {-15, -20, "Wine", FR_DOWN, -1, 0},
+  {1<<12, 1<<13, "Wine", FR_DOWN, -1, 0},
+
+  /* Check the case noted in bug 4479 where matches at end aren't recognized */
+  {23, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23, 0},
+  {27, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
+  {27, 32, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
+  {13, 31, "WineWine", FR_DOWN | FR_MATCHCASE, 23, 0},
+  {13, 32, "WineWine", FR_DOWN | FR_MATCHCASE, 23, 0},
+
+  /* The backwards case of bug 4479; bounds look right
+   * Fails because backward find is wrong */
+  {19, 20, "WINE", FR_MATCHCASE, 0, 1},
+  {0, 20, "WINE", FR_MATCHCASE, -1, 1}
+};
+
+static void check_EM_FINDTEXT(HWND hwnd, char *name, struct find_s *f, int id) {
   int findloc;
   FINDTEXT ft;
   memset(&ft, 0, sizeof(ft));
-  ft.chrg.cpMin = start;
-  ft.chrg.cpMax = end;
-  ft.lpstrText = needle;
-  findloc = SendMessage(hwnd, EM_FINDTEXT, flags, (LPARAM) &ft);
-  ok(findloc == expected_start,
-     "EM_FINDTEXT '%s' in range (%d,%d), flags %08x, got start at %d\n",
-     needle, start, end, flags, findloc);
+  ft.chrg.cpMin = f->start;
+  ft.chrg.cpMax = f->end;
+  ft.lpstrText = f->needle;
+  findloc = SendMessage(hwnd, EM_FINDTEXT, f->flags, (LPARAM) &ft);
+  ok(findloc == f->expected_loc,
+     "EM_FINDTEXT(%s,%d) '%s' in range(%d,%d), flags %08x, got start at %d\n",
+     name, id, f->needle, f->start, f->end, f->flags, findloc);
+}
+
+static void check_EM_FINDTEXTEX(HWND hwnd, char *name, struct find_s *f,
+    int id) {
+  int findloc;
+  FINDTEXTEX ft;
+  memset(&ft, 0, sizeof(ft));
+  ft.chrg.cpMin = f->start;
+  ft.chrg.cpMax = f->end;
+  ft.lpstrText = f->needle;
+  findloc = SendMessage(hwnd, EM_FINDTEXTEX, f->flags, (LPARAM) &ft);
+  ok(findloc == f->expected_loc,
+      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, start at %d\n",
+      name, id, f->needle, f->start, f->end, f->flags, findloc);
+  ok(ft.chrgText.cpMin == f->expected_loc,
+      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, start at %ld\n",
+      name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMin);
+  ok(ft.chrgText.cpMax == ((f->expected_loc == -1) ? -1
+        : f->expected_loc + strlen(f->needle)),
+      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, end at %ld\n",
+      name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMax);
+}
+
+static void run_tests_EM_FINDTEXT(HWND hwnd, char *name, struct find_s *find,
+    int num_tests)
+{
+  int i;
+
+  for (i = 0; i < num_tests; i++) {
+    if (find[i]._todo_wine) {
+      todo_wine {
+        check_EM_FINDTEXT(hwnd, name, &find[i], i);
+        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
+      }
+    } else {
+        check_EM_FINDTEXT(hwnd, name, &find[i], i);
+        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
+    }
+  }
 }
 
 static void test_EM_FINDTEXT(void)
 {
-  CHARRANGE cr;
-  GETTEXTLENGTHEX gtl;
-  int size;
-
   HWND hwndRichEdit = new_richedit(NULL);
 
-  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) haystack);
-  SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
-  ok(cr.cpMin == cr.cpMax, "(%ld,%ld)\n", cr.cpMin, cr.cpMax);
-
-  gtl.flags = GTL_NUMCHARS;
-  gtl.codepage = CP_ACP;
-  size = SendMessage(hwndRichEdit, EM_GETTEXTLENGTHEX, (WPARAM) &gtl, 0);
-  ok(size == sizeof(haystack) - 1, "size=%d, sizeof haystack=%d\n",
-     size, sizeof(haystack)); /* sizeof counts '\0' */
-
-  check_EM_FINDTEXT(hwndRichEdit, 0, size, "Wine", FR_DOWN | FR_MATCHCASE, 9);
-  check_EM_FINDTEXT(hwndRichEdit, 10, size, "Wine", FR_DOWN | FR_MATCHCASE, 69);
-  check_EM_FINDTEXT(hwndRichEdit, 298, size, "Wine", FR_DOWN | FR_MATCHCASE,
-                    -1);
-  check_EM_FINDTEXT(hwndRichEdit, 0, size, "wine", FR_DOWN | FR_MATCHCASE, -1);
-  todo_wine {
-    check_EM_FINDTEXT(hwndRichEdit, 0, size, "wine", FR_DOWN | FR_WHOLEWORD, 9);
-    check_EM_FINDTEXT(hwndRichEdit, 0, size, "win", FR_DOWN | FR_WHOLEWORD, -1);
-  }
-
-  /* Check the case noted in bug 4479 */
-  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "blahblah");
-  check_EM_FINDTEXT(hwndRichEdit, 0, 8, "blah", FR_DOWN | FR_MATCHCASE, 0);
-  check_EM_FINDTEXT(hwndRichEdit, 4, 8, "blah", FR_DOWN | FR_MATCHCASE, 4);
-  check_EM_FINDTEXT(hwndRichEdit, 4, 9, "blah", FR_DOWN | FR_MATCHCASE, 4);
-  check_EM_FINDTEXT(hwndRichEdit, 0, 8, "blahblah", FR_DOWN | FR_MATCHCASE, 0);
-
-  DestroyWindow(hwndRichEdit);
-}
-
-static void check_EM_FINDTEXTEX(HWND hwnd, int start, int end, char needle[],
-                                int flags, int expected_start,
-                                int expected_end) {
-  int findloc;
-  FINDTEXTEX ft;
-  memset(&ft, 0, sizeof(ft));
-  ft.chrg.cpMin = start;
-  ft.chrg.cpMax = end;
-  ft.lpstrText = needle;
-  findloc = SendMessage(hwnd, EM_FINDTEXTEX, flags, (LPARAM) &ft);
-  ok(findloc == expected_start,
-     "EM_FINDTEXTEX '%s' in range (%d,%d), flags %08x, got start at %d\n",
-     needle, start, end, flags, findloc);
-  if(findloc != -1) {
-    ok(ft.chrgText.cpMin == expected_start,
-       "EM_FINDTEXTEX '%s' in range (%d,%d), flags %08x, got start at %ld\n",
-       needle, start, end, flags, ft.chrgText.cpMin);
-    ok(ft.chrgText.cpMax == expected_end,
-       "EM_FINDTEXTEX '%s' in range (%d,%d), flags %08x, got end at %ld\n",
-       needle, start, end, flags, ft.chrgText.cpMax);
-  }
-}
-
-static void test_EM_FINDTEXTEX(void)
-{
-  CHARRANGE cr;
-  GETTEXTLENGTHEX gtl;
-  int size;
-
-  HWND hwndRichEdit = new_richedit(NULL);
+  /* Empty rich edit control */
+  run_tests_EM_FINDTEXT(hwndRichEdit, "1", find_tests,
+      sizeof(find_tests)/sizeof(struct find_s));
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) haystack);
-  SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM) &cr);
-  ok(cr.cpMin == cr.cpMax, "(%ld,%ld)\n", cr.cpMin, cr.cpMax);
 
-  gtl.flags = GTL_NUMCHARS;
-  gtl.codepage = CP_ACP;
-  size = SendMessage(hwndRichEdit, EM_GETTEXTLENGTHEX, (WPARAM) &gtl, 0);
-  ok(size == sizeof(haystack) - 1, "size=%d, sizeof haystack=%d\n", size,
-     sizeof(haystack)); /* sizeof counts '\0' */
-
-  check_EM_FINDTEXTEX(hwndRichEdit, 0, size, "Wine", FR_DOWN | FR_MATCHCASE,
-                      9, 13);
-  check_EM_FINDTEXTEX(hwndRichEdit, 10, size, "Wine", FR_DOWN | FR_MATCHCASE,
-                      69, 73);
-  check_EM_FINDTEXTEX(hwndRichEdit, 298, size, "Wine", FR_DOWN | FR_MATCHCASE,
-                      -1, -1);
-  check_EM_FINDTEXTEX(hwndRichEdit, 0, size, "wine", FR_DOWN | FR_MATCHCASE,
-                      -1, -1);
-  todo_wine {
-    check_EM_FINDTEXTEX(hwndRichEdit, 0, size, "wine", FR_DOWN | FR_WHOLEWORD,
-                        9, 13);
-    check_EM_FINDTEXTEX(hwndRichEdit, 0, size, "win", FR_DOWN | FR_WHOLEWORD,
-                        -1, -1);
-  }
+  /* Haystack text */
+  run_tests_EM_FINDTEXT(hwndRichEdit, "2", find_tests2,
+      sizeof(find_tests2)/sizeof(struct find_s));
 
   DestroyWindow(hwndRichEdit);
 }
@@ -168,7 +194,6 @@ START_TEST( editor )
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
 
   test_EM_FINDTEXT();
-  test_EM_FINDTEXTEX();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
