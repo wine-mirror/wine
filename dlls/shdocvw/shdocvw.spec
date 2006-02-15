@@ -2,7 +2,7 @@
 101 stub -noname IEWinMain
 102 stub -noname CreateShortcutInDirA
 103 stub -noname CreateShortcutInDirW
-104 stub -noname WhichPlatformFORWARD
+104 stdcall -noname WhichPlatformFORWARD()
 105 stub -noname CreateShortcutInDirEx
 106 stub HlinkFindFrame
 107 stub SetShellOfflineState
@@ -15,9 +15,10 @@
 118 stdcall -noname ShellDDEInit(long)
 119 stub -noname SHCreateDesktop
 120 stub -noname SHDesktopMessageLoop
-121 stub -noname StopWatchModeFORWARD
-122 stub -noname StopWatchFlushFORWARD
-123 stub -noname StopWatchFORWARD
+121 stdcall -noname StopWatchModeFORWARD()
+122 stdcall -noname StopWatchFlushFORWARD()
+123 stdcall -noname StopWatchAFORWARD(long str long long long)
+124 stdcall -noname StopWatchWFORWARD(long wstr long long long)
 125 stdcall -noname RunInstallUninstallStubs()
 130 stub -noname RunInstallUninstallStubs2
 131 stub -noname SHCreateSplashScreen

@@ -586,3 +586,73 @@ void WINAPI OpenURL(HWND hWnd, HINSTANCE hInst, LPCSTR lpcstrUrl, int nShowCmd)
 {
     FIXME("%p %p %s %d\n", hWnd, hInst, debugstr_a(lpcstrUrl), nShowCmd);
 }
+
+/**********************************************************************
+ * Some forwards (by ordinal) to SHLWAPI
+ */
+
+static void* fetch_shlwapi_ordinal(unsigned ord)
+{
+    static const WCHAR shlwapiW[] = {'s','h','l','w','a','p','i','.','d','l','l','\0'};
+    static HANDLE h;
+
+    if (!h && !(h = GetModuleHandleW(shlwapiW))) return NULL;
+    return (void*)GetProcAddress(h, (const char*)ord);
+}
+
+/******************************************************************
+ *		WhichPlatformFORWARD            (SHDOCVW.@)
+ */
+DWORD WINAPI WhichPlatformFORWARD(void)
+{
+    static DWORD (*WINAPI p)(void);
+
+    if (p || (p = fetch_shlwapi_ordinal(276))) return p();
+    return 1; /* not integrated, see shlwapi.WhichPlatform */
+}
+
+/******************************************************************
+ *		StopWatchModeFORWARD            (SHDOCVW.@)
+ */
+void WINAPI StopWatchModeFORWARD(void)
+{
+    static void (*WINAPI p)(void);
+
+    if (p || (p = fetch_shlwapi_ordinal(241))) p();
+}
+
+/******************************************************************
+ *		StopWatchFlushFORWARD            (SHDOCVW.@)
+ */
+void WINAPI StopWatchFlushFORWARD(void)
+{
+    static void (*WINAPI p)(void);
+
+    if (p || (p = fetch_shlwapi_ordinal(242))) p();
+}
+
+/******************************************************************
+ *		StopWatchWFORWARD            (SHDOCVW.@)
+ */
+DWORD WINAPI StopWatchWFORWARD(DWORD dwClass, LPCWSTR lpszStr, DWORD dwUnknown,
+                               DWORD dwMode, DWORD dwTimeStamp)
+{
+    static DWORD (*WINAPI p)(DWORD, LPCWSTR, DWORD, DWORD, DWORD);
+
+    if (p || (p = fetch_shlwapi_ordinal(243)))
+        return p(dwClass, lpszStr, dwUnknown, dwMode, dwTimeStamp);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************
+ *		StopWatchAFORWARD            (SHDOCVW.@)
+ */
+DWORD WINAPI StopWatchAFORWARD(DWORD dwClass, LPCSTR lpszStr, DWORD dwUnknown,
+                               DWORD dwMode, DWORD dwTimeStamp)
+{
+    static DWORD (*WINAPI p)(DWORD, LPCSTR, DWORD, DWORD, DWORD);
+
+    if (p || (p = fetch_shlwapi_ordinal(244)))
+        return p(dwClass, lpszStr, dwUnknown, dwMode, dwTimeStamp);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
