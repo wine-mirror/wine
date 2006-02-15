@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NS_APPSTARTUPNOTIFIER_CONTRACTID "@mozilla.org/embedcomp/appstartup-notifier;1"
 #define NS_WEBBROWSER_CONTRACTID "@mozilla.org/embedding/browser/nsWebBrowser;1"
 #define NS_PROFILE_CONTRACTID "@mozilla.org/profile/manager;1"
+#define NS_STRINGSTREAM_CONTRACTID "@mozilla.org/io/string-input-stream;1"
 
 #define APPSTARTUP_TOPIC "app-startup"
 
@@ -386,6 +387,32 @@ void nsACString_Destroy(nsACString *str)
 {
     NS_CStringContainerFinish(str);
     HeapFree(GetProcessHeap(), 0, str);
+}
+
+nsIInputStream *create_nsstream(const char *data, PRInt32 data_len)
+{
+    nsIStringInputStream *ret;
+    nsresult nsres;
+
+    if(!pCompMgr)
+        return NULL;
+
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
+            NS_STRINGSTREAM_CONTRACTID, NULL, &IID_nsIStringInputStream,
+            (void**)&ret);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIStringInputStream\n");
+        return NULL;
+    }
+
+    nsres = nsIStringInputStream_SetData(ret, data, data_len);
+    if(NS_FAILED(nsres)) {
+        ERR("AdoptData failed: %08lx\n", nsres);
+        nsIStringInputStream_Release(ret);
+        return NULL;
+    }
+
+    return (nsIInputStream*)ret;
 }
 
 void close_gecko()

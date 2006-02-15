@@ -158,6 +158,8 @@ PRUint32 nsACString_GetData(const nsACString*,const char**,PRBool*);
 void nsACString_SetData(nsACString*,const char*);
 void nsACString_Destroy(nsACString*);
 
+nsIInputStream *create_nsstream(const char*,PRInt32);
+
 IHlink *Hlink_Create(void);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);

@@ -145,6 +145,17 @@ interface nsIInputStream : nsISupports
 
 [
     object,
+    uuid(450cd2d4-f0fd-424d-b365-b1251f80fd53)
+]
+interface nsIStringInputStream : nsIInputStream
+{
+    nsresult SetData(const char *data, PRInt32 dataLen);
+    nsresult AdoptData(char *data, PRInt32 dataLen);
+    nsresult ShareData(const char *data, PRInt32 dataLen);
+}
+
+[
+    object,
     uuid(07a22cc0-0ce5-11d3-9331-00104ba0fd40)
 ]
 interface nsIURI : nsISupports

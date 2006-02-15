@@ -32,6 +32,7 @@
 #include "shlguid.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "mshtml_private.h"
 
@@ -221,6 +222,8 @@ static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *
     return E_NOTIMPL;
 }
 
+#undef STATUSCLB_THIS
+
 static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
     BindStatusCallback_QueryInterface,
     BindStatusCallback_AddRef,
@@ -238,12 +241,14 @@ static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
 static BindStatusCallback *BindStatusCallback_Create(HTMLDocument *doc, LPOLESTR url)
 {
     BindStatusCallback *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(BindStatusCallback));
+
     ret->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
     ret->ref = 0;
     ret->url = url;
     ret->doc = doc;
     ret->stream = NULL;
     IHTMLDocument2_AddRef(HTMLDOC(doc));
+
     return ret;
 }
 
@@ -283,6 +288,80 @@ static HRESULT WINAPI PersistMoniker_IsDirty(IPersistMoniker *iface)
     HTMLDocument *This = PERSISTMON_THIS(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
+}
+
+static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
+{
+    nsIInputStream *ret = NULL;
+    IBindStatusCallback *callback;
+    IHttpNegotiate *http_negotiate;
+    BINDINFO bindinfo;
+    DWORD bindf = 0;
+    DWORD post_len = 0, headers_len = 0;
+    LPWSTR headers = NULL;
+    WCHAR emptystr[] = {0};
+    char *data;
+    HRESULT hres;
+
+    static WCHAR _BSCB_Holder_[] =
+        {'_','B','S','C','B','_','H','o','l','d','e','r','_',0};
+
+
+    /* FIXME: This should be done in URLMoniker */
+    if(!bctx)
+        return NULL;
+
+    hres = IBindCtx_GetObjectParam(bctx, _BSCB_Holder_, (IUnknown**)&callback);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IBindStatusCallback_QueryInterface(callback, &IID_IHttpNegotiate,
+                                              (void**)&http_negotiate);
+    if(SUCCEEDED(hres)) {
+        hres = IHttpNegotiate_BeginningTransaction(http_negotiate, emptystr,
+                                                   emptystr, 0, &headers);
+        IHttpNegotiate_Release(http_negotiate);
+
+        if(SUCCEEDED(hres) && headers)
+            headers_len = WideCharToMultiByte(CP_ACP, 0, headers, -1, NULL, 0, NULL, NULL);
+    }
+
+    memset(&bindinfo, 0, sizeof(bindinfo));
+    bindinfo.cbSize = sizeof(bindinfo);
+
+    hres = IBindStatusCallback_GetBindInfo(callback, &bindf, &bindinfo);
+
+    if(SUCCEEDED(hres) && bindinfo.dwBindVerb == BINDVERB_POST)
+        post_len = bindinfo.cbStgmedData-1;
+
+    if(headers_len || post_len) {
+        int len = headers_len;
+
+        static const char content_length[] = "Content-Length: %lu\r\n\r\n";
+
+        data = HeapAlloc(GetProcessHeap(), 0, headers_len+post_len+sizeof(content_length)+8);
+
+        if(headers_len) {
+            WideCharToMultiByte(CP_ACP, 0, headers, -1, data, -1, NULL, NULL);
+            CoTaskMemFree(headers);
+        }
+
+        if(post_len) {
+            sprintf(data+headers_len-1, content_length, post_len);
+            len = strlen(data);
+
+            memcpy(data+len, bindinfo.stgmedData.u.hGlobal, post_len);
+        }
+
+        TRACE("data = %s\n", debugstr_an(data, len+post_len));
+
+        ret = create_nsstream(data, strlen(data));
+    }
+
+    ReleaseBindInfo(&bindinfo);
+    IBindStatusCallback_Release(callback);
+
+    return ret;
 }
 
 static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAvailable,
@@ -358,15 +437,23 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
          * It uses Gecko's LoadURI instead of IMoniker's BindToStorage. Should we improve
          * it (to do so we'd have to use not frozen interfaces)?
          */
+
+        nsIInputStream *post_data_stream = get_post_data_stream(pibc);;
+
         This->nscontainer->load_call = TRUE;
         nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, url,
-                LOAD_FLAGS_NONE, NULL, NULL, NULL);
+                LOAD_FLAGS_NONE, NULL, post_data_stream, NULL);
         This->nscontainer->load_call = FALSE;
 
-        if(NS_SUCCEEDED(nsres))
+        if(post_data_stream)
+            nsIInputStream_Release(post_data_stream);
+
+        if(NS_SUCCEEDED(nsres)) {
+            CoTaskMemFree(url);
             return S_OK;
-        else
+        }else {
             WARN("LoadURI failed: %08lx\n", nsres);
+        }
     }    
 
     /* FIXME: Use grfMode */
@@ -378,6 +465,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         IBinding_Abort(This->status_callback->binding);
 
     callback = This->status_callback = BindStatusCallback_Create(This, url);
+    CoTaskMemFree(url);
 
     if(pibc) {
         pbind = pibc;
