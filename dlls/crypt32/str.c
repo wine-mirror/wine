@@ -108,7 +108,6 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     return ret;
 }
 
-
 DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
  DWORD dwStrType, LPSTR psz, DWORD csz)
 {
@@ -123,7 +122,8 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
     BOOL bRet;
     CERT_NAME_INFO *info;
 
-    TRACE("(%ld, %p, %p, %ld)\n", dwCertEncodingType, pName, psz, csz);
+    TRACE("(%ld, %p, %08lx, %p, %ld)\n", dwCertEncodingType, pName, dwStrType,
+     psz, csz);
     if (dwStrType & unsupportedFlags)
         FIXME("unsupported flags: %08lx\n", dwStrType & unsupportedFlags);
 
@@ -219,7 +219,8 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
     BOOL bRet;
     CERT_NAME_INFO *info;
 
-    TRACE("(%ld, %p, %p, %ld)\n", dwCertEncodingType, pName, psz, csz);
+    TRACE("(%ld, %p, %08lx, %p, %ld)\n", dwCertEncodingType, pName, dwStrType,
+     psz, csz);
     if (dwStrType & unsupportedFlags)
         FIXME("unsupported flags: %08lx\n", dwStrType & unsupportedFlags);
 
