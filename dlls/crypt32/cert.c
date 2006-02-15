@@ -282,7 +282,7 @@ typedef struct _WINE_STORE_LIST_ENTRY
 typedef struct _WINE_COLLECTION_CERT_CONTEXT
 {
     WINE_CERT_CONTEXT_REF  cert;
-    PWINE_STORE_LIST_ENTRY entry;
+    PWINE_STORE_LIST_ENTRY storeEntry;
     PWINE_CERT_CONTEXT_REF childContext;
 } WINE_COLLECTION_CERT_CONTEXT, *PWINE_COLLECTION_CERT_CONTEXT;
 
@@ -648,7 +648,7 @@ static PWINE_CERT_CONTEXT_REF CRYPT_CollectionCreateCertRef(
     {
         /* Initialize to empty for now, just make sure the size is right */
         CRYPT_InitCertRef((PWINE_CERT_CONTEXT_REF)ret, context, store);
-        ret->entry = NULL;
+        ret->storeEntry = NULL;
         ret->childContext = NULL;
     }
     return (PWINE_CERT_CONTEXT_REF)ret;
@@ -705,7 +705,7 @@ static PWINE_COLLECTION_CERT_CONTEXT CRYPT_CollectionAdvanceEnum(
          child->context, store);
         if (ret)
         {
-            ret->entry = storeEntry;
+            ret->storeEntry = storeEntry;
             ret->childContext = child;
         }
         else
@@ -740,7 +740,7 @@ static PWINE_CERT_CONTEXT_REF CRYPT_CollectionEnumCert(
     if (prevEntry)
     {
         EnterCriticalSection(&cs->cs);
-        ret = CRYPT_CollectionAdvanceEnum(cs, prevEntry->entry, prevEntry);
+        ret = CRYPT_CollectionAdvanceEnum(cs, prevEntry->storeEntry, prevEntry);
         LeaveCriticalSection(&cs->cs);
     }
     else
@@ -752,7 +752,7 @@ static PWINE_CERT_CONTEXT_REF CRYPT_CollectionEnumCert(
 
             storeEntry = LIST_ENTRY(cs->stores.next, WINE_STORE_LIST_ENTRY,
              entry);
-            ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry, prevEntry);
+            ret = CRYPT_CollectionAdvanceEnum(cs, storeEntry, NULL);
         }
         else
         {
