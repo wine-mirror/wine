@@ -50,7 +50,6 @@ static const char * const builtin_only[] =
     "ddraw",
     "gdi32",
     "glu32",
-    "glut32",
     "icmp",
     "iphlpapi",
     "joystick.drv",
