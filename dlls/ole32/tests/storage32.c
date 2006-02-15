@@ -566,6 +566,51 @@ static void test_storage_suminfo(void)
     DeleteFileW(filename);
 }
 
+static void test_storage_refcount(void)
+{
+    static const WCHAR szPrefix[] = { 's','t','g',0 };
+    static const WCHAR szDot[] = { '.',0 };
+    WCHAR filename[MAX_PATH];
+    IStorage *stg = NULL;
+    HRESULT r;
+    IStream *stm = NULL;
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER upos;
+    STATSTG stat;
+
+    if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
+        return;
+
+    DeleteFileW(filename);
+
+    /* create the file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | 
+                            STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    /* now create a stream */
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==S_OK, "IStorage->CreateStream failed\n");
+
+    todo_wine {
+    r = IStorage_Release( stg );
+    ok (r == 0, "storage not released\n");
+
+    pos.QuadPart = 0;
+    r = IStream_Seek( stm, pos, 0, &upos );
+    ok (r == STG_E_REVERTED, "seek should fail\n");
+
+    r = IStream_Stat( stm, &stat, STATFLAG_DEFAULT );
+    ok (r == STG_E_REVERTED, "stat should fail\n");
+    }
+
+    r = IStream_Release(stm);
+    ok (r == 0, "stream not released\n");
+
+    DeleteFileW(filename);
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
@@ -573,4 +618,5 @@ START_TEST(storage32)
     test_storage_stream();
     test_open_storage();
     test_storage_suminfo();
+    test_storage_refcount();
 }
