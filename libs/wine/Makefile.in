@@ -6,7 +6,7 @@ LIBRARY   = wine
 SOVERSION = 1
 VERSCRIPT = $(SRCDIR)/wine.map
 EXTRADEFS = -D__WINESRC__ -DBINDIR="\"$(bindir)\"" -DLIBDIR="\"$(libdir)\"" -DDLLDIR="\"$(dlldir)\""
-EXTRALIBS = $(LIBPORT) @DLLIBS@ @CRTLIBS@ @LDLIBWINEFLAGS@
+EXTRALIBS = $(LIBPORT) @DLLIBS@ @CRTLIBS@
 
 C_SRCS = \
 	config.c \

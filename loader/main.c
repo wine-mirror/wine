@@ -23,8 +23,21 @@
 #include "wine/library.h"
 #include "main.h"
 
+#ifdef __APPLE__
+asm(".zerofill WINE_DOS, WINE_DOS, ___wine_dos, 0x20000000");
+asm(".zerofill WINE_SHARED_HEAP, WINE_SHARED_HEAP, ___wine_shared_heap, 0x01020000");
+extern char __wine_dos[0x20000000], __wine_shared_heap[0x01020000];
+
+static const struct wine_preload_info wine_main_preload_info[] =
+{
+    { __wine_dos,         sizeof(__wine_dos) },          /* DOS area + PE exe */
+    { __wine_shared_heap, sizeof(__wine_shared_heap) },  /* shared user data + shared heap */
+    { 0, 0 }  /* end of list */
+};
+#else
 /* the preloader will set this variable */
 const struct wine_preload_info *wine_main_preload_info = NULL;
+#endif
 
 /**********************************************************************
  *           main

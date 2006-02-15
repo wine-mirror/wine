@@ -1020,16 +1020,11 @@ case $host_os in
             dnl declare needed frameworks
             AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
             AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
+            AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7ffe0000"])
             case $host_cpu in
-              *i[[3456789]]86*)
-                AC_SUBST(LDEXECFLAGS,"-image_base 0x7bf00000")
-                ;;
               *powerpc*)
                 CFLAGS="$CFLAGS -ffixed-r13"
                 LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"
-                dnl Relocate wine executable (FIXME: is this really needed?)
-                AC_SUBST(LDEXECFLAGS,"-seg1addr 0x120000")
-                AC_SUBST(LDLIBWINEFLAGS,"-seg1addr 0x140000")
                 ;;
             esac
 
