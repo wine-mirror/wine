@@ -87,6 +87,7 @@ typedef struct {
     const IOleDocumentSiteVtbl          *lpOleDocumentSiteVtbl;
     const IOleCommandTargetVtbl         *lpClOleCommandTargetVtbl;
     const IDispatchVtbl                 *lpDispatchVtbl;
+    const IServiceProviderVtbl          *lpClServiceProviderVtbl;
 
     /* Interfaces of InPlaceFrame object */
 
@@ -145,6 +146,7 @@ typedef struct {
 #define DOCSITE(x)      ((IOleDocumentSite*)            &(x)->lpOleDocumentSiteVtbl)
 #define CLOLECMD(x)     ((IOleCommandTarget*)           &(x)->lpClOleCommandTargetVtbl)
 #define CLDISP(x)       ((IDispatch*)                   &(x)->lpDispatchVtbl)
+#define CLSERVPROV(x)   ((IServiceProvider*)            &(x)->lpClServiceProviderVtbl)
 
 #define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
 
