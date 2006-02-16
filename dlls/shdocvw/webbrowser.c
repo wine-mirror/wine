@@ -551,7 +551,8 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
 
     hres = navigate_url(This, V_BSTR(URL), post_data, post_data_len, headers);
 
-    SafeArrayUnaccessData(V_ARRAY(PostData));
+    if(post_data)
+        SafeArrayUnaccessData(V_ARRAY(PostData));
 
     return hres;
 }
