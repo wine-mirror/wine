@@ -84,6 +84,7 @@ static BOOL stack_set_frame_internal(int newframe)
 
 static BOOL stack_get_frame(int nf, IMAGEHLP_STACK_FRAME* ihsf)
 {
+    memset(ihsf, 0, sizeof(*ihsf));
     ihsf->InstructionOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_pc);
     ihsf->FrameOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_frame);
     return TRUE;
@@ -229,7 +230,7 @@ static void stack_print_addr_and_args(int nf)
         DWORD           disp;
 
         dbg_printf(" %s", si->Name);
-        if (disp) dbg_printf("+0x%lx", (DWORD_PTR)disp64);
+        if (disp64) dbg_printf("+0x%lx", (DWORD_PTR)disp64);
 
         SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
         se.tmp = tmp;
