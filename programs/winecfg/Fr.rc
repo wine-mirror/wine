@@ -2,7 +2,7 @@
  * WineCfg resources
  * French Language Support
  *
- * Copyright 2005 Jonathan Ernst
+ * Copyright 2005-2006 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -171,7 +171,7 @@ IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
+    GROUPBOX        " Apparence ",IDC_STATIC,8,4,244,106
     LTEXT           "Thème:",IDC_STATIC,15,16,230,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Installer un thème...",IDC_THEME_INSTALL,152,38,93,14
@@ -179,12 +179,12 @@ BEGIN
     COMBOBOX        IDC_THEME_COLORCOMBO,15,62,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Taille:",IDC_THEME_SIZETEXT,15,80,230,8
     COMBOBOX        IDC_THEME_SIZECOMBO,15,88,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        " Shell Folder ",IDC_STATIC,8,114,244,100
+    GROUPBOX        " Dossiers système ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    CONTROL         "Lié à:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "Parcourir",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -193,17 +193,17 @@ BEGIN
     IDS_TAB_APPLICATIONS    "Applications"
     IDS_TAB_DLLS            "Bibliothèques"
     IDS_TAB_DRIVES          "Lecteurs"
-    IDS_CHOOSE_PATH         "Select the unix target directory, please."
+    IDS_CHOOSE_PATH         "Veuillez sélectionner le répertoire de destination."
     IDS_HIDE_ADVANCED       "Cacher avancés"
     IDS_SHOW_ADVANCED       "Montrer avancés"
     IDS_NOTHEME             "(Pas de thème)"
     IDS_TAB_GRAPHICS        "Affichage"
-    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
+    IDS_TAB_DESKTOP_INTEGRATION "Intégration avec le bureau"
     IDS_TAB_AUDIO           "Audio"
     IDS_TAB_ABOUT           "A propos"
     IDS_WINECFG_TITLE       "Configuration de Wine"
     IDS_THEMEFILE           "Fichiers de thèmes"
     IDS_THEMEFILE_SELECT    "Sélectionnez un fichier de thème"
-    IDS_SHELL_FOLDER        "Shell Folder"
-    IDS_LINKS_TO            "Links to"
+    IDS_SHELL_FOLDER        "Dossier système"
+    IDS_LINKS_TO            "Lié à"
 END
