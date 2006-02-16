@@ -585,6 +585,9 @@ static void test_UrlUnescape(void)
     WCHAR *urlW, *expected_urlW; 
     DWORD dwEscaped;
     size_t i;
+    static char inplace[] = "file:///C:/Program%20Files";
+    static WCHAR inplaceW[] = {'f','i','l','e',':','/','/','/','C',':','/',
+                               'P','r','o','g','r','a','m','%','2','0','F','i','l','e','s',0};
 
     for(i=0; i<sizeof(TEST_URL_UNESCAPE)/sizeof(TEST_URL_UNESCAPE[0]); i++) { 
         dwEscaped=INTERNET_MAX_URL_LENGTH;
@@ -601,6 +604,11 @@ static void test_UrlUnescape(void)
         FreeWideString(expected_urlW);
     }
 
+    dwEscaped = sizeof(inplace);
+    ok(UrlUnescapeA(inplace, NULL, &dwEscaped, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeA failed unexpectedly\n");
+
+    dwEscaped = sizeof(inplaceW);
+    ok(UrlUnescapeW(inplaceW, NULL, &dwEscaped, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeW failed unexpectedly\n");
 }
 
 static void test_PathSearchAndQualify(void)

@@ -1117,7 +1117,7 @@ HRESULT WINAPI UrlUnescapeA(
     TRACE("(%s, %p, %p, 0x%08lx)\n", debugstr_a(pszUrl), pszUnescaped,
 	  pcchUnescaped, dwFlags);
 
-    if(!pszUrl || !pszUnescaped || !pcchUnescaped)
+    if(!pszUrl || (!pszUnescaped && !(dwFlags & URL_UNESCAPE_INPLACE)) || !pcchUnescaped)
 	return E_INVALIDARG;
 
     if(dwFlags & URL_UNESCAPE_INPLACE)
