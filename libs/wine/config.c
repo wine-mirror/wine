@@ -139,10 +139,10 @@ static const char *get_runtime_libdir(void)
 
 #ifdef HAVE_DLADDR
     Dl_info info;
-    char *p;
 
-    if (!libdir && dladdr( get_runtime_libdir, &info ) && (p = strrchr( info.dli_fname, '/' )))
+    if (!libdir && dladdr( get_runtime_libdir, &info ) && info.dli_fname[0] == '/')
     {
+        const char *p = strrchr( info.dli_fname, '/' );
         unsigned int len = p - info.dli_fname;
         if (!len) len++;  /* include initial slash */
         libdir = xmalloc( len + 1 );
