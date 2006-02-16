@@ -1718,12 +1718,27 @@ static PWINECRYPT_CERTSTORE CRYPT_SysOpenStoreW(HCRYPTPROV hCryptProv,
         {
             store = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
              CERT_STORE_CREATE_NEW_FLAG, NULL);
-            if (store)
+            CertAddStoreToCollection(store, regStore,
+             dwFlags & CERT_STORE_READONLY_FLAG ? 0 :
+             CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+            CertCloseStore(regStore, 0);
+            /* CERT_SYSTEM_STORE_CURRENT_USER returns both the HKCU and HKLM
+             * stores.
+             */
+            if ((dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK) ==
+             CERT_SYSTEM_STORE_CURRENT_USER)
             {
-                CertAddStoreToCollection(store, regStore,
-                 dwFlags & CERT_STORE_READONLY_FLAG ? 0 :
-                 CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
-                CertCloseStore(regStore, 0);
+                dwFlags &= ~CERT_SYSTEM_STORE_CURRENT_USER;
+                dwFlags |= CERT_SYSTEM_STORE_LOCAL_MACHINE;
+                regStore = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0,
+                 hCryptProv, dwFlags, pvPara);
+                if (regStore)
+                {
+                    CertAddStoreToCollection(store, regStore,
+                     dwFlags & CERT_STORE_READONLY_FLAG ? 0 :
+                     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+                    CertCloseStore(regStore, 0);
+                }
             }
         }
     }
@@ -2227,15 +2242,19 @@ static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
     if (!cbData || data)
     {
         PWINE_CERT_PROPERTY prop;
+        BOOL found = FALSE;
 
         EnterCriticalSection(&context->cs);
         LIST_FOR_EACH_ENTRY(prop, &context->extendedProperties,
          WINE_CERT_PROPERTY, entry)
         {
             if (prop->hdr.propID == dwPropId)
+            {
+                found = TRUE;
                 break;
+            }
         }
-        if (prop && prop->entry.next != &context->extendedProperties)
+        if (found)
         {
             CryptMemFree(prop->pbData);
             prop->hdr.cb = cbData;
