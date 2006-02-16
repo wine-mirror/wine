@@ -497,6 +497,21 @@ static void enum_registered_color_profiles(void)
     trace("\n");
 }
 
+static colorspace_descr *query_colorspace(DWORD dwID)
+{
+    DWORD count, i;
+
+    count = sizeof(known_colorspaces)/sizeof(known_colorspaces[0]);
+
+    for (i=0; i<count; i++)
+        if (known_colorspaces[i].dwID == dwID)
+        {
+            if (!known_colorspaces[i].registered) break;
+            return &known_colorspaces[i];
+        }
+    return NULL;
+}
+
 static HKEY reg_open_mscms_key(void)
 {
     char win9x[] = "SOFTWARE\\Microsoft\\Windows";
@@ -580,10 +595,19 @@ static void test_GetStandardColorSpaceProfileA(void)
     fail_GSCSP(A, NULL,    (DWORD)-1, newprofile, &size, sizeP, FALSE, (GLE == ERROR_FILE_NOT_FOUND));
     todo_wine
     fail_GSCSP(A, NULL,    SPACE_RGB, newprofile, NULL,  sizeP, FALSE, (GLE == ERROR_INVALID_PARAMETER));
-    todo_wine
-    fail_GSCSP(A, NULL,    SPACE_RGB, NULL,       &size, sizeP, FALSE, (GLE == ERROR_INSUFFICIENT_BUFFER));
-    todo_wine
-    fail_GSCSP(A, NULL,    SPACE_RGB, newprofile, &size, 0,     FALSE, (GLE == ERROR_MORE_DATA || GLE == ERROR_INSUFFICIENT_BUFFER));
+
+    if (query_colorspace(SPACE_RGB)) 
+    {
+        todo_wine
+        fail_GSCSP(A, NULL,    SPACE_RGB, NULL,       &size, sizeP, FALSE, (GLE == ERROR_INSUFFICIENT_BUFFER));
+        todo_wine
+        fail_GSCSP(A, NULL,    SPACE_RGB, newprofile, &size, 0,     FALSE, (GLE == ERROR_MORE_DATA || GLE == ERROR_INSUFFICIENT_BUFFER));
+    } else {
+        todo_wine
+        fail_GSCSP(A, NULL,    SPACE_RGB, NULL,       &size, sizeP, FALSE, (GLE == ERROR_FILE_NOT_FOUND));
+        todo_wine
+        fail_GSCSP(A, NULL,    SPACE_RGB, newprofile, &size, 0,     FALSE, (GLE == ERROR_FILE_NOT_FOUND));
+    }
 
     /* Several invalid parameter checks */
     fail_GSCSP(A, machine,  0, newprofile, &size, 0,     FALSE, (GLE == ERROR_INVALID_PARAMETER || GLE == ERROR_NOT_SUPPORTED));
