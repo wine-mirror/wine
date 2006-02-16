@@ -1481,14 +1481,8 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         if (winedebug) putenv( winedebug );
         if (unixdir) chdir(unixdir);
 
-        if (argv)
-        {
-            /* first, try for a WINELOADER environment variable */
-            const char *loader = getenv("WINELOADER");
-            if (loader) wine_exec_wine_binary( loader, argv, NULL, TRUE );
-            /* now use the standard search strategy */
-            wine_exec_wine_binary( NULL, argv, NULL, TRUE );
-        }
+        if (argv) wine_exec_wine_binary( NULL, argv, getenv("WINELOADER") );
+
         err = errno;
         write( execfd[1], &err, sizeof(err) );
         _exit(1);

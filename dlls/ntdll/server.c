@@ -589,7 +589,6 @@ void wine_server_release_fd( obj_handle_t handle, int unix_fd )
 static void start_server( const char *oldcwd )
 {
     static int started;  /* we only try once */
-    char *path, *p;
     char *argv[3];
 
     if (!started)
@@ -602,22 +601,7 @@ static void start_server( const char *oldcwd )
             argv[0] = "wineserver";
             argv[1] = TRACE_ON(server) ? "-d" : NULL;
             argv[2] = NULL;
-            /* if server is explicitly specified, use this */
-            if ((p = getenv("WINESERVER")))
-            {
-                if (p[0] != '/' && oldcwd[0] == '/')  /* make it an absolute path */
-                {
-                    if (!(path = malloc( strlen(oldcwd) + strlen(p) + 1 )))
-                        fatal_error( "out of memory\n" );
-                    sprintf( path, "%s/%s", oldcwd, p );
-                    p = path;
-                }
-                wine_exec_wine_binary( p, argv, NULL, FALSE );
-                fatal_perror( "could not exec the server '%s'\n"
-                              "    specified in the WINESERVER environment variable", p );
-            }
-            /* now use the standard search strategy */
-            wine_exec_wine_binary( argv[0], argv, NULL, FALSE );
+            wine_exec_wine_binary( argv[0], argv, getenv("WINESERVER") );
             fatal_error( "could not exec wineserver\n" );
         }
         waitpid( pid, &status, 0 );
@@ -809,7 +793,7 @@ static void create_config_dir(void)
         argv[3] = "--prefix";
         argv[4] = tmp_dir;
         argv[5] = NULL;
-        wine_exec_wine_binary( argv[0], (char **)argv, NULL, FALSE );
+        wine_exec_wine_binary( argv[0], (char **)argv, NULL );
         rmdir( tmp_dir );
         fatal_perror( "could not exec wineprefixcreate" );
     }

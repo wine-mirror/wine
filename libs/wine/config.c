@@ -375,7 +375,7 @@ const char *wine_get_user_name(void)
 }
 
 /* exec a binary using the preloader if requested; helper for wine_exec_wine_binary */
-static void preloader_exec( char **argv, char **envp, int use_preloader )
+static void preloader_exec( char **argv, int use_preloader )
 {
 #ifdef linux
     if (use_preloader)
@@ -396,35 +396,39 @@ static void preloader_exec( char **argv, char **envp, int use_preloader )
         new_argv = xmalloc( (last_arg - argv + 2) * sizeof(*argv) );
         memcpy( new_argv + 1, argv, (last_arg - argv + 1) * sizeof(*argv) );
         new_argv[0] = full_name;
-        if (envp) execve( full_name, new_argv, envp );
-        else execv( full_name, new_argv );
+        execv( full_name, new_argv );
         free( new_argv );
         free( full_name );
         return;
     }
 #endif
-    if (envp) execve( argv[0], argv, envp );
-    else execv( argv[0], argv );
+    execv( argv[0], argv );
 }
 
 /* exec a wine internal binary (either the wine loader or the wine server) */
-void wine_exec_wine_binary( const char *name, char **argv, char **envp, int use_preloader )
+void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
 {
     static const char bindir[] = BINDIR;
     const char *path, *pos, *ptr;
+    int use_preloader = 0;
 
-    if (name && strchr( name, '/' ))
+    if (!name)  /* no name means default loader */
     {
-        argv[0] = (char *)name;
-        preloader_exec( argv, envp, use_preloader );
-        return;
+        name = argv0_name;
+        use_preloader = 1;
     }
-    else if (!name) name = argv0_name;
 
     /* first, bin directory from the current libdir or argv0 */
     argv[0] = get_path_from_libdir( bindir, argv0_path, name );
-    preloader_exec( argv, envp, use_preloader );
+    preloader_exec( argv, use_preloader );
     free( argv[0] );
+
+    /* then specified environment variable */
+    if (env_var)
+    {
+        argv[0] = (char *)env_var;
+        preloader_exec( argv, use_preloader );
+    }
 
     /* now search in the Unix path */
     if ((path = getenv( "PATH" )))
@@ -439,7 +443,7 @@ void wine_exec_wine_binary( const char *name, char **argv, char **envp, int use_
             memcpy( argv[0], pos, ptr - pos );
             strcpy( argv[0] + (ptr - pos), "/" );
             strcat( argv[0] + (ptr - pos), name );
-            preloader_exec( argv, envp, use_preloader );
+            preloader_exec( argv, use_preloader );
             pos = ptr;
         }
         free( argv[0] );
@@ -450,5 +454,5 @@ void wine_exec_wine_binary( const char *name, char **argv, char **envp, int use_
     strcpy( argv[0], bindir );
     strcat( argv[0], "/" );
     strcat( argv[0], name );
-    preloader_exec( argv, envp, use_preloader );
+    preloader_exec( argv, use_preloader );
 }
