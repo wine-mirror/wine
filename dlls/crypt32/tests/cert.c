@@ -138,6 +138,51 @@ static const BYTE signedCRL[] = { 0x30, 0x45, 0x30, 0x2c, 0x30, 0x02, 0x06,
  0x30, 0x5a, 0x30, 0x02, 0x06, 0x00, 0x03, 0x11, 0x00, 0x0f, 0x0e, 0x0d, 0x0c,
  0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 };
 
+static void testDupCert(void)
+{
+    HCERTSTORE store;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
+    if (store != NULL)
+    {
+        PCCERT_CONTEXT context, dupContext;
+        BOOL ret;
+
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, &context);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ok(context != NULL, "Expected a valid cert context\n");
+        if (context)
+        {
+            ok(context->cbCertEncoded == sizeof(bigCert) - 1,
+             "Expected cert of %d bytes, got %ld\n", sizeof(bigCert) - 1,
+             context->cbCertEncoded);
+            ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert) - 1),
+             "Unexpected encoded cert in context\n");
+            ok(context->hCertStore == store, "Unexpected store\n");
+
+            dupContext = CertDuplicateCertificateContext(context);
+            ok(dupContext != NULL, "Expected valid duplicate\n");
+            if (dupContext)
+            {
+                ok(dupContext->cbCertEncoded == sizeof(bigCert) - 1,
+                 "Expected cert of %d bytes, got %ld\n", sizeof(bigCert) - 1,
+                 dupContext->cbCertEncoded);
+                ok(!memcmp(dupContext->pbCertEncoded, bigCert,
+                 sizeof(bigCert) - 1),
+                 "Unexpected encoded cert in context\n");
+                ok(dupContext->hCertStore == store, "Unexpected store\n");
+                CertFreeCertificateContext(dupContext);
+            }
+            CertFreeCertificateContext(context);
+        }
+        CertCloseStore(store, 0);
+    }
+}
+
 static void testMemStore(void)
 {
     HCERTSTORE store1, store2;
@@ -1633,6 +1678,7 @@ START_TEST(cert)
     init_function_pointers();
 
     testCryptHashCert();
+    testDupCert();
 
     /* various combinations of CertOpenStore */
     testMemStore();

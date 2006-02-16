@@ -154,6 +154,8 @@ typedef struct _WINE_CERT_CONTEXT_REF * (*CreateRefFunc)
  */
 typedef void (*FreeCertFunc)(struct _WINE_CERT_CONTEXT_REF *ref);
 
+typedef PCCERT_CONTEXT (*DupCertFunc)(PCCERT_CONTEXT context);
+
 typedef enum _CertStoreType {
     StoreTypeMem,
     StoreTypeCollection,
@@ -180,6 +182,7 @@ typedef struct WINE_CRYPTCERTSTORE
     CreateRefFunc                   createCertRef;
     EnumCertFunc                    enumCert;
     PFN_CERT_STORE_PROV_DELETE_CERT deleteCert;
+    DupCertFunc                     dupCert;
     FreeCertFunc                    freeCert;   /* optional */
     PFN_CERT_STORE_PROV_CONTROL     control;    /* optional */
 } WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
@@ -580,6 +583,21 @@ static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     CryptMemFree(store);
 }
 
+static PCCERT_CONTEXT CRYPT_MemDupCert(PCCERT_CONTEXT pCertContext)
+{
+    const WINE_CERT_LIST_ENTRY *context =
+     (const WINE_CERT_LIST_ENTRY *)pCertContext;
+    PWINE_CERT_LIST_ENTRY ret;
+
+    ret = CryptMemAlloc(sizeof(WINE_CERT_LIST_ENTRY));
+    if (ret)
+    {
+        memcpy(ret, context, sizeof(WINE_CERT_LIST_ENTRY));
+        InterlockedIncrement(&ret->cert.context->ref);
+    }
+    return (PCCERT_CONTEXT)ret;
+}
+
 static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
@@ -605,6 +623,7 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.enumCert      = CRYPT_MemEnumCert;
             store->hdr.deleteCert    = CRYPT_MemDeleteCert;
             store->hdr.freeCert      = NULL;
+            store->hdr.dupCert       = CRYPT_MemDupCert;
             store->hdr.control       = NULL;
             InitializeCriticalSection(&store->cs);
             list_init(&store->certs);
@@ -780,6 +799,21 @@ static BOOL WINAPI CRYPT_CollectionDeleteCert(HCERTSTORE hCertStore,
     return ret;
 }
 
+static PCCERT_CONTEXT CRYPT_CollectionDupCert(PCCERT_CONTEXT pCertContext)
+{
+    const WINE_COLLECTION_CERT_CONTEXT *context =
+     (const WINE_COLLECTION_CERT_CONTEXT *)pCertContext;
+    PWINE_COLLECTION_CERT_CONTEXT ret;
+
+    ret = CryptMemAlloc(sizeof(WINE_COLLECTION_CERT_CONTEXT));
+    if (ret)
+    {
+        memcpy(ret, context, sizeof(WINE_COLLECTION_CERT_CONTEXT));
+        InterlockedIncrement(&ret->cert.context->ref);
+    }
+    return (PCCERT_CONTEXT)ret;
+}
+
 static void CRYPT_CollectionFreeCert(PWINE_CERT_CONTEXT_REF ref)
 {
     PWINE_COLLECTION_CERT_CONTEXT context = (PWINE_COLLECTION_CERT_CONTEXT)ref;
@@ -813,6 +847,7 @@ static WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.createCertRef = CRYPT_CollectionCreateCertRef;
             store->hdr.enumCert      = CRYPT_CollectionEnumCert;
             store->hdr.deleteCert    = CRYPT_CollectionDeleteCert;
+            store->hdr.dupCert       = CRYPT_CollectionDupCert;
             store->hdr.freeCert      = CRYPT_CollectionFreeCert;
             InitializeCriticalSection(&store->cs);
             list_init(&store->stores);
@@ -902,6 +937,21 @@ static PWINE_CERT_CONTEXT_REF CRYPT_ProvEnumCert(PWINECRYPT_CERTSTORE store,
     return (PWINE_CERT_CONTEXT_REF)ret;
 }
 
+static PCCERT_CONTEXT CRYPT_ProvDupCert(PCCERT_CONTEXT pCertContext)
+{
+    const WINE_PROV_CERT_CONTEXT *context =
+     (const WINE_PROV_CERT_CONTEXT *)pCertContext;
+    PWINE_PROV_CERT_CONTEXT ret;
+
+    ret = CryptMemAlloc(sizeof(WINE_PROV_CERT_CONTEXT));
+    if (ret)
+    {
+        memcpy(ret, context, sizeof(WINE_PROV_CERT_CONTEXT));
+        InterlockedIncrement(&ret->cert.context->ref);
+    }
+    return (PCCERT_CONTEXT)ret;
+}
+
 static BOOL WINAPI CRYPT_ProvDeleteCert(HCERTSTORE hCertStore,
  PCCERT_CONTEXT cert, DWORD dwFlags)
 {
@@ -966,6 +1016,7 @@ static PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(HCRYPTPROV hCryptProv,
         ret->hdr.createCertRef = CRYPT_ProvCreateCertRef;
         ret->hdr.enumCert = CRYPT_ProvEnumCert;
         ret->hdr.deleteCert = CRYPT_ProvDeleteCert;
+        ret->hdr.dupCert = CRYPT_ProvDupCert;
         ret->hdr.freeCert = CRYPT_ProvFreeCert;
         ret->hdr.control = CRYPT_ProvControl;
         if (pProvInfo->cStoreProvFunc > CERT_STORE_PROV_CLOSE_FUNC)
@@ -1839,64 +1890,25 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
 HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV hProv,
  LPCSTR szSubSystemProtocol)
 {
-    HCERTSTORE ret = 0;
-
-    if (szSubSystemProtocol)
-    {
-        int len = MultiByteToWideChar(CP_ACP, 0, szSubSystemProtocol, -1, NULL,
-         0);
-        LPWSTR param = CryptMemAlloc(len * sizeof(WCHAR));
-
-        if (param)
-        {
-            MultiByteToWideChar(CP_ACP, 0, szSubSystemProtocol, -1, param, len);
-            ret = CertOpenSystemStoreW(hProv, param);
-            CryptMemFree(param);
-        }
-    }
-    else
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
-    return ret;
-}
-
-HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV hProv,
- LPCWSTR szSubSystemProtocol)
-{
-    HCERTSTORE ret;
-
     if (!szSubSystemProtocol)
     {
         SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
         return 0;
     }
+    return CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, hProv,
+     CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
+}
 
-    /* FIXME: needs some tests. It seems to open both HKEY_LOCAL_MACHINE and
-     * HKEY_CURRENT_USER stores, but I'm not sure under what conditions, if any,
-     * it fails.
-     */
-    ret = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, hProv,
-     CERT_STORE_CREATE_NEW_FLAG, NULL);
-    if (ret)
+HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV hProv,
+ LPCWSTR szSubSystemProtocol)
+{
+    if (!szSubSystemProtocol)
     {
-        HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,
-         0, hProv, CERT_SYSTEM_STORE_LOCAL_MACHINE, szSubSystemProtocol);
-
-        if (store)
-        {
-            CertAddStoreToCollection(ret, store,
-             CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
-            CertCloseStore(store, 0);
-        }
-        store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,
-         0, hProv, CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
-        if (store)
-        {
-            CertAddStoreToCollection(ret, store,
-             CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
-            CertCloseStore(store, 0);
-        }
+        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        return 0;
     }
-    return ret;
+    return CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, hProv,
+     CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
 }
 
 BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
@@ -2374,29 +2386,35 @@ BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
     return ret;
 }
 
-/* Only the reference portion of the context is duplicated.  The returned
- * context has the cert store set to 0, to prevent the store's certificate free
- * function from getting called on partial data.
- * FIXME: is this okay?  Needs a test.
- */
 PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(
  PCCERT_CONTEXT pCertContext)
 {
-    PWINE_CERT_CONTEXT_REF ref = (PWINE_CERT_CONTEXT_REF)pCertContext, ret;
+    PCCERT_CONTEXT ret;
 
     TRACE("(%p)\n", pCertContext);
-    if (ref)
+    if (pCertContext->hCertStore)
     {
-        ret = CryptMemAlloc(sizeof(WINE_CERT_CONTEXT_REF));
-        if (ret)
-        {
-            memcpy(ret, ref, sizeof(*ret));
-            ret->cert.hCertStore = 0;
-            InterlockedIncrement(&ret->context->ref);
-        }
+        PWINECRYPT_CERTSTORE store =
+         (PWINECRYPT_CERTSTORE)pCertContext->hCertStore;
+
+        ret = store->dupCert(pCertContext);
     }
     else
-        ret = NULL;
+    {
+        PWINE_CERT_CONTEXT_REF context = (PWINE_CERT_CONTEXT_REF)pCertContext,
+         ref;
+
+        ref = CryptMemAlloc(sizeof(WINE_CERT_CONTEXT_REF));
+        if (ref)
+        {
+            memcpy(ref, context, sizeof(*ret));
+            ref->cert.hCertStore = 0;
+            InterlockedIncrement(&ref->context->ref);
+            ret = (PCCERT_CONTEXT)ref;
+        }
+        else
+            ret = NULL;
+    }
     return (PCCERT_CONTEXT)ret;
 }
 
