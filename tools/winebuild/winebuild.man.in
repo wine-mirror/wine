@@ -73,11 +73,11 @@ Specify the module entry point function; if not specified, the default
 is
 .B DllMain
 for dlls, and
-.B WinMain
-for executables (if
-.B WinMain
-is not defined, the standard C
 .B main
+for executables (if the standard C
+.B main
+is not defined,
+.B WinMain
 is used instead). This is only valid for Win32 modules.
 .TP
 .BI \-E,\ --export= filename
