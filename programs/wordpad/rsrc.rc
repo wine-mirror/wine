@@ -78,3 +78,4 @@ IDB_TOOLBAR BITMAP "toolbar.bmp"
 
 #include "De.rc"
 #include "En.rc"
+#include "Fr.rc"
