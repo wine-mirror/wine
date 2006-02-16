@@ -252,11 +252,6 @@ struct thread *create_process( int fd )
     process->ldt_copy        = NULL;
     process->winstation      = 0;
     process->desktop         = 0;
-    process->exe.file        = NULL;
-    process->exe.dbg_offset  = 0;
-    process->exe.dbg_size    = 0;
-    process->exe.namelen     = 0;
-    process->exe.filename    = NULL;
     process->token           = token_create_admin();
     list_init( &process->thread_list );
     list_init( &process->locks );
@@ -392,8 +387,6 @@ static void process_destroy( struct object *obj )
     list_remove( &process->entry );
     if (process->idle_event) release_object( process->idle_event );
     if (process->queue) release_object( process->queue );
-    if (process->exe.file) release_object( process->exe.file );
-    if (process->exe.filename) free( process->exe.filename );
     if (process->id) free_ptid( process->id );
     if (process->token) release_object( process->token );
 }
@@ -480,8 +473,6 @@ static inline struct process_dll *find_process_dll( struct process *process, voi
 {
     struct process_dll *dll;
 
-    if (process->exe.base == base) return &process->exe;
-
     LIST_FOR_EACH_ENTRY( dll, &process->dlls, struct process_dll, entry )
     {
         if (dll->base == base) return dll;
@@ -514,7 +505,7 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
             return NULL;
         }
         if (file) dll->file = (struct file *)grab_object( file );
-        list_add_head( &process->dlls, &dll->entry );
+        list_add_tail( &process->dlls, &dll->entry );
     }
     return dll;
 }
@@ -524,7 +515,7 @@ static void process_unload_dll( struct process *process, void *base )
 {
     struct process_dll *dll = find_process_dll( process, base );
 
-    if (dll && dll != &process->exe)
+    if (dll && (&dll->entry != list_head( &process->dlls )))  /* main exe can't be unloaded */
     {
         if (dll->file) release_object( dll->file );
         if (dll->filename) free( dll->filename );
@@ -597,8 +588,6 @@ static void process_killed( struct process *process )
     destroy_process_classes( process );
     remove_process_locks( process );
     set_process_startup_state( process, STARTUP_ABORTED );
-    if (process->exe.file) release_object( process->exe.file );
-    process->exe.file = NULL;
     wake_up( &process->obj, 0 );
     if (!--running_processes) close_master_socket();
 }
@@ -850,18 +839,12 @@ struct module_snapshot *module_snap( struct process *process, int *count )
 {
     struct module_snapshot *snapshot, *ptr;
     struct process_dll *dll;
-    int total = 1;
+    int total = 0;
 
     LIST_FOR_EACH_ENTRY( dll, &process->dlls, struct process_dll, entry ) total++;
     if (!(snapshot = mem_alloc( sizeof(*snapshot) * total ))) return NULL;
 
-    /* first entry is main exe */
-    snapshot->base     = process->exe.base;
-    snapshot->size     = process->exe.size;
-    snapshot->namelen  = process->exe.namelen;
-    snapshot->filename = memdup( process->exe.filename, process->exe.namelen );
-    ptr = snapshot + 1;
-
+    ptr = snapshot;
     LIST_FOR_EACH_ENTRY( dll, &process->dlls, struct process_dll, entry )
     {
         ptr->base     = dll->base;
@@ -992,21 +975,19 @@ DECL_HANDLER(init_process_done)
     }
 
     /* check if main exe has been registered as a dll already */
-    if ((dll = find_process_dll( process, req->module )))
+    if (!(dll = find_process_dll( process, req->module )))
     {
-        list_remove( &dll->entry );
-        memcpy( &process->exe, dll, sizeof(*dll) );
-        list_init( &process->exe.entry );
-        free( dll );
+        if (!(dll = process_load_dll( process, NULL, req->module,
+                                      get_req_data(), get_req_data_size() ))) return;
+        dll->size       = req->module_size;
+        dll->dbg_offset = 0;
+        dll->dbg_size   = 0;
+        dll->name       = req->name;
     }
-    else
-    {
-        process->exe.base = req->module;
-        process->exe.size = req->module_size;
-        process->exe.name = req->name;
-        if ((process->exe.namelen = get_req_data_size()))
-            process->exe.filename = memdup( get_req_data(), process->exe.namelen );
-    }
+
+    /* main exe is the first in the dll list */
+    list_remove( &dll->entry );
+    list_add_head( &process->dlls, &dll->entry );
 
     generate_startup_debug_events( process, req->entry );
     set_process_startup_state( process, STARTUP_DONE );

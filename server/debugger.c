@@ -130,6 +130,7 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     struct process *debugger = event->debugger->process;
     struct thread *thread = event->sender;
     struct process *process = thread->process;
+    struct process_dll *exe_module = get_process_exe_module( process );
     obj_handle_t handle;
 
     /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
@@ -145,9 +146,9 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     event->data.info.create_process.thread = handle;
 
     handle = 0;
-    if (process->exe.file &&
+    if (exe_module->file &&
         /* the doc says write access too, but this doesn't seem a good idea */
-        !(handle = alloc_handle( debugger, process->exe.file, GENERIC_READ, 0 )))
+        !(handle = alloc_handle( debugger, exe_module->file, GENERIC_READ, 0 )))
     {
         close_handle( debugger, event->data.info.create_process.process, NULL );
         close_handle( debugger, event->data.info.create_process.thread, NULL );
@@ -155,11 +156,11 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     }
     event->data.info.create_process.file       = handle;
     event->data.info.create_process.teb        = thread->teb;
-    event->data.info.create_process.base       = process->exe.base;
+    event->data.info.create_process.base       = exe_module->base;
     event->data.info.create_process.start      = arg;
-    event->data.info.create_process.dbg_offset = process->exe.dbg_offset;
-    event->data.info.create_process.dbg_size   = process->exe.dbg_size;
-    event->data.info.create_process.name       = process->exe.name;
+    event->data.info.create_process.dbg_offset = exe_module->dbg_offset;
+    event->data.info.create_process.dbg_size   = exe_module->dbg_size;
+    event->data.info.create_process.name       = exe_module->name;
     event->data.info.create_process.unicode    = 1;
     return 1;
 }

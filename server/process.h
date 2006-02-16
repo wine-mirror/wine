@@ -75,7 +75,6 @@ struct process
     obj_handle_t         winstation;      /* main handle to process window station */
     obj_handle_t         desktop;         /* handle to desktop to use for new threads */
     struct token        *token;           /* security token associated with this process */
-    struct process_dll   exe;             /* main exe file */
     struct list          dlls;            /* list of loaded dlls */
     void                *peb;             /* PEB address in client address space */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
@@ -132,6 +131,12 @@ inline static process_id_t get_process_id( struct process *process ) { return pr
 inline static int is_process_init_done( struct process *process )
 {
     return process->startup_state == STARTUP_DONE;
+}
+
+inline static struct process_dll *get_process_exe_module( struct process *process )
+{
+    struct list *ptr = list_head( &process->dlls );
+    return ptr ? LIST_ENTRY( ptr, struct process_dll, entry ) : NULL;
 }
 
 #endif  /* __WINE_SERVER_PROCESS_H */

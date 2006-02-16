@@ -117,6 +117,7 @@ static struct snapshot *create_snapshot( process_id_t pid, int flags )
 static int snapshot_next_process( struct snapshot *snapshot, struct next_process_reply *reply )
 {
     struct process_snapshot *ptr;
+    struct process_dll *exe_module;
 
     if (!snapshot->process_count)
     {
@@ -137,10 +138,10 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
     reply->threads  = ptr->threads;
     reply->priority = ptr->priority;
     reply->handles  = ptr->handles;
-    if (ptr->process->exe.filename)
+    if ((exe_module = get_process_exe_module( ptr->process )) && exe_module->filename)
     {
-        size_t len = min( ptr->process->exe.namelen, get_reply_max_size() );
-        set_reply_data( ptr->process->exe.filename, len );
+        size_t len = min( exe_module->namelen, get_reply_max_size() );
+        set_reply_data( exe_module->filename, len );
     }
     return 1;
 }
