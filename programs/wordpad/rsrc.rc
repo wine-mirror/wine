@@ -16,6 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <windows.h>
 #include "resource.h"
 
 MAINACCELTABLE ACCELERATORS
@@ -75,4 +76,5 @@ IDB_TOOLBAR BITMAP "toolbar.bmp"
  '88 88 88 88 88 88'
 } */
 
+#include "De.rc"
 #include "En.rc"
