@@ -205,6 +205,7 @@ BEGIN
     IDS_TAB_AUDIO           "Аудио"
     IDS_TAB_ABOUT           "О программе"
     IDS_WINECFG_TITLE       "Настройка Wine"
+    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
     IDS_THEMEFILE           "Файлы тем"
     IDS_THEMEFILE_SELECT    "Выберите файл с темой"
     IDS_SHELL_FOLDER        "Shell Folder"

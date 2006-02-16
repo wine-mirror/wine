@@ -206,6 +206,7 @@ BEGIN
     IDS_TAB_AUDIO           "Audio"
     IDS_TAB_ABOUT           "About"
     IDS_WINECFG_TITLE       "Wine configuration"
+    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
     IDS_THEMEFILE           "Theme files"
     IDS_THEMEFILE_SELECT    "Select a theme file"
     IDS_AUDIO_MISSING       "There is no audio driver currently specified in the registry.\n\nA recommended driver has been selected for you.\nYou can use this driver or select another driver if available.\n\nYou must click Apply for the selection to take effect."

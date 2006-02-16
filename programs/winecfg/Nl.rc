@@ -206,6 +206,7 @@ BEGIN
     IDS_TAB_AUDIO           "Audio"
     IDS_TAB_ABOUT           "Info"
     IDS_WINECFG_TITLE       "Wine configuratie"
+    IDS_WINECFG_TITLE_APP   "Wine configuratie voor %s"
     IDS_THEMEFILE           "Thema-bestanden"
     IDS_THEMEFILE_SELECT    "Thema-bestanden kiezen"
     IDS_AUDIO_MISSING       "Op dit moment is er geen audio stuurbestand gespecificeerd in de registry.\n\nEen aanbevolen stuurbestand is voor u geselecteerd.\nU kunt dit stuurbestand gebruiken of (indien beschikbaar) een ander selecteren.\n\nKlik op 'Toepassen' om deze selectie te activeren."

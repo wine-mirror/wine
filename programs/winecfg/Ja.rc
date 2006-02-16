@@ -203,6 +203,7 @@ BEGIN
     IDS_TAB_AUDIO           "オーディオ"
     IDS_TAB_ABOUT           "Wineについて"
     IDS_WINECFG_TITLE       "Wine設定"
+    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
     IDS_THEMEFILE           "テーマファイル"
     IDS_THEMEFILE_SELECT    "テーマファイルを選んでください"
     IDS_SHELL_FOLDER        "Shell Folder"

@@ -204,6 +204,7 @@ BEGIN
     IDS_TAB_AUDIO           "Audio"
     IDS_TAB_ABOUT           "Über"
     IDS_WINECFG_TITLE       "Wine-Konfiguration"
+    IDS_WINECFG_TITLE_APP   "Wine-Konfiguration für %s"
     IDS_THEMEFILE           "Motiv-Dateien"
     IDS_THEMEFILE_SELECT    "Motiv-Datei auswählen"
     IDS_AUDIO_MISSING       "Zur Zeit ist kein Audio Treiber in der Registry eingetragen.\n\nEin bevorzugter Treiber wurde für Sie ausgewählt.\nSie können diesen Treiber nutzen oder einen anderen auswählen, sofern dieser vorhanden ist.\n\nSie müssen auf Anwenden klicken, damit die Änderung übernommen wird."

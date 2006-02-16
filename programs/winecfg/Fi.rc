@@ -200,6 +200,7 @@ BEGIN
     IDS_TAB_AUDIO           "Ääni"
     IDS_TAB_ABOUT           "Tietoja"
     IDS_WINECFG_TITLE       "Winen asetukset"
+    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
     IDS_THEMEFILE           "Teema -tiedostot"
     IDS_THEMEFILE_SELECT    "Valitse teeman tiedosto"
     IDS_SHELL_FOLDER        "Shell Folder"

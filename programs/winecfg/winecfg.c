@@ -53,23 +53,22 @@ HMENU hPopupMenus = 0;
  */
 void set_window_title(HWND dialog)
 {
-    char *newtitle;
+    char newtitle[256];
 
     /* update the window title  */
     if (current_app)
     {
-        const char *template = "Wine Configuration for %s";
-        newtitle = HeapAlloc(GetProcessHeap(), 0, strlen(template) + strlen(current_app) + 1);
-        sprintf(newtitle, template, current_app);
+        char apptitle[256];
+        LoadString(GetModuleHandle(NULL), IDS_WINECFG_TITLE_APP, apptitle, 256);
+        sprintf(newtitle, apptitle, current_app);
     }
     else
     {
-        newtitle = strdupA("Wine Configuration");
+        LoadString(GetModuleHandle(NULL), IDS_WINECFG_TITLE, newtitle, 256);
     }
 
     WINE_TRACE("setting title to %s\n", newtitle);
     SendMessage(GetParent(dialog), PSM_SETTITLE, 0, (LPARAM) newtitle);
-    HeapFree(GetProcessHeap(), 0, newtitle);
 }
 
 

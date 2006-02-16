@@ -203,6 +203,7 @@ BEGIN
     IDS_TAB_AUDIO           "Ses"
     IDS_TAB_ABOUT           "Hakkýnda"
     IDS_WINECFG_TITLE       "Wine yapýlandýrmasý"
+    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
     IDS_THEMEFILE           "Tema dosyalarý"
     IDS_THEMEFILE_SELECT    "Tema dosyasý seçin"
     IDS_AUDIO_MISSING       "Sistem kaydýnda belirlenmiþ bir ses sürücüsü yok.\n\nÖnerilen bir sürücü sizin için seçildi.\nBu sürücüyü kullanabilir veya varsa baþka bir sürücüyü seçebilirsiniz.\n\nSeçimin etkili olabilmesi için Uygula'yý týklamalýsýnýz."

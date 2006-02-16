@@ -210,6 +210,7 @@ BEGIN
     IDS_TAB_AUDIO           "Звук"
     IDS_TAB_ABOUT           "Относно"
     IDS_WINECFG_TITLE       "Настройка на Wine"
+    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
     IDS_THEMEFILE           "Файлове с теми"
     IDS_THEMEFILE_SELECT    "Изберете файл с тема"
     IDS_AUDIO_MISSING       "Няма настроен звуков драйвер.\n\nЗа вас беше избран драйвер по подразбиране.\nМоже да го използвате или да изберете друг.\n\nТрябва да щракнете на Потвърди, за да влезе в сила избора."
