@@ -154,7 +154,7 @@ static const char *get_runtime_libdir(void)
 }
 
 /* determine the proper location of the given path based on the current libdir */
-static char *get_path_from_libdir( const char *path, const char *filename )
+static char *get_path_from_libdir( const char *path, const char *fallback, const char *filename )
 {
     char *p, *ret;
     const char *libdir = get_runtime_libdir();
@@ -184,6 +184,7 @@ static char *get_path_from_libdir( const char *path, const char *filename )
     }
     else
     {
+        if (fallback) path = fallback;
         ret = xmalloc( strlen(path) + strlen(filename) + 2 );
         strcpy( ret, path );
         p = ret + strlen(ret);
@@ -229,7 +230,7 @@ const char *get_default_dlldir(void)
 {
     static const char *dlldir;
 
-    if (!dlldir) dlldir = get_path_from_libdir( DLLDIR, "" );
+    if (!dlldir) dlldir = get_path_from_libdir( DLLDIR, NULL, "" );
     return dlldir;
 }
 
@@ -409,6 +410,7 @@ static void preloader_exec( char **argv, char **envp, int use_preloader )
 /* exec a wine internal binary (either the wine loader or the wine server) */
 void wine_exec_wine_binary( const char *name, char **argv, char **envp, int use_preloader )
 {
+    static const char bindir[] = BINDIR;
     const char *path, *pos, *ptr;
 
     if (name && strchr( name, '/' ))
@@ -419,20 +421,10 @@ void wine_exec_wine_binary( const char *name, char **argv, char **envp, int use_
     }
     else if (!name) name = argv0_name;
 
-    /* first, try bin directory */
-    argv[0] = get_path_from_libdir( BINDIR, name );
+    /* first, bin directory from the current libdir or argv0 */
+    argv[0] = get_path_from_libdir( bindir, argv0_path, name );
     preloader_exec( argv, envp, use_preloader );
     free( argv[0] );
-
-    /* now try the path of argv0 of the current binary */
-    if (argv0_path)
-    {
-        argv[0] = xmalloc( strlen(argv0_path) + strlen(name) + 1 );
-        strcpy( argv[0], argv0_path );
-        strcat( argv[0], name );
-        preloader_exec( argv, envp, use_preloader );
-        free( argv[0] );
-    }
 
     /* now search in the Unix path */
     if ((path = getenv( "PATH" )))
@@ -452,4 +444,11 @@ void wine_exec_wine_binary( const char *name, char **argv, char **envp, int use_
         }
         free( argv[0] );
     }
+
+    /* and finally try BINDIR */
+    argv[0] = xmalloc( sizeof(bindir) + 1 + strlen(name) );
+    strcpy( argv[0], bindir );
+    strcat( argv[0], "/" );
+    strcat( argv[0], name );
+    preloader_exec( argv, envp, use_preloader );
 }
