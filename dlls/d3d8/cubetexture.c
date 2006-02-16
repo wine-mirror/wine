@@ -165,7 +165,7 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
 #if defined(GL_VERSION_1_3)
 	  glBindTexture(GL_TEXTURE_CUBE_MAP, D3D8_SURFACE(This->surfaces[0][0])->textureName);
 #else
-	  glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][0]->textureName);
+	  glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, D3D8_SURFACE(This->surfaces[0][0])->textureName);
 #endif
 	  checkGLcall("glBindTexture");
 
