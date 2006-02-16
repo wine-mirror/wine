@@ -183,6 +183,78 @@ static void test_EM_FINDTEXT(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static int get_scroll_pos_y(HWND hwnd)
+{
+  POINT p = {-1, -1};
+  SendMessage(hwnd, EM_GETSCROLLPOS, 0, (LPARAM) &p);
+  ok(p.x != -1 && p.y != -1, "p.x:%ld p.y:%ld\n", p.x, p.y);
+  return p.y;
+}
+
+static void move_cursor(HWND hwnd, long charindex)
+{
+  CHARRANGE cr;
+  cr.cpMax = charindex;
+  cr.cpMin = charindex;
+  SendMessage(hwnd, EM_EXSETSEL, 0, (LPARAM) &cr);
+}
+
+static void line_scroll(HWND hwnd, int amount)
+{
+  SendMessage(hwnd, EM_LINESCROLL, 0, amount);
+}
+
+static void test_EM_SCROLLCARET(void)
+{
+  int prevY, curY;
+  HWND hwndRichEdit = new_richedit(NULL);
+  const char text[] = "aa\n"
+      "this is a long line of text that should be longer than the "
+      "control's width\n"
+      "cc\n"
+      "dd\n"
+      "ee\n"
+      "ff\n"
+      "gg\n"
+      "hh\n";
+
+  /* Can't verify this */
+  SendMessage(hwndRichEdit, EM_SCROLLCARET, 0, 0);
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+
+  /* Caret above visible window */
+  line_scroll(hwndRichEdit, 3);
+  prevY = get_scroll_pos_y(hwndRichEdit);
+  SendMessage(hwndRichEdit, EM_SCROLLCARET, 0, 0);
+  curY = get_scroll_pos_y(hwndRichEdit);
+  ok(prevY != curY, "%d == %d\n", prevY, curY);
+
+  /* Caret below visible window */
+  move_cursor(hwndRichEdit, sizeof(text) - 1);
+  line_scroll(hwndRichEdit, -3);
+  prevY = get_scroll_pos_y(hwndRichEdit);
+  SendMessage(hwndRichEdit, EM_SCROLLCARET, 0, 0);
+  curY = get_scroll_pos_y(hwndRichEdit);
+  ok(prevY != curY, "%d == %d\n", prevY, curY);
+
+  /* Caret in visible window */
+  move_cursor(hwndRichEdit, sizeof(text) - 2);
+  prevY = get_scroll_pos_y(hwndRichEdit);
+  SendMessage(hwndRichEdit, EM_SCROLLCARET, 0, 0);
+  curY = get_scroll_pos_y(hwndRichEdit);
+  ok(prevY == curY, "%d != %d\n", prevY, curY);
+
+  /* Caret still in visible window */
+  line_scroll(hwndRichEdit, -1);
+  prevY = get_scroll_pos_y(hwndRichEdit);
+  SendMessage(hwndRichEdit, EM_SCROLLCARET, 0, 0);
+  curY = get_scroll_pos_y(hwndRichEdit);
+  ok(prevY == curY, "%d != %d\n", prevY, curY);
+
+  DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -194,6 +266,7 @@ START_TEST( editor )
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
 
   test_EM_FINDTEXT();
+  test_EM_SCROLLCARET();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

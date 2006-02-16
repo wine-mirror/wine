@@ -64,7 +64,7 @@
   - EM_GETREDONAME 2.0
   + EM_GETSEL
   + EM_GETSELTEXT (ANSI&Unicode)
-  - EM_GETSCROLLPOS 3.0
+  + EM_GETSCROLLPOS 3.0 (only Y value valid)
 ! - EM_GETTHUMB
   - EM_GETTEXTEX 2.0
   + EM_GETTEXTLENGTHEX (GTL_PRECISE unimplemented)
@@ -88,7 +88,7 @@
   + EM_REQUESTRESIZE
   + EM_REPLACESEL (proper style?) ANSI&Unicode
   - EM_SCROLL
-  - EM_SCROLLCARET
+  + EM_SCROLLCARET
   - EM_SELECTIONTYPE
   - EM_SETBIDIOPTIONS 3.0
   + EM_SETBKGNDCOLOR
@@ -1319,7 +1319,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETOPTIONS)
   UNSUPPORTED_MSG(EM_GETPASSWORDCHAR)
   UNSUPPORTED_MSG(EM_GETREDONAME)
-  UNSUPPORTED_MSG(EM_GETSCROLLPOS)
   UNSUPPORTED_MSG(EM_GETTEXTMODE)
   UNSUPPORTED_MSG(EM_GETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_GETUNDONAME)
@@ -1328,7 +1327,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
   UNSUPPORTED_MSG(EM_SCROLL)
-  UNSUPPORTED_MSG(EM_SCROLLCARET)
   UNSUPPORTED_MSG(EM_SELECTIONTYPE)
   UNSUPPORTED_MSG(EM_SETBIDIOPTIONS)
   UNSUPPORTED_MSG(EM_SETEDITSTYLE)
@@ -1629,6 +1627,41 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_UpdateRepaint(editor);
     return 0;
   }
+  case EM_SCROLLCARET:
+  {
+    int top, bottom; /* row's edges relative to document top */
+    ME_DisplayItem *para, *row;
+
+    row = ME_RowStart(editor->pCursors[0].pRun);
+    para = ME_GetParagraph(row);
+    top = para->member.para.nYPos + row->member.row.nYPos;
+    bottom = top + row->member.row.nHeight;
+
+    if ((top < editor->nScrollPosY)
+        || (editor->nScrollPosY + editor->sizeWindow.cy < bottom))
+    {
+      int dy;
+      int prevScrollPosY = editor->nScrollPosY;
+
+      if (top < editor->nScrollPosY) /* caret above window */
+        editor->nScrollPosY = top;
+      else /* caret below window */
+        editor->nScrollPosY = bottom - editor->sizeWindow.cy;
+
+      if (editor->nScrollPosY < 0)
+        editor->nScrollPosY = 0;
+
+      dy = prevScrollPosY - editor->nScrollPosY;
+      SetScrollPos(hWnd, SB_VERT, editor->nScrollPosY, TRUE);
+      if (editor->bRedraw)
+      {
+        ScrollWindow(hWnd, 0, dy, NULL, NULL);
+        UpdateWindow(hWnd);
+      }
+    }
+
+    return 0;
+  }
   case WM_SETTEXT:
   {
     ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
@@ -1796,6 +1829,13 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     tr.chrg.cpMax = to;
     tr.lpstrText = (WCHAR *)lParam;
     return RichEditANSIWndProc(hWnd, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
+  }
+  case EM_GETSCROLLPOS:
+  {
+      POINT *point = (POINT *)lParam;
+      point->x = 0; /* FIXME side scrolling not implemented */
+      point->y = editor->nScrollPosY;
+      return 1;
   }
   case EM_GETTEXTRANGE:
   {
