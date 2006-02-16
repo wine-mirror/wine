@@ -654,7 +654,7 @@ static const struct EncodedName names[] = {
    { sizeof(bogusNumeric), (BYTE *)bogusNumeric } }, bin45 },
 };
 
-static const BYTE emptyName[] = { 0x30, 0 };
+static const BYTE emptySequence[] = { 0x30, 0 };
 static const BYTE emptyRDNs[] = { 0x30, 0x02, 0x31, 0 };
 static const BYTE twoRDNs[] = {
     0x30,0x23,0x31,0x21,0x30,0x0c,0x06,0x03,0x55,0x04,0x04,
@@ -731,7 +731,7 @@ static void test_encodeName(DWORD dwEncoding)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
     {
-        ok(!memcmp(buf, emptyName, sizeof(emptyName)),
+        ok(!memcmp(buf, emptySequence, sizeof(emptySequence)),
          "Got unexpected encoding for empty name\n");
         LocalFree(buf);
     }
@@ -921,8 +921,8 @@ static void test_decodeName(DWORD dwEncoding)
     }
     /* test empty name */
     bufSize = 0;
-    ret = CryptDecodeObjectEx(dwEncoding, X509_NAME, emptyName,
-     emptyName[1] + 2,
+    ret = CryptDecodeObjectEx(dwEncoding, X509_NAME, emptySequence,
+     emptySequence[1] + 2,
      CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_SHARE_OID_STRING_FLAG, NULL,
      (BYTE *)&buf, &bufSize);
     ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
@@ -990,7 +990,6 @@ static void test_decodeName(DWORD dwEncoding)
     }
 }
 
-static const BYTE emptyAltName[] = { 0x30, 0x00 };
 static const BYTE emptyURL[] = { 0x30, 0x02, 0x86, 0x00 };
 static const WCHAR url[] = { 'h','t','t','p',':','/','/','w','i','n','e',
  'h','q','.','o','r','g',0 };
@@ -1019,9 +1018,9 @@ static void test_encodeAltName(DWORD dwEncoding)
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (buf)
     {
-        ok(size == sizeof(emptyAltName), "Expected size %d, got %ld\n",
-         sizeof(emptyAltName), size);
-        ok(!memcmp(buf, emptyAltName, size), "Unexpected value\n");
+        ok(size == sizeof(emptySequence), "Expected size %d, got %ld\n",
+         sizeof(emptySequence), size);
+        ok(!memcmp(buf, emptySequence, size), "Unexpected value\n");
         LocalFree(buf);
     }
     /* Test with an empty entry */
@@ -1124,8 +1123,8 @@ static void test_decodeAltName(DWORD dwEncoding)
     ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
      "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
     /* Now expected cases */
-    ret = CryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, emptyAltName,
-     emptyAltName[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, emptySequence,
+     emptySequence[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
      &bufSize);
     ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
     if (buf)
@@ -1424,17 +1423,29 @@ static const struct Constraints2 constraints2[] = {
  { { TRUE,  TRUE,  1}, bin62 },
 };
 
+static const BYTE emptyConstraint[] = { 0x30, 0x03, 0x03, 0x01, 0x00 };
+static const BYTE encodedDomainName[] = { 0x30, 0x2b, 0x31, 0x29, 0x30, 0x11,
+ 0x06, 0x0a, 0x09, 0x92, 0x26, 0x89, 0x93, 0xf2, 0x2c, 0x64, 0x01, 0x19, 0x16,
+ 0x03, 0x6f, 0x72, 0x67, 0x30, 0x14, 0x06, 0x0a, 0x09, 0x92, 0x26, 0x89, 0x93,
+ 0xf2, 0x2c, 0x64, 0x01, 0x19, 0x16, 0x06, 0x77, 0x69, 0x6e, 0x65, 0x68, 0x71 };
+static const BYTE constraintWithDomainName[] = { 0x30, 0x32, 0x03, 0x01, 0x00,
+ 0x30, 0x2d, 0x30, 0x2b, 0x31, 0x29, 0x30, 0x11, 0x06, 0x0a, 0x09, 0x92, 0x26,
+ 0x89, 0x93, 0xf2, 0x2c, 0x64, 0x01, 0x19, 0x16, 0x03, 0x6f, 0x72, 0x67, 0x30,
+ 0x14, 0x06, 0x0a, 0x09, 0x92, 0x26, 0x89, 0x93, 0xf2, 0x2c, 0x64, 0x01, 0x19,
+ 0x16, 0x06, 0x77, 0x69, 0x6e, 0x65, 0x68, 0x71 };
+
 static void test_encodeBasicConstraints(DWORD dwEncoding)
 {
-    DWORD i;
+    DWORD i, bufSize = 0;
+    CERT_BASIC_CONSTRAINTS_INFO info;
+    CERT_NAME_BLOB nameBlob = { sizeof(encodedDomainName),
+     (LPBYTE)encodedDomainName };
+    BOOL ret;
+    BYTE *buf = NULL;
 
     /* First test with the simpler info2 */
     for (i = 0; i < sizeof(constraints2) / sizeof(constraints2[0]); i++)
     {
-        BOOL ret;
-        BYTE *buf = NULL;
-        DWORD bufSize = 0;
-
         ret = CryptEncodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
          &constraints2[i].info, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
          &bufSize);
@@ -1449,6 +1460,39 @@ static void test_encodeBasicConstraints(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
+    /* Now test with more complex basic constraints */
+    info.SubjectType.cbData = 0;
+    info.fPathLenConstraint = FALSE;
+    info.cSubtreesConstraint = 0;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(bufSize == sizeof(emptyConstraint), "Expected %d bytes, got %ld\n",
+         sizeof(emptyConstraint), bufSize);
+        ok(!memcmp(buf, emptyConstraint, sizeof(emptyConstraint)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* None of the certs I examined had any subtree constraint, but I test one
+     * anyway just in case.
+     */
+    info.cSubtreesConstraint = 1;
+    info.rgSubtreesConstraint = &nameBlob;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(bufSize == sizeof(constraintWithDomainName),
+         "Expected %d bytes, got %ld\n", sizeof(constraintWithDomainName),
+         bufSize);
+        ok(!memcmp(buf, constraintWithDomainName,
+         sizeof(constraintWithDomainName)), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* FIXME: test encoding with subject type. */
 }
 
 static const unsigned char bin63[] = { 0x30,0x06,0x01,0x01,0x01,0x02,0x01,0x01,0 };
@@ -1507,6 +1551,41 @@ static void test_decodeBasicConstraints(DWORD dwEncoding)
      (BYTE *)&buf, &bufSize);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
      "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
+    /* Now check with the more complex CERT_BASIC_CONSTRAINTS_INFO */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS,
+     emptyConstraint, sizeof(emptyConstraint), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_BASIC_CONSTRAINTS_INFO *info = (CERT_BASIC_CONSTRAINTS_INFO *)buf;
+
+        ok(info->SubjectType.cbData == 0, "Expected no subject type\n");
+        ok(!info->fPathLenConstraint, "Expected no path length constraint\n");
+        ok(info->cSubtreesConstraint == 0, "Expected no subtree constraints\n");
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS,
+     constraintWithDomainName, sizeof(constraintWithDomainName),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_BASIC_CONSTRAINTS_INFO *info = (CERT_BASIC_CONSTRAINTS_INFO *)buf;
+
+        ok(info->SubjectType.cbData == 0, "Expected no subject type\n");
+        ok(!info->fPathLenConstraint, "Expected no path length constraint\n");
+        ok(info->cSubtreesConstraint == 1, "Expected a subtree constraint\n");
+        if (info->cSubtreesConstraint && info->rgSubtreesConstraint)
+        {
+            ok(info->rgSubtreesConstraint[0].cbData ==
+             sizeof(encodedDomainName), "Expected %d bytes, got %ld\n",
+             sizeof(encodedDomainName), info->rgSubtreesConstraint[0].cbData);
+            ok(!memcmp(info->rgSubtreesConstraint[0].pbData, encodedDomainName,
+             sizeof(encodedDomainName)), "Unexpected value\n");
+        }
+        LocalFree(buf);
+    }
 }
 
 /* These are terrible public keys of course, I'm just testing encoding */
@@ -2761,6 +2840,92 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
     }
 }
 
+static const LPCSTR keyUsages[] = { szOID_PKIX_KP_CODE_SIGNING,
+ szOID_PKIX_KP_CLIENT_AUTH, szOID_RSA_RSA };
+static const BYTE encodedUsage[] = {
+ 0x30, 0x1f, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x03,
+ 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x02, 0x06, 0x09,
+ 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
+
+static void test_encodeEnhancedKeyUsage(DWORD dwEncoding)
+{
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD size = 0;
+    CERT_ENHKEY_USAGE usage;
+
+    /* Test with empty usage */
+    usage.cUsageIdentifier = 0;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ENHANCED_KEY_USAGE, &usage,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(emptySequence), "Expected size %d, got %ld\n",
+         sizeof(emptySequence), size);
+        ok(!memcmp(buf, emptySequence, size), "Got unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Test with a few usages */
+    usage.cUsageIdentifier = sizeof(keyUsages) / sizeof(keyUsages[0]);
+    usage.rgpszUsageIdentifier = (LPSTR *)keyUsages;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_ENHANCED_KEY_USAGE, &usage,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(encodedUsage), "Expected size %d, got %ld\n",
+         sizeof(encodedUsage), size);
+        ok(!memcmp(buf, encodedUsage, size), "Got unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void test_decodeEnhancedKeyUsage(DWORD dwEncoding)
+{
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ENHANCED_KEY_USAGE,
+     emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_ENHKEY_USAGE *usage = (CERT_ENHKEY_USAGE *)buf;
+
+        ok(size >= sizeof(CERT_ENHKEY_USAGE),
+         "Expected size at least %d, got %ld\n", sizeof(CERT_ENHKEY_USAGE),
+         size);
+        ok(usage->cUsageIdentifier == 0, "Expected 0 CRL entries, got %ld\n",
+         usage->cUsageIdentifier);
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_ENHANCED_KEY_USAGE,
+     encodedUsage, sizeof(encodedUsage), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_ENHKEY_USAGE *usage = (CERT_ENHKEY_USAGE *)buf;
+        DWORD i;
+
+        ok(size >= sizeof(CERT_ENHKEY_USAGE),
+         "Expected size at least %d, got %ld\n", sizeof(CERT_ENHKEY_USAGE),
+         size);
+        ok(usage->cUsageIdentifier == sizeof(keyUsages) / sizeof(keyUsages[0]),
+         "Expected %d CRL entries, got %ld\n",
+         sizeof(keyUsages) / sizeof(keyUsages[0]),
+         usage->cUsageIdentifier);
+        for (i = 0; i < usage->cUsageIdentifier; i++)
+            ok(!strcmp(usage->rgpszUsageIdentifier[i], keyUsages[i]),
+             "Expected OID %s, got %s\n", keyUsages[i],
+             usage->rgpszUsageIdentifier[i]);
+        LocalFree(buf);
+    }
+}
+
 /* Free *pInfo with HeapFree */
 static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
 {
@@ -2909,6 +3074,8 @@ START_TEST(encode)
         test_decodeCRLDistPoints(encodings[i]);
         test_encodeCRLToBeSigned(encodings[i]);
         test_decodeCRLToBeSigned(encodings[i]);
+        test_encodeEnhancedKeyUsage(encodings[i]);
+        test_decodeEnhancedKeyUsage(encodings[i]);
     }
     testPortPublicKeyInfo();
 }
