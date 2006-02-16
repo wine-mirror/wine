@@ -170,7 +170,7 @@ foreach my $mod (sort keys %directories)
     next unless defined $altnames{$mod};
     foreach my $i (sort @{$altnames{$mod}})
     {
-        $targets16{sprintf("%s.so",$i)} = 1;
+        $targets16{$i . "16"} = $mod;
     }
 }
 foreach my $mod (sort keys %staticlib_dirs) { $targets{$mod} = 1; }
@@ -230,10 +230,10 @@ foreach my $mod (sort keys %directories)
         foreach my $i (sort @{$altnames{$mod}})
         {
             if ($count++ == 3) { printf NEWMAKE "\\\n  "; $count = 1; }
-            printf NEWMAKE "%s.so ", $i;
+            printf NEWMAKE "%s16 ", $i;
         }
         printf NEWMAKE ": %s.so\n", $mod;
-        printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s.so \$@\n\n", $mod;
+        printf NEWMAKE "\techo \"%s\" >\$\@\n\n", $mod;
     }
 }
 foreach my $mod (sort keys %staticlib_dirs)

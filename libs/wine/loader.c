@@ -518,6 +518,25 @@ int wine_dll_get_owner( const char *name, char *buffer, int size, int *exists )
     struct dll_path_context context;
 
     *exists = 0;
+
+    for (path = first_dll_path( name, "16", &context ); path; path = next_dll_path( &context ))
+    {
+        int fd = open( path, O_RDONLY );
+        if (fd != -1)
+        {
+            int res = read( fd, buffer, size - 1 );
+            while (res > 0 && (buffer[res-1] == '\n' || buffer[res-1] == '\r')) res--;
+            buffer[res] = 0;
+            close( fd );
+            *exists = 1;
+            ret = 0;
+            break;
+        }
+    }
+    free_dll_path( &context );
+    if (ret != -1) return ret;
+
+    /* try old method too for backwards compatibility; will be removed later on */
     for (path = first_dll_path( name, ".so", &context ); path; path = next_dll_path( &context ))
     {
         int res = readlink( path, buffer, size );
