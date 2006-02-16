@@ -69,11 +69,13 @@ static const WCHAR szDocument[] = {
 
 static const WCHAR szOpen[] = { 'o','p','e','n',0 };
 static const WCHAR szdl[] = { 'd','l',0 };
+static const WCHAR szvr[] = { 'v','r',0 };
 static const WCHAR szlc[] = { 'l','c',0 };
 static const WCHAR szbs[] = { 'b','s',0 };
 static const WCHAR szstr1[] = { 's','t','r','1',0 };
 static const WCHAR szstr2[] = { 's','t','r','2',0 };
 static const WCHAR szstar[] = { '*',0 };
+static const WCHAR szfn1_txt[] = {'f','n','1','.','t','x','t',0};
 
 void test_domdoc( void )
 {
@@ -835,6 +837,73 @@ static void test_getElementsByTagName(void)
     IXMLDOMDocument_Release( doc );
 }
 
+static void test_get_text(void)
+{
+    HRESULT r;
+    BSTR str;
+    VARIANT_BOOL b;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node, *node2, *node3;
+    IXMLDOMNodeList *node_list;
+    IXMLDOMNamedNodeMap *node_map;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    str = SysAllocString( szbs );
+    r = IXMLDOMDocument_getElementsByTagName( doc, str, &node_list );
+    ok( r == S_OK, "ret %08lx\n", r );
+    SysFreeString(str);
+    
+    r = IXMLDOMNodeList_get_item( node_list, 0, &node );
+    ok( r == S_OK, "ret %08lx\n", r ); 
+    IXMLDOMNodeList_Release( node_list );
+
+    r = IXMLDOMNode_get_text( node, &str );
+    ok( r == S_OK, "ret %08lx\n", r );
+todo_wine {
+    ok( !memcmp(str, szfn1_txt, sizeof(szfn1_txt)), "wrong string\n" );
+ }
+    ok( !memcmp(str, szfn1_txt, sizeof(szfn1_txt)-4), "wrong string\n" );
+    SysFreeString(str);
+
+    r = IXMLDOMNode_get_attributes( node, &node_map );
+    ok( r == S_OK, "ret %08lx\n", r );
+    
+    str = SysAllocString( szvr );
+    r = IXMLDOMNamedNodeMap_getNamedItem( node_map, str, &node2 );
+    ok( r == S_OK, "ret %08lx\n", r );
+    SysFreeString(str);
+
+    r = IXMLDOMNode_get_text( node2, &str );
+    ok( r == S_OK, "ret %08lx\n", r );
+    ok( !memcmp(str, szstr2, sizeof(szstr2)), "wrong string\n" );
+    SysFreeString(str);
+
+    r = IXMLDOMNode_get_firstChild( node2, &node3 );
+    ok( r == S_OK, "ret %08lx\n", r );
+
+    r = IXMLDOMNode_get_text( node3, &str );
+    ok( r == S_OK, "ret %08lx\n", r );
+    ok( !memcmp(str, szstr2, sizeof(szstr2)), "wrong string\n" );
+    SysFreeString(str);
+
+
+    IXMLDOMNode_Release( node3 );
+    IXMLDOMNode_Release( node2 );
+    IXMLDOMNamedNodeMap_Release( node_map );
+    IXMLDOMNode_Release( node );
+    IXMLDOMDocument_Release( doc );
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -847,6 +916,7 @@ START_TEST(domdoc)
     test_refs();
     test_create();
     test_getElementsByTagName();
+    test_get_text();
 
     CoUninitialize();
 }
