@@ -867,14 +867,17 @@ IXMLDOMNode *create_node( xmlNodePtr node )
     TRACE("type %d\n", node->type);
     switch(node->type)
     {
-    case XML_ATTRIBUTE_NODE:
-        pUnk = create_attribute( node );
-        break;
     case XML_ELEMENT_NODE:
         pUnk = create_element( node );
         break;
+    case XML_ATTRIBUTE_NODE:
+        pUnk = create_attribute( node );
+        break;
     case XML_TEXT_NODE:
         pUnk = create_text( node );
+        break;
+    case XML_COMMENT_NODE:
+        pUnk = create_comment( node );
         break;
     case XML_DOCUMENT_NODE:
         ERR("shouldn't be here!\n");
