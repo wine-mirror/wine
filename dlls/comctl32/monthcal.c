@@ -934,6 +934,7 @@ static LRESULT
 MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     SYSTEMTIME *lprgSysTimeArray=(SYSTEMTIME *)lParam;
+    FILETIME ft_min, ft_max;
 
     TRACE("%x %lx\n", wParam, lParam);
 
@@ -950,6 +951,30 @@ MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     {
         MONTHCAL_CopyTime(&lprgSysTimeArray[1], &infoPtr->maxDate);
         infoPtr->rangeValid |= GDTR_MAX;
+    }
+
+    /* Only one limit set - we are done */
+    if ((infoPtr->rangeValid & (GDTR_MIN | GDTR_MAX)) != (GDTR_MIN | GDTR_MAX))
+        return TRUE;
+    
+    SystemTimeToFileTime(&infoPtr->maxDate, &ft_max);
+    SystemTimeToFileTime(&infoPtr->minDate, &ft_min);
+
+    if (CompareFileTime(&ft_min, &ft_max) > 0)
+    {
+        if ((wParam & (GDTR_MIN | GDTR_MAX)) == (GDTR_MIN | GDTR_MAX))
+        {
+            /* Native swaps limits only when both limits are being set. */
+            SYSTEMTIME st_tmp = infoPtr->minDate;
+            infoPtr->minDate  = infoPtr->maxDate;
+            infoPtr->maxDate  = st_tmp;
+        }
+        else
+        {
+            /* Reset the other limit. */
+            /* FIXME: native sets date&time to 0. Should we do this too? */
+            infoPtr->rangeValid &= wParam & GDTR_MIN ? ~GDTR_MAX : ~GDTR_MIN ;
+        }
     }
 
     return TRUE;
