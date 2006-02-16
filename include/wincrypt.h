@@ -2283,6 +2283,18 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CERT_NAME_STR_ENABLE_T61_UNICODE_FLAG  0x00020000
 #define CERT_NAME_STR_DISABLE_IE4_UTF8_FLAG    0x00010000
 
+#define CERT_NAME_EMAIL_TYPE            1
+#define CERT_NAME_RDN_TYPE              2
+#define CERT_NAME_ATTR_TYPE             3
+#define CERT_NAME_SIMPLE_DISPLAY_TYPE   4
+#define CERT_NAME_FRIENDLY_DISPLAY_TYPE 5
+#define CERT_NAME_DNS_TYPE              6
+#define CERT_NAME_URL_TYPE              7
+#define CERT_NAME_UPN_TYPE              8
+
+#define CERT_NAME_ISSUER_FLAG           0x00000001
+#define CERT_NAME_DISABLE_IE4_UTF8_FLAG 0x00010000
+
 /* function declarations */
 /* advapi32.dll */
 BOOL WINAPI CryptAcquireContextA(HCRYPTPROV *phProv, LPCSTR pszContainer,
@@ -2641,6 +2653,12 @@ BOOL WINAPI CryptProtectData( DATA_BLOB* pDataIn, LPCWSTR szDataDescr,
 BOOL WINAPI CryptUnprotectData( DATA_BLOB* pDataIn, LPWSTR* ppszDataDescr,
  DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
  CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut );
+
+DWORD WINAPI CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, void *pvTypePara, LPSTR pszNameString, DWORD cchNameString);
+DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, void *pvTypePara, LPWSTR pszNameString, DWORD cchNameString);
+#define CertGetNameString WINELIB_NAME_AW(CertGetNameString)
 
 DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
  LPSTR psz, DWORD csz);

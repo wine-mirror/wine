@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wincrypt.h"
 #include "wine/debug.h"
 
@@ -304,5 +305,137 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
     }
     else
         ret++;
+    return ret;
+}
+
+DWORD WINAPI CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, void *pvTypePara, LPSTR pszNameString, DWORD cchNameString)
+{
+    DWORD ret;
+
+    TRACE("(%p, %ld, %08lx, %p, %p, %ld)\n", pCertContext, dwType, dwFlags,
+     pvTypePara, pszNameString, cchNameString);
+
+    if (pszNameString)
+    {
+        LPWSTR wideName;
+        DWORD nameLen;
+
+        nameLen = CertGetNameStringW(pCertContext, dwType, dwFlags, pvTypePara,
+         NULL, 0);
+        wideName = CryptMemAlloc(nameLen * sizeof(WCHAR));
+        if (wideName)
+        {
+            CertGetNameStringW(pCertContext, dwType, dwFlags, pvTypePara,
+             wideName, nameLen);
+            nameLen = WideCharToMultiByte(CP_ACP, 0, wideName, nameLen,
+             pszNameString, cchNameString, NULL, NULL);
+            if (nameLen <= cchNameString)
+                ret = nameLen;
+            else
+            {
+                pszNameString[cchNameString - 1] = '\0';
+                ret = cchNameString;
+            }
+            CryptMemFree(wideName);
+        }
+        else
+        {
+            *pszNameString = '\0';
+            ret = 1;
+        }
+    }
+    else
+        ret = CertGetNameStringW(pCertContext, dwType, dwFlags, pvTypePara,
+         NULL, 0);
+    return ret;
+}
+
+DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, void *pvTypePara, LPWSTR pszNameString, DWORD cchNameString)
+{
+    DWORD ret;
+    PCERT_NAME_BLOB name;
+    LPCSTR altNameOID;
+
+    TRACE("(%p, %ld, %08lx, %p, %p, %ld)\n", pCertContext, dwType,
+     dwFlags, pvTypePara, pszNameString, cchNameString);
+
+    if (dwFlags & CERT_NAME_ISSUER_FLAG)
+    {
+        name = &pCertContext->pCertInfo->Issuer;
+        altNameOID = szOID_ISSUER_ALT_NAME;
+    }
+    else
+    {
+        name = &pCertContext->pCertInfo->Subject;
+        altNameOID = szOID_SUBJECT_ALT_NAME;
+    }
+
+    switch (dwType)
+    {
+    case CERT_NAME_SIMPLE_DISPLAY_TYPE:
+    {
+        static const LPCSTR simpleAttributeOIDs[] = { szOID_COMMON_NAME,
+         szOID_ORGANIZATIONAL_UNIT_NAME, szOID_ORGANIZATION_NAME,
+         szOID_RSA_emailAddr };
+        CERT_NAME_INFO *info = NULL;
+        PCERT_RDN_ATTR nameAttr = NULL;
+        DWORD bytes = 0, i;
+
+        if (CryptDecodeObjectEx(pCertContext->dwCertEncodingType, X509_NAME,
+         name->pbData, name->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &info,
+         &bytes))
+        {
+            for (i = 0; !nameAttr && i < sizeof(simpleAttributeOIDs) /
+             sizeof(simpleAttributeOIDs[0]); i++)
+                nameAttr = CertFindRDNAttr(simpleAttributeOIDs[i], info);
+        }
+        else
+            ret = 0;
+        if (!nameAttr)
+        {
+            PCERT_EXTENSION ext = CertFindExtension(altNameOID,
+             pCertContext->pCertInfo->cExtension,
+             pCertContext->pCertInfo->rgExtension);
+
+            if (ext)
+            {
+                for (i = 0; !nameAttr && i < sizeof(simpleAttributeOIDs) /
+                 sizeof(simpleAttributeOIDs[0]); i++)
+                    nameAttr = CertFindRDNAttr(simpleAttributeOIDs[i], info);
+                if (!nameAttr)
+                {
+                    /* FIXME: gotta then look for a rfc822Name choice in ext.
+                     * Failing that, look for the first attribute.
+                     */
+                    FIXME("CERT_NAME_SIMPLE_DISPLAY_TYPE: stub\n");
+                    ret = 0;
+                }
+            }
+        }
+        ret = CertRDNValueToStrW(nameAttr->dwValueType, &nameAttr->Value,
+         pszNameString, cchNameString);
+        if (info)
+            LocalFree(info);
+        break;
+    }
+    case CERT_NAME_FRIENDLY_DISPLAY_TYPE:
+    {
+        DWORD cch = cchNameString;
+
+        if (CertGetCertificateContextProperty(pCertContext,
+         CERT_FRIENDLY_NAME_PROP_ID, pszNameString, &cch))
+            ret = cch;
+        else
+            ret = CertGetNameStringW(pCertContext,
+             CERT_NAME_SIMPLE_DISPLAY_TYPE, dwFlags, pvTypePara, pszNameString,
+             cchNameString);
+        break;
+    }
+    default:
+        FIXME("unimplemented for type %ld\n", dwType);
+        ret = 0;
+    }
     return ret;
 }

@@ -52,6 +52,8 @@
 @ stub CertGetEnhancedKeyUsage
 @ stub CertGetIntendedKeyUsage
 @ stub CertGetIssuerCertificateFromStore
+@ stdcall CertGetNameStringA(ptr long long ptr ptr long)
+@ stdcall CertGetNameStringW(ptr long long ptr ptr long)
 @ stub CertGetPublicKeyLength
 @ stub CertGetSubjectCertificateFromStore
 @ stub CertIsRDNAttrsInCertificateName
