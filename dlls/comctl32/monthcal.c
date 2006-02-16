@@ -930,17 +930,10 @@ MONTHCAL_GetMaxTodayWidth(MONTHCAL_INFO *infoPtr)
 }
 
 
-/* FIXME: are validated times taken from current date/time or simply
- * copied?
- * FIXME:    check whether MCM_GETMONTHRANGE shows correct result after
- *            adjusting range with MCM_SETRANGE
- */
-
 static LRESULT
 MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     SYSTEMTIME *lprgSysTimeArray=(SYSTEMTIME *)lParam;
-    int prev;
 
     TRACE("%x %lx\n", wParam, lParam);
 
@@ -959,15 +952,7 @@ MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         infoPtr->rangeValid |= GDTR_MAX;
     }
 
-  prev = infoPtr->monthRange;
-  infoPtr->monthRange = infoPtr->maxDate.wMonth - infoPtr->minDate.wMonth;
-
-  if(infoPtr->monthRange!=prev) {
-	infoPtr->monthdayState = ReAlloc(infoPtr->monthdayState,
-                                                  infoPtr->monthRange * sizeof(MONTHDAYSTATE));
-  }
-
-  return 1;
+    return TRUE;
 }
 
 

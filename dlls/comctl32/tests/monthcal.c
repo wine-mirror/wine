@@ -33,6 +33,7 @@ void test_monthcal(void)
     HWND hwnd;
     SYSTEMTIME st[2], st1[2];
     INITCOMMONCONTROLSEX ic = {sizeof(INITCOMMONCONTROLSEX), ICC_DATE_CLASSES};
+    int res, month_range;
 
     InitCommonControlsEx(&ic);
     hwnd = CreateWindowA(MONTHCAL_CLASSA, "MonthCal", WS_POPUP | WS_VISIBLE, CW_USEDEFAULT,
@@ -61,19 +62,25 @@ void test_monthcal(void)
     st[0].wMonth = 5;
     st[1] = st[0];
 
+    month_range = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, (LPARAM)st1);
     st[1].wMonth--;
     ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN | GDTR_MAX, (LPARAM)st), "Failed to set both min and max limits\n");
+    res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, (LPARAM)st1);
+    ok(res == month_range, "Invalid month range (%d)\n", res);
+
     st[1].wMonth += 2;
     ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN | GDTR_MAX, (LPARAM)st), "Failed to set both min and max limits\n");
+    res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, (LPARAM)st1);
+    ok(res == month_range, "Invalid month range (%d)\n", res);
+
     st[1].wYear --;
     ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN | GDTR_MAX, (LPARAM)st), "Failed to set both min and max limits\n");
     st[1].wYear += 1;
     ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MIN | GDTR_MAX, (LPARAM)st), "Failed to set both min and max limits\n");
 
-/* This crashing Wine so commented untill fixed.
     st[1].wMonth -= 3;
     ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MAX, (LPARAM)st), "Failed to set max limit\n");
-*/
+
     st[1].wMonth += 4;
     ok(SendMessage(hwnd, MCM_SETRANGE, GDTR_MAX, (LPARAM)st), "Failed to set max limit\n");
     st[1].wYear -= 3;
