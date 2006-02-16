@@ -1,7 +1,14 @@
+*.[oa]
+*.orig
+*.rej
+*.so
+*~
 Make.rules
 Makefile
+TAGS
 autom4te.cache
 config.cache
 config.log
 config.status
+tags
 wine
