@@ -29,7 +29,7 @@
 #include "Fr.rc"
 #include "Hu.rc"
 #include "It.rc"
-/* #include "Ko.rc" */
+#include "Ko.rc" 
 #include "Nl.rc"
 #include "No.rc"
 #include "Pt.rc"
