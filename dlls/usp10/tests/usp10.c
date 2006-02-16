@@ -79,12 +79,11 @@ START_TEST(usp10)
      * by checking a known value in the table                                                */
     hr = ScriptGetProperties(&ppSp, &iMaxProps);
     trace("number of script properties %d\n", iMaxProps);
-    todo_wine {
-        ok (iMaxProps > 0, "Number of scripts returned should not be 0\n"); 
-        if  (iMaxProps > 0)
-            ok( ppSp[5]->langid == 9, "Langid[5] not = to 9\n"); /* Check a known value to ensure   */
-                                                                 /* ptrs work                       */
-    }
+    ok (iMaxProps > 0, "Number of scripts returned should not be 0\n"); 
+    if  (iMaxProps > 0)
+         ok( ppSp[5]->langid == 9, "Langid[5] not = to 9\n"); /* Check a known value to ensure   */
+                                                              /* ptrs work                       */
+
 
     /* This set of tests are to check that the various edits in ScriptIemize work           */
     cInChars = 5;                                        /* Length of test without NULL     */

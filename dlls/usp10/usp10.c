@@ -39,6 +39,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
+#define MAX_SCRIPTS  8
+
+/*  Set up a default for ScriptGetProperties    */
+static const SCRIPT_PROPERTIES Default_Script_0 = {0, 0, 0, 0, 0, 0, 0, 0, 
+                                            0, 0, 0, 0, 0, 0, 0};
+static const SCRIPT_PROPERTIES Default_Script_1 = {0, 0, 0, 0, 0, 0, 0, 0, 
+                                            0, 0, 0, 0, 0, 0, 0};
+static const SCRIPT_PROPERTIES Default_Script_2 = {0, 0, 0, 0, 0, 0, 0, 0, 
+                                            0, 0, 0, 0, 0, 0, 0};
+static const SCRIPT_PROPERTIES Default_Script_3 = {9, 0, 0, 0, 0, 0, 0, 0, 
+                                            0, 0, 0, 0, 0, 0, 0};
+static const SCRIPT_PROPERTIES Default_Script_4 = {9, 1, 0, 0, 0, 0, 0, 0, 
+                                            0, 0, 0, 0, 0, 0, 0};
+static const SCRIPT_PROPERTIES Default_Script_5 = {9, 0, 0, 0, 0, 0, 0, 0, 
+                                            0, 0, 0, 0, 1, 0, 0};
+static const SCRIPT_PROPERTIES Default_Script_6 = {9, 1, 0, 0, 0, 0, 0, 0, 
+                                            0, 0, 0, 0, 1, 0, 0};
+static const SCRIPT_PROPERTIES Default_Script_7 = {8, 0, 0, 0, 0, 161, 0, 0, 
+                                            0, 0, 0, 0, 0, 0, 0};
+static const SCRIPT_PROPERTIES *Global_Script[MAX_SCRIPTS] =
+                                      {&Default_Script_0,
+                                       &Default_Script_1,
+                                       &Default_Script_2,
+                                       &Default_Script_3,
+                                       &Default_Script_4,
+                                       &Default_Script_5,
+                                       &Default_Script_6,
+                                       &Default_Script_7};
+
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
@@ -69,9 +98,13 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
  */
 HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***ppSp, int *piNumScripts)
 {
-    FIXME("%p,%p\n",ppSp,piNumScripts);
+    TRACE("%p,%p\n",ppSp, piNumScripts);
 
-    if (piNumScripts) *piNumScripts = 0;
+/*  Set up a sensible default and intialise pointers  */
+    *piNumScripts = MAX_SCRIPTS;
+    *ppSp =  Global_Script;
+    TRACE("ppSp:%p, *ppSp:%p, **ppSp:%p, %d\n", ppSp, *ppSp, **ppSp, 
+                                                *piNumScripts);
     return 0;
 }
 
