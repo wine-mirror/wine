@@ -31,6 +31,8 @@
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
 
+static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
+
 static void ref_count_test(LPCWSTR type_lib)
 {
     ITypeLib *iface;
@@ -69,7 +71,6 @@ static void test_TypeComp(void)
     DESCKIND desckind;
     BINDPTR bindptr;
     ITypeInfo *pTypeInfo;
-    static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
     static WCHAR wszStdFunctions[] = {'S','t','d','F','u','n','c','t','i','o','n','s',0};
     static WCHAR wszSavePicture[] = {'S','a','v','e','P','i','c','t','u','r','e',0};
     static WCHAR wszOLE_TRISTATE[] = {'O','L','E','_','T','R','I','S','T','A','T','E',0};
@@ -362,10 +363,44 @@ static void test_CreateDispTypeInfo(void)
     SysFreeString(methdata[3].szName);
 }
 
+static void test_TypeInfo(void)
+{
+    ITypeLib *pTypeLib;
+    ITypeInfo *pTypeInfo;
+    HRESULT hr;
+    static WCHAR szBogus[] = { 'b','o','g','u','s',0 };
+    OLECHAR* bogus = szBogus;
+    DISPID dispidMember;
+    DISPPARAMS dispparams;
+
+    hr = LoadTypeLib(wszStdOle2, &pTypeLib);
+    ok_ole_success(hr, LoadTypeLib);
+
+    hr = ITypeLib_GetTypeInfo(pTypeLib, 1, &pTypeInfo);
+    ok_ole_success(hr, ITypeLib_GetTypeInfo); 
+    ITypeLib_Release(pTypeLib);
+
+    /* test nonexistent method name */
+    hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &bogus, 1, &dispidMember);
+    ok(hr == DISP_E_UNKNOWNNAME,
+       "ITypeInfo_GetIDsOfNames should have returned DISP_E_UNKNOWNNAME instead of 0x%08lx\n",
+       hr);
+
+    /* test invalid memberid */
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = NULL;
+    hr = ITypeInfo_Invoke(pTypeInfo, NULL, 0xdeadbeef, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08lx\n", hr);
+
+    ITypeInfo_Release(pTypeInfo);
+}
+
 START_TEST(typelib)
 {
-    static const WCHAR type_lib_stdole32[] = {'s','t','d','o','l','e','3','2','.','t','l','b',0};
-    ref_count_test(type_lib_stdole32);
+    ref_count_test(wszStdOle2);
     test_TypeComp();
     test_CreateDispTypeInfo();
+    test_TypeInfo();
 }
