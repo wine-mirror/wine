@@ -586,7 +586,7 @@ void wine_server_release_fd( obj_handle_t handle, int unix_fd )
  *
  * Start a new wine server.
  */
-static void start_server( const char *oldcwd )
+static void start_server(void)
 {
     static int started;  /* we only try once */
     char *argv[3];
@@ -652,17 +652,21 @@ static void server_connect_error( const char *serverdir )
  * Attempt to connect to an existing server socket.
  * We need to be in the server directory already.
  */
-static int server_connect( const char *oldcwd, const char *serverdir )
+static int server_connect( const char *serverdir )
 {
     struct sockaddr_un addr;
     struct stat st;
-    int s, slen, retry;
+    int s, slen, retry, fd_cwd;
+
+    /* retrieve the current directory */
+    fd_cwd = open( ".", O_RDONLY );
+    if (fd_cwd != -1) fcntl( fd_cwd, F_SETFD, 1 ); /* set close on exec flag */
 
     /* chdir to the server directory */
     if (chdir( serverdir ) == -1)
     {
         if (errno != ENOENT) fatal_perror( "chdir to %s", serverdir );
-        start_server( "." );
+        start_server();
         if (chdir( serverdir ) == -1) fatal_perror( "chdir to %s", serverdir );
     }
 
@@ -677,13 +681,13 @@ static int server_connect( const char *oldcwd, const char *serverdir )
         if (retry)
         {
             usleep( 100000 * retry * retry );
-            start_server( oldcwd );
+            start_server();
             if (lstat( SOCKETNAME, &st ) == -1) continue;  /* still no socket, wait a bit more */
         }
         else if (lstat( SOCKETNAME, &st ) == -1) /* check for an already existing socket */
         {
             if (errno != ENOENT) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
-            start_server( oldcwd );
+            start_server();
             if (lstat( SOCKETNAME, &st ) == -1) continue;  /* still no socket, wait a bit more */
         }
 
@@ -703,6 +707,12 @@ static int server_connect( const char *oldcwd, const char *serverdir )
         if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
         if (connect( s, (struct sockaddr *)&addr, slen ) != -1)
         {
+            /* switch back to the starting directory */
+            if (fd_cwd != -1)
+            {
+                fchdir( fd_cwd );
+                close( fd_cwd );
+            }
             fcntl( s, F_SETFD, 1 ); /* set close on exec flag */
             return s;
         }
@@ -830,8 +840,6 @@ static void create_config_dir(void)
  */
 void server_init_process(void)
 {
-    int size;
-    char *oldcwd;
     obj_handle_t dummy_handle;
     const char *server_dir = wine_get_server_dir();
 
@@ -841,26 +849,8 @@ void server_init_process(void)
         server_dir = wine_get_server_dir();
     }
 
-    /* retrieve the current directory */
-    for (size = 512; ; size *= 2)
-    {
-        if (!(oldcwd = malloc( size ))) break;
-        if (getcwd( oldcwd, size )) break;
-        free( oldcwd );
-        if (errno == ERANGE) continue;
-        oldcwd = NULL;
-        break;
-    }
-
     /* connect to the server */
-    fd_socket = server_connect( oldcwd, server_dir );
-
-    /* switch back to the starting directory */
-    if (oldcwd)
-    {
-        chdir( oldcwd );
-        free( oldcwd );
-    }
+    fd_socket = server_connect( server_dir );
 
     /* setup the signal mask */
     sigemptyset( &block_set );
