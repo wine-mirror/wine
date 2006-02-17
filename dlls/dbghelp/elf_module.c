@@ -69,6 +69,7 @@
 # include <sys/link.h>
 #endif
 
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
@@ -1160,6 +1161,33 @@ static BOOL elf_load_file_from_path(HANDLE hProcess,
 }
 
 /******************************************************************
+ *		elf_load_file_from_dll_path
+ *
+ * Tries to load an ELF file from the dll path
+ */
+static BOOL elf_load_file_from_dll_path(HANDLE hProcess,
+                                        const char* filename,
+                                        unsigned long load_offset,
+                                        struct elf_info* elf_info)
+{
+    BOOL ret = FALSE;
+    unsigned int index = 0;
+    const char *path;
+
+    while (!ret && (path = wine_dll_enum_load_path( index++ )))
+    {
+        char *name = HeapAlloc( GetProcessHeap(), 0, strlen(path) + strlen(filename) + 2 );
+        if (!name) break;
+        strcpy( name, path );
+        strcat( name, "/" );
+        strcat( name, filename );
+        ret = elf_load_file(hProcess, name, load_offset, elf_info);
+        HeapFree( GetProcessHeap(), 0, name );
+    }
+    return ret;
+}
+
+/******************************************************************
  *		elf_search_and_load_file
  *
  * lookup a file in standard ELF locations, and if found, load it
@@ -1187,9 +1215,8 @@ static BOOL elf_search_and_load_file(struct process* pcs, const char* filename,
         ret = elf_load_file_from_path(pcs, filename, load_offset, 
                                       getenv("PATH"), elf_info) ||
             elf_load_file_from_path(pcs, filename, load_offset,
-                                    getenv("LD_LIBRARY_PATH"), elf_info) ||
-            elf_load_file_from_path(pcs, filename, load_offset,
-                                    getenv("WINEDLLPATH"), elf_info);
+                                    getenv("LD_LIBRARY_PATH"), elf_info);
+        if (!ret) ret = elf_load_file_from_dll_path(pcs, filename, load_offset, elf_info);
     }
     
     return ret;
