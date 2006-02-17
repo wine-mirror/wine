@@ -803,7 +803,7 @@ __int64 _lseeki64(int fd, __int64 offset, int whence)
   }
 
   TRACE(":fd (%d) to %s pos %s\n",
-        fd,wine_dbgstr_longlong(ofs.QuadPart),
+        fd,wine_dbgstr_longlong(offset),
         (whence==SEEK_SET)?"SEEK_SET":
         (whence==SEEK_CUR)?"SEEK_CUR":
         (whence==SEEK_END)?"SEEK_END":"UNKNOWN");
