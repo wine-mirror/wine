@@ -39,10 +39,11 @@ static const char server_config_dir[] = "/.wine";        /* config dir relative 
 static const char server_root_prefix[] = "/tmp/.wine-";  /* prefix for server root dir */
 static const char server_dir_prefix[] = "/server-";      /* prefix for server dir */
 
+static char *bindir;
+static char *dlldir;
 static char *config_dir;
 static char *server_dir;
 static char *user_name;
-static char *argv0_path;
 static char *argv0_name;
 
 #ifdef __GNUC__
@@ -101,15 +102,26 @@ inline static void remove_trailing_slashes( char *path )
     while (len > 1 && path[len-1] == '/') path[--len] = 0;
 }
 
+/* build a path from the specified dir and name */
+static char *build_path( const char *dir, const char *name )
+{
+    size_t len = strlen(dir);
+    char *ret = xmalloc( len + strlen(name) + 2 );
+
+    memcpy( ret, dir, len );
+    if (len && ret[len-1] != '/') ret[len++] = '/';
+    strcpy( ret + len, name );
+    return ret;
+}
+
 /* return the directory that contains the library at run-time */
 static const char *get_runtime_libdir(void)
 {
-    static char *libdir;
-
 #ifdef HAVE_DLADDR
     Dl_info info;
+    char *libdir;
 
-    if (!libdir && dladdr( get_runtime_libdir, &info ) && info.dli_fname[0] == '/')
+    if (dladdr( get_runtime_libdir, &info ) && info.dli_fname[0] == '/')
     {
         const char *p = strrchr( info.dli_fname, '/' );
         unsigned int len = p - info.dli_fname;
@@ -117,42 +129,10 @@ static const char *get_runtime_libdir(void)
         libdir = xmalloc( len + 1 );
         memcpy( libdir, info.dli_fname, len );
         libdir[len] = 0;
+        return libdir;
     }
 #endif /* HAVE_DLADDR */
-    return libdir;
-}
-
-/* determine the proper location of the given path based on the current libdir */
-static char *get_path_from_libdir( const char *path, const char *fallback, const char *filename )
-{
-    char *p, *ret;
-    const char *libdir = get_runtime_libdir();
-
-    /* retrieve the library load path */
-
-    if (path[0] && libdir)
-    {
-        ret = xmalloc( strlen(libdir) + strlen(path) + strlen(filename) + 3 );
-        strcpy( ret, libdir );
-        p = ret + strlen(libdir);
-        if (p[-1] != '/') *p++ = '/';
-    }
-    else
-    {
-        if (fallback) path = fallback;
-        ret = p = xmalloc( strlen(path) + strlen(filename) + 2 );
-    }
-
-    strcpy( p, path );
-    p += strlen(p);
-
-    if (*filename)
-    {
-        if (p > ret && p[-1] != '/') *p++ = '/';
-        strcpy( p, filename );
-    }
-    else if (p > ret && p[-1] == '/') p[-1] = 0;
-    return ret;
+    return NULL;
 }
 
 /* initialize the server directory value */
@@ -184,10 +164,7 @@ static void init_server_dir( dev_t dev, ino_t ino )
 /* retrieve the default dll dir */
 const char *get_default_dlldir(void)
 {
-    static const char *dlldir;
-
-    if (!dlldir) dlldir = get_path_from_libdir( DLLDIR_REL, DLLDIR, "" );
-    return dlldir;
+    return dlldir ? dlldir : DLLDIR;
 }
 
 /* initialize all the paths values */
@@ -258,41 +235,53 @@ static void init_paths(void)
 void wine_init_argv0_path( const char *argv0 )
 {
     size_t size, len;
-    const char *p;
+    const char *p, *libdir;
     char *cwd;
 
     if (!(p = strrchr( argv0, '/' )))
-    {
         argv0_name = xstrdup( argv0 );
-        return;  /* if argv0 doesn't contain a path, don't store any path */
-    }
-    else argv0_name = xstrdup( p + 1 );
+    else
+        argv0_name = xstrdup( p + 1 );
 
-    len = p - argv0 + 1;
-    if (argv0[0] == '/')  /* absolute path */
+    if ((libdir = get_runtime_libdir()))
     {
-        argv0_path = xmalloc( len + 1 );
-        memcpy( argv0_path, argv0, len );
-        argv0_path[len] = 0;
+        bindir = build_path( libdir, LIB_TO_BINDIR );
+        dlldir = build_path( libdir, LIB_TO_DLLDIR );
         return;
     }
 
-    /* relative path, make it absolute */
-    for (size = 256 + len; ; size *= 2)
+    if (!p) return;  /* if argv0 doesn't contain a path, don't store anything */
+
+    len = p - argv0;
+    if (!len) len++;  /* include leading slash */
+
+    if (argv0[0] == '/')  /* absolute path */
     {
-        if (!(cwd = malloc( size ))) break;
-        if (getcwd( cwd, size - len ))
-        {
-            argv0_path = cwd;
-            cwd += strlen(cwd);
-            *cwd++ = '/';
-            memcpy( cwd, argv0, len );
-            cwd[len] = 0;
-            return;
-        }
-        free( cwd );
-        if (errno != ERANGE) break;
+        bindir = xmalloc( len + 1 );
+        memcpy( bindir, argv0, len );
+        bindir[len] = 0;
     }
+    else
+    {
+        /* relative path, make it absolute */
+        for (size = 256 + len; ; size *= 2)
+        {
+            if (!(cwd = malloc( size ))) return;
+            if (getcwd( cwd, size - len ))
+            {
+                bindir = cwd;
+                cwd += strlen(cwd);
+                *cwd++ = '/';
+                memcpy( cwd, argv0, len );
+                cwd[len] = 0;
+                break;
+            }
+            free( cwd );
+            if (errno != ERANGE) return;
+        }
+    }
+
+    dlldir = build_path( bindir, BIN_TO_DLLDIR );
 }
 
 /* return the configuration directory ($WINEPREFIX or $HOME/.wine) */
@@ -364,7 +353,6 @@ static void preloader_exec( char **argv, int use_preloader )
 /* exec a wine internal binary (either the wine loader or the wine server) */
 void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
 {
-    static const char bindir[] = BINDIR;
     const char *path, *pos, *ptr;
     int use_preloader = 0;
 
@@ -375,9 +363,12 @@ void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
     }
 
     /* first, bin directory from the current libdir or argv0 */
-    argv[0] = get_path_from_libdir( BINDIR_REL, argv0_path, name );
-    preloader_exec( argv, use_preloader );
-    free( argv[0] );
+    if (bindir)
+    {
+        argv[0] = build_path( bindir, name );
+        preloader_exec( argv, use_preloader );
+        free( argv[0] );
+    }
 
     /* then specified environment variable */
     if (env_var)
@@ -406,9 +397,7 @@ void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
     }
 
     /* and finally try BINDIR */
-    argv[0] = xmalloc( sizeof(bindir) + 1 + strlen(name) );
-    strcpy( argv[0], bindir );
-    strcat( argv[0], "/" );
-    strcat( argv[0], name );
+    argv[0] = build_path( BINDIR, name );
     preloader_exec( argv, use_preloader );
+    free( argv[0] );
 }

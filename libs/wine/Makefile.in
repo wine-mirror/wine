@@ -21,10 +21,14 @@ C_SRCS = \
 CONFIGDIRS = \
 	-DBINDIR='"$(bindir)"' \
 	-DDLLDIR='"$(dlldir)"' \
-	-DBINDIR_REL=\"`$(RELPATH) $(libdir) $(bindir)`\" \
-	-DDLLDIR_REL=\"`$(RELPATH) $(libdir) $(dlldir)`\"
+	-DLIB_TO_BINDIR=\"`$(RELPATH) $(libdir) $(bindir)`\" \
+	-DLIB_TO_DLLDIR=\"`$(RELPATH) $(libdir) $(dlldir)`\" \
+	-DBIN_TO_DLLDIR=\"`$(RELPATH) $(bindir) $(dlldir)`\"
 
-config.o: config.c
-	$(CC) -c $(ALLCFLAGS) -o $@ config.c $(CONFIGDIRS)
+config.o: config.c $(RELPATH)
+	$(CC) -c $(ALLCFLAGS) -o $@ $(SRCDIR)/config.c $(CONFIGDIRS)
+
+$(RELPATH):
+	@cd $(TOOLSDIR)/tools && $(MAKE) relpath
 
 ### Dependencies:
