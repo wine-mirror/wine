@@ -81,13 +81,14 @@ static int dll_path_maxlen;
 
 extern void mmap_init(void);
 extern void debug_init(void);
-extern const char *get_default_dlldir(void);
+extern const char *get_dlldir( const char **default_dlldir );
 
 /* build the dll load path from the WINEDLLPATH variable */
 static void build_dll_path(void)
 {
     int len, count = 0;
     char *p, *path = getenv( "WINEDLLPATH" );
+    const char *dlldir = get_dlldir( &default_dlldir );
 
     if (path)
     {
@@ -103,12 +104,18 @@ static void build_dll_path(void)
         }
     }
 
-    dll_paths = malloc( (count+1) * sizeof(*dll_paths) );
+    dll_paths = malloc( (count+2) * sizeof(*dll_paths) );
+    nb_dll_paths = 0;
+
+    if (dlldir)
+    {
+        dll_path_maxlen = strlen(dlldir);
+        dll_paths[nb_dll_paths++] = dlldir;
+    }
 
     if (count)
     {
         p = path;
-        nb_dll_paths = 0;
         while (*p)
         {
             while (*p == ':') *p++ = 0;
@@ -122,7 +129,6 @@ static void build_dll_path(void)
     }
 
     /* append default dll dir (if not empty) to path */
-    default_dlldir = get_default_dlldir();
     if ((len = strlen(default_dlldir)) > 0)
     {
         if (len > dll_path_maxlen) dll_path_maxlen = len;
@@ -570,8 +576,8 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     void *ntdll = NULL;
     void (*init_func)(void);
 
-    build_dll_path();
     wine_init_argv0_path( argv[0] );
+    build_dll_path();
     __wine_main_argc = argc;
     __wine_main_argv = argv;
     __wine_main_environ = environ;
@@ -583,7 +589,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
         if ((ntdll = wine_dlopen( path, RTLD_NOW, error, error_size )))
         {
             /* if we didn't use the default dll dir, remove it from the search path */
-            if (sizeof(default_dlldir) > 1 && context.index < nb_dll_paths) nb_dll_paths--;
+            if (default_dlldir[0] && context.index < nb_dll_paths) nb_dll_paths--;
             break;
         }
     }

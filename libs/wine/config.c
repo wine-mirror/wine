@@ -162,9 +162,10 @@ static void init_server_dir( dev_t dev, ino_t ino )
 }
 
 /* retrieve the default dll dir */
-const char *get_default_dlldir(void)
+const char *get_dlldir( const char **default_dlldir )
 {
-    return dlldir ? dlldir : DLLDIR;
+    *default_dlldir = DLLDIR;
+    return dlldir;
 }
 
 /* initialize all the paths values */
