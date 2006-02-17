@@ -119,6 +119,15 @@ static void test_fileops( void )
     ok(fgetws(wbuffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected\n");
     ok(lstrlenW(wbuffer) == 1,"fgets dropped chars\n");
     fclose (file);
+
+    file = fopen("fdopen.tst", "rb");
+    ok( file != NULL, "fopen failed");
+    /* sizeof(buffer) > content of file */
+    ok(fread(buffer, sizeof(buffer), 1, file) == 0, "fread test failed\n");
+    /* feof should be set now */
+    todo_wine ok(feof(file), "feof after fread failed\n");
+    fclose (file);
+
     unlink ("fdopen.tst");
 }
 
