@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 LIBRARY   = wine
 SOVERSION = 1
 VERSCRIPT = $(SRCDIR)/wine.map
-EXTRADEFS = -D__WINESRC__ -DBINDIR="\"$(bindir)\"" -DLIBDIR="\"$(libdir)\"" -DDLLDIR="\"$(dlldir)\""
+EXTRADEFS = -D__WINESRC__
 EXTRALIBS = $(LIBPORT) @DLLIBS@ @CRTLIBS@
 
 C_SRCS = \
@@ -17,5 +17,14 @@ C_SRCS = \
 	port.c
 
 @MAKE_LIB_RULES@
+
+CONFIGDIRS = \
+	-DBINDIR='"$(bindir)"' \
+	-DDLLDIR='"$(dlldir)"' \
+	-DBINDIR_REL=\"`$(RELPATH) $(libdir) $(bindir)`\" \
+	-DDLLDIR_REL=\"`$(RELPATH) $(libdir) $(dlldir)`\"
+
+config.o: config.c
+	$(CC) -c $(ALLCFLAGS) -o $@ config.c $(CONFIGDIRS)
 
 ### Dependencies:

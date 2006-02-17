@@ -101,37 +101,6 @@ inline static void remove_trailing_slashes( char *path )
     while (len > 1 && path[len-1] == '/') path[--len] = 0;
 }
 
-/* determine where the destination path is located relative to the 'from' path */
-inline static const char *get_relative_path( const char *from, const char *dest, unsigned int *dotdots )
-{
-#define DIR_END(p)  (*(p) == 0 || *(p) == '/')
-    const char *start;
-
-    *dotdots = 0;
-    for (;;)
-    {
-        while (*from == '/') from++;
-        while (*dest == '/') dest++;
-        start = dest;  /* save start of next path element */
-        if (!*from) break;
-
-        while (!DIR_END(from) && *from == *dest) { from++; dest++; }
-        if (DIR_END(from) && DIR_END(dest)) continue;
-
-        /* count remaining elements in 'from' */
-        do
-        {
-            (*dotdots)++;
-            while (!DIR_END(from)) from++;
-            while (*from == '/') from++;
-        }
-        while (*from);
-        break;
-    }
-    return start;
-#undef DIR_END
-}
-
 /* return the directory that contains the library at run-time */
 static const char *get_runtime_libdir(void)
 {
@@ -161,41 +130,28 @@ static char *get_path_from_libdir( const char *path, const char *fallback, const
 
     /* retrieve the library load path */
 
-    if (libdir)
+    if (path[0] && libdir)
     {
-        unsigned int dotdots = 0;
-        const char *start = get_relative_path( LIBDIR, path, &dotdots );
-
-        ret = xmalloc( strlen(libdir) + 3 * dotdots + strlen(start) + strlen(filename) + 3 );
+        ret = xmalloc( strlen(libdir) + strlen(path) + strlen(filename) + 3 );
         strcpy( ret, libdir );
         p = ret + strlen(libdir);
         if (p[-1] != '/') *p++ = '/';
-
-        while (dotdots--)
-        {
-            p[0] = '.';
-            p[1] = '.';
-            p[2] = '/';
-            p += 3;
-        }
-
-        strcpy( p, start );
-        p += strlen(p);
     }
     else
     {
         if (fallback) path = fallback;
-        ret = xmalloc( strlen(path) + strlen(filename) + 2 );
-        strcpy( ret, path );
-        p = ret + strlen(ret);
+        ret = p = xmalloc( strlen(path) + strlen(filename) + 2 );
     }
+
+    strcpy( p, path );
+    p += strlen(p);
 
     if (*filename)
     {
-        if (p[-1] != '/') *p++ = '/';
+        if (p > ret && p[-1] != '/') *p++ = '/';
         strcpy( p, filename );
     }
-    else if (p[-1] == '/') p[-1] = 0;
+    else if (p > ret && p[-1] == '/') p[-1] = 0;
     return ret;
 }
 
@@ -230,7 +186,7 @@ const char *get_default_dlldir(void)
 {
     static const char *dlldir;
 
-    if (!dlldir) dlldir = get_path_from_libdir( DLLDIR, NULL, "" );
+    if (!dlldir) dlldir = get_path_from_libdir( DLLDIR_REL, DLLDIR, "" );
     return dlldir;
 }
 
@@ -419,7 +375,7 @@ void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
     }
 
     /* first, bin directory from the current libdir or argv0 */
-    argv[0] = get_path_from_libdir( bindir, argv0_path, name );
+    argv[0] = get_path_from_libdir( BINDIR_REL, argv0_path, name );
     preloader_exec( argv, use_preloader );
     free( argv[0] );
 
