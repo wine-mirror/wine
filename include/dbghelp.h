@@ -362,6 +362,7 @@ typedef struct _DBGHELP_MODLOAD_DATA
  *       MiniDUMP        *
  *************************/
 
+#include <pshpack4.h>
 /* DebugHelp */
 
 #define MINIDUMP_SIGNATURE 0x504D444D /* 'MDMP' */
@@ -722,6 +723,7 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE, DWORD, HANDLE, MINIDUMP_TYPE,
 BOOL WINAPI MiniDumpReadDumpStream(PVOID, ULONG, PMINIDUMP_DIRECTORY*, PVOID*,
                                    ULONG*);
 
+#include <poppack.h>
 
 /*************************
  *    MODULE handling    *
