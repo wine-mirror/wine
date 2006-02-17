@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <limits.h>
+#include <dirent.h>
 #include <errno.h>
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
@@ -126,6 +129,12 @@ static inline int inotify_remove_watch( int fd, int wd )
 
 #endif
 
+struct inode;
+
+static void free_inode( struct inode *inode );
+
+static struct fd *inotify_fd;
+
 struct change_record {
     struct list entry;
     int action;
@@ -143,10 +152,10 @@ struct dir
     int            notified; /* SIGIO counter */
     int            want_data; /* return change data */
     long           signaled; /* the file changed */
-    struct fd     *inotify_fd; /* inotify file descriptor */
-    int            wd;       /* inotify watch descriptor */
     struct list    change_q; /* change readers */
     struct list    change_records;   /* data for the change */
+    struct list    in_entry; /* entry in the inode dirs list */
+    struct inode  *inode;    /* inode of the associated directory */
 };
 
 static struct fd *dir_get_fd( struct object *obj );
@@ -241,30 +250,6 @@ static inline void remove_change( struct dir *dir )
     sigprocmask( SIG_UNBLOCK, &sigset, NULL );
 }
 
-struct object *create_dir_obj( struct fd *fd )
-{
-    struct dir *dir;
-
-    dir = alloc_object( &dir_ops );
-    if (!dir)
-        return NULL;
-
-    list_init( &dir->change_q );
-    list_init( &dir->change_records );
-    dir->event = NULL;
-    dir->filter = 0;
-    dir->notified = 0;
-    dir->signaled = 0;
-    dir->want_data = 0;
-    dir->inotify_fd = NULL;
-    dir->wd = -1;
-    grab_object( fd );
-    dir->fd = fd;
-    set_fd_user( fd, &dir_fd_ops, &dir->obj );
-
-    return &dir->obj;
-}
-
 static void dir_dump( struct object *obj, int verbose )
 {
     struct dir *dir = (struct dir *)obj;
@@ -352,8 +337,11 @@ static void dir_destroy( struct object *obj )
     if (dir->filter)
         remove_change( dir );
 
-    if (dir->inotify_fd)
-        release_object( dir->inotify_fd );
+    if (dir->inode)
+    {
+        list_remove( &dir->in_entry );
+        free_inode( dir->inode );
+    }
 
     async_terminate_queue( &dir->change_q, STATUS_CANCELLED );
     while ((record = get_first_change_record( dir ))) free( record );
@@ -364,6 +352,12 @@ static void dir_destroy( struct object *obj )
         release_object( dir->event );
     }
     release_object( dir->fd );
+
+    if (inotify_fd && list_empty( &change_list ))
+    {
+        release_object( inotify_fd );
+        inotify_fd = NULL;
+    }
 }
 
 static struct dir *
@@ -390,6 +384,87 @@ static void dir_cancel_async( struct fd *fd )
 
 
 #ifdef USE_INOTIFY
+
+#define HASH_SIZE 31
+
+struct inode {
+    struct list dirs;        /* directory handles watching this inode */
+    struct list ino_entry;   /* entry in the inode hash */
+    struct list wd_entry;    /* entry in the watch descriptor hash */
+    dev_t dev;               /* device number */
+    ino_t ino;               /* device's inode number */
+    int wd;                  /* inotify's watch descriptor */
+};
+
+struct list inode_hash[ HASH_SIZE ];
+struct list wd_hash[ HASH_SIZE ];
+
+static struct inode *inode_from_wd( int wd )
+{
+    struct list *bucket = &wd_hash[ wd % HASH_SIZE ];
+    struct inode *inode;
+
+    LIST_FOR_EACH_ENTRY( inode, bucket, struct inode, wd_entry )
+        if (inode->wd == wd)
+            return inode;
+
+    return NULL;
+}
+
+static inline struct list *get_hash_list( dev_t dev, ino_t ino )
+{
+    return &inode_hash[ (ino ^ dev) % HASH_SIZE ];
+}
+
+static struct inode *get_inode( dev_t dev, ino_t ino )
+{
+    struct list *bucket = get_hash_list( dev, ino );
+    struct inode *inode;
+
+    LIST_FOR_EACH_ENTRY( inode, bucket, struct inode, ino_entry )
+        if (inode->ino == ino && inode->dev == dev)
+             return inode;
+
+    return NULL;
+}
+
+static struct inode *create_inode( dev_t dev, ino_t ino )
+{
+    struct inode *inode;
+
+    inode = malloc( sizeof *inode );
+    if (inode)
+    {
+        list_init( &inode->dirs );
+        inode->ino = ino;
+        inode->dev = dev;
+        inode->wd = -1;
+        list_add_tail( get_hash_list( dev, ino ), &inode->ino_entry );
+    }
+    return inode;
+}
+
+static void inode_set_wd( struct inode *inode, int wd )
+{
+    if (inode->wd != -1)
+        list_remove( &inode->wd_entry );
+    inode->wd = wd;
+    list_add_tail( &wd_hash[ wd % HASH_SIZE ], &inode->wd_entry );
+}
+
+static void free_inode( struct inode *inode )
+{
+    if (!list_empty( &inode->dirs ))
+        return;
+
+    if (inode->wd != -1)
+    {
+        inotify_remove_watch( get_unix_fd( inotify_fd ), inode->wd );
+        list_remove( &inode->wd_entry );
+    }
+    list_remove( &inode->ino_entry );
+    free( inode );
+}
 
 static int inotify_get_poll_events( struct fd *fd );
 static void inotify_poll_event( struct fd *fd, int event );
@@ -442,12 +517,49 @@ static void inotify_do_change_notify( struct dir *dir, struct inotify_event *ie 
     }
 }
 
+static unsigned int filter_from_event( struct inotify_event *ie )
+{
+    unsigned int filter = 0;
+
+    if (ie->mask & (IN_MOVED_FROM | IN_MOVED_TO | IN_DELETE | IN_CREATE))
+        filter |= FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME;
+    if (ie->mask & IN_MODIFY)
+        filter |= FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE;
+    if (ie->mask & IN_ATTRIB)
+        filter |= FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SECURITY;
+    if (ie->mask & IN_ACCESS)
+        filter |= FILE_NOTIFY_CHANGE_LAST_ACCESS;
+    if (ie->mask & IN_CREATE)
+        filter |= FILE_NOTIFY_CHANGE_CREATION;
+
+    return filter;
+}
+
+static void inotify_notify_all( struct inotify_event *ie )
+{
+    struct inode *inode;
+    struct dir *dir;
+    unsigned int filter;
+
+    inode = inode_from_wd( ie->wd );
+    if (!inode)
+    {
+        fprintf( stderr, "no inode matches %d\n", ie->wd);
+        return;
+    }
+
+    filter = filter_from_event( ie );
+
+    LIST_FOR_EACH_ENTRY( dir, &inode->dirs, struct dir, in_entry )
+        if (filter & dir->filter)
+            inotify_do_change_notify( dir, ie );
+}
+
 static void inotify_poll_event( struct fd *fd, int event )
 {
     int r, ofs, unix_fd;
     char buffer[0x1000];
     struct inotify_event *ie;
-    struct dir *dir = get_fd_user( fd );
 
     unix_fd = get_unix_fd( fd );
     r = read( unix_fd, buffer, sizeof buffer );
@@ -464,7 +576,7 @@ static void inotify_poll_event( struct fd *fd, int event )
             break;
         ofs += offsetof( struct inotify_event, name[ie->len] );
         if (ofs > r) break;
-        inotify_do_change_notify( dir, ie );
+        inotify_notify_all( ie );
     }
 }
 
@@ -473,26 +585,19 @@ static int inotify_get_info( struct fd *fd )
     return 0;
 }
 
-static inline struct fd *create_inotify_fd( struct dir *dir )
+static inline struct fd *create_inotify_fd( void )
 {
     int unix_fd;
 
     unix_fd = inotify_init();
     if (unix_fd<0)
         return NULL;
-    return create_anonymous_fd( &inotify_fd_ops, unix_fd, &dir->obj );
+    return create_anonymous_fd( &inotify_fd_ops, unix_fd, NULL );
 }
 
-static int inotify_adjust_changes( struct dir *dir )
+static int map_flags( unsigned int filter )
 {
-    unsigned int filter = dir->filter;
     unsigned int mask = 0;
-    char link[32];
-
-    if (!dir->inotify_fd)
-    {
-        if (!(dir->inotify_fd = create_inotify_fd( dir ))) return 0;
-    }
 
     if (filter & FILE_NOTIFY_CHANGE_FILE_NAME)
         mask |= (IN_MOVED_FROM | IN_MOVED_TO | IN_DELETE | IN_CREATE);
@@ -511,14 +616,130 @@ static int inotify_adjust_changes( struct dir *dir )
     if (filter & FILE_NOTIFY_CHANGE_SECURITY)
         mask |= IN_ATTRIB;
 
-    sprintf( link, "/proc/self/fd/%u", get_unix_fd( dir->fd ) );
-    dir->wd = inotify_add_watch( get_unix_fd( dir->inotify_fd ), link, mask );
-    if (dir->wd != -1)
-        set_fd_events( dir->inotify_fd, POLLIN );
+    return mask;
+}
+
+static int inotify_add_dir( char *path, unsigned int filter )
+{
+    int wd = inotify_add_watch( get_unix_fd( inotify_fd ),
+                                path, map_flags( filter ) );
+    if (wd != -1)
+        set_fd_events( inotify_fd, POLLIN );
+    return wd;
+}
+
+static unsigned int filter_from_inode( struct inode *inode )
+{
+    unsigned int filter = 0;
+    struct dir *dir;
+
+    LIST_FOR_EACH_ENTRY( dir, &inode->dirs, struct dir, in_entry )
+        filter |= dir->filter;
+
+    return filter;
+}
+
+static int init_inotify( void )
+{
+    int i;
+
+    if (inotify_fd)
+        return 1;
+
+    inotify_fd = create_inotify_fd();
+    if (!inotify_fd)
+        return 0;
+
+    for (i=0; i<HASH_SIZE; i++)
+    {
+        list_init( &inode_hash[i] );
+        list_init( &wd_hash[i] );
+    }
+
     return 1;
 }
 
+static int inotify_adjust_changes( struct dir *dir )
+{
+    unsigned int filter;
+    struct inode *inode;
+    struct stat st;
+    char path[32];
+    int wd, unix_fd;
+
+    if (!inotify_fd)
+        return 0;
+
+    unix_fd = get_unix_fd( dir->fd );
+
+    inode = dir->inode;
+    if (!inode)
+    {
+        /* check if this fd is already being watched */
+        if (-1 == fstat( unix_fd, &st ))
+            return 0;
+
+        inode = get_inode( st.st_dev, st.st_ino );
+        if (!inode)
+            inode = create_inode( st.st_dev, st.st_ino );
+        if (!inode)
+            return 0;
+        list_add_tail( &inode->dirs, &dir->in_entry );
+        dir->inode = inode;
+    }
+
+    filter = filter_from_inode( inode );
+
+    sprintf( path, "/proc/self/fd/%u", unix_fd );
+    wd = inotify_add_dir( path, filter );
+    if (wd == -1) return 0;
+
+    inode_set_wd( inode, wd );
+
+    return 1;
+}
+
+#else
+
+static int init_inotify( void )
+{
+    return 0;
+}
+
+static int inotify_adjust_changes( struct dir *dir )
+{
+    return 0;
+}
+
+static void free_inode( struct inode *inode )
+{
+    assert( 0 );
+}
+
 #endif  /* USE_INOTIFY */
+
+struct object *create_dir_obj( struct fd *fd )
+{
+    struct dir *dir;
+
+    dir = alloc_object( &dir_ops );
+    if (!dir)
+        return NULL;
+
+    list_init( &dir->change_q );
+    list_init( &dir->change_records );
+    dir->event = NULL;
+    dir->filter = 0;
+    dir->notified = 0;
+    dir->signaled = 0;
+    dir->want_data = 0;
+    dir->inode = NULL;
+    grab_object( fd );
+    dir->fd = fd;
+    set_fd_user( fd, &dir_fd_ops, &dir->obj );
+
+    return &dir->obj;
+}
 
 /* enable change notifications for a directory */
 DECL_HANDLER(read_directory_changes)
@@ -556,6 +777,7 @@ DECL_HANDLER(read_directory_changes)
     /* assign it once */
     if (!dir->filter)
     {
+        init_inotify();
         insert_change( dir );
         dir->filter = req->filter;
         dir->want_data = req->want_data;
@@ -570,9 +792,7 @@ DECL_HANDLER(read_directory_changes)
         reset_event( event );
 
     /* setup the real notification */
-#ifdef USE_INOTIFY
     if (!inotify_adjust_changes( dir ))
-#endif
         dnotify_adjust_changes( dir );
 
     set_error(STATUS_PENDING);
