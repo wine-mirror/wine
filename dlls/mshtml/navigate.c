@@ -404,6 +404,8 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
     nsIInputStream_Available(post_data_stream, &available);
     post_data = GlobalAlloc(0, available+1);
     nsIInputStream_Read(post_data_stream, post_data, available, &post_data_len);
+    
+    TRACE("post_data = %s\n", debugstr_an(post_data, post_data_len));
 
     ptr = ptr2 = post_data;
 
@@ -452,8 +454,8 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
     }
 
     if(headers_len) {
-        memmove(post_data, ptr, ptr-(const char*)post_data);
         post_data_len -= ptr-(const char*)post_data;
+        memmove(post_data, ptr, post_data_len);
         post_data = GlobalReAlloc(post_data, post_data_len+1, 0);
     }
 
@@ -476,7 +478,7 @@ void hlink_frame_navigate(NSContainer *container, IHlinkFrame *hlink_frame,
 
     if(post_data_stream) {
         parse_post_data(post_data_stream, &headers, &post_data, &post_data_len);
-        TRACE("%s %s\n", debugstr_w(headers), debugstr_a(post_data));
+        TRACE("headers = %s post_data = %s\n", debugstr_w(headers), debugstr_a(post_data));
     }
 
     callback = BSCallback_Create(container->doc, uri, post_data, post_data_len, headers);
