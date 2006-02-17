@@ -405,7 +405,7 @@ extern PWINE_ACMLOCALDRIVER MSACM_GetLocalDriver(HACMDRIVER hDriver);
 extern HINSTANCE MSACM_hInstance32;
 
 /* From pcmcnvtr.c */
-LRESULT CALLBACK	PCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
+LRESULT CALLBACK	PCM_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 				       LPARAM dwParam1, LPARAM dwParam2);
 
 /* Dialog box templates */

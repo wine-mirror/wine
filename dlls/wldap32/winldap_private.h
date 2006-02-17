@@ -375,8 +375,8 @@ ULONG ldap_parse_resultA(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,ULONG*,PCHAR*,PCHAR*
 ULONG ldap_parse_resultW(WLDAP32_LDAP*,WLDAP32_LDAPMessage*,ULONG*,PWCHAR*,PWCHAR*,PWCHAR**,PLDAPControlW**,BOOLEAN);
 ULONG ldap_parse_sort_controlA(WLDAP32_LDAP*,PLDAPControlA*,ULONG*,PCHAR*);
 ULONG ldap_parse_sort_controlW(WLDAP32_LDAP*,PLDAPControlW*,ULONG*,PWCHAR*);
-int ldap_parse_vlv_controlA(WLDAP32_LDAP*,LDAPControlA**,unsigned long*,unsigned long*,struct WLDAP32_berval**,int*);
-int ldap_parse_vlv_controlW(WLDAP32_LDAP*,LDAPControlW**,unsigned long*,unsigned long*,struct WLDAP32_berval**,int*);
+int ldap_parse_vlv_controlA(WLDAP32_LDAP*,LDAPControlA**,ULONG*,ULONG*,struct WLDAP32_berval**,INT*);
+int ldap_parse_vlv_controlW(WLDAP32_LDAP*,LDAPControlW**,ULONG*,ULONG*,struct WLDAP32_berval**,INT*);
 void WLDAP32_ldap_perror(WLDAP32_LDAP*,const PCHAR);
 ULONG ldap_rename_extA(WLDAP32_LDAP*,PCHAR,PCHAR,PCHAR,INT,PLDAPControlA*,PLDAPControlA*,ULONG*);
 ULONG ldap_rename_extW(WLDAP32_LDAP*,PWCHAR,PWCHAR,PWCHAR,INT,PLDAPControlW*,PLDAPControlW*,ULONG*);

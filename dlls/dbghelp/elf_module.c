@@ -1394,7 +1394,7 @@ static BOOL elf_load_cb(const char* name, unsigned long addr, void* user)
  * Also, find module real name and load address from
  * the real loaded modules list in pcs address space
  */
-struct module*  elf_load_module(struct process* pcs, const char* name, DWORD addr)
+struct module*  elf_load_module(struct process* pcs, const char* name, unsigned long addr)
 {
     struct elf_load     el;
 
