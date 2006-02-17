@@ -5,6 +5,7 @@
  * Copyright 1994 Alexandre Julliard
  * Copyright 1997 Morten Welinder
  * Copyright 2005 Maxime Bellengé
+ * Copyright 2006 Phil Krylov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -93,9 +94,12 @@ typedef struct {
     UINT        FocusedItem;  /* Currently focused item */
     HWND	hwndOwner;    /* window receiving the messages for ownerdraw */
     BOOL        bTimeToHide;  /* Request hiding when receiving a second click in the top-level menu item */
+    BOOL        bScrolling;   /* Scroll arrows are active */
+    UINT        nScrollPos;   /* Current scroll position */
+    UINT        nTotalHeight; /* Total height of menu items inside menu */
     /* ------------ MENUINFO members ------ */
-    DWORD	dwStyle;	/* Extended mennu style */
-    UINT	cyMax;		/* max hight of the whole menu, 0 is screen hight */
+    DWORD	dwStyle;	/* Extended menu style */
+    UINT	cyMax;		/* max height of the whole menu, 0 is screen height */
     HBRUSH	hbrBack;	/* brush for menu background */
     DWORD	dwContextHelpID;
     DWORD	dwMenuData;	/* application defined value */
@@ -140,6 +144,10 @@ typedef struct
 
   /* Space between 2 columns */
 #define MENU_COL_SPACE 4
+
+  /*  top and bottom margins for popup menus */
+#define MENU_TOP_MARGIN 3
+#define MENU_BOTTOM_MARGIN 2
 
   /* (other menu->FocusedItem values give the position of the focused item) */
 #define NO_SELECTED_ITEM  0xffff
@@ -351,6 +359,50 @@ static HBITMAP get_arrow_bitmap(void)
     static HBITMAP arrow_bitmap;
 
     if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_MNARROW));
+    return arrow_bitmap;
+}
+
+/***********************************************************************
+ *           get_down_arrow_bitmap
+ */
+static HBITMAP get_down_arrow_bitmap(void)
+{
+    static HBITMAP arrow_bitmap;
+
+    if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_DNARROW));
+    return arrow_bitmap;
+}
+
+/***********************************************************************
+ *           get_down_arrow_inactive_bitmap
+ */
+static HBITMAP get_down_arrow_inactive_bitmap(void)
+{
+    static HBITMAP arrow_bitmap;
+
+    if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_DNARROWI));
+    return arrow_bitmap;
+}
+
+/***********************************************************************
+ *           get_up_arrow_bitmap
+ */
+static HBITMAP get_up_arrow_bitmap(void)
+{
+    static HBITMAP arrow_bitmap;
+
+    if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_UPARROW));
+    return arrow_bitmap;
+}
+
+/***********************************************************************
+ *           get_up_arrow_inactive_bitmap
+ */
+static HBITMAP get_up_arrow_inactive_bitmap(void)
+{
+    static HBITMAP arrow_bitmap;
+
+    if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_UPARROWI));
     return arrow_bitmap;
 }
 
@@ -608,6 +660,28 @@ static void MENU_FreeItemData( MENUITEM* item )
 }
 
 /***********************************************************************
+ *           MENU_AdjustMenuItemRect
+ *
+ * Adjust menu item rectangle according to scrolling state.
+ */
+static void
+MENU_AdjustMenuItemRect(const POPUPMENU *menu, LPRECT rect)
+{
+    if (menu->bScrolling)
+    {
+        UINT arrow_bitmap_width, arrow_bitmap_height;
+        BITMAP bmp;
+
+        GetObjectW(get_up_arrow_bitmap(), sizeof(bmp), &bmp);
+        arrow_bitmap_width = bmp.bmWidth;
+        arrow_bitmap_height = bmp.bmHeight;
+        rect->top += arrow_bitmap_height - menu->nScrollPos;
+        rect->bottom += arrow_bitmap_height - menu->nScrollPos;
+    }
+}
+
+
+/***********************************************************************
  *           MENU_FindItemByCoords
  *
  * Find the item at the specified coordinates (screen coords). Does
@@ -620,14 +694,17 @@ static MENUITEM *MENU_FindItemByCoords( const POPUPMENU *menu,
     MENUITEM *item;
     UINT i;
     RECT wrect;
+    RECT rect;
 
     if (!GetWindowRect(menu->hWnd,&wrect)) return NULL;
     pt.x -= wrect.left;pt.y -= wrect.top;
     item = menu->items;
     for (i = 0; i < menu->nItems; i++, item++)
     {
-	if ((pt.x >= item->rect.left) && (pt.x < item->rect.right) &&
-	    (pt.y >= item->rect.top) && (pt.y < item->rect.bottom))
+        rect = item->rect;
+        MENU_AdjustMenuItemRect(menu, &rect);
+	if ((pt.x >= rect.left) && (pt.x < rect.right) &&
+	    (pt.y >= rect.top) && (pt.y < rect.bottom))
 	{
 	    if (pos) *pos = i;
 	    return item;
@@ -963,6 +1040,18 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
 
 /***********************************************************************
+ *           MENU_GetMaxPopupHeight
+ */
+static UINT
+MENU_GetMaxPopupHeight(LPPOPUPMENU lppop)
+{
+    if (lppop->cyMax)
+        return lppop->cyMax;
+    return GetSystemMetrics(SM_CYSCREEN) - GetSystemMetrics(SM_CYBORDER);
+}
+
+
+/***********************************************************************
  *           MENU_PopupMenuCalcSize
  *
  * Calculate the size of a popup menu.
@@ -972,7 +1061,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     MENUITEM *lpitem;
     HDC hdc;
     int start, i;
-    int orgX, orgY, maxX, maxTab, maxTabWidth;
+    int orgX, orgY, maxX, maxTab, maxTabWidth, maxHeight;
 
     lppop->Width = lppop->Height = 0;
     if (lppop->nItems == 0) return;
@@ -992,7 +1081,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
 	orgX = maxX;
         if( lpitem->fType & MF_MENUBREAK)
             orgX += MENU_COL_SPACE; 
-	orgY = 3;
+	orgY = MENU_TOP_MARGIN;
 
 	maxTab = maxTabWidth = 0;
 	  /* Parse items until column break or end of menu */
@@ -1028,8 +1117,21 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     lppop->Width  = maxX;
 
     /* space for 3d border */
-    lppop->Height += 2;
+    lppop->Height += MENU_BOTTOM_MARGIN;
     lppop->Width += 2;
+
+    /* Adjust popup height if it exceeds maximum */
+    maxHeight = MENU_GetMaxPopupHeight(lppop);
+    lppop->nTotalHeight = lppop->Height - MENU_TOP_MARGIN;
+    if (lppop->Height >= maxHeight)
+    {
+        lppop->Height = maxHeight;
+        lppop->bScrolling = TRUE;
+    }
+    else
+    {
+        lppop->bScrolling = FALSE;
+    }
 
     ReleaseDC( 0, hdc );
 }
@@ -1109,6 +1211,52 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
     }
 }
 
+
+/***********************************************************************
+ *           MENU_DrawScrollArrows
+ *
+ * Draw scroll arrows.
+ */
+static void
+MENU_DrawScrollArrows(LPPOPUPMENU lppop, HDC hdc)
+{
+    HDC hdcMem = CreateCompatibleDC(hdc);
+    HBITMAP hOrigBitmap;
+    UINT arrow_bitmap_width, arrow_bitmap_height;
+    BITMAP bmp;
+    RECT rect;
+
+    GetObjectW(get_down_arrow_bitmap(), sizeof(bmp), &bmp);
+    arrow_bitmap_width = bmp.bmWidth;
+    arrow_bitmap_height = bmp.bmHeight;
+
+    
+    if (lppop->nScrollPos)
+        hOrigBitmap = SelectObject(hdcMem, get_up_arrow_bitmap());
+    else
+        hOrigBitmap = SelectObject(hdcMem, get_up_arrow_inactive_bitmap());
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = lppop->Width;
+    rect.bottom = arrow_bitmap_height;
+    FillRect(hdc, &rect, GetSysColorBrush(COLOR_MENU));
+    BitBlt(hdc, (lppop->Width - arrow_bitmap_width) / 2, 0,
+           arrow_bitmap_width, arrow_bitmap_height, hdcMem, 0, 0, SRCCOPY);
+    rect.top = lppop->Height - arrow_bitmap_height;
+    rect.bottom = lppop->Height;
+    FillRect(hdc, &rect, GetSysColorBrush(COLOR_MENU));
+    if (lppop->nScrollPos < lppop->nTotalHeight - (MENU_GetMaxPopupHeight(lppop) - 2 * arrow_bitmap_height))
+        SelectObject(hdcMem, get_down_arrow_bitmap());
+    else
+        SelectObject(hdcMem, get_down_arrow_inactive_bitmap());
+    BitBlt(hdc, (lppop->Width - arrow_bitmap_width) / 2,
+           lppop->Height - arrow_bitmap_height,
+           arrow_bitmap_width, arrow_bitmap_height, hdcMem, 0, 0, SRCCOPY);
+    SelectObject(hdcMem, hOrigBitmap);
+    DeleteDC(hdcMem);
+}
+
+
 /***********************************************************************
  *           MENU_DrawMenuItem
  *
@@ -1182,6 +1330,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         dis.hwndItem   = (HWND)hmenu;
         dis.hDC        = hdc;
         dis.rcItem     = lpitem->rect;
+        MENU_AdjustMenuItemRect(MENU_GetMenu(hmenu), &dis.rcItem);
         TRACE("Ownerdraw: owner=%p itemID=%d, itemState=%d, itemAction=%d, "
 	      "hwndItem=%p, hdc=%p, rcItem=%s\n", hwndOwner,
 	      dis.itemID, dis.itemState, dis.itemAction, dis.hwndItem,
@@ -1195,6 +1344,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     if (menuBar && (lpitem->fType & MF_SEPARATOR)) return;
 
     rect = lpitem->rect;
+    MENU_AdjustMenuItemRect(MENU_GetMenu(hmenu), &rect);
 
     if (!(lpitem->fType & MF_OWNERDRAW))
     {
@@ -1487,9 +1637,9 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 	    else
 		DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT);
 
-	    /* draw menu items */
-
 	    menu = MENU_GetMenu( hmenu );
+            
+	    /* draw menu items */
 	    if (menu && menu->nItems)
 	    {
 		MENUITEM *item;
@@ -1500,7 +1650,11 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 				       menu->Height, FALSE, ODA_DRAWENTIRE );
 
 	    }
-	} else
+
+            /* draw scroll arrows */
+            if (menu->bScrolling)
+                MENU_DrawScrollArrows(menu, hdc);
+ 	} else
 	{
 	    SelectObject( hdc, hPrevBrush );
 	}
@@ -1567,6 +1721,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
     /* store the owner for DrawItem */
     menu->hwndOwner = hwndOwner;
 
+    menu->nScrollPos = 0;
     MENU_PopupMenuCalcSize( menu, hwndOwner );
 
     /* adjust popup menu pos so that it fits within the desktop */
@@ -1610,6 +1765,47 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
 
 
 /***********************************************************************
+ *           MENU_EnsureMenuItemVisible
+ */
+static void
+MENU_EnsureMenuItemVisible(LPPOPUPMENU lppop, UINT wIndex, HDC hdc)
+{
+    if (lppop->bScrolling)
+    {
+        MENUITEM *item = &lppop->items[wIndex];
+        UINT nMaxHeight = MENU_GetMaxPopupHeight(lppop);
+        UINT nOldPos = lppop->nScrollPos;
+        RECT rc;
+        UINT arrow_bitmap_height;
+        BITMAP bmp;
+        
+        GetClientRect(lppop->hWnd, &rc);
+
+        GetObjectW(get_down_arrow_bitmap(), sizeof(bmp), &bmp);
+        arrow_bitmap_height = bmp.bmHeight;
+
+        rc.top += arrow_bitmap_height;
+        rc.bottom -= arrow_bitmap_height + MENU_BOTTOM_MARGIN;
+       
+        nMaxHeight -= GetSystemMetrics(SM_CYBORDER) + 2 * arrow_bitmap_height;
+        if (item->rect.bottom > lppop->nScrollPos + nMaxHeight)
+        {
+            
+            lppop->nScrollPos = item->rect.bottom - nMaxHeight;
+            ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, &rc, &rc);
+            MENU_DrawScrollArrows(lppop, hdc);
+        }
+        else if (item->rect.top - MENU_TOP_MARGIN < lppop->nScrollPos)
+        {
+            lppop->nScrollPos = item->rect.top - MENU_TOP_MARGIN;
+            ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, &rc, &rc);
+            MENU_DrawScrollArrows(lppop, hdc);
+        }
+    }
+}
+
+
+/***********************************************************************
  *           MENU_SelectItem
  */
 static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
@@ -1645,6 +1841,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
     {
         if(!(lppop->items[wIndex].fType & MF_SEPARATOR)) {
             lppop->items[wIndex].fState |= MF_HILITE;
+            MENU_EnsureMenuItemVisible(lppop, wIndex, hdc);
             MENU_DrawMenuItem( lppop->hWnd, hmenu, hwndOwner, hdc,
                     &lppop->items[wIndex], lppop->Height,
                     !(lppop->wFlags & MF_POPUP), ODA_SELECT );
@@ -2074,10 +2271,13 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
         GetWindowRect( menu->hWnd, &rect );
 	if (menu->wFlags & MF_POPUP)
 	{
-	    rect.left += item->rect.right - GetSystemMetrics(SM_CXBORDER);
-	    rect.top += item->rect.top;
-	    rect.right = item->rect.left - item->rect.right + GetSystemMetrics(SM_CXBORDER);
-	    rect.bottom = item->rect.top - item->rect.bottom;
+            RECT rc = item->rect;
+
+            MENU_AdjustMenuItemRect(menu, &rc);
+	    rect.left += rc.right - GetSystemMetrics(SM_CXBORDER);
+	    rect.top += rc.top;
+	    rect.right = rc.left - rc.right + GetSystemMetrics(SM_CXBORDER);
+	    rect.bottom = rc.top - rc.bottom;
 	}
 	else
 	{
