@@ -105,6 +105,116 @@ static LPSTR find_default_printer(VOID)
     return default_printer;
 }
 
+/* ########################### */
+
+static void test_EnumMonitors(void)
+{
+    DWORD   res;
+    LPBYTE  buffer;
+    DWORD   cbBuf;
+    DWORD   pcbNeeded;
+    DWORD   pcReturned;
+    DWORD   level;
+
+    /* valid levels are 1 and 2 */
+    for(level = 0; level < 4; level++) {
+        cbBuf = MAGIC_DEAD;
+        pcReturned = MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = EnumMonitorsA(NULL, level, NULL, 0, &cbBuf, &pcReturned);
+
+        RETURN_ON_DEACTIVATED_SPOOLER(res)
+
+        /* not implemented yet in wine */
+        if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) continue;
+
+
+        /* use only a short test, when we test with an invalid level */
+        if(!level || (level > 2)) {
+            ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
+                (res && (pcReturned == 0)),
+                "(%ld) returned %ld with %ld and 0x%08lx (expected '0' with " \
+                "ERROR_INVALID_LEVEL or '!=0' and 0x0)\n",
+                level, res, GetLastError(), pcReturned);
+            continue;
+        }        
+
+        /* Level 2 is not supported on win9x */
+        if (!res && (GetLastError() == ERROR_INVALID_LEVEL)) {
+            trace("Level %ld not supported, skipping tests\n", level);
+            continue;
+        }
+
+        ok((!res) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+            "(%ld) returned %ld with %ld (expected '0' with " \
+            "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
+
+        if (!cbBuf) {
+            trace("no valid buffer size returned, skipping tests\n");
+            continue;
+        }
+
+        buffer = HeapAlloc(GetProcessHeap(), 0, cbBuf *2);
+        if (buffer == NULL) continue;
+
+        SetLastError(MAGIC_DEAD);
+        pcbNeeded = MAGIC_DEAD;
+        res = EnumMonitorsA(NULL, level, buffer, cbBuf, &pcbNeeded, &pcReturned);
+        ok(res, "(%ld) returned %ld with %ld (expected '!=0')\n",
+                level, res, GetLastError());
+        ok(pcbNeeded == cbBuf, "(%ld) returned %ld (expected %ld)\n",
+                level, pcbNeeded, cbBuf);
+        /* We can validate the returned Data with the Registry here */
+
+
+        SetLastError(MAGIC_DEAD);
+        pcReturned = MAGIC_DEAD;
+        pcbNeeded = MAGIC_DEAD;
+        res = EnumMonitorsA(NULL, level, buffer, cbBuf+1, &pcbNeeded, &pcReturned);
+        ok(res, "(%ld) returned %ld with %ld (expected '!=0')\n", level,
+                res, GetLastError());
+        ok(pcbNeeded == cbBuf, "(%ld) returned %ld (expected %ld)\n", level,
+                pcbNeeded, cbBuf);
+
+        SetLastError(MAGIC_DEAD);
+        pcbNeeded = MAGIC_DEAD;
+        res = EnumMonitorsA(NULL, level, buffer, cbBuf-1, &pcbNeeded, &pcReturned);
+        ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+            "(%ld) returned %ld with %ld (expected '0' with " \
+            "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
+
+        ok(pcbNeeded == cbBuf, "(%ld) returned %ld (expected %ld)\n", level,
+                pcbNeeded, cbBuf);
+
+/*
+      Do not add the next test:
+      w2k+:  RPC_X_NULL_REF_POINTER 
+      NT3.5: ERROR_INVALID_USER_BUFFER
+      win9x: crash in winspool.drv
+
+      res = EnumMonitorsA(NULL, level, NULL, cbBuf, &pcbNeeded, &pcReturned);
+*/
+
+        SetLastError(MAGIC_DEAD);
+        pcbNeeded = MAGIC_DEAD;
+        pcReturned = MAGIC_DEAD;
+        res = EnumMonitorsA(NULL, level, buffer, cbBuf, NULL, &pcReturned);
+        ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
+            "(%ld) returned %ld with %ld (expected '!=0' or '0' with "\
+            "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
+
+        pcbNeeded = MAGIC_DEAD;
+        pcReturned = MAGIC_DEAD;
+        SetLastError(MAGIC_DEAD);
+        res = EnumMonitorsA(NULL, level, buffer, cbBuf, &pcbNeeded, NULL);
+        ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
+            "(%ld) returned %ld with %ld (expected '!=0' or '0' with "\
+            "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
+
+        HeapFree(GetProcessHeap(), 0, buffer);
+    } /* for(level ... */
+}
+
 
 static void test_GetDefaultPrinter(void)
 {
@@ -481,6 +591,7 @@ START_TEST(info)
 
     find_default_printer();
 
+    test_EnumMonitors(); 
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
     test_OpenPrinter();
