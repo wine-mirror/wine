@@ -4,6 +4,7 @@ fnt2bdf
 fnt2fon
 make_ctests
 makedep
+relpath
 sfnt2fnt
 winemaker.man
 wineprefixcreate

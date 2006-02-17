@@ -72,6 +72,7 @@ BIN2RES      = $(TOOLSDIR)/tools/bin2res
 WMC          = $(TOOLSDIR)/tools/wmc/wmc
 WIDL         = $(TOOLSDIR)/tools/widl/widl
 WINEGCC      = $(TOOLSDIR)/tools/winegcc/winegcc
+RELPATH      = $(TOOLSDIR)/tools/relpath
 SFNT2FNT     = $(TOOLSDIR)/tools/sfnt2fnt
 FNT2FON      = $(TOOLSDIR)/tools/fnt2fon
 RC           = $(WRC)
