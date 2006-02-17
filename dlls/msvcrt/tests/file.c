@@ -125,7 +125,7 @@ static void test_fileops( void )
     /* sizeof(buffer) > content of file */
     ok(fread(buffer, sizeof(buffer), 1, file) == 0, "fread test failed\n");
     /* feof should be set now */
-    todo_wine ok(feof(file), "feof after fread failed\n");
+    ok(feof(file), "feof after fread failed\n");
     fclose (file);
 
     unlink ("fdopen.tst");

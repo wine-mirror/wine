@@ -2503,7 +2503,7 @@ MSVCRT_size_t MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, M
     /* expose feof condition in the flags
      * MFC tests file->_flag for feof, and doesn't not call feof())
      */
-    if (pread == 0)
+    if ( MSVCRT_fdesc[file->_file].wxflag & WX_ATEOF)
         file->_flag |= MSVCRT__IOEOF;
     else if (pread == -1)
     {
