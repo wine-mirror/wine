@@ -259,7 +259,7 @@ inline static void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
 {
     UINT i;
     int j;
-    void *addr, *prev_frame, *object = (void *)rec->ExceptionInformation[1];
+    void *addr, *object = (void *)rec->ExceptionInformation[1];
     struct catch_func_nested_frame nested_frame;
     int trylevel = frame->trylevel;
     thread_data_t *thread_data = msvcrt_get_thread_data();
@@ -318,8 +318,7 @@ inline static void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
 
             if (info && info->destructor) call_dtor( info->destructor, object );
             TRACE( "done, continuing at %p\n", addr );
-            prev_frame = NtCurrentTeb()->Tib.ExceptionList;
-            __wine_pop_frame( prev_frame );
+
             continue_after_catch( frame, addr );
         }
     }
