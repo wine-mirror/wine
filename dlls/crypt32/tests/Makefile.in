@@ -11,6 +11,7 @@ CTESTS = \
 	main.c \
 	oid.c \
 	protectdata.c \
+	store.c \
 	str.c
 
 @MAKE_TEST_RULES@

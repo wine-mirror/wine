@@ -4,5 +4,6 @@ encode.ok
 main.ok
 oid.ok
 protectdata.ok
+store.ok
 str.ok
 testlist.c
