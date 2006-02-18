@@ -156,13 +156,71 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
                              const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState, 
                              SCRIPT_ITEM *pItems, int *pcItems)
 {
+    /* This implementation currently treats the entire string represented in 
+     * pwcInChars as a single entity.  Hence pcItems will be set to 1.          */
+
     FIXME("%s,%d,%d,%p,%p,%p,%p\n", debugstr_w(pwcInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
 
     if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
         return E_INVALIDARG;
 
-    *pcItems = 0;
+    /*  Set a sensible default                              */
+    /*  Set SCRIPT_ITEM                                     */
+    pItems[0].iCharPos = 0;
+    /*  Set the SCRIPT_ANALYSIS                             */
+    pItems[0].a.eScript = SCRIPT_UNDEFINED;
+    pItems[0].a.fRTL = 0;
+    pItems[0].a.fLayoutRTL = 0;
+    pItems[0].a.fLinkBefore = 0;
+    pItems[0].a.fLinkAfter = 0;
+    pItems[0].a.fLogicalOrder = 0;
+    pItems[0].a.fNoGlyphIndex = 0;
+    /*  set the SCRIPT_STATE                                */
+    pItems[0].a.s.uBidiLevel = 0;
+    pItems[0].a.s.fOverrideDirection = 0;
+    pItems[0].a.s.fInhibitSymSwap = FALSE;
+    pItems[0].a.s.fCharShape = 0;
+    pItems[0].a.s.fDigitSubstitute = 0;
+    pItems[0].a.s.fInhibitLigate = 0;
+    pItems[0].a.s.fDisplayZWG = 0;
+    pItems[0].a.s.fArabicNumContext = 0;
+    pItems[0].a.s.fGcpClusters = 0;
+    pItems[0].a.s.fReserved = 0;
+    pItems[0].a.s.fEngineReserved = 0;
+
+    /* While not strickly necessary according to the spec, make sure the n+1
+     * item is set up to prevent random behaviour if the caller eroneously
+     * checks the n+1 structure                                              */
+    pItems[1].a.eScript = 0;
+    pItems[1].a.fRTL = 0;
+    pItems[1].a.fLayoutRTL = 0;
+    pItems[1].a.fLinkBefore = 0;
+    pItems[1].a.fLinkAfter = 0;
+    pItems[1].a.fLogicalOrder = 0;
+    pItems[1].a.fNoGlyphIndex = 0;
+    /*  set the SCRIPT_STATE                                */
+    pItems[1].a.s.uBidiLevel = 0;
+    pItems[1].a.s.fOverrideDirection = 0;
+    pItems[1].a.s.fInhibitSymSwap = FALSE;
+    pItems[1].a.s.fCharShape = 0;
+    pItems[1].a.s.fDigitSubstitute = 0;
+    pItems[1].a.s.fInhibitLigate = 0;
+    pItems[1].a.s.fDisplayZWG = 0;
+    pItems[1].a.s.fArabicNumContext = 0;
+    pItems[1].a.s.fGcpClusters = 0;
+    pItems[1].a.s.fReserved = 0;
+    pItems[1].a.s.fEngineReserved = 0;
+
+    /*  Set one SCRIPT_STATE item being returned  */
+    *pcItems = 1;
+
+    /*  Set SCRIPT_ITEM                                     */
+    pItems[1].iCharPos = cInChars - pItems[0].iCharPos ; /* the last + 1 item
+                                             contains the ptr to the lastchar */
+    TRACE("%s,%d,%d,%p,%p,%p,%p,%d\n", debugstr_w(pwcInChars), cInChars, cMaxItems, 
+          psControl, psState, pItems, pcItems, *pcItems);
+    TRACE("Start Pos in string: %d, Stop Pos %d\n", pItems[0].iCharPos, pItems[1].iCharPos);
     return 0;
 }
 
