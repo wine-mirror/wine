@@ -13115,18 +13115,23 @@ case $host_os in
     ;;
 esac
 
-case $host in
-  *i[3456789]86*-linux* | *i[3456789]86*-k*bsd*-gnu)
-    MAIN_BINARY="wine-glibc"
+case $host_cpu in
+  *i[3456789]86*)
+    case $host_os in
+      linux* | k*bsd*-gnu)
+        MAIN_BINARY="wine-glibc"
 
-    EXTRA_BINARIES="wine-kthread wine-pthread wine-preloader"
-
+        EXTRA_BINARIES="wine-kthread wine-pthread wine-preloader"
+ ;;
+      darwin*)
+        MAIN_BINARY="wine-pthread"
+ ;;
+      *)
+        MAIN_BINARY="wine-kthread"
+ ;;
+    esac
     ;;
-  darwin*)          MAIN_BINARY="wine-pthread"
- ;;
-  *i[3456789]86*) MAIN_BINARY="wine-kthread"
- ;;
-  *)                MAIN_BINARY="wine-pthread"
+  *) MAIN_BINARY="wine-pthread"
  ;;
 esac
 
