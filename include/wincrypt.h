@@ -681,6 +681,27 @@ typedef struct _CERT_CHAIN_POLICY_STATUS {
     void *pvExtraPolicyStatus;
 } CERT_CHAIN_POLICY_STATUS, *PCERT_CHAIN_POLICY_STATUS;
 
+typedef struct _CERT_USAGE_MATCH {
+    DWORD             dwType;
+    CERT_ENHKEY_USAGE Usage;
+} CERT_USAGE_MATCH, *PCERT_USAGE_MATCH;
+
+typedef struct _CTL_USAGE_MATCH {
+    DWORD     dwType;
+    CTL_USAGE Usage;
+} CTL_USAGE_MATCH, *PCTL_USAGE_MATCH;
+
+typedef struct _CERT_CHAIN_PARA {
+    DWORD            cbSize;
+    CERT_USAGE_MATCH RequestedUsage;
+#ifdef CERT_CHAIN_PARA_HAS_EXTRA_FIELDS
+    CERT_USAGE_MATCH RequestedIssuancePolicy;
+    DWORD            dwUrlRetrievalTimeout;
+    BOOL             fCheckRevocationFreshnessTime;
+    DWORD            dwRevocationFreshnessTime;
+#endif
+} CERT_CHAIN_PARA, *PCERT_CHAIN_PARA;
+
 typedef struct _CERT_SYSTEM_STORE_INFO {
     DWORD cbSize;
 } CERT_SYSTEM_STORE_INFO, *PCERT_SYSTEM_STORE_INFO;
@@ -1881,6 +1902,19 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CERT_FIND_PUBKEY_MD5_HASH \
  (CERT_COMPARE_PUBKEY_MD5_HASH << CERT_COMPARE_SHIFT)
 
+#define CERT_FIND_OPTIONAL_ENHKEY_USAGE_FLAG  0x1
+#define CERT_FIND_OPTIONAL_CTL_USAGE_FLAG     0x1
+#define CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG  0x2
+#define CERT_FIND_EXT_ONLY_CTL_USAGE_FLAG     0x2
+#define CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG 0x4
+#define CERT_FIND_PROP_ONLY_CTL_USAGE_FLAG    0x4
+#define CERT_FIND_NO_ENHKEY_USAGE_FLAG        0x8
+#define CERT_FIND_NO_CTL_USAGE_FLAG           0x8
+#define CERT_FIND_OR_ENHKEY_USAGE_FLAG        0x10
+#define CERT_FIND_OR_CTL_USAGE_FLAG           0x10
+#define CERT_FIND_VALID_ENHKEY_USAGE_FLAG     0x20
+#define CERT_FIND_VALID_CTL_USAGE_FLAG        0x20
+
 /* PFN_CERT_STORE_PROV_WRITE_CERT dwFlags values */
 #define CERT_STORE_PROV_WRITE_ADD_FLAG 0x1
 
@@ -2586,6 +2620,17 @@ BOOL WINAPI CertSerializeCRLStoreElement(PCCRL_CONTEXT pCrlContext,
 
 BOOL WINAPI CertSerializeCTLStoreElement(PCCTL_CONTEXT pCtlContext,
  DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement);
+
+BOOL WINAPI CertGetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext, DWORD dwFlags,
+ PCERT_ENHKEY_USAGE pUsage, DWORD *pcbUsage);
+BOOL WINAPI CertSetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext,
+ PCERT_ENHKEY_USAGE pUsage);
+BOOL WINAPI CertAddEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
+ LPCSTR pszUsageIdentifer);
+BOOL WINAPI CertRemoveEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
+ LPCSTR pszUsageIdentifer);
+BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
+ int *cNumOIDs, LPSTR *rghOIDs, DWORD *pcbOIDs);
 
 BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, BYTE *pbEncoded, DWORD *pcbEncoded);

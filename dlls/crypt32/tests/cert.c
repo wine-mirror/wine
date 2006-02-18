@@ -299,9 +299,315 @@ static void testCertSigs(void)
      CRYPT_DELETEKEYSET);
 }
 
+static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
+ 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
+ 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
+ 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30,
+ 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31, 0x13, 0x30,
+ 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20,
+ 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01,
+ 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
+ 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
+
+static const LPCSTR keyUsages[] = { szOID_PKIX_KP_CODE_SIGNING,
+ szOID_PKIX_KP_CLIENT_AUTH, szOID_RSA_RSA };
+
+static const BYTE certWithUsage[] = { 0x30, 0x81, 0x93, 0x02, 0x01, 0x01, 0x30,
+ 0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04,
+ 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00,
+ 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31,
+ 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61,
+ 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00,
+ 0x03, 0x01, 0x00, 0xa3, 0x2f, 0x30, 0x2d, 0x30, 0x2b, 0x06, 0x03, 0x55, 0x1d,
+ 0x25, 0x01, 0x01, 0xff, 0x04, 0x21, 0x30, 0x1f, 0x06, 0x08, 0x2b, 0x06, 0x01,
+ 0x05, 0x05, 0x07, 0x03, 0x03, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07,
+ 0x03, 0x02, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
+
+static void testKeyUsage(void)
+{
+    BOOL ret;
+    PCCERT_CONTEXT context;
+    DWORD size;
+
+    /* Test base cases */
+    ret = CertGetEnhancedKeyUsage(NULL, 0, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    size = 1;
+    ret = CertGetEnhancedKeyUsage(NULL, 0, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    size = 0;
+    ret = CertGetEnhancedKeyUsage(NULL, 0, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    /* These crash
+    ret = CertSetEnhancedKeyUsage(NULL, NULL);
+    usage.cUsageIdentifier = 0;
+    ret = CertSetEnhancedKeyUsage(NULL, &usage);
+     */
+    /* Test with a cert with no enhanced key usage extension */
+    context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert));
+    ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
+     GetLastError());
+    if (context)
+    {
+        static const char oid[] = "1.2.3.4";
+        BYTE buf[sizeof(CERT_ENHKEY_USAGE) + 2 * (sizeof(LPSTR) + sizeof(oid))];
+        PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
+
+        ret = CertGetEnhancedKeyUsage(context, 0, NULL, NULL);
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+         "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+        size = 1;
+        ret = CertGetEnhancedKeyUsage(context, 0, NULL, &size);
+        if (ret)
+        {
+            /* Windows 2000, ME, or later: even though it succeeded, we expect
+             * CRYPT_E_NOT_FOUND, which indicates there is no enhanced key
+             * usage set for this cert (which implies it's valid for all uses.)
+             */
+            ok(GetLastError() == CRYPT_E_NOT_FOUND,
+             "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+            ok(size == sizeof(CERT_ENHKEY_USAGE), "Expected size %d, got %ld\n",
+             sizeof(CERT_ENHKEY_USAGE), size);
+            ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
+            ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+            ok(pUsage->cUsageIdentifier == 0, "Expected 0 usages, got %ld\n",
+             pUsage->cUsageIdentifier);
+        }
+        else
+        {
+            /* Windows NT, 95, or 98: it fails, and the last error is
+             * CRYPT_E_NOT_FOUND.
+             */
+            ok(GetLastError() == CRYPT_E_NOT_FOUND,
+             "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+        }
+        /* I can add a usage identifier when no key usage has been set */
+        ret = CertAddEnhancedKeyUsageIdentifier(context, oid);
+        ok(ret, "CertAddEnhancedKeyUsageIdentifier failed: %08lx\n",
+         GetLastError());
+        size = sizeof(buf);
+        ret = CertGetEnhancedKeyUsage(context,
+         CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, pUsage, &size);
+        ok(ret && GetLastError() == 0,
+         "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        ok(pUsage->cUsageIdentifier == 1, "Expected 1 usage, got %ld\n",
+         pUsage->cUsageIdentifier);
+        if (pUsage->cUsageIdentifier)
+            ok(!strcmp(pUsage->rgpszUsageIdentifier[0], oid),
+             "Expected %s, got %s\n", oid, pUsage->rgpszUsageIdentifier[0]);
+        /* Now set an empty key usage */
+        pUsage->cUsageIdentifier = 0;
+        ret = CertSetEnhancedKeyUsage(context, pUsage);
+        ok(ret, "CertSetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        /* Shouldn't find it in the cert */
+        size = sizeof(buf);
+        ret = CertGetEnhancedKeyUsage(context,
+         CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG, pUsage, &size);
+        ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+        /* Should find it as an extended property */
+        ret = CertGetEnhancedKeyUsage(context,
+         CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, pUsage, &size);
+        ok(ret && GetLastError() == 0,
+         "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        ok(pUsage->cUsageIdentifier == 0, "Expected 0 usages, got %ld\n",
+         pUsage->cUsageIdentifier);
+        /* Should find it as either */
+        ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
+        ok(ret && GetLastError() == 0,
+         "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        ok(pUsage->cUsageIdentifier == 0, "Expected 0 usages, got %ld\n",
+         pUsage->cUsageIdentifier);
+        /* Add a usage identifier */
+        ret = CertAddEnhancedKeyUsageIdentifier(context, oid);
+        ok(ret, "CertAddEnhancedKeyUsageIdentifier failed: %08lx\n",
+         GetLastError());
+        size = sizeof(buf);
+        ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
+        ok(ret && GetLastError() == 0,
+         "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        ok(pUsage->cUsageIdentifier == 1, "Expected 1 identifier, got %ld\n",
+         pUsage->cUsageIdentifier);
+        if (pUsage->cUsageIdentifier)
+            ok(!strcmp(pUsage->rgpszUsageIdentifier[0], oid),
+             "Expected %s, got %s\n", oid, pUsage->rgpszUsageIdentifier[0]);
+        /* Yep, I can re-add the same usage identifier */
+        ret = CertAddEnhancedKeyUsageIdentifier(context, oid);
+        ok(ret, "CertAddEnhancedKeyUsageIdentifier failed: %08lx\n",
+         GetLastError());
+        size = sizeof(buf);
+        ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
+        ok(ret && GetLastError() == 0,
+         "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        ok(pUsage->cUsageIdentifier == 2, "Expected 2 identifiers, got %ld\n",
+         pUsage->cUsageIdentifier);
+        if (pUsage->cUsageIdentifier)
+            ok(!strcmp(pUsage->rgpszUsageIdentifier[0], oid),
+             "Expected %s, got %s\n", oid, pUsage->rgpszUsageIdentifier[0]);
+        if (pUsage->cUsageIdentifier >= 2)
+            ok(!strcmp(pUsage->rgpszUsageIdentifier[1], oid),
+             "Expected %s, got %s\n", oid, pUsage->rgpszUsageIdentifier[1]);
+        /* Now set a NULL extended property--this deletes the property. */
+        ret = CertSetEnhancedKeyUsage(context, NULL);
+        ok(ret, "CertSetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        SetLastError(0xbaadcafe);
+        size = sizeof(buf);
+        ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
+        ok(GetLastError() == CRYPT_E_NOT_FOUND,
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+
+        CertFreeCertificateContext(context);
+    }
+    /* Now test with a cert with an enhanced key usage extension */
+    context = CertCreateCertificateContext(X509_ASN_ENCODING, certWithUsage,
+     sizeof(certWithUsage));
+    ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
+     GetLastError());
+    if (context)
+    {
+        LPBYTE buf = NULL;
+        DWORD bufSize = 0, i;
+
+        /* The size may depend on what flags are used to query it, so I
+         * realloc the buffer for each test.
+         */
+        ret = CertGetEnhancedKeyUsage(context,
+         CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG, NULL, &bufSize);
+        ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        if (buf)
+        {
+            PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
+
+            /* Should find it in the cert */
+            size = bufSize;
+            ret = CertGetEnhancedKeyUsage(context,
+             CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG, pUsage, &size);
+            ok(ret && GetLastError() == 0,
+             "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+            ok(pUsage->cUsageIdentifier == 3, "Expected 3 usages, got %ld\n",
+             pUsage->cUsageIdentifier);
+            for (i = 0; i < pUsage->cUsageIdentifier; i++)
+                ok(!strcmp(pUsage->rgpszUsageIdentifier[i], keyUsages[i]),
+                 "Expected %s, got %s\n", keyUsages[i],
+                 pUsage->rgpszUsageIdentifier[i]);
+            HeapFree(GetProcessHeap(), 0, buf);
+        }
+        ret = CertGetEnhancedKeyUsage(context, 0, NULL, &bufSize);
+        ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        if (buf)
+        {
+            PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
+
+            /* Should find it as either */
+            size = bufSize;
+            ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
+            /* In Windows, GetLastError returns CRYPT_E_NOT_FOUND not found
+             * here, even though the return is successful and the usage id
+             * count is positive.  I don't enforce that here.
+             */
+            ok(ret,
+             "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+            ok(pUsage->cUsageIdentifier == 3, "Expected 3 usages, got %ld\n",
+             pUsage->cUsageIdentifier);
+            for (i = 0; i < pUsage->cUsageIdentifier; i++)
+                ok(!strcmp(pUsage->rgpszUsageIdentifier[i], keyUsages[i]),
+                 "Expected %s, got %s\n", keyUsages[i],
+                 pUsage->rgpszUsageIdentifier[i]);
+            HeapFree(GetProcessHeap(), 0, buf);
+        }
+        /* Shouldn't find it as an extended property */
+        ret = CertGetEnhancedKeyUsage(context,
+         CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, NULL, &size);
+        ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+        /* Adding a usage identifier overrides the cert's usage!? */
+        ret = CertAddEnhancedKeyUsageIdentifier(context, szOID_RSA_RSA);
+        ok(ret, "CertAddEnhancedKeyUsageIdentifier failed: %08lx\n",
+         GetLastError());
+        ret = CertGetEnhancedKeyUsage(context, 0, NULL, &bufSize);
+        ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        if (buf)
+        {
+            PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
+
+            /* Should find it as either */
+            size = bufSize;
+            ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
+            ok(ret,
+             "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+            ok(pUsage->cUsageIdentifier == 1, "Expected 1 usage, got %ld\n",
+             pUsage->cUsageIdentifier);
+            ok(!strcmp(pUsage->rgpszUsageIdentifier[0], szOID_RSA_RSA),
+             "Expected %s, got %s\n", szOID_RSA_RSA,
+             pUsage->rgpszUsageIdentifier[0]);
+            HeapFree(GetProcessHeap(), 0, buf);
+        }
+        /* But querying the cert directly returns its usage */
+        ret = CertGetEnhancedKeyUsage(context,
+         CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG, NULL, &bufSize);
+        ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        if (buf)
+        {
+            PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
+
+            size = bufSize;
+            ret = CertGetEnhancedKeyUsage(context,
+             CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG, pUsage, &size);
+            ok(ret,
+             "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+            ok(pUsage->cUsageIdentifier == 3, "Expected 3 usages, got %ld\n",
+             pUsage->cUsageIdentifier);
+            for (i = 0; i < pUsage->cUsageIdentifier; i++)
+                ok(!strcmp(pUsage->rgpszUsageIdentifier[i], keyUsages[i]),
+                 "Expected %s, got %s\n", keyUsages[i],
+                 pUsage->rgpszUsageIdentifier[i]);
+            HeapFree(GetProcessHeap(), 0, buf);
+        }
+        /* And removing the only usage identifier in the extended property
+         * results in the cert's key usage being found.
+         */
+        ret = CertRemoveEnhancedKeyUsageIdentifier(context, szOID_RSA_RSA);
+        ok(ret, "CertRemoveEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        ret = CertGetEnhancedKeyUsage(context, 0, NULL, &bufSize);
+        ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+        buf = HeapAlloc(GetProcessHeap(), 0, bufSize);
+        if (buf)
+        {
+            PCERT_ENHKEY_USAGE pUsage = (PCERT_ENHKEY_USAGE)buf;
+
+            /* Should find it as either */
+            size = bufSize;
+            ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
+            ok(ret,
+             "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
+            ok(pUsage->cUsageIdentifier == 3, "Expected 3 usages, got %ld\n",
+             pUsage->cUsageIdentifier);
+            for (i = 0; i < pUsage->cUsageIdentifier; i++)
+                ok(!strcmp(pUsage->rgpszUsageIdentifier[i], keyUsages[i]),
+                 "Expected %s, got %s\n", keyUsages[i],
+                 pUsage->rgpszUsageIdentifier[i]);
+            HeapFree(GetProcessHeap(), 0, buf);
+        }
+
+        CertFreeCertificateContext(context);
+    }
+}
+
 START_TEST(cert)
 {
     init_function_pointers();
     testCryptHashCert();
     testCertSigs();
+    testKeyUsage();
 }

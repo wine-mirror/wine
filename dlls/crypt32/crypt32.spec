@@ -6,7 +6,7 @@
 @ stdcall CertAddEncodedCertificateToStore(long long ptr long long ptr)
 @ stub CertAddEncodedCertificateToSystemStoreA
 @ stub CertAddEncodedCertificateToSystemStoreW
-@ stub CertAddEnhancedKeyUsageIdentifier
+@ stdcall CertAddEnhancedKeyUsageIdentifier(ptr str)
 @ stdcall CertAddSerializedElementToStore(ptr ptr long long long long ptr ptr)
 @ stdcall CertAddStoreToCollection(ptr ptr long long)
 @ stdcall CertAlgIdToOID(long)
@@ -49,7 +49,7 @@
 @ stdcall CertGetCTLContextProperty(ptr long ptr ptr)
 @ stub CertGetCertificateChain
 @ stdcall CertGetCertificateContextProperty(ptr long ptr ptr)
-@ stub CertGetEnhancedKeyUsage
+@ stdcall CertGetEnhancedKeyUsage(ptr long ptr ptr)
 @ stub CertGetIntendedKeyUsage
 @ stub CertGetIssuerCertificateFromStore
 @ stdcall CertGetNameStringA(ptr long long ptr ptr long)
@@ -65,7 +65,7 @@
 @ stdcall CertOpenSystemStoreW(long wstr)
 @ stdcall CertRDNValueToStrA(long ptr ptr long)
 @ stdcall CertRDNValueToStrW(long ptr ptr long)
-@ stub CertRemoveEnhancedKeyUsageIdentifier
+@ stdcall CertRemoveEnhancedKeyUsageIdentifier(ptr str)
 @ stdcall CertRemoveStoreFromCollection(long long)
 @ stdcall CertSaveStore(long long long long ptr long)
 @ stdcall CertSerializeCRLStoreElement(ptr long ptr ptr)
@@ -74,7 +74,7 @@
 @ stdcall CertSetCRLContextProperty(ptr long long ptr)
 @ stdcall CertSetCTLContextProperty(ptr long long ptr)
 @ stdcall CertSetCertificateContextProperty(ptr long long ptr)
-@ stub CertSetEnhancedKeyUsage
+@ stdcall CertSetEnhancedKeyUsage(ptr ptr)
 @ stub CertStrToNameA
 @ stub CertStrToNameW
 @ stub CertVerifyCRLRevocation

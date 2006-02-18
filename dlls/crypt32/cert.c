@@ -323,3 +323,262 @@ BOOL WINAPI CryptVerifyMessageSignature(/*PCRYPT_VERIFY_MESSAGE_PARA*/ void* pVe
         pbDecoded, pcbDecoded, ppSignerCert);
     return FALSE;
 }
+
+BOOL WINAPI CertGetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext, DWORD dwFlags,
+ PCERT_ENHKEY_USAGE pUsage, DWORD *pcbUsage)
+{
+    PCERT_ENHKEY_USAGE usage = NULL;
+    DWORD bytesNeeded;
+    BOOL ret = TRUE;
+
+    TRACE("(%p, %08lx, %p, %ld)\n", pCertContext, dwFlags, pUsage, *pcbUsage);
+
+    if (!pCertContext || !pcbUsage)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!(dwFlags & CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG))
+    {
+        DWORD propSize = 0;
+
+        if (CertGetCertificateContextProperty(pCertContext,
+         CERT_ENHKEY_USAGE_PROP_ID, NULL, &propSize))
+        {
+            LPBYTE buf = CryptMemAlloc(propSize);
+
+            if (buf)
+            {
+                if (CertGetCertificateContextProperty(pCertContext,
+                 CERT_ENHKEY_USAGE_PROP_ID, buf, &propSize))
+                {
+                    ret = CryptDecodeObjectEx(pCertContext->dwCertEncodingType,
+                     X509_ENHANCED_KEY_USAGE, buf, propSize,
+                     CRYPT_ENCODE_ALLOC_FLAG, NULL, &usage, &bytesNeeded);
+                }
+                CryptMemFree(buf);
+            }
+        }
+    }
+    if (!usage && !(dwFlags & CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG))
+    {
+        PCERT_EXTENSION ext = CertFindExtension(szOID_ENHANCED_KEY_USAGE,
+         pCertContext->pCertInfo->cExtension,
+         pCertContext->pCertInfo->rgExtension);
+
+        if (ext)
+        {
+            ret = CryptDecodeObjectEx(pCertContext->dwCertEncodingType,
+             X509_ENHANCED_KEY_USAGE, ext->Value.pbData, ext->Value.cbData,
+             CRYPT_ENCODE_ALLOC_FLAG, NULL, &usage, &bytesNeeded);
+        }
+    }
+    if (!usage)
+    {
+        /* If a particular location is specified, this should fail.  Otherwise
+         * it should succeed with an empty usage.  (This is true on Win2k and
+         * later, which we emulate.)
+         */
+        if (dwFlags)
+        {
+            SetLastError(CRYPT_E_NOT_FOUND);
+            ret = FALSE;
+        }
+        else
+            bytesNeeded = sizeof(CERT_ENHKEY_USAGE);
+    }
+
+    if (ret)
+    {
+        if (!pUsage)
+            *pcbUsage = bytesNeeded;
+        else if (*pcbUsage < bytesNeeded)
+        {
+            SetLastError(ERROR_MORE_DATA);
+            *pcbUsage = bytesNeeded;
+            ret = FALSE;
+        }
+        else
+        {
+            *pcbUsage = bytesNeeded;
+            if (usage)
+            {
+                DWORD i;
+                LPSTR nextOID = (LPSTR)((LPBYTE)pUsage +
+                 sizeof(CERT_ENHKEY_USAGE) +
+                 usage->cUsageIdentifier * sizeof(LPSTR));
+
+                pUsage->cUsageIdentifier = usage->cUsageIdentifier;
+                pUsage->rgpszUsageIdentifier = (LPSTR *)((LPBYTE)pUsage +
+                 sizeof(CERT_ENHKEY_USAGE));
+                for (i = 0; i < usage->cUsageIdentifier; i++)
+                {
+                    pUsage->rgpszUsageIdentifier[i] = nextOID;
+                    strcpy(nextOID, usage->rgpszUsageIdentifier[i]);
+                    nextOID += strlen(nextOID) + 1;
+                }
+            }
+            else
+                pUsage->cUsageIdentifier = 0;
+        }
+    }
+    if (usage)
+        LocalFree(usage);
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+BOOL WINAPI CertSetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext,
+ PCERT_ENHKEY_USAGE pUsage)
+{
+    BOOL ret;
+
+    TRACE("(%p, %p)\n", pCertContext, pUsage);
+
+    if (pUsage)
+    {
+        CRYPT_DATA_BLOB blob = { 0, NULL };
+
+        ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_ENHANCED_KEY_USAGE,
+         pUsage, CRYPT_ENCODE_ALLOC_FLAG, NULL, &blob.pbData, &blob.cbData);
+        if (ret)
+        {
+            ret = CertSetCertificateContextProperty(pCertContext,
+             CERT_ENHKEY_USAGE_PROP_ID, 0, &blob);
+            LocalFree(blob.pbData);
+        }
+    }
+    else
+        ret = CertSetCertificateContextProperty(pCertContext,
+         CERT_ENHKEY_USAGE_PROP_ID, 0, NULL);
+    return ret;
+}
+
+BOOL WINAPI CertAddEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
+ LPCSTR pszUsageIdentifier)
+{
+    BOOL ret;
+    DWORD size;
+
+    TRACE("(%p, %s)\n", pCertContext, debugstr_a(pszUsageIdentifier));
+
+    if (CertGetEnhancedKeyUsage(pCertContext,
+     CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, NULL, &size))
+    {
+        PCERT_ENHKEY_USAGE usage = CryptMemAlloc(size);
+
+        if (usage)
+        {
+            ret = CertGetEnhancedKeyUsage(pCertContext,
+             CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, usage, &size);
+            if (ret)
+            {
+                PCERT_ENHKEY_USAGE newUsage = CryptMemAlloc(size +
+                 sizeof(LPSTR) + strlen(pszUsageIdentifier) + 1);
+
+                if (newUsage)
+                {
+                    LPSTR nextOID;
+                    DWORD i;
+
+                    newUsage->rgpszUsageIdentifier =
+                     (LPSTR *)((LPBYTE)newUsage + sizeof(CERT_ENHKEY_USAGE));
+                    nextOID = (LPSTR)((LPBYTE)newUsage->rgpszUsageIdentifier +
+                     (usage->cUsageIdentifier + 1) * sizeof(LPSTR));
+                    for (i = 0; i < usage->cUsageIdentifier; i++)
+                    {
+                        newUsage->rgpszUsageIdentifier[i] = nextOID;
+                        strcpy(nextOID, usage->rgpszUsageIdentifier[i]);
+                        nextOID += strlen(nextOID) + 1;
+                    }
+                    newUsage->rgpszUsageIdentifier[i] = nextOID;
+                    strcpy(nextOID, pszUsageIdentifier);
+                    newUsage->cUsageIdentifier = i + 1;
+                    ret = CertSetEnhancedKeyUsage(pCertContext, newUsage);
+                    CryptMemFree(newUsage);
+                }
+            }
+            CryptMemFree(usage);
+        }
+        else
+            ret = FALSE;
+    }
+    else
+    {
+        PCERT_ENHKEY_USAGE usage = CryptMemAlloc(sizeof(CERT_ENHKEY_USAGE) +
+         sizeof(LPSTR) + strlen(pszUsageIdentifier) + 1);
+
+        if (usage)
+        {
+            usage->rgpszUsageIdentifier =
+             (LPSTR *)((LPBYTE)usage + sizeof(CERT_ENHKEY_USAGE));
+            usage->rgpszUsageIdentifier[0] = (LPSTR)((LPBYTE)usage +
+             sizeof(CERT_ENHKEY_USAGE) + sizeof(LPSTR));
+            strcpy(usage->rgpszUsageIdentifier[0], pszUsageIdentifier);
+            usage->cUsageIdentifier = 1;
+            ret = CertSetEnhancedKeyUsage(pCertContext, usage);
+            CryptMemFree(usage);
+        }
+        else
+            ret = FALSE;
+    }
+    return ret;
+}
+
+BOOL WINAPI CertRemoveEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
+ LPCSTR pszUsageIdentifier)
+{
+    BOOL ret;
+    DWORD size;
+    CERT_ENHKEY_USAGE usage;
+
+    TRACE("(%p, %s)\n", pCertContext, debugstr_a(pszUsageIdentifier));
+
+    size = sizeof(usage);
+    ret = CertGetEnhancedKeyUsage(pCertContext,
+     CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, &usage, &size);
+    if (!ret && GetLastError() == ERROR_MORE_DATA)
+    {
+        PCERT_ENHKEY_USAGE pUsage = CryptMemAlloc(size);
+
+        if (pUsage)
+        {
+            ret = CertGetEnhancedKeyUsage(pCertContext,
+             CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, pUsage, &size);
+            if (ret)
+            {
+                if (pUsage->cUsageIdentifier)
+                {
+                    DWORD i;
+                    BOOL found = FALSE;
+
+                    for (i = 0; i < pUsage->cUsageIdentifier; i++)
+                    {
+                        if (!strcmp(pUsage->rgpszUsageIdentifier[i],
+                         pszUsageIdentifier))
+                            found = TRUE;
+                        if (found && i < pUsage->cUsageIdentifier - 1)
+                            pUsage->rgpszUsageIdentifier[i] =
+                             pUsage->rgpszUsageIdentifier[i + 1];
+                    }
+                    pUsage->cUsageIdentifier--;
+                    /* Remove the usage if it's empty */
+                    if (pUsage->cUsageIdentifier)
+                        ret = CertSetEnhancedKeyUsage(pCertContext, pUsage);
+                    else
+                        ret = CertSetEnhancedKeyUsage(pCertContext, NULL);
+                }
+            }
+            CryptMemFree(pUsage);
+        }
+        else
+            ret = FALSE;
+    }
+    else
+    {
+        /* it fit in an empty usage, therefore there's nothing to remove */
+        ret = TRUE;
+    }
+    return ret;
+}
