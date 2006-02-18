@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winebrowser.exe
 APPMODE   = -mconsole
-IMPORTS   = advapi32 kernel32
+IMPORTS   = shlwapi advapi32 kernel32
 
 C_SRCS = \
 	main.c

@@ -27,10 +27,10 @@
  *  The application to launch is chosen from a default set or, if set,
  *  taken from a registry key.
  *  
- *  The argument may be a regular Windows file name, an http(s) URL or a
- *  mailto URL. In the first two cases the argument will be fed to a web
- *  browser. In the third case the argument is fed to a mail client.
- *  A mailto URL is composed as follows:
+ *  The argument may be a regular Windows file name, a file URL, an
+ *  http(s) URL or a mailto URL. In the first three cases the argument
+ *  will be fed to a web browser. In the last case the argument is fed
+ *  to a mail client. A mailto URL is composed as follows:
  *
  *   mailto:[E-MAIL]?subject=[TOPIC]&cc=[E-MAIL]&bcc=[E-MAIL]&body=[TEXT]
  */
@@ -41,6 +41,7 @@
 #include "wine/port.h"
 
 #include <windows.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -140,12 +141,48 @@ static int open_mailto_url( const char *url )
  */
 int main(int argc, char *argv[])
 {
+    char *url = argv[1];
     wine_get_unix_file_name_t wine_get_unix_file_name_ptr;
 
     if (argc == 1)
     {
         fprintf( stderr, "Usage: winebrowser URL\n" );
         return 1;
+    }
+
+    /* handle an RFC1738 file URL */
+    if (!strncasecmp( url, "file:", 5 ))
+    {
+        char *p;
+        DWORD len = lstrlenA( url ) + 1;
+
+        if (UrlUnescapeA( url, NULL, &len, URL_UNESCAPE_INPLACE ) != S_OK)
+        {
+            fprintf( stderr, "winebrowser: unescaping URL failed: %s\n", url );
+            return 1;
+        }
+
+        /* look for a Windows path after 'file:' */
+        p = url + 5;
+        while (*p)
+        {
+            if (isalpha( p[0] ) && (p[1] == ':' || p[1] == '|')) break;
+            p++;
+        }
+        if (!*p)
+        {
+            fprintf( stderr, "winebrowser: no valid Windows path in: %s\n", url );
+            return 1;
+        }
+
+        if (p[1] == '|') p[1] = ':';
+        url = p;
+ 
+        while (*p)
+        {
+            if (*p == '/') *p = '\\';
+            p++;
+        }
     }
 
     /* check if the argument is a local file */
@@ -162,7 +199,7 @@ int main(int argc, char *argv[])
         char *unixpath;
         WCHAR unixpathW[MAX_PATH];
 
-        MultiByteToWideChar( CP_ACP, 0, argv[1], -1, unixpathW, MAX_PATH );
+        MultiByteToWideChar( CP_ACP, 0, url, -1, unixpathW, MAX_PATH );
         if ((unixpath = wine_get_unix_file_name_ptr( unixpathW )))
         {
             struct stat dummy;
@@ -172,12 +209,12 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (!strncasecmp( argv[1], "http:", 5 ) || !strncasecmp( argv[1], "https:", 6 ))
-        return open_http_url( argv[1] );
+    if (!strncasecmp( url, "http:", 5 ) || !strncasecmp( url, "https:", 6 ))
+        return open_http_url( url );
 
-    if (!strncasecmp( argv[1], "mailto:", 7 ))
-        return open_mailto_url( argv[1] );
+    if (!strncasecmp( url, "mailto:", 7 ))
+        return open_mailto_url( url );
 
-    fprintf( stderr, "winebrowser: cannot handle this type of URL\n" );
+    fprintf( stderr, "winebrowser: cannot handle this type of URL: %s\n", url );
     return 1;
 }
