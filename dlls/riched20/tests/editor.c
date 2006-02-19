@@ -255,6 +255,239 @@ static void test_EM_SCROLLCARET(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_SETTEXTMODE(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  CHARFORMAT2 cf2, cf2test;
+  CHARRANGE cr;
+  int rc = 0;
+
+  /*Test that EM_SETTEXTMODE fails if text exists within the control*/
+  /*Insert text into the control*/
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "wine");
+
+  /*Attempt to change the control to plain text mode*/
+  rc = SendMessage(hwndRichEdit, EM_SETTEXTMODE, (WPARAM) TM_PLAINTEXT, 0);
+  ok(rc != 0, "EM_SETTEXTMODE: changed text mode in control containing text - returned: %d\n", rc);
+
+  /*Test that EM_SETTEXTMODE does not allow rich edit text to be pasted.
+  If rich text is pasted, it should have the same formatting as the rest
+  of the text in the control*/
+
+  /*Italicize the text
+  *NOTE: If the default text was already italicized, the test will simply
+  reverse; in other words, it will copy a regular "wine" into a plain
+  text window that uses an italicized format*/
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
+             (LPARAM) &cf2);
+
+  cf2.dwMask = CFM_ITALIC | cf2.dwMask;
+  cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
+
+  /*EM_SETCHARFORMAT is not yet fully implemented for all WPARAMs in wine;
+  however, SCF_ALL has been implemented*/
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "wine");
+
+  /*Select the string "wine"*/
+  cr.cpMin = 0;
+  cr.cpMax = 4;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+
+  /*Copy the italicized "wine" to the clipboard*/
+  SendMessage(hwndRichEdit, WM_COPY, 0, 0);
+
+  /*Reset the formatting to default*/
+  cf2.dwEffects = CFE_ITALIC^cf2.dwEffects;
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+
+  /*Clear the text in the control*/
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "");
+
+  /*Switch to Plain Text Mode*/
+  rc = SendMessage(hwndRichEdit, EM_SETTEXTMODE, (WPARAM) TM_PLAINTEXT, 0);
+  ok(rc == 0, "EM_SETTEXTMODE: unable to switch to plain text mode with empty control:  returned: %d\n", rc);
+
+  /*Input "wine" again in normal format*/
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "wine");
+
+  /*Paste the italicized "wine" into the control*/
+  SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
+
+  /*Select a character from the first "wine" string*/
+  cr.cpMin = 2;
+  cr.cpMax = 3;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+
+  /*Retrieve its formatting*/
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION,
+              (LPARAM) &cf2);
+
+  /*Select a character from the second "wine" string*/
+  cr.cpMin = 5;
+  cr.cpMax = 6;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+
+  /*Retrieve its formatting*/
+  cf2test.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION,
+               (LPARAM) &cf2test);
+
+  /*Compare the two formattings*/
+    ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
+      "two formats found in plain text mode - cf2.dwEffects: %f cf2test.dwEffects: %f\n",(double) cf2.dwEffects, (double) cf2test.dwEffects);
+  /*Test TM_RICHTEXT by: switching back to Rich Text mode
+                         printing "wine" in the current format(normal)
+                         pasting "wine" from the clipboard(italicized)
+                         comparing the two formats(should differ)*/
+
+  /*Attempt to switch with text in control*/
+  rc = SendMessage(hwndRichEdit, EM_SETTEXTMODE, (WPARAM) TM_RICHTEXT, 0);
+  ok(rc != 0, "EM_SETTEXTMODE: changed from plain text to rich text with text in control - returned: %d\n", rc);
+
+  /*Clear control*/
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "");
+
+  /*Switch into Rich Text mode*/
+  rc = SendMessage(hwndRichEdit, EM_SETTEXTMODE, (WPARAM) TM_RICHTEXT, 0);
+  ok(rc == 0, "EM_SETTEXTMODE: unable to change to rich text with empty control - returned: %d\n", rc);
+
+  /*Print "wine" in normal formatting into the control*/
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "wine");
+
+  /*Paste italicized "wine" into the control*/
+  SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
+
+  /*Select text from the first "wine" string*/
+  cr.cpMin = 1;
+  cr.cpMax = 3;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+
+  /*Retrieve its formatting*/
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION,
+                (LPARAM) &cf2);
+
+  /*Select text from the second "wine" string*/
+  cr.cpMin = 6;
+  cr.cpMax = 7;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+
+  /*Retrieve its formatting*/
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION,
+                (LPARAM) &cf2test);
+
+  /*Test that the two formattings are not the same*/
+  ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects != cf2test.dwEffects),
+      "expected different formats - cf2.dwMask: %f, cf2test.dwMask: %f, cf2.dwEffects: %f, cf2test.dwEffects: %f\n",
+      (double) cf2.dwMask, (double) cf2test.dwMask, (double) cf2.dwEffects, (double) cf2test.dwEffects);
+
+  DestroyWindow(hwndRichEdit);
+}
+
+static void test_TM_PLAINTEXT()
+{
+  /*Tests plain text properties*/
+
+  HWND hwndRichEdit = new_richedit(NULL);
+  CHARFORMAT2 cf2, cf2test;
+  CHARRANGE cr;
+
+  /*Switch to plain text mode*/
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "");
+  SendMessage(hwndRichEdit, EM_SETTEXTMODE, TM_PLAINTEXT, 0);
+
+  /*Fill control with text*/
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "Is Wine an emulator? No it's not");
+
+  /*Select some text and bold it*/
+
+  cr.cpMin = 10;
+  cr.cpMax = 20;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
+	      (LPARAM) &cf2);
+
+  cf2.dwMask = CFM_BOLD | cf2.dwMask;
+  cf2.dwEffects = CFE_BOLD ^ cf2.dwEffects;
+
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2);
+
+  /*Get the formatting of those characters*/
+
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2);
+
+  /*Get the formatting of some other characters*/
+  cf2test.cbSize = sizeof(CHARFORMAT2);
+  cr.cpMin = 21;
+  cr.cpMax = 30;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2test);
+
+  /*Test that they are the same as plain text allows only one formatting*/
+
+  ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
+     "two selections' formats differ - cf2.dwMask: %f, cf2test.dwMask %f, cf2.dwEffects: %f, cf2test.dwEffects: %f\n",
+     (double) cf2.dwMask, (double) cf2test.dwMask, (double) cf2.dwEffects, (double) cf2test.dwEffects);
+  
+  /*Fill the control with a "wine" string, which when inserted will be bold*/
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "wine");
+
+  /*Copy the bolded "wine" string*/
+
+  cr.cpMin = 0;
+  cr.cpMax = 4;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+  SendMessage(hwndRichEdit, WM_COPY, 0, 0);
+
+  /*Swap back to rich text*/
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "");
+  SendMessage(hwndRichEdit, EM_SETTEXTMODE, (WPARAM) TM_RICHTEXT, 0);
+
+  /*Set the default formatting to bold italics*/
+
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT, (LPARAM) &cf2);
+  cf2.dwMask |= CFM_ITALIC;
+  cf2.dwEffects ^= CFE_ITALIC;
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+
+  /*Set the text in the control to "wine", which will be bold and italicized*/
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "wine");
+
+  /*Paste the plain text "wine" string, which should take the insert
+   formatting, which at the moment is bold italics*/
+
+  SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
+
+  /*Select the first "wine" string and retrieve its formatting*/
+
+  cr.cpMin = 1;
+  cr.cpMax = 3;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2);
+
+  /*Select the second "wine" string and retrieve its formatting*/
+
+  cr.cpMin = 5;
+  cr.cpMax = 7;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_SELECTION, (LPARAM) &cf2test);
+
+  /*Compare the two formattings. They should be the same.*/
+
+  ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
+     "Copied text retained formatting - cf2.dwMask: %f, cf2test.dwMask: %f, cf2.dwEffects: %f, cf2test.dwEffects: %f",
+     (double) cf2.dwMask, (double) cf2test.dwMask, (double) cf2.dwEffects, (double) cf2test.dwEffects);
+  DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -267,6 +500,8 @@ START_TEST( editor )
 
   test_EM_FINDTEXT();
   test_EM_SCROLLCARET();
+  test_EM_SETTEXTMODE();
+  test_TM_PLAINTEXT();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

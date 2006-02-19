@@ -308,6 +308,11 @@ typedef struct tagME_TextEditor
   int nInvalidOfs;
   EDITWORDBREAKPROCW pfnWordBreak;
   LPRICHEDITOLECALLBACK lpOleCallback;
+  /*TEXTMODE variable; contains only one of each of the following options:
+   *TM_RICHTEXT or TM_PLAINTEXT
+   *TM_SINGLELEVELUNDO or TM_MULTILEVELUNDO
+   *TM_SINGLECODEPAGE or TM_MULTICODEPAGE*/
+  int mode;
 } ME_TextEditor;
 
 typedef struct tagME_Context

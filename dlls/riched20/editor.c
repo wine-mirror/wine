@@ -594,7 +594,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   editor->nEventMask = 0;
   
   ME_GetSelection(editor, &from, &to);
-  if (format & SFF_SELECTION) {
+  if ((format & SFF_SELECTION) && (editor->mode & TM_RICHTEXT)) {
     style = ME_GetSelectionInsertStyle(editor);
 
     ME_InternalDeleteText(editor, from, to-from);
@@ -1015,6 +1015,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nInvalidOfs = -1;
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
+  ed->mode = TM_RICHTEXT | TM_MULTILEVELUNDO | TM_MULTICODEPAGE;
   GetClientRect(hWnd, &ed->rcFormat);
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
@@ -1338,7 +1339,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETSCROLLPOS)
   UNSUPPORTED_MSG(EM_SETTABSTOPS)
   UNSUPPORTED_MSG(EM_SETTARGETDEVICE)
-  UNSUPPORTED_MSG(EM_SETTEXTMODE)
   UNSUPPORTED_MSG(EM_SETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_SETUNDOLIMIT)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
@@ -1508,7 +1508,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     CHARFORMAT2W buf, *p;
     BOOL bRepaint = TRUE;
     p = ME_ToCF2W(&buf, (CHARFORMAT2W *)lParam);
-    if (!wParam)
+    if (!wParam || (editor->mode & TM_PLAINTEXT))
       ME_SetDefaultCharFormat(editor, p);
     else if (wParam == (SCF_WORD | SCF_SELECTION))
       FIXME("EM_SETCHARFORMAT: word selection not supported\n");
@@ -1748,16 +1748,17 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_GetTextW(editor, data, from, to-from, TRUE);
     GlobalUnlock(hData);
 
-    gds.hData = GlobalAlloc(GMEM_MOVEABLE, 0);
-    gds.nLength = 0;
-    es.dwCookie = (DWORD)&gds;
-    es.pfnCallback = ME_AppendToHGLOBAL;
-    ME_StreamOutRange(editor, SF_RTF, from, to, &es);
-    GlobalReAlloc(gds.hData, gds.nLength+1, 0);
-    
-    SetClipboardData(CF_UNICODETEXT, hData);    
-    SetClipboardData(RegisterClipboardFormatA("Rich Text Format"), gds.hData);
-    
+    if (editor->mode & TM_RICHTEXT)
+    {
+      gds.hData = GlobalAlloc(GMEM_MOVEABLE, 0);
+      gds.nLength = 0;
+      es.dwCookie = (DWORD)&gds;
+      es.pfnCallback = ME_AppendToHGLOBAL;
+      ME_StreamOutRange(editor, SF_RTF, from, to, &es);
+      GlobalReAlloc(gds.hData, gds.nLength+1, 0);
+      SetClipboardData(RegisterClipboardFormatA("Rich Text Format"), gds.hData);
+    }
+    SetClipboardData(CF_UNICODETEXT, hData);        
     CloseClipboard();
     if (msg == WM_CUT)
     {
@@ -2237,6 +2238,32 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     editor->pfnWordBreak = (EDITWORDBREAKPROCW)lParam;
     return (LRESULT)pfnOld;
   }
+  case EM_SETTEXTMODE:
+  {
+    LRESULT ret;
+    int mask = 0;
+    int changes = 0;
+    if ((ret = RichEditANSIWndProc(hWnd, WM_GETTEXTLENGTH, 0, 0)) == 0)
+    {
+      /*Check for valid wParam*/
+      if ((((wParam & TM_RICHTEXT) && ((wParam & TM_PLAINTEXT) << 1))) ||
+	  (((wParam & TM_MULTILEVELUNDO) && ((wParam & TM_SINGLELEVELUNDO) << 1))) ||
+	  (((wParam & TM_MULTICODEPAGE) && ((wParam & TM_SINGLECODEPAGE) << 1))))
+	return 1;
+      else
+      {
+	if (wParam & (TM_RICHTEXT | TM_PLAINTEXT))
+	{
+	  mask |= (TM_RICHTEXT | TM_PLAINTEXT);
+	  changes |= (wParam & (TM_RICHTEXT | TM_PLAINTEXT));
+	}
+	/*FIXME: Currently no support for undo level and code page options*/ 
+	editor->mode = (editor->mode & (~mask)) | changes;
+	return 0;
+      }
+    }
+    return ret;
+  }      
   default:
   do_default:
     return DefWindowProcW(hWnd, msg, wParam, lParam);
