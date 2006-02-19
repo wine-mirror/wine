@@ -126,9 +126,6 @@ HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uI
     (((kst)&(MK_CONTROL|MK_SHIFT)) ? DROPEFFECT_COPY :\
     DROPEFFECT_MOVE))
 
-/* Systray */
-BOOL SYSTRAY_Init(void);
-
 
 HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
 HGLOBAL RenderSHELLIDLIST (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);

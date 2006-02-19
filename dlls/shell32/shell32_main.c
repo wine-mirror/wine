@@ -1158,7 +1158,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         InitCommonControlsEx(NULL);
 
         SIC_Initialize();
-        SYSTRAY_Init();
         InitChangeNotifications();
         break;
 

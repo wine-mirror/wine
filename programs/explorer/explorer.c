@@ -1,6 +1,7 @@
 /*
  * explorer.exe
  *
+ * Copyright 2004 CodeWeavers, Mike Hearn
  * Copyright 2005,2006 CodeWeavers, Aric Stewart
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +22,17 @@
 #include <windows.h>
 #include <ctype.h>
 
+#include <wine/debug.h>
+
+#include <systray.h>
+
+WINE_DEFAULT_DEBUG_CHANNEL(explorer);
+
+unsigned int shell_refs = 0;
+
 typedef struct parametersTAG {
     BOOL    explorer_mode;
+    BOOL    systray_mode;
     WCHAR   root[MAX_PATH];
     WCHAR   selection[MAX_PATH];
 } parameters_struct;
@@ -128,6 +138,11 @@ static void ParseCommandLine(LPSTR commandline,parameters_struct *parameters)
                 CopyPathRoot(parameters->root,
                         parameters->selection);
         }
+        else if (strncmp(p,"systray",7)==0)
+        {
+            parameters->systray_mode = TRUE;
+            p+=7;
+        }
         p2 = p;
         p = strchr(p,'/');
     }
@@ -136,6 +151,44 @@ static void ParseCommandLine(LPSTR commandline,parameters_struct *parameters)
         /* left over command line is generally the path to be opened */
         CopyPathString(parameters->root,p2);
     }
+}
+
+static void do_systray_loop(void)
+{
+    initialize_systray();
+
+    while (TRUE)
+    {
+        const int timeout = 5;
+        MSG message;
+        DWORD res;
+
+        res = MsgWaitForMultipleObjectsEx(0, NULL, shell_refs ? INFINITE : timeout * 1000,
+                                          QS_ALLINPUT, MWMO_WAITALL);
+        if (res == WAIT_TIMEOUT) break;
+
+        res = PeekMessage(&message, 0, 0, 0, PM_REMOVE);
+        if (!res) continue;
+
+        if (message.message == WM_QUIT)
+        {
+            WINE_FIXME("Somebody sent the shell a WM_QUIT message, should we reboot?");
+
+            /* Sending the tray window a WM_QUIT message is actually a
+            * tip given by some programming websites as a way of
+            * forcing a reboot! let's delay implementing this hack
+            * until we find a program that really needs it. for now
+            * just bail out.
+            */
+
+            break;
+        }
+
+        TranslateMessage(&message);
+        DispatchMessage(&message);
+    }
+
+    shutdown_systray();
 }
 
 int WINAPI WinMain(HINSTANCE hinstance,
@@ -157,8 +210,13 @@ int WINAPI WinMain(HINSTANCE hinstance,
 
     ParseCommandLine(cmdline,&parameters);
     len = lstrlenW(winefile) +1;
-    
-    if (parameters.selection[0])
+
+    if (parameters.systray_mode)
+    {
+        do_systray_loop();
+        return 0;
+    }
+    else if (parameters.selection[0])
     {
         len += lstrlenW(parameters.selection) + 2;
         winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
@@ -191,7 +249,7 @@ int WINAPI WinMain(HINSTANCE hinstance,
                         parameters.root, &si, &info);
 
     HeapFree(GetProcessHeap(),0,winefile_commandline);
-    
+
     if (!rc)
         return 0;
 
