@@ -778,18 +778,28 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
   if (flags & ~(FR_DOWN | FR_MATCHCASE))
     FIXME("Flags 0x%08lx not implemented\n", flags & ~(FR_DOWN | FR_MATCHCASE));
 
+  nMin = chrg->cpMin;
   if (chrg->cpMax == -1)
-  {
-    nMin = chrg->cpMin;
     nMax = ME_GetTextLength(editor);
-  }
   else
-  {
-    nMin = min(chrg->cpMin, chrg->cpMax);
-    nMax = max(chrg->cpMin, chrg->cpMax);
-  }
+    nMax = chrg->cpMax;
   
-  if (!nLen || nMin < 0 || nMax < 0)
+  /* when searching up, if cpMin < cpMax, then instead of searching
+   * on [cpMin,cpMax], we search on [0,cpMin], otherwise, search on
+   * [cpMax, cpMin]
+   */
+  if (!(flags & FR_DOWN))
+  {
+    int nSwap = nMax;
+
+    nMax = nMin;
+    if (nMin < nSwap)
+      nMin = 0;
+    else
+      nMin = nSwap;
+  }
+
+  if (!nLen || nMin < 0 || nMax < 0 || nMax < nMin)
   {
     if (chrgText)
       chrgText->cpMin = chrgText->cpMax = -1;

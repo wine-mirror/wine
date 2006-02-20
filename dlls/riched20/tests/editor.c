@@ -71,8 +71,8 @@ struct find_s find_tests2[] = {
   {24, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
 
   /* Find backwards */
-  {19, 20, "Wine", FR_MATCHCASE, 13, 1},
-  {10, 20, "Wine", FR_MATCHCASE, 4, 1},
+  {19, 20, "Wine", FR_MATCHCASE, 13, 0},
+  {10, 20, "Wine", FR_MATCHCASE, 4, 0},
   {20, 10, "Wine", FR_MATCHCASE, 13, 0},
 
   /* Case-insensitive */
@@ -80,7 +80,7 @@ struct find_s find_tests2[] = {
   {1, 31, "Wine", FR_DOWN, 4, 0},
 
   /* High-to-low ranges */
-  {20, 5, "Wine", FR_DOWN, -1, 1},
+  {20, 5, "Wine", FR_DOWN, -1, 0},
   {2, 1, "Wine", FR_DOWN, -1, 0},
   {30, 29, "Wine", FR_DOWN, -1, 0},
   {20, 5, "Wine", 0, 13, 0},
@@ -110,8 +110,8 @@ struct find_s find_tests2[] = {
 
   /* The backwards case of bug 4479; bounds look right
    * Fails because backward find is wrong */
-  {19, 20, "WINE", FR_MATCHCASE, 0, 1},
-  {0, 20, "WINE", FR_MATCHCASE, -1, 1}
+  {19, 20, "WINE", FR_MATCHCASE, 0, 0},
+  {0, 20, "WINE", FR_MATCHCASE, -1, 0}
 };
 
 static void check_EM_FINDTEXT(HWND hwnd, char *name, struct find_s *f, int id) {
