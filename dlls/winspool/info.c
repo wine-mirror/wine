@@ -4148,6 +4148,50 @@ end:
 
 
 /******************************************************************************
+ *		SetDefaultPrinterW   (WINSPOOL.204)
+ *
+ * Set the Name of the Default Printer
+ *
+ * PARAMS
+ *  pszPrinter [I] Name of the Printer or NULL
+ *
+ * RETURNS
+ *  Success:    True
+ *  Failure:    FALSE
+ *
+ * NOTES
+ *  When the Parameter is NULL or points to an Empty String and
+ *  a Default Printer was already present, then this Function changes nothing.
+ *  Without a Default Printer and NULL (or an Empty String) as Parameter,
+ *  the First enumerated local Printer is used.
+ *
+ */
+BOOL WINAPI SetDefaultPrinterW(LPCWSTR pszPrinter)
+{
+
+    TRACE("(%s)\n", debugstr_w(pszPrinter));
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *		SetDefaultPrinterA   (WINSPOOL.202)
+ *
+ * See SetDefaultPrinterW.
+ *
+ */
+BOOL WINAPI SetDefaultPrinterA(LPCSTR pszPrinter)
+{
+
+    TRACE("(%s)\n", debugstr_a(pszPrinter));
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/******************************************************************************
  *		SetPrinterDataExA   (WINSPOOL.@)
  */
 DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,

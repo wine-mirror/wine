@@ -6,9 +6,9 @@
 105 stub PerfCollect
 106 stub PerfOpen
 201 stdcall GetDefaultPrinterA(ptr ptr)
-202 stub SetDefaultPrinterA
+202 stdcall SetDefaultPrinterA(str)
 203 stdcall GetDefaultPrinterW(ptr ptr)
-204 stub SetDefaultPrinterW
+204 stdcall SetDefaultPrinterW(wstr)
 205 stub -noname SplReadPrinter
 206 stub -noname AddPerMachineConnectionA
 207 stub -noname AddPerMachineConnectionW
