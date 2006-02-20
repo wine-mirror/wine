@@ -35,6 +35,7 @@ static char env_win9x_case[] = "windowS 4.0";
 
 static HANDLE  hwinspool;
 static FARPROC pGetDefaultPrinterA;
+static FARPROC pSetDefaultPrinterA;
 
 /* report common behavior only once */
 static DWORD report_deactivated_spooler = 1;
@@ -584,10 +585,114 @@ static void test_OpenPrinter(void)
 
 }
 
+
+static void test_SetDefaultPrinter(void)
+{
+    DWORD   res;
+    LPSTR   default_printer;
+    DWORD   size = DEFAULT_PRINTER_SIZE;
+    CHAR    buffer[DEFAULT_PRINTER_SIZE];
+    CHAR    org_value[DEFAULT_PRINTER_SIZE];
+
+
+    if (!pSetDefaultPrinterA)  return;
+	/* only supported on win2k and above */
+
+    default_printer = find_default_printer();
+
+    /* backup the original value */
+    org_value[0] = '\0';
+    SetLastError(MAGIC_DEAD);
+    res = GetProfileStringA("windows", "device", NULL, org_value, size);
+
+    /* first part: with the default Printer */
+    SetLastError(MAGIC_DEAD);
+    res = pSetDefaultPrinterA("no_printer_with_this_name");
+
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    /* spooler is running or we have no spooler here*/
+
+    /* Not implemented in wine */
+    if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) {
+        trace("SetDefaultPrinterA() not implemented yet.\n");
+        return;
+    }
+
+    ok(!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME),
+        "returned %ld with %ld (expected '0' with " \
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+
+    WriteProfileStringA("windows", "device", org_value);
+    SetLastError(MAGIC_DEAD);
+    res = pSetDefaultPrinterA("");
+    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "returned %ld with %ld (expected '!=0' or '0' with " \
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+
+    WriteProfileStringA("windows", "device", org_value);
+    SetLastError(MAGIC_DEAD);
+    res = pSetDefaultPrinterA(NULL);
+    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "returned %ld with %ld (expected '!=0' or '0' with " \
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+
+    WriteProfileStringA("windows", "device", org_value);
+    SetLastError(MAGIC_DEAD);
+    res = pSetDefaultPrinterA(default_printer);
+    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "returned %ld with %ld (expected '!=0' or '0' with " \
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+
+
+    /* second part: always without a default Printer */
+    WriteProfileStringA("windows", "device", NULL);    
+    SetLastError(MAGIC_DEAD);
+    res = pSetDefaultPrinterA("no_printer_with_this_name");
+
+    ok(!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME),
+        "returned %ld with %ld (expected '0' with " \
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+
+    WriteProfileStringA("windows", "device", NULL);    
+    SetLastError(MAGIC_DEAD);
+    res = pSetDefaultPrinterA("");
+    /* we get ERROR_INVALID_PRINTER_NAME when no printer is installed */
+    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+         "returned %ld with %ld (expected '!=0' or '0' with " \
+         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+
+    WriteProfileStringA("windows", "device", NULL);    
+    SetLastError(MAGIC_DEAD);
+    res = pSetDefaultPrinterA(NULL);
+    /* we get ERROR_INVALID_PRINTER_NAME when no printer is installed */
+    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "returned %ld with %ld (expected '!=0' or '0' with " \
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+
+    WriteProfileStringA("windows", "device", NULL);    
+    SetLastError(MAGIC_DEAD);
+    res = pSetDefaultPrinterA(default_printer);
+    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+        "returned %ld with %ld (expected '!=0' or '0' with " \
+        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
+
+    /* restore the original value */
+    res = pSetDefaultPrinterA(default_printer);          /* the nice way */
+    WriteProfileStringA("windows", "device", org_value); /* the old way */
+
+    buffer[0] = '\0';
+    SetLastError(MAGIC_DEAD);
+    res = GetProfileStringA("windows", "device", NULL, buffer, size);
+    ok(!lstrcmpA(org_value, buffer), "'%s' (expected '%s')\n", buffer, org_value);
+
+}
+
+
 START_TEST(info)
 {
     hwinspool = GetModuleHandleA("winspool.drv");
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
+    pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
 
     find_default_printer();
 
@@ -595,4 +700,5 @@ START_TEST(info)
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
     test_OpenPrinter();
+    test_SetDefaultPrinter();
 }
