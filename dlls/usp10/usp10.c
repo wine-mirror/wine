@@ -68,6 +68,13 @@ static const SCRIPT_PROPERTIES *Global_Script[MAX_SCRIPTS] =
                                        &Default_Script_6,
                                        &Default_Script_7};
 
+typedef struct scriptcache {
+       HDC hdc;
+       DWORD GlyphToChar[256];
+       int HaveWidths;
+       ABC CharWidths[256];
+} Scriptcache;
+
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
@@ -86,9 +93,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
 {
-    FIXME("%p\n", psc);
+    TRACE("%p\n", psc);
 
-    if (psc) *psc = NULL;
+    if (psc) {
+       HeapFree ( GetProcessHeap(), 0, *psc);
+       *psc = NULL;
+    }
     return 0;
 }
 
@@ -159,7 +169,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     /* This implementation currently treats the entire string represented in 
      * pwcInChars as a single entity.  Hence pcItems will be set to 1.          */
 
-    FIXME("%s,%d,%d,%p,%p,%p,%p\n", debugstr_w(pwcInChars), cInChars, cMaxItems, 
+    FIXME("%s,%d,%d,%p,%p,%p,%p: semi-stub\n", debugstr_w(pwcInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
 
     if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
@@ -281,13 +291,75 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
                            SCRIPT_ANALYSIS *psa, WORD *pwOutGlyphs, WORD *pwLogClust, 
                            SCRIPT_VISATTR *psva, int *pcGlyphs)
 {
-    FIXME("(%p,%p,%p,%s,%d,%d, %p, %p, %p, %p): stub\n",  hdc, psc, pwcChars,
-                                       debugstr_w(pwcChars), 
-                                       cChars, cMaxGlyphs,
-                                       psa, pwOutGlyphs, psva, pcGlyphs);
-    return E_NOTIMPL;
+    /*  Note SCRIPT_CACHE (*psc) appears to be a good place to save info that needs to be 
+     *  passed between functions.                                                         */
 
+    HDC phdc;
+    int cnt;
+    DWORD hr;
+    int clusterinit;
+    Scriptcache *pScriptcache;
+    *pcGlyphs = cChars;
+    FIXME("(%p, %p, %p, %d, %d, %p): semi-stub\n",  hdc, psc, pwcChars,
+                                       cChars, cMaxGlyphs, psa);
+    if (psa) TRACE("%d, %d, %d, %d, %d, %d, %d\n", psa->eScript, psa->fRTL, psa->fLayoutRTL,
+                                         psa->fLinkBefore, psa->fLinkAfter,
+                                         psa->fLogicalOrder, psa->fNoGlyphIndex);
+
+    if  (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
+
+    if  (!hdc && !*psc) {
+        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
+	return E_PENDING;
+    }   else 
+        if  (hdc && !*psc) {
+            pScriptcache = HeapAlloc( GetProcessHeap(), 0, sizeof(Scriptcache) );
+            pScriptcache->hdc = (HDC) hdc;
+            phdc = hdc;
+            pScriptcache->HaveWidths = 0;
+            *psc = (Scriptcache *) pScriptcache;
+       }   else
+            if  (*psc) {
+                pScriptcache = (Scriptcache *) *psc;
+                phdc = pScriptcache->hdc;
+            }
+                
+    TRACE("Before: ");
+    for (cnt = 0; cnt < cChars; cnt++)
+         TRACE("%4x",pwcChars[cnt]);
+    TRACE("\n");
+
+    if  (!psa->fNoGlyphIndex) {                                         /* Glyph translate */
+        hr = GetGlyphIndicesW(phdc, pwcChars, cChars, pwOutGlyphs, 0);
+        TRACE("After:  ");
+        for (cnt = 0; cnt < cChars; cnt++) {
+             TRACE("%04x",pwOutGlyphs[cnt]);
+             pScriptcache->GlyphToChar[pwOutGlyphs[cnt]] = pwcChars[cnt]; /* save for ScriptPlace */
+        }
+       TRACE("\n");
+    }
+    else {
+        TRACE("After:  ");
+        for (cnt = 0; cnt < cChars; cnt++) {                           /* no translate so set up */
+             pwOutGlyphs[cnt] = pwcChars[cnt];                         /* copy in to out and     */
+             TRACE("%04x",pwOutGlyphs[cnt]);
+             pScriptcache->GlyphToChar[pwcChars[cnt]] = pwcChars[cnt]; /* set up a dummy table   */
+        }
+       TRACE("\n");
+    }
+
+    /*  Set up a valid SCRIPT_VISATTR for this run */     
+    clusterinit = 1;                        /* Start of Cluster */
+    for (cnt = 0;  cnt < cChars; cnt++) {
+         psva[cnt].uJustification = 0;
+         psva[cnt].fClusterStart = clusterinit;
+         clusterinit = 0;
+         psva[cnt].fDiacritic = 0;
+         psva[cnt].fZeroWidth = 0;
+    }
+    return 0; 
 }
+
 /***********************************************************************
  *      ScriptPlace (USP10.@)
  *

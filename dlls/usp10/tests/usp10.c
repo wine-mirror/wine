@@ -126,28 +126,29 @@ START_TEST(usp10)
     if (hr == 0) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
-        cMaxGlyphs = 4;
+        cMaxGlyphs = cInChars;
         hr = ScriptShape(NULL, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs, pwLogClust, psva, &pcGlyphs);
-        todo_wine ok (hr == E_OUTOFMEMORY, "If not enough output area cChars (%d) is > than CMaxGlyphs (%d) but not E_OUTOFMEMORY\n",
-            cChars, cMaxGlyphs);
-        cMaxGlyphs = 256;
-        hr = ScriptShape(NULL, &psc, TestItem1, cChars,
-                         cMaxGlyphs, &pItem[0].a,
-                         pwOutGlyphs, pwLogClust, psva, &pcGlyphs);
-        todo_wine ok (hr == E_PENDING, "If psc is NULL (%08x) the E_PENDING should be returned\n",
+        ok (hr == E_PENDING, "If psc is NULL (%08x) the E_PENDING should be returned\n",
                       (unsigned int) hr);
+        cMaxGlyphs = 4;
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs, pwLogClust, psva, &pcGlyphs);
-        todo_wine ok (hr == 0, "Should return 0 not (%08x)\n", (unsigned int) hr);
-        todo_wine ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
-        todo_wine ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
+        ok (hr == E_OUTOFMEMORY, "If not enough output area cChars (%d) is > than CMaxGlyphs (%d) but not E_OUTOFMEMORY\n",
+            cChars, cMaxGlyphs);
+        cMaxGlyphs = 256;
+        hr = ScriptShape(hdc, &psc, TestItem1, cChars,
+                         cMaxGlyphs, &pItem[0].a,
+                         pwOutGlyphs, pwLogClust, psva, &pcGlyphs);
+        ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", (unsigned int) hr);
+        ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+        ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
         if (hr ==0) {
             hr = ScriptPlace(NULL, &psc, pwOutGlyphs, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "Should return 0 not (%08x)\n", (unsigned int) hr);
+            todo_wine ok (hr == 0, "Should return 0 not (%08x)\n", (unsigned int) hr);
         }
 
         /* This test will check to make sure that SCRIPT_CACHE is reused and that not translation   *
@@ -171,16 +172,16 @@ START_TEST(usp10)
                               cMaxGlyphs, &pItem[0].a,
                               pwOutGlyphs, pwLogClust, psva, &pcGlyphs);
              ok (hr != E_PENDING, "If psc should not be NULL (%08x) and the E_PENDING should be returned\n",
-                              (unsigned int) hr);
-             todo_wine ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", (unsigned int) hr);
-             todo_wine ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
-             todo_wine ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
+                (unsigned int) hr);
+             ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", (unsigned int) hr);
+             ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+             ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
              for (cnt=0; cnt < cChars && TestItem2[cnt] == pwOutGlyphs[cnt]; cnt++) {}
-             todo_wine ok (cnt == cChars, "Translation to place when told not to. WCHAR %d - %04x != %04x\n",
+             ok (cnt == cChars, "Translation to place when told not to. WCHAR %d - %04x != %04x\n",
                            cnt, TestItem2[cnt], pwOutGlyphs[cnt]);
              if (hr ==0) {
                  hr = ScriptPlace(NULL, &psc, pwOutGlyphs, pcGlyphs, psva, &pItem[0].a, piAdvance,
-                              pGoffset, pABC);
+                                  pGoffset, pABC);
                  todo_wine ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", (unsigned int) hr);
              }
         }
