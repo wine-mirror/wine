@@ -31,7 +31,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* TODO:
- * - document a bit (grammar + fonctions)
+ * - document a bit (grammar + functions)
  * - back-port this new code into tools/winedump/msmangle.c
  */
 
@@ -201,7 +201,7 @@ static void str_array_push(struct parsed_symbol* sym, const char* ptr, size_t le
             c = '>';
             if (i < a->start) c = '-';
             else if (i >= a->num) c = '}';
-            TRACE("\t%d%c %s\n", i, c, a->elts[i]);
+            TRACE("%p\t%d%c %s\n", a, i, c, a->elts[i]);
         }
     }
 }
@@ -497,15 +497,16 @@ static BOOL get_class(struct parsed_symbol* sym)
 
 /******************************************************************
  *		get_class_string
- * From an array collected by get_class, constructs the corresponding (allocated) 
- * string
+ * From an array collected by get_class in sym->stack, constructs the
+ * corresponding (allocated) string
  */
-static char* get_class_string(struct parsed_symbol* sym, /*const struct array* a, */int start)
+static char* get_class_string(struct parsed_symbol* sym, int start)
 {
     int         i;
     size_t      len, sz;
     char*       ret;
     struct array *a = &sym->stack;
+
     for (len = 0, i = start; i < a->num; i++)
     {
         assert(a->elts[i]);
@@ -547,9 +548,8 @@ static char* get_class_name(struct parsed_symbol* sym)
  * Returns a static string corresponding to the calling convention described
  * by char 'ch'. Sets export to TRUE iff the calling convention is exported.
  */
-static BOOL get_calling_convention(struct parsed_symbol* sym, char ch, 
-                                   const char** call_conv, const char** exported,
-                                   unsigned flags)
+static BOOL get_calling_convention(char ch, const char** call_conv,
+                                   const char** exported, unsigned flags)
 {
     *call_conv = *exported = NULL;
 
@@ -591,7 +591,7 @@ static BOOL get_calling_convention(struct parsed_symbol* sym, char ch,
  *         get_simple_type
  * Return a string containing an allocated string for a simple data type
  */
-static const char* get_simple_type(struct parsed_symbol* sym, char c)
+static const char* get_simple_type(char c)
 {
     const char* type_string;
     
@@ -615,11 +615,12 @@ static const char* get_simple_type(struct parsed_symbol* sym, char c)
     }
     return type_string;
 }
+
 /*******************************************************************
  *         get_extented_type
  * Return a string containing an allocated string for a simple data type
  */
-static const char* get_extended_type(struct parsed_symbol* sym, char c)
+static const char* get_extended_type(char c)
 {
     const char* type_string;
     
@@ -663,13 +664,13 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
     {
     case '_':
         /* MS type: __int8,__int16 etc */
-        ct->left = get_extended_type(sym, *sym->current++);
+        ct->left = get_extended_type(*sym->current++);
         break;
     case 'C': case 'D': case 'E': case 'F': case 'G':
     case 'H': case 'I': case 'J': case 'K': case 'M':
     case 'N': case 'O': case 'X': case 'Z':
         /* Simple data types */
-        ct->left = get_simple_type(sym, dt);
+        ct->left = get_simple_type(dt);
         add_pmt = FALSE;
         break;
     case 'T': /* union */
@@ -719,7 +720,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                 struct datatype_t       sub_ct;
                 unsigned                mark = sym->stack.num;
 
-                if (!get_calling_convention(sym, *sym->current++, 
+                if (!get_calling_convention(*sym->current++,
                                             &call_conv, &exported, 
                                             sym->flags & ~UNDNAME_NO_ALLOCATION_LANGUAGE) ||
                     !demangle_datatype(sym, &sub_ct, pmt_ref, FALSE))
@@ -964,8 +965,8 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
 
     name = get_class_string(sym, 0);
   
-    if (!get_calling_convention(sym, *sym->current++, 
-                                &call_conv, &exported, sym->flags))
+    if (!get_calling_convention(*sym->current++, &call_conv, &exported,
+                                sym->flags))
         goto done;
 
     str_array_init(&array_pmt);
@@ -1010,7 +1011,7 @@ done:
 }
 
 /*******************************************************************
- *         demangle_symbol
+ *         symbol_demangle
  * Demangle a C++ linker symbol
  */
 static BOOL symbol_demangle(struct parsed_symbol* sym)
