@@ -2,6 +2,7 @@
  * Winefile
  *
  * Copyright 2000, 2003, 2004, 2005 Martin Fuchs
+ * Copyright 2006 Jason Green
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -58,6 +59,13 @@
 #define	DEFAULT_SPLIT_POS	200
 #endif
 
+static const WCHAR registry_key[] = { 'S','o','f','t','w','a','r','e','\\',
+                                      'W','i','n','e','\\',
+                                      'W','i','n','e','F','i','l','e','\0'};
+static const WCHAR reg_start_x[] = { 's','t','a','r','t','X','\0'};
+static const WCHAR reg_start_y[] = { 's','t','a','r','t','Y','\0'};
+static const WCHAR reg_width[] = { 'w','i','d','t','h','\0'};
+static const WCHAR reg_height[] = { 'h','e','i','g','h','t','\0'};
 
 enum ENTRY_TYPE {
 	ET_WINDOWS,
@@ -1569,6 +1577,75 @@ static void get_path(Entry* dir, PTSTR path)
 	}
 }
 
+static windowOptions load_registry_settings(void)
+{
+	DWORD size;
+	DWORD type;
+	HKEY hKey;
+	windowOptions opts;
+
+	RegOpenKeyEx( HKEY_CURRENT_USER, registry_key,
+	              0, KEY_QUERY_VALUE, &hKey );
+
+	size = sizeof(DWORD);
+
+        if( RegQueryValueEx( hKey, reg_start_x, NULL, &type,
+                             (LPBYTE) &opts.start_x, &size ) != ERROR_SUCCESS )
+		opts.start_x = CW_USEDEFAULT;
+
+        if( RegQueryValueEx( hKey, reg_start_y, NULL, &type,
+                             (LPBYTE) &opts.start_y, &size ) != ERROR_SUCCESS )
+		opts.start_y = CW_USEDEFAULT;
+
+        if( RegQueryValueEx( hKey, reg_width, NULL, &type,
+                             (LPBYTE) &opts.width, &size ) != ERROR_SUCCESS )
+		opts.width = CW_USEDEFAULT;
+
+        if( RegQueryValueEx( hKey, reg_height, NULL, &type,
+                             (LPBYTE) &opts.height, &size ) != ERROR_SUCCESS )
+		opts.height = CW_USEDEFAULT;
+
+	RegCloseKey( hKey );
+
+	return opts;
+}
+
+static void save_registry_settings(void)
+{
+	WINDOWINFO wi;
+	HKEY hKey;
+	INT width, height;
+
+	wi.cbSize = sizeof( WINDOWINFO );
+	GetWindowInfo(Globals.hMainWnd, &wi);
+	width = wi.rcWindow.right - wi.rcWindow.left;
+	height = wi.rcWindow.bottom - wi.rcWindow.top;
+
+	if ( RegOpenKeyEx( HKEY_CURRENT_USER, registry_key,
+	                   0, KEY_SET_VALUE, &hKey ) != ERROR_SUCCESS )
+	{
+		/* Unable to save registry settings - try to create key */
+		if ( RegCreateKeyEx( HKEY_CURRENT_USER, registry_key,
+		                     0, NULL, REG_OPTION_NON_VOLATILE,
+		                     KEY_SET_VALUE, NULL, &hKey, NULL ) != ERROR_SUCCESS )
+		{
+			/* FIXME: Cannot create key */
+			return;
+		}
+	}
+	/* Save all of the settings */
+	RegSetValueEx( hKey, reg_start_x, 0, REG_DWORD,
+	               (LPBYTE) &wi.rcWindow.left, sizeof(DWORD) );
+	RegSetValueEx( hKey, reg_start_y, 0, REG_DWORD,
+	               (LPBYTE) &wi.rcWindow.top, sizeof(DWORD) );
+	RegSetValueEx( hKey, reg_width, 0, REG_DWORD,
+	               (LPBYTE) &width, sizeof(DWORD) );
+	RegSetValueEx( hKey, reg_height, 0, REG_DWORD,
+	               (LPBYTE) &height, sizeof(DWORD) );
+
+	/* TODO: Save more settings here (List vs. Detailed View, etc.) */
+	RegCloseKey( hKey );
+}
 
 static void resize_frame_rect(HWND hwnd, PRECT prect)
 {
@@ -2150,6 +2227,9 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 	switch(nmsg) {
 		case WM_CLOSE:
+			if (Globals.saveSettings == TRUE)  
+				save_registry_settings();  
+			
 			DestroyWindow(hwnd);
 
 			 /* clear handle variables */
@@ -2303,6 +2383,12 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 				case ID_VIEW_STATUSBAR:
 					toggle_child(hwnd, cmd, Globals.hstatusbar);
+					break;
+
+				case ID_VIEW_SAVESETTINGS:
+					Globals.saveSettings = !Globals.saveSettings;
+					CheckMenuItem(Globals.hMenuOptions, ID_VIEW_SAVESETTINGS,
+                                                      Globals.saveSettings == TRUE ? MF_CHECKED : MF_UNCHECKED );
 					break;
 
 				case ID_EXECUTE: {
@@ -4678,12 +4764,14 @@ static void show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 	TCHAR buffer[MAX_PATH], b1[BUFFER_LEN];
 	ChildWnd* child;
 	HMENU hMenuFrame, hMenuWindow;
+	windowOptions opts;
 
 	CLIENTCREATESTRUCT ccs;
 
 	if (Globals.hMainWnd)
 		return;
 
+	opts = load_registry_settings();
 	hMenuFrame = LoadMenu(Globals.hInstance, MAKEINTRESOURCE(IDM_WINEFILE));
 	hMenuWindow = GetSubMenu(hMenuFrame, GetMenuItemCount(hMenuFrame)-2);
 
@@ -4697,7 +4785,7 @@ static void show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 
 	/* create main window */
 	Globals.hMainWnd = CreateWindowEx(0, (LPCTSTR)(int)Globals.hframeClass, RS(b1,IDS_WINE_FILE), WS_OVERLAPPEDWINDOW,
-					CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+					opts.start_x, opts.start_y, opts.width, opts.height,
 					hwndParent, Globals.hMenuFrame, Globals.hInstance, 0/*lpParam*/);
 
 
@@ -4705,9 +4793,9 @@ static void show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 					WS_CHILD|WS_CLIPCHILDREN|WS_VSCROLL|WS_HSCROLL|WS_VISIBLE|WS_BORDER,
 					0, 0, 0, 0,
 					Globals.hMainWnd, 0, Globals.hInstance, &ccs);
-
-
+  
 	CheckMenuItem(Globals.hMenuOptions, ID_VIEW_DRIVE_BAR, MF_BYCOMMAND|MF_CHECKED);
+	CheckMenuItem(Globals.hMenuOptions, ID_VIEW_SAVESETTINGS, MF_BYCOMMAND);
 
 	create_drive_bar();
 
@@ -4737,7 +4825,7 @@ static void show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 					WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|CCS_NODIVIDER, 0,0,0,0,
 					Globals.hMainWnd, (HMENU)IDW_STATUSBAR, hinstance, 0);*/
 
-	/*TODO: read paths and window placements from registry */
+	/*TODO: read paths from registry */
 
 	if (!path || !*path) {
 		GetCurrentDirectory(MAX_PATH, buffer);
@@ -4849,12 +4937,8 @@ static int find_window_class(LPCTSTR classname)
 static int winefile_main(HINSTANCE hinstance, int cmdshow, LPCTSTR path)
 {
 	MSG msg;
-
+  
 	InitInstance(hinstance);
-
-	if (cmdshow == SW_SHOWNORMAL)
-	        /*TODO: read window placement from registry */
-		cmdshow = SW_MAXIMIZE;
 
 	show_frame(0, cmdshow, path);
 

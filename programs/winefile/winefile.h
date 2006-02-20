@@ -107,6 +107,13 @@ enum IMAGE {
 #define FRM_CALC_CLIENT     0xBF83
 #define Frame_CalcFrameClient(hwnd, prt) ((BOOL)SNDMSG(hwnd, FRM_CALC_CLIENT, 0, (LPARAM)(PRECT)prt))
 
+typedef struct
+{
+  int       start_x;
+  int       start_y;
+  int       width;
+  int       height;
+} windowOptions;
 
 typedef struct
 {
@@ -132,7 +139,8 @@ typedef struct
 
   TCHAR     drives[BUFFER_LEN];
   BOOL      prescan_node;   /*TODO*/
-
+  BOOL      saveSettings;
+  
 #ifdef _SHELL_FOLDERS
   IShellFolder* iDesktop;
   IMalloc*      iMalloc;

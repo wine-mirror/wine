@@ -63,6 +63,7 @@
 #define ID_VIEW_TOOL_BAR                508
 #define ID_VIEW_DRIVE_BAR               507
 #define ID_VIEW_STATUSBAR               503
+#define ID_VIEW_SAVESETTINGS            511
 
 #define ID_ABOUT                        1803
 #define ID_REFRESH                      1704

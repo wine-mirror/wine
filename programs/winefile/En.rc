@@ -113,7 +113,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 #endif
         MENUITEM SEPARATOR
         MENUITEM "&Minimize on run",            504
-        MENUITEM "&Save settings on exit",      511
+        MENUITEM "&Save settings on exit",      ID_VIEW_SAVESETTINGS
     }
 
 
