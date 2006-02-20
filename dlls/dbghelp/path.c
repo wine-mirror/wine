@@ -220,11 +220,17 @@ struct sffip
     void*                       user;
 };
 
+/* checks that buffer (as found by matching the name) matches the info
+ * (information is based on file type)
+ * returns TRUE when file is found, FALSE to continue searching
+ * (NB this is the opposite conventions as for SymFindFileInPathProc)
+ */
 static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
 {
     struct sffip*       s = (struct sffip*)user;
     DWORD               size, checksum;
     DWORD_PTR           timestamp;
+
     /* FIXME: should check that id/two/three match the file pointed
      * by buffer
      */
@@ -239,7 +245,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
             size = ~s->two;
             hFile = CreateFileA(buffer, GENERIC_READ, FILE_SHARE_READ, NULL, 
                                 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (hFile == INVALID_HANDLE_VALUE) return TRUE;
+            if (hFile == INVALID_HANDLE_VALUE) return FALSE;
             if ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
             {
                 if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
@@ -255,7 +261,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
             if (timestamp != (DWORD_PTR)s->id || size != s->two)
             {
                 WARN("Found %s, but wrong size or timestamp\n", buffer);
-                return TRUE;
+                return FALSE;
             }
         }
         break;
@@ -266,13 +272,13 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
             {
                 WARN("Found %s, but wrong checksums: %08lx %08lx\n",
                       buffer, checksum, (DWORD_PTR)s->id);
-                return TRUE;
+                return FALSE;
             }
         }
         else
         {
             WARN("Couldn't read %s\n", buffer);
-            return TRUE;
+            return FALSE;
         }
         break;
     case DMT_PDB:
@@ -281,7 +287,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
         break;
     default:
         FIXME("What the heck??\n");
-        return TRUE;
+        return FALSE;
     }
     /* yes, EnumDirTree/do_search and SymFindFileInPath callbacks use the opposite
      * convention to stop/continue enumeration. sigh.
@@ -342,7 +348,8 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path
             strcpy(tmp, searchPath);
             searchPath = NULL;
         }
-        if (do_search(filename, tmp, FALSE, sffip_cb, &s)) {
+        if (do_search(filename, tmp, FALSE, sffip_cb, &s))
+        {
             strcpy(buffer, tmp);
             return TRUE;
         }
