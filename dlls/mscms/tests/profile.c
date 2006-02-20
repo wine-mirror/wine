@@ -527,7 +527,6 @@ static HKEY reg_open_mscms_key(void)
     RegCloseKey( win9x_key );
     RegCloseKey( winNT_key );
 
-    if ( !ICM_key ) return NULL;
     return ICM_key;
 }
 
@@ -548,15 +547,24 @@ static void check_registry(void)
     }
 
     res = RegQueryInfoKeyA(hkIcmKey, NULL, NULL, NULL, NULL, NULL, NULL, &dwValCount, NULL, NULL, NULL, NULL);
+    if (!res) 
+    {
+        trace("RegQueryInfoKeyA() failed\n");
+        return;
+    }
+
     trace("Count of profile entries found directly in the registry: %ld\n", dwValCount);
-    if (dwValCount<1) return;
 
     for (i = 0; i<dwValCount; i++) 
     {
         dwNameLen = sizeof(szName);
         dwDataLen = sizeof(szData);
         res = RegEnumValueA( hkIcmKey, i, szName, &dwNameLen, NULL, &dwType, (LPBYTE)szData, &dwDataLen );
-        if (res != ERROR_SUCCESS) break;
+        if (res != ERROR_SUCCESS) 
+        {
+            trace("RegEnumValueA() failed (%ld), cannot enumerate profiles\n", res);
+            break;
+        }
         ok( dwType == REG_SZ, "RegEnumValueA() returned unexpected value type (%ld)\n", dwType );
         if (dwType != REG_SZ) break;
         trace(" found '%s' value containing '%s' (%d chars)\n", szName, szData, strlen(szData));
