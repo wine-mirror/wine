@@ -1091,7 +1091,7 @@ static BOOL elf_load_file(struct process* pcs, const char* filename,
         struct elf_module_info *elf_module_info = 
             HeapAlloc(GetProcessHeap(), 0, sizeof(struct elf_module_info));
         if (!elf_module_info) goto leave;
-        elf_info->module = module_new(pcs, filename, DMT_ELF, 
+        elf_info->module = module_new(pcs, filename, DMT_ELF, FALSE,
                                       (load_offset) ? load_offset : fmap.elf_start, 
                                       fmap.elf_size, 0, calc_crc32(&fmap));
         if (!elf_info->module)
@@ -1292,7 +1292,8 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
 
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (module->type == DMT_ELF) module->elf_info->elf_mark = 0;
+        if (module->type == DMT_ELF && !module->is_virtual)
+            module->elf_info->elf_mark = 0;
     }
 
     es.pcs = pcs;
@@ -1303,8 +1304,8 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
     module = pcs->lmodules;
     while (module)
     {
-        if (module->type == DMT_ELF && !module->elf_info->elf_mark && 
-            !module->elf_info->elf_loader)
+        if (module->type == DMT_ELF && !module->is_virtual &&
+            !module->elf_info->elf_mark && !module->elf_info->elf_loader)
         {
             module_remove(pcs, module);
             /* restart all over */

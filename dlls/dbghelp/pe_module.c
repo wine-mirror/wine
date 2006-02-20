@@ -360,7 +360,7 @@ struct module* pe_load_module(struct process* pcs, const char* name,
                 if (!base) base = nth->OptionalHeader.ImageBase;
                 if (!size) size = nth->OptionalHeader.SizeOfImage;
             
-                module = module_new(pcs, loaded_name, DMT_PE, base, size,
+                module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
                                     nth->FileHeader.TimeDateStamp, 
                                     nth->OptionalHeader.CheckSum);
                 if (module)
@@ -428,11 +428,11 @@ struct module* pe_load_module_from_pcs(struct process* pcs, const char* name,
             if (pe_load_nt_header(pcs->handle, base, &nth))
             {
                 if (!size) size = nth.OptionalHeader.SizeOfImage;
-                module = module_new(pcs, name, DMT_PE, base, size,
+                module = module_new(pcs, name, DMT_PE, FALSE, base, size,
                                     nth.FileHeader.TimeDateStamp, nth.OptionalHeader.CheckSum);
             }
         } else if (size)
-            module = module_new(pcs, name, DMT_PE, base, size, 0 /* FIXME */, 0 /* FIXME */);
+            module = module_new(pcs, name, DMT_PE, FALSE, base, size, 0 /* FIXME */, 0 /* FIXME */);
     }
     return module;
 }

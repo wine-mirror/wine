@@ -282,7 +282,6 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
         }
         break;
     case DMT_PDB:
-    case DMT_VIRTUAL:
         FIXME("NIY on '%s'\n", buffer);
         break;
     default:

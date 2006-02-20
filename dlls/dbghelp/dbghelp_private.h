@@ -258,14 +258,14 @@ enum module_type
     DMT_ELF,            /* a real ELF shared module */
     DMT_PE,             /* a native or builtin PE module */
     DMT_PDB,            /* PDB file */
-    DMT_VIRTUAL,        /* a virtual module (ie defined by caller) */
 };
 
 struct module
 {
     IMAGEHLP_MODULE             module;
     struct module*              next;
-    enum module_type		type;
+    enum module_type		type : 16;
+    unsigned short              is_virtual : 1;
     struct elf_module_info*	elf_info;
     
     /* memory allocation pool */
@@ -345,9 +345,9 @@ extern struct module*
                     module_get_debug(const struct process* pcs, struct module*);
 extern struct module*
                     module_new(struct process* pcs, const char* name, 
-                               enum module_type type, unsigned long addr, 
-                               unsigned long size, unsigned long stamp, 
-                               unsigned long checksum);
+                               enum module_type type, BOOL virtual,
+                               unsigned long addr, unsigned long size,
+                               unsigned long stamp, unsigned long checksum);
 extern struct module*
                     module_get_container(const struct process* pcs,
                                          const struct module* inner);

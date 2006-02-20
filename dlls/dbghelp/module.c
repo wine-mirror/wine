@@ -78,13 +78,12 @@ static void module_fill_module(const char* in, char* out, size_t size)
     while ((*out = tolower(*out))) out++;
 }
 
-static const char*      get_module_type(enum module_type type)
+static const char*      get_module_type(enum module_type type, BOOL virtual)
 {
     switch (type)
     {
-    case DMT_ELF: return "ELF";
-    case DMT_PE: return "PE";
-    case DMT_VIRTUAL: return "Virtual";
+    case DMT_ELF: return virtual ? "Virtual ELF" : "ELF";
+    case DMT_PE: return virtual ? "Virtual PE" : "PE";
     default: return "---";
     }
 }
@@ -93,13 +92,13 @@ static const char*      get_module_type(enum module_type type)
  * Creates and links a new module to a process 
  */
 struct module* module_new(struct process* pcs, const char* name, 
-                          enum module_type type, 
+                          enum module_type type, BOOL virtual,
                           unsigned long mod_addr, unsigned long size,
                           unsigned long stamp, unsigned long checksum) 
 {
     struct module*      module;
 
-    assert(type == DMT_ELF || type == DMT_PE || type == DMT_VIRTUAL);
+    assert(type == DMT_ELF || type == DMT_PE);
     if (!(module = HeapAlloc(GetProcessHeap(), 0, sizeof(*module))))
 	return NULL;
 
@@ -109,7 +108,7 @@ struct module* module_new(struct process* pcs, const char* name,
     pcs->lmodules = module;
 
     TRACE("=> %s %08lx-%08lx %s\n", 
-          get_module_type(type), mod_addr, mod_addr + size, name);
+          get_module_type(type, virtual), mod_addr, mod_addr + size, name);
 
     pool_init(&module->pool, 65536);
     
@@ -126,6 +125,7 @@ struct module* module_new(struct process* pcs, const char* name,
     module->module.CheckSum = checksum;
 
     module->type              = type;
+    module->is_virtual        = virtual ? TRUE : FALSE;
     module->sortlist_valid    = FALSE;
     module->addr_sorttab      = NULL;
     /* FIXME: this seems a bit too high (on a per module basis)
@@ -154,8 +154,7 @@ struct module* module_find_by_name(const struct process* pcs,
     if (type == DMT_UNKNOWN)
     {
         if ((module = module_find_by_name(pcs, name, DMT_PE)) ||
-            (module = module_find_by_name(pcs, name, DMT_ELF)) ||
-            (module = module_find_by_name(pcs, name, DMT_VIRTUAL)))
+            (module = module_find_by_name(pcs, name, DMT_ELF)))
             return module;
     }
     else
@@ -243,8 +242,9 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
     if (module->module.SymType == SymDeferred)
     {
         BOOL ret;
-
-        switch (module->type)
+        
+        if (module->is_virtual) ret = FALSE;
+        else switch (module->type)
         {
         case DMT_ELF:
             ret = elf_load_debug_info(module, NULL);
@@ -264,7 +264,6 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
                          ret ? CBA_DEFERRED_SYMBOL_LOAD_COMPLETE : CBA_DEFERRED_SYMBOL_LOAD_FAILURE,
                          &idsl64);
             break;
-        case DMT_VIRTUAL: /* fall through */
         default:
             ret = FALSE;
             break;
@@ -290,8 +289,7 @@ struct module* module_find_by_addr(const struct process* pcs, unsigned long addr
     if (type == DMT_UNKNOWN)
     {
         if ((module = module_find_by_addr(pcs, addr, DMT_PE)) ||
-            (module = module_find_by_addr(pcs, addr, DMT_ELF)) ||
-            (module = module_find_by_addr(pcs, addr, DMT_VIRTUAL)))
+            (module = module_find_by_addr(pcs, addr, DMT_ELF)))
             return module;
     }
     else
@@ -436,6 +434,10 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
                                 PCSTR ModuleName, DWORD64 BaseOfDll, DWORD DllSize,
                                 PMODLOAD_DATA Data, DWORD Flags)
 {
+    TRACE("(%p %p %s %s %s %08lx %p %08lx)\n", 
+          hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName), 
+          wine_dbgstr_longlong(BaseOfDll), DllSize, Data, Flags);
+
     if (Data)
         FIXME("Unsupported load data parameter %p for %s\n", Data, ImageName);
     if (!validate_addr64(BaseOfDll)) return FALSE;
@@ -445,7 +447,8 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
         struct module* module;
         if (!pcs) return FALSE;
 
-        module = module_new(pcs, ImageName, DMT_VIRTUAL, (DWORD)BaseOfDll, DllSize, 0, 0);
+        module = module_new(pcs, ImageName, module_get_type_by_name(ImageName), TRUE, 
+                            (DWORD)BaseOfDll, DllSize, 0, 0);
         if (!module) return FALSE;
         if (ModuleName)
             lstrcpynA(module->module.ModuleName, ModuleName, sizeof(module->module.ModuleName));
