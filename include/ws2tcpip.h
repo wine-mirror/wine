@@ -215,7 +215,7 @@ int WINAPI  WS(getaddrinfo)(const char*,const char*,const struct WS(addrinfo)*,s
 #define     GetAddrInfoA WS(getaddrinfo)
 int WINAPI  GetAddrInfoW(PCWSTR,PCWSTR,const ADDRINFOW*,PADDRINFOW*);
 #define     GetAddrInfo WINELIB_NAME_AW(GetAddrInfo)
-int WINAPI  WS(getnameinfo)(const struct sockaddr*,socklen_t,char*,DWORD,char*,DWORD,int);
+int WINAPI  WS(getnameinfo)(const struct WS(sockaddr)*,socklen_t,char*,DWORD,char*,DWORD,int);
 #define     GetNameInfoA WS(getnameinfo)
 INT WINAPI  GetNameInfoW(const SOCKADDR*,socklen_t,PWCHAR,DWORD,PWCHAR,DWORD,INT);
 #define     GetNameInfo WINELIB_NAME_AW(GetNameInfo)

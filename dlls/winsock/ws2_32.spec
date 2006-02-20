@@ -116,4 +116,4 @@
 @ stdcall WSCWriteProviderOrder(ptr long)
 @ stdcall freeaddrinfo(ptr) WS_freeaddrinfo
 @ stdcall getaddrinfo(str str ptr ptr) WS_getaddrinfo
-@ stub    getnameinfo
+@ stdcall getnameinfo(ptr long ptr long ptr long long) WS_getnameinfo

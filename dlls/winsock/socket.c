@@ -3235,6 +3235,33 @@ int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hin
     return EAI_FAIL;
 }
 
+int WINAPI WS_getnameinfo(const struct WS_sockaddr *sa, socklen_t salen, char *host,
+                          DWORD hostlen, char *serv, DWORD servlen, int flags)
+{
+#if HAVE_GETNAMEINFO
+    int ret;
+    const struct sockaddr* sa_u;
+    unsigned int size;
+
+    TRACE("%s %d %p %ld %p %ld %d\n", debugstr_sockaddr(sa), salen, host, hostlen,
+          serv, servlen, flags);
+
+    sa_u = ws_sockaddr_ws2u(sa, salen, &size);
+    if (!sa_u)
+    {
+        WSASetLastError(WSAEFAULT);
+        return WSA_NOT_ENOUGH_MEMORY;
+    }
+    ret = getnameinfo(sa_u, size, host, hostlen, serv, servlen, flags);
+
+    ws_sockaddr_free(sa_u, sa);
+    return convert_eai_u2w(ret);
+#else
+    FIXME("getnameinfo() failed, not found during buildtime.\n");
+    return EAI_FAIL;
+#endif
+}
+
 /***********************************************************************
  *		getservbyport		(WS2_32.56)
  */
