@@ -55,6 +55,10 @@ typedef struct {
     nsIHttpChannel *http_channel;
     nsIWineURI *uri;
     nsIInputStream *post_data_stream;
+    nsILoadGroup *load_group;
+    nsIInterfaceRequestor *notif_callback;
+    nsLoadFlags load_flags;
+    nsIURI *original_uri;
 } nsChannel;
 
 typedef struct {
@@ -131,15 +135,12 @@ static BOOL before_async_open(nsChannel *This)
 {
     nsACString *uri_str;
     NSContainer *container;
-    PRUint32 load_flags = 0;
     const char *uria;
     LPWSTR uri;
     DWORD len;
     BOOL ret;
 
-    nsIChannel_GetLoadFlags(This->channel, &load_flags);
-    TRACE("load_flags = %08lx\n", load_flags);
-    if(!(load_flags & LOAD_INITIAL_DOCUMENT_URI))
+    if(!(This->load_flags & LOAD_INITIAL_DOCUMENT_URI))
         return TRUE;
 
     nsIWineURI_GetNSContainer(This->uri, &container);
@@ -200,7 +201,10 @@ static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef r
     }
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
-    return nsIChannel_QueryInterface(This->channel, riid, result);
+
+    if(This->channel)
+        return nsIChannel_QueryInterface(This->channel, riid, result);
+    return NS_NOINTERFACE;
 }
 
 static nsrefcnt NSAPI nsChannel_AddRef(nsIHttpChannel *iface)
@@ -219,12 +223,19 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
     LONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref) {
-        nsIChannel_Release(This->channel);
         nsIWineURI_Release(This->uri);
+        if(This->channel)
+            nsIChannel_Release(This->channel);
         if(This->http_channel)
             nsIHttpChannel_Release(This->http_channel);
         if(This->post_data_stream)
             nsIInputStream_Release(This->post_data_stream);
+        if(This->load_group)
+            nsILoadGroup_Release(This->load_group);
+        if(This->notif_callback)
+            nsIInterfaceRequestor_Release(This->notif_callback);
+        if(This->original_uri)
+            nsIURI_Release(This->original_uri);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -234,85 +245,163 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
 static nsresult NSAPI nsChannel_GetName(nsIHttpChannel *iface, nsACString *aName)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aName);
-    return nsIChannel_GetName(This->channel, aName);
+
+    if(This->channel)
+        return nsIChannel_GetName(This->channel, aName);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_IsPending(nsIHttpChannel *iface, PRBool *_retval)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, _retval);
-    return nsIChannel_IsPending(This->channel, _retval);
+
+    if(This->channel)
+        return nsIChannel_IsPending(This->channel, _retval);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_GetStatus(nsIHttpChannel *iface, nsresult *aStatus)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aStatus);
-    return nsIChannel_GetStatus(This->channel, aStatus);
+
+    if(This->channel)
+        return nsIChannel_GetStatus(This->channel, aStatus);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_Cancel(nsIHttpChannel *iface, nsresult aStatus)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%08lx)\n", This, aStatus);
-    return nsIChannel_Cancel(This->channel, aStatus);
+
+    if(This->channel)
+        return nsIChannel_Cancel(This->channel, aStatus);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_Suspend(nsIHttpChannel *iface)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)\n", This);
-    return nsIChannel_Suspend(This->channel);
+
+    if(This->channel)
+        return nsIChannel_Suspend(This->channel);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_Resume(nsIHttpChannel *iface)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)\n", This);
-    return nsIChannel_Resume(This->channel);
+
+    if(This->channel)
+        return nsIChannel_Resume(This->channel);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_GetLoadGroup(nsIHttpChannel *iface, nsILoadGroup **aLoadGroup)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aLoadGroup);
-    return nsIChannel_GetLoadGroup(This->channel, aLoadGroup);
+
+    if(This->load_group)
+        nsILoadGroup_AddRef(This->load_group);
+
+    *aLoadGroup = This->load_group;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_SetLoadGroup(nsIHttpChannel *iface, nsILoadGroup *aLoadGroup)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aLoadGroup);
-    return nsIChannel_SetLoadGroup(This->channel, aLoadGroup);
+
+    if(This->load_group)
+        nsILoadGroup_Release(This->load_group);
+    if(aLoadGroup)
+        nsILoadGroup_AddRef(aLoadGroup);
+
+    This->load_group = aLoadGroup;
+
+    if(This->channel)
+        return nsIChannel_SetLoadGroup(This->channel, aLoadGroup);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetLoadFlags(nsIHttpChannel *iface, nsLoadFlags *aLoadFlags)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aLoadFlags);
-    return nsIChannel_GetLoadFlags(This->channel, aLoadFlags);
+
+    *aLoadFlags = This->load_flags;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_SetLoadFlags(nsIHttpChannel *iface, nsLoadFlags aLoadFlags)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%08lx)\n", This, aLoadFlags);
-    return nsIChannel_SetLoadFlags(This->channel, aLoadFlags);
+
+    This->load_flags = aLoadFlags;
+
+    if(This->channel)
+        return nsIChannel_SetLoadFlags(This->channel, aLoadFlags);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetOriginalURI(nsIHttpChannel *iface, nsIURI **aOriginalURI)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aOriginalURI);
-    return nsIChannel_GetOriginalURI(This->channel, aOriginalURI);
+
+    if(This->original_uri)
+        nsIURI_AddRef(This->original_uri);
+
+    *aOriginalURI = This->original_uri;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_SetOriginalURI(nsIHttpChannel *iface, nsIURI *aOriginalURI)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aOriginalURI);
-    return nsIChannel_SetOriginalURI(This->channel, aOriginalURI);
+
+    if(This->original_uri)
+        nsIURI_Release(This->original_uri);
+
+    nsIURI_AddRef(aOriginalURI);
+    This->original_uri = aOriginalURI;
+
+    if(This->channel)
+        return nsIChannel_SetOriginalURI(This->channel, aOriginalURI);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetURI(nsIHttpChannel *iface, nsIURI **aURI)
@@ -330,31 +419,60 @@ static nsresult NSAPI nsChannel_GetURI(nsIHttpChannel *iface, nsIURI **aURI)
 static nsresult NSAPI nsChannel_GetOwner(nsIHttpChannel *iface, nsISupports **aOwner)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aOwner);
-    return nsIChannel_GetOwner(This->channel, aOwner);
+
+    if(This->channel)
+        return nsIChannel_GetOwner(This->channel, aOwner);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_SetOwner(nsIHttpChannel *iface, nsISupports *aOwner)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aOwner);
-    return nsIChannel_SetOwner(This->channel, aOwner);
+
+    if(This->channel)
+        return nsIChannel_SetOwner(This->channel, aOwner);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_GetNotificationCallbacks(nsIHttpChannel *iface,
         nsIInterfaceRequestor **aNotificationCallbacks)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aNotificationCallbacks);
-    return nsIChannel_GetNotificationCallbacks(This->channel, aNotificationCallbacks);
+
+    if(This->notif_callback)
+        nsIInterfaceRequestor_AddRef(This->notif_callback);
+    *aNotificationCallbacks = This->notif_callback;
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_SetNotificationCallbacks(nsIHttpChannel *iface,
         nsIInterfaceRequestor *aNotificationCallbacks)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aNotificationCallbacks);
-    return nsIChannel_SetNotificationCallbacks(This->channel, aNotificationCallbacks);
+
+    if(This->notif_callback)
+        nsIInterfaceRequestor_Release(This->notif_callback);
+    if(aNotificationCallbacks)
+        nsIInterfaceRequestor_AddRef(aNotificationCallbacks);
+
+    This->notif_callback = aNotificationCallbacks;
+
+    if(This->channel)
+        return nsIChannel_SetNotificationCallbacks(This->channel, aNotificationCallbacks);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetSecurityInfo(nsIHttpChannel *iface, nsISupports **aSecurityInfo)
@@ -367,53 +485,95 @@ static nsresult NSAPI nsChannel_GetSecurityInfo(nsIHttpChannel *iface, nsISuppor
 static nsresult NSAPI nsChannel_GetContentType(nsIHttpChannel *iface, nsACString *aContentType)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aContentType);
-    return nsIChannel_GetContentType(This->channel, aContentType);
+
+    if(This->channel)
+        return nsIChannel_GetContentType(This->channel, aContentType);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_SetContentType(nsIHttpChannel *iface,
                                                const nsACString *aContentType)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aContentType);
-    return nsIChannel_SetContentType(This->channel, aContentType);
+
+    if(This->channel)
+        return nsIChannel_SetContentType(This->channel, aContentType);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_GetContentCharset(nsIHttpChannel *iface,
                                                   nsACString *aContentCharset)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aContentCharset);
-    return nsIChannel_GetContentCharset(This->channel, aContentCharset);
+
+    if(This->channel)
+        return nsIChannel_GetContentCharset(This->channel, aContentCharset);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_SetContentCharset(nsIHttpChannel *iface,
                                                   const nsACString *aContentCharset)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aContentCharset);
-    return nsIChannel_SetContentCharset(This->channel, aContentCharset);
+
+    if(This->channel)
+        return nsIChannel_SetContentCharset(This->channel, aContentCharset);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_GetContentLength(nsIHttpChannel *iface, PRInt32 *aContentLength)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, aContentLength);
-    return nsIChannel_GetContentLength(This->channel, aContentLength);
+
+    if(This->channel)
+        return nsIChannel_GetContentLength(This->channel, aContentLength);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_SetContentLength(nsIHttpChannel *iface, PRInt32 aContentLength)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%ld)\n", This, aContentLength);
-    return nsIChannel_SetContentLength(This->channel, aContentLength);
+
+    if(This->channel)
+        return nsIChannel_SetContentLength(This->channel, aContentLength);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_Open(nsIHttpChannel *iface, nsIInputStream **_retval)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+
     TRACE("(%p)->(%p)\n", This, _retval);
-    return nsIChannel_Open(This->channel, _retval);
+
+    if(This->channel)
+        return nsIChannel_Open(This->channel, _retval);
+
+    FIXME("default action not implemented\n");
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListener *aListener,
@@ -426,6 +586,11 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
     if(!before_async_open(This)) {
         TRACE("canceled\n");
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    if(!This->channel) {
+        FIXME("channel == NULL\n");
         return NS_ERROR_UNEXPECTED;
     }
 
@@ -1233,7 +1398,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     TRACE("(%p %p)\n", aURI, _retval);
 
     nsres = nsIIOService_NewChannelFromURI(nsio, aURI, &channel);
-    if(NS_FAILED(nsres)) {
+    if(NS_FAILED(nsres) && nsres != NS_ERROR_UNKNOWN_PROTOCOL) {
         WARN("NewChannelFromURI failed: %08lx\n", nsres);
         *_retval = channel;
         return nsres;
@@ -1255,8 +1420,13 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     ret->http_channel = NULL;
     ret->uri = wine_uri;
     ret->post_data_stream = NULL;
+    ret->load_group = NULL;
+    ret->notif_callback = NULL;
+    ret->load_flags = 0;
+    ret->original_uri = NULL;
 
-    nsIChannel_QueryInterface(ret->channel, &IID_nsIHttpChannel, (void**)&ret->http_channel);
+    if(channel)
+        nsIChannel_QueryInterface(channel, &IID_nsIHttpChannel, (void**)&ret->http_channel);
 
     *_retval = NSCHANNEL(ret);
     return NS_OK;

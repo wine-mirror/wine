@@ -53,6 +53,7 @@ typedef nsCStringContainer nsACString;
 typedef nsStringContainer nsAString;
 
 interface nsIWebBrowserChrome;
+interface nsILoadGroup;
 
 [
     object,
@@ -78,9 +79,8 @@ typedef nsISupports nsIDOMNode;
 typedef nsISupports nsIDOMEventTarget;
 typedef nsISupports nsIDOMAbstractView;
 typedef nsISupports nsIStreamListener;
-typedef nsISupports nsILoadGroup;
-typedef nsISupports nsIInterfaceRequestor;
 typedef nsISupports nsIHttpHeaderVisitor;
+typedef nsISupports nsIRequestObserver;
 
 [
     object,
@@ -125,6 +125,15 @@ interface nsIComponentManager : nsISupports
             nsQIResult result);
     nsresult CreateInstanceByContractID(nsstring aContractID, nsISupports *aDelegate,
             nsIIDRef aIID, nsQIResult result);
+}
+
+[
+    object,
+    uuid(033a1470-8b2a-11d3-af88-00a024ffc08c)
+]
+interface nsIInterfaceRequestor : nsISupports
+{
+    nsresult GetInterface(const nsIID *riid, void **result);
 }
 
 [
@@ -204,6 +213,24 @@ interface nsIRequest : nsISupports
     nsresult SetLoadGroup(nsILoadGroup *aLoadGroup);
     nsresult GetLoadFlags(nsLoadFlags *aLoadFlags);
     nsresult SetLoadFlags(nsLoadFlags aLoadFlags);
+}
+
+[
+    object,
+    uuid(3de0a31c-feaf-400f-9f1e-4ef71f8b20cc)
+]
+interface nsILoadGroup : nsIRequest
+{
+    nsresult GetGroupObserver(nsIRequestObserver **aGroupObserver);
+    nsresult SetGroupObserver(nsIRequestObserver *aGroupObserver);
+    nsresult GetDefaultLoadRequest(nsIRequest **aDefaultLoadRequest);
+    nsresult SetDefaultLoadRequest(nsIRequest *aDefaultLoadRequest);
+    nsresult AddRequest(nsIRequest *aRequest, nsISupports *aContext);
+    nsresult RemoveRequest(nsIRequest *aRequest, nsISupports *aContext, nsresult aStatus);
+    nsresult GetRequests(nsISimpleEnumerator **aRequests);
+    nsresult GetActiveCount(PRUint32 *aActiveCount);
+    nsresult GetNotificationCallbacks(nsIInterfaceRequestor **aNotificationCallbacks);
+    nsresult SetNotificationCallbacks(nsIInterfaceRequestor *aNotificationCallbacks);
 }
 
 [
