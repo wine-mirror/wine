@@ -132,10 +132,10 @@ struct proxy_manager
 /* this needs to become a COM object that implements IRemUnknown */
 struct apartment
 {
-  struct list entry;       
+  struct list entry;
 
   LONG  refs;              /* refcount of the apartment (LOCK) */
-  DWORD model;             /* threading model (RO) */
+  BOOL multi_threaded;     /* multi-threaded or single-threaded apartment? (RO) */
   DWORD tid;               /* thread id (RO) */
   OXID oxid;               /* object exporter ID (RO) */
   LONG ipidc;              /* interface pointer ID counter, starts at 1 (LOCK) */

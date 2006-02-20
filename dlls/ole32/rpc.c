@@ -277,7 +277,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
 
     RpcBindingInqObject(msg->Handle, &ipid);
     hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan);
-    if ((hr == S_OK) && (apt->model & COINIT_APARTMENTTHREADED))
+    if ((hr == S_OK) && !apt->multi_threaded)
     {
         params->handle = CreateEventW(NULL, FALSE, FALSE, NULL);
 
@@ -536,7 +536,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     /* Note: this is the important difference between STAs and MTAs - we
      * always execute RPCs to STAs in the thread that originally created the
      * apartment (i.e. the one that pumps messages to the window) */
-    if (apt->model & COINIT_APARTMENTTHREADED)
+    if (!apt->multi_threaded)
     {
         params->handle = CreateEventW(NULL, FALSE, FALSE, NULL);
 
