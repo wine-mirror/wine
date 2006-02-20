@@ -849,6 +849,26 @@ static void test_demangle_datatype(void)
 	      
     }
 }
+
+/* Compare two strings treating multiple spaces (' ', ascii 0x20) in s2 
+   as single space. Needed for test_demangle as __unDName() returns sometimes
+   two spaces instead of one in some older native msvcrt dlls. */
+static int strcmp_space(const char *s1, const char *s2)
+{
+    const char* s2start = s2;
+    do {
+        while (*s1 == *s2 && *s1) {
+            s1++;
+            s2++;
+        }
+        if (*s2 == ' ' && s2 > s2start && *(s2 - 1) == ' ')
+            s2++;
+        else
+            break;
+    } while (*s1 && *s2);
+    return *s1 - *s2;
+}
+
 static void test_demangle(void)
 {
     static struct {const char* in; const char* out;} test[] = {
@@ -950,7 +970,8 @@ static void test_demangle(void)
     for (i = 0; i < num_test; i++)
     {
 	name = p__unDName(0, test[i].in, 0, pmalloc, pfree, 0);
-        ok(name != NULL && !strcmp(name, test[i].out), "Got name \"%s\" for %d\n", name, i);
+        ok(name != NULL && !strcmp_space(test[i].out, name),
+                "Got name \"%s\" for %d\n", name, i);
         pfree(name);
     }
 }
