@@ -7,7 +7,7 @@
 @ stub CMP_RegisterNotification
 @ stub CMP_Report_LogOn
 @ stub CMP_UnregisterNotification
-@ stub CMP_WaitNoPendingInstallEvents
+@ stdcall CMP_WaitNoPendingInstallEvents(long)
 @ stub CMP_WaitServices
 @ stub CM_Add_Empty_Log_Conf
 @ stub CM_Add_Empty_Log_Conf_Ex

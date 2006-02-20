@@ -853,3 +853,12 @@ void WINAPI pSetupSetGlobalFlags( DWORD flags )
 {
     global_flags = flags;
 }
+
+/***********************************************************************
+ *		CMP_WaitNoPendingInstallEvents  (SETUPAPI.@)
+ */
+DWORD WINAPI CMP_WaitNoPendingInstallEvents( DWORD dwTimeout )
+{
+    FIXME("%ld\n", dwTimeout);
+    return WAIT_OBJECT_0;
+}
