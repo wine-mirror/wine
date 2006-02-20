@@ -99,7 +99,7 @@ BOOL load_winedos(void)
 	    /* ok, we're the winning thread */
             if (!VirtualProtect( DOSMEM_dosmem + DOSMEM_protect,
                                  DOSMEM_SIZE - DOSMEM_protect,
-                                 PAGE_EXECUTE_READWRITE, NULL ) ||
+                                 PAGE_READWRITE, NULL ) ||
                 !(hModule = LoadLibraryA( "winedos.dll" )))
             {
                 ERR("Could not load winedos.dll, DOS subsystem unavailable\n");
