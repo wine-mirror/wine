@@ -560,6 +560,85 @@ static void test_readdirectorychanges_null(void)
     ok( r == TRUE, "failed to remove directory\n");
 }
 
+static void test_readdirectorychanges_filedir(void)
+{
+    NTSTATUS r;
+    HANDLE hdir, hfile;
+    char buffer[0x1000];
+    DWORD fflags, filter = 0;
+    OVERLAPPED ov;
+    WCHAR path[MAX_PATH], subdir[MAX_PATH], file[MAX_PATH];
+    static const WCHAR szBoo[] = { '\\','b','o','o',0 };
+    static const WCHAR szHoo[] = { '\\','h','o','o',0 };
+    static const WCHAR szFoo[] = { '\\','f','o','o',0 };
+    PFILE_NOTIFY_INFORMATION pfni;
+
+    r = GetTempPathW( MAX_PATH, path );
+    ok( r != 0, "temp path failed\n");
+    if (!r)
+        return;
+
+    lstrcatW( path, szBoo );
+    lstrcpyW( subdir, path );
+    lstrcatW( subdir, szHoo );
+
+    lstrcpyW( file, path );
+    lstrcatW( file, szFoo );
+
+    DeleteFileW( file );
+    RemoveDirectoryW( subdir );
+    RemoveDirectoryW( path );
+    
+    r = CreateDirectoryW(path, NULL);
+    ok( r == TRUE, "failed to create directory\n");
+
+    fflags = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
+    hdir = CreateFileW(path, GENERIC_READ|SYNCHRONIZE|FILE_LIST_DIRECTORY, 
+                        FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, 
+                        OPEN_EXISTING, fflags, NULL);
+    ok( hdir != INVALID_HANDLE_VALUE, "failed to open directory\n");
+
+    ov.hEvent = CreateEvent( NULL, 0, 0, NULL );
+
+    filter = FILE_NOTIFY_CHANGE_FILE_NAME;
+
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,TRUE,filter,NULL,&ov,NULL);
+    ok(r==TRUE, "should return true\n");
+
+    r = WaitForSingleObject( ov.hEvent, 10 );
+    ok( r == WAIT_TIMEOUT, "should timeout\n" );
+
+    r = CreateDirectoryW( subdir, NULL );
+    ok( r == TRUE, "failed to create directory\n");
+
+    hfile = CreateFileW( file, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL );
+    ok( hfile != INVALID_HANDLE_VALUE, "failed to create file\n");
+    ok( CloseHandle(hfile), "failed toc lose file\n");
+
+    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    ok( r == WAIT_OBJECT_0, "event should be ready\n" );
+
+    ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
+    ok( ov.InternalHigh == 0x12, "ov.InternalHigh wrong\n");
+
+    pfni = (PFILE_NOTIFY_INFORMATION) buffer;
+    ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
+    ok( pfni->Action == FILE_ACTION_ADDED, "action wrong\n" );
+    ok( pfni->FileNameLength == 6, "len wrong\n" );
+    ok( !memcmp(pfni->FileName,&szFoo[1],6), "name wrong\n" );
+
+    r = DeleteFileW( file );
+    ok( r == TRUE, "failed to delete file\n");
+
+    r = RemoveDirectoryW( subdir );
+    ok( r == TRUE, "failed to remove directory\n");
+
+    CloseHandle(hdir);
+
+    r = RemoveDirectoryW( path );
+    ok( r == TRUE, "failed to remove directory\n");
+}
+
 START_TEST(change)
 {
     HMODULE hkernel32 = GetModuleHandle("kernel32");
@@ -570,4 +649,5 @@ START_TEST(change)
     test_ffcn();
     test_readdirectorychanges();
     test_readdirectorychanges_null();
+    test_readdirectorychanges_filedir();
 }

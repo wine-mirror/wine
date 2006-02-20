@@ -485,24 +485,20 @@ static int inotify_get_poll_events( struct fd *fd )
     return POLLIN;
 }
 
-static void inotify_do_change_notify( struct dir *dir, struct inotify_event *ie )
+static void inotify_do_change_notify( struct dir *dir, unsigned int action,
+                                      const char *relpath )
 {
     struct change_record *record;
 
     if (dir->want_data)
     {
-        size_t len = strlen(ie->name);
+        size_t len = strlen(relpath);
         record = malloc( offsetof(struct change_record, name[len]) );
         if (!record)
             return;
 
-        if( ie->mask & IN_CREATE )
-            record->action = FILE_ACTION_ADDED;
-        else if( ie->mask & IN_DELETE )
-            record->action = FILE_ACTION_REMOVED;
-        else
-            record->action = FILE_ACTION_MODIFIED;
-        memcpy( record->name, ie->name, len );
+        record->action = action;
+        memcpy( record->name, relpath, len );
         record->len = len;
 
         list_add_tail( &dir->change_records, &record->entry );
@@ -535,11 +531,39 @@ static unsigned int filter_from_event( struct inotify_event *ie )
     return filter;
 }
 
+static int inode_entry_is_dir( struct inode *inode, const char *name )
+{
+    /* distinguish a created file from a directory */
+    char *path;
+    struct list *head;
+    struct stat st;
+    int unix_fd, r;
+
+    head = list_head( &inode->dirs );
+    if (!head)
+        return -1;
+
+    path = malloc( strlen(name) + 32 );
+    if (!path)
+        return -1;
+
+    unix_fd = get_unix_fd( LIST_ENTRY( head, struct dir, in_entry )->fd );
+    sprintf( path, "/proc/self/fd/%u/%s", unix_fd, name );
+    r = stat( path, &st );
+    free( path );
+    if (-1 == r)
+        return -1;
+
+    if (S_ISDIR(st.st_mode))
+        return 1;
+    return 0;
+}
+
 static void inotify_notify_all( struct inotify_event *ie )
 {
+    unsigned int filter, action;
     struct inode *inode;
     struct dir *dir;
-    unsigned int filter;
 
     inode = inode_from_wd( ie->wd );
     if (!inode)
@@ -549,10 +573,31 @@ static void inotify_notify_all( struct inotify_event *ie )
     }
 
     filter = filter_from_event( ie );
+    
+    if (ie->mask & IN_CREATE)
+    {
+        switch (inode_entry_is_dir( inode, ie->name ))
+        {
+        case 1:
+            filter &= ~FILE_NOTIFY_CHANGE_FILE_NAME;
+            break;
+        case 0:
+            filter &= ~FILE_NOTIFY_CHANGE_DIR_NAME;
+            break;
+        default:
+            break;
+            /* Maybe the file disappeared before we could check it? */
+        }
+        action = FILE_ACTION_ADDED;
+    }
+    else if (ie->mask & IN_DELETE)
+        action = FILE_ACTION_REMOVED;
+    else
+        action = FILE_ACTION_MODIFIED;
 
     LIST_FOR_EACH_ENTRY( dir, &inode->dirs, struct dir, in_entry )
         if (filter & dir->filter)
-            inotify_do_change_notify( dir, ie );
+            inotify_do_change_notify( dir, action, ie->name );
 }
 
 static void inotify_poll_event( struct fd *fd, int event )
