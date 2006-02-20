@@ -140,15 +140,6 @@ typedef struct
 #define TPM_BUTTONDOWN		0x40000000		/* menu was clicked before tracking */
 #define TPM_POPUPMENU           0x20000000              /* menu is a popup menu */
 
-  /* Space between 2 menu bar items */
-#define MENU_BAR_ITEMS_SPACE 12
-
-  /* Minimum width of a tab character */
-#define MENU_TAB_SPACE 8
-
-  /* Height of a separator item */
-#define SEPARATOR_HEIGHT 5
-
   /* Space between 2 columns */
 #define MENU_COL_SPACE 4
 
@@ -960,18 +951,19 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
     GetObjectW( get_arrow_bitmap(), sizeof(bm), &bm );
     arrow_bitmap_width = bm.bmWidth;
 
+    /* not done in Menu_Init: GetDialogBaseUnits() breaks there */
+    if( !menucharsize.cx ) {
+        menucharsize.cx = GdiGetCharDimensions( hdc, NULL, &menucharsize.cy );
+        /* Win95/98/ME will use menucharsize.cy here. Testing is possible
+         * but it is unlikely an application will depend on that */
+        ODitemheight = HIWORD( GetDialogBaseUnits());
+    }
+
     SetRect( &lpitem->rect, orgX, orgY, orgX, orgY );
 
     if (lpitem->fType & MF_OWNERDRAW)
     {
         MEASUREITEMSTRUCT mis;
-        /* not done in Menu_Init: GetDialogBaseUnits() breaks there */
-        if( !menucharsize.cx ) {
-            menucharsize.cx = GdiGetCharDimensions( hdc, NULL, &menucharsize.cy );
-            /* Win95/98/ME will use menucharsize.cy here. Testing is possible
-             * but it is unlikely an application will depend on that */
-            ODitemheight = HIWORD( GetDialogBaseUnits());
-        }
         mis.CtlType    = ODT_MENU;
         mis.CtlID      = 0;
         mis.itemID     = lpitem->wID;
@@ -998,14 +990,16 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
     if (lpitem->fType & MF_SEPARATOR)
     {
-	lpitem->rect.bottom += SEPARATOR_HEIGHT;
-	return;
+        lpitem->rect.bottom += GetSystemMetrics( SM_CYMENUSIZE)/2;
+        if( !menuBar)
+            lpitem->rect.right += arrow_bitmap_width + menucharsize.cx;
+        return;
     }
 
     if (!menuBar) {
         if (lpitem->hbmpItem) {
             SIZE size;
-            
+
             MENU_GetBitmapItemSize(lpitem, &size, hwndOwner);
             /* Keep the size of the bitmap in callback mode to be able
              * to draw it correctly */
@@ -1046,19 +1040,19 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
 	if (menuBar)
 	{
-	     lpitem->rect.right += MENU_BAR_ITEMS_SPACE;
+            lpitem->rect.right +=  2 * menucharsize.cx;
 	}
 	else if ((p = strchrW( lpitem->text, '\t' )) != NULL)
 	{
 	    /* Item contains a tab (only meaningful in popup menus) */
 	    GetTextExtentPoint32W(hdc, lpitem->text, (int)(p - lpitem->text) , &size);
-	    lpitem->xTab = check_bitmap_width + MENU_TAB_SPACE + size.cx;
-	    lpitem->rect.right += MENU_TAB_SPACE;
+	    lpitem->xTab = check_bitmap_width + menucharsize.cx + size.cx;
+	    lpitem->rect.right += menucharsize.cx;
 	}
 	else
 	{
 	    if (strchrW( lpitem->text, '\b' ))
-	        lpitem->rect.right += MENU_TAB_SPACE;
+                lpitem->rect.right += menucharsize.cx;
 	    lpitem->xTab = lpitem->rect.right - check_bitmap_width
 	                   - arrow_bitmap_width;
 	}
@@ -1456,7 +1450,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
         rc.left++;
         rc.right--;
-        rc.top += SEPARATOR_HEIGHT / 2;
+        rc.top = ( rc.top + rc.bottom) / 2;
         if (flat_menu)
         {
             oldPen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_BTNSHADOW) );
@@ -1585,10 +1579,12 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	     hfontOld = SelectObject( hdc, get_menu_font(TRUE) );
 	}
 
-	if (menuBar)
-	{
-	    rect.left += MENU_BAR_ITEMS_SPACE / 2;
-	    rect.right -= MENU_BAR_ITEMS_SPACE / 2;
+	if (menuBar) {
+            if( lpitem->hbmpItem)
+                rect.left += lpitem->bmpsize.cx;
+            if( !(lpitem->hbmpItem == HBMMENU_CALLBACK))
+                rect.left += menucharsize.cx;
+            rect.right -= menucharsize.cx;
 	}
 
 	for (i = 0; lpitem->text[i]; i++)
