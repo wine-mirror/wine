@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "shlguid.h"
 
 #include "wine/test.h"
 
@@ -81,9 +82,30 @@ static void test_CLSIDFromString(void)
     ok(IsEqualCLSID(&clsid, &CLSID_CDeviceMoniker), "clsid wasn't equal to CLSID_CDeviceMoniker\n");
 }
 
+static void test_CoCreateInstance(void)
+{
+    REFCLSID rclsid = &CLSID_MyComputer;
+    IUnknown *pUnk = (IUnknown *)0xdeadbeef;
+    HRESULT hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
+    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have return CO_E_NOTINITIALIZED instead of 0x%08lx", hr);
+    todo_wine {
+    ok(pUnk == NULL, "CoCreateInstance should have changed the passed in pointer to NULL, instead of %p\n", pUnk);
+    }
+
+    OleInitialize(NULL);
+    hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
+    ok_ole_success(hr, "CoCreateInstance");
+    IUnknown_Release(pUnk);
+    OleUninitialize();
+
+    hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
+    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have return CO_E_NOTINITIALIZED instead of 0x%08lx", hr);
+}
+
 START_TEST(compobj)
 {
     test_ProgIDFromCLSID();
     test_CLSIDFromProgID();
     test_CLSIDFromString();
+    test_CoCreateInstance();
 }
