@@ -27,6 +27,11 @@
  * have been selected, i.e. their popup menu is currently displayed.
  * This is probably not the meaning this style has in MS-Windows.
  *
+ * Note 2: where there is a difference, these menu API's are according
+ * the behavior of Windows 2k and Windows XP. Known differences with
+ * Windows 9x/ME are documented in the comments, in case an application
+ * is found to depend on the old behavior.
+ * 
  * TODO:
  *    implements styles :
  *        - MNS_AUTODISMISS
@@ -104,7 +109,7 @@ typedef struct {
     DWORD	dwContextHelpID;
     DWORD	dwMenuData;	/* application defined value */
     HMENU       hSysMenuOwner;  /* Handle to the dummy sys menu holder */
-    SIZE        maxBmpSize;     /* Maximum size of the bitmap items in MIIM_BITMAP state */
+    SIZE        maxBmpSize;     /* Maximum size of the bitmap items */
 } POPUPMENU, *LPPOPUPMENU;
 
 /* internal flags for menu tracking */
@@ -155,6 +160,7 @@ typedef struct
 #define MENU_ITEM_TYPE(flags) \
   ((flags) & (MF_STRING | MF_BITMAP | MF_OWNERDRAW | MF_SEPARATOR))
 
+/* macro to test that flags do not indicate bitmap, ownerdraw or separator */
 #define IS_STRING_ITEM(flags) (MENU_ITEM_TYPE ((flags)) == MF_STRING)
 #define IS_MAGIC_BITMAP(id)     ((id) && ((INT_PTR)(id) < 12) && ((INT_PTR)(id) >= -1))
 
@@ -1258,6 +1264,25 @@ MENU_DrawScrollArrows(LPPOPUPMENU lppop, HDC hdc)
 
 
 /***********************************************************************
+ *           draw_popup_arrow
+ *
+ * Draws the popup-menu arrow.
+ */
+static void draw_popup_arrow( HDC hdc, RECT rect, UINT arrow_bitmap_width,
+        UINT arrow_bitmap_height)
+{
+    HDC hdcMem = CreateCompatibleDC( hdc );
+    HBITMAP hOrigBitmap;
+
+    hOrigBitmap = SelectObject( hdcMem, get_arrow_bitmap() );
+    BitBlt( hdc, rect.right - arrow_bitmap_width - 1,
+            (rect.top + rect.bottom - arrow_bitmap_height) / 2,
+            arrow_bitmap_width, arrow_bitmap_height,
+            hdcMem, 0, 0, SRCCOPY );
+    SelectObject( hdcMem, hOrigBitmap );
+    DeleteDC( hdcMem );
+}
+/***********************************************************************
  *           MENU_DrawMenuItem
  *
  * Draw a single menu item.
@@ -1268,8 +1293,16 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     RECT rect;
     BOOL flat_menu = FALSE;
     int bkgnd;
+    UINT arrow_bitmap_width = 0, arrow_bitmap_height = 0;
 
     debug_print_menuitem("MENU_DrawMenuItem: ", lpitem, "");
+
+    if (!menuBar) {
+        BITMAP bmp;
+        GetObjectW( get_arrow_bitmap(), sizeof(bmp), &bmp );
+        arrow_bitmap_width = bmp.bmWidth;
+        arrow_bitmap_height = bmp.bmHeight;
+    }
 
     if (lpitem->fType & MF_SYSMENU)
     {
@@ -1336,7 +1369,11 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	      dis.itemID, dis.itemState, dis.itemAction, dis.hwndItem,
 	      dis.hDC, wine_dbgstr_rect( &dis.rcItem));
         SendMessageW( hwndOwner, WM_DRAWITEM, 0, (LPARAM)&dis );
-        /* Fall through to draw popup-menu arrow */
+        /* Draw the popup-menu arrow */
+        if (lpitem->fType & MF_POPUP)
+            draw_popup_arrow( hdc, rect, arrow_bitmap_width,
+                    arrow_bitmap_height);
+        return;
     }
 
     TRACE("rect=%s\n", wine_dbgstr_rect( &lpitem->rect));
@@ -1346,70 +1383,66 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     rect = lpitem->rect;
     MENU_AdjustMenuItemRect(MENU_GetMenu(hmenu), &rect);
 
-    if (!(lpitem->fType & MF_OWNERDRAW))
+    if (lpitem->fState & MF_HILITE)
     {
-	if (lpitem->fState & MF_HILITE)
-	{
-	    if (flat_menu)
-	    {
-		InflateRect (&rect, -1, -1);
-		FillRect(hdc, &rect, GetSysColorBrush(COLOR_MENUHILIGHT));
-		InflateRect (&rect, 1, 1);
-		FrameRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
-	    }
-	    else
-	    {
-		if(menuBar)
-		    DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
-		else
-		    FillRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
-	    }
-	}
+        if (flat_menu)
+        {
+            InflateRect (&rect, -1, -1);
+            FillRect(hdc, &rect, GetSysColorBrush(COLOR_MENUHILIGHT));
+            InflateRect (&rect, 1, 1);
+            FrameRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
+        }
         else
-	    FillRect( hdc, &rect, GetSysColorBrush(bkgnd) );
+        {
+            if(menuBar)
+                DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
+            else
+                FillRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
+        }
     }
+    else
+        FillRect( hdc, &rect, GetSysColorBrush(bkgnd) );
 
     SetBkMode( hdc, TRANSPARENT );
 
-    if (!(lpitem->fType & MF_OWNERDRAW))
+    /* vertical separator */
+    if (!menuBar && (lpitem->fType & MF_MENUBARBREAK))
     {
-	HPEN oldPen;
-    
-        /* vertical separator */
-        if (!menuBar && (lpitem->fType & MF_MENUBARBREAK))
-        {
-	    RECT rc = rect;
-	    rc.top = 3;
-	    rc.bottom = height - 3;
-	    if (flat_menu)
-	    {
-		oldPen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_BTNSHADOW) );
-		MoveToEx( hdc, rc.left, rc.top, NULL );
-		LineTo( hdc, rc.left, rc.bottom );
-		SelectObject( hdc, oldPen );
-	    }
-	    else
-		DrawEdge (hdc, &rc, EDGE_ETCHED, BF_LEFT);
-        }
+        HPEN oldPen;
+        RECT rc = rect;
 
-        /* horizontal separator */
-        if (lpitem->fType & MF_SEPARATOR)
+        rc.top = 3;
+        rc.bottom = height - 3;
+        if (flat_menu)
         {
-	    RECT rc = rect;
-	    rc.left++;
-	    rc.right--;
-	    rc.top += SEPARATOR_HEIGHT / 2;
-	    if (flat_menu)
-	    {
-		oldPen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_BTNSHADOW) );
-		MoveToEx( hdc, rc.left, rc.top, NULL );
-		LineTo( hdc, rc.right, rc.top );
-		SelectObject( hdc, oldPen );
-	    }
-	    else
-		DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
-	    return;
+            oldPen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_BTNSHADOW) );
+            MoveToEx( hdc, rc.left, rc.top, NULL );
+            LineTo( hdc, rc.left, rc.bottom );
+            SelectObject( hdc, oldPen );
         }
+        else
+            DrawEdge (hdc, &rc, EDGE_ETCHED, BF_LEFT);
+    }
+
+    /* horizontal separator */
+    if (lpitem->fType & MF_SEPARATOR)
+    {
+        HPEN oldPen;
+        RECT rc = rect;
+
+        rc.left++;
+        rc.right--;
+        rc.top += SEPARATOR_HEIGHT / 2;
+        if (flat_menu)
+        {
+            oldPen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_BTNSHADOW) );
+            MoveToEx( hdc, rc.left, rc.top, NULL );
+            LineTo( hdc, rc.right, rc.top );
+            SelectObject( hdc, oldPen );
+        }
+        else
+            DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
+        return;
     }
 
 	/* helper lines for debugging */
@@ -1423,115 +1456,91 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     {
         HBITMAP bm;
         INT y = rect.top + rect.bottom;
+        RECT rc = rect;
         UINT check_bitmap_width = GetSystemMetrics( SM_CXMENUCHECK );
         UINT check_bitmap_height = GetSystemMetrics( SM_CYMENUCHECK );
-        UINT arrow_bitmap_width, arrow_bitmap_height;
-        BITMAP bmp;
 
-        GetObjectW( get_arrow_bitmap(), sizeof(bmp), &bmp );
-        arrow_bitmap_width = bmp.bmWidth;
-        arrow_bitmap_height = bmp.bmHeight;
-
-        if (!(lpitem->fType & MF_OWNERDRAW))
+        if (lpitem->hbmpItem)
         {
-            RECT rc;
-            rc = rect;
-            if (lpitem->hbmpItem)
-            {
-                POPUPMENU *menu = MENU_GetMenu(hmenu);
-                if (menu->dwStyle & MNS_CHECKORBMP)
-                    rc.left += menu->maxBmpSize.cx - check_bitmap_width;
-                else
-                    rc.left += menu->maxBmpSize.cx;
-            }
-            /* Draw the check mark
-             *
-             * FIXME:
-             * Custom checkmark bitmaps are monochrome but not always 1bpp.
-             */
-            bm = (lpitem->fState & MF_CHECKED) ? lpitem->hCheckBit : lpitem->hUnCheckBit;
-            if (bm)  /* we have a custom bitmap */
-            {
-                HDC hdcMem = CreateCompatibleDC( hdc );
-                SelectObject( hdcMem, bm );
-                BitBlt( hdc, rc.left, (y - check_bitmap_height) / 2,
-                        check_bitmap_width, check_bitmap_height,
-                        hdcMem, 0, 0, SRCCOPY );
-                DeleteDC( hdcMem );
-            }
-            else if (lpitem->fState & MF_CHECKED)  /* standard bitmaps */
-            {
-                RECT r;
-                HBITMAP bm = CreateBitmap( check_bitmap_width, check_bitmap_height, 1, 1, NULL );
-                HDC hdcMem = CreateCompatibleDC( hdc );
-                SelectObject( hdcMem, bm );
-                SetRect( &r, 0, 0, check_bitmap_width, check_bitmap_height );
-                DrawFrameControl( hdcMem, &r, DFC_MENU,
-                                  (lpitem->fType & MFT_RADIOCHECK) ?
-                                  DFCS_MENUBULLET : DFCS_MENUCHECK );
-                BitBlt( hdc, rc.left, (y - r.bottom) / 2, r.right, r.bottom,
-                        hdcMem, 0, 0, SRCCOPY );
-                DeleteDC( hdcMem );
-                DeleteObject( bm );
-            }
-            if (lpitem->hbmpItem)
-            {
-                HBITMAP hbm = lpitem->hbmpItem;
+            POPUPMENU *menu = MENU_GetMenu(hmenu);
+            if (menu->dwStyle & MNS_CHECKORBMP)
+                rc.left += menu->maxBmpSize.cx - check_bitmap_width;
+            else
+                rc.left += menu->maxBmpSize.cx;
+        }
+        /* Draw the check mark
+         *
+         * FIXME:
+         * Custom checkmark bitmaps are monochrome but not always 1bpp.
+         */
+        bm = (lpitem->fState & MF_CHECKED) ? lpitem->hCheckBit : lpitem->hUnCheckBit;
+        if (bm)  /* we have a custom bitmap */
+        {
+            HDC hdcMem = CreateCompatibleDC( hdc );
+            SelectObject( hdcMem, bm );
+            BitBlt( hdc, rc.left, (y - check_bitmap_height) / 2,
+                    check_bitmap_width, check_bitmap_height,
+                    hdcMem, 0, 0, SRCCOPY );
+            DeleteDC( hdcMem );
+        }
+        else if (lpitem->fState & MF_CHECKED)  /* standard bitmaps */
+        {
+            RECT r;
+            HBITMAP bm = CreateBitmap( check_bitmap_width, check_bitmap_height, 1, 1, NULL );
+            HDC hdcMem = CreateCompatibleDC( hdc );
+            SelectObject( hdcMem, bm );
+            SetRect( &r, 0, 0, check_bitmap_width, check_bitmap_height );
+            DrawFrameControl( hdcMem, &r, DFC_MENU,
+                              (lpitem->fType & MFT_RADIOCHECK) ?
+                              DFCS_MENUBULLET : DFCS_MENUCHECK );
+            BitBlt( hdc, rc.left, (y - r.bottom) / 2, r.right, r.bottom,
+                    hdcMem, 0, 0, SRCCOPY );
+            DeleteDC( hdcMem );
+            DeleteObject( bm );
+        }
+        if (lpitem->hbmpItem)
+        {
+            HBITMAP hbm = lpitem->hbmpItem;
 
-                if (hbm == HBMMENU_CALLBACK)
-                {
-                    DRAWITEMSTRUCT drawItem;
-                    POINT origorg;
-                    drawItem.CtlType = ODT_MENU;
-                    drawItem.CtlID = 0;
-                    drawItem.itemID = lpitem->wID;
-                    drawItem.itemAction = odaction;
-                    drawItem.itemState = (lpitem->fState & MF_CHECKED)?ODS_CHECKED:0;
-                    drawItem.itemState |= (lpitem->fState & MF_DEFAULT)?ODS_DEFAULT:0;
-                    drawItem.itemState |= (lpitem->fState & MF_DISABLED)?ODS_DISABLED:0;
-                    drawItem.itemState |= (lpitem->fState & MF_GRAYED)?ODS_GRAYED|ODS_DISABLED:0;
-                    drawItem.itemState |= (lpitem->fState & MF_HILITE)?ODS_SELECTED:0;
-                    drawItem.hwndItem = (HWND)hmenu;
-                    drawItem.hDC = hdc;
-                    drawItem.rcItem = lpitem->rect;
-                    drawItem.itemData = lpitem->dwItemData;
-                    /* some applications make this assumption on the DC's origin */
-                    SetViewportOrgEx( hdc, lpitem->rect.left, lpitem->rect.top, &origorg);
-                    OffsetRect( &drawItem.rcItem, - lpitem->rect.left, - lpitem->rect.top);
-                    SendMessageW( hwndOwner, WM_DRAWITEM, 0, (LPARAM)&drawItem);
-                    SetViewportOrgEx( hdc, origorg.x, origorg.y, NULL);
+            if (hbm == HBMMENU_CALLBACK)
+            {
+                DRAWITEMSTRUCT drawItem;
+                POINT origorg;
+                drawItem.CtlType = ODT_MENU;
+                drawItem.CtlID = 0;
+                drawItem.itemID = lpitem->wID;
+                drawItem.itemAction = odaction;
+                drawItem.itemState = (lpitem->fState & MF_CHECKED)?ODS_CHECKED:0;
+                drawItem.itemState |= (lpitem->fState & MF_DEFAULT)?ODS_DEFAULT:0;
+                drawItem.itemState |= (lpitem->fState & MF_DISABLED)?ODS_DISABLED:0;
+                drawItem.itemState |= (lpitem->fState & MF_GRAYED)?ODS_GRAYED|ODS_DISABLED:0;
+                drawItem.itemState |= (lpitem->fState & MF_HILITE)?ODS_SELECTED:0;
+                drawItem.hwndItem = (HWND)hmenu;
+                drawItem.hDC = hdc;
+                drawItem.rcItem = lpitem->rect;
+                drawItem.itemData = lpitem->dwItemData;
+                /* some applications make this assumption on the DC's origin */
+                SetViewportOrgEx( hdc, lpitem->rect.left, lpitem->rect.top, &origorg);
+                OffsetRect( &drawItem.rcItem, - lpitem->rect.left, - lpitem->rect.top);
+                SendMessageW( hwndOwner, WM_DRAWITEM, 0, (LPARAM)&drawItem);
+                SetViewportOrgEx( hdc, origorg.x, origorg.y, NULL);
 
-                } else {
-                    MENU_DrawBitmapItem(hdc, lpitem, &rect, FALSE);
-                }
+            } else {
+                MENU_DrawBitmapItem(hdc, lpitem, &rect, FALSE);
             }
         }
-
-	  /* Draw the popup-menu arrow */
-	if (lpitem->fType & MF_POPUP)
-	{
-	    HDC hdcMem = CreateCompatibleDC( hdc );
-	    HBITMAP hOrigBitmap;
-
-	    hOrigBitmap = SelectObject( hdcMem, get_arrow_bitmap() );
-	    BitBlt( hdc, rect.right - arrow_bitmap_width - 1,
-		      (y - arrow_bitmap_height) / 2,
-		      arrow_bitmap_width, arrow_bitmap_height,
-		      hdcMem, 0, 0, SRCCOPY );
-            SelectObject( hdcMem, hOrigBitmap );
-	    DeleteDC( hdcMem );
-	}
+	/* Draw the popup-menu arrow */
+        if (lpitem->fType & MF_POPUP)
+            draw_popup_arrow( hdc, rect, arrow_bitmap_width,
+                    arrow_bitmap_height);
 
 	rect.left += check_bitmap_width;
 	rect.right -= arrow_bitmap_width;
     }
-    else if( lpitem->hbmpItem && !(lpitem->fType & MF_OWNERDRAW))
+    else if( lpitem->hbmpItem)
     {   /* Draw the bitmap */
 	MENU_DrawBitmapItem( hdc, lpitem, &rect, menuBar);
     }
-    /* Done for owner-drawn */
-    if (lpitem->fType & MF_OWNERDRAW)
-        return;
     /* process text if present */
     if (lpitem->text)
     {
@@ -4279,16 +4288,19 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
     
     if( lpmii->fMask & MIIM_TYPE) {
         if( lpmii->fMask & ( MIIM_STRING | MIIM_FTYPE | MIIM_BITMAP)) {
+            WARN("invalid combination of fMask bits used\n");
+            /* this does not happen on Win9x/ME */
             SetLastError( ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 	lpmii->fType = menu->fType & ~MF_POPUP;
         if( menu->hbmpItem) lpmii->fType |= MFT_BITMAP;
-	lpmii->hbmpItem = menu->hbmpItem;
+	lpmii->hbmpItem = menu->hbmpItem; /* not on Win9x/ME */
         if( lpmii->fType & MFT_BITMAP) {
 	    lpmii->dwTypeData = (LPWSTR) menu->hbmpItem;
 	    lpmii->cch = 0;
         } else if( lpmii->fType & (MFT_OWNERDRAW | MFT_SEPARATOR)) {
+            /* this does not happen on Win9x/ME */
 	    lpmii->dwTypeData = 0;
 	    lpmii->cch = 0;
         }
@@ -4327,8 +4339,11 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
                     lpmii->cch--;
                 else
                     lpmii->cch = len;
-            else /* return length of string */
+            else {
+                /* return length of string */
+                /* not on Win9x/ME if fType & MFT_BITMAP */
                 lpmii->cch = len;
+            }
         }
     }
 
@@ -4346,8 +4361,11 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 
     if (lpmii->fMask & MIIM_SUBMENU)
 	lpmii->hSubMenu = menu->hSubMenu;
-    else
-        lpmii->hSubMenu = 0; /* hSubMenu is always cleared */
+    else {
+        /* hSubMenu is always cleared 
+         * (not on Win9x/ME ) */
+        lpmii->hSubMenu = 0;
+    }
 
     if (lpmii->fMask & MIIM_CHECKMARKS) {
 	lpmii->hbmpChecked = menu->hCheckBit;
@@ -4433,10 +4451,12 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 {
     if (!menu) return FALSE;
 
-    debug_print_menuitem("MENU_SetItemInfo_common from: ", menu, "");
+    debug_print_menuitem("SetmenuItemInfo_common from: ", menu, "");
 
     if (lpmii->fMask & MIIM_TYPE ) {
         if( lpmii->fMask & ( MIIM_STRING | MIIM_FTYPE | MIIM_BITMAP)) {
+            WARN("invalid combination of fMask bits used\n");
+            /* this does not happen on Win9x/ME */
             SetLastError( ERROR_INVALID_PARAMETER);
             return FALSE;
         }
