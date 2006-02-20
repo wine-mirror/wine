@@ -963,6 +963,15 @@ static void test_demangle(void)
 {"??_V@YAXPAX@Z", "void __cdecl operator delete[](void *)"},
 {"??X?$_Complex_base@M@std@@QAEAAV01@ABM@Z", "public: class std::_Complex_base<float> & __thiscall std::_Complex_base<float>::operator*=(float const &)"},
 {"??Xstd@@YAAAV?$complex@M@0@AAV10@ABV10@@Z", "class std::complex<float> & __cdecl std::operator*=(class std::complex<float> &,class std::complex<float> const &)"},
+{"?aaa@@YAHAAUbbb@@@Z", "int __cdecl aaa(struct bbb &)"},
+{"?aaa@@YAHBAUbbb@@@Z", "int __cdecl aaa(struct bbb & volatile)"},
+{"?aaa@@YAHPAUbbb@@@Z", "int __cdecl aaa(struct bbb *)"},
+{"?aaa@@YAHQAUbbb@@@Z", "int __cdecl aaa(struct bbb * const)"},
+{"?aaa@@YAHRAUbbb@@@Z", "int __cdecl aaa(struct bbb * volatile)"},
+{"?aaa@@YAHSAUbbb@@@Z", "int __cdecl aaa(struct bbb * const volatile)"},
+{"??0aa.a@@QAE@XZ", "??0aa.a@@QAE@XZ"},
+{"??0aa$_3a@@QAE@XZ", "public: __thiscall aa$_3a::aa$_3a(void)"},
+{"??2?$aaa@AAUbbb@@AAUccc@@AAU2@@ddd@1eee@2@QAEHXZ", "public: int __thiscall eee::eee::ddd::ddd::aaa<struct bbb &,struct ccc &,struct ccc &>::operator new(void)"},
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
     char* name;
