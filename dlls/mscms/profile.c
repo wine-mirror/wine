@@ -348,13 +348,13 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
 
     if (machine) 
     {
-        SetLastError(ERROR_NOT_SUPPORTED);
+        SetLastError( ERROR_NOT_SUPPORTED );
         return FALSE;
     }
 
     if (!size) 
     {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -413,13 +413,13 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
 
     if (machine) 
     {
-        SetLastError(ERROR_NOT_SUPPORTED);
+        SetLastError( ERROR_NOT_SUPPORTED );
         return FALSE;
     }
 
     if (!size) 
     {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
