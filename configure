@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS DLLDEFS build build_cpu build_vendor build_os host host_cpu host_vendor host_os WIN16_FILES WIN16_INSTALL SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS FONTFORGE PKG_CONFIG PRELINK LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS XML2LIBS XML2INCL XSLTLIBS XSLTINCL CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS LCMSLIBS LDAPLIBS FREETYPELIBS FREETYPEINCL ft_devel ft_devel2 FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ESDCONFIG ESDLIBS ESDINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS BUILTINFLAG DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS MAIN_BINARY EXTRA_BINARIES LDD LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS DLLDEFS build build_cpu build_vendor build_os host host_cpu host_vendor host_os WIN16_FILES WIN16_INSTALL SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS FONTFORGE PKG_CONFIG PRELINK LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS XML2LIBS XML2INCL XSLTLIBS XSLTINCL CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS LCMSLIBS LDAPLIBS FREETYPELIBS FREETYPEINCL ft_devel ft_devel2 FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ESDCONFIG ESDLIBS ESDINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS BUILTINFLAG DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS LDEXERPATH COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS MAIN_BINARY EXTRA_BINARIES LDD LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_IMPLIB_RULES MAKE_TEST_RULES MAKE_LIB_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -12712,6 +12712,68 @@ echo "${ECHO_T}$ac_cv_c_export_dynamic" >&6
 
         fi
 
+        echo "$as_me:$LINENO: checking whether the linker accepts --rpath" >&5
+echo $ECHO_N "checking whether the linker accepts --rpath... $ECHO_C" >&6
+if test "${ac_cv_ld_rpath+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -fPIC -Wl,--rpath,\$ORIGIN/../lib"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_ld_rpath="yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_ld_rpath="no"
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+echo "$as_me:$LINENO: result: $ac_cv_ld_rpath" >&5
+echo "${ECHO_T}$ac_cv_ld_rpath" >&6
+        if test "$ac_cv_ld_rpath" = "yes"
+        then
+          LDEXERPATH="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
+
+        fi
+
         case $host_cpu in
           *i[3456789]86*)
             echo "$as_me:$LINENO: checking whether we can relocate the executable to 0x7bf00000" >&5
@@ -19850,6 +19912,7 @@ s,@ac_ct_DLLTOOL@,$ac_ct_DLLTOOL,;t t
 s,@DLLWRAP@,$DLLWRAP,;t t
 s,@ac_ct_DLLWRAP@,$ac_ct_DLLWRAP,;t t
 s,@LDEXECFLAGS@,$LDEXECFLAGS,;t t
+s,@LDEXERPATH@,$LDEXERPATH,;t t
 s,@COREFOUNDATIONLIB@,$COREFOUNDATIONLIB,;t t
 s,@IOKITLIB@,$IOKITLIB,;t t
 s,@CROSSTEST@,$CROSSTEST,;t t

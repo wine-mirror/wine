@@ -987,6 +987,14 @@ case $host_os in
           AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])
         fi
 
+        AC_CACHE_CHECK([whether the linker accepts --rpath], ac_cv_ld_rpath,
+          [WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
+                           ac_cv_ld_rpath="yes",ac_cv_ld_rpath="no")])
+        if test "$ac_cv_ld_rpath" = "yes"
+        then
+          AC_SUBST(LDEXERPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"])
+        fi
+
         case $host_cpu in
           *i[[3456789]]86*)
             AC_CACHE_CHECK([whether we can relocate the executable to 0x7bf00000], ac_cv_ld_reloc_exec,

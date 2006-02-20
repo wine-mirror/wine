@@ -57,8 +57,10 @@ all: $(PROGRAMS) $(MANPAGES)
 
 @MAKE_RULES@
 
+LDEXERPATH = @LDEXERPATH@
+
 wineserver: $(OBJS)
-	$(CC) -o $(PROGRAMS) $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LDFLAGS) $(LIBS)
+	$(CC) -o $@ $(LDEXERPATH) $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LDFLAGS) $(LIBS)
 
 install:: $(PROGRAMS) $(MANPAGES)
 	$(MKINSTALLDIRS) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)

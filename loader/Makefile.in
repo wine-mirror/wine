@@ -26,18 +26,19 @@ all: $(WINE_BINARIES) $(MODULE) $(MANPAGES)
 
 LIBPTHREAD  = @LIBPTHREAD@
 LDEXECFLAGS = @LDEXECFLAGS@
+LDEXERPATH  = @LDEXERPATH@
 
 wine-glibc: glibc.o Makefile.in
-	$(CC) -o $@ glibc.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS)
+	$(CC) -o $@ glibc.o $(LDEXERPATH) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS)
 
 wine-preloader: preloader.o Makefile.in
 	$(CC) -o $@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c000000 preloader.o $(LIBPORT) $(LDFLAGS)
 
 wine-kthread: $(KTHREAD_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(KTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS)
+	$(CC) -o $@ $(LDEXECFLAGS) $(LDEXERPATH) $(KTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS)
 
 wine-pthread: $(PTHREAD_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(PTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS)
+	$(CC) -o $@ $(LDEXECFLAGS) $(LDEXERPATH) $(PTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS)
 
 $(MODULE): $(MAIN_BINARY)
 	$(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
