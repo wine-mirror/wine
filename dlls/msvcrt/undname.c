@@ -91,6 +91,7 @@ struct parsed_symbol
     const char*         current;        /* pointer in input (mangled) string */
     char*               result;         /* demangled string */
 
+    struct array        names;          /* array of names for back reference */
     struct array        stack;          /* stack of parsed strings */
 
     void*               alloc_list;     /* linked list of allocated blocks */
@@ -420,9 +421,9 @@ static char* get_literal_string(struct parsed_symbol* sym)
         }
     } while (*++sym->current != '@');
     sym->current++;
-    str_array_push(sym, ptr, sym->current - 1 - ptr, &sym->stack);
+    str_array_push(sym, ptr, sym->current - 1 - ptr, &sym->names);
 
-    return str_array_get_ref(&sym->stack, sym->stack.num - sym->stack.start - 1);
+    return str_array_get_ref(&sym->names, sym->names.num - sym->names.start - 1);
 }
 
 /******************************************************************
@@ -440,7 +441,7 @@ static char* get_literal_string(struct parsed_symbol* sym)
  */
 static BOOL get_class(struct parsed_symbol* sym)
 {
-    const char* ptr;
+    const char* name = NULL;
 
     while (*sym->current != '@')
     {
@@ -451,39 +452,44 @@ static BOOL get_class(struct parsed_symbol* sym)
         case '0': case '1': case '2': case '3':
         case '4': case '5': case '6': case '7':
         case '8': case '9':
-            ptr = str_array_get_ref(&sym->stack, *sym->current++ - '0');
-            if (!ptr) return FALSE;
-            str_array_push(sym, ptr, -1, &sym->stack);
+            name = str_array_get_ref(&sym->names, *sym->current++ - '0');
             break;
         case '?':
             if (*++sym->current == '$') 
             {
-                const char*     name;
-                char*           full = NULL;
+                /* In a template argument list the back reference to names
+                   table is separately created. '0' points to the class
+                   component name with the template arguments. We use the same
+                   stack array to hold the names but save/restore the stack
+                   state before/after parsing the template argument list. */
                 char*           args = NULL;
-                unsigned        num_mark = sym->stack.num;
-                unsigned        start_mark = sym->stack.start;
+                unsigned        num_mark = sym->names.num;
+                unsigned        start_mark = sym->names.start;
+                unsigned        stack_mark = sym->stack.num;
 
+                sym->names.start = sym->names.num;
                 sym->current++;
-                sym->stack.start = sym->stack.num;
                 if (!(name = get_literal_string(sym)))
                     return FALSE;
                 args = get_args(sym, NULL, FALSE, '<', '>');
                 if (args != NULL)
-                {
-                    full = str_printf(sym, "%s%s", name, args);
-                }
-                if (!full) return FALSE;
-                sym->stack.elts[num_mark] = full;
-                sym->stack.num = num_mark + 1;
-                sym->stack.start = start_mark;
+                    name = str_printf(sym, "%s%s", name, args);
+                sym->names.num = num_mark;
+                sym->names.start = start_mark;
+                sym->stack.num = stack_mark;
+                /* Now that we are back to the standard name scope push
+                   the class component with all its template arguments
+                   to the names array for back reference. */
+                str_array_push(sym, name, -1, &sym->names);
             }
             break;
         default:
-            if (!get_literal_string(sym))
-                return FALSE;
+            name = get_literal_string(sym);
             break;
         }
+        if (!name)
+            return FALSE;
+        str_array_push(sym, name, -1, &sym->stack);
     }
     sym->current++;
     return TRUE;
@@ -1027,6 +1033,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
 
     /* MS mangled names always begin with '?' */
     if (*sym->current != '?') return FALSE;
+    str_array_init(&sym->names);
     str_array_init(&sym->stack);
     sym->current++;
 
