@@ -1423,7 +1423,9 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     ret->load_group = NULL;
     ret->notif_callback = NULL;
     ret->load_flags = 0;
-    ret->original_uri = NULL;
+
+    nsIURI_AddRef(aURI);
+    ret->original_uri = aURI;
 
     if(channel)
         nsIChannel_QueryInterface(channel, &IID_nsIHttpChannel, (void**)&ret->http_channel);
