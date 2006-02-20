@@ -43,7 +43,7 @@ void stack_info(void)
     struct dbg_lvalue lvalue;
 
     lvalue.cookie = 0;
-    lvalue.type.id = dbg_itype_none;
+    lvalue.type.id = dbg_itype_segptr;
     lvalue.type.module = 0;
 
     /* FIXME: we assume stack grows the same way as on i386 */
