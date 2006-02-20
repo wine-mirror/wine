@@ -17,6 +17,7 @@
  */
 
 #include "config.h"
+#include "initguid.h"
 
 #include <stdarg.h>
 

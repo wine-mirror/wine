@@ -600,23 +600,10 @@ struct IDirect3DVolume8Impl
 {
     /* IUnknown fields */
     const IDirect3DVolume8Vtbl *lpVtbl;
-    LONG                   ref;
+    LONG                        ref;
 
     /* IDirect3DVolume8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    IUnknown               *Container;
-    D3DVOLUME_DESC          myDesc;
-    BYTE                   *allocatedMemory;
-    UINT                    textureName;
-    UINT                    bytesPerPixel;
-
-    BOOL                    lockable;
-    BOOL                    locked;
-    D3DBOX                  lockedBox;
-    D3DBOX                  dirtyBox;
-    BOOL                    Dirty;
+    IWineD3DVolume             *wineD3DVolume;
 };
 
 /* IUnknown: */
@@ -848,9 +835,6 @@ extern DWORD    WINAPI        IDirect3DResource8Impl_GetPriority(LPDIRECT3DRESOU
 extern void     WINAPI        IDirect3DResource8Impl_PreLoad(LPDIRECT3DRESOURCE8 iface);
 extern D3DRESOURCETYPE WINAPI IDirect3DResource8Impl_GetType(LPDIRECT3DRESOURCE8 iface);
 
-/* internal Interfaces */
-extern D3DPOOL WINAPI         IDirect3DResource8Impl_GetPool(LPDIRECT3DRESOURCE8 iface);
-
 
 /* ---------------------- */
 /* IDirect3DVertexBuffer8 */
@@ -958,6 +942,31 @@ extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_Unlock(LPDIRECT3DINDEXBU
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXBUFFER8 iface, D3DINDEXBUFFER_DESC *pDesc);
 
 
+/*****************************************************************************
+ * IWineD3DBaseTexture implementation structure (extends IWineD3DResourceImpl)
+ */
+typedef struct IWineD3DBaseTextureClass
+{
+    UINT                    levels;
+    BOOL                    dirty;
+    D3DFORMAT               format;
+    DWORD                   usage;
+    UINT                    textureName;
+    UINT                    LOD;
+    D3DTEXTUREFILTERTYPE    filterType;
+    DWORD                   states[13];
+
+} IWineD3DBaseTextureClass;
+
+typedef struct IWineD3DBaseTextureImpl
+{
+    /* IUnknown & WineD3DResource Information     */
+    const IWineD3DBaseTextureVtbl *lpVtbl;
+    IWineD3DResourceClass     resource;
+    IWineD3DBaseTextureClass  baseTexture;
+
+} IWineD3DBaseTextureImpl;
+
 /* --------------------- */
 /* IDirect3DBaseTexture8 */
 /* --------------------- */
@@ -972,17 +981,7 @@ struct IDirect3DBaseTexture8Impl
     LONG                   ref;
 
     /* IDirect3DResource8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DBaseTexture8 fields */
-    BOOL                    Dirty;
-    D3DFORMAT               format;
-    UINT                    levels;
-    /*
-     *BOOL                    isManaged;
-     *DWORD                   lod;
-     */
+    IWineD3DBaseTexture             *wineD3DBaseTexture;
 };
 
 /* IUnknown: */
@@ -1029,19 +1028,7 @@ struct IDirect3DCubeTexture8Impl
     LONG                   ref;
 
     /* IDirect3DResource8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DBaseTexture8 fields */
-    BOOL                    Dirty;
-    D3DFORMAT               format;
-    UINT                    levels;
-
-    /* IDirect3DCubeTexture8 fields */
-    UINT                    edgeLength;
-    DWORD                   usage;
-
-    IDirect3DSurface8Impl  *surfaces[6][MAX_LEVELS];
+    IWineD3DCubeTexture             *wineD3DCubeTexture;
 };
 
 /* IUnknown: */
@@ -1071,6 +1058,25 @@ extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_LockRect(LPDIRECT3DCUBET
 extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_UnlockRect(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, UINT Level);
 extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect);
 
+/*****************************************************************************
+ * IWineD3DTexture implementation structure (extends IWineD3DBaseTextureImpl)
+ */
+typedef struct IWineD3DTextureImpl
+{
+    /* IUnknown & WineD3DResource/WineD3DBaseTexture Information     */
+    const IWineD3DTextureVtbl *lpVtbl;
+    IWineD3DResourceClass     resource;
+    IWineD3DBaseTextureClass  baseTexture;
+
+    /* IWineD3DTexture */
+    IWineD3DSurface          *surfaces[MAX_LEVELS];
+    
+    UINT                      width;
+    UINT                      height;
+    float                     pow2scalingFactorX;
+    float                     pow2scalingFactorY;
+
+} IWineD3DTextureImpl;
 
 /* ----------------- */
 /* IDirect3DTexture8 */
@@ -1091,20 +1097,7 @@ struct IDirect3DTexture8Impl
     LONG                   ref;
 
     /* IDirect3DResourc8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DBaseTexture8 fields */
-    BOOL                    Dirty;
-    D3DFORMAT               format;
-    UINT                    levels;
-
-    /* IDirect3DTexture8 fields */
-    UINT                    width;
-    UINT                    height;
-    DWORD                   usage;
-
-    IDirect3DSurface8Impl  *surfaces[MAX_LEVELS];
+    IWineD3DTexture             *wineD3DTexture;
 };
 
 /* IUnknown: */
@@ -1154,21 +1147,7 @@ struct IDirect3DVolumeTexture8Impl
     LONG                   ref;
 
     /* IDirect3DResource8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DBaseTexture8 fields */
-    BOOL                    Dirty;
-    D3DFORMAT               format;
-    UINT                    levels;
-
-    /* IDirect3DVolumeTexture8 fields */
-    UINT                    width;
-    UINT                    height;
-    UINT                    depth;
-    DWORD                   usage;
-
-    IDirect3DVolume8Impl   *volumes[MAX_LEVELS];
+    IWineD3DVolumeTexture             *wineD3DVolumeTexture;
 };
 
 /* IUnknown: */
@@ -1445,6 +1424,16 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_CreatePixelShader(IDirect3DDevice8Impl
  *
  * to see how not defined it here
  */ 
+ /* Internal function called back during the CreateDevice to create a render target  */
+HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, UINT Width, UINT Height, 
+                                         WINED3DFORMAT Format, DWORD Usage, D3DPOOL Pool, UINT Level,
+                                         IWineD3DSurface **ppSurface, HANDLE *pSharedHandle);
+/* Internal function called back during the CreateVolumeTexture */
+HRESULT WINAPI D3D8CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
+                                   WINED3DFORMAT  Format, D3DPOOL Pool, DWORD Usage,
+                                   IWineD3DVolume **ppVolume,
+                                   HANDLE   * pSharedHandle) ; 
+ 
 void   GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand);
 void   setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage, DWORD Flags);
 void   set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);

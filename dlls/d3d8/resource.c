@@ -108,30 +108,6 @@ D3DRESOURCETYPE WINAPI IDirect3DResource8Impl_GetType(LPDIRECT3DRESOURCE8 iface)
     return This->ResourceType;
 }
 
-D3DPOOL WINAPI IDirect3DResource8Impl_GetPool(LPDIRECT3DRESOURCE8 iface) {    
-    IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
-
-    switch (This->ResourceType) { 
-    case D3DRTYPE_SURFACE:
-      return D3D8_SURFACE(((IDirect3DSurface8Impl*) This))->resource.pool;
-    case D3DRTYPE_TEXTURE:
-      return D3D8_SURFACE(((IDirect3DTexture8Impl*) This)->surfaces[0])->resource.pool;
-    case D3DRTYPE_VOLUME:
-      return ((IDirect3DVolume8Impl*) This)->myDesc.Pool;
-    case D3DRTYPE_VOLUMETEXTURE:
-      return ((IDirect3DVolumeTexture8Impl*) This)->volumes[0]->myDesc.Pool;
-    case D3DRTYPE_CUBETEXTURE:
-      return D3D8_SURFACE(((IDirect3DCubeTexture8Impl*) This)->surfaces[0][0])->resource.pool;
-    case D3DRTYPE_VERTEXBUFFER:
-      return ((IDirect3DVertexBuffer8Impl*) This)->currentDesc.Pool;
-    case D3DRTYPE_INDEXBUFFER:
-      return ((IDirect3DIndexBuffer8Impl*) This)->currentDesc.Pool;
-    default:
-      FIXME("(%p) Unrecognized type(%d,%s)\n", This, This->ResourceType, debug_d3dressourcetype(This->ResourceType));
-      return D3DPOOL_DEFAULT;
-    }
-}
-
 const IDirect3DResource8Vtbl Direct3DResource8_Vtbl =
 {
     IDirect3DResource8Impl_QueryInterface,

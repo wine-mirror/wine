@@ -1,7 +1,7 @@
 /*
  * IDirect3DBaseTexture8 implementation
  *
- * Copyright 2002 Jason Edmeades
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,33 +19,24 @@
  */
 
 #include "config.h"
-
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "wine/debug.h"
-
 #include "d3d8_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
-/* IDirect3DBaseTexture8 (Inherited from IUnknown) */
-HRESULT WINAPI IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 iface,REFIID riid,LPVOID *ppobj)
-{
+/* IDirect3DBaseTexture8 IUnknown parts follow: */
+HRESULT WINAPI IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 iface, REFIID riid, LPVOID *ppobj) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    TRACE("(%p) : QueryInterface\n", This);
+    TRACE("(%p) Relay\n" , This);
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DResource8)
         || IsEqualGUID(riid, &IID_IDirect3DBaseTexture8)) {
-        IDirect3DBaseTexture8Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+
     return E_NOINTERFACE;
 }
 
@@ -64,73 +55,95 @@ ULONG WINAPI IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 iface) {
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
 
-    if (ref == 0)
+    if (ref == 0) {
+        IWineD3DBaseTexture_Release(This->wineD3DBaseTexture);
         HeapFree(GetProcessHeap(), 0, This);
+    }
+
     return ref;
 }
 
-/* IDirect3DBaseTexture8 (Inherited from IDirect3DResource8) */
-HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetDevice(LPDIRECT3DBASETEXTURE8 iface, IDirect3DDevice8** ppDevice) {
+/* IDirect3DBaseTexture8 IDirect3DResource8 Interface follow: */
+HRESULT WINAPI IDirect3DBaseTexture8Impl_GetDevice(LPDIRECT3DBASETEXTURE8 iface, IDirect3DDevice8 **ppDevice) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->Device);
-    *ppDevice = (LPDIRECT3DDEVICE8) This->Device;
-    /**
-     * Note  Calling this method will increase the internal reference count 
-     * on the IDirect3DDevice8 interface. 
-     */
-    IDirect3DDevice8Impl_AddRef(*ppDevice);
-    return D3D_OK;
+    TRACE("(%p) Relay\n" , This);
+
+    return IDirect3DResource8Impl_GetDevice((LPDIRECT3DRESOURCE8) This, ppDevice);
 }
-HRESULT  WINAPI        IDirect3DBaseTexture8Impl_SetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
+
+HRESULT WINAPI IDirect3DBaseTexture8Impl_SetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    TRACE("(%p) Relay\n" , This);
+
+    return IWineD3DBaseTexture_SetPrivateData(This->wineD3DBaseTexture, refguid, pData, SizeOfData, Flags);
 }
-HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
+
+HRESULT WINAPI IDirect3DBaseTexture8Impl_GetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    TRACE("(%p) Relay\n" , This);
+
+    return IWineD3DBaseTexture_GetPrivateData(This->wineD3DBaseTexture, refguid, pData, pSizeOfData);
 }
-HRESULT  WINAPI        IDirect3DBaseTexture8Impl_FreePrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid) {
+
+HRESULT WINAPI IDirect3DBaseTexture8Impl_FreePrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    TRACE("(%p) Relay\n" , This);
+
+    return IWineD3DBaseTexture_FreePrivateData(This->wineD3DBaseTexture, refguid);
 }
-DWORD    WINAPI        IDirect3DBaseTexture8Impl_SetPriority(LPDIRECT3DBASETEXTURE8 iface, DWORD PriorityNew) {
+
+DWORD WINAPI IDirect3DBaseTexture8Impl_SetPriority(LPDIRECT3DBASETEXTURE8 iface, DWORD PriorityNew) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
+    TRACE("(%p) Relay\n" , This);
+
+    return IWineD3DBaseTexture_SetPriority(This->wineD3DBaseTexture, PriorityNew);
 }
-DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetPriority(LPDIRECT3DBASETEXTURE8 iface) {
+
+DWORD WINAPI IDirect3DBaseTexture8Impl_GetPriority(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
+    TRACE("(%p) Relay\n" , This);
+
+    return IWineD3DBaseTexture_GetPriority(This->wineD3DBaseTexture);
 }
-void     WINAPI        IDirect3DBaseTexture8Impl_PreLoad(LPDIRECT3DBASETEXTURE8 iface) {
+
+void WINAPI IDirect3DBaseTexture8Impl_PreLoad(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    TRACE("(%p) Relay\n" , This);
+
+    IWineD3DBaseTexture_PreLoad(This->wineD3DBaseTexture);
+    return;
 }
+
 D3DRESOURCETYPE WINAPI IDirect3DBaseTexture8Impl_GetType(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    /*TRACE("(%p) : returning %d\n", This, This->ResourceType);*/
-    return This->ResourceType;
+    TRACE("(%p) Relay\n" , This);
+
+    return IWineD3DBaseTexture_GetType(This->wineD3DBaseTexture);
 }
 
-/* IDirect3DBaseTexture8 */
-DWORD    WINAPI        IDirect3DBaseTexture8Impl_SetLOD(LPDIRECT3DBASETEXTURE8 iface, DWORD LODNew) {
+/* IDirect3DBaseTexture8 Interface follow: */
+DWORD  WINAPI IDirect3DBaseTexture8Impl_SetLOD(LPDIRECT3DBASETEXTURE8 iface, DWORD LODNew) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
-}
-DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLOD(LPDIRECT3DBASETEXTURE8 iface) {
-    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
-}
-DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEXTURE8 iface) {
-    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    TRACE("(%p) : returning %d\n", This, This->levels);    
-    return This->levels;
+    TRACE("(%p) Relay\n" , This);
+
+    return IWineD3DBaseTexture_SetLOD(This->wineD3DBaseTexture, LODNew);
 }
 
-static const IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl =
+DWORD WINAPI IDirect3DBaseTexture8Impl_GetLOD(LPDIRECT3DBASETEXTURE8 iface) {
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
+    TRACE("(%p) Relay\n" , This);
+
+    return IWineD3DBaseTexture_GetLOD(This->wineD3DBaseTexture);
+}
+
+DWORD WINAPI IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEXTURE8 iface) {
+    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
+    TRACE("(%p) Relay\n" , This);
+
+    return IWineD3DBaseTexture_GetLevelCount(This->wineD3DBaseTexture);
+}
+
+const IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl =
 {
     IDirect3DBaseTexture8Impl_QueryInterface,
     IDirect3DBaseTexture8Impl_AddRef,
@@ -143,21 +156,22 @@ static const IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl =
     IDirect3DBaseTexture8Impl_GetPriority,
     IDirect3DBaseTexture8Impl_PreLoad,
     IDirect3DBaseTexture8Impl_GetType,
+
     IDirect3DBaseTexture8Impl_SetLOD,
     IDirect3DBaseTexture8Impl_GetLOD,
-    IDirect3DBaseTexture8Impl_GetLevelCount,
+    IDirect3DBaseTexture8Impl_GetLevelCount
 };
 
 BOOL WINAPI IDirect3DBaseTexture8Impl_IsDirty(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    return This->Dirty;
+    return ((IWineD3DBaseTextureImpl*)This->wineD3DBaseTexture)->baseTexture.dirty;
 }
 
 BOOL WINAPI IDirect3DBaseTexture8Impl_SetDirty(LPDIRECT3DBASETEXTURE8 iface, BOOL dirty) {
     BOOL old;
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    
-    old = This->Dirty;
-    This->Dirty = dirty;
+
+    old = ((IWineD3DBaseTextureImpl*)This->wineD3DBaseTexture)->baseTexture.dirty;
+    ((IWineD3DBaseTextureImpl*)This->wineD3DBaseTexture)->baseTexture.dirty = dirty;
     return old;
 }
