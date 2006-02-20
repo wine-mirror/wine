@@ -449,7 +449,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
     IMAGE_THUNK_DATA *thunk_list;
     WCHAR buffer[32];
     const char *name = get_rva( module, descr->Name );
-    DWORD len = strlen(name) + 1;
+    DWORD len = strlen(name);
     PVOID protect_base;
     SIZE_T protect_size = 0;
     DWORD protect_old;
@@ -460,16 +460,20 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
     else
         import_list = thunk_list;
 
-    if (len * sizeof(WCHAR) <= sizeof(buffer))
+    while (len && name[len-1] == ' ') len--;  /* remove trailing spaces */
+
+    if (len * sizeof(WCHAR) < sizeof(buffer))
     {
         ascii_to_unicode( buffer, name, len );
+        buffer[len] = 0;
         status = load_dll( load_path, buffer, 0, &wmImp );
     }
     else  /* need to allocate a larger buffer */
     {
-        WCHAR *ptr = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        WCHAR *ptr = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
         if (!ptr) return NULL;
         ascii_to_unicode( ptr, name, len );
+        ptr[len] = 0;
         status = load_dll( load_path, ptr, 0, &wmImp );
         RtlFreeHeap( GetProcessHeap(), 0, ptr );
     }
