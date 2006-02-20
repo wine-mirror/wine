@@ -943,6 +943,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
     UINT check_bitmap_width = GetSystemMetrics( SM_CXMENUCHECK );
     UINT arrow_bitmap_width;
     BITMAP bm;
+    INT itemheight;
 
     TRACE("dc=%p owner=%p (%d,%d)\n", hdc, hwndOwner, orgX, orgY);
     debug_print_menuitem("MENU_CalcItemSize: menuitem:", lpitem,
@@ -996,6 +997,8 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         return;
     }
 
+    itemheight = 0;
+
     if (!menuBar) {
         if (lpitem->hbmpItem) {
             SIZE size;
@@ -1007,7 +1010,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
             lppop->maxBmpSize.cx = max( lppop->maxBmpSize.cx, size.cx);
             lppop->maxBmpSize.cy = max( lppop->maxBmpSize.cy, size.cy);
             lpitem->rect.right  += size.cx;
-            lpitem->rect.bottom += size.cy;
+            itemheight = size.cy;
 	    if (lppop->dwStyle & MNS_CHECKORBMP) 
 		lpitem->rect.right += check_bitmap_width;
 	    else
@@ -1022,41 +1025,59 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         MENU_GetBitmapItemSize( lpitem, &size, hwndOwner );
         lpitem->bmpsize = size;
         lpitem->rect.right  += size.cx;
-        lpitem->rect.bottom += size.cy;
-        /* Leave space for the sunken border */
-        lpitem->rect.right  += 2;
-        lpitem->rect.bottom += 2;
+        if( lpitem->text) lpitem->rect.right  += 2;
+        itemheight = size.cy;
     }
 
     /* it must be a text item - unless it's the system menu */
-    if (!(lpitem->fType & MF_SYSMENU) && lpitem->text)
-    {   SIZE size;
+    if (!(lpitem->fType & MF_SYSMENU) && lpitem->text) {
+        RECT rc = lpitem->rect;
+        LONG txtheight, txtwidth;
 
-	GetTextExtentPoint32W(hdc, lpitem->text,  strlenW(lpitem->text), &size);
-
-	lpitem->rect.right  += size.cx;
-	lpitem->rect.bottom += max(max(size.cy, GetSystemMetrics(SM_CYMENU)-1), lppop->maxBmpSize.cy);
-	lpitem->xTab = 0;
-
-	if (menuBar)
-	{
+        lpitem->xTab = 0;
+        if (menuBar) {
+            txtheight = DrawTextW( hdc, lpitem->text, -1, &rc,
+                    DT_SINGLELINE|DT_CALCRECT); 
+            lpitem->rect.right  += rc.right - rc.left;
+            itemheight = max( max( itemheight, txtheight),
+                    GetSystemMetrics( SM_CYMENU) - 1);
             lpitem->rect.right +=  2 * menucharsize.cx;
-	}
-	else if ((p = strchrW( lpitem->text, '\t' )) != NULL)
-	{
-	    /* Item contains a tab (only meaningful in popup menus) */
-	    GetTextExtentPoint32W(hdc, lpitem->text, (int)(p - lpitem->text) , &size);
-	    lpitem->xTab = check_bitmap_width + menucharsize.cx + size.cx;
-	    lpitem->rect.right += menucharsize.cx;
-	}
-	else
-	{
-	    if (strchrW( lpitem->text, '\b' ))
-                lpitem->rect.right += menucharsize.cx;
-	    lpitem->xTab = lpitem->rect.right - check_bitmap_width
-	                   - arrow_bitmap_width;
-	}
+        } else {
+            if ((p = strchrW( lpitem->text, '\t' )) != NULL) {
+                RECT tmprc = rc;
+                LONG tmpheight;
+                int n = (int)( p - lpitem->text);
+                /* Item contains a tab (only meaningful in popup menus) */
+                /* get text size before the tab */
+                txtheight = DrawTextW( hdc, lpitem->text, n, &rc,
+                        DT_SINGLELINE|DT_CALCRECT);
+                txtwidth = rc.right - rc.left;
+                p += 1; /* advance past the Tab */
+                /* get text size after the tab */
+                tmpheight = DrawTextW( hdc, p, -1, &tmprc,
+                        DT_SINGLELINE|DT_CALCRECT);
+                lpitem->xTab = menucharsize.cx +
+                    4 + check_bitmap_width + lpitem->bmpsize.cx + txtwidth;
+                txtheight = max( txtheight, tmpheight);
+                txtwidth += menucharsize.cx + /* space for the tab */
+                    tmprc.right - tmprc.left; /* space for the short cut */
+            } else {
+                txtheight = DrawTextW( hdc, lpitem->text, -1, &rc,
+                        DT_SINGLELINE|DT_CALCRECT);
+                txtwidth = rc.right - rc.left;
+                if (strchrW( lpitem->text, '\b' ))
+                    lpitem->rect.right += menucharsize.cx;
+                lpitem->xTab = 4 + check_bitmap_width + lpitem->bmpsize.cx +
+                    txtwidth;
+            }
+            lpitem->rect.right  += 2 + txtwidth;
+            itemheight = max( itemheight,
+                    max( txtheight + 2, menucharsize.cy + 4));
+        }
+    } else if( menuBar) {
+        itemheight = max( itemheight, GetSystemMetrics(SM_CYMENU)-1);
     }
+    lpitem->rect.bottom += itemheight;
     TRACE("%s\n", wine_dbgstr_rect( &lpitem->rect));
 }
 
