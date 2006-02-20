@@ -37,7 +37,6 @@
  *        - MNS_AUTODISMISS
  *        - MNS_DRAGDROP
  *        - MNS_MODELESS
- *        - MNS_NOCHECK
  *        - MNS_NOTIFYBYPOS
  */
 
@@ -1009,16 +1008,12 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
             lpitem->bmpsize = size;
             lppop->maxBmpSize.cx = max( lppop->maxBmpSize.cx, size.cx);
             lppop->maxBmpSize.cy = max( lppop->maxBmpSize.cy, size.cy);
-            lpitem->rect.right  += size.cx;
-            itemheight = size.cy;
-	    if (lppop->dwStyle & MNS_CHECKORBMP) 
-		lpitem->rect.right += check_bitmap_width;
-	    else
-		lpitem->rect.right += 2 * check_bitmap_width;
-	} else
-	    lpitem->rect.right += 2 * check_bitmap_width;
-	if (lpitem->fType & MF_POPUP)
-	    lpitem->rect.right += arrow_bitmap_width;
+            lpitem->rect.right += size.cx + 2;
+            itemheight = size.cy + 2;
+        }
+        lpitem->rect.right += 4 + arrow_bitmap_width + menucharsize.cx;
+        if( !(lppop->dwStyle & MNS_NOCHECK))
+            lpitem->rect.right += check_bitmap_width; 
     } else if (lpitem->hbmpItem) { /* menuBar */
         SIZE size;
 
@@ -1070,6 +1065,8 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
                 lpitem->xTab = 4 + check_bitmap_width + lpitem->bmpsize.cx +
                     txtwidth;
             }
+            if( (lppop->dwStyle & MNS_NOCHECK))
+                lpitem->xTab -= check_bitmap_width;
             lpitem->rect.right  += 2 + txtwidth;
             itemheight = max( itemheight,
                     max( txtheight + 2, menucharsize.cy + 4));
@@ -1501,7 +1498,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
                 bmprc.left = lpitem->text ? menucharsize.cx : 0;          
         } else {
             bmprc.left = 4;
-            if( !(menu->dwStyle & MNS_NOCHECK))
+            if( !(menu->dwStyle & ( MNS_CHECKORBMP | MNS_NOCHECK)))
                 bmprc.left += GetSystemMetrics( SM_CXMENUCHECK); 
         }
         bmprc.right =  bmprc.left + lpitem->bmpsize.cx;
@@ -1518,49 +1515,49 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         HBITMAP bm;
         INT y = rect.top + rect.bottom;
         RECT rc = rect;
+        int checked = FALSE;
         UINT check_bitmap_width = GetSystemMetrics( SM_CXMENUCHECK );
         UINT check_bitmap_height = GetSystemMetrics( SM_CYMENUCHECK );
-
-        if (lpitem->hbmpItem)
-        {
-            POPUPMENU *menu = MENU_GetMenu(hmenu);
-            if (menu->dwStyle & MNS_CHECKORBMP)
-                rc.left += menu->maxBmpSize.cx - check_bitmap_width;
-            else
-                rc.left += menu->maxBmpSize.cx;
-        }
         /* Draw the check mark
          *
          * FIXME:
          * Custom checkmark bitmaps are monochrome but not always 1bpp.
          */
-        bm = (lpitem->fState & MF_CHECKED) ? lpitem->hCheckBit : lpitem->hUnCheckBit;
-        if (bm)  /* we have a custom bitmap */
-        {
-            HDC hdcMem = CreateCompatibleDC( hdc );
-            SelectObject( hdcMem, bm );
-            BitBlt( hdc, rc.left, (y - check_bitmap_height) / 2,
-                    check_bitmap_width, check_bitmap_height,
-                    hdcMem, 0, 0, SRCCOPY );
-            DeleteDC( hdcMem );
+        if( !(menu->dwStyle & MNS_NOCHECK)) {
+            bm = (lpitem->fState & MF_CHECKED) ? lpitem->hCheckBit :
+                lpitem->hUnCheckBit;
+            if (bm)  /* we have a custom bitmap */
+            {
+                HDC hdcMem = CreateCompatibleDC( hdc );
+
+                SelectObject( hdcMem, bm );
+                BitBlt( hdc, rc.left, (y - check_bitmap_height) / 2,
+                        check_bitmap_width, check_bitmap_height,
+                        hdcMem, 0, 0, SRCCOPY );
+                DeleteDC( hdcMem );
+                checked = TRUE;
+            }
+            else if (lpitem->fState & MF_CHECKED) /* standard bitmaps */
+            {
+                RECT r;
+                HBITMAP bm = CreateBitmap( check_bitmap_width,
+                        check_bitmap_height, 1, 1, NULL );
+                HDC hdcMem = CreateCompatibleDC( hdc );
+
+                SelectObject( hdcMem, bm );
+                SetRect( &r, 0, 0, check_bitmap_width, check_bitmap_height);
+                DrawFrameControl( hdcMem, &r, DFC_MENU,
+                        (lpitem->fType & MFT_RADIOCHECK) ?
+                        DFCS_MENUBULLET : DFCS_MENUCHECK );
+                BitBlt( hdc, rc.left, (y - r.bottom) / 2, r.right, r.bottom,
+                        hdcMem, 0, 0, SRCCOPY );
+                DeleteDC( hdcMem );
+                DeleteObject( bm );
+                checked = TRUE;
+            }
         }
-        else if (lpitem->fState & MF_CHECKED)  /* standard bitmaps */
-        {
-            RECT r;
-            HBITMAP bm = CreateBitmap( check_bitmap_width, check_bitmap_height, 1, 1, NULL );
-            HDC hdcMem = CreateCompatibleDC( hdc );
-            SelectObject( hdcMem, bm );
-            SetRect( &r, 0, 0, check_bitmap_width, check_bitmap_height );
-            DrawFrameControl( hdcMem, &r, DFC_MENU,
-                              (lpitem->fType & MFT_RADIOCHECK) ?
-                              DFCS_MENUBULLET : DFCS_MENUCHECK );
-            BitBlt( hdc, rc.left, (y - r.bottom) / 2, r.right, r.bottom,
-                    hdcMem, 0, 0, SRCCOPY );
-            DeleteDC( hdcMem );
-            DeleteObject( bm );
-        }
-        if (lpitem->hbmpItem)
-        {
+        if( lpitem->hbmpItem &&
+                !( checked && (menu->dwStyle & MNS_CHECKORBMP))) {
             POINT origorg;
             /* some applications make this assumption on the DC's origin */
             SetViewportOrgEx( hdc, lpitem->rect.left, lpitem->rect.top, &origorg);
@@ -1572,8 +1569,9 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         if (lpitem->fType & MF_POPUP)
             draw_popup_arrow( hdc, rect, arrow_bitmap_width,
                     arrow_bitmap_height);
-
-	rect.left += check_bitmap_width;
+	rect.left += 4;
+        if( !(menu->dwStyle & MNS_NOCHECK))
+            rect.left += check_bitmap_width;
 	rect.right -= arrow_bitmap_width;
     }
     else if( lpitem->hbmpItem)
@@ -1594,6 +1592,9 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	UINT uFormat = (menuBar) ?
 			DT_CENTER | DT_VCENTER | DT_SINGLELINE :
 			DT_LEFT | DT_VCENTER | DT_SINGLELINE;
+
+        if( !(menu->dwStyle & MNS_CHECKORBMP))
+            rect.left += menu->maxBmpSize.cx;
 
 	if ( lpitem->fState & MFS_DEFAULT )
 	{
@@ -4869,7 +4870,6 @@ BOOL WINAPI SetMenuInfo (HMENU hMenu, LPCMENUINFO lpmi)
 	    if (menu->dwStyle & MNS_AUTODISMISS) FIXME("MNS_AUTODISMISS unimplemented\n");
 	    if (menu->dwStyle & MNS_DRAGDROP) FIXME("MNS_DRAGDROP unimplemented\n");
 	    if (menu->dwStyle & MNS_MODELESS) FIXME("MNS_MODELESS unimplemented\n");
-	    if (menu->dwStyle & MNS_NOCHECK) FIXME("MNS_NOCHECK unimplemented\n");
 	    if (menu->dwStyle & MNS_NOTIFYBYPOS) FIXME("MNS_NOTIFYBYPOS unimplemented\n");
 	}
 
