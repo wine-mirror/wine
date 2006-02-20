@@ -930,28 +930,20 @@ static struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int w
     case WS_AF_INET6: {
         struct sockaddr_in6* uin6;
         const struct WS_sockaddr_in6* win6 = (struct WS_sockaddr_in6*)wsaddr;
-        const struct WS_sockaddr_in6_old* win6old = (struct WS_sockaddr_in6_old*)wsaddr;
 
         /* Note: Windows has 2 versions of the sockaddr_in6 struct, one with
          * scope_id, one without. Check:
          * http://msdn.microsoft.com/library/en-us/winsock/winsock/sockaddr_2.asp
          */
-        if (wsaddrlen==sizeof(struct WS_sockaddr_in6_old)) {
-            *uaddrlen=sizeof(struct sockaddr_in6);
-            uin6=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *uaddrlen);
-            uin6->sin6_family   = AF_INET6;
-            uin6->sin6_port     = win6old->sin6_port;
-            uin6->sin6_flowinfo = win6old->sin6_flowinfo;
-            memcpy(&uin6->sin6_addr,&win6old->sin6_addr,16); /* 16 bytes = 128 address bits */
-            return (struct sockaddr*)uin6;
-        }
-        if (wsaddrlen>=sizeof(struct WS_sockaddr_in6)) {
+        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6_old)) {
             *uaddrlen=sizeof(struct sockaddr_in6);
             uin6=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *uaddrlen);
             uin6->sin6_family   = AF_INET6;
             uin6->sin6_port     = win6->sin6_port;
             uin6->sin6_flowinfo = win6->sin6_flowinfo;
-            uin6->sin6_scope_id = win6->sin6_scope_id;
+#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+            if (wsaddrlen >= sizeof(struct WS_sockaddr_in6)) uin6->sin6_scope_id = win6->sin6_scope_id;
+#endif
             memcpy(&uin6->sin6_addr,&win6->sin6_addr,16); /* 16 bytes = 128 address bits */
             return (struct sockaddr*)uin6;
         }
@@ -1066,28 +1058,22 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
 #endif
     case AF_INET6: {
         const struct sockaddr_in6* uin6 = (struct sockaddr_in6*)uaddr;
-        struct WS_sockaddr_in6* win6 = (struct WS_sockaddr_in6*)wsaddr;
         struct WS_sockaddr_in6_old* win6old = (struct WS_sockaddr_in6_old*)wsaddr;
 
         if (*wsaddrlen < sizeof(struct WS_sockaddr_in6_old))
             return -1;
-        if (*wsaddrlen == sizeof(struct WS_sockaddr_in6_old)) {
-            win6old->sin6_family   = WS_AF_INET6;
-            win6old->sin6_port     = uin6->sin6_port;
-            win6old->sin6_flowinfo = uin6->sin6_flowinfo;
-            memcpy(&win6old->sin6_addr,&uin6->sin6_addr,16); /* 16 bytes = 128 address bits */
-            *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
-            return 0;
-        }
+        win6old->sin6_family   = WS_AF_INET6;
+        win6old->sin6_port     = uin6->sin6_port;
+        win6old->sin6_flowinfo = uin6->sin6_flowinfo;
+        memcpy(&win6old->sin6_addr,&uin6->sin6_addr,16); /* 16 bytes = 128 address bits */
+        *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
+#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
         if (*wsaddrlen >= sizeof(struct WS_sockaddr_in6)) {
-            win6->sin6_family   = WS_AF_INET6;
-            win6->sin6_port     = uin6->sin6_port;
-            win6->sin6_flowinfo = uin6->sin6_flowinfo;
-            memcpy(&win6->sin6_addr,&uin6->sin6_addr,16); /* 16 bytes = 128 address bits */
+            struct WS_sockaddr_in6* win6 = (struct WS_sockaddr_in6*)wsaddr;
             win6->sin6_scope_id = uin6->sin6_scope_id;
             *wsaddrlen = sizeof(struct WS_sockaddr_in6);
-            return 0;
         }
+#endif
         return 0;
     }
     case AF_INET: {

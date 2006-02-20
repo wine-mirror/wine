@@ -1367,6 +1367,15 @@ AC_CHECK_MEMBERS([struct option.name],,,
 dnl Check for stat.st_blocks
 AC_CHECK_MEMBERS([struct stat.st_blocks])
 
+dnl Check for sin6_scope_id
+AC_CHECK_MEMBERS([struct sockaddr_in6.sin6_scope_id],,,
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
+
 dnl Check for the external timezone variables timezone and daylight
 AC_CACHE_CHECK([for timezone variable], ac_cv_have_timezone,
                AC_TRY_LINK([#include <time.h>],[timezone;],

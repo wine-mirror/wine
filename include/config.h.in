@@ -629,6 +629,9 @@
 /* Define to 1 if `name' is member of `struct option'. */
 #undef HAVE_STRUCT_OPTION_NAME
 
+/* Define to 1 if `sin6_scope_id' is member of `struct sockaddr_in6'. */
+#undef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+
 /* Define to 1 if `sa_len' is member of `struct sockaddr'. */
 #undef HAVE_STRUCT_SOCKADDR_SA_LEN
 
