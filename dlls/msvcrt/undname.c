@@ -491,6 +491,21 @@ static char* get_class_string(struct parsed_symbol* sym, /*const struct array* a
 }
 
 /******************************************************************
+ *            get_class_name
+ * Wrapper around get_class and get_class_string.
+ */
+static char* get_class_name(struct parsed_symbol* sym)
+{
+    unsigned    mark = sym->stack.num;
+    char*       s = NULL;
+
+    if (get_class(sym))
+        s = get_class_string(sym, mark);
+    sym->stack.num = mark;
+    return s;
+}
+
+/******************************************************************
  *		get_calling_convention
  * Returns a static string corresponding to the calling convention described
  * by char 'ch'. Sets export to TRUE iff the calling convention is exported.
@@ -625,13 +640,11 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
     case 'V': /* class */
         /* Class/struct/union */
         {
-            unsigned    mark = sym->stack.num;
             const char* struct_name = NULL;
             const char* type_name = NULL;
 
-            if (!get_class(sym) ||
-                !(struct_name = get_class_string(sym, mark))) goto done;
-            sym->stack.num = mark;
+            if (!(struct_name = get_class_name(sym)))
+                goto done;
             if (!(sym->flags & UNDNAME_NO_COMPLEX_TYPE)) 
             {
                 switch (dt)
@@ -691,11 +704,9 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
         if (*sym->current == '4')
         {
             char*               enum_name;
-            unsigned            mark = sym->stack.num;
             sym->current++;
-            if (!get_class(sym) ||
-                !(enum_name = get_class_string(sym, mark))) goto done;
-            sym->stack.num = mark;
+            if (!(enum_name = get_class_name(sym)))
+                goto done;
             if (sym->flags & UNDNAME_NO_COMPLEX_TYPE)
                 ct->left = enum_name;
             else
@@ -813,12 +824,10 @@ static BOOL handle_data(struct parsed_symbol* sym)
         if (!get_modifier(*sym->current++, &modifier)) goto done;
         if (*sym->current != '@')
         {
-            unsigned    mark = sym->stack.num;
             char*       cls = NULL;
 
-            if (!get_class(sym) ||
-                !(cls = get_class_string(sym, mark))) goto done;
-            sym->stack.num = mark;
+            if (!(cls = get_class_name(sym)))
+                goto done;
             ct.right = str_printf(sym, "{for `%s'}", cls);
         }
         break;
