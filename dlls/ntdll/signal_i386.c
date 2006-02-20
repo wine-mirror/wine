@@ -103,6 +103,13 @@ struct kernel_sigaction
     void *ksa_restorer;
 };
 
+#ifndef SYS_sigaction
+# ifndef __NR_sigaction
+#  error The sigaction syscall is part of the Linux i386 ABI, but your headers don't define it. Please raise a bug with your distribution.
+# endif
+# define SYS_sigaction __NR_sigaction
+#endif
+
 /* Similar to the sigaction function in libc, except it leaves alone the
    restorer field, which is used to specify the signal stack address */
 static inline int wine_sigaction( int sig, struct kernel_sigaction *new,
