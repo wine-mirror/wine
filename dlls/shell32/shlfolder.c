@@ -425,11 +425,20 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
 
         if (!dwAttributes && has_guid) {
 	    WCHAR path[MAX_PATH];
+	    STRRET strret;
 
 	    /* File attributes are not present in the internal PIDL structure, so get them from the file system. */
-	    if (SHGetPathFromIDListW(pidl, path))
-		dwAttributes = GetFileAttributesW(path);
-        }
+
+	    HRESULT hr = IShellFolder_GetDisplayNameOf(psf, pidl, SHGDN_FORPARSING, &strret);
+
+	    if (SUCCEEDED(hr)) {
+		hr = StrRetToBufW(&strret, pidl, path, MAX_PATH);
+
+		/* call GetFileAttributes() only for file system paths, not for parsing names like "::{...}" */
+		if (SUCCEEDED(hr) && path[0]!=':')
+		    dwAttributes = GetFileAttributesW(path);
+	    }
+	}
 
         /* Set common attributes */
         *pdwAttributes |= SFGAO_FILESYSTEM | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANDELETE | 
