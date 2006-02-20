@@ -370,7 +370,9 @@ static ULONG WINAPI ClDispatch_Release(IDispatch *iface)
 static HRESULT WINAPI ClDispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 {
     WebBrowser *This = DISP_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pctinfo);
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
     return E_NOTIMPL;
 }
 
@@ -378,7 +380,9 @@ static HRESULT WINAPI ClDispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID
                                              ITypeInfo **ppTInfo)
 {
     WebBrowser *This = DISP_THIS(iface);
-    FIXME("(%p)->(%u %ld %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    TRACE("(%p)->(%u %ld %p)\n", This, iTInfo, lcid, ppTInfo);
+
     return E_NOTIMPL;
 }
 
@@ -386,8 +390,10 @@ static HRESULT WINAPI ClDispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LP
                                                UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     WebBrowser *This = DISP_THIS(iface);
-    FIXME("(%p)->(%s %p %u %ld %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+
+    TRACE("(%p)->(%s %p %u %ld %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
+
     return E_NOTIMPL;
 }
 
