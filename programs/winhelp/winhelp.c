@@ -485,7 +485,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     bPopup = wi->win_style & WS_POPUP;
 
     /* Initialize WINHELP_WINDOW struct */
-    win = HeapAlloc(GetProcessHeap(), 0,
+    win = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                     sizeof(WINHELP_WINDOW) + strlen(wi->name) + 1);
     if (!win) return FALSE;
 
@@ -496,13 +496,6 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     lstrcpy((char*)win->lpszName, wi->name);
 
     win->page = page;
-    win->first_button = 0;
-    win->first_line = 0;
-    win->hMainWnd = 0;
-    win->hButtonBoxWnd = 0;
-    win->hTextWnd = 0;
-    win->hShadowWnd = 0;
-    win->hHistoryWnd = 0;
 
     win->hArrowCur = LoadCursorA(0, (LPSTR)IDC_ARROW);
     win->hHandCur = LoadCursorA(0, (LPSTR)IDC_HAND);
@@ -539,7 +532,6 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
             MACRO_ExecuteMacro(macro->lpszMacro);
     }
 
-    win->histIndex = win->backIndex = 0;
     /* Reuse existing window */
     if (!bPopup)
     {
