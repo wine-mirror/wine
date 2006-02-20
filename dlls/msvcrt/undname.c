@@ -400,11 +400,43 @@ static const char* get_modified_type(struct parsed_symbol* sym, char modif)
 }
 
 /******************************************************************
+ *             get_literal_string
+ * Gets the literal name from the current position in the mangled
+ * symbol to the first '@' character. It pushes the parsed name to
+ * the symbol names stack and returns a pointer to it or NULL in
+ * case of an error.
+ */
+static char* get_literal_string(struct parsed_symbol* sym)
+{
+    const char *ptr = sym->current;
+
+    do {
+        if (!((*sym->current >= 'A' && *sym->current <= 'Z') ||
+              (*sym->current >= 'a' && *sym->current <= 'z') ||
+              (*sym->current >= '0' && *sym->current <= '9') ||
+              *sym->current == '_' || *sym->current == '$')) {
+            TRACE("Failed at '%c' in %s\n", *sym->current, ptr);
+            return NULL;
+        }
+    } while (*++sym->current != '@');
+    sym->current++;
+    str_array_push(sym, ptr, sym->current - 1 - ptr, &sym->stack);
+
+    return str_array_get_ref(&sym->stack, sym->stack.num - sym->stack.start - 1);
+}
+
+/******************************************************************
  *		get_class
- * Parses class as a list of parent-classes, separated by '@', terminated by '@@'
- * and stores the result in 'a' array. Each parent-classes, as well as the inner
- * element (either field/method name or class name), are stored as allocated
- * strings in the array.
+ * Parses class as a list of parent-classes, terminated by '@' and stores the
+ * result in 'a' array. Each parent-classes, as well as the inner element
+ * (either field/method name or class name), are represented in the mangled
+ * name by a literal name ([a-zA-Z0-9_]+ terminated by '@') or a back reference
+ * ([0-9]) or a name with template arguments ('?$' literal name followed by the
+ * template argument list). The class name components appear in the reverse
+ * order in the mangled name, e.g aaa@bbb@ccc@@ will be demangled to
+ * ccc::bbb::aaa
+ * For each of this class name componets a string will be allocated in the
+ * array.
  */
 static BOOL get_class(struct parsed_symbol* sym)
 {
@@ -426,20 +458,20 @@ static BOOL get_class(struct parsed_symbol* sym)
         case '?':
             if (*++sym->current == '$') 
             {
-                const char*     name = ++sym->current;
+                const char*     name;
                 char*           full = NULL;
                 char*           args = NULL;
                 unsigned        num_mark = sym->stack.num;
                 unsigned        start_mark = sym->stack.start;
 
-                while (*sym->current++ != '@');
-
+                sym->current++;
                 sym->stack.start = sym->stack.num;
-                str_array_push(sym, name, sym->current - name -1, &sym->stack);
+                if (!(name = get_literal_string(sym)))
+                    return FALSE;
                 args = get_args(sym, NULL, FALSE, '<', '>');
                 if (args != NULL)
                 {
-                    full = str_printf(sym, "%s%s", sym->stack.elts[num_mark], args);
+                    full = str_printf(sym, "%s%s", name, args);
                 }
                 if (!full) return FALSE;
                 sym->stack.elts[num_mark] = full;
@@ -448,9 +480,8 @@ static BOOL get_class(struct parsed_symbol* sym)
             }
             break;
         default:
-            ptr = sym->current;
-            while (*sym->current++ != '@');
-            str_array_push(sym, ptr, sym->current - 1 - ptr, &sym->stack);
+            if (!get_literal_string(sym))
+                return FALSE;
             break;
         }
     }
