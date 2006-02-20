@@ -1026,10 +1026,14 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
     /* it must be a text item - unless it's the system menu */
     if (!(lpitem->fType & MF_SYSMENU) && lpitem->text) {
+        HFONT hfontOld = NULL;
         RECT rc = lpitem->rect;
         LONG txtheight, txtwidth;
 
         lpitem->xTab = 0;
+	if ( lpitem->fState & MFS_DEFAULT ) {
+	     hfontOld = SelectObject( hdc, get_menu_font(TRUE) );
+	}
         if (menuBar) {
             txtheight = DrawTextW( hdc, lpitem->text, -1, &rc,
                     DT_SINGLELINE|DT_CALCRECT); 
@@ -1071,6 +1075,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
             itemheight = max( itemheight,
                     max( txtheight + 2, menucharsize.cy + 4));
         }
+	if (hfontOld) SelectObject (hdc, hfontOld);
     } else if( menuBar) {
         itemheight = max( itemheight, GetSystemMetrics(SM_CYMENU)-1);
     }
