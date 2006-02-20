@@ -187,6 +187,9 @@ typedef struct IDirect3DVertexShaderImpl IDirect3DVertexShaderImpl;
 typedef struct IDirect3DPixelShaderImpl IDirect3DPixelShaderImpl;
 typedef struct IDirect3DVertexShaderDeclarationImpl IDirect3DVertexShaderDeclarationImpl;
 
+/* Advance declaration of structures to satisfy compiler */
+typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
+
 typedef struct D3DSHADERVECTOR {
   float x;
   float y;
@@ -295,14 +298,14 @@ struct PLIGHTINFOEL {
     } \
 }
 
+#include "wine/wined3d_gl.h"
 #include "d3dcore_gl.h"
 
 
-#define GL_LIMITS(ExtName)            (This->direct3d8->gl_info.max_##ExtName)
-#define GL_SUPPORT(ExtName)           (TRUE == This->direct3d8->gl_info.supported[ExtName])
-#define GL_SUPPORT_DEV(ExtName, dev)  (TRUE == (dev)->direct3d8->gl_info.supported[ExtName])
-#define GL_EXTCALL(FuncName)          (This->direct3d8->gl_info.FuncName)
-#define GL_EXTCALL_DEV(FuncName, dev) ((dev)->direct3d8->gl_info.FuncName)
+#define GL_LIMITS(ExtName)            (((IWineD3DImpl*)((IWineD3DDeviceImpl*)(This->WineD3DDevice))->wineD3D)->gl_info.max_##ExtName)
+#define GL_SUPPORT(ExtName)           (((IWineD3DImpl*)((IWineD3DDeviceImpl*)(This->WineD3DDevice))->wineD3D)->gl_info.supported[ExtName] == TRUE)
+#define GL_EXTCALL(FuncName)          (((IWineD3DImpl*)((IWineD3DDeviceImpl*)(This->WineD3DDevice))->wineD3D)->gl_info.FuncName)
+#define GL_VENDOR_NAME(This)          (((IWineD3DImpl*)((IWineD3DDeviceImpl*)(This->WineD3DDevice))->wineD3D)->gl_info.gl_vendor)
 
 #define D3DCOLOR_B_R(dw) (((dw) >> 16) & 0xFF)
 #define D3DCOLOR_B_G(dw) (((dw) >>  8) & 0xFF)
@@ -336,6 +339,25 @@ struct PLIGHTINFOEL {
     The interfactes themselves
    =========================================================================== */
 
+/*****************************************************************************
+* IWineD3D implementation structure
+*/
+typedef struct IWineD3DImpl
+{
+    /* IUnknown fields */
+    const IWineD3DVtbl     *lpVtbl;
+    LONG                    ref;     /* Note: Ref counting not required */
+      
+    /* WineD3D Information */
+    IUnknown               *parent;
+    UINT                    dxVersion;
+
+    /* GL Information */
+    BOOL                    isGLInfoValid;
+    WineD3D_GL_Info         gl_info;
+} IWineD3DImpl;
+				      
+
 /* ---------- */
 /* IDirect3D8 */
 /* ---------- */
@@ -358,8 +380,6 @@ struct IDirect3D8Impl
     IWineD3D               *WineD3D;
     
     /* IDirect3D8 fields */
-    GL_Info                 gl_info;
-    BOOL                    isGLInfoValid;
     IDirect3D8Impl         *direct3d8;
 };
 
@@ -388,6 +408,121 @@ extern HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT
 extern HRESULT  WINAPI  IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
 						    DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
 						    IDirect3DDevice8** ppReturnedDeviceInterface);
+
+#define MAX_SAMPLERS      16
+#define MAX_TEXTURES      8
+#define CONTEXT_CACHE 100
+
+#define MAX_VSHADER_CONSTANTS 96
+#define MAX_PSHADER_CONSTANTS 32
+
+typedef struct SwapChainList {
+    IWineD3DSwapChain         *swapchain;
+    struct SwapChainList      *next;
+} SwapChainList;
+
+/** Hacked out start of a context manager!! **/
+typedef struct glContext {
+    int Width;
+    int Height;
+    int usedcount;
+    GLXContext context;
+
+    Drawable drawable;
+    IWineD3DSurface *pSurface;
+} glContext;
+
+typedef struct ResourceList {
+    IWineD3DResource         *resource;
+    struct ResourceList      *next;
+} ResourceList;
+
+/*****************************************************************************
+ * IWineD3DDevice implementation structure
+ */
+typedef struct IWineD3DDeviceImpl
+{
+    /* IUnknown fields      */
+    const IWineD3DDeviceVtbl *lpVtbl;
+    LONG                    ref;     /* Note: Ref counting not required */
+
+    /* WineD3D Information  */
+    IUnknown               *parent;
+    IWineD3D               *wineD3D;
+
+    /* X and GL Information */
+    GLint                   maxConcurrentLights;
+
+    /* Optimization */
+    BOOL                    modelview_valid;
+    BOOL                    proj_valid;
+    BOOL                    view_ident;        /* true iff view matrix is identity                */
+    BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
+    GLenum                  tracking_parm;     /* Which source is tracking current colour         */
+    LONG                    tracking_color;    /* used iff GL_COLOR_MATERIAL was enabled          */
+#define                         DISABLED_TRACKING  0  /* Disabled                                 */
+#define                         IS_TRACKING        1  /* tracking_parm is tracking diffuse color  */
+#define                         NEEDS_TRACKING     2  /* Tracking needs to be enabled when needed */
+#define                         NEEDS_DISABLE      3  /* Tracking needs to be disabled when needed*/
+    UINT                    srcBlend;
+    UINT                    dstBlend;
+    UINT                    alphafunc;
+    UINT                    stencilfunc;
+    BOOL                    texture_shader_active;  /* TODO: Confirm use is correct */
+
+    /* State block related */
+    BOOL                    isRecordingState;
+    IWineD3DStateBlockImpl *stateBlock;
+    IWineD3DStateBlockImpl *updateStateBlock;
+
+    /* Internal use fields  */
+    D3DDEVICE_CREATION_PARAMETERS   createParms;
+    UINT                            adapterNo;
+    D3DDEVTYPE                      devType;
+
+    SwapChainList          *swapchains;
+
+    ResourceList           *resources; /* a linked list to track resources created by the device */
+
+    /* Render Target Support */
+    IWineD3DSurface        *depthStencilBuffer;
+
+    IWineD3DSurface        *renderTarget;
+    IWineD3DSurface        *stencilBufferTarget;
+
+    /* palettes texture management */
+    PALETTEENTRY            palettes[MAX_PALETTES][256];
+    UINT                    currentPalette;
+
+    /* For rendering to a texture using glCopyTexImage */
+    BOOL                    renderUpsideDown;
+
+    /* Cursor management */
+    BOOL                    bCursorVisible;
+    UINT                    xHotSpot;
+    UINT                    yHotSpot;
+    UINT                    xScreenSpace;
+    UINT                    yScreenSpace;
+
+    /* Textures for when no other textures are mapped */
+    UINT                          dummyTextureName[MAX_TEXTURES];
+
+    /* Debug stream management */
+    BOOL                     debug;
+
+    /* Device state management */
+    HRESULT                 state;
+
+    /* Screen buffer resources */
+    glContext contextCache[CONTEXT_CACHE];
+
+    /* A flag to check if endscene has been called before changing the render tartet */
+    BOOL sceneEnded;
+
+    /* process vertex shaders using software or hardware */
+    BOOL softwareVertexProcessing;
+    
+} IWineD3DDeviceImpl;
 
 /* ---------------- */
 /* IDirect3DDevice8 */
@@ -1202,6 +1337,95 @@ typedef struct SAVEDSTATES {
         BOOL                      clipplane[MAX_CLIPPLANES];
 } SAVEDSTATES;
 
+typedef enum {
+    WINESHADERCNST_NONE     = 0,
+    WINESHADERCNST_FLOAT    = 1,
+    WINESHADERCNST_INTEGER  = 2,
+    WINESHADERCNST_BOOL     = 3
+} WINESHADERCNST;
+
+struct IWineD3DStateBlockImpl
+{
+    /* IUnknown fields */
+    const IWineD3DStateBlockVtbl *lpVtbl;
+    LONG                      ref;     /* Note: Ref counting not required */
+
+    /* IWineD3DStateBlock information */
+    IUnknown                 *parent;
+    IWineD3DDeviceImpl       *wineD3DDevice;
+    WINED3DSTATEBLOCKTYPE     blockType;
+
+    /* Array indicating whether things have been set or changed */
+    SAVEDSTATES               changed;
+    SAVEDSTATES               set;
+
+    /* Drawing - Vertex Shader or FVF related */
+    DWORD                     fvf;
+    /* Vertex Shader Declaration */
+    IWineD3DVertexDeclaration *vertexDecl;
+
+    IWineD3DVertexShader      *vertexShader;
+
+    /* Vertex Shader Constants */
+    BOOL                       vertexShaderConstantB[MAX_VSHADER_CONSTANTS];
+    INT                        vertexShaderConstantI[MAX_VSHADER_CONSTANTS * 4];
+    float                      vertexShaderConstantF[MAX_VSHADER_CONSTANTS * 4];
+    WINESHADERCNST             vertexShaderConstantT[MAX_VSHADER_CONSTANTS]; /* TODO: Think about changing this to a char to possibly save a little memory */
+
+    /* Stream Source */
+    BOOL                      streamIsUP;
+    UINT                      streamStride[MAX_STREAMS];
+    UINT                      streamOffset[MAX_STREAMS];
+    IWineD3DVertexBuffer     *streamSource[MAX_STREAMS];
+    UINT                      streamFreq[MAX_STREAMS];
+    UINT                      streamFlags[MAX_STREAMS];     /*0 | D3DSTREAMSOURCE_INSTANCEDATA | D3DSTREAMSOURCE_INDEXEDDATA  */
+
+    /* Indices */
+    IWineD3DIndexBuffer*      pIndexData;
+    UINT                      baseVertexIndex; /* Note: only used for d3d8 */
+
+    /* Transform */
+    D3DMATRIX                 transforms[HIGHEST_TRANSFORMSTATE + 1];
+
+    /* Lights */
+    PLIGHTINFOEL             *lights; /* NOTE: active GL lights must be front of the chain */
+
+    /* Clipping */
+    double                    clipplane[MAX_CLIPPLANES][4];
+    WINED3DCLIPSTATUS         clip_status;
+
+    /* ViewPort */
+    WINED3DVIEWPORT           viewport;
+
+    /* Material */
+    WINED3DMATERIAL           material;
+
+    /* Pixel Shader */
+    IWineD3DPixelShader      *pixelShader;
+
+    /* Pixel Shader Constants */
+    BOOL                       pixelShaderConstantB[MAX_PSHADER_CONSTANTS];
+    INT                        pixelShaderConstantI[MAX_PSHADER_CONSTANTS * 4];
+    float                      pixelShaderConstantF[MAX_PSHADER_CONSTANTS * 4];
+    WINESHADERCNST             pixelShaderConstantT[MAX_PSHADER_CONSTANTS]; /* TODO: Think about changing this to a char to possibly save a little memory */
+
+    /* Indexed Vertex Blending */
+    D3DVERTEXBLENDFLAGS       vertex_blend;
+    FLOAT                     tween_factor;
+
+    /* RenderState */
+    DWORD                     renderState[WINEHIGHEST_RENDER_STATE + 1];
+
+    /* Texture */
+    IWineD3DBaseTexture      *textures[MAX_TEXTURES];
+    int                       textureDimensions[MAX_SAMPLERS];
+
+    /* Texture State Stage */
+    DWORD                     textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
+    /* Sampler States */
+    DWORD                     samplerState[MAX_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
+
+};
 
 /* ----------------------- */
 /* IDirect3DStateBlockImpl */

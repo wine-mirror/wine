@@ -748,8 +748,7 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
 	/* Due to the dynamic constants binding mechanism, we need to declare
 	 * all the constants for relative addressing. */
 	/* Mesa supports nly 95 constants for VS1.X although we should have at least 96. */
-	if (This->direct3d8->gl_info.gl_vendor == VENDOR_MESA || 
-	    This->direct3d8->gl_info.gl_vendor == VENDOR_WINE) {
+	if (GL_VENDOR_NAME(This) == VENDOR_MESA || GL_VENDOR_NAME(This) == VENDOR_WINE) {
 	  numConstants = 95;
 	}
 	sprintf(tmpLine, "PARAM C[%d] = { program.env[0..%d] };\n", numConstants, numConstants-1);

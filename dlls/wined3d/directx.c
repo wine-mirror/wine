@@ -1782,6 +1782,16 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     object->adapterNo                    = Adapter;
     object->devType                      = DeviceType;
 
+    /* Let D3D8 use WineD3D's capability detection code. We can't use the block of code after this call yet
+    /  as D3D8 doesn't use WineD3D stateblocks / swapchains.
+    */
+    if(This->dxVersion == 8) {
+        /* Setup some defaults for creating the implicit swapchain */
+        ENTER_GL();
+        IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
+        LEAVE_GL();
+    }
+
     /* FIXME: Use for dx8 code eventually too! */
     /* Deliberately no indentation here, as this if will be removed when dx8 support merged in */
     if (This->dxVersion > 8) {

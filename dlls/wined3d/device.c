@@ -696,13 +696,6 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
         }
     }
 
-    /* D3D8 doesn't use the opengl capability code from WineD3D and because of this the maximum texture size isn't set. */
-    if (((IWineD3DImpl *)This->wineD3D)->dxVersion == 8 && GL_LIMITS(texture_size) == 0) {
-        int gl_max;
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_max);
-        GL_LIMITS(texture_size) = gl_max;
-    }
-
     /** Check against the maximum texture sizes supported by the video card **/
     if (pow2Width > GL_LIMITS(texture_size) || pow2Height > GL_LIMITS(texture_size)) {
         /* one of three options
