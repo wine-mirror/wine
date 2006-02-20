@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <assert.h>
 
 #include "windef.h"
@@ -33,6 +34,9 @@
 #include "wine/test.h"
 
 static ATOM atomMenuCheckClass;
+
+static BOOL (WINAPI *pSetMenuInfo)(HMENU,LPCMENUINFO);
+static BOOL (WINAPI *pGetMenuInfo)(HMENU,LPCMENUINFO);
 
 static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -49,11 +53,30 @@ static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
 }
 
 /* globals to communicate between test and wndproc */
+
+#define MOD_SIZE 10
+#define MOD_NRMENUS 8
+
+ /* menu texts with their sizes */
+static struct {
+    char *text;
+    SIZE size; /* size of text upto any \t */
+    SIZE sc_size; /* size of the short-cut */
+} MOD_txtsizes[] = {
+        { "Pinot &Noir" },
+        { "&Merlot\t" },
+        { "Shira&z\tAlt+S" },
+        { "" },
+        { NULL }
+};
+
 unsigned int MOD_maxid;
-RECT MOD_rc[4];
+RECT MOD_rc[MOD_NRMENUS];
 int MOD_avec, MOD_hic;
 int MOD_odheight;
-#define MOD_SIZE 10
+SIZE MODsizes[MOD_NRMENUS]= { {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE},
+    {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE}};
+int MOD_GotDrawItemMsg = FALSE;
 /* wndproc used by test_menu_ownerdraw() */
 static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
         WPARAM wparam, LPARAM lparam)
@@ -64,11 +87,11 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
             {
                 MEASUREITEMSTRUCT* pmis = (MEASUREITEMSTRUCT*)lparam;
                 if( winetest_debug)
-                    trace("WM_MEASUREITEM received %d,%d\n",
-                            pmis->itemWidth, pmis->itemHeight);
+                    trace("WM_MEASUREITEM received data %lx size %dx%d\n",
+                            pmis->itemData, pmis->itemWidth, pmis->itemHeight);
                 MOD_odheight = pmis->itemHeight;
-                pmis->itemWidth = MOD_SIZE;
-                pmis->itemHeight = MOD_SIZE;
+                pmis->itemWidth = MODsizes[pmis->itemData].cx;
+                pmis->itemHeight = MODsizes[pmis->itemData].cy;
                 return TRUE;
             }
         case WM_DRAWITEM:
@@ -78,18 +101,41 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
                 HPEN oldpen;
                 char chrs[]="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
                 SIZE sz;
+                int i;
                 pdis = (DRAWITEMSTRUCT *) lparam;
                 if( winetest_debug) {
-                    trace("WM_DRAWITEM received itemdata %ld item %d rc %ld,%ld-%ld,%ld\n",
-                            pdis->itemData,
+                    RECT rc;
+                    GetMenuItemRect( hwnd, (HMENU)pdis->hwndItem, pdis->itemData ,&rc);
+                    trace("WM_DRAWITEM received hwnd %p hmenu %p itemdata %ld item %d rc %ld,%ld-%ld,%ld itemrc:  %ld,%ld-%ld,%ld\n",
+                            hwnd, (HMENU)pdis->hwndItem, pdis->itemData,
                             pdis->itemID, pdis->rcItem.left, pdis->rcItem.top,
-                            pdis->rcItem.right,pdis->rcItem.bottom );
+                            pdis->rcItem.right,pdis->rcItem.bottom,
+                            rc.left,rc.top,rc.right,rc.bottom);
                     oldpen=SelectObject( pdis->hDC, GetStockObject(
                                 pdis->itemState & ODS_SELECTED ? WHITE_PEN :BLACK_PEN));
                     Rectangle( pdis->hDC, pdis->rcItem.left,pdis->rcItem.top,
                             pdis->rcItem.right,pdis->rcItem.bottom );
                     SelectObject( pdis->hDC, oldpen);
                 }
+                /* calculate widths of some menu texts */
+                if( ! MOD_txtsizes[0].size.cx)
+                    for(i = 0; MOD_txtsizes[i].text; i++) {
+                        char buf[100], *p;
+                        RECT rc={0,0,0,0};
+                        strcpy( buf, MOD_txtsizes[i].text);
+                        if( ( p = strchr( buf, '\t'))) {
+                            *p = '\0';
+                            DrawText( pdis->hDC, p + 1, -1, &rc,
+                                    DT_SINGLELINE|DT_CALCRECT);
+                            MOD_txtsizes[i].sc_size.cx= rc.right - rc.left;
+                            MOD_txtsizes[i].sc_size.cy= rc.bottom - rc.top;
+                        }
+                        DrawText( pdis->hDC, buf, -1, &rc,
+                                DT_SINGLELINE|DT_CALCRECT);
+                        MOD_txtsizes[i].size.cx= rc.right - rc.left;
+                        MOD_txtsizes[i].size.cy= rc.bottom - rc.top;
+                    }
+
                 if( pdis->itemData > MOD_maxid) return TRUE;
                 /* store the rectangl */
                 MOD_rc[pdis->itemData] = pdis->rcItem;
@@ -98,7 +144,12 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
                 MOD_avec = (sz.cx + 26)/52;
                 GetTextMetrics( pdis->hDC, &tm);
                 MOD_hic = tm.tmHeight;
-                if( pdis->itemData == MOD_maxid) PostMessage(hwnd, WM_CANCELMODE, 0, 0);
+                MOD_GotDrawItemMsg = TRUE;
+                return TRUE;
+            }
+        case WM_ENTERIDLE:
+            {
+                PostMessage(hwnd, WM_CANCELMODE, 0, 0);
                 return TRUE;
             }
 
@@ -236,7 +287,7 @@ static void test_menu_ownerdraw(void)
         ret = AppendMenu( hmenu, MF_OWNERDRAW , i, 0);
         ok( ret, "AppendMenu failed for %d\n", i);
     }
-    SetMenu( hwnd, hmenu);
+    ret = SetMenu( hwnd, hmenu);
     UpdateWindow( hwnd); /* hack for wine to draw the window + menu */
     ok(ret, "SetMenu failed with error %ld\n", GetLastError());
     /* test width */
@@ -247,6 +298,207 @@ static void test_menu_ownerdraw(void)
     ok( MOD_rc[0].bottom - MOD_rc[0].top == GetSystemMetrics( SM_CYMENU) - 1,
             "Height of owner drawn menu item is wrong. Got %ld expected %d\n",
             MOD_rc[0].bottom - MOD_rc[0].top, GetSystemMetrics( SM_CYMENU) - 1);
+
+    /* clean up */
+    ret = DestroyMenu(hmenu);
+    ok(ret, "DestroyMenu failed with error %ld\n", GetLastError());
+    DestroyWindow(hwnd);
+}
+
+/* helper for test_menu_bmp_and_string() */
+static void test_mbs_help( int ispop, int hassub, int mnuopt,
+        HWND hwnd, int arrowwidth, int count, HBITMAP hbmp,
+        SIZE bmpsize, char *text, SIZE size, SIZE sc_size)
+{
+    BOOL ret;
+    HMENU hmenu, submenu;
+    MENUITEMINFO mii={ sizeof( MENUITEMINFO )};
+    MENUINFO mi;
+    RECT rc;
+    int hastab,  expect;
+    int failed = 0;
+
+    MOD_GotDrawItemMsg = FALSE;
+    mii.fMask = MIIM_FTYPE | MIIM_DATA | MIIM_STATE;
+    mii.fType = 0;
+    mii.fState = MF_CHECKED;
+    mii.dwItemData =0;
+    MODsizes[0] = bmpsize;
+    hastab = 0;
+    if( text ) {
+        char *p;
+        mii.fMask |= MIIM_STRING;
+        mii.dwTypeData = text;
+        if( ( p = strchr( text, '\t'))) {
+            hastab = *(p + 1) ? 2 : 1;
+        }
+    }
+    /* tabs don't make sense in menubars */
+    if(hastab && !ispop) return;
+    if( hbmp) {
+        mii.fMask |= MIIM_BITMAP;
+        mii.hbmpItem = hbmp;
+    }
+    submenu = CreateMenu();
+    ok( submenu != 0, "CreateMenu failed with error %ld\n", GetLastError());
+    if( ispop)
+        hmenu = CreatePopupMenu();
+    else
+        hmenu = CreateMenu();
+    ok( hmenu != 0, "Create{Popup}Menu failed with error %ld\n", GetLastError());
+    if( hassub) {
+        mii.fMask |= MIIM_SUBMENU;
+        mii.hSubMenu = submenu;
+    }
+    if( mnuopt) {
+        mi.cbSize = sizeof(mi);
+        mi.fMask = MIM_STYLE;
+        pGetMenuInfo( hmenu, &mi);
+        mi.dwStyle |= mnuopt == 1 ? MNS_NOCHECK : MNS_CHECKORBMP;
+        ret = pSetMenuInfo( hmenu, &mi);
+        ok( ret, "SetMenuInfo failed with error %ld\n", GetLastError());
+    }
+    ret = InsertMenuItem( hmenu, 0, FALSE, &mii);
+    ok( ret, "InsertMenuItem failed with error %ld\n", GetLastError());
+    failed = !ret;
+    if( winetest_debug) {
+        HDC hdc=GetDC(hwnd);
+        RECT rc = {100, 50, 400, 70};
+        char buf[100];
+
+        sprintf( buf,"%d text \"%s\" mnuopt %d", count, text ? text: "(nil)", mnuopt);
+        FillRect( hdc, &rc, (HBRUSH) COLOR_WINDOW);
+        TextOut( hdc, 100, 50, buf, strlen( buf));
+        ReleaseDC( hwnd, hdc);
+    }
+    if(ispop)
+        ret = TrackPopupMenu( hmenu, 0x100, 100,100, 0, hwnd, NULL);
+    else {
+        ret = SetMenu( hwnd, hmenu);
+        ok(ret, "SetMenu failed with error %ld\n", GetLastError());
+        DrawMenuBar( hwnd);
+    }
+    ret = GetMenuItemRect( hwnd, hmenu, 0, &rc);
+    /* check menu width */
+    if( ispop)
+        expect = ( text || hbmp ?
+                4 + (mnuopt != 1 ? GetSystemMetrics(SM_CXMENUCHECK) : 0)
+                : 0) +
+            arrowwidth  + MOD_avec + (hbmp ? bmpsize.cx + 2 : 0) +
+            (text && hastab ? /* TAB space */
+             MOD_avec + ( hastab==2 ? sc_size.cx : 0) : 0) +
+            (text ?  2 + (text[0] ? size.cx :0): 0) ;
+    else
+        expect = !(text || hbmp) ? 0 :
+            ( hbmp ? (text ? 2:0) + bmpsize.cx  : 0 ) +
+            (text ? 2 * MOD_avec + (text[0] ? size.cx :0): 0) ;
+    ok( rc.right - rc.left == expect,
+            "menu width wrong, got %ld expected %d\n", rc.right - rc.left, expect);
+    failed = failed || !(rc.right - rc.left == expect);
+    /* check menu height */
+    if( ispop)
+        expect = max( ( !(text || hbmp) ? GetSystemMetrics( SM_CYMENUSIZE)/2 : 0),
+                max( (text ? max( 2 + size.cy, MOD_hic + 4) : 0),
+                    (hbmp ? bmpsize.cy + 2 : 0)));
+    else
+        expect = ( !(text || hbmp) ? GetSystemMetrics( SM_CYMENUSIZE)/2 :
+                max( GetSystemMetrics( SM_CYMENU) - 1, (hbmp ? bmpsize.cy : 0)));
+    ok( rc.bottom - rc.top == expect,
+            "menu height wrong, got %ld expected %d (%d)\n",
+            rc.bottom - rc.top, expect, GetSystemMetrics( SM_CYMENU));
+    failed = failed || !(rc.bottom - rc.top == expect);
+    if( hbmp == HBMMENU_CALLBACK && MOD_GotDrawItemMsg) {
+        /* check the position of the bitmap */
+        /* horizontal */
+        expect = ispop ? (4 + ( mnuopt  ? 0 : GetSystemMetrics(SM_CXMENUCHECK)))
+            : 3;
+        ok( expect == MOD_rc[0].left,
+                "bitmap left is %ld expected %d\n", MOD_rc[0].left, expect);
+        failed = failed || !(expect == MOD_rc[0].left);
+        /* vertical */
+        expect = (rc.bottom - rc.top - MOD_rc[0].bottom + MOD_rc[0].top) / 2;
+        ok( expect == MOD_rc[0].top,
+                "bitmap top is %ld expected %d\n", MOD_rc[0].top, expect);
+        failed = failed || !(expect == MOD_rc[0].top);
+    }
+    /* if there was a failure, report details */
+    if( failed) {
+        trace("*** count %d text \"%s\" bitmap %p bmsize %ld,%ld textsize %ld+%ld,%ld mnuopt %d hastab %d\n",
+                count, text ? text: "(nil)", hbmp, bmpsize.cx, bmpsize.cy,
+                size.cx, size.cy, sc_size.cx, mnuopt, hastab);
+        trace("    check %d,%d arrow %d avechar %d\n",
+                GetSystemMetrics(SM_CXMENUCHECK ),
+                GetSystemMetrics(SM_CYMENUCHECK ),arrowwidth, MOD_avec);
+        if( hbmp == HBMMENU_CALLBACK)
+            trace( "    rc %ld,%ld-%ld,%ld bmp.rc %ld,%ld-%ld,%ld\n",
+                rc.left, rc.top, rc.top, rc.bottom, MOD_rc[0].left,
+                MOD_rc[0].top,MOD_rc[0].right, MOD_rc[0].bottom);
+    }
+    /* clean up */
+    ret = DestroyMenu(submenu);
+    ok(ret, "DestroyMenu failed with error %ld\n", GetLastError());
+    ret = DestroyMenu(hmenu);
+    ok(ret, "DestroyMenu failed with error %ld\n", GetLastError());
+}
+
+
+static void test_menu_bmp_and_string(void)
+{
+    BYTE bmfill[300];
+    HBITMAP hbm_arrow;
+    BITMAP bm;
+    INT arrowwidth;
+    HWND hwnd;
+    int count, szidx, txtidx, bmpidx, hassub, mnuopt, ispop;
+
+    if( !pGetMenuInfo) return;
+
+    memset( bmfill, 0x55, sizeof( bmfill));
+    hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
+            WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            NULL, NULL, NULL, NULL);
+    hbm_arrow=LoadBitmap( 0, (CHAR*)OBM_MNARROW);
+    GetObject( hbm_arrow, sizeof(bm), &bm);
+    arrowwidth = bm.bmWidth;
+
+    ok(hwnd != NULL, "CreateWindowEx failed with error %ld\n", GetLastError());
+    if( !hwnd) return;
+    SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG)menu_ownerdraw_wnd_proc);
+
+    if( winetest_debug)
+        trace("    check %d,%d arrow %d avechar %d\n",
+                GetSystemMetrics(SM_CXMENUCHECK ),
+                GetSystemMetrics(SM_CYMENUCHECK ),arrowwidth, MOD_avec);
+    count = 0;
+    MOD_maxid = 0;
+    for( ispop=1; ispop >= 0; ispop--){
+        static SIZE bmsizes[]= {
+            {10,10},{38,38},{1,30},{55,5}};
+        for( szidx=0; szidx < sizeof( bmsizes) / sizeof( SIZE); szidx++) {
+            HBITMAP hbm = CreateBitmap( bmsizes[szidx].cx, bmsizes[szidx].cy,1,1,bmfill);
+            HBITMAP bitmaps[] = { HBMMENU_CALLBACK, hbm, NULL  };
+            ok( (int)hbm, "CreateBitmap failed err %ld\n", GetLastError());
+            for( txtidx = 0; txtidx < sizeof(MOD_txtsizes)/sizeof(MOD_txtsizes[0]); txtidx++) {
+                for( hassub = 0; hassub < 2 ; hassub++) { /* add submenu item */
+                    for( mnuopt = 0; mnuopt < 3 ; mnuopt++){ /* test MNS_NOCHECK/MNS_CHECKORBMP */
+                        for( bmpidx = 0; bmpidx <sizeof(bitmaps)/sizeof(HBITMAP); bmpidx++) {
+                            /* no need to test NULL bitmaps of several sizes */
+                            if( !bitmaps[bmpidx] && szidx > 0) continue;
+                            if( !ispop && hassub) continue;
+                            test_mbs_help( ispop, hassub, mnuopt,
+                                    hwnd, arrowwidth, ++count,
+                                    bitmaps[bmpidx],
+                                    bmsizes[szidx],
+                                    MOD_txtsizes[txtidx].text,
+                                    MOD_txtsizes[txtidx].size,
+                                    MOD_txtsizes[txtidx].sc_size);
+                        }
+                    }
+                }
+            }
+            DeleteObject( hbm);
+        }
+    }
     /* clean up */
     DestroyWindow(hwnd);
 }
@@ -256,7 +508,7 @@ static void test_menu_add_string( void )
     HMENU hmenu;
     MENUITEMINFO info;
     BOOL rc;
-    
+
     char string[0x80];
     char string2[0x80];
 
@@ -880,9 +1132,22 @@ static void test_menu_iteminfo( void )
         {, S, MIIM_TYPE, MFT_STRING, -9, -9, 0, -9, -9, -9, string, 4, 0, },
         txt,  OK, OK )
     TMII_DONE
+    /* MFT_SEPARATOR bit is kept when the text is added */
+    TMII_INSMI( {, S, MIIM_STRING|MIIM_FTYPE, MFT_STRING, -1, -1, -1, -1, -1, -1, NULL, 0, -1, }, OK)
+    TMII_SMII( {, S, MIIM_STRING, -1, -1, -1, -1, -1, -1, -1, txt, -1, -1, }, OK)
+    TMII_GMII ( {, S, MIIM_STRING|MIIM_FTYPE, -9, -9, -9, -9, -9, -9, -9, string, 80, -9, },
+        {, S, MIIM_STRING|MIIM_FTYPE, MFT_SEPARATOR, -9, -9, 0, -9, -9, -9, string, 4, -9, },
+        txt, OK, OK )
+    TMII_DONE
+    /* MFT_SEPARATOR bit is kept when bitmap is added */
+    TMII_INSMI( {, S, MIIM_STRING|MIIM_FTYPE, MFT_STRING, -1, -1, -1, -1, -1, -1, NULL, 0, -1, }, OK)
+    TMII_SMII( {, S, MIIM_BITMAP, -1, -1, -1, -1, -1, -1, -1, -1, -1, hbm, }, OK)
+    TMII_GMII ( {, S, MIIM_BITMAP|MIIM_FTYPE, -9, -9, -9, -9, -9, -9, -9, string, 80, -9, },
+        {, S, MIIM_BITMAP|MIIM_FTYPE, MFT_SEPARATOR, -9, -9, 0, -9, -9, -9, string, 80, hbm, },
+        init, OK, ER )
+    TMII_DONE
 
-    ansi = !ansi;
-  } while( !ansi);
+  } while( !(ansi = !ansi) );
   DeleteObject( hbm);
 }
 
@@ -1149,6 +1414,11 @@ void test_menu_search_bycommand( void )
 
 START_TEST(menu)
 {
+    pSetMenuInfo =
+        (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "SetMenuInfo" );
+    pGetMenuInfo =
+        (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetMenuInfo" );
+
     register_menu_check_class();
 
     test_menu_locked_by_window();
@@ -1156,4 +1426,5 @@ START_TEST(menu)
     test_menu_add_string();
     test_menu_iteminfo();
     test_menu_search_bycommand();
+    test_menu_bmp_and_string();
 }
