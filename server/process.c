@@ -448,7 +448,7 @@ static void startup_info_dump( struct object *obj, int verbose )
 static int startup_info_signaled( struct object *obj, struct thread *thread )
 {
     struct startup_info *info = (struct startup_info *)obj;
-    return info->process && is_process_init_done(info->process);
+    return info->process && info->process->startup_state != STARTUP_IN_PROGRESS;
 }
 
 /* get a process from an id (and increment the refcount) */
