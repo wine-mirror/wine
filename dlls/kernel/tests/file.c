@@ -1425,6 +1425,63 @@ static void test_OpenFile_exists(void)
     ok( hFile == HFILE_ERROR, "hFile != HFILE_ERROR : %ld\n", GetLastError());
 }
 
+static void test_overlapped(void)
+{
+    OVERLAPPED ov;
+    DWORD r, result;
+
+    /* GetOverlappedResult crashes if the 2nd or 3rd param are NULL */
+
+    memset( &ov, 0,  sizeof ov );
+    result = 1;
+    r = GetOverlappedResult(0, &ov, &result, 0);
+    ok( r == TRUE, "should return false\n");
+    ok( result == 0, "result wrong\n");
+
+    result = 0;
+    ov.Internal = 0;
+    ov.InternalHigh = 0xabcd;
+    r = GetOverlappedResult(0, &ov, &result, 0);
+    ok( r == TRUE, "should return false\n");
+    ok( result == 0xabcd, "result wrong\n");
+
+    SetLastError( 0xb00 );
+    result = 0;
+    ov.Internal = STATUS_INVALID_HANDLE;
+    ov.InternalHigh = 0xabcd;
+    r = GetOverlappedResult(0, &ov, &result, 0);
+    ok (GetLastError() == ERROR_INVALID_HANDLE, "error wrong\n");
+    ok( r == FALSE, "should return false\n");
+    ok( result == 0xabcd, "result wrong\n");
+
+    result = 0;
+    ov.Internal = STATUS_PENDING;
+    ov.InternalHigh = 0xabcd;
+    r = GetOverlappedResult(0, &ov, &result, 0);
+    todo_wine {
+    ok (GetLastError() == ERROR_IO_INCOMPLETE, "error wrong\n");
+    }
+    ok( r == FALSE, "should return false\n");
+    ok( result == 0, "result wrong\n");
+
+    ov.hEvent = CreateEvent( NULL, 1, 1, NULL );
+    ov.Internal = STATUS_PENDING;
+    ov.InternalHigh = 0xabcd;
+    r = GetOverlappedResult(0, &ov, &result, 0);
+    ok (GetLastError() == ERROR_IO_INCOMPLETE, "error wrong\n");
+    ok( r == FALSE, "should return false\n");
+
+    ResetEvent( ov.hEvent );
+
+    ov.Internal = STATUS_PENDING;
+    ov.InternalHigh = 0;
+    r = GetOverlappedResult(0, &ov, &result, 0);
+    ok (GetLastError() == ERROR_IO_INCOMPLETE, "error wrong\n");
+    ok( r == FALSE, "should return false\n");
+
+    r = CloseHandle( ov.hEvent );
+    ok( r == TRUE, "close handle failed\n");
+}
 
 START_TEST(file)
 {
@@ -1455,4 +1512,5 @@ START_TEST(file)
     test_async_file_errors();
     test_read_write();
     test_OpenFile_exists();
+    test_overlapped();
 }
