@@ -1775,48 +1775,31 @@ LookupAccountNameA(
 	IN OUT LPDWORD cbReferencedDomainName,
 	OUT PSID_NAME_USE name_use )
 {
-    /* Default implementation: Always return a default SID */
-    SID_IDENTIFIER_AUTHORITY identifierAuthority = {SECURITY_NT_AUTHORITY};
     BOOL ret;
-    PSID pSid;
-    static const char dm[] = "DOMAIN";
+    UNICODE_STRING lpSystemW;
+    UNICODE_STRING lpAccountW;
+    LPWSTR lpReferencedDomainNameW = NULL;
 
-    FIXME("(%s,%s,%p,%p,%p,%p,%p), stub.\n",system,account,sid,cbSid,ReferencedDomainName,cbReferencedDomainName,name_use);
+    RtlCreateUnicodeStringFromAsciiz(&lpSystemW, system);
+    RtlCreateUnicodeStringFromAsciiz(&lpAccountW, account);
 
-    ret = AllocateAndInitializeSid(&identifierAuthority,
-        2,
-        SECURITY_BUILTIN_DOMAIN_RID,
-        DOMAIN_ALIAS_RID_ADMINS,
-        0, 0, 0, 0, 0, 0,
-        &pSid);
+    if (ReferencedDomainName)
+        lpReferencedDomainNameW = HeapAlloc(GetProcessHeap(), 0, *cbReferencedDomainName * sizeof(WCHAR));
 
-    if (!ret)
-       return FALSE;
-    if(!RtlValidSid(pSid))
+    ret = LookupAccountNameW(lpSystemW.Buffer, lpAccountW.Buffer, sid, cbSid, lpReferencedDomainNameW,
+        cbReferencedDomainName, name_use);
+
+    if (ret && lpReferencedDomainNameW)
     {
-       FreeSid(pSid);
-       return FALSE;
+        WideCharToMultiByte(CP_ACP, 0, lpReferencedDomainNameW, *cbReferencedDomainName,
+            ReferencedDomainName, *cbReferencedDomainName, NULL, NULL);
     }
 
-    if (sid != NULL && (*cbSid >= GetLengthSid(pSid)))
-       CopySid(*cbSid, sid, pSid);
-    if (*cbSid < GetLengthSid(pSid))
-    {
-       SetLastError(ERROR_INSUFFICIENT_BUFFER);
-       ret = FALSE;
-    }
-    *cbSid = GetLengthSid(pSid);
-    
-    if (ReferencedDomainName != NULL && (*cbReferencedDomainName > strlen(dm)))
-      strcpy(ReferencedDomainName, dm);
-    if (*cbReferencedDomainName <= strlen(dm))
-    {
-       SetLastError(ERROR_INSUFFICIENT_BUFFER);
-       ret = FALSE;
-    }
-    *cbReferencedDomainName = strlen(dm)+1;
+    RtlFreeUnicodeString(&lpSystemW);
+    RtlFreeUnicodeString(&lpAccountW);
 
-    FreeSid(pSid);
+    if (lpReferencedDomainNameW)
+        HeapFree(GetProcessHeap(), 0, lpReferencedDomainNameW);
 
     return ret;
 }
@@ -1828,10 +1811,54 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
                                 LPDWORD cbSid, LPWSTR ReferencedDomainName,
                                 LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )
 {
+    /* Default implementation: Always return a default SID */
+    SID_IDENTIFIER_AUTHORITY identifierAuthority = {SECURITY_NT_AUTHORITY};
+    BOOL ret;
+    PSID pSid;
+    static const WCHAR dm[] = {'D','O','M','A','I','N'};
+
     FIXME("%s %s %p %p %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpAccountName),
           Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse);
 
-    return FALSE;
+    ret = AllocateAndInitializeSid(&identifierAuthority,
+        2,
+        SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS,
+        0, 0, 0, 0, 0, 0,
+        &pSid);
+
+    if (!ret)
+       return FALSE;
+
+    if (!RtlValidSid(pSid))
+    {
+       FreeSid(pSid);
+       return FALSE;
+    }
+
+    if (Sid != NULL && (*cbSid >= GetLengthSid(pSid)))
+       CopySid(*cbSid, Sid, pSid);
+    if (*cbSid < GetLengthSid(pSid))
+    {
+       SetLastError(ERROR_INSUFFICIENT_BUFFER);
+       ret = FALSE;
+    }
+    *cbSid = GetLengthSid(pSid);
+    
+    if (ReferencedDomainName != NULL && (*cchReferencedDomainName > strlenW(dm)))
+      strcpyW(ReferencedDomainName, dm);
+
+    if (*cchReferencedDomainName <= strlenW(dm))
+    {
+       SetLastError(ERROR_INSUFFICIENT_BUFFER);
+       ret = FALSE;
+    }
+
+    *cchReferencedDomainName = strlenW(dm)+1;
+
+    FreeSid(pSid);
+
+    return ret;
 }
 
 /******************************************************************************
