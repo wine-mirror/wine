@@ -1349,7 +1349,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     WINE_MODREF *wm;
     NTSTATUS status;
 
-    TRACE( "loading %s\n", debugstr_w(name) );
+    TRACE("Trying native dll %s\n", debugstr_w(name));
 
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
@@ -1456,6 +1456,8 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
         UNICODE_STRING nt_name;
         ANSI_STRING unix_name;
 
+        TRACE("Trying built-in %s\n", debugstr_w(path));
+
         if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
             return STATUS_DLL_NOT_FOUND;
 
@@ -1480,6 +1482,8 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
     else
     {
         int file_exists;
+
+        TRACE("Trying built-in %s\n", debugstr_w(name));
 
         /* we don't want to depend on the current codepage here */
         len = strlenW( name ) + 1;
@@ -1652,7 +1656,6 @@ overflow:
  */
 static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_MODREF** pwm )
 {
-    int i;
     enum loadorder_type loadorder[LOADORDER_NTYPES];
     WCHAR buffer[32];
     WCHAR *filename;
@@ -1696,45 +1699,43 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     MODULE_GetLoadOrderW( loadorder, main_exe ? main_exe->ldr.BaseDllName.Buffer : NULL, filename );
 
     nts = STATUS_DLL_NOT_FOUND;
-    for (i = 0; i < LOADORDER_NTYPES; i++)
+    switch(loadorder[0])
     {
-        if (loadorder[i] == LOADORDER_INVALID) break;
-
-        switch (loadorder[i])
+    case LOADORDER_DLL:
+        if (handle)
         {
-        case LOADORDER_DLL:
-            TRACE("Trying native dll %s\n", debugstr_w(filename));
-            if (!handle) continue;  /* it cannot possibly be loaded */
             nts = load_native_dll( load_path, filename, handle, flags, pwm );
             if (nts == STATUS_INVALID_FILE_FOR_SECTION)
-            {
                 /* not in PE format, maybe it's a builtin */
                 nts = load_builtin_dll( load_path, filename, handle, flags, pwm );
-            }
-            break;
-        case LOADORDER_BI:
-            TRACE("Trying built-in %s\n", debugstr_w(filename));
+        }
+        if (nts == STATUS_DLL_NOT_FOUND && loadorder[1] == LOADORDER_BI)
             nts = load_builtin_dll( load_path, filename, 0, flags, pwm );
-            break;
-        default:
-            nts = STATUS_INTERNAL_ERROR;
-            break;
-        }
+        break;
+    case LOADORDER_BI:
+        nts = load_builtin_dll( load_path, filename, handle, flags, pwm );
+        if (!handle) break;  /* nothing else we can try */
+        /* file is not a builtin library, try without using the specified file */
+        nts = load_builtin_dll( load_path, filename, 0, flags, pwm );
+        if (nts == STATUS_DLL_NOT_FOUND && loadorder[1] == LOADORDER_DLL)
+            nts = load_native_dll( load_path, filename, handle, flags, pwm );
+        break;
+    default:
+        break;
+    }
 
-        if (nts == STATUS_SUCCESS)
-        {
-            /* Initialize DLL just loaded */
-            TRACE("Loaded module %s (%s) at %p\n", debugstr_w(filename),
-                  ((*pwm)->ldr.Flags & LDR_WINE_INTERNAL) ? "builtin" : "native",
-                  (*pwm)->ldr.BaseAddress);
-            /* Set the ldr.LoadCount here so that an attach failure will */
-            /* decrement the dependencies through the MODULE_FreeLibrary call. */
-            (*pwm)->ldr.LoadCount = 1;
-            if (handle) NtClose( handle );
-            if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
-            return nts;
-        }
-        if (nts != STATUS_DLL_NOT_FOUND) break;
+    if (nts == STATUS_SUCCESS)
+    {
+        /* Initialize DLL just loaded */
+        TRACE("Loaded module %s (%s) at %p\n", debugstr_w(filename),
+              ((*pwm)->ldr.Flags & LDR_WINE_INTERNAL) ? "builtin" : "native",
+              (*pwm)->ldr.BaseAddress);
+        /* Set the ldr.LoadCount here so that an attach failure will */
+        /* decrement the dependencies through the MODULE_FreeLibrary call. */
+        (*pwm)->ldr.LoadCount = 1;
+        if (handle) NtClose( handle );
+        if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
+        return nts;
     }
 
     WARN("Failed to load module %s; status=%lx\n", debugstr_w(libname), nts);
