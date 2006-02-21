@@ -30,6 +30,10 @@
 #include "winnls.h"
 #include "ole2.h"
 #include "msxml2.h"
+#include "wininet.h"
+#include "urlmon.h"
+#include "winreg.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 
@@ -38,6 +42,124 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
+
+typedef struct {
+    const struct IBindStatusCallbackVtbl *lpVtbl;
+} bsc;
+
+static HRESULT WINAPI bsc_QueryInterface(
+    IBindStatusCallback *iface,
+    REFIID riid,
+    LPVOID *ppobj )
+{
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IBindStatusCallback))
+    {
+        IBindStatusCallback_AddRef( iface );
+        *ppobj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s not implemented\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI bsc_AddRef(
+    IBindStatusCallback *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI bsc_Release(
+    IBindStatusCallback *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI bsc_OnStartBinding(
+        IBindStatusCallback* iface,
+        DWORD dwReserved,
+        IBinding* pib)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI bsc_GetPriority(
+        IBindStatusCallback* iface,
+        LONG* pnPriority)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI bsc_OnLowResource(
+        IBindStatusCallback* iface,
+        DWORD reserved)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI bsc_OnProgress(
+        IBindStatusCallback* iface,
+        ULONG ulProgress,
+        ULONG ulProgressMax,
+        ULONG ulStatusCode,
+        LPCWSTR szStatusText)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI bsc_OnStopBinding(
+        IBindStatusCallback* iface,
+        HRESULT hresult,
+        LPCWSTR szError)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI bsc_GetBindInfo(
+        IBindStatusCallback* iface,
+        DWORD* grfBINDF,
+        BINDINFO* pbindinfo)
+{
+    *grfBINDF = BINDF_RESYNCHRONIZE;
+    
+    return S_OK;
+}
+
+static HRESULT WINAPI bsc_OnDataAvailable(
+        IBindStatusCallback* iface,
+        DWORD grfBSCF,
+        DWORD dwSize,
+        FORMATETC* pformatetc,
+        STGMEDIUM* pstgmed)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI bsc_OnObjectAvailable(
+        IBindStatusCallback* iface,
+        REFIID riid,
+        IUnknown* punk)
+{
+    return S_OK;
+}
+
+const struct IBindStatusCallbackVtbl bsc_vtbl =
+{
+    bsc_QueryInterface,
+    bsc_AddRef,
+    bsc_Release,
+    bsc_OnStartBinding,
+    bsc_GetPriority,
+    bsc_OnLowResource,
+    bsc_OnProgress,
+    bsc_OnStopBinding,
+    bsc_GetBindInfo,
+    bsc_OnDataAvailable,
+    bsc_OnObjectAvailable
+};
+
+static bsc domdoc_bsc = { &bsc_vtbl };
 
 typedef struct _domdoc
 {
@@ -750,38 +872,84 @@ static xmlDocPtr doparse( char *ptr, int len )
 
 static xmlDocPtr doread( LPWSTR filename )
 {
-    HANDLE handle, mapping;
-    DWORD len;
     xmlDocPtr xmldoc = NULL;
-    char *ptr;
+    HRESULT hr;
+    IBindCtx *pbc;
+    IStream *stream, *memstream;
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
+    BYTE buf[4096];
+    DWORD read, written;
 
     TRACE("%s\n", debugstr_w( filename ));
 
-    handle = CreateFileW( filename, GENERIC_READ, FILE_SHARE_READ,
-                         NULL, OPEN_EXISTING, 0, NULL );
-    if( handle == INVALID_HANDLE_VALUE )
-        return xmldoc;
-
-    len = GetFileSize( handle, NULL );
-    if( len != INVALID_FILE_SIZE || GetLastError() == NO_ERROR )
+    if(!PathIsURLW(filename))
     {
-        mapping = CreateFileMappingW( handle, NULL, PAGE_READONLY, 0, 0, NULL );
-        if ( mapping )
+        WCHAR fullpath[MAX_PATH];
+        DWORD needed = sizeof(url)/sizeof(WCHAR);
+
+        if(!PathSearchAndQualifyW(filename, fullpath, sizeof(fullpath)/sizeof(WCHAR)))
         {
-            ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, len );
-            if ( ptr )
+            WARN("can't find path\n");
+            return NULL;
+        }
+
+        if(FAILED(UrlCreateFromPathW(fullpath, url, &needed, 0)))
+        {
+            ERR("can't create url from path\n");
+            return NULL;
+        }
+        filename = url;
+    }
+
+    hr = CreateBindCtx(0, &pbc);
+    if(SUCCEEDED(hr))
+    {
+        hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)&domdoc_bsc.lpVtbl, NULL, 0);
+        if(SUCCEEDED(hr))
+        {
+            IMoniker *moniker;
+            hr = CreateURLMoniker(NULL, filename, &moniker);
+            if(SUCCEEDED(hr))
             {
-                xmldoc = doparse( ptr, len );
-                UnmapViewOfFile( ptr );
+                hr = IMoniker_BindToStorage(moniker, pbc, NULL, &IID_IStream, (LPVOID*)&stream);
+                IMoniker_Release(moniker);
             }
-            CloseHandle( mapping );
+        }
+        IBindCtx_Release(pbc);
+    }
+    if(FAILED(hr))
+        return NULL;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &memstream);
+    if(FAILED(hr))
+    {
+        IStream_Release(stream);
+        return NULL;
+    }
+
+    do
+    {
+        IStream_Read(stream, buf, sizeof(buf), &read);
+        hr = IStream_Write(memstream, buf, read, &written);
+    } while(SUCCEEDED(hr) && written != 0 && read != 0);
+
+    if(SUCCEEDED(hr))
+    {
+        HGLOBAL hglobal;
+        hr = GetHGlobalFromStream(memstream, &hglobal);
+        if(SUCCEEDED(hr))
+        {
+            DWORD len = GlobalSize(hglobal);
+            char *ptr = GlobalLock(hglobal);
+            if(len != 0)
+                xmldoc = doparse( ptr, len );
+            GlobalUnlock(hglobal);
         }
     }
-    CloseHandle( handle );
-
+    IStream_Release(memstream);
+    IStream_Release(stream);
     return xmldoc;
 }
-
 
 static HRESULT WINAPI domdoc_load(
     IXMLDOMDocument *iface,
