@@ -368,6 +368,10 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
 	_dump_cooperativelevel_DI(dwflags);
     }
     
+    if (dwflags & DISCL_EXCLUSIVE && dwflags & DISCL_BACKGROUND) {
+        return DIERR_UNSUPPORTED;
+    }
+    
     /* Store the window which asks for the mouse */
     if (!hwnd)
 	hwnd = GetDesktopWindow();
