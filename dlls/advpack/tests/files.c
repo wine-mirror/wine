@@ -30,6 +30,7 @@
 
 /* function pointers */
 HMODULE hAdvPack;
+static HRESULT (WINAPI *pAddDelBackupEntry)(LPCSTR, LPCSTR, LPCSTR, DWORD);
 static HRESULT (WINAPI *pExtractFiles)(LPCSTR, LPCSTR, DWORD, LPCSTR, LPVOID, DWORD);
 static HRESULT (WINAPI *pAdvInstallFile)(HWND,LPCSTR,LPCSTR,LPCSTR,LPCSTR,DWORD,DWORD);
 
@@ -41,6 +42,7 @@ static void init_function_pointers(void)
 
     if (hAdvPack)
     {
+        pAddDelBackupEntry = (void *)GetProcAddress(hAdvPack, "AddDelBackupEntry");
         pExtractFiles = (void *)GetProcAddress(hAdvPack, "ExtractFiles");
         pAdvInstallFile = (void*)GetProcAddress(hAdvPack, "AdvInstallFile");
     }
@@ -87,6 +89,130 @@ static void delete_test_files(void)
     RemoveDirectoryA("dest");
 
     DeleteFileA("extract.cab");
+}
+
+static BOOL check_ini_file_attr(LPSTR filename)
+{
+    BOOL ret;
+    DWORD expected = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_READONLY;
+    DWORD attr = GetFileAttributesA(filename);
+
+    ret = (attr & expected) && (attr != INVALID_FILE_ATTRIBUTES);
+    SetFileAttributesA(filename, FILE_ATTRIBUTE_NORMAL);
+
+    return ret;
+}
+
+#define FIELD_LEN   16
+
+static BOOL check_ini_contents(LPSTR filename, BOOL add)
+{
+    CHAR field[FIELD_LEN];
+    BOOL ret = TRUE, match;
+
+    GetPrivateProfileStringA("backup", "one", NULL, field, FIELD_LEN, filename);
+    match = !lstrcmpA(field, "-1,0,0,0,0,0,-1");
+    if ((add && !match) || (!add && match))
+        ret = FALSE;
+
+    GetPrivateProfileStringA("backup", "two", NULL, field, FIELD_LEN, filename);
+    if (lstrcmpA(field, "-1,0,0,0,0,0,-1"))
+        ret = FALSE;
+
+    GetPrivateProfileStringA("backup", "three", NULL, field, FIELD_LEN, filename);
+    match = !lstrcmpA(field, "-1,0,0,0,0,0,-1");
+    if ((add && !match) || (!add && match))
+        ret = FALSE;
+
+    return ret;
+}
+
+static void test_AddDelBackupEntry()
+{
+    HRESULT res;
+    CHAR path[MAX_PATH];
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\backup\\basename.INI");
+
+    /* native AddDelBackupEntry crashes if lpcszBaseName is NULL */
+
+    /* try a NULL file list */
+    res = pAddDelBackupEntry(NULL, "backup", "basename", AADBE_ADD_ENTRY);
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(!DeleteFileA(path), "Expected path to not exist\n");
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\backup\\.INI");
+
+    /* try an empty base name */
+    res = pAddDelBackupEntry("one\0two\0three", "backup", "", AADBE_ADD_ENTRY);
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(!DeleteFileA(path), "Expected path to not exist\n");
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\basename.INI");
+
+    /* try an invalid flag */
+    res = pAddDelBackupEntry("one\0two\0three", NULL, "basename", 0);
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(!DeleteFileA(path), "Expected path to not exist\n");
+
+    lstrcpyA(path, "c:\\basename.INI");
+
+    /* create the INF file */
+    res = pAddDelBackupEntry("one\0two\0three", "c:\\", "basename", AADBE_ADD_ENTRY);
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    todo_wine
+    {
+        ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
+        ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
+        ok(DeleteFileA(path), "Expected path to exist\n");
+    }
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\backup\\basename.INI");
+
+    /* try to create the INI file in a nonexistent directory */
+    RemoveDirectoryA("backup");
+    res = pAddDelBackupEntry("one\0two\0three", "backup", "basename", AADBE_ADD_ENTRY);
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    ok(!check_ini_file_attr(path), "Expected ini file to not be hidden\n");
+    ok(!check_ini_contents(path, TRUE), "Expected ini contents to not match\n");
+    ok(!DeleteFileA(path), "Expected path to not exist\n");
+
+    /* try an existent, relative backup directory */
+    CreateDirectoryA("backup", NULL);
+    res = pAddDelBackupEntry("one\0two\0three", "backup", "basename", AADBE_ADD_ENTRY);
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    todo_wine
+    {
+        ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
+        ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
+        ok(DeleteFileA(path), "Expected path to exist\n");
+    }
+    RemoveDirectoryA("backup");
+
+    lstrcpyA(path, "c:\\windows\\basename.INI");
+
+    /* try a NULL backup dir, INI is created in c:\windows */
+    res = pAddDelBackupEntry("one\0two\0three", NULL, "basename", AADBE_ADD_ENTRY);
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    todo_wine
+    {
+        ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
+    }
+
+    /* remove the entries with AADBE_DEL_ENTRY */
+    SetFileAttributesA(path, FILE_ATTRIBUTE_NORMAL);
+    res = pAddDelBackupEntry("one\0three", NULL, "basename", AADBE_DEL_ENTRY);
+    SetFileAttributesA(path, FILE_ATTRIBUTE_NORMAL);
+    ok(res == S_OK, "Expected S_OK, got %ld\n", res);
+    todo_wine
+    {
+        ok(check_ini_contents(path, FALSE), "Expected ini contents to match\n");
+        ok(DeleteFileA(path), "Expected path to exist\n");
+    }
 }
 
 /* the FCI callbacks */
@@ -428,6 +554,7 @@ START_TEST(files)
     create_test_files();
     create_cab_file();
 
+    test_AddDelBackupEntry();
     test_ExtractFiles();
     test_AdvInstallFile();
 
