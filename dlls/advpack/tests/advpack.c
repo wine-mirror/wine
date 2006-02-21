@@ -222,7 +222,6 @@ static void translateinfstring_test()
        "Expected ERROR_SUCCESS or E_FAIL, got 0x%08x\n", (UINT)hr);
 
     if(hr == ERROR_SUCCESS)
-    todo_wine
     {
         HKEY key;
         DWORD len = MAX_PATH;
@@ -245,8 +244,11 @@ static void translateinfstring_test()
     hr = pTranslateInfString("c:\\test.inf", NULL, "Options.NTx86",
                              "InstallDir", buffer, MAX_PATH, &dwSize, NULL);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", (UINT)hr);
-    ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
-    ok(dwSize == 25, "Expected size 25, got %ld\n", dwSize);
+    todo_wine
+    {
+        ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
+        ok(dwSize == 25, "Expected size 25, got %ld\n", dwSize);
+    }
 
     DeleteFile("c:\\a.inf");
     DeleteFile("c:\\test.inf");

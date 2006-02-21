@@ -36,6 +36,77 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
 typedef HRESULT (WINAPI *DLLREGISTER) (void);
 
+#define MAX_FIELD_LENGTH    512
+#define PREFIX_LEN          5
+
+/* parses the destination directory parameters from pszSection
+ * the parameters are of the form: root,key,value,unknown,fallback
+ * we first read the reg value root\\key\\value and if that fails,
+ * use fallback as the destination directory
+ */
+static void get_dest_dir(HINF hInf, PCSTR pszSection, PSTR pszBuffer, DWORD dwSize)
+{
+    INFCONTEXT context;
+    CHAR key[MAX_PATH], value[MAX_PATH];
+    CHAR prefix[PREFIX_LEN];
+    HKEY root, subkey;
+    DWORD size;
+
+    /* load the destination parameters */
+    SetupFindFirstLineA(hInf, pszSection, NULL, &context);
+    SetupGetStringFieldA(&context, 1, prefix, PREFIX_LEN, &size);
+    SetupGetStringFieldA(&context, 2, key, MAX_PATH, &size);
+    SetupGetStringFieldA(&context, 3, value, MAX_PATH, &size);
+
+    if (!lstrcmpA(prefix, "HKLM"))
+        root = HKEY_LOCAL_MACHINE;
+    else if (!lstrcmpA(prefix, "HKCU"))
+        root = HKEY_CURRENT_USER;
+    else
+        root = NULL;
+
+    /* preserve the buffer size */
+    size = dwSize;
+
+    /* fallback to the default destination dir if reg fails */
+    if (RegOpenKeyA(root, key, &subkey) ||
+        RegQueryValueExA(subkey, value, NULL, NULL, (LPBYTE)pszBuffer, &size))
+    {
+        SetupGetStringFieldA(&context, 6, pszBuffer, dwSize, &size);
+    }
+
+    RegCloseKey(subkey);
+}
+
+/* loads the LDIDs specified in the install section of an INF */
+static void set_ldids(HINF hInf, PCSTR pszInstallSection)
+{
+    CHAR field[MAX_FIELD_LENGTH];
+    CHAR key[MAX_FIELD_LENGTH];
+    CHAR dest[MAX_PATH];
+    INFCONTEXT context;
+    DWORD size;
+    int ldid;
+
+    if (!SetupGetLineTextA(NULL, hInf, pszInstallSection, "CustomDestination",
+                           field, MAX_FIELD_LENGTH, &size))
+        return;
+
+    if (!SetupFindFirstLineA(hInf, field, NULL, &context))
+        return;
+
+    do
+    {
+        SetupGetIntField(&context, 0, &ldid);
+        SetupGetLineTextA(&context, NULL, NULL, NULL,
+                          key, MAX_FIELD_LENGTH, &size);
+
+        get_dest_dir(hInf, key, dest, MAX_PATH);
+
+        SetupSetDirectoryIdA(hInf, ldid, dest);
+    } while (SetupFindNextLine(&context, &context));
+}
+
 /***********************************************************************
  *           CloseINFEngine (ADVPACK.@)
  *
@@ -507,6 +578,8 @@ HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
     if (hInf == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
+    set_ldids(hInf, pszInstallSection);
+
     if (!SetupGetLineTextA(NULL, hInf, pszTranslateSection, pszTranslateKey,
                            pszBuffer, dwBufferSize, pdwRequiredSize))
     {
@@ -516,6 +589,7 @@ HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
         return SPAPI_E_LINE_NOT_FOUND;
     }
 
+    SetupCloseInfFile(hInf);
     return S_OK;
 }
 
