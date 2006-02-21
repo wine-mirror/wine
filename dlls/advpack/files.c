@@ -55,15 +55,46 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
  * 
  *   If lpcszBackupDir is NULL, the INI file is assumed to exist in
  *   c:\windows or created there if it does not exist.
- *
- * BUGS
- *   Unimplemented.
  */
 HRESULT WINAPI AddDelBackupEntry(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
                                  LPCSTR lpcszBaseName, DWORD dwFlags)
 {
-    FIXME("(%p, %p, %p, %ld) stub\n", lpcszFileList, lpcszBackupDir,
+    CHAR szIniPath[MAX_PATH];
+    LPSTR szString = NULL;
+
+    const char szBackupEntry[] = "-1,0,0,0,0,0,-1";
+
+    TRACE("(%p, %p, %p, %ld)\n", lpcszFileList, lpcszBackupDir,
           lpcszBaseName, dwFlags);
+
+    if (!lpcszFileList || !*lpcszFileList)
+        return S_OK;
+
+    if (lpcszBackupDir)
+        lstrcpyA(szIniPath, lpcszBackupDir);
+    else
+        GetWindowsDirectoryA(szIniPath, MAX_PATH);
+
+    lstrcatA(szIniPath, "\\");
+    lstrcatA(szIniPath, lpcszBaseName);
+    lstrcatA(szIniPath, ".ini");
+
+    SetFileAttributesA(szIniPath, FILE_ATTRIBUTE_NORMAL);
+
+    if (dwFlags & AADBE_ADD_ENTRY)
+        szString = (LPSTR)szBackupEntry;
+    else if (dwFlags & AADBE_DEL_ENTRY)
+        szString = NULL;
+
+    /* add or delete the INI entries */
+    while (*lpcszFileList)
+    {
+        WritePrivateProfileStringA("backup", lpcszFileList, szString, szIniPath);
+        lpcszFileList += lstrlenA(lpcszFileList) + 1;
+    }
+
+    /* hide the INI file */
+    SetFileAttributesA(szIniPath, FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN);
 
     return S_OK;
 }

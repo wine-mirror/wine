@@ -163,12 +163,9 @@ static void test_AddDelBackupEntry()
     /* create the INF file */
     res = pAddDelBackupEntry("one\0two\0three", "c:\\", "basename", AADBE_ADD_ENTRY);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
-    todo_wine
-    {
-        ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
-        ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
-        ok(DeleteFileA(path), "Expected path to exist\n");
-    }
+    ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
+    ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
+    ok(DeleteFileA(path), "Expected path to exist\n");
 
     lstrcpyA(path, CURR_DIR);
     lstrcatA(path, "\\backup\\basename.INI");
@@ -185,12 +182,9 @@ static void test_AddDelBackupEntry()
     CreateDirectoryA("backup", NULL);
     res = pAddDelBackupEntry("one\0two\0three", "backup", "basename", AADBE_ADD_ENTRY);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
-    todo_wine
-    {
-        ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
-        ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
-        ok(DeleteFileA(path), "Expected path to exist\n");
-    }
+    ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
+    ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
+    ok(DeleteFileA(path), "Expected path to exist\n");
     RemoveDirectoryA("backup");
 
     lstrcpyA(path, "c:\\windows\\basename.INI");
@@ -198,21 +192,15 @@ static void test_AddDelBackupEntry()
     /* try a NULL backup dir, INI is created in c:\windows */
     res = pAddDelBackupEntry("one\0two\0three", NULL, "basename", AADBE_ADD_ENTRY);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
-    todo_wine
-    {
-        ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
-    }
+    ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
 
     /* remove the entries with AADBE_DEL_ENTRY */
     SetFileAttributesA(path, FILE_ATTRIBUTE_NORMAL);
     res = pAddDelBackupEntry("one\0three", NULL, "basename", AADBE_DEL_ENTRY);
     SetFileAttributesA(path, FILE_ATTRIBUTE_NORMAL);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
-    todo_wine
-    {
-        ok(check_ini_contents(path, FALSE), "Expected ini contents to match\n");
-        ok(DeleteFileA(path), "Expected path to exist\n");
-    }
+    ok(check_ini_contents(path, FALSE), "Expected ini contents to match\n");
+    ok(DeleteFileA(path), "Expected path to exist\n");
 }
 
 /* the FCI callbacks */
