@@ -332,7 +332,7 @@ TW_UINT16 TWAIN_ProcessEvent (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         {
             pEvent->TWMessage = pSource->pendingEvent.TWMessage;
             pSource->pendingEvent.TWMessage = MSG_NULL;
-            twRC = TWRC_DSEVENT;
+            twRC = TWRC_NOTDSEVENT;
         }
         else
         {
@@ -360,7 +360,7 @@ TW_UINT16 TWAIN_PendingXfersEndXfer (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 {
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_PENDINGXFERS pPendingXfers = (pTW_PENDINGXFERS) pData;
-    activeDS *pSource = TWAIN_LookupSource (pData);
+    activeDS *pSource = TWAIN_LookupSource (pDest);
 
     TRACE("DG_CONTROL/DAT_PENDINGXFERS/MSG_ENDXFER\n");
 
@@ -542,9 +542,29 @@ TW_UINT16 TWAIN_SetupFileXfer2Set (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 TW_UINT16 TWAIN_SetupMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
                                   TW_MEMREF pData)
 {
-    FIXME ("stub!\n");
-
+#ifndef HAVE_SANE
     return TWRC_FAILURE;
+#else
+    activeDS *pSource = TWAIN_LookupSource (pDest);
+    pTW_SETUPMEMXFER  pSetupMemXfer = (pTW_SETUPMEMXFER)pData;
+
+    TRACE("DG_CONTROL/DAT_SETUPMEMXFER/MSG_GET\n");
+    if (pSource->sane_param_valid)
+    {
+        pSetupMemXfer->MinBufSize = pSource->sane_param.bytes_per_line;
+        pSetupMemXfer->MaxBufSize = pSource->sane_param.bytes_per_line * 8;
+        pSetupMemXfer->Preferred = pSource->sane_param.bytes_per_line * 2;
+    }
+    else
+    {
+        /* Guessing */
+        pSetupMemXfer->MinBufSize = 2000;
+        pSetupMemXfer->MaxBufSize = 8000;
+        pSetupMemXfer->Preferred = 4000;
+    }
+
+    return TWRC_SUCCESS;
+#endif
 }
 
 /* DG_CONTROL/DAT_STATUS/MSG_GET */

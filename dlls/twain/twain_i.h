@@ -46,6 +46,7 @@ typedef struct tagActiveDS
     SANE_Handle		deviceHandle;		/* device handle */
     SANE_Parameters     sane_param;             /* parameters about the image
                                                    transferred */
+    BOOL                sane_param_valid;  /* true if valid sane_param*/
 #endif
     /* Capabiblities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */

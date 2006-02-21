@@ -1,5 +1,6 @@
 /*
  * Copyright 2000 Corel Corporation
+ * Copyright 2006 CodeWeavers, Aric Stewart
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -105,6 +106,8 @@ TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         {
             /* return general image description information about the image about to be transferred */
             status = sane_get_parameters (pSource->deviceHandle, &pSource->sane_param);
+            pSource->sane_param_valid = TRUE;
+            TRACE("Getting parameters\n");
         }
 
         pImageInfo->XResolution.Whole = -1;
@@ -113,20 +116,26 @@ TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         pImageInfo->YResolution.Frac = 0;
         pImageInfo->ImageWidth = pSource->sane_param.pixels_per_line;
         pImageInfo->ImageLength = pSource->sane_param.lines;
-        if (pSource->sane_param.depth == 24)
+
+        TRACE("Bits per Sample %i\n",pSource->sane_param.depth);
+        TRACE("Frame Format %i\n",pSource->sane_param.format);
+
+        if (pSource->sane_param.format == 1 /*RGB*/ )
         {
-            pImageInfo->SamplesPerPixel = 3;
-            pImageInfo->BitsPerSample[0] = 8;
-            pImageInfo->BitsPerSample[1] = 8;
-            pImageInfo->BitsPerSample[2] = 8;
-            pImageInfo->BitsPerPixel = 24;
-            pImageInfo->Planar = TRUE;
-            pImageInfo->PixelType = TWPT_RGB;
+            pImageInfo->BitsPerPixel = pSource->sane_param.depth * 3;
             pImageInfo->Compression = TWCP_NONE;
+            pImageInfo->Planar = TRUE;
+            pImageInfo->SamplesPerPixel = 3;
+            pImageInfo->BitsPerSample[0] = pSource->sane_param.depth;
+            pImageInfo->BitsPerSample[1] = pSource->sane_param.depth;
+            pImageInfo->BitsPerSample[2] = pSource->sane_param.depth;
+            pImageInfo->PixelType = TWPT_RGB;
         }
-        else if (pSource->sane_param.depth == 8)
+        else
         {
-            /* FIXME: fill the image info structure for 8-bit image */
+            ERR("Unhandled source frame type\n");
+            twRC = TWRC_FAILURE;
+            pSource->twCC = TWCC_SEQERROR;
         }
     }
 
@@ -174,9 +183,131 @@ TW_UINT16 TWAIN_ImageLayoutSet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
                                  TW_MEMREF pData)
 {
-    FIXME ("stub!\n");
-
+#ifndef HAVE_SANE
     return TWRC_FAILURE;
+#else
+    TW_UINT16 twRC = TWRC_SUCCESS;
+    pTW_IMAGEMEMXFER pImageMemXfer = (pTW_IMAGEMEMXFER) pData;
+    activeDS *pSource = TWAIN_LookupSource (pDest);
+    SANE_Status status = SANE_STATUS_GOOD;
+
+    TRACE ("DG_IMAGE/DAT_IMAGEMEMXFER/MSG_GET\n");
+
+    if (!pSource)
+    {
+        twRC = TWRC_FAILURE;
+        DSM_twCC = TWCC_NODS;
+    }
+    else if (pSource->currentState < 6 || pSource->currentState > 7)
+    {
+        twRC = TWRC_FAILURE;
+        pSource->twCC = TWCC_SEQERROR;
+    }
+    else
+    {
+        LPBYTE buffer;
+        int buff_len = 0;
+        int consumed_len = 0;
+        LPBYTE ptr;
+        int rows;
+
+        /* Transfer an image from the source to the application */
+        if (pSource->currentState == 6)
+        {
+            status = sane_start (pSource->deviceHandle);
+            if (status != SANE_STATUS_GOOD)
+            {
+                WARN("sane_start: %s\n", sane_strstatus (status));
+                sane_cancel (pSource->deviceHandle);
+                pSource->twCC = TWCC_OPERATIONERROR;
+                return TWRC_FAILURE;
+            }
+
+            status = sane_get_parameters (pSource->deviceHandle,
+                    &pSource->sane_param);
+            pSource->sane_param_valid = TRUE;
+
+            if (status != SANE_STATUS_GOOD)
+            {
+                WARN("sane_get_parameters: %s\n", sane_strstatus (status));
+                sane_cancel (pSource->deviceHandle);
+                pSource->twCC = TWCC_OPERATIONERROR;
+                return TWRC_FAILURE;
+            }
+
+            TRACE("Acquiring image %dx%dx%d bits (format=%d last=%d) from sane...\n"
+              , pSource->sane_param.pixels_per_line, pSource->sane_param.lines,
+              pSource->sane_param.depth, pSource->sane_param.format,
+              pSource->sane_param.last_frame);
+
+            pSource->currentState = 7;
+        }
+
+        /* access memory buffer */
+        if (pImageMemXfer->Memory.Length < pSource->sane_param.bytes_per_line)
+        {
+            sane_cancel (pSource->deviceHandle);
+            pSource->twCC = TWCC_BADVALUE;
+            return TWRC_FAILURE;
+        }
+
+        if (pImageMemXfer->Memory.Flags & TWMF_HANDLE)
+        {
+            FIXME("Memory Handle, may not be locked correctly\n");
+            buffer = LocalLock(pImageMemXfer->Memory.TheMem);
+        }
+        else
+            buffer = pImageMemXfer->Memory.TheMem;
+       
+        memset(buffer,0,pImageMemXfer->Memory.Length);
+
+        ptr = buffer;
+        consumed_len = 0;
+        rows = pImageMemXfer->Memory.Length / pSource->sane_param.bytes_per_line;
+
+        /* must fill full lines */
+        while (consumed_len < (pSource->sane_param.bytes_per_line*rows) && 
+                status == SANE_STATUS_GOOD)
+        {
+            status = sane_read (pSource->deviceHandle, ptr, 
+                    (pSource->sane_param.bytes_per_line*rows) - consumed_len ,
+                    &buff_len);
+            consumed_len += buff_len;
+            ptr += buff_len;
+        }
+
+        if (status == SANE_STATUS_GOOD || status == SANE_STATUS_EOF)
+        {
+            pImageMemXfer->Compression = TWCP_NONE;
+            pImageMemXfer->BytesPerRow = pSource->sane_param.bytes_per_line;
+            pImageMemXfer->Columns = pSource->sane_param.pixels_per_line;
+            pImageMemXfer->Rows = rows;
+            pImageMemXfer->XOffset = 0;
+            pImageMemXfer->YOffset = 0;
+            pImageMemXfer->BytesWritten = consumed_len;
+
+            if (status == SANE_STATUS_EOF)
+            {
+                TRACE("sane_read: %s\n", sane_strstatus (status));
+                sane_cancel (pSource->deviceHandle);
+                twRC = TWRC_XFERDONE;
+            }
+            pSource->twCC = TWRC_SUCCESS;
+        }
+        else if (status != SANE_STATUS_EOF)
+        {
+            WARN("sane_read: %s\n", sane_strstatus (status));
+            sane_cancel (pSource->deviceHandle);
+            pSource->twCC = TWCC_OPERATIONERROR;
+            twRC = TWRC_FAILURE;
+        }
+    }
+
+    if (pImageMemXfer->Memory.Flags & TWMF_HANDLE)
+        LocalUnlock(pImageMemXfer->Memory.TheMem);
+    
+    return twRC;
+#endif
 }
 
 /* DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET */
@@ -222,6 +353,7 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         }
 
         status = sane_get_parameters (pSource->deviceHandle, &pSource->sane_param);
+        pSource->sane_param_valid = TRUE;
         if (status != SANE_STATUS_GOOD)
         {
             WARN("sane_get_parameters: %s\n", sane_strstatus (status));

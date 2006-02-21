@@ -178,6 +178,7 @@ TW_UINT16 TWAIN_IdentityGetFirst (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 
     TRACE ("DG_CONTROL/DAT_IDENTITY/MSG_GETFIRST\n");
 
+    device_list = NULL;
     status = sane_get_devices (&device_list, SANE_FALSE);
     if (status == SANE_STATUS_GOOD)
     {
