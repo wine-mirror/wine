@@ -1400,6 +1400,7 @@ struct read_directory_changes_request
     obj_handle_t handle;
     obj_handle_t event;
     unsigned int filter;
+    int          subtree;
     int          want_data;
     void*        io_apc;
     void*        io_sb;
@@ -4363,6 +4364,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 226
+#define SERVER_PROTOCOL_VERSION 227
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

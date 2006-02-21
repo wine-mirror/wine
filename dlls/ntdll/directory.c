@@ -1793,7 +1793,7 @@ static void WINAPI read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, ULONG st
     struct read_changes_info *info = user;
     char path[PATH_MAX];
     NTSTATUS ret = STATUS_SUCCESS;
-    int len, action;
+    int len, action, i;
 
     TRACE("%p %p %p %08lx\n", info, info->ApcContext, iosb, status);
 
@@ -1822,6 +1822,11 @@ static void WINAPI read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, ULONG st
         PFILE_NOTIFY_INFORMATION pfni;
 
         pfni = (PFILE_NOTIFY_INFORMATION) info->Buffer;
+
+        /* convert to an NT style path */
+        for (i=0; i<len; i++)
+            if (path[i] == '/')
+                path[i] = '\\';
 
         len = ntdll_umbstowcs( 0, path, len, pfni->FileName,
                                info->BufferSize - sizeof (*pfni) );
@@ -1900,6 +1905,7 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
         req->event      = Event;
         req->filter     = CompletionFilter;
         req->want_data  = (Buffer != NULL);
+        req->subtree    = WatchTree;
         req->io_apc     = read_changes_apc;
         req->io_sb      = IoStatusBlock;
         req->io_user    = info;

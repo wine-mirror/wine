@@ -1044,6 +1044,7 @@ enum char_info_mode
     obj_handle_t handle;        /* handle to the directory */
     obj_handle_t event;         /* handle to the event */
     unsigned int filter;        /* notification filter */
+    int          subtree;       /* watch the subtree? */
     int          want_data;     /* flag indicating whether change data should be collected */
     void*        io_apc;        /* APC routine to queue upon end of async */
     void*        io_sb;         /* I/O status block (unique across all async on this handle) */
