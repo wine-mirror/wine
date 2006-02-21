@@ -44,7 +44,7 @@
   48 stdcall -noname PathSetDlgItemPath(long long ptr) PathSetDlgItemPathAW
   49 stdcall -noname PathQualify(ptr) PathQualifyAW
   50 stdcall -noname PathStripToRoot(ptr) PathStripToRootAW
-  51 stdcall -noname PathResolve(str long long) PathResolveAW
+  51 stdcall PathResolve(str long long) PathResolveAW
   52 stdcall -noname PathGetArgs(str) PathGetArgsAW
   53 stdcall DoEnvironmentSubst(long long) DoEnvironmentSubstAW
   55 stdcall -noname PathQuoteSpaces(ptr) PathQuoteSpacesAW
