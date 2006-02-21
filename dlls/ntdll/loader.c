@@ -584,6 +584,9 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     DWORD size;
     NTSTATUS status;
 
+    if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS)) return STATUS_SUCCESS;  /* already done */
+    wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
+
     if (!(imports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
                                                   IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
         return STATUS_SUCCESS;
@@ -634,7 +637,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     wm->ldr.BaseAddress   = hModule;
     wm->ldr.EntryPoint    = NULL;
     wm->ldr.SizeOfImage   = nt->OptionalHeader.SizeOfImage;
-    wm->ldr.Flags         = 0;
+    wm->ldr.Flags         = LDR_DONT_RESOLVE_REFS;
     wm->ldr.LoadCount     = 0;
     wm->ldr.TlsIndex      = -1;
     wm->ldr.SectionHandle = NULL;
@@ -1393,7 +1396,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
             return status;
         }
     }
-    else wm->ldr.Flags |= LDR_DONT_RESOLVE_REFS;
 
     /* send DLL load event */
 
@@ -1682,12 +1684,8 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     {
         if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
 
-        if (((*pwm)->ldr.Flags & LDR_DONT_RESOLVE_REFS) &&
-            !(flags & DONT_RESOLVE_DLL_REFERENCES))
-        {
-            (*pwm)->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
-            fixup_imports( *pwm, load_path );
-        }
+        if (!(flags & DONT_RESOLVE_DLL_REFERENCES)) fixup_imports( *pwm, load_path );
+
         TRACE("Found loaded module %s for %s at %p, count=%d\n",
               debugstr_w((*pwm)->ldr.FullDllName.Buffer), debugstr_w(libname),
               (*pwm)->ldr.BaseAddress, (*pwm)->ldr.LoadCount);
@@ -2044,7 +2042,6 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
         goto error;
     }
     wm->ldr.LoadCount = -1;  /* can't unload main exe */
-    wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
 
     peb->ProcessParameters->ImagePathName = wm->ldr.FullDllName;
     version_init( wm->ldr.FullDllName.Buffer );
