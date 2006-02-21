@@ -112,7 +112,7 @@ static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCST
     if (rc>=32)
     {
         int wait_rc;
-        wait_rc=WaitForSingleObject(hEvent, 60000);
+        wait_rc=WaitForSingleObject(hEvent, 5000);
         ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
     }
     /* The child process may have changed the result file, so let profile
@@ -172,10 +172,10 @@ static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
         int wait_rc;
         if (sei.hProcess!=NULL)
         {
-            wait_rc=WaitForSingleObject(sei.hProcess, 60000);
+            wait_rc=WaitForSingleObject(sei.hProcess, 5000);
             ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject(hProcess) returned %d\n", wait_rc);
         }
-        wait_rc=WaitForSingleObject(hEvent, 60000);
+        wait_rc=WaitForSingleObject(hEvent, 5000);
         ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
     }
     /* The child process may have changed the result file, so let profile
