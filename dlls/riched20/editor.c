@@ -56,7 +56,7 @@
   + EM_GETLINECOUNT   returns number of rows, not of paragraphs
   + EM_GETMODIFY
   - EM_GETOLEINTERFACE
-  - EM_GETOPTIONS
+  + EM_GETOPTIONS
   + EM_GETPARAFORMAT
   - EM_GETPASSWORDCHAR 2.0
   - EM_GETPUNCTUATION 1.0asian
@@ -102,7 +102,7 @@
   - EM_SETLIMITTEXT
   + EM_SETMODIFY (not sure if implementation is correct)
   - EM_SETOLECALLBACK
-  - EM_SETOPTIONS
+  + EM_SETOPTIONS (partially implemented)
   - EM_SETPALETTE 2.0
   + EM_SETPARAFORMAT
   - EM_SETPASSWORDCHAR 2.0
@@ -1325,7 +1325,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETLIMITTEXT)
   UNSUPPORTED_MSG(EM_GETLINE)
   /* UNSUPPORTED_MSG(EM_GETOLEINTERFACE) separate stub */
-  UNSUPPORTED_MSG(EM_GETOPTIONS)
   UNSUPPORTED_MSG(EM_GETPASSWORDCHAR)
   UNSUPPORTED_MSG(EM_GETREDONAME)
   UNSUPPORTED_MSG(EM_GETTEXTMODE)
@@ -1341,7 +1340,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETEDITSTYLE)
   UNSUPPORTED_MSG(EM_SETFONTSIZE)
   UNSUPPORTED_MSG(EM_SETLANGOPTIONS)
-  UNSUPPORTED_MSG(EM_SETOPTIONS)
   UNSUPPORTED_MSG(EM_SETPALETTE)
   UNSUPPORTED_MSG(EM_SETPASSWORDCHAR)
   UNSUPPORTED_MSG(EM_SETSCROLLPOS)
@@ -1410,6 +1408,59 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_REDO:
     ME_Redo(editor);
     return 0;
+  case EM_GETOPTIONS:
+  {
+    /* these flags are equivalent to the ES_* counterparts */
+    DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
+                 ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN;
+    DWORD settings = GetWindowLongW(hWnd, GWL_STYLE) & mask;
+
+    return settings;
+  }
+  case EM_SETOPTIONS:
+  {
+    /* these flags are equivalent to ES_* counterparts                      
+     * ECO_READONLY is already implemented in the code, only requires 
+     * setting the bit to work                                        
+     */
+    DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
+                 ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN;
+    DWORD raw = GetWindowLongW(hWnd, GWL_STYLE);
+    DWORD settings = mask & raw;
+
+    switch(wParam)
+    {
+      case ECOOP_SET:
+        settings = lParam;
+        break;
+      case ECOOP_OR:
+        settings |= lParam;
+        break;
+      case ECOOP_AND:
+        settings &= lParam;
+        break;
+      case ECOOP_XOR:
+        settings ^= lParam;
+    }
+    SetWindowLongW(hWnd, GWL_STYLE, (raw & ~mask) | (settings & mask));
+
+    if (lParam & ECO_AUTOWORDSELECTION)
+      FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
+    if (lParam & ECO_SELECTIONBAR)
+      FIXME("ECO_SELECTIONBAR not implemented yet!\n");
+    if (lParam & ECO_VERTICAL)
+      FIXME("ECO_VERTICAL not implemented yet!\n");
+    if (lParam & ECO_AUTOHSCROLL)
+      FIXME("ECO_AUTOHSCROLL not implemented yet!\n");
+    if (lParam & ECO_AUTOVSCROLL)
+      FIXME("ECO_AUTOVSCROLL not implemented yet!\n");
+    if (lParam & ECO_NOHIDESEL)
+      FIXME("ECO_NOHIDESEL not implemented yet!\n");
+    if (lParam & ECO_WANTRETURN)
+      FIXME("ECO_WANTRETURN not implemented yet!\n");
+
+    return settings;
+  }
   case EM_SETSEL:
   {
     ME_InvalidateSelection(editor);

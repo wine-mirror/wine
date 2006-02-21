@@ -488,6 +488,54 @@ static void test_TM_PLAINTEXT()
   DestroyWindow(hwndRichEdit);
 }
 
+/* FIXME: Extra '\r' appended at end of gotten text*/
+static void test_WM_GETTEXT()
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    static const char text[] = "Hello. My name is RichEdit!";
+    char buffer[1024] = {0};
+    int result;
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    result = strcmp(buffer,text);
+    todo_wine{
+      ok(result == 0, 
+        "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
+    }
+}
+
+/* FIXME: need to test unimplemented options and robustly test wparam */
+static void test_EM_SETOPTIONS()
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    static const char text[] = "Hello. My name is RichEdit!";
+    char buffer[1024] = {0};
+
+    /* NEGATIVE TESTING - NO OPTIONS SET */
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+    SendMessage(hwndRichEdit, EM_SETOPTIONS, ECOOP_SET, 0);
+
+    /* testing no readonly by sending 'a' to the control*/
+    SetFocus(hwndRichEdit);
+    SendMessage(hwndRichEdit, WM_CHAR, 'a', 0x1E0001);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    ok(buffer[0]=='a', 
+       "EM_SETOPTIONS: Text not changed! s1:%s s2:%s\n", text, buffer);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+
+    /* READONLY - sending 'a' to the control */
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+    SendMessage(hwndRichEdit, EM_SETOPTIONS, ECOOP_SET, ECO_READONLY);
+    SetFocus(hwndRichEdit);
+    SendMessage(hwndRichEdit, WM_CHAR, 'a', 0x1E0001);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    ok(buffer[0]==text[0], 
+       "EM_SETOPTIONS: Text changed! s1:%s s2:%s\n", text, buffer); 
+
+    DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -502,6 +550,8 @@ START_TEST( editor )
   test_EM_SCROLLCARET();
   test_EM_SETTEXTMODE();
   test_TM_PLAINTEXT();
+  test_EM_SETOPTIONS();
+  test_WM_GETTEXT();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
