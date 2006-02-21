@@ -989,9 +989,12 @@ static void start_process( void *arg )
  */
 void __wine_kernel_init(void)
 {
-    WCHAR *main_exe_name, *p;
-    char error[1024];
-    int file_exists;
+    static const WCHAR dotW[] = {'.',0};
+    static const WCHAR exeW[] = {'.','e','x','e',0};
+
+    WCHAR *p, main_exe_name[MAX_PATH];
+    HMODULE module;
+    DWORD type, error = 0;
     PEB *peb = NtCurrentTeb()->Peb;
 
     /* Initialize everything */
@@ -1000,9 +1003,12 @@ void __wine_kernel_init(void)
     __wine_main_argv++;  /* remove argv[0] (wine itself) */
     __wine_main_argc--;
 
-    if (!(main_exe_name = peb->ProcessParameters->ImagePathName.Buffer))
+    if (peb->ProcessParameters->ImagePathName.Buffer)
     {
-        WCHAR buffer[MAX_PATH];
+        strcpyW( main_exe_name, peb->ProcessParameters->ImagePathName.Buffer );
+    }
+    else
+    {
         WCHAR exe_nameW[MAX_PATH];
 
         if (!__wine_main_argv[0]) usage();
@@ -1013,19 +1019,17 @@ void __wine_kernel_init(void)
         }
 
         MultiByteToWideChar( CP_UNIXCP, 0, __wine_main_argv[0], -1, exe_nameW, MAX_PATH );
-        if (!find_exe_file( exe_nameW, buffer, MAX_PATH, &main_exe_file ))
+        if (!SearchPathW( NULL, exe_nameW, exeW, MAX_PATH, main_exe_name, NULL ) &&
+            !get_builtin_path( exe_nameW, exeW, main_exe_name, MAX_PATH ))
         {
             MESSAGE( "wine: cannot find '%s'\n", __wine_main_argv[0] );
             ExitProcess(1);
         }
-        if (main_exe_file == INVALID_HANDLE_VALUE)
-        {
-            MESSAGE( "wine: cannot open %s\n", debugstr_w(main_exe_name) );
-            ExitProcess(1);
-        }
-        RtlCreateUnicodeString( &peb->ProcessParameters->ImagePathName, buffer );
-        main_exe_name = peb->ProcessParameters->ImagePathName.Buffer;
     }
+
+    /* if there's no extension, append a dot to prevent LoadLibrary from appending .dll */
+    p = strrchrW( main_exe_name, '.' );
+    if (!p || strchrW( p, '/' ) || strchrW( p, '\\' )) strcatW( main_exe_name, dotW );
 
     TRACE( "starting process name=%s file=%p argv[0]=%s\n",
            debugstr_w(main_exe_name), main_exe_file, debugstr_a(__wine_main_argv[0]) );
@@ -1033,77 +1037,34 @@ void __wine_kernel_init(void)
     RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath,
                           MODULE_get_dll_load_path(NULL) );
 
-    if (!main_exe_file)  /* no file handle -> Winelib app */
+    if (!(module = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
     {
-        TRACE( "starting Winelib app %s\n", debugstr_w(main_exe_name) );
-        if (open_builtin_exe_file( main_exe_name, error, sizeof(error), 0, &file_exists ) &&
-            NtCurrentTeb()->Peb->ImageBaseAddress)
-            goto found;
-        MESSAGE( "wine: cannot open builtin exe for %s: %s\n",
-                 debugstr_w(main_exe_name), error );
-        ExitProcess(1);
-    }
-
-    switch( MODULE_GetBinaryType( main_exe_file, NULL, NULL ))
-    {
-    case BINARY_PE_EXE:
-        TRACE( "starting Win32 binary %s\n", debugstr_w(main_exe_name) );
-        if ((peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
-            goto found;
-        MESSAGE( "wine: could not load %s as Win32 binary\n", debugstr_w(main_exe_name) );
-        ExitProcess(1);
-    case BINARY_PE_DLL:
-        MESSAGE( "wine: %s is a DLL, not an executable\n", debugstr_w(main_exe_name) );
-        ExitProcess(1);
-    case BINARY_UNKNOWN:
-        /* check for .com extension */
-        if (!(p = strrchrW( main_exe_name, '.' )) || strcmpiW( p, comW ))
+        error = GetLastError();
+        /* check for a DOS binary and start winevdm if needed */
+        if (error == ERROR_BAD_EXE_FORMAT && GetBinaryTypeW( main_exe_name, &type ))
         {
-            MESSAGE( "wine: cannot determine executable type for %s\n",
-                     debugstr_w(main_exe_name) );
-            ExitProcess(1);
-        }
-        /* fall through */
-    case BINARY_OS216:
-    case BINARY_WIN16:
-    case BINARY_DOS:
-        TRACE( "starting Win16/DOS binary %s\n", debugstr_w(main_exe_name) );
-        __wine_main_argv--;
-        __wine_main_argc++;
-        __wine_main_argv[0] = "winevdm.exe";
-        if (open_builtin_exe_file( winevdmW, error, sizeof(error), 0, &file_exists ))
-            goto found;
-        MESSAGE( "wine: trying to run %s, cannot open builtin library for 'winevdm.exe': %s\n",
-                 debugstr_w(main_exe_name), error );
-        ExitProcess(1);
-    case BINARY_UNIX_EXE:
-        MESSAGE( "wine: %s is a Unix binary, not supported\n", debugstr_w(main_exe_name) );
-        ExitProcess(1);
-    case BINARY_UNIX_LIB:
-        {
-            char *unix_name;
-
-            TRACE( "starting Winelib app %s\n", debugstr_w(main_exe_name) );
-            if ((unix_name = wine_get_unix_file_name( main_exe_name )) &&
-                wine_dlopen( unix_name, RTLD_NOW, error, sizeof(error) ))
+            if (type == SCS_WOW_BINARY || type == SCS_DOS_BINARY ||
+                type == SCS_OS216_BINARY || type == SCS_PIF_BINARY)
             {
-                static const WCHAR soW[] = {'.','s','o',0};
-                if ((p = strrchrW( main_exe_name, '.' )) && !strcmpW( p, soW ))
-                {
-                    *p = 0;
-                    /* update the unicode string */
-                    RtlInitUnicodeString( &peb->ProcessParameters->ImagePathName, main_exe_name );
-                }
-                HeapFree( GetProcessHeap(), 0, unix_name );
-                goto found;
+                __wine_main_argv--;
+                __wine_main_argc++;
+                __wine_main_argv[0] = "winevdm.exe";
+                module = LoadLibraryExW( winevdmW, 0, DONT_RESOLVE_DLL_REFERENCES );
             }
-            MESSAGE( "wine: could not load %s: %s\n", debugstr_w(main_exe_name), error );
-            ExitProcess(1);
         }
     }
 
- found:
-    CloseHandle( main_exe_file );
+    if (main_exe_file) CloseHandle( main_exe_file );
+
+    if (!module)
+    {
+        char msg[1024];
+        FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM, NULL, error, 0, msg, sizeof(msg), NULL );
+        MESSAGE( "wine: could not load %s: %s", debugstr_w(main_exe_name), msg );
+        ExitProcess(1);
+    }
+
+    peb->ImageBaseAddress = module;
 
     /* build command line */
     set_library_wargv( __wine_main_argv );

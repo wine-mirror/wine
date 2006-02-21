@@ -1271,16 +1271,6 @@ static void load_builtin_callback( void *module, const char *filename )
     addr = module;
     NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &nt->OptionalHeader.SizeOfImage,
                              MEM_SYSTEM | MEM_IMAGE, PAGE_EXECUTE_WRITECOPY );
-    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
-    {
-        /* if we already have an executable, ignore this one */
-        if (!NtCurrentTeb()->Peb->ImageBaseAddress)
-        {
-            NtCurrentTeb()->Peb->ImageBaseAddress = module;
-            return; /* don't create the modref here, will be done later on */
-        }
-    }
-
     /* create the MODREF */
 
     if (!(fullname = get_builtin_fullname( builtin_load_info->filename, filename )))
@@ -1300,20 +1290,29 @@ static void load_builtin_callback( void *module, const char *filename )
     }
     wm->ldr.Flags |= LDR_WINE_INTERNAL;
 
-    /* fixup imports */
-
-    load_path = builtin_load_info->load_path;
-    if (!load_path) load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
-    if (!load_path) load_path = emptyW;
-    if (fixup_imports( wm, load_path ) != STATUS_SUCCESS)
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
+        !NtCurrentTeb()->Peb->ImageBaseAddress)  /* if we already have an executable, ignore this one */
     {
-        /* the module has only be inserted in the load & memory order lists */
-        RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
-        RemoveEntryList(&wm->ldr.InMemoryOrderModuleList);
-        /* FIXME: free the modref */
-        builtin_load_info->status = STATUS_DLL_NOT_FOUND;
-        return;
+        NtCurrentTeb()->Peb->ImageBaseAddress = module;
     }
+    else
+    {
+        /* fixup imports */
+
+        load_path = builtin_load_info->load_path;
+        if (!load_path) load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
+        if (!load_path) load_path = emptyW;
+        if (fixup_imports( wm, load_path ) != STATUS_SUCCESS)
+        {
+            /* the module has only be inserted in the load & memory order lists */
+            RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
+            RemoveEntryList(&wm->ldr.InMemoryOrderModuleList);
+            /* FIXME: free the modref */
+            builtin_load_info->status = STATUS_DLL_NOT_FOUND;
+            return;
+        }
+    }
+
     builtin_load_info->wm = wm;
     TRACE( "loaded %s %p %p\n", filename, wm, module );
 
@@ -2039,11 +2038,12 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
 
     /* allocate the modref for the main exe (if not already done) */
-    if (!(wm = get_modref( peb->ImageBaseAddress )) &&
-        !(wm = alloc_module( peb->ImageBaseAddress, peb->ProcessParameters->ImagePathName.Buffer )))
+    wm = get_modref( peb->ImageBaseAddress );
+    assert( wm );
+    if (wm->ldr.Flags & LDR_IMAGE_IS_DLL)
     {
-        status = STATUS_NO_MEMORY;
-        goto error;
+        ERR("%s is a dll, not an executable\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
+        exit(1);
     }
     wm->ldr.LoadCount = -1;  /* can't unload main exe */
 
