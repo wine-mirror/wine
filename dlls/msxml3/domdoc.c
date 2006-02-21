@@ -168,6 +168,7 @@ typedef struct _domdoc
     VARIANT_BOOL async;
     IUnknown *node_unk;
     IXMLDOMNode *node;
+    HRESULT error;
 } domdoc;
 
 LONG xmldoc_add_ref(xmlDocPtr doc)
@@ -978,8 +979,13 @@ static HRESULT WINAPI domdoc_load(
         return S_FALSE;
 
     xmldoc = doread( filename );
-    if ( !xmldoc ) return S_FALSE;
+    if ( !xmldoc )
+    {
+        This->error = E_FAIL;
+        return S_FALSE;
+    }
 
+    This->error = S_OK;
     xmldoc->_private = 0;
     attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
 
@@ -1001,8 +1007,16 @@ static HRESULT WINAPI domdoc_get_parseError(
     IXMLDOMDocument *iface,
     IXMLDOMParseError** errorObj )
 {
+    BSTR error_string = NULL;
+    static const WCHAR err[] = {'e','r','r','o','r',0};
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+
     FIXME("(%p)->(%p): creating a dummy parseError\n", iface, errorObj);
-    *errorObj = create_parseError(0, NULL, NULL, NULL, 0, 0, 0);
+
+    if(This->error)
+        error_string = SysAllocString(err);
+
+    *errorObj = create_parseError(This->error, NULL, error_string, NULL, 0, 0, 0);
     if(!*errorObj) return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -1094,8 +1108,12 @@ static HRESULT WINAPI domdoc_loadXML(
     xmldoc = doparse( str, len );
     HeapFree( GetProcessHeap(), 0, str );
     if ( !xmldoc )
+    {
+        This->error = E_FAIL;
         return S_FALSE;
+    }
 
+    This->error = S_OK;
     xmldoc->_private = 0;
     attach_xmlnode( This->node, (xmlNodePtr) xmldoc );
 
@@ -1317,6 +1335,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->lpVtbl = &domdoc_vtbl;
     doc->ref = 1;
     doc->async = 0;
+    doc->error = S_OK;
 
     doc->node_unk = create_basic_node( NULL, (IUnknown*)&doc->lpVtbl );
     if(!doc->node_unk)

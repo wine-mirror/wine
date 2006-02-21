@@ -173,8 +173,16 @@ static HRESULT WINAPI parseError_get_reason(
     IXMLDOMParseError *iface,
     BSTR *reason )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    parse_error_t *This = impl_from_IXMLDOMParseError( iface );
+    TRACE("(%p)->(%p)\n", This, reason);
+    
+    if(!This->reason)
+    {
+        *reason = NULL;
+        return S_FALSE;
+    }
+    *reason = SysAllocString(This->reason);
+    return S_OK;
 }
 
 static HRESULT WINAPI parseError_get_srcText(
