@@ -47,8 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
  *                      the entries from the INI file.
  *
  * RETURNS
- *   Success: S_OK.
- *   Failure: E_FAIL.
+ *   S_OK in all cases.
  *
  * NOTES
  *   If the INI file does not exist before adding entries to it, the file
@@ -66,7 +65,7 @@ HRESULT WINAPI AddDelBackupEntry(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
     FIXME("(%p, %p, %p, %ld) stub\n", lpcszFileList, lpcszBackupDir,
           lpcszBaseName, dwFlags);
 
-    return E_FAIL;
+    return S_OK;
 }
 
 /* FIXME: this is only for the local case, X:\ */
