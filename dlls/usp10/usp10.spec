@@ -28,7 +28,7 @@
 @ stub ScriptString_pLogAttr
 @ stub ScriptString_pSize
 @ stub ScriptString_pcOutChars
-@ stub ScriptTextOut
+@ stdcall ScriptTextOut(ptr ptr long long long ptr ptr ptr long ptr long ptr ptr ptr)
 @ stub ScriptXtoCP
 @ stub UspAllocCache
 @ stub UspAllocTemp

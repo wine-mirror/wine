@@ -439,3 +439,19 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     FIXME("(%p,%p,%s,%d,0x%lx,%p): stub\n", hdc, psc, debugstr_w(pwcInChars), cChars, dwFlags, pwOutGlyphs);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *      ScriptTextOut (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UINT fuOptions, 
+                             const RECT *lprc, const SCRIPT_ANALYSIS *psa, const WCHAR *pwcReserved, 
+                             int iReserved, const WORD *pwGlyphs, int cGlyphs, const int *piAdvance, 
+                             const int *piJustify, const GOFFSET *pGoffset)
+{
+     FIXME("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p): stub\n",
+           hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
+           piAdvance, piJustify, pGoffset);
+     return E_NOTIMPL;
+}
+
