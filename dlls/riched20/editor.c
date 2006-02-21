@@ -773,8 +773,6 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
   TRACE("flags==0x%08lx, chrg->cpMin==%ld, chrg->cpMax==%ld text==%s\n",
         flags, chrg->cpMin, chrg->cpMax, debugstr_w(text));
   
-  if (!(flags & FR_MATCHCASE))
-    FIXME("Case-insensitive search not implemented\n");
   if (flags & ~(FR_DOWN | FR_MATCHCASE))
     FIXME("Flags 0x%08lx not implemented\n", flags & ~(FR_DOWN | FR_MATCHCASE));
 
@@ -825,7 +823,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
       int nCurStart = nStart;
       int nMatched = 0;
     
-      while (pCurItem && pCurItem->member.run.strText->szData[nCurStart + nMatched] == text[nMatched])
+      while (pCurItem && ME_CharCompare(pCurItem->member.run.strText->szData[nCurStart + nMatched], text[nMatched], (flags & FR_MATCHCASE)))
       {
         nMatched++;
         if (nMatched == nLen)
@@ -874,7 +872,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
       int nCurEnd = nEnd;
       int nMatched = 0;
       
-      while (pCurItem && pCurItem->member.run.strText->szData[nCurEnd - nMatched - 1] == text[nLen - nMatched - 1])
+      while (ME_CharCompare(pCurItem->member.run.strText->szData[nCurEnd - nMatched - 1], text[nLen - nMatched - 1], (flags & FR_MATCHCASE)))
       {
         nMatched++;
         if (nMatched == nLen)

@@ -19,6 +19,7 @@
  */
 
 #include "editstr.h"
+#include "wine/unicode.h"
 
 #define ALLOC_OBJ(type) HeapAlloc(me_heap, 0, sizeof(type))
 #define ALLOC_N_OBJ(type, count) HeapAlloc(me_heap, 0, (count)*sizeof(type))
@@ -93,6 +94,11 @@ void ME_EndToAnsi(HWND hWnd, LPVOID psz);
 static inline int ME_IsWSpace(WCHAR ch)
 {
   return ch > '\0' && ch <= ' ';
+}
+
+static inline int ME_CharCompare(WCHAR a, WCHAR b, int caseSensitive)
+{
+  return caseSensitive ? (a == b) : (toupperW(a) == toupperW(b));
 }
 
 /* note: those two really return the first matching offset (starting from EOS)+1 

@@ -76,7 +76,7 @@ struct find_s find_tests2[] = {
   {20, 10, "Wine", FR_MATCHCASE, 13, 0},
 
   /* Case-insensitive */
-  {1, 31, "wInE", FR_DOWN, 4, 1},
+  {1, 31, "wInE", FR_DOWN, 4, 0},
   {1, 31, "Wine", FR_DOWN, 4, 0},
 
   /* High-to-low ranges */
