@@ -148,7 +148,7 @@ START_TEST(usp10)
         if (hr ==0) {
             hr = ScriptPlace(NULL, &psc, pwOutGlyphs, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            todo_wine ok (hr == 0, "Should return 0 not (%08x)\n", (unsigned int) hr);
+            ok (hr == 0, "Should return 0 not (%08x)\n", (unsigned int) hr);
         }
 
         /* This test will check to make sure that SCRIPT_CACHE is reused and that not translation   *
@@ -182,7 +182,7 @@ START_TEST(usp10)
              if (hr ==0) {
                  hr = ScriptPlace(NULL, &psc, pwOutGlyphs, pcGlyphs, psva, &pItem[0].a, piAdvance,
                                   pGoffset, pABC);
-                 todo_wine ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", (unsigned int) hr);
+                 ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", (unsigned int) hr);
              }
         }
         hr = ScriptFreeCache( &psc);

@@ -368,12 +368,65 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
                            int cGlyphs, const SCRIPT_VISATTR *psva,
                            SCRIPT_ANALYSIS *psa, int *piAdvance, GOFFSET *pGoffset, ABC *pABC )
 {
-    FIXME("(%p,%p,%p,%s,%d, %p, %p, %p): stub\n",  hdc, psc, pwGlyphs,
+    HDC phdc;
+    int wcnt;
+    LPABC lpABC;
+    Scriptcache *pScriptcache;
+    FIXME("(%p, %p, %p, %s, %d, %p, %p, %p): semi-stub\n",  hdc, psc, pwGlyphs,
                                                 debugstr_w(pwGlyphs), 
                                                 cGlyphs, psva, psa, 
                                                 piAdvance);
-    return E_NOTIMPL;
 
+    /*  We need a valid hdc to do any of the font calls.  The spec says that hdc is optional and 
+     *  psc will be used first.  If psc and hdc are not specified E_PENDING is returned to get 
+     *  the caller to return the hdc.  For convience, the hdc is cached in SCRIPT_CACHE.    */
+
+    if  (!hdc && !*psc) {
+        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
+	return E_PENDING;
+    }   else 
+        if  (hdc && !*psc) {
+            pScriptcache = HeapAlloc( GetProcessHeap(), 0, sizeof(Scriptcache) );
+            pScriptcache->hdc = hdc;
+            phdc = hdc;
+            *psc = pScriptcache;
+        }   else
+            if  (*psc) {
+                pScriptcache = *psc;
+                phdc = pScriptcache->hdc;
+            }
+
+    /*   Here we need to calculate the width of the run unit.  At this point the input string
+     *   has been converted to glyphs and we till need to translate back to the original chars
+     *   to get the correct ABC widths.  To make life easier the ABC widths are saved in the 
+     *   SCRIPT_CACHE.  This is ok as the cache must be invalidated if the font or font size 
+     *   changes.   */
+
+     lpABC = pScriptcache->CharWidths;
+     pABC->abcA = 0; 
+     pABC->abcB = 0; 
+     pABC->abcC = 0; 
+     if  (!pScriptcache->HaveWidths) {
+         if  (GetCharABCWidthsW(phdc, 0, 255, lpABC )) 
+             pScriptcache->HaveWidths = 1;
+         else {
+             WARN("Could not get ABC values\n");
+         }
+     }
+
+     for (wcnt = 0; wcnt < cGlyphs ; wcnt++) {          /* add up the char lengths  */
+         TRACE("     Glyph=%04x, abcA=%d,  abcB=%d,  abcC=%d  wcnt=%d\n",
+                              pwGlyphs[wcnt], 
+                              lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcA,
+                              lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcB,
+                              lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcC, wcnt);
+         pABC->abcA += lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcA;
+         pABC->abcB += lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcB;
+         pABC->abcC += lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcC;
+     }
+     TRACE("Total for run:   abcA=%d,  abcB=%d,  abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
+
+     return 0;
 }
 
 /***********************************************************************
