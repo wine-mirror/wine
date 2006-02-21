@@ -60,34 +60,23 @@ static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo2 *iface, L
     return E_NOTIMPL;
 }
 
-/* Get the IID for generic default event callbacks.  This IID will
- * in theory be used to later query for an IConnectionPoint to connect
- * an event sink (callback implementation in the OLE control site)
- * to this control.
-*/
 static HRESULT WINAPI ProvideClassInfo_GetGUID(IProvideClassInfo2 *iface,
         DWORD dwGuidKind, GUID *pGUID)
 {
     WebBrowser *This = CLASSINFO_THIS(iface);
 
-    FIXME("(%p)->(%ld %p)\n", This, dwGuidKind, pGUID);
+    TRACE("(%p)->(%ld %p)\n", This, dwGuidKind, pGUID);
 
-    if (dwGuidKind != GUIDKIND_DEFAULT_SOURCE_DISP_IID)
-    {
-        FIXME ("Requested unsupported GUID type: %ld\n", dwGuidKind);
-        return E_FAIL;  /* Is there a better return type here? */
+    if(!pGUID)
+        return E_POINTER;
+
+    if (dwGuidKind != GUIDKIND_DEFAULT_SOURCE_DISP_IID) {
+        WARN("Wrong GUID type: %ld\n", dwGuidKind);
+        memcpy(pGUID, &IID_NULL, sizeof(GUID));
+        return E_FAIL;
     }
 
-    /* FIXME: Returning IPropertyNotifySink interface, but should really
-     * return a more generic event set (???) dispinterface.
-     * However, this hack, allows a control site to return with success
-     * (MFC's COleControlSite falls back to older IProvideClassInfo interface
-     * if GetGUID() fails to return a non-NULL GUID).
-     */
-    memcpy(pGUID, &IID_IPropertyNotifySink, sizeof(GUID));
-    FIXME("Wrongly returning IPropertyNotifySink interface %s\n",
-          debugstr_guid(pGUID));
-
+    memcpy(pGUID, &DIID_DWebBrowserEvents2, sizeof(GUID));
     return S_OK;
 }
 
