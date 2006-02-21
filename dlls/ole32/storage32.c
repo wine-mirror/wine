@@ -393,6 +393,12 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
        */
       IStream_AddRef(*ppstm);
 
+      /*
+       * add us to the storage's list of active streams
+       */
+
+      StorageBaseImpl_AddStream(This,newStream);
+
       res = S_OK;
       goto end;
     }
@@ -979,6 +985,11 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
      * the reference.
      */
     IStream_AddRef(*ppstm);
+
+    /* add us to the storage's list of active streams
+     */
+    StorageBaseImpl_AddStream(This,newStream);
+
   }
   else
   {
@@ -1797,6 +1808,34 @@ HRESULT WINAPI StorageImpl_Stat( IStorage* iface,
   return result;
 }
 
+/******************************************************************************
+ * Internal stream list handlers                   
+ */
+
+void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm)
+{
+  TRACE("Stream added (stg=%p strm=%p)\n", stg, strm);
+  list_add_tail(&stg->strmHead,&strm->StrmListEntry);
+}
+
+void StorageBaseImpl_RemoveStream(StorageBaseImpl * stg, StgStreamImpl * strm)
+{
+  TRACE("Stream removed (stg=%p strm=%p)\n", stg,strm);
+  list_remove(&(strm->StrmListEntry));
+}
+
+void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg)
+{
+  struct list *cur, *cur2;
+  StgStreamImpl *strm=NULL;
+
+  LIST_FOR_EACH_SAFE(cur, cur2, &stg->strmHead) {
+    strm = LIST_ENTRY(cur,StgStreamImpl,StrmListEntry);
+    TRACE("Streams deleted (stg=%p strm=%p next=%p prev=%p)\n", stg,strm,cur->next,cur->prev);
+    strm->parentStorage = NULL;   
+    list_remove(cur);
+  }
+}
 
 
 /*********************************************************************
@@ -2256,6 +2295,12 @@ HRESULT StorageImpl_Construct(
   memset(This, 0, sizeof(StorageImpl));
 
   /*
+   * Initialize stream list
+   */
+
+  list_init(&This->base.strmHead);
+
+  /*
    * Initialize the virtual function table.
    */
   This->base.lpVtbl = &Storage32Impl_Vtbl;
@@ -2447,6 +2492,8 @@ void StorageImpl_Destroy(StorageBaseImpl* iface)
 {
   StorageImpl *This = (StorageImpl*) iface;
   TRACE("(%p)\n", This);
+
+  StorageBaseImpl_DeleteAll(&This->base);
 
   HeapFree(GetProcessHeap(), 0, This->pwcsName);
 
@@ -4111,6 +4158,12 @@ StorageInternalImpl* StorageInternalImpl_Construct(
   if (newStorage!=0)
   {
     memset(newStorage, 0, sizeof(StorageInternalImpl));
+
+    /*
+     * Initialize the stream list
+     */
+
+    list_init(&newStorage->base.strmHead);
 
     /*
      * Initialize the virtual function table.

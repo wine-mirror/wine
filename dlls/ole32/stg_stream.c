@@ -58,8 +58,21 @@ static void StgStreamImpl_Destroy(StgStreamImpl* This)
 
   /*
    * Release the reference we are holding on the parent storage.
+   * IStorage_Release((IStorage*)This->parentStorage);
+   *
+   * No, don't do this. Some apps call IStorage_Release without
+   * calling IStream_Release first. If we grab a reference the
+   * file is not closed, and the app fails when it tries to
+   * reopen the file (Easy-PC, for example). Just inform the
+   * storage that we have closed the stream
    */
-  IStorage_Release((IStorage*)This->parentStorage);
+
+  if(This->parentStorage) {
+
+    StorageBaseImpl_RemoveStream(This->parentStorage, This);
+
+  }
+
   This->parentStorage = 0;
 
   /*
@@ -447,6 +460,14 @@ static HRESULT WINAPI StgStreamImpl_Seek(
 	iface, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
 
   /*
+   * fail if the stream has no parent (as does windows)
+   */
+
+  if(!(This->parentStorage)) {
+    return STG_E_REVERTED;
+  }
+
+  /*
    * The caller is allowed to pass in NULL as the new position return value.
    * If it happens, we assign it to a dynamic variable to avoid special cases
    * in the code below.
@@ -505,6 +526,10 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
   BOOL         Success;
 
   TRACE("(%p, %ld)\n", iface, libNewSize.u.LowPart);
+
+  if(!This->parentStorage) {
+    return STG_E_REVERTED;
+  }
 
   /*
    * As documented.
@@ -609,6 +634,7 @@ static HRESULT WINAPI StgStreamImpl_CopyTo(
 				    ULARGE_INTEGER* pcbRead,      /* [out] */
 				    ULARGE_INTEGER* pcbWritten)   /* [out] */
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
   HRESULT        hr = S_OK;
   BYTE           tmpBuffer[128];
   ULONG          bytesRead, bytesWritten, copySize;
@@ -621,6 +647,11 @@ static HRESULT WINAPI StgStreamImpl_CopyTo(
   /*
    * Sanity check
    */
+
+  if(!This->parentStorage) {
+    return STG_E_REVERTED;
+  }
+
   if ( pstm == 0 )
     return STG_E_INVALIDPOINTER;
 
@@ -691,6 +722,11 @@ static HRESULT WINAPI StgStreamImpl_Commit(
 		  IStream*      iface,
 		  DWORD           grfCommitFlags)  /* [in] */
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
+  if(!This->parentStorage) {
+    return STG_E_REVERTED;
+  }
   return S_OK;
 }
 
@@ -714,6 +750,12 @@ static HRESULT WINAPI StgStreamImpl_LockRegion(
 					ULARGE_INTEGER cb,          /* [in] */
 					DWORD          dwLockType)  /* [in] */
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
+  if(!This->parentStorage) {
+    return STG_E_REVERTED;
+  }
+
   FIXME("not implemented!\n");
   return E_NOTIMPL;
 }
@@ -724,6 +766,12 @@ static HRESULT WINAPI StgStreamImpl_UnlockRegion(
 					  ULARGE_INTEGER cb,          /* [in] */
 					  DWORD          dwLockType)  /* [in] */
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
+  if(!This->parentStorage) {
+    return STG_E_REVERTED;
+  }
+
   FIXME("not implemented!\n");
   return E_NOTIMPL;
 }
@@ -745,6 +793,14 @@ static HRESULT WINAPI StgStreamImpl_Stat(
 
   StgProperty    curProperty;
   BOOL         readSucessful;
+
+  /*
+   * if stream has no parent, return STG_E_REVERTED
+   */
+
+  if(!This->parentStorage) {
+	return STG_E_REVERTED;
+  }
 
   /*
    * Read the information from the property.
@@ -791,6 +847,11 @@ static HRESULT WINAPI StgStreamImpl_Clone(
   /*
    * Sanity check
    */
+
+  if(!This->parentStorage) {
+    return STG_E_REVERTED;
+  }
+
   if ( ppstm == 0 )
     return STG_E_INVALIDPOINTER;
 
@@ -858,12 +919,19 @@ StgStreamImpl* StgStreamImpl_Construct(
     newStream->lpVtbl    = &StgStreamImpl_Vtbl;
     newStream->ref       = 0;
 
+    newStream->parentStorage = parentStorage;
+
     /*
      * We want to nail-down the reference to the storage in case the
      * stream out-lives the storage in the client application.
+     *
+     * -- IStorage_AddRef((IStorage*)newStream->parentStorage);
+     *
+     * No, don't do this. Some apps call IStorage_Release without
+     * calling IStream_Release first. If we grab a reference the
+     * file is not closed, and the app fails when it tries to
+     * reopen the file (Easy-PC, for example)
      */
-    newStream->parentStorage = parentStorage;
-    IStorage_AddRef((IStorage*)newStream->parentStorage);
 
     newStream->grfMode = grfMode;
     newStream->ownerProperty = ownerProperty;

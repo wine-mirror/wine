@@ -37,6 +37,7 @@
 #include "objbase.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "wine/list.h"
 
 /*
  * Definitions for the file format offsets.
@@ -220,6 +221,12 @@ struct StorageBaseImpl
   const IPropertySetStorageVtbl *pssVtbl; /* interface for adding a properties stream */
 
   /*
+   * Stream tracking list
+   */
+
+  struct list strmHead;
+
+  /*
    * Reference count of this object
    */
   LONG ref;
@@ -246,6 +253,13 @@ struct StorageBaseImpl
   DWORD openFlags;
 };
 
+/****************************************************************************
+ * StorageBaseImpl stream list handlers
+ */
+
+void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm);
+void StorageBaseImpl_RemoveStream(StorageBaseImpl * stg, StgStreamImpl * strm);
+void StorageBaseImpl_DeleteAll(StorageBaseImpl * stg);
 
 /****************************************************************************
  * Storage32Impl definitions.
@@ -483,6 +497,12 @@ struct StgStreamImpl
 {
   const IStreamVtbl *lpVtbl;  /* Needs to be the first item in the struct
 			 * since we want to cast this to an IStream pointer */
+
+  /*
+   * We are an entry in the storage object's stream handler list
+   */
+
+  struct list StrmListEntry;
 
   /*
    * Reference count

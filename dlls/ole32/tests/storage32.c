@@ -593,7 +593,6 @@ static void test_storage_refcount(void)
     r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
     ok(r==S_OK, "IStorage->CreateStream failed\n");
 
-    todo_wine {
     r = IStorage_Release( stg );
     ok (r == 0, "storage not released\n");
 
@@ -603,7 +602,6 @@ static void test_storage_refcount(void)
 
     r = IStream_Stat( stm, &stat, STATFLAG_DEFAULT );
     ok (r == STG_E_REVERTED, "stat should fail\n");
-    }
 
     r = IStream_Release(stm);
     ok (r == 0, "stream not released\n");
@@ -617,10 +615,8 @@ static void test_storage_refcount(void)
         r = IStorage_OpenStream( stg, stmname, 0, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
         ok(r == S_OK, "OpenStream should succeed\n");
 
-        todo_wine {
         r = IStorage_Release(stg);
         ok(r == 0, "wrong ref count\n");
-        }
     }
 
     DeleteFileW(filename);
