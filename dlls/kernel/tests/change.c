@@ -327,9 +327,10 @@ static void test_readdirectorychanges(void)
     char buffer[0x1000];
     DWORD fflags, filter = 0, r, dwCount;
     OVERLAPPED ov;
-    WCHAR path[MAX_PATH], subdir[MAX_PATH];
+    WCHAR path[MAX_PATH], subdir[MAX_PATH], subsubdir[MAX_PATH];
     static const WCHAR szBoo[] = { '\\','b','o','o',0 };
     static const WCHAR szHoo[] = { '\\','h','o','o',0 };
+    static const WCHAR szGa[] = { '\\','h','o','o','\\','g','a',0 };
     PFILE_NOTIFY_INFORMATION pfni;
 
     if (!pReadDirectoryChangesW)
@@ -344,6 +345,10 @@ static void test_readdirectorychanges(void)
     lstrcpyW( subdir, path );
     lstrcatW( subdir, szHoo );
 
+    lstrcpyW( subsubdir, path );
+    lstrcatW( subsubdir, szGa );
+
+    RemoveDirectoryW( subsubdir );
     RemoveDirectoryW( subdir );
     RemoveDirectoryW( path );
     
@@ -395,7 +400,7 @@ static void test_readdirectorychanges(void)
     ok(GetLastError()==ERROR_INVALID_PARAMETER,"last error wrong\n");
     ok(r==FALSE, "should return false\n");
 
-    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,filter,NULL,&ov,NULL);
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,TRUE,filter,NULL,&ov,NULL);
     ok(r==TRUE, "should return true\n");
 
     r = WaitForSingleObject( ov.hEvent, 10 );
@@ -461,6 +466,61 @@ static void test_readdirectorychanges(void)
     ok( pfni->Action == FILE_ACTION_REMOVED, "action wrong\n" );
     ok( pfni->FileNameLength == 6, "len wrong\n" );
     ok( !memcmp(pfni->FileName,&szHoo[1],6), "name wrong\n" );
+
+    /* what happens if the buffer is too small? */
+    r = pReadDirectoryChangesW(hdir,buffer,0x10,FALSE,filter,NULL,&ov,NULL);
+    ok(r==TRUE, "should return true\n");
+
+    r = CreateDirectoryW( subdir, NULL );
+    ok( r == TRUE, "failed to create directory\n");
+
+    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    ok( r == WAIT_OBJECT_0, "should be ready\n" );
+
+    ok( ov.Internal == STATUS_NOTIFY_ENUM_DIR, "ov.Internal wrong\n");
+    ok( ov.InternalHigh == 0, "ov.InternalHigh wrong\n");
+
+    /* test the recursive watch */
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,filter,NULL,&ov,NULL);
+    ok(r==TRUE, "should return true\n");
+
+    r = CreateDirectoryW( subsubdir, NULL );
+    ok( r == TRUE, "failed to create directory\n");
+
+    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    ok( r == WAIT_OBJECT_0, "should be ready\n" );
+
+    ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
+    ok( ov.InternalHigh == 0x18, "ov.InternalHigh wrong\n");
+
+    pfni = (PFILE_NOTIFY_INFORMATION) buffer;
+    ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
+    ok( pfni->Action == FILE_ACTION_ADDED, "action wrong\n" );
+    ok( pfni->FileNameLength == 0x0c, "len wrong\n" );
+    ok( !memcmp(pfni->FileName,&szGa[1],6), "name wrong\n" );
+
+    r = RemoveDirectoryW( subsubdir );
+    ok( r == TRUE, "failed to remove directory\n");
+
+    ov.Internal = 1;
+    ov.InternalHigh = 1;
+    r = pReadDirectoryChangesW(hdir,buffer,sizeof buffer,FALSE,filter,NULL,&ov,NULL);
+    ok(r==TRUE, "should return true\n");
+
+    r = RemoveDirectoryW( subdir );
+    ok( r == TRUE, "failed to remove directory\n");
+
+    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    ok( r == WAIT_OBJECT_0, "should be ready\n" );
+
+    pfni = (PFILE_NOTIFY_INFORMATION) buffer;
+    ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
+    ok( pfni->Action == FILE_ACTION_REMOVED, "action wrong\n" );
+    ok( pfni->FileNameLength == 0x0c, "len wrong\n" );
+    ok( !memcmp(pfni->FileName,&szGa[1],6), "name wrong\n" );
+
+    ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
+    ok( ov.InternalHigh == 0x18, "ov.InternalHigh wrong\n");
 
     CloseHandle(hdir);
 
