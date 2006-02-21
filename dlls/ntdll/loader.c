@@ -1519,28 +1519,31 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
 
     if (!info.wm)
     {
+        PLIST_ENTRY mark, entry;
+
         /* The constructor wasn't called, this means the .so is already
-         * loaded under a different name. We can't support multiple names
-         * for the same module, so return an error. */
-        return STATUS_INVALID_IMAGE_FORMAT;
-    }
+         * loaded under a different name. Try to find the wm for it. */
 
-    TRACE_(loaddll)( "Loaded module %s : builtin\n", debugstr_w(info.wm->ldr.FullDllName.Buffer) );
-
-    info.wm->ldr.SectionHandle = handle;
-    if (strcmpiW( info.wm->ldr.BaseDllName.Buffer, name ))
-    {
-        /* check without .so extension */
-        static const WCHAR soW[] = {'.','s','o',0};
-        DWORD len = info.wm->ldr.BaseDllName.Length / sizeof(WCHAR);
-        if (strncmpiW( info.wm->ldr.BaseDllName.Buffer, name, len ) || strcmpiW( name + len, soW ))
+        mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+        for (entry = mark->Flink; entry != mark; entry = entry->Flink)
         {
-            ERR( "loaded .so for %s but got %s instead - probably 16-bit dll\n",
-                 debugstr_w(name), debugstr_w(info.wm->ldr.BaseDllName.Buffer) );
-            /* wine_dll_unload( handle );*/
-            return STATUS_INVALID_IMAGE_FORMAT;
+            LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+            if (mod->Flags & LDR_WINE_INTERNAL && mod->SectionHandle == handle)
+            {
+                info.wm = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
+                TRACE( "Found already loaded module %s for builtin %s\n",
+                       debugstr_w(info.wm->ldr.FullDllName.Buffer), debugstr_w(path) );
+                break;
+            }
         }
+        if (!info.wm) return STATUS_INVALID_IMAGE_FORMAT;
     }
+    else
+    {
+        TRACE_(loaddll)( "Loaded module %s : builtin\n", debugstr_w(info.wm->ldr.FullDllName.Buffer) );
+        info.wm->ldr.SectionHandle = handle;
+    }
+
     *pwm = info.wm;
     return STATUS_SUCCESS;
 }
@@ -1712,6 +1715,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         break;
     case LOADORDER_BI:
         nts = load_builtin_dll( load_path, filename, handle, flags, pwm );
+        if (nts == STATUS_SUCCESS) break;
         if (!handle) break;  /* nothing else we can try */
         /* file is not a builtin library, try without using the specified file */
         nts = load_builtin_dll( load_path, filename, 0, flags, pwm );
