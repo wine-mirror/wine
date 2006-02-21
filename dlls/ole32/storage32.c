@@ -342,13 +342,16 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
   }
 
   /*
-   * Check that we're compatible with the parent's storage mode
+   * Check that we're compatible with the parent's storage mode, but
+   * only if we are not in transacted mode
    */
   parent_grfMode = STGM_ACCESS_MODE( This->ancestorStorage->base.openFlags );
-  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
-  {
-    res = STG_E_ACCESSDENIED;
-    goto end;
+  if(!(This->ancestorStorage->base.openFlags & STGM_TRANSACTED)) {
+    if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+    {
+      res = STG_E_ACCESSDENIED;
+      goto end;
+    }
   }
 
   /*
@@ -472,13 +475,16 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
   }
 
   /*
-   * Check that we're compatible with the parent's storage mode
+   * Check that we're compatible with the parent's storage mode,
+   * but only if we are not transacted
    */
   parent_grfMode = STGM_ACCESS_MODE( This->ancestorStorage->base.openFlags );
-  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
-  {
-    res = STG_E_ACCESSDENIED;
-    goto end;
+  if(!(This->ancestorStorage->base.openFlags & STGM_TRANSACTED)) {
+    if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+    {
+      res = STG_E_ACCESSDENIED;
+      goto end;
+    }
   }
 
   /*
@@ -869,10 +875,13 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
 
   /*
    * Check that we're compatible with the parent's storage mode
+   * if not in transacted mode
    */
   parent_grfMode = STGM_ACCESS_MODE( This->ancestorStorage->base.openFlags );
-  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
-    return STG_E_ACCESSDENIED;
+  if(!(parent_grfMode & STGM_TRANSACTED)) {
+    if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+      return STG_E_ACCESSDENIED;
+  }
 
   /*
    * Initialize the out parameter
