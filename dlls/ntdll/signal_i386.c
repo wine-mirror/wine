@@ -105,7 +105,7 @@ struct kernel_sigaction
 
 #ifndef SYS_sigaction
 # ifndef __NR_sigaction
-#  error The sigaction syscall is part of the Linux i386 ABI, but your headers don't define it. Please raise a bug with your distribution.
+#  error The sigaction syscall is part of the Linux i386 ABI, but your headers does not define it. Please raise a bug with your distribution.
 # endif
 # define SYS_sigaction __NR_sigaction
 #endif
