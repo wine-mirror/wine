@@ -203,8 +203,8 @@
 207 stub MsiSetFeatureAttributesW
 208 stub MsiSourceListClearAllA
 209 stub MsiSourceListClearAllW
-210 stub MsiSourceListAddSourceA
-211 stub MsiSourceListAddSourceW
+210 stdcall MsiSourceListAddSourceA(str str long str)
+211 stdcall MsiSourceListAddSourceW(wstr wstr long wstr)
 212 stub MsiSourceListForceResolutionA
 213 stub MsiSourceListForceResolutionW
 214 stub MsiIsProductElevatedA

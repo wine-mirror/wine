@@ -37,6 +37,7 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "action.h"
+#include "sddl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -394,6 +395,61 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     RegCloseKey(sourcekey);
     return rc;
 
+}
+
+/******************************************************************
+ *  MsiSourceListAddSourceW (MSI.@)
+ */
+UINT WINAPI MsiSourceListAddSourceW( LPCWSTR szProduct, LPCWSTR szUserName,
+        DWORD dwReserved, LPCWSTR szSource)
+{
+    INT ret;
+    LPWSTR sidstr = NULL;
+    DWORD sidsize = 0;
+
+    TRACE("%s %s %s\n", debugstr_w(szProduct), debugstr_w(szUserName), debugstr_w(szSource));
+
+    if (LookupAccountNameW(NULL, szUserName, NULL, &sidsize, NULL, NULL, NULL))
+    {
+        PSID psid = msi_alloc(sidsize);
+
+        if (LookupAccountNameW(NULL, szUserName, psid, &sidsize, NULL, NULL, NULL))
+            ConvertSidToStringSidW(psid, &sidstr);
+
+        msi_free(psid);
+    }
+
+    ret = MsiSourceListAddSourceExW(szProduct, sidstr, 
+        MSIINSTALLCONTEXT_USERMANAGED, MSISOURCETYPE_NETWORK, szSource, 0);
+
+    if (sidstr)
+        LocalFree(sidstr);
+
+    return ret;
+}
+
+/******************************************************************
+ *  MsiSourceListAddSourceA (MSI.@)
+ */
+UINT WINAPI MsiSourceListAddSourceA( LPCSTR szProduct, LPCSTR szUserName,
+        DWORD dwReserved, LPCSTR szSource)
+{
+    INT ret;
+    LPWSTR szwproduct;
+    LPWSTR szwusername;
+    LPWSTR szwsource;
+
+    szwproduct = strdupAtoW( szProduct );
+    szwusername = strdupAtoW( szUserName );
+    szwsource = strdupAtoW( szSource );
+
+    ret = MsiSourceListAddSourceW(szwproduct, szwusername, 0, szwsource);
+
+    msi_free(szwproduct);
+    msi_free(szwusername);
+    msi_free(szwsource);
+
+    return ret;
 }
 
 /******************************************************************
