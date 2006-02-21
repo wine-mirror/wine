@@ -118,15 +118,13 @@ static void set_ldids(HINF hInf, PCSTR pszInstallSection)
  * RETURNS
  *   Success: S_OK.
  *   Failure: E_FAIL.
- *
- * BUGS
- *   Unimplemented.
  */
 HRESULT WINAPI CloseINFEngine(HINF hInf)
 {
-    FIXME("(%p) stub\n", hInf);
+    TRACE("(%p)\n", hInf);
 
-    return E_FAIL;
+    SetupCloseInfFile(hInf);
+    return S_OK;
 }
 
 /***********************************************************************
@@ -405,17 +403,23 @@ BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
  * RETURNS
  *   Success: S_OK.
  *   Failure: E_FAIL.
- *
- * BUGS
- *   Unimplemented.
  */
 HRESULT WINAPI OpenINFEngine(PCSTR pszInfFilename, PCSTR pszInstallSection,
                              DWORD dwFlags, HINF *phInf, PVOID pvReserved)
 {
-    FIXME("(%p, %p, %ld, %p, %p) stub\n", pszInfFilename, pszInstallSection,
+    TRACE("(%p, %p, %ld, %p, %p)\n", pszInfFilename, pszInstallSection,
           dwFlags, phInf, pvReserved);
 
-    return E_FAIL;
+    if (!phInf)
+        return E_INVALIDARG;
+
+    *phInf = SetupOpenInfFileA(pszInfFilename, NULL, INF_STYLE_WIN4, NULL);
+    if (*phInf == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    set_ldids(*phInf, pszInstallSection);
+    
+    return S_OK;
 }
 
 /***********************************************************************
@@ -621,18 +625,24 @@ HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
  *   When translating more than one keys, this method is more efficient
  *   than calling TranslateInfString, because the INF file is only
  *   opened once.
- *
- * BUGS
- *   Unimplemented.
  */
 HRESULT WINAPI TranslateInfStringEx(HINF hInf, PCSTR pszInfFilename,
                                     PCSTR pszTranslateSection, PCSTR pszTranslateKey,
                                     PSTR pszBuffer, DWORD dwBufferSize,
                                     PDWORD pdwRequiredSize, PVOID pvReserved)
 {
-    FIXME("(%p, %p, %p, %p, %p, %ld, %p, %p) stub\n", hInf, pszInfFilename,
+    TRACE("(%p, %p, %p, %p, %p, %ld, %p, %p)\n", hInf, pszInfFilename,
           pszTranslateSection, pszTranslateKey, pszBuffer, dwBufferSize,
           pdwRequiredSize, pvReserved);
+
+    if (!SetupGetLineTextA(NULL, hInf, pszTranslateSection, pszTranslateKey,
+                           pszBuffer, dwBufferSize, pdwRequiredSize))
+    {
+        if (dwBufferSize < *pdwRequiredSize)
+            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+
+        return SPAPI_E_LINE_NOT_FOUND;
+    }
 
     return E_FAIL;   
 }
