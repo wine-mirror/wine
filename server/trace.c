@@ -638,12 +638,8 @@ static void dump_get_startup_info_reply( const struct get_startup_info_reply *re
 static void dump_init_process_done_request( const struct init_process_done_request *req )
 {
     fprintf( stderr, " module=%p,", req->module );
-    fprintf( stderr, " module_size=%lu,", (unsigned long)req->module_size );
     fprintf( stderr, " entry=%p,", req->entry );
-    fprintf( stderr, " name=%p,", req->name );
-    fprintf( stderr, " gui=%d,", req->gui );
-    fprintf( stderr, " filename=" );
-    dump_varargs_unicode_str( cur_size );
+    fprintf( stderr, " gui=%d", req->gui );
 }
 
 static void dump_init_thread_request( const struct init_thread_request *req )

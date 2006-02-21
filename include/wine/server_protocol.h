@@ -261,11 +261,8 @@ struct init_process_done_request
 {
     struct request_header __header;
     void*        module;
-    size_t       module_size;
     void*        entry;
-    void*        name;
     int          gui;
-    /* VARARG(filename,unicode_str); */
 };
 struct init_process_done_reply
 {
@@ -4364,6 +4361,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 227
+#define SERVER_PROTOCOL_VERSION 228
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

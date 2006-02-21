@@ -968,21 +968,10 @@ DECL_HANDLER(init_process_done)
         fatal_protocol_error( current, "init_process_done: called twice\n" );
         return;
     }
-    if (!req->module)
-    {
-        fatal_protocol_error( current, "init_process_done: module base address cannot be 0\n" );
-        return;
-    }
-
-    /* check if main exe has been registered as a dll already */
     if (!(dll = find_process_dll( process, req->module )))
     {
-        if (!(dll = process_load_dll( process, NULL, req->module,
-                                      get_req_data(), get_req_data_size() ))) return;
-        dll->size       = req->module_size;
-        dll->dbg_offset = 0;
-        dll->dbg_size   = 0;
-        dll->name       = req->name;
+        set_error( STATUS_DLL_NOT_FOUND );
+        return;
     }
 
     /* main exe is the first in the dll list */

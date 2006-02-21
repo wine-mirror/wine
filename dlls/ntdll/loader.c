@@ -2066,15 +2066,13 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     SERVER_START_REQ( init_process_done )
     {
         req->module      = peb->ImageBaseAddress;
-        req->module_size = wm->ldr.SizeOfImage;
         req->entry       = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
-        /* API requires a double indirection */
-        req->name        = &wm->ldr.FullDllName.Buffer;
         req->gui         = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
-        wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
-        wine_server_call( req );
+        status = wine_server_call( req );
     }
     SERVER_END_REQ;
+
+    if (status != STATUS_SUCCESS) goto error;
 
     RtlEnterCriticalSection( &loader_section );
 

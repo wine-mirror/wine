@@ -255,11 +255,8 @@ struct security_descriptor
 /* Signal the end of the process initialization */
 @REQ(init_process_done)
     void*        module;       /* main module base address */
-    size_t       module_size;  /* main module size */
     void*        entry;        /* process entry point */
-    void*        name;         /* ptr to ptr to name (in process addr space) */
     int          gui;          /* is it a GUI process? */
-    VARARG(filename,unicode_str); /* file name of main exe */
 @END
 
 
