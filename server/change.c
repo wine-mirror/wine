@@ -934,6 +934,105 @@ static int inotify_adjust_changes( struct dir *dir )
     return 1;
 }
 
+static char *get_basename( const char *link )
+{
+    char *buffer, *name = NULL;
+    int r, n = 0x100;
+
+    while (1)
+    {
+        buffer = malloc( n );
+        if (!buffer) break;
+
+        r = readlink( link, buffer, n );
+        if (r < 0)
+            break;
+
+        if (r < n)
+        {
+            name = buffer;
+            break;
+        }
+        free( buffer );
+        n *= 2;
+    }
+
+    if (name)
+    {
+        while (r > 0 && name[ r - 1 ] == '/' )
+            r--;
+        name[ r ] = 0;
+
+        name = strrchr( name, '/' );
+        if (name)
+            name = strdup( &name[1] );
+    }
+
+    free( buffer );
+    return name;
+}
+
+static int dir_add_to_existing_notify( struct dir *dir )
+{
+    struct inode *inode, *parent;
+    unsigned int filter = 0;
+    struct stat st, st_new;
+    char link[35], *name;
+    int wd, unix_fd;
+
+    if (!inotify_fd)
+        return 0;
+
+    unix_fd = get_unix_fd( dir->fd );
+
+    /* check if it's in the list of inodes we want to watch */
+    if (-1 == fstat( unix_fd, &st_new ))
+        return 0;
+    inode = find_inode( st_new.st_dev, st_new.st_ino );
+    if (inode)
+        return 0;
+
+    /* lookup the parent */
+    sprintf( link, "/proc/self/fd/%u/..", unix_fd );
+    if (-1 == stat( link, &st ))
+        return 0;
+
+    /*
+     * If there's no parent, stop.  We could keep going adding
+     *  ../ to the path until we hit the root of the tree or
+     *  find a recursively watched ancestor.
+     * Assume it's too expensive to search up the tree for now.
+     */
+    parent = find_inode( st.st_dev, st.st_ino );
+    if (!parent)
+        return 0;
+
+    if (parent->wd == -1)
+        return 0;
+
+    filter = filter_from_inode( parent, 1 );
+    if (!filter)
+        return 0;
+
+    sprintf( link, "/proc/self/fd/%u", unix_fd );
+    name = get_basename( link );
+    if (!name)
+        return 0;
+    inode = inode_add( parent, st_new.st_dev, st_new.st_ino, name );
+    free( name );
+    if (!inode)
+        return 0;
+
+    /* Couldn't find this inode at the start of the function, must be new */
+    assert( inode->wd == -1 );
+
+    wd = inotify_add_dir( link, filter );
+    if (wd != -1)
+        inode_set_wd( inode, wd );
+
+    return 1;
+}
+
 #else
 
 static int init_inotify( void )
@@ -949,6 +1048,11 @@ static int inotify_adjust_changes( struct dir *dir )
 static void free_inode( struct inode *inode )
 {
     assert( 0 );
+}
+
+static int dir_add_to_existing_notify( struct dir *dir )
+{
+    return 0;
 }
 
 #endif  /* USE_INOTIFY */
@@ -972,6 +1076,8 @@ struct object *create_dir_obj( struct fd *fd )
     grab_object( fd );
     dir->fd = fd;
     set_fd_user( fd, &dir_fd_ops, &dir->obj );
+
+    dir_add_to_existing_notify( dir );
 
     return &dir->obj;
 }
