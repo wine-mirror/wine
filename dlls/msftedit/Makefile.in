@@ -1,0 +1,11 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msftedit.dll
+IMPORTS   = riched20 kernel32
+EXTRALIBS = -luuid
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

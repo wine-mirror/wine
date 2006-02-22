@@ -85,6 +85,7 @@ BASEDIRS = \
 	msacm/winemp3 \
 	mscms \
 	msdmo \
+	msftedit \
 	mshtml \
 	msi \
 	msimg32 \
@@ -337,6 +338,7 @@ SYMLINKS_SO = \
 	msadp32.acm.so \
 	mscms.dll.so \
 	msdmo.dll.so \
+	msftedit.dll.so \
 	msg711.acm.so \
 	mshtml.dll.so \
 	msi.dll.so \
@@ -698,6 +700,9 @@ mscms.dll.so: mscms/mscms.dll.so
 
 msdmo.dll.so: msdmo/msdmo.dll.so
 	$(RM) $@ && $(LN_S) msdmo/msdmo.dll.so $@
+
+msftedit.dll.so: msftedit/msftedit.dll.so
+	$(RM) $@ && $(LN_S) msftedit/msftedit.dll.so $@
 
 msg711.acm.so: msacm/msg711/msg711.acm.so
 	$(RM) $@ && $(LN_S) msacm/msg711/msg711.acm.so $@
@@ -1642,6 +1647,7 @@ msacm/msacm32.dll.so: msacm
 msacm/msadp32/msadp32.acm.so: msacm/msadp32
 mscms/mscms.dll.so: mscms
 msdmo/msdmo.dll.so: msdmo
+msftedit/msftedit.dll.so: msftedit
 msacm/msg711/msg711.acm.so: msacm/msg711
 mshtml/mshtml.dll.so: mshtml
 msi/msi.dll.so: msi
