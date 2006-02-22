@@ -1130,9 +1130,9 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedBitmap()
 HANDLE X11DRV_CLIPBOARD_ImportXAString(Window w, Atom prop)
 {
     LPBYTE lpdata;
-    ULONG cbytes;
+    unsigned long cbytes;
     LPSTR lpstr;
-    UINT i, inlcount = 0;
+    unsigned long i, inlcount = 0;
     HANDLE hText = 0;
 
     if (!X11DRV_CLIPBOARD_ReadProperty(w, prop, &lpdata, &cbytes))
@@ -1174,9 +1174,9 @@ HANDLE X11DRV_CLIPBOARD_ImportXAString(Window w, Atom prop)
 HANDLE X11DRV_CLIPBOARD_ImportUTF8(Window w, Atom prop)
 {
     LPBYTE lpdata;
-    ULONG cbytes;
+    unsigned long cbytes;
     LPSTR lpstr;
-    UINT i, inlcount = 0;
+    unsigned long i, inlcount = 0;
     HANDLE hUnicodeText = 0;
 
     if (!X11DRV_CLIPBOARD_ReadProperty(w, prop, &lpdata, &cbytes))
@@ -1297,7 +1297,7 @@ HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Window w, Atom prop)
     HWND hwnd;
     HDC hdc;
     LPBYTE lpdata;
-    ULONG cbytes;
+    unsigned long cbytes;
     Pixmap *pPixmap;
     HANDLE hClipData = 0;
 
@@ -1327,7 +1327,7 @@ HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Window w, Atom prop)
 HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Window w, Atom prop)
 {
     LPBYTE lpdata;
-    ULONG cbytes;
+    unsigned long cbytes;
     HANDLE hClipData = 0;
 
     if (X11DRV_CLIPBOARD_ReadProperty(w, prop, &lpdata, &cbytes))
@@ -1351,7 +1351,7 @@ HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Window w, Atom prop)
 HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Window w, Atom prop)
 {
     LPBYTE lpdata;
-    ULONG cbytes;
+    unsigned long cbytes;
     HANDLE hClipData = 0;
 
     if (X11DRV_CLIPBOARD_ReadProperty(w, prop, &lpdata, &cbytes))
@@ -1376,7 +1376,7 @@ HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Window w, Atom prop)
 {
     LPVOID lpClipData;
     LPBYTE lpdata;
-    ULONG cbytes;
+    unsigned long cbytes;
     HANDLE hClipData = 0;
 
     if (X11DRV_CLIPBOARD_ReadProperty(w, prop, &lpdata, &cbytes))
