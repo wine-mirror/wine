@@ -34,7 +34,6 @@
 #include "winnt.h"
 #include "winternl.h"
 
-#include "module.h"
 #include "wine/exception.h"
 #include "excpt.h"
 #include "wine/library.h"
@@ -1661,7 +1660,7 @@ overflow:
  */
 static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_MODREF** pwm )
 {
-    enum loadorder_type loadorder[LOADORDER_NTYPES];
+    enum loadorder loadorder;
     WCHAR buffer[32];
     WCHAR *filename;
     ULONG size;
@@ -1697,32 +1696,39 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     }
 
     main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
-    MODULE_GetLoadOrderW( loadorder, main_exe ? main_exe->ldr.BaseDllName.Buffer : NULL, filename );
+    loadorder = get_load_order( main_exe ? main_exe->ldr.BaseDllName.Buffer : NULL, filename );
 
-    nts = STATUS_DLL_NOT_FOUND;
-    switch(loadorder[0])
+    switch(loadorder)
     {
-    case LOADORDER_DLL:
-        if (handle)
+    case LO_INVALID:
+        nts = STATUS_NO_MEMORY;
+        break;
+    case LO_DISABLED:
+        nts = STATUS_DLL_NOT_FOUND;
+        break;
+    case LO_NATIVE:
+    case LO_NATIVE_BUILTIN:
+        if (!handle) nts = STATUS_DLL_NOT_FOUND;
+        else
         {
             nts = load_native_dll( load_path, filename, handle, flags, pwm );
             if (nts == STATUS_INVALID_FILE_FOR_SECTION)
                 /* not in PE format, maybe it's a builtin */
                 nts = load_builtin_dll( load_path, filename, handle, flags, pwm );
         }
-        if (nts == STATUS_DLL_NOT_FOUND && loadorder[1] == LOADORDER_BI)
+        if (nts == STATUS_DLL_NOT_FOUND && loadorder == LO_NATIVE_BUILTIN)
             nts = load_builtin_dll( load_path, filename, 0, flags, pwm );
         break;
-    case LOADORDER_BI:
+    case LO_BUILTIN:
+    case LO_BUILTIN_NATIVE:
+    case LO_DEFAULT:  /* default is builtin,native */
         nts = load_builtin_dll( load_path, filename, handle, flags, pwm );
         if (nts == STATUS_SUCCESS) break;
         if (!handle) break;  /* nothing else we can try */
         /* file is not a builtin library, try without using the specified file */
         nts = load_builtin_dll( load_path, filename, 0, flags, pwm );
-        if (nts == STATUS_DLL_NOT_FOUND && loadorder[1] == LOADORDER_DLL)
+        if (nts == STATUS_DLL_NOT_FOUND && loadorder != LO_BUILTIN)
             nts = load_native_dll( load_path, filename, handle, flags, pwm );
-        break;
-    default:
         break;
     }
 

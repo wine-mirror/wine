@@ -116,6 +116,21 @@ extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst,
 extern int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
                            const char* defchar, int *used );
 
+/* load order */
+
+enum loadorder
+{
+    LO_INVALID,
+    LO_DISABLED,
+    LO_NATIVE,
+    LO_BUILTIN,
+    LO_NATIVE_BUILTIN,  /* native then builtin */
+    LO_BUILTIN_NATIVE,  /* builtin then native */
+    LO_DEFAULT          /* nothing specified, use default strategy */
+};
+
+extern enum loadorder get_load_order( const WCHAR *app_name, const WCHAR *path );
+
 struct debug_info
 {
     char *str_pos;       /* current position in strings buffer */
