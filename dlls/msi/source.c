@@ -127,6 +127,7 @@ static UINT find_given_source(HKEY key, LPCWSTR szSource, media_info *ss)
     {
         val = NULL;
         val_size = 0;
+        size = sizeof(szIndex)/sizeof(szIndex[0]);
         rc = RegEnumValueW(key, index, szIndex, &size, NULL, NULL, NULL, &val_size);
         if (rc != ERROR_NO_MORE_ITEMS)
         {
