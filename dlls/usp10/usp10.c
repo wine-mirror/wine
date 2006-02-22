@@ -433,11 +433,49 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
  *      ScriptGetCMap (USP10.@)
  *
  */
+/***********************************************************************
+ *      ScriptGetCMap (USP10.@)
+ *
+ */
 HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars,
 			      int cChars, DWORD dwFlags, WORD *pwOutGlyphs)
 {
-    FIXME("(%p,%p,%s,%d,0x%lx,%p): stub\n", hdc, psc, debugstr_w(pwcInChars), cChars, dwFlags, pwOutGlyphs);
-    return E_NOTIMPL;
+    HDC phdc;
+    int cnt;
+    DWORD hr;
+    Scriptcache *pScriptcache;
+    FIXME("(%p,%p,%s,%d,0x%lx,%p): semi-stub\n", hdc, psc, debugstr_wn(pwcInChars,cChars), cChars, dwFlags, pwOutGlyphs);
+
+    if  (!hdc && !*psc) {
+        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
+	return E_PENDING;
+    }   else 
+        if  (hdc && !*psc) {
+            pScriptcache = HeapAlloc( GetProcessHeap(), 0, sizeof(Scriptcache) );
+            pScriptcache->hdc = hdc;
+            phdc = hdc;
+            pScriptcache->HaveWidths = 0;
+            *psc = pScriptcache;
+        }   else
+            if  (*psc) {
+                pScriptcache = *psc;
+                phdc = pScriptcache->hdc;
+            }
+
+    TRACE("Before: ");
+    for (cnt = 0; cnt < cChars; cnt++)
+         TRACE("%4x",pwcInChars[cnt]);
+    TRACE("\n");
+
+    hr = GetGlyphIndicesW(phdc, pwcInChars, cChars, pwOutGlyphs, 0);
+    TRACE("After:  ");
+    for (cnt = 0; cnt < cChars; cnt++) {
+         TRACE("%04x",pwOutGlyphs[cnt]);
+         pScriptcache->GlyphToChar[pwOutGlyphs[cnt]] = pwcInChars[cnt]; /* save for ScriptPlace */
+    }
+    TRACE("\n");
+
+    return 0; 
 }
 
 /***********************************************************************
@@ -454,4 +492,3 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
            piAdvance, piJustify, pGoffset);
      return E_NOTIMPL;
 }
-
