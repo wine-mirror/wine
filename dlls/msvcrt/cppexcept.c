@@ -229,6 +229,7 @@ struct catch_func_nested_frame
     cxx_exception_frame          *cxx_frame; /* frame of parent exception */
     cxx_function_descr           *descr;     /* descriptor of parent exception */
     int                           trylevel;  /* current try level */
+    EXCEPTION_RECORD             *rec;       /* rec associated with frame */
 };
 
 /* handler for exceptions happening while calling a catch function */
@@ -247,7 +248,7 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
 
     if(rec->ExceptionCode == CXX_EXCEPTION)
     {
-        PEXCEPTION_RECORD prev_rec = msvcrt_get_thread_data()->exc_record;
+        PEXCEPTION_RECORD prev_rec = nested_frame->rec;
         if(rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
         {
             /* exception was rethrown */
@@ -330,6 +331,7 @@ inline static void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
             nested_frame.cxx_frame = frame;
             nested_frame.descr     = descr;
             nested_frame.trylevel  = nested_trylevel + 1;
+            nested_frame.rec = rec;
 
             __wine_push_frame( &nested_frame.frame );
             thread_data->exc_record = rec;
