@@ -42,6 +42,7 @@ AddReg=\
     Misc,\
     Nls,\
     OLE,\
+    Printing,\
     Tapi,\
     Timezones
 
@@ -62,6 +63,7 @@ AddReg=\
     Misc,\
     Nls,\
     OLE,\
+    Printing,\
     Tapi,\
     Timezones,\
     VersionInfo
@@ -608,6 +610,9 @@ HKLM,System\CurrentControlSet\Control\Nls\Locale\Alternate Sorts,"00030404",,"9"
 [OLE]
 HKLM,"Software\Microsoft\OLE","EnableDCOM",,"Y"
 HKLM,"Software\Microsoft\OLE","EnableRemoteConnect",,"N"
+
+[Printing]
+HKLM,%Control%\Print\Monitors\Local Port,"Driver",2,"localspl.dll"
 
 [Tapi]
 HKLM,%CurrentVersion%\Telephony,"Perf1",0x10001,0x5045524a
