@@ -285,6 +285,7 @@ inline static void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
     struct catch_func_nested_frame nested_frame;
     int trylevel = frame->trylevel;
     thread_data_t *thread_data = msvcrt_get_thread_data();
+    DWORD save_esp = ((DWORD*)frame)[-1];
 
     for (i = 0; i < descr->tryblock_count; i++)
     {
@@ -339,6 +340,7 @@ inline static void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
             thread_data->exc_record = nested_frame.prev_rec;
             __wine_pop_frame( &nested_frame.frame );
 
+            ((DWORD*)frame)[-1] = save_esp;
             if (info && info->destructor) call_dtor( info->destructor, object );
             TRACE( "done, continuing at %p\n", addr );
 
