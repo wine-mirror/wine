@@ -102,17 +102,106 @@ static inline void free_teb( TEB *teb )
 
 
 /***********************************************************************
+ *           fix_unicode_string
+ *
+ * Make sure the unicode string doesn't point beyond the end pointer
+ */
+static inline void fix_unicode_string( UNICODE_STRING *str, char *end_ptr )
+{
+    if ((char *)str->Buffer >= end_ptr)
+    {
+        str->Length = str->MaximumLength = 0;
+        str->Buffer = NULL;
+        return;
+    }
+    if ((char *)str->Buffer + str->MaximumLength > end_ptr)
+    {
+        str->MaximumLength = (end_ptr - (char *)str->Buffer) & ~(sizeof(WCHAR) - 1);
+    }
+    if (str->Length >= str->MaximumLength)
+    {
+        if (str->MaximumLength >= sizeof(WCHAR))
+            str->Length = str->MaximumLength - sizeof(WCHAR);
+        else
+            str->Length = str->MaximumLength = 0;
+    }
+}
+
+
+/***********************************************************************
+ *           init_user_process_params
+ *
+ * Fill the RTL_USER_PROCESS_PARAMETERS structure from the server.
+ */
+static NTSTATUS init_user_process_params( SIZE_T info_size, HANDLE *exe_file )
+{
+    void *ptr;
+    SIZE_T env_size;
+    NTSTATUS status;
+    RTL_USER_PROCESS_PARAMETERS *params = NULL;
+
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &info_size,
+                                      MEM_COMMIT, PAGE_READWRITE );
+    if (status != STATUS_SUCCESS) return status;
+
+    params->AllocationSize = info_size;
+    peb.ProcessParameters = params;
+
+    SERVER_START_REQ( get_startup_info )
+    {
+        wine_server_set_reply( req, params, info_size );
+        if (!(status = wine_server_call( req )))
+        {
+            info_size = wine_server_reply_size( reply );
+            *exe_file = reply->exe_file;
+            params->hStdInput  = reply->hstdin;
+            params->hStdOutput = reply->hstdout;
+            params->hStdError  = reply->hstderr;
+        }
+    }
+    SERVER_END_REQ;
+    if (status != STATUS_SUCCESS) return status;
+
+    if (params->Size > info_size) params->Size = info_size;
+
+    /* make sure the strings are valid */
+    fix_unicode_string( &params->CurrentDirectory.DosPath, (char *)info_size );
+    fix_unicode_string( &params->DllPath, (char *)info_size );
+    fix_unicode_string( &params->ImagePathName, (char *)info_size );
+    fix_unicode_string( &params->CommandLine, (char *)info_size );
+    fix_unicode_string( &params->WindowTitle, (char *)info_size );
+    fix_unicode_string( &params->Desktop, (char *)info_size );
+    fix_unicode_string( &params->ShellInfo, (char *)info_size );
+    fix_unicode_string( &params->RuntimeInfo, (char *)info_size );
+
+    /* environment needs to be a separate memory block */
+    env_size = info_size - params->Size;
+    if (!env_size) env_size = 1;
+    ptr = NULL;
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &env_size,
+                                      MEM_COMMIT, PAGE_READWRITE );
+    if (status != STATUS_SUCCESS) return status;
+    memcpy( ptr, (char *)params + params->Size, info_size - params->Size );
+    params->Environment = ptr;
+
+    RtlNormalizeProcessParams( params );
+    return status;
+}
+
+
+/***********************************************************************
  *           thread_init
  *
  * Setup the initial thread.
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-void thread_init(void)
+HANDLE thread_init(void)
 {
     TEB *teb;
     void *addr;
     SIZE_T info_size;
+    HANDLE exe_file = 0;
     struct ntdll_thread_data *thread_data;
     struct ntdll_thread_regs *thread_regs;
     struct wine_pthread_thread_info thread_info;
@@ -170,14 +259,7 @@ void thread_init(void)
     /* allocate user parameters */
     if (info_size)
     {
-        RTL_USER_PROCESS_PARAMETERS *params = NULL;
-
-        if (NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &info_size,
-                                     MEM_COMMIT, PAGE_READWRITE ) == STATUS_SUCCESS)
-        {
-            params->AllocationSize = info_size;
-            NtCurrentTeb()->Peb->ProcessParameters = params;
-        }
+        init_user_process_params( info_size, &exe_file );
     }
     else
     {
@@ -188,6 +270,7 @@ void thread_init(void)
         wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdOutput );
         wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
     }
+    return exe_file;
 }
 
 

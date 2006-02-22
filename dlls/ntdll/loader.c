@@ -85,6 +85,7 @@ struct builtin_load_info
 static struct builtin_load_info default_load_info;
 static struct builtin_load_info *builtin_load_info = &default_load_info;
 
+static HANDLE main_exe_file;
 static UINT tls_module_count;      /* number of modules with TLS directory */
 static UINT tls_total_size;        /* total size of TLS storage */
 static const IMAGE_TLS_DIRECTORY **tls_dirs;  /* array of TLS directories */
@@ -2037,6 +2038,8 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
 
+    if (main_exe_file) NtClose( main_exe_file );  /* at this point the main module is created */
+
     /* allocate the modref for the main exe (if not already done) */
     wm = get_modref( peb->ImageBaseAddress );
     assert( wm );
@@ -2243,7 +2246,7 @@ void __wine_process_init( int argc, char *argv[] )
     void (* DECLSPEC_NORETURN init_func)(void);
     extern mode_t FILE_umask;
 
-    thread_init();
+    main_exe_file = thread_init();
 
     /* retrieve current umask */
     FILE_umask = umask(0777);

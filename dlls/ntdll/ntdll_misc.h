@@ -48,7 +48,7 @@ extern BOOL SIGNAL_Init(void);
 extern size_t get_signal_stack_total_size(void);
 extern void version_init( const WCHAR *appname );
 extern void debug_init(void);
-extern void thread_init(void);
+extern HANDLE thread_init(void);
 
 /* server support */
 extern time_t server_start_time;

@@ -64,7 +64,6 @@ typedef struct
 
 static UINT process_error_mode;
 
-static HANDLE main_exe_file;
 static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
 static DWORD process_dword;
@@ -637,28 +636,6 @@ static BOOL build_command_line( WCHAR **argv )
 }
 
 
-/* make sure the unicode string doesn't point beyond the end pointer */
-static inline void fix_unicode_string( UNICODE_STRING *str, char *end_ptr )
-{
-    if ((char *)str->Buffer >= end_ptr)
-    {
-        str->Length = str->MaximumLength = 0;
-        str->Buffer = NULL;
-        return;
-    }
-    if ((char *)str->Buffer + str->MaximumLength > end_ptr)
-    {
-        str->MaximumLength = (end_ptr - (char *)str->Buffer) & ~(sizeof(WCHAR) - 1);
-    }
-    if (str->Length >= str->MaximumLength)
-    {
-        if (str->MaximumLength >= sizeof(WCHAR))
-            str->Length = str->MaximumLength - sizeof(WCHAR);
-        else
-            str->Length = str->MaximumLength = 0;
-    }
-}
-
 static void version(void)
 {
     MESSAGE( "%s\n", PACKAGE_STRING );
@@ -672,87 +649,6 @@ static void usage(void)
     MESSAGE( "       wine --help                   Display this help and exit\n");
     MESSAGE( "       wine --version                Output version information and exit\n");
     ExitProcess(0);
-}
-
-
-/***********************************************************************
- *           init_user_process_params
- *
- * Fill the RTL_USER_PROCESS_PARAMETERS structure from the server.
- */
-static BOOL init_user_process_params( RTL_USER_PROCESS_PARAMETERS *params )
-{
-    BOOL ret;
-    void *ptr;
-    SIZE_T size, env_size, info_size;
-    HANDLE hstdin, hstdout, hstderr;
-
-    size = info_size = params->AllocationSize;
-    if (!size) return TRUE;  /* no parameters received from parent */
-
-    SERVER_START_REQ( get_startup_info )
-    {
-        wine_server_set_reply( req, params, size );
-        if ((ret = !wine_server_call( req )))
-        {
-            info_size = wine_server_reply_size( reply );
-            main_exe_file     = reply->exe_file;
-            hstdin            = reply->hstdin;
-            hstdout           = reply->hstdout;
-            hstderr           = reply->hstderr;
-        }
-    }
-    SERVER_END_REQ;
-    if (!ret) return ret;
-
-    params->AllocationSize = size;
-    if (params->Size > info_size) params->Size = info_size;
-
-    /* make sure the strings are valid */
-    fix_unicode_string( &params->CurrentDirectory.DosPath, (char *)info_size );
-    fix_unicode_string( &params->DllPath, (char *)info_size );
-    fix_unicode_string( &params->ImagePathName, (char *)info_size );
-    fix_unicode_string( &params->CommandLine, (char *)info_size );
-    fix_unicode_string( &params->WindowTitle, (char *)info_size );
-    fix_unicode_string( &params->Desktop, (char *)info_size );
-    fix_unicode_string( &params->ShellInfo, (char *)info_size );
-    fix_unicode_string( &params->RuntimeInfo, (char *)info_size );
-
-    /* environment needs to be a separate memory block */
-    env_size = info_size - params->Size;
-    if (!env_size) env_size = 1;
-    ptr = NULL;
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &env_size,
-                                 MEM_COMMIT, PAGE_READWRITE ) != STATUS_SUCCESS)
-        return FALSE;
-    memcpy( ptr, (char *)params + params->Size, info_size - params->Size );
-    params->Environment = ptr;
-
-    /* convert value from server:
-     * + 0 => INVALID_HANDLE_VALUE
-     * + console handle needs to be mapped
-     */
-    if (!hstdin)
-        hstdin = INVALID_HANDLE_VALUE;
-    else if (VerifyConsoleIoHandle(console_handle_map(hstdin)))
-        hstdin = console_handle_map(hstdin);
-
-    if (!hstdout)
-        hstdout = INVALID_HANDLE_VALUE;
-    else if (VerifyConsoleIoHandle(console_handle_map(hstdout)))
-        hstdout = console_handle_map(hstdout);
-
-    if (!hstderr)
-        hstderr = INVALID_HANDLE_VALUE;
-    else if (VerifyConsoleIoHandle(console_handle_map(hstderr)))
-        hstderr = console_handle_map(hstderr);
-
-    params->hStdInput  = hstdin;
-    params->hStdOutput = hstdout;
-    params->hStdError  = hstderr;
-
-    RtlNormalizeProcessParams( params );
-    return TRUE;
 }
 
 
@@ -878,6 +774,7 @@ static BOOL process_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     PEB *peb = NtCurrentTeb()->Peb;
+    RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
 
     PTHREAD_Init();
 
@@ -885,13 +782,11 @@ static BOOL process_init(void)
     setbuf(stderr,NULL);
     setlocale(LC_CTYPE,"");
 
-    if (!init_user_process_params( peb->ProcessParameters )) return FALSE;
-
     kernel32_handle = GetModuleHandleW(kernel32W);
 
     LOCALE_Init();
 
-    if (!peb->ProcessParameters->Environment)
+    if (!params->Environment)
     {
         /* Copy the parent environment */
         if (!build_initial_environment( __wine_main_environ )) return FALSE;
@@ -903,7 +798,26 @@ static BOOL process_init(void)
     }
 
     init_windows_dirs();
-    init_current_directory( &peb->ProcessParameters->CurrentDirectory );
+    init_current_directory( &params->CurrentDirectory );
+
+    /* convert value from server:
+     * + 0 => INVALID_HANDLE_VALUE
+     * + console handle needs to be mapped
+     */
+    if (!params->hStdInput)
+        params->hStdInput = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdInput)))
+        params->hStdInput = console_handle_map(params->hStdInput);
+
+    if (!params->hStdOutput)
+        params->hStdOutput = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdOutput)))
+        params->hStdOutput = console_handle_map(params->hStdOutput);
+
+    if (!params->hStdError)
+        params->hStdError = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdError)))
+        params->hStdError = console_handle_map(params->hStdError);
 
     return TRUE;
 }
@@ -1023,7 +937,7 @@ void __wine_kernel_init(void)
             !get_builtin_path( exe_nameW, exeW, main_exe_name, MAX_PATH ))
         {
             MESSAGE( "wine: cannot find '%s'\n", __wine_main_argv[0] );
-            ExitProcess(1);
+            ExitProcess( GetLastError() );
         }
     }
 
@@ -1031,8 +945,8 @@ void __wine_kernel_init(void)
     p = strrchrW( main_exe_name, '.' );
     if (!p || strchrW( p, '/' ) || strchrW( p, '\\' )) strcatW( main_exe_name, dotW );
 
-    TRACE( "starting process name=%s file=%p argv[0]=%s\n",
-           debugstr_w(main_exe_name), main_exe_file, debugstr_a(__wine_main_argv[0]) );
+    TRACE( "starting process name=%s argv[0]=%s\n",
+           debugstr_w(main_exe_name), debugstr_a(__wine_main_argv[0]) );
 
     RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath,
                           MODULE_get_dll_load_path(NULL) );
@@ -1054,14 +968,12 @@ void __wine_kernel_init(void)
         }
     }
 
-    if (main_exe_file) CloseHandle( main_exe_file );
-
     if (!module)
     {
         char msg[1024];
         FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM, NULL, error, 0, msg, sizeof(msg), NULL );
         MESSAGE( "wine: could not load %s: %s", debugstr_w(main_exe_name), msg );
-        ExitProcess(1);
+        ExitProcess( error );
     }
 
     peb->ImageBaseAddress = module;
