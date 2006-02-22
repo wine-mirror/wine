@@ -905,7 +905,7 @@ void __wine_kernel_init(void)
            debugstr_w(main_exe_name), debugstr_a(__wine_main_argv[0]) );
 
     RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath,
-                          MODULE_get_dll_load_path(NULL) );
+                          MODULE_get_dll_load_path(main_exe_name) );
 
     if (!(module = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
     {
