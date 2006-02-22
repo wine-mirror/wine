@@ -460,7 +460,6 @@ static BOOL WINAPI CRYPT_MemAddCert(HCERTSTORE store, PCCERT_CONTEXT pCert,
         {
             TRACE("adding %p\n", entry);
             CRYPT_InitCertRef(&entry->cert, (PWINE_CERT_CONTEXT)pCert, store);
-            list_init(&entry->entry);
             EnterCriticalSection(&ms->cs);
             list_add_tail(&ms->certs, &entry->entry);
             LeaveCriticalSection(&ms->cs);
@@ -511,8 +510,6 @@ static PWINE_CERT_CONTEXT_REF CRYPT_MemEnumCert(PWINECRYPT_CERTSTORE store,
     TRACE("returning %p\n", ret);
     return (PWINE_CERT_CONTEXT_REF)ret;
 }
-
-static void CRYPT_UnrefCertificateContext(PWINE_CERT_CONTEXT_REF ref);
 
 static BOOL WINAPI CRYPT_MemDeleteCert(HCERTSTORE hCertStore,
  PCCERT_CONTEXT pCertContext, DWORD dwFlags)
@@ -2321,7 +2318,7 @@ static BOOL WINAPI CRYPT_SetCertificateContextProperty(
         switch (dwPropId)
         {
         case CERT_AUTO_ENROLL_PROP_ID:
-        case CERT_CTL_USAGE_PROP_ID:
+        case CERT_CTL_USAGE_PROP_ID: /* same as CERT_ENHKEY_USAGE_PROP_ID */
         case CERT_DESCRIPTION_PROP_ID:
         case CERT_FRIENDLY_NAME_PROP_ID:
         case CERT_HASH_PROP_ID:
@@ -3108,14 +3105,139 @@ BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
     return TRUE;
 }
 
+typedef BOOL (*CertCompareFunc)(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara);
+
+static BOOL compare_cert_any(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    return TRUE;
+}
+
+static BOOL compare_cert_by_md5_hash(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    BOOL ret;
+    BYTE hash[16];
+    DWORD size = sizeof(hash);
+
+    ret = CertGetCertificateContextProperty(pCertContext,
+     CERT_MD5_HASH_PROP_ID, hash, &size);
+    if (ret)
+    {
+        const CRYPT_HASH_BLOB *pHash = (const CRYPT_HASH_BLOB *)pvPara;
+
+        if (size == pHash->cbData)
+            ret = !memcmp(pHash->pbData, hash, size);
+        else
+            ret = FALSE;
+    }
+    return ret;
+}
+
+static BOOL compare_cert_by_sha1_hash(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    BOOL ret;
+    BYTE hash[20];
+    DWORD size = sizeof(hash);
+
+    ret = CertGetCertificateContextProperty(pCertContext,
+     CERT_SHA1_HASH_PROP_ID, hash, &size);
+    if (ret)
+    {
+        const CRYPT_HASH_BLOB *pHash = (const CRYPT_HASH_BLOB *)pvPara;
+
+        if (size == pHash->cbData)
+            ret = !memcmp(pHash->pbData, hash, size);
+        else
+            ret = FALSE;
+    }
+    return ret;
+}
+
+static BOOL compare_cert_by_name(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    const CERT_NAME_BLOB *blob = (const CERT_NAME_BLOB *)pvPara, *toCompare;
+    BOOL ret;
+
+    if (dwType & CERT_INFO_SUBJECT_FLAG)
+        toCompare = &pCertContext->pCertInfo->Subject;
+    else
+        toCompare = &pCertContext->pCertInfo->Issuer;
+    if (toCompare->cbData == blob->cbData)
+        ret = !memcmp(toCompare->pbData, blob->pbData, blob->cbData);
+    else
+        ret = FALSE;
+    return ret;
+}
+
+static BOOL compare_cert_by_subject_cert(PCCERT_CONTEXT pCertContext,
+ DWORD dwType, DWORD dwFlags, const void *pvPara)
+{
+    const CERT_INFO *pCertInfo = (const CERT_INFO *)pvPara;
+    BOOL ret;
+
+    if (pCertInfo->Issuer.cbData == pCertContext->pCertInfo->Subject.cbData)
+        ret = !memcmp(pCertInfo->Issuer.pbData,
+         pCertContext->pCertInfo->Subject.pbData, pCertInfo->Issuer.cbData);
+    else
+        ret = FALSE;
+    return ret;
+}
+
 PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
 		DWORD dwCertEncodingType, DWORD dwFlags, DWORD dwType,
 		const void *pvPara, PCCERT_CONTEXT pPrevCertContext)
 {
-    FIXME("stub: %p %ld %ld %ld %p %p\n", hCertStore, dwCertEncodingType,
-	dwFlags, dwType, pvPara, pPrevCertContext);
-    SetLastError(CRYPT_E_NOT_FOUND);
-    return NULL;
+    PCCERT_CONTEXT ret;
+    CertCompareFunc compare;
+
+    TRACE("(%p, %ld, %ld, %ld, %p, %p)\n", hCertStore, dwCertEncodingType,
+	 dwFlags, dwType, pvPara, pPrevCertContext);
+
+    switch (dwType >> CERT_COMPARE_SHIFT)
+    {
+    case CERT_COMPARE_ANY:
+        compare = compare_cert_any;
+        break;
+    case CERT_COMPARE_MD5_HASH:
+        compare = compare_cert_by_md5_hash;
+        break;
+    case CERT_COMPARE_SHA1_HASH:
+        compare = compare_cert_by_sha1_hash;
+        break;
+    case CERT_COMPARE_NAME:
+        compare = compare_cert_by_name;
+        break;
+    case CERT_COMPARE_SUBJECT_CERT:
+        compare = compare_cert_by_subject_cert;
+        break;
+    default:
+        FIXME("find type %08lx unimplemented\n", dwType);
+        compare = NULL;
+    }
+
+    if (compare)
+    {
+        BOOL matches = FALSE;
+
+        ret = pPrevCertContext;
+        do {
+            ret = CertEnumCertificatesInStore(hCertStore, ret);
+            if (ret)
+                matches = compare(ret, dwType, dwFlags, pvPara);
+        } while (ret != NULL && !matches);
+        if (!ret)
+            SetLastError(CRYPT_E_NOT_FOUND);
+    }
+    else
+    {
+        SetLastError(CRYPT_E_NOT_FOUND);
+        ret = NULL;
+    }
+    return ret;
 }
 
 BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
