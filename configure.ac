@@ -606,6 +606,7 @@ else
           [Define if you have the <freetype/fttrigon.h> header file.])
                     wine_cv_fttrigon=yes],
                     wine_cv_fttrigon=no)
+        AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <freetype/ftmodapi.h>])
 	CPPFLAGS="$ac_save_CPPFLAGS"
 	dnl Check that we have at least freetype/freetype.h
 	if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"

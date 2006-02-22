@@ -90,8 +90,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #define SONAME_LIBFREETYPE "libfreetype.so"
 #endif
 
-#ifndef FT_MODULE_DRIVER_HAS_HINTER
-#define FT_MODULE_DRIVER_HAS_HINTER 0x400
+#ifndef HAVE_FT_TRUETYPEENGINETYPE
+typedef enum
+{
+    FT_TRUETYPE_ENGINE_TYPE_NONE = 0,
+    FT_TRUETYPE_ENGINE_TYPE_UNPATENTED,
+    FT_TRUETYPE_ENGINE_TYPE_PATENTED
+} FT_TrueTypeEngineType;
 #endif
 
 static FT_Library library = 0;
@@ -126,7 +131,7 @@ MAKE_FUNCPTR(FT_Vector_Transform);
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
 static FT_Error (*pFT_Load_Sfnt_Table)(FT_Face,FT_ULong,FT_Long,FT_Byte*,FT_ULong*);
 static FT_ULong (*pFT_Get_First_Char)(FT_Face,FT_UInt*);
-static FT_Error (*pFT_Module_Get_Flags)(FT_Module,FT_ULong*);
+static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
 #ifdef HAVE_FREETYPE_FTWINFNT_H
 MAKE_FUNCPTR(FT_Get_WinFNT_Header);
 #endif
@@ -1504,7 +1509,7 @@ BOOL WineEngInit(void)
     pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
     pFT_Load_Sfnt_Table = wine_dlsym(ft_handle, "FT_Load_Sfnt_Table", NULL, 0);
     pFT_Get_First_Char = wine_dlsym(ft_handle, "FT_Get_First_Char", NULL, 0);
-    pFT_Module_Get_Flags = wine_dlsym(ft_handle, "FT_Module_Get_Flags", NULL, 0);
+    pFT_Get_TrueType_Engine_Type = wine_dlsym(ft_handle, "FT_Get_TrueType_Engine_Type", NULL, 0);
 #ifdef HAVE_FREETYPE_FTWINFNT_H
     pFT_Get_WinFNT_Header = wine_dlsym(ft_handle, "FT_Get_WinFNT_Header", NULL, 0);
 #endif
@@ -3844,19 +3849,19 @@ BOOL WINAPI FontIsLinked(HDC hdc)
 
 static BOOL is_hinting_enabled(void)
 {
-    FT_Module mod = pFT_Get_Module(library, "truetype");
+    FT_Module mod;
 
     /* Use the >= 2.2.0 function if available */
-    if(pFT_Module_Get_Flags)
+    if(pFT_Get_TrueType_Engine_Type)
     {
-        FT_ULong flags;
-        pFT_Module_Get_Flags(mod, &flags);
-        return flags & FT_MODULE_DRIVER_HAS_HINTER;
+        FT_TrueTypeEngineType type = pFT_Get_TrueType_Engine_Type(library);
+        return type == FT_TRUETYPE_ENGINE_TYPE_PATENTED;
     }
 
     /* otherwise if we've been compiled with < 2.2.0 headers 
        use the internal macro */
 #ifdef FT_DRIVER_HAS_HINTER
+    mod = pFT_Get_Module(library, "truetype");
     if(mod && FT_DRIVER_HAS_HINTER(mod))
         return TRUE;
 #endif
