@@ -755,7 +755,7 @@ static UINT save_string_table( MSIDATABASE *db )
 
     /* construct the new table in memory first */
     datasize = msi_string_totalsize( db->strings, &count );
-    poolsize = count*2*sizeof(USHORT);
+    poolsize = (count + 1)*2*sizeof(USHORT);
 
     pool = msi_alloc( poolsize );
     if( ! pool )
