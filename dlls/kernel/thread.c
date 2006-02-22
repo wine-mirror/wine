@@ -36,7 +36,6 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "thread.h"
-#include "module.h"
 #include "wine/winbase16.h"
 #include "wine/exception.h"
 #include "wine/library.h"
@@ -54,6 +53,8 @@ struct new_thread_info
     LPTHREAD_START_ROUTINE func;
     void                  *arg;
 };
+
+extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );  /* FIXME */
 
 /***********************************************************************
  *           THREAD_Start
