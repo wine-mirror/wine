@@ -169,7 +169,7 @@ char IO_pp_init(void)
 	  }
 	/* Check for the minimum required IOCTLS */
 	if ((ioctl(fd,PPRDATA,&res))||
-	    (ioctl(fd,PPRCONTROL,&res))||
+	    (ioctl(fd,PPRSTATUS,&res))||
 	    (ioctl(fd,PPRCONTROL,&res)))
 	  {
 	    ERR("PPUSER IOCTL not available for parport device %s\n",buffer);
@@ -289,7 +289,7 @@ int IO_pp_inp(int port, DWORD* res)
 
 /* IO_pp_outp
  *
- * Check if we can satisfy the INP command with some of the configured PPDEV deviced
+ * Check if we can satisfy the OUTP command with some of the configured PPDEV deviced
  * Return NULL on success
  */
 BOOL IO_pp_outp(int port, DWORD* res)
