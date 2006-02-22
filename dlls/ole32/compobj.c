@@ -1836,12 +1836,6 @@ HRESULT WINAPI CoCreateInstance(
   TRACE("(rclsid=%s, pUnkOuter=%p, dwClsContext=%08lx, riid=%s, ppv=%p)\n", debugstr_guid(rclsid),
         pUnkOuter, dwClsContext, debugstr_guid(iid), ppv);
 
-  if (!COM_CurrentApt())
-  {
-      ERR("apartment not initialised\n");
-      return CO_E_NOTINITIALIZED;
-  }
-
   /*
    * Sanity check
    */
@@ -1852,6 +1846,12 @@ HRESULT WINAPI CoCreateInstance(
    * Initialize the "out" parameter
    */
   *ppv = 0;
+
+  if (!COM_CurrentApt())
+  {
+      ERR("apartment not initialised\n");
+      return CO_E_NOTINITIALIZED;
+  }
 
   /*
    * The Standard Global Interface Table (GIT) object is a process-wide singleton.
