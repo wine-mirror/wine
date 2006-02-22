@@ -242,13 +242,34 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
         msvcrt_get_thread_data()->exc_record = nested_frame->prev_rec;
         return ExceptionContinueSearch;
     }
-    else
+
+    TRACE( "got nested exception in catch function\n" );
+
+    if(rec->ExceptionCode == CXX_EXCEPTION)
     {
-        TRACE( "got nested exception in catch function\n" );
-        return cxx_frame_handler( rec, nested_frame->cxx_frame, context,
-                                  NULL, nested_frame->descr, &nested_frame->frame,
-                                  nested_frame->trylevel );
+        PEXCEPTION_RECORD prev_rec = msvcrt_get_thread_data()->exc_record;
+        if(rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
+        {
+            /* exception was rethrown */
+            rec->ExceptionInformation[1] = prev_rec->ExceptionInformation[1];
+            rec->ExceptionInformation[2] = prev_rec->ExceptionInformation[2];
+            TRACE("detect rethrow: re-propagate: obj: %lx, type: %lx\n",
+                    rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+        }
+        else {
+            /* new exception in exception handler, destroy old */
+            void *object = (void*)prev_rec->ExceptionInformation[1];
+            cxx_exception_type *info = (cxx_exception_type*) prev_rec->ExceptionInformation[2];
+            TRACE("detect threw new exception in catch block - destroy old(obj: %p type: %p)\n",
+                    object, info);
+            if(info && info->destructor)
+                call_dtor( info->destructor, object );
+        }
     }
+
+    return cxx_frame_handler( rec, nested_frame->cxx_frame, context,
+                              NULL, nested_frame->descr, &nested_frame->frame,
+                              nested_frame->trylevel );
 }
 
 /* find and call the appropriate catch block for an exception */
@@ -359,11 +380,7 @@ DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
             return exc_type->custom_handler( rec, frame, context, dispatch,
                                          descr, nested_trylevel, nested_frame, 0 );
         }
-        if (!exc_type)  /* nested exception, fetch info from original exception */
-        {
-            rec = msvcrt_get_thread_data()->exc_record;
-            exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
-        }
+
         if (TRACE_ON(seh))
         {
             TRACE("handling C++ exception rec %p frame %p trylevel %d descr %p nested_frame %p\n",
