@@ -1586,7 +1586,7 @@ size_t get_size_procformatstring_var(const var_t *var)
 
 size_t get_size_typeformatstring_var(const var_t *var)
 {
-    unsigned int type_offset = 0;
+    size_t type_offset = 0;
     write_typeformatstring_var(NULL, 0, var, &type_offset);
     return type_offset;
 }
