@@ -56,7 +56,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mapi);
  * NOTES
  *  This is a temporary hack. 
  */
-ULONG WINAPI MAPISendMail( LHANDLE session, ULONG uiparam,
+ULONG WINAPI MAPISendMail( LHANDLE session, ULONG_PTR uiparam,
     lpMapiMessage message, FLAGS flags, ULONG reserved )
 {
     ULONG ret = MAPI_E_FAILURE;
