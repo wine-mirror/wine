@@ -492,10 +492,10 @@ static void free_inode( struct inode *inode )
 
     if (!subtree && !inode->parent)
     {
-        struct list *head;
-        while ( (head = list_head(&inode->children)) )
+        struct inode *tmp, *next;
+        LIST_FOR_EACH_ENTRY_SAFE( tmp, next, &inode->children,
+                                  struct inode, ch_entry )
         {
-            struct inode *tmp = LIST_ENTRY( head, struct inode, ch_entry );
             assert( tmp != inode );
             assert( tmp->parent == inode );
             free_inode( tmp );
