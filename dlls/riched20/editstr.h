@@ -30,6 +30,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
 #include <windef.h>
 #include <winbase.h>
 #include <winnls.h>
@@ -38,7 +42,6 @@
 #include <winuser.h>
 #include <richedit.h>
 #include <commctrl.h>
-#define COBJMACROS
 #include <ole2.h>
 #include <richole.h>
 

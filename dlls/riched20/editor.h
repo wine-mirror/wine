@@ -28,6 +28,15 @@
 #define RUN_IS_HIDDEN(run) ((run)->style->fmt.dwMask & CFM_HIDDEN \
                              && (run)->style->fmt.dwEffects & CFE_HIDDEN)
 
+#define InitFormatEtc(fe, cf, med) \
+        {\
+        (fe).cfFormat=cf;\
+        (fe).dwAspect=DVASPECT_CONTENT;\
+        (fe).ptd=NULL;\
+        (fe).tymed=med;\
+        (fe).lindex=-1;\
+        };
+
 /* style.c */
 ME_Style *ME_MakeStyle(CHARFORMAT2W *style);
 void ME_AddRefStyle(ME_Style *item);
@@ -249,3 +258,6 @@ extern void DoWrap(ME_TextEditor *editor);
 /* writer.c */
 LRESULT ME_StreamOutRange(ME_TextEditor *editor, DWORD dwFormat, int nStart, int nTo, EDITSTREAM *stream);
 LRESULT ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream);
+
+/* clipboard.c */
+HRESULT ME_GetDataObject(ME_TextEditor *editor, CHARRANGE *lpchrg, LPDATAOBJECT *lplpdataobj);

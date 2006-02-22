@@ -9,6 +9,7 @@ EXTRALIBS = $(LIBUNICODE) -luuid
 
 C_SRCS = \
 	caret.c \
+	clipboard.c \
 	context.c \
 	editor.c \
 	list.c \

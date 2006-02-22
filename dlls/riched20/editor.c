@@ -1041,29 +1041,6 @@ typedef struct tagME_GlobalDestStruct
   int nLength;
 } ME_GlobalDestStruct;
 
-static DWORD CALLBACK ME_AppendToHGLOBAL(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG cb, LONG *pcb)
-{
-  ME_GlobalDestStruct *pData = (ME_GlobalDestStruct *)dwCookie;
-  int nMaxSize;
-  BYTE *pDest;
-  
-  nMaxSize = GlobalSize(pData->hData);
-  if (pData->nLength+cb+1 >= cb)
-  {
-    /* round up to 2^17 */
-    int nNewSize = (((nMaxSize+cb+1)|0x1FFFF)+1) & 0xFFFE0000;
-    pData->hData = GlobalReAlloc(pData->hData, nNewSize, 0);
-  }
-  pDest = (BYTE *)GlobalLock(pData->hData);
-  memcpy(pDest + pData->nLength, lpBuff, cb);
-  pData->nLength += cb;
-  pDest[pData->nLength] = '\0';
-  GlobalUnlock(pData->hData);
-  *pcb = cb;
-  
-  return 0;
-}
-
 static DWORD CALLBACK ME_ReadFromHGLOBALUnicode(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG cb, LONG *pcb)
 {
   ME_GlobalDestStruct *pData = (ME_GlobalDestStruct *)dwCookie;
@@ -1790,38 +1767,18 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_CUT:
   case WM_COPY:
   {
-    int from, to, pars;
-    WCHAR *data;
-    HANDLE hData;
-    EDITSTREAM es;
-    ME_GlobalDestStruct gds;
-    
-    if (!OpenClipboard(hWnd))
-      return 0;
-      
-    EmptyClipboard();
-    ME_GetSelection(editor, &from, &to);
-    pars = ME_CountParagraphsBetween(editor, from, to);
-    hData = GlobalAlloc(GMEM_MOVEABLE, sizeof(WCHAR)*(to-from+pars+1));
-    data = (WCHAR *)GlobalLock(hData);
-    ME_GetTextW(editor, data, from, to-from, TRUE);
-    GlobalUnlock(hData);
-
-    if (editor->mode & TM_RICHTEXT)
-    {
-      gds.hData = GlobalAlloc(GMEM_MOVEABLE, 0);
-      gds.nLength = 0;
-      es.dwCookie = (DWORD)&gds;
-      es.pfnCallback = ME_AppendToHGLOBAL;
-      ME_StreamOutRange(editor, SF_RTF, from, to, &es);
-      GlobalReAlloc(gds.hData, gds.nLength+1, 0);
-      SetClipboardData(RegisterClipboardFormatA("Rich Text Format"), gds.hData);
+    LPDATAOBJECT dataObj;
+    CHARRANGE range;
+    HRESULT hr;
+    ME_GetSelection(editor, (int*)&range.cpMin, (int*)&range.cpMax);
+    hr = ME_GetDataObject(editor, &range, &dataObj);
+    if(SUCCEEDED(hr)) {
+        hr = OleSetClipboard(dataObj);
+        IDataObject_Release(dataObj);
     }
-    SetClipboardData(CF_UNICODETEXT, hData);        
-    CloseClipboard();
-    if (msg == WM_CUT)
+    if (SUCCEEDED(hr) && msg == WM_CUT)
     {
-      ME_InternalDeleteText(editor, from, to-from);
+      ME_InternalDeleteText(editor, range.cpMin, range.cpMax-range.cpMin);
       ME_CommitUndo(editor);
       ME_UpdateRepaint(editor);
     }
