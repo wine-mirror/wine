@@ -42,14 +42,16 @@ struct CertPropIDHeader
 };
 
 static const BYTE emptyCert[] = { 0x30, 0x00 };
-static const BYTE bigCert[] = "\x30\x7a\x02\x01\x01\x30\x02\x06\x00"
- "\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x4a\x75\x61\x6e\x20\x4c"
- "\x61\x6e\x67\x00\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30"
- "\x30\x30\x30\x5a\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30"
- "\x30\x5a\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x4a\x75\x61\x6e"
- "\x20\x4c\x61\x6e\x67\x00\x30\x07\x30\x02\x06\x00\x03\x01\x00\xa3\x16\x30\x14"
- "\x30\x12\x06\x03\x55\x1d\x13\x01\x01\xff\x04\x08\x30\x06\x01\x01\xff\x02\x01"
- "\x01";
+static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
+ 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
+ 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
+ 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30,
+ 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31, 0x13, 0x30,
+ 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20,
+ 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01,
+ 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
+ 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
 static const BYTE signedBigCert[] = {
  0x30, 0x81, 0x93, 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06, 0x00, 0x30,
  0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a,
@@ -95,16 +97,16 @@ static void testDupCert(void)
         BOOL ret;
 
         ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, &context);
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
         ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
          GetLastError());
         ok(context != NULL, "Expected a valid cert context\n");
         if (context)
         {
-            ok(context->cbCertEncoded == sizeof(bigCert) - 1,
-             "Expected cert of %d bytes, got %ld\n", sizeof(bigCert) - 1,
+            ok(context->cbCertEncoded == sizeof(bigCert),
+             "Expected cert of %d bytes, got %ld\n", sizeof(bigCert),
              context->cbCertEncoded);
-            ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert) - 1),
+            ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert)),
              "Unexpected encoded cert in context\n");
             ok(context->hCertStore == store, "Unexpected store\n");
 
@@ -112,11 +114,11 @@ static void testDupCert(void)
             ok(dupContext != NULL, "Expected valid duplicate\n");
             if (dupContext)
             {
-                ok(dupContext->cbCertEncoded == sizeof(bigCert) - 1,
-                 "Expected cert of %d bytes, got %ld\n", sizeof(bigCert) - 1,
+                ok(dupContext->cbCertEncoded == sizeof(bigCert),
+                 "Expected cert of %d bytes, got %ld\n", sizeof(bigCert),
                  dupContext->cbCertEncoded);
                 ok(!memcmp(dupContext->pbCertEncoded, bigCert,
-                 sizeof(bigCert) - 1),
+                 sizeof(bigCert)),
                  "Unexpected encoded cert in context\n");
                 ok(dupContext->hCertStore == store, "Unexpected store\n");
                 CertFreeCertificateContext(dupContext);
@@ -192,7 +194,7 @@ static void testMemStore(void)
      GetLastError());
     /* add a cert to store1 */
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, bigCert,
-     sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, &context);
+     sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
     ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
     ok(context != NULL, "Expected a valid cert context\n");
     if (context)
@@ -200,10 +202,10 @@ static void testMemStore(void)
         DWORD size;
         BYTE *buf;
 
-        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
-         "Expected cert of %d bytes, got %ld\n", sizeof(bigCert) - 1,
+        ok(context->cbCertEncoded == sizeof(bigCert),
+         "Expected cert of %d bytes, got %ld\n", sizeof(bigCert),
          context->cbCertEncoded);
-        ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert) - 1),
+        ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert)),
          "Unexpected encoded cert in context\n");
         ok(context->hCertStore == store1, "Unexpected store\n");
 
@@ -283,15 +285,15 @@ static void testMemStore(void)
     ok(store1 != NULL, "CertOpenStore failed: %ld\n", GetLastError());
     /* yep, this succeeds */
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, bigCert,
-     sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, &context);
+     sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
     ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
     ok(context != NULL, "Expected a valid cert context\n");
     if (context)
     {
-        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
-         "Expected cert of %d bytes, got %ld\n", sizeof(bigCert) - 1,
+        ok(context->cbCertEncoded == sizeof(bigCert),
+         "Expected cert of %d bytes, got %ld\n", sizeof(bigCert),
          context->cbCertEncoded);
-        ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert) - 1),
+        ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert)),
          "Unexpected encoded cert in context\n");
         ok(context->hCertStore == store1, "Unexpected store\n");
         ret = CertDeleteCertificateFromStore(context);
@@ -301,14 +303,16 @@ static void testMemStore(void)
     CertCloseStore(store1, 0);
 }
 
-static const BYTE bigCert2[] = "\x30\x7a\x02\x01\x01\x30\x02\x06\x00"
- "\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x41\x6c\x65\x78\x20\x4c"
- "\x61\x6e\x67\x00\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30"
- "\x30\x30\x30\x5a\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30"
- "\x30\x5a\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x41\x6c\x65\x78"
- "\x20\x4c\x61\x6e\x67\x00\x30\x07\x30\x02\x06\x00\x03\x01\x00\xa3\x16\x30\x14"
- "\x30\x12\x06\x03\x55\x1d\x13\x01\x01\xff\x04\x08\x30\x06\x01\x01\xff\x02\x01"
- "\x01";
+static const BYTE bigCert2[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
+ 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
+ 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
+ 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30,
+ 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31, 0x13, 0x30,
+ 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20,
+ 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01,
+ 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
+ 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
 
 static void testCollectionStore(void)
 {
@@ -321,7 +325,7 @@ static void testCollectionStore(void)
 
     /* Try adding a cert to any empty collection */
     ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
-     bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
      "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08lx\n",
      GetLastError());
@@ -330,7 +334,7 @@ static void testCollectionStore(void)
     store1 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING,
-     bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
     ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
     /* Add the memory store to the collection, without allowing adding */
     ret = CertAddStoreToCollection(collection, store1, 0, 0);
@@ -345,7 +349,7 @@ static void testCollectionStore(void)
     }
     /* Check that adding to the collection isn't allowed */
     ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
-     bigCert2, sizeof(bigCert2) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+     bigCert2, sizeof(bigCert2), CERT_STORE_ADD_ALWAYS, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
      "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08lx\n",
      GetLastError());
@@ -379,7 +383,7 @@ static void testCollectionStore(void)
     ok(ret, "CertAddStoreToCollection failed: %08lx\n", GetLastError());
     /* Check that adding to the collection is allowed */
     ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
-     bigCert2, sizeof(bigCert2) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+     bigCert2, sizeof(bigCert2), CERT_STORE_ADD_ALWAYS, NULL);
     ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
     /* Now check that it was actually added to store2 */
     context = CertEnumCertificatesInStore(store2, NULL);
@@ -397,8 +401,8 @@ static void testCollectionStore(void)
     if (context)
     {
         ok(context->hCertStore == collection, "Unexpected store\n");
-        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
-         "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+        ok(context->cbCertEncoded == sizeof(bigCert),
+         "Expected size %d, got %ld\n", sizeof(bigCert),
          context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
          "Unexpected cert\n");
@@ -407,8 +411,8 @@ static void testCollectionStore(void)
         if (context)
         {
             ok(context->hCertStore == collection, "Unexpected store\n");
-            ok(context->cbCertEncoded == sizeof(bigCert2) - 1,
-             "Expected size %d, got %ld\n", sizeof(bigCert2) - 1,
+            ok(context->cbCertEncoded == sizeof(bigCert2),
+             "Expected size %d, got %ld\n", sizeof(bigCert2),
              context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert2,
              context->cbCertEncoded), "Unexpected cert\n");
@@ -423,8 +427,8 @@ static void testCollectionStore(void)
     if (context)
     {
         ok(context->hCertStore == collection, "Unexpected store\n");
-        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
-         "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+        ok(context->cbCertEncoded == sizeof(bigCert),
+         "Expected size %d, got %ld\n", sizeof(bigCert),
          context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
          "Unexpected cert\n");
@@ -433,8 +437,8 @@ static void testCollectionStore(void)
         if (context)
         {
             ok(context->hCertStore == collection, "Unexpected store\n");
-            ok(context->cbCertEncoded == sizeof(bigCert2) - 1,
-             "Expected size %d, got %ld\n", sizeof(bigCert2) - 1,
+            ok(context->cbCertEncoded == sizeof(bigCert2),
+             "Expected size %d, got %ld\n", sizeof(bigCert2),
              context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert2,
              context->cbCertEncoded), "Unexpected cert\n");
@@ -455,8 +459,8 @@ static void testCollectionStore(void)
     if (context)
     {
         ok(context->hCertStore == collection2, "Unexpected store\n");
-        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
-         "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+        ok(context->cbCertEncoded == sizeof(bigCert),
+         "Expected size %d, got %ld\n", sizeof(bigCert),
          context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
          "Unexpected cert\n");
@@ -465,8 +469,8 @@ static void testCollectionStore(void)
         if (context)
         {
             ok(context->hCertStore == collection2, "Unexpected store\n");
-            ok(context->cbCertEncoded == sizeof(bigCert2) - 1,
-             "Expected size %d, got %ld\n", sizeof(bigCert2) - 1,
+            ok(context->cbCertEncoded == sizeof(bigCert2),
+             "Expected size %d, got %ld\n", sizeof(bigCert2),
              context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert2,
              context->cbCertEncoded), "Unexpected cert\n");
@@ -499,10 +503,10 @@ static void testCollectionStore(void)
     ok(store2 != 0, "CertOpenStore failed: %08lx\n", GetLastError());
 
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING,
-     bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
     ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
     ret = CertAddEncodedCertificateToStore(store2, X509_ASN_ENCODING,
-     bigCert, sizeof(bigCert) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+     bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
     ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
     collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -521,8 +525,8 @@ static void testCollectionStore(void)
     if (context)
     {
         ok(context->hCertStore == collection, "Unexpected store\n");
-        ok(context->cbCertEncoded == sizeof(bigCert) - 1,
-         "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+        ok(context->cbCertEncoded == sizeof(bigCert),
+         "Expected size %d, got %ld\n", sizeof(bigCert),
          context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
          "Unexpected cert\n");
@@ -531,8 +535,8 @@ static void testCollectionStore(void)
         if (context)
         {
             ok(context->hCertStore == collection, "Unexpected store\n");
-            ok(context->cbCertEncoded == sizeof(bigCert) - 1,
-             "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+            ok(context->cbCertEncoded == sizeof(bigCert),
+             "Expected size %d, got %ld\n", sizeof(bigCert),
              context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
              "Unexpected cert\n");
@@ -546,7 +550,7 @@ static void testCollectionStore(void)
      * only call CertDeleteCertificateFromStore with contexts enumerated from
      * the store.
     context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
-     sizeof(bigCert) - 1);
+     sizeof(bigCert));
     ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
      GetLastError());
     if (context)
@@ -572,8 +576,8 @@ static void testCollectionStore(void)
         if (context)
         {
             ok(context->hCertStore == collection, "Unexpected store\n");
-            ok(context->cbCertEncoded == sizeof(bigCert) - 1,
-             "Expected size %d, got %ld\n", sizeof(bigCert) - 1,
+            ok(context->cbCertEncoded == sizeof(bigCert),
+             "Expected size %d, got %ld\n", sizeof(bigCert),
              context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
              "Unexpected cert\n");
@@ -685,7 +689,7 @@ static void testRegStore(void)
          * added to the cache..
          */
         ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-         bigCert2, sizeof(bigCert2) - 1, CERT_STORE_ADD_ALWAYS, NULL);
+         bigCert2, sizeof(bigCert2), CERT_STORE_ADD_ALWAYS, NULL);
         ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
          GetLastError());
         /* so flush the cache to force a commit.. */
@@ -693,7 +697,7 @@ static void testRegStore(void)
         ok(ret, "CertControlStore failed: %08lx\n", GetLastError());
         /* and check that the expected subkey was written. */
         size = sizeof(hash);
-        ret = CryptHashCertificate(0, 0, 0, bigCert2, sizeof(bigCert2) - 1,
+        ret = CryptHashCertificate(0, 0, 0, bigCert2, sizeof(bigCert2),
          hash, &size);
         ok(ret, "CryptHashCertificate failed: %ld\n", GetLastError());
         strcpy(subKeyName, certificates);
@@ -723,9 +727,9 @@ static void testRegStore(void)
                     ok(hdr != NULL, "Expected to find a cert property\n");
                     if (hdr)
                     {
-                        ok(hdr->cb == sizeof(bigCert2) - 1,
+                        ok(hdr->cb == sizeof(bigCert2),
                          "Unexpected size %ld of cert property, expected %d\n",
-                         hdr->cb, sizeof(bigCert2) - 1);
+                         hdr->cb, sizeof(bigCert2));
                         ok(!memcmp((BYTE *)hdr + sizeof(*hdr), bigCert2,
                          hdr->cb), "Unexpected cert in cert property\n");
                     }
@@ -765,7 +769,7 @@ static void testRegStore(void)
         if (subKey)
         {
             BYTE buf[sizeof(struct CertPropIDHeader) * 2 + sizeof(hash) +
-             sizeof(bigCert) - 1], *ptr;
+             sizeof(bigCert)], *ptr;
             DWORD certCount = 0;
             struct CertPropIDHeader *hdr;
 
@@ -779,9 +783,9 @@ static void testRegStore(void)
             hdr = (struct CertPropIDHeader *)ptr;
             hdr->propID = CERT_CERT_PROP_ID;
             hdr->unknown1 = 1;
-            hdr->cb = sizeof(bigCert) - 1;
+            hdr->cb = sizeof(bigCert);
             ptr += sizeof(*hdr);
-            memcpy(ptr, bigCert, sizeof(bigCert) - 1);
+            memcpy(ptr, bigCert, sizeof(bigCert));
 
             rc = RegSetValueExA(subKey, "Blob", 0, REG_BINARY, buf,
              sizeof(buf));
@@ -808,7 +812,7 @@ static void testRegStore(void)
          */
         size = sizeof(hash);
         ret = CryptHashCertificate(0, 0, 0, bigCert2,
-         sizeof(bigCert2) - 1, hash, &size);
+         sizeof(bigCert2), hash, &size);
         ok(ret, "CryptHashCertificate failed: %ld\n", GetLastError());
         strcpy(subKeyName, certificates);
         for (i = 0, ptr = subKeyName + sizeof(certificates) - 1;
@@ -820,7 +824,7 @@ static void testRegStore(void)
         if (subKey)
         {
             BYTE buf[sizeof(struct CertPropIDHeader) * 2 + sizeof(hash) +
-             sizeof(bigCert2) - 1], *ptr;
+             sizeof(bigCert2)], *ptr;
             DWORD certCount = 0;
             PCCERT_CONTEXT context;
             struct CertPropIDHeader *hdr;
@@ -836,9 +840,9 @@ static void testRegStore(void)
             hdr = (struct CertPropIDHeader *)ptr;
             hdr->propID = CERT_CERT_PROP_ID;
             hdr->unknown1 = 1;
-            hdr->cb = sizeof(bigCert2) - 1;
+            hdr->cb = sizeof(bigCert2);
             ptr += sizeof(*hdr);
-            memcpy(ptr, bigCert2, sizeof(bigCert2) - 1);
+            memcpy(ptr, bigCert2, sizeof(bigCert2));
 
             rc = RegSetValueExA(subKey, "Blob", 0, REG_BINARY, buf,
              sizeof(buf));
@@ -1112,7 +1116,7 @@ static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
 static void testCertProperties(void)
 {
     PCCERT_CONTEXT context = CertCreateCertificateContext(X509_ASN_ENCODING,
-     bigCert, sizeof(bigCert) - 1);
+     bigCert, sizeof(bigCert));
 
     ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
      GetLastError());
@@ -1201,7 +1205,7 @@ static void testCertProperties(void)
          NULL);
         ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
          GetLastError());
-        checkHash(bigCert, sizeof(bigCert) - 1, CALG_SHA1, context,
+        checkHash(bigCert, sizeof(bigCert), CALG_SHA1, context,
          CERT_HASH_PROP_ID);
 
         /* Now that the hash property is set, we should get one property when
@@ -1217,7 +1221,7 @@ static void testCertProperties(void)
         ok(numProps == 1, "Expected 1 properties, got %ld\n", numProps);
 
         /* Check a few other implicit properties */
-        checkHash(bigCert, sizeof(bigCert) - 1, CALG_MD5, context,
+        checkHash(bigCert, sizeof(bigCert), CALG_MD5, context,
          CERT_MD5_HASH_PROP_ID);
         checkHash(
          context->pCertInfo->Subject.pbData,
@@ -1245,7 +1249,7 @@ static void testAddSerialized(void)
 {
     BOOL ret;
     HCERTSTORE store;
-    BYTE buf[sizeof(struct CertPropIDHeader) * 2 + 20 + sizeof(bigCert) - 1] =
+    BYTE buf[sizeof(struct CertPropIDHeader) * 2 + 20 + sizeof(bigCert)] =
      { 0 };
     BYTE hash[20];
     struct CertPropIDHeader *hdr;
@@ -1274,40 +1278,40 @@ static void testAddSerialized(void)
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
     /* Test with a bad size in property header */
-    hdr->cb = sizeof(bigCert) - 2;
-    memcpy(buf + sizeof(struct CertPropIDHeader), bigCert, sizeof(bigCert) - 1);
+    hdr->cb = sizeof(bigCert) - 1;
+    memcpy(buf + sizeof(struct CertPropIDHeader), bigCert, sizeof(bigCert));
     ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 0,
      NULL, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 0, NULL,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), 0, 0, 0, NULL,
      NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), CERT_STORE_ADD_NEW,
      0, 0, NULL, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
     /* Kosher size in property header, but no context type */
-    hdr->cb = sizeof(bigCert) - 1;
+    hdr->cb = sizeof(bigCert);
     ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 0,
      NULL, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 0, NULL,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), 0, 0, 0, NULL,
      NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), CERT_STORE_ADD_NEW,
      0, 0, NULL, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
@@ -1319,13 +1323,13 @@ static void testAddSerialized(void)
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), 0, 0, 
      CERT_STORE_CRL_CONTEXT_FLAG, NULL, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
      GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), CERT_STORE_ADD_NEW,
      0, CERT_STORE_CRL_CONTEXT_FLAG, NULL, NULL);
     ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
      "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
@@ -1337,12 +1341,12 @@ static void testAddSerialized(void)
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND got %08lx\n", GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), 0, 0, 
      CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND got %08lx\n", GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), CERT_STORE_ADD_NEW,
      0, CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND got %08lx\n", GetLastError());
@@ -1353,7 +1357,7 @@ static void testAddSerialized(void)
      CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
      * as does this
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, 0, 0, 
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), 0, 0, 
      CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
      */
     /* Everything okay, but buffer's too big */
@@ -1362,7 +1366,7 @@ static void testAddSerialized(void)
     ok(ret, "CertAddSerializedElementToStore failed: %08lx\n", GetLastError());
     /* Everything okay, check it's not re-added */
     ret = CertAddSerializedElementToStore(store, buf,
-     sizeof(struct CertPropIDHeader) + sizeof(bigCert) - 1, CERT_STORE_ADD_NEW,
+     sizeof(struct CertPropIDHeader) + sizeof(bigCert), CERT_STORE_ADD_NEW,
      0, CERT_STORE_CERTIFICATE_CONTEXT_FLAG, NULL, NULL);
     ok(!ret && GetLastError() == CRYPT_E_EXISTS,
      "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
@@ -1376,7 +1380,7 @@ static void testAddSerialized(void)
      * when queried, is the real hash rather than the bogus hash.
      */
     hdr = (struct CertPropIDHeader *)(buf + sizeof(struct CertPropIDHeader) +
-     sizeof(bigCert) - 1);
+     sizeof(bigCert));
     hdr->propID = CERT_HASH_PROP_ID;
     hdr->unknown1 = 1;
     hdr->cb = sizeof(hash);
@@ -1391,7 +1395,7 @@ static void testAddSerialized(void)
         BYTE hashVal[20], realHash[20];
         DWORD size = sizeof(hashVal);
 
-        ret = CryptHashCertificate(0, 0, 0, bigCert, sizeof(bigCert) - 1,
+        ret = CryptHashCertificate(0, 0, 0, bigCert, sizeof(bigCert),
          realHash, &size);
         ok(ret, "CryptHashCertificate failed: %08lx\n", GetLastError());
         ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID,
