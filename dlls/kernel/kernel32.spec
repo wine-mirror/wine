@@ -205,7 +205,7 @@
 @ stdcall CloseHandle(long)
 @ stdcall CloseProfileUserMapping()
 @ stub CloseSystemHandle
-@ stub CmdBatNotification
+@ stdcall CmdBatNotification(long)
 @ stdcall CommConfigDialogA(str long ptr)
 @ stdcall CommConfigDialogW(wstr long ptr)
 @ stdcall CompareFileTime(ptr ptr)

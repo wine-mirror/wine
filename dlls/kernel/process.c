@@ -2743,3 +2743,16 @@ HANDLE WINAPI GetCurrentProcess(void)
 {
     return (HANDLE)0xffffffff;
 }
+
+/***********************************************************************
+ *           CmdBatNotification   (KERNEL32.@)
+ *
+ *  Called by cmd.exe with
+ *    (1) when a batch file is started 
+ *    (0) when a batch file finishes executing
+ */
+BOOL WINAPI CmdBatNotification( BOOL bBatchRunning )
+{
+    FIXME("%d\n", bBatchRunning);
+    return FALSE;
+}
