@@ -41,6 +41,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
+#define IS_OPTION_FALSE(ch) \
+    ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
+
 const static WCHAR adaptor_classname[] = /* Adaptor */ {'A','d','a','p','t','o','r',0};
 
 /* tray state */
@@ -338,26 +341,23 @@ static LRESULT WINAPI listener_wndproc(HWND window, UINT msg,
 
 static BOOL is_systray_hidden(void)
 {
-    const WCHAR hide_systray_keyname[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                          'S','y','s','t','r','a','y',0};
-    const WCHAR hide_systray_valuename[] = {'H','i','d','d','e','n',0};
-    DWORD hidden;
+    const WCHAR show_systray_keyname[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                          'X','1','1',' ','D','r','i','v','e','r',0};
+    const WCHAR show_systray_valuename[] = {'S','h','o','w','S','y','s','t','r','a','y',0};
     HKEY hkey;
-    DWORD size;
-    DWORD type;
     BOOL ret = FALSE;
 
-    /* @@ Wine registry key: HKCU\Software\Wine\Systray */
-    if (RegOpenKeyW(HKEY_CURRENT_USER, hide_systray_keyname, &hkey) == ERROR_SUCCESS)
+    /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver */
+    if (RegOpenKeyW(HKEY_CURRENT_USER, show_systray_keyname, &hkey) == ERROR_SUCCESS)
     {
-        size = sizeof(hidden);
-        if (RegQueryValueExW(hkey, hide_systray_valuename, 0, &type, (LPBYTE)&hidden, &size) == ERROR_SUCCESS && type == REG_DWORD)
+        WCHAR value[10];
+        DWORD type, size = sizeof(value);
+        if (RegQueryValueExW(hkey, show_systray_valuename, 0, &type, (LPBYTE)&value, &size) == ERROR_SUCCESS)
         {
-            if (hidden != 0) ret = TRUE;
+            ret = IS_OPTION_FALSE(value[0]);
         }
         RegCloseKey(hkey);
     }
-
     return ret;
 }
 
