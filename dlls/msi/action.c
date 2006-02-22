@@ -2815,7 +2815,7 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = (MSIPACKAGE*)param;
     LPWSTR target_file, target_folder, filename;
-    LPCWSTR buffer;
+    LPCWSTR buffer, extension;
     MSICOMPONENT *comp;
     static const WCHAR szlnk[]={'.','l','n','k',0};
     IShellLinkW *sl;
@@ -2864,8 +2864,14 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 
     filename = msi_dup_record_field( row, 3 );
     reduce_to_longfilename(filename);
-    if (!strchrW(filename,'.') || strcmpiW(strchrW(filename,'.'),szlnk))
-        strcatW(filename,szlnk);
+
+    extension = strchrW(filename,'.');
+    if (!extension || strcmpiW(extension,szlnk))
+    {
+        int len = strlenW(filename);
+        filename = msi_realloc(filename, len * sizeof(WCHAR) + sizeof(szlnk));
+        memcpy(filename + len, szlnk, sizeof(szlnk));
+    }
     target_file = build_directory_name(2, target_folder, filename);
     msi_free(target_folder);
     msi_free(filename);
