@@ -39,7 +39,6 @@
 #include "wine/winuser16.h"
 #include "winioctl.h"
 #include "winternl.h"
-#include "module.h"
 #include "kernel_private.h"
 #include "wine/exception.h"
 #include "wine/server.h"
@@ -189,46 +188,20 @@ static void *open_builtin_exe_file( const WCHAR *name, char *error, int error_si
  */
 static HANDLE open_exe_file( const WCHAR *name )
 {
-    enum loadorder_type loadorder[LOADORDER_NTYPES];
-    WCHAR buffer[MAX_PATH];
     HANDLE handle;
-    int i, file_exists;
 
     TRACE("looking for %s\n", debugstr_w(name) );
 
     if ((handle = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                NULL, OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
     {
+        WCHAR buffer[MAX_PATH];
         /* file doesn't exist, check for builtin */
         if (!contains_path( name )) goto error;
         if (!get_builtin_path( name, NULL, buffer, sizeof(buffer) )) goto error;
-        name = buffer;
+        handle = 0;
     }
-
-    MODULE_GetLoadOrderW( loadorder, NULL, name );
-
-    for(i = 0; i < LOADORDER_NTYPES; i++)
-    {
-        if (loadorder[i] == LOADORDER_INVALID) break;
-        switch(loadorder[i])
-        {
-        case LOADORDER_DLL:
-            TRACE( "Trying native exe %s\n", debugstr_w(name) );
-            if (handle != INVALID_HANDLE_VALUE) return handle;
-            break;
-        case LOADORDER_BI:
-            TRACE( "Trying built-in exe %s\n", debugstr_w(name) );
-            open_builtin_exe_file( name, NULL, 0, 1, &file_exists );
-            if (file_exists)
-            {
-                if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);
-                return 0;
-            }
-        default:
-            break;
-        }
-    }
-    if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);
+    return handle;
 
  error:
     SetLastError( ERROR_FILE_NOT_FOUND );
@@ -247,9 +220,7 @@ static HANDLE open_exe_file( const WCHAR *name )
 static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE *handle )
 {
     static const WCHAR exeW[] = {'.','e','x','e',0};
-
-    enum loadorder_type loadorder[LOADORDER_NTYPES];
-    int i, file_exists;
+    int file_exists;
 
     TRACE("looking for %s\n", debugstr_w(name) );
 
@@ -268,34 +239,19 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
         return FALSE;
     }
 
-    MODULE_GetLoadOrderW( loadorder, NULL, buffer );
+    TRACE( "Trying native exe %s\n", debugstr_w(buffer) );
+    if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
+                                NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
+        return TRUE;
 
-    for(i = 0; i < LOADORDER_NTYPES; i++)
+    TRACE( "Trying built-in exe %s\n", debugstr_w(buffer) );
+    open_builtin_exe_file( buffer, NULL, 0, 1, &file_exists );
+    if (file_exists)
     {
-        if (loadorder[i] == LOADORDER_INVALID) break;
-        switch(loadorder[i])
-        {
-        case LOADORDER_DLL:
-            TRACE( "Trying native exe %s\n", debugstr_w(buffer) );
-            if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
-                                        NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
-                return TRUE;
-            if (GetLastError() != ERROR_FILE_NOT_FOUND) return TRUE;
-            break;
-        case LOADORDER_BI:
-            TRACE( "Trying built-in exe %s\n", debugstr_w(buffer) );
-            open_builtin_exe_file( buffer, NULL, 0, 1, &file_exists );
-            if (file_exists)
-            {
-                *handle = 0;
-                return TRUE;
-            }
-            break;
-        default:
-            break;
-        }
+        *handle = 0;
+        return TRUE;
     }
-    SetLastError( ERROR_FILE_NOT_FOUND );
+
     return FALSE;
 }
 
