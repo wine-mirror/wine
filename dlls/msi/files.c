@@ -345,7 +345,11 @@ static BOOL check_volume(LPCWSTR path, LPCWSTR want_volume, LPWSTR volume,
     UINT type;
 
     if (!(path[0] && path[1] == ':'))
+    {
+        if (intype)
+            *intype = DRIVE_NO_ROOT_DIR;
         return TRUE;
+    }
 
     drive[0] = path[0];
     drive[1] = path[1];
@@ -355,15 +359,15 @@ static BOOL check_volume(LPCWSTR path, LPCWSTR want_volume, LPWSTR volume,
     type = GetDriveTypeW(drive);
     TRACE("drive is of type %x\n",type);
 
+    if (intype)
+        *intype=type;
+
     if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR || 
             type == DRIVE_FIXED || type == DRIVE_RAMDISK)
         return TRUE;
 
     GetVolumeInformationW(drive, name, MAX_PATH, NULL, NULL, NULL, NULL, 0);
     TRACE("Drive contains %s\n", debugstr_w(name));
-    volume = strdupW(name);
-    if (*intype)
-        *intype=type;
     return (strcmpiW(want_volume,name)==0);
 }
 
