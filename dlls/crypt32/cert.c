@@ -314,16 +314,6 @@ BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV hCryptProv,
     return ret;
 }
 
-BOOL WINAPI CryptVerifyMessageSignature(/*PCRYPT_VERIFY_MESSAGE_PARA*/ void* pVerifyPara,
-          DWORD dwSignerIndex, const BYTE* pbSignedBlob, DWORD cbSignedBlob,
-          BYTE* pbDecoded, DWORD* pcbDecoded, PCCERT_CONTEXT* ppSignerCert)
-{
-    FIXME("stub: %p, %ld, %p, %ld, %p, %p, %p\n",
-        pVerifyPara, dwSignerIndex, pbSignedBlob, cbSignedBlob,
-        pbDecoded, pcbDecoded, ppSignerCert);
-    return FALSE;
-}
-
 BOOL WINAPI CertGetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext, DWORD dwFlags,
  PCERT_ENHKEY_USAGE pUsage, DWORD *pcbUsage)
 {

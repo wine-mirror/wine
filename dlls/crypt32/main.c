@@ -365,6 +365,12 @@ BOOL WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
     return FALSE;
 }
 
+BOOL WINAPI I_CryptInstallAsn1Module(void *x, DWORD y, DWORD z)
+{
+    FIXME("%p %08lx %08lx\n", x, y, z);
+    return TRUE;
+}
+
 BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void* pvObject,
     DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags,
     DWORD dwFlags, DWORD* pdwMsgAndCertEncodingType, DWORD* pdwContentType,
@@ -375,5 +381,15 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void* pvObject,
            pvObject, dwExpectedContentTypeFlags, dwExpectedFormatTypeFlags,
            dwFlags, pdwMsgAndCertEncodingType, pdwContentType, pdwFormatType,
            phCertStore, phMsg, ppvContext);
+    return FALSE;
+}
+
+BOOL WINAPI CryptVerifyMessageSignature(/*PCRYPT_VERIFY_MESSAGE_PARA*/ void* pVerifyPara,
+          DWORD dwSignerIndex, const BYTE* pbSignedBlob, DWORD cbSignedBlob,
+          BYTE* pbDecoded, DWORD* pcbDecoded, PCCERT_CONTEXT* ppSignerCert)
+{
+    FIXME("stub: %p, %ld, %p, %ld, %p, %p, %p\n",
+        pVerifyPara, dwSignerIndex, pbSignedBlob, cbSignedBlob,
+        pbDecoded, pcbDecoded, ppSignerCert);
     return FALSE;
 }

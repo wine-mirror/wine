@@ -84,6 +84,13 @@ BOOL WINAPI CryptEnumOIDInfo(DWORD dwGroupId, DWORD dwFlags, void *pvArg,
     return TRUE;
 }
 
+PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
+ DWORD dwGroupId)
+{
+    FIXME("(%ld, %p, %ld): stub\n", dwKeyType, pvKey, dwGroupId);
+    return NULL;
+}
+
 /* There is no free function associated with this; therefore, the sets are
  * freed when crypt32.dll is unloaded.
  */

@@ -102,7 +102,7 @@
 @ stub CryptExportPKCS8
 @ stdcall CryptExportPublicKeyInfo(long long long ptr ptr)
 @ stdcall CryptExportPublicKeyInfoEx(long long long str long ptr ptr ptr)
-@ stub CryptFindOIDInfo
+@ stdcall CryptFindOIDInfo(long ptr long)
 @ stub CryptFormatObject
 @ stdcall CryptFreeOIDFunctionAddress(long long)
 @ stub CryptGetAsyncParam
@@ -181,6 +181,7 @@
 @ stdcall I_CryptGetOssGlobal(long)
 @ stdcall I_CryptGetTls(long)
 @ stub I_CryptInsertLruEntry
+@ stdcall I_CryptInstallAsn1Module(long long long)
 @ stdcall I_CryptInstallOssGlobal(long long long)
 @ stub I_CryptReleaseLruEntry
 @ stdcall I_CryptSetTls(long ptr)
