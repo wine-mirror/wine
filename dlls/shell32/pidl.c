@@ -1259,7 +1259,7 @@ BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
     DWORD dwAttributes;
     STRRET strret;
 
-    TRACE_(shell)("(pidl=%p,%p)\n", pidl, debugstr_w(pszPath));
+    TRACE_(shell)("(pidl=%p,%p)\n", pidl, pszPath);
     pdump(pidl);
 
     if (!pidl)

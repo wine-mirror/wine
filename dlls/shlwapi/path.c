@@ -506,9 +506,12 @@ int WINAPI PathGetDriveNumberW(LPCWSTR lpszPath)
 {
   TRACE ("(%s)\n",debugstr_w(lpszPath));
 
-  if (lpszPath && lpszPath[1] == ':' &&
-      tolowerW(*lpszPath) >= 'a' && tolowerW(*lpszPath) <= 'z')
-    return tolowerW(*lpszPath) - 'a';
+  if (lpszPath)
+  {
+      WCHAR tl = tolowerW(lpszPath[0]);
+      if (tl >= 'a' && tl <= 'z' && lpszPath[1] == ':')
+          return tl - 'a';
+  }
   return -1;
 }
 

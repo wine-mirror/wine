@@ -701,6 +701,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
             
         if (!pNextPathElement) {
             SHFree(*ppidl);
+            *ppidl = NULL;
             return FALSE;
         }
         pidl = ILGetNext(pidl);
@@ -1753,7 +1754,7 @@ static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd
                 ILFree(pidlRelative);
             SHChangeNotify(SHCNE_MKDIR, SHCNF_IDLIST, pidlAbsolute, NULL);
             ILFree(pidlAbsolute);
-        }
+        } else return E_FAIL;
         return S_OK;
     }
 }

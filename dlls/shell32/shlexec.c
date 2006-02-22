@@ -597,6 +597,11 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
             filetype[filetypelen] = '\0';
             TRACE("File type: %s\n", debugstr_w(filetype));
         }
+        else
+        {
+            *filetype = '\0';
+            filetypelen = 0;
+        }
     }
 
     if (*filetype)

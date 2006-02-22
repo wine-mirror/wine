@@ -43,23 +43,24 @@ static const WCHAR notafile[]= { 'C',':','\\','n','o','n','e','x','i','s','t','e
  * SHSimpleIDListFromPathA does not work on NT4. But if we call both we
  * get what we want on all platforms.
  */
-static LPITEMIDLIST (WINAPI *pSHSimpleIDListFromPathA)(LPCSTR)=NULL;
+static LPITEMIDLIST (WINAPI *pSHSimpleIDListFromPathAW)(LPCVOID);
 
 static LPITEMIDLIST path_to_pidl(const char* path)
 {
     LPITEMIDLIST pidl;
 
-    if (!pSHSimpleIDListFromPathA)
+    if (!pSHSimpleIDListFromPathAW)
     {
         HMODULE hdll=LoadLibraryA("shell32.dll");
-        pSHSimpleIDListFromPathA=(void*)GetProcAddress(hdll, (char*)162);
-        if (!pSHSimpleIDListFromPathA)
-            trace("SHSimpleIDListFromPathA not found in shell32.dll\n");
+        pSHSimpleIDListFromPathAW=(void*)GetProcAddress(hdll, (char*)162);
+        if (!pSHSimpleIDListFromPathAW)
+            trace("SHSimpleIDListFromPathAW not found in shell32.dll\n");
     }
 
     pidl=NULL;
-    if (pSHSimpleIDListFromPathA)
-        pidl=pSHSimpleIDListFromPathA(path);
+    /* pSHSimpleIDListFromPathAW maps to A on non NT platforms */
+    if (pSHSimpleIDListFromPathAW && (GetVersion() & 0x80000000))
+        pidl=pSHSimpleIDListFromPathAW(path);
 
     if (!pidl)
     {
