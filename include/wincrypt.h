@@ -2127,6 +2127,36 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define szOID_PKCS_12_LOCAL_KEY_ID           "1.2.840.113549.1.9.21"
 #define szOID_CERT_EXTENSIONS                "1.3.6.1.4.1.311.2.1.14"
 #define szOID_NEXT_UPDATE_LOCATION           "1.3.6.1.4.1.311.10.2"
+#define szOID_KP_CTL_USAGE_SIGNING           "1.3.6.1.4.1.311.10.3.1"
+#define szOID_KP_TIME_STAMP_SIGNING          "1.3.6.1.4.1.311.10.3.2"
+#ifndef szOID_SERVER_GATED_CRYPTO
+#define szOID_SERVER_GATED_CRYPTO            "1.3.6.1.4.1.311.10.3.3"
+#endif
+#define szOID_KP_EFS                         "1.3.6.1.4.1.311.10.3.4"
+#define szOID_EFS_RECOVERY                   "1.3.6.1.4.1.311.10.3.4.1"
+#define szOID_WHQL_CRYPTO                    "1.3.6.1.4.1.311.10.3.5"
+#define szOID_NT5_CRYPTO                     "1.3.6.1.4.1.311.10.3.6"
+#define szOID_OEM_WHQL_CRYPTO                "1.3.6.1.4.1.311.10.3.7"
+#define szOID_EMBEDDED_NT_CRYPTO             "1.3.6.1.4.1.311.10.3.8"
+#define szOID_ROOT_LIST_SIGNER               "1.3.6.1.4.1.311.10.3.9"
+#define szOID_KP_QUALIFIED_SUBORDINATION     "1.3.6.1.4.1.311.10.3.10"
+#define szOID_KP_KEY_RECOVERY                "1.3.6.1.4.1.311.10.3.11"
+#define szOID_KP_DOCUMENT_SIGNING            "1.3.6.1.4.1.311.10.3.12"
+#define szOID_KP_LIFETIME_SIGNING            "1.3.6.1.4.1.311.10.3.13"
+#define szOID_KP_MOBILE_DEVICE_SOFTWARE      "1.3.6.1.4.1.311.10.3.14"
+#define szOID_YESNO_TRUST_ATTR               "1.3.6.1.4.1.311.10.4.1"
+#ifndef szOID_DRM
+#define szOID_DRM                            "1.3.6.1.4.1.311.10.5.1"
+#endif
+#ifndef szOID_DRM_INDIVIDUALIZATION
+#define szOID_DRM_INDIVIDUALIZATION          "1.3.6.1.4.1.311.10.5.2"
+#endif
+#ifndef szOID_LICENSES
+#define szOID_LICENSES                       "1.3.6.1.4.1.311.10.6.1"
+#endif
+#ifndef szOID_LICENSE_SERVER
+#define szOID_LICENSE_SERVER                 "1.3.6.1.4.1.311.10.6.2"
+#endif
 #define szOID_REMOVE_CERTIFICATE             "1.3.6.1.4.1.311.10.8.1"
 #define szOID_CROSS_CERT_DIST_POINTS         "1.3.6.1.4.1.311.10.9.1"
 #define szOID_CTL                            "1.3.6.1.4.1.311.10.10.1"
@@ -2141,7 +2171,11 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define szOID_AUTO_ENROLL_CTL_USAGE          "1.3.6.1.4.1.311.20.1"
 #define szOID_ENROLL_CERTTYPE_EXTENSION      "1.3.6.1.4.1.311.20.2"
 #define szOID_ENROLLMENT_AGENT               "1.3.6.1.4.1.311.20.2.1"
+#define szOID_KP_SMARTCARD_LOGON             "1.3.6.1.4.1.311.20.2.2"
 #define szOID_CERT_MANIFOLD                  "1.3.6.1.4.1.311.20.3"
+#ifndef szOID_CERTSRV_CA_VERSION
+#define szOID_CERTSRV_CA_VERSION             "1.3.6.1.4.1.311.21.1"
+#endif
 #define szOID_CERTSRV_PREVIOUS_CERT_HASH     "1.3.6.1.4.1.311.21.2"
 #define szOID_CRL_VIRTUAL_BASE               "1.3.6.1.4.1.311.21.3"
 #define szOID_CRL_NEXT_PUBLISH               "1.3.6.1.4.1.311.21.4"
@@ -2177,15 +2211,48 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define szOID_PKIX_KP_IPSEC_TUNNEL           "1.3.6.1.5.5.7.3.6"
 #define szOID_PKIX_KP_IPSEC_USER             "1.3.6.1.5.5.7.3.7"
 #define szOID_PKIX_KP_TIMESTAMP_SIGNING      "1.3.6.1.5.5.7.3.8"
+#define szOID_PKIX_NO_SIGNATURE              "1.3.6.1.5.5.7.6.2"
+#define szOID_CMC                            "1.3.6.1.5.5.7.7"
+#define szOID_CMC_STATUS_INFO                "1.3.6.1.5.5.7.7.1"
+#define szOID_CMC_IDENTIFICATION             "1.3.6.1.5.5.7.7.2"
+#define szOID_CMC_IDENTITY_PROOF             "1.3.6.1.5.5.7.7.3"
+#define szOID_CMC_DATA_RETURN                "1.3.6.1.5.5.7.7.4"
+#define szOID_CMC_TRANSACTION_ID             "1.3.6.1.5.5.7.7.5"
+#define szOID_CMC_SENDER_NONCE               "1.3.6.1.5.5.7.7.6"
+#define szOID_CMC_RECIPIENT_NONCE            "1.3.6.1.5.5.7.7.7"
+#define szOID_CMC_ADD_EXTENSIONS             "1.3.6.1.5.5.7.7.8"
+#define szOID_CMC_ENCRYPTED_POP              "1.3.6.1.5.5.7.7.9"
+#define szOID_CMC_DECRYPTED_POP              "1.3.6.1.5.5.7.7.10"
+#define szOID_CMC_LRA_POP_WITNESS            "1.3.6.1.5.5.7.7.11"
+#define szOID_CMC_GET_CERT                   "1.3.6.1.5.5.7.7.15"
+#define szOID_CMC_GET_CRL                    "1.3.6.1.5.5.7.7.16"
+#define szOID_CMC_REVOKE_REQUEST             "1.3.6.1.5.5.7.7.17"
+#define szOID_CMC_REG_INFO                   "1.3.6.1.5.5.7.7.18"
+#define szOID_CMC_RESPONSE_INFO              "1.3.6.1.5.5.7.7.19"
+#define szOID_CMC_QUERY_PENDING              "1.3.6.1.5.5.7.7.21"
+#define szOID_CMC_ID_POP_LINK_RANDOM         "1.3.6.1.5.5.7.7.22"
+#define szOID_CMC_ID_POP_LINK_WITNESS        "1.3.6.1.5.5.7.7.23"
+#define szOID_CT_PKI_DATA                    "1.3.6.1.5.5.7.12.2"
+#define szOID_CT_PKI_RESPONSE                "1.3.6.1.5.5.7.12.3"
+#define szOID_PKIX_ACC_DESCR                 "1.3.6.1.5.5.7.48"
+#define szOID_PKIX_OCSP                      "1.3.6.1.5.5.7.48.1"
+#define szOID_PKIX_CA_ISSUERS                "1.3.6.1.5.5.7.48.2"
 #define szOID_IPSEC_KP_IKE_INTERMEDIATE      "1.3.6.1.5.5.8.2.2"
 
 #ifndef szOID_SERIALIZED
 #define szOID_SERIALIZED                     "1.3.6.1.4.1.311.10.3.3.1"
 #endif
 
+#define szOID_AUTO_ENROLL_CTL_USAGE          "1.3.6.1.4.1.311.20.1"
+#define szOID_ENROLL_CERTTYPE_EXTENSION      "1.3.6.1.4.1.311.20.2"
+#define szOID_ENROLLMENT_AGENT               "1.3.6.1.4.1.311.20.2.1"
+#ifndef szOID_KP_SMARTCARD_LOGON
+#define szOID_KP_SMARTCARD_LOGON             "1.3.6.1.4.1.311.20.2.2"
+#endif
 #ifndef szOID_NT_PRINCIPAL_NAME
 #define szOID_NT_PRINCIPAL_NAME              "1.3.6.1.4.1.311.20.2.3"
 #endif
+#define szOID_CERT_MANIFOLD                  "1.3.6.1.4.1.311.20.3"
 
 #ifndef szOID_CERTSRV_CA_VERSION
 #define szOID_CERTSRV_CA_VERSION             "1.3.6.1.4.1.311.21.1"
@@ -2194,6 +2261,17 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #ifndef szOID_PRODUCT_UPDATE
 #define szOID_PRODUCT_UPDATE                 "1.3.6.1.4.1.311.31.1"
 #endif
+
+#define szOID_NETSCAPE                       "2.16.840.1.113730"
+#define szOID_NETSCAPE_CERT_EXTENSION        "2.16.840.1.113730.1"
+#define szOID_NETSCAPE_CERT_TYPE             "2.16.840.1.113730.1.1"
+#define szOID_NETSCAPE_BASE_URL              "2.16.840.1.113730.1.2"
+#define szOID_NETSCAPE_REVOCATION_URL        "2.16.840.1.113730.1.3"
+#define szOID_NETSCAPE_CA_REVOCATION_URL     "2.16.840.1.113730.1.4"
+#define szOID_NETSCAPE_CERT_RENEWAL_URL      "2.16.840.1.113730.1.7"
+#define szOID_NETSCAPE_CA_POLICY_URL         "2.16.840.1.113730.1.8"
+#define szOID_NETSCAPE_SSL_SERVER_NAME       "2.16.840.1.113730.1.12"
+#define szOID_NETSCAPE_COMMENT               "2.16.840.1.113730.1.13"
 
 #define CRYPT_ENCODE_DECODE_NONE             0
 #define X509_CERT                            ((LPCSTR)1)
