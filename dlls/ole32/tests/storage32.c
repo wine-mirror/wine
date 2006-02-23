@@ -312,7 +312,7 @@ static void test_storage_stream(void)
     r = IStorage_Release(stg);
     ok(r == 0, "wrong ref count\n");
     r = DeleteFileW(filename);
-    ok(r == TRUE, "file should exist\n");
+    ok(r, "file should exist\n");
 }
 
 static BOOL touch_file(LPCWSTR filename)
