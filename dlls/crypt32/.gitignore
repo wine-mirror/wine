@@ -1,2 +1,3 @@
 Makefile
+crypt32.res
 libcrypt32.def

@@ -16,6 +16,8 @@ C_SRCS = \
 	str.c \
 	main.c
 
+RC_SRCS = crypt32.rc
+
 SUBDIRS = tests
 
 @MAKE_DLL_RULES@

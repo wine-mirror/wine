@@ -1,5 +1,7 @@
 /*
- * Copyright 2005 Juan Lang
+ * crypt32 dll version resources
+ *
+ * Copyright (C) 2006 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,15 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __CRYPT32_PRIVATE_H__
-#define __CRYPT32_PRIVATE_H__
+#define WINE_FILEDESCRIPTION_STR "Wine CryptoAPI Library"
+#define WINE_FILENAME_STR "crypt32.dll"
+#define WINE_FILEVERSION 5,131,2600,1243
+#define WINE_FILEVERSION_STR "5.131.2600.1243"
+#define WINE_PRODUCTVERSION 5,131,2600,1243
+#define WINE_PRODUCTVERSION_STR "5.131.2600.1243"
 
-/* Returns a handle to the default crypto provider; loads it if necessary.
- * Returns NULL on failure.
- */
-HCRYPTPROV CRYPT_GetDefaultProvider(void);
-
-void crypt_oid_init(HINSTANCE hinst);
-void crypt_oid_free(void);
-
-#endif
+#include "wine/wine_common_ver.rc"

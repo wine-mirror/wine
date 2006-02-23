@@ -314,10 +314,86 @@ static void test_registerOIDFunction(void)
     ok(ret, "CryptUnregisterOIDFunction failed: %ld\n", GetLastError());
 }
 
+static BOOL WINAPI countOidInfo(PCCRYPT_OID_INFO pInfo, void *pvArg)
+{
+    (*(DWORD *)pvArg)++;
+    return TRUE;
+}
+
+static BOOL WINAPI noOidInfo(PCCRYPT_OID_INFO pInfo, void *pvArg)
+{
+    return FALSE;
+}
+
+static void test_enumOIDInfo(void)
+{
+    BOOL ret;
+    DWORD count = 0;
+
+    /* This crashes
+    ret = CryptEnumOIDInfo(7, 0, NULL, NULL);
+     */
+
+    /* Silly tests, check that more than one thing is enumerated */
+    ret = CryptEnumOIDInfo(0, 0, &count, countOidInfo);
+    ok(ret && count > 0, "Expected more than item enumerated\n");
+    ret = CryptEnumOIDInfo(0, 0, NULL, noOidInfo);
+    ok(!ret, "Expected FALSE\n");
+}
+
+static void test_findOIDInfo(void)
+{
+    static const WCHAR sha1[] = { 's','h','a','1',0 };
+    ALG_ID alg = CALG_SHA1;
+    ALG_ID algs[2] = { CALG_MD5, CALG_RSA_SIGN };
+    PCCRYPT_OID_INFO info;
+
+    info = CryptFindOIDInfo(0, NULL, 0);
+    ok(info == NULL, "Expected NULL\n");
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, szOID_RSA_MD5, 0);
+    ok(info != NULL, "Expected to find szOID_RSA_MD5\n");
+    if (info)
+    {
+        ok(!strcmp(info->pszOID, szOID_RSA_MD5), "Expected %s, got %s\n",
+         szOID_RSA_MD5, info->pszOID);
+        ok(info->Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
+         info->Algid);
+    }
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_NAME_KEY, (void *)sha1, 0);
+    ok(info != NULL, "Expected to find sha1\n");
+    if (info)
+    {
+        ok(!strcmp(info->pszOID, szOID_OIWSEC_sha1), "Expected %s, got %s\n",
+         szOID_OIWSEC_sha1, info->pszOID);
+        ok(info->Algid == CALG_SHA1, "Expected CALG_SHA1, got %d\n",
+         info->Algid);
+    }
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_ALGID_KEY, &alg, 0);
+    ok(info != NULL, "Expected to find sha1\n");
+    if (info)
+    {
+        ok(!strcmp(info->pszOID, szOID_OIWSEC_sha1), "Expected %s, got %s\n",
+         szOID_OIWSEC_sha1, info->pszOID);
+        ok(info->Algid == CALG_SHA1, "Expected CALG_SHA1, got %d\n",
+         info->Algid);
+    }
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_SIGN_KEY, algs, 0);
+    ok(info != NULL, "Expected to find md5RSA\n");
+    if (info)
+    {
+        ok(!strcmp(info->pszOID, szOID_RSA_MD5RSA), "Expected %s, got %s\n",
+         szOID_RSA_MD5RSA, info->pszOID);
+        ok(info->Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
+         info->Algid);
+    }
+}
+
 START_TEST(oid)
 {
     testOIDToAlgID();
     testAlgIDToOID();
+    test_enumOIDInfo();
+    test_findOIDInfo();
     test_oidFunctionSet();
     test_installOIDFunctionAddress();
     test_registerOIDFunction();

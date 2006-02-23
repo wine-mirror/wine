@@ -40,10 +40,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
     {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hInstance);
-            CRYPT_InitFunctionSets();
+            crypt_oid_init(hInstance);
             break;
         case DLL_PROCESS_DETACH:
-            CRYPT_FreeFunctionSets();
+            crypt_oid_free();
             if (hDefProv) CryptReleaseContext(hDefProv, 0);
             break;
     }
