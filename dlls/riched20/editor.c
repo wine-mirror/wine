@@ -2235,7 +2235,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_GETOLEINTERFACE:
   {
     LPVOID *ppvObj = (LPVOID*) lParam;
-    FIXME("EM_GETOLEINTERFACE %p: stub\n", ppvObj);
     return CreateIRichEditOle(editor, ppvObj);
   }
   case EM_SETOLECALLBACK:
