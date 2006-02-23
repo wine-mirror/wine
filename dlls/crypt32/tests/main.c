@@ -27,107 +27,6 @@
 
 #include "wine/test.h"
 
-struct OIDToAlgID
-{
-    LPCSTR oid;
-    DWORD algID;
-};
-
-static const struct OIDToAlgID oidToAlgID[] = {
- { szOID_RSA_RSA, CALG_RSA_KEYX },
- { szOID_RSA_MD2RSA, CALG_MD2 },
- { szOID_RSA_MD4RSA, CALG_MD4 },
- { szOID_RSA_MD5RSA, CALG_MD5 },
- { szOID_RSA_SHA1RSA, CALG_SHA },
- { szOID_RSA_DH, CALG_DH_SF },
- { szOID_RSA_SMIMEalgESDH, CALG_DH_EPHEM },
- { szOID_RSA_SMIMEalgCMS3DESwrap, CALG_3DES },
- { szOID_RSA_SMIMEalgCMSRC2wrap, CALG_RC2 },
- { szOID_RSA_MD2, CALG_MD2 },
- { szOID_RSA_MD4, CALG_MD4 },
- { szOID_RSA_MD5, CALG_MD5 },
- { szOID_RSA_RC2CBC, CALG_RC2 },
- { szOID_RSA_RC4, CALG_RC4 },
- { szOID_RSA_DES_EDE3_CBC, CALG_3DES },
- { szOID_ANSI_X942_DH, CALG_DH_SF },
- { szOID_X957_DSA, CALG_DSS_SIGN },
- { szOID_X957_SHA1DSA, CALG_SHA },
- { szOID_OIWSEC_md4RSA, CALG_MD4 },
- { szOID_OIWSEC_md5RSA, CALG_MD5 },
- { szOID_OIWSEC_md4RSA2, CALG_MD4 },
- { szOID_OIWSEC_desCBC, CALG_DES },
- { szOID_OIWSEC_dsa, CALG_DSS_SIGN },
- { szOID_OIWSEC_shaDSA, CALG_SHA },
- { szOID_OIWSEC_shaRSA, CALG_SHA },
- { szOID_OIWSEC_sha, CALG_SHA },
- { szOID_OIWSEC_rsaXchg, CALG_RSA_KEYX },
- { szOID_OIWSEC_sha1, CALG_SHA },
- { szOID_OIWSEC_dsaSHA1, CALG_SHA },
- { szOID_OIWSEC_sha1RSASign, CALG_SHA },
- { szOID_OIWDIR_md2RSA, CALG_MD2 },
- { szOID_INFOSEC_mosaicUpdatedSig, CALG_SHA },
- { szOID_INFOSEC_mosaicKMandUpdSig, CALG_DSS_SIGN },
-};
-
-static const struct OIDToAlgID algIDToOID[] = {
- { szOID_RSA_RSA, CALG_RSA_KEYX },
- { szOID_RSA_SMIMEalgESDH, CALG_DH_EPHEM },
- { szOID_RSA_MD2, CALG_MD2 },
- { szOID_RSA_MD4, CALG_MD4 },
- { szOID_RSA_MD5, CALG_MD5 },
- { szOID_RSA_RC2CBC, CALG_RC2 },
- { szOID_RSA_RC4, CALG_RC4 },
- { szOID_RSA_DES_EDE3_CBC, CALG_3DES },
- { szOID_ANSI_X942_DH, CALG_DH_SF },
- { szOID_X957_DSA, CALG_DSS_SIGN },
- { szOID_OIWSEC_desCBC, CALG_DES },
- { szOID_OIWSEC_sha1, CALG_SHA },
-};
-
-static void testOIDToAlgID(void)
-{
-    int i;
-    DWORD alg;
-
-    /* Test with a bogus one */
-    SetLastError(0xdeadbeef);
-    alg = CertOIDToAlgId("1.2.3");
-    ok(!alg && (GetLastError() == 0xdeadbeef ||
-     GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND),
-     "Expected ERROR_RESOURCE_NAME_NOT_FOUND or no error set, got %08lx\n",
-     GetLastError());
-
-    for (i = 0; i < sizeof(oidToAlgID) / sizeof(oidToAlgID[0]); i++)
-    {
-        alg = CertOIDToAlgId(oidToAlgID[i].oid);
-        /* Not all Windows installations support all these, so make sure it's
-         * at least not the wrong one.
-         */
-        ok(alg == 0 || alg == oidToAlgID[i].algID,
-         "Expected %ld, got %ld\n", oidToAlgID[i].algID, alg);
-    }
-}
-
-static void testAlgIDToOID(void)
-{
-    int i;
-    LPCSTR oid;
-
-    /* Test with a bogus one */
-    SetLastError(0xdeadbeef);
-    oid = CertAlgIdToOID(ALG_CLASS_SIGNATURE | ALG_TYPE_ANY | 80);
-    ok(!oid && GetLastError() == 0xdeadbeef,
-     "Didn't expect last error (%08lx) to be set\n", GetLastError());
-    for (i = 0; i < sizeof(algIDToOID) / sizeof(algIDToOID[0]); i++)
-    {
-        oid = CertAlgIdToOID(algIDToOID[i].algID);
-        /* Allow failure, not every version of Windows supports every algo */
-        if (oid)
-            ok(!strcmp(oid, algIDToOID[i].oid), 
-             "Expected %s, got %s\n", algIDToOID[i].oid, oid);
-    }
-}
-
 static void test_findAttribute(void)
 {
     PCRYPT_ATTRIBUTE ret;
@@ -374,8 +273,6 @@ static void test_cryptTls(void)
 
 START_TEST(main)
 {
-    testOIDToAlgID();
-    testAlgIDToOID();
     test_findAttribute();
     test_findExtension();
     test_findRDNAttr();
