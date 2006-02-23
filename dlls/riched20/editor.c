@@ -1767,11 +1767,14 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_CUT:
   case WM_COPY:
   {
-    LPDATAOBJECT dataObj;
+    LPDATAOBJECT dataObj = NULL;
     CHARRANGE range;
-    HRESULT hr;
+    HRESULT hr = S_OK;
     ME_GetSelection(editor, (int*)&range.cpMin, (int*)&range.cpMax);
-    hr = ME_GetDataObject(editor, &range, &dataObj);
+    if(editor->lpOleCallback)
+        hr = IRichEditOleCallback_GetClipboardData(editor->lpOleCallback, &range, RECO_COPY, &dataObj);
+    if(FAILED(hr) || !dataObj)
+        hr = ME_GetDataObject(editor, &range, &dataObj);
     if(SUCCEEDED(hr)) {
         hr = OleSetClipboard(dataObj);
         IDataObject_Release(dataObj);
