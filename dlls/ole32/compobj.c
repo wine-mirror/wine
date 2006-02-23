@@ -1695,7 +1695,9 @@ HRESULT WINAPI CoGetClassObject(
     /* Next try out of process */
     if (CLSCTX_LOCAL_SERVER & dwClsContext)
     {
-        return RPC_GetLocalClassObject(rclsid,iid,ppv);
+        hres = RPC_GetLocalClassObject(rclsid,iid,ppv);
+        if (SUCCEEDED(hres))
+            return hres;
     }
 
     /* Finally try remote: this requires networked DCOM (a lot of work) */
