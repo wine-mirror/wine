@@ -1109,6 +1109,17 @@ static HRESULT WINAPI OLEFontImpl_Clone(
 
   newObject->gdiFont = CreateFontIndirectW(&logFont);
 
+  /* create new connection points */
+  newObject->pPropertyNotifyCP = NULL;
+  newObject->pFontEventsCP = NULL;
+  CreateConnectionPoint((IUnknown*)newObject, &IID_IPropertyNotifySink, &newObject->pPropertyNotifyCP);
+  CreateConnectionPoint((IUnknown*)newObject, &IID_IFontEventsDisp, &newObject->pFontEventsCP);
+
+  if (!newObject->pPropertyNotifyCP || !newObject->pFontEventsCP)
+  {
+    OLEFontImpl_Destroy(newObject);
+    return E_OUTOFMEMORY;
+  }
 
   /* The cloned object starts with a reference count of 1 */
   newObject->ref          = 1;

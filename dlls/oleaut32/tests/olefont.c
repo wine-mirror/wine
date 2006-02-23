@@ -206,7 +206,7 @@ static ULONG WINAPI FontEventsDisp_Release(
     return 1;
 }
 
-static BOOL fonteventsdisp_invoke_called = FALSE;
+static int fonteventsdisp_invoke_called = 0;
 
 static HRESULT WINAPI FontEventsDisp_Invoke(
         IFontEventsDisp __RPC_FAR * iface,
@@ -226,7 +226,7 @@ static HRESULT WINAPI FontEventsDisp_Invoke(
     ok(V_VT(&pDispParams->rgvarg[0]) == VT_BSTR, "VT of first param should have been VT_BSTR instead of %d\n", V_VT(&pDispParams->rgvarg[0]));
     ok(!lstrcmpW(V_BSTR(&pDispParams->rgvarg[0]), wszBold), "String in first param should have been \"Bold\"\n");
 
-    fonteventsdisp_invoke_called = TRUE;
+    fonteventsdisp_invoke_called++;
     return S_OK;
 }
 
@@ -246,6 +246,7 @@ static IFontEventsDisp FontEventsDisp = { &FontEventsDisp_Vtbl };
 static void test_font_events_disp(void)
 {
     IFont *pFont;
+    IFont *pFont2;
     IConnectionPointContainer *pCPC;
     IConnectionPoint *pCP;
     FONTDESC fontdesc;
@@ -279,9 +280,19 @@ static void test_font_events_disp(void)
     hr = IFont_put_Bold(pFont, TRUE);
     ok_ole_success(hr, "IFont_put_Bold");
 
-    ok(fonteventsdisp_invoke_called, "IFontEventDisp::Invoke wasn't called\n");
+    ok(fonteventsdisp_invoke_called == 1, "IFontEventDisp::Invoke wasn't called once\n");
 
+    hr = IFont_Clone(pFont, &pFont2);
+    ok_ole_success(hr, "IFont_Clone");
     IFont_Release(pFont);
+
+    hr = IFont_put_Bold(pFont2, TRUE);
+    ok_ole_success(hr, "IFont_put_Bold");
+
+    /* this test shows that the notification routine isn't called again */
+    ok(fonteventsdisp_invoke_called == 1, "IFontEventDisp::Invoke wasn't called once\n");
+
+    IFont_Release(pFont2);
 }
 
 START_TEST(olefont)
