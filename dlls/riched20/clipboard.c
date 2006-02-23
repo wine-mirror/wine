@@ -335,7 +335,8 @@ static HGLOBAL get_unicode_text(ME_TextEditor *editor, CHARRANGE *lpchrg)
     len = lpchrg->cpMax-lpchrg->cpMin;
     ret = GlobalAlloc(GMEM_MOVEABLE, sizeof(WCHAR)*(len+pars+1));
     data = (WCHAR *)GlobalLock(ret);
-    ME_GetTextW(editor, data, lpchrg->cpMin, len, TRUE);
+    len = ME_GetTextW(editor, data, lpchrg->cpMin, len, TRUE);
+    data[len] = 0;
     GlobalUnlock(ret);
     return ret;
 }
