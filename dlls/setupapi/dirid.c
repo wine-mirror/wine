@@ -175,7 +175,7 @@ const WCHAR *DIRID_get_string( int dirid )
     {
         for (i = 0; i < nb_user_dirids; i++)
             if (user_dirids[i].id == dirid) return user_dirids[i].str;
-        ERR("user id %d not found\n", dirid );
+        WARN("user id %d not found\n", dirid );
         return NULL;
     }
     else if (dirid >= MIN_CSIDL_DIRID)
