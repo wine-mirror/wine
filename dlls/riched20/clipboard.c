@@ -397,10 +397,11 @@ HRESULT ME_GetDataObject(ME_TextEditor *editor, CHARRANGE *lpchrg, LPDATAOBJECT 
     obj->rtf = NULL;
 
     obj->fmtetc_cnt = 1;
+    if(editor->mode & TM_RICHTEXT)
+        obj->fmtetc_cnt++;
     obj->fmtetc = HeapAlloc(GetProcessHeap(), 0, obj->fmtetc_cnt*sizeof(FORMATETC));
     InitFormatEtc(obj->fmtetc[0], CF_UNICODETEXT, TYMED_HGLOBAL);
     if(editor->mode & TM_RICHTEXT) {
-        obj->fmtetc_cnt++;
         obj->rtf = get_rtf_text(editor, lpchrg);
         InitFormatEtc(obj->fmtetc[1], cfRTF, TYMED_HGLOBAL);
     }
