@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cfgmgr32.dll
 IMPORTLIB = libcfgmgr32.$(IMPLIBEXT)
-IMPORTS   = kernel32
+IMPORTS   = setupapi kernel32
 
 C_SRCS = \
 	main.c

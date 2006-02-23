@@ -8,7 +8,7 @@
 @ stub CM_Add_Res_Des
 @ stub CM_Add_Res_Des_Ex
 @ stub CM_Connect_MachineA
-@ stub CM_Connect_MachineW
+@ stdcall CM_Connect_MachineW(wstr ptr) setupapi.CM_Connect_MachineW
 @ stub CM_Create_DevNodeA
 @ stub CM_Create_DevNodeW
 @ stub CM_Create_DevNode_ExA
@@ -23,7 +23,7 @@
 @ stub CM_Detect_Resource_Conflict_Ex
 @ stub CM_Disable_DevNode
 @ stub CM_Disable_DevNode_Ex
-@ stub CM_Disconnect_Machine
+@ stdcall CM_Disconnect_Machine(long) setupapi.CM_Disconnect_Machine
 @ stub CM_Dup_Range_List
 @ stub CM_Enable_DevNode
 @ stub CM_Enable_DevNode_Ex
@@ -177,3 +177,4 @@
 @ stub CM_Unregister_Device_InterfaceW
 @ stub CM_Unregister_Device_Interface_ExA
 @ stub CM_Unregister_Device_Interface_ExW
+@ stdcall CMP_WaitNoPendingInstallEvents(long) setupapi.CMP_WaitNoPendingInstallEvents
