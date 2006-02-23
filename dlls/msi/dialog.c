@@ -1991,7 +1991,7 @@ static UINT msi_dialog_control_event( MSIRECORD *rec, LPVOID param )
 
     condition = MSI_RecordGetString( rec, 5 );
     r = MSI_EvaluateConditionW( dialog->package, condition );
-    if( r == MSICONDITION_TRUE )
+    if( r == MSICONDITION_TRUE || r == MSICONDITION_NONE )
     {
         event = MSI_RecordGetString( rec, 3 );
         arg = MSI_RecordGetString( rec, 4 );
