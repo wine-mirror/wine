@@ -31,6 +31,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "richole.h"
+#include "editor.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
@@ -38,6 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 typedef struct IRichEditOleImpl {
     const IRichEditOleVtbl *lpVtbl;
     LONG ref;
+
+    ME_TextEditor *editor;
 } IRichEditOleImpl;
 
 /* there is no way to be consistent across different sets of headers - mingw, Wine, Win32 SDK*/
@@ -250,7 +253,7 @@ static const IRichEditOleVtbl revt = {
     IRichEditOle_fnImportDataObject
 };
 
-LRESULT CreateIRichEditOle(LPVOID *ppObj)
+LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *ppObj)
 {
     IRichEditOleImpl *reo;
 
@@ -260,6 +263,7 @@ LRESULT CreateIRichEditOle(LPVOID *ppObj)
 
     reo->lpVtbl = &revt;
     reo->ref = 1;
+    reo->editor = editor;
     TRACE("Created %p\n",reo);
     *ppObj = (LPVOID) reo;
 

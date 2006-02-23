@@ -233,7 +233,7 @@ void ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);
 
 /* richole.c */
-extern LRESULT CreateIRichEditOle(LPVOID *);
+extern LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *);
 
 /* wintest.c */
 
