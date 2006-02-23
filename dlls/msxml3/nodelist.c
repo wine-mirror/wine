@@ -61,6 +61,8 @@ static void xslt_info_init( struct xslt_info *info )
 
 static int create_xslt_parser( struct xslt_info *info, xmlNodePtr node, const xmlChar *str )
 {
+    if(!node) return 1;
+
     info->sheet = xsltNewStylesheet();
     if (!info->sheet)
         return 0;
@@ -220,7 +222,7 @@ static ULONG WINAPI xmlnodelist_Release(
     if ( ref == 0 )
     {
         free_xslt_info( &This->xinfo );
-        xmldoc_release( This->node->doc );
+        if(This->node) xmldoc_release( This->node->doc );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -424,7 +426,7 @@ static xmlnodelist *new_nodelist( xmlNodePtr node )
     nodelist->enum_children = FALSE;
     xslt_info_init( &nodelist->xinfo );
 
-    xmldoc_add_ref( node->doc );
+    if(node) xmldoc_add_ref( node->doc );
 
     return nodelist;
 }
@@ -432,15 +434,12 @@ static xmlnodelist *new_nodelist( xmlNodePtr node )
 IXMLDOMNodeList* create_nodelist( xmlNodePtr node )
 {
     xmlnodelist *nodelist = new_nodelist( node );
-    if (!node)
-        return NULL;
     return (IXMLDOMNodeList*) &nodelist->lpVtbl;
 }
 
 IXMLDOMNodeList* create_filtered_nodelist( xmlNodePtr node, const xmlChar *str, BOOL enum_children )
 {
     xmlnodelist *This = new_nodelist( node );
-
     if (create_xslt_parser( &This->xinfo, node, str ))
     {
         This->enum_children = enum_children;
