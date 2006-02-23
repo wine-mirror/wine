@@ -5535,12 +5535,12 @@ static void test_message_conversion(void)
     ok( ret, "DestroyWindow() error %ld\n", GetLastError());
 }
 
-typedef struct _thread_info
+struct timer_info
 {
     HWND hWnd;
     HANDLE handles[2];
     DWORD id;
-} thread_info;
+};
 
 static VOID CALLBACK tfunc(HWND hwnd, UINT uMsg, UINT id, DWORD dwTime)
 {
@@ -5550,7 +5550,7 @@ static VOID CALLBACK tfunc(HWND hwnd, UINT uMsg, UINT id, DWORD dwTime)
 
 static DWORD WINAPI timer_thread_proc(LPVOID x)
 {
-    thread_info *info = x;
+    struct timer_info *info = x;
     DWORD r;
 
     r = KillTimer(info->hWnd, 0x19);
@@ -5565,7 +5565,7 @@ static DWORD WINAPI timer_thread_proc(LPVOID x)
 
 static void test_timers(void)
 {
-    thread_info info;
+    struct timer_info info;
     DWORD id;
 
     info.hWnd = CreateWindow ("TestWindowClass", NULL,
@@ -6432,7 +6432,7 @@ static const struct message WmUser[] = {
     { 0 }
 };
 
-struct thread_info
+struct sendmsg_info
 {
     HWND  hwnd;
     DWORD timeout;
@@ -6441,7 +6441,7 @@ struct thread_info
 
 static DWORD CALLBACK send_msg_thread( LPVOID arg )
 {
-    struct thread_info *info = arg;
+    struct sendmsg_info *info = arg;
     info->ret = SendMessageTimeoutA( info->hwnd, WM_USER, 0, 0, 0, info->timeout, NULL );
     if (!info->ret) ok( GetLastError() == ERROR_TIMEOUT, "unexpected error %ld\n", GetLastError());
     return 0;
@@ -6466,7 +6466,7 @@ static void test_SendMessageTimeout(void)
 {
     MSG msg;
     HANDLE thread;
-    struct thread_info info;
+    struct sendmsg_info info;
     DWORD tid;
 
     info.hwnd = CreateWindowA( "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
@@ -6783,7 +6783,7 @@ static const struct message WmUserChar[] = {
 #define EV_SENDMSG 1
 #define EV_ACK 2
 
-struct thread_info_2
+struct peekmsg_info
 {
     HWND  hwnd;
     HANDLE hevent[3]; /* 0 - start/stop, 1 - SendMessage, 2 - ack */
@@ -6792,7 +6792,7 @@ struct thread_info_2
 static DWORD CALLBACK send_msg_thread_2(void *param)
 {
     DWORD ret;
-    struct thread_info_2 *info = param;
+    struct peekmsg_info *info = param;
 
     trace("thread: waiting for start\n");
     WaitForSingleObject(info->hevent[EV_START_STOP], INFINITE);
@@ -6830,7 +6830,7 @@ static void test_PeekMessage(void)
     DWORD tid, qstatus;
     UINT qs_all_input = QS_ALLINPUT;
     UINT qs_input = QS_INPUT;
-    struct thread_info_2 info;
+    struct peekmsg_info info;
 
     info.hwnd = CreateWindowA("TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
                               100, 100, 200, 200, 0, 0, 0, NULL);
