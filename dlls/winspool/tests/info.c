@@ -553,6 +553,8 @@ static void test_OpenPrinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
+        /* stop here, when a remote Printserver has no RPC-Service running */
+        RETURN_ON_DEACTIVATED_SPOOLER(res)
         ok(res || ((GetLastError() == ERROR_INVALID_DATATYPE) ||
                    (GetLastError() == ERROR_ACCESS_DENIED)),
             "returned %ld with %ld (expected '!=0' or '0' with: " \
