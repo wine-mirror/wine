@@ -817,13 +817,13 @@ HRESULT  WINAPI IDirect3DDevice8Impl_CreateSurface(LPDIRECT3DDEVICE8 iface, UINT
     IDirect3DDevice8Impl  *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     if(MultisampleQuality < 0) { 
-        FIXME("MultisampleQuality out of range %ld, substituting 0 \n", MultisampleQuality);
+        FIXME("MultisampleQuality out of range %ld, substituting 0\n", MultisampleQuality);
         /*FIXME: Find out what windows does with a MultisampleQuality < 0 */
         MultisampleQuality=0;
     }
 
     if(MultisampleQuality > 0){
-        FIXME("MultisampleQuality set to %ld, bstituting 0  \n" , MultisampleQuality);
+        FIXME("MultisampleQuality set to %ld, substituting 0\n" , MultisampleQuality);
         /*
         MultisampleQuality
         [in] Quality level. The valid range is between zero and one less than the level returned by pQualityLevels used by IDirect3D8::CheckDeviceMultiSampleType. Passing a larger value returns the error D3DERR_INVALIDCALL. The MultisampleQuality values of paired render targets, depth stencil surfaces, and the MultiSample type must all match.
