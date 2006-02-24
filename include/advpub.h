@@ -18,48 +18,94 @@
 #ifndef __WINE_ADVPUB_H
 #define __WINE_ADVPUB_H
 
+#include <setupapi.h>
+/* FIXME: #include <cfgmgr32.h> */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct _CabInfo {
-    PSTR  pszCab;
-    PSTR  pszInf;
-    PSTR  pszSection;
-    char  szSrcPath[MAX_PATH];
-    DWORD dwFlags;
-} CABINFO, *PCABINFO;
+typedef struct _CabInfoA
+{
+    LPSTR  pszCab;
+    LPSTR  pszInf;
+    LPSTR  pszSection;
+    CHAR   szSrcPath[MAX_PATH];
+    DWORD  dwFlags;
+} CABINFOA, *PCABINFOA;
 
-typedef struct _PERUSERSECTION {
-    char szGUID[39 /*MAX_GUID_STRING_LEN*/ + 20];
-    char szDispName[128];
-    char szLocale[10];
-    char szStub[MAX_PATH * 4];
-    char szVersion[32];
-    char szCompID[128];
+typedef struct _CabInfoW
+{
+    LPWSTR pszCab;
+    LPWSTR pszInf;
+    LPWSTR pszSection;
+    WCHAR  szSrcPath[MAX_PATH];
+    DWORD  dwFlags;
+} CABINFOW, *PCABINFOW;
+
+DECL_WINELIB_TYPE_AW(CABINFO)
+DECL_WINELIB_TYPE_AW(PCABINFO)
+
+typedef struct _PERUSERSECTIONA
+{
+    CHAR  szGUID[39 /*MAX_GUID_STRING_LEN*/ + 20];
+    CHAR  szDispName[128];
+    CHAR  szLocale[10];
+    CHAR  szStub[MAX_PATH * 4];
+    CHAR  szVersion[32];
+    CHAR  szCompID[128];
     DWORD dwIsInstalled;
     BOOL  bRollback;
-} PERUSERSECTION, *PPERUSERSECTION;
+} PERUSERSECTIONA, *PPERUSERSECTIONA;
 
-typedef struct _StrEntry {
+typedef struct _PERUSERSECTIONW
+{
+    WCHAR szGUID[39 /*MAX_GUID_STRING_LEN*/ + 20];
+    WCHAR szDispName[128];
+    WCHAR szLocale[10];
+    WCHAR szStub[MAX_PATH * 4];
+    WCHAR szVersion[32];
+    WCHAR szCompID[128];
+    DWORD dwIsInstalled;
+    BOOL  bRollback;
+} PERUSERSECTIONW, *PPERUSERSECTIONW;
+
+DECL_WINELIB_TYPE_AW(PERUSERSECTION)
+DECL_WINELIB_TYPE_AW(PPERUSERSECTION)
+
+typedef struct _StrEntryA
+{
     LPSTR pszName;
     LPSTR pszValue;
-} STRENTRY, *LPSTRENTRY;
+} STRENTRYA, *LPSTRENTRYA;
 
-typedef const STRENTRY CSTRENTRY;
-typedef CSTRENTRY *LPCSTRENTRY;
+typedef struct _StrEntryW
+{
+    LPWSTR pszName;
+    LPWSTR pszValue;
+} STRENTRYW, *LPSTRENTRYW;
 
-typedef struct _StrTable {
+DECL_WINELIB_TYPE_AW(STRENTRY)
+DECL_WINELIB_TYPE_AW(LPSTRENTRY)
+
+typedef struct _StrTableA
+{
     DWORD cEntries;
-    LPSTRENTRY pse;
-} STRTABLE, *LPSTRTABLE;
+    STRENTRYA* pse;
+} STRTABLEA, *LPSTRTABLEA;
+typedef const STRTABLEA CSTRTABLEA, *LPCSTRTABLEA;
 
-typedef const STRTABLE CSTRTABLE;
-typedef CSTRTABLE *LPCSTRTABLE;
+typedef struct _StrTableW
+{
+    DWORD cEntries;
+    STRENTRYW* pse;
+} STRTABLEW, *LPSTRTABLEW;
+typedef const STRTABLEW CSTRTABLEW, *LPCSTRTABLEW;
 
-#ifndef _INC_SETUPAPI
-typedef PVOID HINF;
-#endif
+DECL_WINELIB_TYPE_AW(STRTABLE)
+DECL_WINELIB_TYPE_AW(CSTRTABLE)
+DECL_WINELIB_TYPE_AW(LPSTRTABLE)
+DECL_WINELIB_TYPE_AW(LPCSTRTABLE)
 
 /* Flags for AddDelBackupEntry */
 #define AADBE_ADD_ENTRY             0x01
@@ -115,49 +161,113 @@ typedef PVOID HINF;
 #define  AFSR_USEREFCNT             IE4_USEREFCNT
 #define  AFSR_EXTRAINCREFCNT        IE4_EXTRAINCREFCNT
 
-HRESULT WINAPI AddDelBackupEntry(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
+HRESULT WINAPI AddDelBackupEntryA(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
      LPCSTR lpcszBaseName, DWORD dwFlags);
-HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir,
+HRESULT WINAPI AddDelBackupEntryW(LPCWSTR lpcszFileList, LPCWSTR lpcszBackupDir,
+     LPCWSTR lpcszBaseName, DWORD dwFlags);
+#define AddDelBackupEntry WINELIB_NAME_AW(AddDelBackupEntry)
+HRESULT WINAPI AdvInstallFileA(HWND hwnd, LPCSTR lpszSourceDir,
      LPCSTR lpszSourceFile, LPCSTR lpszDestDir, LPCSTR lpszDestFile,
      DWORD dwFlags, DWORD dwReserved);
+HRESULT WINAPI AdvInstallFileW(HWND hwnd, LPCWSTR lpszSourceDir,
+     LPCWSTR lpszSourceFile, LPCWSTR lpszDestDir, LPCWSTR lpszDestFile,
+     DWORD dwFlags, DWORD dwReserved);
+#define AdvInstallFile WINELIB_NAME_AW(AdvInstallFile)
 HRESULT WINAPI CloseINFEngine(HINF hInf);
-HRESULT WINAPI DelNode(LPCSTR pszFileOrDirName, DWORD dwFlags);
-HRESULT WINAPI DelNodeRunDLL32(HWND,HINSTANCE,LPSTR,INT);
-HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved );
-HRESULT WINAPI ExtractFiles(LPCSTR,LPCSTR,DWORD,LPCSTR,LPVOID,DWORD);
-HRESULT WINAPI FileSaveMarkNotExist(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBaseName);
-HRESULT WINAPI FileSaveRestore(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
+HRESULT WINAPI DelNodeA(LPCSTR pszFileOrDirName, DWORD dwFlags);
+HRESULT WINAPI DelNodeW(LPCWSTR pszFileOrDirName, DWORD dwFlags);
+#define DelNode WINELIB_NAME_AW(DelNode)
+HRESULT WINAPI DelNodeRunDLL32A(HWND,HINSTANCE,LPSTR,INT);
+HRESULT WINAPI DelNodeRunDLL32W(HWND,HINSTANCE,LPWSTR,INT);
+#define DelNodeRunDLL32 WINELIB_NAME_AW(DelNodeRunDLL32)
+HRESULT WINAPI ExecuteCabA( HWND hwnd, CABINFOA* pCab, LPVOID pReserved );
+HRESULT WINAPI ExecuteCabW( HWND hwnd, CABINFOW* pCab, LPVOID pReserved );
+#define ExecuteCab WINELIB_NAME_AW(ExecuteCab)
+HRESULT WINAPI ExtractFilesA(LPCSTR,LPCSTR,DWORD,LPCSTR,LPVOID,DWORD);
+HRESULT WINAPI ExtractFilesW(LPCWSTR,LPCWSTR,DWORD,LPCWSTR,LPVOID,DWORD);
+#define ExtractFiles WINELIB_NAME_AW(ExtractFiles)
+HRESULT WINAPI FileSaveMarkNotExistA(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBaseName);
+HRESULT WINAPI FileSaveMarkNotExistW(LPWSTR pszFileList, LPWSTR pszDir, LPWSTR pszBaseName);
+#define FileSaveMarkNotExist WINELIB_NAME_AW(FileSaveMarkNotExist)
+HRESULT WINAPI FileSaveRestoreA(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
      LPSTR pszBaseName, DWORD dwFlags);
-HRESULT WINAPI FileSaveRestoreOnINF(HWND hWnd, PCSTR pszTitle, PCSTR pszINF,
-     PCSTR pszSection, PCSTR pszBackupDir, PCSTR pszBaseBackupFile, DWORD dwFlags);
-HRESULT WINAPI GetVersionFromFile(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
-HRESULT WINAPI GetVersionFromFileEx(LPSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+HRESULT WINAPI FileSaveRestoreW(HWND hDlg, LPWSTR pszFileList, LPWSTR pszDir,
+     LPWSTR pszBaseName, DWORD dwFlags);
+#define FileSaveRestore WINELIB_NAME_AW(FileSaveRestore)
+HRESULT WINAPI FileSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
+     LPCSTR pszSection, LPCSTR pszBackupDir, LPCSTR pszBaseBackupFile, DWORD dwFlags);
+HRESULT WINAPI FileSaveRestoreOnINFW(HWND hWnd, LPCWSTR pszTitle, LPCWSTR pszINF,
+     LPCWSTR pszSection, LPCWSTR pszBackupDir, LPCWSTR pszBaseBackupFile, DWORD dwFlags);
+#define FileSaveRestoreOnINF WINELIB_NAME_AW(FileSaveRestoreOnINF)
+HRESULT WINAPI GetVersionFromFileA(LPCSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+HRESULT WINAPI GetVersionFromFileW(LPCWSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+#define GetVersionFromFile WINELIB_NAME_AW(GetVersionFromFile)
+HRESULT WINAPI GetVersionFromFileExA(LPCSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+HRESULT WINAPI GetVersionFromFileExW(LPCWSTR lpszFilename, LPDWORD pdwMSVer, LPDWORD pdwLSVer, BOOL bVersion);
+#define GetVersionFromFileEx WINELIB_NAME_AW(GetVersionFromFileEx)
 BOOL WINAPI IsNTAdmin(DWORD,LPDWORD);
-INT WINAPI LaunchINFSection(HWND,HINSTANCE,LPSTR,INT);
-HRESULT WINAPI LaunchINFSectionEx(HWND,HINSTANCE,LPSTR,INT);
+INT WINAPI LaunchINFSectionA(HWND,HINSTANCE,LPSTR,INT);
+INT WINAPI LaunchINFSectionW(HWND,HINSTANCE,LPWSTR,INT);
+#define LaunchINFSection WINELIB_NAME_AW(LaunchINFSection)
+HRESULT WINAPI LaunchINFSectionExA(HWND,HINSTANCE,LPSTR,INT);
+HRESULT WINAPI LaunchINFSectionExW(HWND,HINSTANCE,LPWSTR,INT);
+#define LaunchINFSectionEx WINELIB_NAME_AW(LaunchINFSectionEx)
 DWORD WINAPI NeedRebootInit(VOID);
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck);
-HRESULT WINAPI OpenINFEngine(PCSTR pszInfFilename, PCSTR pszInstallSection,
+HRESULT WINAPI OpenINFEngineA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
      DWORD dwFlags, HINF *phInf, PVOID pvReserved);
-HRESULT WINAPI RebootCheckOnInstall(HWND hWnd, LPCSTR pszINF, LPCSTR pszSec, DWORD dwReserved);
-HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable);
-HRESULT WINAPI RegRestoreAll(HWND hWnd, PSTR pszTitleString, HKEY hkBackupKey);
-HRESULT WINAPI RegSaveRestore(HWND hWnd, PCSTR pszTitleString, HKEY hkBackupKey,
-     PCSTR pcszRootKey, PCSTR pcszSubKey, PCSTR pcszValueName, DWORD dwFlags);
-HRESULT WINAPI RegSaveRestoreOnINF(HWND hWnd, PCSTR pszTitle, PCSTR pszINF,
-     PCSTR pszSection, HKEY hHKLMBackKey, HKEY hHKCUBackKey, DWORD dwFlags);
-HRESULT WINAPI RunSetupCommand(HWND hWnd,
+HRESULT WINAPI OpenINFEngineW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSection,
+     DWORD dwFlags, HINF *phInf, PVOID pvReserved);
+#define OpenINFEngine WINELIB_NAME_AW(OpenINFEngine)
+HRESULT WINAPI RebootCheckOnInstallA(HWND hWnd, LPCSTR pszINF, LPSTR pszSec, DWORD dwReserved);
+HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF, LPWSTR pszSec, DWORD dwReserved);
+#define RebootCheckOnInstall WINELIB_NAME_AW(RebootCheckOnInstall)
+HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
+HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstTable);
+#define RegInstall WINELIB_NAME_AW(RegInstall)
+HRESULT WINAPI RegRestoreAllA(HWND hWnd, LPSTR pszTitleString, HKEY hkBackupKey);
+HRESULT WINAPI RegRestoreAllW(HWND hWnd, LPWSTR pszTitleString, HKEY hkBackupKey);
+#define RegRestoreAll WINELIB_NAME_AW(RegRestoreAll)
+HRESULT WINAPI RegSaveRestoreA(HWND hWnd, LPCSTR pszTitleString, HKEY hkBackupKey,
+     LPCSTR pcszRootKey, LPCSTR pcszSubKey, LPCSTR pcszValueName, DWORD dwFlags);
+HRESULT WINAPI RegSaveRestoreW(HWND hWnd, LPCWSTR pszTitleString, HKEY hkBackupKey,
+     LPCWSTR pcszRootKey, LPCWSTR pcszSubKey, LPCWSTR pcszValueName, DWORD dwFlags);
+#define RegSaveRestore WINELIB_NAME_AW(RegSaveRestore)
+HRESULT WINAPI RegSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
+     LPCSTR pszSection, HKEY hHKLMBackKey, HKEY hHKCUBackKey, DWORD dwFlags);
+HRESULT WINAPI RegSaveRestoreOnINFW(HWND hWnd, LPCWSTR pszTitle, LPCWSTR pszINF,
+     LPCWSTR pszSection, HKEY hHKLMBackKey, HKEY hHKCUBackKey, DWORD dwFlags);
+#define RegSaveRestoreOnINF WINELIB_NAME_AW(RegSaveRestoreOnINF)
+HRESULT WINAPI RunSetupCommandA(HWND hWnd,
      LPCSTR szCmdName, LPCSTR szInfSection, LPCSTR szDir, LPCSTR lpszTitle,
      HANDLE *phEXE, DWORD dwFlags, LPVOID pvReserved);
-HRESULT WINAPI SetPerUserSecValues(PPERUSERSECTION pPerUser);
-HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
-     PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
+HRESULT WINAPI RunSetupCommandW(HWND hWnd,
+     LPCWSTR szCmdName, LPCWSTR szInfSection, LPCWSTR szDir, LPCWSTR lpszTitle,
+     HANDLE *phEXE, DWORD dwFlags, LPVOID pvReserved);
+#define RunSetupCommand WINELIB_NAME_AW(RunSetupCommand)
+HRESULT WINAPI SetPerUserSecValuesA(PPERUSERSECTIONA pPerUser);
+HRESULT WINAPI SetPerUserSecValuesW(PPERUSERSECTIONW pPerUser);
+#define SetPerUserSecValues WINELIB_NAME_AW(SetPerUserSecValues)
+HRESULT WINAPI TranslateInfStringA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
+     LPCSTR pszTranslateSection, LPCSTR pszTranslateKey, LPSTR pszBuffer,
      DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);
-HRESULT WINAPI TranslateInfStringEx(HINF hInf, PCSTR pszInfFilename,
-    PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
+HRESULT WINAPI TranslateInfStringW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSection,
+     LPCWSTR pszTranslateSection, LPCWSTR pszTranslateKey, LPWSTR pszBuffer,
+     DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);
+#define TranslateInfString WINELIB_NAME_AW(TranslateInfString)
+HRESULT WINAPI TranslateInfStringExA(HINF hInf, LPCSTR pszInfFilename,
+    LPCSTR pszTranslateSection, LPCSTR pszTranslateKey, LPSTR pszBuffer,
     DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);
-HRESULT WINAPI UserInstStubWrapper(HWND hWnd, HINSTANCE hInstance, PSTR pszParms, INT nShow);
-HRESULT WINAPI UserUnInstStubWrapper(HWND hWnd, HINSTANCE hInstance, PSTR pszParms, INT nShow);
+HRESULT WINAPI TranslateInfStringExW(HINF hInf, LPCWSTR pszInfFilename,
+    LPCWSTR pszTranslateSection, LPCWSTR pszTranslateKey, LPWSTR pszBuffer,
+    DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved);
+#define TranslateInfStringEx WINELIB_NAME_AW(TranslateInfStringEx)
+HRESULT WINAPI UserInstStubWrapperA(HWND hWnd, HINSTANCE hInstance, LPSTR pszParms, INT nShow);
+HRESULT WINAPI UserInstStubWrapperW(HWND hWnd, HINSTANCE hInstance, LPWSTR pszParms, INT nShow);
+#define UserInstStubWrapper WINELIB_NAME_AW(UserInstStubWrapper)
+HRESULT WINAPI UserUnInstStubWrapperA(HWND hWnd, HINSTANCE hInstance, LPSTR pszParms, INT nShow);
+HRESULT WINAPI UserUnInstStubWrapperW(HWND hWnd, HINSTANCE hInstance, LPWSTR pszParms, INT nShow);
+#define UserUnInstStubWrapper WINELIB_NAME_AW(UserUnInstStubWrapper)
 
 #ifdef __cplusplus
 }

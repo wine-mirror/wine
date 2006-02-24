@@ -258,9 +258,9 @@ static HRESULT register_server(BOOL do_register)
 {
     HRESULT hres;
     HMODULE hAdvpack;
-    typeof(RegInstall) *pRegInstall;
-    STRTABLE strtable;
-    STRENTRY pse[35];
+    typeof(RegInstallA) *pRegInstall;
+    STRTABLEA strtable;
+    STRENTRYA pse[35];
     static CLSID const *clsids[35];
     int i = 0;
     
@@ -316,7 +316,7 @@ static HRESULT register_server(BOOL do_register)
     strtable.pse = pse;
 
     hAdvpack = LoadLibraryW(wszAdvpack);
-    pRegInstall = (typeof(RegInstall)*)GetProcAddress(hAdvpack, "RegInstall");
+    pRegInstall = (typeof(RegInstallA)*)GetProcAddress(hAdvpack, "RegInstallA");
 
     hres = pRegInstall(hInst, do_register ? "RegisterDll" : "UnregisterDll", &strtable);
 

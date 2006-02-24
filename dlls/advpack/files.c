@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
 /***********************************************************************
- *      AddDelBackupEntry (ADVPACK.@)
+ *      AddDelBackupEntryA (ADVPACK.@)
  *
  * Either appends the files in the file list to the backup section of
  * the specified INI, or deletes the entries from the INI file.
@@ -56,7 +56,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
  *   If lpcszBackupDir is NULL, the INI file is assumed to exist in
  *   c:\windows or created there if it does not exist.
  */
-HRESULT WINAPI AddDelBackupEntry(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
+HRESULT WINAPI AddDelBackupEntryA(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
                                  LPCSTR lpcszBaseName, DWORD dwFlags)
 {
     CHAR szIniPath[MAX_PATH];
@@ -125,7 +125,7 @@ UINT CALLBACK pQueueCallback(PVOID Context, UINT Notification,
 }
 
 /***********************************************************************
- *      AdvInstallFile (ADVPACK.@)
+ *      AdvInstallFileA (ADVPACK.@)
  *
  * Copies a file from the source to a destination.
  *
@@ -146,7 +146,7 @@ UINT CALLBACK pQueueCallback(PVOID Context, UINT Notification,
  *   If lpszDestFile is NULL, the destination filename is the same as
  *   lpszSourceFIle.
  */
-HRESULT WINAPI AdvInstallFile(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourceFile,
+HRESULT WINAPI AdvInstallFileA(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourceFile,
                               LPCSTR lpszDestDir, LPCSTR lpszDestFile,
                               DWORD dwFlags, DWORD dwReserved)
 {
@@ -290,7 +290,7 @@ static HRESULT DELNODE_recurse_dirtree(LPSTR fname, DWORD flags)
 }
 
 /***********************************************************************
- *              DelNode    (ADVPACK.@)
+ *              DelNodeA   (ADVPACK.@)
  *
  * Deletes a file or directory
  *
@@ -307,7 +307,7 @@ static HRESULT DELNODE_recurse_dirtree(LPSTR fname, DWORD flags)
  *   - Native version apparently does a lot of checking to make sure
  *     we're not trying to delete a system directory etc.
  */
-HRESULT WINAPI DelNode( LPCSTR pszFileOrDirName, DWORD dwFlags )
+HRESULT WINAPI DelNodeA( LPCSTR pszFileOrDirName, DWORD dwFlags )
 {
     CHAR fname[MAX_PATH];
     HRESULT ret = E_FAIL;
@@ -355,7 +355,7 @@ static LPSTR get_parameter(LPSTR szParameters, CHAR cSeparator, DWORD dwIndex)
 }
 
 /***********************************************************************
- *             DelNodeRunDLL32    (ADVPACK.@)
+ *             DelNodeRunDLL32A   (ADVPACK.@)
  *
  * Deletes a file or directory, WinMain style.
  *
@@ -369,7 +369,7 @@ static LPSTR get_parameter(LPSTR szParameters, CHAR cSeparator, DWORD dwIndex)
  *   Success: S_OK.
  *   Failure: E_FAIL.
  */
-HRESULT WINAPI DelNodeRunDLL32( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
+HRESULT WINAPI DelNodeRunDLL32A( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
     LPSTR szFilename, szFlags;
     DWORD dwFlags;
@@ -383,7 +383,7 @@ HRESULT WINAPI DelNodeRunDLL32( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT s
 
     dwFlags = atol(szFlags);
 
-    res = DelNode(szFilename, dwFlags);
+    res = DelNodeA(szFilename, dwFlags);
 
     HeapFree(GetProcessHeap(), 0, szFilename);
     HeapFree(GetProcessHeap(), 0, szFlags);
@@ -538,7 +538,7 @@ static DWORD fill_file_list(EXTRACTdest *extractDest, LPCSTR szCabName, LPSTR sz
 }
 
 /***********************************************************************
- *             ExtractFiles    (ADVPACK.@)
+ *             ExtractFilesA    (ADVPACK.@)
  *
  * Extracts the specified files from a cab archive into
  * a destination directory.
@@ -562,7 +562,7 @@ static DWORD fill_file_list(EXTRACTdest *extractDest, LPCSTR szCabName, LPSTR sz
  *   spaces, tabs, or colons can be before or after the list, but
  *   the list itself must only be separated by colons.
  */
-HRESULT WINAPI ExtractFiles ( LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
+HRESULT WINAPI ExtractFilesA( LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
                               LPCSTR FileList, LPVOID LReserved, DWORD Reserved)
 {   
     EXTRACTdest extractDest;
@@ -625,7 +625,7 @@ done:
 }
 
 /***********************************************************************
- *      FileSaveMarkNotExist (ADVPACK.@)
+ *      FileSaveMarkNotExistA (ADVPACK.@)
  *
  * Marks the files in the file list as not existing so they won't be
  * backed up during a save.
@@ -639,15 +639,15 @@ done:
  *   Success: S_OK.
  *   Failure: E_FAIL.
  */
-HRESULT WINAPI FileSaveMarkNotExist(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBaseName)
+HRESULT WINAPI FileSaveMarkNotExistA(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBaseName)
 {
     TRACE("(%p, %p, %p)\n", pszFileList, pszDir, pszBaseName);
 
-    return AddDelBackupEntry(pszFileList, pszDir, pszBaseName, AADBE_DEL_ENTRY);
+    return AddDelBackupEntryA(pszFileList, pszDir, pszBaseName, AADBE_DEL_ENTRY);
 }
 
 /***********************************************************************
- *      FileSaveRestore (ADVPACK.@)
+ *      FileSaveRestoreA (ADVPACK.@)
  *
  * Saves or restores the files in the specified file list.
  *
@@ -668,7 +668,7 @@ HRESULT WINAPI FileSaveMarkNotExist(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBa
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI FileSaveRestore(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
+HRESULT WINAPI FileSaveRestoreA(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
                                LPSTR pszBaseName, DWORD dwFlags)
 {
     FIXME("(%p, %p, %p, %p, %ld) stub\n", hDlg, pszFileList, pszDir,
@@ -678,7 +678,7 @@ HRESULT WINAPI FileSaveRestore(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
 }
 
 /***********************************************************************
- *      FileSaveRestoreOnINF (ADVPACK.@)
+ *      FileSaveRestoreOnINFA (ADVPACK.@)
  *
  *
  * PARAMS
@@ -700,9 +700,9 @@ HRESULT WINAPI FileSaveRestore(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI FileSaveRestoreOnINF(HWND hWnd, PCSTR pszTitle, PCSTR pszINF,
-                                    PCSTR pszSection, PCSTR pszBackupDir,
-                                    PCSTR pszBaseBackupFile, DWORD dwFlags)
+HRESULT WINAPI FileSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
+                                    LPCSTR pszSection, LPCSTR pszBackupDir,
+                                    LPCSTR pszBaseBackupFile, DWORD dwFlags)
 {
     FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitle, pszINF,
           pszSection, pszBackupDir, pszBaseBackupFile, dwFlags);
@@ -711,15 +711,15 @@ HRESULT WINAPI FileSaveRestoreOnINF(HWND hWnd, PCSTR pszTitle, PCSTR pszINF,
 }
 
 /***********************************************************************
- *             GetVersionFromFile      (ADVPACK.@)
+ *             GetVersionFromFileA     (ADVPACK.@)
  *
  * See GetVersionFromFileEx.
  */
-HRESULT WINAPI GetVersionFromFile( LPSTR Filename, LPDWORD MajorVer,
+HRESULT WINAPI GetVersionFromFileA(LPCSTR Filename, LPDWORD MajorVer,
                                    LPDWORD MinorVer, BOOL Version )
 {
     TRACE("(%s, %p, %p, %d)\n", Filename, MajorVer, MinorVer, Version);
-    return GetVersionFromFileEx(Filename, MajorVer, MinorVer, Version);
+    return GetVersionFromFileExA(Filename, MajorVer, MinorVer, Version);
 }
 
 /* data for GetVersionFromFileEx */
@@ -730,7 +730,7 @@ typedef struct tagLANGANDCODEPAGE
 } LANGANDCODEPAGE;
 
 /***********************************************************************
- *             GetVersionFromFileEx    (ADVPACK.@)
+ *             GetVersionFromFileExA   (ADVPACK.@)
  *
  * Gets the files version or language information.
  *
@@ -747,7 +747,7 @@ typedef struct tagLANGANDCODEPAGE
  *   If bVersion is TRUE, version information is retrieved, else
  *   pdwMSVer gets the language ID and pdwLSVer gets the codepage ID.
  */
-HRESULT WINAPI GetVersionFromFileEx( LPSTR lpszFilename, LPDWORD pdwMSVer,
+HRESULT WINAPI GetVersionFromFileExA(LPCSTR lpszFilename, LPDWORD pdwMSVer,
                                      LPDWORD pdwLSVer, BOOL bVersion )
 {
     VS_FIXEDFILEINFO *pFixedVersionInfo;

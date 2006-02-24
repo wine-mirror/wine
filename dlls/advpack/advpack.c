@@ -248,7 +248,7 @@ BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
 }
 
 /***********************************************************************
- *             OpenINFEngine    (ADVPACK.@)
+ *             OpenINFEngineA   (ADVPACK.@)
  *
  * Opens and returns a handle to an INF file to be used by
  * TranslateInfStringEx to continuously translate the INF file.
@@ -264,7 +264,7 @@ BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
  *   Success: S_OK.
  *   Failure: E_FAIL.
  */
-HRESULT WINAPI OpenINFEngine(PCSTR pszInfFilename, PCSTR pszInstallSection,
+HRESULT WINAPI OpenINFEngineA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
                              DWORD dwFlags, HINF *phInf, PVOID pvReserved)
 {
     TRACE("(%p, %p, %ld, %p, %p)\n", pszInfFilename, pszInstallSection,
@@ -283,7 +283,7 @@ HRESULT WINAPI OpenINFEngine(PCSTR pszInfFilename, PCSTR pszInstallSection,
 }
 
 /***********************************************************************
- *             RebootCheckOnInstall    (ADVPACK.@)
+ *             RebootCheckOnInstallA   (ADVPACK.@)
  *
  * Checks if a reboot is required for an installed INF section.
  *
@@ -305,8 +305,8 @@ HRESULT WINAPI OpenINFEngine(PCSTR pszInfFilename, PCSTR pszInstallSection,
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI RebootCheckOnInstall(HWND hWnd, LPCSTR pszINF,
-                                    LPCSTR pszSec, DWORD dwReserved)
+HRESULT WINAPI RebootCheckOnInstallA(HWND hWnd, LPCSTR pszINF,
+                                    LPSTR pszSec, DWORD dwReserved)
 {
     FIXME("(%p, %p, %p, %ld) stub\n", hWnd, pszINF, pszSec, dwReserved);
 
@@ -358,7 +358,7 @@ void WINAPI RegisterOCX( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
 }
 
 /***********************************************************************
- *             SetPerUserSecValues    (ADVPACK.@)
+ *             SetPerUserSecValuesA   (ADVPACK.@)
  *
  * Prepares the per-user stub values under IsInstalled\{GUID} that
  * control the per-user installation.
@@ -373,7 +373,7 @@ void WINAPI RegisterOCX( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI SetPerUserSecValues(PPERUSERSECTION pPerUser)
+HRESULT WINAPI SetPerUserSecValuesA(PERUSERSECTIONA* pPerUser)
 {
     FIXME("(%p) stub\n", pPerUser);
 
@@ -381,7 +381,7 @@ HRESULT WINAPI SetPerUserSecValues(PPERUSERSECTION pPerUser)
 }
 
 /***********************************************************************
- *             TranslateInfString    (ADVPACK.@)
+ *             TranslateInfStringA   (ADVPACK.@)
  *
  * Translates the value of a specified key in an inf file into the
  * current locale by expanding string macros.
@@ -400,8 +400,8 @@ HRESULT WINAPI SetPerUserSecValues(PPERUSERSECTION pPerUser)
  *   Success: S_OK.
  *   Failure: An hresult error code.
  */
-HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
-                PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
+HRESULT WINAPI TranslateInfStringA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
+                LPCSTR pszTranslateSection, LPCSTR pszTranslateKey, LPSTR pszBuffer,
                 DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved)
 {
     HINF hInf;
@@ -435,7 +435,7 @@ HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
 }
 
 /***********************************************************************
- *             TranslateInfStringEx    (ADVPACK.@)
+ *             TranslateInfStringExA   (ADVPACK.@)
  *
  * Using a handle to an INF file opened with OpenINFEngine, translates
  * the value of a specified key in an inf file into the current locale
@@ -463,9 +463,9 @@ HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
  *   than calling TranslateInfString, because the INF file is only
  *   opened once.
  */
-HRESULT WINAPI TranslateInfStringEx(HINF hInf, PCSTR pszInfFilename,
-                                    PCSTR pszTranslateSection, PCSTR pszTranslateKey,
-                                    PSTR pszBuffer, DWORD dwBufferSize,
+HRESULT WINAPI TranslateInfStringExA(HINF hInf, LPCSTR pszInfFilename,
+                                    LPCSTR pszTranslateSection, LPCSTR pszTranslateKey,
+                                    LPSTR pszBuffer, DWORD dwBufferSize,
                                     PDWORD pdwRequiredSize, PVOID pvReserved)
 {
     TRACE("(%p, %p, %p, %p, %p, %ld, %p, %p)\n", hInf, pszInfFilename,
@@ -485,10 +485,10 @@ HRESULT WINAPI TranslateInfStringEx(HINF hInf, PCSTR pszInfFilename,
 }
 
 /***********************************************************************
- *             UserInstStubWrapper    (ADVPACK.@)
+ *             UserInstStubWrapperA   (ADVPACK.@)
  */
-HRESULT WINAPI UserInstStubWrapper(HWND hWnd, HINSTANCE hInstance,
-                                   PSTR pszParms, INT nShow)
+HRESULT WINAPI UserInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
+                                   LPSTR pszParms, INT nShow)
 {
     FIXME("(%p, %p, %p, %i) stub\n", hWnd, hInstance, pszParms, nShow);
 
@@ -496,10 +496,10 @@ HRESULT WINAPI UserInstStubWrapper(HWND hWnd, HINSTANCE hInstance,
 }
 
 /***********************************************************************
- *             UserUnInstStubWrapper    (ADVPACK.@)
+ *             UserUnInstStubWrapperA   (ADVPACK.@)
  */
-HRESULT WINAPI UserUnInstStubWrapper(HWND hWnd, HINSTANCE hInstance,
-                                     PSTR pszParms, INT nShow)
+HRESULT WINAPI UserUnInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
+                                     LPSTR pszParms, INT nShow)
 {
     FIXME("(%p, %p, %p, %i) stub\n", hWnd, hInstance, pszParms, nShow);
 

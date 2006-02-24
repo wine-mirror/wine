@@ -79,7 +79,7 @@ HRESULT WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
 }
 
 /***********************************************************************
- *             ExecuteCab    (ADVPACK.@)
+ *             ExecuteCabA    (ADVPACK.@)
  * 
  * Installs the INF file extracted from a specified cabinet file.
  * 
@@ -95,14 +95,14 @@ HRESULT WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
  * BUGS
  *   Unimplemented
  */
-HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved )
+HRESULT WINAPI ExecuteCabA( HWND hwnd, CABINFOA* pCab, LPVOID pReserved )
 {
     FIXME("(%p %p %p): stub\n", hwnd, pCab, pReserved);
     return E_FAIL;
 }
 
 /***********************************************************************
- *      LaunchINFSection  (ADVPACK.@)
+ *      LaunchINFSectionA   (ADVPACK.@)
  *
  * Installs an INF section without BACKUP/ROLLBACK capabilities.
  *
@@ -122,14 +122,14 @@ HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved )
  * BUGS
  *  Unimplemented.
  */
-INT WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
+INT WINAPI LaunchINFSectionA( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
     FIXME("(%p %p %s %d): stub\n", hWnd, hInst, debugstr_a(cmdline), show );
     return 0;
 }
 
 /***********************************************************************
- *      LaunchINFSectionEx  (ADVPACK.@)
+ *      LaunchINFSectionExA (ADVPACK.@)
  *
  * Installs an INF section with BACKUP/ROLLBACK capabilities.
  *
@@ -149,14 +149,14 @@ INT WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show
  * BUGS
  *  Unimplemented.
  */
-HRESULT WINAPI LaunchINFSectionEx( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
+HRESULT WINAPI LaunchINFSectionExA( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
     FIXME("(%p %p %s %d): stub\n", hWnd, hInst, debugstr_a(cmdline), show );
     return E_FAIL;
 }
 
 /***********************************************************************
- *      RunSetupCommand  (ADVPACK.@)
+ *      RunSetupCommandA  (ADVPACK.@)
  *
  * Executes an install section in an INF file or a program.
  *
@@ -183,7 +183,7 @@ HRESULT WINAPI LaunchINFSectionEx( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, IN
  * BUGS
  *   Unimplemented
  */
-HRESULT WINAPI RunSetupCommand( HWND hWnd, LPCSTR szCmdName,
+HRESULT WINAPI RunSetupCommandA(HWND hWnd, LPCSTR szCmdName,
                                 LPCSTR szInfSection, LPCSTR szDir,
                                 LPCSTR lpszTitle, HANDLE *phEXE,
                                 DWORD dwFlags, LPVOID pvReserved )

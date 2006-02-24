@@ -98,7 +98,7 @@ error:
 }
 
 /***********************************************************************
- *          RegInstall (advpack.@)
+ *          RegInstallA (advpack.@)
  *
  * Loads an INF from a string resource, adds entries to the string
  * substitution table, and executes the INF.
@@ -112,7 +112,7 @@ error:
  *   Success: S_OK.
  *   Failure: E_FAIL.
  */
-HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable)
+HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable)
 {
     int i;
     WCHAR tmp_ini_path[MAX_PATH];
@@ -189,7 +189,7 @@ HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable)
 }
 
 /***********************************************************************
- *          RegRestoreAll (advpack.@)
+ *          RegRestoreAllA (advpack.@)
  *
  * Restores all saved registry entries.
  *
@@ -205,7 +205,7 @@ HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable)
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI RegRestoreAll(HWND hWnd, PSTR pszTitleString, HKEY hkBackupKey)
+HRESULT WINAPI RegRestoreAllA(HWND hWnd, LPSTR pszTitleString, HKEY hkBackupKey)
 {
     FIXME("(%p, %p, %p) stub\n", hWnd, pszTitleString, hkBackupKey);
     
@@ -213,7 +213,7 @@ HRESULT WINAPI RegRestoreAll(HWND hWnd, PSTR pszTitleString, HKEY hkBackupKey)
 }
 
 /***********************************************************************
- *          RegSaveRestore (advpack.@)
+ *          RegSaveRestoreA (advpack.@)
  *
  * Saves or restores the specified registry value.
  *
@@ -233,9 +233,9 @@ HRESULT WINAPI RegRestoreAll(HWND hWnd, PSTR pszTitleString, HKEY hkBackupKey)
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI RegSaveRestore(HWND hWnd, PCSTR pszTitleString, HKEY hkBackupKey,
-                              PCSTR pcszRootKey, PCSTR pcszSubKey,
-                              PCSTR pcszValueName, DWORD dwFlags)
+HRESULT WINAPI RegSaveRestoreA(HWND hWnd, LPCSTR pszTitleString, HKEY hkBackupKey,
+                              LPCSTR pcszRootKey, LPCSTR pcszSubKey,
+                              LPCSTR pcszValueName, DWORD dwFlags)
 {
     FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitleString,
           hkBackupKey, pcszRootKey, pcszSubKey, pcszValueName, dwFlags);
@@ -244,7 +244,7 @@ HRESULT WINAPI RegSaveRestore(HWND hWnd, PCSTR pszTitleString, HKEY hkBackupKey,
 }
 
 /***********************************************************************
- *          RegSaveRestoreOnINF (advpack.@)
+ *          RegSaveRestoreOnINFA (advpack.@)
  *
  * Saves or restores the specified INF Reg section.
  *
@@ -264,8 +264,8 @@ HRESULT WINAPI RegSaveRestore(HWND hWnd, PCSTR pszTitleString, HKEY hkBackupKey,
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI RegSaveRestoreOnINF(HWND hWnd, PCSTR pszTitle, PCSTR pszINF,
-                                   PCSTR pszSection, HKEY hHKLMBackKey,
+HRESULT WINAPI RegSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
+                                   LPCSTR pszSection, HKEY hHKLMBackKey,
                                    HKEY hHKCUBackKey, DWORD dwFlags)
 {
     FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitle, pszINF,
