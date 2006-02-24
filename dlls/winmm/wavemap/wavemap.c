@@ -453,7 +453,7 @@ static	DWORD	wodGetPosition(WAVEMAPDATA* wom, LPMMTIME lpTime, DWORD dwParam2)
             DWORD remainder = 0;
 
             /* If we are up sampling (going from lower sample rate to higher),
-            **   we need to make a special accomodation for times when we've
+            **   we need to make a special accommodation for times when we've
             **   written a partial output sample.  This happens frequently
             **   to us because we use msacm to do our up sampling, and it
             **   will up sample on an unaligned basis.
@@ -1007,7 +1007,7 @@ static	DWORD	widGetPosition(WAVEMAPDATA* wim, LPMMTIME lpTime, DWORD dwParam2)
             DWORD remainder = 0;
 
             /* If we are up sampling (going from lower sample rate to higher),
-            **   we need to make a special accomodation for times when we've
+            **   we need to make a special accommodation for times when we've
             **   written a partial output sample.  This happens frequently
             **   to us because we use msacm to do our up sampling, and it
             **   will up sample on an unaligned basis.

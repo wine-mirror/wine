@@ -60,7 +60,7 @@ static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
  /* menu texts with their sizes */
 static struct {
     char *text;
-    SIZE size; /* size of text upto any \t */
+    SIZE size; /* size of text up to any \t */
     SIZE sc_size; /* size of the short-cut */
 } MOD_txtsizes[] = {
         { "Pinot &Noir" },

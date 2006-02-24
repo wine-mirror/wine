@@ -767,7 +767,7 @@ static void apply_shell_folder_changes() {
     HRESULT hr;
 
     for (i=0; i<NUM_ELEMS(asfiInfo); i++) {
-        /* Ignore non existent link targets */
+        /* Ignore nonexistent link targets */
         if (asfiInfo[i].szLinkTarget[0] && stat(asfiInfo[i].szLinkTarget, &statPath))
             continue;
         

@@ -777,9 +777,9 @@ static void inotify_notify_all( struct inotify_event *ie )
         action = FILE_ACTION_MODIFIED;
 
     /*
-     * Work our way up the inode heirachy
+     * Work our way up the inode hierarchy
      *  extending the relative path as we go
-     *  and notifyiny all recursive watches.
+     *  and notifying all recursive watches.
      */
     if (!prepend( &path, ie->name ))
         return;
