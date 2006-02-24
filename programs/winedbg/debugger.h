@@ -257,6 +257,8 @@ struct type_expr_t
     } u;
 };
 
+enum dbg_start {start_ok, start_error_parse, start_error_init};
+
   /* break.c */
 extern void             break_set_xpoints(BOOL set);
 extern BOOL             break_add_break(const ADDRESS* addr, BOOL verbose, BOOL swbp);
@@ -368,11 +370,11 @@ extern BOOL             symbol_is_local(const char* name);
   /* tgt_active.c */
 extern void             dbg_run_debuggee(const char* args);
 extern void             dbg_wait_next_exception(DWORD cont, int count, int mode);
+extern enum dbg_start   dbg_active_attach(int argc, char* argv[]);
+extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
   /* temporary for tgt_active.c */
 extern enum dbg_action_mode {none_mode = 0, winedbg_mode, automatic_mode, gdb_mode} dbg_action_mode;
-extern char* dbg_last_cmd_line;
 extern unsigned         dbg_main_loop(HANDLE);
-extern unsigned         dbg_start_debuggee(LPSTR cmdLine);
 
   /* tgt_minidump.c */
 extern void             minidump_write(const char*, const EXCEPTION_RECORD*);

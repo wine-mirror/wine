@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-/*static*/ char*	        dbg_last_cmd_line = NULL;
+static char*            dbg_last_cmd_line;
 /*static*/ enum dbg_action_mode dbg_action_mode;
 
 struct be_process_io be_process_active_io =
@@ -711,7 +711,7 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
     return 0;
 }
 
-/*static*/	unsigned dbg_start_debuggee(LPSTR cmdLine)
+static	unsigned dbg_start_debuggee(LPSTR cmdLine)
 {
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
@@ -781,3 +781,94 @@ void	dbg_run_debuggee(const char* args)
     }
 }
 
+static BOOL     str2int(const char* str, DWORD* val)
+{
+    char*   ptr;
+
+    *val = strtol(str, &ptr, 10);
+    return str < ptr && !*ptr;
+}
+
+
+/******************************************************************
+ *		dbg_active_attach
+ *
+ * Tries to attach to a running process
+ * Handles the <pid> or <pid> <evt> forms
+ */
+enum dbg_start  dbg_active_attach(int argc, char* argv[])
+{
+    DWORD       pid, evt;
+
+    /* try the form <myself> pid */
+    if (argc == 1 && str2int(argv[0], &pid) && pid != 0)
+    {
+        if (dbg_attach_debuggee(pid, FALSE, FALSE))
+        {
+            dbg_curr_pid = pid;
+            return start_ok;
+        }
+        return start_error_init;
+    }
+
+    /* try the form <myself> pid evt (Win32 JIT debugger) */
+    if (argc == 2 && str2int(argv[0], &pid) && pid != 0 &&
+        str2int(argv[1], &evt) && evt != 0)
+    {
+        if (!dbg_attach_debuggee(pid, TRUE, FALSE))
+        {
+            /* don't care about result */
+            SetEvent((HANDLE)evt);
+            return start_error_init;
+        }
+        if (!SetEvent((HANDLE)evt))
+        {
+            WINE_ERR("Invalid event handle: %lx\n", evt);
+            return start_error_init;
+        }
+        CloseHandle((HANDLE)evt);
+        dbg_curr_pid = pid;
+	return start_ok;
+    }
+    return start_error_parse;
+}
+
+/******************************************************************
+ *		dbg_active_launch
+ *
+ * Launches a debuggee (with its arguments) from argc/argv
+ */
+enum dbg_start    dbg_active_launch(int argc, char* argv[])
+{
+    int         i, len;
+    LPSTR	cmd_line;
+
+    if (argc == 0) return start_error_parse;
+
+    if (!(cmd_line = HeapAlloc(GetProcessHeap(), 0, len = 1)))
+    {
+    oom_leave:
+        dbg_printf("Out of memory\n");
+        return start_error_init;
+    }
+    cmd_line[0] = '\0';
+
+    for (i = 0; i < argc; i++)
+    {
+        len += strlen(argv[i]) + 1;
+        if (!(cmd_line = HeapReAlloc(GetProcessHeap(), 0, cmd_line, len)))
+            goto oom_leave;
+        strcat(cmd_line, argv[i]);
+        cmd_line[len - 2] = ' ';
+        cmd_line[len - 1] = '\0';
+    }
+
+    if (!dbg_start_debuggee(cmd_line))
+    {
+        HeapFree(GetProcessHeap(), 0, cmd_line);
+        return start_error_init;
+    }
+    HeapFree(GetProcessHeap(), 0, dbg_last_cmd_line);
+    dbg_last_cmd_line = cmd_line;
+    return start_ok;
+}

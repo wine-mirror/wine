@@ -481,10 +481,13 @@ int main(int argc, char** argv)
     /* Initialize internal vars */
     if (!dbg_load_internal_vars()) return -1;
 
+    /* as we don't care about exec name */
+    argc--; argv++;
+
     /* parse options */
-    while (argc > 1 && argv[1][0] == '-')
+    while (argc > 0 && argv[0][0] == '-')
     {
-        if (!strcmp(argv[1], "--command"))
+        if (!strcmp(argv[0], "--command"))
         {
             char        path[MAX_PATH], file[MAX_PATH];
             DWORD       w;
@@ -499,27 +502,27 @@ int main(int argc, char** argv)
                 dbg_printf("Couldn't open temp file %s (%lu)\n", file, GetLastError());
                 return 1;
             }
-            WriteFile(hFile, argv[1], strlen(argv[1]), &w, 0);
+            WriteFile(hFile, argv[0], strlen(argv[0]), &w, 0);
             WriteFile(hFile, "\nquit\n", 6, &w, 0);
             SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
 
             argc--; argv++;
             continue;
         }
-        if (!strcmp(argv[1], "--file"))
+        if (!strcmp(argv[0], "--file"))
         {
             argc--; argv++;
-            hFile = CreateFileA(argv[1], GENERIC_READ|DELETE, 0, 
+            hFile = CreateFileA(argv[0], GENERIC_READ|DELETE, 0, 
                                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
             if (hFile == INVALID_HANDLE_VALUE)
             {
-                dbg_printf("Couldn't open file %s (%lu)\n", argv[1], GetLastError());
+                dbg_printf("Couldn't open file %s (%lu)\n", argv[0], GetLastError());
                 return 1;
             }
             argc--; argv++;
             continue;
         }
-        if (!strcmp(argv[1], "--auto"))
+        if (!strcmp(argv[0], "--auto"))
         {
             if (dbg_action_mode != none_mode) return dbg_winedbg_usage();
             dbg_action_mode = automatic_mode;
@@ -529,109 +532,45 @@ int main(int argc, char** argv)
             dbg_houtput = GetStdHandle(STD_ERROR_HANDLE);
             continue;
         }
-        if (!strcmp(argv[1], "--gdb"))
+        if (!strcmp(argv[0], "--gdb"))
         {
             if (dbg_action_mode != none_mode) return dbg_winedbg_usage();
             dbg_action_mode = gdb_mode;
             argc--; argv++;
             continue;
         }
-        if (strcmp(argv[1], "--no-start") == 0 && dbg_action_mode == gdb_mode)
+        if (strcmp(argv[0], "--no-start") == 0 && dbg_action_mode == gdb_mode)
         {
             gdb_flags |= 1;
-            argc--; argv++; /* as we don't use argv[0] */
+            argc--; argv++;
             continue;
         }
-        if (strcmp(argv[1], "--with-xterm") == 0 && dbg_action_mode == gdb_mode)
+        if (strcmp(argv[0], "--with-xterm") == 0 && dbg_action_mode == gdb_mode)
         {
             gdb_flags |= 2;
-            argc--; argv++; /* as we don't use argv[0] */
+            argc--; argv++;
             continue;
         }
         return dbg_winedbg_usage();
     }
 
     if (dbg_action_mode == none_mode) dbg_action_mode = winedbg_mode;
-
-    /* try the form <myself> pid */
-    if (dbg_curr_pid == 0 && argc == 2)
+    if (!argc || dbg_active_attach(argc, argv) == start_ok ||
+        dbg_active_launch(argc, argv) == start_ok)
     {
-        char*   ptr;
+        /* don't save local vars in gdb mode */
+        if (dbg_action_mode == gdb_mode && dbg_curr_pid)
+            return gdb_remote(gdb_flags);
 
-        dbg_curr_pid = strtol(argv[1], &ptr, 10);
-        if (dbg_curr_pid == 0 || ptr != argv[1] + strlen(argv[1]) ||
-            !dbg_attach_debuggee(dbg_curr_pid, FALSE, FALSE))
-            dbg_curr_pid = 0;
+        dbg_init_console();
+
+        SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
+                      SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS);
+
+        retv = dbg_main_loop(hFile);
+        /* don't save modified variables in auto mode */
+        if (dbg_action_mode != automatic_mode) dbg_save_internal_vars();
     }
 
-    /* try the form <myself> pid evt (Win32 JIT debugger) */
-    if (dbg_curr_pid == 0 && argc == 3)
-    {
-	HANDLE	hEvent;
-	DWORD	pid;
-        char*   ptr;
-
-	if ((pid = strtol(argv[1], &ptr, 10)) != 0 && ptr != NULL &&
-            (hEvent = (HANDLE)strtol(argv[2], &ptr, 10)) != 0 && ptr != NULL)
-        {
-	    if (!dbg_attach_debuggee(pid, TRUE, FALSE))
-            {
-		/* don't care about result */
-		SetEvent(hEvent);
-		goto leave;
-	    }
-	    if (!SetEvent(hEvent))
-            {
-		WINE_ERR("Invalid event handle: %p\n", hEvent);
-		goto leave;
-	    }
-            CloseHandle(hEvent);
-	    dbg_curr_pid = pid;
-	}
-    }
-
-    if (dbg_curr_pid == 0 && argc > 1)
-    {
-	int	i, len;
-	LPSTR	cmdLine;
-
-	if (!(cmdLine = HeapAlloc(GetProcessHeap(), 0, len = 1))) goto oom_leave;
-	cmdLine[0] = '\0';
-
-	for (i = 1; i < argc; i++)
-        {
-	    len += strlen(argv[i]) + 1;
-	    if (!(cmdLine = HeapReAlloc(GetProcessHeap(), 0, cmdLine, len)))
-                goto oom_leave;
-	    strcat(cmdLine, argv[i]);
-	    cmdLine[len - 2] = ' ';
-	    cmdLine[len - 1] = '\0';
-	}
-
-	if (!dbg_start_debuggee(cmdLine))
-        {
-	    dbg_printf("Couldn't start process '%s'\n", cmdLine);
-	    goto leave;
-	}
-	dbg_last_cmd_line = cmdLine;
-    }
-    /* don't save local vars in gdb mode */
-    if (dbg_action_mode == gdb_mode && dbg_curr_pid)
-        return gdb_remote(gdb_flags);
-
-    dbg_init_console();
-
-    SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
-                  SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS);
-
-    retv = dbg_main_loop(hFile);
-    /* don't save modified variables in auto mode */
-    if (dbg_action_mode != automatic_mode) dbg_save_internal_vars();
-
-leave:
-    return retv;
-
-oom_leave:
-    dbg_printf("Out of memory\n");
     return retv;
 }
