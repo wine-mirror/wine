@@ -889,6 +889,8 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CH
         if (nCurEnd - nMatched == 0)
         {
           pCurItem = ME_FindItemBack(pCurItem, diRun);
+          /* Don't care about pCurItem becoming NULL here; it's already taken
+           * care of in the exterior loop condition */
           para = ME_GetParagraph(pCurItem);
           nCurEnd = ME_StrLen(pCurItem->member.run.strText) + nMatched;
         }
