@@ -166,7 +166,7 @@ static char* setup_dos_mem(void)
     if (wine_mmap_is_in_reserved_area( NULL, DOSMEM_SIZE ) != 1)
     {
         addr = wine_anon_mmap( (void *)page_size, DOSMEM_SIZE-page_size,
-                               PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
+                               PROT_READ | PROT_WRITE, 0 );
         if (addr == (void *)page_size) addr = NULL; /* we got what we wanted */
         else munmap( addr, DOSMEM_SIZE - page_size );
     }
@@ -174,7 +174,7 @@ static char* setup_dos_mem(void)
     if (!addr)
     {
         /* now reserve from address 0 */
-        wine_anon_mmap( NULL, DOSMEM_SIZE, 0, MAP_FIXED );
+        wine_anon_mmap( NULL, DOSMEM_SIZE, PROT_NONE, MAP_FIXED );
 
         /* inform the memory manager that there is a mapping here, but don't commit yet */
         VirtualAlloc( NULL, DOSMEM_SIZE, MEM_RESERVE | MEM_SYSTEM, PAGE_NOACCESS );
