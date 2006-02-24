@@ -201,7 +201,7 @@ struct dbg_process
 {
     HANDLE			handle;
     DWORD			pid;
-    struct be_process_io*       process_io;
+    const struct be_process_io* process_io;
     const char*			imageName;
     struct dbg_thread*  	threads;
     unsigned			continue_on_first_exception;
@@ -417,13 +417,13 @@ extern BOOL             gdb_remote(unsigned int);
 static inline BOOL dbg_read_memory(const void* addr, void* buffer, size_t len)
 {
     DWORD rlen;
-    return ReadProcessMemory(dbg_curr_process->handle, addr, buffer, len, &rlen) && len == rlen;
+    return dbg_curr_process->process_io->read(dbg_curr_process->handle, addr, buffer, len, &rlen) && len == rlen;
 }
 
 static inline BOOL dbg_write_memory(void* addr, const void* buffer, size_t len)
 {
     DWORD wlen;
-    return WriteProcessMemory(dbg_curr_process->handle, addr, buffer, len, &wlen) && len == wlen;
+    return dbg_curr_process->process_io->write(dbg_curr_process->handle, addr, buffer, len, &wlen) && len == wlen;
 }
 
 static inline void* dbg_heap_realloc(void* buffer, size_t size)

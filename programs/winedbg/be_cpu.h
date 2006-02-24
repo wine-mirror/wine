@@ -82,11 +82,11 @@ struct backend_cpu
      * break points / watchpoints handling 
      * -------------------------------------------------------------------------------*/
     /* Inserts an Xpoint in the CPU context and/or debuggee address space */
-    unsigned            (*insert_Xpoint)(HANDLE hProcess, struct be_process_io* pio,
+    unsigned            (*insert_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
                                          CONTEXT* ctx, enum be_xpoint_type type,
                                          void* addr, unsigned long* val, unsigned size);
     /* Removes an Xpoint in the CPU context and/or debuggee address space */
-    unsigned            (*remove_Xpoint)(HANDLE hProcess, struct be_process_io* pio,
+    unsigned            (*remove_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
                                          CONTEXT* ctx, enum be_xpoint_type type,
                                          void* addr, unsigned long val, unsigned size);
     /* Checks whether a given watchpoint has been triggered */

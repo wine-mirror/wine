@@ -392,7 +392,7 @@ static inline int be_i386_get_unused_DR(CONTEXT* ctx, unsigned long** r)
     return -1;
 }
 
-static unsigned be_i386_insert_Xpoint(HANDLE hProcess, struct be_process_io* pio, 
+static unsigned be_i386_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio, 
                                       CONTEXT* ctx, enum be_xpoint_type type, 
                                       void* addr, unsigned long* val, unsigned size)
 {
@@ -443,7 +443,7 @@ static unsigned be_i386_insert_Xpoint(HANDLE hProcess, struct be_process_io* pio
     return 1;
 }
 
-static unsigned be_i386_remove_Xpoint(HANDLE hProcess, struct be_process_io* pio,
+static unsigned be_i386_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                       CONTEXT* ctx, enum be_xpoint_type type, 
                                       void* addr, unsigned long val, unsigned size)
 {

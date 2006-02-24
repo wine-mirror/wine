@@ -82,7 +82,7 @@ static void be_alpha_disasm_one_insn(ADDRESS* addr, int display)
     dbg_printf("Disasm NIY\n");
 }
 
-static unsigned be_alpha_insert_Xpoint(HANDLE hProcess, struct be_process_io* pio,
+static unsigned be_alpha_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                        CONTEXT* ctx, enum be_xpoint_type type,
                                        void* addr, unsigned long* val, unsigned size)
 {
@@ -104,9 +104,9 @@ static unsigned be_alpha_insert_Xpoint(HANDLE hProcess, struct be_process_io* pi
     return 1;
 }
 
-static unsigned be_alpha_remove_Xpoint(HANDLE hProcess, CONTEXT* ctx, 
-                                     enum be_xpoint_type type, void* addr, 
-                                     unsigned long val, unsigned size)
+static unsigned be_alpha_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
+                                       CONTEXT* ctx, enum be_xpoint_type type, 
+                                       void* addr, unsigned long val, unsigned size)
 {
     dbg_printf("not done\n");
     return FALSE;

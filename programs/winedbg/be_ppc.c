@@ -95,7 +95,7 @@ static void be_ppc_disasm_one_insn(ADDRESS* addr, int display)
     dbg_printf("Disasm NIY\n");
 }
 
-static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, struct be_process_io* pio,
+static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                      CONTEXT* ctx, enum be_xpoint_type type,
                                      void* addr, unsigned long* val, unsigned size)
 {
@@ -117,7 +117,7 @@ static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, struct be_process_io* pio,
     return 1;
 }
 
-static unsigned be_ppc_remove_Xpoint(HANDLE hProcess, struct be_process_io* pio,
+static unsigned be_ppc_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                      CONTEXT* ctx, enum be_xpoint_type type,
                                      void* addr, unsigned long val, unsigned size)
 {
