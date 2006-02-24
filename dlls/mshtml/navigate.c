@@ -399,7 +399,7 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
     HGLOBAL post_data = NULL;
     LPWSTR headers = NULL;
     DWORD headers_len = 0, len;
-    const char *ptr, *ptr2;
+    const char *ptr, *ptr2, *post_data_end;
 
     nsIInputStream_Available(post_data_stream, &available);
     post_data = GlobalAlloc(0, available+1);
@@ -408,9 +408,10 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
     TRACE("post_data = %s\n", debugstr_an(post_data, post_data_len));
 
     ptr = ptr2 = post_data;
+    post_data_end = (const char*)post_data+post_data_len;
 
-    while(*ptr && (*ptr != '\r' || ptr[1] != '\n')) {
-        while(*ptr && (*ptr != '\r' || ptr[1] != '\n'))
+    while(ptr < post_data_end && (*ptr != '\r' || ptr[1] != '\n')) {
+        while(ptr < post_data_end && (*ptr != '\r' || ptr[1] != '\n'))
             ptr++;
 
         if(!*ptr) {
@@ -445,13 +446,12 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
     headers[headers_len] = 0;
     *headers_ret = headers;
 
-    if(*ptr)
-        ptr += 2;
-
-    if(!*ptr || !(ptr-(const char*)post_data)) {
+    if(ptr >= post_data_end-2) {
         GlobalFree(post_data);
         return;
     }
+
+    ptr += 2;
 
     if(headers_len) {
         post_data_len -= ptr-(const char*)post_data;
@@ -459,10 +459,8 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
         post_data = GlobalReAlloc(post_data, post_data_len+1, 0);
     }
 
-    *((PBYTE)post_data+post_data_len) = 0;
-
     *post_data_ret = post_data;
-    *post_data_len_ret = post_data_len+1;
+    *post_data_len_ret = post_data_len;
 }
 
 void hlink_frame_navigate(NSContainer *container, IHlinkFrame *hlink_frame,
@@ -478,7 +476,8 @@ void hlink_frame_navigate(NSContainer *container, IHlinkFrame *hlink_frame,
 
     if(post_data_stream) {
         parse_post_data(post_data_stream, &headers, &post_data, &post_data_len);
-        TRACE("headers = %s post_data = %s\n", debugstr_w(headers), debugstr_a(post_data));
+        TRACE("headers = %s post_data = %s\n", debugstr_w(headers),
+              debugstr_an(post_data, post_data_len));
     }
 
     callback = BSCallback_Create(container->doc, uri, post_data, post_data_len, headers);

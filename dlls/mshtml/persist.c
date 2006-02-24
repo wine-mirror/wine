@@ -332,10 +332,10 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
     hres = IBindStatusCallback_GetBindInfo(callback, &bindf, &bindinfo);
 
     if(SUCCEEDED(hres) && bindinfo.dwBindVerb == BINDVERB_POST)
-        post_len = bindinfo.cbStgmedData-1;
+        post_len = bindinfo.cbStgmedData;
 
     if(headers_len || post_len) {
-        int len = headers_len;
+        int len = headers_len ? headers_len-1 : 0;
 
         static const char content_length[] = "Content-Length: %lu\r\n\r\n";
 
@@ -347,7 +347,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
         }
 
         if(post_len) {
-            sprintf(data+headers_len-1, content_length, post_len);
+            sprintf(data+len, content_length, post_len);
             len = strlen(data);
 
             memcpy(data+len, bindinfo.stgmedData.u.hGlobal, post_len);
@@ -355,7 +355,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
 
         TRACE("data = %s\n", debugstr_an(data, len+post_len));
 
-        ret = create_nsstream(data, strlen(data));
+        ret = create_nsstream(data, len+post_len);
     }
 
     ReleaseBindInfo(&bindinfo);
@@ -438,7 +438,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
          * it (to do so we'd have to use not frozen interfaces)?
          */
 
-        nsIInputStream *post_data_stream = get_post_data_stream(pibc);;
+        nsIInputStream *post_data_stream = get_post_data_stream(pibc);
 
         This->nscontainer->load_call = TRUE;
         nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, url,
