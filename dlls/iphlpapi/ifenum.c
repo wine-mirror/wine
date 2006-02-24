@@ -97,6 +97,10 @@
 #define ETH_ALEN 6
 #endif
 
+#ifndef IF_NAMESIZE
+#define IF_NAMESIZE 16
+#endif
+
 #ifndef INADDR_NONE
 #define INADDR_NONE (~0U)
 #endif
