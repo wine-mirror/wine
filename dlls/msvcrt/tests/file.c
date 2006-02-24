@@ -121,7 +121,7 @@ static void test_fileops( void )
     fclose (file);
 
     file = fopen("fdopen.tst", "rb");
-    ok( file != NULL, "fopen failed");
+    ok( file != NULL, "fopen failed\n");
     /* sizeof(buffer) > content of file */
     ok(fread(buffer, sizeof(buffer), 1, file) == 0, "fread test failed\n");
     /* feof should be set now */

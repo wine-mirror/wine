@@ -483,7 +483,7 @@ static void test_TM_PLAINTEXT()
   /*Compare the two formattings. They should be the same.*/
 
   ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
-     "Copied text retained formatting - cf2.dwMask: %f, cf2test.dwMask: %f, cf2.dwEffects: %f, cf2test.dwEffects: %f",
+     "Copied text retained formatting - cf2.dwMask: %f, cf2test.dwMask: %f, cf2.dwEffects: %f, cf2test.dwEffects: %f\n",
      (double) cf2.dwMask, (double) cf2test.dwMask, (double) cf2.dwEffects, (double) cf2test.dwEffects);
   DestroyWindow(hwndRichEdit);
 }

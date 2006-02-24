@@ -87,7 +87,7 @@ static void test_CoCreateInstance(void)
     REFCLSID rclsid = &CLSID_MyComputer;
     IUnknown *pUnk = (IUnknown *)0xdeadbeef;
     HRESULT hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
-    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have return CO_E_NOTINITIALIZED instead of 0x%08lx", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
     ok(pUnk == NULL, "CoCreateInstance should have changed the passed in pointer to NULL, instead of %p\n", pUnk);
 
     OleInitialize(NULL);
@@ -97,7 +97,7 @@ static void test_CoCreateInstance(void)
     OleUninitialize();
 
     hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
-    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have return CO_E_NOTINITIALIZED instead of 0x%08lx", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
 }
 
 START_TEST(compobj)
