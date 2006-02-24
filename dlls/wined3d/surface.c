@@ -191,7 +191,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFIID r
     if (This->container) {
         container = This->container;
     } else {
-        IWineD3DSurface_GetDevice(iface, (IWineD3DDevice **)&container);
+        container = (IWineD3DBase *)This->resource.wineD3DDevice;
     }
 
     TRACE("Relaying to QueryInterface\n");
