@@ -648,6 +648,11 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_QUERYENDSESSION:
         return 1;
 
+    case WM_ENDSESSION:
+        if (wParam)
+            PostQuitMessage(0);
+        return 0;
+
     case WM_SETICON:
         {
             HICON ret;
