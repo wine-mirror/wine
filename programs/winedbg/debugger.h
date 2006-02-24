@@ -373,7 +373,7 @@ extern void             dbg_wait_next_exception(DWORD cont, int count, int mode)
 extern enum dbg_start   dbg_active_attach(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
   /* temporary for tgt_active.c */
-extern enum dbg_action_mode {none_mode = 0, winedbg_mode, automatic_mode, gdb_mode} dbg_action_mode;
+extern enum dbg_action_mode {none_mode = 0, winedbg_mode, automatic_mode} dbg_action_mode;
 extern unsigned         dbg_main_loop(HANDLE);
 
   /* tgt_minidump.c */
@@ -414,7 +414,7 @@ extern void             dbg_del_thread(struct dbg_thread* t);
 extern BOOL             dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod);
 
   /* gdbproxy.c */
-extern BOOL             gdb_remote(unsigned int);
+extern int              gdb_main(int argc, char* argv[]);
 
 static inline BOOL dbg_read_memory(const void* addr, void* buffer, size_t len)
 {

@@ -2042,6 +2042,9 @@ static int fetch_data(struct gdb_context* gdbctx)
     return gdbctx->in_len - in_len;
 }
 
+#define FLAG_NO_START   1
+#define FLAG_WITH_XTERM 2
+
 static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
 {
     char            buf[MAX_PATH];
@@ -2071,7 +2074,7 @@ static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
     /* tell gdb to delete this file when done handling it... */
     fprintf(f, "shell rm -f \"%s\"\n", buf);
     fclose(f);
-    if (flags & 2)
+    if (flags & FLAG_WITH_XTERM)
         execlp("xterm", "xterm", "-e", gdb_path, "-x", buf, NULL);
     else
         execlp(gdb_path, gdb_path, "-x", buf, NULL);
@@ -2106,7 +2109,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
     if (!dbg_get_debuggee_info(gdbctx->process->handle, &imh_mod)) return FALSE;
 
     /* step 4: fire up gdb (if requested) */
-    if (flags & 1)
+    if (flags & FLAG_NO_START)
         fprintf(stderr, "target remote localhost:%d\n", ntohs(s_addrs.sin_port));
     else
         switch (fork())
@@ -2205,7 +2208,7 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags)
     return TRUE;
 }
 
-BOOL gdb_remote(unsigned flags)
+static int gdb_remote(unsigned flags)
 {
     struct pollfd       pollfd;
     struct gdb_context  gdbctx;
@@ -2247,4 +2250,30 @@ BOOL gdb_remote(unsigned flags)
     }
     wait(NULL);
     return 0;
+}
+
+int gdb_main(int argc, char* argv[])
+{
+    unsigned gdb_flags = 0;
+
+    argc--; argv++;
+    while (argc > 0 && argv[0][0] == '-')
+    {
+        if (strcmp(argv[0], "--no-start") == 0)
+        {
+            gdb_flags |= FLAG_NO_START;
+            argc--; argv++;
+            continue;
+        }
+        if (strcmp(argv[0], "--with-xterm") == 0)
+        {
+            gdb_flags |= FLAG_WITH_XTERM;
+            argc--; argv++;
+            continue;
+        }
+        return -1;
+    }
+    if (dbg_active_attach(argc, argv) || dbg_active_launch(argc, argv))
+        return gdb_remote(gdb_flags);
+    return -1;
 }

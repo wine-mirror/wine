@@ -446,7 +446,7 @@ static void dbg_init_console(void)
 static int dbg_winedbg_usage(void)
 {
     dbg_printf("Usage: winedbg [--command cmd|--file file|--auto] [--gdb [--no-start] [--with-xterm]] cmdline\n");
-    return 1;
+    return -1;
 }
 
 struct backend_cpu* be_cpu;
@@ -462,8 +462,7 @@ extern struct backend_cpu be_alpha;
 
 int main(int argc, char** argv)
 {
-    DWORD	retv = 0;
-    unsigned    gdb_flags = 0;
+    int 	retv = 0;
     HANDLE      hFile = INVALID_HANDLE_VALUE;
 
 #ifdef __i386__
@@ -483,6 +482,13 @@ int main(int argc, char** argv)
 
     /* as we don't care about exec name */
     argc--; argv++;
+
+    if (argc && !strcmp(argv[0], "--gdb"))
+    {
+        retv = gdb_main(argc, argv);
+        if (retv == -1) dbg_winedbg_usage();
+        return retv;
+    }
 
     /* parse options */
     while (argc > 0 && argv[0][0] == '-')
@@ -532,25 +538,6 @@ int main(int argc, char** argv)
             dbg_houtput = GetStdHandle(STD_ERROR_HANDLE);
             continue;
         }
-        if (!strcmp(argv[0], "--gdb"))
-        {
-            if (dbg_action_mode != none_mode) return dbg_winedbg_usage();
-            dbg_action_mode = gdb_mode;
-            argc--; argv++;
-            continue;
-        }
-        if (strcmp(argv[0], "--no-start") == 0 && dbg_action_mode == gdb_mode)
-        {
-            gdb_flags |= 1;
-            argc--; argv++;
-            continue;
-        }
-        if (strcmp(argv[0], "--with-xterm") == 0 && dbg_action_mode == gdb_mode)
-        {
-            gdb_flags |= 2;
-            argc--; argv++;
-            continue;
-        }
         return dbg_winedbg_usage();
     }
 
@@ -558,10 +545,6 @@ int main(int argc, char** argv)
     if (!argc || dbg_active_attach(argc, argv) == start_ok ||
         dbg_active_launch(argc, argv) == start_ok)
     {
-        /* don't save local vars in gdb mode */
-        if (dbg_action_mode == gdb_mode && dbg_curr_pid)
-            return gdb_remote(gdb_flags);
-
         dbg_init_console();
 
         SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
