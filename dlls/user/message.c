@@ -1372,7 +1372,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
         req->wparam  = info->wparam;
         req->lparam  = lp;
         req->time    = GetCurrentTime();
-        req->timeout = -1;
+        req->timeout = 0;
         for (i = 0; i < data->count; i++)
             wine_server_add_data( req, data->data[i], data->size[i] );
         if ((res = wine_server_call( req )))
@@ -2151,8 +2151,11 @@ static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info
 {
     struct packed_message data;
     unsigned int res;
-    int i, timeout = -1;
+    int i, timeout = 0;
 
+    /* Check for INFINITE timeout for compatibility with Win9x,
+     * although Windows >= NT does not do so
+     */
     if (info->type != MSG_NOTIFY &&
         info->type != MSG_CALLBACK &&
         info->type != MSG_POSTED &&
