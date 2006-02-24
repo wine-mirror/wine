@@ -51,6 +51,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
+WINE_DECLARE_DEBUG_CHANNEL(synchronous);
 
 static CRITICAL_SECTION X11DRV_CritSection;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -86,7 +87,6 @@ int copy_default_colors = 128;
 int alloc_system_colors = 256;
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 
-static BOOL synchronous;  /* run in synchronous mode? */
 static BOOL desktop_dbl_buf = TRUE;
 static char *desktop_geometry;
 
@@ -224,7 +224,7 @@ static int error_handler( Display *display, XErrorEvent *error_evt )
                error_evt->error_code, error_evt->request_code );
         return 0;
     }
-    if (synchronous)
+    if (TRACE_ON(synchronous))
     {
         ERR( "X protocol error: serial=%ld, request_code=%d - breaking into debugger\n",
              error_evt->serial, error_evt->request_code );
@@ -330,9 +330,6 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))
         screen_depth = atoi(buffer);
 
-    if (!get_config_key( hkey, appkey, "Synchronous", buffer, sizeof(buffer) ))
-        synchronous = IS_OPTION_TRUE( buffer[0] );
-
     if (!get_config_key( hkey, appkey, "ClientSideWithCore", buffer, sizeof(buffer) ))
         client_side_with_core = IS_OPTION_TRUE( buffer[0] );
 
@@ -417,7 +414,7 @@ static BOOL process_attach(void)
 
     XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
 
-    if (synchronous) XSynchronize( display, True );
+    if (TRACE_ON(synchronous)) XSynchronize( display, True );
 
     screen_width  = WidthOfScreen( screen );
     screen_height = HeightOfScreen( screen );
@@ -526,7 +523,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     }
 #endif
 
-    if (synchronous) XSynchronize( data->display, True );
+    if (TRACE_ON(synchronous)) XSynchronize( data->display, True );
     wine_tsx11_unlock();
 
     if (use_xim && !(data->xim = X11DRV_SetupXIM( data->display, input_style )))
