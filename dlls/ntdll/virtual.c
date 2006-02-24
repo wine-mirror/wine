@@ -443,6 +443,7 @@ static int VIRTUAL_GetUnixProt( BYTE vprot )
         if (vprot & VPROT_WRITECOPY) prot |= PROT_WRITE;
         if (vprot & VPROT_EXEC) prot |= PROT_EXEC;
     }
+    if (!prot) prot = PROT_NONE;
     return prot;
 }
 
