@@ -194,12 +194,12 @@ BEGIN
     IDS_TAB_APPLICATIONS    "Programmer"
     IDS_TAB_DLLS            "Biblioteker"
     IDS_TAB_DRIVES          "Stasjoner"
-    IDS_CHOOSE_PATH         "Select the unix target folder, please."
+    IDS_CHOOSE_PATH         "Velg Unix-målkatalogen."
     IDS_HIDE_ADVANCED       "Enkel visning"
     IDS_SHOW_ADVANCED       "Avansert visning"
     IDS_NOTHEME             "(Intet tema)"
     IDS_TAB_GRAPHICS        "Grafikk"
-    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
+    IDS_TAB_DESKTOP_INTEGRATION "Skrivebordsintegrering"
     IDS_TAB_AUDIO           "Lyd"
     IDS_TAB_ABOUT           "Om"
     IDS_WINECFG_TITLE       "Oppsett av Wine"
@@ -207,8 +207,8 @@ BEGIN
     IDS_THEMEFILE           "Temafiler"
     IDS_THEMEFILE_SELECT    "Velg en temafil"
     IDS_AUDIO_MISSING       "Ingen lyddriver er oppgitt i registeret.\n\nEn anbefalt driver er valgt for deg;\nbruk den eller velg en annen,\n\nog trykk «Bruk» for at endringene skal tre i kraft."
-    IDS_SHELL_FOLDER        "Shell Folder"
-    IDS_LINKS_TO            "Links to"
+    IDS_SHELL_FOLDER        "Skallkatalog"
+    IDS_LINKS_TO            "Peker til"
 END
     
     STRINGTABLE DISCARDABLE
