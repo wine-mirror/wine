@@ -20,8 +20,6 @@
  * - As you can see in the stubs below, support for CRLs and CTLs is missing.
  *   Mostly this should be copy-paste work, and some code (e.g. extended
  *   properties) could be shared between them.
- * - Opening a cert store provider should be morphed to support loading
- *   external DLLs.
  * - The concept of physical stores and locations isn't implemented.  (This
  *   doesn't mean registry stores et al aren't implemented.  See the PSDK for
  *   registering and enumerating physical stores and locations.)
@@ -219,9 +217,10 @@ typedef struct _WINE_CERT_PROP_HEADER
 /* Stores an extended property in a cert. */
 typedef struct _WINE_CERT_PROPERTY
 {
-    WINE_CERT_PROP_HEADER hdr;
-    LPBYTE                pbData;
-    struct list           entry;
+    DWORD       propID;
+    DWORD       cbData;
+    LPBYTE      pbData;
+    struct list entry;
 } WINE_CERT_PROPERTY, *PWINE_CERT_PROPERTY;
 
 /* A mem store has a list of these.  They're also returned by the mem store
@@ -2059,14 +2058,14 @@ DWORD WINAPI CertEnumCertificateContextProperties(PCCERT_CONTEXT pCertContext,
         LIST_FOR_EACH_ENTRY(cursor, &ref->context->extendedProperties,
          WINE_CERT_PROPERTY, entry)
         {
-            if (cursor->hdr.propID == dwPropId)
+            if (cursor->propID == dwPropId)
                 break;
         }
         if (cursor)
         {
             if (cursor->entry.next != &ref->context->extendedProperties)
                 ret = LIST_ENTRY(cursor->entry.next, WINE_CERT_PROPERTY,
-                 entry)->hdr.propID;
+                 entry)->propID;
             else
                 ret = 0;
         }
@@ -2075,7 +2074,7 @@ DWORD WINAPI CertEnumCertificateContextProperties(PCCERT_CONTEXT pCertContext,
     }
     else if (!list_empty(&ref->context->extendedProperties))
         ret = LIST_ENTRY(ref->context->extendedProperties.next,
-         WINE_CERT_PROPERTY, entry)->hdr.propID;
+         WINE_CERT_PROPERTY, entry)->propID;
     else
         ret = 0;
     LeaveCriticalSection(&ref->context->cs);
@@ -2112,22 +2111,22 @@ static BOOL WINAPI CRYPT_GetCertificateContextProperty(
     LIST_FOR_EACH_ENTRY(prop, &context->extendedProperties,
      WINE_CERT_PROPERTY, entry)
     {
-        if (prop->hdr.propID == dwPropId)
+        if (prop->propID == dwPropId)
         {
             if (!pvData)
             {
-                *pcbData = prop->hdr.cb;
+                *pcbData = prop->cbData;
                 ret = TRUE;
             }
-            else if (*pcbData < prop->hdr.cb)
+            else if (*pcbData < prop->cbData)
             {
                 SetLastError(ERROR_MORE_DATA);
-                *pcbData = prop->hdr.cb;
+                *pcbData = prop->cbData;
             }
             else
             {
-                memcpy(pvData, prop->pbData, prop->hdr.cb);
-                *pcbData = prop->hdr.cb;
+                memcpy(pvData, prop->pbData, prop->cbData);
+                *pcbData = prop->cbData;
                 ret = TRUE;
             }
             found = TRUE;
@@ -2254,7 +2253,7 @@ static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
         LIST_FOR_EACH_ENTRY(prop, &context->extendedProperties,
          WINE_CERT_PROPERTY, entry)
         {
-            if (prop->hdr.propID == dwPropId)
+            if (prop->propID == dwPropId)
             {
                 found = TRUE;
                 break;
@@ -2263,7 +2262,7 @@ static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
         if (found)
         {
             CryptMemFree(prop->pbData);
-            prop->hdr.cb = cbData;
+            prop->cbData = cbData;
             prop->pbData = data;
             ret = TRUE;
         }
@@ -2272,9 +2271,8 @@ static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
             prop = CryptMemAlloc(sizeof(WINE_CERT_PROPERTY));
             if (prop)
             {
-                prop->hdr.propID = dwPropId;
-                prop->hdr.unknown = 1;
-                prop->hdr.cb = cbData;
+                prop->propID = dwPropId;
+                prop->cbData = cbData;
                 list_init(&prop->entry);
                 prop->pbData = data;
                 list_add_tail(&context->extendedProperties, &prop->entry);
@@ -2303,7 +2301,7 @@ static BOOL WINAPI CRYPT_SetCertificateContextProperty(
         LIST_FOR_EACH_ENTRY_SAFE(prop, next, &context->extendedProperties,
          WINE_CERT_PROPERTY, entry)
         {
-            if (prop->hdr.propID == dwPropId)
+            if (prop->propID == dwPropId)
             {
                 list_remove(&prop->entry);
                 CryptMemFree(prop->pbData);
@@ -2440,18 +2438,44 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
      ref->context->cert.pbCertEncoded, ref->context->cert.cbCertEncoded);
     if (cert)
     {
-        PWINE_CERT_PROPERTY prop;
+        DWORD prop = 0, bufSize = 0;
+        LPBYTE buf = NULL;
 
         ret = TRUE;
         EnterCriticalSection(&ref->context->cs);
-        LIST_FOR_EACH_ENTRY(prop, &ref->context->extendedProperties,
-         WINE_CERT_PROPERTY, entry)
-        {
-            ret = CRYPT_SaveCertificateContextProperty(cert, prop->hdr.propID,
-             prop->pbData, prop->hdr.cb);
-            if (!ret)
-                break;
-        }
+        do {
+            prop = CertEnumCertificateContextProperties((PCCERT_CONTEXT)ref,
+             prop);
+            if (prop)
+            {
+                DWORD propSize = 0;
+
+                ret = CertGetCertificateContextProperty(pCertContext, prop,
+                 NULL, &propSize);
+                if (ret)
+                {
+                    if (bufSize < propSize)
+                    {
+                        if (buf)
+                            buf = CryptMemRealloc(buf, propSize);
+                        else
+                            buf = CryptMemAlloc(propSize);
+                        bufSize = propSize;
+                    }
+                    if (buf)
+                    {
+                        ret = CertGetCertificateContextProperty(pCertContext,
+                         prop, buf, &propSize);
+                        if (ret)
+                            ret = CRYPT_SaveCertificateContextProperty(cert,
+                             prop, buf, bufSize);
+                    }
+                    else
+                        ret = FALSE;
+                }
+            }
+        } while (ret && prop != 0);
+        CryptMemFree(buf);
         LeaveCriticalSection(&ref->context->cs);
         if (ret)
         {
@@ -2739,12 +2763,24 @@ BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
         PWINE_CERT_CONTEXT_REF ref = (PWINE_CERT_CONTEXT_REF)pCertContext;
         DWORD bytesNeeded = sizeof(WINE_CERT_PROP_HEADER) +
          pCertContext->cbCertEncoded;
-        PWINE_CERT_PROPERTY prop;
+        DWORD prop = 0;
 
         EnterCriticalSection(&ref->context->cs);
-        LIST_FOR_EACH_ENTRY(prop, &ref->context->extendedProperties,
-         WINE_CERT_PROPERTY, entry)
-            bytesNeeded += sizeof(WINE_CERT_PROP_HEADER) + prop->hdr.cb;
+
+        ret = TRUE;
+        do {
+            prop = CertEnumCertificateContextProperties(pCertContext, prop);
+            if (prop)
+            {
+                DWORD propSize = 0;
+
+                ret = CertGetCertificateContextProperty(pCertContext,
+                 prop, NULL, &propSize);
+                if (ret)
+                    bytesNeeded += sizeof(WINE_CERT_PROP_HEADER) + propSize;
+            }
+        } while (ret && prop != 0);
+
         if (!pbElement)
         {
             *pcbElement = bytesNeeded;
@@ -2759,25 +2795,59 @@ BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
         else
         {
             PWINE_CERT_PROP_HEADER hdr;
+            DWORD bufSize = 0;
+            LPBYTE buf = NULL;
 
-            LIST_FOR_EACH_ENTRY(prop, &ref->context->extendedProperties,
-             WINE_CERT_PROPERTY, entry)
-            {
-                memcpy(pbElement, &prop->hdr, sizeof(WINE_CERT_PROP_HEADER));
-                pbElement += sizeof(WINE_CERT_PROP_HEADER);
-                if (prop->hdr.cb)
+            prop = 0;
+            do {
+                prop = CertEnumCertificateContextProperties(pCertContext, prop);
+                if (prop)
                 {
-                    memcpy(pbElement, prop->pbData, prop->hdr.cb);
-                    pbElement += prop->hdr.cb;
+                    DWORD propSize = 0;
+
+                    ret = CertGetCertificateContextProperty(pCertContext,
+                     prop, NULL, &propSize);
+                    if (ret)
+                    {
+                        if (bufSize < propSize)
+                        {
+                            if (buf)
+                                buf = CryptMemRealloc(buf, propSize);
+                            else
+                                buf = CryptMemAlloc(propSize);
+                            bufSize = propSize;
+                        }
+                        if (buf)
+                        {
+                            ret = CertGetCertificateContextProperty(
+                             pCertContext, prop, buf, &propSize);
+                            if (ret)
+                            {
+                                hdr = (PWINE_CERT_PROP_HEADER)pbElement;
+                                hdr->propID = prop;
+                                hdr->unknown = 1;
+                                hdr->cb = propSize;
+                                pbElement += sizeof(WINE_CERT_PROP_HEADER);
+                                if (propSize)
+                                {
+                                    memcpy(pbElement, buf, propSize);
+                                    pbElement += propSize;
+                                }
+                            }
+                        }
+                        else
+                            ret = FALSE;
+                    }
                 }
-            }
+            } while (ret && prop != 0);
+            CryptMemFree(buf);
+
             hdr = (PWINE_CERT_PROP_HEADER)pbElement;
             hdr->propID = CERT_CERT_PROP_ID;
             hdr->unknown = 1;
             hdr->cb = pCertContext->cbCertEncoded;
             memcpy(pbElement + sizeof(WINE_CERT_PROP_HEADER),
              pCertContext->pbCertEncoded, pCertContext->cbCertEncoded);
-            ret = TRUE;
         }
         LeaveCriticalSection(&ref->context->cs);
     }
