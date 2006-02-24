@@ -374,23 +374,25 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
         {
             HWND *phwnd;
             UINT send_flags;
-            DWORD_PTR result;
+            DWORD_PTR result=1;
 
-            /* Send a WM_QUERYENDSESSION message to every window */
+            /* Send a WM_QUERYENDSESSION / WM_ENDSESSION message pair to
+             * each window. Note: it might be better to send all the
+             * WM_QUERYENDSESSION messages, aggregate the results and then
+             * send all the WM_ENDSESSION messages with the results but
+             * that's not what Windows does.
+             */
             send_flags=(flags & EWX_FORCEIFHUNG) ? SMTO_ABORTIFHUNG : SMTO_NORMAL;
             for (phwnd = list; *phwnd; phwnd++)
             {
                 /* Make sure that the window still exists */
                 if (!IsWindow( *phwnd )) continue;
-                if (SendMessageTimeoutW( *phwnd, WM_QUERYENDSESSION, 0, 0, send_flags, INFINITE, &result) && !result) break;
-            }
-            result = (*phwnd == NULL);
-
-            /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
-            for (phwnd = list; *phwnd; phwnd++)
-            {
-                if (!IsWindow( *phwnd )) continue;
-                SendMessageW( *phwnd, WM_ENDSESSION, result, 0 );
+                if (SendMessageTimeoutW( *phwnd, WM_QUERYENDSESSION, 0, 0, send_flags, 0, &result))
+                {
+                    DWORD_PTR dummy;
+                    SendMessageTimeoutW( *phwnd, WM_ENDSESSION, result, 0, send_flags, 0, &dummy );
+                    if (!result) break;
+                }
             }
             HeapFree( GetProcessHeap(), 0, list );
 
