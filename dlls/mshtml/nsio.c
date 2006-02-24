@@ -1427,7 +1427,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     if(NS_FAILED(nsres)) {
         WARN("Could not get nsIWineURI: %08lx\n", nsres);
         *_retval = channel;
-        return NS_OK;
+        return channel ? NS_OK : NS_ERROR_UNEXPECTED;
     }
 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsChannel));
