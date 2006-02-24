@@ -2349,7 +2349,6 @@ struct get_serial_info_reply
     unsigned int writeconst;
     unsigned int writemult;
     unsigned int eventmask;
-    unsigned int commerror;
 };
 
 
@@ -2365,7 +2364,6 @@ struct set_serial_info_request
     unsigned int writeconst;
     unsigned int writemult;
     unsigned int eventmask;
-    unsigned int commerror;
 };
 struct set_serial_info_reply
 {
@@ -2373,7 +2371,6 @@ struct set_serial_info_reply
 };
 #define SERIALINFO_SET_TIMEOUTS  0x01
 #define SERIALINFO_SET_MASK      0x02
-#define SERIALINFO_SET_ERROR     0x04
 
 
 
@@ -4361,6 +4358,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 228
+#define SERVER_PROTOCOL_VERSION 229
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

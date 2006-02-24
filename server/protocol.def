@@ -1673,7 +1673,6 @@ enum message_type
     unsigned int writeconst;
     unsigned int writemult;
     unsigned int eventmask;
-    unsigned int commerror;
 @END
 
 
@@ -1687,11 +1686,9 @@ enum message_type
     unsigned int writeconst;
     unsigned int writemult;
     unsigned int eventmask;
-    unsigned int commerror;
 @END
 #define SERIALINFO_SET_TIMEOUTS  0x01
 #define SERIALINFO_SET_MASK      0x02
-#define SERIALINFO_SET_ERROR     0x04
 
 
 /* Create an async I/O */

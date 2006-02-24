@@ -804,6 +804,18 @@ static void test_ClearCommErrors(HANDLE hcom)
     trace("test_ClearCommErrors done\n");
 }
 
+static void test_non_pending_errors(HANDLE hcom)
+{
+    DCB dcb;
+    DWORD err;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    dcb.ByteSize = 255; /* likely bogus */
+    ok(!SetCommState(hcom, &dcb), "SetCommState should have failed\n");
+    ok(ClearCommError(hcom, &err, NULL), "ClearCommError should succeed\n");
+    ok(!(err & CE_MODE), "ClearCommError shouldn't set CE_MODE byte in this case (%lx)\n", err);
+}
+
 /**/
 static void test_LoopbackRead(HANDLE hcom)
 {
@@ -1613,7 +1625,7 @@ static void  test_WaitBreak(HANDLE hcom)
 START_TEST(comm)
 {
     HANDLE hcom;
-    /* use variabel and not #define to compile the code */
+    /* use variables and not #define to compile the code */
     BOOL loopback_txd_rxd  = LOOPBACK_TXD_RXD;
     BOOL loopback_rts_cts  = LOOPBACK_CTS_RTS;
     BOOL loopback_dtr_dsr  = LOOPBACK_DTR_DSR;
@@ -1632,8 +1644,14 @@ START_TEST(comm)
     hcom = test_OpenComm(FALSE);
     if (hcom != INVALID_HANDLE_VALUE)
     {
-	Sleep(200); /* Give the laster cahacter of test_waittxempty to drop into the receiver*/
+	Sleep(200); /* Give the laster character of test_waittxempty to drop into the receiver */
 	test_ClearCommErrors(hcom);
+	CloseHandle(hcom);
+    }
+    hcom = test_OpenComm(FALSE);
+    if (hcom != INVALID_HANDLE_VALUE)
+    {
+        test_non_pending_errors(hcom);
 	CloseHandle(hcom);
     }
     if((loopback_txd_rxd) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))

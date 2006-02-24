@@ -82,7 +82,6 @@ struct serial
     unsigned int        writemult;
 
     unsigned int        eventmask;
-    unsigned int        commerror;
 
     struct termios      original;
 
@@ -146,7 +145,6 @@ struct object *create_serial( struct fd *fd, unsigned int options )
     serial->writemult    = 0;
     serial->writeconst   = 0;
     serial->eventmask    = 0;
-    serial->commerror    = 0;
     list_init( &serial->read_q );
     list_init( &serial->write_q );
     list_init( &serial->wait_q );
@@ -323,9 +321,6 @@ DECL_HANDLER(get_serial_info)
         /* event mask */
         reply->eventmask    = serial->eventmask;
 
-        /* comm port error status */
-        reply->commerror    = serial->commerror;
-
         release_object( serial );
     }
 }
@@ -354,12 +349,6 @@ DECL_HANDLER(set_serial_info)
             {
                 async_terminate_queue( &serial->wait_q, STATUS_SUCCESS );
             }
-        }
-
-        /* comm port error status */
-        if (req->flags & SERIALINFO_SET_ERROR)
-        {
-            serial->commerror = req->commerror;
         }
 
         release_object( serial );

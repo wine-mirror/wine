@@ -650,39 +650,6 @@ BOOL WINAPI BuildCommDCBW(
 	return BuildCommDCBAndTimeoutsW(devid,lpdcb,NULL);
 }
 
-static BOOL COMM_SetCommError(HANDLE handle, DWORD error)
-{
-    DWORD ret;
-
-    SERVER_START_REQ( set_serial_info )
-    {
-        req->handle = handle;
-        req->flags = SERIALINFO_SET_ERROR;
-        req->commerror = error;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-static BOOL COMM_GetCommError(HANDLE handle, LPDWORD lperror)
-{
-    DWORD ret;
-
-    if(!lperror)
-        return FALSE;
-
-    SERVER_START_REQ( get_serial_info )
-    {
-        req->handle = handle;
-        ret = !wine_server_call_err( req );
-        *lperror = reply->commerror;
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
-
 /*****************************************************************************
  *	SetCommBreak		(KERNEL32.@)
  *
@@ -750,7 +717,6 @@ BOOL WINAPI EscapeCommFunction(
 	if(fd<0) return FALSE;
 
 	if (tcgetattr(fd,&port) == -1) {
-		COMM_SetCommError(handle,CE_IOE);
 		release_comm_fd( handle, fd );
 		return FALSE;
 	}
@@ -824,7 +790,6 @@ BOOL WINAPI EscapeCommFunction(
 	if (!direct)
 	  if (tcsetattr(fd, TCSADRAIN, &port) == -1) {
 		release_comm_fd( handle, fd );
-		COMM_SetCommError(handle,CE_IOE);
 		return FALSE;
 	  } else
 	        result= TRUE;
@@ -833,7 +798,6 @@ BOOL WINAPI EscapeCommFunction(
 	    if (result == -1)
 	      {
 		result= FALSE;
-		COMM_SetCommError(handle,CE_IOE);
 	      }
 	    else
 	      result = TRUE;
@@ -912,8 +876,7 @@ BOOL WINAPI ClearCommError(
 
     release_comm_fd( handle, fd );
 
-    COMM_GetCommError(handle, errors);
-    COMM_SetCommError(handle, 0);
+    if (errors) *errors = 0; /* FIXME */
 
     return TRUE;
 }
@@ -1028,7 +991,6 @@ BOOL WINAPI SetCommState(
 
      if ((tcgetattr(fd,&port)) == -1) {
          int save_error = errno;
-         COMM_SetCommError(handle,CE_IOE);
          release_comm_fd( handle, fd );
          ERR("tcgetattr error '%s'\n", strerror(save_error));
          return FALSE;
@@ -1134,7 +1096,7 @@ BOOL WINAPI SetCommState(
 #endif
        	        default:
 #if defined (HAVE_LINUX_SERIAL_H) && defined (TIOCSSERIAL)
-			{   struct serial_struct nuts;
+                        {   struct serial_struct nuts;
 			    int arby;
 			    ioctl(fd, TIOCGSERIAL, &nuts);
 			    nuts.custom_divisor = nuts.baud_base / lpdcb->BaudRate;
@@ -1156,7 +1118,6 @@ BOOL WINAPI SetCommState(
 #endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
 
 
-                        COMM_SetCommError(handle,IE_BAUDRATE);
                         release_comm_fd( handle, fd );
 			ERR("baudrate %ld\n",lpdcb->BaudRate);
 			return FALSE;
@@ -1243,7 +1204,6 @@ BOOL WINAPI SetCommState(
 			break;
 #endif
                 default:
-                        COMM_SetCommError(handle,IE_BAUDRATE);
                         release_comm_fd( handle, fd );
 			ERR("baudrate %ld\n",lpdcb->BaudRate);
                         return FALSE;
@@ -1286,7 +1246,6 @@ BOOL WINAPI SetCommState(
                             stopbits = TWOSTOPBITS;
                             port.c_iflag &= ~INPCK;
                         } else {
-                            COMM_SetCommError(handle,IE_BYTESIZE);
                             release_comm_fd( handle, fd );
                             ERR("Cannot set MARK Parity\n");
                             return FALSE;
@@ -1297,7 +1256,6 @@ BOOL WINAPI SetCommState(
                             bytesize +=1;
                             port.c_iflag &= ~INPCK;
                         } else {
-                            COMM_SetCommError(handle,IE_BYTESIZE);
                             release_comm_fd( handle, fd );
                             ERR("Cannot set SPACE Parity\n");
                             return FALSE;
@@ -1305,7 +1263,6 @@ BOOL WINAPI SetCommState(
                         break;
 #endif
                default:
-                        COMM_SetCommError(handle,IE_BYTESIZE);
                         release_comm_fd( handle, fd );
 			ERR("Parity\n");
                         return FALSE;
@@ -1327,7 +1284,6 @@ BOOL WINAPI SetCommState(
 			port.c_cflag |= CS8;
 			break;
 		default:
-                        COMM_SetCommError(handle,IE_BYTESIZE);
                         release_comm_fd( handle, fd );
 			ERR("ByteSize\n");
 			return FALSE;
@@ -1342,7 +1298,6 @@ BOOL WINAPI SetCommState(
 				port.c_cflag |= CSTOPB;
 				break;
 		default:
-                        COMM_SetCommError(handle,IE_BYTESIZE);
                         release_comm_fd( handle, fd );
 			ERR("StopBits\n");
 			return FALSE;
@@ -1368,10 +1323,9 @@ BOOL WINAPI SetCommState(
 
 	if (tcsetattr(fd,TCSANOW,&port)==-1) { /* otherwise it hangs with pending input*/
                 ERR("tcsetattr error '%s'\n", strerror(errno));
-                COMM_SetCommError(handle,CE_IOE);
 		ret = FALSE;
 	} else {
-                COMM_SetCommError(handle,0);
+                ClearCommError(handle, NULL, NULL);
 		ret = TRUE;
 	}
 
@@ -1431,7 +1385,6 @@ BOOL WINAPI GetCommState(
      if (tcgetattr(fd, &port) == -1) {
                 int save_error=errno;
                 ERR("tcgetattr error '%s'\n", strerror(save_error));
-                COMM_SetCommError(handle,CE_IOE);
                 release_comm_fd( handle, fd );
 		return FALSE;
 	}
@@ -1619,8 +1572,6 @@ BOOL WINAPI GetCommState(
  */
 	lpdcb->XonLim = 10;
 	lpdcb->XoffLim = 10;
-
-        COMM_SetCommError(handle,0);
 
         TRACE("OK\n");
 
