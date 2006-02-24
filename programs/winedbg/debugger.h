@@ -365,6 +365,15 @@ extern void             symbol_info(const char* str);
 extern int              symbol_info_locals(void);
 extern BOOL             symbol_is_local(const char* name);
 
+  /* tgt_active.c */
+extern void             dbg_run_debuggee(const char* args);
+extern void             dbg_wait_next_exception(DWORD cont, int count, int mode);
+  /* temporary for tgt_active.c */
+extern enum dbg_action_mode {none_mode = 0, winedbg_mode, automatic_mode, gdb_mode} dbg_action_mode;
+extern char* dbg_last_cmd_line;
+extern unsigned         dbg_main_loop(HANDLE);
+extern unsigned         dbg_start_debuggee(LPSTR cmdLine);
+
   /* tgt_minidump.c */
 extern void             minidump_write(const char*, const EXCEPTION_RECORD*);
 
@@ -393,7 +402,6 @@ extern const struct dbg_internal_var* dbg_get_internal_var(const char*);
 extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe);
 extern BOOL             dbg_detach_debuggee(void);
 extern BOOL             dbg_interrupt_debuggee(void);
-extern void             dbg_run_debuggee(const char* args);
 extern struct dbg_process* dbg_add_process(DWORD pid, HANDLE h);
 extern void             dbg_set_process_name(struct dbg_process* p, const char* name);
 extern struct dbg_process* dbg_get_process(DWORD pid);
@@ -401,10 +409,9 @@ extern void             dbg_del_process(struct dbg_process* p);
 struct dbg_thread*	dbg_add_thread(struct dbg_process* p, DWORD tid, HANDLE h, void* teb);
 extern struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid);
 extern void             dbg_del_thread(struct dbg_thread* t);
-extern void             dbg_wait_next_exception(DWORD cont, int count, int mode);
 extern BOOL             dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod);
 
-/* gdbproxy.c */
+  /* gdbproxy.c */
 extern BOOL             gdb_remote(unsigned int);
 
 static inline BOOL dbg_read_memory(const void* addr, void* buffer, size_t len)
