@@ -122,14 +122,14 @@ static nsresult NSAPI nsPromptService_ConfirmEx(nsIPromptService *iface,
      * This is really very very ugly hack!!!
      */
 
-    if(!memcmp(aButton0Title, wszContinue, sizeof(wszContinue)))
+    if(aButton0Title && !memcmp(aButton0Title, wszContinue, sizeof(wszContinue)))
         *_retval = 0;
-    else if(!memcmp(aButton1Title, wszContinue, sizeof(wszContinue)))
+    else if(aButton1Title && !memcmp(aButton1Title, wszContinue, sizeof(wszContinue)))
         *_retval = 1;
-    else if(!memcmp(aButton2Title, wszContinue, sizeof(wszContinue)))
+    else if(aButton2Title && !memcmp(aButton2Title, wszContinue, sizeof(wszContinue)))
         *_retval = 2;
-    else
-        *_retval = 0;
+    /* else
+     *     let's hope that _retval is set to the default value */
 
     return NS_OK;
 }
