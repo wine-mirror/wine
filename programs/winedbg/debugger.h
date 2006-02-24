@@ -372,8 +372,9 @@ extern void             dbg_run_debuggee(const char* args);
 extern void             dbg_wait_next_exception(DWORD cont, int count, int mode);
 extern enum dbg_start   dbg_active_attach(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
+extern enum dbg_start   dbg_active_auto(int argc, char* argv[]);
   /* temporary for tgt_active.c */
-extern enum dbg_action_mode {none_mode = 0, winedbg_mode, automatic_mode} dbg_action_mode;
+extern enum dbg_action_mode {winedbg_mode, automatic_mode} dbg_action_mode;
 extern unsigned         dbg_main_loop(HANDLE);
 
   /* tgt_minidump.c */

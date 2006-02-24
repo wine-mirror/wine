@@ -872,3 +872,15 @@ enum dbg_start    dbg_active_launch(int argc, char* argv[])
     dbg_last_cmd_line = cmd_line;
     return start_ok;
 }
+
+/******************************************************************
+ *		dbg_active_auto
+ *
+ * Starts (<pid> or <pid> <evt>) in automatic mode
+ */
+enum dbg_start dbg_active_auto(int argc, char* argv[])
+{
+    argc--; argv++;
+    dbg_action_mode = automatic_mode;
+    return dbg_active_attach(argc, argv);
+}

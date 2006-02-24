@@ -462,8 +462,9 @@ extern struct backend_cpu be_alpha;
 
 int main(int argc, char** argv)
 {
-    int 	retv = 0;
-    HANDLE      hFile = INVALID_HANDLE_VALUE;
+    int 	        retv = 0;
+    HANDLE              hFile = INVALID_HANDLE_VALUE;
+    enum dbg_start      ds;
 
 #ifdef __i386__
     be_cpu = &be_i386;
@@ -489,71 +490,74 @@ int main(int argc, char** argv)
         if (retv == -1) dbg_winedbg_usage();
         return retv;
     }
+    dbg_init_console();
+    dbg_action_mode = winedbg_mode;
 
-    /* parse options */
-    while (argc > 0 && argv[0][0] == '-')
+    SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
+                  SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS);
+
+    if (argc && !strcmp(argv[0], "--auto"))
     {
-        if (!strcmp(argv[0], "--command"))
-        {
-            char        path[MAX_PATH], file[MAX_PATH];
-            DWORD       w;
-
-            GetTempPath(sizeof(path), path);
-            GetTempFileName(path, "WD", 0, file);
-            argc--; argv++;
-            hFile = CreateFileA(file, GENERIC_READ|GENERIC_WRITE|DELETE, FILE_SHARE_DELETE, 
-                                NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0);
-            if (hFile == INVALID_HANDLE_VALUE)
-            {
-                dbg_printf("Couldn't open temp file %s (%lu)\n", file, GetLastError());
-                return 1;
-            }
-            WriteFile(hFile, argv[0], strlen(argv[0]), &w, 0);
-            WriteFile(hFile, "\nquit\n", 6, &w, 0);
-            SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-
-            argc--; argv++;
-            continue;
-        }
-        if (!strcmp(argv[0], "--file"))
-        {
-            argc--; argv++;
-            hFile = CreateFileA(argv[0], GENERIC_READ|DELETE, 0, 
-                                NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-            if (hFile == INVALID_HANDLE_VALUE)
-            {
-                dbg_printf("Couldn't open file %s (%lu)\n", argv[0], GetLastError());
-                return 1;
-            }
-            argc--; argv++;
-            continue;
-        }
-        if (!strcmp(argv[0], "--auto"))
-        {
-            if (dbg_action_mode != none_mode) return dbg_winedbg_usage();
-            dbg_action_mode = automatic_mode;
-            /* force some internal variables */
-            DBG_IVAR(BreakOnDllLoad) = 0;
-            argc--; argv++;
-            dbg_houtput = GetStdHandle(STD_ERROR_HANDLE);
-            continue;
-        }
-        return dbg_winedbg_usage();
+        /* force some internal variables */
+        DBG_IVAR(BreakOnDllLoad) = 0;
+        dbg_houtput = GetStdHandle(STD_ERROR_HANDLE);
+        ds = dbg_active_auto(argc, argv);
     }
-
-    if (dbg_action_mode == none_mode) dbg_action_mode = winedbg_mode;
-    if (!argc || dbg_active_attach(argc, argv) == start_ok ||
-        dbg_active_launch(argc, argv) == start_ok)
+    else
     {
-        dbg_init_console();
+        /* parse options */
+        while (argc > 0 && argv[0][0] == '-')
+        {
+            if (!strcmp(argv[0], "--command"))
+            {
+                char        path[MAX_PATH], file[MAX_PATH];
+                DWORD       w;
 
-        SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
-                      SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS);
+                GetTempPath(sizeof(path), path);
+                GetTempFileName(path, "WD", 0, file);
+                argc--; argv++;
+                hFile = CreateFileA(file, GENERIC_READ|GENERIC_WRITE|DELETE, FILE_SHARE_DELETE, 
+                                    NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0);
+                if (hFile == INVALID_HANDLE_VALUE)
+                {
+                    dbg_printf("Couldn't open temp file %s (%lu)\n", file, GetLastError());
+                    return 1;
+                }
+                WriteFile(hFile, argv[0], strlen(argv[0]), &w, 0);
+                WriteFile(hFile, "\nquit\n", 6, &w, 0);
+                SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
 
-        retv = dbg_main_loop(hFile);
-        /* don't save modified variables in auto mode */
-        if (dbg_action_mode != automatic_mode) dbg_save_internal_vars();
+                argc--; argv++;
+                continue;
+            }
+            if (!strcmp(argv[0], "--file"))
+            {
+                argc--; argv++;
+                hFile = CreateFileA(argv[0], GENERIC_READ|DELETE, 0, 
+                                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+                if (hFile == INVALID_HANDLE_VALUE)
+                {
+                    dbg_printf("Couldn't open file %s (%lu)\n", argv[0], GetLastError());
+                    return 1;
+                }
+                argc--; argv++;
+                continue;
+            }
+            return dbg_winedbg_usage();
+        }
+        if (!argc) ds = start_ok;
+        else if ((ds = dbg_active_attach(argc, argv)) == start_error_parse)
+            ds = dbg_active_launch(argc, argv);
     }
+    switch (ds)
+    {
+    case start_ok:              break;
+    case start_error_parse:     return dbg_winedbg_usage();
+    case start_error_init:      return -1;
+    }
+    retv = dbg_main_loop(hFile);
+    /* don't save modified variables in auto mode */
+    if (dbg_action_mode != automatic_mode) dbg_save_internal_vars();
 
     return retv;
 }
