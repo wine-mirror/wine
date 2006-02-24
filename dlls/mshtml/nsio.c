@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NS_IOSERVICE_CLASSNAME "nsIOService"
 #define NS_IOSERVICE_CONTRACTID "@mozilla.org/network/io-service;1"
 
-static IID NS_IOSERVICE_CID =
+static const IID NS_IOSERVICE_CID =
     {0x9ac9e770, 0x18bc, 0x11d3, {0x93, 0x37, 0x00, 0x10, 0x4b, 0xa0, 0xfd, 0x40}};
 
 static nsIIOService *nsio = NULL;
@@ -74,6 +74,8 @@ typedef struct {
 #define NSHTTPCHANNEL(x) ((nsIHttpChannel*)    &(x)->lpHttpChannelVtbl)
 #define NSUPCHANNEL(x)   ((nsIUploadChannel*)  &(x)->lpUploadChannelVtbl)
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
+
+static nsresult create_uri(nsIURI*,NSContainer*,nsIURI**);
 
 static BOOL exec_shldocvw_67(NSContainer *container, LPCWSTR url)
 {
@@ -1180,8 +1182,18 @@ static nsresult NSAPI nsURI_SchemeIs(nsIWineURI *iface, const char *scheme, PRBo
 static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
 {
     nsURI *This = NSURI_THIS(iface);
+    nsIURI *uri;
+    nsresult nsres;
+
     TRACE("(%p)->(%p)\n", This, _retval);
-    return nsIURI_Clone(This->uri, _retval);
+
+    nsres = nsIURI_Clone(This->uri, &uri);
+    if(NS_FAILED(nsres)) {
+        WARN("Clone failed: %08lx\n", nsres);
+        return nsres;
+    }
+
+    return create_uri(uri, This->container, _retval);
 }
 
 static nsresult NSAPI nsURI_Resolve(nsIWineURI *iface, const nsACString *arelativePath,
@@ -1280,6 +1292,23 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURI_SetNSContainer,
 };
 
+static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval)
+{
+    nsURI *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsURI));
+
+    ret->lpWineURIVtbl = &nsWineURIVtbl;
+    ret->ref = 1;
+    ret->uri = uri;
+    ret->container = container;
+
+    if(container)
+        nsIWebBrowserChrome_AddRef(NSWBCHROME(container));
+
+    TRACE("retval=%p\n", ret);
+    *_retval = NSURI(ret);
+    return NS_OK;
+}
+
 static nsresult NSAPI nsIOService_QueryInterface(nsIIOService *iface, nsIIDRef riid,
                                                  nsQIResult result)
 {
@@ -1331,7 +1360,6 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
 {
     const char *spec = NULL;
     nsIURI *uri;
-    nsURI *ret;
     PRBool is_javascript = FALSE;
     nsresult nsres;
 
@@ -1368,16 +1396,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         return NS_OK;
     }
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsURI));
-
-    ret->lpWineURIVtbl = &nsWineURIVtbl;
-    ret->ref = 1;
-    ret->uri = uri;
-    ret->container = NULL;
-
-    TRACE("_retval = %p\n", ret);
-    *_retval = NSURI(ret);
-    return NS_OK;
+    return create_uri(uri, NULL, _retval);
 }
 
 static nsresult NSAPI nsIOService_NewFileURI(nsIIOService *iface, nsIFile *aFile,
