@@ -3773,6 +3773,17 @@ LPWSTR
 PCWSTR
 PWSTR
 
+%%sfc.dll
+
+%long
+
+BOOL
+HANDLE
+
+%wstr
+
+LPCWSTR
+
 %%shdocvw.dll
 
 %long

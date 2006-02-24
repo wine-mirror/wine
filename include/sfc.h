@@ -36,6 +36,7 @@ typedef struct _PROTECTED_FILE_DATA {
 
 BOOL WINAPI SfcGetNextProtectedFile(HANDLE, PPROTECTED_FILE_DATA);
 BOOL WINAPI SfcIsFileProtected(HANDLE, LPCWSTR);
+BOOL WINAPI SfpVerifyFile(LPCSTR, LPSTR, DWORD);
 
 #ifdef __cplusplus
 }
