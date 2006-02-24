@@ -1,6 +1,6 @@
 2 extern IID_IRichEditOle
 3 extern IID_IRichEditOleCallback
-4 stdcall CreateTextServices(ptr ptr ptr) riched32.CreateTextServices
+4 stdcall CreateTextServices(ptr ptr ptr) riched20.CreateTextServices
 5 stub IID_ITextServices
 6 stub IID_ITextHost
 7 stub IID_ITextHost2
