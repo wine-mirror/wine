@@ -338,6 +338,8 @@ static BOOL load_gecko(void)
         nsres = nsIComponentRegistrar_AutoRegister(registrar, gre_dir);
         if(NS_FAILED(nsres))
             ERR("AutoRegister(gre_dir) failed: %08lx\n", nsres);
+
+        init_nsio(pCompMgr, registrar);
     }else {
         ERR("NS_GetComponentRegistrar failed: %08lx\n", nsres);
     }
@@ -358,7 +360,6 @@ static BOOL load_gecko(void)
 
     if(registrar) {
         register_nsservice(registrar);
-        init_nsio(pCompMgr, registrar);
         nsIComponentRegistrar_Release(registrar);
     }
 
