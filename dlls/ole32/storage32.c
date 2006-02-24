@@ -2424,7 +2424,7 @@ HRESULT StorageImpl_Construct(
     return STG_E_READFAULT;
 
   /*
-   * Write the root property
+   * Write the root property (memory only)
    */
   if (fileCreate)
   {
@@ -3000,6 +3000,7 @@ HRESULT StorageImpl_LoadFileHeader(
   void*   headerBigBlock = NULL;
   int     index;
 
+  TRACE("\n");
   /*
    * Get a pointer to the big block of data containing the header.
    */
@@ -5589,6 +5590,22 @@ ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
 
 /******************************************************************************
  *    StgCreateDocfile  [OLE32.@]
+ * Creates a new compound file storage object
+ *
+ * PARAMS
+ *  pwcsName  [ I] Unicode string with filename (can be relative or NULL)
+ *  grfMode   [ I] Access mode for opening the new storage object (see STGM_ constants)
+ *  reserved  [ ?] unused?, usually 0
+ *  ppstgOpen [IO] A pointer to IStorage pointer to the new onject
+ *
+ * RETURNS
+ *  S_OK if the file was succesfully created
+ *  some STG_E_ value if error
+ * NOTES
+ *  if pwcsName is NULL, create file with new unique name
+ *  the function can returns
+ *  STG_S_CONVERTED if the specified file was successfully converted to storage format
+ *  (unrealized now)
  */
 HRESULT WINAPI StgCreateDocfile(
   LPCOLESTR pwcsName,
@@ -7736,6 +7753,14 @@ HRESULT WINAPI GetConvertStg(IStorage *stg) {
 
 /******************************************************************************
  * StgIsStorageFile [OLE32.@]
+ * Verify if the file contains a storage object
+ *
+ * PARAMS
+ *  fn      [ I] Filename
+ *
+ * RETURNS
+ *  S_OK    if file has magic bytes as a storage object
+ *  S_FALSE if file is not storage
  */
 HRESULT WINAPI
 StgIsStorageFile(LPCOLESTR fn)
