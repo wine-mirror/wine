@@ -340,6 +340,7 @@ typedef struct {
   cab_ULONG          sizeFileCFFILE2;
   cab_ULONG          sizeFileCFFOLDER;
   BOOL               fNewPrevious;
+  cab_ULONG          estimatedCabinetSize;
 } FCI_Int, *PFCI_Int;
 
 typedef struct {
