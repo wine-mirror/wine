@@ -316,6 +316,7 @@ typedef struct tagME_TextEditor
    *TM_SINGLELEVELUNDO or TM_MULTILEVELUNDO
    *TM_SINGLECODEPAGE or TM_MULTICODEPAGE*/
   int mode;
+  BOOL bHideSelection;
 } ME_TextEditor;
 
 typedef struct tagME_Context

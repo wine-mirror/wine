@@ -76,7 +76,7 @@
   - EM_GETWORDBREAKPROCEX
   - EM_GETWORDWRAPMODE 1.0asian
   + EM_GETZOOM 3.0
-  - EM_HIDESELECTION
+  + EM_HIDESELECTION
   - EM_LIMITTEXT
   + EM_LINEFROMCHAR
   + EM_LINEINDEX
@@ -1022,6 +1022,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nScrollPosY = 0;
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ed->bRedraw = TRUE;
+  ed->bHideSelection = FALSE;
   ed->nInvalidOfs = -1;
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
@@ -1200,7 +1201,7 @@ static const char * const richedit_messages[] = {
   "EM_GETOLEINTERFACE",
   "EM_GETPARAFORMAT",
   "EM_GETSELTEXT",
-  "EM_HIDESELECTION",
+  "EM_HIDESELECTION", 
   "EM_PASTESPECIAL",
   "EM_REQUESTRESIZE",
   "EM_SELECTIONTYPE",
@@ -1310,7 +1311,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_GETUNDONAME)
   UNSUPPORTED_MSG(EM_GETWORDBREAKPROCEX)
-  UNSUPPORTED_MSG(EM_HIDESELECTION)
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
   UNSUPPORTED_MSG(EM_SCROLL)
@@ -1610,6 +1610,12 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       count++;
     }
     return count;
+  }
+  case EM_HIDESELECTION:
+  {
+     editor->bHideSelection = (wParam != 0);
+     ME_InvalidateSelection(editor);
+     return 0;
   }
   case EM_LINESCROLL:
   {

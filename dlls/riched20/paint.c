@@ -175,7 +175,10 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
     GetTextExtentPoint32W(hDC, szText, nSelFrom, &sz);
     x += sz.cx;
     GetTextExtentPoint32W(hDC, szText+nSelFrom, nSelTo-nSelFrom, &sz);
-    PatBlt(hDC, x, ymin, sz.cx, cy, DSTINVERT);
+    
+    /* Invert selection if not hidden by EM_HIDESELECTION */
+    if (c->editor->bHideSelection == FALSE)
+	PatBlt(hDC, x, ymin, sz.cx, cy, DSTINVERT);
   }
   SetTextColor(hDC, rgbOld);
   ME_UnselectStyleFont(c->editor, hDC, s, hOldFont);
