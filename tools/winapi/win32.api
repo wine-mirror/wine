@@ -5347,6 +5347,7 @@ WSAESETSERVICEOP
 WSAEVENT
 int
 long
+socklen_t
 u_long
 u_short
 
@@ -5378,6 +5379,7 @@ LPWSAQUERYSETW
 LPWSASERVICECLASSINFOA
 LPWSASERVICECLASSINFOW
 PADDRINFOW *
+SOCKADDR *
 WS_fd_set *
 int *
 struct WS_addrinfo *
@@ -5394,6 +5396,7 @@ u_short *
 
 LPCSTR
 LPSTR
+PCHAR
 char *
 
 %unknown

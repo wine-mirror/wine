@@ -3235,8 +3235,8 @@ int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hin
     return EAI_FAIL;
 }
 
-int WINAPI WS_getnameinfo(const struct WS_sockaddr *sa, socklen_t salen, char *host,
-                          DWORD hostlen, char *serv, DWORD servlen, int flags)
+int WINAPI WS_getnameinfo(const SOCKADDR *sa, socklen_t salen, PCHAR host,
+                          DWORD hostlen, PCHAR serv, DWORD servlen, INT flags)
 {
 #if HAVE_GETNAMEINFO
     int ret;
