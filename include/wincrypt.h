@@ -2732,6 +2732,12 @@ BOOL WINAPI CryptHashToBeSigned(HCRYPTPROV hCryptProv, DWORD dwCertEncodingType,
  const BYTE *pbEncoded, DWORD cbEncoded, BYTE *pbComputedHash,
  DWORD *pcbComputedHash);
 
+BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void* pvObject,
+ DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags,
+ DWORD dwFlags, DWORD* pdwMsgAndCertEncodingType, DWORD* pdwContentType,
+ DWORD* pdwFormatType, HCERTSTORE* phCertStore, HCRYPTMSG* phMsg,
+ const void** ppvContext);
+
 BOOL WINAPI CryptSignCertificate(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
  DWORD dwCertEncodingType, const BYTE *pbEncodedToBeSigned,
  DWORD cbEncodedToBeSigned, PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm,
