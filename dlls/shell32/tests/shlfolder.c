@@ -81,6 +81,7 @@ static void test_ParseDisplayName(void)
     DWORD res;
     WCHAR cTestDirW [MAX_PATH] = {0};
     ITEMIDLIST *newPIDL;
+    BOOL bRes;
 
     hr = SHGetDesktopFolder(&IDesktopFolder);
     if(hr != S_OK) return;
@@ -103,8 +104,25 @@ static void test_ParseDisplayName(void)
     ok((hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) || (hr == E_FAIL) || (hr == E_INVALIDARG), 
         "ParseDisplayName returned %08lx, expected 80070002, E_FAIL or E_INVALIDARG\n", hr);
 
-    hr = IShellFolder_Release(IDesktopFolder);
-    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
+    /* I thought that perhaps the DesktopFolder's ParseDisplayName would recognize the
+     * path corresponding to CSIDL_PERSONAL and return a CLSID_MyDocuments PIDL. Turns
+     * out it doesn't. The magic seems to happen in the file dialogs, then. */
+    if (!pSHGetSpecialFolderPathW || !pILFindLastID) goto finished;
+    
+    bRes = pSHGetSpecialFolderPathW(NULL, cTestDirW, CSIDL_PERSONAL, FALSE);
+    ok(bRes, "SHGetSpecialFolderPath(CSIDL_PERSONAL) failed! %ld\n", GetLastError());
+    if (!bRes) goto finished;
+
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
+    ok(SUCCEEDED(hr), "DesktopFolder->ParseDisplayName failed. hr = %08lx.\n", hr);
+    if (FAILED(hr)) goto finished;
+
+    ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x31, "Last pidl should be of type "
+       "PT_FOLDER, but is: %02x\n", pILFindLastID(newPIDL)->mkid.abID[0]);
+    IMalloc_Free(ppM, newPIDL);
+    
+finished:
+    IShellFolder_Release(IDesktopFolder);
 }
 
 /* creates a file with the specified name for tests */
@@ -724,13 +742,11 @@ static void test_GetAttributesOf(void)
     /* free memory */
     IMalloc_Free(ppM, newPIDL);
 
-    hr = IShellFolder_Release(testIShellFolder);
-    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
+    IShellFolder_Release(testIShellFolder);
 
     Cleanup();
 
-    hr = IShellFolder_Release(IDesktopFolder);
-    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
+    IShellFolder_Release(IDesktopFolder);
 }    
 
 static void test_SHGetPathFromIDList(void)
@@ -889,15 +905,13 @@ static void test_EnumObjects_and_CompareIDs(void)
 
     test_EnumObjects(testIShellFolder);
 
-    hr = IShellFolder_Release(testIShellFolder);
-    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
+    IShellFolder_Release(testIShellFolder);
 
     Cleanup();
 
     IMalloc_Free(ppM, newPIDL);
 
-    hr = IShellFolder_Release(IDesktopFolder);
-    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
+    IShellFolder_Release(IDesktopFolder);
 }
 
 /* A simple implementation of an IPropertyBag, which returns fixed values for
