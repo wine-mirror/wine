@@ -197,7 +197,6 @@ AC_CHECK_HEADERS(\
 	ldap.h \
 	libaudioio.h \
 	link.h \
-	linux/capi.h \
 	linux/cdrom.h \
 	linux/compiler.h \
 	linux/hdreg.h \
@@ -277,6 +276,9 @@ AC_CHECK_HEADERS(\
 	valgrind/memcheck.h
 )
 AC_HEADER_STAT()
+
+dnl Check for broken kernel header that doesn't define __user
+AC_CHECK_HEADERS([linux/capi.h],,,[#define __user])
 
 dnl **** Check for X11 ****
 
