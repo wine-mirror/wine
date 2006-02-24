@@ -297,12 +297,11 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
     HDC phdc;
     int cnt;
     DWORD hr;
-    int clusterinit;
     Scriptcache *pScriptcache;
     *pcGlyphs = cChars;
     FIXME("(%p, %p, %p, %d, %d, %p): semi-stub\n",  hdc, psc, pwcChars,
                                        cChars, cMaxGlyphs, psa);
-    if (psa) TRACE("%d, %d, %d, %d, %d, %d, %d\n", psa->eScript, psa->fRTL, psa->fLayoutRTL,
+    if (psa) TRACE("psa values: %d, %d, %d, %d, %d, %d, %d\n", psa->eScript, psa->fRTL, psa->fLayoutRTL,
                                          psa->fLinkBefore, psa->fLinkAfter,
                                          psa->fLogicalOrder, psa->fNoGlyphIndex);
 
@@ -348,14 +347,13 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
        TRACE("\n");
     }
 
-    /*  Set up a valid SCRIPT_VISATTR for this run */     
-    clusterinit = 1;                        /* Start of Cluster */
+    /*  Set up a valid SCRIPT_VISATTR and LogClust for each char in this run */     
     for (cnt = 0;  cnt < cChars; cnt++) {
-         psva[cnt].uJustification = 0;
-         psva[cnt].fClusterStart = clusterinit;
-         clusterinit = 0;
+         psva[cnt].uJustification = 2;
+         psva[cnt].fClusterStart = 1;
          psva[cnt].fDiacritic = 0;
          psva[cnt].fZeroWidth = 0;
+         pwLogClust[cnt] = cnt;
     }
     return 0; 
 }
