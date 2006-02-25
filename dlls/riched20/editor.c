@@ -1313,7 +1313,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETWORDBREAKPROCEX)
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
-  UNSUPPORTED_MSG(EM_SCROLL)
   UNSUPPORTED_MSG(EM_SELECTIONTYPE)
   UNSUPPORTED_MSG(EM_SETBIDIOPTIONS)
   UNSUPPORTED_MSG(EM_SETEDITSTYLE)
@@ -2132,21 +2131,29 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     }
     return 0;
   }
+  case EM_SCROLL: /* fall through */
   case WM_VSCROLL: 
   {
+    int nEnd;
     int nPos = editor->nScrollPosY;
+    int origNPos = nPos;
+    int lineHeight = 24;
     si.cbSize = sizeof(SCROLLINFO);
     si.fMask = SIF_PAGE|SIF_POS|SIF_RANGE|SIF_TRACKPOS;
     GetScrollInfo(hWnd, SB_VERT, &si);
+    if (editor && editor->pBuffer && editor->pBuffer->pDefaultStyle)
+        lineHeight = editor->pBuffer->pDefaultStyle->tm.tmHeight;
+    if (lineHeight <= 0) lineHeight = 24;
     switch(LOWORD(wParam)) {
     case SB_LINEUP:
-      nPos -= 24; /* FIXME follow the original */
+      nPos -= lineHeight;
       if (nPos<0) nPos = 0;
       break;
     case SB_LINEDOWN:
     {
-      int nEnd = editor->nTotalLength - editor->sizeWindow.cy;
-      nPos += 24; /* FIXME follow the original */
+      nEnd = editor->nTotalLength - editor->sizeWindow.cy;
+      if (nEnd < 0) nEnd = 0;
+      nPos += lineHeight;
       if (nPos>=nEnd) nPos = nEnd;
       break;
     }
@@ -2155,8 +2162,10 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       if (nPos<0) nPos = 0;
       break;
     case SB_PAGEDOWN:
+      nEnd = editor->nTotalLength - editor->sizeWindow.cy;
+      if (nEnd < 0) nEnd = 0;
       nPos += editor->sizeWindow.cy;
-      if (nPos>=editor->nTotalLength) nPos = editor->nTotalLength-1;
+      if (nPos>=nEnd) nPos = nEnd;
       break;
     case SB_THUMBTRACK:
     case SB_THUMBPOSITION:
@@ -2173,6 +2182,8 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
         UpdateWindow(hWnd);
       }
     }
+    if (msg == EM_SCROLL)
+      return 0x00010000 | (((nPos - origNPos)/lineHeight) & 0xffff);
     break;
   }
   case WM_MOUSEWHEEL:
