@@ -849,7 +849,13 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 		 keylow  = lpbltfx->ddckDestColorkey.dwColorSpaceLowValue;
 		 keyhigh = lpbltfx->ddckDestColorkey.dwColorSpaceHighValue;
 	      }
-	      keymask = sdesc.u4.ddpfPixelFormat.u2.dwRBitMask | sdesc.u4.ddpfPixelFormat.u3.dwGBitMask | sdesc.u4.ddpfPixelFormat.u4.dwBBitMask;
+
+		if(bpp == 1)
+			keymask = 0xff;
+		else
+			keymask = sdesc.u4.ddpfPixelFormat.u2.dwRBitMask | sdesc.u4.ddpfPixelFormat.u3.dwGBitMask |
+			          sdesc.u4.ddpfPixelFormat.u4.dwBBitMask;
+
 	      dwFlags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE);
            }
 
