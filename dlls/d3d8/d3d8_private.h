@@ -88,6 +88,7 @@ extern int ps_mode;
 #define MAX_STREAMS       16
 #define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
 #define MAX_LEVELS        256
+#define MAX_SHADERS        64
 
 /* Other useful values */
 #define HIGHEST_RENDER_STATE 174
@@ -189,6 +190,7 @@ typedef struct IDirect3DVertexShaderDeclarationImpl IDirect3DVertexShaderDeclara
 
 /* Advance declaration of structures to satisfy compiler */
 typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
+typedef struct IDirect3DVertexShader8Impl IDirect3DVertexShader8Impl;
 
 typedef struct D3DSHADERVECTOR {
   float x;
@@ -541,76 +543,11 @@ struct IDirect3DDevice8Impl
     /* IUnknown fields */
     const IDirect3DDevice8Vtbl   *lpVtbl;
     LONG                         ref;
-
-    /* IDirect3DDevice8 fields */
-    IDirect3D8Impl               *direct3d8;
+/* But what about baseVertexIndex in state blocks? hmm... it may be a better idea to pass this to wined3d */
     IWineD3DDevice               *WineD3DDevice;
-
-    IDirect3DSurface8Impl        *frontBuffer;
-    IDirect3DSurface8Impl        *backBuffer;
-    IDirect3DSurface8Impl        *depthStencilBuffer;
-
-    IDirect3DSurface8Impl        *renderTarget;
-    IDirect3DSurface8Impl        *stencilBufferTarget;
-
-    D3DPRESENT_PARAMETERS         PresentParms;
-    D3DDEVICE_CREATION_PARAMETERS CreateParms;
-
-    UINT                          adapterNo;
-    D3DDEVTYPE                    devType;
-
-    UINT                          srcBlend;
-    UINT                          dstBlend;
-    UINT                          alphafunc;
-    UINT                          stencilfunc;
-
-    /* State block related */
-    BOOL                          isRecordingState;
-    IDirect3DStateBlockImpl      *StateBlock;
-    IDirect3DStateBlockImpl      *UpdateStateBlock;
-
-    /* palettes texture management */
-    PALETTEENTRY                  palettes[MAX_PALETTES][256];
-    UINT                          currentPalette;
-
-    BOOL                          texture_shader_active;
-
-    /* Optimization */
-    BOOL                          modelview_valid;
-    BOOL                          proj_valid;
-    BOOL                          view_ident;        /* true iff view matrix is identity                */
-    BOOL                          last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
-    GLenum                        tracking_parm;     /* Which source is tracking current colour         */
-    LONG                          tracking_color;    /* used iff GL_COLOR_MATERIAL was enabled          */
-#define                         DISABLED_TRACKING  0  /* Disabled                                 */
-#define                         IS_TRACKING        1  /* tracking_parm is tracking diffuse color  */
-#define                         NEEDS_TRACKING     2  /* Tracking needs to be enabled when needed */
-#define                         NEEDS_DISABLE      3  /* Tracking needs to be disabled when needed*/
-
-    /* OpenGL related */
-    GLXContext                    glCtx;
-    XVisualInfo                  *visInfo;
-    Display                      *display;
-    HWND                          win_handle;
-    Window                        win;
-    GLXContext                    render_ctx;
-    Drawable                      drawable;
-    GLint                         maxConcurrentLights;
-
-    /* OpenGL Extension related */
-
-    /* Cursor management */
-    BOOL                          bCursorVisible;
-    UINT                          xHotSpot;
-    UINT                          yHotSpot;
-    UINT                          xScreenSpace;
-    UINT                          yScreenSpace;
-    GLint                         cursor;
-
-    UINT                          dummyTextureName[8];
-
-    /* For rendering to a texture using glCopyTexImage */
-    BOOL                          renderUpsideDown;
+    IDirect3DVertexShader8Impl   *vShaders[MAX_SHADERS];
+/* FIXME: Move *baseVertexIndex somewhere sensible like wined3d */
+    UINT                          baseVertexIndex;
 };
 
 /* IUnknown: */
@@ -948,11 +885,10 @@ struct IDirect3DResource8Impl
 {
     /* IUnknown fields */
     const IDirect3DResource8Vtbl *lpVtbl;
-    LONG                   ref;
+    LONG                          ref;
 
     /* IDirect3DResource8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
+    IWineD3DResource             *wineD3DResource;
 };
 
 /* IUnknown: */
@@ -987,16 +923,10 @@ struct IDirect3DVertexBuffer8Impl
 {
     /* IUnknown fields */
     const IDirect3DVertexBuffer8Vtbl *lpVtbl;
-    LONG                   ref;
-    LONG                   refInt;
+    LONG                              ref;
 
     /* IDirect3DResource8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DVertexBuffer8 fields */
-    BYTE                   *allocatedMemory;
-    D3DVERTEXBUFFER_DESC    currentDesc;
+    IWineD3DVertexBuffer             *wineD3DVertexBuffer;
 };
 
 /* IUnknown: */
@@ -1040,16 +970,10 @@ struct IDirect3DIndexBuffer8Impl
 {
     /* IUnknown fields */
     const IDirect3DIndexBuffer8Vtbl *lpVtbl;
-    LONG                   ref;
-    LONG                   refInt;
+    LONG                             ref;
 
     /* IDirect3DResource8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DIndexBuffer8 fields */
-    void                   *allocatedMemory;
-    D3DINDEXBUFFER_DESC     currentDesc;
+    IWineD3DIndexBuffer             *wineD3DIndexBuffer;
 };
 
 /* IUnknown: */
@@ -1427,221 +1351,159 @@ struct IWineD3DStateBlockImpl
 
 };
 
+/* ==============================================================================
+    Private interfaces: beginning of cleaning/splitting for HAL and d3d9 support
+   ============================================================================== */
+
 /* ----------------------- */
 /* IDirect3DStateBlockImpl */
 /* ----------------------- */
 
+/* TODO: Generate a valid GUIDs */
+/* {83B073CE-6F30-11d9-C687-00046142C14F} */
+DEFINE_GUID(IID_IDirect3DStateBlock8, 
+0x83b073ce, 0x6f30, 0x11d9, 0xc6, 0x87, 0x0, 0x4, 0x61, 0x42, 0xc1, 0x4f);
+
+DEFINE_GUID(IID_IDirect3DVertexShader8,
+0xefc5557e, 0x6265, 0x4613, 0x8a, 0x94, 0x43, 0x85, 0x78, 0x89, 0xeb, 0x36);
+
+DEFINE_GUID(IID_IDirect3DPixelShader8,
+0x6d3bdbdc, 0x5b02, 0x4415, 0xb8, 0x52, 0xce, 0x5e, 0x8b, 0xcc, 0xb2, 0x89);
+
+
+/*****************************************************************************
+ * IDirect3DStateBlock8 interface
+ */
+#define INTERFACE IDirect3DStateBlock8
+DECLARE_INTERFACE_(IDirect3DStateBlock8, IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirect3DStateBlock9 methods ***/
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice8** ppDevice) PURE;
+    STDMETHOD(Capture)(THIS) PURE;
+    STDMETHOD(Apply)(THIS) PURE;
+};
+#undef INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirect3DStateBlock8_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DStateBlock8_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IDirect3DStateBlock8_Release(p)             (p)->lpVtbl->Release(p)
+/*** IDirect3DStateBlock9 methods ***/
+#define IDirect3DStateBlock8_GetDevice(p,a)         (p)->lpVtbl->GetDevice(p,a)
+#define IDirect3DStateBlock8_Capture(p)             (p)->lpVtbl->Capture(p)
+#define IDirect3DStateBlock8_Apply(p)               (p)->lpVtbl->Apply(p)
+
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-/*extern const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl;*/
+extern const IDirect3DStateBlock8Vtbl Direct3DStateBlock8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DStateBlock implementation structure
  */
-struct  IDirect3DStateBlockImpl {
-  /* IUnknown fields */
-  /*const IDirect3DStateBlock9Vtbl *lpVtbl;*/
-  LONG  ref;
+typedef struct  IDirect3DStateBlock8Impl {
+    /* IUnknown fields */
+    const IDirect3DStateBlock8Vtbl *lpVtbl;
+    LONG                   ref;
 
-  /* The device, to be replaced by an IDirect3DDeviceImpl */
-  IDirect3DDevice8Impl* device;
+    /* IDirect3DResource8 fields */
+    IWineD3DStateBlock             *wineD3DStateBlock;
+} IDirect3DStateBlock8Impl;
 
-  D3DSTATEBLOCKTYPE         blockType;
-
-  SAVEDSTATES               Changed;
-  SAVEDSTATES               Set;
-  
-  /* Clipping */
-  double                    clipplane[MAX_CLIPPLANES][4];
-  D3DCLIPSTATUS8            clip_status;
-
-  /* Stream Source */
-  UINT                      stream_stride[MAX_STREAMS];
-  IDirect3DVertexBuffer8   *stream_source[MAX_STREAMS];
-  BOOL                      streamIsUP;
-
-  /* Indices */
-  IDirect3DIndexBuffer8*    pIndexData;
-  UINT                      baseVertexIndex;
-  
-  /* Texture */
-  IDirect3DBaseTexture8    *textures[8];
-  int                       textureDimensions[8];
-  /* Texture State Stage */
-  DWORD                     texture_state[8][HIGHEST_TEXTURE_STATE];
-  
-  /* Lights */
-  PLIGHTINFOEL             *lights; /* NOTE: active GL lights must be front of the chain */
-  
-  /* Material */
-  D3DMATERIAL8              material;
-  
-  /* RenderState */
-  DWORD                     renderstate[HIGHEST_RENDER_STATE];
-  
-  /* Transform */
-  D3DMATRIX                 transforms[HIGHEST_TRANSFORMSTATE];
-  
-  /* ViewPort */
-  D3DVIEWPORT8              viewport;
-  
-  /* Vertex Shader */
-  DWORD                     VertexShader;
-
-  /* Vertex Shader Declaration */
-  IDirect3DVertexShaderDeclarationImpl* vertexShaderDecl;
-  
-  /* Pixel Shader */
-  DWORD                     PixelShader;
-  
-  /* Indexed Vertex Blending */
-  D3DVERTEXBLENDFLAGS       vertex_blend;
-  FLOAT                     tween_factor;
-
-  /* Vertex Shader Constant */
-  D3DSHADERVECTOR           vertexShaderConstant[D3D8_VSHADER_MAX_CONSTANTS];
-  /* Pixel Shader Constant */
-  D3DSHADERVECTOR           pixelShaderConstant[D3D8_PSHADER_MAX_CONSTANTS];
+/*****************************************************************************
+ * IDirect3DVertexShader9 interface
+ */
+#define INTERFACE IDirect3DVertexShader8
+DECLARE_INTERFACE_(IDirect3DVertexShader8, IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirect3DVertexShader9 methods ***/
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice8** ppDevice) PURE;
+    STDMETHOD(GetFunction)(THIS_ void*, UINT* pSizeOfData) PURE;
 };
+#undef INTERFACE
 
-/* exported Interfaces */
-/* internal Interfaces */
-/* temporary internal Interfaces */
-extern HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* This);
-extern HRESULT WINAPI IDirect3DDeviceImpl_CreateStateBlock(IDirect3DDevice8Impl* This, D3DSTATEBLOCKTYPE Type, IDirect3DStateBlockImpl** ppStateBlock);
-extern HRESULT WINAPI IDirect3DDeviceImpl_DeleteStateBlock(IDirect3DDevice8Impl* This, IDirect3DStateBlockImpl* pSB);
-extern HRESULT WINAPI IDirect3DDeviceImpl_BeginStateBlock(IDirect3DDevice8Impl* This);
-extern HRESULT WINAPI IDirect3DDeviceImpl_EndStateBlock(IDirect3DDevice8Impl* This, IDirect3DStateBlockImpl** ppStateBlock);
-extern HRESULT WINAPI IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* iface, IDirect3DStateBlockImpl* pSB);
-extern HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This, IDirect3DStateBlockImpl* pSB);
+/*** IUnknown methods ***/
+#define IDirect3DVertexShader8_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DVertexShader8_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IDirect3DVertexShader8_Release(p)             (p)->lpVtbl->Release(p)
+/*** IDirect3DVertexShader8 methods ***/
+#define IDirect3DVertexShader8_GetDevice(p,a)         (p)->lpVtbl->GetDevice(p,a)
+#define IDirect3DVertexShader8_GetFunction(p,a,b)     (p)->lpVtbl->GetFunction(p,a,b)
 
-/* ------------------------------------ */
-/* IDirect3DVertexShaderDeclarationImpl */
-/* ------------------------------------ */
+/* ------------------------- */
+/* IDirect3DVertexShader8Impl */
+/* ------------------------- */
+
+/*****************************************************************************
+ * IDirect3DPixelShader9 interface
+ */
+#define INTERFACE IDirect3DPixelShader8
+DECLARE_INTERFACE_(IDirect3DPixelShader8,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirect3DPixelShader8 methods ***/
+    STDMETHOD(GetDevice)(THIS_ struct IDirect3DDevice8** ppDevice) PURE;
+    STDMETHOD(GetFunction)(THIS_ void*, UINT* pSizeOfData) PURE;
+};
+#undef INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirect3DPixelShader8_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DPixelShader8_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IDirect3DPixelShader8_Release(p)             (p)->lpVtbl->Release(p)
+/*** IDirect3DPixelShader8 methods ***/
+#define IDirect3DPixelShader8_GetDevice(p,a)         (p)->lpVtbl->GetDevice(p,a)
+#define IDirect3DPixelShader8_GetFunction(p,a,b)     (p)->lpVtbl->GetFunction(p,a,b)
+
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-/*extern const IDirect3DVertexShaderDeclaration9Vtbl Direct3DVertexShaderDeclaration9_Vtbl;*/
-
-/*****************************************************************************
- * IDirect3DVertexShaderDeclaration implementation structure
- */
-struct IDirect3DVertexShaderDeclarationImpl {
-  /* IUnknown fields */
-  /*const IDirect3DVertexShaderDeclaration9Vtbl *lpVtbl;*/
-  LONG  ref;
-
-  /* The device, to be replaced by an IDirect3DDeviceImpl */
-  IDirect3DDevice8Impl* device;
-
-  /** precomputed fvf if simple declaration */
-  DWORD   fvf[MAX_STREAMS];
-  DWORD   allFVF;
-
-  /** dx8 compatible Declaration fields */
-  DWORD*  pDeclaration8;
-  DWORD   declaration8Length;
-};
-
-/* exported Interfaces */
-extern HRESULT WINAPI IDirect3DVertexShaderDeclarationImpl_GetDeclaration8(IDirect3DVertexShaderDeclarationImpl* This, DWORD* pData, UINT* pSizeOfData);
-/*extern HRESULT IDirect3DVertexShaderDeclarationImpl_GetDeclaration9(IDirect3DVertexShaderDeclarationImpl* This, D3DVERTEXELEMENT9* pData, UINT* pNumElements);*/
-/* internal Interfaces */
-/* temporary internal Interfaces */
-extern HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevice8Impl* This, CONST DWORD* pDeclaration8, IDirect3DVertexShaderDeclarationImpl** ppVertexShaderDecl);
-
-
-/* ------------------------- */
-/* IDirect3DVertexShaderImpl */
-/* ------------------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-/*extern const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl;*/
+extern const IDirect3DVertexShader8Vtbl Direct3DVertexShader8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure
  */
-struct IDirect3DVertexShaderImpl {
-  /*const IDirect3DVertexShader9Vtbl *lpVtbl;*/
+
+struct IDirect3DVertexShader8Impl {
+  const IDirect3DVertexShader8Vtbl *lpVtbl;
   LONG ref;
 
-  /* The device, to be replaced by an IDirect3DDeviceImpl */
-  IDirect3DDevice8Impl* device;
-
-  DWORD* function;
-  UINT functionLength;
-  DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
-  DWORD version;
-  
-  /** fields for hw vertex shader use */
-  GLuint  prgId;
-
-  /* run time datas */
-  VSHADERDATA8* data;
-  VSHADERINPUTDATA8 input;
-  VSHADEROUTPUTDATA8 output;
+  IWineD3DVertexShader             *wineD3DVertexShader;
 };
 
-/* exported Interfaces */
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetFunction(IDirect3DVertexShaderImpl* This, VOID* pData, UINT* pSizeOfData);
-/*extern HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantB(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount);*/
-/*extern HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantI(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST INT*   pConstantData, UINT Vector4iCount);*/
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantF(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount);
-/*extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantB(IDirect3DVertexShaderImpl* This, UINT StartRegister, BOOL*  pConstantData, UINT BoolCount);*/
-/*extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantI(IDirect3DVertexShaderImpl* This, UINT StartRegister, INT*   pConstantData, UINT Vector4iCount);*/
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantF(IDirect3DVertexShaderImpl* This, UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount);
-/* internal Interfaces */
-extern DWORD WINAPI IDirect3DVertexShaderImpl_GetVersion(IDirect3DVertexShaderImpl* This);
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* This, VSHADERINPUTDATA8* input, VSHADEROUTPUTDATA8* output);
-/* temporary internal Interfaces */
-extern HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShader(IDirect3DDevice8Impl* This, CONST DWORD* pFunction, DWORD Usage, IDirect3DVertexShaderImpl** ppVertexShader);
-extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputSW(IDirect3DDevice8Impl* This, IDirect3DVertexShaderImpl* vshader,  DWORD SkipnStrides);
-extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDevice8Impl* This, IDirect3DVertexShaderImpl* vshader,  DWORD SkipnStrides);
 
 /* ------------------------ */
 /* IDirect3DPixelShaderImpl */
 /* ------------------------ */
 
+
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-/*extern const IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl;*/
+extern const IDirect3DPixelShader8Vtbl Direct3DPixelShader8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
-struct IDirect3DPixelShaderImpl { 
-  /*const IDirect3DPixelShader9Vtbl *lpVtbl;*/
-  LONG ref;
+typedef struct IDirect3DPixelShader8Impl {
+    const IDirect3DPixelShader8Vtbl *lpVtbl;
+    LONG                             ref;
 
-  /* The device, to be replaced by an IDirect3DDeviceImpl */
-  IDirect3DDevice8Impl* device;
-
-  DWORD* function;
-  UINT functionLength;
-  DWORD version;
-
-  /** fields for hw pixel shader use */
-  GLuint  prgId;
-
-  /* run time datas */
-  PSHADERDATA8* data;
-  PSHADERINPUTDATA8 input;
-  PSHADEROUTPUTDATA8 output;
-};
-
-/* exported Interfaces */
-extern HRESULT WINAPI IDirect3DPixelShaderImpl_GetFunction(IDirect3DPixelShaderImpl* This, VOID* pData, UINT* pSizeOfData);
-extern HRESULT WINAPI IDirect3DPixelShaderImpl_SetConstantF(IDirect3DPixelShaderImpl* This, UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount);
-/* internal Interfaces */
-extern DWORD WINAPI IDirect3DPixelShaderImpl_GetVersion(IDirect3DPixelShaderImpl* This);
-/* temporary internal Interfaces */
-extern HRESULT WINAPI IDirect3DDeviceImpl_CreatePixelShader(IDirect3DDevice8Impl* This, CONST DWORD* pFunction, IDirect3DPixelShaderImpl** ppPixelShader);
-
+    /* The device, to be replaced by an IDirect3DDeviceImpl */
+    IWineD3DPixelShader             *wineD3DPixelShader;
+} IDirect3DPixelShader8Impl;
 
 /**
  * Internals functions
@@ -1680,65 +1542,24 @@ int SOURCEx_ALPHA_EXT(DWORD arg);
 int OPERANDx_ALPHA_EXT(DWORD arg);
 GLenum StencilOp(DWORD op);
 
-/**
- * Internals debug functions
- */
-const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
-const char* debug_d3dusage(DWORD usage);
-const char* debug_d3dformat(D3DFORMAT fmt);
-const char* debug_d3dressourcetype(D3DRESOURCETYPE res);
-const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
-const char* debug_d3dpool(D3DPOOL Pool);
-const char *debug_d3drenderstate(DWORD State);
-const char *debug_d3dtexturestate(DWORD State);
+/* Callbacks */
+extern HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, UINT Width, UINT Height, 
+                                         WINED3DFORMAT Format, DWORD Usage, D3DPOOL Pool, UINT Level,
+                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
-/* Some #defines for additional diagnostics */
-#if 0 /* NOTE: Must be 0 in cvs */
-  /* To avoid having to get gigabytes of trace, the following can be compiled in, and at the start
-     of each frame, a check is made for the existence of C:\D3DTRACE, and if if exists d3d trace
-     is enabled, and if it doesn't exists it is disabled.                                           */
-# define FRAME_DEBUGGING
-  /*  Adding in the SINGLE_FRAME_DEBUGGING gives a trace of just what makes up a single frame, before
-      the file is deleted                                                                            */
-# if 1 /* NOTE: Must be 1 in cvs, as this is mostly more useful than a trace from program start */
-#  define SINGLE_FRAME_DEBUGGING
-# endif  
-  /* The following, when enabled, lets you see the makeup of the frame, by drawprimitive calls.
-     It can only be enabled when FRAME_DEBUGGING is also enabled                               
-     The contents of the back buffer are written into /tmp/backbuffer_* after each primitive 
-     array is drawn.                                                                            */
-# if 0 /* NOTE: Must be 0 in cvs, as this give a lot of ppm files when compiled in */                                                                                       
-#  define SHOW_FRAME_MAKEUP 1
-# endif  
-  /* The following, when enabled, lets you see the makeup of the all the textures used during each
-     of the drawprimitive calls. It can only be enabled when SHOW_FRAME_MAKEUP is also enabled.
-     The contents of the textures assigned to each stage are written into 
-     /tmp/texture_*_<Stage>.ppm after each primitive array is drawn.                            */
-# if 0 /* NOTE: Must be 0 in cvs, as this give a lot of ppm files when compiled in */
-#  define SHOW_TEXTURE_MAKEUP 0
-# endif  
-extern BOOL isOn;
-extern BOOL isDumpingFrames;
-extern LONG primCounter;
-#endif
+extern HRESULT WINAPI D3D8CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
+                                          WINED3DFORMAT  Format, D3DPOOL Pool, DWORD Usage,
+                                          IWineD3DVolume **ppVolume, 
+                                          HANDLE   * pSharedHandle);
 
-/* Per-vertex trace: */
-#if 0 /* NOTE: Must be 0 in cvs */
-# define VTRACE(A) TRACE A
-#else 
-# define VTRACE(A) 
-#endif
+extern HRESULT WINAPI D3D8CB_CreateDepthStencilSurface(IUnknown *device, UINT Width, UINT Height,
+                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
+                                         DWORD MultisampleQuality, BOOL Discard,
+                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
-#define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
-#define TRACE_STRIDED(sd,name) TRACE( #name "=(data:%p, stride:%ld, type:%ld)\n", sd->u.s.name.lpData, sd->u.s.name.dwStride, sd->u.s.name.dwType);
-
-#define DUMP_LIGHT_CHAIN()                    \
-{                                             \
-  PLIGHTINFOEL *el = This->StateBlock->lights;\
-  while (el) {                                \
-    TRACE("Light %p (glIndex %ld, d3dIndex %ld, enabled %d)\n", el, el->glIndex, el->OriginalIndex, el->lightEnabled);\
-    el = el->next;                            \
-  }                                           \
-}
+extern HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height,
+                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
+                                         DWORD MultisampleQuality, BOOL Lockable, 
+                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

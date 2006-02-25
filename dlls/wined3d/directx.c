@@ -1521,7 +1521,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
                           /* TODO: add support for NON-POW2 if avaialble
 
                           */
-    if (This->dxVersion > 8) {
+    if (This->dxVersion >= 8) {
         *pCaps->TextureCaps |= D3DPTEXTURECAPS_NONPOW2CONDITIONAL;
 
     } else {  /* NONPOW2 isn't accessible by d3d8 yet */
@@ -1782,19 +1782,9 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     object->adapterNo                    = Adapter;
     object->devType                      = DeviceType;
 
-    /* Let D3D8 use WineD3D's capability detection code. We can't use the block of code after this call yet
-    /  as D3D8 doesn't use WineD3D stateblocks / swapchains.
-    */
-    if(This->dxVersion == 8) {
-        /* Setup some defaults for creating the implicit swapchain */
-        ENTER_GL();
-        IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
-        LEAVE_GL();
-    }
-
-    /* FIXME: Use for dx8 code eventually too! */
+    /* FIXME: Use for dx7 code eventually too! */
     /* Deliberately no indentation here, as this if will be removed when dx8 support merged in */
-    if (This->dxVersion > 8) {
+    if (This->dxVersion >= 8) {
         TRACE("(%p) : Creating stateblock\n", This);
         /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
         if (D3D_OK != IWineD3DDevice_CreateStateBlock((IWineD3DDevice *)object,

@@ -161,17 +161,3 @@ const IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl =
     IDirect3DBaseTexture8Impl_GetLOD,
     IDirect3DBaseTexture8Impl_GetLevelCount
 };
-
-BOOL WINAPI IDirect3DBaseTexture8Impl_IsDirty(LPDIRECT3DBASETEXTURE8 iface) {
-    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-    return ((IWineD3DBaseTextureImpl*)This->wineD3DBaseTexture)->baseTexture.dirty;
-}
-
-BOOL WINAPI IDirect3DBaseTexture8Impl_SetDirty(LPDIRECT3DBASETEXTURE8 iface, BOOL dirty) {
-    BOOL old;
-    IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
-
-    old = ((IWineD3DBaseTextureImpl*)This->wineD3DBaseTexture)->baseTexture.dirty;
-    ((IWineD3DBaseTextureImpl*)This->wineD3DBaseTexture)->baseTexture.dirty = dirty;
-    return old;
-}

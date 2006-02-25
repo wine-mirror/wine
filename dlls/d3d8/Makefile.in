@@ -14,19 +14,17 @@ C_SRCS = \
 	d3d8_main.c \
 	device.c \
 	directx.c \
-	drawprim.c \
 	indexbuffer.c \
+	pixelshader.c \
 	resource.c \
-	shader.c \
 	stateblock.c \
 	surface.c \
 	swapchain.c \
 	texture.c \
-	utils.c \
 	vertexbuffer.c \
+	vertexshader.c \
 	volume.c \
-	volumetexture.c \
-	vshaderdeclaration.c
+	volumetexture.c
 
 RC_SRCS = version.rc
 

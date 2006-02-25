@@ -362,7 +362,7 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
     if (!refCount) {
         /* TODO: Clean up all the surfaces and textures! */
         /* FIXME: Create targets and state blocks in d3d8 */
-        if (((IWineD3DImpl *)This->wineD3D)->dxVersion > 8) { /*We don't create a state block in d3d8 yet*/
+        if (((IWineD3DImpl *)This->wineD3D)->dxVersion >= 8) { /*We don't create state blocks for d3d7 yet*/
             /* NOTE: You must release the parent if the object was created via a callback
             ** ***************************/
             /* TODO: this is exactly the same as required by _Reset.., so at some point we need to move the code so that is can be called by reset add release...  */

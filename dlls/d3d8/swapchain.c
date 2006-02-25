@@ -1,7 +1,7 @@
 /*
  * IDirect3DSwapChain8 implementation
  *
- * Copyright 2002 Jason Edmeades
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,32 +19,23 @@
  */
 
 #include "config.h"
-
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "wine/debug.h"
-
 #include "d3d8_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 /* IDirect3DSwapChain IUnknown parts follow: */
-HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface,REFIID riid,LPVOID *ppobj)
+HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface, REFIID riid, LPVOID* ppobj)
 {
     IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DSwapChain8)) {
-        IDirect3DSwapChain8Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
 }
 
@@ -64,31 +55,32 @@ ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) {
     TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
 
     if (ref == 0) {
+        IWineD3DSwapChain_Release(This->wineD3DSwapChain);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
 
-/* IDirect3DSwapChain parts follow: */
-HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion) {
+/* IDirect3DSwapChain8 parts follow: */
+HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion) {
     IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DSwapChain_Present(This->wineD3DSwapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, 0);
 }
 
-HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer) {
+HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer) {
     IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
-    *ppBackBuffer = (LPDIRECT3DSURFACE8) This->backBuffer;
-    TRACE("(%p) : BackBuf %d Type %d returning %p\n", This, BackBuffer, Type, *ppBackBuffer);
+    HRESULT hrc = D3D_OK;
+    IWineD3DSurface *mySurface = NULL;
 
-    if (BackBuffer > This->PresentParms.BackBufferCount - 1) {
-        FIXME("Only one backBuffer currently supported\n");
-        return D3DERR_INVALIDCALL;
+    TRACE("(%p) Relay\n", This);
+
+    hrc = IWineD3DSwapChain_GetBackBuffer(This->wineD3DSwapChain, iBackBuffer, Type, &mySurface);
+    if (hrc == D3D_OK && NULL != mySurface) {
+       IWineD3DSurface_GetParent(mySurface, (IUnknown **)ppBackBuffer);
+       IWineD3DSurface_Release(mySurface);
     }
-
-    /* Note inc ref on returned surface */
-    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppBackBuffer);
-    return D3D_OK;
+    return hrc;
 }
 
 const IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl =

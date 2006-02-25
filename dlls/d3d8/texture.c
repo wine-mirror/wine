@@ -23,10 +23,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
-#define D3D8_TEXTURE(a) ((IWineD3DTextureImpl*)(a->wineD3DTexture))
-#define D3D8_TEXTURE_GET_SURFACE(a) ((IWineD3DSurfaceImpl*)(D3D8_TEXTURE(a)->surfaces[i]))
-#define D3D8_BASETEXTURE(a) (((IWineD3DTextureImpl*)(a->wineD3DTexture))->baseTexture)
-
 /* IDirect3DTexture8 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DTexture8Impl_QueryInterface(LPDIRECT3DTEXTURE8 iface, REFIID riid, LPVOID *ppobj) {
     IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
@@ -103,50 +99,10 @@ DWORD WINAPI IDirect3DTexture8Impl_GetPriority(LPDIRECT3DTEXTURE8 iface) {
     return IWineD3DTexture_GetPriority(This->wineD3DTexture);
 }
 
-void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
-    unsigned int i;
+void WINAPI IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
     IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
-    TRACE("(%p) : About to load texture\n", This);
-
-    ENTER_GL();
-
-    for (i = 0; i < D3D8_BASETEXTURE(This).levels; i++) {
-      if (i == 0 && D3D8_TEXTURE_GET_SURFACE(This)->textureName != 0 && D3D8_BASETEXTURE(This).dirty == FALSE) {
-	glBindTexture(GL_TEXTURE_2D, D3D8_TEXTURE_GET_SURFACE(This)->textureName);
-	checkGLcall("glBindTexture");
-	TRACE("Texture %p (level %d) given name %d\n", D3D8_TEXTURE_GET_SURFACE(This), i, D3D8_TEXTURE_GET_SURFACE(This)->textureName);
-	/* No need to walk through all mip-map levels, since already all assigned */
-        i = D3D8_BASETEXTURE(This).levels;
-
-      } else {
-	if (i == 0) {
-	  if (D3D8_TEXTURE_GET_SURFACE(This)->textureName == 0) {
-	    glGenTextures(1, &(D3D8_TEXTURE_GET_SURFACE(This)->textureName));
-	    checkGLcall("glGenTextures");
-	    TRACE("Texture %p (level %d) given name %d\n", D3D8_TEXTURE_GET_SURFACE(This), i, D3D8_TEXTURE_GET_SURFACE(This)->textureName);
-	  }
-	  
-	  glBindTexture(GL_TEXTURE_2D, D3D8_TEXTURE_GET_SURFACE(This)->textureName);
-	  checkGLcall("glBindTexture");
-	}
-	IWineD3DSurface_LoadTexture((IWineD3DSurface*)D3D8_TEXTURE_GET_SURFACE(This));
-/*	IDirect3DSurface8Impl_LoadTexture((LPDIRECT3DSURFACE8) D3D8_TEXTURE_GET_SURFACE(This), GL_TEXTURE_2D, i); */
-      }
-    }
-
-    /* No longer dirty */
-    D3D8_BASETEXTURE(This).dirty = FALSE;
-
-    /* Always need to reset the number of mipmap levels when rebinding as it is
-       a property of the active texture unit, and another texture may have set it
-       to a different value                                                       */
-    TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", D3D8_BASETEXTURE(This).levels - 1);   
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, D3D8_BASETEXTURE(This).levels - 1);
-    checkGLcall("glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels)");
-
-    LEAVE_GL();
-
-    return ;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DTexture_PreLoad(This->wineD3DTexture);
 }
 
 D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(LPDIRECT3DTEXTURE8 iface) {
