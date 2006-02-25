@@ -423,6 +423,12 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
         return FALSE;
     }
 
+    if (!profile)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
     GetColorDirectoryW( machine, rgbprofile, &len );
 
     switch (id)
