@@ -3674,6 +3674,22 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
     }
+    case WINED3DRS_ANTIALIASEDLINEENABLE :
+    {
+        if(Value) {
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_BLEND);
+            checkGLcall("glEnable(GL_BLEND)");
+            glEnable(GL_LINE_SMOOTH);
+            checkGLcall("glEnable(GL_LINE_SMOOTH)");
+        } else {
+            glDisable(GL_BLEND);
+            checkGLcall("glDisable(GL_BLEND)");
+            glDisable(GL_LINE_SMOOTH);
+            checkGLcall("glDisable(GL_LINE_SMOOTH)");
+        }
+        break;
+    }
     case WINED3DRS_MULTISAMPLEMASK           :
     case WINED3DRS_PATCHEDGESTYLE            :
     case WINED3DRS_PATCHSEGMENTS             :
@@ -3683,7 +3699,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     /* Direct3D9 render states */
     case WINED3DRS_SCISSORTESTENABLE :
     case WINED3DRS_SLOPESCALEDEPTHBIAS :
-    case WINED3DRS_ANTIALIASEDLINEENABLE :
     case WINED3DRS_MINTESSELLATIONLEVEL :
     case WINED3DRS_MAXTESSELLATIONLEVEL :
     case WINED3DRS_ADAPTIVETESS_X :
