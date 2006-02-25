@@ -3729,11 +3729,81 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     case WINED3DRS_ADAPTIVETESS_Z :
     case WINED3DRS_ADAPTIVETESS_W :
     case WINED3DRS_ENABLEADAPTIVETESSELLATION :
+    {
+        FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
+        break;
+    }
     case WINED3DRS_TWOSIDEDSTENCILMODE :
+    {
+        if(Value) {
+            TRACE("Two-sided stencil mode enabled\n");
+        } else {
+            TRACE("Two-sided stencil mode disabled\n");
+        }
+        break;
+    }
     case WINED3DRS_CCW_STENCILFAIL :
     case WINED3DRS_CCW_STENCILZFAIL :
     case WINED3DRS_CCW_STENCILPASS :
+    {
+        GLint stencilFail;
+        GLint depthFail;
+        GLint stencilPass;
+
+        GLint action = StencilOp(Value);
+
+        glGetIntegerv(GL_STENCIL_FAIL, &stencilFail);
+        glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &depthFail);
+        glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &stencilPass);
+
+        if(WINED3DRS_CCW_STENCILFAIL == State) {
+            stencilFail = action;
+        }
+        else if(WINED3DRS_CCW_STENCILZFAIL == State) {
+            depthFail = action;
+        }
+        else if(WINED3DRS_CCW_STENCILPASS == State) {
+            stencilPass = action;
+        }
+
+        if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
+            glStencilOpSeparate(GL_BACK, stencilFail, depthFail, stencilPass);
+            checkGLcall("glStencilOpSeparate(GL_BACK,...)");
+        } else {
+            glStencilOp(stencilFail, depthFail, stencilPass);
+            checkGLcall("glStencilOp(...)");
+        }
+        break;
+    }
     case WINED3DRS_CCW_STENCILFUNC :
+    {
+        GLint func;
+        GLint ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
+        GLuint mask = This->stateBlock->renderState[WINED3DRS_STENCILMASK];
+
+        func = GL_ALWAYS;
+        switch ((D3DCMPFUNC)Value) {
+            case D3DCMP_NEVER: func = GL_NEVER; break;
+            case D3DCMP_LESS: func = GL_LESS; break;
+            case D3DCMP_EQUAL: func = GL_EQUAL; break;
+            case D3DCMP_LESSEQUAL: func = GL_LEQUAL; break;
+            case D3DCMP_GREATER: func = GL_GREATER; break;
+            case D3DCMP_NOTEQUAL: func = GL_NOTEQUAL; break;
+            case D3DCMP_GREATEREQUAL: func = GL_GEQUAL; break;
+            case D3DCMP_ALWAYS: func = GL_ALWAYS; break;
+            default:
+                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
+        }
+        This->stencilfunc = func;
+        if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
+            glStencilFuncSeparate(GL_BACK, func, ref, mask);
+            checkGLcall("glStencilFuncSeparate(GL_BACK,...)");
+        } else {
+            glStencilFunc(func, ref, mask);
+            checkGLcall("glStencilFunc(...)");
+        }
+        break;
+    }
     case WINED3DRS_COLORWRITEENABLE1 :
     case WINED3DRS_COLORWRITEENABLE2 :
     case WINED3DRS_COLORWRITEENABLE3 :
