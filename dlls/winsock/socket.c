@@ -3146,7 +3146,10 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
 
         memset(&unixhints, 0, sizeof(unixhints));
         punixhints->ai_flags    = convert_aiflag_w2u(hints->ai_flags);
-        punixhints->ai_family   = convert_af_w2u(hints->ai_family);
+        if (hints->ai_family == 0) /* wildcard, specific to getaddrinfo() */
+            punixhints->ai_family = 0;
+        else
+            punixhints->ai_family = convert_af_w2u(hints->ai_family);
         if (hints->ai_socktype == 0) /* wildcard, specific to getaddrinfo() */
             punixhints->ai_socktype = 0;
         else
@@ -3252,7 +3255,7 @@ int WINAPI WS_getnameinfo(const SOCKADDR *sa, socklen_t salen, PCHAR host,
         WSASetLastError(WSAEFAULT);
         return WSA_NOT_ENOUGH_MEMORY;
     }
-    ret = getnameinfo(sa_u, size, host, hostlen, serv, servlen, flags);
+    ret = getnameinfo(sa_u, size, host, hostlen, serv, servlen, convert_aiflag_w2u(flags));
 
     ws_sockaddr_free(sa_u, sa);
     return convert_eai_u2w(ret);
