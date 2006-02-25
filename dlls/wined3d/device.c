@@ -3674,6 +3674,20 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
     }
+    case WINED3DRS_SLOPESCALEDEPTHBIAS :
+    {
+        if(Value) {
+            tmpvalue.d = Value;
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
+            glPolygonOffset(tmpvalue.f, *((float*)&This->stateBlock->renderState[WINED3DRS_DEPTHBIAS]));
+            checkGLcall("glPolygonOffset(...)");
+        } else {
+            glDisable(GL_POLYGON_OFFSET_FILL);
+            checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL)");
+        }
+        break;
+    }
     case WINED3DRS_ANTIALIASEDLINEENABLE :
     {
         if(Value) {
@@ -3698,7 +3712,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     case WINED3DRS_NORMALORDER               :
     /* Direct3D9 render states */
     case WINED3DRS_SCISSORTESTENABLE :
-    case WINED3DRS_SLOPESCALEDEPTHBIAS :
     case WINED3DRS_MINTESSELLATIONLEVEL :
     case WINED3DRS_MAXTESSELLATIONLEVEL :
     case WINED3DRS_ADAPTIVETESS_X :
