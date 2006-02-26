@@ -237,7 +237,7 @@ static const char * _DM_fields(DWORD fields)
 LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
                                      HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
-    DWORD i;
+    DWORD i, dwBpp;
     DEVMODEW dm;
 
     TRACE("(%s,%p,%p,0x%08lx,%p)\n",debugstr_w(devname),devmode,hwnd,flags,lpvoid);
@@ -259,12 +259,13 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         }
         devmode = &dm;
     }
+    dwBpp = (devmode->dmBitsPerPel == 24) ? 32 : devmode->dmBitsPerPel;
 
     for (i = 0; i < dd_mode_count; i++)
     {
         if (devmode->dmFields & DM_BITSPERPEL)
         {
-            if (devmode->dmBitsPerPel != dd_modes[i].dwBPP)
+            if (dwBpp != dd_modes[i].dwBPP)
                 continue;
         }
         if (devmode->dmFields & DM_PELSWIDTH)
