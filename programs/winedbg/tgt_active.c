@@ -33,7 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 static char*            dbg_last_cmd_line;
-/*static*/ enum dbg_action_mode dbg_action_mode;
 
 struct be_process_io be_process_active_io =
 {
@@ -404,13 +403,6 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
         dbg_printf( ", invalid program stack" );
     }
 
-    if (dbg_action_mode == automatic_mode)
-    {
-        dbg_exception_prolog(is_debug, rec);
-        dbg_exception_epilog();
-        return 0;  /* terminate execution */
-    }
-
     if (dbg_exception_prolog(is_debug, rec))
     {
 	dbg_interactiveP = TRUE;
@@ -693,19 +685,8 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
     {
         if (dbg_handle_debug_event(&de)) break;
     }
-    switch (dbg_action_mode)
-    {
-    case automatic_mode:
-        /* print some extra information */
-        dbg_printf("Modules:\n");
-        info_win32_module(0); /* print all modules */
-        dbg_printf("Threads:\n");
-        info_win32_threads();
-        break;
-    default:
-        dbg_interactiveP = TRUE;
-        parser_handle(hFile);
-    }
+    dbg_interactiveP = TRUE;
+    parser_handle(hFile);
     dbg_printf("WineDbg terminated on pid 0x%lx\n", dbg_curr_pid);
 
     return 0;
@@ -880,7 +861,16 @@ enum dbg_start    dbg_active_launch(int argc, char* argv[])
  */
 enum dbg_start dbg_active_auto(int argc, char* argv[])
 {
+    HANDLE              hFile;
+    enum dbg_start      ds = start_error_parse;
+
     argc--; argv++;
-    dbg_action_mode = automatic_mode;
-    return dbg_active_attach(argc, argv);
+    hFile = parser_generate_command_file("echo Modules:", "info share",
+                                         "echo Threads:", "info threads",
+					 NULL);
+    if (hFile == INVALID_HANDLE_VALUE ||
+        (ds = dbg_active_attach(argc, argv)) != start_ok)
+        return ds;
+    dbg_main_loop(hFile);
+    return start_ok;
 }

@@ -180,6 +180,7 @@ STRING     \"[^\n"]+\"
 <INITIAL>detach|detac|deta|det   	{ BEGIN(NOCMD); return tDETACH; }
 <INITIAL>maintenance|maint              { BEGIN(MAINT_CMD); return tMAINTENANCE; }
 <INITIAL>minidump|mdmp                  { BEGIN(PATH_EXPECTED); return tMINIDUMP; }
+<INITIAL>echo				{ BEGIN(ASTRING_EXPECTED); return tECHO; }
 <NOPROCESS>attach|attac|atta|att 	{ BEGIN(NOCMD); return tATTACH; }
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }

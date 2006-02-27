@@ -491,7 +491,6 @@ int main(int argc, char** argv)
         return retv;
     }
     dbg_init_console();
-    dbg_action_mode = winedbg_mode;
 
     SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
                   SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS);
@@ -501,63 +500,60 @@ int main(int argc, char** argv)
         /* force some internal variables */
         DBG_IVAR(BreakOnDllLoad) = 0;
         dbg_houtput = GetStdHandle(STD_ERROR_HANDLE);
-        ds = dbg_active_auto(argc, argv);
-    }
-    else
-    {
-        /* parse options */
-        while (argc > 0 && argv[0][0] == '-')
+        switch (dbg_active_auto(argc, argv))
         {
-            if (!strcmp(argv[0], "--command"))
-            {
-                char        path[MAX_PATH], file[MAX_PATH];
-                DWORD       w;
-
-                GetTempPath(sizeof(path), path);
-                GetTempFileName(path, "WD", 0, file);
-                argc--; argv++;
-                hFile = CreateFileA(file, GENERIC_READ|GENERIC_WRITE|DELETE, FILE_SHARE_DELETE, 
-                                    NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0);
-                if (hFile == INVALID_HANDLE_VALUE)
-                {
-                    dbg_printf("Couldn't open temp file %s (%lu)\n", file, GetLastError());
-                    return 1;
-                }
-                WriteFile(hFile, argv[0], strlen(argv[0]), &w, 0);
-                WriteFile(hFile, "\nquit\n", 6, &w, 0);
-                SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-
-                argc--; argv++;
-                continue;
-            }
-            if (!strcmp(argv[0], "--file"))
-            {
-                argc--; argv++;
-                hFile = CreateFileA(argv[0], GENERIC_READ|DELETE, 0, 
-                                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-                if (hFile == INVALID_HANDLE_VALUE)
-                {
-                    dbg_printf("Couldn't open file %s (%lu)\n", argv[0], GetLastError());
-                    return 1;
-                }
-                argc--; argv++;
-                continue;
-            }
-            return dbg_winedbg_usage();
+        case start_ok:          return 0;
+        case start_error_parse: return dbg_winedbg_usage();
+        case start_error_init:  return -1;
         }
-        if (!argc) ds = start_ok;
-        else if ((ds = dbg_active_attach(argc, argv)) == start_error_parse)
-            ds = dbg_active_launch(argc, argv);
     }
+    /* parse options */
+    while (argc > 0 && argv[0][0] == '-')
+    {
+        if (!strcmp(argv[0], "--command"))
+        {
+            argc--; argv++;
+            hFile = parser_generate_command_file(argv[0], NULL);
+            if (hFile == INVALID_HANDLE_VALUE)
+            {
+                dbg_printf("Couldn't open temp file (%lu)\n", GetLastError());
+                return 1;
+            }
+            argc--; argv++;
+            continue;
+        }
+        if (!strcmp(argv[0], "--file"))
+        {
+            argc--; argv++;
+            hFile = CreateFileA(argv[0], GENERIC_READ|DELETE, 0, 
+                                NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+            if (hFile == INVALID_HANDLE_VALUE)
+            {
+                dbg_printf("Couldn't open file %s (%lu)\n", argv[0], GetLastError());
+                return 1;
+            }
+            argc--; argv++;
+            continue;
+        }
+        if (!strcmp(argv[0], "--"))
+        {
+            argc--; argv++;
+            break;
+        }
+        return dbg_winedbg_usage();
+    }
+    if (!argc) ds = start_ok;
+    else if ((ds = dbg_active_attach(argc, argv)) == start_error_parse)
+        ds = dbg_active_launch(argc, argv);
     switch (ds)
     {
     case start_ok:              break;
     case start_error_parse:     return dbg_winedbg_usage();
     case start_error_init:      return -1;
     }
+
     retv = dbg_main_loop(hFile);
-    /* don't save modified variables in auto mode */
-    if (dbg_action_mode != automatic_mode) dbg_save_internal_vars();
+    dbg_save_internal_vars();
 
     return retv;
 }

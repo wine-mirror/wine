@@ -51,7 +51,7 @@ int yyerror(const char*);
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tALL tINFO tUP tDOWN
 %token tENABLE tDISABLE tBREAK tHBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM
-%token tABORT tVM86
+%token tABORT tVM86 tECHO
 %token tCLASS tMAPS tSTACK tSEGMENTS tSYMBOL tREGS tWND tQUEUE tLOCAL tEXCEPTION
 %token tPROCESS tTHREAD tMODREF tEOL tEOF
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
@@ -141,6 +141,7 @@ command:
     | tATTACH tNUM     		{ dbg_attach_debuggee($2, FALSE, TRUE); }
     | tDETACH                   { dbg_detach_debuggee(); }
     | tMINIDUMP pathname        { minidump_write($2, (dbg_curr_thread && dbg_curr_thread->in_exception) ? &dbg_curr_thread->excpt_record : NULL);}
+    | tECHO tSTRING             { dbg_printf("%s\n", $2); }
     | run_command
     | list_command
     | disassemble_command
@@ -553,4 +554,33 @@ int yyerror(const char* s)
 {
     dbg_printf("%s\n", s);
     return 0;
+}
+
+HANDLE parser_generate_command_file(const char* pmt, ...)
+{
+    HANDLE      hFile;
+    char        path[MAX_PATH], file[MAX_PATH];
+    DWORD       w;
+    const char* p;
+
+    GetTempPath(sizeof(path), path);
+    GetTempFileName(path, "WD", 0, file);
+    hFile = CreateFileA(file, GENERIC_READ|GENERIC_WRITE|DELETE, FILE_SHARE_DELETE, 
+                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0);
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        va_list ap;
+
+        WriteFile(hFile, pmt, strlen(pmt), &w, 0);
+        va_start(ap, pmt);
+        while ((p = va_arg(ap, const char*)) != NULL)
+        {
+            WriteFile(hFile, "\n", 1, &w, 0);
+            WriteFile(hFile, p, strlen(p), &w, 0);
+        }
+        va_end(ap);
+        WriteFile(hFile, "\nquit\n", 6, &w, 0);
+        SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+    }
+    return hFile;
 }

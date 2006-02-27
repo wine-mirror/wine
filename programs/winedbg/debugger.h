@@ -282,6 +282,7 @@ extern void             parser(const char*);
 extern void             parser_handle(HANDLE);
 extern int              input_read_line(const char* pfx, char* buffer, int size);
 extern int              input_fetch_entire_line(const char* pfx, char** line);
+extern HANDLE           parser_generate_command_file(const char*, ...);
 
   /* debug.l */
 extern void             lexeme_flush(void);
@@ -374,7 +375,6 @@ extern enum dbg_start   dbg_active_attach(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_auto(int argc, char* argv[]);
   /* temporary for tgt_active.c */
-extern enum dbg_action_mode {winedbg_mode, automatic_mode} dbg_action_mode;
 extern unsigned         dbg_main_loop(HANDLE);
 
   /* tgt_minidump.c */
