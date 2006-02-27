@@ -28,9 +28,26 @@
 #define TEST_STRING1 "\\Application Name"
 #define TEST_STRING2 "%49001%\\Application Name"
 
-static HRESULT (WINAPI *pGetVersionFromFile)(LPSTR,LPDWORD,LPDWORD,BOOL);
 static HRESULT (WINAPI *pDelNode)(LPCSTR,DWORD);
+static HRESULT (WINAPI *pGetVersionFromFile)(LPSTR,LPDWORD,LPDWORD,BOOL);
 static HRESULT (WINAPI *pTranslateInfString)(LPSTR,LPSTR,LPSTR,LPSTR,LPSTR,DWORD,LPDWORD,LPVOID);
+
+static BOOL init_function_pointers(void)
+{
+    HMODULE hAdvPack = LoadLibraryA("advpack.dll");
+
+    if (!hAdvPack)
+        return FALSE;
+
+    pDelNode = (void *)GetProcAddress(hAdvPack, "DelNode");
+    pGetVersionFromFile = (void *)GetProcAddress(hAdvPack, "GetVersionFromFile");
+    pTranslateInfString = (void *)GetProcAddress(hAdvPack, "TranslateInfString");
+
+    if (!pDelNode || !pGetVersionFromFile || !pTranslateInfString)
+        return FALSE;
+
+    return TRUE;
+}
 
 static void version_test(void)
 {
@@ -256,21 +273,10 @@ static void translateinfstring_test()
 
 START_TEST(advpack)
 {
-    HMODULE hdll;
-
-    hdll = LoadLibraryA("advpack.dll");
-    if (!hdll)
-        return;
-
-    pGetVersionFromFile = (void*)GetProcAddress(hdll, "GetVersionFromFile");
-    pDelNode = (void*)GetProcAddress(hdll, "DelNode");
-    pTranslateInfString = (void*)GetProcAddress(hdll, "TranslateInfString");
-    if (!pGetVersionFromFile || !pDelNode || !pTranslateInfString)
+    if (!init_function_pointers())
         return;
 
     version_test();
     delnode_test();
     translateinfstring_test();
-
-    FreeLibrary(hdll);
 }
