@@ -35,6 +35,22 @@ static HRESULT (WINAPI *pOpenINFEngine)(PCSTR,PCSTR,DWORD,HINF*,PVOID);
 static HRESULT (WINAPI *pTranslateInfString)(LPSTR,LPSTR,LPSTR,LPSTR,LPSTR,DWORD,LPDWORD,LPVOID);
 static HRESULT (WINAPI *pTranslateInfStringEx)(HINF,PCSTR,PCSTR,PCSTR,PSTR,DWORD,PDWORD,PVOID);
 
+static CHAR PROG_FILES[MAX_PATH];
+static DWORD PROG_FILES_LEN;
+
+static void get_progfiles_dir(void)
+{
+    HKEY hkey;
+    DWORD size = MAX_PATH;
+
+    RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &hkey);
+    RegQueryValueExA(hkey, "ProgramFilesDir", NULL, NULL, (LPBYTE)PROG_FILES, &size);
+    RegCloseKey(hkey);
+
+    lstrcatA(PROG_FILES, TEST_STRING1);
+    PROG_FILES_LEN = lstrlenA(PROG_FILES) + 1;
+}
+
 static BOOL init_function_pointers(void)
 {
     HMODULE hAdvPack = LoadLibraryA("advpack.dll");
@@ -247,20 +263,8 @@ static void translateinfstring_test()
 
     if(hr == ERROR_SUCCESS)
     {
-        HKEY key;
-        DWORD len = MAX_PATH;
-        char cmpbuffer[MAX_PATH];
-        LONG res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &key);
-        if(res == ERROR_SUCCESS) {
-            res = RegQueryValueExA(key, "ProgramFilesDir", NULL, NULL, (LPBYTE)cmpbuffer, &len);
-            if(res == ERROR_SUCCESS) {
-                strcat(cmpbuffer, TEST_STRING1);
-                ok(!strcmp(buffer, cmpbuffer), "Expected '%s', got '%s'\n", cmpbuffer, buffer);
-                ok(dwSize == (strlen(cmpbuffer)+1), "Expected size %d, got %ld\n",
-                   strlen(cmpbuffer)+1, dwSize);
-            }
-            RegCloseKey(key);
-        }
+        ok(!strcmp(buffer, PROG_FILES), "Expected '%s', got '%s'\n", PROG_FILES, buffer);
+        ok(dwSize == PROG_FILES_LEN, "Expected size %ld, got %ld\n", PROG_FILES_LEN, dwSize);
     }
 
     buffer[0] = 0;
@@ -281,17 +285,11 @@ static void translateinfstring_test()
 static void translateinfstringex_test(void)
 {
     HINF hinf;
-    HKEY hkey;
     HRESULT hr;
     char buffer[MAX_PATH];
-    char progfiles[MAX_PATH];
     DWORD size = MAX_PATH;
 
     create_inf_file();
-
-    RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &hkey);
-    RegQueryValueExA(hkey, "ProgramFilesDir", NULL, NULL, (LPBYTE)progfiles, &size);
-    lstrcatA(progfiles, TEST_STRING1);
     
     /* need to see if there are any flags */
 
@@ -381,9 +379,8 @@ static void translateinfstringex_test(void)
     hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "Options.NTx86", "InstallDir",
                               buffer, size, &size, NULL);
     ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-    ok(!strcmp(buffer, progfiles), "Expected %s, got %s\n", progfiles, buffer);
-    ok(size == lstrlenA(progfiles) + 1, "Expected size %i, got %ld\n",
-       lstrlenA(progfiles) + 1, size);
+    ok(!strcmp(buffer, PROG_FILES), "Expected %s, got %s\n", PROG_FILES, buffer);
+    ok(size == PROG_FILES_LEN, "Expected size %ld, got %ld\n", PROG_FILES_LEN, size);
 
     /* close the INF again */
     hr = pCloseINFEngine(hinf);
@@ -396,6 +393,8 @@ START_TEST(advpack)
 {
     if (!init_function_pointers())
         return;
+
+    get_progfiles_dir();
 
     version_test();
     delnode_test();
