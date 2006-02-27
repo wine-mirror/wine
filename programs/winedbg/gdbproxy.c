@@ -2273,7 +2273,8 @@ int gdb_main(int argc, char* argv[])
         }
         return -1;
     }
-    if (dbg_active_attach(argc, argv) || dbg_active_launch(argc, argv))
+    if (dbg_active_attach(argc, argv) == start_ok ||
+        dbg_active_launch(argc, argv) == start_ok)
         return gdb_remote(gdb_flags);
     return -1;
 }
