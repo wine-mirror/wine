@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -457,6 +457,9 @@ static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *ifa
     }else if(IsEqualGUID(&IID_nsIEmbeddingSiteWindow, riid)) {
         TRACE("(%p)->(IID_nsIEmbeddingSiteWindow %p)\n", This, result);
         *result = NSEMBWNDS(This);
+    }else if(IsEqualGUID(&IID_nsIInterfaceRequestor, riid)) {
+        TRACE("(%p)->(IID_nsIInterfaceRequestor %p)\n", This, result);
+        *result = NSIFACEREQ(This);
     }
 
     if(*result) {
@@ -916,6 +919,49 @@ static const nsIEmbeddingSiteWindowVtbl nsEmbeddingSiteWindowVtbl = {
     nsEmbeddingSiteWindow_GetSiteWindow
 };
 
+#define NSIFACEREQ_THIS(iface) DEFINE_THIS(NSContainer, InterfaceRequestor, iface)
+
+static nsresult NSAPI nsInterfaceRequestor_QueryInterface(nsIInterfaceRequestor *iface,
+                                                          nsIIDRef riid, nsQIResult result)
+{
+    NSContainer *This = NSIFACEREQ_THIS(iface);
+    return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
+}
+
+static nsrefcnt NSAPI nsInterfaceRequestor_AddRef(nsIInterfaceRequestor *iface)
+{
+    NSContainer *This = NSIFACEREQ_THIS(iface);
+    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
+}
+
+static nsrefcnt NSAPI nsInterfaceRequestor_Release(nsIInterfaceRequestor *iface)
+{
+    NSContainer *This = NSIFACEREQ_THIS(iface);
+    return nsIWebBrowserChrome_Release(NSWBCHROME(This));
+}
+
+static nsresult NSAPI nsInterfaceRequestor_GetInterface(nsIInterfaceRequestor *iface,
+                                                        nsIIDRef riid, nsQIResult result)
+{
+    NSContainer *This = NSIFACEREQ_THIS(iface);
+
+    if(IsEqualGUID(&IID_nsIDOMWindow, riid)) {
+        FIXME("(%p)->(IID_nsIDOMWindow %p)\n", This, result);
+        return NS_NOINTERFACE;
+    }
+
+    return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
+}
+
+#undef NSIFACEREQ_THIS
+
+static const nsIInterfaceRequestorVtbl nsInterfaceRequestorVtbl = {
+    nsInterfaceRequestor_QueryInterface,
+    nsInterfaceRequestor_AddRef,
+    nsInterfaceRequestor_Release,
+    nsInterfaceRequestor_GetInterface
+};
+
 void NSContainer_Create(HTMLDocument *doc)
 {
     nsIWebBrowserSetup *wbsetup;
@@ -931,6 +977,7 @@ void NSContainer_Create(HTMLDocument *doc)
     ret->lpContextMenuListenerVtbl = &nsContextMenuListenerVtbl;
     ret->lpURIContentListenerVtbl  = &nsURIContentListenerVtbl;
     ret->lpEmbeddingSiteWindowVtbl = &nsEmbeddingSiteWindowVtbl;
+    ret->lpInterfaceRequestorVtbl  = &nsInterfaceRequestorVtbl;
 
     ret->doc = doc;
     ret->ref = 1;

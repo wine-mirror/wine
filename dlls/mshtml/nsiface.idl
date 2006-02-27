@@ -68,7 +68,6 @@ interface nsISupports
 
 /* Currently we don't need a full declaration of these interfaces */
 typedef nsISupports nsIWeakReference;
-typedef nsISupports nsIDOMWindow;
 typedef nsISupports nsIDOMDocument;
 typedef nsISupports nsISHistory;
 typedef nsISupports nsISimpleEnumerator;
@@ -81,6 +80,9 @@ typedef nsISupports nsIDOMAbstractView;
 typedef nsISupports nsIStreamListener;
 typedef nsISupports nsIHttpHeaderVisitor;
 typedef nsISupports nsIRequestObserver;
+typedef nsISupports nsIDOMBarProp;
+typedef nsISupports nsIDOMWindowCollection;
+typedef nsISupports nsISelection;
 
 [
     object,
@@ -293,6 +295,31 @@ interface nsIUploadChannel : nsISupports
     nsresult SetUploadStream(nsIInputStream *aStream, const nsACString *aContentType,
                              PRInt32 aContentLength);
     nsresult GetUploadStream(nsIInputStream **aUploadStream);
+}
+
+[
+    object,
+    uuid(a6cf906b-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMWindow : nsISupports
+{
+    nsresult GetDocument(nsIDOMDocument **aDocument);
+    nsresult GetParent(nsIDOMWindow **aParent);
+    nsresult GetTop(nsIDOMWindow **aTop);
+    nsresult GetScrollbars(nsIDOMBarProp **aScrollbars);
+    nsresult GetFrames(nsIDOMWindowCollection **aFrames);
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetTextZoom(float *aTextZoom);
+    nsresult SetTextZoom(float aTextZoom);
+    nsresult GetScrollX(PRInt32 *aScrollX);
+    nsresult GetScrollY(PRInt32 *aScrollY);
+    nsresult ScrollTo(PRInt32 xScroll, PRInt32 yScroll);
+    nsresult ScrollBy(PRInt32 xScrollDif, PRInt32 yScrollDif);
+    nsresult GetSelection(nsISelection **_retval);
+    nsresult ScrollByLines(PRInt32 numLines);
+    nsresult ScrollByPages(PRInt32 numPages);
+    nsresult SizeToContent();
 }
 
 [
