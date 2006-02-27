@@ -286,7 +286,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapter, D3
     IDirect3DDevice8Impl *object = NULL;
     WINED3DPRESENT_PARAMETERS localParameters;
     HRESULT hr;
-    TRACE("(%p) Relay \n", This);
+    TRACE("(%p) Relay\n", This);
 
     /* Check the validity range of the adapter parameter */
     if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {

@@ -125,7 +125,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_GetDeviceCaps(LPDIRECT3DDEVICE8 iface, D3DCA
     HRESULT hrc = D3D_OK;
     WINED3DCAPS *pWineCaps;
 
-    TRACE("(%p) : Relay pCaps %p \n", This, pCaps);
+    TRACE("(%p) : Relay pCaps %p\n", This, pCaps);
     if(NULL == pCaps){
         return D3DERR_INVALIDCALL;
     }
@@ -771,7 +771,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, DWO
     IDirect3DStateBlock8Impl *pSB  = (IDirect3DStateBlock8Impl*) Token;
     IDirect3DDevice8Impl     *This = (IDirect3DDevice8Impl *)iface;
 
-    TRACE("(%p) %p Relay \n", This, pSB);
+    TRACE("(%p) %p Relay\n", This, pSB);
 
     return  IWineD3DStateBlock_Apply(pSB->wineD3DStateBlock);
 }
@@ -780,7 +780,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface, D
     IDirect3DStateBlock8Impl* pSB = (IDirect3DStateBlock8Impl *)Token;
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
-    TRACE("(%p) %p Relay \n", This, pSB);
+    TRACE("(%p) %p Relay\n", This, pSB);
 
     return IWineD3DStateBlock_Capture(pSB->wineD3DStateBlock);
 }
@@ -789,7 +789,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_DeleteStateBlock(LPDIRECT3DDEVICE8 iface, DW
     IDirect3DStateBlock8Impl* pSB = (IDirect3DStateBlock8Impl *)Token;
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
 
-    TRACE("(%p) Relay \n", This);
+    TRACE("(%p) Relay\n", This);
 
     while(IUnknown_Release((IUnknown *)pSB));
 
@@ -855,7 +855,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, DWORD St
         IWineD3DBaseTexture_GetParent(retTexture, (IUnknown **)ppTexture);
         IWineD3DBaseTexture_Release(retTexture);
     } else {
-        FIXME("Call to get texture  (%ld) failed (%p) \n", Stage, retTexture);
+        FIXME("Call to get texture  (%ld) failed (%p)\n", Stage, retTexture);
         *ppTexture = NULL;
     }
 
@@ -1080,7 +1080,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, DWO
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     HRESULT hrc = D3D_OK;
 
-    TRACE("(%p) : Relay  \n", This);
+    TRACE("(%p) : Relay\n", This);
     if (VS_HIGHESTFIXEDFXF >= pShader) {
         TRACE("Setting FVF, %d %ld\n", VS_HIGHESTFIXEDFXF, pShader);
         IWineD3DDevice_SetFVF(This->WineD3DDevice, pShader);
@@ -1094,7 +1094,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, DWO
             /* hrc =  IWineD3DDevice_SetVertexShader(This->WineD3DDevice, 0 == shader ? NULL : shader->wineD3DVertexShader); */
         }
     }
-    TRACE("(%p) : returning hr(%lu) \n", This, hrc);
+    TRACE("(%p) : returning hr(%lu)\n", This, hrc);
 
     return hrc;
 }
@@ -1104,7 +1104,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShader(LPDIRECT3DDEVICE8 iface, DWO
     IWineD3DVertexShader *pShader;
     HRESULT hrc = D3D_OK;
 
-    TRACE("(%p) : Relay  device@%p \n", This, This->WineD3DDevice);
+    TRACE("(%p) : Relay  device@%p\n", This, This->WineD3DDevice);
     hrc = IWineD3DDevice_GetVertexShader(This->WineD3DDevice, &pShader);
     if (D3D_OK == hrc) {
         if(0 != pShader) {
