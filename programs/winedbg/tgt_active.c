@@ -34,12 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 static char*            dbg_last_cmd_line;
 
-struct be_process_io be_process_active_io =
-{
-    ReadProcessMemory,
-    WriteProcessMemory,
-};
-
 static void dbg_init_current_process(void)
 {
 }
@@ -97,23 +91,6 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe)
         }
         if (dbg_curr_process) dbg_interactiveP = TRUE;
     }
-    return TRUE;
-}
-
-BOOL dbg_detach_debuggee(void)
-{
-    /* remove all set breakpoints in debuggee code */
-    break_set_xpoints(FALSE);
-    /* needed for single stepping (ugly).
-     * should this be handled inside the server ??? 
-     */
-    be_cpu->single_step(&dbg_context, FALSE);
-    SetThreadContext(dbg_curr_thread->handle, &dbg_context);
-    if (dbg_curr_thread->in_exception)
-        ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, DBG_CONTINUE);
-    if (!DebugActiveProcessStop(dbg_curr_pid)) return FALSE;
-    dbg_del_process(dbg_curr_process);
-
     return TRUE;
 }
 
@@ -413,6 +390,8 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
     return DBG_CONTINUE;
 }
 
+static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill);
+
 static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
 {
     char	buffer[256];
@@ -507,15 +486,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             WINE_ERR("Unknown process\n");
             break;
         }
-        if (!SymCleanup(dbg_curr_process->handle))
-            dbg_printf("Couldn't initiate DbgHelp\n");
-        /* just in case */
-        break_set_xpoints(FALSE);
-        /* kill last thread */
-        dbg_del_thread(dbg_curr_process->threads);
-        dbg_del_process(dbg_curr_process);
-
-        dbg_printf("Process of pid=0x%08lx has terminated\n", dbg_curr_pid);
+        tgt_process_active_close_process(dbg_curr_process, FALSE);
         break;
 
     case CREATE_THREAD_DEBUG_EVENT:
@@ -687,7 +658,6 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
     }
     dbg_interactiveP = TRUE;
     parser_handle(hFile);
-    dbg_printf("WineDbg terminated on pid 0x%lx\n", dbg_curr_pid);
 
     return 0;
 }
@@ -928,3 +898,34 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     dbg_main_loop(hFile);
     return start_ok;
 }
+
+static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
+{
+    if (pcs == dbg_curr_process)
+    {
+        /* remove all set breakpoints in debuggee code */
+        break_set_xpoints(FALSE);
+        /* needed for single stepping (ugly).
+         * should this be handled inside the server ??? 
+         */
+        be_cpu->single_step(&dbg_context, FALSE);
+        if (dbg_curr_thread->in_exception)
+        {
+            SetThreadContext(dbg_curr_thread->handle, &dbg_context);
+            ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, DBG_CONTINUE);
+        }
+        if (!kill && !DebugActiveProcessStop(dbg_curr_pid)) return FALSE;
+    }
+    SymCleanup(pcs->handle);
+    dbg_printf("Process of pid=0x%08lx has terminated\n", pcs->pid);
+    dbg_del_process(pcs);
+
+    return TRUE;
+}
+
+struct be_process_io be_process_active_io =
+{
+    tgt_process_active_close_process,
+    ReadProcessMemory,
+    WriteProcessMemory,
+};

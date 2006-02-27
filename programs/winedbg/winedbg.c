@@ -551,6 +551,9 @@ int main(int argc, char** argv)
     }
 
     retv = dbg_main_loop(hFile);
+    while (dbg_process_list)
+        dbg_process_list->process_io->close_process(dbg_process_list, TRUE);
+
     dbg_save_internal_vars();
 
     return retv;

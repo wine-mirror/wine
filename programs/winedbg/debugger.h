@@ -216,6 +216,7 @@ struct dbg_process
 /* describes the way the debugger interacts with a given process */
 struct be_process_io
 {
+    BOOL        (*close_process)(struct dbg_process*, BOOL);
     BOOL        (WINAPI *read)(HANDLE, const void*, void*, DWORD, DWORD*);
     BOOL        (WINAPI *write)(HANDLE, void*, const void*, DWORD, DWORD*);
 };
@@ -403,7 +404,6 @@ extern int	        dbg_printf(const char* format, ...);
 #endif
 extern const struct dbg_internal_var* dbg_get_internal_var(const char*);
 extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe);
-extern BOOL             dbg_detach_debuggee(void);
 extern BOOL             dbg_interrupt_debuggee(void);
 extern struct dbg_process* dbg_add_process(DWORD pid, HANDLE h);
 extern void             dbg_set_process_name(struct dbg_process* p, const char* name);

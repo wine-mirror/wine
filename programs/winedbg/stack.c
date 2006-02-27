@@ -338,7 +338,7 @@ static void backtrace_all(void)
         {
             if (entry.th32OwnerProcessID == GetCurrentProcessId()) continue;
             if (dbg_curr_process && dbg_curr_pid != entry.th32OwnerProcessID)
-                dbg_detach_debuggee();
+                dbg_curr_process->process_io->close_process(dbg_curr_process, FALSE);
 
             if (entry.th32OwnerProcessID != dbg_curr_pid)
             {
@@ -358,7 +358,7 @@ static void backtrace_all(void)
         while (Thread32Next(snapshot, &entry));
 
         if (dbg_curr_process)
-            dbg_detach_debuggee();
+            dbg_curr_process->process_io->close_process(dbg_curr_process, FALSE);
     }
     CloseHandle(snapshot);
 }
