@@ -833,51 +833,47 @@ BOOL WINAPI PurgeComm(HANDLE handle, DWORD flags)
  *  Enables further I/O operations on a communications resource after
  *  supplying error and current status information.
  *
+ * PARAMS
+ *
+ *      handle  [in]    The communication resource with the error
+ *      errors  [out]   Flags indicating error the resource experienced
+ *      lpStat  [out] The status of the communication resource
  * RETURNS
  *
  *  True on success, false if the communication resource handle is bad.
  */
-BOOL WINAPI ClearCommError(
-    HANDLE    handle, /* [in] The communication resource with the error. */
-    LPDWORD   errors, /* [out] Flags indicating error the resource experienced. */
-    LPCOMSTAT lpStat) /* [out] The status of the communication resource. */
+BOOL WINAPI ClearCommError(HANDLE handle, LPDWORD errors, LPCOMSTAT lpStat)
 {
-    int fd;
+    SERIAL_STATUS       ss;
 
-    fd=get_comm_fd( handle, FILE_READ_DATA );
-    if(0>fd) return FALSE;
+    if (!DeviceIoControl(handle, IOCTL_SERIAL_GET_COMMSTATUS, NULL, 0,
+                         &ss, sizeof(ss), NULL, NULL))
+        return FALSE;
 
+    if (errors)
+    {
+        *errors = 0;
+        if (ss.Errors & SERIAL_ERROR_BREAK)             *errors |= CE_BREAK;
+        if (ss.Errors & SERIAL_ERROR_FRAMING)           *errors |= CE_FRAME;
+        if (ss.Errors & SERIAL_ERROR_OVERRUN)           *errors |= CE_OVERRUN;
+        if (ss.Errors & SERIAL_ERROR_QUEUEOVERRUN)      *errors |= CE_RXOVER;
+        if (ss.Errors & SERIAL_ERROR_PARITY)            *errors |= CE_RXPARITY;
+    }
+ 
     if (lpStat)
     {
-        lpStat->fCtsHold = 0;
-	lpStat->fDsrHold = 0;
-	lpStat->fRlsdHold = 0;
-	lpStat->fXoffHold = 0;
-	lpStat->fXoffSent = 0;
-	lpStat->fEof = 0;
-	lpStat->fTxim = 0;
-	lpStat->fReserved = 0;
+        memset(lpStat, 0, sizeof(*lpStat));
 
-#ifdef TIOCOUTQ
-	if(ioctl(fd, TIOCOUTQ, &lpStat->cbOutQue))
-	    WARN("ioctl returned error\n");
-#else
-	lpStat->cbOutQue = 0; /* FIXME: find a different way to find out */
-#endif
-
-#ifdef TIOCINQ
-	if(ioctl(fd, TIOCINQ, &lpStat->cbInQue))
-	    WARN("ioctl returned error\n");
-#endif
-
-	TRACE("handle %p cbInQue = %ld cbOutQue = %ld\n",
-	      handle, lpStat->cbInQue, lpStat->cbOutQue);
+        if (ss.HoldReasons & SERIAL_TX_WAITING_FOR_CTS)         lpStat->fCtsHold = TRUE;
+        if (ss.HoldReasons & SERIAL_TX_WAITING_FOR_DSR)         lpStat->fDsrHold = TRUE;
+        if (ss.HoldReasons & SERIAL_TX_WAITING_FOR_DCD)         lpStat->fRlsdHold = TRUE;
+        if (ss.HoldReasons & SERIAL_TX_WAITING_FOR_XON)         lpStat->fXoffHold = TRUE;
+        if (ss.HoldReasons & SERIAL_TX_WAITING_XOFF_SENT)       lpStat->fXoffSent = TRUE;
+        if (ss.EofReceived)                                     lpStat->fEof = TRUE;
+        if (ss.WaitForImmediate)                                lpStat->fTxim = TRUE;
+        lpStat->cbInQue = ss.AmountInInQueue;
+        lpStat->cbOutQue = ss.AmountInOutQueue;
     }
-
-    release_comm_fd( handle, fd );
-
-    if (errors) *errors = 0; /* FIXME */
-
     return TRUE;
 }
 
