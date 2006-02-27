@@ -258,6 +258,12 @@ HRESULT IDirectSoundFullDuplex_IDirectSound_Create(
         return DSERR_INVALIDPARAM;
     }
 
+    if (((IDirectSoundFullDuplexImpl*)pdsfd)->renderer_device == NULL) {
+        WARN("not initialized\n");
+        *ppds = NULL;
+        return DSERR_UNINITIALIZED;
+    }
+
     pdsfdds = HeapAlloc(GetProcessHeap(),0,sizeof(*pdsfdds));
     if (pdsfdds == NULL) {
         WARN("out of memory\n");
@@ -417,6 +423,12 @@ HRESULT IDirectSoundFullDuplex_IDirectSound8_Create(
         return DSERR_INVALIDPARAM;
     }
 
+    if (((IDirectSoundFullDuplexImpl*)pdsfd)->renderer_device == NULL) {
+        WARN("not initialized\n");
+        *ppds8 = NULL;
+        return DSERR_UNINITIALIZED;
+    }
+
     pdsfdds8 = HeapAlloc(GetProcessHeap(),0,sizeof(*pdsfdds8));
     if (pdsfdds8 == NULL) {
         WARN("out of memory\n");
@@ -523,6 +535,12 @@ HRESULT IDirectSoundFullDuplex_IDirectSoundCapture_Create(
     if (ppdsc8 == NULL) {
         ERR("invalid parameter: ppdsc8 == NULL\n");
         return DSERR_INVALIDPARAM;
+    }
+
+    if (((IDirectSoundFullDuplexImpl*)pdsfd)->capture_device == NULL) {
+        WARN("not initialized\n");
+        *ppdsc8 = NULL;
+        return DSERR_UNINITIALIZED;
     }
 
     pdsfddsc = HeapAlloc(GetProcessHeap(),0,sizeof(*pdsfddsc));
@@ -773,6 +791,8 @@ HRESULT DSOUND_FullDuplexCreate(LPDIRECTSOUNDFULLDUPLEX* ppDSFD, IUnknown *pUnkO
     This->ref = 1;
     This->capture_device = NULL;
     This->renderer_device = NULL;
+
+    *ppDSFD = (LPDIRECTSOUNDFULLDUPLEX)This;
 
     return DS_OK;
 }
