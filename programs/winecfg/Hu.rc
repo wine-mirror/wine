@@ -1,0 +1,224 @@
+/*
+ * WineCfg resources
+ * Hungarian Language Support
+ *
+ * Copyright 2006 Andras Kovacs
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+
+IDR_WINECFG MENU DISCARDABLE
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Konfiguráció", IDC_AUDIO_CONFIGURE
+    END
+END
+
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
+STYLE WS_CHILD
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
+    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
+    LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
+    LTEXT           "Ez a függvénykönvtár szabad szoftver; szabadon terjesztheti, vagy módosíthatja a GNU Lesser General Public Liszenc feltételei szerint, amit a Free Software Foundation készített; mind a 2.1 verziójú licensz, vagy (választása szerint) bármely késõbbi verzió használható.",
+                    IDC_STATIC,119,44,124,72
+END
+
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Alkalmazás beállítások ",IDC_STATIC, 8,4,244,240
+    LTEXT           "A Wine különbözõ Windows verzióként tud viselkedni alkalmazásonként.  Ez a fül összeköttetésben áll a Függvénykönyvtár és Grafika füllel, hogy lehetõvé tegye a rendszerszintû vagy alkalmazásonkénti beállításokat ezeken a füleken is.",
+                    IDC_STATIC,15,15,227,35
+    CONTROL         "Alkalmazások",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,50,230,150
+    PUSHBUTTON	    "&Alk. hozzáadás...",IDC_APP_ADDAPP, 90,204,75,14
+    PUSHBUTTON	    "Alk. &eltávolítása",IDC_APP_REMOVEAPP, 170,204,75,14
+    LTEXT           "&Windows verzió:",IDC_STATIC,17,226,58,8
+    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
+END
+
+IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Ablakbeállítások ",IDC_STATIC,8,25,244,180
+
+    CONTROL	    "A DirectX-es alkalmazások ablakábol nem léphet ki az egérmutató",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "Asztal dupla-pufferelés engedélyezése",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    LTEXT 	    "Ha az ablakokat egy másik ablakkezelõ kezeli, akkor lesz standard keretjük, tisztelni fogják a virtuális asztalokat, és megjelennek az ablaklistában. \n\nHa az ablakok kezeletlenek, el fognak vállni az Ön ablakkezelõjétõl. Ez azt jelenti, hogy az ablakok nem fognak szorosan egybeépülni az Ön asztalával, de az emuláció hatásosabb, jobban együtt tud mûködni néhány programmal.",
+    		    IDC_STATIC,15,58,228,80
+    CONTROL	    "Az ablakkezelõ kezelheti az ablakokat",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
+    
+    /* FIXME: the wording of this explanation could be a lot better */
+    LTEXT           "Ön választhatja a windows asztal emulálást, ahol az összes ablak egy 'virtuális képernyõn' fog megjelnni, vagy az ablakok megjelníthetõk az Ön standard asztalán.",
+                    IDC_STATIC,15,146,228,28
+    LTEXT           "Ablakméret:",IDC_DESKTOP_SIZE,15,188,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,188,8,8,WS_DISABLED
+    CONTROL         "Virtuális asztal emulálása",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,173,230,10
+		    
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,210,244,50
+
+    LTEXT	    "Vertex Shader támogatás: ",IDC_STATIC,15,220,80,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,218,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL         "Pixel Shader engedélyezése (ha támogatja a hardver)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,237,230,10
+END
+
+IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " DLL felûlbírálások ",IDC_STATIC,8,4,244,240
+    LTEXT           "A dinamikus csatolású függvénykönyvtárakat ki lehet választani egyenként hogy beépítettek (a Wine biztosítja), vagy natívak (a windowsból nyert, vagy az alkalmazás biztosítja)."
+                    ,IDC_STATIC,16,16,220,32
+    LTEXT           "Új felülbírálás könyvtárhoz:",IDC_STATIC,16,58,100,8
+    COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON      "Hozzá&adás",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
+    LTEXT           "Létezõ felülbírálások:",IDC_STATIC,16,86,100,8
+    LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "Sz&erkesztés",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "E&ltávolítás",IDC_DLLS_REMOVEDLL,164,114,82,14 
+END
+
+IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Felülbírálás szerkesztése"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Betöltési sorrend ",IDC_STATIC,8,4,94,66
+    CONTROL         "&Beépített (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
+    CONTROL         "&Natív (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "Beépítet&t, natív",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "Natí&v, beépített",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "Tiltá&s",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "Mégse",IDCANCEL,57,74,45,14,WS_GROUP
+END
+
+IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Meghajtó hozzárendelések ",IDC_STATIC,8,4,244,240
+    CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
+    PUSHBUTTON      "Hozzá&ad...",IDC_BUTTON_ADD,15,98,37,14
+    PUSHBUTTON      "Tö&rlés",IDC_BUTTON_REMOVE,56,98,37,14
+    PUSHBUTTON      "Auto&felism...",IDC_BUTTON_AUTODETECT,197,98,49,14
+
+    /* editing drive details */
+    LTEXT           "&Útv.:",IDC_STATIC,15,123,20,9    
+    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Tallózás...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+    
+    LTEXT           "&Típus:",IDC_STATIC_TYPE,15,138,21,10
+    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    
+    LTEXT           "Címke és sorozatszám",IDC_LABELSERIAL_STATIC,15,155,95,10
+    
+    PUSHBUTTON      "&Haladó",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
+    CONTROL         "Autofelismerés &eszközrõl:",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,15,166,93,10
+    EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Tall&ózás...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    CONTROL         "Ké&zi hozzárendelés:",IDC_RADIO_ASSIGN,"Button",
+                    BS_AUTORADIOBUTTON,15,195,79,10
+
+    LTEXT           "&Címke:",IDC_STATIC_LABEL,33,208,29,12
+    EDITTEXT        IDC_EDIT_LABEL,63,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "S&orszám:",IDC_STATIC_SERIAL,33,225,29,12
+    EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+
+    CONTROL         "Rejtett fájlok megjelenítése",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+END
+
+IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Meghajtóprogram választás ",IDC_STATIC,8,4,244,195
+    LTEXT           "Válasszon egy hangmeghajtót a kiválasztott meghajtóprogram elõtti négyzet bejlölésével.  A hang letiltható, ha nem jelöl be egy meghajtót sem. Több meghajtóprogram bejelölése nem ajánlott. Az összes meghajtó beállítható, ha rájuk kattint jobb egérgombbal.",IDC_STATIC,15,15,227,35
+    CONTROL         "Eszközök",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140 
+    PUSHBUTTON	    "Vezérlõpult",IDC_AUDIO_CONTROL_PANEL,170,50,59,14
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
+    LTEXT	    "Hardveres gyorsítás: ",IDC_STATIC,15,215,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Meghajtóprogram emuláció",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
+END
+
+IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Megjelenés ",IDC_STATIC,8,4,244,106
+    LTEXT           "Téma:",IDC_STATIC,15,16,230,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,24,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Téma telepítése...",IDC_THEME_INSTALL,152,38,93,14
+    LTEXT           "Szín:",IDC_THEME_COLORTEXT,15,54,230,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,62,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Méret:",IDC_THEME_SIZETEXT,15,80,230,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,15,88,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " Rendszermappa ",IDC_STATIC,8,114,244,100
+    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
+    CONTROL         "Ide linkel:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+    PUSHBUTTON      "Tallózás",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WINE_VERSION        "CVS"
+    IDS_TAB_APPLICATIONS    "Alkalmazások"
+    IDS_TAB_DLLS            "Függvénykönyvtárak"
+    IDS_TAB_DRIVES          "Meghajtók"
+    IDS_CHOOSE_PATH         "Kérem válasszon unix célkönyvtárat."
+    IDS_HIDE_ADVANCED       "Haladó <<"
+    IDS_SHOW_ADVANCED       "Haladó >>"
+    IDS_NOTHEME             "(Nincs téma)"
+    IDS_TAB_GRAPHICS        "Grafika"
+    IDS_TAB_DESKTOP_INTEGRATION "Asztalba beépülés"
+    IDS_TAB_AUDIO           "Hang"
+    IDS_TAB_ABOUT           "Névjegy"
+    IDS_WINECFG_TITLE       "Wine konfiguráció"
+    IDS_WINECFG_TITLE_APP   "Wine konfiguráció %s számára"
+    IDS_THEMEFILE           "Témafájlok"
+    IDS_THEMEFILE_SELECT    "Témafájl választása"
+    IDS_AUDIO_MISSING       "Jelenleg nincs hangmeghajtó kiválasztva a regisztrációs adatbázisban.\n\nEgy ajánlott meghajtóprogram ki lett választva Önnek.\nÖn használhatja ezt a meghajtót, vagy választhat másikat ha elérhetõ.\n\nÖnnek az alkalmazásra kell kattintani a kiválasztás érvénybe léptetéséhez."
+    IDS_SHELL_FOLDER        "Rendszermappa"
+    IDS_LINKS_TO            "Ide linkel"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "A könyvtárak betöltési sorrendjének megváltoztatása nem ajánlott.\nBiztos hogy ezt akarja tenni?"
+    IDS_DLL_WARNING_CAPTION "Figyelem: rendszerfüggvénykönyvtár"
+    IDS_DLL_NATIVE          "natív"
+    IDS_DLL_BUILTIN         "beépített"
+    IDS_DLL_NATIVE_BUILTIN  "natív, beépített"
+    IDS_DLL_BUILTIN_NATIVE  "beépített, natív"
+    IDS_DLL_DISABLED        "letiltva"
+END
