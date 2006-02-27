@@ -18,6 +18,7 @@
  */
 #include <stdio.h>
 #include <stdarg.h>
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
@@ -937,7 +938,7 @@ static void init_oid_info(HINSTANCE hinst)
                 info->info.pszOID = oidInfoConstructors[i].pszOID;
                 info->info.pwszName = oidInfoConstructors[i].pwszName;
                 info->info.dwGroupId = oidInfoConstructors[i].dwGroupId;
-                info->info.Algid = oidInfoConstructors[i].Algid;
+                info->info.u.Algid = oidInfoConstructors[i].Algid;
                 if (oidInfoConstructors[i].blob)
                 {
                     info->info.ExtraInfo.cbData =
@@ -966,7 +967,7 @@ static void init_oid_info(HINSTANCE hinst)
                     info->info.pwszName =
                      (LPWSTR)((LPBYTE)info + sizeof(struct OIDInfo));
                     info->info.dwGroupId = oidInfoConstructors[i].dwGroupId;
-                    info->info.Algid = oidInfoConstructors[i].Algid;
+                    info->info.u.Algid = oidInfoConstructors[i].Algid;
                     LoadStringW(hinst, (UINT)oidInfoConstructors[i].pwszName,
                      (LPWSTR)info->info.pwszName, len + 1);
                     if (oidInfoConstructors[i].blob)
@@ -1034,7 +1035,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
-            if (info->info.Algid == *(DWORD *)pvKey &&
+            if (info->info.u.Algid == *(DWORD *)pvKey &&
              (!dwGroupId || info->info.dwGroupId == dwGroupId))
             {
                 ret = &info->info;
@@ -1086,7 +1087,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
-            if (info->info.Algid == *(DWORD *)pvKey &&
+            if (info->info.u.Algid == *(DWORD *)pvKey &&
              info->info.ExtraInfo.cbData >= sizeof(DWORD) &&
              *(DWORD *)info->info.ExtraInfo.pbData ==
              *(DWORD *)((LPBYTE)pvKey + sizeof(DWORD)) &&
@@ -1123,7 +1124,7 @@ DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId)
      (void *)pszObjId, 0);
 
     if (info)
-        ret = info->Algid;
+        ret = info->u.Algid;
     else
         ret = 0;
     return ret;
