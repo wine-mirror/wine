@@ -123,6 +123,9 @@ HRESULT WINAPI CloseINFEngine(HINF hInf)
 {
     TRACE("(%p)\n", hInf);
 
+    if (!hInf)
+        return E_INVALIDARG;
+
     SetupCloseInfFile(hInf);
     return S_OK;
 }
@@ -270,7 +273,7 @@ HRESULT WINAPI OpenINFEngineA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
     TRACE("(%p, %p, %ld, %p, %p)\n", pszInfFilename, pszInstallSection,
           dwFlags, phInf, pvReserved);
 
-    if (!phInf)
+    if (!pszInfFilename || !phInf)
         return E_INVALIDARG;
 
     *phInf = SetupOpenInfFileA(pszInfFilename, NULL, INF_STYLE_WIN4, NULL);
@@ -472,6 +475,9 @@ HRESULT WINAPI TranslateInfStringExA(HINF hInf, LPCSTR pszInfFilename,
           pszTranslateSection, pszTranslateKey, pszBuffer, dwBufferSize,
           pdwRequiredSize, pvReserved);
 
+    if (!hInf || !pszInfFilename || !pszTranslateSection || !pszTranslateKey)
+        return E_INVALIDARG;
+
     if (!SetupGetLineTextA(NULL, hInf, pszTranslateSection, pszTranslateKey,
                            pszBuffer, dwBufferSize, pdwRequiredSize))
     {
@@ -481,7 +487,7 @@ HRESULT WINAPI TranslateInfStringExA(HINF hInf, LPCSTR pszInfFilename,
         return SPAPI_E_LINE_NOT_FOUND;
     }
 
-    return E_FAIL;   
+    return S_OK;   
 }
 
 /***********************************************************************

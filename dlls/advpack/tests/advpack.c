@@ -28,9 +28,12 @@
 #define TEST_STRING1 "\\Application Name"
 #define TEST_STRING2 "%49001%\\Application Name"
 
+static HRESULT (WINAPI *pCloseINFEngine)(HINF);
 static HRESULT (WINAPI *pDelNode)(LPCSTR,DWORD);
 static HRESULT (WINAPI *pGetVersionFromFile)(LPSTR,LPDWORD,LPDWORD,BOOL);
+static HRESULT (WINAPI *pOpenINFEngine)(PCSTR,PCSTR,DWORD,HINF*,PVOID);
 static HRESULT (WINAPI *pTranslateInfString)(LPSTR,LPSTR,LPSTR,LPSTR,LPSTR,DWORD,LPDWORD,LPVOID);
+static HRESULT (WINAPI *pTranslateInfStringEx)(HINF,PCSTR,PCSTR,PCSTR,PSTR,DWORD,PDWORD,PVOID);
 
 static BOOL init_function_pointers(void)
 {
@@ -39,11 +42,15 @@ static BOOL init_function_pointers(void)
     if (!hAdvPack)
         return FALSE;
 
+    pCloseINFEngine = (void*)GetProcAddress(hAdvPack, "CloseINFEngine");
     pDelNode = (void *)GetProcAddress(hAdvPack, "DelNode");
     pGetVersionFromFile = (void *)GetProcAddress(hAdvPack, "GetVersionFromFile");
+    pOpenINFEngine = (void*)GetProcAddress(hAdvPack, "OpenINFEngine");
     pTranslateInfString = (void *)GetProcAddress(hAdvPack, "TranslateInfString");
+    pTranslateInfStringEx = (void*)GetProcAddress(hAdvPack, "TranslateInfStringEx");
 
-    if (!pDelNode || !pGetVersionFromFile || !pTranslateInfString)
+    if (!pCloseINFEngine || !pDelNode || !pGetVersionFromFile ||
+        !pOpenINFEngine || !pTranslateInfString)
         return FALSE;
 
     return TRUE;
@@ -271,6 +278,120 @@ static void translateinfstring_test()
     DeleteFile("c:\\test.inf");
 }
 
+static void translateinfstringex_test(void)
+{
+    HINF hinf;
+    HKEY hkey;
+    HRESULT hr;
+    char buffer[MAX_PATH];
+    char progfiles[MAX_PATH];
+    DWORD size = MAX_PATH;
+
+    create_inf_file();
+
+    RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &hkey);
+    RegQueryValueExA(hkey, "ProgramFilesDir", NULL, NULL, (LPBYTE)progfiles, &size);
+    lstrcatA(progfiles, TEST_STRING1);
+    
+    /* need to see if there are any flags */
+
+    /* try a NULL filename */
+    hr = pOpenINFEngine(NULL, "Options.NTx86", 0, &hinf, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+
+    /* try an empty filename */
+    hr = pOpenINFEngine("", "Options.NTx86", 0, &hinf, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %ld\n", hr);
+
+    /* try a NULL hinf */
+    hr = pOpenINFEngine("c:\\test.inf", "Options.NTx86", 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+
+    /* open the INF without the Install section specified */
+    hr = pOpenINFEngine("c:\\test.inf", NULL, 0, &hinf, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+
+    /* try a NULL hinf */
+    hr = pTranslateInfStringEx(NULL, "c:\\test.inf", "Options.NTx86", "InstallDir",
+                              buffer, size, &size, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+
+    /* try a NULL filename */
+    hr = pTranslateInfStringEx(hinf, NULL, "Options.NTx86", "InstallDir",
+                              buffer, size, &size, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+
+    /* try an empty filename */
+    size = MAX_PATH;
+    hr = pTranslateInfStringEx(hinf, "", "Options.NTx86", "InstallDir",
+                              buffer, size, &size, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", (UINT)hr);
+    todo_wine
+    {
+        ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
+        ok(size == 25, "Expected size 25, got %ld\n", size);
+    }
+
+    /* try a NULL translate section */
+    hr = pTranslateInfStringEx(hinf, "c:\\test.inf", NULL, "InstallDir",
+                              buffer, size, &size, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+
+    /* try an empty translate section */
+    hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "", "InstallDir",
+                              buffer, size, &size, NULL);
+    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got %ld\n", hr);
+
+    /* try a NULL translate key */
+    hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "Options.NTx86", NULL,
+                              buffer, size, &size, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+
+    /* try an empty translate key */
+    hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "Options.NTx86", "",
+                              buffer, size, &size, NULL);
+    ok(hr == SPAPI_E_LINE_NOT_FOUND, "Expected SPAPI_E_LINE_NOT_FOUND, got %ld\n", hr);
+
+    /* successfully translate the string */
+    size = MAX_PATH;
+    hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "Options.NTx86", "InstallDir",
+                              buffer, size, &size, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    todo_wine
+    {
+        ok(!strcmp(buffer, TEST_STRING2), "Expected %s, got %s\n", TEST_STRING2, buffer);
+        ok(size == 25, "Expected size 25, got %ld\n", size);
+    }
+
+    /* try a NULL hinf */
+    hr = pCloseINFEngine(NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
+
+    /* successfully close the hinf */
+    hr = pCloseINFEngine(hinf);
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+
+    /* open the inf with the install section */
+    hr = pOpenINFEngine("c:\\test.inf", "section", 0, &hinf, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+
+    /* translate the string with the install section specified */
+    size = MAX_PATH;
+    hr = pTranslateInfStringEx(hinf, "c:\\test.inf", "Options.NTx86", "InstallDir",
+                              buffer, size, &size, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(!strcmp(buffer, progfiles), "Expected %s, got %s\n", progfiles, buffer);
+    ok(size == lstrlenA(progfiles) + 1, "Expected size %i, got %ld\n",
+       lstrlenA(progfiles) + 1, size);
+
+    /* close the INF again */
+    hr = pCloseINFEngine(hinf);
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+
+    DeleteFileA("c:\\test.inf");
+}
+
 START_TEST(advpack)
 {
     if (!init_function_pointers())
@@ -279,4 +400,5 @@ START_TEST(advpack)
     version_test();
     delnode_test();
     translateinfstring_test();
+    translateinfstringex_test();
 }
