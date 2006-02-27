@@ -168,6 +168,36 @@ static NTSTATUS get_modem_status(int fd, DWORD* lpModemStat)
     return status;
 }
 
+static NTSTATUS get_status(int fd, SERIAL_STATUS* ss)
+{
+    NTSTATUS    status = STATUS_SUCCESS;
+
+    ss->Errors = 0;
+    ss->HoldReasons = 0;
+    ss->EofReceived = FALSE;
+    ss->WaitForImmediate = FALSE;
+#ifdef TIOCOUTQ
+    if (ioctl(fd, TIOCOUTQ, &ss->AmountInOutQueue) == -1)
+    {
+        WARN("ioctl returned error\n");
+        status = FILE_GetNtStatus();
+    }
+#else
+    ss->AmountInOutQueue = 0; /* FIXME: find a different way to find out */
+#endif
+
+#ifdef TIOCINQ
+    if (ioctl(fd, TIOCINQ, &ss->AmountInInQueue))
+    {
+        WARN("ioctl returned error\n");
+        status = FILE_GetNtStatus();
+    }
+#else
+    ss->AmountInInQueue = 0; /* FIXME: find a different way to find out */
+#endif
+    return status;
+}
+
 static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD* mask)
 {
     NTSTATUS    status;
@@ -247,6 +277,14 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 
     switch (dwIoControlCode)
     {
+    case IOCTL_SERIAL_GET_COMMSTATUS:
+        if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_STATUS))
+        {
+            if (!(status = get_status(fd, (SERIAL_STATUS*)lpOutBuffer)))
+                sz = sizeof(SERIAL_STATUS);
+        }
+        else status = STATUS_INVALID_PARAMETER;
+        break;
     case IOCTL_SERIAL_GET_MODEMSTATUS:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
