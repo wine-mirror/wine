@@ -534,8 +534,8 @@ static BOOL WINAPI CRYPT_MemDeleteCert(HCERTSTORE hCertStore,
              * protected.
              */
             list_remove(&cert->entry);
-            ret = CertFreeCertificateContext((PCCERT_CONTEXT)cert);
             cert->entry.prev = cert->entry.next = &store->certs;
+            ret = CertFreeCertificateContext((PCCERT_CONTEXT)cert);
             break;
         }
     }

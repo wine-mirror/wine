@@ -85,7 +85,6 @@ static void free_function_sets(void)
 
         list_remove(&setCursor->next);
         CryptMemFree(setCursor->name);
-        CryptMemFree(setCursor);
         LIST_FOR_EACH_ENTRY_SAFE(functionCursor, funcNext,
          &setCursor->functions, struct OIDFunction, next)
         {
@@ -93,6 +92,7 @@ static void free_function_sets(void)
             CryptMemFree(functionCursor);
         }
         DeleteCriticalSection(&setCursor->cs);
+        CryptMemFree(setCursor);
     }
     DeleteCriticalSection(&funcSetCS);
 }
