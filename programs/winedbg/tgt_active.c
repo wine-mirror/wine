@@ -864,13 +864,67 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     HANDLE              hFile;
     enum dbg_start      ds = start_error_parse;
 
-    argc--; argv++;
-    hFile = parser_generate_command_file("echo Modules:", "info share",
-                                         "echo Threads:", "info threads",
-					 NULL);
-    if (hFile == INVALID_HANDLE_VALUE ||
-        (ds = dbg_active_attach(argc, argv)) != start_ok)
-        return ds;
+    if (!strcmp(argv[0], "--auto"))
+    {
+        /* auto mode */
+        argc--; argv++;
+        ds = dbg_active_attach(argc, argv);
+        if (ds != start_ok) return ds;
+        hFile = parser_generate_command_file("echo Modules:", "info share",
+                                             "echo Threads:", "info threads",
+                                             NULL);
+    }
+    else if (!strcmp(argv[0], "--minidump"))
+    {
+        const char*     file = NULL;
+        char            tmp[8 + 1 + MAX_PATH]; /* minidump <file> */
+
+        argc--; argv++;
+        /* hard stuff now ; we can get things like:
+         * --minidump <pid>                     1 arg
+         * --minidump <pid> <evt>               2 args
+         * --minidump <file> <pid>              2 args
+         * --minidump <file> <pid> <evt>        3 args
+         */
+        switch (argc)
+        {
+        case 1:
+            ds = dbg_active_attach(argc, argv);
+            break;
+        case 2:
+            if ((ds = dbg_active_attach(argc, argv)) != start_ok)
+            {
+                file = argv[0];
+                ds = dbg_active_attach(argc - 1, argv + 1);
+            }
+            break;
+        case 3:
+            file = argv[0];
+            ds = dbg_active_attach(argc - 1, argv + 1);
+            break;
+        default:
+            return start_error_parse;
+        }
+        if (ds != start_ok) return ds;
+        memcpy(tmp, "minidump \"", 10);
+        if (!file)
+        {
+            char        path[MAX_PATH];
+
+            GetTempPath(sizeof(path), path);
+            GetTempFileName(path, "WD", 0, tmp + 10);
+        }
+        else strcpy(tmp + 10, file);
+        strcat(tmp, "\"");
+        if (!file)
+        {
+            /* FIXME: should generate unix name as well */
+            dbg_printf("Capturing program state in %s\n", tmp + 9);
+        }
+        hFile = parser_generate_command_file(tmp, NULL);
+    }
+    else return start_error_parse;
+    if (hFile == INVALID_HANDLE_VALUE) return start_error_parse;
     dbg_main_loop(hFile);
     return start_ok;
 }

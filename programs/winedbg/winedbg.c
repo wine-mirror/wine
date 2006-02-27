@@ -34,8 +34,6 @@
 /* TODO list:
  *
  * - minidump
- *      + allow winedbg in automatic mode to create a minidump (or add another option
- *        for that)
  *      + set a mode where winedbg would start (postmortem debugging) from a minidump
  * - CPU adherence
  *      + we always assume the stack grows as on i386 (ie downwards)
@@ -495,7 +493,7 @@ int main(int argc, char** argv)
     SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
                   SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS);
 
-    if (argc && !strcmp(argv[0], "--auto"))
+    if (argc && (!strcmp(argv[0], "--auto") || !strcmp(argv[0], "--minidump")))
     {
         /* force some internal variables */
         DBG_IVAR(BreakOnDllLoad) = 0;
