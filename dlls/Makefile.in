@@ -168,7 +168,7 @@ BASEDIRS = \
 	winmm/winejack \
 	winmm/winenas \
 	winmm/wineoss \
-	winnls \
+	winnls32 \
 	winsock \
 	winspool \
 	wintab32 \
@@ -1004,8 +1004,8 @@ winmm.dll.so: winmm/winmm.dll.so
 mmsystem.dll16 sound.drv16 : winmm.dll.so
 	echo "winmm.dll" >$@
 
-winnls32.dll.so: winnls/winnls32.dll.so
-	$(RM) $@ && $(LN_S) winnls/winnls32.dll.so $@
+winnls32.dll.so: winnls32/winnls32.dll.so
+	$(RM) $@ && $(LN_S) winnls32/winnls32.dll.so $@
 
 winnls.dll16 : winnls32.dll.so
 	echo "winnls32.dll" >$@
@@ -1076,7 +1076,6 @@ IMPORT_SYMLINKS = \
 	libmsacm32.$(IMPLIBEXT) \
 	libmsvfw32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
-	libwinnls32.$(IMPLIBEXT) \
 	libws2_32.$(IMPLIBEXT) \
 	libdxerr8.a \
 	libdxerr9.a \
@@ -1188,7 +1187,7 @@ IMPORT_LIBS = \
 	winedos/libwinedos.$(IMPLIBEXT) \
 	wininet/libwininet.$(IMPLIBEXT) \
 	winmm/libwinmm.$(IMPLIBEXT) \
-	winnls/libwinnls32.$(IMPLIBEXT) \
+	winnls32/libwinnls32.$(IMPLIBEXT) \
 	winspool/libwinspool.$(IMPLIBEXT) \
 	wintab32/libwintab32.$(IMPLIBEXT) \
 	wintrust/libwintrust.$(IMPLIBEXT) \
@@ -1504,8 +1503,8 @@ wininet/libwininet.$(IMPLIBEXT): wininet/wininet.spec $(WINEBUILD)
 winmm/libwinmm.$(IMPLIBEXT): winmm/winmm.spec $(WINEBUILD)
 	@cd winmm && $(MAKE) libwinmm.$(IMPLIBEXT)
 
-winnls/libwinnls32.$(IMPLIBEXT): winnls/winnls32.spec $(WINEBUILD)
-	@cd winnls && $(MAKE) libwinnls32.$(IMPLIBEXT)
+winnls32/libwinnls32.$(IMPLIBEXT): winnls32/winnls32.spec $(WINEBUILD)
+	@cd winnls32 && $(MAKE) libwinnls32.$(IMPLIBEXT)
 
 winspool/libwinspool.$(IMPLIBEXT): winspool/winspool.drv.spec $(WINEBUILD)
 	@cd winspool && $(MAKE) libwinspool.$(IMPLIBEXT)
@@ -1551,9 +1550,6 @@ libmsvfw32.$(IMPLIBEXT): msvideo/libmsvfw32.$(IMPLIBEXT)
 
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
-
-libwinnls32.$(IMPLIBEXT): winnls/libwinnls32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) winnls/libwinnls32.$(IMPLIBEXT) $@
 
 libws2_32.$(IMPLIBEXT): winsock/libws2_32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) winsock/libws2_32.$(IMPLIBEXT) $@
@@ -1724,7 +1720,7 @@ wineps/wineps.drv.so: wineps
 x11drv/winex11.drv.so: x11drv
 wininet/wininet.dll.so: wininet
 winmm/winmm.dll.so: winmm
-winnls/winnls32.dll.so: winnls
+winnls32/winnls32.dll.so: winnls32
 winspool/winspool.drv.so: winspool
 wintab32/wintab32.dll.so: wintab32
 wintrust/wintrust.dll.so: wintrust

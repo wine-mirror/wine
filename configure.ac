@@ -1657,7 +1657,7 @@ dlls/winmm/wineesd/Makefile
 dlls/winmm/winejack/Makefile
 dlls/winmm/winenas/Makefile
 dlls/winmm/wineoss/Makefile
-dlls/winnls/Makefile
+dlls/winnls32/Makefile
 dlls/winsock/Makefile
 dlls/winsock/tests/Makefile
 dlls/winspool/Makefile
