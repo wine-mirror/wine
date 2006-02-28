@@ -143,6 +143,9 @@ static VOID NOTEPAD_InitData(VOID)
     *p = '\0';
     Globals.hDevMode = NULL;
     Globals.hDevNames = NULL;
+
+    CheckMenuItem(GetMenu(Globals.hMainWnd), CMD_WRAP,
+            MF_BYCOMMAND | (Globals.bWrapLongLines ? MF_CHECKED : MF_UNCHECKED));
 }
 
 /***********************************************************************
@@ -178,11 +181,15 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
     case WM_CREATE:
     {
         static const WCHAR editW[] = { 'e','d','i','t',0 };
+        DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
+                        ES_AUTOVSCROLL | ES_MULTILINE;
         RECT rc;
         GetClientRect(hWnd, &rc);
+
+        if (!Globals.bWrapLongLines) dwStyle |= WS_HSCROLL | ES_AUTOHSCROLL;
+
         Globals.hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, editW, NULL,
-                             WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | WS_HSCROLL |
-                             ES_AUTOVSCROLL | ES_MULTILINE,
+                             dwStyle,
                              0, 0, rc.right, rc.bottom, hWnd,
                              NULL, Globals.hInstance, NULL);
         NOTEPAD_InitFont();
@@ -370,6 +377,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
     ZeroMemory(&Globals, sizeof(Globals));
     Globals.hInstance       = hInstance;
+    Globals.bWrapLongLines  = TRUE;
 
     ZeroMemory(&class, sizeof(class));
     class.cbSize        = sizeof(class);
