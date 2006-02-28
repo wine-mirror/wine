@@ -896,11 +896,9 @@ ctrls	: /* Empty */				{ $$ = NULL; }
 	;
 
 lab_ctrl
-	: tSTRING opt_comma expr ',' expr ',' expr ',' expr ',' expr optional_style_pair {
+	: nameid_s opt_comma expr ',' expr ',' expr ',' expr ',' expr optional_style_pair {
 		$$=new_control();
-		$$->title = new_name_id();
-		$$->title->type = name_str;
-		$$->title->name.s_name = $1;
+		$$->title = $1;
 		$$->id = $3;
 		$$->x = $5;
 		$$->y = $7;
@@ -1156,11 +1154,9 @@ gen_exctrl
 	;
 
 lab_exctrl
-	: tSTRING opt_comma expr ',' expr ',' expr ',' expr ',' expr optional_style_pair helpid opt_data {
+	: nameid_s opt_comma expr ',' expr ',' expr ',' expr ',' expr optional_style_pair helpid opt_data {
 		$$=new_control();
-		$$->title = new_name_id();
-		$$->title->type = name_str;
-		$$->title->name.s_name = $1;
+		$$->title = $1;
 		$$->id = $3;
 		$$->x = $5;
 		$$->y = $7;
