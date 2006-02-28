@@ -68,7 +68,7 @@ BASEDIRS = \
 	iphlpapi \
 	itss \
 	kernel \
-	lzexpand \
+	lz32 \
 	mapi32 \
 	mciavi32 \
 	mcicda \
@@ -647,8 +647,8 @@ comm.drv16 krnl386.exe16 stress.dll16 \
   windebug.dll16 : kernel32.dll.so
 	echo "kernel32.dll" >$@
 
-lz32.dll.so: lzexpand/lz32.dll.so
-	$(RM) $@ && $(LN_S) lzexpand/lz32.dll.so $@
+lz32.dll.so: lz32/lz32.dll.so
+	$(RM) $@ && $(LN_S) lz32/lz32.dll.so $@
 
 lzexpand.dll16 : lz32.dll.so
 	echo "lz32.dll" >$@
@@ -1073,7 +1073,6 @@ IMPORT_SYMLINKS = \
 	libcomdlg32.$(IMPLIBEXT) \
 	libgdi32.$(IMPLIBEXT) \
 	libkernel32.$(IMPLIBEXT) \
-	liblz32.$(IMPLIBEXT) \
 	libmsacm32.$(IMPLIBEXT) \
 	libmsvfw32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
@@ -1130,7 +1129,7 @@ IMPORT_LIBS = \
 	imm32/libimm32.$(IMPLIBEXT) \
 	iphlpapi/libiphlpapi.$(IMPLIBEXT) \
 	kernel/libkernel32.$(IMPLIBEXT) \
-	lzexpand/liblz32.$(IMPLIBEXT) \
+	lz32/liblz32.$(IMPLIBEXT) \
 	mapi32/libmapi32.$(IMPLIBEXT) \
 	mlang/libmlang.$(IMPLIBEXT) \
 	mpr/libmpr.$(IMPLIBEXT) \
@@ -1326,8 +1325,8 @@ iphlpapi/libiphlpapi.$(IMPLIBEXT): iphlpapi/iphlpapi.spec $(WINEBUILD)
 kernel/libkernel32.$(IMPLIBEXT): kernel/kernel32.spec $(WINEBUILD)
 	@cd kernel && $(MAKE) libkernel32.$(IMPLIBEXT)
 
-lzexpand/liblz32.$(IMPLIBEXT): lzexpand/lz32.spec $(WINEBUILD)
-	@cd lzexpand && $(MAKE) liblz32.$(IMPLIBEXT)
+lz32/liblz32.$(IMPLIBEXT): lz32/lz32.spec $(WINEBUILD)
+	@cd lz32 && $(MAKE) liblz32.$(IMPLIBEXT)
 
 mapi32/libmapi32.$(IMPLIBEXT): mapi32/mapi32.spec $(WINEBUILD)
 	@cd mapi32 && $(MAKE) libmapi32.$(IMPLIBEXT)
@@ -1545,9 +1544,6 @@ libgdi32.$(IMPLIBEXT): gdi/libgdi32.$(IMPLIBEXT)
 libkernel32.$(IMPLIBEXT): kernel/libkernel32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) kernel/libkernel32.$(IMPLIBEXT) $@
 
-liblz32.$(IMPLIBEXT): lzexpand/liblz32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) lzexpand/liblz32.$(IMPLIBEXT) $@
-
 libmsacm32.$(IMPLIBEXT): msacm/libmsacm32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) msacm/libmsacm32.$(IMPLIBEXT) $@
 
@@ -1631,7 +1627,7 @@ iphlpapi/iphlpapi.dll.so: iphlpapi
 itss/itss.dll.so: itss
 winmm/joystick/joystick.drv.so: winmm/joystick
 kernel/kernel32.dll.so: kernel
-lzexpand/lz32.dll.so: lzexpand
+lz32/lz32.dll.so: lz32
 mapi32/mapi32.dll.so: mapi32
 mciavi32/mciavi32.dll.so: mciavi32
 mcicda/mcicda.dll.so: mcicda

@@ -1521,8 +1521,8 @@ dlls/iphlpapi/tests/Makefile
 dlls/itss/Makefile
 dlls/kernel/Makefile
 dlls/kernel/tests/Makefile
-dlls/lzexpand/Makefile
-dlls/lzexpand/tests/Makefile
+dlls/lz32/Makefile
+dlls/lz32/tests/Makefile
 dlls/mapi32/Makefile
 dlls/mapi32/tests/Makefile
 dlls/mciavi32/Makefile

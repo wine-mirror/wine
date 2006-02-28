@@ -125,8 +125,8 @@ iphlpapi_test.exe$(DLLEXT): $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 kernel32_test.exe$(DLLEXT): $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT) $@ && $(STRIP) $@
-lz32_test.exe$(DLLEXT): $(DLLDIR)/lzexpand/tests/lz32_test.exe$(DLLEXT)
-	cp $(DLLDIR)/lzexpand/tests/lz32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+lz32_test.exe$(DLLEXT): $(DLLDIR)/lz32/tests/lz32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/lz32/tests/lz32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mapi32_test.exe$(DLLEXT): $(DLLDIR)/mapi32/tests/mapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/mapi32/tests/mapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mlang_test.exe$(DLLEXT): $(DLLDIR)/mlang/tests/mlang_test.exe$(DLLEXT)
