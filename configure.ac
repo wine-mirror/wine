@@ -252,6 +252,7 @@ AC_CHECK_HEADERS(\
 	sys/poll.h \
 	sys/ptrace.h \
 	sys/reg.h \
+	sys/resource.h \
 	sys/scsiio.h \
 	sys/shm.h \
 	sys/signal.h \

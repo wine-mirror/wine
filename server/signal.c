@@ -28,6 +28,9 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
 #include <unistd.h>
 
 #include "file.h"
@@ -215,6 +218,13 @@ static void do_sigchld( int signum )
     do_signal( handler_sigchld );
 }
 
+/* SIGSEGV handler */
+static void do_sigsegv( int signum )
+{
+    fprintf( stderr, "wineserver crashed, please report this.\n");
+    abort();
+}
+
 /* SIGIO handler */
 #ifdef HAVE_SIGINFO_T_SI_FD
 static void do_sigio( int signum, siginfo_t *si, void *x )
@@ -239,6 +249,17 @@ void stop_watchdog(void)
 int watchdog_triggered(void)
 {
     return watchdog != 0;
+}
+
+static int core_dump_disabled( void )
+{
+    int r = 0;
+#ifdef RLIMIT_CORE
+    struct rlimit lim;
+
+    r = !getrlimit(RLIMIT_CORE, &lim) && (lim.rlim_cur == 0);
+#endif
+    return r;
 }
 
 void init_signals(void)
@@ -279,6 +300,11 @@ void init_signals(void)
     action.sa_handler = do_sigterm;
     sigaction( SIGQUIT, &action, NULL );
     sigaction( SIGTERM, &action, NULL );
+    if (core_dump_disabled())
+    {
+        action.sa_handler = do_sigsegv;
+        sigaction( SIGSEGV, &action, NULL );
+    }
     action.sa_handler = SIG_IGN;
     sigaction( SIGXFSZ, &action, NULL );
 #ifdef HAVE_SIGINFO_T_SI_FD

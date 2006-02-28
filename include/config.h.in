@@ -734,6 +734,9 @@
 /* Define to 1 if you have the <sys/reg.h> header file. */
 #undef HAVE_SYS_REG_H
 
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
 /* Define to 1 if you have the <sys/scsiio.h> header file. */
 #undef HAVE_SYS_SCSIIO_H
 
