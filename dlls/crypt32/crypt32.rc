@@ -26,4 +26,5 @@
 
 #include "crypt32_De.rc"
 #include "crypt32_En.rc"
+#include "crypt32_Ko.rc"
 #include "crypt32_No.rc"
