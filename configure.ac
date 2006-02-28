@@ -1639,7 +1639,6 @@ dlls/vnetbios.vxd/Makefile
 dlls/vtdapi.vxd/Makefile
 dlls/vwin32.vxd/Makefile
 dlls/win32s/Makefile
-dlls/winaspi/Makefile
 dlls/winecrt0/Makefile
 dlls/wined3d/Makefile
 dlls/winedos/Makefile
@@ -1666,6 +1665,7 @@ dlls/winspool/tests/Makefile
 dlls/wintab32/Makefile
 dlls/wintrust/Makefile
 dlls/wldap32/Makefile
+dlls/wnaspi32/Makefile
 dlls/wow32/Makefile
 dlls/wsock32/Makefile
 dlls/wtsapi32/Makefile

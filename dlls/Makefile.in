@@ -154,7 +154,6 @@ BASEDIRS = \
 	vtdapi.vxd \
 	vwin32.vxd \
 	win32s \
-	winaspi \
 	winedos \
 	wineps \
 	wininet \
@@ -175,6 +174,7 @@ BASEDIRS = \
 	wintab32 \
 	wintrust \
 	wldap32 \
+	wnaspi32 \
 	wow32 \
 	wsock32 \
 	wtsapi32
@@ -1025,8 +1025,8 @@ wintrust.dll.so: wintrust/wintrust.dll.so
 wldap32.dll.so: wldap32/wldap32.dll.so
 	$(RM) $@ && $(LN_S) wldap32/wldap32.dll.so $@
 
-wnaspi32.dll.so: winaspi/wnaspi32.dll.so
-	$(RM) $@ && $(LN_S) winaspi/wnaspi32.dll.so $@
+wnaspi32.dll.so: wnaspi32/wnaspi32.dll.so
+	$(RM) $@ && $(LN_S) wnaspi32/wnaspi32.dll.so $@
 
 winaspi.dll16 : wnaspi32.dll.so
 	echo "wnaspi32.dll" >$@
@@ -1077,7 +1077,6 @@ IMPORT_SYMLINKS = \
 	libmsvfw32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
 	libwinnls32.$(IMPLIBEXT) \
-	libwnaspi32.$(IMPLIBEXT) \
 	libws2_32.$(IMPLIBEXT) \
 	libdxerr8.a \
 	libdxerr9.a \
@@ -1194,7 +1193,7 @@ IMPORT_LIBS = \
 	wintab32/libwintab32.$(IMPLIBEXT) \
 	wintrust/libwintrust.$(IMPLIBEXT) \
 	wldap32/libwldap32.$(IMPLIBEXT) \
-	winaspi/libwnaspi32.$(IMPLIBEXT) \
+	wnaspi32/libwnaspi32.$(IMPLIBEXT) \
 	wow32/libwow32.$(IMPLIBEXT) \
 	winsock/libws2_32.$(IMPLIBEXT) \
 	wsock32/libwsock32.$(IMPLIBEXT) \
@@ -1520,8 +1519,8 @@ wintrust/libwintrust.$(IMPLIBEXT): wintrust/wintrust.spec $(WINEBUILD)
 wldap32/libwldap32.$(IMPLIBEXT): wldap32/wldap32.spec $(WINEBUILD)
 	@cd wldap32 && $(MAKE) libwldap32.$(IMPLIBEXT)
 
-winaspi/libwnaspi32.$(IMPLIBEXT): winaspi/wnaspi32.spec $(WINEBUILD)
-	@cd winaspi && $(MAKE) libwnaspi32.$(IMPLIBEXT)
+wnaspi32/libwnaspi32.$(IMPLIBEXT): wnaspi32/wnaspi32.spec $(WINEBUILD)
+	@cd wnaspi32 && $(MAKE) libwnaspi32.$(IMPLIBEXT)
 
 wow32/libwow32.$(IMPLIBEXT): wow32/wow32.spec $(WINEBUILD)
 	@cd wow32 && $(MAKE) libwow32.$(IMPLIBEXT)
@@ -1555,9 +1554,6 @@ libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 
 libwinnls32.$(IMPLIBEXT): winnls/libwinnls32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) winnls/libwinnls32.$(IMPLIBEXT) $@
-
-libwnaspi32.$(IMPLIBEXT): winaspi/libwnaspi32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) winaspi/libwnaspi32.$(IMPLIBEXT) $@
 
 libws2_32.$(IMPLIBEXT): winsock/libws2_32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) winsock/libws2_32.$(IMPLIBEXT) $@
@@ -1733,7 +1729,7 @@ winspool/winspool.drv.so: winspool
 wintab32/wintab32.dll.so: wintab32
 wintrust/wintrust.dll.so: wintrust
 wldap32/wldap32.dll.so: wldap32
-winaspi/wnaspi32.dll.so: winaspi
+wnaspi32/wnaspi32.dll.so: wnaspi32
 wow32/wow32.dll.so: wow32
 winsock/ws2_32.dll.so: winsock
 wsock32/wsock32.dll.so: wsock32

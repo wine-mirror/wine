@@ -22,7 +22,6 @@ libmsacm32.def
 libmsvfw32.def
 libuser32.def
 libwinnls32.def
-libwnaspi32.def
 libws2_32.def
 lzexpand.dll16
 mmsystem.dll16
