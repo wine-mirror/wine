@@ -464,6 +464,19 @@ char* MSVCRT_setlocale(int category, const char* locale)
   return MSVCRT_current_lc_all;
 }
 
+/*********************************************************************
+ *		setlocale (MSVCRT.@)
+ */
+MSVCRT_wchar_t* MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* locale)
+{
+  static MSVCRT_wchar_t fake[] = {
+    'E','n','g','l','i','s','h','_','U','n','i','t','e','d',' ',
+    'S','t','a','t','e','s','.','1','2','5','2',0 };
+
+  FIXME("%d %s\n", category, debugstr_w(locale));
+
+  return fake;
+}
 
 /*********************************************************************
  *		_Getdays (MSVCRT.@)

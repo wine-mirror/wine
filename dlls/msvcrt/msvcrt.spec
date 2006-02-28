@@ -541,7 +541,7 @@
 @ cdecl _write(long ptr long)
 @ cdecl _wrmdir(wstr)
 @ stub _wsearchenv #(wstr wstr ptr)
-@ stub _wsetlocale #(long wstr)
+@ cdecl _wsetlocale(long wstr) MSVCRT__wsetlocale
 @ varargs _wsopen (wstr long long) MSVCRT__wsopen
 @ stub _wspawnl #(long wstr wstr) varargs
 @ stub _wspawnle #(long wstr wstr) varargs
