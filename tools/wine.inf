@@ -152,6 +152,7 @@ HKLM,Software\Microsoft\Windows NT\CurrentVersion\Hotfix\Q246009,"Installed",,"1
 [Debugger]
 HKLM,Software\Microsoft\Windows NT\CurrentVersion\AeDebug,"Debugger",2,"winedbg --auto %ld %ld"
 HKLM,Software\Microsoft\Windows NT\CurrentVersion\AeDebug,"Auto",2,"1"
+HKCU,Software\Wine\Debug,"RelayExclude",2,"ntdll.RtlEnterCriticalSection;ntdll.RtlLeaveCriticalSection;kernel32.97;kernel32.98"
 
 [Desktop]
 HKCU,%Desktop%,"FontSmoothing",2,"0"
