@@ -1420,6 +1420,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     TRACE_(loaddll)( " Loaded module %s : native\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
 
+    wm->ldr.LoadCount = 1;
     *pwm = wm;
     return STATUS_SUCCESS;
 }
@@ -1536,10 +1537,12 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
             }
         }
         if (!info.wm) return STATUS_INVALID_IMAGE_FORMAT;
+        if (info.wm->ldr.LoadCount != -1) info.wm->ldr.LoadCount++;
     }
     else
     {
         TRACE_(loaddll)( "Loaded module %s : builtin\n", debugstr_w(info.wm->ldr.FullDllName.Buffer) );
+        info.wm->ldr.LoadCount = 1;
         info.wm->ldr.SectionHandle = handle;
     }
 
@@ -1738,9 +1741,6 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         TRACE("Loaded module %s (%s) at %p\n", debugstr_w(filename),
               ((*pwm)->ldr.Flags & LDR_WINE_INTERNAL) ? "builtin" : "native",
               (*pwm)->ldr.BaseAddress);
-        /* Set the ldr.LoadCount here so that an attach failure will */
-        /* decrement the dependencies through the MODULE_FreeLibrary call. */
-        (*pwm)->ldr.LoadCount = 1;
         if (handle) NtClose( handle );
         if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
         return nts;
