@@ -373,9 +373,26 @@ static BOOL CRYPT_MemAddCert(PWINECRYPT_CERTSTORE store,
 {
     WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
     BOOL add = FALSE, ret;
+    PCCERT_CONTEXT existing = NULL;
 
     TRACE("(%p, %p, %ld, %p)\n", store, cert, dwAddDisposition, ppStoreContext);
 
+    if (dwAddDisposition != CERT_STORE_ADD_ALWAYS)
+    {
+        BYTE hashToAdd[20];
+        DWORD size = sizeof(hashToAdd);
+
+        ret = CRYPT_GetCertificateContextProperty(cert, CERT_HASH_PROP_ID,
+         hashToAdd, &size);
+        if (ret)
+        {
+            CRYPT_HASH_BLOB blob = { sizeof(hashToAdd), hashToAdd };
+
+            existing = CertFindCertificateInStore(store,
+             cert->cert.dwCertEncodingType, 0, CERT_FIND_SHA1_HASH, &blob,
+             NULL);
+        }
+    }
     switch (dwAddDisposition)
     {
     case CERT_STORE_ADD_ALWAYS:
@@ -383,64 +400,23 @@ static BOOL CRYPT_MemAddCert(PWINECRYPT_CERTSTORE store,
         break;
     case CERT_STORE_ADD_NEW:
     {
-        BYTE hashToAdd[20], hash[20];
-        DWORD size = sizeof(hashToAdd);
-
-        ret = CRYPT_GetCertificateContextProperty(cert, CERT_HASH_PROP_ID,
-         hashToAdd, &size);
-        if (ret)
+        if (existing)
         {
-            PWINE_CERT_LIST_ENTRY cursor;
-
-            /* Add if no cert with the same hash is found. */
-            add = TRUE;
-            EnterCriticalSection(&ms->cs);
-            LIST_FOR_EACH_ENTRY(cursor, &ms->certs, WINE_CERT_LIST_ENTRY, entry)
-            {
-                size = sizeof(hash);
-                ret = CertGetCertificateContextProperty(&cursor->cert.cert,
-                 CERT_HASH_PROP_ID, hash, &size);
-                if (ret && !memcmp(hashToAdd, hash, size))
-                {
-                    TRACE("found matching certificate, not adding\n");
-                    SetLastError(CRYPT_E_EXISTS);
-                    add = FALSE;
-                    break;
-                }
-            }
-            LeaveCriticalSection(&ms->cs);
+            TRACE("found matching certificate, not adding\n");
+            SetLastError(CRYPT_E_EXISTS);
+            add = FALSE;
         }
+        else
+            add = TRUE;
         break;
     }
     case CERT_STORE_ADD_REPLACE_EXISTING:
     {
-        BYTE hashToAdd[20], hash[20];
-        DWORD size = sizeof(hashToAdd);
-
         add = TRUE;
-        ret = CRYPT_GetCertificateContextProperty(cert, CERT_HASH_PROP_ID,
-         hashToAdd, &size);
-        if (ret)
+        if (existing)
         {
-            PWINE_CERT_LIST_ENTRY cursor, next;
-
-            /* Look for existing cert to delete */
-            EnterCriticalSection(&ms->cs);
-            LIST_FOR_EACH_ENTRY_SAFE(cursor, next, &ms->certs,
-             WINE_CERT_LIST_ENTRY, entry)
-            {
-                size = sizeof(hash);
-                ret = CertGetCertificateContextProperty(&cursor->cert.cert,
-                 CERT_HASH_PROP_ID, hash, &size);
-                if (ret && !memcmp(hashToAdd, hash, size))
-                {
-                    TRACE("found matching certificate, replacing\n");
-                    list_remove(&cursor->entry);
-                    CertFreeCertificateContext((PCCERT_CONTEXT)cursor);
-                    break;
-                }
-            }
-            LeaveCriticalSection(&ms->cs);
+            TRACE("found matching certificate, replacing\n");
+            CertDeleteCertificateFromStore(existing);
         }
         break;
     }
@@ -448,6 +424,8 @@ static BOOL CRYPT_MemAddCert(PWINECRYPT_CERTSTORE store,
         FIXME("Unimplemented add disposition %ld\n", dwAddDisposition);
         add = FALSE;
     }
+    if (existing)
+        CertFreeCertificateContext(existing);
     if (add)
     {
         PWINE_CERT_LIST_ENTRY entry = CryptMemAlloc(
