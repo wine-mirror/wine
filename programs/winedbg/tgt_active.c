@@ -644,7 +644,7 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
                dbg_curr_thread->exec_count);
 }
 
-/*static*/	unsigned        dbg_main_loop(HANDLE hFile)
+static void     dbg_wait_for_first_exception(void)
 {
     DEBUG_EVENT		de;
 
@@ -656,10 +656,6 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
     {
         if (dbg_handle_debug_event(&de)) break;
     }
-    dbg_interactiveP = TRUE;
-    parser_handle(hFile);
-
-    return 0;
 }
 
 static	unsigned dbg_start_debuggee(LPSTR cmdLine)
@@ -703,6 +699,7 @@ static	unsigned dbg_start_debuggee(LPSTR cmdLine)
     }
     dbg_curr_pid = info.dwProcessId;
     if (!(dbg_curr_process = dbg_add_process(dbg_curr_pid, 0))) return FALSE;
+    dbg_wait_for_first_exception();
 
     return TRUE;
 }
@@ -754,17 +751,12 @@ enum dbg_start  dbg_active_attach(int argc, char* argv[])
     /* try the form <myself> pid */
     if (argc == 1 && str2int(argv[0], &pid) && pid != 0)
     {
-        if (dbg_attach_debuggee(pid, FALSE, FALSE))
-        {
-            dbg_curr_pid = pid;
-            return start_ok;
-        }
-        return start_error_init;
+        if (!dbg_attach_debuggee(pid, FALSE, FALSE))
+            return start_error_init;
     }
-
     /* try the form <myself> pid evt (Win32 JIT debugger) */
-    if (argc == 2 && str2int(argv[0], &pid) && pid != 0 &&
-        str2int(argv[1], &evt) && evt != 0)
+    else if (argc == 2 && str2int(argv[0], &pid) && pid != 0 &&
+             str2int(argv[1], &evt) && evt != 0)
     {
         if (!dbg_attach_debuggee(pid, TRUE, FALSE))
         {
@@ -778,10 +770,12 @@ enum dbg_start  dbg_active_attach(int argc, char* argv[])
             return start_error_init;
         }
         CloseHandle((HANDLE)evt);
-        dbg_curr_pid = pid;
-	return start_ok;
     }
-    return start_error_parse;
+    else return start_error_parse;
+
+    dbg_curr_pid = pid;
+    dbg_wait_for_first_exception();
+    return start_ok;
 }
 
 /******************************************************************
@@ -895,7 +889,10 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     }
     else return start_error_parse;
     if (hFile == INVALID_HANDLE_VALUE) return start_error_parse;
-    dbg_main_loop(hFile);
+
+    dbg_interactiveP = TRUE;
+    parser_handle(hFile);
+
     return start_ok;
 }
 

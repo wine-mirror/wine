@@ -550,11 +550,13 @@ int main(int argc, char** argv)
     case start_error_init:      return -1;
     }
 
-    retv = dbg_main_loop(hFile);
+    dbg_interactiveP = TRUE;
+    parser_handle(hFile);
+
     while (dbg_process_list)
         dbg_process_list->process_io->close_process(dbg_process_list, TRUE);
 
     dbg_save_internal_vars();
 
-    return retv;
+    return 0;
 }
