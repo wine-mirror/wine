@@ -450,9 +450,25 @@ static void dbg_init_console(void)
     SetConsoleTitle("Wine Debugger");
 }
 
-static int dbg_winedbg_usage(void)
+static int dbg_winedbg_usage(BOOL advanced)
 {
-    dbg_printf("Usage: winedbg [--command cmd|--file file|--auto] [--gdb [--no-start] [--with-xterm]] cmdline\n");
+    if (advanced)
+    {
+    dbg_printf("Usage:\n"
+               "   winedbg cmdline         launch process 'cmdline' (as if you were starting\n"
+               "                           it with wine) and run WineDbg on it\n"
+               "   winedbg <num>           attach to running process of pid <num> and run\n"
+               "                           WineDbg on it\n"
+               "   winedbg --gdb cmdline   launch process 'cmdline' (as if you were starting\n"
+               "                           wine) and run gdb (proxied) on it\n"
+               "   winedbg --gdb <num>     attach to running process of pid <num> and run\n"
+               "                           gdb (proxied) on it\n"
+               "   winedbg file.mdmp       reload the minidump file.mdmp into memory and run\n"
+               "                           WineDbg on it\n"
+               "   winedbg --help          prints advanced options\n");
+    }
+    else
+        dbg_printf("Usage:\n\twinedbg [ [ --gdb ] [ prog-name [ prog-args ] | <num> | file.mdmp | --help ]\n");
     return -1;
 }
 
@@ -491,10 +507,13 @@ int main(int argc, char** argv)
     /* as we don't care about exec name */
     argc--; argv++;
 
+    if (argc && !strcmp(argv[0], "--help"))
+        return dbg_winedbg_usage(TRUE);
+
     if (argc && !strcmp(argv[0], "--gdb"))
     {
         retv = gdb_main(argc, argv);
-        if (retv == -1) dbg_winedbg_usage();
+        if (retv == -1) dbg_winedbg_usage(FALSE);
         return retv;
     }
     dbg_init_console();
@@ -510,7 +529,7 @@ int main(int argc, char** argv)
         switch (dbg_active_auto(argc, argv))
         {
         case start_ok:          return 0;
-        case start_error_parse: return dbg_winedbg_usage();
+        case start_error_parse: return dbg_winedbg_usage(FALSE);
         case start_error_init:  return -1;
         }
     }
@@ -547,7 +566,7 @@ int main(int argc, char** argv)
             argc--; argv++;
             break;
         }
-        return dbg_winedbg_usage();
+        return dbg_winedbg_usage(FALSE);
     }
     if (!argc) ds = start_ok;
     else if ((ds = dbg_active_attach(argc, argv)) == start_error_parse &&
@@ -556,7 +575,7 @@ int main(int argc, char** argv)
     switch (ds)
     {
     case start_ok:              break;
-    case start_error_parse:     return dbg_winedbg_usage();
+    case start_error_parse:     return dbg_winedbg_usage(FALSE);
     case start_error_init:      return -1;
     }
 
