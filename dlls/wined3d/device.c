@@ -3866,7 +3866,24 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     case WINED3DRS_COLORWRITEENABLE3 :
     case WINED3DRS_BLENDFACTOR :
     case WINED3DRS_SRGBWRITEENABLE :
+    {
+        FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
+        break;
+    }
     case WINED3DRS_DEPTHBIAS :
+    {
+        if(Value) {
+            tmpvalue.d = Value;
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
+            glPolygonOffset(*((float*)&This->stateBlock->renderState[WINED3DRS_SLOPESCALEDEPTHBIAS]), tmpvalue.f);
+            checkGLcall("glPolygonOffset(...)");
+        } else {
+            glDisable(GL_POLYGON_OFFSET_FILL);
+            checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL)");
+        }
+        break;
+    }
     case WINED3DRS_WRAP8 :
     case WINED3DRS_WRAP9 :
     case WINED3DRS_WRAP10 :
