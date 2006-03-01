@@ -81,23 +81,23 @@ static ATOM nscontainer_class;
 
 static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    HTMLDocument *This;
+    NSContainer *This;
     nsresult nsres;
 
     static const WCHAR wszTHIS[] = {'T','H','I','S',0};
 
     if(msg == WM_CREATE) {
-        This = *(HTMLDocument**)lParam;
+        This = *(NSContainer**)lParam;
         SetPropW(hwnd, wszTHIS, This);
     }else {
-        This = (HTMLDocument*)GetPropW(hwnd, wszTHIS);
+        This = (NSContainer*)GetPropW(hwnd, wszTHIS);
     }
 
     switch(msg) {
         case WM_SIZE:
             TRACE("(%p)->(WM_SIZE)\n", This);
 
-            nsres = nsIBaseWindow_SetSize(This->nscontainer->window,
+            nsres = nsIBaseWindow_SetSize(This->window,
                     LOWORD(lParam), HIWORD(lParam), TRUE);
             if(NS_FAILED(nsres))
                 WARN("SetSize failed: %08lx\n", nsres);
@@ -105,7 +105,6 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
-
 
 static void register_nscontainer_class(void)
 {
@@ -1034,7 +1033,7 @@ void NSContainer_Create(HTMLDocument *doc)
 
     ret->hwnd = CreateWindowExW(0, wszNsContainer, NULL,
             WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, 100, 100,
-            GetDesktopWindow(), NULL, hInst, doc);
+            GetDesktopWindow(), NULL, hInst, ret);
 
     nsres = nsIBaseWindow_InitWindow(ret->window, ret->hwnd, NULL, 0, 0, 100, 100);
     if(NS_SUCCEEDED(nsres)) {
