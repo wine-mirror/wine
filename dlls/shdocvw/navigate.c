@@ -497,6 +497,7 @@ HRESULT navigate_hlink(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
     bindinfo.cbSize = sizeof(bindinfo);
 
     hres = IBindStatusCallback_GetBindInfo(callback, &bindf, &bindinfo);
+    dump_BINDINFO(&bindinfo);
     if(bindinfo.dwBindVerb == BINDVERB_POST) {
         post_data_len = bindinfo.cbStgmedData;
         if(post_data_len)
@@ -558,8 +559,6 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
     WebBrowser *This = HLINKFRAME_THIS(iface);
     IMoniker *mon;
     LPWSTR location = NULL;
-    BINDINFO bi = {0};
-    DWORD bindf = 0;
 
     TRACE("(%p)->(%08lx %p %p %p)\n", This, grfHLNF, pbc, pibsc, pihlNavigate);
 
@@ -567,12 +566,6 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
         FIXME("unsupported grfHLNF=%08lx\n", grfHLNF);
 
     /* Windows calls GetTargetFrameName here. */
-
-    memset(&bi, 0, sizeof(bi));
-    bi.cbSize = sizeof(bi);
-
-    IBindStatusCallback_GetBindInfo(pibsc, &bindf, &bi);
-    dump_BINDINFO(&bi);
 
     IHlink_GetMonikerReference(pihlNavigate, 1, &mon, &location);
 
@@ -582,6 +575,11 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
     }
 
     /* Windows calls GetHlinkSite here */
+
+    if(grfHLNF & HLNF_OPENINNEWWINDOW) {
+        FIXME("Not supported HLNF_OPENINNEWWINDOW\n");
+        return E_NOTIMPL;
+    }
 
     return navigate_hlink(This, mon, pbc, pibsc);
 }
