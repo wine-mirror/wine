@@ -3053,19 +3053,19 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		case VK_END:
 		    MENU_SelectItem( mt.hOwnerWnd, mt.hCurrentMenu,
 				     NO_SELECTED_ITEM, FALSE, 0 );
-		/* fall through */
-		case VK_UP:
 		    MENU_MoveSelection( mt.hOwnerWnd, mt.hCurrentMenu,
 				       (msg.wParam == VK_HOME)? ITEM_NEXT : ITEM_PREV );
 		    break;
 
+		case VK_UP:
 		case VK_DOWN: /* If on menu bar, pull-down the menu */
 
 		    menu = MENU_GetMenu( mt.hCurrentMenu );
 		    if (!(menu->wFlags & MF_POPUP))
 			mt.hCurrentMenu = MENU_ShowSubPopup(mt.hOwnerWnd, mt.hTopMenu, TRUE, wFlags);
 		    else      /* otherwise try to move selection */
-			MENU_MoveSelection( mt.hOwnerWnd, mt.hCurrentMenu, ITEM_NEXT );
+			MENU_MoveSelection( mt.hOwnerWnd, mt.hCurrentMenu, 
+                                       (msg.wParam == VK_UP)? ITEM_PREV : ITEM_NEXT );
 		    break;
 
 		case VK_LEFT:
