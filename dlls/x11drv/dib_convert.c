@@ -821,18 +821,36 @@ static void convert_888_to_0888_asis(int width, int height,
     const DWORD* srcpixel;
     DWORD* dstpixel;
     int x,y;
-    int oddwidth;
-
-    oddwidth=width & 3;
-    width=width/4;
+    int w1, w2, w3;
+    
+    w1 = min( (INT_PTR)srcbits & 3, width);
+    w2 = ( width - w1) / 4;
+    w3 = ( width - w1) & 3;
     for (y=0; y<height; y++) {
         srcpixel=srcbits;
         dstpixel=dstbits;
-        for (x=0; x<width; x++) {
+        /* advance  w1 pixels to make srcpixel 32 bit alignd */
+        srcpixel = (const DWORD*)((INT_PTR)srcpixel & ~3);
+        srcpixel += w1;
+        dstpixel += w1;
+        /* and do the w1 pixels */
+        x = w1;
+        if( x) {
+            dstpixel[ -1] = ( srcpixel[ -1] >>  8);               /* h4, g4, l4 */
+            if( --x) {
+                dstpixel[ -2] = ( srcpixel[ -2] >> 16) |              /* g3, l3 */
+                                ((srcpixel[ -1] << 16) & 0x00ff0000); /* h3 */
+                if( --x) {
+                    dstpixel[ -3] = ( srcpixel[ -3] >> 24) |              /* l2 */
+                                    ((srcpixel[ -2] <<  8) & 0x00ffff00); /* h2, g2 */
+                }
+            }
+        }
+        for (x=0; x < w2; x++) {
             /* Do 4 pixels at a time: 3 dwords in and 4 dwords out */
             DWORD srcval1,srcval2;
             srcval1=srcpixel[0];
-            dstpixel[0]=( srcval1        & 0x00ffffff);  /* h1, g1, l1 */
+            dstpixel[0]=( srcval1        & 0x00ffffff); /* h1, g1, l1 */
             srcval2=srcpixel[1];
             dstpixel[1]=( srcval1 >> 24) |              /* l2 */
                         ((srcval2 <<  8) & 0x00ffff00); /* h2, g2 */
@@ -843,12 +861,18 @@ static void convert_888_to_0888_asis(int width, int height,
             srcpixel+=3;
             dstpixel+=4;
         }
-        /* And now up to 3 odd pixels */
-        for (x=0; x<oddwidth; x++) {
-            DWORD srcval;
-            srcval=*srcpixel;
-            srcpixel=(const DWORD*)(((const char*)srcpixel)+3);
-            *dstpixel++=( srcval         & 0x00ffffff); /* h, g, l */
+        /* do last w3 pixels */
+        x = w3;
+        if( x) {
+            dstpixel[0]=( srcpixel[0]       & 0x00ffffff); /* h1, g1, l1 */
+            if( --x) {
+                dstpixel[1]=( srcpixel[0]>> 24) |              /* l2 */
+                            ((srcpixel[1]<<  8) & 0x00ffff00); /* h2, g2 */
+                if( --x) {
+                    dstpixel[2]=( srcpixel[1]>> 16) |              /* g3, l3 */
+                                ((srcpixel[2]<< 16) & 0x00ff0000); /* h3 */
+                }
+            }
         }
         srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
@@ -862,14 +886,36 @@ static void convert_888_to_0888_reverse(int width, int height,
     const DWORD* srcpixel;
     DWORD* dstpixel;
     int x,y;
-    int oddwidth;
+    int w1, w2, w3;
 
-    oddwidth=width & 3;
-    width=width/4;
+    w1 = min( (INT_PTR)srcbits & 3, width);
+    w2 = ( width - w1) / 4;
+    w3 = ( width - w1) & 3;
     for (y=0; y<height; y++) {
         srcpixel=srcbits;
         dstpixel=dstbits;
-        for (x=0; x<width; x++) {
+        /* advance w1 pixels to make srcpixel 32 bit alignd */
+        srcpixel =  (const DWORD*)((INT_PTR)srcpixel & ~3);
+        srcpixel += w1;
+        dstpixel += w1;
+        /* and do the w1 pixels */
+        x = w1;
+        if( x) {
+            dstpixel[ -1]=((srcpixel[ -1] >> 24) & 0x0000ff) | /* h4 */
+                          ((srcpixel[ -1] >>  8) & 0x00ff00) | /* g4 */
+                          ((srcpixel[ -1] <<  8) & 0xff0000);  /* l4 */
+            if( --x) {
+                dstpixel[ -2]=( srcpixel[ -2]        & 0xff0000) | /* l3 */
+                              ((srcpixel[ -2] >> 16) & 0x00ff00) | /* g3 */
+                              ( srcpixel[ -1]        & 0x0000ff);  /* h3 */
+                if( --x) {
+                    dstpixel[ -3]=((srcpixel[ -3] >>  8) & 0xff0000) | /* l2 */
+                                  ((srcpixel[ -2] <<  8) & 0x00ff00) | /* g2 */
+                                  ((srcpixel[ -2] >>  8) & 0x0000ff);  /* h2 */
+                }
+            }
+        }
+        for (x=0; x < w2; x++) {
             /* Do 4 pixels at a time: 3 dwords in and 4 dwords out */
             DWORD srcval1,srcval2;
 
@@ -891,14 +937,22 @@ static void convert_888_to_0888_reverse(int width, int height,
             srcpixel+=3;
             dstpixel+=4;
         }
-        /* And now up to 3 odd pixels */
-        for (x=0; x<oddwidth; x++) {
-            DWORD srcval;
-            srcval=*srcpixel;
-            srcpixel=(const DWORD*)(((const char*)srcpixel)+3);
-            *dstpixel++=((srcval  >> 16) & 0x0000ff) | /* h */
-                        ( srcval         & 0x00ff00) | /* g */
-                        ((srcval  << 16) & 0xff0000);  /* l */
+        /* do last w3 pixels */
+        x = w3;
+        if( x) {
+            dstpixel[0]=((srcpixel[0] >> 16) & 0x0000ff) | /* h1 */
+                        ( srcpixel[0]        & 0x00ff00) | /* g1 */
+                        ((srcpixel[0] << 16) & 0xff0000);  /* l1 */
+            if( --x) {
+                dstpixel[1]=((srcpixel[0] >>  8) & 0xff0000) | /* l2 */
+                            ((srcpixel[1] <<  8) & 0x00ff00) | /* g2 */
+                            ((srcpixel[1] >>  8) & 0x0000ff);  /* h2 */
+                if( --x) {
+                    dstpixel[2]=( srcpixel[1]        & 0xff0000) | /* l3 */
+                                ((srcpixel[1] >> 16) & 0x00ff00) | /* g3 */
+                                ( srcpixel[2]        & 0x0000ff);  /* h3 */
+                }
+            }
         }
         srcbits = (const char*)srcbits + srclinebytes;
         dstbits = (char*)dstbits + dstlinebytes;
