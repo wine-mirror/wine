@@ -1375,6 +1375,10 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	SetBkColor( hdc, GetSysColor( bkgnd ) );
     }
 
+    TRACE("rect=%s\n", wine_dbgstr_rect( &lpitem->rect));
+    rect = lpitem->rect;
+    MENU_AdjustMenuItemRect(MENU_GetMenu(hmenu), &rect);
+
     if (lpitem->fType & MF_OWNERDRAW)
     {
         /*
@@ -1399,8 +1403,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         dis.itemAction = odaction; /* ODA_DRAWENTIRE | ODA_SELECT | ODA_FOCUS; */
         dis.hwndItem   = (HWND)hmenu;
         dis.hDC        = hdc;
-        dis.rcItem     = lpitem->rect;
-        MENU_AdjustMenuItemRect(MENU_GetMenu(hmenu), &dis.rcItem);
+        dis.rcItem     = rect;
         TRACE("Ownerdraw: owner=%p itemID=%d, itemState=%d, itemAction=%d, "
 	      "hwndItem=%p, hdc=%p, rcItem=%s\n", hwndOwner,
 	      dis.itemID, dis.itemState, dis.itemAction, dis.hwndItem,
@@ -1413,12 +1416,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         return;
     }
 
-    TRACE("rect=%s\n", wine_dbgstr_rect( &lpitem->rect));
-
     if (menuBar && (lpitem->fType & MF_SEPARATOR)) return;
-
-    rect = lpitem->rect;
-    MENU_AdjustMenuItemRect(MENU_GetMenu(hmenu), &rect);
 
     if (lpitem->fState & MF_HILITE)
     {
