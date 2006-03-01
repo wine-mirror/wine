@@ -366,25 +366,59 @@ static HRESULT WINAPI Proxy_MarshalInterface(
     void* pvDestContext, DWORD mshlflags)
 {
     ICOM_THIS_MULTI(struct proxy_manager, lpVtblMarshal, iface);
-    ULONG res;
     HRESULT hr;
-    STDOBJREF stdobjref;
     struct ifproxy *ifproxy;
 
     TRACE("(...,%s,...)\n", debugstr_guid(riid));
 
     hr = proxy_manager_find_ifproxy(This, riid, &ifproxy);
-    if (FAILED(hr))
+    if (SUCCEEDED(hr))
     {
-        ERR("couldn't find proxy for interface %s, error 0x%08lx\n", debugstr_guid(riid), hr);
-        return hr;
-    }
+        STDOBJREF stdobjref = ifproxy->stdobjref;
+        /* FIXME: optimization - share out proxy's public references if possible
+         * instead of making new proxy do a roundtrip through the server */
+        stdobjref.cPublicRefs = 0; /* InterlockedDecrement(&This->stdobjref.cPublicRefs) >= 0 ? 1 : 0 */
 
-    stdobjref = ifproxy->stdobjref;
-    /* FIXME: optimization - share out proxy's public references if possible
-     * instead of making new proxy do a roundtrip through the server */
-    stdobjref.cPublicRefs = 0; /* InterlockedDecrement(&This->stdobjref.cPublicRefs) >= 0 ? 1 : 0 */
-    hr = IStream_Write(pStm, &stdobjref, sizeof(stdobjref), &res);
+        hr = IStream_Write(pStm, &stdobjref, sizeof(stdobjref), NULL);
+    }
+    else
+    {
+        /* we don't have the interface already unmarshaled so we have to
+         * request the object from the server */
+        IRemUnknown *remunk;
+        IPID *ipid;
+        REMQIRESULT *qiresults = NULL;
+        IID iid = *riid;
+
+        /* get the ipid of the first entry */
+        /* FIXME: should we implement ClientIdentity on the ifproxies instead
+         * of the proxy_manager so we use the correct ipid here? */
+        ipid = &LIST_ENTRY(list_head(&This->interfaces), struct ifproxy, entry)->stdobjref.ipid;
+
+        /* get IRemUnknown proxy so we can communicate with the remote object */
+        hr = proxy_manager_get_remunknown(This, &remunk);
+
+        if (hr == S_OK)
+        {
+            hr = IRemUnknown_RemQueryInterface(remunk, ipid, NORMALEXTREFS,
+                                               1, &iid, &qiresults);
+            if (SUCCEEDED(hr))
+            {
+                hr = IStream_Write(pStm, &qiresults->std, sizeof(qiresults->std), NULL);
+                if (FAILED(hr))
+                {
+                    REMINTERFACEREF rif;
+                    rif.ipid = qiresults->std.ipid;
+                    rif.cPublicRefs = qiresults->std.cPublicRefs;
+                    rif.cPrivateRefs = 0;
+                    IRemUnknown_RemRelease(remunk, 1, &rif);
+                }
+                CoTaskMemFree(qiresults);
+            }
+            else
+                ERR("IRemUnknown_RemQueryInterface failed with error 0x%08lx\n", hr);
+        }
+    }
 
     return hr;
 }
