@@ -1703,9 +1703,9 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_Q8W8V8U8:         retVal = GL_RGBA; break;
         case WINED3DFMT_Q16W16V16U16:     retVal = GL_COLOR_INDEX; break;
             /* color buffer */
-        case WINED3DFMT_R3G3B2:           retVal = GL_BGR; break;
-        case WINED3DFMT_R5G6B5:           retVal = GL_BGR; break;
-        case WINED3DFMT_R8G8B8:           retVal = GL_BGR; break;
+        case WINED3DFMT_R3G3B2:           retVal = GL_RGB; break;
+        case WINED3DFMT_R5G6B5:           retVal = GL_RGB; break;
+        case WINED3DFMT_R8G8B8:           retVal = GL_RGB; break;
         case WINED3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
         case WINED3DFMT_X1R5G5B5:         retVal = GL_BGRA; break;
         case WINED3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
