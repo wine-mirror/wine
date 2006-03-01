@@ -534,7 +534,7 @@ void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const
  
     if (ifstub->flags & MSHLFLAGS_TABLEWEAK)
         refs = 0;
-    else
+    else if (ifstub->flags & MSHLFLAGS_TABLESTRONG)
         refs = 1;
 
     stub_manager_ext_release(m, refs);

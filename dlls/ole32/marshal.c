@@ -50,7 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 extern const CLSID CLSID_DfMarshal;
 
 /* number of refs given out for normal marshaling */
-#define NORMALEXTREFS 1 /* FIXME: this should be 5, but we have to wait for IRemUnknown support first */
+#define NORMALEXTREFS 5
 
 /* private flag indicating that the caller does not want to notify the stub
  * when the proxy disconnects or is destroyed */
