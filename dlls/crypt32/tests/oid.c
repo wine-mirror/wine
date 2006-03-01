@@ -356,8 +356,8 @@ static void test_findOIDInfo(void)
     {
         ok(!strcmp(info->pszOID, szOID_RSA_MD5), "Expected %s, got %s\n",
          szOID_RSA_MD5, info->pszOID);
-        ok(info->Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
-         info->Algid);
+        ok(U(*info).Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
+           U(*info).Algid);
     }
     info = CryptFindOIDInfo(CRYPT_OID_INFO_NAME_KEY, (void *)sha1, 0);
     ok(info != NULL, "Expected to find sha1\n");
@@ -365,8 +365,8 @@ static void test_findOIDInfo(void)
     {
         ok(!strcmp(info->pszOID, szOID_OIWSEC_sha1), "Expected %s, got %s\n",
          szOID_OIWSEC_sha1, info->pszOID);
-        ok(info->Algid == CALG_SHA1, "Expected CALG_SHA1, got %d\n",
-         info->Algid);
+        ok(U(*info).Algid == CALG_SHA1, "Expected CALG_SHA1, got %d\n",
+           U(*info).Algid);
     }
     info = CryptFindOIDInfo(CRYPT_OID_INFO_ALGID_KEY, &alg, 0);
     ok(info != NULL, "Expected to find sha1\n");
@@ -374,8 +374,8 @@ static void test_findOIDInfo(void)
     {
         ok(!strcmp(info->pszOID, szOID_OIWSEC_sha1), "Expected %s, got %s\n",
          szOID_OIWSEC_sha1, info->pszOID);
-        ok(info->Algid == CALG_SHA1, "Expected CALG_SHA1, got %d\n",
-         info->Algid);
+        ok(U(*info).Algid == CALG_SHA1, "Expected CALG_SHA1, got %d\n",
+           U(*info).Algid);
     }
     info = CryptFindOIDInfo(CRYPT_OID_INFO_SIGN_KEY, algs, 0);
     ok(info != NULL, "Expected to find md5RSA\n");
@@ -383,8 +383,8 @@ static void test_findOIDInfo(void)
     {
         ok(!strcmp(info->pszOID, szOID_RSA_MD5RSA), "Expected %s, got %s\n",
          szOID_RSA_MD5RSA, info->pszOID);
-        ok(info->Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
-         info->Algid);
+        ok(U(*info).Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
+           U(*info).Algid);
     }
 }
 
