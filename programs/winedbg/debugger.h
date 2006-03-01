@@ -375,6 +375,7 @@ extern void             dbg_wait_next_exception(DWORD cont, int count, int mode)
 extern enum dbg_start   dbg_active_attach(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_auto(int argc, char* argv[]);
+extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe);
 
   /* tgt_minidump.c */
 extern void             minidump_write(const char*, const EXCEPTION_RECORD*);
@@ -401,9 +402,8 @@ extern int	        dbg_printf(const char* format, ...) __attribute__((format (pr
 extern int	        dbg_printf(const char* format, ...);
 #endif
 extern const struct dbg_internal_var* dbg_get_internal_var(const char*);
-extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe);
 extern BOOL             dbg_interrupt_debuggee(void);
-extern struct dbg_process* dbg_add_process(DWORD pid, HANDLE h);
+extern struct dbg_process* dbg_add_process(const struct be_process_io* pio, DWORD pid, HANDLE h);
 extern void             dbg_set_process_name(struct dbg_process* p, const char* name);
 extern struct dbg_process* dbg_get_process(DWORD pid);
 extern void             dbg_del_process(struct dbg_process* p);

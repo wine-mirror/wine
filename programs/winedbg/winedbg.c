@@ -250,11 +250,8 @@ struct dbg_process*     dbg_get_process(DWORD pid)
     return p;
 }
 
-struct dbg_process*	dbg_add_process(DWORD pid, HANDLE h)
+struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, HANDLE h)
 {
-    /* FIXME: temporary */
-    extern struct be_process_io be_process_active_io;
-
     struct dbg_process*	p;
 
     if ((p = dbg_get_process(pid)))
@@ -266,6 +263,7 @@ struct dbg_process*	dbg_add_process(DWORD pid, HANDLE h)
         else
         {
             p->handle = h;
+            p->process_io = pio;
             p->imageName = NULL;
         }
         return p;
@@ -274,7 +272,7 @@ struct dbg_process*	dbg_add_process(DWORD pid, HANDLE h)
     if (!(p = HeapAlloc(GetProcessHeap(), 0, sizeof(struct dbg_process)))) return NULL;
     p->handle = h;
     p->pid = pid;
-    p->process_io = &be_process_active_io;
+    p->process_io = pio;
     p->imageName = NULL;
     p->threads = NULL;
     p->continue_on_first_exception = FALSE;

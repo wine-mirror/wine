@@ -33,6 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 static char*            dbg_last_cmd_line;
+static struct be_process_io be_process_active_io;
 
 static void dbg_init_current_process(void)
 {
@@ -72,7 +73,7 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe)
 {
     DEBUG_EVENT         de;
 
-    if (!(dbg_curr_process = dbg_add_process(pid, 0))) return FALSE;
+    if (!(dbg_curr_process = dbg_add_process(&be_process_active_io, pid, 0))) return FALSE;
 
     if (!DebugActiveProcess(pid)) 
     {
@@ -436,7 +437,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         break;
 
     case CREATE_PROCESS_DEBUG_EVENT:
-        dbg_curr_process = dbg_add_process(de->dwProcessId,
+        dbg_curr_process = dbg_add_process(&be_process_active_io, de->dwProcessId,
                                            de->u.CreateProcessInfo.hProcess);
         if (dbg_curr_process == NULL)
         {
@@ -698,7 +699,7 @@ static	unsigned dbg_start_debuggee(LPSTR cmdLine)
         return TRUE;
     }
     dbg_curr_pid = info.dwProcessId;
-    if (!(dbg_curr_process = dbg_add_process(dbg_curr_pid, 0))) return FALSE;
+    if (!(dbg_curr_process = dbg_add_process(&be_process_active_io, dbg_curr_pid, 0))) return FALSE;
     dbg_wait_for_first_exception();
 
     return TRUE;
@@ -920,7 +921,7 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
     return TRUE;
 }
 
-struct be_process_io be_process_active_io =
+static struct be_process_io be_process_active_io =
 {
     tgt_process_active_close_process,
     ReadProcessMemory,

@@ -102,6 +102,8 @@ struct gdb_context
     unsigned long               wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
 };
 
+static struct be_process_io be_process_gdbproxy_io;
+
 /* =============================================== *
  *       B A S I C   M A N I P U L A T I O N S     *
  * =============================================== *
@@ -444,7 +446,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
     switch (de->dwDebugEventCode)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
-        gdbctx->process = dbg_add_process(de->dwProcessId,
+        gdbctx->process = dbg_add_process(&be_process_gdbproxy_io, de->dwProcessId,
                                           de->u.CreateProcessInfo.hProcess);
         if (!gdbctx->process) break;
         memory_get_string_indirect(gdbctx->process,
@@ -2278,3 +2280,10 @@ int gdb_main(int argc, char* argv[])
         return gdb_remote(gdb_flags);
     return -1;
 }
+
+static struct be_process_io be_process_gdbproxy_io =
+{
+    NULL, /* we shouldn't use close_process() in gdbproxy */
+    ReadProcessMemory,
+    WriteProcessMemory
+};
