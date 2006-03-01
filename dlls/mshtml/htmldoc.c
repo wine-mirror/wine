@@ -999,7 +999,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_Service_Init(ret);
     HTMLDocument_Hlink_Init(ret);
 
-    NSContainer_Create(ret);
+    ret->nscontainer = NSContainer_Create(ret, NULL);
 
     return hres;
 }

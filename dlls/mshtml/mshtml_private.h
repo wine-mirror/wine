@@ -94,6 +94,7 @@ struct NSContainer {
 
     LONG ref;
 
+    NSContainer *parent;
     HTMLDocument *doc;
 
     HWND hwnd;
@@ -140,7 +141,7 @@ void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
 
-void NSContainer_Create(HTMLDocument *doc);
+NSContainer *NSContainer_Create(HTMLDocument*,NSContainer*);
 void NSContainer_Release(NSContainer*);
 
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
@@ -149,10 +150,10 @@ void HTMLDocument_ShowContextMenu(HTMLDocument*,DWORD,POINT*);
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 
 void close_gecko(void);
-void register_nsservice(nsIComponentRegistrar*);
+void register_nsservice(nsIComponentRegistrar*,nsIServiceManager*);
 void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 
-void hlink_frame_navigate(NSContainer*,IHlinkFrame*,LPCWSTR,nsIInputStream*);
+void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWORD);
 
 nsIURI *get_nsIURI(LPCWSTR);
 

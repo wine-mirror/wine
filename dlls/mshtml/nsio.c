@@ -77,12 +77,12 @@ typedef struct {
 
 static nsresult create_uri(nsIURI*,NSContainer*,nsIURI**);
 
-static BOOL exec_shldocvw_67(NSContainer *container, LPCWSTR url)
+static BOOL exec_shldocvw_67(HTMLDocument *doc, LPCWSTR url)
 {
     IOleCommandTarget *cmdtrg = NULL;
     HRESULT hres;
 
-    hres = IOleClientSite_QueryInterface(container->doc->client, &IID_IOleCommandTarget,
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget,
                                          (void**)&cmdtrg);
     if(SUCCEEDED(hres)) {
         VARIANT varUrl, varRes;
@@ -108,12 +108,23 @@ static BOOL exec_shldocvw_67(NSContainer *container, LPCWSTR url)
 static BOOL handle_uri(NSContainer *container, nsChannel *channel, LPCWSTR uri)
 {
     IServiceProvider *service_provider;
+    HTMLDocument *doc = container->doc;
+    DWORD hlnf = 0;
     HRESULT hres;
 
-    if(!exec_shldocvw_67(container, uri))
+    if(!doc) {
+        NSContainer *container_iter = container;
+
+        hlnf = HLNF_OPENINNEWWINDOW;
+        while(!container_iter->doc)
+            container_iter = container_iter->parent;
+        doc = container_iter->doc;
+    }
+
+    if(!hlnf && !exec_shldocvw_67(doc, uri))
         return FALSE;
 
-    hres = IOleClientSite_QueryInterface(container->doc->client, &IID_IServiceProvider,
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IServiceProvider,
                                          (void**)&service_provider);
     if(SUCCEEDED(hres)) {
         IHlinkFrame *hlink_frame;
@@ -121,7 +132,7 @@ static BOOL handle_uri(NSContainer *container, nsChannel *channel, LPCWSTR uri)
         hres = IServiceProvider_QueryService(service_provider, &IID_IHlinkFrame,
                                              &IID_IHlinkFrame, (void**)&hlink_frame);
         if(SUCCEEDED(hres)) {
-            hlink_frame_navigate(container, hlink_frame, uri, channel->post_data_stream);
+            hlink_frame_navigate(doc, hlink_frame, uri, channel->post_data_stream, hlnf);
             IHlinkFrame_Release(hlink_frame);
 
             return FALSE;

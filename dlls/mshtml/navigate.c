@@ -463,8 +463,8 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
     *post_data_len_ret = post_data_len;
 }
 
-void hlink_frame_navigate(NSContainer *container, IHlinkFrame *hlink_frame,
-                          LPCWSTR uri, nsIInputStream *post_data_stream)
+void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
+                          LPCWSTR uri, nsIInputStream *post_data_stream, DWORD hlnf)
 {
     IBindStatusCallback *callback;
     IBindCtx *bindctx;
@@ -480,7 +480,7 @@ void hlink_frame_navigate(NSContainer *container, IHlinkFrame *hlink_frame,
               debugstr_an(post_data, post_data_len));
     }
 
-    callback = BSCallback_Create(container->doc, uri, post_data, post_data_len, headers);
+    callback = BSCallback_Create(doc, uri, post_data, post_data_len, headers);
     CreateAsyncBindCtx(0, callback, NULL, &bindctx);
 
     hlink = Hlink_Create();
@@ -488,7 +488,12 @@ void hlink_frame_navigate(NSContainer *container, IHlinkFrame *hlink_frame,
     CreateURLMoniker(NULL, uri, &mon);
     IHlink_SetMonikerReference(hlink, 0, mon, NULL);
 
-    IHlinkFrame_Navigate(hlink_frame, 0, bindctx, callback, hlink);
+    if(hlnf & HLNF_OPENINNEWWINDOW) {
+        static const WCHAR wszBlank[] = {'_','b','l','a','n','k',0};
+        IHlink_SetTargetFrameName(hlink, wszBlank); /* FIXME */
+    }
+
+    IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, callback, hlink);
 
     IBindCtx_Release(bindctx);
     IBindStatusCallback_Release(callback);

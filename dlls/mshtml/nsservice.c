@@ -36,9 +36,77 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NS_PROMPTSERVICE_CONTRACTID "@mozilla.org/embedcomp/prompt-service;1"
+#define NS_WINDOWWATCHER_CONTRACTID "@mozilla.org/embedcomp/window-watcher;1"
 
 static const nsIID NS_PROMPTSERVICE_CID =
     {0xa2112d6a,0x0e28,0x421f,{0xb4,0x6a,0x25,0xc0,0xb3,0x8,0xcb,0xd0}};
+
+static nsresult NSAPI nsWindowCreator_QueryInterface(nsIWindowCreator2 *iface, nsIIDRef riid,
+                                               nsQIResult result)
+{
+    *result = NULL;
+
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(IID_nsISupports %p)\n", result);
+        *result = iface;
+    }else if(IsEqualGUID(&IID_nsIWindowCreator, riid)) {
+        TRACE("(IID_nsIWindowCreator %p)\n", result);
+        *result = iface;
+    }else if(IsEqualGUID(&IID_nsIWindowCreator2, riid)) {
+        TRACE("(IID_nsIWindowCreator2 %p)\n", result);
+        *result = iface;
+    }
+
+    if(*result) {
+        nsIWindowCreator_AddRef(iface);
+        return NS_OK;
+    }
+
+    WARN("(%s %p)\n", debugstr_guid(riid), result);
+    return NS_NOINTERFACE;
+}
+
+static nsrefcnt NSAPI nsWindowCreator_AddRef(nsIWindowCreator2 *iface)
+{
+    return 2;
+}
+
+static nsrefcnt NSAPI nsWindowCreator_Release(nsIWindowCreator2 *iface)
+{
+    return 1;
+}
+
+static nsresult NSAPI nsWindowCreator_CreateChromeWindow(nsIWindowCreator2 *iface,
+        nsIWebBrowserChrome *parent, PRUint32 chromeFlags, nsIWebBrowserChrome **_retval)
+{
+    TRACE("(%p %08lx %p)\n", parent, chromeFlags, _retval);
+    return nsIWindowCreator2_CreateChromeWindow2(iface, parent, chromeFlags, 0, NULL,
+                                                 NULL, _retval);
+}
+
+static nsresult NSAPI nsWindowCreator_CreateChromeWindow2(nsIWindowCreator2 *iface,
+        nsIWebBrowserChrome *parent, PRUint32 chromeFlags, PRUint32 contextFlags,
+        nsIURI *uri, PRBool *cancel, nsIWebBrowserChrome **_retval)
+{
+    TRACE("(%p %08lx %08lx %p %p %p)\n", parent, chromeFlags, contextFlags, uri,
+          cancel, _retval);
+
+    if(cancel)
+        *cancel = FALSE;
+
+    *_retval = NSWBCHROME(NSContainer_Create(NULL, (NSContainer*)parent));
+    return NS_OK;
+}
+
+static const nsIWindowCreator2Vtbl nsWindowCreatorVtbl = {
+    nsWindowCreator_QueryInterface,
+    nsWindowCreator_AddRef,
+    nsWindowCreator_Release,
+    nsWindowCreator_CreateChromeWindow,
+    nsWindowCreator_CreateChromeWindow2
+};
+
+static nsIWindowCreator2 nsWindowCreator = { &nsWindowCreatorVtbl };
 
 static nsresult NSAPI nsPromptService_QueryInterface(nsIPromptService *iface,
                                                      nsIIDRef riid, nsQIResult result)
@@ -260,17 +328,30 @@ static const nsIFactoryVtbl nsServiceFactoryVtbl = {
     nsServiceFactory_LockFactory
 };
 
-static nsServiceFactory PromptServiceFactory = {
+static nsServiceFactory nsPromptServiceFactory = {
     &nsServiceFactoryVtbl,
     (nsISupports*)&nsPromptService
 };
 
-void register_nsservice(nsIComponentRegistrar *registrar)
+void register_nsservice(nsIComponentRegistrar *registrar, nsIServiceManager *service_manager)
 {
+    nsIWindowWatcher *window_watcher;
     nsresult nsres;
 
     nsres = nsIComponentRegistrar_RegisterFactory(registrar, &NS_PROMPTSERVICE_CID,
-            "Prompt Service", NS_PROMPTSERVICE_CONTRACTID, NSFACTORY(&PromptServiceFactory));
+            "Prompt Service", NS_PROMPTSERVICE_CONTRACTID, NSFACTORY(&nsPromptServiceFactory));
     if(NS_FAILED(nsres))
         ERR("RegisterFactory failed: %08lx\n", nsres);
+
+    nsres = nsIServiceManager_GetServiceByContactID(service_manager, NS_WINDOWWATCHER_CONTRACTID,
+            &IID_nsIWindowWatcher, (void**)&window_watcher);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIWindowWatcher_SetWindowCreator(window_watcher,
+                                                  (nsIWindowCreator*)&nsWindowCreator);
+        if(NS_FAILED(nsres))
+            ERR("SetWindowCreator failed: %08lx\n", nsres);
+        nsIWindowWatcher_Release(window_watcher);
+    }else {
+        ERR("Could not get WindowWatcher object: %08lx\n", nsres);
+    }
 }

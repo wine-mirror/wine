@@ -106,6 +106,7 @@ static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
+
 static void register_nscontainer_class(void)
 {
     static WNDCLASSEXW wndclass = {
@@ -358,7 +359,7 @@ static BOOL load_gecko(void)
     set_profile();
 
     if(registrar) {
-        register_nsservice(registrar);
+        register_nsservice(registrar, pServMgr);
         nsIComponentRegistrar_Release(registrar);
     }
 
@@ -487,8 +488,11 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->parent)
+            nsIWebBrowserChrome_Release(NSWBCHROME(This->parent));
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -945,8 +949,8 @@ static nsresult NSAPI nsInterfaceRequestor_GetInterface(nsIInterfaceRequestor *i
     NSContainer *This = NSIFACEREQ_THIS(iface);
 
     if(IsEqualGUID(&IID_nsIDOMWindow, riid)) {
-        FIXME("(%p)->(IID_nsIDOMWindow %p)\n", This, result);
-        return NS_NOINTERFACE;
+        TRACE("(%p)->(IID_nsIDOMWindow %p)\n", This, result);
+        return nsIWebBrowser_GetContentDOMWindow(This->webbrowser, (nsIDOMWindow**)result);
     }
 
     return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
@@ -961,14 +965,14 @@ static const nsIInterfaceRequestorVtbl nsInterfaceRequestorVtbl = {
     nsInterfaceRequestor_GetInterface
 };
 
-void NSContainer_Create(HTMLDocument *doc)
+NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
 {
     nsIWebBrowserSetup *wbsetup;
     NSContainer *ret;
     nsresult nsres;
 
     if(!load_gecko())
-        return;
+        return NULL;
 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(NSContainer));
 
@@ -982,7 +986,9 @@ void NSContainer_Create(HTMLDocument *doc)
     ret->ref = 1;
     ret->load_call = FALSE;
 
-    doc->nscontainer = ret;
+    if(parent)
+        nsIWebBrowserChrome_AddRef(NSWBCHROME(parent));
+    ret->parent = parent;
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
             NULL, &IID_nsIWebBrowser, (void**)&ret->webbrowser);
@@ -1050,6 +1056,8 @@ void NSContainer_Create(HTMLDocument *doc)
     nsres = nsIWebBrowser_SetParentURIContentListener(ret->webbrowser, NSURICL(ret));
     if(NS_FAILED(nsres))
         ERR("SetParentURIContentListener failed: %08lx\n", nsres);
+
+    return ret;
 }
 
 void NSContainer_Release(NSContainer *This)
