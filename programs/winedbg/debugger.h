@@ -202,6 +202,7 @@ struct dbg_process
     HANDLE			handle;
     DWORD			pid;
     const struct be_process_io* process_io;
+    void*                       pio_data;
     const char*			imageName;
     struct dbg_thread*  	threads;
     unsigned			continue_on_first_exception;
@@ -379,6 +380,7 @@ extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe);
 
   /* tgt_minidump.c */
 extern void             minidump_write(const char*, const EXCEPTION_RECORD*);
+extern enum dbg_start   minidump_reload(int argc, char* argv[]);
 
   /* types.c */
 extern void             print_value(const struct dbg_lvalue* addr, char format, int level);
@@ -406,6 +408,7 @@ extern BOOL             dbg_interrupt_debuggee(void);
 extern struct dbg_process* dbg_add_process(const struct be_process_io* pio, DWORD pid, HANDLE h);
 extern void             dbg_set_process_name(struct dbg_process* p, const char* name);
 extern struct dbg_process* dbg_get_process(DWORD pid);
+extern struct dbg_process* dbg_get_process_h(HANDLE handle);
 extern void             dbg_del_process(struct dbg_process* p);
 struct dbg_thread*	dbg_add_thread(struct dbg_process* p, DWORD tid, HANDLE h, void* teb);
 extern struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid);

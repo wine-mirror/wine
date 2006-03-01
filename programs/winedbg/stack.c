@@ -123,6 +123,15 @@ BOOL stack_get_current_symbol(SYMBOL_INFO* symbol)
     return SymFromAddr(dbg_curr_process->handle, ihsf.InstructionOffset,
                        &disp, symbol);
 }
+
+static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD addr, 
+                                    PVOID buffer, DWORD size, PDWORD written)
+{
+    struct dbg_process* pcs = dbg_get_process_h(hProc);
+    if (!pcs) return FALSE;
+    return pcs->process_io->read(hProc, (const void*)addr, buffer, size, written);
+}
+
 /******************************************************************
  *		stack_fetch_frames
  *
@@ -148,7 +157,7 @@ unsigned stack_fetch_frames(void)
     }
 
     while (StackWalk(IMAGE_FILE_MACHINE_I386, dbg_curr_process->handle, 
-                     dbg_curr_thread->handle, &sf, &dbg_context, NULL,
+                     dbg_curr_thread->handle, &sf, &dbg_context, stack_read_mem,
                      SymFunctionTableAccess, SymGetModuleBase, NULL))
     {
         dbg_curr_thread->frames = dbg_heap_realloc(dbg_curr_thread->frames, 

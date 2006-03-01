@@ -34,7 +34,8 @@
 /* TODO list:
  *
  * - minidump
- *      + set a mode where winedbg would start (postmortem debugging) from a minidump
+ *      + ensure that all commands work as expected in minidump reload function
+ *        (and reenable parser usager)
  * - CPU adherence
  *      + we always assume the stack grows as on i386 (ie downwards)
  * - UI
@@ -250,6 +251,15 @@ struct dbg_process*     dbg_get_process(DWORD pid)
     return p;
 }
 
+struct dbg_process*     dbg_get_process_h(HANDLE h)
+{
+    struct dbg_process*	p;
+
+    for (p = dbg_process_list; p; p = p->next)
+	if (p->handle == h) break;
+    return p;
+}
+
 struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, HANDLE h)
 {
     struct dbg_process*	p;
@@ -273,6 +283,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->handle = h;
     p->pid = pid;
     p->process_io = pio;
+    p->pio_data = NULL;
     p->imageName = NULL;
     p->threads = NULL;
     p->continue_on_first_exception = FALSE;
@@ -539,7 +550,8 @@ int main(int argc, char** argv)
         return dbg_winedbg_usage();
     }
     if (!argc) ds = start_ok;
-    else if ((ds = dbg_active_attach(argc, argv)) == start_error_parse)
+    else if ((ds = dbg_active_attach(argc, argv)) == start_error_parse &&
+             (ds = minidump_reload(argc, argv)) == start_error_parse)
         ds = dbg_active_launch(argc, argv);
     switch (ds)
     {
