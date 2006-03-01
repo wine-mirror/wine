@@ -194,6 +194,7 @@ WINDOWS_INCLUDES = \
 	msxml2did.h \
 	msxmldid.h \
 	nb30.h \
+	ndrtypes.h \
 	npapi.h \
 	nspapi.h \
 	ntddcdrm.h \

@@ -38,6 +38,7 @@
 #include "objbase.h"
 #include "rpc.h"
 #include "rpcproxy.h"
+#include "ndrtypes.h"
 
 #include "wine/debug.h"
 #include "wine/rpcfc.h"
@@ -288,37 +289,7 @@ typedef struct _NDR_PARAM_OI_OTHER
 
 typedef struct _NDR_PARAM_OIF_BASETYPE
 {
-    /* attributes of the parameter:
-     * RPC_FC_PROC_PF_MUSTSIZE = 0x0001 - client interpreter MUST size this
-     *  parameter, other parameters may be skipped, using the value in
-     *  NDR_PROC_PARTIAL_OIF_HEADER::constant_client_buffer_size instead.
-     * RPC_FC_PROC_PF_MUSTFREE = 0x0002 - server interpreter MUST size this
-     *  parameter, other parameters may be skipped, using the value in
-     *  NDR_PROC_PARTIAL_OIF_HEADER::constant_server_buffer_size instead.
-     * RPC_FC_PROC_PF_PIPE = 0x0004 - The parameter is a pipe handle. See
-     *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/rpc/rpc/pipes.asp
-     *  for more information on pipes.
-     * RPC_FC_PROC_PF_IN = 0x0008 - The parameter is an input
-     * RPC_FC_PROC_PF_OUT = 0x0010 - The parameter is an output
-     * RPC_FC_PROC_PF_RETURN = 0x0020 - The parameter is to be returned
-     * RPC_FC_PROC_PF_BASETYPE = 0x0040 - The parameter is simple and has the
-     *  format defined by NDR_PARAM_OIF_BASETYPE rather than by
-     *  NDR_PARAM_OIF_OTHER.
-     * RPC_FC_PROC_PF_BYVAL = 0x0080 - Set for compound types being sent by
-     *  value. Can be of type: structure, union, transmit_as, represent_as,
-     *  wire_marshal and SAFEARRAY.
-     * RPC_FC_PROC_PF_SIMPLEREF = 0x0100 - parameter that is a reference
-     *  pointer to anything other than another pointer, and which has no
-     *  allocate attributes.
-     * RPC_FC_PROC_PF_DONTFREEINST = 0x0200 - Used for some represent_as types
-     *  for when the free instance routine should not be called.
-     * RPC_FC_PROC_PF_SAVEASYNC = 0x0400 - unknown
-     * RPC_FC_PROC_PF_SRVALLOCSIZE = 0xe000 - bitmask, which if non-zero
-     *  specifies the size of the object in numbers of 8byte blocks needed.
-     *  It will be stored on the server's stack rather than using an allocate
-     *  call.
-     */
-    unsigned short param_attributes;
+    PARAM_ATTRIBUTES param_attributes;
 
     /* the offset on the calling stack where the parameter is located */
     unsigned short stack_offset;
@@ -332,8 +303,7 @@ typedef struct _NDR_PARAM_OIF_BASETYPE
 
 typedef struct _NDR_PARAM_OIF_OTHER
 {
-    /* see NDR_PARAM_OIF_BASETYPE::param_attributes */
-    unsigned short param_attributes;
+    PARAM_ATTRIBUTES param_attributes;
 
     /* see NDR_PARAM_OIF_BASETYPE::stack_offset */
     unsigned short stack_offset;
@@ -420,20 +390,20 @@ void WINAPI NdrRpcSmSetClientToOsf(PMIDL_STUB_MESSAGE pMessage)
 #endif
 }
 
-static void WINAPI dump_RPC_FC_PROC_PF(unsigned short param_attributes)
+static void WINAPI dump_RPC_FC_PROC_PF(PARAM_ATTRIBUTES param_attributes)
 {
-    if (param_attributes & RPC_FC_PROC_PF_MUSTSIZE) TRACE(" RPC_FC_PROC_PF_MUSTSIZE");
-    if (param_attributes & RPC_FC_PROC_PF_MUSTFREE) TRACE(" RPC_FC_PROC_PF_MUSTFREE");
-    if (param_attributes & RPC_FC_PROC_PF_PIPE) TRACE(" RPC_FC_PROC_PF_PIPE");
-    if (param_attributes & RPC_FC_PROC_PF_IN) TRACE(" RPC_FC_PROC_PF_IN");
-    if (param_attributes & RPC_FC_PROC_PF_OUT) TRACE(" RPC_FC_PROC_PF_OUT");
-    if (param_attributes & RPC_FC_PROC_PF_RETURN) TRACE(" RPC_FC_PROC_PF_RETURN");
-    if (param_attributes & RPC_FC_PROC_PF_BASETYPE) TRACE(" RPC_FC_PROC_PF_BASETYPE");
-    if (param_attributes & RPC_FC_PROC_PF_BYVAL) TRACE(" RPC_FC_PROC_PF_BYVAL");
-    if (param_attributes & RPC_FC_PROC_PF_SIMPLEREF) TRACE(" RPC_FC_PROC_PF_SIMPLEREF");
-    if (param_attributes & RPC_FC_PROC_PF_DONTFREEINST) TRACE(" RPC_FC_PROC_PF_DONTFREEINST");
-    if (param_attributes & RPC_FC_PROC_PF_SAVEASYNC) TRACE(" RPC_FC_PROC_PF_SAVEASYNC");
-    if (param_attributes & RPC_FC_PROC_PF_SRVALLOCSIZE) TRACE(" RPC_FC_PROC_PF_SRVALLOCSIZE");
+    if (param_attributes.MustSize) TRACE(" MustSize");
+    if (param_attributes.MustFree) TRACE(" MustFree");
+    if (param_attributes.IsPipe) TRACE(" IsPipe");
+    if (param_attributes.IsIn) TRACE(" IsIn");
+    if (param_attributes.IsOut) TRACE(" IsOut");
+    if (param_attributes.IsReturn) TRACE(" IsReturn");
+    if (param_attributes.IsBasetype) TRACE(" IsBasetype");
+    if (param_attributes.IsByValue) TRACE(" IsByValue");
+    if (param_attributes.IsSimpleRef) TRACE(" IsSimpleRef");
+    if (param_attributes.IsDontCallFreeInst) TRACE(" IsDontCallFreeInst");
+    if (param_attributes.SaveForAsyncFinish) TRACE(" SaveForAsyncFinish");
+    if (param_attributes.ServerAllocSize) TRACE(" ServerAllocSize = %d", param_attributes.ServerAllocSize * 8);
 }
 
 /* FIXME: this will be different on other plaftorms than i386 */
@@ -723,12 +693,12 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                     TRACE("\tstack_offset: 0x%x\n", current_stack_offset);
                     TRACE("\tmemory addr (before): %p\n", pArg);
 
-                    if (pParam->param_attributes & RPC_FC_PROC_PF_BASETYPE)
+                    if (pParam->param_attributes.IsBasetype)
                     {
                         const unsigned char * pTypeFormat =
                             &pParam->type_format_char;
 
-                        if (pParam->param_attributes & RPC_FC_PROC_PF_SIMPLEREF)
+                        if (pParam->param_attributes.IsSimpleRef)
                             pArg = *(unsigned char **)pArg;
 
                         TRACE("\tbase type: 0x%02x\n", *pTypeFormat);
@@ -736,18 +706,18 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                         switch (phase)
                         {
                         case PROXY_CALCSIZE:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_IN)
+                            if (pParam->param_attributes.IsIn)
                                 call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
                             break;
                         case PROXY_MARSHAL:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_IN)
+                            if (pParam->param_attributes.IsIn)
                                 call_marshaller(&stubMsg, pArg, pTypeFormat);
                             break;
                         case PROXY_UNMARSHAL:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
+                            if (pParam->param_attributes.IsOut)
                             {
                                 unsigned char *pRetVal = (unsigned char *)&RetVal;
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_RETURN)
+                                if (pParam->param_attributes.IsReturn)
                                     call_unmarshaller(&stubMsg, &pRetVal, pTypeFormat, 0);
                                 else
                                     call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
@@ -770,7 +740,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
                         /* if a simple ref pointer then we have to do the
                          * check for the pointer being non-NULL. */
-                        if (pParam->param_attributes & RPC_FC_PROC_PF_SIMPLEREF)
+                        if (pParam->param_attributes.IsSimpleRef)
                         {
                             if (!*(unsigned char **)pArg)
                                 RpcRaiseException(RPC_X_NULL_REF_POINTER);
@@ -781,30 +751,30 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                         switch (phase)
                         {
                         case PROXY_CALCSIZE:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_IN)
+                            if (pParam->param_attributes.IsIn)
                             {
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                if (pParam->param_attributes.IsByValue)
                                     call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
                                 else
                                     call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
                             }
                             break;
                         case PROXY_MARSHAL:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_IN)
+                            if (pParam->param_attributes.IsIn)
                             {
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                if (pParam->param_attributes.IsByValue)
                                     call_marshaller(&stubMsg, pArg, pTypeFormat);
                                 else
                                     call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
                             }
                             break;
                         case PROXY_UNMARSHAL:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
+                            if (pParam->param_attributes.IsOut)
                             {
                                 unsigned char *pRetVal = (unsigned char *)&RetVal;
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_RETURN)
+                                if (pParam->param_attributes.IsReturn)
                                     call_unmarshaller(&stubMsg, &pRetVal, pTypeFormat, 0);
-                                else if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                else if (pParam->param_attributes.IsByValue)
                                     call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
                                 else
                                     call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
@@ -1263,10 +1233,11 @@ long WINAPI NdrStubCall2(
                     TRACE("\tstack_offset: %x\n", current_stack_offset);
                     TRACE("\tmemory addr (before): %p -> %p\n", pArg, *(unsigned char **)pArg);
 
-                    if (pParam->param_attributes & RPC_FC_PROC_PF_SRVALLOCSIZE)
-                        FIXME("RPC_FC_PROC_PF_SRVALLOCSIZE ignored for parameter %d\n", i);
+                    if (pParam->param_attributes.ServerAllocSize)
+                        FIXME("ServerAllocSize of %d ignored for parameter %d\n",
+                            pParam->param_attributes.ServerAllocSize * 8, i);
 
-                    if (pParam->param_attributes & RPC_FC_PROC_PF_BASETYPE)
+                    if (pParam->param_attributes.IsBasetype)
                     {
                         const unsigned char *pTypeFormat =
                             &pParam->type_format_char;
@@ -1276,11 +1247,11 @@ long WINAPI NdrStubCall2(
                         switch (phase)
                         {
                         case STUBLESS_MARSHAL:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_RETURN)
+                            if (pParam->param_attributes.IsReturn)
                                 call_marshaller(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
-                            else if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
+                            else if (pParam->param_attributes.IsOut)
                             {
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_SIMPLEREF)
+                                if (pParam->param_attributes.IsSimpleRef)
                                     call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
                                 else
                                     call_marshaller(&stubMsg, pArg, pTypeFormat);
@@ -1288,20 +1259,20 @@ long WINAPI NdrStubCall2(
                             /* FIXME: call call_freer here */
                             break;
                         case STUBLESS_UNMARSHAL:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_IN)
+                            if (pParam->param_attributes.IsIn)
                             {
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_SIMPLEREF)
+                                if (pParam->param_attributes.IsSimpleRef)
                                     call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
                                 else
                                     call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
                             }
                             break;
                         case STUBLESS_CALCSIZE:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_RETURN)
+                            if (pParam->param_attributes.IsReturn)
                                 call_buffer_sizer(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
-                            else if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
+                            else if (pParam->param_attributes.IsOut)
                             {
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_SIMPLEREF)
+                                if (pParam->param_attributes.IsSimpleRef)
                                     call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
                                 else
                                     call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
@@ -1326,11 +1297,11 @@ long WINAPI NdrStubCall2(
                         switch (phase)
                         {
                         case STUBLESS_MARSHAL:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_RETURN)
+                            if (pParam->param_attributes.IsReturn)
                                 call_marshaller(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
-                            else if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
+                            else if (pParam->param_attributes.IsOut)
                             {
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                if (pParam->param_attributes.IsByValue)
                                     call_marshaller(&stubMsg, pArg, pTypeFormat);
                                 else
                                 {
@@ -1341,26 +1312,26 @@ long WINAPI NdrStubCall2(
                             /* FIXME: call call_freer here for IN types */
                             break;
                         case STUBLESS_UNMARSHAL:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_IN)
+                            if (pParam->param_attributes.IsIn)
                             {
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                if (pParam->param_attributes.IsByValue)
                                     call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
                                 else
                                     call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
                             }
-                            else if ((pParam->param_attributes & RPC_FC_PROC_PF_OUT) && 
-                                      !(pParam->param_attributes & RPC_FC_PROC_PF_BYVAL))
+                            else if ((pParam->param_attributes.IsOut) && 
+                                      !(pParam->param_attributes.IsByValue))
                             {
                                 *(void **)pArg = NdrAllocate(&stubMsg, sizeof(void *));
                                 **(void ***)pArg = 0;
                             }
                             break;
                         case STUBLESS_CALCSIZE:
-                            if (pParam->param_attributes & RPC_FC_PROC_PF_RETURN)
+                            if (pParam->param_attributes.IsReturn)
                                 call_buffer_sizer(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
-                            else if (pParam->param_attributes & RPC_FC_PROC_PF_OUT)
+                            else if (pParam->param_attributes.IsOut)
                             {
-                                if (pParam->param_attributes & RPC_FC_PROC_PF_BYVAL)
+                                if (pParam->param_attributes.IsByValue)
                                     call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
                                 else
                                     call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
