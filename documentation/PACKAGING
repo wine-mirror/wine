@@ -64,6 +64,9 @@ they should appear as "Suggests" or "Recommends", as the case may be.
       better support of fonts than using the X11 fonts engine. It is
       only needed for the X11 back end engine. Used from GDI.
 
+    * fontforge: http://sourceforge.net/projects/fontforge/
+      Used by WINE to create our own set of TrueType fonts during build.
+
     * fontconfig
       Used to find TrueType fonts for rendering with freetype. Used by
       GDI.
@@ -118,6 +121,15 @@ they should appear as "Suggests" or "Recommends", as the case may be.
       Xrender - client side font rendering
       Xi - X Input handling (for asian input methods mostly)
       Xext - X extensions
+
+    * libxml2, libxslt
+      These two libraries are used for our msxml3.dll implementation.
+
+    * prelink
+      Used during build to locate WINE at a specific virtual address.
+
+    * capi4linux
+      Used to implement our capi2032.dll.
 
 GOALS
 ~~~~~
