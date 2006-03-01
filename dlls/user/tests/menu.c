@@ -64,7 +64,7 @@ static struct {
     SIZE sc_size; /* size of the short-cut */
 } MOD_txtsizes[] = {
         { "Pinot &Noir" },
-        { "&Merlot\t" },
+        { "&Merlot\bF4" },
         { "Shira&z\tAlt+S" },
         { "" },
         { NULL }

@@ -997,6 +997,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
     }
 
     itemheight = 0;
+    lpitem->xTab = 0;
 
     if (!menuBar) {
         if (lpitem->hbmpItem) {
@@ -1011,9 +1012,11 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
             lpitem->rect.right += size.cx + 2;
             itemheight = size.cy + 2;
         }
-        lpitem->rect.right += 4 + arrow_bitmap_width + menucharsize.cx;
         if( !(lppop->dwStyle & MNS_NOCHECK))
             lpitem->rect.right += check_bitmap_width; 
+        lpitem->rect.right += 4 + menucharsize.cx;
+        lpitem->xTab = lpitem->rect.right;
+        lpitem->rect.right += arrow_bitmap_width;
     } else if (lpitem->hbmpItem) { /* menuBar */
         SIZE size;
 
@@ -1030,7 +1033,6 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         RECT rc = lpitem->rect;
         LONG txtheight, txtwidth;
 
-        lpitem->xTab = 0;
 	if ( lpitem->fState & MFS_DEFAULT ) {
 	     hfontOld = SelectObject( hdc, get_menu_font(TRUE) );
 	}
@@ -1055,8 +1057,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
                 /* get text size after the tab */
                 tmpheight = DrawTextW( hdc, p, -1, &tmprc,
                         DT_SINGLELINE|DT_CALCRECT);
-                lpitem->xTab = menucharsize.cx +
-                    4 + check_bitmap_width + lpitem->bmpsize.cx + txtwidth;
+                lpitem->xTab += txtwidth;
                 txtheight = max( txtheight, tmpheight);
                 txtwidth += menucharsize.cx + /* space for the tab */
                     tmprc.right - tmprc.left; /* space for the short cut */
@@ -1064,13 +1065,8 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
                 txtheight = DrawTextW( hdc, lpitem->text, -1, &rc,
                         DT_SINGLELINE|DT_CALCRECT);
                 txtwidth = rc.right - rc.left;
-                if (strchrW( lpitem->text, '\b' ))
-                    lpitem->rect.right += menucharsize.cx;
-                lpitem->xTab = 4 + check_bitmap_width + lpitem->bmpsize.cx +
-                    txtwidth;
+                lpitem->xTab += txtwidth;
             }
-            if( (lppop->dwStyle & MNS_NOCHECK))
-                lpitem->xTab -= check_bitmap_width;
             lpitem->rect.right  += 2 + txtwidth;
             itemheight = max( itemheight,
                     max( txtheight + 2, menucharsize.cy + 4));
@@ -1642,6 +1638,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    }
 	    else
 	    {
+		rect.right = lpitem->xTab;
 		uFormat = DT_RIGHT | DT_VCENTER | DT_SINGLELINE;
 	    }
 
