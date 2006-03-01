@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -2985,6 +2986,7 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ERROR_STATUS_T:
+    case RPC_FC_ENUM32:
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG) - 1);
         *(ULONG *)pStubMsg->Buffer = *(ULONG *)pMemory;
         pStubMsg->Buffer += sizeof(ULONG);
@@ -3007,7 +3009,14 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(
         TRACE("value: %s\n", wine_dbgstr_longlong(*(ULONGLONG*)pMemory));
         break;
     case RPC_FC_ENUM16:
-    case RPC_FC_ENUM32:
+        /* only 16-bits on the wire, so do a sanity check */
+        if (*(UINT *)pMemory > USHRT_MAX)
+            RpcRaiseException(RPC_X_ENUM_VALUE_OUT_OF_RANGE);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        *(USHORT *)pStubMsg->Buffer = *(UINT *)pMemory;
+        pStubMsg->Buffer += sizeof(USHORT);
+        TRACE("value: 0x%04x\n", *(UINT *)pMemory);
+        break;
     default:
         FIXME("Unhandled base type: 0x%02x\n", *pFormat);
     }
@@ -3055,6 +3064,7 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ERROR_STATUS_T:
+    case RPC_FC_ENUM32:
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG) - 1);
         **(ULONG **)ppMemory = *(ULONG *)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(ULONG);
@@ -3079,7 +3089,12 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
         TRACE("value: %s\n", wine_dbgstr_longlong(**(ULONGLONG **)ppMemory));
         break;
     case RPC_FC_ENUM16:
-    case RPC_FC_ENUM32:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        /* 16-bits on the wire, but int in memory */
+        **(UINT **)ppMemory = *(USHORT *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(USHORT);
+        TRACE("value: 0x%08x\n", **(UINT **)ppMemory);
+        break;
     default:
         FIXME("Unhandled base type: 0x%02x\n", *pFormat);
     }
@@ -3110,11 +3125,13 @@ static void WINAPI NdrBaseTypeBufferSize(
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
+    case RPC_FC_ENUM16:
         ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(USHORT) - 1);
         pStubMsg->BufferLength += sizeof(USHORT);
         break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
+    case RPC_FC_ENUM32:
         ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(ULONG) - 1);
         pStubMsg->BufferLength += sizeof(ULONG);
         break;
@@ -3134,8 +3151,6 @@ static void WINAPI NdrBaseTypeBufferSize(
         ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(error_status_t) - 1);
         pStubMsg->BufferLength += sizeof(error_status_t);
         break;
-    case RPC_FC_ENUM16:
-    case RPC_FC_ENUM32:
     default:
         FIXME("Unhandled base type: 0x%02x\n", *pFormat);
     }
@@ -3172,6 +3187,7 @@ static unsigned long WINAPI NdrBaseTypeMemorySize(
         return sizeof(error_status_t);
     case RPC_FC_ENUM16:
     case RPC_FC_ENUM32:
+        return sizeof(INT);
     default:
         FIXME("Unhandled base type: 0x%02x\n", *pFormat);
        return 0;
