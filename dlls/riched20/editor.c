@@ -24,7 +24,7 @@
   API implementation status:
   
   Messages (ANSI versions not done yet)
-  - EM_AUTOURLDETECT 2.0
+  + EM_AUTOURLDETECT 2.0
   + EM_CANPASTE
   + EM_CANREDO 2.0
   + EM_CANUNDO
@@ -40,7 +40,7 @@
   - EM_FINDWORDBREAK
   - EM_FMTLINES
   - EM_FORMATRANGE
-  - EM_GETAUTOURLDETECT 2.0
+  + EM_GETAUTOURLDETECT 2.0
   - EM_GETBIDIOPTIONS 3.0
   - EM_GETCHARFORMAT (partly done)
   - EM_GETEDITSTYLE
@@ -1290,13 +1290,11 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   
   switch(msg) {
   
-  UNSUPPORTED_MSG(EM_AUTOURLDETECT)
   UNSUPPORTED_MSG(EM_DISPLAYBAND)
   UNSUPPORTED_MSG(EM_EXLIMITTEXT)
   UNSUPPORTED_MSG(EM_FINDWORDBREAK)
   UNSUPPORTED_MSG(EM_FMTLINES)
   UNSUPPORTED_MSG(EM_FORMATRANGE)
-  UNSUPPORTED_MSG(EM_GETAUTOURLDETECT)
   UNSUPPORTED_MSG(EM_GETBIDIOPTIONS)
   UNSUPPORTED_MSG(EM_GETEDITSTYLE)
   UNSUPPORTED_MSG(EM_GETIMECOMPMODE)
@@ -1446,6 +1444,19 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_InvalidateSelection(editor);
     ME_SendSelChange(editor);
     return 0;
+  }
+  case EM_AUTOURLDETECT:
+  {
+    if (wParam==1 || wParam ==0) 
+    {
+        editor->AutoURLDetect_bEnable = (BOOL)wParam;
+        return 0;
+    }
+    return E_INVALIDARG;
+  }
+  case EM_GETAUTOURLDETECT:
+  {
+	return editor->AutoURLDetect_bEnable;
   }
   case EM_EXSETSEL:
   {
@@ -2089,7 +2100,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_CHAR: 
   {
     WCHAR wstr = LOWORD(wParam);
-
+    if (editor->AutoURLDetect_bEnable)
+      ME_AutoURLDetect(editor, wstr);
+        
     switch (wstr)
     {
     case 3: /* Ctrl-C */
@@ -2512,4 +2525,96 @@ LRESULT WINAPI REExtendedRegisterClass(void)
       result += 2;
 
   return result;
+}
+
+int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar) 
+{
+  struct prefix_s {
+    char *text;
+    int length;
+  } prefixes[12] = {
+    {"http:", 5},
+    {"file:", 6},
+    {"mailto:", 8},
+    {"ftp:", 5},
+    {"https:", 7},
+    {"gopher:", 8},
+    {"nntp:", 6},
+    {"prospero:", 10},
+    {"telnet:", 8},
+    {"news:", 6},
+    {"wais:", 6},
+    {"www.", 5}
+  };
+  CHARRANGE ins_pt;
+  int curf_ef, link_ef, def_ef;
+  int cur_prefx, prefx_cnt;
+  int sel_min, sel_max;
+  int car_pos = 0;
+  int text_pos=-1;
+  int URLmin, URLmax;
+  CHARRANGE url;
+  FINDTEXTA ft;
+  CHARFORMAT2W cur_format;
+  CHARFORMAT2W default_format;
+  CHARFORMAT2W link;
+  RichEditANSIWndProc(editor->hWnd, EM_EXGETSEL, (WPARAM) 0, (LPARAM) &ins_pt);
+  sel_min = ins_pt.cpMin;
+  sel_max = ins_pt.cpMax;
+  if (sel_min==sel_max) 
+    car_pos = sel_min;
+  if (sel_min!=sel_max)
+    car_pos = ME_GetTextLength(editor)+1;   
+  cur_format.cbSize = sizeof(cur_format);
+  default_format.cbSize = sizeof(default_format);
+  RichEditANSIWndProc(editor->hWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cur_format);
+  RichEditANSIWndProc(editor->hWnd, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM) &default_format);
+  link.cbSize = sizeof(link);
+  link.dwMask = CFM_LINK | CFM_COLOR | CFM_UNDERLINE;
+  link.dwEffects = CFE_LINK | CFE_UNDERLINE;
+  link.crTextColor = RGB(0,0,255);
+  curf_ef = cur_format.dwEffects & link.dwEffects;
+  def_ef = default_format.dwEffects & link.dwEffects;
+  link_ef = link.dwEffects & link.dwEffects;
+  if (curf_ef == link_ef) 
+  {
+    if( curChar == '\n' || curChar=='\r' || curChar==' ') 
+    {
+      ME_SetSelection(editor, car_pos, car_pos);
+      RichEditANSIWndProc(editor->hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &default_format);
+      text_pos=-1;
+      return 0;
+    }
+  }
+  if (curf_ef == def_ef)
+  {
+    cur_prefx = 0;
+    prefx_cnt = (sizeof(prefixes)/sizeof(struct prefix_s))-1;
+    while (cur_prefx<=prefx_cnt) 
+    {
+      if (text_pos == -1) 
+      {
+        ft.lpstrText = prefixes[cur_prefx].text;
+        URLmin=max(0,(car_pos-prefixes[cur_prefx].length));
+        URLmax=max(0, car_pos);
+        if ((car_pos == 0) && (ME_GetTextLength(editor) != 0))
+        {
+        URLmax = ME_GetTextLength(editor)+1;
+        }
+        ft.chrg.cpMin = URLmin;
+        ft.chrg.cpMax = URLmax;
+        text_pos=RichEditANSIWndProc(editor->hWnd, EM_FINDTEXT, FR_DOWN, (LPARAM)&ft);   
+        cur_prefx++;
+      }
+      if (text_pos != -1) 
+      {
+        url.cpMin=text_pos;
+        url.cpMax=car_pos-1;
+        ME_SetCharFormat(editor, text_pos, (URLmax-text_pos), &link);
+        ME_Repaint(editor);
+        break;
+      }
+    }
+  }
+  return 0;
 }

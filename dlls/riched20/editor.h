@@ -250,7 +250,7 @@ void ME_EmptyUndoStack(ME_TextEditor *editor);
 int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, BOOL bCRLF);
 ME_DisplayItem *ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int *nItemOffset);
 void ME_StreamInFill(ME_InStream *stream);
-
+int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar);
 extern int me_debug;
 extern HANDLE me_heap;
 extern void DoWrap(ME_TextEditor *editor);

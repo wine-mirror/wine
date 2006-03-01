@@ -317,6 +317,7 @@ typedef struct tagME_TextEditor
    *TM_SINGLECODEPAGE or TM_MULTICODEPAGE*/
   int mode;
   BOOL bHideSelection;
+  BOOL AutoURLDetect_bEnable;
 } ME_TextEditor;
 
 typedef struct tagME_Context

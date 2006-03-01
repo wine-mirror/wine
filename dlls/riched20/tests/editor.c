@@ -536,6 +536,79 @@ static void test_EM_SETOPTIONS()
     DestroyWindow(hwndRichEdit);
 }
 
+static void check_CFE_LINK_rcvd(HWND hwnd, int is_url)
+{
+  CHARFORMAT2W text_format;
+  int link_present = 0;
+  text_format.cbSize = sizeof(text_format);
+  SendMessage(hwnd, EM_SETSEL, 0, 0);
+  SendMessage(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &text_format);
+  link_present = text_format.dwEffects & CFE_LINK;
+  if (is_url) 
+  { /* control text is url; should get CFE_LINK */
+	ok(0 != link_present, "URL Case: CFE_LINK not set.\n");
+  }
+  else 
+  {
+    ok(0 == link_present, "Non-URL Case: CFE_LINK set.\n");
+  }
+}
+
+static HWND new_static_wnd(HWND parent) {
+  return new_window("Static", 0, parent);
+}
+
+static void test_EM_AUTOURLDETECT(void)
+{
+  struct urls_s {
+    char *text;
+    int is_url;
+  } urls[12] = {
+    {"winehq.org", 0},
+    {"http://www.winehq.org", 1},
+    {"http//winehq.org", 0},
+    {"ww.winehq.org", 0},
+    {"www.winehq.org", 1},
+    {"ftp://192.168.1.1", 1},
+    {"ftp//192.168.1.1", 0},
+    {"mailto:your@email.com", 1},    
+    {"prospero:prosperoserver", 1},
+    {"telnet:test", 1},
+    {"news:newserver", 1},
+    {"wais:waisserver", 1}  
+  };
+
+  int i;
+  int urlRet=-1;
+  HWND hwndRichEdit, parent;
+
+  parent = new_static_wnd(NULL);
+  hwndRichEdit = new_richedit(parent);
+  /* Try and pass EM_AUTOURLDETECT some test wParam values */
+  urlRet=SendMessage(hwndRichEdit, EM_AUTOURLDETECT, FALSE, 0);
+  ok(urlRet==0, "Good wParam: urlRet is: %d\n", urlRet);
+  urlRet=SendMessage(hwndRichEdit, EM_AUTOURLDETECT, 1, 0);
+  ok(urlRet==0, "Good wParam2: urlRet is: %d\n", urlRet);
+  /* Windows returns -2147024809 (0x80070057) on bad wParam values */
+  urlRet=SendMessage(hwndRichEdit, EM_AUTOURLDETECT, 8, 0);
+  ok(urlRet==E_INVALIDARG, "Bad wParam: urlRet is: %d\n", urlRet);
+  urlRet=SendMessage(hwndRichEdit, EM_AUTOURLDETECT, (WPARAM)"h", (LPARAM)"h");
+  ok(urlRet==E_INVALIDARG, "Bad wParam2: urlRet is: %d\n", urlRet);
+  /* for each url, check the text to see if CFE_LINK effect is present */
+  for (i = 0; i < sizeof(urls)/sizeof(struct urls_s); i++) {
+    SendMessage(hwndRichEdit, EM_AUTOURLDETECT, FALSE, 0);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) urls[i].text);
+    SendMessage(hwndRichEdit, WM_CHAR, 0, 0);
+    check_CFE_LINK_rcvd(hwndRichEdit, 0);
+    SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) urls[i].text);
+    SendMessage(hwndRichEdit, WM_CHAR, 0, 0);
+    check_CFE_LINK_rcvd(hwndRichEdit, urls[i].is_url);
+  }
+  DestroyWindow(hwndRichEdit);
+  DestroyWindow(parent);
+}
+
 static void test_EM_SCROLL()
 {
   int i, j;
@@ -686,7 +759,6 @@ START_TEST( editor )
    * RICHED20.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
-
   test_EM_FINDTEXT();
   test_EM_SCROLLCARET();
   test_EM_SCROLL();
@@ -694,6 +766,7 @@ START_TEST( editor )
   test_TM_PLAINTEXT();
   test_EM_SETOPTIONS();
   test_WM_GETTEXT();
+  test_EM_AUTOURLDETECT();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
