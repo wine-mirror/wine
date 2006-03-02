@@ -75,9 +75,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv) {
  * PARAMS
  * toto       result?
  */
-BOOL WINAPI ValidateVertexShader(LPVOID pFunction, int foo, int bar, void *fee, int rab)
+BOOL WINAPI ValidateVertexShader(LPVOID pFunction, int param1, int param2, LPVOID toto)
 {
-  FIXME("(void): stub: %p %d %d %p %d\n", pFunction, foo, bar, fee, rab);
+  FIXME("(%p %d %d %p): stub\n", pFunction, param1, param2, toto);
   return TRUE;
 }
 
@@ -87,8 +87,8 @@ BOOL WINAPI ValidateVertexShader(LPVOID pFunction, int foo, int bar, void *fee, 
  * PARAMS
  * toto       result?
  */
-BOOL WINAPI ValidatePixelShader(LPVOID pFunction, int foo, int bar, void *fee, int rab)
+BOOL WINAPI ValidatePixelShader(LPVOID pFunction, int param1, int param2, LPVOID toto)
 {
-  FIXME("(void): stub: %p %d %d %p %d\n", pFunction, foo, bar, fee, rab);
+  FIXME("(%p %d %d %p): stub\n", pFunction, param1, param2, toto);
   return TRUE;
 }
