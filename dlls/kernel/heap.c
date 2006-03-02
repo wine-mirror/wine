@@ -44,7 +44,9 @@
 /* FIXME:  Unfortunately swapctl can't be used with largefile.... */
 # undef _FILE_OFFSET_BITS
 # define _FILE_OFFSET_BITS 32
-# include <sys/resource.h>
+# ifdef HAVE_SYS_RESOURCE_H
+#  include <sys/resource.h>
+# endif
 # ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 # endif
