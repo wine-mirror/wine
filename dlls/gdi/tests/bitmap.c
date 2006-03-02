@@ -342,6 +342,27 @@ static void test_dibsections(void)
     SelectObject(hdcmem, oldbm);
     DeleteObject(hdib);
 
+    pbmi->bmiColors[0].rgbRed = 0xff;
+    pbmi->bmiColors[0].rgbGreen = 0xff;
+    pbmi->bmiColors[0].rgbBlue = 0xff;
+    pbmi->bmiColors[1].rgbRed = 0;
+    pbmi->bmiColors[1].rgbGreen = 0;
+    pbmi->bmiColors[1].rgbBlue = 0;
+
+    hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection failed\n");
+    oldbm = SelectObject(hdcmem, hdib);
+
+    ret = GetDIBColorTable(hdcmem, 0, 2, rgb);
+    ok(ret == 2, "GetDIBColorTable returned %d\n", ret);
+    ok(!memcmp(rgb, pbmi->bmiColors, 2 * sizeof(RGBQUAD)),
+       "GetDIBColorTable returns table 0: r%02x g%02x b%02x res%02x 1: r%02x g%02x b%02x res%02x\n",
+       rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue, rgb[0].rgbReserved,
+       rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue, rgb[1].rgbReserved);
+
+    SelectObject(hdcmem, oldbm);
+    DeleteObject(hdib);
+
     pbmi->bmiHeader.biBitCount = 4;
     for (i = 0; i < 16; i++) {
         pbmi->bmiColors[i].rgbRed = i;
@@ -528,6 +549,200 @@ static void test_dibsections(void)
     ReleaseDC(0, hdc);
 }    
 
+void test_mono_dibsection(void)
+{
+    HDC hdc, memdc;
+    HBITMAP old_bm, mono_ds;
+    char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
+    BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
+    BYTE bits[10 * 4];
+    BYTE *ds_bits;
+    int num;
+
+    hdc = GetDC(0);
+
+    memdc = CreateCompatibleDC(hdc);
+
+    memset(pbmi, 0, sizeof(bmibuf));
+    pbmi->bmiHeader.biSize = sizeof(pbmi->bmiHeader);
+    pbmi->bmiHeader.biHeight = 10;
+    pbmi->bmiHeader.biWidth = 10;
+    pbmi->bmiHeader.biBitCount = 1;
+    pbmi->bmiHeader.biPlanes = 1;
+    pbmi->bmiHeader.biCompression = BI_RGB;
+    pbmi->bmiColors[0].rgbRed = 0xff;
+    pbmi->bmiColors[0].rgbGreen = 0xff;
+    pbmi->bmiColors[0].rgbBlue = 0xff;
+    pbmi->bmiColors[1].rgbRed = 0x0;
+    pbmi->bmiColors[1].rgbGreen = 0x0;
+    pbmi->bmiColors[1].rgbBlue = 0x0;
+
+    /*
+     * First dib section is 'inverted' ie color[0] is white, color[1] is black
+     */
+
+    mono_ds = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&ds_bits, NULL, 0);
+    ok(mono_ds != NULL, "CreateDIBSection rets NULL\n");
+    old_bm = SelectObject(memdc, mono_ds);
+
+    /* black border, white interior */
+    Rectangle(memdc, 0, 0, 10, 10);
+    ok(ds_bits[0] == 0xff, "out_bits %02x\n", ds_bits[0]);
+    ok(ds_bits[4] == 0x80, "out_bits %02x\n", ds_bits[4]);
+
+    /* SetDIBitsToDevice with an inverted bmi -> inverted dib section */
+
+    memset(bits, 0, sizeof(bits));
+    bits[0] = 0xaa;
+
+    SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
+    ok(ds_bits[0] == 0xaa, "out_bits %02x\n", ds_bits[0]);
+
+    /* SetDIBitsToDevice with a normal bmi -> inverted dib section */
+
+    pbmi->bmiColors[0].rgbRed = 0x0;
+    pbmi->bmiColors[0].rgbGreen = 0x0;
+    pbmi->bmiColors[0].rgbBlue = 0x0;
+    pbmi->bmiColors[1].rgbRed = 0xff;
+    pbmi->bmiColors[1].rgbGreen = 0xff;
+    pbmi->bmiColors[1].rgbBlue = 0xff;
+
+    SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
+    ok(ds_bits[0] == 0x55, "out_bits %02x\n", ds_bits[0]);
+
+    SelectObject(memdc, old_bm);
+    DeleteObject(mono_ds);
+
+    /*
+     * Next dib section is 'normal' ie color[0] is black, color[1] is white
+     */
+
+    pbmi->bmiColors[0].rgbRed = 0x0;
+    pbmi->bmiColors[0].rgbGreen = 0x0;
+    pbmi->bmiColors[0].rgbBlue = 0x0;
+    pbmi->bmiColors[1].rgbRed = 0xff;
+    pbmi->bmiColors[1].rgbGreen = 0xff;
+    pbmi->bmiColors[1].rgbBlue = 0xff;
+
+    mono_ds = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&ds_bits, NULL, 0);
+    ok(mono_ds != NULL, "CreateDIBSection rets NULL\n");
+    old_bm = SelectObject(memdc, mono_ds);
+
+    /* black border, white interior */
+    Rectangle(memdc, 0, 0, 10, 10);
+    ok(ds_bits[0] == 0x00, "out_bits %02x\n", ds_bits[0]);
+    ok(ds_bits[4] == 0x7f, "out_bits %02x\n", ds_bits[4]);
+
+    /* SetDIBitsToDevice with a normal bmi -> normal dib section */
+
+    SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
+    ok(ds_bits[0] == 0xaa, "out_bits %02x\n", ds_bits[0]);
+
+    /* SetDIBitsToDevice with a inverted bmi -> normal dib section */
+
+    pbmi->bmiColors[0].rgbRed = 0xff;
+    pbmi->bmiColors[0].rgbGreen = 0xff;
+    pbmi->bmiColors[0].rgbBlue = 0xff;
+    pbmi->bmiColors[1].rgbRed = 0x0;
+    pbmi->bmiColors[1].rgbGreen = 0x0;
+    pbmi->bmiColors[1].rgbBlue = 0x0;
+
+    SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
+    ok(ds_bits[0] == 0x55, "out_bits %02x\n", ds_bits[0]);
+
+    /*
+     * Take that 'normal' dibsection and change its colour table to an 'inverted' one
+     */
+
+    pbmi->bmiColors[0].rgbRed = 0xff;
+    pbmi->bmiColors[0].rgbGreen = 0xff;
+    pbmi->bmiColors[0].rgbBlue = 0xff;
+    pbmi->bmiColors[1].rgbRed = 0x0;
+    pbmi->bmiColors[1].rgbGreen = 0x0;
+    pbmi->bmiColors[1].rgbBlue = 0x0;
+    num = SetDIBColorTable(memdc, 0, 2, pbmi->bmiColors);
+    ok(num == 2, "num = %d\n", num);
+
+    /* black border, white interior */
+    Rectangle(memdc, 0, 0, 10, 10);
+todo_wine {
+    ok(ds_bits[0] == 0xff, "out_bits %02x\n", ds_bits[0]);
+    ok(ds_bits[4] == 0x80, "out_bits %02x\n", ds_bits[4]);
+ }
+    /* SetDIBitsToDevice with an inverted bmi -> inverted dib section */
+
+    memset(bits, 0, sizeof(bits));
+    bits[0] = 0xaa;
+
+    SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
+    ok(ds_bits[0] == 0xaa, "out_bits %02x\n", ds_bits[0]);
+
+    /* SetDIBitsToDevice with a normal bmi -> inverted dib section */
+
+    pbmi->bmiColors[0].rgbRed = 0x0;
+    pbmi->bmiColors[0].rgbGreen = 0x0;
+    pbmi->bmiColors[0].rgbBlue = 0x0;
+    pbmi->bmiColors[1].rgbRed = 0xff;
+    pbmi->bmiColors[1].rgbGreen = 0xff;
+    pbmi->bmiColors[1].rgbBlue = 0xff;
+
+    SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
+    ok(ds_bits[0] == 0x55, "out_bits %02x\n", ds_bits[0]);
+
+    SelectObject(memdc, old_bm);
+    DeleteObject(mono_ds);
+
+    /*
+     * Now a dib section with a strange colour map just for fun.  This behaves just like an inverted one.
+     */
+ 
+    pbmi->bmiColors[0].rgbRed = 0xff;
+    pbmi->bmiColors[0].rgbGreen = 0x0;
+    pbmi->bmiColors[0].rgbBlue = 0x0;
+    pbmi->bmiColors[1].rgbRed = 0xfe;
+    pbmi->bmiColors[1].rgbGreen = 0x0;
+    pbmi->bmiColors[1].rgbBlue = 0x0;
+
+    mono_ds = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&ds_bits, NULL, 0);
+    ok(mono_ds != NULL, "CreateDIBSection rets NULL\n");
+    old_bm = SelectObject(memdc, mono_ds);
+
+    /* black border, white interior */
+    Rectangle(memdc, 0, 0, 10, 10);
+    ok(ds_bits[0] == 0xff, "out_bits %02x\n", ds_bits[0]);
+    ok(ds_bits[4] == 0x80, "out_bits %02x\n", ds_bits[4]);
+
+    /* SetDIBitsToDevice with a normal bmi -> inverted dib section */
+
+    pbmi->bmiColors[0].rgbRed = 0x0;
+    pbmi->bmiColors[0].rgbGreen = 0x0;
+    pbmi->bmiColors[0].rgbBlue = 0x0;
+    pbmi->bmiColors[1].rgbRed = 0xff;
+    pbmi->bmiColors[1].rgbGreen = 0xff;
+    pbmi->bmiColors[1].rgbBlue = 0xff;
+
+    SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
+    ok(ds_bits[0] == 0x55, "out_bits %02x\n", ds_bits[0]);
+
+    /* SetDIBitsToDevice with a inverted bmi -> inverted dib section */
+
+    pbmi->bmiColors[0].rgbRed = 0xff;
+    pbmi->bmiColors[0].rgbGreen = 0xff;
+    pbmi->bmiColors[0].rgbBlue = 0xff;
+    pbmi->bmiColors[1].rgbRed = 0x0;
+    pbmi->bmiColors[1].rgbGreen = 0x0;
+    pbmi->bmiColors[1].rgbBlue = 0x0;
+
+    SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
+    ok(ds_bits[0] == 0xaa, "out_bits %02x\n", ds_bits[0]);
+
+    SelectObject(memdc, old_bm);
+    DeleteObject(mono_ds);
+
+    DeleteDC(memdc);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(bitmap)
 {
     HWND hWnd;
@@ -541,4 +756,5 @@ START_TEST(bitmap)
 
     test_createdibitmap();
     test_dibsections();
+    test_mono_dibsection();
 }

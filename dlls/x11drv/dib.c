@@ -272,6 +272,12 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
 }
 
 
+static inline BOOL colour_is_brighter(RGBQUAD c1, RGBQUAD c2)
+{
+    return (c1.rgbRed * c1.rgbRed + c1.rgbGreen * c1.rgbGreen + c1.rgbBlue * c1.rgbBlue) > 
+        (c2.rgbRed * c2.rgbRed + c2.rgbGreen * c2.rgbGreen + c2.rgbBlue * c2.rgbBlue);
+}
+
 /***********************************************************************
  *           X11DRV_DIB_GenColorMap
  *
@@ -291,9 +297,19 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
             const RGBQUAD * rgb = (const RGBQUAD *)colorPtr;
 
             if (depth == 1)  /* Monochrome */
-                for (i = start; i < end; i++, rgb++)
-                    colorMapping[i] = (rgb->rgbRed + rgb->rgbGreen +
-                                       rgb->rgbBlue > 255*3/2);
+            {
+                BOOL invert = FALSE;
+                if(physDev && physDev->bitmap && physDev->bitmap->colorTable)
+                {
+                    if(!colour_is_brighter(physDev->bitmap->colorTable[1], physDev->bitmap->colorTable[0]))
+                        invert = TRUE;
+                }
+                for (i = start; i < end; i++, rgb++) 
+                    colorMapping[i] = ((rgb->rgbRed + rgb->rgbGreen +
+                                        rgb->rgbBlue > 255*3/2 && !invert) ||
+                                       (rgb->rgbRed + rgb->rgbGreen +
+                                        rgb->rgbBlue <= 255*3/2 && invert));
+            }
             else
                 for (i = start; i < end; i++, rgb++)
                     colorMapping[i] = X11DRV_PALETTE_ToPhysical( physDev, RGB(rgb->rgbRed,
@@ -305,9 +321,19 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
             const RGBTRIPLE * rgb = (const RGBTRIPLE *)colorPtr;
 
             if (depth == 1)  /* Monochrome */
+            {
+                BOOL invert = FALSE;
+                if(physDev && physDev->bitmap && physDev->bitmap->colorTable)
+                {
+                    if(!colour_is_brighter(physDev->bitmap->colorTable[1], physDev->bitmap->colorTable[0]))
+                        invert = TRUE;
+                }
                 for (i = start; i < end; i++, rgb++)
-                    colorMapping[i] = (rgb->rgbtRed + rgb->rgbtGreen +
-                                       rgb->rgbtBlue > 255*3/2);
+                    colorMapping[i] = ((rgb->rgbtRed + rgb->rgbtGreen +
+                                        rgb->rgbtBlue > 255*3/2 && !invert) ||
+                                       (rgb->rgbtRed + rgb->rgbtGreen +
+                                        rgb->rgbtBlue <= 255*3/2 && invert));
+            }
             else
                 for (i = start; i < end; i++, rgb++)
                     colorMapping[i] = X11DRV_PALETTE_ToPhysical( physDev, RGB(rgb->rgbtRed,
@@ -337,8 +363,8 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
  * Build the color map from the bitmap palette. Should not be called
  * for a >8-bit deep bitmap.
  */
-int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WORD depth,
-                               const BITMAPINFO *info, int *nColors )
+static int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WORD depth,
+                                      const BITMAPINFO *info, int *nColors )
 {
     unsigned int colors;
     BOOL isInfo;
@@ -3852,7 +3878,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
        case 4:
        case 8:
                descr.colorMap = (RGBQUAD *)X11DRV_DIB_BuildColorMap(
-                                            coloruse == DIB_PAL_COLORS ? physDev : NULL, coloruse,
+                                            physDev, coloruse,
                                             physDev->depth, info, &descr.nColorMap );
                if (!descr.colorMap) return 0;
                descr.rMask = descr.gMask = descr.bMask = 0;
@@ -3938,7 +3964,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
        case 4:
        case 8:
 	       descr.colorMap = (RGBQUAD *)X11DRV_DIB_BuildColorMap(
-                        coloruse == DIB_PAL_COLORS ? descr.physDev : NULL, coloruse,
+                                                          descr.physDev, coloruse,
                                                           physBitmap->pixmap_depth,
                                                           info, &descr.nColorMap );
                if (!descr.colorMap) return 0;
@@ -4637,10 +4663,10 @@ HBITMAP X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
     /* create color map */
     if (dib.dsBm.bmBitsPixel <= 8)
     {
-        physBitmap->colorMap = X11DRV_DIB_BuildColorMap( usage == DIB_PAL_COLORS ? physDev : NULL,
+        physBitmap->colorTable = X11DRV_DIB_BuildColorTable( physDev, usage, dib.dsBm.bmBitsPixel, bmi );
+        physBitmap->colorMap = X11DRV_DIB_BuildColorMap( physDev,
                                                          usage, dib.dsBm.bmBitsPixel, bmi,
                                                          &physBitmap->nColorMap );
-        physBitmap->colorTable = X11DRV_DIB_BuildColorTable( physDev, usage, dib.dsBm.bmBitsPixel, bmi );
     }
 
     /* create pixmap and X image */
@@ -4739,6 +4765,10 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
          * Changing color table might change the mapping between
          * DIB colors and X11 colors and thus alter the visible state
          * of the bitmap object.
+         */
+        /*
+         * FIXME we need to recalculate the pen, brush, text and bkgnd pixels here,
+         * at least for a 1 bpp dibsection
          */
         X11DRV_DIB_Lock( physBitmap, DIB_Status_AppMod, FALSE );
         memcpy(physBitmap->colorTable + start, colors, (end - start) * sizeof(RGBQUAD));

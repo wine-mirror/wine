@@ -808,6 +808,12 @@ static int X11DRV_SysPaletteLookupPixel( COLORREF col, BOOL skipReserved )
     return best;
 }
 
+ 
+static inline BOOL colour_is_brighter(RGBQUAD c1, RGBQUAD c2)
+{
+    return (c1.rgbRed * c1.rgbRed + c1.rgbGreen * c1.rgbGreen + c1.rgbBlue * c1.rgbBlue) > 
+        (c2.rgbRed * c2.rgbRed + c2.rgbGreen * c2.rgbGreen + c2.rgbBlue * c2.rgbBlue);
+}
 
 /***********************************************************************
  *           X11DRV_PALETTE_ToPhysical
@@ -870,9 +876,16 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 	  case 0: /* RGB */
 	    if (physDev && (physDev->depth == 1) )
 	    {
+                int white = 1;
+
 		GDI_ReleaseObj( hPal );
+                if (physDev->bitmap && physDev->bitmap->colorTable)
+                {
+                    if(!colour_is_brighter(physDev->bitmap->colorTable[1], physDev->bitmap->colorTable[0]))
+                        white = 0;
+                }
 		return (((color >> 16) & 0xff) +
-			((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
+			((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? white : 1 - white;
 	    }
 
 	}
@@ -923,9 +936,16 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
        	    case 0:  /* RGB */
 		if (physDev && (physDev->depth == 1) )
 		{
-		    GDI_ReleaseObj( hPal );
-		    return (((color >> 16) & 0xff) +
-			    ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
+                    int white = 1;
+
+		    GDI_ReleaseObj( hPal );	
+                    if (physDev->bitmap && physDev->bitmap->colorTable)
+                    {
+                        if(!colour_is_brighter(physDev->bitmap->colorTable[1], physDev->bitmap->colorTable[0]))
+                            white = 0;
+                    }
+                    return (((color >> 16) & 0xff) +
+			    ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? white : 1 - white;
 		}
 
 	    	index = X11DRV_SysPaletteLookupPixel( color, FALSE);
