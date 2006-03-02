@@ -3767,8 +3767,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
 
         if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
-            glStencilOpSeparate(GL_BACK, stencilFail, depthFail, stencilPass);
-            checkGLcall("glStencilOpSeparate(GL_BACK,...)");
+            if(GL_EXTCALL(glStencilOpSeparate)) {
+                GL_EXTCALL(glStencilOpSeparate(GL_BACK, stencilFail, depthFail, stencilPass));
+                checkGLcall("glStencilOpSeparate(GL_BACK,...)");
+            } else {
+                WARN("Unsupported in local OpenGL implementation: glStencilOpSeparate\n");
+            }
         } else {
             glStencilOp(stencilFail, depthFail, stencilPass);
             checkGLcall("glStencilOp(...)");
@@ -3796,8 +3800,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         This->stencilfunc = func;
         if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
-            glStencilFuncSeparate(GL_BACK, func, ref, mask);
-            checkGLcall("glStencilFuncSeparate(GL_BACK,...)");
+            if(GL_EXTCALL(glStencilFuncSeparate)) {
+                GL_EXTCALL(glStencilFuncSeparate(GL_BACK, func, ref, mask));
+                checkGLcall("glStencilOpSeparate(GL_BACK,...)");
+            } else
+                WARN("Unsupported in local OpenGL implementation: glStencilFuncSeparate\n");
         } else {
             glStencilFunc(func, ref, mask);
             checkGLcall("glStencilFunc(...)");
