@@ -26,7 +26,7 @@
 @ stub CertDuplicateCRLContext
 @ stub CertDuplicateCTLContext
 @ stdcall CertDuplicateCertificateContext(ptr)
-@ stub CertDuplicateStore
+@ stdcall CertDuplicateStore(ptr)
 @ stub CertEnumCRLContextProperties
 @ stdcall CertEnumCRLsInStore(ptr ptr)
 @ stub CertEnumCTLContextProperties

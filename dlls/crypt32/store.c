@@ -2626,6 +2626,16 @@ PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore,
     return NULL;
 }
 
+HCERTSTORE WINAPI CertDuplicateStore(HCERTSTORE hCertStore)
+{
+    WINECRYPT_CERTSTORE *hcs = (WINECRYPT_CERTSTORE *)hCertStore;
+
+    TRACE("(%p)\n", hCertStore);
+
+    if (hcs && hcs->dwMagic == WINE_CRYPTCERTSTORE_MAGIC)
+        InterlockedIncrement(&hcs->ref);
+    return hCertStore;
+}
 
 BOOL WINAPI CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {

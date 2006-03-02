@@ -2605,6 +2605,8 @@ BOOL WINAPI CertSetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
 BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
  DWORD dwCtrlType, void const *pvCtrlPara);
 
+HCERTSTORE WINAPI CertDuplicateStore(HCERTSTORE hCertStore);
+
 BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags );
 
 BOOL WINAPI CertFreeCertificateContext( PCCERT_CONTEXT pCertContext );
