@@ -942,7 +942,7 @@ static char *get_basename( const char *link )
     while (1)
     {
         buffer = malloc( n );
-        if (!buffer) break;
+        if (!buffer) return NULL;
 
         r = readlink( link, buffer, n );
         if (r < 0)

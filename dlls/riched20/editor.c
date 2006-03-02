@@ -2552,7 +2552,7 @@ int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar)
   int sel_min, sel_max;
   int car_pos = 0;
   int text_pos=-1;
-  int URLmin, URLmax;
+  int URLmin, URLmax = 0;
   CHARRANGE url;
   FINDTEXTA ft;
   CHARFORMAT2W cur_format;

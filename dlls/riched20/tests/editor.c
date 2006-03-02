@@ -621,15 +621,9 @@ static void test_EM_SCROLL()
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "a");/* one line of text */
   expr = 0x00010000;
   for (i = 0; i < 4; i++) {
-    int cmd;
-    switch (i) {
-    case 0: cmd = SB_PAGEDOWN; break;
-    case 1: cmd = SB_PAGEUP; break;
-    case 2: cmd = SB_LINEDOWN; break;
-    case 3: cmd = SB_LINEUP; break;
-    }
-    
-    r = SendMessage(hwndRichEdit, EM_SCROLL, cmd, 0);
+    static const int cmd[4] = { SB_PAGEDOWN, SB_PAGEUP, SB_LINEDOWN, SB_LINEUP };
+
+    r = SendMessage(hwndRichEdit, EM_SCROLL, cmd[i], 0);
     y_after = SendMessage(hwndRichEdit, EM_GETFIRSTVISIBLELINE, 0, 0);
     ok(expr == r, "EM_SCROLL improper return value returned (i == %d). "
        "Got 0x%08x, expected 0x%08x\n", i, r, expr);

@@ -129,7 +129,7 @@ static HRESULT WINAPI EnumOleSTATDATA_Next(
         rgelt->dwConnection = This->index;
 
         if (pceltFetched)
-            *pceltFetched++;
+            (*pceltFetched)++;
         This->index++;
     }
     return hr;

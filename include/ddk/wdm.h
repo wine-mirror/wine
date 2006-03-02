@@ -833,7 +833,7 @@ typedef struct _KUSER_SHARED_DATA {
     union {
         volatile KSYSTEM_TIME TickCount;
         volatile ULONG64 TickCountQuad;
-    };
+    } DUMMYUNIONNAME;
 } KSHARED_USER_DATA, *PKSHARED_USER_DATA;
 
 NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);

@@ -858,7 +858,7 @@ static void test_SHGetPathFromIDList(void)
 
 	/* Test if we can get the path from the start menu "program files" PIDL. */
     hShell32 = GetModuleHandleA("shell32");
-    pSHGetSpecialFolderLocation = (HRESULT(WINAPI*)(HWND,int,LPITEMIDLIST*))GetProcAddress(hShell32, "SHGetSpecialFolderLocation");
+    pSHGetSpecialFolderLocation = (void *)GetProcAddress(hShell32, "SHGetSpecialFolderLocation");
 
     hr = pSHGetSpecialFolderLocation(NULL, CSIDL_PROGRAM_FILES, &pidlPrograms);
     ok(SUCCEEDED(hr), "SHGetFolderLocation failed: 0x%08lx\n", hr);

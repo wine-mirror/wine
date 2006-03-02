@@ -801,7 +801,7 @@ static HRESULT WINAPI EnumOLEVERB_Next(
         rgelt->grfAttribs = atolW(pwszAttribs);
 
         if (pceltFetched)
-            *pceltFetched++;
+            (*pceltFetched)++;
         This->index++;
     }
     return hr;
