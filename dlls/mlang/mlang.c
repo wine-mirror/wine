@@ -453,6 +453,21 @@ static const struct mlang_data
 
 static void fill_cp_info(const struct mlang_data *ml_data, UINT index, MIMECPINFO *mime_cp_info);
 
+static LONG dll_count;
+
+/*
+ * Dll lifetime tracking declaration
+ */
+static void LockModule(void)
+{
+    InterlockedIncrement(&dll_count);
+}
+
+static void UnlockModule(void)
+{
+    InterlockedDecrement(&dll_count);
+}
+
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
@@ -735,8 +750,11 @@ static HRESULT WINAPI MLANGCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOu
 
 static HRESULT WINAPI MLANGCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    FIXME("(%p)->(%d),stub!\n",This,dolock);
+    if (dolock)
+        LockModule();
+    else
+        UnlockModule();
+
     return S_OK;
 }
 
@@ -2281,6 +2299,9 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     mlang->ref = 1;
     *ppObj = (LPVOID) mlang;
     TRACE("returning %p\n", mlang);
+
+    LockModule();
+
     return S_OK;
 }
 
@@ -2288,8 +2309,7 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    FIXME("\n");
-    return S_FALSE;
+    return dll_count == 0 ? S_OK : S_FALSE;
 }
 
 HRESULT WINAPI GetGlobalFontLinkObject(void)
