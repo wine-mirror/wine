@@ -5819,7 +5819,7 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
         }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_UP;
-        ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
+        SendMessageW( infoPtr->hwndSelf, LVM_GETITEMPOSITION, nItem, (LPARAM)&lvFindInfo.pt );
         while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
         {
           if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
@@ -5854,7 +5854,7 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
         }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_DOWN;
-        ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
+        SendMessageW( infoPtr->hwndSelf, LVM_GETITEMPOSITION, nItem, (LPARAM)&lvFindInfo.pt );
         while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
         {
           if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
@@ -5890,7 +5890,7 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
         }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_LEFT;
-        ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
+        SendMessageW( infoPtr->hwndSelf, LVM_GETITEMPOSITION, nItem, (LPARAM)&lvFindInfo.pt );
         while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
         {
           if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
@@ -5926,7 +5926,7 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
         }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_RIGHT;
-        ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
+        SendMessageW( infoPtr->hwndSelf, LVM_GETITEMPOSITION, nItem, (LPARAM)&lvFindInfo.pt );
         while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
         {
           if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
@@ -8907,7 +8907,7 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 
 	hl.prc = &infoPtr->rcList;
 	hl.pwpos = &wp;
-	Header_Layout(infoPtr->hwndHeader, &hl);
+	SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
 
 	SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
 
@@ -8985,7 +8985,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
 
             hl.prc = &infoPtr->rcList;
             hl.pwpos = &wp;
-            Header_Layout(infoPtr->hwndHeader, &hl);
+            SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
             SetWindowPos(infoPtr->hwndHeader, infoPtr->hwndSelf, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
         }
 
