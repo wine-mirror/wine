@@ -3802,7 +3802,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
             if(GL_EXTCALL(glStencilFuncSeparate)) {
                 GL_EXTCALL(glStencilFuncSeparate(GL_BACK, func, ref, mask));
-                checkGLcall("glStencilOpSeparate(GL_BACK,...)");
+                checkGLcall("glStencilFuncSeparate(GL_BACK,...)");
             } else
                 WARN("Unsupported in local OpenGL implementation: glStencilFuncSeparate\n");
         } else {
