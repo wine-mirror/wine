@@ -492,7 +492,7 @@ static void NP_CreateTab(HINSTANCE hInstance, HWND hwndTabCtrl, DWORD dwStrID, D
     tie.mask = TCIF_TEXT;
     tie.pszText = tabText;
 
-    TabCtrl_InsertItemW(hwndTabCtrl, dwIndex, &tie);
+    SendMessageW( hwndTabCtrl, TCM_INSERTITEMW, dwIndex, (LPARAM)&tie );
     HeapFree(GetProcessHeap(), 0, tabText);
 }
 
