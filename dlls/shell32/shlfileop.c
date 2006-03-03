@@ -779,7 +779,7 @@ static DWORD count_wildcard_files(LPCWSTR szWildFile)
     
     while (res)
     {
-        dwCount++;
+        if (!IsDotDir(wfd.cFileName)) dwCount++;
         res = FindNextFileW(hFile, &wfd);
     }
 
@@ -879,18 +879,16 @@ static void parse_wildcard_files(FILE_LIST *flList, LPWSTR szFile, LPDWORD pdwLi
     WIN32_FIND_DATAW wfd;
     HANDLE hFile = FindFirstFileW(szFile, &wfd);
     LPWSTR szFullPath;
-    BOOL res = TRUE, bDir;
-    
-    while (res)
-    {
-        szFullPath = wildcard_to_file(szFile, wfd.cFileName);
-        bDir = add_file_to_entry(&flList->feFiles[(*pdwListIndex)++],
-                                 szFullPath, TRUE);
-        HeapFree(GetProcessHeap(), 0, szFullPath);
-        res = FindNextFileW(hFile, &wfd);
+    BOOL res;
 
-        if (bDir)
+    for (res = TRUE; res; res = FindNextFileW(hFile, &wfd))
+    {
+        if (IsDotDir(wfd.cFileName)) continue;
+        szFullPath = wildcard_to_file(szFile, wfd.cFileName);
+        if (add_file_to_entry(&flList->feFiles[(*pdwListIndex)++],
+                              szFullPath, TRUE))
             flList->bAnyDirectories = TRUE;
+        HeapFree(GetProcessHeap(), 0, szFullPath);
     }
 
     FindClose(hFile);
