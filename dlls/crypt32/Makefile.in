@@ -12,6 +12,7 @@ C_SRCS = \
 	encode.c \
 	oid.c \
 	protectdata.c \
+	serialize.c \
 	store.c \
 	str.c \
 	main.c
