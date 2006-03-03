@@ -640,8 +640,8 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             DWORD ksize = KEY_MAX_LEN, vsize = sizeof(valuebuf), type = 0;
             if (RegEnumValue(hKey, LOWORD(wParam) - ID_FAVORITE_FIRST, namebuf, &ksize, NULL, 
                 &type, valuebuf, &vsize) == ERROR_SUCCESS) {
-                TreeView_SelectItem(g_pChildWnd->hTreeWnd, 
-                                    FindPathInTree(g_pChildWnd->hTreeWnd, (TCHAR *)valuebuf));
+                SendMessage( g_pChildWnd->hTreeWnd, TVM_SELECTITEM, TVGN_CARET,
+                             (LPARAM) FindPathInTree(g_pChildWnd->hTreeWnd, (TCHAR *)valuebuf) );
             }
             RegCloseKey(hKey);
         }
@@ -693,7 +693,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             hItem = FindNext(g_pChildWnd->hTreeWnd, hItem, searchString, searchMask, &row);
             SetCursor(hcursorOld);
             if (hItem) {
-                TreeView_SelectItem(g_pChildWnd->hTreeWnd, hItem);
+                SendMessage( g_pChildWnd->hTreeWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM) hItem );
                 InvalidateRect(g_pChildWnd->hTreeWnd, NULL, TRUE);
                 UpdateWindow(g_pChildWnd->hTreeWnd);
                 if (row != -1) {

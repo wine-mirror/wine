@@ -320,7 +320,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		    item.mask = TVIF_HANDLE | TVIF_TEXT;
 		    item.hItem = TreeView_GetSelection(pChildWnd->hTreeWnd);
 		    item.pszText = dispInfo->item.pszText;
-		    TreeView_SetItem(pChildWnd->hTreeWnd, &item);
+                    SendMessage( pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
 		}
 		return res;
 	    }

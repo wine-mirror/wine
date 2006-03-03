@@ -19,7 +19,6 @@
  */
 
 #include <windows.h>
-#include <windowsx.h>
 #include <commctrl.h>
 #include <stdlib.h>
 #include <tchar.h>
@@ -218,7 +217,7 @@ static BOOL InitListViewImageList(HWND hWndListView)
         IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR);
     Image_Binary = ImageList_AddIcon(himl, hicon);
 
-    ListView_SetImageList(hWndListView, himl, LVSIL_SMALL);
+    SendMessage( hWndListView, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM) himl );
 
     /* fail if some of the icons failed to load */
     if (ImageList_GetImageCount(himl) < 2)
@@ -373,7 +372,7 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
                 g_invertSort = FALSE;
             }
                     
-            ListView_SortItems(hWnd, CompareFunc, hWnd);
+            SendMessage(hWnd, LVM_SORTITEMS, (WPARAM)hWnd, (LPARAM)CompareFunc);
             break;
 	case LVN_ENDLABELEDIT: {
 	        LPNMLVDISPINFO dispInfo = (LPNMLVDISPINFO)lParam;
@@ -453,12 +452,12 @@ HWND CreateListView(HWND hwndParent, int id)
                             0, 0, rcClient.right, rcClient.bottom,
                             hwndParent, (HMENU)id, hInst, NULL);
     if (!hwndLV) return NULL;
-    ListView_SetExtendedListViewStyle(hwndLV,  LVS_EX_FULLROWSELECT);
+    SendMessage(hwndLV, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
     /* Initialize the image list */
     if (!InitListViewImageList(hwndLV)) goto fail;
     if (!CreateListColumns(hwndLV)) goto fail;
-    g_orgListWndProc = SubclassWindow(hwndLV, ListWndProc);
+    g_orgListWndProc = (WNDPROC) SetWindowLongPtr(hwndLV, GWLP_WNDPROC, (LPARAM)ListWndProc);
     return hwndLV;
 fail:
     DestroyWindow(hwndLV);
@@ -490,12 +489,12 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highli
     for (i = 0; i < count; i++) {
         item.mask = LVIF_PARAM;
         item.iItem = i;
-        ListView_GetItem(hwndLV, &item);
+        SendMessage( hwndLV, LVM_GETITEM, 0, (LPARAM)&item );
         free(((LINE_INFO*)item.lParam)->name);
         HeapFree(GetProcessHeap(), 0, (void*)item.lParam);
     }
     g_columnToSort = ~0UL;
-    ListView_DeleteAllItems(hwndLV);
+    SendMessage( hwndLV, LVM_DELETEALLITEMS, 0, 0L );
 
     /* get size information and resize the buffers if necessary */
     errCode = RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, &max_sub_key_len, NULL, 
@@ -524,7 +523,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highli
             bSelected = TRUE;
         AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize, bSelected);
     }
-    ListView_SortItems(hwndLV, CompareFunc, hwndLV); 
+    SendMessage(hwndLV, LVM_SORTITEMS, (WPARAM)hwndLV, (LPARAM)CompareFunc);
 
     g_currentRootKey = hKeyRoot;
     if (keyPath != g_currentPath) {
