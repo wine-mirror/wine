@@ -229,7 +229,7 @@ BOOL DPLAYX_ConstructData(void)
   s_attrib.lpSecurityDescriptor = NULL;
   s_attrib.nLength              = sizeof(s_attrib);
 
-  hDplayxSema = CreateSemaphoreA( &s_attrib, 1, 1, lpszDplayxSemaName );
+  hDplayxSema = CreateSemaphoreA( &s_attrib, 0, 1, lpszDplayxSemaName );
 
   /* First instance creates the semaphore. Others just use it */
   if( GetLastError() == ERROR_SUCCESS )
@@ -242,6 +242,7 @@ BOOL DPLAYX_ConstructData(void)
   else if ( GetLastError() == ERROR_ALREADY_EXISTS )
   {
     TRACE( "Found semaphore handle %p\n", hDplayxSema );
+    DPLAYX_AquireSemaphore();
   }
   else
   {
@@ -250,8 +251,6 @@ BOOL DPLAYX_ConstructData(void)
   }
 
   SetLastError( ERROR_SUCCESS );
-
-  DPLAYX_AquireSemaphore();
 
   hDplayxSharedMem = CreateFileMappingA( INVALID_HANDLE_VALUE,
                                          &s_attrib,
@@ -271,6 +270,7 @@ BOOL DPLAYX_ConstructData(void)
   else
   {
     ERR( ": unable to create shared memory (%ld)\n", GetLastError() );
+    DPLAYX_ReleaseSemaphore();
     return FALSE;
   }
 
@@ -282,6 +282,7 @@ BOOL DPLAYX_ConstructData(void)
   {
     ERR( ": unable to map static data into process memory space (%ld)\n",
          GetLastError() );
+    DPLAYX_ReleaseSemaphore();
     return FALSE;
   }
   else
