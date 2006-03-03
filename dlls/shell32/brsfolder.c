@@ -108,7 +108,7 @@ static void InitializeTreeView( browse_info *info )
     Shell_GetImageList(NULL, &hImageList);
 
     if (hImageList)
-        TreeView_SetImageList( info->hwndTreeView, hImageList, 0 );
+        SendMessageW( info->hwndTreeView, TVM_SETIMAGELIST, 0, (LPARAM)hImageList );
 
     /* We want to call InsertTreeViewItem down the code, in order to insert
      * the root item of the treeview. Due to InsertTreeViewItem's signature, 
@@ -166,10 +166,10 @@ static void InitializeTreeView( browse_info *info )
         return;
     }
 
-    TreeView_DeleteAllItems( info->hwndTreeView );
+    SendMessageW( info->hwndTreeView, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT );
     item = InsertTreeViewItem( info, lpsfParent, pidlChild,
                                pidlParent, pEnumChildren, TVI_ROOT );
-    TreeView_Expand( info->hwndTreeView, item, TVE_EXPAND );
+    SendMessageW( info->hwndTreeView, TVM_EXPAND, TVE_EXPAND, (LPARAM)item );
 
     IShellFolder_Release(lpsfRoot);
     IShellFolder_Release(lpsfParent);
@@ -440,7 +440,8 @@ static LRESULT BrsFolder_Treeview_Expand( browse_info *info, NMTREEVIEWW *pnmtv 
     /* My Computer is already sorted and trying to do a simple text
      * sort will only mess things up */
     if (!_ILIsMyComputer(lptvid->lpi))
-        TreeView_SortChildren(info->hwndTreeView, pnmtv->itemNew.hItem, FALSE);
+        SendMessageW( info->hwndTreeView, TVM_SORTCHILDREN,
+                      FALSE, (LPARAM)pnmtv->itemNew.hItem );
 
     return 0;
 }
