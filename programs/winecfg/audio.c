@@ -205,7 +205,7 @@ static void initAudioDeviceTree(HWND hDlg)
     hBitMap = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_CHECKBOX));
     ImageList_Add(hImageList, hBitMap, NULL);
     DeleteObject(hBitMap);
-    TreeView_SetImageList(tree, hImageList, TVSIL_STATE);
+    SendMessageW( tree, LVM_SETIMAGELIST, TVSIL_STATE, (LPARAM)hImageList );
 
     /* root item */
     insert.hParent = TVI_ROOT;
@@ -702,14 +702,14 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                   ht.pt.x = GET_X_LPARAM(dwPos);
                   ht.pt.y = GET_Y_LPARAM(dwPos);
                   MapWindowPoints(HWND_DESKTOP, tree, &ht.pt, 1);
-                  TreeView_HitTest(tree, &ht);
+                  SendMessageW( tree, TVM_HITTEST, 0, (LPARAM)&ht );
                   if (TVHT_ONITEMSTATEICON & ht.flags)
                   {
                       TVITEM tvItem;
                       int index;
                       ZeroMemory(&tvItem, sizeof(tvItem));
                       tvItem.hItem = ht.hItem;
-                      TreeView_GetItem(tree, &tvItem);
+                      SendMessageW( tree, TVM_GETITEMW, 0, (LPARAM) &tvItem );
 
                       index = TreeView_GetItemState(tree, ht.hItem, TVIS_STATEIMAGEMASK);
                       if (index == INDEXTOSTATEIMAGEMASK(1))
@@ -739,7 +739,7 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                   pt.y = GET_Y_LPARAM(dwPos);
                   ht.pt = pt;
                   MapWindowPoints(HWND_DESKTOP, tree, &ht.pt, 1);
-                  TreeView_HitTest(tree, &ht);
+                  SendMessageW( tree, TVM_HITTEST, 0, (LPARAM)&ht );
                   if (TVHT_ONITEMLABEL & ht.flags)
                   {
                       TVITEM tvItem;
