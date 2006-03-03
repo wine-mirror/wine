@@ -27,7 +27,6 @@
 
 #include "winnls.h"
 #include "winuser.h"
-#include "windowsx.h"
 
 #include "wine/debug.h"
 
@@ -1387,10 +1386,10 @@ static LRESULT CompressBegin(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
     CompressEnd(pi);
 
   size = WIDTHBYTES(lpbiOut->biWidth * 16) / 2 * lpbiOut->biHeight;
-  pi->pPrevFrame = (LPWORD)GlobalAllocPtr(GPTR, size * sizeof(WORD));
+  pi->pPrevFrame = GlobalLock(GlobalAlloc(GPTR, size * sizeof(WORD)));
   if (pi->pPrevFrame == NULL)
     return ICERR_MEMORY;
-  pi->pCurFrame = (LPWORD)GlobalAllocPtr(GPTR, size * sizeof(WORD));
+  pi->pCurFrame = GlobalLock(GlobalAlloc(GPTR, size * sizeof(WORD)));
   if (pi->pCurFrame == NULL) {
     CompressEnd(pi);
     return ICERR_MEMORY;
@@ -1534,9 +1533,15 @@ static LRESULT CompressEnd(CodecInfo *pi)
 
   if (pi != NULL) {
     if (pi->pPrevFrame != NULL)
-      GlobalFreePtr(pi->pPrevFrame);
+    {
+      GlobalUnlock(GlobalHandle(pi->pPrevFrame));
+      GlobalFree(GlobalHandle(pi->pPrevFrame));
+    }
     if (pi->pCurFrame != NULL)
-      GlobalFreePtr(pi->pCurFrame);
+    {
+      GlobalUnlock(GlobalHandle(pi->pCurFrame));
+      GlobalFree(GlobalHandle(pi->pCurFrame));
+    }
     pi->pPrevFrame = NULL;
     pi->pCurFrame  = NULL;
     pi->nPrevFrame = -1;
