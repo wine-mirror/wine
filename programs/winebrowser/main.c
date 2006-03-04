@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
         char *unixpath;
         WCHAR unixpathW[MAX_PATH];
 
-        MultiByteToWideChar( CP_ACP, 0, url, -1, unixpathW, MAX_PATH );
+        MultiByteToWideChar( CP_UNIXCP, 0, url, -1, unixpathW, MAX_PATH );
         if ((unixpath = wine_get_unix_file_name_ptr( unixpathW )))
         {
             struct stat dummy;
