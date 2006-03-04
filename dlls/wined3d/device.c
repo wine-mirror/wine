@@ -3752,9 +3752,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
 
         GLint action = StencilOp(Value);
 
-        glGetIntegerv(GL_STENCIL_FAIL, &stencilFail);
-        glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &depthFail);
-        glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &stencilPass);
+        glGetIntegerv(GL_STENCIL_BACK_FAIL, &stencilFail);
+        glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_FAIL, &depthFail);
+        glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_PASS, &stencilPass);
 
         if(WINED3DRS_CCW_STENCILFAIL == State) {
             stencilFail = action;
@@ -3770,8 +3770,22 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
             if(GL_EXTCALL(glStencilOpSeparate)) {
                 GL_EXTCALL(glStencilOpSeparate(GL_BACK, stencilFail, depthFail, stencilPass));
                 checkGLcall("glStencilOpSeparate(GL_BACK,...)");
+            }
+            else if(GL_EXTCALL(glActiveStencilFaceEXT)) {
+                glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+                checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
+                GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
+                checkGLcall("glActiveStencilFaceEXT(GL_BACK)");
+                glStencilOp(stencilFail, depthFail, stencilPass);
+                checkGLcall("glStencilOp(...)");
+            }
+            else if(GL_EXTCALL(glStencilOpSeparateATI)) {
+                GL_EXTCALL(glStencilOpSeparateATI(GL_BACK, stencilFail, depthFail, stencilPass));
+                checkGLcall("glStencilOpSeparateATI(GL_BACK,...)");
             } else {
-                WARN("Unsupported in local OpenGL implementation: glStencilOpSeparate\n");
+                TRACE("Separate stencil operation not supported on this version of opengl");
+                glStencilOp(stencilFail, depthFail, stencilPass);
+                checkGLcall("glStencilOp(...)");
             }
         } else {
             glStencilOp(stencilFail, depthFail, stencilPass);

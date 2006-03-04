@@ -803,6 +803,23 @@ typedef void (APIENTRY * PGLFNBEGINOCCLUSIONQUERYNVPROC) (GLuint id);
 typedef void (APIENTRY * PGLFNENDOCCLUSIONQUERYNVPROC) (void);
 typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYIVNVPROC) (GLuint id, GLenum pname, GLint *params);
 typedef void (APIENTRY * PGLFNGETOCCLUSIONQUERYUIVNVPROC) (GLuint id, GLenum pname, GLuint *params);
+/* GL_EXT_stencil_two_side */
+#ifndef GL_EXT_stencil_two_side
+#define GL_EXT_stencil_two_side 1
+#define GL_STENCIL_TEST_TWO_SIDE_EXT      0x8910
+#define GL_ACTIVE_STENCIL_FACE_EXT        0x8911
+#endif
+typedef void (APIENTRY * PGLFNACTIVESTENCILFACEEXTPROC) (GLenum face);
+/* GL_ATI_separate_stencil */
+#ifndef GL_ATI_separate_stencil
+#define GL_ATI_separate_stencil 1
+#define GL_STENCIL_BACK_FUNC_ATI          0x8800
+#define GL_STENCIL_BACK_FAIL_ATI          0x8801
+#define GL_STENCIL_BACK_PASS_DEPTH_FAIL_ATI 0x8802
+#define GL_STENCIL_BACK_PASS_DEPTH_PASS_ATI 0x8803
+#endif
+typedef void (APIENTRY * PGLFNSTENCILOPSEPARATEATIPROC) (GLenum, GLenum, GLenum, GLenum);
+typedef void (APIENTRY * PGLFNSTENCILFUNCSEPARATEATIPROC) (GLenum, GLenum, GLint, GLuint);
 /* OpenGL 2.0 */
 typedef void (APIENTRY * PGLFNSTENCILOPSEPARATEPROC) (GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass);
 typedef void (APIENTRY * PGLFNSTENCILFUNCSEPARATEPROC) (GLenum face, GLenum func, GLint ref, GLuint mask);
@@ -1034,6 +1051,10 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNVERTEXATTRIBPOINTERARBPROC,      glVertexAttribPointerARB); \
     USE_GL_FUNC(PGLFNENABLEVERTEXATTRIBARRAYARBPROC,  glEnableVertexAttribArrayARB); \
     USE_GL_FUNC(PGLFNDISABLEVERTEXATTRIBARRAYARBPROC, glDisableVertexAttribArrayARB); \
+    /* GL_EXT_stencil_two_side */ \
+    USE_GL_FUNC(PGLFNACTIVESTENCILFACEEXTPROC, glActiveStencilFaceEXT); \
+    USE_GL_FUNC(PGLFNSTENCILOPSEPARATEATIPROC, glStencilOpSeparateATI); \
+    USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEATIPROC, glStencilFuncSeparateATI); \
     /* OpenGL 2.0 */ \
     USE_GL_FUNC(PGLFNSTENCILOPSEPARATEPROC, glStencilOpSeparate); \
     USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEPROC, glStencilFuncSeparate); \
