@@ -205,7 +205,7 @@ static void initAudioDeviceTree(HWND hDlg)
     hBitMap = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_CHECKBOX));
     ImageList_Add(hImageList, hBitMap, NULL);
     DeleteObject(hBitMap);
-    SendMessageW( tree, LVM_SETIMAGELIST, TVSIL_STATE, (LPARAM)hImageList );
+    SendMessageW( tree, TVM_SETIMAGELIST, TVSIL_STATE, (LPARAM)hImageList );
 
     /* root item */
     insert.hParent = TVI_ROOT;
