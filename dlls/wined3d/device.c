@@ -3144,31 +3144,53 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
 
-    case WINED3DRS_STENCILFUNC               :
-        {
-           int glParm = GL_ALWAYS;
-           int ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
-           GLuint mask = This->stateBlock->renderState[WINED3DRS_STENCILMASK];
+    case WINED3DRS_STENCILFUNC :
+    {
+        GLint func;
+        GLint ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
+        GLuint mask = This->stateBlock->renderState[WINED3DRS_STENCILMASK];
 
-           switch ((D3DCMPFUNC) Value) {
-           case D3DCMP_NEVER:         glParm=GL_NEVER; break;
-           case D3DCMP_LESS:          glParm=GL_LESS; break;
-           case D3DCMP_EQUAL:         glParm=GL_EQUAL; break;
-           case D3DCMP_LESSEQUAL:     glParm=GL_LEQUAL; break;
-           case D3DCMP_GREATER:       glParm=GL_GREATER; break;
-           case D3DCMP_NOTEQUAL:      glParm=GL_NOTEQUAL; break;
-           case D3DCMP_GREATEREQUAL:  glParm=GL_GEQUAL; break;
-           case D3DCMP_ALWAYS:        glParm=GL_ALWAYS; break;
-           default:
-               FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
-           }
-           TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
-           This->stencilfunc = glParm;
-           glStencilFunc(glParm, ref, mask);
-           checkGLcall("glStencilFunc");
+        func = GL_ALWAYS;
+        switch ((D3DCMPFUNC)Value) {
+            case D3DCMP_NEVER: func = GL_NEVER; break;
+            case D3DCMP_LESS: func = GL_LESS; break;
+            case D3DCMP_EQUAL: func = GL_EQUAL; break;
+            case D3DCMP_LESSEQUAL: func = GL_LEQUAL; break;
+            case D3DCMP_GREATER: func = GL_GREATER; break;
+            case D3DCMP_NOTEQUAL: func = GL_NOTEQUAL; break;
+            case D3DCMP_GREATEREQUAL: func = GL_GEQUAL; break;
+            case D3DCMP_ALWAYS: func = GL_ALWAYS; break;
+            default:
+                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
+        }
+        This->stencilfunc = func;
+        if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
+            if(GL_EXTCALL(glStencilFuncSeparate)) {
+                GL_EXTCALL(glStencilFuncSeparate(GL_FRONT, func, ref, mask));
+                checkGLcall("glStencilFuncSeparate(GL_FRONT,...)");
+            }
+            else if(GL_EXTCALL(glActiveStencilFaceEXT)) {
+                glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+                checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
+                GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
+                checkGLcall("glActiveStencilFaceEXT(GL_FRONT)");
+                glStencilFunc(func, ref, mask);
+                checkGLcall("glStencilFunc(...)");
+            }
+            else if(GL_EXTCALL(glStencilFuncSeparateATI)) {
+                GL_EXTCALL(glStencilFuncSeparateATI(GL_FRONT, func, ref, mask));
+                checkGLcall("glStencilFuncSeparateATI(GL_FRONT,...)");
+            } else {
+                TRACE("Separate stencil function not supported on this version of opengl");
+                glStencilFunc(func, ref, mask);
+                checkGLcall("glStencilFunc(...)");
+            }
+        } else {
+            glStencilFunc(func, ref, mask);
+            checkGLcall("glStencilFunc(...)");
         }
         break;
-
+    }
     case WINED3DRS_STENCILREF                :
         {
            int glParm = This->stencilfunc;
