@@ -3817,8 +3817,23 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
             if(GL_EXTCALL(glStencilFuncSeparate)) {
                 GL_EXTCALL(glStencilFuncSeparate(GL_BACK, func, ref, mask));
                 checkGLcall("glStencilFuncSeparate(GL_BACK,...)");
-            } else
-                WARN("Unsupported in local OpenGL implementation: glStencilFuncSeparate\n");
+            }
+            else if(GL_EXTCALL(glActiveStencilFaceEXT)) {
+                glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+                checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
+                GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
+                checkGLcall("glActiveStencilFaceEXT(GL_BACK)");
+                glStencilFunc(func, ref, mask);
+                checkGLcall("glStencilFunc(...)");
+            }
+            else if(GL_EXTCALL(glStencilFuncSeparateATI)) {
+                GL_EXTCALL(glStencilFuncSeparateATI(GL_BACK, func, ref, mask));
+                checkGLcall("glStencilFuncSeparateATI(GL_BACK,...)");
+            } else {
+                TRACE("Separate stencil function not supported on this version of opengl");
+                glStencilFunc(func, ref, mask);
+                checkGLcall("glStencilFunc(...)");
+            }
         } else {
             glStencilFunc(func, ref, mask);
             checkGLcall("glStencilFunc(...)");
