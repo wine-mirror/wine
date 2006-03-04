@@ -3195,57 +3195,56 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         break;
 
     case WINED3DRS_STENCILFAIL               :
-        {
-            GLenum fail  ;
-            GLint  zpass ;
-            GLint  zfail ;
-
-            fail = StencilOp(Value);
-            glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);
-            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);");
-            glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);
-            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);");
-
-            TRACE("StencilOp fail=%x, zfail=%x, zpass=%x\n", fail, zfail, zpass);
-            glStencilOp(fail, zfail, zpass);
-            checkGLcall("glStencilOp(fail, zfail, zpass);");
-        }
-        break;
     case WINED3DRS_STENCILZFAIL              :
-        {
-            GLint  fail  ;
-            GLint  zpass ;
-            GLenum zfail ;
-
-            glGetIntegerv(GL_STENCIL_FAIL, &fail);
-            checkGLcall("glGetIntegerv(GL_STENCIL_FAIL, &fail);");
-            glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);
-            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);");
-            zfail = StencilOp(Value);
-
-            TRACE("StencilOp fail=%x, zfail=%x, zpass=%x\n", fail, zfail, zpass);
-            glStencilOp(fail, zfail, zpass);
-            checkGLcall("glStencilOp(fail, zfail, zpass);");
-        }
-        break;
     case WINED3DRS_STENCILPASS               :
-        {
-            GLint  fail  ;
-            GLenum zpass ;
-            GLint  zfail ;
+    {
+        GLint stencilFail;
+        GLint depthFail;
+        GLint stencilPass;
 
-            glGetIntegerv(GL_STENCIL_FAIL, &fail);
-            checkGLcall("glGetIntegerv(GL_STENCIL_FAIL, &fail);");
-            zpass = StencilOp(Value);
-            glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);
-            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);");
+        GLint action = StencilOp(Value);
 
-            TRACE("StencilOp fail=%x, zfail=%x, zpass=%x\n", fail, zfail, zpass);
-            glStencilOp(fail, zfail, zpass);
-            checkGLcall("glStencilOp(fail, zfail, zpass);");
+        glGetIntegerv(GL_STENCIL_FAIL, &stencilFail);
+        glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &depthFail);
+        glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &stencilPass);
+
+        if(WINED3DRS_STENCILFAIL == State) {
+            stencilFail = action;
+        }
+        else if(WINED3DRS_STENCILZFAIL == State) {
+            depthFail = action;
+        }
+        else if(WINED3DRS_STENCILPASS == State) {
+            stencilPass = action;
+        }
+
+        if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
+            if(GL_EXTCALL(glStencilOpSeparate)) {
+                GL_EXTCALL(glStencilOpSeparate(GL_FRONT, stencilFail, depthFail, stencilPass));
+                checkGLcall("glStencilOpSeparate(GL_FRONT,...)");
+            }
+            else if(GL_EXTCALL(glActiveStencilFaceEXT)) {
+                glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+                checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
+                GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
+                checkGLcall("glActiveStencilFaceEXT(GL_FRONT)");
+                glStencilOp(stencilFail, depthFail, stencilPass);
+                checkGLcall("glStencilOp(...)");
+            }
+            else if(GL_EXTCALL(glStencilOpSeparateATI)) {
+                GL_EXTCALL(glStencilOpSeparateATI(GL_FRONT, stencilFail, depthFail, stencilPass));
+                checkGLcall("glStencilOpSeparateATI(GL_FRONT,...)");
+            } else {
+                TRACE("Separate stencil operation not supported on this version of opengl");
+                glStencilOp(stencilFail, depthFail, stencilPass);
+                checkGLcall("glStencilOp(...)");
+            }
+        } else {
+            glStencilOp(stencilFail, depthFail, stencilPass);
+            checkGLcall("glStencilOp(...)");
         }
         break;
-
+    }
     case WINED3DRS_STENCILWRITEMASK          :
         {
             glStencilMask(Value);
