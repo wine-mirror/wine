@@ -1021,6 +1021,7 @@ static void load_nonclient_metrics(void)
 {
     HKEY hkey;
     NONCLIENTMETRICSW ncm;
+    INT r;
 
     if (RegOpenKeyExW (HKEY_CURRENT_USER, METRICS_REGKEY,
                        0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
@@ -1061,7 +1062,9 @@ static void load_nonclient_metrics(void)
         SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfMenuFont, 0 );
         GetProfileStringW( Desktop, MenuFont, ncm.lfCaptionFont.lfFaceName,
                            ncm.lfMenuFont.lfFaceName, LF_FACESIZE );
-        ncm.lfMenuFont.lfHeight = -GetProfileIntW( Desktop, MenuFontSize, 11 );
+        r = GetProfileIntW( Desktop, MenuFontSize, 0 );
+        if (r)
+            ncm.lfMenuFont.lfHeight = -r;
         ncm.lfMenuFont.lfWeight = FW_NORMAL;
     }
 
@@ -1071,7 +1074,9 @@ static void load_nonclient_metrics(void)
         SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfStatusFont, 0 );
         GetProfileStringW( Desktop, StatusFont, ncm.lfCaptionFont.lfFaceName,
                            ncm.lfStatusFont.lfFaceName, LF_FACESIZE );
-        ncm.lfStatusFont.lfHeight = -GetProfileIntW( Desktop, StatusFontSize, 11 );
+        r = GetProfileIntW( Desktop, StatusFontSize, 0 );
+        if (r)
+            ncm.lfStatusFont.lfHeight = -r;
         ncm.lfStatusFont.lfWeight = FW_NORMAL;
     }
 
@@ -1081,7 +1086,9 @@ static void load_nonclient_metrics(void)
         SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &ncm.lfMessageFont, 0 );
         GetProfileStringW( Desktop, MessageFont, ncm.lfCaptionFont.lfFaceName,
                            ncm.lfMessageFont.lfFaceName, LF_FACESIZE );
-        ncm.lfMessageFont.lfHeight = -GetProfileIntW( Desktop, MessageFontSize, 11 );
+        r = GetProfileIntW( Desktop, MessageFontSize, 0 );
+        if (r)
+            ncm.lfMessageFont.lfHeight = -r;
         ncm.lfMessageFont.lfWeight = FW_NORMAL;
     }
 
@@ -1414,6 +1421,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             if (!reg_get_logfont( SPI_SETICONTITLELOGFONT_REGKEY,
                                   SPI_SETICONTITLELOGFONT_VALNAME, &icon_metrics.lfFont ))
             {
+                INT r;
+
                 /*
                  * The 'default GDI fonts' seems to be returned.
                  * If a returned font is not a correct font in your environment,
@@ -1425,7 +1434,13 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                    lfDefault.lfFaceName,
                                    icon_metrics.lfFont.lfFaceName,
                                    LF_FACESIZE );
-                icon_metrics.lfFont.lfHeight = -GetProfileIntW( Desktop, IconTitleSize, 11 );
+                
+                r = GetProfileIntW( Desktop, IconTitleSize, 0 );
+                if (r)
+                    icon_metrics.lfFont.lfHeight = -r;
+                else
+                    icon_metrics.lfFont.lfHeight = lfDefault.lfHeight;
+
                 icon_metrics.lfFont.lfWidth = 0;
                 icon_metrics.lfFont.lfEscapement = icon_metrics.lfFont.lfOrientation = 0;
                 icon_metrics.lfFont.lfWeight = FW_NORMAL;
