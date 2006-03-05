@@ -2007,6 +2007,9 @@ HRESULT WINAPI VarFormatFromTokens(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   if (!pVarIn || !rgbTok)
     return E_INVALIDARG;
 
+  if (V_VT(pVarIn) == VT_NULL)
+    return S_OK;
+
   if (*rgbTok == FMT_TO_STRING || header->type == FMT_TYPE_GENERAL)
   {
     /* According to MSDN, general format acts somewhat like the 'Str'

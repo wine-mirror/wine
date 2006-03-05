@@ -1785,10 +1785,8 @@ static void test_VarFormat(void)
   /* VT_NULL */
   V_VT(&in) = VT_NULL;
   hres = pVarFormat(&in,NULL,fd,fw,0,&out);
-  todo_wine {
   ok(hres == S_OK, "VarFormat failed with 0x%08lx\n", hres);
   ok(out == NULL, "expected NULL formatted string\n");
-  }
 
   /* Invalid args */
   hres = pVarFormat(&in,NULL,fd,fw,flags,NULL);
