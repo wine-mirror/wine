@@ -57,7 +57,6 @@ int main (int argc, char *argv[])
   HANDLE h;
   int opt_c, opt_k, opt_q;
 
-  argv++;
   opt_c=opt_k=opt_q=0;
   while (*argv!=NULL)
   {
@@ -74,8 +73,6 @@ int main (int argc, char *argv[])
       } else if (lstrcmpi(*argv,"/t")==0 || lstrcmpi(*argv,"/x")==0 ||
                  lstrcmpi(*argv,"/y")==0) {
           /* Ignored for compatibility with Windows */
-      } else {
-          break;
       }
       argv++;
   }
