@@ -193,14 +193,14 @@ static void DoNewFolder(
 {
 	BgCmImpl *This = (BgCmImpl *)iface;
 	ISFHelper * psfhlp;
-	char szName[MAX_PATH];
+	WCHAR wszName[MAX_PATH];
 
 	IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper, (LPVOID*)&psfhlp);
 	if (psfhlp)
 	{
 	  LPITEMIDLIST pidl;
-	  ISFHelper_GetUniqueName(psfhlp, szName, MAX_PATH);
-	  ISFHelper_AddFolder(psfhlp, 0, szName, &pidl);
+	  ISFHelper_GetUniqueName(psfhlp, wszName, MAX_PATH);
+	  ISFHelper_AddFolder(psfhlp, 0, wszName, &pidl);
 
 	  if(psv)
 	  {

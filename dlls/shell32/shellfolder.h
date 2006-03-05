@@ -46,8 +46,8 @@ DECLARE_INTERFACE_(ISFHelper,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** ISFHelper methods ***/
-    STDMETHOD(GetUniqueName)(THIS_ LPSTR  lpName, UINT  uLen) PURE;
-    STDMETHOD(AddFolder)(THIS_ HWND  hwnd, LPCSTR  lpName, LPITEMIDLIST * ppidlOut) PURE;
+    STDMETHOD(GetUniqueName)(THIS_ LPWSTR  lpName, UINT  uLen) PURE;
+    STDMETHOD(AddFolder)(THIS_ HWND  hwnd, LPCWSTR  lpName, LPITEMIDLIST * ppidlOut) PURE;
     STDMETHOD(DeleteItems)(THIS_ UINT  cidl, LPCITEMIDLIST * apidl) PURE;
     STDMETHOD(CopyItems)(THIS_ IShellFolder * pSFFrom, UINT  cidl, LPCITEMIDLIST * apidl) PURE;
 };

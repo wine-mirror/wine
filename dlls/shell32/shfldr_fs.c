@@ -1064,20 +1064,21 @@ static ULONG WINAPI ISFHelper_fnRelease (ISFHelper * iface)
  */
 
 static HRESULT WINAPI
-ISFHelper_fnGetUniqueName (ISFHelper * iface, LPSTR lpName, UINT uLen)
+ISFHelper_fnGetUniqueName (ISFHelper * iface, LPWSTR pwszName, UINT uLen)
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
     IEnumIDList *penum;
     HRESULT hr;
-    char szText[MAX_PATH];
-    const char *szNewFolder = "New Folder";
+    WCHAR wszText[MAX_PATH];
+    const WCHAR wszNewFolder[] = {'N','e','w',' ','F','o','l','d','e','r',0 };
+    const WCHAR wszFormat[] = {'%','s',' ','%','d',0 };
 
-    TRACE ("(%p)(%s %u)\n", This, lpName, uLen);
+    TRACE ("(%p)(%p %u)\n", This, pwszName, uLen);
 
-    if (uLen < strlen (szNewFolder) + 4)
+    if (uLen < sizeof(wszNewFolder)/sizeof(WCHAR) + 3)
         return E_POINTER;
 
-    strcpy (lpName, szNewFolder);
+    lstrcpynW (pwszName, wszNewFolder, uLen);
 
     hr = IShellFolder_fnEnumObjects (_IShellFolder2_ (This), 0,
      SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &penum);
@@ -1090,9 +1091,9 @@ next:
         IEnumIDList_Reset (penum);
         while (S_OK == IEnumIDList_Next (penum, 1, &pidl, &dwFetched) &&
          dwFetched) {
-            _ILSimpleGetText (pidl, szText, MAX_PATH);
-            if (0 == strcasecmp (szText, lpName)) {
-                sprintf (lpName, "%s %d", szNewFolder, i++);
+            _ILSimpleGetTextW (pidl, wszText, MAX_PATH);
+            if (0 == lstrcmpiW (wszText, pwszName)) {
+                snprintfW (pwszName, uLen, wszFormat, wszNewFolder, i++);
                 if (i > 99) {
                     hr = E_FAIL;
                     break;
@@ -1113,40 +1114,41 @@ next:
  */
 
 static HRESULT WINAPI
-ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCSTR lpName,
+ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCWSTR pwszName,
                        LPITEMIDLIST * ppidlOut)
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
-    char lpstrNewDir[MAX_PATH];
+    WCHAR wszNewDir[MAX_PATH];
     DWORD bRes;
     HRESULT hres = E_FAIL;
 
-    TRACE ("(%p)(%s %p)\n", This, lpName, ppidlOut);
+    TRACE ("(%p)(%s %p)\n", This, debugstr_w(pwszName), ppidlOut);
 
-    if (!WideCharToMultiByte(CP_ACP, 0, This->sPathTarget, -1, lpstrNewDir, MAX_PATH, NULL, NULL))
-        lpstrNewDir[0] = '\0';
-    PathAppendA(lpstrNewDir, lpName);
+    wszNewDir[0] = 0;
+    if (This->sPathTarget)
+        lstrcpynW(wszNewDir, This->sPathTarget, MAX_PATH);
+    PathAppendW(wszNewDir, pwszName);
 
-    bRes = CreateDirectoryA (lpstrNewDir, NULL);
+    bRes = CreateDirectoryW (wszNewDir, NULL);
     if (bRes) {
-        SHChangeNotify (SHCNE_MKDIR, SHCNF_PATHA, lpstrNewDir, NULL);
+        SHChangeNotify (SHCNE_MKDIR, SHCNF_PATHW, wszNewDir, NULL);
 
         hres = S_OK;
 
         if (ppidlOut)
-                hres = _ILCreateFromPathA(lpstrNewDir, ppidlOut);
+                hres = _ILCreateFromPathW(wszNewDir, ppidlOut);
     } else {
-        char lpstrText[128 + MAX_PATH];
-        char lpstrTempText[128];
-        char lpstrCaption[256];
+        WCHAR wszText[128 + MAX_PATH];
+        WCHAR wszTempText[128];
+        WCHAR wszCaption[256];
 
         /* Cannot Create folder because of permissions */
-        LoadStringA (shell32_hInstance, IDS_CREATEFOLDER_DENIED, lpstrTempText,
-         sizeof (lpstrTempText));
-        LoadStringA (shell32_hInstance, IDS_CREATEFOLDER_CAPTION, lpstrCaption,
-         sizeof (lpstrCaption));
-        sprintf (lpstrText, lpstrTempText, lpstrNewDir);
-        MessageBoxA (hwnd, lpstrText, lpstrCaption, MB_OK | MB_ICONEXCLAMATION);
+        LoadStringW (shell32_hInstance, IDS_CREATEFOLDER_DENIED, wszTempText,
+         sizeof (wszTempText));
+        LoadStringW (shell32_hInstance, IDS_CREATEFOLDER_CAPTION, wszCaption,
+         sizeof (wszCaption));
+        sprintfW (wszText, wszTempText, wszNewDir);
+        MessageBoxW (hwnd, wszText, wszCaption, MB_OK | MB_ICONEXCLAMATION);
     }
 
     return hres;

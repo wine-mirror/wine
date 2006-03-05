@@ -1680,7 +1680,7 @@ static ULONG WINAPI UnixFolder_ISFHelper_Release(ISFHelper* iface)
         STATIC_CAST(IShellFolder2, ADJUST_THIS(UnixFolder, ISFHelper, iface)));
 }
 
-static HRESULT WINAPI UnixFolder_ISFHelper_GetUniqueName(ISFHelper* iface, LPSTR lpName, UINT uLen)
+static HRESULT WINAPI UnixFolder_ISFHelper_GetUniqueName(ISFHelper* iface, LPWSTR pwszName, UINT uLen)
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, ISFHelper, iface);
     IEnumIDList *pEnum;
@@ -1688,23 +1688,26 @@ static HRESULT WINAPI UnixFolder_ISFHelper_GetUniqueName(ISFHelper* iface, LPSTR
     LPITEMIDLIST pidlElem;
     DWORD dwFetched;
     int i;
-    static const char szNewFolder[] = "New Folder";
+    static const WCHAR wszNewFolder[] = { 'N','e','w',' ','F','o','l','d','e','r', 0 };
+    static const WCHAR wszFormat[] = { '%','s',' ','%','d',0 };
 
-    TRACE("(iface=%p, lpName=%p, uLen=%u)\n", iface, lpName, uLen);
+    TRACE("(iface=%p, pwszName=%p, uLen=%u)\n", iface, pwszName, uLen);
     
-    if (uLen < sizeof(szNewFolder)+3)
+    if (uLen < sizeof(wszNewFolder)/sizeof(WCHAR)+3)
         return E_INVALIDARG;
 
     hr = IShellFolder2_EnumObjects(STATIC_CAST(IShellFolder2, This), 0,
                                    SHCONTF_FOLDERS|SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN, &pEnum);
     if (SUCCEEDED(hr)) {
-        lstrcpyA(lpName, szNewFolder);
+        lstrcpynW(pwszName, wszNewFolder, uLen);
         IEnumIDList_Reset(pEnum);
         i = 2;
         while ((IEnumIDList_Next(pEnum, 1, &pidlElem, &dwFetched) == S_OK) && (dwFetched == 1)) {
-            if (!strcasecmp(_ILGetTextPointer(pidlElem), lpName)) {
+            WCHAR wszTemp[MAX_PATH];
+            _ILSimpleGetTextW(pidlElem, wszTemp, MAX_PATH);
+            if (!lstrcmpiW(wszTemp, pwszName)) {
                 IEnumIDList_Reset(pEnum);
-                sprintf(lpName, "%s %d", szNewFolder, i++);
+                snprintfW(pwszName, uLen, wszFormat, wszNewFolder, i++);
                 if (i > 99) {
                     hr = E_FAIL;
                     break;
@@ -1716,20 +1719,26 @@ static HRESULT WINAPI UnixFolder_ISFHelper_GetUniqueName(ISFHelper* iface, LPSTR
     return hr;
 }
 
-static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd, LPCSTR pszName, 
+static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd, LPCWSTR pwszName, 
     LPITEMIDLIST* ppidlOut)
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, ISFHelper, iface);
     char szNewDir[FILENAME_MAX];
+    int cBaseLen;
 
-    TRACE("(iface=%p, hwnd=%p, pszName=%s, ppidlOut=%p)\n", iface, hwnd, pszName, ppidlOut);
+    TRACE("(iface=%p, hwnd=%p, pwszName=%s, ppidlOut=%p)\n", 
+            iface, hwnd, debugstr_w(pwszName), ppidlOut);
 
     if (ppidlOut)
         *ppidlOut = NULL;
-    
-    lstrcpyA(szNewDir, This->m_pszPath);
-    lstrcatA(szNewDir, pszName);
 
+    if (!This->m_pszPath || !(This->m_dwAttributes & SFGAO_FILESYSTEM))
+        return E_FAIL;
+    
+    lstrcpynA(szNewDir, This->m_pszPath, FILENAME_MAX);
+    cBaseLen = lstrlenA(szNewDir);
+    WideCharToMultiByte(CP_UNIXCP, 0, pwszName, -1, szNewDir+cBaseLen, FILENAME_MAX-cBaseLen, 0, 0);
+   
     if (mkdir(szNewDir, 0755)) {
         char szMessage[256 + FILENAME_MAX];
         char szCaption[256];
@@ -1742,11 +1751,9 @@ static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd
         return E_FAIL;
     } else {
         LPITEMIDLIST pidlRelative;
-        WCHAR wszName[MAX_PATH];
 
         /* Inform the shell */
-        MultiByteToWideChar(CP_UNIXCP, 0, pszName, -1, wszName, MAX_PATH);
-        if (UNIXFS_path_to_pidl(This, wszName, &pidlRelative)) {
+        if (UNIXFS_path_to_pidl(This, pwszName, &pidlRelative)) {
             LPITEMIDLIST pidlAbsolute = ILCombine(This->m_pidlLocation, pidlRelative);
             if (ppidlOut)
                 *ppidlOut = pidlRelative;
