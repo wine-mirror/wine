@@ -1731,6 +1731,9 @@ static void test_VarFormat(void)
   VARFMT(VT_I4,V_I4,1,"000###",S_OK,"000001");
   VARFMT(VT_I4,V_I4,1,"#00##00#0",S_OK,"00000001");
   VARFMT(VT_I4,V_I4,1,"1#####0000",S_OK,"10001");
+  todo_wine {
+  VARFMT(VT_I4,V_I4,100000,"#,###,###,###",S_OK,"100,000");
+  }
   VARFMT(VT_R8,V_R8,1.23456789,"0#.0#0#0#0#0",S_OK,"01.234567890");
   VARFMT(VT_R8,V_R8,1.2,"0#.0#0#0#0#0",S_OK,"01.200000000");
   VARFMT(VT_R8,V_R8,9.87654321,"#0.#0#0#0#0#",S_OK,"9.87654321");
@@ -1778,6 +1781,14 @@ static void test_VarFormat(void)
   out = (BSTR)0x1;
   pVarFormat(&in,NULL,fd,fw,flags,&out); /* Would crash if out is cleared */
   out = NULL;
+
+  /* VT_NULL */
+  V_VT(&in) = VT_NULL;
+  hres = pVarFormat(&in,NULL,fd,fw,0,&out);
+  todo_wine {
+  ok(hres == S_OK, "VarFormat failed with 0x%08lx\n", hres);
+  ok(out == NULL, "expected NULL formatted string\n");
+  }
 
   /* Invalid args */
   hres = pVarFormat(&in,NULL,fd,fw,flags,NULL);
@@ -2450,6 +2461,25 @@ static void test_VarMod(void)
   ok(hres == S_OK && V_VT(&vDst) == VT_I4 && V_I4(&vDst) == 0,
      "VarMod: expected 0x%lx,%d,%d, got 0x%lX,%d,%ld\n", S_OK, VT_I4, 0, hres, V_VT(&vDst), V_I4(&vDst));
 
+  /* some decimals */
+  todo_wine {
+  V_VT(&v1) = VT_DECIMAL;
+  V_VT(&v2) = VT_DECIMAL;
+  VarDecFromI4(100, &V_DECIMAL(&v1));
+  VarDecFromI4(10, &V_DECIMAL(&v2));
+  hres = pVarMod(&v1,&v2,&vDst);
+  ok(hres == S_OK && V_VT(&vDst) == VT_I4 && V_I4(&vDst) == 0,
+     "VarMod: expected 0x%lx,%d,%d, got 0x%lX,%d,%ld\n", S_OK, VT_I4, 0, hres, V_VT(&vDst), V_I4(&vDst));
+
+  V_VT(&v1) = VT_I4;
+  V_VT(&v2) = VT_DECIMAL;
+  V_I4(&v1) = 100;
+  VarDecFromI4(10, &V_DECIMAL(&v2));
+  hres = pVarMod(&v1,&v2,&vDst);
+  ok(hres == S_OK && V_VT(&vDst) == VT_I4 && V_I4(&vDst) == 0,
+     "VarMod: expected 0x%lx,%d,%d, got 0x%lX,%d,%ld\n", S_OK, VT_I4, 0, hres, V_VT(&vDst), V_I4(&vDst));
+  }
+
   VARMOD2(UINT,I4,100,10,I4,0,S_OK);
 
   /* test that an error results in the type of the result changing but not its value */
@@ -2473,7 +2503,6 @@ static void test_VarMod(void)
   VARMOD2(ERROR,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
   VARMOD2(VARIANT,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
   VARMOD2(UNKNOWN,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
-  VARMOD2(DECIMAL,I4,100,10,EMPTY,0,DISP_E_OVERFLOW);
   VARMOD2(VOID,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
   VARMOD2(HRESULT,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
   VARMOD2(PTR,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
