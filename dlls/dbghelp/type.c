@@ -551,13 +551,20 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         break;
 
     case TI_GET_COUNT:
-        /* it seems that FunctionType also react to GET_COUNT (same value as
-         * GET_CHILDREN_COUNT ?, except for C++ methods, where it seems to
-         * also include 'this' (GET_CHILDREN_COUNT+1)
-         */
-        if (type->tag != SymTagArrayType) return FALSE;
-        X(DWORD) = ((const struct symt_array*)type)->end - 
-            ((const struct symt_array*)type)->start + 1;
+        switch (type->tag)
+        {
+        case SymTagArrayType:
+            X(DWORD) = ((const struct symt_array*)type)->end - 
+                ((const struct symt_array*)type)->start + 1;
+            break;
+        case SymTagFunctionType:
+            /* this seems to be wrong for (future) C++ methods, where 'this' parameter
+             * should be included in this value (and not in GET_CHILDREN_COUNT)
+             */
+            X(DWORD) = vector_length(&((const struct symt_function_signature*)type)->vchildren);
+            break;
+        default: return FALSE;
+        }
         break;
 
     case TI_GET_DATAKIND:
