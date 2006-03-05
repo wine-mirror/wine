@@ -142,6 +142,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
         if(This->hwnd)
             DestroyWindow(This->hwnd);
+        release_nodes(This);
 
         if(This->nscontainer)
             NSContainer_Release(This->nscontainer);
@@ -982,6 +983,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
     ret->ref = 0;
     ret->nscontainer = NULL;
+    ret->nodes = NULL;
 
     hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
     if(FAILED(hres)) {

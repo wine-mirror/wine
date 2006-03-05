@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,7 +40,11 @@
 
 #define NSAPI WINAPI
 
+#define NS_ELEMENT_NODE   1
+#define NS_DOCUMENT_NODE  9
+
 typedef struct BindStatusCallback BindStatusCallback;
+typedef struct HTMLDOMNode HTMLDOMNode;
 
 typedef struct {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
@@ -77,6 +81,8 @@ typedef struct {
     BOOL container_locked;
 
     BindStatusCallback *status_callback;
+
+    HTMLDOMNode *nodes;
 } HTMLDocument;
 
 struct NSContainer {
@@ -100,6 +106,27 @@ struct NSContainer {
     HWND hwnd;
 
     BOOL load_call; /* hack */
+};
+
+struct HTMLDOMNode {
+    const IHTMLDOMNodeVtbl *lpHTMLDOMNodeVtbl;
+
+    void (*destructor)(IUnknown*);
+
+    enum {
+        NT_UNKNOWN,
+        NT_HTMLELEM
+    } node_type;
+
+    union {
+        IUnknown *unk;
+        IHTMLElement *elem;
+    } impl;
+
+    nsIDOMNode *nsnode;
+    HTMLDocument *doc;
+
+    HTMLDOMNode *next;
 };
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
@@ -128,6 +155,8 @@ struct NSContainer {
 #define NSURICL(x)       ((nsIURIContentListener*)        &(x)->lpURIContentListenerVtbl)
 #define NSEMBWNDS(x)     ((nsIEmbeddingSiteWindow*)       &(x)->lpEmbeddingSiteWindowVtbl)
 #define NSIFACEREQ(x)    ((nsIInterfaceRequestor*)        &(x)->lpInterfaceRequestorVtbl)
+
+#define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
@@ -165,6 +194,9 @@ void nsACString_Destroy(nsACString*);
 nsIInputStream *create_nsstream(const char*,PRInt32);
 
 IHlink *Hlink_Create(void);
+
+HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
+void release_nodes(HTMLDocument*);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);

@@ -54,6 +54,7 @@ typedef nsStringContainer nsAString;
 
 interface nsIWebBrowserChrome;
 interface nsILoadGroup;
+interface nsIDOMNode;
 
 [
     object,
@@ -74,7 +75,6 @@ typedef nsISupports nsISimpleEnumerator;
 typedef nsISupports nsIWidget;
 typedef nsISupports nsIProtocolHandler;
 typedef nsISupports nsIDOMElement;
-typedef nsISupports nsIDOMNode;
 typedef nsISupports nsIDOMEventTarget;
 typedef nsISupports nsIDOMAbstractView;
 typedef nsISupports nsIStreamListener;
@@ -85,6 +85,7 @@ typedef nsISupports nsIDOMWindowCollection;
 typedef nsISupports nsISelection;
 typedef nsISupports nsIPrompt;
 typedef nsISupports nsIAuthPrompt;
+typedef nsISupports nsIDOMNamedNodeMap;
 
 [
     object,
@@ -297,6 +298,49 @@ interface nsIUploadChannel : nsISupports
     nsresult SetUploadStream(nsIInputStream *aStream, const nsACString *aContentType,
                              PRInt32 aContentLength);
     nsresult GetUploadStream(nsIInputStream **aUploadStream);
+}
+
+[
+    object,
+    uuid(a6cf907d-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMNodeList : nsISupports
+{
+    nsresult Item(PRUint32 index, nsIDOMNode **_retval);
+    nsresult GetLength(PRUint32 *aLength);
+}
+
+[
+    object,
+    uuid(a6cf907c-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMNode : nsISupports
+{
+    nsresult GetNodeName(nsAString *aNodeName);
+    nsresult GetNodeValue(nsAString *aNodeValue);
+    nsresult SetNodeValue(const nsAString *aNodeValue);
+    nsresult GetNodeType(PRUint16 *aNodeType);
+    nsresult GetParentNode(nsIDOMNode **aParentNode);
+    nsresult GetChildNodes(nsIDOMNodeList **aChildNodes);
+    nsresult GetFirstChild(nsIDOMNode **aFirstChild);
+    nsresult GetLastChild(nsIDOMNode **aLastChild);
+    nsresult GetPreviousSibling(nsIDOMNode **aPreviousSibling);
+    nsresult GetNextSibling(nsIDOMNode **aNextSibling);
+    nsresult GetAttributes(nsIDOMNamedNodeMap **aAttributes);
+    nsresult GetOwnerDocument(nsIDOMDocument **aOwnerDocument);
+    nsresult InsertBefore(nsIDOMNode *newChild, nsIDOMNode *refChild, nsIDOMNode **_retval);
+    nsresult ReplaceChild(nsIDOMNode *newChild, nsIDOMNode *oldChild, nsIDOMNode **_retval);
+    nsresult RemoveChild(nsIDOMNode *oldChild, nsIDOMNode **_retval);
+    nsresult AppendChild(nsIDOMNode *newChild, nsIDOMNode **_retval);
+    nsresult HasChildNodes(PRBool *_retval);
+    nsresult CloneNode(PRBool deep, nsIDOMNode **_retval);
+    nsresult Normalize();
+    nsresult IsSupported(const nsAString *feature, const nsAString *version, PRBool *_retval);
+    nsresult GetNamespaceURI(nsAString *aNamespaceURI);
+    nsresult GetPrefix(nsAString *aPrefix);
+    nsresult SetPrefix(const nsAString *aPrefix);
+    nsresult GetLocalName(nsAString *aLocalName);
+    nsresult HasAttributes(PRBool *_retval);
 }
 
 [
