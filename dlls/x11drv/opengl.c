@@ -226,7 +226,8 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
       ADD2(GLX_ALPHA_SIZE, 8);
     } else {
       ADD2(GLX_BUFFER_SIZE, ppfd->cColorBits);
-      TEST_AND_ADD2(ppfd->cAlphaBits, GLX_ALPHA_SIZE, ppfd->cAlphaBits);
+      /* Some broken apps try to ask for more than 8 bits of alpha */
+      TEST_AND_ADD2(ppfd->cAlphaBits, GLX_ALPHA_SIZE, min(ppfd->cAlphaBits,8));
     }
   }
   TEST_AND_ADD2(ppfd->cStencilBits, GLX_STENCIL_SIZE, ppfd->cStencilBits);
