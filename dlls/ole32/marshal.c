@@ -56,7 +56,9 @@ extern const CLSID CLSID_DfMarshal;
  * when the proxy disconnects or is destroyed */
 #define SORFP_NOLIFETIMEMGMT SORF_OXRES1
 
-static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFIID riid, void **object);
+static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
+                                MSHCTX dest_context, void *dest_context_data,
+                                REFIID riid, void **object);
 
 /* Marshalling just passes a unique identifier to the remote client,
  * that makes it possible to find the passed interface again.
@@ -300,6 +302,8 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
                 HRESULT hrobj = qiresults[i].hResult;
                 if (hrobj == S_OK)
                     hrobj = unmarshal_object(&qiresults[i].std, This->parent,
+                                             This->dest_context,
+                                             This->dest_context_data,
                                              pMQIs[index].pIID,
                                              (void **)&pMQIs[index].pItf);
 
@@ -586,6 +590,11 @@ static HRESULT proxy_manager_construct(
     /* we create the IRemUnknown proxy on demand */
     This->remunk = NULL;
 
+    /* initialise these values to the weakest values and they will be
+     * overwritten in proxy_manager_set_context */
+    This->dest_context = MSHCTX_INPROC;
+    This->dest_context_data = NULL;
+
     EnterCriticalSection(&apt->cs);
     /* FIXME: we are dependent on the ordering in here to make sure a proxy's
      * IRemUnknown proxy doesn't get destroyed before the regual proxy does
@@ -600,6 +609,63 @@ static HRESULT proxy_manager_construct(
 
     *proxy_manager = This;
     return S_OK;
+}
+
+static inline void proxy_manager_set_context(struct proxy_manager *This, MSHCTX dest_context, void *dest_context_data)
+{
+    MSHCTX old_dest_context = This->dest_context;
+    MSHCTX new_dest_context;
+
+    do
+    {
+        new_dest_context = old_dest_context;
+        /* "stronger" values overwrite "weaker" values. stronger values are
+         * ones that disable more optimisations */
+        switch (old_dest_context)
+        {
+        case MSHCTX_INPROC:
+            new_dest_context = dest_context;
+            break;
+        case MSHCTX_CROSSCTX:
+            switch (dest_context)
+            {
+            case MSHCTX_INPROC:
+                break;
+            default:
+                new_dest_context = dest_context;
+            }
+            break;
+        case MSHCTX_LOCAL:
+            switch (dest_context)
+            {
+            case MSHCTX_INPROC:
+            case MSHCTX_CROSSCTX:
+                break;
+            default:
+                new_dest_context = dest_context;
+            }
+            break;
+        case MSHCTX_NOSHAREDMEM:
+            switch (dest_context)
+            {
+            case MSHCTX_DIFFERENTMACHINE:
+                new_dest_context = dest_context;
+                break;
+            default:
+                break;
+            }
+            break;
+        default:
+            break;
+        }
+
+        if (old_dest_context == new_dest_context) break;
+
+        old_dest_context = InterlockedCompareExchange((PLONG)&This->dest_context, new_dest_context, old_dest_context);
+    } while (new_dest_context != old_dest_context);
+
+    if (dest_context_data)
+        InterlockedExchangePointer(&This->dest_context_data, dest_context_data);
 }
 
 static HRESULT proxy_manager_query_local_interface(struct proxy_manager * This, REFIID riid, void ** ppv)
@@ -799,7 +865,9 @@ static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnk
         memcpy(&stdobjref.ipid.Data4, &stdobjref.oxid, sizeof(OXID));
         
         /* do the unmarshal */
-        hr = unmarshal_object(&stdobjref, This->parent, &IID_IRemUnknown, (void**)&This->remunk);
+        hr = unmarshal_object(&stdobjref, This->parent, This->dest_context,
+                              This->dest_context_data, &IID_IRemUnknown,
+                              (void**)&This->remunk);
         if (hr == S_OK)
             *remunk = This->remunk;
     }
@@ -990,7 +1058,9 @@ StdMarshalImpl_MarshalInterface(
 /* helper for StdMarshalImpl_UnmarshalInterface - does the unmarshaling with
  * no questions asked about the rules surrounding same-apartment unmarshals
  * and table marshaling */
-static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFIID riid, void **object)
+static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
+                                MSHCTX dest_context, void *dest_context_data,
+                                REFIID riid, void **object)
 {
     struct proxy_manager *proxy_manager = NULL;
     HRESULT hr = S_OK;
@@ -1017,6 +1087,9 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
     if (hr == S_OK)
     {
         struct ifproxy * ifproxy;
+
+        proxy_manager_set_context(proxy_manager, dest_context, dest_context_data);
+
         hr = proxy_manager_find_ifproxy(proxy_manager, riid, &ifproxy);
         if (hr == E_NOINTERFACE)
         {
@@ -1043,6 +1116,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
 static HRESULT WINAPI
 StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv)
 {
+    StdMarshalImpl *This = (StdMarshalImpl *)iface;
     struct stub_manager  *stubmgr;
     STDOBJREF stdobjref;
     ULONG res;
@@ -1112,7 +1186,8 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
             wine_dbgstr_longlong(stdobjref.oxid));
 
     if (hres == S_OK)
-        hres = unmarshal_object(&stdobjref, apt, riid, ppv);
+        hres = unmarshal_object(&stdobjref, apt, This->dwDestContext,
+                                This->pvDestContext, riid, ppv);
 
     if (hres) WARN("Failed with error 0x%08lx\n", hres);
     else TRACE("Successfully created proxy %p\n", *ppv);

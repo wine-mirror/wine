@@ -127,6 +127,8 @@ struct proxy_manager
   ULONG sorflags;           /* STDOBJREF flags (RO) */
   IRemUnknown *remunk;      /* proxy to IRemUnknown used for lifecycle management (CS cs) */
   HANDLE remoting_mutex;    /* mutex used for synchronizing access to IRemUnknown */
+  MSHCTX dest_context;      /* context used for activating optimisations (LOCK) */
+  void *dest_context_data;  /* reserved context value (LOCK) */
 };
 
 /* this needs to become a COM object that implements IRemUnknown */
