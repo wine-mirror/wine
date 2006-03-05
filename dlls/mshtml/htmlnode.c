@@ -328,6 +328,7 @@ HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode)
     ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
     ret->node_type = NT_UNKNOWN;
     ret->impl.unk = NULL;
+    ret->destructor = NULL;
     ret->doc = This;
 
     nsIDOMNode_AddRef(nsnode);
