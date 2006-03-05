@@ -851,7 +851,11 @@ static BOOL handle_data(struct parsed_symbol* sym)
     case '3': case '4': case '5':
         {
             unsigned mark = sym->stack.num;
-            if (!demangle_datatype(sym, &ct, NULL, FALSE)) goto done;
+            struct array pmt;
+
+            str_array_init(&pmt);
+
+            if (!demangle_datatype(sym, &ct, &pmt, FALSE)) goto done;
             if (!get_modifier(*sym->current++, &modifier)) goto done;
             sym->stack.num = mark;
         }
