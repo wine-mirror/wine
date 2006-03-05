@@ -12,6 +12,7 @@ C_SRCS = \
 	hlink.c \
 	htmldoc.c \
 	htmldoc3.c \
+	htmlelem.c \
 	htmlnode.c \
 	main.c \
 	navigate.c \

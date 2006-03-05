@@ -74,7 +74,6 @@ typedef nsISupports nsISHistory;
 typedef nsISupports nsISimpleEnumerator;
 typedef nsISupports nsIWidget;
 typedef nsISupports nsIProtocolHandler;
-typedef nsISupports nsIDOMElement;
 typedef nsISupports nsIDOMEventTarget;
 typedef nsISupports nsIDOMAbstractView;
 typedef nsISupports nsIStreamListener;
@@ -86,6 +85,7 @@ typedef nsISupports nsISelection;
 typedef nsISupports nsIPrompt;
 typedef nsISupports nsIAuthPrompt;
 typedef nsISupports nsIDOMNamedNodeMap;
+typedef nsISupports nsIDOMAttr;
 
 [
     object,
@@ -341,6 +341,55 @@ interface nsIDOMNode : nsISupports
     nsresult SetPrefix(const nsAString *aPrefix);
     nsresult GetLocalName(nsAString *aLocalName);
     nsresult HasAttributes(PRBool *_retval);
+}
+
+[
+    object,
+    uuid(a6cf9078-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMElement : nsIDOMNode
+{
+    nsresult GetTagName(nsAString *aTagName);
+    nsresult GetAttribute(const nsAString *name, nsAString *_retval);
+    nsresult SetAttribute(const nsAString *name, const nsAString *value);
+    nsresult RemoveAttribute(const nsAString *name);
+    nsresult GetAttributeNode(const nsAString *name, nsIDOMAttr **_retval);
+    nsresult SetAttributeNode(nsIDOMAttr *newAttr, nsIDOMAttr **_retval);
+    nsresult RemoveAttributeNode(nsIDOMAttr *oldAttr, nsIDOMAttr **_retval);
+    nsresult GetElementsByTagName(const nsAString *name, nsIDOMNodeList **_retval);
+    nsresult GetAttributeNS(const nsAString *namespaceURI, const nsAString *localName,
+                            nsAString *_retval);
+    nsresult SetAttributeNS(const nsAString *namespaceURI, const nsAString *qualifiedName,
+                            const nsAString *value);
+    nsresult RemoveAttributeNS(const nsAString *namespaceURI, const nsAString *localName);
+    nsresult GetAttributeNodeNS(const nsAString *namespaceURI, const nsAString *localName,
+                                nsIDOMAttr **_retval);
+    nsresult SetAttributeNodeNS(nsIDOMAttr *newAttr, nsIDOMAttr **_retval);
+    nsresult GetElementsByTagNameNS(const nsAString *namespaceURI, const nsAString *localName,
+                                    nsIDOMNodeList **_retval);
+    nsresult HasAttribute(const nsAString *name, PRBool *_retval);
+    nsresult HasAttributeNS(const nsAString *namespaceURI, const nsAString *localName,
+                            PRBool *_retval);
+}
+
+cpp_quote("#undef GetClassName");
+
+[
+    object,
+    uuid(a6cf9085-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMHTMLElement : nsIDOMElement
+{
+    nsresult GetId(nsAString *aId);
+    nsresult SetId(const nsAString *aId);
+    nsresult GetTitle(nsAString *aTitle);
+    nsresult SetTitle(const nsAString *aTitle);
+    nsresult GetLang(nsAString *aLang);
+    nsresult SetLang(const nsAString *aLang);
+    nsresult GetDir(nsAString *aDir);
+    nsresult SetDir(const nsAString *aDir);
+    nsresult GetClassName(nsAString *aClassName);
+    nsresult SetClassName(const nsAString *aClassName);
 }
 
 [

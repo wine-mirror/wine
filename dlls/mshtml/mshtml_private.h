@@ -129,6 +129,17 @@ struct HTMLDOMNode {
     HTMLDOMNode *next;
 };
 
+typedef struct {
+    const IHTMLElementVtbl *lpHTMLElementVtbl;
+
+    void (*destructor)(IUnknown*);
+
+    nsIDOMHTMLElement *nselem;
+    HTMLDOMNode *node;
+
+    IUnknown *impl;
+} HTMLElement;
+
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
 #define HTMLDOC3(x)      ((IHTMLDocument3*)               &(x)->lpHTMLDocument3Vtbl)
 #define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
@@ -156,6 +167,7 @@ struct HTMLDOMNode {
 #define NSEMBWNDS(x)     ((nsIEmbeddingSiteWindow*)       &(x)->lpEmbeddingSiteWindowVtbl)
 #define NSIFACEREQ(x)    ((nsIInterfaceRequestor*)        &(x)->lpInterfaceRequestorVtbl)
 
+#define HTMLELEM(x)      ((IHTMLElement*)                 &(x)->lpHTMLElementVtbl)
 #define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
@@ -194,6 +206,8 @@ void nsACString_Destroy(nsACString*);
 nsIInputStream *create_nsstream(const char*,PRInt32);
 
 IHlink *Hlink_Create(void);
+
+void HTMLElement_Create(HTMLDOMNode*);
 
 HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
 void release_nodes(HTMLDocument*);
