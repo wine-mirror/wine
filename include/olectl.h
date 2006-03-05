@@ -42,6 +42,9 @@ DEFINE_GUID(CLSID_StdFont,
 DEFINE_GUID(CLSID_StdPicture,
             0x0be35204,0x8f91,0x11ce,0x9d,0xe3,0x00,0xaa,0x00,0x4b,0xb8,0x51);
 
+DEFINE_GUID(IID_IPropertyFrame,
+            0xb196b28a,0xbab4,0x101a,0xb6,0x9c,0x00,0xaa,0x00,0x34,0x1d,0x07);
+
 DEFINE_GUID(CLSID_CFontPropPage,
             0x0be35200,0x8f91,0x11ce,0x9d,0xe3,0x00,0xaa,0x00,0x4b,0xb8,0x51);
 DEFINE_GUID(CLSID_CColorPropPage,
@@ -69,6 +72,30 @@ DEFINE_GUID(GUID_XSIZE,
             0x66504308,0xBE0F,0x101A,0x8B,0xBB,0x00,0xAA,0x00,0x30,0x0C,0xAB);
 DEFINE_GUID(GUID_YSIZE,
             0x66504309,0xBE0F,0x101A,0x8B,0xBB,0x00,0xAA,0x00,0x30,0x0C,0xAB);
+
+#ifndef __CGUID_H__
+DEFINE_GUID(GUID_TRISTATE,
+            0x6650430a,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
+#endif
+
+DEFINE_GUID(GUID_OPTIONVALUEEXCLUSIVE,
+            0x6650430b,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
+DEFINE_GUID(GUID_CHECKVALUEEXCLUSIVE,
+            0x6650430c,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
+DEFINE_GUID(GUID_FONTNAME,
+            0x6650430d,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
+DEFINE_GUID(GUID_FONTSIZE,
+            0x6650430e,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
+DEFINE_GUID(GUID_FONTBOLD,
+            0x6650430f,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
+DEFINE_GUID(GUID_FONTITALIC,
+            0x66504310,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
+DEFINE_GUID(GUID_FONTUNDERSCORE,
+            0x66504311,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
+DEFINE_GUID(GUID_FONTSTRIKETHROUGH,
+            0x66504312,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
+DEFINE_GUID(GUID_HANDLE,
+            0x66504313,0xbe0f,0x101a,0x8b,0xbb,0x00,0xaa,0x00,0x30,0x0c,0xab);
 
 typedef struct tagOCPFIPARAMS
 {
@@ -150,6 +177,12 @@ typedef VARIANT_BOOL OLE_OPTEXCLUSIVE;
 typedef VARIANT_BOOL OLE_CANCELBOOL;
 typedef VARIANT_BOOL OLE_ENABLEDEFAULTBOOL;
 
+/* flags for OleLoadPictureEx and OleLoadPictureFileEx */
+#define LP_DEFAULT      0x0
+#define LP_MONOCHROME   0x1
+#define LP_VGACOLOR     0x2
+#define LP_COLOR        0x4
+
 HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon);
 
 HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams);
@@ -166,6 +199,13 @@ HRESULT WINAPI OleLoadPicture(	LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunMode,
                 REFIID riid, DWORD xSizeDesired, DWORD ySizeDesired,
                 DWORD dwFlags, LPVOID *lplpvObj );
+
+HRESULT WINAPI OleLoadPictureFile( VARIANT varFilename, IDispatch **ppdispPicture );
+
+HRESULT WINAPI OleLoadPictureFileEx( VARIANT varFilename, DWORD xSizeDesired,
+                DWORD ySizeDesired, DWORD dwFlags, IDispatch **ppdispPicture );
+
+HRESULT WINAPI OleSavePictureFile( IDispatch *pdispPicture, BSTR bstrFilename );
 
 HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 		DWORD dwReserved, OLE_COLOR clrReserved, REFIID riid,
@@ -265,12 +305,31 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #define CTL_E_SEARCHTEXTNOTFOUND        STD_CTL_SCODE(744)
 #define CTL_E_REPLACEMENTSTOOLONG       STD_CTL_SCODE(746)
 
+#define CUSTOM_CTL_SCODE(n) MAKE_SCODE(SEVERITY_ERROR, FACILITY_CONTROL, n)
+#define CTL_E_CUSTOM_FIRST              CUSTOM_CTL_SCODE(600)
+
 #define VT_COLOR            VT_I4
+#define VT_XPOS_PIXELS      VT_I4
+#define VT_YPOS_PIXELS      VT_I4
+#define VT_XSIZE_PIXELS     VT_I4
+#define VT_YSIZE_PIXELS     VT_I4
+#define VT_XPOS_HIMETRIC    VT_I4
+#define VT_YPOS_HIMETRIC    VT_I4
+#define VT_XSIZE_HIMETRIC   VT_I4
+#define VT_YSIZE_HIMETRIC   VT_I4
+#define VT_TRISTATE         VT_I2
+#define VT_OPTEXCLUSIVE     VT_BOOL
 #define VT_FONT             VT_DISPATCH
-#define VT_STREAMED_PROPSET 73  /*       [P]  Stream contains a property set */
-#define VT_STORED_PROPSET   74  /*       [P]  Storage contains a property set */
-#define VT_BLOB_PROPSET     75  /*       [P]  Blob contains a property set */
-#define VT_VERBOSE_ENUM     76  /*       [P]  Enum value with text string */
+#define VT_PICTURE          VT_DISPATCH
+
+#define VT_STREAMED_PROPSET 73
+#define VT_STORED_PROPSET   74
+#define VT_BLOB_PROPSET     75
+#define VT_VERBOSE_ENUM     76
+
+#ifndef OLEIVERB_PROPERTIES
+#define OLEIVERB_PROPERTIES (-7L)
+#endif
 
 #define PERPROP_E_FIRST    MAKE_SCODE(SEVERITY_ERROR,   FACILITY_ITF, 0x0200)
 #define PERPROP_E_LAST     MAKE_SCODE(SEVERITY_ERROR,   FACILITY_ITF, 0x020F)
@@ -316,6 +375,9 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #define DISPID_REFRESH                  (-550)
 #define DISPID_DOCLICK                  (-551)
 #define DISPID_ABOUTBOX                 (-552)
+#define DISPID_ADDITEM                  (-553)
+#define DISPID_CLEAR                    (-554)
+#define DISPID_REMOVEITEM               (-555)
 
 #define DISPID_CLICK                    (-600)
 #define DISPID_DBLCLICK                 (-601)
@@ -327,6 +389,10 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #define DISPID_MOUSEUP                  (-607)
 #define DISPID_ERROREVENT               (-608)
 #define DISPID_READYSTATECHANGE         (-609)
+#define DISPID_CLICK_VALUE              (-610)
+#define DISPID_RIGHTTOLEFT              (-611)
+#define DISPID_TOPTOBOTTOM              (-612)
+#define DISPID_THIS                     (-613)
 
 #define DISPID_AMBIENT_BACKCOLOR        (-701)
 #define DISPID_AMBIENT_DISPLAYNAME      (-702)
@@ -344,8 +410,14 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #define DISPID_AMBIENT_SUPPORTSMNEMONICS (-714)
 #define DISPID_AMBIENT_AUTOCLIP         (-715)
 #define DISPID_AMBIENT_APPEARANCE       (-716)
+
+#define DISPID_AMBIENT_CODEPAGE         (-725)
 #define DISPID_AMBIENT_PALETTE          (-726)
+#define DISPID_AMBIENT_CHARSET          (-727)
 #define DISPID_AMBIENT_TRANSFERPRIORITY (-728)
+
+#define DISPID_AMBIENT_RIGHTTOLEFT      (-732)
+#define DISPID_AMBIENT_TOPTOBOTTOM      (-733)
 
 #define DISPID_Name                     (-800)
 #define DISPID_Delete                   (-801)
