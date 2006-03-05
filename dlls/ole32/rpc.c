@@ -100,6 +100,8 @@ typedef struct
 
     RPC_BINDING_HANDLE     bind; /* handle to the remote server */
     OXID                   oxid; /* apartment in which the channel is valid */
+    DWORD                  dest_context; /* returned from GetDestCtx */
+    LPVOID                 dest_context_data; /* returned from GetDestCtx */
 } ClientRpcChannelBuffer;
 
 struct dispatch_params
@@ -379,7 +381,19 @@ static HRESULT WINAPI ClientRpcChannelBuffer_FreeBuffer(LPRPCCHANNELBUFFER iface
     return HRESULT_FROM_WIN32(status);
 }
 
-static HRESULT WINAPI RpcChannelBuffer_GetDestCtx(LPRPCCHANNELBUFFER iface, DWORD* pdwDestContext, void** ppvDestContext)
+static HRESULT WINAPI ClientRpcChannelBuffer_GetDestCtx(LPRPCCHANNELBUFFER iface, DWORD* pdwDestContext, void** ppvDestContext)
+{
+    ClientRpcChannelBuffer *This = (ClientRpcChannelBuffer *)iface;
+
+    TRACE("(%p,%p)\n", pdwDestContext, ppvDestContext);
+
+    *pdwDestContext = This->dest_context;
+    *ppvDestContext = This->dest_context_data;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ServerRpcChannelBuffer_GetDestCtx(LPRPCCHANNELBUFFER iface, DWORD* pdwDestContext, void** ppvDestContext)
 {
     FIXME("(%p,%p), stub!\n", pdwDestContext, ppvDestContext);
     return E_FAIL;
@@ -400,7 +414,7 @@ static const IRpcChannelBufferVtbl ClientRpcChannelBufferVtbl =
     ClientRpcChannelBuffer_GetBuffer,
     ClientRpcChannelBuffer_SendReceive,
     ClientRpcChannelBuffer_FreeBuffer,
-    RpcChannelBuffer_GetDestCtx,
+    ClientRpcChannelBuffer_GetDestCtx,
     RpcChannelBuffer_IsConnected
 };
 
@@ -412,12 +426,14 @@ static const IRpcChannelBufferVtbl ServerRpcChannelBufferVtbl =
     ServerRpcChannelBuffer_GetBuffer,
     ServerRpcChannelBuffer_SendReceive,
     ServerRpcChannelBuffer_FreeBuffer,
-    RpcChannelBuffer_GetDestCtx,
+    ServerRpcChannelBuffer_GetDestCtx,
     RpcChannelBuffer_IsConnected
 };
 
 /* returns a channel buffer for proxies */
-HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid, IRpcChannelBuffer **chan)
+HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
+                                DWORD dest_context, void *dest_context_data,
+                                IRpcChannelBuffer **chan)
 {
     ClientRpcChannelBuffer *This;
     WCHAR                   endpoint[200];
@@ -470,6 +486,8 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid, IRpcChannelB
     This->super.refs = 1;
     This->bind = bind;
     apartment_getoxid(COM_CurrentApt(), &This->oxid);
+    This->dest_context = dest_context;
+    This->dest_context_data = dest_context_data;
 
     *chan = (IRpcChannelBuffer*)This;
 

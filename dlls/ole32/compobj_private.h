@@ -201,7 +201,9 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
 struct dispatch_params;
 
 void    RPC_StartRemoting(struct apartment *apt);
-HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid, IRpcChannelBuffer **pipebuf);
+HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
+                                DWORD dest_context, void *dest_context_data,
+                                IRpcChannelBuffer **chan);
 HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan);
 void    RPC_ExecuteCall(struct dispatch_params *params);
 HRESULT RPC_RegisterInterface(REFIID riid);

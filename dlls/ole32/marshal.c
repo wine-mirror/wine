@@ -1094,7 +1094,10 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
         if (hr == E_NOINTERFACE)
         {
             IRpcChannelBuffer *chanbuf;
-            hr = RPC_CreateClientChannel(&stdobjref->oxid, &stdobjref->ipid, &chanbuf);
+            hr = RPC_CreateClientChannel(&stdobjref->oxid, &stdobjref->ipid,
+                                         proxy_manager->dest_context,
+                                         proxy_manager->dest_context_data,
+                                         &chanbuf);
             if (hr == S_OK)
                 hr = proxy_manager_create_ifproxy(proxy_manager, stdobjref,
                                                   riid, chanbuf, &ifproxy);
