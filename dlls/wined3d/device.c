@@ -3169,7 +3169,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 GL_EXTCALL(glStencilFuncSeparate(GL_FRONT, func, ref, mask));
                 checkGLcall("glStencilFuncSeparate(GL_FRONT,...)");
             }
-            else if(GL_EXTCALL(glActiveStencilFaceEXT)) {
+            else if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
                 glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
                 checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
                 GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
@@ -3177,7 +3177,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 glStencilFunc(func, ref, mask);
                 checkGLcall("glStencilFunc(...)");
             }
-            else if(GL_EXTCALL(glStencilFuncSeparateATI)) {
+            else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
                 GL_EXTCALL(glStencilFuncSeparateATI(GL_FRONT, func, ref, mask));
                 checkGLcall("glStencilFuncSeparateATI(GL_FRONT,...)");
             } else {
@@ -3245,7 +3245,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 GL_EXTCALL(glStencilOpSeparate(GL_FRONT, stencilFail, depthFail, stencilPass));
                 checkGLcall("glStencilOpSeparate(GL_FRONT,...)");
             }
-            else if(GL_EXTCALL(glActiveStencilFaceEXT)) {
+            else if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
                 glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
                 checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
                 GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
@@ -3253,7 +3253,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 glStencilOp(stencilFail, depthFail, stencilPass);
                 checkGLcall("glStencilOp(...)");
             }
-            else if(GL_EXTCALL(glStencilOpSeparateATI)) {
+            else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
                 GL_EXTCALL(glStencilOpSeparateATI(GL_FRONT, stencilFail, depthFail, stencilPass));
                 checkGLcall("glStencilOpSeparateATI(GL_FRONT,...)");
             } else {
@@ -3792,7 +3792,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 GL_EXTCALL(glStencilOpSeparate(GL_BACK, stencilFail, depthFail, stencilPass));
                 checkGLcall("glStencilOpSeparate(GL_BACK,...)");
             }
-            else if(GL_EXTCALL(glActiveStencilFaceEXT)) {
+            else if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
                 glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
                 checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
                 GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
@@ -3800,7 +3800,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 glStencilOp(stencilFail, depthFail, stencilPass);
                 checkGLcall("glStencilOp(...)");
             }
-            else if(GL_EXTCALL(glStencilOpSeparateATI)) {
+            else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
                 GL_EXTCALL(glStencilOpSeparateATI(GL_BACK, stencilFail, depthFail, stencilPass));
                 checkGLcall("glStencilOpSeparateATI(GL_BACK,...)");
             } else {
@@ -3839,7 +3839,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 GL_EXTCALL(glStencilFuncSeparate(GL_BACK, func, ref, mask));
                 checkGLcall("glStencilFuncSeparate(GL_BACK,...)");
             }
-            else if(GL_EXTCALL(glActiveStencilFaceEXT)) {
+            else if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
                 glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
                 checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
                 GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
@@ -3847,7 +3847,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 glStencilFunc(func, ref, mask);
                 checkGLcall("glStencilFunc(...)");
             }
-            else if(GL_EXTCALL(glStencilFuncSeparateATI)) {
+            else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
                 GL_EXTCALL(glStencilFuncSeparateATI(GL_BACK, func, ref, mask));
                 checkGLcall("glStencilFuncSeparateATI(GL_BACK,...)");
             } else {

@@ -566,6 +566,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             } else if (strcmp(ThisExtn, "GL_EXT_secondary_color") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Secondary coord support\n");
                 gl_info->supported[EXT_SECONDARY_COLOR] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_EXT_stencil_two_side") == 0) {
+                TRACE_(d3d_caps)(" FOUND: EXT Stencil two side support\n");
+                gl_info->supported[EXT_STENCIL_TWO_SIDE] = TRUE;
             } else if (strcmp(ThisExtn, "GL_EXT_stencil_wrap") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Stencil wrap support\n");
                 gl_info->supported[EXT_STENCIL_WRAP] = TRUE;
@@ -639,6 +642,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
              * ATI
              */
             /** TODO */
+            } else if (strcmp(ThisExtn, "GL_ATI_separate_stencil") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ATI Separate stencil support\n");
+                gl_info->supported[ATI_SEPARATE_STENCIL] = TRUE;
             } else if (strcmp(ThisExtn, "GL_ATI_texture_env_combine3") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ATI Texture Env combine (3) support\n");
                 gl_info->supported[ATI_TEXTURE_ENV_COMBINE3] = TRUE;

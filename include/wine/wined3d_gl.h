@@ -820,9 +820,188 @@ typedef void (APIENTRY * PGLFNACTIVESTENCILFACEEXTPROC) (GLenum face);
 #endif
 typedef void (APIENTRY * PGLFNSTENCILOPSEPARATEATIPROC) (GLenum, GLenum, GLenum, GLenum);
 typedef void (APIENTRY * PGLFNSTENCILFUNCSEPARATEATIPROC) (GLenum, GLenum, GLint, GLuint);
-/* OpenGL 2.0 */
+/* GL_VERSION_2_0 */
+#ifndef GL_VERSION_2_0
+#define GL_VERSION_2_0 1
+#define GL_BLEND_EQUATION_RGB             GL_BLEND_EQUATION
+#define GL_VERTEX_ATTRIB_ARRAY_ENABLED    0x8622
+#define GL_VERTEX_ATTRIB_ARRAY_SIZE       0x8623
+#define GL_VERTEX_ATTRIB_ARRAY_STRIDE     0x8624
+#define GL_VERTEX_ATTRIB_ARRAY_TYPE       0x8625
+#define GL_CURRENT_VERTEX_ATTRIB          0x8626
+#define GL_VERTEX_PROGRAM_POINT_SIZE      0x8642
+#define GL_VERTEX_PROGRAM_TWO_SIDE        0x8643
+#define GL_VERTEX_ATTRIB_ARRAY_POINTER    0x8645
+#define GL_STENCIL_BACK_FUNC              0x8800
+#define GL_STENCIL_BACK_FAIL              0x8801
+#define GL_STENCIL_BACK_PASS_DEPTH_FAIL   0x8802
+#define GL_STENCIL_BACK_PASS_DEPTH_PASS   0x8803
+#define GL_MAX_DRAW_BUFFERS               0x8824
+#define GL_DRAW_BUFFER0                   0x8825
+#define GL_DRAW_BUFFER1                   0x8826
+#define GL_DRAW_BUFFER2                   0x8827
+#define GL_DRAW_BUFFER3                   0x8828
+#define GL_DRAW_BUFFER4                   0x8829
+#define GL_DRAW_BUFFER5                   0x882A
+#define GL_DRAW_BUFFER6                   0x882B
+#define GL_DRAW_BUFFER7                   0x882C
+#define GL_DRAW_BUFFER8                   0x882D
+#define GL_DRAW_BUFFER9                   0x882E
+#define GL_DRAW_BUFFER10                  0x882F
+#define GL_DRAW_BUFFER11                  0x8830
+#define GL_DRAW_BUFFER12                  0x8831
+#define GL_DRAW_BUFFER13                  0x8832
+#define GL_DRAW_BUFFER14                  0x8833
+#define GL_DRAW_BUFFER15                  0x8834
+#define GL_BLEND_EQUATION_ALPHA           0x883D
+#define GL_POINT_SPRITE                   0x8861
+#define GL_COORD_REPLACE                  0x8862
+#define GL_MAX_VERTEX_ATTRIBS             0x8869
+#define GL_VERTEX_ATTRIB_ARRAY_NORMALIZED 0x886A
+#define GL_MAX_TEXTURE_COORDS             0x8871
+#define GL_MAX_TEXTURE_IMAGE_UNITS        0x8872
+#define GL_FRAGMENT_SHADER                0x8B30
+#define GL_VERTEX_SHADER                  0x8B31
+#define GL_MAX_FRAGMENT_UNIFORM_COMPONENTS 0x8B49
+#define GL_MAX_VERTEX_UNIFORM_COMPONENTS  0x8B4A
+#define GL_MAX_VARYING_FLOATS             0x8B4B
+#define GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS 0x8B4C
+#define GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS 0x8B4D
+#define GL_SHADER_TYPE                    0x8B4F
+#define GL_FLOAT_VEC2                     0x8B50
+#define GL_FLOAT_VEC3                     0x8B51
+#define GL_FLOAT_VEC4                     0x8B52
+#define GL_INT_VEC2                       0x8B53
+#define GL_INT_VEC3                       0x8B54
+#define GL_INT_VEC4                       0x8B55
+#define GL_BOOL                           0x8B56
+#define GL_BOOL_VEC2                      0x8B57
+#define GL_BOOL_VEC3                      0x8B58
+#define GL_BOOL_VEC4                      0x8B59
+#define GL_FLOAT_MAT2                     0x8B5A
+#define GL_FLOAT_MAT3                     0x8B5B
+#define GL_FLOAT_MAT4                     0x8B5C
+#define GL_SAMPLER_1D                     0x8B5D
+#define GL_SAMPLER_2D                     0x8B5E
+#define GL_SAMPLER_3D                     0x8B5F
+#define GL_SAMPLER_CUBE                   0x8B60
+#define GL_SAMPLER_1D_SHADOW              0x8B61
+#define GL_SAMPLER_2D_SHADOW              0x8B62
+#define GL_DELETE_STATUS                  0x8B80
+#define GL_COMPILE_STATUS                 0x8B81
+#define GL_LINK_STATUS                    0x8B82
+#define GL_VALIDATE_STATUS                0x8B83
+#define GL_INFO_LOG_LENGTH                0x8B84
+#define GL_ATTACHED_SHADERS               0x8B85
+#define GL_ACTIVE_UNIFORMS                0x8B86
+#define GL_ACTIVE_UNIFORM_MAX_LENGTH      0x8B87
+#define GL_SHADER_SOURCE_LENGTH           0x8B88
+#define GL_ACTIVE_ATTRIBUTES              0x8B89
+#define GL_ACTIVE_ATTRIBUTE_MAX_LENGTH    0x8B8A
+#define GL_FRAGMENT_SHADER_DERIVATIVE_HINT 0x8B8B
+#define GL_SHADING_LANGUAGE_VERSION       0x8B8C
+#define GL_CURRENT_PROGRAM                0x8B8D
+#define GL_POINT_SPRITE_COORD_ORIGIN      0x8CA0
+#define GL_LOWER_LEFT                     0x8CA1
+#define GL_UPPER_LEFT                     0x8CA2
+#define GL_STENCIL_BACK_REF               0x8CA3
+#define GL_STENCIL_BACK_VALUE_MASK        0x8CA4
+#define GL_STENCIL_BACK_WRITEMASK         0x8CA5
+typedef char GLchar;
+#endif
+typedef void (APIENTRY * PGLFNBLENDEQUATIONSEPARATEPROC) (GLenum modeRGB, GLenum modeAlpha);
+typedef void (APIENTRY * PGLFNDRAWBUFFERSPROC) (GLsizei n, const GLenum *bufs);
 typedef void (APIENTRY * PGLFNSTENCILOPSEPARATEPROC) (GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass);
-typedef void (APIENTRY * PGLFNSTENCILFUNCSEPARATEPROC) (GLenum face, GLenum func, GLint ref, GLuint mask);
+typedef void (APIENTRY * PGLFNSTENCILFUNCSEPARATEPROC) (GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
+typedef void (APIENTRY * PGLFNSTENCILMASKSEPARATEPROC) (GLenum face, GLuint mask);
+typedef void (APIENTRY * PGLFNATTACHSHADERPROC) (GLuint program, GLuint shader);
+typedef void (APIENTRY * PGLFNBINDATTRIBLOCATIONPROC) (GLuint program, GLuint index, const GLchar *name);
+typedef void (APIENTRY * PGLFNCOMPILESHADERPROC) (GLuint shader);
+typedef GLuint (APIENTRY * PGLFNCREATEPROGRAMPROC) (void);
+typedef GLuint (APIENTRY * PGLFNCREATESHADERPROC) (GLenum type);
+typedef void (APIENTRY * PGLFNDELETEPROGRAMPROC) (GLuint program);
+typedef void (APIENTRY * PGLFNDELETESHADERPROC) (GLuint shader);
+typedef void (APIENTRY * PGLFNDETACHSHADERPROC) (GLuint program, GLuint shader);
+typedef void (APIENTRY * PGLFNDISABLEVERTEXATTRIBARRAYPROC) (GLuint index);
+typedef void (APIENTRY * PGLFNENABLEVERTEXATTRIBARRAYPROC) (GLuint index);
+typedef void (APIENTRY * PGLFNGETACTIVEATTRIBPROC) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+typedef void (APIENTRY * PGLFNGETACTIVEUNIFORMPROC) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+typedef void (APIENTRY * PGLFNGETATTACHEDSHADERSPROC) (GLuint program, GLsizei maxCount, GLsizei *count, GLuint *obj);
+typedef GLint (APIENTRY * PGLFNGETATTRIBLOCATIONPROC) (GLuint program, const GLchar *name);
+typedef void (APIENTRY * PGLFNGETPROGRAMIVPROC) (GLuint program, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETPROGRAMINFOLOGPROC) (GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+typedef void (APIENTRY * PGLFNGETSHADERIVPROC) (GLuint shader, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETSHADERINFOLOGPROC) (GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+typedef void (APIENTRY * PGLFNGETSHADERSOURCEPROC) (GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source);
+typedef GLint (APIENTRY * PGLFNGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar *name);
+typedef void (APIENTRY * PGLFNGETUNIFORMFVPROC) (GLuint program, GLint location, GLfloat *params);
+typedef void (APIENTRY * PGLFNGETUNIFORMIVPROC) (GLuint program, GLint location, GLint *params);
+typedef void (APIENTRY * PGLFNGETVERTEXATTRIBDVPROC) (GLuint index, GLenum pname, GLdouble *params);
+typedef void (APIENTRY * PGLFNGETVERTEXATTRIBFVPROC) (GLuint index, GLenum pname, GLfloat *params);
+typedef void (APIENTRY * PGLFNGETVERTEXATTRIBIVPROC) (GLuint index, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETVERTEXATTRIBPOINTERVPROC) (GLuint index, GLenum pname, GLvoid* *pointer);
+typedef GLboolean (APIENTRY * PGLFNISPROGRAMPROC) (GLuint program);
+typedef GLboolean (APIENTRY * PGLFNISSHADERPROC) (GLuint shader);
+typedef void (APIENTRY * PGLFNLINKPROGRAMPROC) (GLuint program);
+typedef void (APIENTRY * PGLFNSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar* *string, const GLint *length);
+typedef void (APIENTRY * PGLFNUSEPROGRAMPROC) (GLuint program);
+typedef void (APIENTRY * PGLFNUNIFORM1FPROC) (GLint location, GLfloat v0);
+typedef void (APIENTRY * PGLFNUNIFORM2FPROC) (GLint location, GLfloat v0, GLfloat v1);
+typedef void (APIENTRY * PGLFNUNIFORM3FPROC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
+typedef void (APIENTRY * PGLFNUNIFORM4FPROC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+typedef void (APIENTRY * PGLFNUNIFORM1IPROC) (GLint location, GLint v0);
+typedef void (APIENTRY * PGLFNUNIFORM2IPROC) (GLint location, GLint v0, GLint v1);
+typedef void (APIENTRY * PGLFNUNIFORM3IPROC) (GLint location, GLint v0, GLint v1, GLint v2);
+typedef void (APIENTRY * PGLFNUNIFORM4IPROC) (GLint location, GLint v0, GLint v1, GLint v2, GLint v3);
+typedef void (APIENTRY * PGLFNUNIFORM1FVPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * PGLFNUNIFORM2FVPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * PGLFNUNIFORM3FVPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * PGLFNUNIFORM4FVPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * PGLFNUNIFORM1IVPROC) (GLint location, GLsizei count, const GLint *value);
+typedef void (APIENTRY * PGLFNUNIFORM2IVPROC) (GLint location, GLsizei count, const GLint *value);
+typedef void (APIENTRY * PGLFNUNIFORM3IVPROC) (GLint location, GLsizei count, const GLint *value);
+typedef void (APIENTRY * PGLFNUNIFORM4IVPROC) (GLint location, GLsizei count, const GLint *value);
+typedef void (APIENTRY * PGLFNUNIFORMMATRIX2FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY * PGLFNUNIFORMMATRIX3FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY * PGLFNUNIFORMMATRIX4FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY * PGLFNVALIDATEPROGRAMPROC) (GLuint program);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1DPROC) (GLuint index, GLdouble x);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1DVPROC) (GLuint index, const GLdouble *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1FPROC) (GLuint index, GLfloat x);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1FVPROC) (GLuint index, const GLfloat *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1SPROC) (GLuint index, GLshort x);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1SVPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2DPROC) (GLuint index, GLdouble x, GLdouble y);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2DVPROC) (GLuint index, const GLdouble *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2FPROC) (GLuint index, GLfloat x, GLfloat y);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2FVPROC) (GLuint index, const GLfloat *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2SPROC) (GLuint index, GLshort x, GLshort y);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2SVPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3DPROC) (GLuint index, GLdouble x, GLdouble y, GLdouble z);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3DVPROC) (GLuint index, const GLdouble *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3FPROC) (GLuint index, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3FVPROC) (GLuint index, const GLfloat *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3SPROC) (GLuint index, GLshort x, GLshort y, GLshort z);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3SVPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NBVPROC) (GLuint index, const GLbyte *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NIVPROC) (GLuint index, const GLint *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NSVPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NUBPROC) (GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NUBVPROC) (GLuint index, const GLubyte *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NUIVPROC) (GLuint index, const GLuint *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NUSVPROC) (GLuint index, const GLushort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4BVPROC) (GLuint index, const GLbyte *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4DPROC) (GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4DVPROC) (GLuint index, const GLdouble *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4FPROC) (GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4FVPROC) (GLuint index, const GLfloat *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4IVPROC) (GLuint index, const GLint *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4SPROC) (GLuint index, GLshort x, GLshort y, GLshort z, GLshort w);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4SVPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4UBVPROC) (GLuint index, const GLubyte *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4UIVPROC) (GLuint index, const GLuint *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4USVPROC) (GLuint index, const GLushort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer);
 
 /****************************************************
  * OpenGL Official Version 
@@ -954,6 +1133,7 @@ typedef enum _GL_SupportedExt {
   EXT_PIXEL_BUFFER_OBJECT,
   EXT_POINT_PARAMETERS,
   EXT_SECONDARY_COLOR,
+  EXT_STENCIL_TWO_SIDE,
   EXT_STENCIL_WRAP,
   EXT_TEXTURE_COMPRESSION_S3TC,
   EXT_TEXTURE_FILTER_ANISOTROPIC,
@@ -976,6 +1156,7 @@ typedef enum _GL_SupportedExt {
   NV_TEXTURE_SHADER3,
   NV_VERTEX_PROGRAM,
   /* ATI */
+  ATI_SEPARATE_STENCIL,
   ATI_TEXTURE_ENV_COMBINE3,
   ATI_TEXTURE_MIRROR_ONCE,
   EXT_VERTEX_SHADER,
@@ -1053,11 +1234,102 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNDISABLEVERTEXATTRIBARRAYARBPROC, glDisableVertexAttribArrayARB); \
     /* GL_EXT_stencil_two_side */ \
     USE_GL_FUNC(PGLFNACTIVESTENCILFACEEXTPROC, glActiveStencilFaceEXT); \
+    /* GL_ATI_separate_stencil */ \
     USE_GL_FUNC(PGLFNSTENCILOPSEPARATEATIPROC, glStencilOpSeparateATI); \
     USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEATIPROC, glStencilFuncSeparateATI); \
-    /* OpenGL 2.0 */ \
+    /* GL_VERSION_2_0 */ \
+    USE_GL_FUNC(PGLFNBLENDEQUATIONSEPARATEPROC, glBlendEquationSeparate); \
+    USE_GL_FUNC(PGLFNDRAWBUFFERSPROC, glDrawBuffers); \
     USE_GL_FUNC(PGLFNSTENCILOPSEPARATEPROC, glStencilOpSeparate); \
     USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEPROC, glStencilFuncSeparate); \
+    USE_GL_FUNC(PGLFNSTENCILMASKSEPARATEPROC, glStencilMaskSeparate); \
+    USE_GL_FUNC(PGLFNATTACHSHADERPROC, glAttachShader); \
+    USE_GL_FUNC(PGLFNBINDATTRIBLOCATIONPROC, glBindAttribLocation); \
+    USE_GL_FUNC(PGLFNCOMPILESHADERPROC, glCompileShader); \
+    USE_GL_FUNC(PGLFNCREATEPROGRAMPROC, glCreateProgram); \
+    USE_GL_FUNC(PGLFNCREATESHADERPROC, glCreateShader); \
+    USE_GL_FUNC(PGLFNDELETEPROGRAMPROC, glDeleteProgram); \
+    USE_GL_FUNC(PGLFNDELETESHADERPROC, glDeleteShader); \
+    USE_GL_FUNC(PGLFNDETACHSHADERPROC, glDetachShader); \
+    USE_GL_FUNC(PGLFNDISABLEVERTEXATTRIBARRAYPROC, glDisableVertexAttribArray); \
+    USE_GL_FUNC(PGLFNENABLEVERTEXATTRIBARRAYPROC, glEnableVertexAttribArray); \
+    USE_GL_FUNC(PGLFNGETACTIVEATTRIBPROC, glGetActiveAttrib); \
+    USE_GL_FUNC(PGLFNGETACTIVEUNIFORMPROC, glGetActiveUniform); \
+    USE_GL_FUNC(PGLFNGETATTACHEDSHADERSPROC, glGetAttachedShaders); \
+    USE_GL_FUNC(PGLFNGETATTRIBLOCATIONPROC, glGetAttribLocation); \
+    USE_GL_FUNC(PGLFNGETPROGRAMIVPROC, glGetProgramiv); \
+    USE_GL_FUNC(PGLFNGETPROGRAMINFOLOGPROC, glGetProgramInfoLog); \
+    USE_GL_FUNC(PGLFNGETSHADERIVPROC, glGetShaderiv); \
+    USE_GL_FUNC(PGLFNGETSHADERINFOLOGPROC, glGetShaderInfoLog); \
+    USE_GL_FUNC(PGLFNGETSHADERSOURCEPROC, glGetShaderSource); \
+    USE_GL_FUNC(PGLFNGETUNIFORMLOCATIONPROC, glGetUniformLocation); \
+    USE_GL_FUNC(PGLFNGETUNIFORMFVPROC, glGetUniformfv); \
+    USE_GL_FUNC(PGLFNGETUNIFORMIVPROC, glGetUniformiv); \
+    USE_GL_FUNC(PGLFNGETVERTEXATTRIBDVPROC, glGetVertexAttribdv); \
+    USE_GL_FUNC(PGLFNGETVERTEXATTRIBFVPROC, glGetVertexAttribfv); \
+    USE_GL_FUNC(PGLFNGETVERTEXATTRIBIVPROC, glGetVertexAttribiv); \
+    USE_GL_FUNC(PGLFNGETVERTEXATTRIBPOINTERVPROC, glGetVertexAttribPointerv); \
+    USE_GL_FUNC(PGLFNISPROGRAMPROC, glIsProgram); \
+    USE_GL_FUNC(PGLFNISSHADERPROC, glIsShader); \
+    USE_GL_FUNC(PGLFNLINKPROGRAMPROC, glLinkProgram); \
+    USE_GL_FUNC(PGLFNSHADERSOURCEPROC, glShaderSource); \
+    USE_GL_FUNC(PGLFNUSEPROGRAMPROC, glUseProgram); \
+    USE_GL_FUNC(PGLFNUNIFORM1FPROC, glUniform1f); \
+    USE_GL_FUNC(PGLFNUNIFORM2FPROC, glUniform2f); \
+    USE_GL_FUNC(PGLFNUNIFORM3FPROC, glUniform3f); \
+    USE_GL_FUNC(PGLFNUNIFORM4FPROC, glUniform4f); \
+    USE_GL_FUNC(PGLFNUNIFORM1IPROC, glUniform1i); \
+    USE_GL_FUNC(PGLFNUNIFORM2IPROC, glUniform2i); \
+    USE_GL_FUNC(PGLFNUNIFORM3IPROC, glUniform3i); \
+    USE_GL_FUNC(PGLFNUNIFORM4IPROC, glUniform4i); \
+    USE_GL_FUNC(PGLFNUNIFORM1FVPROC, glUniform1fv); \
+    USE_GL_FUNC(PGLFNUNIFORM2FVPROC, glUniform2fv); \
+    USE_GL_FUNC(PGLFNUNIFORM3FVPROC, glUniform3fv); \
+    USE_GL_FUNC(PGLFNUNIFORM4FVPROC, glUniform4fv); \
+    USE_GL_FUNC(PGLFNUNIFORM1IVPROC, glUniform1iv); \
+    USE_GL_FUNC(PGLFNUNIFORM2IVPROC, glUniform2iv); \
+    USE_GL_FUNC(PGLFNUNIFORM3IVPROC, glUniform3iv); \
+    USE_GL_FUNC(PGLFNUNIFORM4IVPROC, glUniform4iv); \
+    USE_GL_FUNC(PGLFNUNIFORMMATRIX2FVPROC, glUniformMatrix2fv); \
+    USE_GL_FUNC(PGLFNUNIFORMMATRIX3FVPROC, glUniformMatrix3fv); \
+    USE_GL_FUNC(PGLFNUNIFORMMATRIX4FVPROC, glUniformMatrix4fv); \
+    USE_GL_FUNC(PGLFNVALIDATEPROGRAMPROC, glValidateProgram); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB1DPROC, glVertexAttrib1d); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB1DVPROC, glVertexAttrib1dv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB1FPROC, glVertexAttrib1f); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB1FVPROC, glVertexAttrib1fv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB1SPROC, glVertexAttrib1s); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB1SVPROC, glVertexAttrib1sv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB2DPROC, glVertexAttrib2d); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB2DVPROC, glVertexAttrib2dv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB2FPROC, glVertexAttrib2f); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB2FVPROC, glVertexAttrib2fv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB2SPROC, glVertexAttrib2s); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB2SVPROC, glVertexAttrib2sv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB3DPROC, glVertexAttrib3d); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB3DVPROC, glVertexAttrib3dv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB3FPROC, glVertexAttrib3f); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB3FVPROC, glVertexAttrib3fv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB3SPROC, glVertexAttrib3s); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB3SVPROC, glVertexAttrib3sv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4NBVPROC, glVertexAttrib4Nbv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4NIVPROC, glVertexAttrib4Niv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4NSVPROC, glVertexAttrib4Nsv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4NUBPROC, glVertexAttrib4Nub); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4NUBVPROC, glVertexAttrib4Nubv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4NUIVPROC, glVertexAttrib4Nuiv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4NUSVPROC, glVertexAttrib4Nusv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4BVPROC, glVertexAttrib4bv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4DPROC, glVertexAttrib4d); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4DVPROC, glVertexAttrib4dv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4FPROC, glVertexAttrib4f); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4FVPROC, glVertexAttrib4fv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4IVPROC, glVertexAttrib4iv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4SVPROC, glVertexAttrib4sv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4UBVPROC, glVertexAttrib4ubv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4UIVPROC, glVertexAttrib4uiv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIB4USVPROC, glVertexAttrib4usv); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBPOINTERPROC, glVertexAttribPointer); \
 
 #define GLX_EXT_FUNCS_GEN \
     /** GLX_VERSION_1_3 **/ \
