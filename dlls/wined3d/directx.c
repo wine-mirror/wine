@@ -1015,8 +1015,11 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
            reuse the values once we have a context which is valid. Values from
            a temporary context may differ from the final ones                 */
         if (isGLInfoValid == FALSE) {
+            WineD3D_Context *fake_ctx = NULL;
+            if (glXGetCurrentContext() == NULL) fake_ctx = WineD3D_CreateFakeGLContext();
             /* If we don't know the device settings, go query them now */
             isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
+            if (fake_ctx != NULL) WineD3D_ReleaseFakeGLContext(fake_ctx);
         }
 
         /* If it worked, return the information requested */
