@@ -765,22 +765,23 @@ static inline int stabs_pts_read_array(struct ParseTypedefData* ptd,
                                        struct symt** adt)
 {
     long                lo, hi;
-    struct symt*        rdt;
+    struct symt*        range_dt;
+    struct symt*        base_dt;
 
     /* ar<typeinfo_nodef>;<int>;<int>;<typeinfo> */
 
     PTS_ABORTIF(ptd, *ptd->ptr++ != 'r');
-    /* FIXME: range type is lost, always assume int */
-    PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &rdt) == -1);
+
+    PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &range_dt) == -1);
     PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
     PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &lo) == -1);
     PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
     PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &hi) == -1);
     PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
 
-    PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &rdt) == -1);
+    PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &base_dt) == -1);
 
-    *adt = &symt_new_array(ptd->module, lo, hi, rdt)->symt;
+    *adt = &symt_new_array(ptd->module, lo, hi, base_dt, range_dt)->symt;
     return 0;
 }
 

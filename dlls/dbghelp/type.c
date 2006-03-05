@@ -282,16 +282,17 @@ BOOL symt_add_enum_element(struct module* module, struct symt_enum* enum_type,
 }
 
 struct symt_array* symt_new_array(struct module* module, int min, int max, 
-                                  struct symt* base)
+                                  struct symt* base, struct symt* index)
 {
     struct symt_array*  sym;
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
-        sym->symt.tag  = SymTagArrayType;
-        sym->start     = min;
-        sym->end       = max;
-        sym->basetype  = base;
+        sym->symt.tag   = SymTagArrayType;
+        sym->start      = min;
+        sym->end        = max;
+        sym->base_type  = base;
+        sym->index_type = index;
         symt_add_type(module, &sym->symt);
     }
     return sym;
@@ -597,7 +598,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
             X(DWORD64) = ((const struct symt_data*)type)->u.s.length;
             break;
         case SymTagArrayType:   
-            if (!symt_get_info(((const struct symt_array*)type)->basetype, 
+            if (!symt_get_info(((const struct symt_array*)type)->base_type, 
                                TI_GET_LENGTH, pInfo))
                 return FALSE;
             X(DWORD64) *= ((const struct symt_array*)type)->end - 
@@ -702,7 +703,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         {
             /* hierarchical => hierarchical */
         case SymTagArrayType:
-            X(DWORD) = (DWORD)((const struct symt_array*)type)->basetype;
+            X(DWORD) = (DWORD)((const struct symt_array*)type)->base_type;
             break;
         case SymTagPointerType:
             X(DWORD) = (DWORD)((const struct symt_pointer*)type)->pointsto;
@@ -753,11 +754,14 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         }
         else X(DWORD) = ((const struct symt_function_signature*)type)->call_conv;
         break;
+    case TI_GET_ARRAYINDEXTYPEID:
+        if (type->tag != SymTagArrayType) return FALSE;
+        X(DWORD) = (DWORD)((const struct symt_array*)type)->index_type;
+        break;
 
 #undef X
 
     case TI_GET_ADDRESSOFFSET:
-    case TI_GET_ARRAYINDEXTYPEID:
     case TI_GET_CLASSPARENTID:
     case TI_GET_SYMINDEX:
     case TI_GET_THISADJUST:

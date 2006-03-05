@@ -197,7 +197,8 @@ struct symt_array
     struct symt                 symt;
     int		                start;
     int		                end;
-    struct symt*                basetype;
+    struct symt*                base_type;
+    struct symt*                index_type;
 };
 
 struct symt_basic
@@ -475,7 +476,7 @@ extern BOOL         symt_add_enum_element(struct module* module,
                                           const char* name, int value);
 extern struct symt_array*
                     symt_new_array(struct module* module, int min, int max, 
-                                   struct symt* base);
+                                   struct symt* base, struct symt* index);
 extern struct symt_function_signature*
                     symt_new_function_signature(struct module* module, 
                                                 struct symt* ret_type,

@@ -1050,6 +1050,7 @@ static void dwarf2_parse_array_subrange_type(struct module* module, dwarf2_abbre
   }
   parent->start = min;
   parent->end = max;
+  parent->index_type = idx_type;
 
   TRACE("found min:%u max:%u\n", min, max);   
 
@@ -1087,7 +1088,8 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
     }
   }
 
-  symt = symt_new_array(module, min, max, ref_type);
+  /* FIXME: ugly as hell */
+  symt = symt_new_array(module, min, max, ref_type, NULL);
 
   if (entry->have_child) { /** any interest to not have child ? */
     ++ctx->level;

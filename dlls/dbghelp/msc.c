@@ -388,10 +388,12 @@ static int codeview_add_type_pointer(struct module* module, unsigned int typeno,
 
 static int codeview_add_type_array(struct module* module, 
                                    unsigned int typeno, const char* name,
-                                   unsigned int elemtype, unsigned int arr_len)
+                                   unsigned int elemtype, unsigned int indextype,
+                                   unsigned int arr_len)
 {
     struct symt*        symt;
     struct symt*        elem = codeview_get_type(elemtype, FALSE);
+    struct symt*        index = codeview_get_type(indextype, FALSE);
     DWORD               arr_max = 0;
 
     if (elem)
@@ -400,7 +402,7 @@ static int codeview_add_type_array(struct module* module,
         symt_get_info(elem, TI_GET_LENGTH, &elem_size);
         if (elem_size) arr_max = arr_len / (DWORD)elem_size;
     }
-    symt = &symt_new_array(module, 0, arr_max, elem)->symt;
+    symt = &symt_new_array(module, 0, arr_max, elem, index)->symt;
     return codeview_add_type(typeno, symt);
 }
 
@@ -792,21 +794,21 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
             p_name = (const struct p_string*)((const unsigned char*)&type->array_v1.arrlen + leaf_len);
 
             retv = codeview_add_type_array(module, curr_type, terminate_string(p_name),
-                                           type->array_v1.elemtype, value);
+                                           type->array_v1.elemtype, type->array_v1.idxtype, value);
             break;
         case LF_ARRAY_V2:
             leaf_len = numeric_leaf(&value, &type->array_v2.arrlen);
             p_name = (const struct p_string*)((const unsigned char*)&type->array_v2.arrlen + leaf_len);
 
             retv = codeview_add_type_array(module, curr_type, terminate_string(p_name),
-                                           type->array_v2.elemtype, value);
+                                           type->array_v2.elemtype, type->array_v2.idxtype, value);
             break;
         case LF_ARRAY_V3:
             leaf_len = numeric_leaf(&value, &type->array_v3.arrlen);
             c_name = (const char*)&type->array_v3.arrlen + leaf_len;
 
             retv = codeview_add_type_array(module, curr_type, c_name,
-                                           type->array_v3.elemtype, value);
+                                           type->array_v3.elemtype, type->array_v3.idxtype, value);
             break;
 
         case LF_BITFIELD_V1:
