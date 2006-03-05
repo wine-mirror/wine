@@ -281,7 +281,18 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
          DWORD dwID, POINT *ppt, IUnknown *pcmdtReserved, IDispatch *pdispReserved)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    FIXME("(%p)->(%ld %p %p %p)\n", This, dwID, ppt, pcmdtReserved, pdispReserved);
+    HRESULT hres;
+
+    TRACE("(%p)->(%ld %p %p %p)\n", This, dwID, ppt, pcmdtReserved, pdispReserved);
+
+    if(This->hostui) {
+        hres = IDocHostUIHandler_ShowContextMenu(This->hostui, dwID, ppt, pcmdtReserved,
+                                                 pdispReserved);
+        if(hres == S_OK)
+            return S_OK;
+    }
+
+    FIXME("default action not implemented\n");
     return E_NOTIMPL;
 }
 
