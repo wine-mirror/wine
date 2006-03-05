@@ -111,7 +111,7 @@
 112 stdcall VarBstrFromR8(double long long ptr)
 113 stdcall VarBstrFromCy(double long long ptr)
 114 stdcall VarBstrFromDate(double long long ptr)
-115 stub VarBstrFromDisp
+115 stdcall VarBstrFromDisp(ptr long long ptr)
 116 stdcall VarBstrFromBool(long long long ptr)
 117 stdcall VarFormatPercent(ptr long long long long long ptr)
 118 stdcall VarBoolFromUI1(long ptr)
