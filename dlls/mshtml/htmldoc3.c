@@ -112,11 +112,34 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLDocument3_documentElement(IHTMLDocument3 *iface, IHTMLElement **p)
+static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, IHTMLElement **p)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMDocument *nsdoc;
+    HTMLDOMNode *node;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->nscontainer) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres))
+        ERR("GetDocument failed: %08lx\n", nsres);
+
+    if(nsdoc) {
+        node = get_node(This, (nsIDOMNode*)nsdoc);
+        nsIDOMDocument_Release(nsdoc);
+
+        IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
+    }else {
+        *p = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument3_uniqueID(IHTMLDocument3 *iface, BSTR *p)
@@ -402,7 +425,7 @@ static const IHTMLDocument3Vtbl HTMLDocument3Vtbl = {
     HTMLDocument3_releaseCapture,
     HTMLDocument3_recalc,
     HTMLDocument3_createTextNode,
-    HTMLDocument3_documentElement,
+    HTMLDocument3_get_documentElement,
     HTMLDocument3_uniqueID,
     HTMLDocument3_attachEvent,
     HTMLDocument3_detachEvent,
