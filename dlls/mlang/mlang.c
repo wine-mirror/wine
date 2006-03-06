@@ -836,6 +836,7 @@ static ULONG WINAPI MLang_Release( MLang_impl* This )
     {
         TRACE("Destroying %p\n", This);
 	HeapFree(GetProcessHeap(), 0, This);
+        UnlockModule();
     }
 
     return ref;
