@@ -100,6 +100,7 @@ typedef nsISupports nsIDOMComment;
 typedef nsISupports nsIDOMCDATASection;
 typedef nsISupports nsIDOMProcessingInstruction;
 typedef nsISupports nsIDOMEntityReference;
+typedef nsISupports nsIDOMHTMLFormElement;
 
 [
     object,
@@ -458,6 +459,53 @@ interface nsIDOMWindow : nsISupports
     nsresult ScrollByLines(PRInt32 numLines);
     nsresult ScrollByPages(PRInt32 numPages);
     nsresult SizeToContent();
+}
+
+[
+    object,
+    uuid(a6cf9093-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMHTMLInputElement : nsIDOMHTMLElement
+{
+    nsresult GetDefaultValue(nsAString *aDefaultValue);
+    nsresult SetDefaultValue(const nsAString *aDefaultValue);
+    nsresult GetDefaultChecked(PRBool *aDefaultChecked);
+    nsresult SetDefaultChecked(PRBool aDefaultChecked);
+    nsresult GetForm(nsIDOMHTMLFormElement **aForm);
+    nsresult GetAccept(nsAString *aAccept);
+    nsresult SetAccept(const nsAString *aAccept);
+    nsresult GetAccessKey(nsAString *aAccessKey);
+    nsresult SetAccessKey(const nsAString *aAccessKey);
+    nsresult GetAlign(nsAString *aAlign);
+    nsresult SetAlign(const nsAString *aAlign);
+    nsresult GetAlt(nsAString *aAlt);
+    nsresult SetAlt(const nsAString *aAlt);
+    nsresult GetChecked(PRBool *aChecked);
+    nsresult SetChecked(PRBool aChecked);
+    nsresult GetDisabled(PRBool *aDisabled);
+    nsresult SetDisabled(PRBool aDisabled);
+    nsresult GetMaxLength(PRInt32 *aMaxLength);
+    nsresult SetMaxLength(PRInt32 aMaxLength);
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetReadOnly(PRBool *aReadOnly);
+    nsresult SetReadOnly(PRBool aReadOnly);
+    nsresult GetSize(PRUint32 *aSize);
+    nsresult SetSize(PRUint32 aSize);
+    nsresult GetSrc(nsAString *aSrc);
+    nsresult SetSrc(const nsAString *aSrc);
+    nsresult GetTabIndex(PRInt32 *aTabIndex);
+    nsresult SetTabIndex(PRInt32 aTabIndex);
+    nsresult GetType(nsAString *aType);
+    nsresult SetType(const nsAString *aType);
+    nsresult GetUseMap(nsAString *aUseMap);
+    nsresult SetUseMap(const nsAString *aUseMap);
+    nsresult GetValue(nsAString *aValue);
+    nsresult SetValue(const nsAString *aValue);
+    nsresult Blur();
+    nsresult Focus();
+    nsresult Select();
+    nsresult Click();
 }
 
 [

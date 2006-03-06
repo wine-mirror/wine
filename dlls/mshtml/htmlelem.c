@@ -918,6 +918,11 @@ static const IHTMLElementVtbl HTMLElementVtbl = {
 void HTMLElement_Create(HTMLDOMNode *node)
 {
     HTMLElement *ret;
+    nsAString class_name_str;
+    const PRUnichar *class_name;
+    nsresult nsres;
+
+    static const WCHAR wszINPUT[]    = {'I','N','P','U','T',0};
 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLElement));
     ret->lpHTMLElementVtbl = &HTMLElementVtbl;
@@ -929,7 +934,19 @@ void HTMLElement_Create(HTMLDOMNode *node)
     node->impl.elem = HTMLELEM(ret);
     node->destructor = HTMLElement_destructor;
 
-    nsIDOMNode_QueryInterface(node->nsnode, &IID_nsIDOMHTMLElement, (void**)&ret->nselem);
+    nsres = nsIDOMNode_QueryInterface(node->nsnode, &IID_nsIDOMHTMLElement, (void**)&ret->nselem);
+    if(NS_FAILED(nsres))
+        return;
+
+    nsAString_Init(&class_name_str, NULL);
+    nsIDOMHTMLElement_GetTagName(ret->nselem, &class_name_str);
+
+    nsAString_GetData(&class_name_str, &class_name, NULL);
+
+    if(!strcmpW(class_name, wszINPUT))
+        HTMLInputElement_Create(ret);
+
+    nsAString_Finish(&class_name_str);
 }
 
 typedef struct {

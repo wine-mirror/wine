@@ -13,6 +13,7 @@ C_SRCS = \
 	htmldoc.c \
 	htmldoc3.c \
 	htmlelem.c \
+	htmlinput.c \
 	htmlnode.c \
 	main.c \
 	navigate.c \
