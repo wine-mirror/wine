@@ -113,7 +113,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
 
 #define D3DINITIALIZEBASETEXTURE(_basetexture) { \
     _basetexture.levels     = Levels; \
-    _basetexture.filterType = (Usage & D3DUSAGE_AUTOGENMIPMAP) ? D3DTEXF_LINEAR : D3DTEXF_NONE; \
+    _basetexture.filterType = (Usage & WINED3DUSAGE_AUTOGENMIPMAP) ? D3DTEXF_LINEAR : D3DTEXF_NONE; \
     _basetexture.LOD        = 0; \
     _basetexture.dirty      = TRUE; \
 }
@@ -785,13 +785,13 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
         if(Lockable == FALSE) FIXME("Create surface called with a pool of SYSTEMMEM and a Lockable of FALSE, \
                                     this is acceptable but unexpected (I can't know how the surface can be usable!)\n");
     case D3DPOOL_MANAGED:
-        if(Usage == D3DUSAGE_DYNAMIC) FIXME("Create surface called with a pool of MANAGED and a \
-                                             Usage of DYNAMIC which are mutually exclusive, not doing \
-                                             anything just telling you.\n");
+        if(Usage == WINED3DUSAGE_DYNAMIC) FIXME("Create surface called with a pool of MANAGED and a \
+                                                Usage of DYNAMIC which are mutually exclusive, not doing \
+                                                anything just telling you.\n");
     break;
     case D3DPOOL_DEFAULT: /*TODO: Create offscreen plain can cause this check to fail..., find out if it should */
-        if(!(Usage & D3DUSAGE_DYNAMIC) && !(Usage & D3DUSAGE_RENDERTARGET)
-           && !(Usage && D3DUSAGE_DEPTHSTENCIL ) && Lockable == TRUE)
+        if(!(Usage & WINED3DUSAGE_DYNAMIC) && !(Usage & WINED3DUSAGE_RENDERTARGET)
+           && !(Usage && WINED3DUSAGE_DEPTHSTENCIL ) && Lockable == TRUE)
             FIXME("Creating a surface with a POOL of DEFAULT with Locable true, that doesn't specify DYNAMIC usage.\n");
     break;
     default:
@@ -799,7 +799,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     break;
     };
 
-    if (Usage & D3DUSAGE_RENDERTARGET && Pool != D3DPOOL_DEFAULT) {
+    if (Usage & WINED3DUSAGE_RENDERTARGET && Pool != D3DPOOL_DEFAULT) {
         FIXME("Trying to create a render target that isn't in the default pool\n");
     }
 
@@ -5836,7 +5836,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurfa
 
     /* TODO: get rid of IWineD3DSwapChainImpl reference, a 'context' manager may help with this */
     if (D3D_OK == IWineD3DSurface_GetContainer(pSurface, &IID_IWineD3DSwapChain, (void **)&container) || pSurface == This->renderTarget) {
-        if (D3DUSAGE_RENDERTARGET & surface->resource.usage) {
+        if (WINED3DUSAGE_RENDERTARGET & surface->resource.usage) {
             /* TODO: make sure we set everything back to the way it was, and context management!
                 glGetIntegerv(GL_READ_BUFFER, &prev_read);
                 vcheckGLcall("glIntegerv");
@@ -5850,7 +5850,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurfa
                 glDrawBuffer(GL_BACK);
             }
         } else {
-            if (D3DUSAGE_DEPTHSTENCIL & surface->resource.usage) {
+            if (WINED3DUSAGE_DEPTHSTENCIL & surface->resource.usage) {
                 FIXME("colouring of depth_stencil? %p buffers is not yet supported? %ld\n", surface, surface->resource.usage);
             } else {
                 FIXME("(%p) : Regression %ld %p %p\n", This, surface->resource.usage, pSurface, This->renderTarget);
@@ -5977,8 +5977,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD R
         return D3DERR_INVALIDCALL;
     }
     /* TODO: replace Impl* usage with interface usage */
-    if (!((IWineD3DSurfaceImpl *)pRenderTarget)->resource.usage & D3DUSAGE_RENDERTARGET) {
-        FIXME("(%p)Trying to set the render target to a surface(%p) that wasn't created with a usage of D3DUSAGE_RENDERTARGET\n",This ,pRenderTarget);
+    if (!((IWineD3DSurfaceImpl *)pRenderTarget)->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+        FIXME("(%p)Trying to set the render target to a surface(%p) that wasn't created with a usage of WINED3DUSAGE_RENDERTARGET\n",This ,pRenderTarget);
         return D3DERR_INVALIDCALL;
     }
     /** TODO: check that the depth stencil format matches the render target, this is only done in debug

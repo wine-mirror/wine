@@ -772,6 +772,18 @@ typedef enum _WINED3DDECLUSAGE {
       WINED3DSHADERDECLUSAGE_MAX_USAGE
 } WINED3DSHADERDECLUSAGE;
 
+#define WINED3DUSAGE_RENDERTARGET                     0x00000001L
+#define WINED3DUSAGE_DEPTHSTENCIL                     0x00000002L
+#define WINED3DUSAGE_WRITEONLY                        0x00000008L
+#define WINED3DUSAGE_SOFTWAREPROCESSING               0x00000010L
+#define WINED3DUSAGE_DONOTCLIP                        0x00000020L
+#define WINED3DUSAGE_POINTS                           0x00000040L
+#define WINED3DUSAGE_RTPATCHES                        0x00000080L
+#define WINED3DUSAGE_NPATCHES                         0x00000100L
+#define WINED3DUSAGE_DYNAMIC                          0x00000200L
+#define WINED3DUSAGE_AUTOGENMIPMAP                    0x00000400L 
+#define WINED3DUSAGE_DMAP                             0x00004000L
+
 #define WINED3DPRASTERCAPS_DITHER                     0x00000001L
 #define WINED3DPRASTERCAPS_ROP2                       0x00000002L
 #define WINED3DPRASTERCAPS_XOR                        0x00000004L

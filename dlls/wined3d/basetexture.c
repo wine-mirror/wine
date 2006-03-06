@@ -187,7 +187,7 @@ DWORD WINAPI IWineD3DBaseTextureImpl_GetLevelCount(IWineD3DBaseTexture *iface) {
 HRESULT WINAPI IWineD3DBaseTextureImpl_SetAutoGenFilterType(IWineD3DBaseTexture *iface, D3DTEXTUREFILTERTYPE FilterType) {
   IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
 
-  if (!(This->baseTexture.usage & D3DUSAGE_AUTOGENMIPMAP)) {
+  if (!(This->baseTexture.usage & WINED3DUSAGE_AUTOGENMIPMAP)) {
       TRACE("(%p) : returning invalid call\n", This);
       return D3DERR_INVALIDCALL;
   }
@@ -199,7 +199,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_SetAutoGenFilterType(IWineD3DBaseTexture 
 D3DTEXTUREFILTERTYPE WINAPI IWineD3DBaseTextureImpl_GetAutoGenFilterType(IWineD3DBaseTexture *iface) {
   IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
   FIXME("(%p) : stub\n", This);
-  if (!(This->baseTexture.usage & D3DUSAGE_AUTOGENMIPMAP)) {
+  if (!(This->baseTexture.usage & WINED3DUSAGE_AUTOGENMIPMAP)) {
      return D3DTEXF_NONE;
   }
   return This->baseTexture.filterType;

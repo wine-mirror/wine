@@ -285,7 +285,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         /*return D3DERR_INVALIDCALL; */
     }
 
-    if (This->resource.usage & D3DUSAGE_RENDERTARGET) {
+    if (This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
         IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
 
         if (swapchain != NULL ||  iface == myDevice->renderTarget || iface == myDevice->depthStencilBuffer) {
@@ -317,7 +317,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
              This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
         pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 4;
     else {
-        if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & D3DUSAGE_RENDERTARGET) {
+        if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
             /* Front and back buffers are always lockes/unlocked on currentDesc.Width */
             pLockedRect->Pitch = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
         } else {
@@ -350,7 +350,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         TRACE("Locking non-power 2 texture\n");
     }
 
-    if (0 == This->resource.usage || This->resource.usage & D3DUSAGE_DYNAMIC) {
+    if (0 == This->resource.usage || This->resource.usage & WINED3DUSAGE_DYNAMIC) {
         /* classic surface  TODO: non 2d surfaces?
         These resources may be POOL_SYSTEMMEM, so they must not access the device */
         TRACE("locking an ordinarary surface\n");
@@ -469,7 +469,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             }
         }
 
-    } else if (D3DUSAGE_RENDERTARGET & This->resource.usage && !(Flags&D3DLOCK_DISCARD)) { /* render surfaces */
+    } else if (WINED3DUSAGE_RENDERTARGET & This->resource.usage && !(Flags&D3DLOCK_DISCARD)) { /* render surfaces */
 
         GLint  prev_store;
         GLint  prev_read;
@@ -611,7 +611,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         }
         LEAVE_GL();
 
-    } else if (D3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
+    } else if (WINED3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
 
         if (!messages & 1) {
             FIXME("TODO stencil depth surface locking surf%p usage(%lu)\n", This, This->resource.usage);
@@ -669,7 +669,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         return D3DERR_INVALIDCALL;
     }
 
-    if (D3DUSAGE_RENDERTARGET & This->resource.usage) {
+    if (WINED3DUSAGE_RENDERTARGET & This->resource.usage) {
         IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
 
         if ((swapchain != NULL) &&  iface ==  swapchain->backBuffer) {
@@ -699,7 +699,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
          * nothing to do
          * waiting to reload the surface via IDirect3DDevice8::UpdateTexture
          */
-    } else if (D3DUSAGE_RENDERTARGET & This->resource.usage) { /* render surfaces */
+    } else if (WINED3DUSAGE_RENDERTARGET & This->resource.usage) { /* render surfaces */
 
         /****************************
         * TODO: Render targets are 'special' and
@@ -897,7 +897,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         }
         IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
 
-    } else if (D3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
+    } else if (WINED3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
 
         if (iface == myDevice->depthStencilBuffer) {
             FIXME("TODO stencil depth surface unlocking surf@%p usage(%lu)\n", This, This->resource.usage);
