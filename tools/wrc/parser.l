@@ -68,11 +68,11 @@
  */
 
 /* Exclusive string handling */
-%x yystr
+%x tkstr
 /* Exclusive unicode string handling */
-%x yylstr
+%x tklstr
 /* Exclusive rcdata single quoted data handling */
-%x yyrcd
+%x tkrcd
 /* Exclusive comment eating... */
 %x comment
 /* Set when stripping c-junk */
@@ -428,102 +428,102 @@ static struct keyword *iskeyword(char *kw)
 	 * Wide string scanning
 	 */
 L\"			{
-				yy_push_state(yylstr);
+				yy_push_state(tklstr);
 				wbufidx = 0;
 				if(!win32)
 					yywarning("16bit resource contains unicode strings\n");
 			}
-<yylstr>\"{ws}+	|
-<yylstr>\"		{
+<tklstr>\"{ws}+	|
+<tklstr>\"		{
 				yy_pop_state();
 				yylval.str = get_buffered_wstring();
 				return tSTRING;
 			}
-<yylstr>\\[0-7]{1,6}	{ /* octal escape sequence */
+<tklstr>\\[0-7]{1,6}	{ /* octal escape sequence */
 				unsigned int result;
 				result = strtoul(yytext+1, 0, 8);
 				if ( result > 0xffff )
 					yyerror("Character constant out of range");
 				addwchar((WCHAR)result);
 			}
-<yylstr>\\x[0-9a-fA-F]{4} {  /* hex escape sequence */
+<tklstr>\\x[0-9a-fA-F]{4} {  /* hex escape sequence */
 				unsigned int result;
 				result = strtoul(yytext+2, 0, 16);
 				addwchar((WCHAR)result);
 			}
-<yylstr>\\x[0-9a-fA-F]{1,3} {  yyerror("Invalid hex escape sequence '%s'", yytext); }
+<tklstr>\\x[0-9a-fA-F]{1,3} {  yyerror("Invalid hex escape sequence '%s'", yytext); }
 
-<yylstr>\\[0-9]+	yyerror("Bad escape sequence");
-<yylstr>\\\n{ws}*	line_number++; char_number = 1; /* backslash at EOL continues string after leading whitespace on next line */
-<yylstr>\\a		addwchar('\a');
-<yylstr>\\b		addwchar('\b');
-<yylstr>\\f		addwchar('\f');
-<yylstr>\\n		addwchar('\n');
-<yylstr>\\r		addwchar('\r');
-<yylstr>\\t		addwchar('\t');
-<yylstr>\\v		addwchar('\v');
-<yylstr>\\.		addwchar(yytext[1]);
-<yylstr>\\\r\n		addwchar(yytext[2]); line_number++; char_number = 1;
-<yylstr>\"\"		addwchar('\"');		/* "bla""bla"  -> "bla\"bla" */
-<yylstr>\\\"\"		addwchar('\"');		/* "bla\""bla" -> "bla\"bla" */
-<yylstr>\"{ws}+\"	;			/* "bla" "bla" -> "blabla" */
-<yylstr>[^\\\n\"]+	{
+<tklstr>\\[0-9]+	yyerror("Bad escape sequence");
+<tklstr>\\\n{ws}*	line_number++; char_number = 1; /* backslash at EOL continues string after leading whitespace on next line */
+<tklstr>\\a		addwchar('\a');
+<tklstr>\\b		addwchar('\b');
+<tklstr>\\f		addwchar('\f');
+<tklstr>\\n		addwchar('\n');
+<tklstr>\\r		addwchar('\r');
+<tklstr>\\t		addwchar('\t');
+<tklstr>\\v		addwchar('\v');
+<tklstr>\\.		addwchar(yytext[1]);
+<tklstr>\\\r\n		addwchar(yytext[2]); line_number++; char_number = 1;
+<tklstr>\"\"		addwchar('\"');		/* "bla""bla"  -> "bla\"bla" */
+<tklstr>\\\"\"		addwchar('\"');		/* "bla\""bla" -> "bla\"bla" */
+<tklstr>\"{ws}+\"	;			/* "bla" "bla" -> "blabla" */
+<tklstr>[^\\\n\"]+	{
 				char *yptr = yytext;
 				while(*yptr)	/* FIXME: codepage translation */
 					addwchar(*yptr++ & 0xff);
 			}
-<yylstr>\n		yyerror("Unterminated string");
+<tklstr>\n		yyerror("Unterminated string");
 
 	/*
 	 * Normal string scanning
 	 */
-\"			yy_push_state(yystr); cbufidx = 0;
-<yystr>\"{ws}+	|
-<yystr>\"		{
+\"			yy_push_state(tkstr); cbufidx = 0;
+<tkstr>\"{ws}+	|
+<tkstr>\"		{
 				yy_pop_state();
 				yylval.str = get_buffered_cstring();
 				return tSTRING;
 			}
-<yystr>\\[0-7]{1,3}	{ /* octal escape sequence */
+<tkstr>\\[0-7]{1,3}	{ /* octal escape sequence */
 				int result;
 				result = strtol(yytext+1, 0, 8);
 				if ( result > 0xff )
 					yyerror("Character constant out of range");
 				addcchar((char)result);
 			}
-<yystr>\\x[0-9a-fA-F]{2} {  /* hex escape sequence */
+<tkstr>\\x[0-9a-fA-F]{2} {  /* hex escape sequence */
 				int result;
 				result = strtol(yytext+2, 0, 16);
 				addcchar((char)result);
 			}
-<yystr>\\x[0-9a-fA-F]	{  yyerror("Invalid hex escape sequence '%s'", yytext); }
+<tkstr>\\x[0-9a-fA-F]	{  yyerror("Invalid hex escape sequence '%s'", yytext); }
 
-<yystr>\\[0-9]+		yyerror("Bad escape sequence");
-<yystr>\\\n{ws}*	line_number++; char_number = 1; /* backslash at EOL continues string after leading whitespace on next line */
-<yystr>\\a		addcchar('\a');
-<yystr>\\b		addcchar('\b');
-<yystr>\\f		addcchar('\f');
-<yystr>\\n		addcchar('\n');
-<yystr>\\r		addcchar('\r');
-<yystr>\\t		addcchar('\t');
-<yystr>\\v		addcchar('\v');
-<yystr>\\.		addcchar(yytext[1]);
-<yystr>\\\r\n		addcchar(yytext[2]); line_number++; char_number = 1;
-<yystr>[^\\\n\"]+	{
+<tkstr>\\[0-9]+		yyerror("Bad escape sequence");
+<tkstr>\\\n{ws}*	line_number++; char_number = 1; /* backslash at EOL continues string after leading whitespace on next line */
+<tkstr>\\a		addcchar('\a');
+<tkstr>\\b		addcchar('\b');
+<tkstr>\\f		addcchar('\f');
+<tkstr>\\n		addcchar('\n');
+<tkstr>\\r		addcchar('\r');
+<tkstr>\\t		addcchar('\t');
+<tkstr>\\v		addcchar('\v');
+<tkstr>\\.		addcchar(yytext[1]);
+<tkstr>\\\r\n		addcchar(yytext[2]); line_number++; char_number = 1;
+<tkstr>[^\\\n\"]+	{
 				char *yptr = yytext;
 				while(*yptr)
 					addcchar(*yptr++);
 			}
-<yystr>\"\"		addcchar('\"');		/* "bla""bla"   -> "bla\"bla" */
-<yystr>\\\"\"		addcchar('\"');		/* "bla\""bla"  -> "bla\"bla" */
-<yystr>\"{ws}+\"	;			/* "bla" "bla"  -> "blabla" */
-<yystr>\n		yyerror("Unterminated string");
+<tkstr>\"\"		addcchar('\"');		/* "bla""bla"   -> "bla\"bla" */
+<tkstr>\\\"\"		addcchar('\"');		/* "bla\""bla"  -> "bla\"bla" */
+<tkstr>\"{ws}+\"	;			/* "bla" "bla"  -> "blabla" */
+<tkstr>\n		yyerror("Unterminated string");
 
 	/*
 	 * Raw data scanning
 	 */
-\'			yy_push_state(yyrcd); cbufidx = 0;
-<yyrcd>\'		{
+\'			yy_push_state(tkrcd); cbufidx = 0;
+<tkrcd>\'		{
 				yy_pop_state();
 				yylval.raw = new_raw_data();
 				yylval.raw->size = cbufidx;
@@ -531,14 +531,14 @@ L\"			{
 				memcpy(yylval.raw->data, cbuffer, yylval.raw->size);
 				return tRAWDATA;
 			}
-<yyrcd>[0-9a-fA-F]{2}	{
+<tkrcd>[0-9a-fA-F]{2}	{
 				int result;
 				result = strtol(yytext, 0, 16);
 				addcchar((char)result);
 			}
-<yyrcd>{ws}+		;	/* Ignore space */
-<yyrcd>\n		line_number++; char_number = 1;
-<yyrcd>.		yyerror("Malformed data-line");
+<tkrcd>{ws}+		;	/* Ignore space */
+<tkrcd>\n		line_number++; char_number = 1;
+<tkrcd>.		yyerror("Malformed data-line");
 
 	/*
 	 * Comment stripping
