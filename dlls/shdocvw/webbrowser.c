@@ -351,8 +351,17 @@ static HRESULT WINAPI WebBrowser_get_LocationName(IWebBrowser2 *iface, BSTR *Loc
 static HRESULT WINAPI WebBrowser_get_LocationURL(IWebBrowser2 *iface, BSTR *LocationURL)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, LocationURL);
-    return E_NOTIMPL;
+
+    if(!This->url) {
+        static const WCHAR null_char = 0;
+        *LocationURL = SysAllocString(&null_char);
+        return S_FALSE;
+    }
+
+    *LocationURL = SysAllocString(This->url);
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_Busy(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
@@ -543,7 +552,7 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
             return E_INVALIDARG;
 
         headers = V_BSTR(Headers);
-        FIXME("Headers: %s\n", debugstr_w(headers));
+        TRACE("Headers: %s\n", debugstr_w(headers));
     }
 
     if(!This->doc_view_hwnd)

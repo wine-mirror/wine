@@ -315,7 +315,7 @@ static IBindStatusCallback *create_callback(WebBrowser *This, PBYTE post_data,
     return BINDSC(ret);
 }
 
-static void on_before_navigate2(WebBrowser *This, PBYTE post_data, ULONG post_data_len,
+static void on_before_navigate2(WebBrowser *This, LPWSTR url, PBYTE post_data, ULONG post_data_len,
                                 LPWSTR headers, VARIANT_BOOL *cancel)
 {
     VARIANT var_url, var_flags, var_frame_name, var_post_data, var_post_data2, var_headers;
@@ -366,13 +366,14 @@ static void on_before_navigate2(WebBrowser *This, PBYTE post_data, ULONG post_da
     V_VT(params+5) = (VT_BYREF|VT_VARIANT);
     V_VARIANTREF(params+5) = &var_url;
     V_VT(&var_url) = VT_BSTR;
-    V_BSTR(&var_url) = SysAllocString(This->url);
+    V_BSTR(&var_url) = SysAllocString(url);
 
     V_VT(params+6) = (VT_DISPATCH);
     V_DISPATCH(params+6) = (IDispatch*)WEBBROWSER2(This);
 
     call_sink(This->cp_wbe2, DISPID_BEFORENAVIGATE2, &dispparams);
 
+    SysFreeString(V_BSTR(&var_url));
     if(post_data_len)
         SafeArrayDestroy(V_ARRAY(&var_post_data));
 }
@@ -472,6 +473,7 @@ HRESULT navigate_hlink(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
                        IBindStatusCallback *callback)
 {
     IHttpNegotiate *http_negotiate;
+    LPWSTR url = NULL;
     PBYTE post_data = NULL;
     ULONG post_data_len = 0;
     LPWSTR headers = NULL;
@@ -480,8 +482,8 @@ HRESULT navigate_hlink(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
     DWORD bindf = 0;
     HRESULT hres;
 
-    IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
-    TRACE("navigating to %s\n", debugstr_w(This->url));
+    IMoniker_GetDisplayName(mon, NULL, NULL, &url);
+    TRACE("navigating to %s\n", debugstr_w(url));
 
     hres = IBindStatusCallback_QueryInterface(callback, &IID_IHttpNegotiate,
                                               (void**)&http_negotiate);
@@ -504,15 +506,18 @@ HRESULT navigate_hlink(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
             post_data = bindinfo.stgmedData.u.hGlobal;
     }
 
-    on_before_navigate2(This, post_data, post_data_len, headers, &cancel);
+    on_before_navigate2(This, url, post_data, post_data_len, headers, &cancel);
 
     CoTaskMemFree(headers);
     ReleaseBindInfo(&bindinfo);
 
     if(cancel) {
         FIXME("navigation canceled\n");
+        CoTaskMemFree(url);
         return S_OK;
     }
+
+    This->url = url;
 
     return navigate(This, mon, bindctx, callback);
 }
