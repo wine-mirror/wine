@@ -297,23 +297,37 @@ inline static void destroy_properties( struct window *win )
     free( win->properties );
 }
 
-/* destroy a window */
-void destroy_window( struct window *win )
+/* detach a window from its owner thread but keep the window around */
+static void detach_window_thread( struct window *win )
 {
     struct thread *thread = win->thread;
 
-    /* destroy all children */
-    while (!list_empty(&win->children))
-        destroy_window( LIST_ENTRY( list_head(&win->children), struct window, entry ));
-    while (!list_empty(&win->unlinked))
-        destroy_window( LIST_ENTRY( list_head(&win->unlinked), struct window, entry ));
-
-    if (thread && thread->queue)
+    if (!thread) return;
+    if (thread->queue)
     {
         if (win->update_region) inc_queue_paint_count( thread, -1 );
         if (win->paint_flags & PAINT_INTERNAL) inc_queue_paint_count( thread, -1 );
         queue_cleanup_window( thread, win->handle );
     }
+    assert( thread->desktop_users > 0 );
+    thread->desktop_users--;
+    release_class( win->class );
+    win->class = NULL;
+
+    /* don't hold a reference to the desktop so that the desktop window can be */
+    /* destroyed when the desktop ref count reaches zero */
+    release_object( win->desktop );
+    win->thread = NULL;
+}
+
+/* destroy a window */
+void destroy_window( struct window *win )
+{
+    /* destroy all children */
+    while (!list_empty(&win->children))
+        destroy_window( LIST_ENTRY( list_head(&win->children), struct window, entry ));
+    while (!list_empty(&win->unlinked))
+        destroy_window( LIST_ENTRY( list_head(&win->unlinked), struct window, entry ));
 
     /* reset global window pointers, if the corresponding window is destroyed */
     if (win == shell_window) shell_window = NULL;
@@ -323,16 +337,16 @@ void destroy_window( struct window *win )
     free_user_handle( win->handle );
     destroy_properties( win );
     list_remove( &win->entry );
+    if (is_desktop_window(win))
+    {
+        assert( win->desktop->top_window == win );
+        win->desktop->top_window = NULL;
+    }
+    detach_window_thread( win );
     if (win->win_region) free_region( win->win_region );
     if (win->update_region) free_region( win->update_region );
-    release_class( win->class );
+    if (win->class) release_class( win->class );
     if (win->text) free( win->text );
-    if (!is_desktop_window(win))
-    {
-        assert( thread->desktop_users > 0 );
-        thread->desktop_users--;
-        release_object( win->desktop );
-    }
     memset( win, 0x55, sizeof(*win) + win->nb_extra_bytes - 1 );
     free( win );
 }
@@ -354,13 +368,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         return NULL;
     }
 
-    win = mem_alloc( sizeof(*win) + extra_bytes - 1 );
-    if (!win)
-    {
-        release_object( desktop );
-        release_class( class );
-        return NULL;
-    }
+    if (!(win = mem_alloc( sizeof(*win) + extra_bytes - 1 ))) goto failed;
     if (!(win->handle = alloc_user_handle( win, USER_WINDOW ))) goto failed;
 
     win->parent         = parent;
@@ -395,6 +403,13 @@ static struct window *create_window( struct window *parent, struct window *owner
         goto failed;
     }
 
+    /* if no parent, class must be the desktop */
+    if (!parent && !is_desktop_class( class ))
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        goto failed;
+    }
+
     /* if parent belongs to a different thread, attach the two threads */
     if (parent && parent->thread && parent->thread != current)
     {
@@ -407,16 +422,24 @@ static struct window *create_window( struct window *parent, struct window *owner
 
     /* put it on parent unlinked list */
     if (parent) list_add_head( &parent->unlinked, &win->entry );
-    else list_init( &win->entry );
+    else
+    {
+        list_init( &win->entry );
+        assert( !desktop->top_window );
+        desktop->top_window = win;
+    }
 
     current->desktop_users++;
     return win;
 
 failed:
-    if (win->handle) free_user_handle( win->handle );
+    if (win)
+    {
+        if (win->handle) free_user_handle( win->handle );
+        free( win );
+    }
     release_object( desktop );
     release_class( class );
-    free( win );
     return NULL;
 }
 
@@ -429,7 +452,8 @@ void destroy_thread_windows( struct thread *thread )
     while ((win = next_user_handle( &handle, USER_WINDOW )))
     {
         if (win->thread != thread) continue;
-        destroy_window( win );
+        if (is_desktop_window( win )) detach_window_thread( win );
+        else destroy_window( win );
     }
 }
 
@@ -445,13 +469,8 @@ static struct window *get_desktop_window( struct thread *thread, int create )
     {
         if ((top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 )))
         {
-            current->desktop_users--;
-            top_window->thread = NULL;  /* no thread owns the desktop */
+            detach_window_thread( top_window );
             top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-            desktop->top_window = top_window;
-            /* don't hold a reference to the desktop so that the desktop window can be */
-            /* destroyed when the desktop ref count reaches zero */
-            release_object( top_window->desktop );
         }
     }
     release_object( desktop );
@@ -677,7 +696,9 @@ user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *threa
 
     if (!top_window) return 0;
 
-    win = find_child_to_repaint( top_window, thread );
+    if (top_window->thread == thread && win_needs_repaint( top_window )) win = top_window;
+    else win = find_child_to_repaint( top_window, thread );
+
     if (win && parent)
     {
         /* check that it is a child of the specified parent */
@@ -859,6 +880,7 @@ struct window_class* get_window_class( user_handle_t window )
 {
     struct window *win;
     if (!(win = get_window( window ))) return NULL;
+    if (!win->class) set_error( STATUS_ACCESS_DENIED );
     return win->class;
 }
 
@@ -1361,7 +1383,9 @@ DECL_HANDLER(create_window)
 
     reply->handle = 0;
 
-    if (!(parent = get_window( req->parent ))) return;
+    if (!req->parent) parent = get_desktop_window( current, 0 );
+    else if (!(parent = get_window( req->parent ))) return;
+
     if (req->owner)
     {
         if (!(owner = get_window( req->owner ))) return;
@@ -1411,6 +1435,7 @@ DECL_HANDLER(destroy_window)
     if (win)
     {
         if (!is_desktop_window(win)) destroy_window( win );
+        else if (win->thread == current) detach_window_thread( win );
         else set_error( STATUS_ACCESS_DENIED );
     }
 }
@@ -1460,7 +1485,7 @@ DECL_HANDLER(get_window_info)
         {
             reply->tid  = get_thread_id( win->thread );
             reply->pid  = get_process_id( win->thread->process );
-            reply->atom = get_class_atom( win->class );
+            reply->atom = win->class ? get_class_atom( win->class ) : DESKTOP_ATOM;
         }
     }
 }
@@ -1472,7 +1497,7 @@ DECL_HANDLER(set_window_info)
     struct window *win = get_window( req->handle );
 
     if (!win) return;
-    if (req->flags && is_desktop_window(win))
+    if (req->flags && is_desktop_window(win) && win->thread != current)
     {
         set_error( STATUS_ACCESS_DENIED );
         return;
