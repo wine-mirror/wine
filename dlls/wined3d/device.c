@@ -6531,13 +6531,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetDialogBoxMode(IWineD3DDevice *iface, BOOL b
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetCreationParameters(IWineD3DDevice *iface, D3DDEVICE_CREATION_PARAMETERS *pParameters) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    TRACE("(%p) : pParameters %p\n", This, pParameters);
 
-    FIXME("(%p) : stub\n", This);
-    /* Setup some reasonable defaults */
-    pParameters->AdapterOrdinal = 0; /* always for now */
-    pParameters->DeviceType = D3DDEVTYPE_HAL; /* always for now */
-    pParameters->hFocusWindow = 0;
-    pParameters->BehaviorFlags =0;
+    *pParameters = This->createParms;
     return D3D_OK;
 }
 
