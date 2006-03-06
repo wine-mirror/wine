@@ -103,6 +103,29 @@ D3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
 /* *******************************************
    IWineD3DVolume parts follow
    ******************************************* */
+HRESULT WINAPI IWineD3DVolumeImpl_GetContainerParent(IWineD3DVolume *iface, IUnknown **ppContainerParent) {
+    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
+
+    TRACE("(%p) : ppContainerParent %p\n", This, ppContainerParent);
+
+    if (!ppContainerParent) {
+        ERR("(%p) : Called without a valid ppContainerParent\n", This);
+    }
+
+    if (This->container) {
+        IWineD3DBase_GetParent(This->container, ppContainerParent);
+        if (!ppContainerParent) {
+            /* WineD3D objects should always have a parent */
+            ERR("(%p) : GetParent returned NULL\n", This);
+        }
+        IUnknown_Release(*ppContainerParent); /* GetParent adds a reference; we want just the pointer */
+    } else {
+        *ppContainerParent = NULL;
+    }
+
+    return D3D_OK;
+}
+
 HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID riid, void** ppContainer) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
 
@@ -304,6 +327,7 @@ const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_PreLoad,
     IWineD3DVolumeImpl_GetType,
     /* IWineD3DVolume */
+    IWineD3DVolumeImpl_GetContainerParent,
     IWineD3DVolumeImpl_GetContainer,
     IWineD3DVolumeImpl_GetDesc,
     IWineD3DVolumeImpl_LockBox,

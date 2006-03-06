@@ -60,8 +60,19 @@ ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *iface) {
     if (ref == 0) {
         for (i = 0; i < This->baseTexture.levels; i++) {
             if (This->volumes[i] != NULL) {
+                /* Since the volumes were created by callback, the texture is
+                 * keeping the reference to the parent, so the texture should
+                 * release it. */
+                IUnknown *volumeParent = NULL;
+
                 TRACE("(%p) : Releasing volume %p\n", This, This->volumes[i]);
-                IWineD3DVolume_Release(This->volumes[i]);
+
+                /* Cleanup the container */
+                IWineD3DVolume_SetContainer(This->volumes[i], 0);
+                /* Now, release the parent, which will take care of cleaning up the volume for us */
+                IWineD3DVolume_GetParent(This->volumes[i], &volumeParent);
+                IUnknown_Release(volumeParent); /* Once for the reference GetParent added */
+                IUnknown_Release(volumeParent); /* Once for the reference we're keeping */
             }
         }
         IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *) iface);

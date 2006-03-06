@@ -40,24 +40,47 @@ HRESULT WINAPI IDirect3DVolume8Impl_QueryInterface(LPDIRECT3DVOLUME8 iface, REFI
 
 ULONG WINAPI IDirect3DVolume8Impl_AddRef(LPDIRECT3DVOLUME8 iface) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
-    ULONG ref = InterlockedIncrement(&This->ref);
+    IUnknown *containerParent = NULL;
 
-    TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+    TRACE("(%p)\n", This);
 
-    return ref;
+    IWineD3DVolume_GetContainerParent(This->wineD3DVolume, &containerParent);
+    if (containerParent) {
+        /* Forward to the containerParent */
+        TRACE("(%p) : Forwarding to %p\n", This, containerParent);
+        return IUnknown_AddRef(containerParent);
+    } else {
+        /* No container, handle our own refcounting */
+        ULONG ref = InterlockedIncrement(&This->ref);
+        TRACE("(%p) : AddRef from %ld\n", This, ref - 1);
+        return ref;
+    }
 }
 
 ULONG WINAPI IDirect3DVolume8Impl_Release(LPDIRECT3DVOLUME8 iface) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
-    ULONG ref = InterlockedDecrement(&This->ref);
+    IUnknown *containerParent = NULL;
 
-    TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+    TRACE("(%p)\n", This);
 
-    if (ref == 0) {
-        IWineD3DVolume_Release(This->wineD3DVolume);
-        HeapFree(GetProcessHeap(), 0, This);
+    IWineD3DVolume_GetContainerParent(This->wineD3DVolume, &containerParent);
+    if (containerParent) {
+        /* Forward to the containerParent */
+        TRACE("(%p) : Forwarding to %p\n", This, containerParent);
+        return IUnknown_Release(containerParent);
     }
-    return ref;
+    else {
+        /* No container, handle our own refcounting */
+        ULONG ref = InterlockedDecrement(&This->ref);
+        TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
+
+        if (ref == 0) {
+            IWineD3DVolume_Release(This->wineD3DVolume);
+            HeapFree(GetProcessHeap(), 0, This);
+        }
+
+        return ref;
+    }
 }
 
 /* IDirect3DVolume8 Interface follow: */
