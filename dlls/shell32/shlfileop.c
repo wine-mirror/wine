@@ -760,53 +760,20 @@ typedef struct
 typedef struct
 {
     FILE_ENTRY *feFiles;
+    DWORD num_alloc;
     DWORD dwNumFiles;
     BOOL bAnyFromWildcard;
     BOOL bAnyDirectories;
     BOOL bAnyDontExist;
 } FILE_LIST;
 
-/* count the number of expanded files from a given wildcard */
-static DWORD count_wildcard_files(LPCWSTR szWildFile)
+
+static inline void grow_list(FILE_LIST *list)
 {
-    WIN32_FIND_DATAW wfd;
-    HANDLE hFile = FindFirstFileW(szWildFile, &wfd);
-    BOOL res = TRUE;
-    DWORD dwCount = 0;
-    
-    if (hFile == INVALID_HANDLE_VALUE)
-        return 0;
-    
-    while (res)
-    {
-        if (!IsDotDir(wfd.cFileName)) dwCount++;
-        res = FindNextFileW(hFile, &wfd);
-    }
-
-    FindClose(hFile);
-    return dwCount;
-}
-
-/* counts the number of files in a file list including expanded wildcard files */
-static DWORD count_files(LPCWSTR szFileList)
-{
-    DWORD dwCount = 0;
-    LPCWSTR str = szFileList;
-
-    /* test empty list */
-    if (!szFileList[0]) return -1;
-
-    while (*str)
-    {
-        if (StrPBrkW(str, wWildcardChars))
-            dwCount += count_wildcard_files(str);
-        else
-            dwCount++;
-
-        str += lstrlenW(str) + 1;
-    }
-
-    return dwCount;
+    FILE_ENTRY *new = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, list->feFiles,
+                                  list->num_alloc * 2 * sizeof(*new) );
+    list->feFiles = new;
+    list->num_alloc *= 2;
 }
 
 /* adds a file to the FILE_ENTRY struct
@@ -861,6 +828,7 @@ static void parse_wildcard_files(FILE_LIST *flList, LPWSTR szFile, LPDWORD pdwLi
     for (res = TRUE; res; res = FindNextFileW(hFile, &wfd))
     {
         if (IsDotDir(wfd.cFileName)) continue;
+        if (*pdwListIndex >= flList->num_alloc) grow_list( flList );
         szFullPath = wildcard_to_file(szFile, wfd.cFileName);
         file = &flList->feFiles[(*pdwListIndex)++];
         add_file_to_entry(file, szFullPath);
@@ -878,7 +846,7 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
 {
     LPCWSTR ptr = szFiles;
     WCHAR szCurFile[MAX_PATH];
-    DWORD i, dwDirLen;
+    DWORD i = 0, dwDirLen;
 
     if (!szFiles)
         return ERROR_INVALID_PARAMETER;
@@ -886,19 +854,19 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
     flList->bAnyFromWildcard = FALSE;
     flList->bAnyDirectories = FALSE;
     flList->bAnyDontExist = FALSE;
-    flList->dwNumFiles = count_files(szFiles);
+    flList->num_alloc = 32;
+    flList->dwNumFiles = 0;
 
     /* empty list */
-    if (flList->dwNumFiles == -1)
+    if (!szFiles[0])
         return ERROR_ACCESS_DENIED;
         
     flList->feFiles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                flList->dwNumFiles * sizeof(FILE_ENTRY));
+                                flList->num_alloc * sizeof(FILE_ENTRY));
 
-    for (i = 0; i < flList->dwNumFiles; i++)
+    while (*ptr)
     {
-        if (!*ptr)
-            return ERROR_ACCESS_DENIED;
+        if (i >= flList->num_alloc) grow_list( flList );
 
         /* change relative to absolute path */
         if (PathIsRelativeW(ptr))
@@ -925,21 +893,16 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
             FILE_ENTRY *file = &flList->feFiles[i];
             add_file_to_entry(file, szCurFile);
             file->attributes = GetFileAttributesW( file->szFullPath );
+            file->bExists = (file->attributes != INVALID_FILE_ATTRIBUTES);
+            if (!file->bExists) flList->bAnyDontExist = TRUE;
             if (IsAttribDir(file->attributes)) flList->bAnyDirectories = TRUE;
         }
 
-        /* record whether the file exists */
-        if (!PathFileExistsW(flList->feFiles[i].szFullPath))
-        {
-            flList->feFiles[i].bExists = FALSE;
-            flList->bAnyDontExist = TRUE;
-        }
-        else
-            flList->feFiles[i].bExists = TRUE;
-
         /* advance to the next string */
         ptr += strlenW(ptr) + 1;
+        i++;
     }
+    flList->dwNumFiles = i;
 
     return S_OK;
 }
