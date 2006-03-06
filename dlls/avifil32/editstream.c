@@ -26,7 +26,6 @@
 #include "wingdi.h"
 #include "winnls.h"
 #include "winerror.h"
-#include "windowsx.h"
 #include "mmsystem.h"
 #include "vfw.h"
 
@@ -330,11 +329,11 @@ static BOOL AVIFILE_FormatsEqual(PAVISTREAM avi1, PAVISTREAM avi2)
     return FALSE;
 
   /* sizes match, now get formats and compare them */
-  fmt1 = GlobalAllocPtr(GHND, size1);
+  fmt1 = GlobalLock(GlobalAlloc(GHND, size1));
   if (fmt1 == NULL)
     return FALSE;
   if (SUCCEEDED(AVIStreamReadFormat(avi1, start1, fmt1, &size1))) {
-    fmt2 = GlobalAllocPtr(GHND, size1);
+    fmt2 = GlobalLock(GlobalAlloc(GHND, size1));
     if (fmt2 != NULL) {
       if (SUCCEEDED(AVIStreamReadFormat(avi2, start2, fmt2, &size1)))
         status = (memcmp(fmt1, fmt2, size1) == 0);
@@ -342,8 +341,12 @@ static BOOL AVIFILE_FormatsEqual(PAVISTREAM avi1, PAVISTREAM avi2)
   }
 
   if (fmt2 != NULL)
-    GlobalFreePtr(fmt2);
-  GlobalFreePtr(fmt1);
+  {
+    GlobalUnlock(GlobalHandle(fmt2));
+    GlobalFree(GlobalHandle(fmt2));
+  }
+  GlobalUnlock(GlobalHandle(fmt1));
+  GlobalFree(GlobalHandle(fmt1));
 
   return status;
 }
@@ -404,7 +407,8 @@ static ULONG   WINAPI IAVIEditStream_fnRelease(IAVIEditStream*iface)
         if (This->pStreams[i].pStream != NULL)
           IAVIStream_Release(This->pStreams[i].pStream);
       }
-      GlobalFreePtr(This->pStreams);
+      GlobalUnlock(GlobalHandle(This->pStreams));
+      GlobalFree(GlobalHandle(This->pStreams));
     }
 
     LocalFree((HLOCAL)This);
@@ -470,8 +474,8 @@ static HRESULT WINAPI IAVIEditStream_fnCut(IAVIEditStream*iface,LONG*plStart,
     } else {
       /* splitting */
       if (This->nStreams + 1 >= This->nTableSize) {
-        This->pStreams =
-          GlobalReAllocPtr(This->pStreams, (This->nTableSize + 32) * sizeof(EditStreamTable), GMEM_SHARE|GHND);
+        GlobalUnlock(GlobalHandle(This->pStreams));
+        This->pStreams = GlobalLock(GlobalReAlloc(GlobalHandle(This->pStreams), (This->nTableSize + 32) * sizeof(EditStreamTable), GMEM_SHARE|GHND));
         if (This->pStreams == NULL)
           return AVIERR_MEMORY;
         This->nTableSize += 32;
@@ -662,8 +666,8 @@ static HRESULT WINAPI IAVIEditStream_fnPaste(IAVIEditStream*iface,LONG*plStart,
   if (This->nStreams + nStreams + 1 > This->nTableSize) {
     n = This->nStreams + nStreams + 33;
 
-    This->pStreams =
-      GlobalReAllocPtr(This->pStreams, n * sizeof(EditStreamTable), GMEM_SHARE|GHND);
+    GlobalUnlock(GlobalHandle(This->pStreams));
+    This->pStreams = GlobalLock(GlobalReAlloc(GlobalHandle(This->pStreams), n * sizeof(EditStreamTable), GMEM_SHARE|GHND));
     if (This->pStreams == NULL)
       return AVIERR_MEMORY;
     This->nTableSize = n;
@@ -752,7 +756,8 @@ static HRESULT WINAPI IAVIEditStream_fnClone(IAVIEditStream*iface,
   if (pEdit == NULL)
     return AVIERR_MEMORY;
   if (This->nStreams > pEdit->nTableSize) {
-    pEdit->pStreams = GlobalReAllocPtr(pEdit->pStreams, This->nStreams * sizeof(EditStreamTable),GMEM_SHARE|GHND);
+    GlobalUnlock(GlobalHandle(pEdit->pStreams));
+    pEdit->pStreams = GlobalLock(GlobalReAlloc(GlobalHandle(pEdit->pStreams), This->nStreams * sizeof(EditStreamTable), GMEM_SHARE|GHND));
     if (pEdit->pStreams == NULL)
       return AVIERR_MEMORY;
     pEdit->nTableSize = This->nStreams;
@@ -841,7 +846,7 @@ static HRESULT WINAPI IEditAVIStream_fnCreate(IAVIStream*iface,
 
   if (This->pStreams == NULL) {
     This->pStreams =
-      GlobalAllocPtr(GMEM_SHARE|GHND, 256 * sizeof(EditStreamTable));
+      GlobalLock(GlobalAlloc(GMEM_SHARE|GHND, 256 * sizeof(EditStreamTable)));
     if (This->pStreams == NULL)
       return AVIERR_MEMORY;
     This->nTableSize = 256;
