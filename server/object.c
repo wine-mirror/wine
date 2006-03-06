@@ -217,6 +217,13 @@ void dump_object_name( struct object *obj )
     }
 }
 
+/* unlink a named object from its namespace, without freeing the object itself */
+void unlink_named_object( struct object *obj )
+{
+    if (obj->name) free_name( obj );
+    obj->name = NULL;
+}
+
 /* grab an object (i.e. increment its refcount) and return the object */
 struct object *grab_object( void *ptr )
 {

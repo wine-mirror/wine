@@ -109,6 +109,7 @@ extern void *create_object( struct namespace *namespace, const struct object_ops
                             const struct unicode_str *name, struct object *parent );
 extern void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
                                   const struct unicode_str *name, unsigned int attributes );
+extern void unlink_named_object( struct object *obj );
 extern struct namespace *create_namespace( unsigned int hash_size );
 /* grab/release_object can take any pointer, but you better make sure */
 /* that the thing pointed to starts with a struct object... */
