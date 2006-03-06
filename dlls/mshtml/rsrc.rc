@@ -26,6 +26,7 @@
 #include "En.rc"
 #include "Fi.rc"
 #include "Fr.rc"
+#include "Hu.rc"
 #include "Ko.rc"
 #include "Nl.rc"
 #include "No.rc"
