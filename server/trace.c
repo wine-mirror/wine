@@ -2267,6 +2267,8 @@ static void dump_create_window_request( const struct create_window_request *req 
 static void dump_create_window_reply( const struct create_window_reply *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " parent=%p,", req->parent );
+    fprintf( stderr, " owner=%p,", req->owner );
     fprintf( stderr, " extra=%d,", req->extra );
     fprintf( stderr, " class_ptr=%p", req->class_ptr );
 }

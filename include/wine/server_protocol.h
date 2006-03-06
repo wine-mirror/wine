@@ -2520,6 +2520,8 @@ struct create_window_reply
 {
     struct reply_header __header;
     user_handle_t  handle;
+    user_handle_t  parent;
+    user_handle_t  owner;
     int            extra;
     void*          class_ptr;
 };
@@ -4358,6 +4360,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 229
+#define SERVER_PROTOCOL_VERSION 230
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

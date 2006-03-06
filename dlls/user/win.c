@@ -59,6 +59,7 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
 {
     WORD index;
     WND *win;
+    HWND full_parent = 0, full_owner = 0;
     struct tagCLASS *class = NULL;
     user_handle_t handle = 0;
     int extra_bytes = 0;
@@ -76,6 +77,8 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
         if (!wine_server_call_err( req ))
         {
             handle = reply->handle;
+            full_parent = reply->parent;
+            full_owner  = reply->owner;
             extra_bytes = reply->extra;
             class = reply->class_ptr;
         }
@@ -106,6 +109,8 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
     assert( index < NB_USER_HANDLES );
     user_handles[index] = win;
     win->hwndSelf   = handle;
+    win->parent     = full_parent;
+    win->owner      = full_owner;
     win->dwMagic    = WND_MAGIC;
     win->cbWndExtra = extra_bytes;
     memset( win->wExtra, 0, extra_bytes );
@@ -915,7 +920,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Find the parent window */
 
-    parent = GetDesktopWindow();
+    parent = cs->hwndParent;
     owner = 0;
 
     if (cs->hwndParent == HWND_MESSAGE)
@@ -924,24 +929,24 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
        * message window (style: WS_POPUP|WS_DISABLED)
        */
       FIXME("Parent is HWND_MESSAGE\n");
+      parent = GetDesktopWindow();
     }
     else if (cs->hwndParent)
     {
-	/* Make sure parent is valid */
-        if (!IsWindow( cs->hwndParent ))
+        if ((cs->style & (WS_CHILD|WS_POPUP)) != WS_CHILD)
         {
-            WARN("Bad parent %p\n", cs->hwndParent );
-	    return 0;
-	}
-        if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
-            parent = WIN_GetFullHandle(cs->hwndParent);
-        else
-            owner = GetAncestor( cs->hwndParent, GA_ROOT );
+            parent = GetDesktopWindow();
+            owner = cs->hwndParent;
+        }
     }
-    else if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
+    else
     {
-        WARN("No parent for child window\n" );
-        return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
+        if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
+        {
+            WARN("No parent for child window\n" );
+            return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
+        }
+        parent = GetDesktopWindow();
     }
 
     WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
@@ -956,17 +961,12 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     /* Create the window structure */
 
     if (!(wndPtr = create_window_handle( parent, owner, classAtom, cs->hInstance, type )))
-    {
-	TRACE("out of memory\n" );
-	return 0;
-    }
+        return 0;
     hwnd = wndPtr->hwndSelf;
 
     /* Fill the window structure */
 
     wndPtr->tid            = GetCurrentThreadId();
-    wndPtr->owner          = owner;
-    wndPtr->parent         = parent;
     wndPtr->hInstance      = cs->hInstance;
     wndPtr->text           = NULL;
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;

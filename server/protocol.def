@@ -1789,6 +1789,8 @@ enum message_type
     void*          instance;    /* module instance */
 @REPLY
     user_handle_t  handle;      /* created window */
+    user_handle_t  parent;      /* full handle of parent */
+    user_handle_t  owner;       /* full handle of owner */
     int            extra;       /* number of extra bytes */
     void*          class_ptr;   /* pointer to class in client address space */
 @END

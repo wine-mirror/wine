@@ -1372,10 +1372,14 @@ DECL_HANDLER(create_window)
             set_error( STATUS_ACCESS_DENIED );
             return;
         }
+        else /* owner must be a top-level window */
+            while (!is_desktop_window(owner->parent)) owner = owner->parent;
     }
     if (!(win = create_window( parent, owner, req->atom, req->instance ))) return;
 
     reply->handle    = win->handle;
+    reply->parent    = win->parent ? win->parent->handle : 0;
+    reply->owner     = win->owner;
     reply->extra     = win->nb_extra_bytes;
     reply->class_ptr = get_class_client_ptr( win->class );
 }
