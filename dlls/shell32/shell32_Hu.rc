@@ -1,5 +1,5 @@
 /*
- * Copyright 1998 Juergen Schmied
+ * Copyright 2006 Andras Kovacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "A %s-rõl"
+CAPTION "Névjegy: %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 50, 12, WS_TABSTOP
@@ -37,10 +37,10 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Type the name of a program, folder, document, or Internet resource, and Wine will open it for you.", 12289, 36, 11, 182, 18
- LTEXT "&Open:", 12305, 7, 39, 24, 10
+ LTEXT "Írja be a program, mappa, doumentum címét, vagy internet erõforrást, a Wine meg fogja Önnek nyitni.", 12289, 36, 11, 182, 18
+ LTEXT "&Megnyitás:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "Cancel", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Browse...", 12288, 170, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Mégse", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Tallózás...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
