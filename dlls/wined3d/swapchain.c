@@ -93,12 +93,14 @@ ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
         IWineD3DDevice_SwapChainReleased((IWineD3DDevice *)This->wineD3DDevice, iface);
 
         /* release the ref to the front and back buffer parents */
+        IWineD3DSurface_SetContainer(This->frontBuffer, 0);
         IWineD3DSurface_GetParent(This->frontBuffer, &bufferParent);
         IUnknown_Release(bufferParent); /* once for the get parent */
         if(IUnknown_Release(bufferParent) > 0){
             FIXME("(%p) Something's still holding the front buffer\n",This);
         }
 
+        IWineD3DSurface_SetContainer(This->backBuffer, 0);
         IWineD3DSurface_GetParent(This->backBuffer, &bufferParent);
         IUnknown_Release(bufferParent); /* once for the get parent */
         if(IUnknown_Release(bufferParent) > 0){

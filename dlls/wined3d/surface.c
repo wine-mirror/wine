@@ -173,6 +173,29 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **
    IWineD3DSurface IWineD3DSurface parts follow
    ****************************************************** */
 
+HRESULT WINAPI IWineD3DSurfaceImpl_GetContainerParent(IWineD3DSurface* iface, IUnknown **ppContainerParent) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("(%p) : ppContainerParent %p)\n", This, ppContainerParent);
+
+    if (!ppContainerParent) {
+        ERR("(%p) : Called without a valid ppContainerParent.\n", This);
+    }
+
+    if (This->container) {
+        IWineD3DBase_GetParent(This->container, ppContainerParent);
+        if (!ppContainerParent) {
+            /* WineD3D objects should always have a parent */
+            ERR("(%p) : GetParent returned NULL\n", This);
+        }
+        IUnknown_Release(*ppContainerParent); /* GetParent adds a reference; we want just the pointer */
+    } else {
+        *ppContainerParent = NULL;
+    }
+
+    return D3D_OK;
+}
+
 HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFIID riid, void** ppContainer) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DBase *container = 0;
@@ -1439,6 +1462,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_PreLoad,
     IWineD3DSurfaceImpl_GetType,
     /* IWineD3DSurface */
+    IWineD3DSurfaceImpl_GetContainerParent,
     IWineD3DSurfaceImpl_GetContainer,
     IWineD3DSurfaceImpl_GetDesc,
     IWineD3DSurfaceImpl_LockRect,

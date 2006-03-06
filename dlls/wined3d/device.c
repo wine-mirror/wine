@@ -1433,7 +1433,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
                                     &This->depthStencilBuffer,
                                     NULL /* pShared (always null)*/  );
             if (This->depthStencilBuffer != NULL)
-                IWineD3DSurface_SetContainer(This->depthStencilBuffer, (IWineD3DBase *)iface);
+                IWineD3DSurface_SetContainer(This->depthStencilBuffer, 0);
         }
 
         /** TODO: A check on width, height and multisample types

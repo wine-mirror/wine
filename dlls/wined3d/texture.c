@@ -66,6 +66,9 @@ ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
                 IUnknown* surfaceParent;
                 /* Clean out the texture name we gave to the suface so that the surface doesn't try and release it */
                 IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], 0, 0);
+                /* Cleanup the container */
+                IWineD3DSurface_SetContainer(This->surfaces[i], 0);
+                /* Now, release the parent, which will take care of cleaning up the surface for us */
                 IWineD3DSurface_GetParent(This->surfaces[i], &surfaceParent);
                 IUnknown_Release(surfaceParent);
                 IUnknown_Release(surfaceParent);
