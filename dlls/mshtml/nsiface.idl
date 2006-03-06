@@ -542,6 +542,37 @@ interface nsIDOMHTMLSelectElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(a6cf9094-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMHTMLTextAreaElement : nsIDOMHTMLElement
+{
+    nsresult GetDefaultValue(nsAString *aDefaultValue);
+    nsresult SetDefaultValue(const nsAString *aDefaultValue);
+    nsresult GetForm(nsIDOMHTMLFormElement **aForm);
+    nsresult GetAccessKey(nsAString *aAccessKey);
+    nsresult SetAccessKey(const nsAString *aAccessKey);
+    nsresult GetCols(PRInt32 *aCols);
+    nsresult SetCols(PRInt32 aCols);
+    nsresult GetDisabled(PRBool *aDisabled);
+    nsresult SetDisabled(PRBool aDisabled);
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetReadOnly(PRBool *aReadOnly);
+    nsresult SetReadOnly(PRBool aReadOnly);
+    nsresult GetRows(PRInt32 *aRows);
+    nsresult SetRows(PRInt32 aRows);
+    nsresult GetTabIndex(PRInt32 *aTabIndex);
+    nsresult SetTabIndex(PRInt32 aTabIndex);
+    nsresult GetType(nsAString *aType);
+    nsresult GetValue(nsAString *aValue);
+    nsresult SetValue(const nsAString *aValue);
+    nsresult Blur();
+    nsresult Focus();
+    nsresult Select();
+}
+
+[
+    object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b)
 ]
 interface nsIURIContentListener : nsISupports

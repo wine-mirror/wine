@@ -924,6 +924,7 @@ void HTMLElement_Create(HTMLDOMNode *node)
 
     static const WCHAR wszINPUT[]    = {'I','N','P','U','T',0};
     static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
+    static const WCHAR wszTEXTAREA[] = {'T','E','X','T','A','R','E','A',0};
 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(HTMLElement));
     ret->lpHTMLElementVtbl = &HTMLElementVtbl;
@@ -948,6 +949,8 @@ void HTMLElement_Create(HTMLDOMNode *node)
         HTMLInputElement_Create(ret);
     else if(!strcmpW(class_name, wszSELECT))
         HTMLSelectElement_Create(ret);
+    else if(!strcmpW(class_name, wszTEXTAREA))
+        HTMLTextAreaElement_Create(ret);
 
     nsAString_Finish(&class_name_str);
 }

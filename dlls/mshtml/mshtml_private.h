@@ -214,6 +214,7 @@ IHlink *Hlink_Create(void);
 void HTMLElement_Create(HTMLDOMNode*);
 void HTMLInputElement_Create(HTMLElement*);
 void HTMLSelectElement_Create(HTMLElement*);
+void HTMLTextAreaElement_Create(HTMLElement*);
 
 HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
 void release_nodes(HTMLDocument*);
