@@ -117,8 +117,8 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
  */
 static LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    /* all messages are ignored */
-    return 0;
+    if (message == WM_NCCREATE) return TRUE;
+    return 0;  /* all other messages are ignored */
 }
 
 /***********************************************************************
