@@ -1154,22 +1154,26 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
  */
 static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    if (hwnd == GetDesktopWindow()) return 0;
     switch(msg)
     {
     case WM_WINE_DESTROYWINDOW:
         return WIN_DestroyWindow( hwnd );
     case WM_WINE_SETWINDOWPOS:
+        if (hwnd == GetDesktopWindow()) return 0;
         return USER_Driver->pSetWindowPos( (WINDOWPOS *)lparam );
     case WM_WINE_SHOWWINDOW:
+        if (hwnd == GetDesktopWindow()) return 0;
         return ShowWindow( hwnd, wparam );
     case WM_WINE_SETPARENT:
+        if (hwnd == GetDesktopWindow()) return 0;
         return (LRESULT)SetParent( hwnd, (HWND)wparam );
     case WM_WINE_SETWINDOWLONG:
         return (LRESULT)SetWindowLongW( hwnd, wparam, lparam );
     case WM_WINE_ENABLEWINDOW:
+        if (hwnd == GetDesktopWindow()) return 0;
         return EnableWindow( hwnd, wparam );
     case WM_WINE_SETACTIVEWINDOW:
+        if (hwnd == GetDesktopWindow()) return 0;
         return (LRESULT)SetActiveWindow( (HWND)wparam );
     case WM_WINE_KEYBOARD_LL_HOOK:
         return HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, wparam, lparam, TRUE );
