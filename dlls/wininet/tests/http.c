@@ -44,8 +44,9 @@
 #define CREATE_URL3 "http://username:"
 #define CREATE_URL4 "http://www.winehq.org/site/about"
 #define CREATE_URL5 "http://"
-#define CREATE_URL6 "nhtt://username:password@www.winehq.org:80/site/about"
+#define CREATE_URL6 "nhttp://username:password@www.winehq.org:80/site/about"
 #define CREATE_URL7 "http://username:password@www.winehq.org:42/site/about"
+#define CREATE_URL8 "https://username:password@www.winehq.org/site/about"
 
 static HANDLE hCompleteEvent;
 
@@ -967,7 +968,7 @@ static void InternetCreateUrlA_test(void)
 	ok(GetLastError() == 0xdeadbeef,
 		"Expected 0xdeadbeef, got %ld\n", GetLastError());
 	ok(len == 50, "Expected len 50, got %ld\n", len);
-	ok(!strcmp(szUrl, CREATE_URL3), "Expected %s, got %s\n", CREATE_URL2, szUrl);
+	ok(!strcmp(szUrl, CREATE_URL3), "Expected %s, got %s\n", CREATE_URL3, szUrl);
 
 	/* valid password, NULL username
 	 * if password is provided, username has to exist
@@ -981,7 +982,7 @@ static void InternetCreateUrlA_test(void)
 	ok(GetLastError() == ERROR_INVALID_PARAMETER,
 		"Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 	ok(len == 42, "Expected len 42, got %ld\n", len);
-	ok(!strcmp(szUrl, CREATE_URL3), "Expected %s, got %s\n", CREATE_URL2, szUrl);
+	ok(!strcmp(szUrl, CREATE_URL3), "Expected %s, got %s\n", CREATE_URL3, szUrl);
 
 	/* valid password, empty username
 	 * if password is provided, username has to exist
@@ -995,7 +996,7 @@ static void InternetCreateUrlA_test(void)
 	ok(GetLastError() == 0xdeadbeef,
 		"Expected 0xdeadbeef, got %ld\n", GetLastError());
 	ok(len == 50, "Expected len 50, got %ld\n", len);
-	ok(!strcmp(szUrl, CREATE_URL5), "Expected %s, got %s\n", CREATE_URL4, szUrl);
+	ok(!strcmp(szUrl, CREATE_URL5), "Expected %s, got %s\n", CREATE_URL5, szUrl);
 
 	/* NULL username, NULL password */
 	fill_url_components(&urlComp);
@@ -1008,7 +1009,7 @@ static void InternetCreateUrlA_test(void)
 	ok(GetLastError() == 0xdeadbeef,
 		"Expected 0xdeadbeef, got %ld\n", GetLastError());
 	ok(len == 32, "Expected len 32, got %ld\n", len);
-	ok(!strcmp(szUrl, CREATE_URL4), "Expected %s, got %s\n", CREATE_URL3, szUrl);
+	ok(!strcmp(szUrl, CREATE_URL4), "Expected %s, got %s\n", CREATE_URL4, szUrl);
 
 	/* empty username, empty password */
 	fill_url_components(&urlComp);
@@ -1021,25 +1022,23 @@ static void InternetCreateUrlA_test(void)
 	ok(GetLastError() == 0xdeadbeef,
 		"Expected 0xdeadbeef, got %ld\n", GetLastError());
 	ok(len == 50, "Expected len 50, got %ld\n", len);
-	ok(!strcmp(szUrl, CREATE_URL5), "Expected %s, got %s\n", CREATE_URL4, szUrl);
+	ok(!strcmp(szUrl, CREATE_URL5), "Expected %s, got %s\n", CREATE_URL5, szUrl);
 
-	/* if lpszScheme != "http" or nPort != 80, display nPort.
-	 * depending on nScheme, displays only first x characters
-	 * of lpszScheme:
-	 *  HTTP: x=4
-	 *  FTP: x=3 etc
+	/* shows that nScheme is ignored, as the appearance of the port number
+	 * depends on lpszScheme and the string copied depends on lpszScheme.
 	 */
 	fill_url_components(&urlComp);
 	HeapFree(GetProcessHeap(), 0, szUrl);
 	urlComp.lpszScheme = "nhttp";
-	len = 54;
-	szUrl = HeapAlloc(GetProcessHeap(), 0, len);
+	urlComp.dwSchemeLength = strlen(urlComp.lpszScheme);
+	len = strlen(CREATE_URL6) + 1;
+	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, len);
 	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
 	ok(ret, "Expected success\n");
-	ok(len == 53, "Expected len 51, got %ld\n", len);
-	ok(strstr(szUrl, "80") != NULL, "Expected to find 80 in szUrl\n");
-	ok(!strncmp(szUrl, "nhtt://", 7), "Expected 'nhtt://'\n");
-	ok(!strcmp(szUrl, CREATE_URL6), "Expected %s, got %s\n", CREATE_URL5, szUrl);
+	todo_wine {
+	ok(len == strlen(CREATE_URL6), "Expected len %d, got %ld\n", strlen(CREATE_URL6) + 1, len);
+	ok(!strcmp(szUrl, CREATE_URL6), "Expected %s, got %s\n", CREATE_URL6, szUrl);
+	}
 
 	/* if lpszScheme != "http" or nPort != 80, display nPort */
 	HeapFree(GetProcessHeap(), 0, szUrl);
@@ -1050,7 +1049,59 @@ static void InternetCreateUrlA_test(void)
 	ok(ret, "Expected success\n");
 	ok(len == 53, "Expected len 53, got %ld\n", len);
 	ok(strstr(szUrl, "42") != NULL, "Expected to find 42 in szUrl\n");
-	ok(!strcmp(szUrl, CREATE_URL7), "Expected %s, got %s\n", CREATE_URL6, szUrl);
+	ok(!strcmp(szUrl, CREATE_URL7), "Expected %s, got %s\n", CREATE_URL7, szUrl);
+
+	HeapFree(GetProcessHeap(), 0, szUrl);
+
+	memset(&urlComp, 0, sizeof(urlComp));
+	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
+	urlComp.lpszScheme = "http";
+	urlComp.dwSchemeLength = 0;
+	urlComp.nScheme = INTERNET_SCHEME_HTTP;
+	urlComp.lpszHostName = "www.winehq.org";
+	urlComp.dwHostNameLength = 0;
+	urlComp.nPort = 80;
+	urlComp.lpszUserName = "username";
+	urlComp.dwUserNameLength = 0;
+	urlComp.lpszPassword = "password";
+	urlComp.dwPasswordLength = 0;
+	urlComp.lpszUrlPath = "/site/about";
+	urlComp.dwUrlPathLength = 0;
+	urlComp.lpszExtraInfo = "";
+	urlComp.dwExtraInfoLength = 0;
+	len = strlen(CREATE_URL1);
+	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
+	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
+	ok(ret, "Expected success\n");
+	todo_wine {
+	ok(len == strlen(CREATE_URL1), "Expected len %d, got %ld\n", strlen(CREATE_URL1), len);
+	ok(!strcmp(szUrl, CREATE_URL1), "Expected %s, got %s\n", CREATE_URL1, szUrl);
+	}
+
+	memset(&urlComp, 0, sizeof(urlComp));
+	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
+	urlComp.lpszScheme = "https";
+	urlComp.dwSchemeLength = 0;
+	urlComp.nScheme = INTERNET_SCHEME_HTTP;
+	urlComp.lpszHostName = "www.winehq.org";
+	urlComp.dwHostNameLength = 0;
+	urlComp.nPort = 443;
+	urlComp.lpszUserName = "username";
+	urlComp.dwUserNameLength = 0;
+	urlComp.lpszPassword = "password";
+	urlComp.dwPasswordLength = 0;
+	urlComp.lpszUrlPath = "/site/about";
+	urlComp.dwUrlPathLength = 0;
+	urlComp.lpszExtraInfo = "";
+	urlComp.dwExtraInfoLength = 0;
+	len = strlen(CREATE_URL8);
+	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
+	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
+	ok(ret, "Expected success\n");
+	todo_wine {
+	ok(len == strlen(CREATE_URL8), "Expected len %d, got %ld\n", strlen(CREATE_URL8), len);
+	ok(!strcmp(szUrl, CREATE_URL8), "Expected %s, got %s\n", CREATE_URL8, szUrl);
+	}
 
 	HeapFree(GetProcessHeap(), 0, szUrl);
 }
