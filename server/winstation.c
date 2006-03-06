@@ -477,7 +477,7 @@ DECL_HANDLER(set_thread_desktop)
     else
         current->desktop = req->handle;  /* FIXME: should we close the old one? */
 
-    if (old_desktop != new_desktop) detach_thread_input( current );
+    if (old_desktop != new_desktop && current->queue) detach_thread_input( current );
 
     if (old_desktop) release_object( old_desktop );
     release_object( new_desktop );
