@@ -748,7 +748,7 @@ int WINAPI SHFileOperationA(LPSHFILEOPSTRUCTA lpFileOp)
 
 typedef struct
 {
-    WIN32_FIND_DATAW wfd;
+    DWORD attributes;
     LPWSTR szDirectory;
     LPWSTR szFilename;
     LPWSTR szFullPath;
@@ -810,13 +810,11 @@ static DWORD count_files(LPCWSTR szFileList)
 }
 
 /* adds a file to the FILE_ENTRY struct
- * returns TRUE if szFile is a directory, FALSE otherwise
  */
-static BOOL add_file_to_entry(FILE_ENTRY *feFile, LPWSTR szFile, BOOL bFromWildcard)
+static void add_file_to_entry(FILE_ENTRY *feFile, LPWSTR szFile)
 {
     DWORD dwLen = strlenW(szFile) + 1;
     LPWSTR ptr;
-    HANDLE h;
 
     feFile->szFullPath = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
     strcpyW(feFile->szFullPath, szFile);
@@ -832,19 +830,7 @@ static BOOL add_file_to_entry(FILE_ENTRY *feFile, LPWSTR szFile, BOOL bFromWildc
         feFile->szFilename = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
         strcpyW(feFile->szFilename, ptr + 1); /* skip over backslash */
     }
-
-    feFile->bFromWildcard = bFromWildcard;
-    h = FindFirstFileW(feFile->szFullPath, &feFile->wfd);
-    if (h != INVALID_HANDLE_VALUE)
-    {
-        FindClose(h);
-        if (IsAttribDir(feFile->wfd.dwFileAttributes))
-            return TRUE;
-    }
-    else
-        feFile->wfd.dwFileAttributes &= ~FILE_ATTRIBUTE_DIRECTORY;
-
-    return FALSE;
+    feFile->bFromWildcard = FALSE;
 }
 
 static LPWSTR wildcard_to_file(LPWSTR szWildCard, LPWSTR szFileName)
@@ -868,6 +854,7 @@ static void parse_wildcard_files(FILE_LIST *flList, LPWSTR szFile, LPDWORD pdwLi
 {
     WIN32_FIND_DATAW wfd;
     HANDLE hFile = FindFirstFileW(szFile, &wfd);
+    FILE_ENTRY *file;
     LPWSTR szFullPath;
     BOOL res;
 
@@ -875,9 +862,11 @@ static void parse_wildcard_files(FILE_LIST *flList, LPWSTR szFile, LPDWORD pdwLi
     {
         if (IsDotDir(wfd.cFileName)) continue;
         szFullPath = wildcard_to_file(szFile, wfd.cFileName);
-        if (add_file_to_entry(&flList->feFiles[(*pdwListIndex)++],
-                              szFullPath, TRUE))
-            flList->bAnyDirectories = TRUE;
+        file = &flList->feFiles[(*pdwListIndex)++];
+        add_file_to_entry(file, szFullPath);
+        file->bFromWildcard = TRUE;
+        file->attributes = wfd.dwFileAttributes;
+        if (IsAttribDir(file->attributes)) flList->bAnyDirectories = TRUE;
         HeapFree(GetProcessHeap(), 0, szFullPath);
     }
 
@@ -931,8 +920,13 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
             flList->bAnyFromWildcard = TRUE;
             i--;
         }
-        else if (add_file_to_entry(&flList->feFiles[i], szCurFile, FALSE))
-            flList->bAnyDirectories = TRUE;
+        else
+        {
+            FILE_ENTRY *file = &flList->feFiles[i];
+            add_file_to_entry(file, szCurFile);
+            file->attributes = GetFileAttributesW( file->szFullPath );
+            if (IsAttribDir(file->attributes)) flList->bAnyDirectories = TRUE;
+        }
 
         /* record whether the file exists */
         if (!PathFileExistsW(flList->feFiles[i].szFullPath))
@@ -1007,7 +1001,7 @@ static void copy_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, FILE_ENT
 
     PathCombineW(szDestPath, feTo->szFullPath, feFrom->szFilename);
 
-    if (IsAttribFile(feFrom->wfd.dwFileAttributes))
+    if (IsAttribFile(feFrom->attributes))
         SHNotifyCopyFileW(feFrom->szFullPath, szDestPath, FALSE);
     else if (!(lpFileOp->fFlags & FOF_FILESONLY && feFrom->bFromWildcard))
         copy_dir_to_dir(lpFileOp, feFrom, szDestPath);
@@ -1057,7 +1051,7 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
 
     if (flFrom->dwNumFiles > 1 && flTo->dwNumFiles == 1 &&
         !PathFileExistsW(flTo->feFiles[0].szFullPath) &&
-        IsAttribFile(fileDest->wfd.dwFileAttributes))
+        IsAttribFile(fileDest->attributes))
     {
         bCancelIfAnyDirectories = TRUE;
     }
@@ -1071,7 +1065,7 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
 
     if (!(lpFileOp->fFlags & FOF_MULTIDESTFILES) && flFrom->dwNumFiles != 1 &&
         PathFileExistsW(fileDest->szFullPath) &&
-        IsAttribFile(fileDest->wfd.dwFileAttributes))
+        IsAttribFile(fileDest->attributes))
     {
         return ERROR_CANCELLED;
     }
@@ -1083,31 +1077,31 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
         if (lpFileOp->fFlags & FOF_MULTIDESTFILES)
             fileDest = &flTo->feFiles[i];
 
-        if (IsAttribDir(entryToCopy->wfd.dwFileAttributes) &&
+        if (IsAttribDir(entryToCopy->attributes) &&
             !lstrcmpW(entryToCopy->szFullPath, fileDest->szDirectory))
         {
             return ERROR_SUCCESS;
         }
 
-        if (IsAttribDir(entryToCopy->wfd.dwFileAttributes) && bCancelIfAnyDirectories)
+        if (IsAttribDir(entryToCopy->attributes) && bCancelIfAnyDirectories)
             return ERROR_CANCELLED;
 
         create_dest_dirs(fileDest->szDirectory);
 
         if (!strcmpW(entryToCopy->szFullPath, fileDest->szFullPath))
         {
-            if (IsAttribFile(entryToCopy->wfd.dwFileAttributes))
+            if (IsAttribFile(entryToCopy->attributes))
                 return ERROR_NO_MORE_SEARCH_HANDLES;
             else
                 return ERROR_SUCCESS;
         }
 
         if ((flFrom->dwNumFiles > 1 && flTo->dwNumFiles == 1) ||
-            (flFrom->dwNumFiles == 1 && IsAttribDir(fileDest->wfd.dwFileAttributes)))
+            (flFrom->dwNumFiles == 1 && IsAttribDir(fileDest->attributes)))
         {
             copy_to_dir(lpFileOp, entryToCopy, fileDest);
         }
-        else if (IsAttribDir(entryToCopy->wfd.dwFileAttributes))
+        else if (IsAttribDir(entryToCopy->attributes))
         {
             copy_dir_to_dir(lpFileOp, entryToCopy, fileDest->szFullPath);
         }
@@ -1141,7 +1135,7 @@ static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom)
         fileEntry = &flFrom->feFiles[i];
 
         /* delete the file or directory */
-        if (IsAttribFile(fileEntry->wfd.dwFileAttributes))
+        if (IsAttribFile(fileEntry->attributes))
             bPathExists = DeleteFileW(fileEntry->szFullPath);
         else if (!(lpFileOp->fFlags & FOF_FILESONLY && fileEntry->bFromWildcard))
             bPathExists = SHELL_DeleteDirectoryW(fileEntry->szFullPath, bConfirm);
@@ -1185,7 +1179,7 @@ static void move_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, FILE_ENT
 
     PathCombineW(szDestPath, feTo->szFullPath, feFrom->szFilename);
 
-    if (IsAttribFile(feFrom->wfd.dwFileAttributes))
+    if (IsAttribFile(feFrom->attributes))
         SHNotifyMoveFileW(feFrom->szFullPath, szDestPath);
     else if (!(lpFileOp->fFlags & FOF_FILESONLY && feFrom->bFromWildcard))
         move_dir_to_dir(lpFileOp, feFrom, szDestPath);
@@ -1234,7 +1228,7 @@ static HRESULT move_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
         if (!PathFileExistsW(fileDest->szDirectory))
             return ERROR_CANCELLED;
 
-        if (fileDest->bExists && IsAttribDir(fileDest->wfd.dwFileAttributes))
+        if (fileDest->bExists && IsAttribDir(fileDest->attributes))
             move_to_dir(lpFileOp, entryToMove, fileDest);
         else
             SHNotifyMoveFileW(entryToMove->szFullPath, fileDest->szFullPath);
