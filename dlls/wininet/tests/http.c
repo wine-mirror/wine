@@ -911,15 +911,18 @@ static void InternetCreateUrlA_test(void)
 	ok(len == 51, "Expected len 51, got %ld\n", len);
 
 	/* alloced szUrl, NULL lpszScheme
-     * shows that it uses dwXLength instead of strlen(lpszX)
+	 * shows that it uses nScheme instead
 	 */
 	SetLastError(0xdeadbeef);
 	urlComp.lpszScheme = NULL;
 	ret = InternetCreateUrlA(&urlComp, 0, szUrl, &len);
+	todo_wine {
 	ok(ret, "Expected success\n");
 	ok(GetLastError() == 0xdeadbeef,
 		"Expected 0xdeadbeef, got %ld\n", GetLastError());
 	ok(len == 50, "Expected len 50, got %ld\n", len);
+	ok(!strcmp(szUrl, CREATE_URL1), "Expected %s, got %s\n", CREATE_URL1, szUrl);
+	}
 
 	/* alloced szUrl, invalid nScheme
 	 * any nScheme out of range seems ignored
@@ -1035,14 +1038,13 @@ static void InternetCreateUrlA_test(void)
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, len);
 	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
 	ok(ret, "Expected success\n");
-	todo_wine {
 	ok(len == strlen(CREATE_URL6), "Expected len %d, got %ld\n", strlen(CREATE_URL6) + 1, len);
 	ok(!strcmp(szUrl, CREATE_URL6), "Expected %s, got %s\n", CREATE_URL6, szUrl);
-	}
 
 	/* if lpszScheme != "http" or nPort != 80, display nPort */
 	HeapFree(GetProcessHeap(), 0, szUrl);
 	urlComp.lpszScheme = "http";
+	urlComp.dwSchemeLength = strlen(urlComp.lpszScheme);
 	urlComp.nPort = 42;
 	szUrl = HeapAlloc(GetProcessHeap(), 0, ++len);
 	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
@@ -1073,10 +1075,8 @@ static void InternetCreateUrlA_test(void)
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
 	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
 	ok(ret, "Expected success\n");
-	todo_wine {
 	ok(len == strlen(CREATE_URL1), "Expected len %d, got %ld\n", strlen(CREATE_URL1), len);
 	ok(!strcmp(szUrl, CREATE_URL1), "Expected %s, got %s\n", CREATE_URL1, szUrl);
-	}
 
 	memset(&urlComp, 0, sizeof(urlComp));
 	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
@@ -1098,10 +1098,8 @@ static void InternetCreateUrlA_test(void)
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
 	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
 	ok(ret, "Expected success\n");
-	todo_wine {
 	ok(len == strlen(CREATE_URL8), "Expected len %d, got %ld\n", strlen(CREATE_URL8), len);
 	ok(!strcmp(szUrl, CREATE_URL8), "Expected %s, got %s\n", CREATE_URL8, szUrl);
-	}
 
 	HeapFree(GetProcessHeap(), 0, szUrl);
 }

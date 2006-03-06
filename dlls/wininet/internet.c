@@ -3691,39 +3691,52 @@ BOOL WINAPI InternetCombineUrlW(LPCWSTR lpszBaseUrl, LPCWSTR lpszRelativeUrl,
 /* max port num is 65535 => 5 digits */
 #define MAX_WORD_DIGITS 5
 
+#define URL_GET_COMP_LENGTH(url, component) ((url)->dw##component##Length ? \
+    (url)->dw##component##Length : strlenW((url)->lpsz##component))
+#define URL_GET_COMP_LENGTHA(url, component) ((url)->dw##component##Length ? \
+    (url)->dw##component##Length : strlen((url)->lpsz##component))
+
+static BOOL url_uses_default_port(LPURL_COMPONENTSW lpUrlComponents)
+{
+    static const WCHAR httpW[] = {'h','t','t','p',0};
+    static const WCHAR httpsW[] = {'h','t','t','p','s',0};
+    static const WCHAR ftpW[] = {'f','t','p',0};
+    static const WCHAR gopherW[] = {'g','o','p','h','e','r',0};
+    DWORD len;
+
+    if (!lpUrlComponents->lpszScheme) return FALSE;
+
+    len = URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
+    if (!strncmpW(lpUrlComponents->lpszScheme, httpW, len) &&
+        (lpUrlComponents->nPort == INTERNET_DEFAULT_HTTP_PORT))
+        return TRUE;
+    if (!strncmpW(lpUrlComponents->lpszScheme, httpsW, len) &&
+        (lpUrlComponents->nPort == INTERNET_DEFAULT_HTTPS_PORT))
+        return TRUE;
+    if (!strncmpW(lpUrlComponents->lpszScheme, ftpW, len) &&
+        (lpUrlComponents->nPort == INTERNET_DEFAULT_FTP_PORT))
+        return TRUE;
+    if (!strncmpW(lpUrlComponents->lpszScheme, gopherW, len) &&
+        (lpUrlComponents->nPort == INTERNET_DEFAULT_GOPHER_PORT))
+        return TRUE;
+
+    return FALSE;
+}
+
 /* we can calculate using ansi strings because we're just
  * calculating string length, not size
  */
 static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
-                            LPDWORD lpdwUrlLength, LPDWORD lpdwSchemeLength)
+                            LPDWORD lpdwUrlLength)
 {
-    static const WCHAR httpW[] = {'h','t','t','p',0};
-
     *lpdwUrlLength = 0;
 
-    switch (lpUrlComponents->nScheme)
-    {
-        case INTERNET_SCHEME_FTP:
-        case INTERNET_SCHEME_RES:
-            *lpdwSchemeLength = 3;
-            break;
-        case INTERNET_SCHEME_HTTP:
-        case INTERNET_SCHEME_FILE:
-        case INTERNET_SCHEME_NEWS:
-            *lpdwSchemeLength = 4;
-            break;
-
-        default:
-            *lpdwSchemeLength = 4;
-            break;
-    }
-
-    *lpdwUrlLength += *lpdwSchemeLength;
+    *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
     *lpdwUrlLength += strlen("://");
 
     if (lpUrlComponents->lpszUserName)
     {
-        *lpdwUrlLength += lpUrlComponents->dwUserNameLength;
+        *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, UserName);
         *lpdwUrlLength += strlen("@");
     }
     else
@@ -3738,13 +3751,12 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
     if (lpUrlComponents->lpszPassword)
     {
         *lpdwUrlLength += strlen(":");
-        *lpdwUrlLength += lpUrlComponents->dwPasswordLength;
+        *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, Password);
     }
 
-    *lpdwUrlLength += lpUrlComponents->dwHostNameLength;
+    *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, HostName);
 
-    if (lpUrlComponents->nPort != 80 ||
-        (lpUrlComponents->lpszScheme && strncmpW(lpUrlComponents->lpszScheme, httpW, lpUrlComponents->dwSchemeLength)))
+    if (!url_uses_default_port(lpUrlComponents))
     {
         char szPort[MAX_WORD_DIGITS];
 
@@ -3753,7 +3765,7 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
         *lpdwUrlLength += strlen(":");
     }
 
-    *lpdwUrlLength += lpUrlComponents->dwUrlPathLength;
+    *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, UrlPath);
     return TRUE;
 }
 
@@ -3775,7 +3787,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
 
     if (lpUrlComponents->lpszScheme)
     {
-        len = lpUrlComponents->dwSchemeLength + 1;
+        len = URL_GET_COMP_LENGTHA(lpUrlComponents, Scheme) + 1;
         urlCompW->lpszScheme = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszScheme,
                             -1, urlCompW->lpszScheme, len);
@@ -3783,7 +3795,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
 
     if (lpUrlComponents->lpszHostName)
     {
-        len = lpUrlComponents->dwHostNameLength + 1;
+        len = URL_GET_COMP_LENGTHA(lpUrlComponents, HostName) + 1;
         urlCompW->lpszHostName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszHostName,
                             -1, urlCompW->lpszHostName, len);
@@ -3791,7 +3803,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
 
     if (lpUrlComponents->lpszUserName)
     {
-        len = lpUrlComponents->dwUserNameLength + 1;
+        len = URL_GET_COMP_LENGTHA(lpUrlComponents, UserName) + 1;
         urlCompW->lpszUserName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszUserName,
                             -1, urlCompW->lpszUserName, len);
@@ -3799,7 +3811,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
 
     if (lpUrlComponents->lpszPassword)
     {
-        len = lpUrlComponents->dwPasswordLength + 1;
+        len = URL_GET_COMP_LENGTHA(lpUrlComponents, Password) + 1;
         urlCompW->lpszPassword = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszPassword,
                             -1, urlCompW->lpszPassword, len);
@@ -3807,7 +3819,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
 
     if (lpUrlComponents->lpszUrlPath)
     {
-        len = lpUrlComponents->dwUrlPathLength + 1;
+        len = URL_GET_COMP_LENGTHA(lpUrlComponents, UrlPath) + 1;
         urlCompW->lpszUrlPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszUrlPath,
                             -1, urlCompW->lpszUrlPath, len);
@@ -3815,7 +3827,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
 
     if (lpUrlComponents->lpszExtraInfo)
     {
-        len = lpUrlComponents->dwExtraInfoLength + 1;
+        len = URL_GET_COMP_LENGTHA(lpUrlComponents, ExtraInfo) + 1;
         urlCompW->lpszExtraInfo = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszExtraInfo,
                             -1, urlCompW->lpszExtraInfo, len);
@@ -3883,12 +3895,9 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
 BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
                                LPWSTR lpszUrl, LPDWORD lpdwUrlLength)
 {
-    DWORD dwLen, dwSchemeLen;
+    DWORD dwLen;
 
-    static const WCHAR colonSlashW[] = {':','/','/',0};
-    static const WCHAR httpW[] = {'h','t','t','p',0};
-    static const WCHAR colonW[] = {':',0};
-    static const WCHAR atW[] = {'@',0};
+    static const WCHAR colonSlashW[] = {':','/','/'};
     static const WCHAR percentD[] = {'%','d',0};
 
     TRACE("(%p,%ld,%s,%p)\n", lpUrlComponents, dwFlags, debugstr_w(lpszUrl), lpdwUrlLength);
@@ -3902,7 +3911,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         return FALSE;
     }
 
-    if (!calc_url_length(lpUrlComponents, &dwLen, &dwSchemeLen))
+    if (!calc_url_length(lpUrlComponents, &dwLen))
         return FALSE;
 
     if (!lpszUrl || *lpdwUrlLength < dwLen)
@@ -3915,45 +3924,59 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
     *lpdwUrlLength = dwLen;
     lpszUrl[0] = 0x00;
 
-    if (lpUrlComponents->lpszScheme)
-        lstrcpynW(lpszUrl, lpUrlComponents->lpszScheme,
-                  min(lpUrlComponents->dwSchemeLength, dwSchemeLen) + 1);
+    dwLen = 0;
 
-    lstrcatW(lpszUrl, colonSlashW);
+    if (lpUrlComponents->lpszScheme)
+    {
+        dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
+        memcpy(lpszUrl, lpUrlComponents->lpszScheme, dwLen * sizeof(WCHAR));
+        lpszUrl += dwLen;
+    }
+
+    memcpy(lpszUrl, colonSlashW, sizeof(colonSlashW));
+    lpszUrl += sizeof(colonSlashW)/sizeof(colonSlashW[0]);
 
     if (lpUrlComponents->lpszUserName)
     {
-        if (!*lpUrlComponents->lpszUserName)
-            return TRUE;
-
-        lstrcatW(lpszUrl, lpUrlComponents->lpszUserName);
+        dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, UserName);
+        memcpy(lpszUrl, lpUrlComponents->lpszUserName, dwLen * sizeof(WCHAR));
+        lpszUrl += dwLen;
 
         if (lpUrlComponents->lpszPassword)
         {
-            lstrcatW(lpszUrl, colonW);
+            *lpszUrl = ':';
+            lpszUrl++;
 
-            if (!*lpUrlComponents->lpszPassword)
-                return TRUE;
-            else
-                lstrcatW(lpszUrl, lpUrlComponents->lpszPassword);
+            dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, Password);
+            memcpy(lpszUrl, lpUrlComponents->lpszPassword, dwLen * sizeof(WCHAR));
+            lpszUrl += dwLen;
         }
 
-        lstrcatW(lpszUrl, atW);
+        *lpszUrl = '@';
+        lpszUrl++;
     }
 
-    lstrcatW(lpszUrl, lpUrlComponents->lpszHostName);
+    dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, HostName);
+    memcpy(lpszUrl, lpUrlComponents->lpszHostName, dwLen * sizeof(WCHAR));
+    lpszUrl += dwLen;
 
-    if (lpUrlComponents->nPort != 80 || (lpUrlComponents->lpszScheme &&
-        strncmpW(lpUrlComponents->lpszScheme, httpW, lpUrlComponents->dwSchemeLength)))
+    if (!url_uses_default_port(lpUrlComponents))
     {
         WCHAR szPort[MAX_WORD_DIGITS];
 
         sprintfW(szPort, percentD, lpUrlComponents->nPort);
-        lstrcatW(lpszUrl, colonW);
-        lstrcatW(lpszUrl, szPort);
+        *lpszUrl = ':';
+        lpszUrl++;
+        dwLen = strlenW(szPort);
+        memcpy(lpszUrl, szPort, dwLen * sizeof(WCHAR));
+        lpszUrl += dwLen;
     }
 
-    lstrcatW(lpszUrl, lpUrlComponents->lpszUrlPath);
+    dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, UrlPath);
+    memcpy(lpszUrl, lpUrlComponents->lpszUrlPath, dwLen * sizeof(WCHAR));
+    lpszUrl += dwLen;
+
+    *lpszUrl = '\0';
 
     return TRUE;
 }
