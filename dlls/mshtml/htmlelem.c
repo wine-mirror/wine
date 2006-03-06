@@ -1096,8 +1096,52 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
                                                  VARIANT tagName, IDispatch **pdisp)
 {
     HTMLElementCollection *This = ELEMCOL_THIS(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(V_BSTR(&tagName)), pdisp);
-    return E_NOTIMPL;
+    DWORD size = 8, len = 0, i;
+    HTMLElement **elem_list;
+    nsAString tag_str;
+    const PRUnichar *tag;
+
+    if(V_VT(&tagName) != VT_BSTR) {
+        WARN("Invalid arg\n");
+        return E_INVALIDARG;
+    }
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(V_BSTR(&tagName)), pdisp);
+
+    elem_list = HeapAlloc(GetProcessHeap(), 0, size*sizeof(HTMLElement*));
+
+    nsAString_Init(&tag_str, NULL);
+
+    for(i=0; i<This->len; i++) {
+        if(!This->elems[i]->nselem)
+            continue;
+
+        nsIDOMElement_GetTagName(This->elems[i]->nselem, &tag_str);
+        nsAString_GetData(&tag_str, &tag, NULL);
+
+        if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, tag, -1,
+                          V_BSTR(&tagName), -1) == CSTR_EQUAL) {
+            if(len == size) {
+                size <<= 2;
+                elem_list = HeapReAlloc(GetProcessHeap(), 0, elem_list, size);
+            }
+
+            elem_list[len++] = This->elems[i];
+        }
+    }
+
+    nsAString_Finish(&tag_str);
+
+    TRACE("fount %ld tags\n", len);
+
+    if(!len) {
+        HeapFree(GetProcessHeap(), 0, elem_list);
+        elem_list = NULL;
+    }else if(size > len) {
+        HeapReAlloc(GetProcessHeap(), 0, elem_list, len);
+    }
+
+    return HTMLElementCollection_Create(This->ref_unk, elem_list, len, pdisp);
 }
 
 #undef ELEMCOL_THIS

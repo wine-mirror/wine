@@ -203,6 +203,10 @@ PRUint32 nsACString_GetData(const nsACString*,const char**,PRBool*);
 void nsACString_SetData(nsACString*,const char*);
 void nsACString_Destroy(nsACString*);
 
+void nsAString_Init(nsAString*,const PRUnichar*);
+PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**,PRBool*);
+void nsAString_Finish(nsAString*);
+
 nsIInputStream *create_nsstream(const char*,PRInt32);
 
 IHlink *Hlink_Create(void);

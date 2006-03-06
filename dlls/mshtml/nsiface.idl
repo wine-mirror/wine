@@ -47,8 +47,14 @@ typedef ULARGE_INTEGER PRUint64;
 typedef PRUint64 DOMTimeStamp;
 typedef PRUint32 nsLoadFlags;
 
+typedef struct {
+    void *v;
+    void *d1;
+    PRUint32 d2;
+    void *d3;
+} nsStringContainer;
+
 typedef struct nsCStringContainer nsCStringContainer;
-typedef struct nsStringContainer nsStringContainer;
 typedef nsCStringContainer nsACString;
 typedef nsStringContainer nsAString;
 

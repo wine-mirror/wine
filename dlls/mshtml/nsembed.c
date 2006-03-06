@@ -44,13 +44,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define PR_UINT32_MAX 0xffffffff
 
-struct nsStringContainer {
-    void *v;
-    void *d1;
-    PRUint32 d2;
-    void *d3;
-};
-
 struct nsCStringContainer {
     void *v;
     void *d1;
@@ -68,6 +61,7 @@ static nsresult (*NS_CStringContainerFinish)(nsCStringContainer*);
 static nsresult (*NS_StringSetData)(nsAString*,const PRUnichar*,PRUint32);
 static nsresult (*NS_CStringSetData)(nsACString*,const char*,PRUint32);
 static nsresult (*NS_NewLocalFile)(const nsAString*,PRBool,nsIFile**);
+static PRUint32 (*NS_StringGetData)(const nsAString*,const PRUnichar **,PRBool*);
 static PRUint32 (*NS_CStringGetData)(const nsACString*,const char**,PRBool*);
 
 static HINSTANCE hXPCOM = NULL;
@@ -304,6 +298,7 @@ static BOOL load_gecko(void)
     NS_DLSYM(NS_StringSetData);
     NS_DLSYM(NS_CStringSetData);
     NS_DLSYM(NS_NewLocalFile);
+    NS_DLSYM(NS_StringGetData);
     NS_DLSYM(NS_CStringGetData);
 
 #undef NS_DLSYM
@@ -388,6 +383,23 @@ void nsACString_Destroy(nsACString *str)
 {
     NS_CStringContainerFinish(str);
     HeapFree(GetProcessHeap(), 0, str);
+}
+
+void nsAString_Init(nsAString *str, const PRUnichar *data)
+{
+    NS_StringContainerInit(str);
+    if(data)
+        NS_StringSetData(str, data, PR_UINT32_MAX);
+}
+
+PRUint32 nsAString_GetData(const nsAString *str, const PRUnichar **data, PRBool *termited)
+{
+    return NS_StringGetData(str, data, termited);
+}
+
+void nsAString_Finish(nsAString *str)
+{
+    NS_StringContainerFinish(str);
 }
 
 nsIInputStream *create_nsstream(const char *data, PRInt32 data_len)
