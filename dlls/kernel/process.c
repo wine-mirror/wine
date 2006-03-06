@@ -1116,7 +1116,7 @@ static char **build_envp( const WCHAR *envW )
  * Fork and exec a new Unix binary, checking for errors.
  */
 static int fork_and_exec( const char *filename, const WCHAR *cmdline,
-                          const WCHAR *env, const char *newdir )
+                          const WCHAR *env, const char *newdir, DWORD flags )
 {
     int fd[2];
     int pid, err;
@@ -1134,6 +1134,8 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
         char **argv = build_argv( cmdline, 0 );
         char **envp = build_envp( env );
         close( fd[0] );
+
+        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)) setsid();
 
         /* Reset signals that we previously set to SIG_IGN */
         signal( SIGPIPE, SIG_DFL );
@@ -1302,6 +1304,8 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         if (read( startfd[0], &dummy, 1 ) != 1) _exit(1);
 
         close( startfd[0] );
+        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)) setsid();
+
         /* Reset signals that we previously set to SIG_IGN */
         signal( SIGPIPE, SIG_DFL );
         signal( SIGCHLD, SIG_DFL );
@@ -1743,7 +1747,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
 
             if ((unix_name = wine_get_unix_file_name( name )))
             {
-                retv = (fork_and_exec( unix_name, tidy_cmdline, envW, unixdir ) != -1);
+                retv = (fork_and_exec( unix_name, tidy_cmdline, envW, unixdir, flags ) != -1);
                 HeapFree( GetProcessHeap(), 0, unix_name );
             }
         }
