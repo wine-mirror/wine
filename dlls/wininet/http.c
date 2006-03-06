@@ -1016,7 +1016,12 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         goto lend;
     }
 
-    NETCON_init(&lpwhr->netConnection, dwFlags & INTERNET_FLAG_SECURE);
+    if (!NETCON_init(&lpwhr->netConnection, dwFlags & INTERNET_FLAG_SECURE))
+    {
+        InternetCloseHandle( handle );
+        handle = NULL;
+        goto lend;
+    }
 
     if (NULL != lpszObjectName && strlenW(lpszObjectName)) {
         HRESULT rc;
@@ -2077,7 +2082,9 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                               szaddr, strlen(szaddr)+1);
 
         NETCON_close(&lpwhr->netConnection);
-        NETCON_init(&lpwhr->netConnection,lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE);
+
+        if (!NETCON_init(&lpwhr->netConnection,lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
+            return FALSE;
     }
 
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);

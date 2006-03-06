@@ -111,7 +111,7 @@ MAKE_FUNCPTR(ERR_error_string);
 
 #endif
 
-void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
+BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 {
     connection->useSSL = FALSE;
     connection->socketFD = -1;
@@ -119,23 +119,23 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     {
 #if defined HAVE_OPENSSL_SSL_H && defined HAVE_OPENSSL_ERR_H
         TRACE("using SSL connection\n");
-	if (OpenSSL_ssl_handle) /* already initilzed everything */
-            return;
+	if (OpenSSL_ssl_handle) /* already initialized everything */
+            return TRUE;
 	OpenSSL_ssl_handle = wine_dlopen(SONAME_LIBSSL, RTLD_NOW, NULL, 0);
 	if (!OpenSSL_ssl_handle)
 	{
 	    ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n",
 		SONAME_LIBSSL);
-            connection->useSSL = FALSE;
-            return;
+            INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
+            return FALSE;
 	}
 	OpenSSL_crypto_handle = wine_dlopen(SONAME_LIBCRYPTO, RTLD_NOW, NULL, 0);
 	if (!OpenSSL_crypto_handle)
 	{
 	    ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n",
 		SONAME_LIBCRYPTO);
-            connection->useSSL = FALSE;
-            return;
+            INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
+            return FALSE;
 	}
 
         /* mmm nice ugly macroness */
@@ -144,8 +144,8 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     if (!p##x) \
     { \
         ERR("failed to load symbol %s\n", #x); \
-        connection->useSSL = FALSE; \
-        return; \
+        INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR); \
+        return FALSE; \
     }
 
 	DYNSSL(SSL_library_init);
@@ -172,8 +172,8 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     if (!p##x) \
     { \
         ERR("failed to load symbol %s\n", #x); \
-        connection->useSSL = FALSE; \
-        return; \
+        INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR); \
+        return FALSE; \
     }
 	DYNCRYPTO(BIO_new_fp);
 	DYNCRYPTO(ERR_get_error);
@@ -189,9 +189,11 @@ void NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
         connection->peek_msg_mem = NULL;
 #else
 	FIXME("can't use SSL, not compiled in.\n");
-        connection->useSSL = FALSE;
+        INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
+        return FALSE;
 #endif
     }
+    return TRUE;
 }
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection)
@@ -353,6 +355,7 @@ BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
     {
         ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
     connection->ssl_s = pSSL_new(ctx);
@@ -360,6 +363,7 @@ BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
     {
         ERR("SSL_new failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
         goto fail;
     }
 
@@ -367,6 +371,7 @@ BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
     {
         ERR("SSL_set_fd failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
+        INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
         goto fail;
     }
 
@@ -397,7 +402,7 @@ BOOL NETCON_secure_connect(WININET_NETCONNECTION *connection, LPCWSTR hostname)
     hostname_unix = HeapAlloc(GetProcessHeap(), 0, len);
     if (!hostname_unix)
     {
-        INTERNET_SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
         goto fail;
     }
     WideCharToMultiByte(CP_UNIXCP, 0, hostname, -1, hostname_unix, len, NULL, NULL);

@@ -468,7 +468,7 @@ VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
 LPHTTPHEADERW HTTP_GetHeader(LPWININETHTTPREQW lpwhr, LPCWSTR header);
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection);
-void NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);
+BOOL NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);
 BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
 	      int type, int protocol);
 BOOL NETCON_close(WININET_NETCONNECTION *connection);
