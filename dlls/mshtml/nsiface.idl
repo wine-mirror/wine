@@ -101,6 +101,7 @@ typedef nsISupports nsIDOMCDATASection;
 typedef nsISupports nsIDOMProcessingInstruction;
 typedef nsISupports nsIDOMEntityReference;
 typedef nsISupports nsIDOMHTMLFormElement;
+typedef nsISupports nsIDOMHTMLOptionsCollection;
 
 [
     object,
@@ -506,6 +507,37 @@ interface nsIDOMHTMLInputElement : nsIDOMHTMLElement
     nsresult Focus();
     nsresult Select();
     nsresult Click();
+}
+
+[
+    object,
+    uuid(a6cf9090-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMHTMLSelectElement : nsIDOMHTMLElement
+{
+    nsresult GetType(nsAString *aType);
+    nsresult GetSelectedIndex(PRInt32 *aSelectedIndex);
+    nsresult SetSelectedIndex(PRInt32 aSelectedIndex);
+    nsresult GetValue(nsAString *aValue);
+    nsresult SetValue(const nsAString *aValue);
+    nsresult GetLength(PRUint32 *aLength);
+    nsresult SetLength(PRUint32 aLength);
+    nsresult GetForm(nsIDOMHTMLFormElement **aForm);
+    nsresult GetOptions(nsIDOMHTMLOptionsCollection **aOptions);
+    nsresult GetDisabled(PRBool *aDisabled);
+    nsresult SetDisabled(PRBool aDisabled);
+    nsresult GetMultiple(PRBool *aMultiple);
+    nsresult SetMultiple(PRBool aMultiple);
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetSize(PRInt32 *aSize);
+    nsresult SetSize(PRInt32 aSize);
+    nsresult GetTabIndex(PRInt32 *aTabIndex);
+    nsresult SetTabIndex(PRInt32 aTabIndex);
+    nsresult Add(nsIDOMHTMLElement *element, nsIDOMHTMLElement *before);
+    nsresult Remove(PRInt32 index);
+    nsresult Blur();
+    nsresult Focus();
 }
 
 [
