@@ -1512,7 +1512,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
         if (glGetError() == GL_INVALID_OPERATION) {
             GLint errPos;
             glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
-            FIXME("HW PixelShader Error at position: %d\n%s\n", errPos, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+            FIXME("HW PixelShader Error at position %d: %s\n",
+                  errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
             This->prgId = -1;
         }
     }

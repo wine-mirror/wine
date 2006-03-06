@@ -1650,7 +1650,8 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
       if (glGetError() == GL_INVALID_OPERATION) {
           GLint errPos;
           glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
-          FIXME("HW VertexShader Error at position: %d\n%s\n", errPos, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+          FIXME("HW VertexShader Error at position %d: %s\n",
+                errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
           This->prgId = -1;
       }
   }

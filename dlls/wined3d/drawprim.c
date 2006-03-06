@@ -1820,7 +1820,8 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
             /* check for any errors */
             glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
             if (errPos != -1) {
-                FIXME("HW VertexShader Error at position: %d\n%s\n", errPos, glGetString( GL_PROGRAM_ERROR_STRING_ARB) );
+                FIXME("HW VertexShader Error at position %d: %s\n",
+                      errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
             }
 
             /* disable any attribs */
