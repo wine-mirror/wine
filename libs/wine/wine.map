@@ -27,6 +27,7 @@ WINE_1.0
     wine_exec_wine_binary;
     wine_get_config_dir;
     wine_get_cs;
+    wine_get_data_dir;
     wine_get_ds;
     wine_get_es;
     wine_get_fs;

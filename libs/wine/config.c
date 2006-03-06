@@ -41,6 +41,7 @@ static const char server_dir_prefix[] = "/server-";      /* prefix for server di
 
 static char *bindir;
 static char *dlldir;
+static char *datadir;
 static char *config_dir;
 static char *server_dir;
 static char *user_name;
@@ -248,6 +249,7 @@ void wine_init_argv0_path( const char *argv0 )
     {
         bindir = build_path( libdir, LIB_TO_BINDIR );
         dlldir = build_path( libdir, LIB_TO_DLLDIR );
+        datadir = build_path( libdir, LIB_TO_DATADIR );
         return;
     }
 
@@ -283,6 +285,7 @@ void wine_init_argv0_path( const char *argv0 )
     }
 
     dlldir = build_path( bindir, BIN_TO_DLLDIR );
+    datadir = build_path( bindir, BIN_TO_DATADIR );
 }
 
 /* return the configuration directory ($WINEPREFIX or $HOME/.wine) */
@@ -290,6 +293,12 @@ const char *wine_get_config_dir(void)
 {
     if (!config_dir) init_paths();
     return config_dir;
+}
+
+/* retrieve the wine data dir */
+const char *wine_get_data_dir(void)
+{
+    return datadir;
 }
 
 /* return the full name of the server directory (the one containing the socket) */
