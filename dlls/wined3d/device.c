@@ -4661,7 +4661,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
 
     if(pTexture != NULL) {
         /* SetTexture isn't allowed on textures in D3DPOOL_SCRATCH; The same is
-        *  the case for D3DPOOL_SYSTEMMEM textures unless D3DDEVCAPS_TEXTURESYSTEMMORY is set.
+        *  the case for D3DPOOL_SYSTEMMEM textures unless WINED3DDEVCAPS_TEXTURESYSTEMMORY is set.
         *  We don't check the caps as GetDeviceCaps is inefficient and we don't set the cap anyway.
         */
         if(((IWineD3DTextureImpl*)pTexture)->resource.pool == D3DPOOL_SCRATCH || ((IWineD3DTextureImpl*)pTexture)->resource.pool == D3DPOOL_SYSTEMMEM) {

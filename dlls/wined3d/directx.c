@@ -1462,18 +1462,18 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 
     *pCaps->Caps                    = 0;
     *pCaps->Caps2                   = D3DCAPS2_CANRENDERWINDOWED;
-    *pCaps->Caps3                   = D3DDEVCAPS_HWTRANSFORMANDLIGHT;
+    *pCaps->Caps3                   = WINED3DDEVCAPS_HWTRANSFORMANDLIGHT;
     *pCaps->PresentationIntervals   = D3DPRESENT_INTERVAL_IMMEDIATE;
 
     *pCaps->CursorCaps              = 0;
 
 
-    *pCaps->DevCaps                 = D3DDEVCAPS_DRAWPRIMTLVERTEX    |
-                                      D3DDEVCAPS_HWTRANSFORMANDLIGHT |
-                                      D3DDEVCAPS_EXECUTEVIDEOMEMORY  |
-                                      D3DDEVCAPS_PUREDEVICE          |
-                                      D3DDEVCAPS_HWRASTERIZATION     |
-                                      D3DDEVCAPS_TEXTUREVIDEOMEMORY;
+    *pCaps->DevCaps                 = WINED3DDEVCAPS_DRAWPRIMTLVERTEX    |
+                                      WINED3DDEVCAPS_HWTRANSFORMANDLIGHT |
+                                      WINED3DDEVCAPS_EXECUTEVIDEOMEMORY  |
+                                      WINED3DDEVCAPS_PUREDEVICE          |
+                                      WINED3DDEVCAPS_HWRASTERIZATION     |
+                                      WINED3DDEVCAPS_TEXTUREVIDEOMEMORY;
 
 
     *pCaps->PrimitiveMiscCaps       = D3DPMISCCAPS_CULLCCW               |

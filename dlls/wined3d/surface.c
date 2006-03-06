@@ -949,7 +949,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     *  these resources cannot be accessed by the Direct3D device nor set as textures or render targets.
     *  However, these resources can always be created, locked, and copied.
     *  In general never store scratch or system mem textures in the video ram. However it is allowed
-    *  for system memory textures when D3DDEVCAPS_TEXTURESYSTEMMEMORY is set but it isn't right now.
+    *  for system memory textures when WINED3DDEVCAPS_TEXTURESYSTEMMEMORY is set but it isn't right now.
     */
     if (This->resource.pool == D3DPOOL_SCRATCH || This->resource.pool == D3DPOOL_SYSTEMMEM)
     {
