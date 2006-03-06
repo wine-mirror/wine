@@ -351,6 +351,21 @@ void destroy_window( struct window *win )
     free( win );
 }
 
+/* get the process owning the top window of a given desktop */
+struct process *get_top_window_owner( struct desktop *desktop )
+{
+    struct window *win = desktop->top_window;
+    if (!win || !win->thread) return NULL;
+    return win->thread->process;
+}
+
+/* attempt to close the desktop window when the last process using it is gone */
+void close_desktop_window( struct desktop *desktop )
+{
+    struct window *win = desktop->top_window;
+    if (win && win->thread) post_message( win->handle, WM_SYSCOMMAND, SC_CLOSE, 0 );
+}
+
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner,
                                      atom_t atom, void *instance )

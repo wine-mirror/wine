@@ -36,6 +36,7 @@
 #include "request.h"
 #include "process.h"
 #include "user.h"
+#include "file.h"
 #include "wine/unicode.h"
 
 
@@ -199,6 +200,8 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             desktop->winstation = (struct winstation *)grab_object( winstation );
             desktop->top_window = NULL;
             desktop->global_hooks = NULL;
+            desktop->close_timeout = NULL;
+            desktop->users = 0;
             list_add_tail( &winstation->desktops, &desktop->entry );
         }
     }
@@ -233,6 +236,7 @@ static void desktop_destroy( struct object *obj )
 
     if (desktop->top_window) destroy_window( desktop->top_window );
     if (desktop->global_hooks) release_object( desktop->global_hooks );
+    if (desktop->close_timeout) remove_timeout_user( desktop->close_timeout );
     list_remove( &desktop->entry );
     release_object( desktop->winstation );
 }
@@ -293,9 +297,46 @@ void connect_process_desktop( struct process *process, const struct unicode_str 
         if ((desktop = create_desktop( name, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, 0, winstation )))
         {
             process->desktop = alloc_handle( process, desktop, DESKTOP_ALL_ACCESS, 0 );
+            desktop->users++;
+            if (desktop->close_timeout)
+            {
+                remove_timeout_user( desktop->close_timeout );
+                desktop->close_timeout = NULL;
+            }
             release_object( desktop );
         }
         release_object( winstation );
+    }
+    clear_error();  /* ignore errors */
+}
+
+static void close_desktop_timeout( void *private )
+{
+    struct desktop *desktop = private;
+
+    desktop->close_timeout = NULL;
+    unlink_named_object( &desktop->obj );  /* make sure no other process can open it */
+    close_desktop_window( desktop );  /* and signal the owner to quit */
+}
+
+/* close the desktop of a given process */
+void close_process_desktop( struct process *process )
+{
+    struct desktop *desktop;
+
+    if (process->desktop && (desktop = get_desktop_obj( process, process->desktop, 0 )))
+    {
+        assert( desktop->users > 0 );
+        desktop->users--;
+        /* if we have one remaining user, it has to be the manager of the desktop window */
+        if (desktop->users == 1 && get_top_window_owner( desktop ))
+        {
+            struct timeval when;
+            gettimeofday( &when, NULL );
+            add_timeout( &when, 1000 );
+            desktop->close_timeout = add_timeout_user( &when, close_desktop_timeout, desktop );
+        }
+        release_object( desktop );
     }
     clear_error();  /* ignore errors */
 }

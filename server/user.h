@@ -52,12 +52,14 @@ struct winstation
 
 struct desktop
 {
-    struct object      obj;           /* object header */
-    unsigned int       flags;         /* desktop flags */
-    struct winstation *winstation;    /* winstation this desktop belongs to */
-    struct list        entry;         /* entry in winstation list of desktops */
-    struct window     *top_window;    /* desktop window for this desktop */
-    struct hook_table *global_hooks;  /* table of global hooks on this desktop */
+    struct object        obj;            /* object header */
+    unsigned int         flags;          /* desktop flags */
+    struct winstation   *winstation;     /* winstation this desktop belongs to */
+    struct list          entry;          /* entry in winstation list of desktops */
+    struct window       *top_window;     /* desktop window for this desktop */
+    struct hook_table   *global_hooks;   /* table of global hooks on this desktop */
+    struct timeout_user *close_timeout;  /* timeout before closing the desktop */
+    unsigned int         users;          /* processes and threads using this desktop */
 };
 
 /* user handles functions */
@@ -123,6 +125,8 @@ extern int rect_in_region( struct region *region, const rectangle_t *rect );
 
 /* window functions */
 
+extern struct process *get_top_window_owner( struct desktop *desktop );
+extern void close_desktop_window( struct desktop *desktop );
 extern void destroy_window( struct window *win );
 extern void destroy_thread_windows( struct thread *thread );
 extern int is_child_window( user_handle_t parent, user_handle_t child );
@@ -150,6 +154,7 @@ extern struct winstation *get_process_winstation( struct process *process, unsig
 extern struct desktop *get_thread_desktop( struct thread *thread, unsigned int access );
 extern void connect_process_winstation( struct process *process, const struct unicode_str *name );
 extern void connect_process_desktop( struct process *process, const struct unicode_str *name );
+extern void close_process_desktop( struct process *process );
 extern void close_thread_desktop( struct thread *thread );
 
 #endif  /* __WINE_SERVER_USER_H */

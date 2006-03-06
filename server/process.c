@@ -570,6 +570,7 @@ static void process_killed( struct process *process )
 
     assert( list_empty( &process->thread_list ));
     gettimeofday( &process->end_time, NULL );
+    close_process_desktop( process );
     handles = process->handles;
     process->handles = NULL;
     if (handles) release_object( handles );
