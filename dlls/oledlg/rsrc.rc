@@ -36,6 +36,7 @@
 #include "oledlg_En.rc"
 #include "oledlg_Es.rc"
 #include "oledlg_Fr.rc"
+#include "oledlg_Hu.rc"
 #include "oledlg_It.rc"
 #include "oledlg_Ja.rc"
 #include "oledlg_Ko.rc"
