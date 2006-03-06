@@ -144,8 +144,6 @@ typedef BOOL (*AddCertFunc)(struct WINE_CRYPTCERTSTORE *store,
  */
 typedef void (*FreeCertFunc)(struct _WINE_CERT_CONTEXT_REF *ref);
 
-typedef PCCERT_CONTEXT (*DupCertFunc)(PCCERT_CONTEXT context);
-
 typedef enum _CertStoreType {
     StoreTypeMem,
     StoreTypeCollection,
@@ -170,7 +168,6 @@ typedef struct WINE_CRYPTCERTSTORE
     AddCertFunc                     addCert;
     EnumCertFunc                    enumCert;
     PFN_CERT_STORE_PROV_DELETE_CERT deleteCert;
-    DupCertFunc                     dupCert;
     FreeCertFunc                    freeCert;   /* optional */
     PFN_CERT_STORE_PROV_CONTROL     control;    /* optional */
 } WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
@@ -193,7 +190,8 @@ typedef struct _WINE_CERT_CONTEXT
 
 typedef struct _WINE_CERT_CONTEXT_REF
 {
-    CERT_CONTEXT cert;
+    CERT_CONTEXT       cert;
+    LONG               ref;
     WINE_CERT_CONTEXT *context;
 } WINE_CERT_CONTEXT_REF, *PWINE_CERT_CONTEXT_REF;
 
@@ -326,6 +324,7 @@ static void CRYPT_InitCertRef(PWINE_CERT_CONTEXT_REF ref,
 {
     TRACE("(%p, %p)\n", ref, context);
     memcpy(&ref->cert, context, sizeof(ref->cert));
+    ref->ref = 1;
     ref->context = context;
     InterlockedIncrement(&context->ref);
     TRACE("%p's ref count is %ld\n", context, context->ref);
@@ -532,21 +531,6 @@ static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     CryptMemFree(store);
 }
 
-static PCCERT_CONTEXT CRYPT_MemDupCert(PCCERT_CONTEXT pCertContext)
-{
-    const WINE_CERT_LIST_ENTRY *context =
-     (const WINE_CERT_LIST_ENTRY *)pCertContext;
-    PWINE_CERT_LIST_ENTRY ret;
-
-    ret = CryptMemAlloc(sizeof(WINE_CERT_LIST_ENTRY));
-    if (ret)
-    {
-        memcpy(ret, context, sizeof(WINE_CERT_LIST_ENTRY));
-        InterlockedIncrement(&ret->cert.context->ref);
-    }
-    return (PCCERT_CONTEXT)ret;
-}
-
 static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
@@ -571,7 +555,6 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.enumCert      = CRYPT_MemEnumCert;
             store->hdr.deleteCert    = CRYPT_MemDeleteCert;
             store->hdr.freeCert      = NULL;
-            store->hdr.dupCert       = CRYPT_MemDupCert;
             store->hdr.control       = NULL;
             InitializeCriticalSection(&store->cs);
             list_init(&store->certs);
@@ -749,21 +732,6 @@ static BOOL WINAPI CRYPT_CollectionDeleteCert(HCERTSTORE hCertStore,
     return ret;
 }
 
-static PCCERT_CONTEXT CRYPT_CollectionDupCert(PCCERT_CONTEXT pCertContext)
-{
-    const WINE_COLLECTION_CERT_CONTEXT *context =
-     (const WINE_COLLECTION_CERT_CONTEXT *)pCertContext;
-    PWINE_COLLECTION_CERT_CONTEXT ret;
-
-    ret = CryptMemAlloc(sizeof(WINE_COLLECTION_CERT_CONTEXT));
-    if (ret)
-    {
-        memcpy(ret, context, sizeof(WINE_COLLECTION_CERT_CONTEXT));
-        InterlockedIncrement(&ret->cert.context->ref);
-    }
-    return (PCCERT_CONTEXT)ret;
-}
-
 static void CRYPT_CollectionFreeCert(PWINE_CERT_CONTEXT_REF ref)
 {
     PWINE_COLLECTION_CERT_CONTEXT context = (PWINE_COLLECTION_CERT_CONTEXT)ref;
@@ -796,7 +764,6 @@ static WINECRYPT_CERTSTORE *CRYPT_CollectionOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.addCert       = CRYPT_CollectionAddCert;
             store->hdr.enumCert      = CRYPT_CollectionEnumCert;
             store->hdr.deleteCert    = CRYPT_CollectionDeleteCert;
-            store->hdr.dupCert       = CRYPT_CollectionDupCert;
             store->hdr.freeCert      = CRYPT_CollectionFreeCert;
             InitializeCriticalSection(&store->cs);
             list_init(&store->stores);
@@ -887,21 +854,6 @@ static PWINE_CERT_CONTEXT_REF CRYPT_ProvEnumCert(PWINECRYPT_CERTSTORE store,
     return (PWINE_CERT_CONTEXT_REF)ret;
 }
 
-static PCCERT_CONTEXT CRYPT_ProvDupCert(PCCERT_CONTEXT pCertContext)
-{
-    const WINE_PROV_CERT_CONTEXT *context =
-     (const WINE_PROV_CERT_CONTEXT *)pCertContext;
-    PWINE_PROV_CERT_CONTEXT ret;
-
-    ret = CryptMemAlloc(sizeof(WINE_PROV_CERT_CONTEXT));
-    if (ret)
-    {
-        memcpy(ret, context, sizeof(WINE_PROV_CERT_CONTEXT));
-        InterlockedIncrement(&ret->cert.context->ref);
-    }
-    return (PCCERT_CONTEXT)ret;
-}
-
 static BOOL WINAPI CRYPT_ProvDeleteCert(HCERTSTORE hCertStore,
  PCCERT_CONTEXT cert, DWORD dwFlags)
 {
@@ -965,7 +917,6 @@ static PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(HCRYPTPROV hCryptProv,
         ret->hdr.addCert = CRYPT_ProvAddCert;
         ret->hdr.enumCert = CRYPT_ProvEnumCert;
         ret->hdr.deleteCert = CRYPT_ProvDeleteCert;
-        ret->hdr.dupCert = CRYPT_ProvDupCert;
         ret->hdr.freeCert = CRYPT_ProvFreeCert;
         ret->hdr.control = CRYPT_ProvControl;
         if (pProvInfo->cStoreProvFunc > CERT_STORE_PROV_CLOSE_FUNC)
@@ -2337,33 +2288,11 @@ BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
 PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(
  PCCERT_CONTEXT pCertContext)
 {
-    PCCERT_CONTEXT ret;
+    PWINE_CERT_CONTEXT_REF context = (PWINE_CERT_CONTEXT_REF)pCertContext;
 
     TRACE("(%p)\n", pCertContext);
-    if (pCertContext->hCertStore)
-    {
-        PWINECRYPT_CERTSTORE store =
-         (PWINECRYPT_CERTSTORE)pCertContext->hCertStore;
-
-        ret = store->dupCert(pCertContext);
-    }
-    else
-    {
-        PWINE_CERT_CONTEXT_REF context = (PWINE_CERT_CONTEXT_REF)pCertContext,
-         ref;
-
-        ref = CryptMemAlloc(sizeof(WINE_CERT_CONTEXT_REF));
-        if (ref)
-        {
-            memcpy(ref, context, sizeof(*ret));
-            ref->cert.hCertStore = 0;
-            InterlockedIncrement(&ref->context->ref);
-            ret = (PCCERT_CONTEXT)ref;
-        }
-        else
-            ret = NULL;
-    }
-    return (PCCERT_CONTEXT)ret;
+    InterlockedIncrement(&context->ref);
+    return pCertContext;
 }
 
 BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
@@ -2694,13 +2623,23 @@ BOOL WINAPI CertSetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
 
 static void CRYPT_UnrefCertificateContext(PWINE_CERT_CONTEXT_REF ref)
 {
-    if (InterlockedDecrement(&ref->context->ref) == 0)
+    if (InterlockedDecrement(&ref->ref) == 0)
     {
-        TRACE("%p's ref count is 0, freeing\n", ref->context);
-        CRYPT_FreeCert(ref->context);
+        PWINECRYPT_CERTSTORE store = (PWINECRYPT_CERTSTORE)ref->cert.hCertStore;
+
+        if (InterlockedDecrement(&ref->context->ref) == 0)
+        {
+            TRACE("%p's ref count is 0, freeing\n", ref->context);
+            CRYPT_FreeCert(ref->context);
+        }
+        else
+            TRACE("%p's ref count is %ld\n", ref->context, ref->context->ref);
+        if (store && store->dwMagic == WINE_CRYPTCERTSTORE_MAGIC &&
+         store->freeCert)
+            store->freeCert(ref);
+        TRACE("freeing %p\n", ref);
+        CryptMemFree(ref);
     }
-    else
-        TRACE("%p's ref count is %ld\n", ref->context, ref->context->ref);
 }
 
 BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
@@ -2708,17 +2647,7 @@ BOOL WINAPI CertFreeCertificateContext(PCCERT_CONTEXT pCertContext)
     TRACE("(%p)\n", pCertContext);
 
     if (pCertContext)
-    {
-        PWINE_CERT_CONTEXT_REF ref = (PWINE_CERT_CONTEXT_REF)pCertContext;
-        PWINECRYPT_CERTSTORE store = (PWINECRYPT_CERTSTORE)ref->cert.hCertStore;
-
-        CRYPT_UnrefCertificateContext(ref);
-        if (store && store->dwMagic == WINE_CRYPTCERTSTORE_MAGIC &&
-         store->freeCert)
-            store->freeCert(ref);
-        TRACE("freeing %p\n", ref);
-        CryptMemFree(ref);
-    }
+        CRYPT_UnrefCertificateContext((PWINE_CERT_CONTEXT_REF)pCertContext);
     return TRUE;
 }
 
