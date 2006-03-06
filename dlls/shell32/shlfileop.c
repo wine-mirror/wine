@@ -791,29 +791,19 @@ static DWORD count_wildcard_files(LPCWSTR szWildFile)
 static DWORD count_files(LPCWSTR szFileList)
 {
     DWORD dwCount = 0;
-    LPCWSTR p = szFileList;
-    LPCWSTR q = p + 1;
-    LPCWSTR str = p;
+    LPCWSTR str = szFileList;
 
     /* test empty list */
-    if (!szFileList[0] && !szFileList[1])
-        return -1;
-    
-    /* p,q search: stop when we reach double null terminator */
-    while (*p || *q)
+    if (!szFileList[0]) return -1;
+
+    while (*str)
     {
-        if (!*q)
-        {
-            if (StrPBrkW(str, wWildcardChars))
-                dwCount += count_wildcard_files(str);
-            else
-                dwCount++;
+        if (StrPBrkW(str, wWildcardChars))
+            dwCount += count_wildcard_files(str);
+        else
+            dwCount++;
 
-            str = q + 1;
-        }
-
-        p++;
-        q++;
+        str += lstrlenW(str) + 1;
     }
 
     return dwCount;
