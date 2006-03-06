@@ -1029,7 +1029,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         This->resource.format == WINED3DFMT_DXT3 ||
         This->resource.format == WINED3DFMT_DXT4 ||
         This->resource.format == WINED3DFMT_DXT5) {
-        if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+        if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+            FIXME("Using DXT1/3/5 without advertized support\n");
+        } else if (This->resource.allocatedMemory) {
             TRACE("Calling glCompressedTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, sz=%d, Mem=%p\n",
                   This->glDescription.target,
                   This->glDescription.level,
@@ -1050,7 +1052,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
                                                   0,
                                                   This->resource.size,
                                                   This->resource.allocatedMemory);
-            checkGLcall("glCommpressedTexTexImage2D");
+            checkGLcall("glCommpressedTexImage2D");
 
             LEAVE_GL();
 
@@ -1058,9 +1060,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
                 HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
                 This->resource.allocatedMemory = NULL;
             }
-
-        } else {
-            FIXME("Using DXT1/3/5 without advertized support\n");
         }
     } else {
 
