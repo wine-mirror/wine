@@ -43,6 +43,7 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #include "avifile_En.rc"
 #include "avifile_Es.rc"
 #include "avifile_Fr.rc"
+#include "avifile_Hu.rc"
 #include "avifile_It.rc"
 #include "avifile_Ja.rc"
 #include "avifile_Ko.rc"
