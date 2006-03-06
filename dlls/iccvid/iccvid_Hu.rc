@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Dmitry Timoshkov
+ * Copyright 2006 Andras Kovacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,12 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "iccvid_private.h"
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 
-#include "iccvid_De.rc"
-#include "iccvid_En.rc"
-#include "iccvid_Hu.rc"
-#include "iccvid_Ko.rc"
-#include "iccvid_No.rc"
-#include "iccvid_Tr.rc"
+STRINGTABLE DISCARDABLE
+{
+    IDS_NAME "Cinepak Video kodek"
+    IDS_DESCRIPTION "Cinepak Video kodek"
+}
