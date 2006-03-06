@@ -316,7 +316,7 @@ static HRESULT register_server(BOOL do_register)
     strtable.pse = pse;
 
     hAdvpack = LoadLibraryW(wszAdvpack);
-    pRegInstall = (typeof(RegInstallA)*)GetProcAddress(hAdvpack, "RegInstallA");
+    pRegInstall = (typeof(RegInstallA)*)GetProcAddress(hAdvpack, "RegInstall");
 
     hres = pRegInstall(hInst, do_register ? "RegisterDll" : "UnregisterDll", &strtable);
 
