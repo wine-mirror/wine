@@ -586,9 +586,16 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
     }
     SERVER_END_REQ;
 
-    if (win == WND_DESKTOP)
+    if (win == WND_DESKTOP || data->whole_window == DefaultRootWindow(gdi_display))
     {
         data->whole_rect = data->client_rect = data->window_rect = *rectWindow;
+        if (win != WND_DESKTOP)
+        {
+            win->rectWindow   = *rectWindow;
+            win->rectClient   = *rectClient;
+            win->dwStyle      = new_style;
+            WIN_ReleasePtr( win );
+        }
         return ret;
     }
 

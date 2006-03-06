@@ -145,7 +145,8 @@ void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data )
     int mask = get_window_attributes( data, &attr );
 
     wine_tsx11_lock();
-    XChangeWindowAttributes( display, data->whole_window, mask, &attr );
+    if (data->whole_window != DefaultRootWindow(display))
+        XChangeWindowAttributes( display, data->whole_window, mask, &attr );
     wine_tsx11_unlock();
 }
 
@@ -715,7 +716,8 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     wine_tsx11_lock();
     XSync( gdi_display, False );  /* flush any reference to this drawable in GDI queue */
     XDeleteContext( display, data->whole_window, winContext );
-    XDestroyWindow( display, data->whole_window );  /* this destroys client too */
+    if (data->whole_window != DefaultRootWindow(display))
+        XDestroyWindow( display, data->whole_window );
     data->whole_window = 0;
     if (data->xic)
     {
