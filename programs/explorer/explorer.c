@@ -23,7 +23,7 @@
 #include <ctype.h>
 
 #include <wine/debug.h>
-
+#include "explorer_private.h"
 #include <systray.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(explorer);
@@ -33,6 +33,7 @@ unsigned int shell_refs = 0;
 typedef struct parametersTAG {
     BOOL    explorer_mode;
     BOOL    systray_mode;
+    BOOL    desktop_mode;
     WCHAR   root[MAX_PATH];
     WCHAR   selection[MAX_PATH];
 } parameters_struct;
@@ -143,6 +144,11 @@ static void ParseCommandLine(LPSTR commandline,parameters_struct *parameters)
             parameters->systray_mode = TRUE;
             p+=7;
         }
+        else if (strncmp(p,"desktop",7)==0)
+        {
+            parameters->desktop_mode = TRUE;
+            p+=7;
+        }
         p2 = p;
         p = strchr(p,'/');
     }
@@ -216,7 +222,13 @@ int WINAPI WinMain(HINSTANCE hinstance,
         do_systray_loop();
         return 0;
     }
-    else if (parameters.selection[0])
+    if (parameters.desktop_mode)
+    {
+        manage_desktop();
+        return 0;
+    }
+
+    if (parameters.selection[0])
     {
         len += lstrlenW(parameters.selection) + 2;
         winefile_commandline = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
