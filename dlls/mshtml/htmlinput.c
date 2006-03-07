@@ -142,8 +142,26 @@ static HRESULT WINAPI HTMLInputElement_put_type(IHTMLInputElement *iface, BSTR v
 static HRESULT WINAPI HTMLInputElement_get_type(IHTMLInputElement *iface, BSTR *p)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString type_str;
+    const PRUnichar *type;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&type_str, NULL);
+    nsres = nsIDOMHTMLInputElement_GetType(This->nsinput, &type_str);
+
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&type_str, &type, NULL);
+        *p = SysAllocString(type);
+    }else {
+        ERR("GetType failed: %08lx\n", nsres);
+    }
+
+    nsAString_Finish(&type_str);
+
+    TRACE("type=%s\n", debugstr_w(*p));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_value(IHTMLInputElement *iface, BSTR v)
@@ -156,8 +174,26 @@ static HRESULT WINAPI HTMLInputElement_put_value(IHTMLInputElement *iface, BSTR 
 static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR *p)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString value_str;
+    const PRUnichar *value;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&value_str, NULL);
+
+    nsres = nsIDOMHTMLInputElement_GetValue(This->nsinput, &value_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&value_str, &value, NULL);
+        *p = SysAllocString(value);
+    }else {
+        ERR("GetValue failed: %08lx\n", nsres);
+    }
+
+    nsAString_Finish(&value_str);
+
+    TRACE("value=%s\n", debugstr_w(value));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_name(IHTMLInputElement *iface, BSTR v)
@@ -170,8 +206,27 @@ static HRESULT WINAPI HTMLInputElement_put_name(IHTMLInputElement *iface, BSTR v
 static HRESULT WINAPI HTMLInputElement_get_name(IHTMLInputElement *iface, BSTR *p)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString name_str;
+    const PRUnichar *name;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&name_str, NULL);
+
+    nsres = nsIDOMHTMLInputElement_GetName(This->nsinput, &name_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&name_str, &name, NULL);
+        *p = SysAllocString(name);
+    }else {
+        ERR("GetName failed: %08lx\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_Finish(&name_str);
+
+    TRACE("name=%s\n", debugstr_w(*p));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_status(IHTMLInputElement *iface, VARIANT_BOOL v)
@@ -345,8 +400,20 @@ static HRESULT WINAPI HTMLInputElement_put_checked(IHTMLInputElement *iface, VAR
 static HRESULT WINAPI HTMLInputElement_get_checked(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRBool checked;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLInputElement_GetChecked(This->nsinput, &checked);
+    if(NS_FAILED(nsres)) {
+        ERR("GetChecked failed: %08lx\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = checked ? VARIANT_TRUE : VARIANT_FALSE;
+    TRACE("checked=%x\n", *p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_border(IHTMLInputElement *iface, VARIANT v)
