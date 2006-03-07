@@ -299,12 +299,12 @@ static void dump_varargs_debug_event( size_t size )
 /* dump a unicode string contained in a buffer; helper for dump_varargs_startup_info */
 static void dump_inline_unicode_string( const UNICODE_STRING *str, const void *data, size_t size )
 {
-    size_t length = str->Length / sizeof(WCHAR);
+    size_t length = str->Length;
     size_t offset = (size_t)str->Buffer;
 
     if (offset >= size) return;
     if (offset + length > size) length = size - offset;
-    dump_strW( (const WCHAR *)data + offset/sizeof(WCHAR), length, stderr, "\"\"" );
+    dump_strW( (const WCHAR *)data + offset/sizeof(WCHAR), length/sizeof(WCHAR), stderr, "\"\"" );
 }
 
 static void dump_varargs_startup_info( size_t size )
