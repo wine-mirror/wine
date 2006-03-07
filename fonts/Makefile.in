@@ -3,7 +3,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
-fontdir   = $(datadir)/fonts/wine
+fontdir   = $(datadir)/wine/fonts
 
 BITMAP_FONTS  = \
 	coue1255.fon \
