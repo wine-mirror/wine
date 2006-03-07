@@ -149,8 +149,26 @@ static HRESULT WINAPI HTMLTextAreaElement_put_value(IHTMLTextAreaElement *iface,
 static HRESULT WINAPI HTMLTextAreaElement_get_value(IHTMLTextAreaElement *iface, BSTR *p)
 {
     HTMLTextAreaElement *This = HTMLTXTAREA_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString value_str;
+    const PRUnichar *value;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&value_str, NULL);
+
+    nsres = nsIDOMHTMLTextAreaElement_GetValue(This->nstextarea, &value_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&value_str, &value, NULL);
+        *p = SysAllocString(value);
+    }else {
+        ERR("GetValue failed: %08lx\n", nsres);
+    }
+
+    nsAString_Finish(&value_str);
+
+    TRACE("%s\n", debugstr_w(*p));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTextAreaElement_put_name(IHTMLTextAreaElement *iface, BSTR v)
@@ -163,8 +181,26 @@ static HRESULT WINAPI HTMLTextAreaElement_put_name(IHTMLTextAreaElement *iface, 
 static HRESULT WINAPI HTMLTextAreaElement_get_name(IHTMLTextAreaElement *iface, BSTR *p)
 {
     HTMLTextAreaElement *This = HTMLTXTAREA_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString name_str;
+    const PRUnichar *name;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&name_str, NULL);
+
+    nsres = nsIDOMHTMLTextAreaElement_GetName(This->nstextarea, &name_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&name_str, &name, NULL);
+        *p = SysAllocString(name);
+    }else {
+        ERR("GetName failed: %08lx\n", nsres);
+    }
+
+    nsAString_Finish(&name_str);
+
+    TRACE("%s\n", debugstr_w(*p));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTextAreaElement_put_status(IHTMLTextAreaElement *iface, VARIANT v)
