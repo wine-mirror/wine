@@ -207,6 +207,8 @@ typedef struct tagPROFILE
     DWORD cbDataSize;
 } PROFILE, *PPROFILE, *LPPROFILE;
 
+#define ENUM_TYPE_VERSION   0x0300
+
 typedef struct tagENUMTYPEA
 {
     DWORD   dwSize;
@@ -254,6 +256,24 @@ typedef struct tagENUMTYPEW
     DWORD   dwCreator;
     DWORD   dwDeviceClass;
 } ENUMTYPEW, *PENUMTYPEW, *LPENUMTYPEW;
+
+#define ET_DEVICENAME       0x00000001
+#define ET_MEDIATYPE        0x00000002
+#define ET_DITHERMODE       0x00000004
+#define ET_RESOLUTION       0x00000008
+#define ET_CMMTYPE          0x00000010
+#define ET_CLASS            0x00000020
+#define ET_DATACOLORSPACE   0x00000040
+#define ET_CONNECTIONSPACE  0x00000080
+#define ET_SIGNATURE        0x00000100
+#define ET_PLATFORM         0x00000200
+#define ET_PROFILEFLAGS     0x00000400
+#define ET_MANUFACTURER     0x00000800
+#define ET_MODEL            0x00001000
+#define ET_ATTRIBUTES       0x00002000
+#define ET_RENDERINGINTENT  0x00004000
+#define ET_CREATOR          0x00008000
+#define ET_DEVICECLASS      0x00010000
 
 struct _tagCOLORMATCHSETUPA;
 struct _tagCOLORMATCHSETUPW;

@@ -114,22 +114,6 @@ BOOL WINAPI DisassociateColorProfileFromDeviceW( PCWSTR machine, PCWSTR profile,
     return TRUE;
 }
 
-BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer, PDWORD size,
-                                PDWORD number )
-{
-    FIXME( "( %p, %p, %p, %p, %p ) stub\n", machine, record, buffer, size, number );
-
-    return FALSE;
-}
-
-BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer, PDWORD size,
-                                PDWORD number )
-{
-    FIXME( "( %p, %p, %p, %p, %p ) stub\n", machine, record, buffer, size, number );
-
-    return FALSE;
-}
-
 DWORD WINAPI GenerateCopyFilePaths( LPCWSTR printer, LPCWSTR directory, LPBYTE clientinfo,
                                     DWORD level, LPWSTR sourcedir, LPDWORD sourcedirsize,
                                     LPWSTR targetdir, LPDWORD targetdirsize, DWORD flags )
