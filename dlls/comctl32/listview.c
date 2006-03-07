@@ -6211,7 +6211,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     if (infoPtr->dwStyle & LVS_OWNERDATA) return infoPtr->nItemCount++;
 
     /* make sure it's an item, and not a subitem; cannot insert a subitem */
-    if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iSubItem) return -1;
+    if (!lpLVItem || lpLVItem->iSubItem) return -1;
 
     if (!is_assignable_item(lpLVItem, infoPtr->dwStyle)) return -1;
 
@@ -6223,6 +6223,8 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
 
     is_sorted = (infoPtr->dwStyle & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) &&
 	        !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (LPSTR_TEXTCALLBACKW != lpLVItem->pszText);
+
+    if (lpLVItem->iItem < 0 && !is_sorted) return -1;
 
     nItem = is_sorted ? infoPtr->nItemCount : min(lpLVItem->iItem, infoPtr->nItemCount);
     TRACE(" inserting at %d, sorted=%d, count=%d, iItem=%d\n", nItem, is_sorted, infoPtr->nItemCount, lpLVItem->iItem);
