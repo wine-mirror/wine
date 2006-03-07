@@ -37,7 +37,7 @@
 #include <wine/debug.h>
 #include <wine/list.h>
 
-#include "systray.h"
+#include "explorer_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
@@ -127,8 +127,8 @@ static LRESULT WINAPI adaptor_wndproc(HWND window, UINT msg,
             ret = PostMessage(icon->owner, icon->callback_message, (WPARAM) icon->id, (LPARAM) msg);
             if (!ret && (GetLastError() == ERROR_INVALID_HANDLE))
             {
-                WINE_ERR("application window was destroyed without removing "
-                    "notification icon, removing automatically\n");
+                WINE_WARN("application window was destroyed without removing "
+                          "notification icon, removing automatically\n");
                 DestroyWindow(window);
             }
             return 0;
@@ -140,9 +140,6 @@ static LRESULT WINAPI adaptor_wndproc(HWND window, UINT msg,
             list_remove(&icon->entry);
             DestroyIcon(icon->image);
             HeapFree(GetProcessHeap(), 0, icon);
-
-            shell_refs--;
-            WINE_TRACE("shell now has %d refs\n", shell_refs);
             break;
     }
 
@@ -236,9 +233,6 @@ static void add_icon(const NOTIFYICONDATAW *nid)
     list_add_tail(&tray.icons, &icon->entry);
 
     modify_icon(nid);
-
-    shell_refs++;
-    WINE_TRACE("shell now has %d refs\n", shell_refs);
 }
 
 static void delete_icon(const NOTIFYICONDATAW *nid)
@@ -365,11 +359,9 @@ static BOOL is_systray_hidden(void)
 void initialize_systray(void)
 {
     WNDCLASSEX class;
-    HANDLE event;
     static const WCHAR classname[] = /* Shell_TrayWnd */ {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
     static const WCHAR winname[]   = /* Wine Systray Listener */
         {'W','i','n','e',' ','S','y','s','t','r','a','y',' ','L','i','s','t','e','n','e','r',0};
-    static const WCHAR    event_name[] = {'W','i','n','e','S','y','s','t','r','a','y','I','n','i','t','e','d',0};
 
     WINE_TRACE("initiaizing\n");
 
@@ -419,17 +411,4 @@ void initialize_systray(void)
         WINE_ERR("Could not create tray window\n");
         return;
     }
-
-    /* tell shell32 that we're ready */
-    event = OpenEventW(EVENT_MODIFY_STATE, FALSE, event_name);
-    if (event)
-    {
-        SetEvent(event);
-        CloseHandle(event);
-    }
-}
-
-void shutdown_systray(void)
-{
-    DestroyWindow(tray.window);
 }

@@ -22,5 +22,6 @@
 #define __WINE_EXPLORER_PRIVATE_H
 
 extern void manage_desktop(void);
+extern void initialize_systray(void);
 
 #endif  /* __WINE_EXPLORER_PRIVATE_H */

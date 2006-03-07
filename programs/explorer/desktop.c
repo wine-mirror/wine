@@ -69,6 +69,9 @@ void manage_desktop(void)
     SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
 
     WINE_TRACE( "explorer starting on hwnd %p\n", hwnd );
+
+    initialize_systray();
     while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
+
     WINE_TRACE( "explorer exiting for hwnd %p\n", hwnd );
 }

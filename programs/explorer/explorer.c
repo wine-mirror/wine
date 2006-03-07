@@ -24,15 +24,11 @@
 
 #include <wine/debug.h>
 #include "explorer_private.h"
-#include <systray.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
-unsigned int shell_refs = 0;
-
 typedef struct parametersTAG {
     BOOL    explorer_mode;
-    BOOL    systray_mode;
     BOOL    desktop_mode;
     WCHAR   root[MAX_PATH];
     WCHAR   selection[MAX_PATH];
@@ -139,11 +135,6 @@ static void ParseCommandLine(LPSTR commandline,parameters_struct *parameters)
                 CopyPathRoot(parameters->root,
                         parameters->selection);
         }
-        else if (strncmp(p,"systray",7)==0)
-        {
-            parameters->systray_mode = TRUE;
-            p+=7;
-        }
         else if (strncmp(p,"desktop",7)==0)
         {
             parameters->desktop_mode = TRUE;
@@ -157,44 +148,6 @@ static void ParseCommandLine(LPSTR commandline,parameters_struct *parameters)
         /* left over command line is generally the path to be opened */
         CopyPathString(parameters->root,p2);
     }
-}
-
-static void do_systray_loop(void)
-{
-    initialize_systray();
-
-    while (TRUE)
-    {
-        const int timeout = 5;
-        MSG message;
-        DWORD res;
-
-        res = MsgWaitForMultipleObjectsEx(0, NULL, shell_refs ? INFINITE : timeout * 1000,
-                                          QS_ALLINPUT, MWMO_WAITALL);
-        if (res == WAIT_TIMEOUT) break;
-
-        res = PeekMessage(&message, 0, 0, 0, PM_REMOVE);
-        if (!res) continue;
-
-        if (message.message == WM_QUIT)
-        {
-            WINE_FIXME("Somebody sent the shell a WM_QUIT message, should we reboot?");
-
-            /* Sending the tray window a WM_QUIT message is actually a
-            * tip given by some programming websites as a way of
-            * forcing a reboot! let's delay implementing this hack
-            * until we find a program that really needs it. for now
-            * just bail out.
-            */
-
-            break;
-        }
-
-        TranslateMessage(&message);
-        DispatchMessage(&message);
-    }
-
-    shutdown_systray();
 }
 
 int WINAPI WinMain(HINSTANCE hinstance,
@@ -217,11 +170,6 @@ int WINAPI WinMain(HINSTANCE hinstance,
     ParseCommandLine(cmdline,&parameters);
     len = lstrlenW(winefile) +1;
 
-    if (parameters.systray_mode)
-    {
-        do_systray_loop();
-        return 0;
-    }
     if (parameters.desktop_mode)
     {
         manage_desktop();

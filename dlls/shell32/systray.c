@@ -38,49 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
 const static WCHAR classname[] = /* Shell_TrayWnd */ {'S','h','e','l','l','_','T','r','a','y','W','n','d','\0'};
 
-/* start timeout of 1 second */
-#define SYSTRAY_START_TIMEOUT 1000
-
-static BOOL start_systray_process(void)
-{
-    STARTUPINFOW          sinfo;
-    PROCESS_INFORMATION   pinfo;
-    WCHAR                 command_line[] = {'e','x','p','l','o','r','e','r',' ','/','s','y','s','t','r','a','y',0};
-    static const WCHAR    event_name[] = {'W','i','n','e','S','y','s','t','r','a','y','I','n','i','t','e','d',0};
-    HANDLE                systray_ready_event;
-    DWORD                 wait;
-
-    TRACE("No tray window found, starting %s\n", debugstr_w(command_line));
-
-    ZeroMemory(&sinfo, sizeof(sinfo));
-    sinfo.cb = sizeof(sinfo);
-
-    if (CreateProcessW(NULL, command_line, NULL, NULL, FALSE, 0, NULL, NULL, &sinfo, &pinfo) == 0)
-    {
-        ERR("Could not start %s, error 0x%lx\n", debugstr_w(command_line), GetLastError());
-        return FALSE;
-    }
- 
-    CloseHandle(pinfo.hThread);
-    CloseHandle(pinfo.hProcess);
-
-    systray_ready_event = CreateEventW(NULL, TRUE, FALSE, event_name);
-    if (!systray_ready_event) return FALSE;
-
-    /* don't guess how long to wait, just wait for process to signal to us
-     * that it has created the Shell_TrayWnd class before continuing */
-    wait = WaitForSingleObject(systray_ready_event, SYSTRAY_START_TIMEOUT);
-    CloseHandle(systray_ready_event);
-
-    if (wait == WAIT_TIMEOUT)
-    {
-        ERR("timeout waiting for %s to start\n", debugstr_w(command_line));
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 /*************************************************************************
  * Shell_NotifyIcon			[SHELL32.296]
  * Shell_NotifyIconA			[SHELL32.297]
@@ -126,16 +83,6 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     TRACE("dwMessage = %ld\n", dwMessage);
 
     tray = FindWindowExW(0, NULL, classname, NULL);
-
-    /* this isn't how native does it - it assumes that Explorer is always
-     * running */
-    if (!tray)
-    {
-        if (!start_systray_process())
-            return FALSE;
-        tray = FindWindowExW(0, NULL, classname, NULL);
-    }
-
     if (!tray) return FALSE;
 
     cds.dwData = dwMessage;
