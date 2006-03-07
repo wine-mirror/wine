@@ -103,6 +103,16 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
         return NULL;
     }
 
+    if (!parent)  /* if parent is 0 we don't have a desktop window yet */
+    {
+        struct user_thread_info *thread_info = get_user_thread_info();
+
+        assert( !thread_info->desktop );
+        thread_info->desktop = full_parent ? full_parent : handle;
+        if (full_parent && !USER_Driver->pCreateDesktopWindow( thread_info->desktop ))
+            ERR( "failed to create desktop window\n" );
+    }
+
     USER_Lock();
 
     index = USER_HANDLE_TO_INDEX(handle);
@@ -946,7 +956,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             WARN("No parent for child window\n" );
             return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
         }
-        parent = GetDesktopWindow();
+        if (classAtom != LOWORD(DESKTOP_CLASS_ATOM))  /* are we creating the desktop itself? */
+            parent = GetDesktopWindow();
     }
 
     WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
@@ -1553,16 +1564,45 @@ HWND WINAPI GetDesktopWindow(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
 
+    if (thread_info->desktop) return thread_info->desktop;
+
+    SERVER_START_REQ( get_desktop_window )
+    {
+        req->force = 0;
+        if (!wine_server_call( req )) thread_info->desktop = reply->handle;
+    }
+    SERVER_END_REQ;
+
     if (!thread_info->desktop)
     {
+        STARTUPINFOW si;
+        PROCESS_INFORMATION pi;
+        WCHAR command_line[] = {'e','x','p','l','o','r','e','r','.','e','x','e',' ','/','d','e','s','k','t','o','p',0};
+
+        memset( &si, 0, sizeof(si) );
+        si.cb = sizeof(si);
+        if (CreateProcessW( NULL, command_line, NULL, NULL, FALSE, DETACHED_PROCESS,
+                            NULL, NULL, &si, &pi ))
+        {
+            TRACE( "started explorer pid %04lx tid %04lx\n", pi.dwProcessId, pi.dwThreadId );
+            WaitForInputIdle( pi.hProcess, 10000 );
+            CloseHandle( pi.hThread );
+            CloseHandle( pi.hProcess );
+
+        }
+        else WARN( "failed to start explorer, err %ld\n", GetLastError() );
+
         SERVER_START_REQ( get_desktop_window )
         {
+            req->force = 1;
             if (!wine_server_call( req )) thread_info->desktop = reply->handle;
         }
         SERVER_END_REQ;
-        if (!thread_info->desktop || !USER_Driver->pCreateDesktopWindow( thread_info->desktop ))
-            ERR( "failed to create desktop window\n" );
     }
+
+    if (!thread_info->desktop || !USER_Driver->pCreateDesktopWindow( thread_info->desktop ))
+        ERR( "failed to create desktop window\n" );
+
     return thread_info->desktop;
 }
 

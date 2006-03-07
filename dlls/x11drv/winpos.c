@@ -942,8 +942,6 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     RECT newPos = {0, 0, 0, 0};
     UINT swp = 0;
 
-    if (hwnd == GetDesktopWindow()) return FALSE;
-
     TRACE("hwnd=%p, cmd=%d, wasVisible %d\n", hwnd, cmd, wasVisible);
 
     switch(cmd)

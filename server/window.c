@@ -1459,7 +1459,7 @@ DECL_HANDLER(destroy_window)
 /* retrieve the desktop window for the current thread */
 DECL_HANDLER(get_desktop_window)
 {
-    struct window *win = get_desktop_window( current, 1 );
+    struct window *win = get_desktop_window( current, req->force );
 
     if (win) reply->handle = win->handle;
 }

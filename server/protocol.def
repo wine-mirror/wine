@@ -1804,6 +1804,7 @@ enum message_type
 
 /* Retrieve the desktop window for the current thread */
 @REQ(get_desktop_window)
+    int            force;       /* force creation if it doesn't exist */
 @REPLY
     user_handle_t  handle;      /* handle to the desktop window */
 @END

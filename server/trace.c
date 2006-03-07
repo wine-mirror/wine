@@ -2280,6 +2280,7 @@ static void dump_destroy_window_request( const struct destroy_window_request *re
 
 static void dump_get_desktop_window_request( const struct get_desktop_window_request *req )
 {
+    fprintf( stderr, " force=%d", req->force );
 }
 
 static void dump_get_desktop_window_reply( const struct get_desktop_window_reply *req )

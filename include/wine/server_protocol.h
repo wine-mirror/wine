@@ -2543,6 +2543,7 @@ struct destroy_window_reply
 struct get_desktop_window_request
 {
     struct request_header __header;
+    int            force;
 };
 struct get_desktop_window_reply
 {
@@ -4360,6 +4361,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 230
+#define SERVER_PROTOCOL_VERSION 231
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
