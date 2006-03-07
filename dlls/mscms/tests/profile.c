@@ -1,7 +1,7 @@
 /*
  * Tests for color profile functions
  *
- * Copyright 2004, 2005 Hans Leidekker
+ * Copyright 2004, 2005, 2006 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -42,6 +42,8 @@ static BOOL     (WINAPI *pGetColorProfileHeader)(HPROFILE,PPROFILEHEADER);
 static BOOL     (WINAPI *pGetCountColorProfileElements)(HPROFILE,PDWORD);
 static BOOL     (WINAPI *pGetStandardColorSpaceProfileA)(PCSTR,DWORD,PSTR,PDWORD);
 static BOOL     (WINAPI *pGetStandardColorSpaceProfileW)(PCWSTR,DWORD,PWSTR,PDWORD);
+static BOOL     (WINAPI *pEnumColorProfilesA)(PCSTR,PENUMTYPEA,PBYTE,PDWORD,PDWORD);
+static BOOL     (WINAPI *pEnumColorProfilesW)(PCWSTR,PENUMTYPEW,PBYTE,PDWORD,PDWORD);
 static BOOL     (WINAPI *pInstallColorProfileA)(PCSTR,PCSTR);
 static BOOL     (WINAPI *pInstallColorProfileW)(PCWSTR,PCWSTR);
 static BOOL     (WINAPI *pIsColorProfileTagPresent)(HPROFILE,TAGTYPE,PBOOL);
@@ -69,6 +71,8 @@ static BOOL init_function_ptrs( void )
     GETFUNCPTR( GetCountColorProfileElements )
     GETFUNCPTR( GetStandardColorSpaceProfileA )
     GETFUNCPTR( GetStandardColorSpaceProfileW )
+    GETFUNCPTR( EnumColorProfilesA )
+    GETFUNCPTR( EnumColorProfilesW )
     GETFUNCPTR( InstallColorProfileA )
     GETFUNCPTR( InstallColorProfileW )
     GETFUNCPTR( IsColorProfileTagPresent )
@@ -701,6 +705,102 @@ static void test_GetStandardColorSpaceProfileW(void)
     }
 }
 
+static void test_EnumColorProfilesA(void)
+{
+    BOOL ret;
+    DWORD size, number;
+    ENUMTYPEA record;
+    BYTE buffer[MAX_PATH];
+
+    /* Parameter checks */
+
+    size = sizeof(buffer);
+    memset( &record, 0, sizeof(ENUMTYPEA) );
+
+    record.dwSize = sizeof(ENUMTYPEA);
+    record.dwVersion = ENUM_TYPE_VERSION;
+    record.dwFields |= ET_DATACOLORSPACE;
+    record.dwDataColorSpace = SPACE_RGB;
+
+    ret = pEnumColorProfilesA( machine, &record, buffer, &size, &number );
+    ok( !ret, "EnumColorProfilesA() succeeded (%ld)\n", GetLastError() );
+
+    ret = pEnumColorProfilesA( NULL, NULL, buffer, &size, &number );
+    ok( !ret, "EnumColorProfilesA() succeeded (%ld)\n", GetLastError() );
+
+    ret = pEnumColorProfilesA( NULL, &record, buffer, NULL, &number );
+    ok( !ret, "EnumColorProfilesA() succeeded (%ld)\n", GetLastError() );
+
+    if (standardprofile)
+    {
+        ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
+        ok( ret, "EnumColorProfilesA() failed (%ld)\n", GetLastError() );
+    }
+
+    size = 0;
+
+    ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
+    ok( !ret, "EnumColorProfilesA() succeeded (%ld)\n", GetLastError() );
+
+    /* Functional checks */
+
+    if (standardprofile)
+    {
+        size = sizeof(buffer);
+
+        ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
+        ok( ret, "EnumColorProfilesA() failed (%ld)\n", GetLastError() );
+    }
+}
+
+static void test_EnumColorProfilesW(void)
+{
+    BOOL ret;
+    DWORD size, number;
+    ENUMTYPEW record;
+    BYTE buffer[MAX_PATH * sizeof(WCHAR)];
+
+    /* Parameter checks */
+
+    size = sizeof(buffer);
+    memset( &record, 0, sizeof(ENUMTYPEW) );
+
+    record.dwSize = sizeof(ENUMTYPEW);
+    record.dwVersion = ENUM_TYPE_VERSION;
+    record.dwFields |= ET_DATACOLORSPACE;
+    record.dwDataColorSpace = SPACE_RGB;
+
+    ret = pEnumColorProfilesW( machineW, &record, buffer, &size, &number );
+    ok( !ret, "EnumColorProfilesW() succeeded (%ld)\n", GetLastError() );
+
+    ret = pEnumColorProfilesW( NULL, NULL, buffer, &size, &number );
+    ok( !ret, "EnumColorProfilesW() succeeded (%ld)\n", GetLastError() );
+
+    ret = pEnumColorProfilesW( NULL, &record, buffer, NULL, &number );
+    ok( !ret, "EnumColorProfilesW() succeeded (%ld)\n", GetLastError() );
+
+    if (standardprofileW)
+    {
+        ret = pEnumColorProfilesW( NULL, &record, buffer, &size, NULL );
+        ok( ret, "EnumColorProfilesW() failed (%ld)\n", GetLastError() );
+    }
+
+    size = 0;
+
+    ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
+    ok( !ret, "EnumColorProfilesW() succeeded (%ld)\n", GetLastError() );
+
+    /* Functional checks */
+
+    if (standardprofileW)
+    {
+        size = sizeof(buffer);
+
+        ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
+        ok( ret, "EnumColorProfilesW() failed (%ld)\n", GetLastError() );
+    }
+}
+
 static void test_InstallColorProfileA(void)
 {
     BOOL ret;
@@ -1249,6 +1349,9 @@ START_TEST(profile)
 
     test_GetStandardColorSpaceProfileA();
     test_GetStandardColorSpaceProfileW();
+
+    test_EnumColorProfilesA();
+    test_EnumColorProfilesW();
 
     test_InstallColorProfileA();
     test_InstallColorProfileW();
