@@ -34,6 +34,11 @@
 
 #include "wgl_ext.h"
 #include "opengl_ext.h"
+#ifdef HAVE_GL_GLU_H
+#undef far
+#undef near
+#include <GL/glu.h>
+#endif
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -864,6 +869,212 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc,
   return TRUE;
 }
 
+#ifdef HAVE_GL_GLU_H
+
+static void fixed_to_double(POINTFX fixed, UINT em_size, GLdouble vertex[3])
+{
+    vertex[0] = (fixed.x.value + (GLdouble)fixed.x.fract / (1 << 16)) / em_size;  
+    vertex[1] = (fixed.y.value + (GLdouble)fixed.y.fract / (1 << 16)) / em_size;  
+    vertex[2] = 0.0;
+}
+
+static void tess_callback_vertex(GLvoid *vertex)
+{
+    GLdouble *dbl = vertex;
+    TRACE("%f, %f, %f\n", dbl[0], dbl[1], dbl[2]);
+    glVertex3dv(vertex);
+}
+
+static void tess_callback_begin(GLenum which)
+{
+    TRACE("%d\n", which);
+    glBegin(which);
+}
+
+static void tess_callback_end(void)
+{
+    TRACE("\n");
+    glEnd();
+}
+
+/***********************************************************************
+ *		wglUseFontOutlines_common
+ */
+BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
+                                      DWORD first,
+                                      DWORD count,
+                                      DWORD listBase,
+                                      FLOAT deviation,
+                                      FLOAT extrusion,
+                                      int format,
+                                      LPGLYPHMETRICSFLOAT lpgmf,
+                                      BOOL unicode)
+{
+    UINT glyph;
+    const MAT2 identity = {{0,1},{0,0},{0,0},{0,1}};
+    GLUtesselator *tess;
+    LOGFONTW lf;
+    HFONT old_font, unscaled_font;
+    UINT em_size = 1024;
+    RECT rc;
+
+    TRACE("(%p, %ld, %ld, %ld, %f, %f, %d, %p, %s)\n", hdc, first, count,
+          listBase, deviation, extrusion, format, lpgmf, unicode ? "W" : "A");
+
+
+    ENTER_GL();
+    tess = gluNewTess();
+    if(tess)
+    {
+        gluTessCallback(tess, GLU_TESS_VERTEX, (_GLUfuncptr)tess_callback_vertex);
+        gluTessCallback(tess, GLU_TESS_BEGIN, (_GLUfuncptr)tess_callback_begin);
+        gluTessCallback(tess, GLU_TESS_END, tess_callback_end);
+    }
+    LEAVE_GL();
+
+    if(!tess) return FALSE;
+
+    GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
+    rc.left = rc.right = rc.bottom = 0;
+    rc.top = em_size;
+    DPtoLP(hdc, (POINT*)&rc, 2);
+    lf.lfHeight = -abs(rc.top - rc.bottom);
+    lf.lfOrientation = lf.lfEscapement = 0;
+    unscaled_font = CreateFontIndirectW(&lf);
+    old_font = SelectObject(hdc, unscaled_font);
+
+    for (glyph = first; glyph < first + count; glyph++)
+    {
+        DWORD needed;
+        GLYPHMETRICS gm;
+        BYTE *buf;
+        TTPOLYGONHEADER *pph;
+        TTPOLYCURVE *ppc;
+        GLdouble *vertices;
+
+        if(unicode)
+            needed = GetGlyphOutlineW(hdc, glyph, GGO_NATIVE, &gm, 0, NULL, &identity);
+        else
+            needed = GetGlyphOutlineA(hdc, glyph, GGO_NATIVE, &gm, 0, NULL, &identity);
+
+        if(needed == GDI_ERROR)
+            goto error;
+
+        buf = HeapAlloc(GetProcessHeap(), 0, needed);
+        vertices = HeapAlloc(GetProcessHeap(), 0, needed / sizeof(POINTFX) * 3 * sizeof(GLdouble));
+
+        if(unicode)
+            GetGlyphOutlineW(hdc, glyph, GGO_NATIVE, &gm, needed, buf, &identity);
+        else
+            GetGlyphOutlineA(hdc, glyph, GGO_NATIVE, &gm, needed, buf, &identity);
+
+        TRACE("glyph %d\n", glyph);
+
+        if(lpgmf)
+        {
+            lpgmf->gmfBlackBoxX = gm.gmBlackBoxX / em_size;
+            lpgmf->gmfBlackBoxY = gm.gmBlackBoxY / em_size;
+            lpgmf->gmfptGlyphOrigin.x = gm.gmptGlyphOrigin.x / em_size;
+            lpgmf->gmfptGlyphOrigin.y = gm.gmptGlyphOrigin.y / em_size;
+            lpgmf->gmfCellIncX = gm.gmCellIncX / em_size;
+            lpgmf->gmfCellIncY = gm.gmCellIncY / em_size;
+            TRACE("%fx%f at %f,%f inc %f,%f\n", lpgmf->gmfBlackBoxX, lpgmf->gmfBlackBoxY,
+                  lpgmf->gmfptGlyphOrigin.x, lpgmf->gmfptGlyphOrigin.y, lpgmf->gmfCellIncX, lpgmf->gmfCellIncY); 
+            lpgmf++;
+        }
+
+	ENTER_GL();
+	glNewList(listBase++, GL_COMPILE);
+        gluTessBeginPolygon(tess, NULL);
+
+        pph = (TTPOLYGONHEADER*)buf;
+        while((BYTE*)pph < buf + needed)
+        {
+            TRACE("\tstart %d, %d\n", pph->pfxStart.x.value, pph->pfxStart.y.value);
+
+            gluTessBeginContour(tess);
+
+            fixed_to_double(pph->pfxStart, em_size, vertices);
+            gluTessVertex(tess, vertices, vertices);
+            vertices += 3;
+
+            ppc = (TTPOLYCURVE*)((char*)pph + sizeof(*pph));
+            while((char*)ppc < (char*)pph + pph->cb)
+            {
+                int i;
+
+                switch(ppc->wType) {
+                case TT_PRIM_LINE:
+                    for(i = 0; i < ppc->cpfx; i++)
+                    {
+                        TRACE("\t\tline to %d, %d\n", ppc->apfx[i].x.value, ppc->apfx[i].y.value);
+                        fixed_to_double(ppc->apfx[i], em_size, vertices); 
+                        gluTessVertex(tess, vertices, vertices);
+                        vertices += 3;
+                    }
+                    break;
+
+                case TT_PRIM_QSPLINE:
+                    for(i = 0; i < ppc->cpfx/2; i++)
+                    {
+                        /* FIXME just connecting the control points for now */
+                        TRACE("\t\tcurve  %d,%d %d,%d\n",
+                              ppc->apfx[i * 2].x.value,     ppc->apfx[i * 3].y.value,
+                              ppc->apfx[i * 2 + 1].x.value, ppc->apfx[i * 3 + 1].y.value);
+                        fixed_to_double(ppc->apfx[i * 2], em_size, vertices); 
+                        gluTessVertex(tess, vertices, vertices);
+                        vertices += 3;
+                        fixed_to_double(ppc->apfx[i * 2 + 1], em_size, vertices); 
+                        gluTessVertex(tess, vertices, vertices);
+                        vertices += 3;
+                    }
+                    break;
+                default:
+                    ERR("\t\tcurve type = %d\n", ppc->wType);
+                    gluTessEndContour(tess);
+                    goto error_in_list;
+                }
+
+                ppc = (TTPOLYCURVE*)((char*)ppc + sizeof(*ppc) +
+                                     (ppc->cpfx - 1) * sizeof(POINTFX));
+            }
+            gluTessEndContour(tess);
+            pph = (TTPOLYGONHEADER*)((char*)pph + pph->cb);
+        }
+
+error_in_list:
+        gluTessEndPolygon(tess);
+        glEndList();
+        LEAVE_GL();
+        HeapFree(GetProcessHeap(), 0, buf);
+        HeapFree(GetProcessHeap(), 0, vertices);
+    }
+
+ error:
+    DeleteObject(SelectObject(hdc, old_font));
+    gluDeleteTess(tess);
+    return TRUE;
+
+}
+
+#else /* HAVE_GL_GLU_H */
+
+BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
+                                      DWORD first,
+                                      DWORD count,
+                                      DWORD listBase,
+                                      FLOAT deviation,
+                                      FLOAT extrusion,
+                                      int format,
+                                      LPGLYPHMETRICSFLOAT lpgmf,
+                                      BOOL unicode)
+{
+    FIXME("Unable to compile in wglUseFontOutlines support without GL/glu.h\n");
+    return FALSE;
+}
+
+#endif /* HAVE_GL_GLU_H */
+
 /***********************************************************************
  *		wglUseFontOutlinesA (OPENGL32.@)
  */
@@ -874,10 +1085,24 @@ BOOL WINAPI wglUseFontOutlinesA(HDC hdc,
 				FLOAT deviation,
 				FLOAT extrusion,
 				int format,
-				LPGLYPHMETRICSFLOAT lpgmf) {
-  FIXME("(): stub !\n");
+				LPGLYPHMETRICSFLOAT lpgmf)
+{
+    return wglUseFontOutlines_common(hdc, first, count, listBase, deviation, extrusion, format, lpgmf, FALSE);
+}
 
-  return FALSE;
+/***********************************************************************
+ *		wglUseFontOutlinesW (OPENGL32.@)
+ */
+BOOL WINAPI wglUseFontOutlinesW(HDC hdc,
+				DWORD first,
+				DWORD count,
+				DWORD listBase,
+				FLOAT deviation,
+				FLOAT extrusion,
+				int format,
+				LPGLYPHMETRICSFLOAT lpgmf)
+{
+    return wglUseFontOutlines_common(hdc, first, count, listBase, deviation, extrusion, format, lpgmf, TRUE);
 }
 
 const GLubyte * internal_glGetString(GLenum name) {

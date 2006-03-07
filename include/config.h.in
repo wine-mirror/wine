@@ -206,6 +206,9 @@
 /* Define to 1 if you have the <GL/glext.h> header file. */
 #undef HAVE_GL_GLEXT_H
 
+/* Define to 1 if you have the <GL/glu.h> header file. */
+#undef HAVE_GL_GLU_H
+
 /* Define to 1 if you have the <GL/glx.h> header file. */
 #undef HAVE_GL_GLX_H
 

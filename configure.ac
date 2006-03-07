@@ -373,7 +373,7 @@ then
     dnl Check for the presence of OpenGL
     if test "x$with_opengl" != "xno"
     then
-	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glext.h,,,
+	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glext.h GL/glu.h,,,
 [#ifdef HAVE_GL_GLX_H
 # include <GL/glx.h>
 #endif])

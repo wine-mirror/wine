@@ -397,4 +397,4 @@
 @  stdcall wglUseFontBitmapsA(long long long long)
 @  stdcall wglUseFontBitmapsW(long long long long)
 @  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
-@  stub    wglUseFontOutlinesW
+@  stdcall wglUseFontOutlinesW(long long long long long long long ptr)
