@@ -170,8 +170,26 @@ static HRESULT WINAPI HTMLSelectElement_put_name(IHTMLSelectElement *iface, BSTR
 static HRESULT WINAPI HTMLSelectElement_get_name(IHTMLSelectElement *iface, BSTR *p)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString name_str;
+    const PRUnichar *name;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&name_str, NULL);
+
+    nsres = nsIDOMHTMLSelectElement_GetName(This->nsselect, &name_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&name_str, &name, NULL);
+        *p = SysAllocString(name);
+    }else {
+        ERR("GetName failed: %08lx\n", nsres);
+    }
+
+    nsAString_Finish(&name_str);
+
+    TRACE("name=%s\n", debugstr_w(name));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_get_options(IHTMLSelectElement *iface, IDispatch **p)
@@ -226,8 +244,26 @@ static HRESULT WINAPI HTMLSelectElement_put_value(IHTMLSelectElement *iface, BST
 static HRESULT WINAPI HTMLSelectElement_get_value(IHTMLSelectElement *iface, BSTR *p)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString value_str;
+    const PRUnichar *value;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&value_str, NULL);
+
+    nsres = nsIDOMHTMLSelectElement_GetValue(This->nsselect, &value_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&value_str, &value, NULL);
+        *p = SysAllocString(value);
+    }else {
+        ERR("GetValue failed: %08lx\n", nsres);
+    }
+
+    nsAString_Finish(&value_str);
+
+    TRACE("value=%s\n", debugstr_w(value));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_put_disabled(IHTMLSelectElement *iface, VARIANT_BOOL v)
