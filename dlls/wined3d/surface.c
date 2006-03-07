@@ -469,7 +469,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             }
         }
 
-    } else if (WINED3DUSAGE_RENDERTARGET & This->resource.usage && !(Flags&D3DLOCK_DISCARD)) { /* render surfaces */
+    } else if (WINED3DUSAGE_RENDERTARGET & This->resource.usage && !(Flags&WINED3DLOCK_DISCARD)) { /* render surfaces */
 
         GLint  prev_store;
         GLint  prev_read;
@@ -631,7 +631,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         FIXME("unsupported locking to surface surf@%p usage(%lu)\n", This, This->resource.usage);
     }
 
-    if (Flags & (D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY)) {
+    if (Flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)) {
         /* Don't dirtify */
     } else {
         IWineD3DBaseTexture *pBaseTexture;

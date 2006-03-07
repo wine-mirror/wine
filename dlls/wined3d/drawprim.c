@@ -2150,7 +2150,7 @@ void drawPrimitive(IWineD3DDevice *iface,
         if (primCounter >= 0) {
             D3DLOCKED_RECT r;
             char buffer[80];
-            IWineD3DSurface_LockRect(This->renderTarget, &r, NULL, D3DLOCK_READONLY);
+            IWineD3DSurface_LockRect(This->renderTarget, &r, NULL, WINED3DLOCK_READONLY);
             sprintf(buffer, "/tmp/backbuffer_%ld.tga", primCounter);
             TRACE("Saving screenshot %s\n", buffer);
             IWineD3DSurface_SaveSnapshot(This->renderTarget, buffer);

@@ -191,7 +191,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* 
         This->lockedBox.Back   = pBox->Back;
     }
 
-    if (Flags & (D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY)) {
+    if (Flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)) {
       /* Don't dirtify */
     } else {
       /**
