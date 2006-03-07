@@ -31,6 +31,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(actctx);
 
 
+#define ACTCTX_FLAGS_ALL (\
+ ACTCTX_FLAG_PROCESSOR_ARCHITECTURE_VALID |\
+ ACTCTX_FLAG_LANGID_VALID |\
+ ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID |\
+ ACTCTX_FLAG_RESOURCE_NAME_VALID |\
+ ACTCTX_FLAG_SET_PROCESS_DEFAULT |\
+ ACTCTX_FLAG_APPLICATION_NAME_VALID |\
+ ACTCTX_FLAG_SOURCE_IS_ASSEMBLYREF |\
+ ACTCTX_FLAG_HMODULE_VALID )
+
+#define ACTCTX_FAKE_HANDLE ((HANDLE) 0xf00baa)
+#define ACTCTX_FAKE_COOKIE ((ULONG_PTR) 0xf00bad)
+
 /***********************************************************************
  * CreateActCtxA (KERNEL32.@)
  *
@@ -38,8 +51,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
  */
 HANDLE WINAPI CreateActCtxA(PCACTCTXA pActCtx)
 {
-  FIXME("stub!\n");
-  return INVALID_HANDLE_VALUE;
+  FIXME("%p %08lx\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
+
+  if (!pActCtx)
+    return INVALID_HANDLE_VALUE;
+  if (pActCtx->cbSize != sizeof *pActCtx)
+    return INVALID_HANDLE_VALUE;
+  if (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL)
+    return INVALID_HANDLE_VALUE;
+  return ACTCTX_FAKE_HANDLE;
 }
 
 /***********************************************************************
@@ -49,8 +69,15 @@ HANDLE WINAPI CreateActCtxA(PCACTCTXA pActCtx)
  */
 HANDLE WINAPI CreateActCtxW(PCACTCTXW pActCtx)
 {
-  FIXME("stub!\n");
-  return INVALID_HANDLE_VALUE;
+  FIXME("%p %08lx\n", pActCtx, pActCtx ? pActCtx->dwFlags : 0);
+
+  if (!pActCtx)
+    return INVALID_HANDLE_VALUE;
+  if (pActCtx->cbSize != sizeof *pActCtx)
+    return INVALID_HANDLE_VALUE;
+  if (pActCtx->dwFlags & ~ACTCTX_FLAGS_ALL)
+    return INVALID_HANDLE_VALUE;
+  return ACTCTX_FAKE_HANDLE;
 }
 
 /***********************************************************************
@@ -60,8 +87,10 @@ HANDLE WINAPI CreateActCtxW(PCACTCTXW pActCtx)
  */
 BOOL WINAPI ActivateActCtx(HANDLE hActCtx, ULONG_PTR *ulCookie)
 {
-  FIXME("stub!\n");
-  return FALSE;
+  FIXME("%p %p\n", hActCtx, ulCookie );
+  if (ulCookie)
+    *ulCookie = ACTCTX_FAKE_COOKIE;
+  return TRUE;
 }
 
 /***********************************************************************
@@ -71,8 +100,10 @@ BOOL WINAPI ActivateActCtx(HANDLE hActCtx, ULONG_PTR *ulCookie)
  */
 BOOL WINAPI DeactivateActCtx(DWORD dwFlags, ULONG_PTR ulCookie)
 {
-  FIXME("stub!\n");
-  return FALSE;
+  FIXME("%08lx %08lx\n", dwFlags, ulCookie);
+  if (ulCookie != ACTCTX_FAKE_COOKIE)
+    return FALSE;
+  return TRUE;
 }
 
 /***********************************************************************
@@ -82,8 +113,9 @@ BOOL WINAPI DeactivateActCtx(DWORD dwFlags, ULONG_PTR ulCookie)
  */
 BOOL WINAPI GetCurrentActCtx(HANDLE* phActCtx)
 {
-  FIXME("stub!\n");
-  return FALSE;
+  FIXME("%p\n", phActCtx);
+  *phActCtx = ACTCTX_FAKE_HANDLE;
+  return TRUE;
 }
 
 /***********************************************************************
@@ -93,7 +125,7 @@ BOOL WINAPI GetCurrentActCtx(HANDLE* phActCtx)
  */
 void WINAPI AddRefActCtx(HANDLE hActCtx)
 {
-  FIXME("stub!\n");
+  FIXME("%p\n", hActCtx);
 }
 
 /***********************************************************************
@@ -103,7 +135,7 @@ void WINAPI AddRefActCtx(HANDLE hActCtx)
  */
 void WINAPI ReleaseActCtx(HANDLE hActCtx)
 {
-  FIXME("stub!\n");
+  FIXME("%p\n", hActCtx);
 }
 
 /***********************************************************************
@@ -113,8 +145,10 @@ void WINAPI ReleaseActCtx(HANDLE hActCtx)
  */
 BOOL WINAPI ZombifyActCtx(HANDLE hActCtx)
 {
-  FIXME("stub!\n");
-  return FALSE;
+  FIXME("%p\n", hActCtx);
+  if (hActCtx != ACTCTX_FAKE_HANDLE)
+    return FALSE;
+  return TRUE;
 }
 
 /***********************************************************************
