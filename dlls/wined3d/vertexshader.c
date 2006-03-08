@@ -948,13 +948,14 @@ inline static void vshader_program_add_input_param_swizzle(const DWORD param, in
     }
 }
 
-inline static void vshader_program_add_param(const DWORD param, int input, int is_color, char *hwLine, BOOL namedArrays, CHAR constantsUsedBitmap[]) {
-  /*static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" }; */
+inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, const DWORD param, BOOL is_input, char *hwLine) {
+  /* oPos, oFog and oPts in D3D */
   static const char* hwrastout_reg_names[] = { "result.position", "result.fogcoord", "result.pointsize" };
 
   DWORD reg = param & 0x00001FFF;
   DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
   char  tmpReg[255];
+  BOOL is_color = FALSE;
 
   if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) {
       strcat(hwLine, " -");
@@ -969,7 +970,7 @@ inline static void vshader_program_add_param(const DWORD param, int input, int i
     break;
   case D3DSPR_INPUT:
     /* if the attributes come in as named dcl's then use a named vertex (called namedVertexN) */
-    if (namedArrays) {
+    if (This->namedArrays) {
         sprintf(tmpReg, "namedVertex%lu", reg);
     } else {
     /* otherwise the input is on a numbered attribute so use opengl numbered attributes */
@@ -979,9 +980,9 @@ inline static void vshader_program_add_param(const DWORD param, int input, int i
     break;
   case D3DSPR_CONST:
     /* FIXME: some constants are named so we need a constants map*/
-    if (constantsUsedBitmap[reg] == VS_CONSTANT_CONSTANT) {
+    if (This->constantsUsedBitmap[reg] == VS_CONSTANT_CONSTANT) {
         if (param & D3DVS_ADDRMODE_RELATIVE) {
-            FIXME("Relitive addressing not expected for a named constant %lu\n", reg);
+            FIXME("Relative addressing not expected for a named constant %lu\n", reg);
         }
         sprintf(tmpReg, "const%lu", reg);
     } else {
@@ -1013,7 +1014,7 @@ inline static void vshader_program_add_param(const DWORD param, int input, int i
     break;
   }
 
-  if (!input) {
+  if (!is_input) {
     vshader_program_add_output_param_swizzle(param, is_color, hwLine);
   } else {
     vshader_program_add_input_param_swizzle(param, is_color, hwLine);
@@ -1560,7 +1561,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                     char tmpChar[80];
                     ++pToken;
                     sprintf(tmpLine, "ATTRIB ");
-                    vshader_program_add_param(*pToken, 0, 0, tmpLine, This->namedArrays, This->constantsUsedBitmap);
+                    vshader_program_add_param(This, *pToken, FALSE, tmpLine);
                     sprintf(tmpChar," = %s", attribName);
                     strcat(tmpLine, tmpChar);
                     strcat(tmpLine,";\n");
@@ -1612,12 +1613,12 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             }
         }
         if (curOpcode->num_params > 0) {
-            vshader_program_add_param(*pToken, 0, 0, tmpLine, This->namedArrays, This->constantsUsedBitmap);
+            vshader_program_add_param(This, *pToken, FALSE, tmpLine);
 
             ++pToken;
             for (i = 1; i < curOpcode->num_params; ++i) {
                 strcat(tmpLine, ",");
-                vshader_program_add_param(*pToken, 1, 0, tmpLine, This->namedArrays, This->constantsUsedBitmap);
+                vshader_program_add_param(This, *pToken, TRUE, tmpLine);
                 ++pToken;
             }
         }
