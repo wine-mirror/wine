@@ -1290,7 +1290,7 @@ DECLARE_INTERFACE_(IWineD3DSwapChain,IWineD3DBase)
     STDMETHOD(GetBackBuffer)(THIS_ UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) PURE;
     STDMETHOD(GetRasterStatus)(THIS_ D3DRASTER_STATUS *pRasterStatus) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ D3DDISPLAYMODE *pMode) PURE;
-    STDMETHOD(GetPresentParameters)(THIS_ D3DPRESENT_PARAMETERS *pPresentationParameters) PURE;
+    STDMETHOD(GetPresentParameters)(THIS_ WINED3DPRESENT_PARAMETERS *pPresentationParameters) PURE;
     STDMETHOD(SetGammaRamp)(THIS_ DWORD Flags, const D3DGAMMARAMP *pRamp) PURE;
     STDMETHOD(GetGammaRamp)(THIS_ D3DGAMMARAMP *pRamp) PURE;
 };

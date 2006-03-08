@@ -434,10 +434,22 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *iface, D3DPRESENT_PARAMETERS *pPresentationParameters) {
+HRESULT WINAPI IWineD3DSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *iface, WINED3DPRESENT_PARAMETERS *pPresentationParameters) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    FIXME("(%p) : copy\n", This);
-    memcpy(pPresentationParameters, &This->presentParms, sizeof(D3DPRESENT_PARAMETERS));
+    TRACE("(%p)\n", This);
+    *pPresentationParameters->BackBufferWidth = This->presentParms.BackBufferWidth;
+    *pPresentationParameters->BackBufferHeight = This->presentParms.BackBufferHeight;
+    *pPresentationParameters->BackBufferFormat = This->presentParms.BackBufferFormat;
+    *pPresentationParameters->BackBufferCount = This->presentParms.BackBufferCount;
+    *pPresentationParameters->MultiSampleType = This->presentParms.MultiSampleType;
+    *pPresentationParameters->MultiSampleQuality = This->presentParms.MultiSampleQuality;
+    *pPresentationParameters->SwapEffect = This->presentParms.SwapEffect;
+    *pPresentationParameters->hDeviceWindow = This->presentParms.hDeviceWindow;
+    *pPresentationParameters->Windowed = This->presentParms.Windowed;
+    *pPresentationParameters->EnableAutoDepthStencil = This->presentParms.EnableAutoDepthStencil;
+    *pPresentationParameters->Flags = This->presentParms.Flags;
+    *pPresentationParameters->FullScreen_RefreshRateInHz = This->presentParms.FullScreen_RefreshRateInHz;
+    *pPresentationParameters->PresentationInterval = This->presentParms.PresentationInterval;
     return D3D_OK;
 }
 
