@@ -969,6 +969,10 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_INPUT:
+    if (reg == This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE]
+        || reg == This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR]) {
+        is_color = TRUE;
+    }
     /* if the attributes come in as named dcl's then use a named vertex (called namedVertexN) */
     if (This->namedArrays) {
         sprintf(tmpReg, "namedVertex%lu", reg);
