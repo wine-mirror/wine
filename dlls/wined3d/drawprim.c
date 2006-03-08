@@ -1817,13 +1817,6 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
             drawStridedFast(iface, numberOfIndicies, glPrimType,
                         idxData, idxSize, minIndex, StartIdx);
 
-            /* check for any errors */
-            glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
-            if (errPos != -1) {
-                FIXME("HW VertexShader Error at position %d: %s\n",
-                      errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-            }
-
             /* disable any attribs */
             if(((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->declaredArrays) {
                 GLint maxAttribs;
