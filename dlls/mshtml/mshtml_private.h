@@ -212,6 +212,7 @@ nsIInputStream *create_nsstream(const char*,PRInt32);
 IHlink *Hlink_Create(void);
 
 void HTMLElement_Create(HTMLDOMNode*);
+void HTMLBodyElement_Create(HTMLElement*);
 void HTMLInputElement_Create(HTMLElement*);
 void HTMLSelectElement_Create(HTMLElement*);
 void HTMLTextAreaElement_Create(HTMLElement*);

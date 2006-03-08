@@ -464,6 +464,26 @@ interface nsIDOMWindow : nsISupports
 
 [
     object,
+    uuid(a6cf908e-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMHTMLBodyElement : nsIDOMHTMLElement
+{
+    nsresult GetALink(nsAString *aALink);
+    nsresult SetALink(const nsAString *aALink);
+    nsresult GetBackground(nsAString *aBackground);
+    nsresult SetBackground(const nsAString *aBackground);
+    nsresult GetBgColor(nsAString *aBgColor);
+    nsresult SetBgColor(const nsAString *aBgColor);
+    nsresult GetLink(nsAString *aLink);
+    nsresult SetLink(const nsAString *aLink);
+    nsresult GetText(nsAString *aText);
+    nsresult SetText(const nsAString *aText);
+    nsresult GetVLink(nsAString *aVLink);
+    nsresult SetVLink(const nsAString *aVLink);
+}
+
+[
+    object,
     uuid(a6cf9093-15b3-11d2-932e-00805f8add32)
 ]
 interface nsIDOMHTMLInputElement : nsIDOMHTMLElement

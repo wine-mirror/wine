@@ -10,6 +10,7 @@ EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
 	hlink.c \
+	htmlbody.c \
 	htmldoc.c \
 	htmldoc3.c \
 	htmlelem.c \
