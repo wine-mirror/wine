@@ -572,3 +572,144 @@ BOOL WINAPI CertRemoveEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
     }
     return ret;
 }
+
+BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
+ int *cNumOIDSs, LPSTR *rghOIDs, DWORD *pcbOIDs)
+{
+    BOOL ret = TRUE;
+    DWORD i, cbOIDs = 0;
+    BOOL allUsagesValid = TRUE;
+    CERT_ENHKEY_USAGE validUsages = { 0, NULL };
+
+    TRACE("(%ld, %p, %p, %p, %ld)\n", cCerts, *rghCerts, cNumOIDSs,
+     rghOIDs, *pcbOIDs);
+
+    for (i = 0; ret && i < cCerts; i++)
+    {
+        CERT_ENHKEY_USAGE usage;
+        DWORD size = sizeof(usage);
+
+        ret = CertGetEnhancedKeyUsage(rghCerts[i], 0, &usage, &size);
+        /* Success is deliberately ignored: it implies all usages are valid */
+        if (!ret && GetLastError() == ERROR_MORE_DATA)
+        {
+            PCERT_ENHKEY_USAGE pUsage = CryptMemAlloc(size);
+
+            allUsagesValid = FALSE;
+            if (pUsage)
+            {
+                ret = CertGetEnhancedKeyUsage(rghCerts[i], 0, pUsage, &size);
+                if (ret)
+                {
+                    if (!validUsages.cUsageIdentifier)
+                    {
+                        DWORD j;
+
+                        cbOIDs = pUsage->cUsageIdentifier * sizeof(LPSTR);
+                        validUsages.cUsageIdentifier = pUsage->cUsageIdentifier;
+                        for (j = 0; j < validUsages.cUsageIdentifier; j++)
+                            cbOIDs += lstrlenA(pUsage->rgpszUsageIdentifier[j])
+                             + 1;
+                        validUsages.rgpszUsageIdentifier =
+                         CryptMemAlloc(cbOIDs);
+                        if (validUsages.rgpszUsageIdentifier)
+                        {
+                            LPSTR nextOID = (LPSTR)
+                             ((LPBYTE)validUsages.rgpszUsageIdentifier +
+                             validUsages.cUsageIdentifier * sizeof(LPSTR));
+
+                            for (j = 0; j < validUsages.cUsageIdentifier; j++)
+                            {
+                                validUsages.rgpszUsageIdentifier[j] = nextOID;
+                                lstrcpyA(validUsages.rgpszUsageIdentifier[j],
+                                 pUsage->rgpszUsageIdentifier[j]);
+                                nextOID += lstrlenA(nextOID) + 1;
+                            }
+                        }
+                        else
+                            ret = FALSE;
+                    }
+                    else
+                    {
+                        DWORD j, k, validIndexes = 0, numRemoved = 0;
+
+                        /* Merge: build a bitmap of all the indexes of
+                         * validUsages.rgpszUsageIdentifier that are in pUsage.
+                         */
+                        for (j = 0; j < pUsage->cUsageIdentifier; j++)
+                        {
+                            for (k = 0; k < validUsages.cUsageIdentifier; k++)
+                            {
+                                if (!strcmp(pUsage->rgpszUsageIdentifier[j],
+                                 validUsages.rgpszUsageIdentifier[k]))
+                                {
+                                    validIndexes |= (1 << k);
+                                    break;
+                                }
+                            }
+                        }
+                        /* Merge by removing from validUsages those that are
+                         * not in the bitmap.
+                         */
+                        for (j = 0; j < validUsages.cUsageIdentifier; j++)
+                        {
+                            if (!(validIndexes & (1 << j)))
+                            {
+                                if (j < validUsages.cUsageIdentifier - 1)
+                                {
+                                    memcpy(&validUsages.rgpszUsageIdentifier[j],
+                                     &validUsages.rgpszUsageIdentifier[j +
+                                     numRemoved + 1],
+                                     (validUsages.cUsageIdentifier - numRemoved
+                                     - j - 1) * sizeof(LPSTR));
+                                    cbOIDs -= lstrlenA(
+                                     validUsages.rgpszUsageIdentifier[j]) + 1 +
+                                     sizeof(LPSTR);
+                                    numRemoved++;
+                                }
+                                else
+                                    validUsages.cUsageIdentifier--;
+                            }
+                        }
+                    }
+                }
+                CryptMemFree(pUsage);
+            }
+            else
+                ret = FALSE;
+        }
+    }
+    if (ret)
+    {
+        if (allUsagesValid)
+        {
+            *cNumOIDSs = -1;
+            *pcbOIDs = 0;
+        }
+        else
+        {
+            if (!rghOIDs || *pcbOIDs < cbOIDs)
+            {
+                *pcbOIDs = cbOIDs;
+                SetLastError(ERROR_MORE_DATA);
+                ret = FALSE;
+            }
+            else
+            {
+                LPSTR nextOID = (LPSTR)((LPBYTE)rghOIDs +
+                 validUsages.cUsageIdentifier * sizeof(LPSTR));
+
+                *pcbOIDs = cbOIDs;
+                *cNumOIDSs = validUsages.cUsageIdentifier;
+                for (i = 0; i < validUsages.cUsageIdentifier; i++)
+                {
+                    rghOIDs[i] = nextOID;
+                    lstrcpyA(nextOID, validUsages.rgpszUsageIdentifier[i]);
+                    nextOID += lstrlenA(nextOID) + 1;
+                }
+            }
+        }
+    }
+    CryptMemFree(validUsages.rgpszUsageIdentifier);
+    return ret;
+}
