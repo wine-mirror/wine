@@ -27,6 +27,8 @@ install install-dev:: $(MODULE)
 	$(MKINSTALLDIRS) $(DESTDIR)$(dlldir)
 	$(INSTALL_DATA) $(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)
 
+install-lib::
+
 uninstall::
 	$(RM) $(DESTDIR)$(dlldir)/$(MODULE)
 
