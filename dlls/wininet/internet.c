@@ -3743,7 +3743,8 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
         *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, Password);
     }
 
-    *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, HostName);
+    if (lpUrlComponents->lpszHostName)
+        *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, HostName);
 
     if (!url_uses_default_port(lpUrlComponents))
     {
@@ -3945,9 +3946,12 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         lpszUrl++;
     }
 
-    dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, HostName);
-    memcpy(lpszUrl, lpUrlComponents->lpszHostName, dwLen * sizeof(WCHAR));
-    lpszUrl += dwLen;
+    if (lpUrlComponents->lpszHostName)
+    {
+        dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, HostName);
+        memcpy(lpszUrl, lpUrlComponents->lpszHostName, dwLen * sizeof(WCHAR));
+        lpszUrl += dwLen;
+    }
 
     if (!url_uses_default_port(lpUrlComponents))
     {
