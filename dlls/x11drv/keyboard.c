@@ -1059,7 +1059,7 @@ static const WORD nonchar_key_scan[256] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x47, 0x4B, 0x48,              /* FF90 */
     0x4D, 0x50, 0x49, 0x51, 0x4F, 0x4C, 0x52, 0x53,              /* FF98 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFA0 */
-    0x00, 0x00, 0x37, 0x4E, /*?*/ 0, 0x4A, 0x53, 0x135,          /* FFA8 */
+    0x00, 0x00, 0x37, 0x4E, 0x53, 0x4A, 0x53, 0x135,             /* FFA8 */
     0x52, 0x4F, 0x50, 0x51, 0x4B, 0x4C, 0x4D, 0x47,              /* FFB0 */
     0x48, 0x49, 0x00, 0x00, 0x00, 0x00,                          /* FFB8 */
     /* function keys */
@@ -1089,8 +1089,9 @@ static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
     else
         XLookupString(e, buf, sizeof(buf), &keysym, NULL);
 
-    if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (keysym != 0xFFAF)
-	&& (e->state & NumLockMask))
+    if ((e->state & NumLockMask) &&
+        (keysym == XK_KP_Separator || keysym == XK_KP_Decimal ||
+         (keysym >= XK_KP_0 && keysym <= XK_KP_9)))
         /* Only the Keypad keys 0-9 and . send different keysyms
          * depending on the NumLock state */
         return nonchar_key_vkey[keysym & 0xFF];
@@ -2376,6 +2377,9 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 
     if (virtKey==VK_DECIMAL)
         e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
+
+    if (virtKey==VK_SEPARATOR)
+        e.keycode = XKeysymToKeycode(e.display, XK_KP_Separator);
 
     if (!e.keycode && virtKey != VK_NONAME)
       {
