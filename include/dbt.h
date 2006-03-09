@@ -78,6 +78,9 @@ typedef struct _DEV_BROADCAST_VOLUME
     WORD        dbcv_flags;
 } DEV_BROADCAST_VOLUME, *PDEV_BROADCAST_VOLUME;
 
+#define DBTF_MEDIA 0x0001
+#define DBTF_NET   0x0002
+
 typedef struct _DEV_BROADCAST_PORT_A
 {
     DWORD       dbcp_size;
