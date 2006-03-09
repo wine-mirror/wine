@@ -301,6 +301,14 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
             }
         }
     }
+
+    if (!domain_count)
+    {
+        TRACE("no cookies found for %s\n", debugstr_w(hostName));
+        SetLastError(ERROR_NO_MORE_ITEMS);
+        return FALSE;
+    }
+
     if (lpCookieData == NULL)
     {
 	cnt += 1; /* NULL */
@@ -308,9 +316,6 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 	TRACE("returning\n");
 	return TRUE;
     }
-
-    if (!domain_count)
-        return FALSE;
 
     *lpdwSize = (cnt + 1)*sizeof(WCHAR);
 

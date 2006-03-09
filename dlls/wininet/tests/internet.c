@@ -27,7 +27,7 @@
 
 #include "wine/test.h"
 
-void InternetQueryOptionA_test()
+static void InternetQueryOptionA_test(void)
 {
   HINTERNET hinet,hurl;
   DWORD len;
@@ -107,7 +107,20 @@ void InternetQueryOptionA_test()
   InternetCloseHandle(hinet);
 }
 
+static void test_get_cookie(void)
+{
+  DWORD len;
+  BOOL ret;
+
+  SetLastError(0xdeadbeef);
+  ret = InternetGetCookie("http://www.example.com", NULL, NULL, &len);
+  ok(!ret && GetLastError() == ERROR_NO_MORE_ITEMS,
+    "InternetGetCookie should have failed with %s and error %ld\n",
+    ret ? "TRUE" : "FALSE", GetLastError());
+}
+
 START_TEST(internet)
 {
   InternetQueryOptionA_test();
+  test_get_cookie();
 }
