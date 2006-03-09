@@ -3849,7 +3849,7 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
     LPWSTR urlW = NULL;
     URL_COMPONENTSW urlCompW;
 
-    TRACE("(%p,%ld,%s,%p)\n", lpUrlComponents, dwFlags, debugstr_a(lpszUrl), lpdwUrlLength);
+    TRACE("(%p,%ld,%p,%p)\n", lpUrlComponents, dwFlags, lpszUrl, lpdwUrlLength);
 
     if (!lpUrlComponents)
         return FALSE;
@@ -3900,7 +3900,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
     static const WCHAR colonSlashW[] = {':','/','/'};
     static const WCHAR percentD[] = {'%','d',0};
 
-    TRACE("(%p,%ld,%s,%p)\n", lpUrlComponents, dwFlags, debugstr_w(lpszUrl), lpdwUrlLength);
+    TRACE("(%p,%ld,%p,%p)\n", lpUrlComponents, dwFlags, lpszUrl, lpdwUrlLength);
 
     if (!lpUrlComponents)
         return FALSE;
