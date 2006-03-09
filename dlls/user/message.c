@@ -32,6 +32,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "dbt.h"
 #include "dde.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
@@ -603,6 +604,12 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_MDIGETACTIVE:
         if (lparam) return sizeof(BOOL);
         return 0;
+    case WM_DEVICECHANGE:
+    {
+        DEV_BROADCAST_HDR *header = (DEV_BROADCAST_HDR *)lparam;
+        push_data( data, header, header->dbch_size );
+        return 0;
+    }
     case WM_WINE_SETWINDOWPOS:
         push_data( data, (WINDOWPOS *)lparam, sizeof(WINDOWPOS) );
         return 0;
@@ -646,7 +653,6 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_DRAGLOOP:
     case WM_DRAGSELECT:
     case WM_DRAGMOVE:
-    case WM_DEVICECHANGE:
         FIXME( "msg %x (%s) not supported yet\n", message, SPY_GetMsgName(message, hwnd) );
         data->count = -1;
         return 0;
@@ -864,6 +870,9 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!*lparam) return TRUE;
         if (!get_buffer_space( buffer, sizeof(BOOL) )) return FALSE;
         break;
+    case WM_DEVICECHANGE:
+        minsize = sizeof(DEV_BROADCAST_HDR);
+        break;
     case WM_WINE_KEYBOARD_LL_HOOK:
         minsize = sizeof(KBDLLHOOKSTRUCT);
         break;
@@ -904,7 +913,6 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_DRAGLOOP:
     case WM_DRAGSELECT:
     case WM_DRAGMOVE:
-    case WM_DEVICECHANGE:
         FIXME( "msg %x (%s) not supported yet\n", message, SPY_GetMsgName(message, hwnd) );
         return FALSE;
 
