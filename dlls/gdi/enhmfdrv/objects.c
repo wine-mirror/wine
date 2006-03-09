@@ -401,16 +401,21 @@ static HPEN EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen )
     if (!GetObjectW( hPen, sizeof(emr.lopn), &emr.lopn ))
     {
         /* must be an extended pen */
-        EXTLOGPEN elp;
-        if (!GetObjectW( hPen, sizeof(elp), &elp ))
-        {
-            FIXME("extended pen %p not supported\n", hPen);
-            return 0;
-        }
-        emr.lopn.lopnStyle = elp.elpPenStyle;
-        emr.lopn.lopnWidth.x = elp.elpWidth;
+        EXTLOGPEN *elp;
+        INT size = GetObjectW( hPen, 0, NULL );
+
+        if (!size) return 0;
+
+        elp = HeapAlloc( GetProcessHeap(), 0, size );
+
+        GetObjectW( hPen, size, elp );
+        /* FIXME: add support for user style pens */
+        emr.lopn.lopnStyle = elp->elpPenStyle;
+        emr.lopn.lopnWidth.x = elp->elpWidth;
         emr.lopn.lopnWidth.y = 0;
-        emr.lopn.lopnColor = elp.elpColor;
+        emr.lopn.lopnColor = elp->elpColor;
+
+        HeapFree( GetProcessHeap(), 0, elp );
     }
 
     emr.emr.iType = EMR_CREATEPEN;

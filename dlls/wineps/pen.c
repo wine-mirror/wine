@@ -44,16 +44,21 @@ HPEN PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
     if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
     {
         /* must be an extended pen */
-        EXTLOGPEN elp;
-        if (!GetObjectW( hpen, sizeof(elp), &elp ))
-        {
-            FIXME("extended pen %p not supported\n", hpen);
-            return 0;
-        }
-        logpen.lopnStyle = elp.elpPenStyle;
-        logpen.lopnWidth.x = elp.elpWidth;
+        EXTLOGPEN *elp;
+        INT size = GetObjectW( hpen, 0, NULL );
+
+        if (!size) return 0;
+
+        elp = HeapAlloc( GetProcessHeap(), 0, size );
+
+        GetObjectW( hpen, size, elp );
+        /* FIXME: add support for user style pens */
+        logpen.lopnStyle = elp->elpPenStyle;
+        logpen.lopnWidth.x = elp->elpWidth;
         logpen.lopnWidth.y = 0;
-        logpen.lopnColor = elp.elpColor;
+        logpen.lopnColor = elp->elpColor;
+
+        HeapFree( GetProcessHeap(), 0, elp );
     }
 
     TRACE("hpen = %p colour = %08lx\n", hpen, logpen.lopnColor);
