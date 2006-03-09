@@ -96,7 +96,7 @@ void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
     return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
-D3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
+WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 
@@ -204,9 +204,9 @@ HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* 
       if (NULL != This->container) {
 
         IWineD3DVolumeTexture *cont = (IWineD3DVolumeTexture*) This->container;
-        D3DRESOURCETYPE containerType = IWineD3DBaseTexture_GetType((IWineD3DBaseTexture *) cont);
+        WINED3DRESOURCETYPE containerType = IWineD3DBaseTexture_GetType((IWineD3DBaseTexture *) cont);
 
-        if (containerType == D3DRTYPE_VOLUMETEXTURE) {
+        if (containerType == WINED3DRTYPE_VOLUMETEXTURE) {
           IWineD3DBaseTextureImpl* pTexture = (IWineD3DBaseTextureImpl*) cont;
           pTexture->baseTexture.dirty = TRUE;
         } else {

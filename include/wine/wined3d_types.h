@@ -451,10 +451,24 @@ typedef struct _WINED3DPRESENT_PARAMETERS {
     UINT                *PresentationInterval;
 } WINED3DPRESENT_PARAMETERS;
 
+typedef enum _WINED3DRESOURCETYPE {
+    WINED3DRTYPE_SURFACE                =  1,
+    WINED3DRTYPE_VOLUME                 =  2,
+    WINED3DRTYPE_TEXTURE                =  3,
+    WINED3DRTYPE_VOLUMETEXTURE          =  4,
+    WINED3DRTYPE_CUBETEXTURE            =  5,
+    WINED3DRTYPE_VERTEXBUFFER           =  6,
+    WINED3DRTYPE_INDEXBUFFER            =  7,
+
+    WINED3DRTYPE_FORCE_DWORD            = 0x7fffffff
+} WINED3DRESOURCETYPE;
+
+#define WINED3DRTYPECOUNT (WINED3DRTYPE_INDEXBUFFER+1)
+
 typedef struct _WINED3DSURFACE_DESC
 {
-    WINED3DFORMAT           *Format;
-    D3DRESOURCETYPE     *Type;
+    WINED3DFORMAT       *Format;
+    WINED3DRESOURCETYPE *Type;
     DWORD               *Usage;
     D3DPOOL             *Pool;
     UINT                *Size;
@@ -468,7 +482,7 @@ typedef struct _WINED3DSURFACE_DESC
 typedef struct _WINED3DVOLUME_DESC
 {
     WINED3DFORMAT       *Format;
-    D3DRESOURCETYPE     *Type;
+    WINED3DRESOURCETYPE *Type;
     DWORD               *Usage;
     D3DPOOL             *Pool;
     UINT                *Size;
@@ -564,20 +578,6 @@ typedef struct WINED3DRESOURCESTATS {
     DWORD               TotalManaged;
     DWORD               TotalBytes;
 } WINED3DRESOURCESTATS;
-
-typedef enum _WINED3DRESOURCETYPE {
-    WINED3DRTYPE_SURFACE                =  1,
-    WINED3DRTYPE_VOLUME                 =  2,
-    WINED3DRTYPE_TEXTURE                =  3,
-    WINED3DRTYPE_VOLUMETEXTURE          =  4,
-    WINED3DRTYPE_CUBETEXTURE            =  5,
-    WINED3DRTYPE_VERTEXBUFFER           =  6,
-    WINED3DRTYPE_INDEXBUFFER            =  7,
-
-    WINED3DRTYPE_FORCE_DWORD            = 0x7fffffff
-} WINED3DRESOURCETYPE;
-
-#define WINED3DRTYPECOUNT (WINED3DRTYPE_INDEXBUFFER+1)
 
 typedef struct _WINED3DDEVINFO_RESOURCEMANAGER {
     WINED3DRESOURCESTATS stats[WINED3DRTYPECOUNT];

@@ -162,7 +162,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFAC
     /* As d3d8 and d3d8 structures differ, pass in ptrs to where data needs to go */
     memset(&wined3ddesc, 0, sizeof(wined3ddesc));
     wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
-    wined3ddesc.Type                = &pDesc->Type;
+    wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
     wined3ddesc.Pool                = &pDesc->Pool;
     wined3ddesc.Size                = &tmpInt;

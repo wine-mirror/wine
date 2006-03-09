@@ -141,7 +141,7 @@ void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     return ;
 }
 
-D3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DTexture *iface) {
+WINED3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DTexture *iface) {
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 

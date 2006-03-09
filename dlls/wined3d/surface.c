@@ -159,7 +159,7 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     return;
 }
 
-D3DRESOURCETYPE WINAPI IWineD3DSurfaceImpl_GetType(IWineD3DSurface *iface) {
+WINED3DRESOURCETYPE WINAPI IWineD3DSurfaceImpl_GetType(IWineD3DSurface *iface) {
     TRACE("(%p) : calling resourceimpl_GetType\n", iface);
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }

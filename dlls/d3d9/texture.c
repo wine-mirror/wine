@@ -160,7 +160,7 @@ HRESULT WINAPI IDirect3DTexture9Impl_GetLevelDesc(LPDIRECT3DTEXTURE9 iface, UINT
 
     /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
     wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
-    wined3ddesc.Type                = &pDesc->Type;
+    wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
     wined3ddesc.Pool                = &pDesc->Pool;
     wined3ddesc.Size                = &tmpInt; /* required for d3d8 */

@@ -592,7 +592,7 @@ typedef struct IWineD3DResourceClass
 
     /* WineD3DResource Information */
     IUnknown               *parent;
-    D3DRESOURCETYPE         resourceType;
+    WINED3DRESOURCETYPE     resourceType;
     IWineD3DDeviceImpl     *wineD3DDevice;
     D3DPOOL                 pool;
     UINT                    size;
@@ -1062,7 +1062,7 @@ extern IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;
 /* Trace routines */
 const char* debug_d3dformat(WINED3DFORMAT fmt);
 const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
-const char* debug_d3dresourcetype(D3DRESOURCETYPE res);
+const char* debug_d3dresourcetype(WINED3DRESOURCETYPE res);
 const char* debug_d3dusage(DWORD usage);
 const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
 const char* debug_d3drenderstate(DWORD state);
@@ -1101,7 +1101,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
     extern DWORD WINAPI IWineD3DResourceImpl_SetPriority(IWineD3DResource *iface, DWORD  PriorityNew);
     extern DWORD WINAPI IWineD3DResourceImpl_GetPriority(IWineD3DResource *iface);
     extern void WINAPI IWineD3DResourceImpl_PreLoad(IWineD3DResource *iface);
-    extern D3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface);
+    extern WINED3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface);
     /*** class static members ***/
     void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface);
 
@@ -1118,7 +1118,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
     extern DWORD WINAPI IWineD3DBaseTextureImpl_SetPriority(IWineD3DBaseTexture *iface, DWORD  PriorityNew);
     extern DWORD WINAPI IWineD3DBaseTextureImpl_GetPriority(IWineD3DBaseTexture *iface);
     extern void WINAPI IWineD3DBaseTextureImpl_PreLoad(IWineD3DBaseTexture *iface);
-    extern D3DRESOURCETYPE WINAPI IWineD3DBaseTextureImpl_GetType(IWineD3DBaseTexture *iface);
+    extern WINED3DRESOURCETYPE WINAPI IWineD3DBaseTextureImpl_GetType(IWineD3DBaseTexture *iface);
     /*** IWineD3DBaseTexture methods ***/
     extern DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LODNew);
     extern DWORD WINAPI IWineD3DBaseTextureImpl_GetLOD(IWineD3DBaseTexture *iface);

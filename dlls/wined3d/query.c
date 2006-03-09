@@ -114,7 +114,7 @@ HRESULT WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWOR
     {
         WINED3DDEVINFO_RESOURCEMANAGER *data = (WINED3DDEVINFO_RESOURCEMANAGER *)pData;
         int i;
-        for(i = 0; i < D3DRTYPECOUNT; i++){
+        for(i = 0; i < WINED3DRTYPECOUNT; i++){
             /*I'm setting the default values to 1 so as to reduce the risk of a div/0 in the caller*/
             /*  isTextureResident could be used to get some of this infomration  */
             data->stats[i].bThrashing            = FALSE;

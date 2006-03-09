@@ -255,7 +255,7 @@ DECLARE_INTERFACE_(IWineD3D, IWineD3DBase)
     STDMETHOD(CheckDeviceMultiSampleType)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DFORMAT  SurfaceFormat, BOOL  Windowed, D3DMULTISAMPLE_TYPE  MultiSampleType, DWORD *pQuality) PURE;
     STDMETHOD(CheckDepthStencilMatch)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DFORMAT  AdapterFormat, WINED3DFORMAT  RenderTargetFormat, WINED3DFORMAT  DepthStencilFormat) PURE;
     STDMETHOD(CheckDeviceType)(THIS_ UINT  Adapter, D3DDEVTYPE  CheckType, WINED3DFORMAT  DisplayFormat, WINED3DFORMAT  BackBufferFormat, BOOL  Windowed) PURE;
-    STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DFORMAT  AdapterFormat, DWORD  Usage, D3DRESOURCETYPE  RType, WINED3DFORMAT  CheckFormat) PURE;
+    STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DFORMAT  AdapterFormat, DWORD  Usage, WINED3DRESOURCETYPE  RType, WINED3DFORMAT  CheckFormat) PURE;
     STDMETHOD(CheckDeviceFormatConversion)(THIS_ UINT Adapter, D3DDEVTYPE DeviceType, WINED3DFORMAT SourceFormat, WINED3DFORMAT TargetFormat) PURE;
     STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DCAPS *pCaps) PURE;
     STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS *pPresentationParameters, struct IWineD3DDevice **ppReturnedDeviceInterface, IUnknown *parent, D3DCB_CREATEADDITIONALSWAPCHAIN pFn3) PURE;
@@ -306,7 +306,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,struct IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateIndexBuffer)(THIS_ UINT Length, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DIndexBuffer** ppIndexBuffer, HANDLE* pSharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateStateBlock)(THIS_ WINED3DSTATEBLOCKTYPE Type, struct IWineD3DStateBlock **ppStateBlock, IUnknown *parent) PURE;
-    STDMETHOD(CreateSurface)(THIS_ UINT Width, UINT Height, WINED3DFORMAT Format,  BOOL Lockable, BOOL Discard, UINT Level,  struct IWineD3DSurface** ppSurface, D3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality,  HANDLE* pSharedHandle, IUnknown *parent) PURE;    
+    STDMETHOD(CreateSurface)(THIS_ UINT Width, UINT Height, WINED3DFORMAT Format,  BOOL Lockable, BOOL Discard, UINT Level,  struct IWineD3DSurface** ppSurface, WINED3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality,  HANDLE* pSharedHandle, IUnknown *parent) PURE;    
     STDMETHOD(CreateTexture)(THIS_ UINT Width, UINT Height, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DTexture** ppTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
     STDMETHOD(CreateVolumeTexture)(THIS_ UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DVolumeTexture** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATEVOLUMEFN pFn) PURE;
     STDMETHOD(CreateVolume)(THIS_ UINT Width, UINT Height, UINT Depth, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DVolume** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent) PURE;
@@ -588,7 +588,7 @@ DECLARE_INTERFACE_(IWineD3DResource,IWineD3DBase)
     STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
     STDMETHOD_(void,PreLoad)(THIS) PURE;
-    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    STDMETHOD_(WINED3DRESOURCETYPE,GetType)(THIS) PURE;
 };
 #undef INTERFACE
 
@@ -630,7 +630,7 @@ DECLARE_INTERFACE_(IWineD3DVertexBuffer,IWineD3DResource)
     STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
     STDMETHOD_(void,PreLoad)(THIS) PURE;
-    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    STDMETHOD_(WINED3DRESOURCETYPE,GetType)(THIS) PURE;
     /*** IWineD3DVertexBuffer methods ***/
     STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE;
     STDMETHOD(Unlock)(THIS) PURE;
@@ -680,7 +680,7 @@ DECLARE_INTERFACE_(IWineD3DIndexBuffer,IWineD3DResource)
     STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
     STDMETHOD_(void,PreLoad)(THIS) PURE;
-    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    STDMETHOD_(WINED3DRESOURCETYPE,GetType)(THIS) PURE;
     /*** IWineD3DIndexBuffer methods ***/
     STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE;
     STDMETHOD(Unlock)(THIS) PURE;
@@ -732,7 +732,7 @@ DECLARE_INTERFACE_(IWineD3DBaseTexture,IWineD3DResource)
     STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
     STDMETHOD_(void,PreLoad)(THIS) PURE;
-    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    STDMETHOD_(WINED3DRESOURCETYPE,GetType)(THIS) PURE;
     /*** IWineD3DBaseTexture methods ***/
     STDMETHOD_(DWORD, SetLOD)(THIS_ DWORD LODNew) PURE;
     STDMETHOD_(DWORD, GetLOD)(THIS) PURE;
@@ -802,7 +802,7 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
     STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
     STDMETHOD_(void,PreLoad)(THIS) PURE;
-    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    STDMETHOD_(WINED3DRESOURCETYPE,GetType)(THIS) PURE;
     /*** IWineD3DBaseTexture methods ***/
     STDMETHOD_(DWORD, SetLOD)(THIS_ DWORD LODNew) PURE;
     STDMETHOD_(DWORD, GetLOD)(THIS) PURE;
@@ -882,7 +882,7 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
     STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
     STDMETHOD_(void,PreLoad)(THIS) PURE;
-    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    STDMETHOD_(WINED3DRESOURCETYPE,GetType)(THIS) PURE;
     /*** IWineD3DBaseTexture methods ***/
     STDMETHOD_(DWORD, SetLOD)(THIS_ DWORD LODNew) PURE;
     STDMETHOD_(DWORD, GetLOD)(THIS) PURE;
@@ -963,7 +963,7 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
     STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
     STDMETHOD_(void,PreLoad)(THIS) PURE;
-    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    STDMETHOD_(WINED3DRESOURCETYPE,GetType)(THIS) PURE;
     /*** IWineD3DBaseTexture methods ***/
     STDMETHOD_(DWORD, SetLOD)(THIS_ DWORD LODNew) PURE;
     STDMETHOD_(DWORD, GetLOD)(THIS) PURE;
@@ -1043,7 +1043,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
     STDMETHOD_(void,PreLoad)(THIS) PURE;
-    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    STDMETHOD_(WINED3DRESOURCETYPE,GetType)(THIS) PURE;
     /*** IWineD3DSurface methods ***/
     STDMETHOD(GetContainerParent)(THIS_ IUnknown **ppContainerParent) PURE;
     STDMETHOD(GetContainer)(THIS_ REFIID  riid, void ** ppContainer) PURE;
@@ -1123,7 +1123,7 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
     STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
     STDMETHOD_(void,PreLoad)(THIS) PURE;
-    STDMETHOD_(D3DRESOURCETYPE, GetType)(THIS) PURE;    
+    STDMETHOD_(WINED3DRESOURCETYPE, GetType)(THIS) PURE;    
     /*** IWineD3DVolume methods ***/    
     STDMETHOD(GetContainerParent)(THIS_ IUnknown **ppContainerParent) PURE;
     STDMETHOD(GetContainer)(THIS_ REFIID  riid, void ** ppContainer) PURE;

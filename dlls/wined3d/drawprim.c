@@ -1646,9 +1646,9 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                    numcoords[textureNo]    = This->stateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & ~D3DTTFF_PROJECTED;
                } else {
                    switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->stateBlock->textures[textureNo])) {
-                   case D3DRTYPE_TEXTURE:       numcoords[textureNo] = 2; break;
-                   case D3DRTYPE_VOLUMETEXTURE: numcoords[textureNo] = 3; break;
-                   default:                     numcoords[textureNo] = 4;
+                   case WINED3DRTYPE_TEXTURE:       numcoords[textureNo] = 2; break;
+                   case WINED3DRTYPE_VOLUMETEXTURE: numcoords[textureNo] = 3; break;
+                   default:                         numcoords[textureNo] = 4;
                    }
                }
             } else {
@@ -2197,7 +2197,7 @@ void drawPrimitive(IWineD3DDevice *iface,
                 if (This->stateBlock->textures[textureNo] != NULL) {
                     sprintf(buffer, "/tmp/texture_%p_%ld_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
                     TRACE("Saving texture %s\n", buffer);
-                    if (IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]) == D3DRTYPE_TEXTURE) {
+                    if (IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]) == WINED3DRTYPE_TEXTURE) {
                             IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)This->stateBlock->textures[textureNo], 0, &pSur);
                             IWineD3DSurface_SaveSnapshot(pSur, buffer);
                             IWineD3DSurface_Release(pSur);

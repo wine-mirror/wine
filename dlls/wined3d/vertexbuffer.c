@@ -93,7 +93,7 @@ void     WINAPI        IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
-D3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface) {
+WINED3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface) {
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 

@@ -94,7 +94,7 @@ void     WINAPI        IWineD3DIndexBufferImpl_PreLoad(IWineD3DIndexBuffer *ifac
     return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
-D3DRESOURCETYPE WINAPI IWineD3DIndexBufferImpl_GetType(IWineD3DIndexBuffer *iface) {
+WINED3DRESOURCETYPE WINAPI IWineD3DIndexBufferImpl_GetType(IWineD3DIndexBuffer *iface) {
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 
