@@ -1123,6 +1123,30 @@ LOAD_FUNCPTR(FcPatternGet);
     return;
 }
 
+static BOOL load_font_from_data_dir(LPCWSTR file)
+{
+    BOOL ret = FALSE;
+    const char *data_dir = wine_get_data_dir();
+
+    if (data_dir)
+    {
+        INT len;
+        char *unix_name;
+
+        len = WideCharToMultiByte(CP_UNIXCP, 0, file, -1, NULL, 0, NULL, NULL);
+
+        unix_name = HeapAlloc(GetProcessHeap(), 0, strlen(data_dir) + len + sizeof("/fonts/"));
+
+        strcpy(unix_name, data_dir);
+        strcat(unix_name, "/fonts/");
+
+        WideCharToMultiByte(CP_UNIXCP, 0, file, -1, unix_name + strlen(unix_name), len, NULL, NULL);
+
+        ret = AddFontFileToList(unix_name, NULL, ADDFONT_FORCE_BITMAP);
+        HeapFree(GetProcessHeap(), 0, unix_name);
+    }
+    return ret;
+}
 
 static void load_system_fonts(void)
 {
@@ -1140,11 +1164,15 @@ static void load_system_fonts(void)
             dlen = sizeof(data);
             if(RegQueryValueExW(hkey, *value, 0, &type, (void*)data, &dlen) == ERROR_SUCCESS &&
                type == REG_SZ) {
+                BOOL added = FALSE;
+
                 sprintfW(pathW, fmtW, windowsdir, data);
                 if((unixname = wine_get_unix_file_name(pathW))) {
-                    AddFontFileToList(unixname, NULL, ADDFONT_FORCE_BITMAP);
+                    added = AddFontFileToList(unixname, NULL, ADDFONT_FORCE_BITMAP);
                     HeapFree(GetProcessHeap(), 0, unixname);
                 }
+                if (!added)
+                    load_font_from_data_dir(data);
             }
         }
         RegCloseKey(hkey);
@@ -1592,12 +1620,16 @@ BOOL WineEngInit(void)
                 {
                     WCHAR pathW[MAX_PATH];
                     static const WCHAR fmtW[] = {'%','s','\\','%','s','\0'};
+                    BOOL added = FALSE;
+
                     sprintfW(pathW, fmtW, windowsdir, data);
                     if((unixname = wine_get_unix_file_name(pathW)))
                     {
-                        AddFontFileToList(unixname, NULL, ADDFONT_FORCE_BITMAP);
+                        added = AddFontFileToList(unixname, NULL, ADDFONT_FORCE_BITMAP);
                         HeapFree(GetProcessHeap(), 0, unixname);
                     }
+                    if (!added)
+                        load_font_from_data_dir(data);
                 }
                 /* reset dlen and vlen */
                 dlen = datalen;
