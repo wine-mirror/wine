@@ -326,7 +326,7 @@ static void test_gettargetpath_bad(void)
     MsiCloseHandle( hpkg );
 }
 
-void test_settargetpath_bad(void)
+static void test_settargetpath_bad(void)
 {
     MSIHANDLE hpkg;
     UINT r;
@@ -349,7 +349,7 @@ void test_settargetpath_bad(void)
     MsiCloseHandle( hpkg );
 }
 
-void test_condition(void)
+static void test_condition(void)
 {
     MSICONDITION r;
     MSIHANDLE hpkg;
@@ -801,4 +801,5 @@ START_TEST(package)
     test_gettargetpath_bad();
     test_settargetpath_bad();
     test_props();
+    test_condition();
 }
