@@ -1199,6 +1199,18 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
   return TRUE;
 }
 
+static const WCHAR url_schemes[][7] =
+{
+    {'f','t','p',0},
+    {'g','o','p','h','e','r',0},
+    {'h','t','t','p',0},
+    {'h','t','t','p','s',0},
+    {'f','i','l','e',0},
+    {'n','e','w','s',0},
+    {'m','a','i','l','t','o',0},
+    {'r','e','s',0},
+};
+
 /***********************************************************************
  *           GetInternetSchemeW (internal)
  *
@@ -1211,41 +1223,18 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
  */
 static INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, DWORD nMaxCmp)
 {
-    INTERNET_SCHEME iScheme=INTERNET_SCHEME_UNKNOWN;
-    static const WCHAR lpszFtp[]={'f','t','p',0};
-    static const WCHAR lpszGopher[]={'g','o','p','h','e','r',0};
-    static const WCHAR lpszHttp[]={'h','t','t','p',0};
-    static const WCHAR lpszHttps[]={'h','t','t','p','s',0};
-    static const WCHAR lpszFile[]={'f','i','l','e',0};
-    static const WCHAR lpszNews[]={'n','e','w','s',0};
-    static const WCHAR lpszMailto[]={'m','a','i','l','t','o',0};
-    static const WCHAR lpszRes[]={'r','e','s',0};
-    WCHAR* tempBuffer=NULL;
+    int i;
+
     TRACE("%s %ld\n",debugstr_wn(lpszScheme, nMaxCmp), nMaxCmp);
+
     if(lpszScheme==NULL)
         return INTERNET_SCHEME_UNKNOWN;
 
-    tempBuffer=HeapAlloc(GetProcessHeap(),0,(nMaxCmp+1)*sizeof(WCHAR));
-    lstrcpynW(tempBuffer,lpszScheme,nMaxCmp+1);
-    strlwrW(tempBuffer);
-    if (nMaxCmp==strlenW(lpszFtp) && !strncmpW(lpszFtp, tempBuffer, nMaxCmp))
-        iScheme=INTERNET_SCHEME_FTP;
-    else if (nMaxCmp==strlenW(lpszGopher) && !strncmpW(lpszGopher, tempBuffer, nMaxCmp))
-        iScheme=INTERNET_SCHEME_GOPHER;
-    else if (nMaxCmp==strlenW(lpszHttp) && !strncmpW(lpszHttp, tempBuffer, nMaxCmp))
-        iScheme=INTERNET_SCHEME_HTTP;
-    else if (nMaxCmp==strlenW(lpszHttps) && !strncmpW(lpszHttps, tempBuffer, nMaxCmp))
-        iScheme=INTERNET_SCHEME_HTTPS;
-    else if (nMaxCmp==strlenW(lpszFile) && !strncmpW(lpszFile, tempBuffer, nMaxCmp))
-        iScheme=INTERNET_SCHEME_FILE;
-    else if (nMaxCmp==strlenW(lpszNews) && !strncmpW(lpszNews, tempBuffer, nMaxCmp))
-        iScheme=INTERNET_SCHEME_NEWS;
-    else if (nMaxCmp==strlenW(lpszMailto) && !strncmpW(lpszMailto, tempBuffer, nMaxCmp))
-        iScheme=INTERNET_SCHEME_MAILTO;
-    else if (nMaxCmp==strlenW(lpszRes) && !strncmpW(lpszRes, tempBuffer, nMaxCmp))
-        iScheme=INTERNET_SCHEME_RES;
-    HeapFree(GetProcessHeap(),0,tempBuffer);
-    return iScheme;
+    for (i = 0; i < sizeof(url_schemes)/sizeof(url_schemes[0]); i++)
+        if (!strncmpW(lpszScheme, url_schemes[i], nMaxCmp))
+            return INTERNET_SCHEME_FIRST + i;
+
+    return INTERNET_SCHEME_UNKNOWN;
 }
 
 /***********************************************************************
