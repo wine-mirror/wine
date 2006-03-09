@@ -2557,92 +2557,91 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 
     rc = MSIREG_OpenComponents(&hkey);
     if (rc != ERROR_SUCCESS)
-        goto end;
-      
+        return rc;
+
     squash_guid(package->ProductCode,squished_pc);
     ui_progress(package,1,COMPONENT_PROGRESS_VALUE,1,0);
 
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
+        MSIRECORD * uirow;
+
         ui_progress(package,2,0,0,0);
-        if (comp->ComponentId)
-        {
-            MSIRECORD * uirow;
+        if (!comp->ComponentId)
+            continue;
 
-            squash_guid(comp->ComponentId,squished_cc);
+        squash_guid(comp->ComponentId,squished_cc);
            
-            msi_free(comp->FullKeypath);
-            comp->FullKeypath = resolve_keypath( package, comp );
+        msi_free(comp->FullKeypath);
+        comp->FullKeypath = resolve_keypath( package, comp );
 
-            /* do the refcounting */
-            ACTION_RefCountComponent( package, comp );
+        /* do the refcounting */
+        ACTION_RefCountComponent( package, comp );
 
-            TRACE("Component %s (%s), Keypath=%s, RefCount=%i\n", 
+        TRACE("Component %s (%s), Keypath=%s, RefCount=%i\n",
                             debugstr_w(comp->Component),
                             debugstr_w(squished_cc),
-                            debugstr_w(comp->FullKeypath), 
+                            debugstr_w(comp->FullKeypath),
                             comp->RefCount);
-            /*
-            * Write the keypath out if the component is to be registered
-            * and delete the key if the component is to be deregistered
-            */
-            if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
+        /*
+         * Write the keypath out if the component is to be registered
+         * and delete the key if the component is to be deregistered
+         */
+        if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
+        {
+            rc = RegCreateKeyW(hkey,squished_cc,&hkey2);
+            if (rc != ERROR_SUCCESS)
+                continue;
+
+            if (!comp->FullKeypath)
+                continue;
+
+            msi_reg_set_val_str( hkey2, squished_pc, comp->FullKeypath );
+
+            if (comp->Attributes & msidbComponentAttributesPermanent)
             {
-                rc = RegCreateKeyW(hkey,squished_cc,&hkey2);
-                if (rc != ERROR_SUCCESS)
-                    continue;
+                static const WCHAR szPermKey[] =
+                    { '0','0','0','0','0','0','0','0','0','0','0','0',
+                      '0','0','0','0','0','0','0','0','0','0','0','0',
+                      '0','0','0','0','0','0','0','0',0 };
 
-                if (comp->FullKeypath)
-                {
-                    msi_reg_set_val_str( hkey2, squished_pc, comp->FullKeypath );
-
-                    if (comp->Attributes & msidbComponentAttributesPermanent)
-                    {
-                        static const WCHAR szPermKey[] =
-                            { '0','0','0','0','0','0','0','0','0','0','0','0',
-                              '0','0','0','0','0','0','0','0','0','0','0','0',
-                              '0','0','0','0','0','0','0','0',0};
-
-                        msi_reg_set_val_str( hkey2, szPermKey, comp->FullKeypath );
-                    }
-                    
-                    RegCloseKey(hkey2);
-        
-                    /* UI stuff */
-                    uirow = MSI_CreateRecord(3);
-                    MSI_RecordSetStringW(uirow,1,package->ProductCode);
-                    MSI_RecordSetStringW(uirow,2,comp->ComponentId);
-                    MSI_RecordSetStringW(uirow,3,comp->FullKeypath);
-                    ui_actiondata(package,szProcessComponents,uirow);
-                    msiobj_release( &uirow->hdr );
-               }
+                msi_reg_set_val_str( hkey2, szPermKey, comp->FullKeypath );
             }
-            else if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT))
-            {
-                DWORD res;
 
-                rc = RegOpenKeyW(hkey,squished_cc,&hkey2);
-                if (rc != ERROR_SUCCESS)
-                    continue;
+            RegCloseKey(hkey2);
 
-                RegDeleteValueW(hkey2,squished_pc);
+            /* UI stuff */
+            uirow = MSI_CreateRecord(3);
+            MSI_RecordSetStringW(uirow,1,package->ProductCode);
+            MSI_RecordSetStringW(uirow,2,comp->ComponentId);
+            MSI_RecordSetStringW(uirow,3,comp->FullKeypath);
+            ui_actiondata(package,szProcessComponents,uirow);
+            msiobj_release( &uirow->hdr );
+        }
+        else if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT))
+        {
+            DWORD res;
 
-                /* if the key is empty delete it */
-                res = RegEnumKeyExW(hkey2,0,NULL,0,0,NULL,0,NULL);
-                RegCloseKey(hkey2);
-                if (res == ERROR_NO_MORE_ITEMS)
-                    RegDeleteKeyW(hkey,squished_cc);
-        
-                /* UI stuff */
-                uirow = MSI_CreateRecord(2);
-                MSI_RecordSetStringW(uirow,1,package->ProductCode);
-                MSI_RecordSetStringW(uirow,2,comp->ComponentId);
-                ui_actiondata(package,szProcessComponents,uirow);
-                msiobj_release( &uirow->hdr );
-            }
+            rc = RegOpenKeyW(hkey,squished_cc,&hkey2);
+            if (rc != ERROR_SUCCESS)
+                continue;
+
+            RegDeleteValueW(hkey2,squished_pc);
+
+            /* if the key is empty delete it */
+            res = RegEnumKeyExW(hkey2,0,NULL,0,0,NULL,0,NULL);
+            RegCloseKey(hkey2);
+            if (res == ERROR_NO_MORE_ITEMS)
+                RegDeleteKeyW(hkey,squished_cc);
+
+            /* UI stuff */
+            uirow = MSI_CreateRecord(2);
+            MSI_RecordSetStringW(uirow,1,package->ProductCode);
+            MSI_RecordSetStringW(uirow,2,comp->ComponentId);
+            ui_actiondata(package,szProcessComponents,uirow);
+            msiobj_release( &uirow->hdr );
         }
     } 
-end:
     RegCloseKey(hkey);
     return rc;
 }
