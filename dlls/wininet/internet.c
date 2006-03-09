@@ -3783,20 +3783,23 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
     if (lpUrlComponents->lpszHostName)
     {
         *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, HostName);
+
+        if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
+        {
+            char szPort[MAX_WORD_DIGITS];
+
+            sprintf(szPort, "%d", lpUrlComponents->nPort);
+            *lpdwUrlLength += strlen(szPort);
+            *lpdwUrlLength += strlen(":");
+        }
+
         if (lpUrlComponents->lpszUrlPath && *lpUrlComponents->lpszUrlPath != '/')
             (*lpdwUrlLength)++; /* '/' */
     }
 
-    if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
-    {
-        char szPort[MAX_WORD_DIGITS];
+    if (lpUrlComponents->lpszUrlPath)
+        *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, UrlPath);
 
-        sprintf(szPort, "%d", lpUrlComponents->nPort);
-        *lpdwUrlLength += strlen(szPort);
-        *lpdwUrlLength += strlen(":");
-    }
-
-    *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, UrlPath);
     return TRUE;
 }
 
@@ -4016,6 +4019,18 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         memcpy(lpszUrl, lpUrlComponents->lpszHostName, dwLen * sizeof(WCHAR));
         lpszUrl += dwLen;
 
+        if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
+        {
+            WCHAR szPort[MAX_WORD_DIGITS];
+
+            sprintfW(szPort, percentD, lpUrlComponents->nPort);
+            *lpszUrl = ':';
+            lpszUrl++;
+            dwLen = strlenW(szPort);
+            memcpy(lpszUrl, szPort, dwLen * sizeof(WCHAR));
+            lpszUrl += dwLen;
+        }
+
         /* add slash between hostname and path if necessary */
         if (lpUrlComponents->lpszUrlPath && *lpUrlComponents->lpszUrlPath != '/')
         {
@@ -4024,21 +4039,13 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         }
     }
 
-    if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
-    {
-        WCHAR szPort[MAX_WORD_DIGITS];
 
-        sprintfW(szPort, percentD, lpUrlComponents->nPort);
-        *lpszUrl = ':';
-        lpszUrl++;
-        dwLen = strlenW(szPort);
-        memcpy(lpszUrl, szPort, dwLen * sizeof(WCHAR));
+    if (lpUrlComponents->lpszUrlPath)
+    {
+        dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, UrlPath);
+        memcpy(lpszUrl, lpUrlComponents->lpszUrlPath, dwLen * sizeof(WCHAR));
         lpszUrl += dwLen;
     }
-
-    dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, UrlPath);
-    memcpy(lpszUrl, lpUrlComponents->lpszUrlPath, dwLen * sizeof(WCHAR));
-    lpszUrl += dwLen;
 
     *lpszUrl = '\0';
 
