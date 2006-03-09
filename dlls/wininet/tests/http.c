@@ -1111,11 +1111,9 @@ static void InternetCreateUrlA_test(void)
 	len = strlen(CREATE_URL9);
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
 	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
-	todo_wine {
 	ok(ret, "Expected success\n");
 	ok(len == strlen(CREATE_URL9), "Expected len %d, got %ld\n", strlen(CREATE_URL9), len);
 	ok(!strcmp(szUrl, CREATE_URL9), "Expected %s, got %s\n", CREATE_URL9, szUrl);
-	}
 
 	HeapFree(GetProcessHeap(), 0, szUrl);
 }

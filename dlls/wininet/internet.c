@@ -3700,7 +3700,21 @@ static BOOL url_uses_default_port(INTERNET_SCHEME nScheme, INTERNET_PORT nPort)
         (nPort == INTERNET_DEFAULT_GOPHER_PORT))
         return TRUE;
 
+    if (nPort == INTERNET_INVALID_PORT_NUMBER)
+        return TRUE;
+
     return FALSE;
+}
+
+/* opaque urls do not fit into the standard url hierarchy and don't have
+ * two following slashes */
+static inline BOOL scheme_is_opaque(INTERNET_SCHEME nScheme)
+{
+    return (nScheme != INTERNET_SCHEME_FTP) &&
+           (nScheme != INTERNET_SCHEME_GOPHER) &&
+           (nScheme != INTERNET_SCHEME_HTTP) &&
+           (nScheme != INTERNET_SCHEME_HTTPS) &&
+           (nScheme != INTERNET_SCHEME_FILE);
 }
 
 static LPCWSTR INTERNET_GetSchemeString(INTERNET_SCHEME scheme)
@@ -3742,7 +3756,9 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
         *lpdwUrlLength += strlenW(scheme);
     }
 
-    *lpdwUrlLength += strlen("://");
+    (*lpdwUrlLength)++; /* ':' */
+    if (!scheme_is_opaque(nScheme) || lpUrlComponents->lpszHostName)
+        *lpdwUrlLength += strlen("//");
 
     if (lpUrlComponents->lpszUserName)
     {
@@ -3909,7 +3925,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
     DWORD dwLen;
     INTERNET_SCHEME nScheme;
 
-    static const WCHAR colonSlashW[] = {':','/','/'};
+    static const WCHAR slashSlashW[] = {'/','/'};
     static const WCHAR percentD[] = {'%','d',0};
 
     TRACE("(%p,%ld,%p,%p)\n", lpUrlComponents, dwFlags, lpszUrl, lpdwUrlLength);
@@ -3960,8 +3976,15 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         lpszUrl += dwLen;
     }
 
-    memcpy(lpszUrl, colonSlashW, sizeof(colonSlashW));
-    lpszUrl += sizeof(colonSlashW)/sizeof(colonSlashW[0]);
+    /* all schemes are followed by at least a colon */
+    *lpszUrl = ':';
+    lpszUrl++;
+
+    if (!scheme_is_opaque(nScheme) || lpUrlComponents->lpszHostName)
+    {
+        memcpy(lpszUrl, slashSlashW, sizeof(slashSlashW));
+        lpszUrl += sizeof(slashSlashW)/sizeof(slashSlashW[0]);
+    }
 
     if (lpUrlComponents->lpszUserName)
     {
