@@ -3786,7 +3786,7 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
 
         if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
         {
-            char szPort[MAX_WORD_DIGITS];
+            char szPort[MAX_WORD_DIGITS+1];
 
             sprintf(szPort, "%d", lpUrlComponents->nPort);
             *lpdwUrlLength += strlen(szPort);
@@ -4021,7 +4021,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
 
         if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
         {
-            WCHAR szPort[MAX_WORD_DIGITS];
+            WCHAR szPort[MAX_WORD_DIGITS+1];
 
             sprintfW(szPort, percentD, lpUrlComponents->nPort);
             *lpszUrl = ':';
