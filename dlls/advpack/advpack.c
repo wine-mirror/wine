@@ -26,6 +26,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winver.h"
+#include "winternl.h"
 #include "winnls.h"
 #include "setupapi.h"
 #include "advpub.h"
@@ -44,66 +45,72 @@ typedef HRESULT (WINAPI *DLLREGISTER) (void);
  * we first read the reg value root\\key\\value and if that fails,
  * use fallback as the destination directory
  */
-static void get_dest_dir(HINF hInf, PCSTR pszSection, PSTR pszBuffer, DWORD dwSize)
+static void get_dest_dir(HINF hInf, PCWSTR pszSection, PWSTR pszBuffer, DWORD dwSize)
 {
     INFCONTEXT context;
-    CHAR key[MAX_PATH], value[MAX_PATH];
-    CHAR prefix[PREFIX_LEN];
+    WCHAR key[MAX_PATH], value[MAX_PATH];
+    WCHAR prefix[PREFIX_LEN];
     HKEY root, subkey;
     DWORD size;
 
-    /* load the destination parameters */
-    SetupFindFirstLineA(hInf, pszSection, NULL, &context);
-    SetupGetStringFieldA(&context, 1, prefix, PREFIX_LEN, &size);
-    SetupGetStringFieldA(&context, 2, key, MAX_PATH, &size);
-    SetupGetStringFieldA(&context, 3, value, MAX_PATH, &size);
+    static const WCHAR hklm[] = {'H','K','L','M',0};
+    static const WCHAR hkcu[] = {'H','K','C','U',0};
 
-    if (!lstrcmpA(prefix, "HKLM"))
+    /* load the destination parameters */
+    SetupFindFirstLineW(hInf, pszSection, NULL, &context);
+    SetupGetStringFieldW(&context, 1, prefix, PREFIX_LEN, &size);
+    SetupGetStringFieldW(&context, 2, key, MAX_PATH, &size);
+    SetupGetStringFieldW(&context, 3, value, MAX_PATH, &size);
+
+    if (!lstrcmpW(prefix, hklm))
         root = HKEY_LOCAL_MACHINE;
-    else if (!lstrcmpA(prefix, "HKCU"))
+    else if (!lstrcmpW(prefix, hkcu))
         root = HKEY_CURRENT_USER;
     else
         root = NULL;
 
-    /* preserve the buffer size */
-    size = dwSize;
+    size = dwSize * sizeof(WCHAR);
 
     /* fallback to the default destination dir if reg fails */
-    if (RegOpenKeyA(root, key, &subkey) ||
-        RegQueryValueExA(subkey, value, NULL, NULL, (LPBYTE)pszBuffer, &size))
+    if (RegOpenKeyW(root, key, &subkey) ||
+        RegQueryValueExW(subkey, value, NULL, NULL, (LPBYTE)pszBuffer, &size))
     {
-        SetupGetStringFieldA(&context, 6, pszBuffer, dwSize, &size);
+        SetupGetStringFieldW(&context, 6, pszBuffer, dwSize, NULL);
     }
 
     RegCloseKey(subkey);
 }
 
 /* loads the LDIDs specified in the install section of an INF */
-static void set_ldids(HINF hInf, PCSTR pszInstallSection)
+static void set_ldids(HINF hInf, LPCWSTR pszInstallSection)
 {
-    CHAR field[MAX_FIELD_LENGTH];
-    CHAR key[MAX_FIELD_LENGTH];
-    CHAR dest[MAX_PATH];
+    WCHAR field[MAX_FIELD_LENGTH];
+    WCHAR key[MAX_FIELD_LENGTH];
+    WCHAR dest[MAX_PATH];
     INFCONTEXT context;
     DWORD size;
     int ldid;
 
-    if (!SetupGetLineTextA(NULL, hInf, pszInstallSection, "CustomDestination",
+    static const WCHAR custDestW[] = {
+        'C','u','s','t','o','m','D','e','s','t','i','n','a','t','i','o','n',0
+    };
+
+    if (!SetupGetLineTextW(NULL, hInf, pszInstallSection, custDestW,
                            field, MAX_FIELD_LENGTH, &size))
         return;
 
-    if (!SetupFindFirstLineA(hInf, field, NULL, &context))
+    if (!SetupFindFirstLineW(hInf, field, NULL, &context))
         return;
 
     do
     {
         SetupGetIntField(&context, 0, &ldid);
-        SetupGetLineTextA(&context, NULL, NULL, NULL,
+        SetupGetLineTextW(&context, NULL, NULL, NULL,
                           key, MAX_FIELD_LENGTH, &size);
 
         get_dest_dir(hInf, key, dest, MAX_PATH);
 
-        SetupSetDirectoryIdA(hInf, ldid, dest);
+        SetupSetDirectoryIdW(hInf, ldid, dest);
     } while (SetupFindNextLine(&context, &context));
 }
 
@@ -253,6 +260,35 @@ BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
 /***********************************************************************
  *             OpenINFEngineA   (ADVPACK.@)
  *
+ * See OpenINFEngineW.
+ */
+HRESULT WINAPI OpenINFEngineA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
+                              DWORD dwFlags, HINF *phInf, PVOID pvReserved)
+{
+    UNICODE_STRING filenameW, installW;
+    HRESULT res;
+
+    TRACE("(%p, %p, %ld, %p, %p)\n", pszInfFilename, pszInstallSection,
+          dwFlags, phInf, pvReserved);
+
+    if (!pszInfFilename || !phInf)
+        return E_INVALIDARG;
+
+    RtlCreateUnicodeStringFromAsciiz(&filenameW, pszInfFilename);
+    RtlCreateUnicodeStringFromAsciiz(&installW, pszInstallSection);
+
+    res = OpenINFEngineW(filenameW.Buffer, installW.Buffer,
+                         dwFlags, phInf, pvReserved);
+
+    RtlFreeUnicodeString(&filenameW);
+    RtlFreeUnicodeString(&installW);
+
+    return res;
+}
+
+/***********************************************************************
+ *             OpenINFEngineW   (ADVPACK.@)
+ *
  * Opens and returns a handle to an INF file to be used by
  * TranslateInfStringEx to continuously translate the INF file.
  *
@@ -267,16 +303,16 @@ BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
  *   Success: S_OK.
  *   Failure: E_FAIL.
  */
-HRESULT WINAPI OpenINFEngineA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
-                             DWORD dwFlags, HINF *phInf, PVOID pvReserved)
+HRESULT WINAPI OpenINFEngineW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSection,
+                              DWORD dwFlags, HINF *phInf, PVOID pvReserved)
 {
-    TRACE("(%p, %p, %ld, %p, %p)\n", pszInfFilename, pszInstallSection,
-          dwFlags, phInf, pvReserved);
+    TRACE("(%p, %p, %ld, %p, %p)\n", debugstr_w(pszInfFilename),
+          debugstr_w(pszInstallSection), dwFlags, phInf, pvReserved);
 
     if (!pszInfFilename || !phInf)
         return E_INVALIDARG;
 
-    *phInf = SetupOpenInfFileA(pszInfFilename, NULL, INF_STYLE_WIN4, NULL);
+    *phInf = SetupOpenInfFileW(pszInfFilename, NULL, INF_STYLE_WIN4, NULL);
     if (*phInf == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
@@ -386,6 +422,71 @@ HRESULT WINAPI SetPerUserSecValuesA(PERUSERSECTIONA* pPerUser)
 /***********************************************************************
  *             TranslateInfStringA   (ADVPACK.@)
  *
+ * See TranslateInfStringW.
+ */
+HRESULT WINAPI TranslateInfStringA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
+                LPCSTR pszTranslateSection, LPCSTR pszTranslateKey, LPSTR pszBuffer,
+                DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved)
+{
+    UNICODE_STRING filenameW, installW;
+    UNICODE_STRING translateW, keyW;
+    LPWSTR bufferW;
+    HRESULT res;
+    DWORD len = 0;
+
+    TRACE("(%s %s %s %s %p %ld %p %p)\n",
+          debugstr_a(pszInfFilename), debugstr_a(pszInstallSection),
+          debugstr_a(pszTranslateSection), debugstr_a(pszTranslateKey),
+          pszBuffer, dwBufferSize,pdwRequiredSize, pvReserved);
+
+    if (!pszInfFilename || !pszTranslateSection ||
+        !pszTranslateKey || !pdwRequiredSize)
+        return E_INVALIDARG;
+
+    RtlCreateUnicodeStringFromAsciiz(&filenameW, pszInfFilename);
+    RtlCreateUnicodeStringFromAsciiz(&installW, pszInstallSection);
+    RtlCreateUnicodeStringFromAsciiz(&translateW, pszTranslateSection);
+    RtlCreateUnicodeStringFromAsciiz(&keyW, pszTranslateKey);
+
+    res = TranslateInfStringW(filenameW.Buffer, installW.Buffer,
+                              translateW.Buffer, keyW.Buffer, NULL,
+                              dwBufferSize, &len, NULL);
+
+    if (res == S_OK)
+    {
+        bufferW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+        res = TranslateInfStringW(filenameW.Buffer, installW.Buffer,
+                                  translateW.Buffer, keyW.Buffer, bufferW,
+                                  len, &len, NULL);
+        if (res == S_OK)
+        {
+            *pdwRequiredSize = WideCharToMultiByte(CP_ACP, 0, bufferW, -1,
+                                                   NULL, 0, NULL, NULL);
+
+            if (dwBufferSize >= *pdwRequiredSize)
+            {
+                WideCharToMultiByte(CP_ACP, 0, bufferW, -1, pszBuffer,
+                                    dwBufferSize, NULL, NULL);
+            }
+            else
+                res = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        }
+        
+        HeapFree(GetProcessHeap(), 0, bufferW);
+    }
+
+    RtlFreeUnicodeString(&filenameW);
+    RtlFreeUnicodeString(&installW);
+    RtlFreeUnicodeString(&translateW);
+    RtlFreeUnicodeString(&keyW);
+
+    return res;
+}
+
+/***********************************************************************
+ *             TranslateInfStringW   (ADVPACK.@)
+ *
  * Translates the value of a specified key in an inf file into the
  * current locale by expanding string macros.
  *
@@ -403,28 +504,28 @@ HRESULT WINAPI SetPerUserSecValuesA(PERUSERSECTIONA* pPerUser)
  *   Success: S_OK.
  *   Failure: An hresult error code.
  */
-HRESULT WINAPI TranslateInfStringA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
-                LPCSTR pszTranslateSection, LPCSTR pszTranslateKey, LPSTR pszBuffer,
+HRESULT WINAPI TranslateInfStringW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSection,
+                LPCWSTR pszTranslateSection, LPCWSTR pszTranslateKey, LPWSTR pszBuffer,
                 DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved)
 {
     HINF hInf;
 
     TRACE("(%s %s %s %s %p %ld %p %p)\n",
-          debugstr_a(pszInfFilename), debugstr_a(pszInstallSection),
-          debugstr_a(pszTranslateSection), debugstr_a(pszTranslateKey),
+          debugstr_w(pszInfFilename), debugstr_w(pszInstallSection),
+          debugstr_w(pszTranslateSection), debugstr_w(pszTranslateKey),
           pszBuffer, dwBufferSize,pdwRequiredSize, pvReserved);
 
     if (!pszInfFilename || !pszTranslateSection ||
         !pszTranslateKey || !pdwRequiredSize)
         return E_INVALIDARG;
 
-    hInf = SetupOpenInfFileA(pszInfFilename, NULL, INF_STYLE_WIN4, NULL);
+    hInf = SetupOpenInfFileW(pszInfFilename, NULL, INF_STYLE_WIN4, NULL);
     if (hInf == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
     set_ldids(hInf, pszInstallSection);
 
-    if (!SetupGetLineTextA(NULL, hInf, pszTranslateSection, pszTranslateKey,
+    if (!SetupGetLineTextW(NULL, hInf, pszTranslateSection, pszTranslateKey,
                            pszBuffer, dwBufferSize, pdwRequiredSize))
     {
         if (dwBufferSize < *pdwRequiredSize)
