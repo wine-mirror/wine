@@ -47,6 +47,7 @@
 #define CREATE_URL6 "nhttp://username:password@www.winehq.org:80/site/about"
 #define CREATE_URL7 "http://username:password@www.winehq.org:42/site/about"
 #define CREATE_URL8 "https://username:password@www.winehq.org/site/about"
+#define CREATE_URL9 "about:blank"
 
 static HANDLE hCompleteEvent;
 
@@ -1100,6 +1101,23 @@ static void InternetCreateUrlA_test(void)
 	ok(ret, "Expected success\n");
 	ok(len == strlen(CREATE_URL8), "Expected len %d, got %ld\n", strlen(CREATE_URL8), len);
 	ok(!strcmp(szUrl, CREATE_URL8), "Expected %s, got %s\n", CREATE_URL8, szUrl);
+
+	HeapFree(GetProcessHeap(), 0, szUrl);
+
+	memset(&urlComp, 0, sizeof(urlComp));
+	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
+	urlComp.lpszScheme = "about";
+	urlComp.dwSchemeLength = 5;
+	urlComp.lpszUrlPath = "blank";
+	urlComp.dwUrlPathLength = 5;
+	len = strlen(CREATE_URL9);
+	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
+	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
+	todo_wine {
+	ok(ret, "Expected success\n");
+	ok(len == strlen(CREATE_URL9), "Expected len %d, got %ld\n", strlen(CREATE_URL9), len);
+	ok(!strcmp(szUrl, CREATE_URL9), "Expected %s, got %s\n", CREATE_URL9, szUrl);
+	}
 
 	HeapFree(GetProcessHeap(), 0, szUrl);
 }

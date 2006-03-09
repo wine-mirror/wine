@@ -3712,6 +3712,17 @@ static BOOL url_uses_default_port(LPURL_COMPONENTSW lpUrlComponents)
     return FALSE;
 }
 
+static LPCWSTR INTERNET_GetSchemeString(INTERNET_SCHEME scheme)
+{
+    int index;
+    if (scheme < INTERNET_SCHEME_FIRST)
+        return NULL;
+    index = scheme - INTERNET_SCHEME_FIRST;
+    if (index >= sizeof(url_schemes)/sizeof(url_schemes[0]))
+        return NULL;
+    return (LPCWSTR)&url_schemes[index];
+}
+
 /* we can calculate using ansi strings because we're just
  * calculating string length, not size
  */
@@ -3720,7 +3731,15 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
 {
     *lpdwUrlLength = 0;
 
-    *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
+    if (lpUrlComponents->lpszScheme)
+        *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
+    else
+    {
+        LPCWSTR scheme = INTERNET_GetSchemeString(lpUrlComponents->nScheme);
+        TRACE("got scheme %s\n", debugstr_w(scheme));
+        *lpdwUrlLength += strlenW(scheme);
+    }
+
     *lpdwUrlLength += strlen("://");
 
     if (lpUrlComponents->lpszUserName)
@@ -3920,6 +3939,13 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
     {
         dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
         memcpy(lpszUrl, lpUrlComponents->lpszScheme, dwLen * sizeof(WCHAR));
+        lpszUrl += dwLen;
+    }
+    else
+    {
+        LPCWSTR scheme = INTERNET_GetSchemeString(lpUrlComponents->nScheme);
+        dwLen = strlenW(scheme);
+        memcpy(lpszUrl, scheme, dwLen * sizeof(WCHAR));
         lpszUrl += dwLen;
     }
 
