@@ -1187,6 +1187,9 @@ static LRESULT LISTBOX_GetItemHeight( LB_DESCR *descr, INT index )
  */
 static LRESULT LISTBOX_SetItemHeight( LB_DESCR *descr, INT index, INT height, BOOL repaint )
 {
+    if (height > MAXBYTE)
+        return -1;
+
     if (!height) height = 1;
 
     if (descr->style & LBS_OWNERDRAWVARIABLE)

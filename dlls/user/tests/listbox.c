@@ -390,6 +390,45 @@ static void test_selection(void)
     DestroyWindow(hLB);
 }
 
+static void test_listbox_height(void)
+{
+    HWND hList;
+    int r, id;
+
+    hList = CreateWindow( "ListBox", "list test", 0, 
+                          1, 1, 600, 100, NULL, NULL, NULL, NULL );
+    ok( hList != NULL, "failed to create listbox\n");
+
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi");
+    ok( id == 0, "item id wrong\n");
+
+    r = SendMessage( hList, LB_SETITEMHEIGHT, 0, MAKELPARAM( 20, 0 ));
+    ok( r == 0, "send message failed\n");
+
+    r = SendMessage(hList, LB_GETITEMHEIGHT, 0, 0 );
+    ok( r == 20, "height wrong\n");
+
+    r = SendMessage( hList, LB_SETITEMHEIGHT, 0, MAKELPARAM( 0, 30 ));
+    ok( r == -1, "send message failed\n");
+
+    r = SendMessage(hList, LB_GETITEMHEIGHT, 0, 0 );
+    ok( r == 20, "height wrong\n");
+
+    r = SendMessage( hList, LB_SETITEMHEIGHT, 0, MAKELPARAM( 0x100, 0 ));
+    ok( r == -1, "send message failed\n");
+
+    r = SendMessage(hList, LB_GETITEMHEIGHT, 0, 0 );
+    ok( r == 20, "height wrong\n");
+
+    r = SendMessage( hList, LB_SETITEMHEIGHT, 0, MAKELPARAM( 0xff, 0 ));
+    ok( r == 0, "send message failed\n");
+
+    r = SendMessage(hList, LB_GETITEMHEIGHT, 0, 0 );
+    ok( r == 0xff, "height wrong\n");
+
+    DestroyWindow( hList );
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -463,4 +502,5 @@ START_TEST(listbox)
   check_item_height();
   test_ownerdraw();
   test_selection();
+  test_listbox_height();
 }
