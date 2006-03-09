@@ -917,13 +917,11 @@ static void InternetCreateUrlA_test(void)
 	SetLastError(0xdeadbeef);
 	urlComp.lpszScheme = NULL;
 	ret = InternetCreateUrlA(&urlComp, 0, szUrl, &len);
-	todo_wine {
 	ok(ret, "Expected success\n");
 	ok(GetLastError() == 0xdeadbeef,
 		"Expected 0xdeadbeef, got %ld\n", GetLastError());
 	ok(len == 50, "Expected len 50, got %ld\n", len);
 	ok(!strcmp(szUrl, CREATE_URL1), "Expected %s, got %s\n", CREATE_URL1, szUrl);
-	}
 
 	/* alloced szUrl, invalid nScheme
 	 * any nScheme out of range seems ignored

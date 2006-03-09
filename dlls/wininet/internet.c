@@ -3685,28 +3685,19 @@ BOOL WINAPI InternetCombineUrlW(LPCWSTR lpszBaseUrl, LPCWSTR lpszRelativeUrl,
 #define URL_GET_COMP_LENGTHA(url, component) ((url)->dw##component##Length ? \
     (url)->dw##component##Length : strlen((url)->lpsz##component))
 
-static BOOL url_uses_default_port(LPURL_COMPONENTSW lpUrlComponents)
+static BOOL url_uses_default_port(INTERNET_SCHEME nScheme, INTERNET_PORT nPort)
 {
-    static const WCHAR httpW[] = {'h','t','t','p',0};
-    static const WCHAR httpsW[] = {'h','t','t','p','s',0};
-    static const WCHAR ftpW[] = {'f','t','p',0};
-    static const WCHAR gopherW[] = {'g','o','p','h','e','r',0};
-    DWORD len;
-
-    if (!lpUrlComponents->lpszScheme) return FALSE;
-
-    len = URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
-    if (!strncmpW(lpUrlComponents->lpszScheme, httpW, len) &&
-        (lpUrlComponents->nPort == INTERNET_DEFAULT_HTTP_PORT))
+    if ((nScheme == INTERNET_SCHEME_HTTP) &&
+        (nPort == INTERNET_DEFAULT_HTTP_PORT))
         return TRUE;
-    if (!strncmpW(lpUrlComponents->lpszScheme, httpsW, len) &&
-        (lpUrlComponents->nPort == INTERNET_DEFAULT_HTTPS_PORT))
+    if ((nScheme == INTERNET_SCHEME_HTTPS) &&
+        (nPort == INTERNET_DEFAULT_HTTPS_PORT))
         return TRUE;
-    if (!strncmpW(lpUrlComponents->lpszScheme, ftpW, len) &&
-        (lpUrlComponents->nPort == INTERNET_DEFAULT_FTP_PORT))
+    if ((nScheme == INTERNET_SCHEME_FTP) &&
+        (nPort == INTERNET_DEFAULT_FTP_PORT))
         return TRUE;
-    if (!strncmpW(lpUrlComponents->lpszScheme, gopherW, len) &&
-        (lpUrlComponents->nPort == INTERNET_DEFAULT_GOPHER_PORT))
+    if ((nScheme == INTERNET_SCHEME_GOPHER) &&
+        (nPort == INTERNET_DEFAULT_GOPHER_PORT))
         return TRUE;
 
     return FALSE;
@@ -3729,14 +3720,25 @@ static LPCWSTR INTERNET_GetSchemeString(INTERNET_SCHEME scheme)
 static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
                             LPDWORD lpdwUrlLength)
 {
+    INTERNET_SCHEME nScheme;
+
     *lpdwUrlLength = 0;
 
     if (lpUrlComponents->lpszScheme)
-        *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
+    {
+        DWORD dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
+        *lpdwUrlLength += dwLen;
+        nScheme = GetInternetSchemeW(lpUrlComponents->lpszScheme, dwLen);
+    }
     else
     {
-        LPCWSTR scheme = INTERNET_GetSchemeString(lpUrlComponents->nScheme);
-        TRACE("got scheme %s\n", debugstr_w(scheme));
+        LPCWSTR scheme;
+
+        nScheme = lpUrlComponents->nScheme;
+
+        if (nScheme == INTERNET_SCHEME_DEFAULT)
+            nScheme = INTERNET_SCHEME_HTTP;
+        scheme = INTERNET_GetSchemeString(nScheme);
         *lpdwUrlLength += strlenW(scheme);
     }
 
@@ -3765,7 +3767,7 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
     if (lpUrlComponents->lpszHostName)
         *lpdwUrlLength += URL_GET_COMP_LENGTH(lpUrlComponents, HostName);
 
-    if (!url_uses_default_port(lpUrlComponents))
+    if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
     {
         char szPort[MAX_WORD_DIGITS];
 
@@ -3905,6 +3907,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
                                LPWSTR lpszUrl, LPDWORD lpdwUrlLength)
 {
     DWORD dwLen;
+    INTERNET_SCHEME nScheme;
 
     static const WCHAR colonSlashW[] = {':','/','/'};
     static const WCHAR percentD[] = {'%','d',0};
@@ -3940,10 +3943,18 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         dwLen = URL_GET_COMP_LENGTH(lpUrlComponents, Scheme);
         memcpy(lpszUrl, lpUrlComponents->lpszScheme, dwLen * sizeof(WCHAR));
         lpszUrl += dwLen;
+
+        nScheme = GetInternetSchemeW(lpUrlComponents->lpszScheme, dwLen);
     }
     else
     {
-        LPCWSTR scheme = INTERNET_GetSchemeString(lpUrlComponents->nScheme);
+        LPCWSTR scheme;
+        nScheme = lpUrlComponents->nScheme;
+
+        if (nScheme == INTERNET_SCHEME_DEFAULT)
+            nScheme = INTERNET_SCHEME_HTTP;
+
+        scheme = INTERNET_GetSchemeString(nScheme);
         dwLen = strlenW(scheme);
         memcpy(lpszUrl, scheme, dwLen * sizeof(WCHAR));
         lpszUrl += dwLen;
@@ -3979,7 +3990,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         lpszUrl += dwLen;
     }
 
-    if (!url_uses_default_port(lpUrlComponents))
+    if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
     {
         WCHAR szPort[MAX_WORD_DIGITS];
 
