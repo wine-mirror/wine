@@ -466,7 +466,10 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
     TRACE("(this=%p)\n",This);
     if (This->joyfd!=-1)
-    	return 0;
+    	return S_FALSE;
+    if (This->df==NULL) {
+      return DIERR_INVALIDPARAM;
+    }
     for (i=0;i<64;i++) {
       sprintf(buf,EVDEVPREFIX"%d",i);
       if (-1==(This->joyfd=open(buf,O_RDWR))) { 
@@ -627,40 +630,22 @@ static void fake_current_js_state(JoystickImpl *ji)
 
 static int find_property_offset(JoystickImpl *This, LPCDIPROPHEADER ph)
 {
-  int i,c;
   switch (ph->dwHow) {
-    case DIPH_BYOFFSET:
-      for (i=0; i<This->df->dwNumObjs; i++) {
-        if (This->df->rgodf[i].dwOfs == ph->dwObj) {
-          return i;
-        }
-      }
-      break;
-    case DIPH_BYID:
-      /* XXX: this is a hack - see below */
-      c = DIDFT_GETINSTANCE(ph->dwObj)>>WINE_JOYSTICK_AXIS_BASE;
-      for (i=0; (c&1)==0 && i<0x0F; i++) {
-        c >>= 1;
-      }
-      if (i<0x0F) {
-        return i;
-      }
-
-      /* XXX - the following part won't work with LiveForSpeed
-       * - the game sets the dwTypes to something else then
-       * the ddoi.dwType set in EnumObjects
-       */
-#if 0
-      for (i=0; i<This->df->dwNumObjs; i++) {
-        TRACE("dwType='%08x'\n", This->df->rgodf[i].dwType);
-        if ((This->df->rgodf[i].dwType & 0x00ffffff) == (ph->dwObj & 0x00ffffff)) {
-          return i;
-        }
-      }
-#endif
-      break;
+    case DIPH_BYOFFSET: {
+                          int i;
+                          for (i=0; i<This->df->dwNumObjs; i++) {
+                            if (This->df->rgodf[i].dwOfs == ph->dwObj) {
+                              return i;
+                            }
+                          }
+                        }
+                        break;
+    case DIPH_BYID: {
+                      return DIDFT_GETINSTANCE(ph->dwObj)>>WINE_JOYSTICK_AXIS_BASE;
+                    }
+                    break;
     default:
-      FIXME("Unhandled ph->dwHow=='%04X'\n", (unsigned int)ph->dwHow);
+                    FIXME("Unhandled ph->dwHow=='%04X'\n", (unsigned int)ph->dwHow);
   }
 
   return -1;
@@ -1075,7 +1060,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       default:
 	FIXME("unhandled abs axis %d, ignoring!\n",i);
       }
-      ddoi.dwType = DIDFT_MAKEINSTANCE((1<<i) << WINE_JOYSTICK_AXIS_BASE) | DIDFT_ABSAXIS;
+      ddoi.dwType = DIDFT_MAKEINSTANCE(i << WINE_JOYSTICK_AXIS_BASE) | DIDFT_ABSAXIS;
       /* Linux event force feedback supports only (and always) x and y axes */
       if (i == ABS_X || i == ABS_Y) {
 	if (This->has_ff)
