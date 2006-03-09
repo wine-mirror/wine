@@ -48,6 +48,7 @@
 #define CREATE_URL7 "http://username:password@www.winehq.org:42/site/about"
 #define CREATE_URL8 "https://username:password@www.winehq.org/site/about"
 #define CREATE_URL9 "about:blank"
+#define CREATE_URL10 "about://host/blank"
 
 static HANDLE hCompleteEvent;
 
@@ -1109,11 +1110,27 @@ static void InternetCreateUrlA_test(void)
 	urlComp.lpszUrlPath = "blank";
 	urlComp.dwUrlPathLength = 5;
 	len = strlen(CREATE_URL9);
+	len++; /* work around bug in native wininet */
 	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
 	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
 	ok(ret, "Expected success\n");
 	ok(len == strlen(CREATE_URL9), "Expected len %d, got %ld\n", strlen(CREATE_URL9), len);
 	ok(!strcmp(szUrl, CREATE_URL9), "Expected %s, got %s\n", CREATE_URL9, szUrl);
+
+	HeapFree(GetProcessHeap(), 0, szUrl);
+
+	memset(&urlComp, 0, sizeof(urlComp));
+	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
+	urlComp.lpszScheme = "about";
+	urlComp.lpszHostName = "host";
+	urlComp.lpszUrlPath = "blank";
+	len = strlen(CREATE_URL10);
+	len++; /* work around bug in native wininet */
+	szUrl = (char *)HeapAlloc(GetProcessHeap(), 0, ++len);
+	ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
+	ok(ret, "Expected success\n");
+	ok(len == strlen(CREATE_URL10), "Expected len %d, got %ld\n", strlen(CREATE_URL9), len);
+	ok(!strcmp(szUrl, CREATE_URL10), "Expected %s, got %s\n", CREATE_URL9, szUrl);
 
 	HeapFree(GetProcessHeap(), 0, szUrl);
 }
