@@ -142,9 +142,33 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
                                                LONG lFlags, VARIANT *AttributeValue)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s %08lx %p)\n", This, debugstr_w(strAttributeName), lFlags,
-          AttributeValue);
-    return E_NOTIMPL;
+    nsAString attr_str;
+    nsAString value_str;
+    const PRUnichar *value;
+    nsresult nsres;
+    HRESULT hres = S_OK;
+
+    WARN("(%p)->(%s %08lx %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
+
+    nsAString_Init(&attr_str, strAttributeName);
+    nsAString_Init(&value_str, NULL);
+
+    nsres = nsIDOMHTMLElement_GetAttribute(This->nselem, &attr_str, &value_str);
+    nsAString_Finish(&attr_str);
+
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&value_str, &value, NULL);
+        V_VT(AttributeValue) = VT_BSTR;
+        V_BSTR(AttributeValue) = SysAllocString(value);;
+        TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));
+    }else {
+        ERR("GetAttribute failed: %08lx\n", nsres);
+        hres = E_FAIL;
+    }
+
+    nsAString_Finish(&value_str);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strAttributeName,
