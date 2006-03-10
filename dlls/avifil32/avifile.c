@@ -316,13 +316,13 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
     }
 
     if (This->idxRecords != NULL) {
-      GlobalFreePtr(This->idxRecords);
+      HeapFree(GetProcessHeap(), 0, This->idxRecords);
       This->idxRecords  = NULL;
       This->nIdxRecords = 0;
     }
 
     if (This->fileextra.lp != NULL) {
-      GlobalFreePtr(This->fileextra.lp);
+      HeapFree(GetProcessHeap(), 0, This->fileextra.lp);
       This->fileextra.lp = NULL;
       This->fileextra.cb = 0;
     }
@@ -956,7 +956,7 @@ static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream *iface, LONG pos,
     if (This->paf->dwMoviChunkPos != 0)
       return AVIERR_ERROR; /* user has used API in wrong sequnece! */
 
-    This->lpFormat = GlobalAllocPtr(GMEM_MOVEABLE, formatsize);
+    This->lpFormat = HeapAlloc(GetProcessHeap(), 0, formatsize);
     if (This->lpFormat == NULL)
       return AVIERR_MEMORY;
     This->cbFormat = formatsize;
@@ -1007,7 +1007,7 @@ static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream *iface, LONG pos,
     /* simply say all colors have changed */
     ck.ckid   = MAKEAVICKID(cktypePALchange, This->nStream);
     ck.cksize = 2 * sizeof(WORD) + lpbiOld->biClrUsed * sizeof(PALETTEENTRY);
-    lppc = (AVIPALCHANGE*)GlobalAllocPtr(GMEM_MOVEABLE, ck.cksize);
+    lppc = HeapAlloc(GetProcessHeap(), 0, ck.cksize);
     if (lppc == NULL)
       return AVIERR_MEMORY;
 
@@ -1031,7 +1031,7 @@ static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream *iface, LONG pos,
       return AVIERR_FILEWRITE;
     This->paf->dwNextFramePos += ck.cksize + 2 * sizeof(DWORD);
 
-    GlobalFreePtr(lppc);
+    HeapFree(GetProcessHeap(), 0, lppc);
 
     return AVIFILE_AddFrame(This, cktypePALchange, n, ck.dwDataOffset, 0);
   }
@@ -1390,11 +1390,11 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
       This->nIdxFmtChanges += 16;
       if (This->idxFmtChanges == NULL)
 	This->idxFmtChanges =
-	  GlobalAllocPtr(GHND, This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
+	  HeapAlloc(GetProcessHeap(), 0, This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
       else
 	This->idxFmtChanges =
-	  GlobalReAllocPtr(This->idxFmtChanges,
-			   This->nIdxFmtChanges * sizeof(AVIINDEXENTRY), GHND);
+	  HeapReAlloc(GetProcessHeap(), 0, This->idxFmtChanges,
+			   This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
       if (This->idxFmtChanges == NULL)
 	return AVIERR_MEMORY;
 
@@ -1426,12 +1426,10 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
   if (This->idxFrames == NULL || This->lLastFrame + 1 >= This->nIdxFrames) {
     This->nIdxFrames += 512;
     if (This->idxFrames == NULL)
-      This->idxFrames =
-	GlobalAllocPtr(GHND, This->nIdxFrames * sizeof(AVIINDEXENTRY));
+      This->idxFrames = HeapAlloc(GetProcessHeap(), 0, This->nIdxFrames * sizeof(AVIINDEXENTRY));
       else
-	This->idxFrames =
-	  GlobalReAllocPtr(This->idxFrames,
-			   This->nIdxFrames * sizeof(AVIINDEXENTRY), GHND);
+	This->idxFrames = HeapReAlloc(GetProcessHeap(), 0, This->idxFrames,
+			   This->nIdxFrames * sizeof(AVIINDEXENTRY));
     if (This->idxFrames == NULL)
       return AVIERR_MEMORY;
   }
@@ -1456,7 +1454,7 @@ static HRESULT AVIFILE_AddRecord(IAVIFileImpl *This)
 
   if (This->idxRecords == NULL || This->cbIdxRecords == 0) {
     This->cbIdxRecords += 1024 * sizeof(AVIINDEXENTRY);
-    This->idxRecords = GlobalAllocPtr(GHND, This->cbIdxRecords);
+    This->idxRecords = HeapAlloc(GetProcessHeap(), 0, This->cbIdxRecords);
     if (This->idxRecords == NULL)
       return AVIERR_MEMORY;
   }
@@ -1531,14 +1529,14 @@ static void    AVIFILE_ConstructAVIStream(IAVIFileImpl *paf, DWORD nr, LPAVISTRE
     if (asi->dwLength > 0) {
       /* pre-allocate mem for frame-index structure */
       pstream->idxFrames =
-	(AVIINDEXENTRY*)GlobalAllocPtr(GHND, asi->dwLength * sizeof(AVIINDEXENTRY));
+	HeapAlloc(GetProcessHeap(), 0, asi->dwLength * sizeof(AVIINDEXENTRY));
       if (pstream->idxFrames != NULL)
 	pstream->nIdxFrames = asi->dwLength;
     }
     if (asi->dwFormatChangeCount > 0) {
       /* pre-allocate mem for formatchange-index structure */
       pstream->idxFmtChanges =
-	(AVIINDEXENTRY*)GlobalAllocPtr(GHND, asi->dwFormatChangeCount * sizeof(AVIINDEXENTRY));
+	HeapAlloc(GetProcessHeap(), 0, asi->dwFormatChangeCount * sizeof(AVIINDEXENTRY));
       if (pstream->idxFmtChanges != NULL)
 	pstream->nIdxFmtChanges = asi->dwFormatChangeCount;
     }
@@ -1564,16 +1562,16 @@ static void    AVIFILE_DestructAVIStream(IAVIStreamImpl *This)
   This->lLastFrame    = -1;
   This->paf = NULL;
   if (This->idxFrames != NULL) {
-    GlobalFreePtr(This->idxFrames);
+    HeapFree(GetProcessHeap(), 0, This->idxFrames);
     This->idxFrames  = NULL;
     This->nIdxFrames = 0;
   }
   if (This->idxFmtChanges != NULL) {
-    GlobalFreePtr(This->idxFmtChanges);
+    HeapFree(GetProcessHeap(), 0, This->idxFmtChanges);
     This->idxFmtChanges = NULL;
   }
   if (This->lpBuffer != NULL) {
-    GlobalFreePtr(This->lpBuffer);
+    HeapFree(GetProcessHeap(), 0, This->lpBuffer);
     This->lpBuffer = NULL;
     This->cbBuffer = 0;
   }
@@ -1583,12 +1581,12 @@ static void    AVIFILE_DestructAVIStream(IAVIStreamImpl *This)
     This->cbHandlerData = 0;
   }
   if (This->extra.lp != NULL) {
-    GlobalFreePtr(This->extra.lp);
+    HeapFree(GetProcessHeap(), 0, This->extra.lp);
     This->extra.lp = NULL;
     This->extra.cb = 0;
   }
   if (This->lpFormat != NULL) {
-    GlobalFreePtr(This->lpFormat);
+    HeapFree(GetProcessHeap(), 0, This->lpFormat);
     This->lpFormat = NULL;
     This->cbFormat = 0;
   }
@@ -1918,8 +1916,7 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
   HRESULT        hr = AVIERR_OK;
   BOOL           bAbsolute = TRUE;
 
-  lp = (AVIINDEXENTRY*)GlobalAllocPtr(GMEM_MOVEABLE,
-				      IDX_PER_BLOCK * sizeof(AVIINDEXENTRY));
+  lp = HeapAlloc(GetProcessHeap(), 0, IDX_PER_BLOCK * sizeof(AVIINDEXENTRY));
   if (lp == NULL)
     return AVIERR_MEMORY;
 
@@ -1930,7 +1927,7 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
     pStream->lLastFrame = -1;
 
     if (pStream->idxFrames != NULL) {
-      GlobalFreePtr(pStream->idxFrames);
+      HeapFree(GetProcessHeap(), 0, pStream->idxFrames);
       pStream->idxFrames  = NULL;
       pStream->nIdxFrames = 0;
     }
@@ -1946,7 +1943,7 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
       pStream->nIdxFrames = pStream->sInfo.dwLength;
 
     pStream->idxFrames =
-      (AVIINDEXENTRY*)GlobalAllocPtr(GHND, pStream->nIdxFrames * sizeof(AVIINDEXENTRY));
+      HeapAlloc(GetProcessHeap(), 0, pStream->nIdxFrames * sizeof(AVIINDEXENTRY));
     if (pStream->idxFrames == NULL && pStream->nIdxFrames > 0) {
       pStream->nIdxFrames = 0;
       return AVIERR_MEMORY;
@@ -1971,7 +1968,7 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
   }
 
   if (lp != NULL)
-    GlobalFreePtr(lp);
+    HeapFree(GetProcessHeap(), 0, lp);
 
   /* checking ... */
   for (n = 0; n < This->fInfo.dwStreams; n++) {
@@ -2040,10 +2037,9 @@ static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
       DWORD maxSize = max(size, This->sInfo.dwSuggestedBufferSize);
 
       if (This->lpBuffer == NULL)
-	This->lpBuffer = (LPDWORD)GlobalAllocPtr(GMEM_MOVEABLE, maxSize);
+	This->lpBuffer = HeapAlloc(GetProcessHeap(), 0, maxSize);
       else
-	This->lpBuffer =
-	  (LPDWORD)GlobalReAllocPtr(This->lpBuffer, maxSize, GMEM_MOVEABLE);
+	This->lpBuffer = HeapReAlloc(GetProcessHeap(), 0, This->lpBuffer, maxSize);
       if (This->lpBuffer == NULL)
 	return AVIERR_MEMORY;
       This->cbBuffer = max(size, This->sInfo.dwSuggestedBufferSize);

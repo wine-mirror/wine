@@ -26,7 +26,6 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "winerror.h"
-#include "windowsx.h"
 #include "mmsystem.h"
 #include "vfw.h"
 #include "msacm.h"
@@ -225,7 +224,7 @@ HRESULT AVIFILE_CreateWAVFile(REFIID riid, LPVOID *ppv)
 
   *ppv = NULL;
 
-  pfile = (IAVIFileImpl*)LocalAlloc(LPTR, sizeof(IAVIFileImpl));
+  pfile = HeapAlloc(GetProcessHeap(), 0, sizeof(IAVIFileImpl));
   if (pfile == NULL)
     return AVIERR_MEMORY;
 
@@ -238,7 +237,7 @@ HRESULT AVIFILE_CreateWAVFile(REFIID riid, LPVOID *ppv)
 
   hr = IAVIFile_QueryInterface((IAVIFile*)pfile, riid, ppv);
   if (FAILED(hr))
-    LocalFree((HLOCAL)pfile);
+    HeapFree(GetProcessHeap(), 0, pfile);
 
   return hr;
 }
@@ -289,17 +288,17 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
     }
 
     if (This->lpFormat != NULL) {
-      GlobalFreePtr(This->lpFormat);
+      HeapFree(GetProcessHeap(), 0, This->lpFormat);
       This->lpFormat = NULL;
       This->cbFormat = 0;
     }
     if (This->extra.lp != NULL) {
-      GlobalFreePtr(This->extra.lp);
+      HeapFree(GetProcessHeap(), 0, This->extra.lp);
       This->extra.lp = NULL;
       This->extra.cb = 0;
     }
     if (This->szFileName != NULL) {
-      LocalFree((HLOCAL)This->szFileName);
+      HeapFree(GetProcessHeap(), 0, This->szFileName);
       This->szFileName = NULL;
     }
     if (This->hmmio != NULL) {
@@ -307,7 +306,7 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
       This->hmmio = NULL;
     }
 
-    LocalFree((HLOCAL)This);
+    HeapFree(GetProcessHeap(), 0, This);
     return 0;
   }
   return ref;
@@ -485,7 +484,7 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile *iface, DWORD fccType,
   if ((This->uMode & MMIO_RWMODE) == 0)
     return AVIERR_READONLY;
 
-  GlobalFreePtr(This->lpFormat);
+  HeapFree(GetProcessHeap(), 0, This->lpFormat);
   This->lpFormat = NULL;
   This->cbFormat = 0;
 
@@ -582,7 +581,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
   This->uMode = dwMode;
 
   len = lstrlenW(pszFileName) + 1;
-  This->szFileName = LocalAlloc(LPTR, len * sizeof(WCHAR));
+  This->szFileName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
   if (This->szFileName == NULL)
     return AVIERR_MEMORY;
   lstrcpyW(This->szFileName, pszFileName);
@@ -594,7 +593,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
     LPSTR szFileName;
     len = WideCharToMultiByte(CP_ACP, 0, This->szFileName, -1,
                               NULL, 0, NULL, NULL);
-    szFileName = LocalAlloc(LPTR, len * sizeof(CHAR));
+    szFileName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR));
     if (szFileName == NULL)
       return AVIERR_MEMORY;
 
@@ -602,7 +601,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
 			len, NULL, NULL);
 
     This->hmmio = mmioOpenA(szFileName, NULL, MMIO_ALLOCBUF | dwMode);
-    LocalFree((HLOCAL)szFileName);
+    HeapFree(GetProcessHeap(), 0, szFileName);
     if (This->hmmio == NULL)
       return AVIERR_FILEOPEN;
   }
@@ -826,7 +825,7 @@ static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream *iface, LONG pos,
     return AVIERR_READONLY;
 
   /* get memory for format and copy it */
-  This->lpFormat = (LPWAVEFORMATEX)GlobalAllocPtr(GMEM_MOVEABLE, formatsize);
+  This->lpFormat = HeapAlloc(GetProcessHeap(), 0, formatsize);
   if (This->lpFormat == NULL)
     return AVIERR_MEMORY;
 
@@ -1079,7 +1078,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
     return AVIERR_FILEREAD;
 
   /* get memory for format and read it */
-  This->lpFormat = (LPWAVEFORMATEX)GlobalAllocPtr(GMEM_MOVEABLE, ck.cksize);
+  This->lpFormat = HeapAlloc(GetProcessHeap(), 0, ck.cksize);
   if (This->lpFormat == NULL)
     return AVIERR_FILEREAD;
   This->cbFormat = ck.cksize;
@@ -1168,8 +1167,7 @@ static HRESULT AVIFILE_LoadSunFile(IAVIFileImpl *This)
     This->cbFormat = sizeof(WAVEFORMATEX); break;
   };
 
-  This->lpFormat =
-    (LPWAVEFORMATEX)GlobalAllocPtr(GMEM_MOVEABLE, This->cbFormat);
+  This->lpFormat = HeapAlloc(GetProcessHeap(), 0, This->cbFormat);
   if (This->lpFormat == NULL)
     return AVIERR_MEMORY;
 
