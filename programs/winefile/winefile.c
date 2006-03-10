@@ -2521,6 +2521,10 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 			resize_frame(hwnd, LOWORD(lparam), HIWORD(lparam));
 			break;	/* do not pass message to DefFrameProc */
 
+		case WM_DEVICECHANGE:
+			SendMessage(hwnd, WM_COMMAND, MAKELONG(ID_REFRESH,0), 0);
+			break;
+
 #ifndef _NO_EXTENSIONS
 		case WM_GETMINMAXINFO: {
 			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lparam;
