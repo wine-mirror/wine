@@ -41,4 +41,31 @@ void crypt_oid_free(void);
 const void *CRYPT_ReadSerializedElement(const BYTE *pbElement,
  DWORD cbElement, DWORD dwContextTypeFlags, DWORD *pdwContentType);
 
+/**
+ *  Context property list functions
+ */
+struct _CONTEXT_PROPERTY_LIST;
+typedef struct _CONTEXT_PROPERTY_LIST *PCONTEXT_PROPERTY_LIST;
+
+PCONTEXT_PROPERTY_LIST ContextPropertyList_Create(void);
+
+/* Searches for the property with ID id in the context.  Returns TRUE if found,
+ * and copies the property's length and a pointer to its data to blob.
+ * Otherwise returns FALSE.
+ */
+BOOL ContextPropertyList_FindProperty(PCONTEXT_PROPERTY_LIST list, DWORD id,
+ PCRYPT_DATA_BLOB blob);
+
+BOOL ContextPropertyList_SetProperty(PCONTEXT_PROPERTY_LIST list, DWORD id,
+ const BYTE *pbData, size_t cbData);
+
+void ContextPropertyList_RemoveProperty(PCONTEXT_PROPERTY_LIST list, DWORD id);
+
+DWORD ContextPropertyList_EnumPropIDs(PCONTEXT_PROPERTY_LIST list, DWORD id);
+
+void ContextPropertyList_Copy(PCONTEXT_PROPERTY_LIST to,
+ PCONTEXT_PROPERTY_LIST from);
+
+void ContextPropertyList_Free(PCONTEXT_PROPERTY_LIST list);
+
 #endif

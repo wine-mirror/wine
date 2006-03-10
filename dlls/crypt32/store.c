@@ -182,27 +182,19 @@ typedef struct WINE_CRYPTCERTSTORE
  */
 typedef struct _WINE_CERT_CONTEXT
 {
-    CERT_CONTEXT     cert;
-    LONG             ref;
-    CRITICAL_SECTION cs;
-    struct list      extendedProperties;
+    CERT_CONTEXT           cert;
+    LONG                   ref;
+    PCONTEXT_PROPERTY_LIST properties;
 } WINE_CERT_CONTEXT, *PWINE_CERT_CONTEXT;
+typedef const struct _WINE_CERT_CONTEXT PCWINE_CERT_CONTEXT;
 
 typedef struct _WINE_CERT_CONTEXT_REF
 {
     CERT_CONTEXT       cert;
     LONG               ref;
-    WINE_CERT_CONTEXT *context;
+    PWINE_CERT_CONTEXT context;
 } WINE_CERT_CONTEXT_REF, *PWINE_CERT_CONTEXT_REF;
-
-/* Stores an extended property in a cert. */
-typedef struct _WINE_CERT_PROPERTY
-{
-    DWORD       propID;
-    DWORD       cbData;
-    LPBYTE      pbData;
-    struct list entry;
-} WINE_CERT_PROPERTY, *PWINE_CERT_PROPERTY;
+typedef const struct _WINE_CERT_CONTEXT_REF PCWINE_CERT_CONTEXT_REF;
 
 /* A mem store has a list of these.  They're also returned by the mem store
  * during enumeration.
@@ -554,7 +546,6 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.addCert       = CRYPT_MemAddCert;
             store->hdr.enumCert      = CRYPT_MemEnumCert;
             store->hdr.deleteCert    = CRYPT_MemDeleteCert;
-            store->hdr.freeCert      = NULL;
             store->hdr.control       = NULL;
             InitializeCriticalSection(&store->cs);
             list_init(&store->certs);
@@ -1905,8 +1896,7 @@ static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
         cert->cert.pCertInfo          = certInfo;
         cert->cert.hCertStore         = 0;
         cert->ref = 0;
-        InitializeCriticalSection(&cert->cs);
-        list_init(&cert->extendedProperties);
+        cert->properties = ContextPropertyList_Create();
     }
 
 end:
@@ -1915,18 +1905,9 @@ end:
 
 static void CRYPT_FreeCert(PWINE_CERT_CONTEXT context)
 {
-    PWINE_CERT_PROPERTY prop, next;
-
     CryptMemFree(context->cert.pbCertEncoded);
     LocalFree(context->cert.pCertInfo);
-    DeleteCriticalSection(&context->cs);
-    LIST_FOR_EACH_ENTRY_SAFE(prop, next, &context->extendedProperties,
-     WINE_CERT_PROPERTY, entry)
-    {
-        list_remove(&prop->entry);
-        CryptMemFree(prop->pbData);
-        CryptMemFree(prop);
-    }
+    ContextPropertyList_Free(context->properties);
     CryptMemFree(context);
 }
 
@@ -1946,46 +1927,14 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
     return (PCCERT_CONTEXT)ret;
 }
 
-/* Since the properties are stored in a list, this is a tad inefficient
- * (O(n^2)) since I have to find the previous position every time.
- */
 DWORD WINAPI CertEnumCertificateContextProperties(PCCERT_CONTEXT pCertContext,
  DWORD dwPropId)
 {
     PWINE_CERT_CONTEXT_REF ref = (PWINE_CERT_CONTEXT_REF)pCertContext;
-    DWORD ret;
 
     TRACE("(%p, %ld)\n", pCertContext, dwPropId);
 
-    EnterCriticalSection(&ref->context->cs);
-    if (dwPropId)
-    {
-        PWINE_CERT_PROPERTY cursor = NULL;
-
-        LIST_FOR_EACH_ENTRY(cursor, &ref->context->extendedProperties,
-         WINE_CERT_PROPERTY, entry)
-        {
-            if (cursor->propID == dwPropId)
-                break;
-        }
-        if (cursor)
-        {
-            if (cursor->entry.next != &ref->context->extendedProperties)
-                ret = LIST_ENTRY(cursor->entry.next, WINE_CERT_PROPERTY,
-                 entry)->propID;
-            else
-                ret = 0;
-        }
-        else
-            ret = 0;
-    }
-    else if (!list_empty(&ref->context->extendedProperties))
-        ret = LIST_ENTRY(ref->context->extendedProperties.next,
-         WINE_CERT_PROPERTY, entry)->propID;
-    else
-        ret = 0;
-    LeaveCriticalSection(&ref->context->cs);
-    return ret;
+    return ContextPropertyList_EnumPropIDs(ref->context->properties, dwPropId);
 }
 
 static BOOL CRYPT_GetCertHashProp(PWINE_CERT_CONTEXT context, DWORD dwPropId,
@@ -2007,40 +1956,33 @@ static BOOL CRYPT_GetCertHashProp(PWINE_CERT_CONTEXT context, DWORD dwPropId,
 static BOOL WINAPI CRYPT_GetCertificateContextProperty(
  PWINE_CERT_CONTEXT context, DWORD dwPropId, void *pvData, DWORD *pcbData)
 {
-    PWINE_CERT_PROPERTY prop;
-    BOOL ret, found;
+    BOOL ret;
+    CRYPT_DATA_BLOB blob;
 
     TRACE("(%p, %ld, %p, %p)\n", context, dwPropId, pvData, pcbData);
 
-    EnterCriticalSection(&context->cs);
-    ret = FALSE;
-    found = FALSE;
-    LIST_FOR_EACH_ENTRY(prop, &context->extendedProperties,
-     WINE_CERT_PROPERTY, entry)
+    ret = ContextPropertyList_FindProperty(context->properties, dwPropId,
+     &blob);
+    if (ret)
     {
-        if (prop->propID == dwPropId)
+        if (!pvData)
         {
-            if (!pvData)
-            {
-                *pcbData = prop->cbData;
-                ret = TRUE;
-            }
-            else if (*pcbData < prop->cbData)
-            {
-                SetLastError(ERROR_MORE_DATA);
-                *pcbData = prop->cbData;
-            }
-            else
-            {
-                memcpy(pvData, prop->pbData, prop->cbData);
-                *pcbData = prop->cbData;
-                ret = TRUE;
-            }
-            found = TRUE;
-            break;
+            *pcbData = blob.cbData;
+            ret = TRUE;
+        }
+        else if (*pcbData < blob.cbData)
+        {
+            SetLastError(ERROR_MORE_DATA);
+            *pcbData = blob.cbData;
+        }
+        else
+        {
+            memcpy(pvData, blob.pbData, blob.cbData);
+            *pcbData = blob.cbData;
+            ret = TRUE;
         }
     }
-    if (!found)
+    else
     {
         /* Implicit properties */
         switch (dwPropId)
@@ -2076,7 +2018,6 @@ static BOOL WINAPI CRYPT_GetCertificateContextProperty(
             SetLastError(CRYPT_E_NOT_FOUND);
         }
     }
-    LeaveCriticalSection(&context->cs);
     TRACE("returning %d\n", ret);
     return ret;
 }
@@ -2134,65 +2075,6 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
     return ret;
 }
 
-/* Copies cbData bytes from pbData to the context's property with ID
- * dwPropId.
- */
-static BOOL CRYPT_SaveCertificateContextProperty(PWINE_CERT_CONTEXT context,
- DWORD dwPropId, const BYTE *pbData, size_t cbData)
-{
-    BOOL ret = FALSE;
-    LPBYTE data;
-
-    if (cbData)
-    {
-        data = CryptMemAlloc(cbData);
-        if (data)
-            memcpy(data, pbData, cbData);
-    }
-    else
-        data = NULL;
-    if (!cbData || data)
-    {
-        PWINE_CERT_PROPERTY prop;
-        BOOL found = FALSE;
-
-        EnterCriticalSection(&context->cs);
-        LIST_FOR_EACH_ENTRY(prop, &context->extendedProperties,
-         WINE_CERT_PROPERTY, entry)
-        {
-            if (prop->propID == dwPropId)
-            {
-                found = TRUE;
-                break;
-            }
-        }
-        if (found)
-        {
-            CryptMemFree(prop->pbData);
-            prop->cbData = cbData;
-            prop->pbData = data;
-            ret = TRUE;
-        }
-        else
-        {
-            prop = CryptMemAlloc(sizeof(WINE_CERT_PROPERTY));
-            if (prop)
-            {
-                prop->propID = dwPropId;
-                prop->cbData = cbData;
-                list_init(&prop->entry);
-                prop->pbData = data;
-                list_add_tail(&context->extendedProperties, &prop->entry);
-                ret = TRUE;
-            }
-            else
-                CryptMemFree(data);
-        }
-        LeaveCriticalSection(&context->cs);
-    }
-    return ret;
-}
-
 static BOOL WINAPI CRYPT_SetCertificateContextProperty(
  PWINE_CERT_CONTEXT context, DWORD dwPropId, DWORD dwFlags, const void *pvData)
 {
@@ -2202,20 +2084,7 @@ static BOOL WINAPI CRYPT_SetCertificateContextProperty(
 
     if (!pvData)
     {
-        PWINE_CERT_PROPERTY prop, next;
-
-        EnterCriticalSection(&context->cs);
-        LIST_FOR_EACH_ENTRY_SAFE(prop, next, &context->extendedProperties,
-         WINE_CERT_PROPERTY, entry)
-        {
-            if (prop->propID == dwPropId)
-            {
-                list_remove(&prop->entry);
-                CryptMemFree(prop->pbData);
-                CryptMemFree(prop);
-            }
-        }
-        LeaveCriticalSection(&context->cs);
+        ContextPropertyList_RemoveProperty(context->properties, dwPropId);
         ret = TRUE;
     }
     else
@@ -2242,12 +2111,12 @@ static BOOL WINAPI CRYPT_SetCertificateContextProperty(
         {
             PCRYPT_DATA_BLOB blob = (PCRYPT_DATA_BLOB)pvData;
 
-            ret = CRYPT_SaveCertificateContextProperty(context, dwPropId,
+            ret = ContextPropertyList_SetProperty(context->properties, dwPropId,
              blob->pbData, blob->cbData);
             break;
         }
         case CERT_DATE_STAMP_PROP_ID:
-            ret = CRYPT_SaveCertificateContextProperty(context, dwPropId,
+            ret = ContextPropertyList_SetProperty(context->properties, dwPropId,
              pvData, sizeof(FILETIME));
             break;
         default:
@@ -2319,51 +2188,12 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
         return FALSE;
     }
 
-    cert = CRYPT_CreateCertificateContext(ref->context->cert.dwCertEncodingType,
-     ref->context->cert.pbCertEncoded, ref->context->cert.cbCertEncoded);
+    cert = CRYPT_CreateCertificateContext(ref->cert.dwCertEncodingType,
+     ref->cert.pbCertEncoded, ref->cert.cbCertEncoded);
     if (cert)
     {
-        DWORD prop = 0, bufSize = 0;
-        LPBYTE buf = NULL;
-
-        ret = TRUE;
-        EnterCriticalSection(&ref->context->cs);
-        do {
-            prop = CertEnumCertificateContextProperties((PCCERT_CONTEXT)ref,
-             prop);
-            if (prop)
-            {
-                DWORD propSize = 0;
-
-                ret = CertGetCertificateContextProperty(pCertContext, prop,
-                 NULL, &propSize);
-                if (ret)
-                {
-                    if (bufSize < propSize)
-                    {
-                        if (buf)
-                            buf = CryptMemRealloc(buf, propSize);
-                        else
-                            buf = CryptMemAlloc(propSize);
-                        bufSize = propSize;
-                    }
-                    if (buf)
-                    {
-                        ret = CertGetCertificateContextProperty(pCertContext,
-                         prop, buf, &propSize);
-                        if (ret)
-                            ret = CRYPT_SaveCertificateContextProperty(cert,
-                             prop, buf, bufSize);
-                    }
-                    else
-                        ret = FALSE;
-                }
-            }
-        } while (ret && prop != 0);
-        CryptMemFree(buf);
-        LeaveCriticalSection(&ref->context->cs);
-        if (ret)
-            ret = store->addCert(store, cert, dwAddDisposition, ppStoreContext);
+        ContextPropertyList_Copy(cert->properties, ref->context->properties);
+        ret = store->addCert(store, cert, dwAddDisposition, ppStoreContext);
         if (!ret)
             CRYPT_FreeCert(cert);
     }

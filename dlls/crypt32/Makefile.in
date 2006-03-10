@@ -11,6 +11,7 @@ C_SRCS = \
 	cert.c \
 	encode.c \
 	oid.c \
+	proplist.c \
 	protectdata.c \
 	serialize.c \
 	store.c \
