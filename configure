@@ -13368,7 +13368,6 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-
 echo "$as_me:$LINENO: checking for -lX11 soname" >&5
 echo $ECHO_N "checking for -lX11 soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_X11+set}" = set; then
@@ -13436,14 +13435,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_X11" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_X11" >&6
-if test "x$ac_cv_lib_soname_X11" != xNONE
-then
+if test "${ac_cv_lib_soname_X11+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBX11 "$ac_cv_lib_soname_X11"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lXext soname" >&5
+  echo "$as_me:$LINENO: checking for -lXext soname" >&5
 echo $ECHO_N "checking for -lXext soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_Xext+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -13510,14 +13510,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_Xext" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_Xext" >&6
-if test "x$ac_cv_lib_soname_Xext" != xNONE
-then
+if test "${ac_cv_lib_soname_Xext+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBXEXT "$ac_cv_lib_soname_Xext"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lXi soname" >&5
+  echo "$as_me:$LINENO: checking for -lXi soname" >&5
 echo $ECHO_N "checking for -lXi soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_Xi+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -13584,14 +13585,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_Xi" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_Xi" >&6
-if test "x$ac_cv_lib_soname_Xi" != xNONE
-then
+if test "${ac_cv_lib_soname_Xi+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBXI "$ac_cv_lib_soname_Xi"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lXrender soname" >&5
+  echo "$as_me:$LINENO: checking for -lXrender soname" >&5
 echo $ECHO_N "checking for -lXrender soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_Xrender+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -13658,14 +13660,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_Xrender" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_Xrender" >&6
-if test "x$ac_cv_lib_soname_Xrender" != xNONE
-then
+if test "${ac_cv_lib_soname_Xrender+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBXRENDER "$ac_cv_lib_soname_Xrender"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lXrandr soname" >&5
+  echo "$as_me:$LINENO: checking for -lXrandr soname" >&5
 echo $ECHO_N "checking for -lXrandr soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_Xrandr+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -13732,14 +13735,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_Xrandr" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_Xrandr" >&6
-if test "x$ac_cv_lib_soname_Xrandr" != xNONE
-then
+if test "${ac_cv_lib_soname_Xrandr+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBXRANDR "$ac_cv_lib_soname_Xrandr"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lfreetype soname" >&5
+  echo "$as_me:$LINENO: checking for -lfreetype soname" >&5
 echo $ECHO_N "checking for -lfreetype soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_freetype+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -13806,14 +13810,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_freetype" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_freetype" >&6
-if test "x$ac_cv_lib_soname_freetype" != xNONE
-then
+if test "${ac_cv_lib_soname_freetype+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBFREETYPE "$ac_cv_lib_soname_freetype"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lGL soname" >&5
+  echo "$as_me:$LINENO: checking for -lGL soname" >&5
 echo $ECHO_N "checking for -lGL soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_GL+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -13880,14 +13885,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_GL" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_GL" >&6
-if test "x$ac_cv_lib_soname_GL" != xNONE
-then
+if test "${ac_cv_lib_soname_GL+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBGL "$ac_cv_lib_soname_GL"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -ltxc_dxtn soname" >&5
+  echo "$as_me:$LINENO: checking for -ltxc_dxtn soname" >&5
 echo $ECHO_N "checking for -ltxc_dxtn soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_txc_dxtn+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -13954,14 +13960,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_txc_dxtn" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_txc_dxtn" >&6
-if test "x$ac_cv_lib_soname_txc_dxtn" != xNONE
-then
+if test "${ac_cv_lib_soname_txc_dxtn+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBTXC_DXTN "$ac_cv_lib_soname_txc_dxtn"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lcups soname" >&5
+  echo "$as_me:$LINENO: checking for -lcups soname" >&5
 echo $ECHO_N "checking for -lcups soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_cups+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14028,14 +14035,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_cups" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_cups" >&6
-if test "x$ac_cv_lib_soname_cups" != xNONE
-then
+if test "${ac_cv_lib_soname_cups+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBCUPS "$ac_cv_lib_soname_cups"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -ljack soname" >&5
+  echo "$as_me:$LINENO: checking for -ljack soname" >&5
 echo $ECHO_N "checking for -ljack soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_jack+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14102,14 +14110,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_jack" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_jack" >&6
-if test "x$ac_cv_lib_soname_jack" != xNONE
-then
+if test "${ac_cv_lib_soname_jack+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBJACK "$ac_cv_lib_soname_jack"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lfontconfig soname" >&5
+  echo "$as_me:$LINENO: checking for -lfontconfig soname" >&5
 echo $ECHO_N "checking for -lfontconfig soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_fontconfig+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14176,14 +14185,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_fontconfig" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_fontconfig" >&6
-if test "x$ac_cv_lib_soname_fontconfig" != xNONE
-then
+if test "${ac_cv_lib_soname_fontconfig+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBFONTCONFIG "$ac_cv_lib_soname_fontconfig"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lssl soname" >&5
+  echo "$as_me:$LINENO: checking for -lssl soname" >&5
 echo $ECHO_N "checking for -lssl soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_ssl+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14250,14 +14260,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_ssl" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_ssl" >&6
-if test "x$ac_cv_lib_soname_ssl" != xNONE
-then
+if test "${ac_cv_lib_soname_ssl+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBSSL "$ac_cv_lib_soname_ssl"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lcrypto soname" >&5
+  echo "$as_me:$LINENO: checking for -lcrypto soname" >&5
 echo $ECHO_N "checking for -lcrypto soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_crypto+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14324,14 +14335,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_crypto" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_crypto" >&6
-if test "x$ac_cv_lib_soname_crypto" != xNONE
-then
+if test "${ac_cv_lib_soname_crypto+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBCRYPTO "$ac_cv_lib_soname_crypto"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lncurses soname" >&5
+  echo "$as_me:$LINENO: checking for -lncurses soname" >&5
 echo $ECHO_N "checking for -lncurses soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_ncurses+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14398,14 +14410,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_ncurses" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_ncurses" >&6
-if test "x$ac_cv_lib_soname_ncurses" != xNONE
-then
+if test "${ac_cv_lib_soname_ncurses+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBNCURSES "$ac_cv_lib_soname_ncurses"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lcurses soname" >&5
+  echo "$as_me:$LINENO: checking for -lcurses soname" >&5
 echo $ECHO_N "checking for -lcurses soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_curses+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14472,14 +14485,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_curses" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_curses" >&6
-if test "x$ac_cv_lib_soname_curses" != xNONE
-then
+if test "${ac_cv_lib_soname_curses+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBCURSES "$ac_cv_lib_soname_curses"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -ljpeg soname" >&5
+  echo "$as_me:$LINENO: checking for -ljpeg soname" >&5
 echo $ECHO_N "checking for -ljpeg soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_jpeg+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14546,14 +14560,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_jpeg" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_jpeg" >&6
-if test "x$ac_cv_lib_soname_jpeg" != xNONE
-then
+if test "${ac_cv_lib_soname_jpeg+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBJPEG "$ac_cv_lib_soname_jpeg"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lungif soname" >&5
+  echo "$as_me:$LINENO: checking for -lungif soname" >&5
 echo $ECHO_N "checking for -lungif soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_ungif+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14620,14 +14635,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_ungif" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_ungif" >&6
-if test "x$ac_cv_lib_soname_ungif" != xNONE
-then
+if test "${ac_cv_lib_soname_ungif+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBUNGIF "$ac_cv_lib_soname_ungif"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lgif soname" >&5
+  echo "$as_me:$LINENO: checking for -lgif soname" >&5
 echo $ECHO_N "checking for -lgif soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_gif+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14694,14 +14710,15 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_gif" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_gif" >&6
-if test "x$ac_cv_lib_soname_gif" != xNONE
-then
+if test "${ac_cv_lib_soname_gif+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBGIF "$ac_cv_lib_soname_gif"
 _ACEOF
+
 fi
 
-echo "$as_me:$LINENO: checking for -lcapi20 soname" >&5
+  echo "$as_me:$LINENO: checking for -lcapi20 soname" >&5
 echo $ECHO_N "checking for -lcapi20 soname... $ECHO_C" >&6
 if test "${ac_cv_lib_soname_capi20+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -14768,12 +14785,14 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_soname_capi20" >&5
 echo "${ECHO_T}$ac_cv_lib_soname_capi20" >&6
-if test "x$ac_cv_lib_soname_capi20" != xNONE
-then
+if test "${ac_cv_lib_soname_capi20+set}" = set; then
+
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBCAPI20 "$ac_cv_lib_soname_capi20"
 _ACEOF
+
 fi
+
 fi
 
 
