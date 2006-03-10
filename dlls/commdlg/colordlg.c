@@ -1220,7 +1220,7 @@ static INT_PTR CALLBACK ColorDlgProc( HWND hDlg, UINT message,
 	                DeleteDC(lpp->hdcMem);
 	                DeleteObject(lpp->hbmMem);
                         HeapFree(GetProcessHeap(), 0, lpp);
-                        SetPropW( hDlg, szColourDialogProp, 0 );
+                        RemovePropW( hDlg, szColourDialogProp );
 	                break;
 	  case WM_COMMAND:
 	                if (CC_WMCommand( hDlg, wParam, lParam, HIWORD(wParam), (HWND) lParam))
