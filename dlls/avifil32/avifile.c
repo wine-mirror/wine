@@ -704,7 +704,7 @@ static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile *iface,
   if (This->paf->szFileName != NULL) {
     int len = lstrlenW(This->paf->szFileName) + 1;
 
-    *ppszFileName = (LPOLESTR)GlobalAllocPtr(GHND, len * sizeof(WCHAR));
+    *ppszFileName = CoTaskMemAlloc(len * sizeof(WCHAR));
     if (*ppszFileName == NULL)
       return AVIERR_MEMORY;
 
