@@ -67,6 +67,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 /* Wine joystick driver object instances */
 #define WINE_JOYSTICK_AXIS_BASE   0
+#define WINE_JOYSTICK_POV_BASE    6
 #define WINE_JOYSTICK_BUTTON_BASE 8
 
 typedef struct EffectListItem EffectListItem;
@@ -148,8 +149,9 @@ static GUID DInput_Wine_Joystick_GUID = { /* 9e573eda-7734-11d2-8d4a-23903fb6bdf
 
 static void fake_current_js_state(JoystickImpl *ji);
 static int find_property_offset(JoystickImpl *This, LPCDIPROPHEADER ph);
+static DWORD map_pov(int event_value, int is_x);
 
-#define test_bit(arr,bit) (((BYTE*)arr)[bit>>3]&(1<<(bit&7)))
+#define test_bit(arr,bit) (((BYTE*)(arr))[(bit)>>3]&(1<<((bit)&7)))
 
 static int joydev_have(BOOL require_ff)
 {
@@ -618,6 +620,8 @@ map_axis(JoystickImpl* This, int axis, int val) {
  */
 static void fake_current_js_state(JoystickImpl *ji)
 {
+	int i;
+	/* center the axes */
 	ji->js.lX  = map_axis(ji, ABS_X,  ji->axes[ABS_X ][AXE_ABS]);
 	ji->js.lY  = map_axis(ji, ABS_Y,  ji->axes[ABS_Y ][AXE_ABS]);
 	ji->js.lZ  = map_axis(ji, ABS_Z,  ji->axes[ABS_Z ][AXE_ABS]);
@@ -626,6 +630,35 @@ static void fake_current_js_state(JoystickImpl *ji)
 	ji->js.lRz = map_axis(ji, ABS_RZ, ji->axes[ABS_RZ][AXE_ABS]);
 	ji->js.rglSlider[0] = map_axis(ji, ABS_THROTTLE, ji->axes[ABS_THROTTLE][AXE_ABS]);
 	ji->js.rglSlider[1] = map_axis(ji, ABS_RUDDER,   ji->axes[ABS_RUDDER  ][AXE_ABS]);
+	/* POV center is -1 */
+	for (i=0; i<4; i++) {
+		ji->js.rgdwPOV[i] = -1;
+	}
+}
+
+/*
+ * Maps an event value to a DX "clock" position:
+ *           0
+ * 27000    -1 9000
+ *       18000
+ */
+static DWORD map_pov(int event_value, int is_x) 
+{
+	DWORD ret = -1;
+	if (is_x) {
+		if (event_value<0) {
+			ret = 27000;
+		} else if (event_value>0) {
+			ret = 9000;
+		}
+	} else {
+		if (event_value<0) {
+			ret = 0;
+		} else if (event_value>0) {
+			ret = 18000;
+		}
+	}
+	return ret;
 }
 
 static int find_property_offset(JoystickImpl *This, LPCDIPROPHEADER ph)
@@ -716,6 +749,26 @@ static void joy_polldev(JoystickImpl *This) {
 	    case ABS_RUDDER:
                 This->js.rglSlider[1] = map_axis(This,ABS_RUDDER,ie.value);
                 GEN_EVENT(DIJOFS_SLIDER(1),This->js.rglSlider[1],ie.time.tv_usec,(This->dinput->evsequence)++);
+                break;
+	    case ABS_HAT0X:
+	    case ABS_HAT0Y:
+                This->js.rgdwPOV[0] = map_pov(ie.value,ie.code==ABS_HAT0X);
+                GEN_EVENT(DIJOFS_POV(0),This->js.rgdwPOV[0],ie.time.tv_usec,(This->dinput->evsequence)++);
+                break;
+	    case ABS_HAT1X:
+	    case ABS_HAT1Y:
+                This->js.rgdwPOV[1] = map_pov(ie.value,ie.code==ABS_HAT1X);
+                GEN_EVENT(DIJOFS_POV(1),This->js.rgdwPOV[1],ie.time.tv_usec,(This->dinput->evsequence)++);
+                break;
+	    case ABS_HAT2X:
+	    case ABS_HAT2Y:
+                This->js.rgdwPOV[2] = map_pov(ie.value,ie.code==ABS_HAT2X);
+                GEN_EVENT(DIJOFS_POV(2),This->js.rgdwPOV[2],ie.time.tv_usec,(This->dinput->evsequence)++);
+                break;
+	    case ABS_HAT3X:
+	    case ABS_HAT3Y:
+                This->js.rgdwPOV[3] = map_pov(ie.value,ie.code==ABS_HAT3X);
+                GEN_EVENT(DIJOFS_POV(3),This->js.rgdwPOV[3],ie.time.tv_usec,(This->dinput->evsequence)++);
                 break;
 	    default:
 		FIXME("unhandled joystick axe event (code %d, value %d)\n",ie.code,ie.value);
@@ -1073,6 +1126,26 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 	if (xfd == -1)
 	  IDirectInputDevice8_Unacquire(iface);
 	return DI_OK;
+      }
+    }
+  }
+
+  if ((dwFlags == DIDFT_ALL) ||
+      (dwFlags & DIDFT_POV)) {
+    int i;
+    ddoi.guidType = GUID_POV;
+    for (i=0; i<4; i++) {
+      if (test_bit(This->absbits,ABS_HAT0X+(i<<1)) && test_bit(This->absbits,ABS_HAT0Y+(i<<1))) {
+        ddoi.dwOfs = DIJOFS_POV(i);
+        ddoi.dwType = DIDFT_MAKEINSTANCE(i << WINE_JOYSTICK_POV_BASE) | DIDFT_POV;
+        sprintf(ddoi.tszName, "%d-POV", i);
+        _dump_OBJECTINSTANCEA(&ddoi);
+        if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) {
+          /* return to unaquired state if that's where we were */
+          if (xfd == -1)
+            IDirectInputDevice8_Unacquire(iface);
+          return DI_OK;
+        }
       }
     }
   }
