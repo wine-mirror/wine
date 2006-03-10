@@ -50,8 +50,12 @@
 #include "winerror.h"
 #include "wine/winuser16.h"
 #include "mmddk.h"
+#include "mmreg.h"
 #include "dsound.h"
 #include "dsdriver.h"
+#include "ks.h"
+#include "ksguid.h"
+#include "ksmedia.h"
 #include "esound.h"
 #include "wine/debug.h"
 
@@ -70,6 +74,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 #define MAX_WAVEOUTDRV 	(10)
 #define MAX_WAVEINDRV 	(10)
+#define MAX_CHANNELS	2
 
 /* state diagram for waveOut writing:
  *
@@ -124,7 +129,7 @@ typedef struct {
     volatile int		state;			/* one of the WINE_WS_ manifest constants */
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
-    PCMWAVEFORMAT		format;
+    WAVEFORMATPCMEX             waveFormat;
     WAVEOUTCAPSW		caps;
     char                        interface_name[32];
 
@@ -162,7 +167,7 @@ typedef struct {
     volatile int		state;			/* one of the WINE_WS_ manifest constants */
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
-    PCMWAVEFORMAT		format;
+    WAVEFORMATPCMEX             waveFormat;
     WAVEINCAPSW			caps;
     char                        interface_name[32];
 
@@ -256,6 +261,93 @@ void volume_effect8(void *bufin, void* bufout, int length, int left,
       *(d_out++) = (v>255) ? 255 : ((v<0) ? 0 : v);
     }
   }
+}
+
+static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
+                             WAVEFORMATPCMEX* format)
+{
+    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
+          lpTime->wType, format->Format.wBitsPerSample, format->Format.nSamplesPerSec,
+          format->Format.nChannels, format->Format.nAvgBytesPerSec);
+    TRACE("Position in bytes=%lu\n", position);
+
+    switch (lpTime->wType) {
+    case TIME_SAMPLES:
+        lpTime->u.sample = position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels);
+        TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
+        break;
+    case TIME_MS:
+        lpTime->u.ms = 1000.0 * position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels * format->Format.nSamplesPerSec);
+        TRACE("TIME_MS=%lu\n", lpTime->u.ms);
+        break;
+    case TIME_SMPTE:
+        lpTime->u.smpte.fps = 30;
+        position = position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels);
+        position += (format->Format.nSamplesPerSec / lpTime->u.smpte.fps) - 1; /* round up */
+        lpTime->u.smpte.sec = position / format->Format.nSamplesPerSec;
+        position -= lpTime->u.smpte.sec * format->Format.nSamplesPerSec;
+        lpTime->u.smpte.min = lpTime->u.smpte.sec / 60;
+        lpTime->u.smpte.sec -= 60 * lpTime->u.smpte.min;
+        lpTime->u.smpte.hour = lpTime->u.smpte.min / 60;
+        lpTime->u.smpte.min -= 60 * lpTime->u.smpte.hour;
+        lpTime->u.smpte.fps = 30;
+        lpTime->u.smpte.frame = position * lpTime->u.smpte.fps / format->Format.nSamplesPerSec;
+        TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
+              lpTime->u.smpte.hour, lpTime->u.smpte.min,
+              lpTime->u.smpte.sec, lpTime->u.smpte.frame);
+        break;
+    default:
+        WARN("Format %d not supported, using TIME_BYTES !\n", lpTime->wType);
+        lpTime->wType = TIME_BYTES;
+        /* fall through */
+    case TIME_BYTES:
+        lpTime->u.cb = position;
+        TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
+        break;
+    }
+    return MMSYSERR_NOERROR;
+}
+
+static BOOL supportedFormat(LPWAVEFORMATEX wf)
+{
+    TRACE("(%p)\n",wf);
+                                                                                
+    if (wf->nSamplesPerSec<DSBFREQUENCY_MIN||wf->nSamplesPerSec>DSBFREQUENCY_MAX)
+        return FALSE;
+                                                                                
+    if (wf->wFormatTag == WAVE_FORMAT_PCM) {
+        if (wf->nChannels >= 1 && wf->nChannels <= MAX_CHANNELS) {
+            if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
+                return TRUE;
+        }
+    } else if (wf->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        WAVEFORMATEXTENSIBLE * wfex = (WAVEFORMATEXTENSIBLE *)wf;
+                                                                                
+        if (wf->cbSize == 22 && IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
+            if (wf->nChannels >=1 && wf->nChannels <= MAX_CHANNELS) {
+                if (wf->wBitsPerSample==wfex->Samples.wValidBitsPerSample) {
+                    if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
+                        return TRUE;
+                } else
+                    WARN("wBitsPerSample != wValidBitsPerSample not supported yet\n");
+            }
+        } else
+            WARN("only KSDATAFORMAT_SUBTYPE_PCM supported\n");
+    } else
+        WARN("only WAVE_FORMAT_PCM and WAVE_FORMAT_EXTENSIBLE supported\n");
+                                                                                
+    return FALSE;
+}
+
+void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
+{
+    ZeroMemory(wf2, sizeof(wf2));
+    if (wf1->wFormatTag == WAVE_FORMAT_PCM)
+        memcpy(wf2, wf1, sizeof(PCMWAVEFORMAT));
+    else if (wf1->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        memcpy(wf2, wf1, sizeof(WAVEFORMATPCMEX));
+    else
+        memcpy(wf2, wf1, sizeof(WAVEFORMATEX) + wf1->cbSize);
 }
 
 /******************************************************************
@@ -420,6 +512,7 @@ static int ESD_InitRingMessage(ESD_MSG_RING* mr)
     mr->ring_buffer_size = ESD_RING_BUFFER_INCREMENT;
     mr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,mr->ring_buffer_size * sizeof(RING_MSG));
     InitializeCriticalSection(&mr->msg_crst);
+    mr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)"WINEESD_msg_crst";
     return 0;
 }
 
@@ -653,7 +746,7 @@ static DWORD wodPlayer_NotifyWait(const WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
     }
     else
     {
-        dwMillis = (lpWaveHdr->reserved - wwo->dwPlayedTotal) * 1000 / wwo->format.wf.nAvgBytesPerSec;
+        dwMillis = (lpWaveHdr->reserved - wwo->dwPlayedTotal) * 1000 / wwo->waveFormat.Format.nAvgBytesPerSec;
 	if(!dwMillis) dwMillis = 1;
     }
 
@@ -707,23 +800,23 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
 
     /* apply volume to the bits */
     /* for single channel audio streams we only use the LEFT volume */
-    if(wwo->format.wBitsPerSample == 16)
+    if(wwo->waveFormat.Format.wBitsPerSample == 16)
     {
       /* apply volume to the buffer we are about to send */
       /* divide toWrite(bytes) by 2 as volume processes by 16 bits */
       volume_effect16(wwo->lpPlayPtr->lpData + wwo->dwPartialOffset,
                 wwo->sound_buffer, toWrite>>1, wwo->volume_left,
-		wwo->volume_right, wwo->format.wf.nChannels);
-    } else if(wwo->format.wBitsPerSample == 8)
+		wwo->volume_right, wwo->waveFormat.Format.nChannels);
+    } else if(wwo->waveFormat.Format.wBitsPerSample == 8)
     {
       /* apply volume to the buffer we are about to send */
       volume_effect8(wwo->lpPlayPtr->lpData + wwo->dwPartialOffset,
                 wwo->sound_buffer, toWrite, wwo->volume_left,
-		wwo->volume_right, wwo->format.wf.nChannels);
+		wwo->volume_right, wwo->waveFormat.Format.nChannels);
     } else
     {
       FIXME("unsupported wwo->format.wBitsPerSample of %d\n",
-        wwo->format.wBitsPerSample);
+        wwo->waveFormat.Format.wBitsPerSample);
     }
 
     /* send the audio data to esd for playing */
@@ -1073,15 +1166,11 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     /* only PCM format is supported so far... */
-    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
-	lpDesc->lpFormat->nChannels == 0 ||
-        lpDesc->lpFormat->nSamplesPerSec < DSBFREQUENCY_MIN ||
-        lpDesc->lpFormat->nSamplesPerSec > DSBFREQUENCY_MAX ||
-        (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
-	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
-	     lpDesc->lpFormat->nSamplesPerSec);
-	return WAVERR_BADFORMAT;
+    if (!supportedFormat(lpDesc->lpFormat)) {
+        WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+             lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+             lpDesc->lpFormat->nSamplesPerSec);
+        return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
@@ -1098,31 +1187,31 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwo->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
-    memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+    memcpy(&wwo->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+    copy_format(lpDesc->lpFormat, &wwo->waveFormat);
 
-    if (wwo->format.wBitsPerSample == 0) {
+    if (wwo->waveFormat.Format.wBitsPerSample == 0) {
 	WARN("Resetting zeroed wBitsPerSample\n");
-	wwo->format.wBitsPerSample = 8 *
-	    (wwo->format.wf.nAvgBytesPerSec /
-	     wwo->format.wf.nSamplesPerSec) /
-	    wwo->format.wf.nChannels;
+	wwo->waveFormat.Format.wBitsPerSample = 8 *
+	    (wwo->waveFormat.Format.nAvgBytesPerSec /
+	     wwo->waveFormat.Format.nSamplesPerSec) /
+	    wwo->waveFormat.Format.nChannels;
     }
 
-    if (wwo->format.wBitsPerSample == 8)
+    if (wwo->waveFormat.Format.wBitsPerSample == 8)
 	out_bits = ESD_BITS8;
-    else if (wwo->format.wBitsPerSample == 16)
+    else if (wwo->waveFormat.Format.wBitsPerSample == 16)
 	out_bits = ESD_BITS16;
 
-    wwo->bytes_per_frame = (wwo->format.wBitsPerSample * wwo->format.wf.nChannels) / 8;
+    wwo->bytes_per_frame = (wwo->waveFormat.Format.wBitsPerSample * wwo->waveFormat.Format.nChannels) / 8;
 
-    if (wwo->format.wf.nChannels == 1)
+    if (wwo->waveFormat.Format.nChannels == 1)
 	out_channels = ESD_MONO;
-    else if (wwo->format.wf.nChannels == 2)
+    else if (wwo->waveFormat.Format.nChannels == 2)
 	out_channels = ESD_STEREO;
 
     out_format = out_bits | out_channels | out_mode | out_func;
-    out_rate = (int) wwo->format.wf.nSamplesPerSec;
+    out_rate = (int) wwo->waveFormat.Format.nSamplesPerSec;
 	TRACE("esd output format = 0x%08x, rate = %d\n", out_format, out_rate);
 
     wwo->esd_fd = esd_play_stream(out_format, out_rate, esd_host, "wineesd");
@@ -1139,7 +1228,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
 
-    wwo->dwSleepTime = (1024 * 1000 * BUFFER_REFILL_THRESHOLD) / wwo->format.wf.nAvgBytesPerSec;
+    wwo->dwSleepTime = (1024 * 1000 * BUFFER_REFILL_THRESHOLD) / wwo->waveFormat.Format.nAvgBytesPerSec;
 
     /* Initialize volume to full level */
     wwo->volume_left = 100;
@@ -1163,9 +1252,9 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	  (long)wwo->esd_fd, wwo->dwBufferSize);
 
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
-	  wwo->format.wBitsPerSample, wwo->format.wf.nAvgBytesPerSec,
-	  wwo->format.wf.nSamplesPerSec, wwo->format.wf.nChannels,
-	  wwo->format.wf.nBlockAlign);
+	  wwo->waveFormat.Format.wBitsPerSample, wwo->waveFormat.Format.nAvgBytesPerSec,
+	  wwo->waveFormat.Format.nSamplesPerSec, wwo->waveFormat.Format.nChannels,
+	  wwo->waveFormat.Format.nBlockAlign);
 
     return wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
 }
@@ -1241,47 +1330,6 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 }
 
 /**************************************************************************
- * 				wodPrepare			[internal]
- */
-static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	WARN("bad device ID !\n");
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
-	return WAVERR_STILLPLAYING;
-
-    lpWaveHdr->dwFlags |= WHDR_PREPARED;
-    lpWaveHdr->dwFlags &= ~WHDR_DONE;
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 				wodUnprepare			[internal]
- */
-static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	WARN("bad device ID !\n");
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
-	return WAVERR_STILLPLAYING;
-
-    lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
-    lpWaveHdr->dwFlags |= WHDR_DONE;
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			wodPause				[internal]
  */
 static DWORD wodPause(WORD wDevID)
@@ -1347,8 +1395,6 @@ static DWORD wodReset(WORD wDevID)
  */
 static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
-    double		time;
-    DWORD		val;
     WINE_WAVEOUT*	wwo;
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
@@ -1358,50 +1404,15 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	return MMSYSERR_BADDEVICEID;
     }
 
-    if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
+    if (lpTime == NULL)	{
+        WARN("invalid parameter: lpTime == NULL\n");
+        return MMSYSERR_INVALPARAM;
+    }
 
     wwo = &WOutDev[wDevID];
     ESD_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
-    val = wwo->dwPlayedTotal;
 
-    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
-	  lpTime->wType, wwo->format.wBitsPerSample,
-	  wwo->format.wf.nSamplesPerSec, wwo->format.wf.nChannels,
-	  wwo->format.wf.nAvgBytesPerSec);
-    TRACE("dwPlayedTotal=%lu\n", val);
-
-    switch (lpTime->wType) {
-    case TIME_BYTES:
-	lpTime->u.cb = val;
-	TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
-	break;
-    case TIME_SAMPLES:
-	lpTime->u.sample = val * 8 / wwo->format.wBitsPerSample /wwo->format.wf.nChannels;
-	TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
-	break;
-    case TIME_SMPTE:
-	time = (double)val / (double)wwo->format.wf.nAvgBytesPerSec;
-	lpTime->u.smpte.hour = time / (60 * 60);
-	time -= lpTime->u.smpte.hour * (60 * 60);
-	lpTime->u.smpte.min = time / 60;
-	time -= lpTime->u.smpte.min * 60;
-	lpTime->u.smpte.sec = time;
-	time -= lpTime->u.smpte.sec;
-	lpTime->u.smpte.frame = ceil(time * 30);
-	lpTime->u.smpte.fps = 30;
-	TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
-	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
-	      lpTime->u.smpte.sec, lpTime->u.smpte.frame);
-	break;
-    default:
-	FIXME("Format %d not supported ! use TIME_MS !\n", lpTime->wType);
-	lpTime->wType = TIME_MS;
-    case TIME_MS:
-	lpTime->u.ms = val * 1000.0 / wwo->format.wf.nAvgBytesPerSec;
-	TRACE("TIME_MS=%lu\n", lpTime->u.ms);
-	break;
-    }
-    return MMSYSERR_NOERROR;
+    return bytes_to_mmtime(lpTime, wwo->dwPlayedTotal, &wwo->waveFormat);
 }
 
 /**************************************************************************
@@ -1512,8 +1523,8 @@ DWORD WINAPI ESD_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_PAUSE:	 	return wodPause		(wDevID);
     case WODM_GETPOS:	 	return wodGetPosition	(wDevID, (LPMMTIME)dwParam1, 		dwParam2);
     case WODM_BREAKLOOP: 	return wodBreakLoop     (wDevID);
-    case WODM_PREPARE:	 	return wodPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    case WODM_UNPREPARE: 	return wodUnprepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
+    case WODM_PREPARE:	 	return MMSYSERR_NOTSUPPORTED;
+    case WODM_UNPREPARE: 	return MMSYSERR_NOTSUPPORTED;
     case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WODM_GETNUMDEVS:	return wodGetNumDevs	();
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
@@ -1637,7 +1648,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     SetEvent(wwi->hStartUpEvent);
 
     /* make sleep time to be # of ms to record one packet */
-    dwSleepTime = (1024 * 1000) / wwi->format.wf.nAvgBytesPerSec;
+    dwSleepTime = (1024 * 1000) / wwi->waveFormat.Format.nAvgBytesPerSec;
     TRACE("sleeptime=%ld ms\n", dwSleepTime);
 
     for(;;) {
@@ -1810,15 +1821,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     /* only PCM format is support so far... */
-    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
-	lpDesc->lpFormat->nChannels == 0 ||
-        lpDesc->lpFormat->nSamplesPerSec < DSBFREQUENCY_MIN ||
-        lpDesc->lpFormat->nSamplesPerSec > DSBFREQUENCY_MAX ||
-        (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
-	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
-	     lpDesc->lpFormat->nSamplesPerSec);
-	return WAVERR_BADFORMAT;
+    if (!supportedFormat(lpDesc->lpFormat)) {
+        WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+             lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+             lpDesc->lpFormat->nSamplesPerSec);
+        return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
@@ -1835,31 +1842,31 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
  
-    memcpy(&wwi->waveDesc, lpDesc,           sizeof(WAVEOPENDESC));
-    memcpy(&wwi->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+    memcpy(&wwi->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+    copy_format(lpDesc->lpFormat, &wwi->waveFormat);
 
-    if (wwi->format.wBitsPerSample == 0) {
+    if (wwi->waveFormat.Format.wBitsPerSample == 0) {
 	WARN("Resetting zerod wBitsPerSample\n");
-	wwi->format.wBitsPerSample = 8 *
-	    (wwi->format.wf.nAvgBytesPerSec /
-	     wwi->format.wf.nSamplesPerSec) /
-	    wwi->format.wf.nChannels;
+	wwi->waveFormat.Format.wBitsPerSample = 8 *
+	    (wwi->waveFormat.Format.nAvgBytesPerSec /
+	     wwi->waveFormat.Format.nSamplesPerSec) /
+	    wwi->waveFormat.Format.nChannels;
     }
 
-    if (wwi->format.wBitsPerSample == 8)
+    if (wwi->waveFormat.Format.wBitsPerSample == 8)
 	in_bits = ESD_BITS8;
-    else if (wwi->format.wBitsPerSample == 16)
+    else if (wwi->waveFormat.Format.wBitsPerSample == 16)
 	in_bits = ESD_BITS16;
 
-    wwi->bytes_per_frame = (wwi->format.wBitsPerSample * wwi->format.wf.nChannels) / 8;
+    wwi->bytes_per_frame = (wwi->waveFormat.Format.wBitsPerSample * wwi->waveFormat.Format.nChannels) / 8;
 
-    if (wwi->format.wf.nChannels == 1)
+    if (wwi->waveFormat.Format.nChannels == 1)
 	in_channels = ESD_MONO;
-    else if (wwi->format.wf.nChannels == 2)
+    else if (wwi->waveFormat.Format.nChannels == 2)
 	in_channels = ESD_STEREO;
 
     in_format = in_bits | in_channels | in_mode | in_func;
-    in_rate = (int) wwi->format.wf.nSamplesPerSec;
+    in_rate = (int) wwi->waveFormat.Format.nSamplesPerSec;
 	TRACE("esd input format = 0x%08x, rate = %d\n", in_format, in_rate);
 
 #ifdef WID_USE_ESDMON
@@ -1900,9 +1907,9 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwi->hStartUpEvent = INVALID_HANDLE_VALUE;
 
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
-	  wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec,
-	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
-	  wwi->format.wf.nBlockAlign);
+	  wwi->waveFormat.Format.wBitsPerSample, wwi->waveFormat.Format.nAvgBytesPerSec,
+	  wwi->waveFormat.Format.nSamplesPerSec, wwi->waveFormat.Format.nChannels,
+	  wwi->waveFormat.Format.nBlockAlign);
     return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
 }
 
@@ -1959,47 +1966,6 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->lpNext = NULL;
 
     ESD_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 				widPrepare			[internal]
- */
-static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-
-    if (wDevID >= MAX_WAVEINDRV) return MMSYSERR_INVALHANDLE;
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
-	return WAVERR_STILLPLAYING;
-
-    lpWaveHdr->dwFlags |= WHDR_PREPARED;
-    lpWaveHdr->dwFlags &= ~WHDR_DONE;
-    lpWaveHdr->dwBytesRecorded = 0;
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 				widUnprepare			[internal]
- */
-static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-    if (wDevID >= MAX_WAVEINDRV) {
-	WARN("bad device ID !\n");
-	return MMSYSERR_INVALHANDLE;
-    }
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE) {
-	TRACE("Still playing...\n");
-	return WAVERR_STILLPLAYING;
-    }
-
-    lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
-    lpWaveHdr->dwFlags |= WHDR_DONE;
-
     return MMSYSERR_NOERROR;
 }
 
@@ -2066,8 +2032,8 @@ DWORD WINAPI ESD_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WIDM_OPEN:	 	return widOpen		(wDevID, (LPWAVEOPENDESC)dwParam1,	dwParam2);
     case WIDM_CLOSE:		return widClose		(wDevID);
     case WIDM_ADDBUFFER:	return widAddBuffer	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
-    case WIDM_PREPARE:		return widPrepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
-    case WIDM_UNPREPARE:	return widUnprepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+    case WIDM_PREPARE:		return MMSYSERR_NOTSUPPORTED;
+    case WIDM_UNPREPARE:	return MMSYSERR_NOTSUPPORTED;
     case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEINCAPSW)dwParam1,	dwParam2);
     case WIDM_GETNUMDEVS:	return widGetNumDevs	();
     case WIDM_RESET:		return widReset		(wDevID);
