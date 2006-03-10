@@ -2113,7 +2113,9 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
 
         
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
-        lpwhs->lpszUserName = WININET_strdupW(userName);
+        lpwhs->lpszUserName = NULL;
+        if (userName[0])
+            lpwhs->lpszUserName = WININET_strdupW(userName);
         lpwhs->nServerPort = urlComponents.nPort;
 
         INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
@@ -2445,12 +2447,12 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
         if(hIC->lpszProxyBypass)
             FIXME("Proxy bypass is ignored.\n");
     }
-    if (NULL != lpszServerName)
+    if (lpszServerName && lpszServerName[0])
     {
         lpwhs->lpszServerName = WININET_strdupW(lpszServerName);
         lpwhs->lpszHostName = WININET_strdupW(lpszServerName);
     }
-    if (NULL != lpszUserName)
+    if (lpszUserName && lpszUserName[0])
         lpwhs->lpszUserName = WININET_strdupW(lpszUserName);
     lpwhs->nServerPort = nServerPort;
     lpwhs->nHostPort = nServerPort;
