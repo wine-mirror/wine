@@ -172,7 +172,7 @@ IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
+    GROUPBOX        " Görünüm ",IDC_STATIC,8,4,244,106
     LTEXT           "Tema:",IDC_STATIC,15,16,230,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Tema kur...",IDC_THEME_INSTALL,152,38,93,14
@@ -180,12 +180,12 @@ BEGIN
     COMBOBOX        IDC_THEME_COLORCOMBO,15,62,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Boyut:",IDC_THEME_SIZETEXT,15,80,230,8
     COMBOBOX        IDC_THEME_SIZECOMBO,15,88,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        " Shell Folder ",IDC_STATIC,8,114,244,100
+    GROUPBOX        " Özel Klasörler ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    CONTROL         "Hedef dizin:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "Gözat",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -199,14 +199,14 @@ BEGIN
     IDS_SHOW_ADVANCED       "Geliþmiþ Ayarlar"
     IDS_NOTHEME             "(Tema Yok)"
     IDS_TAB_GRAPHICS        "Grafik"
-    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
+    IDS_TAB_DESKTOP_INTEGRATION "Masaüstü Entegrasyonu"
     IDS_TAB_AUDIO           "Ses"
     IDS_TAB_ABOUT           "Hakkýnda"
     IDS_WINECFG_TITLE       "Wine yapýlandýrmasý"
-    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
+    IDS_WINECFG_TITLE_APP   "%s için Wine yapýlandýrmasý"
     IDS_THEMEFILE           "Tema dosyalarý"
     IDS_THEMEFILE_SELECT    "Tema dosyasý seçin"
     IDS_AUDIO_MISSING       "Sistem kaydýnda belirlenmiþ bir ses sürücüsü yok.\n\nÖnerilen bir sürücü sizin için seçildi.\nBu sürücüyü kullanabilir veya varsa baþka bir sürücüyü seçebilirsiniz.\n\nSeçimin etkili olabilmesi için Uygula'yý týklamalýsýnýz."
-    IDS_SHELL_FOLDER        "Shell Folder"
-    IDS_LINKS_TO            "Links to"
+    IDS_SHELL_FOLDER        "Klasör"
+    IDS_LINKS_TO            "Hedef Dizin"
 END
