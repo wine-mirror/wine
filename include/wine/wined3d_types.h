@@ -601,6 +601,15 @@ typedef struct WINED3DDEVINFO_VCACHE {
     DWORD         MagicNumber; 
 } WINED3DDEVINFO_VCACHE;
 
+typedef struct _WINED3DVERTEXBUFFER_DESC {
+    WINED3DFORMAT           Format;
+    WINED3DRESOURCETYPE     Type;
+    DWORD                   Usage;
+    D3DPOOL                 Pool;
+    UINT                    Size;
+    DWORD                   FVF;
+} WINED3DVERTEXBUFFER_DESC;
+
 /*
  * The wined3dcaps structure
  */

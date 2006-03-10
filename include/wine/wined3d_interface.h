@@ -634,7 +634,7 @@ DECLARE_INTERFACE_(IWineD3DVertexBuffer,IWineD3DResource)
     /*** IWineD3DVertexBuffer methods ***/
     STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE;
     STDMETHOD(Unlock)(THIS) PURE;
-    STDMETHOD(GetDesc)(THIS_ D3DVERTEXBUFFER_DESC  * pDesc) PURE;
+    STDMETHOD(GetDesc)(THIS_ WINED3DVERTEXBUFFER_DESC  * pDesc) PURE;
 };
 #undef INTERFACE
 

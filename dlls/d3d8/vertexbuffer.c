@@ -140,7 +140,7 @@ HRESULT WINAPI IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER8 iface,
     IDirect3DVertexBuffer8Impl *This = (IDirect3DVertexBuffer8Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
-    return IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer, pDesc);
+    return IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer, (WINED3DVERTEXBUFFER_DESC *) pDesc);
 }
 
 const IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl =

@@ -129,7 +129,7 @@ HRESULT WINAPI IDirect3DVertexBuffer9Impl_Unlock(LPDIRECT3DVERTEXBUFFER9 iface) 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTEXBUFFER9 iface, D3DVERTEXBUFFER_DESC* pDesc) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer, pDesc);
+    return IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer, (WINED3DVERTEXBUFFER_DESC *) pDesc);
 }
 
 const IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
