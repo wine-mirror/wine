@@ -79,6 +79,20 @@ static BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
 }
 
 /******************************************************************************
+ * LsaAddAccountRights [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaAddAccountRights(
+    LSA_HANDLE policy,
+    PSID sid,
+    PLSA_UNICODE_STRING rights,
+    ULONG count)
+{
+    FIXME("(%p,%p,%p,0x%08lx) stub\n", policy, sid, rights, count);
+    return STATUS_OBJECT_NAME_NOT_FOUND;
+}
+
+/******************************************************************************
  * LsaClose [ADVAPI32.@]
  *
  * Closes a handle to a Policy or TrustedDomain.
@@ -94,6 +108,60 @@ NTSTATUS WINAPI LsaClose(IN LSA_HANDLE ObjectHandle)
 {
     FIXME("(%p) stub\n", ObjectHandle);
     return 0xc0000000;
+}
+
+/******************************************************************************
+ * LsaCreateTrustedDomainEx [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaCreateTrustedDomainEx(
+    LSA_HANDLE policy,
+    PTRUSTED_DOMAIN_INFORMATION_EX domain_info,
+    PTRUSTED_DOMAIN_AUTH_INFORMATION auth_info,
+    ACCESS_MASK access,
+    PLSA_HANDLE domain)
+{
+    FIXME("(%p,%p,%p,0x%08lx,%p) stub\n", policy, domain_info, auth_info,
+          access, domain);
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * LsaDeleteTrustedDomain [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaDeleteTrustedDomain(LSA_HANDLE policy, PSID sid)
+{
+    FIXME("(%p,%p) stub\n", policy, sid);
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * LsaEnumerateAccountRights [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaEnumerateAccountRights(
+    LSA_HANDLE policy,
+    PSID sid,
+    PLSA_UNICODE_STRING *rights,
+    PULONG count)
+{
+    FIXME("(%p,%p,%p,%p) stub\n", policy, sid, rights, count);
+    return STATUS_OBJECT_NAME_NOT_FOUND;
+}
+
+/******************************************************************************
+ * LsaEnumerateAccountsWithUserRight [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaEnumerateAccountsWithUserRight(
+    LSA_HANDLE policy,
+    PLSA_UNICODE_STRING rights,
+    PVOID *buffer,
+    PULONG count)
+{
+    FIXME("(%p,%p,%p,%p) stub\n", policy, rights, buffer, count);
+    return STATUS_NO_MORE_ENTRIES;
 }
 
 /******************************************************************************
@@ -129,6 +197,23 @@ NTSTATUS WINAPI LsaEnumerateTrustedDomains(
           Buffer, PreferredMaximumLength, CountReturned);
 
     if (CountReturned) *CountReturned = 0;
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * LsaEnumerateTrustedDomainsEx [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaEnumerateTrustedDomainsEx(
+    LSA_HANDLE policy,
+    PLSA_ENUMERATION_HANDLE context,
+    PVOID *buffer,
+    ULONG length,
+    PULONG count)
+{
+    FIXME("(%p,%p,%p,0x%08lx,%p) stub\n", policy, context, buffer, length, count);
+
+    if (count) *count = 0;
     return STATUS_SUCCESS;
 }
 
@@ -177,6 +262,22 @@ NTSTATUS WINAPI LsaLookupNames(
     FIXME("(%p,0x%08lx,%p,%p,%p) stub\n", PolicyHandle, Count, Names,
           ReferencedDomains, Sids);
 
+    return STATUS_NONE_MAPPED;
+}
+
+/******************************************************************************
+ * LsaLookupNames2 [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaLookupNames2(
+    LSA_HANDLE policy,
+    ULONG flags,
+    ULONG count,
+    PLSA_UNICODE_STRING names,
+    PLSA_REFERENCED_DOMAIN_LIST *domains,
+    PLSA_TRANSLATED_SID2 *sids)
+{
+    FIXME("(%p,0x%08lx,0x%08lx,%p,%p,%p) stub\n", policy, flags, count, names, domains, sids);
     return STATUS_NONE_MAPPED;
 }
 
@@ -261,6 +362,20 @@ NTSTATUS WINAPI LsaOpenPolicy(
 
     if(PolicyHandle) *PolicyHandle = (LSA_HANDLE)0xcafe;
     return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * LsaOpenTrustedDomainByName [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaOpenTrustedDomainByName(
+    LSA_HANDLE policy,
+    PLSA_UNICODE_STRING name,
+    ACCESS_MASK access,
+    PLSA_HANDLE handle)
+{
+    FIXME("(%p,%p,0x%08lx,%p) stub\n", policy, name, access, handle);
+    return STATUS_OBJECT_NAME_NOT_FOUND;
 }
 
 /******************************************************************************
@@ -369,6 +484,61 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
 }
 
 /******************************************************************************
+ * LsaQueryTrustedDomainInfo [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaQueryTrustedDomainInfo(
+    LSA_HANDLE policy,
+    PSID sid,
+    TRUSTED_INFORMATION_CLASS class,
+    PVOID *buffer)
+{
+    FIXME("(%p,%p,%d,%p) stub\n", policy, sid, class, buffer);
+    return STATUS_OBJECT_NAME_NOT_FOUND;
+}
+
+/******************************************************************************
+ * LsaQueryTrustedDomainInfoByName [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaQueryTrustedDomainInfoByName(
+    LSA_HANDLE policy,
+    PLSA_UNICODE_STRING name,
+    TRUSTED_INFORMATION_CLASS class,
+    PVOID *buffer)
+{
+    FIXME("(%p,%p,%d,%p) stub\n", policy, name, class, buffer);
+    return STATUS_OBJECT_NAME_NOT_FOUND;
+}
+
+/******************************************************************************
+ * LsaRegisterPolicyChangeNotification [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaRegisterPolicyChangeNotification(
+    POLICY_NOTIFICATION_INFORMATION_CLASS class,
+    HANDLE event)
+{
+    FIXME("(%d,%p) stub\n", class, event);
+    return STATUS_UNSUCCESSFUL;
+}
+
+/******************************************************************************
+ * LsaRemoveAccountRights [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaRemoveAccountRights(
+    LSA_HANDLE policy,
+    PSID sid,
+    BOOLEAN all,
+    PLSA_UNICODE_STRING rights,
+    ULONG count)
+{
+    FIXME("(%p,%p,%d,%p,0x%08lx) stub\n", policy, sid, all, rights, count);
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
  * LsaRetrievePrivateData [ADVAPI32.@]
  *
  * Retrieves data stored by LsaStorePrivateData.
@@ -416,6 +586,34 @@ NTSTATUS WINAPI LsaSetInformationPolicy(
 }
 
 /******************************************************************************
+ * LsaSetTrustedDomainInfoByName [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaSetTrustedDomainInfoByName(
+    LSA_HANDLE policy,
+    PLSA_UNICODE_STRING name,
+    TRUSTED_INFORMATION_CLASS class,
+    PVOID buffer)
+{
+    FIXME("(%p,%p,%d,%p) stub\n", policy, name, class, buffer);
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * LsaSetTrustedDomainInformation [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaSetTrustedDomainInformation(
+    LSA_HANDLE policy,
+    PSID sid,
+    TRUSTED_INFORMATION_CLASS class,
+    PVOID buffer)
+{
+    FIXME("(%p,%p,%d,%p) stub\n", policy, sid, class, buffer);
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
  * LsaStorePrivateData [ADVAPI32.@]
  *
  * Stores or deletes a Policy object's data under the specified reg key.
@@ -436,4 +634,16 @@ NTSTATUS WINAPI LsaStorePrivateData(
 {
     FIXME("(%p,%p,%p) stub\n", PolicyHandle, KeyName, PrivateData);
     return STATUS_OBJECT_NAME_NOT_FOUND;
+}
+
+/******************************************************************************
+ * LsaUnregisterPolicyChangeNotification [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaUnregisterPolicyChangeNotification(
+    POLICY_NOTIFICATION_INFORMATION_CLASS class,
+    HANDLE event)
+{
+    FIXME("(%d,%p) stub\n", class, event);
+    return STATUS_SUCCESS;
 }

@@ -341,23 +341,23 @@
 @ stdcall LookupPrivilegeValueW(ptr ptr ptr)
 # @ stub LookupSecurityDescriptorPartsA
 # @ stub LookupSecurityDescriptorPartsW
-# @ stub LsaAddAccountRights
+@ stdcall LsaAddAccountRights(ptr ptr ptr long)
 @ stub LsaAddPrivilegesToAccount
 # @ stub LsaClearAuditLog
 @ stdcall LsaClose(ptr)
 @ stub LsaCreateAccount
 @ stub LsaCreateSecret
 @ stub LsaCreateTrustedDomain
-# @ stub LsaCreateTrustedDomainEx
+@ stdcall LsaCreateTrustedDomainEx(ptr ptr ptr long ptr)
 @ stub LsaDelete
-# @ stub LsaDeleteTrustedDomain
-# @ stub LsaEnumerateAccountRights
+@ stdcall LsaDeleteTrustedDomain(ptr ptr)
+@ stdcall LsaEnumerateAccountRights(ptr ptr long ptr long)
 @ stub LsaEnumerateAccounts
-# @ stub LsaEnumerateAccountsWithUserRight
+@ stdcall LsaEnumerateAccountsWithUserRight(ptr ptr ptr ptr)
 @ stub LsaEnumeratePrivileges
 @ stub LsaEnumeratePrivilegesOfAccount
-@ stdcall LsaEnumerateTrustedDomains(long ptr ptr long ptr)
-# @ stub LsaEnumerateTrustedDomainsEx
+@ stdcall LsaEnumerateTrustedDomains(ptr ptr ptr long ptr)
+@ stdcall LsaEnumerateTrustedDomainsEx(ptr ptr ptr long ptr)
 @ stdcall LsaFreeMemory(ptr)
 # @ stub LsaGetQuotasForAccount
 # @ stub LsaGetRemoteUserName
@@ -367,7 +367,7 @@
 # @ stub LsaICLookupNamesWithCreds
 @ stub LsaICLookupSids
 # @ stub LsaICLookupSidsWithCreds
-# @ stub LsaLookupNames2
+@ stdcall LsaLookupNames2(ptr long long ptr ptr ptr)
 @ stdcall LsaLookupNames(long long ptr ptr ptr)
 @ stub LsaLookupPrivilegeDisplayName
 # @ stub LsaLookupPrivilegeName
@@ -379,16 +379,17 @@
 # @ stub LsaOpenPolicySce
 @ stub LsaOpenSecret
 @ stub LsaOpenTrustedDomain
-# @ stub LsaOpenTrustedDomainByName
+@ stdcall LsaOpenTrustedDomainByName(ptr ptr long ptr)
 # @ stub LsaQueryDomainInformationPolicy
 # @ stub LsaQueryForestTrustInformation
 @ stub LsaQueryInfoTrustedDomain
 @ stdcall LsaQueryInformationPolicy(ptr long ptr)
 @ stub LsaQuerySecret
 # @ stub LsaQuerySecurityObject
-# @ stub LsaQueryTrustedDomainInfo
-# @ stub LsaQueryTrustedDomainInfoByName
-# @ stub LsaRemoveAccountRights
+@ stdcall LsaQueryTrustedDomainInfo(ptr ptr long ptr)
+@ stdcall LsaQueryTrustedDomainInfoByName(ptr ptr long ptr)
+@ stdcall LsaRegisterPolicyChangeNotification(long long)
+@ stdcall LsaRemoveAccountRights(ptr ptr long ptr long)
 @ stub LsaRemovePrivilegesFromAccount
 @ stdcall LsaRetrievePrivateData(ptr ptr ptr)
 # @ stub LsaSetDomainInformationPolicy
@@ -399,9 +400,10 @@
 @ stub LsaSetSecret
 # @ stub LsaSetSecurityObject
 @ stub LsaSetSystemAccessAccount
-# @ stub LsaSetTrustedDomainInfoByName
-# @ stub LsaSetTrustedDomainInformation
+@ stdcall LsaSetTrustedDomainInfoByName(ptr ptr long ptr)
+@ stdcall LsaSetTrustedDomainInformation(ptr ptr long ptr)
 @ stdcall LsaStorePrivateData(ptr ptr ptr)
+@ stdcall LsaUnregisterPolicyChangeNotification(long long)
 @ stdcall MD4Final(ptr)
 @ stdcall MD4Init(ptr)
 @ stdcall MD4Update(ptr ptr long)
