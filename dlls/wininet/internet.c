@@ -1345,7 +1345,6 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
     if (bIsAbsolute) /* Parse <protocol>:[//<net_loc>] */
     {
         LPCWSTR lpszNetLoc;
-        static const WCHAR wszAbout[]={'a','b','o','u','t',':',0};
 
         /* Get scheme first. */
         lpUC->nScheme = GetInternetSchemeW(lpszUrl, lpszcp - lpszUrl);
@@ -1355,27 +1354,10 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
         /* Eat ':' in protocol. */
         lpszcp++;
 
-        /* if the scheme is "about", there is no host */
-        if(strncmpW(wszAbout,lpszUrl, lpszcp - lpszUrl)==0)
+        /* double slash indicates the net_loc portion is present */
+        if ((lpszcp[0] == '/') && (lpszcp[1] == '/'))
         {
-            SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
-            SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
-            SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength, NULL, 0);
-            lpUC->nPort = 0;
-        }
-        else
-        {
-            /* Skip over slashes. */
-            if (*lpszcp == '/')
-            {
-                lpszcp++;
-                if (*lpszcp == '/')
-                {
-                    lpszcp++;
-                    if (*lpszcp == '/')
-                        lpszcp++;
-                }
-            }
+            lpszcp += 2;
 
             lpszNetLoc = strpbrkW(lpszcp, lpszSlash);
             if (lpszParam)
@@ -1487,6 +1469,13 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
                     }
                 }
             }
+        }
+        else
+        {
+            SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
+            SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
+            SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength, NULL, 0);
+            lpUC->nPort = 0;
         }
     }
 

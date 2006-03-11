@@ -31,6 +31,7 @@
 #include "wine/test.h"
 
 #define TEST_URL "http://www.winehq.org/site/about"
+#define TEST_URL_HOST "www.winehq.org"
 #define TEST_URL_PATH "/site/about"
 #define TEST_URL2 "http://www.myserver.com/myscript.php?arg=1"
 #define TEST_URL2_SERVER "www.myserver.com"
@@ -601,6 +602,23 @@ static void InternetCrackUrl_test(void)
   ok(urlComponents.nPort == INTERNET_DEFAULT_HTTP_PORT,"urlComponents->nPort should have been 80 instead of %d\n", urlComponents.nPort);
   ok(urlComponents.nScheme == INTERNET_SCHEME_HTTP,"urlComponents->nScheme should have been INTERNET_SCHEME_HTTP instead of %d\n", urlComponents.nScheme);
 
+  zero_compsA(&urlComponents, 1, 1, 1, 1, 1, 1);
+  ok(InternetCrackUrlA(TEST_URL, strlen(TEST_URL), 0, &urlComponents),"InternetCrackUrl failed with GLE 0x%lx\n",GetLastError());
+  ok(urlComponents.dwUrlPathLength == strlen(TEST_URL_PATH),".dwUrlPathLength should be %d, but is %ld\n", strlen(TEST_URL_PATH), urlComponents.dwUrlPathLength);
+  ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL_PATH,strlen(TEST_URL_PATH)),"lpszUrlPath should be %s but is %s\n", TEST_URL_PATH, urlComponents.lpszUrlPath);
+  ok(urlComponents.dwHostNameLength == strlen(TEST_URL_HOST),".dwHostNameLength should be %d, but is %ld\n", strlen(TEST_URL_HOST), urlComponents.dwHostNameLength);
+  ok(!strncmp(urlComponents.lpszHostName,TEST_URL_HOST,strlen(TEST_URL_HOST)),"lpszHostName should be %s but is %s\n", TEST_URL_HOST, urlComponents.lpszHostName);
+  ok(urlComponents.nPort == INTERNET_DEFAULT_HTTP_PORT,"urlComponents->nPort should have been 80 instead of %d\n", urlComponents.nPort);
+  ok(urlComponents.nScheme == INTERNET_SCHEME_HTTP,"urlComponents->nScheme should have been INTERNET_SCHEME_HTTP instead of %d\n", urlComponents.nScheme);
+  todo_wine {
+  ok(!urlComponents.lpszUserName, ".lpszUserName should have been set to NULL\n");
+  ok(!urlComponents.lpszPassword, ".lpszPassword should have been set to NULL\n");
+  ok(!urlComponents.lpszExtraInfo, ".lpszExtraInfo should have been set to NULL\n");
+  }
+  ok(!urlComponents.dwUserNameLength,".dwUserNameLength should be 0, but is %ld\n", urlComponents.dwUserNameLength);
+  ok(!urlComponents.dwPasswordLength,".dwPasswordLength should be 0, but is %ld\n", urlComponents.dwPasswordLength);
+  ok(!urlComponents.dwExtraInfoLength,".dwExtraInfoLength should be 0, but is %ld\n", urlComponents.dwExtraInfoLength);
+
   /*3. Check for %20 */
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
   ok(InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents),"InternetCrackUrl failed with GLE 0x%lx\n",GetLastError());
@@ -651,6 +669,13 @@ static void InternetCrackUrl_test(void)
   ok(ret==0 && GLE==ERROR_INVALID_PARAMETER,
      "InternetCrackUrl returned %d with GLE=%ld (expected to return 0 and ERROR_INVALID_PARAMETER)\n",
     ret, GLE);
+
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
+  ret = InternetCrackUrl("about://host/blank", 0,0,&urlComponents);
+  ok(ret, "InternetCrackUrl failed with %ld\n", GetLastError());
+  ok(!strcmp(urlComponents.lpszScheme, "about"), "lpszScheme was \"%s\" instead of \"about\"\n", urlComponents.lpszScheme);
+  ok(!strcmp(urlComponents.lpszHostName, "host"), "lpszHostName was \"%s\" instead of \"host\"\n", urlComponents.lpszHostName);
+  ok(!strcmp(urlComponents.lpszUrlPath, "/blank"), "lpszUrlPath was \"%s\" instead of \"/blank\"\n", urlComponents.lpszUrlPath);
 }
 
 static void InternetCrackUrlW_test(void)
@@ -854,14 +879,6 @@ static void InternetCreateUrlA_test(void)
 
 	/* test NULL lpUrlComponents */
 	ret = InternetCreateUrlA(NULL, 0, NULL, &len);
-	SetLastError(0xdeadbeef);
-	ok(!ret, "Expected failure\n");
-	ok(GetLastError() == 0xdeadbeef,
-		"Expected 0xdeadbeef, got %ld\n", GetLastError());
-	ok(len == -1, "Expected len -1, got %ld\n", len);
-
-	/* test garbage lpUrlComponets */
-	ret = InternetCreateUrlA(&urlComp, 0, NULL, &len);
 	SetLastError(0xdeadbeef);
 	ok(!ret, "Expected failure\n");
 	ok(GetLastError() == 0xdeadbeef,
