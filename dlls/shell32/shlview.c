@@ -342,12 +342,17 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
         This->ListViewSortInfo.nLastHeaderID = -1;
 
        if (This->FolderSettings.fFlags & FWF_DESKTOP) {
-         if (0)  /* FIXME: look into registry vale HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ListviewShadow and activate drop shadows */
-           ListView_SetTextBkColor(This->hWndList, CLR_NONE);
+         /*
+          * FIXME: look at the registry value
+          * HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ListviewShadow
+          * and activate drop shadows if necessary
+          */
+         if (0)
+           SendMessageW(This->hWndList, LVM_SETTEXTBKCOLOR, 0, CLR_NONE);
          else
-           ListView_SetTextBkColor(This->hWndList, GetSysColor(COLOR_DESKTOP));
+           SendMessageW(This->hWndList, LVM_SETTEXTBKCOLOR, 0, GetSysColor(COLOR_DESKTOP));
 
-         ListView_SetTextColor(This->hWndList, RGB(255,255,255));
+         SendMessageW(This->hWndList, LVM_SETTEXTCOLOR, 0, RGB(255,255,255));
        }
 
         /*  UpdateShellSettings(); */
@@ -368,7 +373,7 @@ static BOOL ShellView_InitList(IShellViewImpl * This)
 
 	TRACE("%p\n",This);
 
-	ListView_DeleteAllItems(This->hWndList);
+	SendMessageW(This->hWndList, LVM_DELETEALLITEMS, 0, 0);
 
 	lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
 	lvColumn.pszText = szTemp;
@@ -382,7 +387,7 @@ static BOOL ShellView_InitList(IShellViewImpl * This)
 	    lvColumn.fmt = sd.fmt;
 	    lvColumn.cx = sd.cxChar*8; /* chars->pixel */
 	    StrRetToStrNA( szTemp, 50, &sd.str, NULL);
-	    ListView_InsertColumnA(This->hWndList, i, &lvColumn);
+	    SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, i, (LPARAM) &lvColumn);
 	  }
 	}
 	else
@@ -390,8 +395,8 @@ static BOOL ShellView_InitList(IShellViewImpl * This)
 	  FIXME("no SF2\n");
 	}
 
-	ListView_SetImageList(This->hWndList, ShellSmallIconList, LVSIL_SMALL);
-	ListView_SetImageList(This->hWndList, ShellBigIconList, LVSIL_NORMAL);
+	SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)ShellSmallIconList);
+	SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)ShellBigIconList);
 
 	return TRUE;
 }
@@ -524,7 +529,9 @@ static int LV_FindItemByPidl(
 	LVITEMA lvItem;
 	ZeroMemory(&lvItem, sizeof(LVITEMA));
 	lvItem.mask = LVIF_PARAM;
-	for(lvItem.iItem = 0; ListView_GetItemA(This->hWndList, &lvItem); lvItem.iItem++)
+	for(lvItem.iItem = 0;
+		SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
+		lvItem.iItem++)
 	{
 	  LPITEMIDLIST currentpidl = (LPITEMIDLIST) lvItem.lParam;
 	  HRESULT hr = IShellFolder_CompareIDs(This->pSFParent, 0, pidl, currentpidl);
@@ -583,14 +590,14 @@ static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPCITEMIDLIST pidlOld, LPCIT
 	  ZeroMemory(&lvItem, sizeof(lvItem));	/* create the listview item*/
 	  lvItem.mask = LVIF_PARAM;		/* only the pidl */
 	  lvItem.iItem = nItem;
-	  ListView_GetItemA(This->hWndList, &lvItem);
+	  SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
 
 	  SHFree((LPITEMIDLIST)lvItem.lParam);
 	  lvItem.mask = LVIF_PARAM;
 	  lvItem.iItem = nItem;
 	  lvItem.lParam = (LPARAM) ILClone(ILFindLastID(pidlNew));	/* set the item's data */
-	  ListView_SetItemA(This->hWndList, &lvItem);
-	  ListView_Update(This->hWndList, nItem);
+	  SendMessageA(This->hWndList, LVM_SETITEMA, 0, (LPARAM) &lvItem);
+	  SendMessageA(This->hWndList, LVM_UPDATE, nItem, 0);
 	  return TRUE;					/* FIXME: better handling */
 	}
 	return FALSE;
@@ -1227,7 +1234,7 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	    This->ListViewSortInfo.nHeaderID = (LPARAM) (dwCmdID - 0x30);
 	    This->ListViewSortInfo.bIsAscending = TRUE;
 	    This->ListViewSortInfo.nLastHeaderID = This->ListViewSortInfo.nHeaderID;
-	    ListView_SortItems(This->hWndList, ShellView_ListViewCompareItems, (LPARAM) (&(This->ListViewSortInfo)));
+	    SendMessageA(This->hWndList, LVM_SORTITEMS, (WPARAM) &This->ListViewSortInfo, (LPARAM)ShellView_ListViewCompareItems);
 	    break;
 
 	  default:
@@ -1323,7 +1330,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    }
 	    This->ListViewSortInfo.nLastHeaderID = This->ListViewSortInfo.nHeaderID;
 
-	    ListView_SortItems(lpnmlv->hdr.hwndFrom, ShellView_ListViewCompareItems, (LPARAM) (&(This->ListViewSortInfo)));
+	    SendMessageA(lpnmlv->hdr.hwndFrom, LVM_SORTITEMS, (WPARAM) &This->ListViewSortInfo, (LPARAM)ShellView_ListViewCompareItems);
 	    break;
 
 	  case LVN_GETDISPINFOA:
@@ -1423,7 +1430,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		ZeroMemory(&lvItem, sizeof(LVITEMA));
 		lvItem.iItem = lpdi->item.iItem;
 		lvItem.mask = LVIF_PARAM;
-		ListView_GetItemA(This->hWndList, &lvItem);
+		SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
 
 		pidl = (LPITEMIDLIST)lpdi->item.lParam;
                 if (!MultiByteToWideChar( CP_ACP, 0, lpdi->item.pszText, -1, wszNewName, MAX_PATH ))
@@ -1434,7 +1441,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		{
 	          lvItem.mask = LVIF_PARAM;
 		  lvItem.lParam = (LPARAM)pidl;
-		  ListView_SetItemA(This->hWndList, &lvItem);
+		  SendMessageA(This->hWndList, LVM_SETITEMA, 0, (LPARAM) &lvItem);
 		  return TRUE;
 		}
 	      }
@@ -1466,8 +1473,8 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
                   i = ListView_GetNextItem(This->hWndList, -1,
 			LVNI_SELECTED);
 
-                  ListView_EnsureVisible(This->hWndList, i, 0);
-                  ListView_EditLabelA(This->hWndList, i);
+                  SendMessageW(This->hWndList, LVM_ENSUREVISIBLE, i, 0);
+                  SendMessageW(This->hWndList, LVM_EDITLABELW, i, 0);
                 }
               }
 #if 0
@@ -1504,7 +1511,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 			item_index, LVNI_SELECTED);
 		  item.iItem = item_index;
 		  item.mask |= LVIF_PARAM;
-		  ListView_GetItemA(This->hWndList, &item);
+		  SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &item);
 
 		  /* get item pidl */
 		  pItems[i] = (LPITEMIDLIST)item.lParam;
@@ -1817,7 +1824,7 @@ static HRESULT WINAPI IShellView_fnRefresh(IShellView * iface)
 
 	TRACE("(%p)\n",This);
 
-	ListView_DeleteAllItems(This->hWndList);
+	SendMessageW(This->hWndList, LVM_DELETEALLITEMS, 0, 0);
 	ShellView_FillList(This);
 
 	return S_OK;
@@ -1968,13 +1975,13 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 	  LVITEMA lvItem;
 
 	  if(uFlags & SVSI_ENSUREVISIBLE)
-	    ListView_EnsureVisible(This->hWndList, i, 0);
+	    SendMessageW(This->hWndList, LVM_ENSUREVISIBLE, i, 0);
 
           ZeroMemory(&lvItem, sizeof(LVITEMA));
 	  lvItem.mask = LVIF_STATE;
 	  lvItem.iItem = 0;
 
-          while(ListView_GetItemA(This->hWndList, &lvItem))
+          while(SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem))
 	  {
 	    if (lvItem.iItem == i)
 	    {
@@ -1991,13 +1998,13 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 	      if (uFlags & SVSI_DESELECTOTHERS)
 	        lvItem.state &= ~LVIS_SELECTED;
 	    }
-	    ListView_SetItemA(This->hWndList, &lvItem);
+	    SendMessageA(This->hWndList, LVM_SETITEMA, 0, (LPARAM) &lvItem);
 	    lvItem.iItem++;
 	  }
 
 
 	  if(uFlags & SVSI_EDIT)
-	    ListView_EditLabelA(This->hWndList, i);
+	    SendMessageW(This->hWndList, LVM_EDITLABELW, i, 0);
 
 	}
 	return S_OK;
@@ -2255,7 +2262,7 @@ static HRESULT drag_notify_subitem(IShellViewImpl *This, DWORD grfKeyState, POIN
         ZeroMemory(&lvItem, sizeof(lvItem));
         lvItem.mask = LVIF_PARAM;
         lvItem.iItem = lResult;
-        ListView_GetItemA(This->hWndList, &lvItem);
+        SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &lvItem);
 
         /* ... and bind pCurDropTarget to the IDropTarget interface of an UIObject of this object */
         hr = IShellFolder_GetUIObjectOf(This->pSFParent, This->hWndList, 1,
