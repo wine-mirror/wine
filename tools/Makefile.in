@@ -70,7 +70,7 @@ bin2res$(EXEEXT): bin2res.o
 	$(CC) $(CFLAGS) -o $@ bin2res.o $(LIBPORT)
 
 wineprefixcreate: wineprefixcreate.in
-	sed -e 's,@dlldir\@,$(dlldir),g' -e 's,@datadir\@,$(datadir),g' $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)
+	sed -e "s,@bintodlldir\@,`$(RELPATH) $(bindir) $(dlldir)`,g" -e "s,@bintodatadir\@,`$(RELPATH) $(bindir) $(datadir)`,g" $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)
 	chmod +x wineprefixcreate
 
 install install-lib:: wineprefixcreate

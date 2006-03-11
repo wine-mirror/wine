@@ -36,8 +36,31 @@ usage()
 
 set -e
 
-dlldir="@dlldir@"
-datadir="@datadir@/wine"
+bindir=""
+case "$0" in
+  */*)
+    # $0 contains a path, use it
+    bindir=`dirname "$0"`
+    ;;
+  *)
+    # no directory in $0, search in PATH
+    saved_ifs=$IFS
+    IFS=:
+    for d in $PATH
+    do
+      IFS=$saved_ifs
+      if [ -x "$d/$0" ]
+      then
+        bindir="$d"
+        break
+      fi
+    done
+    ;;
+esac
+
+bindir=`cd "$bindir" && pwd`
+dlldir="$bindir/@bintodlldir@"
+datadir="$bindir/@bintodatadir@"
 
 do_wait=0
 quiet=0
