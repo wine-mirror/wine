@@ -610,11 +610,9 @@ static void InternetCrackUrl_test(void)
   ok(!strncmp(urlComponents.lpszHostName,TEST_URL_HOST,strlen(TEST_URL_HOST)),"lpszHostName should be %s but is %s\n", TEST_URL_HOST, urlComponents.lpszHostName);
   ok(urlComponents.nPort == INTERNET_DEFAULT_HTTP_PORT,"urlComponents->nPort should have been 80 instead of %d\n", urlComponents.nPort);
   ok(urlComponents.nScheme == INTERNET_SCHEME_HTTP,"urlComponents->nScheme should have been INTERNET_SCHEME_HTTP instead of %d\n", urlComponents.nScheme);
-  todo_wine {
   ok(!urlComponents.lpszUserName, ".lpszUserName should have been set to NULL\n");
   ok(!urlComponents.lpszPassword, ".lpszPassword should have been set to NULL\n");
   ok(!urlComponents.lpszExtraInfo, ".lpszExtraInfo should have been set to NULL\n");
-  }
   ok(!urlComponents.dwUserNameLength,".dwUserNameLength should be 0, but is %ld\n", urlComponents.dwUserNameLength);
   ok(!urlComponents.dwPasswordLength,".dwPasswordLength should be 0, but is %ld\n", urlComponents.dwPasswordLength);
   ok(!urlComponents.dwExtraInfoLength,".dwExtraInfoLength should be 0, but is %ld\n", urlComponents.dwExtraInfoLength);

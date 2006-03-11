@@ -1097,14 +1097,17 @@ static void ConvertUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentL
                                      LPWSTR lpwszComponent, DWORD dwwComponentLen,
                                      LPCSTR lpszStart, LPCWSTR lpwszStart)
 {
-    TRACE("%p %p %p %ld %p %p\n", lppszComponent, dwComponentLen, lpwszComponent, dwwComponentLen, lpszStart, lpwszStart);
+    TRACE("%p %ld %p %ld %p %p\n", lppszComponent, *dwComponentLen, lpwszComponent, dwwComponentLen, lpszStart, lpwszStart);
     if (*dwComponentLen != 0)
     {
         DWORD nASCIILength=WideCharToMultiByte(CP_ACP,0,lpwszComponent,dwwComponentLen,NULL,0,NULL,NULL);
         if (*lppszComponent == NULL)
         {
             int nASCIIOffset=WideCharToMultiByte(CP_ACP,0,lpwszStart,lpwszComponent-lpwszStart,NULL,0,NULL,NULL);
-            *lppszComponent = (LPSTR)lpszStart+nASCIIOffset;
+            if (lpwszComponent)
+                *lppszComponent = (LPSTR)lpszStart+nASCIIOffset;
+            else
+                *lppszComponent = NULL;
             *dwComponentLen = nASCIILength;
         }
         else
