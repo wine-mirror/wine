@@ -1467,8 +1467,23 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
                                               lpszHost, lpszPort - lpszHost);
                         if (lpszPort != lpszNetLoc)
                             lpUC->nPort = atoiW(++lpszPort);
-                        else
-                            lpUC->nPort = 0;
+                        else switch (lpUC->nScheme)
+                        {
+                        case INTERNET_SCHEME_HTTP:
+                            lpUC->nPort = INTERNET_DEFAULT_HTTP_PORT;
+                            break;
+                        case INTERNET_SCHEME_HTTPS:
+                            lpUC->nPort = INTERNET_DEFAULT_HTTPS_PORT;
+                            break;
+                        case INTERNET_SCHEME_FTP:
+                            lpUC->nPort = INTERNET_DEFAULT_FTP_PORT;
+                            break;
+                        case INTERNET_SCHEME_GOPHER:
+                            lpUC->nPort = INTERNET_DEFAULT_GOPHER_PORT;
+                            break;
+                        default:
+                            lpUC->nPort = INTERNET_INVALID_PORT_NUMBER;
+                        }
                     }
                 }
             }
