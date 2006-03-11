@@ -75,7 +75,7 @@ static HRESULT AVIFILE_CreateClassFactory(const CLSID *pclsid, const IID *riid,
 
   *ppv = NULL;
 
-  pClassFactory = (IClassFactoryImpl*)LocalAlloc(LPTR, sizeof(*pClassFactory));
+  pClassFactory = HeapAlloc(GetProcessHeap(), 0, sizeof(*pClassFactory));
   if (pClassFactory == NULL)
     return E_OUTOFMEMORY;
 
@@ -85,7 +85,7 @@ static HRESULT AVIFILE_CreateClassFactory(const CLSID *pclsid, const IID *riid,
 
   hr = IClassFactory_QueryInterface((IClassFactory*)pClassFactory, riid, ppv);
   if (FAILED(hr)) {
-    LocalFree((HLOCAL)pClassFactory);
+    HeapFree(GetProcessHeap(), 0, pClassFactory);
     *ppv = NULL;
   }
 
@@ -123,6 +123,8 @@ static ULONG WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface)
   TRACE("(%p)\n", iface);
   if ((--(This->dwRef)) > 0)
     return This->dwRef;
+
+  HeapFree(GetProcessHeap(), 0, This);
 
   return 0;
 }
