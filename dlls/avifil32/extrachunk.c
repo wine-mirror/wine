@@ -23,7 +23,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "windowsx.h"
 #include "vfw.h"
 
 #include "wine/debug.h"
@@ -81,9 +80,9 @@ HRESULT WriteExtraChunk(LPEXTRACHUNKS extra,FOURCC ckid,LPVOID lpData,
   assert(size > 0);
 
   if (extra->lp)
-    lp = (LPDWORD)GlobalReAllocPtr(extra->lp, extra->cb + size + 2 * sizeof(DWORD), GHND);
+    lp = HeapReAlloc(GetProcessHeap(), 0, extra->lp, extra->cb + size + 2 * sizeof(DWORD));
   else
-    lp = (LPDWORD)GlobalAllocPtr(GHND, size + 2 * sizeof(DWORD));
+    lp = HeapAlloc(GetProcessHeap(), 0, size + 2 * sizeof(DWORD));
 
   if (lp == NULL)
     return AVIERR_MEMORY;
@@ -116,10 +115,10 @@ HRESULT ReadChunkIntoExtra(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck)
   cb  = lpck->cksize + 2 * sizeof(DWORD);
   cb += (cb & 1);
 
-  if (extra->lp != NULL) {
-    lp = (LPDWORD)GlobalReAllocPtr(extra->lp, extra->cb + cb, GHND);
-  } else
-    lp = (LPDWORD)GlobalAllocPtr(GHND, cb);
+  if (extra->lp != NULL)
+    lp = HeapReAlloc(GetProcessHeap(), 0, extra->lp, extra->cb + cb);
+  else
+    lp = HeapAlloc(GetProcessHeap(), 0, cb);
 
   if (lp == NULL)
     return AVIERR_MEMORY;
