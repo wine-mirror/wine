@@ -4046,6 +4046,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3
         IWineD3DVertexShader_Release(oldShader);
     }
 
+    if (pShader != NULL && ((IWineD3DVertexShaderImpl *)pShader)->vertexDeclaration != NULL) {
+        TRACE("(%p) : setting vertexDeclaration(%p)\n", This, ((IWineD3DVertexShaderImpl *)pShader)->vertexDeclaration);
+        IWineD3DDevice_SetVertexDeclaration(iface, ((IWineD3DVertexShaderImpl *)pShader)->vertexDeclaration);
+    }
+
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
     /**
      * TODO: merge HAL shaders context switching from prototype
