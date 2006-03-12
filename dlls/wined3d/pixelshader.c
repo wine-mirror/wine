@@ -1417,8 +1417,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     /* Generate lines that handle input modifier computation */
                     for (i = 1; i < curOpcode->num_params; ++i) {
                         TRACE("(%p) : Param %ld token %lx\n", This, i, *(pToken + i));
-                        if (gen_input_modifier_line(*(pToken + i), i - 1, regs[i - 1], tmpLine, This->constants)) {
-                            addline(&lineNum, pgmStr, &pgmLength, tmpLine);
+                        if (gen_input_modifier_line(*(pToken + i), i - 1, regs[i - 1], tmpOp, This->constants)) {
+                            addline(&lineNum, pgmStr, &pgmLength, tmpOp);
                         }
                     }
 
