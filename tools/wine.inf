@@ -146,6 +146,8 @@ HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"DiskSpinDownMin",,"3"
 HKLM,%CurrentVersion%\Controls Folder\PowerCfg,"LastID",,"5"
 HKLM,%CurrentVersion%\Setup,"BootDir",,"%30%"
 HKLM,%CurrentVersion%\Setup,"SharedDir",,"%25%"
+HKLM,%CurrentVersionNT%,"RegisteredOrganization",2,"Change preferred organization in ~/.wine/system.reg"
+HKLM,%CurrentVersionNT%,"RegisteredOwner",2,"Change preferred owner in ~/.wine/system.reg"
 HKLM,Software\Microsoft\Windows NT\CurrentVersion\Fonts,,,""
 HKLM,Software\Microsoft\Windows NT\CurrentVersion\Hotfix\Q246009,"Installed",,"1"
 
