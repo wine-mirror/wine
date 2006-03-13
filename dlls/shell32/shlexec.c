@@ -848,7 +848,14 @@ static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR
         /* Is there a replace() function anywhere? */
         cmdlen /= sizeof(WCHAR);
         cmd[cmdlen] = '\0';
-        SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline);
+        if (!SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline))
+        {
+            /* looks like there is no %1 param in the cmd, add one */
+            static const WCHAR oneW[] = { ' ','\"','%','1','\"',0 };
+            strcatW(cmd, oneW);
+            SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline);
+        }
+        TRACE("executing: %s\n", debugstr_w(param));
         retval = execfunc(param, env, FALSE, psei, psei_out);
     }
     else
