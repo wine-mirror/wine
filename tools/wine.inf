@@ -176,7 +176,7 @@ HKCU,%Metrics%,"BorderWidth",2,"1"
 HKCU,%Metrics%,"Shell Icon Size",2,"32"
 
 [DirectX]
-HKLM,Software\Microsoft\DirectX,"Version",,"4.09.00.0903"
+HKLM,Software\Microsoft\DirectX,"Version",,"4.09.00.0904"
 HKLM,Software\Microsoft\DirectMusic,GMFilePath,,"%12%\gm.dls"
 HKLM,Software\Microsoft\DirectMusic\Defaults,DefaultOutputPort,,"{58C2B4D0-46E7-11D1-89AC-00A0C9054129}"
 HKLM,Software\Microsoft\DirectMusic\SoftwareSynths\{58C2B4D0-46E7-11D1-89AC-00A0C9054129},Description,,"Microsoft Software Synthesizer"
