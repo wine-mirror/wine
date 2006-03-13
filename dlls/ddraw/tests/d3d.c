@@ -58,6 +58,7 @@ static BOOL CreateDirect3D(void)
     ok(rc==DD_OK, "SetCooperativeLevel returned: %lx\n", rc);
 
     rc = IDirectDraw7_QueryInterface(lpDD, &IID_IDirect3D7, (void**) &lpD3D);
+    if (rc == E_NOINTERFACE) return FALSE;
     ok(rc==DD_OK, "QueryInterface returned: %lx\n", rc);
 
     memset(&ddsd, 0, sizeof(ddsd));
