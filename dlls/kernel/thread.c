@@ -506,8 +506,14 @@ DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
  */
 BOOL WINAPI QueueUserWorkItem( LPTHREAD_START_ROUTINE Function, PVOID Context, ULONG Flags )
 {
-    FIXME("(%p,%p,0x%08lx): stub\n", Function, Context, Flags);
-    return FALSE;
+    NTSTATUS status;
+
+    TRACE("(%p,%p,0x%08lx)\n", Function, Context, Flags);
+
+    status = RtlQueueWorkItem( Function, Context, Flags );
+
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 /**********************************************************************
