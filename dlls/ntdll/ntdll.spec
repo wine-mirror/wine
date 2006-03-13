@@ -781,7 +781,7 @@
 @ stub RtlQueryTagHeap
 @ stdcall RtlQueryTimeZoneInformation(ptr)
 @ stub RtlQueueApcWow64Thread
-@ stub RtlQueueWorkItem
+@ stdcall RtlQueueWorkItem(ptr ptr long)
 @ stdcall -register RtlRaiseException(ptr)
 @ stdcall RtlRaiseStatus(long)
 @ stdcall RtlRandom(ptr)

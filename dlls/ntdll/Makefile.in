@@ -47,6 +47,7 @@ C_SRCS = \
 	tape.c \
 	version.c \
 	thread.c \
+	threadpool.c \
 	time.c \
 	virtual.c \
 	wcstring.c
