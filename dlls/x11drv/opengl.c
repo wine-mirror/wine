@@ -369,9 +369,9 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     return 0;
   }
 
-  if (nCfgs < iPixelFormat) {
-    ERR("unexpected iPixelFormat(%d) > nFormats(%d), returns NULL\n", iPixelFormat, nCfgs);
-    return 0; /* unespected error */
+  if (nCfgs < iPixelFormat || 1 > iPixelFormat) {
+    WARN("unexpected iPixelFormat(%d): not >=1 and <=nFormats(%d), returning NULL\n", iPixelFormat, nCfgs);
+    return 0;
   }
 
   ret = nCfgs;
