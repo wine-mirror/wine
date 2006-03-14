@@ -610,6 +610,14 @@ typedef struct _WINED3DVERTEXBUFFER_DESC {
     DWORD                   FVF;
 } WINED3DVERTEXBUFFER_DESC;
 
+typedef struct _WINED3DINDEXBUFFER_DESC {
+    WINED3DFORMAT           Format;
+    WINED3DRESOURCETYPE     Type;
+    DWORD                   Usage;
+    D3DPOOL                 Pool;
+    UINT                    Size;
+} WINED3DINDEXBUFFER_DESC;
+
 /*
  * The wined3dcaps structure
  */

@@ -116,7 +116,7 @@ HRESULT  WINAPI        IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuffer *iface
     TRACE("(%p) : stub\n", This);
     return D3D_OK;
 }
-HRESULT  WINAPI        IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBuffer *iface, D3DINDEXBUFFER_DESC *pDesc) {
+HRESULT  WINAPI        IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBuffer *iface, WINED3DINDEXBUFFER_DESC *pDesc) {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
 
     TRACE("(%p)\n", This);
