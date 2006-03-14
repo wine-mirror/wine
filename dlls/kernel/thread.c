@@ -54,7 +54,6 @@ struct new_thread_info
     void                  *arg;
 };
 
-extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );  /* FIXME */
 
 /***********************************************************************
  *           THREAD_Start
@@ -74,7 +73,6 @@ static void CALLBACK THREAD_Start( void *ptr )
 
     __TRY
     {
-        MODULE_DllThreadAttach( NULL );
         ExitThread( func( arg ) );
     }
     __EXCEPT(UnhandledExceptionFilter)

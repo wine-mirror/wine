@@ -60,6 +60,7 @@ extern void DECLSPEC_NORETURN server_exit_thread( int status );
 extern void DECLSPEC_NORETURN server_abort_thread( int status );
 
 /* module handling */
+extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                      DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user );
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
