@@ -44,6 +44,13 @@
 # include <unistd.h>
 #endif
 #include <fcntl.h>
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -64,6 +71,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 #ifdef HAVE_ESD
 
 #include <esd.h>
+
+/* unless someone makes a wineserver kernel module, Unix pipes are faster than win32 events */
+#define USE_PIPE_SYNC
 
 /* define if you want to use esd_monitor_stream instead of
  * esd_record_stream for waveIn stream
@@ -105,6 +115,21 @@ enum win_wm_message {
     WINE_WM_UPDATE, WINE_WM_BREAKLOOP, WINE_WM_CLOSING, WINE_WM_STARTING, WINE_WM_STOPPING
 };
 
+#ifdef USE_PIPE_SYNC
+#define SIGNAL_OMR(mr) do { int x = 0; write((mr)->msg_pipe[1], &x, sizeof(x)); } while (0)
+#define CLEAR_OMR(mr) do { int x = 0; read((mr)->msg_pipe[0], &x, sizeof(x)); } while (0)
+#define RESET_OMR(mr) do { } while (0)
+#define WAIT_OMR(mr, sleep) \
+  do { struct pollfd pfd; pfd.fd = (mr)->msg_pipe[0]; \
+       pfd.events = POLLIN; poll(&pfd, 1, sleep); } while (0)
+#else
+#define SIGNAL_OMR(mr) do { SetEvent((mr)->msg_event); } while (0)
+#define CLEAR_OMR(mr) do { } while (0)
+#define RESET_OMR(mr) do { ResetEvent((mr)->msg_event); } while (0)
+#define WAIT_OMR(mr, sleep) \
+  do { WaitForSingleObject((mr)->msg_event, sleep); } while (0)
+#endif
+
 typedef struct {
     enum win_wm_message 	msg;	/* message identifier */
     DWORD	                param;  /* parameter for this message */
@@ -121,7 +146,11 @@ typedef struct {
     int                         ring_buffer_size;
     int				msg_tosave;
     int				msg_toget;
-    HANDLE			msg_event;
+#ifdef USE_PIPE_SYNC
+    int                         msg_pipe[2];
+#else
+    HANDLE                      msg_event;
+#endif
     CRITICAL_SECTION		msg_crst;
 } ESD_MSG_RING;
 
@@ -508,7 +537,15 @@ static int ESD_InitRingMessage(ESD_MSG_RING* mr)
 {
     mr->msg_toget = 0;
     mr->msg_tosave = 0;
+#ifdef USE_PIPE_SYNC
+    if (pipe(mr->msg_pipe) < 0) {
+        mr->msg_pipe[0] = -1;
+        mr->msg_pipe[1] = -1;
+        ERR("could not create pipe, error=%s\n", strerror(errno));
+    }
+#else
     mr->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+#endif
     mr->ring_buffer_size = ESD_RING_BUFFER_INCREMENT;
     mr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,mr->ring_buffer_size * sizeof(RING_MSG));
     InitializeCriticalSection(&mr->msg_crst);
@@ -522,7 +559,12 @@ static int ESD_InitRingMessage(ESD_MSG_RING* mr)
  */
 static int ESD_DestroyRingMessage(ESD_MSG_RING* mr)
 {
+#ifdef USE_PIPE_SYNC
+    close(mr->msg_pipe[0]);
+    close(mr->msg_pipe[1]);
+#else
     CloseHandle(mr->msg_event);
+#endif
     HeapFree(GetProcessHeap(),0,mr->messages);
     mr->messages=NULL;
     DeleteCriticalSection(&mr->msg_crst);
@@ -587,8 +629,8 @@ static int ESD_AddRingMessage(ESD_MSG_RING* mr, enum win_wm_message msg, DWORD p
 
     LeaveCriticalSection(&mr->msg_crst);
 
-    SetEvent(mr->msg_event);    /* signal a new message */
-
+    /* signal a new message */
+    SIGNAL_OMR(mr);
     if (wait)
     {
         /* wait for playback/record thread to have processed the message */
@@ -620,6 +662,7 @@ static int ESD_RetrieveRingMessage(ESD_MSG_RING* mr,
     *param = mr->messages[mr->msg_toget].param;
     *hEvent = mr->messages[mr->msg_toget].hEvent;
     mr->msg_toget = (mr->msg_toget + 1) % mr->ring_buffer_size;
+    CLEAR_OMR(mr);
     LeaveCriticalSection(&mr->msg_crst);
     return 1;
 }
@@ -943,7 +986,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 
             wodNotifyClient(wwo, WOM_DONE, param, 0);
         }
-        ResetEvent(wwo->msgRing.msg_event);
+        RESET_OMR(&wwo->msgRing);
         LeaveCriticalSection(&wwo->msgRing.msg_crst);
     } else {
         if (wwo->lpLoopPtr) {
@@ -1108,7 +1151,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
          */
         dwSleepTime = min(dwNextFeedTime, dwNextNotifyTime);
         TRACE("waiting %lums (%lu,%lu)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
-        WaitForSingleObject(wwo->msgRing.msg_event, dwSleepTime);
+        WAIT_OMR(&wwo->msgRing, dwSleepTime);
 	wodPlayer_ProcessMessages(wwo);
 	if (wwo->state == WINE_WS_PLAYING) {
 	    dwNextFeedTime = wodPlayer_FeedDSP(wwo);
@@ -1696,7 +1739,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	}
 
 	/* wait for dwSleepTime or an event in thread's queue */
-	WaitForSingleObject(wwi->msgRing.msg_event, dwSleepTime);
+	WAIT_OMR(&wwi->msgRing, dwSleepTime);
 
 	while (ESD_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
