@@ -683,6 +683,7 @@ static void InternetCrackUrlW_test(void)
         'C','F','I','D','E','/','m','a','i','n','.','c','f','m','?','C','F','S','V','R',
         '=','I','D','E','&','A','C','T','I','O','N','=','I','D','E','_','D','E','F','A',
         'U','L','T', 0 };
+    static const WCHAR url2[] = { '.','.','/','R','i','t','z','.','x','m','l',0 };
     URL_COMPONENTSW comp;
     WCHAR scheme[20], host[20], user[20], pwd[20], urlpart[50], extra[50];
     BOOL r;
@@ -762,6 +763,35 @@ static void InternetCrackUrlW_test(void)
     ok( comp.dwPasswordLength == 0, "password length wrong\n");
     ok( comp.dwUrlPathLength == 15, "url length wrong\n");
     ok( comp.dwExtraInfoLength == 29, "extra length wrong\n");
+
+    urlpart[0]=0;
+    scheme[0]=0;
+    extra[0]=0;
+    host[0]=0;
+    user[0]=0;
+    pwd[0]=0;
+    memset(&comp, 0, sizeof(comp));
+    comp.dwStructSize = sizeof(comp);
+    comp.lpszScheme = scheme;
+    comp.dwSchemeLength = sizeof(scheme)/sizeof(scheme[0]);
+    comp.lpszHostName = host;
+    comp.dwHostNameLength = sizeof(host)/sizeof(host[0]);
+    comp.lpszUserName = user;
+    comp.dwUserNameLength = sizeof(user)/sizeof(user[0]);
+    comp.lpszPassword = pwd;
+    comp.dwPasswordLength = sizeof(pwd)/sizeof(pwd[0]);
+    comp.lpszUrlPath = urlpart;
+    comp.dwUrlPathLength = sizeof(urlpart)/sizeof(urlpart[0]);
+    comp.lpszExtraInfo = extra;
+    comp.dwExtraInfoLength = sizeof(extra)/sizeof(extra[0]);
+
+    r = InternetCrackUrlW(url2, 0, 0, &comp);
+    ok( r, "InternetCrackUrl failed, error %lx\n",GetLastError());
+    ok(!comp.dwSchemeLength,".dwSchemeLength should be 0, but is %ld\n", comp.dwSchemeLength);
+    ok(!comp.dwHostNameLength,".dwHostNameLength should be 0, but is %ld\n", comp.dwHostNameLength);
+    ok(!comp.dwUserNameLength,".dwUserNameLength should be 0, but is %ld\n", comp.dwUserNameLength);
+    ok(!comp.dwPasswordLength,".dwPasswordLength should be 0, but is %ld\n", comp.dwPasswordLength);
+    ok(!comp.dwExtraInfoLength,".dwExtraInfoLength should be 0, but is %ld\n", comp.dwExtraInfoLength);
 }
 
 static void InternetTimeFromSystemTimeA_test(void)

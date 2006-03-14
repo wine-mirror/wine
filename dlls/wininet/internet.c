@@ -1337,13 +1337,13 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
         break;
     }
 
+    lpUC->nScheme = INTERNET_SCHEME_UNKNOWN;
+    lpUC->nPort = INTERNET_INVALID_PORT_NUMBER;
+
     /* Parse <params> */
     lpszParam = strpbrkW(lpszap, lpszSeparators);
-    if (lpszParam != NULL)
-    {
-        SetUrlComponentValueW(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
-                                   lpszParam, dwUrlLength-(lpszParam-lpszUrl));
-    }
+    SetUrlComponentValueW(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
+                          lpszParam, lpszParam ? dwUrlLength-(lpszParam-lpszUrl) : 0);
 
     if (bIsAbsolute) /* Parse <protocol>:[//<net_loc>] */
     {
@@ -1425,7 +1425,6 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
                 {
                     SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
                                           lpszHost, lpszPort - lpszHost);
-                    lpUC->nPort = 0;
                     lpszcp=lpszNetLoc;
                 }
                 else
@@ -1444,7 +1443,6 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
                         lpszcp=lpszHost;
                         SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
                                               NULL, 0);
-                        lpUC->nPort = 0;
                     }
                     else
                     {
@@ -1467,7 +1465,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
                             lpUC->nPort = INTERNET_DEFAULT_GOPHER_PORT;
                             break;
                         default:
-                            lpUC->nPort = INTERNET_INVALID_PORT_NUMBER;
+                            break;
                         }
                     }
                 }
@@ -1478,8 +1476,14 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
             SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
             SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
             SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength, NULL, 0);
-            lpUC->nPort = 0;
         }
+    }
+    else
+    {
+        SetUrlComponentValueW(&lpUC->lpszScheme, &lpUC->dwSchemeLength, NULL, 0);
+        SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
+        SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
+        SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength, NULL, 0);
     }
 
     /* Here lpszcp points to:
