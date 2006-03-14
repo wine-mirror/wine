@@ -481,6 +481,7 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 		int *recvd /* out */);
 BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPDWORD dwBuffer);
 LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection);
+BOOL NETCON_set_timeout(WININET_NETCONNECTION *connection, BOOL send, int value);
 
 extern void URLCacheContainers_CreateDefaults(void);
 extern void URLCacheContainers_DeleteAll(void);

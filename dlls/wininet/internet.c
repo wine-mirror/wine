@@ -2442,11 +2442,29 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_DISABLE_PASSPORT_AUTH:
 	TRACE("Option INTERNET_OPTION_DISABLE_PASSPORT_AUTH: harmless stub, since not enabled\n");
 	break;
-    case INTERNET_OPTION_RECEIVE_TIMEOUT:
-        FIXME("Option INTERNET_OPTION_RECEIVE_TIMEOUT: STUB\n");
-        break;
     case INTERNET_OPTION_SEND_TIMEOUT:
-        FIXME("Option INTERNET_OPTION_SEND_TIMEOUT: STUB\n");
+    case INTERNET_OPTION_RECEIVE_TIMEOUT:
+        TRACE("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT\n");
+        if (dwBufferLength == sizeof(DWORD))
+        {
+            if (lpwhh->htype == WH_HHTTPREQ)
+                ret = NETCON_set_timeout(
+                    &((LPWININETHTTPREQW)lpwhh)->netConnection,
+                    dwOption == INTERNET_OPTION_SEND_TIMEOUT,
+                    *(DWORD *)lpBuffer);
+            else
+            {
+                FIXME("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT not supported on protocol %d\n",
+                      lpwhh->htype);
+                INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+                ret = FALSE;
+            }
+        }
+        else
+        {
+            INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+            ret = FALSE;
+        }
         break;
     case INTERNET_OPTION_CONNECT_RETRIES:
         FIXME("Option INTERNET_OPTION_CONNECT_RETRIES: STUB\n");

@@ -714,3 +714,31 @@ LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection)
     return NULL;
 #endif
 }
+
+BOOL NETCON_set_timeout(WININET_NETCONNECTION *connection, BOOL send, int value)
+{
+    int result;
+    struct timeval tv;
+
+    /* FIXME: we should probably store the timeout in the connection to set
+     * when we do connect */
+    if (!NETCON_connected(connection))
+        return TRUE;
+
+    /* value is in milliseconds, convert to struct timeval */
+    tv.tv_sec = value / 1000;
+    tv.tv_usec = (value % 1000) * 1000;
+
+    result = setsockopt(connection->socketFD, SOL_SOCKET,
+                        send ? SO_SNDTIMEO : SO_RCVTIMEO, &tv,
+                        sizeof(tv));
+
+    if (result == -1)
+    {
+        WARN("setsockopt failed (%s)\n", strerror(errno));
+        INTERNET_SetLastError(sock_get_error(errno));
+        return FALSE;
+    }
+
+    return TRUE;
+}
