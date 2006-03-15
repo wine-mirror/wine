@@ -1659,8 +1659,6 @@ dlls/winmm/winejack/Makefile
 dlls/winmm/winenas/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winnls32/Makefile
-dlls/winsock/Makefile
-dlls/winsock/tests/Makefile
 dlls/winspool/Makefile
 dlls/winspool/tests/Makefile
 dlls/wintab32/Makefile
@@ -1668,6 +1666,8 @@ dlls/wintrust/Makefile
 dlls/wldap32/Makefile
 dlls/wnaspi32/Makefile
 dlls/wow32/Makefile
+dlls/ws2_32/Makefile
+dlls/ws2_32/tests/Makefile
 dlls/wsock32/Makefile
 dlls/wtsapi32/Makefile
 dlls/x11drv/Makefile

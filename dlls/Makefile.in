@@ -169,13 +169,13 @@ BASEDIRS = \
 	winmm/winenas \
 	winmm/wineoss \
 	winnls32 \
-	winsock \
 	winspool \
 	wintab32 \
 	wintrust \
 	wldap32 \
 	wnaspi32 \
 	wow32 \
+	ws2_32 \
 	wsock32 \
 	wtsapi32
 
@@ -1034,8 +1034,8 @@ winaspi.dll16 : wnaspi32.dll.so
 wow32.dll.so: wow32/wow32.dll.so
 	$(RM) $@ && $(LN_S) wow32/wow32.dll.so $@
 
-ws2_32.dll.so: winsock/ws2_32.dll.so
-	$(RM) $@ && $(LN_S) winsock/ws2_32.dll.so $@
+ws2_32.dll.so: ws2_32/ws2_32.dll.so
+	$(RM) $@ && $(LN_S) ws2_32/ws2_32.dll.so $@
 
 winsock.dll16 : ws2_32.dll.so
 	echo "ws2_32.dll" >$@
@@ -1076,7 +1076,6 @@ IMPORT_SYMLINKS = \
 	libmsacm32.$(IMPLIBEXT) \
 	libmsvfw32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
-	libws2_32.$(IMPLIBEXT) \
 	libdxerr8.a \
 	libdxerr9.a \
 	libdxguid.a \
@@ -1194,7 +1193,7 @@ IMPORT_LIBS = \
 	wldap32/libwldap32.$(IMPLIBEXT) \
 	wnaspi32/libwnaspi32.$(IMPLIBEXT) \
 	wow32/libwow32.$(IMPLIBEXT) \
-	winsock/libws2_32.$(IMPLIBEXT) \
+	ws2_32/libws2_32.$(IMPLIBEXT) \
 	wsock32/libwsock32.$(IMPLIBEXT) \
 	wtsapi32/libwtsapi32.$(IMPLIBEXT)
 
@@ -1524,8 +1523,8 @@ wnaspi32/libwnaspi32.$(IMPLIBEXT): wnaspi32/wnaspi32.spec $(WINEBUILD)
 wow32/libwow32.$(IMPLIBEXT): wow32/wow32.spec $(WINEBUILD)
 	@cd wow32 && $(MAKE) libwow32.$(IMPLIBEXT)
 
-winsock/libws2_32.$(IMPLIBEXT): winsock/ws2_32.spec $(WINEBUILD)
-	@cd winsock && $(MAKE) libws2_32.$(IMPLIBEXT)
+ws2_32/libws2_32.$(IMPLIBEXT): ws2_32/ws2_32.spec $(WINEBUILD)
+	@cd ws2_32 && $(MAKE) libws2_32.$(IMPLIBEXT)
 
 wsock32/libwsock32.$(IMPLIBEXT): wsock32/wsock32.spec $(WINEBUILD)
 	@cd wsock32 && $(MAKE) libwsock32.$(IMPLIBEXT)
@@ -1550,9 +1549,6 @@ libmsvfw32.$(IMPLIBEXT): msvideo/libmsvfw32.$(IMPLIBEXT)
 
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
-
-libws2_32.$(IMPLIBEXT): winsock/libws2_32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) winsock/libws2_32.$(IMPLIBEXT) $@
 
 $(BUILDSUBDIRS): $(IMPORT_LIBS)
 $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPORT_LIBS)
@@ -1727,7 +1723,7 @@ wintrust/wintrust.dll.so: wintrust
 wldap32/wldap32.dll.so: wldap32
 wnaspi32/wnaspi32.dll.so: wnaspi32
 wow32/wow32.dll.so: wow32
-winsock/ws2_32.dll.so: winsock
+ws2_32/ws2_32.dll.so: ws2_32
 wsock32/wsock32.dll.so: wsock32
 wtsapi32/wtsapi32.dll.so: wtsapi32
 dxerr8/libdxerr8.a: dxerr8
