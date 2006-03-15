@@ -1639,7 +1639,7 @@ dlls/vnbt.vxd/Makefile
 dlls/vnetbios.vxd/Makefile
 dlls/vtdapi.vxd/Makefile
 dlls/vwin32.vxd/Makefile
-dlls/win32s/Makefile
+dlls/w32skrnl/Makefile
 dlls/winecrt0/Makefile
 dlls/wined3d/Makefile
 dlls/winedos/Makefile

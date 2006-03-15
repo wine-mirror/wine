@@ -153,7 +153,7 @@ BASEDIRS = \
 	vnetbios.vxd \
 	vtdapi.vxd \
 	vwin32.vxd \
-	win32s \
+	w32skrnl \
 	winedos \
 	wineps \
 	wininet \
@@ -947,8 +947,8 @@ vtdapi.vxd.so: vtdapi.vxd/vtdapi.vxd.so
 vwin32.vxd.so: vwin32.vxd/vwin32.vxd.so
 	$(RM) $@ && $(LN_S) vwin32.vxd/vwin32.vxd.so $@
 
-w32skrnl.dll.so: win32s/w32skrnl.dll.so
-	$(RM) $@ && $(LN_S) win32s/w32skrnl.dll.so $@
+w32skrnl.dll.so: w32skrnl/w32skrnl.dll.so
+	$(RM) $@ && $(LN_S) w32skrnl/w32skrnl.dll.so $@
 
 w32sys.dll16 win32s16.dll16 : w32skrnl.dll.so
 	echo "w32skrnl.dll" >$@
@@ -1701,7 +1701,7 @@ vnbt.vxd/vnbt.vxd.so: vnbt.vxd
 vnetbios.vxd/vnetbios.vxd.so: vnetbios.vxd
 vtdapi.vxd/vtdapi.vxd.so: vtdapi.vxd
 vwin32.vxd/vwin32.vxd.so: vwin32.vxd
-win32s/w32skrnl.dll.so: win32s
+w32skrnl/w32skrnl.dll.so: w32skrnl
 winmm/winealsa/winealsa.drv.so: winmm/winealsa
 winmm/winearts/winearts.drv.so: winmm/winearts
 winmm/wineaudioio/wineaudioio.drv.so: winmm/wineaudioio
