@@ -69,8 +69,8 @@ sfnt2fnt$(EXEEXT): sfnt2fnt.o
 bin2res$(EXEEXT): bin2res.o
 	$(CC) $(CFLAGS) -o $@ bin2res.o $(LIBPORT)
 
-wineprefixcreate: wineprefixcreate.in
-	sed -e "s,@bintodlldir\@,`$(RELPATH) $(bindir) $(dlldir)`,g" -e "s,@bintodatadir\@,`$(RELPATH) $(bindir) $(datadir)`,g" $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)
+wineprefixcreate: wineprefixcreate.in relpath$(EXEEXT)
+	sed -e "s,@bintodlldir\@,`$(RELPATH) $(bindir) $(dlldir)`,g" -e "s,@bintodatadir\@,`$(RELPATH) $(bindir) $(datadir)/wine`,g" $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)
 	chmod +x wineprefixcreate
 
 install install-lib:: wineprefixcreate
