@@ -96,8 +96,8 @@ BASEDIRS = \
 	msvcrt20 \
 	msvcrt40 \
 	msvcrtd \
+	msvfw32 \
 	msvidc32 \
-	msvideo \
 	mswsock \
 	msxml3 \
 	netapi32 \
@@ -737,8 +737,8 @@ msvcrt40.dll.so: msvcrt40/msvcrt40.dll.so
 msvcrtd.dll.so: msvcrtd/msvcrtd.dll.so
 	$(RM) $@ && $(LN_S) msvcrtd/msvcrtd.dll.so $@
 
-msvfw32.dll.so: msvideo/msvfw32.dll.so
-	$(RM) $@ && $(LN_S) msvideo/msvfw32.dll.so $@
+msvfw32.dll.so: msvfw32/msvfw32.dll.so
+	$(RM) $@ && $(LN_S) msvfw32/msvfw32.dll.so $@
 
 msvideo.dll16 : msvfw32.dll.so
 	echo "msvfw32.dll" >$@
@@ -1074,7 +1074,6 @@ IMPORT_SYMLINKS = \
 	libgdi32.$(IMPLIBEXT) \
 	libkernel32.$(IMPLIBEXT) \
 	libmsacm32.$(IMPLIBEXT) \
-	libmsvfw32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
 	libdxerr8.a \
 	libdxerr9.a \
@@ -1140,7 +1139,7 @@ IMPORT_LIBS = \
 	msvcrt20/libmsvcrt20.$(IMPLIBEXT) \
 	msvcrt40/libmsvcrt40.$(IMPLIBEXT) \
 	msvcrtd/libmsvcrtd.$(IMPLIBEXT) \
-	msvideo/libmsvfw32.$(IMPLIBEXT) \
+	msvfw32/libmsvfw32.$(IMPLIBEXT) \
 	mswsock/libmswsock.$(IMPLIBEXT) \
 	netapi32/libnetapi32.$(IMPLIBEXT) \
 	newdev/libnewdev.$(IMPLIBEXT) \
@@ -1364,8 +1363,8 @@ msvcrt40/libmsvcrt40.$(IMPLIBEXT): msvcrt40/msvcrt40.spec $(WINEBUILD)
 msvcrtd/libmsvcrtd.$(IMPLIBEXT): msvcrtd/msvcrtd.spec $(WINEBUILD)
 	@cd msvcrtd && $(MAKE) libmsvcrtd.$(IMPLIBEXT)
 
-msvideo/libmsvfw32.$(IMPLIBEXT): msvideo/msvfw32.spec $(WINEBUILD)
-	@cd msvideo && $(MAKE) libmsvfw32.$(IMPLIBEXT)
+msvfw32/libmsvfw32.$(IMPLIBEXT): msvfw32/msvfw32.spec $(WINEBUILD)
+	@cd msvfw32 && $(MAKE) libmsvfw32.$(IMPLIBEXT)
 
 mswsock/libmswsock.$(IMPLIBEXT): mswsock/mswsock.spec $(WINEBUILD)
 	@cd mswsock && $(MAKE) libmswsock.$(IMPLIBEXT)
@@ -1544,9 +1543,6 @@ libkernel32.$(IMPLIBEXT): kernel/libkernel32.$(IMPLIBEXT)
 libmsacm32.$(IMPLIBEXT): msacm/libmsacm32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) msacm/libmsacm32.$(IMPLIBEXT) $@
 
-libmsvfw32.$(IMPLIBEXT): msvideo/libmsvfw32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.$(IMPLIBEXT) $@
-
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
 
@@ -1643,7 +1639,7 @@ msvcrt/msvcrt.dll.so: msvcrt
 msvcrt20/msvcrt20.dll.so: msvcrt20
 msvcrt40/msvcrt40.dll.so: msvcrt40
 msvcrtd/msvcrtd.dll.so: msvcrtd
-msvideo/msvfw32.dll.so: msvideo
+msvfw32/msvfw32.dll.so: msvfw32
 msvidc32/msvidc32.dll.so: msvidc32
 mswsock/mswsock.dll.so: mswsock
 msxml3/msxml3.dll.so: msxml3

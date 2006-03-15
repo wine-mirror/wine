@@ -1559,8 +1559,8 @@ dlls/msvcrt20/Makefile
 dlls/msvcrt40/Makefile
 dlls/msvcrtd/Makefile
 dlls/msvcrtd/tests/Makefile
+dlls/msvfw32/Makefile
 dlls/msvidc32/Makefile
-dlls/msvideo/Makefile
 dlls/mswsock/Makefile
 dlls/msxml3/Makefile
 dlls/msxml3/tests/Makefile

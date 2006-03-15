@@ -19,7 +19,6 @@ libcomdlg32.def
 libgdi32.def
 libkernel32.def
 libmsacm32.def
-libmsvfw32.def
 libuser32.def
 lzexpand.dll16
 mmsystem.dll16
