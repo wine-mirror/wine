@@ -143,17 +143,11 @@ static void testDupCert(void)
 
             dupContext = CertDuplicateCertificateContext(context);
             ok(dupContext != NULL, "Expected valid duplicate\n");
-            if (dupContext)
-            {
-                ok(dupContext->cbCertEncoded == sizeof(bigCert),
-                 "Expected cert of %d bytes, got %ld\n", sizeof(bigCert),
-                 dupContext->cbCertEncoded);
-                ok(!memcmp(dupContext->pbCertEncoded, bigCert,
-                 sizeof(bigCert)),
-                 "Unexpected encoded cert in context\n");
-                ok(dupContext->hCertStore == store, "Unexpected store\n");
-                CertFreeCertificateContext(dupContext);
-            }
+            /* Not only is it a duplicate, it's identical: the address is the
+             * same.
+             */
+            ok(dupContext == context, "Expected identical context addresses\n");
+            CertFreeCertificateContext(dupContext);
             CertFreeCertificateContext(context);
         }
         CertCloseStore(store, 0);
