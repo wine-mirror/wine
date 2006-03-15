@@ -94,36 +94,38 @@ static void FillRoot(void)
 
 static void DoTest1(void)
 {
-    TreeView_SelectItem(hTree, NULL);
+    BOOL r;
+    r = TreeView_SelectItem(hTree, NULL);
     Clear();
     AddItem('1');
-    TreeView_SelectItem(hTree, hRoot);
+    r = TreeView_SelectItem(hTree, hRoot);
     AddItem('2');
-    TreeView_SelectItem(hTree, hRoot);
+    r = TreeView_SelectItem(hTree, hRoot);
     AddItem('3');
-    TreeView_SelectItem(hTree, NULL);
+    r = TreeView_SelectItem(hTree, NULL);
     AddItem('4');
-    TreeView_SelectItem(hTree, NULL);
+    r = TreeView_SelectItem(hTree, NULL);
     AddItem('5');
-    TreeView_SelectItem(hTree, hRoot);
+    r = TreeView_SelectItem(hTree, hRoot);
     AddItem('.');
     ok(!strcmp(sequence, "1(nR)nR23(Rn)Rn45(nR)nR."), "root-none select test\n");
 }
 
 static void DoTest2(void)
 {
-    TreeView_SelectItem(hTree, NULL);
+    BOOL r;
+    r = TreeView_SelectItem(hTree, NULL);
     Clear();
     AddItem('1');
-    TreeView_SelectItem(hTree, hRoot);
+    r = TreeView_SelectItem(hTree, hRoot);
     AddItem('2');
-    TreeView_SelectItem(hTree, hRoot);
+    r = TreeView_SelectItem(hTree, hRoot);
     AddItem('3');
-    TreeView_SelectItem(hTree, hChild);
+    r = TreeView_SelectItem(hTree, hChild);
     AddItem('4');
-    TreeView_SelectItem(hTree, hChild);
+    r = TreeView_SelectItem(hTree, hChild);
     AddItem('5');
-    TreeView_SelectItem(hTree, hRoot);
+    r = TreeView_SelectItem(hTree, hRoot);
     AddItem('.');
     ok(!strcmp(sequence, "1(nR)nR23(RC)RC45(CR)CR."), "root-child select test\n");
 }
