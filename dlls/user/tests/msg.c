@@ -1282,6 +1282,21 @@ static void add_message(const struct message *msg)
     sequence_cnt++;
 }
 
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, diff, QS_ALLINPUT );
+        while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+        diff = time - GetTickCount();
+    }
+}
+
 static void flush_sequence(void)
 {
     HeapFree(GetProcessHeap(), 0, sequence);
@@ -3938,10 +3953,7 @@ static void test_paint_messages(void)
 
     ShowWindow( hwnd, SW_SHOW );
     UpdateWindow( hwnd );
-
-    /* try to flush pending X expose events */
-    MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
 
     check_update_rgn( hwnd, 0 );
     SetRectRgn( hrgn, 10, 10, 20, 20 );
@@ -4142,10 +4154,7 @@ static void test_paint_messages(void)
     ShowWindow( hparent, SW_SHOW );
     UpdateWindow( hparent );
     UpdateWindow( hchild );
-    /* try to flush pending X expose events */
-    MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT );
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
-
+    flush_events();
     flush_sequence();
     log_all_parent_messages++;
 
@@ -4702,6 +4711,7 @@ static void test_accelerators(void)
 
     assert(hwnd != 0);
     UpdateWindow(hwnd);
+    flush_events();
     SetFocus(hwnd);
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
@@ -6171,7 +6181,7 @@ static void test_scrollwindowex(void)
             10, 10, 150, 150, hwnd, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child\n");
     UpdateWindow(hwnd);
-    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_events();
     flush_sequence();
 
     /* scroll without the child window */
@@ -6424,6 +6434,7 @@ static void test_DispatchMessage(void)
             if (++count > 10) break;
         }
     }
+    DestroyWindow(hwnd);
 }
 
 

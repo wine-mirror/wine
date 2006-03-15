@@ -60,6 +60,21 @@ static HMENU hmenu;
 
 #define COUNTOF(arr) (sizeof(arr)/sizeof(arr[0]))
 
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, diff, QS_ALLINPUT );
+        while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+        diff = time - GetTickCount();
+    }
+}
+
 /* check the values returned by the various parent/owner functions on a given window */
 static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_parent,
                            HWND gw_owner, HWND ga_root, HWND ga_root_owner )
@@ -3423,6 +3438,7 @@ static void test_csparentdc(void)
    ShowWindow(hwndMain, SW_SHOW);
    ShowWindow(hwnd1, SW_SHOW);
    ShowWindow(hwnd2, SW_SHOW);
+   flush_events();
 
    zero_parentdc_test(&test_answer);
    InvalidateRect(hwndMain, NULL, TRUE);
