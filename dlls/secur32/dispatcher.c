@@ -290,11 +290,11 @@ void check_version(PNegoHelper helper)
                 temp[len] = 0;
 
             TRACE("Exact version is %s\n", debugstr_a(temp));
-            if(strncmp(temp+8, "3.9", 3) == 0)
+            if(strncmp(temp+8, "4", 1) == 0)
             {
                 helper->version = 4;
             }
-            else if(strncmp(temp+8, "3.0", 3) == 0)
+            else if(strncmp(temp+8, "3", 1) == 0)
             {
                 helper->version = 3;
             }
