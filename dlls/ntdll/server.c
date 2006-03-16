@@ -598,7 +598,7 @@ static void start_server(void)
         if (pid == -1) fatal_perror( "fork" );
         if (!pid)
         {
-            argv[0] = "wineserver";
+            argv[0] = "server/wineserver";
             argv[1] = TRACE_ON(server) ? "-d" : NULL;
             argv[2] = NULL;
             wine_exec_wine_binary( argv[0], argv, getenv("WINESERVER") );
@@ -797,7 +797,7 @@ static void create_config_dir(void)
     {
         const char *argv[6];
 
-        argv[0] = "wineprefixcreate";
+        argv[0] = "tools/wineprefixcreate";
         argv[1] = "--quiet";
         argv[2] = "--wait";
         argv[3] = "--prefix";

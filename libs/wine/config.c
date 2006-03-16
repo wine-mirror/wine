@@ -427,6 +427,18 @@ void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
         use_preloader = 1;
     }
 
+    if ((ptr = strrchr( name, '/' )))
+    {
+        /* if we are in build dir and name contains a path, try that */
+        if (build_dir)
+        {
+            argv[0] = build_path( build_dir, name );
+            preloader_exec( argv, use_preloader );
+            free( argv[0] );
+        }
+        name = ptr + 1;  /* get rid of path */
+    }
+
     /* first, bin directory from the current libdir or argv0 */
     if (bindir)
     {
