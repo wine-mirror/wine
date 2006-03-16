@@ -410,13 +410,21 @@ typedef enum _WINED3DTEXTURESTAGESTATETYPE {
 
 #define WINED3D_HIGHEST_TEXTURE_STATE WINED3DTSS_CONSTANT
 
+typedef enum _WINED3DBASISTYPE {
+   WINED3DBASIS_BEZIER        = 0,
+   WINED3DBASIS_BSPLINE       = 1,
+   WINED3DBASIS_INTERPOLATE   = 2,
+
+   WINED3DBASIS_FORCE_DWORD   = 0x7fffffff
+} WINED3DBASISTYPE;
+
 typedef struct _WINEDD3DRECTPATCH_INFO {
     UINT                StartVertexOffsetWidth;
     UINT                StartVertexOffsetHeight;
     UINT                Width;
     UINT                Height;
     UINT                Stride;
-    D3DBASISTYPE        Basis;
+    WINED3DBASISTYPE    Basis;
     WINED3DDEGREETYPE   Degree;
 } WINED3DRECTPATCH_INFO;
 
