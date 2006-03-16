@@ -19,13 +19,13 @@ C_SRCS = \
 all: aviinfo.exe$(DLLEXT) aviplay.exe$(DLLEXT) icinfo.exe$(DLLEXT) aviinfo$(EXEEXT) aviplay$(EXEEXT) icinfo$(EXEEXT)
 
 aviinfo.exe.so: aviinfo.o
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ aviinfo.o -L$(DLLDIR)/avifil32 -L$(DLLDIR) -lavifil32 -lkernel32 $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ aviinfo.o -L$(DLLDIR) -lavifil32 -lkernel32 $(ALL_LIBS)
 
 aviplay.exe.so: aviplay.o
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ aviplay.o -L$(DLLDIR)/avifil32 -L$(DLLDIR)/ddraw -L$(DLLDIR) -lavifil32 -lddraw -lkernel32 $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ aviplay.o -L$(DLLDIR) -lavifil32 -lddraw -lkernel32 $(ALL_LIBS)
 
 icinfo.exe.so: icinfo.o
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ icinfo.o -L$(DLLDIR)/msvfw32 -L$(DLLDIR) -lmsvfw32 -lkernel32 $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mwindows -o $@ icinfo.o -L$(DLLDIR) -lmsvfw32 -lkernel32 $(ALL_LIBS)
 
 aviinfo.exe: aviinfo.o
 	$(CC) -o $@ aviinfo.o -lavifil32 $(ALL_LIBS)
