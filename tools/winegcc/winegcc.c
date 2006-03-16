@@ -382,6 +382,35 @@ static char *find_static_lib( const char *dll )
     return NULL;
 }
 
+/* add specified library to the list of files */
+static void add_library( strarray *lib_dirs, strarray *files, const char *library )
+{
+    char *static_lib, *fullname = 0;
+
+    switch(get_lib_type(lib_dirs, library, &fullname))
+    {
+    case file_arh:
+        strarray_add(files, strmake("-a%s", fullname));
+        break;
+    case file_dll:
+        strarray_add(files, strmake("-d%s", fullname));
+        if ((static_lib = find_static_lib(fullname)))
+        {
+            strarray_add(files, strmake("-a%s",static_lib));
+            free(static_lib);
+        }
+        break;
+    case file_so:
+        strarray_add(files, strmake("-s%s", fullname));
+        break;
+    default:
+        /* keep it anyway, the linker may know what to do with it */
+        strarray_add(files, strmake("-l%s", library));
+        break;
+    }
+    free(fullname);
+}
+
 static void build(struct options* opts)
 {
     static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
@@ -486,31 +515,7 @@ static void build(struct options* opts)
 	    }
 	}
 	else if (file[1] == 'l')
-	{
-	    char *static_lib, *fullname = 0;
-	    switch(get_lib_type(lib_dirs, file + 2, &fullname))
-	    {
-	    	case file_arh:
-		    strarray_add(files, strmake("-a%s", fullname));
-		    break;
-	        case file_dll:
-		    strarray_add(files, strmake("-d%s", file + 2));
-                    if ((static_lib = find_static_lib(fullname)))
-                    {
-                        strarray_add(files, strmake("-a%s",static_lib));
-                        free(static_lib);
-                    }
-		    break;
-	        case file_so:
-		    strarray_add(files, strmake("-s%s", file + 2));
-		    break;
-	        default:
-                    /* keep it anyway, the linker may know what to do with it */
-                    strarray_add(files, file);
-                    break;
-	    }
-	    free(fullname);
-	}
+            add_library( lib_dirs, files, file + 2 );
 	else if (file[1] == 'x')
 	    lang = file;
     }
@@ -518,31 +523,23 @@ static void build(struct options* opts)
 	error("A spec file is currently needed in shared mode");
 
     /* add the default libraries, if needed */
-    if (!opts->nostdlib) 
-    {
-        if (opts->use_msvcrt) strarray_add(files, "-dmsvcrt");
-    }
+    if (!opts->nostdlib && opts->use_msvcrt) add_library(lib_dirs, files, "msvcrt");
 
     if (!opts->wine_mode && !opts->nodefaultlibs) 
     {
         if (opts->gui_app) 
 	{
-            strarray_add(files, "-dshell32");
-	    strarray_add(files, "-dcomdlg32");
-	    strarray_add(files, "-dgdi32");
+	    add_library(lib_dirs, files, "shell32");
+	    add_library(lib_dirs, files, "comdlg32");
+	    add_library(lib_dirs, files, "gdi32");
 	}
-        strarray_add(files, "-dadvapi32");
-        strarray_add(files, "-duser32");
-        strarray_add(files, "-dkernel32");
+        add_library(lib_dirs, files, "advapi32");
+        add_library(lib_dirs, files, "user32");
+        add_library(lib_dirs, files, "kernel32");
     }
 
-    if (!opts->nostartfiles)
-    {
-        char *fullname = NULL;
-        if (get_lib_type(lib_dirs, "winecrt0", &fullname) == file_arh)
-            strarray_add(files, strmake("-a%s", fullname));
-        free( fullname );
-    }
+    if (!opts->nostartfiles) add_library(lib_dirs, files, "winecrt0");
+    if (!opts->nostdlib) add_library(lib_dirs, files, "wine");
 
     /* run winebuild to generate the .spec.o file */
     spec_args = strarray_alloc();
@@ -588,12 +585,10 @@ static void build(struct options* opts)
 	const char* name = files->base[j] + 2;
 	switch(files->base[j][1])
 	{
-	    case 'd':
-		strarray_add(spec_args, strmake("-l%s", name));
-		break;
 	    case 'r':
 		strarray_add(spec_args, files->base[j]);
 		break;
+	    case 'd':
 	    case 'a':
 	    case 'o':
 		strarray_add(spec_args, name);
@@ -633,9 +628,9 @@ static void build(struct options* opts)
 	switch(files->base[j][1])
 	{
 	    case 'l':
-	    case 's':
 		strarray_add(link_args, strmake("-l%s", name));
 		break;
+	    case 's':
 	    case 'a':
 	    case 'o':
 		strarray_add(link_args, name);
@@ -645,7 +640,6 @@ static void build(struct options* opts)
 
     if (!opts->nostdlib) 
     {
-	strarray_add(link_args, "-lwine");
 	strarray_add(link_args, "-lm");
 	strarray_add(link_args, "-lc");
     }

@@ -235,6 +235,14 @@ static char* try_lib_path(const char* dir, const char* pre,
     char *fullname;
     file_type type;
 
+    /* first try a subdir named from the library we are looking for */
+    fullname = strmake("%s/%s/%s%s%s", dir, library, pre, library, ext);
+    if (verbose > 1) fprintf(stderr, "Try %s...", fullname);
+    type = get_file_type(fullname);
+    if (verbose > 1) fprintf(stderr, type == expected_type ? "FOUND!\n" : "no\n");
+    if (type == expected_type) return fullname;
+    free( fullname );
+
     fullname = strmake("%s/%s%s%s", dir, pre, library, ext);
     if (verbose > 1) fprintf(stderr, "Try %s...", fullname);
     type = get_file_type(fullname);
