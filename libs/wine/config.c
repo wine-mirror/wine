@@ -356,6 +356,12 @@ const char *wine_get_data_dir(void)
     return datadir;
 }
 
+/* retrieve the wine build dir (if we are running from there) */
+const char *wine_get_build_dir(void)
+{
+    return build_dir;
+}
+
 /* return the full name of the server directory (the one containing the socket) */
 const char *wine_get_server_dir(void)
 {
