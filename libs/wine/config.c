@@ -44,6 +44,7 @@ static char *dlldir;
 static char *datadir;
 static char *config_dir;
 static char *server_dir;
+static char *build_dir;
 static char *user_name;
 static char *argv0_name;
 
@@ -233,21 +234,66 @@ static void init_paths(void)
     init_server_dir( st.st_dev, st.st_ino );
 }
 
+/* check if we are running from the build directory */
+static char *running_from_build_dir( const char *basedir, const char *bindir )
+{
+    struct stat st;
+    const char *p;
+    char *path, *end;
+    int res;
+
+    if (!(path = build_path( bindir, "wineserver" ))) return NULL;
+    res = stat( path, &st );
+    free( path );
+    if (res != -1) return NULL;  /* the real bindir is valid */
+
+    /* remove last component from basedir */
+    p = basedir + strlen(basedir) - 1;
+    while (p > basedir && *p == '/') p--;
+    while (p > basedir && *p != '/') p--;
+    if (p == basedir) return NULL;
+    path = xmalloc( p - basedir + sizeof("/dlls/ntdll/ntdll.dll.so") );
+    memcpy( path, basedir, p - basedir );
+    end = path + (p - basedir);
+
+    strcpy( end, "/server/wineserver" );
+    if (stat( path, &st ) == -1)
+    {
+        free( path );
+        return NULL;  /* no wineserver found */
+    }
+
+    /* check for ntdll too to make sure */
+    strcpy( end, "/dlls/ntdll/ntdll.dll.so" );
+    if (stat( path, &st ) == -1)
+    {
+        free( path );
+        return NULL;  /* no ntdll found */
+    }
+
+    *end = 0;
+    return path;
+}
+
 /* initialize the argv0 path */
 void wine_init_argv0_path( const char *argv0 )
 {
     size_t size, len;
-    const char *p, *libdir;
+    const char *p, *libdir, *basename;
     char *cwd;
 
     if (!(p = strrchr( argv0, '/' )))
-        argv0_name = xstrdup( argv0 );
+        basename = argv0;
     else
-        argv0_name = xstrdup( p + 1 );
+        basename = p + 1;
+
+    argv0_name = xstrdup( basename );
 
     if ((libdir = get_runtime_libdir()))
     {
         bindir = build_path( libdir, LIB_TO_BINDIR );
+        if ((build_dir = running_from_build_dir( libdir, bindir ))) goto in_build_dir;
+
         dlldir = build_path( libdir, LIB_TO_DLLDIR );
         datadir = build_path( libdir, LIB_TO_DATADIR );
         return;
@@ -284,8 +330,17 @@ void wine_init_argv0_path( const char *argv0 )
         }
     }
 
+    if ((build_dir = running_from_build_dir( bindir, bindir ))) goto in_build_dir;
+
     dlldir = build_path( bindir, BIN_TO_DLLDIR );
     datadir = build_path( bindir, BIN_TO_DATADIR );
+    return;
+
+in_build_dir:
+    free( bindir );
+    free( argv0_name );
+    bindir = NULL;
+    argv0_name = build_path( "loader/", basename );
 }
 
 /* return the configuration directory ($WINEPREFIX or $HOME/.wine) */
