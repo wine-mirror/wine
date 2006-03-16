@@ -1084,14 +1084,17 @@ HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, DWO
     if (VS_HIGHESTFIXEDFXF >= pShader) {
         TRACE("Setting FVF, %d %ld\n", VS_HIGHESTFIXEDFXF, pShader);
         IWineD3DDevice_SetFVF(This->WineD3DDevice, pShader);
+
+	/* Call SetVertexShader with a NULL shader to set the vertexshader in the stateblock to NULL. */
+        IWineD3DDevice_SetVertexShader(This->WineD3DDevice, NULL);
     } else {
         FIXME("Setting shader\n");
         if (MAX_SHADERS <= pShader - (VS_HIGHESTFIXEDFXF + 1)) {
             FIXME("(%p) : Number of shaders exceeds the maximum number of possible shaders\n", This);
             hrc = D3DERR_INVALIDCALL;
         } else {
-            /* IDirect3DVertexShader8Impl *shader = This->vShaders[pShader - (VS_HIGHESTFIXEDFXF + 1)]; */
-            /* hrc =  IWineD3DDevice_SetVertexShader(This->WineD3DDevice, 0 == shader ? NULL : shader->wineD3DVertexShader); */
+            IDirect3DVertexShader8Impl *shader = This->vShaders[pShader - (VS_HIGHESTFIXEDFXF + 1)];
+            hrc =  IWineD3DDevice_SetVertexShader(This->WineD3DDevice, 0 == shader ? NULL : shader->wineD3DVertexShader);
         }
     }
     TRACE("(%p) : returning hr(%lu)\n", This, hrc);

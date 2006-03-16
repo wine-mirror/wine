@@ -1064,6 +1064,127 @@ int ExpandMxMacro(DWORD macro_opcode, const DWORD* args) {
   return nComponents;
 }
 
+static void ParseVertexDeclarationUsage(IWineD3DVertexShaderImpl *This, INT usage, INT arrayNo)
+{
+    switch(usage & 0xFFFF) {
+        case D3DDECLUSAGE_POSITION:
+            if((usage & 0xF0000) >> 16 == 0) { /* tween data */
+                TRACE("Setting position to %d\n", arrayNo);
+                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION]     = arrayNo;
+                This->namedArrays = TRUE;
+            } else {
+                /* TODO: position indexes go from 0-8!!*/
+                TRACE("Setting position 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
+                /* robots uses positions up to 8, the position arrays are just packed.*/
+                if ((usage & 0xF0000) >> 16 > 1) {
+                    TRACE("Loaded for position %d (greater than 2)\n", (usage & 0xF0000) >> 16);
+                }
+                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + ((usage & 0xF0000) >> 16) -1] = arrayNo;
+                This->declaredArrays = TRUE;
+            }
+        break;
+        case D3DDECLUSAGE_BLENDINDICES:
+            /* not supported by openGL */
+            TRACE("Setting BLENDINDICES to %d\n", arrayNo);
+            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDINDICES] = arrayNo;
+            This->declaredArrays = TRUE;
+            if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended BLENDINDICES\n");
+        break;
+        case D3DDECLUSAGE_BLENDWEIGHT:
+            TRACE("Setting BLENDWEIGHT to %d\n", arrayNo);
+            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDWEIGHT]  = arrayNo;
+            This->namedArrays = TRUE;
+            if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended blend weights\n");
+        break;
+        case D3DDECLUSAGE_NORMAL:
+            if((usage & 0xF0000) >> 16 == 0) { /* tween data */
+                TRACE("Setting normal to %d\n", arrayNo);
+                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL]   = arrayNo;
+                This->namedArrays = TRUE;
+            } else {
+                TRACE("Setting normal 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
+                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL2]   = arrayNo;
+                This->declaredArrays = TRUE;
+            }
+        break;
+        case D3DDECLUSAGE_PSIZE:
+            TRACE("Setting PSIZE to %d\n", arrayNo);
+            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_PSIZE]        = arrayNo;
+            This->namedArrays = TRUE;
+            if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended PSIZE\n");
+        break;
+        case D3DDECLUSAGE_COLOR:
+            if((usage & 0xF0000) >> 16 == 0)  {
+                TRACE("Setting DIFFUSE to %d\n", arrayNo);
+                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE]  = arrayNo;
+                This->namedArrays = TRUE;
+            } else {
+                TRACE("Setting SPECULAR to %d\n", arrayNo);
+                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] = arrayNo;
+                This->namedArrays = TRUE;
+            }
+        break;
+        case D3DDECLUSAGE_TEXCOORD:
+            This->namedArrays = TRUE;
+            /* only 7 texture coords have been designed for, so run a quick sanity check */
+            if ((usage & 0xF0000) >> 16 > 7) {
+                FIXME("(%p) : Program uses texture coordinate %d but only 0-7 have been implemented\n", This, (usage & 0xF0000) >> 16);
+            } else {
+                TRACE("Setting TEXCOORD %d  to %d\n", ((usage & 0xF0000) >> 16), arrayNo);
+                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TEXCOORD0 + ((usage & 0xF0000) >> 16)] = arrayNo;
+            }
+        break;
+        /* The following aren't supported by openGL,
+            if we get them then everything needs to be mapped to numbered attributes instead of named ones.
+            this should be caught in the first pass */
+        case D3DDECLUSAGE_TANGENT:
+            TRACE("Setting TANGENT to %d\n", arrayNo);
+            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TANGENT]      = arrayNo;
+            This->declaredArrays = TRUE;
+        break;
+        case D3DDECLUSAGE_BINORMAL:
+            TRACE("Setting BINORMAL to %d\n", arrayNo);
+            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BINORMAL]     = arrayNo;
+            This->declaredArrays = TRUE;
+        break;
+        case D3DDECLUSAGE_TESSFACTOR:
+            TRACE("Setting TESSFACTOR to %d\n", arrayNo);
+            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TESSFACTOR]   = arrayNo;
+            This->declaredArrays = TRUE;
+        break;
+        case D3DDECLUSAGE_POSITIONT:
+            if((usage & 0xF0000) >> 16 == 0) { /* tween data */
+                FIXME("Setting positiont to %d\n", arrayNo);
+                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT] = arrayNo;
+                This->namedArrays = TRUE;
+            } else {
+                FIXME("Setting positiont 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
+                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT2] = arrayNo;
+                This->declaredArrays = TRUE;
+            if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended positiont\n");
+            }
+        break;
+        case D3DDECLUSAGE_FOG:
+            /* supported by OpenGL */
+            TRACE("Setting FOG to %d\n", arrayNo);
+            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_FOG]          = arrayNo;
+            This->namedArrays = TRUE;
+        break;
+        case D3DDECLUSAGE_DEPTH:
+            TRACE("Setting DEPTH to %d\n", arrayNo);
+            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DEPTH]        = arrayNo;
+            This->declaredArrays = TRUE;
+        break;
+        case D3DDECLUSAGE_SAMPLE:
+            TRACE("Setting SAMPLE to %d\n", arrayNo);
+            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SAMPLE]       = arrayNo;
+            This->declaredArrays = TRUE;
+        break;
+        default:
+        FIXME("Unrecognised dcl %08x", usage & 0xFFFF);
+    }
+}
+
 /**
  * Function parser ...
  */
@@ -1124,6 +1245,15 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     /* TODO: renumbering of attributes if the values are higher than the highest supported attribute but the total number of attributes is less than the highest supported attribute */
     This->highestConstant = -1;
 
+    /* Parse the vertex declaration and store the used elements in arrayUsageMap. */
+    if(This->vertexDeclaration) {
+        for (i = 0 ; i < ((IWineD3DVertexDeclarationImpl*)This->vertexDeclaration)->declarationWNumElements - 1; ++i) {
+            WINED3DVERTEXELEMENT *element = ((IWineD3DVertexDeclarationImpl*)This->vertexDeclaration)->pDeclarationWine + i;
+            INT usage = element->Usage | (element->UsageIndex << 16);
+            BYTE arrayNo = element->Reg;
+            ParseVertexDeclarationUsage(This, usage, arrayNo);
+        }
+    }
 
   /**
    * First pass to determine what we need to declare:
@@ -1158,123 +1288,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                 if (curOpcode->opcode == D3DSIO_DCL){
                     INT usage = *pToken++;
                     INT arrayNo = (*pToken++ & 0x00001FFF);
-                    switch(usage & 0xFFFF) {
-                    case D3DDECLUSAGE_POSITION:
-                        if((usage & 0xF0000) >> 16 == 0) { /* tween data */
-                            TRACE("Setting position to %d\n", arrayNo);
-                            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION]     = arrayNo;
-                            This->namedArrays = TRUE;
-                        } else {
-                            /* TODO: position indexes go from 0-8!!*/
-                            TRACE("Setting position 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
-                            /* robots uses positions up to 8, the position arrays are just packed.*/
-                            if ((usage & 0xF0000) >> 16 > 1) {
-                                TRACE("Loaded for position %d (greater than 2)\n", (usage & 0xF0000) >> 16);
-                            }
-                            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + ((usage & 0xF0000) >> 16) -1] = arrayNo;
-                            This->declaredArrays = TRUE;
-                        }
-                    break;
-                    case D3DDECLUSAGE_BLENDINDICES:
-                        /* not supported by openGL */
-                        TRACE("Setting BLENDINDICES to %d\n", arrayNo);
-                        This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDINDICES] = arrayNo;
-                        This->declaredArrays = TRUE;
-                        if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended BLENDINDICES\n");
-                    break;
-                    case D3DDECLUSAGE_BLENDWEIGHT:
-                         TRACE("Setting BLENDWEIGHT to %d\n", arrayNo);
-                        This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDWEIGHT]  = arrayNo;
-                        This->namedArrays = TRUE;
-                        if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended blend weights\n");
-                    break;
-                    case D3DDECLUSAGE_NORMAL:
-                        if((usage & 0xF0000) >> 16 == 0) { /* tween data */
-                            TRACE("Setting normal to %d\n", arrayNo);
-                            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL]   = arrayNo;
-                            This->namedArrays = TRUE;
-                        } else {
-                            TRACE("Setting normal 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
-                            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL2]   = arrayNo;
-                            This->declaredArrays = TRUE;
-                        }
-                    break;
-                    case D3DDECLUSAGE_PSIZE:
-                        TRACE("Setting PSIZE to %d\n", arrayNo);
-                        This->arrayUsageMap[WINED3DSHADERDECLUSAGE_PSIZE]        = arrayNo;
-                        This->namedArrays = TRUE;
-                        if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended PSIZE\n");
-                    break;
-                    case D3DDECLUSAGE_COLOR:
-                        if((usage & 0xF0000) >> 16 == 0)  {
-                            TRACE("Setting DIFFUSE to %d\n", arrayNo);
-                            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE]  = arrayNo;
-                            This->namedArrays = TRUE;
-                        } else {
-                            TRACE("Setting SPECULAR to %d\n", arrayNo);
-                            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] = arrayNo;
-                            This->namedArrays = TRUE;
-                        }
-                    break;
-                    case D3DDECLUSAGE_TEXCOORD:
-                        This->namedArrays = TRUE;
-                        /* only 7 texture coords have been designed for, so run a quick sanity check */
-                        if ((usage & 0xF0000) >> 16 > 7) {
-                            FIXME("(%p) : Program uses texture coordinate %d but only 0-7 have been implemented\n", This, (usage & 0xF0000) >> 16);
-                        } else {
-                            TRACE("Setting TEXCOORD %d  to %d\n", ((usage & 0xF0000) >> 16), arrayNo);
-                            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TEXCOORD0 + ((usage & 0xF0000) >> 16)] = arrayNo;
-                        }
-                    break;
-                    /* The following aren't supported by openGL,
-                        if we get them then everything needs to be mapped to numbered attributes instead of named ones.
-                        this should be caught in the first pass */
-                    case D3DDECLUSAGE_TANGENT:
-                        TRACE("Setting TANGENT to %d\n", arrayNo);
-                        This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TANGENT]      = arrayNo;
-                        This->declaredArrays = TRUE;
-                    break;
-                    case D3DDECLUSAGE_BINORMAL:
-                        TRACE("Setting BINORMAL to %d\n", arrayNo);
-                        This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BINORMAL]     = arrayNo;
-                        This->declaredArrays = TRUE;
-                    break;
-                    case D3DDECLUSAGE_TESSFACTOR:
-                        TRACE("Setting TESSFACTOR to %d\n", arrayNo);
-                        This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TESSFACTOR]   = arrayNo;
-                        This->declaredArrays = TRUE;
-                    break;
-                    case D3DDECLUSAGE_POSITIONT:
-                        if((usage & 0xF0000) >> 16 == 0) { /* tween data */
-                            FIXME("Setting positiont to %d\n", arrayNo);
-                            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT] = arrayNo;
-                            This->namedArrays = TRUE;
-                        } else {
-                            FIXME("Setting positiont 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
-                            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT2] = arrayNo;
-                            This->declaredArrays = TRUE;
-                        if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended positiont\n");
-                        }
-                    break;
-                    case D3DDECLUSAGE_FOG:
-                        /* supported by OpenGL */
-                        TRACE("Setting FOG to %d\n", arrayNo);
-                        This->arrayUsageMap[WINED3DSHADERDECLUSAGE_FOG]          = arrayNo;
-                        This->namedArrays = TRUE;
-                    break;
-                    case D3DDECLUSAGE_DEPTH:
-                        TRACE("Setting DEPTH to %d\n", arrayNo);
-                        This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DEPTH]        = arrayNo;
-                        This->declaredArrays = TRUE;
-                    break;
-                    case D3DDECLUSAGE_SAMPLE:
-                        TRACE("Setting SAMPLE to %d\n", arrayNo);
-                        This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SAMPLE]       = arrayNo;
-                        This->declaredArrays = TRUE;
-                    break;
-                    default:
-                    FIXME("Unrecognised dcl %08x", usage & 0xFFFF);
-                    }
+                    ParseVertexDeclarationUsage(This, usage, arrayNo); 
                 } else if(curOpcode->opcode == D3DSIO_DEF) {
                             This->constantsUsedBitmap[*pToken & 0xFF] = VS_CONSTANT_CONSTANT;
                             FIXME("Constant %ld\n", *pToken & 0xFF);

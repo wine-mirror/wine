@@ -1622,6 +1622,22 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, CONS
     D3DCREATEOBJECTINSTANCE(object, VertexShader)
 
     TRACE("(%p) : Created Vertex shader %p\n", This, *ppVertexShader);
+
+    /* If a vertex declaration has been passed, save it to the vertex shader, this affects d3d8 only. */
+    /* Further it needs to be set before calling SetFunction as SetFunction needs the declaration. */
+    if (pDeclaration != NULL) {
+        IWineD3DVertexDeclaration *vertexDeclaration;
+        hr = IWineD3DDevice_CreateVertexDeclaration(iface, pDeclaration, &vertexDeclaration ,NULL);
+        if (D3D_OK == hr) {
+            TRACE("(%p) : Setting vertex declaration to %p\n", This, vertexDeclaration);
+            object->vertexDeclaration = vertexDeclaration;
+        } else {
+            FIXME("(%p) : Failed to set the declaration, returning D3DERR_INVALIDCALL\n", iface);
+            IWineD3DVertexShader_Release(*ppVertexShader);
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
     hr = IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction);
 
     if (D3D_OK != hr) {
@@ -1638,21 +1654,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, CONS
     }
 
 #endif
-
-
-    /* If a vertex declaration has been passed, save it to the vertex shader, this affects d3d8 only. */
-    if (pDeclaration != NULL) {
-        IWineD3DVertexDeclaration *vertexDeclaration;
-        hr = IWineD3DDevice_CreateVertexDeclaration(iface, pDeclaration, &vertexDeclaration ,NULL);
-        if (D3D_OK == hr) {
-            TRACE("(%p) : Setting vertex declaration to %p\n", This, vertexDeclaration);
-            object->vertexDeclaration = vertexDeclaration;
-        } else {
-            FIXME("(%p) : Failed to set the declaration, returning D3DERR_INVALIDCALL\n", iface);
-            IWineD3DVertexShader_Release(*ppVertexShader);
-            return D3DERR_INVALIDCALL;
-        }
-    }
 
     return D3D_OK;
 }
