@@ -316,12 +316,6 @@ SYMLINKS_SO = \
 	itss.dll.so \
 	joystick.drv.so \
 	kernel32.dll.so \
-	libdxerr8.a \
-	libdxerr9.a \
-	libdxguid.a \
-	libstrmiids.a \
-	libuuid.a \
-	libwinecrt0.a \
 	lz32.dll.so \
 	mapi32.dll.so \
 	mciavi32.dll.so \
@@ -1046,24 +1040,6 @@ wsock32.dll.so: wsock32/wsock32.dll.so
 wtsapi32.dll.so: wtsapi32/wtsapi32.dll.so
 	$(RM) $@ && $(LN_S) wtsapi32/wtsapi32.dll.so $@
 
-libdxerr8.a: dxerr8/libdxerr8.a
-	$(RM) $@ && $(LN_S) dxerr8/libdxerr8.a $@
-
-libdxerr9.a: dxerr9/libdxerr9.a
-	$(RM) $@ && $(LN_S) dxerr9/libdxerr9.a $@
-
-libdxguid.a: dxguid/libdxguid.a
-	$(RM) $@ && $(LN_S) dxguid/libdxguid.a $@
-
-libstrmiids.a: strmiids/libstrmiids.a
-	$(RM) $@ && $(LN_S) strmiids/libstrmiids.a $@
-
-libuuid.a: uuid/libuuid.a
-	$(RM) $@ && $(LN_S) uuid/libuuid.a $@
-
-libwinecrt0.a: winecrt0/libwinecrt0.a
-	$(RM) $@ && $(LN_S) winecrt0/libwinecrt0.a $@
-
 
 # Import libraries
 
@@ -1074,16 +1050,16 @@ IMPORT_SYMLINKS = \
 	libgdi32.$(IMPLIBEXT) \
 	libkernel32.$(IMPLIBEXT) \
 	libmsacm32.$(IMPLIBEXT) \
-	libuser32.$(IMPLIBEXT) \
-	libdxerr8.a \
-	libdxerr9.a \
-	libdxguid.a \
-	libstrmiids.a \
-	libuuid.a \
-	libwinecrt0.a
+	libuser32.$(IMPLIBEXT)
 
 IMPORT_LIBS = \
 	$(IMPORT_SYMLINKS) \
+	dxerr8/libdxerr8.a \
+	dxerr9/libdxerr9.a \
+	dxguid/libdxguid.a \
+	strmiids/libstrmiids.a \
+	uuid/libuuid.a \
+	winecrt0/libwinecrt0.a \
 	activeds/libactiveds.$(IMPLIBEXT) \
 	advapi32/libadvapi32.$(IMPLIBEXT) \
 	advpack/libadvpack.$(IMPLIBEXT) \

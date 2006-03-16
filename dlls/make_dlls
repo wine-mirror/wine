@@ -66,6 +66,7 @@ foreach my $i (split(/\s/,$makefiles))
             if ($module =~ /^lib.*\.a$/)
             {
                 ($staticlib_dirs{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
+                die "invalid module $module in dir $staticlib_dirs{$module}\n" if "lib$staticlib_dirs{$module}.a" ne $module;
             }
             else
             {
@@ -173,7 +174,6 @@ foreach my $mod (sort keys %directories)
         $targets16{$i . "16"} = $mod;
     }
 }
-foreach my $mod (sort keys %staticlib_dirs) { $targets{$mod} = 1; }
 
 print NEWMAKE <<EOF;
 
@@ -236,11 +236,6 @@ foreach my $mod (sort keys %directories)
         printf NEWMAKE "\techo \"%s\" >\$\@\n\n", $mod;
     }
 }
-foreach my $mod (sort keys %staticlib_dirs)
-{
-    printf NEWMAKE "%s: %s/%s\n", $mod, $staticlib_dirs{$mod}, $mod;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s \$@\n\n", $staticlib_dirs{$mod}, $mod;
-}
 
 ################################################################
 # output the import libraries rules
@@ -260,12 +255,12 @@ foreach my $mod (sort @lib_symlinks)
 {
     printf NEWMAKE " \\\n\t%s.\$(IMPLIBEXT)", $importlibs{$mod};
 }
-foreach my $mod (sort keys %staticlib_dirs)
-{
-    printf NEWMAKE " \\\n\t%s", $mod;
-}
 
 print NEWMAKE "\n\nIMPORT_LIBS = \\\n\t\$(IMPORT_SYMLINKS)";
+foreach my $mod (sort keys %staticlib_dirs)
+{
+    printf NEWMAKE " \\\n\t%s/%s", $staticlib_dirs{$mod}, $mod;
+}
 foreach my $mod (sort keys %importlibs)
 {
     my $dir = $directories{$mod};
