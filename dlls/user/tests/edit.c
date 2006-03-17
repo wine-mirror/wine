@@ -20,7 +20,6 @@
 
 #include <assert.h>
 #include <windows.h>
-#include <windowsx.h>
 #include <commctrl.h>
 
 #include "wine/test.h"
@@ -278,7 +277,9 @@ static void ET2_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 static LRESULT CALLBACK ET2_WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (iMsg) {
-        HANDLE_MSG(hwnd, WM_COMMAND, ET2_OnCommand);
+    case WM_COMMAND:
+        ET2_OnCommand(hwnd, LOWORD(wParam), (HWND)lParam, HIWORD(wParam));
+        break;
     }
     return DefWindowProc(hwnd, iMsg, wParam, lParam);
 }

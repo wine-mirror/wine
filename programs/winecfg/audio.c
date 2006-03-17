@@ -38,7 +38,6 @@
 #include <shlguid.h>
 #include <shlwapi.h>
 #include <shlobj.h>
-#include <windowsx.h>
 #include <mmsystem.h>
 #include <mmreg.h>
 #include <mmddk.h>
@@ -699,8 +698,8 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                   DWORD dwPos = GetMessagePos();
                   HWND tree = ((LPNMHDR)lParam)->hwndFrom;
                   ZeroMemory(&ht, sizeof(ht));
-                  ht.pt.x = GET_X_LPARAM(dwPos);
-                  ht.pt.y = GET_Y_LPARAM(dwPos);
+                  ht.pt.x = (short)LOWORD(dwPos);
+                  ht.pt.y = (short)HIWORD(dwPos);
                   MapWindowPoints(HWND_DESKTOP, tree, &ht.pt, 1);
                   SendMessageW( tree, TVM_HITTEST, 0, (LPARAM)&ht );
                   if (TVHT_ONITEMSTATEICON & ht.flags)
@@ -735,8 +734,8 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                   HWND tree = ((LPNMHDR)lParam)->hwndFrom;
                   POINT pt;
                   ZeroMemory(&ht, sizeof(ht));
-                  pt.x = GET_X_LPARAM(dwPos);
-                  pt.y = GET_Y_LPARAM(dwPos);
+                  pt.x = (short)LOWORD(dwPos);
+                  pt.y = (short)HIWORD(dwPos);
                   ht.pt = pt;
                   MapWindowPoints(HWND_DESKTOP, tree, &ht.pt, 1);
                   SendMessageW( tree, TVM_HITTEST, 0, (LPARAM)&ht );
