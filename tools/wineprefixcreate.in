@@ -29,7 +29,6 @@ usage()
     echo "  -h, --help                 Display this message"
     echo "      --prefix <dir>         Directory to create (default: \$WINEPREFIX or ~/.wine)"
     echo "  -q, --quiet                Don't print status messages"
-    echo "      --use-wine-tree <dir>  Run from the Wine build tree <dir>"
     echo "  -w, --wait                 Wait for the wineserver to exit before returning"
     echo ""
 }
@@ -65,6 +64,38 @@ datadir="$bindir/@bintodatadir@"
 do_wait=0
 quiet=0
 
+if [ ! -f "$dlldir/ntdll.dll.so" -a \
+     -x "$bindir/../server/wineserver" -a \
+     -f "$bindir/../dlls/ntdll/ntdll.dll.so" ]
+then
+    # running from the wine source tree
+    topdir=`cd "$bindir/.." && pwd`
+    WINELOADER="$topdir/wine"
+    WINESERVER="$topdir/server/wineserver"
+    if [ -n "$LD_LIBRARY_PATH" ]
+    then
+        LD_LIBRARY_PATH="$topdir/libs:$LD_LIBRARY_PATH"
+    else
+        LD_LIBRARY_PATH="$topdir/libs"
+    fi
+    export LD_LIBRARY_PATH
+
+    # find the source directory
+    link=`readlink "$WINELOADER"`
+    if [ -z "$link" ]
+    then
+        topsrcdir="$topdir"
+    else
+        link=`dirname "$link"`
+        case "$link" in
+            /*) topsrcdir=`cd "$link/.." && pwd` ;;
+             *) topsrcdir=`cd "$topdir/$link/.." && pwd` ;;
+        esac
+    fi
+    dlldir="$topdir/programs"
+    datadir="$topsrcdir/tools"
+fi
+
 while [ $# -gt 0 ]
 do
     case "$1" in
@@ -85,38 +116,7 @@ do
             shift
             ;;
         --use-wine-tree)
-            topdir=`cd "$2" && pwd`
-            if [ -x "$topdir/server/wineserver" ]
-            then
-                WINELOADER="$topdir/wine"
-                WINESERVER="$topdir/server/wineserver"
-                if [ -n "$LD_LIBRARY_PATH" ]
-                then
-                    LD_LIBRARY_PATH="$topdir/libs:$LD_LIBRARY_PATH"
-                else
-                    LD_LIBRARY_PATH="$topdir/libs"
-                fi
-                export LD_LIBRARY_PATH
-
-                # find the source directory
-                link=`readlink "$WINELOADER"`
-                if [ -z "$link" ]
-                then
-                    topsrcdir="$topdir"
-                else
-                    link=`dirname "$link"`
-                    case "$link" in
-                        /*) topsrcdir=`cd "$link/.." && pwd` ;;
-                         *) topsrcdir=`cd "$topdir/$link/.." && pwd` ;;
-                    esac
-                fi
-
-                dlldir="$topdir/programs"
-                datadir="$topsrcdir/tools"
-            else
-                echo "$2 is not a valid Wine build tree"
-                exit 1
-            fi
+            # ignored, autodetected now
             shift 2
             ;;
         *)
