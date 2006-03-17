@@ -1128,6 +1128,8 @@ static BOOL load_font_from_data_dir(LPCWSTR file)
     BOOL ret = FALSE;
     const char *data_dir = wine_get_data_dir();
 
+    if (!data_dir) data_dir = wine_get_build_dir();
+
     if (data_dir)
     {
         INT len;
