@@ -85,7 +85,7 @@ ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
          */
         SendMessage(hProcessPageListCtrl, WM_SETFONT, SendMessage(hProcessPage, WM_GETFONT, 0, 0), TRUE);
         SetWindowText(hProcessPageListCtrl, _T("Processes"));
-        ListView_SetExtendedListViewStyle(hProcessPageListCtrl, ListView_GetExtendedListViewStyle(hProcessPageListCtrl) | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
+        SendMessage(hProcessPageListCtrl, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, ListView_GetExtendedListViewStyle(hProcessPageListCtrl) | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
 
         AddColumns();
 
@@ -348,7 +348,7 @@ void ProcessPageOnNotify(WPARAM wParam, LPARAM lParam)
                 lvitem.stateMask = LVIS_SELECTED;
                 lvitem.iItem = Index;
 
-                ListView_GetItem(hProcessPageListCtrl, &lvitem);
+                SendMessage(hProcessPageListCtrl, LVM_GETITEM, 0, (LPARAM) &lvitem);
 
                 if (lvitem.state & LVIS_SELECTED)
                     break;
