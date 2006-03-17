@@ -261,6 +261,66 @@ static void testFindCert(void)
     }
 }
 
+static void testGetSubjectCert(void)
+{
+    HCERTSTORE store;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store, "CertOpenStore failed: %ld\n", GetLastError());
+    if (store != NULL)
+    {
+        PCCERT_CONTEXT context1, context2;
+        CERT_INFO info = { 0 };
+        BOOL ret;
+
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, &context1);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ok(context1 != NULL, "Expected a context\n");
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+
+        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+         NULL);
+        ok(!context2 && GetLastError() ==
+         HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
+         GetLastError());
+        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+         &info);
+        ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+        info.SerialNumber.cbData = sizeof(serialNum);
+        info.SerialNumber.pbData = (LPBYTE)serialNum;
+        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+         &info);
+        ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
+         "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
+        info.Issuer.cbData = sizeof(subjectName2);
+        info.Issuer.pbData = (LPBYTE)subjectName2;
+        context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
+         &info);
+        ok(context2 != NULL,
+         "CertGetSubjectCertificateFromStore failed: %08lx\n", GetLastError());
+        /* Not only should this find a context, but it should be the same
+         * (same address) as context1.
+         */
+        ok(context1 == context2, "Expected identical context addresses\n");
+        CertFreeCertificateContext(context2);
+
+        CertFreeCertificateContext(context1);
+        CertCloseStore(store, 0);
+    }
+}
+
 static void testMemStore(void)
 {
     HCERTSTORE store1, store2;
@@ -1534,6 +1594,7 @@ START_TEST(store)
 {
     testDupCert();
     testFindCert();
+    testGetSubjectCert();
 
     /* various combinations of CertOpenStore */
     testMemStore();

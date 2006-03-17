@@ -2693,6 +2693,9 @@ PCCTL_CONTEXT WINAPI CertFindCTLInStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, DWORD dwFindFlags, DWORD dwFindType,
  const void *pvFindPara, PCCTL_CONTEXT pPrevCtlContext);
 
+PCCERT_CONTEXT WINAPI CertGetSubjectCertificateFromStore(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, PCERT_INFO pCertId);
+
 BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
  DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement);
 

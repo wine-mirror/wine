@@ -866,9 +866,10 @@ static PWINECRYPT_CERTSTORE CRYPT_ProvOpenStore(LPCSTR lpszStoreProvider,
              dwFlags, pvPara, NULL, &provInfo);
         else
         {
-            PWINECRYPT_CERTSTORE memStore;
+            HCERTSTORE memStore;
 
-            memStore = CRYPT_MemOpenStore(hCryptProv, dwFlags, NULL);
+            memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+             CERT_STORE_CREATE_NEW_FLAG, NULL);
             if (memStore)
             {
                 if (provOpenFunc(lpszStoreProvider, dwEncodingType, hCryptProv,
@@ -2557,6 +2558,20 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         ret = NULL;
     }
     return ret;
+}
+
+PCCERT_CONTEXT WINAPI CertGetSubjectCertificateFromStore(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, PCERT_INFO pCertId)
+{
+    TRACE("(%p, %08lx, %p)\n", hCertStore, dwCertEncodingType, pCertId);
+
+    if (!pCertId)
+    {
+        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        return NULL;
+    }
+    return CertFindCertificateInStore(hCertStore, dwCertEncodingType, 0,
+     CERT_FIND_SUBJECT_CERT, pCertId, NULL);
 }
 
 BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
