@@ -267,7 +267,7 @@ static void testGetSubjectCert(void)
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
-    ok(store, "CertOpenStore failed: %ld\n", GetLastError());
+    ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
     if (store != NULL)
     {
         PCCERT_CONTEXT context1, context2;
