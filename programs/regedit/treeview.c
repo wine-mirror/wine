@@ -134,7 +134,7 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCTSTR lpKeyName) {
 
     buf[260] = '\0';
     hItem = TreeView_GetRoot(hwndTV);
-    TreeView_Expand(hwndTV, hItem, TVE_EXPAND);
+    SendMessage(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
     hItem = TreeView_GetChild(hwndTV, hItem);
     hOldItem = hItem;
     while(1) {
@@ -145,9 +145,9 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCTSTR lpKeyName) {
                 tvi.hItem = hItem;
                 tvi.pszText = buf;
                 tvi.cchTextMax = 260;
-                TreeView_GetItem(hwndTV, &tvi);
+                SendMessage(hwndTV, TVM_GETITEM, 0, (LPARAM) &tvi);
                 if (!_tcsicmp(tvi.pszText, lpItemName)) {
-                     TreeView_Expand(hwndTV, hItem, TVE_EXPAND);
+                     SendMessage(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
                      if (!lpKeyName)
                          return hItem;
                      hOldItem = hItem;
@@ -425,7 +425,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     while (childItem) {
         HTREEITEM nextItem = TreeView_GetNextSibling(hwndTV, childItem);
         if (RefreshTreeItem(hwndTV, childItem) == FALSE) {
-            TreeView_DeleteItem(hwndTV, childItem);
+            SendMessage(hwndTV, TVM_DELETEITEM, 0, (LPARAM)childItem);
         }
         childItem = nextItem;
     }
@@ -455,7 +455,7 @@ BOOL RefreshTreeView(HWND hwndTV)
     SetCursor(hcursorOld);
     
     /* We reselect the currently selected node, this will prompt a refresh of the listview. */
-    TreeView_SelectItem(hwndTV, hSelectedItem);
+    SendMessage(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hSelectedItem);
     return TRUE;
 }
 
@@ -476,7 +476,7 @@ HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPTSTR name)
 	item.cChildren = 1;
 	if (!TreeView_SetItem(hwndTV, &item)) return FALSE;
     }
-    TreeView_Expand(hwndTV, hItem, TVE_EXPAND);
+    SendMessage(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
     if (!hNewItem) {
 	for(hNewItem = TreeView_GetChild(hwndTV, hItem); hNewItem; hNewItem = TreeView_GetNextSibling(hwndTV, hNewItem)) {
 	    item.mask = TVIF_HANDLE | TVIF_TEXT;
@@ -487,7 +487,8 @@ HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPTSTR name)
 	    if (lstrcmp(name, item.pszText) == 0) break;
 	}	
     }
-    if (hNewItem) TreeView_SelectItem(hwndTV, hNewItem);
+    if (hNewItem)
+        SendMessage(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hNewItem);
 
     return hNewItem;
 }
@@ -528,8 +529,8 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
     if (!AddEntryToTree(hwndTV, hRoot, _T("HKEY_DYN_DATA"), HKEY_DYN_DATA, 1)) return FALSE;
     
     /* expand and select host name */
-    TreeView_Expand(hwndTV, hRoot, TVE_EXPAND);
-    TreeView_Select(hwndTV, hRoot, TVGN_CARET);
+    SendMessage(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot );
+    SendMessage(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     return TRUE;
 }
 
@@ -567,7 +568,7 @@ static BOOL InitTreeViewImageLists(HWND hwndTV)
     }
 
     /* Associate the image list with the tree view control.  */
-    TreeView_SetImageList(hwndTV, himl, TVSIL_NORMAL);
+    SendMessage(hwndTV, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)himl);
 
     return TRUE;
 }
