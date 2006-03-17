@@ -198,6 +198,95 @@ todo_wine
     ReleaseDC(0, hdc);
 }
 
+static INT CALLBACK find_font_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
+{
+    LOGFONT *lf = (LOGFONT *)lParam;
+
+    trace("found font %s, height %ld\n", elf->lfFaceName, elf->lfHeight);
+
+    if (elf->lfHeight == lf->lfHeight && !strcmp(elf->lfFaceName, lf->lfFaceName))
+    {
+        *lf = *elf;
+        return 0; /* stop enumeration */
+    }
+    return 1; /* continue enumeration */
+}
+
+static void test_bitmap_font_metrics(void)
+{
+    static const struct font_data
+    {
+        const char face_name[LF_FACESIZE];
+        int weight, height, ascent, descent, int_leading, ext_leading;
+        int ave_char_width, max_char_width;
+    } fd[] =
+    {
+        { "MS Sans Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 11 },
+        { "MS Sans Serif", FW_NORMAL, 16, 13, 3, 3, 0, 7, 14 },
+        { "MS Sans Serif", FW_NORMAL, 20, 16, 4, 4, 0, 8, 16 },
+        { "MS Sans Serif", FW_NORMAL, 24, 19, 5, 6, 0, 9, 20 },
+        { "MS Sans Serif", FW_NORMAL, 29, 23, 6, 5, 0, 12, 25 },
+        { "MS Sans Serif", FW_NORMAL, 37, 29, 8, 5, 0, 16, 32 },
+        { "MS Serif", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8 },
+        { "MS Serif", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9 },
+        { "MS Serif", FW_NORMAL, 13, 11, 2, 2, 0, 5, 12 },
+        { "MS Serif", FW_NORMAL, 16, 13, 3, 3, 0, 6, 16 },
+        { "MS Serif", FW_NORMAL, 19, 15, 4, 3, 0, 8, 19 },
+        { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 23 },
+        { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 27 },
+        { "MS Serif", FW_NORMAL, 35, 27, 8, 3, 0, 16, 34 },
+#if 0 /* FIXME: enable once the bug in sfnt2fnt is fixed */
+        { "Courier", FW_NORMAL, 13, 11, 2, 0, 0, 8, 8 },
+#endif
+        { "Courier", FW_NORMAL, 16, 13, 3, 0, 0, 9, 9 },
+        { "Courier", FW_NORMAL, 20, 16, 4, 0, 0, 12, 12 },
+        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15 }
+        /* FIXME: add "Fixedsys", "Terminal", "Small Fonts" */
+    };
+    HDC hdc;
+    LOGFONT lf;
+    HFONT hfont, old_hfont;
+    TEXTMETRIC tm;
+    INT ret, i;
+
+    hdc = CreateCompatibleDC(0);
+    assert(hdc);
+
+    for (i = 0; i < sizeof(fd)/sizeof(fd[0]); i++)
+    {
+        memset(&lf, 0, sizeof(lf));
+
+        lf.lfHeight = fd[i].height;
+        strcpy(lf.lfFaceName, fd[i].face_name);
+        ret = EnumFontFamilies(hdc, fd[i].face_name, find_font_proc, (LPARAM)&lf);
+        if (ret)
+        {
+            trace("font %s height %d not found\n", fd[i].face_name, fd[i].height);
+            continue;
+        }
+
+        trace("found font %s, height %ld\n", lf.lfFaceName, lf.lfHeight);
+
+        hfont = create_font(lf.lfFaceName, &lf);
+        old_hfont = SelectObject(hdc, hfont);
+        ok(GetTextMetrics(hdc, &tm), "GetTextMetrics error %ld\n", GetLastError());
+
+        ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmWeight, fd[i].weight);
+        ok(tm.tmHeight == fd[i].height, "%s(%d): tm.tmHeight %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmHeight, fd[i].height);
+        ok(tm.tmAscent == fd[i].ascent, "%s(%d): tm.tmAscent %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmAscent, fd[i].ascent);
+        ok(tm.tmDescent == fd[i].descent, "%s(%d): tm.tmDescent %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmDescent, fd[i].descent);
+        ok(tm.tmInternalLeading == fd[i].int_leading, "%s(%d): tm.tmInternalLeading %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmInternalLeading, fd[i].int_leading);
+        ok(tm.tmExternalLeading == fd[i].ext_leading, "%s(%d): tm.tmExternalLeading %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmExternalLeading, fd[i].ext_leading);
+        ok(tm.tmAveCharWidth == fd[i].ave_char_width, "%s(%d): tm.tmAveCharWidth %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmAveCharWidth, fd[i].ave_char_width);
+        ok(tm.tmMaxCharWidth == fd[i].max_char_width, "%s(%d): tm.tmMaxCharWidth %ld != %d\n", fd[i].face_name, fd[i].height, tm.tmMaxCharWidth, fd[i].max_char_width);
+
+        SelectObject(hdc, old_hfont);
+        DeleteObject(hfont);
+    }
+
+    DeleteDC(hdc);
+}
+
 static void test_gdi_objects(void)
 {
     BYTE buff[256];
@@ -898,6 +987,7 @@ START_TEST(gdiobj)
     test_logfont();
     test_logpen();
     test_bitmap_font();
+    test_bitmap_font_metrics();
     test_gdi_objects();
     test_GdiGetCharDimensions();
     test_text_extents();
