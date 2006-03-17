@@ -56,8 +56,10 @@ char **__wine_main_environ = NULL;
 
 struct dll_path_context
 {
-    int   index;
-    char *buffer;
+    int   index;    /* current index in the dll path list */
+    char *buffer;   /* buffer used for storing path names */
+    char *name;     /* start of file name part in buffer (including leading slash) */
+    int   namelen;  /* length of file name without .so extension */
 };
 
 #define MAX_DLLS 100
@@ -74,6 +76,7 @@ static const IMAGE_NT_HEADERS *main_exe;
 
 static load_dll_callback_t load_dll_callback;
 
+static const char *build_dir;
 static const char *default_dlldir;
 static const char **dll_paths;
 static int nb_dll_paths;
@@ -112,6 +115,10 @@ static void build_dll_path(void)
         dll_path_maxlen = strlen(dlldir);
         dll_paths[nb_dll_paths++] = dlldir;
     }
+    else if ((build_dir = wine_get_build_dir()))
+    {
+        dll_path_maxlen = strlen(build_dir) + sizeof("/programs");
+    }
 
     if (count)
     {
@@ -144,18 +151,43 @@ inline static int file_exists( const char *name )
     return (fd != -1);
 }
 
+inline static char *prepend( char *buffer, const char *str, size_t len )
+{
+    return memcpy( buffer - len, str, len );
+}
 
 /* get a filename from the next entry in the dll path */
 static char *next_dll_path( struct dll_path_context *context )
 {
     int index = context->index++;
+    int namelen = context->namelen;
+    char *path = context->name;
 
-    if (index < nb_dll_paths)
+    switch(index)
     {
-        int len = strlen( dll_paths[index] );
-        char *path = context->buffer + dll_path_maxlen - len;
-        memcpy( path, dll_paths[index], len );
+    case 0:  /* try programs dir for .exe files */
+        if (namelen > 4 && !memcmp( context->name + namelen - 4, ".exe", 4 ))
+        {
+            path = prepend( path, context->name, namelen - 4 );
+            path = prepend( path, "/programs", sizeof("/programs") - 1 );
+            path = prepend( path, build_dir, strlen(build_dir) );
+            return path;
+        }
+        context->index++;
+        /* fall through */
+    case 1:  /* try dlls dir with subdir prefix */
+        if (namelen > 4 && !memcmp( context->name + namelen - 4, ".dll", 4 )) namelen -= 4;
+        path = prepend( path, context->name, namelen );
+        /* fall through */
+    case 2:  /* try dlls dir without prefix */
+        path = prepend( path, "/dlls", sizeof("/dlls") - 1 );
+        path = prepend( path, build_dir, strlen(build_dir) );
         return path;
+    default:
+        index -= 3;
+        if (index < nb_dll_paths)
+            return prepend( context->name, dll_paths[index], strlen( dll_paths[index] ));
+        break;
     }
     return NULL;
 }
@@ -167,11 +199,13 @@ static char *first_dll_path( const char *name, const char *ext, struct dll_path_
     char *p;
     int namelen = strlen( name );
 
-    context->buffer = p = malloc( dll_path_maxlen + namelen + strlen(ext) + 2 );
-    context->index = 0;
+    context->buffer = malloc( dll_path_maxlen + 2 * namelen + strlen(ext) + 3 );
+    context->index = build_dir ? 0 : 3;  /* if no build dir skip all the build dir magic cases */
+    context->name = context->buffer + dll_path_maxlen + namelen + 1;
+    context->namelen = namelen + 1;
 
     /* store the name at the end of the buffer, followed by extension */
-    p += dll_path_maxlen;
+    p = context->name;
     *p++ = '/';
     memcpy( p, name, namelen );
     strcpy( p + namelen, ext );
