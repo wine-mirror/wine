@@ -1499,6 +1499,7 @@ BOOL WineEngInit(void)
     WCHAR windowsdir[MAX_PATH];
     char *unixname;
     HANDLE font_mutex;
+    const char *data_dir;
 
     TRACE("\n");
 
@@ -1578,7 +1579,7 @@ BOOL WineEngInit(void)
     }
     WaitForSingleObject(font_mutex, INFINITE);
 
-    /* load the system fonts */
+    /* load the system bitmap fonts */
     load_system_fonts();
 
     /* load in the fonts from %WINDOWSDIR%\\Fonts first of all */
@@ -1586,6 +1587,15 @@ BOOL WineEngInit(void)
     strcatW(windowsdir, fontsW);
     if((unixname = wine_get_unix_file_name(windowsdir)))
     {
+        ReadFontDir(unixname, FALSE);
+        HeapFree(GetProcessHeap(), 0, unixname);
+    }
+
+    /* load the system truetype fonts */
+    data_dir = wine_get_data_dir();
+    if (data_dir && (unixname = HeapAlloc(GetProcessHeap(), 0, strlen(data_dir) + sizeof("/fonts/")))) {
+        strcpy(unixname, data_dir);
+        strcat(unixname, "/fonts/");
         ReadFontDir(unixname, FALSE);
         HeapFree(GetProcessHeap(), 0, unixname);
     }
