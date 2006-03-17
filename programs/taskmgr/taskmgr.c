@@ -504,17 +504,17 @@ BOOL OnCreate(HWND hWnd)
     memset(&item, 0, sizeof(TCITEM));
     item.mask = TCIF_TEXT;
     item.pszText = szTemp;
-    TabCtrl_InsertItem(hTabWnd, 0, &item);
+    SendMessage(hTabWnd, TCM_INSERTITEM, 0, (LPARAM)&item);
     _tcscpy(szTemp, _T("Processes"));
     memset(&item, 0, sizeof(TCITEM));
     item.mask = TCIF_TEXT;
     item.pszText = szTemp;
-    TabCtrl_InsertItem(hTabWnd, 1, &item);
+    SendMessage(hTabWnd, TCM_INSERTITEM, 1, (LPARAM)&item);
     _tcscpy(szTemp, _T("Performance"));
     memset(&item, 0, sizeof(TCITEM));
     item.mask = TCIF_TEXT;
     item.pszText = szTemp;
-    TabCtrl_InsertItem(hTabWnd, 2, &item);
+    SendMessage(hTabWnd, TCM_INSERTITEM, 2, (LPARAM)&item);
 
     /* Size everything correctly */
     GetClientRect(hWnd, &rc);
