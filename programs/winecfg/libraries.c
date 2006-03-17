@@ -32,6 +32,9 @@
 #include <dirent.h>
 #include <assert.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -252,38 +255,63 @@ static int is_16bit_dll( const char *dir, const char *name )
 }
 
 /* load the list of available libraries from a given dir */
-static void load_library_list_from_dir( HWND dialog, const char *dir_path )
+static void load_library_list_from_dir( HWND dialog, const char *dir_path, int check_subdirs )
 {
-    char name[256];
+    char *buffer = NULL, name[256];
     struct dirent *de;
     DIR *dir = opendir( dir_path );
 
     if (!dir) return;
 
+    if (check_subdirs)
+        buffer = HeapAlloc( GetProcessHeap(), 0, strlen(dir_path) + 2 * sizeof(name) + 10 );
+
     while ((de = readdir( dir )))
     {
         size_t len = strlen(de->d_name);
-        if (len > sizeof(name) || len <= 7 || strcmp( de->d_name + len - 7, ".dll.so")) continue;
-        if (is_16bit_dll( dir_path, de->d_name )) continue;  /* 16-bit dlls can't be configured */
-        len -= 7;
-        memcpy( name, de->d_name, len );
-        name[len] = 0;
-        /* skip dlls that should always be builtin */
-        if (is_builtin_only( name )) continue;
-        SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)name );
+        if (len > sizeof(name)) continue;
+        if (len > 7 && !strcmp( de->d_name + len - 7, ".dll.so"))
+        {
+            if (is_16bit_dll( dir_path, de->d_name )) continue;  /* 16-bit dlls can't be configured */
+            len -= 7;
+            memcpy( name, de->d_name, len );
+            name[len] = 0;
+            /* skip dlls that should always be builtin */
+            if (is_builtin_only( name )) continue;
+            SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)name );
+        }
+        else if (check_subdirs)
+        {
+            struct stat st;
+            if (is_builtin_only( de->d_name )) continue;
+            sprintf( buffer, "%s/%s/%s.dll.so", dir_path, de->d_name, de->d_name );
+            if (!stat( buffer, &st ))
+                SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)de->d_name );
+        }
     }
     closedir( dir );
+    HeapFree( GetProcessHeap(), 0, buffer );
 }
 
 /* load the list of available libraries */
 static void load_library_list( HWND dialog )
 {
     unsigned int i = 0;
-    const char *path;
+    const char *path, *build_dir = wine_get_build_dir();
     char item1[256], item2[256];
+    HCURSOR old_cursor = SetCursor( LoadCursor(0, IDC_WAIT) );
+
+    if (build_dir)
+    {
+        char *dir = HeapAlloc( GetProcessHeap(), 0, strlen(build_dir) + sizeof("/dlls") );
+        strcpy( dir, build_dir );
+        strcat( dir, "/dlls" );
+        load_library_list_from_dir( dialog, dir, TRUE );
+        HeapFree( GetProcessHeap(), 0, dir );
+    }
 
     while ((path = wine_dll_enum_load_path( i++ )))
-        load_library_list_from_dir( dialog, path );
+        load_library_list_from_dir( dialog, path, FALSE );
 
     /* get rid of duplicate entries */
 
@@ -301,6 +329,7 @@ static void load_library_list( HWND dialog )
             i++;
         }
     }
+    SetCursor( old_cursor );
 }
 
 static void load_library_settings(HWND dialog)
