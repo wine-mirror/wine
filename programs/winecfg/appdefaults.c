@@ -130,7 +130,7 @@ static void add_listview_item(HWND listview, const char *text, void *association
   item.lParam = (LPARAM) association;
   item.iItem = ListView_GetItemCount(listview);
 
-  ListView_InsertItem(listview, &item);
+  SendMessage(listview, LVM_INSERTITEM, 0, (LPARAM) &item);
 }
 
 /* Called when the application is initialized (cannot reinit!)  */
@@ -179,7 +179,7 @@ static void init_appsheet(HWND dialog)
       item.state = LVIS_SELECTED | LVIS_FOCUSED;
       item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 
-      ListView_SetItem(listview, &item);
+      SendMessage(listview, LVM_SETITEM, 0, (LPARAM) &item);
   }
   
 }
@@ -214,7 +214,7 @@ static void on_selection_change(HWND dialog, HWND listview)
   
   if (item.iItem == -1) return;
   
-  ListView_GetItem(listview, &item);
+  SendMessage(listview, LVM_GETITEM, 0, (LPARAM) &item);
 
   current_app = (char *) item.lParam;
 
@@ -301,7 +301,7 @@ static void on_remove_app_click(HWND dialog)
 
     section[strlen(section)] = '\0'; /* remove last backslash  */
     set_reg_key(config_key, section, NULL, NULL); /* delete the section  */
-    ListView_DeleteItem(listview, selection);
+    SendMessage(listview, LVM_DELETEITEM, selection, 0);
     ListView_SetItemState(listview, selection - 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
     SetFocus(listview);
