@@ -30,7 +30,6 @@
 
 #define NONAMELESSUNION
 #include <windows.h>
-#include <windowsx.h>
 #include <commctrl.h>
 #include <commdlg.h>
 
@@ -105,7 +104,7 @@ enum IMAGE {
 #endif
 
 #define FRM_CALC_CLIENT     0xBF83
-#define Frame_CalcFrameClient(hwnd, prt) ((BOOL)SNDMSG(hwnd, FRM_CALC_CLIENT, 0, (LPARAM)(PRECT)prt))
+#define Frame_CalcFrameClient(hwnd, prt) (SNDMSG(hwnd, FRM_CALC_CLIENT, 0, (LPARAM)(PRECT)prt))
 
 typedef struct
 {

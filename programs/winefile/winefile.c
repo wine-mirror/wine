@@ -259,6 +259,15 @@ static VOID WineWarranty(HWND Wnd)
 	MessageBox(Wnd, text, cap, MB_ICONEXCLAMATION | MB_OK);
 }
 
+static inline BOOL get_check(HWND hwnd, INT id)
+{
+	return BST_CHECKED&SendMessage(GetDlgItem(hwnd, id), BM_GETSTATE, 0, 0);
+}
+
+static inline INT set_check(HWND hwnd, INT id, BOOL on)
+{
+	return SendMessage(GetDlgItem(hwnd, id), BM_SETCHECK, on?BST_CHECKED:BST_UNCHECKED, 0);
+}
 
 #ifdef __WINE__
 
@@ -1744,11 +1753,11 @@ static HWND create_child_window(ChildWnd* child)
 
 	UnhookWindowsHookEx(hcbthook);
 
-	ListBox_SetItemHeight(child->left.hwnd, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
-	ListBox_SetItemHeight(child->right.hwnd, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+	SendMessage(child->left.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+	SendMessage(child->right.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
 
-	idx = ListBox_FindItemData(child->left.hwnd, 0, child->left.cur);
-	ListBox_SetCurSel(child->left.hwnd, idx);
+	idx = SendMessage(child->left.hwnd, LB_FINDSTRING, 0, (LPARAM)child->left.cur);
+	SendMessage(child->left.hwnd, LB_SETCURSEL, idx, 0);
 
 	return child->hwnd;
 }
@@ -1773,8 +1782,7 @@ static INT_PTR CALLBACK ExecuteDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam
 
 			if (id == IDOK) {
 				GetWindowText(GetDlgItem(hwnd, 201), dlg->cmd, MAX_PATH);
-				dlg->cmdshow = Button_GetState(GetDlgItem(hwnd,214))&BST_CHECKED?
-												SW_SHOWMINIMIZED: SW_SHOWNORMAL;
+				dlg->cmdshow = get_check(hwnd,214) ? SW_SHOWMINIMIZED : SW_SHOWNORMAL;
 				EndDialog(hwnd, id);
 			} else if (id == IDCANCEL)
 				EndDialog(hwnd, id);
@@ -1836,11 +1844,11 @@ static INT_PTR CALLBACK FilterDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam,
 		case WM_INITDIALOG:
 			dlg = (struct FilterDialog*) lparam;
 			SetWindowText(GetDlgItem(hwnd, IDC_VIEW_PATTERN), dlg->pattern);
-			Button_SetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_DIRECTORIES), (dlg->flags&TF_DIRECTORIES? BST_CHECKED: BST_UNCHECKED));
-			Button_SetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_PROGRAMS), dlg->flags&TF_PROGRAMS? BST_CHECKED: BST_UNCHECKED);
-			Button_SetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_DOCUMENTS), dlg->flags&TF_DOCUMENTS? BST_CHECKED: BST_UNCHECKED);
-			Button_SetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_OTHERS), dlg->flags&TF_OTHERS? BST_CHECKED: BST_UNCHECKED);
-			Button_SetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_HIDDEN), dlg->flags&TF_HIDDEN? BST_CHECKED: BST_UNCHECKED);
+			set_check(hwnd, IDC_VIEW_TYPE_DIRECTORIES, dlg->flags&TF_DIRECTORIES);
+			set_check(hwnd, IDC_VIEW_TYPE_PROGRAMS, dlg->flags&TF_PROGRAMS);
+			set_check(hwnd, IDC_VIEW_TYPE_DOCUMENTS, dlg->flags&TF_DOCUMENTS);
+			set_check(hwnd, IDC_VIEW_TYPE_OTHERS, dlg->flags&TF_OTHERS);
+			set_check(hwnd, IDC_VIEW_TYPE_HIDDEN, dlg->flags&TF_HIDDEN);
 			return 1;
 
 		case WM_COMMAND: {
@@ -1851,11 +1859,11 @@ static INT_PTR CALLBACK FilterDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam,
 
 				GetWindowText(GetDlgItem(hwnd, IDC_VIEW_PATTERN), dlg->pattern, MAX_PATH);
 
-				flags |= Button_GetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_DIRECTORIES))&BST_CHECKED? TF_DIRECTORIES: 0;
-				flags |= Button_GetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_PROGRAMS))&BST_CHECKED? TF_PROGRAMS: 0;
-				flags |= Button_GetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_DOCUMENTS))&BST_CHECKED? TF_DOCUMENTS: 0;
-				flags |= Button_GetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_OTHERS))&BST_CHECKED? TF_OTHERS: 0;
-				flags |= Button_GetCheck(GetDlgItem(hwnd,IDC_VIEW_TYPE_HIDDEN))&BST_CHECKED? TF_HIDDEN: 0;
+				flags |= get_check(hwnd, IDC_VIEW_TYPE_DIRECTORIES) ? TF_DIRECTORIES : 0;
+				flags |= get_check(hwnd, IDC_VIEW_TYPE_PROGRAMS) ? TF_PROGRAMS : 0;
+				flags |= get_check(hwnd, IDC_VIEW_TYPE_DOCUMENTS) ? TF_DOCUMENTS : 0;
+				flags |= get_check(hwnd, IDC_VIEW_TYPE_OTHERS) ? TF_OTHERS : 0;
+				flags |= get_check(hwnd, IDC_VIEW_TYPE_HIDDEN) ? TF_HIDDEN : 0;
 
 				dlg->flags = flags;
 
@@ -1900,10 +1908,10 @@ static LPCSTR InfoStrings[] = {
 
 static void PropDlg_DisplayValue(HWND hlbox, HWND hedit)
 {
-	int idx = ListBox_GetCurSel(hlbox);
+	int idx = SendMessage(hlbox, LB_GETCURSEL, 0, 0);
 
 	if (idx != LB_ERR) {
-		LPCTSTR pValue = (LPCTSTR) ListBox_GetItemData(hlbox, idx);
+		LPCTSTR pValue = (LPCTSTR) SendMessage(hlbox, LB_GETITEMDATA, idx, 0);
 
 		if (pValue)
 			SetWindowText(hedit, pValue);
@@ -1967,13 +1975,13 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCTSTR st
 
 						/* Retrieve file description for language and code page */
 						if (VerQueryValue(dlg->pVersionData, subblock, (PVOID)&pTxt, &nValLen)) {
-							int idx = ListBox_AddString(hlbox, infoStr);
-							ListBox_SetItemData(hlbox, idx, pTxt);
+							int idx = SendMessage(hlbox, LB_ADDSTRING, 0L, (LPARAM)infoStr);
+							SendMessage(hlbox, LB_SETITEMDATA, idx, (LPARAM) pTxt);
 						}
 					}
 				}
 
-				ListBox_SetCurSel(hlbox, 0);
+				SendMessage(hlbox, LB_SETCURSEL, 0, 0);
 
 				PropDlg_DisplayValue(hlbox, GetDlgItem(hwnd,IDC_LIST_PROP_VERSION_VALUES));
 			}
@@ -2010,11 +2018,11 @@ static INT_PTR CALLBACK PropertiesDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wpa
 			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_FILENAME), pWFD->cFileName);
 			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_PATH), dlg->path);
 
-			Button_SetCheck(GetDlgItem(hwnd,IDC_CHECK_READONLY), (pWFD->dwFileAttributes&FILE_ATTRIBUTE_READONLY? BST_CHECKED: BST_UNCHECKED));
-			Button_SetCheck(GetDlgItem(hwnd,IDC_CHECK_ARCHIVE), (pWFD->dwFileAttributes&FILE_ATTRIBUTE_ARCHIVE? BST_CHECKED: BST_UNCHECKED));
-			Button_SetCheck(GetDlgItem(hwnd,IDC_CHECK_COMPRESSED), (pWFD->dwFileAttributes&FILE_ATTRIBUTE_COMPRESSED? BST_CHECKED: BST_UNCHECKED));
-			Button_SetCheck(GetDlgItem(hwnd,IDC_CHECK_HIDDEN), (pWFD->dwFileAttributes&FILE_ATTRIBUTE_HIDDEN? BST_CHECKED: BST_UNCHECKED));
-			Button_SetCheck(GetDlgItem(hwnd,IDC_CHECK_SYSTEM), (pWFD->dwFileAttributes&FILE_ATTRIBUTE_SYSTEM? BST_CHECKED: BST_UNCHECKED));
+			set_check(hwnd, IDC_CHECK_READONLY, pWFD->dwFileAttributes&FILE_ATTRIBUTE_READONLY);
+			set_check(hwnd, IDC_CHECK_ARCHIVE, pWFD->dwFileAttributes&FILE_ATTRIBUTE_ARCHIVE);
+			set_check(hwnd, IDC_CHECK_COMPRESSED, pWFD->dwFileAttributes&FILE_ATTRIBUTE_COMPRESSED);
+			set_check(hwnd, IDC_CHECK_HIDDEN, pWFD->dwFileAttributes&FILE_ATTRIBUTE_HIDDEN);
+			set_check(hwnd, IDC_CHECK_SYSTEM, pWFD->dwFileAttributes&FILE_ATTRIBUTE_SYSTEM);
 
 			CheckForFileInfo(dlg, hwnd, dlg->path);
 			return 1;}
@@ -2187,7 +2195,7 @@ static BOOL activate_drive_window(LPCTSTR path)
 			if (!lstrcmpi(drv2, drv1)) {
 				SendMessage(Globals.hmdiclient, WM_MDIACTIVATE, (WPARAM)child_wnd, 0);
 
-				if (IsMinimized(child_wnd))
+				if (IsIconic(child_wnd))
 					ShowWindow(child_wnd, SW_SHOWNORMAL);
 
 				return TRUE;
@@ -2210,7 +2218,7 @@ static BOOL activate_fs_window(LPCTSTR filesys)
 			if (!lstrcmpi(child->root.fs, filesys)) {
 				SendMessage(Globals.hmdiclient, WM_MDIACTIVATE, (WPARAM)child_wnd, 0);
 
-				if (IsMinimized(child_wnd))
+				if (IsIconic(child_wnd))
 					ShowWindow(child_wnd, SW_SHOWNORMAL);
 
 				return TRUE;
@@ -2347,21 +2355,21 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 						DeleteObject(Globals.hfont);
 						Globals.hfont = CreateFontIndirect(&lFont);
-						hFontOld = SelectFont(hdc, Globals.hfont);
+						hFontOld = SelectObject(hdc, Globals.hfont);
 						GetTextExtentPoint32(hdc, sSpace, 1, &Globals.spaceSize);
 
 						/* change font in all open child windows */
 						for(childWnd=GetWindow(Globals.hmdiclient,GW_CHILD); childWnd; childWnd=GetNextWindow(childWnd,GW_HWNDNEXT)) {
 							ChildWnd* child = (ChildWnd*) GetWindowLongPtr(childWnd, GWLP_USERDATA);
-							SetWindowFont(child->left.hwnd, Globals.hfont, TRUE);
-							SetWindowFont(child->right.hwnd, Globals.hfont, TRUE);
-							ListBox_SetItemHeight(child->left.hwnd, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
-							ListBox_SetItemHeight(child->right.hwnd, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+							SendMessage(child->left.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
+							SendMessage(child->right.hwnd, WM_SETFONT, (WPARAM)Globals.hfont, TRUE);
+							SendMessage(child->left.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+							SendMessage(child->right.hwnd, LB_SETITEMHEIGHT, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
 							InvalidateRect(child->left.hwnd, NULL, TRUE);
 							InvalidateRect(child->right.hwnd, NULL, TRUE);
 						}
 
-						SelectFont(hdc, hFontOld);
+						SelectObject(hdc, hFontOld);
 					}
 					else if (CommDlgExtendedError()) {
 						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, BUFFER_LEN);
@@ -2615,7 +2623,7 @@ static HWND create_header(HWND parent, Pane* pane, int id)
 	if (!hwnd)
 		return 0;
 
-	SetWindowFont(hwnd, GetStockObject(DEFAULT_GUI_FONT), FALSE);
+	SendMessage(hwnd, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), FALSE);
 
 	hdi.mask = HDI_TEXT|HDI_WIDTH|HDI_FORMAT;
 
@@ -2645,9 +2653,9 @@ static void init_output(HWND hwnd)
 	else
 		Globals.num_sep = TEXT('.');
 
-	old_font = SelectFont(hdc, Globals.hfont);
+	old_font = SelectObject(hdc, Globals.hfont);
 	GetTextExtentPoint32(hdc, sSpace, 1, &Globals.spaceSize);
-	SelectFont(hdc, old_font);
+	SelectObject(hdc, old_font);
 	ReleaseDC(hwnd, hdc);
 }
 
@@ -2659,7 +2667,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 static BOOL calc_widths(Pane* pane, BOOL anyway)
 {
 	int col, x, cx, spc=3*Globals.spaceSize.cx;
-	int entries = ListBox_GetCount(pane->hwnd);
+	int entries = SendMessage(pane->hwnd, LB_GETCOUNT, 0, 0);
 	int orgWidths[COLUMNS];
 	int orgPositions[COLUMNS+1];
 	HFONT hfontOld;
@@ -2675,10 +2683,10 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 		pane->widths[col] = 0;
 
 	hdc = GetDC(pane->hwnd);
-	hfontOld = SelectFont(hdc, Globals.hfont);
+	hfontOld = SelectObject(hdc, Globals.hfont);
 
 	for(cnt=0; cnt<entries; cnt++) {
-		Entry* entry = (Entry*) ListBox_GetItemData(pane->hwnd, cnt);
+		Entry* entry = (Entry*) SendMessage(pane->hwnd, LB_GETITEMDATA, cnt, 0);
 
 		DRAWITEMSTRUCT dis;
 
@@ -2720,7 +2728,7 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 
 	pane->positions[COLUMNS] = x;
 
-	ListBox_SetHorizontalExtent(pane->hwnd, x);
+	SendMessage(pane->hwnd, LB_SETHORIZONTALEXTENT, x, 0);
 
 	/* no change? */
 	if (!memcmp(orgWidths, pane->widths, sizeof(orgWidths)))
@@ -2747,17 +2755,17 @@ static void calc_single_width(Pane* pane, int col)
 {
 	HFONT hfontOld;
 	int x, cx;
-	int entries = ListBox_GetCount(pane->hwnd);
+	int entries = SendMessage(pane->hwnd, LB_GETCOUNT, 0, 0);
 	int cnt;
 	HDC hdc;
 
 	pane->widths[col] = 0;
 
 	hdc = GetDC(pane->hwnd);
-	hfontOld = SelectFont(hdc, Globals.hfont);
+	hfontOld = SelectObject(hdc, Globals.hfont);
 
 	for(cnt=0; cnt<entries; cnt++) {
-		Entry* entry = (Entry*) ListBox_GetItemData(pane->hwnd, cnt);
+		Entry* entry = (Entry*) SendMessage(pane->hwnd, LB_GETITEMDATA, cnt, 0);
 		DRAWITEMSTRUCT dis;
 
 		dis.CtlType		  = 0;
@@ -2797,7 +2805,7 @@ static void calc_single_width(Pane* pane, int col)
 		x += pane->widths[col];
 	}
 
-	ListBox_SetHorizontalExtent(pane->hwnd, x);
+	SendMessage(pane->hwnd, LB_SETHORIZONTALEXTENT, x, 0);
 }
 
 
@@ -2912,7 +2920,7 @@ static int insert_entries(Pane* pane, Entry* dir, LPCTSTR pattern, int filter_fl
 		if (idx != -1)
 			idx++;
 
-		ListBox_InsertItemData(pane->hwnd, idx, entry);
+		SendMessage(pane->hwnd, LB_INSERTSTRING, idx, (LPARAM) entry);
 
 		if (pane->treePane && entry->expanded)
 			idx = insert_entries(pane, entry->down, pattern, filter_flags, idx);
@@ -2972,9 +2980,9 @@ static void create_tree_window(HWND parent, Pane* pane, int id, int id_header, L
 								0, 0, 0, 0, parent, (HMENU)id, Globals.hInstance, 0);
 
 	SetWindowLongPtr(pane->hwnd, GWLP_USERDATA, (LPARAM)pane);
-	g_orgTreeWndProc = SubclassWindow(pane->hwnd, TreeWndProc);
+	g_orgTreeWndProc = (WNDPROC) SetWindowLongPtr(pane->hwnd, GWLP_WNDPROC, (LPARAM)TreeWndProc);
 
-	SetWindowFont(pane->hwnd, Globals.hfont, FALSE);
+	SendMessage(pane->hwnd, WM_SETFONT, (WPARAM)Globals.hfont, FALSE);
 
 	/* insert entries into listbox */
 	if (entry)
@@ -3642,7 +3650,7 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 				RedrawWindow(pane->hwnd, &rt_clip, 0, RDW_INVALIDATE|RDW_UPDATENOW);
 
 				if (pnmh->code == HDN_ENDTRACK) {
-					ListBox_SetHorizontalExtent(pane->hwnd, pane->positions[COLUMNS]);
+					SendMessage(pane->hwnd, LB_SETHORIZONTALEXTENT, pane->positions[COLUMNS], 0);
 
 					if (GetScrollPos(pane->hwnd, SB_HORZ) != scroll_pos)
 						set_header(pane);
@@ -3678,17 +3686,17 @@ static void scan_entry(ChildWnd* child, Entry* entry, int idx, HWND hwnd)
 
 	/* delete sub entries in left pane */
 	for(;;) {
-		LRESULT res = ListBox_GetItemData(child->left.hwnd, idx+1);
+		LRESULT res = SendMessage(child->left.hwnd, LB_GETITEMDATA, idx+1, 0);
 		Entry* sub = (Entry*) res;
 
 		if (res==LB_ERR || !sub || sub->level<=entry->level)
 			break;
 
-		ListBox_DeleteString(child->left.hwnd, idx+1);
+		SendMessage(child->left.hwnd, LB_DELETESTRING, idx+1, 0);
 	}
 
 	/* empty right pane */
-	ListBox_ResetContent(child->right.hwnd);
+	SendMessage(child->right.hwnd, LB_RESETCONTENT, 0, 0);
 
 	/* release memory */
 	free_entries(entry);
@@ -3743,7 +3751,7 @@ static BOOL expand_entry(ChildWnd* child, Entry* dir)
 	if (!(p->data.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 		return FALSE;
 
-	idx = ListBox_FindItemData(child->left.hwnd, 0, dir);
+	idx = SendMessage(child->left.hwnd, LB_FINDSTRING, 0, (LPARAM)dir);
 
 	dir->expanded = TRUE;
 
@@ -3766,19 +3774,19 @@ static BOOL expand_entry(ChildWnd* child, Entry* dir)
 
 static void collapse_entry(Pane* pane, Entry* dir)
 {
-	int idx = ListBox_FindItemData(pane->hwnd, 0, dir);
+	int idx = SendMessage(pane->hwnd, LB_FINDSTRING, 0, (LPARAM)dir);
 
 	ShowWindow(pane->hwnd, SW_HIDE);
 
 	/* hide sub entries */
 	for(;;) {
-		LRESULT res = ListBox_GetItemData(pane->hwnd, idx+1);
+		LRESULT res = SendMessage(pane->hwnd, LB_GETITEMDATA, idx+1, 0);
 		Entry* sub = (Entry*) res;
 
 		if (res==LB_ERR || !sub || sub->level<=dir->level)
 			break;
 
-		ListBox_DeleteString(pane->hwnd, idx+1);
+		SendMessage(pane->hwnd, LB_DELETESTRING, idx+1, 0);
 	}
 
 	dir->expanded = FALSE;
@@ -3789,7 +3797,7 @@ static void collapse_entry(Pane* pane, Entry* dir)
 
 static void refresh_right_pane(ChildWnd* child)
 {
-	ListBox_ResetContent(child->right.hwnd);
+	SendMessage(child->right.hwnd, LB_RESETCONTENT, 0, 0);
 	insert_entries(&child->right, child->right.root, child->filter_pattern, child->filter_flags, -1);
 	calc_widths(&child->right, FALSE);
 
@@ -3856,8 +3864,8 @@ static void refresh_child(ChildWnd* child)
 
 	set_curdir(child, entry, 0, child->hwnd);
 
-	idx = ListBox_FindItemData(child->left.hwnd, 0, child->left.cur);
-	ListBox_SetCurSel(child->left.hwnd, idx);
+	idx = SendMessage(child->left.hwnd, LB_FINDSTRING, 0, (LPARAM)child->left.cur);
+	SendMessage(child->left.hwnd, LB_SETCURSEL, idx, 0);
 }
 
 
@@ -4007,7 +4015,10 @@ static void activate_entry(ChildWnd* child, Pane* pane, HWND hwnd)
 		int scanned_old = entry->scanned;
 
 		if (!scanned_old)
-			scan_entry(child, entry, ListBox_GetCurSel(child->left.hwnd), hwnd);
+		{
+			int idx = SendMessage(child->left.hwnd, LB_GETCURSEL, 0, 0);
+			scan_entry(child, entry, idx, hwnd);
+		}
 
 #ifndef _NO_EXTENSIONS
 		if (entry->data.cFileName[0]=='.' && entry->data.cFileName[1]=='\0')
@@ -4024,8 +4035,9 @@ static void activate_entry(ChildWnd* child, Pane* pane, HWND hwnd)
 			expand_entry(child, child->left.cur);
 
 			if (!pane->treePane) focus_entry: {
-				int idx = ListBox_FindItemData(child->left.hwnd, ListBox_GetCurSel(child->left.hwnd), entry);
-				ListBox_SetCurSel(child->left.hwnd, idx);
+				int idxstart = SendMessage(child->left.hwnd, LB_GETCURSEL, 0, 0);
+				int idx = SendMessage(child->left.hwnd, LB_FINDSTRING, idxstart, (LPARAM)entry);
+				SendMessage(child->left.hwnd, LB_SETCURSEL, idx, 0);
 				set_curdir(child, entry, idx, hwnd);
 			}
 		}
@@ -4287,7 +4299,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 			BeginPaint(hwnd, &ps);
 			rt.left = child->split_pos-SPLIT_WIDTH/2;
 			rt.right = child->split_pos+SPLIT_WIDTH/2+1;
-			lastBrush = SelectBrush(ps.hdc, (HBRUSH)GetStockObject(COLOR_SPLITBAR));
+			lastBrush = SelectObject(ps.hdc, GetStockObject(COLOR_SPLITBAR));
 			Rectangle(ps.hdc, rt.left, rt.top-1, rt.right, rt.bottom+1);
 			SelectObject(ps.hdc, lastBrush);
 #ifdef _NO_EXTENSIONS
@@ -4312,7 +4324,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 		case WM_LBUTTONDOWN: {
 			RECT rt;
-			int x = GET_X_LPARAM(lparam);
+			int x = LOWORD(lparam);
 
 			GetClientRect(hwnd, &rt);
 
@@ -4532,8 +4544,8 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 			switch(HIWORD(wparam)) {
 				case LBN_SELCHANGE: {
-					int idx = ListBox_GetCurSel(pane->hwnd);
-					Entry* entry = (Entry*) ListBox_GetItemData(pane->hwnd, idx);
+					int idx = SendMessage(pane->hwnd, LB_GETCURSEL, 0, 0);
+					Entry* entry = (Entry*) SendMessage(pane->hwnd, LB_GETITEMDATA, idx, 0);
 
 					if (pane == &child->left)
 						set_curdir(child, entry, idx, hwnd);
@@ -4569,10 +4581,10 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 			 /* now create the popup menu using shell namespace and IContextMenu */
 			pane = GetFocus()==child->left.hwnd? &child->left: &child->right;
-			idx = ListBox_GetCurSel(pane->hwnd);
+			idx = SendMessage(pane->hwnd, LB_GETCURSEL, 0, 0);
 
 			if (idx != -1) {
-				Entry* entry = (Entry*) ListBox_GetItemData(pane->hwnd, idx);
+				Entry* entry = (Entry*) SendMessage(pane->hwnd, LB_GETITEMDATA, idx, 0);
 
 				LPITEMIDLIST pidl_abs = get_to_absolute_pidl(entry, hwnd);
 
@@ -4648,7 +4660,7 @@ static LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM 
 
 		case WM_SETFOCUS:
 			child->focus_pane = pane==&child->right? 1: 0;
-			ListBox_SetSel(hwnd, TRUE, 1);
+			SendMessage(hwnd, LB_SETSEL, TRUE, 1);
 			/*TODO: check menu items */
 			break;
 
@@ -4873,18 +4885,17 @@ static void show_frame(HWND hwndParent, int cmdshow, LPCTSTR path)
 		_tsplitpath(path, drv, dir, name, ext);
 		if (name[0])
 		{
-			count = ListBox_GetCount(child->right.hwnd);
+			count = SendMessage(child->right.hwnd, LB_GETCOUNT, 0, 0);
 			lstrcpy(fullname,name);
 			lstrcat(fullname,ext);
 
 			for (index = 0; index < count; index ++)
 			{
-				Entry* entry = (Entry*) ListBox_GetItemData(child->right.hwnd,
-						index);
+				Entry* entry = (Entry*) SendMessage(child->right.hwnd, LB_GETITEMDATA, index, 0);
 				if (lstrcmp(entry->data.cFileName,fullname)==0 ||
 						lstrcmp(entry->data.cAlternateFileName,fullname)==0)
 				{
-					ListBox_SetCurSel(child->right.hwnd, index);
+					SendMessage(child->right.hwnd, LB_SETCURSEL, index, 0);
 					SetFocus(child->right.hwnd);
 					break;
 				}
