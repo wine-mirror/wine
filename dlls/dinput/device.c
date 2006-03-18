@@ -32,9 +32,11 @@
 #include "wine/unicode.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "dinput.h"
 #include "device_private.h"
+#include "dinput_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
@@ -897,4 +899,140 @@ HRESULT WINAPI IDirectInputDevice8WImpl_GetImageInfo(LPDIRECTINPUTDEVICE8W iface
     FIXME("(%p)->(%p): stub !\n", iface, lpdiDevImageInfoHeader);
     
     return DI_OK;
+}
+
+/******************************************************************************
+ *	DInput hook thread
+ */
+
+static LRESULT CALLBACK dinput_hook_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static HHOOK kbd_hook, mouse_hook;
+    BOOL res;
+
+    TRACE("got message %x %p %p\n", message, (LPVOID)wParam, (LPVOID)lParam);
+    switch (message)
+    {
+    case WM_USER+0x10:
+        if (wParam == WH_KEYBOARD_LL)
+        {
+            if (lParam)
+            {
+                if (kbd_hook) return 0;
+                kbd_hook = SetWindowsHookExW(WH_KEYBOARD_LL, (LPVOID)lParam, DINPUT_instance, 0);
+                return (LRESULT)kbd_hook;
+            }
+            else
+            {
+                if (!kbd_hook) return 0;
+                res = UnhookWindowsHookEx(kbd_hook);
+                kbd_hook = NULL;
+                return res;
+            }
+        }
+        else if (wParam == WH_MOUSE_LL)
+        {
+            if (lParam)
+            {
+                if (mouse_hook) return 0;
+                mouse_hook = SetWindowsHookExW(WH_MOUSE_LL, (LPVOID)lParam, DINPUT_instance, 0);
+                return (LRESULT)mouse_hook;
+            }
+            else
+            {
+                if (!mouse_hook) return 0;
+                res = UnhookWindowsHookEx(mouse_hook);
+                mouse_hook = NULL;
+                return res;
+            }
+        }
+        return 0;
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+    }
+    return DefWindowProcW(hWnd, message, wParam, lParam);
+}
+
+static HANDLE signal_event;
+
+static DWORD WINAPI hook_thread_proc(void *param)
+{
+    static const WCHAR classW[]={'H','o','o','k','_','L','L','_','C','L',0};
+    MSG msg;
+    WNDCLASSEXW wcex;
+    HWND hwnd;
+
+    memset(&wcex, 0, sizeof(wcex));
+    wcex.cbSize = sizeof(wcex);
+    wcex.lpfnWndProc = dinput_hook_WndProc;
+    wcex.lpszClassName = classW;
+    wcex.hInstance = GetModuleHandleW(0);
+
+    if (!RegisterClassExW(&wcex)) ERR("Error registering window class\n");
+    hwnd = CreateWindowExW(0, classW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, 0);
+    *(HWND*)param = hwnd;
+
+    SetEvent(signal_event);
+    if (hwnd)
+    {
+        while (GetMessageW(&msg, 0, 0, 0))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    else ERR("Error creating message window\n");
+
+    DestroyWindow(hwnd);
+    UnregisterClassW(wcex.lpszClassName, wcex.hInstance);
+    return 0;
+}
+
+static CRITICAL_SECTION dinput_hook_crit;
+static CRITICAL_SECTION_DEBUG dinput_critsect_debug =
+{
+    0, 0, &dinput_hook_crit,
+    { &dinput_critsect_debug.ProcessLocksList, &dinput_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": dinput_hook_crit") }
+};
+static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0, 0 };
+
+static HWND get_thread_hwnd(void)
+{
+    static HANDLE hook_thread;
+    static HWND   hook_thread_hwnd;
+
+    EnterCriticalSection(&dinput_hook_crit);
+    if (!hook_thread)
+    {
+        DWORD tid;
+        HWND hwnd;
+
+        signal_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        hook_thread = CreateThread(NULL, 0, hook_thread_proc, &hwnd, 0, &tid);
+        if (signal_event && hook_thread)
+        {
+            HANDLE handles[2];
+            handles[0] = signal_event;
+            handles[1] = hook_thread;
+            WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+        }
+        CloseHandle(signal_event);
+
+        if (!(hook_thread_hwnd = hwnd))
+        {
+            /* Thread failed to create window - reset things so we could try again later */
+            CloseHandle(hook_thread);
+            hook_thread = 0;
+        }
+    }
+    LeaveCriticalSection(&dinput_hook_crit);
+
+    return hook_thread_hwnd;
+}
+
+HHOOK set_dinput_hook(int hook_id, LPVOID proc)
+{
+    return (HHOOK)SendMessageW(get_thread_hwnd(), WM_USER+0x10, (WPARAM)hook_id, (LPARAM)proc);
 }

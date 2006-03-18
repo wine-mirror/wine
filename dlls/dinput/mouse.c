@@ -126,7 +126,6 @@ struct SysMouseImpl
     LONG			    prevX, prevY;
     /* These are used in case of relative -> absolute transitions */
     POINT                           org_coords;
-    HHOOK                           hook;
     HWND			    win;
     DWORD			    dwCoopLevel;
     POINT      			    mapped_center;
@@ -329,15 +328,11 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     ref = InterlockedDecrement(&(This->ref));
     if (ref)
 	return ref;
-    
+
+    set_dinput_hook(WH_MOUSE_LL, NULL);
+
     /* Free the data queue */
     HeapFree(GetProcessHeap(),0,This->data_queue);
-    
-    if (This->hook) {
-	UnhookWindowsHookEx( This->hook );
-	if (This->dwCoopLevel & DISCL_EXCLUSIVE)
-            ShowCursor(TRUE); /* show cursor */
-    }
     DeleteCriticalSection(&(This->crit));
     
     /* Free the DataFormat */
@@ -426,7 +421,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     static long last_event = 0;
     int wdata;
 
-    if (code != HC_ACTION) return CallNextHookEx( This->hook, code, wparam, lparam );
+    if (code != HC_ACTION) return CallNextHookEx( 0, code, wparam, lparam );
 
     EnterCriticalSection(&(This->crit));
     dwCoop = This->dwCoopLevel;
@@ -549,14 +544,13 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     
     if (dwCoop & DISCL_NONEXCLUSIVE) {
 	/* Pass the events down to previous handlers (e.g. win32 input) */
-	ret = CallNextHookEx( This->hook, code, wparam, lparam );
+	ret = CallNextHookEx( 0, code, wparam, lparam );
     } else {
 	/* Ignore message */
 	ret = 1;
     }
     return ret;
 }
-
 
 static void dinput_window_check(SysMouseImpl* This) {
     RECT rect;
@@ -615,7 +609,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     /* Install our mouse hook */
     if (This->dwCoopLevel & DISCL_EXCLUSIVE)
       ShowCursor(FALSE); /* hide cursor */
-    This->hook = SetWindowsHookExA( WH_MOUSE_LL, dinput_mouse_hook, DINPUT_instance, 0 );
+    set_dinput_hook(WH_MOUSE_LL, dinput_mouse_hook);
     
     /* Get the window dimension and find the center */
     GetWindowRect(This->win, &rect);
@@ -651,16 +645,11 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     if (0 == This->acquired) {
 	return DI_NOEFFECT;
     }
-	
-    /* Reinstall previous mouse event handler */
-    if (This->hook) {
-      UnhookWindowsHookEx( This->hook );
-      This->hook = 0;
-      
-      if (This->dwCoopLevel & DISCL_EXCLUSIVE)
-	ShowCursor(TRUE); /* show cursor */
-    }
-	
+
+    set_dinput_hook(WH_MOUSE_LL, NULL);
+    if (This->dwCoopLevel & DISCL_EXCLUSIVE)
+        ShowCursor(TRUE); /* show cursor */
+
     /* No more locks */
     if (current_lock == (IDirectInputDevice8A*) This)
       current_lock = NULL;
