@@ -79,7 +79,8 @@ static void write_parameters_init(const func_t *func)
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
-        print_server("%s = 0;\n", var->name);
+        if (var->type->type != RPC_FC_BIND_PRIMITIVE)
+            print_server("%s = 0;\n", var->name);
 
         var = PREV_LINK(var);
     }
