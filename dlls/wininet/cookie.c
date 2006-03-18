@@ -426,7 +426,7 @@ BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 	ourCookieData += 1;
 	ourCookieName = HeapAlloc(GetProcessHeap(), 0, 
                               (ourCookieNameSize + 1)*sizeof(WCHAR));
-	memcpy(ourCookieName, ourCookieData, ourCookieNameSize * sizeof(WCHAR));
+	memcpy(ourCookieName, lpCookieData, ourCookieNameSize * sizeof(WCHAR));
 	ourCookieName[ourCookieNameSize] = '\0';
 	TRACE("setting (hacked) cookie of %s, %s\n",
                debugstr_w(ourCookieName), debugstr_w(ourCookieData));
