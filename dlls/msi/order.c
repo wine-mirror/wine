@@ -249,6 +249,24 @@ static UINT ORDER_delete( struct tagMSIVIEW *view )
     return ERROR_SUCCESS;
 }
 
+static UINT ORDER_find_matching_rows( struct tagMSIVIEW *view, UINT col,
+    UINT val, UINT *row, MSIITERHANDLE *handle )
+{
+    MSIORDERVIEW *ov = (MSIORDERVIEW*)view;
+    UINT r;
+
+    TRACE("%p, %d, %u, %p\n", ov, col, val, *handle);
+
+    if( !ov->table )
+         return ERROR_FUNCTION_FAILED;
+
+    r = ov->table->ops->find_matching_rows( ov->table, col, val, row, handle );
+
+    *row = ov->reorder[ *row ];
+
+    return r;
+}
+
 
 MSIVIEWOPS order_ops =
 {
@@ -261,7 +279,8 @@ MSIVIEWOPS order_ops =
     ORDER_get_dimensions,
     ORDER_get_column_info,
     ORDER_modify,
-    ORDER_delete
+    ORDER_delete,
+    ORDER_find_matching_rows
 };
 
 static UINT ORDER_AddColumn( MSIORDERVIEW *ov, LPCWSTR name )

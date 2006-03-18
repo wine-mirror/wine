@@ -177,6 +177,13 @@ static UINT UPDATE_delete( struct tagMSIVIEW *view )
     return ERROR_SUCCESS;
 }
 
+static UINT UPDATE_find_matching_rows( struct tagMSIVIEW *view, UINT col, UINT val, UINT *row, MSIITERHANDLE *handle )
+{
+    TRACE("%p %d %d %p\n", view, col, val, *handle );
+
+    return ERROR_FUNCTION_FAILED;
+}
+
 
 static MSIVIEWOPS update_ops =
 {
@@ -189,7 +196,8 @@ static MSIVIEWOPS update_ops =
     UPDATE_get_dimensions,
     UPDATE_get_column_info,
     UPDATE_modify,
-    UPDATE_delete
+    UPDATE_delete,
+    UPDATE_find_matching_rows
 };
 
 UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,

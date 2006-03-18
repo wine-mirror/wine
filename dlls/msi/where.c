@@ -248,6 +248,45 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
         return ERROR_FUNCTION_FAILED;
 
     wv->row_count = 0;
+    if (wv->cond->type == EXPR_STRCMP)
+    {
+        MSIITERHANDLE handle = NULL;
+        UINT row, value, col;
+        struct expr *col_cond = wv->cond->u.expr.left;
+        struct expr *val_cond = wv->cond->u.expr.right;
+
+        /* swap conditionals */
+        if (col_cond->type != EXPR_COL_NUMBER_STRING)
+        {
+            val_cond = wv->cond->u.expr.left;
+            col_cond = wv->cond->u.expr.right;
+        }
+
+        if ((col_cond->type == EXPR_COL_NUMBER_STRING) && (val_cond->type == EXPR_SVAL))
+        {
+            col = col_cond->u.col_number;
+            r = msi_string2idW(wv->db->strings, val_cond->u.sval, &value);
+            if (r != ERROR_SUCCESS)
+            {
+                TRACE("no id for %s, assuming it doesn't exist in the table\n", debugstr_w(wv->cond->u.expr.right->u.sval));
+                return ERROR_SUCCESS;
+            }
+
+            do
+            {
+                r = table->ops->find_matching_rows(table, col, value, &row, &handle);
+                if (r == ERROR_SUCCESS)
+                    wv->reorder[ wv->row_count ++ ] = row;
+            } while (r == ERROR_SUCCESS);
+
+            if (r == ERROR_NO_MORE_ITEMS)
+                return ERROR_SUCCESS;
+            else
+                return r;
+        }
+        /* else fallback to slow case */
+    }
+
     for( i=0; i<count; i++ )
     {
         val = 0;
@@ -341,6 +380,27 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
     return ERROR_SUCCESS;
 }
 
+static UINT WHERE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
+    UINT val, UINT *row, MSIITERHANDLE *handle )
+{
+    MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
+    UINT r;
+
+    TRACE("%p, %d, %u, %p\n", view, col, val, *handle);
+
+    if( !wv->table )
+         return ERROR_FUNCTION_FAILED;
+
+    r = wv->table->ops->find_matching_rows( wv->table, col, val, row, handle );
+
+    if( *row > wv->row_count )
+        return ERROR_NO_MORE_ITEMS;
+
+    *row = wv->reorder[ *row ];
+
+    return r;
+}
+
 
 MSIVIEWOPS where_ops =
 {
@@ -353,7 +413,8 @@ MSIVIEWOPS where_ops =
     WHERE_get_dimensions,
     WHERE_get_column_info,
     WHERE_modify,
-    WHERE_delete
+    WHERE_delete,
+    WHERE_find_matching_rows
 };
 
 static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr *cond,
