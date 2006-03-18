@@ -343,6 +343,8 @@ static void write_function_stubs(type_t *iface)
         }
         if (!is_void(def->type, NULL))
             proc_offset += get_size_procformatstring_var(def);
+        else
+            proc_offset += 2; /* FC_END and FC_PAD */
 
         func = PREV_LINK(func);
     }
