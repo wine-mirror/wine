@@ -987,7 +987,7 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
     union any_size		pnt2;
     const struct startend*      start;
     int				this_seg;
-    struct symt_compiland*      compiland;
+    unsigned                    source;
 
     /*
      * Now get the important bits.
@@ -1048,17 +1048,17 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
             p_fn = (const struct p_string*)(start + file_segcount);
             memset(filename, 0, sizeof(filename));
             memcpy(filename, p_fn->name, p_fn->namelen);
-            compiland = symt_new_compiland(module, filename);
+            source = source_new(module, filename);
         }
         else
-            compiland = symt_new_compiland(module, (const char*)(start + file_segcount));
+            source = source_new(module, (const char*)(start + file_segcount));
         
         for (k = 0; k < file_segcount; k++, this_seg++)
 	{
             pnt2.uc = linetab + lt_ptr[k];
             lt_hdr[this_seg].start      = start[k].start;
             lt_hdr[this_seg].end        = start[k].end;
-            lt_hdr[this_seg].compiland  = compiland;
+            lt_hdr[this_seg].source     = source;
             lt_hdr[this_seg].segno      = *pnt2.s++;
             lt_hdr[this_seg].nline      = *pnt2.s++;
             lt_hdr[this_seg].offtab     = pnt2.ui;
@@ -1134,7 +1134,7 @@ static void codeview_add_func_linenum(struct module* module,
     {
         if (linetab->offtab[i] >= offset && linetab->offtab[i] < offset + size)
         {
-            symt_add_func_line(module, func, linetab->compiland->source,
+            symt_add_func_line(module, func, linetab->source,
                                linetab->linetab[i], linetab->offtab[i] - offset);
         }
     }
@@ -1150,6 +1150,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
     struct symt_block*                  block = NULL;
     struct symt*                        symt;
     const char*                         name;
+    struct symt_compiland*              compiland = NULL;
 
     /*
      * Loop over the different types of records and whenever we
@@ -1170,9 +1171,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
          */
 	case S_GDATA_V1:
 	case S_LDATA_V1:
-            flt = codeview_get_linetab(linetab, sym->data_v1.segment, sym->data_v1.offset);
-            symt_new_global_variable(msc_dbg->module, 
-                                     flt ? flt->compiland : NULL,
+            symt_new_global_variable(msc_dbg->module, compiland,
                                      terminate_string(&sym->data_v1.p_name), sym->generic.id == S_LDATA_V1,
                                      codeview_get_address(msc_dbg, sym->data_v1.segment, sym->data_v1.offset),
                                      0,
@@ -1180,10 +1179,9 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	    break;
 	case S_GDATA_V2:
 	case S_LDATA_V2:
-            flt = codeview_get_linetab(linetab, sym->data_v2.segment, sym->data_v2.offset);
             name = terminate_string(&sym->data_v2.p_name);
             if (name)
-                symt_new_global_variable(msc_dbg->module, flt ? flt->compiland : NULL,
+                symt_new_global_variable(msc_dbg->module, compiland,
                                          name, sym->generic.id == S_LDATA_V2,
                                          codeview_get_address(msc_dbg, sym->data_v2.segment, sym->data_v2.offset),
                                          0,
@@ -1191,9 +1189,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	    break;
 	case S_GDATA_V3:
 	case S_LDATA_V3:
-            flt = codeview_get_linetab(linetab, sym->data_v3.segment, sym->data_v3.offset);
             if (*sym->data_v3.name)
-                symt_new_global_variable(msc_dbg->module, flt ? flt->compiland : NULL,
+                symt_new_global_variable(msc_dbg->module, compiland,
                                          sym->data_v3.name,
                                          sym->generic.id == S_LDATA_V3,
                                          codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
@@ -1204,8 +1201,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	case S_PUB_V1: /* FIXME is this really a 'data_v1' structure ?? */
             if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
             {
-                flt = codeview_get_linetab(linetab, sym->data_v1.segment, sym->data_v1.offset);
-                symt_new_public(msc_dbg->module, flt ? flt->compiland : NULL,
+                symt_new_public(msc_dbg->module, compiland,
                                 terminate_string(&sym->data_v1.p_name), 
                                 codeview_get_address(msc_dbg, sym->data_v1.segment, sym->data_v1.offset),
                                 1, TRUE /* FIXME */, TRUE /* FIXME */);
@@ -1214,8 +1210,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	case S_PUB_V2: /* FIXME is this really a 'data_v2' structure ?? */
             if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
             {
-                flt = codeview_get_linetab(linetab, sym->data_v2.segment, sym->data_v2.offset);
-                symt_new_public(msc_dbg->module, flt ? flt->compiland : NULL,
+                symt_new_public(msc_dbg->module, compiland,
                                 terminate_string(&sym->data_v2.p_name), 
                                 codeview_get_address(msc_dbg, sym->data_v2.segment, sym->data_v2.offset),
                                 1, TRUE /* FIXME */, TRUE /* FIXME */);
@@ -1228,15 +1223,13 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
          * a PLT slot in the normal jargon that everyone else uses.
          */
 	case S_THUNK_V1:
-            flt = codeview_get_linetab(linetab, sym->thunk_v1.segment, sym->thunk_v1.offset);
-            symt_new_thunk(msc_dbg->module, flt ? flt->compiland : NULL,
+            symt_new_thunk(msc_dbg->module, compiland,
                            terminate_string(&sym->thunk_v1.p_name), sym->thunk_v1.thtype,
                            codeview_get_address(msc_dbg, sym->thunk_v1.segment, sym->thunk_v1.offset),
                            sym->thunk_v1.thunk_len);
 	    break;
 	case S_THUNK_V3:
-            flt = codeview_get_linetab(linetab, sym->thunk_v3.segment, sym->thunk_v3.offset);
-            symt_new_thunk(msc_dbg->module, flt ? flt->compiland : NULL,
+            symt_new_thunk(msc_dbg->module, compiland,
                            sym->thunk_v3.name, sym->thunk_v3.thtype,
                            codeview_get_address(msc_dbg, sym->thunk_v3.segment, sym->thunk_v3.offset),
                            sym->thunk_v3.thunk_len);
@@ -1249,8 +1242,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	case S_LPROC_V1:
             flt = codeview_get_linetab(linetab, sym->proc_v1.segment, sym->proc_v1.offset);
             if (curr_func) FIXME("nested function\n");
-            curr_func = symt_new_function(msc_dbg->module,
-                                          flt ? flt->compiland : NULL,
+            curr_func = symt_new_function(msc_dbg->module, compiland,
                                           terminate_string(&sym->proc_v1.p_name),
                                           codeview_get_address(msc_dbg, sym->proc_v1.segment, sym->proc_v1.offset),
                                           sym->proc_v1.proc_len,
@@ -1264,8 +1256,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	case S_LPROC_V2:
             flt = codeview_get_linetab(linetab, sym->proc_v2.segment, sym->proc_v2.offset);
             if (curr_func) FIXME("nested function\n");
-            curr_func = symt_new_function(msc_dbg->module, 
-                                          flt ? flt->compiland : NULL,
+            curr_func = symt_new_function(msc_dbg->module, compiland,
                                           terminate_string(&sym->proc_v2.p_name),
                                           codeview_get_address(msc_dbg, sym->proc_v2.segment, sym->proc_v2.offset),
                                           sym->proc_v2.proc_len,
@@ -1279,8 +1270,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	case S_LPROC_V3:
             flt = codeview_get_linetab(linetab, sym->proc_v3.segment, sym->proc_v3.offset);
             if (curr_func) FIXME("nested function\n");
-            curr_func = symt_new_function(msc_dbg->module, 
-                                          flt ? flt->compiland : NULL,
+            curr_func = symt_new_function(msc_dbg->module, compiland,
                                           sym->proc_v3.name,
                                           codeview_get_address(msc_dbg, sym->proc_v3.segment, sym->proc_v3.offset),
                                           sym->proc_v3.proc_len,
@@ -1343,19 +1333,16 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             }
             break;
 
-        /* FIXME: we should use this as a compiland, instead of guessing it on the fly */
-        case S_COMPILAND_V1:
-            TRACE("S-Compiland-V1e %x %s\n", 
-                  sym->compiland_v1.unknown, 
-                  terminate_string(&sym->compiland_v1.p_name));
+        case S_COMPILE_V1:
+            TRACE("S-Compile-V1 %x %s\n", 
+                  sym->compile_v1.unknown, terminate_string(&sym->compile_v1.p_name));
             break;
 
-        case S_COMPILAND_V2:
-            TRACE("S-Compiland-V2 %s\n", 
-                  terminate_string(&sym->compiland_v2.p_name));
+        case S_COMPILE_V2:
+            TRACE("S-Compile-V2 %s\n", terminate_string(&sym->compile_v2.p_name));
             if (TRACE_ON(dbghelp_msc))
             {
-                const char* ptr1 = sym->compiland_v2.p_name.name + sym->compiland_v2.p_name.namelen;
+                const char* ptr1 = sym->compile_v2.p_name.name + sym->compile_v2.p_name.namelen;
                 const char* ptr2;
                 while (*ptr1)
                 {
@@ -1365,11 +1352,11 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 }
             }
             break;
-        case S_COMPILAND_V3:
-            TRACE("S-Compiland-V3 %s\n", sym->compiland_v3.name);
+        case S_COMPILE_V3:
+            TRACE("S-Compile-V3 %s\n", sym->compile_v3.name);
             if (TRACE_ON(dbghelp_msc))
             {
-                const char* ptr1 = sym->compiland_v3.name + strlen(sym->compiland_v3.name);
+                const char* ptr1 = sym->compile_v3.name + strlen(sym->compile_v3.name);
                 const char* ptr2;
                 while (*ptr1)
                 {
@@ -1381,7 +1368,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             break;
 
         case S_OBJNAME_V1:
-            TRACE("S-ObjName %.*s\n", ((const BYTE*)sym)[8], (const BYTE*)sym + 9);
+            TRACE("S-ObjName %s\n", terminate_string(&sym->objname_v1.p_name));
+            compiland = symt_new_compiland(msc_dbg->module, terminate_string(&sym->objname_v1.p_name));
             break;
 
         case S_LABEL_V1:
@@ -1512,9 +1500,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
         case S_PUB_DATA_V3:
             if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
             {
-                flt = codeview_get_linetab(linetab, sym->data_v3.segment, sym->data_v3.offset);
-                symt_new_public(msc_dbg->module, 
-                                flt ? flt->compiland : NULL,
+                symt_new_public(msc_dbg->module, compiland,
                                 sym->data_v3.name, 
                                 codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
                                 1, FALSE /* FIXME */, FALSE);
@@ -1524,9 +1510,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
         case S_PUB_FUNC2_V3: /* using a data_v3 isn't what we'd expect */
             if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
             {
-                flt = codeview_get_linetab(linetab, sym->data_v3.segment, sym->data_v3.offset);
-                symt_new_public(msc_dbg->module, 
-                                flt ? flt->compiland : NULL,
+                symt_new_public(msc_dbg->module, compiland,
                                 sym->data_v3.name, 
                                 codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
                                 1, TRUE /* FIXME */, TRUE);

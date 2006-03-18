@@ -118,7 +118,7 @@ struct symtab_elt
 {
     struct hash_table_elt       ht_elt;
     const Elf32_Sym*            symp;
-    const char*                 filename;
+    struct symt_compiland*      compiland;
     unsigned                    used;
 };
 
@@ -251,14 +251,14 @@ static void elf_unmap_file(struct elf_file_map* fmap)
  *
  * creating an internal hash table to ease use ELF symtab information lookup
  */
-static void elf_hash_symtab(const struct module* module, struct pool* pool, 
+static void elf_hash_symtab(struct module* module, struct pool* pool, 
                             struct hash_table* ht_symtab, struct elf_file_map* fmap,
                             int symtab_idx, struct thunk_area* thunks)
 {
     int		                i, j, nsym;
     const char*                 strp;
     const char*                 symname;
-    const char*                 filename = NULL;
+    struct symt_compiland*      compiland = NULL;
     const char*                 ptr;
     const Elf32_Sym*            symp;
     struct symtab_elt*          ste;
@@ -289,7 +289,7 @@ static void elf_hash_symtab(const struct module* module, struct pool* pool,
 
         if (ELF32_ST_TYPE(symp->st_info) == STT_FILE)
         {
-            filename = symname;
+            compiland = symname ? symt_new_compiland(module, symname) : NULL;
             continue;
         }
         for (j = 0; thunks[j].symname; j++)
@@ -331,7 +331,7 @@ static void elf_hash_symtab(const struct module* module, struct pool* pool,
             }
         }
         ste->symp        = symp;
-        ste->filename    = filename;
+        ste->compiland   = compiland;
         ste->used        = 0;
         hash_table_add(ht_symtab, &ste->ht_elt);
     }
@@ -377,22 +377,24 @@ static const Elf32_Sym* elf_lookup_symtab(const struct module* module,
         if (ste->used || strcmp(ste->ht_elt.name, name)) continue;
 
         weak_result = ste;
-        if ((ste->filename && !compiland_name) || (!ste->filename && compiland_name))
+        if ((ste->compiland && !compiland_name) || (!ste->compiland && compiland_name))
             continue;
-        if (ste->filename && compiland_name)
+        if (ste->compiland && compiland_name)
         {
-            if (strcmp(ste->filename, compiland_name))
+            const char* filename = source_get(module, ste->compiland->source);
+            if (strcmp(filename, compiland_name))
             {
-                base = strrchr(ste->filename, '/');
-                if (!base++) base = ste->filename;
+                base = strrchr(filename, '/');
+                if (!base++) base = filename;
                 if (strcmp(base, compiland_basename)) continue;
             }
         }
         if (result)
         {
             FIXME("Already found symbol %s (%s) in symtab %s @%08x and %s @%08x\n", 
-                  name, compiland_name, result->filename, result->symp->st_value,
-                  ste->filename, ste->symp->st_value);
+                  name, compiland_name,
+                  source_get(module, result->compiland->source), result->symp->st_value,
+                  source_get(module, ste->compiland->source), ste->symp->st_value);
         }
         else
         {
@@ -496,8 +498,6 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                                unsigned num_areas, struct thunk_area* thunks)
 {
     int		                j;
-    struct symt_compiland*      compiland = NULL;
-    const char*                 compiland_name = NULL;
     struct hash_table_iter      hti;
     struct symtab_elt*          ste;
     DWORD                       addr;
@@ -507,16 +507,6 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
     while ((ste = hash_table_iter_up(&hti)))
     {
         if (ste->used) continue;
-
-        /* FIXME: this is not a good idea anyway... we are creating several
-         * compiland objects for a same compilation unit
-         * We try to cache the last compiland used, but it's not enough
-         * (we should here only create compilands if they are not yet 
-         *  defined)
-         */
-        if (!compiland_name || compiland_name != ste->filename)
-            compiland = symt_new_compiland(module, 
-                                           compiland_name = ste->filename);
 
         addr = module->elf_info->elf_addr + ste->symp->st_value;
 
@@ -528,7 +518,7 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
         }
         if (j < num_areas) /* thunk found */
         {
-            symt_new_thunk(module, compiland, ste->ht_elt.name, thunks[j].ordinal,
+            symt_new_thunk(module, ste->compiland, ste->ht_elt.name, thunks[j].ordinal,
                            addr, ste->symp->st_size);
         }
         else
@@ -548,11 +538,11 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                 switch (ELF32_ST_TYPE(ste->symp->st_info))
                 {
                 case STT_FUNC:
-                    symt_new_function(module, compiland, ste->ht_elt.name,
+                    symt_new_function(module, ste->compiland, ste->ht_elt.name,
                                       addr, ste->symp->st_size, NULL);
                     break;
                 case STT_OBJECT:
-                    symt_new_global_variable(module, compiland, ste->ht_elt.name,
+                    symt_new_global_variable(module, ste->compiland, ste->ht_elt.name,
                                              ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL,
                                              addr, ste->symp->st_size, NULL);
                     break;
@@ -605,8 +595,6 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
  */
 static int elf_new_public_symbols(struct module* module, struct hash_table* symtab)
 {
-    struct symt_compiland*      compiland = NULL;
-    const char*                 compiland_name = NULL;
     struct hash_table_iter      hti;
     struct symtab_elt*          ste;
 
@@ -617,17 +605,7 @@ static int elf_new_public_symbols(struct module* module, struct hash_table* symt
     hash_table_iter_init(symtab, &hti, NULL);
     while ((ste = hash_table_iter_up(&hti)))
     {
-        /* FIXME: this is not a good idea anyway... we are creating several
-         * compiland objects for a same compilation unit
-         * We try to cache the last compiland used, but it's not enough
-         * (we should here only create compilands if they are not yet 
-         *  defined)
-         */
-        if (!compiland_name || compiland_name != ste->filename)
-            compiland = symt_new_compiland(module, 
-                                           compiland_name = ste->filename);
-
-        symt_new_public(module, compiland, ste->ht_elt.name,
+        symt_new_public(module, ste->compiland, ste->ht_elt.name,
                         module->elf_info->elf_addr + ste->symp->st_value,
                         ste->symp->st_size, TRUE /* FIXME */, 
                         ELF32_ST_TYPE(ste->symp->st_info) == STT_FUNC);

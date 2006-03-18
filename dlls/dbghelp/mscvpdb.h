@@ -1084,9 +1084,17 @@ union codeview_symbol
     {
         short int               len;
         short int               id;
+        char                    signature[4];
+        struct p_string         p_name;
+    } objname_v1;
+
+    struct
+    {
+        short int               len;
+        short int               id;
         unsigned int            unknown;
         struct p_string         p_name;
-    } compiland_v1;
+    } compile_v1;
 
     struct
     {
@@ -1095,7 +1103,7 @@ union codeview_symbol
         unsigned                unknown1[4];
         unsigned short          unknown2;
         struct p_string         p_name;
-    } compiland_v2;
+    } compile_v2;
 
     struct
     {
@@ -1103,10 +1111,10 @@ union codeview_symbol
         short int               id;
         unsigned int            unknown;
         char                    name[1];
-    } compiland_v3;
+    } compile_v3;
 };
 
-#define S_COMPILAND_V1  0x0001
+#define S_COMPILE_V1  0x0001
 #define S_REGISTER_V1   0x0002
 #define S_CONSTANT_V1   0x0003
 #define S_UDT_V1        0x0004
@@ -1160,9 +1168,9 @@ union codeview_symbol
 #if 0
 #define S_XXXXXXXXX_32  0x1012  /* seems linked to a function, content unknown */
 #endif
-#define S_COMPILAND_V2  0x1013
+#define S_COMPILE_V2    0x1013
 
-#define S_COMPILAND_V3  0x1101
+#define S_COMPILE_V3    0x1101
 #define S_THUNK_V3      0x1102
 #define S_BLOCK_V3      0x1103
 #define S_LABEL_V3      0x1105
@@ -1203,7 +1211,7 @@ struct codeview_linetab
     unsigned int		segno;
     unsigned int		start;
     unsigned int		end;
-    struct symt_compiland*      compiland;
+    unsigned int                source;
     const unsigned short*       linetab;
     const unsigned int*         offtab;
 };
