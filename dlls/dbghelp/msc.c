@@ -684,14 +684,39 @@ static int codeview_add_type_struct(struct codeview_type_parse* ctp, unsigned in
     return codeview_add_type(typeno, &symt->symt);
 }
 
-static int codeview_new_func_signature(struct module* module, unsigned typeno,
-                                       unsigned ret_type, enum CV_call_e call_conv)
+static int codeview_new_func_signature(struct codeview_type_parse* ctp, 
+                                       unsigned typeno, unsigned ret_type,
+                                       unsigned args_list, enum CV_call_e call_conv)
 {
-    struct symt* symt;
-    symt = &symt_new_function_signature(module, 
-                                        codeview_get_type(ret_type, FALSE),
-                                        call_conv)->symt;
-    return codeview_add_type(typeno, symt);
+    struct symt_function_signature*     sym;
+    const union codeview_reftype*       reftype;
+
+    sym = symt_new_function_signature(ctp->module, codeview_get_type(ret_type, FALSE),
+                                      call_conv);
+    reftype = codeview_jump_to_type(ctp, args_list);
+    if (reftype)
+    {
+        int i;
+        switch (reftype->generic.id)
+        {
+        case LF_ARGLIST_V1:
+            for (i = 0; i < reftype->arglist_v1.num; i++)
+                symt_add_function_signature_parameter(ctp->module, sym,
+                                                      codeview_get_type(reftype->arglist_v1.args[i],
+                                                                        FALSE));
+            break;
+        case LF_ARGLIST_V2:
+            for (i = 0; i < reftype->arglist_v2.num; i++)
+                symt_add_function_signature_parameter(ctp->module, sym,
+                                                      codeview_get_type(reftype->arglist_v2.args[i],
+                                                                        FALSE));
+            break;
+        default:
+            FIXME("Unexpected leaf %x for signature's pmt\n", reftype->generic.id);
+        }
+    }
+
+    return codeview_add_type(typeno, &sym->symt);
 }
 
 static int codeview_parse_type_table(struct codeview_type_parse* ctp)
@@ -854,29 +879,33 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
             break;
 
         case LF_PROCEDURE_V1:
-            retv = codeview_new_func_signature(ctp->module, curr_type, 
+            retv = codeview_new_func_signature(ctp, curr_type, 
                                                type->procedure_v1.rvtype,
+                                               type->procedure_v1.arglist,
                                                type->procedure_v1.call);
             break;
         case LF_PROCEDURE_V2:
-            retv = codeview_new_func_signature(ctp->module, curr_type, 
+            retv = codeview_new_func_signature(ctp, curr_type, 
                                                type->procedure_v2.rvtype,
+                                               type->procedure_v2.arglist,
                                                type->procedure_v2.call);
             break;
         case LF_MFUNCTION_V1:
             /* FIXME: for C++, this is plain wrong, but as we don't use arg types
              * nor class information, this would just do for now
              */
-            retv = codeview_new_func_signature(ctp->module, curr_type,
+            retv = codeview_new_func_signature(ctp, curr_type,
                                                type->mfunction_v1.rvtype,
+                                               type->mfunction_v1.arglist,
                                                type->mfunction_v1.call);
             break;
         case LF_MFUNCTION_V2:
             /* FIXME: for C++, this is plain wrong, but as we don't use arg types
              * nor class information, this would just do for now
              */
-            retv = codeview_new_func_signature(ctp->module, curr_type,
+            retv = codeview_new_func_signature(ctp, curr_type,
                                                type->mfunction_v2.rvtype,
+                                               type->mfunction_v2.arglist,
                                                type->mfunction_v2.call);
             break;
 
