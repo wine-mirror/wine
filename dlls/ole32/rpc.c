@@ -220,12 +220,14 @@ static HRESULT WINAPI ServerRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
 static DWORD WINAPI rpc_sendreceive_thread(LPVOID param)
 {
     struct dispatch_params *data = (struct dispatch_params *) param;
-    
+
     /* FIXME: trap and rethrow RPC exceptions in app thread */
     data->status = I_RpcSendReceive((RPC_MESSAGE *)data->msg);
 
     TRACE("completed with status 0x%lx\n", data->status);
-    
+
+    SetEvent(data->handle);
+
     return 0;
 }
 
@@ -249,7 +251,6 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     RPC_STATUS status;
     DWORD index;
     struct dispatch_params *params;
-    DWORD tid;
     APARTMENT *apt = NULL;
     IPID ipid;
 
@@ -279,10 +280,9 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
 
     RpcBindingInqObject(msg->Handle, &ipid);
     hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan);
+    params->handle = CreateEventW(NULL, FALSE, FALSE, NULL);
     if ((hr == S_OK) && !apt->multi_threaded)
     {
-        params->handle = CreateEventW(NULL, FALSE, FALSE, NULL);
-
         TRACE("Calling apartment thread 0x%08lx...\n", apt->tid);
 
         if (!PostMessageW(apartment_getwindow(apt), DM_EXECUTERPC, 0, (LPARAM)params))
@@ -309,10 +309,9 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
          * and re-enter this STA from an incoming server thread will
          * deadlock. InstallShield is an example of that.
          */
-        params->handle = CreateThread(NULL, 0, rpc_sendreceive_thread, params, 0, &tid);
-        if (!params->handle)
+        if (!QueueUserWorkItem(rpc_sendreceive_thread, params, WT_EXECUTEDEFAULT))
         {
-            ERR("Could not create RpcSendReceive thread, error %lx\n", GetLastError());
+            ERR("QueueUserWorkItem failed with error %lx\n", GetLastError());
             hr = E_UNEXPECTED;
         }
         else
