@@ -1000,7 +1000,7 @@ union codeview_symbol
 	short int	        len;	        /* Total length of this entry */
 	short int	        id;		/* Always S_REGISTER_V2 */
         unsigned int            type;           /* check whether type & reg are correct */
-        unsigned int            reg;
+        unsigned short          reg;
         struct p_string         p_name;
         /* don't handle register tracking */
     } register_v2;

@@ -629,7 +629,7 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
             leaf_len = numeric_leaf(&value, &type->member_v3.offset);
             c_name = (const char*)&type->member_v3.offset + leaf_len;
 
-            codeview_add_udt_element(ctp, symt, c_name, value, type->member_v2.type);
+            codeview_add_udt_element(ctp, symt, c_name, value, type->member_v3.type);
 
             ptr += 2 + 2 + 4 + leaf_len + (strlen(c_name) + 1);
             break;
