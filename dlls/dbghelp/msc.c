@@ -2100,12 +2100,36 @@ static BOOL codeview_process_info(const struct process* pcs,
         unsigned int                    i;
 
         codeview_init_basic_types(msc_dbg->module);
+
+        for (i = 0; i < hdr->cDir; i++)
+        {
+            ent = (const CV_DIRECTORY_ENTRY*)((const BYTE*)hdr + hdr->cbDirHeader + i * hdr->cbDirEntry);
+            if (ent->subsection == sstGlobalTypes)
+            {
+                const CV_ENTRY_GLOBAL_TYPES*    types;
+                struct codeview_type_parse      ctp;
+
+                types = (const CV_ENTRY_GLOBAL_TYPES*)(msc_dbg->root + ent->lfo);
+                ctp.module = msc_dbg->module;
+                ctp.offset = (const DWORD*)(types + 1);
+                ctp.num    = types->cTypes;
+                ctp.table  = (const BYTE*)(ctp.offset + types->cTypes);
+
+                cv_current_module = &cv_zmodules[0];
+                if (cv_current_module->allowed) FIXME("Already allowed ??\n");
+                cv_current_module->allowed = TRUE;
+
+                codeview_parse_type_table(&ctp);
+                break;
+            }
+        }
+
         ent = (const CV_DIRECTORY_ENTRY*)((const BYTE*)hdr + hdr->cbDirHeader);
         for (i = 0; i < hdr->cDir; i++, ent = next)
         {
-            next = (i == hdr->cDir-1)? NULL :
+            next = (i == hdr->cDir-1) ? NULL :
                    (const CV_DIRECTORY_ENTRY*)((const BYTE*)ent + hdr->cbDirEntry);
-            prev = (i == 0)? NULL :
+            prev = (i == 0) ? NULL :
                    (const CV_DIRECTORY_ENTRY*)((const BYTE*)ent - hdr->cbDirEntry);
 
             if (ent->subsection == sstAlignSym)
@@ -2137,6 +2161,7 @@ static BOOL codeview_process_info(const struct process* pcs,
         }
 
         msc_dbg->module->module.SymType = SymCv;
+        codeview_clear_type_table();
         ret = TRUE;
         break;
     }
