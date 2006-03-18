@@ -752,6 +752,23 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
         retv = TRUE;
         type = (const union codeview_type*)(table + offset[curr_type - 0x1000]);
 
+        /* type records we're interested in are the ones referenced by symbols
+         * The known ranges are (X mark the ones we want):
+         *   X  0000-0016       for V1 types
+         *      0200-020c       for V1 types referenced by other types
+         *      0400-040f       for V1 types (complex lists & sets)
+         *   X  1000-100f       for V2 types
+         *      1200-120c       for V2 types referenced by other types
+         *      1400-140f       for V1 types (complex lists & sets)
+         *   X  1500-150d       for V3 types
+         *      8000-8010       for numeric leafes
+         */
+        if ((type->generic.id & 0x8600) &&
+            type->generic.id != LF_BITFIELD_V1 && /* still some cases to fix */
+            type->generic.id != LF_BITFIELD_V2 &&
+            type->generic.id != LF_FIELDLIST_V1 &&
+            type->generic.id != LF_FIELDLIST_V2)
+            continue;
         switch (type->generic.id)
         {
         case LF_MODIFIER_V1:
@@ -941,15 +958,6 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
             retv = codeview_new_func_signature(module, curr_type,
                                                type->mfunction_v2.rvtype,
                                                type->mfunction_v2.call);
-            break;
-
-        case LF_ARGLIST_V1:
-        case LF_ARGLIST_V2:
-            {
-                static int once;
-                if (!once++) 
-                    FIXME("Not adding parameters' types to function signature\n");
-            }
             break;
 
         default:
