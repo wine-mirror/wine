@@ -375,20 +375,19 @@ static void codeview_clear_type_table(void)
     cv_current_module = NULL;
 }
 
-static int codeview_add_type_pointer(struct module* module, unsigned int typeno, 
-                                     unsigned int datatype)
+static struct symt* codeview_add_type_pointer(struct module* module,
+                                              unsigned int datatype)
 {
-    struct symt* symt = &symt_new_pointer(module,
-                                          codeview_get_type(datatype, FALSE))->symt;
-    return codeview_add_type(typeno, symt);
+    return &symt_new_pointer(module,
+                             codeview_get_type(datatype, FALSE))->symt;
 }
 
-static int codeview_add_type_array(struct module* module, 
-                                   unsigned int typeno, const char* name,
-                                   unsigned int elemtype, unsigned int indextype,
-                                   unsigned int arr_len)
+static struct symt* codeview_add_type_array(struct module* module, 
+                                            const char* name,
+                                            unsigned int elemtype,
+                                            unsigned int indextype,
+                                            unsigned int arr_len)
 {
-    struct symt*        symt;
     struct symt*        elem = codeview_get_type(elemtype, FALSE);
     struct symt*        index = codeview_get_type(indextype, FALSE);
     DWORD               arr_max = 0;
@@ -399,8 +398,7 @@ static int codeview_add_type_array(struct module* module,
         symt_get_info(elem, TI_GET_LENGTH, &elem_size);
         if (elem_size) arr_max = arr_len / (DWORD)elem_size;
     }
-    symt = &symt_new_array(module, 0, arr_max, elem, index)->symt;
-    return codeview_add_type(typeno, symt);
+    return &symt_new_array(module, 0, arr_max, elem, index)->symt;
 }
 
 static int codeview_add_type_enum_field_list(struct module* module,
@@ -664,29 +662,31 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
     return TRUE;
 }
 
-static int codeview_add_type_enum(struct module* module, unsigned int typeno, 
-                                  const char* name, const union codeview_reftype* fieldlist)
+static struct symt* codeview_add_type_enum(struct module* module,
+                                           const char* name,
+                                           const union codeview_reftype* fieldlist)
 {
     struct symt_enum*   symt = symt_new_enum(module, name);
 
     if (fieldlist) codeview_add_type_enum_field_list(module, symt, fieldlist);
-    return codeview_add_type(typeno, &symt->symt);
+    return &symt->symt;
 }
 
-static int codeview_add_type_struct(struct codeview_type_parse* ctp, unsigned int typeno, 
-                                    const char* name, int structlen, 
-                                    const union codeview_reftype* fieldlist,
-                                    enum UdtKind kind)
+static struct symt* codeview_add_type_struct(struct codeview_type_parse* ctp,
+                                             const char* name, int structlen, 
+                                             const union codeview_reftype* fieldlist,
+                                             enum UdtKind kind)
 {
     struct symt_udt*    symt = symt_new_udt(ctp->module, name, structlen, kind);
 
     if (fieldlist) codeview_add_type_struct_field_list(ctp, symt, fieldlist);
-    return codeview_add_type(typeno, &symt->symt);
+    return &symt->symt;
 }
 
-static int codeview_new_func_signature(struct codeview_type_parse* ctp, 
-                                       unsigned typeno, unsigned ret_type,
-                                       unsigned args_list, enum CV_call_e call_conv)
+static struct symt* codeview_add_func_signature(struct codeview_type_parse* ctp, 
+                                                unsigned ret_type,
+                                                unsigned args_list,
+                                                enum CV_call_e call_conv)
 {
     struct symt_function_signature*     sym;
     const union codeview_reftype*       reftype;
@@ -716,22 +716,195 @@ static int codeview_new_func_signature(struct codeview_type_parse* ctp,
         }
     }
 
-    return codeview_add_type(typeno, &sym->symt);
+    return &sym->symt;
+}
+
+static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
+                                            unsigned curr_type,
+                                            const union codeview_type* type)
+{
+    const union codeview_reftype*type_ref;
+    int                         value, leaf_len;
+    const struct p_string*      p_name;
+    const char*                 c_name;
+    struct symt*                symt;
+
+    switch (type->generic.id)
+    {
+    case LF_MODIFIER_V1:
+        /* FIXME: we don't handle modifiers, 
+         * but readd previous type on the curr_type 
+         */
+        WARN("Modifier on %x: %s%s%s%s\n",
+             type->modifier_v1.type,
+             type->modifier_v1.attribute & 0x01 ? "const " : "",
+             type->modifier_v1.attribute & 0x02 ? "volatile " : "",
+             type->modifier_v1.attribute & 0x04 ? "unaligned " : "",
+             type->modifier_v1.attribute & ~0x07 ? "unknown " : "");
+        symt = codeview_get_type(type->modifier_v1.type, FALSE);
+        break;
+    case LF_MODIFIER_V2:
+        /* FIXME: we don't handle modifiers, but readd previous type on the curr_type */
+        WARN("Modifier on %x: %s%s%s%s\n",
+             type->modifier_v2.type,
+             type->modifier_v2.attribute & 0x01 ? "const " : "",
+             type->modifier_v2.attribute & 0x02 ? "volatile " : "",
+             type->modifier_v2.attribute & 0x04 ? "unaligned " : "",
+             type->modifier_v2.attribute & ~0x07 ? "unknown " : "");
+        symt = codeview_get_type(type->modifier_v2.type, FALSE);
+        break;
+
+    case LF_POINTER_V1:
+        symt = codeview_add_type_pointer(ctp->module,
+                                         type->pointer_v1.datatype);
+        break;
+    case LF_POINTER_V2:
+        symt = codeview_add_type_pointer(ctp->module,
+                                         type->pointer_v2.datatype);
+        break;
+
+    case LF_ARRAY_V1:
+        leaf_len = numeric_leaf(&value, &type->array_v1.arrlen);
+        p_name = (const struct p_string*)((const unsigned char*)&type->array_v1.arrlen + leaf_len);
+
+        symt = codeview_add_type_array(ctp->module, terminate_string(p_name),
+                                       type->array_v1.elemtype, type->array_v1.idxtype, value);
+        break;
+    case LF_ARRAY_V2:
+        leaf_len = numeric_leaf(&value, &type->array_v2.arrlen);
+        p_name = (const struct p_string*)((const unsigned char*)&type->array_v2.arrlen + leaf_len);
+
+        symt = codeview_add_type_array(ctp->module, terminate_string(p_name),
+                                       type->array_v2.elemtype, type->array_v2.idxtype, value);
+        break;
+    case LF_ARRAY_V3:
+        leaf_len = numeric_leaf(&value, &type->array_v3.arrlen);
+        c_name = (const char*)&type->array_v3.arrlen + leaf_len;
+
+        symt = codeview_add_type_array(ctp->module, c_name,
+                                       type->array_v3.elemtype, type->array_v3.idxtype, value);
+        break;
+
+    case LF_STRUCTURE_V1:
+    case LF_CLASS_V1:
+        leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
+        p_name = (const struct p_string*)((const unsigned char*)&type->struct_v1.structlen + leaf_len);
+        type_ref = codeview_jump_to_type(ctp, type->struct_v1.fieldlist);
+        symt = codeview_add_type_struct(ctp, terminate_string(p_name),
+                                        value, type_ref,
+                                        type->generic.id == LF_CLASS_V1 ? UdtClass : UdtStruct);
+        break;
+
+    case LF_STRUCTURE_V2:
+    case LF_CLASS_V2:
+        leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
+        p_name = (const struct p_string*)((const unsigned char*)&type->struct_v2.structlen + leaf_len);
+        type_ref = codeview_jump_to_type(ctp, type->struct_v2.fieldlist);
+        symt = codeview_add_type_struct(ctp, terminate_string(p_name),
+                                        value, type_ref,
+                                        type->generic.id == LF_CLASS_V2 ? UdtClass : UdtStruct);
+        break;
+
+    case LF_STRUCTURE_V3:
+    case LF_CLASS_V3:
+        leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
+        c_name = (const char*)&type->struct_v3.structlen + leaf_len;
+        type_ref = codeview_jump_to_type(ctp, type->struct_v3.fieldlist);
+        symt = codeview_add_type_struct(ctp, c_name,
+                                        value, type_ref,
+                                        type->generic.id == LF_CLASS_V3 ? UdtClass : UdtStruct);
+        break;
+
+    case LF_UNION_V1:
+        leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
+        p_name = (const struct p_string*)((const unsigned char*)&type->union_v1.un_len + leaf_len);
+        type_ref = codeview_jump_to_type(ctp, type->union_v1.fieldlist);
+        symt = codeview_add_type_struct(ctp, terminate_string(p_name),
+                                        value, type_ref, UdtUnion);
+        break;
+
+    case LF_UNION_V2:
+        leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
+        p_name = (const struct p_string*)((const unsigned char*)&type->union_v2.un_len + leaf_len);
+        type_ref = codeview_jump_to_type(ctp, type->union_v2.fieldlist);
+        symt = codeview_add_type_struct(ctp, terminate_string(p_name),
+                                        value, type_ref, UdtUnion);
+        break;
+    case LF_UNION_V3:
+        leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
+        c_name = (const char*)&type->union_v3.un_len + leaf_len;
+        type_ref = codeview_jump_to_type(ctp, type->union_v3.fieldlist);
+        symt = codeview_add_type_struct(ctp, c_name,
+                                        value, type_ref, UdtUnion);
+        break;
+
+    case LF_ENUM_V1:
+        type_ref = codeview_jump_to_type(ctp, type->enumeration_v1.fieldlist);
+        symt = codeview_add_type_enum(ctp->module, 
+                                      terminate_string(&type->enumeration_v1.p_name),
+                                      type_ref);
+        break;
+
+    case LF_ENUM_V2:
+        type_ref = codeview_jump_to_type(ctp, type->enumeration_v2.fieldlist);
+        symt = codeview_add_type_enum(ctp->module,
+                                      terminate_string(&type->enumeration_v2.p_name),
+                                      type_ref);
+        break;
+
+    case LF_ENUM_V3:
+        type_ref = codeview_jump_to_type(ctp, type->enumeration_v3.fieldlist);
+        symt = codeview_add_type_enum(ctp->module, type->enumeration_v3.name,
+                                      type_ref);
+        break;
+
+    case LF_PROCEDURE_V1:
+        symt = codeview_add_func_signature(ctp, 
+                                           type->procedure_v1.rvtype,
+                                           type->procedure_v1.arglist,
+                                           type->procedure_v1.call);
+        break;
+    case LF_PROCEDURE_V2:
+        symt = codeview_add_func_signature(ctp, 
+                                           type->procedure_v2.rvtype,
+                                           type->procedure_v2.arglist,
+                                           type->procedure_v2.call);
+        break;
+    case LF_MFUNCTION_V1:
+        /* FIXME: for C++, this is plain wrong, but as we don't use arg types
+         * nor class information, this would just do for now
+         */
+        symt = codeview_add_func_signature(ctp,
+                                           type->mfunction_v1.rvtype,
+                                           type->mfunction_v1.arglist,
+                                           type->mfunction_v1.call);
+        break;
+    case LF_MFUNCTION_V2:
+        /* FIXME: for C++, this is plain wrong, but as we don't use arg types
+         * nor class information, this would just do for now
+         */
+        symt = codeview_add_func_signature(ctp,
+                                           type->mfunction_v2.rvtype,
+                                           type->mfunction_v2.arglist,
+                                           type->mfunction_v2.call);
+        break;
+
+    default:
+        FIXME("Unsupported type-id leaf %x\n", type->generic.id);
+        dump(type, 2 + type->generic.len);
+        symt = NULL;
+        break;
+    }
+    return (symt && codeview_add_type(curr_type, symt)) ? symt : NULL;
 }
 
 static int codeview_parse_type_table(struct codeview_type_parse* ctp)
 {
     unsigned int                curr_type = FIRST_DEFINABLE_TYPE;
-    int                         retv = TRUE;
     const union codeview_type*  type;
-    const union codeview_reftype*type_ref;
-    int                         value, leaf_len;
-    const struct p_string*      p_name;
-    const char*                 c_name;
 
-    for (curr_type = FIRST_DEFINABLE_TYPE; retv && curr_type < FIRST_DEFINABLE_TYPE + ctp->num; curr_type++)
+    for (curr_type = FIRST_DEFINABLE_TYPE; curr_type < FIRST_DEFINABLE_TYPE + ctp->num; curr_type++)
     {
-        retv = TRUE;
         type = codeview_jump_to_type(ctp, curr_type);
 
         /* type records we're interested in are the ones referenced by symbols
@@ -746,177 +919,10 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
          *      8000-8010       for numeric leafes
          */
         if (type->generic.id & 0x8600) continue;
-
-        switch (type->generic.id)
-        {
-        case LF_MODIFIER_V1:
-            /* FIXME: we don't handle modifiers, 
-             * but readd previous type on the curr_type 
-             */
-            WARN("Modifier on %x: %s%s%s%s\n",
-                 type->modifier_v1.type,
-                 type->modifier_v1.attribute & 0x01 ? "const " : "",
-                 type->modifier_v1.attribute & 0x02 ? "volatile " : "",
-                 type->modifier_v1.attribute & 0x04 ? "unaligned " : "",
-                 type->modifier_v1.attribute & ~0x07 ? "unknown " : "");
-            codeview_add_type(curr_type, 
-                              codeview_get_type(type->modifier_v1.type, FALSE));
-            break;
-        case LF_MODIFIER_V2:
-            /* FIXME: we don't handle modifiers, but readd previous type on the curr_type */
-            WARN("Modifier on %x: %s%s%s%s\n",
-                 type->modifier_v2.type,
-                 type->modifier_v2.attribute & 0x01 ? "const " : "",
-                 type->modifier_v2.attribute & 0x02 ? "volatile " : "",
-                 type->modifier_v2.attribute & 0x04 ? "unaligned " : "",
-                 type->modifier_v2.attribute & ~0x07 ? "unknown " : "");
-            codeview_add_type(curr_type, 
-                              codeview_get_type(type->modifier_v2.type, FALSE));
-            break;
-
-        case LF_POINTER_V1:
-            retv = codeview_add_type_pointer(ctp->module, curr_type, 
-                                             type->pointer_v1.datatype);
-            break;
-        case LF_POINTER_V2:
-            retv = codeview_add_type_pointer(ctp->module, curr_type, 
-                                             type->pointer_v2.datatype);
-            break;
-
-        case LF_ARRAY_V1:
-            leaf_len = numeric_leaf(&value, &type->array_v1.arrlen);
-            p_name = (const struct p_string*)((const unsigned char*)&type->array_v1.arrlen + leaf_len);
-
-            retv = codeview_add_type_array(ctp->module, curr_type, terminate_string(p_name),
-                                           type->array_v1.elemtype, type->array_v1.idxtype, value);
-            break;
-        case LF_ARRAY_V2:
-            leaf_len = numeric_leaf(&value, &type->array_v2.arrlen);
-            p_name = (const struct p_string*)((const unsigned char*)&type->array_v2.arrlen + leaf_len);
-
-            retv = codeview_add_type_array(ctp->module, curr_type, terminate_string(p_name),
-                                           type->array_v2.elemtype, type->array_v2.idxtype, value);
-            break;
-        case LF_ARRAY_V3:
-            leaf_len = numeric_leaf(&value, &type->array_v3.arrlen);
-            c_name = (const char*)&type->array_v3.arrlen + leaf_len;
-
-            retv = codeview_add_type_array(ctp->module, curr_type, c_name,
-                                           type->array_v3.elemtype, type->array_v3.idxtype, value);
-            break;
-
-        case LF_STRUCTURE_V1:
-        case LF_CLASS_V1:
-            leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
-            p_name = (const struct p_string*)((const unsigned char*)&type->struct_v1.structlen + leaf_len);
-            type_ref = codeview_jump_to_type(ctp, type->struct_v1.fieldlist);
-            retv = codeview_add_type_struct(ctp, curr_type, terminate_string(p_name),
-                                            value, type_ref,
-                                            type->generic.id == LF_CLASS_V1 ? UdtClass : UdtStruct);
-            break;
-
-        case LF_STRUCTURE_V2:
-        case LF_CLASS_V2:
-            leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
-            p_name = (const struct p_string*)((const unsigned char*)&type->struct_v2.structlen + leaf_len);
-            type_ref = codeview_jump_to_type(ctp, type->struct_v2.fieldlist);
-            retv = codeview_add_type_struct(ctp, curr_type, terminate_string(p_name),
-                                            value, type_ref,
-                                            type->generic.id == LF_CLASS_V2 ? UdtClass : UdtStruct);
-            break;
-
-        case LF_STRUCTURE_V3:
-        case LF_CLASS_V3:
-            leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
-            c_name = (const char*)&type->struct_v3.structlen + leaf_len;
-            type_ref = codeview_jump_to_type(ctp, type->struct_v3.fieldlist);
-            retv = codeview_add_type_struct(ctp, curr_type, c_name,
-                                            value, type_ref,
-                                            type->generic.id == LF_CLASS_V3 ? UdtClass : UdtStruct);
-            break;
-
-        case LF_UNION_V1:
-            leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
-            p_name = (const struct p_string*)((const unsigned char*)&type->union_v1.un_len + leaf_len);
-            type_ref = codeview_jump_to_type(ctp, type->union_v1.fieldlist);
-            retv = codeview_add_type_struct(ctp, curr_type, terminate_string(p_name),
-                                            value, type_ref, UdtUnion);
-            break;
-
-        case LF_UNION_V2:
-            leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
-            p_name = (const struct p_string*)((const unsigned char*)&type->union_v2.un_len + leaf_len);
-            type_ref = codeview_jump_to_type(ctp, type->union_v2.fieldlist);
-            retv = codeview_add_type_struct(ctp, curr_type, terminate_string(p_name),
-                                            value, type_ref, UdtUnion);
-            break;
-        case LF_UNION_V3:
-            leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
-            c_name = (const char*)&type->union_v3.un_len + leaf_len;
-            type_ref = codeview_jump_to_type(ctp, type->union_v3.fieldlist);
-            retv = codeview_add_type_struct(ctp, curr_type, c_name,
-                                            value, type_ref, UdtUnion);
-            break;
-
-        case LF_ENUM_V1:
-            type_ref = codeview_jump_to_type(ctp, type->enumeration_v1.fieldlist);
-            retv = codeview_add_type_enum(ctp->module, curr_type, 
-                                          terminate_string(&type->enumeration_v1.p_name),
-                                          type_ref);
-            break;
-
-        case LF_ENUM_V2:
-            type_ref = codeview_jump_to_type(ctp, type->enumeration_v2.fieldlist);
-            retv = codeview_add_type_enum(ctp->module, curr_type,
-                                          terminate_string(&type->enumeration_v2.p_name),
-                                          type_ref);
-            break;
-
-        case LF_ENUM_V3:
-            type_ref = codeview_jump_to_type(ctp, type->enumeration_v3.fieldlist);
-            retv = codeview_add_type_enum(ctp->module, curr_type, type->enumeration_v3.name,
-                                          type_ref);
-            break;
-
-        case LF_PROCEDURE_V1:
-            retv = codeview_new_func_signature(ctp, curr_type, 
-                                               type->procedure_v1.rvtype,
-                                               type->procedure_v1.arglist,
-                                               type->procedure_v1.call);
-            break;
-        case LF_PROCEDURE_V2:
-            retv = codeview_new_func_signature(ctp, curr_type, 
-                                               type->procedure_v2.rvtype,
-                                               type->procedure_v2.arglist,
-                                               type->procedure_v2.call);
-            break;
-        case LF_MFUNCTION_V1:
-            /* FIXME: for C++, this is plain wrong, but as we don't use arg types
-             * nor class information, this would just do for now
-             */
-            retv = codeview_new_func_signature(ctp, curr_type,
-                                               type->mfunction_v1.rvtype,
-                                               type->mfunction_v1.arglist,
-                                               type->mfunction_v1.call);
-            break;
-        case LF_MFUNCTION_V2:
-            /* FIXME: for C++, this is plain wrong, but as we don't use arg types
-             * nor class information, this would just do for now
-             */
-            retv = codeview_new_func_signature(ctp, curr_type,
-                                               type->mfunction_v2.rvtype,
-                                               type->mfunction_v2.arglist,
-                                               type->mfunction_v2.call);
-            break;
-
-        default:
-            FIXME("Unsupported type-id leaf %x\n", type->generic.id);
-            dump(type, 2 + type->generic.len);
-            break;
-        }
+        codeview_parse_one_type(ctp, curr_type, type);
     }
 
-    return retv;
+    return TRUE;
 }
 
 /*========================================================================
