@@ -1520,6 +1520,11 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
         case S_MSTOOL_V3: /* just to silence a few warnings */
             break;
 
+        case S_SSEARCH_V1:
+            TRACE("Start search: seg=0x%x at offset 0x%08x\n",
+                  sym->ssearch_v1.segment, sym->ssearch_v1.offset);
+            break;
+
         default:
             FIXME("Unsupported symbol id %x\n", sym->generic.id);
             dump(sym, 2 + sym->generic.len);

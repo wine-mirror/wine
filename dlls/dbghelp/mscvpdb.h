@@ -1112,9 +1112,17 @@ union codeview_symbol
         unsigned int            unknown;
         char                    name[1];
     } compile_v3;
+
+    struct
+    {
+        short int               len;
+        short int               id;
+        unsigned int            offset;
+        unsigned short          segment;
+    } ssearch_v1;
 };
 
-#define S_COMPILE_V1  0x0001
+#define S_COMPILE_V1    0x0001
 #define S_REGISTER_V1   0x0002
 #define S_CONSTANT_V1   0x0003
 #define S_UDT_V1        0x0004
