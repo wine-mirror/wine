@@ -361,17 +361,11 @@ static BOOL load_gecko(void)
     return TRUE;
 }
 
-nsACString *nsACString_Create(void)
+void nsACString_Init(nsACString *str, const char *data)
 {
-    nsACString *ret;
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsACString));
-    NS_CStringContainerInit(ret);
-    return ret;
-}
-
-void nsACString_SetData(nsACString *str, const char *data)
-{
-    NS_CStringSetData(str, data, PR_UINT32_MAX);
+    NS_CStringContainerInit(str);
+    if(data)
+        NS_CStringSetData(str, data, PR_UINT32_MAX);
 }
 
 PRUint32 nsACString_GetData(const nsACString *str, const char **data, PRBool *termited)
@@ -379,10 +373,9 @@ PRUint32 nsACString_GetData(const nsACString *str, const char **data, PRBool *te
     return NS_CStringGetData(str, data, termited);
 }
 
-void nsACString_Destroy(nsACString *str)
+void nsACString_Finish(nsACString *str)
 {
     NS_CStringContainerFinish(str);
-    HeapFree(GetProcessHeap(), 0, str);
 }
 
 void nsAString_Init(nsAString *str, const PRUnichar *data)
@@ -727,16 +720,17 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
 {
     NSContainer *This = NSURICL_THIS(iface);
     nsIWineURI *wine_uri;
-    nsACString *spec_str = nsACString_Create();
+    nsACString spec_str;
     const char *spec;
     nsresult nsres;
 
-    nsIURI_GetSpec(aURI, spec_str);
-    nsACString_GetData(spec_str, &spec, NULL);
+    nsACString_Init(&spec_str, NULL);
+    nsIURI_GetSpec(aURI, &spec_str);
+    nsACString_GetData(&spec_str, &spec, NULL);
 
     TRACE("(%p)->(%p(%s) %p)\n", This, aURI, debugstr_a(spec), _retval);
 
-    nsACString_Destroy(spec_str);
+    nsACString_Finish(&spec_str);
 
     nsres = nsIURI_QueryInterface(aURI, &IID_nsIWineURI, (void**)&wine_uri);
     if(NS_SUCCEEDED(nsres)) {

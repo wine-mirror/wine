@@ -146,7 +146,7 @@ static BOOL handle_uri(NSContainer *container, nsChannel *channel, LPCWSTR uri)
 
 static BOOL before_async_open(nsChannel *This)
 {
-    nsACString *uri_str;
+    nsACString uri_str;
     NSContainer *container;
     const char *uria;
     LPWSTR uri;
@@ -167,13 +167,13 @@ static BOOL before_async_open(nsChannel *This)
         return TRUE;
     }
 
-    uri_str = nsACString_Create();
-    nsIWineURI_GetSpec(This->uri, uri_str);
-    nsACString_GetData(uri_str, &uria, NULL);
+    nsACString_Init(&uri_str, NULL);
+    nsIWineURI_GetSpec(This->uri, &uri_str);
+    nsACString_GetData(&uri_str, &uria, NULL);
     len = MultiByteToWideChar(CP_ACP, 0, uria, -1, NULL, 0);
     uri = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, uria, -1, uri, len);
-    nsACString_Destroy(uri_str);
+    nsACString_Finish(&uri_str);
 
     ret = handle_uri(container, This, uri);
 
@@ -613,13 +613,15 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         nsres = nsIChannel_QueryInterface(This->channel, &IID_nsIUploadChannel,
                                           (void**)&upload_channel);
         if(NS_SUCCEEDED(nsres)) {
-            nsACString *empty_string = nsACString_Create();
-            nsACString_SetData(empty_string, "");
+            nsACString empty_string;
+            nsACString_Init(&empty_string, "");
 
             nsres = nsIUploadChannel_SetUploadStream(upload_channel, This->post_data_stream,
-                                                     empty_string, -1);
+                                                     &empty_string, -1);
             if(NS_FAILED(nsres))
                 WARN("SetUploadStream failed: %08lx\n", nsres);
+
+            nsACString_Finish(&empty_string);
         }
     }
 
@@ -1380,18 +1382,20 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
           aBaseURI, _retval);
 
     if(aBaseURI) {
-        nsACString *base_uri_str = nsACString_Create();
+        nsACString base_uri_str;
         const char *base_uri = NULL;
 
-        nsres = nsIURI_GetSpec(aBaseURI, base_uri_str);
+        nsACString_Init(&base_uri_str, NULL);
+
+        nsres = nsIURI_GetSpec(aBaseURI, &base_uri_str);
         if(NS_SUCCEEDED(nsres)) {
-            nsACString_GetData(base_uri_str, &base_uri, NULL);
+            nsACString_GetData(&base_uri_str, &base_uri, NULL);
             TRACE("uri=%s\n", debugstr_a(base_uri));
         }else {
             ERR("GetSpec failed: %08lx\n", nsres);
         }
 
-        nsACString_Destroy(base_uri_str);
+        nsACString_Finish(&base_uri_str);
     }
 
     nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
@@ -1603,7 +1607,7 @@ void init_nsio(nsIComponentManager *component_manager, nsIComponentRegistrar *re
 nsIURI *get_nsIURI(LPCWSTR url)
 {
     nsIURI *ret;
-    nsACString *acstr;
+    nsACString acstr;
     nsresult nsres;
     char *urla;
     int len;
@@ -1612,14 +1616,13 @@ nsIURI *get_nsIURI(LPCWSTR url)
     urla = HeapAlloc(GetProcessHeap(), 0, len);
     WideCharToMultiByte(CP_ACP, 0, url, -1, urla, -1, NULL, NULL);
 
-    acstr = nsACString_Create();
-    nsACString_SetData(acstr, urla);
+    nsACString_Init(&acstr, urla);
 
-    nsres = nsIIOService_NewURI(nsio, acstr, NULL, NULL, &ret);
+    nsres = nsIIOService_NewURI(nsio, &acstr, NULL, NULL, &ret);
     if(NS_FAILED(nsres))
         FIXME("NewURI failed: %08lx\n", nsres);
 
-    nsACString_Destroy(acstr);
+    nsACString_Finish(&acstr);
     HeapFree(GetProcessHeap(), 0, urla);
 
     return ret;

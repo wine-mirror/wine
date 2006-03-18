@@ -52,9 +52,15 @@ typedef struct {
     void *d1;
     PRUint32 d2;
     void *d3;
+} nsCStringContainer;
+
+typedef struct {
+    void *v;
+    void *d1;
+    PRUint32 d2;
+    void *d3;
 } nsStringContainer;
 
-typedef struct nsCStringContainer nsCStringContainer;
 typedef nsCStringContainer nsACString;
 typedef nsStringContainer nsAString;
 

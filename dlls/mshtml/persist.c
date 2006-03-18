@@ -115,18 +115,18 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
     IBinding_AddRef(pbind);
 
     if(This->doc->nscontainer && This->doc->nscontainer->stream) {
-        nsACString *strTextHtml;
+        nsACString strTextHtml;
         nsresult nsres;
         nsIURI *uri = get_nsIURI(This->url);
 
-        strTextHtml = nsACString_Create();
         /* FIXME: Set it correctly */
-        nsACString_SetData(strTextHtml, "text/html");
+        nsACString_Init(&strTextHtml, "text/html");
 
-        nsres = nsIWebBrowserStream_OpenStream(This->doc->nscontainer->stream, uri, strTextHtml);
+        nsres = nsIWebBrowserStream_OpenStream(This->doc->nscontainer->stream, uri, &strTextHtml);
         if(NS_FAILED(nsres))
             ERR("OpenStream failed: %08lx\n", nsres);
 
+        nsACString_Finish(&strTextHtml);
         nsIURI_Release(uri);
     }
 

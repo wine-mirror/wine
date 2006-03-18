@@ -198,10 +198,9 @@ void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWO
 
 nsIURI *get_nsIURI(LPCWSTR);
 
-nsACString *nsACString_Create(void);
+void nsACString_Init(nsACString*,const char*);
 PRUint32 nsACString_GetData(const nsACString*,const char**,PRBool*);
-void nsACString_SetData(nsACString*,const char*);
-void nsACString_Destroy(nsACString*);
+void nsACString_Finish(nsACString*);
 
 void nsAString_Init(nsAString*,const PRUnichar*);
 PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**,PRBool*);
