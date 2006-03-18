@@ -294,7 +294,7 @@ union codeview_type
         short int               id;
         short int               count;
         short int               type;
-        short int               field;
+        short int               fieldlist;
         short int               property;
         struct p_string         p_name;
     } enumeration_v1;
@@ -306,7 +306,7 @@ union codeview_type
         short int               count;
         short int               property;
         unsigned int            type;
-        unsigned int            field;
+        unsigned int            fieldlist;
         struct p_string         p_name;
     } enumeration_v2;
 
@@ -317,16 +317,9 @@ union codeview_type
         short int               count;
         short int               property;
         unsigned int            type;
-        unsigned int            field;
+        unsigned int            fieldlist;
         char                    name[1];
     } enumeration_v3;
-
-    struct
-    {
-        unsigned short int      len;
-        short int               id;
-        unsigned char           list[1];
-    } fieldlist;
 
     struct
     {
@@ -377,6 +370,23 @@ union codeview_type
         unsigned int            arglist;
         unsigned int            this_adjust;
     } mfunction_v2;
+};
+
+union codeview_reftype
+{
+    struct
+    {
+        unsigned short int      len;
+        short int               id;
+    } generic;
+
+    struct
+    {
+        unsigned short int      len;
+        short int               id;
+        unsigned char           list[1];
+    } fieldlist;
+
 };
 
 union codeview_fieldtype

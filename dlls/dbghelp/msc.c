@@ -4,7 +4,7 @@
  *
  * Copyright (C) 1996,      Eric Youngdale.
  * Copyright (C) 1999-2000, Ulrich Weigand.
- * Copyright (C) 2004-2005, Eric Pouech.
+ * Copyright (C) 2004-2006, Eric Pouech.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -328,6 +328,21 @@ static struct symt*  codeview_get_type(unsigned int typeno, BOOL allow_special)
     return symt;
 }
 
+struct codeview_type_parse
+{
+    struct module*      module;
+    const BYTE*         table;
+    const DWORD*        offset;
+    DWORD               num;
+};
+
+static inline const void* codeview_jump_to_type(struct codeview_type_parse* ctp, DWORD idx)
+{
+    if (idx < FIRST_DEFINABLE_TYPE) return NULL;
+    idx -= FIRST_DEFINABLE_TYPE;
+    return (idx >= ctp->num) ? NULL : (ctp->table + ctp->offset[idx]); 
+}
+
 static int codeview_add_type(unsigned int typeno, struct symt* dt)
 {
     if (typeno < FIRST_DEFINABLE_TYPE)
@@ -437,23 +452,23 @@ static int codeview_add_type_bitfield(unsigned int typeno, unsigned int bitoff,
     return codeview_add_type(typeno, &cv_current_module->bitfields[cv_current_module->used_bitfields++].symt);
 }
 
-static int codeview_add_type_enum_field_list(struct module* module, 
-                                             unsigned int typeno, 
-                                             const unsigned char* list, int len)
+static int codeview_add_type_enum_field_list(struct module* module,
+                                             struct symt_enum* symt,
+                                             const union codeview_reftype* ref_type)
 {
-    struct symt_enum*           symt;
-    const unsigned char*        ptr = list;
+    const unsigned char*                ptr = ref_type->fieldlist.list;
+    const unsigned char*                last = (const BYTE*)ref_type + ref_type->generic.len + 2;
+    const union codeview_fieldtype*     type;
 
-    symt = symt_new_enum(module, NULL);
-    while (ptr - list < len)
+    while (ptr < last)
     {
-        const union codeview_fieldtype* type = (const union codeview_fieldtype*)ptr;
-
         if (*ptr >= 0xf0)       /* LF_PAD... */
         {
             ptr += *ptr & 0x0f;
             continue;
         }
+
+        type = (const union codeview_fieldtype*)ptr;
 
         switch (type->generic.id)
         {
@@ -481,31 +496,30 @@ static int codeview_add_type_enum_field_list(struct module* module,
             return FALSE;
         }
     }
-
-    return codeview_add_type(typeno, &symt->symt);
+    return TRUE;
 }
 
-static int codeview_add_type_struct_field_list(struct module* module, 
-                                               unsigned int typeno, 
-                                               const unsigned char* list, int len)
+static int codeview_add_type_struct_field_list(struct module* module,
+                                               struct symt_udt* symt,
+                                               const union codeview_reftype* ref_type)
 {
-    struct symt_udt*            symt;
-    const unsigned char*        ptr = list;
+    const unsigned char*        ptr = ref_type->fieldlist.list;
+    const unsigned char*        last = (const BYTE*)ref_type + ref_type->generic.len + 2;
     int                         value, leaf_len;
     const struct p_string*      p_name;
     const char*                 c_name;
     struct symt*                subtype;
+    const union codeview_fieldtype* type;
 
-    symt = symt_new_udt(module, NULL, 0, UdtStruct /* don't care */);
-    while (ptr - list < len)
+    while (ptr < last)
     {
-        const union codeview_fieldtype* type = (const union codeview_fieldtype*)ptr;
-
         if (*ptr >= 0xf0)       /* LF_PAD... */
         {
-            ptr +=* ptr & 0x0f;
+            ptr += *ptr & 0x0f;
             continue;
         }
+
+        type = (const union codeview_fieldtype*)ptr;
 
         switch (type->generic.id)
         {
@@ -699,31 +713,26 @@ static int codeview_add_type_struct_field_list(struct module* module,
         }
     }
 
-    return codeview_add_type(typeno, &symt->symt);
+    return TRUE;
 }
 
 static int codeview_add_type_enum(struct module* module, unsigned int typeno, 
-                                  const char* name, unsigned int fieldlist)
+                                  const char* name, const union codeview_reftype* fieldlist)
 {
     struct symt_enum*   symt = symt_new_enum(module, name);
-    struct symt*        list = codeview_get_type(fieldlist, FALSE);
 
-    /* FIXME: this is rather ugly !!! */
-    if (list) symt->vchildren = ((struct symt_enum*)list)->vchildren;
-
+    if (fieldlist) codeview_add_type_enum_field_list(module, symt, fieldlist);
     return codeview_add_type(typeno, &symt->symt);
 }
 
 static int codeview_add_type_struct(struct module* module, unsigned int typeno, 
                                     const char* name, int structlen, 
-                                    unsigned int fieldlist, enum UdtKind kind)
+                                    const union codeview_reftype* fieldlist,
+                                    enum UdtKind kind)
 {
     struct symt_udt*    symt = symt_new_udt(module, name, structlen, kind);
-    struct symt*        list = codeview_get_type(fieldlist, FALSE);
 
-    /* FIXME: this is rather ugly !!! */
-    if (list) symt->vchildren = ((struct symt_udt*)list)->vchildren;
-
+    if (fieldlist) codeview_add_type_struct_field_list(module, symt, fieldlist);
     return codeview_add_type(typeno, &symt->symt);
 }
 
@@ -737,20 +746,20 @@ static int codeview_new_func_signature(struct module* module, unsigned typeno,
     return codeview_add_type(typeno, symt);
 }
 
-static int codeview_parse_type_table(struct module* module, const BYTE* table,
-                                     const DWORD* offset, DWORD num)
+static int codeview_parse_type_table(struct codeview_type_parse* ctp)
 {
-    unsigned int                curr_type = 0x1000;
+    unsigned int                curr_type = FIRST_DEFINABLE_TYPE;
     int                         retv = TRUE;
     const union codeview_type*  type;
+    const union codeview_reftype*type_ref;
     int                         value, leaf_len;
     const struct p_string*      p_name;
     const char*                 c_name;
 
-    for (curr_type = 0x1000; retv && curr_type < 0x1000 + num; curr_type++)
+    for (curr_type = FIRST_DEFINABLE_TYPE; retv && curr_type < FIRST_DEFINABLE_TYPE + ctp->num; curr_type++)
     {
         retv = TRUE;
-        type = (const union codeview_type*)(table + offset[curr_type - 0x1000]);
+        type = codeview_jump_to_type(ctp, curr_type);
 
         /* type records we're interested in are the ones referenced by symbols
          * The known ranges are (X mark the ones we want):
@@ -765,9 +774,7 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
          */
         if ((type->generic.id & 0x8600) &&
             type->generic.id != LF_BITFIELD_V1 && /* still some cases to fix */
-            type->generic.id != LF_BITFIELD_V2 &&
-            type->generic.id != LF_FIELDLIST_V1 &&
-            type->generic.id != LF_FIELDLIST_V2)
+            type->generic.id != LF_BITFIELD_V2)
             continue;
         switch (type->generic.id)
         {
@@ -797,11 +804,11 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
             break;
 
         case LF_POINTER_V1:
-            retv = codeview_add_type_pointer(module, curr_type, 
+            retv = codeview_add_type_pointer(ctp->module, curr_type, 
                                              type->pointer_v1.datatype);
             break;
         case LF_POINTER_V2:
-            retv = codeview_add_type_pointer(module, curr_type, 
+            retv = codeview_add_type_pointer(ctp->module, curr_type, 
                                              type->pointer_v2.datatype);
             break;
 
@@ -809,21 +816,21 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
             leaf_len = numeric_leaf(&value, &type->array_v1.arrlen);
             p_name = (const struct p_string*)((const unsigned char*)&type->array_v1.arrlen + leaf_len);
 
-            retv = codeview_add_type_array(module, curr_type, terminate_string(p_name),
+            retv = codeview_add_type_array(ctp->module, curr_type, terminate_string(p_name),
                                            type->array_v1.elemtype, type->array_v1.idxtype, value);
             break;
         case LF_ARRAY_V2:
             leaf_len = numeric_leaf(&value, &type->array_v2.arrlen);
             p_name = (const struct p_string*)((const unsigned char*)&type->array_v2.arrlen + leaf_len);
 
-            retv = codeview_add_type_array(module, curr_type, terminate_string(p_name),
+            retv = codeview_add_type_array(ctp->module, curr_type, terminate_string(p_name),
                                            type->array_v2.elemtype, type->array_v2.idxtype, value);
             break;
         case LF_ARRAY_V3:
             leaf_len = numeric_leaf(&value, &type->array_v3.arrlen);
             c_name = (const char*)&type->array_v3.arrlen + leaf_len;
 
-            retv = codeview_add_type_array(module, curr_type, c_name,
+            retv = codeview_add_type_array(ctp->module, curr_type, c_name,
                                            type->array_v3.elemtype, type->array_v3.idxtype, value);
             break;
 
@@ -842,40 +849,14 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
                                               type->bitfield_v2.nbits,
                                               type->bitfield_v2.type);
             break;
-        case LF_FIELDLIST_V1:
-        case LF_FIELDLIST_V2:
-           {
-               /*
-                * A 'field list' is a CodeView-specific data type which doesn't
-                * directly correspond to any high-level data type.  It is used
-                * to hold the collection of members of a struct, class, union
-                * or enum type.  The actual definition of that type will follow
-                * later, and refer to the field list definition record.
-                *
-                * As we don't have a field list type ourselves, we look ahead
-                * in the field list to try to find out whether this field list
-                * will be used for an enum or struct type, and create a dummy
-                * type of the corresponding sort.  Later on, the definition of
-                * the 'real' type will copy the member / enumeration data.
-                */
-               const unsigned char* list = type->fieldlist.list;
-               int   len  = ((const BYTE*)type + type->generic.len + 2) - list;
-
-               if (((const union codeview_fieldtype*)list)->generic.id == LF_ENUMERATE_V1 ||
-                   ((const union codeview_fieldtype*)list)->generic.id == LF_ENUMERATE_V3)
-                   retv = codeview_add_type_enum_field_list(module, curr_type, list, len);
-               else
-                   retv = codeview_add_type_struct_field_list(module, curr_type, list, len);
-           }
-           break;
 
         case LF_STRUCTURE_V1:
         case LF_CLASS_V1:
             leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
             p_name = (const struct p_string*)((const unsigned char*)&type->struct_v1.structlen + leaf_len);
-
-            retv = codeview_add_type_struct(module, curr_type, terminate_string(p_name),
-                                            value, type->struct_v1.fieldlist,
+            type_ref = codeview_jump_to_type(ctp, type->struct_v1.fieldlist);
+            retv = codeview_add_type_struct(ctp->module, curr_type, terminate_string(p_name),
+                                            value, type_ref,
                                             type->generic.id == LF_CLASS_V1 ? UdtClass : UdtStruct);
             break;
 
@@ -883,9 +864,9 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
         case LF_CLASS_V2:
             leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
             p_name = (const struct p_string*)((const unsigned char*)&type->struct_v2.structlen + leaf_len);
-
-            retv = codeview_add_type_struct(module, curr_type, terminate_string(p_name),
-                                            value, type->struct_v2.fieldlist,
+            type_ref = codeview_jump_to_type(ctp, type->struct_v2.fieldlist);
+            retv = codeview_add_type_struct(ctp->module, curr_type, terminate_string(p_name),
+                                            value, type_ref,
                                             type->generic.id == LF_CLASS_V2 ? UdtClass : UdtStruct);
             break;
 
@@ -893,53 +874,62 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
         case LF_CLASS_V3:
             leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
             c_name = (const char*)&type->struct_v3.structlen + leaf_len;
-
-            retv = codeview_add_type_struct(module, curr_type, c_name,
-                                            value, type->struct_v3.fieldlist,
+            type_ref = codeview_jump_to_type(ctp, type->struct_v3.fieldlist);
+            retv = codeview_add_type_struct(ctp->module, curr_type, c_name,
+                                            value, type_ref,
                                             type->generic.id == LF_CLASS_V3 ? UdtClass : UdtStruct);
             break;
 
         case LF_UNION_V1:
             leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
             p_name = (const struct p_string*)((const unsigned char*)&type->union_v1.un_len + leaf_len);
-
-            retv = codeview_add_type_struct(module, curr_type, terminate_string(p_name),
-                                            value, type->union_v1.fieldlist, UdtUnion);
+            type_ref = codeview_jump_to_type(ctp, type->union_v1.fieldlist);
+            retv = codeview_add_type_struct(ctp->module, curr_type, terminate_string(p_name),
+                                            value, type_ref, UdtUnion);
             break;
+
         case LF_UNION_V2:
             leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
             p_name = (const struct p_string*)((const unsigned char*)&type->union_v2.un_len + leaf_len);
-
-            retv = codeview_add_type_struct(module, curr_type, terminate_string(p_name),
-                                            value, type->union_v2.fieldlist, UdtUnion);
+            type_ref = codeview_jump_to_type(ctp, type->union_v2.fieldlist);
+            retv = codeview_add_type_struct(ctp->module, curr_type, terminate_string(p_name),
+                                            value, type_ref, UdtUnion);
             break;
         case LF_UNION_V3:
             leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
             c_name = (const char*)&type->union_v3.un_len + leaf_len;
-
-            retv = codeview_add_type_struct(module, curr_type, c_name,
-                                            value, type->union_v3.fieldlist, UdtUnion);
+            type_ref = codeview_jump_to_type(ctp, type->union_v3.fieldlist);
+            retv = codeview_add_type_struct(ctp->module, curr_type, c_name,
+                                            value, type_ref, UdtUnion);
+            break;
 
         case LF_ENUM_V1:
-            retv = codeview_add_type_enum(module, curr_type, terminate_string(&type->enumeration_v1.p_name),
-                                          type->enumeration_v1.field);
+            type_ref = codeview_jump_to_type(ctp, type->enumeration_v1.fieldlist);
+            retv = codeview_add_type_enum(ctp->module, curr_type, 
+                                          terminate_string(&type->enumeration_v1.p_name),
+                                          type_ref);
             break;
 
         case LF_ENUM_V2:
-            retv = codeview_add_type_enum(module, curr_type, terminate_string(&type->enumeration_v2.p_name),
-                                          type->enumeration_v2.field);
+            type_ref = codeview_jump_to_type(ctp, type->enumeration_v2.fieldlist);
+            retv = codeview_add_type_enum(ctp->module, curr_type,
+                                          terminate_string(&type->enumeration_v2.p_name),
+                                          type_ref);
             break;
+
         case LF_ENUM_V3:
-            retv = codeview_add_type_enum(module, curr_type, type->enumeration_v3.name,
-                                          type->enumeration_v3.field);
+            type_ref = codeview_jump_to_type(ctp, type->enumeration_v3.fieldlist);
+            retv = codeview_add_type_enum(ctp->module, curr_type, type->enumeration_v3.name,
+                                          type_ref);
             break;
+
         case LF_PROCEDURE_V1:
-            retv = codeview_new_func_signature(module, curr_type, 
+            retv = codeview_new_func_signature(ctp->module, curr_type, 
                                                type->procedure_v1.rvtype,
                                                type->procedure_v1.call);
             break;
         case LF_PROCEDURE_V2:
-            retv = codeview_new_func_signature(module, curr_type, 
+            retv = codeview_new_func_signature(ctp->module, curr_type, 
                                                type->procedure_v2.rvtype,
                                                type->procedure_v2.call);
             break;
@@ -947,7 +937,7 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
             /* FIXME: for C++, this is plain wrong, but as we don't use arg types
              * nor class information, this would just do for now
              */
-            retv = codeview_new_func_signature(module, curr_type,
+            retv = codeview_new_func_signature(ctp->module, curr_type,
                                                type->mfunction_v1.rvtype,
                                                type->mfunction_v1.call);
             break;
@@ -955,7 +945,7 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
             /* FIXME: for C++, this is plain wrong, but as we don't use arg types
              * nor class information, this would just do for now
              */
-            retv = codeview_new_func_signature(module, curr_type,
+            retv = codeview_new_func_signature(ctp->module, curr_type,
                                                type->mfunction_v2.rvtype,
                                                type->mfunction_v2.call);
             break;
@@ -1795,10 +1785,10 @@ static void pdb_process_types(const struct msc_debug_info* msc_dbg,
     if (types_image)
     {
         PDB_TYPES               types;
-        DWORD*                  offset;
-        DWORD                   num, total;
-        const BYTE*             table;
+        struct codeview_type_parse      ctp;
+        DWORD                   total;
         const BYTE*             ptr;
+        DWORD*                  offset;
 
         pdb_convert_types_header(&types, types_image);
 
@@ -1814,21 +1804,23 @@ static void pdb_process_types(const struct msc_debug_info* msc_dbg,
             ERR("-Unknown type info version %ld\n", types.version);
         }
 
+        ctp.module = msc_dbg->module;
         /* reconstruct the types offset...
          * FIXME: maybe it's present in the newest PDB_TYPES structures
          */
         total = types.last_index - types.first_index + 1;
         offset = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * total);
-        table = ptr = types_image + types.type_offset;
-        num = 0;
-        while (ptr < table + types.type_size && num < total)
+        ctp.table = ptr = types_image + types.type_offset;
+        ctp.num = 0;
+        while (ptr < ctp.table + types.type_size && ctp.num < total)
         {
-            offset[num++] = ptr - table;
+            offset[ctp.num++] = ptr - ctp.table;
             ptr += ((const union codeview_type*)ptr)->generic.len + 2;
         }
+        ctp.offset = offset;
 
         /* Read type table */
-        codeview_parse_type_table(msc_dbg->module, table, offset, num);
+        codeview_parse_type_table(&ctp);
         HeapFree(GetProcessHeap(), 0, offset);
         pdb_free(types_image);
     }
