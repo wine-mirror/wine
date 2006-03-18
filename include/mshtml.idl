@@ -1190,6 +1190,353 @@ interface IHTMLRenderStyle : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLCurrentStyle interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f3db-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLCurrentStyle : IDispatch
+{
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_POSITION), displaybind, bindable]
+    HRESULT position([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_STYLEFLOAT), displaybind, bindable]
+    HRESULT styleFloat([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_COLOR), displaybind, bindable]
+    HRESULT color([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDCOLOR), displaybind, bindable]
+    HRESULT backgroundColor([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTFAMILY), displaybind, bindable]
+    HRESULT fontFamily([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTSTYLE), displaybind, bindable]
+    HRESULT fontStyle([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTVARIANT), displaybind, bindable, hidden]
+    HRESULT fontVariant([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTWEIGHT), displaybind, bindable]
+    HRESULT fontWeight([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTSIZE), displaybind, bindable]
+    HRESULT fontSize([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDIMAGE), displaybind, bindable]
+    HRESULT backgroundImage([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDPOSITIONX), displaybind, bindable]
+    HRESULT backgroundPositionX([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDPOSITIONY), displaybind, bindable]
+    HRESULT backgroundPositionY([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDREPEAT), displaybind, bindable]
+    HRESULT backgroundRepeat([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERLEFTCOLOR), displaybind, bindable]
+    HRESULT borderLeftColor([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERTOPCOLOR), displaybind, bindable]
+    HRESULT borderTopColor([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERRIGHTCOLOR), displaybind, bindable]
+    HRESULT borderRightColor([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERBOTTOMCOLOR), displaybind, bindable]
+    HRESULT borderBottomColor([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERTOPSTYLE), displaybind, bindable]
+    HRESULT borderTopStyle([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERRIGHTSTYLE), displaybind, bindable]
+    HRESULT borderRightStyle([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERBOTTOMSTYLE), displaybind, bindable]
+    HRESULT borderBottomStyle([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERLEFTSTYLE), displaybind, bindable]
+    HRESULT borderLeftStyle([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERTOPWIDTH), displaybind, bindable]
+    HRESULT borderTopWidth([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERRIGHTWIDTH), displaybind, bindable]
+    HRESULT borderRightWidth([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERBOTTOMWIDTH), displaybind, bindable]
+    HRESULT borderBottomWidth([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERLEFTWIDTH), displaybind, bindable]
+    HRESULT borderLeftWidth([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LEFT), displaybind, bindable]
+    HRESULT left([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TOP), displaybind, bindable]
+    HRESULT top([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_WIDTH), displaybind, bindable]
+    HRESULT width([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_HEIGHT), displaybind, bindable]
+    HRESULT height([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDINGLEFT), displaybind, bindable]
+    HRESULT paddingLeft([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDINGTOP), displaybind, bindable]
+    HRESULT paddingTop([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDINGRIGHT), displaybind, bindable]
+    HRESULT paddingRight([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDINGBOTTOM), displaybind, bindable]
+    HRESULT paddingBottom([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTALIGN), displaybind, bindable]
+    HRESULT textAlign([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTDECORATION), displaybind, bindable]
+    HRESULT textDecoration([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_DISPLAY), displaybind, bindable]
+    HRESULT display([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_VISIBILITY), displaybind, bindable]
+    HRESULT visibility([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_ZINDEX), displaybind, bindable]
+    HRESULT zIndex([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LETTERSPACING), displaybind, bindable]
+    HRESULT letterSpacing([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LINEHEIGHT), displaybind, bindable]
+    HRESULT lineHeight([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTINDENT), displaybind, bindable]
+    HRESULT textIndent([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_VERTICALALIGN), displaybind, bindable]
+    HRESULT verticalAlign([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDATTACHMENT), displaybind, bindable]
+    HRESULT backgroundAttachment([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGINTOP), displaybind, bindable]
+    HRESULT marginTop([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGINRIGHT), displaybind, bindable]
+    HRESULT marginRight([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGINBOTTOM), displaybind, bindable]
+    HRESULT marginBottom([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGINLEFT), displaybind, bindable]
+    HRESULT marginLeft([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLEAR), displaybind, bindable]
+    HRESULT clear([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LISTSTYLETYPE), displaybind, bindable]
+    HRESULT listStyleType([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LISTSTYLEPOSITION), displaybind, bindable]
+    HRESULT listStylePosition([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LISTSTYLEIMAGE), displaybind, bindable]
+    HRESULT listStyleImage([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLIPTOP), displaybind, bindable]
+    HRESULT clipTop([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLIPRIGHT), displaybind, bindable]
+    HRESULT clipRight([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLIPBOTTOM), displaybind, bindable]
+    HRESULT clipBottom([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLIPLEFT), displaybind, bindable]
+    HRESULT clipLeft([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_OVERFLOW), displaybind, bindable]
+    HRESULT overflow([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PAGEBREAKBEFORE), displaybind, bindable]
+    HRESULT pageBreakBefore([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PAGEBREAKAFTER), displaybind, bindable]
+    HRESULT pageBreakAfter([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CURSOR), displaybind, bindable]
+    HRESULT cursor([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TABLELAYOUT), displaybind, bindable]
+    HRESULT tableLayout([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERCOLLAPSE), displaybind, bindable]
+    HRESULT borderCollapse([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_DIRECTION), displaybind, bindable]
+    HRESULT direction([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BEHAVIOR), displaybind, bindable]
+    HRESULT behavior([retval, out] BSTR *p);
+
+    [id(DISPID_IHTMLCURRENTSTYLE_GETATTRIBUTE)]
+    HRESULT getAttribute(
+        [in] BSTR strAttributeName,
+        [defaultvalue(0), in] LONG lFlags,
+        [retval, out] VARIANT *AttributeValue);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_UNICODEBIDI), displaybind, bindable]
+    HRESULT unicodeBidi([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_RIGHT), displaybind, bindable]
+    HRESULT right([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BOTTOM), displaybind, bindable]
+    HRESULT bottom([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_IMEMODE), displaybind, bindable]
+    HRESULT imeMode([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_RUBYALIGN), displaybind, bindable]
+    HRESULT rubyAlign([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_RUBYPOSITION), displaybind, bindable]
+    HRESULT rubyPosition([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_RUBYOVERHANG), displaybind, bindable]
+    HRESULT rubyOverhang([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTAUTOSPACE), displaybind, bindable]
+    HRESULT textAutospace([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LINEBREAK), displaybind, bindable]
+    HRESULT lineBreak([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_WORDBREAK), displaybind, bindable]
+    HRESULT wordBreak([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTJUSTIFY), displaybind, bindable]
+    HRESULT textJustify([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTJUSTIFYTRIM), displaybind, bindable]
+    HRESULT textJustifyTrim([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTKASHIDA), displaybind, bindable]
+    HRESULT textKashida([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BLOCKDIRECTION), displaybind, bindable]
+    HRESULT blockDirection([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LAYOUTGRIDCHAR), displaybind, bindable]
+    HRESULT layoutGridChar([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LAYOUTGRIDLINE), displaybind, bindable]
+    HRESULT layoutGridLine([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LAYOUTGRIDMODE), displaybind, bindable]
+    HRESULT layoutGridMode([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LAYOUTGRIDTYPE), displaybind, bindable]
+    HRESULT layoutGridType([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERSTYLE), displaybind, bindable]
+    HRESULT borderStyle([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERCOLOR), displaybind, bindable]
+    HRESULT borderColor([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERWIDTH), displaybind, bindable]
+    HRESULT borderWidth([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDING), displaybind, bindable]
+    HRESULT padding([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGIN), displaybind, bindable]
+    HRESULT margin([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_ACCELERATOR), displaybind, bindable]
+    HRESULT accelerator([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_OVERFLOWX), displaybind, bindable]
+    HRESULT overflowX([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_OVERFLOWY), displaybind, bindable]
+    HRESULT overflowY([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTTRANSFORM), displaybind, bindable]
+    HRESULT textTransform([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLRect interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4a3-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLRect : IDispatch
+{
+    [propput, id(DISPID_IHTMLRECT_LEFT)]
+    HRESULT left([in] long v);
+
+    [propget, id(DISPID_IHTMLRECT_LEFT)]
+    HRESULT left([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLRECT_TOP)]
+    HRESULT top([in] long v);
+
+    [propget, id(DISPID_IHTMLRECT_TOP)]
+    HRESULT top([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLRECT_RIGHT)]
+    HRESULT right([in] long v);
+
+    [propget, id(DISPID_IHTMLRECT_RIGHT)]
+    HRESULT right([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLRECT_BOTTOM)]
+    HRESULT bottom([in] long v);
+
+    [propget, id(DISPID_IHTMLRECT_BOTTOM)]
+    HRESULT bottom([retval, out] long *p);
+}
+
+/*****************************************************************************
+ *    IHTMLRectCollection interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4a4-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLRectCollection : IDispatch
+{
+    [propget, id(DISPID_IHTMLRECTCOLLECTION_LENGTH)]
+    HRESULT length([retval, out] long *p);
+
+    [propget, id(DISPID_IHTMLRECTCOLLECTION__NEWENUM), hidden, restricted]
+    HRESULT _newEnum([retval, out] IUnknown **p);
+
+    [id(DISPID_IHTMLRECTCOLLECTION_ITEM)]
+    HRESULT item(
+        [in] VARIANT *pvarIndex,
+        [retval, out] VARIANT *pvarResult);
+}
+
+/*****************************************************************************
  *    IHTMLDOMNode interface
  */
 [
@@ -1320,6 +1667,8 @@ interface IHTMLDOMImplementation : IDispatch
         [optional, in] VARIANT version,
         [retval, out] VARIANT_BOOL *pfHasFeature);
 }
+
+interface IHTMLElementCollection;
 
 /*****************************************************************************
  *    IHTMLElement interface
@@ -1603,6 +1952,345 @@ interface IHTMLElement : IDispatch
 
     [propget, id(DISPID_IHTMLELEMENT_ALL)]
     HRESULT all([retval, out] IDispatch **p);
+}
+
+/*****************************************************************************
+ *    IHTMLElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f434-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLElement2 : IDispatch
+{
+    [propget, id(DISPID_IHTMLELEMENT2_SCOPENAME)]
+    HRESULT scopeName([retval, out] BSTR *p);
+
+    [id(DISPID_IHTMLELEMENT2_SETCAPTURE)]
+    HRESULT setCapture([defaultvalue(-1), in] VARIANT_BOOL containerCapture);
+
+    [id(DISPID_IHTMLELEMENT2_RELEASECAPTURE)]
+    HRESULT releaseCapture();
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONLOSECAPTURE), displaybind, bindable]
+    HRESULT onlosecapture([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONLOSECAPTURE), displaybind, bindable]
+    HRESULT onlosecapture([retval, out] VARIANT *p);
+
+    [id(DISPID_IHTMLELEMENT2_COMPONENTFROMPOINT)]
+    HRESULT componentFromPoint(
+        [in] long x,
+        [in] long y,
+        [retval, out] BSTR *component);
+
+    [id(DISPID_IHTMLELEMENT2_DOSCROLL)]
+    HRESULT doScroll([optional, in] VARIANT component);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONSCROLL), displaybind, bindable]
+    HRESULT onscroll([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONSCROLL), displaybind, bindable]
+    HRESULT onscroll([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONDRAG), displaybind, bindable]
+    HRESULT ondrag([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONDRAG), displaybind, bindable]
+    HRESULT ondrag([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONDRAGEND), displaybind, bindable]
+    HRESULT ondragend([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONDRAGEND), displaybind, bindable]
+    HRESULT ondragend([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONDRAGENTER), displaybind, bindable]
+    HRESULT ondragenter([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONDRAGENTER), displaybind, bindable]
+    HRESULT ondragenter([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONDRAGOVER), displaybind, bindable]
+    HRESULT ondragover([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONDRAGOVER), displaybind, bindable]
+    HRESULT ondragover([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONDRAGLEAVE), displaybind, bindable]
+    HRESULT ondragleave([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONDRAGLEAVE), displaybind, bindable]
+    HRESULT ondragleave([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONDROP), displaybind, bindable]
+    HRESULT ondrop([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONDROP), displaybind, bindable]
+    HRESULT ondrop([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONBEFORECUT), displaybind, bindable]
+    HRESULT onbeforecut([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONBEFORECUT), displaybind, bindable]
+    HRESULT onbeforecut([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONCUT), displaybind, bindable]
+    HRESULT oncut([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONCUT), displaybind, bindable]
+    HRESULT oncut([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONBEFORECOPY), displaybind, bindable]
+    HRESULT onbeforecopy([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONBEFORECOPY), displaybind, bindable]
+    HRESULT onbeforecopy([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONCOPY), displaybind, bindable]
+    HRESULT oncopy([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONCOPY), displaybind, bindable]
+    HRESULT oncopy([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONBEFOREPASTE), displaybind, bindable]
+    HRESULT onbeforepaste([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONBEFOREPASTE), displaybind, bindable]
+    HRESULT onbeforepaste([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONPASTE), displaybind, bindable]
+    HRESULT onpaste([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONPASTE), displaybind, bindable]
+    HRESULT onpaste([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLELEMENT2_CURRENTSTYLE), nonbrowsable]
+    HRESULT currentStyle([retval, out] IHTMLCurrentStyle **p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONPROPERTYCHANGE), displaybind, bindable]
+    HRESULT onpropertychange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONPROPERTYCHANGE), displaybind, bindable]
+    HRESULT onpropertychange([retval, out] VARIANT *p);
+
+    [id(DISPID_IHTMLELEMENT2_GETCLIENTRECTS)]
+    HRESULT getClientRects([retval, out] IHTMLRectCollection **pRectCol);
+
+    [id(DISPID_IHTMLELEMENT2_GETBOUNDINGCLIENTRECT)]
+    HRESULT getBoundingClientRect([retval, out] IHTMLRect **pRect);
+
+    [id(DISPID_IHTMLELEMENT2_SETEXPRESSION)]
+    HRESULT setExpression(
+        [in] BSTR propname,
+        [in] BSTR expression,
+        [defaultvalue(""), in] BSTR language);
+
+    [id(DISPID_IHTMLELEMENT2_GETEXPRESSION)]
+    HRESULT getExpression(
+        [in] BSTR propname,
+        [retval, out] VARIANT *expression);
+
+    [id(DISPID_IHTMLELEMENT2_REMOVEEXPRESSION)]
+    HRESULT removeExpression(
+        [in] BSTR propname,
+        [retval, out] VARIANT_BOOL *pfSuccess);
+
+    [propput, id(DISPID_IHTMLELEMENT2_TABINDEX), displaybind, bindable]
+    HRESULT tabIndex([in] short v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_TABINDEX), displaybind, bindable]
+    HRESULT tabIndex([retval, out] short *p);
+
+    [id(DISPID_IHTMLELEMENT2_FOCUS)]
+    HRESULT focus();
+
+    [propput, id(DISPID_IHTMLELEMENT2_ACCESSKEY), displaybind, bindable]
+    HRESULT accessKey([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ACCESSKEY), displaybind, bindable]
+    HRESULT accessKey([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONBLUR), displaybind, bindable]
+    HRESULT onblur([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONBLUR), displaybind, bindable]
+    HRESULT onblur([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONFOCUS), displaybind, bindable]
+    HRESULT onfocus([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONFOCUS), displaybind, bindable]
+    HRESULT onfocus([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONRESIZE), displaybind, bindable]
+    HRESULT onresize([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONRESIZE), displaybind, bindable]
+    HRESULT onresize([retval, out] VARIANT *p);
+
+    [id(DISPID_IHTMLELEMENT2_BLUR)]
+    HRESULT blur();
+
+    [id(DISPID_IHTMLELEMENT2_ADDFILTER)]
+    HRESULT addFilter([in] IUnknown *pUnk);
+
+    [id(DISPID_IHTMLELEMENT2_REMOVEFILTER)]
+    HRESULT removeFilter([in] IUnknown *pUnk);
+
+    [propget, id(DISPID_IHTMLELEMENT2_CLIENTHEIGHT), displaybind, bindable]
+    HRESULT clientHeight([retval, out] long *p);
+
+    [propget, id(DISPID_IHTMLELEMENT2_CLIENTWIDTH), displaybind, bindable]
+    HRESULT clientWidth([retval, out] long *p);
+
+    [propget, id(DISPID_IHTMLELEMENT2_CLIENTTOP), displaybind, bindable]
+    HRESULT clientTop([retval, out] long *p);
+
+    [propget, id(DISPID_IHTMLELEMENT2_CLIENTLEFT), displaybind, bindable]
+    HRESULT clientLeft([retval, out] long *p);
+
+    [id(DISPID_IHTMLELEMENT2_ATTACHEVENT)]
+    HRESULT attachEvent(
+        [in] BSTR event,
+        [in] IDispatch *pDisp,
+        [retval, out] VARIANT_BOOL *pfResult);
+
+    [id(DISPID_IHTMLELEMENT2_DETACHEVENT)]
+    HRESULT detachEvent(
+        [in] BSTR event,
+        [in] IDispatch *pDisp);
+
+    [propget, id(DISPID_IHTMLELEMENT2_READYSTATE)]
+    HRESULT readyState([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONROWSDELETE), displaybind, bindable]
+    HRESULT onrowsdelete([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONROWSDELETE), displaybind, bindable]
+    HRESULT onrowsdelete([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONROWSINSERTED), displaybind, bindable]
+    HRESULT onrowsinserted([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONROWSINSERTED), displaybind, bindable]
+    HRESULT onrowsinserted([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONCELLCHANGE), displaybind, bindable]
+    HRESULT oncellchange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONCELLCHANGE), displaybind, bindable]
+    HRESULT oncellchange([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_DIR), displaybind, bindable]
+    HRESULT dir([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_DIR), displaybind, bindable]
+    HRESULT dir([retval, out] BSTR *p);
+
+    [id(DISPID_IHTMLELEMENT2_CREATECONTROLRANGE)]
+    HRESULT createControlRange([retval, out] IDispatch **range);
+
+    [propget, id(DISPID_IHTMLELEMENT2_SCROLLHEIGHT), displaybind, bindable]
+    HRESULT scrollHeight([retval, out] long *p);
+
+    [propget, id(DISPID_IHTMLELEMENT2_SCROLLWIDTH), displaybind, bindable]
+    HRESULT scrollWidth([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
+    HRESULT scrollTop([in] long v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_SCROLLTOP), displaybind, bindable]
+    HRESULT scrollTop([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
+    HRESULT scrollLeft([in] long v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_SCROLLLEFT), displaybind, bindable]
+    HRESULT scrollLeft([retval, out] long *p);
+
+    [id(DISPID_IHTMLELEMENT2_CLEARATTRIBUTES)]
+    HRESULT clearAttributes();
+
+    [id(DISPID_IHTMLELEMENT2_MERGEATTRIBUTES)]
+    HRESULT mergeAttributes([in] IHTMLElement *mergeThis);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONCONTEXTMENU), displaybind, bindable]
+    HRESULT oncontextmenu([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONCONTEXTMENU), displaybind, bindable]
+    HRESULT oncontextmenu([retval, out] VARIANT *p);
+
+    [id(DISPID_IHTMLELEMENT2_INSERTADJACENTELEMENT)]
+    HRESULT insertAdjacentElement(
+        [in] BSTR where,
+        [in] IHTMLElement *insertedElement,
+        [retval, out] IHTMLElement **inserted);
+
+    [id(DISPID_IHTMLELEMENT2_APPLYELEMENT)]
+    HRESULT applyElement(
+        [in] IHTMLElement *apply,
+        [in] BSTR where,
+        [retval, out] IHTMLElement **applied);
+
+    [id(DISPID_IHTMLELEMENT2_GETADJACENTTEXT)]
+    HRESULT getAdjacentText(
+        [in] BSTR where,
+        [retval, out] BSTR *text);
+
+    [id(DISPID_IHTMLELEMENT2_REPLACEADJACENTTEXT)]
+    HRESULT replaceAdjacentText(
+        [in] BSTR where,
+        [in] BSTR newText,
+        [retval, out] BSTR *oldText);
+
+    [propget, id(DISPID_IHTMLELEMENT2_CANHAVECHILDREN)]
+    HRESULT canHaveChildren([retval, out] VARIANT_BOOL *p);
+
+    [id(DISPID_IHTMLELEMENT2_ADDBEHAVIOR)]
+    HRESULT addBehavior(
+        [in] BSTR bstrUrl,
+        [optional, in] VARIANT *pvarFactory,
+        [retval, out] long *pCookie);
+
+    [id(DISPID_IHTMLELEMENT2_REMOVEBEHAVIOR)]
+    HRESULT removeBehavior(
+        [in] long cookie,
+        [retval, out] VARIANT_BOOL *pfResult);
+
+    [propget, id(DISPID_IHTMLELEMENT2_RUNTIMESTYLE), nonbrowsable]
+    HRESULT runtimeStyle([retval, out] IHTMLStyle **p);
+
+    [propget, id(DISPID_IHTMLELEMENT2_BEHAVIORURNS)]
+    HRESULT behaviorUrns([retval, out] IDispatch **p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_TAGURN)]
+    HRESULT tagUrn([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_TAGURN)]
+    HRESULT tagUrn([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLELEMENT2_ONBEFOREEDITFOCUS), displaybind, bindable]
+    HRESULT onbeforeeditfocus([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT2_ONBEFOREEDITFOCUS), displaybind, bindable]
+    HRESULT onbeforeeditfocus([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLELEMENT2_READYSTATEVALUE), hidden, restricted]
+    HRESULT readyStateValue([retval, out] long *p);
+
+    [id(DISPID_IHTMLELEMENT2_GETELEMENTSBYTAGNAME)]
+    HRESULT getElementsByTagName(
+        [in] BSTR v,
+        [retval, out] IHTMLElementCollection **pelColl);
 }
 
 /*****************************************************************************
