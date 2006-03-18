@@ -83,6 +83,8 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe)
     }
     dbg_curr_process->continue_on_first_exception = cofe;
 
+    SetEnvironmentVariableA("DBGHELP_NOLIVE", NULL);
+
     if (wfe) /* shall we proceed all debug events until we get an exception ? */
     {
         dbg_interactiveP = FALSE;

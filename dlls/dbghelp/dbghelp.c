@@ -170,8 +170,8 @@ static BOOL WINAPI process_invade_cb(char* name, DWORD base, DWORD size, void* u
 static BOOL check_live_target(struct process* pcs)
 {
     if (!GetProcessId(pcs->handle)) return FALSE;
-    if (!elf_read_wine_loader_dbg_info(pcs)) return FALSE;
-    return getenv("DBGHELP_NOLIVE") == NULL;
+    if (GetEnvironmentVariableA("DBGHELP_NOLIVE", NULL, 0)) return FALSE;
+    return elf_read_wine_loader_dbg_info(pcs);
 }
 
 /******************************************************************
