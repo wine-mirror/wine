@@ -1877,6 +1877,39 @@ void WINAPI LdrShutdownThread(void)
     RtlLeaveCriticalSection( &loader_section );
 }
 
+
+/***********************************************************************
+ *           free_modref
+ *
+ */
+static void free_modref( WINE_MODREF *wm )
+{
+    RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
+    RemoveEntryList(&wm->ldr.InMemoryOrderModuleList);
+    if (wm->ldr.InInitializationOrderModuleList.Flink)
+        RemoveEntryList(&wm->ldr.InInitializationOrderModuleList);
+
+    TRACE(" unloading %s\n", debugstr_w(wm->ldr.FullDllName.Buffer));
+    if (!TRACE_ON(module))
+        TRACE_(loaddll)("Unloaded module %s : %s\n",
+                        debugstr_w(wm->ldr.FullDllName.Buffer),
+                        (wm->ldr.Flags & LDR_WINE_INTERNAL) ? "builtin" : "native" );
+
+    SERVER_START_REQ( unload_dll )
+    {
+        req->base = wm->ldr.BaseAddress;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    NtUnmapViewOfSection( NtCurrentProcess(), wm->ldr.BaseAddress );
+    if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
+    if (cached_modref == wm) cached_modref = NULL;
+    RtlFreeUnicodeString( &wm->ldr.FullDllName );
+    RtlFreeHeap( GetProcessHeap(), 0, wm->deps );
+    RtlFreeHeap( GetProcessHeap(), 0, wm );
+}
+
 /***********************************************************************
  *           MODULE_FlushModrefs
  *
@@ -1894,36 +1927,20 @@ static void MODULE_FlushModrefs(void)
     mark = &NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList;
     for (entry = mark->Blink; entry != mark; entry = prev)
     {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, 
-                                InInitializationOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_MODULE, InInitializationOrderModuleList);
         wm = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
-
         prev = entry->Blink;
-        if (mod->LoadCount) continue;
+        if (!mod->LoadCount) free_modref( wm );
+    }
 
-        RemoveEntryList(&mod->InLoadOrderModuleList);
-        RemoveEntryList(&mod->InMemoryOrderModuleList);
-        RemoveEntryList(&mod->InInitializationOrderModuleList);
-
-        TRACE(" unloading %s\n", debugstr_w(mod->FullDllName.Buffer));
-        if (!TRACE_ON(module))
-            TRACE_(loaddll)("Unloaded module %s : %s\n",
-                            debugstr_w(mod->FullDllName.Buffer),
-                            (wm->ldr.Flags & LDR_WINE_INTERNAL) ? "builtin" : "native" );
-
-        SERVER_START_REQ( unload_dll )
-        {
-            req->base = mod->BaseAddress;
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-
-        NtUnmapViewOfSection( NtCurrentProcess(), mod->BaseAddress );
-        if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
-        if (cached_modref == wm) cached_modref = NULL;
-        RtlFreeUnicodeString( &mod->FullDllName );
-        RtlFreeHeap( GetProcessHeap(), 0, wm->deps );
-        RtlFreeHeap( GetProcessHeap(), 0, wm );
+    /* check load order list too for modules that haven't been initialized yet */
+    mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+    for (entry = mark->Blink; entry != mark; entry = prev)
+    {
+        mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+        wm = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
+        prev = entry->Blink;
+        if (!mod->LoadCount) free_modref( wm );
     }
 }
 
