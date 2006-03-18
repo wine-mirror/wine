@@ -24,6 +24,7 @@
  * - Lots of functionality missing from builtins
  */
 
+#include "config.h"
 #include "wcmd.h"
 
 const char * const inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
@@ -38,7 +39,7 @@ DWORD errorlevel;
 int echo_mode = 1, verify_mode = 0;
 const char nyi[] = "Not Yet Implemented\n\n";
 const char newline[] = "\n";
-const char version_string[] = "WCMD Version 0.17\n\n";
+const char version_string[] = "WCMD Version " PACKAGE_VERSION "\n\n";
 const char anykey[] = "Press Return key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
