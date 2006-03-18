@@ -2100,47 +2100,6 @@ static BOOL pdb_process_file(const struct process* pcs,
 #define CODEVIEW_NB11_SIG       MAKESIG('N','B','1','1')
 #define CODEVIEW_RSDS_SIG       MAKESIG('R','S','D','S')
 
-typedef struct _CODEVIEW_HEADER_NBxx
-{
-    DWORD       dwSignature;
-    DWORD       lfoDirectory;
-} CODEVIEW_HEADER_NBxx,* PCODEVIEW_HEADER_NBxx;
-
-typedef struct _CODEVIEW_HEADER_RSDS
-{
-    DWORD       dwSignature;
-    GUID        guid;
-    DWORD       unknown;
-    CHAR        name[1];
-} CODEVIEW_HEADER_RSDS,* PCODEVIEW_HEADER_RSDS;
-
-typedef struct _CODEVIEW_PDB_DATA
-{
-    DWORD       timestamp;
-    DWORD       unknown;
-    CHAR        name[1];
-} CODEVIEW_PDB_DATA, *PCODEVIEW_PDB_DATA;
-
-typedef struct _CV_DIRECTORY_HEADER
-{
-    WORD        cbDirHeader;
-    WORD        cbDirEntry;
-    DWORD       cDir;
-    DWORD       lfoNextDir;
-    DWORD       flags;
-} CV_DIRECTORY_HEADER, *PCV_DIRECTORY_HEADER;
-
-typedef struct _CV_DIRECTORY_ENTRY
-{
-    WORD        subsection;
-    WORD        iMod;
-    DWORD       lfo;
-    DWORD       cb;
-} CV_DIRECTORY_ENTRY, *PCV_DIRECTORY_ENTRY;
-
-#define	sstAlignSym		0x125
-#define	sstSrcModule		0x127
-
 static BOOL codeview_process_info(const struct process* pcs, 
                                   const struct msc_debug_info* msc_dbg)
 {

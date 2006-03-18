@@ -1431,3 +1431,96 @@ struct msc_debug_info
 
 /* coff.c */
 extern BOOL coff_process_info(const struct msc_debug_info* msc_dbg);
+
+/* ===================================================
+ * The old CodeView stuff (for NB09 and NB11)
+ * =================================================== */
+
+#define sstModule      0x120
+#define sstTypes       0x121
+#define sstPublic      0x122
+#define sstPublicSym   0x123
+#define sstSymbols     0x124
+#define sstAlignSym    0x125
+#define sstSrcLnSeg    0x126
+#define sstSrcModule   0x127
+#define sstLibraries   0x128
+#define sstGlobalSym   0x129
+#define sstGlobalPub   0x12a
+#define sstGlobalTypes 0x12b
+#define sstMPC         0x12c
+#define sstSegMap      0x12d
+#define sstSegName     0x12e
+#define sstPreComp     0x12f
+#define sstFileIndex   0x133
+#define sstStaticSym   0x134
+
+typedef struct _CODEVIEW_HEADER_NBxx
+{
+    DWORD       dwSignature;
+    DWORD       lfoDirectory;
+} CODEVIEW_HEADER_NBxx,* PCODEVIEW_HEADER_NBxx;
+
+typedef struct _CODEVIEW_HEADER_RSDS
+{
+    DWORD       dwSignature;
+    GUID        guid;
+    DWORD       unknown;
+    CHAR        name[1];
+} CODEVIEW_HEADER_RSDS,* PCODEVIEW_HEADER_RSDS;
+
+typedef struct _CODEVIEW_PDB_DATA
+{
+    DWORD       timestamp;
+    DWORD       unknown;
+    CHAR        name[1];
+} CODEVIEW_PDB_DATA, *PCODEVIEW_PDB_DATA;
+
+typedef struct _CV_DIRECTORY_HEADER
+{
+    WORD        cbDirHeader;
+    WORD        cbDirEntry;
+    DWORD       cDir;
+    DWORD       lfoNextDir;
+    DWORD       flags;
+} CV_DIRECTORY_HEADER, *PCV_DIRECTORY_HEADER;
+
+typedef struct _CV_DIRECTORY_ENTRY
+{
+    WORD        subsection;
+    WORD        iMod;
+    DWORD       lfo;
+    DWORD       cb;
+} CV_DIRECTORY_ENTRY, *PCV_DIRECTORY_ENTRY;
+
+typedef struct _CV_ENTRY_MODULE_SEGINFO
+{
+    WORD        seg;
+    WORD        pad;
+    DWORD       offset;
+    DWORD       cbSeg;
+} CV_ENTRY_MODULE_SEGINFO;
+
+typedef struct _CV_ENTRY_MODULE
+{
+    WORD        ovlNumber;
+    WORD        iLib;
+    WORD        cSeg;
+    WORD        Style;
+/*
+    CV_ENTRY_MODULE_SEGINFO     SegInfo[cSeg];
+    p_string    Name;
+*/
+} CV_ENTRY_MODULE;
+
+typedef struct _CV_ENTRY_GLOBAL_TYPES
+{
+    DWORD       flags;
+    DWORD       cTypes;
+/*
+    DWORD       offset[cTypes];
+                types_record[];
+*/
+} CV_ENTRY_GLOBAL_TYPES;
+
+
