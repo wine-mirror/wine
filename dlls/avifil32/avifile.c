@@ -40,7 +40,6 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "winerror.h"
-#include "windowsx.h"
 #include "mmsystem.h"
 #include "vfw.h"
 
@@ -1341,7 +1340,7 @@ static HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream *iface, DWORD fcc,
       return AVIERR_UNSUPPORTED;
     }
 
-    This->lpHandlerData = GlobalAllocPtr(GMEM_MOVEABLE, size);
+    This->lpHandlerData = HeapAlloc(GetProcessHeap(), 0, size);
     if (This->lpHandlerData == NULL)
       return AVIERR_MEMORY;
     This->cbHandlerData = size;
@@ -1576,7 +1575,7 @@ static void    AVIFILE_DestructAVIStream(IAVIStreamImpl *This)
     This->cbBuffer = 0;
   }
   if (This->lpHandlerData != NULL) {
-    GlobalFreePtr(This->lpHandlerData);
+    HeapFree(GetProcessHeap(), 0, This->lpHandlerData);
     This->lpHandlerData = NULL;
     This->cbHandlerData = 0;
   }
@@ -1687,8 +1686,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	case ckidSTREAMHANDLERDATA:
 	  if (pStream->lpHandlerData != NULL)
 	    return AVIERR_BADFORMAT;
-	  pStream->lpHandlerData = GlobalAllocPtr(GMEM_DDESHARE|GMEM_MOVEABLE,
-						  ck.cksize);
+	  pStream->lpHandlerData = HeapAlloc(GetProcessHeap(), 0, ck.cksize);
 	  if (pStream->lpHandlerData == NULL)
 	    return AVIERR_MEMORY;
 	  pStream->cbHandlerData = ck.cksize;
@@ -1702,8 +1700,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
           if (ck.cksize == 0)
             break;
 
-	  pStream->lpFormat = GlobalAllocPtr(GMEM_DDESHARE|GMEM_MOVEABLE,
-					     ck.cksize);
+	  pStream->lpFormat = HeapAlloc(GetProcessHeap(), 0, ck.cksize);
 	  if (pStream->lpFormat == NULL)
 	    return AVIERR_MEMORY;
 	  pStream->cbFormat = ck.cksize;
