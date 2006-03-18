@@ -28,13 +28,38 @@
 
 #include "initguid.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        expect_ ## func = FALSE; \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func  "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 DEFINE_GUID(CLSID_ResProtocol, 0x3050F3BC, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 
-static BOOL expect_GetBindInfo = FALSE, called_GetBindInfo = FALSE;
-static BOOL expect_ReportProgress = FALSE, called_ReportProgress = FALSE;
-static BOOL expect_ReportData = FALSE, called_ReportData = FALSE;
-static BOOL expect_ReportResult = FALSE, called_ReportResult = FALSE;
+DEFINE_EXPECT(GetBindInfo);
+DEFINE_EXPECT(ReportProgress);
+DEFINE_EXPECT(ReportData);
+DEFINE_EXPECT(ReportResult);
 
 static HRESULT expect_hrResult;
 static BOOL expect_hr_win32err = FALSE;
@@ -69,31 +94,33 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
 {
     static const WCHAR text_html[] = {'t','e','x','t','/','h','t','m','l',0};
 
-    ok(expect_ReportProgress, "unexpected call\n");
+    CHECK_EXPECT(ReportProgress);
+
     ok(ulStatusCode == BINDSTATUS_MIMETYPEAVAILABLE
-            || ulStatusCode == BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE, "ulStatusCode=%ld\n", ulStatusCode);
+            || ulStatusCode == BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE,
+            "ulStatusCode=%ld\n", ulStatusCode);
     ok(!lstrcmpW(szStatusText, text_html), "szStatusText != text/html\n");
-    expect_ReportProgress = FALSE;
-    called_ReportProgress = TRUE;
+
     return S_OK;
 }
 
 static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWORD grfBSCF, ULONG ulProgress,
         ULONG ulProgressMax)
 {
-    ok(expect_ReportData, "unexpected call\n");
+    CHECK_EXPECT(ReportData);
+
     ok(ulProgress == ulProgressMax, "ulProgress != ulProgressMax\n");
     ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE),
             "grcf = %08lx\n", grfBSCF);
-    expect_ReportData = FALSE;
-    called_ReportData = TRUE;
+
     return S_OK;
 }
 
 static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HRESULT hrResult, DWORD dwError,
         LPCWSTR szResult)
 {
-    ok(expect_ReportResult, "unexpected call\n");
+    CHECK_EXPECT(ReportResult);
+
     if(expect_hr_win32err)
         ok((hrResult&0xffff0000) == ((FACILITY_WIN32 << 16)|0x80000000) || expect_hrResult,
                 "expected win32 err or %08lx got: %08lx\n", expect_hrResult, hrResult);
@@ -101,8 +128,7 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
         ok(hrResult == expect_hrResult, "expected: %08lx got: %08lx\n", expect_hrResult, hrResult);
     ok(dwError == 0, "dwError = %ld\n", dwError);
     ok(!szResult, "szResult != NULL\n");
-    called_ReportResult = TRUE;
-    expect_ReportResult = FALSE;
+
     return S_OK;
 }
 
@@ -141,14 +167,14 @@ static ULONG WINAPI BindInfo_Release(IInternetBindInfo *iface)
 
 static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfBINDF, BINDINFO *pbindinfo)
 {
-    ok(expect_GetBindInfo, "unexpected call\n");
+    CHECK_EXPECT(GetBindInfo);
+
     ok(grfBINDF != NULL, "grfBINDF == NULL\n");
     if(grfBINDF)
         ok(!*grfBINDF, "*grfBINDF != 0\n");
     ok(pbindinfo != NULL, "pbindinfo == NULL\n");
     ok(pbindinfo->cbSize == sizeof(BINDINFO), "wrong size of pbindinfo: %ld\n", pbindinfo->cbSize);
-    called_GetBindInfo = TRUE;
-    expect_GetBindInfo = FALSE;
+
     return S_OK;
 }
 
@@ -176,8 +202,9 @@ static void test_protocol_fail(IInternetProtocol *protocol, LPCWSTR url, HRESULT
 {
     HRESULT hres;
 
-    expect_ReportResult = TRUE;
-    expect_GetBindInfo = TRUE;
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(ReportResult);
+
     expect_hrResult = expected_hres;
     expect_hr_win32err = expect_win32err;
     hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
@@ -186,34 +213,29 @@ static void test_protocol_fail(IInternetProtocol *protocol, LPCWSTR url, HRESULT
                 "expected win32 err or %08lx got: %08lx\n", expected_hres, hres);
     else
         ok(hres == expected_hres, "expected: %08lx got: %08lx\n", expected_hres, hres);
-    ok(called_ReportResult, "expected ReportResult\n");
-    ok(called_GetBindInfo, "expected GetBindInfo\n");
-    expect_ReportResult =  called_ReportResult = FALSE;
-    expect_GetBindInfo = called_GetBindInfo = FALSE;
+
+    CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(ReportResult);
 }
 
 static void protocol_start(IInternetProtocol *protocol, LPCWSTR url)
 {
     HRESULT hres;
 
-    expect_GetBindInfo = TRUE;
-    expect_ReportResult = TRUE;
-    expect_ReportProgress = TRUE;
-    expect_ReportData = TRUE;
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(ReportResult);
+    SET_EXPECT(ReportProgress);
+    SET_EXPECT(ReportData);
     expect_hrResult = S_OK;
     expect_hr_win32err = FALSE;
 
     hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
     ok(hres == S_OK, "Start failed: %08lx\n", hres);
 
-    ok(called_GetBindInfo, "expected GetBindInfo\n");
-    ok(called_ReportProgress, "expected ReportProgress\n");
-    ok(called_ReportData, "expected ReportData\n");
-    ok(called_ReportResult, "expected ReportResult\n");
-    called_GetBindInfo =  expect_GetBindInfo = FALSE;
-    called_ReportProgress = expect_ReportProgress = FALSE;
-    called_ReportData = expect_ReportData = FALSE;
-    called_ReportResult = expect_ReportResult = FALSE;
+    CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(ReportProgress);
+    CHECK_CALLED(ReportData);
+    CHECK_CALLED(ReportResult);
 }
 
 static void test_res_protocol(void)
