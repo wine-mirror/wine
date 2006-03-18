@@ -44,33 +44,16 @@ static HRESULT WINAPI HTMLElement_QueryInterface(IHTMLElement *iface,
                                                  REFIID riid, void **ppv)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
+    HRESULT hres;
 
     if(This->impl)
         return IUnknown_QueryInterface(This->impl, riid, ppv);
 
-    *ppv =  NULL;
+    hres = HTMLElement_QI(This, riid, ppv);
+    if(FAILED(hres))
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLELEM(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLELEM(This);
-    }else if(IsEqualGUID(&IID_IHTMLDOMNode, riid)) {
-        TRACE("(%p)->(IID_IHTMLDOMNode %p)\n", This, ppv);
-        *ppv = HTMLDOMNODE(This->node);
-    }else if(IsEqualGUID(&IID_IHTMLElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLElement %p)\n", This, ppv);
-        *ppv = HTMLELEM(This);
-    }
-
-    if(*ppv) {
-        IHTMLElement_AddRef(HTMLELEM(This));
-        return S_OK;
-    }
-
-    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return hres;
 }
 
 static ULONG WINAPI HTMLElement_AddRef(IHTMLElement *iface)
@@ -938,6 +921,29 @@ static const IHTMLElementVtbl HTMLElementVtbl = {
     HTMLElement_get_children,
     HTMLElement_get_all
 };
+
+HRESULT HTMLElement_QI(HTMLElement *This, REFIID riid, void **ppv)
+{
+    *ppv =  NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLELEM(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = HTMLELEM(This);
+    }else if(IsEqualGUID(&IID_IHTMLElement, riid)) {
+        TRACE("(%p)->(IID_IHTMLElement %p)\n", This, ppv);
+        *ppv = HTMLELEM(This);
+    }
+
+    if(*ppv) {
+        IHTMLElement_AddRef(HTMLELEM(This));
+        return S_OK;
+    }
+
+    return HTMLDOMNode_QI(This->node, riid, ppv);
+}
 
 void HTMLElement_Create(HTMLDOMNode *node)
 {

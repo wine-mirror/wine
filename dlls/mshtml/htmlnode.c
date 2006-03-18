@@ -43,30 +43,16 @@ static HRESULT WINAPI HTMLDOMNode_QueryInterface(IHTMLDOMNode *iface,
                                                  REFIID riid, void **ppv)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
+    HRESULT hres;
 
     if(This->impl.unk)
         return IUnknown_QueryInterface(This->impl.unk, riid, ppv);
 
-    *ppv = NULL;
+    hres = HTMLDOMNode_QI(This, riid, ppv);
+    if(FAILED(hres))
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = HTMLDOMNODE(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLDOMNODE(This);
-    }else if(IsEqualGUID(&IID_IHTMLDOMNode, riid)) {
-        TRACE("(%p)->(IID_IHTMLDOMNode %p)\n", This, ppv);
-        *ppv = HTMLDOMNODE(This);
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return hres;
 }
 
 static ULONG WINAPI HTMLDOMNode_AddRef(IHTMLDOMNode *iface)
@@ -303,6 +289,29 @@ static const IHTMLDOMNodeVtbl HTMLDOMNodeVtbl = {
     HTMLDOMNode_get_previousSibling,
     HTMLDOMNode_get_nextSibling
 };
+
+HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLDOMNODE(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = HTMLDOMNODE(This);
+    }else if(IsEqualGUID(&IID_IHTMLDOMNode, riid)) {
+        TRACE("(%p)->(IID_IHTMLDOMNode %p)\n", This, ppv);
+        *ppv = HTMLDOMNODE(This);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
 
 /*
  * FIXME

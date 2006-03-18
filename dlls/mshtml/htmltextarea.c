@@ -50,6 +50,7 @@ static HRESULT WINAPI HTMLTextAreaElement_QueryInterface(IHTMLTextAreaElement *i
                                                          REFIID riid, void **ppv)
 {
     HTMLTextAreaElement *This = HTMLTXTAREA_THIS(iface);
+    HRESULT hres;
 
     *ppv = NULL;
 
@@ -62,12 +63,6 @@ static HRESULT WINAPI HTMLTextAreaElement_QueryInterface(IHTMLTextAreaElement *i
     }else if(IsEqualGUID(&IID_IHTMLTextAreaElement, riid)) {
         TRACE("(%p)->(IID_IHTMLTextAreaElement %p)\n", This, ppv);
         *ppv = HTMLTXTAREA(This);
-    }else if(IsEqualGUID(&IID_IHTMLElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLElement %p)\n", This, ppv);
-        *ppv = HTMLELEM(This->element);
-    }else if(IsEqualGUID(&IID_IHTMLDOMNode, riid)) {
-        TRACE("(%p)->(IID_IHTMLDOMNode %p)\n", This, ppv);
-        *ppv = HTMLDOMNODE(This->element->node);
     }
 
     if(*ppv) {
@@ -75,8 +70,11 @@ static HRESULT WINAPI HTMLTextAreaElement_QueryInterface(IHTMLTextAreaElement *i
         return S_OK;
     }
 
-    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    hres = HTMLElement_QI(This->element, riid, ppv);
+    if(FAILED(hres))
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    return hres;
 }
 
 static ULONG WINAPI HTMLTextAreaElement_AddRef(IHTMLTextAreaElement *iface)

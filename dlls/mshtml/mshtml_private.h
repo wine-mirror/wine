@@ -217,6 +217,9 @@ void HTMLInputElement_Create(HTMLElement*);
 void HTMLSelectElement_Create(HTMLElement*);
 void HTMLTextAreaElement_Create(HTMLElement*);
 
+HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
+HRESULT HTMLElement_QI(HTMLElement*,REFIID,void**);
+
 HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
 void release_nodes(HTMLDocument*);
 

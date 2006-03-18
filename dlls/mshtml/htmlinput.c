@@ -50,6 +50,7 @@ static HRESULT WINAPI HTMLInputElement_QueryInterface(IHTMLInputElement *iface,
                                                          REFIID riid, void **ppv)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
+    HRESULT hres;
 
     *ppv = NULL;
 
@@ -62,12 +63,6 @@ static HRESULT WINAPI HTMLInputElement_QueryInterface(IHTMLInputElement *iface,
     }else if(IsEqualGUID(&IID_IHTMLInputElement, riid)) {
         TRACE("(%p)->(IID_IHTMLInputElement %p)\n", This, ppv);
         *ppv = HTMLINPUT(This);
-    }else if(IsEqualGUID(&IID_IHTMLElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLElement %p)\n", This, ppv);
-        *ppv = HTMLELEM(This->element);
-    }else if(IsEqualGUID(&IID_IHTMLDOMNode, riid)) {
-        TRACE("(%p)->(IID_IHTMLDOMNode %p)\n", This, ppv);
-        *ppv = HTMLDOMNODE(This->element->node);
     }
 
     if(*ppv) {
@@ -75,8 +70,11 @@ static HRESULT WINAPI HTMLInputElement_QueryInterface(IHTMLInputElement *iface,
         return S_OK;
     }
 
-    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    hres = HTMLElement_QI(This->element, riid, ppv);
+    if(FAILED(hres))
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    return hres;
 }
 
 static ULONG WINAPI HTMLInputElement_AddRef(IHTMLInputElement *iface)
