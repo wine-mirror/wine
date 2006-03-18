@@ -738,20 +738,19 @@ static int codeview_new_func_signature(struct module* module, unsigned typeno,
 }
 
 static int codeview_parse_type_table(struct module* module, const BYTE* table,
-                                     int len)
+                                     const DWORD* offset, DWORD num)
 {
     unsigned int                curr_type = 0x1000;
-    const BYTE*                 ptr = table;
-    int                         retv;
+    int                         retv = TRUE;
     const union codeview_type*  type;
     int                         value, leaf_len;
     const struct p_string*      p_name;
     const char*                 c_name;
 
-    while (ptr - table < len)
+    for (curr_type = 0x1000; retv && curr_type < 0x1000 + num; curr_type++)
     {
         retv = TRUE;
-        type = (const union codeview_type*)ptr;
+        type = (const union codeview_type*)(table + offset[curr_type - 0x1000]);
 
         switch (type->generic.id)
         {
@@ -843,7 +842,7 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
                 * the 'real' type will copy the member / enumeration data.
                 */
                const unsigned char* list = type->fieldlist.list;
-               int   len  = (ptr + type->generic.len + 2) - list;
+               int   len  = ((const BYTE*)type + type->generic.len + 2) - list;
 
                if (((const union codeview_fieldtype*)list)->generic.id == LF_ENUMERATE_V1 ||
                    ((const union codeview_fieldtype*)list)->generic.id == LF_ENUMERATE_V3)
@@ -943,6 +942,7 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
                                                type->mfunction_v2.rvtype,
                                                type->mfunction_v2.call);
             break;
+
         case LF_ARGLIST_V1:
         case LF_ARGLIST_V2:
             {
@@ -957,12 +957,9 @@ static int codeview_parse_type_table(struct module* module, const BYTE* table,
             dump(type, 2 + type->generic.len);
             break;
         }
-        if (!retv) return FALSE;
-        curr_type++;
-        ptr += type->generic.len + 2;
     }
 
-    return TRUE;
+    return retv;
 }
 
 /*========================================================================
@@ -1789,7 +1786,12 @@ static void pdb_process_types(const struct msc_debug_info* msc_dbg,
     types_image = pdb_read_file(image, pdb_lookup, 2);
     if (types_image)
     {
-        PDB_TYPES   types;
+        PDB_TYPES               types;
+        DWORD*                  offset;
+        DWORD                   num, total;
+        const BYTE*             table;
+        const BYTE*             ptr;
+
         pdb_convert_types_header(&types, types_image);
 
         /* Check for unknown versions */
@@ -1804,9 +1806,22 @@ static void pdb_process_types(const struct msc_debug_info* msc_dbg,
             ERR("-Unknown type info version %ld\n", types.version);
         }
 
+        /* reconstruct the types offset...
+         * FIXME: maybe it's present in the newest PDB_TYPES structures
+         */
+        total = types.last_index - types.first_index + 1;
+        offset = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * total);
+        table = ptr = types_image + types.type_offset;
+        num = 0;
+        while (ptr < table + types.type_size && num < total)
+        {
+            offset[num++] = ptr - table;
+            ptr += ((const union codeview_type*)ptr)->generic.len + 2;
+        }
+
         /* Read type table */
-        codeview_parse_type_table(msc_dbg->module, types_image + types.type_offset,
-                                  types.type_size);
+        codeview_parse_type_table(msc_dbg->module, table, offset, num);
+        HeapFree(GetProcessHeap(), 0, offset);
         pdb_free(types_image);
     }
 }
