@@ -22,6 +22,11 @@
 extern "C" {
 #endif
 
+#ifdef __WINESRC__
+/* This file contains macros that cause warnings on gcc 4.1, so avoid it. */
+#error Please avoid use of windowsx.h in Wine source code.
+#endif
+
 #ifndef SNDMSG
 #ifdef __cplusplus
 #define SNDMSG ::SendMessage
