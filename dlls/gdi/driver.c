@@ -365,11 +365,13 @@ BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size )
 {
     static const WCHAR displayW[] = { 'd','i','s','p','l','a','y',0 };
     static const WCHAR devicesW[] = { 'd','e','v','i','c','e','s',0 };
+    static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
     static const WCHAR empty_strW[] = { 0 };
     WCHAR *p;
 
     /* display is a special case */
-    if (!strcmpiW( device, displayW ))
+    if (!strcmpiW( device, displayW ) ||
+        !strcmpiW( device, display1W ))
     {
         lstrcpynW( driver, displayW, size );
         return TRUE;
