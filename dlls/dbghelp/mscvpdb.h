@@ -154,24 +154,6 @@ union codeview_type
     {
         unsigned short int      len;
         short int               id;
-        unsigned char           nbits;
-        unsigned char           bitoff;
-        unsigned short          type;
-    } bitfield_v1;
-    
-    struct
-    {
-        unsigned short int      len;
-        short int               id;
-        unsigned int            type;
-        unsigned char           nbits;
-        unsigned char           bitoff;
-    } bitfield_v2;
-
-    struct
-    {
-        unsigned short int      len;
-        short int               id;
         short int               elemtype;
         short int               idxtype;
         unsigned short int      arrlen;     /* numeric leaf */
@@ -386,6 +368,24 @@ union codeview_reftype
         short int               id;
         unsigned char           list[1];
     } fieldlist;
+
+    struct
+    {
+        unsigned short int      len;
+        short int               id;
+        unsigned char           nbits;
+        unsigned char           bitoff;
+        unsigned short          type;
+    } bitfield_v1;
+    
+    struct
+    {
+        unsigned short int      len;
+        short int               id;
+        unsigned int            type;
+        unsigned char           nbits;
+        unsigned char           bitoff;
+    } bitfield_v2;
 
 };
 

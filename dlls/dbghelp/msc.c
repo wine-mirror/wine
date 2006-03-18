@@ -100,24 +100,11 @@ static void dump(const void* ptr, unsigned len)
 
 static struct symt*     cv_basic_types[MAX_BUILTIN_TYPES];
 
-#define SymTagCVBitField        (SymTagMax + 0x100)
-struct codeview_bitfield
-{
-    struct symt         symt;
-    unsigned            subtype;
-    unsigned            bitposition;
-    unsigned            bitlength;
-};
-
 struct cv_defined_module
 {
     BOOL                allowed;
     unsigned int        num_defined_types;
     struct symt**       defined_types;
-
-    struct codeview_bitfield* bitfields;
-    unsigned            num_bitfields;
-    unsigned            used_bitfields;
 };
 /* FIXME: don't make it static */
 #define CV_MAX_MODULES          32
@@ -292,7 +279,7 @@ static const char* terminate_string(const struct p_string* p_name)
     return (!*symname || strcmp(symname, "__unnamed") == 0) ? NULL : symname;
 }
 
-static struct symt*  codeview_get_type(unsigned int typeno, BOOL allow_special)
+static struct symt*  codeview_get_type(unsigned int typeno, BOOL quiet)
 {
     struct symt*        symt = NULL;
 
@@ -322,9 +309,7 @@ static struct symt*  codeview_get_type(unsigned int typeno, BOOL allow_special)
                 symt = mod->defined_types[mod_typeno - FIRST_DEFINABLE_TYPE];
         }
     }
-    if (!allow_special && symt && symt->tag == SymTagCVBitField)
-        FIXME("bitfields are only handled for UDTs\n");
-    if (!symt && typeno) FIXME("Returning NULL symt for type-id %x\n", typeno);
+    if (!quiet && !symt && typeno) FIXME("Returning NULL symt for type-id %x\n", typeno);
     return symt;
 }
 
@@ -386,9 +371,6 @@ static void codeview_clear_type_table(void)
         cv_zmodules[i].allowed = FALSE;
         cv_zmodules[i].defined_types = NULL;
         cv_zmodules[i].num_defined_types = 0;
-        HeapFree(GetProcessHeap(), 0, cv_zmodules[i].bitfields);
-        cv_zmodules[i].bitfields = NULL;
-        cv_zmodules[i].num_bitfields = cv_zmodules[i].used_bitfields = 0;
     }
     cv_current_module = NULL;
 }
@@ -419,37 +401,6 @@ static int codeview_add_type_array(struct module* module,
     }
     symt = &symt_new_array(module, 0, arr_max, elem, index)->symt;
     return codeview_add_type(typeno, symt);
-}
-
-static int codeview_add_type_bitfield(unsigned int typeno, unsigned int bitoff,
-                                      unsigned int nbits, unsigned int basetype)
-{
-    if (cv_current_module->used_bitfields >= cv_current_module->num_bitfields)
-    {
-        if (cv_current_module->bitfields)
-        {
-            cv_current_module->num_bitfields *= 2;
-            cv_current_module->bitfields = 
-                HeapReAlloc(GetProcessHeap(), 0, 
-                            cv_current_module->bitfields, 
-                            cv_current_module->num_bitfields * sizeof(struct codeview_bitfield));
-        }
-        else
-        {
-            cv_current_module->num_bitfields = 64;
-            cv_current_module->bitfields = 
-                HeapAlloc(GetProcessHeap(), 0, 
-                          cv_current_module->num_bitfields * sizeof(struct codeview_bitfield));
-        }
-        if (!cv_current_module->bitfields) return 0;
-    }
-    
-    cv_current_module->bitfields[cv_current_module->used_bitfields].symt.tag    = SymTagCVBitField;
-    cv_current_module->bitfields[cv_current_module->used_bitfields].subtype     = basetype;
-    cv_current_module->bitfields[cv_current_module->used_bitfields].bitposition = bitoff;
-    cv_current_module->bitfields[cv_current_module->used_bitfields].bitlength   = nbits;
-
-    return codeview_add_type(typeno, &cv_current_module->bitfields[cv_current_module->used_bitfields++].symt);
 }
 
 static int codeview_add_type_enum_field_list(struct module* module,
@@ -499,7 +450,46 @@ static int codeview_add_type_enum_field_list(struct module* module,
     return TRUE;
 }
 
-static int codeview_add_type_struct_field_list(struct module* module,
+static void codeview_add_udt_element(struct codeview_type_parse* ctp,
+                                     struct symt_udt* symt, const char* name,
+                                     int value, DWORD type)
+{
+    struct symt*                subtype;
+    const union codeview_reftype*cv_type;
+
+    subtype = codeview_get_type(type, FALSE);
+
+    /* FIXME: we expect no forward usage of subtypes */
+    if (subtype)
+    {
+        DWORD64 elem_size = 0;
+        symt_get_info(subtype, TI_GET_LENGTH, &elem_size);
+        symt_add_udt_element(ctp->module, symt, name, subtype,
+                             value << 3, (DWORD)elem_size << 3);
+    }
+    else if ((cv_type = codeview_jump_to_type(ctp, type)))
+    {
+        switch (cv_type->generic.id)
+        {
+        case LF_BITFIELD_V1:
+            symt_add_udt_element(ctp->module, symt, name,
+                                 codeview_get_type(cv_type->bitfield_v1.type, FALSE),
+                                 cv_type->bitfield_v1.bitoff,
+                                 cv_type->bitfield_v1.nbits);
+            break;
+        case LF_BITFIELD_V2:
+            symt_add_udt_element(ctp->module, symt, name,
+                                 codeview_get_type(cv_type->bitfield_v2.type, FALSE),
+                                 cv_type->bitfield_v2.bitoff,
+                                 cv_type->bitfield_v2.nbits);
+            break;
+        default:
+            FIXME("Unexpected leaf %x\n", cv_type->generic.id);
+        }
+    }
+}
+
+static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
                                                struct symt_udt* symt,
                                                const union codeview_reftype* ref_type)
 {
@@ -508,7 +498,6 @@ static int codeview_add_type_struct_field_list(struct module* module,
     int                         value, leaf_len;
     const struct p_string*      p_name;
     const char*                 c_name;
-    struct symt*                subtype;
     const union codeview_fieldtype* type;
 
     while (ptr < last)
@@ -572,23 +561,9 @@ static int codeview_add_type_struct_field_list(struct module* module,
         case LF_MEMBER_V1:
             leaf_len = numeric_leaf(&value, &type->member_v1.offset);
             p_name = (const struct p_string*)((const char*)&type->member_v1.offset + leaf_len);
-            subtype = codeview_get_type(type->member_v1.type, TRUE);
 
-            if (!subtype || subtype->tag != SymTagCVBitField)
-            {
-                DWORD64 elem_size = 0;
-                if (subtype) symt_get_info(subtype, TI_GET_LENGTH, &elem_size);
-                symt_add_udt_element(module, symt, terminate_string(p_name),
-                                     codeview_get_type(type->member_v1.type, TRUE),
-                                     value << 3, (DWORD)elem_size << 3);
-            }
-            else
-            {
-                struct codeview_bitfield* cvbf = (struct codeview_bitfield*)subtype;
-                symt_add_udt_element(module, symt, terminate_string(p_name),
-                                     codeview_get_type(cvbf->subtype, FALSE),
-                                     cvbf->bitposition, cvbf->bitlength);
-            }
+            codeview_add_udt_element(ctp, symt, terminate_string(p_name), value, 
+                                     type->member_v1.type);
 
             ptr += 2 + 2 + 2 + leaf_len + (1 + p_name->namelen);
             break;
@@ -596,22 +571,9 @@ static int codeview_add_type_struct_field_list(struct module* module,
         case LF_MEMBER_V2:
             leaf_len = numeric_leaf(&value, &type->member_v2.offset);
             p_name = (const struct p_string*)((const unsigned char*)&type->member_v2.offset + leaf_len);
-            subtype = codeview_get_type(type->member_v2.type, TRUE);
 
-            if (!subtype || subtype->tag != SymTagCVBitField)
-            {
-                DWORD64 elem_size = 0;
-                if (subtype) symt_get_info(subtype, TI_GET_LENGTH, &elem_size);
-                symt_add_udt_element(module, symt, terminate_string(p_name),
-                                     subtype, value << 3, (DWORD)elem_size << 3);
-            }
-            else
-            {
-                struct codeview_bitfield* cvbf = (struct codeview_bitfield*)subtype;
-                symt_add_udt_element(module, symt, terminate_string(p_name),
-                                     codeview_get_type(cvbf->subtype, FALSE),
-                                     cvbf->bitposition, cvbf->bitlength);
-            }
+            codeview_add_udt_element(ctp, symt, terminate_string(p_name), value, 
+                                     type->member_v2.type);
 
             ptr += 2 + 2 + 4 + leaf_len + (1 + p_name->namelen);
             break;
@@ -619,22 +581,8 @@ static int codeview_add_type_struct_field_list(struct module* module,
         case LF_MEMBER_V3:
             leaf_len = numeric_leaf(&value, &type->member_v3.offset);
             c_name = (const char*)&type->member_v3.offset + leaf_len;
-            subtype = codeview_get_type(type->member_v3.type, TRUE);
 
-            if (!subtype || subtype->tag != SymTagCVBitField)
-            {
-                DWORD64 elem_size = 0;
-                if (subtype) symt_get_info(subtype, TI_GET_LENGTH, &elem_size);
-                symt_add_udt_element(module, symt, c_name,
-                                     subtype, value << 3, (DWORD)elem_size << 3);
-            }
-            else
-            {
-                struct codeview_bitfield* cvbf = (struct codeview_bitfield*)subtype;
-                symt_add_udt_element(module, symt, c_name,
-                                     codeview_get_type(cvbf->subtype, FALSE),
-                                     cvbf->bitposition, cvbf->bitlength);
-            }
+            codeview_add_udt_element(ctp, symt, c_name, value, type->member_v2.type);
 
             ptr += 2 + 2 + 4 + leaf_len + (strlen(c_name) + 1);
             break;
@@ -725,14 +673,14 @@ static int codeview_add_type_enum(struct module* module, unsigned int typeno,
     return codeview_add_type(typeno, &symt->symt);
 }
 
-static int codeview_add_type_struct(struct module* module, unsigned int typeno, 
+static int codeview_add_type_struct(struct codeview_type_parse* ctp, unsigned int typeno, 
                                     const char* name, int structlen, 
                                     const union codeview_reftype* fieldlist,
                                     enum UdtKind kind)
 {
-    struct symt_udt*    symt = symt_new_udt(module, name, structlen, kind);
+    struct symt_udt*    symt = symt_new_udt(ctp->module, name, structlen, kind);
 
-    if (fieldlist) codeview_add_type_struct_field_list(module, symt, fieldlist);
+    if (fieldlist) codeview_add_type_struct_field_list(ctp, symt, fieldlist);
     return codeview_add_type(typeno, &symt->symt);
 }
 
@@ -772,10 +720,8 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
          *   X  1500-150d       for V3 types
          *      8000-8010       for numeric leafes
          */
-        if ((type->generic.id & 0x8600) &&
-            type->generic.id != LF_BITFIELD_V1 && /* still some cases to fix */
-            type->generic.id != LF_BITFIELD_V2)
-            continue;
+        if (type->generic.id & 0x8600) continue;
+
         switch (type->generic.id)
         {
         case LF_MODIFIER_V1:
@@ -834,28 +780,12 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
                                            type->array_v3.elemtype, type->array_v3.idxtype, value);
             break;
 
-        case LF_BITFIELD_V1:
-            /* a bitfield is a CodeView specific data type which represent a bitfield
-             * in a structure or a class. For now, we store it in a SymTag-like type
-             * (so that the rest of the process is seamless), but check at udt 
-             * inclusion type for its presence
-             */
-            retv = codeview_add_type_bitfield(curr_type, type->bitfield_v1.bitoff,
-                                              type->bitfield_v1.nbits,
-                                              type->bitfield_v1.type);
-            break;
-        case LF_BITFIELD_V2:
-            retv = codeview_add_type_bitfield(curr_type, type->bitfield_v2.bitoff,
-                                              type->bitfield_v2.nbits,
-                                              type->bitfield_v2.type);
-            break;
-
         case LF_STRUCTURE_V1:
         case LF_CLASS_V1:
             leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
             p_name = (const struct p_string*)((const unsigned char*)&type->struct_v1.structlen + leaf_len);
             type_ref = codeview_jump_to_type(ctp, type->struct_v1.fieldlist);
-            retv = codeview_add_type_struct(ctp->module, curr_type, terminate_string(p_name),
+            retv = codeview_add_type_struct(ctp, curr_type, terminate_string(p_name),
                                             value, type_ref,
                                             type->generic.id == LF_CLASS_V1 ? UdtClass : UdtStruct);
             break;
@@ -865,7 +795,7 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
             leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
             p_name = (const struct p_string*)((const unsigned char*)&type->struct_v2.structlen + leaf_len);
             type_ref = codeview_jump_to_type(ctp, type->struct_v2.fieldlist);
-            retv = codeview_add_type_struct(ctp->module, curr_type, terminate_string(p_name),
+            retv = codeview_add_type_struct(ctp, curr_type, terminate_string(p_name),
                                             value, type_ref,
                                             type->generic.id == LF_CLASS_V2 ? UdtClass : UdtStruct);
             break;
@@ -875,7 +805,7 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
             leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
             c_name = (const char*)&type->struct_v3.structlen + leaf_len;
             type_ref = codeview_jump_to_type(ctp, type->struct_v3.fieldlist);
-            retv = codeview_add_type_struct(ctp->module, curr_type, c_name,
+            retv = codeview_add_type_struct(ctp, curr_type, c_name,
                                             value, type_ref,
                                             type->generic.id == LF_CLASS_V3 ? UdtClass : UdtStruct);
             break;
@@ -884,7 +814,7 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
             leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
             p_name = (const struct p_string*)((const unsigned char*)&type->union_v1.un_len + leaf_len);
             type_ref = codeview_jump_to_type(ctp, type->union_v1.fieldlist);
-            retv = codeview_add_type_struct(ctp->module, curr_type, terminate_string(p_name),
+            retv = codeview_add_type_struct(ctp, curr_type, terminate_string(p_name),
                                             value, type_ref, UdtUnion);
             break;
 
@@ -892,14 +822,14 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
             leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
             p_name = (const struct p_string*)((const unsigned char*)&type->union_v2.un_len + leaf_len);
             type_ref = codeview_jump_to_type(ctp, type->union_v2.fieldlist);
-            retv = codeview_add_type_struct(ctp->module, curr_type, terminate_string(p_name),
+            retv = codeview_add_type_struct(ctp, curr_type, terminate_string(p_name),
                                             value, type_ref, UdtUnion);
             break;
         case LF_UNION_V3:
             leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
             c_name = (const char*)&type->union_v3.un_len + leaf_len;
             type_ref = codeview_jump_to_type(ctp, type->union_v3.fieldlist);
-            retv = codeview_add_type_struct(ctp->module, curr_type, c_name,
+            retv = codeview_add_type_struct(ctp, curr_type, c_name,
                                             value, type_ref, UdtUnion);
             break;
 
