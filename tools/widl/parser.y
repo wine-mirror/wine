@@ -576,7 +576,7 @@ base_type: tBYTE				{ $$ = make_type(RPC_FC_BYTE, NULL); }
 	| tSIGNED int_std			{ $$ = $2; $$->sign = 1; }
 	| tUNSIGNED int_std			{ $$ = $2; $$->sign = -1;
 						  switch ($$->type) {
-						  case RPC_FC_CHAR:  $$->type = RPC_FC_BYTE; $$->sign = 0; break;
+						  case RPC_FC_CHAR:  break;
 						  case RPC_FC_SMALL: $$->type = RPC_FC_USMALL; break;
 						  case RPC_FC_SHORT: $$->type = RPC_FC_USHORT; break;
 						  case RPC_FC_LONG:  $$->type = RPC_FC_ULONG;  break;
