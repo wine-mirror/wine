@@ -1009,6 +1009,15 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
                                            type->mfunction_v2.call);
         break;
 
+    case LF_VTSHAPE_V1:
+        /* this is an ugly hack... FIXME when we have C++ support */
+        if (!(symt = existing))
+        {
+            char    buf[128];
+            snprintf(buf, sizeof(buf), "__internal_vt_shape_%x\n", curr_type);
+            symt = &symt_new_udt(ctp->module, buf, 0, UdtStruct)->symt;
+        }
+        break;
     default:
         FIXME("Unsupported type-id leaf %x\n", type->generic.id);
         dump(type, 2 + type->generic.len);
