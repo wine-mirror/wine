@@ -595,6 +595,39 @@ static struct regsvr_interface const interface_list[] = {
     { NULL }			/* list terminator */
 };
 
+static HRESULT register_msiexec(void)
+{
+    static const WCHAR key[] = {
+        'S','o','f','t','w','a','r','e',
+        '\\','M','i','c','r','o','s','o','f','t',
+        '\\','W','i','n','d','o','w','s',
+        '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+        '\\','I','n','s','t','a','l','l','e','r',0 };
+    static const WCHAR val[] = {
+        'I','n','s','t','a','l','l','e','r','L','o','c','a','t','i','o','n',0 };
+    WCHAR path[MAX_PATH];
+    HKEY hkey;
+    LONG res;
+    INT len;
+
+    len = GetSystemDirectoryW(path, MAX_PATH);
+    if (!len || len > MAX_PATH)
+        return E_FAIL;
+
+    res = RegCreateKeyExW(HKEY_LOCAL_MACHINE, key, 0,
+			  NULL, 0, KEY_READ | KEY_WRITE, NULL,
+			  &hkey, NULL);
+    if (res != ERROR_SUCCESS)
+        return E_FAIL;
+
+    res = RegSetValueExW(hkey, val, 0, REG_SZ,
+			 (BYTE*)path, (len + 1)*sizeof(WCHAR));
+
+    RegCloseKey(hkey);
+
+    return (res == ERROR_SUCCESS) ? S_OK : E_FAIL;
+}
+
 /***********************************************************************
  *		DllRegisterServer (MSI.@)
  */
@@ -607,6 +640,8 @@ HRESULT WINAPI DllRegisterServer(void)
     hr = register_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = register_interfaces(interface_list);
+    if (SUCCEEDED(hr))
+	hr = register_msiexec();
     return hr;
 }
 
