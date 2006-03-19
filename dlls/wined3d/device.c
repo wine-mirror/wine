@@ -3166,11 +3166,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         This->stencilfunc = func;
         if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
+#if 0 /* Don't use OpenGL 2.0 calls for now */
             if(GL_EXTCALL(glStencilFuncSeparate)) {
                 GL_EXTCALL(glStencilFuncSeparate(GL_FRONT, func, ref, mask));
                 checkGLcall("glStencilFuncSeparate(GL_FRONT,...)");
             }
-            else if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+            else
+#endif
+	    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
                 glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
                 checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
                 GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
@@ -3242,11 +3245,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
 
         if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
+#if 0 /* Don't use OpenGL 2.0 calls for now */
             if(GL_EXTCALL(glStencilOpSeparate)) {
                 GL_EXTCALL(glStencilOpSeparate(GL_FRONT, stencilFail, depthFail, stencilPass));
                 checkGLcall("glStencilOpSeparate(GL_FRONT,...)");
             }
-            else if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+            else
+#endif
+	    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
                 glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
                 checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
                 GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
@@ -3789,11 +3795,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
 
         if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
+#if 0 /* Don't use OpenGL 2.0 calls for now */
             if(GL_EXTCALL(glStencilOpSeparate)) {
                 GL_EXTCALL(glStencilOpSeparate(GL_BACK, stencilFail, depthFail, stencilPass));
                 checkGLcall("glStencilOpSeparate(GL_BACK,...)");
             }
-            else if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+            else
+#endif
+	    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
                 glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
                 checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
                 GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
@@ -3836,11 +3845,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         This->stencilfunc = func;
         if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
+#if 0 /* Don't use OpenGL 2.0 calls for now */
             if(GL_EXTCALL(glStencilFuncSeparate)) {
                 GL_EXTCALL(glStencilFuncSeparate(GL_BACK, func, ref, mask));
                 checkGLcall("glStencilFuncSeparate(GL_BACK,...)");
             }
-            else if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+            else
+#endif
+	    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
                 glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
                 checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
                 GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));

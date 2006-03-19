@@ -1237,7 +1237,9 @@ typedef enum _GL_SupportedExt {
     /* GL_ATI_separate_stencil */ \
     USE_GL_FUNC(PGLFNSTENCILOPSEPARATEATIPROC, glStencilOpSeparateATI); \
     USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEATIPROC, glStencilFuncSeparateATI); \
-    /* GL_VERSION_2_0 */ \
+
+/* OpenGL 2.0 functions */
+#define GL2_FUNCS_GEN \
     USE_GL_FUNC(PGLFNBLENDEQUATIONSEPARATEPROC, glBlendEquationSeparate); \
     USE_GL_FUNC(PGLFNDRAWBUFFERSPROC, glDrawBuffers); \
     USE_GL_FUNC(PGLFNSTENCILOPSEPARATEPROC, glStencilOpSeparate); \
@@ -1388,6 +1390,8 @@ typedef struct _WineD3D_GL_Info {
   GL_EXT_FUNCS_GEN;
   /** OpenGL GLX functions ptr */
   GLX_EXT_FUNCS_GEN;
+  /** OpenGL 2.0 functions ptr */
+  /* GL2_FUNCS_GEN; */
   /**/
 } WineD3D_GL_Info;
 #undef USE_GL_FUNC
