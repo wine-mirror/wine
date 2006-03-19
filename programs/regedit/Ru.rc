@@ -28,7 +28,7 @@ IDC_REGEDIT MENU DISCARDABLE
 BEGIN
     POPUP "&Файл"
     BEGIN
-        MENUITEM "В&ыход",                       ID_REGISTRY_EXIT
+        MENUITEM "В&ыйти",                       ID_REGISTRY_EXIT
     END
     POPUP "&Справка"
     BEGIN
@@ -46,9 +46,9 @@ BEGIN
         MENUITEM "&Подключить сетевой реестр...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
         MENUITEM "&Отключить сетевой реестр...",  ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "&Печатаь\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
+        MENUITEM "&Напечатать\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "В&ыход",                       ID_REGISTRY_EXIT
+        MENUITEM "В&ыйти",                       ID_REGISTRY_EXIT
     END
     POPUP "&Правка"
     BEGIN
@@ -153,9 +153,9 @@ BEGIN
                             "Подключается к реестру удалённого компьютера"
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
                             "Отключается от реестра удалённого компьютера"
-    ID_REGISTRY_PRINT       "Печатает весь реестр или ого часть"
+    ID_REGISTRY_PRINT       "Печатает весь реестр или его часть"
 /*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
-    ID_HELP_ABOUT           "Отображает информацию о программе, номер версии и авторство"
+    ID_HELP_ABOUT           "Отображает информацию о программе, номер версии и список авторов"
 END
 
 STRINGTABLE DISCARDABLE
