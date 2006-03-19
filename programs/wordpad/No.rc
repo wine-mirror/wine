@@ -30,7 +30,7 @@ BEGIN
     END
     POPUP "R&ediger"
     BEGIN
-        MENUITEM "&Angreo\tCtrl+Z",               ID_EDIT_UNDO
+        MENUITEM "&Angre\tCtrl+Z",               ID_EDIT_UNDO
         MENUITEM "&Gjenta\tCtrl+Y",               ID_EDIT_REDO
         MENUITEM "&Merk alt\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
