@@ -35,7 +35,7 @@
 #define szEXEC_ARGS        "Shell32.dll,Control_RunDLL "
 
 #define szC_COLOR          "desk.cpl,,2"
-#define szC_DATETIME       "datetime.cpl"
+#define szC_DATETIME       "timedate.cpl"
 #define szC_DESKTOP        "desk.cpl"
 #define szC_FONTS          "main.cpl @3"
 #define szC_INTERNATIONAL  "intl.cpl"
