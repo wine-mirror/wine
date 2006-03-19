@@ -100,7 +100,7 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe)
 static unsigned dbg_fetch_context(void)
 {
     dbg_context.ContextFlags = CONTEXT_CONTROL
-        | CONTEXT_INTEGER
+        | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT
 #ifdef CONTEXT_SEGMENTS
         | CONTEXT_SEGMENTS
 #endif
