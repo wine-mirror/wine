@@ -1088,7 +1088,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, DWO
 	/* Call SetVertexShader with a NULL shader to set the vertexshader in the stateblock to NULL. */
         IWineD3DDevice_SetVertexShader(This->WineD3DDevice, NULL);
     } else {
-        FIXME("Setting shader\n");
+        TRACE("Setting shader\n");
         if (MAX_SHADERS <= pShader - (VS_HIGHESTFIXEDFXF + 1)) {
             FIXME("(%p) : Number of shaders exceeds the maximum number of possible shaders\n", This);
             hrc = D3DERR_INVALIDCALL;
