@@ -3243,26 +3243,14 @@ typedef struct tagLVITEMW
 #define LV_ITEMA LVITEMA
 #define LV_ITEMW LVITEMW
 
-typedef struct LVSETINFOTIPA
-{
-    UINT cbSize;
-    DWORD dwFlags;
-    LPSTR pszText;
-    int iItem;
-    int iSubItem;
-} LVSETINFOTIPA, *PLVSETINFOTIPA;
-
-typedef struct LVSETINFOTIPW
+typedef struct LVSETINFOTIP
 {
     UINT cbSize;
     DWORD dwFlags;
     LPWSTR pszText;
     int iItem;
     int iSubItem;
-} LVSETINFOTIPW, *PLVSETINFOTIPW;
-
-#define LVSETINFOTIP WINELIB_NAME_AW(LVSETINFOTIP)
-#define PLVSETINFOTIP WINELIB_NAME_AW(PLVSETINFOTIP)
+} LVSETINFOTIP, *PLVSETINFOTIP;
 
 /* ListView background image structs and constants
    For _WIN32_IE version 0x400 and later. */
