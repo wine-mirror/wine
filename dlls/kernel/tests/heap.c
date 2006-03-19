@@ -25,6 +25,8 @@
 #include "winbase.h"
 #include "wine/test.h"
 
+#define MAGIC_DEAD 0xdeadbeef
+
 static SIZE_T resize_9x(SIZE_T size)
 {
     DWORD dwSizeAligned = (size + 3) & ~3;
@@ -35,7 +37,8 @@ START_TEST(heap)
 {
     void *mem;
     HGLOBAL gbl;
-    SIZE_T size;
+    HGLOBAL hsecond;
+    SIZE_T  size;
 
     /* Heap*() functions */
     mem = HeapAlloc(GetProcessHeap(), 0, 0);
@@ -75,6 +78,15 @@ START_TEST(heap)
     gbl = GlobalReAlloc(0, 10, GMEM_MOVEABLE);
     ok(gbl == NULL, "global realloc allocated memory\n");
 
+    /* invalid handles are catched in windows */
+    gbl = GlobalAlloc(GMEM_MOVEABLE, 256);
+    GlobalFree(gbl);
+    SetLastError(MAGIC_DEAD);
+    hsecond = GlobalFree(gbl);      /* invalid handle: free memory twice */
+    ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
+        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
+        hsecond, GetLastError(), gbl);
+
     /* Local*() functions */
     gbl = LocalAlloc(LMEM_MOVEABLE, 0);
     ok(gbl != NULL, "local memory not allocated for size 0\n");
@@ -95,6 +107,15 @@ START_TEST(heap)
 
     gbl = LocalReAlloc(0, 10, LMEM_MOVEABLE);
     ok(gbl == NULL, "local realloc allocated memory\n");
+
+    /* invalid handles are catched in windows */
+    gbl = LocalAlloc(GMEM_MOVEABLE, 256);
+    LocalFree(gbl);
+    SetLastError(MAGIC_DEAD);
+    hsecond = LocalFree(gbl);       /* invalid handle: free memory twice */
+    ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
+        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
+        hsecond, GetLastError(), gbl);
 
     /* trying to lock empty memory should give an error */
     gbl = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT,0);

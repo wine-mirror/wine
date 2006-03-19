@@ -683,13 +683,19 @@ HGLOBAL WINAPI GlobalReAlloc(
  *
  * Free a global memory object.
  *
+ * PARAMS
+ *  hmem [I] Handle of the global memory object
+ *
  * RETURNS
- *      NULL: Success
- *      Handle: Failure
+ *  Success: NULL
+ *  Failure: The provided handle
+ *
+ * NOTES
+ *   When the handle is invalid, last error is set to ERROR_INVALID_HANDLE
+ *
  */
-HGLOBAL WINAPI GlobalFree(
-                 HGLOBAL hmem /* [in] Handle of global memory object */
-) {
+HGLOBAL WINAPI GlobalFree(HGLOBAL hmem)
+{
     PGLOBAL32_INTERN pintern;
     HGLOBAL hreturned;
 
@@ -707,6 +713,7 @@ HGLOBAL WINAPI GlobalFree(
 
             if(pintern->Magic==MAGIC_GLOBAL_USED)
             {
+                pintern->Magic = 0xdead;
 
                 /* WIN98 does not make this test. That is you can free a */
                 /* block you have not unlocked. Go figure!!              */
@@ -718,6 +725,12 @@ HGLOBAL WINAPI GlobalFree(
                         hreturned=hmem;
                 if(!HeapFree(GetProcessHeap(), 0, pintern))
                     hreturned=hmem;
+            }
+            else
+            {
+                WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
+                SetLastError(ERROR_INVALID_HANDLE);
+                hreturned = hmem;
             }
         }
     }
