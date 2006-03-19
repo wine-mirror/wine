@@ -1140,11 +1140,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     HRESULT hrc = D3D_OK;
     TRACE("(%p) Relay\n", This);
-    if (VS_HIGHESTFIXEDFXF <= pShader) {
-        WARN("(%p) : Caller as passed a shader below the valud of VS_HIGHESTFIXEDFXF\n", This);
+    if (pShader <= VS_HIGHESTFIXEDFXF) {
+        WARN("(%p) : Caller passed a shader below the value of VS_HIGHESTFIXEDFXF\n", This);
         hrc = D3DERR_INVALIDCALL;
     } else if (MAX_SHADERS <= pShader - (VS_HIGHESTFIXEDFXF + 1)) {
-        FIXME("(%p) : Caller as passed a shader greater than the maximum number of shaders\n", This);
+        FIXME("(%p) : Caller passed a shader greater than the maximum number of shaders\n", This);
         hrc = D3DERR_INVALIDCALL;
     } else {
         IDirect3DVertexShader8Impl *shader = This->vShaders[pShader - (VS_HIGHESTFIXEDFXF + 1)];
