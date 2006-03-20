@@ -366,8 +366,9 @@ LONG WINAPI GetBitmapBits(
     } else {
 
         if(!bmp->bitmap.bmBits) {
-	    WARN("Bitmap is empty\n");
-	    ret = 0;
+	    TRACE("Bitmap is empty\n");
+	    memset(bits, 0, count);
+	    ret = count;
 	} else {
 	    memcpy(bits, bmp->bitmap.bmBits, count);
 	    ret = count;
