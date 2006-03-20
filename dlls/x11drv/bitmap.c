@@ -146,7 +146,18 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
     }
 
     if (bitmap.bmBits) /* Set bitmap bits */
+    {
         X11DRV_SetBitmapBits( hbitmap, bitmap.bmBits, bitmap.bmHeight * bitmap.bmWidthBytes );
+    }
+    else  /* else clear the bitmap */
+    {
+        wine_tsx11_lock();
+        XSetFunction( gdi_display, BITMAP_GC(physBitmap), GXclear );
+        XFillRectangle( gdi_display, physBitmap->pixmap, BITMAP_GC(physBitmap), 0, 0,
+                        bitmap.bmWidth, bitmap.bmHeight );
+        XSetFunction( gdi_display, BITMAP_GC(physBitmap), GXcopy );
+        wine_tsx11_unlock();
+    }
     return TRUE;
 }
 

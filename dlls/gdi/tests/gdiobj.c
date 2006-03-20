@@ -1034,9 +1034,7 @@ static void test_bitmap(void)
     memset(buf, 0xAA, sizeof(buf));
     ret = GetBitmapBits(hbmp, sizeof(buf), buf);
     ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
-todo_wine {
     ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match\n");
-}
 
     hbmp_old = SelectObject(hdc, hbmp_old);
     ok(hbmp_old == hbmp, "wrong old bitmap %p\n", hbmp_old);
