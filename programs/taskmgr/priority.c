@@ -33,7 +33,7 @@
 #include "taskmgr.h"
 #include "perfdata.h"
 
-void ProcessPage_OnSetPriorityRealTime(void)
+static void DoSetPriority(DWORD priority)
 {
     LVITEM            lvitem;
     ULONG            Index;
@@ -49,7 +49,7 @@ void ProcessPage_OnSetPriorityRealTime(void)
         lvitem.stateMask = LVIS_SELECTED;
         lvitem.iItem = Index;
 
-        ListView_GetItem(hProcessPageListCtrl, &lvitem);
+        SendMessage(hProcessPageListCtrl, LVM_GETITEM, 0, (LPARAM)&lvitem);
 
         if (lvitem.state & LVIS_SELECTED)
             break;
@@ -72,251 +72,41 @@ void ProcessPage_OnSetPriorityRealTime(void)
         return;
     }
 
-    if (!SetPriorityClass(hProcess, REALTIME_PRIORITY_CLASS))
+    if (!SetPriorityClass(hProcess, priority))
     {
         GetLastErrorText(strErrorText, 260);
         MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
     }
 
     CloseHandle(hProcess);
+}
+
+void ProcessPage_OnSetPriorityRealTime(void)
+{
+    DoSetPriority(REALTIME_PRIORITY_CLASS);
 }
 
 void ProcessPage_OnSetPriorityHigh(void)
 {
-    LVITEM            lvitem;
-    ULONG            Index;
-    DWORD            dwProcessId;
-    HANDLE            hProcess;
-    TCHAR            strErrorText[260];
-
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
-    {
-        memset(&lvitem, 0, sizeof(LVITEM));
-
-        lvitem.mask = LVIF_STATE;
-        lvitem.stateMask = LVIS_SELECTED;
-        lvitem.iItem = Index;
-
-        ListView_GetItem(hProcessPageListCtrl, &lvitem);
-
-        if (lvitem.state & LVIS_SELECTED)
-            break;
-    }
-
-    dwProcessId = PerfDataGetProcessId(Index);
-
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
-        return;
-
-    if (MessageBox(hMainWnd, _T("WARNING: Changing the priority class of this process may\ncause undesired results including system instability. Are you\nsure you want to change the priority class?"), _T("Task Manager Warning"), MB_YESNO|MB_ICONWARNING) != IDYES)
-        return;
-
-    hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, dwProcessId);
-
-    if (!hProcess)
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-        return;
-    }
-
-    if (!SetPriorityClass(hProcess, HIGH_PRIORITY_CLASS))
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-    }
-
-    CloseHandle(hProcess);
+    DoSetPriority(HIGH_PRIORITY_CLASS);
 }
 
 void ProcessPage_OnSetPriorityAboveNormal(void)
 {
-    LVITEM            lvitem;
-    ULONG            Index;
-    DWORD            dwProcessId;
-    HANDLE            hProcess;
-    TCHAR            strErrorText[260];
-
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
-    {
-        memset(&lvitem, 0, sizeof(LVITEM));
-
-        lvitem.mask = LVIF_STATE;
-        lvitem.stateMask = LVIS_SELECTED;
-        lvitem.iItem = Index;
-
-        ListView_GetItem(hProcessPageListCtrl, &lvitem);
-
-        if (lvitem.state & LVIS_SELECTED)
-            break;
-    }
-
-    dwProcessId = PerfDataGetProcessId(Index);
-
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
-        return;
-
-    if (MessageBox(hMainWnd, _T("WARNING: Changing the priority class of this process may\ncause undesired results including system instability. Are you\nsure you want to change the priority class?"), _T("Task Manager Warning"), MB_YESNO|MB_ICONWARNING) != IDYES)
-        return;
-
-    hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, dwProcessId);
-
-    if (!hProcess)
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-        return;
-    }
-
-    if (!SetPriorityClass(hProcess, ABOVE_NORMAL_PRIORITY_CLASS))
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-    }
-
-    CloseHandle(hProcess);
+    DoSetPriority(ABOVE_NORMAL_PRIORITY_CLASS);
 }
 
 void ProcessPage_OnSetPriorityNormal(void)
 {
-    LVITEM            lvitem;
-    ULONG            Index;
-    DWORD            dwProcessId;
-    HANDLE            hProcess;
-    TCHAR            strErrorText[260];
-
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
-    {
-        memset(&lvitem, 0, sizeof(LVITEM));
-
-        lvitem.mask = LVIF_STATE;
-        lvitem.stateMask = LVIS_SELECTED;
-        lvitem.iItem = Index;
-
-        ListView_GetItem(hProcessPageListCtrl, &lvitem);
-
-        if (lvitem.state & LVIS_SELECTED)
-            break;
-    }
-
-    dwProcessId = PerfDataGetProcessId(Index);
-
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
-        return;
-
-    if (MessageBox(hMainWnd, _T("WARNING: Changing the priority class of this process may\ncause undesired results including system instability. Are you\nsure you want to change the priority class?"), _T("Task Manager Warning"), MB_YESNO|MB_ICONWARNING) != IDYES)
-        return;
-
-    hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, dwProcessId);
-
-    if (!hProcess)
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-        return;
-    }
-
-    if (!SetPriorityClass(hProcess, NORMAL_PRIORITY_CLASS))
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-    }
-
-    CloseHandle(hProcess);
+    DoSetPriority(NORMAL_PRIORITY_CLASS);
 }
 
 void ProcessPage_OnSetPriorityBelowNormal(void)
 {
-    LVITEM            lvitem;
-    ULONG            Index;
-    DWORD            dwProcessId;
-    HANDLE            hProcess;
-    TCHAR            strErrorText[260];
-
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
-    {
-        memset(&lvitem, 0, sizeof(LVITEM));
-
-        lvitem.mask = LVIF_STATE;
-        lvitem.stateMask = LVIS_SELECTED;
-        lvitem.iItem = Index;
-
-        ListView_GetItem(hProcessPageListCtrl, &lvitem);
-
-        if (lvitem.state & LVIS_SELECTED)
-            break;
-    }
-
-    dwProcessId = PerfDataGetProcessId(Index);
-
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
-        return;
-
-    if (MessageBox(hMainWnd, _T("WARNING: Changing the priority class of this process may\ncause undesired results including system instability. Are you\nsure you want to change the priority class?"), _T("Task Manager Warning"), MB_YESNO|MB_ICONWARNING) != IDYES)
-        return;
-
-    hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, dwProcessId);
-
-    if (!hProcess)
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-        return;
-    }
-
-    if (!SetPriorityClass(hProcess, BELOW_NORMAL_PRIORITY_CLASS))
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-    }
-
-    CloseHandle(hProcess);
+    DoSetPriority(BELOW_NORMAL_PRIORITY_CLASS);
 }
 
 void ProcessPage_OnSetPriorityLow(void)
 {
-    LVITEM            lvitem;
-    ULONG            Index;
-    DWORD            dwProcessId;
-    HANDLE            hProcess;
-    TCHAR            strErrorText[260];
-
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
-    {
-        memset(&lvitem, 0, sizeof(LVITEM));
-
-        lvitem.mask = LVIF_STATE;
-        lvitem.stateMask = LVIS_SELECTED;
-        lvitem.iItem = Index;
-
-        ListView_GetItem(hProcessPageListCtrl, &lvitem);
-
-        if (lvitem.state & LVIS_SELECTED)
-            break;
-    }
-
-    dwProcessId = PerfDataGetProcessId(Index);
-
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
-        return;
-
-    if (MessageBox(hMainWnd, _T("WARNING: Changing the priority class of this process may\ncause undesired results including system instability. Are you\nsure you want to change the priority class?"), _T("Task Manager Warning"), MB_YESNO|MB_ICONWARNING) != IDYES)
-        return;
-
-    hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, dwProcessId);
-
-    if (!hProcess)
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-        return;
-    }
-
-    if (!SetPriorityClass(hProcess, IDLE_PRIORITY_CLASS))
-    {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Change Priority"), MB_OK|MB_ICONSTOP);
-    }
-
-    CloseHandle(hProcess);
+    DoSetPriority(IDLE_PRIORITY_CLASS);
 }
