@@ -1776,5 +1776,5 @@ dnl Local Variables:
 dnl comment-start: "dnl "
 dnl comment-end: ""
 dnl comment-start-skip: "\\bdnl\\b\\s *"
-dnl compile-command: "autoconf"
+dnl compile-command: "autoconf && autoheader"
 dnl End:
