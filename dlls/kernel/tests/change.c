@@ -409,7 +409,7 @@ static void test_readdirectorychanges(void)
     r = CreateDirectoryW( subdir, NULL );
     ok( r == TRUE, "failed to create directory\n");
 
-    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    r = WaitForSingleObject( ov.hEvent, 1000 );
     ok( r == WAIT_OBJECT_0, "event should be ready\n" );
 
     ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
@@ -451,7 +451,7 @@ static void test_readdirectorychanges(void)
     r = RemoveDirectoryW( subdir );
     ok( r == TRUE, "failed to remove directory\n");
 
-    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    r = WaitForSingleObject( ov.hEvent, 1000 );
     ok( r == WAIT_OBJECT_0, "should be ready\n" );
 
     ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
@@ -474,7 +474,7 @@ static void test_readdirectorychanges(void)
     r = CreateDirectoryW( subdir, NULL );
     ok( r == TRUE, "failed to create directory\n");
 
-    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    r = WaitForSingleObject( ov.hEvent, 1000 );
     ok( r == WAIT_OBJECT_0, "should be ready\n" );
 
     ok( ov.Internal == STATUS_NOTIFY_ENUM_DIR, "ov.Internal wrong\n");
@@ -487,7 +487,7 @@ static void test_readdirectorychanges(void)
     r = CreateDirectoryW( subsubdir, NULL );
     ok( r == TRUE, "failed to create directory\n");
 
-    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    r = WaitForSingleObject( ov.hEvent, 1000 );
     ok( r == WAIT_OBJECT_0, "should be ready\n" );
 
     ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
@@ -510,7 +510,7 @@ static void test_readdirectorychanges(void)
     r = RemoveDirectoryW( subdir );
     ok( r == TRUE, "failed to remove directory\n");
 
-    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    r = WaitForSingleObject( ov.hEvent, 1000 );
     ok( r == WAIT_OBJECT_0, "should be ready\n" );
 
     pfni = (PFILE_NOTIFY_INFORMATION) buffer;
@@ -605,7 +605,7 @@ static void test_readdirectorychanges_null(void)
     r = RemoveDirectoryW( subdir );
     ok( r == TRUE, "failed to remove directory\n");
 
-    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    r = WaitForSingleObject( ov.hEvent, 1000 );
     ok( r == WAIT_OBJECT_0, "should be ready\n" );
 
     ok( ov.Internal == STATUS_NOTIFY_ENUM_DIR, "ov.Internal wrong\n");
@@ -675,7 +675,7 @@ static void test_readdirectorychanges_filedir(void)
     ok( hfile != INVALID_HANDLE_VALUE, "failed to create file\n");
     ok( CloseHandle(hfile), "failed toc lose file\n");
 
-    r = WaitForSingleObject( ov.hEvent, INFINITE );
+    r = WaitForSingleObject( ov.hEvent, 1000 );
     ok( r == WAIT_OBJECT_0, "event should be ready\n" );
 
     ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
