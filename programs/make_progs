@@ -76,6 +76,7 @@ foreach my $i (split(/\s/,$makefiles))
             $module = $1;
             next if ($module eq "none");
             ($directories{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
+            die "invalid module $module in dir $directories{$module}\n" if "$directories{$module}.exe" ne $module;
             last;
         }
         if (/^PROGRAMS\s*=((\s*[a-zA-Z0-9_.]+)+)/)
@@ -133,12 +134,6 @@ foreach my $dir (sort keys %alldirs)
     printf NEWMAKE " \\\n\t%s", $dir if $bin_install{$dir};
 }
 
-print NEWMAKE "\n\n# Symlinks to apps that we want to run from inside the source tree\nSYMLINKS =";
-foreach my $mod (sort keys %directories)
-{
-    printf NEWMAKE " \\\n\t%s\$(DLLEXT)", $mod;
-}
-
 ################################################################
 # output the build and install targets
 
@@ -147,7 +142,7 @@ print NEWMAKE <<EOF;
 
 \@MAKE_RULES\@
 
-all: wineapploader winelauncher \$(SUBDIRS) \$(SYMLINKS)
+all: wineapploader winelauncher \$(SUBDIRS)
 
 wineapploader: wineapploader.in
 	sed -e 's,\@bindir\\\@,\$(bindir),g' \$(SRCDIR)/wineapploader.in >\$\@ || (\$(RM) \$\@ && false)
@@ -180,35 +175,14 @@ uninstall::
 	-rmdir \$(DESTDIR)\$(dlldir)
 
 clean::
-	\$(RM) wineapploader winelauncher \$(SYMLINKS)
+	\$(RM) wineapploader winelauncher
 
 # Rules for testing
 
 check test:: \$(SUBDIRS:%=%/__test__)
 
+### Dependencies:
 EOF
-
-################################################################
-# output the symlinks rules
-
-print NEWMAKE "# Rules for symlinks\n\n";
-
-foreach my $mod (sort keys %directories)
-{
-    printf NEWMAKE "%s\$(DLLEXT)", $mod;
-    printf NEWMAKE ": %s/%s\$(DLLEXT)\n", $directories{$mod}, $mod;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
-}
-
-foreach my $mod (sort keys %directories)
-{
-    printf NEWMAKE "%s/%s\$(DLLEXT): %s\n", $directories{$mod}, $mod, $directories{$mod};
-}
-
-################################################################
-# makefile trailer
-
-print NEWMAKE "\n### Dependencies:\n";
 
 close NEWMAKE;
 rename "Makefile.in.new", "Makefile.in";
