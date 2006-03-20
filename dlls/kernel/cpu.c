@@ -157,7 +157,7 @@ static void create_registry_keys( const SYSTEM_INFO *info )
                 /*TODO: report 64bit processors properly*/
                 RtlInitUnicodeString( &valueW, IdentifierW );
                 sprintf( id, "x86 Family %d Model %d Stepping %d",
-                         info->wProcessorLevel /*model and family are messed up*/, info->wProcessorLevel, info->wProcessorRevision);
+                         info->wProcessorLevel, HIBYTE(info->wProcessorRevision), LOBYTE(info->wProcessorRevision) );
 
                 RtlMultiByteToUnicodeN( idW, sizeof(idW), NULL, id, strlen(id)+1 );
                 NtSetValueKey( hkey, &valueW, 0, REG_SZ, idW, (strlenW(idW)+1)*sizeof(WCHAR) );
@@ -300,6 +300,26 @@ VOID WINAPI GetSystemInfo(
 		if ((s=strchr(value,'\n')))
 			*s='\0';
 
+		if (!strcasecmp(line,"processor")) {
+			/* processor number counts up... */
+			unsigned int x;
+
+			if (sscanf(value,"%d",&x))
+				if (x+1>cachedsi.dwNumberOfProcessors)
+					cachedsi.dwNumberOfProcessors=x+1;
+			
+			continue;
+		}
+                if (!strcasecmp(line,"model")) {
+                        /* First part of wProcessorRevision */
+			int	x;
+
+			if (sscanf(value,"%d",&x))
+				cachedsi.wProcessorRevision = cachedsi.wProcessorRevision | (x << 8);
+
+			continue;
+                }
+
 		/* 2.1 method */
 		if (!strcasecmp(line, "cpu family")) {
 			if (isdigit (value[0])) {
@@ -356,33 +376,12 @@ VOID WINAPI GetSystemInfo(
 			}
 			continue;
 		}
-		if (!strcasecmp(line,"fdiv_bug")) {
-			if (!strncasecmp(value,"yes",3))
-				PF[PF_FLOATING_POINT_PRECISION_ERRATA] = TRUE;
-
-			continue;
-		}
-		if (!strcasecmp(line,"fpu")) {
-			if (!strncasecmp(value,"no",2))
-				PF[PF_FLOATING_POINT_EMULATED] = TRUE;
-
-			continue;
-		}
-		if (!strcasecmp(line,"processor")) {
-			/* processor number counts up... */
-			unsigned int x;
-
-			if (sscanf(value,"%d",&x))
-				if (x+1>cachedsi.dwNumberOfProcessors)
-					cachedsi.dwNumberOfProcessors=x+1;
-			
-			continue;
-		}
 		if (!strcasecmp(line,"stepping")) {
+                        /* Second part of wProcessorRevision */
 			int	x;
 
 			if (sscanf(value,"%d",&x))
-				cachedsi.wProcessorRevision = x;
+				cachedsi.wProcessorRevision = cachedsi.wProcessorRevision | x;
 
 			continue;
 		}
@@ -395,9 +394,20 @@ VOID WINAPI GetSystemInfo(
 			}
 			continue;
 		}
+		if (!strcasecmp(line,"fdiv_bug")) {
+			if (!strncasecmp(value,"yes",3))
+				PF[PF_FLOATING_POINT_PRECISION_ERRATA] = TRUE;
+
+			continue;
+		}
+		if (!strcasecmp(line,"fpu")) {
+			if (!strncasecmp(value,"no",2))
+				PF[PF_FLOATING_POINT_EMULATED] = TRUE;
+
+			continue;
+		}
 		if (	!strcasecmp(line,"flags")	||
-			!strcasecmp(line,"features")
-		) {
+			!strcasecmp(line,"features")) {
 			if (strstr(value,"cx8"))
 				PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
 			if (strstr(value,"mmx"))
