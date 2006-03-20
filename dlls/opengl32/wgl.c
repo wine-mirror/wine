@@ -31,6 +31,8 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "wingdi.h"
+#include "winternl.h"
+#include "winnt.h"
 
 #include "wgl_ext.h"
 #include "opengl_ext.h"
@@ -82,6 +84,7 @@ typedef struct wine_glcontext {
   XVisualInfo *vis;
   GLXFBConfig fb_conf;
   GLXContext ctx;
+  BOOL do_escape;
   struct wine_glcontext *next;
   struct wine_glcontext *prev;
 } Wine_GLContext;
@@ -96,18 +99,13 @@ static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
 
 void enter_gl(void)
 {
-    GLXContext gl_ctx;
-    Wine_GLContext *ctx;
-    enum x11drv_escape_codes escape = X11DRV_SYNC_PIXMAP;
-
-    wine_tsx11_lock_ptr();
-    gl_ctx = glXGetCurrentContext();
-    if(!gl_ctx) return;
-    ctx = get_context_from_GLXContext(gl_ctx);
-    wine_tsx11_unlock_ptr(); /* unlock before calling GDI apis */
-
-    if(ctx && GetObjectType(ctx->hdc) == OBJ_MEMDC)
-        ExtEscape(ctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL);
+    Wine_GLContext *curctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
+    
+    if (curctx && curctx->do_escape)
+    {
+        enum x11drv_escape_codes escape = X11DRV_SYNC_PIXMAP;
+        ExtEscape(curctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL);
+    }
 
     wine_tsx11_lock_ptr();
     return;
@@ -541,6 +539,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
   ENTER_GL();
   if (hglrc == NULL) {
       ret = glXMakeCurrent(default_display, None, NULL);
+      NtCurrentTeb()->glContext = NULL;
   } else {
       Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
       Drawable drawable = get_drawable( hdc );
@@ -571,8 +570,12 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
       }
       TRACE(" make current for dis %p, drawable %p, ctx %p\n", ctx->display, (void*) drawable, ctx->ctx);
       ret = glXMakeCurrent(ctx->display, drawable, ctx->ctx);
+      NtCurrentTeb()->glContext = ctx;
       if(ret && type == OBJ_MEMDC)
+      {
+          ctx->do_escape = TRUE;
           glDrawBuffer(GL_FRONT_LEFT);
+      }
   }
   LEAVE_GL();
   TRACE(" returning %s\n", (ret ? "True" : "False"));
