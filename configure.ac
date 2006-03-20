@@ -997,6 +997,7 @@ case $host_os in
         if test "$ac_cv_ld_rpath" = "yes"
         then
           AC_SUBST(LDEXERPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"])
+          AC_SUBST(LDDLLRPATH,["-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(dlldir) \$(libdir)\`"])
         fi
 
         case $host_cpu in

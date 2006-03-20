@@ -11,6 +11,7 @@
 
 DLLDEFS     = @DLLDEFS@
 DLLFLAGS    = @DLLFLAGS@
+LDRPATH     = @LDDLLRPATH@
 DEFS        = $(DLLDEFS) $(EXTRADEFS)
 ALL_IMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 ALL_LIBS    = $(ALL_IMPORTS:%=-l%) -L$(LIBDIR) -lwine $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
@@ -24,7 +25,7 @@ all: $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
 # Rules for .so main module
 
 $(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ -L$(DLLDIR) $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(LDRPATH) -L$(DLLDIR) $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
 
 $(BASEMODULE): $(WINEWRAPPER)
 	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
