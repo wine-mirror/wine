@@ -55,6 +55,8 @@ typedef struct {
 
 #include "poppack.h"
 
+static const char *output_name;
+
 static void usage(char **argv)
 {
     fprintf(stderr, "%s foo.ttf ppem enc dpi def_char avg_width\n", argv[0]);
@@ -64,6 +66,12 @@ static void usage(char **argv)
 #ifndef __GNUC__
 #define __attribute__(X)
 #endif
+
+/* atexit handler to cleanup files */
+static void cleanup(void)
+{
+    if (output_name) unlink( output_name );
+}
 
 static void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 
@@ -377,10 +385,13 @@ int main(int argc, char **argv)
 
     sprintf(output, "%s-%d-%d-%d.fnt", name, enc, dpi, ppem);
 
+    atexit( cleanup );
     fp = fopen(output, "w");
+    output_name = output;
 
     fill_fontinfo(face, enc, fp, dpi, def_char, avg_width);
     fclose(fp);
+    output_name = NULL;
     exit(0);
 }
 
