@@ -227,13 +227,15 @@ static void test_CreateDispTypeInfo(void)
     TYPEATTR *pTypeAttr;
     HREFTYPE href;
     FUNCDESC *pFuncDesc;
+    MEMBERID memid;
 
     static const WCHAR func1[] = {'f','u','n','c','1',0};
     static const WCHAR func2[] = {'f','u','n','c','2',0};
     static const WCHAR func3[] = {'f','u','n','c','3',0};
     static const WCHAR parm1[] = {'p','a','r','m','1',0};
     static const WCHAR parm2[] = {'p','a','r','m','2',0};
-    
+    OLECHAR *name = (OLECHAR *)func1;
+
     ifdata.pmethdata = methdata;
     ifdata.cMembers = sizeof(methdata) / sizeof(methdata[0]);
 
@@ -293,6 +295,9 @@ static void test_CreateDispTypeInfo(void)
 
     hr = ITypeInfo_GetRefTypeOfImplType(pTypeInfo, 0, &href);
     ok(hr == S_OK, "hr %08lx\n", hr);
+    todo_wine {
+    ok(href == 0, "href = 0x%lx\n", href);
+    }
     hr = ITypeInfo_GetRefTypeInfo(pTypeInfo, href, &pTI2);
     ok(hr == S_OK, "hr %08lx\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI2, &pTypeAttr);
@@ -350,6 +355,11 @@ static void test_CreateDispTypeInfo(void)
     ok(pFuncDesc->wFuncFlags == 0, "oVft %d\n", pFuncDesc->wFuncFlags);
     ok(pFuncDesc->elemdescFunc.tdesc.vt == VT_I4, "ret vt %x\n", pFuncDesc->elemdescFunc.tdesc.vt);
     ITypeInfo_ReleaseFuncDesc(pTI2, pFuncDesc);
+
+    /* test GetIDsOfNames on a coclass to see if it searches its interfaces */
+    hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &name, 1, &memid);
+    ok(hr == S_OK, "hr 0x%08lx\n", hr);
+    ok(memid == 0x123, "memid 0x%08lx\n", memid);
 
     ITypeInfo_Release(pTI2);
     ITypeInfo_Release(pTypeInfo);

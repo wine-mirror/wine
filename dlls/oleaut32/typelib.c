@@ -4784,9 +4784,8 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
             return ret;
         }
     }
-    /* not found, see if this is and interface with an inheritance */
-    if(This->TypeAttr.cImplTypes &&
-       (This->TypeAttr.typekind==TKIND_INTERFACE || This->TypeAttr.typekind==TKIND_DISPATCH)) {
+    /* not found, see if it can be found in an inherited interface */
+    if(This->TypeAttr.cImplTypes) {
         /* recursive search */
         ITypeInfo *pTInfo;
         ret=ITypeInfo_GetRefTypeInfo(iface,
@@ -6338,7 +6337,7 @@ HRESULT WINAPI CreateDispTypeInfo(
     int param, func;
     TLBFuncDesc **ppFuncDesc;
 
-    TRACE_(typelib)("\n");
+    TRACE("\n");
     pTypeLibImpl = TypeLibImpl_Constructor();
     if (!pTypeLibImpl) return E_FAIL;
 
@@ -6394,6 +6393,8 @@ HRESULT WINAPI CreateDispTypeInfo(
         ppFuncDesc = &(*ppFuncDesc)->next;
     }
 
+    dump_TypeInfo(pTIIface);
+
     pTypeLibImpl->pTypeInfo = pTIIface;
     pTypeLibImpl->TypeInfoCount++;
 
@@ -6422,6 +6423,8 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTIClass->reflist->index = 0;
     pTIClass->reflist->reference = 1;
     pTIClass->reflist->pImpTLInfo = TLB_REF_INTERNAL;
+
+    dump_TypeInfo(pTIClass);
 
     pTIIface->next = pTIClass;
     pTypeLibImpl->TypeInfoCount++;
