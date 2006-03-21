@@ -677,6 +677,42 @@ static void test_SetThreadContext(void)
 
 #endif  /* __i386__ */
 
+static HANDLE finish_event;
+static LONG times_executed;
+
+static DWORD CALLBACK work_function(void *p)
+{
+    LONG executed = InterlockedIncrement(&times_executed);
+
+    if (executed == 100)
+        SetEvent(finish_event);
+    return 0;
+}
+
+static void test_QueueUserWorkItem(void)
+{
+    int i;
+    DWORD wait_result;
+    DWORD before, after;
+
+    finish_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+    before = GetTickCount();
+
+    for (i = 0; i < 100; i++)
+    {
+        BOOL ret = QueueUserWorkItem(work_function, (void *)i, WT_EXECUTEDEFAULT);
+        ok(ret, "QueueUserWorkItem failed with error %ld\n", GetLastError());
+    }
+
+    wait_result = WaitForSingleObject(finish_event, 10000);
+
+    after = GetTickCount();
+    trace("100 QueueUserWorkItem calls took %ldms\n", after - before);
+    ok(wait_result == WAIT_OBJECT_0, "wait failed with error 0x%lx\n", wait_result);
+
+    ok(times_executed == 100, "didn't execute all of the work items\n");
+}
 
 START_TEST(thread)
 {
@@ -702,4 +738,5 @@ START_TEST(thread)
 #ifdef __i386__
    test_SetThreadContext();
 #endif
+   test_QueueUserWorkItem();
 }
