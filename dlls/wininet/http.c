@@ -2003,9 +2003,10 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
             (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
             return FALSE;
 
-        url_length++; /* for nul terminating character */
-        orig_url = HeapAlloc(GetProcessHeap(), 0, url_length * sizeof(WCHAR));
+        orig_url = HeapAlloc(GetProcessHeap(), 0, url_length);
 
+        /* convert from bytes to characters */
+        url_length = url_length / sizeof(WCHAR) - 1;
         if (!InternetCreateUrlW(&urlComponents, 0, orig_url, &url_length))
         {
             HeapFree(GetProcessHeap(), 0, orig_url);

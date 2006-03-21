@@ -3900,10 +3900,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
 /***********************************************************************
  *      InternetCreateUrlA (WININET.@)
  *
- * RETURNS
- *   TRUE on success
- *   FALSE on failure
- *
+ * See InternetCreateUrlW.
  */
 BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
                                LPSTR lpszUrl, LPDWORD lpdwUrlLength)
@@ -3930,6 +3927,9 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
 
     ret = InternetCreateUrlW(&urlCompW, dwFlags, urlW, lpdwUrlLength);
 
+    if (!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER))
+        *lpdwUrlLength /= sizeof(WCHAR);
+
     /* on success, lpdwUrlLength points to the size of urlW in WCHARS
     * minus one, so add one to leave room for NULL terminator
     */
@@ -3949,6 +3949,21 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
 
 /***********************************************************************
  *      InternetCreateUrlW (WININET.@)
+ *
+ * Creates a URL from its component parts.
+ *
+ * PARAMS
+ *  lpUrlComponents [I] URL Components.
+ *  dwFlags         [I] Flags. See notes.
+ *  lpszUrl         [I] Buffer in which to store the created URL.
+ *  lpdwUrlLength   [I/O] On input, the length of the buffer pointed to by
+ *                        lpszUrl in characters. On output, the number of bytes
+ *                        required to store the URL including terminator.
+ *
+ * NOTES
+ *
+ * The dwFlags parameter can be zero or more of the following:
+ *|ICU_ESCAPE - Generates escape sequences for unsafe characters in the path and extra info of the URL.
  *
  * RETURNS
  *   TRUE on success
@@ -3980,7 +3995,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
 
     if (!lpszUrl || *lpdwUrlLength < dwLen)
     {
-        *lpdwUrlLength = dwLen + 1; /* terminating null */
+        *lpdwUrlLength = (dwLen + 1) * sizeof(WCHAR);
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
