@@ -92,10 +92,16 @@ struct find_s find_tests2[] = {
   {10, 5, "", 0, -1, 0},
 
   /* Whole-word search */
-  {0, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 1},
-  {0, -1, "win", FR_DOWN | FR_WHOLEWORD, -1, 1},
+  {0, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 0},
+  {0, -1, "win", FR_DOWN | FR_WHOLEWORD, -1, 0},
+  {13, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 0},
+  {0, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 0, 0},
+  {10, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 23, 0},
+  {11, -1, "winewine", FR_WHOLEWORD, 0, 0},
+  {31, -1, "winewine", FR_WHOLEWORD, 23, 0},
   
   /* Bad ranges */
+  {5, 200, "XXX", FR_DOWN, -1, 0},
   {-20, 20, "Wine", FR_DOWN, -1, 0},
   {-20, 20, "Wine", FR_DOWN, -1, 0},
   {-15, -20, "Wine", FR_DOWN, -1, 0},
