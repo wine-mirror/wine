@@ -98,15 +98,19 @@ ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         _tcscpy(szTemp, _T("Task"));
         column.pszText = szTemp;
         column.cx = 250;
-        ListView_InsertColumn(hApplicationPageListCtrl, 0, &column);    /* Add the "Task" column */
+        /* Add the "Task" column */
+        SendMessage(hApplicationPageListCtrl, LVM_INSERTCOLUMN, 0, (LPARAM) &column);
         column.mask = LVCF_TEXT|LVCF_WIDTH;
         _tcscpy(szTemp, _T("Status"));
         column.pszText = szTemp;
         column.cx = 95;
-        ListView_InsertColumn(hApplicationPageListCtrl, 1, &column);    /* Add the "Status" column */
+        /* Add the "Status" column */
+        SendMessage(hApplicationPageListCtrl, LVM_INSERTCOLUMN, 1, (LPARAM) &column);
 
-        ListView_SetImageList(hApplicationPageListCtrl, ImageList_Create(16, 16, ILC_COLOR8|ILC_MASK, 0, 1), LVSIL_SMALL);
-        ListView_SetImageList(hApplicationPageListCtrl, ImageList_Create(32, 32, ILC_COLOR8|ILC_MASK, 0, 1), LVSIL_NORMAL);
+        SendMessage(hApplicationPageListCtrl, LVM_SETIMAGELIST, LVSIL_SMALL,
+                    (LPARAM) ImageList_Create(16, 16, ILC_COLOR8|ILC_MASK, 0, 1));
+        SendMessage(hApplicationPageListCtrl, LVM_SETIMAGELIST, LVSIL_NORMAL,
+                    (LPARAM) ImageList_Create(32, 32, ILC_COLOR8|ILC_MASK, 0, 1));
 
         UpdateApplicationListControlViewSetting();
 
@@ -330,7 +334,7 @@ void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
         memset(&item, 0, sizeof(LV_ITEM));
         item.mask = LVIF_IMAGE|LVIF_PARAM;
         item.iItem = i;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
 
         pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
         if (pAPLI->hWnd == hWnd)
@@ -358,7 +362,7 @@ void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
             ImageList_ReplaceIcon(hImageListSmall, item.iItem, hIcon);
 
             /* Update the list view */
-            ListView_RedrawItems(hApplicationPageListCtrl, 0, ListView_GetItemCount(hApplicationPageListCtrl));
+            SendMessage(hApplicationPageListCtrl, LVM_REDRAWITEMS, 0, ListView_GetItemCount(hApplicationPageListCtrl));
             /* UpdateWindow(hApplicationPageListCtrl); */
             InvalidateRect(hApplicationPageListCtrl, NULL, 0);
         }
@@ -381,7 +385,7 @@ void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
         item.pszText = LPSTR_TEXTCALLBACK;
         item.iItem = ListView_GetItemCount(hApplicationPageListCtrl);
         item.lParam = (LPARAM)pAPLI;
-        ListView_InsertItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_INSERTITEM, 0, (LPARAM) &item);
     }
 
 
@@ -391,7 +395,7 @@ void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
         memset(&item, 0, sizeof(LV_ITEM));
         item.mask = LVIF_IMAGE|LVIF_PARAM;
         item.iItem = i;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
 
         pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
         if (!IsWindow(pAPLI->hWnd)||
@@ -404,7 +408,7 @@ void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
             ImageList_Remove(hImageListLarge, item.iItem);
             ImageList_Remove(hImageListSmall, item.iItem);
 
-            ListView_DeleteItem(hApplicationPageListCtrl, item.iItem);
+            SendMessage(hApplicationPageListCtrl, LVM_DELETEITEM, item.iItem, 0);
             free(pAPLI);
             bItemRemoved = TRUE;
         }
@@ -423,7 +427,7 @@ void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
             item.mask = LVIF_IMAGE;
             item.iItem = i;
             item.iImage = i;
-            ListView_SetItem(hApplicationPageListCtrl, &item);
+            SendMessage(hApplicationPageListCtrl, LVM_SETITEM, 0, (LPARAM) &item);
         }
     }
 
@@ -566,7 +570,7 @@ void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
 
         case HDN_ITEMCLICK:
 
-            ListView_SortItems(hApplicationPageListCtrl, ApplicationPageCompareFunc, 0);
+            SendMessage(hApplicationPageListCtrl, LVM_SORTITEMS, 0, (LPARAM) ApplicationPageCompareFunc);
             bSortAscending = !bSortAscending;
 
             break;
@@ -708,7 +712,7 @@ void ApplicationPage_OnWindowsTileHorizontally(void)
         item.mask = LVIF_STATE|LVIF_PARAM;
         item.iItem = i;
         item.stateMask = (UINT)-1;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
 
         if (item.state & LVIS_SELECTED) {
             pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
@@ -739,7 +743,7 @@ void ApplicationPage_OnWindowsTileVertically(void)
         item.mask = LVIF_STATE|LVIF_PARAM;
         item.iItem = i;
         item.stateMask = (UINT)-1;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
 
         if (item.state & LVIS_SELECTED) {
             pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
@@ -765,7 +769,7 @@ void ApplicationPage_OnWindowsMinimize(void)
         item.mask = LVIF_STATE|LVIF_PARAM;
         item.iItem = i;
         item.stateMask = (UINT)-1;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
         if (item.state & LVIS_SELECTED) {
             pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
             if (pAPLI) {
@@ -786,7 +790,7 @@ void ApplicationPage_OnWindowsMaximize(void)
         item.mask = LVIF_STATE|LVIF_PARAM;
         item.iItem = i;
         item.stateMask = (UINT)-1;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
         if (item.state & LVIS_SELECTED) {
             pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
             if (pAPLI) {
@@ -812,7 +816,7 @@ void ApplicationPage_OnWindowsCascade(void)
         item.mask = LVIF_STATE|LVIF_PARAM;
         item.iItem = i;
         item.stateMask = (UINT)-1;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
         if (item.state & LVIS_SELECTED) {
             pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
             if (pAPLI) {
@@ -836,7 +840,7 @@ void ApplicationPage_OnWindowsBringToFront(void)
         item.mask = LVIF_STATE|LVIF_PARAM;
         item.iItem = i;
         item.stateMask = (UINT)-1;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
         if (item.state & LVIS_SELECTED) {
             pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
             break;
@@ -860,7 +864,7 @@ void ApplicationPage_OnSwitchTo(void)
         item.mask = LVIF_STATE|LVIF_PARAM;
         item.iItem = i;
         item.stateMask = (UINT)-1;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
 
         if (item.state & LVIS_SELECTED) {
             pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
@@ -897,7 +901,7 @@ void ApplicationPage_OnEndTask(void)
         item.mask = LVIF_STATE|LVIF_PARAM;
         item.iItem = i;
         item.stateMask = (UINT)-1;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
         if (item.state & LVIS_SELECTED) {
             pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
             if (pAPLI) {
@@ -919,7 +923,7 @@ void ApplicationPage_OnGotoProcess(void)
         item.mask = LVIF_STATE|LVIF_PARAM;
         item.iItem = i;
         item.stateMask = (UINT)-1;
-        ListView_GetItem(hApplicationPageListCtrl, &item);
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
         if (item.state & LVIS_SELECTED) {
             pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
             break;
