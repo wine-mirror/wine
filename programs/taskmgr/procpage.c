@@ -47,120 +47,100 @@ static int    nProcessPageHeight;
 
 static HANDLE    hProcessPageEvent = NULL;    /* When this event becomes signaled then we refresh the process list */
 
-void ProcessPageOnNotify(WPARAM wParam, LPARAM lParam);
-void CommaSeparateNumberString(LPTSTR strNumber, int nMaxCount);
-void ProcessPageShowContextMenu(DWORD dwProcessId);
-DWORD WINAPI ProcessPageRefreshThread(void *lpParameter);
 
-INT_PTR CALLBACK
-ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+static void CommaSeparateNumberString(LPTSTR strNumber, int nMaxCount)
 {
-    RECT    rc;
-    int        nXDifference;
-    int        nYDifference;
-    int        cx, cy;
+    TCHAR    temp[260];
+    UINT    i, j, k;
 
-    switch (message) {
-    case WM_INITDIALOG:
-        /*
-         * Save the width and height
-         */
-        GetClientRect(hDlg, &rc);
-        nProcessPageWidth = rc.right;
-        nProcessPageHeight = rc.bottom;
+    for (i=0,j=0; i<(_tcslen(strNumber) % 3); i++, j++)
+        temp[j] = strNumber[i];
+    for (k=0; i<_tcslen(strNumber); i++,j++,k++) {
+        if ((k % 3 == 0) && (j > 0))
+            temp[j++] = _T(',');
+        temp[j] = strNumber[i];
+    }
+    temp[j] = _T('\0');
+    _tcsncpy(strNumber, temp, nMaxCount);
+}
 
-        /* Update window position */
-        SetWindowPos(hDlg, NULL, 15, 30, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
+static void ProcessPageShowContextMenu(DWORD dwProcessId)
+{
+    HMENU        hMenu;
+    HMENU        hSubMenu;
+    HMENU        hPriorityMenu;
+    POINT        pt;
+    SYSTEM_INFO    si;
+    HANDLE        hProcess;
+    DWORD        dwProcessPriorityClass;
+    TCHAR        strDebugger[260];
+    DWORD        dwDebuggerSize;
+    HKEY        hKey;
+    UINT        Idx;
 
-        /*
-         * Get handles to the controls
-         */
-        hProcessPageListCtrl = GetDlgItem(hDlg, IDC_PROCESSLIST);
-        hProcessPageHeaderCtrl = ListView_GetHeader(hProcessPageListCtrl);
-        hProcessPageEndProcessButton = GetDlgItem(hDlg, IDC_ENDPROCESS);
-        hProcessPageShowAllProcessesButton = GetDlgItem(hDlg, IDC_SHOWALLPROCESSES);
+    memset(&si, 0, sizeof(SYSTEM_INFO));
 
-        /*
-         * Set the font, title, and extended window styles for the list control
-         */
-        SendMessage(hProcessPageListCtrl, WM_SETFONT, SendMessage(hProcessPage, WM_GETFONT, 0, 0), TRUE);
-        SetWindowText(hProcessPageListCtrl, _T("Processes"));
-        SendMessage(hProcessPageListCtrl, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, ListView_GetExtendedListViewStyle(hProcessPageListCtrl) | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
+    GetCursorPos(&pt);
+    GetSystemInfo(&si);
 
-        AddColumns();
+    hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_PROCESS_PAGE_CONTEXT));
+    hSubMenu = GetSubMenu(hMenu, 0);
+    hPriorityMenu = GetSubMenu(hSubMenu, 4);
 
-        /*
-         * Subclass the process list control so we can intercept WM_ERASEBKGND
-         */
-        OldProcessListWndProc = (WNDPROC)SetWindowLongPtr(hProcessPageListCtrl, GWLP_WNDPROC, (LONG_PTR)ProcessListWndProc);
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, dwProcessId);
+    dwProcessPriorityClass = GetPriorityClass(hProcess);
+    CloseHandle(hProcess);
 
-        /* Start our refresh thread */
-         CreateThread(NULL, 0, ProcessPageRefreshThread, NULL, 0, NULL);
+    if (si.dwNumberOfProcessors < 2)
+        RemoveMenu(hSubMenu, ID_PROCESS_PAGE_SETAFFINITY, MF_BYCOMMAND);
+    
+    if (!AreDebugChannelsSupported())
+        RemoveMenu(hSubMenu, ID_PROCESS_PAGE_DEBUGCHANNELS, MF_BYCOMMAND);
 
-        return TRUE;
-
-    case WM_DESTROY:
-        /* Close the event handle, this will make the */
-        /* refresh thread exit when the wait fails */
-        CloseHandle(hProcessPageEvent);
-
-        SaveColumnSettings();
-
+    switch (dwProcessPriorityClass)    {
+    case REALTIME_PRIORITY_CLASS:
+        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, MF_BYCOMMAND);
         break;
-
-    case WM_COMMAND:
-        /* Handle the button clicks */
-        switch (LOWORD(wParam))
-        {
-                case IDC_ENDPROCESS:
-                        ProcessPage_OnEndProcess();
-        }
+    case HIGH_PRIORITY_CLASS:
+        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_HIGH, MF_BYCOMMAND);
         break;
-
-    case WM_SIZE:
-        if (wParam == SIZE_MINIMIZED)
-            return 0;
-
-        cx = LOWORD(lParam);
-        cy = HIWORD(lParam);
-        nXDifference = cx - nProcessPageWidth;
-        nYDifference = cy - nProcessPageHeight;
-        nProcessPageWidth = cx;
-        nProcessPageHeight = cy;
-
-        /* Reposition the application page's controls */
-        GetWindowRect(hProcessPageListCtrl, &rc);
-        cx = (rc.right - rc.left) + nXDifference;
-        cy = (rc.bottom - rc.top) + nYDifference;
-        SetWindowPos(hProcessPageListCtrl, NULL, 0, 0, cx, cy, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOMOVE|SWP_NOZORDER);
-        InvalidateRect(hProcessPageListCtrl, NULL, TRUE);
-        
-        GetClientRect(hProcessPageEndProcessButton, &rc);
-        MapWindowPoints(hProcessPageEndProcessButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
-           cx = rc.left + nXDifference;
-        cy = rc.top + nYDifference;
-        SetWindowPos(hProcessPageEndProcessButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
-        InvalidateRect(hProcessPageEndProcessButton, NULL, TRUE);
-        
-        GetClientRect(hProcessPageShowAllProcessesButton, &rc);
-        MapWindowPoints(hProcessPageShowAllProcessesButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
-           cx = rc.left;
-        cy = rc.top + nYDifference;
-        SetWindowPos(hProcessPageShowAllProcessesButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
-        InvalidateRect(hProcessPageShowAllProcessesButton, NULL, TRUE);
-
+    case ABOVE_NORMAL_PRIORITY_CLASS:
+        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL, MF_BYCOMMAND);
         break;
-
-    case WM_NOTIFY:
-
-        ProcessPageOnNotify(wParam, lParam);
+    case NORMAL_PRIORITY_CLASS:
+        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_NORMAL, MF_BYCOMMAND);
+        break;
+    case BELOW_NORMAL_PRIORITY_CLASS:
+        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL, MF_BYCOMMAND);
+        break;
+    case IDLE_PRIORITY_CLASS:
+        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_LOW, MF_BYCOMMAND);
         break;
     }
 
-    return 0;
+    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug"), 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+    {
+        dwDebuggerSize = 260;
+        if (RegQueryValueEx(hKey, _T("Debugger"), NULL, NULL, (LPBYTE)strDebugger, &dwDebuggerSize) == ERROR_SUCCESS)
+        {
+            for (Idx=0; Idx<_tcslen(strDebugger); Idx++)
+                strDebugger[Idx] = toupper(strDebugger[Idx]);
+
+            if (_tcsstr(strDebugger, _T("DRWTSN32")))
+                EnableMenuItem(hSubMenu, ID_PROCESS_PAGE_DEBUG, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        }
+        else
+            EnableMenuItem(hSubMenu, ID_PROCESS_PAGE_DEBUG, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+
+        RegCloseKey(hKey);
+    } else {
+        EnableMenuItem(hSubMenu, ID_PROCESS_PAGE_DEBUG, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+    }
+    TrackPopupMenu(hSubMenu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_LEFTBUTTON, pt.x, pt.y, 0, hMainWnd, NULL);
+    DestroyMenu(hMenu);
 }
 
-void ProcessPageOnNotify(WPARAM wParam, LPARAM lParam)
+static void ProcessPageOnNotify(WPARAM wParam, LPARAM lParam)
 {
     int                idctrl;
     LPNMHDR            pnmh;
@@ -396,98 +376,6 @@ void ProcessPageOnNotify(WPARAM wParam, LPARAM lParam)
 
 }
 
-void CommaSeparateNumberString(LPTSTR strNumber, int nMaxCount)
-{
-    TCHAR    temp[260];
-    UINT    i, j, k;
-
-    for (i=0,j=0; i<(_tcslen(strNumber) % 3); i++, j++)
-        temp[j] = strNumber[i];
-    for (k=0; i<_tcslen(strNumber); i++,j++,k++) {
-        if ((k % 3 == 0) && (j > 0))
-            temp[j++] = _T(',');
-        temp[j] = strNumber[i];
-    }
-    temp[j] = _T('\0');
-    _tcsncpy(strNumber, temp, nMaxCount);
-}
-
-void ProcessPageShowContextMenu(DWORD dwProcessId)
-{
-    HMENU        hMenu;
-    HMENU        hSubMenu;
-    HMENU        hPriorityMenu;
-    POINT        pt;
-    SYSTEM_INFO    si;
-    HANDLE        hProcess;
-    DWORD        dwProcessPriorityClass;
-    TCHAR        strDebugger[260];
-    DWORD        dwDebuggerSize;
-    HKEY        hKey;
-    UINT        Idx;
-
-    memset(&si, 0, sizeof(SYSTEM_INFO));
-
-    GetCursorPos(&pt);
-    GetSystemInfo(&si);
-
-    hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_PROCESS_PAGE_CONTEXT));
-    hSubMenu = GetSubMenu(hMenu, 0);
-    hPriorityMenu = GetSubMenu(hSubMenu, 4);
-
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, dwProcessId);
-    dwProcessPriorityClass = GetPriorityClass(hProcess);
-    CloseHandle(hProcess);
-
-    if (si.dwNumberOfProcessors < 2)
-        RemoveMenu(hSubMenu, ID_PROCESS_PAGE_SETAFFINITY, MF_BYCOMMAND);
-    
-    if (!AreDebugChannelsSupported())
-        RemoveMenu(hSubMenu, ID_PROCESS_PAGE_DEBUGCHANNELS, MF_BYCOMMAND);
-
-    switch (dwProcessPriorityClass)    {
-    case REALTIME_PRIORITY_CLASS:
-        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, MF_BYCOMMAND);
-        break;
-    case HIGH_PRIORITY_CLASS:
-        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_HIGH, MF_BYCOMMAND);
-        break;
-    case ABOVE_NORMAL_PRIORITY_CLASS:
-        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL, MF_BYCOMMAND);
-        break;
-    case NORMAL_PRIORITY_CLASS:
-        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_NORMAL, MF_BYCOMMAND);
-        break;
-    case BELOW_NORMAL_PRIORITY_CLASS:
-        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL, MF_BYCOMMAND);
-        break;
-    case IDLE_PRIORITY_CLASS:
-        CheckMenuRadioItem(hPriorityMenu, ID_PROCESS_PAGE_SETPRIORITY_REALTIME, ID_PROCESS_PAGE_SETPRIORITY_LOW, ID_PROCESS_PAGE_SETPRIORITY_LOW, MF_BYCOMMAND);
-        break;
-    }
-
-    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug"), 0, KEY_READ, &hKey) == ERROR_SUCCESS)
-    {
-        dwDebuggerSize = 260;
-        if (RegQueryValueEx(hKey, _T("Debugger"), NULL, NULL, (LPBYTE)strDebugger, &dwDebuggerSize) == ERROR_SUCCESS)
-        {
-            for (Idx=0; Idx<_tcslen(strDebugger); Idx++)
-                strDebugger[Idx] = toupper(strDebugger[Idx]);
-
-            if (_tcsstr(strDebugger, _T("DRWTSN32")))
-                EnableMenuItem(hSubMenu, ID_PROCESS_PAGE_DEBUG, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        }
-        else
-            EnableMenuItem(hSubMenu, ID_PROCESS_PAGE_DEBUG, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-
-        RegCloseKey(hKey);
-    } else {
-        EnableMenuItem(hSubMenu, ID_PROCESS_PAGE_DEBUG, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-    }
-    TrackPopupMenu(hSubMenu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_LEFTBUTTON, pt.x, pt.y, 0, hMainWnd, NULL);
-    DestroyMenu(hMenu);
-}
-
 void RefreshProcessPage(void)
 {
     /* Signal the event so that our refresh thread */
@@ -495,7 +383,7 @@ void RefreshProcessPage(void)
     SetEvent(hProcessPageEvent);
 }
 
-DWORD WINAPI ProcessPageRefreshThread(void *lpParameter)
+static DWORD WINAPI ProcessPageRefreshThread(void *lpParameter)
 {
     ULONG    OldProcessorUsage = 0;
     ULONG    OldProcessCount = 0;
@@ -543,4 +431,112 @@ DWORD WINAPI ProcessPageRefreshThread(void *lpParameter)
         }
     }
         return 0;
+}
+
+INT_PTR CALLBACK
+ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    RECT    rc;
+    int        nXDifference;
+    int        nYDifference;
+    int        cx, cy;
+
+    switch (message) {
+    case WM_INITDIALOG:
+        /*
+         * Save the width and height
+         */
+        GetClientRect(hDlg, &rc);
+        nProcessPageWidth = rc.right;
+        nProcessPageHeight = rc.bottom;
+
+        /* Update window position */
+        SetWindowPos(hDlg, NULL, 15, 30, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
+
+        /*
+         * Get handles to the controls
+         */
+        hProcessPageListCtrl = GetDlgItem(hDlg, IDC_PROCESSLIST);
+        hProcessPageHeaderCtrl = ListView_GetHeader(hProcessPageListCtrl);
+        hProcessPageEndProcessButton = GetDlgItem(hDlg, IDC_ENDPROCESS);
+        hProcessPageShowAllProcessesButton = GetDlgItem(hDlg, IDC_SHOWALLPROCESSES);
+
+        /*
+         * Set the font, title, and extended window styles for the list control
+         */
+        SendMessage(hProcessPageListCtrl, WM_SETFONT, SendMessage(hProcessPage, WM_GETFONT, 0, 0), TRUE);
+        SetWindowText(hProcessPageListCtrl, _T("Processes"));
+        SendMessage(hProcessPageListCtrl, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, ListView_GetExtendedListViewStyle(hProcessPageListCtrl) | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
+
+        AddColumns();
+
+        /*
+         * Subclass the process list control so we can intercept WM_ERASEBKGND
+         */
+        OldProcessListWndProc = (WNDPROC)SetWindowLongPtr(hProcessPageListCtrl, GWLP_WNDPROC, (LONG_PTR)ProcessListWndProc);
+
+        /* Start our refresh thread */
+         CreateThread(NULL, 0, ProcessPageRefreshThread, NULL, 0, NULL);
+
+        return TRUE;
+
+    case WM_DESTROY:
+        /* Close the event handle, this will make the */
+        /* refresh thread exit when the wait fails */
+        CloseHandle(hProcessPageEvent);
+
+        SaveColumnSettings();
+
+        break;
+
+    case WM_COMMAND:
+        /* Handle the button clicks */
+        switch (LOWORD(wParam))
+        {
+                case IDC_ENDPROCESS:
+                        ProcessPage_OnEndProcess();
+        }
+        break;
+
+    case WM_SIZE:
+        if (wParam == SIZE_MINIMIZED)
+            return 0;
+
+        cx = LOWORD(lParam);
+        cy = HIWORD(lParam);
+        nXDifference = cx - nProcessPageWidth;
+        nYDifference = cy - nProcessPageHeight;
+        nProcessPageWidth = cx;
+        nProcessPageHeight = cy;
+
+        /* Reposition the application page's controls */
+        GetWindowRect(hProcessPageListCtrl, &rc);
+        cx = (rc.right - rc.left) + nXDifference;
+        cy = (rc.bottom - rc.top) + nYDifference;
+        SetWindowPos(hProcessPageListCtrl, NULL, 0, 0, cx, cy, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOMOVE|SWP_NOZORDER);
+        InvalidateRect(hProcessPageListCtrl, NULL, TRUE);
+        
+        GetClientRect(hProcessPageEndProcessButton, &rc);
+        MapWindowPoints(hProcessPageEndProcessButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
+           cx = rc.left + nXDifference;
+        cy = rc.top + nYDifference;
+        SetWindowPos(hProcessPageEndProcessButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
+        InvalidateRect(hProcessPageEndProcessButton, NULL, TRUE);
+        
+        GetClientRect(hProcessPageShowAllProcessesButton, &rc);
+        MapWindowPoints(hProcessPageShowAllProcessesButton, hDlg, (LPPOINT)(&rc), (sizeof(RECT)/sizeof(POINT)) );
+           cx = rc.left;
+        cy = rc.top + nYDifference;
+        SetWindowPos(hProcessPageShowAllProcessesButton, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
+        InvalidateRect(hProcessPageShowAllProcessesButton, NULL, TRUE);
+
+        break;
+
+    case WM_NOTIFY:
+
+        ProcessPageOnNotify(wParam, lParam);
+        break;
+    }
+
+    return 0;
 }

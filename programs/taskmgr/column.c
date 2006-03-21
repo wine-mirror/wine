@@ -34,8 +34,29 @@
 
 UINT    ColumnDataHints[25];
 
-int                 InsertColumn(int nCol, LPCTSTR lpszColumnHeading, int nFormat, int nWidth, int nSubItem);
-INT_PTR CALLBACK    ColumnsDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+
+static int InsertColumn(int nCol, LPCTSTR lpszColumnHeading, int nFormat, int nWidth, int nSubItem)
+{
+    LVCOLUMN    column;
+
+    column.mask = LVCF_TEXT|LVCF_FMT;
+    column.pszText = (LPTSTR)lpszColumnHeading;
+    column.fmt = nFormat;
+
+    if (nWidth != -1)
+    {
+        column.mask |= LVCF_WIDTH;
+        column.cx = nWidth;
+    }
+
+    if (nSubItem != -1)
+    {
+        column.mask |= LVCF_SUBITEM;
+        column.iSubItem = nSubItem;
+    }
+
+    return ListView_InsertColumn(hProcessPageListCtrl, nCol, &column);
+}
 
 void AddColumns(void)
 {
@@ -98,27 +119,110 @@ void AddColumns(void)
     UpdateColumnDataHints();
 }
 
-int InsertColumn(int nCol, LPCTSTR lpszColumnHeading, int nFormat, int nWidth, int nSubItem)
+static INT_PTR CALLBACK ColumnsDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    LVCOLUMN    column;
 
-    column.mask = LVCF_TEXT|LVCF_FMT;
-    column.pszText = (LPTSTR)lpszColumnHeading;
-    column.fmt = nFormat;
-
-    if (nWidth != -1)
+    switch (message)
     {
-        column.mask |= LVCF_WIDTH;
-        column.cx = nWidth;
+    case WM_INITDIALOG:
+
+        if (TaskManagerSettings.Column_ImageName)
+            SendMessage(GetDlgItem(hDlg, IDC_IMAGENAME), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_PID)
+            SendMessage(GetDlgItem(hDlg, IDC_PID), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_UserName)
+            SendMessage(GetDlgItem(hDlg, IDC_USERNAME), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_SessionID)
+            SendMessage(GetDlgItem(hDlg, IDC_SESSIONID), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_CPUUsage)
+            SendMessage(GetDlgItem(hDlg, IDC_CPUUSAGE), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_CPUTime)
+            SendMessage(GetDlgItem(hDlg, IDC_CPUTIME), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_MemoryUsage)
+            SendMessage(GetDlgItem(hDlg, IDC_MEMORYUSAGE), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_PeakMemoryUsage)
+            SendMessage(GetDlgItem(hDlg, IDC_PEAKMEMORYUSAGE), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_MemoryUsageDelta)
+            SendMessage(GetDlgItem(hDlg, IDC_MEMORYUSAGEDELTA), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_PageFaults)
+            SendMessage(GetDlgItem(hDlg, IDC_PAGEFAULTS), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_PageFaultsDelta)
+            SendMessage(GetDlgItem(hDlg, IDC_PAGEFAULTSDELTA), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_VirtualMemorySize)
+            SendMessage(GetDlgItem(hDlg, IDC_VIRTUALMEMORYSIZE), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_PagedPool)
+            SendMessage(GetDlgItem(hDlg, IDC_PAGEDPOOL), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_NonPagedPool)
+            SendMessage(GetDlgItem(hDlg, IDC_NONPAGEDPOOL), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_BasePriority)
+            SendMessage(GetDlgItem(hDlg, IDC_BASEPRIORITY), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_HandleCount)
+            SendMessage(GetDlgItem(hDlg, IDC_HANDLECOUNT), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_ThreadCount)
+            SendMessage(GetDlgItem(hDlg, IDC_THREADCOUNT), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_USERObjects)
+            SendMessage(GetDlgItem(hDlg, IDC_USEROBJECTS), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_GDIObjects)
+            SendMessage(GetDlgItem(hDlg, IDC_GDIOBJECTS), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_IOReads)
+            SendMessage(GetDlgItem(hDlg, IDC_IOREADS), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_IOWrites)
+            SendMessage(GetDlgItem(hDlg, IDC_IOWRITES), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_IOOther)
+            SendMessage(GetDlgItem(hDlg, IDC_IOOTHER), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_IOReadBytes)
+            SendMessage(GetDlgItem(hDlg, IDC_IOREADBYTES), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_IOWriteBytes)
+            SendMessage(GetDlgItem(hDlg, IDC_IOWRITEBYTES), BM_SETCHECK, BST_CHECKED, 0);
+        if (TaskManagerSettings.Column_IOOtherBytes)
+            SendMessage(GetDlgItem(hDlg, IDC_IOOTHERBYTES), BM_SETCHECK, BST_CHECKED, 0);
+
+        return TRUE;
+
+    case WM_COMMAND:
+
+        if (LOWORD(wParam) == IDCANCEL)
+        {
+            EndDialog(hDlg, LOWORD(wParam));
+            return TRUE;
+        }
+
+        if (LOWORD(wParam) == IDOK)
+        {
+            TaskManagerSettings.Column_ImageName = SendMessage(GetDlgItem(hDlg, IDC_IMAGENAME), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_PID = SendMessage(GetDlgItem(hDlg, IDC_PID), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_UserName = SendMessage(GetDlgItem(hDlg, IDC_USERNAME), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_SessionID = SendMessage(GetDlgItem(hDlg, IDC_SESSIONID), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_CPUUsage = SendMessage(GetDlgItem(hDlg, IDC_CPUUSAGE), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_CPUTime = SendMessage(GetDlgItem(hDlg, IDC_CPUTIME), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_MemoryUsage = SendMessage(GetDlgItem(hDlg, IDC_MEMORYUSAGE), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_PeakMemoryUsage = SendMessage(GetDlgItem(hDlg, IDC_PEAKMEMORYUSAGE), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_MemoryUsageDelta = SendMessage(GetDlgItem(hDlg, IDC_MEMORYUSAGEDELTA), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_PageFaults = SendMessage(GetDlgItem(hDlg, IDC_PAGEFAULTS), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_PageFaultsDelta = SendMessage(GetDlgItem(hDlg, IDC_PAGEFAULTSDELTA), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_VirtualMemorySize = SendMessage(GetDlgItem(hDlg, IDC_VIRTUALMEMORYSIZE), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_PagedPool = SendMessage(GetDlgItem(hDlg, IDC_PAGEDPOOL), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_NonPagedPool = SendMessage(GetDlgItem(hDlg, IDC_NONPAGEDPOOL), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_BasePriority = SendMessage(GetDlgItem(hDlg, IDC_BASEPRIORITY), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_HandleCount = SendMessage(GetDlgItem(hDlg, IDC_HANDLECOUNT), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_ThreadCount = SendMessage(GetDlgItem(hDlg, IDC_THREADCOUNT), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_USERObjects = SendMessage(GetDlgItem(hDlg, IDC_USEROBJECTS), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_GDIObjects = SendMessage(GetDlgItem(hDlg, IDC_GDIOBJECTS), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_IOReads = SendMessage(GetDlgItem(hDlg, IDC_IOREADS), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_IOWrites = SendMessage(GetDlgItem(hDlg, IDC_IOWRITES), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_IOOther = SendMessage(GetDlgItem(hDlg, IDC_IOOTHER), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_IOReadBytes = SendMessage(GetDlgItem(hDlg, IDC_IOREADBYTES), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_IOWriteBytes = SendMessage(GetDlgItem(hDlg, IDC_IOWRITEBYTES), BM_GETCHECK, 0, 0);
+            TaskManagerSettings.Column_IOOtherBytes = SendMessage(GetDlgItem(hDlg, IDC_IOOTHERBYTES), BM_GETCHECK, 0, 0);
+
+            EndDialog(hDlg, LOWORD(wParam));
+            return TRUE;
+        }
+
+        break;
     }
 
-    if (nSubItem != -1)
-    {
-        column.mask |= LVCF_SUBITEM;
-        column.iSubItem = nSubItem;
-    }
-
-    return ListView_InsertColumn(hProcessPageListCtrl, nCol, &column);
+    return 0;
 }
 
 void SaveColumnSettings(void)
@@ -367,113 +471,6 @@ void ProcessPage_OnViewSelectColumns(void)
 
         AddColumns();
     }
-}
-
-INT_PTR CALLBACK
-ColumnsDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-
-    switch (message)
-    {
-    case WM_INITDIALOG:
-
-        if (TaskManagerSettings.Column_ImageName)
-            SendMessage(GetDlgItem(hDlg, IDC_IMAGENAME), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_PID)
-            SendMessage(GetDlgItem(hDlg, IDC_PID), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_UserName)
-            SendMessage(GetDlgItem(hDlg, IDC_USERNAME), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_SessionID)
-            SendMessage(GetDlgItem(hDlg, IDC_SESSIONID), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_CPUUsage)
-            SendMessage(GetDlgItem(hDlg, IDC_CPUUSAGE), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_CPUTime)
-            SendMessage(GetDlgItem(hDlg, IDC_CPUTIME), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_MemoryUsage)
-            SendMessage(GetDlgItem(hDlg, IDC_MEMORYUSAGE), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_PeakMemoryUsage)
-            SendMessage(GetDlgItem(hDlg, IDC_PEAKMEMORYUSAGE), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_MemoryUsageDelta)
-            SendMessage(GetDlgItem(hDlg, IDC_MEMORYUSAGEDELTA), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_PageFaults)
-            SendMessage(GetDlgItem(hDlg, IDC_PAGEFAULTS), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_PageFaultsDelta)
-            SendMessage(GetDlgItem(hDlg, IDC_PAGEFAULTSDELTA), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_VirtualMemorySize)
-            SendMessage(GetDlgItem(hDlg, IDC_VIRTUALMEMORYSIZE), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_PagedPool)
-            SendMessage(GetDlgItem(hDlg, IDC_PAGEDPOOL), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_NonPagedPool)
-            SendMessage(GetDlgItem(hDlg, IDC_NONPAGEDPOOL), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_BasePriority)
-            SendMessage(GetDlgItem(hDlg, IDC_BASEPRIORITY), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_HandleCount)
-            SendMessage(GetDlgItem(hDlg, IDC_HANDLECOUNT), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_ThreadCount)
-            SendMessage(GetDlgItem(hDlg, IDC_THREADCOUNT), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_USERObjects)
-            SendMessage(GetDlgItem(hDlg, IDC_USEROBJECTS), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_GDIObjects)
-            SendMessage(GetDlgItem(hDlg, IDC_GDIOBJECTS), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_IOReads)
-            SendMessage(GetDlgItem(hDlg, IDC_IOREADS), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_IOWrites)
-            SendMessage(GetDlgItem(hDlg, IDC_IOWRITES), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_IOOther)
-            SendMessage(GetDlgItem(hDlg, IDC_IOOTHER), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_IOReadBytes)
-            SendMessage(GetDlgItem(hDlg, IDC_IOREADBYTES), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_IOWriteBytes)
-            SendMessage(GetDlgItem(hDlg, IDC_IOWRITEBYTES), BM_SETCHECK, BST_CHECKED, 0);
-        if (TaskManagerSettings.Column_IOOtherBytes)
-            SendMessage(GetDlgItem(hDlg, IDC_IOOTHERBYTES), BM_SETCHECK, BST_CHECKED, 0);
-
-        return TRUE;
-
-    case WM_COMMAND:
-
-        if (LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return TRUE;
-        }
-
-        if (LOWORD(wParam) == IDOK)
-        {
-            TaskManagerSettings.Column_ImageName = SendMessage(GetDlgItem(hDlg, IDC_IMAGENAME), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_PID = SendMessage(GetDlgItem(hDlg, IDC_PID), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_UserName = SendMessage(GetDlgItem(hDlg, IDC_USERNAME), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_SessionID = SendMessage(GetDlgItem(hDlg, IDC_SESSIONID), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_CPUUsage = SendMessage(GetDlgItem(hDlg, IDC_CPUUSAGE), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_CPUTime = SendMessage(GetDlgItem(hDlg, IDC_CPUTIME), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_MemoryUsage = SendMessage(GetDlgItem(hDlg, IDC_MEMORYUSAGE), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_PeakMemoryUsage = SendMessage(GetDlgItem(hDlg, IDC_PEAKMEMORYUSAGE), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_MemoryUsageDelta = SendMessage(GetDlgItem(hDlg, IDC_MEMORYUSAGEDELTA), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_PageFaults = SendMessage(GetDlgItem(hDlg, IDC_PAGEFAULTS), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_PageFaultsDelta = SendMessage(GetDlgItem(hDlg, IDC_PAGEFAULTSDELTA), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_VirtualMemorySize = SendMessage(GetDlgItem(hDlg, IDC_VIRTUALMEMORYSIZE), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_PagedPool = SendMessage(GetDlgItem(hDlg, IDC_PAGEDPOOL), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_NonPagedPool = SendMessage(GetDlgItem(hDlg, IDC_NONPAGEDPOOL), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_BasePriority = SendMessage(GetDlgItem(hDlg, IDC_BASEPRIORITY), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_HandleCount = SendMessage(GetDlgItem(hDlg, IDC_HANDLECOUNT), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_ThreadCount = SendMessage(GetDlgItem(hDlg, IDC_THREADCOUNT), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_USERObjects = SendMessage(GetDlgItem(hDlg, IDC_USEROBJECTS), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_GDIObjects = SendMessage(GetDlgItem(hDlg, IDC_GDIOBJECTS), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_IOReads = SendMessage(GetDlgItem(hDlg, IDC_IOREADS), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_IOWrites = SendMessage(GetDlgItem(hDlg, IDC_IOWRITES), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_IOOther = SendMessage(GetDlgItem(hDlg, IDC_IOOTHER), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_IOReadBytes = SendMessage(GetDlgItem(hDlg, IDC_IOREADBYTES), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_IOWriteBytes = SendMessage(GetDlgItem(hDlg, IDC_IOWRITEBYTES), BM_GETCHECK, 0, 0);
-            TaskManagerSettings.Column_IOOtherBytes = SendMessage(GetDlgItem(hDlg, IDC_IOOTHERBYTES), BM_GETCHECK, 0, 0);
-
-            EndDialog(hDlg, LOWORD(wParam));
-            return TRUE;
-        }
-
-        break;
-    }
-
-    return 0;
 }
 
 void UpdateColumnDataHints(void)

@@ -35,41 +35,7 @@
 
 HANDLE        hProcessAffinityHandle;
 
-INT_PTR CALLBACK AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-
-void ProcessPage_OnSetAffinity(void)
-{
-    LV_ITEM            lvitem;
-    ULONG            Index;
-    DWORD            dwProcessId;
-    TCHAR            strErrorText[260];
-
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++) {
-        memset(&lvitem, 0, sizeof(LV_ITEM));
-        lvitem.mask = LVIF_STATE;
-        lvitem.stateMask = LVIS_SELECTED;
-        lvitem.iItem = Index;
-        SendMessage(hProcessPageListCtrl, LVM_GETITEM, 0, (LPARAM) &lvitem);
-        if (lvitem.state & LVIS_SELECTED)
-            break;
-    }
-    dwProcessId = PerfDataGetProcessId(Index);
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
-        return;
-    hProcessAffinityHandle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_SET_INFORMATION, FALSE, dwProcessId);
-    if (!hProcessAffinityHandle) {
-        GetLastErrorText(strErrorText, 260);
-        MessageBox(hMainWnd, strErrorText, _T("Unable to Access or Set Process Affinity"), MB_OK|MB_ICONSTOP);
-        return;
-    }
-    DialogBox(hInst, MAKEINTRESOURCE(IDD_AFFINITY_DIALOG), hMainWnd, AffinityDialogWndProc);
-    if (hProcessAffinityHandle)    {
-        CloseHandle(hProcessAffinityHandle);
-        hProcessAffinityHandle = NULL;
-    }
-}
-
-INT_PTR CALLBACK
+static INT_PTR CALLBACK
 AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     DWORD    dwProcessAffinityMask = 0;
@@ -342,4 +308,36 @@ AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     }
 
     return 0;
+}
+
+void ProcessPage_OnSetAffinity(void)
+{
+    LV_ITEM            lvitem;
+    ULONG            Index;
+    DWORD            dwProcessId;
+    TCHAR            strErrorText[260];
+
+    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++) {
+        memset(&lvitem, 0, sizeof(LV_ITEM));
+        lvitem.mask = LVIF_STATE;
+        lvitem.stateMask = LVIS_SELECTED;
+        lvitem.iItem = Index;
+        SendMessage(hProcessPageListCtrl, LVM_GETITEM, 0, (LPARAM) &lvitem);
+        if (lvitem.state & LVIS_SELECTED)
+            break;
+    }
+    dwProcessId = PerfDataGetProcessId(Index);
+    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
+        return;
+    hProcessAffinityHandle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_SET_INFORMATION, FALSE, dwProcessId);
+    if (!hProcessAffinityHandle) {
+        GetLastErrorText(strErrorText, 260);
+        MessageBox(hMainWnd, strErrorText, _T("Unable to Access or Set Process Affinity"), MB_OK|MB_ICONSTOP);
+        return;
+    }
+    DialogBox(hInst, MAKEINTRESOURCE(IDD_AFFINITY_DIALOG), hMainWnd, AffinityDialogWndProc);
+    if (hProcessAffinityHandle)    {
+        CloseHandle(hProcessAffinityHandle);
+        hProcessAffinityHandle = NULL;
+    }
 }

@@ -40,110 +40,7 @@
 
 WNDPROC             OldGraphWndProc;
 
-void                Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd);
-void                Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd);
-void                Graph_DrawMemUsageHistoryGraph(HDC hDC, HWND hWnd);
-
-INT_PTR CALLBACK
-Graph_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    HDC                hdc;
-    PAINTSTRUCT        ps;
-    LONG            WindowId;
-    
-    switch (message)
-    {
-    case WM_ERASEBKGND:
-        return TRUE;
-
-    /*
-     * Filter out mouse  & keyboard messages
-     */
-    /* case WM_APPCOMMAND: */
-    case WM_CAPTURECHANGED:
-    case WM_LBUTTONDBLCLK:
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
-    case WM_MBUTTONDBLCLK:
-    case WM_MBUTTONDOWN:
-    case WM_MBUTTONUP:
-    case WM_MOUSEACTIVATE:
-    case WM_MOUSEHOVER:
-    case WM_MOUSELEAVE:
-    case WM_MOUSEMOVE:
-    /* case WM_MOUSEWHEEL: */
-    case WM_NCHITTEST:
-    case WM_NCLBUTTONDBLCLK:
-    case WM_NCLBUTTONDOWN:
-    case WM_NCLBUTTONUP:
-    case WM_NCMBUTTONDBLCLK:
-    case WM_NCMBUTTONDOWN:
-    case WM_NCMBUTTONUP:
-    /* case WM_NCMOUSEHOVER: */
-    /* case WM_NCMOUSELEAVE: */
-    case WM_NCMOUSEMOVE:
-    case WM_NCRBUTTONDBLCLK:
-    case WM_NCRBUTTONDOWN:
-    case WM_NCRBUTTONUP:
-    /* case WM_NCXBUTTONDBLCLK: */
-    /* case WM_NCXBUTTONDOWN: */
-    /* case WM_NCXBUTTONUP: */
-    case WM_RBUTTONDBLCLK:
-    case WM_RBUTTONDOWN:
-    case WM_RBUTTONUP:
-    /* case WM_XBUTTONDBLCLK: */
-    /* case WM_XBUTTONDOWN: */
-    /* case WM_XBUTTONUP: */
-    case WM_ACTIVATE:
-    case WM_CHAR:
-    case WM_DEADCHAR:
-    case WM_GETHOTKEY:
-    case WM_HOTKEY:
-    case WM_KEYDOWN:
-    case WM_KEYUP:
-    case WM_KILLFOCUS:
-    case WM_SETFOCUS:
-    case WM_SETHOTKEY:
-    case WM_SYSCHAR:
-    case WM_SYSDEADCHAR:
-    case WM_SYSKEYDOWN:
-    case WM_SYSKEYUP:
-            
-    case WM_NCCALCSIZE:
-        return 0;
-
-    case WM_PAINT:
-        
-        hdc = BeginPaint(hWnd, &ps);
-
-        WindowId = GetWindowLongPtr(hWnd, GWLP_ID);
-
-        switch (WindowId)
-        {
-        case IDC_CPU_USAGE_GRAPH:
-            Graph_DrawCpuUsageGraph(hdc, hWnd);
-            break;
-        case IDC_MEM_USAGE_GRAPH:
-            Graph_DrawMemUsageGraph(hdc, hWnd);
-            break;
-        case IDC_MEM_USAGE_HISTORY_GRAPH:
-            Graph_DrawMemUsageHistoryGraph(hdc, hWnd);
-            break;
-        }
-        
-        EndPaint(hWnd, &ps);
-        
-        return 0;
-        
-    }
-    
-    /*
-     * We pass on all non-handled messages
-     */
-    return CallWindowProc((WNDPROC)OldGraphWndProc, hWnd, message, wParam, lParam);
-}
-
-void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
+static void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
 {
     RECT            rcClient;
     RECT            rcBarLeft;
@@ -323,7 +220,7 @@ void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
     }
 }
 
-void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
+static void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
 {
     RECT            rcClient;
     RECT            rcBarLeft;
@@ -418,7 +315,7 @@ void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
     }
 }
 
-void Graph_DrawMemUsageHistoryGraph(HDC hDC, HWND hWnd)
+static void Graph_DrawMemUsageHistoryGraph(HDC hDC, HWND hWnd)
 {
     RECT            rcClient;
     ULONGLONG        CommitChargeLimit;
@@ -472,4 +369,103 @@ void Graph_DrawMemUsageHistoryGraph(HDC hDC, HWND hWnd)
     for (i=rcClient.right; i>=0; i--)
     {
     }
+}
+
+INT_PTR CALLBACK
+Graph_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    HDC                hdc;
+    PAINTSTRUCT        ps;
+    LONG            WindowId;
+    
+    switch (message)
+    {
+    case WM_ERASEBKGND:
+        return TRUE;
+
+    /*
+     * Filter out mouse  & keyboard messages
+     */
+    /* case WM_APPCOMMAND: */
+    case WM_CAPTURECHANGED:
+    case WM_LBUTTONDBLCLK:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MOUSEACTIVATE:
+    case WM_MOUSEHOVER:
+    case WM_MOUSELEAVE:
+    case WM_MOUSEMOVE:
+    /* case WM_MOUSEWHEEL: */
+    case WM_NCHITTEST:
+    case WM_NCLBUTTONDBLCLK:
+    case WM_NCLBUTTONDOWN:
+    case WM_NCLBUTTONUP:
+    case WM_NCMBUTTONDBLCLK:
+    case WM_NCMBUTTONDOWN:
+    case WM_NCMBUTTONUP:
+    /* case WM_NCMOUSEHOVER: */
+    /* case WM_NCMOUSELEAVE: */
+    case WM_NCMOUSEMOVE:
+    case WM_NCRBUTTONDBLCLK:
+    case WM_NCRBUTTONDOWN:
+    case WM_NCRBUTTONUP:
+    /* case WM_NCXBUTTONDBLCLK: */
+    /* case WM_NCXBUTTONDOWN: */
+    /* case WM_NCXBUTTONUP: */
+    case WM_RBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    /* case WM_XBUTTONDBLCLK: */
+    /* case WM_XBUTTONDOWN: */
+    /* case WM_XBUTTONUP: */
+    case WM_ACTIVATE:
+    case WM_CHAR:
+    case WM_DEADCHAR:
+    case WM_GETHOTKEY:
+    case WM_HOTKEY:
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_KILLFOCUS:
+    case WM_SETFOCUS:
+    case WM_SETHOTKEY:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+            
+    case WM_NCCALCSIZE:
+        return 0;
+
+    case WM_PAINT:
+        
+        hdc = BeginPaint(hWnd, &ps);
+
+        WindowId = GetWindowLongPtr(hWnd, GWLP_ID);
+
+        switch (WindowId)
+        {
+        case IDC_CPU_USAGE_GRAPH:
+            Graph_DrawCpuUsageGraph(hdc, hWnd);
+            break;
+        case IDC_MEM_USAGE_GRAPH:
+            Graph_DrawMemUsageGraph(hdc, hWnd);
+            break;
+        case IDC_MEM_USAGE_HISTORY_GRAPH:
+            Graph_DrawMemUsageHistoryGraph(hdc, hWnd);
+            break;
+        }
+        
+        EndPaint(hWnd, &ps);
+        
+        return 0;
+        
+    }
+    
+    /*
+     * We pass on all non-handled messages
+     */
+    return CallWindowProc((WNDPROC)OldGraphWndProc, hWnd, message, wParam, lParam);
 }

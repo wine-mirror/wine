@@ -31,15 +31,7 @@
     
 #include "taskmgr.h"
 
-INT_PTR CALLBACK AboutDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-
-void OnAbout(void)
-{
-    DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hMainWnd, AboutDialogWndProc);
-}
-
-INT_PTR CALLBACK
-AboutDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK AboutDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND    hLicenseEditWnd;
     TCHAR    strLicense[0x1000];
@@ -68,4 +60,9 @@ AboutDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     }
 
     return 0;
+}
+
+void OnAbout(void)
+{
+    DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hMainWnd, AboutDialogWndProc);
 }

@@ -34,8 +34,6 @@
 #include "perfdata.h"
 
 
-LRESULT CALLBACK    ProcessListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
 WNDPROC                OldProcessListWndProc;
 
 
