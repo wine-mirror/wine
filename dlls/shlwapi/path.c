@@ -2519,7 +2519,7 @@ LPWSTR WINAPI PathFindNextComponentW(LPCWSTR lpszPath)
  * RETURNS
  *  TRUE  If the path was modified,
  *  FALSE If lpszPath or lpszExtension are invalid, lpszPath has an
- *        extension allready, or the new path length is too big.
+ *        extension already, or the new path length is too big.
  *
  * FIXME
  *  What version of shlwapi.dll adds "exe" if lpszExtension is NULL? Win2k

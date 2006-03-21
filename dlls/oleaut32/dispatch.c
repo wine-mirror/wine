@@ -85,7 +85,7 @@ HRESULT WINAPI DispInvoke(
 /******************************************************************************
  *		DispGetIDsOfNames (OLEAUT32.29)
  *
- * Convert a set of parameter names to DISPID's for DispInvoke().
+ * Convert a set of parameter names to DISPIDs for DispInvoke().
  *
  * RETURNS
  *  Success: S_OK.
@@ -93,13 +93,13 @@ HRESULT WINAPI DispInvoke(
  *
  * NOTES
  *  This call defers to ITypeInfo_GetIDsOfNames(). The ITypeInfo interface passed
- *  as ptinfo contains the information to map names to DISPID's.
+ *  as ptinfo contains the information to map names to DISPIDs.
  */
 HRESULT WINAPI DispGetIDsOfNames(
 	ITypeInfo  *ptinfo,    /* [in] Object's type info */
-	OLECHAR   **rgszNames, /* [in] Array of names to get DISPID's for */
+	OLECHAR   **rgszNames, /* [in] Array of names to get DISPIDs for */
 	UINT        cNames,    /* [in] Number of names in rgszNames */
-	DISPID     *rgdispid)  /* [out] Destination for converted DISPID's */
+	DISPID     *rgdispid)  /* [out] Destination for converted DISPIDs */
 {
     return ITypeInfo_GetIDsOfNames(ptinfo, rgszNames, cNames, rgdispid);
 }
@@ -107,7 +107,7 @@ HRESULT WINAPI DispGetIDsOfNames(
 /******************************************************************************
  *		DispGetParam (OLEAUT32.28)
  *
- * Retrive a parameter from a DISPPARAMS structure and coerce it to the
+ * Retrieve a parameter from a DISPPARAMS structure and coerce it to the
  * specified variant type.
  *
  * NOTES
@@ -203,10 +203,10 @@ HRESULT WINAPI CreateStdDispatch(
  *  to simplify the process of calling an objects methods through IDispatch.
  *
  *  A standard implementation of an IDispatch object is created by calling
- *  CreateStdDispatch(). Numeric Id values for the parameters and methods (DISPID's)
+ *  CreateStdDispatch(). Numeric Id values for the parameters and methods (DISPIDs)
  *  of an object of interest are retrieved by calling DispGetIDsOfNames(). DispGetParam()
  *  retrieves information about a particular parameter. Finally the DispInvoke()
- *  function is responsable for actually calling methods on an object.
+ *  function is responsible for actually calling methods on an object.
  *
  * METHODS
  */
@@ -342,7 +342,7 @@ static HRESULT WINAPI StdDispatch_GetTypeInfo(LPDISPATCH iface, UINT iTInfo, LCI
 /******************************************************************************
  * IDispatch_GetIDsOfNames {OLEAUT32}
  *
- * Convert a methods name and an optional set of parameter names into DISPID's
+ * Convert a methods name and an optional set of parameter names into DISPIDs
  * for passing to IDispatch_Invoke().
  *
  * PARAMS
@@ -351,7 +351,7 @@ static HRESULT WINAPI StdDispatch_GetTypeInfo(LPDISPATCH iface, UINT iTInfo, LCI
  *  rgszNames [I] Name to convert
  *  cNames    [I] Number of names in rgszNames
  *  lcid      [I] Locale of the type information to convert from
- *  rgDispId  [O] Destination for converted DISPID's.
+ *  rgDispId  [O] Destination for converted DISPIDs.
  *
  * RETURNS
  *  Success: S_OK.

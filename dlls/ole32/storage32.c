@@ -787,13 +787,13 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
 
     /*
      * At this point the renamed property has been inserted in the tree,
-     * now, before to Destroy the old property we must zeroed it's dirProperty
+     * now, before Destroying the old property we must zero its dirProperty
      * otherwise the DestroyProperty below will zap it all and we do not want
      * this to happen.
      * Also, we fake that the old property is a storage so the DestroyProperty
      * will not do a SetSize(0) on the stream data.
      *
-     * This means that we need to tweek the StgProperty if it is a stream or a
+     * This means that we need to tweak the StgProperty if it is a stream or a
      * non empty storage.
      */
     StorageImpl_ReadProperty(This->ancestorStorage,
@@ -809,7 +809,7 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
 
     /*
      * Invoke Destroy to get rid of the ole property and automatically redo
-     * the linking of it's previous and next members...
+     * the linking of its previous and next members...
      */
     IStorage_DestroyElement((IStorage*)This->ancestorStorage, pwcsOldName);
 
@@ -1429,7 +1429,7 @@ static void updatePropertyChain(
   else
   {
     /*
-     * The root storage is empty, link the new property to it's dir property
+     * The root storage is empty, link the new property to its dir property
      */
     currentProperty.dirProperty = newPropertyIndex;
     StorageImpl_WriteProperty(storage->base.ancestorStorage,
@@ -1652,12 +1652,12 @@ HRESULT WINAPI StorageImpl_Revert(
 /*************************************************************************
  * DestroyElement (IStorage)
  *
- * Stategy: This implementation is build this way for simplicity not for speed.
- *          I always delete the top most element of the enumeration and adjust
+ * Strategy: This implementation is built this way for simplicity not for speed.
+ *          I always delete the topmost element of the enumeration and adjust
  *          the deleted element pointer all the time.  This takes longer to
  *          do but allow to reinvoke DestroyElement whenever we encounter a
- *          storage object.  The optimisation reside in the usage of another
- *          enumeration stategy that would give all the leaves of a storage
+ *          storage object.  The optimisation resides in the usage of another
+ *          enumeration strategy that would give all the leaves of a storage
  *          first. (postfix order)
  */
 HRESULT WINAPI StorageImpl_DestroyElement(
@@ -1706,7 +1706,7 @@ HRESULT WINAPI StorageImpl_DestroyElement(
   /*
    * Find the parent property of the property to delete (the one that
    * link to it).  If This->dirProperty == foundPropertyIndexToDelete,
-   * the parent is This. Otherwise, the parent is one of it's sibling...
+   * the parent is This. Otherwise, the parent is one of its sibling...
    */
 
   /*
@@ -1902,7 +1902,7 @@ static HRESULT deleteStorageProperty(
   } while ((hr == S_OK) && (destroyHr == S_OK));
 
   /*
-   * Invalidate the property by zeroing it's name member.
+   * Invalidate the property by zeroing its name member.
    */
   propertyToDelete.sizeOfNameString = 0;
 
@@ -1964,7 +1964,7 @@ static HRESULT deleteStreamProperty(
   IStream_Release(pis);
 
   /*
-   * Invalidate the property by zeroing it's name member.
+   * Invalidate the property by zeroing its name member.
    */
   propertyToDelete.sizeOfNameString = 0;
 
@@ -5599,7 +5599,7 @@ ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
  *  ppstgOpen [IO] A pointer to IStorage pointer to the new onject
  *
  * RETURNS
- *  S_OK if the file was succesfully created
+ *  S_OK if the file was successfully created
  *  some STG_E_ value if error
  * NOTES
  *  if pwcsName is NULL, create file with new unique name

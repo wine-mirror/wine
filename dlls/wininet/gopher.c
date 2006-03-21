@@ -93,7 +93,7 @@ BOOL WINAPI GopherCreateLocatorW(
  *                      - Locator created by the GopherCreateLocator function.
  * lpszSearchString [I] what to search for if this request is to an index server.
  *                      Otherwise, this parameter should be NULL.
- * lpFindData       [O] retrived information
+ * lpFindData       [O] retrieved information
  * dwFlags          [I] INTERNET_FLAG_{HYPERLINK, NEED_FILE, NO_CACHE_WRITE, RELOAD, RESYNCHRONIZE}
  * dwContext        [I] application private value
  *

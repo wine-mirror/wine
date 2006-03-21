@@ -229,10 +229,10 @@ static void testcooperativelevels_normal(void)
         hwnd, DDSCL_SETFOCUSWINDOW);
     ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %lx\n",rc);
 
-    /* Set the focus window a secound time*/
+    /* Set the focus window a second time*/
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) the secound time returned: %lx\n",rc);
+    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) the second time returned: %lx\n",rc);
 
     /* Test DDSCL_SETFOCUSWINDOW with the other flags. They should all fail, except of DDSCL_NOWINDOWCHANGES */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,

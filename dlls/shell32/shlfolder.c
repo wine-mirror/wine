@@ -109,7 +109,7 @@ BOOL SHELL32_GetCustomFolderAttribute(
 /***************************************************************************
  *  GetNextElement (internal function)
  *
- * gets a part of a string till the first backslash
+ * Gets a part of a string till the first backslash.
  *
  * PARAMETERS
  *  pszNext [IN] string to get the element from
@@ -190,7 +190,7 @@ HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
  *
  * NOTES
  *   pathRoot can be NULL for Folders beeing a drive.
- *   In this case the absolute path is build from pidlChild (eg. C:)
+ *   In this case the absolute path is built from pidlChild (eg. C:)
  */
 static HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot, LPCWSTR pathRoot,
     LPCITEMIDLIST pidlChild, REFCLSID clsid, REFIID riid, LPVOID * ppvOut)
@@ -319,7 +319,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
 /***********************************************************************
  *	SHELL32_GetDisplayNameOfChild
  *
- * Retrives the display name of a child object of a shellfolder.
+ * Retrieves the display name of a child object of a shellfolder.
  *
  * For a pidl eg. [subpidl1][subpidl2][subpidl3]:
  * - it binds to the child shellfolder [subpidl1]
@@ -368,7 +368,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
  *  SHELL32_GetItemAttributes
  *
  * NOTES
- * observerd values:
+ * Observed values:
  *  folder:	0xE0000177	FILESYSTEM | HASSUBFOLDER | FOLDER
  *  file:	0x40000177	FILESYSTEM
  *  drive:	0xf0000144	FILESYSTEM | HASSUBFOLDER | FOLDER | FILESYSANCESTOR
@@ -380,7 +380,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
  *  file:      0x40400177      FILESYSTEM | CANMONIKER
  *  drive      0xF0400154      FILESYSTEM | HASSUBFOLDER | FOLDER | FILESYSANCESTOR | CANMONIKER | CANRENAME (LABEL)
  *
- * According to the MSDN documentation this function should not set flags. It claimes only to reset flags when necessary.
+ * According to the MSDN documentation this function should not set flags. It claims only to reset flags when necessary.
  * However it turns out the native shell32.dll _sets_ flags in several cases - so do we.
  */
 HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWORD pdwAttributes)

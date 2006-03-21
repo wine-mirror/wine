@@ -1267,7 +1267,7 @@ HWND WINAPI SHSetParentHwnd(HWND hWnd, HWND hWndParent)
  *
  * RETURNS
  *  Success: S_OK. If lppCP is non-NULL, it is filled with the IConnectionPoint
- *           that was advised. The caller is responsable for releasing it.
+ *           that was advised. The caller is responsible for releasing it.
  *  Failure: E_FAIL, if any arguments are invalid.
  *           E_NOINTERFACE, if lpUnknown isn't an IConnectionPointContainer,
  *           Or an HRESULT error code if any call fails.

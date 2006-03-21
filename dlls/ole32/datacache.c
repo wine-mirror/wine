@@ -338,7 +338,7 @@ static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
  * Notes:
  *   Algorithm:	Scan the elements of the presentation storage, looking
  *		for presentation streams. For each presentation stream,
- *		load the header and check to see if the aspect maches.
+ *		load the header and check to see if the aspect matches.
  *
  *   If a fallback is desired, just opening the first presentation stream
  *   is a possibility.
@@ -960,7 +960,7 @@ static HRESULT WINAPI DataCache_GetClassID(
 /************************************************************************
  * DataCache_IsDirty (IPersistStorage)
  *
- * Until we actully connect to a running object and retrieve new
+ * Until we actually connect to a running object and retrieve new
  * information to it, we never get dirty.
  *
  * See Windows documentation for more details on IPersistStorage methods.
@@ -1025,9 +1025,9 @@ static HRESULT WINAPI DataCache_Load(
 /************************************************************************
  * DataCache_Save (IPersistStorage)
  *
- * Until we actully connect to a running object and retrieve new
+ * Until we actually connect to a running object and retrieve new
  * information to it, we never have to save anything. However, it is
- * our responsability to copy the information when saving to a new
+ * our responsibility to copy the information when saving to a new
  * storage.
  *
  * See Windows documentation for more details on IPersistStorage methods.
@@ -1058,7 +1058,7 @@ static HRESULT WINAPI DataCache_Save(
  * DataCache_SaveCompleted (IPersistStorage)
  *
  * This method is called to tell the cache to release the storage
- * pointer it's currentlu holding.
+ * pointer it's currently holding.
  *
  * See Windows documentation for more details on IPersistStorage methods.
  */
@@ -1090,7 +1090,7 @@ static HRESULT WINAPI DataCache_SaveCompleted(
  * DataCache_HandsOffStorage (IPersistStorage)
  *
  * This method is called to tell the cache to release the storage
- * pointer it's currentlu holding.
+ * pointer it's currently holding.
  *
  * See Windows documentation for more details on IPersistStorage methods.
  */
@@ -1809,7 +1809,7 @@ static DataCache* DataCache_Construct(
   /*
    * Initialize the outer unknown
    * We don't keep a reference on the outer unknown since, the way
-   * aggregation works, our lifetime is at least as large as it's
+   * aggregation works, our lifetime is at least as large as its
    * lifetime.
    */
   if (pUnkOuter==NULL)
