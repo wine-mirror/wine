@@ -116,7 +116,74 @@ static void be_i386_single_step(CONTEXT* ctx, unsigned enable)
     else ctx->EFlags &= ~STEP_FLAG;
 }
 
-static void be_i386_print_context(HANDLE hThread, const CONTEXT* ctx)
+static void be_i386_all_print_context(HANDLE hThread, const CONTEXT* ctx)
+{
+    long double ST[8];                         /* These are for floating regs */
+    int         cnt;
+
+    /* Break out the FPU state and the floating point registers    */
+    dbg_printf("Floating Point Unit status:\n");
+    dbg_printf(" FLCW:%04x ", LOWORD(ctx->FloatSave.ControlWord));
+    dbg_printf(" FLTW:%04x ", LOWORD(ctx->FloatSave.TagWord));
+    dbg_printf(" FLEO:%08x ", (unsigned int) ctx->FloatSave.ErrorOffset);
+    dbg_printf(" FLSW:%04x", LOWORD(ctx->FloatSave.StatusWord));
+
+    /* Isolate the condition code bits - note they are not contiguous */
+    dbg_printf("(CC:%ld%ld%ld%ld", (ctx->FloatSave.StatusWord & 0x00004000) >> 14, 
+                                   (ctx->FloatSave.StatusWord & 0x00000400) >> 10,
+                                   (ctx->FloatSave.StatusWord & 0x00000200) >> 9,
+                                   (ctx->FloatSave.StatusWord & 0x00000100) >> 8);
+
+    /* Now pull out hte 3 bit of the TOP stack pointer */
+    dbg_printf(" TOP:%01x", (unsigned int) (ctx->FloatSave.StatusWord & 0x00003800) >> 11);
+
+    /* Lets analyse the error bits and indicate the status  
+     * the Invalid Op flag has sub status which is tested as follows */
+    if (ctx->FloatSave.StatusWord & 0x00000001) {     /* Invalid Fl OP   */
+       if (ctx->FloatSave.StatusWord & 0x00000040) {  /* Stack Fault     */
+          if (ctx->FloatSave.StatusWord & 0x00000200) /* C1 says Overflow */
+             dbg_printf(" #IE(Stack Overflow)");      
+          else
+             dbg_printf(" #IE(Stack Underflow)");     /* Underflow */
+       }
+       else  dbg_printf(" #IE(Arthimetic error)");    /* Invalid Fl OP   */
+    }
+
+    if (ctx->FloatSave.StatusWord & 0x00000002) dbg_printf(" #DE"); /* Denormalised OP */
+    if (ctx->FloatSave.StatusWord & 0x00000004) dbg_printf(" #ZE"); /* Zero Divide     */
+    if (ctx->FloatSave.StatusWord & 0x00000008) dbg_printf(" #OE"); /* Overflow        */
+    if (ctx->FloatSave.StatusWord & 0x00000010) dbg_printf(" #UE"); /* Underflow       */
+    if (ctx->FloatSave.StatusWord & 0x00000020) dbg_printf(" #PE"); /* Precision error */
+    if (ctx->FloatSave.StatusWord & 0x00000040)
+       if (!(ctx->FloatSave.StatusWord & 0x00000001))
+           dbg_printf(" #SE");                 /* Stack Fault (don't think this can occur) */
+    if (ctx->FloatSave.StatusWord & 0x00000080) dbg_printf(" #ES"); /* Error Summary   */
+    if (ctx->FloatSave.StatusWord & 0x00008000) dbg_printf(" #FB"); /* FPU Busy        */
+    dbg_printf(")\n");
+    
+    /* Here are the rest of the registers */
+    dbg_printf(" FLES:%08x ", (unsigned int) ctx->FloatSave.ErrorSelector);
+    dbg_printf(" FLDO:%08x ", (unsigned int) ctx->FloatSave.DataOffset);
+    dbg_printf(" FLDS:%08x ", (unsigned int) ctx->FloatSave.DataSelector);
+    dbg_printf(" FLCNS:%08x \n", (unsigned int) ctx->FloatSave.Cr0NpxState);
+
+    /* Now for the floating point registers */
+    dbg_printf("Floating Point Registers:\n");
+    for (cnt = 0; cnt < 4; cnt++) 
+    {
+        memcpy(&ST[cnt], &ctx->FloatSave.RegisterArea[cnt * 10], 10);
+        dbg_printf(" ST%d:%Lf ", cnt, ST[cnt]);
+    }
+    dbg_printf("\n");
+    for (cnt = 4; cnt < 8; cnt++) 
+    {
+        memcpy(&ST[cnt], &ctx->FloatSave.RegisterArea[cnt * 10], 10);
+        dbg_printf(" ST%d:%Lf ", cnt, ST[cnt]);
+    }
+    dbg_printf("\n");
+}
+
+static void be_i386_print_context(HANDLE hThread, const CONTEXT* ctx, int all_regs)
 {
     char        buf[33];
     char*       pt;
@@ -173,6 +240,9 @@ static void be_i386_print_context(HANDLE hThread, const CONTEXT* ctx)
                    ctx->Esi, ctx->Edi);
         break;
     }
+
+    if (all_regs) be_i386_all_print_context(hThread, ctx); /* print floating regs */
+
 }
 
 static void be_i386_print_segment_info(HANDLE hThread, const CONTEXT* ctx)

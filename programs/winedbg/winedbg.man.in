@@ -348,6 +348,8 @@ Lists all the dynamic libraries loaded in the debugged program
 Prints information on module at address \fBN\fR
 .IP \fBinfo\ regs\fR
 Prints the value of the CPU registers
+.IP \fBinfo\ all-regs\fR
+Prints the value of the CPU and Floating Point registers
 .IP \fBinfo\ segment\fR
 Lists all allocated segments (i386 only)
 .IP \fBinfo\ segment\ N\fR

@@ -34,7 +34,7 @@ static void be_alpha_single_step(CONTEXT* ctx, unsigned enable)
     dbg_printf("not done\n");
 }
 
-static void be_alpha_print_context(HANDLE hThread, const CONTEXT* ctx)
+static void be_alpha_print_context(HANDLE hThread, const CONTEXT* ctx, int all_regs)
 {
     dbg_printf("Context printing for Alpha not done yet\n");
 }

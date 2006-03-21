@@ -49,7 +49,7 @@ struct backend_cpu
     /* Enables/disables CPU single step mode (depending on enable) */
     void                (*single_step)(CONTEXT* ctx, unsigned enable);
     /* Dumps out the content of the context */
-    void                (*print_context)(HANDLE hThread, const CONTEXT* ctx);
+    void                (*print_context)(HANDLE hThread, const CONTEXT* ctx, int all_regs);
     /* Prints information about segments. Non segmented CPU should leave this
      * function empty
      */

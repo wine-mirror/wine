@@ -52,7 +52,7 @@ int yyerror(const char*);
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tALL tINFO tUP tDOWN
 %token tENABLE tDISABLE tBREAK tHBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM
 %token tABORT tVM86 tECHO
-%token tCLASS tMAPS tSTACK tSEGMENTS tSYMBOL tREGS tWND tQUEUE tLOCAL tEXCEPTION
+%token tCLASS tMAPS tSTACK tSEGMENTS tSYMBOL tREGS tALLREGS tWND tQUEUE tLOCAL tEXCEPTION
 %token tPROCESS tTHREAD tMODREF tEOL tEOF
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS tSOURCE
@@ -256,7 +256,8 @@ info_command:
       tINFO tBREAK              { break_info(); }
     | tINFO tSHARE     		{ info_win32_module(0); }
     | tINFO tSHARE expr_rvalue  { info_win32_module($3); }
-    | tINFO tREGS               { be_cpu->print_context(dbg_curr_thread->handle, &dbg_context); }
+    | tINFO tREGS               { be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 0); }
+    | tINFO tALLREGS            { be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 1); }
     | tINFO tSEGMENTS expr_rvalue { info_win32_segments($3 >> 3, 1); }
     | tINFO tSEGMENTS           { info_win32_segments(0, -1); }
     | tINFO tSTACK              { stack_info(); }

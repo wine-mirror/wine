@@ -189,6 +189,8 @@ STRING     \"[^\n"]+\"
 <INFO_CMD>threads|thread|threa|thre|thr|th { return tTHREAD; }
 <INFO_CMD>exception|except|exc|ex	{ return tEXCEPTION; }
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
+<INFO_CMD>allregs|allreg|allre          { return tALLREGS; }
+<INFO_CMD>"all-registers"|"all-regs"|"all-reg"|"all-re" { return tALLREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
 <INFO_CMD>stack|stac|sta|st     	{ return tSTACK; }
 <INFO_CMD>symbol|symbo|symb|sym         { BEGIN(ASTRING_EXPECTED); return tSYMBOL; }

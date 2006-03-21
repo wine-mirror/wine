@@ -47,7 +47,7 @@ static void be_ppc_single_step(CONTEXT* ctx, unsigned enable)
     else ctx->Msr &= ~MSR_SE;
 }
 
-static void be_ppc_print_context(HANDLE hThread, const CONTEXT* ctx)
+static void be_ppc_print_context(HANDLE hThread, const CONTEXT* ctx, int all_regs)
 {
     dbg_printf("Context printing for PPC not done yet\n");
 }
