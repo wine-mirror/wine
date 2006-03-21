@@ -44,6 +44,12 @@ my %special_dlls =
   "x11drv"   => "XFILES"
 );
 
+sub needs_symlink($)
+{
+    (my $mod = $_[0]) =~ s/\.dll$//;
+    return $mod ne $directories{$_[0]};
+}
+
 foreach my $i (split(/\s/,$makefiles))
 {
     my $module;
@@ -167,7 +173,7 @@ my %targets16 = ();
 foreach my $mod (sort keys %directories)
 {
     next if defined($special_dlls{$directories{$mod}});  # skip special dlls
-    $targets{$mod . ".so"} = 1;
+    $targets{$mod . ".so"} = 1 if needs_symlink($mod);
     next unless defined $altnames{$mod};
     foreach my $i (sort @{$altnames{$mod}})
     {
@@ -188,7 +194,7 @@ printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets16 );
 print NEWMAKE <<EOF;
 
 SYMLINKS_SO = \\
-	\$(EXTRADIRS:%=%.dll.so) \\
+	\$(XFILES:%=%.dll.so) \\
 	\@WIN16_FILES\@ \\
 EOF
 printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets );
@@ -197,7 +203,7 @@ print NEWMAKE <<EOF;
 
 # Main target
 
-all: symlinks\$(DLLEXT)
+all: \$(BUILDSUBDIRS) symlinks\$(DLLEXT)
 
 .PHONY: symlinks symlinks.so implib
 
@@ -213,34 +219,32 @@ EOF
 ################################################################
 # output the lib name -> directory rules
 
-print NEWMAKE <<EOF;
-
-# Map symlink name to the corresponding library
-
-EOF
-
+print NEWMAKE "# Map symlink name to the corresponding library\n\n";
 foreach my $mod (sort keys %directories)
 {
+    next unless (needs_symlink($mod) || $mod eq "ddraw.dll"); # FIXME: hack because of x11drv
     printf NEWMAKE "%s.so: %s/%s.so\n", $mod, $directories{$mod}, $mod;
     printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s.so \$@\n\n", $directories{$mod}, $mod;
+}
 
-    if (defined $altnames{$mod})
+print NEWMAKE "# Placeholders for 16-bit libraries\n\n";
+foreach my $mod (sort keys %directories)
+{
+    next unless defined $altnames{$mod};
+    my $count = 0;
+    foreach my $i (sort @{$altnames{$mod}})
     {
-        my $count = 0;
-        foreach my $i (sort @{$altnames{$mod}})
-        {
-            if ($count++ == 3) { printf NEWMAKE "\\\n  "; $count = 1; }
-            printf NEWMAKE "%s16 ", $i;
-        }
-        printf NEWMAKE ": %s.so\n", $mod;
-        printf NEWMAKE "\techo \"%s\" >\$\@\n\n", $mod;
+        if ($count++ == 3) { printf NEWMAKE "\\\n  "; $count = 1; }
+        printf NEWMAKE "%s16 ", $i;
     }
+    printf NEWMAKE ": %s/%s.so\n", $directories{$mod}, $mod;
+    printf NEWMAKE "\techo \"%s\" >\$\@\n\n", $mod;
 }
 
 ################################################################
 # output the import libraries rules
 
-print NEWMAKE "\n# Import libraries\n\n";
+print NEWMAKE "# Import libraries\n\n";
 print NEWMAKE "STATIC_IMPLIBEXT = \$(IMPLIBEXT:def=def.a)\n\n";
 
 my @lib_symlinks = ();

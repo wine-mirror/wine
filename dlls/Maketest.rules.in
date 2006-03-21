@@ -52,7 +52,7 @@ depend: $(TESTLIST)
 
 check test:: $(TESTRESULTS) $(SUBDIRS:%=%/__test__)
 
-$(TESTRESULTS): $(MODULE)$(DLLEXT) $(DLLDIR)/$(TESTDLL)$(DLLEXT)
+$(TESTRESULTS): $(MODULE)$(DLLEXT) ../$(TESTDLL)$(DLLEXT)
 
 # Rules for cross-compiling tests
 

@@ -260,174 +260,36 @@ WIN16_FILES = \
 	wprocs.dll16
 
 SYMLINKS_SO = \
-	$(EXTRADIRS:%=%.dll.so) \
+	$(XFILES:%=%.dll.so) \
 	@WIN16_FILES@ \
-	activeds.dll.so \
-	advapi32.dll.so \
-	advpack.dll.so \
-	amstream.dll.so \
-	atl.dll.so \
-	avicap32.dll.so \
-	avifil32.dll.so \
-	cabinet.dll.so \
-	capi2032.dll.so \
-	cards.dll.so \
-	cfgmgr32.dll.so \
-	comcat.dll.so \
-	comctl32.dll.so \
 	comdlg32.dll.so \
-	crtdll.dll.so \
-	crypt32.dll.so \
-	cryptdll.dll.so \
-	ctl3d32.dll.so \
-	d3dim.dll.so \
-	d3drm.dll.so \
-	d3dxof.dll.so \
-	dbghelp.dll.so \
-	dciman32.dll.so \
-	devenum.dll.so \
-	dinput.dll.so \
-	dinput8.dll.so \
-	dmband.dll.so \
-	dmcompos.dll.so \
-	dmime.dll.so \
-	dmloader.dll.so \
-	dmscript.dll.so \
-	dmstyle.dll.so \
-	dmsynth.dll.so \
-	dmusic.dll.so \
-	dmusic32.dll.so \
-	dplay.dll.so \
-	dplayx.dll.so \
-	dpnet.dll.so \
-	dpnhpast.dll.so \
-	dsound.dll.so \
-	dswave.dll.so \
-	dxdiagn.dll.so \
 	gdi32.dll.so \
-	hhctrl.ocx.so \
-	iccvid.dll.so \
-	icmp.dll.so \
-	ifsmgr.vxd.so \
 	imaadp32.acm.so \
-	imagehlp.dll.so \
-	imm32.dll.so \
-	iphlpapi.dll.so \
-	itss.dll.so \
 	joystick.drv.so \
 	kernel32.dll.so \
-	lz32.dll.so \
-	mapi32.dll.so \
-	mciavi32.dll.so \
-	mcicda.dll.so \
-	mciseq.dll.so \
 	mciwave.drv.so \
-	midimap.dll.so \
-	mlang.dll.so \
-	mmdevldr.vxd.so \
-	monodebg.vxd.so \
-	mpr.dll.so \
 	msacm.drv.so \
 	msacm32.dll.so \
 	msadp32.acm.so \
-	mscms.dll.so \
-	msdmo.dll.so \
-	msftedit.dll.so \
 	msg711.acm.so \
-	mshtml.dll.so \
-	msi.dll.so \
-	msimg32.dll.so \
 	msisys.ocx.so \
-	msnet32.dll.so \
-	msrle32.dll.so \
-	msvcrt.dll.so \
-	msvcrt20.dll.so \
-	msvcrt40.dll.so \
-	msvcrtd.dll.so \
-	msvfw32.dll.so \
-	msvidc32.dll.so \
-	mswsock.dll.so \
-	msxml3.dll.so \
-	netapi32.dll.so \
-	newdev.dll.so \
-	ntdll.dll.so \
-	objsel.dll.so \
-	odbc32.dll.so \
-	odbccp32.dll.so \
-	ole32.dll.so \
-	oleacc.dll.so \
-	oleaut32.dll.so \
-	olecli32.dll.so \
-	oledlg.dll.so \
-	olepro32.dll.so \
-	olesvr32.dll.so \
-	powrprof.dll.so \
-	psapi.dll.so \
-	qcap.dll.so \
-	quartz.dll.so \
-	rasapi32.dll.so \
-	riched20.dll.so \
 	riched32.dll.so \
-	rpcrt4.dll.so \
-	rsabase.dll.so \
-	rsaenh.dll.so \
-	secur32.dll.so \
-	security.dll.so \
-	sensapi.dll.so \
-	serialui.dll.so \
-	setupapi.dll.so \
-	sfc.dll.so \
-	shdocvw.dll.so \
-	shell32.dll.so \
-	shfolder.dll.so \
-	shlwapi.dll.so \
-	snmpapi.dll.so \
-	stdole2.tlb.so \
-	stdole32.tlb.so \
-	sti.dll.so \
-	tapi32.dll.so \
 	twain_32.dll.so \
-	unicows.dll.so \
-	url.dll.so \
-	urlmon.dll.so \
 	user32.dll.so \
-	usp10.dll.so \
-	uxtheme.dll.so \
-	vdhcp.vxd.so \
-	vdmdbg.dll.so \
-	version.dll.so \
-	vmm.vxd.so \
-	vnbt.vxd.so \
-	vnetbios.vxd.so \
-	vtdapi.vxd.so \
-	vwin32.vxd.so \
-	w32skrnl.dll.so \
 	winealsa.drv.so \
 	winearts.drv.so \
 	wineaudioio.drv.so \
-	winedos.dll.so \
 	wineesd.drv.so \
 	winejack.drv.so \
 	winemp3.acm.so \
 	winenas.drv.so \
 	wineoss.drv.so \
 	wineps.drv.so \
-	wininet.dll.so \
-	winmm.dll.so \
-	winnls32.dll.so \
-	winspool.drv.so \
-	wintab32.dll.so \
-	wintrust.dll.so \
-	wldap32.dll.so \
-	wnaspi32.dll.so \
-	wow32.dll.so \
-	ws2_32.dll.so \
-	wsock32.dll.so \
-	wtsapi32.dll.so
+	winspool.drv.so
 
 # Main target
 
-all: symlinks$(DLLEXT)
+all: $(BUILDSUBDIRS) symlinks$(DLLEXT)
 
 .PHONY: symlinks symlinks.so implib
 
@@ -438,197 +300,19 @@ symlinks: $(BUILDSUBDIRS)
 x11drv.dll.so: winex11.drv.so
 	$(RM) $@ && $(LN_S) winex11.drv.so $@
 
-
 # Map symlink name to the corresponding library
-
-activeds.dll.so: activeds/activeds.dll.so
-	$(RM) $@ && $(LN_S) activeds/activeds.dll.so $@
-
-advapi32.dll.so: advapi32/advapi32.dll.so
-	$(RM) $@ && $(LN_S) advapi32/advapi32.dll.so $@
-
-advpack.dll.so: advpack/advpack.dll.so
-	$(RM) $@ && $(LN_S) advpack/advpack.dll.so $@
-
-amstream.dll.so: amstream/amstream.dll.so
-	$(RM) $@ && $(LN_S) amstream/amstream.dll.so $@
-
-atl.dll.so: atl/atl.dll.so
-	$(RM) $@ && $(LN_S) atl/atl.dll.so $@
-
-avicap32.dll.so: avicap32/avicap32.dll.so
-	$(RM) $@ && $(LN_S) avicap32/avicap32.dll.so $@
-
-avifil32.dll.so: avifil32/avifil32.dll.so
-	$(RM) $@ && $(LN_S) avifil32/avifil32.dll.so $@
-
-avifile.dll16 : avifil32.dll.so
-	echo "avifil32.dll" >$@
-
-cabinet.dll.so: cabinet/cabinet.dll.so
-	$(RM) $@ && $(LN_S) cabinet/cabinet.dll.so $@
-
-capi2032.dll.so: capi2032/capi2032.dll.so
-	$(RM) $@ && $(LN_S) capi2032/capi2032.dll.so $@
-
-cards.dll.so: cards/cards.dll.so
-	$(RM) $@ && $(LN_S) cards/cards.dll.so $@
-
-cfgmgr32.dll.so: cfgmgr32/cfgmgr32.dll.so
-	$(RM) $@ && $(LN_S) cfgmgr32/cfgmgr32.dll.so $@
-
-comcat.dll.so: comcat/comcat.dll.so
-	$(RM) $@ && $(LN_S) comcat/comcat.dll.so $@
-
-comctl32.dll.so: comctl32/comctl32.dll.so
-	$(RM) $@ && $(LN_S) comctl32/comctl32.dll.so $@
 
 comdlg32.dll.so: commdlg/comdlg32.dll.so
 	$(RM) $@ && $(LN_S) commdlg/comdlg32.dll.so $@
 
-commdlg.dll16 : comdlg32.dll.so
-	echo "comdlg32.dll" >$@
-
-crtdll.dll.so: crtdll/crtdll.dll.so
-	$(RM) $@ && $(LN_S) crtdll/crtdll.dll.so $@
-
-crypt32.dll.so: crypt32/crypt32.dll.so
-	$(RM) $@ && $(LN_S) crypt32/crypt32.dll.so $@
-
-cryptdll.dll.so: cryptdll/cryptdll.dll.so
-	$(RM) $@ && $(LN_S) cryptdll/cryptdll.dll.so $@
-
-ctl3d32.dll.so: ctl3d32/ctl3d32.dll.so
-	$(RM) $@ && $(LN_S) ctl3d32/ctl3d32.dll.so $@
-
-ctl3d.dll16 ctl3dv2.dll16 : ctl3d32.dll.so
-	echo "ctl3d32.dll" >$@
-
-d3d8.dll.so: d3d8/d3d8.dll.so
-	$(RM) $@ && $(LN_S) d3d8/d3d8.dll.so $@
-
-d3d9.dll.so: d3d9/d3d9.dll.so
-	$(RM) $@ && $(LN_S) d3d9/d3d9.dll.so $@
-
-d3dim.dll.so: d3dim/d3dim.dll.so
-	$(RM) $@ && $(LN_S) d3dim/d3dim.dll.so $@
-
-d3drm.dll.so: d3drm/d3drm.dll.so
-	$(RM) $@ && $(LN_S) d3drm/d3drm.dll.so $@
-
-d3dx8.dll.so: d3dx8/d3dx8.dll.so
-	$(RM) $@ && $(LN_S) d3dx8/d3dx8.dll.so $@
-
-d3dxof.dll.so: d3dxof/d3dxof.dll.so
-	$(RM) $@ && $(LN_S) d3dxof/d3dxof.dll.so $@
-
-dbghelp.dll.so: dbghelp/dbghelp.dll.so
-	$(RM) $@ && $(LN_S) dbghelp/dbghelp.dll.so $@
-
-dciman32.dll.so: dciman32/dciman32.dll.so
-	$(RM) $@ && $(LN_S) dciman32/dciman32.dll.so $@
-
 ddraw.dll.so: ddraw/ddraw.dll.so
 	$(RM) $@ && $(LN_S) ddraw/ddraw.dll.so $@
-
-devenum.dll.so: devenum/devenum.dll.so
-	$(RM) $@ && $(LN_S) devenum/devenum.dll.so $@
-
-dinput.dll.so: dinput/dinput.dll.so
-	$(RM) $@ && $(LN_S) dinput/dinput.dll.so $@
-
-dinput8.dll.so: dinput8/dinput8.dll.so
-	$(RM) $@ && $(LN_S) dinput8/dinput8.dll.so $@
-
-dmband.dll.so: dmband/dmband.dll.so
-	$(RM) $@ && $(LN_S) dmband/dmband.dll.so $@
-
-dmcompos.dll.so: dmcompos/dmcompos.dll.so
-	$(RM) $@ && $(LN_S) dmcompos/dmcompos.dll.so $@
-
-dmime.dll.so: dmime/dmime.dll.so
-	$(RM) $@ && $(LN_S) dmime/dmime.dll.so $@
-
-dmloader.dll.so: dmloader/dmloader.dll.so
-	$(RM) $@ && $(LN_S) dmloader/dmloader.dll.so $@
-
-dmscript.dll.so: dmscript/dmscript.dll.so
-	$(RM) $@ && $(LN_S) dmscript/dmscript.dll.so $@
-
-dmstyle.dll.so: dmstyle/dmstyle.dll.so
-	$(RM) $@ && $(LN_S) dmstyle/dmstyle.dll.so $@
-
-dmsynth.dll.so: dmsynth/dmsynth.dll.so
-	$(RM) $@ && $(LN_S) dmsynth/dmsynth.dll.so $@
-
-dmusic.dll.so: dmusic/dmusic.dll.so
-	$(RM) $@ && $(LN_S) dmusic/dmusic.dll.so $@
-
-dmusic32.dll.so: dmusic32/dmusic32.dll.so
-	$(RM) $@ && $(LN_S) dmusic32/dmusic32.dll.so $@
-
-dplay.dll.so: dplay/dplay.dll.so
-	$(RM) $@ && $(LN_S) dplay/dplay.dll.so $@
-
-dplayx.dll.so: dplayx/dplayx.dll.so
-	$(RM) $@ && $(LN_S) dplayx/dplayx.dll.so $@
-
-dpnet.dll.so: dpnet/dpnet.dll.so
-	$(RM) $@ && $(LN_S) dpnet/dpnet.dll.so $@
-
-dpnhpast.dll.so: dpnhpast/dpnhpast.dll.so
-	$(RM) $@ && $(LN_S) dpnhpast/dpnhpast.dll.so $@
-
-dsound.dll.so: dsound/dsound.dll.so
-	$(RM) $@ && $(LN_S) dsound/dsound.dll.so $@
-
-dswave.dll.so: dswave/dswave.dll.so
-	$(RM) $@ && $(LN_S) dswave/dswave.dll.so $@
-
-dxdiagn.dll.so: dxdiagn/dxdiagn.dll.so
-	$(RM) $@ && $(LN_S) dxdiagn/dxdiagn.dll.so $@
 
 gdi32.dll.so: gdi/gdi32.dll.so
 	$(RM) $@ && $(LN_S) gdi/gdi32.dll.so $@
 
-dispdib.dll16 gdi.exe16 wing.dll16 : gdi32.dll.so
-	echo "gdi32.dll" >$@
-
-glu32.dll.so: glu32/glu32.dll.so
-	$(RM) $@ && $(LN_S) glu32/glu32.dll.so $@
-
-glut32.dll.so: glut32/glut32.dll.so
-	$(RM) $@ && $(LN_S) glut32/glut32.dll.so $@
-
-hhctrl.ocx.so: hhctrl.ocx/hhctrl.ocx.so
-	$(RM) $@ && $(LN_S) hhctrl.ocx/hhctrl.ocx.so $@
-
-iccvid.dll.so: iccvid/iccvid.dll.so
-	$(RM) $@ && $(LN_S) iccvid/iccvid.dll.so $@
-
-icmp.dll.so: icmp/icmp.dll.so
-	$(RM) $@ && $(LN_S) icmp/icmp.dll.so $@
-
-ifsmgr.vxd.so: ifsmgr.vxd/ifsmgr.vxd.so
-	$(RM) $@ && $(LN_S) ifsmgr.vxd/ifsmgr.vxd.so $@
-
 imaadp32.acm.so: msacm/imaadp32/imaadp32.acm.so
 	$(RM) $@ && $(LN_S) msacm/imaadp32/imaadp32.acm.so $@
-
-imagehlp.dll.so: imagehlp/imagehlp.dll.so
-	$(RM) $@ && $(LN_S) imagehlp/imagehlp.dll.so $@
-
-imm32.dll.so: imm32/imm32.dll.so
-	$(RM) $@ && $(LN_S) imm32/imm32.dll.so $@
-
-imm.dll16 : imm32.dll.so
-	echo "imm32.dll" >$@
-
-iphlpapi.dll.so: iphlpapi/iphlpapi.dll.so
-	$(RM) $@ && $(LN_S) iphlpapi/iphlpapi.dll.so $@
-
-itss.dll.so: itss/itss.dll.so
-	$(RM) $@ && $(LN_S) itss/itss.dll.so $@
 
 joystick.drv.so: winmm/joystick/joystick.drv.so
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv.so $@
@@ -636,46 +320,8 @@ joystick.drv.so: winmm/joystick/joystick.drv.so
 kernel32.dll.so: kernel/kernel32.dll.so
 	$(RM) $@ && $(LN_S) kernel/kernel32.dll.so $@
 
-comm.drv16 krnl386.exe16 stress.dll16 \
-  system.drv16 toolhelp.dll16 win87em.dll16 \
-  windebug.dll16 : kernel32.dll.so
-	echo "kernel32.dll" >$@
-
-lz32.dll.so: lz32/lz32.dll.so
-	$(RM) $@ && $(LN_S) lz32/lz32.dll.so $@
-
-lzexpand.dll16 : lz32.dll.so
-	echo "lz32.dll" >$@
-
-mapi32.dll.so: mapi32/mapi32.dll.so
-	$(RM) $@ && $(LN_S) mapi32/mapi32.dll.so $@
-
-mciavi32.dll.so: mciavi32/mciavi32.dll.so
-	$(RM) $@ && $(LN_S) mciavi32/mciavi32.dll.so $@
-
-mcicda.dll.so: mcicda/mcicda.dll.so
-	$(RM) $@ && $(LN_S) mcicda/mcicda.dll.so $@
-
-mciseq.dll.so: mciseq/mciseq.dll.so
-	$(RM) $@ && $(LN_S) mciseq/mciseq.dll.so $@
-
 mciwave.drv.so: winmm/mciwave/mciwave.drv.so
 	$(RM) $@ && $(LN_S) winmm/mciwave/mciwave.drv.so $@
-
-midimap.dll.so: midimap/midimap.dll.so
-	$(RM) $@ && $(LN_S) midimap/midimap.dll.so $@
-
-mlang.dll.so: mlang/mlang.dll.so
-	$(RM) $@ && $(LN_S) mlang/mlang.dll.so $@
-
-mmdevldr.vxd.so: mmdevldr.vxd/mmdevldr.vxd.so
-	$(RM) $@ && $(LN_S) mmdevldr.vxd/mmdevldr.vxd.so $@
-
-monodebg.vxd.so: monodebg.vxd/monodebg.vxd.so
-	$(RM) $@ && $(LN_S) monodebg.vxd/monodebg.vxd.so $@
-
-mpr.dll.so: mpr/mpr.dll.so
-	$(RM) $@ && $(LN_S) mpr/mpr.dll.so $@
 
 msacm.drv.so: winmm/wavemap/msacm.drv.so
 	$(RM) $@ && $(LN_S) winmm/wavemap/msacm.drv.so $@
@@ -683,269 +329,23 @@ msacm.drv.so: winmm/wavemap/msacm.drv.so
 msacm32.dll.so: msacm/msacm32.dll.so
 	$(RM) $@ && $(LN_S) msacm/msacm32.dll.so $@
 
-msacm.dll16 : msacm32.dll.so
-	echo "msacm32.dll" >$@
-
 msadp32.acm.so: msacm/msadp32/msadp32.acm.so
 	$(RM) $@ && $(LN_S) msacm/msadp32/msadp32.acm.so $@
-
-mscms.dll.so: mscms/mscms.dll.so
-	$(RM) $@ && $(LN_S) mscms/mscms.dll.so $@
-
-msdmo.dll.so: msdmo/msdmo.dll.so
-	$(RM) $@ && $(LN_S) msdmo/msdmo.dll.so $@
-
-msftedit.dll.so: msftedit/msftedit.dll.so
-	$(RM) $@ && $(LN_S) msftedit/msftedit.dll.so $@
 
 msg711.acm.so: msacm/msg711/msg711.acm.so
 	$(RM) $@ && $(LN_S) msacm/msg711/msg711.acm.so $@
 
-mshtml.dll.so: mshtml/mshtml.dll.so
-	$(RM) $@ && $(LN_S) mshtml/mshtml.dll.so $@
-
-msi.dll.so: msi/msi.dll.so
-	$(RM) $@ && $(LN_S) msi/msi.dll.so $@
-
-msimg32.dll.so: msimg32/msimg32.dll.so
-	$(RM) $@ && $(LN_S) msimg32/msimg32.dll.so $@
-
 msisys.ocx.so: msisys/msisys.ocx.so
 	$(RM) $@ && $(LN_S) msisys/msisys.ocx.so $@
-
-msnet32.dll.so: msnet32/msnet32.dll.so
-	$(RM) $@ && $(LN_S) msnet32/msnet32.dll.so $@
-
-msrle32.dll.so: msrle32/msrle32.dll.so
-	$(RM) $@ && $(LN_S) msrle32/msrle32.dll.so $@
-
-msvcrt.dll.so: msvcrt/msvcrt.dll.so
-	$(RM) $@ && $(LN_S) msvcrt/msvcrt.dll.so $@
-
-msvcrt20.dll.so: msvcrt20/msvcrt20.dll.so
-	$(RM) $@ && $(LN_S) msvcrt20/msvcrt20.dll.so $@
-
-msvcrt40.dll.so: msvcrt40/msvcrt40.dll.so
-	$(RM) $@ && $(LN_S) msvcrt40/msvcrt40.dll.so $@
-
-msvcrtd.dll.so: msvcrtd/msvcrtd.dll.so
-	$(RM) $@ && $(LN_S) msvcrtd/msvcrtd.dll.so $@
-
-msvfw32.dll.so: msvfw32/msvfw32.dll.so
-	$(RM) $@ && $(LN_S) msvfw32/msvfw32.dll.so $@
-
-msvideo.dll16 : msvfw32.dll.so
-	echo "msvfw32.dll" >$@
-
-msvidc32.dll.so: msvidc32/msvidc32.dll.so
-	$(RM) $@ && $(LN_S) msvidc32/msvidc32.dll.so $@
-
-mswsock.dll.so: mswsock/mswsock.dll.so
-	$(RM) $@ && $(LN_S) mswsock/mswsock.dll.so $@
-
-msxml3.dll.so: msxml3/msxml3.dll.so
-	$(RM) $@ && $(LN_S) msxml3/msxml3.dll.so $@
-
-netapi32.dll.so: netapi32/netapi32.dll.so
-	$(RM) $@ && $(LN_S) netapi32/netapi32.dll.so $@
-
-newdev.dll.so: newdev/newdev.dll.so
-	$(RM) $@ && $(LN_S) newdev/newdev.dll.so $@
-
-ntdll.dll.so: ntdll/ntdll.dll.so
-	$(RM) $@ && $(LN_S) ntdll/ntdll.dll.so $@
-
-objsel.dll.so: objsel/objsel.dll.so
-	$(RM) $@ && $(LN_S) objsel/objsel.dll.so $@
-
-odbc32.dll.so: odbc32/odbc32.dll.so
-	$(RM) $@ && $(LN_S) odbc32/odbc32.dll.so $@
-
-odbccp32.dll.so: odbccp32/odbccp32.dll.so
-	$(RM) $@ && $(LN_S) odbccp32/odbccp32.dll.so $@
-
-ole32.dll.so: ole32/ole32.dll.so
-	$(RM) $@ && $(LN_S) ole32/ole32.dll.so $@
-
-compobj.dll16 ole2.dll16 ole2conv.dll16 \
-  ole2nls.dll16 ole2prox.dll16 ole2thk.dll16 \
-  storage.dll16 : ole32.dll.so
-	echo "ole32.dll" >$@
-
-oleacc.dll.so: oleacc/oleacc.dll.so
-	$(RM) $@ && $(LN_S) oleacc/oleacc.dll.so $@
-
-oleaut32.dll.so: oleaut32/oleaut32.dll.so
-	$(RM) $@ && $(LN_S) oleaut32/oleaut32.dll.so $@
-
-ole2disp.dll16 typelib.dll16 : oleaut32.dll.so
-	echo "oleaut32.dll" >$@
-
-olecli32.dll.so: olecli32/olecli32.dll.so
-	$(RM) $@ && $(LN_S) olecli32/olecli32.dll.so $@
-
-olecli.dll16 : olecli32.dll.so
-	echo "olecli32.dll" >$@
-
-oledlg.dll.so: oledlg/oledlg.dll.so
-	$(RM) $@ && $(LN_S) oledlg/oledlg.dll.so $@
-
-olepro32.dll.so: olepro32/olepro32.dll.so
-	$(RM) $@ && $(LN_S) olepro32/olepro32.dll.so $@
-
-olesvr32.dll.so: olesvr32/olesvr32.dll.so
-	$(RM) $@ && $(LN_S) olesvr32/olesvr32.dll.so $@
-
-olesvr.dll16 : olesvr32.dll.so
-	echo "olesvr32.dll" >$@
-
-opengl32.dll.so: opengl32/opengl32.dll.so
-	$(RM) $@ && $(LN_S) opengl32/opengl32.dll.so $@
-
-powrprof.dll.so: powrprof/powrprof.dll.so
-	$(RM) $@ && $(LN_S) powrprof/powrprof.dll.so $@
-
-psapi.dll.so: psapi/psapi.dll.so
-	$(RM) $@ && $(LN_S) psapi/psapi.dll.so $@
-
-qcap.dll.so: qcap/qcap.dll.so
-	$(RM) $@ && $(LN_S) qcap/qcap.dll.so $@
-
-quartz.dll.so: quartz/quartz.dll.so
-	$(RM) $@ && $(LN_S) quartz/quartz.dll.so $@
-
-rasapi32.dll.so: rasapi32/rasapi32.dll.so
-	$(RM) $@ && $(LN_S) rasapi32/rasapi32.dll.so $@
-
-rasapi16.dll16 : rasapi32.dll.so
-	echo "rasapi32.dll" >$@
-
-riched20.dll.so: riched20/riched20.dll.so
-	$(RM) $@ && $(LN_S) riched20/riched20.dll.so $@
 
 riched32.dll.so: richedit/riched32.dll.so
 	$(RM) $@ && $(LN_S) richedit/riched32.dll.so $@
 
-rpcrt4.dll.so: rpcrt4/rpcrt4.dll.so
-	$(RM) $@ && $(LN_S) rpcrt4/rpcrt4.dll.so $@
-
-rsabase.dll.so: rsabase/rsabase.dll.so
-	$(RM) $@ && $(LN_S) rsabase/rsabase.dll.so $@
-
-rsaenh.dll.so: rsaenh/rsaenh.dll.so
-	$(RM) $@ && $(LN_S) rsaenh/rsaenh.dll.so $@
-
-secur32.dll.so: secur32/secur32.dll.so
-	$(RM) $@ && $(LN_S) secur32/secur32.dll.so $@
-
-security.dll.so: security/security.dll.so
-	$(RM) $@ && $(LN_S) security/security.dll.so $@
-
-sensapi.dll.so: sensapi/sensapi.dll.so
-	$(RM) $@ && $(LN_S) sensapi/sensapi.dll.so $@
-
-serialui.dll.so: serialui/serialui.dll.so
-	$(RM) $@ && $(LN_S) serialui/serialui.dll.so $@
-
-setupapi.dll.so: setupapi/setupapi.dll.so
-	$(RM) $@ && $(LN_S) setupapi/setupapi.dll.so $@
-
-setupx.dll16 : setupapi.dll.so
-	echo "setupapi.dll" >$@
-
-sfc.dll.so: sfc/sfc.dll.so
-	$(RM) $@ && $(LN_S) sfc/sfc.dll.so $@
-
-shdocvw.dll.so: shdocvw/shdocvw.dll.so
-	$(RM) $@ && $(LN_S) shdocvw/shdocvw.dll.so $@
-
-shell32.dll.so: shell32/shell32.dll.so
-	$(RM) $@ && $(LN_S) shell32/shell32.dll.so $@
-
-shell.dll16 : shell32.dll.so
-	echo "shell32.dll" >$@
-
-shfolder.dll.so: shfolder/shfolder.dll.so
-	$(RM) $@ && $(LN_S) shfolder/shfolder.dll.so $@
-
-shlwapi.dll.so: shlwapi/shlwapi.dll.so
-	$(RM) $@ && $(LN_S) shlwapi/shlwapi.dll.so $@
-
-snmpapi.dll.so: snmpapi/snmpapi.dll.so
-	$(RM) $@ && $(LN_S) snmpapi/snmpapi.dll.so $@
-
-stdole2.tlb.so: stdole2.tlb/stdole2.tlb.so
-	$(RM) $@ && $(LN_S) stdole2.tlb/stdole2.tlb.so $@
-
-stdole32.tlb.so: stdole32.tlb/stdole32.tlb.so
-	$(RM) $@ && $(LN_S) stdole32.tlb/stdole32.tlb.so $@
-
-sti.dll.so: sti/sti.dll.so
-	$(RM) $@ && $(LN_S) sti/sti.dll.so $@
-
-tapi32.dll.so: tapi32/tapi32.dll.so
-	$(RM) $@ && $(LN_S) tapi32/tapi32.dll.so $@
-
 twain_32.dll.so: twain/twain_32.dll.so
 	$(RM) $@ && $(LN_S) twain/twain_32.dll.so $@
 
-twain.dll16 : twain_32.dll.so
-	echo "twain_32.dll" >$@
-
-unicows.dll.so: unicows/unicows.dll.so
-	$(RM) $@ && $(LN_S) unicows/unicows.dll.so $@
-
-url.dll.so: url/url.dll.so
-	$(RM) $@ && $(LN_S) url/url.dll.so $@
-
-urlmon.dll.so: urlmon/urlmon.dll.so
-	$(RM) $@ && $(LN_S) urlmon/urlmon.dll.so $@
-
 user32.dll.so: user/user32.dll.so
 	$(RM) $@ && $(LN_S) user/user32.dll.so $@
-
-ddeml.dll16 display.drv16 keyboard.drv16 \
-  mouse.drv16 user.exe16 : user32.dll.so
-	echo "user32.dll" >$@
-
-usp10.dll.so: usp10/usp10.dll.so
-	$(RM) $@ && $(LN_S) usp10/usp10.dll.so $@
-
-uxtheme.dll.so: uxtheme/uxtheme.dll.so
-	$(RM) $@ && $(LN_S) uxtheme/uxtheme.dll.so $@
-
-vdhcp.vxd.so: vdhcp.vxd/vdhcp.vxd.so
-	$(RM) $@ && $(LN_S) vdhcp.vxd/vdhcp.vxd.so $@
-
-vdmdbg.dll.so: vdmdbg/vdmdbg.dll.so
-	$(RM) $@ && $(LN_S) vdmdbg/vdmdbg.dll.so $@
-
-version.dll.so: version/version.dll.so
-	$(RM) $@ && $(LN_S) version/version.dll.so $@
-
-ver.dll16 : version.dll.so
-	echo "version.dll" >$@
-
-vmm.vxd.so: vmm.vxd/vmm.vxd.so
-	$(RM) $@ && $(LN_S) vmm.vxd/vmm.vxd.so $@
-
-vnbt.vxd.so: vnbt.vxd/vnbt.vxd.so
-	$(RM) $@ && $(LN_S) vnbt.vxd/vnbt.vxd.so $@
-
-vnetbios.vxd.so: vnetbios.vxd/vnetbios.vxd.so
-	$(RM) $@ && $(LN_S) vnetbios.vxd/vnetbios.vxd.so $@
-
-vtdapi.vxd.so: vtdapi.vxd/vtdapi.vxd.so
-	$(RM) $@ && $(LN_S) vtdapi.vxd/vtdapi.vxd.so $@
-
-vwin32.vxd.so: vwin32.vxd/vwin32.vxd.so
-	$(RM) $@ && $(LN_S) vwin32.vxd/vwin32.vxd.so $@
-
-w32skrnl.dll.so: w32skrnl/w32skrnl.dll.so
-	$(RM) $@ && $(LN_S) w32skrnl/w32skrnl.dll.so $@
-
-w32sys.dll16 win32s16.dll16 : w32skrnl.dll.so
-	echo "w32skrnl.dll" >$@
 
 winealsa.drv.so: winmm/winealsa/winealsa.drv.so
 	$(RM) $@ && $(LN_S) winmm/winealsa/winealsa.drv.so $@
@@ -955,15 +355,6 @@ winearts.drv.so: winmm/winearts/winearts.drv.so
 
 wineaudioio.drv.so: winmm/wineaudioio/wineaudioio.drv.so
 	$(RM) $@ && $(LN_S) winmm/wineaudioio/wineaudioio.drv.so $@
-
-wined3d.dll.so: wined3d/wined3d.dll.so
-	$(RM) $@ && $(LN_S) wined3d/wined3d.dll.so $@
-
-winedos.dll.so: winedos/winedos.dll.so
-	$(RM) $@ && $(LN_S) winedos/winedos.dll.so $@
-
-wprocs.dll16 : winedos.dll.so
-	echo "winedos.dll" >$@
 
 wineesd.drv.so: winmm/wineesd/wineesd.drv.so
 	$(RM) $@ && $(LN_S) winmm/wineesd/wineesd.drv.so $@
@@ -983,63 +374,99 @@ wineoss.drv.so: winmm/wineoss/wineoss.drv.so
 wineps.drv.so: wineps/wineps.drv.so
 	$(RM) $@ && $(LN_S) wineps/wineps.drv.so $@
 
-wineps16.drv16 : wineps.drv.so
-	echo "wineps.drv" >$@
-
 winex11.drv.so: x11drv/winex11.drv.so
 	$(RM) $@ && $(LN_S) x11drv/winex11.drv.so $@
-
-wininet.dll.so: wininet/wininet.dll.so
-	$(RM) $@ && $(LN_S) wininet/wininet.dll.so $@
-
-winmm.dll.so: winmm/winmm.dll.so
-	$(RM) $@ && $(LN_S) winmm/winmm.dll.so $@
-
-mmsystem.dll16 sound.drv16 : winmm.dll.so
-	echo "winmm.dll" >$@
-
-winnls32.dll.so: winnls32/winnls32.dll.so
-	$(RM) $@ && $(LN_S) winnls32/winnls32.dll.so $@
-
-winnls.dll16 : winnls32.dll.so
-	echo "winnls32.dll" >$@
 
 winspool.drv.so: winspool/winspool.drv.so
 	$(RM) $@ && $(LN_S) winspool/winspool.drv.so $@
 
-wintab32.dll.so: wintab32/wintab32.dll.so
-	$(RM) $@ && $(LN_S) wintab32/wintab32.dll.so $@
+# Placeholders for 16-bit libraries
 
-wintab.dll16 : wintab32.dll.so
+avifile.dll16 : avifil32/avifil32.dll.so
+	echo "avifil32.dll" >$@
+
+commdlg.dll16 : commdlg/comdlg32.dll.so
+	echo "comdlg32.dll" >$@
+
+ctl3d.dll16 ctl3dv2.dll16 : ctl3d32/ctl3d32.dll.so
+	echo "ctl3d32.dll" >$@
+
+dispdib.dll16 gdi.exe16 wing.dll16 : gdi/gdi32.dll.so
+	echo "gdi32.dll" >$@
+
+imm.dll16 : imm32/imm32.dll.so
+	echo "imm32.dll" >$@
+
+comm.drv16 krnl386.exe16 stress.dll16 \
+  system.drv16 toolhelp.dll16 win87em.dll16 \
+  windebug.dll16 : kernel/kernel32.dll.so
+	echo "kernel32.dll" >$@
+
+lzexpand.dll16 : lz32/lz32.dll.so
+	echo "lz32.dll" >$@
+
+msacm.dll16 : msacm/msacm32.dll.so
+	echo "msacm32.dll" >$@
+
+msvideo.dll16 : msvfw32/msvfw32.dll.so
+	echo "msvfw32.dll" >$@
+
+compobj.dll16 ole2.dll16 ole2conv.dll16 \
+  ole2nls.dll16 ole2prox.dll16 ole2thk.dll16 \
+  storage.dll16 : ole32/ole32.dll.so
+	echo "ole32.dll" >$@
+
+ole2disp.dll16 typelib.dll16 : oleaut32/oleaut32.dll.so
+	echo "oleaut32.dll" >$@
+
+olecli.dll16 : olecli32/olecli32.dll.so
+	echo "olecli32.dll" >$@
+
+olesvr.dll16 : olesvr32/olesvr32.dll.so
+	echo "olesvr32.dll" >$@
+
+rasapi16.dll16 : rasapi32/rasapi32.dll.so
+	echo "rasapi32.dll" >$@
+
+setupx.dll16 : setupapi/setupapi.dll.so
+	echo "setupapi.dll" >$@
+
+shell.dll16 : shell32/shell32.dll.so
+	echo "shell32.dll" >$@
+
+twain.dll16 : twain/twain_32.dll.so
+	echo "twain_32.dll" >$@
+
+ddeml.dll16 display.drv16 keyboard.drv16 \
+  mouse.drv16 user.exe16 : user/user32.dll.so
+	echo "user32.dll" >$@
+
+ver.dll16 : version/version.dll.so
+	echo "version.dll" >$@
+
+w32sys.dll16 win32s16.dll16 : w32skrnl/w32skrnl.dll.so
+	echo "w32skrnl.dll" >$@
+
+wprocs.dll16 : winedos/winedos.dll.so
+	echo "winedos.dll" >$@
+
+wineps16.drv16 : wineps/wineps.drv.so
+	echo "wineps.drv" >$@
+
+mmsystem.dll16 sound.drv16 : winmm/winmm.dll.so
+	echo "winmm.dll" >$@
+
+winnls.dll16 : winnls32/winnls32.dll.so
+	echo "winnls32.dll" >$@
+
+wintab.dll16 : wintab32/wintab32.dll.so
 	echo "wintab32.dll" >$@
 
-wintrust.dll.so: wintrust/wintrust.dll.so
-	$(RM) $@ && $(LN_S) wintrust/wintrust.dll.so $@
-
-wldap32.dll.so: wldap32/wldap32.dll.so
-	$(RM) $@ && $(LN_S) wldap32/wldap32.dll.so $@
-
-wnaspi32.dll.so: wnaspi32/wnaspi32.dll.so
-	$(RM) $@ && $(LN_S) wnaspi32/wnaspi32.dll.so $@
-
-winaspi.dll16 : wnaspi32.dll.so
+winaspi.dll16 : wnaspi32/wnaspi32.dll.so
 	echo "wnaspi32.dll" >$@
 
-wow32.dll.so: wow32/wow32.dll.so
-	$(RM) $@ && $(LN_S) wow32/wow32.dll.so $@
-
-ws2_32.dll.so: ws2_32/ws2_32.dll.so
-	$(RM) $@ && $(LN_S) ws2_32/ws2_32.dll.so $@
-
-winsock.dll16 : ws2_32.dll.so
+winsock.dll16 : ws2_32/ws2_32.dll.so
 	echo "ws2_32.dll" >$@
-
-wsock32.dll.so: wsock32/wsock32.dll.so
-	$(RM) $@ && $(LN_S) wsock32/wsock32.dll.so $@
-
-wtsapi32.dll.so: wtsapi32/wtsapi32.dll.so
-	$(RM) $@ && $(LN_S) wtsapi32/wtsapi32.dll.so $@
-
 
 # Import libraries
 
