@@ -48,14 +48,6 @@ static int      nApplicationPageWidth;
 static int      nApplicationPageHeight;
 static HANDLE   hApplicationPageEvent = NULL;   /* When this event becomes signaled then we refresh the app list */
 static BOOL     bSortAscending = TRUE;
-static DWORD WINAPI    ApplicationPageRefreshThread(void *lpParameter);
-static BOOL CALLBACK   EnumWindowsProc(HWND hWnd, LPARAM lParam);
-static void            AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung);
-static void            ApplicationPageUpdate(void);
-static void            ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam);
-static void            ApplicationPageShowContextMenu1(void);
-static void            ApplicationPageShowContextMenu2(void);
-static int CALLBACK    ApplicationPageCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 #if 0
 void SwitchToThisWindow (
@@ -63,6 +55,448 @@ HWND hWnd,   /* Handle to the window that should be activated */
 BOOL bRestore /* Restore the window if it is minimized */
 );
 #endif
+
+static void ApplicationPageUpdate(void)
+{
+    /* Enable or disable the "End Task" & "Switch To" buttons */
+    if (ListView_GetSelectedCount(hApplicationPageListCtrl))
+    {
+        EnableWindow(hApplicationPageEndTaskButton, TRUE);
+        EnableWindow(hApplicationPageSwitchToButton, TRUE);
+    }
+    else
+    {
+        EnableWindow(hApplicationPageEndTaskButton, FALSE);
+        EnableWindow(hApplicationPageSwitchToButton, FALSE);
+    }
+
+    /* If we are on the applications tab the the windows menu will */
+    /* be present on the menu bar so enable & disable the menu items */
+    if (TabCtrl_GetCurSel(hTabWnd) == 0)
+    {
+        HMENU   hMenu;
+        HMENU   hWindowsMenu;
+
+        hMenu = GetMenu(hMainWnd);
+        hWindowsMenu = GetSubMenu(hMenu, 3);
+
+        /* Only one item selected */
+        if (ListView_GetSelectedCount(hApplicationPageListCtrl) == 1)
+        {
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_ENABLED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_ENABLED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_ENABLED);
+        }
+        /* More than one item selected */
+        else if (ListView_GetSelectedCount(hApplicationPageListCtrl) > 1)
+        {
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_ENABLED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_ENABLED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_ENABLED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_ENABLED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_ENABLED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        }
+        /* No items selected */
+        else
+        {
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+            EnableMenuItem(hWindowsMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        }
+    }
+}
+
+static void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
+{
+    LPAPPLICATION_PAGE_LIST_ITEM    pAPLI = NULL;
+    HIMAGELIST                      hImageListLarge;
+    HIMAGELIST                      hImageListSmall;
+    LV_ITEM                         item;
+    int                             i;
+    BOOL                            bAlreadyInList = FALSE;
+    BOOL                            bItemRemoved = FALSE;
+
+    memset(&item, 0, sizeof(LV_ITEM));
+
+    /* Get the image lists */
+    hImageListLarge = ListView_GetImageList(hApplicationPageListCtrl, LVSIL_NORMAL);
+    hImageListSmall = ListView_GetImageList(hApplicationPageListCtrl, LVSIL_SMALL);
+
+    /* Check to see if it's already in our list */
+    for (i=0; i<ListView_GetItemCount(hApplicationPageListCtrl); i++)
+    {
+        memset(&item, 0, sizeof(LV_ITEM));
+        item.mask = LVIF_IMAGE|LVIF_PARAM;
+        item.iItem = i;
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
+
+        pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
+        if (pAPLI->hWnd == hWnd)
+        {
+            bAlreadyInList = TRUE;
+            break;
+        }
+    }
+
+    /* If it is already in the list then update it if necessary */
+    if (bAlreadyInList)
+    {
+        /* Check to see if anything needs updating */
+        if ((pAPLI->hIcon != hIcon) ||
+            (_tcsicmp(pAPLI->szTitle, szTitle) != 0) ||
+            (pAPLI->bHung != bHung))
+        {
+            /* Update the structure */
+            pAPLI->hIcon = hIcon;
+            pAPLI->bHung = bHung;
+            _tcscpy(pAPLI->szTitle, szTitle);
+
+            /* Update the image list */
+            ImageList_ReplaceIcon(hImageListLarge, item.iItem, hIcon);
+            ImageList_ReplaceIcon(hImageListSmall, item.iItem, hIcon);
+
+            /* Update the list view */
+            SendMessage(hApplicationPageListCtrl, LVM_REDRAWITEMS, 0, ListView_GetItemCount(hApplicationPageListCtrl));
+            /* UpdateWindow(hApplicationPageListCtrl); */
+            InvalidateRect(hApplicationPageListCtrl, NULL, 0);
+        }
+    }
+    /* It is not already in the list so add it */
+    else
+    {
+        pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)malloc(sizeof(APPLICATION_PAGE_LIST_ITEM));
+
+        pAPLI->hWnd = hWnd;
+        pAPLI->hIcon = hIcon;
+        pAPLI->bHung = bHung;
+        _tcscpy(pAPLI->szTitle, szTitle);
+
+        /* Add the item to the list */
+        memset(&item, 0, sizeof(LV_ITEM));
+        item.mask = LVIF_TEXT|LVIF_IMAGE|LVIF_PARAM;
+        ImageList_AddIcon(hImageListLarge, hIcon);
+        item.iImage = ImageList_AddIcon(hImageListSmall, hIcon);
+        item.pszText = LPSTR_TEXTCALLBACK;
+        item.iItem = ListView_GetItemCount(hApplicationPageListCtrl);
+        item.lParam = (LPARAM)pAPLI;
+        SendMessage(hApplicationPageListCtrl, LVM_INSERTITEM, 0, (LPARAM) &item);
+    }
+
+
+    /* Check to see if we need to remove any items from the list */
+    for (i=ListView_GetItemCount(hApplicationPageListCtrl)-1; i>=0; i--)
+    {
+        memset(&item, 0, sizeof(LV_ITEM));
+        item.mask = LVIF_IMAGE|LVIF_PARAM;
+        item.iItem = i;
+        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
+
+        pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
+        if (!IsWindow(pAPLI->hWnd)||
+            (_tcslen(pAPLI->szTitle) <= 0) ||
+            !IsWindowVisible(pAPLI->hWnd) ||
+            (GetParent(pAPLI->hWnd) != NULL) ||
+            (GetWindow(pAPLI->hWnd, GW_OWNER) != NULL) ||
+            (GetWindowLong(hWnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW))
+        {
+            ImageList_Remove(hImageListLarge, item.iItem);
+            ImageList_Remove(hImageListSmall, item.iItem);
+
+            SendMessage(hApplicationPageListCtrl, LVM_DELETEITEM, item.iItem, 0);
+            free(pAPLI);
+            bItemRemoved = TRUE;
+        }
+    }
+
+    /*
+     * If an item was removed from the list then
+     * we need to resync all the items with the
+     * image list
+     */
+    if (bItemRemoved)
+    {
+        for (i=0; i<ListView_GetItemCount(hApplicationPageListCtrl); i++)
+        {
+            memset(&item, 0, sizeof(LV_ITEM));
+            item.mask = LVIF_IMAGE;
+            item.iItem = i;
+            item.iImage = i;
+            SendMessage(hApplicationPageListCtrl, LVM_SETITEM, 0, (LPARAM) &item);
+        }
+    }
+
+    ApplicationPageUpdate();
+}
+
+static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
+{
+    HICON hIcon;
+    TCHAR szText[260];
+    BOOL  bLargeIcon;
+    BOOL  bHung = FALSE;
+    typedef int (__stdcall *IsHungAppWindowProc)(HWND);
+    IsHungAppWindowProc IsHungAppWindow;
+
+
+    /* Skip our window */
+    if (hWnd == hMainWnd)
+        return TRUE;
+
+    bLargeIcon = TaskManagerSettings.View_LargeIcons ? TRUE : FALSE;
+
+    GetWindowText(hWnd, szText, 260); /* Get the window text */
+
+    /* Check and see if this is a top-level app window */
+    if ((_tcslen(szText) <= 0) ||
+        !IsWindowVisible(hWnd) ||
+        (GetParent(hWnd) != NULL) ||
+        (GetWindow(hWnd, GW_OWNER) != NULL) ||
+        (GetWindowLong(hWnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW))
+    {
+        return TRUE; /* Skip this window */
+    }
+
+    /* Get the icon for this window */
+    hIcon = NULL;
+    SendMessageTimeout(hWnd, WM_GETICON, bLargeIcon ? ICON_BIG /*1*/ : ICON_SMALL /*0*/, 0, 0, 1000, (PDWORD_PTR)&hIcon);
+
+    if (!hIcon)
+    {
+        hIcon = (HICON)GetClassLongPtr(hWnd, bLargeIcon ? GCLP_HICON : GCLP_HICONSM);
+        if (!hIcon) hIcon = (HICON)GetClassLongPtr(hWnd, bLargeIcon ? GCLP_HICONSM : GCLP_HICON);
+        if (!hIcon) SendMessageTimeout(hWnd, WM_QUERYDRAGICON, 0, 0, 0, 1000, (PDWORD_PTR)&hIcon);
+        if (!hIcon) SendMessageTimeout(hWnd, WM_GETICON, bLargeIcon ? ICON_SMALL /*0*/ : ICON_BIG /*1*/, 0, 0, 1000, (PDWORD_PTR)&hIcon);
+    }
+
+    if (!hIcon)
+        hIcon = LoadIcon(hInst, bLargeIcon ? MAKEINTRESOURCE(IDI_WINDOW) : MAKEINTRESOURCE(IDI_WINDOWSM));
+
+    bHung = FALSE;
+
+    IsHungAppWindow = (IsHungAppWindowProc)(FARPROC)GetProcAddress(GetModuleHandle(_T("USER32.DLL")), "IsHungAppWindow");
+
+    if (IsHungAppWindow)
+        bHung = IsHungAppWindow(hWnd);
+
+    AddOrUpdateHwnd(hWnd, szText, hIcon, bHung);
+
+    return TRUE;
+}
+
+static DWORD WINAPI ApplicationPageRefreshThread(void *lpParameter)
+{
+    /* Create the event */
+    hApplicationPageEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+
+    /* If we couldn't create the event then exit the thread */
+    if (!hApplicationPageEvent)
+        return 0;
+
+    while (1)
+    {
+        DWORD   dwWaitVal;
+
+        /* Wait on the event */
+        dwWaitVal = WaitForSingleObject(hApplicationPageEvent, INFINITE);
+
+        /* If the wait failed then the event object must have been */
+        /* closed and the task manager is exiting so exit this thread */
+        if (dwWaitVal == WAIT_FAILED)
+            return 0;
+
+        if (dwWaitVal == WAIT_OBJECT_0)
+        {
+            /* Reset our event */
+            ResetEvent(hApplicationPageEvent);
+
+            /*
+             * FIXME:
+             *
+             * Should this be EnumDesktopWindows() instead?
+             */
+            EnumWindows(EnumWindowsProc, 0);
+        }
+    }
+}
+
+static void ApplicationPageShowContextMenu1(void)
+{
+    HMENU   hMenu;
+    HMENU   hSubMenu;
+    POINT   pt;
+
+    GetCursorPos(&pt);
+
+    hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_APPLICATION_PAGE_CONTEXT1));
+    hSubMenu = GetSubMenu(hMenu, 0);
+
+    if (TaskManagerSettings.View_LargeIcons)
+        CheckMenuRadioItem(hSubMenu, ID_VIEW_LARGE, ID_VIEW_DETAILS, ID_VIEW_LARGE, MF_BYCOMMAND);
+    else if (TaskManagerSettings.View_SmallIcons)
+        CheckMenuRadioItem(hSubMenu, ID_VIEW_LARGE, ID_VIEW_DETAILS, ID_VIEW_SMALL, MF_BYCOMMAND);
+    else
+        CheckMenuRadioItem(hSubMenu, ID_VIEW_LARGE, ID_VIEW_DETAILS, ID_VIEW_DETAILS, MF_BYCOMMAND);
+
+    TrackPopupMenu(hSubMenu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_LEFTBUTTON, pt.x, pt.y, 0, hMainWnd, NULL);
+
+    DestroyMenu(hMenu);
+}
+
+static void ApplicationPageShowContextMenu2(void)
+{
+    HMENU   hMenu;
+    HMENU   hSubMenu;
+    POINT   pt;
+
+    GetCursorPos(&pt);
+
+    hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_APPLICATION_PAGE_CONTEXT2));
+    hSubMenu = GetSubMenu(hMenu, 0);
+
+    if (ListView_GetSelectedCount(hApplicationPageListCtrl) == 1)
+    {
+        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_ENABLED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_ENABLED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_ENABLED);
+    }
+    else if (ListView_GetSelectedCount(hApplicationPageListCtrl) > 1)
+    {
+        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_ENABLED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_ENABLED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_ENABLED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_ENABLED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_ENABLED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+    }
+    else
+    {
+        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+        EnableMenuItem(hSubMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+    }
+
+    SetMenuDefaultItem(hSubMenu, ID_APPLICATION_PAGE_SWITCHTO, MF_BYCOMMAND);
+
+    TrackPopupMenu(hSubMenu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_LEFTBUTTON, pt.x, pt.y, 0, hMainWnd, NULL);
+
+    DestroyMenu(hMenu);
+}
+
+static int CALLBACK ApplicationPageCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+{
+    LPAPPLICATION_PAGE_LIST_ITEM Param1;
+    LPAPPLICATION_PAGE_LIST_ITEM Param2;
+
+    if (bSortAscending) {
+        Param1 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam1;
+        Param2 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam2;
+    } else {
+        Param1 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam2;
+        Param2 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam1;
+    }
+    return _tcscmp(Param1->szTitle, Param2->szTitle);
+}
+
+static void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
+{
+    int             idctrl;
+    LPNMHDR         pnmh;
+    LPNM_LISTVIEW   pnmv;
+    LV_DISPINFO*    pnmdi;
+    LPAPPLICATION_PAGE_LIST_ITEM pAPLI;
+
+
+    idctrl = (int) wParam;
+    pnmh = (LPNMHDR) lParam;
+    pnmv = (LPNM_LISTVIEW) lParam;
+    pnmdi = (LV_DISPINFO*) lParam;
+
+    if (pnmh->hwndFrom == hApplicationPageListCtrl) {
+        switch (pnmh->code) {
+        case LVN_ITEMCHANGED:
+            ApplicationPageUpdate();
+            break;
+            
+        case LVN_GETDISPINFO:
+            pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)pnmdi->item.lParam;
+
+            /* Update the item text */
+            if (pnmdi->item.iSubItem == 0)
+            {
+                _tcsncpy(pnmdi->item.pszText, pAPLI->szTitle, pnmdi->item.cchTextMax);
+            }
+
+            /* Update the item status */
+            else if (pnmdi->item.iSubItem == 1)
+            {
+                if (pAPLI->bHung)
+                    _tcsncpy(pnmdi->item.pszText, _T("Not Responding"), pnmdi->item.cchTextMax);
+                else
+                    _tcsncpy(pnmdi->item.pszText, _T("Running"), pnmdi->item.cchTextMax);
+            }
+
+            break;
+
+        case NM_RCLICK:
+
+            if (ListView_GetSelectedCount(hApplicationPageListCtrl) < 1)
+            {
+                ApplicationPageShowContextMenu1();
+            }
+            else
+            {
+                ApplicationPageShowContextMenu2();
+            }
+
+            break;
+
+        case NM_DBLCLK:
+
+            ApplicationPage_OnSwitchTo();
+
+            break;
+        }
+    }
+    else if (pnmh->hwndFrom == ListView_GetHeader(hApplicationPageListCtrl))
+    {
+        switch (pnmh->code)
+        {
+        case NM_RCLICK:
+
+            if (ListView_GetSelectedCount(hApplicationPageListCtrl) < 1)
+            {
+                ApplicationPageShowContextMenu1();
+            }
+            else
+            {
+                ApplicationPageShowContextMenu2();
+            }
+
+            break;
+
+        case HDN_ITEMCLICK:
+
+            SendMessage(hApplicationPageListCtrl, LVM_SORTITEMS, 0, (LPARAM) ApplicationPageCompareFunc);
+            bSortAscending = !bSortAscending;
+
+            break;
+        }
+    }
+
+}
 
 INT_PTR CALLBACK
 ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -219,433 +653,6 @@ void UpdateApplicationListControlViewSetting(void)
     SetWindowLong(hApplicationPageListCtrl, GWL_STYLE, dwStyle);
 
     RefreshApplicationPage();
-}
-
-static DWORD WINAPI ApplicationPageRefreshThread(void *lpParameter)
-{
-    /* Create the event */
-    hApplicationPageEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
-
-    /* If we couldn't create the event then exit the thread */
-    if (!hApplicationPageEvent)
-        return 0;
-
-    while (1)
-    {
-        DWORD   dwWaitVal;
-
-        /* Wait on the event */
-        dwWaitVal = WaitForSingleObject(hApplicationPageEvent, INFINITE);
-
-        /* If the wait failed then the event object must have been */
-        /* closed and the task manager is exiting so exit this thread */
-        if (dwWaitVal == WAIT_FAILED)
-            return 0;
-
-        if (dwWaitVal == WAIT_OBJECT_0)
-        {
-            /* Reset our event */
-            ResetEvent(hApplicationPageEvent);
-
-            /*
-             * FIXME:
-             *
-             * Should this be EnumDesktopWindows() instead?
-             */
-            EnumWindows(EnumWindowsProc, 0);
-        }
-    }
-}
-
-static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
-{
-    HICON hIcon;
-    TCHAR szText[260];
-    BOOL  bLargeIcon;
-    BOOL  bHung = FALSE;
-    typedef int (__stdcall *IsHungAppWindowProc)(HWND);
-    IsHungAppWindowProc IsHungAppWindow;
-
-
-    /* Skip our window */
-    if (hWnd == hMainWnd)
-        return TRUE;
-
-    bLargeIcon = TaskManagerSettings.View_LargeIcons ? TRUE : FALSE;
-
-    GetWindowText(hWnd, szText, 260); /* Get the window text */
-
-    /* Check and see if this is a top-level app window */
-    if ((_tcslen(szText) <= 0) ||
-        !IsWindowVisible(hWnd) ||
-        (GetParent(hWnd) != NULL) ||
-        (GetWindow(hWnd, GW_OWNER) != NULL) ||
-        (GetWindowLong(hWnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW))
-    {
-        return TRUE; /* Skip this window */
-    }
-
-    /* Get the icon for this window */
-    hIcon = NULL;
-    SendMessageTimeout(hWnd, WM_GETICON, bLargeIcon ? ICON_BIG /*1*/ : ICON_SMALL /*0*/, 0, 0, 1000, (PDWORD_PTR)&hIcon);
-
-    if (!hIcon)
-    {
-        hIcon = (HICON)GetClassLongPtr(hWnd, bLargeIcon ? GCLP_HICON : GCLP_HICONSM);
-        if (!hIcon) hIcon = (HICON)GetClassLongPtr(hWnd, bLargeIcon ? GCLP_HICONSM : GCLP_HICON);
-        if (!hIcon) SendMessageTimeout(hWnd, WM_QUERYDRAGICON, 0, 0, 0, 1000, (PDWORD_PTR)&hIcon);
-        if (!hIcon) SendMessageTimeout(hWnd, WM_GETICON, bLargeIcon ? ICON_SMALL /*0*/ : ICON_BIG /*1*/, 0, 0, 1000, (PDWORD_PTR)&hIcon);
-    }
-
-    if (!hIcon)
-        hIcon = LoadIcon(hInst, bLargeIcon ? MAKEINTRESOURCE(IDI_WINDOW) : MAKEINTRESOURCE(IDI_WINDOWSM));
-
-    bHung = FALSE;
-
-    IsHungAppWindow = (IsHungAppWindowProc)(FARPROC)GetProcAddress(GetModuleHandle(_T("USER32.DLL")), "IsHungAppWindow");
-
-    if (IsHungAppWindow)
-        bHung = IsHungAppWindow(hWnd);
-
-    AddOrUpdateHwnd(hWnd, szText, hIcon, bHung);
-
-    return TRUE;
-}
-
-static void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
-{
-    LPAPPLICATION_PAGE_LIST_ITEM    pAPLI = NULL;
-    HIMAGELIST                      hImageListLarge;
-    HIMAGELIST                      hImageListSmall;
-    LV_ITEM                         item;
-    int                             i;
-    BOOL                            bAlreadyInList = FALSE;
-    BOOL                            bItemRemoved = FALSE;
-
-    memset(&item, 0, sizeof(LV_ITEM));
-
-    /* Get the image lists */
-    hImageListLarge = ListView_GetImageList(hApplicationPageListCtrl, LVSIL_NORMAL);
-    hImageListSmall = ListView_GetImageList(hApplicationPageListCtrl, LVSIL_SMALL);
-
-    /* Check to see if it's already in our list */
-    for (i=0; i<ListView_GetItemCount(hApplicationPageListCtrl); i++)
-    {
-        memset(&item, 0, sizeof(LV_ITEM));
-        item.mask = LVIF_IMAGE|LVIF_PARAM;
-        item.iItem = i;
-        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
-
-        pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
-        if (pAPLI->hWnd == hWnd)
-        {
-            bAlreadyInList = TRUE;
-            break;
-        }
-    }
-
-    /* If it is already in the list then update it if necessary */
-    if (bAlreadyInList)
-    {
-        /* Check to see if anything needs updating */
-        if ((pAPLI->hIcon != hIcon) ||
-            (_tcsicmp(pAPLI->szTitle, szTitle) != 0) ||
-            (pAPLI->bHung != bHung))
-        {
-            /* Update the structure */
-            pAPLI->hIcon = hIcon;
-            pAPLI->bHung = bHung;
-            _tcscpy(pAPLI->szTitle, szTitle);
-
-            /* Update the image list */
-            ImageList_ReplaceIcon(hImageListLarge, item.iItem, hIcon);
-            ImageList_ReplaceIcon(hImageListSmall, item.iItem, hIcon);
-
-            /* Update the list view */
-            SendMessage(hApplicationPageListCtrl, LVM_REDRAWITEMS, 0, ListView_GetItemCount(hApplicationPageListCtrl));
-            /* UpdateWindow(hApplicationPageListCtrl); */
-            InvalidateRect(hApplicationPageListCtrl, NULL, 0);
-        }
-    }
-    /* It is not already in the list so add it */
-    else
-    {
-        pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)malloc(sizeof(APPLICATION_PAGE_LIST_ITEM));
-
-        pAPLI->hWnd = hWnd;
-        pAPLI->hIcon = hIcon;
-        pAPLI->bHung = bHung;
-        _tcscpy(pAPLI->szTitle, szTitle);
-
-        /* Add the item to the list */
-        memset(&item, 0, sizeof(LV_ITEM));
-        item.mask = LVIF_TEXT|LVIF_IMAGE|LVIF_PARAM;
-        ImageList_AddIcon(hImageListLarge, hIcon);
-        item.iImage = ImageList_AddIcon(hImageListSmall, hIcon);
-        item.pszText = LPSTR_TEXTCALLBACK;
-        item.iItem = ListView_GetItemCount(hApplicationPageListCtrl);
-        item.lParam = (LPARAM)pAPLI;
-        SendMessage(hApplicationPageListCtrl, LVM_INSERTITEM, 0, (LPARAM) &item);
-    }
-
-
-    /* Check to see if we need to remove any items from the list */
-    for (i=ListView_GetItemCount(hApplicationPageListCtrl)-1; i>=0; i--)
-    {
-        memset(&item, 0, sizeof(LV_ITEM));
-        item.mask = LVIF_IMAGE|LVIF_PARAM;
-        item.iItem = i;
-        SendMessage(hApplicationPageListCtrl, LVM_GETITEM, 0, (LPARAM) &item);
-
-        pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
-        if (!IsWindow(pAPLI->hWnd)||
-            (_tcslen(pAPLI->szTitle) <= 0) ||
-            !IsWindowVisible(pAPLI->hWnd) ||
-            (GetParent(pAPLI->hWnd) != NULL) ||
-            (GetWindow(pAPLI->hWnd, GW_OWNER) != NULL) ||
-            (GetWindowLong(hWnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW))
-        {
-            ImageList_Remove(hImageListLarge, item.iItem);
-            ImageList_Remove(hImageListSmall, item.iItem);
-
-            SendMessage(hApplicationPageListCtrl, LVM_DELETEITEM, item.iItem, 0);
-            free(pAPLI);
-            bItemRemoved = TRUE;
-        }
-    }
-
-    /*
-     * If an item was removed from the list then
-     * we need to resync all the items with the
-     * image list
-     */
-    if (bItemRemoved)
-    {
-        for (i=0; i<ListView_GetItemCount(hApplicationPageListCtrl); i++)
-        {
-            memset(&item, 0, sizeof(LV_ITEM));
-            item.mask = LVIF_IMAGE;
-            item.iItem = i;
-            item.iImage = i;
-            SendMessage(hApplicationPageListCtrl, LVM_SETITEM, 0, (LPARAM) &item);
-        }
-    }
-
-    ApplicationPageUpdate();
-}
-
-static void ApplicationPageUpdate(void)
-{
-    /* Enable or disable the "End Task" & "Switch To" buttons */
-    if (ListView_GetSelectedCount(hApplicationPageListCtrl))
-    {
-        EnableWindow(hApplicationPageEndTaskButton, TRUE);
-        EnableWindow(hApplicationPageSwitchToButton, TRUE);
-    }
-    else
-    {
-        EnableWindow(hApplicationPageEndTaskButton, FALSE);
-        EnableWindow(hApplicationPageSwitchToButton, FALSE);
-    }
-
-    /* If we are on the applications tab the the windows menu will */
-    /* be present on the menu bar so enable & disable the menu items */
-    if (TabCtrl_GetCurSel(hTabWnd) == 0)
-    {
-        HMENU   hMenu;
-        HMENU   hWindowsMenu;
-
-        hMenu = GetMenu(hMainWnd);
-        hWindowsMenu = GetSubMenu(hMenu, 3);
-
-        /* Only one item selected */
-        if (ListView_GetSelectedCount(hApplicationPageListCtrl) == 1)
-        {
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_ENABLED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_ENABLED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_ENABLED);
-        }
-        /* More than one item selected */
-        else if (ListView_GetSelectedCount(hApplicationPageListCtrl) > 1)
-        {
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_ENABLED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_ENABLED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_ENABLED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_ENABLED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_ENABLED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        }
-        /* No items selected */
-        else
-        {
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-            EnableMenuItem(hWindowsMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        }
-    }
-}
-
-static void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
-{
-    int             idctrl;
-    LPNMHDR         pnmh;
-    LPNM_LISTVIEW   pnmv;
-    LV_DISPINFO*    pnmdi;
-    LPAPPLICATION_PAGE_LIST_ITEM pAPLI;
-
-
-    idctrl = (int) wParam;
-    pnmh = (LPNMHDR) lParam;
-    pnmv = (LPNM_LISTVIEW) lParam;
-    pnmdi = (LV_DISPINFO*) lParam;
-
-    if (pnmh->hwndFrom == hApplicationPageListCtrl) {
-        switch (pnmh->code) {
-        case LVN_ITEMCHANGED:
-            ApplicationPageUpdate();
-            break;
-            
-        case LVN_GETDISPINFO:
-            pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)pnmdi->item.lParam;
-
-            /* Update the item text */
-            if (pnmdi->item.iSubItem == 0)
-            {
-                _tcsncpy(pnmdi->item.pszText, pAPLI->szTitle, pnmdi->item.cchTextMax);
-            }
-
-            /* Update the item status */
-            else if (pnmdi->item.iSubItem == 1)
-            {
-                if (pAPLI->bHung)
-                    _tcsncpy(pnmdi->item.pszText, _T("Not Responding"), pnmdi->item.cchTextMax);
-                else
-                    _tcsncpy(pnmdi->item.pszText, _T("Running"), pnmdi->item.cchTextMax);
-            }
-
-            break;
-
-        case NM_RCLICK:
-
-            if (ListView_GetSelectedCount(hApplicationPageListCtrl) < 1)
-            {
-                ApplicationPageShowContextMenu1();
-            }
-            else
-            {
-                ApplicationPageShowContextMenu2();
-            }
-
-            break;
-
-        case NM_DBLCLK:
-
-            ApplicationPage_OnSwitchTo();
-
-            break;
-        }
-    }
-    else if (pnmh->hwndFrom == ListView_GetHeader(hApplicationPageListCtrl))
-    {
-        switch (pnmh->code)
-        {
-        case NM_RCLICK:
-
-            if (ListView_GetSelectedCount(hApplicationPageListCtrl) < 1)
-            {
-                ApplicationPageShowContextMenu1();
-            }
-            else
-            {
-                ApplicationPageShowContextMenu2();
-            }
-
-            break;
-
-        case HDN_ITEMCLICK:
-
-            SendMessage(hApplicationPageListCtrl, LVM_SORTITEMS, 0, (LPARAM) ApplicationPageCompareFunc);
-            bSortAscending = !bSortAscending;
-
-            break;
-        }
-    }
-
-}
-
-static void ApplicationPageShowContextMenu1(void)
-{
-    HMENU   hMenu;
-    HMENU   hSubMenu;
-    POINT   pt;
-
-    GetCursorPos(&pt);
-
-    hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_APPLICATION_PAGE_CONTEXT1));
-    hSubMenu = GetSubMenu(hMenu, 0);
-
-    if (TaskManagerSettings.View_LargeIcons)
-        CheckMenuRadioItem(hSubMenu, ID_VIEW_LARGE, ID_VIEW_DETAILS, ID_VIEW_LARGE, MF_BYCOMMAND);
-    else if (TaskManagerSettings.View_SmallIcons)
-        CheckMenuRadioItem(hSubMenu, ID_VIEW_LARGE, ID_VIEW_DETAILS, ID_VIEW_SMALL, MF_BYCOMMAND);
-    else
-        CheckMenuRadioItem(hSubMenu, ID_VIEW_LARGE, ID_VIEW_DETAILS, ID_VIEW_DETAILS, MF_BYCOMMAND);
-
-    TrackPopupMenu(hSubMenu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_LEFTBUTTON, pt.x, pt.y, 0, hMainWnd, NULL);
-
-    DestroyMenu(hMenu);
-}
-
-static void ApplicationPageShowContextMenu2(void)
-{
-    HMENU   hMenu;
-    HMENU   hSubMenu;
-    POINT   pt;
-
-    GetCursorPos(&pt);
-
-    hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_APPLICATION_PAGE_CONTEXT2));
-    hSubMenu = GetSubMenu(hMenu, 0);
-
-    if (ListView_GetSelectedCount(hApplicationPageListCtrl) == 1)
-    {
-        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_ENABLED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_ENABLED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_ENABLED);
-    }
-    else if (ListView_GetSelectedCount(hApplicationPageListCtrl) > 1)
-    {
-        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_ENABLED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_ENABLED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_ENABLED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_ENABLED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_ENABLED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-    }
-    else
-    {
-        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEHORIZONTALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_TILEVERTICALLY, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_MINIMIZE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_MAXIMIZE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_CASCADE, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-        EnableMenuItem(hSubMenu, ID_WINDOWS_BRINGTOFRONT, MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
-    }
-
-    SetMenuDefaultItem(hSubMenu, ID_APPLICATION_PAGE_SWITCHTO, MF_BYCOMMAND);
-
-    TrackPopupMenu(hSubMenu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_LEFTBUTTON, pt.x, pt.y, 0, hMainWnd, NULL);
-
-    DestroyMenu(hMenu);
 }
 
 void ApplicationPage_OnViewLargeIcons(void)
@@ -943,19 +950,4 @@ void ApplicationPage_OnGotoProcess(void)
         for (i=0; i<ListView_GetItemCount(hProcessPage); i++) {
         }
     }
-}
-
-static int CALLBACK ApplicationPageCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
-{
-    LPAPPLICATION_PAGE_LIST_ITEM Param1;
-    LPAPPLICATION_PAGE_LIST_ITEM Param2;
-
-    if (bSortAscending) {
-        Param1 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam1;
-        Param2 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam2;
-    } else {
-        Param1 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam2;
-        Param2 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam1;
-    }
-    return _tcscmp(Param1->szTitle, Param2->szTitle);
 }
