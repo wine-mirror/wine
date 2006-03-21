@@ -1124,14 +1124,7 @@ static void ConvertUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentL
 /***********************************************************************
  *           InternetCrackUrlA (WININET.@)
  *
- * Break up URL into its components
- *
- * TODO: Handle dwFlags
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
+ * See InternetCrackUrlW.
  */
 BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     LPURL_COMPONENTSA lpUrlComponents)
@@ -1285,6 +1278,12 @@ static BOOL SetUrlComponentValueW(LPWSTR* lppszComponent, LPDWORD dwComponentLen
 
 /***********************************************************************
  *           InternetCrackUrlW   (WININET.@)
+ *
+ * Break up URL into its components
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
  */
 BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWORD dwFlags,
                               LPURL_COMPONENTSW lpUC)
