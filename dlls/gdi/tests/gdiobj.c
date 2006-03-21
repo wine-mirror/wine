@@ -1044,17 +1044,13 @@ static void test_bitmap(void)
     ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
 
     ret = GetObject(hbmp, sizeof(bm) / 2, &bm);
-todo_wine {
     ok(ret == 0, "%d != 0\n", ret);
-}
 
     ret = GetObject(hbmp, 0, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
     ret = GetObject(hbmp, 1, &bm);
-todo_wine {
     ok(ret == 0, "%d != 0\n", ret);
-}
 
     DeleteObject(hbmp);
     DeleteDC(hdc);

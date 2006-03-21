@@ -653,9 +653,9 @@ static INT BITMAP_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buff
 	bmp16.bmPlanes     = bmp->bitmap.bmPlanes;
 	bmp16.bmBitsPixel  = bmp->bitmap.bmBitsPixel;
 	bmp16.bmBits       = (SEGPTR)0;
-	if (count > sizeof(bmp16)) count = sizeof(bmp16);
-	memcpy( buffer, &bmp16, count );
-	return count;
+	if (count < sizeof(bmp16)) return 0;
+	memcpy( buffer, &bmp16, sizeof(bmp16) );
+	return sizeof(bmp16);
     }
 }
 
@@ -685,11 +685,10 @@ static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer
     }
     else
     {
-        if( !buffer )
-            return sizeof(BITMAP);
-	if (count > sizeof(BITMAP)) count = sizeof(BITMAP);
-	memcpy( buffer, &bmp->bitmap, count );
-	return count;
+        if( !buffer ) return sizeof(BITMAP);
+        if (count < sizeof(BITMAP)) return 0;
+        memcpy( buffer, &bmp->bitmap, sizeof(BITMAP) );
+        return sizeof(BITMAP);
     }
 }
 
