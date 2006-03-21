@@ -2595,7 +2595,7 @@ static void resize_tree(ChildWnd* child, int cx, int cy)
 		hdl.prc   = &rt;
 		hdl.pwpos = &wp;
 
-		Header_Layout(child->left.hwndHeader, &hdl);
+		SendMessage(child->left.hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hdl);
 
 		DeferWindowPos(hdwp, child->left.hwndHeader, wp.hwndInsertAfter,
 						wp.x-1, wp.y, child->split_pos-SPLIT_WIDTH/2+1, wp.cy, wp.flags);
@@ -2631,7 +2631,7 @@ static HWND create_header(HWND parent, Pane* pane, int id)
 		hdi.pszText = g_pos_names[idx];
 		hdi.fmt = HDF_STRING | g_pos_align[idx];
 		hdi.cxy = pane->widths[idx];
-		Header_InsertItem(hwnd, idx, &hdi);
+		SendMessage(hwnd, HDM_INSERTITEM, idx, (LPARAM) &hdi);
 	}
 
 	return hwnd;
@@ -3589,18 +3589,18 @@ static void set_header(Pane* pane)
 
 	for(; x+pane->widths[i]<scroll_pos && i<COLUMNS; i++) {
 		x += pane->widths[i];
-		Header_SetItem(pane->hwndHeader, i, &item);
+		SendMessage(pane->hwndHeader, HDM_SETITEM, i, (LPARAM) &item);
 	}
 
 	if (i < COLUMNS) {
 		x += pane->widths[i];
 		item.cxy = x - scroll_pos;
-		Header_SetItem(pane->hwndHeader, i++, &item);
+		SendMessage(pane->hwndHeader, HDM_SETITEM, i++, (LPARAM) &item);
 
 		for(; i<COLUMNS; i++) {
 			item.cxy = pane->widths[i];
 			x += pane->widths[i];
-			Header_SetItem(pane->hwndHeader, i, &item);
+			SendMessage(pane->hwndHeader, HDM_SETITEM, i, (LPARAM) &item);
 		}
 	}
 }
@@ -3619,7 +3619,7 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 			GetClientRect(pane->hwnd, &clnt);
 
 			/* move immediate to simulate HDS_FULLDRAG (for now [04/2000] not really needed with WINELIB) */
-			Header_SetItem(pane->hwndHeader, idx, phdn->pitem);
+			SendMessage(pane->hwndHeader, HDM_SETITEM, idx, (LPARAM) phdn->pitem);
 
 			pane->widths[idx] += dx;
 
@@ -3668,7 +3668,7 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 			item.mask = HDI_WIDTH;
 			item.cxy = pane->widths[phdn->iItem];
 
-			Header_SetItem(pane->hwndHeader, phdn->iItem, &item);
+			SendMessage(pane->hwndHeader, HDM_SETITEM, phdn->iItem, (LPARAM) &item);
 			InvalidateRect(pane->hwnd, 0, TRUE);
 			break;}
 	}
