@@ -13,6 +13,7 @@ C_SRCS = \
 	devinst.c \
 	dirid.c \
 	diskspace.c \
+	fakedll.c \
 	install.c \
 	misc.c \
 	parser.c \

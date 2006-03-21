@@ -76,6 +76,7 @@ static const WCHAR UpdateIniFields[] = {'U','p','d','a','t','e','I','n','i','F',
 static const WCHAR RegisterDlls[]    = {'R','e','g','i','s','t','e','r','D','l','l','s',0};
 static const WCHAR UnregisterDlls[]  = {'U','n','r','e','g','i','s','t','e','r','D','l','l','s',0};
 static const WCHAR ProfileItems[]    = {'P','r','o','f','i','l','e','I','t','e','m','s',0};
+static const WCHAR WineFakeDlls[]    = {'W','i','n','e','F','a','k','e','D','l','l','s',0};
 
 
 /***********************************************************************
@@ -621,6 +622,48 @@ static BOOL register_dlls_callback( HINF hinf, PCWSTR field, void *arg )
 }
 
 /***********************************************************************
+ *            fake_dlls_callback
+ *
+ * Called once for each WineFakeDlls entry in a given section.
+ */
+static BOOL fake_dlls_callback( HINF hinf, PCWSTR field, void *arg )
+{
+    INFCONTEXT context;
+    BOOL ret = TRUE;
+    BOOL ok = SetupFindFirstLineW( hinf, field, NULL, &context );
+
+    for (; ok; ok = SetupFindNextLine( &context, &context ))
+    {
+        WCHAR *path, *p;
+        WCHAR buffer[MAX_INF_STRING_LENGTH];
+
+        /* get directory */
+        if (!(path = PARSER_get_dest_dir( &context ))) continue;
+
+        /* get dll name */
+        if (!SetupGetStringFieldW( &context, 3, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+            goto done;
+        if (!(p = HeapReAlloc( GetProcessHeap(), 0, path,
+                               (strlenW(path) + strlenW(buffer) + 2) * sizeof(WCHAR) ))) goto done;
+        path = p;
+        p += strlenW(p);
+        if (p == path || p[-1] != '\\') *p++ = '\\';
+        strcpyW( p, buffer );
+
+        /* get source dll */
+        if (SetupGetStringFieldW( &context, 4, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+            p = buffer;  /* otherwise use target base name as default source */
+
+        create_fake_dll( path, p );  /* ignore errors */
+
+    done:
+        HeapFree( GetProcessHeap(), 0, path );
+        if (!ret) break;
+    }
+    return ret;
+}
+
+/***********************************************************************
  *            update_ini_callback
  *
  * Called once for each UpdateInis entry in a given section.
@@ -889,6 +932,9 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         else info.callback = NULL;
 
         if (!iterate_section_fields( hinf, section, RegisterDlls, register_dlls_callback, &info ))
+            return FALSE;
+
+        if (!iterate_section_fields( hinf, section, WineFakeDlls, fake_dlls_callback, NULL ))
             return FALSE;
     }
     if (flags & SPINST_UNREGSVR)
