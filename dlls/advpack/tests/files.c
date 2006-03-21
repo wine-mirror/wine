@@ -146,7 +146,7 @@ static void test_AddDelBackupEntry()
     lstrcatA(path, "\\backup\\.INI");
 
     /* try an empty base name */
-    res = pAddDelBackupEntry("one\0two\0three", "backup", "", AADBE_ADD_ENTRY);
+    res = pAddDelBackupEntry("one\0two\0three\0", "backup", "", AADBE_ADD_ENTRY);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
     ok(!DeleteFileA(path), "Expected path to not exist\n");
 
@@ -154,14 +154,14 @@ static void test_AddDelBackupEntry()
     lstrcatA(path, "\\basename.INI");
 
     /* try an invalid flag */
-    res = pAddDelBackupEntry("one\0two\0three", NULL, "basename", 0);
+    res = pAddDelBackupEntry("one\0two\0three\0", NULL, "basename", 0);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
     ok(!DeleteFileA(path), "Expected path to not exist\n");
 
     lstrcpyA(path, "c:\\basename.INI");
 
     /* create the INF file */
-    res = pAddDelBackupEntry("one\0two\0three", "c:\\", "basename", AADBE_ADD_ENTRY);
+    res = pAddDelBackupEntry("one\0two\0three\0", "c:\\", "basename", AADBE_ADD_ENTRY);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
     ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
     ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
@@ -172,7 +172,7 @@ static void test_AddDelBackupEntry()
 
     /* try to create the INI file in a nonexistent directory */
     RemoveDirectoryA("backup");
-    res = pAddDelBackupEntry("one\0two\0three", "backup", "basename", AADBE_ADD_ENTRY);
+    res = pAddDelBackupEntry("one\0two\0three\0", "backup", "basename", AADBE_ADD_ENTRY);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
     ok(!check_ini_file_attr(path), "Expected ini file to not be hidden\n");
     ok(!check_ini_contents(path, TRUE), "Expected ini contents to not match\n");
@@ -180,7 +180,7 @@ static void test_AddDelBackupEntry()
 
     /* try an existent, relative backup directory */
     CreateDirectoryA("backup", NULL);
-    res = pAddDelBackupEntry("one\0two\0three", "backup", "basename", AADBE_ADD_ENTRY);
+    res = pAddDelBackupEntry("one\0two\0three\0", "backup", "basename", AADBE_ADD_ENTRY);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
     ok(check_ini_file_attr(path), "Expected ini file to be hidden\n");
     ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
@@ -190,13 +190,13 @@ static void test_AddDelBackupEntry()
     lstrcpyA(path, "c:\\windows\\basename.INI");
 
     /* try a NULL backup dir, INI is created in c:\windows */
-    res = pAddDelBackupEntry("one\0two\0three", NULL, "basename", AADBE_ADD_ENTRY);
+    res = pAddDelBackupEntry("one\0two\0three\0", NULL, "basename", AADBE_ADD_ENTRY);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
     ok(check_ini_contents(path, TRUE), "Expected ini contents to match\n");
 
     /* remove the entries with AADBE_DEL_ENTRY */
     SetFileAttributesA(path, FILE_ATTRIBUTE_NORMAL);
-    res = pAddDelBackupEntry("one\0three", NULL, "basename", AADBE_DEL_ENTRY);
+    res = pAddDelBackupEntry("one\0three\0", NULL, "basename", AADBE_DEL_ENTRY);
     SetFileAttributesA(path, FILE_ATTRIBUTE_NORMAL);
     ok(res == S_OK, "Expected S_OK, got %ld\n", res);
     ok(check_ini_contents(path, FALSE), "Expected ini contents to match\n");
