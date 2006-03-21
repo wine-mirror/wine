@@ -677,10 +677,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         opengl_initialized = DDRAW_bind_to_opengl();
 #endif /* HAVE_OPENGL */
         s3tc_initialized = DDRAW_bind_to_s3tc();
-    }
 
-    if (DDRAW_num_drivers > 0)
-	DDRAW_default_driver = DDRAW_ChooseDefaultDriver();
+        if (DDRAW_num_drivers > 0)
+            DDRAW_default_driver = DDRAW_ChooseDefaultDriver();
+    }
 
     return TRUE;
 }
