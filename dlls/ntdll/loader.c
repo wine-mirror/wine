@@ -58,7 +58,9 @@ static const char * const reason_names[] =
     "PROCESS_DETACH",
     "PROCESS_ATTACH",
     "THREAD_ATTACH",
-    "THREAD_DETACH"
+    "THREAD_DETACH",
+    NULL, NULL, NULL, NULL,
+    "WINE_PREATTACH"
 };
 
 static const WCHAR dllW[] = {'.','d','l','l',0};
@@ -1749,10 +1751,18 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     case LO_BUILTIN_NATIVE:
     case LO_DEFAULT:  /* default is builtin,native */
         nts = load_builtin_dll( load_path, filename, handle, flags, pwm );
-        if (nts == STATUS_SUCCESS) break;
         if (!handle) break;  /* nothing else we can try */
         /* file is not a builtin library, try without using the specified file */
-        nts = load_builtin_dll( load_path, filename, 0, flags, pwm );
+        if (nts != STATUS_SUCCESS)
+            nts = load_builtin_dll( load_path, filename, 0, flags, pwm );
+        if (nts == STATUS_SUCCESS && loadorder == LO_DEFAULT &&
+            !MODULE_InitDLL( *pwm, DLL_WINE_PREATTACH, NULL ))
+        {
+            /* stub-only dll, try native */
+            TRACE( "%s pre-attach returned FALSE, preferring native\n", debugstr_w(filename) );
+            LdrUnloadDll( (*pwm)->ldr.BaseAddress );
+            nts = STATUS_DLL_NOT_FOUND;
+        }
         if (nts == STATUS_DLL_NOT_FOUND && loadorder != LO_BUILTIN)
             nts = load_native_dll( load_path, filename, handle, flags, pwm );
         break;

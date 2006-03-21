@@ -469,7 +469,9 @@ typedef DWORD FLONG;
 #define	DLL_PROCESS_ATTACH	1	/* attach process (load library) */
 #define	DLL_THREAD_ATTACH	2	/* attach new thread */
 #define	DLL_THREAD_DETACH	3	/* detach thread */
-
+#ifdef __WINESRC__
+#define DLL_WINE_PREATTACH      8       /* called before process attach for Wine builtins */
+#endif
 
 /* u.x.wProcessorArchitecture (NT) */
 #define PROCESSOR_ARCHITECTURE_INTEL	0
