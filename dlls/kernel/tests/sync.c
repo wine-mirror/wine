@@ -31,7 +31,8 @@ static void test_signalandwait(void)
     DWORD (WINAPI *pSignalObjectAndWait)(HANDLE, HANDLE, DWORD, BOOL);
     HMODULE kernel32;
     DWORD r;
-    HANDLE event[2], semaphore[2], file;
+    int i;
+    HANDLE event[2], maxevents[MAXIMUM_WAIT_OBJECTS], semaphore[2], file;
 
     kernel32 = GetModuleHandle("kernel32");
     pSignalObjectAndWait = (void*) GetProcAddress(kernel32, "SignalObjectAndWait");
@@ -83,6 +84,18 @@ static void test_signalandwait(void)
     CloseHandle(event[0]);
     CloseHandle(event[1]);
 
+    /* create the maximum number of events and make sure 
+     * we can wait on that many */
+    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
+    {
+        maxevents[i] = CreateEvent(NULL, 1, 1, NULL);
+        ok( maxevents[i] != 0, "should create enough events\n");
+    }
+    r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, 0, 0);
+    ok( r != WAIT_FAILED && r != WAIT_TIMEOUT, "should succeed\n");
+
+    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
+        if (maxevents[i]) CloseHandle(maxevents[i]);
 
     /* semaphores */
     semaphore[0] = CreateSemaphore( NULL, 0, 1, NULL );
