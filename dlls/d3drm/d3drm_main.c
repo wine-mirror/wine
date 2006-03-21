@@ -16,6 +16,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "wine/debug.h"
- 
-WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+
+/***********************************************************************
+ *		DllMain  (D3DRM.@)
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    switch(reason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( inst );
+        break;
+    }
+    return TRUE;
+}

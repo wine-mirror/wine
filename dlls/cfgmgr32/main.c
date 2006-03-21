@@ -29,6 +29,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cfgmgr32);
 
+/***********************************************************************
+ *		DllMain  (CFGMGR32.@)
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    switch(reason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( inst );
+        break;
+    }
+    return TRUE;
+}
+
 CONFIGRET WINAPI CM_Get_Device_ID_ListA( 
     PCSTR pszFilter, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
 {

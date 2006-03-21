@@ -32,6 +32,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 
+
+/***********************************************************************
+ *		DllMain  (WINTRUST.@)
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    switch(reason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( inst );
+        break;
+    }
+    return TRUE;
+}
+
 /***********************************************************************
  *		CryptCATAdminAcquireContext (WINTRUST.@)
  */

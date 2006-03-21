@@ -16,9 +16,30 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msnet);
+
+
+/***********************************************************************
+ *		DllMain  (MSNET32.@)
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    switch(reason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( inst );
+        break;
+    }
+    return TRUE;
+}
 
 /***********************************************************************
  *		@  (MSNET32.57)

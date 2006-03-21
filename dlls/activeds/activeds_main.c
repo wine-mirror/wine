@@ -48,7 +48,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(activeds);
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p, %ld, %p)\n",hinstDLL, fdwReason, lpvReserved);
-    /* For the moment, do nothing here. */
+
+    switch(fdwReason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( hinstDLL );
+        break;
+    }
     return TRUE;
 }
 

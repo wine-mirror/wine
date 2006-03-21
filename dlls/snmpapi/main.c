@@ -39,6 +39,8 @@ BOOL WINAPI DllMain(
     TRACE("(%p,%ld,%p)\n", hInstDLL, fdwReason, lpvReserved);
 
     switch(fdwReason) {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
         break;

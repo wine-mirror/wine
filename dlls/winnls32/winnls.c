@@ -23,6 +23,22 @@
 #include "wine/winuser16.h"
 
 /***********************************************************************
+ *		DllMain  (WINNLS.@)
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    switch(reason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( inst );
+        break;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
  *		WINNLSEnableIME (WINNLS.16)
  */
 BOOL WINAPI WINNLSEnableIME16(HWND16 hWnd, BOOL fEnable)
