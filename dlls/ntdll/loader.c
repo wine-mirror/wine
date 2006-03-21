@@ -1202,6 +1202,22 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
 
 
 /***********************************************************************
+ *           is_fake_dll
+ *
+ * Check if a loaded native dll is a Wine fake dll.
+ */
+static BOOL is_fake_dll( const void *base )
+{
+    static const char fakedll_signature[] = "Wine placeholder DLL";
+    const IMAGE_DOS_HEADER *dos = base;
+
+    if (dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
+        !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return TRUE;
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           get_builtin_fullname
  *
  * Build the full pathname for a builtin dll.
@@ -1370,6 +1386,13 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
                                  &module, 0, 0, &size, &len, ViewShare, 0, PAGE_READONLY );
     NtClose( mapping );
     if (status != STATUS_SUCCESS) return status;
+
+    if (is_fake_dll( module ))
+    {
+        TRACE( "%s is a fake dll, not loading it\n", debugstr_w(name) );
+        NtUnmapViewOfSection( NtCurrentProcess(), module );
+        return STATUS_DLL_NOT_FOUND;
+    }
 
     /* create the MODREF */
 
