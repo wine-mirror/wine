@@ -164,40 +164,6 @@ do
     [ -d "$i" ] || mkdir "$i"
 done
 
-# Create the application symlinks
-
-link_app()
-{
-    if [ ! -f "$2" ]
-    then
-        # make a copy if the original is writable
-        if [ -w "$dlldir/$1.exe.so" ]
-        then
-            cp "$dlldir/$1.exe.so" "$2" || echo "Warning: failed to create $2"
-        else
-            ln -s "$dlldir/$1.exe.so" "$2" || echo "Warning: failed to create $2"
-        fi
-    fi
-}
-
-link_app start        "$CROOT/windows/command/start.exe"
-link_app notepad      "$CROOT/windows/notepad.exe"
-link_app regedit      "$CROOT/windows/regedit.exe"
-link_app rundll32     "$CROOT/windows/rundll32.exe"
-link_app wcmd         "$CROOT/windows/system32/wcmd.exe"
-link_app control      "$CROOT/windows/system32/control.exe"
-link_app winhelp      "$CROOT/windows/system32/help.exe"
-link_app msiexec      "$CROOT/windows/system32/msiexec.exe"
-link_app notepad      "$CROOT/windows/system32/notepad.exe"
-link_app progman      "$CROOT/windows/system32/progman.exe"
-link_app regsvr32     "$CROOT/windows/system32/regsvr32.exe"
-link_app winemine     "$CROOT/windows/system32/winmine.exe"
-link_app winver       "$CROOT/windows/system32/winver.exe"
-link_app uninstaller  "$CROOT/windows/uninstall.exe"
-link_app winhelp      "$CROOT/windows/winhelp.exe"
-link_app winhelp      "$CROOT/windows/winhlp32.exe"
-link_app winebrowser  "$CROOT/windows/winebrowser.exe"
-
 # Copy the .inf script and run it
 
 cp "$datadir/wine.inf" "$CROOT/windows/inf/wine.inf"

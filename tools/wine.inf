@@ -27,6 +27,7 @@ signature="$CHICAGO$"
 
 [DefaultInstall]
 RegisterDlls=RegisterDllsSection
+WineFakeDlls=FakeDllsSection
 UpdateInis=SystemIni
 AddReg=\
     Classes,\
@@ -48,6 +49,7 @@ AddReg=\
 
 [DefaultInstall.NT]
 RegisterDlls=RegisterDllsSection
+WineFakeDlls=FakeDllsSection
 UpdateInis=SystemIni
 AddReg=\
     Classes,\
@@ -2099,6 +2101,23 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,shdocvw.dll,1
 11,,shell32.dll,1
 11,,urlmon.dll,1
+
+[FakeDllsSection]
+10,,notepad.exe
+10,,regedit.exe
+10,,rundll32.exe
+10,,winebrowser.exe
+10,,winhelp.exe
+10,,winhlp32.exe,winhelp.exe
+10,command,start.exe
+11,,control.exe
+11,,help.exe,winhelp.exe
+11,,msiexec.exe
+11,,notepad.exe
+11,,progman.exe
+11,,regsvr32.exe
+11,,wcmd.exe
+11,,winver.exe
 
 [SystemIni]
 system.ini, mci,,"MPEGVideo=mciqtz.drv" 
