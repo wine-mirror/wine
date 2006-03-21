@@ -48,14 +48,14 @@ static int      nApplicationPageWidth;
 static int      nApplicationPageHeight;
 static HANDLE   hApplicationPageEvent = NULL;   /* When this event becomes signaled then we refresh the app list */
 static BOOL     bSortAscending = TRUE;
-DWORD WINAPI    ApplicationPageRefreshThread(void *lpParameter);
-BOOL CALLBACK   EnumWindowsProc(HWND hWnd, LPARAM lParam);
-void            AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung);
-void            ApplicationPageUpdate(void);
-void            ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam);
-void            ApplicationPageShowContextMenu1(void);
-void            ApplicationPageShowContextMenu2(void);
-int CALLBACK    ApplicationPageCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+static DWORD WINAPI    ApplicationPageRefreshThread(void *lpParameter);
+static BOOL CALLBACK   EnumWindowsProc(HWND hWnd, LPARAM lParam);
+static void            AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung);
+static void            ApplicationPageUpdate(void);
+static void            ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam);
+static void            ApplicationPageShowContextMenu1(void);
+static void            ApplicationPageShowContextMenu2(void);
+static int CALLBACK    ApplicationPageCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 #if 0
 void SwitchToThisWindow (
@@ -221,7 +221,7 @@ void UpdateApplicationListControlViewSetting(void)
     RefreshApplicationPage();
 }
 
-DWORD WINAPI ApplicationPageRefreshThread(void *lpParameter)
+static DWORD WINAPI ApplicationPageRefreshThread(void *lpParameter)
 {
     /* Create the event */
     hApplicationPageEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
@@ -257,7 +257,7 @@ DWORD WINAPI ApplicationPageRefreshThread(void *lpParameter)
     }
 }
 
-BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
+static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 {
     HICON hIcon;
     TCHAR szText[260];
@@ -312,7 +312,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
     return TRUE;
 }
 
-void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
+static void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
 {
     LPAPPLICATION_PAGE_LIST_ITEM    pAPLI = NULL;
     HIMAGELIST                      hImageListLarge;
@@ -434,7 +434,7 @@ void AddOrUpdateHwnd(HWND hWnd, TCHAR *szTitle, HICON hIcon, BOOL bHung)
     ApplicationPageUpdate();
 }
 
-void ApplicationPageUpdate(void)
+static void ApplicationPageUpdate(void)
 {
     /* Enable or disable the "End Task" & "Switch To" buttons */
     if (ListView_GetSelectedCount(hApplicationPageListCtrl))
@@ -491,7 +491,7 @@ void ApplicationPageUpdate(void)
     }
 }
 
-void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
+static void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
 {
     int             idctrl;
     LPNMHDR         pnmh;
@@ -579,7 +579,7 @@ void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
 
 }
 
-void ApplicationPageShowContextMenu1(void)
+static void ApplicationPageShowContextMenu1(void)
 {
     HMENU   hMenu;
     HMENU   hSubMenu;
@@ -602,7 +602,7 @@ void ApplicationPageShowContextMenu1(void)
     DestroyMenu(hMenu);
 }
 
-void ApplicationPageShowContextMenu2(void)
+static void ApplicationPageShowContextMenu2(void)
 {
     HMENU   hMenu;
     HMENU   hSubMenu;
@@ -945,7 +945,7 @@ void ApplicationPage_OnGotoProcess(void)
     }
 }
 
-int CALLBACK ApplicationPageCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+static int CALLBACK ApplicationPageCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
     LPAPPLICATION_PAGE_LIST_ITEM Param1;
     LPAPPLICATION_PAGE_LIST_ITEM Param2;
