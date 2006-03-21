@@ -235,9 +235,7 @@ static void test_bitmap_font_metrics(void)
         { "MS Serif", FW_NORMAL, 21, 16, 5, 3, 0, 9, 23 },
         { "MS Serif", FW_NORMAL, 27, 21, 6, 3, 0, 12, 27 },
         { "MS Serif", FW_NORMAL, 35, 27, 8, 3, 0, 16, 34 },
-#if 0 /* FIXME: enable once the bug in sfnt2fnt is fixed */
         { "Courier", FW_NORMAL, 13, 11, 2, 0, 0, 8, 8 },
-#endif
         { "Courier", FW_NORMAL, 16, 13, 3, 0, 0, 9, 9 },
         { "Courier", FW_NORMAL, 20, 16, 4, 0, 0, 12, 12 },
         { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15 }

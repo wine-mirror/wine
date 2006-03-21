@@ -34,6 +34,7 @@
 #include FT_FREETYPE_H
 #include FT_SFNT_NAMES_H
 #include FT_TRUETYPE_TABLES_H
+#include FT_TRUETYPE_TAGS_H
 
 #include "wine/unicode.h"
 #include "wine/wingdi16.h"
@@ -52,6 +53,45 @@ typedef struct {
     WORD width;
     DWORD offset;
 } CHAR_TABLE_ENTRY;
+
+typedef struct {
+    DWORD version;
+    ULONG numSizes;
+} eblcHeader_t;
+
+typedef struct {
+    CHAR ascender;
+    CHAR descender;
+    BYTE widthMax;
+    CHAR caretSlopeNumerator;
+    CHAR caretSlopeDenominator;
+    CHAR caretOffset;
+    CHAR minOriginSB;
+    CHAR minAdvanceSB;
+    CHAR maxBeforeBL;
+    CHAR maxAfterBL;
+    CHAR pad1;
+    CHAR pad2;
+} sbitLineMetrics_t;
+
+typedef struct {
+    ULONG indexSubTableArrayOffset;
+    ULONG indexTableSize;
+    ULONG numberOfIndexSubTables;
+    ULONG colorRef;
+    sbitLineMetrics_t hori;
+    sbitLineMetrics_t vert;
+    USHORT startGlyphIndex;
+    USHORT endGlyphIndex;
+    BYTE ppemX;
+    BYTE ppemY;
+    BYTE bitDepth;
+    CHAR flags;
+} bitmapSizeTable_t;
+
+#define GET_BE_WORD(ptr)  MAKEWORD( ((BYTE *)(ptr))[1], ((BYTE *)(ptr))[0] )
+#define GET_BE_DWORD(ptr) ((DWORD)MAKELONG( GET_BE_WORD(&((WORD *)(ptr))[1]), \
+                                            GET_BE_WORD(&((WORD *)(ptr))[0]) ))
 
 #include "poppack.h"
 
@@ -141,7 +181,7 @@ static int lookup_charset(int enc)
 
 static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned char def_char, int avg_width)
 {
-    int ascent, il, ppem, descent, width_bytes = 0, space_size, max_width = 0;
+    int ascent = 0, il, ppem, descent = 0, width_bytes = 0, space_size, max_width = 0;
     FNT_HEADER hdr;
     FONTINFO16 fi;
     BYTE left_byte, right_byte, byte;
@@ -153,6 +193,11 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     const union cptable *cptable;
     FT_SfntName sfntname;
     TT_OS2 *os2;
+    FT_ULong needed;
+    eblcHeader_t *eblc;
+    bitmapSizeTable_t *size_table;
+    int num_sizes;
+
     cptable = wine_cp_get_table(enc);
     if(!cptable)
         error("Can't find codepage %d\n", enc);
@@ -165,12 +210,44 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     }
 
     ppem = face->size->metrics.y_ppem;
+
+    needed = 0;
+    if(FT_Load_Sfnt_Table(face, TTAG_EBLC, 0, NULL, &needed))
+        error("Can't find EBLC table\n");
+
+    eblc = malloc(needed);
+    FT_Load_Sfnt_Table(face, TTAG_EBLC, 0, (FT_Byte *)eblc, &needed);
+
+    num_sizes = GET_BE_DWORD(&eblc->numSizes);
+
+    size_table = (bitmapSizeTable_t *)(eblc + 1);
+    for(i = 0; i < num_sizes; i++)
+    {
+        if(size_table->hori.ascender - size_table->hori.descender == ppem)
+        {
+            ascent = size_table->hori.ascender;
+            descent = -size_table->hori.descender;
+            break;
+        }
+        size_table++;
+    }
+
+    /* Versions of fontforge prior to early 2006 have incorrect
+       ascender values in the eblc table, so we won't find the 
+       correct bitmapSizeTable.  In this case use the height of
+       the Aring glyph instead. */
+    if(ascent == 0) 
+    {
+        if(FT_Load_Char(face, 0xc5, FT_LOAD_DEFAULT))
+            error("Can't find Aring\n");
+        ascent = face->glyph->metrics.horiBearingY >> 6;
+        descent = ppem - ascent;
+    }
+
+    free(eblc);
+
     start = sizeof(FNT_HEADER) + sizeof(FONTINFO16);
 
-    if(FT_Load_Char(face, 0xc5, FT_LOAD_DEFAULT))
-        error("Can't find Aring\n");
-    ascent = face->glyph->metrics.height >> 6;
-    descent = ppem - ascent;
     if(FT_Load_Char(face, 'M', FT_LOAD_DEFAULT))
         error("Can't find M\n");
     il = ascent - (face->glyph->metrics.height >> 6);
