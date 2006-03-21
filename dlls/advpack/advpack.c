@@ -541,6 +541,67 @@ HRESULT WINAPI TranslateInfStringW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSec
 /***********************************************************************
  *             TranslateInfStringExA   (ADVPACK.@)
  *
+ * See TranslateInfStringExW.
+ */
+HRESULT WINAPI TranslateInfStringExA(HINF hInf, LPCSTR pszInfFilename,
+                                    LPCSTR pszTranslateSection, LPCSTR pszTranslateKey,
+                                    LPSTR pszBuffer, DWORD dwBufferSize,
+                                    PDWORD pdwRequiredSize, PVOID pvReserved)
+{
+    UNICODE_STRING filenameW, sectionW, keyW;
+    LPWSTR bufferW;
+    HRESULT res;
+    DWORD len = 0;
+
+    TRACE("(%p, %p, %p, %p, %p, %ld, %p, %p)\n", hInf, debugstr_a(pszInfFilename),
+          debugstr_a(pszTranslateSection), debugstr_a(pszTranslateKey),
+          debugstr_a(pszBuffer), dwBufferSize, pdwRequiredSize, pvReserved);
+
+    if (!pszInfFilename || !pszTranslateSection ||
+        !pszTranslateKey || !pdwRequiredSize)
+        return E_INVALIDARG;
+
+    RtlCreateUnicodeStringFromAsciiz(&filenameW, pszInfFilename);
+    RtlCreateUnicodeStringFromAsciiz(&sectionW, pszTranslateSection);
+    RtlCreateUnicodeStringFromAsciiz(&keyW, pszTranslateKey);
+
+    res = TranslateInfStringExW(hInf, filenameW.Buffer, sectionW.Buffer,
+                                keyW.Buffer, NULL, 0, &len, NULL);
+
+    if (res == S_OK)
+    {
+        bufferW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+        res = TranslateInfStringExW(hInf, filenameW.Buffer, sectionW.Buffer,
+                                keyW.Buffer, bufferW, len, &len, NULL);
+
+        if (res == S_OK)
+        {
+            *pdwRequiredSize = WideCharToMultiByte(CP_ACP, 0, bufferW, -1,
+                                                   NULL, 0, NULL, NULL);
+
+            if (dwBufferSize >= *pdwRequiredSize)
+            {
+                WideCharToMultiByte(CP_ACP, 0, bufferW, -1, pszBuffer,
+                                    dwBufferSize, NULL, NULL);
+            }
+            else
+                res = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        }
+        
+        HeapFree(GetProcessHeap(), 0, bufferW);
+    }
+
+    RtlFreeUnicodeString(&filenameW);
+    RtlFreeUnicodeString(&sectionW);
+    RtlFreeUnicodeString(&keyW);
+
+    return res;
+}
+
+/***********************************************************************
+ *             TranslateInfStringExW   (ADVPACK.@)
+ *
  * Using a handle to an INF file opened with OpenINFEngine, translates
  * the value of a specified key in an inf file into the current locale
  * by expanding string macros.
@@ -567,19 +628,19 @@ HRESULT WINAPI TranslateInfStringW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSec
  *   than calling TranslateInfString, because the INF file is only
  *   opened once.
  */
-HRESULT WINAPI TranslateInfStringExA(HINF hInf, LPCSTR pszInfFilename,
-                                    LPCSTR pszTranslateSection, LPCSTR pszTranslateKey,
-                                    LPSTR pszBuffer, DWORD dwBufferSize,
-                                    PDWORD pdwRequiredSize, PVOID pvReserved)
+HRESULT WINAPI TranslateInfStringExW(HINF hInf, LPCWSTR pszInfFilename,
+                                     LPCWSTR pszTranslateSection, LPCWSTR pszTranslateKey,
+                                     LPWSTR pszBuffer, DWORD dwBufferSize,
+                                     PDWORD pdwRequiredSize, PVOID pvReserved)
 {
-    TRACE("(%p, %p, %p, %p, %p, %ld, %p, %p)\n", hInf, pszInfFilename,
-          pszTranslateSection, pszTranslateKey, pszBuffer, dwBufferSize,
-          pdwRequiredSize, pvReserved);
+    TRACE("(%p, %p, %p, %p, %p, %ld, %p, %p)\n", hInf, debugstr_w(pszInfFilename),
+          debugstr_w(pszTranslateSection), debugstr_w(pszTranslateKey),
+          debugstr_w(pszBuffer), dwBufferSize, pdwRequiredSize, pvReserved);
 
     if (!hInf || !pszInfFilename || !pszTranslateSection || !pszTranslateKey)
         return E_INVALIDARG;
 
-    if (!SetupGetLineTextA(NULL, hInf, pszTranslateSection, pszTranslateKey,
+    if (!SetupGetLineTextW(NULL, hInf, pszTranslateSection, pszTranslateKey,
                            pszBuffer, dwBufferSize, pdwRequiredSize))
     {
         if (dwBufferSize < *pdwRequiredSize)

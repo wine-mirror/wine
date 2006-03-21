@@ -72,7 +72,7 @@
 @ stdcall TranslateInfStringW(wstr wstr wstr wstr ptr long ptr ptr)
 @ stdcall TranslateInfString(str str str str ptr long ptr ptr) TranslateInfStringA
 @ stdcall TranslateInfStringExA(long str str str str long ptr ptr)
-# stdcall TranslateInfStringExW(long wstr wstr wstr wstr long ptr ptr)
+@ stdcall TranslateInfStringExW(long wstr wstr wstr wstr long ptr ptr)
 @ stdcall TranslateInfStringEx(long str str str str long ptr ptr) TranslateInfStringExA
 @ stdcall UserInstStubWrapperA(long long str long)
 # stdcall UserInstStubWrapperW(long long wstr long)
