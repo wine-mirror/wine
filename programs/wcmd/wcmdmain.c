@@ -594,11 +594,11 @@ char filetorun[MAX_PATH];
 	/* No batch file found, assume executable */
 
   hinst = FindExecutable (param1, NULL, filetorun);
-  if ((int)hinst < 32) {
-    WCMD_print_error ();
-    return;
-  }
-  console = SHGetFileInfo (filetorun, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
+  if ((int)hinst < 32)
+    console = 0;
+  else
+    console = SHGetFileInfo (filetorun, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
+
   ZeroMemory (&st, sizeof(STARTUPINFO));
   st.cb = sizeof(STARTUPINFO);
   init_msvcrt_io_block(&st);
