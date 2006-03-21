@@ -328,9 +328,15 @@ static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, MSICOMPONENT*
 {
     if (file->Attributes & msidbFileAttributesNoncompressed)
     {
-        LPWSTR p;
+        LPWSTR p, path;
         p = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
-        file->SourcePath = build_directory_name(2, p, file->ShortName);
+        path = build_directory_name(2, p, file->ShortName);
+        if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
+        {
+            msi_free(path);
+            path = build_directory_name(2, p, file->LongName);
+        }
+        file->SourcePath = path;
         msi_free(p);
     }
     else

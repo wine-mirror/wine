@@ -78,7 +78,8 @@ typedef struct tagMSIFOLDER
     struct list entry;
     LPWSTR Directory;
     LPWSTR TargetDefault;
-    LPWSTR SourceDefault;
+    LPWSTR SourceLongPath;
+    LPWSTR SourceShortPath;
 
     LPWSTR ResolvedTarget;
     LPWSTR ResolvedSource;
@@ -109,6 +110,7 @@ typedef struct tagMSIFILE
     MSICOMPONENT *Component;
     LPWSTR FileName;
     LPWSTR ShortName;
+    LPWSTR LongName;
     INT FileSize;
     LPWSTR Version;
     LPWSTR Language;

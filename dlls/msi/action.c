@@ -1269,6 +1269,17 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
+static LPWSTR folder_split_path(LPWSTR p, WCHAR ch)
+{
+    if (!p)
+        return p;
+    p = strchrW(p, ch);
+    if (!p)
+        return p;
+    *p = 0;
+    return p+1;
+}
+
 static UINT load_file(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE* package = (MSIPACKAGE*)param;
@@ -1293,7 +1304,7 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     reduce_to_longfilename( file->FileName );
 
     file->ShortName = msi_dup_record_field( row, 3 );
-    reduce_to_shortfilename( file->ShortName );
+    file->LongName = strdupW( folder_split_path(file->ShortName, '|'));
     
     file->FileSize = MSI_RecordGetInteger( row, 4 );
     file->Version = msi_dup_record_field( row, 5 );
@@ -1411,7 +1422,6 @@ static UINT ACTION_FileCost(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
-
 static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
 {
     static const WCHAR Query[] =
@@ -1420,10 +1430,10 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
          'W','H','E','R','E',' ', '`', 'D','i','r','e','c','t', 'o','r','y','`',
          ' ','=',' ','\'','%','s','\'',
          0};
-    LPWSTR ptargetdir, targetdir, srcdir;
+    static const WCHAR szDot[] = { '.',0 };
+    LPWSTR p, tgt_short, tgt_long, src_short, src_long;
     LPCWSTR parent;
-    LPWSTR shortname = NULL;
-    MSIRECORD * row = 0;
+    MSIRECORD *row;
     MSIFOLDER *folder;
 
     TRACE("Looking for dir %s\n",debugstr_w(dir));
@@ -1444,54 +1454,40 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
     if (!row)
         return NULL;
 
-    ptargetdir = targetdir = msi_dup_record_field(row,3);
+    p = msi_dup_record_field(row, 3);
 
     /* split src and target dir */
-    if (strchrW(targetdir,':'))
-    {
-        srcdir=strchrW(targetdir,':');
-        *srcdir=0;
-        srcdir ++;
-    }
-    else
-        srcdir=NULL;
+    tgt_short = p;
+    src_short = folder_split_path( p, ':' );
 
-    /* for now only pick long filename versions */
-    if (strchrW(targetdir,'|'))
-    {
-        shortname = targetdir;
-        targetdir = strchrW(targetdir,'|'); 
-        *targetdir = 0;
-        targetdir ++;
-    }
-    /* for the sourcedir pick the short filename */
-    if (srcdir && strchrW(srcdir,'|'))
-    {
-        LPWSTR p = strchrW(srcdir,'|'); 
-        *p = 0;
-    }
+    /* split the long and short pathes */
+    tgt_long = folder_split_path( tgt_short, '|' );
+    src_long = folder_split_path( src_short, '|' );
 
-    /* now check for root dirs */
-    if (targetdir[0] == '.' && targetdir[1] == 0)
-        targetdir = NULL;
-        
-    if (targetdir)
-    {
-        TRACE("   TargetDefault = %s\n",debugstr_w(targetdir));
-        msi_free( folder->TargetDefault);
-        folder->TargetDefault = strdupW(targetdir);
-    }
+    /* check for root dirs */
+    if (!lstrcmpW(szDot, tgt_short))
+        tgt_short = NULL;
+    if (!lstrcmpW(szDot, tgt_long))
+        tgt_long = NULL;
 
-    if (srcdir)
-        folder->SourceDefault = strdupW(srcdir);
-    else if (shortname)
-        folder->SourceDefault = strdupW(shortname);
-    else if (targetdir)
-        folder->SourceDefault = strdupW(targetdir);
-    msi_free(ptargetdir);
-        TRACE("   SourceDefault = %s\n", debugstr_w( folder->SourceDefault ));
+    if (!tgt_long)
+        tgt_long = tgt_short;
+    if (!src_short)
+        src_short = tgt_long;
+    if (!src_long)
+        src_long = src_short;
 
-    parent = MSI_RecordGetString(row,2);
+    /* FIXME: use the target short path too */
+    folder->TargetDefault = strdupW(tgt_long);
+    folder->SourceShortPath = strdupW(src_long);
+    folder->SourceLongPath = strdupW(src_long);
+    msi_free(p);
+
+    TRACE("TargetDefault = %s\n",debugstr_w( folder->TargetDefault ));
+    TRACE("SourceLong = %s\n", debugstr_w( folder->SourceLongPath ));
+    TRACE("SourceShort = %s\n", debugstr_w( folder->SourceShortPath ));
+
+    parent = MSI_RecordGetString(row, 2);
     if (parent) 
     {
         folder->Parent = load_folder( package, parent );

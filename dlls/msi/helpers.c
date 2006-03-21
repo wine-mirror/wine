@@ -355,21 +355,48 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         }
         else 
         {
-            if (f->SourceDefault && f->SourceDefault[0]!='.')
-                path = build_directory_name( 3, p, f->SourceDefault, NULL );
-            else
-                path = strdupW(p);
-            TRACE("source -> %s\n", debugstr_w(path));
+            /* source may be in a few different places ... check each of them */
+            path = NULL;
 
-            /* if the directory doesn't exist, use the root */
-            if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
+            /* try the long path directory */
+            if (f->SourceLongPath)
             {
-                msi_free( path );
-                path = get_source_root( package );
-                TRACE("defaulting to %s\n", debugstr_w(path));
+                path = build_directory_name( 3, p, f->SourceLongPath, NULL );
+                if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
+                {
+                    msi_free( path );
+                    path = NULL;
+                }
             }
-            else
-                f->ResolvedSource = strdupW( path );
+
+            /* try the short path directory */
+            if (!path && f->SourceShortPath)
+            {
+                path = build_directory_name( 3, p, f->SourceShortPath, NULL );
+                if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
+                {
+                    msi_free( path );
+                    path = NULL;
+                }
+            }
+
+            /* try the parent folder's path */
+            if (!path)
+            {
+                path = strdupW(p);
+                if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
+                {
+                    msi_free( path );
+                    path = NULL;
+                }
+            }
+
+            /* try the root of the install */
+            if (!path)
+                path = get_source_root( package );
+
+            TRACE("source -> %s\n", debugstr_w(path));
+            f->ResolvedSource = strdupW( path );
         }
         msi_free(p);
     }
@@ -508,7 +535,8 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         list_remove( &folder->entry );
         msi_free( folder->Directory );
         msi_free( folder->TargetDefault );
-        msi_free( folder->SourceDefault );
+        msi_free( folder->SourceLongPath );
+        msi_free( folder->SourceShortPath );
         msi_free( folder->ResolvedTarget );
         msi_free( folder->ResolvedSource );
         msi_free( folder->Property );
@@ -537,6 +565,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         msi_free( file->File );
         msi_free( file->FileName );
         msi_free( file->ShortName );
+        msi_free( file->LongName );
         msi_free( file->Version );
         msi_free( file->Language );
         msi_free( file->SourcePath );
