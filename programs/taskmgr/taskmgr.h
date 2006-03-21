@@ -142,27 +142,11 @@ extern HWND hApplicationPageNewTaskButton;   /* Application New Task button */
 
 
 /* Foward declarations of functions included in this code module: */
-INT_PTR CALLBACK TaskManagerWndProc(HWND, UINT, WPARAM, LPARAM);
-BOOL OnCreate(HWND hWnd);
-void OnSize(UINT nType, int cx, int cy);
-void OnMove(UINT nType, int cx, int cy);
 void FillSolidRect(HDC hDC, LPCRECT lpRect, COLORREF clr);
 void FillSolidRect2(HDC hDC, int x, int y, int cx, int cy, COLORREF clr);
 void Draw3dRect(HDC hDC, int x, int y, int cx, int cy, COLORREF clrTopLeft, COLORREF clrBottomRight);
 void Draw3dRect2(HDC hDC, LPRECT lpRect, COLORREF clrTopLeft, COLORREF clrBottomRight);
 void Font_DrawText(HDC hDC, LPCTSTR lpszText, int x, int y);
-void LoadSettings(void);
-void SaveSettings(void);
-void TaskManager_OnRestoreMainWindow(void);
-void TaskManager_OnEnterMenuLoop(HWND hWnd);
-void TaskManager_OnExitMenuLoop(HWND hWnd);
-void TaskManager_OnMenuSelect(HWND hWnd, UINT nItemID, UINT nFlags, HMENU hSysMenu);
-void TaskManager_OnViewUpdateSpeedHigh(void);
-void TaskManager_OnViewUpdateSpeedNormal(void);
-void TaskManager_OnViewUpdateSpeedLow(void);
-void TaskManager_OnViewUpdateSpeedPaused(void);
-void TaskManager_OnViewRefresh(void);
-void TaskManager_OnTabWndSelChange(void);
 
 #define OPTIONS_MENU_INDEX    1
 
