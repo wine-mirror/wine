@@ -1064,7 +1064,7 @@ int ExpandMxMacro(DWORD macro_opcode, const DWORD* args) {
   return nComponents;
 }
 
-static void ParseVertexDeclarationUsage(IWineD3DVertexShaderImpl *This, INT usage, INT arrayNo)
+static void parse_decl_usage(IWineD3DVertexShaderImpl *This, INT usage, INT arrayNo)
 {
     switch(usage & 0xFFFF) {
         case D3DDECLUSAGE_POSITION:
@@ -1251,7 +1251,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             WINED3DVERTEXELEMENT *element = ((IWineD3DVertexDeclarationImpl*)This->vertexDeclaration)->pDeclarationWine + i;
             INT usage = element->Usage | (element->UsageIndex << 16);
             BYTE arrayNo = element->Reg;
-            ParseVertexDeclarationUsage(This, usage, arrayNo);
+            parse_decl_usage(This, usage, arrayNo);
         }
     }
 
@@ -1288,7 +1288,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                 if (curOpcode->opcode == D3DSIO_DCL){
                     INT usage = *pToken++;
                     INT arrayNo = (*pToken++ & 0x00001FFF);
-                    ParseVertexDeclarationUsage(This, usage, arrayNo); 
+                    parse_decl_usage(This, usage, arrayNo);
                 } else if(curOpcode->opcode == D3DSIO_DEF) {
                             This->constantsUsedBitmap[*pToken & 0xFF] = VS_CONSTANT_CONSTANT;
                             FIXME("Constant %ld\n", *pToken & 0xFF);
