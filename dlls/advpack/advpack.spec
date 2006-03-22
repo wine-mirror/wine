@@ -75,8 +75,8 @@
 @ stdcall TranslateInfStringExW(long wstr wstr wstr wstr long ptr ptr)
 @ stdcall TranslateInfStringEx(long str str str str long ptr ptr) TranslateInfStringExA
 @ stdcall UserInstStubWrapperA(long long str long)
-# stdcall UserInstStubWrapperW(long long wstr long)
+@ stdcall UserInstStubWrapperW(long long wstr long)
 @ stdcall UserInstStubWrapper(long long str long) UserInstStubWrapperA
 @ stdcall UserUnInstStubWrapperA(long long str long)
-# stdcall UserUnInstStubWrapperW(long long wstr long)
+@ stdcall UserUnInstStubWrapperW(long long wstr long)
 @ stdcall UserUnInstStubWrapper(long long str long) UserUnInstStubWrapperA

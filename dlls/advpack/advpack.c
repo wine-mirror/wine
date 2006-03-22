@@ -683,9 +683,34 @@ HRESULT WINAPI TranslateInfStringExW(HINF hInf, LPCWSTR pszInfFilename,
 
 /***********************************************************************
  *             UserInstStubWrapperA   (ADVPACK.@)
+ *
+ * See UserInstStubWrapperW.
  */
 HRESULT WINAPI UserInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
                                    LPSTR pszParms, INT nShow)
+{
+    UNICODE_STRING parmsW;
+    HRESULT res;
+
+    TRACE("(%p, %p, %p, %i)\n", hWnd, hInstance, pszParms, nShow);
+
+    if (!pszParms)
+        return E_INVALIDARG;
+
+    RtlCreateUnicodeStringFromAsciiz(&parmsW, pszParms);
+
+    res = UserInstStubWrapperW(hWnd, hInstance, parmsW.Buffer, nShow);
+
+    RtlFreeUnicodeString(&parmsW);
+
+    return res;
+}
+
+/***********************************************************************
+ *             UserInstStubWrapperW   (ADVPACK.@)
+ */
+HRESULT WINAPI UserInstStubWrapperW(HWND hWnd, HINSTANCE hInstance,
+                                    LPWSTR pszParms, INT nShow)
 {
     FIXME("(%p, %p, %p, %i) stub\n", hWnd, hInstance, pszParms, nShow);
 
@@ -694,9 +719,34 @@ HRESULT WINAPI UserInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
 
 /***********************************************************************
  *             UserUnInstStubWrapperA   (ADVPACK.@)
+ *
+ * See UserUnInstStubWrapperW.
  */
 HRESULT WINAPI UserUnInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
-                                     LPSTR pszParms, INT nShow)
+                                      LPSTR pszParms, INT nShow)
+{
+    UNICODE_STRING parmsW;
+    HRESULT res;
+
+    TRACE("(%p, %p, %p, %i)\n", hWnd, hInstance, pszParms, nShow);
+
+    if (!pszParms)
+        return E_INVALIDARG;
+
+    RtlCreateUnicodeStringFromAsciiz(&parmsW, pszParms);
+
+    res = UserUnInstStubWrapperW(hWnd, hInstance, parmsW.Buffer, nShow);
+
+    RtlFreeUnicodeString(&parmsW);
+
+    return res;
+}
+
+/***********************************************************************
+ *             UserUnInstStubWrapperW   (ADVPACK.@)
+ */
+HRESULT WINAPI UserUnInstStubWrapperW(HWND hWnd, HINSTANCE hInstance,
+                                      LPWSTR pszParms, INT nShow)
 {
     FIXME("(%p, %p, %p, %i) stub\n", hWnd, hInstance, pszParms, nShow);
 
