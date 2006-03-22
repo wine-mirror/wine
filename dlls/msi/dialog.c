@@ -1931,7 +1931,6 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     SetWindowPos( hwnd, 0, 0, 0, size.cx, size.cy,
                   SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOREDRAW );
 
-
     msi_dialog_build_font_list( dialog );
     msi_dialog_fill_controls( dialog );
     msi_dialog_evaluate_control_conditions( dialog );
@@ -2351,16 +2350,18 @@ void msi_dialog_check_messages( HANDLE handle )
 
 UINT msi_dialog_run_message_loop( msi_dialog *dialog )
 {
+    DWORD style;
     HWND hwnd;
-
-    if( !(dialog->attributes & msidbDialogAttributesVisible) )
-        return ERROR_SUCCESS;
 
     if( uiThreadId != GetCurrentThreadId() )
         return SendMessageW( hMsiHiddenWindow, WM_MSI_DIALOG_CREATE, 0, (LPARAM) dialog );
 
     /* create the dialog window, don't show it yet */
-    hwnd = CreateWindowW( szMsiDialogClass, dialog->name, WS_OVERLAPPEDWINDOW,
+    style = WS_OVERLAPPED;
+    if( dialog->attributes & msidbDialogAttributesVisible )
+        style |= WS_VISIBLE;
+
+    hwnd = CreateWindowW( szMsiDialogClass, dialog->name, style,
                      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                      NULL, NULL, NULL, dialog );
     if( !hwnd )
