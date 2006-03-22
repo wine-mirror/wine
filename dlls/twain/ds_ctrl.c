@@ -647,11 +647,20 @@ TW_UINT16 TWAIN_EnableDSUserInterface (pTW_IDENTITY pOrigin,
     {
         if (pUserInterface->ShowUI)
         {
+            BOOL rc;
             pSource->currentState = 5; /* Transitions to state 5 */
-            /* FIXME: we should replace xscanimage with our own device UI */
-            system ("xscanimage");
-            pSource->currentState = 6;
-            pSource->pendingEvent.TWMessage = MSG_XFERREADY;
+            rc = DoScannerUI(pSource);
+            if (!rc)
+            {
+                pSource->pendingEvent.TWMessage = MSG_CLOSEDSREQ;
+            }
+#ifdef HAVE_SANE
+            else
+            {
+                sane_get_parameters (pSource->deviceHandle, &pSource->sane_param);
+                pSource->sane_param_valid = TRUE;
+            }
+#endif
         }
         else
         {

@@ -223,6 +223,12 @@ TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         /* Transfer an image from the source to the application */
         if (pSource->currentState == 6)
         {
+
+            /* trigger scanning dialog */
+            pSource->progressWnd = ScanningDialogBox(NULL,0);
+
+            ScanningDialogBox(pSource->progressWnd,0);
+
             status = sane_start (pSource->deviceHandle);
             if (status != SANE_STATUS_GOOD)
             {
@@ -295,8 +301,11 @@ TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
             pImageMemXfer->YOffset = 0;
             pImageMemXfer->BytesWritten = consumed_len;
 
+            ScanningDialogBox(pSource->progressWnd, consumed_len);
+
             if (status == SANE_STATUS_EOF)
             {
+                ScanningDialogBox(pSource->progressWnd, -1);
                 TRACE("sane_read: %s\n", sane_strstatus (status));
                 sane_cancel (pSource->deviceHandle);
                 twRC = TWRC_XFERDONE;
@@ -305,6 +314,7 @@ TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         }
         else if (status != SANE_STATUS_EOF)
         {
+            ScanningDialogBox(pSource->progressWnd, -1);
             WARN("sane_read: %s\n", sane_strstatus (status));
             sane_cancel (pSource->deviceHandle);
             pSource->twCC = TWCC_OPERATIONERROR;

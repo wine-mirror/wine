@@ -42,11 +42,13 @@ typedef struct tagActiveDS
                                                    application */
     TW_UINT16		twCC;			/* condition code */
     HWND		hwndOwner;		/* window handle of the app */
+    HWND		progressWnd;		/* window handle of the scanning window */
 #ifdef HAVE_SANE
     SANE_Handle		deviceHandle;		/* device handle */
     SANE_Parameters     sane_param;             /* parameters about the image
                                                    transferred */
     BOOL                sane_param_valid;  /* true if valid sane_param*/
+    INT                 deviceIndex;    /* index of the current device */
 #endif
     /* Capabiblities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
@@ -58,6 +60,8 @@ TW_UINT16 DSM_twCC;             /* current condition code of Source Manager */
 TW_HANDLE DSM_parentHWND;       /* window handle of the Source's "parent" */
 TW_UINT32 DSM_sourceId;         /* source id generator */
 TW_UINT16 DSM_currentDevice;    /* keep track of device during enumeration */
+HINSTANCE DSM_instance;
+
 #ifdef HAVE_SANE
 const SANE_Device **device_list;/* a list of all sane devices */
 #endif
@@ -243,5 +247,9 @@ TW_UINT16 TWAIN_AudioNativeXferGet
 /* Implementation of TWAIN capabilities */
 TW_UINT16 TWAIN_ICAPXferMech
     (activeDS *pSource, pTW_CAPABILITY pCapability, TW_UINT16 action);
+
+/* UI function */
+BOOL DoScannerUI(activeDS *pSource);
+HWND ScanningDialogBox(HWND dialog, DWORD progress);
 
 #endif

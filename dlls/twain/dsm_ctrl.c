@@ -304,6 +304,7 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         newSource = HeapAlloc (GetProcessHeap(), 0, sizeof (activeDS));
         if (newSource)
         {
+            newSource->deviceIndex = i;
             status = sane_open(device_list[i]->name,&newSource->deviceHandle);
             if (status == SANE_STATUS_GOOD)
             {
