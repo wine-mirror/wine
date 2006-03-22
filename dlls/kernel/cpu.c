@@ -102,7 +102,7 @@ static inline int have_cpuid(void)
 static BYTE PF[64] = {0,};
 static ULONGLONG cpuHz = 1000000000; /* default to a 1GHz */
 
-static void create_registry_keys( const SYSTEM_INFO *info )
+static void create_system_registry_keys( const SYSTEM_INFO *info )
 {
     static const WCHAR SystemW[] = {'M','a','c','h','i','n','e','\\',
                                     'H','a','r','d','w','a','r','e','\\',
@@ -177,6 +177,73 @@ static void create_registry_keys( const SYSTEM_INFO *info )
     NtClose( system_key );
 }
 
+static void create_env_registry_keys( const SYSTEM_INFO *info )
+{
+    static const WCHAR EnvironW[]  = {'M','a','c','h','i','n','e','\\',
+                                      'S','y','s','t','e','m','\\',
+                                      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                      'C','o','n','t','r','o','l','\\',
+                                      'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+                                      'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR NumProcW[]  = {'N','U','M','B','E','R','_','O','F','_','P','R','O','C','E','S','S','O','R','S',0};
+    static const WCHAR ProcArchW[] = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','C','T','U','R','E',0};
+    static const WCHAR x86W[]      = {'x','8','6',0};
+    static const WCHAR ProcIdW[]   = {'P','R','O','C','E','S','S','O','R','_','I','D','E','N','T','I','F','I','E','R',0};
+    static const WCHAR ProcLvlW[]  = {'P','R','O','C','E','S','S','O','R','_','L','E','V','E','L',0};
+    static const WCHAR ProcRevW[]  = {'P','R','O','C','E','S','S','O','R','_','R','E','V','I','S','I','O','N',0};
+
+    HANDLE env_key;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valueW;
+
+    char nProc[10],id[60],procLevel[10],rev[10];
+    WCHAR nProcW[10],idW[60],procLevelW[10],revW[10];
+
+    /* Create some keys under HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment.
+     * All these environment variables are processor related and will be read during process initialization and hence
+     * show up in the environment of that process.
+     */
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    RtlInitUnicodeString( &nameW, EnvironW );
+    if (NtCreateKey( &env_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) return;
+
+    sprintf( nProc, "%ld", info->dwNumberOfProcessors );
+    RtlMultiByteToUnicodeN( nProcW, sizeof(nProcW), NULL, nProc, strlen(nProc)+1 );
+    RtlInitUnicodeString( &valueW, NumProcW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, nProcW, (strlenW(nProcW)+1)*sizeof(WCHAR) );
+
+    /* TODO: currently hardcoded x86, add different processors */
+    RtlInitUnicodeString( &valueW, ProcArchW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, x86W, (strlenW(x86W)+1) * sizeof(WCHAR) );
+
+    /* TODO: currently hardcoded Intel, add different processors */
+    sprintf( id, "x86 Family %d Model %d Stepping %d, GenuineIntel",
+        info->wProcessorLevel, HIBYTE(info->wProcessorRevision), LOBYTE(info->wProcessorRevision) );
+    RtlMultiByteToUnicodeN( idW, sizeof(idW), NULL, id, strlen(id)+1 );
+    RtlInitUnicodeString( &valueW, ProcIdW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, idW, (strlenW(idW)+1)*sizeof(WCHAR) );
+
+    sprintf( procLevel, "%d", info->wProcessorLevel );
+    RtlMultiByteToUnicodeN( procLevelW, sizeof(procLevelW), NULL, procLevel, strlen(procLevel)+1 );
+    RtlInitUnicodeString( &valueW, ProcLvlW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, procLevelW, (strlenW(procLevelW)+1)*sizeof(WCHAR) );
+
+    /* Properly report model/stepping */
+    sprintf( rev, "%04x", info->wProcessorRevision);
+    RtlMultiByteToUnicodeN( revW, sizeof(revW), NULL, rev, strlen(rev)+1 );
+    RtlInitUnicodeString( &valueW, ProcRevW );
+    NtSetValueKey( env_key, &valueW, 0, REG_SZ, revW, (strlenW(revW)+1)*sizeof(WCHAR) );
+
+    NtClose( env_key );
+}
+
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.@)
  *
@@ -238,6 +305,10 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
  * "\HARDWARE\DESCRIPTION\System\CentralProcessor\<processornumber>\Identifier (CPU x86)".
  * Note that there is a hierarchy for every processor installed, so this
  * supports multiprocessor systems. This is done like Win95 does it, I think.
+ *
+ * It creates some registry entries in the environment part:
+ * "\HKLM\System\CurrentControlSet\Control\Session Manager\Environment". These are
+ * always present. When deleted, Windows will add them again.
  *
  * It also creates a cached flag array for IsProcessorFeaturePresent().
  */
@@ -702,7 +773,8 @@ VOID WINAPI GetSystemInfo(
               si->dwActiveProcessorMask, si->dwNumberOfProcessors, si->dwProcessorType,
               si->dwAllocationGranularity, si->wProcessorLevel, si->wProcessorRevision);
 
-        create_registry_keys( &cachedsi );
+        create_system_registry_keys( &cachedsi );
+        create_env_registry_keys( &cachedsi );
 }
 
 
