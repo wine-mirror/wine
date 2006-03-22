@@ -38,6 +38,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static HRESULT HTMLElementCollection_Create(IUnknown*,HTMLElement**,DWORD,IDispatch**);
 
+typedef struct {
+    HTMLElement **buf;
+    DWORD len;
+    DWORD size;
+} elem_vector;
+
+static void elem_vector_add(elem_vector *buf, HTMLElement *elem)
+{
+    if(buf->len == buf->size) {
+        buf->size <<= 1;
+        buf->buf = HeapReAlloc(GetProcessHeap(), 0, buf->buf, buf->size*sizeof(HTMLElement**));
+    }
+
+    buf->buf[buf->len++] = elem;
+}
+
 #define HTMLELEM_THIS(iface) DEFINE_THIS(HTMLElement, HTMLElement, iface)
 
 static HRESULT WINAPI HTMLElement_QueryInterface(IHTMLElement *iface,
@@ -747,8 +763,7 @@ static HRESULT WINAPI HTMLElement_get_children(IHTMLElement *iface, IDispatch **
     return E_NOTIMPL;
 }
 
-static void create_all_list(HTMLDocument *doc, HTMLElement *elem, HTMLElement ***list, DWORD *size,
-                        DWORD *len)
+static void create_all_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *buf)
 {
     nsIDOMNodeList *nsnode_list;
     nsIDOMNode *iter;
@@ -777,37 +792,30 @@ static void create_all_list(HTMLDocument *doc, HTMLElement *elem, HTMLElement **
         if(node->node_type != NT_HTMLELEM)
             continue;
 
-        if(*len == *size) {
-            *size <<= 1;
-            *list = HeapReAlloc(GetProcessHeap(), 0, *list, *size * sizeof(HTMLElement**));
-        }
-
-        (*list)[(*len)++] = (HTMLElement*)node->impl.elem;
-
-        create_all_list(doc, (HTMLElement*)node->impl.elem, list, size, len);
+        elem_vector_add(buf, (HTMLElement*)node->impl.elem);
+        create_all_list(doc, (HTMLElement*)node->impl.elem, buf);
     }
 }
 
 static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    HTMLElement **elem_list;
-    DWORD list_size = 8, len = 0;
+    elem_vector buf = {NULL, 0, 8};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    elem_list = HeapAlloc(GetProcessHeap(), 0, list_size*sizeof(HTMLElement**));
+    buf.buf = HeapAlloc(GetProcessHeap(), 0, buf.size*sizeof(HTMLElement**));
 
-    create_all_list(This->node->doc, This, &elem_list, &list_size, &len);
+    create_all_list(This->node->doc, This, &buf);
 
-    if(!len) {
-        HeapFree(GetProcessHeap(), 0, elem_list);
-        elem_list = NULL;
-    }else if(list_size > len) {
-        elem_list = HeapReAlloc(GetProcessHeap(), 0, elem_list, len*sizeof(HTMLElement**));
+    if(!buf.len) {
+        HeapFree(GetProcessHeap(), 0, buf.buf);
+        buf.buf = NULL;
+    }else if(buf.size > buf.len) {
+        buf.buf = HeapReAlloc(GetProcessHeap(), 0, buf.buf, buf.len*sizeof(HTMLElement**));
     }
 
-    return HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), elem_list, len, p);
+    return HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len, p);
 }
 
 static void HTMLElement_destructor(IUnknown *iface)
@@ -1152,19 +1160,19 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
                                                  VARIANT tagName, IDispatch **pdisp)
 {
     HTMLElementCollection *This = ELEMCOL_THIS(iface);
-    DWORD size = 8, len = 0, i;
-    HTMLElement **elem_list;
+    DWORD i;
     nsAString tag_str;
     const PRUnichar *tag;
+    elem_vector buf = {NULL, 0, 8};
 
     if(V_VT(&tagName) != VT_BSTR) {
         WARN("Invalid arg\n");
-        return E_INVALIDARG;
+        return DISP_E_MEMBERNOTFOUND;
     }
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(V_BSTR(&tagName)), pdisp);
 
-    elem_list = HeapAlloc(GetProcessHeap(), 0, size*sizeof(HTMLElement*));
+    buf.buf = HeapAlloc(GetProcessHeap(), 0, buf.size*sizeof(HTMLElement*));
 
     nsAString_Init(&tag_str, NULL);
 
@@ -1176,28 +1184,22 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
         nsAString_GetData(&tag_str, &tag, NULL);
 
         if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, tag, -1,
-                          V_BSTR(&tagName), -1) == CSTR_EQUAL) {
-            if(len == size) {
-                size <<= 2;
-                elem_list = HeapReAlloc(GetProcessHeap(), 0, elem_list, size);
-            }
-
-            elem_list[len++] = This->elems[i];
-        }
+                          V_BSTR(&tagName), -1) == CSTR_EQUAL)
+            elem_vector_add(&buf, This->elems[i]);
     }
 
     nsAString_Finish(&tag_str);
 
-    TRACE("fount %ld tags\n", len);
+    TRACE("fount %ld tags\n", buf.len);
 
-    if(!len) {
-        HeapFree(GetProcessHeap(), 0, elem_list);
-        elem_list = NULL;
-    }else if(size > len) {
-        HeapReAlloc(GetProcessHeap(), 0, elem_list, len);
+    if(!buf.len) {
+        HeapFree(GetProcessHeap(), 0, buf.buf);
+        buf.buf = NULL;
+    }else if(buf.size > buf.len) {
+        buf.buf = HeapReAlloc(GetProcessHeap(), 0, buf.buf, buf.len);
     }
 
-    return HTMLElementCollection_Create(This->ref_unk, elem_list, len, pdisp);
+    return HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len, pdisp);
 }
 
 #undef ELEMCOL_THIS
