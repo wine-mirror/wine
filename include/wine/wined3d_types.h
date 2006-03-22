@@ -507,7 +507,7 @@ typedef struct _WINED3DVERTEXELEMENT {
   BYTE    Method;
   BYTE    Usage;
   BYTE    UsageIndex;
-  BYTE    Reg; /* DirectX 8 */
+  int     Reg; /* DirectX 8 */
 } WINED3DVERTEXELEMENT, *LPWINED3DVERTEXELEMENT;
 
 

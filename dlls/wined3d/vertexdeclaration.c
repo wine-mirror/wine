@@ -383,6 +383,7 @@ static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DVertexDec
     This->pDeclarationWine = HeapAlloc(GetProcessHeap(), 0, This->declaration9NumElements * sizeof(WINED3DVERTEXELEMENT));
     for(i = 0; i < This->declaration9NumElements; ++i) {
         memcpy(This->pDeclarationWine + i, This->pDeclaration9 + i, sizeof(D3DVERTEXELEMENT9));
+        This->pDeclarationWine[i].Reg = -1;
     }
 
     This->declarationWNumElements = This->declaration9NumElements;
