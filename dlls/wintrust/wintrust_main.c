@@ -25,6 +25,7 @@
 #include "winerror.h"
 #include "guiddef.h"
 #include "wintrust.h"
+#include "softpub.h"
 #include "mscat.h"
 #include "objbase.h"
 
@@ -86,8 +87,7 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
 {
-    static const GUID WINTRUST_ACTION_GENERIC_VERIFY_V2 = { 0xaac56b, 0xcd44, 0x11d0,
-                                                          { 0x8c,0xc2,0x00,0xc0,0x4f,0xc2,0x95,0xee }};
+    static const GUID gen_verify_v2 = WINTRUST_ACTION_GENERIC_VERIFY_V2;
 
     FIXME("%p %s %p\n", hwnd, debugstr_guid(ActionID), ActionData);
 
@@ -104,7 +104,7 @@ LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionDat
      *
      */
 
-    if (IsEqualCLSID(ActionID, &WINTRUST_ACTION_GENERIC_VERIFY_V2))
+    if (IsEqualCLSID(ActionID, &gen_verify_v2))
         return TRUST_E_PROVIDER_UNKNOWN;
 
     return ERROR_SUCCESS;
