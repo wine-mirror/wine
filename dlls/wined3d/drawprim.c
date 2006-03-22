@@ -325,6 +325,7 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
     int i;
     WINED3DVERTEXELEMENT *element;
     DWORD stride;
+    int reg;
 
     /* Locate the vertex declaration */
     if (useVertexShaderFunction && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration) {
@@ -350,8 +351,21 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
         stride  = This->stateBlock->streamStride[element->Stream];
         data += (BaseVertexIndex * stride);
         data += element->Offset;
+        reg = element->Reg;
 
         TRACE("Offset %d Stream %d UsageIndex %d\n", element->Offset, element->Stream, element->UsageIndex);
+
+        if (useVertexShaderFunction && reg != -1 && data) {
+            WINED3DGLTYPE glType = glTypeLookup[element->Type];
+
+            TRACE("(%p) : Set vertex attrib pointer: reg 0x%08x, d3d type 0x%08x, stride 0x%08lx, data %p)\n", This, reg, element->Type, stride, data);
+
+            GL_EXTCALL(glVertexAttribPointerARB(reg, glType.size, glType.glType, glType.normalized, stride, data));
+            checkGLcall("glVertexAttribPointerARB");
+            GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
+            checkGLcall("glEnableVertexAttribArrayARB");
+        }
+
         switch (element->Usage) {
         case D3DDECLUSAGE_POSITION:
                 switch (element->UsageIndex) {

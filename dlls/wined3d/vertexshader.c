@@ -1245,16 +1245,6 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     /* TODO: renumbering of attributes if the values are higher than the highest supported attribute but the total number of attributes is less than the highest supported attribute */
     This->highestConstant = -1;
 
-    /* Parse the vertex declaration and store the used elements in arrayUsageMap. */
-    if(This->vertexDeclaration) {
-        for (i = 0 ; i < ((IWineD3DVertexDeclarationImpl*)This->vertexDeclaration)->declarationWNumElements - 1; ++i) {
-            WINED3DVERTEXELEMENT *element = ((IWineD3DVertexDeclarationImpl*)This->vertexDeclaration)->pDeclarationWine + i;
-            INT usage = element->Usage | (element->UsageIndex << 16);
-            BYTE arrayNo = element->Reg;
-            parse_decl_usage(This, usage, arrayNo);
-        }
-    }
-
   /**
    * First pass to determine what we need to declare:
    *  - Temporary variables
