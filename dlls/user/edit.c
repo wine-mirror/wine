@@ -246,7 +246,7 @@ static void	EDIT_EM_ScrollCaret(EDITSTATE *es);
 static void	EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc);
 static void	EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc);
 static void	EDIT_EM_SetLimitText(EDITSTATE *es, INT limit);
-static void	EDIT_EM_SetMargins(EDITSTATE *es, INT action, INT left, INT right, BOOL repaint);
+static void	EDIT_EM_SetMargins(EDITSTATE *es, INT action, WORD left, WORD right, BOOL repaint);
 static void	EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c);
 static void	EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap);
 static BOOL	EDIT_EM_SetTabStops(EDITSTATE *es, INT count, LPINT tabs);
@@ -747,7 +747,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 	/* The following EM_xxx are new to win95 and don't exist for 16 bit */
 
 	case EM_SETMARGINS:
-		EDIT_EM_SetMargins(es, (INT)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam), TRUE);
+		EDIT_EM_SetMargins(es, (INT)wParam, LOWORD(lParam), HIWORD(lParam), TRUE);
 		break;
 
 	case EM_GETMARGINS:
@@ -2326,7 +2326,7 @@ static void EDIT_SetCaretPos(EDITSTATE *es, INT pos,
 static void EDIT_AdjustFormatRect(EDITSTATE *es)
 {
 	RECT ClientRect;
-	
+
 	es->format_rect.right = max(es->format_rect.right, es->format_rect.left + es->char_width);
 	if (es->style & ES_MULTILINE)
 	{
@@ -3660,9 +3660,24 @@ static void EDIT_EM_SetLimitText(EDITSTATE *es, INT limit)
  * of the char's width as the margin, but this is not how Windows handles this.
  * For all other fonts Windows sets the margins to zero.
  *
+ * FIXME - When EC_USEFONTINFO is used the margins only change if the
+ * edit control is equal to or larger than a certain size.
+ * Interestingly if one subtracts both the left and right margins from
+ * this size one always seems to get an even number.  The extents of
+ * the (four character) string "'**'" match this quite closely, so
+ * we'll use this until we come up with a better idea.
  */
+static int calc_min_set_margin_size(HDC dc, INT left, INT right)
+{
+    WCHAR magic_string[] = {'\'','*','*','\'', 0};
+    SIZE sz;
+
+    GetTextExtentPointW(dc, magic_string, sizeof(magic_string)/sizeof(WCHAR) - 1, &sz);
+    return sz.cx + left + right;
+}
+
 static void EDIT_EM_SetMargins(EDITSTATE *es, INT action,
-			       INT left, INT right, BOOL repaint)
+			       WORD left, WORD right, BOOL repaint)
 {
 	TEXTMETRICW tm;
 	INT default_left_margin  = 0; /* in pixels */
@@ -3675,9 +3690,17 @@ static void EDIT_EM_SetMargins(EDITSTATE *es, INT action,
             GetTextMetricsW(dc, &tm);
             /* The default margins are only non zero for TrueType or Vector fonts */
             if (tm.tmPitchAndFamily & ( TMPF_VECTOR | TMPF_TRUETYPE )) {
+                int min_size;
+                RECT rc;
                 /* This must be calculated more exactly! But how? */
-                default_left_margin = tm.tmAveCharWidth / 3;
-                default_right_margin = tm.tmAveCharWidth / 3;
+                default_left_margin = tm.tmAveCharWidth / 2;
+                default_right_margin = tm.tmAveCharWidth / 2;
+                min_size = calc_min_set_margin_size(dc, default_left_margin, default_right_margin);
+                GetClientRect(es->hwndSelf, &rc);
+                if(rc.right - rc.left < min_size) {
+                    default_left_margin = es->left_margin;
+                    default_right_margin = es->right_margin;
+                }
             }
             SelectObject(dc, old_font);
             ReleaseDC(es->hwndSelf, dc);
