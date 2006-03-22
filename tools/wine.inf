@@ -2114,6 +2114,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,help.exe,winhelp.exe
 11,,msiexec.exe
 11,,notepad.exe
+11,,shdocvw.dll
 11,,progman.exe
 11,,regsvr32.exe
 11,,wcmd.exe
