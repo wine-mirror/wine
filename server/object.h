@@ -110,6 +110,7 @@ extern void *create_object( struct namespace *namespace, const struct object_ops
 extern void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
                                   const struct unicode_str *name, unsigned int attributes );
 extern void unlink_named_object( struct object *obj );
+extern void make_object_static( struct object *obj );
 extern struct namespace *create_namespace( unsigned int hash_size );
 /* grab/release_object can take any pointer, but you better make sure */
 /* that the thing pointed to starts with a struct object... */
@@ -127,6 +128,7 @@ extern int no_close_handle( struct object *obj, struct process *process, obj_han
 extern void no_destroy( struct object *obj );
 #ifdef DEBUG_OBJECTS
 extern void dump_objects(void);
+extern void close_objects(void);
 #endif
 
 /* event functions */
@@ -167,7 +169,6 @@ extern int get_page_size(void);
 
 extern void init_registry(void);
 extern void flush_registry(void);
-extern void close_registry(void);
 
 /* signal functions */
 
@@ -175,7 +176,6 @@ extern void start_watchdog(void);
 extern void stop_watchdog(void);
 extern int watchdog_triggered(void);
 extern void init_signals(void);
-extern void close_signals(void);
 
 /* atom functions */
 
@@ -194,7 +194,6 @@ extern void *create_named_object_dir( struct directory *root, const struct unico
 extern void *open_object_dir( struct directory *root, const struct unicode_str *name,
                               unsigned int attr, const struct object_ops *ops );
 extern void init_directories(void);
-extern void close_directories(void);
 
 /* symbolic link functions */
 
@@ -202,10 +201,8 @@ extern struct symlink *create_symlink( struct directory *root, const struct unic
                                        unsigned int attr, const struct unicode_str *target );
 
 /* devices */
-extern struct named_pipe_device *create_named_pipe_device( struct directory *root,
-                                                           const struct unicode_str *name );
-extern struct mailslot_device *create_mailslot_device( struct directory *root,
-                                                       const struct unicode_str *name );
+extern void create_named_pipe_device( struct directory *root, const struct unicode_str *name );
+extern void create_mailslot_device( struct directory *root, const struct unicode_str *name );
 
 /* global variables */
 

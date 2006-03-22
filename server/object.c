@@ -56,11 +56,18 @@ struct namespace
 
 #ifdef DEBUG_OBJECTS
 static struct list object_list = LIST_INIT(object_list);
+static struct list static_object_list = LIST_INIT(static_object_list);
 
 void dump_objects(void)
 {
     struct list *p;
 
+    LIST_FOR_EACH( p, &static_object_list )
+    {
+        struct object *ptr = LIST_ENTRY( p, struct object, obj_list );
+        fprintf( stderr, "%p:%d: ", ptr, ptr->refcount );
+        ptr->ops->dump( ptr, 1 );
+    }
     LIST_FOR_EACH( p, &object_list )
     {
         struct object *ptr = LIST_ENTRY( p, struct object, obj_list );
@@ -68,7 +75,25 @@ void dump_objects(void)
         ptr->ops->dump( ptr, 1 );
     }
 }
-#endif
+
+void close_objects(void)
+{
+    struct list *ptr;
+
+    /* release the static objects */
+    while ((ptr = list_head( &static_object_list )))
+    {
+        struct object *obj = LIST_ENTRY( ptr, struct object, obj_list );
+        /* move it back to the standard list before freeing */
+        list_remove( &obj->obj_list );
+        list_add_head( &object_list, &obj->obj_list );
+        release_object( obj );
+    }
+
+    dump_objects();  /* dump any remaining objects */
+}
+
+#endif  /* DEBUG_OBJECTS */
 
 /*****************************************************************/
 
@@ -222,6 +247,15 @@ void unlink_named_object( struct object *obj )
 {
     if (obj->name) free_name( obj );
     obj->name = NULL;
+}
+
+/* mark an object as being stored statically, i.e. only released at shutdown */
+void make_object_static( struct object *obj )
+{
+#ifdef DEBUG_OBJECTS
+    list_remove( &obj->obj_list );
+    list_add_head( &static_object_list, &obj->obj_list );
+#endif
 }
 
 /* grab an object (i.e. increment its refcount) and return the object */

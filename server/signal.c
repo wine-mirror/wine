@@ -91,8 +91,6 @@ static struct handler *handler_sigint;
 static struct handler *handler_sigchld;
 static struct handler *handler_sigio;
 
-static sigset_t blocked_sigset;
-
 static int watchdog;
 
 /* create a signal handler */
@@ -118,6 +116,7 @@ static struct handler *create_handler( signal_callback callback )
         return NULL;
     }
     set_fd_events( handler->fd, POLLIN );
+    make_object_static( &handler->obj );
     return handler;
 }
 
@@ -265,6 +264,7 @@ static int core_dump_disabled( void )
 void init_signals(void)
 {
     struct sigaction action;
+    sigset_t blocked_sigset;
 
     if (!(handler_sighup  = create_handler( sighup_callback ))) goto error;
     if (!(handler_sigterm = create_handler( sigterm_callback ))) goto error;
@@ -317,14 +317,4 @@ void init_signals(void)
 error:
     fprintf( stderr, "failed to initialize signal handlers\n" );
     exit(1);
-}
-
-void close_signals(void)
-{
-    sigprocmask( SIG_BLOCK, &blocked_sigset, NULL );
-    release_object( handler_sighup );
-    release_object( handler_sigterm );
-    release_object( handler_sigint );
-    release_object( handler_sigchld );
-    release_object( handler_sigio );
 }

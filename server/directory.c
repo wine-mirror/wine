@@ -294,11 +294,6 @@ void *open_object_dir( struct directory *root, const struct unicode_str *name,
 
 /* Global initialization */
 
-static struct directory *dir_driver, *dir_device;
-static struct symlink *link_dosdev, *link_global1, *link_global2, *link_local;
-static struct named_pipe_device *dev_named_pipe;
-static struct mailslot_device *dev_mailslot;
-
 void init_directories(void)
 {
     /* Directories */
@@ -325,11 +320,15 @@ void init_directories(void)
     static const struct unicode_str pipe_str = {pipeW, sizeof(pipeW)};
     static const struct unicode_str mailslot_str = {mailslotW, sizeof(mailslotW)};
 
-    struct directory *dir_global, *dir_basenamed;
+    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed;
+    struct symlink *link_dosdev, *link_global1, *link_global2, *link_local;
 
     root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
     dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE );
     dir_device     = create_directory( root_directory, &dir_device_str, 0, HASH_SIZE );
+    make_object_static( &root_directory->obj );
+    make_object_static( &dir_driver->obj );
+    make_object_static( &dir_device->obj );
 
     dir_global     = create_directory( NULL, &dir_global_str, 0, HASH_SIZE );
     /* use a larger hash table for this one since it can contain a lot of objects */
@@ -340,31 +339,19 @@ void init_directories(void)
     link_global1   = create_symlink( dir_global, &link_global_str, 0, &dir_global_str );
     link_global2   = create_symlink( dir_basenamed, &link_global_str, 0, &dir_basenamed_str );
     link_local     = create_symlink( dir_basenamed, &link_local_str, 0, &dir_basenamed_str );
+    make_object_static( (struct object *)link_dosdev );
+    make_object_static( (struct object *)link_global1 );
+    make_object_static( (struct object *)link_global2 );
+    make_object_static( (struct object *)link_local );
 
     /* devices */
-    dev_named_pipe = create_named_pipe_device( dir_global, &pipe_str );
-    dev_mailslot   = create_mailslot_device( dir_global, &mailslot_str );
+    create_named_pipe_device( dir_global, &pipe_str );
+    create_mailslot_device( dir_global, &mailslot_str );
 
     /* the symlinks or devices hold references so we can release these */
     release_object( dir_global );
     release_object( dir_basenamed );
 }
-
-void close_directories(void)
-{
-    release_object( dev_named_pipe );
-    release_object( dev_mailslot );
-
-    release_object( link_dosdev );
-    release_object( link_global1 );
-    release_object( link_global2 );
-    release_object( link_local );
-
-    release_object( dir_device );
-    release_object( dir_driver );
-    release_object( root_directory );
-}
-
 
 /* create a directory object */
 DECL_HANDLER(create_directory)

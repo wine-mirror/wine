@@ -443,8 +443,7 @@ static int named_pipe_device_get_file_info( struct fd *fd )
     return 0;
 }
 
-struct named_pipe_device *create_named_pipe_device( struct directory *root,
-                                                    const struct unicode_str *name )
+void create_named_pipe_device( struct directory *root, const struct unicode_str *name )
 {
     struct named_pipe_device *dev;
 
@@ -459,7 +458,7 @@ struct named_pipe_device *create_named_pipe_device( struct directory *root,
             dev = NULL;
         }
     }
-    return dev;
+    if (dev) make_object_static( &dev->obj );
 }
 
 static int pipe_data_remaining( struct pipe_server *server )

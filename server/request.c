@@ -58,10 +58,7 @@
 #include "wine/library.h"
 
 #include "file.h"
-#include "handle.h"
-#include "thread.h"
 #include "process.h"
-#include "user.h"
 #define WANT_REQUEST_HANDLERS
 #include "request.h"
 
@@ -715,6 +712,7 @@ static void acquire_lock(void)
         fatal_error( "out of memory\n" );
     master_socket->timeout = NULL;
     set_fd_events( master_socket->fd, POLLIN );
+    make_object_static( &master_socket->obj );
 }
 
 /* open the master server socket and start waiting for new clients */
@@ -798,16 +796,9 @@ static void close_socket_timeout( void *arg )
     if (debug_level) fprintf( stderr, "wineserver: exiting (pid=%ld)\n", (long) getpid() );
 
 #ifdef DEBUG_OBJECTS
-    /* shut down everything properly */
-    release_object( master_socket );
-    close_signals();
-    close_global_handles();
-    close_registry();
-    close_directories();
-    dump_objects();  /* dump any remaining objects */
-#else
-    exit(0);
+    close_objects();  /* shut down everything properly */
 #endif
+    exit(0);
 }
 
 /* close the master socket and stop waiting for new clients */

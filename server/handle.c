@@ -247,6 +247,7 @@ static obj_handle_t alloc_global_handle( void *obj, unsigned int access )
     {
         if (!(global_table = (struct handle_table *)alloc_handle_table( NULL, 0 )))
             return 0;
+        make_object_static( &global_table->obj );
     }
     return handle_local_to_global( alloc_entry( global_table, obj, access ));
 }
@@ -357,16 +358,6 @@ int close_handle( struct process *process, obj_handle_t handle, int *fd )
     if (entry == table->entries + table->last) shrink_handle_table( table );
     release_object( obj );
     return 1;
-}
-
-/* close all the global handles */
-void close_global_handles(void)
-{
-    if (global_table)
-    {
-        release_object( global_table );
-        global_table = NULL;
-    }
 }
 
 /* retrieve the object corresponding to one of the magic pseudo-handles */

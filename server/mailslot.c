@@ -310,7 +310,7 @@ static int mailslot_device_get_file_info( struct fd *fd )
     return 0;
 }
 
-struct mailslot_device *create_mailslot_device( struct directory *root, const struct unicode_str *name )
+void create_mailslot_device( struct directory *root, const struct unicode_str *name )
 {
     struct mailslot_device *dev;
 
@@ -325,7 +325,7 @@ struct mailslot_device *create_mailslot_device( struct directory *root, const st
             dev = NULL;
         }
     }
-    return dev;
+    if (dev) make_object_static( &dev->obj );
 }
 
 static struct mailslot *create_mailslot( struct directory *root,

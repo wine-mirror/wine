@@ -52,6 +52,4 @@ extern struct handle_table *copy_handle_table( struct process *process, struct p
 extern unsigned int get_handle_table_count( struct process *process);
 extern int flush_cached_fd( struct process *process, obj_handle_t handle );
 
-extern void close_global_handles(void);
-
 #endif  /* __WINE_SERVER_HANDLE_H */

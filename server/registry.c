@@ -1442,7 +1442,10 @@ static void load_init_registry_from_file( const char *filename, struct key *key 
     assert( save_branch_count < MAX_SAVE_BRANCH_INFO );
 
     if ((save_branch_info[save_branch_count].path = strdup( filename )))
+    {
         save_branch_info[save_branch_count++].key = (struct key *)grab_object( key );
+        make_object_static( &key->obj );
+    }
 }
 
 static WCHAR *format_user_registry_path( const SID *sid, struct unicode_str *path )
@@ -1488,6 +1491,7 @@ void init_registry(void)
     /* create the root key */
     root_key = alloc_key( &root_name, time(NULL) );
     assert( root_key );
+    make_object_static( &root_key->obj );
 
     if (!(filename = malloc( strlen(config) + 16 ))) fatal_error( "out of memory\n" );
     strcpy( filename, config );
@@ -1692,21 +1696,6 @@ void flush_registry(void)
             perror( " " );
         }
     }
-}
-
-/* close the top-level keys; used on server exit */
-void close_registry(void)
-{
-    int i;
-
-    if (save_timeout_user) remove_timeout_user( save_timeout_user );
-    save_timeout_user = NULL;
-    for (i = 0; i < save_branch_count; i++)
-    {
-        release_object( save_branch_info[i].key );
-        free( save_branch_info[i].path );
-    }
-    release_object( root_key );
 }
 
 
