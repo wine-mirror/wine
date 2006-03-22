@@ -1,4 +1,5 @@
 Makefile
+clipboard.ok
 compobj.ok
 marshal.ok
 moniker.ok

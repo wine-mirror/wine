@@ -7,6 +7,7 @@ IMPORTS   = oleaut32 ole32 user32 gdi32 kernel32
 EXTRALIBS = -luuid
 
 CTESTS = \
+	clipboard.c \
 	compobj.c \
 	marshal.c \
 	moniker.c \
