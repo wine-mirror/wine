@@ -615,26 +615,27 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
     {
         static const WCHAR template_s[]=
-            {'A','c','t','i','o','n',' ','%','s',':',' ','%','s','.',' ', '%','s',
-            '.',0};
+            {'A','c','t','i','o','n',' ','%','s',':',' ','%','s','.',' ',0};
         static const WCHAR format[] = 
             {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
         WCHAR timet[0x100];
-        LPCWSTR action_text;
-        LPCWSTR action;
-        LPWSTR deformated;
+        LPCWSTR action_text, action;
+        LPWSTR deformatted = NULL;
 
         GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
 
         action = MSI_RecordGetString(record, 1);
         action_text = MSI_RecordGetString(record, 2);
-        deformat_string(package, action_text, &deformated);
+        deformat_string(package, action_text, &deformatted);
 
-        len = strlenW(timet) + strlenW(action) + strlenW(deformated) + 
-              strlenW(template_s) - 6 /* 6 characters of format specifier */;
-        message = msi_alloc((len + 1)*sizeof(WCHAR));
-        sprintfW(message,template_s,timet,action,deformated);
-        msi_free(deformated);
+        len = strlenW(timet) + strlenW(action) + strlenW(template_s);
+        if (deformatted)
+            len += strlenW(deformatted);
+        message = msi_alloc(len*sizeof(WCHAR));
+        sprintfW(message, template_s, timet, action);
+        if (deformatted)
+            strcatW(message, deformatted);
+        msi_free(deformatted);
     }
     else
     {
