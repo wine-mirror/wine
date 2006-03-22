@@ -1,5 +1,5 @@
 @ stdcall AddDelBackupEntryA(str str str long)
-# stdcall AddDelBackupEntryW(wstr wstr wstr long)
+@ stdcall AddDelBackupEntryW(wstr wstr wstr long)
 @ stdcall AddDelBackupEntry(str str str long) AddDelBackupEntryA
 @ stdcall AdvInstallFileA(long str str str str long long)
 # stdcall AdvInstallFileW(long wstr wstr wstr wstr long long)

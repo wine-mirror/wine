@@ -26,14 +26,69 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winver.h"
+#include "winternl.h"
 #include "setupapi.h"
 #include "advpub.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
+/* converts an ansi double null-terminated list to a unicode list */
+static LPWSTR ansi_to_unicode_list(LPCSTR ansi_list)
+{
+    DWORD len, wlen = 0;
+    LPWSTR list;
+    LPCSTR ptr = ansi_list;
+
+    while (*ptr) ptr += lstrlenA(ptr) + 1;
+    len = ptr + 1 - ansi_list;
+    wlen = MultiByteToWideChar(CP_ACP, 0, ansi_list, len, NULL, 0);
+    list = HeapAlloc(GetProcessHeap(), 0, wlen * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, ansi_list, len, list, wlen);
+    return list;
+}
+
 /***********************************************************************
  *      AddDelBackupEntryA (ADVPACK.@)
+ *
+ * See AddDelBackupEntryW.
+ */
+HRESULT WINAPI AddDelBackupEntryA(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
+                                  LPCSTR lpcszBaseName, DWORD dwFlags)
+{
+    UNICODE_STRING backupdir, basename;
+    LPWSTR filelist, backup;
+    HRESULT res;
+
+    TRACE("(%p, %p, %p, %ld)\n", lpcszFileList, lpcszBackupDir,
+          lpcszBaseName, dwFlags);
+
+    if (lpcszFileList)
+        filelist = ansi_to_unicode_list(lpcszFileList);
+    else
+        filelist = NULL;
+
+    RtlCreateUnicodeStringFromAsciiz(&backupdir, lpcszBackupDir);
+    RtlCreateUnicodeStringFromAsciiz(&basename, lpcszBaseName);
+
+    if (lpcszBackupDir)
+        backup = backupdir.Buffer;
+    else
+        backup = NULL;
+
+    res = AddDelBackupEntryW(filelist, backup, basename.Buffer, dwFlags);
+
+    HeapFree(GetProcessHeap(), 0, filelist);
+
+    RtlFreeUnicodeString(&backupdir);
+    RtlFreeUnicodeString(&basename);
+
+    return res;
+}
+
+/***********************************************************************
+ *      AddDelBackupEntryW (ADVPACK.@)
  *
  * Either appends the files in the file list to the backup section of
  * the specified INI, or deletes the entries from the INI file.
@@ -56,13 +111,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
  *   If lpcszBackupDir is NULL, the INI file is assumed to exist in
  *   c:\windows or created there if it does not exist.
  */
-HRESULT WINAPI AddDelBackupEntryA(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
-                                 LPCSTR lpcszBaseName, DWORD dwFlags)
+HRESULT WINAPI AddDelBackupEntryW(LPCWSTR lpcszFileList, LPCWSTR lpcszBackupDir,
+                                  LPCWSTR lpcszBaseName, DWORD dwFlags)
 {
-    CHAR szIniPath[MAX_PATH];
-    LPSTR szString = NULL;
+    WCHAR szIniPath[MAX_PATH];
+    LPWSTR szString = NULL;
 
-    const char szBackupEntry[] = "-1,0,0,0,0,0,-1";
+    static const WCHAR szBackupEntry[] = {
+        '-','1',',','0',',','0',',','0',',','0',',','0',',','-','1',0
+    };
+    
+    static const WCHAR backslash[] = {'\\',0};
+    static const WCHAR ini[] = {'.','i','n','i',0};
+    static const WCHAR backup[] = {'b','a','c','k','u','p',0};
 
     TRACE("(%p, %p, %p, %ld)\n", lpcszFileList, lpcszBackupDir,
           lpcszBaseName, dwFlags);
@@ -71,30 +132,30 @@ HRESULT WINAPI AddDelBackupEntryA(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
         return S_OK;
 
     if (lpcszBackupDir)
-        lstrcpyA(szIniPath, lpcszBackupDir);
+        lstrcpyW(szIniPath, lpcszBackupDir);
     else
-        GetWindowsDirectoryA(szIniPath, MAX_PATH);
+        GetWindowsDirectoryW(szIniPath, MAX_PATH);
 
-    lstrcatA(szIniPath, "\\");
-    lstrcatA(szIniPath, lpcszBaseName);
-    lstrcatA(szIniPath, ".ini");
+    lstrcatW(szIniPath, backslash);
+    lstrcatW(szIniPath, lpcszBaseName);
+    lstrcatW(szIniPath, ini);
 
-    SetFileAttributesA(szIniPath, FILE_ATTRIBUTE_NORMAL);
+    SetFileAttributesW(szIniPath, FILE_ATTRIBUTE_NORMAL);
 
     if (dwFlags & AADBE_ADD_ENTRY)
-        szString = (LPSTR)szBackupEntry;
+        szString = (LPWSTR)szBackupEntry;
     else if (dwFlags & AADBE_DEL_ENTRY)
         szString = NULL;
 
     /* add or delete the INI entries */
     while (*lpcszFileList)
     {
-        WritePrivateProfileStringA("backup", lpcszFileList, szString, szIniPath);
-        lpcszFileList += lstrlenA(lpcszFileList) + 1;
+        WritePrivateProfileStringW(backup, lpcszFileList, szString, szIniPath);
+        lpcszFileList += lstrlenW(lpcszFileList) + 1;
     }
 
     /* hide the INI file */
-    SetFileAttributesA(szIniPath, FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN);
+    SetFileAttributesW(szIniPath, FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN);
 
     return S_OK;
 }
