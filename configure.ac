@@ -1682,7 +1682,6 @@ libs/wine/Makefile
 libs/wpp/Makefile
 loader/Makefile
 programs/Makefile
-programs/avitools/Makefile
 programs/clock/Makefile
 programs/cmdlgtst/Makefile
 programs/control/Makefile
@@ -1690,6 +1689,7 @@ programs/eject/Makefile
 programs/expand/Makefile
 programs/explorer/Makefile
 programs/hh/Makefile
+programs/icinfo/Makefile
 programs/msiexec/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile

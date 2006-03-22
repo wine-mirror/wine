@@ -6,7 +6,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
 SUBDIRS = \
-	avitools \
 	clock \
 	cmdlgtst \
 	control \
@@ -14,6 +13,7 @@ SUBDIRS = \
 	expand \
 	explorer \
 	hh \
+	icinfo \
 	msiexec \
 	notepad \
 	progman \
@@ -43,13 +43,13 @@ SUBDIRS = \
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = \
-	avitools \
 	clock \
 	control \
 	eject \
 	expand \
 	explorer \
 	hh \
+	icinfo \
 	msiexec \
 	notepad \
 	progman \
