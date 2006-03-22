@@ -58,6 +58,9 @@ static GetThreadPriorityBoost_t pGetThreadPriorityBoost=NULL;
 typedef HANDLE (WINAPI *OpenThread_t)(DWORD,BOOL,DWORD);
 static OpenThread_t pOpenThread=NULL;
 
+typedef BOOL (WINAPI *QueueUserWorkItem_t)(LPTHREAD_START_ROUTINE,PVOID,ULONG);
+static QueueUserWorkItem_t pQueueUserWorkItem=NULL;
+
 typedef DWORD (WINAPI *SetThreadIdealProcessor_t)(HANDLE,DWORD);
 static SetThreadIdealProcessor_t pSetThreadIdealProcessor=NULL;
 
@@ -695,13 +698,16 @@ static void test_QueueUserWorkItem(void)
     DWORD wait_result;
     DWORD before, after;
 
+    /* QueueUserWorkItem not present on win9x */
+    if (!pQueueUserWorkItem) return;
+
     finish_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     before = GetTickCount();
 
     for (i = 0; i < 100; i++)
     {
-        BOOL ret = QueueUserWorkItem(work_function, (void *)i, WT_EXECUTEDEFAULT);
+        BOOL ret = pQueueUserWorkItem(work_function, (void *)i, WT_EXECUTEDEFAULT);
         ok(ret, "QueueUserWorkItem failed with error %ld\n", GetLastError());
     }
 
@@ -724,6 +730,7 @@ START_TEST(thread)
    ok(lib!=NULL,"Couldn't get a handle for kernel32.dll\n");
    pGetThreadPriorityBoost=(GetThreadPriorityBoost_t)GetProcAddress(lib,"GetThreadPriorityBoost");
    pOpenThread=(OpenThread_t)GetProcAddress(lib,"OpenThread");
+   pQueueUserWorkItem=(QueueUserWorkItem_t)GetProcAddress(lib,"QueueUserWorkItem");
    pSetThreadIdealProcessor=(SetThreadIdealProcessor_t)GetProcAddress(lib,"SetThreadIdealProcessor");
    pSetThreadPriorityBoost=(SetThreadPriorityBoost_t)GetProcAddress(lib,"SetThreadPriorityBoost");
    test_CreateThread_basic();
