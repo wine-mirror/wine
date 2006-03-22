@@ -47,7 +47,7 @@
 @ stdcall OpenINFEngineW(wstr wstr long ptr ptr)
 @ stdcall OpenINFEngine(str str long ptr ptr) OpenINFEngineA
 @ stdcall RebootCheckOnInstallA(long str str long)
-# stdcall RebootCheckOnInstallW(long wstr wstr long)
+@ stdcall RebootCheckOnInstallW(long wstr wstr long)
 @ stdcall RebootCheckOnInstall(long str str long) RebootCheckOnInstallA
 @ stdcall RegInstallA(ptr str ptr)
 # stdcall RegInstallW(ptr wstr ptr)

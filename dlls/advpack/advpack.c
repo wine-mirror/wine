@@ -324,6 +324,34 @@ HRESULT WINAPI OpenINFEngineW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSection,
 /***********************************************************************
  *             RebootCheckOnInstallA   (ADVPACK.@)
  *
+ * See RebootCheckOnInstallW.
+ */
+HRESULT WINAPI RebootCheckOnInstallA(HWND hWnd, LPCSTR pszINF,
+                                     LPSTR pszSec, DWORD dwReserved)
+{
+    UNICODE_STRING infW, secW;
+    HRESULT res;
+
+    TRACE("(%p, %s, %s, %ld)\n", hWnd, debugstr_a(pszINF),
+          debugstr_a(pszSec), dwReserved);
+
+    if (!pszINF || !pszSec)
+        return E_INVALIDARG;
+
+    RtlCreateUnicodeStringFromAsciiz(&infW, pszINF);
+    RtlCreateUnicodeStringFromAsciiz(&secW, pszSec);
+
+    res = RebootCheckOnInstallW(hWnd, infW.Buffer, secW.Buffer, dwReserved);
+
+    RtlFreeUnicodeString(&infW);
+    RtlFreeUnicodeString(&secW);
+
+    return res;
+}
+
+/***********************************************************************
+ *             RebootCheckOnInstallW   (ADVPACK.@)
+ *
  * Checks if a reboot is required for an installed INF section.
  *
  * PARAMS
@@ -344,10 +372,11 @@ HRESULT WINAPI OpenINFEngineW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSection,
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI RebootCheckOnInstallA(HWND hWnd, LPCSTR pszINF,
-                                    LPSTR pszSec, DWORD dwReserved)
+HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
+                                     LPWSTR pszSec, DWORD dwReserved)
 {
-    FIXME("(%p, %p, %p, %ld) stub\n", hWnd, pszINF, pszSec, dwReserved);
+    FIXME("(%p, %s, %s, %ld) stub\n", hWnd, debugstr_w(pszINF),
+          debugstr_w(pszSec), dwReserved);
 
     return E_FAIL;
 }
