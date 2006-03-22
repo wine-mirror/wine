@@ -81,8 +81,16 @@ extern DWORD *stateLookup[MAX_LOOKUPS];
 
 extern DWORD minMipLookup[D3DTEXF_ANISOTROPIC + 1][D3DTEXF_LINEAR + 1];
 
+typedef struct _WINED3DGLTYPE {
+    int         d3dType;
+    GLint       size;
+    GLenum      glType;
+    GLboolean   normalized;
+    int         typesize;
+} WINED3DGLTYPE;
+
 /* NOTE: Make sure these are in the correct numerical order. (see /include/d3d9types.h typedef enum _D3DDECLTYPE) */
-UINT static const glTypeLookup[D3DDECLTYPE_UNUSED][5] = {
+WINED3DGLTYPE static const glTypeLookup[D3DDECLTYPE_UNUSED] = {
                                   {D3DDECLTYPE_FLOAT1,    1, GL_FLOAT           , GL_FALSE ,sizeof(float)},
                                   {D3DDECLTYPE_FLOAT2,    2, GL_FLOAT           , GL_FALSE ,sizeof(float)},
                                   {D3DDECLTYPE_FLOAT3,    3, GL_FLOAT           , GL_FALSE ,sizeof(float)},
@@ -101,11 +109,11 @@ UINT static const glTypeLookup[D3DDECLTYPE_UNUSED][5] = {
                                   {D3DDECLTYPE_FLOAT16_2, 2, GL_FLOAT           , GL_FALSE ,sizeof(short int)},
                                   {D3DDECLTYPE_FLOAT16_4, 4, GL_FLOAT           , GL_FALSE ,sizeof(short int)}};
 
-#define WINED3D_ATR_TYPE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType][0]
-#define WINED3D_ATR_SIZE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType][1]
-#define WINED3D_ATR_GLTYPE(_attribute)        glTypeLookup[sd->u.s._attribute.dwType][2]
-#define WINED3D_ATR_NORMALIZED(_attribute)    glTypeLookup[sd->u.s._attribute.dwType][3]
-#define WINED3D_ATR_TYPESIZE(_attribute)      glTypeLookup[sd->u.s._attribute.dwType][4]
+#define WINED3D_ATR_TYPE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType].d3dType
+#define WINED3D_ATR_SIZE(_attribute)          glTypeLookup[sd->u.s._attribute.dwType].size
+#define WINED3D_ATR_GLTYPE(_attribute)        glTypeLookup[sd->u.s._attribute.dwType].glType
+#define WINED3D_ATR_NORMALIZED(_attribute)    glTypeLookup[sd->u.s._attribute.dwType].normalized
+#define WINED3D_ATR_TYPESIZE(_attribute)      glTypeLookup[sd->u.s._attribute.dwType].typesize
 
 /**
  * Settings 

@@ -297,7 +297,7 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
             convToW[nTokens].Type       = type;
             convToW[nTokens].Offset     = offset;
             convToW[nTokens].Reg        = reg;
-            offset += glTypeLookup[type][1] * glTypeLookup[type][4];
+            offset += glTypeLookup[type].size * glTypeLookup[type].typesize;
             ++nTokens;
         } else if (D3DVSD_TOKEN_STREAMDATA == tokentype &&  0x10000000 & tokentype ) {
              TRACE(" 0x%08lx SKIP(%lu)\n", tokentype, ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
