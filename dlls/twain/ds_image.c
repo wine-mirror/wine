@@ -120,7 +120,7 @@ TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         TRACE("Bits per Sample %i\n",pSource->sane_param.depth);
         TRACE("Frame Format %i\n",pSource->sane_param.format);
 
-        if (pSource->sane_param.format == 1 /*RGB*/ )
+        if (pSource->sane_param.format == SANE_FRAME_RGB )
         {
             pImageInfo->BitsPerPixel = pSource->sane_param.depth * 3;
             pImageInfo->Compression = TWCP_NONE;
@@ -131,9 +131,18 @@ TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
             pImageInfo->BitsPerSample[2] = pSource->sane_param.depth;
             pImageInfo->PixelType = TWPT_RGB;
         }
+        else if (pSource->sane_param.format == SANE_FRAME_GRAY)
+        {
+            pImageInfo->BitsPerPixel = pSource->sane_param.depth;
+            pImageInfo->Compression = TWCP_NONE;
+            pImageInfo->Planar = TRUE;
+            pImageInfo->SamplesPerPixel = 1;
+            pImageInfo->BitsPerSample[0] = pSource->sane_param.depth;
+            pImageInfo->PixelType = TWPT_GRAY;
+        }
         else
         {
-            ERR("Unhandled source frame type\n");
+            ERR("Unhandled source frame type %i\n",pSource->sane_param.format);
             twRC = TWRC_FAILURE;
             pSource->twCC = TWCC_SEQERROR;
         }
