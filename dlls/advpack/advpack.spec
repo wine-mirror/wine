@@ -20,7 +20,7 @@
 # stdcall ExtractFilesW(wstr wstr long ptr ptr long)
 @ stdcall ExtractFiles(str str long ptr ptr long) ExtractFilesA
 @ stdcall FileSaveMarkNotExistA(str str str)
-# stdcall FileSaveMarkNotExistW(wstr wstr wstr)
+@ stdcall FileSaveMarkNotExistW(wstr wstr wstr)
 @ stdcall FileSaveMarkNotExist(str str str) FileSaveMarkNotExistA
 @ stdcall FileSaveRestoreA(ptr str str str long)
 # stdcall FileSaveRestoreW(ptr wstr wstr wstr long)

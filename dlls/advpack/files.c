@@ -724,6 +724,18 @@ done:
 /***********************************************************************
  *      FileSaveMarkNotExistA (ADVPACK.@)
  *
+ * See FileSaveMarkNotExistW.
+ */
+HRESULT WINAPI FileSaveMarkNotExistA(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBaseName)
+{
+    TRACE("(%p, %p, %p)\n", pszFileList, pszDir, pszBaseName);
+
+    return AddDelBackupEntryA(pszFileList, pszDir, pszBaseName, AADBE_DEL_ENTRY);
+}
+
+/***********************************************************************
+ *      FileSaveMarkNotExistW (ADVPACK.@)
+ *
  * Marks the files in the file list as not existing so they won't be
  * backed up during a save.
  *
@@ -736,11 +748,11 @@ done:
  *   Success: S_OK.
  *   Failure: E_FAIL.
  */
-HRESULT WINAPI FileSaveMarkNotExistA(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBaseName)
+HRESULT WINAPI FileSaveMarkNotExistW(LPWSTR pszFileList, LPWSTR pszDir, LPWSTR pszBaseName)
 {
     TRACE("(%p, %p, %p)\n", pszFileList, pszDir, pszBaseName);
 
-    return AddDelBackupEntryA(pszFileList, pszDir, pszBaseName, AADBE_DEL_ENTRY);
+    return AddDelBackupEntryW(pszFileList, pszDir, pszBaseName, AADBE_DEL_ENTRY);
 }
 
 /***********************************************************************
