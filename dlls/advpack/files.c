@@ -178,7 +178,7 @@ UINT CALLBACK pQueueCallback(PVOID Context, UINT Notification,
         Notification == SPFILENOTIFY_DELETEERROR ||
         Notification == SPFILENOTIFY_COPYERROR)
     {
-        return SetupDefaultQueueCallbackA(Context, Notification,
+        return SetupDefaultQueueCallbackW(Context, Notification,
                                           Param1, Param2);
     }
 
@@ -187,6 +187,42 @@ UINT CALLBACK pQueueCallback(PVOID Context, UINT Notification,
 
 /***********************************************************************
  *      AdvInstallFileA (ADVPACK.@)
+ *
+ * See AdvInstallFileW.
+ */
+HRESULT WINAPI AdvInstallFileA(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourceFile,
+                              LPCSTR lpszDestDir, LPCSTR lpszDestFile,
+                              DWORD dwFlags, DWORD dwReserved)
+{
+    UNICODE_STRING sourcedir, sourcefile;
+    UNICODE_STRING destdir, destfile;
+    HRESULT res;
+
+    TRACE("(%p,%s,%s,%s,%s,%ld,%ld)\n", hwnd, debugstr_a(lpszSourceDir),
+          debugstr_a(lpszSourceFile), debugstr_a(lpszDestDir),
+          debugstr_a(lpszDestFile), dwFlags, dwReserved);
+
+    if (!lpszSourceDir || !lpszSourceFile || !lpszDestDir)
+        return E_INVALIDARG;
+
+    RtlCreateUnicodeStringFromAsciiz(&sourcedir, lpszSourceDir);
+    RtlCreateUnicodeStringFromAsciiz(&sourcefile, lpszSourceFile);
+    RtlCreateUnicodeStringFromAsciiz(&destdir, lpszDestDir);
+    RtlCreateUnicodeStringFromAsciiz(&destfile, lpszDestFile);
+
+    res = AdvInstallFileW(hwnd, sourcedir.Buffer, sourcefile.Buffer,
+                          destdir.Buffer, destfile.Buffer, dwFlags, dwReserved);
+
+    RtlFreeUnicodeString(&sourcedir);
+    RtlFreeUnicodeString(&sourcefile);
+    RtlFreeUnicodeString(&destdir);
+    RtlFreeUnicodeString(&destfile);
+
+    return res;
+}
+
+/***********************************************************************
+ *      AdvInstallFileW (ADVPACK.@)
  *
  * Copies a file from the source to a destination.
  *
@@ -207,20 +243,20 @@ UINT CALLBACK pQueueCallback(PVOID Context, UINT Notification,
  *   If lpszDestFile is NULL, the destination filename is the same as
  *   lpszSourceFIle.
  */
-HRESULT WINAPI AdvInstallFileA(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourceFile,
-                              LPCSTR lpszDestDir, LPCSTR lpszDestFile,
-                              DWORD dwFlags, DWORD dwReserved)
+HRESULT WINAPI AdvInstallFileW(HWND hwnd, LPCWSTR lpszSourceDir, LPCWSTR lpszSourceFile,
+                               LPCWSTR lpszDestDir, LPCWSTR lpszDestFile,
+                               DWORD dwFlags, DWORD dwReserved)
 {
-    PSP_FILE_CALLBACK_A pFileCallback;
-    LPSTR szPath, szDestFilename;
-    char szRootPath[ROOT_LENGTH];
+    PSP_FILE_CALLBACK_W pFileCallback;
+    LPWSTR szPath, szDestFilename;
+    WCHAR szRootPath[ROOT_LENGTH];
     DWORD dwLen, dwLastError;
     HSPFILEQ fileQueue;
     PVOID pContext;
 
-    TRACE("(%p,%p,%p,%p,%p,%ld,%ld)\n", hwnd, debugstr_a(lpszSourceDir),
-          debugstr_a(lpszSourceFile), debugstr_a(lpszDestDir),
-          debugstr_a(lpszDestFile), dwFlags, dwReserved);
+    TRACE("(%p,%s,%s,%s,%s,%ld,%ld)\n", hwnd, debugstr_w(lpszSourceDir),
+          debugstr_w(lpszSourceFile), debugstr_w(lpszDestDir),
+          debugstr_w(lpszDestFile), dwFlags, dwReserved);
 
     if (!lpszSourceDir || !lpszSourceFile || !lpszDestDir)
         return E_INVALIDARG;
@@ -232,25 +268,25 @@ HRESULT WINAPI AdvInstallFileA(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourc
     pContext = NULL;
     dwLastError = ERROR_SUCCESS;
 
-    lstrcpynA(szRootPath, lpszSourceDir, ROOT_LENGTH);
-    szPath = (LPSTR)lpszSourceDir + ROOT_LENGTH;
+    lstrcpynW(szRootPath, lpszSourceDir, ROOT_LENGTH);
+    szPath = (LPWSTR)lpszSourceDir + ROOT_LENGTH;
 
     /* use lpszSourceFile as destination filename if lpszDestFile is NULL */
     if (lpszDestFile)
     {
-        dwLen = lstrlenA(lpszDestFile);
-        szDestFilename = HeapAlloc(GetProcessHeap(), 0, dwLen);
-        lstrcpyA(szDestFilename, lpszDestFile);
+        dwLen = lstrlenW(lpszDestFile);
+        szDestFilename = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
+        lstrcpyW(szDestFilename, lpszDestFile);
     }
     else
     {
-        dwLen = lstrlenA(lpszSourceFile);
-        szDestFilename = HeapAlloc(GetProcessHeap(), 0, dwLen);
-        lstrcpyA(szDestFilename, lpszSourceFile);
+        dwLen = lstrlenW(lpszSourceFile);
+        szDestFilename = HeapAlloc(GetProcessHeap(), 0, dwLen * sizeof(WCHAR));
+        lstrcpyW(szDestFilename, lpszSourceFile);
     }
 
     /* add the file copy operation to the setup queue */
-    if (!SetupQueueCopyA(fileQueue, szRootPath, szPath, lpszSourceFile, NULL,
+    if (!SetupQueueCopyW(fileQueue, szRootPath, szPath, lpszSourceFile, NULL,
                          NULL, lpszDestDir, szDestFilename, dwFlags))
     {
         dwLastError = GetLastError();
@@ -272,7 +308,7 @@ HRESULT WINAPI AdvInstallFileA(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourc
         pFileCallback = pQueueCallback;
 
     /* perform the file copy */
-    if (!SetupCommitFileQueueA(hwnd, fileQueue, pFileCallback, pContext))
+    if (!SetupCommitFileQueueW(hwnd, fileQueue, pFileCallback, pContext))
     {
         dwLastError = GetLastError();
         goto done;
