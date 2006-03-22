@@ -244,6 +244,7 @@ WINDOWS_INCLUDES = \
 	shlwapi.h \
 	sipbase.h \
 	snmp.h \
+	softpub.h \
 	sql.h \
 	sqlext.h \
 	sqltypes.h \
