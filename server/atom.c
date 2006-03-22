@@ -88,6 +88,7 @@ static const struct object_ops atom_table_ops =
     atom_table_destroy            /* destroy */
 };
 
+static struct atom_table *global_table;
 
 /* create an atom table */
 static struct atom_table *create_table(int entries_count)
@@ -292,12 +293,22 @@ static atom_t find_atom( struct atom_table *table, const WCHAR *str, size_t len 
 
 static struct atom_table *get_global_table( struct winstation *winstation, int create )
 {
-    if (!winstation->atom_table)
+    struct atom_table *table = winstation ? winstation->atom_table : global_table;
+    if (!table)
     {
-        if (create) winstation->atom_table = create_table( HASH_SIZE );
+        if (create)
+        {
+            table = create_table( HASH_SIZE );
+            if (winstation) winstation->atom_table = table;
+            else
+            {
+                global_table = table;
+                make_object_static( &global_table->obj );
+            }
+        }
         else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     }
-    return winstation->atom_table;
+    return table;
 }
 
 static struct atom_table *get_table( obj_handle_t h, int create )
@@ -310,14 +321,8 @@ static struct atom_table *get_table( obj_handle_t h, int create )
     }
     else
     {
-        struct winstation *winstation = get_process_winstation( current->process,
-                                                                WINSTA_ACCESSGLOBALATOMS );
-        if (winstation)
-        {
-            table = get_global_table( winstation, 1 );
-            if (table) grab_object( table );
-            release_object( winstation );
-        }
+        table = get_global_table( NULL, 1 );
+        if (table) grab_object( table );
     }
     return table;
 }
