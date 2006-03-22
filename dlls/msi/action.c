@@ -4276,6 +4276,18 @@ static UINT ACTION_RMCCPSearch( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "RMCCPSearch", table );
 }
 
+static UINT ACTION_RegisterComPlus( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = { 'C','o','m','p','l','u','s',0 };
+    return msi_unimplemented_action_stub( package, "RegisterComPlus", table );
+}
+
+static UINT ACTION_UnregisterComPlus( MSIPACKAGE *package )
+{
+    static const WCHAR table[] = { 'C','o','m','p','l','u','s',0 };
+    return msi_unimplemented_action_stub( package, "UnregisterComPlus", table );
+}
+
 static struct _actions StandardActions[] = {
     { szAllocateRegistrySpace, ACTION_AllocateRegistrySpace },
     { szAppSearch, ACTION_AppSearch },
@@ -4314,7 +4326,7 @@ static struct _actions StandardActions[] = {
     { szPublishFeatures, ACTION_PublishFeatures },
     { szPublishProduct, ACTION_PublishProduct },
     { szRegisterClassInfo, ACTION_RegisterClassInfo },
-    { szRegisterComPlus, NULL},
+    { szRegisterComPlus, ACTION_RegisterComPlus},
     { szRegisterExtensionInfo, ACTION_RegisterExtensionInfo },
     { szRegisterFonts, ACTION_RegisterFonts },
     { szRegisterMIMEInfo, ACTION_RegisterMIMEInfo },
@@ -4342,7 +4354,7 @@ static struct _actions StandardActions[] = {
     { szUnpublishComponents, NULL},
     { szUnpublishFeatures, NULL},
     { szUnregisterClassInfo, NULL},
-    { szUnregisterComPlus, NULL},
+    { szUnregisterComPlus, ACTION_UnregisterComPlus},
     { szUnregisterExtensionInfo, NULL},
     { szUnregisterFonts, ACTION_UnregisterFonts },
     { szUnregisterMIMEInfo, NULL},
