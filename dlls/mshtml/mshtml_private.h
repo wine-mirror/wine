@@ -131,6 +131,7 @@ struct HTMLDOMNode {
 
 typedef struct {
     const IHTMLElementVtbl *lpHTMLElementVtbl;
+    const IHTMLElement2Vtbl *lpHTMLElement2Vtbl;
 
     void (*destructor)(IUnknown*);
 
@@ -168,6 +169,7 @@ typedef struct {
 #define NSIFACEREQ(x)    ((nsIInterfaceRequestor*)        &(x)->lpInterfaceRequestorVtbl)
 
 #define HTMLELEM(x)      ((IHTMLElement*)                 &(x)->lpHTMLElementVtbl)
+#define HTMLELEM2(x)     ((IHTMLElement2*)                &(x)->lpHTMLElement2Vtbl)
 #define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
@@ -215,6 +217,8 @@ void HTMLBodyElement_Create(HTMLElement*);
 void HTMLInputElement_Create(HTMLElement*);
 void HTMLSelectElement_Create(HTMLElement*);
 void HTMLTextAreaElement_Create(HTMLElement*);
+
+void HTMLElement2_Init(HTMLElement*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
 HRESULT HTMLElement_QI(HTMLElement*,REFIID,void**);

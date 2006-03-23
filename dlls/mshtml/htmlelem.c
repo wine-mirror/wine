@@ -943,6 +943,9 @@ HRESULT HTMLElement_QI(HTMLElement *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLElement, riid)) {
         TRACE("(%p)->(IID_IHTMLElement %p)\n", This, ppv);
         *ppv = HTMLELEM(This);
+    }else if(IsEqualGUID(&IID_IHTMLElement2, riid)) {
+        TRACE("(%p)->(IID_IHTMLElement2 %p)\n", This, ppv);
+        *ppv = HTMLELEM2(This);
     }
 
     if(*ppv) {
@@ -974,6 +977,8 @@ void HTMLElement_Create(HTMLDOMNode *node)
     node->node_type = NT_HTMLELEM;
     node->impl.elem = HTMLELEM(ret);
     node->destructor = HTMLElement_destructor;
+
+    HTMLElement2_Init(ret);
 
     nsres = nsIDOMNode_QueryInterface(node->nsnode, &IID_nsIDOMHTMLElement, (void**)&ret->nselem);
     if(NS_FAILED(nsres))
