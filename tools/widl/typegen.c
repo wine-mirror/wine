@@ -1285,12 +1285,13 @@ static unsigned int get_required_buffer_size_type(
         case RPC_FC_CHAR:
         case RPC_FC_USMALL:
         case RPC_FC_SMALL:
+            *alignment = 4;
             return 1;
 
         case RPC_FC_WCHAR:
         case RPC_FC_USHORT:
         case RPC_FC_SHORT:
-            *alignment = 2;
+            *alignment = 4;
             return 2;
 
         case RPC_FC_ULONG:
@@ -1358,7 +1359,6 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                               unsigned int *type_offset, enum pass pass,
                               enum remoting_phase phase)
 {
-    unsigned int last_size = 0;
     var_t *var;
 
     if (!func->args)
@@ -1398,7 +1398,6 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 print_file(file, indent,
                            "NdrConformantString%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
                            function_from_phase(phase), var->name, *type_offset);
-            last_size = 1;
         }
         else if (is_array_type(var->attrs, var->ptr_level, var->array))
         {
@@ -1455,7 +1454,6 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                        "Ndr%s%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
                        array_type, function_from_phase(phase), var->name,
                        *type_offset);
-            last_size = 1;
         }
         else if (var->ptr_level == 0 && is_base_type(var->type->type))
         {
@@ -1468,15 +1466,14 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             case RPC_FC_SMALL:
             case RPC_FC_USMALL:
                 size = 1;
-                alignment = 0;
+                alignment = 1;
                 break;
 
             case RPC_FC_WCHAR:
             case RPC_FC_USHORT:
             case RPC_FC_SHORT:
                 size = 2;
-                if (last_size != 0 && last_size < 2)
-                    alignment = (2 - last_size);
+                alignment = 2;
                 break;
 
             case RPC_FC_ULONG:
@@ -1484,15 +1481,13 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             case RPC_FC_FLOAT:
             case RPC_FC_ERROR_STATUS_T:
                 size = 4;
-                if (last_size != 0 && last_size < 4)
-                    alignment = (4 - last_size);
+                alignment = 4;
                 break;
 
             case RPC_FC_HYPER:
             case RPC_FC_DOUBLE:
                 size = 8;
-                if (last_size != 0 && last_size < 4)
-                    alignment = (4 - last_size);
+                alignment = 8;
                 break;
 
             case RPC_FC_IGNORE:
@@ -1505,8 +1500,8 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 size = 0;
             }
 
-            if (alignment != 0)
-                print_file(file, indent, "_StubMsg.Buffer += %u;\n", alignment);
+            print_file(file, indent, "_StubMsg.Buffer += (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
+                       alignment - 1, alignment - 1);
 
             if (phase == PHASE_MARSHAL)
             {
@@ -1523,17 +1518,13 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 fprintf(file, " = *(");
                 write_type(file, var->type, var, var->tname);
                 fprintf(file, " *)_StubMsg.Buffer;\n");
-                print_file(file, indent, "_StubMsg.Buffer += sizeof(");
-                write_type(file, var->type, var, var->tname);
-                fprintf(file, ");\n");
             }
             else
                 error("write_remoting_arguments: Unimplemented for base types for phase %d\n", phase);
+
             print_file(file, indent, "_StubMsg.Buffer += sizeof(");
             write_type(file, var->type, var, var->tname);
             fprintf(file, ");\n");
-
-            last_size = size;
         }
         else if (var->ptr_level == 0)
         {
@@ -1563,14 +1554,12 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             print_file(file, indent,
                 "Ndr%s%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
                 ndrtype, function_from_phase(phase), var->name, *type_offset);
-            last_size = 1;
         }
         else
         {
             print_file(file, indent,
                        "NdrPointer%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
                        function_from_phase(phase), var->name, *type_offset);
-            last_size = 1;
         }
         fprintf(file, "\n");
     }

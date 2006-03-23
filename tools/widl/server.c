@@ -306,6 +306,10 @@ static void write_function_stubs(type_t *iface)
         /* marshall the return value */
         if (!is_void(def->type, NULL))
         {
+            unsigned int alignment;
+            unsigned int size = get_required_buffer_size(def, &alignment);
+            print_server("_StubMsg.Buffer += (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
+                         size - 1, size - 1);
             print_server("*(");
             write_type(server, def->type, def, def->tname);
             fprintf(server, " *)_StubMsg.Buffer = _RetVal;\n");
