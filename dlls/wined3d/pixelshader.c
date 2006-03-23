@@ -1661,6 +1661,60 @@ inline static void pshader_program_dump_ps_param(const DWORD param, int input) {
     }
 }
 
+inline static void pshader_program_dump_decl_usage(IWineD3DPixelShaderImpl *This, DWORD token) {
+    TRACE("dcl_");
+    switch(token & 0xFFFF) {
+        case D3DDECLUSAGE_POSITION:
+            TRACE("%s%ld ", "position",(token & 0xF0000) >> 16);
+            break;
+        case D3DDECLUSAGE_BLENDINDICES:
+            TRACE("%s ", "blend");
+            break;
+        case D3DDECLUSAGE_BLENDWEIGHT:
+            TRACE("%s ", "weight");
+            break;
+        case D3DDECLUSAGE_NORMAL:
+            TRACE("%s%ld ", "normal",(token & 0xF0000) >> 16);
+            break;
+        case D3DDECLUSAGE_PSIZE:
+            TRACE("%s ", "psize");
+            break;
+        case D3DDECLUSAGE_COLOR:
+            if((token & 0xF0000) >> 16 == 0)  {
+                TRACE("%s ", "color");
+            } else {
+                TRACE("%s%ld ", "specular", ((token & 0xF0000) >> 16) - 1);
+            }
+            break;
+        case D3DDECLUSAGE_TEXCOORD:
+            TRACE("%s%ld ", "texture", (token & 0xF0000) >> 16);
+            break;
+        case D3DDECLUSAGE_TANGENT:
+            TRACE("%s ", "tangent");
+            break;
+        case D3DDECLUSAGE_BINORMAL:
+            TRACE("%s ", "binormal");
+            break;
+        case D3DDECLUSAGE_TESSFACTOR:
+            TRACE("%s ", "tessfactor");
+            break;
+        case D3DDECLUSAGE_POSITIONT:
+            TRACE("%s%ld ", "positionT",(token & 0xF0000) >> 16);
+            break;
+        case D3DDECLUSAGE_FOG:
+            TRACE("%s ", "fog");
+            break;
+        case D3DDECLUSAGE_DEPTH:
+            TRACE("%s ", "depth");
+            break;
+        case D3DDECLUSAGE_SAMPLE:
+            TRACE("%s ", "sample");
+            break;
+        default:
+            FIXME("Unrecognised dcl %08lx", token & 0xFFFF);
+    }
+}
+
 HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const DWORD* pToken = pFunction;
@@ -1706,57 +1760,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
 
             } else {
                 if (curOpcode->opcode == D3DSIO_DCL) {
-                    TRACE("dcl_");
-                    switch(*pToken & 0xFFFF) {
-                        case D3DDECLUSAGE_POSITION:
-                        TRACE("%s%ld ", "position",(*pToken & 0xF0000) >> 16);
-                        break;
-                        case D3DDECLUSAGE_BLENDINDICES:
-                        TRACE("%s ", "blend");
-                        break;
-                        case D3DDECLUSAGE_BLENDWEIGHT:
-                        TRACE("%s ", "weight");
-                        break;
-                        case D3DDECLUSAGE_NORMAL:
-                        TRACE("%s%ld ", "normal",(*pToken & 0xF0000) >> 16);
-                        break;
-                        case D3DDECLUSAGE_PSIZE:
-                        TRACE("%s ", "psize");
-                        break;
-                        case D3DDECLUSAGE_COLOR:
-                        if((*pToken & 0xF0000) >> 16 == 0)  {
-                            TRACE("%s ", "color");
-                        } else {
-                            TRACE("%s%ld ", "specular", ((*pToken & 0xF0000) >> 16) - 1);
-                        }
-                        break;
-                        case D3DDECLUSAGE_TEXCOORD:
-                        TRACE("%s%ld ", "texture", (*pToken & 0xF0000) >> 16);
-                        break;
-                        case D3DDECLUSAGE_TANGENT:
-                        TRACE("%s ", "tangent");
-                        break;
-                        case D3DDECLUSAGE_BINORMAL:
-                        TRACE("%s ", "binormal");
-                        break;
-                        case D3DDECLUSAGE_TESSFACTOR:
-                        TRACE("%s ", "tessfactor");
-                        break;
-                        case D3DDECLUSAGE_POSITIONT:
-                        TRACE("%s%ld ", "positionT",(*pToken & 0xF0000) >> 16);
-                        break;
-                        case D3DDECLUSAGE_FOG:
-                        TRACE("%s ", "fog");
-                        break;
-                        case D3DDECLUSAGE_DEPTH:
-                        TRACE("%s ", "depth");
-                        break;
-                        case D3DDECLUSAGE_SAMPLE:
-                        TRACE("%s ", "sample");
-                        break;
-                        default:
-                        FIXME("Unrecognised dcl %08lx", *pToken & 0xFFFF);
-                    }
+                    pshader_program_dump_decl_usage(This, *pToken);
                     ++pToken;
                     ++len;
                     pshader_program_dump_ps_param(*pToken, 0);
