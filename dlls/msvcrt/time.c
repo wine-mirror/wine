@@ -445,10 +445,28 @@ MSVCRT_size_t MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *format,
 MSVCRT_size_t MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
                                const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm )
 {
-    FIXME( "%p, %d, %s, %p - stub\n", str, max, debugstr_w(format), mstm );
+    char *s, *fmt;
+    MSVCRT_size_t len;
 
-    *str = '\0';
-    return 0;
+    TRACE("%p %d %s %p\n", str, max, debugstr_w(format), mstm );
+
+    len = WideCharToMultiByte( CP_UNIXCP, 0, format, -1, NULL, 0, NULL, NULL );
+    if (!(fmt = MSVCRT_malloc( len ))) return 0;
+    WideCharToMultiByte( CP_UNIXCP, 0, format, -1, fmt, len, NULL, NULL );
+
+    if ((s = MSVCRT_malloc( max*4 )))
+    {
+        struct tm tm;
+        msvcrt_tm_to_unix( &tm, mstm );
+        if (!strftime( s, max*4, fmt, &tm )) s[0] = 0;
+        len = MultiByteToWideChar( CP_UNIXCP, 0, s, -1, str, max );
+        if (len) len--;
+        MSVCRT_free( s );
+    }
+    else len = 0;
+
+    MSVCRT_free( fmt );
+    return len;
 }
 
 /*********************************************************************
