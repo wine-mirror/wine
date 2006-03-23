@@ -322,6 +322,60 @@ dispinterface DWebBrowserEvents2
 
     [id(DISPID_ONTHEATERMODE)]
     void OnTheaterMode([in] VARIANT_BOOL TheaterMode);
+
+    [id(DISPID_WINDOWSETRESIZABLE)]
+    void WindowSetResizable([in] VARIANT_BOOL Resizable);
+
+    [id(DISPID_WINDOWSETLEFT)]
+    void WindowSetLeft([in] long Left);
+
+    [id(DISPID_WINDOWSETTOP)]
+    void WindowSetTop([in] long Top);
+
+    [id(DISPID_WINDOWSETWIDTH)]
+    void WindowSetWidth([in] long Width);
+
+    [id(DISPID_WINDOWSETHEIGHT)]
+    void WindowSetHeight([in] long Height);
+
+    [id(DISPID_WINDOWCLOSING)]
+    void WindowClosing(
+            [in] VARIANT_BOOL IsChildWindow,
+            [in, out] VARIANT_BOOL *Cancel);
+
+    [id(DISPID_CLIENTTOHOSTWINDOW)]
+    void ClientToHostWindow(
+            [in, out] long *CX,
+            [in, out] long *CY);
+
+    [id(DISPID_SETSECURELOCKICON)]
+    void SetSecureLockIcon([in] long SecureLockIcon);
+
+    [id(DISPID_FILEDOWNLOAD)]
+    void FileDownload([in, out] VARIANT_BOOL* Cancel);
+
+    [id(DISPID_NAVIGATEERROR)]
+    void NavigateError(
+            [in] IDispatch *pDisp,
+            [in] VARIANT *URL,
+            [in] VARIANT *Frame,
+            [in] VARIANT *StatusCode,
+            [in, out] VARIANT_BOOL *Cancel);
+
+    [id(DISPID_PRINTTEMPLATEINSTANTIATION)]
+    void PrintTemplateInstantiation([in] IDispatch *pDisp);
+
+    [id(DISPID_PRINTTEMPLATETEARDOWN)]
+    void PrintTemplateTeardown([in] IDispatch *pDisp);
+    
+    [id(DISPID_UPDATEPAGESTATUS)]
+    void UpdatePageStatus(
+            [in] IDispatch *pDisp,
+            [in] VARIANT *nPage,
+            [in] VARIANT *fDone);
+
+    [id(DISPID_PRIVACYIMPACTEDSTATECHANGE)]
+    void PrivacyImpactedStateChange([in] VARIANT_BOOL bImpacted);
 }
 
 [
