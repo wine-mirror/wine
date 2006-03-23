@@ -1,7 +1,7 @@
 /*
  * Format String Generator for IDL Compiler
  *
- * Copyright 2005 Eric Kohl
+ * Copyright 2005-2006 Eric Kohl
  * Copyright 2005-2006 Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
@@ -1589,6 +1589,68 @@ size_t get_size_typeformatstring_var(const var_t *var)
     size_t type_offset = 0;
     write_typeformatstring_var(NULL, 0, var, &type_offset);
     return type_offset;
+}
+
+size_t get_size_procformatstring(const type_t *iface)
+{
+    size_t size = 1;
+    func_t *func;
+    var_t *var;
+
+    if (iface->funcs)
+    {
+        func = iface->funcs;
+        while (NEXT_LINK(func)) func = NEXT_LINK(func);
+        while (func)
+        {
+            /* argument list size */
+            if (func->args)
+            {
+                var = func->args;
+                while (NEXT_LINK(var)) var = NEXT_LINK(var);
+                while (var)
+                {
+                    size += get_size_procformatstring_var(var);
+                    var = PREV_LINK(var);
+                }
+            }
+
+            /* return value size */
+            size += 2; /* FIXME: determine real size */
+            func = PREV_LINK(func);
+        }
+    }
+    return size;
+}
+
+size_t get_size_typeformatstring(const type_t *iface)
+{
+    size_t size = 3;
+    func_t *func;
+    var_t *var;
+
+    if (iface->funcs)
+    {
+        func = iface->funcs;
+        while (NEXT_LINK(func)) func = NEXT_LINK(func);
+        while (func)
+        {
+            /* argument list size */
+            if (func->args)
+            {
+                var = func->args;
+                while (NEXT_LINK(var)) var = NEXT_LINK(var);
+                while (var)
+                {
+                    size += get_size_typeformatstring_var(var);
+                    var = PREV_LINK(var);
+                }
+            }
+
+            func = PREV_LINK(func);
+        }
+    }
+    return size;
 }
 
 static void write_struct_expr(FILE *h, const expr_t *e, int brackets,

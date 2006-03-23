@@ -1,7 +1,7 @@
 /*
  * Format String Generator for IDL Compiler
  *
- * Copyright 2005 Eric Kohl
+ * Copyright 2005-2006 Eric Kohl
  * Copyright 2005 Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
@@ -41,5 +41,7 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
 void write_remoting_arguments(FILE *file, int indent, const func_t *func, unsigned int *type_offset, enum pass pass, enum remoting_phase phase);
 size_t get_size_procformatstring_var(const var_t *var);
 size_t get_size_typeformatstring_var(const var_t *var);
+size_t get_size_procformatstring(const type_t *iface);
+size_t get_size_typeformatstring(const type_t *iface);
 int write_expr_eval_routines(FILE *file, const char *iface);
 void write_expr_eval_routine_list(FILE *file, const char *iface);

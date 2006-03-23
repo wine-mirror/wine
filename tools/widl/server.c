@@ -1,7 +1,7 @@
 /*
  * IDL Compiler
  *
- * Copyright 2005 Eric Kohl
+ * Copyright 2005-2006 Eric Kohl
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -472,35 +472,11 @@ static void write_formatdesc( const char *str )
 
 static void write_formatstringsdecl(type_t *iface)
 {
-    int byte_count = 1;
+    print_server("#define TYPE_FORMAT_STRING_SIZE %d\n",
+                 get_size_typeformatstring(iface));
 
-    print_server("#define TYPE_FORMAT_STRING_SIZE %d\n", 3); /* FIXME */
-
-    /* determine the proc format string size */
-    if (iface->funcs)
-    {
-        func_t *func = iface->funcs;
-        while (NEXT_LINK(func)) func = NEXT_LINK(func);
-        while (func)
-        {
-            /* argument list size */
-            if (func->args)
-            {
-                var_t *var = func->args;
-                while (NEXT_LINK(var)) var = NEXT_LINK(var);
-                while (var)
-                {
-                    byte_count += 2; /* FIXME: determine real size */
-                    var = PREV_LINK(var);
-                }
-            }
-    
-            /* return value size */
-            byte_count += 2; /* FIXME: determine real size */
-            func = PREV_LINK(func);
-        }
-    }
-    print_server("#define PROC_FORMAT_STRING_SIZE %d\n", byte_count);
+    print_server("#define PROC_FORMAT_STRING_SIZE %d\n",
+                 get_size_procformatstring(iface));
 
     fprintf(server, "\n");
     write_formatdesc("TYPE");
