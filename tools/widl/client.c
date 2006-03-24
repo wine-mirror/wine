@@ -88,6 +88,29 @@ static void print_message_buffer_size(const func_t *func)
 }
 
 
+static int has_out_arg_or_return(const func_t *func)
+{
+    var_t *var;
+
+    if (!is_void(func->def->type, NULL))
+        return 1;
+
+    if (!func->args)
+        return 0;
+
+    var = func->args;
+    while (NEXT_LINK(var)) var = NEXT_LINK(var);
+    while (var)
+    {
+        if (is_attr(var->attrs, ATTR_OUT))
+            return 1;
+
+        var = PREV_LINK(var);
+    }
+    return 0;
+}
+
+
 static void write_function_stubs(type_t *iface)
 {
     const func_t *func = iface->funcs;
@@ -212,13 +235,9 @@ static void write_function_stubs(type_t *iface)
         indent--;
 
         print_client("_StubMsg.BufferStart = (unsigned char *)_RpcMessage.Buffer;\n");
-        print_client("_StubMsg.BufferEnd = _StubMsg.BufferStart + _RpcMessage.BufferLength;\n\n");
+        print_client("_StubMsg.BufferEnd = _StubMsg.BufferStart + _RpcMessage.BufferLength;\n");
 
-        /* unmarshall arguments */
-        write_remoting_arguments(client, indent, func, &type_offset, PASS_OUT, PHASE_UNMARSHAL);
-
-        /* unmarshal return value */
-        if (!is_void(def->type, NULL))
+        if (has_out_arg_or_return(func))
         {
             fprintf(client, "\n");
 
@@ -229,8 +248,16 @@ static void write_function_stubs(type_t *iface)
             print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
             print_client("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", proc_offset);
             indent -= 2;
-            fprintf(client, "\n");
+        }
 
+        /* unmarshall arguments */
+        fprintf(client, "\n");
+        write_remoting_arguments(client, indent, func, &type_offset, PASS_OUT, PHASE_UNMARSHAL);
+
+        /* unmarshal return value */
+        if (!is_void(def->type, NULL))
+        {
+            fprintf(client, "\n");
             print_client("_RetVal = *(");
             write_type(client, def->type, def, def->tname);
             fprintf(client, " *)_StubMsg.Buffer;\n");

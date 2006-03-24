@@ -88,6 +88,77 @@ static void write_parameters_init(const func_t *func)
 }
 
 
+static void declare_args(const func_t *func)
+{
+    int in_attr, out_attr;
+    int i = 0;
+    var_t *var;
+
+    if (!func->args)
+        return;
+
+    var = func->args;
+    while (NEXT_LINK(var)) var = NEXT_LINK(var);
+    while (var)
+    {
+        in_attr = is_attr(var->attrs, ATTR_IN);
+        out_attr = is_attr(var->attrs, ATTR_OUT);
+        if (!out_attr && !in_attr)
+            in_attr = 1;
+
+        if (!in_attr)
+        {
+            print_server("");
+            write_type(server, var->type, NULL, var->tname);
+            fprintf(server, " _W%u;\n", i++);
+        }
+
+        print_server("");
+        write_type(server, var->type, var, var->tname);
+        fprintf(server, " ");
+        write_name(server, var);
+        write_array(server, var->array, 0);
+        fprintf(server, ";\n");
+
+        var = PREV_LINK(var);
+    }
+}
+
+
+static void assign_out_args(const func_t *func)
+{
+    int in_attr, out_attr;
+    int i = 0, sep = 0;
+    var_t *var;
+
+    if (!func->args)
+        return;
+
+    var = func->args;
+    while (NEXT_LINK(var)) var = NEXT_LINK(var);
+    while (var)
+    {
+        in_attr = is_attr(var->attrs, ATTR_IN);
+        out_attr = is_attr(var->attrs, ATTR_OUT);
+        if (!out_attr && !in_attr)
+            in_attr = 1;
+
+        if (!in_attr)
+        {
+            print_server("");
+            write_name(server, var);
+            fprintf(server, " = &_W%u;\n", i++);
+            sep = 1;
+        }
+
+        var = PREV_LINK(var);
+    }
+
+    if (sep)
+        fprintf(server, "\n");
+}
+
+
 static void write_function_stubs(type_t *iface)
 {
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
@@ -144,23 +215,8 @@ static void write_function_stubs(type_t *iface)
             fprintf(server, " _RetVal;\n");
         }
 
-        /* declare arguments */
-        if (func->args)
-        {
-            var = func->args;
-            while (NEXT_LINK(var)) var = NEXT_LINK(var);
-            while (var)
-            {
-                print_server("");
-                write_type(server, var->type, var, var->tname);
-                fprintf(server, " ");
-                write_name(server, var);
-                write_array(server, var->array, 0);
-                fprintf(server, ";\n");
-
-                var = PREV_LINK(var);
-            }
-        }
+        /* Declare arguments */
+        declare_args(func);
 
         print_server("MIDL_STUB_MESSAGE _StubMsg;\n");
         print_server("RPC_STATUS _Status;\n");
@@ -226,6 +282,8 @@ static void write_function_stubs(type_t *iface)
         print_server("RpcEndExcept\n");
         fprintf(server, "\n");
 
+        /* Assign 'out' arguments */
+        assign_out_args(func);
 
         /* Call the real server function */
         if (!is_void(def->type, NULL))

@@ -1181,6 +1181,8 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
         else if (ptr_level == 1 && !type_has_ref(type))
         {
             size_t start_offset = *typeformat_offset;
+            int in_attr = is_attr(var->attrs, ATTR_IN);
+            int out_attr = is_attr(var->attrs, ATTR_OUT);
             int pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
             if (!pointer_type) pointer_type = RPC_FC_RP;
 
@@ -1189,9 +1191,11 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
             {
 #define CASE_BASETYPE(fctype) \
             case RPC_##fctype: \
-                print_file(file, indent, "0x%x, 0x08,    /* %s [simple_pointer] */\n", \
+                print_file(file, indent, "0x%x, 0x%x,    /* %s %s[simple_pointer] */\n", \
                            pointer_type, \
-                           pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP")); \
+                           (!in_attr && out_attr) ? 0x0C : 0x08, \
+                           pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"), \
+                           (!in_attr && out_attr) ? "[allocated_on_stack] " : ""); \
                 print_file(file, indent, "0x%02x,    /* " #fctype " */\n", RPC_##fctype); \
                 print_file(file, indent, "0x5c,          /* FC_PAD */\n"); \
                 *typeformat_offset += 4; \
@@ -1331,6 +1335,8 @@ static unsigned int get_required_buffer_size_type(
     }
     if (ptr_level == 0 && type_has_ref(type))
         return get_required_buffer_size_type(type->ref, 0 /* FIXME */, array, name, alignment);
+    if (ptr_level == 1)
+        return 25; /* FIXME: Only 'in' pointers need this */
     return 0;
 }
 
@@ -1557,9 +1563,91 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         }
         else
         {
-            print_file(file, indent,
-                       "NdrPointer%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                       function_from_phase(phase), var->name, *type_offset);
+            int pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
+            if (!pointer_type)
+                pointer_type = RPC_FC_RP;
+
+            if (pointer_type == RPC_FC_RP)
+            {
+                unsigned int size;
+                switch (var->type->type)
+                {
+                case RPC_FC_BYTE:
+                case RPC_FC_CHAR:
+                case RPC_FC_SMALL:
+                case RPC_FC_USMALL:
+                    size = 1;
+                    break;
+
+                case RPC_FC_WCHAR:
+                case RPC_FC_USHORT:
+                case RPC_FC_SHORT:
+                    size = 2;
+                    break;
+
+                case RPC_FC_ULONG:
+                case RPC_FC_LONG:
+                case RPC_FC_FLOAT:
+                case RPC_FC_ERROR_STATUS_T:
+                    size = 4;
+                    break;
+
+                case RPC_FC_HYPER:
+                case RPC_FC_DOUBLE:
+                    size = 8;
+                    break;
+
+                case RPC_FC_IGNORE:
+                case RPC_FC_BIND_PRIMITIVE:
+                    /* no marshalling needed */
+                    continue;
+
+                default:
+                    error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
+                    size = 0;
+                }
+
+                print_file(file, indent,
+                           "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
+                           size - 1, size - 1);
+
+                if (phase == PHASE_MARSHAL)
+                {
+                    print_file(file, indent, "*(");
+                    write_type(file, var->type, NULL, var->tname);
+                    fprintf(file, " *)_StubMsg.Buffer = *");
+                    write_name(file, var);
+                    fprintf(file, ";\n");
+                }
+                else if (phase == PHASE_UNMARSHAL)
+                {
+                    print_file(file, indent, (pass == PASS_IN) ? "" : "*");
+                    write_name(file, var);
+                    fprintf(file, (pass == PASS_IN) ? " = (" : " = *(");
+                    write_type(file, var->type, NULL, var->tname);
+                    fprintf(file, " *)_StubMsg.Buffer;\n");
+                }
+
+                print_file(file, indent, "_StubMsg.Buffer += sizeof(");
+                write_type(file, var->type, NULL, var->tname);
+                fprintf(file, ");\n");
+            }
+            else if (pointer_type == RPC_FC_UP)
+            {
+                print_file(file, indent, "NdrPointer%s(\n", function_from_phase(phase));
+                indent++;
+                print_file(file, indent, "(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
+                print_file(file, indent, "(unsigned char *)%s,\n", var->name);
+                print_file(file, indent, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]%s\n",
+                           *type_offset, (phase == PHASE_MARSHAL) ? ");" : ",");
+                if (phase == PHASE_UNMARSHAL)
+                    print_file(file, indent, "(unsigned char *)0);\n");
+                indent--;
+            }
+            else if (pointer_type == RPC_FC_FP)
+            {
+                error("write_remoting_arguments: Unimplemented for full pointers to base types\n");
+            }
         }
         fprintf(file, "\n");
     }
