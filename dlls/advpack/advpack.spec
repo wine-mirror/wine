@@ -29,10 +29,10 @@
 # stdcall FileSaveRestoreOnINFW(ptr wstr wstr wstr wstr wstr long)
 @ stdcall FileSaveRestoreOnINF(ptr str str str str str long) FileSaveRestoreOnINFA
 @ stdcall GetVersionFromFileA(str ptr ptr long)
-# stdcall GetVersionFromFileW(wstr ptr ptr long)
+@ stdcall GetVersionFromFileW(wstr ptr ptr long)
 @ stdcall GetVersionFromFile(str ptr ptr long) GetVersionFromFileA
 @ stdcall GetVersionFromFileExA(str ptr ptr long)
-# stdcall GetVersionFromFileExW(wstr ptr ptr long)
+@ stdcall GetVersionFromFileExW(wstr ptr ptr long)
 @ stdcall GetVersionFromFileEx(str ptr ptr long) GetVersionFromFileExA
 @ stdcall IsNTAdmin(long ptr)
 @ stdcall LaunchINFSectionA(ptr ptr str long)

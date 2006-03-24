@@ -822,13 +822,25 @@ HRESULT WINAPI FileSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
 /***********************************************************************
  *             GetVersionFromFileA     (ADVPACK.@)
  *
- * See GetVersionFromFileEx.
+ * See GetVersionFromFileExW.
  */
 HRESULT WINAPI GetVersionFromFileA(LPCSTR Filename, LPDWORD MajorVer,
                                    LPDWORD MinorVer, BOOL Version )
 {
     TRACE("(%s, %p, %p, %d)\n", Filename, MajorVer, MinorVer, Version);
     return GetVersionFromFileExA(Filename, MajorVer, MinorVer, Version);
+}
+
+/***********************************************************************
+ *             GetVersionFromFileW     (ADVPACK.@)
+ *
+ * See GetVersionFromFileExW.
+ */
+HRESULT WINAPI GetVersionFromFileW(LPCWSTR Filename, LPDWORD MajorVer,
+                                   LPDWORD MinorVer, BOOL Version )
+{
+    TRACE("(%s, %p, %p, %d)\n", debugstr_w(Filename), MajorVer, MinorVer, Version);
+    return GetVersionFromFileExW(Filename, MajorVer, MinorVer, Version);
 }
 
 /* data for GetVersionFromFileEx */
@@ -840,6 +852,28 @@ typedef struct tagLANGANDCODEPAGE
 
 /***********************************************************************
  *             GetVersionFromFileExA   (ADVPACK.@)
+ *
+ * See GetVersionFromFileExW.
+ */
+HRESULT WINAPI GetVersionFromFileExA(LPCSTR lpszFilename, LPDWORD pdwMSVer,
+                                     LPDWORD pdwLSVer, BOOL bVersion )
+{
+    UNICODE_STRING filename;
+    HRESULT res;
+
+    TRACE("(%s, %p, %p, %d)\n", lpszFilename, pdwMSVer, pdwLSVer, bVersion);
+
+    RtlCreateUnicodeStringFromAsciiz(&filename, lpszFilename);
+
+    res = GetVersionFromFileExW(filename.Buffer, pdwMSVer, pdwLSVer, bVersion);
+
+    RtlFreeUnicodeString(&filename);
+
+    return res;
+}
+
+/***********************************************************************
+ *             GetVersionFromFileExW   (ADVPACK.@)
  *
  * Gets the files version or language information.
  *
@@ -856,41 +890,48 @@ typedef struct tagLANGANDCODEPAGE
  *   If bVersion is TRUE, version information is retrieved, else
  *   pdwMSVer gets the language ID and pdwLSVer gets the codepage ID.
  */
-HRESULT WINAPI GetVersionFromFileExA(LPCSTR lpszFilename, LPDWORD pdwMSVer,
+HRESULT WINAPI GetVersionFromFileExW(LPCWSTR lpszFilename, LPDWORD pdwMSVer,
                                      LPDWORD pdwLSVer, BOOL bVersion )
 {
     VS_FIXEDFILEINFO *pFixedVersionInfo;
     LANGANDCODEPAGE *pLangAndCodePage;
     DWORD dwHandle, dwInfoSize;
-    CHAR szWinDir[MAX_PATH];
-    CHAR szFile[MAX_PATH];
+    WCHAR szWinDir[MAX_PATH];
+    WCHAR szFile[MAX_PATH];
     LPVOID pVersionInfo = NULL;
     BOOL bFileCopied = FALSE;
     UINT uValueLen;
 
-    TRACE("(%s, %p, %p, %d)\n", lpszFilename, pdwMSVer, pdwLSVer, bVersion);
+    static WCHAR backslash[] = {'\\',0};
+    static WCHAR translation[] = {
+        '\\','V','a','r','F','i','l','e','I','n','f','o',
+        '\\','T','r','a','n','s','l','a','t','i','o','n',0
+    };
+
+    TRACE("(%s, %p, %p, %d)\n", debugstr_w(lpszFilename),
+          pdwMSVer, pdwLSVer, bVersion);
 
     *pdwLSVer = 0;
     *pdwMSVer = 0;
 
-    lstrcpynA(szFile, lpszFilename, MAX_PATH);
+    lstrcpynW(szFile, lpszFilename, MAX_PATH);
 
-    dwInfoSize = GetFileVersionInfoSizeA(szFile, &dwHandle);
+    dwInfoSize = GetFileVersionInfoSizeW(szFile, &dwHandle);
     if (!dwInfoSize)
     {
         /* check that the file exists */
-        if (GetFileAttributesA(szFile) == INVALID_FILE_ATTRIBUTES)
+        if (GetFileAttributesW(szFile) == INVALID_FILE_ATTRIBUTES)
             return S_OK;
 
         /* file exists, but won't be found by GetFileVersionInfoSize,
         * so copy it to the temp dir where it will be found.
         */
-        GetWindowsDirectoryA(szWinDir, MAX_PATH);
-        GetTempFileNameA(szWinDir, NULL, 0, szFile);
-        CopyFileA(lpszFilename, szFile, FALSE);
+        GetWindowsDirectoryW(szWinDir, MAX_PATH);
+        GetTempFileNameW(szWinDir, NULL, 0, szFile);
+        CopyFileW(lpszFilename, szFile, FALSE);
         bFileCopied = TRUE;
 
-        dwInfoSize = GetFileVersionInfoSizeA(szFile, &dwHandle);
+        dwInfoSize = GetFileVersionInfoSizeW(szFile, &dwHandle);
         if (!dwInfoSize)
             goto done;
     }
@@ -899,12 +940,12 @@ HRESULT WINAPI GetVersionFromFileExA(LPCSTR lpszFilename, LPDWORD pdwMSVer,
     if (!pVersionInfo)
         goto done;
 
-    if (!GetFileVersionInfoA(szFile, dwHandle, dwInfoSize, pVersionInfo))
+    if (!GetFileVersionInfoW(szFile, dwHandle, dwInfoSize, pVersionInfo))
         goto done;
 
     if (bVersion)
     {
-        if (!VerQueryValueA(pVersionInfo, "\\",
+        if (!VerQueryValueW(pVersionInfo, backslash,
             (LPVOID *)&pFixedVersionInfo, &uValueLen))
             goto done;
 
@@ -916,7 +957,7 @@ HRESULT WINAPI GetVersionFromFileExA(LPCSTR lpszFilename, LPDWORD pdwMSVer,
     }
     else
     {
-        if (!VerQueryValueA(pVersionInfo, "\\VarFileInfo\\Translation",
+        if (!VerQueryValueW(pVersionInfo, translation,
              (LPVOID *)&pLangAndCodePage, &uValueLen))
             goto done;
 
@@ -931,7 +972,7 @@ done:
     HeapFree(GetProcessHeap(), 0, pVersionInfo);
 
     if (bFileCopied)
-        DeleteFileA(szFile);
+        DeleteFileW(szFile);
 
     return S_OK;
 }
