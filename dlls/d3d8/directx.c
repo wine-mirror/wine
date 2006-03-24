@@ -147,7 +147,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceMultiSampleType(LPDIRECT3D8 iface,
 							   BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
     return IWineD3D_CheckDeviceMultiSampleType(This->WineD3D, Adapter, DeviceType, SurfaceFormat,
-                                               Windowed, MultiSampleType, NULL);
+                                               Windowed, (WINED3DMULTISAMPLE_TYPE) MultiSampleType, NULL);
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface, 
@@ -186,7 +186,7 @@ HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT Adapte
 
 /* Internal function called back during the CreateDevice to create a render target */
 HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height, 
-                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
+                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample, 
                                          DWORD MultisampleQuality, BOOL Lockable, 
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     HRESULT res = D3D_OK;
@@ -263,7 +263,7 @@ HRESULT WINAPI D3D8CB_CreateAdditionalSwapChain(IUnknown *device,
 
 /* Internal function called back during the CreateDevice to create a render target */
 HRESULT WINAPI D3D8CB_CreateDepthStencilSurface(IUnknown *device, UINT Width, UINT Height,
-                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
+                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,
                                          DWORD MultisampleQuality, BOOL Discard,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     HRESULT res = D3D_OK;
@@ -311,7 +311,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapter, D3
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
     localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
-    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;
+    localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
     /* d3d9 only */
     localParameters.MultiSampleQuality             = NULL;
     localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;

@@ -618,12 +618,12 @@ extern HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT H
                                           HANDLE   * pSharedHandle);
 
 extern HRESULT WINAPI D3D9CB_CreateDepthStencilSurface(IUnknown *device, UINT Width, UINT Height,
-                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
+                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,
                                          DWORD MultisampleQuality, BOOL Discard,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
 extern HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height,
-                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
+                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,
                                          DWORD MultisampleQuality, BOOL Lockable, 
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 

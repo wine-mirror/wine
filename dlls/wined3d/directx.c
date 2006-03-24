@@ -1256,7 +1256,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter
 
 HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
                                                        WINED3DFORMAT SurfaceFormat,
-                                                       BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD*   pQualityLevels) {
+                                                       BOOL Windowed, WINED3DMULTISAMPLE_TYPE MultiSampleType, DWORD*   pQualityLevels) {
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x, pQual:%p)\n",
@@ -1281,7 +1281,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Ada
         *pQualityLevels = 1; /* Guess at a value! */
     }
 
-    if (D3DMULTISAMPLE_NONE == MultiSampleType) return D3D_OK;
+    if (WINED3DMULTISAMPLE_NONE == MultiSampleType) return D3D_OK;
     return D3DERR_NOTAVAILABLE;
 }
 

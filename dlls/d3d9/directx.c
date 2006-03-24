@@ -176,7 +176,7 @@ HMONITOR WINAPI  IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapte
 
 /* Internal function called back during the CreateDevice to create a render target */
 HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height,
-                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
+                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,
                                          DWORD MultisampleQuality, BOOL Lockable,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     HRESULT res = D3D_OK;
@@ -246,7 +246,7 @@ HRESULT WINAPI D3D9CB_CreateAdditionalSwapChain(IUnknown *device,
 
 /* Internal function called back during the CreateDevice to create a render target */
 HRESULT WINAPI D3D9CB_CreateDepthStencilSurface(IUnknown *device, UINT Width, UINT Height, 
-                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
+                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,
                                          DWORD MultisampleQuality, BOOL Discard,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     HRESULT res = D3D_OK;
@@ -296,7 +296,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
     localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
-    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;
+    localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
     localParameters.MultiSampleQuality             = &pPresentationParameters->MultiSampleQuality;
     localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;

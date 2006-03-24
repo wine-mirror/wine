@@ -170,7 +170,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9 iface, D3DPRESENT_
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;           
     localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;            
-    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;            
+    localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;            
     localParameters.MultiSampleQuality             = &pPresentationParameters->MultiSampleQuality;         
     localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;                 
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;              

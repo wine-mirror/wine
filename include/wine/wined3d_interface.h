@@ -164,7 +164,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATERENDERTARGETFN) (IUnknown *pDevice,
                                                UINT       Width, 
                                                UINT       Height, 
                                                WINED3DFORMAT  Format, 
-                                               D3DMULTISAMPLE_TYPE MultiSample, 
+                                               WINED3DMULTISAMPLE_TYPE MultiSample, 
                                                DWORD      MultisampleQuality, 
                                                BOOL       Lockable, 
                                                struct IWineD3DSurface **ppSurface,
@@ -184,7 +184,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATEDEPTHSTENCILSURFACEFN) (IUnknown *pDevice,
                                                UINT       Width, 
                                                UINT       Height, 
                                                WINED3DFORMAT  Format, 
-                                               D3DMULTISAMPLE_TYPE MultiSample, 
+                                               WINED3DMULTISAMPLE_TYPE MultiSample, 
                                                DWORD      MultisampleQuality, 
                                                BOOL       Discard, 
                                                struct IWineD3DSurface **ppSurface,
@@ -252,7 +252,7 @@ DECLARE_INTERFACE_(IWineD3D, IWineD3DBase)
     STDMETHOD(EnumAdapterModes)(THIS_ UINT  Adapter, UINT  Mode, WINED3DFORMAT Format, D3DDISPLAYMODE * pMode) PURE;
     STDMETHOD(GetAdapterDisplayMode)(THIS_ UINT  Adapter, D3DDISPLAYMODE *pMode) PURE;
     STDMETHOD(GetAdapterIdentifier)(THIS_ UINT Adapter, DWORD Flags, WINED3DADAPTER_IDENTIFIER* pIdentifier) PURE;
-    STDMETHOD(CheckDeviceMultiSampleType)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DFORMAT  SurfaceFormat, BOOL  Windowed, D3DMULTISAMPLE_TYPE  MultiSampleType, DWORD *pQuality) PURE;
+    STDMETHOD(CheckDeviceMultiSampleType)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DFORMAT  SurfaceFormat, BOOL  Windowed, WINED3DMULTISAMPLE_TYPE  MultiSampleType, DWORD *pQuality) PURE;
     STDMETHOD(CheckDepthStencilMatch)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DFORMAT  AdapterFormat, WINED3DFORMAT  RenderTargetFormat, WINED3DFORMAT  DepthStencilFormat) PURE;
     STDMETHOD(CheckDeviceType)(THIS_ UINT  Adapter, D3DDEVTYPE  CheckType, WINED3DFORMAT  DisplayFormat, WINED3DFORMAT  BackBufferFormat, BOOL  Windowed) PURE;
     STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DFORMAT  AdapterFormat, DWORD  Usage, WINED3DRESOURCETYPE  RType, WINED3DFORMAT  CheckFormat) PURE;
@@ -306,7 +306,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,struct IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateIndexBuffer)(THIS_ UINT Length, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DIndexBuffer** ppIndexBuffer, HANDLE* pSharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateStateBlock)(THIS_ WINED3DSTATEBLOCKTYPE Type, struct IWineD3DStateBlock **ppStateBlock, IUnknown *parent) PURE;
-    STDMETHOD(CreateSurface)(THIS_ UINT Width, UINT Height, WINED3DFORMAT Format,  BOOL Lockable, BOOL Discard, UINT Level,  struct IWineD3DSurface** ppSurface, WINED3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality,  HANDLE* pSharedHandle, IUnknown *parent) PURE;    
+    STDMETHOD(CreateSurface)(THIS_ UINT Width, UINT Height, WINED3DFORMAT Format,  BOOL Lockable, BOOL Discard, UINT Level,  struct IWineD3DSurface** ppSurface, WINED3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality,  HANDLE* pSharedHandle, IUnknown *parent) PURE;    
     STDMETHOD(CreateTexture)(THIS_ UINT Width, UINT Height, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DTexture** ppTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
     STDMETHOD(CreateVolumeTexture)(THIS_ UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DVolumeTexture** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATEVOLUMEFN pFn) PURE;
     STDMETHOD(CreateVolume)(THIS_ UINT Width, UINT Height, UINT Depth, DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool, struct IWineD3DVolume** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent) PURE;

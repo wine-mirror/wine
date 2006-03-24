@@ -636,7 +636,7 @@ If this flag is set, the contents of the depth stencil buffer will be invalid af
 
 ******************************** */
  
-HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height, WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,WINED3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality, HANDLE* pSharedHandle, IUnknown *parent) {
+HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height, WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,WINED3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality, HANDLE* pSharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int pow2Width, pow2Height;

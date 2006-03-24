@@ -375,6 +375,28 @@ typedef enum _WINED3DSAMPLERSTATETYPE {
 } WINED3DSAMPLERSTATETYPE;
 #define WINED3D_HIGHEST_SAMPLER_STATE WINED3DSAMP_DMAPOFFSET
 
+typedef enum _WINED3DMULTISAMPLE_TYPE {
+    WINED3DMULTISAMPLE_NONE          =  0,
+    WINED3DMULTISAMPLE_NONMASKABLE   =  1,
+    WINED3DMULTISAMPLE_2_SAMPLES     =  2,
+    WINED3DMULTISAMPLE_3_SAMPLES     =  3,
+    WINED3DMULTISAMPLE_4_SAMPLES     =  4,
+    WINED3DMULTISAMPLE_5_SAMPLES     =  5,
+    WINED3DMULTISAMPLE_6_SAMPLES     =  6,
+    WINED3DMULTISAMPLE_7_SAMPLES     =  7,
+    WINED3DMULTISAMPLE_8_SAMPLES     =  8,
+    WINED3DMULTISAMPLE_9_SAMPLES     =  9,
+    WINED3DMULTISAMPLE_10_SAMPLES    = 10,
+    WINED3DMULTISAMPLE_11_SAMPLES    = 11,
+    WINED3DMULTISAMPLE_12_SAMPLES    = 12,
+    WINED3DMULTISAMPLE_13_SAMPLES    = 13,
+    WINED3DMULTISAMPLE_14_SAMPLES    = 14,
+    WINED3DMULTISAMPLE_15_SAMPLES    = 15,
+    WINED3DMULTISAMPLE_16_SAMPLES    = 16,
+
+    WINED3DMULTISAMPLE_FORCE_DWORD   = 0xffffffff
+} WINED3DMULTISAMPLE_TYPE;
+
 typedef enum _WINED3DTEXTURESTAGESTATETYPE {
     WINED3DTSS_COLOROP               =  1,
     WINED3DTSS_COLORARG1             =  2,
@@ -451,20 +473,20 @@ typedef struct _WINED3DADAPTER_IDENTIFIER {
 } WINED3DADAPTER_IDENTIFIER;
 
 typedef struct _WINED3DPRESENT_PARAMETERS {
-    UINT                *BackBufferWidth;
-    UINT                *BackBufferHeight;
-    WINED3DFORMAT       *BackBufferFormat;
-    UINT                *BackBufferCount;
-    D3DMULTISAMPLE_TYPE *MultiSampleType;
-    DWORD               *MultiSampleQuality;
-    D3DSWAPEFFECT       *SwapEffect;
-    HWND                *hDeviceWindow;
-    BOOL                *Windowed;
-    BOOL                *EnableAutoDepthStencil;
-    WINED3DFORMAT       *AutoDepthStencilFormat;
-    DWORD               *Flags;
-    UINT                *FullScreen_RefreshRateInHz;
-    UINT                *PresentationInterval;
+    UINT                    *BackBufferWidth;
+    UINT                    *BackBufferHeight;
+    WINED3DFORMAT           *BackBufferFormat;
+    UINT                    *BackBufferCount;
+    WINED3DMULTISAMPLE_TYPE *MultiSampleType;
+    DWORD                   *MultiSampleQuality;
+    D3DSWAPEFFECT           *SwapEffect;
+    HWND                    *hDeviceWindow;
+    BOOL                    *Windowed;
+    BOOL                    *EnableAutoDepthStencil;
+    WINED3DFORMAT           *AutoDepthStencilFormat;
+    DWORD                   *Flags;
+    UINT                    *FullScreen_RefreshRateInHz;
+    UINT                    *PresentationInterval;
 } WINED3DPRESENT_PARAMETERS;
 
 typedef enum _WINED3DRESOURCETYPE {
@@ -483,16 +505,16 @@ typedef enum _WINED3DRESOURCETYPE {
 
 typedef struct _WINED3DSURFACE_DESC
 {
-    WINED3DFORMAT       *Format;
-    WINED3DRESOURCETYPE *Type;
-    DWORD               *Usage;
-    D3DPOOL             *Pool;
-    UINT                *Size;
+    WINED3DFORMAT           *Format;
+    WINED3DRESOURCETYPE     *Type;
+    DWORD                   *Usage;
+    D3DPOOL                 *Pool;
+    UINT                    *Size;
 
-    D3DMULTISAMPLE_TYPE *MultiSampleType;
-    DWORD               *MultiSampleQuality;
-    UINT                *Width;
-    UINT                *Height;
+    WINED3DMULTISAMPLE_TYPE *MultiSampleType;
+    DWORD                   *MultiSampleQuality;
+    UINT                    *Width;
+    UINT                    *Height;
 } WINED3DSURFACE_DESC;
 
 typedef struct _WINED3DVOLUME_DESC

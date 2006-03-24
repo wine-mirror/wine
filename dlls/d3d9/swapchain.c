@@ -126,7 +126,7 @@ HRESULT WINAPI IDirect3DSwapChain9Impl_GetPresentParameters(LPDIRECT3DSWAPCHAIN9
     winePresentParameters.BackBufferHeight = &pPresentationParameters->BackBufferHeight;
     winePresentParameters.BackBufferFormat = (WINED3DFORMAT *) &pPresentationParameters->BackBufferFormat;
     winePresentParameters.BackBufferCount = &pPresentationParameters->BackBufferCount;
-    winePresentParameters.MultiSampleType = &pPresentationParameters->MultiSampleType;
+    winePresentParameters.MultiSampleType = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
     winePresentParameters.MultiSampleQuality = &pPresentationParameters->MultiSampleQuality;
     winePresentParameters.SwapEffect = &pPresentationParameters->SwapEffect;
     winePresentParameters.hDeviceWindow = &pPresentationParameters->hDeviceWindow;
@@ -176,7 +176,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
     localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
-    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;
+    localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
     localParameters.MultiSampleQuality             = &pPresentationParameters->MultiSampleQuality;
     localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;

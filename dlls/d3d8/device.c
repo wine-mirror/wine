@@ -195,7 +195,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE8 
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
     localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
-    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;
+    localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
     localParameters.MultiSampleQuality             = NULL; /* d3d9 only */
     localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;
@@ -228,7 +228,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PA
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
     localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
-    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;
+    localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
     localParameters.MultiSampleQuality             = NULL; /* D3d9 only */
     localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;

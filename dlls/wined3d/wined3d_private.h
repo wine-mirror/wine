@@ -792,10 +792,10 @@ extern const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;
 
 typedef struct _WINED3DSURFACET_DESC
 {
-    D3DMULTISAMPLE_TYPE MultiSampleType;
-    DWORD               MultiSampleQuality;
-    UINT                Width;
-    UINT                Height;
+    WINED3DMULTISAMPLE_TYPE MultiSampleType;
+    DWORD                   MultiSampleQuality;
+    UINT                    Width;
+    UINT                    Height;
 } WINED3DSURFACET_DESC;
 
 /*****************************************************************************
