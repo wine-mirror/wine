@@ -731,9 +731,9 @@ BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break
     if (code == EXCEPTION_BREAKPOINT)
         addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, TRUE);
 
+    dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_break);
     dbg_curr_process->bp[0].enabled = FALSE;  /* disable the step-over breakpoint */
 
-    dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_break);
     if (dbg_curr_thread->stopped_xpoint > 0)
     {
         if (!should_stop(dbg_curr_thread->stopped_xpoint)) return TRUE;
@@ -744,7 +744,8 @@ BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break
         return FALSE;
     }
 
-    dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_watch_exec);
+    if(dbg_curr_thread->stopped_xpoint < 0)
+        dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_watch_exec);
     if (dbg_curr_thread->stopped_xpoint > 0)
     {
         /* If not single-stepping, do not back up over the break instruction */
@@ -759,7 +760,8 @@ BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break
         return FALSE;
     }
 
-    dbg_curr_thread->stopped_xpoint = find_triggered_watch(&oldval);
+    if(dbg_curr_thread->stopped_xpoint < 0)
+        dbg_curr_thread->stopped_xpoint = find_triggered_watch(&oldval);
     if (dbg_curr_thread->stopped_xpoint > 0)
     {
         /* If not single-stepping, do not back up over the break instruction */
