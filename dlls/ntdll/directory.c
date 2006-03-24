@@ -1884,9 +1884,8 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
     if (CompletionFilter == 0 || (CompletionFilter & ~FILE_NOTIFY_ALL))
         return STATUS_INVALID_PARAMETER;
 
-    if (WatchTree || ApcRoutine)
-        FIXME("parameters ignored %p %p %d\n",
-              ApcRoutine, ApcContext, WatchTree );
+    if (ApcRoutine)
+        FIXME("parameters ignored %p %p\n", ApcRoutine, ApcContext );
 
     info = RtlAllocateHeap( GetProcessHeap(), 0, sizeof *info );
     if (!info)
