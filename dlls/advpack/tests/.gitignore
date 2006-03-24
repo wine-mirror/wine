@@ -1,4 +1,5 @@
 Makefile
 advpack.ok
 files.ok
+install.ok
 testlist.c

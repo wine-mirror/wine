@@ -7,7 +7,8 @@ IMPORTS   = cabinet user32 advapi32 kernel32
 
 CTESTS = \
 	advpack.c \
-	files.c
+	files.c \
+	install.c
 
 @MAKE_TEST_RULES@
 
