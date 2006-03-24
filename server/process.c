@@ -1068,7 +1068,7 @@ DECL_HANDLER(read_process_memory)
                 if (start_offset) memmove( buffer, (char *)buffer + start_offset, len );
                 set_reply_data_ptr( buffer, len );
             }
-            else len = 0;
+            else free( buffer );
         }
     }
     release_object( process );
