@@ -588,11 +588,11 @@ int MSVCRT_fflush(MSVCRT_FILE* file)
 {
   if(!file) {
 	_flushall();
-	return 0;
-  } else {
+  } else if(file->_flag & MSVCRT__IOWRT) {
   	int res=msvcrt_flush_buffer(file);
   	return res;
   }
+  return 0;
 }
 
 /*********************************************************************
