@@ -5,6 +5,7 @@
  * Copyright 2002-2003 Jason Edmeades
  *                     Raphael Junqueira
  * Copyright 2005 Oliver Stieber
+ * Copyright 2006 Stefan Dösinger
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -427,6 +428,13 @@ typedef struct _WINEDD3DRECTPATCH_INFO {
     WINED3DBASISTYPE    Basis;
     WINED3DDEGREETYPE   Degree;
 } WINED3DRECTPATCH_INFO;
+
+typedef struct _WINED3DTRIPATCH_INFO {
+    UINT                StartVertexOffset;
+    UINT                NumVertices;
+    WINED3DBASISTYPE    Basis;
+    WINED3DDEGREETYPE   Degree;
+} WINED3DTRIPATCH_INFO;
 
 
 typedef struct _WINED3DADAPTER_IDENTIFIER {
