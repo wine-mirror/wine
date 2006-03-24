@@ -26,6 +26,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winver.h"
+#include "winternl.h"
 #include "setupapi.h"
 #include "advpub.h"
 #include "wine/debug.h"
@@ -158,6 +159,44 @@ HRESULT WINAPI LaunchINFSectionExA( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, I
 /***********************************************************************
  *      RunSetupCommandA  (ADVPACK.@)
  *
+ * See RunSetupCommandW.
+ */
+HRESULT WINAPI RunSetupCommandA(HWND hWnd, LPCSTR szCmdName,
+                                LPCSTR szInfSection, LPCSTR szDir,
+                                LPCSTR lpszTitle, HANDLE *phEXE,
+                                DWORD dwFlags, LPVOID pvReserved )
+{
+    UNICODE_STRING cmdname, infsec;
+    UNICODE_STRING dir, title;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %s, %s, %p, 0x%08lx, %p)\n",
+           hWnd, debugstr_a(szCmdName), debugstr_a(szInfSection),
+           debugstr_a(szDir), debugstr_a(lpszTitle),
+           phEXE, dwFlags, pvReserved);
+
+    if (!szCmdName || !szDir)
+        return E_INVALIDARG;
+
+    RtlCreateUnicodeStringFromAsciiz(&cmdname, szCmdName);
+    RtlCreateUnicodeStringFromAsciiz(&infsec, szInfSection);
+    RtlCreateUnicodeStringFromAsciiz(&dir, szDir);
+    RtlCreateUnicodeStringFromAsciiz(&title, lpszTitle);
+
+    hr = RunSetupCommandW(hWnd, cmdname.Buffer, infsec.Buffer, dir.Buffer,
+                          title.Buffer, phEXE, dwFlags, pvReserved);
+
+    RtlFreeUnicodeString(&cmdname);
+    RtlFreeUnicodeString(&infsec);
+    RtlFreeUnicodeString(&dir);
+    RtlFreeUnicodeString(&title);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      RunSetupCommandW  (ADVPACK.@)
+ *
  * Executes an install section in an INF file or a program.
  *
  * PARAMS
@@ -183,14 +222,14 @@ HRESULT WINAPI LaunchINFSectionExA( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, I
  * BUGS
  *   Unimplemented
  */
-HRESULT WINAPI RunSetupCommandA(HWND hWnd, LPCSTR szCmdName,
-                                LPCSTR szInfSection, LPCSTR szDir,
-                                LPCSTR lpszTitle, HANDLE *phEXE,
+HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
+                                LPCWSTR szInfSection, LPCWSTR szDir,
+                                LPCWSTR lpszTitle, HANDLE *phEXE,
                                 DWORD dwFlags, LPVOID pvReserved )
 {
     FIXME("(%p, %s, %s, %s, %s, %p, 0x%08lx, %p): stub\n",
-           hWnd, debugstr_a(szCmdName), debugstr_a(szInfSection),
-           debugstr_a(szDir), debugstr_a(lpszTitle),
+           hWnd, debugstr_w(szCmdName), debugstr_w(szInfSection),
+           debugstr_w(szDir), debugstr_w(lpszTitle),
            phEXE, dwFlags, pvReserved);
     return E_UNEXPECTED;
 }
