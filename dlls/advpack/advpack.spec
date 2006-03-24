@@ -66,7 +66,7 @@
 # stdcall RunSetupCommandW(long wstr wstr wstr wstr wptr long ptr)
 @ stdcall RunSetupCommand(long str str str str ptr long ptr) RunSetupCommandA
 @ stdcall SetPerUserSecValuesA(ptr)
-# stdcall SetPerUserSecValuesW(ptr)
+@ stdcall SetPerUserSecValuesW(ptr)
 @ stdcall SetPerUserSecValues(ptr) SetPerUserSecValuesA
 @ stdcall TranslateInfStringA(str str str str ptr long ptr ptr)
 @ stdcall TranslateInfStringW(wstr wstr wstr wstr ptr long ptr ptr)
