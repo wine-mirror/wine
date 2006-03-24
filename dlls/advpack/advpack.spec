@@ -23,10 +23,10 @@
 @ stdcall FileSaveMarkNotExistW(wstr wstr wstr)
 @ stdcall FileSaveMarkNotExist(str str str) FileSaveMarkNotExistA
 @ stdcall FileSaveRestoreA(ptr str str str long)
-# stdcall FileSaveRestoreW(ptr wstr wstr wstr long)
+@ stdcall FileSaveRestoreW(ptr wstr wstr wstr long)
 @ stdcall FileSaveRestore(ptr str str str long) FileSaveRestoreA
 @ stdcall FileSaveRestoreOnINFA(ptr str str str str str long)
-# stdcall FileSaveRestoreOnINFW(ptr wstr wstr wstr wstr wstr long)
+@ stdcall FileSaveRestoreOnINFW(ptr wstr wstr wstr wstr wstr long)
 @ stdcall FileSaveRestoreOnINF(ptr str str str str str long) FileSaveRestoreOnINFA
 @ stdcall GetVersionFromFileA(str ptr ptr long)
 @ stdcall GetVersionFromFileW(wstr ptr ptr long)

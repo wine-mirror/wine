@@ -758,6 +758,34 @@ HRESULT WINAPI FileSaveMarkNotExistW(LPWSTR pszFileList, LPWSTR pszDir, LPWSTR p
 /***********************************************************************
  *      FileSaveRestoreA (ADVPACK.@)
  *
+ * See FileSaveRestoreW.
+ */
+HRESULT WINAPI FileSaveRestoreA(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
+                                LPSTR pszBaseName, DWORD dwFlags)
+{
+    UNICODE_STRING filelist, dir, basename;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %s, %ld)\n", hDlg, pszFileList, pszDir,
+          pszBaseName, dwFlags);
+
+    RtlCreateUnicodeStringFromAsciiz(&filelist, pszFileList);
+    RtlCreateUnicodeStringFromAsciiz(&dir, pszDir);
+    RtlCreateUnicodeStringFromAsciiz(&basename, pszBaseName);
+
+    hr = FileSaveRestoreW(hDlg, filelist.Buffer, dir.Buffer,
+                          basename.Buffer, dwFlags);
+
+    RtlFreeUnicodeString(&filelist);
+    RtlFreeUnicodeString(&dir);
+    RtlFreeUnicodeString(&basename);
+
+    return hr;
+}                         
+
+/***********************************************************************
+ *      FileSaveRestoreW (ADVPACK.@)
+ *
  * Saves or restores the files in the specified file list.
  *
  * PARAMS
@@ -777,17 +805,51 @@ HRESULT WINAPI FileSaveMarkNotExistW(LPWSTR pszFileList, LPWSTR pszDir, LPWSTR p
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI FileSaveRestoreA(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
-                               LPSTR pszBaseName, DWORD dwFlags)
+HRESULT WINAPI FileSaveRestoreW(HWND hDlg, LPWSTR pszFileList, LPWSTR pszDir,
+                                LPWSTR pszBaseName, DWORD dwFlags)
 {
-    FIXME("(%p, %p, %p, %p, %ld) stub\n", hDlg, pszFileList, pszDir,
-          pszBaseName, dwFlags);
+    FIXME("(%p, %s, %s, %s, %ld) stub\n", hDlg, debugstr_w(pszFileList),
+          debugstr_w(pszDir), debugstr_w(pszBaseName), dwFlags);
 
     return E_FAIL;
 }
 
 /***********************************************************************
  *      FileSaveRestoreOnINFA (ADVPACK.@)
+ *
+ * See FileSaveRestoreOnINFW.
+ */
+HRESULT WINAPI FileSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
+                                    LPCSTR pszSection, LPCSTR pszBackupDir,
+                                    LPCSTR pszBaseBackupFile, DWORD dwFlags)
+{
+    UNICODE_STRING title, inf, section;
+    UNICODE_STRING backupdir, backupfile;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %s, %s, %s, %ld) stub\n", hWnd, pszTitle, pszINF,
+          pszSection, pszBackupDir, pszBaseBackupFile, dwFlags);
+
+    RtlCreateUnicodeStringFromAsciiz(&title, pszTitle);
+    RtlCreateUnicodeStringFromAsciiz(&inf, pszINF);
+    RtlCreateUnicodeStringFromAsciiz(&section, pszSection);
+    RtlCreateUnicodeStringFromAsciiz(&backupdir, pszBackupDir);
+    RtlCreateUnicodeStringFromAsciiz(&backupfile, pszBaseBackupFile);
+
+    hr = FileSaveRestoreOnINFW(hWnd, title.Buffer, inf.Buffer, section.Buffer,
+                               backupdir.Buffer, backupfile.Buffer, dwFlags);
+
+    RtlFreeUnicodeString(&title);
+    RtlFreeUnicodeString(&inf);
+    RtlFreeUnicodeString(&section);
+    RtlFreeUnicodeString(&backupdir);
+    RtlFreeUnicodeString(&backupfile);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      FileSaveRestoreOnINFW (ADVPACK.@)
  *
  *
  * PARAMS
@@ -809,12 +871,13 @@ HRESULT WINAPI FileSaveRestoreA(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI FileSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
-                                    LPCSTR pszSection, LPCSTR pszBackupDir,
-                                    LPCSTR pszBaseBackupFile, DWORD dwFlags)
+HRESULT WINAPI FileSaveRestoreOnINFW(HWND hWnd, LPCWSTR pszTitle, LPCWSTR pszINF,
+                                     LPCWSTR pszSection, LPCWSTR pszBackupDir,
+                                     LPCWSTR pszBaseBackupFile, DWORD dwFlags)
 {
-    FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitle, pszINF,
-          pszSection, pszBackupDir, pszBaseBackupFile, dwFlags);
+    FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, debugstr_w(pszTitle),
+          debugstr_w(pszINF), debugstr_w(pszSection), debugstr_w(pszBackupDir),
+          debugstr_w(pszBaseBackupFile), dwFlags);
 
     return E_FAIL;
 }
