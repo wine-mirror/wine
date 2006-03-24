@@ -6,7 +6,7 @@
 @ stdcall AdvInstallFile(long str str str str long long) AdvInstallFileA
 @ stdcall CloseINFEngine(long)
 @ stdcall DelNodeA(str long)
-# stdcall DelNodeW(wstr long)
+@ stdcall DelNodeW(wstr long)
 @ stdcall DelNode(str long) DelNodeA
 @ stdcall DelNodeRunDLL32A(ptr ptr str long)
 # stdcall DelNodeRunDLL32W(ptr ptr wstr long)

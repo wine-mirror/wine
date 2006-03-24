@@ -323,36 +323,41 @@ done:
     return HRESULT_FROM_WIN32(dwLastError);
 }
 
-static HRESULT DELNODE_recurse_dirtree(LPSTR fname, DWORD flags)
+static HRESULT DELNODE_recurse_dirtree(LPWSTR fname, DWORD flags)
 {
-    DWORD fattrs = GetFileAttributesA(fname);
+    DWORD fattrs = GetFileAttributesW(fname);
     HRESULT ret = E_FAIL;
+
+    static const WCHAR backslash[] = {'\\',0};
+    static const WCHAR asterisk[] = {'*',0};
+    static const WCHAR dot[] = {'.',0};
+    static const WCHAR dotdot[] = {'.','.',0};
 
     if (fattrs & FILE_ATTRIBUTE_DIRECTORY)
     {
         HANDLE hFindFile;
-        WIN32_FIND_DATAA w32fd;
+        WIN32_FIND_DATAW w32fd;
         BOOL done = TRUE;
-        int fname_len = lstrlenA(fname);
+        int fname_len = lstrlenW(fname);
 
         /* Generate a path with wildcard suitable for iterating */
-        if (CharPrevA(fname, fname + fname_len) != "\\")
+        if (lstrcmpW(CharPrevW(fname, fname + fname_len), backslash))
         {
-            lstrcpyA(fname + fname_len, "\\");
+            lstrcpyW(fname + fname_len, backslash);
             ++fname_len;
         }
-        lstrcpyA(fname + fname_len, "*");
+        lstrcpyW(fname + fname_len, asterisk);
 
-        if ((hFindFile = FindFirstFileA(fname, &w32fd)) != INVALID_HANDLE_VALUE)
+        if ((hFindFile = FindFirstFileW(fname, &w32fd)) != INVALID_HANDLE_VALUE)
         {
             /* Iterate through the files in the directory */
-            for (done = FALSE; !done; done = !FindNextFileA(hFindFile, &w32fd))
+            for (done = FALSE; !done; done = !FindNextFileW(hFindFile, &w32fd))
             {
-                TRACE("%s\n", w32fd.cFileName);
-                if (lstrcmpA(".", w32fd.cFileName) != 0 &&
-                    lstrcmpA("..", w32fd.cFileName) != 0)
+                TRACE("%s\n", debugstr_w(w32fd.cFileName));
+                if (lstrcmpW(dot, w32fd.cFileName) != 0 &&
+                    lstrcmpW(dotdot, w32fd.cFileName) != 0)
                 {
-                    lstrcpyA(fname + fname_len, w32fd.cFileName);
+                    lstrcpyW(fname + fname_len, w32fd.cFileName);
                     if (DELNODE_recurse_dirtree(fname, flags) != S_OK)
                     {
                         break; /* Failure */
@@ -367,8 +372,8 @@ static HRESULT DELNODE_recurse_dirtree(LPSTR fname, DWORD flags)
 
         if (done)
         {
-            TRACE("%s: directory\n", fname);
-            if (SetFileAttributesA(fname, FILE_ATTRIBUTE_NORMAL) && RemoveDirectoryA(fname))
+            TRACE("%s: directory\n", debugstr_w(fname));
+            if (SetFileAttributesW(fname, FILE_ATTRIBUTE_NORMAL) && RemoveDirectoryW(fname))
             {
                 ret = S_OK;
             }
@@ -376,8 +381,8 @@ static HRESULT DELNODE_recurse_dirtree(LPSTR fname, DWORD flags)
     }
     else
     {
-        TRACE("%s: file\n", fname);
-        if (SetFileAttributesA(fname, FILE_ATTRIBUTE_NORMAL) && DeleteFileA(fname))
+        TRACE("%s: file\n", debugstr_w(fname));
+        if (SetFileAttributesW(fname, FILE_ATTRIBUTE_NORMAL) && DeleteFileW(fname))
         {
             ret = S_OK;
         }
@@ -388,6 +393,27 @@ static HRESULT DELNODE_recurse_dirtree(LPSTR fname, DWORD flags)
 
 /***********************************************************************
  *              DelNodeA   (ADVPACK.@)
+ *
+ * See DelNodeW.
+ */
+HRESULT WINAPI DelNodeA( LPCSTR pszFileOrDirName, DWORD dwFlags )
+{
+    UNICODE_STRING fileordirname;
+    HRESULT res;
+
+    TRACE("(%s, 0x%08lx)\n", debugstr_a(pszFileOrDirName), dwFlags);
+
+    RtlCreateUnicodeStringFromAsciiz(&fileordirname, pszFileOrDirName);
+
+    res = DelNodeW(fileordirname.Buffer, dwFlags);
+
+    RtlFreeUnicodeString(&fileordirname);
+
+    return res;
+}
+
+/***********************************************************************
+ *              DelNodeW   (ADVPACK.@)
  *
  * Deletes a file or directory
  *
@@ -404,19 +430,19 @@ static HRESULT DELNODE_recurse_dirtree(LPSTR fname, DWORD flags)
  *   - Native version apparently does a lot of checking to make sure
  *     we're not trying to delete a system directory etc.
  */
-HRESULT WINAPI DelNodeA( LPCSTR pszFileOrDirName, DWORD dwFlags )
+HRESULT WINAPI DelNodeW( LPCWSTR pszFileOrDirName, DWORD dwFlags )
 {
-    CHAR fname[MAX_PATH];
+    WCHAR fname[MAX_PATH];
     HRESULT ret = E_FAIL;
     
-    TRACE("(%s, 0x%08lx)\n", debugstr_a(pszFileOrDirName), dwFlags);
+    TRACE("(%s, 0x%08lx)\n", debugstr_w(pszFileOrDirName), dwFlags);
     
     if (dwFlags)
         FIXME("Flags ignored!\n");
 
     if (pszFileOrDirName && *pszFileOrDirName)
     {
-        lstrcpyA(fname, pszFileOrDirName);
+        lstrcpyW(fname, pszFileOrDirName);
 
         /* TODO: Should check for system directory deletion etc. here */
 
