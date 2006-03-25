@@ -86,7 +86,7 @@ int yyerror(const char*);
 %type <expression> expr lvalue
 %type <lvalue> expr_lvalue lvalue_addr
 %type <integer> expr_rvalue
-%type <string> pathname identifier
+%type <string> pathname identifier cpp_identifier
 %type <listing> list_arg
 %type <type> type_expr
 
@@ -162,12 +162,16 @@ pathname:
     | tPATH                     { $$ = $1; }
     ;
 
-identifier:
+cpp_identifier:
       tIDENTIFIER               { $$ = $1; }
-    | tPATH '!' tIDENTIFIER     { $$ = lexeme_alloc_size(strlen($1) + 1 + strlen($3) + 1);
-                                  sprintf($$, "%s!%s", $1, $3); }
     | identifier OP_SCOPE tIDENTIFIER { $$ = lexeme_alloc_size(strlen($1) + 2 + strlen($3) + 1);
                                        sprintf($$, "%s::%s", $1, $3); }
+    ;
+
+identifier:
+      cpp_identifier            { $$ = $1; }
+    | tIDENTIFIER '!' cpp_identifier { $$ = lexeme_alloc_size(strlen($1) + 1 + strlen($3) + 1);
+                                       sprintf($$, "%s!%s", $1, $3); }
     ;
 
 list_arg:
