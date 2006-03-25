@@ -119,4 +119,6 @@
 #define IDI_SHELL_FONTS_FOLDER      39
 #define IDI_SHELL_MY_DOCUMENTS     235
 
+#define IDR_AVI_SEARCHING          151
+
 #endif

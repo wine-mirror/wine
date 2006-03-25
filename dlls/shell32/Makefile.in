@@ -66,6 +66,7 @@ RC_BINARIES = \
 	netdrive2.ico \
 	printer.ico \
 	ramdisk.ico \
+	searching.avi \
 	shortcut.ico
 
 C_SRCS16  = shell.c
