@@ -797,8 +797,7 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
 
         if (bang == Mask) return FALSE;
 
-        compile_regex(Mask, bang - Mask, &mod_regex, 
-                      dbghelp_options & SYMOPT_CASE_INSENSITIVE);
+        compile_regex(Mask, bang - Mask, &mod_regex, TRUE);
         compile_regex(bang + 1, -1, &sym_regex, 
                       dbghelp_options & SYMOPT_CASE_INSENSITIVE);
         
