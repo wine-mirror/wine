@@ -37,7 +37,7 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(opengl);
+WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
 
 /* x11drv GDI escapes */

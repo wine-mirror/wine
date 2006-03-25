@@ -28,7 +28,8 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(opengl);
+WINE_DEFAULT_DEBUG_CHANNEL(wgl);
+WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 #if defined(HAVE_GL_GL_H) && defined(HAVE_GL_GLX_H)
 
@@ -533,7 +534,7 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
     return 0;
   }
   
-  TRACE("(%p)\n", physDev);
+  TRACE_(opengl)("(%p)\n", physDev);
 
   wine_tsx11_lock();
   pglXSwapBuffers(gdi_display, physDev->drawable);

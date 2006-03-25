@@ -44,7 +44,8 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(opengl);
+WINE_DEFAULT_DEBUG_CHANNEL(wgl);
+WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 /** global glx object */
 wine_glx_t wine_glx;
@@ -698,7 +699,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
  */
 BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 				UINT fuPlanes) {
-  TRACE("(%p, %08x)\n", hdc, fuPlanes);
+  TRACE_(opengl)("(%p, %08x)\n", hdc, fuPlanes);
 
   if (fuPlanes & WGL_SWAP_MAIN_PLANE) {
     if (!SwapBuffers(hdc)) return FALSE;
