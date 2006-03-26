@@ -398,6 +398,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, 
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     HRESULT hrc = D3D_OK;
 
+    TRACE("(%p) Relay\n", This);
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexBuffer8Impl));
     if (NULL == object) {
