@@ -2367,16 +2367,19 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
       lpstrDisplay = lpstrPos;
       lpstrPos += strlenW(lpstrPos) + 1;
 
+      CBAddStringW(fodInfos->DlgInfos.hwndFileTypeCB, lpstrDisplay);
+
+      nFilters++;
+      /* malformed filters are added anyway... */
+      if (!*lpstrPos) break;
+
       /* Copy the extensions */
-      if (! *lpstrPos) return E_FAIL;	/* malformed filter */
       if (!(lpstrExt = MemAlloc((strlenW(lpstrPos)+1)*sizeof(WCHAR)))) return E_FAIL;
       strcpyW(lpstrExt,lpstrPos);
       lpstrPos += strlenW(lpstrPos) + 1;
 
       /* Add the item at the end of the combo */
-      CBAddStringW(fodInfos->DlgInfos.hwndFileTypeCB, lpstrDisplay);
-      CBSetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB, nFilters, lpstrExt);
-      nFilters++;
+      CBSetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB, nFilters-1, lpstrExt);
     }
   }
 
