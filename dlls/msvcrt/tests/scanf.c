@@ -52,6 +52,11 @@ static void test_sscanf( void )
     ok( sscanf(buffer, "%x", &result) == 1, "sscanf failed\n" );
     ok( result == 0x51, "sscanf reads %x instead of %x\n", result, 0x51 );
 
+    result = 0;
+    ret = sscanf("-1", "%x", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d (expected 1)\n", ret);
+    ok(result == -1, "Read %d, expected -1\n", result);
+
     /* check % followed by any char */
     strcpy(buffer,"\"%12@");
     strcpy(format,"%\"%%%d%@");  /* work around gcc format check */
@@ -93,9 +98,29 @@ static void test_sscanf( void )
     ret = sscanf(buffer, "%i", &result);
     ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
     ok(result == 123, "Wrong number read\n");
+    result = 0;
+    ret = sscanf("-1", "%i", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d (expected 1)\n", ret);
+    ok(result == -1, "Read %d, expected -1\n", result);
     ret = sscanf(buffer, "%d", &result);
     ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
     ok(result == 123, "Wrong number read\n");
+    result = 0;
+    ret = sscanf("-1", "%d", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d (expected 1)\n", ret);
+    ok(result == -1, "Read %d, expected -1\n", result);
+
+    /* %o */
+    result = 0;
+    ret = sscanf("-1", "%o", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d (expected 1)\n", ret);
+    ok(result == -1, "Read %d, expected -1\n", result);
+
+    /* %u */
+    result = 0;
+    ret = sscanf("-1", "%u", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d (expected 1)\n", ret);
+    ok(result == -1, "Read %d, expected -1\n", result);
 
     /* Check %c */
     strcpy(buffer,"a");

@@ -114,7 +114,7 @@ _FUNCTION_ {
 	 * the form %[*][width][{h | l | I64 | L}]type */
         else if (*format == '%') {
             int st = 0; int suppress = 0; int width = 0;
-	    int base, number_signed;
+	    int base;
 	    int h_prefix = 0;
 	    int l_prefix = 0;
 	    int L_prefix = 0;
@@ -157,19 +157,19 @@ _FUNCTION_ {
             switch(*format) {
 	    case 'x':
 	    case 'X': /* hexadecimal integer. */
-		base = 16; number_signed = 0;
+		base = 16;
 		goto number;
 	    case 'o': /* octal integer */
-		base = 8; number_signed = 0;
+		base = 8;
 		goto number;
 	    case 'u': /* unsigned decimal integer */
-		base = 10; number_signed = 0;
+		base = 10;
 		goto number;
 	    case 'd': /* signed decimal integer */
-		base = 10; number_signed = 1;
+		base = 10;
 		goto number;
 	    case 'i': /* generic integer */
-		base = 10; number_signed = 1;
+		base = 10;
 	    number: {
 		    /* read an integer */
 		    ULONGLONG cur = 0;
@@ -179,8 +179,7 @@ _FUNCTION_ {
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
                     /* get sign */
-                    if (number_signed && (nch == '-' ||
-					  nch == '+')) {
+                    if (nch == '-' || nch == '+') {
 			negative = (nch=='-');
                         nch = _GETC_(file);
 			if (width>0) width--;
@@ -225,22 +224,10 @@ _FUNCTION_ {
                     st = 1;
                     if (!suppress) {
 #define _SET_NUMBER_(type) *va_arg(ap, type*) = negative ? -cur : cur
-			if (number_signed) {
-			    if (I64_prefix) _SET_NUMBER_(LONGLONG);
-			    else if (l_prefix) _SET_NUMBER_(long int);
-			    else if (h_prefix) _SET_NUMBER_(short int);
-			    else _SET_NUMBER_(int);
-			} else {
-			    if (negative) {
-				WARN("Dropping sign in reading a negative number into an unsigned value");
-				negative = 0;
-			    }
-			    if (I64_prefix) _SET_NUMBER_(ULONGLONG);
-			    else if (l_prefix) _SET_NUMBER_(unsigned long int);
-			    else if (h_prefix)
-				_SET_NUMBER_(unsigned short int);
-			    else _SET_NUMBER_(unsigned int);
-			}
+			if (I64_prefix) _SET_NUMBER_(LONGLONG);
+			else if (l_prefix) _SET_NUMBER_(long int);
+			else if (h_prefix) _SET_NUMBER_(short int);
+			else _SET_NUMBER_(int);
 		    }
                 }
                 break;
