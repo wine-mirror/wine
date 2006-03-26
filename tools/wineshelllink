@@ -107,7 +107,7 @@ Exec=wine "$path" $args
 Type=Application
 Comment=$descr
 EOF
-    [ -z "$workdir" ] || echo "Path=\"$workdir\""
+    [ -z "$workdir" ] || echo "Path=$workdir"
     [ -z "$xpmicon" ] || echo "Icon=$xpmicon"
 }
 
