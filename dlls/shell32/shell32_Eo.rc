@@ -1,5 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
+ * Copyright 2006 Antonio Codazzi
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,17 +19,104 @@
 
 LANGUAGE LANG_ESPERANTO, SUBLANG_DEFAULT
 
+/* Cxapelitaj literoj estas en Latin-3 iso8895-3 */
+
+MENU_001 MENU DISCARDABLE
+BEGIN
+	MENUITEM "&Grandaj Ikonoj",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "Malgrandaj Ikonoj",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Listo",		FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "&Detale",		FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU DISCARDABLE
+BEGIN
+	POPUP ""
+	BEGIN
+	  POPUP "&Vido"
+	  BEGIN
+	    MENUITEM "&Grandaj Ikonoj",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "Malgrandaj Ikonoj",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Listo",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&Detale",	FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "Aranøu &Ikonojn"
+	  BEGIN
+	    MENUITEM "Laý­ &Nomo",	0x30	/* column 0 */
+	    MENUITEM "Laý­ &Tipo",	0x32	/* column 2 */
+	    MENUITEM "Laý­ Grandeco",	0x31	/* ... */
+	    MENUITEM "Laý­ &Dato",	0x33
+	    MENUITEM SEPARATOR
+	    MENUITEM "&Aranøu Aýtomate",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "Vicigu Ikonojn",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM SEPARATOR
+	  MENUITEM "Relegu",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM SEPARATOR
+	  MENUITEM "Enmetu",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "Enmetu kiel Ligo",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM SEPARATOR
+	  POPUP "Nova"
+	  BEGIN
+	    MENUITEM "Nova &Dosierujo",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "Nova &Ligo",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM SEPARATOR
+	  END
+	  MENUITEM SEPARATOR
+	  MENUITEM "Ecoj",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+/*
+ shellview item menu
+*/
+MENU_SHV_FILE MENU DISCARDABLE
+BEGIN
+	POPUP ""
+	BEGIN
+	  MENUITEM "E&sploru",		FCIDM_SHVIEW_EXPLORE
+	  MENUITEM "Malfermu",		FCIDM_SHVIEW_OPEN
+	  MENUITEM SEPARATOR
+	  MENUITEM "Enmetu",		FCIDM_SHVIEW_CUT
+	  MENUITEM "Kopiu",		FCIDM_SHVIEW_COPY
+	  MENUITEM SEPARATOR
+	  MENUITEM "Kreu Ligon",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Forigu",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "Alinomu",		FCIDM_SHVIEW_RENAME
+	  MENUITEM SEPARATOR
+	  MENUITEM "Ecoj",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Foliu Dosierujon"
+FONT 8, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "Bone", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Rezigni", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+ 	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	4, 40, 180, 120
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Pri %s"
 FONT 10, "MS Shell Dlg"
 {
- DEFPUSHBUTTON "Enorde", IDOK, 153, 133, 50, 12, WS_TABSTOP
+ DEFPUSHBUTTON "Bone", 1, 153, 130, 50, 12
  LISTBOX 99, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
- ICON "", 1088, 10, 10, 14, 16
- LTEXT "", 100, 30, 10, 137, 10
- LTEXT "", 101, 30, 22, 137, 10
- LTEXT "Wine was brought to you by:", 98, 8, 55, 137, 10
+ ICON "", 1088, 189, 10, 14, 16
+ LTEXT "", 100, 8, 10, 137, 33
+ LTEXT "Wine estas disponebla dank'al:", 98, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -37,10 +125,101 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Type the name of a program, folder, document, or Internet resource, and Wine will open it for you.", 12289, 36, 11, 182, 18
- LTEXT "&Open:", 12305, 7, 39, 24, 10
+ LTEXT "Skribu nomon de programo, de dosierujo, de documento aý de Interreta fonto, kaj Wine malfermos øin.", 12289, 36, 11, 182, 18
+ LTEXT "Malfermu:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
- DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "Cancel", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Browse...", 12288, 170, 63, 50, 14, WS_TABSTOP
+ DEFPUSHBUTTON "Bone", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Rezigni", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Foliu...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
+
+/*
+	special folders
+*/
+STRINGTABLE DISCARDABLE
+{
+	IDS_DESKTOP		"Desktop"
+	IDS_MYCOMPUTER		"Mea Komputero"
+}
+
+/*
+	context menus
+*/
+STRINGTABLE DISCARDABLE
+{
+	IDS_VIEW_LARGE		"&Grandaj Ikonoj"
+	IDS_VIEW_SMALL		"Malgrandaj Ikonoj"
+	IDS_VIEW_LIST		"&Listo"
+	IDS_VIEW_DETAILS	"&Detale"
+	IDS_SELECT		"Elektu"
+	IDS_OPEN		"Malfermu"
+}
+
+STRINGTABLE DISCARDABLE
+{
+	IDS_CREATEFOLDER_DENIED "Mi ne povas crei novan Dosierujon: Aliro rifuzita."
+	IDS_CREATEFOLDER_CAPTION "Eraro dum kreiøo de dosierujo"
+	IDS_DELETEITEM_CAPTION "Konfirmu forigon de dosiero"
+	IDS_DELETEFOLDER_CAPTION "Konfirmu forigon de dosierujo"
+	IDS_DELETEITEM_TEXT "Æu vi estas certa pri forigo de '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Æu vi estas certa pri forigo de æi tiuj %1 komponantoj?"
+	IDS_OVERWRITEFILE_TEXT "Æu vi supreskribas la dosieron %1?"
+	IDS_OVERWRITEFILE_CAPTION "Konfirmu supreskribiton de dosieron"
+}
+
+/*	columns in the shellview	*/
+STRINGTABLE
+BEGIN
+	IDS_SHV_COLUMN1		"Dosiero"
+	IDS_SHV_COLUMN2		"Gandeco"
+	IDS_SHV_COLUMN3		"Tipo"
+	IDS_SHV_COLUMN4		"Modifita"
+	IDS_SHV_COLUMN5		"Atributoj"
+	IDS_SHV_COLUMN6		"Spaco"
+	IDS_SHV_COLUMN7		"Disponebla Spaco"
+	IDS_SHV_COLUMN8		"Nomo"
+	IDS_SHV_COLUMN9		"Komentario"
+END
+
+
+/* message box strings */
+STRINGTABLE DISCARDABLE
+{
+       IDS_RESTART_TITLE       "Restartigu"
+       IDS_RESTART_PROMPT      "Æu vi volas simuli Vindozan restartigon?"
+       IDS_SHUTDOWN_TITLE      "Adiaýu"
+       IDS_SHUTDOWN_PROMPT     "Æu vi volas adiaýi Wine?"
+}
+
+/* shell folder path default values */
+STRINGTABLE DISCARDABLE
+{
+	IDS_PROGRAMS                "Start Menu\\Programs"
+	IDS_PERSONAL                "Miaj Dokumentoj"
+	IDS_FAVORITES               "Favorites"
+	IDS_STARTUP                 "Start Menu\\Programs\\StartUp"
+	IDS_RECENT                  "Recent"
+	IDS_SENDTO                  "SendTo"
+	IDS_STARTMENU               "Start Menu"
+	IDS_MYMUSIC                 "Miaj Dokumentoj\\Muziko"
+	IDS_MYVIDEO                 "Miai Dokumentoj\\Video"
+	IDS_DESKTOPDIRECTORY        "Desktop"
+	IDS_NETHOOD                 "NetHood"
+	IDS_TEMPLATES               "Templates"
+	IDS_APPDATA                 "Application Data"
+	IDS_PRINTHOOD               "PrintHood"
+	IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
+	IDS_INTERNET_CACHE          "Temporary Internet Files"
+	IDS_COOKIES                 "Cookies"
+	IDS_HISTORY                 "History"
+	IDS_PROGRAM_FILES           "Program Files"
+	IDS_MYPICTURES              "Maj Documentoj\\Bildoj"
+	IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
+	IDS_COMMON_DOCUMENTS        "Documents"
+	IDS_ADMINTOOLS              "Start Menu\\Programs\\Administrative Tools"
+	IDS_COMMON_MUSIC            "Documents\\Musiko"
+	IDS_COMMON_PICTURES         "Documents\\Bildoj"
+	IDS_COMMON_VIDEO            "Documents\\Video"
+	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
+}
+
