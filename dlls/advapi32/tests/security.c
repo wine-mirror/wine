@@ -27,8 +27,20 @@
 #include "aclapi.h"
 #include "winnt.h"
 
-typedef BOOL (WINAPI *fnBuildTrusteeWithSidA)( TRUSTEE *trustee, PSID psid );
-typedef BOOL (WINAPI *fnBuildTrusteeWithNameA)( TRUSTEE *trustee, LPSTR str );
+typedef VOID (WINAPI *fnBuildTrusteeWithSidA)( PTRUSTEEA pTrustee, PSID pSid );
+typedef VOID (WINAPI *fnBuildTrusteeWithNameA)( PTRUSTEEA pTrustee, LPSTR pName );
+typedef VOID (WINAPI *fnBuildTrusteeWithObjectsAndNameA)( PTRUSTEEA pTrustee,
+                                                          POBJECTS_AND_NAME_A pObjName,
+                                                          SE_OBJECT_TYPE ObjectType,
+                                                          LPSTR ObjectTypeName,
+                                                          LPSTR InheritedObjectTypeName,
+                                                          LPSTR Name );
+typedef VOID (WINAPI *fnBuildTrusteeWithObjectsAndSidA)( PTRUSTEEA pTrustee,
+                                                         POBJECTS_AND_SID pObjSid,
+                                                         GUID* pObjectGuid,
+                                                         GUID* pInheritedObjectGuid,
+                                                         PSID pSid );
+typedef LPSTR (WINAPI *fnGetTrusteeNameA)( PTRUSTEEA pTrustee );
 typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
@@ -39,6 +51,9 @@ static HMODULE hmod;
 
 fnBuildTrusteeWithSidA   pBuildTrusteeWithSidA;
 fnBuildTrusteeWithNameA  pBuildTrusteeWithNameA;
+fnBuildTrusteeWithObjectsAndNameA pBuildTrusteeWithObjectsAndNameA;
+fnBuildTrusteeWithObjectsAndSidA pBuildTrusteeWithObjectsAndSidA;
+fnGetTrusteeNameA pGetTrusteeNameA;
 fnConvertSidToStringSidA pConvertSidToStringSidA;
 fnConvertStringSidToSidA pConvertStringSidToSidA;
 fnGetFileSecurityA pGetFileSecurityA;
@@ -148,9 +163,18 @@ static void test_sid(void)
 
 static void test_trustee(void)
 {
+    GUID ObjectType = {0x12345678, 0x1234, 0x5678, {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88}};
+    GUID InheritedObjectType = {0x23456789, 0x2345, 0x6786, {0x2, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99}};
+    GUID ZeroGuid;
+    OBJECTS_AND_NAME_ oan;
+    OBJECTS_AND_SID oas;
     TRUSTEE trustee;
     PSID psid;
-    char str[] = "2jjj";
+    char szObjectTypeName[] = "ObjectTypeName";
+    char szInheritedObjectTypeName[] = "InheritedObjectTypeName";
+    char szTrusteeName[] = "szTrusteeName";
+
+    memset( &ZeroGuid, 0x00, sizeof (ZeroGuid) );
 
     SID_IDENTIFIER_AUTHORITY auth = { {0x11,0x22,0,0,0, 0} };
 
@@ -158,7 +182,15 @@ static void test_trustee(void)
                     GetProcAddress( hmod, "BuildTrusteeWithSidA" );
     pBuildTrusteeWithNameA = (fnBuildTrusteeWithNameA)
                     GetProcAddress( hmod, "BuildTrusteeWithNameA" );
-    if( !pBuildTrusteeWithSidA || !pBuildTrusteeWithNameA)
+    pBuildTrusteeWithObjectsAndNameA = (fnBuildTrusteeWithObjectsAndNameA)
+                    GetProcAddress (hmod, "BuildTrusteeWithObjectsAndNameA" );
+    pBuildTrusteeWithObjectsAndSidA = (fnBuildTrusteeWithObjectsAndSidA)
+                    GetProcAddress (hmod, "BuildTrusteeWithObjectsAndSidA" );
+    pGetTrusteeNameA = (fnGetTrusteeNameA)
+                    GetProcAddress (hmod, "GetTrusteeNameA" );
+    if( !pBuildTrusteeWithSidA || !pBuildTrusteeWithNameA ||
+        !pBuildTrusteeWithObjectsAndNameA || !pBuildTrusteeWithObjectsAndSidA ||
+        !pGetTrusteeNameA )
         return;
 
     if ( ! AllocateAndInitializeSid( &auth, 1, 42, 0,0,0,0,0,0,0,&psid ) )
@@ -167,6 +199,7 @@ static void test_trustee(void)
        return;
     }
 
+    /* test BuildTrusteeWithSidA */
     memset( &trustee, 0xff, sizeof trustee );
     pBuildTrusteeWithSidA( &trustee, psid );
 
@@ -176,18 +209,110 @@ static void test_trustee(void)
     ok( trustee.TrusteeForm == TRUSTEE_IS_SID, "TrusteeForm wrong\n");
     ok( trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
     ok( trustee.ptstrName == (LPSTR) psid, "ptstrName wrong\n" );
+
+    /* test BuildTrusteeWithObjectsAndSidA (test 1) */
+    memset( &trustee, 0xff, sizeof trustee );
+    memset( &oas, 0xff, sizeof(oas) );
+    pBuildTrusteeWithObjectsAndSidA(&trustee, &oas, &ObjectType,
+                                    &InheritedObjectType, psid);
+
+    ok(trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
+    ok(trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, "MultipleTrusteeOperation wrong\n");
+    ok(trustee.TrusteeForm == TRUSTEE_IS_OBJECTS_AND_SID, "TrusteeForm wrong\n");
+    ok(trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
+    ok(trustee.ptstrName == (LPSTR)&oas, "ptstrName wrong\n");
+ 
+    ok(oas.ObjectsPresent == (ACE_OBJECT_TYPE_PRESENT | ACE_INHERITED_OBJECT_TYPE_PRESENT), "ObjectsPresent wrong\n");
+    ok(!memcmp(&oas.ObjectTypeGuid, &ObjectType, sizeof(GUID)), "ObjectTypeGuid wrong\n");
+    ok(!memcmp(&oas.InheritedObjectTypeGuid, &InheritedObjectType, sizeof(GUID)), "InheritedObjectTypeGuid wrong\n");
+    ok(oas.pSid == psid, "pSid wrong\n");
+
+    /* test GetTrusteeNameA */
+    ok(pGetTrusteeNameA(&trustee) == (LPSTR)&oas, "GetTrusteeName returned wrong value\n");
+
+    /* test BuildTrusteeWithObjectsAndSidA (test 2) */
+    memset( &trustee, 0xff, sizeof trustee );
+    memset( &oas, 0xff, sizeof(oas) );
+    pBuildTrusteeWithObjectsAndSidA(&trustee, &oas, NULL,
+                                    &InheritedObjectType, psid);
+
+    ok(trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
+    ok(trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, "MultipleTrusteeOperation wrong\n");
+    ok(trustee.TrusteeForm == TRUSTEE_IS_OBJECTS_AND_SID, "TrusteeForm wrong\n");
+    ok(trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
+    ok(trustee.ptstrName == (LPSTR)&oas, "ptstrName wrong\n");
+ 
+    ok(oas.ObjectsPresent == ACE_INHERITED_OBJECT_TYPE_PRESENT, "ObjectsPresent wrong\n");
+    ok(!memcmp(&oas.ObjectTypeGuid, &ZeroGuid, sizeof(GUID)), "ObjectTypeGuid wrong\n");
+    ok(!memcmp(&oas.InheritedObjectTypeGuid, &InheritedObjectType, sizeof(GUID)), "InheritedObjectTypeGuid wrong\n");
+    ok(oas.pSid == psid, "pSid wrong\n");
+
     FreeSid( psid );
 
     /* test BuildTrusteeWithNameA */
     memset( &trustee, 0xff, sizeof trustee );
-    pBuildTrusteeWithNameA( &trustee, str );
+    pBuildTrusteeWithNameA( &trustee, szTrusteeName );
 
     ok( trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
     ok( trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, 
         "MultipleTrusteeOperation wrong\n");
     ok( trustee.TrusteeForm == TRUSTEE_IS_NAME, "TrusteeForm wrong\n");
     ok( trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
-    ok( trustee.ptstrName == str, "ptstrName wrong\n" );
+    ok( trustee.ptstrName == szTrusteeName, "ptstrName wrong\n" );
+
+    /* test BuildTrusteeWithObjectsAndNameA (test 1) */
+    memset( &trustee, 0xff, sizeof trustee );
+    memset( &oan, 0xff, sizeof(oan) );
+    pBuildTrusteeWithObjectsAndNameA(&trustee, &oan, SE_KERNEL_OBJECT, szObjectTypeName,
+                                     szInheritedObjectTypeName, szTrusteeName);
+
+    ok(trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
+    ok(trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, "MultipleTrusteeOperation wrong\n");
+    ok(trustee.TrusteeForm == TRUSTEE_IS_OBJECTS_AND_NAME, "TrusteeForm wrong\n");
+    ok(trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
+    ok(trustee.ptstrName == (LPTSTR)&oan, "ptstrName wrong\n");
+ 
+    ok(oan.ObjectsPresent == (ACE_OBJECT_TYPE_PRESENT | ACE_INHERITED_OBJECT_TYPE_PRESENT), "ObjectsPresent wrong\n");
+    ok(oan.ObjectType == SE_KERNEL_OBJECT, "ObjectType wrong\n");
+    ok(oan.InheritedObjectTypeName == szInheritedObjectTypeName, "InheritedObjectTypeName wrong\n");
+    ok(oan.ptstrName == szTrusteeName, "szTrusteeName wrong\n");
+
+    /* test GetTrusteeNameA */
+    ok(pGetTrusteeNameA(&trustee) == (LPSTR)&oan, "GetTrusteeName returned wrong value\n");
+
+    /* test BuildTrusteeWithObjectsAndNameA (test 2) */
+    memset( &trustee, 0xff, sizeof trustee );
+    memset( &oan, 0xff, sizeof(oan) );
+    pBuildTrusteeWithObjectsAndNameA(&trustee, &oan, SE_KERNEL_OBJECT, NULL,
+                                     szInheritedObjectTypeName, szTrusteeName);
+
+    ok(trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
+    ok(trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, "MultipleTrusteeOperation wrong\n");
+    ok(trustee.TrusteeForm == TRUSTEE_IS_OBJECTS_AND_NAME, "TrusteeForm wrong\n");
+    ok(trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
+    ok(trustee.ptstrName == (LPSTR)&oan, "ptstrName wrong\n");
+ 
+    ok(oan.ObjectsPresent == ACE_INHERITED_OBJECT_TYPE_PRESENT, "ObjectsPresent wrong\n");
+    ok(oan.ObjectType == SE_KERNEL_OBJECT, "ObjectType wrong\n");
+    ok(oan.InheritedObjectTypeName == szInheritedObjectTypeName, "InheritedObjectTypeName wrong\n");
+    ok(oan.ptstrName == szTrusteeName, "szTrusteeName wrong\n");
+
+    /* test BuildTrusteeWithObjectsAndNameA (test 3) */
+    memset( &trustee, 0xff, sizeof trustee );
+    memset( &oan, 0xff, sizeof(oan) );
+    pBuildTrusteeWithObjectsAndNameA(&trustee, &oan, SE_KERNEL_OBJECT, szObjectTypeName,
+                                     NULL, szTrusteeName);
+
+    ok(trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
+    ok(trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, "MultipleTrusteeOperation wrong\n");
+    ok(trustee.TrusteeForm == TRUSTEE_IS_OBJECTS_AND_NAME, "TrusteeForm wrong\n");
+    ok(trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
+    ok(trustee.ptstrName == (LPTSTR)&oan, "ptstrName wrong\n");
+ 
+    ok(oan.ObjectsPresent == ACE_OBJECT_TYPE_PRESENT, "ObjectsPresent wrong\n");
+    ok(oan.ObjectType == SE_KERNEL_OBJECT, "ObjectType wrong\n");
+    ok(oan.InheritedObjectTypeName == NULL, "InheritedObjectTypeName wrong\n");
+    ok(oan.ptstrName == szTrusteeName, "szTrusteeName wrong\n");
 }
  
 /* If the first isn't defined, assume none is */

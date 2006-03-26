@@ -3626,6 +3626,9 @@ typedef enum tagSID_NAME_USE {
 	SidTypeUnknown
 } SID_NAME_USE,*PSID_NAME_USE;
 
+#define ACE_OBJECT_TYPE_PRESENT 0x1
+#define ACE_INHERITED_OBJECT_TYPE_PRESENT   0x2
+
 /* Access rights */
 
 /* DELETE may be already defined via /usr/include/arpa/nameser_compat.h */

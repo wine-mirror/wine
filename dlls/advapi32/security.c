@@ -2067,14 +2067,33 @@ VOID WINAPI BuildTrusteeWithObjectsAndNameA( PTRUSTEEA pTrustee, POBJECTS_AND_NA
                                              SE_OBJECT_TYPE ObjectType, LPSTR ObjectTypeName,
                                              LPSTR InheritedObjectTypeName, LPSTR Name )
 {
+    DWORD ObjectsPresent = 0;
+
     TRACE("%p %p 0x%08x %p %p %s\n", pTrustee, pObjName,
           ObjectType, ObjectTypeName, InheritedObjectTypeName, debugstr_a(Name));
 
+    /* Fill the OBJECTS_AND_NAME structure */
+    pObjName->ObjectType = ObjectType;
+    if (ObjectTypeName != NULL)
+    {
+        ObjectsPresent |= ACE_OBJECT_TYPE_PRESENT;
+    }
+
+    pObjName->InheritedObjectTypeName = InheritedObjectTypeName;
+    if (InheritedObjectTypeName != NULL)
+    {
+        ObjectsPresent |= ACE_INHERITED_OBJECT_TYPE_PRESENT;
+    }
+
+    pObjName->ObjectsPresent = ObjectsPresent;
+    pObjName->ptstrName = Name;
+
+    /* Fill the TRUSTEE structure */
     pTrustee->pMultipleTrustee = NULL;
     pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     pTrustee->TrusteeForm = TRUSTEE_IS_OBJECTS_AND_NAME;
     pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
-    pTrustee->ptstrName = Name;
+    pTrustee->ptstrName = pObjName;
 }
 
 /******************************************************************************
@@ -2084,38 +2103,115 @@ VOID WINAPI BuildTrusteeWithObjectsAndNameW( PTRUSTEEW pTrustee, POBJECTS_AND_NA
                                              SE_OBJECT_TYPE ObjectType, LPWSTR ObjectTypeName,
                                              LPWSTR InheritedObjectTypeName, LPWSTR Name )
 {
+    DWORD ObjectsPresent = 0;
+
     TRACE("%p %p 0x%08x %p %p %s\n", pTrustee, pObjName,
           ObjectType, ObjectTypeName, InheritedObjectTypeName, debugstr_w(Name));
 
+    /* Fill the OBJECTS_AND_NAME structure */
+    pObjName->ObjectType = ObjectType;
+    if (ObjectTypeName != NULL)
+    {
+        ObjectsPresent |= ACE_OBJECT_TYPE_PRESENT;
+    }
+
+    pObjName->InheritedObjectTypeName = InheritedObjectTypeName;
+    if (InheritedObjectTypeName != NULL)
+    {
+        ObjectsPresent |= ACE_INHERITED_OBJECT_TYPE_PRESENT;
+    }
+
+    pObjName->ObjectsPresent = ObjectsPresent;
+    pObjName->ptstrName = Name;
+
+    /* Fill the TRUSTEE structure */
     pTrustee->pMultipleTrustee = NULL;
     pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     pTrustee->TrusteeForm = TRUSTEE_IS_OBJECTS_AND_NAME;
     pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
-    pTrustee->ptstrName = Name;
+    pTrustee->ptstrName = (LPWSTR)pObjName;
 }
 
 VOID WINAPI BuildTrusteeWithObjectsAndSidA( PTRUSTEEA pTrustee, POBJECTS_AND_SID pObjSid,
                                             GUID* pObjectGuid, GUID* pInheritedObjectGuid, PSID pSid )
 {
+    DWORD ObjectsPresent = 0;
+
     TRACE("%p %p %p %p %p\n", pTrustee, pObjSid, pObjectGuid, pInheritedObjectGuid, pSid);
 
+    /* Fill the OBJECTS_AND_SID structure */
+    if (pObjectGuid != NULL)
+    {
+        pObjSid->ObjectTypeGuid = *pObjectGuid;
+        ObjectsPresent |= ACE_OBJECT_TYPE_PRESENT;
+    }
+    else
+    {
+        ZeroMemory(&pObjSid->ObjectTypeGuid,
+                   sizeof(GUID));
+    }
+
+    if (pInheritedObjectGuid != NULL)
+    {
+        pObjSid->InheritedObjectTypeGuid = *pInheritedObjectGuid;
+        ObjectsPresent |= ACE_INHERITED_OBJECT_TYPE_PRESENT;
+    }
+    else
+    {
+        ZeroMemory(&pObjSid->InheritedObjectTypeGuid,
+                   sizeof(GUID));
+    }
+
+    pObjSid->ObjectsPresent = ObjectsPresent;
+    pObjSid->pSid = pSid;
+
+    /* Fill the TRUSTEE structure */
     pTrustee->pMultipleTrustee = NULL;
     pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     pTrustee->TrusteeForm = TRUSTEE_IS_OBJECTS_AND_SID;
     pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
-    pTrustee->ptstrName = (LPSTR) pSid;
+    pTrustee->ptstrName = (LPSTR) pObjSid;
 }
 
 VOID WINAPI BuildTrusteeWithObjectsAndSidW( PTRUSTEEW pTrustee, POBJECTS_AND_SID pObjSid,
                                             GUID* pObjectGuid, GUID* pInheritedObjectGuid, PSID pSid )
 {
+    DWORD ObjectsPresent = 0;
+
     TRACE("%p %p %p %p %p\n", pTrustee, pObjSid, pObjectGuid, pInheritedObjectGuid, pSid);
 
+    /* Fill the OBJECTS_AND_SID structure */
+    if (pObjectGuid != NULL)
+    {
+        pObjSid->ObjectTypeGuid = *pObjectGuid;
+        ObjectsPresent |= ACE_OBJECT_TYPE_PRESENT;
+    }
+    else
+    {
+        ZeroMemory(&pObjSid->ObjectTypeGuid,
+                   sizeof(GUID));
+    }
+
+    if (pInheritedObjectGuid != NULL)
+    {
+        pObjSid->InheritedObjectTypeGuid = *pInheritedObjectGuid;
+        ObjectsPresent |= ACE_INHERITED_OBJECT_TYPE_PRESENT;
+    }
+    else
+    {
+        ZeroMemory(&pObjSid->InheritedObjectTypeGuid,
+                   sizeof(GUID));
+    }
+
+    pObjSid->ObjectsPresent = ObjectsPresent;
+    pObjSid->pSid = pSid;
+
+    /* Fill the TRUSTEE structure */
     pTrustee->pMultipleTrustee = NULL;
     pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     pTrustee->TrusteeForm = TRUSTEE_IS_OBJECTS_AND_SID;
     pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
-    pTrustee->ptstrName = (LPWSTR) pSid;
+    pTrustee->ptstrName = (LPWSTR) pObjSid;
 }
 
 /******************************************************************************
