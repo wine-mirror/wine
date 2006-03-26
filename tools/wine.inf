@@ -2111,15 +2111,31 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,,winhelp.exe
 10,,winhlp32.exe,winhelp.exe
 10,command,start.exe
+11,,advapi32.dll
+11,,comdlg32.dll
 11,,control.exe
+11,,crypt32.dll
+11,,gdi32.dll
 11,,help.exe,winhelp.exe
+11,,kernel32.dll
 11,,msiexec.exe
+11,,msvcrt.dll
 11,,notepad.exe
-11,,shdocvw.dll
+11,,ntdll.dll
 11,,progman.exe
 11,,regsvr32.exe
+11,,rpcrt4.dll
+11,,shdocvw.dll
+11,,shell32.dll
+11,,shfolder.dll
+11,,shlwapi.dll
+11,,user32.dll
+11,,version.dll
 11,,wcmd.exe
+11,,winmm.dll
 11,,winver.exe
+11,,ws2_32.dll
+11,,wsock32.dll
 
 [SystemIni]
 system.ini, mci,,"MPEGVideo=mciqtz.drv" 
