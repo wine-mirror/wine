@@ -531,6 +531,7 @@ static inline TEB *get_current_teb(void)
  */
 static void save_vm86_context( CONTEXT *context, const struct vm86plus_struct *vm86 )
 {
+    context->ContextFlags = CONTEXT_FULL;
     context->Eax    = vm86->regs.eax;
     context->Ebx    = vm86->regs.ebx;
     context->Ecx    = vm86->regs.ecx;
@@ -1528,7 +1529,7 @@ void __wine_enter_vm86( CONTEXT *context )
         case VM86_TRAP: /* return due to DOS-debugger request */
             switch(VM86_ARG(res))
             {
-            case TRAP_x86_TRCTRAP:  /* Single-step exception, single step flag is cleared by raise_trap_exception */
+            case TRAP_x86_TRCTRAP:  /* Single-step exception */
                 rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
                 break;
             case TRAP_x86_BPTFLT:   /* Breakpoint exception */
@@ -1538,8 +1539,7 @@ void __wine_enter_vm86( CONTEXT *context )
                 rec.ExceptionCode = EXCEPTION_BREAKPOINT;
                 break;
             }
-            raise_trap_exception( &rec, context );
-            continue;
+            break;
         case VM86_INTx: /* int3/int x instruction (ARG = x) */
             rec.ExceptionCode = EXCEPTION_VM86_INTx;
             rec.NumberParameters = 1;
