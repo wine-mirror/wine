@@ -660,7 +660,7 @@ void kill_process( struct process *process, struct thread *skip, int exit_code )
     {
         struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
 
-        thread->exit_code = exit_code;
+        if (exit_code) thread->exit_code = exit_code;
         if (thread != skip) kill_thread( thread, 1 );
     }
 }

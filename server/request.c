@@ -389,11 +389,14 @@ int receive_fd( struct process *process )
         return 0;
     }
 
-    if (ret >= 0)
+    if (!ret)
     {
-        if (ret > 0)
-            fprintf( stderr, "Protocol error: process %p: partial recvmsg %d for fd\n",
-                     process, ret );
+        kill_process( process, NULL, 0 );
+    }
+    else if (ret > 0)
+    {
+        fprintf( stderr, "Protocol error: process %p: partial recvmsg %d for fd\n",
+                 process, ret );
         kill_process( process, NULL, 1 );
     }
     else
