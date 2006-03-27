@@ -156,6 +156,39 @@ HRESULT WINAPI LaunchINFSectionExA( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, I
     return E_FAIL;
 }
 
+static HRESULT launch_exe(LPCWSTR cmd, LPCWSTR dir, HANDLE *phEXE)
+{
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+
+    if (phEXE) *phEXE = NULL;
+
+    ZeroMemory(&pi, sizeof(pi));
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+
+    if (!CreateProcessW(NULL, (LPWSTR)cmd, NULL, NULL, FALSE,
+                        CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_PROCESS_GROUP,
+                        NULL, dir, &si, &pi))
+    {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    CloseHandle(pi.hThread);
+
+    if (phEXE)
+    {
+        *phEXE = pi.hProcess;
+        return S_ASYNCHRONOUS;
+    }
+
+    /* wait for the child process to finish */
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    CloseHandle(pi.hProcess);
+
+    return S_OK;
+}
+
 /***********************************************************************
  *      RunSetupCommandA  (ADVPACK.@)
  *
@@ -220,23 +253,26 @@ HRESULT WINAPI RunSetupCommandA(HWND hWnd, LPCSTR szCmdName,
  *   HRESULT_FROM_WIN32(GetLastError())   Some other error
  *
  * BUGS
- *   Unimplemented
+ *   INF install unimplemented.
  */
 HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
                                 LPCWSTR szInfSection, LPCWSTR szDir,
                                 LPCWSTR lpszTitle, HANDLE *phEXE,
                                 DWORD dwFlags, LPVOID pvReserved )
 {
-    FIXME("(%p, %s, %s, %s, %s, %p, 0x%08lx, %p): stub\n",
+    TRACE("(%p, %s, %s, %s, %s, %p, 0x%08lx, %p)\n",
            hWnd, debugstr_w(szCmdName), debugstr_w(szInfSection),
            debugstr_w(szDir), debugstr_w(lpszTitle),
            phEXE, dwFlags, pvReserved);
+
+    if (dwFlags)
+        FIXME("Unhandled flags: 0x%08lx\n", dwFlags);
 
     if (!szCmdName || !szDir)
         return E_INVALIDARG;
 
     if (!(dwFlags & RSC_FLAG_INF))
-        *phEXE = NULL;
+        return launch_exe(szCmdName, szDir, phEXE);
 
     return E_UNEXPECTED;
 }

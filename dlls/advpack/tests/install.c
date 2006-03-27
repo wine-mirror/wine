@@ -56,22 +56,16 @@ static void test_RunSetupCommand()
     /* try to run a non-existent exe */
     hexe = (HANDLE)0xdeadbeef;
     hr = pRunSetupCommand(NULL, "idontexist.exe", "Install", "c:\\windows\\system32", "Title", &hexe, 0, NULL);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %ld\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %ld\n", hr);
     ok(hexe == NULL, "Expcted hexe to be NULL\n");
     ok(!TerminateProcess(hexe, 0), "Expected TerminateProcess to fail\n");
 
     /* try a bad directory */
     hexe = (HANDLE)0xdeadbeef;
-    hr = pRunSetupCommand(NULL, "winve.exe", "Install", "", "Title", &hexe, 0, NULL);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_DIRECTORY),
-           "Expected HRESULT_FROM_WIN32(ERROR_DIRECTORY), got %ld\n", hr);
-    }
+    hr = pRunSetupCommand(NULL, "winver.exe", "Install", "non\\existent\\directory", "Title", &hexe, 0, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_DIRECTORY),
+       "Expected HRESULT_FROM_WIN32(ERROR_DIRECTORY), got %ld\n", hr);
     ok(hexe == NULL, "Expcted hexe to be NULL\n");
     ok(!TerminateProcess(hexe, 0), "Expected TerminateProcess to fail\n");
 
