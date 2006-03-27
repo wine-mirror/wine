@@ -514,8 +514,8 @@ void DOSVM_HardwareInterruptRM( CONTEXT86 *context, BYTE intnum )
          context->SegCs = SELECTOROF( handler );
          context->Eip   = OFFSETOF( handler );
 
-         /* Clear virtual interrupt flag. */
-         context->EFlags &= ~VIF_MASK;
+         /* Clear virtual interrupt flag and trap flag. */
+         context->EFlags &= ~(VIF_MASK | TF_MASK);
      }
 }
 

@@ -98,6 +98,7 @@ extern struct DPMI_segments *DOSVM_dpmi_segments;
  * IF_MASK is only pushed into real mode stack.
  */
 #define V86_FLAG 0x00020000
+#define TF_MASK  0x00000100
 #define IF_MASK  0x00000200
 #define VIF_MASK 0x00080000
 #define VIP_MASK 0x00100000
