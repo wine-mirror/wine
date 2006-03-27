@@ -41,7 +41,6 @@
 
 
 static struct list winstation_list = LIST_INIT(winstation_list);
-static struct winstation *interactive_winstation;
 static struct namespace *winstation_namespace;
 
 static void winstation_dump( struct object *obj, int verbose );
@@ -135,7 +134,6 @@ static void winstation_destroy( struct object *obj )
 {
     struct winstation *winstation = (struct winstation *)obj;
 
-    if (winstation == interactive_winstation) interactive_winstation = NULL;
     list_remove( &winstation->entry );
     if (winstation->clipboard) release_object( winstation->clipboard );
     if (winstation->atom_table) release_object( winstation->atom_table );
@@ -247,67 +245,75 @@ struct desktop *get_thread_desktop( struct thread *thread, unsigned int access )
     return get_desktop_obj( thread->process, thread->desktop, access );
 }
 
-/* connect a process to its window station */
-void connect_process_winstation( struct process *process, const struct unicode_str *name )
+/* set the process default desktop handle */
+void set_process_default_desktop( struct process *process, struct desktop *desktop,
+                                  obj_handle_t handle )
 {
-    struct winstation *winstation;
+    struct thread *thread;
+    struct desktop *old_desktop;
 
-    if (process->winstation) return;  /* already has one */
+    if (process->desktop == handle) return;  /* nothing to do */
 
-    /* check for an inherited winstation handle (don't ask...) */
-    if ((process->winstation = find_inherited_handle( process, &winstation_ops )) != 0) return;
+    if (!(old_desktop = get_desktop_obj( process, process->desktop, 0 ))) clear_error();
+    process->desktop = handle;
 
-    if (name)
+    /* set desktop for threads that don't have one yet */
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+        if (!thread->desktop) thread->desktop = handle;
+
+    desktop->users++;
+    if (desktop->close_timeout)
     {
-        winstation = create_winstation( name, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, 0 );
+        remove_timeout_user( desktop->close_timeout );
+        desktop->close_timeout = NULL;
     }
-    else
+    if (old_desktop)
     {
-        if (!interactive_winstation)
-        {
-            static const WCHAR winsta0W[] = {'W','i','n','S','t','a','0'};
-            static const struct unicode_str winsta0 = { winsta0W, sizeof(winsta0W) };
-            interactive_winstation = create_winstation( &winsta0, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, 0 );
-            winstation = interactive_winstation;
-        }
-        else winstation = (struct winstation *)grab_object( interactive_winstation );
+        old_desktop->users--;
+        release_object( old_desktop );
     }
-    if (winstation)
-    {
-        process->winstation = alloc_handle( process, winstation, WINSTA_ALL_ACCESS, 0 );
-        release_object( winstation );
-    }
-    clear_error();  /* ignore errors */
 }
 
-/* connect a process to its main desktop */
-void connect_process_desktop( struct process *process, const struct unicode_str *name )
+/* connect a process to its window station */
+void connect_process_winstation( struct process *process, struct thread *parent )
 {
-    struct desktop *desktop;
-    struct winstation *winstation;
+    struct winstation *winstation = NULL;
+    struct desktop *desktop = NULL;
+    obj_handle_t handle;
 
-    if (process->desktop) return;  /* already has one */
-
-    if ((winstation = get_process_winstation( process, WINSTA_CREATEDESKTOP )))
+    /* check for an inherited winstation handle (don't ask...) */
+    if ((handle = find_inherited_handle( process, &winstation_ops )))
     {
-        static const WCHAR defaultW[] = {'D','e','f','a','u','l','t'};
-        static const struct unicode_str default_str = { defaultW, sizeof(defaultW) };
-
-        if (!name) name = &default_str;
-        if ((desktop = create_desktop( name, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, 0, winstation )))
-        {
-            process->desktop = alloc_handle( process, desktop, DESKTOP_ALL_ACCESS, 0 );
-            desktop->users++;
-            if (desktop->close_timeout)
-            {
-                remove_timeout_user( desktop->close_timeout );
-                desktop->close_timeout = NULL;
-            }
-            release_object( desktop );
-        }
-        release_object( winstation );
+        winstation = (struct winstation *)get_handle_obj( process, handle, 0, &winstation_ops );
     }
-    clear_error();  /* ignore errors */
+    else if (parent && parent->process->winstation)
+    {
+        handle = duplicate_handle( parent->process, parent->process->winstation,
+                                   process, 0, 0, DUP_HANDLE_SAME_ACCESS );
+        winstation = (struct winstation *)get_handle_obj( process, handle, 0, &winstation_ops );
+    }
+    if (!winstation) goto done;
+    process->winstation = handle;
+
+    if ((handle = find_inherited_handle( process, &desktop_ops )))
+    {
+        desktop = get_desktop_obj( process, handle, 0 );
+        if (!desktop || desktop->winstation != winstation) goto done;
+    }
+    else if (parent && parent->desktop)
+    {
+        desktop = get_desktop_obj( parent->process, parent->desktop, 0 );
+        if (!desktop || desktop->winstation != winstation) goto done;
+        handle = duplicate_handle( parent->process, parent->desktop,
+                                   process, 0, 0, DUP_HANDLE_SAME_ACCESS );
+    }
+
+    if (handle) set_process_default_desktop( process, desktop, handle );
+
+done:
+    if (desktop) release_object( desktop );
+    if (winstation) release_object( winstation );
+    clear_error();
 }
 
 static void close_desktop_timeout( void *private )
@@ -334,6 +340,7 @@ void close_process_desktop( struct process *process )
             struct timeval when;
             gettimeofday( &when, NULL );
             add_timeout( &when, 1000 );
+            assert( !desktop->close_timeout );
             desktop->close_timeout = add_timeout_user( &when, close_desktop_timeout, desktop );
         }
         release_object( desktop );
@@ -517,6 +524,9 @@ DECL_HANDLER(set_thread_desktop)
         set_error( STATUS_DEVICE_BUSY );
     else
         current->desktop = req->handle;  /* FIXME: should we close the old one? */
+
+    if (!current->process->desktop)
+        set_process_default_desktop( current->process, new_desktop, req->handle );
 
     if (old_desktop != new_desktop && current->queue) detach_thread_input( current );
 

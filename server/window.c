@@ -442,6 +442,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         list_init( &win->entry );
         assert( !desktop->top_window );
         desktop->top_window = win;
+        set_process_default_desktop( current->process, desktop, current->desktop );
     }
 
     current->desktop_users++;

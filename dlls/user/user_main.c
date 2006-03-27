@@ -31,9 +31,12 @@
 #include "controls.h"
 #include "user_private.h"
 #include "win.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);
+
+#define DESKTOP_ALL_ACCESS 0x01ff
 
 WORD USER_HeapSel = 0;  /* USER heap selector */
 HMODULE user32_module = 0;
@@ -153,6 +156,48 @@ static void palette_init(void)
 
 
 /***********************************************************************
+ *           winstation_init
+ *
+ * Connect to the process window station and desktop.
+ */
+static void winstation_init(void)
+{
+    static const WCHAR WinSta0[] = {'W','i','n','S','t','a','0',0};
+    static const WCHAR Default[] = {'D','e','f','a','u','l','t',0};
+
+    STARTUPINFOW info;
+    WCHAR *winstation = NULL, *desktop = NULL, *buffer = NULL;
+    HANDLE handle;
+
+    GetStartupInfoW( &info );
+    if (info.lpDesktop && *info.lpDesktop)
+    {
+        buffer = HeapAlloc( GetProcessHeap(), 0, (strlenW(info.lpDesktop) + 1) * sizeof(WCHAR) );
+        strcpyW( buffer, info.lpDesktop );
+        if ((desktop = strchrW( buffer, '\\' )))
+        {
+            *desktop++ = 0;
+            winstation = buffer;
+        }
+        else desktop = buffer;
+    }
+
+    /* set winstation if explicitly specified, or if we don't have one yet */
+    if (buffer || !GetProcessWindowStation())
+    {
+        handle = CreateWindowStationW( winstation ? winstation : WinSta0, 0, WINSTA_ALL_ACCESS, NULL );
+        if (handle) SetProcessWindowStation( handle );
+    }
+    if (buffer || !GetThreadDesktop( GetCurrentThreadId() ))
+    {
+        handle = CreateDesktopW( desktop ? desktop : Default, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+        if (handle) SetThreadDesktop( handle );
+    }
+    HeapFree( GetProcessHeap(), 0, buffer );
+}
+
+
+/***********************************************************************
  *           USER initialisation routine
  */
 static BOOL process_attach(void)
@@ -169,6 +214,8 @@ static BOOL process_attach(void)
 
     /* some Win9x dlls expect keyboard to be loaded */
     if (GetVersion() & 0x80000000) LoadLibrary16( "keyboard.drv" );
+
+    winstation_init();
 
     /* Initialize system colors and metrics */
     SYSPARAMS_Init();

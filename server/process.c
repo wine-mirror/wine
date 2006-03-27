@@ -339,10 +339,8 @@ size_t init_process( struct thread *thread )
         return 0;
     }
 
-    /* connect to the window station and desktop */
-    connect_process_winstation( process, NULL );
-    connect_process_desktop( process, NULL );
-    thread->desktop = process->desktop;
+    /* connect to the window station */
+    connect_process_winstation( process, parent_thread );
 
     if (!info) return 0;
 
