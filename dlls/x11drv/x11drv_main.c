@@ -87,7 +87,6 @@ int alloc_system_colors = 256;
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 
 static BOOL desktop_dbl_buf = TRUE;
-static char *desktop_geometry;
 
 static x11drv_error_callback err_callback;   /* current callback for error */
 static Display *err_callback_display;        /* display callback is set for */
@@ -296,14 +295,6 @@ static void setup_options(void)
         }
     }
 
-    if (!get_config_key( hkey, appkey, "Desktop", buffer, sizeof(buffer) ))
-    {
-        /* Imperfect validation:  If Desktop=N, then we don't turn on
-        ** the --desktop option.  We should really validate for a correct
-        ** sizing entry */
-        if (!IS_OPTION_FALSE(buffer[0])) desktop_geometry = strdup(buffer);
-    }
-
     if (!get_config_key( hkey, appkey, "Managed", buffer, sizeof(buffer) ))
         managed_mode = IS_OPTION_TRUE( buffer[0] );
 
@@ -409,6 +400,7 @@ static BOOL process_attach(void)
         visual       = desktop_vi->visual;
         screen       = ScreenOfDisplay(display, desktop_vi->screen);
         screen_depth = desktop_vi->depth;
+        XFree(desktop_vi);
     }
 
     XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
@@ -419,13 +411,6 @@ static BOOL process_attach(void)
     screen_height = HeightOfScreen( screen );
 
     X11DRV_Settings_Init();
-
-    if (desktop_geometry)
-    {
-        root_window = X11DRV_create_desktop( desktop_vi, desktop_geometry );
-    }
-    if(desktop_vi)
-        XFree(desktop_vi);
 
 #ifdef HAVE_LIBXXF86VM
     /* initialize XVidMode */

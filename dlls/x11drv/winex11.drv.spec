@@ -123,5 +123,8 @@
 @ cdecl -norelay wine_tsx11_lock()
 @ cdecl -norelay wine_tsx11_unlock()
 
+# Desktop
+@ cdecl wine_create_desktop(long long) X11DRV_create_desktop
+
 # XIM
 @ cdecl ForceXIMReset(long) X11DRV_ForceXIMReset

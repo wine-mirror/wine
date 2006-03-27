@@ -846,30 +846,58 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
 }
 
 
+/* fill in the desktop X window id in the x11drv_win_data structure */
+static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
+{
+    RECT rect;
+    Window win = (Window)GetPropA( data->hwnd, whole_window_prop );
+
+    if (win)
+    {
+        /* retrieve the real size of the desktop */
+        SERVER_START_REQ( get_window_rectangles )
+        {
+            req->handle = data->hwnd;
+            if (!wine_server_call( req ))
+            {
+                screen_width  = reply->window.right - reply->window.left;
+                screen_height = reply->window.bottom - reply->window.top;
+            }
+        }
+        SERVER_END_REQ;
+        data->whole_window = root_window = win;
+    }
+    else
+    {
+        VisualID visualid;
+
+        wine_tsx11_lock();
+        visualid = XVisualIDFromVisual(visual);
+        wine_tsx11_unlock();
+        SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
+        SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
+        data->whole_window = root_window;
+        SetRect( &rect, 0, 0, screen_width, screen_height );
+        X11DRV_set_window_pos( data->hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL );
+        if (root_window != DefaultRootWindow( display ))
+        {
+            data->managed = TRUE;
+            SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
+        }
+    }
+}
+
 /**********************************************************************
  *		CreateDesktopWindow   (X11DRV.@)
  */
 BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
 {
     Display *display = thread_display();
-    VisualID visualid;
     struct x11drv_win_data *data;
-    RECT rect;
 
     if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
-    data->whole_window = root_window;
 
-    SetRect( &rect, 0, 0, screen_width, screen_height );
-    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL );
-
-    wine_tsx11_lock();
-    visualid = XVisualIDFromVisual(visual);
-    wine_tsx11_unlock();
-
-    SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
-    SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
-
-    if (root_window != DefaultRootWindow(display) && !desktop_tid) X11DRV_create_desktop_thread();
+    get_desktop_xwin( display, data );
 
     return TRUE;
 }
@@ -921,6 +949,10 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
     {
         if (!create_whole_window( display, data, cs->style )) goto failed;
+    }
+    else if (hwnd == GetDesktopWindow())
+    {
+        get_desktop_xwin( display, data );
     }
 
     /* get class or window DC if needed */

@@ -29,7 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
 typedef struct parametersTAG {
     BOOL    explorer_mode;
-    BOOL    desktop_mode;
     WCHAR   root[MAX_PATH];
     WCHAR   selection[MAX_PATH];
 } parameters_struct;
@@ -137,8 +136,7 @@ static void ParseCommandLine(LPSTR commandline,parameters_struct *parameters)
         }
         else if (strncmp(p,"desktop",7)==0)
         {
-            parameters->desktop_mode = TRUE;
-            p+=7;
+            manage_desktop( p + 7 );  /* the rest of the command line is handled by desktop mode */
         }
         p2 = p;
         p = strchr(p,'/');
@@ -169,12 +167,6 @@ int WINAPI WinMain(HINSTANCE hinstance,
 
     ParseCommandLine(cmdline,&parameters);
     len = lstrlenW(winefile) +1;
-
-    if (parameters.desktop_mode)
-    {
-        manage_desktop();
-        return 0;
-    }
 
     if (parameters.selection[0])
     {
