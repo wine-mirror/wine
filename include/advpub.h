@@ -25,6 +25,10 @@
 extern "C" {
 #endif
 
+#ifndef S_ASYNCHRONOUS
+#define S_ASYNCHRONOUS  _HRESULT_TYPEDEF_(0x401E8L)
+#endif
+
 typedef struct _CabInfoA
 {
     LPSTR  pszCab;

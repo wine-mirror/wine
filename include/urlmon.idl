@@ -1146,7 +1146,9 @@ cpp_quote("DEFINE_GUID(CLSID_MkProtocol, 0x79EAC9E6, 0xBAF9, 0x11CE, 0x8C,0x82, 
 
 
 cpp_quote("#define MK_S_ASYNCHRONOUS                0x000401E8")
+cpp_quote("#ifndef S_ASYNCHRONOUS")
 cpp_quote("#define S_ASYNCHRONOUS                   MK_S_ASYNCHRONOUS")
+cpp_quote("#endif")
 
 cpp_quote("#define INET_E_ERROR_FIRST               0x800C0002")
 cpp_quote("#define INET_E_INVALID_URL               0x800C0002")

@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <windows.h>
 #include <advpub.h>
-#include <urlmon.h>
 #include "wine/test.h"
 
 /* function pointers */
@@ -67,7 +66,7 @@ static void test_RunSetupCommand()
 
     /* try a bad directory */
     hexe = (HANDLE)0xdeadbeef;
-    hr = pRunSetupCommand(NULL, "winver.exe", "Install", "windows\\system32", "Title", &hexe, 0, NULL);
+    hr = pRunSetupCommand(NULL, "winve.exe", "Install", "", "Title", &hexe, 0, NULL);
     todo_wine
     {
         ok(hr == HRESULT_FROM_WIN32(ERROR_DIRECTORY),
@@ -89,12 +88,9 @@ static void test_RunSetupCommand()
     /* run winver.exe */
     hexe = (HANDLE)0xdeadbeef;
     hr = pRunSetupCommand(NULL, "winver.exe", "Install", "c:\\windows\\system32", "Title", &hexe, 0, NULL);
-    todo_wine
-    {
-        ok(hr == S_ASYNCHRONOUS, "Expected S_ASYNCHRONOUS, got %ld\n", hr);
-        ok(hexe != NULL, "Expected hexe to be non-NULL\n");
-        ok(TerminateProcess(hexe, 0), "Expected TerminateProcess to succeed\n");
-    }
+    ok(hr == S_ASYNCHRONOUS, "Expected S_ASYNCHRONOUS, got %ld\n", hr);
+    ok(hexe != NULL, "Expected hexe to be non-NULL\n");
+    ok(TerminateProcess(hexe, 0), "Expected TerminateProcess to succeed\n");
 }
 
 START_TEST(install)
