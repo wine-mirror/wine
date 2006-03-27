@@ -1192,101 +1192,113 @@ static NTSTATUS CDROM_SetVolume(int fd, const VOLUME_CONTROL* vc)
 /******************************************************************
  *		CDROM_RawRead
  *
+ * Some features of this IOCTL are rather poorly documented and
+ * not really intuitive either:
+ *
+ *   1. Although the DiskOffset parameter is meant to be a
+ *      byte offset into the disk, it is in fact the sector
+ *      number multiplied by 2048 regardless of the actual
+ *      sector size.
+ *
+ *   2. The least significant 11 bits of DiskOffset are ignored.
+ *
+ *   3. The TrackMode parameter has no effect on the sector
+ *      size. The entire raw sector (i.e. 2352 bytes of data)
+ *      is always returned. IMO the TrackMode is only used
+ *      to check the correct sector type.
  *
  */
 static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DWORD len, DWORD* sz)
 {
-    int	        ret = STATUS_NOT_SUPPORTED;
+    int         ret = STATUS_NOT_SUPPORTED;
     int         io = -1;
-    DWORD       sectSize;
 
     TRACE("RAW_READ_INFO: DiskOffset=%li,%li SectorCount=%li TrackMode=%i\n buffer=%p len=%li sz=%p\n",
           raw->DiskOffset.u.HighPart, raw->DiskOffset.u.LowPart, raw->SectorCount, raw->TrackMode, buffer, len, sz);
 
+    if (len < raw->SectorCount * 2352) return STATUS_BUFFER_TOO_SMALL;
+
+#if defined(linux)
+    if (raw->DiskOffset.u.HighPart & ~2047) {
+        WARN("DiskOffset points to a sector >= 2**32\n");
+        return ret;
+    }
+
     switch (raw->TrackMode)
     {
-    case YellowMode2:   sectSize = 2336;        break;
-    case XAForm2:       sectSize = 2328;        break;
-    case CDDA:          sectSize = 2352;        break;
-    default:    return STATUS_INVALID_PARAMETER;
+    case YellowMode2:
+    case XAForm2:
+    {
+        DWORD lba = raw->DiskOffset.QuadPart >> 11;
+        struct cdrom_msf*       msf;
+        PBYTE                   *bp; /* current buffer pointer */
+        int i;
+
+        if ((lba + raw->SectorCount) >
+            ((1 << 8*sizeof(msf->cdmsf_min0)) * CD_SECS * CD_FRAMES
+             - CD_MSF_OFFSET)) {
+            WARN("DiskOffset not accessible with MSF\n");
+            return ret;
+        }
+
+        /* Linux reads only one sector at a time.
+         * ioctl CDROMREADRAW takes struct cdrom_msf as an argument
+         * on the contrary to what header comments state.
+         */
+        lba += CD_MSF_OFFSET;
+        for (i = 0, bp = buffer; i < raw->SectorCount;
+             i++, lba++, bp += 2352)
+        {
+            msf = (struct cdrom_msf*)bp;
+            msf->cdmsf_min0   = lba / CD_FRAMES / CD_SECS;
+            msf->cdmsf_sec0   = lba / CD_FRAMES % CD_SECS;
+            msf->cdmsf_frame0 = lba % CD_FRAMES;
+            io = ioctl(fd, CDROMREADRAW, msf);
+            if (io != 0)
+            {
+                *sz = 2352 * i;
+                return CDROM_GetStatusCode(io);
+            }
+        }
+        break;
     }
-    if (len < raw->SectorCount * sectSize) return STATUS_BUFFER_TOO_SMALL;
-    /* strangely enough, it seems that sector offsets are always indicated with a size of 2048,
-     * even if a larger size if read...
-     */
-#if defined(linux)
+
+    case CDDA:
     {
         struct cdrom_read_audio cdra;
-        struct cdrom_msf*       msf;
-        int i;
-        LONGLONG t = ((LONGLONG)raw->DiskOffset.u.HighPart << 32) +
-                                raw->DiskOffset.u.LowPart + CD_MSF_OFFSET;
 
-        switch (raw->TrackMode)
-        {
-        case YellowMode2:
-            /* Linux reads only one sector at a time.
-             * ioctl CDROMREADMODE2 takes struct cdrom_msf as an argument
-             * on the contrary to what header comments state.
-             */
-            for (i = 0; i < raw->SectorCount; i++, t += sectSize)
-            {
-                msf = (struct cdrom_msf*)buffer + i * sectSize;
-                msf->cdmsf_min0   = t / CD_FRAMES / CD_SECS;
-                msf->cdmsf_sec0   = t / CD_FRAMES % CD_SECS;
-                msf->cdmsf_frame0 = t % CD_FRAMES;
-                io = ioctl(fd, CDROMREADMODE2, msf);
-                if (io != 0)
-                {
-                    *sz = sectSize * i;
-                    return CDROM_GetStatusCode(io);
-                }
-            }
-            break;
-        case XAForm2:
-            FIXME("XAForm2: NIY\n");
-            return ret;
-        case CDDA:
-            /* FIXME: the output doesn't seem 100% correct... in fact output is shifted
-             * between by NT2K box and this... should check on the same drive...
-             * otherwise, I fear a 2352/2368 mismatch somewhere in one of the drivers
-             * (linux/NT).
-             * Anyway, that's not critical at all. We're talking of 16/32 bytes, we're
-             * talking of 0.2 ms of sound
-             */
-            /* 2048 = 2 ** 11 */
-            if (raw->DiskOffset.u.HighPart & ~2047) FIXME("Unsupported value\n");
-            cdra.addr.lba = ((raw->DiskOffset.u.LowPart >> 11) |
-                (raw->DiskOffset.u.HighPart << (32 - 11))) - 1;
-            FIXME("reading at %u\n", cdra.addr.lba);
-            cdra.addr_format = CDROM_LBA;
-            cdra.nframes = raw->SectorCount;
-            cdra.buf = buffer;
-            io = ioctl(fd, CDROMREADAUDIO, &cdra);
-            break;
-        default:
-            FIXME("NIY: %d\n", raw->TrackMode);
-            return ret;
-        }
+        cdra.addr.lba = raw->DiskOffset.QuadPart >> 11;
+        TRACE("reading at %u\n", cdra.addr.lba);
+        cdra.addr_format = CDROM_LBA;
+        cdra.nframes = raw->SectorCount;
+        cdra.buf = buffer;
+        io = ioctl(fd, CDROMREADAUDIO, &cdra);
+        break;
+    }
+
+    default:
+        FIXME("NIY: %d\n", raw->TrackMode);
+        return STATUS_INVALID_PARAMETER;
     }
 #else
+    switch (raw->TrackMode)
     {
-        switch (raw->TrackMode)
-        {
-        case YellowMode2:
-            FIXME("YellowMode2: NIY\n");
-            return ret;
-        case XAForm2:
-            FIXME("XAForm2: NIY\n");
-            return ret;
-        case CDDA:
-            FIXME("CDDA: NIY\n");
-            return ret;
-        }
+    case YellowMode2:
+        FIXME("YellowMode2: NIY\n");
+        return ret;
+    case XAForm2:
+        FIXME("XAForm2: NIY\n");
+        return ret;
+    case CDDA:
+        FIXME("CDDA: NIY\n");
+        return ret;
+    default:
+        FIXME("NIY: %d\n", raw->TrackMode);
+        return STATUS_INVALID_PARAMETER;
     }
 #endif
 
-    *sz = sectSize * raw->SectorCount;
+    *sz = 2352 * raw->SectorCount;
     ret = CDROM_GetStatusCode(io);
     return ret;
 }
