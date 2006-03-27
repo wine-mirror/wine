@@ -301,10 +301,15 @@ static void set_size_hints( Display *display, struct x11drv_win_data *data, DWOR
 
     if ((size_hints = XAllocSizeHints()))
     {
-        size_hints->win_gravity = StaticGravity;
-        size_hints->x = data->whole_rect.left;
-        size_hints->y = data->whole_rect.top;
-        size_hints->flags = PWinGravity | PPosition;
+        size_hints->flags = 0;
+
+        if (data->hwnd != GetDesktopWindow())  /* don't force position of desktop */
+        {
+            size_hints->win_gravity = StaticGravity;
+            size_hints->x = data->whole_rect.left;
+            size_hints->y = data->whole_rect.top;
+            size_hints->flags |= PWinGravity | PPosition;
+        }
 
         if ( !(style & WS_THICKFRAME) )
         {
@@ -370,6 +375,13 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     DWORD ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
     HWND owner = GetWindow( data->hwnd, GW_OWNER );
     char *process_name = get_process_name();
+
+    if (data->hwnd == GetDesktopWindow())
+    {
+        /* force some styles for the desktop to get the correct decorations */
+        style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+        owner = 0;
+    }
 
     /* transient for hint */
     if (owner)
