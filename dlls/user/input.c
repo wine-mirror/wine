@@ -195,6 +195,10 @@ BOOL WINAPI ReleaseCapture(void)
     SERVER_END_REQ;
 
     if (previous) SendMessageW( previous, WM_CAPTURECHANGED, 0, 0 );
+
+    /* Somebody may have missed some mouse movements */
+    mouse_event( MOUSEEVENTF_MOVE, 0, 0, 0, 0 );
+
     return ret;
 }
 
