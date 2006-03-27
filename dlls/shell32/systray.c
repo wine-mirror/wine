@@ -99,21 +99,26 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         LONG cbColourBits;
 
         if (!GetIconInfo(nid->hIcon, &iconinfo))
-            return FALSE;
+            goto noicon;
 
         if (!GetObjectW(iconinfo.hbmMask, sizeof(bmMask), &bmMask) ||
             !GetObjectW(iconinfo.hbmColor, sizeof(bmColour), &bmColour))
         {
             DeleteObject(iconinfo.hbmMask);
             DeleteObject(iconinfo.hbmColor);
-            return FALSE;
+            goto noicon;
         }
 
         cbMaskBits = (bmMask.bmPlanes * bmMask.bmWidth * bmMask.bmHeight * bmMask.bmBitsPixel) / 8;
         cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel) / 8;
         cds.cbData = sizeof(*nid) + 2*sizeof(BITMAP) + cbMaskBits + cbColourBits;
         buffer = HeapAlloc(GetProcessHeap(), 0, cds.cbData);
-        if (!buffer) return FALSE;
+        if (!buffer)
+        {
+            DeleteObject(iconinfo.hbmMask);
+            DeleteObject(iconinfo.hbmColor);
+            return FALSE;
+        }
         cds.lpData = buffer;
 
         memcpy(buffer, nid, sizeof(*nid));
@@ -132,6 +137,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     }
     else
     {
+noicon:
         cds.cbData = sizeof(*nid);
         cds.lpData = nid;
     }

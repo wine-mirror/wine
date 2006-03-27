@@ -259,7 +259,7 @@ static void handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
 
     /* FIXME: if statement only needed because we don't support interprocess
      * icon handles */
-    if (nid.uFlags & NIF_ICON)
+    if ((nid.uFlags & NIF_ICON) && (cds->cbData >= sizeof(nid) + 2 * sizeof(BITMAP)))
     {
         LONG cbMaskBits;
         LONG cbColourBits;
@@ -268,12 +268,6 @@ static void handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
         const char *buffer = cds->lpData;
 
         buffer += sizeof(nid);
-
-        if (cds->cbData < sizeof(nid) + 2 * sizeof(BITMAP))
-        {
-            WINE_ERR("buffer underflow\n");
-            return;
-        }
 
         memcpy(&bmMask, buffer, sizeof(bmMask));
         buffer += sizeof(bmMask);
