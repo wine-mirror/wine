@@ -1661,7 +1661,11 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
 
     if (cur_dir)
     {
-        unixdir = wine_get_unix_file_name( cur_dir );
+        if (!(unixdir = wine_get_unix_file_name( cur_dir )))
+        {
+            SetLastError(ERROR_DIRECTORY);
+            goto done;
+        }
     }
     else
     {
