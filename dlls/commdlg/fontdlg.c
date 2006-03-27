@@ -632,9 +632,9 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
                 memcpy(name, strColorName, sizeof(strColorName));
             }
             j=SendDlgItemMessageW(hDlg, cmb4, CB_ADDSTRING, 0, (LPARAM)name);
-            SendDlgItemMessageW(hDlg, cmb4, CB_SETITEMDATA, j, textcolors[j]);
+            SendDlgItemMessageW(hDlg, cmb4, CB_SETITEMDATA, j, textcolors[i]);
             /* look for a fitting value in color combobox */
-            if (textcolors[j]==lpcf->rgbColors)
+            if (textcolors[i]==lpcf->rgbColors)
                 SendDlgItemMessageW(hDlg,cmb4, CB_SETCURSEL,j,0);
         }
     }
@@ -994,7 +994,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
         {
             WINDOWINFO wininfo;
 
-            lpcf->rgbColors=textcolors[i];
+            lpcf->rgbColors = SendDlgItemMessageW(hDlg, cmb4, CB_GETITEMDATA, i, 0);
             wininfo.cbSize=sizeof(wininfo);
 
             if( GetWindowInfo( GetDlgItem( hDlg, stc5), &wininfo ) )
