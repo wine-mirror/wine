@@ -133,7 +133,8 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT
     if (!(pWinpos->flags & SWP_NOSENDCHANGING))
         SendMessageW( pWinpos->hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)pWinpos );
 
-    if (!(wndPtr = WIN_GetPtr( pWinpos->hwnd )) || wndPtr == WND_OTHER_PROCESS) return FALSE;
+    if (!(wndPtr = WIN_GetPtr( pWinpos->hwnd )) ||
+        wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
 
     /* Calculate new position and size */
 
@@ -695,9 +696,6 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     orig_flags = winpos->flags;
     winpos->flags &= ~SWP_WINE_NOHOSTMOVE;
 
-    /* Check window handle */
-    if (winpos->hwnd == GetDesktopWindow()) return FALSE;
-
     /* First make sure that coordinates are valid for WM_WINDOWPOSCHANGING */
     if (!(winpos->flags & SWP_NOMOVE))
     {
@@ -936,6 +934,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 {
     WND *wndPtr;
+    HWND parent;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     BOOL wasVisible = (style & WS_VISIBLE) != 0;
     BOOL showFlag = TRUE;
@@ -1004,7 +1003,8 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
         if (!IsWindow( hwnd )) return wasVisible;
     }
 
-    if (!IsWindowVisible( GetAncestor( hwnd, GA_PARENT )))
+    parent = GetAncestor( hwnd, GA_PARENT );
+    if (parent && !IsWindowVisible( parent ))
     {
         /* if parent is not visible simply toggle WS_VISIBLE and return */
         if (showFlag) WIN_SetStyle( hwnd, WS_VISIBLE, 0 );
