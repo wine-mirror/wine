@@ -1538,7 +1538,6 @@ dlls/mmdevldr.vxd/Makefile
 dlls/monodebg.vxd/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
-dlls/msacm/msg711/Makefile
 dlls/msacm/tests/Makefile
 dlls/msacm/winemp3/Makefile
 dlls/msadp32.acm/Makefile
@@ -1546,6 +1545,7 @@ dlls/mscms/Makefile
 dlls/mscms/tests/Makefile
 dlls/msdmo/Makefile
 dlls/msftedit/Makefile
+dlls/msg711.acm/Makefile
 dlls/mshtml/Makefile
 dlls/mshtml/tests/Makefile
 dlls/msi/Makefile

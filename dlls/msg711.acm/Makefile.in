@@ -1,5 +1,5 @@
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../../..
+TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msg711.acm

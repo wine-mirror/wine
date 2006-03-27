@@ -80,12 +80,12 @@ BASEDIRS = \
 	monodebg.vxd \
 	mpr \
 	msacm \
-	msacm/msg711 \
 	msacm/winemp3 \
 	msadp32.acm \
 	mscms \
 	msdmo \
 	msftedit \
+	msg711.acm \
 	mshtml \
 	msi \
 	msimg32 \
@@ -269,7 +269,6 @@ SYMLINKS_SO = \
 	mciwave.drv.so \
 	msacm.drv.so \
 	msacm32.dll.so \
-	msg711.acm.so \
 	msisys.ocx.so \
 	riched32.dll.so \
 	twain_32.dll.so \
@@ -323,9 +322,6 @@ msacm.drv.so: winmm/wavemap/msacm.drv.so
 
 msacm32.dll.so: msacm/msacm32.dll.so
 	$(RM) $@ && $(LN_S) msacm/msacm32.dll.so $@
-
-msg711.acm.so: msacm/msg711/msg711.acm.so
-	$(RM) $@ && $(LN_S) msacm/msg711/msg711.acm.so $@
 
 msisys.ocx.so: msisys/msisys.ocx.so
 	$(RM) $@ && $(LN_S) msisys/msisys.ocx.so $@
@@ -1023,7 +1019,7 @@ msadp32.acm/msadp32.acm.so: msadp32.acm
 mscms/mscms.dll.so: mscms
 msdmo/msdmo.dll.so: msdmo
 msftedit/msftedit.dll.so: msftedit
-msacm/msg711/msg711.acm.so: msacm/msg711
+msg711.acm/msg711.acm.so: msg711.acm
 mshtml/mshtml.dll.so: mshtml
 msi/msi.dll.so: msi
 msimg32/msimg32.dll.so: msimg32
