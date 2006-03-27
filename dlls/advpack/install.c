@@ -231,5 +231,12 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
            hWnd, debugstr_w(szCmdName), debugstr_w(szInfSection),
            debugstr_w(szDir), debugstr_w(lpszTitle),
            phEXE, dwFlags, pvReserved);
+
+    if (!szCmdName || !szDir)
+        return E_INVALIDARG;
+
+    if (!(dwFlags & RSC_FLAG_INF))
+        *phEXE = NULL;
+
     return E_UNEXPECTED;
 }

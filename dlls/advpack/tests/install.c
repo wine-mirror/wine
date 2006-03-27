@@ -55,7 +55,7 @@ static void test_RunSetupCommand()
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
 
     /* try to run a non-existent exe */
-    hexe = NULL;
+    hexe = (HANDLE)0xdeadbeef;
     hr = pRunSetupCommand(NULL, "idontexist.exe", "Install", "c:\\windows\\system32", "Title", &hexe, 0, NULL);
     todo_wine
     {
@@ -66,7 +66,7 @@ static void test_RunSetupCommand()
     ok(!TerminateProcess(hexe, 0), "Expected TerminateProcess to fail\n");
 
     /* try a bad directory */
-    hexe = NULL;
+    hexe = (HANDLE)0xdeadbeef;
     hr = pRunSetupCommand(NULL, "winver.exe", "Install", "windows\\system32", "Title", &hexe, 0, NULL);
     todo_wine
     {
@@ -77,17 +77,17 @@ static void test_RunSetupCommand()
     ok(!TerminateProcess(hexe, 0), "Expected TerminateProcess to fail\n");
 
     /* try to run an exe with the RSC_FLAG_INF flag */
-    hexe = NULL;
+    hexe = (HANDLE)0xdeadbeef;
     hr = pRunSetupCommand(NULL, "winver.exe", "Install", "c:\\windows\\system32", "Title", &hexe, RSC_FLAG_INF, NULL);
     todo_wine
     {
         ok(hr == SPAPI_E_WRONG_INF_STYLE, "Expected SPAPI_E_WRONG_INF_STYLE, got %ld\n", hr);
     }
-    ok(hexe == NULL, "Expected hexe to be NULL\n");
+    ok(hexe == (HANDLE)0xdeadbeef, "Expected hexe to be 0xdeadbeef\n");
     ok(!TerminateProcess(hexe, 0), "Expected TerminateProcess to fail\n");
 
     /* run winver.exe */
-    hexe = NULL;
+    hexe = (HANDLE)0xdeadbeef;
     hr = pRunSetupCommand(NULL, "winver.exe", "Install", "c:\\windows\\system32", "Title", &hexe, 0, NULL);
     todo_wine
     {
