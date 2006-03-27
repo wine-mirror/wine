@@ -868,7 +868,8 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         goto error;
     }
     status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
-    if (header_size > st.st_size) goto error;
+    if (!st.st_size) goto error;
+    header_size = min( header_size, st.st_size );
     if (map_file_into_view( view, fd, 0, header_size, 0, VPROT_COMMITTED | VPROT_READ,
                             removable ) != STATUS_SUCCESS) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
