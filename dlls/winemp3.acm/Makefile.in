@@ -1,5 +1,5 @@
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../../..
+TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winemp3.acm

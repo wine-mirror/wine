@@ -1539,7 +1539,6 @@ dlls/monodebg.vxd/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
 dlls/msacm/tests/Makefile
-dlls/msacm/winemp3/Makefile
 dlls/msadp32.acm/Makefile
 dlls/mscms/Makefile
 dlls/mscms/tests/Makefile
@@ -1644,6 +1643,7 @@ dlls/w32skrnl/Makefile
 dlls/winecrt0/Makefile
 dlls/wined3d/Makefile
 dlls/winedos/Makefile
+dlls/winemp3.acm/Makefile
 dlls/wineps/Makefile
 dlls/wininet/Makefile
 dlls/wininet/tests/Makefile

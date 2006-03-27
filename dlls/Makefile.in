@@ -80,7 +80,6 @@ BASEDIRS = \
 	monodebg.vxd \
 	mpr \
 	msacm \
-	msacm/winemp3 \
 	msadp32.acm \
 	mscms \
 	msdmo \
@@ -155,6 +154,7 @@ BASEDIRS = \
 	vwin32.vxd \
 	w32skrnl \
 	winedos \
+	winemp3.acm \
 	wineps \
 	wininet \
 	winmm \
@@ -278,7 +278,6 @@ SYMLINKS_SO = \
 	wineaudioio.drv.so \
 	wineesd.drv.so \
 	winejack.drv.so \
-	winemp3.acm.so \
 	winenas.drv.so \
 	wineoss.drv.so \
 	wineps.drv.so \
@@ -349,9 +348,6 @@ wineesd.drv.so: winmm/wineesd/wineesd.drv.so
 
 winejack.drv.so: winmm/winejack/winejack.drv.so
 	$(RM) $@ && $(LN_S) winmm/winejack/winejack.drv.so $@
-
-winemp3.acm.so: msacm/winemp3/winemp3.acm.so
-	$(RM) $@ && $(LN_S) msacm/winemp3/winemp3.acm.so $@
 
 winenas.drv.so: winmm/winenas/winenas.drv.so
 	$(RM) $@ && $(LN_S) winmm/winenas/winenas.drv.so $@
@@ -1096,7 +1092,7 @@ wined3d/wined3d.dll.so: wined3d
 winedos/winedos.dll.so: winedos
 winmm/wineesd/wineesd.drv.so: winmm/wineesd
 winmm/winejack/winejack.drv.so: winmm/winejack
-msacm/winemp3/winemp3.acm.so: msacm/winemp3
+winemp3.acm/winemp3.acm.so: winemp3.acm
 winmm/winenas/winenas.drv.so: winmm/winenas
 winmm/wineoss/wineoss.drv.so: winmm/wineoss
 wineps/wineps.drv.so: wineps
