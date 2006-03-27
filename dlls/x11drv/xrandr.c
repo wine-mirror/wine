@@ -254,7 +254,7 @@ void X11DRV_XRandR_Init(void)
 
     if (xrandr_major) return; /* already initialized? */
     if (!usexrandr) return; /* disabled in config */
-    if (using_wine_desktop) return; /* not compatible with desktop mode */
+    if (root_window != DefaultRootWindow( gdi_display )) return;
     if (!load_xrandr()) return;  /* can't load the Xrandr library */
 
     /* see if Xrandr is available */

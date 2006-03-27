@@ -119,9 +119,10 @@ BOOL X11DRV_is_window_rect_mapped( const RECT *rect )
  *
  * Fill the window attributes structure for an X window.
  */
-static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttributes *attr )
+static int get_window_attributes( Display *display, struct x11drv_win_data *data,
+                                  XSetWindowAttributes *attr )
 {
-    if (!data->managed && !using_wine_desktop && is_window_managed( data->hwnd ))
+    if (!data->managed && (root_window == DefaultRootWindow( display )) && is_window_managed( data->hwnd ))
     {
         data->managed = TRUE;
         SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
@@ -142,7 +143,7 @@ static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttrib
 void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data )
 {
     XSetWindowAttributes attr;
-    int mask = get_window_attributes( data, &attr );
+    int mask = get_window_attributes( display, data, &attr );
 
     wine_tsx11_lock();
     if (data->whole_window != DefaultRootWindow(display))
@@ -654,7 +655,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     if (!(cx = rect.right - rect.left)) cx = 1;
     if (!(cy = rect.bottom - rect.top)) cy = 1;
 
-    mask = get_window_attributes( data, &attr );
+    mask = get_window_attributes( display, data, &attr );
 
     /* set the attributes that don't change over the lifetime of the window */
     attr.bit_gravity   = NorthWestGravity;

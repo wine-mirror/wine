@@ -82,7 +82,6 @@ int client_side_with_core = 1;
 int client_side_with_render = 1;
 int client_side_antialias_with_core = 1;
 int client_side_antialias_with_render = 1;
-int using_wine_desktop = 0;
 int copy_default_colors = 128;
 int alloc_system_colors = 256;
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
@@ -424,7 +423,6 @@ static BOOL process_attach(void)
     if (desktop_geometry)
     {
         root_window = X11DRV_create_desktop( desktop_vi, desktop_geometry );
-        using_wine_desktop = 1;
     }
     if(desktop_vi)
         XFree(desktop_vi);

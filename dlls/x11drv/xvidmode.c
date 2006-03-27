@@ -172,14 +172,14 @@ void X11DRV_XF86VM_Init(void)
 #endif /* X_XF86VidModeSetGammaRamp */
 
       /* retrieve modes */
-      if (!using_wine_desktop) ok = XF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &real_xf86vm_modes);
+      if (root_window == DefaultRootWindow( gdi_display ))
+          ok = XF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &real_xf86vm_modes);
+      else
+          ok = FALSE; /* In desktop mode, do not switch resolution... But still use the Gamma ramp stuff */
   }
   wine_tsx11_unlock();
   if (!ok) return;
 
-  /* In desktop mode, do not switch resolution... But still use the Gamma ramp stuff */
-  if (using_wine_desktop) return;
-  
   TRACE("XVidMode modes: count=%d\n", nmodes);
 
   real_xf86vm_mode_count = nmodes;
