@@ -226,7 +226,7 @@ static void set_property( struct window *win, atom_t atom, obj_handle_t handle, 
     }
 
     /* need to add an entry */
-    if (!grab_global_atom( win->desktop->winstation, atom )) return;
+    if (!grab_global_atom( NULL, atom )) return;
     if (free == -1)
     {
         /* no free entry */
@@ -237,7 +237,7 @@ static void set_property( struct window *win, atom_t atom, obj_handle_t handle, 
                                        sizeof(*new_props) * (win->prop_alloc + 16) )))
             {
                 set_error( STATUS_NO_MEMORY );
-                release_global_atom( win->desktop->winstation, atom );
+                release_global_atom( NULL, atom );
                 return;
             }
             win->prop_alloc += 16;
@@ -260,7 +260,7 @@ static obj_handle_t remove_property( struct window *win, atom_t atom )
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
         if (win->properties[i].atom == atom)
         {
-            release_global_atom( win->desktop->winstation, atom );
+            release_global_atom( NULL, atom );
             win->properties[i].type = PROP_TYPE_FREE;
             return win->properties[i].handle;
         }
@@ -292,7 +292,7 @@ inline static void destroy_properties( struct window *win )
     for (i = 0; i < win->prop_inuse; i++)
     {
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
-        release_global_atom( win->desktop->winstation, win->properties[i].atom );
+        release_global_atom( NULL, win->properties[i].atom );
     }
     free( win->properties );
 }
@@ -1966,12 +1966,11 @@ DECL_HANDLER(set_window_property)
 
     if (get_req_data_size())
     {
-        atom_t atom = add_global_atom( win->desktop->winstation,
-                                       get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+        atom_t atom = add_global_atom( NULL, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
         if (atom)
         {
             set_property( win, atom, req->handle, PROP_TYPE_STRING );
-            release_global_atom( win->desktop->winstation, atom );
+            release_global_atom( NULL, atom );
         }
     }
     else set_property( win, req->atom, req->handle, PROP_TYPE_ATOM );
@@ -1986,7 +1985,7 @@ DECL_HANDLER(remove_window_property)
     if (win)
     {
         atom_t atom = req->atom;
-        if (get_req_data_size()) atom = find_global_atom( win->desktop->winstation, get_req_data(),
+        if (get_req_data_size()) atom = find_global_atom( NULL, get_req_data(),
                                                           get_req_data_size() / sizeof(WCHAR) );
         if (atom) reply->handle = remove_property( win, atom );
     }
@@ -2001,7 +2000,7 @@ DECL_HANDLER(get_window_property)
     if (win)
     {
         atom_t atom = req->atom;
-        if (get_req_data_size()) atom = find_global_atom( win->desktop->winstation, get_req_data(),
+        if (get_req_data_size()) atom = find_global_atom( NULL, get_req_data(),
                                                           get_req_data_size() / sizeof(WCHAR) );
         if (atom) reply->handle = get_property( win, atom );
     }
