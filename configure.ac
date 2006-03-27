@@ -1516,6 +1516,7 @@ dlls/hhctrl.ocx/Makefile
 dlls/iccvid/Makefile
 dlls/icmp/Makefile
 dlls/ifsmgr.vxd/Makefile
+dlls/imaadp32.acm/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/iphlpapi/Makefile
@@ -1537,7 +1538,6 @@ dlls/mmdevldr.vxd/Makefile
 dlls/monodebg.vxd/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
-dlls/msacm/imaadp32/Makefile
 dlls/msacm/msadp32/Makefile
 dlls/msacm/msg711/Makefile
 dlls/msacm/tests/Makefile

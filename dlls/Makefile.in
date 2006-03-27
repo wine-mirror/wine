@@ -63,6 +63,7 @@ BASEDIRS = \
 	iccvid \
 	icmp \
 	ifsmgr.vxd \
+	imaadp32.acm \
 	imagehlp \
 	imm32 \
 	iphlpapi \
@@ -79,7 +80,6 @@ BASEDIRS = \
 	monodebg.vxd \
 	mpr \
 	msacm \
-	msacm/imaadp32 \
 	msacm/msadp32 \
 	msacm/msg711 \
 	msacm/winemp3 \
@@ -264,7 +264,6 @@ SYMLINKS_SO = \
 	@WIN16_FILES@ \
 	comdlg32.dll.so \
 	gdi32.dll.so \
-	imaadp32.acm.so \
 	joystick.drv.so \
 	kernel32.dll.so \
 	mciwave.drv.so \
@@ -310,9 +309,6 @@ ddraw.dll.so: ddraw/ddraw.dll.so
 
 gdi32.dll.so: gdi/gdi32.dll.so
 	$(RM) $@ && $(LN_S) gdi/gdi32.dll.so $@
-
-imaadp32.acm.so: msacm/imaadp32/imaadp32.acm.so
-	$(RM) $@ && $(LN_S) msacm/imaadp32/imaadp32.acm.so $@
 
 joystick.drv.so: winmm/joystick/joystick.drv.so
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv.so $@
@@ -1007,7 +1003,7 @@ hhctrl.ocx/hhctrl.ocx.so: hhctrl.ocx
 iccvid/iccvid.dll.so: iccvid
 icmp/icmp.dll.so: icmp
 ifsmgr.vxd/ifsmgr.vxd.so: ifsmgr.vxd
-msacm/imaadp32/imaadp32.acm.so: msacm/imaadp32
+imaadp32.acm/imaadp32.acm.so: imaadp32.acm
 imagehlp/imagehlp.dll.so: imagehlp
 imm32/imm32.dll.so: imm32
 iphlpapi/iphlpapi.dll.so: iphlpapi
