@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wingdi.h"
+#include "commctrl.h"
 #include "ole2.h"
 #include "resource.h"
 
@@ -39,7 +40,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static const WCHAR wszInternetExplorer_Server[] =
     {'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','_','S','e','r','v','e','r',0};
 
+static const WCHAR wszTooltipData[] = {'t','o','o','l','t','i','p','_','d','a','t','a',0};
+
 static ATOM serverwnd_class = 0;
+
+typedef struct {
+    HTMLDocument *doc;
+    WNDPROC proc;
+} tooltip_data;
 
 static void paint_disabled(HWND hwnd) {
     HDC hdc;
@@ -149,6 +157,7 @@ static HRESULT activate_window(HTMLDocument *This)
         WARN("GetWindowContext failed: %08lx\n", hres);
         return hres;
     }
+
     if(pIPWnd)
         IOleInPlaceUIWindow_Release(pIPWnd);
     TRACE("got window context: %p %p {%ld %ld %ld %ld} {%ld %ld %ld %ld} {%d %x %p %p %d}\n",
@@ -219,6 +228,77 @@ static HRESULT activate_window(HTMLDocument *This)
     This->window_active = TRUE;
 
     return S_OK;
+}
+
+static LRESULT tooltips_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    tooltip_data *data = GetPropW(hwnd, wszTooltipData);
+
+    TRACE("%d %p\n", msg, data);
+
+    if(msg == TTM_WINDOWFROMPOINT) {
+        RECT rect;
+        POINT *pt = (POINT*)lParam;
+
+        TRACE("TTM_WINDOWFROMPOINT (%ld,%ld)\n", pt->x, pt->y);
+
+        GetWindowRect(data->doc->hwnd, &rect);
+
+        if(rect.left <= pt->x && pt->x <= rect.right
+           && rect.top <= pt->y && pt->y <= rect.bottom)
+            return (LPARAM)data->doc->hwnd;
+    }
+
+    return CallWindowProcW(data->proc, hwnd, msg, wParam, lParam);
+}
+
+static void create_tooltips_window(HTMLDocument *This)
+{
+    tooltip_data *data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
+
+    This->tooltips_hwnd = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, TTS_NOPREFIX | WS_POPUP,
+            CW_USEDEFAULT, CW_USEDEFAULT, 10, 10, This->hwnd, NULL, hInst, NULL);
+
+    data->doc = This;
+    data->proc = (WNDPROC)GetWindowLongPtrW(This->tooltips_hwnd, GWLP_WNDPROC);
+
+    SetPropW(This->tooltips_hwnd, wszTooltipData, data);
+
+    SetWindowLongPtrW(This->tooltips_hwnd, GWLP_WNDPROC, (LONG_PTR)tooltips_proc);
+
+    SetWindowPos(This->tooltips_hwnd, HWND_TOPMOST,0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+}
+
+void show_tooltip(HTMLDocument *This, DWORD x, DWORD y, LPCWSTR text)
+{
+    TTTOOLINFOW toolinfo = {
+        sizeof(TTTOOLINFOW), 0, This->hwnd, 0xdeadbeef,
+        {x>2 ? x-2 : 0, y>0 ? y-2 : 0, x+2, y+2}, /* FIXME */
+        NULL, (LPWSTR)text, 0};
+    MSG msg = {This->hwnd, WM_MOUSEMOVE, 0, MAKELPARAM(x,y), 0, {x,y}};
+
+    TRACE("(%p)->(%ld %ld %s)\n", This, x, y, debugstr_w(text));
+
+    if(!This->tooltips_hwnd)
+        create_tooltips_window(This);
+
+    SendMessageW(This->tooltips_hwnd, TTM_ADDTOOLW, 0, (LPARAM)&toolinfo);
+    SendMessageW(This->tooltips_hwnd, TTM_ACTIVATE, TRUE, 0);
+    SendMessageW(This->tooltips_hwnd, TTM_RELAYEVENT, 0, (LPARAM)&msg);
+}
+
+void hide_tooltip(HTMLDocument *This)
+{
+    TTTOOLINFOW toolinfo = {
+        sizeof(TTTOOLINFOW), 0, This->hwnd, 0xdeadbeef,
+        {0,0,0,0}, NULL, NULL, 0};
+
+    TRACE("(%p)\n", This);
+
+    SendMessageW(This->tooltips_hwnd, TTM_DELTOOLW, 0, (LPARAM)&toolinfo);
+    SendMessageW(This->tooltips_hwnd, TTM_ACTIVATE, FALSE, 0);
 }
 
 /**********************************************************
@@ -579,6 +659,7 @@ void HTMLDocument_View_Init(HTMLDocument *This)
     This->ipsite = NULL;
     This->frame = NULL;
     This->hwnd = NULL;
+    This->tooltips_hwnd = NULL;
 
     This->in_place_active = FALSE;
     This->ui_active = FALSE;

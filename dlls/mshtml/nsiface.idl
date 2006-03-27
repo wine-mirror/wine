@@ -81,7 +81,6 @@ interface nsISupports
 }
 
 /* Currently we don't need a full declaration of these interfaces */
-typedef nsISupports nsIWeakReference;
 typedef nsISupports nsISHistory;
 typedef nsISupports nsISimpleEnumerator;
 typedef nsISupports nsIWidget;
@@ -152,6 +151,37 @@ interface nsIComponentManager : nsISupports
             nsQIResult result);
     nsresult CreateInstanceByContractID(nsstring aContractID, nsISupports *aDelegate,
             nsIIDRef aIID, nsQIResult result);
+}
+
+[
+    object,
+    uuid(59e7e77a-38e4-11d4-8cf5-0060b0fc14a3)
+]
+interface nsIMemory : nsISupports
+{
+    void *Alloc(/*size_t*/ int size);
+    void *Realloc(void *_ptr, /*size_t*/ int newSize);
+    void Free(void *_ptr);
+    nsresult HeapMinimize(PRBool immediate);
+    nsresult IsLowMemory(PRBool *_retval);
+}
+
+[
+    object,
+    uuid(9188bc85-f92e-11d2-81ef-0060083a0bcf)
+]
+interface nsIWeakReference : nsISupports
+{
+    nsresult QueryReferent(const nsIID *riid, void **result);
+}
+
+[
+    object,
+    uuid(9188bc86-f92e-11d2-81ef-0060083a0bcf)
+]
+interface nsISupportsWeakReference : nsISupports
+{
+    nsresult GetWeakReference(nsIWeakReference **_retval);
 }
 
 [
@@ -617,6 +647,16 @@ interface nsIURIContentListener : nsISupports
 
 [
     object,
+    uuid(44b78386-1dd2-11b2-9ad2-e4eee2ca1916)
+]
+interface nsITooltipListener : nsISupports
+{
+    nsresult OnShowTooltip(PRInt32 aXCoords, PRInt32 aYCoords, const PRUnichar *aTipText);
+    nsresult OnHideTooltip();
+}
+
+[
+    object,
     uuid(69e5df00-7b8b-11d3-af61-00a024ffc08c)
 ]
 interface nsIWebBrowser : nsISupports
@@ -956,6 +996,15 @@ interface nsIPromptService : nsISupports
     nsresult Select(nsIDOMWindow *aParent, const PRUnichar *aDialogTitle,
             const PRUnichar *aText, PRUint32 aCount, const PRUnichar **aSelectList,
             PRInt32 *aOutSelection, PRBool *_retval);
+}
+
+[
+    object,
+    uuid(b128a1e6-44f3-4331-8fbe-5af360ff21ee)
+]
+interface nsITooltipTextProvider : nsISupports
+{
+    nsresult GetNodeText(nsIDOMNode *aNode, PRUnichar **aText, PRBool *_retval);
 }
 
 [

@@ -140,8 +140,12 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
             IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
         if(This->ipsite)
             IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
+
+        if(This->tooltips_hwnd)
+            DestroyWindow(This->tooltips_hwnd);
         if(This->hwnd)
             DestroyWindow(This->hwnd);
+
         release_nodes(This);
 
         if(This->nscontainer)

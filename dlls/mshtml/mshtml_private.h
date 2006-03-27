@@ -73,6 +73,7 @@ typedef struct {
     IOleInPlaceFrame *frame;
 
     HWND hwnd;
+    HWND tooltips_hwnd;
 
     BOOL in_place_active;
     BOOL ui_active;
@@ -86,11 +87,14 @@ typedef struct {
 } HTMLDocument;
 
 struct NSContainer {
-    const nsIWebBrowserChromeVtbl     *lpWebBrowserChromeVtbl;
-    const nsIContextMenuListenerVtbl  *lpContextMenuListenerVtbl;
-    const nsIURIContentListenerVtbl   *lpURIContentListenerVtbl;
-    const nsIEmbeddingSiteWindowVtbl  *lpEmbeddingSiteWindowVtbl;
-    const nsIInterfaceRequestorVtbl   *lpInterfaceRequestorVtbl;
+    const nsIWebBrowserChromeVtbl       *lpWebBrowserChromeVtbl;
+    const nsIContextMenuListenerVtbl    *lpContextMenuListenerVtbl;
+    const nsIURIContentListenerVtbl     *lpURIContentListenerVtbl;
+    const nsIEmbeddingSiteWindowVtbl    *lpEmbeddingSiteWindowVtbl;
+    const nsITooltipListenerVtbl        *lpTooltipListenerVtbl;
+    const nsIInterfaceRequestorVtbl     *lpInterfaceRequestorVtbl;
+    const nsIWeakReferenceVtbl          *lpWeakReferenceVtbl;
+    const nsISupportsWeakReferenceVtbl  *lpSupportsWeakReferenceVtbl;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -167,6 +171,9 @@ typedef struct {
 #define NSURICL(x)       ((nsIURIContentListener*)        &(x)->lpURIContentListenerVtbl)
 #define NSEMBWNDS(x)     ((nsIEmbeddingSiteWindow*)       &(x)->lpEmbeddingSiteWindowVtbl)
 #define NSIFACEREQ(x)    ((nsIInterfaceRequestor*)        &(x)->lpInterfaceRequestorVtbl)
+#define NSTOOLTIP(x)     ((nsITooltipListener*)           &(x)->lpTooltipListenerVtbl)
+#define NSWEAKREF(x)     ((nsIWeakReference*)             &(x)->lpWeakReferenceVtbl)
+#define NSSUPWEAKREF(x)  ((nsISupportsWeakReference*)     &(x)->lpSupportsWeakReferenceVtbl)
 
 #define HTMLELEM(x)      ((IHTMLElement*)                 &(x)->lpHTMLElementVtbl)
 #define HTMLELEM2(x)     ((IHTMLElement2*)                &(x)->lpHTMLElement2Vtbl)
@@ -190,6 +197,9 @@ void NSContainer_Release(NSContainer*);
 void HTMLDocument_LockContainer(HTMLDocument*,BOOL);
 void HTMLDocument_ShowContextMenu(HTMLDocument*,DWORD,POINT*);
 
+void show_tooltip(HTMLDocument*,DWORD,DWORD,LPCWSTR);
+void hide_tooltip(HTMLDocument*);
+
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 
 void close_gecko(void);
@@ -199,6 +209,9 @@ void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWORD);
 
 nsIURI *get_nsIURI(LPCWSTR);
+
+void *nsalloc(size_t);
+void nsfree(void*);
 
 void nsACString_Init(nsACString*,const char*);
 PRUint32 nsACString_GetData(const nsACString*,const char**,PRBool*);

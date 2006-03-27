@@ -37,9 +37,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NS_PROMPTSERVICE_CONTRACTID "@mozilla.org/embedcomp/prompt-service;1"
 #define NS_WINDOWWATCHER_CONTRACTID "@mozilla.org/embedcomp/window-watcher;1"
+#define NS_TOOLTIPTEXTPROVIDER_CONTRACTID "@mozilla.org/embedcomp/tooltiptextprovider;1"
+
+#define NS_TOOLTIPTEXTPROVIDER_CLASSNAME "nsTooltipTextProvider"
 
 static const nsIID NS_PROMPTSERVICE_CID =
     {0xa2112d6a,0x0e28,0x421f,{0xb4,0x6a,0x25,0xc0,0xb3,0x8,0xcb,0xd0}};
+static const nsIID NS_TOOLTIPTEXTPROVIDER_CID =
+    {0x0b666e3e,0x569a,0x462c,{0xa7,0xf0,0xb1,0x6b,0xb1,0x5d,0x42,0xff}};
 
 static nsresult NSAPI nsWindowCreator_QueryInterface(nsIWindowCreator2 *iface, nsIIDRef riid,
                                                nsQIResult result)
@@ -260,6 +265,104 @@ static const nsIPromptServiceVtbl PromptServiceVtbl = {
 
 static nsIPromptService nsPromptService = { &PromptServiceVtbl };
 
+static nsresult NSAPI nsTooltipTextProvider_QueryInterface(nsITooltipTextProvider *iface,
+                                                          nsIIDRef riid, nsQIResult result)
+{
+    *result = NULL;
+
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(IID_nsISupports %p)\n", result);
+        *result = iface;
+    }else if(IsEqualGUID(&IID_nsITooltipTextProvider, riid)) {
+        TRACE("(IID_nsITooltipTextProvider %p)\n", result);
+        *result = iface;
+    }
+
+    if(*result) {
+        nsITooltipTextProvider_AddRef(iface);
+        return NS_OK;
+    }
+
+    WARN("(%s %p)\n", debugstr_guid(riid), result);
+    return NS_NOINTERFACE;
+}
+
+static nsrefcnt NSAPI nsTooltipTextProvider_AddRef(nsITooltipTextProvider *iface)
+{
+    return 2;
+}
+
+static nsrefcnt NSAPI nsTooltipTextProvider_Release(nsITooltipTextProvider *iface)
+{
+    return 1;
+}
+
+static nsresult NSAPI nsTooltipTextProvider_GetNodeText(nsITooltipTextProvider *iface,
+        nsIDOMNode *aNode, PRUnichar **aText, PRBool *_retval)
+{
+    nsIDOMHTMLElement *nselem;
+    nsIDOMNode *node = aNode, *parent;
+    nsAString title_str;
+    const PRUnichar *title = NULL;
+    nsresult nsres;
+
+    TRACE("(%p %p %p)\n", aNode, aText, _retval);
+
+    *aText = NULL;
+
+    nsAString_Init(&title_str, NULL);
+
+    do {
+        nsres = nsIDOMNode_QueryInterface(node, &IID_nsIDOMHTMLElement, (void**)&nselem);
+        if(NS_SUCCEEDED(nsres)) {
+            title = NULL;
+
+            nsIDOMHTMLElement_GetTitle(nselem, &title_str);
+            nsIDOMHTMLElement_Release(nselem);
+
+            nsAString_GetData(&title_str, &title, NULL);
+            if(title && *title) {
+                if(node != aNode)
+                    nsIDOMNode_Release(node);
+                break;
+            }
+        }
+
+        nsres = nsIDOMNode_GetParentNode(node, &parent);
+        if(NS_FAILED(nsres))
+            parent = NULL;
+
+        if(node != aNode)
+            nsIDOMNode_Release(node);
+        node = parent;
+    } while(node);
+
+    if(title && *title) {
+        int size = (strlenW(title)+1)*sizeof(PRUnichar);
+
+        *aText = nsalloc(size);
+        memcpy(*aText, title, size);
+        TRACE("aText = %s\n", debugstr_w(*aText));
+
+        *_retval = TRUE;
+    }else {
+        *_retval = FALSE;
+    }
+
+    nsAString_Finish(&title_str);
+
+    return NS_OK;
+}
+
+static const nsITooltipTextProviderVtbl nsTooltipTextProviderVtbl = {
+    nsTooltipTextProvider_QueryInterface,
+    nsTooltipTextProvider_AddRef,
+    nsTooltipTextProvider_Release,
+    nsTooltipTextProvider_GetNodeText
+};
+
+static nsITooltipTextProvider nsTooltipTextProvider = { &nsTooltipTextProviderVtbl };
+
 typedef struct {
     const nsIFactoryVtbl *lpFactoryVtbl;
     nsISupports *service;
@@ -333,6 +436,11 @@ static nsServiceFactory nsPromptServiceFactory = {
     (nsISupports*)&nsPromptService
 };
 
+static nsServiceFactory nsTooltipTextFactory = {
+    &nsServiceFactoryVtbl,
+    (nsISupports*)&nsTooltipTextProvider
+};
+
 void register_nsservice(nsIComponentRegistrar *registrar, nsIServiceManager *service_manager)
 {
     nsIWindowWatcher *window_watcher;
@@ -354,4 +462,10 @@ void register_nsservice(nsIComponentRegistrar *registrar, nsIServiceManager *ser
     }else {
         ERR("Could not get WindowWatcher object: %08lx\n", nsres);
     }
+
+    nsres = nsIComponentRegistrar_RegisterFactory(registrar, &NS_TOOLTIPTEXTPROVIDER_CID,
+            NS_TOOLTIPTEXTPROVIDER_CLASSNAME, NS_TOOLTIPTEXTPROVIDER_CONTRACTID,
+            NSFACTORY(&nsTooltipTextFactory));
+    if(NS_FAILED(nsres))
+        ERR("RegisterFactory failed: %08lx\n", nsres);
 }

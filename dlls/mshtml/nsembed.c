@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NS_APPSTARTUPNOTIFIER_CONTRACTID "@mozilla.org/embedcomp/appstartup-notifier;1"
 #define NS_WEBBROWSER_CONTRACTID "@mozilla.org/embedding/browser/nsWebBrowser;1"
 #define NS_PROFILE_CONTRACTID "@mozilla.org/profile/manager;1"
+#define NS_MEMORY_CONTRACTID "@mozilla.org/xpcom/memory-service;1"
 #define NS_STRINGSTREAM_CONTRACTID "@mozilla.org/io/string-input-stream;1"
 
 #define APPSTARTUP_TOPIC "app-startup"
@@ -68,6 +69,7 @@ static HINSTANCE hXPCOM = NULL;
 
 static nsIServiceManager *pServMgr = NULL;
 static nsIComponentManager *pCompMgr = NULL;
+static nsIMemory *nsmem = NULL;
 
 static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','r',0};
 
@@ -353,12 +355,27 @@ static BOOL load_gecko(void)
 
     set_profile();
 
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_MEMORY_CONTRACTID,
+            NULL, &IID_nsIMemory, (void**)&nsmem);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIMemory: %08lx\n", nsres);
+
     if(registrar) {
         register_nsservice(registrar, pServMgr);
         nsIComponentRegistrar_Release(registrar);
     }
 
     return TRUE;
+}
+
+void *nsalloc(size_t size)
+{
+    return nsIMemory_Alloc(nsmem, size);
+}
+
+void nsfree(void *mem)
+{
+    nsIMemory_Free(nsmem, mem);
 }
 
 void nsACString_Init(nsACString *str, const char *data)
@@ -431,6 +448,9 @@ void close_gecko()
     if(pServMgr)
         nsIServiceManager_Release(pServMgr);
 
+    if(nsmem)
+        nsIMemory_Release(nsmem);
+
     if(hXPCOM)
         FreeLibrary(hXPCOM);
 }
@@ -462,9 +482,18 @@ static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *ifa
     }else if(IsEqualGUID(&IID_nsIEmbeddingSiteWindow, riid)) {
         TRACE("(%p)->(IID_nsIEmbeddingSiteWindow %p)\n", This, result);
         *result = NSEMBWNDS(This);
+    }else if(IsEqualGUID(&IID_nsITooltipListener, riid)) {
+        TRACE("(%p)->(IID_nsITooltipListener %p)\n", This, result);
+        *result = NSTOOLTIP(This);
     }else if(IsEqualGUID(&IID_nsIInterfaceRequestor, riid)) {
         TRACE("(%p)->(IID_nsIInterfaceRequestor %p)\n", This, result);
         *result = NSIFACEREQ(This);
+    }else if(IsEqualGUID(&IID_nsIWeakReference, riid)) {
+        TRACE("(%p)->(IID_nsIWeakReference %p)\n", This, result);
+        *result = NSWEAKREF(This);
+    }else if(IsEqualGUID(&IID_nsISupportsWeakReference, riid)) {
+        TRACE("(%p)->(IID_nsISupportsWeakReference %p)\n", This, result);
+        *result = NSSUPWEAKREF(This);
     }
 
     if(*result) {
@@ -928,6 +957,56 @@ static const nsIEmbeddingSiteWindowVtbl nsEmbeddingSiteWindowVtbl = {
     nsEmbeddingSiteWindow_GetSiteWindow
 };
 
+#define NSTOOLTIP_THIS(iface) DEFINE_THIS(NSContainer, TooltipListener, iface)
+
+static nsresult NSAPI nsTooltipListener_QueryInterface(nsITooltipListener *iface, nsIIDRef riid,
+                                                       nsQIResult result)
+{
+    NSContainer *This = NSTOOLTIP_THIS(iface);
+    return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
+}
+
+static nsrefcnt NSAPI nsTooltipListener_AddRef(nsITooltipListener *iface)
+{
+    NSContainer *This = NSTOOLTIP_THIS(iface);
+    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
+}
+
+static nsrefcnt NSAPI nsTooltipListener_Release(nsITooltipListener *iface)
+{
+    NSContainer *This = NSTOOLTIP_THIS(iface);
+    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
+}
+
+static nsresult NSAPI nsTooltipListener_OnShowTooltip(nsITooltipListener *iface,
+        PRInt32 aXCoord, PRInt32 aYCoord, const PRUnichar *aTipText)
+{
+    NSContainer *This = NSTOOLTIP_THIS(iface);
+
+    show_tooltip(This->doc, aXCoord, aYCoord, aTipText);
+
+    return NS_OK;
+}
+
+static nsresult NSAPI nsTooltipListener_OnHideTooltip(nsITooltipListener *iface)
+{
+    NSContainer *This = NSTOOLTIP_THIS(iface);
+
+    hide_tooltip(This->doc);
+
+    return NS_OK;
+}
+
+#undef NSTOOLTIM_THIS
+
+static const nsITooltipListenerVtbl nsTooltipListenerVtbl = {
+    nsTooltipListener_QueryInterface,
+    nsTooltipListener_AddRef,
+    nsTooltipListener_Release,
+    nsTooltipListener_OnShowTooltip,
+    nsTooltipListener_OnHideTooltip
+};
+
 #define NSIFACEREQ_THIS(iface) DEFINE_THIS(NSContainer, InterfaceRequestor, iface)
 
 static nsresult NSAPI nsInterfaceRequestor_QueryInterface(nsIInterfaceRequestor *iface,
@@ -971,6 +1050,85 @@ static const nsIInterfaceRequestorVtbl nsInterfaceRequestorVtbl = {
     nsInterfaceRequestor_GetInterface
 };
 
+#define NSWEAKREF_THIS(iface) DEFINE_THIS(NSContainer, WeakReference, iface)
+
+static nsresult NSAPI nsWeakReference_QueryInterface(nsIWeakReference *iface,
+        nsIIDRef riid, nsQIResult result)
+{
+    NSContainer *This = NSWEAKREF_THIS(iface);
+    return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
+}
+
+static nsrefcnt NSAPI nsWeakReference_AddRef(nsIWeakReference *iface)
+{
+    NSContainer *This = NSWEAKREF_THIS(iface);
+    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
+}
+
+static nsrefcnt NSAPI nsWeakReference_Release(nsIWeakReference *iface)
+{
+    NSContainer *This = NSWEAKREF_THIS(iface);
+    return nsIWebBrowserChrome_Release(NSWBCHROME(This));
+}
+
+static nsresult NSAPI nsWeakReference_QueryReferent(nsIWeakReference *iface,
+        const nsIID *riid, void **result)
+{
+    NSContainer *This = NSWEAKREF_THIS(iface);
+    return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
+}
+
+#undef NSWEAKREF_THIS
+
+static const nsIWeakReferenceVtbl nsWeakReferenceVtbl = {
+    nsWeakReference_QueryInterface,
+    nsWeakReference_AddRef,
+    nsWeakReference_Release,
+    nsWeakReference_QueryReferent
+};
+
+#define NSSUPWEAKREF_THIS(iface) DEFINE_THIS(NSContainer, SupportsWeakReference, iface)
+
+static nsresult NSAPI nsSupportsWeakReference_QueryInterface(nsISupportsWeakReference *iface,
+        nsIIDRef riid, nsQIResult result)
+{
+    NSContainer *This = NSSUPWEAKREF_THIS(iface);
+    return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
+}
+
+static nsrefcnt NSAPI nsSupportsWeakReference_AddRef(nsISupportsWeakReference *iface)
+{
+    NSContainer *This = NSSUPWEAKREF_THIS(iface);
+    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
+}
+
+static nsrefcnt NSAPI nsSupportsWeakReference_Release(nsISupportsWeakReference *iface)
+{
+    NSContainer *This = NSSUPWEAKREF_THIS(iface);
+    return nsIWebBrowserChrome_Release(NSWBCHROME(This));
+}
+
+static nsresult NSAPI nsSupportsWeakReference_GetWeakReference(nsISupportsWeakReference *iface,
+        nsIWeakReference **_retval)
+{
+    NSContainer *This = NSSUPWEAKREF_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, _retval);
+
+    *_retval = NSWEAKREF(This);
+    return NS_OK;
+}
+
+#undef NSWEAKREF_THIS
+
+const nsISupportsWeakReferenceVtbl nsSupportsWeakReferenceVtbl = {
+    nsSupportsWeakReference_QueryInterface,
+    nsSupportsWeakReference_AddRef,
+    nsSupportsWeakReference_Release,
+    nsSupportsWeakReference_GetWeakReference
+};
+
+
 NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
 {
     nsIWebBrowserSetup *wbsetup;
@@ -982,11 +1140,15 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(NSContainer));
 
-    ret->lpWebBrowserChromeVtbl    = &nsWebBrowserChromeVtbl;
-    ret->lpContextMenuListenerVtbl = &nsContextMenuListenerVtbl;
-    ret->lpURIContentListenerVtbl  = &nsURIContentListenerVtbl;
-    ret->lpEmbeddingSiteWindowVtbl = &nsEmbeddingSiteWindowVtbl;
-    ret->lpInterfaceRequestorVtbl  = &nsInterfaceRequestorVtbl;
+    ret->lpWebBrowserChromeVtbl      = &nsWebBrowserChromeVtbl;
+    ret->lpContextMenuListenerVtbl   = &nsContextMenuListenerVtbl;
+    ret->lpURIContentListenerVtbl    = &nsURIContentListenerVtbl;
+    ret->lpEmbeddingSiteWindowVtbl   = &nsEmbeddingSiteWindowVtbl;
+    ret->lpTooltipListenerVtbl       = &nsTooltipListenerVtbl;
+    ret->lpInterfaceRequestorVtbl    = &nsInterfaceRequestorVtbl;
+    ret->lpWeakReferenceVtbl         = &nsWeakReferenceVtbl;
+    ret->lpSupportsWeakReferenceVtbl = &nsSupportsWeakReferenceVtbl;
+
 
     ret->doc = doc;
     ret->ref = 1;
