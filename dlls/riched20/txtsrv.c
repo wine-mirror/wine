@@ -79,6 +79,7 @@ HRESULT WINAPI CreateTextServices(IUnknown  * pUnkOuter,
       return E_OUTOFMEMORY;
    InitializeCriticalSection(&ITextImpl->csTxtSrv);
    ITextImpl->ref = 1;
+   ITextHost_AddRef(pITextHost);
    ITextImpl->pMyHost = pITextHost;
    ITextImpl->lpVtbl = &textservices_Vtbl;
 
