@@ -78,18 +78,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 /* TODO: Vertex and Pixel shaders are almost identicle, the only exception being the way that some of the data is looked up or the availablity of some of the data i.e. some instructions are only valid for pshaders and some for vshaders
 because of this the bulk of the software pipeline can be shared between pixel and vertex shaders... and it wouldn't supprise me if the programes can be cross compiled using a large body body shared code */
 
-typedef void (*shader_fct_t)();
-
-typedef struct SHADER_OPCODE {
-  unsigned int  opcode;
-  const char*   name;
-  const char*   glname;
-  CONST UINT    num_params;
-  shader_fct_t  soft_fct;
-  DWORD         min_version;
-  DWORD         max_version;
-} SHADER_OPCODE;
-
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
 /*******************************

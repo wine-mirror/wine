@@ -41,17 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 #define PGMSIZE 65535
 
 #define REGMASK 0x00001FFF
-typedef void (*shader_fct_t)();
-
-typedef struct SHADER_OPCODE {
-    unsigned int  opcode;
-    const char*   name;
-    const char*   glname;
-    CONST UINT    num_params;
-    shader_fct_t  soft_fct;
-    DWORD         min_version;
-    DWORD         max_version;
-} SHADER_OPCODE;
 
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 /* *******************************************

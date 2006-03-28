@@ -1157,6 +1157,18 @@ enum vsConstantsEnum {
     VS_CONSTANT_FLOAT
 };
 
+typedef void (*shader_fct_t)();
+
+typedef struct SHADER_OPCODE {
+    unsigned int  opcode;
+    const char*   name;
+    const char*   glname;
+    CONST UINT    num_params;
+    shader_fct_t  soft_fct;
+    DWORD         min_version;
+    DWORD         max_version;
+} SHADER_OPCODE;
+
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure
  */
