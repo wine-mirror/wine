@@ -142,7 +142,7 @@ HRESULT WINAPI IDirect3DCubeTexture8Impl_GetLevelDesc(LPDIRECT3DCUBETEXTURE8 ifa
     wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
     wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
-    wined3ddesc.Pool                = &pDesc->Pool;
+    wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
     wined3ddesc.Size                = &tmpInt;
     wined3ddesc.MultiSampleType     = (WINED3DMULTISAMPLE_TYPE *) &pDesc->MultiSampleType;
     wined3ddesc.MultiSampleQuality  = NULL; /* DirectX9 only */

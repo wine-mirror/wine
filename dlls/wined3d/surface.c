@@ -143,7 +143,7 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
             FIXME("Mipmap surface has a glTexture bound to it!\n");
         }
     }
-    if (This->resource.pool == D3DPOOL_DEFAULT) {
+    if (This->resource.pool == WINED3DPOOL_DEFAULT) {
        /* Tell opengl to try and keep this texture in video ram (well mostly) */
        GLclampf tmp;
        tmp = 0.9f;
@@ -258,7 +258,7 @@ void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor *
 const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     /* This should only be called for sysmem textures, it may be a good idea to extend this to all pools at some point in the futture  */
-    if (This->resource.pool != D3DPOOL_SYSTEMMEM) {
+    if (This->resource.pool != WINED3DPOOL_SYSTEMMEM) {
         FIXME(" (%p)Attempting to get system memory for a non-system memory texture\n", iface);
     }
     return (CONST void*)(This->resource.allocatedMemory);
@@ -951,7 +951,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     *  In general never store scratch or system mem textures in the video ram. However it is allowed
     *  for system memory textures when WINED3DDEVCAPS_TEXTURESYSTEMMEMORY is set but it isn't right now.
     */
-    if (This->resource.pool == D3DPOOL_SCRATCH || This->resource.pool == D3DPOOL_SYSTEMMEM)
+    if (This->resource.pool == WINED3DPOOL_SCRATCH || This->resource.pool == WINED3DPOOL_SYSTEMMEM)
     {
         FIXME("(%p) Operation not supported for scratch or SYSTEMMEM textures\n",This);
         return D3DERR_INVALIDCALL;

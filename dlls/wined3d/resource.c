@@ -64,7 +64,7 @@ ULONG WINAPI IWineD3DResourceImpl_Release(IWineD3DResource *iface) {
 void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface){
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     TRACE("(%p) Cleaning up resource\n", This);
-    if (This->resource.pool == D3DPOOL_DEFAULT) {
+    if (This->resource.pool == WINED3DPOOL_DEFAULT) {
         TRACE("Decrementing device memory pool by %u\n", This->resource.size);
         globalChangeGlRam(-This->resource.size);
     }

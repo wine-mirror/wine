@@ -602,7 +602,7 @@ typedef struct IWineD3DResourceClass
     IUnknown               *parent;
     WINED3DRESOURCETYPE     resourceType;
     IWineD3DDeviceImpl     *wineD3DDevice;
-    D3DPOOL                 pool;
+    WINED3DPOOL             pool;
     UINT                    size;
     DWORD                   usage;
     WINED3DFORMAT           format;
@@ -1075,7 +1075,7 @@ const char* debug_d3dusage(DWORD usage);
 const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
 const char* debug_d3drenderstate(DWORD state);
 const char* debug_d3dtexturestate(DWORD state);
-const char* debug_d3dpool(D3DPOOL pool);
+const char* debug_d3dpool(WINED3DPOOL pool);
 
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op);

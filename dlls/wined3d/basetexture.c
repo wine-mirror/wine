@@ -153,7 +153,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_GetParent(IWineD3DBaseTexture *iface, IUn
 DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LODNew) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
 
-    if (This->resource.pool != D3DPOOL_MANAGED) {
+    if (This->resource.pool != WINED3DPOOL_MANAGED) {
         return  D3DERR_INVALIDCALL;
     }
 
@@ -169,7 +169,7 @@ DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LO
 DWORD WINAPI IWineD3DBaseTextureImpl_GetLOD(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
 
-    if (This->resource.pool != D3DPOOL_MANAGED) {
+    if (This->resource.pool != WINED3DPOOL_MANAGED) {
         return  D3DERR_INVALIDCALL;
     }
 
@@ -247,7 +247,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         glGenTextures(1, &This->baseTexture.textureName);
         checkGLcall("glGenTextures");
         TRACE("Generated texture %d\n", This->baseTexture.textureName);
-        if (This->resource.pool == D3DPOOL_DEFAULT) {
+        if (This->resource.pool == WINED3DPOOL_DEFAULT) {
             /* Tell opengl to try and keep this texture in video ram (well mostly) */
             GLclampf tmp;
             tmp = 0.9f;

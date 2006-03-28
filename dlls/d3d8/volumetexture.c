@@ -142,7 +142,7 @@ HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE8
     wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
     wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
-    wined3ddesc.Pool                = &pDesc->Pool;
+    wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
     wined3ddesc.Size                = &tmpInt;
     wined3ddesc.Width               = &pDesc->Width;
     wined3ddesc.Height              = &pDesc->Height;

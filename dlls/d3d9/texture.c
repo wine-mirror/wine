@@ -162,7 +162,7 @@ HRESULT WINAPI IDirect3DTexture9Impl_GetLevelDesc(LPDIRECT3DTEXTURE9 iface, UINT
     wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
     wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
-    wined3ddesc.Pool                = &pDesc->Pool;
+    wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
     wined3ddesc.Size                = &tmpInt; /* required for d3d8 */
     wined3ddesc.MultiSampleType     = (WINED3DMULTISAMPLE_TYPE *) &pDesc->MultiSampleType;
     wined3ddesc.MultiSampleQuality  = &pDesc->MultiSampleQuality;
@@ -255,7 +255,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9 iface, UIN
     object->lpVtbl = &Direct3DTexture9_Vtbl;
     object->ref = 1;
     hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage,
-                                 (WINED3DFORMAT)Format, Pool, &object->wineD3DTexture, pSharedHandle, (IUnknown *)object, D3D9CB_CreateSurface);
+                                 (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DTexture, pSharedHandle, (IUnknown *)object, D3D9CB_CreateSurface);
 
     if (FAILED(hrc)) {
 

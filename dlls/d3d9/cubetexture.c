@@ -163,7 +163,7 @@ HRESULT WINAPI IDirect3DCubeTexture9Impl_GetLevelDesc(LPDIRECT3DCUBETEXTURE9 ifa
     wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
     wined3ddesc.Type                = (WINED3DRESOURCETYPE *) &pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
-    wined3ddesc.Pool                = &pDesc->Pool;
+    wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
     wined3ddesc.Size                = &tmpInt;
     wined3ddesc.MultiSampleType     = (WINED3DMULTISAMPLE_TYPE *) &pDesc->MultiSampleType;
     wined3ddesc.MultiSampleQuality  = &pDesc->MultiSampleQuality;
@@ -261,7 +261,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateCubeTexture(LPDIRECT3DDEVICE9 iface,
     object->lpVtbl = &Direct3DCubeTexture9_Vtbl;
     object->ref = 1;
     hr = IWineD3DDevice_CreateCubeTexture(This->WineD3DDevice, EdgeLength, Levels, Usage,
-                                 (WINED3DFORMAT)Format, Pool, &object->wineD3DCubeTexture, pSharedHandle, (IUnknown*)object,
+                                 (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DCubeTexture, pSharedHandle, (IUnknown*)object,
                                  D3D9CB_CreateSurface);
 
     if (hr != D3D_OK){

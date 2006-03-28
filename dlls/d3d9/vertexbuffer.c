@@ -172,7 +172,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(LPDIRECT3DDEVICE9 iface,
 
     object->lpVtbl = &Direct3DVertexBuffer9_Vtbl;
     object->ref = 1;
-    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage, FVF, Pool, &(object->wineD3DVertexBuffer), pSharedHandle, (IUnknown *)object);
+    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage, FVF, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), pSharedHandle, (IUnknown *)object);
     
     if (hrc != D3D_OK) {
 

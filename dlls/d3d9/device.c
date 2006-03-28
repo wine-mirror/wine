@@ -234,7 +234,7 @@ void WINAPI IDirect3DDevice9Impl_GetGammaRamp(LPDIRECT3DDEVICE9 iface, UINT iSwa
 }
 
 
-HRESULT  WINAPI IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9 iface, UINT Width, UINT Height, D3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IDirect3DSurface9 **ppSurface,D3DRESOURCETYPE Type, UINT Usage,D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality,HANDLE* pSharedHandle )  {
+HRESULT  WINAPI IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9 iface, UINT Width, UINT Height, D3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IDirect3DSurface9 **ppSurface,D3DRESOURCETYPE Type, UINT Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality,HANDLE* pSharedHandle )  {
     HRESULT hrc;
     IDirect3DSurface9Impl *object;
     IDirect3DDevice9Impl  *This = (IDirect3DDevice9Impl *)iface;
@@ -268,7 +268,7 @@ HRESULT  WINAPI IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9 iface, UINT
     
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
            
-    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage, Pool,MultiSample,MultisampleQuality,pSharedHandle,(IUnknown *)object);
+    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage, (WINED3DPOOL) Pool,MultiSample,MultisampleQuality,pSharedHandle,(IUnknown *)object);
     
     if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
 
@@ -368,7 +368,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(LPDIRECT3DDEVI
         Why, their always lockable?
         should I change the usage to dynamic?        
         */
-    return IDirect3DDevice9Impl_CreateSurface(iface,Width,Height,Format,TRUE/*Loackable*/,FALSE/*Discard*/,0/*Level*/ , ppSurface,D3DRTYPE_SURFACE, 0/*Usage (undefined/none)*/,Pool,D3DMULTISAMPLE_NONE,0/*MultisampleQuality*/,pSharedHandle);
+    return IDirect3DDevice9Impl_CreateSurface(iface,Width,Height,Format,TRUE/*Loackable*/,FALSE/*Discard*/,0/*Level*/ , ppSurface,D3DRTYPE_SURFACE, 0/*Usage (undefined/none)*/,(WINED3DPOOL) Pool,D3DMULTISAMPLE_NONE,0/*MultisampleQuality*/,pSharedHandle);
 }
 
 /* TODO: move to wineD3D */
@@ -939,7 +939,7 @@ const IDirect3DDevice9Vtbl Direct3DDevice9_Vtbl =
 
 /* Internal function called back during the CreateDevice to create a render target  */
 HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, UINT Width, UINT Height, 
-                                         WINED3DFORMAT Format, DWORD Usage, D3DPOOL Pool, UINT Level,
+                                         WINED3DFORMAT Format, DWORD Usage, WINED3DPOOL Pool, UINT Level,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     
     HRESULT res = D3D_OK;
@@ -950,7 +950,7 @@ HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, UINT Width, UINT Height,
         Lockable = FALSE;
         
     TRACE("relay\n");
-    res = IDirect3DDevice9Impl_CreateSurface((IDirect3DDevice9 *)device, Width, Height, (D3DFORMAT)Format, Lockable, FALSE/*Discard*/, Level,  (IDirect3DSurface9 **)&d3dSurface, D3DRTYPE_SURFACE, Usage, Pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */, pSharedHandle);  
+    res = IDirect3DDevice9Impl_CreateSurface((IDirect3DDevice9 *)device, Width, Height, (D3DFORMAT)Format, Lockable, FALSE/*Discard*/, Level,  (IDirect3DSurface9 **)&d3dSurface, D3DRTYPE_SURFACE, Usage, (D3DPOOL) Pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */, pSharedHandle);  
 
     if (res == D3D_OK) {
         *ppSurface = d3dSurface->wineD3DSurface;

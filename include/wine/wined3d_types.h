@@ -503,12 +503,21 @@ typedef enum _WINED3DRESOURCETYPE {
 
 #define WINED3DRTYPECOUNT (WINED3DRTYPE_INDEXBUFFER+1)
 
+typedef enum _WINED3DPOOL {
+    WINED3DPOOL_DEFAULT                 = 0,
+    WINED3DPOOL_MANAGED                 = 1,
+    WINED3DPOOL_SYSTEMMEM               = 2,
+    WINED3DPOOL_SCRATCH                 = 3,
+
+    WINED3DPOOL_FORCE_DWORD             = 0x7fffffff
+} WINED3DPOOL;
+
 typedef struct _WINED3DSURFACE_DESC
 {
     WINED3DFORMAT           *Format;
     WINED3DRESOURCETYPE     *Type;
     DWORD                   *Usage;
-    D3DPOOL                 *Pool;
+    WINED3DPOOL             *Pool;
     UINT                    *Size;
 
     WINED3DMULTISAMPLE_TYPE *MultiSampleType;
@@ -522,7 +531,7 @@ typedef struct _WINED3DVOLUME_DESC
     WINED3DFORMAT       *Format;
     WINED3DRESOURCETYPE *Type;
     DWORD               *Usage;
-    D3DPOOL             *Pool;
+    WINED3DPOOL         *Pool;
     UINT                *Size;
 
     UINT                *Width;
@@ -643,7 +652,7 @@ typedef struct _WINED3DVERTEXBUFFER_DESC {
     WINED3DFORMAT           Format;
     WINED3DRESOURCETYPE     Type;
     DWORD                   Usage;
-    D3DPOOL                 Pool;
+    WINED3DPOOL             Pool;
     UINT                    Size;
     DWORD                   FVF;
 } WINED3DVERTEXBUFFER_DESC;
@@ -652,7 +661,7 @@ typedef struct _WINED3DINDEXBUFFER_DESC {
     WINED3DFORMAT           Format;
     WINED3DRESOURCETYPE     Type;
     DWORD                   Usage;
-    D3DPOOL                 Pool;
+    WINED3DPOOL             Pool;
     UINT                    Size;
 } WINED3DINDEXBUFFER_DESC;
 

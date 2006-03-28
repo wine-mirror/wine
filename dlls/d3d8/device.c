@@ -303,7 +303,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UINT 
     object->lpVtbl = &Direct3DTexture8_Vtbl;
     object->ref = 1;
     hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage,
-                                 (WINED3DFORMAT)Format, Pool, &object->wineD3DTexture, NULL, (IUnknown *)object, D3D8CB_CreateSurface);
+                                 (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DTexture, NULL, (IUnknown *)object, D3D8CB_CreateSurface);
 
     if (FAILED(hrc)) {
         /* free up object */ 
@@ -339,7 +339,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 iface,
     object->lpVtbl = &Direct3DVolumeTexture8_Vtbl;
     object->ref = 1;
     hrc = IWineD3DDevice_CreateVolumeTexture(This->WineD3DDevice, Width, Height, Depth, Levels, Usage,
-                                 (WINED3DFORMAT)Format, Pool, &object->wineD3DVolumeTexture, NULL,
+                                 (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DVolumeTexture, NULL,
                                  (IUnknown *)object, D3D8CB_CreateVolume);
 
     if (hrc != D3D_OK) {
@@ -376,7 +376,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface, U
     object->lpVtbl = &Direct3DCubeTexture8_Vtbl;
     object->ref = 1;
     hr = IWineD3DDevice_CreateCubeTexture(This->WineD3DDevice, EdgeLength, Levels, Usage,
-                                 (WINED3DFORMAT)Format, Pool, &object->wineD3DCubeTexture, NULL, (IUnknown*)object,
+                                 (WINED3DFORMAT)Format, (WINED3DPOOL) Pool, &object->wineD3DCubeTexture, NULL, (IUnknown*)object,
                                  D3D8CB_CreateSurface);
 
     if (hr != D3D_OK){
@@ -408,7 +408,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, 
 
     object->lpVtbl = &Direct3DVertexBuffer8_Vtbl;
     object->ref = 1;
-    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage, FVF, Pool, &(object->wineD3DVertexBuffer), NULL, (IUnknown *)object);
+    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage, FVF, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), NULL, (IUnknown *)object);
 
     if (D3D_OK != hrc) {
 
@@ -439,7 +439,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface, U
     object->lpVtbl = &Direct3DIndexBuffer8_Vtbl;
     object->ref = 1;
     TRACE("Calling wined3d create index buffer\n");
-    hrc = IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage, Format, Pool, &object->wineD3DIndexBuffer, NULL, (IUnknown *)object);
+    hrc = IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage, Format, (WINED3DPOOL) Pool, &object->wineD3DIndexBuffer, NULL, (IUnknown *)object);
 
     if (D3D_OK != hrc) {
 
@@ -487,7 +487,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateSurface(LPDIRECT3DDEVICE8 iface, UINT 
 
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
 
-    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage, Pool,MultiSample,MultisampleQuality, NULL,(IUnknown *)object);
+    hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage, (WINED3DPOOL) Pool,MultiSample,MultisampleQuality, NULL,(IUnknown *)object);
     if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
        /* free up object */
         FIXME("(%p) call to IWineD3DDevice_CreateSurface failed\n", This);
@@ -1471,14 +1471,14 @@ const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
 
 /* Internal function called back during the CreateDevice to create a render target  */
 HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, UINT Width, UINT Height, 
-                                         WINED3DFORMAT Format, DWORD Usage, D3DPOOL Pool, UINT Level,
+                                         WINED3DFORMAT Format, DWORD Usage, WINED3DPOOL Pool, UINT Level,
                                          IWineD3DSurface **ppSurface, HANDLE *pSharedHandle) {
 
     HRESULT res = D3D_OK;
     IDirect3DSurface8Impl *d3dSurface = NULL;
     BOOL Lockable = TRUE;
 
-    if((D3DPOOL_DEFAULT == Pool && D3DUSAGE_DYNAMIC != Usage))
+    if((WINED3DPOOL_DEFAULT == Pool && WINED3DUSAGE_DYNAMIC != Usage))
         Lockable = FALSE;
 
     TRACE("relay\n");

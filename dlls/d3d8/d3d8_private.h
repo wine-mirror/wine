@@ -560,11 +560,11 @@ typedef struct IDirect3DPixelShader8Impl {
  
 /* Callbacks */
 extern HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, UINT Width, UINT Height, 
-                                         WINED3DFORMAT Format, DWORD Usage, D3DPOOL Pool, UINT Level,
+                                         WINED3DFORMAT Format, DWORD Usage, WINED3DPOOL Pool, UINT Level,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
 extern HRESULT WINAPI D3D8CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
-                                          WINED3DFORMAT  Format, D3DPOOL Pool, DWORD Usage,
+                                          WINED3DFORMAT  Format, WINED3DPOOL Pool, DWORD Usage,
                                           IWineD3DVolume **ppVolume, 
                                           HANDLE   * pSharedHandle);
 

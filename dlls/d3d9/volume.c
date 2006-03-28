@@ -160,7 +160,7 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DVOLUME_D
     wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
     wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
-    wined3ddesc.Pool                = &pDesc->Pool;
+    wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
     wined3ddesc.Size                = &tmpInt;
     wined3ddesc.Width               = &pDesc->Width;
     wined3ddesc.Height              = &pDesc->Height;
@@ -201,7 +201,7 @@ const IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl =
 
 /* Internal function called back during the CreateVolumeTexture */
 HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
-                                   WINED3DFORMAT  Format, D3DPOOL Pool, DWORD Usage,
+                                   WINED3DFORMAT  Format, WINED3DPOOL Pool, DWORD Usage,
                                    IWineD3DVolume **ppVolume, 
                                    HANDLE   * pSharedHandle) {
     IDirect3DVolume9Impl *object;

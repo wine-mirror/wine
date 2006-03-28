@@ -90,7 +90,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
     object->resource.usage           = Usage; \
     object->resource.size            = _size; \
     /* Check that we have enough video ram left */ \
-    if (Pool == D3DPOOL_DEFAULT) { \
+    if (Pool == WINED3DPOOL_DEFAULT) { \
         if (IWineD3DDevice_GetAvailableTextureMem(iface) <= _size) { \
             WARN("Out of 'bogus' video memory\n"); \
             HeapFree(GetProcessHeap(), 0, object); \
@@ -99,8 +99,8 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
         } \
         globalChangeGlRam(_size); \
     } \
-    object->resource.allocatedMemory = (0 == _size ? NULL : Pool == D3DPOOL_DEFAULT ? NULL : HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _size)); \
-    if (object->resource.allocatedMemory == NULL && _size != 0 && Pool != D3DPOOL_DEFAULT) { \
+    object->resource.allocatedMemory = (0 == _size ? NULL : Pool == WINED3DPOOL_DEFAULT ? NULL : HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _size)); \
+    if (object->resource.allocatedMemory == NULL && _size != 0 && Pool != WINED3DPOOL_DEFAULT) { \
         FIXME("Out of memory!\n"); \
         HeapFree(GetProcessHeap(), 0, object); \
         *pp##type = NULL; \
@@ -462,7 +462,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetParent(IWineD3DDevice *iface, IUnknown **pP
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage, 
-                             DWORD FVF, D3DPOOL Pool, IWineD3DVertexBuffer** ppVertexBuffer, HANDLE *sharedHandle,
+                             DWORD FVF, WINED3DPOOL Pool, IWineD3DVertexBuffer** ppVertexBuffer, HANDLE *sharedHandle,
                              IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexBufferImpl *object;
@@ -470,7 +470,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
     D3DCREATERESOURCEOBJECTINSTANCE(object, VertexBuffer, WINED3DRTYPE_VERTEXBUFFER, Size)
     
     /*TODO: use VBO's */
-    if (Pool == D3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
+    if (Pool == WINED3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
         object->resource.allocatedMemory  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->resource.size);
     }
     object->fvf = FVF;
@@ -482,7 +482,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage, 
-                                                    WINED3DFORMAT Format, D3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer,
+                                                    WINED3DFORMAT Format, WINED3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer,
                                                     HANDLE *sharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DIndexBufferImpl *object;
@@ -492,7 +492,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT 
     D3DCREATERESOURCEOBJECTINSTANCE(object,IndexBuffer,WINED3DRTYPE_INDEXBUFFER, Length)
     
     /*TODO: use VBO's */
-    if (Pool == D3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
+    if (Pool == WINED3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
         object->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->resource.size);
     }
 
@@ -636,7 +636,7 @@ If this flag is set, the contents of the depth stencil buffer will be invalid af
 
 ******************************** */
  
-HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height, WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,WINED3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality, HANDLE* pSharedHandle, IUnknown *parent) {
+HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height, WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,WINED3DRESOURCETYPE Type, DWORD Usage, WINED3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality, HANDLE* pSharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int pow2Width, pow2Height;
@@ -768,28 +768,28 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
 
     /** TODO: change this into a texture transform matrix so that it's processed in hardware **/
 
-    TRACE("Pool %d %d %d %d",Pool, D3DPOOL_DEFAULT, D3DPOOL_MANAGED, D3DPOOL_SYSTEMMEM);
+    TRACE("Pool %d %d %d %d",Pool, WINED3DPOOL_DEFAULT, WINED3DPOOL_MANAGED, WINED3DPOOL_SYSTEMMEM);
 
     /** Quick lockable sanity check TODO: remove this after surfaces, usage and locablility have been debugged properly
     * this function is too deap to need to care about things like this.
     * Levels need to be checked too, and possibly Type wince they all affect what can be done.
     * ****************************************/
     switch(Pool) {
-    case D3DPOOL_SCRATCH:
+    case WINED3DPOOL_SCRATCH:
         if(Lockable == FALSE)
             FIXME("Create suface called with a pool of SCRATCH and a Lockable of FALSE \
                 which are mutually exclusive, setting lockable to true\n");
                 Lockable = TRUE;
     break;
-    case D3DPOOL_SYSTEMMEM:
+    case WINED3DPOOL_SYSTEMMEM:
         if(Lockable == FALSE) FIXME("Create surface called with a pool of SYSTEMMEM and a Lockable of FALSE, \
                                     this is acceptable but unexpected (I can't know how the surface can be usable!)\n");
-    case D3DPOOL_MANAGED:
+    case WINED3DPOOL_MANAGED:
         if(Usage == WINED3DUSAGE_DYNAMIC) FIXME("Create surface called with a pool of MANAGED and a \
                                                 Usage of DYNAMIC which are mutually exclusive, not doing \
                                                 anything just telling you.\n");
     break;
-    case D3DPOOL_DEFAULT: /*TODO: Create offscreen plain can cause this check to fail..., find out if it should */
+    case WINED3DPOOL_DEFAULT: /*TODO: Create offscreen plain can cause this check to fail..., find out if it should */
         if(!(Usage & WINED3DUSAGE_DYNAMIC) && !(Usage & WINED3DUSAGE_RENDERTARGET)
            && !(Usage && WINED3DUSAGE_DEPTHSTENCIL ) && Lockable == TRUE)
             FIXME("Creating a surface with a POOL of DEFAULT with Locable true, that doesn't specify DYNAMIC usage.\n");
@@ -799,7 +799,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     break;
     };
 
-    if (Usage & WINED3DUSAGE_RENDERTARGET && Pool != D3DPOOL_DEFAULT) {
+    if (Usage & WINED3DUSAGE_RENDERTARGET && Pool != WINED3DPOOL_DEFAULT) {
         FIXME("Trying to create a render target that isn't in the default pool\n");
     }
 
@@ -817,7 +817,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
 }
 
 HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Width, UINT Height, UINT Levels,
-                                                 DWORD Usage, WINED3DFORMAT Format, D3DPOOL Pool,
+                                                 DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool,
                                                  IWineD3DTexture** ppTexture, HANDLE* pSharedHandle, IUnknown *parent,
                                                  D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
 
@@ -906,7 +906,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
                                                       UINT Width, UINT Height, UINT Depth,
                                                       UINT Levels, DWORD Usage,
-                                                      WINED3DFORMAT Format, D3DPOOL Pool,
+                                                      WINED3DFORMAT Format, WINED3DPOOL Pool,
                                                       IWineD3DVolumeTexture **ppVolumeTexture,
                                                       HANDLE *pSharedHandle, IUnknown *parent,
                                                       D3DCB_CREATEVOLUMEFN D3DCB_CreateVolume) {
@@ -978,7 +978,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
                                                UINT Width, UINT Height, UINT Depth,
                                                DWORD Usage,
-                                               WINED3DFORMAT Format, D3DPOOL Pool,
+                                               WINED3DFORMAT Format, WINED3DPOOL Pool,
                                                IWineD3DVolume** ppVolume,
                                                HANDLE* pSharedHandle, IUnknown *parent) {
 
@@ -1006,7 +1006,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength,
                                                     UINT Levels, DWORD Usage,
-                                                    WINED3DFORMAT Format, D3DPOOL Pool,
+                                                    WINED3DFORMAT Format, WINED3DPOOL Pool,
                                                     IWineD3DCubeTexture **ppCubeTexture,
                                                     HANDLE *pSharedHandle, IUnknown *parent,
                                                     D3DCB_CREATESURFACEFN D3DCB_CreateSurface) {
@@ -4678,11 +4678,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
     }
 
     if(pTexture != NULL) {
-        /* SetTexture isn't allowed on textures in D3DPOOL_SCRATCH; The same is
-        *  the case for D3DPOOL_SYSTEMMEM textures unless WINED3DDEVCAPS_TEXTURESYSTEMMORY is set.
+        /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH; The same is
+        *  the case for WINED3DPOOL_SYSTEMMEM textures unless WINED3DDEVCAPS_TEXTURESYSTEMMORY is set.
         *  We don't check the caps as GetDeviceCaps is inefficient and we don't set the cap anyway.
         */
-        if(((IWineD3DTextureImpl*)pTexture)->resource.pool == D3DPOOL_SCRATCH || ((IWineD3DTextureImpl*)pTexture)->resource.pool == D3DPOOL_SYSTEMMEM) {
+        if(((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SCRATCH || ((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SYSTEMMEM) {
             WARN("(%p) Attempt to set scratch texture rejected\n", pTexture);
             return D3DERR_INVALIDCALL;
         }
@@ -5503,7 +5503,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
     WINED3DFORMAT destFormat, srcFormat;
     UINT          destSize;
     int destLeft, destTop;
-    D3DPOOL       srcPool, destPool;
+    WINED3DPOOL       srcPool, destPool;
     int offset    = 0;
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
     glDescriptor *glDescription = NULL;
@@ -5529,7 +5529,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
 
     IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
 
-    if(srcPool != D3DPOOL_SYSTEMMEM  || destPool != D3DPOOL_DEFAULT){
+    if(srcPool != WINED3DPOOL_SYSTEMMEM  || destPool != WINED3DPOOL_DEFAULT){
         WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning D3DERR_INVALIDCALL\n", pSourceSurface, pDestinationSurface);
         return D3DERR_INVALIDCALL;
     }
@@ -5706,7 +5706,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_CopyRects(IWineD3DDevice *iface,
           pSourceSurface, pSourceRectsArray, cRects, pDestinationSurface, pDestPointsArray);
 
 
-    /* Check that the source texture is in D3DPOOL_SYSTEMMEM and the destination texture is in D3DPOOL_DEFAULT */
+    /* Check that the source texture is in WINED3DPOOL_SYSTEMMEM and the destination texture is in WINED3DPOOL_DEFAULT */
     memset(&winedesc, 0, sizeof(winedesc));
 
     winedesc.Format = &srcFormat;
@@ -5847,8 +5847,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurfa
     DWORD       *data;
     TRACE("(%p) Colour fill Surface: %p rect: %p color: %ld\n", This, pSurface, pRect, color);
 
-    if (surface->resource.pool != D3DPOOL_DEFAULT) {
-        FIXME("call to colorfill with non D3DPOOL_DEFAULT surface\n");
+    if (surface->resource.pool != WINED3DPOOL_DEFAULT) {
+        FIXME("call to colorfill with non WINED3DPOOL_DEFAULT surface\n");
         return D3DERR_INVALIDCALL;
     }
 
@@ -6501,7 +6501,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_TestCooperativeLevel(IWineD3DDevice* iface) 
         {
             ResourceList *resourceList  = This->resources;
             while (NULL != resourceList) {
-                if (((IWineD3DResourceImpl *)resourceList->resource)->resource.pool == D3DPOOL_DEFAULT /* TODO: IWineD3DResource_GetPool(resourceList->resource)*/)
+                if (((IWineD3DResourceImpl *)resourceList->resource)->resource.pool == WINED3DPOOL_DEFAULT /* TODO: IWineD3DResource_GetPool(resourceList->resource)*/)
                 return D3DERR_DEVICENOTRESET;
                 resourceList = resourceList->next;
             }
