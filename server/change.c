@@ -591,11 +591,6 @@ static void inotify_do_change_notify( struct dir *dir, unsigned int action,
 
     if (!list_empty( &dir->change_q ))
         async_terminate_head( &dir->change_q, STATUS_ALERTED );
-    else
-    {
-        dir->signaled++;
-        dir_signal_changed( dir );
-    }
 }
 
 static unsigned int filter_from_event( struct inotify_event *ie )
@@ -1132,6 +1127,11 @@ DECL_HANDLER(read_directory_changes)
     /* clear the event */
     if (event)
         reset_event( event );
+
+    /* if there's already a change in the queue, send it */
+    if (!list_empty( &dir->change_q ) &&
+        !list_empty( &dir->change_records ))
+        async_terminate_head( &dir->change_q, STATUS_ALERTED );
 
     /* setup the real notification */
     if (!inotify_adjust_changes( dir ))
