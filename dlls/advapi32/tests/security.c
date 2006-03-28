@@ -173,10 +173,9 @@ static void test_trustee(void)
     char szObjectTypeName[] = "ObjectTypeName";
     char szInheritedObjectTypeName[] = "InheritedObjectTypeName";
     char szTrusteeName[] = "szTrusteeName";
+    SID_IDENTIFIER_AUTHORITY auth = { {0x11,0x22,0,0,0, 0} };
 
     memset( &ZeroGuid, 0x00, sizeof (ZeroGuid) );
-
-    SID_IDENTIFIER_AUTHORITY auth = { {0x11,0x22,0,0,0, 0} };
 
     pBuildTrusteeWithSidA = (fnBuildTrusteeWithSidA)
                     GetProcAddress( hmod, "BuildTrusteeWithSidA" );

@@ -2093,7 +2093,7 @@ VOID WINAPI BuildTrusteeWithObjectsAndNameA( PTRUSTEEA pTrustee, POBJECTS_AND_NA
     pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     pTrustee->TrusteeForm = TRUSTEE_IS_OBJECTS_AND_NAME;
     pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
-    pTrustee->ptstrName = pObjName;
+    pTrustee->ptstrName = (LPSTR)pObjName;
 }
 
 /******************************************************************************
