@@ -684,6 +684,7 @@ extern BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rec
                                    const RECT *rectClient, UINT swp_flags, const RECT *validRects );
 extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );
 
+extern void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height );
 extern void X11DRV_handle_desktop_resize(unsigned int width, unsigned int height);
 extern void X11DRV_Settings_AddDepthModes(void);
 extern void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq);

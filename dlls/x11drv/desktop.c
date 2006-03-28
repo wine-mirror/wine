@@ -131,6 +131,31 @@ static void X11DRV_desktop_SetCurrentMode(int mode)
 }
 
 /***********************************************************************
+ *		X11DRV_init_desktop
+ *
+ * Setup the desktop when not using the root window.
+ */
+void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
+{
+    root_window = win;
+    max_width = screen_width;
+    max_height = screen_height;
+    screen_width  = width;
+    screen_height = height;
+
+    /* initialize the available resolutions */
+    dd_modes = X11DRV_Settings_SetHandlers("desktop", 
+                                           X11DRV_desktop_GetCurrentMode, 
+                                           X11DRV_desktop_SetCurrentMode, 
+                                           NUM_DESKTOP_MODES+2, 1);
+    make_modes();
+    X11DRV_Settings_AddDepthModes();
+    dd_mode_count = X11DRV_Settings_GetModeCount();
+    X11DRV_Settings_SetDefaultMode(0);
+}
+
+
+/***********************************************************************
  *		X11DRV_create_desktop
  *
  * Create the X11 desktop window for the desktop mode.
@@ -142,10 +167,6 @@ Window X11DRV_create_desktop( UINT width, UINT height )
     Display *display = thread_display();
 
     wine_tsx11_lock();
-    max_width = screen_width;
-    max_height = screen_height;
-    screen_width  = width;
-    screen_height = height;
 
     /* Create window */
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
@@ -163,17 +184,6 @@ Window X11DRV_create_desktop( UINT width, UINT height )
                          CWEventMask | CWCursor | CWColormap, &win_attr );
     XFlush( display );
     wine_tsx11_unlock();
-    if (win == None) return None;
-
-    /* initialize the available resolutions */
-    dd_modes = X11DRV_Settings_SetHandlers("desktop", 
-                                           X11DRV_desktop_GetCurrentMode, 
-                                           X11DRV_desktop_SetCurrentMode, 
-                                           NUM_DESKTOP_MODES+2, 1);
-    make_modes();
-    X11DRV_Settings_AddDepthModes();
-    dd_mode_count = X11DRV_Settings_GetModeCount();
-    X11DRV_Settings_SetDefaultMode(0);
-    root_window = win;
+    if (win != None) X11DRV_init_desktop( win, width, height );
     return win;
 }

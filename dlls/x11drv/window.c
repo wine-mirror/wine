@@ -858,18 +858,19 @@ static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
 
     if (win)
     {
+        unsigned int width, height;
+
         /* retrieve the real size of the desktop */
         SERVER_START_REQ( get_window_rectangles )
         {
             req->handle = data->hwnd;
-            if (!wine_server_call( req ))
-            {
-                screen_width  = reply->window.right - reply->window.left;
-                screen_height = reply->window.bottom - reply->window.top;
-            }
+            wine_server_call( req );
+            width  = reply->window.right - reply->window.left;
+            height = reply->window.bottom - reply->window.top;
         }
         SERVER_END_REQ;
-        data->whole_window = root_window = win;
+        data->whole_window = win;
+        if (win != root_window) X11DRV_init_desktop( win, width, height );
     }
     else
     {
