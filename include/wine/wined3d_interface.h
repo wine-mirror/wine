@@ -56,6 +56,7 @@ struct IWineD3DStateBlock;
 struct IWineD3DSurface;
 struct IWineD3DVolume;
 struct IWineD3DVertexDeclaration;
+struct IWineD3DBaseShader;
 struct IWineD3DVertexShader;
 struct IWineD3DPixelShader;
 struct IWineD3DQuery;
@@ -119,6 +120,10 @@ DEFINE_GUID(IID_IWineD3DVolumeTexture,
 /* {7CD55BE6-6F30-11d9-C687-00046142C14F} */
 DEFINE_GUID(IID_IWineD3DVertexDeclaration, 
 0x7cd55be6, 0x6f30, 0x11d9, 0xc6, 0x87, 0x0, 0x4, 0x61, 0x42, 0xc1, 0x4f);
+
+/* {EAC93065-A4DF-446F-86A1-9EF2BCA40A3C} */
+DEFINE_GUID(IID_IWineD3DBaseShader,
+0xeac93065, 0xa4df, 0x446f, 0x86, 0xa1, 0x9e, 0xf2, 0xbc, 0xa4, 0x0a, 0x3c);
 
 /* {7F7A2B60-6F30-11d9-C687-00046142C14F} */
 DEFINE_GUID(IID_IWineD3DVertexShader, 
@@ -1317,10 +1322,10 @@ DECLARE_INTERFACE_(IWineD3DSwapChain,IWineD3DBase)
 #endif
 
 /*****************************************************************************
- * IWineD3DVertexShader interface 
+ * IWineD3DBaseShader interface
  */
-#define INTERFACE IWineD3DVertexShader
-DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBase)
+#define INTERFACE IWineD3DBaseShader
+DECLARE_INTERFACE_(IWineD3DBaseShader,IWineD3DBase)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
@@ -1328,10 +1333,39 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBase)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DBaseShader methods ***/
+    STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DBaseShader_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DBaseShader_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IWineD3DBaseShader_Release(p)                (p)->lpVtbl->Release(p)
+/*** IWineD3DBase methods ***/
+#define IWineD3DBaseShader_GetParent(p,a)            (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DBaseShader methods ***/
+#define IWineD3DBaseShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
+#endif
+
+/*****************************************************************************
+ * IWineD3DVertexShader interface 
+ */
+#define INTERFACE IWineD3DVertexShader
+DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBaseShader)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DBase methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DBaseShader methods ***/
+    STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
     /*** IWineD3DVertexShader methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID *pData, UINT *pSizeOfData) PURE;
-    STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
     STDMETHOD(SetConstantB)(THIS_ UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount) PURE;
     STDMETHOD(SetConstantI)(THIS_ UINT StartRegister, CONST INT*   pConstantData, UINT Vector4iCount) PURE;
     STDMETHOD(SetConstantF)(THIS_ UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) PURE;
@@ -1350,10 +1384,11 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBase)
 #define IWineD3DVertexShader_Release(p)                (p)->lpVtbl->Release(p)
 /*** IWineD3DBase methods ***/
 #define IWineD3DVertexShader_GetParent(p,a)            (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DBaseShader methods ***/
+#define IWineD3DVertexShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
 /*** IWineD3DVertexShader methods ***/
 #define IWineD3DVertexShader_GetDevice(p,a)            (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVertexShader_GetFunction(p,a,b)        (p)->lpVtbl->GetFunction(p,a,b)
-#define IWineD3DVertexShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
 #define IWineD3DVertexShader_SetConstantB(p,a,b,c)     (p)->lpVtbl->SetConstantB(p,a,b,c)
 #define IWineD3DVertexShader_SetConstantI(p,a,b,c)     (p)->lpVtbl->SetConstantI(p,a,b,c)
 #define IWineD3DVertexShader_SetConstantF(p,a,b,c)     (p)->lpVtbl->SetConstantF(p,a,b,c)
@@ -1367,7 +1402,7 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBase)
  * IWineD3DPixelShader interface
  */
 #define INTERFACE IWineD3DPixelShader
-DECLARE_INTERFACE_(IWineD3DPixelShader,IWineD3DBase)
+DECLARE_INTERFACE_(IWineD3DPixelShader,IWineD3DBaseShader)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
@@ -1375,11 +1410,11 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IWineD3DBase)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    /*** IWineD3DBaseShader methods ***/
+    STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
     /*** IWineD3DPixelShader methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID* pData, UINT* pSizeOfData) PURE;
-    /* Internal Interfaces */
-    STDMETHOD(SetFunction)(THIS_ CONST DWORD *pFunction) PURE;
 };
 #undef INTERFACE
 
@@ -1390,10 +1425,11 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IWineD3DBase)
 #define IWineD3DPixelShader_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IWineD3DBase methods ***/
 #define IWineD3DPixelShader_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+/*** IWineD3DBaseShader methods ***/
+#define IWineD3DPixelShader_SetFunction(p,a)           (p)->lpVtbl->SetFunction(p,a)
 /*** IWineD3DPixelShader methods ***/
 #define IWineD3DPixelShader_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DPixelShader_GetFunction(p,a,b)         (p)->lpVtbl->GetFunction(p,a,b)
-#define IWineD3DPixelShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
 #endif
 
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */

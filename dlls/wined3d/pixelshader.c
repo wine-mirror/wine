@@ -52,6 +52,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShader *iface
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IWineD3DBase)
+        || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
         || IsEqualGUID(riid, &IID_IWineD3DPixelShader)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
@@ -1825,10 +1826,11 @@ const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
     IWineD3DPixelShaderImpl_QueryInterface,
     IWineD3DPixelShaderImpl_AddRef,
     IWineD3DPixelShaderImpl_Release,
-    /*** IWineD3DPixelShader methods ***/
+    /*** IWineD3DBase methods ***/
     IWineD3DPixelShaderImpl_GetParent,
+    /*** IWineD3DBaseShader methods ***/
+    IWineD3DPixelShaderImpl_SetFunction,
+    /*** IWineD3DPixelShader methods ***/
     IWineD3DPixelShaderImpl_GetDevice,
-    IWineD3DPixelShaderImpl_GetFunction,
-    /* not part of d3d */
-    IWineD3DPixelShaderImpl_SetFunction
+    IWineD3DPixelShaderImpl_GetFunction
 };

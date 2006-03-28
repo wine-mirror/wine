@@ -2035,6 +2035,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *ifa
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown) 
         || IsEqualGUID(riid, &IID_IWineD3DBase)
+        || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
         || IsEqualGUID(riid, &IID_IWineD3DVertexShader)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
@@ -2214,9 +2215,11 @@ const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     IWineD3DVertexShaderImpl_QueryInterface,
     IWineD3DVertexShaderImpl_AddRef,
     IWineD3DVertexShaderImpl_Release,
-    /*** IWineD3DVertexShader methods ***/
+    /*** IWineD3DBase methods ***/
     IWineD3DVertexShaderImpl_GetParent,
+    /*** IWineD3DBaseShader methods ***/
+    IWineD3DVertexShaderImpl_SetFunction,
+    /*** IWineD3DVertexShader methods ***/
     IWineD3DVertexShaderImpl_GetDevice,
-    IWineD3DVertexShaderImpl_GetFunction,
-    IWineD3DVertexShaderImpl_SetFunction
+    IWineD3DVertexShaderImpl_GetFunction
 };
