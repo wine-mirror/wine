@@ -582,7 +582,7 @@ void vshader_breakp(WINED3DSHADERVECTOR* d) {
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
  */
-static CONST SHADER_OPCODE vshader_ins [] = {
+CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_NOP,  "nop", "NOP", 0, vshader_nop, 0, 0},
     {D3DSIO_MOV,  "mov", "MOV", 2, vshader_mov, 0, 0},
     {D3DSIO_ADD,  "add", "ADD", 3, vshader_add, 0, 0},
@@ -691,12 +691,14 @@ static CONST SHADER_OPCODE vshader_ins [] = {
 };
 
 
-inline static const SHADER_OPCODE* vshader_program_get_opcode(const DWORD code) {
+inline static const SHADER_OPCODE* vshader_program_get_opcode(IWineD3DVertexShaderImpl *This, const DWORD code) {
     DWORD i = 0;
+    const SHADER_OPCODE *shader_ins = This->shader_ins;
+
     /** TODO: use dichotomic search or hash table */
-    while (NULL != vshader_ins[i].name) {
-        if ((code & D3DSI_OPCODE_MASK) == vshader_ins[i].opcode) {
-            return &vshader_ins[i];
+    while (NULL != shader_ins[i].name) {
+        if ((code & D3DSI_OPCODE_MASK) == shader_ins[i].opcode) {
+            return &shader_ins[i];
         }
         ++i;
     }
@@ -1305,7 +1307,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                 pToken += comment_len;
                 continue;
             }
-            curOpcode = vshader_program_get_opcode(*pToken);
+            curOpcode = vshader_program_get_opcode(This, *pToken);
             ++pToken;
             /* TODO: dcl's */
             /* TODO: Consts */
@@ -1485,7 +1487,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             continue;
       }
 
-      curOpcode = vshader_program_get_opcode(*pToken);
+      curOpcode = vshader_program_get_opcode(This, *pToken);
       ++pToken;
       if (NULL == curOpcode) {
         /* unknown current opcode ... (shouldn't be any!) */
@@ -1781,7 +1783,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
             pToken += comment_len;
             continue ;
         }
-        curOpcode = vshader_program_get_opcode(*pToken);
+        curOpcode = vshader_program_get_opcode(This, *pToken);
         ++pToken;
         if (NULL == curOpcode) {
             i = 0;
@@ -2129,7 +2131,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
                 len += comment_len + 1;
                 continue;
             }
-            curOpcode = vshader_program_get_opcode(*pToken);
+            curOpcode = vshader_program_get_opcode(This, *pToken);
             ++pToken;
             ++len;
             if (NULL == curOpcode) {

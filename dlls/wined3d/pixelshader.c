@@ -629,7 +629,7 @@ void pshader_breakp(WINED3DSHADERVECTOR* d) {
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
  */
-static CONST SHADER_OPCODE pshader_ins [] = {
+CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_NOP,  "nop", "NOP", 0, pshader_nop, 0, 0},
     {D3DSIO_MOV,  "mov", "MOV", 2, pshader_mov, 0, 0},
     {D3DSIO_ADD,  "add", "ADD", 3, pshader_add, 0, 0},
@@ -746,12 +746,14 @@ inline static const SHADER_OPCODE* pshader_program_get_opcode(IWineD3DPixelShade
     DWORD i = 0;
     DWORD version = This->version;
     DWORD hex_version = D3DPS_VERSION(version/10, version%10);
+    const SHADER_OPCODE *shader_ins = This->shader_ins;
+
     /** TODO: use dichotomic search */
-    while (NULL != pshader_ins[i].name) {
-        if (((code & D3DSI_OPCODE_MASK) == pshader_ins[i].opcode) &&
-            (((hex_version >= pshader_ins[i].min_version) && (hex_version <= pshader_ins[i].max_version)) ||
-            ((pshader_ins[i].min_version == 0) && (pshader_ins[i].max_version == 0)))) {
-            return &pshader_ins[i];
+    while (NULL != shader_ins[i].name) {
+        if (((code & D3DSI_OPCODE_MASK) == shader_ins[i].opcode) &&
+            (((hex_version >= shader_ins[i].min_version) && (hex_version <= shader_ins[i].max_version)) ||
+            ((shader_ins[i].min_version == 0) && (shader_ins[i].max_version == 0)))) {
+            return &shader_ins[i];
         }
         ++i;
     }

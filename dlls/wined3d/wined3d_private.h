@@ -1181,6 +1181,7 @@ typedef struct IWineD3DVertexShaderImpl {
     IWineD3DDeviceImpl          *wineD3DDevice;
 
     /* IWineD3DVertexShaderImpl */
+    CONST SHADER_OPCODE         *shader_ins;
     CONST DWORD                 *function;
     UINT                         functionLength;
 
@@ -1204,6 +1205,7 @@ typedef struct IWineD3DVertexShaderImpl {
     VSHADEROUTPUTDATA output;
 #endif
 } IWineD3DVertexShaderImpl;
+extern const SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[];
 extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
 
 /*****************************************************************************
@@ -1218,6 +1220,7 @@ typedef struct IWineD3DPixelShaderImpl {
     IWineD3DDeviceImpl         *wineD3DDevice;
 
     /* IWineD3DPixelShaderImpl */
+    const SHADER_OPCODE         *shader_ins;
     CONST DWORD                *function;
     UINT                        functionLength;
     DWORD                       version;
@@ -1233,5 +1236,6 @@ typedef struct IWineD3DPixelShaderImpl {
 #endif
 } IWineD3DPixelShaderImpl;
 
+extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
 #endif
