@@ -122,7 +122,10 @@ BOOL X11DRV_is_window_rect_mapped( const RECT *rect )
 static int get_window_attributes( Display *display, struct x11drv_win_data *data,
                                   XSetWindowAttributes *attr )
 {
-    if (!data->managed && (root_window == DefaultRootWindow( display )) && is_window_managed( data->hwnd ))
+    if (!data->managed &&
+        root_window == DefaultRootWindow( display ) &&
+        data->whole_window != root_window &&
+        is_window_managed( data->hwnd ))
     {
         data->managed = TRUE;
         SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
@@ -378,6 +381,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
 
     if (data->hwnd == GetDesktopWindow())
     {
+        if (data->whole_window == DefaultRootWindow(display)) return;
         /* force some styles for the desktop to get the correct decorations */
         style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
         owner = 0;
@@ -508,7 +512,7 @@ void X11DRV_set_iconic_state( HWND hwnd )
     BOOL iconic = (style & WS_MINIMIZE) != 0;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->whole_window) return;
+    if (!data->whole_window || data->whole_window == DefaultRootWindow(display)) return;
 
     GetWindowRect( hwnd, &rect );
 
@@ -754,7 +758,7 @@ void X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
     Window win;
     XTextProperty prop;
 
-    if ((win = X11DRV_get_whole_window( hwnd )))
+    if ((win = X11DRV_get_whole_window( hwnd )) && win != DefaultRootWindow(display))
     {
         /* allocate new buffer for window text */
         count = WideCharToMultiByte(CP_UNIXCP, 0, text, -1, NULL, 0, NULL, NULL);
