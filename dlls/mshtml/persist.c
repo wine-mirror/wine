@@ -465,7 +465,6 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         IBinding_Abort(This->status_callback->binding);
 
     callback = This->status_callback = BindStatusCallback_Create(This, url);
-    CoTaskMemFree(url);
 
     if(pibc) {
         pbind = pibc;
