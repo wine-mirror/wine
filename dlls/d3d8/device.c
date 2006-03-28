@@ -197,7 +197,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE8 
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
     localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
     localParameters.MultiSampleQuality             = NULL; /* d3d9 only */
-    localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;
+    localParameters.SwapEffect                     = (WINED3DSWAPEFFECT *) &pPresentationParameters->SwapEffect;
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;
     localParameters.Windowed                       = &pPresentationParameters->Windowed;
     localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;
@@ -230,7 +230,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PA
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
     localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
     localParameters.MultiSampleQuality             = NULL; /* D3d9 only */
-    localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;
+    localParameters.SwapEffect                     = (WINED3DSWAPEFFECT *) &pPresentationParameters->SwapEffect;
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;
     localParameters.Windowed                       = &pPresentationParameters->Windowed;
     localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;

@@ -314,7 +314,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapter, D3
     localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
     /* d3d9 only */
     localParameters.MultiSampleQuality             = NULL;
-    localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;
+    localParameters.SwapEffect                     = (WINED3DSWAPEFFECT *) &pPresentationParameters->SwapEffect;
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;
     localParameters.Windowed                       = &pPresentationParameters->Windowed;
     localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;

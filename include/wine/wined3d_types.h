@@ -479,7 +479,7 @@ typedef struct _WINED3DPRESENT_PARAMETERS {
     UINT                    *BackBufferCount;
     WINED3DMULTISAMPLE_TYPE *MultiSampleType;
     DWORD                   *MultiSampleQuality;
-    D3DSWAPEFFECT           *SwapEffect;
+    WINED3DSWAPEFFECT       *SwapEffect;
     HWND                    *hDeviceWindow;
     BOOL                    *Windowed;
     BOOL                    *EnableAutoDepthStencil;
