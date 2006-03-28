@@ -289,7 +289,8 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
     {
         queue_raw_mouse_message( WM_MOUSEMOVE, hwnd, pt.x, pt.y, data, time,
                                  extra_info, injected_flags );
-        if (injected_flags & LLMHF_INJECTED)  /* we have to actually move the cursor */
+        if ((injected_flags & LLMHF_INJECTED) &&
+            ((flags & MOUSEEVENTF_ABSOLUTE) || x || y))  /* we have to actually move the cursor */
         {
             TRACE( "warping to (%ld,%ld)\n", pt.x, pt.y );
             wine_tsx11_lock();
