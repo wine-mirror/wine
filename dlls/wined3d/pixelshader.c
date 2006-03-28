@@ -715,6 +715,7 @@ static CONST SHADER_OPCODE pshader_ins [] = {
     {D3DSIO_TEXKILL,  "texkill",  "KIL",   1, pshader_texkill,     D3DPS_VERSION(1,0), D3DPS_VERSION(1,4)},
     {D3DSIO_TEX,      "tex",      "undefined",   1, pshader_tex,         0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEX,      "texld",    GLNAME_REQUIRE_GLSL,   2, pshader_texld,       D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    {D3DSIO_TEX,      "texld",    GLNAME_REQUIRE_GLSL,   3, pshader_texld,       D3DPS_VERSION(2,0), -1},
     {D3DSIO_TEXBEM,   "texbem",   "undefined",   2, pshader_texbem,      0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL,   2, pshader_texbeml,     D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXREG2AR,"texreg2ar","undefined",   2, pshader_texreg2ar,   D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
