@@ -1711,11 +1711,36 @@ DWORD WINAPI WNetGetUniversalNameA ( LPCSTR lpLocalPath, DWORD dwInfoLevel,
 DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel,
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
+    LPUNIVERSAL_NAME_INFOW uniw;
+    DWORD err, len;
+
     FIXME( "(%s, 0x%08lX, %p, %p): stub\n",
            debugstr_w(lpLocalPath), dwInfoLevel, lpBuffer, lpBufferSize);
 
-    SetLastError(WN_NO_NETWORK);
-    return WN_NO_NETWORK;
+    switch (dwInfoLevel)
+    {
+    case UNIVERSAL_NAME_INFO_LEVEL:
+        err = WN_MORE_DATA;
+        len = sizeof (*uniw) + lstrlenW(lpLocalPath);
+        if (*lpBufferSize <= len)
+            break;
+        uniw = lpBuffer;
+        uniw->lpUniversalName = (LPWSTR) &uniw[1];
+        lstrcpyW(uniw->lpUniversalName, lpLocalPath);
+        *lpBufferSize = len;
+        err = WN_NO_ERROR;
+        break;
+
+    case REMOTE_NAME_INFO_LEVEL:
+        err = WN_NO_NETWORK;
+        break;
+
+    default:
+        err = WN_BAD_VALUE;
+    }
+
+    SetLastError(err);
+    return err;
 }
 
 
