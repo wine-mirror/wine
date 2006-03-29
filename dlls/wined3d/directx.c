@@ -1198,7 +1198,7 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(WineD3D_Context* ct
 #endif
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType,
+HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
                                                    WINED3DFORMAT AdapterFormat,
                                                    WINED3DFORMAT RenderTargetFormat,
                                                    WINED3DFORMAT DepthStencilFormat) {
@@ -1254,7 +1254,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter
     return hr;
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
+HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
                                                        WINED3DFORMAT SurfaceFormat,
                                                        BOOL Windowed, WINED3DMULTISAMPLE_TYPE MultiSampleType, DWORD*   pQualityLevels) {
 
@@ -1285,7 +1285,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Ada
     return D3DERR_NOTAVAILABLE;
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, D3DDEVTYPE CheckType,
+HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE CheckType,
                                             WINED3DFORMAT DisplayFormat, WINED3DFORMAT BackBufferFormat, BOOL Windowed) {
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
@@ -1326,7 +1326,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, D3DDE
     return D3DERR_NOTAVAILABLE;
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
+HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
                                               WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ",
@@ -1418,7 +1418,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, D3D
     return D3D_OK;
 }
 
-HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType,
+HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
                                                           WINED3DFORMAT SourceFormat, WINED3DFORMAT TargetFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
 
@@ -1434,7 +1434,7 @@ HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT 
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true
       subset of a D3DCAPS9 structure. However, it has to come via a void *
       as the d3d8 interface cannot import the d3d9 header                  */
-HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, WINED3DCAPS* pCaps) {
+HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DCAPS* pCaps) {
 
     IWineD3DImpl    *This = (IWineD3DImpl *)iface;
 
@@ -1457,7 +1457,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
     /* ------------------------------------------------
        The following fields apply to both d3d8 and d3d9
        ------------------------------------------------ */
-    *pCaps->DeviceType              = (DeviceType == D3DDEVTYPE_HAL) ? D3DDEVTYPE_HAL : D3DDEVTYPE_REF;  /* Not quite true, but use h/w supported by opengl I suppose */
+    *pCaps->DeviceType              = (DeviceType == WINED3DDEVTYPE_HAL) ? WINED3DDEVTYPE_HAL : WINED3DDEVTYPE_REF;  /* Not quite true, but use h/w supported by opengl I suppose */
     *pCaps->AdapterOrdinal          = Adapter;
 
     *pCaps->Caps                    = 0;
@@ -1674,7 +1674,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
     *pCaps->MaxStreams          = MAX_STREAMS;
     *pCaps->MaxStreamStride     = 1024;
 
-    if (((wined3d_settings.vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) || (wined3d_settings.vs_mode == VS_SW) || (DeviceType == D3DDEVTYPE_REF)) {
+    if (((wined3d_settings.vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) || (wined3d_settings.vs_mode == VS_SW) || (DeviceType == WINED3DDEVTYPE_REF)) {
       *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
 
       if (This->gl_info.gl_vendor == VENDOR_MESA ||
@@ -1688,7 +1688,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
         *pCaps->MaxVertexShaderConst = 0;
     }
 
-    if ((wined3d_settings.ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != D3DDEVTYPE_REF)) {
+    if ((wined3d_settings.ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != WINED3DDEVTYPE_REF)) {
         *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
     } else {
@@ -1743,7 +1743,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 
 /* Note due to structure differences between dx8 and dx9 D3DPRESENT_PARAMETERS,
    and fields being inserted in the middle, a new structure is used in place    */
-HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
+HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, HWND hFocusWindow,
                                            DWORD BehaviourFlags, WINED3DPRESENT_PARAMETERS* pPresentationParameters,
                                            IWineD3DDevice** ppReturnedDeviceInterface, IUnknown *parent,
                                            D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {

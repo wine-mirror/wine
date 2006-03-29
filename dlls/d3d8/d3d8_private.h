@@ -59,7 +59,7 @@
    =========================================================================== */
 /* Not nice, but it lets wined3d support different versions of directx */
 #define D3D8CAPSTOWINECAPS(_pD3D8Caps, _pWineCaps) \
-    _pWineCaps->DeviceType                        = &_pD3D8Caps->DeviceType; \
+    _pWineCaps->DeviceType                        = (WINED3DDEVTYPE *) &_pD3D8Caps->DeviceType; \
     _pWineCaps->AdapterOrdinal                    = &_pD3D8Caps->AdapterOrdinal; \
     _pWineCaps->Caps                              = &_pD3D8Caps->Caps; \
     _pWineCaps->Caps2                             = &_pD3D8Caps->Caps2; \

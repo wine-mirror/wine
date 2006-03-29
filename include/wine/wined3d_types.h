@@ -111,6 +111,15 @@ typedef struct PSHADEROUTPUTDATA {
  * WineD3D Structures to be used when d3d8 and d3d9 are incompatible
  */
 
+
+typedef enum _WINED3DDEVTYPE {
+    WINED3DDEVTYPE_HAL         = 1,
+    WINED3DDEVTYPE_REF         = 2,
+    WINED3DDEVTYPE_SW          = 3,
+
+    WINED3DDEVTYPE_FORCE_DWORD = 0xffffffff
+} WINED3DDEVTYPE;
+
 typedef enum _WINED3DDEGREETYPE {
     WINED3DDEGREE_LINEAR      = 1,
     WINED3DDEGREE_QUADRATIC   = 2,
@@ -572,10 +581,10 @@ typedef enum _WINED3DQUERYTYPE {
 #define WINED3DGETDATA_FLUSH (1 << 0)
 
 typedef struct _WINED3DDEVICE_CREATION_PARAMETERS {
-    UINT          AdapterOrdinal;
-    D3DDEVTYPE    DeviceType;
-    HWND          hFocusWindow;
-    DWORD         BehaviorFlags;
+    UINT           AdapterOrdinal;
+    WINED3DDEVTYPE DeviceType;
+    HWND           hFocusWindow;
+    DWORD          BehaviorFlags;
 } WINED3DDEVICE_CREATION_PARAMETERS;
 
 typedef struct _WINED3DDEVINFO_BANDWIDTHTIMINGS {
@@ -685,7 +694,7 @@ typedef struct _WINED3DPSHADERCAPS2_0 {
 } WINED3DPSHADERCAPS2_0;
 
 typedef struct _WINED3DCAPS {
-  D3DDEVTYPE          *DeviceType;
+  WINED3DDEVTYPE      *DeviceType;
   UINT                *AdapterOrdinal;
 
   DWORD               *Caps;
