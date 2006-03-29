@@ -2673,7 +2673,8 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
 {
     HRESULT hr = S_OK;
     DWORD start_time = GetTickCount();
-    BOOL message_loop = TRUE;
+    APARTMENT *apt = COM_CurrentApt();
+    BOOL message_loop = apt && !apt->multi_threaded;
 
     TRACE("(0x%08lx, 0x%08lx, %ld, %p, %p)\n", dwFlags, dwTimeout, cHandles,
         pHandles, lpdwindex);
