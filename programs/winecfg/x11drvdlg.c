@@ -53,7 +53,18 @@ static void update_gui_for_desktop_mode(HWND dialog) {
 
     WINE_TRACE("\n");
     updating_ui = TRUE;
-    
+
+    if (current_app)
+    {
+        disable(IDC_ENABLE_DESKTOP);
+        disable(IDC_DESKTOP_WIDTH);
+        disable(IDC_DESKTOP_HEIGHT);
+        disable(IDC_DESKTOP_SIZE);
+        disable(IDC_DESKTOP_BY);
+        return;
+    }
+    enable(IDC_ENABLE_DESKTOP);
+
     /* do we have desktop mode enabled? */
     if (reg_key_exists(config_key, keypath("X11 Driver"), "Desktop"))
     {
