@@ -451,30 +451,17 @@ static HRESULT WINAPI OLEPictureImpl_QueryInterface(
   /*
    * Compare the riid with the interface IDs implemented by this object.
    */
-  if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
-  {
+  if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IPicture, riid))
     *ppvObject = (IPicture*)This;
-  }
-  else if (memcmp(&IID_IPicture, riid, sizeof(IID_IPicture)) == 0)
-  {
-    *ppvObject = (IPicture*)This;
-  }
-  else if (memcmp(&IID_IDispatch, riid, sizeof(IID_IDispatch)) == 0)
-  {
+  else if (IsEqualIID(&IID_IDispatch, riid))
     *ppvObject = (IDispatch*)&(This->lpvtblIDispatch);
-  }
-  else if (memcmp(&IID_IPictureDisp, riid, sizeof(IID_IPictureDisp)) == 0)
-  {
+  else if (IsEqualIID(&IID_IPictureDisp, riid))
     *ppvObject = (IDispatch*)&(This->lpvtblIDispatch);
-  }
-  else if (memcmp(&IID_IPersistStream, riid, sizeof(IID_IPersistStream)) == 0)
-  {
-  *ppvObject = (IPersistStream*)&(This->lpvtblIPersistStream);
-  }
-  else if (memcmp(&IID_IConnectionPointContainer, riid, sizeof(IID_IConnectionPointContainer)) == 0)
-  {
-  *ppvObject = (IConnectionPointContainer*)&(This->lpvtblIConnectionPointContainer);
-  }
+  else if (IsEqualIID(&IID_IPersistStream, riid))
+    *ppvObject = (IPersistStream*)&(This->lpvtblIPersistStream);
+  else if (IsEqualIID(&IID_IConnectionPointContainer, riid))
+    *ppvObject = (IConnectionPointContainer*)&(This->lpvtblIConnectionPointContainer);
+
   /*
    * Check that we obtained an interface.
    */
