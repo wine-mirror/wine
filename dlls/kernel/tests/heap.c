@@ -36,6 +36,7 @@ static SIZE_T resize_9x(SIZE_T size)
 START_TEST(heap)
 {
     void *mem;
+    UINT    flags;
     HGLOBAL gbl;
     HGLOBAL hsecond;
     SIZE_T  size;
@@ -86,6 +87,12 @@ START_TEST(heap)
     ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
         "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
         hsecond, GetLastError(), gbl);
+    SetLastError(MAGIC_DEAD);
+    flags = GlobalFlags(gbl);
+    ok( (flags == GMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
+        "returned 0x%04x with 0x%08lx (expected GMEM_INVALID_HANDLE with " \
+        "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
+
 
     /* Local*() functions */
     gbl = LocalAlloc(LMEM_MOVEABLE, 0);
@@ -109,13 +116,19 @@ START_TEST(heap)
     ok(gbl == NULL, "local realloc allocated memory\n");
 
     /* invalid handles are catched in windows */
-    gbl = LocalAlloc(GMEM_MOVEABLE, 256);
+    gbl = LocalAlloc(LMEM_MOVEABLE, 256);
     LocalFree(gbl);
     SetLastError(MAGIC_DEAD);
     hsecond = LocalFree(gbl);       /* invalid handle: free memory twice */
     ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
         "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
         hsecond, GetLastError(), gbl);
+    SetLastError(MAGIC_DEAD);
+    flags = LocalFlags(gbl);
+    ok( (flags == LMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
+        "returned 0x%04x with 0x%08lx (expected LMEM_INVALID_HANDLE with " \
+        "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
+
 
     /* trying to lock empty memory should give an error */
     gbl = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT,0);

@@ -837,16 +837,16 @@ VOID WINAPI GlobalUnfix(HGLOBAL hmem)
  *
  * Get information about a global memory object.
  *
- * NOTES
- *      Should this return GMEM_INVALID_HANDLE on invalid handle?
+ * PARAMS
+ *  hmem [I] Handle of the global memory object 
  *
  * RETURNS
- *      Value specifying allocation flags and lock count
- *      GMEM_INVALID_HANDLE: Failure
+ *  Failure: GMEM_INVALID_HANDLE, when the provided handle is invalid 
+ *  Success: Value specifying allocation flags and lock count
+ *
  */
-UINT WINAPI GlobalFlags(
-              HGLOBAL hmem /* [in] Handle to global memory object */
-) {
+UINT WINAPI GlobalFlags(HGLOBAL hmem)
+{
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
 
@@ -866,8 +866,9 @@ UINT WINAPI GlobalFlags(
       }
       else
       {
-         WARN("Invalid handle: %p\n", hmem);
-         retval=0;
+         WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
+         SetLastError(ERROR_INVALID_HANDLE);
+         retval = GMEM_INVALID_HANDLE;
       }
       RtlUnlockHeap(GetProcessHeap());
    }
