@@ -392,7 +392,11 @@ HRESULT WINAPI LoadRegTypeLib(
 	ITypeLib **ppTLib)
 {
     BSTR bstr=NULL;
-    HRESULT res=QueryPathOfRegTypeLib( rguid, wVerMajor, wVerMinor, lcid, &bstr);
+    HRESULT res;
+
+    *ppTLib = NULL;
+
+    res = QueryPathOfRegTypeLib( rguid, wVerMajor, wVerMinor, lcid, &bstr);
 
     if(SUCCEEDED(res))
     {
