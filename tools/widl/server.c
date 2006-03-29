@@ -106,7 +106,7 @@ static void declare_args(const func_t *func)
         if (!out_attr && !in_attr)
             in_attr = 1;
 
-        if (!in_attr)
+        if (!in_attr && !is_attr(var->attrs, ATTR_STRING))
         {
             print_server("");
             write_type(server, var->type, NULL, var->tname);
@@ -130,6 +130,8 @@ static void assign_out_args(const func_t *func)
     int in_attr, out_attr;
     int i = 0, sep = 0;
     var_t *var;
+    const expr_t *size_is;
+    int has_size;
 
     if (!func->args)
         return;
@@ -138,6 +140,8 @@ static void assign_out_args(const func_t *func)
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
+        size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+        has_size = size_is && (size_is->type != EXPR_VOID);
         in_attr = is_attr(var->attrs, ATTR_IN);
         out_attr = is_attr(var->attrs, ATTR_OUT);
         if (!out_attr && !in_attr)
@@ -147,7 +151,22 @@ static void assign_out_args(const func_t *func)
         {
             print_server("");
             write_name(server, var);
-            fprintf(server, " = &_W%u;\n", i++);
+
+            if (has_size)
+            {
+                type_t *type = var->type;
+                while (type->type == 0 && type->ref)
+                    type = type->ref;
+
+                fprintf(server, " = NdrAllocate(&_StubMsg, ");
+                write_expr(server, size_is, 1);
+                fprintf(server, " * %u);\n", get_type_memsize(type));
+            }
+            else
+            {
+                fprintf(server, " = &_W%u;\n", i++);
+            }
+
             sep = 1;
         }
 
@@ -342,10 +361,14 @@ static void write_function_stubs(type_t *iface)
             buffer_size += alignment;
         }
 
-        if (buffer_size)
+        if (has_out_arg_or_return(func))
         {
             fprintf(server, "\n");
-            print_server("_StubMsg.BufferLength = %uU;\n", buffer_size);
+            print_server("_StubMsg.BufferLength = %u;\n", buffer_size);
+
+            type_offset_func = type_offset;
+            write_remoting_arguments(server, indent, func, &type_offset_func, PASS_OUT, PHASE_BUFFERSIZE);
+
             print_server("_pRpcMessage->BufferLength = _StubMsg.BufferLength;\n");
             fprintf(server, "\n");
             print_server("_Status = I_RpcGetBuffer(_pRpcMessage);\n");
@@ -357,6 +380,8 @@ static void write_function_stubs(type_t *iface)
             print_server("_StubMsg.Buffer = (unsigned char *)_pRpcMessage->Buffer;\n");
             fprintf(server, "\n");
         }
+
+        type_offset_func = type_offset;
 
         /* marshall arguments */
         write_remoting_arguments(server, indent, func, &type_offset, PASS_OUT, PHASE_MARSHAL);
@@ -380,6 +405,11 @@ static void write_function_stubs(type_t *iface)
         print_server("}\n");
         print_server("RpcFinally\n");
         print_server("{\n");
+        indent++;
+
+        write_remoting_arguments(server, indent, func, &type_offset_func, PASS_OUT, PHASE_FREE);
+
+        indent--;
         print_server("}\n");
         print_server("RpcEndFinally\n");
 

@@ -518,6 +518,28 @@ const var_t* get_explicit_handle_var(const func_t* func)
     return NULL;
 }
 
+int has_out_arg_or_return(const func_t *func)
+{
+    var_t *var;
+
+    if (!is_void(func->def->type, NULL))
+        return 1;
+
+    if (!func->args)
+        return 0;
+
+    var = func->args;
+    while (NEXT_LINK(var)) var = NEXT_LINK(var);
+    while (var)
+    {
+        if (is_attr(var->attrs, ATTR_OUT))
+            return 1;
+
+        var = PREV_LINK(var);
+    }
+    return 0;
+}
+
 
 /********** INTERFACES **********/
 

@@ -87,29 +87,43 @@ static void print_message_buffer_size(const func_t *func)
     fprintf(client, " %u", total_size);
 }
 
-
-static int has_out_arg_or_return(const func_t *func)
+static void check_pointers(const func_t *func)
 {
     var_t *var;
-
-    if (!is_void(func->def->type, NULL))
-        return 1;
+    int pointer_type;
 
     if (!func->args)
-        return 0;
+        return;
 
     var = func->args;
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
-        if (is_attr(var->attrs, ATTR_OUT))
-            return 1;
+        pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
+        if (!pointer_type)
+            pointer_type = RPC_FC_RP;
+
+        if (pointer_type == RPC_FC_RP)
+        {
+            if (var->ptr_level == 1)
+            {
+                print_client("if (!%s)\n", var->name);
+                print_client("{\n");
+                indent++;
+                print_client("RpcRaiseException(RPC_X_NULL_REF_POINTER);\n");
+                indent--;
+                print_client("}\n\n");
+            }
+            else if (var->ptr_level > 1)
+            {
+                error("Pointer level %d not supported!\n", var->ptr_level);
+                return;
+            }
+        }
 
         var = PREV_LINK(var);
     }
-    return 0;
 }
-
 
 static void write_function_stubs(type_t *iface)
 {
@@ -177,6 +191,10 @@ static void write_function_stubs(type_t *iface)
         print_client("RPC_MESSAGE _RpcMessage;\n");
         print_client("MIDL_STUB_MESSAGE _StubMsg;\n");
         fprintf(client, "\n");
+
+        /* check pointers */
+        check_pointers(func);
+
         print_client("RpcTryFinally\n");
         print_client("{\n");
         indent++;
@@ -205,6 +223,9 @@ static void write_function_stubs(type_t *iface)
         print_client("_StubMsg.BufferLength =");
         print_message_buffer_size(func);
         fprintf(client, ";\n");
+
+        type_offset_func = type_offset;
+        write_remoting_arguments(client, indent, func, &type_offset_func, PASS_IN, PHASE_BUFFERSIZE);
 
         print_client("NdrGetBuffer(\n");
         indent++;

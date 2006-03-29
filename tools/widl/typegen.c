@@ -576,6 +576,11 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
     return size;
 }
 
+size_t get_type_memsize(const type_t *type)
+{
+    return type_memsize(type, 0, NULL);
+}
+
 static int write_pointers(FILE *file, const attr_t *attrs,
                           const type_t *type, int ptr_level,
                           const expr_t *array, int level,
@@ -690,11 +695,30 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
     int has_size = size_is && (size_is->type != EXPR_VOID);
     size_t start_offset = *typestring_offset;
+    unsigned char flags = 0;
+    int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
+    if (!pointer_type)
+        pointer_type = RPC_FC_RP;
+
+    if (!get_attrp(attrs, ATTR_SIZEIS))
+        flags |= RPC_FC_P_SIMPLEPOINTER;
 
     if ((type->type != RPC_FC_BYTE) && (type->type != RPC_FC_CHAR) && (type->type != RPC_FC_WCHAR))
     {
         error("write_string_tfs: Unimplemented for type 0x%x of name: %s\n", type->type, name);
         return start_offset;
+    }
+
+    print_file(file, 2,"0x%x, 0x%x,    /* %s%s */\n",
+               pointer_type, flags,
+               pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"),
+               (flags & RPC_FC_P_SIMPLEPOINTER) ? " [simple_pointer]" : "");
+    *typestring_offset += 2;
+
+    if (!(flags & RPC_FC_P_SIMPLEPOINTER))
+    {
+        print_file(file, 2, "NdrFcShort(0x2);\n");
+        *typestring_offset += 2;
     }
 
     if (array && array->is_const)
@@ -1335,13 +1359,30 @@ static unsigned int get_required_buffer_size_type(
     }
     if (ptr_level == 0 && type_has_ref(type))
         return get_required_buffer_size_type(type->ref, 0 /* FIXME */, array, name, alignment);
-    if (ptr_level == 1)
-        return 25; /* FIXME: Only 'in' pointers need this */
     return 0;
 }
 
 unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
 {
+    int in_attr = is_attr(var->attrs, ATTR_IN);
+    int out_attr = is_attr(var->attrs, ATTR_OUT);
+
+    if (!in_attr && !out_attr)
+        in_attr = 1;
+
+    if ((!out_attr || in_attr) && !is_attr(var->attrs, ATTR_STRING) && !var->array)
+    {
+        if (var->ptr_level > 0 || (var->ptr_level == 0 && type_has_ref(var->type)))
+        {
+            type_t *type = var->type;
+            while (type->type == 0 && type->ref)
+                type = type->ref;
+
+            if (is_base_type(type->type))
+                return 25;
+        }
+    }
+
     return get_required_buffer_size_type(var->type, var->ptr_level, var->array, var->name, alignment);
 }
 
@@ -1365,6 +1406,9 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                               unsigned int *type_offset, enum pass pass,
                               enum remoting_phase phase)
 {
+    const expr_t *length_is;
+    const expr_t *size_is;
+    int in_attr, out_attr, has_length, has_size, pointer_type;
     var_t *var;
 
     if (!func->args)
@@ -1374,9 +1418,17 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
     {
-        int in_attr = is_attr(var->attrs, ATTR_IN);
-        int out_attr = is_attr(var->attrs, ATTR_OUT);
+        length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
+        size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+        has_length = length_is && (length_is->type != EXPR_VOID);
+        has_size = (size_is && (size_is->type != EXPR_VOID)) || (var->array && !var->array->is_const);
 
+        pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
+        if (!pointer_type)
+            pointer_type = RPC_FC_RP;
+
+        in_attr = is_attr(var->attrs, ATTR_IN);
+        out_attr = is_attr(var->attrs, ATTR_OUT);
         if (!in_attr && !out_attr)
             in_attr = 1;
 
@@ -1401,17 +1453,42 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                            "NdrNonConformantString%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
                            function_from_phase(phase), var->name, *type_offset);
             else
-                print_file(file, indent,
-                           "NdrConformantString%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                           function_from_phase(phase), var->name, *type_offset);
+            {
+                if (size_is && phase != PHASE_UNMARSHAL)
+                {
+                    print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                    write_expr(file, size_is, 1);
+                    fprintf(file, ";\n");
+                }
+
+                if (phase == PHASE_FREE)
+                {
+                    print_file(file, indent, "NdrPointerFree(\n");
+                    indent++;
+                    print_file(file, indent, "&_StubMsg,\n");
+                    print_file(file, indent, "(unsigned char *)%s,\n", var->name);
+                    print_file(file, indent, "&__MIDL_TypeFormatString.Format[%d]);\n",
+                               *type_offset);
+                    indent--;
+                }
+                else
+                {
+                    print_file(file, indent, "NdrConformantString%s(\n", function_from_phase(phase));
+                    indent++;
+                    print_file(file, indent, "(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
+                    print_file(file, indent, "(unsigned char *)%s,\n", var->name);
+                    print_file(file, indent, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]%s\n",
+                               *type_offset + (has_size ? 4 : 2),
+                               (phase == PHASE_MARSHAL) ? ");" : ",");
+                    if (phase == PHASE_UNMARSHAL)
+                        print_file(file, indent, "(unsigned char)0);\n");
+                    indent--;
+                }
+            }
         }
         else if (is_array_type(var->attrs, var->ptr_level, var->array))
         {
-            const expr_t *length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
-            const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
             const char *array_type;
-            int has_length = length_is && (length_is->type != EXPR_VOID);
-            int has_size = (size_is && (size_is->type != EXPR_VOID)) || !var->array->is_const;
 
             if (var->array && NEXT_LINK(var->array)) /* multi-dimensional array */
                 array_type = "ComplexArray";
@@ -1506,31 +1583,34 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 size = 0;
             }
 
-            print_file(file, indent, "_StubMsg.Buffer += (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
-                       alignment - 1, alignment - 1);
-
-            if (phase == PHASE_MARSHAL)
+            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
             {
-                print_file(file, indent, "*(");
-                write_type(file, var->type, var, var->tname);
-                fprintf(file, " *)_StubMsg.Buffer = ");
-                write_name(file, var);
-                fprintf(file, ";\n");
-            }
-            else if (phase == PHASE_UNMARSHAL)
-            {
-                print_file(file, indent, "");
-                write_name(file, var);
-                fprintf(file, " = *(");
-                write_type(file, var->type, var, var->tname);
-                fprintf(file, " *)_StubMsg.Buffer;\n");
-            }
-            else
-                error("write_remoting_arguments: Unimplemented for base types for phase %d\n", phase);
+                print_file(file, indent, "_StubMsg.Buffer += (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
+                           alignment - 1, alignment - 1);
 
-            print_file(file, indent, "_StubMsg.Buffer += sizeof(");
-            write_type(file, var->type, var, var->tname);
-            fprintf(file, ");\n");
+                if (phase == PHASE_MARSHAL)
+                {
+                    print_file(file, indent, "*(");
+                    write_type(file, var->type, var, var->tname);
+                    fprintf(file, " *)_StubMsg.Buffer = ");
+                    write_name(file, var);
+                    fprintf(file, ";\n");
+                }
+                else if (phase == PHASE_UNMARSHAL)
+                {
+                    print_file(file, indent, "");
+                    write_name(file, var);
+                    fprintf(file, " = *(");
+                    write_type(file, var->type, var, var->tname);
+                    fprintf(file, " *)_StubMsg.Buffer;\n");
+                }
+                else
+                    error("write_remoting_arguments: Unimplemented for base types for phase %d\n", phase);
+
+                print_file(file, indent, "_StubMsg.Buffer += sizeof(");
+                write_type(file, var->type, var, var->tname);
+                fprintf(file, ");\n");
+            }
         }
         else if (var->ptr_level == 0)
         {
@@ -1563,10 +1643,6 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         }
         else
         {
-            int pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
-            if (!pointer_type)
-                pointer_type = RPC_FC_RP;
-
             if (pointer_type == RPC_FC_RP)
             {
                 unsigned int size;
