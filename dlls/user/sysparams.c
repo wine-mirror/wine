@@ -298,7 +298,6 @@ static BOOL lowpoweractive = FALSE;
 static BOOL poweroffactive = FALSE;
 static BOOL show_sounds = FALSE;
 static BOOL swap_buttons = FALSE;
-static BOOL listbox_smoothscrolling = FALSE;
 static UINT caret_width = 1;
 static BYTE user_prefs[4];
 
@@ -2125,29 +2124,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         break;
 
     case SPI_GETLISTBOXSMOOTHSCROLLING:    /* 0x1006  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-        if (!pvParam) return FALSE;
-
-        spi_idx = SPI_SETLISTBOXSMOOTHSCROLLING_IDX;
-        if (!spi_loaded[spi_idx])
-        {
-            WCHAR buf[5];
-
-            if (SYSPARAMS_Load( SPI_SETLISTBOXSMOOTHSCROLLING_REGKEY,
-                                SPI_SETLISTBOXSMOOTHSCROLLING_VALNAME, buf, sizeof(buf) ))
-            {
-                if ((buf[0]&0x01) == 0x01)
-                {
-                    listbox_smoothscrolling = TRUE;
-                }
-            }
-            spi_loaded[spi_idx] = TRUE;
-        }
-
-        *(BOOL *)pvParam = listbox_smoothscrolling;
-
+        ret = get_user_pref_param( 0, 0x08, pvParam );
         break;
 
-    WINE_SPI_FIXME(SPI_SETLISTBOXSMOOTHSCROLLING);/* 0x1007  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_SETLISTBOXSMOOTHSCROLLING:    /* 0x1007  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = set_user_pref_param( 0, 0x08, (BOOL)pvParam, fWinIni );
+        break;
 
     case SPI_GETGRADIENTCAPTIONS:
         ret = get_user_pref_param( 0, 0x10, pvParam );
