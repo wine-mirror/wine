@@ -2643,6 +2643,11 @@ HRESULT WINAPI CoCopyProxy(IUnknown *pProxy, IUnknown **ppCopy)
 }
 
 
+static BOOL COM_PeekMessage(struct apartment *apt, MSG *msg)
+{
+    return PeekMessageW(msg, NULL, 0, 0, PM_REMOVE|PM_NOYIELD);
+}
+
 /***********************************************************************
  *           CoWaitForMultipleHandles [OLE32.@]
  *
@@ -2704,7 +2709,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
             if (res == WAIT_OBJECT_0 + cHandles)  /* messages available */
             {
                 MSG msg;
-                while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE|PM_NOYIELD))
+                while (COM_PeekMessage(apt, &msg))
                 {
                     /* FIXME: filter the messages here */
                     TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
