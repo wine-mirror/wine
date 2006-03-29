@@ -2227,8 +2227,15 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETDROPSHADOW);          /* 0x1025  _WIN32_WINNT >= 0x510 */
     WINE_SPI_FIXME(SPI_GETBLOCKSENDINPUTRESETS);
     WINE_SPI_FIXME(SPI_SETBLOCKSENDINPUTRESETS);
-    WINE_SPI_FIXME(SPI_GETUIEFFECTS);
-    WINE_SPI_FIXME(SPI_SETUIEFFECTS);
+    case SPI_GETUIEFFECTS:
+        ret = get_user_pref_param( 3, 0x80, pvParam );
+        break;
+
+    case SPI_SETUIEFFECTS:
+        /* FIXME: this probably should mask other UI effect values when unset */
+        ret = set_user_pref_param( 3, 0x80, (BOOL)pvParam, fWinIni );
+        break;
+
     WINE_SPI_FIXME(SPI_GETFOREGROUNDLOCKTIMEOUT);/* 0x2000  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETFOREGROUNDLOCKTIMEOUT);/* 0x2001  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_GETACTIVEWNDTRKTIMEOUT); /* 0x2002  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
