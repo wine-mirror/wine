@@ -2703,7 +2703,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
             if (res == WAIT_OBJECT_0 + cHandles)  /* messages available */
             {
                 MSG msg;
-                while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+                while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE|PM_NOYIELD))
                 {
                     /* FIXME: filter the messages here */
                     TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
