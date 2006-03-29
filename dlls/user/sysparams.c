@@ -2177,8 +2177,14 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETTOOLTIPANIMATION);    /* 0x1017  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_GETTOOLTIPFADE);         /* 0x1018  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETTOOLTIPFADE);         /* 0x1019  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_GETCURSORSHADOW);        /* 0x101A  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETCURSORSHADOW);        /* 0x101B  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETCURSORSHADOW:                   /* 0x101A  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = get_user_pref_param( 1, 0x20, pvParam );
+        break;
+
+    case SPI_SETCURSORSHADOW:                   /* 0x101B  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = set_user_pref_param( 1, 0x20, (BOOL)pvParam, fWinIni );
+        break;
+
     WINE_SPI_FIXME(SPI_GETMOUSESONAR);          /* 0x101C  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
     WINE_SPI_FIXME(SPI_SETMOUSESONAR);          /* 0x101D  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
     WINE_SPI_FIXME(SPI_GETMOUSECLICKLOCK);      /* 0x101E  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
