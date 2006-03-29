@@ -448,6 +448,32 @@ static void test_open_storage(void)
         ok(r == 0, "wrong ref count\n");
     }
 
+    /* open like visio 2003 */
+    stg = NULL;
+    r = StgOpenStorage( filename, NULL, STGM_PRIORITY | STGM_SHARE_DENY_NONE, NULL, 0, &stg);
+    ok(r == S_OK, "should succeed\n");
+    if (stg)
+        IStorage_Release(stg);
+
+    /* test other sharing modes with STGM_PRIORITY */
+    stg = NULL;
+    r = StgOpenStorage( filename, NULL, STGM_PRIORITY | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    ok(r == S_OK, "should succeed\n");
+    if (stg)
+        IStorage_Release(stg);
+
+    stg = NULL;
+    r = StgOpenStorage( filename, NULL, STGM_PRIORITY | STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+    ok(r == S_OK, "should succeed\n");
+    if (stg)
+        IStorage_Release(stg);
+
+    stg = NULL;
+    r = StgOpenStorage( filename, NULL, STGM_PRIORITY | STGM_SHARE_DENY_READ, NULL, 0, &stg);
+    ok(r == S_OK, "should succeed\n");
+    if (stg)
+        IStorage_Release(stg);
+
     r = DeleteFileW(filename);
     ok(r, "file didn't exist\n");
 }

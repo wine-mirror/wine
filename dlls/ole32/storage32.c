@@ -5911,7 +5911,7 @@ HRESULT WINAPI StgOpenStorage(
   /*
    * Validate the sharing mode
    */
-  if (!(grfMode & STGM_TRANSACTED))
+  if (!(grfMode & (STGM_TRANSACTED|STGM_PRIORITY)))
     switch(STGM_SHARE_MODE(grfMode))
     {
       case STGM_SHARE_EXCLUSIVE:
