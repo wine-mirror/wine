@@ -2185,10 +2185,22 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         ret = set_user_pref_param( 1, 0x04, (BOOL)pvParam, fWinIni );
         break;
 
-    WINE_SPI_FIXME(SPI_GETTOOLTIPANIMATION);    /* 0x1016  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETTOOLTIPANIMATION);    /* 0x1017  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_GETTOOLTIPFADE);         /* 0x1018  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETTOOLTIPFADE);         /* 0x1019  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETTOOLTIPANIMATION:               /* 0x1016  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = get_user_pref_param( 1, 0x08, pvParam );
+        break;
+
+    case SPI_SETTOOLTIPANIMATION:               /* 0x1017  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = set_user_pref_param( 1, 0x08, (BOOL)pvParam, fWinIni );
+        break;
+
+    case SPI_GETTOOLTIPFADE:                    /* 0x1018  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = get_user_pref_param( 1, 0x10, pvParam );
+        break;
+
+    case SPI_SETTOOLTIPFADE:                    /* 0x1019  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = set_user_pref_param( 1, 0x10, (BOOL)pvParam, fWinIni );
+        break;
+
     case SPI_GETCURSORSHADOW:                   /* 0x101A  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
         ret = get_user_pref_param( 1, 0x20, pvParam );
         break;
