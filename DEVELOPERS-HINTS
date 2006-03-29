@@ -31,7 +31,7 @@ DLLs (under dlls/):
 	crtdll/			- Old C runtime library
 	crypt32/		- Cryptography
 	cryptdll/		- Cryptography Manager
-	ctl3d/          	- 3D Effects for Common GUI Components
+	ctl3d32/          	- 3D Effects for Common GUI Components
 	d3d8/			- Direct3D (3D graphics)
 	d3d9/			- Direct3D (3D graphics)
 	d3dim/			- Direct3D Immediate Mode
@@ -67,25 +67,28 @@ DLLs (under dlls/):
 	iccvid/			- Radius Cinepak Video Decoder
 	icmp/			- ICMP protocol (networking)
 	ifsmgr.vxd/		- IFSMGR VxD implementation
+	imaadp32.acm/		- IMA ADPCM Audio Codec
 	imagehlp/		- PE (Portable Executable) Image Helper lib
 	imm32/			- Input Method Manager
 	iphlpapi/       	- IP Helper API
 	itss/			- Infotech Structured Storage (HTML Help)
 	kernel/			- The Windows kernel
-	lzexpand/		- Lempel-Ziv compression/decompression
+	lz32/			- Lempel-Ziv compression/decompression
 	mapi32/			- Mail interface
+	mciavi32/		- MCI video driver
+	mcicda/ 		- MCI audio CD driver
+	mciseq/			- MCI MIDI driver
 	midimap/		- MIDI mapper
 	mlang/			- Multi Language Support
 	mmdevldr.vxd/		- MMDEVLDR VxD implementation
 	monodebg.vxd/		- MONODEBG VxD implementation
 	mpr/			- Multi-Protocol Router (networking)
 	msacm/			- Audio Compression Manager (multimedia)
-	msacm/imaadp32/		- IMA ADPCM Audio Codec
-	msacm/msadp32/		- MS ADPCM Audio Codec
-	msacm/msg711/		- MS G711 Audio Codec (includes A-Law & MU-Law)
-	msacm/winemp3/		- Mpeg Layer 3 Audio Codec
+	msadp32.acm/		- MS ADPCM Audio Codec
 	mscms/			- Color Management System
 	msdmo/			- DirectX Media Objects
+	msftedit/		- Rich text editing control (Version 4.1)
+	msg711.acm/		- MS G711 Audio Codec (includes A-Law & MU-Law)
 	mshtml/			- MS HTML component
 	msi/			- Microsoft Installer
 	msimg32/		- Gradient and transparency (graphics)
@@ -96,8 +99,8 @@ DLLs (under dlls/):
 	msvcrt20/		- C runtime library version 2.0
 	msvcrt40/		- C runtime library version 4.0
 	msvcrtd/		- C runtime library debugging
+	msvfw32/		- 16 bit video manager
 	msvidc32/		- Microsoft Video-1 Decoder
-	msvideo/		- 16 bit video manager
 	mswsock/		- Misc networking
 	msxml3/			- MSXML Class Factory
 	netapi32/		- Network interface
@@ -109,22 +112,23 @@ DLLs (under dlls/):
 	ole32/			- 32 bit OLE 2.0 libraries
 	oleacc/			- OLE accessibility support
 	oleaut32/		- 32 bit OLE 2.0 automation
-	olecli/			- 16 bit OLE client
+	olecli32/		- 16 bit OLE client
 	oledlg/			- OLE 2.0 user interface support
 	olepro32/		- 32 bit OLE 2.0 automation
-	olesvr/			- 16 bit OLE server
+	olesvr32/		- 16 bit OLE server
 	opengl32/		- OpenGL implementation (graphics)
 	powrprof/		- Power Management and Profiling
 	psapi/			- Process Status interface
 	qcap/			- DirectShow runtime
 	quartz/			- DirectShow runtime
 	rasapi32/		- Remote Access Server interface
-	riched20/		- Rich text editing control version 2.0
+	riched20/		- Rich text editing control (Version 2.0 and 3.0)
 	richedit/		- Rich text editing control
 	rpcrt4/			- Remote Procedure Call runtime
 	rsabase/		- RSA encryption
 	rsaenh/			- Crypto API (DES, 3DES, RSA, etc.)
 	secur32/                - Contains Windows Security functions
+	security/               - Security Support Provider Interface
 	sensapi/		- System Event Notification Service
 	serialui/		- Serial port property pages
 	setupapi/		- Setup interface
@@ -153,18 +157,14 @@ DLLs (under dlls/):
 	vnetbios.vxd/		- VNETBIOS VxD implementation
 	vtdapi.vxd/		- VTDAPI VxD implementation
 	vwin32.vxd/		- VWIN32 VxD implementation
-	win32s/			- 32-bit function access for 16-bit systems
-	winaspi/		- 16 bit Advanced SCSI Peripheral Interface
+	win32skrnl/		- 32-bit function access for 16-bit systems
 	wined3d/		- Wine internal Direct3D helper
 	winedos/		- DOS features and BIOS calls (Wine specific)
+	winemp3.acm/		- Mpeg Layer 3 Audio Codec
 	wineps/			- Postscript driver (Wine specific)
 	wininet/		- Internet extensions
 	winmm/			- Multimedia (16 & 32 bit)
 	winmm/joystick/		- Joystick driver
-	winmm/mcianim/		- MCI animation driver
-	winmm/mciavi/		- MCI video driver
-	winmm/mcicda/		- MCI audio CD driver
-	winmm/mciseq/		- MCI MIDI driver
 	winmm/mciwave/		- MCI wave driver
 	winmm/wavemap/		- Audio mapper
 	winmm/winealsa/		- ALSA audio driver
@@ -173,13 +173,14 @@ DLLs (under dlls/):
 	winmm/winejack/		- JACK audio server driver
 	winmm/winenas/		- NAS audio driver
 	winmm/wineoss/		- OSS audio driver
-	winnls/			- National Language Support
-	winsock/		- Sockets 2.0 (networking)
+	winnls32/		- National Language Support
 	winspool/		- Printing & Print Spooler
 	wintab32/		- Tablet device interface
 	wintrust/		- Trust verification interface
 	wldap32/		- LDAP support
+	wnaspi32/		- 16 bit Advanced SCSI Peripheral Interface
 	wow32/			- WOW subsystem
+	ws2_32/			- Sockets 2.0 (networking)
 	wsock32/		- Sockets 1.1 (networking)
 	wtsapi32/		- Terminal Services
 	x11drv/			- X11 display driver (Wine specific)
