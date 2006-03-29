@@ -3318,6 +3318,7 @@ typedef struct {
 #define DFC_MENU                2
 #define DFC_SCROLL              3
 #define DFC_BUTTON              4
+#define DFC_POPUPMENU           5
 
 /* uState's */
 
