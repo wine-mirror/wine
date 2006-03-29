@@ -77,6 +77,7 @@ enum spi_index
     SPI_USERPREFERENCEMASK_IDX,
     SPI_NONCLIENTMETRICS_IDX,
     SPI_MINIMIZEDMETRICS_IDX,
+    SPI_CARETWIDTH_IDX,
     SPI_INDEX_COUNT
 };
 
@@ -207,6 +208,8 @@ static const WCHAR SPI_SETMOUSESCROLLLINES_REGKEY[]=          {'C','o','n','t','
 static const WCHAR SPI_SETMOUSESCROLLLINES_VALNAME[]=         {'W','h','e','e','l','S','c','r','o','l','l','L','i','n','e','s',0};
 static const WCHAR SPI_SETMENUSHOWDELAY_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETMENUSHOWDELAY_VALNAME[]=            {'M','e','n','u','S','h','o','w','D','e','l','a','y',0};
+static const WCHAR SPI_CARETWIDTH_REGKEY[]=                   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_CARETWIDTH_VALNAME[]=                  {'C','a','r','e','t','W','i','d','t','h',0};
 
 /* FIXME - real values */
 static const WCHAR SPI_SETSCREENSAVERRUNNING_REGKEY[]=   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -296,6 +299,7 @@ static BOOL poweroffactive = FALSE;
 static BOOL show_sounds = FALSE;
 static BOOL swap_buttons = FALSE;
 static BOOL listbox_smoothscrolling = FALSE;
+static UINT caret_width = 1;
 static BYTE user_prefs[4];
 
 static MINIMIZEDMETRICS minimized_metrics =
@@ -2196,8 +2200,20 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETACTIVEWNDTRKTIMEOUT); /* 0x2003  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_GETFOREGROUNDFLASHCOUNT);/* 0x2004  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETFOREGROUNDFLASHCOUNT);/* 0x2005  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_GETCARETWIDTH);          /* 0x2006  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETCARETWIDTH);          /* 0x2007  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETCARETWIDTH:          /* 0x2006  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = get_uint_param( SPI_CARETWIDTH_IDX,
+                              SPI_CARETWIDTH_REGKEY,
+                              SPI_CARETWIDTH_VALNAME,
+                              &caret_width, pvParam );
+        break;
+
+    case SPI_SETCARETWIDTH:          /* 0x2007  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = set_uint_param( SPI_CARETWIDTH_IDX,
+                              SPI_CARETWIDTH_REGKEY,
+                              SPI_CARETWIDTH_VALNAME,
+                              &caret_width, uiParam, fWinIni );
+        break;
+
     WINE_SPI_FIXME(SPI_GETMOUSECLICKLOCKTIME);  /* 0x2008  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETMOUSECLICKLOCKTIME);  /* 0x2009  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_GETFONTSMOOTHINGTYPE);   /* 0x200A  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
