@@ -138,6 +138,7 @@ DLLs (under dlls/):
 	shfolder/		- Shell folder service
 	shlwapi/		- Shell Light-Weight interface
 	snmpapi/		- SNMP protocol interface (networking)
+	spoolss/		- Spooler Subsystem Library ("spooler" - Service)
 	stdole2.tlb/		- OLE Automation typelib
 	stdole32.tlb/		- Standard OLE typelib
 	sti/			- Still Image service

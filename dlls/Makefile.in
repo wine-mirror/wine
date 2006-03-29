@@ -133,6 +133,7 @@ BASEDIRS = \
 	shfolder \
 	shlwapi \
 	snmpapi \
+	spoolss \
 	stdole2.tlb \
 	stdole32.tlb \
 	sti \
@@ -1065,6 +1066,7 @@ shell32/shell32.dll.so: shell32
 shfolder/shfolder.dll.so: shfolder
 shlwapi/shlwapi.dll.so: shlwapi
 snmpapi/snmpapi.dll.so: snmpapi
+spoolss/spoolss.dll.so: spoolss
 stdole2.tlb/stdole2.tlb.so: stdole2.tlb
 stdole32.tlb/stdole32.tlb.so: stdole32.tlb
 sti/sti.dll.so: sti
