@@ -457,7 +457,7 @@ static HRESULT WINAPI OLEPictureImpl_QueryInterface(
     *ppvObject = (IDispatch*)&(This->lpvtblIDispatch);
   else if (IsEqualIID(&IID_IPictureDisp, riid))
     *ppvObject = (IDispatch*)&(This->lpvtblIDispatch);
-  else if (IsEqualIID(&IID_IPersistStream, riid))
+  else if (IsEqualIID(&IID_IPersist, riid) || IsEqualIID(&IID_IPersistStream, riid))
     *ppvObject = (IPersistStream*)&(This->lpvtblIPersistStream);
   else if (IsEqualIID(&IID_IConnectionPointContainer, riid))
     *ppvObject = (IConnectionPointContainer*)&(This->lpvtblIConnectionPointContainer);

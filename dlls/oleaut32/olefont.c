@@ -586,7 +586,7 @@ HRESULT WINAPI OLEFontImpl_QueryInterface(
     *ppvObject = (IDispatch*)&(this->lpvtblIDispatch);
   if (IsEqualGUID(&IID_IFontDisp, riid))
     *ppvObject = (IDispatch*)&(this->lpvtblIDispatch);
-  if (IsEqualGUID(&IID_IPersistStream, riid))
+  if (IsEqualIID(&IID_IPersist, riid) || IsEqualGUID(&IID_IPersistStream, riid))
     *ppvObject = (IPersistStream*)&(this->lpvtblIPersistStream);
   if (IsEqualGUID(&IID_IConnectionPointContainer, riid))
     *ppvObject = (IConnectionPointContainer*)&(this->lpvtblIConnectionPointContainer);
