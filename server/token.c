@@ -82,6 +82,7 @@ struct token
     SID           *user;            /* SID of user this token represents */
     unsigned       primary;         /* is this a primary or impersonation token? */
     ACL           *default_dacl;    /* the default DACL to assign to objects created by this user */
+    TOKEN_SOURCE   source;          /* source of the token */
 };
 
 struct privilege
@@ -413,7 +414,7 @@ static void token_destroy( struct object *obj )
 static struct token *create_token( unsigned primary, const SID *user,
                                    const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
                                    const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count,
-                                   const ACL *default_dacl )
+                                   const ACL *default_dacl, TOKEN_SOURCE source )
 {
     struct token *token = alloc_object( &token_ops );
     if (token)
@@ -472,6 +473,8 @@ static struct token *create_token( unsigned primary, const SID *user,
         }
         else
             token->default_dacl = NULL;
+
+        token->source = source;
     }
     return token;
 }
@@ -576,12 +579,13 @@ struct token *token_create_admin( void )
             { alias_admins_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
             { alias_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
         };
+        static const TOKEN_SOURCE admin_source = {"SeMgr", {0, 0}};
         /* note: we just set the user sid to be the interactive builtin sid -
          * we should really translate the UNIX user id to a sid */
         token = create_token( TRUE, &interactive_sid,
                             admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
                             admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]),
-                            default_dacl );
+                            default_dacl, admin_source );
     }
 
     if (alias_admins_sid)
@@ -1006,7 +1010,10 @@ DECL_HANDLER(duplicate_token)
                                                      &token_ops )))
     {
         /* FIXME: use req->impersonation_level */
-        struct token *token = create_token( req->primary, src_token->user, NULL, 0, NULL, 0, src_token->default_dacl );
+        struct token *token = create_token( req->primary, src_token->user,
+                                            NULL, 0, NULL, 0,
+                                            src_token->default_dacl,
+                                            src_token->source );
         if (token)
         {
             struct privilege *privilege;
