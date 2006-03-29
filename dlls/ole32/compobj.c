@@ -2645,7 +2645,10 @@ HRESULT WINAPI CoCopyProxy(IUnknown *pProxy, IUnknown **ppCopy)
 
 static BOOL COM_PeekMessage(struct apartment *apt, MSG *msg)
 {
-    return PeekMessageW(msg, NULL, 0, 0, PM_REMOVE|PM_NOYIELD);
+    /* first try to retrieve messages for incoming COM calls to the apartment window */
+    return PeekMessageW(msg, apt->win, WM_USER, WM_APP - 1, PM_REMOVE|PM_NOYIELD) ||
+    /* next retrieve all other messages */
+           PeekMessageW(msg, NULL, 0, 0, PM_REMOVE|PM_NOYIELD);
 }
 
 /***********************************************************************
