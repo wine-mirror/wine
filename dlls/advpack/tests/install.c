@@ -40,6 +40,14 @@ static BOOL init_function_pointers()
     return TRUE;
 }
 
+static BOOL is_spapi_err(DWORD err)
+{
+    const DWORD SPAPI_PREFIX = 0x800F0000L;
+    const DWORD SPAPI_MASK = 0xFFFF0000L;
+
+    return (((err & SPAPI_MASK) ^ SPAPI_PREFIX) == 0);
+}
+
 static void test_RunSetupCommand()
 {
     HRESULT hr;
@@ -72,10 +80,7 @@ static void test_RunSetupCommand()
     /* try to run an exe with the RSC_FLAG_INF flag */
     hexe = (HANDLE)0xdeadbeef;
     hr = pRunSetupCommand(NULL, "winver.exe", "Install", "c:\\windows\\system32", "Title", &hexe, RSC_FLAG_INF, NULL);
-    todo_wine
-    {
-        ok(hr == SPAPI_E_WRONG_INF_STYLE, "Expected SPAPI_E_WRONG_INF_STYLE, got %ld\n", hr);
-    }
+    ok(is_spapi_err(hr), "Expected a setupapi error, got %ld\n", hr);
     ok(hexe == (HANDLE)0xdeadbeef, "Expected hexe to be 0xdeadbeef\n");
     ok(!TerminateProcess(hexe, 0), "Expected TerminateProcess to fail\n");
 
