@@ -403,7 +403,7 @@ inline static BOOL check_resource_write( const EXCEPTION_RECORD *rec )
     if (!rec->ExceptionInformation[0]) return FALSE;  /* not a write access */
     addr = (void *)rec->ExceptionInformation[1];
     if (!VirtualQuery( addr, &info, sizeof(info) )) return FALSE;
-    if (info.State == MEM_FREE) return FALSE;
+    if (info.State == MEM_FREE || !(info.Type & MEM_IMAGE)) return FALSE;
     if (!(rsrc = RtlImageDirectoryEntryToData( (HMODULE)info.AllocationBase, TRUE,
                                               IMAGE_DIRECTORY_ENTRY_RESOURCE, &size )))
         return FALSE;
