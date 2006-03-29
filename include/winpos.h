@@ -31,9 +31,6 @@
 #define SWP_NOCLIENTSIZE	0x0800
 #define SWP_NOCLIENTMOVE	0x1000
 
-/* Wine extra SWP flag */
-#define SWP_WINE_NOHOSTMOVE	0x80000000
-
 extern BOOL WINPOS_RedrawIconTitle( HWND hWnd );
 extern BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow );
 extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos, POINT *minTrack,

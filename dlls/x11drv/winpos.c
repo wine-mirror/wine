@@ -567,7 +567,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
     {
         req->handle        = hwnd;
         req->previous      = insert_after;
-        req->flags         = swp_flags & ~SWP_WINE_NOHOSTMOVE;
+        req->flags         = swp_flags;
         req->window.left   = rectWindow->left;
         req->window.top    = rectWindow->top;
         req->window.right  = rectWindow->right;
@@ -625,7 +625,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
 
         /* FIXME: copy the valid bits */
 
-        if (data->whole_window && !(swp_flags & SWP_WINE_NOHOSTMOVE))
+        if (data->whole_window && !data->lock_changes)
         {
             if ((old_style & WS_VISIBLE) && !(new_style & WS_VISIBLE))
             {
@@ -647,7 +647,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
 
         X11DRV_sync_window_position( display, data, swp_flags, rectClient, &new_whole_rect );
 
-        if (data->whole_window && !(swp_flags & SWP_WINE_NOHOSTMOVE))
+        if (data->whole_window && !data->lock_changes)
         {
             if ((new_style & WS_VISIBLE) && !(new_style & WS_MINIMIZE) &&
                 X11DRV_is_window_rect_mapped( rectWindow ))
@@ -694,7 +694,6 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
            winpos->cx, winpos->cy, winpos->flags);
 
     orig_flags = winpos->flags;
-    winpos->flags &= ~SWP_WINE_NOHOSTMOVE;
 
     /* First make sure that coordinates are valid for WM_WINDOWPOSCHANGING */
     if (!(winpos->flags & SWP_NOMOVE))
@@ -1107,8 +1106,10 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         WIN_ReleasePtr( win );
 
         SendMessageA( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
+        data->lock_changes++;
         SetWindowPos( hwnd, 0, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
-                      SWP_NOZORDER | SWP_WINE_NOHOSTMOVE );
+                      SWP_NOZORDER );
+        data->lock_changes--;
     }
     else WIN_ReleasePtr( win );
     if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
@@ -1140,8 +1141,10 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 
         EndMenu();
         SendMessageA( hwnd, WM_SHOWWINDOW, SW_MINIMIZE, 0 );
+        data->lock_changes++;
         SetWindowPos( hwnd, 0, 0, 0, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
-                      SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_WINE_NOHOSTMOVE );
+                      SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+        data->lock_changes--;
     }
     else WIN_ReleasePtr( win );
 }
@@ -1154,12 +1157,16 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
 {
     RECT rect;
     HWND hwnd = GetDesktopWindow();
+    struct x11drv_win_data *data;
 
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
     screen_width  = width;
     screen_height = height;
     TRACE("desktop %p change to (%dx%d)\n", hwnd, width, height);
     SetRect( &rect, 0, 0, width, height );
-    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER|SWP_NOMOVE|SWP_WINE_NOHOSTMOVE, NULL );
+    data->lock_changes++;
+    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER|SWP_NOMOVE, NULL );
+    data->lock_changes--;
     SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,
                          MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
 }
@@ -1202,7 +1209,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     y     = rect.top;
     cx    = rect.right - rect.left;
     cy    = rect.bottom - rect.top;
-    flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_WINE_NOHOSTMOVE;
+    flags = SWP_NOACTIVATE | SWP_NOZORDER;
 
     /* Compare what has changed */
 
@@ -1223,7 +1230,9 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         TRACE( "%p resizing from (%ldx%ld) to (%dx%d)\n",
                hwnd, rect.right - rect.left, rect.bottom - rect.top, cx, cy );
 
+    data->lock_changes++;
     SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
+    data->lock_changes--;
 }
 
 

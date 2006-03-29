@@ -602,8 +602,7 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
     data->client_rect = *new_client_rect;
     OffsetRect( &data->client_rect, -data->whole_rect.left, -data->whole_rect.top );
 
-    if (!data->whole_window) return;
-    if (swp_flags & SWP_WINE_NOHOSTMOVE) return;
+    if (!data->whole_window || data->lock_changes) return;
 
     mask = get_window_changes( &changes, &old_whole_rect, &data->whole_rect );
 
@@ -837,6 +836,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
         data->xic           = 0;
         data->managed       = FALSE;
         data->dce           = NULL;
+        data->lock_changes  = 0;
         data->hWMIconBitmap = 0;
         data->hWMIconMask   = 0;
 

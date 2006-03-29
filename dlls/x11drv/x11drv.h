@@ -643,6 +643,7 @@ struct x11drv_win_data
     XIC         xic;            /* X input context */
     BOOL        managed;        /* is window managed? */
     struct dce *dce;            /* DCE for CS_OWNDC or CS_CLASSDC windows */
+    unsigned int lock_changes;  /* lock count for X11 change requests */
     HBITMAP     hWMIconBitmap;
     HBITMAP     hWMIconMask;
 };
