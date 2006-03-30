@@ -215,7 +215,6 @@ interface IRemUnknown2 : IRemUnknown
     [out, size_is(cIids)] MInterfacePointer **ppMIF);
 }
 
-cpp_quote("#if 0")
 [
   uuid(99fcfec4-5260-101b-bbcb-00aa0021347a),
   pointer_default(unique)
@@ -289,4 +288,3 @@ interface IRemoteActivation
     [out,size_is(Interfaces)] MInterfacePointer **ppInterfaceData,
     [out,size_is(Interfaces)] HRESULT *pResults);
 }
-cpp_quote("#endif")
