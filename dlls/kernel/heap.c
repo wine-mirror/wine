@@ -736,7 +736,7 @@ HGLOBAL WINAPI GlobalFree(HGLOBAL hmem)
     }
     __EXCEPT_PAGE_FAULT
     {
-        ERR("page fault occurred ! Caused by bug ?\n");
+        ERR("(%p): Page fault occurred ! Caused by bug ?\n", hmem);
         SetLastError( ERROR_INVALID_PARAMETER );
         hreturned = hmem;
     }
