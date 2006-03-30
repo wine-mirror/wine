@@ -280,6 +280,8 @@ static struct list unused_gdi_font_list = LIST_INIT(unused_gdi_font_list);
 static struct list child_font_list = LIST_INIT(child_font_list);
 static struct list system_links = LIST_INIT(system_links);
 
+static struct list font_subst_list = LIST_INIT(font_subst_list);
+
 static struct list font_list = LIST_INIT(font_list);
 
 static const WCHAR defSerif[] = {'T','i','m','e','s',' ','N','e','w',' ',
@@ -362,17 +364,16 @@ static const WCHAR *ElfScriptsW[32] = { /* these are in the order of the fsCsb[0
 };
 
 typedef struct {
-  WCHAR *name;
-  INT charset;
+    WCHAR *name;
+    INT charset;
 } NameCs;
 
 typedef struct tagFontSubst {
-  NameCs from;
-  NameCs to;
-  struct tagFontSubst *next;
+    struct list entry;
+    NameCs from;
+    NameCs to;
 } FontSubst;
 
-static FontSubst *substlist = NULL;
 static BOOL have_installed_roman_font = FALSE; /* CreateFontInstance will fail if this is still FALSE */
 
 static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_','\0'};
@@ -718,13 +719,15 @@ static void DumpSubstList(void)
 {
     FontSubst *psub;
 
-    for(psub = substlist; psub; psub = psub->next)
+    LIST_FOR_EACH_ENTRY(psub, &font_subst_list, FontSubst, entry)
+    {
         if(psub->from.charset != -1 || psub->to.charset != -1)
 	    TRACE("%s:%d -> %s:%d\n", debugstr_w(psub->from.name),
 	      psub->from.charset, debugstr_w(psub->to.name), psub->to.charset);
 	else
 	    TRACE("%s -> %s\n", debugstr_w(psub->from.name),
 		  debugstr_w(psub->to.name));
+    }
     return;
 }
 
@@ -746,6 +749,22 @@ static LPSTR strdupA(LPCSTR p)
     return ret;
 }
 
+static FontSubst *get_font_subst(const struct list *subst_list, const WCHAR *from_name,
+                                 INT from_charset)
+{
+    FontSubst *element;
+
+    LIST_FOR_EACH_ENTRY(element, subst_list, FontSubst, entry)
+    {
+        if(!strcmpiW(element->from.name, from_name) &&
+           (element->from.charset == from_charset ||
+            element->from.charset == -1))
+            return element;
+    }
+
+    return NULL;
+}
+
 static void split_subst_info(NameCs *nc, LPSTR str)
 {
     CHAR *p = strrchr(str, ',');
@@ -763,22 +782,22 @@ static void split_subst_info(NameCs *nc, LPSTR str)
 
 static void LoadSubstList(void)
 {
-    FontSubst *psub, **ppsub;
+    FontSubst *psub;
     HKEY hkey;
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
     LPSTR value;
     LPVOID data;
 
-    if(substlist) {
-        for(psub = substlist; psub;) {
-	    FontSubst *ptmp;
-	    HeapFree(GetProcessHeap(), 0, psub->to.name);
-	    HeapFree(GetProcessHeap(), 0, psub->from.name);
-	    ptmp = psub;
-	    psub = psub->next;
-	    HeapFree(GetProcessHeap(), 0, ptmp);
-	}
-	substlist = NULL;
+    if(!list_empty(&font_subst_list))
+    {
+        FontSubst *cursor2;
+        LIST_FOR_EACH_ENTRY_SAFE(psub, cursor2, &font_subst_list, FontSubst, entry)
+        {
+            HeapFree(GetProcessHeap(), 0, psub->to.name);
+            HeapFree(GetProcessHeap(), 0, psub->from.name);
+            list_remove(&psub->entry);
+            HeapFree(GetProcessHeap(), 0, psub);
+        }
     }
 
     if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
@@ -794,26 +813,23 @@ static void LoadSubstList(void)
 
 	dlen = datalen;
 	vlen = valuelen;
-	ppsub = &substlist;
 	while(RegEnumValueA(hkey, i++, value, &vlen, NULL, &type, data,
 			    &dlen) == ERROR_SUCCESS) {
 	    TRACE("Got %s=%s\n", debugstr_a(value), debugstr_a(data));
 
-	    *ppsub = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppsub));
-	    (*ppsub)->next = NULL;
-	    split_subst_info(&((*ppsub)->from), value);
-	    split_subst_info(&((*ppsub)->to), data);
+	    psub = HeapAlloc(GetProcessHeap(), 0, sizeof(*psub));
+	    split_subst_info(&psub->from, value);
+	    split_subst_info(&psub->to, data);
 
 	    /* Win 2000 doesn't allow mapping between different charsets
 	       or mapping of DEFAULT_CHARSET */
-	    if(((*ppsub)->to.charset != (*ppsub)->from.charset) ||
-	       (*ppsub)->to.charset == DEFAULT_CHARSET) {
-	        HeapFree(GetProcessHeap(), 0, (*ppsub)->to.name);
-		HeapFree(GetProcessHeap(), 0, (*ppsub)->from.name);
-		HeapFree(GetProcessHeap(), 0, *ppsub);
-                *ppsub = NULL;
+	    if((psub->to.charset != psub->from.charset) ||
+	       psub->to.charset == DEFAULT_CHARSET) {
+	        HeapFree(GetProcessHeap(), 0, psub->to.name);
+		HeapFree(GetProcessHeap(), 0, psub->from.name);
+		HeapFree(GetProcessHeap(), 0, psub);
 	    } else {
-	        ppsub = &((*ppsub)->next);
+	        list_add_head(&font_subst_list, &psub->entry);
 	    }
 	    /* reset dlen and vlen */
 	    dlen = datalen;
@@ -2205,11 +2221,8 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     family = NULL;
     if(lf.lfFaceName[0] != '\0') {
         FontSubst *psub;
-	for(psub = substlist; psub; psub = psub->next)
-	    if(!strcmpiW(lf.lfFaceName, psub->from.name) &&
-	       (psub->from.charset == -1 ||
-		psub->from.charset == lf.lfCharSet))
-	      break;
+        psub = get_font_subst(&font_subst_list, lf.lfFaceName, lf.lfCharSet);
+
 	if(psub) {
 	    TRACE("substituting %s -> %s\n", debugstr_w(lf.lfFaceName),
 		  debugstr_w(psub->to.name));
@@ -2628,11 +2641,8 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
 
     if(plf->lfFaceName[0]) {
         FontSubst *psub;
-        for(psub = substlist; psub; psub = psub->next)
-            if(!strcmpiW(plf->lfFaceName, psub->from.name) &&
-               (psub->from.charset == -1 ||
-                psub->from.charset == plf->lfCharSet))
-                break;
+        psub = get_font_subst(&font_subst_list, plf->lfFaceName, plf->lfCharSet);
+
         if(psub) {
             TRACE("substituting %s -> %s\n", debugstr_w(plf->lfFaceName),
                   debugstr_w(psub->to.name));
