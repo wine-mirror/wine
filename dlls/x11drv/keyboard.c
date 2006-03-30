@@ -595,11 +595,11 @@ static const char main_key_BE[MAIN_LEN][4] =
 /*** Hungarian keyboard layout (setxkbmap hu) */
 static const char main_key_HU[MAIN_LEN][4] =
 {
- "0§","1'~","2\"·","3+^","4!¢","5%0°","6/²","7=`","8(ÿ","9)´","öÖ½","üÜ¨","óÓ¸",
- "qQ\\","wW|","eE","rR","tT","zZ","uU","iIÍ","oOø","pP","õÕ÷","úÚ×",
- "aA","sSð","dDÐ","fF[","gG]","hH","jJí","kK³","lL£","éÉ$","áÁß","ûÛ¤",
- "yY>","xX#","cC&","vV@","bB{","nN}","mM",",?;",".:>","-_*",
- "íÍ<"
+ "0§","1'","2\"","3+","4!","5%","6/","7=","8(","9)","öÖ","üÜ","óÓ",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","õÕ","úÚ",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","éÉ","áÁ","ûÛ",
+ "yY","xX","cC","vV","bB","nN","mM",",?",".:","-_",
+ "íÍ"
 };
 
 /*** Polish (programmer's) keyboard layout ***/
