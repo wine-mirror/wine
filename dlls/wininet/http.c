@@ -1406,9 +1406,8 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
                             requested_index,request_only);
 
                     if (index < 0)
-                        return bSuccess;
-                    else
-                        lphttpHdr = &lpwhr->pCustHeaders[index];
+                        break;
+                    lphttpHdr = &lpwhr->pCustHeaders[index];
 
                     if (lpdwIndex)
                         (*lpdwIndex)++;
