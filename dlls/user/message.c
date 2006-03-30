@@ -2148,7 +2148,7 @@ static void wait_message_reply( UINT flags )
 
         ReleaseThunkLock( &dwlc );
         res = USER_Driver->pMsgWaitForMultipleObjectsEx( 1, &server_queue,
-                                                         INFINITE, QS_ALLINPUT, 0 );
+                                                         INFINITE, QS_SENDMESSAGE, 0 );
         if (dwlc) RestoreThunkLock( dwlc );
     }
 }
