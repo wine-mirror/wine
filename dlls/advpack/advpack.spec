@@ -39,7 +39,7 @@
 # stdcall LaunchINFSectionW(ptr ptr wstr long)
 @ stdcall LaunchINFSection(ptr ptr str long) LaunchINFSectionA
 @ stdcall LaunchINFSectionExA(ptr ptr str long)
-# stdcall LaunchINFSectionExW(ptr ptr wstr long)
+@ stdcall LaunchINFSectionExW(ptr ptr wstr long)
 @ stdcall LaunchINFSectionEx(ptr ptr str long) LaunchINFSectionExA
 @ stdcall NeedReboot(long)
 @ stdcall NeedRebootInit()
