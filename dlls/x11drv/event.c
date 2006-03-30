@@ -212,6 +212,7 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
     case KeyPress:
     case KeyRelease:
     case KeymapNotify:
+    case MappingNotify:
         return (mask & QS_KEY) != 0;
     case ButtonPress:
     case ButtonRelease:
@@ -222,6 +223,12 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
         return (mask & QS_MOUSEMOVE) != 0;
     case Expose:
         return (mask & QS_PAINT) != 0;
+    case FocusIn:
+    case FocusOut:
+    case MapNotify:
+    case UnmapNotify:
+    case ConfigureNotify:
+    case PropertyNotify:
     case ClientMessage:
         return (mask & QS_POSTMESSAGE) != 0;
     default:
