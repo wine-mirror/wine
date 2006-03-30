@@ -101,6 +101,8 @@ static const BYTE bigCert2[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
 static const BYTE subjectName2[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
  0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61,
  0x6e, 0x67, 0x00 };
+static const BYTE bigCert2Hash[] = { 0x4a, 0x7f, 0x32, 0x1f, 0xcf, 0x3b, 0xc0,
+ 0x87, 0x48, 0x2b, 0xa1, 0x86, 0x54, 0x18, 0xe4, 0x3a, 0x0e, 0x53, 0x7e, 0x2b };
 static const BYTE certWithUsage[] = { 0x30, 0x81, 0x93, 0x02, 0x01, 0x01, 0x30,
  0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04,
  0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00,
@@ -114,6 +116,110 @@ static const BYTE certWithUsage[] = { 0x30, 0x81, 0x93, 0x02, 0x01, 0x01, 0x30,
  0x05, 0x05, 0x07, 0x03, 0x03, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07,
  0x03, 0x02, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
 static const BYTE serialNum[] = { 1 };
+
+static void testAddCert(void)
+{
+    HCERTSTORE store;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ok(store != NULL, "CertOpenStore failed: %ld\n", GetLastError());
+    if (store != NULL)
+    {
+        HCERTSTORE collection;
+        PCCERT_CONTEXT context;
+        BOOL ret;
+
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert2, sizeof(bigCert2), CERT_STORE_ADD_NEW, NULL);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        /* This has the same name as bigCert, so finding isn't done by name */
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         certWithUsage, sizeof(certWithUsage), CERT_STORE_ADD_NEW, &context);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        ok(context != NULL, "Expected a context\n");
+        if (context)
+        {
+            CRYPT_DATA_BLOB hash = { sizeof(bigCert2Hash),
+             (LPBYTE)bigCert2Hash };
+
+            CertDeleteCertificateFromStore(context);
+            /* Set the same hash as bigCert2, and try to readd it */
+            ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID,
+             0, &hash);
+            ok(ret, "CertSetCertificateContextProperty failed: %08lx\n",
+             GetLastError());
+            ret = CertAddCertificateContextToStore(store, context,
+             CERT_STORE_ADD_NEW, NULL);
+            /* The failure is a bit odd (CRYPT_E_ASN1_BADTAG), so just check
+             * that it fails.
+             */
+            ok(!ret, "Expected failure\n");
+            CertFreeCertificateContext(context);
+        }
+        context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
+         sizeof(bigCert2));
+        ok(context != NULL, "Expected a context\n");
+        if (context)
+        {
+            /* Try to readd bigCert2 to the store */
+            ret = CertAddCertificateContextToStore(store, context,
+             CERT_STORE_ADD_NEW, NULL);
+            ok(!ret && GetLastError() == CRYPT_E_EXISTS,
+             "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
+            CertFreeCertificateContext(context);
+        }
+
+        /* FIXME: test whether adding a cert with the same subject name and
+         * serial number (but different otherwise) as an existing cert works.
+         */
+        collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+        ok(collection != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
+        if (collection)
+        {
+            /* Add store to the collection, but disable updates */
+            CertAddStoreToCollection(collection, store, 0, 0);
+
+            context = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert2,
+             sizeof(bigCert2));
+            ok(context != NULL, "Expected a context\n");
+            if (context)
+            {
+                /* Try to readd bigCert2 to the collection */
+                ret = CertAddCertificateContextToStore(collection, context,
+                 CERT_STORE_ADD_NEW, NULL);
+                ok(!ret && GetLastError() == CRYPT_E_EXISTS,
+                 "Expected CRYPT_E_EXISTS, got %08lx\n", GetLastError());
+                /* Replacing an existing certificate context is allowed, even
+                 * though updates to the collection aren't..
+                 */
+                ret = CertAddCertificateContextToStore(collection, context,
+                 CERT_STORE_ADD_REPLACE_EXISTING, NULL);
+                ok(ret, "CertAddCertificateContextToStore failed: %08lx\n",
+                 GetLastError());
+                /* but adding a new certificate isn't allowed. */
+                ret = CertAddCertificateContextToStore(collection, context,
+                 CERT_STORE_ADD_ALWAYS, NULL);
+                ok(!ret && GetLastError() ==
+                 HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
+                 "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08lx\n",
+                 GetLastError());
+                CertFreeCertificateContext(context);
+            }
+
+            CertCloseStore(collection, 0);
+        }
+
+        CertCloseStore(store, 0);
+    }
+}
 
 static void testDupCert(void)
 {
@@ -1592,6 +1698,7 @@ static void testAddSerialized(void)
 
 START_TEST(store)
 {
+    testAddCert();
     testDupCert();
     testFindCert();
     testGetSubjectCert();
