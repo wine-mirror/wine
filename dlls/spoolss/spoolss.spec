@@ -38,8 +38,8 @@
 @ stub DeletePrinterDriverW
 @ stub DeletePrinterIC
 @ stub DeletePrinterKeyW
-@ stub DllAllocSplMem
-@ stub DllFreeSplMem
+@ stdcall DllAllocSplMem(long)
+@ stdcall DllFreeSplMem(ptr)
 @ stub DllFreeSplStr
 @ stub EndDocPrinter
 @ stub EndPagePrinter

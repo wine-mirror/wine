@@ -45,3 +45,51 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
+
+/******************************************************************
+ *   DllAllocSplMem   [SPOOLSS.@]
+ *
+ * Allocate cleared memory from the spooler heap
+ *
+ * PARAMS
+ *  size [I] Number of bytes to allocate
+ *
+ * RETURNS
+ *  Failure: NULL
+ *  Success: PTR to the allocated memory
+ *
+ * NOTES
+ *  We use the process heap (Windows use a separate spooler heap)
+ *
+ */
+LPVOID WINAPI DllAllocSplMem(DWORD size)
+{
+    LPVOID  res;
+
+    res = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    TRACE("(%ld) => %p\n", size, res);
+    return res;
+}
+
+/******************************************************************
+ *   DllFreeSplMem   [SPOOLSS.@]
+ *
+ * Free the allocated spooler memory
+ *
+ * PARAMS
+ *  memory [I] PTR to the memory allocated by DllAllocSplMem
+ *
+ * RETURNS
+ *  Failure: FALSE
+ *  Success: TRUE
+ *
+ * NOTES
+ *  We use the process heap (Windows use a separate spooler heap)
+ *
+ */
+
+BOOL WINAPI DllFreeSplMem(LPBYTE memory)
+{
+    TRACE("(%p)\n", memory);
+    return HeapFree(GetProcessHeap(), 0, memory);
+}
