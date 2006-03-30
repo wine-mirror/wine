@@ -1291,28 +1291,18 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
     LPHTTPHEADERW lphttpHdr = NULL;
     BOOL bSuccess = FALSE;
     BOOL request_only = dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS;
-
+    INT requested_index = lpdwIndex ? *lpdwIndex : 0;
+    INT level = (dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK);
+    INT index = -1;
 
     /* Find requested header structure */
-    if ((dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK) == HTTP_QUERY_CUSTOM)
+    switch (level)
     {
-        INT requested_index = (lpdwIndex)?(*lpdwIndex):0;
-        INT index = HTTP_GetCustomHeaderIndex(lpwhr, (LPWSTR)lpBuffer, 
-                requested_index,request_only);
+    case HTTP_QUERY_CUSTOM:
+        index = HTTP_GetCustomHeaderIndex(lpwhr, lpBuffer, requested_index, request_only);
+        break;
 
-        if (index < 0)
-            return bSuccess;
-        else
-            lphttpHdr = &lpwhr->pCustHeaders[index];
-
-        if (lpdwIndex)
-            (*lpdwIndex)++;
-    }
-    else
-    {
-        INT index = dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK;
-
-        if (index == HTTP_QUERY_RAW_HEADERS_CRLF)
+    case HTTP_QUERY_RAW_HEADERS_CRLF:
         {
             DWORD len = strlenW(lpwhr->lpszRawHeaders);
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
@@ -1328,7 +1318,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
 
             return TRUE;
         }
-        else if (index == HTTP_QUERY_RAW_HEADERS)
+    case HTTP_QUERY_RAW_HEADERS:
         {
             static const WCHAR szCrLf[] = {'\r','\n',0};
             LPWSTR * ppszRawHeaderLines = HTTP_Tokenize(lpwhr->lpszRawHeaders, szCrLf);
@@ -1361,7 +1351,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
 
             return TRUE;
         }
-        else if (index == HTTP_QUERY_STATUS_TEXT)
+    case HTTP_QUERY_STATUS_TEXT:
         {
             DWORD len = strlenW(lpwhr->lpszStatusText);
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
@@ -1377,7 +1367,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
 
             return TRUE;
         }
-        else if (index == HTTP_QUERY_VERSION)
+    case HTTP_QUERY_VERSION:
         {
             DWORD len = strlenW(lpwhr->lpszVersion);
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
@@ -1393,49 +1383,37 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
 
             return TRUE;
         }
-	    else if (index >= 0 && index <= HTTP_QUERY_MAX )
-	    {
+    default:
+        if (level >= 0 && level <= HTTP_QUERY_MAX )
+        {
             int i;
-            for (i = 0; i <  sizeof(SORTED_STANDARD_HEADERS)/sizeof(std_hdr_data) ; i++)
+            for (i = 0; i < sizeof(SORTED_STANDARD_HEADERS)/sizeof(std_hdr_data) ; i++)
             {
-                if (SORTED_STANDARD_HEADERS[i].hdrIndex == index)
+                if (SORTED_STANDARD_HEADERS[i].hdrIndex == level)
                 {
-                    INT requested_index = (lpdwIndex)?(*lpdwIndex):0;
-                    INT index = HTTP_GetCustomHeaderIndex(lpwhr,
+                    index = HTTP_GetCustomHeaderIndex(lpwhr,
                             (LPWSTR)SORTED_STANDARD_HEADERS[i].hdrStr,
                             requested_index,request_only);
-
-                    if (index < 0)
-                        break;
-                    lphttpHdr = &lpwhr->pCustHeaders[index];
-
-                    if (lpdwIndex)
-                        (*lpdwIndex)++;
-
                     break;
                 }
             }
-
-            if (!lphttpHdr)
-            {
-                SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
-                return bSuccess;
-            }
-	    }
-	    else
-        {
-            SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
-            return bSuccess;
         }
     }
 
+    if (index >= 0)
+        lphttpHdr = &lpwhr->pCustHeaders[index];
+
     /* Ensure header satisifies requested attributes */
-    if ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) &&
-	    (~lphttpHdr->wFlags & HDR_ISREQUEST))
+    if (!lphttpHdr ||
+        ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) &&
+         (~lphttpHdr->wFlags & HDR_ISREQUEST)))
     {
         SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
-	return bSuccess;
+        return bSuccess;
     }
+
+    if (lpdwIndex)
+        (*lpdwIndex)++;
 
     /* coalesce value to reuqested type */
     if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER)
