@@ -110,16 +110,22 @@ HRESULT WINAPI ExecuteCabA( HWND hwnd, CABINFOA* pCab, LPVOID pReserved )
  * PARAMS
  *   hWnd    [I] Handle to parent window, NULL for desktop.
  *   hInst   [I] Instance of the process.
- *   cmdline [I] Contains parameters in the order INF,section,flags.
- *   show    [I] Reboot behaviour:
- *              'A' reboot always
- *              'I' default, reboot if needed
- *              'N' no reboot
+ *   cmdline [I] Contains parameters in the order INF,section,flags,reboot.
+ *   show    [I] How the window should be shown.
  *
  * RETURNS
  *  Success: S_OK.
  *  Failure: S_FALSE
  *
+ * NOTES
+ *  INF - Filename of the INF to launch.
+ *  section - INF section to install.
+ *  flags - see advpub.h.
+ *  reboot - smart reboot behavior
+ *    'A' Always reboot.
+ *    'I' Reboot if needed (default).
+ *    'N' No reboot.
+ * 
  * BUGS
  *  Unimplemented.
  */
@@ -137,16 +143,22 @@ INT WINAPI LaunchINFSectionA( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT sho
  * PARAMS
  *   hWnd    [I] Handle to parent window, NULL for desktop.
  *   hInst   [I] Instance of the process.
- *   cmdline [I] Contains parameters in the order INF,section,CAB,flags.
- *   show    [I] Reboot behaviour:
- *              'A' reboot always
- *              'I' default, reboot if needed
- *              'N' no reboot
+ *   cmdline [I] Contains parameters in the order INF,section,CAB,flags,reboot.
+ *   show    [I] How the window should be shown.
  *
  * RETURNS
  *  Success: S_OK.
  *  Failure: E_FAIL.
  *
+ * NOTES
+ *  INF - Filename of the INF to launch.
+ *  section - INF section to install.
+ *  flags - see advpub.h.
+ *  reboot - smart reboot behavior
+ *    'A' Always reboot.
+ *    'I' Reboot if needed (default).
+ *    'N' No reboot.
+ *  
  * BUGS
  *  Unimplemented.
  */
