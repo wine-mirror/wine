@@ -95,7 +95,7 @@ typedef struct _URL_CACHEFILE_ENTRY
     DWORD dwUnknown2; /* usually zero */
     DWORD dwExemptDelta; /* see INTERNET_CACHE_ENTRY_INFO::dwExemptDelta */
     DWORD dwUnknown3; /* usually 0x60 */
-    DWORD dwOffsetUrl; /* usually 0x68 */
+    DWORD dwOffsetUrl; /* offset of start of url from start of entry */
     BYTE CacheDir; /* index of cache directory this url is stored in */
     BYTE Unknown4; /* usually zero */
     WORD wUnknown5; /* usually 0x1010 */
@@ -112,7 +112,8 @@ typedef struct _URL_CACHEFILE_ENTRY
     WORD wUnknownTime; /* usually same as wLastSyncTime */
     DWORD dwUnknown7; /* usually zero */
     DWORD dwUnknown8; /* usually zero */
-    CHAR szSourceUrlName[1]; /* start of url */
+    /* packing to dword align start of next field */
+    /* CHAR szSourceUrlName[]; (url) */
     /* packing to dword align start of next field */
     /* CHAR szLocalFileName[]; (local file name exluding path) */
     /* packing to dword align start of next field */
@@ -939,9 +940,9 @@ static BOOL URLCache_CopyEntry(
         ZeroMemory((LPBYTE)lpCacheEntryInfo + dwRequiredSize, 4 - (dwRequiredSize % 4));
     dwRequiredSize = DWORD_ALIGN(dwRequiredSize);
     if (bUnicode)
-        lenUrl = MultiByteToWideChar(CP_ACP, 0, pUrlEntry->szSourceUrlName, -1, NULL, 0);
+        lenUrl = MultiByteToWideChar(CP_ACP, 0, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, -1, NULL, 0);
     else
-        lenUrl = strlen(pUrlEntry->szSourceUrlName);
+        lenUrl = strlen((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
     dwRequiredSize += lenUrl + 1;
     
     /* FIXME: is source url optional? */
@@ -949,9 +950,9 @@ static BOOL URLCache_CopyEntry(
     {
         lpCacheEntryInfo->lpszSourceUrlName = (LPSTR)lpCacheEntryInfo + dwRequiredSize - lenUrl - 1;
         if (bUnicode)
-            MultiByteToWideChar(CP_ACP, 0, pUrlEntry->szSourceUrlName, -1, (LPWSTR)lpCacheEntryInfo->lpszSourceUrlName, lenUrl + 1);
+            MultiByteToWideChar(CP_ACP, 0, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, -1, (LPWSTR)lpCacheEntryInfo->lpszSourceUrlName, lenUrl + 1);
         else
-            memcpy(lpCacheEntryInfo->lpszSourceUrlName, pUrlEntry->szSourceUrlName, (lenUrl + 1) * sizeof(CHAR));
+            memcpy(lpCacheEntryInfo->lpszSourceUrlName, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, (lenUrl + 1) * sizeof(CHAR));
     }
 
     if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
@@ -1398,7 +1399,7 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
     }
 
     pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
-    TRACE("Found URL: %s\n", debugstr_a(pUrlEntry->szSourceUrlName));
+    TRACE("Found URL: %s\n", debugstr_a((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
     if (pUrlEntry->dwOffsetHeaderInfo)
         TRACE("Header info: %s\n", debugstr_a((LPSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
 
@@ -1483,7 +1484,7 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
     }
 
     pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
-    TRACE("Found URL: %s\n", debugstr_a(pUrlEntry->szSourceUrlName));
+    TRACE("Found URL: %s\n", debugstr_a((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
     TRACE("Header info: %s\n", debugstr_a((LPSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
 
     if (!URLCache_CopyEntry(
@@ -1704,7 +1705,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
     }
 
     pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
-    TRACE("Found URL: %s\n", pUrlEntry->szSourceUrlName);
+    TRACE("Found URL: %s\n", (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
     TRACE("Header info: %s\n", (LPBYTE)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo);
 
     pUrlEntry->dwHitRate++;
@@ -2035,7 +2036,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     LPURLCACHE_HEADER pHeader;
     CACHEFILE_ENTRY * pEntry;
     URL_CACHEFILE_ENTRY * pUrlEntry;
-    DWORD dwBytesNeeded = sizeof(*pUrlEntry) - sizeof(pUrlEntry->szSourceUrlName);
+    DWORD dwBytesNeeded = DWORD_ALIGN(sizeof(*pUrlEntry));
     DWORD dwOffsetLocalFileName = 0;
     DWORD dwOffsetHeader = 0;
     DWORD dwFileSizeLow = 0;
@@ -2177,7 +2178,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     pUrlEntry->dwHitRate = 0;
     pUrlEntry->dwOffsetHeaderInfo = dwOffsetHeader;
     pUrlEntry->dwOffsetLocalName = dwOffsetLocalFileName;
-    pUrlEntry->dwOffsetUrl = sizeof(*pUrlEntry) - sizeof(pUrlEntry->szSourceUrlName);
+    pUrlEntry->dwOffsetUrl = DWORD_ALIGN(sizeof(*pUrlEntry));
     pUrlEntry->dwSizeHigh = 0;
     pUrlEntry->dwSizeLow = dwFileSizeLow;
     pUrlEntry->dwSizeHigh = dwFileSizeHigh;
@@ -2200,7 +2201,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     pUrlEntry->dwUnknown8 = 0;
 
 
-    strcpy(pUrlEntry->szSourceUrlName, achUrl);
+    strcpy((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, achUrl);
     if (dwOffsetLocalFileName)
         strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), pchLocalFileName);
     if (dwOffsetHeader)
