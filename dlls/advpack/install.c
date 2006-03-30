@@ -138,6 +138,27 @@ INT WINAPI LaunchINFSectionA( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT sho
 /***********************************************************************
  *      LaunchINFSectionExA (ADVPACK.@)
  *
+ * See LaunchINFSectionExW.
+ */
+HRESULT WINAPI LaunchINFSectionExA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show)
+{
+    UNICODE_STRING cmd;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s, %d): stub\n", hWnd, hInst, debugstr_a(cmdline), show);
+
+    RtlCreateUnicodeStringFromAsciiz(&cmd, cmdline);
+
+    hr = LaunchINFSectionExW(hWnd, hInst, cmd.Buffer, show);
+
+    RtlFreeUnicodeString(&cmd);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      LaunchINFSectionExW (ADVPACK.@)
+ *
  * Installs an INF section with BACKUP/ROLLBACK capabilities.
  *
  * PARAMS
@@ -162,9 +183,9 @@ INT WINAPI LaunchINFSectionA( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT sho
  * BUGS
  *  Unimplemented.
  */
-HRESULT WINAPI LaunchINFSectionExA( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
+HRESULT WINAPI LaunchINFSectionExW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, INT show)
 {
-    FIXME("(%p %p %s %d): stub\n", hWnd, hInst, debugstr_a(cmdline), show );
+    FIXME("(%p, %p, %s, %d): stub\n", hWnd, hInst, debugstr_w(cmdline), show );
     return E_FAIL;
 }
 
