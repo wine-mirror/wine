@@ -2988,7 +2988,8 @@ static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
  * Return index of custom header from header array
  *
  */
-static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField,int requested_index, BOOL request_only)
+static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField,
+                                     int requested_index, BOOL request_only)
 {
     DWORD index;
 
@@ -2996,19 +2997,18 @@ static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField,
 
     for (index = 0; index < lpwhr->nCustHeaders; index++)
     {
-	if (!strcmpiW(lpwhr->pCustHeaders[index].lpszField, lpszField))
-    {
-        if ((request_only && 
-                !(lpwhr->pCustHeaders[index].wFlags & HDR_ISREQUEST))||
-            (!request_only &&
-                (lpwhr->pCustHeaders[index].wFlags & HDR_ISREQUEST)))
+        if (strcmpiW(lpwhr->pCustHeaders[index].lpszField, lpszField))
+            continue;
+
+        if (request_only && !(lpwhr->pCustHeaders[index].wFlags & HDR_ISREQUEST))
+            continue;
+
+        if (!request_only && (lpwhr->pCustHeaders[index].wFlags & HDR_ISREQUEST))
             continue;
 
         if (requested_index == 0)
-    	    break;
-        else
-            requested_index --;
-    }
+            break;
+        requested_index --;
     }
 
     if (index >= lpwhr->nCustHeaders)
