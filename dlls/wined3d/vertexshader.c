@@ -693,7 +693,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
 
 inline static const SHADER_OPCODE* vshader_program_get_opcode(IWineD3DVertexShaderImpl *This, const DWORD code) {
     DWORD i = 0;
-    const SHADER_OPCODE *shader_ins = This->shader_ins;
+    const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
 
     /** TODO: use dichotomic search or hash table */
     while (NULL != shader_ins[i].name) {
@@ -1694,9 +1694,9 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
   if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
       /*  Create the hw shader */
       /* TODO: change to resource.glObjectHandel or something like that */
-      GL_EXTCALL(glGenProgramsARB(1, &This->prgId));
-      TRACE("Creating a hw vertex shader, prg=%d\n", This->prgId);
-      GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->prgId));
+      GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
+      TRACE("Creating a hw vertex shader, prg=%d\n", This->baseShader.prgId);
+      GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->baseShader.prgId));
 
       /* Create the program and check for errors */
       GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(pgmStr)/*pgmLength*/, pgmStr));
@@ -1705,7 +1705,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
           glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
           FIXME("HW VertexShader Error at position %d: %s\n",
                 errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-          This->prgId = -1;
+          This->baseShader.prgId = -1;
       }
   }
 #if 1 /* if were using the data buffer of device then we don't need to free it */
@@ -1733,7 +1733,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
     WINED3DSHADERVECTOR d;
     WINED3DSHADERVECTOR s[3];
     /** parser datas */
-    const DWORD* pToken = This->function;
+    const DWORD* pToken = This->baseShader.function;
     const SHADER_OPCODE* curOpcode = NULL;
     /** functions parameters */
     WINED3DSHADERVECTOR* p[4];
@@ -1791,9 +1791,9 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
             /* TODO: Think of a name for 0x80000000 and replace its use with a constant */
             while (*pToken & 0x80000000) {
                 if (i == 0) {
-                    FIXME("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - This->function, *(pToken - 1));
+                    FIXME("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - This->baseShader.function, *(pToken - 1));
                 }
-                FIXME("unrecognized opcode param: pos=%d token=%08lX what=", pToken - This->function, *pToken);
+                FIXME("unrecognized opcode param: pos=%d token=%08lX what=", pToken - This->baseShader.function, *pToken);
                 vshader_program_dump_param(*pToken, i);
                 TRACE("\n");
                 ++i;
@@ -2088,22 +2088,22 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, 
     FIXME("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
 
     if (NULL == pData) {
-        *pSizeOfData = This->functionLength;
+        *pSizeOfData = This->baseShader.functionLength;
         return D3D_OK;
     }
-    if (*pSizeOfData < This->functionLength) {
-        *pSizeOfData = This->functionLength;
+    if (*pSizeOfData < This->baseShader.functionLength) {
+        *pSizeOfData = This->baseShader.functionLength;
         return D3DERR_MOREDATA;
     }
-    if (NULL == This->function) { /* no function defined */
+    if (NULL == This->baseShader.function) { /* no function defined */
         TRACE("(%p) : GetFunction no User Function defined using NULL to %p\n", This, pData);
         (*(DWORD **) pData) = NULL;
     } else {
-        if(This->functionLength == 0){
+        if(This->baseShader.functionLength == 0){
 
         }
         TRACE("(%p) : GetFunction copying to %p\n", This, pData);
-        memcpy(pData, This->function, This->functionLength);
+        memcpy(pData, This->baseShader.function, This->baseShader.functionLength);
     }
     return D3D_OK;
 }
@@ -2187,9 +2187,9 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
                 TRACE("\n");
             }
         }
-        This->functionLength = (len + 1) * sizeof(DWORD);
+        This->baseShader.functionLength = (len + 1) * sizeof(DWORD);
     } else {
-        This->functionLength = 1; /* no Function defined use fixed function vertex processing */
+        This->baseShader.functionLength = 1; /* no Function defined use fixed function vertex processing */
     }
 
     /* Generate HW shader in needed */
@@ -2201,10 +2201,10 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
 
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {
-        This->function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->functionLength);
-        memcpy((void *)This->function, pFunction, This->functionLength);
+        This->baseShader.function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->baseShader.functionLength);
+        memcpy((void *)This->baseShader.function, pFunction, This->baseShader.functionLength);
     } else {
-        This->function = NULL;
+        This->baseShader.function = NULL;
     }
     return D3D_OK;
 }

@@ -1797,13 +1797,13 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
                 TRACE("Using vertex shader\n");
 
                 /* Bind the vertex program */
-                GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->prgId));
+                GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId));
                 checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
 
                 /* Enable OpenGL vertex programs */
                 glEnable(GL_VERTEX_PROGRAM_ARB);
                 checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-                TRACE_(d3d_shader)("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->prgId);
+                TRACE_(d3d_shader)("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId);
 
                 /* Vertex Shader 8 constants */
                 vertexDeclaration = (IWineD3DVertexDeclarationImpl *)((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration;
@@ -1834,13 +1834,13 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
                 TRACE("Using pixel shader\n");
 
                 /* Bind the fragment program */
-                GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->prgId));
+                GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId));
                 checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
 
                 /* Enable OpenGL fragment programs */
                 glEnable(GL_FRAGMENT_PROGRAM_ARB);
                 checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-                TRACE_(d3d_shader)("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->prgId);
+                TRACE_(d3d_shader)("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId);
 
                 /* Update the constants */
                 for (i = 0; i < WINED3D_PSHADER_MAX_CONSTANTS; ++i) {
@@ -2062,7 +2062,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     int                           useHW = FALSE;
 
     if (This->stateBlock->vertexShader != NULL && wined3d_settings.vs_mode != VS_NONE 
-            &&((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->function != NULL 
+            &&((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.function != NULL
             && GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
         useVertexShaderFunction = TRUE;
     } else {
@@ -2071,7 +2071,7 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     if (wined3d_settings.ps_mode != PS_NONE && GL_SUPPORT(ARB_FRAGMENT_PROGRAM)
             && This->stateBlock->pixelShader
-            && ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->function) {
+            && ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.function) {
         usePixelShaderFunction = TRUE;
     }
 

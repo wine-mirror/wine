@@ -1170,6 +1170,27 @@ typedef struct SHADER_OPCODE {
 } SHADER_OPCODE;
 
 /*****************************************************************************
+ * IDirect3DBaseShader implementation structure
+ */
+typedef struct IWineD3DBaseShaderClass
+{
+    DWORD                           version;
+    CONST SHADER_OPCODE             *shader_ins;
+    CONST DWORD                     *function;
+    UINT                            functionLength;
+    GLuint                          prgId;
+} IWineD3DBaseShaderClass;
+
+typedef struct IWineD3DBaseShaderImpl {
+    /* IUnknown */
+    const IWineD3DBaseShaderVtbl    *lpVtbl;
+    LONG                            ref;
+
+    /* IWineD3DBaseShader */
+    IWineD3DBaseShaderClass         baseShader;
+} IWineD3DBaseShaderImpl;
+
+/*****************************************************************************
  * IDirect3DVertexShader implementation structure
  */
 typedef struct IWineD3DVertexShaderImpl {
@@ -1177,16 +1198,14 @@ typedef struct IWineD3DVertexShaderImpl {
     const IWineD3DVertexShaderVtbl *lpVtbl;
     LONG                        ref;     /* Note: Ref counting not required */
 
+    /* IWineD3DBaseShader */
+    IWineD3DBaseShaderClass     baseShader;
+
+    /* IWineD3DVertexShaderImpl */
     IUnknown                    *parent;
     IWineD3DDeviceImpl          *wineD3DDevice;
 
-    /* IWineD3DVertexShaderImpl */
-    CONST SHADER_OPCODE         *shader_ins;
-    CONST DWORD                 *function;
-    UINT                         functionLength;
-
     DWORD usage;
-    DWORD version;
 
     /* vertex declaration array mapping */
     BOOL                        namedArrays;    /* don't map use named functions */
@@ -1197,7 +1216,6 @@ typedef struct IWineD3DVertexShaderImpl {
     /* FIXME: This needs to be populated with some flags of VS_CONSTANT_NOT_USED, VS_CONSTANT_CONSTANT, VS_CONSTANT_INTEGER, VS_CONSTANT_BOOLEAN, VS_CONSTANT_FLOAT, a half byte bitmap will be the best option, but I'll keep it as chards for siplicity */
     /* run time datas...  */
     VSHADERDATA                *data;
-    GLuint                      prgId;
     IWineD3DVertexDeclaration  *vertexDeclaration;
 #if 0 /* needs reworking */
     /* run time datas */
@@ -1216,19 +1234,17 @@ typedef struct IWineD3DPixelShaderImpl {
     const IWineD3DPixelShaderVtbl *lpVtbl;
     LONG                        ref;     /* Note: Ref counting not required */
 
+    /* IWineD3DBaseShader */
+    IWineD3DBaseShaderClass     baseShader;
+
+    /* IWineD3DPixelShaderImpl */
     IUnknown                   *parent;
     IWineD3DDeviceImpl         *wineD3DDevice;
 
-    /* IWineD3DPixelShaderImpl */
-    const SHADER_OPCODE         *shader_ins;
-    CONST DWORD                *function;
-    UINT                        functionLength;
-    DWORD                       version;
     CHAR                        constants[WINED3D_PSHADER_MAX_CONSTANTS];
 
     /* run time data */
     PSHADERDATA                *data;
-    GLuint                      prgId;
 
 #if 0 /* needs reworking */
     PSHADERINPUTDATA input;

@@ -111,22 +111,22 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* impl, VO
   FIXME("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
 
   if (NULL == pData) {
-    *pSizeOfData = This->functionLength;
+    *pSizeOfData = This->baseShader.functionLength;
     return D3D_OK;
   }
-  if (*pSizeOfData < This->functionLength) {
-    *pSizeOfData = This->functionLength;
+  if (*pSizeOfData < This->baseShader.functionLength) {
+    *pSizeOfData = This->baseShader.functionLength;
     return D3DERR_MOREDATA;
   }
-  if (NULL == This->function) { /* no function defined */
+  if (NULL == This->baseShader.function) { /* no function defined */
     TRACE("(%p) : GetFunction no User Function defined using NULL to %p\n", This, pData);
     (*(DWORD **) pData) = NULL;
   } else {
-    if (This->functionLength == 0) {
+    if (This->baseShader.functionLength == 0) {
 
     }
     TRACE("(%p) : GetFunction copying to %p\n", This, pData);
-    memcpy(pData, This->function, This->functionLength);
+    memcpy(pData, This->baseShader.function, This->baseShader.functionLength);
   }
   return D3D_OK;
 }
@@ -745,9 +745,9 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 
 inline static const SHADER_OPCODE* pshader_program_get_opcode(IWineD3DPixelShaderImpl *This, const DWORD code) {
     DWORD i = 0;
-    DWORD version = This->version;
+    DWORD version = This->baseShader.version;
     DWORD hex_version = D3DPS_VERSION(version/10, version%10);
-    const SHADER_OPCODE *shader_ins = This->shader_ins;
+    const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
 
     /** TODO: use dichotomic search */
     while (NULL != shader_ins[i].name) {
@@ -1496,12 +1496,12 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
         }
 
         /* TODO: change to resource.glObjectHandel or something like that */
-        GL_EXTCALL(glGenProgramsARB(1, &This->prgId));
+        GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
 
-        TRACE("Creating a hw pixel shader, prg=%d\n", This->prgId);
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, This->prgId));
+        TRACE("Creating a hw pixel shader, prg=%d\n", This->baseShader.prgId);
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, This->baseShader.prgId));
 
-        TRACE("Created hw pixel shader, prg=%d\n", This->prgId);
+        TRACE("Created hw pixel shader, prg=%d\n", This->baseShader.prgId);
         /* Create the program and check for errors */
         GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(pgmStr), pgmStr));
         if (glGetError() == GL_INVALID_OPERATION) {
@@ -1509,7 +1509,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
             glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
             FIXME("HW PixelShader Error at position %d: %s\n",
                   errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-            This->prgId = -1;
+            This->baseShader.prgId = -1;
         }
     }
 #if 1 /* if were using the data buffer of device then we don't need to free it */
@@ -1719,7 +1719,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
     if (NULL != pToken) {
         while (D3DPS_END() != *pToken) {
             if (pshader_is_version_token(*pToken)) { /** version */
-                This->version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
+                This->baseShader.version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
                 TRACE("ps_%lu_%lu\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
                 ++pToken;
                 ++len;
@@ -1733,7 +1733,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
                 len += comment_len + 1;
                 continue;
             }
-            if (!This->version) {
+            if (!This->baseShader.version) {
                 WARN("(%p) : pixel shader doesn't have a valid version identifier\n", This);
             }
             curOpcode = pshader_program_get_opcode(This, *pToken);
@@ -1793,9 +1793,9 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
                 TRACE("\n");
             }
         }
-        This->functionLength = (len + 1) * sizeof(DWORD);
+        This->baseShader.functionLength = (len + 1) * sizeof(DWORD);
     } else {
-        This->functionLength = 1; /* no Function defined use fixed function vertex processing */
+        This->baseShader.functionLength = 1; /* no Function defined use fixed function vertex processing */
     }
 
     /* Generate HW shader in needed */
@@ -1809,10 +1809,10 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
     TRACE("(%p) : Copying the function\n", This);
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {
-        This->function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->functionLength);
-        memcpy((void *)This->function, pFunction, This->functionLength);
+        This->baseShader.function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->baseShader.functionLength);
+        memcpy((void *)This->baseShader.function, pFunction, This->baseShader.functionLength);
     } else {
-        This->function = NULL;
+        This->baseShader.function = NULL;
     }
 
     /* TODO: Some proper return values for failures */

@@ -1620,7 +1620,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, CONS
     IWineD3DVertexShaderImpl *object;  /* NOTE: impl usage is ok, this is a create */
     HRESULT hr = D3D_OK;
     D3DCREATEOBJECTINSTANCE(object, VertexShader)
-    object->shader_ins = IWineD3DVertexShaderImpl_shader_ins;
+    object->baseShader.shader_ins = IWineD3DVertexShaderImpl_shader_ins;
 
     TRACE("(%p) : Created Vertex shader %p\n", This, *ppVertexShader);
 
@@ -1665,7 +1665,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface, CONST
     HRESULT hr = D3D_OK;
 
     D3DCREATEOBJECTINSTANCE(object, PixelShader)
-    object->shader_ins = IWineD3DPixelShaderImpl_shader_ins;
+    object->baseShader.shader_ins = IWineD3DPixelShaderImpl_shader_ins;
     hr = IWineD3DPixelShader_SetFunction(*ppPixelShader, pFunction);
     if (D3D_OK == hr) {
         TRACE("(%p) : Created Pixel shader %p\n", This, *ppPixelShader);
