@@ -231,13 +231,7 @@ print NEWMAKE "# Placeholders for 16-bit libraries\n\n";
 foreach my $mod (sort keys %directories)
 {
     next unless defined $altnames{$mod};
-    my $count = 0;
-    foreach my $i (sort @{$altnames{$mod}})
-    {
-        if ($count++ == 3) { printf NEWMAKE "\\\n  "; $count = 1; }
-        printf NEWMAKE "%s16 ", $i;
-    }
-    printf NEWMAKE ": %s/%s.so\n", $directories{$mod}, $mod;
+    printf NEWMAKE "%s:\n", join(" ", map { $_ . "16"; } sort @{$altnames{$mod}});
     printf NEWMAKE "\techo \"%s\" >\$\@\n\n", $mod;
 }
 
@@ -309,6 +303,7 @@ print NEWMAKE "# Map library name to the corresponding directory\n\n";
 
 foreach my $mod (sort keys %directories)
 {
+    next unless (needs_symlink($mod) || $mod eq "ddraw.dll"); # FIXME: hack because of x11drv
     printf NEWMAKE "%s/%s.so: %s\n", $directories{$mod}, $mod, $directories{$mod};
 }
 foreach my $mod (sort keys %staticlib_dirs)
