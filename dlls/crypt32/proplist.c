@@ -132,7 +132,6 @@ BOOL ContextPropertyList_SetProperty(PCONTEXT_PROPERTY_LIST list, DWORD id,
             {
                 prop->propID = id;
                 prop->cbData = cbData;
-                list_init(&prop->entry);
                 prop->pbData = data;
                 list_add_tail(&list->properties, &prop->entry);
                 ret = TRUE;
@@ -158,6 +157,7 @@ void ContextPropertyList_RemoveProperty(PCONTEXT_PROPERTY_LIST list, DWORD id)
             list_remove(&prop->entry);
             CryptMemFree(prop->pbData);
             CryptMemFree(prop);
+            break;
         }
     }
     LeaveCriticalSection(&list->cs);
