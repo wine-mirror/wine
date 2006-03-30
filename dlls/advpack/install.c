@@ -27,6 +27,7 @@
 #include "winreg.h"
 #include "winver.h"
 #include "winternl.h"
+#include "winnls.h"
 #include "setupapi.h"
 #include "advpub.h"
 #include "wine/debug.h"
@@ -86,6 +87,51 @@ HRESULT WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
 
 /***********************************************************************
  *             ExecuteCabA    (ADVPACK.@)
+ *
+ * See ExecuteCabW.
+ */
+HRESULT WINAPI ExecuteCabA(HWND hwnd, CABINFOA* pCab, LPVOID pReserved)
+{
+    UNICODE_STRING cab, inf, section;
+    CABINFOW cabinfo;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p)\n", hwnd, pCab, pReserved);
+
+    if (!pCab)
+        return E_INVALIDARG;
+
+    if (pCab->pszCab)
+    {
+        RtlCreateUnicodeStringFromAsciiz(&cab, pCab->pszCab);
+        cabinfo.pszCab = cab.Buffer;
+    }
+    else
+        cabinfo.pszCab = NULL;
+
+    RtlCreateUnicodeStringFromAsciiz(&inf, pCab->pszInf);
+    RtlCreateUnicodeStringFromAsciiz(&section, pCab->pszSection);
+    
+    MultiByteToWideChar(CP_ACP, 0, pCab->szSrcPath, -1, cabinfo.szSrcPath,
+                        sizeof(cabinfo.szSrcPath) / sizeof(WCHAR));
+
+    cabinfo.pszInf = inf.Buffer;
+    cabinfo.pszSection = section.Buffer;
+    cabinfo.dwFlags = pCab->dwFlags;
+
+    hr = ExecuteCabW(hwnd, &cabinfo, pReserved);
+
+    if (pCab->pszCab)
+        RtlFreeUnicodeString(&cab);
+
+    RtlFreeUnicodeString(&inf);
+    RtlFreeUnicodeString(&section);
+
+    return hr;
+}
+
+/***********************************************************************
+ *             ExecuteCabW    (ADVPACK.@)
  * 
  * Installs the INF file extracted from a specified cabinet file.
  * 
@@ -101,7 +147,7 @@ HRESULT WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
  * BUGS
  *   Unimplemented
  */
-HRESULT WINAPI ExecuteCabA( HWND hwnd, CABINFOA* pCab, LPVOID pReserved )
+HRESULT WINAPI ExecuteCabW(HWND hwnd, CABINFOW* pCab, LPVOID pReserved)
 {
     FIXME("(%p %p %p): stub\n", hwnd, pCab, pReserved);
     return E_FAIL;

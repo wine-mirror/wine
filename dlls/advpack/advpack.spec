@@ -14,7 +14,7 @@
 @ stdcall -private DllMain(long long ptr)
 @ stdcall DoInfInstall(ptr)
 @ stdcall ExecuteCabA(ptr ptr ptr)
-# stdcall ExecuteCabW(ptr ptr ptr)
+@ stdcall ExecuteCabW(ptr ptr ptr)
 @ stdcall ExecuteCab(ptr ptr ptr) ExecuteCabA
 @ stdcall ExtractFilesA(str str long ptr ptr long)
 # stdcall ExtractFilesW(wstr wstr long ptr ptr long)
