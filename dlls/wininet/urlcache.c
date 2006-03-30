@@ -943,8 +943,8 @@ static BOOL URLCache_CopyEntry(
         lenUrl = MultiByteToWideChar(CP_ACP, 0, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, -1, NULL, 0);
     else
         lenUrl = strlen((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
-    dwRequiredSize += lenUrl + 1;
-    
+    dwRequiredSize += (lenUrl + 1) * (bUnicode ? sizeof(WCHAR) : sizeof(CHAR));
+
     /* FIXME: is source url optional? */
     if (*lpdwBufferSize >= dwRequiredSize)
     {
@@ -970,7 +970,7 @@ static BOOL URLCache_CopyEntry(
         {
             lpCacheEntryInfo->lpszLocalFileName = lpszLocalFileName;
         }
-        dwRequiredSize += nLocalFilePathSize;
+        dwRequiredSize += nLocalFilePathSize * (bUnicode ? sizeof(WCHAR) : sizeof(CHAR)) ;
 
         if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
             ZeroMemory((LPBYTE)lpCacheEntryInfo + dwRequiredSize, 4 - (dwRequiredSize % 4));
