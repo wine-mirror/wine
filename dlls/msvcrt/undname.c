@@ -1233,8 +1233,7 @@ char* __unDNameEx(char* buffer, const char* mangled, int buflen,
     result = symbol_demangle(&sym) ? sym.result : mangled;
     if (buffer && buflen)
     {
-        memcpy(buffer, result, buflen - 1);
-        buffer[buflen - 1] = '\0';
+        lstrcpynA( buffer, result, buflen);
     }
     else
     {
