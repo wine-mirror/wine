@@ -1163,12 +1163,6 @@ lend:
     return handle;
 }
 
-typedef struct std_hdr_data
-{
-	const WCHAR* hdrStr;
-	INT hdrIndex;
-} std_hdr_data;
-
 static const WCHAR szAccept[] = { 'A','c','c','e','p','t',0 };
 static const WCHAR szAccept_Charset[] = { 'A','c','c','e','p','t','-','C','h','a','r','s','e','t', 0 };
 static const WCHAR szAccept_Encoding[] = { 'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',0 };
@@ -1223,64 +1217,81 @@ static const WCHAR szVia[] = { 'V','i','a',0 };
 static const WCHAR szWarning[] = { 'W','a','r','n','i','n','g',0 };
 static const WCHAR szWWW_Authenticate[] = { 'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
 
-static const std_hdr_data SORTED_STANDARD_HEADERS[] = {
-    {szAccept,			HTTP_QUERY_ACCEPT,},
-    {szAccept_Charset,		HTTP_QUERY_ACCEPT_CHARSET,},
-    {szAccept_Encoding,		HTTP_QUERY_ACCEPT_ENCODING,},
-    {szAccept_Language,		HTTP_QUERY_ACCEPT_LANGUAGE,},
-    {szAccept_Ranges,		HTTP_QUERY_ACCEPT_RANGES,},
-    {szAge,			HTTP_QUERY_AGE,},
-    {szAllow,			HTTP_QUERY_ALLOW,},
-    {szAuthorization,		HTTP_QUERY_AUTHORIZATION,},
-    {szCache_Control,		HTTP_QUERY_CACHE_CONTROL,},
-    {szConnection,		HTTP_QUERY_CONNECTION,},
-    {szContent_Base,		HTTP_QUERY_CONTENT_BASE,},
-    {szContent_Encoding,	HTTP_QUERY_CONTENT_ENCODING,},
-    {szContent_ID,		HTTP_QUERY_CONTENT_ID,},
-    {szContent_Language,	HTTP_QUERY_CONTENT_LANGUAGE,},
-    {szContent_Length,		HTTP_QUERY_CONTENT_LENGTH,},
-    {szContent_Location,	HTTP_QUERY_CONTENT_LOCATION,},
-    {szContent_MD5,		HTTP_QUERY_CONTENT_MD5,},
-    {szContent_Range,		HTTP_QUERY_CONTENT_RANGE,},
-    {szContent_Transfer_Encoding,HTTP_QUERY_CONTENT_TRANSFER_ENCODING,},
-    {szContent_Type,		HTTP_QUERY_CONTENT_TYPE,},
-    {szCookie,			HTTP_QUERY_COOKIE,},
-    {szDate,			HTTP_QUERY_DATE,},
-    {szETag,			HTTP_QUERY_ETAG,},
-    {szExpect,			HTTP_QUERY_EXPECT,},
-    {szExpires,			HTTP_QUERY_EXPIRES,},
-    {szFrom,			HTTP_QUERY_DERIVED_FROM,},
-    {szHost,			HTTP_QUERY_HOST,},
-    {szIf_Match,		HTTP_QUERY_IF_MATCH,},
-    {szIf_Modified_Since,	HTTP_QUERY_IF_MODIFIED_SINCE,},
-    {szIf_None_Match,		HTTP_QUERY_IF_NONE_MATCH,},
-    {szIf_Range,		HTTP_QUERY_IF_RANGE,},
-    {szIf_Unmodified_Since,	HTTP_QUERY_IF_UNMODIFIED_SINCE,},
-    {szLast_Modified,		HTTP_QUERY_LAST_MODIFIED,},
-    {szLocation,		HTTP_QUERY_LOCATION,},
-    {szMax_Forwards,		HTTP_QUERY_MAX_FORWARDS,},
-    {szMime_Version,		HTTP_QUERY_MIME_VERSION,},
-    {szPragma,			HTTP_QUERY_PRAGMA,},
-    {szProxy_Authenticate,	HTTP_QUERY_PROXY_AUTHENTICATE,},
-    {szProxy_Authorization,	HTTP_QUERY_PROXY_AUTHORIZATION,},
-    {szProxy_Connection,	HTTP_QUERY_PROXY_CONNECTION,},
-    {szPublic,			HTTP_QUERY_PUBLIC,},
-    {szRange,			HTTP_QUERY_RANGE,},
-    {szReferer,			HTTP_QUERY_REFERER,},
-    {szRetry_After,		HTTP_QUERY_RETRY_AFTER,},
-    {szServer,			HTTP_QUERY_SERVER,},
-    {szSet_Cookie,		HTTP_QUERY_SET_COOKIE,},
-    {szStatus,			HTTP_QUERY_STATUS_CODE,},
-    {szTransfer_Encoding,	HTTP_QUERY_TRANSFER_ENCODING,},
-    {szUnless_Modified_Since,	HTTP_QUERY_UNLESS_MODIFIED_SINCE,},
-    {szUpgrade,			HTTP_QUERY_UPGRADE,},
-    {szURI,			HTTP_QUERY_URI,},
-    {szUser_Agent,		HTTP_QUERY_USER_AGENT,},
-    {szVary,			HTTP_QUERY_VARY,},
-    {szVia,			HTTP_QUERY_VIA,},
-    {szWarning,			HTTP_QUERY_WARNING,},
-    {szWWW_Authenticate,	HTTP_QUERY_WWW_AUTHENTICATE,},
+static const LPCWSTR header_lookup[] = {
+    szMime_Version,		/* HTTP_QUERY_MIME_VERSION = 0 */
+    szContent_Type,		/* HTTP_QUERY_CONTENT_TYPE = 1 */
+    szContent_Transfer_Encoding,/* HTTP_QUERY_CONTENT_TRANSFER_ENCODING = 2 */
+    szContent_ID,		/* HTTP_QUERY_CONTENT_ID = 3 */
+    NULL,			/* HTTP_QUERY_CONTENT_DESCRIPTION = 4 */
+    szContent_Length,		/* HTTP_QUERY_CONTENT_LENGTH =  5 */
+    szContent_Language,		/* HTTP_QUERY_CONTENT_LANGUAGE =  6 */
+    szAllow,			/* HTTP_QUERY_ALLOW = 7 */
+    szPublic,			/* HTTP_QUERY_PUBLIC = 8 */
+    szDate,			/* HTTP_QUERY_DATE = 9 */
+    szExpires,			/* HTTP_QUERY_EXPIRES = 10 */
+    szLast_Modified,		/* HTTP_QUERY_LAST_MODIFIED = 11 */
+    NULL,			/* HTTP_QUERY_MESSAGE_ID = 12 */
+    szURI,			/* HTTP_QUERY_URI = 13 */
+    szFrom,			/* HTTP_QUERY_DERIVED_FROM = 14 */
+    NULL,			/* HTTP_QUERY_COST = 15 */
+    NULL,			/* HTTP_QUERY_LINK = 16 */
+    szPragma,			/* HTTP_QUERY_PRAGMA = 17 */
+    NULL,			/* HTTP_QUERY_VERSION = 18 */
+    szStatus,			/* HTTP_QUERY_STATUS_CODE = 19 */
+    NULL,			/* HTTP_QUERY_STATUS_TEXT = 20 */
+    NULL,			/* HTTP_QUERY_RAW_HEADERS = 21 */
+    NULL,			/* HTTP_QUERY_RAW_HEADERS_CRLF = 22 */
+    szConnection,		/* HTTP_QUERY_CONNECTION = 23 */
+    szAccept,			/* HTTP_QUERY_ACCEPT = 24 */
+    szAccept_Charset,		/* HTTP_QUERY_ACCEPT_CHARSET = 25 */
+    szAccept_Encoding,		/* HTTP_QUERY_ACCEPT_ENCODING = 26 */
+    szAccept_Language,		/* HTTP_QUERY_ACCEPT_LANGUAGE = 27 */
+    szAuthorization,		/* HTTP_QUERY_AUTHORIZATION = 28 */
+    szContent_Encoding,		/* HTTP_QUERY_CONTENT_ENCODING = 29 */
+    NULL,			/* HTTP_QUERY_FORWARDED = 30 */
+    NULL,			/* HTTP_QUERY_FROM = 31 */
+    szIf_Modified_Since,	/* HTTP_QUERY_IF_MODIFIED_SINCE = 32 */
+    szLocation,			/* HTTP_QUERY_LOCATION = 33 */
+    NULL,			/* HTTP_QUERY_ORIG_URI = 34 */
+    szReferer,			/* HTTP_QUERY_REFERER = 35 */
+    szRetry_After,		/* HTTP_QUERY_RETRY_AFTER = 36 */
+    szServer,			/* HTTP_QUERY_SERVER = 37 */
+    NULL,			/* HTTP_TITLE = 38 */
+    szUser_Agent,		/* HTTP_QUERY_USER_AGENT = 39 */
+    szWWW_Authenticate,		/* HTTP_QUERY_WWW_AUTHENTICATE = 40 */
+    szProxy_Authenticate,	/* HTTP_QUERY_PROXY_AUTHENTICATE = 41 */
+    szAccept_Ranges,		/* HTTP_QUERY_ACCEPT_RANGES = 42 */
+    szSet_Cookie,		/* HTTP_QUERY_SET_COOKIE = 43 */
+    szCookie,			/* HTTP_QUERY_COOKIE = 44 */
+    NULL,			/* HTTP_QUERY_REQUEST_METHOD = 45 */
+    NULL,			/* HTTP_QUERY_REFRESH = 46 */
+    NULL,			/* HTTP_QUERY_CONTENT_DISPOSITION = 47 */
+    szAge,			/* HTTP_QUERY_AGE = 48 */
+    szCache_Control,		/* HTTP_QUERY_CACHE_CONTROL = 49 */
+    szContent_Base,		/* HTTP_QUERY_CONTENT_BASE = 50 */
+    szContent_Location,		/* HTTP_QUERY_CONTENT_LOCATION = 51 */
+    szContent_MD5,		/* HTTP_QUERY_CONTENT_MD5 = 52 */
+    szContent_Range,		/* HTTP_QUERY_CONTENT_RANGE = 53 */
+    szETag,			/* HTTP_QUERY_ETAG = 54 */
+    szHost,			/* HTTP_QUERY_HOST = 55 */
+    szIf_Match,			/* HTTP_QUERY_IF_MATCH = 56 */
+    szIf_None_Match,		/* HTTP_QUERY_IF_NONE_MATCH = 57 */
+    szIf_Range,			/* HTTP_QUERY_IF_RANGE = 58 */
+    szIf_Unmodified_Since,	/* HTTP_QUERY_IF_UNMODIFIED_SINCE = 59 */
+    szMax_Forwards,		/* HTTP_QUERY_MAX_FORWARDS = 60 */
+    szProxy_Authorization,	/* HTTP_QUERY_PROXY_AUTHORIZATION = 61 */
+    szRange,			/* HTTP_QUERY_RANGE = 62 */
+    szTransfer_Encoding,	/* HTTP_QUERY_TRANSFER_ENCODING = 63 */
+    szUpgrade,			/* HTTP_QUERY_UPGRADE = 64 */
+    szVary,			/* HTTP_QUERY_VARY = 65 */
+    szVia,			/* HTTP_QUERY_VIA = 66 */
+    szWarning,			/* HTTP_QUERY_WARNING = 67 */
+    szExpect,			/* HTTP_QUERY_EXPECT = 68 */
+    szProxy_Connection,		/* HTTP_QUERY_PROXY_CONNECTION = 69 */
+    szUnless_Modified_Since,	/* HTTP_QUERY_UNLESS_MODIFIED_SINCE = 70 */
 };
+
+#define LAST_TABLE_HEADER (sizeof(header_lookup)/sizeof(header_lookup[0]))
 
 /***********************************************************************
  *           HTTP_HttpQueryInfoW (internal)
@@ -1384,20 +1395,11 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
             return TRUE;
         }
     default:
-        if (level >= 0 && level <= HTTP_QUERY_MAX )
-        {
-            int i;
-            for (i = 0; i < sizeof(SORTED_STANDARD_HEADERS)/sizeof(std_hdr_data) ; i++)
-            {
-                if (SORTED_STANDARD_HEADERS[i].hdrIndex == level)
-                {
-                    index = HTTP_GetCustomHeaderIndex(lpwhr,
-                            (LPWSTR)SORTED_STANDARD_HEADERS[i].hdrStr,
-                            requested_index,request_only);
-                    break;
-                }
-            }
-        }
+        assert (LAST_TABLE_HEADER == (HTTP_QUERY_UNLESS_MODIFIED_SINCE + 1));
+
+        if (level >= 0 && level < LAST_TABLE_HEADER && header_lookup[level])
+            index = HTTP_GetCustomHeaderIndex(lpwhr, header_lookup[level],
+                                              requested_index,request_only);
     }
 
     if (index >= 0)
