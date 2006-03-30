@@ -275,8 +275,12 @@ static void send_parent_notify( HWND hwnd, UINT msg )
 {
     if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD &&
         !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY))
-        SendMessageW( GetParent(hwnd), WM_PARENTNOTIFY,
-                      MAKEWPARAM( msg, GetWindowLongPtrW( hwnd, GWLP_ID )), (LPARAM)hwnd );
+    {
+        HWND parent = GetParent(hwnd);
+        if (parent && parent != GetDesktopWindow())
+            SendMessageW( parent, WM_PARENTNOTIFY,
+                          MAKEWPARAM( msg, GetWindowLongPtrW( hwnd, GWLP_ID )), (LPARAM)hwnd );
+    }
 }
 
 

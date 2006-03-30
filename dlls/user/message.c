@@ -1563,6 +1563,7 @@ static void send_parent_notify( HWND hwnd, WORD event, WORD idChild, POINT pt )
         if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)) break;
         if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY) break;
         if (!(parent = GetParent(hwnd))) break;
+        if (parent == GetDesktopWindow()) break;
         MapWindowPoints( hwnd, parent, &pt, 1 );
         hwnd = parent;
         SendMessageW( hwnd, WM_PARENTNOTIFY,
