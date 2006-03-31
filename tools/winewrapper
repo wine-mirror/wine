@@ -81,15 +81,8 @@ else
   export LD_LIBRARY_PATH
 fi
 
-if [ -n "$WINEDLLPATH" ]
-then
-  WINEDLLPATH="$topdir/dlls:$topdir/programs:$WINEDLLPATH"
-else
-  WINEDLLPATH="$topdir/dlls:$topdir/programs"
-fi
-WINESERVER="$topdir/server/wineserver"
 WINELOADER="$topdir/loader/wine"
-export WINEDLLPATH WINESERVER WINELOADER
+export WINELOADER
 
 # any local settings ?
 if [ -f "$topdir/.winewrapper" ]
