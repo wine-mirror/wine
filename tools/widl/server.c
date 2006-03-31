@@ -108,8 +108,11 @@ static void declare_args(const func_t *func)
 
         if (!in_attr && !is_attr(var->attrs, ATTR_STRING))
         {
+            int indirection;
             print_server("");
             write_type(server, var->type, NULL, var->tname);
+            for (indirection = 0; indirection < var->ptr_level - 1; indirection++)
+                fprintf(server, "*");
             fprintf(server, " _W%u;\n", i++);
         }
 
