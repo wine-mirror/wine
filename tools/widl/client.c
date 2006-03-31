@@ -272,15 +272,7 @@ static void write_function_stubs(type_t *iface)
 
         /* unmarshal return value */
         if (!is_void(def->type, NULL))
-        {
-            fprintf(client, "\n");
-            print_client("_RetVal = *(");
-            write_type(client, def->type, def, def->tname);
-            fprintf(client, " *)_StubMsg.Buffer;\n");
-            print_client("_StubMsg.Buffer += sizeof(");
-            write_type(client, def->type, def, def->tname);
-            fprintf(client, ");\n");
-        }
+            print_phase_basetype(client, indent, PHASE_UNMARSHAL, PASS_RETURN, def, "_RetVal");
 
         /* update proc_offset */
         if (func->args)
