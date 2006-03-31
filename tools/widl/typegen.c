@@ -313,7 +313,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
         print_file(file, 2, "0x%x, /* Corr desc: constant, val = %ld */\n",
                    RPC_FC_CONSTANT_CONFORMANCE, expr->cval);
         print_file(file, 2, "0x%x,\n", expr->cval & ~USHRT_MAX);
-        print_file(file, 2, "NdrShort(0x%x),\n", expr->cval & USHRT_MAX);
+        print_file(file, 2, "NdrFcShort(0x%x),\n", expr->cval & USHRT_MAX);
 
         return 4;
     }
@@ -450,7 +450,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
                 correlation_type == RPC_FC_TOP_LEVEL_CONFORMANCE ? "parameter, " : "",
                 param_type_string);
         print_file(file, 2, "0x%x, /* %s */\n", operator_type, operator_string);
-        print_file(file, 2, "NdrShort(0x%x), /* %soffset = %d */\n",
+        print_file(file, 2, "NdrFcShort(0x%x), /* %soffset = %d */\n",
                    offset,
                    correlation_type == RPC_FC_TOP_LEVEL_CONFORMANCE ? "x86 stack size / " : "",
                    offset);
@@ -499,7 +499,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
                    correlation_type,
                    correlation_type == RPC_FC_TOP_LEVEL_CONFORMANCE ? "parameter" : "");
         print_file(file, 2, "0x%x, /* %s */\n", RPC_FC_CALLBACK, "FC_CALLBACK");
-        print_file(file, 2, "NdrShort(0x%x), /* %u */\n", callback_offset, callback_offset);
+        print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", callback_offset, callback_offset);
     }
     return 4;
 }
@@ -1007,7 +1007,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
-        print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
+        print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
 
         if (type->type == RPC_FC_PSTRUCT)
@@ -1057,9 +1057,9 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
-        print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
+        print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
-        print_file(file, 2, "NdrShort(0x%x), /* offset = %d (%u) */\n",
+        print_file(file, 2, "NdrFcShort(0x%x), /* offset = %d (%u) */\n",
                    array_offset - *typestring_offset,
                    array_offset - *typestring_offset,
                    array_offset);
@@ -1108,9 +1108,9 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         /* alignment */
         print_file(file, 2, "0x0,\n");
         /* total size */
-        print_file(file, 2, "NdrShort(0x%x), /* %u */\n", total_size, total_size);
+        print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
-        print_file(file, 2, "NdrShort(0x%x), /* offset = %d (%u) */\n",
+        print_file(file, 2, "NdrFcShort(0x%x), /* offset = %d (%u) */\n",
                    array_offset - *typestring_offset,
                    array_offset - *typestring_offset,
                    array_offset);
@@ -1145,7 +1145,7 @@ static void write_pointer_only_tfs(FILE *file, const attr_t *attrs, size_t offse
     print_file(file, 2, "0x%x, 0x00,    /* %s */\n",
                pointer_type,
                pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
-    print_file(file, 2, "NdrShort(0x%x),    /* %d */\n", offset, offset);
+    print_file(file, 2, "NdrFcShort(0x%x),    /* %d */\n", offset, offset);
     *typeformat_offset += 4;
 }
 
