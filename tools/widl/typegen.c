@@ -1396,20 +1396,41 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
     return get_required_buffer_size_type(var->type, var->ptr_level, var->array, var->name, alignment);
 }
 
-static inline const char *function_from_phase(enum remoting_phase phase)
+static void print_phase_function(FILE *file, int indent, const char *type,
+                                 enum remoting_phase phase,
+                                 const char *varname, unsigned int type_offset)
 {
+    const char *function;
     switch (phase)
     {
     case PHASE_BUFFERSIZE:
-        return "BufferSize";
+        function = "BufferSize";
+        break;
     case PHASE_MARSHAL:
-        return "Marshall";
+        function = "Marshall";
+        break;
     case PHASE_UNMARSHAL:
-        return "Unmarshall";
+        function = "Unmarshall";
+        break;
     case PHASE_FREE:
-        return "Free";
+        function = "Free";
+        break;
+    default:
+        assert(0);
+        return;
     }
-    return NULL;
+
+    print_file(file, indent, "Ndr%s%s(\n", type, function);
+    indent++;
+    print_file(file, indent, "(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
+    print_file(file, indent, "%s%s,\n",
+               (phase == PHASE_UNMARSHAL) ? "(unsigned char **)&" : "(unsigned char *)",
+               varname);
+    print_file(file, indent, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]%s\n",
+               type_offset, (phase == PHASE_UNMARSHAL) ? "," : ");");
+    if (phase == PHASE_UNMARSHAL)
+        print_file(file, indent, "0);\n");
+    indent--;
 }
 
 /* returns whether the MaxCount, Offset or ActualCount members need to be
@@ -1470,9 +1491,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         if (is_string_type(var->attrs, var->ptr_level, var->array))
         {
             if (var->array && var->array->is_const)
-                print_file(file, indent,
-                           "NdrNonConformantString%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                           function_from_phase(phase), var->name, *type_offset);
+                print_phase_function(file, indent, "NonConformantString", phase, var->name, *type_offset);
             else
             {
                 if (size_is && is_size_needed_for_phase(phase))
@@ -1494,16 +1513,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 }
                 else
                 {
-                    print_file(file, indent, "NdrConformantString%s(\n", function_from_phase(phase));
-                    indent++;
-                    print_file(file, indent, "(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
-                    print_file(file, indent, "(unsigned char *)%s,\n", var->name);
-                    print_file(file, indent, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]%s\n",
-                               *type_offset + (has_size ? 4 : 2),
-                               (phase == PHASE_MARSHAL) ? ");" : ",");
-                    if (phase == PHASE_UNMARSHAL)
-                        print_file(file, indent, "(unsigned char)0);\n");
-                    indent--;
+                    print_phase_function(file, indent, "ConformantString", phase, var->name, *type_offset);
                 }
             }
         }
@@ -1554,10 +1564,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 }
             }
 
-            print_file(file, indent,
-                       "Ndr%s%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                       array_type, function_from_phase(phase), var->name,
-                       *type_offset);
+            print_phase_function(file, indent, array_type, phase, var->name, *type_offset);
         }
         else if (var->ptr_level == 0 && is_base_type(type->type))
         {
@@ -1606,7 +1613,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
 
             if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
             {
-                print_file(file, indent, "_StubMsg.Buffer += (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
+                print_file(file, indent, "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
                            alignment - 1, alignment - 1);
 
                 if (phase == PHASE_MARSHAL)
@@ -1658,9 +1665,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 ndrtype = NULL;
             }
 
-            print_file(file, indent,
-                "Ndr%s%s(&_StubMsg, (unsigned char *)%s, &__MIDL_TypeFormatString.Format[%d]);\n",
-                ndrtype, function_from_phase(phase), var->name, *type_offset);
+            print_phase_function(file, indent, ndrtype, phase, var->name, *type_offset);
         }
         else
         {
@@ -1734,15 +1739,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             }
             else
             {
-                print_file(file, indent, "NdrPointer%s(\n", function_from_phase(phase));
-                indent++;
-                print_file(file, indent, "(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
-                print_file(file, indent, "(unsigned char *)%s,\n", var->name);
-                print_file(file, indent, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]%s\n",
-                           *type_offset, (phase == PHASE_MARSHAL) ? ");" : ",");
-                if (phase == PHASE_UNMARSHAL)
-                    print_file(file, indent, "(unsigned char *)0);\n");
-                indent--;
+                print_phase_function(file, indent, "Pointer", phase, var->name, *type_offset);
             }
         }
         fprintf(file, "\n");
