@@ -528,12 +528,12 @@ static void create_dir( const char *name, struct stat *st )
 }
 
 /* create the server directory and chdir to it */
-static void create_server_dir(void)
+static void create_server_dir( const char *dir )
 {
     char *p, *server_dir;
     struct stat st, st2;
 
-    if (!(server_dir = strdup( wine_get_server_dir() ))) fatal_error( "out of memory\n" );
+    if (!(server_dir = strdup( dir ))) fatal_error( "out of memory\n" );
 
     /* first create the base directory if needed */
 
@@ -579,10 +579,13 @@ static int create_server_lock(void)
 /* wait for the server lock */
 int wait_for_lock(void)
 {
+    const char *server_dir = wine_get_server_dir();
     int fd, r;
     struct flock fl;
 
-    create_server_dir();
+    if (!server_dir) return 0;  /* no server dir, so no lock to wait on */
+
+    create_server_dir( server_dir );
     fd = create_server_lock();
 
     fl.l_type   = F_WRLCK;
@@ -598,11 +601,14 @@ int wait_for_lock(void)
 /* kill the wine server holding the lock */
 int kill_lock_owner( int sig )
 {
+    const char *server_dir = wine_get_server_dir();
     int fd, i, ret = 0;
     pid_t pid = 0;
     struct flock fl;
 
-    create_server_dir();
+    if (!server_dir) return 0;  /* no server dir, nothing to do */
+
+    create_server_dir( server_dir );
     fd = create_server_lock();
 
     for (i = 0; i < 10; i++)
@@ -721,6 +727,7 @@ static void acquire_lock(void)
 /* open the master server socket and start waiting for new clients */
 void open_master_socket(void)
 {
+    const char *server_dir = wine_get_server_dir();
     int fd, pid, status, sync_pipe[2];
     char dummy;
 
@@ -728,7 +735,8 @@ void open_master_socket(void)
     assert( sizeof(union generic_request) == sizeof(struct request_max_size) );
     assert( sizeof(union generic_reply) == sizeof(struct request_max_size) );
 
-    create_server_dir();
+    if (!server_dir) fatal_error( "directory %s cannot be accessed\n", wine_get_config_dir() );
+    create_server_dir( server_dir );
 
     if (!foreground)
     {
