@@ -1,3 +1,1443 @@
+2006-03-31  Alexandre Julliard <julliard@winehq.org>
+
+	* server/request.c:
+	server: Avoid crash on startup when the configuration dir doesn't exist.
+
+	* dlls/user/tests/win.c:
+	user/tests: Flush events before running the keyboard event test.
+
+	* dlls/comctl32/tests/monthcal.c:
+	comctl32: Force a specific day value in the monthcal test.
+	Avoids test failure when the current day happens to be the 31st...
+
+2006-03-30  James Hawkins <truiken@gmail.com>
+
+	* dlls/advpack/advpack.spec:
+	advpack: LaunchINFSectionExW is available, so mark it so in the spec file.
+
+	* dlls/advpack/advpack.spec, dlls/advpack/install.c:
+	advpack: Forward ExecuteCabA to its Unicode counterpart.
+
+2006-03-30  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/ole32/dcom.idl:
+	ole32: Remove unnecessary commenting out of the RPC interfaces in the dcom idl file.
+
+	* dlls/wininet/urlcache.c:
+	wininet: Fix some string length calculations.
+	Fix some string length calculations that didn't account for the
+	different sized characters with Unicode.
+
+	* dlls/wininet/urlcache.c:
+	wininet: Only access the URL in the cache by the provided offset.
+
+2006-03-30  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/device.c, dlls/wined3d/drawprim.c,
+	  dlls/wined3d/pixelshader.c, dlls/wined3d/vertexshader.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Move fields common to vertex shaders and pixel shaders to IWineD3DBaseShader.
+
+2006-03-30  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/proplist.c:
+	crypt32: Tiny fixes.
+
+	* dlls/crypt32/store.c, dlls/crypt32/tests/store.c:
+	crypt32: Fix certificate adding
+	- Implement add disposition in CertAddCertificateContextToStore,
+	rather than in each store.
+	- Add a few more tests.
+
+2006-03-30  Rein Klazes <wijn@wanadoo.nl>
+
+	* dlls/msvcrt/undname.c:
+	msvcrt: Fix read beyond end of string in __unDNameEx().
+
+2006-03-30  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/spoolss/spoolss.spec, dlls/spoolss/spoolss_main.c:
+	spoolss: Add DllAllocSplMem and DllFreeSplMem.
+
+2006-03-30  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/gdi/tests/metafile.c:
+	gdi32: Add a test for WMF->EMF conversions performed by SetWinMetaFileBits.
+	These tests currently fail in Wine.
+
+	* dlls/x11drv/keyboard.c:
+	x11drv: Update Hungarian keyboard layout to better match the X11 one.
+
+2006-03-29  Eric Kohl <eric.kohl@t-online.de>
+
+	* tools/widl/client.c, tools/widl/header.c, tools/widl/header.h,
+	  tools/widl/server.c, tools/widl/typegen.c, tools/widl/typegen.h:
+	widl: Implement support for ref pointers to strings.
+
+2006-03-30  Huw Davies <huw@codeweavers.com>
+
+	* dlls/gdi/freetype.c:
+	gdi32: Move the font substitution list to a standard Wine list
+	(based on a patch by Byeong-Sik Jeon).
+
+2006-03-30  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/message.c:
+	user: Only wait for sent messages in wait_message_reply.
+
+	* dlls/x11drv/event.c:
+	x11drv: Filter a few more event types in filter_event.
+	ConfigureNotify and related events should only be processed when
+	posted messages are selected. There's no need to handle MappingNotify
+	if keyboard events are not selected.
+
+	* dlls/Makefile.in, dlls/make_dlls:
+	dlls: Removed a number of no longer needed dependencies.
+
+2006-03-29  Detlef Riekenberg <wine.dev@web.de>
+
+	* DEVELOPERS-HINTS, configure, configure.ac, dlls/Makefile.in,
+	  dlls/spoolss/.gitignore, dlls/spoolss/Makefile.in,
+	  dlls/spoolss/spoolss.spec, dlls/spoolss/spoolss_main.c:
+	spoolss: Add minimal spoolss.dll.
+
+2006-03-30  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/message.c, dlls/user/win.c:
+	user: Don't send WM_PARENTNOTIFY to the desktop window.
+
+2006-03-29  James Hawkins <truiken@gmail.com>
+
+	* dlls/advpack/install.c, dlls/advpack/tests/install.c:
+	advpack: Open the INF file if the RSC_FLAG_INF flag is specified.
+
+2006-03-30  James Hawkins <truiken@gmail.com>
+
+	* dlls/advpack/install.c:
+	advpack: Forward LaunchINFSectionExA to its Unicode counterpart.
+
+	* dlls/advpack/install.c:
+	advpack: Fix the documentation for the cmdline parameter of LaunchInfSection/Ex.
+
+2006-03-29  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/kernel/except.c:
+	kernel: Resource browsing.
+	Try to be a bit more strict when checking for resource mapping in
+	exception handler (and prevent some exceptions while in exception
+	handler).
+
+2006-03-30  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/d3d8/d3d8_private.h, dlls/d3d9/d3d9_private.h,
+	  dlls/wined3d/directx.c, include/wine/wined3d_interface.h,
+	  include/wine/wined3d_types.h:
+	wined3d: Add WINED3DDEVTYPE to wined3d_types.h.
+
+2006-03-30  Henning Gerhardt <henning.gerhardt@web.de>
+
+	* dlls/twain/rsrc.rc, dlls/twain/twain_De.rc:
+	twain: Add German resource.
+
+2006-03-30  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/kernel/heap.c:
+	kernel32: Display the parameter that caused a page fault in GlobalFree().
+
+2006-03-29  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/kernel/heap.c, dlls/kernel/tests/heap.c:
+	kernel: Fix handling of invalid parameter in GlobalFlags().
+
+2006-03-30  Detlef Riekenberg <wine.dev@web.de>
+
+	* tools/wineconf:
+	tools: Remove wineconf.
+
+2006-03-29  Detlef Riekenberg <wine.dev@web.de>
+
+	* DEVELOPERS-HINTS:
+	DEVELOPER-HINTS:  Some directories are renamed / removed / added.
+
+2006-03-29  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/oleaut32/olefont.c, dlls/oleaut32/olepicture.c:
+	oleaut32: Add IPersist to QueryInterface.
+
+	* dlls/oleaut32/typelib.c:
+	oleaut32: Zero out parameter in LoadRegTypeLib in case of failure.
+
+	* dlls/oleaut32/olepicture.c:
+	oleaut32: Replace memcmp with IsEqualIID macro.
+	Replace memcmp with IsEqualIID macro that doesn't require a size
+	parameter and remove the unneeded brackets to give more compact and
+	more readable code.
+
+	* dlls/ole32/compobj.c:
+	ole32: Don't process posted messages in CoWaitForMultipleHandles.
+	Tests with native show that during COM calls posted messages aren't
+	retrieved other than COM calls so change the PeekMessage parameters in
+	CoWaitForMultipleHandles to duplicate this.
+
+	* dlls/ole32/compobj.c:
+	ole32: Try to retrieve messages that are COM calls first.
+	Try to retrieve messages that are COM calls first in
+	CoWaitForMultipleHandles before retrieving other types.
+
+	* dlls/ole32/compobj.c:
+	ole32: Put the PeekMessage call of CoWaitForMultipleHandles into a separate function.
+	Put the PeekMessage call of CoWaitForMultipleHandles into a separate
+	function so that the order and type of the messages retrieved can be
+	customised in the future.
+
+	* dlls/ole32/compobj.c:
+	ole32: Whether the message loop is entered in CoWaitForMultipleHandles,
+	should depend on whether the current apartment is a single threaded one.
+
+	* dlls/ole32/compobj.c:
+	ole32: Pass the no yield flag to PeekMessage.
+	Pass the no yield flag to PeekMessage since we sleep in
+	MsgWaitForMultipleObjectsEx and the extra context switch is wasteful.
+
+	* server/token.c:
+	server: Store the token source.
+
+2006-03-29  Huw Davies <huw@codeweavers.com>
+
+	* include/winuser.h:
+	include: Add DFC_POPUPMENU.
+
+2006-03-30  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/wininet/http.c:
+	wininet: Clean up HTTP_GetCustomHeaderIndex.
+
+	* dlls/wininet/http.c:
+	wininet: Use a lookup table sorted by index so we don't need a loop to do lookups.
+
+	* dlls/wininet/http.c:
+	WININET: Clean up HttpQueryInfo.
+	Fixes another return FALSE without SetLastError.
+
+	* dlls/wininet/http.c:
+	wininet: Make sure to set LastError when returning FALSE in HttpQueryInfo.
+
+2006-03-29  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/ole32/storage32.c, dlls/ole32/tests/storage32.c:
+	ole32: Fix StgOpenStorage's handling of the STGM_PRIORITY flag.
+
+2006-03-29  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/x11drv/window.c, dlls/x11drv/winpos.c, dlls/x11drv/x11drv.h,
+	  include/winpos.h:
+	x11drv: Replace the SWP_WINE_NOHOSTMOVE flag by a lock count.
+
+2006-03-27  Petr Tesarik <hat@tesarici.cz>
+
+	* dlls/ntdll/cdrom.c:
+	ntdll: Fix CDROM raw reads.
+	- Fix incorrect data sizes.
+	- Fix CDDA addressing.
+	- Implement XAForm2 mode on Linux.
+
+2006-03-29  Alexandre Julliard <julliard@winehq.org>
+
+	* programs/winecfg/x11drvdlg.c:
+	winecfg: Disable the desktop option when configuring a specific application.
+
+2006-03-28  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/pixelshader.c, dlls/wined3d/vertexshader.c,
+	  include/wine/wined3d_interface.h:
+	wined3d: Create an IWineD3DBaseShader class.
+
+	* dlls/wined3d/device.c, dlls/wined3d/pixelshader.c,
+	  dlls/wined3d/vertexshader.c, dlls/wined3d/wined3d_private.h:
+	wined3d: Move the vshader_ins and pshader_ins arrays into their respective objects.
+
+	* dlls/wined3d/pixelshader.c, dlls/wined3d/vertexshader.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Move the SHADER_OPCODE definition to wined3d_private.h.
+
+	* dlls/wined3d/pixelshader.c:
+	wined3d: Pass the correct number of parameters for texld with ps version >= 2.
+
+2006-03-29  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/user/sysparams.c:
+	user32: Fix SPI_GETLISTBOXSMOOTHSCROLLING, and implement SPI_SETLISTBOXSMOOTHSCROLLING.
+
+	* dlls/user/sysparams.c:
+	user32: Implement SPI_[GS]ETUIEFFECTS.
+
+	* dlls/user/sysparams.c:
+	user32: Implement SPI_[GS]ETTOOLTIPANIMATION and SPI_[GS]ETTOOLTIPFADE.
+
+	* dlls/user/sysparams.c:
+	user32: Implement SPI_[GS]ETMENUANIMATION and SPI_[GS]ETSELECTIONFADE.
+
+	* dlls/user/sysparams.c:
+	user32: Implement SystemParametersInfo(SPI_[SG]ETCURSORSHADOW).
+
+	* dlls/user/sysparams.c:
+	user32: Implement SystemParametersInfo(SPI_[GS]ETCOMBOBOXANIMATION).
+
+	* dlls/user/sysparams.c:
+	user32: Implement SPI_[SG]ETCARETWIDTH.
+
+2006-03-28  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/mshtml/persist.c:
+	mshtml: Don't free the URL we have just stored in the callback object.
+
+	* dlls/x11drv/mouse.c:
+	x11drv: Only warp the mouse pointer if it has actually moved.
+
+2006-03-26  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/d3d8/device.c:
+	d3d8: Add a TRACE for IDirect3DDevice8Impl_CreateVertexBuffer.
+
+2006-03-28  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/d3d8/device.c, dlls/d3d8/directx.c, dlls/d3d9/device.c,
+	  dlls/d3d9/directx.c, dlls/d3d9/swapchain.c, dlls/wined3d/swapchain.c,
+	  include/wine/wined3d_types.h:
+	wined3d: Use WINED3DSWAPEFFECT in the wined3d headers and code.
+
+	* dlls/d3d8/cubetexture.c, dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c,
+	  dlls/d3d8/surface.c, dlls/d3d8/texture.c, dlls/d3d8/volume.c,
+	  dlls/d3d8/volumetexture.c, dlls/d3d9/cubetexture.c,
+	  dlls/d3d9/d3d9_private.h, dlls/d3d9/device.c,
+	  dlls/d3d9/indexbuffer.c, dlls/d3d9/surface.c, dlls/d3d9/texture.c,
+	  dlls/d3d9/vertexbuffer.c, dlls/d3d9/volume.c,
+	  dlls/d3d9/volumetexture.c, dlls/wined3d/basetexture.c,
+	  dlls/wined3d/device.c, dlls/wined3d/resource.c,
+	  dlls/wined3d/surface.c, dlls/wined3d/utils.c,
+	  dlls/wined3d/wined3d_private.h, include/wine/wined3d_interface.h,
+	  include/wine/wined3d_types.h:
+	wined3d: Add WINED3DPOOL to wined3d_types.h.
+
+2006-03-22  Aric Stewart <aric@codeweavers.com>
+
+	* dlls/twain/.gitignore, dlls/twain/Makefile.in, dlls/twain/ds_ctrl.c,
+	  dlls/twain/ds_image.c, dlls/twain/dsm_ctrl.c, dlls/twain/resource.h,
+	  dlls/twain/rsrc.rc, dlls/twain/twain32_main.c,
+	  dlls/twain/twain_En.rc, dlls/twain/twain_i.h, dlls/twain/ui.c:
+	twain: Add a property sheet UI for scanning.
+
+2006-03-28  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/x11drv/desktop.c, dlls/x11drv/window.c, dlls/x11drv/x11drv.h:
+	x11drv: Reinitialize the display settings when using a desktop window.
+
+2006-03-22  Aric Stewart <aric@codeweavers.com>
+
+	* dlls/twain/ds_image.c:
+	twain: A few cleanups, using some consts from sane.
+
+2006-03-24  Eric Kohl <eric.kohl@t-online.de>
+
+	* tools/widl/client.c, tools/widl/server.c, tools/widl/typegen.c:
+	widl: Implement support for pointers to base types.
+
+2006-03-28  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/advapi32/security.c, dlls/advapi32/tests/security.c:
+	advapi32: Fixed compiler warnings.
+
+2006-03-26  Thomas Weidenmueller <wine-patches@reactsoft.com>
+
+	* dlls/advapi32/security.c, dlls/advapi32/tests/security.c,
+	  include/winnt.h:
+	advapi32: Fixed building TRUSTEEs with objects.
+	Fill the TRUSTEE structure properly in BuildTrusteeWithObjectsAndName
+	and BuildTrusteeWithObjectsAndSid, including regression tests.
+
+	* dlls/comctl32/rebar.c:
+	comctl32: Rebar size fix.
+	Rebars without any bands should have a height/width of 0.
+
+2006-03-26  Vitaly Lipatov <lav@etersoft.ru>
+
+	* tools/wineshelllink:
+	wineshelllink: Remove quotes from Path=<workdir>.
+
+2006-03-28  Jonathan Ernst <jonathan@ernstfamily.ch>
+
+	* tools/wine.inf:
+	wine.inf: Add some more fake dlls to the system directory.
+
+2006-03-28  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/mpr/wnet.c:
+	mpr: Improve the stub for WNetGetUniversalNameW.
+
+	* server/change.c:
+	server: Fix a race condition in the delivery of change notifications.
+
+2006-03-28  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/x11drv/window.c:
+	x11drv: Avoid setting text or WM hints of the X root window.
+
+2006-03-27  Alexandre Julliard <julliard@winehq.org>
+
+	* configure, configure.ac, dlls/Makefile.in,
+	  dlls/msacm/winemp3/.gitignore, dlls/msacm/winemp3/Makefile.in,
+	  dlls/msacm/winemp3/common.c, dlls/msacm/winemp3/dct64_i386.c,
+	  dlls/msacm/winemp3/decode_i386.c, dlls/msacm/winemp3/huffman.h,
+	  dlls/msacm/winemp3/interface.c, dlls/msacm/winemp3/l2tables.h,
+	  dlls/msacm/winemp3/layer1.c, dlls/msacm/winemp3/layer2.c,
+	  dlls/msacm/winemp3/layer3.c, dlls/msacm/winemp3/mpegl3.c,
+	  dlls/msacm/winemp3/mpg123.h, dlls/msacm/winemp3/mpglib.h,
+	  dlls/msacm/winemp3/tabinit.c, dlls/msacm/winemp3/winemp3.acm.spec,
+	  dlls/winemp3.acm/.gitignore, dlls/winemp3.acm/Makefile.in,
+	  dlls/winemp3.acm/common.c, dlls/winemp3.acm/dct64_i386.c,
+	  dlls/winemp3.acm/decode_i386.c, dlls/winemp3.acm/huffman.h,
+	  dlls/winemp3.acm/interface.c, dlls/winemp3.acm/l2tables.h,
+	  dlls/winemp3.acm/layer1.c, dlls/winemp3.acm/layer2.c,
+	  dlls/winemp3.acm/layer3.c, dlls/winemp3.acm/mpegl3.c,
+	  dlls/winemp3.acm/mpg123.h, dlls/winemp3.acm/mpglib.h,
+	  dlls/winemp3.acm/tabinit.c, dlls/winemp3.acm/winemp3.acm.spec:
+	winemp3: Renamed the dlls/msacm/winemp3 directory to dlls/winemp3.acm.
+
+	* configure, configure.ac, dlls/Makefile.in, dlls/msacm/msg711/.gitignore,
+	  dlls/msacm/msg711/Makefile.in, dlls/msacm/msg711/msg711.acm.spec,
+	  dlls/msacm/msg711/msg711.c, dlls/msg711.acm/.gitignore,
+	  dlls/msg711.acm/Makefile.in, dlls/msg711.acm/msg711.acm.spec,
+	  dlls/msg711.acm/msg711.c:
+	msg711: Renamed the dlls/msacm/msg711 directory to dlls/msg711.acm.
+
+	* configure, configure.ac, dlls/Makefile.in,
+	  dlls/msacm/msadp32/.gitignore, dlls/msacm/msadp32/Makefile.in,
+	  dlls/msacm/msadp32/msadp32.acm.spec, dlls/msacm/msadp32/msadp32.c,
+	  dlls/msadp32.acm/.gitignore, dlls/msadp32.acm/Makefile.in,
+	  dlls/msadp32.acm/msadp32.acm.spec, dlls/msadp32.acm/msadp32.c:
+	msadp32: Renamed the dlls/msacm/msadp32 directory to dlls/msadp32.acm.
+
+	* configure, configure.ac, dlls/Makefile.in, dlls/imaadp32.acm/.gitignore,
+	  dlls/imaadp32.acm/Makefile.in, dlls/imaadp32.acm/imaadp32.acm.spec,
+	  dlls/imaadp32.acm/imaadp32.c, dlls/msacm/imaadp32/.gitignore,
+	  dlls/msacm/imaadp32/Makefile.in,
+	  dlls/msacm/imaadp32/imaadp32.acm.spec,
+	  dlls/msacm/imaadp32/imaadp32.c:
+	imaadp32: Renamed the dlls/msacm/imaadp32 directory to dlls/imaadp32.acm.
+
+	* dlls/x11drv/desktop.c, dlls/x11drv/window.c,
+	  dlls/x11drv/winex11.drv.spec, dlls/x11drv/x11drv.h,
+	  dlls/x11drv/x11drv_main.c, programs/explorer/desktop.c,
+	  programs/explorer/explorer.c, programs/explorer/explorer_private.h:
+	x11drv: Moved desktop mode handling to the explorer process.
+	Per-application desktop mode settings are no longer supported.  Apps
+	can be launched in a specific desktop window by using:
+	explorer /desktop=name[,widthxheight] app.exe [args]
+	If the named desktop already exists the app is launched inside it. The
+	default desktop is cleverly named "default".
+
+	* dlls/x11drv/window.c:
+	x11drv: Allow setting WM hints for the desktop window.
+
+	* dlls/x11drv/winpos.c:
+	x11drv: Support SetWindowPos and ShowWindow on the desktop window.
+
+2006-03-27  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/htmldoc.c, dlls/mshtml/mshtml_private.h,
+	  dlls/mshtml/nsembed.c, dlls/mshtml/nsiface.idl,
+	  dlls/mshtml/nsservice.c, dlls/mshtml/view.c:
+	mshtml: Added tooltip implementation.
+
+2006-03-27  Ulrich Czekalla <ulrich@codeweavers.com>
+
+	* dlls/commdlg/fontdlg.c:
+	commdlg: Properly set and retrieve colour value from combo box .
+
+2006-03-27  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/shell32/systray.c, programs/explorer/systray.c:
+	shell32: Adding a systray item with an invalid icon handle is allowed.
+
+2006-03-27  Huw Davies <huw@codeweavers.com>
+
+	* dlls/riched20/txtsrv.c:
+	riched20: Take a ref on text host.
+
+2006-03-27  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/user/input.c:
+	user32: Send a fake mouse movement event after releasing capture.
+
+2006-03-27  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/virtual.c:
+	ntdll: Limit header_size to the file size.
+
+	* dlls/x11drv/window.c, dlls/x11drv/x11drv.h, dlls/x11drv/x11drv_main.c,
+	  dlls/x11drv/xrandr.c, dlls/x11drv/xvidmode.c:
+	x11drv: Get rid of the using_wine_desktop flag.
+
+	* dlls/user/user_main.c, server/process.c, server/user.h, server/window.c,
+	  server/winstation.c:
+	server: Connect to the window station and desktop specified by startup info.
+	If window station and desktop aren't inherited from the parent, don't
+	connect to them from the server, but from the USER init code where we
+	can get the proper values from the startup info structure.
+
+	* server/window.c:
+	server: Store window properties in the global atom table instead of
+	the per-winstation table.
+
+2006-03-25  Louis. Lenders <xerox_xerox2000@yahoo.co.uk>
+
+	* dlls/shell32/.gitignore, dlls/shell32/Makefile.in,
+	  dlls/shell32/shres.rc, dlls/shell32/shresdef.h:
+	shell32: Add an uncompressed AVI displaying the word searching.
+
+2006-03-26  James Hawkins <truiken@gmail.com>
+
+	* dlls/advpack/install.c, dlls/advpack/tests/install.c:
+	advpack: Implement the launching of executables in RunSetupCommand.
+
+	* dlls/advpack/tests/install.c, include/advpub.h, include/urlmon.idl:
+	advpack: Define S_ASYNCHRONOUS in advpub.h.
+
+2006-03-27  Alexandre Julliard <julliard@winehq.org>
+
+	* server/process.c, server/request.c:
+	server: Fixed process exit code on FreeBSD.
+
+2006-03-24  Petr Tesarik <hat@tesarici.cz>
+
+	* programs/winedbg/break.c:
+	winedbg: Fix stepping over an instruction.
+
+2006-03-27  Petr Tesarik <hat@tesarici.cz>
+
+	* dlls/winedos/dosexe.h, dlls/winedos/interrupts.c:
+	winedos: Clear TF bit before passing control to a VM86 interrupt handler.
+
+2006-03-26  f_sophia <f_sophia@libero.it>
+
+	* programs/winhelp/Eo.rc, programs/winhelp/rsrc.rc:
+	winhelp: Added Esperanto language support.
+
+2006-03-26  Antonio Codazzi <f_sophia@libero.it>
+
+	* dlls/shell32/shell32_Eo.rc:
+	shell32: Updated Esperanto translation.
+
+2006-03-26  James Hawkins <truiken@gmail.com>
+
+	* dlls/kernel/process.c, dlls/kernel/tests/process.c:
+	kernel: Error out of CreateProcess if the specified current directory
+	doesn't exist.
+
+2006-03-26  Vitaly Lipatov <lav@etersoft.ru>
+
+	* tools/wine.inf:
+	wine.inf: Add some dll stub dll to the system directory.
+
+2006-03-24  Paul Vriens <paul.vriens@xs4all.nl>
+
+	* tools/wine.inf:
+	wine.inf: Add SystemRoot.
+
+2006-03-27  Petr Tesarik <hat@tesarici.cz>
+
+	* dlls/ntdll/signal_i386.c:
+	ntdll: Fix debug exceptions from VM86.
+	- Set ContextFlags accordingly in save_vm86_context().
+	- Raise debug exceptions correctly for debug exceptions.
+	- Do not clear TF bit for VM86-generated debug exceptions.
+
+2006-03-26  James Hawkins <truiken@gmail.com>
+
+	* dlls/advpack/install.c, dlls/advpack/tests/install.c:
+	advpack: Set hexe to a non-NULL value to test that the handle is NULL on return.
+
+2006-03-26  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/commdlg/filedlg.c:
+	commdlg: Malformed filters are still added to the filter combo box.
+
+	* dlls/comctl32/comctl32undoc.c:
+	comctl32: Having an MRU list without a compare function works in Windows.
+
+2006-03-26  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/msvcrt/scanf.h, dlls/msvcrt/tests/scanf.c:
+	msvcrt: Fix reading of signed numbers with unsigned read types in scanf.
+
+2006-03-24  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/msvcrt/file.c:
+	msvcrt: Fix fflush() of files opened for read.
+	Some apps, for no particular reason, call fflush() on files opened for
+	read.  This keeps them from tripping over their shoelaces.
+
+2006-03-25  Tomas Carnecky <tom@dbservice.com>
+
+	* dlls/opengl32/wgl.c, dlls/opengl32/wgl_ext.c, dlls/x11drv/opengl.c:
+	opengl: Put OpenGL setup functions into their own debug channel.
+
+2006-03-25  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* programs/winedbg/dbg.y, programs/winedbg/debug.l:
+	winedbg: Fixes for identifiers.
+	- fixed lexical rules for a path name
+	- fixed identifier rules so that we get the right precedence
+	between ! and ::
+	- modules (in mod!name forms) are now handled as tIDENTIFIER
+	(tPATH was buggy anyhow)
+
+	* dlls/dbghelp/symbol.c:
+	dbghelp: Module should be case insensitive.
+	When looking up a symbol name in the form module!name, the module
+	lookup should be insensitive.
+
+2006-03-24  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/d3d8/cubetexture.c, dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c,
+	  dlls/d3d8/directx.c, dlls/d3d8/surface.c, dlls/d3d8/texture.c,
+	  dlls/d3d9/cubetexture.c, dlls/d3d9/d3d9_private.h,
+	  dlls/d3d9/device.c, dlls/d3d9/directx.c, dlls/d3d9/surface.c,
+	  dlls/d3d9/swapchain.c, dlls/d3d9/texture.c, dlls/wined3d/device.c,
+	  dlls/wined3d/directx.c, dlls/wined3d/wined3d_private.h,
+	  include/wine/wined3d_interface.h, include/wine/wined3d_types.h:
+	wined3d: Add WINED3DMULTISAMPLE_TYPE to wined3d_types.h.
+
+	* dlls/d3d8/device.c, dlls/d3d9/device.c, dlls/wined3d/device.c,
+	  include/wine/wined3d_interface.h, include/wine/wined3d_types.h:
+	wined3d: Add WINED3DTRIPATCH_INFO to wined3d_types.h.
+
+2006-03-23  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/pixelshader.c, dlls/wined3d/vertexshader.c:
+	wined3d: Move the D3DSIO_DCL dumping code into its own function.
+
+2006-03-23  James Hawkins <truiken@gmail.com>
+
+	* dlls/advpack/tests/.gitignore, dlls/advpack/tests/Makefile.in,
+	  dlls/advpack/tests/install.c:
+	advpack: Add initial tests for RunSetupCommand.
+
+	* dlls/advpack/advpack.spec, dlls/advpack/files.c:
+	advpack: Forward DelNodeA to its Unicode counterpart.
+
+	* dlls/advpack/advpack.spec, dlls/advpack/install.c:
+	advpack: Forward RunSetupCommandA to its Unicode counterpart.
+
+	* dlls/advpack/advpack.spec, dlls/advpack/files.c:
+	advpack: Forward the FileSaveRestore API to their Unicode counterparts.
+
+	* dlls/advpack/advpack.spec, dlls/advpack/files.c:
+	advpack: Forward GetVersionFromFileA/ExA to their Unicode counterparts.
+
+	* dlls/advpack/advpack.c, dlls/advpack/advpack.spec:
+	advpack: Forward SetPerUserSecValuesA to its Unicode counterpart.
+
+2006-03-24  Ken Thomases <ken@codeweavers.com>
+
+	* server/process.c:
+	server: Fix memory leak in read_process_memory handler.
+
+2006-03-24  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/ntdll/directory.c:
+	ntdll: Recursive notify is implemented.
+
+2006-03-24  Phil Krylov <phil@newstar.rinet.ru>
+
+	* server/signal.c:
+	server: Fix compilation under Darwin 7.
+
+2006-03-23  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/Makefile.in, dlls/mshtml/htmlelem.c,
+	  dlls/mshtml/htmlelem2.c, dlls/mshtml/mshtml_private.h:
+	mshtml: Added IHTMLElement2 implementation.
+
+	* include/exdisp.idl:
+	exdisp.idl: Added missing IE6 methods to DWebBrowserEvents2.
+
+2006-03-23  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/d3d8/device.c, dlls/d3d9/device.c, dlls/wined3d/device.c,
+	  include/wine/wined3d_interface.h:
+	wined3d: Rectpatch code fix.
+	Update the wined3d code to use WINED3DRECTPATCH_INFO, which was added
+	with an older patch.
+
+2006-03-23  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/msvcrt/time.c:
+	msvcrt: Implementation of wcsftime (based on a patch by Mike McCormack).
+
+2006-03-22  Paul Vriens <paul.vriens@xs4all.nl>
+
+	* dlls/kernel/cpu.c:
+	kernel: Add processor specific environment variables.
+
+2006-03-23  James Hawkins <truiken@gmail.com>
+
+	* dlls/comctl32/tab.c:
+	comctl32: A couple fixes for tab icon offsets.
+	- Shift selected icons up and non-selected icons down.
+	- Add the top or left draw rect to the vertical offset, because it may
+	not be zero.
+
+2006-03-22  James Hawkins <truiken@gmail.com>
+
+	* dlls/advpack/advpack.spec, dlls/advpack/files.c:
+	advpack: Implement FileSaveMarkNotExistW.
+
+	* dlls/advpack/advpack.spec, dlls/advpack/files.c:
+	advpack: Forward AdvInstallFileA to its Unicode counterpart.
+
+	* dlls/advpack/advpack.c, dlls/advpack/advpack.spec:
+	advpack: Forward the ansi user stub APIs to their Unicode counterparts.
+
+	* dlls/advpack/advpack.spec, dlls/advpack/files.c:
+	advpack: Forward AddDelBackupEntryA to its unicode counterpart.
+
+2006-03-23  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/kernel/environ.c:
+	kernel: Remove a couple of incorrect asserts.
+
+2006-03-23  Rein Klazes <wijn@wanadoo.nl>
+
+	* dlls/comctl32/tooltips.c:
+	comctl32: Do not free LPSTR_TEXTCALLBACK tooltip texts.
+
+2006-03-22  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/kernel/tests/thread.c:
+	kernel: Load QueueUserWorkItem function dynamically.
+
+2006-03-23  Eric Kohl <eric.kohl@t-online.de>
+
+	* tools/widl/server.c, tools/widl/typegen.c:
+	widl: Fix base type alignments.
+	Generate aligned marshal and unmarshal code for base type arguments
+	and return values.
+
+	* tools/widl/client.c, tools/widl/server.c, tools/widl/typegen.c,
+	  tools/widl/typegen.h:
+	widl: Fix format string size calculation.
+	- Move proc format string size calculation from client.c and server.c
+	to typegen.c.
+	- Implement type format string size calculation.
+
+2006-03-22  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/tests/winstation.c, server/atom.c, server/class.c:
+	server: Class and global atoms should not be local to a window station.
+
+2006-03-22  Marcus Meissner <meissner@suse.de>
+
+	* configure, configure.ac, programs/Makefile.in,
+	  programs/avitools/.gitignore, programs/avitools/Makefile.in,
+	  programs/avitools/aviinfo.c, programs/avitools/aviplay.c,
+	  programs/avitools/icinfo.c, programs/icinfo/.gitignore,
+	  programs/icinfo/Makefile.in, programs/icinfo/icinfo.c:
+	programs: Move icinfo out of avitools.
+
+2006-03-22  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/wined3d/drawprim.c, dlls/wined3d/vertexshader.c:
+	wined3d: Set vertex attribute pointers defined in vertex declarations properly.
+
+	* dlls/wined3d/vertexshader.c:
+	wined3d: Fix slightly misleading ParseVertexDeclarationUsage naming.
+
+	* dlls/wined3d/vertexdeclaration.c, include/wine/wined3d_types.h:
+	wined3d: Initialise WINED3DVERTEXELEMENT's Reg field in
+	IWineD3DVertexDeclarationImpl_ParseDeclaration9.
+
+	* dlls/wined3d/vertexdeclaration.c, dlls/wined3d/wined3d_private.h:
+	wined3d: glTypeLookup cleanup.
+	Use a struct instead of an UINT array as entries in the glTypeLookup
+	table.
+
+	* dlls/wined3d/pixelshader.c:
+	wined3d: Store the pixelshader version in the pixelshader object.
+
+2006-03-22  Huw Davies <huw@codeweavers.com>
+
+	* dlls/user/edit.c, dlls/user/tests/edit.c:
+	user32: Only adjust the margins if the edit control is above a certain size.
+
+2006-03-22  James Hawkins <truiken@gmail.com>
+
+	* dlls/advpack/advpack.c, dlls/advpack/advpack.spec:
+	advpack: Forward RebootCheckOnInstallA to its Unicode counterpart.
+
+2006-03-22  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/htmlelem.c:
+	mshtml: Clean up get_all and tags (also fixes a typo).
+
+2006-03-22  Mike McCormack <mike@codeweavers.com>
+
+	* tools/wine.inf:
+	wine.inf: Add a shdocvw.dll stub dll to the system directory.
+
+	* dlls/msi/action.c:
+	msi: Add stub for the RegisterComPlus and UnregisterComPlus actions.
+
+	* dlls/msi/package.c:
+	msi: Don't crash when logging a record with only one field.
+
+2006-03-22  Alexandre Julliard <julliard@winehq.org>
+
+	* server/directory.c, server/handle.c, server/handle.h, server/mailslot.c,
+	  server/named_pipe.c, server/object.c, server/object.h,
+	  server/registry.c, server/request.c, server/signal.c:
+	server: New scheme for cleaning up objects on server exit.
+	Objects stored in static variables can now be marked when they are
+	created and are automatically cleaned up on exit. This avoids having
+	to export a bunch of close_* functions.
+
+2006-03-21  James Hawkins <truiken@gmail.com>
+
+	* dlls/advpack/advpack.c, dlls/advpack/advpack.spec:
+	advpack: Forward TranslateInfStringExA to its unicode counterpart.
+
+	* dlls/advpack/tests/files.c:
+	advpack: Add second null for double null terminated lists.
+
+2006-03-22  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/msi/dialog.c:
+	msi: Show "hidden dialogs" but hide them initially.
+
+	* dlls/msi/custom.c:
+	msi: Implement custom action type 17.
+
+	* dlls/riched20/.gitignore, dlls/riched20/Makefile.in,
+	  dlls/riched20/version.rc:
+	riched20: Add a version resource.
+
+	* dlls/wintrust/wintrust_main.c:
+	wintrust: Use the definition of WINTRUST_ACTION_GENERIC_VERIFY_V2 in softpub.h.
+
+	* include/Makefile.in, include/softpub.h:
+	include: Add softpub.h.
+
+2006-03-22  Kevin Koltzau <kevin@plop.org>
+
+	* dlls/ole32/tests/.gitignore, dlls/ole32/tests/Makefile.in,
+	  dlls/ole32/tests/clipboard.c:
+	ole32: Initial tests for OLE clipboard functions.
+
+2006-03-21  Bryan Mayland <bmayland@leoninedev.com>
+
+	* dlls/kernel/sync.c, dlls/kernel/tests/sync.c:
+	kernel: WaitForMultipleObjectsEx should accept up to MAXIMUM_WAIT_OBJECTS.
+
+2006-03-21  Lei Zhang <leiz@ucla.edu>
+
+	* dlls/riched20/editor.c, dlls/riched20/tests/editor.c:
+	riched20: Implements FR_WHOLEWORD for EM_FINDTEXT.
+	Add FR_WHOLEWORD to riched20's EM_FINDTEXT and fix a couple small bugs
+	introduced in earlier patches for EM_FINDTEXT. Additional test cases
+	have been added to check for corner cases.  Also improve input
+	validation.
+
+2006-03-21  Francois Gouget <fgouget@free.fr>
+
+	* dlls/ddraw/tests/ddrawmodes.c, dlls/ole32/datacache.c,
+	  dlls/ole32/storage32.c, dlls/oleaut32/dispatch.c,
+	  dlls/shell32/shlfolder.c, dlls/shlwapi/ordinal.c,
+	  dlls/shlwapi/path.c, dlls/wininet/gopher.c:
+	Assorted spelling fixes.
+
+	* programs/taskmgr/taskmgr.c, programs/taskmgr/taskmgr.h:
+	taskmgr: Avoid forward declarations and make functions static.
+
+	* programs/taskmgr/applpage.c:
+	taskmgr: Reorder functions to avoid forward declarations.
+
+	* programs/taskmgr/about.c, programs/taskmgr/affinity.c,
+	  programs/taskmgr/column.c, programs/taskmgr/graph.c,
+	  programs/taskmgr/perfpage.c, programs/taskmgr/proclist.c,
+	  programs/taskmgr/procpage.c:
+	taskmgr: Avoid forward declarations and make functions static.
+
+	* tools/winapi/win32.api:
+	Update win32.api to match the current sources.
+
+	* include/winerror.h:
+	include: Add missing error and facility codes.
+
+	* dlls/advapi32/advapi32.spec:
+	advapi32: Fix the LsaEnumerateAccountRights() export.
+
+	* include/ntsecapi.h:
+	include: Standardize the LsaLookupNames() prototype.
+
+2006-03-21  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/oleaut32/tests/typelib.c, dlls/oleaut32/typelib.c:
+	oleaut: ITypeInfo::GetIDsOfNames should search inherited interfaces
+	regardless of what type they are.
+	Add a test for this and dump type infos created with CreateDispTypeInfo.
+
+2006-03-21  Huw Davies <huw@codeweavers.com>
+
+	* dlls/gdi/tests/gdiobj.c, tools/sfnt2fnt.c:
+	fonts: Use the EBLC table to retrieve the ascent of the bitmap font.
+
+2006-03-21  Jeff Latimer <lats@yless4u.com.au>
+
+	* programs/winedbg/be_alpha.c, programs/winedbg/be_cpu.h,
+	  programs/winedbg/be_i386.c, programs/winedbg/be_ppc.c,
+	  programs/winedbg/dbg.y, programs/winedbg/debug.l,
+	  programs/winedbg/info.c, programs/winedbg/tgt_active.c,
+	  programs/winedbg/tgt_minidump.c, programs/winedbg/winedbg.man.in:
+	winedbg: Add display for floating point status.
+	Added code to examine and display floating point unit status into
+	be_i386.c as info all-regs command.
+
+2006-03-21  Alexandre Julliard <julliard@winehq.org>
+
+	* tools/sfnt2fnt.c:
+	sfnt2fnt: Remove output file on failure.
+
+	* dlls/activeds/activeds_main.c, dlls/cfgmgr32/main.c,
+	  dlls/cryptdll/cryptdll.c, dlls/d3dim/d3dim_main.c,
+	  dlls/d3drm/d3drm_main.c, dlls/msnet32/msnet_main.c,
+	  dlls/snmpapi/main.c, dlls/url/url_main.c, dlls/vdmdbg/vdmdbg.c,
+	  dlls/winnls32/winnls.c, dlls/wintrust/wintrust_main.c:
+	Added DLL_WINE_PREATTACH handling in a number of stub-only dlls.
+
+2006-03-21  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/msi/action.c, dlls/msi/action.h, dlls/msi/files.c,
+	  dlls/msi/helpers.c:
+	msi: Improve handling of short paths.
+
+2006-03-21  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/ntdll/threadpool.c:
+	ntdll: Start of pooling support for RtlQueueWorkItem.
+	Start of pooling support for RtlQueueWorkItem. The algorithm
+	implmented is very simple - if there are no free threads, create a new
+	one.
+
+	* dlls/kernel/tests/thread.c:
+	kernel: Add a test for QueueUserWorkItem.
+
+	* dlls/oleaut32/typelib.c:
+	oleaut: Better support for invoking methods with VT_VARIANT argument types.
+
+	* dlls/wininet/internet.c:
+	wininet: Document InternetCrackUrlW.
+
+	* dlls/wininet/http.c, dlls/wininet/internet.c:
+	wininet: InternetCreateUrlW should return the number of bytes needed.
+	InternetCreateUrlW should return the number of bytes needed to store
+	the URL, not the number of characters (reported by Sven Paschukat).
+
+2006-03-21  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/loader.c, include/winnt.h:
+	ntdll: Added a DLL_WINE_PREATTACH call to DllMain for builtins.
+	By returning FALSE from this call, a builtin dll can specify that we
+	should try to load the native one instead.
+
+	* dlls/ddraw/main.c:
+	ddraw: Call DDRAW_ChooseDefaultDriver only on PROCESS_ATTACH.
+
+	* dlls/Makefile.in, dlls/Maketest.rules.in, dlls/make_dlls:
+	dlls: Removed a number of dll symlinks that are no longer needed.
+
+	* tools/winewrapper:
+	winewrapper: Remove explicit call to wineprefixcreate.
+	Now that wineprefixcreate detects the build tree automatically, the
+	standard behavior of starting it from ntdll should work fine.
+
+	* programs/wcmd/wcmdmain.c:
+	wcmd: Try executing the process even if the exe file doesn't exist.
+	It may be a builtin exe in which case the CreateProcess call will
+	succeed.
+
+	* tools/wine.inf, tools/wineprefixcreate.in:
+	wine.inf: Use the new fake dlls mechanism to create placeholders for
+	applications instead of using symlinks.
+
+	* dlls/ntdll/loader.c:
+	ntdll: Detect the fake dlls created by setupapi and refuse to load them.
+
+	* dlls/setupapi/Makefile.in, dlls/setupapi/fakedll.c,
+	  dlls/setupapi/install.c, dlls/setupapi/setupapi_private.h:
+	setupapi: Added support for creating fake dlls at install time.
+	This should satisfy applications that access a dll file directly. For
+	apps that check the dll version in the file, the version resource is
+	copied from the builtin dll.
+
+2006-03-18  Vitaliy Margolen <wine-patch@kievinfo.com>
+
+	* dlls/dinput/device.c, dlls/dinput/device_private.h,
+	  dlls/dinput/keyboard.c, dlls/dinput/mouse.c:
+	dinput: Create single thread for mouse and keyboard hook.
+	Put keyboard & mouse hook callbacks into separate thread.
+	Move few global variables into object. Delete no longer used crit section.
+	For hooks to work properly hook callback have to be in a thread
+	with message loop. Some games create separate threads just to handle
+	mouse and/or keyboard events that do not have message loop.
+
+2006-03-20  Mike Hearn <mike@plan99.net>
+
+	* dlls/opengl32/Makefile.in, dlls/opengl32/wgl.c:
+	opengl32: Optimize thunks by storing GL context in the thread environment block.
+
+2006-03-21  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/gdi/bitmap.c, dlls/gdi/tests/gdiobj.c:
+	gdi: Fix a couple of todos in the bitmap test.
+
+2006-03-21  Byeong-Sik Jeon <wjsqudtlr@gmail.com>
+
+	* dlls/commdlg/cdlg_Ko.rc:
+	commdlg: Updated Korean translation.
+
+	* programs/winecfg/Ko.rc:
+	winecfg: Updated Korean translation.
+
+2006-03-21  Mike McCormack <mike@codeweavers.com>
+
+	* programs/taskmgr/applpage.c:
+	taskmgr: Make some functions static.
+
+	* programs/taskmgr/applpage.c:
+	taskmgr: Fix some gcc 4.1 warnings caused by commctrl.h macros.
+
+	* programs/winefile/winefile.c:
+	winefile: Fix some gcc 4.1 warnings caused by commctrl.h macros.
+
+2006-03-19  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/wined3d/device.c, include/wine/wined3d_gl.h:
+	wined3d: Don't use OpenGL 2.0.
+
+2006-03-20  Paul Vriens <paul.vriens@xs4all.nl>
+
+	* dlls/kernel/cpu.c:
+	kernel: Fix model/stepping in GetSystemInfo.
+	wProcessorRevision is built from model and stepping.
+
+2006-03-20  Mike McCormack <mike@codeweavers.com>
+
+	* programs/taskmgr/priority.c:
+	taskmgr: Eliminate common code and fix a warning.
+
+2006-03-19  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/comctl32/listview.c:
+	comctl32: Get rid of some incorrect casts.
+
+2006-03-20  Alexandre Julliard <julliard@winehq.org>
+
+	* configure.ac:
+	configure: Add autoheader to the compile command.
+
+	* configure, configure.ac, dlls/Makedll.rules.in, loader/Makefile.in,
+	  programs/Makeprog.rules.in:
+	configure: Use --rpath when linking dlls too.
+
+	* programs/Makefile.in, programs/make_progs:
+	programs: Get rid of application symlinks, they are no longer needed.
+
+	* dlls/gdi/tests/gdiobj.c, dlls/x11drv/bitmap.c:
+	x11drv: Clear new bitmaps if they don't contain any data.
+
+2006-03-20  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/gdi/bitmap.c, dlls/gdi/tests/gdiobj.c:
+	gdi: Add a simple test for bitmap bits/metrics
+	Add a simple test for bitmap bits/metrics, fix GetBitmapBits for an
+	empty (not selected into a DC) bitmap.
+
+2006-03-19  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/msi/regsvr.c:
+	msi: Set the InstallerLocation value when registering msi.dll.
+
+2006-03-19  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/kernel/heap.c, dlls/kernel/tests/heap.c:
+	kernel: Avoid heap corruption on invalid parameter in GlobalFree().
+
+2006-03-20  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/kernel/tests/change.c:
+	kernel: Avoid infinite waits in directory change tests.
+
+2006-03-19  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/d3d8/device.c:
+	d3d8: Change the default debug channel to d3d8 for device.c.
+
+	* dlls/d3d8/device.c:
+	d3d8: Downgrade a FIXME to a TRACE in IDirect3DDevice8Impl_SetVertexShader.
+
+	* dlls/d3d8/device.c:
+	d3d8: Fix comparison in IDirect3DDevice8Impl_DeleteVertexShader.
+
+2006-03-18  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/mshtml_private.h, dlls/mshtml/nsembed.c,
+	  dlls/mshtml/nsiface.idl, dlls/mshtml/nsio.c, dlls/mshtml/persist.c:
+	mshtml: Optimize nsACString handling.
+
+	* dlls/mshtml/htmlbody.c, dlls/mshtml/htmlelem.c, dlls/mshtml/htmlinput.c,
+	  dlls/mshtml/htmlnode.c, dlls/mshtml/htmlselect.c,
+	  dlls/mshtml/htmltextarea.c, dlls/mshtml/mshtml_private.h:
+	mshtml: Better QueryInterface implementation.
+
+2006-03-19  Alexander N. Sørnes <alex@thehandofagony.com>
+
+	* programs/wordpad/No.rc:
+	wordpad: Fix typo in Norwegian resource.
+
+2006-03-19  Vitaly Lipatov <lav@etersoft.ru>
+
+	* programs/regedit/Ru.rc:
+	regedit: Fix Russian translation.
+
+	* programs/control/params.h:
+	control: Fix datetime name.
+
+2006-03-19  Milko Krachounov <milko@3mhz.net>
+
+	* programs/winecfg/Bg.rc:
+	winecfg: Update Bulgarian translation.
+
+2006-03-19  Mike McCormack <mike@codeweavers.com>
+
+	* include/commctrl.h:
+	include: LVSETINFOTIPA does not exist.
+
+2006-03-19  Jeff Latimer <lats@yless4u.com.au>
+
+	* programs/winedbg/tgt_active.c:
+	winedbg: Copy floating point status to the dbgcontext.
+
+2006-03-18  Vitaliy Margolen <wine-patch@kievinfo.com>
+
+	* dlls/gdi/driver.c:
+	gdi: Handle NT style \\.\DISPLAY1 name that we return.
+
+2006-03-18  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/msi/delete.c, dlls/msi/distinct.c, dlls/msi/insert.c,
+	  dlls/msi/msipriv.h, dlls/msi/order.c, dlls/msi/select.c,
+	  dlls/msi/table.c, dlls/msi/update.c, dlls/msi/where.c:
+	msi: Optimise WHERE operations.
+	Optimise WHERE operations on matching against strings by adding a new
+	function find_matching_rows to the views, which eliminates the need to
+	examine every record when executing a query. Implement this function
+	in the table using a hash table on the ID stored in the data.
+
+	* dlls/msi/tests/format.c:
+	msi: Add a test for MsiFormatRecord with integer fields.
+
+	* dlls/wininet/cookie.c:
+	wininet: Copy from the start of the cookie name, not the cookie data.
+	Copy from the start of the cookie name, not the cookie data when
+	parsing cookies with a NULL cookie name.
+
+	* include/wininet.h:
+	include: Add some more defines to wininet.h.
+
+	* programs/wcmd/wcmdmain.c:
+	wcmd: Use PACKAGE_VERSION as the wcmd version.
+
+	* dlls/ole32/rpc.c:
+	ole: Use the thread pool for executing RPC calls for better performance
+	(after the thread pool has been improved).
+
+2006-03-17  Alexandre Julliard <julliard@winehq.org>
+
+	* tools/wineprefixcreate.in:
+	wineprefixcreate: Autodetect the running from build tree case.
+
+	* dlls/setupapi/install.c:
+	setupapi: Added support for calling executables in a RegisterDlls section.
+
+2006-03-18  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/loader.c:
+	ntdll: In MODULE_FlushModrefs, also free dlls that haven't been initialized yet.
+
+2006-03-18  Mike McCormack <mike@codeweavers.com>
+
+	* include/windowsx.h:
+	Prevent the use of windowsx.h with Wine source.
+
+	* programs/winefile/winefile.c, programs/winefile/winefile.h:
+	winefile: Eliminate use of windowsx.h.
+
+2006-03-18  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/dbghelp/msc.c, dlls/dbghelp/mscvpdb.h:
+	dbghelp: MSC fixes.
+	- wrong cut & paste across versions of a given record type
+	- wrong definition for register_v2
+
+	* dlls/dbghelp/msc.c:
+	dbghelp: Support for LF_VTSHAPE in MSC.
+	- added preliminary support for VT (virtual table) shape
+	type record
+	- as we don't do C++, it's just a hack to get rid of
+	some errors
+
+	* dlls/dbghelp/msc.c:
+	dbghelp: MSC forward declaration.
+	- create an infrastructure for handling forward usage
+	of type records
+	- used it in some cases (pointer to yet not defined udt,
+	function signature, modifiers)
+
+	* dlls/dbghelp/msc.c:
+	dbghelp: Type parsing refactoring.
+	- seperate types' table handling from a single type handling
+	by adding codeview_parse_one_type function
+	- factored all calls for caching symt
+	- make type parsing helpers return the symt instead of a
+	simple error status
+
+	* dlls/dbghelp/msc.c:
+	dbghelp: Fixes for NB11 types.
+	- when checking debug info in NB09 or NB11 format (CodeView),
+	try to load the global types section
+
+	* dlls/dbghelp/msc.c, dlls/dbghelp/mscvpdb.h:
+	dbghelp: MSC handling of function signature's parameters.
+	- now correctly parsing parameters types for a function
+	signature and storing them in dbghelp internal structures
+
+	* dlls/dbghelp/msc.c, dlls/dbghelp/mscvpdb.h:
+	dbghelp: Cleanup MSC bitfield handling.
+	- no longer caching bitfield information but accessing it directly
+	when needed
+	- removed all kludges for bitfield handling
+	- reused BOOL parameter to codeview_get_type for monitoring
+	traces (will be used in later patches)
+
+	* dlls/dbghelp/msc.c, dlls/dbghelp/mscvpdb.h:
+	dbghelp: Fieldlist.
+	- now that we have offset tables to type, we can cleanly
+	parse the field-lists and remove the associated kludges
+	- also adding internal structure for easing parameter sharing
+	across functions (codeview_type_parse)
+	- in mscvpdb.h, also reparated the type records that are
+	referenced from other type records (union codeview_type_ref)
+	from type records referenced by symbols (union codeview_type)
+
+	* dlls/dbghelp/msc.c:
+	dbghelp: MSC types.
+	- enforce the type records that can be accessed by symbols (these are
+	anyway the high level ones)
+
+	* dlls/dbghelp/msc.c:
+	dbghelp: Types parsing.
+	- our engine for parsing types section now requires in entry
+	an offsets table for getting directly to each type in the
+	section
+	- (re)construct this table for PDB types
+
+	* dlls/dbghelp/msc.c, dlls/dbghelp/mscvpdb.h:
+	dbghelp: CV's ssearch.
+	- added definitions for start_search symbol info
+	- silenced warnings from this symbol
+
+	* dlls/dbghelp/msc.c, dlls/dbghelp/mscvpdb.h:
+	dbghelp: Moved codeview structures and definitions from msc.c to mscvpdb.h.
+
+	* dlls/dbghelp/elf_module.c, dlls/dbghelp/msc.c, dlls/dbghelp/mscvpdb.h:
+	dbghelp: Compiland and source files are not the same thing.
+	- in MSC debug info parsing, clearly separate a source file
+	information from a compiland (including in linetab structure)
+	- in ELF debug info parsing, now storing compiland directly
+	in symtab_elt while browsing the symtab section (we still
+	create twice the compilands, once in stabs/dwarf parsing,
+	a second time in symtab parsing)
+
+2006-03-17  Vitaly Lipatov <lav@etersoft.ru>
+
+	* dlls/gdi/freetype.c:
+	gdi32: Look for ttf fonts in the Wine font dir.
+
+2006-03-17  Dmitry Timoshkov <dmitry@baikal.ru>
+
+	* dlls/gdi/tests/gdiobj.c:
+	gdi: Add a test for bitmap font metrics to ensure that they match the Windows ones.
+
+2006-03-18  Eric Kohl <eric.kohl@t-online.de>
+
+	* tools/widl/server.c:
+	widl: Do not generate code that initializes a binding handle.
+
+	* tools/widl/client.c, tools/widl/server.c:
+	widl: Fix proc offset calculation.
+	A void return type is represented by a FC_END/FC_PAD sequence in the
+	proc format string. Increment the proc offset by two when a function
+	returns void.
+
+	* tools/widl/parser.y:
+	widl: 'unsigned char' and 'byte' are must be distinct types.
+
+2006-03-18  Jacek Caban <jacek@codeweavers.com>
+
+	* include/mshtmdid.h, include/mshtml.idl:
+	mshtml.idl: Added more interfaces.
+
+	* dlls/mshtml/tests/protocol.c:
+	mshtml/tests: Code cleanup.
+
+2006-03-18  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/dbghelp/dbghelp.c, programs/winedbg/tgt_active.c:
+	dbghelp: Live target detection.
+	- DBGHELP_NOLIVE env variable is tested earlier to avoid
+	some strange effects in live target detection
+	- in WineDbg, delete DBGHELP_NOLIVE before attaching to
+	a process, because we know it must be a live target
+
+2006-03-17  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/user/tests/edit.c, programs/progman/group.c,
+	  programs/progman/main.c, programs/progman/program.c,
+	  programs/winecfg/audio.c:
+	Remove some unnecessary uses of windowsx.h
+
+2006-03-18  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/avifil32/avifile.c:
+	avifil32: Use HeapAlloc instead of GlobalAlloc. Eliminate windowsx.h.
+
+2006-03-17  Mike McCormack <mike@codeweavers.com>
+
+	* programs/taskmgr/dbgchnl.c:
+	taskmgr: Fix some gcc 4.1 warnings.
+
+	* programs/winecfg/appdefaults.c:
+	winecfg: Fix some gcc 4.1 warnings.
+
+	* dlls/crypt32/tests/store.c:
+	crypt32: Fix a warning.
+
+2006-03-17  YunSong Hwang <hys545@dreamwiz.com>
+
+	* dlls/msvfw32/msvfw32_Ko.rc:
+	msvfw32: Update Korean resources.
+
+2006-03-17  Mike McCormack <mike@codeweavers.com>
+
+	* programs/taskmgr/taskmgr.c:
+	taskmgr: Fix some gcc 4.1 warnings.
+
+	* programs/taskmgr/procpage.c:
+	taskmgr: Fix some gcc 4.1 warnings.
+
+	* programs/taskmgr/proclist.c:
+	taskmgr: Fix some gcc 4.1 warnings.
+
+	* programs/taskmgr/debug.c:
+	taskmgr: Fix some gcc 4.1 warnings.
+
+	* programs/taskmgr/endproc.c:
+	taskmgr: Fix some gcc 4.1 warnings.
+
+	* programs/taskmgr/affinity.c:
+	taskmgr: Fix some gcc 4.1 warnings.
+
+	* programs/regedit/treeview.c:
+	regedit: Fix some gcc 4.1 warnings.
+
+2006-03-16  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/crypt32.spec, dlls/crypt32/store.c,
+	  dlls/crypt32/tests/store.c, include/wincrypt.h:
+	crypt32: Implement CertGetSubjectCertificateFromStore.
+
+2006-03-16  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* include/wine/wined3d_types.h:
+	wined3d: Add D3DBASISTYPE to wined3d_types.h.
+
+2006-03-16  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/d3d8/device.c, dlls/wined3d/device.c, dlls/wined3d/vertexshader.c:
+	d3d8/wined3d: Vertex shader fixes.
+
+2006-03-17  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/gdi/freetype.c:
+	gdi: Support for loading fonts from the build directory.
+
+	* programs/winecfg/libraries.c:
+	winecfg: Support for loading the list of dlls from the build directory.
+
+	* libs/wine/loader.c:
+	libwine: Added magic handling of dll path when running in build dir.
+	This should ensure that we do the right thing in the build dir even if
+	WINEDLLPATH isn't set.
+
+2006-03-16  Detlef Riekenberg <wine.dev@web.de>
+
+	* include/winbase.h:
+	winbase.h: Add missing LMEM_INVALID_HANDLE define.
+
+2006-03-16  Alexandre Julliard <julliard@winehq.org>
+
+	* include/wine/library.h, libs/wine/config.c, libs/wine/wine.def,
+	  libs/wine/wine.map:
+	libwine: Export wine_get_build_dir.
+
+	* dlls/ntdll/server.c, libs/wine/config.c:
+	libwine: Added support for executing wine binaries out of the build dir.
+
+	* libs/wine/config.c:
+	libwine: Added detection for Wine being run out of the build directory.
+
+	* dlls/Makefile.in, dlls/make_dlls:
+	dlls: Remove the no longer needed symlinks to the static libraries.
+
+	* dlls/Makedll.rules.in, dlls/Maketest.rules.in,
+	  programs/Makeprog.rules.in, programs/avitools/Makefile.in:
+	Remove some no longer needed library paths.
+
+	* tools/winegcc/utils.c, tools/winegcc/winegcc.c:
+	winegcc: Look for libraries in subdirs of the library path too.
+	This means that -lfoo will match the library 'foo/libfoo.def' in
+	addition to just 'libfoo.def'. This allows supporting the Wine source
+	layout without adding a gazillion path entries.
+
+2006-03-16  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/dispatcher.c:
+	secur32: Update ntlm_auth version detection to detect new samba4 version numbers.
+	Samba4 changed the versioning from 3.9.X to 4.0.0tpX-preY.
+
+2006-03-15  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/tests/store.c:
+	crypt32: Tighten CertDuplicateCertificateContext test.
+	Test that the return from CertDuplicateCertificateContext is the same
+	as its parameter.
+
+2006-03-15  Alexandre Julliard <julliard@winehq.org>
+
+	* ANNOUNCE, ChangeLog, VERSION, configure:
+	Release 0.9.10.
+
+----------------------------------------------------------------
 2006-03-15  Alexandre Julliard <julliard@winehq.org>
 
 	* programs/avitools/Makefile.in:
