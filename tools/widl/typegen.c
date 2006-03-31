@@ -1501,20 +1501,11 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                     fprintf(file, ";\n");
                 }
 
+                /* FIXME: these can't both be correct */
                 if (phase == PHASE_FREE)
-                {
-                    print_file(file, indent, "NdrPointerFree(\n");
-                    indent++;
-                    print_file(file, indent, "&_StubMsg,\n");
-                    print_file(file, indent, "(unsigned char *)%s,\n", var->name);
-                    print_file(file, indent, "&__MIDL_TypeFormatString.Format[%d]);\n",
-                               *type_offset);
-                    indent--;
-                }
+                    print_phase_function(file, indent, "Pointer", phase, var->name, *type_offset);
                 else
-                {
                     print_phase_function(file, indent, "ConformantString", phase, var->name, *type_offset);
-                }
             }
         }
         else if (is_array_type(var->attrs, var->ptr_level, var->array))
