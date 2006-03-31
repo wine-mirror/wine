@@ -287,6 +287,14 @@ static inline gid_t wld_getegid(void)
     return ret;
 }
 
+static inline int wld_prctl( int code, int arg )
+{
+    int ret;
+    __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
+                          : "=a" (ret) : "0" (SYS_prctl), "r" (code), "c" (arg) );
+    return SYSCALL_RET(ret);
+}
+
 
 /* replacement for libc functions */
 
@@ -871,6 +879,26 @@ static int is_in_preload_range( const ElfW(auxv_t) *av, int type )
     return 0;
 }
 
+/* set the process name if supported */
+static void set_process_name( int argc, char *argv[] )
+{
+    unsigned int i, off;
+    char *p, *name, *end;
+
+    /* set the process short name */
+    for (p = name = argv[1]; *p; p++) if (p[0] == '/' && p[1]) name = p + 1;
+    if (wld_prctl( 15 /* PR_SET_NAME */, (int)name ) == -1) return;
+
+    /* find the end of the argv array and move everything down */
+    end = argv[argc - 1];
+    while (*end) end++;
+    off = argv[1] - argv[0];
+    for (p = argv[1]; p <= end; p++) *(p - off) = *p;
+    wld_memset( end - off, 0, off );
+    for (i = 1; i < argc; i++) argv[i] -= off;
+}
+
+
 /*
  *  wld_start
  *
@@ -956,6 +984,7 @@ void* wld_start( void **stack )
     delete_av[i].a_type = AT_NULL;
 
     /* get rid of first argument */
+    set_process_name( *pargc, argv );
     pargc[1] = pargc[0] - 1;
     *stack = pargc + 1;
 
