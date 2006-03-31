@@ -216,7 +216,6 @@ struct _var_t {
   const char *tname;
   attr_t *attrs;
   expr_t *eval;
-  long lval;
 
   /* parser-internal */
   DECL_LINK(var_t)

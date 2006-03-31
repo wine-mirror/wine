@@ -436,7 +436,6 @@ case:	  tCASE expr ':' field			{ attr_t *a = make_attrp(ATTR_CASE, $2);
 constdef: tCONST type ident '=' expr_const	{ $$ = reg_const($3);
 						  set_type($$, $2, NULL);
 						  $$->eval = $5;
-						  $$->lval = $5->cval;
 						}
 	;
 
@@ -445,20 +444,20 @@ enums:						{ $$ = NULL; }
 	| enum_list
 	;
 
-enum_list: enum
+enum_list: enum					{ if (!$$->eval)
+						    $$->eval = make_exprl(EXPR_NUM, 0 /* default for first enum entry */);
+						}
 	| enum_list ',' enum			{ LINK($3, $1); $$ = $3;
-						  if ($1 && !$3->eval)
-						    $3->lval = $1->lval + 1;
+						  if (!$$->eval)
+						    $$->eval = make_exprl(EXPR_NUM, $1->eval->cval + 1);
 						}
 	;
 
 enum:	  ident '=' expr_const			{ $$ = reg_const($1);
 						  $$->eval = $3;
-						  $$->lval = $3->cval;
                                                   $$->type = make_type(RPC_FC_LONG, &std_int);
 						}
 	| ident					{ $$ = reg_const($1);
-						  $$->lval = 0; /* default for first enum entry */
                                                   $$->type = make_type(RPC_FC_LONG, &std_int);
 						}
 	;
@@ -875,7 +874,7 @@ static expr_t *make_exprs(enum expr_type type, char *val)
       e->u.sval = c->name;
       free(val);
       e->is_const = TRUE;
-      e->cval = c->lval;
+      e->cval = c->eval->cval;
     }
   }
   return e;
@@ -1101,7 +1100,6 @@ static var_t *make_var(char *name)
   v->attrs = NULL;
   v->array = NULL;
   v->eval = NULL;
-  v->lval = 0;
   INIT_LINK(v);
   return v;
 }
