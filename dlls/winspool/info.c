@@ -5136,10 +5136,126 @@ BOOL WINAPI EnumFormsW( HANDLE hPrinter, DWORD Level, LPBYTE pForm,
 BOOL WINAPI EnumMonitorsA(LPSTR pName, DWORD Level, LPBYTE pMonitors,
                           DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
-    FIXME("%s,%ld,%p,%ld,%p,%p\n", debugstr_a(pName), Level, pMonitors,
+    BOOL    res;
+    LPBYTE  bufferW = NULL;
+    LPWSTR  nameW = NULL;
+    DWORD   needed = 0;
+    DWORD   numentries = 0;
+    INT     len;
+
+    TRACE("(%s, %ld, %p, %ld, %p, %p)\n", debugstr_a(pName), Level, pMonitors,
           cbBuf, pcbNeeded, pcReturned);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+
+    /* convert servername to unicode */
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
+    }
+    /* alloc (userbuffersize*sizeof(WCHAR) and try to enum the monitors */
+    needed = cbBuf * sizeof(WCHAR);    
+    if (needed) bufferW = HeapAlloc(GetProcessHeap(), 0, needed);
+    res = EnumMonitorsW(nameW, Level, bufferW, needed, pcbNeeded, pcReturned);
+
+    if(!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        if (pcbNeeded) needed = *pcbNeeded;
+        /* HeapReAlloc return NULL, when bufferW was NULL */
+        bufferW = (bufferW) ? HeapReAlloc(GetProcessHeap(), 0, bufferW, needed) :
+                              HeapAlloc(GetProcessHeap(), 0, needed);
+
+        /* Try again with the large Buffer */
+        res = EnumMonitorsW(nameW, Level, bufferW, needed, pcbNeeded, pcReturned);
+    }
+    numentries = pcReturned ? *pcReturned : 0;
+    needed = 0;
+    /*
+       W2k require the buffersize from EnumMonitorsW also for EnumMonitorsA.
+       We use the smaller Ansi-Size to avoid conflicts with fixed Buffers of old Apps.
+     */
+    if (res) {
+        /* EnumMonitorsW collected all Data. Parse them to caclulate ANSI-Size */
+        DWORD   entrysize = 0;
+        DWORD   index;
+        LPSTR   ptr;
+        LPMONITOR_INFO_2W mi2w;
+        LPMONITOR_INFO_2A mi2a;
+
+        /* MONITOR_INFO_*W and MONITOR_INFO_*A have the same size */
+        entrysize = (Level == 1) ? sizeof(MONITOR_INFO_1A) : sizeof(MONITOR_INFO_2A);
+
+        /* First pass: calculate the size for all Entries */
+        mi2w = (LPMONITOR_INFO_2W) bufferW;
+        mi2a = (LPMONITOR_INFO_2A) pMonitors;
+        index = 0;
+        while (index < numentries) {
+            index++;
+            needed += entrysize;    /* MONITOR_INFO_?A */
+            TRACE("%p: parsing #%ld (%s)\n", mi2w, index, debugstr_w(mi2w->pName));
+
+            needed += WideCharToMultiByte(CP_ACP, 0, mi2w->pName, -1,
+                                            NULL, 0, NULL, NULL);
+            if (Level > 1) {
+                needed += WideCharToMultiByte(CP_ACP, 0, mi2w->pEnvironment, -1,
+                                                NULL, 0, NULL, NULL);
+                needed += WideCharToMultiByte(CP_ACP, 0, mi2w->pDLLName, -1,
+                                                NULL, 0, NULL, NULL);
+            }
+            /* use LPBYTE with entrysize to avoid double code (MONITOR_INFO_1 + MONITOR_INFO_2) */
+            mi2w = (LPMONITOR_INFO_2W) (((LPBYTE)mi2w) + entrysize);
+            mi2a = (LPMONITOR_INFO_2A) (((LPBYTE)mi2a) + entrysize);
+        }
+
+        /* check for errors and quit on failure */
+        if (cbBuf < needed) {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            res = FALSE;
+            goto emA_cleanup;
+        }
+        len = entrysize * numentries;       /* room for all MONITOR_INFO_?A */
+        ptr = (LPSTR) &pMonitors[len];      /* room for strings */
+        cbBuf -= len ;                      /* free Bytes in the user-Buffer */
+        mi2w = (LPMONITOR_INFO_2W) bufferW;
+        mi2a = (LPMONITOR_INFO_2A) pMonitors;
+        index = 0;
+        /* Second Pass: Fill the User Buffer (if we have one) */
+        while ((index < numentries) && pMonitors) {
+            index++;
+            TRACE("%p: writing MONITOR_INFO_%ldA #%ld\n", mi2a, Level, index);
+            mi2a->pName = ptr;
+            len = WideCharToMultiByte(CP_ACP, 0, mi2w->pName, -1,
+                                            ptr, cbBuf , NULL, NULL);
+            ptr += len;
+            cbBuf -= len;
+            if (Level > 1) {
+                mi2a->pEnvironment = ptr;
+                len = WideCharToMultiByte(CP_ACP, 0, mi2w->pEnvironment, -1,
+                                            ptr, cbBuf, NULL, NULL);
+                ptr += len;
+                cbBuf -= len;
+
+                mi2a->pDLLName = ptr;
+                len = WideCharToMultiByte(CP_ACP, 0, mi2w->pDLLName, -1,
+                                            ptr, cbBuf, NULL, NULL);
+                ptr += len;
+                cbBuf -= len;
+            }
+            /* use LPBYTE with entrysize to avoid double code (MONITOR_INFO_1 + MONITOR_INFO_2) */
+            mi2w = (LPMONITOR_INFO_2W) (((LPBYTE)mi2w) + entrysize);
+            mi2a = (LPMONITOR_INFO_2A) (((LPBYTE)mi2a) + entrysize);
+        }
+    }
+emA_cleanup:
+    if (pcbNeeded)  *pcbNeeded = needed;
+    if (pcReturned) *pcReturned = (res) ? numentries : 0;
+
+    HeapFree(GetProcessHeap(), 0, nameW);
+    HeapFree(GetProcessHeap(), 0, bufferW);
+
+    TRACE("returning %d with %ld (%ld byte for %ld entries)\n", 
+            (res), GetLastError(), needed, numentries);
+
+    return (res);
+
 }
 
 /*****************************************************************************
