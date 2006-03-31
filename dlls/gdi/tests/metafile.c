@@ -612,6 +612,8 @@ static void dump_mf_bits (const HMETAFILE mf, const char *desc)
     BYTE buf[MF_BUFSIZE];
     UINT mfsize, i;
 
+    if (!winetest_debug) return;
+
     mfsize = GetMetaFileBitsEx (mf, MF_BUFSIZE, buf);
     ok (mfsize > 0, "%s: GetMetaFileBitsEx failed.\n", desc);
 
@@ -710,6 +712,8 @@ static void dump_emf_bits(const HENHMETAFILE mf, const char *desc)
     BYTE buf[MF_BUFSIZE];
     UINT mfsize, i;
 
+    if (!winetest_debug) return;
+
     mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
     ok (mfsize > 0, "%s: GetEnhMetaFileBits failed\n", desc);
 
@@ -732,6 +736,8 @@ static void dump_emf_records(const HENHMETAFILE mf, const char *desc)
     BYTE *emf;
     BYTE buf[MF_BUFSIZE];
     UINT mfsize, offset;
+
+    if (!winetest_debug) return;
 
     mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
     ok (mfsize > 0, "%s: GetEnhMetaFileBits error %ld\n", desc, GetLastError());
