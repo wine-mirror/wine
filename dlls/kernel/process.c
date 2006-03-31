@@ -2271,6 +2271,8 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
     attr.SecurityQualityOfService = NULL;
     attr.ObjectName = NULL;
 
+    if (GetVersion() & 0x80000000) access = PROCESS_ALL_ACCESS;
+
     status = NtOpenProcess(&handle, access, &attr, &cid);
     if (status != STATUS_SUCCESS)
     {
