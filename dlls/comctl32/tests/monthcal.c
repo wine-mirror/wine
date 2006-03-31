@@ -59,6 +59,7 @@ void test_monthcal(void)
     ok(st1[0].wYear != 2000, "Lover limit changed\n");
 
     GetSystemTime(&st[0]);
+    st[0].wDay = 20;
     st[0].wMonth = 5;
     st[1] = st[0];
 
