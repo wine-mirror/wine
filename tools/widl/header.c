@@ -916,6 +916,14 @@ static void write_rpc_interface(const type_t *iface)
 {
   unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
   const char *var = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+  static int allocate_written = 0;
+
+  if (!allocate_written)
+  {
+    allocate_written = 1;
+    fprintf(header, "void * __RPC_USER MIDL_user_allocate(size_t);\n");
+    fprintf(header, "void __RPC_USER MIDL_user_free(void *);\n\n");
+  }
 
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s interface (v%d.%d)\n", iface->name, LOWORD(ver), HIWORD(ver));
