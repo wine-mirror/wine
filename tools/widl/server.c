@@ -167,7 +167,10 @@ static void assign_out_args(const func_t *func)
             }
             else
             {
-                fprintf(server, " = &_W%u;\n", i++);
+                fprintf(server, " = &_W%u;\n", i);
+                if (var->ptr_level > 1)
+                    print_server("_W%u = 0;\n", i);
+                i++;
             }
 
             sep = 1;
