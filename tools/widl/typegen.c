@@ -706,6 +706,9 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     if (!get_attrp(attrs, ATTR_SIZEIS))
         flags |= RPC_FC_P_SIMPLEPOINTER;
 
+    while (type_has_ref(type))
+        type = type->ref;
+
     if ((type->type != RPC_FC_BYTE) && (type->type != RPC_FC_CHAR) && (type->type != RPC_FC_WCHAR))
     {
         error("write_string_tfs: Unimplemented for type 0x%x of name: %s\n", type->type, name);
@@ -1425,6 +1428,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
     {
+        const type_t *type = var->type;
         length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
         size_is = get_attrp(var->attrs, ATTR_SIZEIS);
         has_length = length_is && (length_is->type != EXPR_VOID);
@@ -1452,6 +1456,9 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         case PASS_RETURN:
             break;
         }
+
+        while (type_has_ref(type))
+            type = type->ref;
 
         if (is_string_type(var->attrs, var->ptr_level, var->array))
         {
@@ -1545,11 +1552,11 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                        array_type, function_from_phase(phase), var->name,
                        *type_offset);
         }
-        else if (var->ptr_level == 0 && is_base_type(var->type->type))
+        else if (var->ptr_level == 0 && is_base_type(type->type))
         {
             unsigned int size;
             unsigned int alignment = 0;
-            switch (var->type->type)
+            switch (type->type)
             {
             case RPC_FC_BYTE:
             case RPC_FC_CHAR:
@@ -1586,7 +1593,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 continue;
 
             default:
-                error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
+                error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, type->type);
                 size = 0;
             }
 
@@ -1623,7 +1630,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         {
             const char *ndrtype;
 
-            switch (var->type->type)
+            switch (type->type)
             {
             case RPC_FC_STRUCT:
                 ndrtype = "SimpleStruct";
@@ -1640,7 +1647,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 break;
             default:
                 error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
-                    var->name, var->type->type, var->ptr_level);
+                    var->name, type->type, var->ptr_level);
                 ndrtype = NULL;
             }
 
@@ -1650,10 +1657,10 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         }
         else
         {
-            if ((var->ptr_level == 1) && (pointer_type == RPC_FC_RP) && is_base_type(var->type->type))
+            if ((var->ptr_level == 1) && (pointer_type == RPC_FC_RP) && is_base_type(type->type))
             {
                 unsigned int size;
-                switch (var->type->type)
+                switch (type->type)
                 {
                 case RPC_FC_BYTE:
                 case RPC_FC_CHAR:
@@ -1686,7 +1693,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                     continue;
 
                 default:
-                    error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, var->type->type);
+                    error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: 1)\n", var->name, type->type);
                     size = 0;
                 }
 
