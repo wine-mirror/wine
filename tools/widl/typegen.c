@@ -1163,8 +1163,12 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
     const type_t *type = var->type;
     int ptr_level = var->ptr_level;
 
+    chat("write_typeformatstring_var: %s\n", var->name);
+
     while (TRUE)
     {
+        chat("write_typeformatstring: type->type = 0x%x, type->name = %s, ptr_level = %d\n", type->type, type->name, ptr_level);
+
         if (is_string_type(var->attrs, ptr_level, var->array))
             return write_string_tfs(file, var->attrs, type, var->array, var->name, typeformat_offset);
 
@@ -1646,7 +1650,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         }
         else
         {
-            if (pointer_type == RPC_FC_RP)
+            if ((var->ptr_level == 1) && (pointer_type == RPC_FC_RP) && is_base_type(var->type->type))
             {
                 unsigned int size;
                 switch (var->type->type)
@@ -1711,7 +1715,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 write_type(file, var->type, NULL, var->tname);
                 fprintf(file, ");\n");
             }
-            else if (pointer_type == RPC_FC_UP)
+            else
             {
                 print_file(file, indent, "NdrPointer%s(\n", function_from_phase(phase));
                 indent++;
@@ -1722,10 +1726,6 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 if (phase == PHASE_UNMARSHAL)
                     print_file(file, indent, "(unsigned char *)0);\n");
                 indent--;
-            }
-            else if (pointer_type == RPC_FC_FP)
-            {
-                error("write_remoting_arguments: Unimplemented for full pointers to base types\n");
             }
         }
         fprintf(file, "\n");
