@@ -70,7 +70,7 @@ static CRITICAL_SECTION_DEBUG csRegIf_debug =
 };
 static CRITICAL_SECTION csRegIf = { &csRegIf_debug, -1, 0, 0, 0, 0 };
 
-static WCHAR wszPipeTransport[] = {'n','c','a','c','n','_','n','p',0};
+static WCHAR wszRpcTransport[] = {'n','c','a','l','r','p','c',0};
 
 
 struct registered_if
@@ -447,7 +447,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
 
     status = RpcStringBindingComposeW(
         NULL,
-        wszPipeTransport,
+        wszRpcTransport,
         NULL,
         endpoint,
         NULL,
@@ -683,7 +683,7 @@ void RPC_StartRemoting(struct apartment *apt)
         get_rpc_endpoint(endpoint, &apt->oxid);
     
         status = RpcServerUseProtseqEpW(
-            wszPipeTransport,
+            wszRpcTransport,
             RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
             endpoint,
             NULL);
