@@ -1433,6 +1433,96 @@ static void print_phase_function(FILE *file, int indent, const char *type,
     indent--;
 }
 
+void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
+                          enum pass pass, const var_t *var,
+                          const char *varname)
+{
+    const type_t *type = var->type;
+    unsigned int size;
+    unsigned int alignment = 0;
+
+    /* no work to do for other phases, buffer sizing is done elsewhere */
+    if (phase != PHASE_MARSHAL && phase != PHASE_UNMARSHAL)
+        return;
+
+    while (type_has_ref(type))
+        type = type->ref;
+
+    switch (type->type)
+    {
+        case RPC_FC_BYTE:
+        case RPC_FC_CHAR:
+        case RPC_FC_SMALL:
+        case RPC_FC_USMALL:
+            size = 1;
+            alignment = 1;
+            break;
+
+        case RPC_FC_WCHAR:
+        case RPC_FC_USHORT:
+        case RPC_FC_SHORT:
+            size = 2;
+            alignment = 2;
+            break;
+
+        case RPC_FC_ULONG:
+        case RPC_FC_LONG:
+        case RPC_FC_FLOAT:
+        case RPC_FC_ERROR_STATUS_T:
+            size = 4;
+            alignment = 4;
+            break;
+
+        case RPC_FC_HYPER:
+        case RPC_FC_DOUBLE:
+            size = 8;
+            alignment = 8;
+            break;
+
+        case RPC_FC_IGNORE:
+        case RPC_FC_BIND_PRIMITIVE:
+            /* no marshalling needed */
+            return;
+
+        default:
+            error("print_phase_basetype: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, type->type);
+            size = 0;
+    }
+
+    print_file(file, indent, "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
+                alignment - 1, alignment - 1);
+
+    if (phase == PHASE_MARSHAL)
+    {
+        print_file(file, indent, "*(");
+        write_type(file, var->type, NULL, var->tname);
+        if (var->ptr_level)
+            fprintf(file, " *)_StubMsg.Buffer = *");
+        else
+            fprintf(file, " *)_StubMsg.Buffer = ");
+        fprintf(file, varname);
+        fprintf(file, ";\n");
+    }
+    else if (phase == PHASE_UNMARSHAL)
+    {
+        if (pass == PASS_IN || pass == PASS_RETURN)
+            print_file(file, indent, "");
+        else
+            print_file(file, indent, "*");
+        fprintf(file, varname);
+        if (pass == PASS_IN && var->ptr_level)
+            fprintf(file, " = (");
+        else
+            fprintf(file, " = *(");
+        write_type(file, var->type, NULL, var->tname);
+        fprintf(file, " *)_StubMsg.Buffer;\n");
+    }
+
+    print_file(file, indent, "_StubMsg.Buffer += sizeof(");
+    write_type(file, var->type, NULL, var->tname);
+    fprintf(file, ");\n");
+}
+
 /* returns whether the MaxCount, Offset or ActualCount members need to be
  * filled in for the specified phase */
 static inline int is_size_needed_for_phase(enum remoting_phase phase)
@@ -1559,77 +1649,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         }
         else if (var->ptr_level == 0 && is_base_type(type->type))
         {
-            unsigned int size;
-            unsigned int alignment = 0;
-            switch (type->type)
-            {
-            case RPC_FC_BYTE:
-            case RPC_FC_CHAR:
-            case RPC_FC_SMALL:
-            case RPC_FC_USMALL:
-                size = 1;
-                alignment = 1;
-                break;
-
-            case RPC_FC_WCHAR:
-            case RPC_FC_USHORT:
-            case RPC_FC_SHORT:
-                size = 2;
-                alignment = 2;
-                break;
-
-            case RPC_FC_ULONG:
-            case RPC_FC_LONG:
-            case RPC_FC_FLOAT:
-            case RPC_FC_ERROR_STATUS_T:
-                size = 4;
-                alignment = 4;
-                break;
-
-            case RPC_FC_HYPER:
-            case RPC_FC_DOUBLE:
-                size = 8;
-                alignment = 8;
-                break;
-
-            case RPC_FC_IGNORE:
-            case RPC_FC_BIND_PRIMITIVE:
-                /* no marshalling needed */
-                continue;
-
-            default:
-                error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: 0)\n", var->name, type->type);
-                size = 0;
-            }
-
-            if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
-            {
-                print_file(file, indent, "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
-                           alignment - 1, alignment - 1);
-
-                if (phase == PHASE_MARSHAL)
-                {
-                    print_file(file, indent, "*(");
-                    write_type(file, var->type, var, var->tname);
-                    fprintf(file, " *)_StubMsg.Buffer = ");
-                    write_name(file, var);
-                    fprintf(file, ";\n");
-                }
-                else if (phase == PHASE_UNMARSHAL)
-                {
-                    print_file(file, indent, "");
-                    write_name(file, var);
-                    fprintf(file, " = *(");
-                    write_type(file, var->type, var, var->tname);
-                    fprintf(file, " *)_StubMsg.Buffer;\n");
-                }
-                else
-                    error("write_remoting_arguments: Unimplemented for base types for phase %d\n", phase);
-
-                print_file(file, indent, "_StubMsg.Buffer += sizeof(");
-                write_type(file, var->type, var, var->tname);
-                fprintf(file, ");\n");
-            }
+            print_phase_basetype(file, indent, phase, pass, var, var->name);
         }
         else if (var->ptr_level == 0)
         {
@@ -1662,71 +1682,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         {
             if ((var->ptr_level == 1) && (pointer_type == RPC_FC_RP) && is_base_type(type->type))
             {
-                unsigned int size;
-                switch (type->type)
-                {
-                case RPC_FC_BYTE:
-                case RPC_FC_CHAR:
-                case RPC_FC_SMALL:
-                case RPC_FC_USMALL:
-                    size = 1;
-                    break;
-
-                case RPC_FC_WCHAR:
-                case RPC_FC_USHORT:
-                case RPC_FC_SHORT:
-                    size = 2;
-                    break;
-
-                case RPC_FC_ULONG:
-                case RPC_FC_LONG:
-                case RPC_FC_FLOAT:
-                case RPC_FC_ERROR_STATUS_T:
-                    size = 4;
-                    break;
-
-                case RPC_FC_HYPER:
-                case RPC_FC_DOUBLE:
-                    size = 8;
-                    break;
-
-                case RPC_FC_IGNORE:
-                case RPC_FC_BIND_PRIMITIVE:
-                    /* no marshalling needed */
-                    continue;
-
-                default:
-                    error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: 1)\n", var->name, type->type);
-                    size = 0;
-                }
-
-                if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
-                {
-                    print_file(file, indent,
-                            "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
-                            size - 1, size - 1);
-
-                    if (phase == PHASE_MARSHAL)
-                    {
-                        print_file(file, indent, "*(");
-                        write_type(file, var->type, NULL, var->tname);
-                        fprintf(file, " *)_StubMsg.Buffer = *");
-                        write_name(file, var);
-                        fprintf(file, ";\n");
-                    }
-                    else if (phase == PHASE_UNMARSHAL)
-                    {
-                        print_file(file, indent, (pass == PASS_IN) ? "" : "*");
-                        write_name(file, var);
-                        fprintf(file, (pass == PASS_IN) ? " = (" : " = *(");
-                        write_type(file, var->type, NULL, var->tname);
-                        fprintf(file, " *)_StubMsg.Buffer;\n");
-                    }
-
-                    print_file(file, indent, "_StubMsg.Buffer += sizeof(");
-                    write_type(file, var->type, NULL, var->tname);
-                    fprintf(file, ");\n");
-                }
+                print_phase_basetype(file, indent, phase, pass, var, var->name);
             }
             else
             {
