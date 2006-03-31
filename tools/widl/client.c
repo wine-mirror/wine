@@ -491,8 +491,11 @@ void write_client(ifref_t *ifaces)
     if (!client)
         return;
 
-    while (iface)
+    for (; iface; iface = PREV_LINK(iface))
     {
+        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+            continue;
+
         fprintf(client, "/*****************************************************************************\n");
         fprintf(client, " * %s interface\n", iface->iface->name);
         fprintf(client, " */\n");
@@ -526,8 +529,6 @@ void write_client(ifref_t *ifaces)
                 write_expr_eval_routine_list(client, iface->iface->name);
             write_stubdescriptor(iface->iface, expr_eval_routines);
         }
-
-        iface = PREV_LINK(iface);
     }
 
     fclose(client);

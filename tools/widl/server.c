@@ -601,7 +601,7 @@ void write_server(ifref_t *ifaces)
 
     if (!do_server)
         return;
-    if (!iface)
+    if (!ifaces)
         return;
     END_OF_LIST(iface);
 
@@ -609,8 +609,11 @@ void write_server(ifref_t *ifaces)
     if (!server)
         return;
 
-    while (iface)
+    for (; iface; iface = PREV_LINK(iface))
     {
+        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+            continue;
+
         fprintf(server, "/*****************************************************************************\n");
         fprintf(server, " * %s interface\n", iface->iface->name);
         fprintf(server, " */\n");
@@ -643,8 +646,6 @@ void write_server(ifref_t *ifaces)
             write_stubdescriptor(iface->iface, expr_eval_routines);
             write_dispatchtable(iface->iface);
         }
-
-        iface = PREV_LINK(iface);
     }
 
     fclose(server);
