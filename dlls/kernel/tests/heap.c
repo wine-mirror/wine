@@ -92,6 +92,11 @@ START_TEST(heap)
     ok( (flags == GMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
         "returned 0x%04x with 0x%08lx (expected GMEM_INVALID_HANDLE with " \
         "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
+    SetLastError(MAGIC_DEAD);
+    size = GlobalSize(gbl);
+    ok( (size == 0) && (GetLastError() == ERROR_INVALID_HANDLE),
+        "returned %ld with 0x%08lx (expected '0' with ERROR_INVALID_HANDLE)\n",
+        size, GetLastError());
 
 
     /* Local*() functions */
@@ -128,6 +133,11 @@ START_TEST(heap)
     ok( (flags == LMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
         "returned 0x%04x with 0x%08lx (expected LMEM_INVALID_HANDLE with " \
         "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
+    SetLastError(MAGIC_DEAD);
+    size = LocalSize(gbl);
+    ok( (size == 0) && (GetLastError() == ERROR_INVALID_HANDLE),
+        "returned %ld with 0x%08lx (expected '0' with ERROR_INVALID_HANDLE)\n",
+        size, GetLastError());
 
 
     /* trying to lock empty memory should give an error */

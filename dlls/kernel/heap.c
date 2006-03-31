@@ -751,13 +751,19 @@ HGLOBAL WINAPI GlobalFree(HGLOBAL hmem)
  *
  * Get the size of a global memory object.
  *
+ * PARAMS
+ *  hmem [I] Handle of the global memory object
+ *
  * RETURNS
- *      Size in bytes of the global memory object
- *      0: Failure
+ *  Failure: 0
+ *  Success: Size in Bytes of the global memory object
+ *
+ * NOTES
+ *   When the handle is invalid, last error is set to ERROR_INVALID_HANDLE
+ *
  */
-SIZE_T WINAPI GlobalSize(
-             HGLOBAL hmem /* [in] Handle of global memory object */
-) {
+SIZE_T WINAPI GlobalSize(HGLOBAL hmem)
+{
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
 
@@ -785,7 +791,8 @@ SIZE_T WINAPI GlobalSize(
       }
       else
       {
-         WARN("invalid handle\n");
+         WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
+         SetLastError(ERROR_INVALID_HANDLE);
          retval=0;
       }
       RtlUnlockHeap(GetProcessHeap());
