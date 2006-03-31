@@ -1887,6 +1887,16 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
 
 /******************************************************************************
  *           TerminateProcess   (KERNEL32.@)
+ *
+ * Terminates a process.
+ *
+ * PARAMS
+ *  handle    [I] Process to terminate.
+ *  exit_code [I] Exit code.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE, check GetLastError().
  */
 BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 {
@@ -1898,6 +1908,14 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 
 /***********************************************************************
  *           ExitProcess   (KERNEL32.@)
+ *
+ * Exits the current process.
+ *
+ * PARAMS
+ *  status [I] Status code to exit with.
+ *
+ * RETURNS
+ *  Nothing.
  */
 void WINAPI ExitProcess( DWORD status )
 {
@@ -2247,6 +2265,17 @@ void WINAPI ExitProcess16( WORD status )
 
 /*********************************************************************
  *           OpenProcess   (KERNEL32.@)
+ *
+ * Opens a handle to a process.
+ *
+ * PARAMS
+ *  access  [I] Desired access rights assigned to the returned handle.
+ *  inherit [I] Determines whether or not child processes will inherit the handle.
+ *  id      [I] Process identifier of the process to get a handle to.
+ *
+ * RETURNS
+ *  Success: Valid handle to the specified process.
+ *  Failure: NULL, check GetLastError().
  */
 HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 {
@@ -2278,6 +2307,20 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 /*********************************************************************
  *           MapProcessHandle   (KERNEL.483)
  *           GetProcessId       (KERNEL32.@)
+ *
+ * Gets the a unique identifier of a process.
+ *
+ * PARAMS
+ *  hProcess [I] Handle to the process.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE, check GetLastError().
+ *
+ * NOTES
+ *
+ * The identifier is unique only on the machine and only until the process
+ * exits (including system shutdown).
  */
 DWORD WINAPI GetProcessId( HANDLE hProcess )
 {
@@ -2295,6 +2338,15 @@ DWORD WINAPI GetProcessId( HANDLE hProcess )
 /*********************************************************************
  *           CloseW32Handle (KERNEL.474)
  *           CloseHandle    (KERNEL32.@)
+ *
+ * Closes a handle.
+ *
+ * PARAMS
+ *  handle [I] Handle to close.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE, check GetLastError().
  */
 BOOL WINAPI CloseHandle( HANDLE handle )
 {
@@ -2687,7 +2739,6 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, SIZ
 BOOL WINAPI FlushInstructionCache(HANDLE hProcess, LPCVOID lpBaseAddress, SIZE_T dwSize)
 {
     NTSTATUS status;
-    if (GetVersion() & 0x80000000) return TRUE; /* not NT, always TRUE */
     status = NtFlushInstructionCache( hProcess, lpBaseAddress, dwSize );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
@@ -2755,9 +2806,14 @@ HANDLE WINAPI GetCurrentProcess(void)
 /***********************************************************************
  *           CmdBatNotification   (KERNEL32.@)
  *
- *  Called by cmd.exe with
- *    (1) when a batch file is started 
- *    (0) when a batch file finishes executing
+ * Notifies the system that a batch file has started or finished.
+ *
+ * PARAMS
+ *  bBatchRunning [I]  TRUE if a batch file has started or 
+ *                     FALSE if a batch file has finished executing.
+ *
+ * RETURNS
+ *  Unknown.
  */
 BOOL WINAPI CmdBatNotification( BOOL bBatchRunning )
 {
