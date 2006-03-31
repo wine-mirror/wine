@@ -828,7 +828,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
-            print_file(file, 2, "FC_END,\n");
+            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
             *typestring_offset += 2;
 
             return start_offset;
@@ -882,7 +882,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
-            print_file(file, 2, "FC_END,\n");
+            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
             *typestring_offset += 2;
 
             return start_offset;
@@ -915,7 +915,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
-            print_file(file, 2, "FC_END,\n");
+            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
             *typestring_offset += 2;
 
             return start_offset;
@@ -951,7 +951,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
             }
 
             print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
-            print_file(file, 2, "FC_END,\n");
+            print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
             *typestring_offset += 2;
 
             return start_offset;
@@ -1023,7 +1023,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
 
         /* member layout */
         print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
-        print_file(file, 2, "FC_END,\n");
+        print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
 
         *typestring_offset += 2;
         return start_offset;
@@ -1076,7 +1076,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             *typestring_offset += 1;
         }
 
-        print_file(file, 2, "FC_END,\n");
+        print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
         *typestring_offset += 1;
 
         return start_offset;
@@ -1127,7 +1127,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
             *typestring_offset += 1;
         }
 
-        print_file(file, 2, "FC_END,\n");
+        print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
         *typestring_offset += 1;
 
         return start_offset;
