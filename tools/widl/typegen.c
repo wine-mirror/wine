@@ -1422,7 +1422,7 @@ static void print_phase_function(FILE *file, int indent, const char *type,
 
     print_file(file, indent, "Ndr%s%s(\n", type, function);
     indent++;
-    print_file(file, indent, "(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
+    print_file(file, indent, "&_StubMsg,\n");
     print_file(file, indent, "%s%s,\n",
                (phase == PHASE_UNMARSHAL) ? "(unsigned char **)&" : "(unsigned char *)",
                varname);
