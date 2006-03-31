@@ -101,12 +101,16 @@ static void declare_args(const func_t *func)
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
+        const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+        int has_size = size_is && (size_is->type != EXPR_VOID);
+        int is_string = is_attr(var->attrs, ATTR_STRING);
+
         in_attr = is_attr(var->attrs, ATTR_IN);
         out_attr = is_attr(var->attrs, ATTR_OUT);
         if (!out_attr && !in_attr)
             in_attr = 1;
 
-        if (!in_attr && !is_attr(var->attrs, ATTR_STRING))
+        if (!in_attr && !has_size && !is_string)
         {
             int indirection;
             print_server("");
@@ -143,6 +147,7 @@ static void assign_out_args(const func_t *func)
     while (NEXT_LINK(var)) var = NEXT_LINK(var);
     while (var)
     {
+        int is_string = is_attr(var->attrs, ATTR_STRING);
         size_is = get_attrp(var->attrs, ATTR_SIZEIS);
         has_size = size_is && (size_is->type != EXPR_VOID);
         in_attr = is_attr(var->attrs, ATTR_IN);
@@ -165,7 +170,7 @@ static void assign_out_args(const func_t *func)
                 write_expr(server, size_is, 1);
                 fprintf(server, " * %u);\n", get_type_memsize(type));
             }
-            else
+            else if (!is_string)
             {
                 fprintf(server, " = &_W%u;\n", i);
                 if (var->ptr_level > 1)
