@@ -1704,30 +1704,33 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                     size = 0;
                 }
 
-                print_file(file, indent,
-                           "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
-                           size - 1, size - 1);
-
-                if (phase == PHASE_MARSHAL)
+                if (phase == PHASE_MARSHAL || phase == PHASE_UNMARSHAL)
                 {
-                    print_file(file, indent, "*(");
-                    write_type(file, var->type, NULL, var->tname);
-                    fprintf(file, " *)_StubMsg.Buffer = *");
-                    write_name(file, var);
-                    fprintf(file, ";\n");
-                }
-                else if (phase == PHASE_UNMARSHAL)
-                {
-                    print_file(file, indent, (pass == PASS_IN) ? "" : "*");
-                    write_name(file, var);
-                    fprintf(file, (pass == PASS_IN) ? " = (" : " = *(");
-                    write_type(file, var->type, NULL, var->tname);
-                    fprintf(file, " *)_StubMsg.Buffer;\n");
-                }
+                    print_file(file, indent,
+                            "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
+                            size - 1, size - 1);
 
-                print_file(file, indent, "_StubMsg.Buffer += sizeof(");
-                write_type(file, var->type, NULL, var->tname);
-                fprintf(file, ");\n");
+                    if (phase == PHASE_MARSHAL)
+                    {
+                        print_file(file, indent, "*(");
+                        write_type(file, var->type, NULL, var->tname);
+                        fprintf(file, " *)_StubMsg.Buffer = *");
+                        write_name(file, var);
+                        fprintf(file, ";\n");
+                    }
+                    else if (phase == PHASE_UNMARSHAL)
+                    {
+                        print_file(file, indent, (pass == PASS_IN) ? "" : "*");
+                        write_name(file, var);
+                        fprintf(file, (pass == PASS_IN) ? " = (" : " = *(");
+                        write_type(file, var->type, NULL, var->tname);
+                        fprintf(file, " *)_StubMsg.Buffer;\n");
+                    }
+
+                    print_file(file, indent, "_StubMsg.Buffer += sizeof(");
+                    write_type(file, var->type, NULL, var->tname);
+                    fprintf(file, ");\n");
+                }
             }
             else
             {
