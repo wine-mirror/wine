@@ -525,6 +525,9 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
     if (ptr_level)
         return sizeof(void *);
 
+    if (type_has_ref(t))
+        return type_memsize(t->ref, 0 /* FIXME */, NULL);
+
     switch (t->type)
     {
     case RPC_FC_BYTE:
@@ -561,7 +564,7 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
         size = fields_memsize(t->fields);
         break;
     default:
-        error("type_memsize: Unknown type %d", t->type);
+        error("type_memsize: Unknown type %d\n", t->type);
         size = 0;
     }
 
