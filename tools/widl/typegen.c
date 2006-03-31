@@ -1412,6 +1412,13 @@ static inline const char *function_from_phase(enum remoting_phase phase)
     return NULL;
 }
 
+/* returns whether the MaxCount, Offset or ActualCount members need to be
+ * filled in for the specified phase */
+static inline int is_size_needed_for_phase(enum remoting_phase phase)
+{
+    return (phase != PHASE_UNMARSHAL);
+}
+
 void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                               unsigned int *type_offset, enum pass pass,
                               enum remoting_phase phase)
@@ -1468,7 +1475,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                            function_from_phase(phase), var->name, *type_offset);
             else
             {
-                if (size_is && phase != PHASE_UNMARSHAL)
+                if (size_is && is_size_needed_for_phase(phase))
                 {
                     print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
                     write_expr(file, size_is, 1);
@@ -1512,7 +1519,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                     array_type = "FixedArray";
                 else if (has_length && !has_size)
                 {
-                    if (phase == PHASE_MARSHAL)
+                    if (is_size_needed_for_phase(phase))
                     {
                         print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
                         print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
@@ -1523,7 +1530,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 }
                 else if (!has_length && has_size)
                 {
-                    if (phase == PHASE_MARSHAL)
+                    if (is_size_needed_for_phase(phase))
                     {
                         print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
                         write_expr(file, size_is ? size_is : var->array, 1);
@@ -1533,7 +1540,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 }
                 else
                 {
-                    if (phase == PHASE_MARSHAL)
+                    if (is_size_needed_for_phase(phase))
                     {
                         print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
                         write_expr(file, size_is ? size_is : var->array, 1);
