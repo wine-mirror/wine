@@ -105,7 +105,7 @@ static void check_pointers(const func_t *func)
 
         if (pointer_type == RPC_FC_RP)
         {
-            if (var->ptr_level == 1)
+            if (var->ptr_level >= 1)
             {
                 print_client("if (!%s)\n", var->name);
                 print_client("{\n");
@@ -113,11 +113,6 @@ static void check_pointers(const func_t *func)
                 print_client("RpcRaiseException(RPC_X_NULL_REF_POINTER);\n");
                 indent--;
                 print_client("}\n\n");
-            }
-            else if (var->ptr_level > 1)
-            {
-                error("Pointer level %d not supported!\n", var->ptr_level);
-                return;
             }
         }
 
