@@ -51,28 +51,6 @@ struct loadorder_list
     module_loadorder_t *order;
 };
 
-/* dll to load as builtins if not explicitly specified otherwise */
-/* the list must remain sorted by dll name */
-static const WCHAR default_builtins[][10] =
-{
-    { 'g','d','i','3','2',0 },
-    { 'i','c','m','p',0 },
-    { 'k','e','r','n','e','l','3','2',0 },
-    { 'n','t','d','l','l',0 },
-    { 'o','d','b','c','3','2',0 },
-    { 't','t','y','d','r','v',0 },
-    { 'u','s','e','r','3','2',0 },
-    { 'w','3','2','s','k','r','n','l',0 },
-    { 'w','i','n','e','d','o','s',0 },
-    { 'w','i','n','e','p','s',0 },
-    { 'w','i','n','m','m',0 },
-    { 'w','n','a','s','p','i','3','2',0 },
-    { 'w','o','w','3','2',0 },
-    { 'w','s','2','_','3','2',0 },
-    { 'w','s','o','c','k','3','2',0 },
-    { 'x','1','1','d','r','v',0 }
-};
-
 static const WCHAR separatorsW[] = {',',' ','\t',0};
 
 static int init_done;
@@ -88,15 +66,6 @@ static struct loadorder_list env_list;
 static int cmp_sort_func(const void *s1, const void *s2)
 {
     return strcmpiW(((const module_loadorder_t *)s1)->modulename, ((const module_loadorder_t *)s2)->modulename);
-}
-
-
-/***************************************************************************
- *	strcmp_func
- */
-static int strcmp_func(const void *s1, const void *s2)
-{
-    return strcmpiW( (const WCHAR *)s1, (const WCHAR *)s2 );
 }
 
 
@@ -321,21 +290,6 @@ static inline enum loadorder get_env_load_order( const WCHAR *module )
 
 
 /***************************************************************************
- *	get_default_load_order
- *
- * Get the load order for a given module from the default list.
- */
-static inline enum loadorder get_default_load_order( const WCHAR *module )
-{
-    const int count = sizeof(default_builtins) / sizeof(default_builtins[0]);
-    if (!bsearch( module, default_builtins, count, sizeof(default_builtins[0]), strcmp_func ))
-        return FALSE;
-    TRACE( "got compiled-in builtin default for %s\n", debugstr_w(module) );
-    return LO_BUILTIN;
-}
-
-
-/***************************************************************************
  *	get_standard_key
  *
  * Return a handle to the standard DllOverrides registry section.
@@ -478,8 +432,6 @@ static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, cons
  */
 enum loadorder get_load_order( const WCHAR *app_name, const WCHAR *path )
 {
-    static const WCHAR wildcardW[] = {'*',0};
-
     enum loadorder ret = LO_INVALID;
     HANDLE std_key, app_key = 0;
     WCHAR *module, *basename;
@@ -520,14 +472,6 @@ enum loadorder get_load_order( const WCHAR *app_name, const WCHAR *path )
 
     /* then module basename without '*' (only if explicit path) */
     if (basename != module+1 && ((ret = get_load_order_value( std_key, app_key, basename )) != LO_INVALID))
-        goto done;
-
-    /* then compiled-in defaults */
-    if ((ret = get_default_load_order( basename )) != LO_INVALID)
-        goto done;
-
-    /* then wildcard entry (only if no explicit path) */
-    if (basename == module+1 && ((ret = get_load_order_value( std_key, app_key, wildcardW )) != LO_INVALID))
         goto done;
 
     /* and last the hard-coded default */
