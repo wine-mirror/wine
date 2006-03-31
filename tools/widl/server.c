@@ -494,7 +494,11 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_server("(void *)& %s___RpcServerInterface,\n", iface->name);
     print_server("MIDL_user_allocate,\n");
     print_server("MIDL_user_free,\n");
+    print_server("{\n");
+    indent++;
     print_server("0,\n");
+    indent--;
+    print_server("},\n");
     print_server("0,\n");
     print_server("0,\n");
     if (expr_eval_routines)

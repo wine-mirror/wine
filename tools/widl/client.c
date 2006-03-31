@@ -360,10 +360,14 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_client("(void *)& %s___RpcClientInterface,\n", iface->name);
     print_client("MIDL_user_allocate,\n");
     print_client("MIDL_user_free,\n");
+    print_client("{\n");
+    indent++;
     if (implicit_handle)
         print_client("&%s,\n", implicit_handle);
     else
         print_client("&%s__MIDL_AutoBindHandle,\n", iface->name);
+    indent--;
+    print_client("},\n");
     print_client("0,\n");
     print_client("0,\n");
     if (expr_eval_routines)
