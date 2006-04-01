@@ -1,6 +1,7 @@
 /*
  * Uninstaller (Italian Resources)
  *
+ * Copyright 2006 Antonio Codazzi
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,7 +20,25 @@
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
+IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "WINE Disinstallazione Applicazioni"
+FONT 10, "MS Sans Serif"
+BEGIN
+LTEXT           "Selezionare dall'elenco l'applicazione che si desidera rimuovere",IDC_PLEASESELECT,10,10,250,14
+EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
+LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
+LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
+PUSHBUTTON      "&Rimuovi",IDC_UNINSTALL,270,48,50,14
+PUSHBUTTON      "&Info",IDC_ABOUT,270,65,50,14
+PUSHBUTTON      "&Esci",IDC_EXIT,270,81,50,14
+END
+
 
 STRINGTABLE DISCARDABLE {
-     IDS_APPNAME, "Disinstallatore"
+IDS_APPNAME, "Wine Disinstallazione Applicazioni"
+IDS_ABOUT, "Wine Application Uninstaller (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst. Traduzione italiana: Antonio Codazzi"
+IDS_ABOUTTITLE, "Informazioni"
+IDS_REGISTRYKEYNOTAVAILABLE, "Chiave del registro non disponibile, nulla da fare !"
+IDS_UNINSTALLFAILED, "Esecuzione del comando di disinstallazione '%s' è fallita, forse a causa di un eseguibile mancante.\r\nVuoi rimuovere dal registro la entry di disinstallazione?"
 }
