@@ -702,8 +702,6 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
         changes.stack_mode = Below;
         XConfigureWindow( display, data->whole_window, CWStackMode, &changes );
     }
-    XSync( display, False );  /* FIXME: should not be needed */
-
     wine_tsx11_unlock();
 
     xim = x11drv_thread_data()->xim;
@@ -730,7 +728,6 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     TRACE( "win %p xwin %lx\n", data->hwnd, data->whole_window );
     if (thread_data->cursor_window == data->whole_window) thread_data->cursor_window = None;
     wine_tsx11_lock();
-    XSync( gdi_display, False );  /* flush any reference to this drawable in GDI queue */
     XDeleteContext( display, data->whole_window, winContext );
     if (data->whole_window != DefaultRootWindow(display))
         XDestroyWindow( display, data->whole_window );
