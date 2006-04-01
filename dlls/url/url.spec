@@ -4,9 +4,9 @@
 @ stub DllGetClassObject
 @ stub DummyEntryPoint
 @ stub DummyEntryPointA
-@ stub FileProtocolHandler
-@ stub FileProtocolHandlerA
-@ stub InetIsOffline
+@ stdcall FileProtocolHandler(long str long) FileProtocolHandlerA
+@ stdcall FileProtocolHandlerA(long str long)
+@ stdcall InetIsOffline()
 @ stub MIMEAssociationDialogA
 @ stub MIMEAssociationDialogW
 @ stub MailToProtocolHandler
@@ -15,8 +15,8 @@
 @ stub NewsProtocolHandlerA
 @ stub OpenURL
 @ stub OpenURLA
-@ stub TelnetProtocolHandler
-@ stub TelnetProtocolHandlerA
+@ stdcall TelnetProtocolHandler(long str) TelnetProtocolHandlerA
+@ stdcall TelnetProtocolHandlerA(long str)
 @ stub TranslateURLA
 @ stub TranslateURLW
 @ stub URLAssociationDialogA

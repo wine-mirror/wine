@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = url.dll
 IMPORTLIB = liburl.$(IMPLIBEXT)
-IMPORTS   = kernel32
+IMPORTS   = shell32 shlwapi kernel32
 
 C_SRCS = url_main.c
 

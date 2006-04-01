@@ -19,6 +19,13 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "winerror.h"
+#include "shellapi.h"
+#include "shlwapi.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(url);
 
 /***********************************************************************
  *		DllMain  (URL.@)
@@ -34,4 +41,53 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ * InetIsOffline    (URL.@)
+ *
+ */
+BOOL WINAPI InetIsOffline(void)
+{
+    FIXME("stub!\n");
+
+    return FALSE;
+}
+
+/***********************************************************************
+ * FileProtocolHandlerA    (URL.@)
+ *
+ * Handles a URL given to it and executes it.
+ *
+ * HWND hWnd - Parent Window
+ * LPCSTR pszUrl - The URL that needs to be handled
+ * int nShowCmd - How to display the operation.
+ */
+
+HRESULT WINAPI FileProtocolHandlerA(HWND hWnd, LPCSTR pszUrl,int nShowCmd)
+{
+    LPSTR pszPath = NULL;
+    DWORD size = MAX_PATH;
+    HRESULT createpath = PathCreateFromUrlA(pszUrl,pszPath,&size,0);
+
+    TRACE("(%p, %p, %d)\n",hWnd,pszUrl,nShowCmd);
+
+    if(createpath != S_OK)
+        return E_FAIL;
+
+    ShellExecuteA(hWnd,NULL,pszPath,NULL,NULL,nShowCmd);
+
+    return S_OK;
+}
+
+/***********************************************************************
+ * TelnetProtocolHandlerA    (URL.@)
+ *
+ */
+
+HRESULT WINAPI TelnetProtocolHandlerA(HWND hWnd, LPSTR lpStr)
+{
+    FIXME("(%p, %p): stub!\n",hWnd,lpStr);
+
+    return E_NOTIMPL;
 }
