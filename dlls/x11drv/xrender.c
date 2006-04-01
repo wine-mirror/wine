@@ -167,7 +167,7 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
  */
 void X11DRV_XRender_Init(void)
 {
-    int error_base, event_base, i;
+    int event_base, i;
     XRenderPictFormat pf;
 
     if (client_side_with_render &&
@@ -200,9 +200,9 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
 
 
         wine_tsx11_lock();
-        if(pXRenderQueryExtension(gdi_display, &event_base, &error_base)) {
+        if(pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base)) {
             X11DRV_XRender_Installed = TRUE;
-            TRACE("Xrender is up and running error_base = %d\n", error_base);
+            TRACE("Xrender is up and running error_base = %d\n", xrender_error_base);
             screen_format = pXRenderFindVisualFormat(gdi_display, visual);
             if(!screen_format)
             {

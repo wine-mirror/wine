@@ -37,6 +37,9 @@
 #ifdef HAVE_XKB
 #include <X11/XKBlib.h>
 #endif
+#ifdef HAVE_X11_EXTENSIONS_XRENDER_H
+#include <X11/extensions/Xrender.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -85,6 +88,7 @@ int client_side_antialias_with_render = 1;
 int copy_default_colors = 128;
 int alloc_system_colors = 256;
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
+int xrender_error_base = 0;
 
 static BOOL desktop_dbl_buf = TRUE;
 
@@ -161,6 +165,18 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
 static inline BOOL ignore_error( Display *display, XErrorEvent *event )
 {
     if (event->request_code == X_SetInputFocus && event->error_code == BadMatch) return TRUE;
+
+    /* ignore a number of errors on gdi display caused by creating/destroying windows */
+    if (display == gdi_display)
+    {
+        if (event->error_code == BadDrawable || event->error_code == BadGC) return TRUE;
+#ifdef HAVE_X11_EXTENSIONS_XRENDER_H
+        if (xrender_error_base)  /* check for XRender errors */
+        {
+            if (event->error_code == xrender_error_base + BadPicture) return TRUE;
+        }
+#endif
+    }
     return FALSE;
 }
 

@@ -538,6 +538,7 @@ extern int managed_mode;
 extern int private_color_map;
 extern int copy_default_colors;
 extern int alloc_system_colors;
+extern int xrender_error_base;
 
 extern BYTE key_state_table[256];
 extern POINT cursor_pos;
