@@ -254,7 +254,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface, UINT 
 
     TRACE("(%p) Relay\n", This);
 
-    rc = IWineD3DDevice_GetBackBuffer(This->WineD3DDevice, 0, BackBuffer, Type, (IWineD3DSurface **)&retSurface);
+    rc = IWineD3DDevice_GetBackBuffer(This->WineD3DDevice, 0, BackBuffer, (WINED3DBACKBUFFER_TYPE) Type, (IWineD3DSurface **)&retSurface);
     if (rc == D3D_OK && NULL != retSurface && NULL != ppBackBuffer) {
         IWineD3DSurface_GetParent(retSurface, (IUnknown **)ppBackBuffer);
         IWineD3DSurface_Release(retSurface);

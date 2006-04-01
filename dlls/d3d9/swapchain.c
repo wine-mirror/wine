@@ -83,7 +83,7 @@ HRESULT WINAPI IDirect3DSwapChain9Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN9 iface,
 
     TRACE("(%p) Relay\n", This);
 
-    hrc = IWineD3DSwapChain_GetBackBuffer(This->wineD3DSwapChain, iBackBuffer, Type, &mySurface);
+    hrc = IWineD3DSwapChain_GetBackBuffer(This->wineD3DSwapChain, iBackBuffer, (WINED3DBACKBUFFER_TYPE) Type, &mySurface);
     if (hrc == D3D_OK && NULL != mySurface) {
        IWineD3DSurface_GetParent(mySurface, (IUnknown **)ppBackBuffer);
        IWineD3DSurface_Release(mySurface);

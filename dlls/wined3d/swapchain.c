@@ -363,7 +363,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) {
+HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UINT iBackBuffer, WINED3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) {
 
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
 

@@ -323,7 +323,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(CreatePixelShader)(THIS_ CONST DWORD* pFunction, struct IWineD3DPixelShader** ppShader, IUnknown *pParent) PURE;
     STDMETHOD(EvictManagedResources)(THIS) PURE;
     STDMETHOD_(UINT, GetAvailableTextureMem)(THIS) PURE;
-    STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT BackBuffer, D3DBACKBUFFER_TYPE, struct IWineD3DSurface** ppBackBuffer) PURE;
+    STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT BackBuffer, WINED3DBACKBUFFER_TYPE, struct IWineD3DSurface** ppBackBuffer) PURE;
     STDMETHOD(GetCreationParameters)(THIS_ D3DDEVICE_CREATION_PARAMETERS *pParameters) PURE;
     STDMETHOD(GetDeviceCaps)(THIS_ WINED3DCAPS* pCaps) PURE;
     STDMETHOD(GetDirect3D)(THIS_ IWineD3D** ppD3D) PURE;
@@ -1292,7 +1292,7 @@ DECLARE_INTERFACE_(IWineD3DSwapChain,IWineD3DBase)
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **ppDevice) PURE;
     STDMETHOD(Present)(THIS_ CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) PURE;
     STDMETHOD(GetFrontBufferData)(THIS_ IWineD3DSurface *pDestSurface) PURE;
-    STDMETHOD(GetBackBuffer)(THIS_ UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) PURE;
+    STDMETHOD(GetBackBuffer)(THIS_ UINT iBackBuffer, WINED3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) PURE;
     STDMETHOD(GetRasterStatus)(THIS_ D3DRASTER_STATUS *pRasterStatus) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ WINED3DDISPLAYMODE *pMode) PURE;
     STDMETHOD(GetPresentParameters)(THIS_ WINED3DPRESENT_PARAMETERS *pPresentationParameters) PURE;
