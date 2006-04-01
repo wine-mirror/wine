@@ -1,0 +1,44 @@
+/*
+ * Uninstaller (Esperanto Resources)
+ *
+ * Copyright 2006 Antonio Codazzi
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_ESPERANTO, SUBLANG_ENGLISH_US
+
+IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Wine Programa Malinstalisto"
+FONT 10, "MS Sans Serif"
+BEGIN
+    LTEXT           "Elektu la programon kion vi desiras forigi:",IDC_PLEASESELECT,10,10,250,14
+    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
+    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
+                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Forigi",IDC_UNINSTALL,270,48,50,14
+    PUSHBUTTON      "&Pri..",IDC_ABOUT,270,65,50,14
+    PUSHBUTTON      "&Fermu",IDC_EXIT,270,81,50,14
+END
+
+
+STRINGTABLE DISCARDABLE {
+     IDS_APPNAME, "Wine Programa Malinstalisto"
+     IDS_ABOUT, "Wine Application Uninstaller (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst. Esperanta traduko: Antonio Codazzi"
+     IDS_ABOUTTITLE, "Pri Malinstalisto"
+     IDS_REGISTRYKEYNOTAVAILABLE, "Registrþlosilo ne estas je dispono. Nenio estas farebla !"
+     IDS_UNINSTALLFAILED, "Malinstalad-komando '%s' malsukcesis, eble æar mankas programo.\r\nÆu vi volas forigi la malinstalada 'entry' de la registro ?"
+}
