@@ -129,7 +129,6 @@ typedef enum _WINED3DDEGREETYPE {
     WINED3DDEGREE_FORCE_DWORD   = 0x7fffffff
 } WINED3DDEGREETYPE;
 
-
 typedef enum _WINED3DFORMAT {
     WINED3DFMT_UNKNOWN              =   0,
 
@@ -207,9 +206,6 @@ typedef enum _WINED3DFORMAT {
 
     WINED3DFMT_FORCE_DWORD          = 0xFFFFFFFF
 } WINED3DFORMAT;
-
-
-
 
 typedef enum _WINED3DRENDERSTATETYPE {
     WINED3DRS_TEXTUREHANDLE             =   1,
@@ -356,6 +352,14 @@ typedef enum _WINED3DRENDERSTATETYPE {
 #define WINEHIGHEST_RENDER_STATE   WINED3DRS_BLENDOPALPHA
         /* Highest D3DRS_ value   */
 
+
+typedef struct _WINED3DDISPLAYMODE {
+    UINT            Width;
+    UINT            Height;
+    UINT            RefreshRate;
+    WINED3DFORMAT   Format;
+} WINED3DDISPLAYMODE;
+
 typedef enum _WINED3DSWAPEFFECT {
     WINED3DSWAPEFFECT_DISCARD         = 1,
     WINED3DSWAPEFFECT_FLIP            = 2,
@@ -363,7 +367,6 @@ typedef enum _WINED3DSWAPEFFECT {
     WINED3DSWAPEFFECT_COPY_VSYNC      = 4,
     WINED3DSWAPEFFECT_FORCE_DWORD     = 0xFFFFFFFF
 } WINED3DSWAPEFFECT;
-
 
 typedef enum _WINED3DSAMPLERSTATETYPE {
     WINED3DSAMP_ADDRESSU       = 1,

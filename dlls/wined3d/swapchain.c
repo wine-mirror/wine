@@ -394,7 +394,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface, D
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, D3DDISPLAYMODE*pMode) {
+HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WINED3DDISPLAYMODE*pMode) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     HDC                 hdc;
     int                 bpp = 0;

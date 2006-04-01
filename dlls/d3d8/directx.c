@@ -118,12 +118,12 @@ UINT WINAPI IDirect3D8Impl_GetAdapterModeCount (LPDIRECT3D8 iface,UINT Adapter) 
 HRESULT WINAPI IDirect3D8Impl_EnumAdapterModes (LPDIRECT3D8 iface, UINT Adapter, UINT Mode, D3DDISPLAYMODE* pMode) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
     /* FIXME: USe a constant WINED3DFOTMAT_ANY, or something similar */
-    return IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, 0 /* format */, Mode, pMode);
+    return IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, 0 /* format */, Mode, (WINED3DDISPLAYMODE *) pMode);
 }
 
 HRESULT WINAPI IDirect3D8Impl_GetAdapterDisplayMode (LPDIRECT3D8 iface, UINT Adapter, D3DDISPLAYMODE* pMode) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    return IWineD3D_GetAdapterDisplayMode(This->WineD3D, Adapter, pMode);
+    return IWineD3D_GetAdapterDisplayMode(This->WineD3D, Adapter, (WINED3DDISPLAYMODE *) pMode);
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
