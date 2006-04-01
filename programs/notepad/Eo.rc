@@ -1,0 +1,126 @@
+/*
+ *  Notepad (Esperanto Language Resources)
+ *
+ *  Copyright 2006 Antonio Codazzi
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_ESPERANTO, SUBLANG_DEFAULT
+
+MAIN_MENU MENU
+{
+ POPUP "Dosiero" {
+  MENUITEM "&Nova",           CMD_NEW
+  MENUITEM "Malfermu\tCtrl+O",     CMD_OPEN
+  MENUITEM "Kon&servu\tCtrl+S",     CMD_SAVE
+  MENUITEM "Konservu &kiel",       CMD_SAVE_AS
+  MENUITEM SEPARATOR
+  MENUITEM "Presu",            CMD_PRINT
+  MENUITEM "Impozu paøon",    CMD_PAGE_SETUP
+  MENUITEM "Impozu Printilon", CMD_PRINTER_SETUP
+  MENUITEM SEPARATOR
+  MENUITEM "Finu",             CMD_EXIT
+ }
+POPUP "&Redakto" {
+  MENUITEM "Nuligu\tCtrl+Z",     CMD_UNDO
+  MENUITEM SEPARATOR
+  MENUITEM "Tondu\tCtrl+X",      CMD_CUT
+  MENUITEM "Kopiu\tCtrl+C",     CMD_COPY
+  MENUITEM "Enmetu\tCtrl+V",    CMD_PASTE
+  MENUITEM "Forigu\tDel",      CMD_DELETE
+  MENUITEM SEPARATOR
+  MENUITEM "Elek&tu æion\tCtrl+A",       CMD_SELECT_ALL
+  MENUITEM "Horo/Dato\tF5",    CMD_TIME_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&Alineu aýtomate",  CMD_WRAP
+  MENUITEM "&Impozu tiparon...",          CMD_FONT
+ }
+POPUP "&Seræu" {
+  MENUITEM "Seræu\tCtrl+F",   CMD_SEARCH
+  MENUITEM "Seræu sekvanta\tF3",  CMD_SEARCH_NEXT
+ }
+POPUP "&Helpo" {
+  MENUITEM "Enhavo",         CMD_HELP_CONTENTS
+  MENUITEM "Seræu...",        CMD_HELP_SEARCH
+  MENUITEM "Pri Helpanto",     CMD_HELP_ON_HELP
+  MENUITEM SEPARATOR
+  POPUP "Pri..." {
+   MENUITEM "&Licenco",         CMD_LICENSE
+   MENUITEM "&Garantio",     CMD_NO_WARRANTY
+   MENUITEM "Pri Notepad",      CMD_ABOUT_WINE
+  }
+ }
+}
+
+/* Dialog `Page setup' */
+
+DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "Impozu la paøon"
+{
+LTEXT    "Kapnotoj:",  0x140,   10, 07, 40, 15
+EDITTEXT                         0x141,       60, 05,110, 12, WS_BORDER | WS_TABSTOP
+LTEXT    "Piednotoj:",  0x142,   10, 24, 40, 15
+EDITTEXT                         0x143,       60, 22,110, 12, WS_BORDER | WS_TABSTOP
+
+GROUPBOX "&Marøenoj:",      0x144,     10, 43,160, 45
+LTEXT    "&Maldekstra:",        0x145,   13, 55, 37, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_LEFTVALUE,*/   0x147,       50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Supra:",         0x148,    13, 73, 37, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_TOPVALUE,*/    0x14A,        50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Dekstra:",       0x14B, 100, 55, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_RIGHTVALUE,*/  0x14D,     130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "Su&ba:",      0x14E,100, 73, 30, 10, WS_CHILD
+EDITTEXT /*STRING_PAGESETUP_BOTTOMVALUE,*/ 0x150,    130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+
+DEFPUSHBUTTON "Bone",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
+PUSHBUTTON    "Rezigni",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "Helpo",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
+}
+
+STRINGTABLE DISCARDABLE
+{
+STRING_PAGESETUP_HEADERVALUE,   "&n"        /* FIXME */
+STRING_PAGESETUP_FOOTERVALUE,   "Paøo &s"   /* FIXME */
+STRING_PAGESETUP_LEFTVALUE,             "20 mm"     /* FIXME */
+STRING_PAGESETUP_RIGHTVALUE,    "20 mm"     /* FIXME */
+STRING_PAGESETUP_TOPVALUE,              "25 mm"     /* FIXME */
+STRING_PAGESETUP_BOTTOMVALUE,   "25 mm"     /* FIXME */
+
+STRING_NOTEPAD,                                 "Notbloko"
+STRING_ERROR,                                   "ERORO"
+STRING_WARNING,                                 "ATENTU"
+STRING_INFO,                                    "Informo pri"
+
+STRING_UNTITLED,                                "(sen-nomo)"
+
+STRING_ALL_FILES,                               "Tutaj dosieroj (*.*)"
+STRING_TEXT_FILES_TXT,                  "Tekstdosieroj (*.txt)"
+
+STRING_TOOLARGE,                                "La dosiero '%s' estas tro granda por Notepad.\n \
+Oni konsilas uzi alian redaktilon."
+STRING_NOTEXT,                                  "Ne estas enmetita teksto. \
+\nOni konsilas skribi devove kaj reprovi"
+STRING_DOESNOTEXIST,                            "La dosiero '%s'\nne eksistas\n\n \
+Æu mi devas krei novan dosieron?"
+STRING_NOTSAVED,                                "La dosiero'%s'\n estis þanøita\n\n \
+Æu vi volas konservi la þanøojn?"
+STRING_NOTFOUND,                                        "Mi ne trovis '%s'."
+STRING_OUT_OF_MEMORY,                   "La memoro estas nesufiæa por kompletigo je la tasko \
+\nOni konsilas fermi unu o pluraj programoj por\nliberigi memoron."
+
+}
