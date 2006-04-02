@@ -57,6 +57,7 @@ ULONG WINAPI IDirect3DVertexBuffer8Impl_Release(LPDIRECT3DVERTEXBUFFER8 iface) {
 
     if (ref == 0) {
         IWineD3DVertexBuffer_Release(This->wineD3DVertexBuffer);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
 

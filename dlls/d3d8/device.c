@@ -418,6 +418,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, 
         HeapFree(GetProcessHeap(), 0, object);
         *ppVertexBuffer = NULL;
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppVertexBuffer = (LPDIRECT3DVERTEXBUFFER8) object;
     }
     return hrc;

@@ -58,6 +58,7 @@ ULONG WINAPI IDirect3DVertexBuffer9Impl_Release(LPDIRECT3DVERTEXBUFFER9 iface) {
 
     if (ref == 0) {
         IWineD3DVertexBuffer_Release(This->wineD3DVertexBuffer);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -180,6 +181,8 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(LPDIRECT3DDEVICE9 iface,
         FIXME("(%p) call to IWineD3DDevice_CreateVertexBuffer failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         TRACE("(%p) : Created vertex buffer %p\n", This, object);
         *ppVertexBuffer = (LPDIRECT3DVERTEXBUFFER9) object;
     }
