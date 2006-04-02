@@ -169,7 +169,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     /* This implementation currently treats the entire string represented in 
      * pwcInChars as a single entity.  Hence pcItems will be set to 1.          */
 
-    FIXME("%s,%d,%d,%p,%p,%p,%p: semi-stub\n", debugstr_w(pwcInChars), cInChars, cMaxItems, 
+    FIXME("%s,%d,%d,%p,%p,%p,%p: semi-stub\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
 
     if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
