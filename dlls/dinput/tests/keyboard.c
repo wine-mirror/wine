@@ -66,8 +66,45 @@ const char * get_file_version(const char * file_name)
     return version;
 }
 
-static void keyboard_tests(void)
+static void keyboard_tests(DWORD version)
 {
+    HRESULT hr;
+    LPDIRECTINPUT pDI;
+    LPDIRECTINPUTDEVICE pKeyboard;
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    BYTE kbd_state[256];
+    ULONG ref;
+
+    hr = DirectInputCreate(hInstance, version, &pDI, NULL);
+    ok(SUCCEEDED(hr), "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
+    if (FAILED(hr)) return;
+    
+    
+    hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
+    if (FAILED(hr))
+    {
+        IDirectInput_Release(pDI);
+        return;
+    }
+
+    hr = IDirectInputDevice_SetDataFormat(pKeyboard, &c_dfDIKeyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_SetCooperativeLevel(pKeyboard, NULL, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetCooperativeLevel() failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_GetDeviceState(pKeyboard, 10, kbd_state);
+    ok(hr == DIERR_NOTACQUIRED, "IDirectInputDevice_GetDeviceState(10,) should have failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
+    ok(hr == DIERR_NOTACQUIRED, "IDirectInputDevice_GetDeviceState() should have failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_Acquire(pKeyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_GetDeviceState(pKeyboard, 10, kbd_state);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(10,) should have failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %s\n", DXGetErrorString8(hr));
+    
+    ref = IDirectInput_Release(pDI);
+    ok(!ref, "IDirectInput_Release() reference count = %ld\n", ref);
 }
 
 START_TEST(keyboard)
@@ -76,7 +113,7 @@ START_TEST(keyboard)
 
     trace("DLL Version: %s\n", get_file_version("dinput.dll"));
 
-    keyboard_tests();
+    keyboard_tests(0x0700);
 
     CoUninitialize();
 }

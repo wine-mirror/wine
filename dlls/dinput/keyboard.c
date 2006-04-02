@@ -369,7 +369,8 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
     SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
     TRACE("(%p)->(%ld,%p)\n", This, len, ptr);
 
-    /* Note: device does not need to be acquired */
+    if (This->acquired == 0) return DIERR_NOTACQUIRED;
+
     if (len != WINE_DINPUT_KEYBOARD_MAX_KEYS)
       return DIERR_INVALIDPARAM;
 
