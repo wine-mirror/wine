@@ -202,8 +202,6 @@ static INT CALLBACK find_font_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DW
 {
     LOGFONT *lf = (LOGFONT *)lParam;
 
-    trace("found font %s, height %ld\n", elf->lfFaceName, elf->lfHeight);
-
     if (elf->lfHeight == lf->lfHeight && !strcmp(elf->lfFaceName, lf->lfFaceName))
     {
         *lf = *elf;
@@ -238,8 +236,14 @@ static void test_bitmap_font_metrics(void)
         { "Courier", FW_NORMAL, 13, 11, 2, 0, 0, 8, 8 },
         { "Courier", FW_NORMAL, 16, 13, 3, 0, 0, 9, 9 },
         { "Courier", FW_NORMAL, 20, 16, 4, 0, 0, 12, 12 },
-        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15 }
-        /* FIXME: add "Fixedsys", "Terminal", "Small Fonts" */
+        { "System", FW_BOLD, 16, 13, 3, 3, 0, 7, 15 },
+        { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2 },
+        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 3, 4 },
+        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 13 },
+        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 7 },
+        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8 },
+        { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9 }
+        /* FIXME: add "Fixedsys", "Terminal" */
     };
     HDC hdc;
     LOGFONT lf;
