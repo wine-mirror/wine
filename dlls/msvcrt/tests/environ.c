@@ -21,6 +21,27 @@
 #include "wine/test.h"
 #include <stdlib.h>
 
+static const char *a_very_long_env_string =
+ "LIBRARY_PATH="
+ "C:/Program Files/GLBasic/Compiler/platform/Win32/Bin/../lib/gcc/mingw32/3.4.2/;"
+ "C:/Program Files/GLBasic/Compiler/platform/Win32/Bin/../lib/gcc/;"
+ "/mingw/lib/gcc/mingw32/3.4.2/;"
+ "/usr/lib/gcc/mingw32/3.4.2/;"
+ "C:/Program Files/GLBasic/Compiler/platform/Win32/Bin/../lib/gcc/mingw32/3.4.2/../../../../mingw32/lib/mingw32/3.4.2/;"
+ "C:/Program Files/GLBasic/Compiler/platform/Win32/Bin/../lib/gcc/mingw32/3.4.2/../../../../mingw32/lib/;"
+ "/mingw/mingw32/lib/mingw32/3.4.2/;"
+ "/mingw/mingw32/lib/;"
+ "/mingw/lib/mingw32/3.4.2/;"
+ "/mingw/lib/;"
+ "C:/Program Files/GLBasic/Compiler/platform/Win32/Bin/../lib/gcc/mingw32/3.4.2/../../../mingw32/3.4.2/;"
+ "C:/Program Files/GLBasic/Compiler/platform/Win32/Bin/../lib/gcc/mingw32/3.4.2/../../../;"
+ "/mingw/lib/mingw32/3.4.2/;"
+ "/mingw/lib/;"
+ "/lib/mingw32/3.4.2/;"
+ "/lib/;"
+ "/usr/lib/mingw32/3.4.2/;"
+ "/usr/lib/";
+
 START_TEST(environ)
 {
     ok( _putenv("cat=") == 0, "_putenv failed on deletion of nonexistent environment variable\n" );
@@ -30,6 +51,7 @@ START_TEST(environ)
 
     ok( _putenv("=") == -1, "should not accept '=' as input\n" );
     ok( _putenv("=dog") == -1, "should not accept '=dog' as input\n" );
+    ok( _putenv(a_very_long_env_string) == 0, "_putenv failed for long environment string\n");
 
     ok( getenv("nonexistent") == NULL, "getenv should fail with nonexistent var name\n" );
 }

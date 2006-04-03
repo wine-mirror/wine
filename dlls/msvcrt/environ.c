@@ -73,20 +73,28 @@ MSVCRT_wchar_t *_wgetenv(const MSVCRT_wchar_t *name)
  */
 int _putenv(const char *str)
 {
- char name[256], value[512];
- char *dst = name;
+ char *name, *value;
+ char *dst;
  int ret;
 
  TRACE("%s\n", str);
 
  if (!str)
    return -1;
+   
+ name = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
+ if (!name)
+   return -1;
+ dst = name;
  while (*str && *str != '=')
   *dst++ = *str++;
  if (!*str++)
-   return -1;
- *dst = '\0';
- dst = value;
+ {
+   ret = -1;
+   goto finish;
+ }
+ *dst++ = '\0';
+ value = dst;
  while (*str)
   *dst++ = *str++;
  *dst = '\0';
@@ -101,6 +109,9 @@ int _putenv(const char *str)
    _environ = msvcrt_SnapshotOfEnvironmentA(_environ);
  if (_wenviron)
    _wenviron = msvcrt_SnapshotOfEnvironmentW(_wenviron);
+   
+finish:
+ HeapFree(GetProcessHeap(), 0, name);
  return ret;
 }
 
@@ -109,20 +120,27 @@ int _putenv(const char *str)
  */
 int _wputenv(const MSVCRT_wchar_t *str)
 {
- MSVCRT_wchar_t name[256], value[512];
- MSVCRT_wchar_t *dst = name;
+ MSVCRT_wchar_t *name, *value;
+ MSVCRT_wchar_t *dst;
  int ret;
 
  TRACE("%s\n", debugstr_w(str));
 
  if (!str)
    return -1;
+ name = HeapAlloc(GetProcessHeap(), 0, (strlenW(str) + 1) * sizeof(MSVCRT_wchar_t));
+ if (!name)
+   return -1;
+ dst = name;
  while (*str && *str != '=')
   *dst++ = *str++;
  if (!*str++)
-   return -1;
- *dst = 0;
- dst = value;
+ {
+   ret = -1;
+   goto finish;
+ }
+ *dst++ = 0;
+ value = dst;
  while (*str)
   *dst++ = *str++;
  *dst = 0;
@@ -137,5 +155,8 @@ int _wputenv(const MSVCRT_wchar_t *str)
    _environ = msvcrt_SnapshotOfEnvironmentA(_environ);
  if (_wenviron)
    _wenviron = msvcrt_SnapshotOfEnvironmentW(_wenviron);
+
+finish:
+ HeapFree(GetProcessHeap(), 0, name);
  return ret;
 }
