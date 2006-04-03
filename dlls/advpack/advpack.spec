@@ -59,7 +59,7 @@
 @ stdcall RegSaveRestoreW(ptr wstr long wstr wstr wstr long)
 @ stdcall RegSaveRestore(ptr str long str str str long) RegSaveRestoreA
 @ stdcall RegSaveRestoreOnINFA(ptr str str str long long long)
-# stdcall RegSaveRestoreOnINFW(ptr wstr wstr wstr long long long)
+@ stdcall RegSaveRestoreOnINFW(ptr wstr wstr wstr long long long)
 @ stdcall RegSaveRestoreOnINF(ptr str str str long long long) RegSaveRestoreOnINFA
 @ stdcall RegisterOCX(ptr ptr str long)
 @ stdcall RunSetupCommandA(long str str str str ptr long ptr)

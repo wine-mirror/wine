@@ -298,6 +298,35 @@ HRESULT WINAPI RegSaveRestoreW(HWND hWnd, LPCWSTR pszTitleString, HKEY hkBackupK
 /***********************************************************************
  *          RegSaveRestoreOnINFA (advpack.@)
  *
+ * See RegSaveRestoreOnINFW.
+ */
+HRESULT WINAPI RegSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
+                                    LPCSTR pszSection, HKEY hHKLMBackKey,
+                                    HKEY hHKCUBackKey, DWORD dwFlags)
+{
+    UNICODE_STRING title, inf, section;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p, %p, %p, %p, %ld)\n", hWnd, pszTitle, pszINF,
+          pszSection, hHKLMBackKey, hHKCUBackKey, dwFlags);
+
+    RtlCreateUnicodeStringFromAsciiz(&title, pszTitle);
+    RtlCreateUnicodeStringFromAsciiz(&inf, pszINF);
+    RtlCreateUnicodeStringFromAsciiz(&section, pszSection);
+
+    hr = RegSaveRestoreOnINFW(hWnd, title.Buffer, inf.Buffer, section.Buffer,
+                              hHKLMBackKey, hHKCUBackKey, dwFlags);
+
+    RtlFreeUnicodeString(&title);
+    RtlFreeUnicodeString(&inf);
+    RtlFreeUnicodeString(&section);
+
+    return hr;
+}
+
+/***********************************************************************
+ *          RegSaveRestoreOnINFW (advpack.@)
+ *
  * Saves or restores the specified INF Reg section.
  *
  * PARAMS
@@ -316,9 +345,9 @@ HRESULT WINAPI RegSaveRestoreW(HWND hWnd, LPCWSTR pszTitleString, HKEY hkBackupK
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI RegSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
-                                   LPCSTR pszSection, HKEY hHKLMBackKey,
-                                   HKEY hHKCUBackKey, DWORD dwFlags)
+HRESULT WINAPI RegSaveRestoreOnINFW(HWND hWnd, LPCWSTR pszTitle, LPCWSTR pszINF,
+                                    LPCWSTR pszSection, HKEY hHKLMBackKey,
+                                    HKEY hHKCUBackKey, DWORD dwFlags)
 {
     FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitle, pszINF,
           pszSection, hHKLMBackKey, hHKCUBackKey, dwFlags);
