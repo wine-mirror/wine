@@ -584,6 +584,8 @@ BOOL GDI_Init(void)
     const struct DefaultFontInfo* deffonts;
     int i;
 
+    WineEngInit();
+
     /* create stock objects */
     stock_objects[WHITE_BRUSH]  = CreateBrushIndirect( &WhiteBrush );
     stock_objects[LTGRAY_BRUSH] = CreateBrushIndirect( &LtGrayBrush );
@@ -630,8 +632,6 @@ BOOL GDI_Init(void)
         }
         __wine_make_gdi_object_system( stock_objects[i], TRUE );
     }
-
-    WineEngInit();
 
     return TRUE;
 }
