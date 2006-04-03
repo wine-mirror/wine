@@ -2,6 +2,7 @@
  * Unit test suite for bitmaps
  *
  * Copyright 2004 Huw Davies
+ * Copyright 2006 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -743,18 +744,86 @@ todo_wine {
     ReleaseDC(0, hdc);
 }
 
+static void test_bitmap(void)
+{
+    char buf[256], buf_cmp[256];
+    HBITMAP hbmp, hbmp_old;
+    HDC hdc;
+    BITMAP bm;
+    INT ret;
+
+    hdc = CreateCompatibleDC(0);
+    assert(hdc != 0);
+
+    hbmp = CreateBitmap(15, 15, 1, 1, NULL);
+    assert(hbmp != NULL);
+
+    ret = GetObject(hbmp, sizeof(bm), &bm);
+    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+
+    ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
+    ok(bm.bmWidth == 15, "wrong bm.bmWidth %d\n", bm.bmWidth);
+    ok(bm.bmHeight == 15, "wrong bm.bmHeight %d\n", bm.bmHeight);
+    ok(bm.bmWidthBytes == 2, "wrong bm.bmWidthBytes %d\n", bm.bmWidthBytes);
+    ok(bm.bmPlanes == 1, "wrong bm.bmPlanes %d\n", bm.bmPlanes);
+    ok(bm.bmBitsPixel == 1, "wrong bm.bmBitsPixel %d\n", bm.bmBitsPixel);
+    ok(bm.bmBits == NULL, "wrong bm.bmBits %p\n", bm.bmBits);
+
+    assert(sizeof(buf) >= bm.bmWidthBytes * bm.bmHeight);
+    assert(sizeof(buf) == sizeof(buf_cmp));
+
+    memset(buf_cmp, 0xAA, sizeof(buf_cmp));
+    memset(buf_cmp, 0, bm.bmWidthBytes * bm.bmHeight);
+
+    memset(buf, 0xAA, sizeof(buf));
+    ret = GetBitmapBits(hbmp, sizeof(buf), buf);
+    ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
+    ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match\n");
+
+    hbmp_old = SelectObject(hdc, hbmp);
+
+    ret = GetObject(hbmp, sizeof(bm), &bm);
+    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+
+    ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
+    ok(bm.bmWidth == 15, "wrong bm.bmWidth %d\n", bm.bmWidth);
+    ok(bm.bmHeight == 15, "wrong bm.bmHeight %d\n", bm.bmHeight);
+    ok(bm.bmWidthBytes == 2, "wrong bm.bmWidthBytes %d\n", bm.bmWidthBytes);
+    ok(bm.bmPlanes == 1, "wrong bm.bmPlanes %d\n", bm.bmPlanes);
+    ok(bm.bmBitsPixel == 1, "wrong bm.bmBitsPixel %d\n", bm.bmBitsPixel);
+    ok(bm.bmBits == NULL, "wrong bm.bmBits %p\n", bm.bmBits);
+
+    memset(buf, 0xAA, sizeof(buf));
+    ret = GetBitmapBits(hbmp, sizeof(buf), buf);
+    ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
+    ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match\n");
+
+    hbmp_old = SelectObject(hdc, hbmp_old);
+    ok(hbmp_old == hbmp, "wrong old bitmap %p\n", hbmp_old);
+
+    /* test various buffer sizes for GetObject */
+    ret = GetObject(hbmp, sizeof(bm) * 2, &bm);
+    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+
+    ret = GetObject(hbmp, sizeof(bm) / 2, &bm);
+    ok(ret == 0, "%d != 0\n", ret);
+
+    ret = GetObject(hbmp, 0, &bm);
+    ok(ret == 0, "%d != 0\n", ret);
+
+    ret = GetObject(hbmp, 1, &bm);
+    ok(ret == 0, "%d != 0\n", ret);
+
+    DeleteObject(hbmp);
+    DeleteDC(hdc);
+}
+
 START_TEST(bitmap)
 {
-    HWND hWnd;
-
-    hWnd = CreateWindowExA(0, "EDIT", NULL, 0,
-                           10, 10, 300, 300,
-                           NULL, NULL, NULL, NULL);
-    assert(hWnd);
-    is_win9x = GetWindowLongPtrW(hWnd, GWLP_WNDPROC) == 0;
-    DestroyWindow(hWnd);
+    is_win9x = GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC) == 0;
 
     test_createdibitmap();
     test_dibsections();
     test_mono_dibsection();
+    test_bitmap();
 }
