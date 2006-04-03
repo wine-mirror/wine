@@ -50,7 +50,7 @@
 @ stdcall RebootCheckOnInstallW(long wstr wstr long)
 @ stdcall RebootCheckOnInstall(long str str long) RebootCheckOnInstallA
 @ stdcall RegInstallA(ptr str ptr)
-# stdcall RegInstallW(ptr wstr ptr)
+@ stdcall RegInstallW(ptr wstr ptr)
 @ stdcall RegInstall(ptr str ptr) RegInstallA
 @ stdcall RegRestoreAllA(ptr str long)
 @ stdcall RegRestoreAllW(ptr wstr long)

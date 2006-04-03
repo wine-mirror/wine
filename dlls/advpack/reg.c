@@ -97,8 +97,81 @@ error:
     return FALSE;
 }
 
+static void strentry_atow(STRENTRYA *aentry, STRENTRYW *wentry)
+{
+    DWORD name_len, val_len;
+
+    name_len = MultiByteToWideChar(CP_ACP, 0, aentry->pszName, -1, NULL, 0);
+    val_len = MultiByteToWideChar(CP_ACP, 0, aentry->pszName, -1, NULL, 0);
+
+    wentry->pszName = HeapAlloc(GetProcessHeap(), 0, name_len * sizeof(WCHAR));
+    wentry->pszValue = HeapAlloc(GetProcessHeap(), 0, val_len * sizeof(WCHAR));
+
+    MultiByteToWideChar(CP_ACP, 0, aentry->pszName, -1, wentry->pszName, name_len);
+    MultiByteToWideChar(CP_ACP, 0, aentry->pszName, -1, wentry->pszValue, val_len);
+}
+
+static STRTABLEW *strtable_atow(const STRTABLEA *atable)
+{
+    STRTABLEW *wtable;
+    DWORD j;
+
+    wtable = HeapAlloc(GetProcessHeap(), 0, sizeof(STRTABLEW));
+    wtable->pse = HeapAlloc(GetProcessHeap(), 0, atable->cEntries * sizeof(STRENTRYW));
+    wtable->cEntries = atable->cEntries;
+
+    for (j = 0; j < wtable->cEntries; j++)
+        strentry_atow(&atable->pse[j], &wtable->pse[j]);
+
+    return wtable;
+}
+
+static void free_strtable(STRTABLEW *wtable)
+{
+    DWORD j;
+
+    for (j = 0; j < wtable->cEntries; j++)
+    {
+        HeapFree(GetProcessHeap(), 0, wtable->pse[j].pszName);
+        HeapFree(GetProcessHeap(), 0, wtable->pse[j].pszValue);
+    }
+
+    HeapFree(GetProcessHeap(), 0, wtable->pse);
+    HeapFree(GetProcessHeap(), 0, wtable);
+}
+
 /***********************************************************************
  *          RegInstallA (advpack.@)
+ *
+ * See RegInstallW.
+ */
+HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable)
+{
+    UNICODE_STRING section;
+    STRTABLEW *wtable;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p)\n", hm, debugstr_a(pszSection), pstTable);
+
+    if (pstTable)
+        wtable = strtable_atow(pstTable);
+    else
+        wtable = NULL;
+
+    RtlCreateUnicodeStringFromAsciiz(&section, pszSection);
+
+    hr = RegInstallW(hm, section.Buffer, wtable);
+
+    if (pstTable)
+        free_strtable(wtable);
+
+    RtlFreeUnicodeString(&section);
+
+    return hr;
+}
+
+/***********************************************************************
+ *          RegInstallW (advpack.@)
  *
  * Loads an INF from a string resource, adds entries to the string
  * substitution table, and executes the INF.
@@ -112,20 +185,15 @@ error:
  *   Success: S_OK.
  *   Failure: E_FAIL.
  */
-HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable)
+HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstTable)
 {
     int i;
     WCHAR tmp_ini_path[MAX_PATH];
     WCHAR mod_path[MAX_PATH + 2], sys_mod_path[MAX_PATH + 2], sys_root[MAX_PATH];
     HINF hinf;
-    WCHAR quote[] = {'\"',0};
-    UNICODE_STRING section;
+    static const WCHAR quote[] = {'\"',0};
 
-    TRACE("(%p %s %p)\n", hm, pszSection, pstTable);
-
-    if (pstTable) for(i = 0; i < pstTable->cEntries; i++)
-        TRACE("%d: %s -> %s\n", i, pstTable->pse[i].pszName,
-             pstTable->pse[i].pszValue);
+    TRACE("(%p, %s, %p)\n", hm, debugstr_w(pszSection), pstTable);
 
     if(!create_tmp_ini_file(hm, tmp_ini_path))
         return E_FAIL;
@@ -150,16 +218,13 @@ HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTa
 
     /* Write the additional string table */
     if (pstTable) for(i = 0; i < pstTable->cEntries; i++) {
-        char tmp_value[MAX_PATH + 2];
-        UNICODE_STRING name, value;
+        WCHAR tmp_value[MAX_PATH + 2];
+
         tmp_value[0] = '\"';
-        strcpy(tmp_value + 1, pstTable->pse[i].pszValue);
-        strcat(tmp_value, "\"");
-        RtlCreateUnicodeStringFromAsciiz(&name, pstTable->pse[i].pszName);
-        RtlCreateUnicodeStringFromAsciiz(&value, tmp_value);
-        WritePrivateProfileStringW(Strings, name.Buffer, value.Buffer, tmp_ini_path);
-        RtlFreeUnicodeString(&name);
-        RtlFreeUnicodeString(&value);
+        lstrcpyW(tmp_value + 1, pstTable->pse[i].pszValue);
+        lstrcatW(tmp_value, quote);
+
+        WritePrivateProfileStringW(Strings, pstTable->pse[i].pszName, tmp_value, tmp_ini_path);
     }
     /* flush cache */
     WritePrivateProfileStringW(NULL, NULL, NULL, tmp_ini_path);
@@ -175,12 +240,9 @@ HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTa
     SetupOpenAppendInfFileW(NULL, hinf, NULL);
 
     /* Need to do a lot more here */
-    RtlCreateUnicodeStringFromAsciiz(&section, pszSection);
-    SetupInstallFromInfSectionW(NULL, hinf, section.Buffer,
+    SetupInstallFromInfSectionW(NULL, hinf, pszSection,
                                 SPINST_INIFILES | SPINST_REGISTRY | SPINST_PROFILEITEMS,
                                 HKEY_LOCAL_MACHINE, NULL, 0, NULL, NULL, NULL, NULL);
-    RtlFreeUnicodeString(&section);
-
     
     SetupCloseInfFile(hinf);
     DeleteFileW(tmp_ini_path);
