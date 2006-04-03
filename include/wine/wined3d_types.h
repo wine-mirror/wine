@@ -631,6 +631,11 @@ typedef struct _WINED3DDEVINFO_STAGETIMINGS {
     float         ComputationProcessingPercent;
 } WINED3DDEVINFO_STAGETIMINGS;
 
+typedef struct _WINED3DRASTER_STATUS {
+    BOOL            InVBlank;
+    UINT            ScanLine;
+} WINED3DRASTER_STATUS;
+
 
 typedef struct WINED3DRESOURCESTATS {
     BOOL                bThrashing;

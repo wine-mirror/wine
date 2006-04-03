@@ -381,7 +381,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UIN
 
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface, D3DRASTER_STATUS*pRasterStatus) {
+HRESULT WINAPI IWineD3DSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface, WINED3DRASTER_STATUS *pRasterStatus) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     static BOOL showFixmes = TRUE;
     pRasterStatus->InVBlank = TRUE;

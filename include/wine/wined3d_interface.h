@@ -329,7 +329,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetDirect3D)(THIS_ IWineD3D** ppD3D) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ UINT iSwapChain, WINED3DDISPLAYMODE* pMode) PURE;
     STDMETHOD_(UINT, GetNumberOfSwapChains)(THIS) PURE;
-    STDMETHOD(GetRasterStatus)(THIS_ UINT iSwapChain, D3DRASTER_STATUS* pRasterStatus) PURE;
+    STDMETHOD(GetRasterStatus)(THIS_ UINT iSwapChain, WINED3DRASTER_STATUS* pRasterStatus) PURE;
     STDMETHOD(GetSwapChain)(THIS_ UINT iSwapChain, struct IWineD3DSwapChain **pSwapChain) PURE;
     STDMETHOD(Reset)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters) PURE;
     STDMETHOD(SetDialogBoxMode)(THIS_ BOOL bEnableDialogs) PURE;
@@ -1293,7 +1293,7 @@ DECLARE_INTERFACE_(IWineD3DSwapChain,IWineD3DBase)
     STDMETHOD(Present)(THIS_ CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) PURE;
     STDMETHOD(GetFrontBufferData)(THIS_ IWineD3DSurface *pDestSurface) PURE;
     STDMETHOD(GetBackBuffer)(THIS_ UINT iBackBuffer, WINED3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) PURE;
-    STDMETHOD(GetRasterStatus)(THIS_ D3DRASTER_STATUS *pRasterStatus) PURE;
+    STDMETHOD(GetRasterStatus)(THIS_ WINED3DRASTER_STATUS *pRasterStatus) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ WINED3DDISPLAYMODE *pMode) PURE;
     STDMETHOD(GetPresentParameters)(THIS_ WINED3DPRESENT_PARAMETERS *pPresentationParameters) PURE;
     STDMETHOD(SetGammaRamp)(THIS_ DWORD Flags, const D3DGAMMARAMP *pRamp) PURE;
