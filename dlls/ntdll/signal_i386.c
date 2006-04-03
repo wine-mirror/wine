@@ -704,27 +704,6 @@ inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
 
 
 /***********************************************************************
- *           save_fpu
- *
- * Set the FPU context from a sigcontext.
- */
-inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
-{
-    context->ContextFlags |= CONTEXT86_FLOATING_POINT;
-#ifdef FPU_sig
-    if (FPU_sig(sigcontext))
-    {
-        context->FloatSave = *FPU_sig(sigcontext);
-        return;
-    }
-#endif  /* FPU_sig */
-#ifdef __GNUC__
-    __asm__ __volatile__( "fnsave %0; fwait" : "=m" (context->FloatSave) );
-#endif  /* __GNUC__ */
-}
-
-
-/***********************************************************************
  *           restore_fpu
  *
  * Restore the FPU context to a sigcontext.
@@ -773,6 +752,21 @@ inline static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
     context->Dr3          = regs->dr3;
     context->Dr6          = regs->dr6;
     context->Dr7          = regs->dr7;
+
+#ifdef FPU_sig
+    if (FPU_sig(sigcontext))
+    {
+        context->ContextFlags |= CONTEXT_FLOATING_POINT;
+        context->FloatSave = *FPU_sig(sigcontext);
+    }
+    else
+#endif
+    {
+#ifdef __GNUC__
+        context->ContextFlags |= CONTEXT_FLOATING_POINT;
+        __asm__ __volatile__( "fnsave %0; fwait" : "=m" (context->FloatSave) );
+#endif
+    }
 }
 
 
@@ -815,6 +809,17 @@ inline static void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
 #else
     wine_set_fs( context->SegFs );
 #endif
+
+#ifdef FPU_sig
+    if (FPU_sig(sigcontext))
+    {
+        *FPU_sig(sigcontext) = context->FloatSave;
+    }
+    else
+#endif
+    {
+        restore_fpu( context );
+    }
 }
 
 
@@ -1278,7 +1283,6 @@ static HANDLER_DEF(fpe_handler)
     CONTEXT *context;
 
     context = get_exception_context( rec );
-    save_fpu( context, HANDLER_CONTEXT );
 
     switch(get_trap_code(HANDLER_CONTEXT))
     {
