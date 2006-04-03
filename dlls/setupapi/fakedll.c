@@ -95,85 +95,74 @@ static inline void add_directory( struct dll_info *info, unsigned int idx, DWORD
     info->nt->OptionalHeader.DataDirectory[idx].Size = size;
 }
 
+/* find the limits of the resource data */
+static void get_resource_data( const IMAGE_RESOURCE_DIRECTORY *dir, const BYTE *root,
+                               DWORD *rva_start, DWORD *rva_end )
+{
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    int i;
+
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
+    {
+        const void *ptr = root + entry->u2.s3.OffsetToDirectory;
+        if (entry->u2.s3.DataIsDirectory) get_resource_data( ptr, root, rva_start, rva_end );
+        else
+        {
+            const IMAGE_RESOURCE_DATA_ENTRY *data = ptr;
+            *rva_start = min( *rva_start, data->OffsetToData );
+            *rva_end = max( *rva_end, data->OffsetToData + data->Size );
+        }
+    }
+}
+
+/* fixup RVAs of resource data */
+static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int delta )
+{
+    IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    int i;
+
+    entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
+    {
+        void *ptr = root + entry->u2.s3.OffsetToDirectory;
+        if (entry->u2.s3.DataIsDirectory) fixup_resources( ptr, root, delta );
+        else
+        {
+            IMAGE_RESOURCE_DATA_ENTRY *data = ptr;
+            if (data->OffsetToData) data->OffsetToData += delta;
+        }
+    }
+}
+
 /* add version resources to the dll by copying them from the source module */
 static BOOL add_version_resource( HMODULE module, struct dll_info *dll_info )
 {
-    int i;
     BOOL ret = FALSE;
-    DWORD size, pos;
+    DWORD rva_start = ~0U, rva_end = 0, dir_size, total_size;
+    const IMAGE_RESOURCE_DIRECTORY *basedir;
+    const BYTE *data_start, *root;
     BYTE *buffer;
-    LDR_RESOURCE_INFO info;
-    IMAGE_RESOURCE_DIRECTORY *dir;
-    IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
-    IMAGE_RESOURCE_DATA_ENTRY *data;
-    const IMAGE_RESOURCE_DIRECTORY *basedir, *resdir;
-    const IMAGE_RESOURCE_DIRECTORY_ENTRY *src_entry;
-    const IMAGE_RESOURCE_DATA_ENTRY *src_data;
 
     if (!module) return TRUE;
     if (LdrFindResourceDirectory_U( module, NULL, 0, &basedir ) != STATUS_SUCCESS) return TRUE;
-    info.Type = VS_FILE_INFO;
-    info.Name = VS_VERSION_INFO;
-    if (LdrFindResourceDirectory_U( module, &info, 2, &resdir ) != STATUS_SUCCESS) return TRUE;
-
-    size = 3 * sizeof(IMAGE_RESOURCE_DIRECTORY);
-    size += (resdir->NumberOfIdEntries + 2) * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY);
-    size += resdir->NumberOfIdEntries * sizeof(IMAGE_RESOURCE_DATA_ENTRY);
-
-    buffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
-
-    /* types directory */
-    dir = (IMAGE_RESOURCE_DIRECTORY *)buffer;
-    dir->NumberOfIdEntries = 1;
-    entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    entry->u1.s2.Id = info.Type;
-    entry->u2.s3.DataIsDirectory = 1;
-    entry->u2.s3.OffsetToDirectory = (BYTE *)(entry + 1) - buffer;
-
-    /* names directory */
-    dir = (IMAGE_RESOURCE_DIRECTORY *)(entry + 1);
-    dir->NumberOfIdEntries = 1;
-    entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    entry->u1.s2.Id = info.Name;
-    entry->u2.s3.DataIsDirectory = 1;
-    entry->u2.s3.OffsetToDirectory = (BYTE *)(entry + 1) - buffer;
-
-    /* languages directory */
-    dir = (IMAGE_RESOURCE_DIRECTORY *)(entry + 1);
-    *dir = *resdir;
-    entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    src_entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
-    memcpy( entry, src_entry, resdir->NumberOfIdEntries * sizeof(*entry) );
-
-    /* data entries */
-    data = (IMAGE_RESOURCE_DATA_ENTRY *)(entry + resdir->NumberOfIdEntries);
-    pos = size;
-    for (i = 0; i < resdir->NumberOfIdEntries; i++)
-    {
-        void *ptr;
-        ULONG data_size;
-        src_data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)basedir + src_entry[i].u2.OffsetToData);
-        if (LdrAccessResource( module, src_data, &ptr, &data_size )) goto done;
-
-        entry[i].u2.OffsetToData = (BYTE *)&data[i] - buffer;
-        data[i] = *src_data;
-        data[i].OffsetToData = dll_info->mem_pos + pos;
-        if (!xwrite( dll_info, ptr, data_size, dll_info->file_pos + pos )) goto done;
-        pos += (data_size + 3) & ~3;
-    }
-    if (!xwrite( dll_info, buffer, size, dll_info->file_pos )) goto done;
-
-    add_directory( dll_info, IMAGE_DIRECTORY_ENTRY_RESOURCE, dll_info->mem_pos, pos );
-    add_section( dll_info, ".rsrc", pos, IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ );
+    root = (const BYTE *)basedir;
+    get_resource_data( basedir, root, &rva_start, &rva_end );
+    data_start = (const BYTE *)module + rva_start;
+    if (data_start <= root) return FALSE;
+    dir_size = data_start - root;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, dir_size ))) return FALSE;
+    memcpy( buffer, root, dir_size );
+    fixup_resources( (IMAGE_RESOURCE_DIRECTORY *)buffer, buffer, dll_info->mem_pos + dir_size - rva_start );
+    if (!xwrite( dll_info, buffer, dir_size, dll_info->file_pos )) goto done;
+    if (!xwrite( dll_info, data_start, rva_end - rva_start, dll_info->file_pos + dir_size )) goto done;
+    total_size = dir_size + rva_end - rva_start;
+    add_directory( dll_info, IMAGE_DIRECTORY_ENTRY_RESOURCE, dll_info->mem_pos, total_size );
+    add_section( dll_info, ".rsrc", total_size, IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ );
     ret = TRUE;
 done:
     HeapFree( GetProcessHeap(), 0, buffer );
     return ret;
-}
-
-void dummy(void)
-{
-    __asm__ __volatile__("movl $1,%eax; ret $4");
 }
 
 /* build a complete fake dll, optionally using module as a source */
