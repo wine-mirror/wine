@@ -236,6 +236,37 @@ HRESULT WINAPI RegRestoreAllW(HWND hWnd, LPWSTR pszTitleString, HKEY hkBackupKey
 /***********************************************************************
  *          RegSaveRestoreA (advpack.@)
  *
+ * See RegSaveRestoreW.
+ */
+HRESULT WINAPI RegSaveRestoreA(HWND hWnd, LPCSTR pszTitleString, HKEY hkBackupKey,
+                               LPCSTR pcszRootKey, LPCSTR pcszSubKey,
+                               LPCSTR pcszValueName, DWORD dwFlags)
+{
+    UNICODE_STRING title, root, subkey, value;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p, %p, %p, %p, %ld)\n", hWnd, pszTitleString,
+          hkBackupKey, pcszRootKey, pcszSubKey, pcszValueName, dwFlags);
+
+    RtlCreateUnicodeStringFromAsciiz(&title, pszTitleString);
+    RtlCreateUnicodeStringFromAsciiz(&root, pcszRootKey);
+    RtlCreateUnicodeStringFromAsciiz(&subkey, pcszSubKey);
+    RtlCreateUnicodeStringFromAsciiz(&value, pcszValueName);
+
+    hr = RegSaveRestoreW(hWnd, title.Buffer, hkBackupKey, root.Buffer,
+                         subkey.Buffer, value.Buffer, dwFlags);
+
+    RtlFreeUnicodeString(&title);
+    RtlFreeUnicodeString(&root);
+    RtlFreeUnicodeString(&subkey);
+    RtlFreeUnicodeString(&value);
+
+    return hr;
+}
+
+/***********************************************************************
+ *          RegSaveRestoreW (advpack.@)
+ *
  * Saves or restores the specified registry value.
  *
  * PARAMS
@@ -254,9 +285,9 @@ HRESULT WINAPI RegRestoreAllW(HWND hWnd, LPWSTR pszTitleString, HKEY hkBackupKey
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI RegSaveRestoreA(HWND hWnd, LPCSTR pszTitleString, HKEY hkBackupKey,
-                              LPCSTR pcszRootKey, LPCSTR pcszSubKey,
-                              LPCSTR pcszValueName, DWORD dwFlags)
+HRESULT WINAPI RegSaveRestoreW(HWND hWnd, LPCWSTR pszTitleString, HKEY hkBackupKey,
+                               LPCWSTR pcszRootKey, LPCWSTR pcszSubKey,
+                               LPCWSTR pcszValueName, DWORD dwFlags)
 {
     FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitleString,
           hkBackupKey, pcszRootKey, pcszSubKey, pcszValueName, dwFlags);

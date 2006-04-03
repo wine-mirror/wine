@@ -56,7 +56,7 @@
 @ stdcall RegRestoreAllW(ptr wstr long)
 @ stdcall RegRestoreAll(ptr str long) RegRestoreAllA
 @ stdcall RegSaveRestoreA(ptr str long str str str long)
-# stdcall RegSaveRestoreW(ptr wstr long wstr wstr wstr long)
+@ stdcall RegSaveRestoreW(ptr wstr long wstr wstr wstr long)
 @ stdcall RegSaveRestore(ptr str long str str str long) RegSaveRestoreA
 @ stdcall RegSaveRestoreOnINFA(ptr str str str long long long)
 # stdcall RegSaveRestoreOnINFW(ptr wstr wstr wstr long long long)
