@@ -862,24 +862,24 @@ static int offset_to_object(JoystickImpl *This, int offset)
 
 static LONG calculate_pov(JoystickImpl *This, int index)
 {
-    if (This->povs[index].lX < 16384) {
-        if (This->povs[index].lY < 16384)
+    if (This->povs[index].lX < -16384) {
+        if (This->povs[index].lY < -16384)
             This->js.rgdwPOV[index] = 31500;
-        else if (This->povs[index].lY > 49150)
+        else if (This->povs[index].lY > 16384)
             This->js.rgdwPOV[index] = 22500;
         else
             This->js.rgdwPOV[index] = 27000;
-    } else if (This->povs[index].lX > 49150) {
-        if (This->povs[index].lY < 16384)
+    } else if (This->povs[index].lX > 16384) {
+        if (This->povs[index].lY < -16384)
             This->js.rgdwPOV[index] = 4500;
-        else if (This->povs[index].lY > 49150)
+        else if (This->povs[index].lY > 16384)
             This->js.rgdwPOV[index] = 13500;
         else
             This->js.rgdwPOV[index] = 9000;
     } else {
-        if (This->povs[index].lY < 16384)
+        if (This->povs[index].lY < -16384)
             This->js.rgdwPOV[index] = 0;
-        else if (This->povs[index].lY > 49150)
+        else if (This->povs[index].lY > 16384)
             This->js.rgdwPOV[index] = 18000;
         else
             This->js.rgdwPOV[index] = -1;
@@ -953,30 +953,30 @@ static void joy_polldev(JoystickImpl *This) {
                 case 8:
                     /* FIXME don't go off array */
                     if (This->axis_map[jse.number + 1] == number)
-                        This->povs[0].lX = value;
+                        This->povs[0].lX = jse.value;
                     else if (This->axis_map[jse.number - 1] == number)
-                        This->povs[0].lY = value;
+                        This->povs[0].lY = jse.value;
                     value = calculate_pov(This, 0);
                     break;
                 case 9:
                     if (This->axis_map[jse.number + 1] == number)
-                        This->povs[1].lX = value;
+                        This->povs[1].lX = jse.value;
                     else if (This->axis_map[jse.number - 1] == number)
-                        This->povs[1].lY = value;
+                        This->povs[1].lY = jse.value;
                     value = calculate_pov(This, 1);
                     break;
                 case 10:
                     if (This->axis_map[jse.number + 1] == number)
-                        This->povs[2].lX = value;
+                        This->povs[2].lX = jse.value;
                     else if (This->axis_map[jse.number - 1] == number)
-                        This->povs[2].lY = value;
+                        This->povs[2].lY = jse.value;
                     value = calculate_pov(This, 2);
                     break;
                 case 11:
                     if (This->axis_map[jse.number + 1] == number)
-                        This->povs[3].lX = value;
+                        This->povs[3].lX = jse.value;
                     else if (This->axis_map[jse.number - 1] == number)
-                        This->povs[3].lY = value;
+                        This->povs[3].lY = jse.value;
                     value = calculate_pov(This, 3);
                     break;
                 }
