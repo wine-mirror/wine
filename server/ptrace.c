@@ -84,10 +84,7 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
         if (sig != want_sig)
         {
             /* ignore other signals for now */
-            if (thread && get_thread_single_step( thread ))
-                ptrace( PTRACE_SINGLESTEP, pid, (caddr_t)1, sig );
-            else
-                ptrace( PTRACE_CONT, pid, (caddr_t)1, sig );
+            ptrace( PTRACE_CONT, pid, (caddr_t)1, sig );
         }
         return sig;
     }
