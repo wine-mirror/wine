@@ -59,6 +59,26 @@ static void dump_user_flags(unsigned long *pFlags)
     }
 }
 
+/******************************************************************************
+ *           CLIPFORMAT_UserSize [OLE32.@]
+ *
+ * Calculates the buffer size required to marshal a clip format.
+ *
+ * PARAMS
+ *  pFlags       [I] Flags. See notes.
+ *  StartingSize [I] Starting size of the buffer. This value is added on to
+ *                   the buffer size required for the clip format.
+ *  pCF          [I] Clip format to size.
+ *
+ * RETURNS
+ *  The buffer size required to marshal a clip format plus the starting size.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an unsigned
+ *  long in pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an unsigned long.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned long __RPC_USER CLIPFORMAT_UserSize(unsigned long *pFlags, unsigned long StartingSize, CLIPFORMAT *pCF)
 {
     unsigned long size = StartingSize;
@@ -85,6 +105,25 @@ unsigned long __RPC_USER CLIPFORMAT_UserSize(unsigned long *pFlags, unsigned lon
     return size;
 }
 
+/******************************************************************************
+ *           CLIPFORMAT_UserMarshal [OLE32.@]
+ *
+ * Marshals a clip format into a buffer.
+ *
+ * PARAMS
+ *  pFlags  [I] Flags. See notes.
+ *  pBuffer [I] Buffer to marshal the clip format into.
+ *  pCF     [I] Clip format to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an unsigned
+ *  long in pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an unsigned long.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER CLIPFORMAT_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, CLIPFORMAT *pCF)
 {
     wireCLIPFORMAT wirecf = (wireCLIPFORMAT)pBuffer;
@@ -123,6 +162,25 @@ unsigned char * __RPC_USER CLIPFORMAT_UserMarshal(unsigned long *pFlags, unsigne
     return pBuffer;
 }
 
+/******************************************************************************
+ *           CLIPFORMAT_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals a clip format from a buffer.
+ *
+ * PARAMS
+ *  pFlags  [I] Flags. See notes.
+ *  pBuffer [I] Buffer to marshal the clip format from.
+ *  pCF     [O] Address that receive the unmarshaled clip format.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an unsigned
+ *  long in pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an unsigned long.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER CLIPFORMAT_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, CLIPFORMAT *pCF)
 {
     wireCLIPFORMAT wirecf = (wireCLIPFORMAT)pBuffer;
@@ -158,6 +216,24 @@ unsigned char * __RPC_USER CLIPFORMAT_UserUnmarshal(unsigned long *pFlags, unsig
     return pBuffer;
 }
 
+/******************************************************************************
+ *           CLIPFORMAT_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled clip format.
+ *
+ * PARAMS
+ *  pFlags  [I] Flags. See notes.
+ *  pCF     [I] Clip format to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an unsigned
+ *  long in pFlags, it actually takes a pointer to a USER_MARSHAL_CB
+ *  structure, of which the first parameter is an unsigned long.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 void __RPC_USER CLIPFORMAT_UserFree(unsigned long *pFlags, CLIPFORMAT *pCF)
 {
     /* there is no inverse of the RegisterClipboardFormat function,
