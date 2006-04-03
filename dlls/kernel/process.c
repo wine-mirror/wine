@@ -592,22 +592,6 @@ static BOOL build_command_line( WCHAR **argv )
 }
 
 
-static void version(void)
-{
-    MESSAGE( "%s\n", PACKAGE_STRING );
-    ExitProcess(0);
-}
-
-static void usage(void)
-{
-    MESSAGE( "%s\n", PACKAGE_STRING );
-    MESSAGE( "Usage: wine PROGRAM [ARGUMENTS...]   Run the specified program\n" );
-    MESSAGE( "       wine --help                   Display this help and exit\n");
-    MESSAGE( "       wine --version                Output version information and exit\n");
-    ExitProcess(0);
-}
-
-
 /***********************************************************************
  *           init_current_directory
  *
@@ -880,13 +864,6 @@ void __wine_kernel_init(void)
     else
     {
         WCHAR exe_nameW[MAX_PATH];
-
-        if (!__wine_main_argv[0]) usage();
-        if (__wine_main_argc == 1)
-        {
-            if (strcmp(__wine_main_argv[0], "--help") == 0) usage();
-            if (strcmp(__wine_main_argv[0], "--version") == 0) version();
-        }
 
         MultiByteToWideChar( CP_UNIXCP, 0, __wine_main_argv[0], -1, exe_nameW, MAX_PATH );
         if (!SearchPathW( NULL, exe_nameW, exeW, MAX_PATH, main_exe_name, NULL ) &&
