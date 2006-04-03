@@ -2062,11 +2062,8 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEDEV* wwo, BOOL force)
  *
  * wodPlayer helper. Resets current output stream.
  */
-static	void	wodPlayer_Reset(WINE_WAVEDEV* wwo)
+static	void	wodPlayer_Reset(WINE_WAVEDEV* wwo, BOOL reset)
 {
-    enum win_wm_message	msg;
-    DWORD		        param;
-    HANDLE		        ev;
     int                         err;
     TRACE("(%p)\n", wwo);
 
@@ -2086,33 +2083,62 @@ static	void	wodPlayer_Reset(WINE_WAVEDEV* wwo)
     if ( (err = snd_pcm_prepare(wwo->pcm)) < 0 )
         ERR("pcm prepare failed: %s\n", snd_strerror(err));
 
-    /* remove any buffer */
-    wodPlayer_NotifyCompletions(wwo, TRUE);
+    if (reset) {
+        enum win_wm_message	msg;
+        DWORD		        param;
+        HANDLE		        ev;
 
-    wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
-    wwo->state = WINE_WS_STOPPED;
-    wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
-    /* Clear partial wavehdr */
-    wwo->dwPartialOffset = 0;
+        /* remove any buffer */
+        wodPlayer_NotifyCompletions(wwo, TRUE);
 
-    /* remove any existing message in the ring */
-    EnterCriticalSection(&wwo->msgRing.msg_crst);
-    /* return all pending headers in queue */
-    while (ALSA_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev))
-    {
-        if (msg != WINE_WM_HEADER)
+        wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
+        wwo->state = WINE_WS_STOPPED;
+        wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
+        /* Clear partial wavehdr */
+        wwo->dwPartialOffset = 0;
+
+        /* remove any existing message in the ring */
+        EnterCriticalSection(&wwo->msgRing.msg_crst);
+        /* return all pending headers in queue */
+        while (ALSA_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev))
         {
-            FIXME("shouldn't have headers left\n");
-            SetEvent(ev);
-            continue;
-        }
-        ((LPWAVEHDR)param)->dwFlags &= ~WHDR_INQUEUE;
-        ((LPWAVEHDR)param)->dwFlags |= WHDR_DONE;
+            if (msg != WINE_WM_HEADER)
+            {
+                FIXME("shouldn't have headers left\n");
+                SetEvent(ev);
+                continue;
+            }
+            ((LPWAVEHDR)param)->dwFlags &= ~WHDR_INQUEUE;
+            ((LPWAVEHDR)param)->dwFlags |= WHDR_DONE;
 
-        wodNotifyClient(wwo, WOM_DONE, param, 0);
+                wodNotifyClient(wwo, WOM_DONE, param, 0);
+        }
+        RESET_OMR(&wwo->msgRing);
+        LeaveCriticalSection(&wwo->msgRing.msg_crst);
+    } else {
+        if (wwo->lpLoopPtr) {
+            /* complicated case, not handled yet (could imply modifying the loop counter */
+            FIXME("Pausing while in loop isn't correctly handled yet, except strange results\n");
+            wwo->lpPlayPtr = wwo->lpLoopPtr;
+            wwo->dwPartialOffset = 0;
+            wwo->dwWrittenTotal = wwo->dwPlayedTotal; /* this is wrong !!! */
+        } else {
+            LPWAVEHDR   ptr;
+            DWORD       sz = wwo->dwPartialOffset;
+
+            /* reset all the data as if we had written only up to lpPlayedTotal bytes */
+            /* compute the max size playable from lpQueuePtr */
+            for (ptr = wwo->lpQueuePtr; ptr != wwo->lpPlayPtr; ptr = ptr->lpNext) {
+                sz += ptr->dwBufferLength;
+            }
+            /* because the reset lpPlayPtr will be lpQueuePtr */
+            if (wwo->dwWrittenTotal > wwo->dwPlayedTotal + sz) ERR("grin\n");
+            wwo->dwPartialOffset = sz - (wwo->dwWrittenTotal - wwo->dwPlayedTotal);
+            wwo->dwWrittenTotal = wwo->dwPlayedTotal;
+            wwo->lpPlayPtr = wwo->lpQueuePtr;
+        }
+        wwo->state = WINE_WS_PAUSED;
     }
-    RESET_OMR(&wwo->msgRing);
-    LeaveCriticalSection(&wwo->msgRing.msg_crst);
 }
 
 /**************************************************************************
@@ -2133,11 +2159,18 @@ static void wodPlayer_ProcessMessages(WINE_WAVEDEV* wwo)
 	case WINE_WM_PAUSING:
 	    if ( snd_pcm_state(wwo->pcm) == SND_PCM_STATE_RUNNING )
 	     {
-		err = snd_pcm_pause(wwo->pcm, 1);
-		if ( err < 0 )
-		    ERR("pcm_pause failed: %s\n", snd_strerror(err));
+                if ( snd_pcm_hw_params_can_pause(wwo->hw_params) )
+		{
+		    err = snd_pcm_pause(wwo->pcm, 1);
+		    if ( err < 0 )
+			ERR("pcm_pause failed: %s\n", snd_strerror(err));
+		    wwo->state = WINE_WS_PAUSED;
+		}
+		else
+		{
+		    wodPlayer_Reset(wwo,FALSE);
+		}
 	     }
-	    wwo->state = WINE_WS_PAUSED;
 	    SetEvent(ev);
 	    break;
 	case WINE_WM_RESTARTING:
@@ -2168,7 +2201,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEDEV* wwo)
 		wwo->state = WINE_WS_PLAYING;
 	    break;
 	case WINE_WM_RESETTING:
-	    wodPlayer_Reset(wwo);
+	    wodPlayer_Reset(wwo,TRUE);
 	    SetEvent(ev);
 	    break;
         case WINE_WM_UPDATE:
