@@ -559,6 +559,12 @@ typedef struct _WINED3DVOLUME_DESC
     UINT                *Depth;
 } WINED3DVOLUME_DESC;
 
+typedef struct _WINED3DCLIPSTATUS {
+   DWORD ClipUnion;
+   DWORD ClipIntersection;
+} WINED3DCLIPSTATUS;
+
+
 typedef struct _WINED3DVERTEXELEMENT {
   WORD    Stream;
   WORD    Offset;
