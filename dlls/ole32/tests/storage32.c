@@ -474,6 +474,13 @@ static void test_open_storage(void)
     if (stg)
         IStorage_Release(stg);
 
+    /* open like Project 2003 */
+    stg = NULL;
+    r = StgOpenStorage( filename, NULL, STGM_PRIORITY, NULL, 0, &stg);
+    ok(r == S_OK, "should succeed\n");
+    if (stg)
+        IStorage_Release(stg);
+
     r = DeleteFileW(filename);
     ok(r, "file didn't exist\n");
 }

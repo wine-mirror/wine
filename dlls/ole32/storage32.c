@@ -5908,10 +5908,17 @@ HRESULT WINAPI StgOpenStorage(
     goto end;
   }
 
+  /* STGM_PRIORITY implies exclusive access */
+  if (grfMode & STGM_PRIORITY)
+  {
+    grfMode &= ~0xf0; /* remove the existing sharing mode */
+    grfMode |= STGM_SHARE_EXCLUSIVE;
+  }
+
   /*
    * Validate the sharing mode
    */
-  if (!(grfMode & (STGM_TRANSACTED|STGM_PRIORITY)))
+  if (!(grfMode & STGM_TRANSACTED))
     switch(STGM_SHARE_MODE(grfMode))
     {
       case STGM_SHARE_EXCLUSIVE:
