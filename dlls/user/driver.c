@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(user);
 static const USER_DRIVER null_driver, lazy_load_driver;
 
 const USER_DRIVER *USER_Driver = &lazy_load_driver;
+static DWORD driver_load_error;
 
 /* load the graphics driver */
 static const USER_DRIVER *load_driver(void)
@@ -61,6 +62,9 @@ static const USER_DRIVER *load_driver(void)
         if ((graphics_driver = LoadLibraryA( libname )) != 0) break;
         name = next;
     }
+
+    if (!graphics_driver)
+        driver_load_error = GetLastError();
 
     driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
     memcpy( driver, &null_driver, sizeof(*driver) );
@@ -305,10 +309,22 @@ static BOOL nulldrv_CreateDesktopWindow( HWND hwnd )
 static BOOL nulldrv_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
     static int warned;
+    if (warned++)
+        return FALSE;
 
-    if (!warned++)
-        MESSAGE( "Application tries to create a window, but no driver could be loaded.\n"
-                 "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
+    MESSAGE( "Application tried to create a window, but no driver could be loaded.\n");
+    switch (driver_load_error)
+    {
+    case ERROR_MOD_NOT_FOUND:
+        MESSAGE( "The X11 driver is missing.  Check your build!\n" );
+        break;
+    case ERROR_DLL_INIT_FAILED:
+        MESSAGE( "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
+        break;
+    default:
+        MESSAGE( "Unknown error (%ld).\n", driver_load_error );
+    }
+
     return FALSE;
 }
 
