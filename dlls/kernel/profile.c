@@ -734,6 +734,9 @@ static BOOL PROFILE_Open( LPCWSTR filename )
 
     GetWindowsDirectoryW( windirW, MAX_PATH );
 
+    if (!filename)
+	filename = wininiW;
+
     if ((RtlDetermineDosPathNameType_U(filename) == RELATIVE_PATH) &&
         !strchrW(filename, '\\') && !strchrW(filename, '/'))
     {
@@ -1071,9 +1074,6 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 {
     int		ret;
     LPCWSTR	pDefVal = NULL;
-
-    if (!filename)
-	filename = wininiW;
 
     TRACE("%s,%s,%s,%p,%u,%s\n", debugstr_w(section), debugstr_w(entry),
           debugstr_w(def_val), buffer, len, debugstr_w(filename));
