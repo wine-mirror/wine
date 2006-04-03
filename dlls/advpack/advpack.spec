@@ -53,7 +53,7 @@
 # stdcall RegInstallW(ptr wstr ptr)
 @ stdcall RegInstall(ptr str ptr) RegInstallA
 @ stdcall RegRestoreAllA(ptr str long)
-# stdcall RegRestoreAllW(ptr wstr long)
+@ stdcall RegRestoreAllW(ptr wstr long)
 @ stdcall RegRestoreAll(ptr str long) RegRestoreAllA
 @ stdcall RegSaveRestoreA(ptr str long str str str long)
 # stdcall RegSaveRestoreW(ptr wstr long wstr wstr wstr long)

@@ -191,6 +191,27 @@ HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTa
 /***********************************************************************
  *          RegRestoreAllA (advpack.@)
  *
+ * See RegRestoreAllW.
+ */
+HRESULT WINAPI RegRestoreAllA(HWND hWnd, LPSTR pszTitleString, HKEY hkBackupKey)
+{
+    UNICODE_STRING title;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p)\n", hWnd, pszTitleString, hkBackupKey);
+
+    RtlCreateUnicodeStringFromAsciiz(&title, pszTitleString);
+
+    hr = RegRestoreAllW(hWnd, title.Buffer, hkBackupKey);
+
+    RtlFreeUnicodeString(&title);
+
+    return hr;
+}
+
+/***********************************************************************
+ *          RegRestoreAllW (advpack.@)
+ *
  * Restores all saved registry entries.
  *
  * PARAMS
@@ -205,9 +226,9 @@ HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTa
  * BUGS
  *   Unimplemented.
  */
-HRESULT WINAPI RegRestoreAllA(HWND hWnd, LPSTR pszTitleString, HKEY hkBackupKey)
+HRESULT WINAPI RegRestoreAllW(HWND hWnd, LPWSTR pszTitleString, HKEY hkBackupKey)
 {
-    FIXME("(%p, %p, %p) stub\n", hWnd, pszTitleString, hkBackupKey);
+    FIXME("(%p, %s, %p) stub\n", hWnd, debugstr_w(pszTitleString), hkBackupKey);
     
     return E_FAIL;   
 }
