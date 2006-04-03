@@ -614,6 +614,15 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
 
 /***********************************************************************
  *             CancelIo                   (KERNEL32.@)
+ *
+ * Cancels pending I/O operations initiated by the current thread on a file.
+ *
+ * PARAMS
+ *  handle [I] File handle.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE, check GetLastError().
  */
 BOOL WINAPI CancelIo(HANDLE handle)
 {
@@ -820,6 +829,17 @@ BOOL WINAPI GetFileInformationByHandle( HANDLE hFile, BY_HANDLE_FILE_INFORMATION
 
 /***********************************************************************
  *           GetFileSize   (KERNEL32.@)
+ *
+ * Retrieve the size of a file.
+ *
+ * PARAMS
+ *  hFile        [I] File to retrieve size of.
+ *  filesizehigh [O] On return, the high bits of the file size.
+ *
+ * RETURNS
+ *  Success: The low bits of the file size.
+ *  Failure: INVALID_FILE_SIZE. As this is could also be a success value,
+ *           check GetLastError() for values other than ERROR_SUCCESS.
  */
 DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
 {
@@ -833,6 +853,16 @@ DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
 
 /***********************************************************************
  *           GetFileSizeEx   (KERNEL32.@)
+ *
+ * Retrieve the size of a file.
+ *
+ * PARAMS
+ *  hFile        [I] File to retrieve size of.
+ *  lpFileSIze   [O] On return, the size of the file.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE, check GetLastError().
  */
 BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
 {
@@ -853,6 +883,15 @@ BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
 
 /**************************************************************************
  *           SetEndOfFile   (KERNEL32.@)
+ *
+ * Sets the current position as the end of the file.
+ *
+ * PARAMS
+ *  hFile [I] File handle.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE, check GetLastError().
  */
 BOOL WINAPI SetEndOfFile( HANDLE hFile )
 {
@@ -1415,6 +1454,15 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 
 /***********************************************************************
  *           DeleteFileW   (KERNEL32.@)
+ *
+ * Delete a file.
+ *
+ * PARAMS
+ *  path [I] Path to the file to delete.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE, check GetLastError().
  */
 BOOL WINAPI DeleteFileW( LPCWSTR path )
 {
@@ -1450,6 +1498,8 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
 
 /***********************************************************************
  *           DeleteFileA   (KERNEL32.@)
+ *
+ * See DeleteFileW.
  */
 BOOL WINAPI DeleteFileA( LPCSTR path )
 {
