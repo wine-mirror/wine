@@ -175,22 +175,6 @@
 @ stdcall BuildCommDCBW(wstr ptr)
 @ stdcall CallNamedPipeA(str ptr long ptr long ptr long)
 @ stdcall CallNamedPipeW(wstr ptr long ptr long ptr long)
-@ stub Callback12
-@ stub Callback16
-@ stub Callback20
-@ stub Callback24
-@ stub Callback28
-@ stub Callback32
-@ stub Callback36
-@ stub Callback40
-@ stub Callback44
-@ stub Callback48
-@ stub Callback4
-@ stub Callback52
-@ stub Callback56
-@ stub Callback60
-@ stub Callback64
-@ stub Callback8
 @ stub CancelDeviceWakeupRequest
 @ stdcall CancelIo(long)
 # @ stub CancelTimerQueueTimer
