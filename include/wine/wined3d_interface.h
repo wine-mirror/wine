@@ -324,7 +324,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(EvictManagedResources)(THIS) PURE;
     STDMETHOD_(UINT, GetAvailableTextureMem)(THIS) PURE;
     STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT BackBuffer, WINED3DBACKBUFFER_TYPE, struct IWineD3DSurface** ppBackBuffer) PURE;
-    STDMETHOD(GetCreationParameters)(THIS_ D3DDEVICE_CREATION_PARAMETERS *pParameters) PURE;
+    STDMETHOD(GetCreationParameters)(THIS_ WINED3DDEVICE_CREATION_PARAMETERS *pParameters) PURE;
     STDMETHOD(GetDeviceCaps)(THIS_ WINED3DCAPS* pCaps) PURE;
     STDMETHOD(GetDirect3D)(THIS_ IWineD3D** ppD3D) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ UINT iSwapChain, WINED3DDISPLAYMODE* pMode) PURE;

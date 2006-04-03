@@ -6549,7 +6549,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetDialogBoxMode(IWineD3DDevice *iface, BOOL b
 }
 
 
-HRESULT  WINAPI  IWineD3DDeviceImpl_GetCreationParameters(IWineD3DDevice *iface, D3DDEVICE_CREATION_PARAMETERS *pParameters) {
+HRESULT  WINAPI  IWineD3DDeviceImpl_GetCreationParameters(IWineD3DDevice *iface, WINED3DDEVICE_CREATION_PARAMETERS *pParameters) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     TRACE("(%p) : pParameters %p\n", This, pParameters);
 

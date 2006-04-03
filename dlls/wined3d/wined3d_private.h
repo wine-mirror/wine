@@ -521,7 +521,7 @@ typedef struct IWineD3DDeviceImpl
     IWineD3DStateBlockImpl *updateStateBlock;
 
     /* Internal use fields  */
-    D3DDEVICE_CREATION_PARAMETERS   createParms;
+    WINED3DDEVICE_CREATION_PARAMETERS createParms;
     UINT                            adapterNo;
     D3DDEVTYPE                      devType;
 
