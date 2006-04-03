@@ -16,7 +16,16 @@ BITMAP_FONTS  = \
 	couret.fon \
 	cvgasys.fon \
 	hvgasys.fon \
+	jsmalle.fon \
 	jvgasys.fon \
+	smalle.fon \
+	smallee.fon \
+	smalleg.fon \
+	smaller.fon \
+	smallet.fon \
+	smae1255.fon \
+	smae1256.fon \
+	smae1257.fon \
 	sserife.fon \
 	sserifee.fon \
 	sserifeg.fon \
@@ -52,6 +61,9 @@ courier.ttf: courier.sfd
 	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
 
 ms_sans_serif.ttf: ms_sans_serif.sfd
+	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
+
+small_fonts.ttf: small_fonts.sfd
 	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
 
 system.ttf: system.sfd
@@ -159,6 +171,33 @@ ms_sans_serif-874-96-16.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 ms_sans_serif-874-96-20.fnt: ms_sans_serif.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 20 874 96 129 8
 
+small_fonts-1252-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 11 1252 96 128 5
+
+small_fonts-1250-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 11 1250 96 128 5
+
+small_fonts-1251-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 11 1251 96 128 5
+
+small_fonts-1253-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 11 1253 96 128 5
+
+small_fonts-1254-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 11 1254 96 128 5
+
+small_fonts-1255-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 11 1255 96 128 5
+
+small_fonts-1256-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 11 1256 96 128 5
+
+small_fonts-1257-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 11 1257 96 128 5
+
+small_fonts-932-96-11.fnt: small_fonts.ttf $(SFNT2FNT)
+	$(LDPATH) $(SFNT2FNT) $< 11 932 96 128 5
+
 system-1252-96-16.fnt: system.ttf $(SFNT2FNT)
 	$(LDPATH) $(SFNT2FNT) $< 16 1252 96 128 7
 
@@ -248,6 +287,33 @@ ssee1257.fon: ms_sans_serif-1257-96-13.fnt ms_sans_serif-1257-96-16.fnt ms_sans_
 
 ssee874.fon: ms_sans_serif-874-96-13.fnt ms_sans_serif-874-96-16.fnt ms_sans_serif-874-96-20.fnt $(FNT2FON)
 	$(FNT2FON) ms_sans_serif-874-96-13.fnt ms_sans_serif-874-96-16.fnt ms_sans_serif-874-96-20.fnt $@
+
+smalle.fon: small_fonts-1252-96-11.fnt $(FNT2FON)
+	$(FNT2FON) small_fonts-1252-96-11.fnt $@
+
+smallee.fon: small_fonts-1250-96-11.fnt $(FNT2FON)
+	$(FNT2FON) small_fonts-1250-96-11.fnt $@
+
+smaller.fon: small_fonts-1251-96-11.fnt $(FNT2FON)
+	$(FNT2FON) small_fonts-1251-96-11.fnt $@
+
+smalleg.fon: small_fonts-1253-96-11.fnt $(FNT2FON)
+	$(FNT2FON) small_fonts-1253-96-11.fnt $@
+
+smallet.fon: small_fonts-1254-96-11.fnt $(FNT2FON)
+	$(FNT2FON) small_fonts-1254-96-11.fnt $@
+
+smae1255.fon: small_fonts-1255-96-11.fnt $(FNT2FON)
+	$(FNT2FON) small_fonts-1255-96-11.fnt $@
+
+smae1256.fon: small_fonts-1256-96-11.fnt $(FNT2FON)
+	$(FNT2FON) small_fonts-1256-96-11.fnt $@
+
+smae1257.fon: small_fonts-1257-96-11.fnt $(FNT2FON)
+	$(FNT2FON) small_fonts-1257-96-11.fnt $@
+
+jsmalle.fon: small_fonts-932-96-11.fnt $(FNT2FON)
+	$(FNT2FON) small_fonts-932-96-11.fnt $@
 
 vgasys.fon: system-1252-96-16.fnt $(FNT2FON)
 	$(FNT2FON) system-1252-96-16.fnt $@
