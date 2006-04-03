@@ -1591,11 +1591,11 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                     fprintf(file, ";\n");
                 }
 
-                /* FIXME: these can't both be correct */
                 if (phase == PHASE_FREE)
                     print_phase_function(file, indent, "Pointer", phase, var->name, *type_offset);
                 else
-                    print_phase_function(file, indent, "ConformantString", phase, var->name, *type_offset);
+                    print_phase_function(file, indent, "ConformantString", phase, var->name,
+                                         *type_offset + (has_size ? 4 : 2));
             }
         }
         else if (is_array_type(var->attrs, var->ptr_level, var->array))
