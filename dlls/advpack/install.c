@@ -39,6 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 #define SPAPI_MASK      0xFFFFL
 #define HRESULT_FROM_SPAPI(x)   ((x & SPAPI_MASK) | SPAPI_PREFIX)
 
+#define ADV_HRESULT(x)  ((x & SPAPI_ERROR) ? HRESULT_FROM_SPAPI(x) : HRESULT_FROM_WIN32(x))
+
 /* this structure very closely resembles parameters of RunSetupCommand() */
 typedef struct
 {
@@ -366,7 +368,6 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
                                 DWORD dwFlags, LPVOID pvReserved )
 {
     HINF hinf;
-    DWORD err;
 
     TRACE("(%p, %s, %s, %s, %s, %p, 0x%08lx, %p)\n",
            hWnd, debugstr_w(szCmdName), debugstr_w(szInfSection),
@@ -384,13 +385,7 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
 
     hinf = SetupOpenInfFileW(szCmdName, NULL, INF_STYLE_WIN4, NULL);
     if (hinf == INVALID_HANDLE_VALUE)
-    {
-        err = GetLastError();
-        if (err & SPAPI_ERROR)
-            return HRESULT_FROM_SPAPI(err);
-        else
-            return HRESULT_FROM_WIN32(err);
-    }
+        return ADV_HRESULT(GetLastError());
 
     SetupCloseInfFile(hinf);
     return E_UNEXPECTED;
