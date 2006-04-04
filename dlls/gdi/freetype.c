@@ -1049,7 +1049,7 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 
     dir = opendir(dirname);
     if(!dir) {
-        ERR("Can't open directory %s\n", debugstr_a(dirname));
+        WARN("Can't open directory %s\n", debugstr_a(dirname));
 	return FALSE;
     }
     while((dent = readdir(dir)) != NULL) {
