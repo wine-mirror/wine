@@ -656,3 +656,15 @@ DWORD WINAPI StopWatchAFORWARD(DWORD dwClass, LPCSTR lpszStr, DWORD dwUnknown,
         return p(dwClass, lpszStr, dwUnknown, dwMode, dwTimeStamp);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/******************************************************************
+ *		IEWinMain            (SHDOCVW.101)
+ *
+ * Only returns on error.
+ */
+DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
+{
+    FIXME("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
+    ExitProcess(0);
+    return 0;
+}

@@ -1,5 +1,5 @@
 # ordinal exports
-101 stub -noname IEWinMain
+101 stdcall -noname IEWinMain(str long)
 102 stub -noname CreateShortcutInDirA
 103 stub -noname CreateShortcutInDirW
 104 stdcall -noname WhichPlatformFORWARD()
