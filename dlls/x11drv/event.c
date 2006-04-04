@@ -269,6 +269,7 @@ static int process_events( Display *display, ULONG_PTR mask )
         handler( hwnd, &event );
         wine_tsx11_lock();
     }
+    XFlush( gdi_display );
     wine_tsx11_unlock();
     if (count) TRACE( "processed %d events\n", count );
     return count;
@@ -293,11 +294,6 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 
     /* check whether only server queue handle was passed in */
     if (count < 2) flags &= ~MWMO_WAITALL;
-
-    wine_tsx11_lock();
-    XFlush( gdi_display );
-    XFlush( data->display );
-    wine_tsx11_unlock();
 
     data->process_event_count++;
 

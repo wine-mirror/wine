@@ -671,9 +671,6 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
                     wine_tsx11_unlock();
                 }
             }
-            wine_tsx11_lock();
-            XFlush( display );  /* FIXME: should not be necessary */
-            wine_tsx11_unlock();
         }
     }
     WIN_ReleasePtr( win );
