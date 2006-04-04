@@ -9,8 +9,8 @@ Version: 001.000
 ItalicAngle: 0
 UnderlinePosition: -100
 UnderlineWidth: 50
-Ascent: 800
-Descent: 200
+Ascent: 9
+Descent: 2
 XUID: [1021 180 78732788 213171]
 FSType: 8
 PfmFamily: 33
@@ -48,973 +48,977 @@ ScriptLang: 1
 LangName: 1033 "" "" "" "" "" "" "" "" "Created with FontForge (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "Wine is free software; you can redistribute it and/or modify it under+AAoA-the terms of the GNU Lesser General Public License as published by the+AAoA-Free Software Foundation; either version 2.1 of the License, or (at+AAoA-your option) any later version.+AAoACgAA-This program is distributed in the hope that it will be useful, but+AAoA-WITHOUT ANY WARRANTY; without even the implied warranty of+AAoA-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU+AAoA-Lesser General Public License for more details.+AAoACgAA-A copy of the GNU Lesser General Public License is included in the+AAoA-Wine distribution in the file COPYING.LIB. If you did not receive this+AAoA-copy, write to the Free Software Foundation, Inc., 59 Temple Place,+AAoA-Suite 330, Boston, MA 02111-1307 USA.+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
 Encoding: UnicodeBmp
 UnicodeInterp: none
+NameList: Adobe Glyph List
 DisplaySize: 11
 AntiAlias: 1
 FitToEm: 1
-WinInfo: 0 20 16
+WinInfo: 0 24 22
 OnlyBitmaps: 1
 TeXData: 1 0 0 189792 94896 63264 0 1048576 63264 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65536 328
+BeginChars: 65536 340
 StartChar: A
 Encoding: 65 65 0
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: exclam
 Encoding: 33 33 1
-Width: 181
+Width: 2
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: quotedbl
 Encoding: 34 34 2
-Width: 363
+Width: 4
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: space
 Encoding: 32 32 3
-Width: 181
+Width: 2
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: numbersign
 Encoding: 35 35 4
-Width: 545
+Width: 6
 Flags: W
 TeX: 110 0 0 0
 EndChar
 StartChar: dollar
 Encoding: 36 36 5
-Width: 545
+Width: 6
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: percent
 Encoding: 37 37 6
-Width: 636
+Width: 7
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: ampersand
 Encoding: 38 38 7
-Width: 545
+Width: 6
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: quotesingle
 Encoding: 39 39 8
-Width: 181
+Width: 2
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: parenleft
 Encoding: 40 40 9
-Width: 272
+Width: 3
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: parenright
 Encoding: 41 41 10
-Width: 272
+Width: 3
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: asterisk
 Encoding: 42 42 11
-Width: 272
+Width: 3
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: plus
 Encoding: 43 43 12
-Width: 363
+Width: 4
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: comma
 Encoding: 44 44 13
-Width: 181
+Width: 2
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: hyphen
 Encoding: 45 45 14
-Width: 272
+Width: 3
 Flags: W
 TeX: 104 0 0 0
 EndChar
 StartChar: period
 Encoding: 46 46 15
-Width: 181
+Width: 2
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: slash
 Encoding: 47 47 16
-Width: 272
+Width: 3
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: zero
 Encoding: 48 48 17
-Width: 454
+Width: 5
 Flags: W
 TeX: 122 0 0 0
 EndChar
 StartChar: one
 Encoding: 49 49 18
-Width: 272
+Width: 3
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: two
 Encoding: 50 50 19
-Width: 454
+Width: 5
 Flags: W
 TeX: 116 0 0 0
 EndChar
 StartChar: three
 Encoding: 51 51 20
-Width: 454
+Width: 5
 Flags: W
 TeX: 116 0 0 0
 EndChar
 StartChar: four
 Encoding: 52 52 21
-Width: 454
+Width: 5
 Flags: W
 TeX: 102 0 0 0
 EndChar
 StartChar: five
 Encoding: 53 53 22
-Width: 454
+Width: 5
 Flags: W
 TeX: 102 0 0 0
 EndChar
 StartChar: six
 Encoding: 54 54 23
-Width: 454
+Width: 5
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: seven
 Encoding: 55 55 24
-Width: 454
+Width: 5
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: eight
 Encoding: 56 56 25
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: nine
 Encoding: 57 57 26
-Width: 454
+Width: 5
 Flags: W
 TeX: 110 0 0 0
 EndChar
 StartChar: colon
 Encoding: 58 58 27
-Width: 181
+Width: 2
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: semicolon
 Encoding: 59 59 28
-Width: 181
+Width: 2
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: less
 Encoding: 60 60 29
-Width: 454
+Width: 5
 Flags: W
 TeX: 108 0 0 0
 EndChar
 StartChar: equal
 Encoding: 61 61 30
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: greater
 Encoding: 62 62 31
-Width: 454
+Width: 5
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: question
 Encoding: 63 63 32
-Width: 454
+Width: 5
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: at
 Encoding: 64 64 33
-Width: 818
+Width: 9
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: B
 Encoding: 66 66 34
-Width: 636
+Width: 7
 Flags: W
 TeX: 66 0 0 0
 EndChar
 StartChar: C
 Encoding: 67 67 35
-Width: 636
+Width: 7
 Flags: W
 TeX: 67 0 0 0
 EndChar
 StartChar: D
 Encoding: 68 68 36
-Width: 636
+Width: 7
 Flags: W
 TeX: 68 0 0 0
 EndChar
 StartChar: E
 Encoding: 69 69 37
-Width: 545
+Width: 6
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: F
 Encoding: 70 70 38
-Width: 545
+Width: 6
 Flags: W
 TeX: 70 0 0 0
 EndChar
 StartChar: G
 Encoding: 71 71 39
-Width: 636
+Width: 7
 Flags: W
 TeX: 71 0 0 0
 EndChar
 StartChar: H
 Encoding: 72 72 40
-Width: 636
+Width: 7
 Flags: W
 TeX: 72 0 0 0
 EndChar
 StartChar: I
 Encoding: 73 73 41
-Width: 181
+Width: 2
 Flags: W
 TeX: 73 0 0 0
 EndChar
 StartChar: J
 Encoding: 74 74 42
-Width: 454
+Width: 5
 Flags: W
 TeX: 74 0 0 0
 EndChar
 StartChar: K
 Encoding: 75 75 43
-Width: 545
+Width: 6
 Flags: W
 TeX: 75 0 0 0
 EndChar
 StartChar: L
 Encoding: 76 76 44
-Width: 454
+Width: 5
 Flags: W
 TeX: 76 0 0 0
 EndChar
 StartChar: M
 Encoding: 77 77 45
-Width: 818
+Width: 9
 Flags: W
 TeX: 77 0 0 0
 EndChar
 StartChar: N
 Encoding: 78 78 46
-Width: 636
+Width: 7
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: O
 Encoding: 79 79 47
-Width: 636
+Width: 7
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: P
 Encoding: 80 80 48
-Width: 636
+Width: 7
 Flags: W
 TeX: 80 0 0 0
 EndChar
 StartChar: Q
 Encoding: 81 81 49
-Width: 636
+Width: 7
 Flags: W
 TeX: 81 0 0 0
 EndChar
 StartChar: R
 Encoding: 82 82 50
-Width: 636
+Width: 7
 Flags: W
 TeX: 82 0 0 0
 EndChar
 StartChar: S
 Encoding: 83 83 51
-Width: 545
+Width: 6
 Flags: W
 TeX: 83 0 0 0
 EndChar
 StartChar: T
 Encoding: 84 84 52
-Width: 545
+Width: 6
 Flags: W
 TeX: 84 0 0 0
 EndChar
 StartChar: U
 Encoding: 85 85 53
-Width: 545
+Width: 6
 Flags: W
 TeX: 85 0 0 0
 EndChar
 StartChar: V
 Encoding: 86 86 54
-Width: 545
+Width: 6
 Flags: W
 TeX: 86 0 0 0
 EndChar
 StartChar: W
 Encoding: 87 87 55
-Width: 727
+Width: 8
 Flags: W
 TeX: 87 0 0 0
 EndChar
 StartChar: X
 Encoding: 88 88 56
-Width: 545
+Width: 6
 Flags: W
 TeX: 88 0 0 0
 EndChar
 StartChar: Y
 Encoding: 89 89 57
-Width: 545
+Width: 6
 Flags: W
 TeX: 89 0 0 0
 EndChar
 StartChar: Z
 Encoding: 90 90 58
-Width: 545
+Width: 6
 Flags: W
 TeX: 90 0 0 0
 EndChar
 StartChar: bracketleft
 Encoding: 91 91 59
-Width: 272
+Width: 3
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: backslash
 Encoding: 92 92 60
-Width: 272
+Width: 3
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: bracketright
 Encoding: 93 93 61
-Width: 272
+Width: 3
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: asciicircum
 Encoding: 94 94 62
-Width: 363
+Width: 4
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: underscore
 Encoding: 95 95 63
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: grave
 Encoding: 96 96 64
-Width: 272
+Width: 3
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: a
 Encoding: 97 97 65
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: b
 Encoding: 98 98 66
-Width: 454
+Width: 5
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: c
 Encoding: 99 99 67
-Width: 454
+Width: 5
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: d
 Encoding: 100 100 68
-Width: 454
+Width: 5
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: e
 Encoding: 101 101 69
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: f
 Encoding: 102 102 70
-Width: 272
+Width: 3
 Flags: W
 TeX: 102 0 0 0
 EndChar
 StartChar: g
 Encoding: 103 103 71
-Width: 454
+Width: 5
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: h
 Encoding: 104 104 72
-Width: 454
+Width: 5
 Flags: W
 TeX: 104 0 0 0
 EndChar
 StartChar: i
 Encoding: 105 105 73
-Width: 181
+Width: 2
 Flags: W
 TeX: 105 0 0 0
 EndChar
 StartChar: j
 Encoding: 106 106 74
-Width: 181
+Width: 2
 Flags: W
 TeX: 106 0 0 0
 EndChar
 StartChar: k
 Encoding: 107 107 75
-Width: 454
+Width: 5
 Flags: W
 TeX: 107 0 0 0
 EndChar
 StartChar: l
 Encoding: 108 108 76
-Width: 181
+Width: 2
 Flags: W
 TeX: 108 0 0 0
 EndChar
 StartChar: m
 Encoding: 109 109 77
-Width: 727
+Width: 8
 Flags: W
 TeX: 109 0 0 0
 EndChar
 StartChar: n
 Encoding: 110 110 78
-Width: 454
+Width: 5
 Flags: W
 TeX: 110 0 0 0
 EndChar
 StartChar: o
 Encoding: 111 111 79
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: p
 Encoding: 112 112 80
-Width: 454
+Width: 5
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: q
 Encoding: 113 113 81
-Width: 454
+Width: 5
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: r
 Encoding: 114 114 82
-Width: 272
+Width: 3
 Flags: W
 TeX: 114 0 0 0
 EndChar
 StartChar: s
 Encoding: 115 115 83
-Width: 454
+Width: 5
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: t
 Encoding: 116 116 84
-Width: 272
+Width: 3
 Flags: W
 TeX: 116 0 0 0
 EndChar
 StartChar: u
 Encoding: 117 117 85
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: v
 Encoding: 118 118 86
-Width: 454
+Width: 5
 Flags: W
 TeX: 118 0 0 0
 EndChar
 StartChar: w
 Encoding: 119 119 87
-Width: 545
+Width: 6
 Flags: W
 TeX: 119 0 0 0
 EndChar
 StartChar: x
 Encoding: 120 120 88
-Width: 363
+Width: 4
 Flags: W
 TeX: 120 0 0 0
 EndChar
 StartChar: y
 Encoding: 121 121 89
-Width: 363
+Width: 4
 Flags: W
 TeX: 121 0 0 0
 EndChar
 StartChar: z
 Encoding: 122 122 90
-Width: 363
+Width: 4
 Flags: W
 TeX: 122 0 0 0
 EndChar
 StartChar: braceleft
 Encoding: 123 123 91
-Width: 272
+Width: 3
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: bar
 Encoding: 124 124 92
-Width: 181
+Width: 2
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: braceright
 Encoding: 125 125 93
-Width: 272
+Width: 3
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: asciitilde
 Encoding: 126 126 94
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: NameMe-127
 Encoding: 127 127 95
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-128
 Encoding: 128 128 96
-Width: 1000
+Width: 10
+Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-129
 Encoding: 129 129 97
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-130
 Encoding: 130 130 98
-Width: 1000
+Width: 10
+Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-131
 Encoding: 131 131 99
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-132
 Encoding: 132 132 100
-Width: 1000
+Width: 10
+Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: Euro
 Encoding: 8364 8364 101
-Width: 181
+Width: 2
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: quotesinglbase
 Encoding: 8218 8218 102
-Width: 181
+Width: 2
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: florin
 Encoding: 402 402 103
-Width: 454
+Width: 5
 Flags: W
 TeX: 102 0 0 0
 EndChar
 StartChar: quotedblbase
 Encoding: 8222 8222 104
-Width: 363
+Width: 4
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: ellipsis
 Encoding: 8230 8230 105
-Width: 545
+Width: 6
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: dagger
 Encoding: 8224 8224 106
-Width: 545
+Width: 6
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: daggerdbl
 Encoding: 8225 8225 107
-Width: 545
+Width: 6
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: perthousand
 Encoding: 8240 8240 108
-Width: 727
+Width: 8
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: guilsinglleft
 Encoding: 8249 8249 109
-Width: 454
+Width: 5
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: quoteleft
 Encoding: 8216 8216 110
-Width: 272
+Width: 3
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: quoteright
 Encoding: 8217 8217 111
-Width: 272
+Width: 3
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: quotedblleft
 Encoding: 8220 8220 112
-Width: 454
+Width: 5
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: quotedblright
 Encoding: 8221 8221 113
-Width: 454
+Width: 5
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: bullet
 Encoding: 8226 8226 114
-Width: 272
+Width: 3
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: endash
 Encoding: 8211 8211 115
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: emdash
 Encoding: 8212 8212 116
-Width: 727
+Width: 8
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: trademark
 Encoding: 8482 8482 117
-Width: 818
+Width: 9
 Flags: W
 TeX: 116 0 0 0
 EndChar
 StartChar: guilsinglright
 Encoding: 8250 8250 118
-Width: 454
+Width: 5
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: circumflex
 Encoding: 710 710 119
-Width: 363
+Width: 4
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: tilde
 Encoding: 732 732 120
-Width: 454
+Width: 5
 Flags: W
 TeX: 116 0 0 0
 EndChar
 StartChar: Scaron
 Encoding: 352 352 121
-Width: 545
+Width: 6
 Flags: W
 TeX: 83 0 0 0
 EndChar
 StartChar: OE
 Encoding: 338 338 122
-Width: 818
+Width: 9
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: Zcaron
 Encoding: 381 381 123
-Width: 545
+Width: 6
 Flags: W
 TeX: 90 0 0 0
 EndChar
 StartChar: scaron
 Encoding: 353 353 124
-Width: 454
+Width: 5
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: oe
 Encoding: 339 339 125
-Width: 727
+Width: 8
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: zcaron
 Encoding: 382 382 126
-Width: 363
+Width: 4
 Flags: W
 TeX: 122 0 0 0
 EndChar
 StartChar: Ydieresis
 Encoding: 376 376 127
-Width: 545
+Width: 6
 Flags: W
 TeX: 89 0 0 0
 EndChar
 StartChar: NameMe-141
 Encoding: 141 141 128
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-143
 Encoding: 143 143 129
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-144
 Encoding: 144 144 130
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-157
 Encoding: 157 157 131
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: nonbreakingspace
 Encoding: 160 160 132
-Width: 181
+Width: 2
 Flags: W
 TeX: 110 0 0 0
 EndChar
 StartChar: exclamdown
 Encoding: 161 161 133
-Width: 181
+Width: 2
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: cent
 Encoding: 162 162 134
-Width: 454
+Width: 5
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: sterling
 Encoding: 163 163 135
-Width: 454
+Width: 5
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: currency
 Encoding: 164 164 136
-Width: 454
+Width: 5
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: yen
 Encoding: 165 165 137
-Width: 363
+Width: 4
 Flags: W
 TeX: 121 0 0 0
 EndChar
 StartChar: brokenbar
 Encoding: 166 166 138
-Width: 181
+Width: 2
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: section
 Encoding: 167 167 139
-Width: 454
+Width: 5
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: dieresis
 Encoding: 168 168 140
-Width: 363
+Width: 4
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: copyright
 Encoding: 169 169 141
-Width: 636
+Width: 7
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: ordfeminine
 Encoding: 170 170 142
-Width: 272
+Width: 3
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: guillemotleft
 Encoding: 171 171 143
-Width: 454
+Width: 5
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: logicalnot
 Encoding: 172 172 144
-Width: 454
+Width: 5
 Flags: W
 TeX: 108 0 0 0
 EndChar
 StartChar: softhyphen
 Encoding: 173 173 145
-Width: 181
+Width: 2
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: registered
 Encoding: 174 174 146
-Width: 636
+Width: 7
 Flags: W
 TeX: 114 0 0 0
 EndChar
 StartChar: macron
 Encoding: 175 175 147
-Width: 454
+Width: 5
 Flags: W
 TeX: 109 0 0 0
 EndChar
 StartChar: degree
 Encoding: 176 176 148
-Width: 181
+Width: 2
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: plusminus
 Encoding: 177 177 149
-Width: 363
+Width: 4
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: uni00B2
 Encoding: 178 178 150
-Width: 272
+Width: 3
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: uni00B3
 Encoding: 179 179 151
-Width: 272
+Width: 3
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: acute
 Encoding: 180 180 152
-Width: 272
+Width: 3
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: uni00B5
 Encoding: 181 181 153
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: paragraph
 Encoding: 182 182 154
-Width: 363
+Width: 4
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: periodcentered
 Encoding: 183 183 155
-Width: 181
+Width: 2
 Flags: W
 TeX: 112 0 0 0
 EndChar
 StartChar: cedilla
 Encoding: 184 184 156
-Width: 272
+Width: 3
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: uni00B9
 Encoding: 185 185 157
-Width: 181
+Width: 2
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: ordmasculine
 Encoding: 186 186 158
-Width: 272
+Width: 3
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: guillemotright
 Encoding: 187 187 159
-Width: 454
+Width: 5
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: onequarter
 Encoding: 188 188 160
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 Ligature: 0 0 'frac' one slash four
@@ -1022,7 +1026,7 @@ Ligature: 0 0 'frac' one fraction four
 EndChar
 StartChar: onehalf
 Encoding: 189 189 161
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 Ligature: 0 0 'frac' one slash two
@@ -1030,7 +1034,7 @@ Ligature: 0 0 'frac' one fraction two
 EndChar
 StartChar: threequarters
 Encoding: 190 190 162
-Width: 545
+Width: 6
 Flags: W
 TeX: 116 0 0 0
 Ligature: 0 0 'frac' three slash four
@@ -1038,995 +1042,1056 @@ Ligature: 0 0 'frac' three fraction four
 EndChar
 StartChar: questiondown
 Encoding: 191 191 163
-Width: 454
+Width: 5
 Flags: W
 TeX: 113 0 0 0
 EndChar
 StartChar: Agrave
 Encoding: 192 192 164
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: Aacute
 Encoding: 193 193 165
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: Acircumflex
 Encoding: 194 194 166
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: Atilde
 Encoding: 195 195 167
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: Adieresis
 Encoding: 196 196 168
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: Aring
 Encoding: 197 197 169
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: AE
 Encoding: 198 198 170
-Width: 818
+Width: 9
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: Ccedilla
 Encoding: 199 199 171
-Width: 545
+Width: 6
 Flags: W
 TeX: 67 0 0 0
 EndChar
 StartChar: Egrave
 Encoding: 200 200 172
-Width: 454
+Width: 5
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: Eacute
 Encoding: 201 201 173
-Width: 454
+Width: 5
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: Ecircumflex
 Encoding: 202 202 174
-Width: 454
+Width: 5
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: Edieresis
 Encoding: 203 203 175
-Width: 454
+Width: 5
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: Igrave
 Encoding: 204 204 176
-Width: 272
+Width: 3
 Flags: W
 TeX: 73 0 0 0
 EndChar
 StartChar: Iacute
 Encoding: 205 205 177
-Width: 272
+Width: 3
 Flags: W
 TeX: 73 0 0 0
 EndChar
 StartChar: Icircumflex
 Encoding: 206 206 178
-Width: 272
+Width: 3
 Flags: W
 TeX: 73 0 0 0
 EndChar
 StartChar: Idieresis
 Encoding: 207 207 179
-Width: 272
+Width: 3
 Flags: W
 TeX: 73 0 0 0
 EndChar
 StartChar: Eth
 Encoding: 208 208 180
-Width: 545
+Width: 6
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: Ntilde
 Encoding: 209 209 181
-Width: 545
+Width: 6
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: Ograve
 Encoding: 210 210 182
-Width: 636
+Width: 7
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: Oacute
 Encoding: 211 211 183
-Width: 636
+Width: 7
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: Ocircumflex
 Encoding: 212 212 184
-Width: 636
+Width: 7
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: Otilde
 Encoding: 213 213 185
-Width: 636
+Width: 7
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: Odieresis
 Encoding: 214 214 186
-Width: 636
+Width: 7
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: multiply
 Encoding: 215 215 187
-Width: 454
+Width: 5
 Flags: W
 TeX: 109 0 0 0
 EndChar
 StartChar: Oslash
 Encoding: 216 216 188
-Width: 636
+Width: 7
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: Ugrave
 Encoding: 217 217 189
-Width: 545
+Width: 6
 Flags: W
 TeX: 85 0 0 0
 EndChar
 StartChar: Uacute
 Encoding: 218 218 190
-Width: 545
+Width: 6
 Flags: W
 TeX: 85 0 0 0
 EndChar
 StartChar: Ucircumflex
 Encoding: 219 219 191
-Width: 545
+Width: 6
 Flags: W
 TeX: 85 0 0 0
 EndChar
 StartChar: Udieresis
 Encoding: 220 220 192
-Width: 545
+Width: 6
 Flags: W
 TeX: 85 0 0 0
 EndChar
 StartChar: Yacute
 Encoding: 221 221 193
-Width: 545
+Width: 6
 Flags: W
 TeX: 89 0 0 0
 EndChar
 StartChar: Thorn
 Encoding: 222 222 194
-Width: 545
+Width: 6
 Flags: W
 TeX: 84 0 0 0
 EndChar
 StartChar: germandbls
 Encoding: 223 223 195
-Width: 545
+Width: 6
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: agrave
 Encoding: 224 224 196
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: aacute
 Encoding: 225 225 197
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: acircumflex
 Encoding: 226 226 198
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: atilde
 Encoding: 227 227 199
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: adieresis
 Encoding: 228 228 200
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: aring
 Encoding: 229 229 201
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: ae
 Encoding: 230 230 202
-Width: 727
+Width: 8
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: ccedilla
 Encoding: 231 231 203
-Width: 454
+Width: 5
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: egrave
 Encoding: 232 232 204
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: eacute
 Encoding: 233 233 205
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: ecircumflex
 Encoding: 234 234 206
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: edieresis
 Encoding: 235 235 207
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: igrave
 Encoding: 236 236 208
-Width: 181
+Width: 2
 Flags: W
 TeX: 105 0 0 0
 EndChar
 StartChar: iacute
 Encoding: 237 237 209
-Width: 272
+Width: 3
 Flags: W
 TeX: 105 0 0 0
 EndChar
 StartChar: icircumflex
 Encoding: 238 238 210
-Width: 272
+Width: 3
 Flags: W
 TeX: 105 0 0 0
 EndChar
 StartChar: idieresis
 Encoding: 239 239 211
-Width: 272
+Width: 3
 Flags: W
 TeX: 105 0 0 0
 EndChar
 StartChar: eth
 Encoding: 240 240 212
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: ntilde
 Encoding: 241 241 213
-Width: 454
+Width: 5
 Flags: W
 TeX: 110 0 0 0
 EndChar
 StartChar: ograve
 Encoding: 242 242 214
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: oacute
 Encoding: 243 243 215
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: ocircumflex
 Encoding: 244 244 216
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: otilde
 Encoding: 245 245 217
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: odieresis
 Encoding: 246 246 218
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: divide
 Encoding: 247 247 219
-Width: 363
+Width: 4
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: oslash
 Encoding: 248 248 220
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: ugrave
 Encoding: 249 249 221
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: uacute
 Encoding: 250 250 222
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: ucircumflex
 Encoding: 251 251 223
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: udieresis
 Encoding: 252 252 224
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: yacute
 Encoding: 253 253 225
-Width: 363
+Width: 4
 Flags: W
 TeX: 121 0 0 0
 EndChar
 StartChar: thorn
 Encoding: 254 254 226
-Width: 454
+Width: 5
 Flags: W
 TeX: 116 0 0 0
 EndChar
 StartChar: ydieresis
 Encoding: 255 255 227
-Width: 363
+Width: 4
 Flags: W
 TeX: 121 0 0 0
 EndChar
 StartChar: NameMe-134
 Encoding: 134 134 228
-Width: 1000
+Width: 10
+Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-136
 Encoding: 136 136 229
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-152
 Encoding: 152 152 230
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: Sacute
 Encoding: 346 346 231
-Width: 545
+Width: 6
 Flags: W
 TeX: 83 0 0 0
 EndChar
 StartChar: Tcaron
 Encoding: 356 356 232
-Width: 545
+Width: 6
 Flags: W
 TeX: 84 0 0 0
 EndChar
 StartChar: Zacute
 Encoding: 377 377 233
-Width: 545
+Width: 6
 Flags: W
 TeX: 90 0 0 0
 EndChar
 StartChar: sacute
 Encoding: 347 347 234
-Width: 454
+Width: 5
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: tcaron
 Encoding: 357 357 235
-Width: 363
+Width: 4
 Flags: W
 TeX: 116 0 0 0
 EndChar
 StartChar: zacute
 Encoding: 378 378 236
-Width: 363
+Width: 4
 Flags: W
 TeX: 122 0 0 0
 EndChar
 StartChar: caron
 Encoding: 711 711 237
-Width: 363
+Width: 4
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: breve
 Encoding: 728 728 238
-Width: 454
+Width: 5
 Flags: W
 TeX: 98 0 0 0
 EndChar
 StartChar: Lslash
 Encoding: 321 321 239
-Width: 454
+Width: 5
 Flags: W
 TeX: 76 0 0 0
 EndChar
 StartChar: Aogonek
 Encoding: 260 260 240
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: Scedilla
 Encoding: 350 350 241
-Width: 545
+Width: 6
 Flags: W
 TeX: 83 0 0 0
 EndChar
 StartChar: Zdotaccent
 Encoding: 379 379 242
-Width: 545
+Width: 6
 Flags: W
 TeX: 90 0 0 0
 EndChar
 StartChar: ogonek
 Encoding: 731 731 243
-Width: 272
+Width: 3
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: lslash
 Encoding: 322 322 244
-Width: 272
+Width: 3
 Flags: W
 TeX: 108 0 0 0
 EndChar
 StartChar: aogonek
 Encoding: 261 261 245
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: scedilla
 Encoding: 351 351 246
-Width: 454
+Width: 5
 Flags: W
 TeX: 115 0 0 0
 EndChar
 StartChar: Lcaron
 Encoding: 317 317 247
-Width: 454
+Width: 5
 Flags: W
 TeX: 76 0 0 0
 EndChar
 StartChar: hungarumlaut
 Encoding: 733 733 248
-Width: 363
+Width: 4
 Flags: W
 TeX: 104 0 0 0
 EndChar
 StartChar: lcaron
 Encoding: 318 318 249
-Width: 272
+Width: 3
 Flags: W
 TeX: 108 0 0 0
 EndChar
 StartChar: zdotaccent
 Encoding: 380 380 250
-Width: 363
+Width: 4
 Flags: W
 TeX: 122 0 0 0
 EndChar
 StartChar: Racute
 Encoding: 340 340 251
-Width: 636
+Width: 7
 Flags: W
 TeX: 82 0 0 0
 EndChar
 StartChar: Abreve
 Encoding: 258 258 252
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: Lacute
 Encoding: 313 313 253
-Width: 454
+Width: 5
 Flags: W
 TeX: 76 0 0 0
 EndChar
 StartChar: Cacute
 Encoding: 262 262 254
-Width: 636
+Width: 7
 Flags: W
 TeX: 67 0 0 0
 EndChar
 StartChar: Ccaron
 Encoding: 268 268 255
-Width: 636
+Width: 7
 Flags: W
 TeX: 67 0 0 0
 EndChar
 StartChar: Eogonek
 Encoding: 280 280 256
-Width: 545
+Width: 6
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: Ecaron
 Encoding: 282 282 257
-Width: 545
+Width: 6
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: Dcaron
 Encoding: 270 270 258
-Width: 636
+Width: 7
 Flags: W
 TeX: 68 0 0 0
 EndChar
 StartChar: Dcroat
 Encoding: 272 272 259
-Width: 545
+Width: 6
 Flags: W
 TeX: 68 0 0 0
 EndChar
 StartChar: Nacute
 Encoding: 323 323 260
-Width: 636
+Width: 7
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: Ncaron
 Encoding: 327 327 261
-Width: 636
+Width: 7
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: Ohungarumlaut
 Encoding: 336 336 262
-Width: 636
+Width: 7
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: Rcaron
 Encoding: 344 344 263
-Width: 636
+Width: 7
 Flags: W
 TeX: 82 0 0 0
 EndChar
 StartChar: Uring
 Encoding: 366 366 264
-Width: 545
+Width: 6
 Flags: W
 TeX: 85 0 0 0
 EndChar
 StartChar: Uhungarumlaut
 Encoding: 368 368 265
-Width: 545
+Width: 6
 Flags: W
 TeX: 85 0 0 0
 EndChar
 StartChar: uni0162
 Encoding: 354 354 266
-Width: 545
+Width: 6
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: racute
 Encoding: 341 341 267
-Width: 272
+Width: 3
 Flags: W
 TeX: 114 0 0 0
 EndChar
 StartChar: abreve
 Encoding: 259 259 268
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: lacute
 Encoding: 314 314 269
-Width: 272
+Width: 3
 Flags: W
 TeX: 108 0 0 0
 EndChar
 StartChar: cacute
 Encoding: 263 263 270
-Width: 454
+Width: 5
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: ccaron
 Encoding: 269 269 271
-Width: 454
+Width: 5
 Flags: W
 TeX: 99 0 0 0
 EndChar
 StartChar: eogonek
 Encoding: 281 281 272
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: ecaron
 Encoding: 283 283 273
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: dcaron
 Encoding: 271 271 274
-Width: 545
+Width: 6
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: dcroat
 Encoding: 273 273 275
-Width: 545
+Width: 6
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: nacute
 Encoding: 324 324 276
-Width: 454
+Width: 5
 Flags: W
 TeX: 110 0 0 0
 EndChar
 StartChar: ncaron
 Encoding: 328 328 277
-Width: 454
+Width: 5
 Flags: W
 TeX: 110 0 0 0
 EndChar
 StartChar: ohungarumlaut
 Encoding: 337 337 278
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: rcaron
 Encoding: 345 345 279
-Width: 272
+Width: 3
 Flags: W
 TeX: 114 0 0 0
 EndChar
 StartChar: uring
 Encoding: 367 367 280
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: uhungarumlaut
 Encoding: 369 369 281
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: uni0163
 Encoding: 355 355 282
-Width: 272
+Width: 3
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: dotaccent
 Encoding: 729 729 283
-Width: 181
+Width: 2
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: afii61352
 Encoding: 8470 8470 284
-Width: 818
+Width: 9
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: Idotaccent
 Encoding: 304 304 285
-Width: 181
+Width: 2
 Flags: W
 TeX: 73 0 0 0
 EndChar
 StartChar: dotlessi
 Encoding: 305 305 286
-Width: 181
+Width: 2
 Flags: W
 TeX: 100 0 0 0
 EndChar
 StartChar: Gbreve
 Encoding: 286 286 287
-Width: 636
+Width: 7
 Flags: W
 TeX: 71 0 0 0
 EndChar
 StartChar: gbreve
 Encoding: 287 287 288
-Width: 454
+Width: 5
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: NameMe-142
 Encoding: 142 142 289
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-158
 Encoding: 158 158 290
-Width: 181
+Width: 2
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-140
 Encoding: 140 140 291
-Width: 818
+Width: 9
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-138
 Encoding: 138 138 292
-Width: 545
+Width: 6
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-154
 Encoding: 154 154 293
-Width: 454
+Width: 5
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-156
 Encoding: 156 156 294
-Width: 727
+Width: 8
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: NameMe-159
 Encoding: 159 159 295
-Width: 545
+Width: 6
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: afii00208
 Encoding: 8213 8213 296
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: Rcommaaccent
 Encoding: 342 342 297
-Width: 636
+Width: 7
 Flags: W
 TeX: 82 0 0 0
 EndChar
 StartChar: rcommaaccent
 Encoding: 343 343 298
-Width: 272
+Width: 3
 Flags: W
 TeX: 114 0 0 0
 EndChar
 StartChar: Iogonek
 Encoding: 302 302 299
-Width: 272
+Width: 3
 Flags: W
 TeX: 73 0 0 0
 EndChar
 StartChar: Amacron
 Encoding: 256 256 300
-Width: 636
+Width: 7
 Flags: W
 TeX: 65 0 0 0
 EndChar
 StartChar: Emacron
 Encoding: 274 274 301
-Width: 454
+Width: 5
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: Edotaccent
 Encoding: 278 278 302
-Width: 454
+Width: 5
 Flags: W
 TeX: 69 0 0 0
 EndChar
 StartChar: Gcommaaccent
 Encoding: 290 290 303
-Width: 636
+Width: 7
 Flags: W
 TeX: 71 0 0 0
 EndChar
 StartChar: Kcommaaccent
 Encoding: 310 310 304
-Width: 545
+Width: 6
 Flags: W
 TeX: 75 0 0 0
 EndChar
 StartChar: Imacron
 Encoding: 298 298 305
-Width: 272
+Width: 3
 Flags: W
 TeX: 73 0 0 0
 EndChar
 StartChar: Lcommaaccent
 Encoding: 315 315 306
-Width: 454
+Width: 5
 Flags: W
 TeX: 76 0 0 0
 EndChar
 StartChar: Ncommaaccent
 Encoding: 325 325 307
-Width: 636
+Width: 7
 Flags: W
 TeX: 78 0 0 0
 EndChar
 StartChar: Omacron
 Encoding: 332 332 308
-Width: 636
+Width: 7
 Flags: W
 TeX: 79 0 0 0
 EndChar
 StartChar: Uogonek
 Encoding: 370 370 309
-Width: 545
+Width: 6
 Flags: W
 TeX: 85 0 0 0
 EndChar
 StartChar: Umacron
 Encoding: 362 362 310
-Width: 545
+Width: 6
 Flags: W
 TeX: 85 0 0 0
 EndChar
 StartChar: iogonek
 Encoding: 303 303 311
-Width: 272
+Width: 3
 Flags: W
 TeX: 105 0 0 0
 EndChar
 StartChar: amacron
 Encoding: 257 257 312
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: emacron
 Encoding: 275 275 313
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: edotaccent
 Encoding: 279 279 314
-Width: 454
+Width: 5
 Flags: W
 TeX: 101 0 0 0
 EndChar
 StartChar: gcommaaccent
 Encoding: 291 291 315
-Width: 454
+Width: 5
 Flags: W
 TeX: 103 0 0 0
 EndChar
 StartChar: kcommaaccent
 Encoding: 311 311 316
-Width: 454
+Width: 5
 Flags: W
 TeX: 107 0 0 0
 EndChar
 StartChar: imacron
 Encoding: 299 299 317
-Width: 181
+Width: 2
 Flags: W
 TeX: 105 0 0 0
 EndChar
 StartChar: lcommaaccent
 Encoding: 316 316 318
-Width: 181
+Width: 2
 Flags: W
 TeX: 108 0 0 0
 EndChar
 StartChar: ncommaaccent
 Encoding: 326 326 319
-Width: 454
+Width: 5
 Flags: W
 TeX: 110 0 0 0
 EndChar
 StartChar: omacron
 Encoding: 333 333 320
-Width: 545
+Width: 6
 Flags: W
 TeX: 111 0 0 0
 EndChar
 StartChar: uogonek
 Encoding: 371 371 321
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: umacron
 Encoding: 363 363 322
-Width: 454
+Width: 5
 Flags: W
 TeX: 117 0 0 0
 EndChar
 StartChar: afii61664
 Encoding: 8204 8204 323
-Width: 90
+Width: 1
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii301
 Encoding: 8205 8205 324
-Width: 272
+Width: 3
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii299
 Encoding: 8206 8206 325
-Width: 272
+Width: 3
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii300
 Encoding: 8207 8207 326
-Width: 272
+Width: 3
 Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii57636
 Encoding: 8362 8362 327
-Width: 454
+Width: 5
 Flags: W
 TeX: 97 0 0 0
 EndChar
+StartChar: uni0085
+Encoding: 133 133 328
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0087
+Encoding: 135 135 329
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0089
+Encoding: 137 137 330
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0091
+Encoding: 145 145 331
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0092
+Encoding: 146 146 332
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0093
+Encoding: 147 147 333
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0094
+Encoding: 148 148 334
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0095
+Encoding: 149 149 335
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0096
+Encoding: 150 150 336
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0097
+Encoding: 151 151 337
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni0099
+Encoding: 153 153 338
+Width: 11
+TeX: 117 0 0 0
+EndChar
+StartChar: uni009B
+Encoding: 155 155 339
+Width: 11
+TeX: 117 0 0 0
+EndChar
 EndChars
-BitmapFont: 11 328 9 2 1 
+BitmapFont: 11 340 9 2 1 
 BDFChar: 0 65 7 1 6 0 6
 0JH$gG_C_M
 BDFChar: 1 33 2 1 1 0 6
@@ -2683,5 +2748,29 @@ BDFChar: 326 8207 3 0 2 -2 8
 5i?#m+<VdL+<Vd,
 BDFChar: 327 8362 5 0 4 0 4
 kbtG9\,ZL/
+BDFChar: 328 133 11 0 0 0 0
+z
+BDFChar: 329 135 11 0 0 0 0
+z
+BDFChar: 330 137 11 0 0 0 0
+z
+BDFChar: 331 145 11 0 0 0 0
+z
+BDFChar: 332 146 11 0 0 0 0
+z
+BDFChar: 333 147 11 0 0 0 0
+z
+BDFChar: 334 148 11 0 0 0 0
+z
+BDFChar: 335 149 11 0 0 0 0
+z
+BDFChar: 336 150 11 0 0 0 0
+z
+BDFChar: 337 151 11 0 0 0 0
+z
+BDFChar: 338 153 11 0 0 0 0
+z
+BDFChar: 339 155 11 0 0 0 0
+z
 EndBitmapFont
 EndSplineFont
