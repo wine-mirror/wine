@@ -176,3 +176,12 @@ BOOL WINAPI SetupTerminateFileLog(HANDLE FileLogHandle)
     FIXME ("Stub %p\n",FileLogHandle);
     return TRUE;
 }
+
+/***********************************************************************
+ *		RegistryDelnode(SETUPAPI.@)
+ */
+BOOL WINAPI RegistryDelnode(DWORD x, DWORD y)
+{
+    FIXME("%08lx %08lx: stub\n", x, y);
+    return FALSE;
+}

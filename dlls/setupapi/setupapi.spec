@@ -228,7 +228,7 @@
 @ stub QueryMultiSzValueToArray
 @ stdcall QueryRegistryValue(long wstr ptr ptr ptr)
 @ stub ReadAsciiOrUnicodeTextFile
-@ stub RegistryDelnode
+@ stdcall RegistryDelnode(long long)
 @ stdcall RetreiveFileSecurity(wstr ptr)
 @ stub RetrieveServiceConfig
 @ stub SearchForInfFile
