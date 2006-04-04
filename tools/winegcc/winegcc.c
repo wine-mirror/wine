@@ -401,8 +401,6 @@ static void add_library( strarray *lib_dirs, strarray *files, const char *librar
         }
         break;
     case file_so:
-        strarray_add(files, strmake("-s%s", fullname));
-        break;
     default:
         /* keep it anyway, the linker may know what to do with it */
         strarray_add(files, strmake("-l%s", library));
@@ -628,9 +626,9 @@ static void build(struct options* opts)
 	switch(files->base[j][1])
 	{
 	    case 'l':
+	    case 's':
 		strarray_add(link_args, strmake("-l%s", name));
 		break;
-	    case 's':
 	    case 'a':
 	    case 'o':
 		strarray_add(link_args, name);
