@@ -401,9 +401,9 @@ static UINT ICO_ExtractIconExW(
 	CloseHandle(fmapping);
 
 	cx1 = LOWORD(cxDesired);
-	cx2 = HIWORD(cxDesired) ? HIWORD(cxDesired) : cx1;
+	cx2 = HIWORD(cxDesired);
 	cy1 = LOWORD(cyDesired);
-	cy2 = HIWORD(cyDesired) ? HIWORD(cyDesired) : cy1;
+	cy2 = HIWORD(cyDesired);
 
 	if (pIconId) /* Invalidate first icon identifier */
 		*pIconId = 0xFFFFFFFF;
@@ -469,7 +469,8 @@ static UINT ICO_ExtractIconExW(
 	        /* .ICO files have only one icon directory */
 	        if (lpiID == NULL)	/* not *.ico */
 	          pCIDir = USER32_LoadResource(peimage, pIconDir + i + nIconIndex, *(WORD*)pData, &uSize);
-	        pIconId[i] = LookupIconIdFromDirectoryEx(pCIDir, TRUE, (i & 1) ? cx2 : cx1, (i & 1) ? cy2 : cy1, flags);
+	        pIconId[i] = LookupIconIdFromDirectoryEx(pCIDir, TRUE, cx1, cy1, flags);
+                if (cx2 && cy2) pIconId[++i] = LookupIconIdFromDirectoryEx(pCIDir, TRUE,  cx2, cy2, flags);
 	      }
 	      if (lpiID && pCIDir)	/* *.ico file, deallocate heap pointer*/
 	        HeapFree(GetProcessHeap(), 0, pCIDir);
@@ -485,8 +486,13 @@ static UINT ICO_ExtractIconExW(
 	              pCIDir = USER32_LoadResource(peimage, pIconStorage + i, *(WORD*)pData, &uSize);
 
 	        if (pCIDir)
+                {
 	          RetPtr[icon] = (HICON)CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000,
-	                                                         (icon & 1) ? cx2 : cx1, (icon & 1) ? cy2 : cy1, flags);
+                                                                 cx1, cy1, flags);
+                  if (cx2 && cy2)
+                      RetPtr[++icon] = (HICON)CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000,
+                                                                       cx2, cy2, flags);
+                }
 	        else
 	          RetPtr[icon] = 0;
 	      }
@@ -550,7 +556,7 @@ static UINT ICO_ExtractIconExW(
 	  iconDirCount = icongroupresdir->NumberOfNamedEntries + icongroupresdir->NumberOfIdEntries;
 
 	  /* only number of icons requested */
-	  if( nIcons == 0 )
+	  if( !pIconId )
 	  {
 	    ret = iconDirCount;
 	    goto end;		/* success */
@@ -630,7 +636,8 @@ static UINT ICO_ExtractIconExW(
 	      FIXME("no matching real address for icongroup!\n");
 	      goto end;	/* failure */
 	    }
-	    pIconId[i] = LookupIconIdFromDirectoryEx(igdata, TRUE, (i & 1) ? cx2 : cx1, (i & 1) ? cy2 : cy1, flags);
+	    pIconId[i] = LookupIconIdFromDirectoryEx(igdata, TRUE, cx1, cy1, flags);
+            if (cx2 && cy2) pIconId[++i] = LookupIconIdFromDirectoryEx(igdata, TRUE, cx2, cy2, flags);
 	  }
 
 	  if (!(iconresdir=find_entry_by_id(rootresdir,LOWORD(RT_ICON),rootresdir)))
@@ -669,7 +676,10 @@ static UINT ICO_ExtractIconExW(
 	      continue;
 	    }
 	    RetPtr[i] = (HICON) CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000,
-	                                                 (i & 1) ? cx2 : cx1, (i & 1) ? cy2 : cy1, flags);
+                                                         cx1, cy1, flags);
+            if (cx2 && cy2)
+                RetPtr[++i] = (HICON) CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000,
+                                                               cx2, cy2, flags);
 	  }
 	  ret = i;	/* return number of retrieved icons */
 	}			/* if(sig == IMAGE_NT_SIGNATURE) */
