@@ -184,6 +184,7 @@ typedef enum _WINED3DFORMAT {
     WINED3DFMT_D24X8                =  77,
     WINED3DFMT_D24X4S4              =  79,
     WINED3DFMT_D16                  =  80,
+    WINED3DFMT_L16                  =  81,
     WINED3DFMT_D32F_LOCKABLE        =  82,
     WINED3DFMT_D24FS8               =  83,
 
