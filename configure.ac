@@ -628,6 +628,9 @@ dnl Only build the fonts dir if we have both freetype and fontforge
 if test "$FONTFORGE" != "false" -a -n "$FREETYPELIBS"
 then
   AC_SUBST(FONTSSUBDIRS,"fonts")
+  wine_cv_msg_fonts=no
+else
+  wine_cv_msg_fonts=yes
 fi
 
 dnl **** Check for parport (currently Linux only) ****
@@ -1752,6 +1755,13 @@ then
   echo "*** installed, but 'freetype-config' is not in your PATH. Install the"
   echo "*** freetype-devel package (or its equivalent on your distribution) to"
   echo "*** enable Wine to use TrueType fonts."
+fi
+
+if test "$wine_cv_msg_fonts" = "yes"
+then
+  echo
+  echo "*** Warning: Freetype or Fontforge is missing."
+  echo "*** Fonts will not be built. Dialog text may be invisible or unaligned."
 fi
 
 if test -z "$ALSALIBS" -a \
