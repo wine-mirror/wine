@@ -770,6 +770,41 @@ static FontSubst *get_font_subst(const struct list *subst_list, const WCHAR *fro
     return NULL;
 }
 
+#define ADD_FONT_SUBST_FORCE  1
+
+static BOOL add_font_subst(struct list *subst_list, FontSubst *subst, INT flags)
+{
+    FontSubst *from_exist, *to_exist;
+
+    from_exist = get_font_subst(subst_list, subst->from.name, subst->from.charset);
+
+    if(from_exist && (flags & ADD_FONT_SUBST_FORCE))
+    {
+        list_remove(&from_exist->entry);
+        HeapFree(GetProcessHeap(), 0, &from_exist->from.name);
+        HeapFree(GetProcessHeap(), 0, &from_exist->to.name);
+        HeapFree(GetProcessHeap(), 0, from_exist);
+        from_exist = NULL;
+    }
+
+    if(!from_exist)
+    {
+        to_exist = get_font_subst(subst_list, subst->to.name, subst->to.charset);
+
+        if(to_exist)
+        {
+            HeapFree(GetProcessHeap(), 0, subst->to.name);
+            subst->to.name = strdupW(to_exist->to.name);
+        }
+            
+        list_add_tail(subst_list, &subst->entry);
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void split_subst_info(NameCs *nc, LPSTR str)
 {
     CHAR *p = strrchr(str, ',');
@@ -834,7 +869,7 @@ static void LoadSubstList(void)
 		HeapFree(GetProcessHeap(), 0, psub->from.name);
 		HeapFree(GetProcessHeap(), 0, psub);
 	    } else {
-	        list_add_head(&font_subst_list, &psub->entry);
+	        add_font_subst(&font_subst_list, psub, 0);
 	    }
 	    /* reset dlen and vlen */
 	    dlen = datalen;
