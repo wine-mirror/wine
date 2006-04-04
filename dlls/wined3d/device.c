@@ -3677,6 +3677,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     case WINED3DRS_WRAP5                     :
     case WINED3DRS_WRAP6                     :
     case WINED3DRS_WRAP7                     :
+    case WINED3DRS_WRAP8                     :
+    case WINED3DRS_WRAP9                     :
+    case WINED3DRS_WRAP10                    :
+    case WINED3DRS_WRAP11                    :
+    case WINED3DRS_WRAP12                    :
+    case WINED3DRS_WRAP13                    :
+    case WINED3DRS_WRAP14                    :
+    case WINED3DRS_WRAP15                    :
     /**
     http://www.cosc.brocku.ca/Offerings/3P98/course/lectures/texture/
     http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/FixedFunction/Textures/texturewrapping.asp
@@ -3686,7 +3694,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
 
     so far as I can tell, wrapping and texture-coordinate generate go hand in hand,
     */
-    TRACE("(%p)->(%d,%ld) Texture wraping not yet supported\n",This, State, Value);
+        TRACE("(%p)->(%s,%ld) Texture wraping not yet supported\n",This, debug_d3drenderstate(State), Value);
     break;
     case WINED3DRS_MULTISAMPLEANTIALIAS      :
     {
@@ -3760,7 +3768,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     case WINED3DRS_ADAPTIVETESS_W :
     case WINED3DRS_ENABLEADAPTIVETESSELLATION :
     {
-        FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
+        FIXME("(%p)->(%s,%ld) not handled yet\n", This, debug_d3drenderstate(State), Value);
         break;
     }
     case WINED3DRS_TWOSIDEDSTENCILMODE :
@@ -3882,7 +3890,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     case WINED3DRS_BLENDFACTOR :
     case WINED3DRS_SRGBWRITEENABLE :
     {
-        FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
+        FIXME("(%p)->(%s,%ld) not handled yet\n", This, debug_d3drenderstate(State), Value);
         break;
     }
     case WINED3DRS_DEPTHBIAS :
@@ -3899,20 +3907,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
     }
-    case WINED3DRS_WRAP8 :
-    case WINED3DRS_WRAP9 :
-    case WINED3DRS_WRAP10 :
-    case WINED3DRS_WRAP11 :
-    case WINED3DRS_WRAP12 :
-    case WINED3DRS_WRAP13 :
-    case WINED3DRS_WRAP14 :
-    case WINED3DRS_WRAP15 :
     case WINED3DRS_SEPARATEALPHABLENDENABLE :
     case WINED3DRS_SRCBLENDALPHA :
     case WINED3DRS_DESTBLENDALPHA :
     case WINED3DRS_BLENDOPALPHA :
-        /*Put back later: FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value); */
-        FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
+        FIXME("(%p)->(%s,%ld) not handled yet\n", This, debug_d3drenderstate(State), Value);
         break;
     default:
         FIXME("(%p)->(%d,%ld) unrecognized\n", This, State, Value);
