@@ -643,7 +643,6 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
                data->whole_rect.bottom - data->whole_rect.top, changes.sibling, mask );
 
         wine_tsx11_lock();
-        XSync( gdi_display, False );  /* flush graphics operations before moving the window */
         if (mask & (CWWidth|CWHeight)) set_size_hints( display, data, style );
         XReconfigureWMWindow( display, data->whole_window,
                               DefaultScreen(display), mask, &changes );
