@@ -907,10 +907,10 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
     STDMETHOD_(void, ApplyStateChanges)(THIS_ DWORD const textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
     /*** IWineD3DCubeTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level,WINED3DSURFACE_DESC* pDesc) PURE;
-    STDMETHOD(GetCubeMapSurface)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level, struct IWineD3DSurface** ppCubeMapSurface) PURE;
-    STDMETHOD(LockRect)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE;
-    STDMETHOD(UnlockRect)(THIS_ D3DCUBEMAP_FACES FaceType, UINT Level) PURE;
-    STDMETHOD(AddDirtyRect)(THIS_ D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) PURE;
+    STDMETHOD(GetCubeMapSurface)(THIS_ WINED3DCUBEMAP_FACES FaceType, UINT Level, struct IWineD3DSurface** ppCubeMapSurface) PURE;
+    STDMETHOD(LockRect)(THIS_ WINED3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE;
+    STDMETHOD(UnlockRect)(THIS_ WINED3DCUBEMAP_FACES FaceType, UINT Level) PURE;
+    STDMETHOD(AddDirtyRect)(THIS_ WINED3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) PURE;
 };
 #undef INTERFACE
 

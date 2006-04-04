@@ -180,7 +180,7 @@ HRESULT WINAPI IDirect3DCubeTexture9Impl_GetCubeMapSurface(LPDIRECT3DCUBETEXTURE
 
     TRACE("(%p) Relay\n", This);
 
-    hrc = IWineD3DCubeTexture_GetCubeMapSurface(This->wineD3DCubeTexture, FaceType, Level, &mySurface);
+    hrc = IWineD3DCubeTexture_GetCubeMapSurface(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES) FaceType, Level, &mySurface);
     if (hrc == D3D_OK && NULL != ppCubeMapSurface) {
        IWineD3DCubeTexture_GetParent(mySurface, (IUnknown **)ppCubeMapSurface);
        IWineD3DCubeTexture_Release(mySurface);
@@ -191,19 +191,19 @@ HRESULT WINAPI IDirect3DCubeTexture9Impl_GetCubeMapSurface(LPDIRECT3DCUBETEXTURE
 HRESULT WINAPI IDirect3DCubeTexture9Impl_LockRect(LPDIRECT3DCUBETEXTURE9 iface, D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DCubeTexture_LockRect(This->wineD3DCubeTexture, FaceType, Level, pLockedRect, pRect, Flags);
+    return IWineD3DCubeTexture_LockRect(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES) FaceType, Level, pLockedRect, pRect, Flags);
 }
 
 HRESULT WINAPI IDirect3DCubeTexture9Impl_UnlockRect(LPDIRECT3DCUBETEXTURE9 iface, D3DCUBEMAP_FACES FaceType, UINT Level) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DCubeTexture_UnlockRect(This->wineD3DCubeTexture, FaceType, Level);
+    return IWineD3DCubeTexture_UnlockRect(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES) FaceType, Level);
 }
 
 HRESULT  WINAPI IDirect3DCubeTexture9Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE9 iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
     IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DCubeTexture_AddDirtyRect(This->wineD3DCubeTexture, FaceType, pDirtyRect);
+    return IWineD3DCubeTexture_AddDirtyRect(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES) FaceType, pDirtyRect);
 }
 
 

@@ -5207,7 +5207,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3D
             {
                 IWineD3DSurface *srcSurface;
                 IWineD3DSurface *destSurface;
-                D3DCUBEMAP_FACES faceType;
+                WINED3DCUBEMAP_FACES faceType;
 
                 for (i = 0 ; i < levels ; ++i) {
                     /* Update each cube face */

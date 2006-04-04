@@ -273,7 +273,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *iface, 
     return D3DERR_INVALIDCALL;
 }
 
-HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, UINT Level, IWineD3DSurface** ppCubeMapSurface) {
+HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *iface, WINED3DCUBEMAP_FACES FaceType, UINT Level, IWineD3DSurface** ppCubeMapSurface) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     HRESULT hr = D3DERR_INVALIDCALL;
 
@@ -292,7 +292,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *if
     return hr;
 }
 
-HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
+HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *iface, WINED3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     HRESULT hr = D3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
@@ -309,7 +309,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *iface, D3DC
     return hr;
 }
 
-HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, UINT Level) {
+HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, WINED3DCUBEMAP_FACES FaceType, UINT Level) {
     HRESULT hr = D3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
@@ -325,7 +325,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, D3
     return hr;
 }
 
-HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
+HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface, WINED3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
     HRESULT hr = D3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
