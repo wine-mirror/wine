@@ -74,7 +74,7 @@ Window root_window;
 DWORD desktop_tid = 0;
 int dxgrab = 0;
 int usedga = 0;
-int usexvidmode = 0;
+int usexvidmode = 1;
 int usexrandr = 1;
 int use_xkb = 1;
 int use_take_focus = 1;
