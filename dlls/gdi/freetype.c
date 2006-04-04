@@ -35,6 +35,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "wingdi.h"
@@ -168,7 +169,11 @@ MAKE_FUNCPTR(FcPatternGet);
 #define FT_ENCODING_APPLE_ROMAN ft_encoding_apple_roman
 #endif
 
-#define GET_BE_WORD(ptr) MAKEWORD( ((BYTE *)(ptr))[1], ((BYTE *)(ptr))[0] )
+#ifdef WORDS_BIGENDIAN
+#define GET_BE_WORD(x) (x)
+#else
+#define GET_BE_WORD(x) RtlUshortByteSwap(x)
+#endif
 
 /* This is bascially a copy of FT_Bitmap_Size with an extra element added */
 typedef struct {
@@ -1898,10 +1903,16 @@ typedef struct {
     BYTE yEndRatio;
 } Ratios;
 
+typedef struct {
+    WORD recs;
+    BYTE startsz;
+    BYTE endsz;
+} VDMX_group;
 
 static LONG load_VDMX(GdiFont font, LONG height)
 {
-    BYTE hdr[6], tmp[2], group[4];
+    WORD hdr[3], tmp;
+    VDMX_group group;
     BYTE devXRatio, devYRatio;
     USHORT numRecs, numRatios;
     DWORD result, offset = -1;
@@ -1921,8 +1932,8 @@ static LONG load_VDMX(GdiFont font, LONG height)
     devXRatio = 1;
     devYRatio = 1;
 
-    numRecs = GET_BE_WORD(&hdr[2]);
-    numRatios = GET_BE_WORD(&hdr[4]);
+    numRecs = GET_BE_WORD(hdr[1]);
+    numRatios = GET_BE_WORD(hdr[2]);
 
     TRACE("numRecs = %d numRatios = %d\n", numRecs, numRatios);
     for(i = 0; i < numRatios; i++) {
@@ -1942,7 +1953,7 @@ static LONG load_VDMX(GdiFont font, LONG height)
 	    devYRatio <= ratio.yEndRatio))
 	    {
 		offset = (3 * 2) + (numRatios * 4) + (i * 2);
-		WineEngGetFontData(font, MS_VDMX_TAG, offset, tmp, 2);
+		WineEngGetFontData(font, MS_VDMX_TAG, offset, &tmp, 2);
 		offset = GET_BE_WORD(tmp);
 		break;
 	    }
@@ -1953,14 +1964,14 @@ static LONG load_VDMX(GdiFont font, LONG height)
 	return ppem;
     }
 
-    if(WineEngGetFontData(font, MS_VDMX_TAG, offset, group, 4) != GDI_ERROR) {
+    if(WineEngGetFontData(font, MS_VDMX_TAG, offset, &group, 4) != GDI_ERROR) {
 	USHORT recs;
 	BYTE startsz, endsz;
-	BYTE *vTable;
+	WORD *vTable;
 
-	recs = GET_BE_WORD(group);
-	startsz = group[2];
-	endsz = group[3];
+	recs = GET_BE_WORD(group.recs);
+	startsz = group.startsz;
+	endsz = group.endsz;
 
 	TRACE("recs=%d  startsz=%d  endsz=%d\n", recs, startsz, endsz);
 
@@ -1973,9 +1984,9 @@ static LONG load_VDMX(GdiFont font, LONG height)
 
 	if(height > 0) {
 	    for(i = 0; i < recs; i++) {
-		SHORT yMax = GET_BE_WORD(&vTable[(i * 6) + 2]);
-                SHORT yMin = GET_BE_WORD(&vTable[(i * 6) + 4]);
-		ppem = GET_BE_WORD(&vTable[i * 6]);
+                SHORT yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
+                SHORT yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
+                ppem = GET_BE_WORD(vTable[i * 3]);
 
 		if(yMax + -yMin == height) {
 		    font->yMax = yMax;
@@ -1988,8 +1999,8 @@ static LONG load_VDMX(GdiFont font, LONG height)
 			ppem = 0;
 			goto end; /* failed */
 		    }
-		    font->yMax = GET_BE_WORD(&vTable[(i * 6) + 2]);
-		    font->yMin = GET_BE_WORD(&vTable[(i * 6) + 4]);
+		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
+		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
                     TRACE("ppem %ld found; height=%ld  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
 		    break;
 		}
@@ -2005,14 +2016,14 @@ static LONG load_VDMX(GdiFont font, LONG height)
 
 	    for(i = 0; i < recs; i++) {
 		USHORT yPelHeight;
-		yPelHeight = GET_BE_WORD(&vTable[i * 6]);
+		yPelHeight = GET_BE_WORD(vTable[i * 3]);
 
 		if(yPelHeight > ppem)
 		    break; /* failed */
 
 		if(yPelHeight == ppem) {
-		    font->yMax = GET_BE_WORD(&vTable[(i * 6) + 2]);
-		    font->yMin = GET_BE_WORD(&vTable[(i * 6) + 4]);
+		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
+		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
 		    TRACE("ppem %ld found; yMax=%d  yMin=%d\n", ppem, font->yMax, font->yMin);
 		    break;
 		}
