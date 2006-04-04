@@ -711,7 +711,14 @@ then
         -I*) ARTSC_CFLAGS="$ARTSC_CFLAGS $i";;
       esac
     done
-    ARTSC_LIBS=`$ARTSCCONFIG --libs`
+    ARTSC_LIBS=""
+    for i in `$ARTSCCONFIG --libs`
+    do
+      case "$i" in
+        -L/usr/lib|-L/usr/lib64) ;;
+        -L*|-l*) ARTSC_LIBS="$ARTSC_LIBS $i";;
+      esac
+    done
     save_CFLAGS="$CFLAGS"
     CFLAGS="$CFLAGS $ARTSC_CFLAGS"
     AC_CHECK_LIB(artsc,arts_init,
