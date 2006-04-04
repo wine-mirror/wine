@@ -34,7 +34,7 @@ all: $(PROGRAMS) $(MANPAGES)
 @MAKE_RULES@
 
 winegcc$(EXEEXT): winegcc.o utils.o
-	$(CC) $(CFLAGS) -o $@ winegcc.o utils.o $(LIBPORT)
+	$(CC) $(CFLAGS) -o $@ winegcc.o utils.o $(LIBPORT) $(LDFLAGS)
 
 winecpp$(EXEEXT) wineg++$(EXEEXT): winegcc$(EXEEXT)
 	$(RM) $@ && $(LN_S) winegcc$(EXEEXT) $@

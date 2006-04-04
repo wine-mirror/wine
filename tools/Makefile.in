@@ -49,25 +49,25 @@ all: $(PROGRAMS) $(MANPAGES) $(SUBDIRS)
 @MAKE_RULES@
 
 makedep$(EXEEXT): makedep.o
-	$(CC) $(CFLAGS) -o $@ makedep.o
+	$(CC) $(CFLAGS) -o $@ makedep.o $(LDFLAGS)
 
 make_ctests$(EXEEXT): make_ctests.o
-	$(CC) $(CFLAGS) -o $@ make_ctests.o
+	$(CC) $(CFLAGS) -o $@ make_ctests.o $(LDFLAGS)
 
 fnt2bdf$(EXEEXT): fnt2bdf.o
-	$(CC) $(CFLAGS) -o $@ fnt2bdf.o $(LIBPORT)
+	$(CC) $(CFLAGS) -o $@ fnt2bdf.o $(LIBPORT) $(LDFLAGS)
 
 fnt2fon$(EXEEXT): fnt2fon.o
-	$(CC) $(CFLAGS) -o $@ fnt2fon.o $(LIBPORT)
+	$(CC) $(CFLAGS) -o $@ fnt2fon.o $(LIBPORT) $(LDFLAGS)
 
 relpath$(EXEEXT): relpath.o
-	$(CC) $(CFLAGS) -o $@ relpath.o $(LIBPORT)
+	$(CC) $(CFLAGS) -o $@ relpath.o $(LIBPORT) $(LDFLAGS)
 
 sfnt2fnt$(EXEEXT): sfnt2fnt.o
-	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBUNICODE) $(LIBPORT) $(FREETYPELIBS)
+	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBUNICODE) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS)
 
 bin2res$(EXEEXT): bin2res.o
-	$(CC) $(CFLAGS) -o $@ bin2res.o $(LIBPORT)
+	$(CC) $(CFLAGS) -o $@ bin2res.o $(LIBPORT) $(LDFLAGS)
 
 wineprefixcreate: wineprefixcreate.in relpath$(EXEEXT)
 	sed -e "s,@bintodlldir\@,`$(RELPATH) $(bindir) $(dlldir)`,g" -e "s,@bintodatadir\@,`$(RELPATH) $(bindir) $(datadir)/wine`,g" $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)
