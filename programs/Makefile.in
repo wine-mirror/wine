@@ -14,6 +14,7 @@ SUBDIRS = \
 	explorer \
 	hh \
 	icinfo \
+	iexplore \
 	msiexec \
 	notepad \
 	progman \
@@ -50,6 +51,7 @@ INSTALLSUBDIRS = \
 	explorer \
 	hh \
 	icinfo \
+	iexplore \
 	msiexec \
 	notepad \
 	progman \

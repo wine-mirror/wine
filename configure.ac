@@ -1701,6 +1701,7 @@ programs/expand/Makefile
 programs/explorer/Makefile
 programs/hh/Makefile
 programs/icinfo/Makefile
+programs/iexplore/Makefile
 programs/msiexec/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
