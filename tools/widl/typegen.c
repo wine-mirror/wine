@@ -780,6 +780,15 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
     int has_length = length_is && (length_is->type != EXPR_VOID);
     int has_size = (size_is && (size_is->type != EXPR_VOID)) || !array->is_const;
     size_t start_offset;
+    int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
+    if (!pointer_type)
+        pointer_type = RPC_FC_RP;
+
+    print_file(file, 2, "0x%x, 0x00,    /* %s */\n",
+               pointer_type,
+               pointer_type == RPC_FC_FP ? "FC_FP" : (pointer_type == RPC_FC_UP ? "FC_UP" : "FC_RP"));
+    print_file(file, 2, "NdrFcShort(0x2),\n");
+    *typestring_offset += 4;
 
     if (array && NEXT_LINK(array)) /* multi-dimensional array */
     {
@@ -917,7 +926,7 @@ static size_t write_array_tfs(FILE *file, const attr_t *attrs,
                 *typestring_offset += 1;
             }
 
-            print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+            print_file(file, 2, "0x%x, /* FIXME: write out conversion data */\n", type->type);
             print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
             *typestring_offset += 2;
 
@@ -1374,13 +1383,15 @@ static unsigned int get_required_buffer_size_type(
 
 unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment)
 {
+    expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+    int has_size = (size_is && (size_is->type != EXPR_VOID));
     int in_attr = is_attr(var->attrs, ATTR_IN);
     int out_attr = is_attr(var->attrs, ATTR_OUT);
 
     if (!in_attr && !out_attr)
         in_attr = 1;
 
-    if ((!out_attr || in_attr) && !is_attr(var->attrs, ATTR_STRING) && !var->array)
+    if ((!out_attr || in_attr) && !has_size && !is_attr(var->attrs, ATTR_STRING) && !var->array)
     {
         if (var->ptr_level > 0 || (var->ptr_level == 0 && type_has_ref(var->type)))
         {
@@ -1621,7 +1632,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 }
                 else if (!has_length && has_size)
                 {
-                    if (is_size_needed_for_phase(phase))
+                    if (is_size_needed_for_phase(phase) && phase != PHASE_FREE)
                     {
                         print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
                         write_expr(file, size_is ? size_is : var->array, 1);
@@ -1645,7 +1656,14 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 }
             }
 
-            print_phase_function(file, indent, array_type, phase, var->name, *type_offset);
+            if (!in_attr && phase == PHASE_FREE)
+            {
+                print_file(file, indent, "if (%s)\n", var->name);
+                indent++;
+                print_file(file, indent, "_StubMsg.pfnFree(%s);\n", var->name);
+            }
+            else if (phase != PHASE_FREE)
+                print_phase_function(file, indent, array_type, phase, var->name, *type_offset + 4);
         }
         else if (var->ptr_level == 0 && is_base_type(type->type))
         {
