@@ -146,17 +146,23 @@ DEFINE_GUID(IID_IWineD3DQuery,
 /* Also, D3DCAPS8 is a subset of D3DCAPS9 so can be typecase as long as
      none of the 9 fields are accessed when the device is d3d8           */
 /* TODO: remove the d3d8/d3d9 dependencies by making a all inclusive WINED3D version */
-#if defined( __WINE_D3D8_H )
- /* Identical: */ 
-# define WINED3DLIGHT           D3DLIGHT8
-# define WINED3DMATERIAL        D3DMATERIAL8
-# define WINED3DVIEWPORT        D3DVIEWPORT8
-
-#else
+#if defined( __WINE_D3D9_H )
  /* Identical: */ 
 # define WINED3DLIGHT           D3DLIGHT9
 # define WINED3DMATERIAL        D3DMATERIAL9
 # define WINED3DVIEWPORT        D3DVIEWPORT9
+# define WINED3DGAMMARAMP       D3DGAMMARAMP
+
+#elif defined( __WINE_D3D8_H )
+ /* Identical: */ 
+# define WINED3DLIGHT           D3DLIGHT8
+# define WINED3DMATERIAL        D3DMATERIAL8
+# define WINED3DVIEWPORT        D3DVIEWPORT8
+# define WINED3DGAMMARAMP       D3DGAMMARAMP
+
+#else /* defined (__WINE_D3D_H ) */
+ /* Identical: */
+# define WINED3DGAMMARAMP       DDGAMMARAMP
 
 #endif
 
@@ -345,8 +351,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetDepthStencilSurface)(THIS_ struct IWineD3DSurface** ppZStencilSurface) PURE;
     STDMETHOD(SetFVF)(THIS_ DWORD  fvf) PURE;
     STDMETHOD(GetFVF)(THIS_ DWORD * pfvf) PURE;
-    STDMETHOD_(void, SetGammaRamp)(THIS_ UINT iSwapChain, DWORD Flags, CONST D3DGAMMARAMP* pRamp) PURE;
-    STDMETHOD_(void, GetGammaRamp)(THIS_ UINT iSwapChain, D3DGAMMARAMP* pRamp) PURE;
+    STDMETHOD_(void, SetGammaRamp)(THIS_ UINT iSwapChain, DWORD Flags, CONST WINED3DGAMMARAMP* pRamp) PURE;
+    STDMETHOD_(void, GetGammaRamp)(THIS_ UINT iSwapChain, WINED3DGAMMARAMP* pRamp) PURE;
     STDMETHOD(SetIndices)(THIS_ struct IWineD3DIndexBuffer * pIndexData,UINT  BaseVertexIndex) PURE;
     STDMETHOD(GetIndices)(THIS_ struct IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex) PURE;
     STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
@@ -1294,8 +1300,8 @@ DECLARE_INTERFACE_(IWineD3DSwapChain,IWineD3DBase)
     STDMETHOD(GetRasterStatus)(THIS_ WINED3DRASTER_STATUS *pRasterStatus) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ WINED3DDISPLAYMODE *pMode) PURE;
     STDMETHOD(GetPresentParameters)(THIS_ WINED3DPRESENT_PARAMETERS *pPresentationParameters) PURE;
-    STDMETHOD(SetGammaRamp)(THIS_ DWORD Flags, const D3DGAMMARAMP *pRamp) PURE;
-    STDMETHOD(GetGammaRamp)(THIS_ D3DGAMMARAMP *pRamp) PURE;
+    STDMETHOD(SetGammaRamp)(THIS_ DWORD Flags, const WINED3DGAMMARAMP *pRamp) PURE;
+    STDMETHOD(GetGammaRamp)(THIS_ WINED3DGAMMARAMP *pRamp) PURE;
 };
 #undef INTERFACE
 

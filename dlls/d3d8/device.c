@@ -273,14 +273,14 @@ void WINAPI IDirect3DDevice8Impl_SetGammaRamp(LPDIRECT3DDEVICE8 iface, DWORD Fla
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
-    return IWineD3DDevice_SetGammaRamp(This->WineD3DDevice, 0, Flags, pRamp);
+    return IWineD3DDevice_SetGammaRamp(This->WineD3DDevice, 0, Flags, (WINED3DGAMMARAMP *) pRamp);
 }
 
 void WINAPI IDirect3DDevice8Impl_GetGammaRamp(LPDIRECT3DDEVICE8 iface, D3DGAMMARAMP* pRamp) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
-    return IWineD3DDevice_GetGammaRamp(This->WineD3DDevice, 0, pRamp);
+    return IWineD3DDevice_GetGammaRamp(This->WineD3DDevice, 0, (WINED3DGAMMARAMP *) pRamp);
 }
 
 HRESULT WINAPI IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, UINT Levels, DWORD Usage,
