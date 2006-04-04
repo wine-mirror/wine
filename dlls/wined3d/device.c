@@ -1193,7 +1193,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
         object->win_handle = This->createParms.hFocusWindow;
     }
 
-    object->win        = (Window)GetPropA(object->win_handle, "__wine_x11_whole_window" );
+    object->win_handle = GetAncestor(object->win_handle, GA_ROOT);
+    if ( !( object->win = (Window)GetPropA(object->win_handle, "__wine_x11_whole_window") ) ) {
+        ERR("Can't get drawable (window), HWND:%p doesn't have the property __wine_x11_whole_window\n", object->win_handle);
+        return D3DERR_NOTAVAILABLE;
+    }
     hDc                = GetDC(object->win_handle);
     object->display    = get_display(hDc);
     ReleaseDC(object->win_handle, hDc);
