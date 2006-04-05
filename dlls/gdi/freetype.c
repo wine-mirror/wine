@@ -568,6 +568,9 @@ static BOOL add_font_subst(struct list *subst_list, FontSubst *subst, INT flags)
         return TRUE;
     }
 
+    HeapFree(GetProcessHeap(), 0, subst->from.name);
+    HeapFree(GetProcessHeap(), 0, subst->to.name);
+    HeapFree(GetProcessHeap(), 0, subst);
     return FALSE;
 }
 
