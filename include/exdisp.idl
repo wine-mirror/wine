@@ -421,3 +421,14 @@ coclass ShellWindows
     [default] interface IShellWindows;
     [default, source] dispinterface DShellWindowsEvents;
 }
+
+[
+    uuid(0002df01-0000-0000-c000-000000000046)
+]
+coclass InternetExplorer
+{
+    [default] interface IWebBrowser2;
+              interface IWebBrowserApp;
+    [default, source] dispinterface DWebBrowserEvents2;
+    [source]          dispinterface DWebBrowserEvents;
+}
