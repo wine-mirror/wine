@@ -175,35 +175,34 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 
 		if(roundCornersFlag)
 		{
-			COLORREF savedPixels[12];
+                    /* NOTE: native uses Get/SetPixel for corners, but that really
+                     * hurts on X11 since it needs a server round-trip for each pixel.
+                     * So we use a clip region instead. */
+                    HRGN saved = CreateRectRgn( 0, 0, 0, 0 );
+                    HRGN line = CreateRectRgn( x + 2, y, x + dx - 2, y + 1 );
+                    HRGN clip = CreateRectRgn( x, y + 2, x + dx, y + dy - 2 );
 
-			savedPixels[0] = GetPixel(hdc, x, y);
-			savedPixels[1] = GetPixel(hdc, x + 1, y);
-			savedPixels[2] = GetPixel(hdc, x, y + 1);
-			savedPixels[3] = GetPixel(hdc, x + dx - 1, y);
-			savedPixels[4] = GetPixel(hdc, x + dx - 2, y);
-			savedPixels[5] = GetPixel(hdc, x + dx - 1, y + 1);
-			savedPixels[6] = GetPixel(hdc, x, y + dy - 1);
-			savedPixels[7] = GetPixel(hdc, x + 1, y + dy - 1);
-			savedPixels[8] = GetPixel(hdc, x, y + dy - 2);
-			savedPixels[9] = GetPixel(hdc, x + dx - 1, y + dy - 1);
-			savedPixels[10] = GetPixel(hdc, x + dx - 2, y + dy - 1);
-			savedPixels[11] = GetPixel(hdc, x + dx - 1, y + dy - 2);
+                    CombineRgn( clip, clip, line, RGN_OR );
+                    SetRectRgn( line, x + 1, y + 1, x + dx - 1, y + 2 );
+                    CombineRgn( clip, clip, line, RGN_OR );
+                    SetRectRgn( line, x + 1, y + dy - 2, x + dx - 1, y + dy - 1 );
+                    CombineRgn( clip, clip, line, RGN_OR );
+                    SetRectRgn( line, x + 2, y + dy - 1, x + dx - 2, y + dy );
+                    CombineRgn( clip, clip, line, RGN_OR );
+                    DeleteObject( line );
 
-			do_blt(hdc, x, y, dx, dy, hMemoryDC, rasterOp);
+                    if (!GetClipRgn( hdc, saved ))
+                    {
+                        DeleteObject( saved );
+                        saved = 0;
+                    }
+                    ExtSelectClipRgn( hdc, clip, RGN_AND );
+                    DeleteObject( clip );
 
-			SetPixel(hdc, x, y, savedPixels[0]);
-			SetPixel(hdc, x + 1, y, savedPixels[1]);
-			SetPixel(hdc, x, y + 1, savedPixels[2]);
-			SetPixel(hdc, x + dx - 1, y, savedPixels[3]);
-			SetPixel(hdc, x + dx - 2, y, savedPixels[4]);
-			SetPixel(hdc, x + dx - 1, y + 1, savedPixels[5]);
-			SetPixel(hdc, x, y + dy - 1, savedPixels[6]);
-			SetPixel(hdc, x + 1, y + dy - 1, savedPixels[7]);
-			SetPixel(hdc, x, y + dy - 2, savedPixels[8]);
-			SetPixel(hdc, x + dx - 1, y + dy - 1, savedPixels[9]);
-			SetPixel(hdc, x + dx - 2, y + dy - 1, savedPixels[10]);
-			SetPixel(hdc, x + dx - 1, y + dy - 2, savedPixels[11]);
+                    do_blt(hdc, x, y, dx, dy, hMemoryDC, rasterOp);
+
+                    SelectClipRgn( hdc, saved );
+                    if (saved) DeleteObject( saved );
 		}
 		else
 			do_blt(hdc, x, y, dx, dy, hMemoryDC, rasterOp);
