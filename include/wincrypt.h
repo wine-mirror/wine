@@ -128,6 +128,29 @@ typedef struct _CRYPT_BIT_BLOB {
     DWORD cUnusedBits;
 } CRYPT_BIT_BLOB, *PCRYPT_BIT_BLOB;
 
+typedef struct _CRYPT_KEY_PROV_PARAM {
+    DWORD dwParam;
+    BYTE *pbData;
+    DWORD cbData;
+    DWORD dwFlags;
+} CRYPT_KEY_PROV_PARAM, *PCRYPT_KEY_PROV_PARAM;
+
+typedef struct _CRYPT_KEY_PROV_INFO {
+    LPWSTR                pwszContainerName;
+    LPWSTR                pwszProvName;
+    DWORD                 dwProvType;
+    DWORD                 dwFlags;
+    DWORD                 cProvParam;
+    PCRYPT_KEY_PROV_PARAM rgProvParam;
+    DWORD                 dwKeySpec;
+} CRYPT_KEY_PROV_INFO, *PCRYPT_KEY_PROV_INFO;
+
+typedef struct _CERT_KEY_CONTEXT {
+    DWORD      cbSize;
+    HCRYPTPROV hCryptProv;
+    DWORD      dwKeySpec;
+} CERT_KEY_CONTEXT, *PCERT_KEY_CONTEXT;
+
 typedef struct _CERT_PUBLIC_KEY_INFO {
     CRYPT_ALGORITHM_IDENTIFIER Algorithm;
     CRYPT_BIT_BLOB             PublicKey;
@@ -2408,6 +2431,12 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CERT_NAME_ISSUER_FLAG           0x00000001
 #define CERT_NAME_DISABLE_IE4_UTF8_FLAG 0x00010000
 
+#define CERT_SET_KEY_PROV_HANDLE_PROP_ID 0x00000001
+#define CERT_SET_KEY_CONTEXT_PROP_ID     0x00000001
+
+#define CERT_CREATE_SELFSIGN_NO_SIGN     1
+#define CERT_CREATE_SELFSIGN_NO_KEY_INFO 2
+
 /* function declarations */
 /* advapi32.dll */
 BOOL WINAPI CryptAcquireContextA(HCRYPTPROV *phProv, LPCSTR pszContainer,
@@ -2667,6 +2696,12 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
 
 PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwMsgAndCertEncodingType,
  const BYTE *pbCtlEncoded, DWORD cbCtlEncoded);
+
+PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV hProv,
+ PCERT_NAME_BLOB pSubjectIssuerBlob, DWORD dwFlags,
+ PCRYPT_KEY_PROV_INFO pKeyProvInfo,
+ PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm, PSYSTEMTIME pStartTime,
+ PSYSTEMTIME pEndTime, PCERT_EXTENSIONS pExtensions);
 
 BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext);
 
