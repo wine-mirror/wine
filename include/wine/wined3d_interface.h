@@ -162,6 +162,9 @@ DEFINE_GUID(IID_IWineD3DQuery,
 
 #else /* defined (__WINE_D3D_H ) */
  /* Identical: */
+# define WINED3DLIGHT           D3DLIGHT7
+# define WINED3DMATERIAL        D3DMATERIAL7
+# define WINED3DVIEWPORT        D3DVIEWPORT7
 # define WINED3DGAMMARAMP       DDGAMMARAMP
 
 #endif
