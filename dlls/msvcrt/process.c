@@ -442,12 +442,40 @@ MSVCRT_intptr_t _spawnve(int flags, const char* name, const char* const* argv,
 {
   char * args = msvcrt_argvtos(argv,' ');
   char * envs = msvcrt_argvtos(envv,0);
-  const char *fullname = name;
+  char fullname[MAX_PATH];
+  const char *p;
+  int len;
   MSVCRT_intptr_t ret = -1;
 
-  FIXME(":not translating name %s to locate program\n",fullname);
   TRACE(":call (%s), params (%s), env (%s)\n",debugstr_a(name),debugstr_a(args),
    envs?"Custom":"Null");
+
+  /* no check for NULL name.
+     native doesn't do it */
+
+  p = memchr(name, '\0', MAX_PATH);
+  if( !p )
+    p = name + MAX_PATH - 1;
+  len = p - name;
+
+  /* extra-long names are silently truncated. */
+  memcpy(fullname, name, len);
+
+  for( p--; p >= name; p-- )
+  {
+    if( *p == '\\' || *p == '/' || *p == ':' || *p == '.' )
+      break;
+  }
+
+  /* if no extension is given, assume .exe */
+  if( (p < name || *p != '.') && len <= MAX_PATH - 5 )
+  {
+    FIXME("only trying .exe when no extension given\n");
+    memcpy(fullname+len, ".exe", 4);
+    len += 4;
+  }
+
+  fullname[len] = '\0';
 
   if (args)
   {
