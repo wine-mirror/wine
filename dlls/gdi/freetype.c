@@ -117,6 +117,8 @@ MAKE_FUNCPTR(FT_Vector_Unit);
 MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Get_Char_Index);
 MAKE_FUNCPTR(FT_Get_Module);
+MAKE_FUNCPTR(FT_Get_Sfnt_Name);
+MAKE_FUNCPTR(FT_Get_Sfnt_Name_Count);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Load_Glyph);
@@ -592,18 +594,6 @@ static void LoadSubstList(void)
     LPSTR value;
     LPVOID data;
 
-    if(!list_empty(&font_subst_list))
-    {
-        FontSubst *cursor2;
-        LIST_FOR_EACH_ENTRY_SAFE(psub, cursor2, &font_subst_list, FontSubst, entry)
-        {
-            HeapFree(GetProcessHeap(), 0, psub->to.name);
-            HeapFree(GetProcessHeap(), 0, psub->from.name);
-            list_remove(&psub->entry);
-            HeapFree(GetProcessHeap(), 0, psub);
-        }
-    }
-
     if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
 		   "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes",
 		   &hkey) == ERROR_SUCCESS) {
@@ -645,6 +635,45 @@ static void LoadSubstList(void)
     }
 }
 
+static WCHAR *get_familyname(FT_Face ft_face)
+{
+    WCHAR *family = NULL;
+    FT_SfntName name;
+    FT_UInt num_names, name_index, i;
+
+    if(FT_IS_SFNT(ft_face))
+    {
+        num_names = pFT_Get_Sfnt_Name_Count(ft_face);
+
+        for(name_index = 0; name_index < num_names; name_index++)
+        {
+            if(!pFT_Get_Sfnt_Name(ft_face, name_index, &name))
+            {
+                if((name.name_id == TT_NAME_ID_FONT_FAMILY) &&
+                   (name.language_id == GetUserDefaultLCID()) &&
+                   (name.platform_id == TT_PLATFORM_MICROSOFT) &&
+                   (name.encoding_id == TT_MS_ID_UNICODE_CS))
+                {
+                    /* String is not nul terminated and string_len is a byte length. */
+                    family = HeapAlloc(GetProcessHeap(), 0, name.string_len + 2);
+                    for(i = 0; i < name.string_len / 2; i++)
+                    {
+                        WORD *tmp = (WORD *)&name.string[i * 2];
+                        family[i] = GET_BE_WORD(*tmp);
+                    }
+                    family[i] = 0;
+
+                    TRACE("Got localised name %s\n", debugstr_w(family));
+                    return family;
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
@@ -652,7 +681,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
     FT_Face ft_face;
     TT_OS2 *pOS2;
     TT_Header *pHeader = NULL;
-    WCHAR *FamilyW, *StyleW;
+    WCHAR *english_family, *localised_family, *StyleW;
     DWORD len;
     Family *family;
     Face *face;
@@ -713,24 +742,42 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
                 size = (My_FT_Bitmap_Size *)ft_face->available_sizes + bitmap_num;
 
             len = MultiByteToWideChar(CP_ACP, 0, family_name, -1, NULL, 0);
-            FamilyW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, family_name, -1, FamilyW, len);
+            english_family = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, family_name, -1, english_family, len);
+
+            localised_family = NULL;
+            if(!fake_family) {
+                localised_family = get_familyname(ft_face);
+                if(localised_family && !strcmpW(localised_family, english_family)) {
+                    HeapFree(GetProcessHeap(), 0, localised_family);
+                    localised_family = NULL;
+                }
+            }
 
             family = NULL;
             LIST_FOR_EACH(family_elem_ptr, &font_list) {
                 family = LIST_ENTRY(family_elem_ptr, Family, entry);
-                if(!strcmpW(family->FamilyName, FamilyW))
+                if(!strcmpW(family->FamilyName, localised_family ? localised_family : english_family))
                     break;
                 family = NULL;
             }
             if(!family) {
                 family = HeapAlloc(GetProcessHeap(), 0, sizeof(*family));
-                family->FamilyName = FamilyW;
+                family->FamilyName = strdupW(localised_family ? localised_family : english_family);
                 list_init(&family->faces);
                 list_add_tail(&font_list, &family->entry);
-            } else {
-                HeapFree(GetProcessHeap(), 0, FamilyW);
+
+                if(localised_family) {
+                    FontSubst *subst = HeapAlloc(GetProcessHeap(), 0, sizeof(*subst));
+                    subst->from.name = strdupW(english_family);
+                    subst->from.charset = -1;
+                    subst->to.name = strdupW(localised_family);
+                    subst->to.charset = -1;
+                    add_font_subst(&font_subst_list, subst, 0);
+                }
             }
+            HeapFree(GetProcessHeap(), 0, localised_family);
+            HeapFree(GetProcessHeap(), 0, english_family);
 
             len = MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, NULL, 0);
             StyleW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
@@ -1579,6 +1626,8 @@ BOOL WineEngInit(void)
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Get_Char_Index)
     LOAD_FUNCPTR(FT_Get_Module)
+    LOAD_FUNCPTR(FT_Get_Sfnt_Name)
+    LOAD_FUNCPTR(FT_Get_Sfnt_Name_Count)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Load_Glyph)
