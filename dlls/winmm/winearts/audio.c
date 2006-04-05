@@ -202,6 +202,7 @@ typedef struct {
     ARTS_MSG_RING		msgRing;
 } WINE_WAVEIN;
 
+static BOOL		init;
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
 static WINE_WAVEIN	WInDev    [MAX_WAVEINDRV];
 
@@ -380,7 +381,8 @@ LONG		ARTS_WaveClose(void)
       }
     }
 
-    arts_free();    /* free up arts */
+    if (init)
+        arts_free();    /* free up arts */
     return 1;
 }
 
@@ -414,6 +416,8 @@ LONG ARTS_WaveInit(void)
 
     if (ret)
         return ret;
+
+    init = TRUE;
 
     /* initialize all device handles to -1 */
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
