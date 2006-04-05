@@ -440,6 +440,211 @@ static inline FT_Fixed FT_FixedFromFIXED(FIXED f)
 	return (FT_Fixed)((long)f.value << 16 | (unsigned long)f.fract);
 }
 
+
+static Face *find_face_from_filename(const WCHAR *name)
+{
+    Family *family;
+    Face *face;
+    char *file;
+    DWORD len = WideCharToMultiByte(CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL);
+    char *nameA = HeapAlloc(GetProcessHeap(), 0, len);
+    Face *ret = NULL;
+
+    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, nameA, len, NULL, NULL);
+    TRACE("looking for %s\n", debugstr_a(nameA));
+
+    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
+    {
+        LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
+        {
+            file = strrchr(face->file, '/');
+            if(!file)
+                file = face->file;
+            else
+                file++;
+            if(!strcmp(file, nameA))
+                ret = face;
+            break;
+	}
+    }
+    HeapFree(GetProcessHeap(), 0, nameA);
+    return ret;
+}
+
+static Family *find_family_from_name(const WCHAR *name)
+{
+    Family *family;
+
+    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
+    {
+        if(!strcmpiW(family->FamilyName, name))
+            return family;
+    }
+
+    return NULL;
+}
+    
+static void DumpSubstList(void)
+{
+    FontSubst *psub;
+
+    LIST_FOR_EACH_ENTRY(psub, &font_subst_list, FontSubst, entry)
+    {
+        if(psub->from.charset != -1 || psub->to.charset != -1)
+	    TRACE("%s:%d -> %s:%d\n", debugstr_w(psub->from.name),
+	      psub->from.charset, debugstr_w(psub->to.name), psub->to.charset);
+	else
+	    TRACE("%s -> %s\n", debugstr_w(psub->from.name),
+		  debugstr_w(psub->to.name));
+    }
+    return;
+}
+
+static LPWSTR strdupW(LPCWSTR p)
+{
+    LPWSTR ret;
+    DWORD len = (strlenW(p) + 1) * sizeof(WCHAR);
+    ret = HeapAlloc(GetProcessHeap(), 0, len);
+    memcpy(ret, p, len);
+    return ret;
+}
+
+static LPSTR strdupA(LPCSTR p)
+{
+    LPSTR ret;
+    DWORD len = (strlen(p) + 1);
+    ret = HeapAlloc(GetProcessHeap(), 0, len);
+    memcpy(ret, p, len);
+    return ret;
+}
+
+static FontSubst *get_font_subst(const struct list *subst_list, const WCHAR *from_name,
+                                 INT from_charset)
+{
+    FontSubst *element;
+
+    LIST_FOR_EACH_ENTRY(element, subst_list, FontSubst, entry)
+    {
+        if(!strcmpiW(element->from.name, from_name) &&
+           (element->from.charset == from_charset ||
+            element->from.charset == -1))
+            return element;
+    }
+
+    return NULL;
+}
+
+#define ADD_FONT_SUBST_FORCE  1
+
+static BOOL add_font_subst(struct list *subst_list, FontSubst *subst, INT flags)
+{
+    FontSubst *from_exist, *to_exist;
+
+    from_exist = get_font_subst(subst_list, subst->from.name, subst->from.charset);
+
+    if(from_exist && (flags & ADD_FONT_SUBST_FORCE))
+    {
+        list_remove(&from_exist->entry);
+        HeapFree(GetProcessHeap(), 0, &from_exist->from.name);
+        HeapFree(GetProcessHeap(), 0, &from_exist->to.name);
+        HeapFree(GetProcessHeap(), 0, from_exist);
+        from_exist = NULL;
+    }
+
+    if(!from_exist)
+    {
+        to_exist = get_font_subst(subst_list, subst->to.name, subst->to.charset);
+
+        if(to_exist)
+        {
+            HeapFree(GetProcessHeap(), 0, subst->to.name);
+            subst->to.name = strdupW(to_exist->to.name);
+        }
+            
+        list_add_tail(subst_list, &subst->entry);
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void split_subst_info(NameCs *nc, LPSTR str)
+{
+    CHAR *p = strrchr(str, ',');
+    DWORD len;
+
+    nc->charset = -1;
+    if(p && *(p+1)) {
+        nc->charset = strtol(p+1, NULL, 10);
+	*p = '\0';
+    }
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    nc->name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, nc->name, len);
+}
+
+static void LoadSubstList(void)
+{
+    FontSubst *psub;
+    HKEY hkey;
+    DWORD valuelen, datalen, i = 0, type, dlen, vlen;
+    LPSTR value;
+    LPVOID data;
+
+    if(!list_empty(&font_subst_list))
+    {
+        FontSubst *cursor2;
+        LIST_FOR_EACH_ENTRY_SAFE(psub, cursor2, &font_subst_list, FontSubst, entry)
+        {
+            HeapFree(GetProcessHeap(), 0, psub->to.name);
+            HeapFree(GetProcessHeap(), 0, psub->from.name);
+            list_remove(&psub->entry);
+            HeapFree(GetProcessHeap(), 0, psub);
+        }
+    }
+
+    if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
+		   "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes",
+		   &hkey) == ERROR_SUCCESS) {
+
+        RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+			 &valuelen, &datalen, NULL, NULL);
+
+	valuelen++; /* returned value doesn't include room for '\0' */
+	value = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(CHAR));
+	data = HeapAlloc(GetProcessHeap(), 0, datalen);
+
+	dlen = datalen;
+	vlen = valuelen;
+	while(RegEnumValueA(hkey, i++, value, &vlen, NULL, &type, data,
+			    &dlen) == ERROR_SUCCESS) {
+	    TRACE("Got %s=%s\n", debugstr_a(value), debugstr_a(data));
+
+	    psub = HeapAlloc(GetProcessHeap(), 0, sizeof(*psub));
+	    split_subst_info(&psub->from, value);
+	    split_subst_info(&psub->to, data);
+
+	    /* Win 2000 doesn't allow mapping between different charsets
+	       or mapping of DEFAULT_CHARSET */
+	    if((psub->to.charset != psub->from.charset) ||
+	       psub->to.charset == DEFAULT_CHARSET) {
+	        HeapFree(GetProcessHeap(), 0, psub->to.name);
+		HeapFree(GetProcessHeap(), 0, psub->from.name);
+		HeapFree(GetProcessHeap(), 0, psub);
+	    } else {
+	        add_font_subst(&font_subst_list, psub, 0);
+	    }
+	    /* reset dlen and vlen */
+	    dlen = datalen;
+	    vlen = valuelen;
+	}
+	HeapFree(GetProcessHeap(), 0, data);
+	HeapFree(GetProcessHeap(), 0, value);
+	RegCloseKey(hkey);
+    }
+}
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
@@ -675,210 +880,6 @@ static void DumpFontList(void)
 	}
     }
     return;
-}
-
-static Face *find_face_from_filename(const WCHAR *name)
-{
-    Family *family;
-    Face *face;
-    char *file;
-    DWORD len = WideCharToMultiByte(CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL);
-    char *nameA = HeapAlloc(GetProcessHeap(), 0, len);
-    Face *ret = NULL;
-
-    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, nameA, len, NULL, NULL);
-    TRACE("looking for %s\n", debugstr_a(nameA));
-
-    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
-    {
-        LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
-        {
-            file = strrchr(face->file, '/');
-            if(!file)
-                file = face->file;
-            else
-                file++;
-            if(!strcmp(file, nameA))
-                ret = face;
-            break;
-	}
-    }
-    HeapFree(GetProcessHeap(), 0, nameA);
-    return ret;
-}
-
-static Family *find_family_from_name(const WCHAR *name)
-{
-    Family *family;
-
-    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
-    {
-        if(!strcmpiW(family->FamilyName, name))
-            return family;
-    }
-
-    return NULL;
-}
-    
-static void DumpSubstList(void)
-{
-    FontSubst *psub;
-
-    LIST_FOR_EACH_ENTRY(psub, &font_subst_list, FontSubst, entry)
-    {
-        if(psub->from.charset != -1 || psub->to.charset != -1)
-	    TRACE("%s:%d -> %s:%d\n", debugstr_w(psub->from.name),
-	      psub->from.charset, debugstr_w(psub->to.name), psub->to.charset);
-	else
-	    TRACE("%s -> %s\n", debugstr_w(psub->from.name),
-		  debugstr_w(psub->to.name));
-    }
-    return;
-}
-
-static LPWSTR strdupW(LPCWSTR p)
-{
-    LPWSTR ret;
-    DWORD len = (strlenW(p) + 1) * sizeof(WCHAR);
-    ret = HeapAlloc(GetProcessHeap(), 0, len);
-    memcpy(ret, p, len);
-    return ret;
-}
-
-static LPSTR strdupA(LPCSTR p)
-{
-    LPSTR ret;
-    DWORD len = (strlen(p) + 1);
-    ret = HeapAlloc(GetProcessHeap(), 0, len);
-    memcpy(ret, p, len);
-    return ret;
-}
-
-static FontSubst *get_font_subst(const struct list *subst_list, const WCHAR *from_name,
-                                 INT from_charset)
-{
-    FontSubst *element;
-
-    LIST_FOR_EACH_ENTRY(element, subst_list, FontSubst, entry)
-    {
-        if(!strcmpiW(element->from.name, from_name) &&
-           (element->from.charset == from_charset ||
-            element->from.charset == -1))
-            return element;
-    }
-
-    return NULL;
-}
-
-#define ADD_FONT_SUBST_FORCE  1
-
-static BOOL add_font_subst(struct list *subst_list, FontSubst *subst, INT flags)
-{
-    FontSubst *from_exist, *to_exist;
-
-    from_exist = get_font_subst(subst_list, subst->from.name, subst->from.charset);
-
-    if(from_exist && (flags & ADD_FONT_SUBST_FORCE))
-    {
-        list_remove(&from_exist->entry);
-        HeapFree(GetProcessHeap(), 0, &from_exist->from.name);
-        HeapFree(GetProcessHeap(), 0, &from_exist->to.name);
-        HeapFree(GetProcessHeap(), 0, from_exist);
-        from_exist = NULL;
-    }
-
-    if(!from_exist)
-    {
-        to_exist = get_font_subst(subst_list, subst->to.name, subst->to.charset);
-
-        if(to_exist)
-        {
-            HeapFree(GetProcessHeap(), 0, subst->to.name);
-            subst->to.name = strdupW(to_exist->to.name);
-        }
-            
-        list_add_tail(subst_list, &subst->entry);
-
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-static void split_subst_info(NameCs *nc, LPSTR str)
-{
-    CHAR *p = strrchr(str, ',');
-    DWORD len;
-
-    nc->charset = -1;
-    if(p && *(p+1)) {
-        nc->charset = strtol(p+1, NULL, 10);
-	*p = '\0';
-    }
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    nc->name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, str, -1, nc->name, len);
-}
-
-static void LoadSubstList(void)
-{
-    FontSubst *psub;
-    HKEY hkey;
-    DWORD valuelen, datalen, i = 0, type, dlen, vlen;
-    LPSTR value;
-    LPVOID data;
-
-    if(!list_empty(&font_subst_list))
-    {
-        FontSubst *cursor2;
-        LIST_FOR_EACH_ENTRY_SAFE(psub, cursor2, &font_subst_list, FontSubst, entry)
-        {
-            HeapFree(GetProcessHeap(), 0, psub->to.name);
-            HeapFree(GetProcessHeap(), 0, psub->from.name);
-            list_remove(&psub->entry);
-            HeapFree(GetProcessHeap(), 0, psub);
-        }
-    }
-
-    if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
-		   "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes",
-		   &hkey) == ERROR_SUCCESS) {
-
-        RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			 &valuelen, &datalen, NULL, NULL);
-
-	valuelen++; /* returned value doesn't include room for '\0' */
-	value = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(CHAR));
-	data = HeapAlloc(GetProcessHeap(), 0, datalen);
-
-	dlen = datalen;
-	vlen = valuelen;
-	while(RegEnumValueA(hkey, i++, value, &vlen, NULL, &type, data,
-			    &dlen) == ERROR_SUCCESS) {
-	    TRACE("Got %s=%s\n", debugstr_a(value), debugstr_a(data));
-
-	    psub = HeapAlloc(GetProcessHeap(), 0, sizeof(*psub));
-	    split_subst_info(&psub->from, value);
-	    split_subst_info(&psub->to, data);
-
-	    /* Win 2000 doesn't allow mapping between different charsets
-	       or mapping of DEFAULT_CHARSET */
-	    if((psub->to.charset != psub->from.charset) ||
-	       psub->to.charset == DEFAULT_CHARSET) {
-	        HeapFree(GetProcessHeap(), 0, psub->to.name);
-		HeapFree(GetProcessHeap(), 0, psub->from.name);
-		HeapFree(GetProcessHeap(), 0, psub);
-	    } else {
-	        add_font_subst(&font_subst_list, psub, 0);
-	    }
-	    /* reset dlen and vlen */
-	    dlen = datalen;
-	    vlen = valuelen;
-	}
-	HeapFree(GetProcessHeap(), 0, data);
-	HeapFree(GetProcessHeap(), 0, value);
-	RegCloseKey(hkey);
-    }
 }
 
 /***********************************************************
