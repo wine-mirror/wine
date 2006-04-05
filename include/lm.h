@@ -23,12 +23,13 @@
 
 #include <lmcons.h>
 #include <lmerr.h>
+#include <lmshare.h>
 #include <lmbrowsr.h>
 #include <lmaccess.h>
+#include <lmserver.h>
 #include <lmwksta.h>
 #include <lmapibuf.h>
 #include <lmstats.h>
 #include <lmjoin.h>
-#include <lmserver.h>
 
 #endif
