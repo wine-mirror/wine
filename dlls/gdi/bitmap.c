@@ -311,10 +311,19 @@ LONG WINAPI GetBitmapBits(
     {
         DIBSECTION *dib = bmp->dib;
         const char *src = dib->dsBm.bmBits;
-        DWORD max = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
+        INT width_bytes = BITMAP_GetWidthBytes(dib->dsBm.bmWidth, dib->dsBm.bmBitsPixel);
+        DWORD max = width_bytes * bmp->bitmap.bmHeight;
+
+        if (!bits)
+        {
+            ret = max;
+            goto done;
+        }
+
         if (count > max) count = max;
         ret = count;
-        if (!bits) goto done;
+
+        /* GetBitmapBits returns not 32-bit aligned data */
 
         if (bmp->dib->dsBmih.biHeight >= 0)  /* not top-down, need to flip contents vertically */
         {
@@ -322,12 +331,21 @@ LONG WINAPI GetBitmapBits(
             while (count > 0)
             {
                 src -= dib->dsBm.bmWidthBytes;
-                memcpy( bits, src, min( count, dib->dsBm.bmWidthBytes ) );
-                bits = (char *)bits + dib->dsBm.bmWidthBytes;
-                count -= dib->dsBm.bmWidthBytes;
+                memcpy( bits, src, min( count, width_bytes ) );
+                bits = (char *)bits + width_bytes;
+                count -= width_bytes;
             }
         }
-        else memcpy( bits, src, count );
+        else
+        {
+            while (count > 0)
+            {
+                memcpy( bits, src, min( count, width_bytes ) );
+                src += dib->dsBm.bmWidthBytes;
+                bits = (char *)bits + width_bytes;
+                count -= width_bytes;
+            }
+        }
         goto done;
     }
 
@@ -667,26 +685,25 @@ static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer
 {
     BITMAPOBJ *bmp = obj;
 
+    if( !buffer ) return sizeof(BITMAP);
+    if (count < sizeof(BITMAP)) return 0;
+
     if (bmp->dib)
     {
-        if( !buffer )
+	if (count >= sizeof(DIBSECTION))
+	{
+            memcpy( buffer, bmp->dib, sizeof(DIBSECTION) );
             return sizeof(DIBSECTION);
-	if (count < sizeof(DIBSECTION))
-	{
-	    if (count > sizeof(BITMAP)) count = sizeof(BITMAP);
 	}
-	else
-	{
-	    if (count > sizeof(DIBSECTION)) count = sizeof(DIBSECTION);
+	else /* if (count >= sizeof(BITMAP)) */
+        {
+            DIBSECTION *dib = bmp->dib;
+            memcpy( buffer, &dib->dsBm, sizeof(BITMAP) );
+            return sizeof(BITMAP);
 	}
-
-	memcpy( buffer, bmp->dib, count );
-	return count;
     }
     else
     {
-        if( !buffer ) return sizeof(BITMAP);
-        if (count < sizeof(BITMAP)) return 0;
         memcpy( buffer, &bmp->bitmap, sizeof(BITMAP) );
         return sizeof(BITMAP);
     }

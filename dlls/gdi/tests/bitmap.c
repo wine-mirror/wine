@@ -32,11 +32,88 @@
 
 static BOOL is_win9x;
 
+static INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
+{
+    switch(bpp)
+    {
+    case 1:
+	return 2 * ((bmWidth+15) >> 4);
+
+    case 24:
+	bmWidth *= 3; /* fall through */
+    case 8:
+        return bmWidth + (bmWidth & 1);
+
+    case 32:
+        return bmWidth * 4;
+
+    case 16:
+    case 15:
+        return bmWidth * 2;
+
+    case 4:
+        return 2 * ((bmWidth+3) >> 2);
+
+    default:
+        trace("Unknown depth %d, please report.\n", bpp );
+        assert(0);
+    }
+    return -1;
+}
+
+static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHEADER *bmih)
+{
+    BITMAP bm;
+    INT ret, width_bytes;
+    char buf[512], buf_cmp[512];
+
+    ret = GetObject(hbm, sizeof(bm), &bm);
+    ok(ret == sizeof(bm), "GetObject returned %d instead of %d\n", ret, sizeof(bm));
+
+    ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
+    ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
+    ok(bm.bmHeight == bmih->biHeight, "wrong bm.bmHeight %d\n", bm.bmHeight);
+    width_bytes = BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel);
+    ok(bm.bmWidthBytes == width_bytes, "wrong bm.bmWidthBytes %d != %d\n", bm.bmWidthBytes, width_bytes);
+    ok(bm.bmPlanes == bmih->biPlanes, "wrong bm.bmPlanes %d\n", bm.bmPlanes);
+    ok(bm.bmBitsPixel == expected_depth, "wrong bm.bmBitsPixel %d != %d\n", bm.bmBitsPixel, expected_depth);
+    ok(bm.bmBits == NULL, "wrong bm.bmBits %p\n", bm.bmBits);
+
+    assert(sizeof(buf) >= bm.bmWidthBytes * bm.bmHeight);
+    assert(sizeof(buf) == sizeof(buf_cmp));
+
+    ret = GetBitmapBits(hbm, 0, NULL);
+    ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
+
+    memset(buf_cmp, 0xAA, sizeof(buf_cmp));
+    memset(buf_cmp, 0, bm.bmWidthBytes * bm.bmHeight);
+
+    memset(buf, 0xAA, sizeof(buf));
+    ret = GetBitmapBits(hbm, sizeof(buf), buf);
+    ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
+    ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match\n");
+
+    /* test various buffer sizes for GetObject */
+    ret = GetObject(hbm, 0, NULL);
+    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+
+    ret = GetObject(hbm, sizeof(bm) * 2, &bm);
+    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+
+    ret = GetObject(hbm, sizeof(bm) / 2, &bm);
+    ok(ret == 0, "%d != 0\n", ret);
+
+    ret = GetObject(hbm, 0, &bm);
+    ok(ret == 0, "%d != 0\n", ret);
+
+    ret = GetObject(hbm, 1, &bm);
+    ok(ret == 0, "%d != 0\n", ret);
+}
+
 static void test_createdibitmap(void)
 {
     HDC hdc, hdcmem;
     BITMAPINFOHEADER bmih;
-    BITMAP bm;
     HBITMAP hbm, hbm_colour, hbm_old;
     INT screen_depth;
 
@@ -57,27 +134,21 @@ static void test_createdibitmap(void)
     /* First try 32 bits */
     hbm = CreateDIBitmap(hdc, &bmih, 0, NULL, NULL, 0);
     ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-    ok(bm.bmBitsPixel == screen_depth, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, screen_depth);
+    test_bitmap_info(hbm, screen_depth, &bmih);
     DeleteObject(hbm);
     
     /* Then 16 */
     bmih.biBitCount = 16;
     hbm = CreateDIBitmap(hdc, &bmih, 0, NULL, NULL, 0);
     ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-    ok(bm.bmBitsPixel == screen_depth, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, screen_depth);
+    test_bitmap_info(hbm, screen_depth, &bmih);
     DeleteObject(hbm);
 
     /* Then 1 */
     bmih.biBitCount = 1;
     hbm = CreateDIBitmap(hdc, &bmih, 0, NULL, NULL, 0);
     ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-    ok(bm.bmBitsPixel == screen_depth, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, screen_depth);
+    test_bitmap_info(hbm, screen_depth, &bmih);
     DeleteObject(hbm);
 
     /* Now with a monochrome dc we expect a monochrome bitmap */
@@ -87,27 +158,21 @@ static void test_createdibitmap(void)
     bmih.biBitCount = 32;
     hbm = CreateDIBitmap(hdcmem, &bmih, 0, NULL, NULL, 0);
     ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-    ok(bm.bmBitsPixel == 1, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, 1);
+    test_bitmap_info(hbm, 1, &bmih);
     DeleteObject(hbm);
     
     /* Then 16 */
     bmih.biBitCount = 16;
     hbm = CreateDIBitmap(hdcmem, &bmih, 0, NULL, NULL, 0);
     ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-    ok(bm.bmBitsPixel == 1, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, 1);
+    test_bitmap_info(hbm, 1, &bmih);
     DeleteObject(hbm);
     
     /* Then 1 */
     bmih.biBitCount = 1;
     hbm = CreateDIBitmap(hdcmem, &bmih, 0, NULL, NULL, 0);
     ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-    ok(bm.bmBitsPixel == 1, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, 1);
+    test_bitmap_info(hbm, 1, &bmih);
     DeleteObject(hbm);
 
     /* Now select a polychrome bitmap into the dc and we expect
@@ -119,27 +184,21 @@ static void test_createdibitmap(void)
     bmih.biBitCount = 32;
     hbm = CreateDIBitmap(hdcmem, &bmih, 0, NULL, NULL, 0);
     ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-    ok(bm.bmBitsPixel == screen_depth, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, screen_depth);
+    test_bitmap_info(hbm, screen_depth, &bmih);
     DeleteObject(hbm);
     
     /* Then 16 */
     bmih.biBitCount = 16;
     hbm = CreateDIBitmap(hdcmem, &bmih, 0, NULL, NULL, 0);
     ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-    ok(bm.bmBitsPixel == screen_depth, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, screen_depth);
+    test_bitmap_info(hbm, screen_depth, &bmih);
     DeleteObject(hbm);
     
     /* Then 1 */
     bmih.biBitCount = 1;
     hbm = CreateDIBitmap(hdcmem, &bmih, 0, NULL, NULL, 0);
     ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-    ok(bm.bmBitsPixel == screen_depth, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, screen_depth);
+    test_bitmap_info(hbm, screen_depth, &bmih);
     DeleteObject(hbm);
 
     SelectObject(hdcmem, hbm_old);
@@ -151,13 +210,121 @@ static void test_createdibitmap(void)
         bmih.biBitCount = 32;
         hbm = CreateDIBitmap(0, &bmih, 0, NULL, NULL, 0);
         ok(hbm != NULL, "CreateDIBitmap failed\n");
-        ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
-
-        ok(bm.bmBitsPixel == 1, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, 1);
+        test_bitmap_info(hbm, 1, &bmih);
         DeleteObject(hbm);
     }
     
     ReleaseDC(0, hdc);
+}
+
+static INT DIB_GetWidthBytes( int width, int bpp )
+{
+    int words;
+
+    switch (bpp)
+    {
+	case 1:  words = (width + 31) / 32; break;
+	case 4:  words = (width + 7) / 8; break;
+	case 8:  words = (width + 3) / 4; break;
+	case 15:
+	case 16: words = (width + 1) / 2; break;
+	case 24: words = (width * 3 + 3)/4; break;
+	case 32: words = width; break;
+
+        default:
+            trace("Unknown depth %d, please report.\n", bpp );
+            assert(0);
+            break;
+    }
+    return 4 * words;
+}
+
+static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER *bmih)
+{
+    BITMAP bm;
+    DIBSECTION ds;
+    INT ret, width_bytes;
+    BYTE *buf;
+
+    ret = GetObject(hbm, sizeof(bm), &bm);
+    ok(ret == sizeof(bm), "GetObject returned %d instead of %d\n", ret, sizeof(bm));
+
+    ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
+    ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
+    ok(bm.bmHeight == bmih->biHeight, "wrong bm.bmHeight %d\n", bm.bmHeight);
+    width_bytes = DIB_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel);
+    ok(bm.bmWidthBytes == width_bytes, "wrong bm.bmWidthBytes %d != %d\n", bm.bmWidthBytes, width_bytes);
+    ok(bm.bmPlanes == bmih->biPlanes, "wrong bm.bmPlanes %d\n", bm.bmPlanes);
+    ok(bm.bmBitsPixel == bmih->biBitCount, "bm.bmBitsPixel %d != %d\n", bm.bmBitsPixel, bmih->biBitCount);
+    ok(bm.bmBits == bits, "wrong bm.bmBits %p != %p\n", bm.bmBits, bits);
+
+    buf = HeapAlloc(GetProcessHeap(), 0, bm.bmWidthBytes * bm.bmHeight + 4096);
+
+    width_bytes = BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel);
+
+    /* GetBitmapBits returns not 32-bit aligned data */
+    ret = GetBitmapBits(hbm, 0, NULL);
+    ok(ret == width_bytes * bm.bmHeight, "%d != %d\n", ret, width_bytes * bm.bmHeight);
+
+    memset(buf, 0xAA, bm.bmWidthBytes * bm.bmHeight + 4096);
+    ret = GetBitmapBits(hbm, bm.bmWidthBytes * bm.bmHeight + 4096, buf);
+    ok(ret == width_bytes * bm.bmHeight, "%d != %d\n", ret, width_bytes * bm.bmHeight);
+
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    /* test various buffer sizes for GetObject */
+    memset(&ds, 0xAA, sizeof(ds));
+    ret = GetObject(hbm, sizeof(bm) * 2, &bm);
+    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+    ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
+    ok(bm.bmHeight == bmih->biHeight, "wrong bm.bmHeight %d\n", bm.bmHeight);
+    ok(bm.bmBits == bits, "wrong bm.bmBits %p != %p\n", bm.bmBits, bits);
+
+    ret = GetObject(hbm, sizeof(bm) / 2, &bm);
+    ok(ret == 0, "%d != 0\n", ret);
+
+    ret = GetObject(hbm, 0, &bm);
+    ok(ret == 0, "%d != 0\n", ret);
+
+    ret = GetObject(hbm, 1, &bm);
+    ok(ret == 0, "%d != 0\n", ret);
+
+    /* test various buffer sizes for GetObject */
+    ret = GetObject(hbm, 0, NULL);
+    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+
+    memset(&ds, 0xAA, sizeof(ds));
+    ret = GetObject(hbm, sizeof(ds) * 2, &ds);
+    ok(ret == sizeof(ds), "%d != %d\n", ret, sizeof(ds));
+
+    ok(ds.dsBm.bmBits == bits, "wrong bm.bmBits %p != %p\n", ds.dsBm.bmBits, bits);
+    ok(ds.dsBmih.biSizeImage == ds.dsBm.bmWidthBytes * ds.dsBm.bmHeight, "%lu != %u",
+       ds.dsBmih.biSizeImage, ds.dsBm.bmWidthBytes * ds.dsBm.bmHeight);
+    ok(bmih->biSizeImage == 0, "%lu != 0\n", bmih->biSizeImage);
+    ds.dsBmih.biSizeImage = 0;
+
+    ok(ds.dsBmih.biSize == bmih->biSize, "%lu != %lu\n", ds.dsBmih.biSize, bmih->biSize);
+    ok(ds.dsBmih.biWidth == bmih->biWidth, "%lu != %lu\n", ds.dsBmih.biWidth, bmih->biWidth);
+    ok(ds.dsBmih.biHeight == bmih->biHeight, "%lu != %lu\n", ds.dsBmih.biHeight, bmih->biHeight);
+    ok(ds.dsBmih.biPlanes == bmih->biPlanes, "%u != %u\n", ds.dsBmih.biPlanes, bmih->biPlanes);
+    ok(ds.dsBmih.biBitCount == bmih->biBitCount, "%u != %u\n", ds.dsBmih.biBitCount, bmih->biBitCount);
+    ok(ds.dsBmih.biCompression == bmih->biCompression, "%lu != %lu\n", ds.dsBmih.biCompression, bmih->biCompression);
+    ok(ds.dsBmih.biSizeImage == bmih->biSizeImage, "%lu != %lu\n", ds.dsBmih.biSizeImage, bmih->biSizeImage);
+    ok(ds.dsBmih.biXPelsPerMeter == bmih->biXPelsPerMeter, "%lu != %lu\n", ds.dsBmih.biXPelsPerMeter, bmih->biXPelsPerMeter);
+    ok(ds.dsBmih.biYPelsPerMeter == bmih->biYPelsPerMeter, "%lu != %lu\n", ds.dsBmih.biYPelsPerMeter, bmih->biYPelsPerMeter);
+
+    memset(&ds, 0xAA, sizeof(ds));
+    ret = GetObject(hbm, sizeof(ds) - 4, &ds);
+    ok(ret == sizeof(ds.dsBm), "%d != %d\n", ret, sizeof(ds.dsBm));
+    ok(ds.dsBm.bmWidth == bmih->biWidth, "%lu != %lu\n", ds.dsBmih.biWidth, bmih->biWidth);
+    ok(ds.dsBm.bmHeight == bmih->biHeight, "%lu != %lu\n", ds.dsBmih.biHeight, bmih->biHeight);
+    ok(ds.dsBm.bmBits == bits, "%p != %p\n", ds.dsBm.bmBits, bits);
+
+    ret = GetObject(hbm, 0, &ds);
+    ok(ret == 0, "%d != 0\n", ret);
+
+    ret = GetObject(hbm, 1, &ds);
+    ok(ret == 0, "%d != 0\n", ret);
 }
 
 #define test_color_todo(got, exp, txt, todo) \
@@ -229,6 +396,7 @@ static void test_dibsections(void)
     ok(info.Protect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.Protect);
     ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
 
+    test_dib_info(hdib, bits, &pbmi->bmiHeader);
     DeleteObject(hdib);
 
     pbmi->bmiHeader.biBitCount = 8;
@@ -258,6 +426,7 @@ static void test_dibsections(void)
     ok(info.Protect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.Protect);
     ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
 
+    test_dib_info(hdib, bits, &pbmi->bmiHeader);
     DeleteObject(hdib);
 
     memset(pbmi, 0, sizeof(bmibuf));
@@ -352,6 +521,9 @@ static void test_dibsections(void)
 
     hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection failed\n");
+
+    test_dib_info(hdib, bits, &pbmi->bmiHeader);
+
     oldbm = SelectObject(hdcmem, hdib);
 
     ret = GetDIBColorTable(hdcmem, 0, 2, rgb);
@@ -362,6 +534,7 @@ static void test_dibsections(void)
        rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue, rgb[1].rgbReserved);
 
     SelectObject(hdcmem, oldbm);
+    test_dib_info(hdib, bits, &pbmi->bmiHeader);
     DeleteObject(hdib);
 
     pbmi->bmiHeader.biBitCount = 4;
@@ -375,6 +548,7 @@ static void test_dibsections(void)
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 16,
        "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 16);
+    test_dib_info(hdib, bits, &pbmi->bmiHeader);
     DeleteObject(hdib);
 
     pbmi->bmiHeader.biBitCount = 8;
@@ -403,6 +577,7 @@ static void test_dibsections(void)
     }
 
     SelectObject(hdcmem, oldbm);
+    test_dib_info(hdib, bits, &pbmi->bmiHeader);
     DeleteObject(hdib);
 
     pbmi->bmiHeader.biBitCount = 1;
@@ -466,6 +641,7 @@ static void test_dibsections(void)
     bits[0] = bits[1] = 0xff;
     bits[13 * 4] = bits[13*4 + 1] = 0xff;
 
+    test_dib_info(hdib, bits, &pbmi->bmiHeader);
 
     pbmi->bmiHeader.biBitCount = 32;
 
@@ -480,6 +656,7 @@ static void test_dibsections(void)
     ok(bits32[17] == 0xff00ff, "bottom but one, left pixel is %08lx\n", bits32[17]);
 
     SelectObject(hdcmem2, oldbm2);
+    test_dib_info(hdib2, bits32, &pbmi->bmiHeader);
     DeleteObject(hdib2);
 
     SelectObject(hdcmem, oldbm);
@@ -516,6 +693,8 @@ static void test_dibsections(void)
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
     ok(dibsec.dsBmih.biClrUsed == 256,
         "created DIBSection: wrong biClrUsed field: %lu, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
+
+    test_dib_info(hdib, bits, &pbmi->bmiHeader);
 
     SelectPalette(hdc, oldpal, TRUE);
     oldbm = SelectObject(hdcmem, hdib);
@@ -771,6 +950,9 @@ static void test_bitmap(void)
 
     assert(sizeof(buf) >= bm.bmWidthBytes * bm.bmHeight);
     assert(sizeof(buf) == sizeof(buf_cmp));
+
+    ret = GetBitmapBits(hbmp, 0, NULL);
+    ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
 
     memset(buf_cmp, 0xAA, sizeof(buf_cmp));
     memset(buf_cmp, 0, bm.bmWidthBytes * bm.bmHeight);
