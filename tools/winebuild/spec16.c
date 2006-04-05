@@ -375,7 +375,6 @@ static void output_call16_function( FILE *outfile, ORDDEF *odp )
     fprintf( outfile, "\tcall *8(%%ebp)\n" );
 
     if (needs_ldt) fprintf( outfile, "\tmovl -4(%%ebp),%%esi\n" );
-    if (odp->flags & FLAG_RET16) fprintf( outfile, "\tmovzwl %%ax,%%eax\n" );
 
     fprintf( outfile, "\tleave\n" );
     fprintf( outfile, "\tret\n" );
@@ -726,17 +725,17 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
         }
         else
         {
-            fprintf( outfile, "shld $16,%%eax,%%edx\n" );
-            fprintf( outfile, "orl %%eax,%%eax\n" );
+            fprintf( outfile, "\tshld $16,%%eax,%%edx\n" );
+            fprintf( outfile, "\torl %%eax,%%eax\n" );
             nop_words = 1;
         }
 
         if (argsize)
         {
-            fprintf( outfile, "lretw $%u\n", argsize );
+            fprintf( outfile, "\tlretw $%u\n", argsize );
             nop_words--;
         }
-        else fprintf( outfile, "lretw\n" );
+        else fprintf( outfile, "\tlretw\n" );
 
         if (nop_words) fprintf( outfile, "\t%s\n", nop_sequence[nop_words-1] );
 
