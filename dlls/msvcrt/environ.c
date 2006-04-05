@@ -77,7 +77,7 @@ int _putenv(const char *str)
  char *dst;
  int ret;
 
- TRACE("%s\n", str);
+ TRACE("%s\n", debugstr_a(str));
 
  if (!str)
    return -1;
