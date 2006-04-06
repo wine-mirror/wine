@@ -1833,6 +1833,7 @@ static HBITMAP _read_bitmap(LPSTREAM pstm,int ilcFlag,int cx,int cy) {
     width = bmih.biWidth;
     height = bmih.biHeight;
     bmihc = (LPBITMAPINFOHEADER)LocalAlloc(LMEM_ZEROINIT,sizeof(bmih)+palspace);
+    if (!bmihc) goto ret1;
     memcpy(bmihc,&bmih,sizeof(bmih));
     longsperline	= ((width*bitsperpixel+31)&~0x1f)>>5;
     bmihc->biSizeImage	= (longsperline*height)<<2;
@@ -1962,8 +1963,10 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 #endif
 
     hbmColor = _read_bitmap(pstm,ilHead.flags & ~ILC_MASK,ilHead.cx,ilHead.cy);
-    if (!hbmColor)
+    if (!hbmColor) {
+	WARN("failed to read bitmap from stream\n");
 	return NULL;
+    }
     if (ilHead.flags & ILC_MASK) {
 	hbmMask = _read_bitmap(pstm,0,ilHead.cx,ilHead.cy);
 	if (!hbmMask) {
