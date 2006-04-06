@@ -250,6 +250,7 @@ AC_CHECK_HEADERS(\
 	sys/mtio.h \
 	sys/param.h \
 	sys/poll.h \
+	sys/prctl.h \
 	sys/ptrace.h \
 	sys/reg.h \
 	sys/resource.h \
@@ -1188,6 +1189,7 @@ AC_CHECK_FUNCS(\
 	mmap \
 	pclose \
 	popen \
+	prctl \
 	pread \
 	pwrite \
 	readlink \

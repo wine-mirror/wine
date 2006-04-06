@@ -7039,6 +7039,7 @@ done
 
 
 
+
 for ac_header in \
 	IOKit/IOKitLib.h \
 	alsa/asoundlib.h \
@@ -7118,6 +7119,7 @@ for ac_header in \
 	sys/mtio.h \
 	sys/param.h \
 	sys/poll.h \
+	sys/prctl.h \
 	sys/ptrace.h \
 	sys/reg.h \
 	sys/resource.h \
@@ -14872,6 +14874,7 @@ fi
 
 
 
+
 for ac_func in \
 	_lwp_create \
 	_lwp_self \
@@ -14913,6 +14916,7 @@ for ac_func in \
 	mmap \
 	pclose \
 	popen \
+	prctl \
 	pread \
 	pwrite \
 	readlink \

@@ -31,6 +31,9 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
+#ifdef HAVE_SYS_PRCTL_H
+# include <sys/prctl.h>
+#endif
 #include <sys/types.h>
 
 #include "ntstatus.h"
@@ -837,6 +840,64 @@ static void start_process( void *arg )
 
 
 /***********************************************************************
+ *           set_process_name
+ *
+ * Change the process name in the ps output.
+ */
+static void set_process_name( int *argc, char *argv[], char *name )
+{
+#ifdef HAVE_PRCTL
+    int i, offset;
+    char *prctl_name = NULL;
+    char *end = argv[*argc-1] + strlen(argv[*argc-1]) + 1;
+
+#ifndef PR_SET_NAME
+# define PR_SET_NAME 15
+#endif
+
+    if (!name)
+    {
+        char *p;
+        prctl_name = argv[1];
+        if ((p = strrchr( prctl_name, '\\' ))) prctl_name = p + 1;
+        if ((p = strrchr( prctl_name, '/' ))) prctl_name = p + 1;
+    }
+    else
+    {
+        if (strlen(name) <= strlen(argv[0])) prctl_name = name;
+    }
+
+    if (prctl_name && prctl( PR_SET_NAME, prctl_name ) != -1)
+    {
+        if (name)
+        {
+            strcpy( argv[0], name );
+            offset = argv[1] - (argv[0] + strlen(name) + 1);
+        }
+        else
+        {
+            offset = argv[1] - argv[0];
+        }
+        memmove( argv[1] - offset, argv[1], end - argv[1] );
+        memset( end - offset, 0, offset );
+        for (i = 1; i < *argc; i++) argv[i-1] = argv[i] - offset;
+        argv[i-1] = NULL;
+        (*argc)--;
+        return;
+    }
+#endif  /* HAVE_PRCTL */
+
+    if (name) argv[0] = name;
+    else
+    {
+        /* remove argv[0] */
+        memmove( argv, argv + 1, *argc * sizeof(argv[0]) );
+        (*argc)--;
+    }
+}
+
+
+/***********************************************************************
  *           __wine_kernel_init
  *
  * Wine initialisation: load and start the main exe file.
@@ -845,17 +906,16 @@ void __wine_kernel_init(void)
 {
     static const WCHAR dotW[] = {'.',0};
     static const WCHAR exeW[] = {'.','e','x','e',0};
+    static char winevdm[] = "winevdm.exe";
 
     WCHAR *p, main_exe_name[MAX_PATH];
     HMODULE module;
     DWORD type, error = 0;
     PEB *peb = NtCurrentTeb()->Peb;
+    char *new_argv0 = NULL;
 
     /* Initialize everything */
     if (!process_init()) exit(1);
-
-    __wine_main_argv++;  /* remove argv[0] (wine itself) */
-    __wine_main_argc--;
 
     if (peb->ProcessParameters->ImagePathName.Buffer)
     {
@@ -865,11 +925,11 @@ void __wine_kernel_init(void)
     {
         WCHAR exe_nameW[MAX_PATH];
 
-        MultiByteToWideChar( CP_UNIXCP, 0, __wine_main_argv[0], -1, exe_nameW, MAX_PATH );
+        MultiByteToWideChar( CP_UNIXCP, 0, __wine_main_argv[1], -1, exe_nameW, MAX_PATH );
         if (!SearchPathW( NULL, exe_nameW, exeW, MAX_PATH, main_exe_name, NULL ) &&
             !get_builtin_path( exe_nameW, exeW, main_exe_name, MAX_PATH ))
         {
-            MESSAGE( "wine: cannot find '%s'\n", __wine_main_argv[0] );
+            MESSAGE( "wine: cannot find '%s'\n", __wine_main_argv[1] );
             ExitProcess( GetLastError() );
         }
     }
@@ -879,7 +939,7 @@ void __wine_kernel_init(void)
     if (!p || strchrW( p, '/' ) || strchrW( p, '\\' )) strcatW( main_exe_name, dotW );
 
     TRACE( "starting process name=%s argv[0]=%s\n",
-           debugstr_w(main_exe_name), debugstr_a(__wine_main_argv[0]) );
+           debugstr_w(main_exe_name), debugstr_a(__wine_main_argv[1]) );
 
     RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath,
                           MODULE_get_dll_load_path(main_exe_name) );
@@ -893,9 +953,7 @@ void __wine_kernel_init(void)
             if (type == SCS_WOW_BINARY || type == SCS_DOS_BINARY ||
                 type == SCS_OS216_BINARY || type == SCS_PIF_BINARY)
             {
-                __wine_main_argv--;
-                __wine_main_argc++;
-                __wine_main_argv[0] = "winevdm.exe";
+                new_argv0 = winevdm;
                 module = LoadLibraryExW( winevdmW, 0, DONT_RESOLVE_DLL_REFERENCES );
             }
         }
@@ -908,6 +966,8 @@ void __wine_kernel_init(void)
         MESSAGE( "wine: could not load %s: %s", debugstr_w(main_exe_name), msg );
         ExitProcess( error );
     }
+
+    set_process_name( &__wine_main_argc, __wine_main_argv, new_argv0 );
 
     peb->ImageBaseAddress = module;
 
