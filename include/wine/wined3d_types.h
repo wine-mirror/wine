@@ -695,6 +695,13 @@ typedef struct _WINED3DLOCKED_RECT {
     void*               pBits;
 } WINED3DLOCKED_RECT;
 
+typedef struct _WINED3DLOCKED_BOX {
+    INT                 RowPitch;
+    INT                 SlicePitch;
+    void*               pBits;
+} WINED3DLOCKED_BOX;
+
+
 /*Vertex cache optimization hints.*/
 typedef struct WINED3DDEVINFO_VCACHE {
     /*Must be a 4 char code FOURCC (e.g. CACH)*/
