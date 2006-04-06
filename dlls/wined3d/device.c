@@ -113,7 +113,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
 
 #define D3DINITIALIZEBASETEXTURE(_basetexture) { \
     _basetexture.levels     = Levels; \
-    _basetexture.filterType = (Usage & WINED3DUSAGE_AUTOGENMIPMAP) ? D3DTEXF_LINEAR : D3DTEXF_NONE; \
+    _basetexture.filterType = (Usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3DTEXF_LINEAR : WINED3DTEXF_NONE; \
     _basetexture.LOD        = 0; \
     _basetexture.dirty      = TRUE; \
 }
@@ -5269,7 +5269,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3D
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_StretchRect(IWineD3DDevice *iface, IWineD3DSurface *pSourceSurface,
                                                 CONST RECT* pSourceRect, IWineD3DSurface *pDestinationSurface,
-                                                CONST RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter) {
+                                                CONST RECT* pDestRect, WINED3DTEXTUREFILTERTYPE Filter) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("(%p) : stub\n", This);

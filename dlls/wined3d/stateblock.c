@@ -785,9 +785,9 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
         This->samplerState[i][WINED3DSAMP_ADDRESSV         ] = D3DTADDRESS_WRAP;
         This->samplerState[i][WINED3DSAMP_ADDRESSW         ] = D3DTADDRESS_WRAP;
         This->samplerState[i][WINED3DSAMP_BORDERCOLOR      ] = 0x00;
-        This->samplerState[i][WINED3DSAMP_MAGFILTER        ] = D3DTEXF_POINT;
-        This->samplerState[i][WINED3DSAMP_MINFILTER        ] = D3DTEXF_POINT;
-        This->samplerState[i][WINED3DSAMP_MIPFILTER        ] = D3DTEXF_NONE;
+        This->samplerState[i][WINED3DSAMP_MAGFILTER        ] = WINED3DTEXF_POINT;
+        This->samplerState[i][WINED3DSAMP_MINFILTER        ] = WINED3DTEXF_POINT;
+        This->samplerState[i][WINED3DSAMP_MIPFILTER        ] = WINED3DTEXF_NONE;
         This->samplerState[i][WINED3DSAMP_MIPMAPLODBIAS    ] = 0;
         This->samplerState[i][WINED3DSAMP_MAXMIPLEVEL      ] = 0;
         This->samplerState[i][WINED3DSAMP_MAXANISOTROPY    ] = 1;

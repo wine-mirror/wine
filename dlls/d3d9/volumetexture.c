@@ -134,13 +134,13 @@ DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLevelCount(LPDIRECT3DVOLUMETEXTURE9 
 HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetAutoGenFilterType(LPDIRECT3DVOLUMETEXTURE9 iface, D3DTEXTUREFILTERTYPE FilterType) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DVolumeTexture_SetAutoGenFilterType(This->wineD3DVolumeTexture, FilterType);
+    return IWineD3DVolumeTexture_SetAutoGenFilterType(This->wineD3DVolumeTexture, (WINED3DTEXTUREFILTERTYPE) FilterType);
 }
 
 D3DTEXTUREFILTERTYPE WINAPI IDirect3DVolumeTexture9Impl_GetAutoGenFilterType(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DVolumeTexture_GetAutoGenFilterType(This->wineD3DVolumeTexture);
+    return (D3DTEXTUREFILTERTYPE) IWineD3DVolumeTexture_GetAutoGenFilterType(This->wineD3DVolumeTexture);
 }
 
 void WINAPI IDirect3DVolumeTexture9Impl_GenerateMipSubLevels(LPDIRECT3DVOLUMETEXTURE9 iface) {

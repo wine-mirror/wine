@@ -434,7 +434,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(UpdateTexture)(THIS_ struct IWineD3DBaseTexture *pSourceTexture, struct IWineD3DBaseTexture *pDestinationTexture) PURE;
     STDMETHOD(UpdateSurface)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, struct IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPoint) PURE;
     STDMETHOD(CopyRects)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRectsArray, UINT cRects, struct IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPointsArray);
-    STDMETHOD(StretchRect)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, struct IWineD3DSurface* pDestinationSurface, CONST RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter) PURE;
+    STDMETHOD(StretchRect)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, struct IWineD3DSurface* pDestinationSurface, CONST RECT* pDestRect, WINED3DTEXTUREFILTERTYPE Filter) PURE;
     STDMETHOD(GetRenderTargetData)(THIS_ struct IWineD3DSurface* pRenderTarget, struct IWineD3DSurface* pSurface) PURE;
     STDMETHOD(GetFrontBufferData)(THIS_ UINT iSwapChain,struct IWineD3DSurface* pSurface) PURE;
     /*** Internal use IWineD3Device methods ***/
@@ -749,8 +749,8 @@ DECLARE_INTERFACE_(IWineD3DBaseTexture,IWineD3DResource)
     STDMETHOD_(DWORD, SetLOD)(THIS_ DWORD LODNew) PURE;
     STDMETHOD_(DWORD, GetLOD)(THIS) PURE;
     STDMETHOD_(DWORD, GetLevelCount)(THIS) PURE;
-    STDMETHOD(SetAutoGenFilterType)(THIS_ D3DTEXTUREFILTERTYPE FilterType) PURE;
-    STDMETHOD_(D3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE;
+    STDMETHOD(SetAutoGenFilterType)(THIS_ WINED3DTEXTUREFILTERTYPE FilterType) PURE;
+    STDMETHOD_(WINED3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE;
     STDMETHOD_(void, GenerateMipSubLevels)(THIS) PURE;
     STDMETHOD_(BOOL, SetDirty)(THIS_ BOOL) PURE;
     STDMETHOD_(BOOL, GetDirty)(THIS) PURE;
@@ -819,8 +819,8 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
     STDMETHOD_(DWORD, SetLOD)(THIS_ DWORD LODNew) PURE;
     STDMETHOD_(DWORD, GetLOD)(THIS) PURE;
     STDMETHOD_(DWORD, GetLevelCount)(THIS) PURE;
-    STDMETHOD(SetAutoGenFilterType)(THIS_ D3DTEXTUREFILTERTYPE FilterType) PURE;
-    STDMETHOD_(D3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE;
+    STDMETHOD(SetAutoGenFilterType)(THIS_ WINED3DTEXTUREFILTERTYPE FilterType) PURE;
+    STDMETHOD_(WINED3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE;
     STDMETHOD_(void, GenerateMipSubLevels)(THIS) PURE;
     STDMETHOD_(BOOL, SetDirty)(THIS_ BOOL) PURE;
     STDMETHOD_(BOOL, GetDirty)(THIS) PURE;
@@ -899,8 +899,8 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
     STDMETHOD_(DWORD, SetLOD)(THIS_ DWORD LODNew) PURE;
     STDMETHOD_(DWORD, GetLOD)(THIS) PURE;
     STDMETHOD_(DWORD, GetLevelCount)(THIS) PURE;
-    STDMETHOD(SetAutoGenFilterType)(THIS_ D3DTEXTUREFILTERTYPE FilterType) PURE;
-    STDMETHOD_(D3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE;
+    STDMETHOD(SetAutoGenFilterType)(THIS_ WINED3DTEXTUREFILTERTYPE FilterType) PURE;
+    STDMETHOD_(WINED3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE;
     STDMETHOD_(void, GenerateMipSubLevels)(THIS) PURE;
     STDMETHOD_(BOOL, SetDirty)(THIS_ BOOL) PURE;
     STDMETHOD_(BOOL, GetDirty)(THIS) PURE;
@@ -980,8 +980,8 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
     STDMETHOD_(DWORD, SetLOD)(THIS_ DWORD LODNew) PURE;
     STDMETHOD_(DWORD, GetLOD)(THIS) PURE;
     STDMETHOD_(DWORD, GetLevelCount)(THIS) PURE;
-    STDMETHOD(SetAutoGenFilterType)(THIS_ D3DTEXTUREFILTERTYPE FilterType) PURE;
-    STDMETHOD_(D3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE;
+    STDMETHOD(SetAutoGenFilterType)(THIS_ WINED3DTEXTUREFILTERTYPE FilterType) PURE;
+    STDMETHOD_(WINED3DTEXTUREFILTERTYPE, GetAutoGenFilterType)(THIS) PURE;
     STDMETHOD_(void, GenerateMipSubLevels)(THIS) PURE;
     STDMETHOD_(BOOL, SetDirty)(THIS_ BOOL) PURE;
     STDMETHOD_(BOOL, GetDirty)(THIS) PURE;

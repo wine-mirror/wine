@@ -135,13 +135,13 @@ DWORD WINAPI IDirect3DTexture9Impl_GetLevelCount(LPDIRECT3DTEXTURE9 iface) {
 HRESULT WINAPI IDirect3DTexture9Impl_SetAutoGenFilterType(LPDIRECT3DTEXTURE9 iface, D3DTEXTUREFILTERTYPE FilterType) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DTexture_SetAutoGenFilterType(This->wineD3DTexture, FilterType);
+    return IWineD3DTexture_SetAutoGenFilterType(This->wineD3DTexture, (WINED3DTEXTUREFILTERTYPE) FilterType);
 }
 
 D3DTEXTUREFILTERTYPE WINAPI IDirect3DTexture9Impl_GetAutoGenFilterType(LPDIRECT3DTEXTURE9 iface) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DTexture_GetAutoGenFilterType(This->wineD3DTexture);
+    return (D3DTEXTUREFILTERTYPE) IWineD3DTexture_GetAutoGenFilterType(This->wineD3DTexture);
 }
 
 void WINAPI IDirect3DTexture9Impl_GenerateMipSubLevels(LPDIRECT3DTEXTURE9 iface) {

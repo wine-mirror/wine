@@ -344,7 +344,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetFrontBufferData(LPDIRECT3DDEVICE9 iface
 HRESULT  WINAPI  IDirect3DDevice9Impl_StretchRect(LPDIRECT3DDEVICE9 iface, IDirect3DSurface9* pSourceSurface, CONST RECT* pSourceRect, IDirect3DSurface9* pDestSurface, CONST RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;    
     TRACE("(%p) Relay\n" , This);
-    return IWineD3DDevice_StretchRect(This->WineD3DDevice, ((IDirect3DSurface9Impl *)pSourceSurface)->wineD3DSurface, pSourceRect, ((IDirect3DSurface9Impl *)pDestSurface)->wineD3DSurface, pDestRect, Filter);            
+    return IWineD3DDevice_StretchRect(This->WineD3DDevice, ((IDirect3DSurface9Impl *)pSourceSurface)->wineD3DSurface, pSourceRect, ((IDirect3DSurface9Impl *)pDestSurface)->wineD3DSurface, pDestRect, (WINED3DTEXTUREFILTERTYPE) Filter);            
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9 iface, IDirect3DSurface9* pSurface, CONST RECT* pRect, D3DCOLOR color) {
