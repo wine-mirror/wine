@@ -30,6 +30,7 @@
 #include "wineconsole_De.rc"
 #include "wineconsole_Es.rc"
 #include "wineconsole_Hu.rc"
+#include "wineconsole_It.rc"
 #include "wineconsole_Ko.rc"
 #include "wineconsole_Nl.rc"
 #include "wineconsole_No.rc"
