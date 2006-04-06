@@ -40,6 +40,8 @@ extern int ds_snd_queue_min;
 extern int ds_hw_accel;
 extern int ds_default_playback;
 extern int ds_default_capture;
+extern int ds_default_sample_rate;
+extern int ds_default_bits_per_sample;
 
 /*****************************************************************************
  * Predeclare the interface implementation structures

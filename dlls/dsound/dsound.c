@@ -1141,8 +1141,8 @@ HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
      * WAVE_DIRECTSOUND flag.
      */
     device->pwfx->wFormatTag = WAVE_FORMAT_PCM;
-    device->pwfx->nSamplesPerSec = 22050;
-    device->pwfx->wBitsPerSample = 8;
+    device->pwfx->nSamplesPerSec = ds_default_sample_rate;
+    device->pwfx->wBitsPerSample = ds_default_bits_per_sample;
     device->pwfx->nChannels = 2;
     device->pwfx->nBlockAlign = device->pwfx->wBitsPerSample * device->pwfx->nChannels / 8;
     device->pwfx->nAvgBytesPerSec = device->pwfx->nSamplesPerSec * device->pwfx->nBlockAlign;
