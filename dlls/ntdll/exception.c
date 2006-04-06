@@ -130,10 +130,7 @@ static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_R
     newframe.frame.Handler = nested_handler;
     newframe.prevFrame     = frame;
     __wine_push_frame( &newframe.frame );
-    TRACE( "calling handler at %p code=%lx flags=%lx\n",
-           handler, record->ExceptionCode, record->ExceptionFlags );
     ret = handler( record, frame, context, dispatcher );
-    TRACE( "handler returned %lx\n", ret );
     __wine_pop_frame( &newframe.frame );
     return ret;
 }
@@ -266,7 +263,11 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
         }
 
         /* Call handler */
+        TRACE( "calling handler at %p code=%lx flags=%lx\n",
+               frame->Handler, rec->ExceptionCode, rec->ExceptionFlags );
         res = EXC_CallHandler( rec, frame, context, &dispatch, frame->Handler, EXC_RaiseHandler );
+        TRACE( "handler at %p returned %lx\n", frame->Handler, res );
+
         if (frame == nested_frame)
         {
             /* no longer nested */
@@ -413,6 +414,7 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID un
 {
     EXCEPTION_RECORD record, newrec;
     EXCEPTION_REGISTRATION_RECORD *frame, *dispatch;
+    DWORD res;
 
 #ifdef __i386__
     context->Eax = (DWORD)returnEax;
@@ -458,8 +460,12 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID un
         }
 
         /* Call handler */
-        switch(EXC_CallHandler( pRecord, frame, context, &dispatch,
-                                frame->Handler, EXC_UnwindHandler ))
+        TRACE( "calling handler at %p code=%lx flags=%lx\n",
+               frame->Handler, pRecord->ExceptionCode, pRecord->ExceptionFlags );
+        res = EXC_CallHandler( pRecord, frame, context, &dispatch, frame->Handler, EXC_UnwindHandler );
+        TRACE( "handler at %p returned %lx\n", frame->Handler, res );
+
+        switch(res)
         {
         case ExceptionContinueSearch:
             break;
