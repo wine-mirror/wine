@@ -3427,21 +3427,6 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
       }
 
-      if (psInfo->useCallback)
-             (*(psInfo->ppshheader.pfnCallback))(hwnd,
-					      PSCB_INITIALIZED, (LPARAM)0);
-
-      idx = psInfo->active_page;
-      ppshpage = (LPCPROPSHEETPAGEW)psInfo->proppage[idx].hpage;
-      psInfo->active_page = -1;
-
-      PROPSHEET_SetCurSel(hwnd, idx, 1, psInfo->proppage[idx].hpage);
-
-      /* doing TCM_SETCURSEL seems to be needed even in case of PSH_WIZARD,
-       * as some programs call TCM_GETCURSEL to get the current selection
-       * from which to switch to the next page */
-      SendMessageW(hwndTabCtrl, TCM_SETCURSEL, psInfo->active_page, 0);
-
       if (!HIWORD(psInfo->ppshheader.pszCaption) &&
               psInfo->ppshheader.hInstance)
       {
@@ -3456,6 +3441,22 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
          PROPSHEET_SetTitleW(hwnd, psInfo->ppshheader.dwFlags,
                          psInfo->ppshheader.pszCaption);
       }
+
+
+      if (psInfo->useCallback)
+             (*(psInfo->ppshheader.pfnCallback))(hwnd,
+					      PSCB_INITIALIZED, (LPARAM)0);
+
+      idx = psInfo->active_page;
+      ppshpage = (LPCPROPSHEETPAGEW)psInfo->proppage[idx].hpage;
+      psInfo->active_page = -1;
+
+      PROPSHEET_SetCurSel(hwnd, idx, 1, psInfo->proppage[idx].hpage);
+
+      /* doing TCM_SETCURSEL seems to be needed even in case of PSH_WIZARD,
+       * as some programs call TCM_GETCURSEL to get the current selection
+       * from which to switch to the next page */
+      SendMessageW(hwndTabCtrl, TCM_SETCURSEL, psInfo->active_page, 0);
 
       return TRUE;
     }

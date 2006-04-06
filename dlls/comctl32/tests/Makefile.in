@@ -13,12 +13,15 @@ CTESTS = \
 	monthcal.c \
 	mru.c \
 	progress.c \
+	propsheet.c \
 	subclass.c \
 	tab.c \
 	toolbar.c \
 	tooltips.c \
 	treeview.c \
 	updown.c
+
+RC_SRCS = propsheet.rc
 
 @MAKE_TEST_RULES@
 
