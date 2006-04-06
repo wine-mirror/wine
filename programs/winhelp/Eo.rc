@@ -25,29 +25,29 @@
 
 MAIN_MENU MENU LANGUAGE LANG_ESPERANTO, SUBLANG_DEFAULT
 {
- POPUP "Dosiero" {
-  MENUITEM "Malfermu", MNID_FILE_OPEN
+ POPUP "&Dosiero" {
+  MENUITEM "&Malfermu", MNID_FILE_OPEN
   MENUITEM SEPARATOR
   MENUITEM "&Presu", MNID_FILE_PRINT
-  MENUITEM "Impozu Printilon...", MNID_FILE_SETUP
+  MENUITEM "&Impozu Printilon...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "Finu", MNID_FILE_EXIT
+  MENUITEM "&Finu", MNID_FILE_EXIT
  }
- POPUP "Redakto" {
-   MENUITEM "Kopiu...", MNID_EDIT_COPYDLG
+ POPUP "&Redakto" {
+   MENUITEM "&Kopiu...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
-   MENUITEM "Notu...", MNID_EDIT_ANNOTATE
+   MENUITEM "&Notu...", MNID_EDIT_ANNOTATE
  }
- POPUP "Legosigno" {
+ POPUP "&Legosigno" {
    MENUITEM "&Difinu...", MNID_BKMK_DEFINE
  }
  POPUP "&Helpo" {
-   MENUITEM "Helpu pri helpo", MNID_HELP_HELPON
-   MENUITEM "Æiam supre", MNID_HELP_HELPTOP
+   MENUITEM "&Helpu pri helpo", MNID_HELP_HELPON
+   MENUITEM "Æiam &supre", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "Pri...", MNID_HELP_ABOUT
+   MENUITEM "&Pri...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "Pri WINE", MNID_HELP_WINE
+   MENUITEM "&Pri WINE", MNID_HELP_WINE
 #endif
  }
 }
@@ -61,10 +61,10 @@ STID_WARNING,  	"ATENTU"
 STID_INFO,  		"Informo pri"
 STID_NOT_IMPLEMENTED, 	"Ne-implementata"
 STID_HLPFILE_ERROR_s, 	"Eraro dum la legado de helpdosiero `%s'"
-STID_CONTENTS, 	"Enhavo"
+STID_CONTENTS, 	"&Enhavo"
 STID_SEARCH, 		"&Seræu"
-STID_BACK, 		"Antaýa"
-STID_HISTORY, 		"&Historio"
+STID_BACK, 		"&Retro"
+STID_HISTORY, 		"Krono&logio"
 STID_TOPICS,		"&Temoj"
 STID_ALL_FILES, 	"Tutaj dosieroj (*.*)"
 STID_HELP_FILES_HLP, 	"Helpaj dosieroj (*.hlp)"
