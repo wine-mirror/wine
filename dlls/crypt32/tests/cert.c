@@ -85,7 +85,8 @@ static void testCryptHashCert(void)
     ok(!memcmp(hash, knownHash, sizeof(knownHash)), "Unexpected hash\n");
 }
 
-static const char cspName[] = "WineCryptTemp";
+static const WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e',
+ 'm','p',0 };
 
 static void verifySig(HCRYPTPROV csp, const BYTE *toSign, size_t toSignLen,
  const BYTE *sig, size_t sigLen)
@@ -284,9 +285,9 @@ static void testCertSigs(void)
     DWORD sigSize = sizeof(sig);
 
     /* Just in case a previous run failed, delete this thing */
-    CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+    CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
-    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
     ok(ret, "CryptAcquireContext failed: %08lx\n", GetLastError());
 
@@ -295,7 +296,91 @@ static void testCertSigs(void)
 
     CryptDestroyKey(key);
     CryptReleaseContext(csp, 0);
-    ret = CryptAcquireContextA(&csp, cspName, MS_DEF_PROV, PROV_RSA_FULL,
+    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+}
+
+static const BYTE subjectName[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
+ 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61,
+ 0x6e, 0x67, 0x00 };
+
+static void testCreateSelfSignCert(void)
+{
+    PCCERT_CONTEXT context;
+    CERT_NAME_BLOB name = { sizeof(subjectName), (LPBYTE)subjectName };
+    HCRYPTPROV csp;
+    BOOL ret;
+    HCRYPTKEY key;
+
+    /* This crashes:
+    context = CertCreateSelfSignCertificate(0, NULL, 0, NULL, NULL, NULL, NULL,
+     NULL);
+     * Calling this with no first parameter creates a new key container, which
+     * lasts beyond the test, so I don't test that.  Nb: the generated key
+     * name is a GUID.
+    context = CertCreateSelfSignCertificate(0, &name, 0, NULL, NULL, NULL, NULL,
+     NULL);
+     */
+
+    /* Acquire a CSP */
+    CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+     CRYPT_DELETEKEYSET);
+    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+     CRYPT_NEWKEYSET);
+    ok(ret, "CryptAcquireContext failed: %08lx\n", GetLastError());
+
+    context = CertCreateSelfSignCertificate(csp, &name, 0, NULL, NULL, NULL,
+     NULL, NULL);
+    ok(!context && GetLastError() == NTE_NO_KEY,
+     "Expected NTE_NO_KEY, got %08lx\n", GetLastError());
+    ret = CryptGenKey(csp, AT_SIGNATURE, 0, &key);
+    ok(ret, "CryptGenKey failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        context = CertCreateSelfSignCertificate(csp, &name, 0, NULL, NULL, NULL,
+         NULL, NULL);
+        ok(context != NULL, "CertCreateSelfSignCertificate failed: %08lx\n",
+         GetLastError());
+        if (context)
+        {
+            DWORD size = 0;
+            PCRYPT_KEY_PROV_INFO info;
+
+            /* The context must have a key provider info property */
+            ret = CertGetCertificateContextProperty(context,
+             CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
+            ok(ret && size, "Expected non-zero key provider info\n");
+            if (size)
+            {
+                info = HeapAlloc(GetProcessHeap(), 0, size);
+                if (info)
+                {
+                    ret = CertGetCertificateContextProperty(context,
+                     CERT_KEY_PROV_INFO_PROP_ID, info, &size);
+                    ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
+                     GetLastError());
+                    if (ret)
+                    {
+                        /* Sanity-check the key provider */
+                        ok(!lstrcmpW(info->pwszContainerName, cspNameW),
+                         "Unexpected key container\n");
+                        ok(!lstrcmpW(info->pwszProvName, MS_DEF_PROV_W),
+                         "Unexpected provider\n");
+                        ok(info->dwKeySpec == AT_SIGNATURE,
+                         "Expected AT_SIGNATURE, got %ld\n", info->dwKeySpec);
+                    }
+                    HeapFree(GetProcessHeap(), 0, info);
+                }
+            }
+
+            CertFreeCertificateContext(context);
+        }
+
+        CryptDestroyKey(key);
+    }
+
+    CryptReleaseContext(csp, 0);
+    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 }
 
@@ -609,5 +694,6 @@ START_TEST(cert)
     init_function_pointers();
     testCryptHashCert();
     testCertSigs();
+    testCreateSelfSignCert();
     testKeyUsage();
 }

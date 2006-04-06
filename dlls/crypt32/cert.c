@@ -22,6 +22,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
+#include "winnls.h"
+#include "rpc.h"
 #include "wine/debug.h"
 #include "crypt32_private.h"
 
@@ -712,4 +714,313 @@ BOOL WINAPI CertGetValidUsages(DWORD cCerts, PCCERT_CONTEXT *rghCerts,
     }
     CryptMemFree(validUsages.rgpszUsageIdentifier);
     return ret;
+}
+
+/* Sets the CERT_KEY_PROV_INFO_PROP_ID property of context from pInfo, or, if
+ * pInfo is NULL, from the attributes of hProv.
+ */
+static void CertContext_SetKeyProvInfo(PCCERT_CONTEXT context,
+ PCRYPT_KEY_PROV_INFO pInfo, HCRYPTPROV hProv)
+{
+    CRYPT_KEY_PROV_INFO info = { 0 };
+    BOOL ret;
+
+    if (!pInfo)
+    {
+        DWORD size;
+        int len;
+
+        ret = CryptGetProvParam(hProv, PP_CONTAINER, NULL, &size, 0);
+        if (ret)
+        {
+            LPSTR szContainer = CryptMemAlloc(size);
+
+            if (szContainer)
+            {
+                ret = CryptGetProvParam(hProv, PP_CONTAINER, (BYTE *)szContainer,
+                                        &size, 0);
+                if (ret)
+                {
+                    len = MultiByteToWideChar(CP_ACP, 0, szContainer, -1,
+                     NULL, 0);
+                    if (len)
+                    {
+                        info.pwszContainerName = CryptMemAlloc(len *
+                         sizeof(WCHAR));
+                        len = MultiByteToWideChar(CP_ACP, 0, szContainer, -1,
+                         info.pwszContainerName, len);
+                    }
+                }
+                CryptMemFree(szContainer);
+            }
+        }
+        ret = CryptGetProvParam(hProv, PP_NAME, NULL, &size, 0);
+        if (ret)
+        {
+            LPSTR szProvider = CryptMemAlloc(size);
+
+            if (szProvider)
+            {
+                ret = CryptGetProvParam(hProv, PP_NAME, (BYTE *)szProvider, &size, 0);
+                if (ret)
+                {
+                    len = MultiByteToWideChar(CP_ACP, 0, szProvider, -1,
+                     NULL, 0);
+                    if (len)
+                    {
+                        info.pwszProvName = CryptMemAlloc(len *
+                         sizeof(WCHAR));
+                        len = MultiByteToWideChar(CP_ACP, 0, szProvider, -1,
+                         info.pwszProvName, len);
+                    }
+                }
+                CryptMemFree(szProvider);
+            }
+        }
+        size = sizeof(info.dwKeySpec);
+        ret = CryptGetProvParam(hProv, PP_KEYSPEC, (LPBYTE)&info.dwKeySpec,
+         &size, 0);
+        if (!ret)
+            info.dwKeySpec = AT_SIGNATURE;
+        size = sizeof(info.dwProvType);
+        ret = CryptGetProvParam(hProv, PP_PROVTYPE, (LPBYTE)&info.dwProvType,
+         &size, 0);
+        if (!ret)
+            info.dwProvType = PROV_RSA_FULL;
+        pInfo = &info;
+    }
+
+    ret = CertSetCertificateContextProperty(context, CERT_KEY_PROV_INFO_PROP_ID,
+     0, pInfo);
+
+    if (pInfo == &info)
+    {
+        CryptMemFree(info.pwszContainerName);
+        CryptMemFree(info.pwszProvName);
+    }
+}
+
+/* Creates a signed certificate context from the unsigned, encoded certificate
+ * in blob, using the crypto provider hProv and the signature algorithm sigAlgo.
+ */
+static PCCERT_CONTEXT CRYPT_CreateSignedCert(PCRYPT_DER_BLOB blob,
+ HCRYPTPROV hProv, PCRYPT_ALGORITHM_IDENTIFIER sigAlgo)
+{
+    PCCERT_CONTEXT context = NULL;
+    BOOL ret;
+    DWORD sigSize = 0;
+
+    ret = CryptSignCertificate(hProv, AT_SIGNATURE, X509_ASN_ENCODING,
+     blob->pbData, blob->cbData, sigAlgo, NULL, NULL, &sigSize);
+    if (ret)
+    {
+        LPBYTE sig = CryptMemAlloc(sigSize);
+
+        ret = CryptSignCertificate(hProv, AT_SIGNATURE, X509_ASN_ENCODING,
+         blob->pbData, blob->cbData, sigAlgo, NULL, sig, &sigSize);
+        if (ret)
+        {
+            CERT_SIGNED_CONTENT_INFO signedInfo;
+            BYTE *encodedSignedCert = NULL;
+            DWORD encodedSignedCertSize = 0;
+
+            signedInfo.ToBeSigned.cbData = blob->cbData;
+            signedInfo.ToBeSigned.pbData = blob->pbData;
+            memcpy(&signedInfo.SignatureAlgorithm, sigAlgo,
+             sizeof(signedInfo.SignatureAlgorithm));
+            signedInfo.Signature.cbData = sigSize;
+            signedInfo.Signature.pbData = sig;
+            signedInfo.Signature.cUnusedBits = 0;
+            ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_CERT,
+             &signedInfo, CRYPT_ENCODE_ALLOC_FLAG, NULL,
+             (BYTE *)&encodedSignedCert, &encodedSignedCertSize);
+            if (ret)
+            {
+                context = CertCreateCertificateContext(X509_ASN_ENCODING,
+                 encodedSignedCert, encodedSignedCertSize);
+                LocalFree(encodedSignedCert);
+            }
+        }
+        CryptMemFree(sig);
+    }
+    return context;
+}
+
+/* Copies data from the parameters into info, where:
+ * pSubjectIssuerBlob: Specifies both the subject and issuer for info.
+ *                     Must not be NULL
+ * pSignatureAlgorithm: Optional.
+ * pStartTime: The starting time of the certificate.  If NULL, the current
+ *             system time is used.
+ * pEndTime: The ending time of the certificate.  If NULL, one year past the
+ *           starting time is used.
+ * pubKey: The public key of the certificate.  Must not be NULL.
+ * pExtensions: Extensions to be included with the certificate.  Optional.
+ */
+static void CRYPT_MakeCertInfo(PCERT_INFO info,
+ PCERT_NAME_BLOB pSubjectIssuerBlob,
+ PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm, PSYSTEMTIME pStartTime,
+ PSYSTEMTIME pEndTime, PCERT_PUBLIC_KEY_INFO pubKey,
+ PCERT_EXTENSIONS pExtensions)
+{
+    /* FIXME: what serial number to use? */
+    static const BYTE serialNum[] = { 1 };
+
+    assert(info);
+    assert(pSubjectIssuerBlob);
+    assert(pubKey);
+
+    info->dwVersion = CERT_V3;
+    info->SerialNumber.cbData = sizeof(serialNum);
+    info->SerialNumber.pbData = (LPBYTE)serialNum;
+    if (pSignatureAlgorithm)
+        memcpy(&info->SignatureAlgorithm, pSignatureAlgorithm,
+         sizeof(info->SignatureAlgorithm));
+    else
+    {
+        info->SignatureAlgorithm.pszObjId = szOID_RSA_SHA1RSA;
+        info->SignatureAlgorithm.Parameters.cbData = 0;
+        info->SignatureAlgorithm.Parameters.pbData = NULL;
+    }
+    info->Issuer.cbData = pSubjectIssuerBlob->cbData;
+    info->Issuer.pbData = pSubjectIssuerBlob->pbData;
+    if (pStartTime)
+        SystemTimeToFileTime(pStartTime, &info->NotBefore);
+    else
+        GetSystemTimeAsFileTime(&info->NotBefore);
+    if (pEndTime)
+        SystemTimeToFileTime(pStartTime, &info->NotBefore);
+    else
+    {
+        SYSTEMTIME endTime;
+
+        if (FileTimeToSystemTime(&info->NotBefore, &endTime))
+        {
+            endTime.wYear++;
+            SystemTimeToFileTime(&endTime, &info->NotAfter);
+        }
+    }
+    info->Subject.cbData = pSubjectIssuerBlob->cbData;
+    info->Subject.pbData = pSubjectIssuerBlob->pbData;
+    memcpy(&info->SubjectPublicKeyInfo, pubKey,
+     sizeof(info->SubjectPublicKeyInfo));
+    if (pExtensions)
+    {
+        info->cExtension = pExtensions->cExtension;
+        info->rgExtension = pExtensions->rgExtension;
+    }
+    else
+    {
+        info->cExtension = 0;
+        info->rgExtension = NULL;
+    }
+}
+ 
+typedef RPC_STATUS (RPC_ENTRY *UuidCreateFunc)(UUID *);
+typedef RPC_STATUS (RPC_ENTRY *UuidToStringFunc)(UUID *, unsigned char **);
+typedef RPC_STATUS (RPC_ENTRY *RpcStringFreeFunc)(unsigned char **);
+
+static HCRYPTPROV CRYPT_CreateKeyProv(void)
+{
+    HCRYPTPROV hProv = 0;
+    HMODULE rpcrt = LoadLibraryA("rpcrt4");
+
+    if (rpcrt)
+    {
+        UuidCreateFunc uuidCreate = (UuidCreateFunc)GetProcAddress(rpcrt,
+         "UuidCreate");
+        UuidToStringFunc uuidToString = (UuidToStringFunc)GetProcAddress(rpcrt,
+         "UuidToString");
+        RpcStringFreeFunc rpcStringFree = (RpcStringFreeFunc)GetProcAddress(
+         rpcrt, "RpcStringFree");
+
+        if (uuidCreate && uuidToString && rpcStringFree)
+        {
+            UUID uuid;
+            RPC_STATUS status = uuidCreate(&uuid);
+
+            if (status == RPC_S_OK || status == RPC_S_UUID_LOCAL_ONLY)
+            {
+                unsigned char *uuidStr;
+
+                status = uuidToString(&uuid, &uuidStr);
+                if (status == RPC_S_OK)
+                {
+                    BOOL ret = CryptAcquireContextA(&hProv, (LPCSTR)uuidStr,
+                     MS_DEF_PROV_A, PROV_RSA_FULL, CRYPT_NEWKEYSET);
+
+                    if (ret)
+                    {
+                        HCRYPTKEY key;
+
+                        ret = CryptGenKey(hProv, AT_SIGNATURE, 0, &key);
+                        if (ret)
+                            CryptDestroyKey(key);
+                    }
+                    rpcStringFree(&uuidStr);
+                }
+            }
+        }
+        FreeLibrary(rpcrt);
+    }
+    return hProv;
+}
+
+PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV hProv,
+ PCERT_NAME_BLOB pSubjectIssuerBlob, DWORD dwFlags,
+ PCRYPT_KEY_PROV_INFO pKeyProvInfo,
+ PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm, PSYSTEMTIME pStartTime,
+ PSYSTEMTIME pEndTime, PCERT_EXTENSIONS pExtensions)
+{
+    PCCERT_CONTEXT context = NULL;
+    BOOL ret, releaseContext = FALSE;
+    PCERT_PUBLIC_KEY_INFO pubKey = NULL;
+    DWORD pubKeySize = 0;
+
+    TRACE("(0x%08lx, %p, %08lx, %p, %p, %p, %p, %p)\n", hProv,
+     pSubjectIssuerBlob, dwFlags, pKeyProvInfo, pSignatureAlgorithm, pStartTime,
+     pExtensions, pExtensions);
+
+    if (!hProv)
+    {
+        hProv = CRYPT_CreateKeyProv();
+        releaseContext = TRUE;
+    }
+
+    CryptExportPublicKeyInfo(hProv, AT_SIGNATURE, X509_ASN_ENCODING, NULL,
+     &pubKeySize);
+    pubKey = CryptMemAlloc(pubKeySize);
+    if (pubKey)
+    {
+        ret = CryptExportPublicKeyInfo(hProv, AT_SIGNATURE, X509_ASN_ENCODING,
+         pubKey, &pubKeySize);
+        if (ret)
+        {
+            CERT_INFO info = { 0 };
+            CRYPT_DER_BLOB blob = { 0, NULL };
+            BOOL ret;
+
+            CRYPT_MakeCertInfo(&info, pSubjectIssuerBlob, pSignatureAlgorithm,
+             pStartTime, pEndTime, pubKey, pExtensions);
+            ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
+             &info, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&blob.pbData,
+             &blob.cbData);
+            if (ret)
+            {
+                if (!(dwFlags & CERT_CREATE_SELFSIGN_NO_SIGN))
+                    context = CRYPT_CreateSignedCert(&blob, hProv,
+                     &info.SignatureAlgorithm);
+                else
+                    context = CertCreateCertificateContext(X509_ASN_ENCODING,
+                     blob.pbData, blob.cbData);
+                if (context && !(dwFlags & CERT_CREATE_SELFSIGN_NO_KEY_INFO))
+                    CertContext_SetKeyProvInfo(context, pKeyProvInfo, hProv);
+                LocalFree(blob.pbData);
+            }
+        }
+        CryptMemFree(pubKey);
+    }
+    if (releaseContext)
+        CryptReleaseContext(hProv, 0);
+    return context;
 }
