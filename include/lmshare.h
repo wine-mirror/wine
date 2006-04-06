@@ -42,6 +42,10 @@ NET_API_STATUS WINAPI NetShareEnum(LMSTR servername, DWORD level,
 #define STYPE_IPC      3
 #define STYPE_SPECIAL  0x80000000
 
+NET_API_STATUS NET_API_FUNCTION NetSessionEnum(LMSTR servername, LMSTR UncClientName,
+    LMSTR username, DWORD level, LPBYTE *bufptr, DWORD prefmaxlen, LPDWORD entriesread,
+    LPDWORD totalentries, LPDWORD resume_handle);
+
 #ifdef __cplusplus
 }
 #endif

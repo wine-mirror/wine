@@ -17,6 +17,7 @@ C_SRCS = \
 	nbt.c \
 	netapi32.c \
 	netbios.c \
+	share.c \
 	wksta.c
 
 SUBDIRS = tests

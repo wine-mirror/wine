@@ -184,7 +184,7 @@
 @ stub NetServiceGetInfo
 @ stub NetServiceInstall
 @ stub NetSessionDel
-@ stub NetSessionEnum
+@ stdcall NetSessionEnum(wstr wstr wstr long ptr long ptr ptr ptr)
 @ stub NetSessionGetInfo
 @ stub NetShareAdd
 @ stub NetShareCheck
