@@ -350,6 +350,9 @@ static BOOL check_volume(LPCWSTR path, LPCWSTR want_volume, LPWSTR volume,
     WCHAR name[MAX_PATH];
     UINT type;
 
+    if (!want_volume)
+        return TRUE;
+
     if (!(path[0] && path[1] == ':'))
     {
         if (intype)
