@@ -273,7 +273,7 @@ HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface, UINT 
     return hr;
 }
 
-HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface, UINT Level, D3DLOCKED_RECT *pLockedRect,
+HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface, UINT Level, WINED3DLOCKED_RECT *pLockedRect,
                                             CONST RECT *pRect, DWORD Flags) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     HRESULT hr = D3DERR_INVALIDCALL;

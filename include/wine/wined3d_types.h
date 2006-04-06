@@ -690,6 +690,10 @@ typedef struct _WINED3DDEVINFO_VERTEXSTATS {
     DWORD NumExtraClippingTriangles;
 } WINED3DDEVINFO_VERTEXSTATS;
 
+typedef struct _WINED3DLOCKED_RECT {
+    INT                 Pitch;
+    void*               pBits;
+} WINED3DLOCKED_RECT;
 
 /*Vertex cache optimization hints.*/
 typedef struct WINED3DDEVINFO_VCACHE {

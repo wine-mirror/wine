@@ -264,7 +264,7 @@ const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
     return (CONST void*)(This->resource.allocatedMemory);
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
+HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain = NULL;

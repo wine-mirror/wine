@@ -5740,8 +5740,8 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_CopyRects(IWineD3DDevice *iface,
     if (cRects == 0 && pSourceRectsArray == NULL && pDestPointsArray == NULL) {
 
         if (srcWidth == destWidth && srcHeight == destHeight) {
-            D3DLOCKED_RECT lrSrc;
-            D3DLOCKED_RECT lrDst;
+            WINED3DLOCKED_RECT lrSrc;
+            WINED3DLOCKED_RECT lrDst;
             IWineD3DSurface_LockRect(pSourceSurface,      &lrSrc, NULL, WINED3DLOCK_READONLY);
             IWineD3DSurface_LockRect(pDestinationSurface, &lrDst, NULL, 0L);
             TRACE("Locked src and dst, Direct copy as surfaces are equal, w=%d, h=%d\n", srcWidth, srcHeight);
@@ -5771,8 +5771,8 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_CopyRects(IWineD3DDevice *iface,
                 CONST POINT* p = &pDestPointsArray[i];
                 int copyperline;
                 int j;
-                D3DLOCKED_RECT lrSrc;
-                D3DLOCKED_RECT lrDst;
+                WINED3DLOCKED_RECT lrSrc;
+                WINED3DLOCKED_RECT lrDst;
                 RECT dest_rect;
 
                 TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (%ld,%ld)\n", i, r->left, r->top, r->right, r->bottom, p->x, p->y);

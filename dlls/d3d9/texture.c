@@ -189,7 +189,7 @@ HRESULT WINAPI IDirect3DTexture9Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE9 iface, U
 HRESULT WINAPI IDirect3DTexture9Impl_LockRect(LPDIRECT3DTEXTURE9 iface, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
-    return IWineD3DTexture_LockRect(This->wineD3DTexture, Level, pLockedRect, pRect, Flags);
+    return IWineD3DTexture_LockRect(This->wineD3DTexture, Level, (WINED3DLOCKED_RECT *) pLockedRect, pRect, Flags);
 }
 
 HRESULT WINAPI IDirect3DTexture9Impl_UnlockRect(LPDIRECT3DTEXTURE9 iface, UINT Level) {

@@ -177,7 +177,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     TRACE("(%p) calling IWineD3DSurface_LockRect %p %p %p %ld\n", This, This->wineD3DSurface, pLockedRect, pRect, Flags);
-    return IWineD3DSurface_LockRect(This->wineD3DSurface, pLockedRect, pRect, Flags);
+    return IWineD3DSurface_LockRect(This->wineD3DSurface, (WINED3DLOCKED_RECT *) pLockedRect, pRect, Flags);
 }
 
 HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {

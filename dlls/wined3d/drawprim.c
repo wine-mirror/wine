@@ -2195,7 +2195,7 @@ void drawPrimitive(IWineD3DDevice *iface,
         /* NOTE: set primCounter to the value reported by drawprim 
            before you want to to write frame makeup to /tmp */
         if (primCounter >= 0) {
-            D3DLOCKED_RECT r;
+            WINED3DLOCKED_RECT r;
             char buffer[80];
             IWineD3DSurface_LockRect(This->renderTarget, &r, NULL, WINED3DLOCK_READONLY);
             sprintf(buffer, "/tmp/backbuffer_%ld.tga", primCounter);

@@ -831,7 +831,7 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
     /*** IWineD3DTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level, WINED3DSURFACE_DESC* pDesc) PURE;
     STDMETHOD(GetSurfaceLevel)(THIS_ UINT Level, struct IWineD3DSurface** ppSurfaceLevel) PURE;
-    STDMETHOD(LockRect)(THIS_ UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE;
+    STDMETHOD(LockRect)(THIS_ UINT Level, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE;
     STDMETHOD(UnlockRect)(THIS_ UINT Level) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pDirtyRect) PURE;
 };
@@ -911,7 +911,7 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
     /*** IWineD3DCubeTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level,WINED3DSURFACE_DESC* pDesc) PURE;
     STDMETHOD(GetCubeMapSurface)(THIS_ WINED3DCUBEMAP_FACES FaceType, UINT Level, struct IWineD3DSurface** ppCubeMapSurface) PURE;
-    STDMETHOD(LockRect)(THIS_ WINED3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE;
+    STDMETHOD(LockRect)(THIS_ WINED3DCUBEMAP_FACES FaceType, UINT Level, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE;
     STDMETHOD(UnlockRect)(THIS_ WINED3DCUBEMAP_FACES FaceType, UINT Level) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ WINED3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) PURE;
 };
@@ -1060,7 +1060,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(GetContainerParent)(THIS_ IUnknown **ppContainerParent) PURE;
     STDMETHOD(GetContainer)(THIS_ REFIID  riid, void ** ppContainer) PURE;
     STDMETHOD(GetDesc)(THIS_ WINED3DSURFACE_DESC * pDesc) PURE;
-    STDMETHOD(LockRect)(THIS_ D3DLOCKED_RECT * pLockedRect, CONST RECT * pRect,DWORD  Flags) PURE;
+    STDMETHOD(LockRect)(THIS_ WINED3DLOCKED_RECT * pLockedRect, CONST RECT * pRect,DWORD  Flags) PURE;
     STDMETHOD(UnlockRect)(THIS) PURE;
     STDMETHOD(GetDC)(THIS_ HDC *pHdc) PURE;
     STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
