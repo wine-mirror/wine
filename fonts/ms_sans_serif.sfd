@@ -42,12 +42,13 @@ EndTtf
 LangName: 1033 "" "" "" "FontForge 1.0 : MS Sans Serif : 14-6-2004" "" "" "" "" "Created with FontForge 1.0 (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoA +AAoA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoA +AAoA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
 Encoding: UnicodeBmp
 UnicodeInterp: none
-DisplaySize: 13
+NameList: Adobe Glyph List
+DisplaySize: 20
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 44 22 19
+WinInfo: 667 29 23
 OnlyBitmaps: 1
-BeginChars: 65536 351
+BeginChars: 65536 353
 StartChar: space
 Encoding: 32 32 0
 Width: 2
@@ -1927,8 +1928,20 @@ Width: 9
 Flags: W
 TeX: 97 0 0 0
 EndChar
+StartChar: afii10023
+Encoding: 1025 1025 351
+Width: 7
+Flags: HW
+TeX: 97 0 0 0
+EndChar
+StartChar: afii10071
+Encoding: 1105 1105 352
+Width: 5
+Flags: HW
+TeX: 97 0 0 0
+EndChar
 EndChars
-BitmapFont: 13 351 11 2 1 
+BitmapFont: 13 353 11 2 1 
 BDFChar: 0 32 3 0 0 0 0
 z
 BDFChar: 1 33 3 1 1 0 8
@@ -2631,8 +2644,12 @@ BDFChar: 349 305 2 1 1 0 5
 J:N0#J:IV"
 BDFChar: 350 8470 11 1 10 0 8
 KE-[U`B^5LU]?[qMu\M2KE(uP
+BDFChar: 351 1025 7 1 5 0 10
+:]U9@J:R->J:RCp
+BDFChar: 352 1105 6 1 5 0 7
+:]PHjn:6=6
 EndBitmapFont
-BitmapFont: 16 351 13 3 1 FontForge
+BitmapFont: 16 353 13 3 1 FontForge
 BDFChar: 0 32 3 0 0 0 0
 z
 BDFChar: 1 33 3 1 1 0 9
@@ -3335,8 +3352,12 @@ BDFChar: 349 305 3 1 1 0 6
 J:N0#J:N.M
 BDFChar: 350 8470 14 1 12 0 9
 JH3M/ThqFZOW]J\KlD_GK)gH&
+BDFChar: 351 1025 9 1 7 0 12
+6i[5dJ:N1FJ:N0#rVuou
+BDFChar: 352 1105 8 1 6 0 9
+8,rX7KS98RKQmIs
 EndBitmapFont
-BitmapFont: 20 351 16 4 1 FontForge
+BitmapFont: 20 353 16 4 1 FontForge
 BDFChar: 0 32 4 0 0 0 0
 z
 BDFChar: 1 33 4 2 2 0 11
@@ -3933,5 +3954,9 @@ BDFChar: 349 305 3 1 1 0 8
 J:N0#J:N0#J,fQL
 BDFChar: 350 8470 15 2 13 0 11
 JcNYq_N:LRU0s,aOoUC/M?&A2L&cf*
+BDFChar: 351 1025 11 2 9 0 13
+,QRjpJ:N1JJ:N0#JH#TL
+BDFChar: 352 1105 9 0 8 0 12
+z+ohTC)uq/_5lcB75QF%L5l`)/)uos=
 EndBitmapFont
 EndSplineFont

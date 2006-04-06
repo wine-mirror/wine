@@ -11,6 +11,7 @@ UnderlinePosition: -100
 UnderlineWidth: 50
 Ascent: 9
 Descent: 2
+NeedsXUIDChange: 1
 XUID: [1021 180 78732788 213171]
 FSType: 8
 PfmFamily: 33
@@ -55,7 +56,7 @@ FitToEm: 1
 WinInfo: 696 24 22
 OnlyBitmaps: 1
 TeXData: 1 0 0 189792 94896 63264 0 1048576 63264 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65536 404
+BeginChars: 65536 406
 StartChar: A
 Encoding: 65 65 0
 Width: 7
@@ -2093,389 +2094,401 @@ EndChar
 StartChar: afii10017
 Encoding: 1040 1040 340
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10018
 Encoding: 1041 1041 341
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10019
 Encoding: 1042 1042 342
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10020
 Encoding: 1043 1043 343
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10021
 Encoding: 1044 1044 344
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10022
 Encoding: 1045 1045 345
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10024
 Encoding: 1046 1046 346
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10025
 Encoding: 1047 1047 347
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10026
 Encoding: 1048 1048 348
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10027
 Encoding: 1049 1049 349
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10028
 Encoding: 1050 1050 350
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10029
 Encoding: 1051 1051 351
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10030
 Encoding: 1052 1052 352
 Width: 9
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10031
 Encoding: 1053 1053 353
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10032
 Encoding: 1054 1054 354
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10033
 Encoding: 1055 1055 355
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10034
 Encoding: 1056 1056 356
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10035
 Encoding: 1057 1057 357
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10036
 Encoding: 1058 1058 358
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10037
 Encoding: 1059 1059 359
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10038
 Encoding: 1060 1060 360
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10039
 Encoding: 1061 1061 361
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10040
 Encoding: 1062 1062 362
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10041
 Encoding: 1063 1063 363
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10042
 Encoding: 1064 1064 364
 Width: 8
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10043
 Encoding: 1065 1065 365
 Width: 9
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10044
 Encoding: 1066 1066 366
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10045
 Encoding: 1067 1067 367
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10046
 Encoding: 1068 1068 368
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10047
 Encoding: 1069 1069 369
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10048
 Encoding: 1070 1070 370
 Width: 8
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10049
 Encoding: 1071 1071 371
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10065
 Encoding: 1072 1072 372
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10066
 Encoding: 1073 1073 373
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10067
 Encoding: 1074 1074 374
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10068
 Encoding: 1075 1075 375
 Width: 4
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10069
 Encoding: 1076 1076 376
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10070
 Encoding: 1077 1077 377
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10072
 Encoding: 1078 1078 378
 Width: 8
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10073
 Encoding: 1079 1079 379
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10074
 Encoding: 1080 1080 380
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10075
 Encoding: 1081 1081 381
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10076
 Encoding: 1082 1082 382
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10077
 Encoding: 1083 1083 383
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10078
 Encoding: 1084 1084 384
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10079
 Encoding: 1085 1085 385
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10080
 Encoding: 1086 1086 386
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10081
 Encoding: 1087 1087 387
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10082
 Encoding: 1088 1088 388
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10083
 Encoding: 1089 1089 389
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10084
 Encoding: 1090 1090 390
 Width: 4
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10085
 Encoding: 1091 1091 391
 Width: 4
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10086
 Encoding: 1092 1092 392
 Width: 7
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10087
 Encoding: 1093 1093 393
 Width: 4
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10088
 Encoding: 1094 1094 394
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10089
 Encoding: 1095 1095 395
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10090
 Encoding: 1096 1096 396
 Width: 8
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10091
 Encoding: 1097 1097 397
 Width: 9
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10092
 Encoding: 1098 1098 398
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10093
 Encoding: 1099 1099 399
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10094
 Encoding: 1100 1100 400
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10095
 Encoding: 1101 1101 401
 Width: 5
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10096
 Encoding: 1102 1102 402
 Width: 6
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10097
 Encoding: 1103 1103 403
 Width: 5
+Flags: W
+TeX: 97 0 0 0
+EndChar
+StartChar: afii10023
+Encoding: 1025 1025 404
+Width: 5
+Flags: HW
+TeX: 97 0 0 0
+EndChar
+StartChar: afii10071
+Encoding: 1105 1105 405
+Width: 5
 Flags: HW
 TeX: 97 0 0 0
 EndChar
 EndChars
-BitmapFont: 11 404 9 2 1 
+BitmapFont: 11 406 9 2 1 
 BDFChar: 0 65 7 1 6 0 6
 0JH$gG_C_M
 BDFChar: 1 33 2 1 1 0 6
@@ -3284,5 +3297,9 @@ BDFChar: 402 1102 6 0 5 0 4
 R&&f=QiI*d
 BDFChar: 403 1103 5 1 4 0 4
 E0,$8O8o7\
+BDFChar: 404 1025 5 1 4 0 8
+O9"d#JFJ)>n,NFg
+BDFChar: 405 1105 5 1 4 0 6
+O8r[Mn:4mH
 EndBitmapFont
 EndSplineFont

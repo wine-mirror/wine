@@ -16,9 +16,14 @@ FSType: 8
 PfmFamily: 49
 TTFWeight: 400
 TTFWidth: 5
-Panose: 2 0 6 9 0 0 0 0 0 0
 LineGap: 1
 VLineGap: 0
+Panose: 2 0 6 9 0 0 0 0 0 0
+OS2TypoAscent: 0
+OS2TypoAOffset: 1
+OS2TypoDescent: 0
+OS2TypoDOffset: 1
+OS2TypoLinegap: 0
 OS2WinAscent: 0
 OS2WinAOffset: 1
 OS2WinDescent: 0
@@ -27,2444 +32,2470 @@ HheadAscent: 0
 HheadAOffset: 1
 HheadDescent: 0
 HheadDOffset: 1
+OS2Vendor: 'PfEd'
 ScriptLang: 2
  1 latn 1 dflt 
  1 DFLT 1 dflt 
 LangName: 1033 "" "" "" "FontForge 1.0 : Courier : 9-7-2004" "" "" "" "" "Created with FontForge 1.0 (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoA +AAoA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoA +AAoA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
-Encoding: unicode
+Encoding: UnicodeBmp
 UnicodeInterp: none
+NameList: Adobe Glyph List
 DisplaySize: 13
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 80 20 16
+WinInfo: 902 22 21
 OnlyBitmaps: 1
-TeXData: 1 10485760 0 346030 173015 115343 0 1048576 115343 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65536 344
+TeXData: 1 0 0 346030 173015 115343 0 1048576 115343 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
+BeginChars: 65536 347
 StartChar: space
 Encoding: 32 32 0
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: exclam
 Encoding: 33 33 1
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: quotedbl
 Encoding: 34 34 2
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: numbersign
 Encoding: 35 35 3
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: dollar
 Encoding: 36 36 4
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: percent
 Encoding: 37 37 5
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ampersand
 Encoding: 38 38 6
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: quotesingle
 Encoding: 39 39 7
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: parenleft
 Encoding: 40 40 8
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: parenright
 Encoding: 41 41 9
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: asterisk
 Encoding: 42 42 10
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: plus
 Encoding: 43 43 11
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: comma
 Encoding: 44 44 12
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: hyphen
 Encoding: 45 45 13
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: period
 Encoding: 46 46 14
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: slash
 Encoding: 47 47 15
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: zero
 Encoding: 48 48 16
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: one
 Encoding: 49 49 17
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: two
 Encoding: 50 50 18
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: three
 Encoding: 51 51 19
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: four
 Encoding: 52 52 20
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: five
 Encoding: 53 53 21
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: six
 Encoding: 54 54 22
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: seven
 Encoding: 55 55 23
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: eight
 Encoding: 56 56 24
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: nine
 Encoding: 57 57 25
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: colon
 Encoding: 58 58 26
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: semicolon
 Encoding: 59 59 27
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: less
 Encoding: 60 60 28
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: equal
 Encoding: 61 61 29
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: greater
 Encoding: 62 62 30
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: question
 Encoding: 63 63 31
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: at
 Encoding: 64 64 32
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: A
 Encoding: 65 65 33
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: B
 Encoding: 66 66 34
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: C
 Encoding: 67 67 35
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: D
 Encoding: 68 68 36
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: E
 Encoding: 69 69 37
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: F
 Encoding: 70 70 38
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: G
 Encoding: 71 71 39
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: H
 Encoding: 72 72 40
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: I
 Encoding: 73 73 41
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: J
 Encoding: 74 74 42
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: K
 Encoding: 75 75 43
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: L
 Encoding: 76 76 44
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: M
 Encoding: 77 77 45
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: N
 Encoding: 78 78 46
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: O
 Encoding: 79 79 47
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: P
 Encoding: 80 80 48
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Q
 Encoding: 81 81 49
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: R
 Encoding: 82 82 50
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: S
 Encoding: 83 83 51
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: T
 Encoding: 84 84 52
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: U
 Encoding: 85 85 53
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: V
 Encoding: 86 86 54
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: W
 Encoding: 87 87 55
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: X
 Encoding: 88 88 56
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Y
 Encoding: 89 89 57
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Z
 Encoding: 90 90 58
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: bracketleft
 Encoding: 91 91 59
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: backslash
 Encoding: 92 92 60
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: bracketright
 Encoding: 93 93 61
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: asciicircum
 Encoding: 94 94 62
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: underscore
 Encoding: 95 95 63
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: grave
 Encoding: 96 96 64
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: a
 Encoding: 97 97 65
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: b
 Encoding: 98 98 66
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: c
 Encoding: 99 99 67
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: d
 Encoding: 100 100 68
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: e
 Encoding: 101 101 69
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: f
 Encoding: 102 102 70
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: g
 Encoding: 103 103 71
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: h
 Encoding: 104 104 72
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: i
 Encoding: 105 105 73
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: j
 Encoding: 106 106 74
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: k
 Encoding: 107 107 75
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: l
 Encoding: 108 108 76
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: m
 Encoding: 109 109 77
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: n
 Encoding: 110 110 78
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: o
 Encoding: 111 111 79
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: p
 Encoding: 112 112 80
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: q
 Encoding: 113 113 81
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: r
 Encoding: 114 114 82
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: s
 Encoding: 115 115 83
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: t
 Encoding: 116 116 84
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: u
 Encoding: 117 117 85
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: v
 Encoding: 118 118 86
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: w
 Encoding: 119 119 87
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: x
 Encoding: 120 120 88
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: y
 Encoding: 121 121 89
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: z
 Encoding: 122 122 90
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: braceleft
 Encoding: 123 123 91
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: bar
 Encoding: 124 124 92
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: braceright
 Encoding: 125 125 93
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: asciitilde
 Encoding: 126 126 94
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uni007F
 Encoding: 127 127 95
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uni0081
 Encoding: 129 129 96
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uni0083
 Encoding: 131 131 97
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uni0088
 Encoding: 136 136 98
 Width: 8
-Flags: H
-EndChar
-StartChar: uni008D
-Encoding: 141 141 97
-Width: 8
-Flags: H
-EndChar
-StartChar: uni008F
-Encoding: 143 143 98
-Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uni0090
 Encoding: 144 144 99
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uni0098
 Encoding: 152 152 100
 Width: 8
-Flags: H
-EndChar
-StartChar: uni009D
-Encoding: 157 157 100
-Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: nonbreakingspace
 Encoding: 160 160 101
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: exclamdown
 Encoding: 161 161 102
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: cent
 Encoding: 162 162 103
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: sterling
 Encoding: 163 163 104
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: currency
 Encoding: 164 164 105
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: yen
 Encoding: 165 165 106
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: brokenbar
 Encoding: 166 166 107
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: section
 Encoding: 167 167 108
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: dieresis
 Encoding: 168 168 109
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 1 'liga' space uni0308
 EndChar
 StartChar: copyright
 Encoding: 169 169 110
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ordfeminine
 Encoding: 170 170 111
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: guillemotleft
 Encoding: 171 171 112
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: logicalnot
 Encoding: 172 172 113
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: softhyphen
 Encoding: 173 173 114
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: registered
 Encoding: 174 174 115
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: macron
 Encoding: 175 175 116
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: degree
 Encoding: 176 176 117
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: plusminus
 Encoding: 177 177 118
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uni00B2
 Encoding: 178 178 119
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uni00B3
 Encoding: 179 179 120
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: acute
 Encoding: 180 180 121
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: mu
 Encoding: 181 181 122
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: paragraph
 Encoding: 182 182 123
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: periodcentered
 Encoding: 183 183 124
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: cedilla
 Encoding: 184 184 125
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uni00B9
 Encoding: 185 185 126
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ordmasculine
 Encoding: 186 186 127
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: guillemotright
 Encoding: 187 187 128
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: onequarter
 Encoding: 188 188 129
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 1 'frac' one slash four
 Ligature: 0 1 'frac' one fraction four
 EndChar
 StartChar: onehalf
 Encoding: 189 189 130
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 1 'frac' one slash two
 Ligature: 0 1 'frac' one fraction two
 EndChar
 StartChar: threequarters
 Encoding: 190 190 131
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 1 'frac' three slash four
 Ligature: 0 1 'frac' three fraction four
 EndChar
 StartChar: questiondown
 Encoding: 191 191 132
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Agrave
 Encoding: 192 192 133
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Aacute
 Encoding: 193 193 134
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Acircumflex
 Encoding: 194 194 135
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Atilde
 Encoding: 195 195 136
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Adieresis
 Encoding: 196 196 137
 Width: 8
-Flags: H
-EndChar
-StartChar: Aring
-Encoding: 197 197 111
-Width: 8
-Flags: H
-Ligature: 0 0 'liga' A uni030A
-EndChar
-StartChar: AE
-Encoding: 198 198 112
-Width: 8
-Flags: H
-EndChar
-StartChar: Ccedilla
-Encoding: 199 199 113
-Width: 8
-Flags: H
-EndChar
-StartChar: Egrave
-Encoding: 200 200 114
-Width: 8
-Flags: H
-EndChar
-StartChar: Eacute
-Encoding: 201 201 115
-Width: 8
-Flags: H
-EndChar
-StartChar: Ecircumflex
-Encoding: 202 202 116
-Width: 8
-Flags: H
-EndChar
-StartChar: Edieresis
-Encoding: 203 203 117
-Width: 8
-Flags: H
-EndChar
-StartChar: Igrave
-Encoding: 204 204 118
-Width: 8
-Flags: H
-EndChar
-StartChar: Iacute
-Encoding: 205 205 119
-Width: 8
-Flags: H
-EndChar
-StartChar: Icircumflex
-Encoding: 206 206 120
-Width: 8
-Flags: H
-EndChar
-StartChar: Idieresis
-Encoding: 207 207 121
-Width: 8
-Flags: H
-EndChar
-StartChar: Eth
-Encoding: 208 208 122
-Width: 8
-Flags: H
-EndChar
-StartChar: Ntilde
-Encoding: 209 209 123
-Width: 8
-Flags: H
-EndChar
-StartChar: Ograve
-Encoding: 210 210 124
-Width: 8
-Flags: H
-EndChar
-StartChar: Oacute
-Encoding: 211 211 125
-Width: 8
-Flags: H
-EndChar
-StartChar: Ocircumflex
-Encoding: 212 212 126
-Width: 8
-Flags: H
-EndChar
-StartChar: Otilde
-Encoding: 213 213 127
-Width: 8
-Flags: H
-EndChar
-StartChar: Odieresis
-Encoding: 214 214 128
-Width: 8
-Flags: H
-EndChar
-StartChar: multiply
-Encoding: 215 215 129
-Width: 8
-Flags: H
-EndChar
-StartChar: Oslash
-Encoding: 216 216 130
-Width: 8
-Flags: H
-EndChar
-StartChar: Ugrave
-Encoding: 217 217 131
-Width: 8
-Flags: H
-EndChar
-StartChar: Uacute
-Encoding: 218 218 132
-Width: 8
-Flags: H
-EndChar
-StartChar: Ucircumflex
-Encoding: 219 219 133
-Width: 8
-Flags: H
-EndChar
-StartChar: Udieresis
-Encoding: 220 220 134
-Width: 8
-Flags: H
-EndChar
-StartChar: Yacute
-Encoding: 221 221 135
-Width: 8
-Flags: H
-EndChar
-StartChar: Thorn
-Encoding: 222 222 136
-Width: 8
-Flags: H
-EndChar
-StartChar: germandbls
-Encoding: 223 223 137
-Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: agrave
 Encoding: 224 224 138
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: aacute
 Encoding: 225 225 139
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: acircumflex
 Encoding: 226 226 140
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: atilde
 Encoding: 227 227 141
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: adieresis
 Encoding: 228 228 142
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: aring
 Encoding: 229 229 143
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ae
 Encoding: 230 230 144
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ccedilla
 Encoding: 231 231 145
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: egrave
 Encoding: 232 232 146
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: eacute
 Encoding: 233 233 147
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ecircumflex
 Encoding: 234 234 148
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: edieresis
 Encoding: 235 235 149
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: igrave
 Encoding: 236 236 150
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: iacute
 Encoding: 237 237 151
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: icircumflex
 Encoding: 238 238 152
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: idieresis
 Encoding: 239 239 153
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: eth
 Encoding: 240 240 154
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ntilde
 Encoding: 241 241 155
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ograve
 Encoding: 242 242 156
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: oacute
 Encoding: 243 243 157
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ocircumflex
 Encoding: 244 244 158
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: otilde
 Encoding: 245 245 159
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: odieresis
 Encoding: 246 246 160
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: divide
 Encoding: 247 247 161
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: oslash
 Encoding: 248 248 162
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ugrave
 Encoding: 249 249 163
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uacute
 Encoding: 250 250 164
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ucircumflex
 Encoding: 251 251 165
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: udieresis
 Encoding: 252 252 166
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: yacute
 Encoding: 253 253 167
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: thorn
 Encoding: 254 254 168
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ydieresis
 Encoding: 255 255 169
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Abreve
 Encoding: 258 258 170
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: abreve
 Encoding: 259 259 171
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Aogonek
 Encoding: 260 260 172
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: aogonek
 Encoding: 261 261 173
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Cacute
 Encoding: 262 262 174
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: cacute
 Encoding: 263 263 175
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Ccaron
 Encoding: 268 268 176
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ccaron
 Encoding: 269 269 177
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Dcaron
 Encoding: 270 270 178
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: dcaron
 Encoding: 271 271 179
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Dcroat
 Encoding: 272 272 180
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: dcroat
 Encoding: 273 273 181
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Eogonek
 Encoding: 280 280 182
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: eogonek
 Encoding: 281 281 183
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Ecaron
 Encoding: 282 282 184
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ecaron
 Encoding: 283 283 185
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Lacute
 Encoding: 313 313 186
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: lacute
 Encoding: 314 314 187
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Lcaron
 Encoding: 317 317 188
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: lcaron
 Encoding: 318 318 189
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Lslash
 Encoding: 321 321 190
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: lslash
 Encoding: 322 322 191
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Nacute
 Encoding: 323 323 192
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: nacute
 Encoding: 324 324 193
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Ncaron
 Encoding: 327 327 194
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ncaron
 Encoding: 328 328 195
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Ohungarumlaut
 Encoding: 336 336 196
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ohungarumlaut
 Encoding: 337 337 197
 Width: 8
-Flags: H
+Flags: W
+EndChar
+StartChar: uni008D
+Encoding: 141 141 198
+Width: 8
+Flags: W
+EndChar
+StartChar: uni008F
+Encoding: 143 143 199
+Width: 8
+Flags: W
+EndChar
+StartChar: uni009D
+Encoding: 157 157 200
+Width: 8
+Flags: W
+EndChar
+StartChar: Aring
+Encoding: 197 197 201
+Width: 8
+Flags: W
+Ligature: 0 0 'liga' A uni030A
+EndChar
+StartChar: AE
+Encoding: 198 198 202
+Width: 8
+Flags: W
+EndChar
+StartChar: Ccedilla
+Encoding: 199 199 203
+Width: 8
+Flags: W
+EndChar
+StartChar: Egrave
+Encoding: 200 200 204
+Width: 8
+Flags: W
+EndChar
+StartChar: Eacute
+Encoding: 201 201 205
+Width: 8
+Flags: W
+EndChar
+StartChar: Ecircumflex
+Encoding: 202 202 206
+Width: 8
+Flags: W
+EndChar
+StartChar: Edieresis
+Encoding: 203 203 207
+Width: 8
+Flags: W
+EndChar
+StartChar: Igrave
+Encoding: 204 204 208
+Width: 8
+Flags: W
+EndChar
+StartChar: Iacute
+Encoding: 205 205 209
+Width: 8
+Flags: W
+EndChar
+StartChar: Icircumflex
+Encoding: 206 206 210
+Width: 8
+Flags: W
+EndChar
+StartChar: Idieresis
+Encoding: 207 207 211
+Width: 8
+Flags: W
+EndChar
+StartChar: Eth
+Encoding: 208 208 212
+Width: 8
+Flags: W
+EndChar
+StartChar: Ntilde
+Encoding: 209 209 213
+Width: 8
+Flags: W
+EndChar
+StartChar: Ograve
+Encoding: 210 210 214
+Width: 8
+Flags: W
+EndChar
+StartChar: Oacute
+Encoding: 211 211 215
+Width: 8
+Flags: W
+EndChar
+StartChar: Ocircumflex
+Encoding: 212 212 216
+Width: 8
+Flags: W
+EndChar
+StartChar: Otilde
+Encoding: 213 213 217
+Width: 8
+Flags: W
+EndChar
+StartChar: Odieresis
+Encoding: 214 214 218
+Width: 8
+Flags: W
+EndChar
+StartChar: multiply
+Encoding: 215 215 219
+Width: 8
+Flags: W
+EndChar
+StartChar: Oslash
+Encoding: 216 216 220
+Width: 8
+Flags: W
+EndChar
+StartChar: Ugrave
+Encoding: 217 217 221
+Width: 8
+Flags: W
+EndChar
+StartChar: Uacute
+Encoding: 218 218 222
+Width: 8
+Flags: W
+EndChar
+StartChar: Ucircumflex
+Encoding: 219 219 223
+Width: 8
+Flags: W
+EndChar
+StartChar: Udieresis
+Encoding: 220 220 224
+Width: 8
+Flags: W
+EndChar
+StartChar: Yacute
+Encoding: 221 221 225
+Width: 8
+Flags: W
+EndChar
+StartChar: Thorn
+Encoding: 222 222 226
+Width: 8
+Flags: W
+EndChar
+StartChar: germandbls
+Encoding: 223 223 227
+Width: 8
+Flags: W
 EndChar
 StartChar: OE
-Encoding: 338 338 111
+Encoding: 338 338 228
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: oe
-Encoding: 339 339 112
+Encoding: 339 339 229
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Racute
-Encoding: 340 340 113
+Encoding: 340 340 230
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: racute
-Encoding: 341 341 114
+Encoding: 341 341 231
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Rcaron
-Encoding: 344 344 115
+Encoding: 344 344 232
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: rcaron
-Encoding: 345 345 116
+Encoding: 345 345 233
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Sacute
-Encoding: 346 346 117
+Encoding: 346 346 234
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: sacute
-Encoding: 347 347 118
+Encoding: 347 347 235
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Scedilla
-Encoding: 350 350 119
+Encoding: 350 350 236
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: scedilla
-Encoding: 351 351 120
+Encoding: 351 351 237
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Scaron
-Encoding: 352 352 113
+Encoding: 352 352 238
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 0 'liga' S uni030C
 EndChar
 StartChar: scaron
-Encoding: 353 353 114
+Encoding: 353 353 239
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 0 'liga' s uni030C
 EndChar
 StartChar: Tcommaaccent
-Encoding: 354 354 115
+Encoding: 354 354 240
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: tcommaaccent
-Encoding: 355 355 116
+Encoding: 355 355 241
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Tcaron
-Encoding: 356 356 117
+Encoding: 356 356 242
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: tcaron
-Encoding: 357 357 118
+Encoding: 357 357 243
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Uring
-Encoding: 366 366 119
+Encoding: 366 366 244
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uring
-Encoding: 367 367 120
+Encoding: 367 367 245
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Uhungarumlaut
-Encoding: 368 368 121
+Encoding: 368 368 246
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: uhungarumlaut
-Encoding: 369 369 122
+Encoding: 369 369 247
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Ydieresis
-Encoding: 376 376 115
+Encoding: 376 376 248
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 0 'liga' Y uni0308
 EndChar
 StartChar: Zacute
-Encoding: 377 377 116
+Encoding: 377 377 249
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: zacute
-Encoding: 378 378 117
+Encoding: 378 378 250
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Zdotaccent
-Encoding: 379 379 118
+Encoding: 379 379 251
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: zdotaccent
-Encoding: 380 380 119
+Encoding: 380 380 252
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Zcaron
-Encoding: 381 381 116
+Encoding: 381 381 253
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 0 'liga' Z uni030C
 EndChar
 StartChar: zcaron
-Encoding: 382 382 117
+Encoding: 382 382 254
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 0 'liga' z uni030C
 EndChar
 StartChar: florin
-Encoding: 402 402 118
+Encoding: 402 402 255
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: circumflex
-Encoding: 710 710 119
+Encoding: 710 710 256
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: caron
-Encoding: 711 711 120
+Encoding: 711 711 257
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: breve
-Encoding: 728 728 121
+Encoding: 728 728 258
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: dotaccent
-Encoding: 729 729 122
+Encoding: 729 729 259
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ogonek
-Encoding: 731 731 123
+Encoding: 731 731 260
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: tilde
-Encoding: 732 732 120
+Encoding: 732 732 261
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 1 'liga' space tildecomb
 EndChar
 StartChar: hungarumlaut
-Encoding: 733 733 121
+Encoding: 733 733 262
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: afii10017
-Encoding: 1040 1040 121
+Encoding: 1040 1040 263
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10018
-Encoding: 1041 1041 122
+Encoding: 1041 1041 264
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10019
-Encoding: 1042 1042 123
+Encoding: 1042 1042 265
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10020
-Encoding: 1043 1043 124
+Encoding: 1043 1043 266
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10021
-Encoding: 1044 1044 125
+Encoding: 1044 1044 267
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10022
-Encoding: 1045 1045 126
+Encoding: 1045 1045 268
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10024
-Encoding: 1046 1046 127
+Encoding: 1046 1046 269
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10025
-Encoding: 1047 1047 128
+Encoding: 1047 1047 270
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10026
-Encoding: 1048 1048 129
+Encoding: 1048 1048 271
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10027
-Encoding: 1049 1049 130
+Encoding: 1049 1049 272
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10028
-Encoding: 1050 1050 131
+Encoding: 1050 1050 273
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10029
-Encoding: 1051 1051 132
+Encoding: 1051 1051 274
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10030
-Encoding: 1052 1052 133
+Encoding: 1052 1052 275
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10031
-Encoding: 1053 1053 134
+Encoding: 1053 1053 276
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10032
-Encoding: 1054 1054 135
+Encoding: 1054 1054 277
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10033
-Encoding: 1055 1055 136
+Encoding: 1055 1055 278
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10034
-Encoding: 1056 1056 137
+Encoding: 1056 1056 279
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10035
-Encoding: 1057 1057 138
+Encoding: 1057 1057 280
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10036
-Encoding: 1058 1058 139
+Encoding: 1058 1058 281
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10037
-Encoding: 1059 1059 140
+Encoding: 1059 1059 282
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10038
-Encoding: 1060 1060 141
+Encoding: 1060 1060 283
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10039
-Encoding: 1061 1061 142
+Encoding: 1061 1061 284
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10040
-Encoding: 1062 1062 143
+Encoding: 1062 1062 285
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10041
-Encoding: 1063 1063 144
+Encoding: 1063 1063 286
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10042
-Encoding: 1064 1064 145
+Encoding: 1064 1064 287
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10043
-Encoding: 1065 1065 146
+Encoding: 1065 1065 288
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10044
-Encoding: 1066 1066 147
+Encoding: 1066 1066 289
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10045
-Encoding: 1067 1067 148
+Encoding: 1067 1067 290
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10046
-Encoding: 1068 1068 149
+Encoding: 1068 1068 291
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10047
-Encoding: 1069 1069 150
+Encoding: 1069 1069 292
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10048
-Encoding: 1070 1070 151
+Encoding: 1070 1070 293
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10049
-Encoding: 1071 1071 152
+Encoding: 1071 1071 294
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10065
-Encoding: 1072 1072 153
+Encoding: 1072 1072 295
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10066
-Encoding: 1073 1073 154
+Encoding: 1073 1073 296
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10067
-Encoding: 1074 1074 155
+Encoding: 1074 1074 297
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10068
-Encoding: 1075 1075 156
+Encoding: 1075 1075 298
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10069
-Encoding: 1076 1076 157
+Encoding: 1076 1076 299
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10070
-Encoding: 1077 1077 158
+Encoding: 1077 1077 300
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10072
-Encoding: 1078 1078 159
+Encoding: 1078 1078 301
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10073
-Encoding: 1079 1079 160
+Encoding: 1079 1079 302
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10074
-Encoding: 1080 1080 161
+Encoding: 1080 1080 303
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10075
-Encoding: 1081 1081 162
+Encoding: 1081 1081 304
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10076
-Encoding: 1082 1082 163
+Encoding: 1082 1082 305
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10077
-Encoding: 1083 1083 164
+Encoding: 1083 1083 306
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10078
-Encoding: 1084 1084 165
+Encoding: 1084 1084 307
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10079
-Encoding: 1085 1085 166
+Encoding: 1085 1085 308
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10080
-Encoding: 1086 1086 167
+Encoding: 1086 1086 309
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10081
-Encoding: 1087 1087 168
+Encoding: 1087 1087 310
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10082
-Encoding: 1088 1088 169
+Encoding: 1088 1088 311
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10083
-Encoding: 1089 1089 170
+Encoding: 1089 1089 312
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10084
-Encoding: 1090 1090 171
+Encoding: 1090 1090 313
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10085
-Encoding: 1091 1091 172
+Encoding: 1091 1091 314
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10086
-Encoding: 1092 1092 173
+Encoding: 1092 1092 315
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10087
-Encoding: 1093 1093 174
+Encoding: 1093 1093 316
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10088
-Encoding: 1094 1094 175
+Encoding: 1094 1094 317
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10089
-Encoding: 1095 1095 176
+Encoding: 1095 1095 318
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10090
-Encoding: 1096 1096 177
+Encoding: 1096 1096 319
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10091
-Encoding: 1097 1097 178
+Encoding: 1097 1097 320
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10092
-Encoding: 1098 1098 179
+Encoding: 1098 1098 321
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10093
-Encoding: 1099 1099 180
+Encoding: 1099 1099 322
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10094
-Encoding: 1100 1100 181
+Encoding: 1100 1100 323
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10095
-Encoding: 1101 1101 182
+Encoding: 1101 1101 324
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10096
-Encoding: 1102 1102 183
+Encoding: 1102 1102 325
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: afii10097
-Encoding: 1103 1103 184
+Encoding: 1103 1103 326
 Width: 8
-Flags: HW
+Flags: W
 EndChar
 StartChar: endash
-Encoding: 8211 8211 121
+Encoding: 8211 8211 327
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: emdash
-Encoding: 8212 8212 122
+Encoding: 8212 8212 328
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: quoteleft
-Encoding: 8216 8216 123
+Encoding: 8216 8216 329
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: quoteright
-Encoding: 8217 8217 124
+Encoding: 8217 8217 330
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: quotesinglbase
-Encoding: 8218 8218 125
+Encoding: 8218 8218 331
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: quotedblleft
-Encoding: 8220 8220 126
+Encoding: 8220 8220 332
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: quotedblright
-Encoding: 8221 8221 127
+Encoding: 8221 8221 333
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: quotedblbase
-Encoding: 8222 8222 128
+Encoding: 8222 8222 334
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: dagger
-Encoding: 8224 8224 129
+Encoding: 8224 8224 335
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: daggerdbl
-Encoding: 8225 8225 130
+Encoding: 8225 8225 336
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: bullet
-Encoding: 8226 8226 131
+Encoding: 8226 8226 337
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: ellipsis
-Encoding: 8230 8230 132
+Encoding: 8230 8230 338
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 1 'liga' period period period
 EndChar
 StartChar: perthousand
-Encoding: 8240 8240 133
+Encoding: 8240 8240 339
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: guilsinglleft
-Encoding: 8249 8249 134
+Encoding: 8249 8249 340
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: guilsinglright
-Encoding: 8250 8250 135
+Encoding: 8250 8250 341
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: Euro
-Encoding: 8364 8364 136
+Encoding: 8364 8364 342
 Width: 8
-Flags: H
+Flags: W
 EndChar
 StartChar: trademark
-Encoding: 8482 8482 137
+Encoding: 8482 8482 343
 Width: 8
-Flags: H
+Flags: W
 Ligature: 0 1 'liga' T M
 EndChar
+StartChar: afii61352
+Encoding: 8470 8470 344
+Width: 8
+Flags: W
+TeX: 97 0 0 0
+EndChar
+StartChar: afii10023
+Encoding: 1025 1025 345
+Width: 8
+Flags: HW
+TeX: 97 0 0 0
+EndChar
+StartChar: afii10071
+Encoding: 1105 1105 346
+Width: 8
+Flags: HW
+TeX: 97 0 0 0
+EndChar
 EndChars
-BitmapFont: 13 65536 11 2 1 
-BDFChar: 32 8 0 0 0 0
+BitmapFont: 13 347 11 2 1 
+BDFChar: 0 32 8 0 0 0 0
 z
-BDFChar: 33 8 4 4 0 8
+BDFChar: 1 33 8 4 4 0 8
 J:N0#J:N.MJ,fQL
-BDFChar: 34 8 3 5 6 8
+BDFChar: 2 34 8 3 5 6 8
 TV.qX
-BDFChar: 35 8 1 7 0 8
+BDFChar: 3 35 8 1 7 0 8
 'GQ!E-n,!i:]LIq
-BDFChar: 36 8 2 6 0 8
+BDFChar: 4 36 8 2 6 0 8
 +E3-eE!V8=+92BA
-BDFChar: 37 8 1 7 0 8
+BDFChar: 5 37 8 1 7 0 8
 5b^XP&0OAu"98E%
-BDFChar: 38 8 2 7 0 8
+BDFChar: 6 38 8 2 7 0 8
 @$$JC5bO?tF8u:@
-BDFChar: 39 8 4 4 6 8
+BDFChar: 7 39 8 4 4 6 8
 J:N.M
-BDFChar: 40 8 3 5 -2 8
+BDFChar: 8 40 8 3 5 -2 8
 +@&2BJ:N0#5X6Fl
-BDFChar: 41 8 3 5 -2 8
+BDFChar: 9 41 8 3 5 -2 8
 J3Z@B+<VdL5X9i"
-BDFChar: 42 8 1 7 2 6
+BDFChar: 10 42 8 1 7 2 6
 CcMDRC]FG8
-BDFChar: 43 8 1 7 0 6
+BDFChar: 11 43 8 1 7 0 6
 &.fEP&.fBQ
-BDFChar: 44 8 3 4 -1 0
+BDFChar: 12 44 8 3 4 -1 0
 5_&h7
-BDFChar: 45 8 1 7 3 3
+BDFChar: 13 45 8 1 7 3 3
 rVuou
-BDFChar: 46 8 4 4 0 0
+BDFChar: 14 46 8 4 4 0 0
 J,fQL
-BDFChar: 47 8 1 7 1 7
+BDFChar: 15 47 8 1 7 1 7
 !X&c?+@(GW
-BDFChar: 48 8 2 6 0 8
+BDFChar: 16 48 8 2 6 0 8
 E/9=+LkpkCDu]k<
-BDFChar: 49 8 2 6 0 8
+BDFChar: 17 49 8 2 6 0 8
 +Q+@b+<VdLp](9o
-BDFChar: 50 8 2 6 0 8
+BDFChar: 18 50 8 2 6 0 8
 E/4c*&0O5gp](9o
-BDFChar: 51 8 2 6 0 8
+BDFChar: 19 51 8 2 6 0 8
 E/4c*0F.r?Du]k<
-BDFChar: 52 8 2 6 0 8
+BDFChar: 20 52 8 2 6 0 8
 &25e7:ltG`2uipY
-BDFChar: 53 8 2 6 0 8
+BDFChar: 21 53 8 2 6 0 8
 pjdmFn-B;UDu]k<
-BDFChar: 54 8 2 6 0 8
+BDFChar: 22 54 8 2 6 0 8
 0L1/=n;)mVDu]k<
-BDFChar: 55 8 2 6 0 8
+BDFChar: 23 55 8 2 6 0 8
 pkTIm+<Wp75QCca
-BDFChar: 56 8 2 6 0 8
+BDFChar: 24 56 8 2 6 0 8
 E/9=+E/9=+Du]k<
-BDFChar: 57 8 2 6 0 8
+BDFChar: 25 57 8 2 6 0 8
 E/9=+GR+Qd?iU0,
-BDFChar: 58 8 4 4 0 4
+BDFChar: 26 58 8 4 4 0 4
 J,fQLJ,fQL
-BDFChar: 59 8 3 4 -1 4
+BDFChar: 27 59 8 3 4 -1 4
 5QCca5_&h7
-BDFChar: 60 8 2 5 0 6
+BDFChar: 28 60 8 2 5 0 6
 &0O5g5TgU<
-BDFChar: 61 8 2 6 3 5
+BDFChar: 29 61 8 2 6 3 5
 p]1'h
-BDFChar: 62 8 2 5 0 6
+BDFChar: 30 62 8 2 5 0 6
 J3Y4g+@(GW
-BDFChar: 63 8 2 6 0 8
+BDFChar: 31 63 8 2 6 0 8
 E/9;U&0N(q+92BA
-BDFChar: 64 8 1 7 0 8
+BDFChar: 32 64 8 1 7 0 8
 4@5L:WiDRS49,?]
-BDFChar: 65 8 1 7 0 8
+BDFChar: 33 65 8 1 7 0 8
 0G"dD-q&GNmJm4e
-BDFChar: 66 8 1 7 0 8
+BDFChar: 34 66 8 1 7 0 8
 r'E_:HpU.dqu?]s
-BDFChar: 67 8 1 7 0 8
+BDFChar: 35 67 8 1 7 0 8
 4@4RKJ:N/:49,?]
-BDFChar: 68 8 1 7 0 8
+BDFChar: 36 68 8 1 7 0 8
 pd@G86:+",p](9o
-BDFChar: 69 8 1 7 0 8
+BDFChar: 37 69 8 1 7 0 8
 r^&k@GXt(drVuou
-BDFChar: 70 8 1 7 0 8
+BDFChar: 38 70 8 1 7 0 8
 r^&k@GXt(bn,NFg
-BDFChar: 71 8 1 7 0 8
+BDFChar: 39 71 8 1 7 0 8
 4@4RKJ<#4J49,?]
-BDFChar: 72 8 1 7 0 8
+BDFChar: 40 72 8 1 7 0 8
 mR0H2Hpg@jmJm4e
-BDFChar: 73 8 2 6 0 8
+BDFChar: 41 73 8 2 6 0 8
 p`L\%+<VdLp](9o
-BDFChar: 74 8 2 7 0 8
+BDFChar: 42 74 8 2 7 0 8
 49u2u#RH6BDu]k<
-BDFChar: 75 8 1 7 0 8
+BDFChar: 43 75 8 1 7 0 8
 mR0TB?r0B^mJm4e
-BDFChar: 76 8 1 7 0 8
+BDFChar: 44 76 8 1 7 0 8
 p`L\%+<VdNrVuou
-BDFChar: 77 8 1 7 0 8
+BDFChar: 45 77 8 1 7 0 8
 `b]Hj<)c7RmJm4e
-BDFChar: 78 8 1 7 0 8
+BDFChar: 46 78 8 1 7 0 8
 c=CHb<)cObjo>A]
-BDFChar: 79 8 1 7 0 8
+BDFChar: 47 79 8 1 7 0 8
 3(/@MJqASB2uipY
-BDFChar: 80 8 1 7 0 8
+BDFChar: 48 80 8 1 7 0 8
 r'E_:HpBq^n,NFg
-BDFChar: 81 8 1 7 -1 8
+BDFChar: 49 81 8 1 7 -1 8
 3(/@MJqASB3&Ua:
-BDFChar: 82 8 1 7 0 8
+BDFChar: 50 82 8 1 7 0 8
 r'E_:Hq6drp&G'm
-BDFChar: 83 8 1 7 0 8
+BDFChar: 51 83 8 1 7 0 8
 I"Hm!HiaA$HiO-H
-BDFChar: 84 8 1 7 0 8
+BDFChar: 52 84 8 1 7 0 8
 rfRg(&.fBa2uipY
-BDFChar: 85 8 1 7 0 8
+BDFChar: 53 85 8 1 7 0 8
 mR0H26psF22uipY
-BDFChar: 86 8 1 7 0 8
+BDFChar: 54 86 8 1 7 0 8
 mR0H2-n$JT&-)\1
-BDFChar: 87 8 1 7 0 8
+BDFChar: 55 87 8 1 7 0 8
 mR0HB<)cgF-ia5I
-BDFChar: 88 8 1 7 0 8
+BDFChar: 56 88 8 1 7 0 8
 mR/HO&1AqpmJm4e
-BDFChar: 89 8 1 7 0 8
+BDFChar: 57 89 8 1 7 0 8
 mR0Gk-kHq$2uipY
-BDFChar: 90 8 1 7 0 8
+BDFChar: 58 90 8 1 7 0 8
 rdk7Y&0O5irVuou
-BDFChar: 91 8 3 5 -2 8
+BDFChar: 59 91 8 3 5 -2 8
 i.-?.J:N0#J:QPX
-BDFChar: 92 8 1 7 1 7
+BDFChar: 60 92 8 1 7 1 7
 J3Y4g#Qt2/
-BDFChar: 93 8 3 5 -2 8
+BDFChar: 61 93 8 3 5 -2 8
 i#j-b+<VdL+<]SB
-BDFChar: 94 8 2 6 7 9
+BDFChar: 62 94 8 2 6 7 9
 +Adjo
-BDFChar: 95 8 0 7 -2 -2
+BDFChar: 63 95 8 0 7 -2 -2
 rr<$!
-BDFChar: 96 8 3 4 7 8
+BDFChar: 64 96 8 3 4 7 8
 J3X)7
-BDFChar: 97 8 1 7 0 5
+BDFChar: 65 97 8 1 7 0 5
 GQ`DIKR*Uu
-BDFChar: 98 8 1 7 0 8
+BDFChar: 66 98 8 1 7 0 8
 i'9PT6:+"*qu?]s
-BDFChar: 99 8 1 7 0 5
+BDFChar: 67 99 8 1 7 0 5
 I"Hm!Jp[Ou
-BDFChar: 100 8 1 7 0 8
+BDFChar: 68 100 8 1 7 0 8
 %Klo^KS5#3IK0?J
-BDFChar: 101 8 1 7 0 5
+BDFChar: 69 101 8 1 7 0 5
 I"M?JJp[Ou
-BDFChar: 102 8 2 5 0 8
+BDFChar: 70 102 8 2 5 0 8
 0L.nm5X7S"n,NFg
-BDFChar: 103 8 1 7 -2 5
+BDFChar: 71 103 8 1 7 -2 5
 IY<B-KR<oI
-BDFChar: 104 8 1 7 0 8
+BDFChar: 72 104 8 1 7 0 8
 i'9P0A4/gRmJm4e
-BDFChar: 105 8 2 6 0 8
+BDFChar: 73 105 8 2 6 0 8
 +92E"+<VdLp](9o
-BDFChar: 106 8 2 5 -2 8
+BDFChar: 74 106 8 2 5 -2 8
 &-)_"&.fBa&.mb"
-BDFChar: 107 8 1 7 0 8
+BDFChar: 75 107 8 1 7 0 8
 i'9P$85O8!jo>A]
-BDFChar: 108 8 2 6 0 8
+BDFChar: 76 108 8 2 6 0 8
 ?m$R7+<VdLp](9o
-BDFChar: 109 8 1 7 0 5
+BDFChar: 77 109 8 1 7 0 5
 kYtM\<7V$L
-BDFChar: 110 8 1 7 0 5
+BDFChar: 78 110 8 1 7 0 5
 fORB<7.($T
-BDFChar: 111 8 1 7 0 5
+BDFChar: 79 111 8 1 7 0 5
 I"Hs%Jp[Ou
-BDFChar: 112 8 1 7 -2 5
+BDFChar: 80 112 8 1 7 -2 5
 r'E_:6@;&V
-BDFChar: 113 8 1 7 -2 5
+BDFChar: 81 113 8 1 7 -2 5
 IY<B-KR<n4
-BDFChar: 114 8 1 7 0 5
+BDFChar: 82 114 8 1 7 0 5
 lnT\++SYp:
-BDFChar: 115 8 1 7 0 5
+BDFChar: 83 115 8 1 7 0 5
 I"H;GJp[Ou
-BDFChar: 116 8 2 6 0 7
+BDFChar: 84 116 8 2 6 0 7
 5X=g(5X7jo
-BDFChar: 117 8 1 7 0 5
+BDFChar: 85 117 8 1 7 0 5
 bX=ie9JukN
-BDFChar: 118 8 1 7 0 5
+BDFChar: 86 118 8 1 7 0 5
 mR0Gk-kH@Y
-BDFChar: 119 8 1 7 0 5
+BDFChar: 87 119 8 1 7 0 5
 mR1#R-n#&q
-BDFChar: 120 8 1 7 0 5
+BDFChar: 88 120 8 1 7 0 5
 mR0#o7.($T
-BDFChar: 121 8 1 7 -2 5
+BDFChar: 89 121 8 1 7 -2 5
 mR0Gk-kHqt
-BDFChar: 122 8 1 6 0 5
+BDFChar: 90 122 8 1 6 0 5
 r.kn,7/R#b
-BDFChar: 123 8 2 6 -2 8
+BDFChar: 91 123 8 2 6 -2 8
 (a'qD+M]*B+<VL$
-BDFChar: 124 8 4 4 -2 10
+BDFChar: 92 124 8 4 4 -2 10
 J:N0#J:N0#J:N0#J,fQL
-BDFChar: 125 8 2 6 -2 8
+BDFChar: 93 125 8 2 6 -2 8
 ^`XaB+;c4D+<\H"
-BDFChar: 126 8 1 7 5 7
+BDFChar: 94 126 8 1 7 5 7
 @ZlZM
-BDFChar: 127 8 3 5 -1 7
+BDFChar: 95 127 8 3 5 -1 7
 i8EPOi8EPOhuE`W
-BDFChar: 129 8 3 5 -1 7
+BDFChar: 96 129 8 3 5 -1 7
 i8EPOi8EPOhuE`W
-BDFChar: 131 8 3 5 -1 7
+BDFChar: 97 131 8 3 5 -1 7
 i8EPOi8EPOhuE`W
-BDFChar: 136 8 3 5 -1 7
+BDFChar: 98 136 8 3 5 -1 7
 i8EPOi8EPOhuE`W
-BDFChar: 141 8 0 5 -1 7
+BDFChar: 99 144 8 0 5 -1 7
 *#oq<*#oq<)uos=
-BDFChar: 143 8 0 5 -1 7
-*#oq<*#oq<)uos=
-BDFChar: 144 8 0 5 -1 7
-*#oq<*#oq<)uos=
-BDFChar: 152 8 3 5 -1 7
+BDFChar: 100 152 8 3 5 -1 7
 i8EPOi8EPOhuE`W
-BDFChar: 157 8 0 5 -1 7
-*#oq<*#oq<)uos=
-BDFChar: 160 8 0 0 0 0
+BDFChar: 101 160 8 0 0 0 0
 z
-BDFChar: 161 8 4 4 0 8
+BDFChar: 102 161 8 4 4 0 8
 J,k+MJ:N0#J,fQL
-BDFChar: 162 8 2 6 0 6
+BDFChar: 103 162 8 2 6 0 6
 +E3-eLi=I:
-BDFChar: 163 8 2 6 0 7
+BDFChar: 104 163 8 2 6 0 7
 E/9$0n3B86
-BDFChar: 164 8 1 6 3 8
+BDFChar: 105 164 8 1 6 3 8
 KQp$YG_?%s
-BDFChar: 165 8 1 7 0 7
+BDFChar: 106 165 8 1 7 0 7
 mR7%&rX]W#
-BDFChar: 166 8 4 4 -2 8
+BDFChar: 107 166 8 4 4 -2 8
 J:N0#J,k+MJ:N.M
-BDFChar: 167 8 1 6 0 8
+BDFChar: 108 167 8 1 6 0 8
 I)M\>80en.p](9o
-BDFChar: 168 8 2 6 8 8
+BDFChar: 109 168 8 2 6 8 8
 L]@DT
-BDFChar: 169 8 1 7 1 8
+BDFChar: 110 169 8 1 7 1 8
 3(040U7+J0
-BDFChar: 170 8 2 5 2 8
+BDFChar: 111 170 8 2 5 2 8
 ?k@:=DufA-
-BDFChar: 171 8 1 7 0 4
+BDFChar: 112 171 8 1 7 0 4
 ,".5T+ohTC
-BDFChar: 172 8 2 6 4 5
+BDFChar: 113 172 8 2 6 4 5
 p]pj"
-BDFChar: 173 8 1 7 3 3
+BDFChar: 114 173 8 1 7 3 3
 rVuou
-BDFChar: 174 8 1 7 1 8
+BDFChar: 115 174 8 1 7 1 8
 3(1'PZDp;P
-BDFChar: 175 8 0 7 9 9
+BDFChar: 116 175 8 0 7 9 9
 rr<$!
-BDFChar: 176 8 3 5 6 8
+BDFChar: 117 176 8 3 5 6 8
 5bL@B
-BDFChar: 177 8 1 7 0 8
+BDFChar: 118 177 8 1 7 0 8
 &.fEP&.fBQrVuou
-BDFChar: 178 8 3 5 4 8
+BDFChar: 119 178 8 3 5 4 8
 5bK5bhuE`W
-BDFChar: 179 8 3 5 4 8
+BDFChar: 120 179 8 3 5 4 8
 ^`Ylb^]4?7
-BDFChar: 180 8 4 5 7 8
+BDFChar: 121 180 8 4 5 7 8
 5_&h7
-BDFChar: 181 8 2 6 -2 5
+BDFChar: 122 181 8 2 6 -2 5
 LkpkCM"#qF
-BDFChar: 182 8 1 7 0 8
+BDFChar: 123 182 8 1 7 0 8
 Ie<:)F;,E'2?3^W
-BDFChar: 183 8 4 4 3 3
+BDFChar: 124 183 8 4 4 3 3
 J,fQL
-BDFChar: 184 8 3 5 -2 0
+BDFChar: 125 184 8 3 5 -2 0
 5TmiB
-BDFChar: 185 8 3 5 4 8
+BDFChar: 126 185 8 3 5 4 8
 ^d(.MhuE`W
-BDFChar: 186 8 2 5 2 8
+BDFChar: 127 186 8 2 5 2 8
 @$$J3?i]Zr
-BDFChar: 187 8 1 7 0 4
+BDFChar: 128 187 8 1 7 0 4
 LdWFTL]@DT
-BDFChar: 188 8 1 7 0 8
+BDFChar: 129 188 8 1 7 0 8
 ^d:F[ng6u#!WW3#
-BDFChar: 189 8 1 7 0 8
+BDFChar: 130 189 8 1 7 0 8
 ^d:F[oI<1\%KHJ/
-BDFChar: 190 8 1 7 0 8
+BDFChar: 131 190 8 1 7 0 8
 ^`l/pdO%SX!WW3#
-BDFChar: 191 8 2 6 0 8
+BDFChar: 132 191 8 2 6 0 8
 +93N,5_+B@Du]k<
-BDFChar: 192 8 1 7 0 10
+BDFChar: 133 192 8 1 7 0 10
 +:p4<&1AqpHpmB&
-BDFChar: 193 8 1 7 0 10
+BDFChar: 134 193 8 1 7 0 10
 #S8[$&1AqpHpmB&
-BDFChar: 194 8 1 7 0 10
+BDFChar: 135 194 8 1 7 0 10
 &1B4D&1AqpHpmB&
-BDFChar: 195 8 1 7 0 10
+BDFChar: 136 195 8 1 7 0 10
 Eh"fp&1AqpHpmB&
-BDFChar: 196 8 1 7 0 10
+BDFChar: 137 196 8 1 7 0 10
 6i\nP&1AqpHpmB&
-BDFChar: 197 8 1 7 0 10
-&1A)$&1AqpHpmB&
-BDFChar: 198 8 1 7 0 8
-IPNTV>ZC3UScA`j
-BDFChar: 199 8 1 7 -2 8
-4@4RKJ:N/:49uc(
-BDFChar: 200 8 1 7 0 10
-+;"N=5Y-,j5XPGM
-BDFChar: 201 8 1 7 0 10
-#S?u%5Y-,j5XPGM
-BDFChar: 202 8 1 7 0 10
-&1INE5Y-,j5XPGM
-BDFChar: 203 8 1 7 0 10
-6id3Q5Y-,j5XPGM
-BDFChar: 204 8 2 6 0 10
-5TohE+<VdL+<^FZ
-BDFChar: 205 8 2 6 0 10
-&0U`j+<VdL+<^FZ
-BDFChar: 206 8 2 6 0 10
-+AhhU+<VdL+<^FZ
-BDFChar: 207 8 2 6 0 10
-L]I2m+<VdL+<^FZ
-BDFChar: 208 8 1 7 0 8
-pd@G8nj5Z2p](9o
-BDFChar: 209 8 1 7 0 10
-Eh(EcA5lN-9MFRK
-BDFChar: 210 8 1 7 0 10
-+:pM#JqAT+Jj_Qu
-BDFChar: 211 8 1 7 0 10
-#S8s`JqAT+Jj_Qu
-BDFChar: 212 8 1 7 0 10
-&1BM+JqAT+Jj_Qu
-BDFChar: 213 8 1 7 0 10
-Eh#*WJqAT+Jj_Qu
-BDFChar: 214 8 1 7 0 10
-6i]27JqAT+Jj_Qu
-BDFChar: 215 8 1 7 0 6
-Jj_!u-q&Xe
-BDFChar: 216 8 1 7 0 8
-3^ej_P+n[=\,ZL/
-BDFChar: 217 8 1 7 0 10
-+;!s/6psF26ps!7
-BDFChar: 218 8 1 7 0 10
-#S?Dl6psF26ps!7
-BDFChar: 219 8 1 7 0 10
-&1Hs76psF26ps!7
-BDFChar: 220 8 1 7 0 10
-6icXC6psF26ps!7
-BDFChar: 221 8 1 7 0 10
-#S?Dl6msGp&.gf$
-BDFChar: 222 8 1 7 0 8
-i';ZV6:-&bhuE`W
-BDFChar: 223 8 1 7 0 8
-3(-/&>XCbDg].<S
-BDFChar: 224 8 1 7 0 8
+BDFChar: 138 224 8 1 7 0 8
 +:nNt"FPlUH2mpF
-BDFChar: 225 8 1 7 0 8
+BDFChar: 139 225 8 1 7 0 8
 &0Lst"FPlUH2mpF
-BDFChar: 226 8 1 7 0 8
+BDFChar: 140 226 8 1 7 0 8
 &1@O'"FPlUH2mpF
-BDFChar: 227 8 1 7 0 8
+BDFChar: 141 227 8 1 7 0 8
 Eh!,S"FPlUH2mpF
-BDFChar: 228 8 1 7 0 8
+BDFChar: 142 228 8 1 7 0 8
 6i[43"FPlUH2mpF
-BDFChar: 229 8 1 7 0 9
+BDFChar: 143 229 8 1 7 0 9
 &1A(iGQ`DIKR*Uu
-BDFChar: 230 8 1 7 0 5
+BDFChar: 144 230 8 1 7 0 5
 C_D2YP&(*u
-BDFChar: 231 8 1 7 -2 5
+BDFChar: 145 231 8 1 7 -2 5
 I"Hm!Jp[h@
-BDFChar: 232 8 1 7 0 8
+BDFChar: 146 232 8 1 7 0 8
 +:nO#K)U:PHiO-H
-BDFChar: 233 8 1 7 0 8
+BDFChar: 147 233 8 1 7 0 8
 #S6u`K)U:PHiO-H
-BDFChar: 234 8 1 7 0 8
+BDFChar: 148 234 8 1 7 0 8
 &1@O+K)U:PHiO-H
-BDFChar: 235 8 1 7 0 8
+BDFChar: 149 235 8 1 7 0 8
 6i[47K)U:PHiO-H
-BDFChar: 236 8 2 6 0 8
+BDFChar: 150 236 8 2 6 0 8
 5Tg'b+<VdLp](9o
-BDFChar: 237 8 2 6 0 8
+BDFChar: 151 237 8 2 6 0 8
 +@#qb+<VdLp](9o
-BDFChar: 238 8 2 6 0 8
+BDFChar: 152 238 8 2 6 0 8
 +A`'r+<VdLp](9o
-BDFChar: 239 8 2 6 0 8
+BDFChar: 153 239 8 2 6 0 8
 L]@G5+<VdLp](9o
-BDFChar: 240 8 1 7 0 8
+BDFChar: 154 240 8 1 7 0 8
 C_17_I"Hs%HiO-H
-BDFChar: 241 8 1 7 0 8
+BDFChar: 155 241 8 1 7 0 8
 Eh!-^A4/gRmJm4e
-BDFChar: 242 8 1 7 0 8
+BDFChar: 156 242 8 1 7 0 8
 +:nO#JqAT+HiO-H
-BDFChar: 243 8 1 7 0 8
+BDFChar: 157 243 8 1 7 0 8
 #S6u`JqAT+HiO-H
-BDFChar: 244 8 1 7 0 8
+BDFChar: 158 244 8 1 7 0 8
 &1@O+JqAT+HiO-H
-BDFChar: 245 8 1 7 0 8
+BDFChar: 159 245 8 1 7 0 8
 Eh!,WJqAT+HiO-H
-BDFChar: 246 8 1 7 0 8
+BDFChar: 160 246 8 1 7 0 8
 6i[47JqAT+HiO-H
-BDFChar: 247 8 1 7 0 6
+BDFChar: 161 247 8 1 7 0 6
 &-)_0!!!Q1
-BDFChar: 248 8 1 7 0 5
+BDFChar: 162 248 8 1 7 0 5
 IYO;s_YaB6
-BDFChar: 249 8 1 7 0 8
+BDFChar: 163 249 8 1 7 0 8
 +:nOs6psF:2?3^W
-BDFChar: 250 8 1 7 0 8
+BDFChar: 164 250 8 1 7 0 8
 #S7![6psF:2?3^W
-BDFChar: 251 8 1 7 0 8
+BDFChar: 165 251 8 1 7 0 8
 &1@P&6psF:2?3^W
-BDFChar: 252 8 1 7 0 8
+BDFChar: 166 252 8 1 7 0 8
 6i[526psF:2?3^W
-BDFChar: 253 8 1 7 -2 8
+BDFChar: 167 253 8 1 7 -2 8
 #S7"(6prFO&.i4L
-BDFChar: 254 8 1 7 -2 8
+BDFChar: 168 254 8 1 7 -2 8
 ^d(/46:+"*HpHTi
-BDFChar: 255 8 1 7 -2 8
+BDFChar: 169 255 8 1 7 -2 8
 6i[5T6prFO&.i4L
-BDFChar: 258 8 1 7 0 10
+BDFChar: 170 258 8 1 7 0 10
 6oZk3&1AqpHpmB&
-BDFChar: 259 8 1 7 0 8
+BDFChar: 171 259 8 1 7 0 8
 6oY0k"FPlUH2mpF
-BDFChar: 260 8 1 7 -2 8
+BDFChar: 172 260 8 1 7 -2 8
 0G"dD-q&GNmK<^o
-BDFChar: 261 8 1 7 -2 5
+BDFChar: 173 261 8 1 7 -2 5
 GQ`DIKR*b*
-BDFChar: 262 8 1 7 0 10
+BDFChar: 174 262 8 1 7 0 10
 #S9*bJ:N0#J3l?u
-BDFChar: 263 8 1 7 0 8
+BDFChar: 175 263 8 1 7 0 8
 #S6u`Jq/B'HiO-H
-BDFChar: 268 8 1 7 0 10
+BDFChar: 176 268 8 1 7 0 10
 -kJL-J:N0#J3l?u
-BDFChar: 269 8 1 7 0 8
+BDFChar: 177 269 8 1 7 0 8
 -kHB+Jq/B'HiO-H
-BDFChar: 270 8 1 7 0 10
+BDFChar: 178 270 8 1 7 0 10
 :a#O$6:+"*6:CSK
-BDFChar: 271 8 0 7 0 8
+BDFChar: 179 271 8 0 7 0 8
 %0cr_KS5#3IK0?J
-BDFChar: 272 8 1 7 0 8
+BDFChar: 180 272 8 1 7 0 8
 pd@G8nj5Z2p](9o
-BDFChar: 273 8 1 7 0 8
+BDFChar: 181 273 8 1 7 0 8
 "<I\nKS5#3IK0?J
-BDFChar: 280 8 1 7 -2 8
+BDFChar: 182 280 8 1 7 -2 8
 r^&k@GXt(drX]nH
-BDFChar: 281 8 1 7 -2 5
+BDFChar: 183 281 8 1 7 -2 5
 I"M?JJp\+H
-BDFChar: 282 8 1 7 0 10
+BDFChar: 184 282 8 1 7 0 10
 -kQAE5Y-,j5XPGM
-BDFChar: 283 8 1 7 0 8
+BDFChar: 185 283 8 1 7 0 8
 -kHB+K)U:PHiO-H
-BDFChar: 313 8 1 7 0 10
+BDFChar: 186 313 8 1 7 0 10
 &0U`j+<VdL+<pdb
-BDFChar: 314 8 2 6 0 10
+BDFChar: 187 314 8 2 6 0 10
 +@'<W+<VdL+<^FZ
-BDFChar: 317 8 1 7 0 8
+BDFChar: 188 317 8 1 7 0 8
 qBR1++<VdNrVuou
-BDFChar: 318 8 2 7 0 8
+BDFChar: 189 318 8 2 7 0 8
 A1/QC+<VdLp](9o
-BDFChar: 321 8 1 7 0 8
+BDFChar: 190 321 8 1 7 0 8
 p`L\-0HaaIrVuou
-BDFChar: 322 8 2 6 0 8
+BDFChar: 191 322 8 2 6 0 8
 ?m$R?0HaaGp](9o
-BDFChar: 323 8 1 7 0 10
+BDFChar: 192 323 8 1 7 0 10
 #S>9lA5lN-9MFRK
-BDFChar: 324 8 1 7 0 8
+BDFChar: 193 324 8 1 7 0 8
 #S7!gA4/gRmJm4e
-BDFChar: 327 8 1 7 0 10
+BDFChar: 194 327 8 1 7 0 10
 -kO[7A5lN-9MFRK
-BDFChar: 328 8 1 7 0 8
+BDFChar: 195 328 8 1 7 0 8
 -kHC2A4/gRmJm4e
-BDFChar: 336 8 1 7 0 10
+BDFChar: 196 336 8 1 7 0 10
 'IYq/JqAT+Jj_Qu
-BDFChar: 337 8 1 7 0 8
+BDFChar: 197 337 8 1 7 0 8
 'IWs/JqAT+HiO-H
-BDFChar: 338 8 0 5 -1 7
+BDFChar: 198 141 8 0 5 -1 7
 *#oq<*#oq<)uos=
-BDFChar: 339 8 0 5 -1 7
+BDFChar: 199 143 8 0 5 -1 7
 *#oq<*#oq<)uos=
-BDFChar: 340 8 1 7 0 10
+BDFChar: 200 157 8 0 5 -1 7
+*#oq<*#oq<)uos=
+BDFChar: 201 197 8 1 7 0 10
+&1A)$&1AqpHpmB&
+BDFChar: 202 198 8 1 7 0 8
+IPNTV>ZC3UScA`j
+BDFChar: 203 199 8 1 7 -2 8
+4@4RKJ:N/:49uc(
+BDFChar: 204 200 8 1 7 0 10
++;"N=5Y-,j5XPGM
+BDFChar: 205 201 8 1 7 0 10
+#S?u%5Y-,j5XPGM
+BDFChar: 206 202 8 1 7 0 10
+&1INE5Y-,j5XPGM
+BDFChar: 207 203 8 1 7 0 10
+6id3Q5Y-,j5XPGM
+BDFChar: 208 204 8 2 6 0 10
+5TohE+<VdL+<^FZ
+BDFChar: 209 205 8 2 6 0 10
+&0U`j+<VdL+<^FZ
+BDFChar: 210 206 8 2 6 0 10
++AhhU+<VdL+<^FZ
+BDFChar: 211 207 8 2 6 0 10
+L]I2m+<VdL+<^FZ
+BDFChar: 212 208 8 1 7 0 8
+pd@G8nj5Z2p](9o
+BDFChar: 213 209 8 1 7 0 10
+Eh(EcA5lN-9MFRK
+BDFChar: 214 210 8 1 7 0 10
++:pM#JqAT+Jj_Qu
+BDFChar: 215 211 8 1 7 0 10
+#S8s`JqAT+Jj_Qu
+BDFChar: 216 212 8 1 7 0 10
+&1BM+JqAT+Jj_Qu
+BDFChar: 217 213 8 1 7 0 10
+Eh#*WJqAT+Jj_Qu
+BDFChar: 218 214 8 1 7 0 10
+6i]27JqAT+Jj_Qu
+BDFChar: 219 215 8 1 7 0 6
+Jj_!u-q&Xe
+BDFChar: 220 216 8 1 7 0 8
+3^ej_P+n[=\,ZL/
+BDFChar: 221 217 8 1 7 0 10
++;!s/6psF26ps!7
+BDFChar: 222 218 8 1 7 0 10
+#S?Dl6psF26ps!7
+BDFChar: 223 219 8 1 7 0 10
+&1Hs76psF26ps!7
+BDFChar: 224 220 8 1 7 0 10
+6icXC6psF26ps!7
+BDFChar: 225 221 8 1 7 0 10
+#S?Dl6msGp&.gf$
+BDFChar: 226 222 8 1 7 0 8
+i';ZV6:-&bhuE`W
+BDFChar: 227 223 8 1 7 0 8
+3(-/&>XCbDg].<S
+BDFChar: 228 338 8 0 5 -1 7
+*#oq<*#oq<)uos=
+BDFChar: 229 339 8 0 5 -1 7
+*#oq<*#oq<)uos=
+BDFChar: 230 340 8 1 7 0 10
 #S?o#6:-&j84<.O
-BDFChar: 341 8 1 7 0 8
+BDFChar: 231 341 8 1 7 0 8
 #S7"&1*@\^p](9o
-BDFChar: 344 8 1 7 0 10
+BDFChar: 232 344 8 1 7 0 10
 -kQ;C6:-&j84<.O
-BDFChar: 345 8 1 7 0 8
+BDFChar: 233 345 8 1 7 0 8
 -kHCF1*@\^p](9o
-BDFChar: 346 8 1 7 0 10
+BDFChar: 234 346 8 1 7 0 10
 #S;B8J:N"K!ePe"
-BDFChar: 347 8 1 7 0 8
+BDFChar: 235 347 8 1 7 0 8
 #S6u`JoD-MHiO-H
-BDFChar: 350 8 1 7 -2 8
+BDFChar: 236 350 8 1 7 -2 8
 I"Hm!HiaA$Hk7t3
-BDFChar: 351 8 1 7 -2 5
+BDFChar: 237 351 8 1 7 -2 5
 I"H;GJp\+`
-BDFChar: 352 8 1 7 0 10
+BDFChar: 238 352 8 1 7 0 10
 -kLcXJ:N"K!ePe"
-BDFChar: 353 8 1 7 0 8
+BDFChar: 239 353 8 1 7 0 8
 -kHB+JoD-MHiO-H
-BDFChar: 354 8 1 7 -2 8
+BDFChar: 240 354 8 1 7 -2 8
 rfRg(&.fBa3"RbD
-BDFChar: 355 8 2 6 -2 7
+BDFChar: 241 355 8 2 6 -2 7
 5X=g(5X7jo+CG0L
-BDFChar: 356 8 1 7 0 10
+BDFChar: 242 356 8 1 7 0 10
 -kQB@&.fBa&.gf$
-BDFChar: 357 8 2 6 0 7
+BDFChar: 243 357 8 2 6 0 7
 85Se@5X7jo
-BDFChar: 366 8 1 7 0 10
+BDFChar: 244 366 8 1 7 0 10
 &1H*t6psF26ps!7
-BDFChar: 367 8 1 7 0 8
+BDFChar: 245 367 8 1 7 0 8
 &1A+66psF:2?3^W
-BDFChar: 368 8 1 7 0 10
+BDFChar: 246 368 8 1 7 0 10
 'I`B;6psF26ps!7
-BDFChar: 369 8 1 7 0 8
+BDFChar: 247 369 8 1 7 0 8
 ,Y.pZ6psF:2?3^W
-BDFChar: 376 8 0 5 -1 7
+BDFChar: 248 376 8 0 5 -1 7
 *#oq<*#oq<)uos=
-BDFChar: 377 8 1 7 0 10
+BDFChar: 249 377 8 1 7 0 10
 #S?ue":,P]5_At8
-BDFChar: 378 8 1 6 0 8
+BDFChar: 250 378 8 1 6 0 8
 &0LuNL_([squ?]s
-BDFChar: 379 8 1 7 0 10
+BDFChar: 251 379 8 1 7 0 10
 &-2]]":,P]5_At8
-BDFChar: 380 8 1 6 0 8
+BDFChar: 252 380 8 1 6 0 8
 &-)_.L_([squ?]s
-BDFChar: 381 8 1 7 0 10
+BDFChar: 253 381 8 1 7 0 10
 -kQB0":,P]5_At8
-BDFChar: 382 8 1 6 0 8
+BDFChar: 254 382 8 1 6 0 8
 :`oc9L_([squ?]s
-BDFChar: 402 8 0 5 -1 7
+BDFChar: 255 402 8 0 5 -1 7
 *#oq<*#oq<)uos=
-BDFChar: 710 8 0 5 -1 7
+BDFChar: 256 710 8 0 5 -1 7
 *#oq<*#oq<)uos=
-BDFChar: 711 8 3 5 7 8
+BDFChar: 257 711 8 3 5 7 8
 TKiJW
-BDFChar: 728 8 2 6 7 8
+BDFChar: 258 728 8 2 6 7 8
 Li<=o
-BDFChar: 729 8 2 2 8 8
+BDFChar: 259 729 8 2 2 8 8
 J,fQL
-BDFChar: 731 8 3 5 -2 0
+BDFChar: 260 731 8 3 5 -2 0
 5_*5B
-BDFChar: 732 8 0 5 -1 7
+BDFChar: 261 732 8 0 5 -1 7
 *#oq<*#oq<)uos=
-BDFChar: 733 8 2 6 7 8
+BDFChar: 262 733 8 2 6 7 8
 8<<fO
-BDFChar: 1040 8 1 7 0 8
+BDFChar: 263 1040 8 1 7 0 8
 0G"dD-q&GNmJm4e
-BDFChar: 1041 8 1 7 0 8
+BDFChar: 264 1041 8 1 7 0 8
 r^&k8HpU.dqu?]s
-BDFChar: 1042 8 1 7 0 8
+BDFChar: 265 1042 8 1 7 0 8
 r'E_:HpU.dqu?]s
-BDFChar: 1043 8 2 7 0 8
+BDFChar: 266 1043 8 2 7 0 8
 r'We85X7S"huE`W
-BDFChar: 1044 8 1 7 -2 8
+BDFChar: 267 1044 8 1 7 -2 8
 r^9.B6psF2rdo_%
-BDFChar: 1045 8 1 7 0 8
+BDFChar: 268 1045 8 1 7 0 8
 r^&k@GXt(drVuou
-BDFChar: 1046 8 1 7 0 8
+BDFChar: 269 1046 8 1 7 0 8
 P*/dD3)ik?OoPI^
-BDFChar: 1047 8 1 7 0 8
+BDFChar: 270 1047 8 1 7 0 8
 I"DD$49>S9HiO-H
-BDFChar: 1048 8 1 7 0 8
+BDFChar: 271 1048 8 1 7 0 8
 k"JHJ<)dC=c2[hE
-BDFChar: 1049 8 1 7 0 9
+BDFChar: 272 1049 8 1 7 0 9
 36"Wc<)ch-ABk/T
-BDFChar: 1050 8 1 7 0 8
+BDFChar: 273 1050 8 1 7 0 8
 mR0TB?r0B^mJm4e
-BDFChar: 1051 8 1 7 0 8
+BDFChar: 274 1051 8 1 7 0 8
 IO$0a,U=Y2mJm4e
-BDFChar: 1052 8 1 7 0 8
+BDFChar: 275 1052 8 1 7 0 8
 `b]Hj<)c7RmJm4e
-BDFChar: 1053 8 1 7 0 8
+BDFChar: 276 1053 8 1 7 0 8
 mR0H2Hpg@jmJm4e
-BDFChar: 1054 8 1 7 0 8
+BDFChar: 277 1054 8 1 7 0 8
 3(/@MJqASB2uipY
-BDFChar: 1055 8 1 7 0 8
+BDFChar: 278 1055 8 1 7 0 8
 r^9.B6psF2mJm4e
-BDFChar: 1056 8 1 7 0 8
+BDFChar: 279 1056 8 1 7 0 8
 r'E_:HpBq^huE`W
-BDFChar: 1057 8 1 7 0 8
+BDFChar: 280 1057 8 1 7 0 8
 4@4RKJ:N/:49,?]
-BDFChar: 1058 8 1 7 0 8
+BDFChar: 281 1058 8 1 7 0 8
 rfRg(&.fBa2uipY
-BDFChar: 1059 8 1 7 0 8
+BDFChar: 282 1059 8 1 7 0 8
 mR0H26p(SX0E;(Q
-BDFChar: 1060 8 1 7 0 8
+BDFChar: 283 1060 8 1 7 0 8
 3"UJ#P*12(2uipY
-BDFChar: 1061 8 1 7 0 8
+BDFChar: 284 1061 8 1 7 0 8
 mR/HO&1AqpmJm4e
-BDFChar: 1062 8 1 7 -2 8
+BDFChar: 285 1062 8 1 7 -2 8
 mR0H26psF2IKBWP
-BDFChar: 1063 8 1 7 0 8
+BDFChar: 286 1063 8 1 7 0 8
 mR0H26p(ST%KHJ/
-BDFChar: 1064 8 1 7 0 8
+BDFChar: 287 1064 8 1 7 0 8
 ``,o:<)cgrHiO-H
-BDFChar: 1065 8 1 7 -2 8
+BDFChar: 288 1065 8 1 7 -2 8
 ``,o:<)cgrIKBWP
-BDFChar: 1066 8 1 7 0 8
+BDFChar: 289 1066 8 1 7 0 8
 i1Q_c4<bsnHiO-H
-BDFChar: 1067 8 0 7 0 8
+BDFChar: 290 1067 8 0 7 0 8
 k<_L%E_8qrpAb0n
-BDFChar: 1068 8 1 7 0 8
+BDFChar: 291 1068 8 1 7 0 8
 i'9OmHpU.dqu?]s
-BDFChar: 1069 8 1 7 0 8
+BDFChar: 292 1069 8 1 7 0 8
 G_?,B4sC&]GQ7^D
-BDFChar: 1070 8 1 7 0 8
+BDFChar: 293 1070 8 1 7 0 8
 lr$_ZE`,e5li7"c
-BDFChar: 1071 8 1 7 0 8
+BDFChar: 294 1071 8 1 7 0 8
 IY<B-Hk[hoc2[hE
-BDFChar: 1072 8 1 7 0 5
+BDFChar: 295 1072 8 1 7 0 5
 GQ`DIKR*Uu
-BDFChar: 1073 8 1 7 0 8
+BDFChar: 296 1073 8 1 7 0 8
 "F,HEJqAT+HiO-H
-BDFChar: 1074 8 1 6 0 7
+BDFChar: 297 1074 8 1 6 0 7
 E/9VNKS5#'
-BDFChar: 1075 8 1 6 0 5
+BDFChar: 298 1075 8 1 6 0 5
 G_?oAKQmIs
-BDFChar: 1076 8 1 6 -2 5
+BDFChar: 299 1076 8 1 6 -2 5
 G_Ca'Hk[hC
-BDFChar: 1077 8 1 7 0 5
+BDFChar: 300 1077 8 1 7 0 5
 I"M?JJp[Ou
-BDFChar: 1078 8 1 7 0 5
+BDFChar: 301 1078 8 1 7 0 5
 P#OD#<0@4]
-BDFChar: 1079 8 1 7 0 5
+BDFChar: 302 1079 8 1 7 0 5
 I"E=>Jp[Ou
-BDFChar: 1080 8 1 7 0 5
+BDFChar: 303 1080 8 1 7 0 5
 mR0H29JukN
-BDFChar: 1081 8 1 7 0 8
+BDFChar: 304 1081 8 1 7 0 8
 82(&36psF:2?3^W
-BDFChar: 1082 8 1 7 0 5
+BDFChar: 305 1082 8 1 7 0 5
 bXbQL9]c<T
-BDFChar: 1083 8 1 7 0 5
+BDFChar: 306 1083 8 1 7 0 5
 *$cdT,fTfa
-BDFChar: 1084 8 1 7 0 5
+BDFChar: 307 1084 8 1 7 0 5
 6ptj-<5nn<
-BDFChar: 1085 8 1 7 0 5
+BDFChar: 308 1085 8 1 7 0 5
 mR2Fj7.($T
-BDFChar: 1086 8 1 7 0 5
+BDFChar: 309 1086 8 1 7 0 5
 I"Hs%Jp[Ou
-BDFChar: 1087 8 1 7 0 5
+BDFChar: 310 1087 8 1 7 0 5
 fORB<7.($T
-BDFChar: 1088 8 1 7 -2 5
+BDFChar: 311 1088 8 1 7 -2 5
 r'E_:6@;&V
-BDFChar: 1089 8 1 7 0 5
+BDFChar: 312 1089 8 1 7 0 5
 I"Hm!Jp[Ou
-BDFChar: 1090 8 1 7 0 5
+BDFChar: 313 1090 8 1 7 0 5
 kYtM\<)ru!
-BDFChar: 1091 8 1 7 -2 5
+BDFChar: 314 1091 8 1 7 -2 5
 mR0H24;9%X
-BDFChar: 1092 8 1 7 -2 6
+BDFChar: 315 1092 8 1 7 -2 6
 3"UJ#P*12(2uipY
-BDFChar: 1093 8 1 7 0 5
+BDFChar: 316 1093 8 1 7 0 5
 mR0#o7.($T
-BDFChar: 1094 8 1 7 -2 5
+BDFChar: 317 1094 8 1 7 -2 5
 mR0H29JuqT
-BDFChar: 1095 8 1 7 0 5
+BDFChar: 318 1095 8 1 7 0 5
 mR0H*":bD3
-BDFChar: 1096 8 1 7 0 5
+BDFChar: 319 1096 8 1 7 0 5
 ``,o:<."ZG
-BDFChar: 1097 8 1 7 -2 5
+BDFChar: 320 1097 8 1 7 -2 5
 ``,o:<.4lO
-BDFChar: 1098 8 1 7 0 5
+BDFChar: 321 1098 8 1 7 0 5
 i1N1V,('@j
-BDFChar: 1099 8 0 7 0 5
+BDFChar: 322 1099 8 0 7 0 5
 k<a2]9(r;c
-BDFChar: 1100 8 2 7 0 5
+BDFChar: 323 1100 8 2 7 0 5
 i';NT7/-`^
-BDFChar: 1101 8 1 7 0 5
+BDFChar: 324 1101 8 1 7 0 5
 I"EC@Jp[Ou
-BDFChar: 1102 8 1 7 0 5
+BDFChar: 325 1102 8 1 7 0 5
 lr%k%;X=A`
-BDFChar: 1103 8 2 7 0 5
+BDFChar: 326 1103 8 2 7 0 5
 I#*T'8=TY[
-BDFChar: 8211 8 3 5 4 4
+BDFChar: 327 8211 8 3 5 4 4
 huE`W
-BDFChar: 8212 8 1 7 4 4
+BDFChar: 328 8212 8 1 7 4 4
 rVuou
-BDFChar: 8216 8 3 4 7 8
+BDFChar: 329 8216 8 3 4 7 8
 5_&h7
-BDFChar: 8217 8 3 4 7 8
+BDFChar: 330 8217 8 3 4 7 8
 5_&h7
-BDFChar: 8218 8 3 4 -1 0
+BDFChar: 331 8218 8 3 4 -1 0
 5_&h7
-BDFChar: 8220 8 2 6 7 8
+BDFChar: 332 8220 8 2 6 7 8
 O@T?O
-BDFChar: 8221 8 2 6 7 8
+BDFChar: 333 8221 8 2 6 7 8
 8<<fO
-BDFChar: 8222 8 1 5 -1 0
+BDFChar: 334 8222 8 1 5 -1 0
 8<<fO
-BDFChar: 8224 8 1 5 0 8
+BDFChar: 335 8224 8 1 5 0 8
 +<^G%+<VdL+92BA
-BDFChar: 8225 8 1 5 0 8
+BDFChar: 336 8225 8 1 5 0 8
 +<^G%+<^G%+92BA
-BDFChar: 8226 8 2 5 3 5
+BDFChar: 337 8226 8 2 5 3 5
 @.7P(
-BDFChar: 8230 8 1 5 0 0
+BDFChar: 338 8230 8 1 5 0 0
 VuQet
-BDFChar: 8240 8 0 7 0 8
+BDFChar: 339 8240 8 0 7 0 8
 +]9Qk&0OlQ&c_n3
-BDFChar: 8249 8 3 5 0 4
+BDFChar: 340 8249 8 3 5 0 4
 +@(HB+92BA
-BDFChar: 8250 8 2 4 0 4
+BDFChar: 341 8250 8 2 4 0 4
 J3Y5BJ,fQL
-BDFChar: 8364 8 0 5 -1 7
+BDFChar: 342 8364 8 0 5 -1 7
 *#oq<*#oq<)uos=
-BDFChar: 8482 8 0 7 6 8
+BDFChar: 343 8482 8 0 7 6 8
 qc-Jn
+BDFChar: 344 8470 8 0 7 0 8
+`ai^`<*)ae`W,u=
+BDFChar: 345 1025 8 1 7 0 10
+6id3Q5Y-,j5XPGM
+BDFChar: 346 1105 8 0 7 -1 9
+!$VCC5!aZ`5s>8K
 EndBitmapFont
 EndSplineFont
