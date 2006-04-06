@@ -206,14 +206,23 @@ static HRESULT WINAPI WebBrowser_GoSearch(IWebBrowser2 *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WebBrowser_Navigate(IWebBrowser2 *iface, BSTR URL,
+static HRESULT WINAPI WebBrowser_Navigate(IWebBrowser2 *iface, BSTR szUrl,
                                   VARIANT *Flags, VARIANT *TargetFrameName,
                                   VARIANT *PostData, VARIANT *Headers)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%s %p %p %p %p)\n", This, debugstr_w(URL), Flags, TargetFrameName,
+    VARIANT url;
+    HRESULT r;
+
+    FIXME("(%p)->(%s %p %p %p %p)\n", This, debugstr_w(szUrl), Flags, TargetFrameName,
           PostData, Headers);
-    return E_NOTIMPL;
+
+    V_VT(&url) = VT_BSTR;
+    V_BSTR(&url) = szUrl;
+    r = IWebBrowser2_Navigate2(iface, &url, Flags,
+                               TargetFrameName, PostData, Headers);
+
+    return r;
 }
 
 static HRESULT WINAPI WebBrowser_Refresh(IWebBrowser2 *iface)
