@@ -25,13 +25,20 @@
 #include <assert.h>
 #include "wine/test.h"
 
+/* defines for the TranslateInfString/Ex tests */
 #define TEST_STRING1 "\\Application Name"
 #define TEST_STRING2 "%49001%\\Application Name"
+
+/* defines for the SetPerUserSecValues tests */
+#define GUID_KEY    "SOFTWARE\\Microsoft\\Active Setup\\Installed Components\\guid"
+#define REG_VAL_EXISTS(key, value)   !RegQueryValueEx(key, value, NULL, NULL, NULL, NULL)
+#define OPEN_GUID_KEY() !RegOpenKey(HKEY_LOCAL_MACHINE, GUID_KEY, &guid)
 
 static HRESULT (WINAPI *pCloseINFEngine)(HINF);
 static HRESULT (WINAPI *pDelNode)(LPCSTR,DWORD);
 static HRESULT (WINAPI *pGetVersionFromFile)(LPSTR,LPDWORD,LPDWORD,BOOL);
 static HRESULT (WINAPI *pOpenINFEngine)(PCSTR,PCSTR,DWORD,HINF*,PVOID);
+static HRESULT (WINAPI *pSetPerUserSecValues)(PPERUSERSECTION pPerUser);
 static HRESULT (WINAPI *pTranslateInfString)(LPSTR,LPSTR,LPSTR,LPSTR,LPSTR,DWORD,LPDWORD,LPVOID);
 static HRESULT (WINAPI *pTranslateInfStringEx)(HINF,PCSTR,PCSTR,PCSTR,PSTR,DWORD,PDWORD,PVOID);
 
@@ -62,11 +69,12 @@ static BOOL init_function_pointers(void)
     pDelNode = (void *)GetProcAddress(hAdvPack, "DelNode");
     pGetVersionFromFile = (void *)GetProcAddress(hAdvPack, "GetVersionFromFile");
     pOpenINFEngine = (void*)GetProcAddress(hAdvPack, "OpenINFEngine");
+    pSetPerUserSecValues = (void*)GetProcAddress(hAdvPack, "SetPerUserSecValues");
     pTranslateInfString = (void *)GetProcAddress(hAdvPack, "TranslateInfString");
     pTranslateInfStringEx = (void*)GetProcAddress(hAdvPack, "TranslateInfStringEx");
 
     if (!pCloseINFEngine || !pDelNode || !pGetVersionFromFile ||
-        !pOpenINFEngine || !pTranslateInfString)
+        !pOpenINFEngine || !pSetPerUserSecValues || !pTranslateInfString)
         return FALSE;
 
     return TRUE;
@@ -389,6 +397,106 @@ static void translateinfstringex_test(void)
     DeleteFileA("c:\\test.inf");
 }
 
+static BOOL check_reg_str(HKEY hkey, LPSTR name, LPSTR value)
+{
+    DWORD size = MAX_PATH;
+    char check[MAX_PATH];
+
+    if (RegQueryValueEx(hkey, name, NULL, NULL, (LPBYTE)check, &size))
+        return FALSE;
+
+    return !lstrcmp(check, value);
+}
+
+static BOOL check_reg_dword(HKEY hkey, LPSTR name, DWORD value)
+{
+    DWORD size = sizeof(DWORD);
+    DWORD check;
+
+    if (RegQueryValueEx(hkey, name, NULL, NULL, (LPBYTE)&check, &size))
+        return FALSE;
+
+    return (check == value);
+}
+
+static void setperusersecvalues_test()
+{
+    PERUSERSECTION peruser;
+    HRESULT hr;
+    HKEY guid;
+
+    lstrcpy(peruser.szGUID, "guid");
+    lstrcpy(peruser.szDispName, "displayname");
+    lstrcpy(peruser.szLocale, "locale");
+    lstrcpy(peruser.szStub, "stub");
+    lstrcpy(peruser.szVersion, "1,1,1,1");
+    lstrcpy(peruser.szCompID, "compid");
+    peruser.dwIsInstalled = 1;
+    peruser.bRollback = FALSE;
+
+    /* set initial values */
+    hr = pSetPerUserSecValues(&peruser);
+    todo_wine
+    {
+        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+        ok(OPEN_GUID_KEY(), "Expected guid key to exist\n");
+        ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
+        ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
+        ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
+        ok(check_reg_str(guid, "StubPath", "stub"), "Expected stub\n");
+        ok(check_reg_str(guid, "Version", "1,1,1,1"), "Expected 1,1,1,1\n");
+        ok(check_reg_dword(guid, "IsInstalled", 1), "Expected 1\n");
+    }
+    ok(!REG_VAL_EXISTS(guid, "OldDisplayName"), "Expected OldDisplayName to not exist\n");
+    ok(!REG_VAL_EXISTS(guid, "OldLocale"), "Expected OldLocale to not exist\n");
+    ok(!REG_VAL_EXISTS(guid, "OldStubPath"), "Expected OldStubPath to not exist\n");
+    ok(!REG_VAL_EXISTS(guid, "OldVersion"), "Expected OldVersion to not exist\n");
+    ok(!REG_VAL_EXISTS(guid, "RealStubPath"), "Expected RealStubPath to not exist\n");
+
+    /* raise the version, but bRollback is FALSE, so vals not saved */
+    lstrcpy(peruser.szVersion, "2,1,1,1");
+    hr = pSetPerUserSecValues(&peruser);
+    todo_wine
+    {
+        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+        ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
+        ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
+        ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
+        ok(check_reg_str(guid, "StubPath", "stub"), "Expected stub\n");
+        ok(check_reg_str(guid, "Version", "2,1,1,1"), "Expected 2,1,1,1\n");
+        ok(check_reg_dword(guid, "IsInstalled", 1), "Expected 1\n");
+    }
+    ok(!REG_VAL_EXISTS(guid, "OldDisplayName"), "Expected OldDisplayName to not exist\n");
+    ok(!REG_VAL_EXISTS(guid, "OldLocale"), "Expected OldLocale to not exist\n");
+    ok(!REG_VAL_EXISTS(guid, "OldStubPath"), "Expected OldStubPath to not exist\n");
+    ok(!REG_VAL_EXISTS(guid, "OldVersion"), "Expected OldVersion to not exist\n");
+    ok(!REG_VAL_EXISTS(guid, "RealStubPath"), "Expected RealStubPath to not exist\n");
+
+    /* raise the version again, bRollback is TRUE so vals are saved */
+    peruser.bRollback = 1;
+    lstrcpy(peruser.szVersion, "3,1,1,1");
+    hr = pSetPerUserSecValues(&peruser);
+    todo_wine
+    {
+        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+        ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
+        ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
+        ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
+        ok(check_reg_dword(guid, "IsInstalled", 1), "Expected 1\n");
+        ok(check_reg_str(guid, "OldDisplayName", "displayname"), "Expected displayname\n");
+        ok(check_reg_str(guid, "OldLocale", "locale"), "Expected locale\n");
+        ok(check_reg_str(guid, "RealStubPath", "stub"), "Expected stub\n");
+        ok(check_reg_str(guid, "OldStubPath", "stub"), "Expected stub\n");
+        ok(check_reg_str(guid, "OldVersion", "2,1,1,1"), "Expected 2,1,1,1\n");
+        ok(check_reg_str(guid, "StubPath",
+           "rundll32.exe advpack.dll,UserInstStubWrapper guid"),
+           "Expected real stub\n");
+        ok(check_reg_str(guid, "Version", "3,1,1,1"), "Expected 3,1,1,1\n");
+    }
+
+    RegDeleteKey(HKEY_LOCAL_MACHINE, GUID_KEY);
+}
+
 START_TEST(advpack)
 {
     if (!init_function_pointers())
@@ -398,6 +506,7 @@ START_TEST(advpack)
 
     version_test();
     delnode_test();
+    setperusersecvalues_test();
     translateinfstring_test();
     translateinfstringex_test();
 }
