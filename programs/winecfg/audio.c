@@ -60,6 +60,22 @@ static const char* DSound_HW_Accels[] = {
   NULL
 };
 
+static const char* DSound_Rates[] = {
+  "48000",
+  "44100",
+  "22050",
+  "16000",
+  "11025",
+  "8000",
+  NULL
+};
+
+static const char* DSound_Bits[] = {
+  "8",
+  "16",
+  NULL
+};
+
 static const AUDIO_DRIVER sAudioDrivers[] = {
   {"ALSA", "alsa"},
   {"aRts", "arts"},
@@ -635,6 +651,30 @@ static void initAudioDlg (HWND hDlg)
     }
     HeapFree(GetProcessHeap(), 0, buf);
 
+    SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_RESETCONTENT, 0, 0);
+    for (i = 0; NULL != DSound_Rates[i]; ++i) {
+      SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_ADDSTRING, 0, (LPARAM) DSound_Rates[i]);
+    }
+    buf = get_reg_key(config_key, keypath("DirectSound"), "DefaultSampleRate", "22050");
+    for (i = 0; NULL != DSound_Rates[i]; ++i) {
+      if (strcmp(buf, DSound_Rates[i]) == 0) {
+	SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_SETCURSEL, i, 0);
+	break ;
+      }
+    }
+
+    SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_RESETCONTENT, 0, 0);
+    for (i = 0; NULL != DSound_Bits[i]; ++i) {
+      SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_ADDSTRING, 0, (LPARAM) DSound_Bits[i]);
+    }
+    buf = get_reg_key(config_key, keypath("DirectSound"), "DefaultBitsPerSample", "8");
+    for (i = 0; NULL != DSound_Bits[i]; ++i) {
+      if (strcmp(buf, DSound_Bits[i]) == 0) {
+	SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_SETCURSEL, i, 0);
+	break ;
+      }
+    }
+
     buf = get_reg_key(config_key, keypath("DirectSound"), "EmulDriver", "N");
     if (IS_OPTION_TRUE(*buf))
       CheckDlgButton(hDlg, IDC_DSOUND_DRV_EMUL, BST_CHECKED);
@@ -661,6 +701,22 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	      SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 	      selected_dsound_accel = SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_GETCURSEL, 0, 0);
 	      set_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", DSound_HW_Accels[selected_dsound_accel]);
+	    }
+	    break;
+          case IDC_DSOUND_RATES:
+	    if (HIWORD(wParam) == CBN_SELCHANGE) {
+	      int selected_dsound_rate;
+	      SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+	      selected_dsound_rate = SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_GETCURSEL, 0, 0);
+	      set_reg_key(config_key, keypath("DirectSound"), "DefaultSampleRate", DSound_Rates[selected_dsound_rate]);
+	    }
+	    break;
+          case IDC_DSOUND_BITS:
+	    if (HIWORD(wParam) == CBN_SELCHANGE) {
+	      int selected_dsound_bits;
+	      SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+	      selected_dsound_bits = SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_GETCURSEL, 0, 0);
+	      set_reg_key(config_key, keypath("DirectSound"), "DefaultBitsPerSample", DSound_Bits[selected_dsound_bits]);
 	    }
 	    break;
           case IDC_DSOUND_DRV_EMUL:

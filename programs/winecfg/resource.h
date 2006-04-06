@@ -151,6 +151,8 @@
 #define IDB_CHECKBOX                    1306
 #define IDB_DEVICE                      1307
 #define IDS_AUDIO_MISSING               1308
+#define IDC_DSOUND_RATES                1309
+#define IDC_DSOUND_BITS                 1310
 
 /* desktop integration tab */
 #define IDC_THEME_COLORCOMBO            1401
