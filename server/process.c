@@ -709,27 +709,50 @@ void enum_processes( int (*cb)(struct process*, void*), void *user )
     }
 }
 
-
 /* read data from a process memory space */
-/* len is the total size (in ints) */
-static int read_process_memory( struct process *process, const int *addr, size_t len, int *dest )
+static int read_process_memory( struct process *process, const void *ptr, size_t size, char *dest )
 {
     struct thread *thread = get_process_first_thread( process );
-
-    assert( !((unsigned int)addr % sizeof(int)) );  /* address must be aligned */
+    unsigned int first_offset, last_offset, len;
+    int data, *addr;
 
     if (!thread)  /* process is dead */
     {
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
+
+    first_offset = (unsigned long)ptr % sizeof(int);
+    last_offset = (size + first_offset) % sizeof(int);
+    if (!last_offset) last_offset = sizeof(int);
+
+    addr = (int *)((char *)ptr - first_offset);
+    len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
+
     if (suspend_for_ptrace( thread ))
     {
-        while (len > 0)
+        if (len > 1)
         {
-            if (read_thread_int( thread, addr++, dest++ ) == -1) break;
+            if (read_thread_int( thread, addr++, &data ) == -1) goto done;
+            memcpy( dest, (char *)&data + first_offset, sizeof(int) - first_offset );
+            dest += sizeof(int) - first_offset;
+            first_offset = 0;
             len--;
         }
+
+        while (len > 1)
+        {
+            if (read_thread_int( thread, addr++, &data ) == -1) goto done;
+            memcpy( dest, &data, sizeof(int) );
+            dest += sizeof(int);
+            len--;
+        }
+
+        if (read_thread_int( thread, addr++, &data ) == -1) goto done;
+        memcpy( dest, (char *)&data + first_offset, last_offset - first_offset );
+        len--;
+
+    done:
         resume_after_ptrace( thread );
     }
     return !len;
@@ -1071,19 +1094,13 @@ DECL_HANDLER(read_process_memory)
 
     if (len)
     {
-        unsigned int start_offset = (unsigned int)req->addr % sizeof(int);
-        unsigned int nb_ints = (len + start_offset + sizeof(int) - 1) / sizeof(int);
-        const int *start = (int *)((char *)req->addr - start_offset);
-        int *buffer = mem_alloc( nb_ints * sizeof(int) );
+        char *buffer = mem_alloc( len );
         if (buffer)
         {
-            if (read_process_memory( process, start, nb_ints, buffer ))
-            {
-                /* move start of requested data to start of buffer */
-                if (start_offset) memmove( buffer, (char *)buffer + start_offset, len );
+            if (read_process_memory( process, req->addr, len, buffer ))
                 set_reply_data_ptr( buffer, len );
-            }
-            else free( buffer );
+            else
+                free( buffer );
         }
     }
     release_object( process );
