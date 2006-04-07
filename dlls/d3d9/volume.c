@@ -172,7 +172,7 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DVOLUME_D
 HRESULT WINAPI IDirect3DVolume9Impl_LockBox(LPDIRECT3DVOLUME9 iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) relay %p %p %p %ld\n", This, This->wineD3DVolume, pLockedVolume, pBox, Flags);
-    return IWineD3DVolume_LockBox(This->wineD3DVolume, pLockedVolume, pBox, Flags);
+    return IWineD3DVolume_LockBox(This->wineD3DVolume, pLockedVolume, (WINED3DBOX *) pBox, Flags);
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_UnlockBox(LPDIRECT3DVOLUME9 iface) {

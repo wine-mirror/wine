@@ -159,7 +159,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_D
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
+HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     FIXME("(%p) : pBox=%p stub\n", This, pBox);
 
@@ -246,7 +246,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_CleanDirtyBox(IWineD3DVolume *iface) {
   return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST D3DBOX* pDirtyBox) {
+HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST WINED3DBOX* pDirtyBox) {
   IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
   This->dirty = TRUE;
    if (NULL != pDirtyBox) {

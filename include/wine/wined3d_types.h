@@ -702,6 +702,15 @@ typedef struct _WINED3DLOCKED_BOX {
 } WINED3DLOCKED_BOX;
 
 
+typedef struct _WINED3DBOX {
+    UINT                Left;
+    UINT                Top;
+    UINT                Right;
+    UINT                Bottom;
+    UINT                Front;
+    UINT                Back;
+} WINED3DBOX;
+
 /*Vertex cache optimization hints.*/
 typedef struct WINED3DDEVINFO_VCACHE {
     /*Must be a 4 char code FOURCC (e.g. CACH)*/

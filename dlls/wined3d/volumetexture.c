@@ -229,7 +229,7 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTexture *i
     return WINED3D_OK;
 
 }
-HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *iface, UINT Level, WINED3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
+HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *iface, UINT Level, WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) {
     HRESULT hr;
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
 
@@ -259,7 +259,7 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture *iface,
     return hr;
 }
 
-HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *iface, CONST D3DBOX* pDirtyBox) {
+HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *iface, CONST WINED3DBOX* pDirtyBox) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
     TRACE("(%p) : dirtyfication of volume Level (0)\n", This);

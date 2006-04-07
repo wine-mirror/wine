@@ -761,8 +761,8 @@ typedef struct IWineD3DVolumeImpl
 
     BOOL                    lockable;
     BOOL                    locked;
-    D3DBOX                  lockedBox;
-    D3DBOX                  dirtyBox;
+    WINED3DBOX              lockedBox;
+    WINED3DBOX              dirtyBox;
     BOOL                    dirty;
 
 

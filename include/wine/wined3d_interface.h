@@ -1026,9 +1026,9 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
     /*** IWineD3DVolumeTexture methods ***/
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level, WINED3DVOLUME_DESC *pDesc) PURE;
     STDMETHOD(GetVolumeLevel)(THIS_ UINT Level, struct IWineD3DVolume** ppVolumeLevel) PURE;
-    STDMETHOD(LockBox)(THIS_ UINT Level, WINED3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) PURE;
+    STDMETHOD(LockBox)(THIS_ UINT Level, WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) PURE;
     STDMETHOD(UnlockBox)(THIS_ UINT Level) PURE;
-    STDMETHOD(AddDirtyBox)(THIS_ CONST D3DBOX* pDirtyBox) PURE;
+    STDMETHOD(AddDirtyBox)(THIS_ CONST WINED3DBOX* pDirtyBox) PURE;
 };
 #undef INTERFACE
 
@@ -1174,9 +1174,9 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
     STDMETHOD(GetContainerParent)(THIS_ IUnknown **ppContainerParent) PURE;
     STDMETHOD(GetContainer)(THIS_ REFIID  riid, void ** ppContainer) PURE;
     STDMETHOD(GetDesc)(THIS_ WINED3DVOLUME_DESC * pDesc) PURE;
-    STDMETHOD(LockBox)(THIS_ WINED3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) PURE;
+    STDMETHOD(LockBox)(THIS_ WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) PURE;
     STDMETHOD(UnlockBox)(THIS) PURE;
-    STDMETHOD(AddDirtyBox)(THIS_ CONST D3DBOX* pDirtyBox) PURE;
+    STDMETHOD(AddDirtyBox)(THIS_ CONST WINED3DBOX* pDirtyBox) PURE;
     STDMETHOD(CleanDirtyBox)(THIS) PURE;
     STDMETHOD(LoadTexture)(THIS_ UINT gl_level) PURE;
     STDMETHOD(SetContainer)(THIS_ IWineD3DBase *container) PURE;

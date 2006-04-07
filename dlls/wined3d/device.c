@@ -998,7 +998,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     /** Note: Volume textures cannot be dxtn, hence no need to check here **/
     object->lockable            = TRUE;
     object->locked              = FALSE;
-    memset(&object->lockedBox, 0, sizeof(D3DBOX));
+    memset(&object->lockedBox, 0, sizeof(WINED3DBOX));
     object->dirty               = TRUE;
 
     return IWineD3DVolume_AddDirtyBox((IWineD3DVolume *) object, NULL);
