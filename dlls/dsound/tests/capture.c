@@ -471,11 +471,6 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc=pDirectSoundCaptureCreate(lpGuid,NULL,NULL);
     ok(rc==DSERR_INVALIDPARAM,"DirectSoundCaptureCreate() should have "
        "returned DSERR_INVALIDPARAM, returned: %s\n",DXGetErrorString8(rc));
-    if (rc==DS_OK) {
-	ref=IDirectSoundCapture_Release(dsco);
-	ok(ref==0,"IDirectSoundCapture_Release() has %d references, should "
-           "have 0\n",ref);
-    }
 
     rc=pDirectSoundCaptureCreate(lpGuid,&dsco,NULL);
     ok((rc==DS_OK)||(rc==DSERR_NODRIVER)||(rc==E_FAIL)||(rc==DSERR_ALLOCATED),
