@@ -1233,9 +1233,10 @@ static struct key_value *parse_value_name( struct key *key, const char *buffer, 
     }
     else
     {
-        if ((*len = parse_strW( info->tmp, &maxlen, buffer + 1, '\"' )) == -1) goto error;
+        int r = parse_strW( info->tmp, &maxlen, buffer + 1, '\"' );
+        if (r == -1) goto error;
+        *len = r + 1; /* for initial quote */
         name.len = maxlen - sizeof(WCHAR);
-        (*len)++;  /* for initial quote */
     }
     while (isspace(buffer[*len])) (*len)++;
     if (buffer[*len] != '=') goto error;
