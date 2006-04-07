@@ -202,7 +202,7 @@ AntiMonikerImpl_GetSizeMax(IMoniker* iface, ULARGE_INTEGER* pcbSize)
 {
     TRACE("(%p,%p)\n",iface,pcbSize);
 
-    if (pcbSize!=NULL)
+    if (!pcbSize)
         return E_POINTER;
 
     /* for more details see AntiMonikerImpl_Save coments */
