@@ -100,18 +100,20 @@ static BOOL SHDOCVW_GetMozctlPath( LPWSTR szPath, DWORD sz )
  */
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
 {
-	TRACE("%p 0x%lx %p\n", hinst, fdwReason, fImpLoad);
-	switch (fdwReason)
-	{
-	  case DLL_PROCESS_ATTACH:
-	    shdocvw_hinstance = hinst;
-	    break;
-	  case DLL_PROCESS_DETACH:
-	    if (SHDOCVW_hshell32) FreeLibrary(SHDOCVW_hshell32);
-	    if (hMozCtl && hMozCtl != (HMODULE)~0UL) FreeLibrary(hMozCtl);
-	    break;
-	}
-	return TRUE;
+    TRACE("%p 0x%lx %p\n", hinst, fdwReason, fImpLoad);
+    switch (fdwReason)
+    {
+        case DLL_PROCESS_ATTACH:
+        shdocvw_hinstance = hinst;
+        register_iewindow_class();
+        break;
+    case DLL_PROCESS_DETACH:
+        if (SHDOCVW_hshell32) FreeLibrary(SHDOCVW_hshell32);
+        if (hMozCtl && hMozCtl != (HMODULE)~0UL) FreeLibrary(hMozCtl);
+        unregister_iewindow_class();
+        break;
+    }
+    return TRUE;
 }
 
 /*************************************************************************
@@ -664,7 +666,25 @@ DWORD WINAPI StopWatchAFORWARD(DWORD dwClass, LPCSTR lpszStr, DWORD dwUnknown,
  */
 DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
 {
+    LPWSTR url;
+    DWORD len;
+
     FIXME("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
+
+    CoInitialize(NULL);
+
+    /* FIXME: parse the command line properly, handle -Embedding */
+
+    len = MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, NULL, 0);
+    url = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, url, len);
+
+    create_ie_window(url);
+
+    HeapFree(GetProcessHeap(), 0, url);
+
+    CoUninitialize();
+
     ExitProcess(0);
     return 0;
 }

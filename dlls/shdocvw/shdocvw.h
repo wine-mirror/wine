@@ -185,5 +185,8 @@ static inline void SHDOCVW_LockModule(void) { InterlockedIncrement( &SHDOCVW_ref
 static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_refCount ); }
 
 extern HINSTANCE shdocvw_hinstance;
+extern void register_iewindow_class(void);
+extern void unregister_iewindow_class(void);
+extern BOOL create_ie_window(LPCWSTR url);
 
 #endif /* __WINE_SHDOCVW_H */
