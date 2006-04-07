@@ -117,7 +117,7 @@ static char *build_path( const char *dir, const char *name )
 }
 
 /* return the directory that contains the library at run-time */
-static const char *get_runtime_libdir(void)
+static char *get_runtime_libdir(void)
 {
 #ifdef HAVE_DLADDR
     Dl_info info;
@@ -279,8 +279,8 @@ static char *running_from_build_dir( const char *basedir, const char *bindir )
 void wine_init_argv0_path( const char *argv0 )
 {
     size_t size, len;
-    const char *p, *libdir, *basename;
-    char *cwd;
+    const char *p, *basename;
+    char *cwd, *libdir;
 
     if (!(p = strrchr( argv0, '/' )))
         basename = argv0;
@@ -292,10 +292,14 @@ void wine_init_argv0_path( const char *argv0 )
     if ((libdir = get_runtime_libdir()))
     {
         bindir = build_path( libdir, LIB_TO_BINDIR );
-        if ((build_dir = running_from_build_dir( libdir, bindir ))) goto in_build_dir;
-
+        if ((build_dir = running_from_build_dir( libdir, bindir )))
+        {
+            free( libdir );
+            goto in_build_dir;
+        }
         dlldir = build_path( libdir, LIB_TO_DLLDIR );
         datadir = build_path( libdir, LIB_TO_DATADIR );
+        free( libdir );
         return;
     }
 
