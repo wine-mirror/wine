@@ -4,6 +4,7 @@
  *
  * Copyright 2003 Dan Kegel
  * Copyright 2003 Ivan Leo Puoti
+ * Copyright 2006 Antonio Codazzi
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,10 +25,10 @@ LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
 {
-STRING_USAGE,                                   "Avvia un programma, o apri un documento con il programma normalmente usato per i programmi con qull'estensione \n\
+STRING_USAGE,                                   "Avvia un programma, o apri un documento con il programma normalmente usato per i files con quell'estensione \n\
 Usage: \n\
-start [options] nome del programma [...] \n\
-start [options] nomde del documento \n\
+start [options] nome_programma [...] \n\
+start [options] nome_documento \n\
  \n\
 Options: \n\
 /M[inimized] Avvia il programma minimizzato. \n\
@@ -37,7 +38,7 @@ Options: \n\
 /L           Mostra l'accordo di licenza con l'utente finale. \n\
  \n\
 start.exe versione 0.2 Copyright (C) 2003, Dan Kegel \n\
-Start è fornito senza nessuna garanzia, per ulteriori informazioni eseguire start con l'opzione /L. \n\
+Start è fornito SENZA GARANZIA di alcun tipo; per ulteriori informazioni eseguire start con l'opzione /L. \n\
 Questo è software libero, e lo potete redistribuire \n\
 sotto alcune condizioni; eseguire 'start' con l'opzione /L per ulteriori infomazioni. \n\
 "
