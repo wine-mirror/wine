@@ -363,7 +363,7 @@ struct process *get_top_window_owner( struct desktop *desktop )
 void close_desktop_window( struct desktop *desktop )
 {
     struct window *win = desktop->top_window;
-    if (win && win->thread) post_message( win->handle, WM_SYSCOMMAND, SC_CLOSE, 0 );
+    if (win && win->thread) post_message( win->handle, WM_CLOSE, 0, 0 );
 }
 
 /* create a new window structure (note: the window is not linked in the window tree) */

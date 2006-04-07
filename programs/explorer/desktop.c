@@ -39,6 +39,10 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
         if ((wp & 0xfff0) == SC_CLOSE) ExitWindows( 0, 0 );
         return 0;
 
+    case WM_CLOSE:
+        PostQuitMessage(0);
+        return 0;
+
     case WM_SETCURSOR:
         return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)IDC_ARROW ) );
 
