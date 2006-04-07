@@ -27,8 +27,8 @@
 # error You must include config.h to use this header
 #endif
 
-#if !defined( __WINE_D3D8_H ) && !defined( __WINE_D3D9_H )
-# error You must include d3d8.h or d3d9.h header to use this header
+#if !defined( __WINE_D3D_H ) && !defined( __WINE_D3D8_H ) && !defined( __WINE_D3D9_H )
+# error You must include d3d.h, d3d8.h or d3d9.h header to use this header
 #endif
 
 #include "wined3d_types.h"

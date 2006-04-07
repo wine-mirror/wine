@@ -26,8 +26,8 @@
 #define __WINE_WINED3D_TYPES_H
 
 /* TODO: remove the dependency on d3d9 or d3d8 */
-#if !defined( __WINE_D3D8_H ) && !defined( __WINE_D3D9_H )
-# error You must include d3d8.h or d3d9.h header to use this header
+#if !defined( __WINE_D3D_H ) && !defined( __WINE_D3D8_H ) && !defined( __WINE_D3D9_H )
+# error You must include d3d.h, d3d8.h or d3d9.h header to use this header
 #endif
 
 #define WINED3D_VSHADER_MAX_CONSTANTS 96
