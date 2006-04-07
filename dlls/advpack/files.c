@@ -452,29 +452,23 @@ HRESULT WINAPI DelNodeW( LPCWSTR pszFileOrDirName, DWORD dwFlags )
     return ret;
 }
 
-/* returns the parameter at dwIndex in a list of parameters
- * separated by the cSeparator character
- */
-static LPSTR get_parameter(LPSTR szParameters, CHAR cSeparator, DWORD dwIndex)
+/* sequentially returns pointers to parameters in a parameter list
+ * returns NULL if the parameter is empty, e.g. one,,three  */
+static LPSTR get_parameter(LPSTR *params, char separator)
 {
-    LPSTR szParam = NULL;
-    DWORD i = 0;
+    LPSTR token = *params;
 
-    while (*szParameters && i < dwIndex)
-    {
-        if (*szParameters == cSeparator)
-            i++;
-
-        szParameters++;
-    }
-
-    if (!*szParameters)
+    if (!*params)
         return NULL;
 
-    szParam = HeapAlloc(GetProcessHeap(), 0, lstrlenA(szParameters));
-    lstrcpyA(szParam, szParameters);
+    *params = strchr(*params, separator);
+    if (*params)
+        *(*params)++ = '\0';
 
-    return szParam;
+    if (!*token)
+        return NULL;
+
+    return token;
 }
 
 /***********************************************************************
@@ -495,21 +489,26 @@ static LPSTR get_parameter(LPSTR szParameters, CHAR cSeparator, DWORD dwIndex)
 HRESULT WINAPI DelNodeRunDLL32A( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
 {
     LPSTR szFilename, szFlags;
-    DWORD dwFlags;
+    LPSTR cmdline_copy, cmdline_ptr;
+    DWORD dwFlags = 0;
     HRESULT res;
 
-    TRACE("(%s)\n", debugstr_a(cmdline));
+    TRACE("(%p, %p, %s, %i)\n", hWnd, hInst, debugstr_a(cmdline), show);
+
+    cmdline_copy = HeapAlloc(GetProcessHeap(), 0, lstrlenA(cmdline) + 1);
+    cmdline_ptr = cmdline_copy;
+    lstrcpyA(cmdline_copy, cmdline);
 
     /* get the parameters at indexes 0 and 1 respectively */
-    szFilename = get_parameter(cmdline, ',', 0);
-    szFlags = get_parameter(cmdline, ',', 1);
+    szFilename = get_parameter(&cmdline_ptr, ',');
+    szFlags = get_parameter(&cmdline_ptr, ',');
 
-    dwFlags = atol(szFlags);
+    if (szFlags)
+        dwFlags = atol(szFlags);
 
     res = DelNodeA(szFilename, dwFlags);
 
-    HeapFree(GetProcessHeap(), 0, szFilename);
-    HeapFree(GetProcessHeap(), 0, szFlags);
+    HeapFree(GetProcessHeap(), 0, cmdline_copy);
 
     return res;
 }
