@@ -205,11 +205,6 @@ static struct thread_input *create_thread_input( struct thread *thread )
 
     if ((input = alloc_object( &thread_input_ops )))
     {
-        if (!(input->desktop = get_thread_desktop( thread, 0 /* FIXME: access rights */ )))
-        {
-            free( input );
-            return NULL;
-        }
         input->focus       = 0;
         input->capture     = 0;
         input->active      = 0;
@@ -218,6 +213,12 @@ static struct thread_input *create_thread_input( struct thread *thread )
         list_init( &input->msg_list );
         set_caret_window( input, 0 );
         memset( input->keystate, 0, sizeof(input->keystate) );
+
+        if (!(input->desktop = get_thread_desktop( thread, 0 /* FIXME: access rights */ )))
+        {
+            release_object( input );
+            return NULL;
+        }
     }
     return input;
 }
@@ -855,7 +856,7 @@ static void thread_input_destroy( struct object *obj )
 
     if (foreground_input == input) foreground_input = NULL;
     empty_msg_list( &input->msg_list );
-    release_object( input->desktop );
+    if (input->desktop) release_object( input->desktop );
 }
 
 /* fix the thread input data when a window is destroyed */
