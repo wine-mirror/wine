@@ -1031,6 +1031,12 @@ DECL_HANDLER(duplicate_token)
             {
                 size_t size = FIELD_OFFSET( struct sid_and_attributes, sid.SubAuthority[group->sid.SubAuthorityCount] );
                 struct sid_and_attributes *newgroup = mem_alloc( size );
+                if (!newgroup)
+                {
+                    release_object( token );
+                    release_object( src_token );
+                    return;
+                }
                 memcpy( newgroup, group, size );
                 list_add_tail( &token->groups, &newgroup->entry );
             }
