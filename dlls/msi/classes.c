@@ -863,8 +863,8 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
          * yes. MSDN says that these are based on _Feature_ not on
          * Component.  So verify the feature is to be installed
          */
-        if ((!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL )) &&
-             !(install_on_demand &&
+        if (!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL ) ||
+            !(install_on_demand &&
                ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED )))
         {
             TRACE("Skipping class %s reg due to disabled feature %s\n", 
