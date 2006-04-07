@@ -49,14 +49,3 @@ NET_API_STATUS WINAPI I_BrowserQueryEmulatedDomains(
 {
     return ERROR_NOT_SUPPORTED;
 }
-
-/************************************************************
- *                NetShareEnum  (NETAPI32.@)
- */
-NET_API_STATUS WINAPI NetShareEnum( LPWSTR servername, DWORD level, LPBYTE* bufptr,
-  DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries, LPDWORD resume_handle)
-{
-    FIXME("%s %ld %p %ld %p %p %p\n", debugstr_w(servername), level, bufptr,
-          prefmaxlen, entriesread, totalentries, resume_handle);
-    return ERROR_NOT_SUPPORTED;
-}

@@ -17,6 +17,7 @@
 
 #include "wine/debug.h"
 #include "lm.h"
+#include "winerror.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(share);
 
@@ -55,4 +56,30 @@ NET_API_STATUS WINAPI NetSessionEnum(LPWSTR servername, LPWSTR UncClientName,
         level, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
 
     return NERR_Success;
+}
+
+/************************************************************
+ * NetShareEnum  (NETAPI32.@)
+ *
+ * PARAMS
+ *   servername    [I]   Pointer to a string with the name of the server
+ *   level         [I]   Data information level
+ *   bufptr        [O]   Buffer to the data
+ *   prefmaxlen    [I]   Preferred maximum length of the data
+ *   entriesread   [O]   Pointer to the number of entries enumerated
+ *   totalentries  [O]   Pointer to the possible number of entries
+ *   resume_handle [I/O] Pointer to a handle for subsequent searches
+ *
+ * RETURNS
+ *   If successful, the function returns NERR_Success
+ *   On failure it returns a system error code (FIXME: find out which)
+ *
+ */
+NET_API_STATUS WINAPI NetShareEnum( LPWSTR servername, DWORD level, LPBYTE* bufptr,
+    DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries, LPDWORD resume_handle)
+{
+    FIXME("Stub (%s %ld %p %ld %p %p %p)\n", debugstr_w(servername), level, bufptr,
+        prefmaxlen, entriesread, totalentries, resume_handle);
+
+    return ERROR_NOT_SUPPORTED;
 }
