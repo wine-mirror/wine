@@ -838,10 +838,9 @@ static HRESULT WINAPI DefaultHandler_EnumAdvise(
   *ppenumAdvise = NULL;
 
   if (!This->oleAdviseHolder)
-    return IOleAdviseHolder_EnumAdvise(This->oleAdviseHolder,
-				       ppenumAdvise);
+      return S_OK;
 
-  return S_OK;
+  return IOleAdviseHolder_EnumAdvise(This->oleAdviseHolder, ppenumAdvise);
 }
 
 /************************************************************************
