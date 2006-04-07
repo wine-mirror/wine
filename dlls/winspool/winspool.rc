@@ -44,6 +44,7 @@
 #include "En.rc"
 #include "Eo.rc"
 #include "Fi.rc"
+#include "It.rc"
 #include "Ko.rc"
 #include "Nl.rc"
 #include "Ru.rc"
