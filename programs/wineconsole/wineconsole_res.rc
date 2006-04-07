@@ -26,6 +26,7 @@
 
 #include "wineconsole_Cs.rc"
 #include "wineconsole_En.rc"
+#include "wineconsole_Eo.rc"
 #include "wineconsole_Fr.rc"
 #include "wineconsole_De.rc"
 #include "wineconsole_Es.rc"
