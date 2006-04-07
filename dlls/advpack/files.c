@@ -454,14 +454,14 @@ HRESULT WINAPI DelNodeW( LPCWSTR pszFileOrDirName, DWORD dwFlags )
 
 /* sequentially returns pointers to parameters in a parameter list
  * returns NULL if the parameter is empty, e.g. one,,three  */
-static LPSTR get_parameter(LPSTR *params, char separator)
+static LPWSTR get_parameter(LPWSTR *params, WCHAR separator)
 {
-    LPSTR token = *params;
+    LPWSTR token = *params;
 
     if (!*params)
         return NULL;
 
-    *params = strchr(*params, separator);
+    *params = strchrW(*params, separator);
     if (*params)
         *(*params)++ = '\0';
 
@@ -473,6 +473,27 @@ static LPSTR get_parameter(LPSTR *params, char separator)
 
 /***********************************************************************
  *             DelNodeRunDLL32A   (ADVPACK.@)
+ *
+ * See DelNodeRunDLL32W.
+ */
+HRESULT WINAPI DelNodeRunDLL32A(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show)
+{
+    UNICODE_STRING params;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s, %i)\n", hWnd, hInst, debugstr_a(cmdline), show);
+
+    RtlCreateUnicodeStringFromAsciiz(&params, cmdline);
+
+    hr = DelNodeRunDLL32W(hWnd, hInst, params.Buffer, show);
+
+    RtlFreeUnicodeString(&params);
+
+    return hr;
+}
+
+/***********************************************************************
+ *             DelNodeRunDLL32W   (ADVPACK.@)
  *
  * Deletes a file or directory, WinMain style.
  *
@@ -486,27 +507,27 @@ static LPSTR get_parameter(LPSTR *params, char separator)
  *   Success: S_OK.
  *   Failure: E_FAIL.
  */
-HRESULT WINAPI DelNodeRunDLL32A( HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show )
+HRESULT WINAPI DelNodeRunDLL32W(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, INT show)
 {
-    LPSTR szFilename, szFlags;
-    LPSTR cmdline_copy, cmdline_ptr;
+    LPWSTR szFilename, szFlags;
+    LPWSTR cmdline_copy, cmdline_ptr;
     DWORD dwFlags = 0;
     HRESULT res;
 
-    TRACE("(%p, %p, %s, %i)\n", hWnd, hInst, debugstr_a(cmdline), show);
+    TRACE("(%p, %p, %s, %i)\n", hWnd, hInst, debugstr_w(cmdline), show);
 
-    cmdline_copy = HeapAlloc(GetProcessHeap(), 0, lstrlenA(cmdline) + 1);
+    cmdline_copy = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmdline) + 1) * sizeof(WCHAR));
     cmdline_ptr = cmdline_copy;
-    lstrcpyA(cmdline_copy, cmdline);
+    lstrcpyW(cmdline_copy, cmdline);
 
     /* get the parameters at indexes 0 and 1 respectively */
     szFilename = get_parameter(&cmdline_ptr, ',');
     szFlags = get_parameter(&cmdline_ptr, ',');
 
     if (szFlags)
-        dwFlags = atol(szFlags);
+        dwFlags = atolW(szFlags);
 
-    res = DelNodeA(szFilename, dwFlags);
+    res = DelNodeW(szFilename, dwFlags);
 
     HeapFree(GetProcessHeap(), 0, cmdline_copy);
 

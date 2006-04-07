@@ -9,7 +9,7 @@
 @ stdcall DelNodeW(wstr long)
 @ stdcall DelNode(str long) DelNodeA
 @ stdcall DelNodeRunDLL32A(ptr ptr str long)
-# stdcall DelNodeRunDLL32W(ptr ptr wstr long)
+@ stdcall DelNodeRunDLL32W(ptr ptr wstr long)
 @ stdcall DelNodeRunDLL32(ptr ptr str long) DelNodeRunDLL32A
 @ stdcall -private DllMain(long long ptr)
 @ stdcall DoInfInstall(ptr)
