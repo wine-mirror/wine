@@ -683,8 +683,8 @@ HRESULT init_string_table( IStorage *stg )
 string_table *load_string_table( IStorage *stg )
 {
     string_table *st = NULL;
-    CHAR *data;
-    USHORT *pool;
+    CHAR *data = NULL;
+    USHORT *pool = NULL;
     UINT r, datasize = 0, poolsize = 0, codepage;
     DWORD i, count, offset, len, n;
     static const WCHAR szStringData[] = {
