@@ -347,8 +347,7 @@ HRESULT WINAPI LoadTypeLibEx(
         {
             case REGKIND_DEFAULT:
                 /* don't register typelibs supplied with full path. Experimentation confirms the following */
-                if ((!szFile) ||
-                    ((szFile[0] == '\\') && (szFile[1] == '\\')) ||
+                if (((szFile[0] == '\\') && (szFile[1] == '\\')) ||
                     (szFile[0] && (szFile[1] == ':'))) break;
                 /* else fall-through */
 
