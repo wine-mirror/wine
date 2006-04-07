@@ -279,7 +279,7 @@ void resume_after_ptrace( struct thread *thread )
 }
 
 /* read an int from a thread address space */
-int read_thread_int( struct thread *thread, const int *addr, int *data )
+static int read_thread_int( struct thread *thread, const int *addr, int *data )
 {
     errno = 0;
     *data = ptrace( PTRACE_PEEKDATA, get_ptrace_pid(thread), (caddr_t)addr, 0 );
@@ -292,7 +292,7 @@ int read_thread_int( struct thread *thread, const int *addr, int *data )
 }
 
 /* write an int to a thread address space */
-int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask )
+static int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask )
 {
     int res;
     if (mask != ~0)
@@ -303,4 +303,163 @@ int write_thread_int( struct thread *thread, int *addr, int data, unsigned int m
     if ((res = ptrace( PTRACE_POKEDATA, get_ptrace_pid(thread), (caddr_t)addr, data )) == -1)
         file_set_error();
     return res;
+}
+
+/* read data from a process memory space */
+int read_process_memory( struct process *process, const void *ptr, size_t size, char *dest )
+{
+    struct thread *thread = get_process_first_thread( process );
+    unsigned int first_offset, last_offset, len;
+    int data, *addr;
+
+    if (!thread)  /* process is dead */
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+
+    first_offset = (unsigned long)ptr % sizeof(int);
+    last_offset = (size + first_offset) % sizeof(int);
+    if (!last_offset) last_offset = sizeof(int);
+
+    addr = (int *)((char *)ptr - first_offset);
+    len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
+
+    if (suspend_for_ptrace( thread ))
+    {
+        if (len > 1)
+        {
+            if (read_thread_int( thread, addr++, &data ) == -1) goto done;
+            memcpy( dest, (char *)&data + first_offset, sizeof(int) - first_offset );
+            dest += sizeof(int) - first_offset;
+            first_offset = 0;
+            len--;
+        }
+
+        while (len > 1)
+        {
+            if (read_thread_int( thread, addr++, &data ) == -1) goto done;
+            memcpy( dest, &data, sizeof(int) );
+            dest += sizeof(int);
+            len--;
+        }
+
+        if (read_thread_int( thread, addr++, &data ) == -1) goto done;
+        memcpy( dest, (char *)&data + first_offset, last_offset - first_offset );
+        len--;
+
+    done:
+        resume_after_ptrace( thread );
+    }
+    return !len;
+}
+
+/* make sure we can write to the whole address range */
+/* len is the total size (in ints) */
+static int check_process_write_access( struct thread *thread, int *addr, size_t len )
+{
+    int page = get_page_size() / sizeof(int);
+
+    for (;;)
+    {
+        if (write_thread_int( thread, addr, 0, 0 ) == -1) return 0;
+        if (len <= page) break;
+        addr += page;
+        len -= page;
+    }
+    return (write_thread_int( thread, addr + len - 1, 0, 0 ) != -1);
+}
+
+/* write data to a process memory space */
+int write_process_memory( struct process *process, void *ptr, size_t size, const char *src )
+{
+    struct thread *thread = get_process_first_thread( process );
+    int ret = 0, data = 0;
+    size_t len;
+    int *addr;
+    unsigned int first_mask, first_offset, last_mask, last_offset;
+
+    if (!thread)  /* process is dead */
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+
+    /* compute the mask for the first int */
+    first_mask = ~0;
+    first_offset = (unsigned long)ptr % sizeof(int);
+    memset( &first_mask, 0, first_offset );
+
+    /* compute the mask for the last int */
+    last_offset = (size + first_offset) % sizeof(int);
+    if (!last_offset) last_offset = sizeof(int);
+    last_mask = 0;
+    memset( &last_mask, 0xff, last_offset );
+
+    addr = (int *)((char *)ptr - first_offset);
+    len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
+
+    if (suspend_for_ptrace( thread ))
+    {
+        if (!check_process_write_access( thread, addr, len ))
+        {
+            set_error( STATUS_ACCESS_DENIED );
+            goto done;
+        }
+        /* first word is special */
+        if (len > 1)
+        {
+            memcpy( (char *)&data + first_offset, src, sizeof(int) - first_offset );
+            src += sizeof(int) - first_offset;
+            if (write_thread_int( thread, addr++, data, first_mask ) == -1) goto done;
+            first_offset = 0;
+            len--;
+        }
+        else last_mask &= first_mask;
+
+        while (len > 1)
+        {
+            memcpy( &data, src, sizeof(int) );
+            src += sizeof(int);
+            if (write_thread_int( thread, addr++, data, ~0 ) == -1) goto done;
+            len--;
+        }
+
+        /* last word is special too */
+        memcpy( (char *)&data + first_offset, src, last_offset - first_offset );
+        if (write_thread_int( thread, addr, data, last_mask ) == -1) goto done;
+        ret = 1;
+
+    done:
+        resume_after_ptrace( thread );
+    }
+    return ret;
+}
+
+/* retrieve an LDT selector entry */
+void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
+                         unsigned int *limit, unsigned char *flags )
+{
+    if (!thread->process->ldt_copy)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    if (entry >= 8192)
+    {
+        set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
+        return;
+    }
+    if (suspend_for_ptrace( thread ))
+    {
+        unsigned char flags_buf[4];
+        int *addr = (int *)thread->process->ldt_copy + entry;
+        if (read_thread_int( thread, addr, (int *)base ) == -1) goto done;
+        if (read_thread_int( thread, addr + 8192, (int *)limit ) == -1) goto done;
+        addr = (int *)thread->process->ldt_copy + 2*8192 + (entry >> 2);
+        if (read_thread_int( thread, addr, (int *)flags_buf ) == -1) goto done;
+        *flags = flags_buf[entry & 3];
+    done:
+        resume_after_ptrace( thread );
+    }
 }

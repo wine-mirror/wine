@@ -126,14 +126,14 @@ extern int attach_process( struct process *process );
 extern void detach_process( struct process *process );
 extern int suspend_for_ptrace( struct thread *thread );
 extern void resume_after_ptrace( struct thread *thread );
-extern int read_thread_int( struct thread *thread, const int *addr, int *data );
-extern int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask );
 extern void *get_thread_ip( struct thread *thread );
 extern int get_thread_single_step( struct thread *thread );
 extern void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags );
 extern void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags );
 extern int tkill( int tgid, int pid, int sig );
 extern int send_thread_signal( struct thread *thread, int sig );
+extern void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
+                                unsigned int *limit, unsigned char *flags );
 
 extern unsigned int global_error;  /* global error code for when no thread is current */
 

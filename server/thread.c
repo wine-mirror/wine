@@ -733,35 +733,6 @@ int thread_get_inflight_fd( struct thread *thread, int client )
     return -1;
 }
 
-/* retrieve an LDT selector entry */
-static void get_selector_entry( struct thread *thread, int entry,
-                                unsigned int *base, unsigned int *limit,
-                                unsigned char *flags )
-{
-    if (!thread->process->ldt_copy)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return;
-    }
-    if (entry >= 8192)
-    {
-        set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
-        return;
-    }
-    if (suspend_for_ptrace( thread ))
-    {
-        unsigned char flags_buf[4];
-        int *addr = (int *)thread->process->ldt_copy + entry;
-        if (read_thread_int( thread, addr, (int *)base ) == -1) goto done;
-        if (read_thread_int( thread, addr + 8192, (int *)limit ) == -1) goto done;
-        addr = (int *)thread->process->ldt_copy + 2*8192 + (entry >> 2);
-        if (read_thread_int( thread, addr, (int *)flags_buf ) == -1) goto done;
-        *flags = flags_buf[entry & 3];
-    done:
-        resume_after_ptrace( thread );
-    }
-}
-
 /* kill a thread on the spot */
 void kill_thread( struct thread *thread, int violent_death )
 {

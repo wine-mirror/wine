@@ -125,6 +125,8 @@ extern void detach_debugged_processes( struct thread *debugger );
 extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
+extern int read_process_memory( struct process *process, const void *ptr, size_t size, char *dest );
+extern int write_process_memory( struct process *process, void *ptr, size_t size, const char *src );
 
 inline static process_id_t get_process_id( struct process *process ) { return process->id; }
 
