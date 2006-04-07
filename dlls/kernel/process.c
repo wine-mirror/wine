@@ -873,26 +873,30 @@ static void set_process_name( int *argc, char *argv[], char *name )
         {
             strcpy( argv[0], name );
             offset = argv[1] - (argv[0] + strlen(name) + 1);
+            memmove( argv[1] - offset, argv[1], end - argv[1] );
+            memset( end - offset, 0, offset );
+            for (i = 1; i < *argc; i++) argv[i] -= offset;
         }
         else
         {
             offset = argv[1] - argv[0];
+            memmove( argv[1] - offset, argv[1], end - argv[1] );
+            memset( end - offset, 0, offset );
+            for (i = 1; i < *argc; i++) argv[i-1] = argv[i] - offset;
+            argv[i-1] = NULL;
+            (*argc)--;
         }
-        memmove( argv[1] - offset, argv[1], end - argv[1] );
-        memset( end - offset, 0, offset );
-        for (i = 1; i < *argc; i++) argv[i-1] = argv[i] - offset;
-        argv[i-1] = NULL;
-        (*argc)--;
-        return;
     }
-#endif  /* HAVE_PRCTL */
-
-    if (name) argv[0] = name;
     else
+#endif  /* HAVE_PRCTL */
     {
-        /* remove argv[0] */
-        memmove( argv, argv + 1, *argc * sizeof(argv[0]) );
-        (*argc)--;
+        if (name) argv[0] = name;
+        else
+        {
+            /* remove argv[0] */
+            memmove( argv, argv + 1, *argc * sizeof(argv[0]) );
+            (*argc)--;
+        }
     }
 }
 
