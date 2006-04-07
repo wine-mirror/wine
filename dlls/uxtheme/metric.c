@@ -151,8 +151,8 @@ HRESULT WINAPI GetThemeSysInt(HTHEME hTheme, int iIntID, int *piValue)
     TRACE("(%p, %d)\n", hTheme, iIntID);
     if(!hTheme)
         return E_HANDLE;
-    if(iIntID <= TMT_FIRSTINT || iIntID >= TMT_LASTINT) {
-        TRACE("Unknown IntID: %d\n", iIntID);
+    if(iIntID < TMT_FIRSTINT || iIntID > TMT_LASTINT) {
+        WARN("Unknown IntID: %d\n", iIntID);
         return STG_E_INVALIDPARAMETER;
     }
     if((tp = MSSTYLES_FindMetric(TMT_INT, iIntID)))
