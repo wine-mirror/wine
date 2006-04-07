@@ -232,6 +232,7 @@ static INT DIB_GetWidthBytes( int width, int bpp )
 	case 32: words = width; break;
 
         default:
+            words=0;
             trace("Unknown depth %d, please report.\n", bpp );
             assert(0);
             break;
