@@ -894,14 +894,9 @@ HRESULT WINAPI SafeArrayPutElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
         if (*lpDest)
          SysFreeString(*lpDest);
 
-        if (lpBstr)
-        {
-          *lpDest = SysAllocStringByteLen((char*)lpBstr, SysStringByteLen(lpBstr));
-          if (!*lpDest)
-            hRet = E_OUTOFMEMORY;
-        }
-        else
-          *lpDest = NULL;
+        *lpDest = SysAllocStringByteLen((char*)lpBstr, SysStringByteLen(lpBstr));
+        if (!*lpDest)
+          hRet = E_OUTOFMEMORY;
       }
       else
       {
