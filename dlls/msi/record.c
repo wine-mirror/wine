@@ -100,8 +100,10 @@ MSIHANDLE WINAPI MsiCreateRecord( unsigned int cParams )
 
     rec = MSI_CreateRecord( cParams );
     if( rec )
+    {
         ret = alloc_msihandle( &rec->hdr );
-    msiobj_release( &rec->hdr );
+        msiobj_release( &rec->hdr );
+    }
     return ret;
 }
 
