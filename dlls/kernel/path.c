@@ -722,7 +722,7 @@ inline static BOOL contains_pathW (LPCWSTR name)
  * Searches for a specified file in the search path.
  *
  * PARAMS
- *    path	[I] Path to search
+ *    path	[I] Path to search (NULL means default)
  *    name	[I] Filename to search for.
  *    ext	[I] File extension to append to file name. The first
  *		    character must be a period. This parameter is
@@ -818,12 +818,13 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
 DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
                           DWORD buflen, LPSTR buffer, LPSTR *lastpart )
 {
-    WCHAR *pathW, *nameW = NULL, *extW = NULL;
+    WCHAR *pathW = NULL, *nameW = NULL, *extW = NULL;
     WCHAR bufferW[MAX_PATH];
     DWORD ret;
 
-    if (name && !(nameW = FILE_name_AtoW( name, FALSE ))) return 0;
-    if (!(pathW = FILE_name_AtoW( path, TRUE ))) return 0;
+    if (!name || !(nameW = FILE_name_AtoW( name, FALSE ))) return 0;
+    if (path && !(pathW = FILE_name_AtoW( path, TRUE ))) return 0;
+    
     if (ext && !(extW = FILE_name_AtoW( ext, TRUE )))
     {
         HeapFree( GetProcessHeap(), 0, pathW );
