@@ -2571,6 +2571,8 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
 
   TRACE( "(%p,%d,%p)\n", hEmf, cEntries, lpPe );
 
+  if (!enhHeader) return 0;
+
   /* First check if there are any palettes associated with
      this metafile. */
   if ( enhHeader->nPalEntries == 0 ) return 0;
