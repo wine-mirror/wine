@@ -1604,13 +1604,12 @@ static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, 
     USHORT mask = *rawdata++;
     MSICOLUMNINFO *columns = tv->columns;
     MSIRECORD *rec;
-    const int debug_transform = 0;
 
     rec = MSI_CreateRecord( tv->num_cols );
     if( !rec )
         return rec;
 
-    if( debug_transform ) MESSAGE("row -> ");
+    TRACE("row -> ");
     for( i=0; i<tv->num_cols; i++ )
     {
         UINT n = bytes_per_column( &columns[i] );
@@ -1630,20 +1629,20 @@ static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, 
             {
                 LPCWSTR sval = msi_string_lookup_id( st, val );
                 MSI_RecordSetStringW( rec, i+1, sval );
-                if( debug_transform ) MESSAGE("[%s]", debugstr_w(sval));
+                TRACE("[%s]", debugstr_w(sval));
             }
             else
             {
                 val ^= 0x8000;
                 MSI_RecordSetInteger( rec, i+1, val );
-                if( debug_transform) MESSAGE("[0x%04x]", val );
+                TRACE("[0x%04x]", val );
             }
             break;
         case 4:
             val = rawdata[ofs] + (rawdata[ofs + 1]<<16);
             /* val ^= 0x80000000; */
             MSI_RecordSetInteger( rec, i+1, val );
-            if( debug_transform ) MESSAGE("[0x%08x]", val );
+            TRACE("[0x%08x]", val );
             break;
         default:
             ERR("oops - unknown column width %d\n", n);
@@ -1651,7 +1650,7 @@ static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, 
         }
         ofs += n/2;
     }
-    if( debug_transform) MESSAGE("\n");
+    TRACE("\n");
     return rec;
 }
 
@@ -1659,20 +1658,18 @@ static void dump_record( MSIRECORD *rec )
 {
     UINT i, n;
 
-    MESSAGE("row -> ");
     n = MSI_RecordGetFieldCount( rec );
     for( i=1; i<=n; i++ )
     {
         LPCWSTR sval = MSI_RecordGetString( rec, i );
 
         if( MSI_RecordIsNull( rec, i ) )
-            MESSAGE("[]");
+            TRACE("row -> []\n");
         else if( (sval = MSI_RecordGetString( rec, i )) )
-            MESSAGE("[%s]", debugstr_w(sval));
+            TRACE("row -> [%s]\n", debugstr_w(sval));
         else
-            MESSAGE("[0x%08x]", MSI_RecordGetInteger( rec, i ) );
+            TRACE("row -> [0x%08x]\n", MSI_RecordGetInteger( rec, i ) );
     }
-    MESSAGE("\n");
 }
 
 static void dump_table( string_table *st, USHORT *rawdata, UINT rawsize )
@@ -1788,7 +1785,6 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
     MSITABLEVIEW *tv = NULL;
     UINT r, n, sz, i, mask;
     MSIRECORD *rec = NULL;
-    const int debug_transform = 0;
 
     TRACE("%p %p %p %s\n", db, stg, st, debugstr_w(name) );
 
@@ -1862,20 +1858,20 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
 
             if( rawdata[n] & 1)
             {
-                if( debug_transform ) MESSAGE("insert [%d]: ", row);
+                TRACE("insert [%d]: ", row);
                 TABLE_insert_row( &tv->view, rec );
             }
             else if( mask & 0xff )
             {
-                if( debug_transform ) MESSAGE("modify [%d]: ", row);
+                TRACE("modify [%d]: ", row);
                 msi_table_modify_row( tv, rec, row, mask );
             }
             else
             {
-                if( debug_transform ) MESSAGE("delete [%d]: ", row);
+                TRACE("delete [%d]: ", row);
                 msi_delete_row( tv, row );
             }
-            if( debug_transform ) dump_record( rec );
+            if( TRACE_ON(msidb) ) dump_record( rec );
             msiobj_release( &rec->hdr );
         }
 
