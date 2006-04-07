@@ -42,6 +42,7 @@
 #include "Bg.rc"
 #include "De.rc"
 #include "En.rc"
+#include "Eo.rc"
 #include "Fi.rc"
 #include "Ko.rc"
 #include "Nl.rc"
