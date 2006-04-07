@@ -38,7 +38,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface,R
         || IsEqualGUID(riid, &IID_IWineD3DStateBlock)){
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -111,7 +111,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_GetParent(IWineD3DStateBlock *iface, IUnkn
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     IUnknown_AddRef(This->parent);
     *pParent = This->parent;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DStateBlockImpl_GetDevice(IWineD3DStateBlock *iface, IWineD3DDevice** ppDevice){
@@ -120,7 +120,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_GetDevice(IWineD3DStateBlock *iface, IWine
 
     *ppDevice = (IWineD3DDevice*)This->wineD3DDevice;
     IWineD3DDevice_AddRef(*ppDevice);
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 
@@ -370,7 +370,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
 
     TRACE("(%p) : Updated state block %p ------------------^\n", targetStateBlock, This);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface){
@@ -581,7 +581,7 @@ should really perform a delta so that only the changes get updated*/
     memcpy(&((IWineD3DDeviceImpl*)pDevice)->stateBlock->changed, &This->changed, sizeof(((IWineD3DDeviceImpl*)pDevice)->stateBlock->changed));
     TRACE("(%p) : Applied state block %p ------------------^\n", This, pDevice);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* iface) {
@@ -852,7 +852,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
     This->wineD3DDevice->currentPalette = 0;
 
     TRACE("-----------------------> Device defaults now set up...\n");
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /**********************************************************

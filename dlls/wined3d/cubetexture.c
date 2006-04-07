@@ -58,7 +58,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_QueryInterface(IWineD3DCubeTexture *iface
         || IsEqualGUID(riid, &IID_IWineD3DTexture)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -270,20 +270,20 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *iface, 
         return IWineD3DSurface_GetDesc(This->surfaces[0][Level], pDesc);
     }
     FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-    return D3DERR_INVALIDCALL;
+    return WINED3DERR_INVALIDCALL;
 }
 
 HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *iface, WINED3DCUBEMAP_FACES FaceType, UINT Level, IWineD3DSurface** ppCubeMapSurface) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    HRESULT hr = D3DERR_INVALIDCALL;
+    HRESULT hr = WINED3DERR_INVALIDCALL;
 
     if (Level < This->baseTexture.levels && FaceType >= D3DCUBEMAP_FACE_POSITIVE_X && FaceType <= D3DCUBEMAP_FACE_NEGATIVE_Z) {
         *ppCubeMapSurface = This->surfaces[FaceType][Level];
         IWineD3DSurface_AddRef(*ppCubeMapSurface);
 
-        hr = D3D_OK;
+        hr = WINED3D_OK;
     }
-    if (D3D_OK == hr) {
+    if (WINED3D_OK == hr) {
         TRACE("(%p) -> faceType(%d) level(%d) returning surface@%p\n", This, FaceType, Level, This->surfaces[FaceType][Level]);
     } else {
         WARN("(%p) level(%d) overflow Levels(%d) Or FaceType(%d)\n", This, Level, This->baseTexture.levels, FaceType);
@@ -293,14 +293,14 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *if
 }
 
 HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *iface, WINED3DCUBEMAP_FACES FaceType, UINT Level, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
-    HRESULT hr = D3DERR_INVALIDCALL;
+    HRESULT hr = WINED3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
     if (Level < This->baseTexture.levels && FaceType >= D3DCUBEMAP_FACE_POSITIVE_X && FaceType <= D3DCUBEMAP_FACE_NEGATIVE_Z) {
         hr = IWineD3DSurface_LockRect(This->surfaces[FaceType][Level], pLockedRect, pRect, Flags);
     }
 
-    if (D3D_OK == hr) {
+    if (WINED3D_OK == hr) {
         TRACE("(%p) -> faceType(%d) level(%d) returning memory@%p success(%lu)\n", This, FaceType, Level, pLockedRect->pBits, hr);
     } else {
         WARN("(%p) level(%d) overflow Levels(%d)  Or FaceType(%d)\n", This, Level, This->baseTexture.levels, FaceType);
@@ -310,14 +310,14 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *iface, WINE
 }
 
 HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, WINED3DCUBEMAP_FACES FaceType, UINT Level) {
-    HRESULT hr = D3DERR_INVALIDCALL;
+    HRESULT hr = WINED3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
     if (Level < This->baseTexture.levels && FaceType >= D3DCUBEMAP_FACE_POSITIVE_X && FaceType <= D3DCUBEMAP_FACE_NEGATIVE_Z) {
         hr = IWineD3DSurface_UnlockRect(This->surfaces[FaceType][Level]);
     }
 
-    if (D3D_OK == hr) {
+    if (WINED3D_OK == hr) {
         TRACE("(%p) -> faceType(%d) level(%d) success(%lu)\n", This, FaceType, Level, hr);
     } else {
         WARN("(%p) level(%d) overflow Levels(%d) Or FaceType(%d)\n", This, Level, This->baseTexture.levels, FaceType);
@@ -326,7 +326,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, WI
 }
 
 HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface, WINED3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
-    HRESULT hr = D3DERR_INVALIDCALL;
+    HRESULT hr = WINED3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
     TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);

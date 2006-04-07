@@ -42,7 +42,7 @@ HRESULT WINAPI IWineD3DQueryImpl_QueryInterface(IWineD3DQuery *iface, REFIID rii
         || IsEqualGUID(riid, &IID_IWineD3DQuery)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -76,7 +76,7 @@ HRESULT WINAPI IWineD3DQueryImpl_GetParent(IWineD3DQuery *iface, IUnknown** pare
     *parent= (IUnknown*) parent;
     IUnknown_AddRef(*parent);
     TRACE("(%p) : returning %p\n", This, *parent);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DQueryImpl_GetDevice(IWineD3DQuery* iface, IWineD3DDevice **pDevice){
@@ -84,7 +84,7 @@ HRESULT WINAPI IWineD3DQueryImpl_GetDevice(IWineD3DQuery* iface, IWineD3DDevice 
     IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
     *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
     TRACE("(%p) returning %p\n", This, *pDevice);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 
@@ -238,7 +238,7 @@ HRESULT WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWOR
     };
 
     /*dwGetDataFlags = 0 || D3DGETDATA_FLUSH
-    D3DGETDATA_FLUSH may return D3DERR_DEVICELOST if the device is lost
+    D3DGETDATA_FLUSH may return WINED3DERR_DEVICELOST if the device is lost
     */
     FIXME("(%p) : stub\n", This);
     return S_OK; /* S_OK if the query data is available*/
@@ -314,7 +314,7 @@ WINED3DQUERYTYPE WINAPI IWineD3DQueryImpl_GetType(IWineD3DQuery* iface){
 HRESULT WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     FIXME("(%p) : stub\n", This);
-    return D3D_OK; /* can be D3DERR_INVALIDCALL.    */
+    return WINED3D_OK; /* can be WINED3DERR_INVALIDCALL.    */
 }
 
 

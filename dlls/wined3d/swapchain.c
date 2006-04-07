@@ -75,7 +75,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, RE
             return E_NOINTERFACE;
         }
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -126,7 +126,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetParent(IWineD3DSwapChain *iface, IUnknow
     *ppParent = This->parent;
     IUnknown_AddRef(*ppParent);
     TRACE("(%p) returning %p\n", This , *ppParent);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*IWineD3DSwapChain parts follow: */
@@ -183,7 +183,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
                 if (NULL == This->visInfo) {
                     ERR("cannot really get XVisual\n");
                     LEAVE_GL();
-                    return D3DERR_NOTAVAILABLE;
+                    return WINED3DERR_NOTAVAILABLE;
                 }
                 /* Now we have problems? well not really we just need to know what the implicit context is */
                 /* now destroy the old context and create a new one (we should really copy the buffers over, and do the whole make current thing! */
@@ -233,7 +233,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
                 checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
 
                 /* If this swapchain is currently the active context then make this swapchain active */
-                if(IWineD3DSurface_GetContainer(This->wineD3DDevice->renderTarget, &IID_IWineD3DSwapChain, (void **)&tmp) == D3D_OK){
+                if(IWineD3DSurface_GetContainer(This->wineD3DDevice->renderTarget, &IID_IWineD3DSwapChain, (void **)&tmp) == WINED3D_OK){
                     if(tmp != (IUnknown *)This){
                         glXMakeCurrent(This->display, currentDrawable, currentContext);
                         checkGLcall("glXMakeCurrent");
@@ -327,7 +327,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
     }
 
     TRACE("returning\n");
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface, IWineD3DSurface *pDestSurface) {
@@ -360,7 +360,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface
                 glDescription->glType,
                 (void *)IWineD3DSurface_GetData(pDestSurface));
     LEAVE_GL();
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UINT iBackBuffer, WINED3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) {
@@ -372,12 +372,12 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UIN
 
     if (iBackBuffer > This->presentParms.BackBufferCount - 1) {
         FIXME("Only one backBuffer currently supported\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     /* Note inc ref on returned surface */
     IWineD3DSurface_AddRef(*ppBackBuffer);
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 
@@ -391,7 +391,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface, W
         FIXME("(%p) : stub (once)\n", This);
         showFixmes = FALSE;
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WINED3DDISPLAYMODE*pMode) {
@@ -419,7 +419,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WI
 
     TRACE("(%p) : returning w(%d) h(%d) rr(%d) fmt(%u,%s)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate,
     pMode->Format, debug_d3dformat(pMode->Format));
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3DDevice**ppDevice) {
@@ -431,7 +431,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3
        on the IDirect3DDevice9 interface. */
     IWineD3DDevice_AddRef(*ppDevice);
     TRACE("(%p) : returning %p\n", This, *ppDevice);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *iface, WINED3DPRESENT_PARAMETERS *pPresentationParameters) {
@@ -450,7 +450,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *ifa
     *pPresentationParameters->Flags = This->presentParms.Flags;
     *pPresentationParameters->FullScreen_RefreshRateInHz = This->presentParms.FullScreen_RefreshRateInHz;
     *pPresentationParameters->PresentationInterval = This->presentParms.PresentationInterval;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface, DWORD Flags, CONST WINED3DGAMMARAMP *pRamp){
@@ -461,7 +461,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface, DWOR
     hDC = GetDC(This->win_handle);
     SetDeviceGammaRamp(hDC, (LPVOID)pRamp);
     ReleaseDC(This->win_handle, hDC);
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 
@@ -473,7 +473,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface, WINE
     hDC = GetDC(This->win_handle);
     GetDeviceGammaRamp(hDC, pRamp);
     ReleaseDC(This->win_handle, hDC);
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 

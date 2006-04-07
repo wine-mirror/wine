@@ -40,7 +40,7 @@ HRESULT WINAPI IWineD3DIndexBufferImpl_QueryInterface(IWineD3DIndexBuffer *iface
         || IsEqualGUID(riid, &IID_IWineD3DIndexBuffer)){
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -109,12 +109,12 @@ HRESULT  WINAPI        IWineD3DIndexBufferImpl_Lock(IWineD3DIndexBuffer *iface, 
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
     TRACE("(%p) : no real locking yet, offset %d, size %d, Flags=%lx\n", This, OffsetToLock, SizeToLock, Flags);
     *ppbData = (BYTE *)This->resource.allocatedMemory + OffsetToLock;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 HRESULT  WINAPI        IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuffer *iface) {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
     TRACE("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 HRESULT  WINAPI        IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBuffer *iface, WINED3DINDEXBUFFER_DESC *pDesc) {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
@@ -125,7 +125,7 @@ HRESULT  WINAPI        IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBuffer *ifac
     pDesc->Usage  = This->resource.usage;
     pDesc->Pool   = This->resource.pool;
     pDesc->Size   = This->resource.size;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 const IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl =

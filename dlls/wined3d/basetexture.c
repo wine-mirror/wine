@@ -68,7 +68,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_QueryInterface(IWineD3DBaseTexture *iface
         || IsEqualGUID(riid, &IID_IWineD3DBaseTexture)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -154,7 +154,7 @@ DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LO
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
 
     if (This->resource.pool != WINED3DPOOL_MANAGED) {
-        return  D3DERR_INVALIDCALL;
+        return  WINED3DERR_INVALIDCALL;
     }
 
     if(LODNew >= This->baseTexture.levels)
@@ -170,7 +170,7 @@ DWORD WINAPI IWineD3DBaseTextureImpl_GetLOD(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
 
     if (This->resource.pool != WINED3DPOOL_MANAGED) {
-        return  D3DERR_INVALIDCALL;
+        return  WINED3DERR_INVALIDCALL;
     }
 
     TRACE("(%p) : returning %d\n", This, This->baseTexture.LOD);
@@ -189,11 +189,11 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_SetAutoGenFilterType(IWineD3DBaseTexture 
 
   if (!(This->baseTexture.usage & WINED3DUSAGE_AUTOGENMIPMAP)) {
       TRACE("(%p) : returning invalid call\n", This);
-      return D3DERR_INVALIDCALL;
+      return WINED3DERR_INVALIDCALL;
   }
   This->baseTexture.filterType = FilterType;
   TRACE("(%p) :\n", This);
-  return D3D_OK;
+  return WINED3D_OK;
 }
 
 WINED3DTEXTUREFILTERTYPE WINAPI IWineD3DBaseTextureImpl_GetAutoGenFilterType(IWineD3DBaseTexture *iface) {
@@ -228,7 +228,7 @@ BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface) {
 
 HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    HRESULT hr = D3D_OK;
+    HRESULT hr = WINED3D_OK;
     UINT textureDimensions;
     BOOL isNewTexture = FALSE;
     TRACE("(%p) : About to bind texture\n", This);
@@ -287,7 +287,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
 		
     } else { /* this only happened if we've run out of openGL textures */
         WARN("This texture doesn't have an openGL texture assigned to it\n");
-        hr =  D3DERR_INVALIDCALL;
+        hr =  WINED3DERR_INVALIDCALL;
     }
 
     LEAVE_GL();
@@ -311,13 +311,13 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_UnBindTexture(IWineD3DBaseTexture *iface)
 #endif
 
     LEAVE_GL();
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 UINT WINAPI IWineD3DBaseTextureImpl_GetTextureDimensions(IWineD3DBaseTexture *iface){
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     FIXME("(%p) : This shouldn't be called\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 static inline GLenum warpLookupType(WINED3DSAMPLERSTATETYPE Type) {

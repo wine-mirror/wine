@@ -65,7 +65,7 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
 static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type);
 
 /* helper macros */
-#define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; WARN("Out of memory\n"); return D3DERR_OUTOFVIDEOMEMORY;}
+#define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; WARN("Out of memory\n"); return WINED3DERR_OUTOFVIDEOMEMORY;}
 
 #define D3DCREATEOBJECTINSTANCE(object, type) { \
     object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
@@ -95,7 +95,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
             WARN("Out of 'bogus' video memory\n"); \
             HeapFree(GetProcessHeap(), 0, object); \
             *pp##type = NULL; \
-            return D3DERR_OUTOFVIDEOMEMORY; \
+            return WINED3DERR_OUTOFVIDEOMEMORY; \
         } \
         globalChangeGlRam(_size); \
     } \
@@ -104,7 +104,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
         FIXME("Out of memory!\n"); \
         HeapFree(GetProcessHeap(), 0, object); \
         *pp##type = NULL; \
-        return D3DERR_OUTOFVIDEOMEMORY; \
+        return WINED3DERR_OUTOFVIDEOMEMORY; \
     } \
     *pp##type = (IWineD3D##type *) object; \
     IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object) ;\
@@ -339,7 +339,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_QueryInterface(IWineD3DDevice *iface,REFIID ri
         || IsEqualGUID(riid, &IID_IWineD3DDevice)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     return E_NOINTERFACE;
@@ -458,7 +458,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetParent(IWineD3DDevice *iface, IUnknown **pP
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     *pParent = This->parent;
     IUnknown_AddRef(This->parent);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage, 
@@ -478,7 +478,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
     TRACE("(%p) : Size=%d, Usage=%ld, FVF=%lx, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
     *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage, 
@@ -500,7 +500,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT 
                            debug_d3dformat(Format), Pool, object, object->resource.allocatedMemory);
     *ppIndexBuffer = (IWineD3DIndexBuffer *) object;
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3DSTATEBLOCKTYPE Type, IWineD3DStateBlock** ppStateBlock, IUnknown *parent) {
@@ -517,7 +517,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3
     if (Type == WINED3DSBT_INIT) {
         /* Don't bother increasing the reference count otherwise a device will never
            be freed due to circular dependencies                                   */
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /* Otherwise, might as well set the whole state block to the appropriate values  */
@@ -600,7 +600,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3
 
         while (src) {
             newEl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
-            if (newEl == NULL) return D3DERR_OUTOFVIDEOMEMORY;
+            if (newEl == NULL) return WINED3DERR_OUTOFVIDEOMEMORY;
             memcpy(newEl, src, sizeof(PLIGHTINFOEL));
             newEl->prev = dst;
             newEl->changed = TRUE;
@@ -621,7 +621,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, WINED3
     }
 
     TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, object);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 
@@ -648,7 +648,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
      *   MultisampleQuality
      *    [in] Quality level. The valid range is between zero and one less than the level
      *    returned by pQualityLevels used by IDirect3D9::CheckDeviceMultiSampleType. 
-     *    Passing a larger value returns the error D3DERR_INVALIDCALL. The MultisampleQuality
+     *    Passing a larger value returns the error WINED3DERR_INVALIDCALL. The MultisampleQuality
      *    values of paired render targets, depth stencil surfaces, and the MultiSample type
      *    must all match.
       *******************************/
@@ -667,7 +667,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
 
     if(MultisampleQuality < 0) {
         FIXME("Invalid multisample level %ld\n", MultisampleQuality);
-        return D3DERR_INVALIDCALL; /* TODO: Check that this is the case! */
+        return WINED3DERR_INVALIDCALL; /* TODO: Check that this is the case! */
     }
 
     if(MultisampleQuality > 0) {
@@ -692,7 +692,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
                || Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
             FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
                     This, Width, Height);
-            return D3DERR_NOTAVAILABLE;
+            return WINED3DERR_NOTAVAILABLE;
         }
     }
 
@@ -701,10 +701,10 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
         /* one of three options
         1: Do the same as we do with nonpow 2 and scale the texture, (any texture ops would require the texture to be scaled which is potentially slow)
         2: Set the texture to the maxium size (bad idea)
-        3:    WARN and return D3DERR_NOTAVAILABLE;
+        3:    WARN and return WINED3DERR_NOTAVAILABLE;
         */
         WARN("(%p) Application requested a surface w %d, h %d, but the graphics card only supports %d\n", This, Width, Height, GL_LIMITS(texture_size));
-         return D3DERR_NOTAVAILABLE;
+         return WINED3DERR_NOTAVAILABLE;
     }
 
 
@@ -812,7 +812,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
            This, Width, Height, Format, debug_d3dformat(Format),
            (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->resource.allocatedMemory, object->resource.size);
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 
@@ -837,7 +837,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
              that are reported as supported */
     if (WINED3DFMT_UNKNOWN >= Format) {
         WARN("(%p) : Texture cannot be created with a format of D3DFMT_UNKNOWN\n", This);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, WINED3DRTYPE_TEXTURE, 0);
@@ -878,7 +878,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     {
         /* use the callback to create the texture surface */
         hr = D3DCB_CreateSurface(This->parent, tmpW, tmpH, Format, Usage, Pool, i, &object->surfaces[i],NULL);
-        if (hr!= D3D_OK) {
+        if (hr!= WINED3D_OK) {
             int j;
             FIXME("Failed to create surface  %p\n", object);
             /* clean up */
@@ -900,7 +900,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     }
 
     TRACE("(%p) : Created  texture %p\n", This, object);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
@@ -922,7 +922,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
              that are reported as supported */
     if (WINED3DFMT_UNKNOWN >= Format) {
         WARN("(%p) : Texture cannot be created with a format of D3DFMT_UNKNOWN\n", This);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, VolumeTexture, WINED3DRTYPE_VOLUMETEXTURE, 0);
@@ -972,7 +972,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
 
     *ppVolumeTexture = (IWineD3DVolumeTexture *) object;
     TRACE("(%p) : Created volume texture %p\n", This, object);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
@@ -1022,7 +1022,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
              that are reported as supported */
     if (WINED3DFMT_UNKNOWN >= Format) {
         WARN("(%p) : Texture cannot be created with a format of D3DFMT_UNKNOWN\n", This);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, WINED3DRTYPE_CUBETEXTURE, 0);
@@ -1062,7 +1062,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
             hr=D3DCB_CreateSurface(This->parent, tmpW, tmpW, Format, Usage, Pool,
                                    i /* Level */, &object->surfaces[j][i],pSharedHandle);
 
-            if(hr!= D3D_OK) {
+            if(hr!= WINED3D_OK) {
                 /* clean up */
                 int k;
                 int l;
@@ -1088,7 +1088,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
 
     TRACE("(%p) : Created Cube Texture %p\n", This, object);
     *ppCubeTexture = (IWineD3DCubeTexture *) object;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUERYTYPE Type, IWineD3DQuery **ppQuery, IUnknown* parent) {
@@ -1097,12 +1097,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUER
 
     if (NULL == ppQuery) {
         /* Just a check to see if we support this type of query */
-        HRESULT hr = D3DERR_NOTAVAILABLE;
+        HRESULT hr = WINED3DERR_NOTAVAILABLE;
         switch(Type) {
         case WINED3DQUERYTYPE_OCCLUSION:
             TRACE("(%p) occlusion query\n", This);
             if (GL_SUPPORT(ARB_OCCLUSION_QUERY) || GL_SUPPORT(NV_OCCLUSION_QUERY))
-                hr = D3D_OK;
+                hr = WINED3D_OK;
             else
                 WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
             break;
@@ -1153,7 +1153,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUER
         FIXME("(%p) Unhandled query type %d\n",This , Type);
     }
     TRACE("(%p) : Created Query %p\n", This, object);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /* example at http://www.fairyengine.com/articles/dxmultiviews.htm */
@@ -1169,7 +1169,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     XVisualInfo             template;
     GLXContext              oldContext;
     Drawable                oldDrawable;
-    HRESULT                 hr = D3D_OK;
+    HRESULT                 hr = WINED3D_OK;
 
     TRACE("(%p) : Created Aditional Swap Chain\n", This);
 
@@ -1196,7 +1196,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     object->win_handle = GetAncestor(object->win_handle, GA_ROOT);
     if ( !( object->win = (Window)GetPropA(object->win_handle, "__wine_x11_whole_window") ) ) {
         ERR("Can't get drawable (window), HWND:%p doesn't have the property __wine_x11_whole_window\n", object->win_handle);
-        return D3DERR_NOTAVAILABLE;
+        return WINED3DERR_NOTAVAILABLE;
     }
     hDc                = GetDC(object->win_handle);
     object->display    = get_display(hDc);
@@ -1205,12 +1205,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
 
     if (NULL == object->display || NULL == hDc) {
         WARN("Failed to get a display and HDc for Window %p\n", object->win_handle);
-        return D3DERR_NOTAVAILABLE;
+        return WINED3DERR_NOTAVAILABLE;
     }
 
     if (object->win == 0) {
         WARN("Failed to get a valid XVisuial ID for the window %p\n", object->win_handle);
-        return D3DERR_NOTAVAILABLE;
+        return WINED3DERR_NOTAVAILABLE;
     }
     /**
     * Create an opengl context for the display visual
@@ -1233,7 +1233,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     if (NULL == object->visInfo) {
         ERR("cannot really get XVisual\n");
         LEAVE_GL();
-        return D3DERR_NOTAVAILABLE;
+        return WINED3DERR_NOTAVAILABLE;
     } else {
         int n, value;
         /* Write out some debug info about the visual/s */
@@ -1278,7 +1278,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
 
     {
         IWineD3DSwapChain *implSwapChain;
-        if (D3D_OK != IWineD3DDevice_GetSwapChain(iface, 0, &implSwapChain)) {
+        if (WINED3D_OK != IWineD3DDevice_GetSwapChain(iface, 0, &implSwapChain)) {
             /* The first time around we create the context that is shared with all other swapchains and render targets */
             object->glCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
             TRACE("Creating implicit context for vis %p, hwnd %p\n", object->display, object->visInfo);
@@ -1299,13 +1299,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     if (NULL == object->glCtx) {
         ERR("cannot create glxContext\n");
         LEAVE_GL();
-        return D3DERR_NOTAVAILABLE;
+        return WINED3DERR_NOTAVAILABLE;
     }
 
     LEAVE_GL();
     if (object->glCtx == NULL) {
         ERR("Error in context creation !\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     } else {
         TRACE("Context created (HWND=%p, glContext=%p, Window=%ld, VisInfo=%p)\n",
                 object->win_handle, object->glCtx, object->win, object->visInfo);
@@ -1457,7 +1457,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     object->drawable     = object->win;
     object->render_ctx   = object->glCtx;
 
-    if (hr == D3D_OK) {
+    if (hr == WINED3D_OK) {
         /*********************
          * Setup some defaults and clear down the buffers
          *******************/
@@ -1569,7 +1569,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, UINT iSw
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     SwapChainList *swapchain;
     int i = iSwapChain;
-    HRESULT hr = D3DERR_INVALIDCALL;
+    HRESULT hr = WINED3DERR_INVALIDCALL;
     swapchain = This->swapchains;
     TRACE("(%p) : swapchain %d\n", This, iSwapChain);
 
@@ -1587,7 +1587,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, UINT iSw
         /** TODO: move off to a linkesList implementation **/
         *pSwapChain = swapchain->swapchain;
         IWineD3DSwapChain_AddRef(*pSwapChain);
-        hr = D3D_OK;
+        hr = WINED3D_OK;
     }
 
     TRACE("(%p) returning %p\n", This, *pSwapChain);
@@ -1598,7 +1598,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PA
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     FIXME("(%p) : Stub\n",This);
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 
@@ -1608,7 +1608,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PA
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice* iface, CONST VOID* pDeclaration, IWineD3DVertexDeclaration** ppVertexDeclaration, IUnknown *parent) {
     IWineD3DDeviceImpl            *This   = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexDeclarationImpl *object = NULL;
-    HRESULT hr = D3D_OK;
+    HRESULT hr = WINED3D_OK;
     TRACE("(%p) : directXVersion=%u, pFunction=%p, ppDecl=%p\n", This, ((IWineD3DImpl *)This->wineD3D)->dxVersion, pDeclaration, ppVertexDeclaration);
     D3DCREATEOBJECTINSTANCE(object, VertexDeclaration)
     object->allFVF = 0;
@@ -1622,7 +1622,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice* iface,
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, CONST DWORD *pDeclaration, CONST DWORD *pFunction, IWineD3DVertexShader **ppVertexShader, IUnknown *parent) {
     IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexShaderImpl *object;  /* NOTE: impl usage is ok, this is a create */
-    HRESULT hr = D3D_OK;
+    HRESULT hr = WINED3D_OK;
     D3DCREATEOBJECTINSTANCE(object, VertexShader)
     object->baseShader.shader_ins = IWineD3DVertexShaderImpl_shader_ins;
 
@@ -1633,22 +1633,22 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, CONS
     if (pDeclaration != NULL) {
         IWineD3DVertexDeclaration *vertexDeclaration;
         hr = IWineD3DDevice_CreateVertexDeclaration(iface, pDeclaration, &vertexDeclaration ,NULL);
-        if (D3D_OK == hr) {
+        if (WINED3D_OK == hr) {
             TRACE("(%p) : Setting vertex declaration to %p\n", This, vertexDeclaration);
             object->vertexDeclaration = vertexDeclaration;
         } else {
-            FIXME("(%p) : Failed to set the declaration, returning D3DERR_INVALIDCALL\n", iface);
+            FIXME("(%p) : Failed to set the declaration, returning WINED3DERR_INVALIDCALL\n", iface);
             IWineD3DVertexShader_Release(*ppVertexShader);
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         }
     }
 
     hr = IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction);
 
-    if (D3D_OK != hr) {
-        FIXME("(%p) : Failed to set the function, returning D3DERR_INVALIDCALL\n", iface);
+    if (WINED3D_OK != hr) {
+        FIXME("(%p) : Failed to set the function, returning WINED3DERR_INVALIDCALL\n", iface);
         IWineD3DVertexShader_Release(*ppVertexShader);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
 #if 0 /* TODO: In D3D* SVP is atatched to the shader, in D3D9 it's attached to the device and isn't stored in the stateblock. */
@@ -1660,18 +1660,18 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, CONS
 
 #endif
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface, CONST DWORD *pFunction, IWineD3DPixelShader **ppPixelShader, IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DPixelShaderImpl *object; /* NOTE: impl allowed, this is a create */
-    HRESULT hr = D3D_OK;
+    HRESULT hr = WINED3D_OK;
 
     D3DCREATEOBJECTINSTANCE(object, PixelShader)
     object->baseShader.shader_ins = IWineD3DPixelShaderImpl_shader_ins;
     hr = IWineD3DPixelShader_SetFunction(*ppPixelShader, pFunction);
-    if (D3D_OK == hr) {
+    if (WINED3D_OK == hr) {
         TRACE("(%p) : Created Pixel shader %p\n", This, *ppPixelShader);
     } else {
         WARN("(%p) : Failed to create pixel shader\n", This);
@@ -1685,7 +1685,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, IWineD3D **
    *ppD3D= This->wineD3D;
    TRACE("(%p) : wineD3D returning %p\n", This,  *ppD3D);
    IWineD3D_AddRef(*ppD3D);
-   return D3D_OK;
+   return WINED3D_OK;
 }
 
 UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
@@ -1713,7 +1713,7 @@ UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
  *****/
 HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    HRESULT hr = D3D_OK;
+    HRESULT hr = WINED3D_OK;
 
     /* Update the current state block */
     This->updateStateBlock->fvf              = fvf;
@@ -1738,7 +1738,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetFVF(IWineD3DDevice *iface, DWORD *pfvf) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : GetFVF returning %lx\n", This, This->stateBlock->fvf);
     *pfvf = This->stateBlock->fvf;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -1771,7 +1771,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT St
 
     if (StreamNumber >= MAX_STREAMS) {
         WARN("Stream out of range %d\n", StreamNumber);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     oldSrc = This->stateBlock->streamSource[StreamNumber];
@@ -1787,7 +1787,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT St
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /* Not recording... */
@@ -1802,7 +1802,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT St
         IWineD3DVertexBuffer_Release(oldSrc);
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,IWineD3DVertexBuffer** pStream, UINT *pOffset, UINT* pStride) {
@@ -1827,19 +1827,19 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT St
 
     if (StreamNumber >= MAX_STREAMS) {
         WARN("Stream out of range %d\n", StreamNumber);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     *pStream = This->stateBlock->streamSource[StreamNumber];
     *pStride = This->stateBlock->streamStride[StreamNumber];
     *pOffset = This->stateBlock->streamOffset[StreamNumber];
 
      if (*pStream == NULL) {
-        FIXME("Attempting to get an empty stream %d, returning D3DERR_INVALIDCALL\n", StreamNumber);
-        return  D3DERR_INVALIDCALL;
+        FIXME("Attempting to get an empty stream %d, returning WINED3DERR_INVALIDCALL\n", StreamNumber);
+        return  WINED3DERR_INVALIDCALL;
     }
 
     IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*Should be quite easy, just an extension of vertexdata
@@ -1866,7 +1866,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *iface,  UI
         FIXME("Stream indexing not fully supported\n");
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSourceFreq(IWineD3DDevice *iface,  UINT StreamNumber, UINT* Divider) {
@@ -1877,7 +1877,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSourceFreq(IWineD3DDevice *iface,  UI
 
     TRACE("(%p) : returning %d\n", This, *Divider);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -1895,7 +1895,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
         This->updateStateBlock->changed.transform[d3dts] = TRUE;
         This->updateStateBlock->set.transform[d3dts]     = TRUE;
         memcpy(&This->updateStateBlock->transforms[d3dts], lpmatrix, sizeof(D3DMATRIX));
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /*
@@ -1908,7 +1908,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
      */
     if (!memcmp(&This->stateBlock->transforms[d3dts].u.m[0][0], lpmatrix, sizeof(D3DMATRIX))) {
         TRACE("The app is setting the same matrix over again\n");
-        return D3D_OK;
+        return WINED3D_OK;
     } else {
         conv_mat(lpmatrix, &This->stateBlock->transforms[d3dts].u.m[0][0]);
     }
@@ -1924,17 +1924,17 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
     /* Capture the times we can just ignore the change for now */
     if (d3dts == D3DTS_WORLDMATRIX(0)) {
         This->modelview_valid = FALSE;
-        return D3D_OK;
+        return WINED3D_OK;
 
     } else if (d3dts == D3DTS_PROJECTION) {
         This->proj_valid = FALSE;
-        return D3D_OK;
+        return WINED3D_OK;
 
     } else if (d3dts >= D3DTS_WORLDMATRIX(1) && d3dts <= D3DTS_WORLDMATRIX(255)) {
         /* Indexed Vertex Blending Matrices 256 -> 511  */
         /* Use arb_vertex_blend or NV_VERTEX_WEIGHTING? */
         FIXME("D3DTS_WORLDMATRIX(1..255) not handled\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /* Now we really are going to have to change a matrix */
@@ -1984,14 +1984,14 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
 
     /* Release lock, all done */
     LEAVE_GL();
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE State, D3DMATRIX* pMatrix) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : for Transform State %d\n", This, State);
     memcpy(pMatrix, &This->stateBlock->transforms[State], sizeof(D3DMATRIX));
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix) {
@@ -2075,7 +2075,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD Index, C
     if (This->isRecordingState) {
         object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
         if (NULL == object) {
-            return D3DERR_OUTOFVIDEOMEMORY;
+            return WINED3DERR_OUTOFVIDEOMEMORY;
         }
         memcpy(&object->OriginalParms, pLight, sizeof(D3DLIGHT9));
         object->OriginalIndex = Index;
@@ -2091,7 +2091,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD Index, C
             temp->next = object;
         }
         TRACE("Recording... not performing anything more\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /* Ok, not recording any longer so do real work */
@@ -2104,7 +2104,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD Index, C
 
         object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
         if (NULL == object) {
-            return D3DERR_OUTOFVIDEOMEMORY;
+            return WINED3DERR_OUTOFVIDEOMEMORY;
         }
         object->OriginalIndex = Index;
         object->glIndex = -1;
@@ -2208,7 +2208,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD Index, C
     if (object->glIndex != -1) {
         setup_light(iface, object->glIndex, object);
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD Index, WINED3DLIGHT* pLight) {
@@ -2222,11 +2222,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD Index, W
 
     if (lightInfo == NULL) {
         TRACE("Light information requested but light not defined\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     memcpy(pLight, &lightInfo->OriginalParms, sizeof(D3DLIGHT9));
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -2242,7 +2242,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
     if (This->isRecordingState) {
         lightInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
         if (NULL == lightInfo) {
-            return D3DERR_OUTOFVIDEOMEMORY;
+            return WINED3DERR_OUTOFVIDEOMEMORY;
         }
         lightInfo->OriginalIndex = Index;
         lightInfo->glIndex = -1;
@@ -2257,7 +2257,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
             temp->next = lightInfo;
         }
         TRACE("Recording... not performing anything more\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /* Not recording... So, locate the light in the live lights */
@@ -2303,7 +2303,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
         while (lightInfo != NULL && lightInfo->OriginalIndex != Index) lightInfo = lightInfo->next;
         if (lightInfo == NULL) {
             FIXME("Adding default lights has failed dismally\n");
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         }
     }
 
@@ -2364,7 +2364,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
             /* If we have too many active lights, fail the call */
             if ((Index == This->maxConcurrentLights) && (bsf == NULL)) {
                 FIXME("Program requests too many concurrent lights\n");
-                return D3DERR_INVALIDCALL;
+                return WINED3DERR_INVALIDCALL;
 
             /* If we have allocated all lights, but not all are enabled,
                reuse one which is not enabled                           */
@@ -2457,7 +2457,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
             }
         }
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetLightEnable(IWineD3DDevice *iface, DWORD Index,BOOL* pEnable) {
@@ -2472,10 +2472,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetLightEnable(IWineD3DDevice *iface, DWORD In
 
     if (lightInfo == NULL) {
         TRACE("Light enabled state requested but light not defined\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     *pEnable = lightInfo->lightEnabled;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -2488,7 +2488,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWORD Inde
     /* Validate Index */
     if (Index >= GL_LIMITS(clipplanes)) {
         TRACE("Application has requested clipplane this device doesn't support\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     This->updateStateBlock->changed.clipplane[Index] = TRUE;
@@ -2501,7 +2501,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWORD Inde
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /* Apply it */
@@ -2524,7 +2524,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWORD Inde
     glPopMatrix();
     LEAVE_GL();
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetClipPlane(IWineD3DDevice *iface, DWORD Index, float *pPlane) {
@@ -2534,14 +2534,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetClipPlane(IWineD3DDevice *iface, DWORD Inde
     /* Validate Index */
     if (Index >= GL_LIMITS(clipplanes)) {
         TRACE("Application has requested clipplane this device doesn't support\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     pPlane[0] = This->stateBlock->clipplane[Index][0];
     pPlane[1] = This->stateBlock->clipplane[Index][1];
     pPlane[2] = This->stateBlock->clipplane[Index][2];
     pPlane[3] = This->stateBlock->clipplane[Index][3];
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -2552,22 +2552,22 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetClipStatus(IWineD3DDevice *iface, CONST W
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     FIXME("(%p) : stub\n", This);
     if (NULL == pClipStatus) {
-      return D3DERR_INVALIDCALL;
+      return WINED3DERR_INVALIDCALL;
     }
     This->updateStateBlock->clip_status.ClipUnion = pClipStatus->ClipUnion;
     This->updateStateBlock->clip_status.ClipIntersection = pClipStatus->ClipIntersection;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetClipStatus(IWineD3DDevice *iface, WINED3DCLIPSTATUS* pClipStatus) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     FIXME("(%p) : stub\n", This);
     if (NULL == pClipStatus) {
-      return D3DERR_INVALIDCALL;
+      return WINED3DERR_INVALIDCALL;
     }
     pClipStatus->ClipUnion = This->updateStateBlock->clip_status.ClipUnion;
     pClipStatus->ClipIntersection = This->updateStateBlock->clip_status.ClipIntersection;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -2584,7 +2584,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     ENTER_GL();
@@ -2618,7 +2618,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED
     checkGLcall("glMaterialf(GL_SHININESS");
 
     LEAVE_GL();
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINED3DMATERIAL* pMaterial) {
@@ -2634,7 +2634,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINED3DMATE
         pMaterial->Emissive.b, pMaterial->Emissive.a);
     TRACE("(%p) : Power (%f)\n", This, pMaterial->Power);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -2656,7 +2656,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DInde
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     if (NULL != pIndexData) {
@@ -2665,7 +2665,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DInde
     if (NULL != oldIdxs) {
         IWineD3DIndexBuffer_Release(oldIdxs);
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWineD3DIndexBuffer** ppIndexData, UINT* pBaseVertexIndex) {
@@ -2683,7 +2683,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWineD3DInde
     }
     TRACE("Returning %p %d\n", *ppIndexData, *pBaseVertexIndex);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -2700,7 +2700,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONST WINED
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
     This->viewport_changed = TRUE;
 
@@ -2721,7 +2721,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONST WINED
 
     LEAVE_GL();
 
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 
@@ -2729,7 +2729,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetViewport(IWineD3DDevice *iface, WINED3DVIEW
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p)\n", This);
     memcpy(pViewport, &This->stateBlock->viewport, sizeof(WINED3DVIEWPORT));
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -2755,7 +2755,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     ENTER_GL();
@@ -2855,7 +2855,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
             FIXME("D3DSHADE_PHONG isn't supported?\n");
 
             LEAVE_GL();
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         default:
             FIXME("Unrecognized/Unhandled D3DSHADEMODE value %ld\n", Value);
         }
@@ -3630,7 +3630,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     case WINED3DRS_ZVISIBLE                  :
       {
         LEAVE_GL();
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
       }
     case WINED3DRS_POINTSPRITEENABLE         :
     {
@@ -3923,14 +3923,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
 
     LEAVE_GL();
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, D3DRENDERSTATETYPE State, DWORD *pValue) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) for State %d = %ld\n", This, State, This->stateBlock->renderState[State]);
     *pValue = This->stateBlock->renderState[State];
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -3959,7 +3959,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD S
 
     if(Sampler >  GL_LIMITS(samplers) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
          FIXME("out of range %d %d sampler %ld type %u\n", GL_LIMITS(samplers), WINED3D_HIGHEST_SAMPLER_STATE, Sampler, Type);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     TRACE("Setting sampler %ld %d to %ld\n", Sampler, Type, Value);
     This->updateStateBlock->samplerState[Sampler][Type]         = Value;
@@ -3969,10 +3969,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD S
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD* Value) {
@@ -3981,7 +3981,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, DWORD S
     *Value = This->updateStateBlock->samplerState[Sampler][Type];
     TRACE("(%p) : Sampler %ld Type %u Returning %ld\n", This, Sampler, Type, *Value);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, CONST RECT* pRect) {
@@ -3993,7 +3993,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, CONST RE
     glScissor(pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
     LEAVE_GL();
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, RECT* pRect) {
@@ -4009,7 +4009,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, RECT* pR
     pRect->bottom = scissorBox[2] + scissorBox[4];
     TRACE("(%p)Returning a Scissor Rect of %ld:%ld-%ld:%ld\n", This, pRect->left, pRect->top, pRect->right, pRect->bottom);
     LEAVE_GL();
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration* pDecl) {
@@ -4032,7 +4032,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IW
     if (NULL != oldDecl) {
         IWineD3DVertexDeclaration_Release(oldDecl);
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration** ppDecl) {
@@ -4042,7 +4042,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* iface, IW
 
     *ppDecl = This->stateBlock->vertexDecl;
     if (NULL != *ppDecl) IWineD3DVertexDeclaration_AddRef(*ppDecl);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader* pShader) {
@@ -4073,21 +4073,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3
     /**
      * TODO: merge HAL shaders context switching from prototype
      */
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader** ppShader) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     if (NULL == ppShader) {
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     *ppShader = This->stateBlock->vertexShader;
     if( NULL != *ppShader)
         IWineD3DVertexShader_AddRef(*ppShader);
 
     TRACE("(%p) : returning %p\n", This, *ppShader);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstant(IWineD3DDevice *iface, void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT registersize) {
@@ -4101,7 +4101,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstant(IWineD3DDevice *iface,
 
     if (type != WINESHADERCNST_NONE) {
         if (srcData == NULL || cnt < 0) {
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         }
 
         CopyMemory((char *)dstData + (start * registersize), srcData, cnt * registersize);
@@ -4113,7 +4113,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstant(IWineD3DDevice *iface,
         This->updateStateBlock->vertexShaderConstantT[i]         = type;
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstant(IWineD3DDevice *iface, void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT registersize) {
@@ -4128,19 +4128,19 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstant(IWineD3DDevice *iface,
     /* Verify that the requested shader constant was populated with the correct type */
     for (i = start; i < cnt + start; ++i) {
         if (This->updateStateBlock->vertexShaderConstantT[i] != type) {
-            TRACE("(%p) : Caller requested 0x%x while type is 0x%x. Returning D3DERR_INVALIDCALL\n", 
+            TRACE("(%p) : Caller requested 0x%x while type is 0x%x. Returning WINED3DERR_INVALIDCALL\n", 
                     This, type, This->updateStateBlock->vertexShaderConstantT[i]);
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         }
     }
 
     if (dstData == NULL || cnt < 0) {
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     CopyMemory(dstData, (char *)srcData + (start * registersize), cnt * registersize);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, CONST BOOL  *pConstantData, UINT BoolCount){
@@ -4249,7 +4249,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3D
     /**
      * TODO: merge HAL shaders context switching from prototype
      */
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader **ppShader) {
@@ -4257,7 +4257,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface, IWineD3D
 
     if (NULL == ppShader) {
         WARN("(%p) : PShader is NULL, returning INVALIDCALL\n", This);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     *ppShader =  This->stateBlock->pixelShader;
@@ -4265,7 +4265,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface, IWineD3D
         IWineD3DPixelShader_AddRef(*ppShader);
     }
     TRACE("(%p) : returning %p\n", This, *ppShader);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstant(IWineD3DDevice *iface, void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT registersize) {
@@ -4279,7 +4279,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstant(IWineD3DDevice *iface, 
 
     if (type != WINESHADERCNST_NONE) {
         if (srcData == NULL || cnt < 0) {
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         }
 
         CopyMemory((char *)dstData + (start * registersize), srcData, cnt * registersize);
@@ -4291,7 +4291,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstant(IWineD3DDevice *iface, 
         This->updateStateBlock->pixelShaderConstantT[i]         = type;
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstant(IWineD3DDevice *iface, void *dstData, const void *srcData, UINT type, UINT start, UINT count, UINT registersize) {
@@ -4306,19 +4306,19 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstant(IWineD3DDevice *iface, 
     /* Verify that the requested shader constant was populated with the correct type */
     for (i = start; i < cnt + start; ++i) {
         if (This->updateStateBlock->pixelShaderConstantT[i] != type) {
-            TRACE("(%p) : Caller requested 0x%x while type is 0x%x. Returning D3DERR_INVALIDCALL\n", 
+            TRACE("(%p) : Caller requested 0x%x while type is 0x%x. Returning WINED3DERR_INVALIDCALL\n", 
                     This, type, This->updateStateBlock->pixelShaderConstantT[i]);
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         }
     }
 
     if (dstData == NULL || cnt < 0) {
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     CopyMemory(dstData, (char *)srcData + (start * registersize), cnt * registersize);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(IWineD3DDevice *iface, UINT StartRegister, CONST BOOL   *pConstantData, UINT BoolCount) {
@@ -4406,7 +4406,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantN(IWineD3DDevice *iface,
 HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -4641,21 +4641,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DW
     /* Reject invalid texture units */
     if (Stage >= GL_LIMITS(textures)) {
         TRACE("Attempt to access invalid texture rejected\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     This->updateStateBlock->changed.textureState[Stage][Type] = TRUE;
     This->updateStateBlock->set.textureState[Stage][Type]     = TRUE;
     This->updateStateBlock->textureState[Stage][Type]         = Value;
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD* pValue) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : requesting Stage %ld, Type %d getting %ld\n", This, Stage, Type, This->updateStateBlock->textureState[Stage][Type]);
     *pValue = This->updateStateBlock->textureState[Stage][Type];
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -4672,14 +4672,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
 #if 0 /* TODO: check so vertex textures */
     if (Stage >= D3DVERTEXTEXTURESAMPLER && Stage <= D3DVERTEXTEXTURESAMPLER3){
         This->updateStateBlock->vertexTextures[Stage - D3DVERTEXTEXTURESAMPLER] = pTexture;
-        return D3D_OK;
+        return WINED3D_OK;
     }
 #endif
 
     /* Reject invalid texture units */
     if (Stage >= GL_LIMITS(textures) || Stage < 0) {
         WARN("Attempt to access invalid texture rejected\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     if(pTexture != NULL) {
@@ -4689,7 +4689,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
         */
         if(((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SCRATCH || ((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SYSTEMMEM) {
             WARN("(%p) Attempt to set scratch texture rejected\n", pTexture);
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         }
     }
 
@@ -4705,7 +4705,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /** NOTE: MSDN says that setTexture increases the reference count,
@@ -4720,7 +4720,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
         IWineD3DBaseTexture_Release(oldTexture);
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD Stage, IWineD3DBaseTexture** ppTexture) {
@@ -4730,14 +4730,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD Stage,
     /* Reject invalid texture units */
     if (Stage >= GL_LIMITS(textures)) {
         TRACE("Attempt to access invalid texture rejected\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     *ppTexture=This->updateStateBlock->textures[Stage];
     if (*ppTexture)
         IWineD3DBaseTexture_AddRef(*ppTexture);
     else
-        return D3DERR_INVALIDCALL;
-    return D3D_OK;
+        return WINED3DERR_INVALIDCALL;
+    return WINED3D_OK;
 }
 
 /*****
@@ -4752,7 +4752,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UINT iSwa
     TRACE("(%p) : BackBuf %d Type %d SwapChain %d returning %p\n", This, BackBuffer, Type, iSwapChain, *ppBackBuffer);
 
     hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, &swapChain);
-    if (hr == D3D_OK) {
+    if (hr == WINED3D_OK) {
         hr = IWineD3DSwapChain_GetBackBuffer(swapChain, BackBuffer, Type, ppBackBuffer);
             IWineD3DSwapChain_Release(swapChain);
     } else {
@@ -4773,7 +4773,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSw
     HRESULT hr;
 
     hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
-    if (hr == D3D_OK) {
+    if (hr == WINED3D_OK) {
         hr = IWineD3DSwapChain_GetDisplayMode(swapChain, pMode);
         IWineD3DSwapChain_Release(swapChain);
     } else {
@@ -4791,7 +4791,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) {
     TRACE("(%p)", This);
     
     if (This->isRecordingState) {
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DStateBlockImpl));
@@ -4812,7 +4812,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) {
     This->isRecordingState = TRUE;
 
     TRACE("(%p) recording stateblock %p\n",This , object);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IWineD3DStateBlock** ppStateBlock) {
@@ -4821,7 +4821,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IWineD3DS
     if (!This->isRecordingState) {
         FIXME("(%p) not recording! returning error\n", This);
         *ppStateBlock = NULL;
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     *ppStateBlock = (IWineD3DStateBlock*)This->updateStateBlock;
@@ -4830,7 +4830,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IWineD3DS
     IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)This->updateStateBlock);
     /* IWineD3DStateBlock_AddRef(*ppStateBlock); don't need to do this, since we should really just release UpdateStateBlock first */
     TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, *ppStateBlock);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -4841,7 +4841,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_BeginScene(IWineD3DDevice *iface) {
        of a scene                                                          */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
@@ -4857,8 +4857,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
 
         /* If the container of the rendertarget is a texture then we need to save the data from the pbuffer */
         IUnknown *targetContainer = NULL;
-        if (D3D_OK == IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DBaseTexture, (void **)&targetContainer)
-            || D3D_OK == IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DDevice, (void **)&targetContainer)) {
+        if (WINED3D_OK == IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DBaseTexture, (void **)&targetContainer)
+            || WINED3D_OK == IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DDevice, (void **)&targetContainer)) {
             TRACE("(%p) : Texture rendertarget %p\n", This ,This->renderTarget);
             /** always dirtify for now. we must find a better way to see that surface have been modified
             (Modifications should will only occur via draw-primitive, but we do need better locking
@@ -4873,7 +4873,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
     }
     This->sceneEnded = TRUE;
     LEAVE_GL();
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
@@ -4894,7 +4894,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
         IWineD3DSwapChain_Release(swapChain);
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONST D3DRECT* pRects,
@@ -5011,7 +5011,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONS
     checkGLcall("glDisable");
     LEAVE_GL();
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****
@@ -5030,7 +5030,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, D3DPRIMIT
                   0 /* indxSize */, NULL /* indxData */, 0 /* minIndex */);
 
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /* TODO: baseVIndex needs to be provided from This->stateBlock->baseVertexIndex when called from d3d8 */
@@ -5061,7 +5061,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
     drawPrimitive(iface, PrimitiveType, primCount, baseVIndex, NumVertices, startIndex,
                    idxStride, ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType,
@@ -5092,7 +5092,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIM
     This->stateBlock->streamSource[0] = NULL;
 
     /*stream zero settings set to null at end, as per the msdn */
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType,
@@ -5136,13 +5136,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamSource[0] = NULL;
     This->stateBlock->streamStride[0] = 0;
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
  /* Yet another way to update a texture, some apps use this to load default textures instead of using surface/texture lock/unlock */
 HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3DBaseTexture *pSourceTexture,  IWineD3DBaseTexture *pDestinationTexture){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    HRESULT hr = D3D_OK;
+    HRESULT hr = WINED3D_OK;
     WINED3DRESOURCETYPE sourceType;
     WINED3DRESOURCETYPE destinationType;
     int i ,levels;
@@ -5153,33 +5153,33 @@ HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3D
 
     /* verify that the source and destination textures aren't NULL */
     if (NULL == pSourceTexture || NULL == pDestinationTexture) {
-        WARN("(%p) : source (%p) and destination (%p) textures must not be NULL, returning D3DERR_INVALIDCALL\n",
+        WARN("(%p) : source (%p) and destination (%p) textures must not be NULL, returning WINED3DERR_INVALIDCALL\n",
              This, pSourceTexture, pDestinationTexture);
-        hr = D3DERR_INVALIDCALL;
+        hr = WINED3DERR_INVALIDCALL;
     }
 
     if (pSourceTexture == pDestinationTexture) {
-        WARN("(%p) : source (%p) and destination (%p) textures must be different, returning D3DERR_INVALIDCALL\n",
+        WARN("(%p) : source (%p) and destination (%p) textures must be different, returning WINED3DERR_INVALIDCALL\n",
              This, pSourceTexture, pDestinationTexture);
-        hr = D3DERR_INVALIDCALL;
+        hr = WINED3DERR_INVALIDCALL;
     }
     /* Verify that the source and destination textures are the same type */
     sourceType      = IWineD3DBaseTexture_GetType(pSourceTexture);
     destinationType = IWineD3DBaseTexture_GetType(pDestinationTexture);
 
     if (sourceType != destinationType) {
-        WARN("(%p) Sorce and destination types must match, returning D3DERR_INVALIDCALL\n",
+        WARN("(%p) Sorce and destination types must match, returning WINED3DERR_INVALIDCALL\n",
              This);
-        hr = D3DERR_INVALIDCALL;
+        hr = WINED3DERR_INVALIDCALL;
     }
 
     /* check that both textures have the identical numbers of levels  */
     if (IWineD3DBaseTexture_GetLevelCount(pDestinationTexture)  != IWineD3DBaseTexture_GetLevelCount(pSourceTexture)) {
-        WARN("(%p) : source (%p) and destination (%p) textures must have identicle numbers of levels, returning D3DERR_INVALIDCALL\n", This, pSourceTexture, pDestinationTexture);
-        hr = D3DERR_INVALIDCALL;
+        WARN("(%p) : source (%p) and destination (%p) textures must have identicle numbers of levels, returning WINED3DERR_INVALIDCALL\n", This, pSourceTexture, pDestinationTexture);
+        hr = WINED3DERR_INVALIDCALL;
     }
 
-    if (D3D_OK == hr) {
+    if (WINED3D_OK == hr) {
 
         /* Make sure that the destination texture is loaded */
         IWineD3DBaseTexture_PreLoad(pDestinationTexture);
@@ -5199,7 +5199,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3D
                     hr = IWineD3DDevice_UpdateSurface(iface, srcSurface, NULL, destSurface, NULL);
                     IWineD3DSurface_Release(srcSurface);
                     IWineD3DSurface_Release(destSurface);
-                    if (D3D_OK != hr) {
+                    if (WINED3D_OK != hr) {
                         WARN("(%p) : Call to update surface failed\n", This);
                         return hr;
                     }
@@ -5216,13 +5216,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3D
                     /* Update each cube face */
                     for (faceType = D3DCUBEMAP_FACE_POSITIVE_X; faceType <= D3DCUBEMAP_FACE_NEGATIVE_Z; ++faceType){
                         hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)pSourceTexture,      faceType, i, &srcSurface);
-                        if (D3D_OK != hr) {
+                        if (WINED3D_OK != hr) {
                             FIXME("(%p) : Failed to get src cube surface facetype %d, level %d\n", This, faceType, i);
                         } else {
                             TRACE("Got srcSurface %p\n", srcSurface);
                         }
                         hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)pDestinationTexture, faceType, i, &destSurface);
-                        if (D3D_OK != hr) {
+                        if (WINED3D_OK != hr) {
                             FIXME("(%p) : Failed to get src cube surface facetype %d, level %d\n", This, faceType, i);
                         } else {
                             TRACE("Got desrSurface %p\n", destSurface);
@@ -5230,7 +5230,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3D
                         hr = IWineD3DDevice_UpdateSurface(iface, srcSurface, NULL, destSurface, NULL);
                         IWineD3DSurface_Release(srcSurface);
                         IWineD3DSurface_Release(destSurface);
-                        if (D3D_OK != hr) {
+                        if (WINED3D_OK != hr) {
                             WARN("(%p) : Call to update surface failed\n", This);
                             return hr;
                         }
@@ -5250,7 +5250,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3D
                     hr =  IWineD3DFoo_UpdateVolume(iface, srcVolume, NULL, destVolume, NULL);
                     IWineD3DVolume_Release(srcSurface);
                     IWineD3DVolume_Release(destSurface);
-                    if (D3D_OK != hr) {
+                    if (WINED3D_OK != hr) {
                         WARN("(%p) : Call to update volume failed\n", This);
                         return hr;
                     }
@@ -5260,7 +5260,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3D
 #endif
         default:
             FIXME("(%p) : Unsupported source and destination type\n", This);
-            hr = D3DERR_INVALIDCALL;
+            hr = WINED3DERR_INVALIDCALL;
         }
     }
 
@@ -5273,7 +5273,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_StretchRect(IWineD3DDevice *iface, IWineD3DS
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTargetData(IWineD3DDevice *iface, IWineD3DSurface *pRenderTarget, IWineD3DSurface *pSurface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -5326,7 +5326,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTargetData(IWineD3DDevice *iface, I
         IWineD3DBaseTexture *container;
         GLenum textureDimensions = GL_TEXTURE_2D;
 
-        if (D3D_OK == IWineD3DSurface_GetContainer(pSurface, &IID_IWineD3DBaseTexture, (void **)&container)) {
+        if (WINED3D_OK == IWineD3DSurface_GetContainer(pSurface, &IID_IWineD3DBaseTexture, (void **)&container)) {
             textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(container);
             IWineD3DBaseTexture_Release(container);
         }
@@ -5349,14 +5349,14 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTargetData(IWineD3DDevice *iface, I
 
     }
     LEAVE_GL();
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *iface,UINT iSwapChain, IWineD3DSurface *pDestSurface) {
     IWineD3DSwapChain *swapChain;
     HRESULT hr;
     hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
-    if(hr == D3D_OK) {
+    if(hr == WINED3D_OK) {
         hr = IWineD3DSwapChain_GetFrontBufferData(swapChain, pDestSurface);
                 IWineD3DSwapChain_Release(swapChain);
     }
@@ -5367,9 +5367,9 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface, DWORD*
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     /* return a sensible default */
     *pNumPasses = 1;
-    /* TODO: If the window is minimized then validate device should return something other than d3d_ok */
+    /* TODO: If the window is minimized then validate device should return something other than WINED3D_OK */
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries) {
@@ -5378,7 +5378,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *iface, UIN
     TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
     if ( PaletteNumber < 0 || PaletteNumber >= MAX_PALETTES) {
         WARN("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     for (j = 0; j < 256; ++j) {
         This->palettes[PaletteNumber][j].peRed   = pEntries[j].peRed;
@@ -5387,7 +5387,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *iface, UIN
         This->palettes[PaletteNumber][j].peFlags = pEntries[j].peFlags;
     }
     TRACE("(%p) : returning\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *iface, UINT PaletteNumber, PALETTEENTRY* pEntries) {
@@ -5396,7 +5396,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *iface, UIN
     TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
     if ( PaletteNumber < 0 || PaletteNumber >= MAX_PALETTES) {
         WARN("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     for (j = 0; j < 256; ++j) {
         pEntries[j].peRed   = This->palettes[PaletteNumber][j].peRed;
@@ -5405,7 +5405,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *iface, UIN
         pEntries[j].peFlags = This->palettes[PaletteNumber][j].peFlags;
     }
     TRACE("(%p) : returning\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_SetCurrentTexturePalette(IWineD3DDevice *iface, UINT PaletteNumber) {
@@ -5413,24 +5413,24 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetCurrentTexturePalette(IWineD3DDevice *ifa
     TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
     if ( PaletteNumber < 0 || PaletteNumber >= MAX_PALETTES) {
         WARN("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     /*TODO: stateblocks */
     This->currentPalette = PaletteNumber;
     TRACE("(%p) : returning\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetCurrentTexturePalette(IWineD3DDevice *iface, UINT* PaletteNumber) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     if (PaletteNumber == NULL) {
         WARN("(%p) : returning Invalid Call\n", This);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     /*TODO: stateblocks */
     *PaletteNumber = This->currentPalette;
     TRACE("(%p) : returning  %u\n", This, *PaletteNumber);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_SetSoftwareVertexProcessing(IWineD3DDevice *iface, BOOL bSoftware) {
@@ -5442,7 +5442,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetSoftwareVertexProcessing(IWineD3DDevice *
     }
 
     This->softwareVertexProcessing = bSoftware;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 
@@ -5465,7 +5465,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface, UINT 
     TRACE("(%p) :  SwapChain %d returning %p\n", This, iSwapChain, pRasterStatus);
 
     hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
-    if(hr == D3D_OK){
+    if(hr == WINED3D_OK){
         hr = IWineD3DSwapChain_GetRasterStatus(swapChain, pRasterStatus);
         IWineD3DSwapChain_Release(swapChain);
     }else{
@@ -5484,7 +5484,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetNPatchMode(IWineD3DDevice *iface, float n
             showfixmes = FALSE;
         }
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 float    WINAPI  IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface) {
@@ -5535,8 +5535,8 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
     IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
 
     if(srcPool != WINED3DPOOL_SYSTEMMEM  || destPool != WINED3DPOOL_DEFAULT){
-        WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning D3DERR_INVALIDCALL\n", pSourceSurface, pDestinationSurface);
-        return D3DERR_INVALIDCALL;
+        WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n", pSourceSurface, pDestinationSurface);
+        return WINED3DERR_INVALIDCALL;
     }
 
     if (destFormat == WINED3DFMT_UNKNOWN) {
@@ -5683,7 +5683,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
     /* I only need to look up baseTexture here, so it may be a good idea to hava a GL_TARGET ->
      * GL_DIMENSIONS lookup, or maybe store the dimensions on the surface (but that's making the
      * surface bigger than it needs to be hmm.. */
-    if (D3D_OK == IWineD3DSurface_GetContainer(pDestinationSurface, &IID_IWineD3DBaseTexture, (void **)&baseTexture)) {
+    if (WINED3D_OK == IWineD3DSurface_GetContainer(pDestinationSurface, &IID_IWineD3DBaseTexture, (void **)&baseTexture)) {
         textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(baseTexture);
         IWineD3DBaseTexture_Release(baseTexture);
     }
@@ -5691,7 +5691,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
     glDisable(textureDimensions); /* This needs to be managed better.... */
     LEAVE_GL();
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /* Used by DirectX 8 */
@@ -5700,7 +5700,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_CopyRects(IWineD3DDevice *iface,
                                                 IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPointsArray) {
 
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
-    HRESULT              hr = D3D_OK;
+    HRESULT              hr = WINED3D_OK;
     WINED3DFORMAT        srcFormat, destFormat;
     UINT                 srcWidth,  destWidth;
     UINT                 srcHeight, destHeight;
@@ -5728,8 +5728,8 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_CopyRects(IWineD3DDevice *iface,
 
     /* Check that the source and destination formats match */
     if (srcFormat != destFormat && WINED3DFMT_UNKNOWN != destFormat) {
-        WARN("(%p) source %p format must match the dest %p format, returning D3DERR_INVALIDCALL\n", This, pSourceSurface, pDestinationSurface);
-        return D3DERR_INVALIDCALL;
+        WARN("(%p) source %p format must match the dest %p format, returning WINED3DERR_INVALIDCALL\n", This, pSourceSurface, pDestinationSurface);
+        return WINED3DERR_INVALIDCALL;
     } else if (WINED3DFMT_UNKNOWN == destFormat) {
         TRACE("(%p) : Converting destination surface from WINED3DFMT_UNKNOWN to the source format\n", This);
         IWineD3DSurface_SetFormat(pDestinationSurface, srcFormat);
@@ -5754,8 +5754,8 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_CopyRects(IWineD3DDevice *iface,
 
         } else {
 
-            FIXME("Wanted to copy all surfaces but size not compatible, returning D3DERR_INVALIDCALL\n");
-            hr = D3DERR_INVALIDCALL;
+            FIXME("Wanted to copy all surfaces but size not compatible, returning WINED3DERR_INVALIDCALL\n");
+            hr = WINED3DERR_INVALIDCALL;
          }
 
     } else {
@@ -5799,8 +5799,8 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_CopyRects(IWineD3DDevice *iface,
                 TRACE("Unlocked src and dst\n");
             }
         } else {
-            FIXME("Wanted to copy partial surfaces not implemented, returning D3DERR_INVALIDCALL\n");
-            hr = D3DERR_INVALIDCALL;
+            FIXME("Wanted to copy partial surfaces not implemented, returning WINED3DERR_INVALIDCALL\n");
+            hr = WINED3DERR_INVALIDCALL;
         }
     }
 
@@ -5819,7 +5819,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawRectPatch(IWineD3DDevice *iface, UINT Hand
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) Handle(%d) noSegs(%p) rectpatch(%p)\n", This, Handle, pNumSegs, pRectPatchInfo);
     FIXME("(%p) : Stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 
@@ -5828,14 +5828,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawTriPatch(IWineD3DDevice *iface, UINT Handl
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) Handle(%d) noSegs(%p) tripatch(%p)\n", This, Handle, pNumSegs, pTriPatchInfo);
     FIXME("(%p) : Stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT Handle) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) Handle(%d)\n", This, Handle);
     FIXME("(%p) : Stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurface *pSurface, CONST D3DRECT* pRect, D3DCOLOR color) {
@@ -5854,11 +5854,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurfa
 
     if (surface->resource.pool != WINED3DPOOL_DEFAULT) {
         FIXME("call to colorfill with non WINED3DPOOL_DEFAULT surface\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     /* TODO: get rid of IWineD3DSwapChainImpl reference, a 'context' manager may help with this */
-    if (D3D_OK == IWineD3DSurface_GetContainer(pSurface, &IID_IWineD3DSwapChain, (void **)&container) || pSurface == This->renderTarget) {
+    if (WINED3D_OK == IWineD3DSurface_GetContainer(pSurface, &IID_IWineD3DSwapChain, (void **)&container) || pSurface == This->renderTarget) {
         if (WINED3DUSAGE_RENDERTARGET & surface->resource.usage) {
             /* TODO: make sure we set everything back to the way it was, and context management!
                 glGetIntegerv(GL_READ_BUFFER, &prev_read);
@@ -5882,7 +5882,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurfa
                 IWineD3DSwapChain_Release((IWineD3DSwapChain *)container);
             }
             /* we can use GL_STENCIL_INDEX etc...*/
-            return D3D_OK;
+            return WINED3D_OK;
         }
         if (container != NULL) {
             IWineD3DSwapChain_Release((IWineD3DSwapChain *)container);
@@ -5941,7 +5941,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurfa
     }
     HeapFree(GetProcessHeap(), 0, data);
     LEAVE_GL();
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 
@@ -5958,7 +5958,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface,DWORD 
     /* Note inc ref on returned surface */
     if(*ppRenderTarget != NULL)
         IWineD3DSurface_AddRef(*ppRenderTarget);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice* iface, IWineD3DSurface **ppZStencilSurface) {
@@ -5970,7 +5970,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice* iface
         /* Note inc ref on returned surface */
         IWineD3DSurface_AddRef(*ppZStencilSurface);
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /* internal static helper functions */
@@ -5979,7 +5979,7 @@ HRESULT WINAPI static IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    HRESULT  hr = D3D_OK;
+    HRESULT  hr = WINED3D_OK;
     WINED3DVIEWPORT viewport;
 
     TRACE("(%p) Swapping rendertarget\n",This);
@@ -5997,12 +5997,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD R
     */
     if (RenderTargetIndex == 0 && pRenderTarget == NULL) {
         FIXME("Trying to set render target 0 to NULL\n");
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     /* TODO: replace Impl* usage with interface usage */
     if (!((IWineD3DSurfaceImpl *)pRenderTarget)->resource.usage & WINED3DUSAGE_RENDERTARGET) {
         FIXME("(%p)Trying to set the render target to a surface(%p) that wasn't created with a usage of WINED3DUSAGE_RENDERTARGET\n",This ,pRenderTarget);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     /** TODO: check that the depth stencil format matches the render target, this is only done in debug
      *        builds, but I think wine counts as a 'debug' build for now.
@@ -6045,7 +6045,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD R
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, IWineD3DSurface *pNewZStencil) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    HRESULT  hr = D3D_OK;
+    HRESULT  hr = WINED3D_OK;
     IWineD3DSurface *tmp;
 
     TRACE("(%p) Swapping z-buffer\n",This);
@@ -6066,7 +6066,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, 
         /* should we be calling the parent or the wined3d surface? */
         if (NULL != This->stencilBufferTarget) IWineD3DSurface_AddRef(This->stencilBufferTarget);
         if (NULL != tmp) IWineD3DSurface_Release(tmp);
-        hr = D3D_OK;
+        hr = WINED3D_OK;
         /** TODO: glEnable/glDisable on depth/stencil    depending on
          *   pNewZStencil is NULL and the depth/stencil is enabled in d3d
           **********************************************************/
@@ -6093,7 +6093,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CleanRender(IWineD3DDevice* iface, IWineD3DSwa
         swapchain->render_ctx = swapchain->glCtx;
         swapchain->drawable   = swapchain->win;
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /* TODO: move this off into a context manager so that GLX_ATI_render_texture and other types of surface can be used. */
@@ -6154,7 +6154,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IWineD3DS
         }
     }
     if (*context != NULL)
-        return D3D_OK;
+        return WINED3D_OK;
     else
         return E_OUTOFMEMORY;
 }
@@ -6166,7 +6166,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IWineD3DS
  ******************************/
 HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
                                                IWineD3DSurface *RenderSurface) {
-    HRESULT ret =  D3DERR_INVALIDCALL;
+    HRESULT ret =  WINED3DERR_INVALIDCALL;
 
     /**
     * Currently only active for GLX >= 1.3
@@ -6272,7 +6272,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
 #endif
     }
 
-    if (IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&currentSwapchain) != D3D_OK) {
+    if (IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&currentSwapchain) != WINED3D_OK) {
         /* the selected render target doesn't belong to a swapchain, so use the devices implicit swapchain */
         IWineD3DDevice_GetSwapChain(iface, 0, &currentSwapchain);
     }
@@ -6281,7 +6281,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     * TODO: remove the use of IWineD3DSwapChainImpl, a context manager will help since it will replace the
     *  renderTarget = swapchain->backBuffer bit and anything to do with *glContexts
      **********************************************************************/
-    if (IWineD3DSurface_GetContainer(RenderSurface, &IID_IWineD3DSwapChain, (void **)&swapchain) == D3D_OK) {
+    if (IWineD3DSurface_GetContainer(RenderSurface, &IID_IWineD3DSwapChain, (void **)&swapchain) == WINED3D_OK) {
         /* We also need to make sure that the lights &co are also in the context of the swapchains */
         /* FIXME: If the render target gets sent to the frontBuffer should be be presenting it raw? */
         TRACE("making swapchain active\n");
@@ -6327,7 +6327,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
         glContext   *newContext;
 
         /* Here were using a shared context model */
-        if (D3D_OK != IWineD3DDeviceImpl_FindGLContext(iface, RenderSurface, &newContext)) {
+        if (WINED3D_OK != IWineD3DDeviceImpl_FindGLContext(iface, RenderSurface, &newContext)) {
             FIXME("(%p) : Failed to find a context for surface %p\n", iface, RenderSurface);
         }
 
@@ -6414,7 +6414,7 @@ the directX current directX state should then be applied to the context */
         /* Check that the container is not a swapchain member */
 
         IWineD3DSwapChain *tmpSwapChain;
-        if (D3D_OK != IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&tmpSwapChain)) {
+        if (WINED3D_OK != IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&tmpSwapChain)) {
             This->renderUpsideDown = TRUE;
         }else{
             This->renderUpsideDown = FALSE;
@@ -6430,7 +6430,7 @@ the directX current directX state should then be applied to the context */
         This->proj_valid = FALSE;
     }
 
-    ret = D3D_OK;
+    ret = WINED3D_OK;
 
     if (cfgs != NULL) {
         XFree(cfgs);
@@ -6461,18 +6461,18 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* iface, U
 
     if (WINED3DFMT_A8R8G8B8 != pSur->resource.format) {
       ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
-      return D3DERR_INVALIDCALL;
+      return WINED3DERR_INVALIDCALL;
     }
     if (32 != pSur->currentDesc.Height || 32 != pSur->currentDesc.Width) {
       ERR("(%p) : surface(%p) has an invalid size\n", This, pCursorBitmap);
-      return D3DERR_INVALIDCALL;
+      return WINED3DERR_INVALIDCALL;
     }
     /* TODO: make the cursor 'real' */
 
     This->xHotSpot = XHotSpot;
     This->yHotSpot = YHotSpot;
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 void     WINAPI  IWineD3DDeviceImpl_SetCursorPosition(IWineD3DDevice* iface, int XScreenSpace, int YScreenSpace, DWORD Flags) {
@@ -6492,7 +6492,7 @@ BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOOL bShow
 
     This->bCursorVisible = bShow;
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_TestCooperativeLevel(IWineD3DDevice* iface) {
@@ -6500,24 +6500,24 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_TestCooperativeLevel(IWineD3DDevice* iface) 
     TRACE("(%p) : state (%lu)\n", This, This->state);
     /* TODO: Implement wrapping of the WndProc so that mimimize and maxamise can be monitored and the states adjusted. */
     switch (This->state) {
-    case D3D_OK:
-        return D3D_OK;
-    case D3DERR_DEVICELOST:
+    case WINED3D_OK:
+        return WINED3D_OK;
+    case WINED3DERR_DEVICELOST:
         {
             ResourceList *resourceList  = This->resources;
             while (NULL != resourceList) {
                 if (((IWineD3DResourceImpl *)resourceList->resource)->resource.pool == WINED3DPOOL_DEFAULT /* TODO: IWineD3DResource_GetPool(resourceList->resource)*/)
-                return D3DERR_DEVICENOTRESET;
+                return WINED3DERR_DEVICENOTRESET;
                 resourceList = resourceList->next;
             }
-            return D3DERR_DEVICELOST;
+            return WINED3DERR_DEVICELOST;
         }
-    case D3DERR_DRIVERINTERNALERROR:
-        return D3DERR_DRIVERINTERNALERROR;
+    case WINED3DERR_DRIVERINTERNALERROR:
+        return WINED3DERR_DRIVERINTERNALERROR;
     }
 
     /* Unknown state */
-    return D3DERR_DRIVERINTERNALERROR;
+    return WINED3DERR_DRIVERINTERNALERROR;
 }
 
 
@@ -6528,7 +6528,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice* iface)
     * and then reset them.
      ***********************************************************/
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_Rest(IWineD3DDevice* iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {
@@ -6539,7 +6539,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_Rest(IWineD3DDevice* iface, D3DPRESENT_PARAM
     * and should clear down the context and set it up according to pPresentationParameters
      ***********************************************************/
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetDialogBoxMode(IWineD3DDevice *iface, BOOL bEnableDialogs) {
@@ -6548,7 +6548,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetDialogBoxMode(IWineD3DDevice *iface, BOOL b
     if(bEnableDialogs == FALSE) {
         FIXME("(%p) Dialogs cannot be disabled yet\n", This);
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 
@@ -6557,16 +6557,16 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetCreationParameters(IWineD3DDevice *iface,
     TRACE("(%p) : pParameters %p\n", This, pParameters);
 
     *pParameters = This->createParms;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice * iface, UINT iSwapChain, DWORD Flags, CONST WINED3DGAMMARAMP* pRamp) {
     IWineD3DSwapChain *swapchain;
-    HRESULT hrc = D3D_OK;
+    HRESULT hrc = WINED3D_OK;
 
     TRACE("Relaying  to swapchain\n");
 
-    if ((hrc = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)) == D3D_OK) {
+    if ((hrc = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)) == WINED3D_OK) {
         IWineD3DSwapChain_SetGammaRamp(swapchain, Flags, (WINED3DGAMMARAMP *)pRamp);
         IWineD3DSwapChain_Release(swapchain);
     }
@@ -6575,11 +6575,11 @@ void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice * iface, UINT iSwapCh
 
 void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT iSwapChain, WINED3DGAMMARAMP* pRamp) {
     IWineD3DSwapChain *swapchain;
-    HRESULT hrc = D3D_OK;
+    HRESULT hrc = WINED3D_OK;
 
     TRACE("Relaying  to swapchain\n");
 
-    if ((hrc = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)) == D3D_OK) {
+    if ((hrc = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)) == WINED3D_OK) {
         hrc =IWineD3DSwapChain_GetGammaRamp(swapchain, pRamp);
         IWineD3DSwapChain_Release(swapchain);
     }

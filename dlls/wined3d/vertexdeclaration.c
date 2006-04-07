@@ -356,7 +356,7 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
   memcpy(This->pDeclarationWine, convToW, nTokens * sizeof(WINED3DVERTEXELEMENT));
 
   /* returns */
-  return D3D_OK;
+  return WINED3D_OK;
 }
 
 static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DVertexDeclaration* iface, const D3DVERTEXELEMENT9* pDecl) {
@@ -371,7 +371,7 @@ static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DVertexDec
 
     if (This->declaration9NumElements == 128) {
         FIXME("?(%p) Error parsing vertex declaration\n", This);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
 
@@ -388,7 +388,7 @@ static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DVertexDec
 
     This->declarationWNumElements = This->declaration9NumElements;
 
-  return D3D_OK;
+  return WINED3D_OK;
 }
 
 /* *******************************************
@@ -403,7 +403,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_QueryInterface(IWineD3DVertexDeclar
         || IsEqualGUID(riid, &IID_IWineD3DVertexDeclaration)){
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -439,7 +439,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetParent(IWineD3DVertexDeclaration
     *parent= This->parent;
     IUnknown_AddRef(*parent);
     TRACE("(%p) : returning %p\n", This, *parent);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDeclaration *iface, IWineD3DDevice** ppDevice) {
@@ -449,14 +449,14 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDeclaration
     *ppDevice = (IWineD3DDevice *) This->wineD3DDevice;
     IWineD3DDevice_AddRef(*ppDevice);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVertexDeclaration* iface, DWORD* pData, DWORD* pSizeOfData) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     if (NULL == pData) {
         *pSizeOfData = This->declaration8Length;
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /* The Incredibles and Teenage Mutant Ninja Turtles require this in d3d9 for NumElements == 0,
@@ -465,17 +465,17 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVert
         TRACE("(%p) : Requested the vertex declaration without specefying the size of the return buffer\n", This);
         *pSizeOfData = This->declaration8Length;
         memcpy(pData, This->pDeclaration8, This->declaration8Length);
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     if (*pSizeOfData < This->declaration8Length) {
-        FIXME("(%p) : Returning D3DERR_MOREDATA numElements %ld expected %ld\n", iface, *pSizeOfData, This->declaration8Length);
+        FIXME("(%p) : Returning WINED3DERR_MOREDATA numElements %ld expected %ld\n", iface, *pSizeOfData, This->declaration8Length);
         *pSizeOfData = This->declaration8Length;
-        return D3DERR_MOREDATA;
+        return WINED3DERR_MOREDATA;
     }
     TRACE("(%p) : GetVertexDeclaration8 copying to %p\n", This, pData);
     memcpy(pData, This->pDeclaration8, This->declaration8Length);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDeclaration* iface,  D3DVERTEXELEMENT9* pData, DWORD* pNumElements) {
@@ -488,18 +488,18 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDecla
 
     /* Passing a NULL pData is used to just retrieve the number of elements */
     if (!pData) {
-        TRACE("NULL pData passed. Returning D3D_OK.\n");
-        return D3D_OK;
+        TRACE("NULL pData passed. Returning WINED3D_OK.\n");
+        return WINED3D_OK;
     }
 
     TRACE("Copying %p to %p\n", This->pDeclaration9, pData);
     memcpy(pData, This->pDeclaration9, This->declaration9NumElements * sizeof(*pData));
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclaration *iface, VOID *pData, DWORD *pSize) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    HRESULT hr = D3D_OK;
+    HRESULT hr = WINED3D_OK;
 
     TRACE("(%p) : d3d version %d r\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
     switch (((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion) {
@@ -518,7 +518,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclar
 
 HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVertexDeclaration *iface, VOID *pDecl) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    HRESULT hr = D3D_OK;
+    HRESULT hr = WINED3D_OK;
 
     TRACE("(%p) : d3d version %d\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
     switch (((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion) {

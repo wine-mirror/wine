@@ -1964,64 +1964,64 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
     TRACE_VSVECTOR(output->oT[0]);
     TRACE_VSVECTOR(output->oT[1]);
 #endif
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_SetConstantF(IWineD3DVertexShader *iface, UINT StartRegister, CONST FLOAT *pConstantData, UINT Vector4fCount) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_GetConstantF(IWineD3DVertexShader *iface, UINT StartRegister, FLOAT *pConstantData, UINT Vector4fCount) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_SetConstantI(IWineD3DVertexShader *iface, UINT StartRegister, CONST int *pConstantData, UINT Vector4iCount) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     if (StartRegister + Vector4iCount > WINED3D_VSHADER_MAX_CONSTANTS) {
         ERR("(%p) : SetVertexShaderConstantI C[%u] invalid\n", This, StartRegister);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     if (NULL == pConstantData) {
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_GetConstantI(IWineD3DVertexShader *iface, UINT StartRegister, int *pConstantData, UINT Vector4iCount) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     TRACE("(%p) : C[%u] count=%u\n", This, StartRegister, Vector4iCount);
     if (StartRegister + Vector4iCount > WINED3D_VSHADER_MAX_CONSTANTS) {
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     if (NULL == pConstantData) {
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_SetConstantB(IWineD3DVertexShader *iface, UINT StartRegister, CONST BOOL *pConstantData, UINT BoolCount) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     if (StartRegister + BoolCount > WINED3D_VSHADER_MAX_CONSTANTS) {
         ERR("(%p) : SetVertexShaderConstantB C[%u] invalid\n", This, StartRegister);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     if (NULL == pConstantData) {
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_GetConstantB(IWineD3DVertexShader *iface, UINT StartRegister, BOOL *pConstantData, UINT BoolCount) {
     IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl *)iface;
     FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 #endif
@@ -2039,7 +2039,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *ifa
         || IsEqualGUID(riid, &IID_IWineD3DVertexShader)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -2072,7 +2072,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetParent(IWineD3DVertexShader *iface, I
     *parent = This->parent;
     IUnknown_AddRef(*parent);
     TRACE("(%p) : returning %p\n", This, *parent);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_GetDevice(IWineD3DVertexShader* iface, IWineD3DDevice **pDevice){
@@ -2080,7 +2080,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetDevice(IWineD3DVertexShader* iface, I
     IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
     *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
     TRACE("(%p) returning %p\n", This, *pDevice);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, VOID* pData, UINT* pSizeOfData) {
@@ -2089,11 +2089,11 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, 
 
     if (NULL == pData) {
         *pSizeOfData = This->baseShader.functionLength;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     if (*pSizeOfData < This->baseShader.functionLength) {
         *pSizeOfData = This->baseShader.functionLength;
-        return D3DERR_MOREDATA;
+        return WINED3DERR_MOREDATA;
     }
     if (NULL == This->baseShader.function) { /* no function defined */
         TRACE("(%p) : GetFunction no User Function defined using NULL to %p\n", This, pData);
@@ -2105,7 +2105,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, 
         TRACE("(%p) : GetFunction copying to %p\n", This, pData);
         memcpy(pData, This->baseShader.function, This->baseShader.functionLength);
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface, CONST DWORD *pFunction) {
@@ -2206,7 +2206,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
     } else {
         This->baseShader.function = NULL;
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =

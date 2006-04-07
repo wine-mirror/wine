@@ -56,7 +56,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShader *iface
         || IsEqualGUID(riid, &IID_IWineD3DPixelShader)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -94,7 +94,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_GetParent(IWineD3DPixelShader *iface, IUn
     *parent = This->parent;
     IUnknown_AddRef(*parent);
     TRACE("(%p) : returning %p\n", This, *parent);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DPixelShaderImpl_GetDevice(IWineD3DPixelShader* iface, IWineD3DDevice **pDevice){
@@ -102,7 +102,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_GetDevice(IWineD3DPixelShader* iface, IWi
     IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
     *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
     TRACE("(%p) returning %p\n", This, *pDevice);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 
@@ -112,11 +112,11 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* impl, VO
 
   if (NULL == pData) {
     *pSizeOfData = This->baseShader.functionLength;
-    return D3D_OK;
+    return WINED3D_OK;
   }
   if (*pSizeOfData < This->baseShader.functionLength) {
     *pSizeOfData = This->baseShader.functionLength;
-    return D3DERR_MOREDATA;
+    return WINED3DERR_MOREDATA;
   }
   if (NULL == This->baseShader.function) { /* no function defined */
     TRACE("(%p) : GetFunction no User Function defined using NULL to %p\n", This, pData);
@@ -128,7 +128,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* impl, VO
     TRACE("(%p) : GetFunction copying to %p\n", This, pData);
     memcpy(pData, This->baseShader.function, This->baseShader.functionLength);
   }
-  return D3D_OK;
+  return WINED3D_OK;
 }
 
 /*******************************
@@ -1816,8 +1816,8 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
     }
 
     /* TODO: Some proper return values for failures */
-    TRACE("(%p) : Returning D3D_OK\n", This);
-    return D3D_OK;
+    TRACE("(%p) : Returning WINED3D_OK\n", This);
+    return WINED3D_OK;
 }
 
 const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =

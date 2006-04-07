@@ -40,7 +40,7 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_QueryInterface(IWineD3DVolumeTexture *i
         || IsEqualGUID(riid, &IID_IWineD3DVolumeTexture)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -214,7 +214,7 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTexture *ifa
     } else {
         FIXME("(%p) Level (%d)\n", This, Level);
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTexture *iface, UINT Level, IWineD3DVolume** ppVolumeLevel) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
@@ -224,9 +224,9 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTexture *i
       TRACE("(%p) -> level(%d) returning volume@%p\n", This, Level, *ppVolumeLevel);
     } else {
       FIXME("(%p) Level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-      return D3DERR_INVALIDCALL;
+      return WINED3DERR_INVALIDCALL;
     }
-    return D3D_OK;
+    return WINED3D_OK;
 
 }
 HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *iface, UINT Level, WINED3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
@@ -239,7 +239,7 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_LockBox(IWineD3DVolumeTexture *iface, U
 
     } else {
       FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-      return D3DERR_INVALIDCALL;
+      return WINED3DERR_INVALIDCALL;
     }
     return hr;
 }
@@ -254,7 +254,7 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture *iface,
 
     } else {
       FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-      return D3DERR_INVALIDCALL;
+      return WINED3DERR_INVALIDCALL;
     }
     return hr;
 }

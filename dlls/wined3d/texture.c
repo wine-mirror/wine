@@ -40,7 +40,7 @@ HRESULT WINAPI IWineD3DTextureImpl_QueryInterface(IWineD3DTexture *iface, REFIID
         || IsEqualGUID(riid, &IID_IWineD3DTexture)){
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -253,20 +253,20 @@ HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface, UINT Lev
         return IWineD3DSurface_GetDesc(This->surfaces[Level], pDesc);
     }
     FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-    return D3DERR_INVALIDCALL;
+    return WINED3DERR_INVALIDCALL;
 }
 
 HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface, UINT Level, IWineD3DSurface** ppSurfaceLevel) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    HRESULT hr = D3DERR_INVALIDCALL;
+    HRESULT hr = WINED3DERR_INVALIDCALL;
 
     if (Level < This->baseTexture.levels) {
         *ppSurfaceLevel = This->surfaces[Level];
         IWineD3DSurface_AddRef((IWineD3DSurface*) This->surfaces[Level]);
-        hr = D3D_OK;
+        hr = WINED3D_OK;
         TRACE("(%p) : returning %p for level %d\n", This, *ppSurfaceLevel, Level);
     }
-    if (D3D_OK != hr) {
+    if (WINED3D_OK != hr) {
         WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
         *ppSurfaceLevel = NULL; /* Just to be on the safe side.. */
     }
@@ -276,12 +276,12 @@ HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface, UINT 
 HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface, UINT Level, WINED3DLOCKED_RECT *pLockedRect,
                                             CONST RECT *pRect, DWORD Flags) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    HRESULT hr = D3DERR_INVALIDCALL;
+    HRESULT hr = WINED3DERR_INVALIDCALL;
 
     if (Level < This->baseTexture.levels) {
         hr = IWineD3DSurface_LockRect(This->surfaces[Level], pLockedRect, pRect, Flags);
     }
-    if (D3D_OK == hr) {
+    if (WINED3D_OK == hr) {
         TRACE("(%p) Level (%d) success\n", This, Level);
     } else {
         WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
@@ -292,12 +292,12 @@ HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface, UINT Level, 
 
 HRESULT WINAPI IWineD3DTextureImpl_UnlockRect(IWineD3DTexture *iface, UINT Level) {
    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    HRESULT hr = D3DERR_INVALIDCALL;
+    HRESULT hr = WINED3DERR_INVALIDCALL;
 
     if (Level < This->baseTexture.levels) {
         hr = IWineD3DSurface_UnlockRect(This->surfaces[Level]);
     }
-    if ( D3D_OK == hr) {
+    if ( WINED3D_OK == hr) {
         TRACE("(%p) Level (%d) success\n", This, Level);
     } else {
         WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);

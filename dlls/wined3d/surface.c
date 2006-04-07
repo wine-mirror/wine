@@ -45,7 +45,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID
         || IsEqualGUID(riid, &IID_IWineD3DSurface)) {
         IUnknown_AddRef((IUnknown*)iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -114,7 +114,7 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DBaseTexture *baseTexture = NULL;
     TRACE("(%p)Checking to see if the container is a base texture\n", This);
-    if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == D3D_OK) {
+    if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
         TRACE("Passing to conatiner\n");
         IWineD3DBaseTexture_PreLoad(baseTexture);
         IWineD3DBaseTexture_Release(baseTexture);
@@ -193,7 +193,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetContainerParent(IWineD3DSurface* iface, IU
         *ppContainerParent = NULL;
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFIID riid, void** ppContainer) {
@@ -234,7 +234,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFAC
     if(pDesc->MultiSampleQuality != NULL) *(pDesc->MultiSampleQuality) = This->currentDesc.MultiSampleQuality;
     if(pDesc->Width != NULL)              *(pDesc->Width)              = This->currentDesc.Width;
     if(pDesc->Height != NULL)             *(pDesc->Height)             = This->currentDesc.Height;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target) {
@@ -282,7 +282,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
               texture regions, and since the destination is an unlockable region we need
               to tolerate this                                                           */
         TRACE("Warning: trying to lock unlockable surf@%p\n", This);
-        /*return D3DERR_INVALIDCALL; */
+        /*return WINED3DERR_INVALIDCALL; */
     }
 
     if (This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
@@ -642,7 +642,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
         IWineD3DSurface_AddDirtyRect(iface, &This->lockedRect);
 
         /** Dirtify Container if needed */
-        if (D3D_OK == IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&pBaseTexture) && pBaseTexture != NULL) {
+        if (WINED3D_OK == IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&pBaseTexture) && pBaseTexture != NULL) {
             TRACE("Making container dirty\n");
             IWineD3DBaseTexture_SetDirty(pBaseTexture, TRUE);
             IWineD3DBaseTexture_Release(pBaseTexture);
@@ -654,7 +654,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
     TRACE("returning memory@%p, pitch(%d) dirtyfied(%d)\n", pLockedRect->pBits, pLockedRect->Pitch, This->Dirty);
 
     This->locked = TRUE;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
@@ -666,7 +666,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
     if (FALSE == This->locked) {
         WARN("trying to Unlock an unlocked surf@%p\n", This);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     if (WINED3DUSAGE_RENDERTARGET & This->resource.usage) {
@@ -912,19 +912,19 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     unlock_end:
     This->locked = FALSE;
     memset(&This->lockedRect, 0, sizeof(RECT));
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     FIXME("No support for GetDC yet for surface %p\n", This);
-    return D3DERR_INVALIDCALL;
+    return WINED3DERR_INVALIDCALL;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     FIXME("No support for ReleaseDC yet for surface %p\n", This);
-    return D3DERR_INVALIDCALL;
+    return WINED3DERR_INVALIDCALL;
 }
 
 /* ******************************************************
@@ -935,11 +935,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
     if (This->inTexture) {
         TRACE("Surface already in texture\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
     if (This->Dirty == FALSE) {
         TRACE("surface isn't dirty\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     This->Dirty = FALSE;
@@ -954,7 +954,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     if (This->resource.pool == WINED3DPOOL_SCRATCH || This->resource.pool == WINED3DPOOL_SYSTEMMEM)
     {
         FIXME("(%p) Operation not supported for scratch or SYSTEMMEM textures\n",This);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     if (This->inPBuffer) {
@@ -990,7 +990,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             This->inTexture = TRUE;
         }
         LEAVE_GL();
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     if ((This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) &&
@@ -1042,7 +1042,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
         LEAVE_GL();
 
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     /* TODO: Compressed non-power 2 support */
@@ -1186,7 +1186,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 #include <errno.h>
@@ -1277,7 +1277,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
     f = fopen(filename, "w+");
     if (NULL == f) {
         ERR("opening of %s failed with: %s\n", filename, strerror(errno));
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 /* Save the dat out to a TGA file because 1: it's an easy raw format, 2: it supports an alpha chanel*/
     TRACE("(%p) opened %s with format %s\n", This, filename, debug_d3dformat(This->resource.format));
@@ -1328,7 +1328,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         IWineD3DSwapChain_Release(swapChain);
     }
     HeapFree(GetProcessHeap(), 0, allocatedMemory);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface) {
@@ -1340,7 +1340,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface) {
     This->dirtyRect.bottom = 0;
     TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left,
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /**
@@ -1364,12 +1364,12 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
     TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left,
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     /* if the container is a basetexture then mark it dirty. */
-    if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == D3D_OK) {
+    if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
         TRACE("Passing to conatiner\n");
         IWineD3DBaseTexture_SetDirty(baseTexture, TRUE);
         IWineD3DBaseTexture_Release(baseTexture);
     }
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3DBase *container) {
@@ -1382,7 +1382,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3D
     TRACE("Setting container to %p from %p\n", container, This->container);
     This->container = container;
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
@@ -1390,7 +1390,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
 
     if (This->resource.format != WINED3DFMT_UNKNOWN) {
         FIXME("(%p) : The foramt of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     TRACE("(%p) : Setting texture foramt to (%d,%s)\n", This, format, debug_d3dformat(format));
@@ -1433,7 +1433,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
 
     TRACE("(%p) : Size %d, pow2Size %d, bytesPerPixel %d, glFormat %d, glFotmatInternal %d, glType %d\n", This, This->resource.size, This->pow2Size, This->bytesPerPixel, This->glDescription.glFormat, This->glDescription.glFormatInternal, This->glDescription.glType);
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /* TODO: replace this function with context management routines */
@@ -1442,7 +1442,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL 
 
     This->inPBuffer = inPBuffer;
     This->inTexture = inTexture;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =

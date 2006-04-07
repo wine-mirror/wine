@@ -39,7 +39,7 @@ HRESULT WINAPI IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuffer *ifa
         || IsEqualGUID(riid, &IID_IWineD3DVertexBuffer)){
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return WINED3D_OK;
     }
     return E_NOINTERFACE;
 }
@@ -109,12 +109,12 @@ HRESULT  WINAPI        IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface
     TRACE("(%p) : returning memory of %p (base:%p,offset:%u)\n", This, This->resource.allocatedMemory + OffsetToLock, This->resource.allocatedMemory, OffsetToLock);
     /* TODO: check Flags compatibility with This->currentDesc.Usage (see MSDN) */
     *ppbData = This->resource.allocatedMemory + OffsetToLock;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 HRESULT  WINAPI        IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     TRACE("(%p) : stub\n", This);
-    return D3D_OK;
+    return WINED3D_OK;
 }
 HRESULT  WINAPI        IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *iface, WINED3DVERTEXBUFFER_DESC *pDesc) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
@@ -126,7 +126,7 @@ HRESULT  WINAPI        IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *if
     pDesc->Pool   = This->resource.pool;
     pDesc->Size   = This->resource.size;
     pDesc->FVF    = This->fvf;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
@@ -158,5 +158,5 @@ BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWO
 }
 
 HRESULT WINAPI IWineD3DVertexBufferImpl_ReleaseMemory(IWineD3DVertexBuffer* iface) {
-  return D3D_OK;
+  return WINED3D_OK;
 }
