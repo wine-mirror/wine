@@ -82,7 +82,7 @@ string_table *msi_init_stringtable( int entries, UINT codepage )
     if( entries < 1 )
         entries = 1;
     st->strings = msi_alloc_zero( sizeof (msistring) * entries );
-    if( !st )
+    if( !st->strings )
     {
         msi_free( st );
         return NULL;    
