@@ -438,6 +438,12 @@ static struct token *create_token( unsigned primary, const SID *user,
         {
             size_t size = FIELD_OFFSET( struct sid_and_attributes, sid.SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] );
             struct sid_and_attributes *group = mem_alloc( size );
+
+            if (!group)
+            {
+                release_object( token );
+                return NULL;
+            }
             memcpy( &group->sid, groups[i].Sid, FIELD_OFFSET( SID, SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] ) );
             group->enabled = TRUE;
             group->def = TRUE;
