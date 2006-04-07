@@ -425,7 +425,6 @@ static void setperusersecvalues_test()
     HRESULT hr;
     HKEY guid;
 
-    lstrcpy(peruser.szGUID, "guid");
     lstrcpy(peruser.szDispName, "displayname");
     lstrcpy(peruser.szLocale, "locale");
     lstrcpy(peruser.szStub, "stub");
@@ -434,7 +433,25 @@ static void setperusersecvalues_test()
     peruser.dwIsInstalled = 1;
     peruser.bRollback = FALSE;
 
+    /* try a NULL pPerUser */
+    hr = pSetPerUserSecValues(NULL);
+    todo_wine
+    {
+        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    }
+    ok(!OPEN_GUID_KEY(), "Expected guid key to not exist\n");
+
+    /* at the very least, szGUID must be valid */
+    peruser.szGUID[0] = '\0';
+    hr = pSetPerUserSecValues(&peruser);
+    todo_wine
+    {
+        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    }
+    ok(!OPEN_GUID_KEY(), "Expected guid key to not exist\n");
+
     /* set initial values */
+    lstrcpy(peruser.szGUID, "guid");
     hr = pSetPerUserSecValues(&peruser);
     todo_wine
     {
