@@ -530,7 +530,7 @@ FileMonikerImpl_BindToObject(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft
         }
         if (pcf!=NULL){
 
-            IClassFactory_CreateInstance(pcf,NULL,&IID_IPersistFile,(void**)ppf);
+            IClassFactory_CreateInstance(pcf,NULL,&IID_IPersistFile,(void**)&ppf);
 
             res=IPersistFile_Load(ppf,This->filePathName,STGM_READ);
 
