@@ -897,13 +897,12 @@ static void console_input_append_hist( struct console_input* console, const WCHA
     WCHAR*	ptr = mem_alloc( (len + 1) * sizeof(WCHAR) );
 
     if (!ptr)
-    {
-	set_error( STATUS_NO_MEMORY );
-	return;
-    }
+        return;
+
     if (!console || !console->history_size)
     {
 	set_error( STATUS_INVALID_PARAMETER ); /* FIXME */
+	free( ptr );
 	return;
     }
 
