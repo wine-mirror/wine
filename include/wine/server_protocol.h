@@ -1691,8 +1691,6 @@ struct write_process_memory_request
     struct request_header __header;
     obj_handle_t handle;
     void*        addr;
-    unsigned int first_mask;
-    unsigned int last_mask;
     /* VARARG(data,bytes); */
 };
 struct write_process_memory_reply
@@ -4361,6 +4359,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 231
+#define SERVER_PROTOCOL_VERSION 232
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

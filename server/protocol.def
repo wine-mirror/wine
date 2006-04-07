@@ -1239,9 +1239,7 @@ enum char_info_mode
 /* Write data to a process address space */
 @REQ(write_process_memory)
     obj_handle_t handle;       /* process handle */
-    void*        addr;         /* addr to write to (must be int-aligned) */
-    unsigned int first_mask;   /* mask for first word */
-    unsigned int last_mask;    /* mask for last word */
+    void*        addr;         /* addr to write to */
     VARARG(data,bytes);        /* data to write */
 @END
 

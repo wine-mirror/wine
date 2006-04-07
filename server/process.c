@@ -752,21 +752,34 @@ static int check_process_write_access( struct thread *thread, int *addr, size_t 
 }
 
 /* write data to a process memory space */
-/* len is the total size (in ints), max is the size we can actually read from the input buffer */
-/* we check the total size for write permissions */
-static int write_process_memory( struct process *process, int *addr, size_t len,
-                                 unsigned int first_mask, unsigned int last_mask, const int *src )
+static int write_process_memory( struct process *process, void *ptr, size_t size, const char *src )
 {
     struct thread *thread = get_process_first_thread( process );
-    int ret = 0;
-
-    assert( !((unsigned int)addr % sizeof(int) ));  /* address must be aligned */
+    int ret = 0, data = 0;
+    size_t len;
+    int *addr;
+    unsigned int first_mask, first_offset, last_mask, last_offset;
 
     if (!thread)  /* process is dead */
     {
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
+
+    /* compute the mask for the first int */
+    first_mask = ~0;
+    first_offset = (unsigned long)ptr % sizeof(int);
+    memset( &first_mask, 0, first_offset );
+
+    /* compute the mask for the last int */
+    last_offset = (size + first_offset) % sizeof(int);
+    if (!last_offset) last_offset = sizeof(int);
+    last_mask = 0;
+    memset( &last_mask, 0xff, last_offset );
+
+    addr = (int *)((char *)ptr - first_offset);
+    len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
+
     if (suspend_for_ptrace( thread ))
     {
         if (!check_process_write_access( thread, addr, len ))
@@ -777,19 +790,25 @@ static int write_process_memory( struct process *process, int *addr, size_t len,
         /* first word is special */
         if (len > 1)
         {
-            if (write_thread_int( thread, addr++, *src++, first_mask ) == -1) goto done;
+            memcpy( (char *)&data + first_offset, src, sizeof(int) - first_offset );
+            src += sizeof(int) - first_offset;
+            if (write_thread_int( thread, addr++, data, first_mask ) == -1) goto done;
+            first_offset = 0;
             len--;
         }
         else last_mask &= first_mask;
 
         while (len > 1)
         {
-            if (write_thread_int( thread, addr++, *src++, ~0 ) == -1) goto done;
+            memcpy( &data, src, sizeof(int) );
+            src += sizeof(int);
+            if (write_thread_int( thread, addr++, data, ~0 ) == -1) goto done;
             len--;
         }
 
         /* last word is special too */
-        if (write_thread_int( thread, addr, *src, last_mask ) == -1) goto done;
+        memcpy( (char *)&data + first_offset, src, last_offset - first_offset );
+        if (write_thread_int( thread, addr, data, last_mask ) == -1) goto done;
         ret = 1;
 
     done:
@@ -801,12 +820,10 @@ static int write_process_memory( struct process *process, int *addr, size_t len,
 /* set the debugged flag in the process PEB */
 int set_process_debug_flag( struct process *process, int flag )
 {
-    int mask = 0, data = 0;
+    char data = (flag != 0);
 
     /* BeingDebugged flag is the byte at offset 2 in the PEB */
-    memset( (char *)&mask + 2, 0xff, 1 );
-    memset( (char *)&data + 2, flag, 1 );
-    return write_process_memory( process, process->peb, 1, mask, mask, &data );
+    return write_process_memory( process, (char *)process->peb + 2, 1, &data );
 }
 
 /* take a snapshot of currently running processes */
@@ -1080,13 +1097,8 @@ DECL_HANDLER(write_process_memory)
     if ((process = get_process_from_handle( req->handle, PROCESS_VM_WRITE )))
     {
         size_t len = get_req_data_size();
-        if ((len % sizeof(int)) || ((unsigned int)req->addr % sizeof(int)))
-            set_error( STATUS_INVALID_PARAMETER );
-        else
-        {
-            if (len) write_process_memory( process, req->addr, len / sizeof(int),
-                                           req->first_mask, req->last_mask, get_req_data() );
-        }
+        if (len) write_process_memory( process, req->addr, len, get_req_data() );
+        else set_error( STATUS_INVALID_PARAMETER );
         release_object( process );
     }
 }

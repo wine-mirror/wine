@@ -1661,8 +1661,6 @@ static void dump_write_process_memory_request( const struct write_process_memory
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " addr=%p,", req->addr );
-    fprintf( stderr, " first_mask=%08x,", req->first_mask );
-    fprintf( stderr, " last_mask=%08x,", req->last_mask );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }
