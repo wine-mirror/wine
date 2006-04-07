@@ -179,6 +179,15 @@ static int lookup_charset(int enc)
     return OEM_CHARSET;
 }
 
+static int get_char(const union cptable *cptable, int enc, int index)
+{
+    /* Korean has the Won sign in place of '\\' */
+    if(enc == 949 && index == '\\')
+        return 0x20a9;
+
+    return cptable->sbcs.cp2uni[index];
+}
+
 static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned char def_char, int avg_width)
 {
     int ascent = 0, il, ppem, descent = 0, width_bytes = 0, space_size, max_width = 0;
@@ -282,10 +291,11 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
 
     os2 = FT_Get_Sfnt_Table(face, ft_sfnt_os2);
     for(i = first_char; i < 0x100; i++) {
-        gi = FT_Get_Char_Index(face, cptable->sbcs.cp2uni[i]);
+        int c = get_char(cptable, enc, i);
+        gi = FT_Get_Char_Index(face, c);
         if(gi == 0)
             fprintf(stderr, "Missing glyph for char %04x\n", cptable->sbcs.cp2uni[i]);
-        if(FT_Load_Char(face, cptable->sbcs.cp2uni[i], FT_LOAD_DEFAULT)) {
+        if(FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
             fprintf(stderr, "error loading char %d - bad news!\n", i);
             continue;
         }
@@ -365,7 +375,8 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     fwrite(dfCharTable + fi.dfFirstChar, sizeof(*dfCharTable), ((unsigned char)fi.dfLastChar - (unsigned char)fi.dfFirstChar) + 3, fp);
 
     for(i = first_char; i < 0x100; i++) {
-        if(FT_Load_Char(face, cptable->sbcs.cp2uni[i], FT_LOAD_DEFAULT)) {
+        int c = get_char(cptable, enc, i);
+        if(FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
             continue;
         }
         assert(dfCharTable[i].width == face->glyph->metrics.horiAdvance >> 6);

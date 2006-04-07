@@ -39,13 +39,12 @@ ScriptLang: 2
 LangName: 1033 "" "" "" "" "" "" "" "" "Created with FontForge 1.0 (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoA +AAoA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoA +AAoA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
 Encoding: UnicodeBmp
 UnicodeInterp: none
-NameList: Adobe Glyph List
 DisplaySize: 16
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 836 19 18
+WinInfo: 0 19 18
 OnlyBitmaps: 1
-BeginChars: 65536 347
+BeginChars: 65536 348
 StartChar: space
 Encoding: 32 32 0
 Width: 4
@@ -1847,17 +1846,23 @@ EndChar
 StartChar: afii10023
 Encoding: 1025 1025 345
 Width: 9
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
 StartChar: afii10071
 Encoding: 1105 1105 346
 Width: 8
-Flags: HW
+Flags: W
 TeX: 97 0 0 0
 EndChar
+StartChar: uni20A9
+Encoding: 8361 8361 347
+Width: 9
+Flags: W
+TeX: 117 0 0 0
+EndChar
 EndChars
-BitmapFont: 16 347 13 3 1 
+BitmapFont: 16 348 13 3 1 
 BDFChar: 0 32 4 14 14 0 0
 z
 BDFChar: 1 33 4 1 2 0 9
@@ -2552,5 +2557,7 @@ BDFChar: 345 1025 9 1 7 0 12
 bfg(d^qdb`^qdb$rVuou
 BDFChar: 346 1105 8 1 6 0 9
 bfg'3bfojtb]j*f
+BDFChar: 347 8361 9 0 8 0 9
+@fU9ECB/,Ms+"kbCB/haG5rfe
 EndBitmapFont
 EndSplineFont
