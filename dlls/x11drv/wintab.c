@@ -973,7 +973,6 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
         case WTI_CURSORS+7:
         case WTI_CURSORS+8:
         case WTI_CURSORS+9:
-        case WTI_CURSORS+10:
             tgtcursor = &gSysCursor[wCategory - WTI_CURSORS];
             switch (nIndex)
             {
