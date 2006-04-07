@@ -899,6 +899,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         case IMAGE_FILE_MACHINE_IA64:    MESSAGE("IA-64"); break;
         case IMAGE_FILE_MACHINE_ALPHA64: MESSAGE("Alpha-64"); break;
         case IMAGE_FILE_MACHINE_AMD64:   MESSAGE("AMD-64"); break;
+        case IMAGE_FILE_MACHINE_ARM:     MESSAGE("ARM"); break;
         default: MESSAGE("Unknown-%04x", nt->FileHeader.Machine); break;
         }
         MESSAGE(")\n");
