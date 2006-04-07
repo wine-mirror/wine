@@ -852,7 +852,7 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(unsigned long *pFlags, unsigned
     Buffer += sizeof(wiresab[0]) * wiresa->cDims;
 
     *ppsa = SafeArrayCreateEx(vt, wiresa->cDims, wiresab, NULL);
-    if (!ppsa)
+    if (!*ppsa)
         RpcRaiseException(E_OUTOFMEMORY);
 
     /* be careful about which flags we set since they could be a security
