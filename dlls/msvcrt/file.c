@@ -346,21 +346,21 @@ void msvcrt_init_io(void)
   if (!(MSVCRT_fdesc[0].wxflag & WX_OPEN) || MSVCRT_fdesc[0].handle == INVALID_HANDLE_VALUE)
   {
     DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_INPUT_HANDLE),
-                    GetCurrentProcess(), &MSVCRT_fdesc[0].handle, 0, FALSE, 
+                    GetCurrentProcess(), &MSVCRT_fdesc[0].handle, 0, TRUE, 
                     DUPLICATE_SAME_ACCESS);
     MSVCRT_fdesc[0].wxflag = WX_OPEN | WX_TEXT;
   }
   if (!(MSVCRT_fdesc[1].wxflag & WX_OPEN) || MSVCRT_fdesc[1].handle == INVALID_HANDLE_VALUE)
   {
     DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_OUTPUT_HANDLE),
-                    GetCurrentProcess(), &MSVCRT_fdesc[1].handle, 0, FALSE, 
+                    GetCurrentProcess(), &MSVCRT_fdesc[1].handle, 0, TRUE, 
                     DUPLICATE_SAME_ACCESS);
     MSVCRT_fdesc[1].wxflag = WX_OPEN | WX_TEXT;
   }
   if (!(MSVCRT_fdesc[2].wxflag & WX_OPEN) || MSVCRT_fdesc[2].handle == INVALID_HANDLE_VALUE)
   {
     DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_ERROR_HANDLE),
-                    GetCurrentProcess(), &MSVCRT_fdesc[2].handle, 0, FALSE, 
+                    GetCurrentProcess(), &MSVCRT_fdesc[2].handle, 0, TRUE, 
                     DUPLICATE_SAME_ACCESS);
     MSVCRT_fdesc[2].wxflag = WX_OPEN | WX_TEXT;
   }
