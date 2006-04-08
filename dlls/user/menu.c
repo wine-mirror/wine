@@ -1693,23 +1693,23 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 	    else
 		DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT);
 
-	    menu = MENU_GetMenu( hmenu );
-            
-	    /* draw menu items */
-	    if (menu && menu->nItems)
-	    {
-		MENUITEM *item;
-		UINT u;
+            if( (menu = MENU_GetMenu( hmenu )))
+            {
+                /* draw menu items */
+                if( menu->nItems)
+                {
+                    MENUITEM *item;
+                    UINT u;
 
-		for (u = menu->nItems, item = menu->items; u > 0; u--, item++)
-		    MENU_DrawMenuItem( hwnd, hmenu, menu->hwndOwner, hdc, item,
-				       menu->Height, FALSE, ODA_DRAWENTIRE );
-
-	    }
-
-            /* draw scroll arrows */
-            if (menu->bScrolling)
-                MENU_DrawScrollArrows(menu, hdc);
+                    item = menu->items;
+                    for( u = menu->nItems; u > 0; u--, item++)
+                        MENU_DrawMenuItem( hwnd, hmenu, menu->hwndOwner, hdc,
+                                item, menu->Height, FALSE, ODA_DRAWENTIRE );
+                }
+                /* draw scroll arrows */
+                if (menu->bScrolling)
+                    MENU_DrawScrollArrows(menu, hdc);
+            }
  	} else
 	{
 	    SelectObject( hdc, hPrevBrush );
