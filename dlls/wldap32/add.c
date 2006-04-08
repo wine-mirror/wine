@@ -342,7 +342,6 @@ ULONG ldap_add_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
            serverctrls, clientctrls );
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
-    if (!attrs) return LDAP_PROTOCOL_ERROR;
 
     if (dn) {
         dnU = strWtoU( dn );
