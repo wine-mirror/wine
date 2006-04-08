@@ -131,14 +131,13 @@ static BOOL handle_uri(NSContainer *container, nsChannel *channel, LPCWSTR uri)
 
         hres = IServiceProvider_QueryService(service_provider, &IID_IHlinkFrame,
                                              &IID_IHlinkFrame, (void**)&hlink_frame);
+        IServiceProvider_Release(service_provider);
         if(SUCCEEDED(hres)) {
             hlink_frame_navigate(doc, hlink_frame, uri, channel->post_data_stream, hlnf);
             IHlinkFrame_Release(hlink_frame);
 
             return FALSE;
         }
-
-        IServiceProvider_Release(service_provider);
     }
 
     return TRUE;
@@ -618,6 +617,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
             nsres = nsIUploadChannel_SetUploadStream(upload_channel, This->post_data_stream,
                                                      &empty_string, -1);
+            nsIUploadChannel_Release(upload_channel);
             if(NS_FAILED(nsres))
                 WARN("SetUploadStream failed: %08lx\n", nsres);
 

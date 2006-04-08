@@ -1115,6 +1115,7 @@ static nsresult NSAPI nsSupportsWeakReference_GetWeakReference(nsISupportsWeakRe
 
     TRACE("(%p)->(%p)\n", This, _retval);
 
+    nsIWeakReference_AddRef(NSWEAKREF(This));
     *_retval = NSWEAKREF(This);
     return NS_OK;
 }
@@ -1230,23 +1231,13 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
 
 void NSContainer_Release(NSContainer *This)
 {
-    nsIBaseWindow *base_window;
-    nsresult nsres;
-
     TRACE("(%p)\n", This);
 
     ShowWindow(This->hwnd, SW_HIDE);
     SetParent(This->hwnd, NULL);
 
-    nsres = nsIWebBrowser_QueryInterface(This->webbrowser, &IID_nsIBaseWindow,
-                                         (void**)&base_window);
-    if(NS_SUCCEEDED(nsres)) {
-        nsIBaseWindow_SetVisibility(base_window, FALSE);
-        nsIBaseWindow_Destroy(base_window);
-        nsIBaseWindow_Release(base_window);
-    }else {
-        ERR("Could not get nsIBaseWindow interface: %08lx\n", nsres);
-    }
+    nsIBaseWindow_SetVisibility(This->window, FALSE);
+    nsIBaseWindow_Destroy(This->window);
 
     nsIWebBrowser_SetContainerWindow(This->webbrowser, NULL);
 
@@ -1258,6 +1249,9 @@ void NSContainer_Release(NSContainer *This)
 
     nsIBaseWindow_Release(This->window);
     This->window = NULL;
+
+    nsIWebBrowserFocus_Release(This->focus);
+    This->focus = NULL;
 
     if(This->stream) {
         nsIWebBrowserStream_Release(This->stream);
