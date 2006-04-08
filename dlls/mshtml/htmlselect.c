@@ -169,7 +169,7 @@ static HRESULT WINAPI HTMLSelectElement_get_name(IHTMLSelectElement *iface, BSTR
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
     nsAString name_str;
-    const PRUnichar *name;
+    const PRUnichar *name = NULL;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -243,7 +243,7 @@ static HRESULT WINAPI HTMLSelectElement_get_value(IHTMLSelectElement *iface, BST
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
     nsAString value_str;
-    const PRUnichar *value;
+    const PRUnichar *value = NULL;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

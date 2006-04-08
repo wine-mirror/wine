@@ -173,7 +173,7 @@ static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR 
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
     nsAString value_str;
-    const PRUnichar *value;
+    const PRUnichar *value = NULL;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
