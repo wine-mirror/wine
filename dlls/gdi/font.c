@@ -2330,6 +2330,8 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
     unsigned int i;
     BOOL ret = FALSE;
 
+    if (!dc) return FALSE;
+
     if(dc->gdiFont)
         ret = WineEngGetCharABCWidths( dc->gdiFont, firstChar, lastChar, abc );
     else

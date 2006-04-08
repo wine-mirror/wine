@@ -323,6 +323,18 @@ static void test_GdiGetCharDimensions(void)
     DeleteDC(hdc);
 }
 
+static void test_GetCharABCWidthsW(void)
+{
+    BOOL ret;
+    ABC abc[1];
+    typedef BOOL (WINAPI *fnGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
+    fnGetCharABCWidthsW GetCharABCWidthsW = (fnGetCharABCWidthsW)GetProcAddress(LoadLibrary("gdi32"), "GetCharABCWidthsW");
+    if (!GetCharABCWidthsW) return;
+
+    ret = GetCharABCWidthsW(NULL, 'a', 'a', abc);
+    ok(!ret, "GetCharABCWidthsW should have returned FALSE\n");
+}
+
 static void test_text_extents(void)
 {
     LOGFONTA lf;
@@ -353,5 +365,6 @@ START_TEST(font)
     test_bitmap_font();
     test_bitmap_font_metrics();
     test_GdiGetCharDimensions();
+    test_GetCharABCWidthsW();
     test_text_extents();
 }
