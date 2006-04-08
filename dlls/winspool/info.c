@@ -3438,7 +3438,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
     RegCloseKey(hkeyDrivers);
 
     if(pcbNeeded) *pcbNeeded = size + needed;
-    TRACE("buffer space %ld required %ld\n", cbBuf, *pcbNeeded);
+    TRACE("buffer space %ld required %ld\n", cbBuf, size + needed);
     if(cbBuf >= needed) return TRUE;
     SetLastError(ERROR_INSUFFICIENT_BUFFER);
     return FALSE;
