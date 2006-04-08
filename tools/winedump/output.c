@@ -458,7 +458,6 @@ void  output_makefile (void)
  */
 void  output_install_script (void)
 {
-  char cmd[128];
   FILE *install_file = open_file (OUTPUT_DLL_NAME, "_install", "w");
 
   if (VERBOSE)
@@ -494,9 +493,8 @@ void  output_install_script (void)
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME);
 
+  fchmod (fileno(install_file), 0755);
   fclose (install_file);
-  snprintf (cmd, sizeof (cmd), "chmod a+x %s_install", OUTPUT_DLL_NAME);
-  system (cmd);
 }
 
 
