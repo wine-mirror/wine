@@ -533,7 +533,7 @@ WLDAP32_LDAP *ldap_sslinitA( PCHAR hostname, ULONG portnumber, int secure )
 WLDAP32_LDAP *ldap_sslinitW( PWCHAR hostname, ULONG portnumber, int secure )
 {
 #ifdef HAVE_LDAP
-    WLDAP32_LDAP *ld;
+    WLDAP32_LDAP *ld = NULL;
     char *hostnameU = NULL, *url = NULL;
 
     TRACE( "(%s, %ld, 0x%08x)\n", debugstr_w(hostname), portnumber, secure );
