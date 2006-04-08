@@ -164,7 +164,7 @@ void deactivate_document(WebBrowser *This)
     if(This->view)
         IOleDocumentView_UIActivate(This->view, FALSE);
 
-    hres = IUnknown_QueryInterface(This->client, &IID_IOleInPlaceObjectWindowless,
+    hres = IUnknown_QueryInterface(This->document, &IID_IOleInPlaceObjectWindowless,
                                    (void**)&winobj);
     if(SUCCEEDED(hres)) {
         IOleInPlaceObjectWindowless_InPlaceDeactivate(winobj);
