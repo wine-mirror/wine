@@ -176,6 +176,32 @@ static const char *iocodex(DWORD code)
 #define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc).TrackData[idx - (toc).FirstTrack].Address)
 #define MSF_OF_FRAME(m,fr) {int f=(fr); ((UCHAR *)&(m))[2]=f%CD_FRAMES;f/=CD_FRAMES;((UCHAR *)&(m))[1]=f%CD_SECS;((UCHAR *)&(m))[0]=f/CD_SECS;}
 
+/* The documented format of DVD_LAYER_DESCRIPTOR is wrong. Even the format in the
+ * DDK's header is wrong. There are four bytes at the start which always seem to
+ * follow the sequence "02 08 00 00".
+ */
+typedef struct
+{
+    UCHAR MagicHeader[4];
+    UCHAR BookVersion : 4;
+    UCHAR BookType : 4;
+    UCHAR MinimumRate : 4;
+    UCHAR DiskSize : 4;
+    UCHAR LayerType : 4;
+    UCHAR TrackPath : 1;
+    UCHAR NumberOfLayers : 2;
+    UCHAR Reserved1 : 1;
+    UCHAR TrackDensity : 4;
+    UCHAR LinearDensity : 4;
+    ULONG StartingDataSector;
+    ULONG EndDataSector;
+    ULONG EndLayerZeroSector;
+    UCHAR Reserved5 : 7;
+    UCHAR BCAFlag : 1;
+    UCHAR Reserved6;
+} internal_dvd_layer_descriptor;
+
+
 static NTSTATUS CDROM_ReadTOC(int, int, CDROM_TOC*);
 static NTSTATUS CDROM_GetStatusCode(int);
 
@@ -1844,9 +1870,13 @@ static NTSTATUS DVD_ReadStructure(int dev, PDVD_READ_STRUCTURE structure, PDVD_L
     {
     case DvdPhysicalDescriptor:
         {
-            DVD_LAYER_DESCRIPTOR *p = layer;
+            internal_dvd_layer_descriptor *p = (internal_dvd_layer_descriptor *) layer;
             struct dvd_layer *l = &s.physical.layer[s.physical.layer_num];
 
+            p->MagicHeader[0] = 2;
+            p->MagicHeader[1] = 8;
+            p->MagicHeader[2] = 0;
+            p->MagicHeader[3] = 0;
             p->BookVersion = l->book_version;
             p->BookType = l->book_type;
             p->MinimumRate = l->min_rate;
