@@ -298,7 +298,10 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
         IOleInPlaceSite_OnUIActivate(inplace);
         IOleInPlaceSite_Release(inplace);
 
-        IOleInPlaceFrame_SetActiveObject(This->frame, ACTIVEOBJ(This), wszitem);
+        if(This->frame)
+            IOleInPlaceFrame_SetActiveObject(This->frame, ACTIVEOBJ(This), wszitem);
+        if(This->uiwindow)
+            IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, ACTIVEOBJ(This), wszitem);
 
         /* TODO:
          * IOleInPlaceFrmae_SetMenu
