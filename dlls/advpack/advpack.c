@@ -469,15 +469,80 @@ HRESULT WINAPI SetPerUserSecValuesA(PERUSERSECTIONA* pPerUser)
  * RETURNS
  *   Success: S_OK.
  *   Failure: E_FAIL.
- *
- * BUGS
- *   Unimplemented.
  */
 HRESULT WINAPI SetPerUserSecValuesW(PERUSERSECTIONW* pPerUser)
 {
-    FIXME("(%p) stub\n", pPerUser);
+    HKEY setup, guid;
 
-    return E_FAIL;
+    static const WCHAR setup_key[] = {
+        'S','O','F','T','W','A','R','E','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'A','c','t','i','v','e',' ','S','e','t','u','p','\\',
+        'I','n','s','t','a','l','l','e','d',' ',
+        'C','o','m','p','o','n','e','n','t','s',0
+    };
+
+    static const WCHAR stub_path[] = {'S','t','u','b','P','a','t','h',0};
+    static const WCHAR version[] = {'V','e','r','s','i','o','n',0};
+    static const WCHAR locale[] = {'L','o','c','a','l','e',0};
+    static const WCHAR compid[] = {'C','o','m','p','o','n','e','n','t','I','D',0};
+    static const WCHAR isinstalled[] = {'I','s','I','n','s','t','a','l','l','e','d',0};
+
+    TRACE("(%p)\n", pPerUser);
+
+    if (!pPerUser || !*pPerUser->szGUID)
+        return S_OK;
+
+    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, setup_key, 0, NULL, 0, KEY_WRITE,
+                        NULL, &setup, NULL))
+    {
+        return E_FAIL;
+    }
+
+    if (RegCreateKeyExW(setup, pPerUser->szGUID, 0, NULL, 0, KEY_ALL_ACCESS,
+                        NULL, &guid, NULL))
+    {
+        RegCloseKey(setup);
+        return E_FAIL;
+    }
+
+    if (*pPerUser->szStub)
+    {
+        RegSetValueExW(guid, stub_path, 0, REG_SZ, (LPBYTE)pPerUser->szStub,
+                       (lstrlenW(pPerUser->szStub) + 1) * sizeof(WCHAR));
+    }
+
+    if (*pPerUser->szVersion)
+    {
+        RegSetValueExW(guid, version, 0, REG_SZ, (LPBYTE)pPerUser->szVersion,
+                       (lstrlenW(pPerUser->szVersion) + 1) * sizeof(WCHAR));
+    }
+
+    if (*pPerUser->szLocale)
+    {
+        RegSetValueExW(guid, locale, 0, REG_SZ, (LPBYTE)pPerUser->szLocale,
+                       (lstrlenW(pPerUser->szLocale) + 1) * sizeof(WCHAR));
+    }
+
+    if (*pPerUser->szCompID)
+    {
+        RegSetValueExW(guid, compid, 0, REG_SZ, (LPBYTE)pPerUser->szCompID,
+                       (lstrlenW(pPerUser->szCompID) + 1) * sizeof(WCHAR));
+    }
+
+    if (*pPerUser->szDispName)
+    {
+        RegSetValueExW(guid, NULL, 0, REG_SZ, (LPBYTE)pPerUser->szDispName,
+                       (lstrlenW(pPerUser->szDispName) + 1) * sizeof(WCHAR));
+    }
+
+    RegSetValueExW(guid, isinstalled, 0, REG_DWORD,
+                   (LPBYTE)&pPerUser->dwIsInstalled, sizeof(DWORD));
+
+    RegCloseKey(guid);
+    RegCloseKey(setup);
+
+    return S_OK;
 }
 
 /***********************************************************************

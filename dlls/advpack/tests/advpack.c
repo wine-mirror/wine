@@ -436,34 +436,26 @@ static void setperusersecvalues_test()
     /* try a NULL pPerUser */
     hr = pSetPerUserSecValues(NULL);
     todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-    }
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
     ok(!OPEN_GUID_KEY(), "Expected guid key to not exist\n");
 
     /* at the very least, szGUID must be valid */
     peruser.szGUID[0] = '\0';
     hr = pSetPerUserSecValues(&peruser);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-    }
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
     ok(!OPEN_GUID_KEY(), "Expected guid key to not exist\n");
 
     /* set initial values */
     lstrcpy(peruser.szGUID, "guid");
     hr = pSetPerUserSecValues(&peruser);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-        ok(OPEN_GUID_KEY(), "Expected guid key to exist\n");
-        ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
-        ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
-        ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
-        ok(check_reg_str(guid, "StubPath", "stub"), "Expected stub\n");
-        ok(check_reg_str(guid, "Version", "1,1,1,1"), "Expected 1,1,1,1\n");
-        ok(check_reg_dword(guid, "IsInstalled", 1), "Expected 1\n");
-    }
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(OPEN_GUID_KEY(), "Expected guid key to exist\n");
+    ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
+    ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
+    ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
+    ok(check_reg_str(guid, "StubPath", "stub"), "Expected stub\n");
+    ok(check_reg_str(guid, "Version", "1,1,1,1"), "Expected 1,1,1,1\n");
+    ok(check_reg_dword(guid, "IsInstalled", 1), "Expected 1\n");
     ok(!REG_VAL_EXISTS(guid, "OldDisplayName"), "Expected OldDisplayName to not exist\n");
     ok(!REG_VAL_EXISTS(guid, "OldLocale"), "Expected OldLocale to not exist\n");
     ok(!REG_VAL_EXISTS(guid, "OldStubPath"), "Expected OldStubPath to not exist\n");
@@ -473,16 +465,13 @@ static void setperusersecvalues_test()
     /* raise the version, but bRollback is FALSE, so vals not saved */
     lstrcpy(peruser.szVersion, "2,1,1,1");
     hr = pSetPerUserSecValues(&peruser);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-        ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
-        ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
-        ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
-        ok(check_reg_str(guid, "StubPath", "stub"), "Expected stub\n");
-        ok(check_reg_str(guid, "Version", "2,1,1,1"), "Expected 2,1,1,1\n");
-        ok(check_reg_dword(guid, "IsInstalled", 1), "Expected 1\n");
-    }
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
+    ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
+    ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
+    ok(check_reg_str(guid, "StubPath", "stub"), "Expected stub\n");
+    ok(check_reg_str(guid, "Version", "2,1,1,1"), "Expected 2,1,1,1\n");
+    ok(check_reg_dword(guid, "IsInstalled", 1), "Expected 1\n");
     ok(!REG_VAL_EXISTS(guid, "OldDisplayName"), "Expected OldDisplayName to not exist\n");
     ok(!REG_VAL_EXISTS(guid, "OldLocale"), "Expected OldLocale to not exist\n");
     ok(!REG_VAL_EXISTS(guid, "OldStubPath"), "Expected OldStubPath to not exist\n");
@@ -490,16 +479,17 @@ static void setperusersecvalues_test()
     ok(!REG_VAL_EXISTS(guid, "RealStubPath"), "Expected RealStubPath to not exist\n");
 
     /* raise the version again, bRollback is TRUE so vals are saved */
-    peruser.bRollback = 1;
+    peruser.bRollback = TRUE;
     lstrcpy(peruser.szVersion, "3,1,1,1");
     hr = pSetPerUserSecValues(&peruser);
+    ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
+    ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
+    ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
+    ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
+    ok(check_reg_dword(guid, "IsInstalled", 1), "Expected 1\n");
+    ok(check_reg_str(guid, "Version", "3,1,1,1"), "Expected 3,1,1,1\n");
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %ld\n", hr);
-        ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
-        ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
-        ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
-        ok(check_reg_dword(guid, "IsInstalled", 1), "Expected 1\n");
         ok(check_reg_str(guid, "OldDisplayName", "displayname"), "Expected displayname\n");
         ok(check_reg_str(guid, "OldLocale", "locale"), "Expected locale\n");
         ok(check_reg_str(guid, "RealStubPath", "stub"), "Expected stub\n");
@@ -508,7 +498,6 @@ static void setperusersecvalues_test()
         ok(check_reg_str(guid, "StubPath",
            "rundll32.exe advpack.dll,UserInstStubWrapper guid"),
            "Expected real stub\n");
-        ok(check_reg_str(guid, "Version", "3,1,1,1"), "Expected 3,1,1,1\n");
     }
 
     RegDeleteKey(HKEY_LOCAL_MACHINE, GUID_KEY);
