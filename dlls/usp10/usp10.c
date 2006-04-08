@@ -228,7 +228,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     /*  Set SCRIPT_ITEM                                     */
     pItems[1].iCharPos = cInChars - pItems[0].iCharPos ; /* the last + 1 item
                                              contains the ptr to the lastchar */
-    TRACE("%s,%d,%d,%p,%p,%p,%p,%d\n", debugstr_w(pwcInChars), cInChars, cMaxItems, 
+    TRACE("%s,%d,%d,%p,%p,%p,%p,%d\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems, *pcItems);
     TRACE("Start Pos in string: %d, Stop Pos %d\n", pItems[0].iCharPos, pItems[1].iCharPos);
     return 0;
@@ -279,7 +279,7 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa) {
  *
  */
 HRESULT WINAPI ScriptIsComplex(const WCHAR* pwcInChars, int cInChars, DWORD dwFlags) {
-  FIXME("(%s,%d,0x%lx): stub\n",  debugstr_w(pwcInChars), cInChars, dwFlags);
+  FIXME("(%s,%d,0x%lx): stub\n",  debugstr_wn(pwcInChars, cInChars), cInChars, dwFlags);
    return E_NOTIMPL;
 }
 /***********************************************************************
@@ -371,7 +371,7 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     LPABC lpABC;
     Scriptcache *pScriptcache;
     FIXME("(%p, %p, %p, %s, %d, %p, %p, %p): semi-stub\n",  hdc, psc, pwGlyphs,
-                                                debugstr_w(pwGlyphs), 
+                                                debugstr_wn(pwGlyphs, cGlyphs), 
                                                 cGlyphs, psva, psa, 
                                                 piAdvance);
 
