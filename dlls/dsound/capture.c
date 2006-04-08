@@ -793,10 +793,7 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 	    IDsCaptureDriverBuffer_Release(This->device->hwbuf);
 
         /* remove from DirectSoundCaptureDevice */
-        if (This->device)
-            This->device->capture_buffer = NULL;
-        else
-            ERR("does not reference dsound\n");
+        This->device->capture_buffer = NULL;
 
         if (This->notify)
 	    IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
