@@ -217,7 +217,7 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 				    const char *postfix)
 {
     static const char * const hbmmenus[] = { "HBMMENU_CALLBACK", "", "HBMMENU_SYSTEM",
-    "HBMMENU_MBAR_RESTORE", "HBMMENU_MBAR_MINIMIZE", "HBMMENU_MBAR_CLOSE",
+    "HBMMENU_MBAR_RESTORE", "HBMMENU_MBAR_MINIMIZE", "UNKNOWN BITMAP", "HBMMENU_MBAR_CLOSE",
     "HBMMENU_MBAR_CLOSE_D", "HBMMENU_MBAR_MINIMIZE_D", "HBMMENU_POPUP_CLOSE",
     "HBMMENU_POPUP_RESTORE", "HBMMENU_POPUP_MAXIMIZE", "HBMMENU_POPUP_MINIMIZE"};
     TRACE("%s ", prefix);
