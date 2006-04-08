@@ -5288,7 +5288,7 @@ BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors,
 {
     DWORD   needed = 0;
     DWORD   numentries = 0;
-    BOOL    res = FALSE;;
+    BOOL    res = FALSE;
 
     TRACE("(%s, %ld, %p, %ld, %p, %p)\n", debugstr_w(pName), Level, pMonitors,
           cbBuf, pcbNeeded, pcReturned);
@@ -5881,7 +5881,7 @@ static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
         exit(0);
     }
 
-    while((no_read = read(file_fd, buf, sizeof(buf))))
+    while((no_read = read(file_fd, buf, sizeof(buf))) > 0)
         write(fds[1], buf, no_read);
 
     ret = TRUE;
@@ -5922,7 +5922,7 @@ static BOOL schedule_unixfile(LPCWSTR output, LPCWSTR filename)
     if(out_fd == -1 || in_fd == -1)
         goto end;
 
-    while((no_read = read(in_fd, buf, sizeof(buf))))
+    while((no_read = read(in_fd, buf, sizeof(buf))) > 0)
         write(out_fd, buf, no_read);
 
     ret = TRUE;
