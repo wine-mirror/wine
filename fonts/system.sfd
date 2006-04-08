@@ -42,9 +42,9 @@ UnicodeInterp: none
 DisplaySize: 16
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 0 19 18
+WinInfo: 0 20 18
 OnlyBitmaps: 1
-BeginChars: 65536 348
+BeginChars: 65536 414
 StartChar: space
 Encoding: 32 32 0
 Width: 4
@@ -1861,8 +1861,395 @@ Width: 9
 Flags: W
 TeX: 117 0 0 0
 EndChar
+StartChar: NameMe-138
+Encoding: 138 138 348
+Width: 4
+Flags: W
+TeX: 78 0 0 0
+EndChar
+StartChar: NameMe-140
+Encoding: 140 140 349
+Width: 4
+Flags: W
+TeX: 78 0 0 0
+EndChar
+StartChar: NameMe-142
+Encoding: 142 142 350
+Width: 4
+Flags: W
+TeX: 78 0 0 0
+EndChar
+StartChar: NameMe-154
+Encoding: 154 154 351
+Width: 4
+Flags: W
+TeX: 78 0 0 0
+EndChar
+StartChar: NameMe-156
+Encoding: 156 156 352
+Width: 4
+Flags: W
+TeX: 78 0 0 0
+EndChar
+StartChar: NameMe-158
+Encoding: 158 158 353
+Width: 4
+Flags: W
+TeX: 78 0 0 0
+EndChar
+StartChar: NameMe-159
+Encoding: 159 159 354
+Width: 4
+Flags: W
+TeX: 78 0 0 0
+EndChar
+StartChar: afii00208
+Encoding: 8213 8213 355
+Width: 8
+Flags: W
+TeX: 97 0 0 0
+EndChar
+StartChar: Alpha
+Encoding: 913 913 356
+Width: 9
+Flags: W
+TeX: 65 0 0 0
+EndChar
+StartChar: Beta
+Encoding: 914 914 357
+Width: 9
+Flags: W
+TeX: 66 0 0 0
+EndChar
+StartChar: Gamma
+Encoding: 915 915 358
+Width: 8
+Flags: W
+TeX: 71 0 0 0
+EndChar
+StartChar: uni0394
+Encoding: 916 916 359
+Width: 9
+Flags: W
+TeX: 117 0 0 0
+EndChar
+StartChar: Epsilon
+Encoding: 917 917 360
+Width: 8
+Flags: W
+TeX: 69 0 0 0
+EndChar
+StartChar: Zeta
+Encoding: 918 918 361
+Width: 10
+Flags: W
+TeX: 90 0 0 0
+EndChar
+StartChar: Eta
+Encoding: 919 919 362
+Width: 9
+Flags: W
+TeX: 69 0 0 0
+EndChar
+StartChar: Theta
+Encoding: 920 920 363
+Width: 9
+Flags: W
+TeX: 84 0 0 0
+EndChar
+StartChar: Iota
+Encoding: 921 921 364
+Width: 3
+Flags: W
+TeX: 73 0 0 0
+EndChar
+StartChar: Kappa
+Encoding: 922 922 365
+Width: 8
+Flags: W
+TeX: 75 0 0 0
+EndChar
+StartChar: Lambda
+Encoding: 923 923 366
+Width: 9
+Flags: W
+TeX: 76 0 0 0
+EndChar
+StartChar: Mu
+Encoding: 924 924 367
+Width: 10
+Flags: W
+TeX: 77 0 0 0
+EndChar
+StartChar: Nu
+Encoding: 925 925 368
+Width: 9
+Flags: W
+TeX: 78 0 0 0
+EndChar
+StartChar: Xi
+Encoding: 926 926 369
+Width: 8
+Flags: W
+TeX: 88 0 0 0
+EndChar
+StartChar: Omicron
+Encoding: 927 927 370
+Width: 9
+Flags: W
+TeX: 79 0 0 0
+EndChar
+StartChar: Pi
+Encoding: 928 928 371
+Width: 9
+Flags: W
+TeX: 80 0 0 0
+EndChar
+StartChar: Rho
+Encoding: 929 929 372
+Width: 9
+Flags: W
+TeX: 82 0 0 0
+EndChar
+StartChar: uni03A2
+Encoding: 930 930 373
+Width: 16
+TeX: 117 0 0 0
+EndChar
+StartChar: Sigma
+Encoding: 931 931 374
+Width: 8
+Flags: W
+TeX: 83 0 0 0
+EndChar
+StartChar: Tau
+Encoding: 932 932 375
+Width: 9
+Flags: W
+TeX: 84 0 0 0
+EndChar
+StartChar: Upsilon
+Encoding: 933 933 376
+Width: 9
+Flags: W
+TeX: 85 0 0 0
+EndChar
+StartChar: Phi
+Encoding: 934 934 377
+Width: 9
+Flags: W
+TeX: 80 0 0 0
+EndChar
+StartChar: Chi
+Encoding: 935 935 378
+Width: 8
+Flags: W
+TeX: 67 0 0 0
+EndChar
+StartChar: Psi
+Encoding: 936 936 379
+Width: 9
+Flags: W
+TeX: 80 0 0 0
+EndChar
+StartChar: uni03A9
+Encoding: 937 937 380
+Width: 10
+Flags: W
+TeX: 117 0 0 0
+EndChar
+StartChar: Iotadieresis
+Encoding: 938 938 381
+Width: 16
+TeX: 73 0 0 0
+EndChar
+StartChar: Upsilondieresis
+Encoding: 939 939 382
+Width: 16
+TeX: 85 0 0 0
+EndChar
+StartChar: alphatonos
+Encoding: 940 940 383
+Width: 16
+TeX: 97 0 0 0
+EndChar
+StartChar: epsilontonos
+Encoding: 941 941 384
+Width: 16
+TeX: 101 0 0 0
+EndChar
+StartChar: etatonos
+Encoding: 942 942 385
+Width: 16
+TeX: 101 0 0 0
+EndChar
+StartChar: iotatonos
+Encoding: 943 943 386
+Width: 16
+TeX: 105 0 0 0
+EndChar
+StartChar: upsilondieresistonos
+Encoding: 944 944 387
+Width: 16
+TeX: 117 0 0 0
+EndChar
+StartChar: alpha
+Encoding: 945 945 388
+Width: 8
+Flags: W
+TeX: 97 0 0 0
+EndChar
+StartChar: beta
+Encoding: 946 946 389
+Width: 7
+Flags: W
+TeX: 98 0 0 0
+EndChar
+StartChar: gamma
+Encoding: 947 947 390
+Width: 7
+Flags: W
+TeX: 103 0 0 0
+EndChar
+StartChar: delta
+Encoding: 948 948 391
+Width: 7
+Flags: W
+TeX: 100 0 0 0
+EndChar
+StartChar: epsilon
+Encoding: 949 949 392
+Width: 7
+Flags: W
+TeX: 101 0 0 0
+EndChar
+StartChar: zeta
+Encoding: 950 950 393
+Width: 6
+Flags: W
+TeX: 122 0 0 0
+EndChar
+StartChar: eta
+Encoding: 951 951 394
+Width: 7
+Flags: W
+TeX: 101 0 0 0
+EndChar
+StartChar: theta
+Encoding: 952 952 395
+Width: 7
+Flags: W
+TeX: 116 0 0 0
+EndChar
+StartChar: iota
+Encoding: 953 953 396
+Width: 4
+Flags: W
+TeX: 105 0 0 0
+EndChar
+StartChar: kappa
+Encoding: 954 954 397
+Width: 7
+Flags: W
+TeX: 107 0 0 0
+EndChar
+StartChar: lambda
+Encoding: 955 955 398
+Width: 7
+Flags: W
+TeX: 108 0 0 0
+EndChar
+StartChar: uni03BC
+Encoding: 956 956 399
+Width: 7
+Flags: W
+TeX: 117 0 0 0
+EndChar
+StartChar: nu
+Encoding: 957 957 400
+Width: 7
+Flags: W
+TeX: 110 0 0 0
+EndChar
+StartChar: xi
+Encoding: 958 958 401
+Width: 7
+Flags: W
+TeX: 120 0 0 0
+EndChar
+StartChar: omicron
+Encoding: 959 959 402
+Width: 7
+Flags: W
+TeX: 111 0 0 0
+EndChar
+StartChar: pi
+Encoding: 960 960 403
+Width: 7
+Flags: W
+TeX: 112 0 0 0
+EndChar
+StartChar: rho
+Encoding: 961 961 404
+Width: 7
+Flags: W
+TeX: 114 0 0 0
+EndChar
+StartChar: sigma1
+Encoding: 962 962 405
+Width: 7
+Flags: W
+TeX: 115 0 0 0
+EndChar
+StartChar: sigma
+Encoding: 963 963 406
+Width: 8
+Flags: W
+TeX: 115 0 0 0
+EndChar
+StartChar: tau
+Encoding: 964 964 407
+Width: 7
+Flags: W
+TeX: 116 0 0 0
+EndChar
+StartChar: upsilon
+Encoding: 965 965 408
+Width: 7
+Flags: W
+TeX: 117 0 0 0
+EndChar
+StartChar: phi
+Encoding: 966 966 409
+Width: 9
+Flags: W
+TeX: 112 0 0 0
+EndChar
+StartChar: chi
+Encoding: 967 967 410
+Width: 7
+Flags: W
+TeX: 99 0 0 0
+EndChar
+StartChar: psi
+Encoding: 968 968 411
+Width: 9
+Flags: W
+TeX: 112 0 0 0
+EndChar
+StartChar: omega
+Encoding: 969 969 412
+Width: 9
+Flags: W
+TeX: 111 0 0 0
+EndChar
+StartChar: iotadieresis
+Encoding: 970 970 413
+Width: 16
+TeX: 105 0 0 0
+EndChar
 EndChars
-BitmapFont: 16 348 13 3 1 
+BitmapFont: 16 414 13 3 1 
 BDFChar: 0 32 4 14 14 0 0
 z
 BDFChar: 1 33 4 1 2 0 9
@@ -2059,8 +2446,8 @@ BDFChar: 96 129 4 1 2 0 8
 ^qdb$^qdb$^]4?7
 BDFChar: 97 131 4 1 2 0 8
 ^qdb$^qdb$^]4?7
-BDFChar: 98 136 4 0 2 0 8
-?smAM?smAM?iU0,
+BDFChar: 98 136 4 1 2 0 8
+^qdb$^qdb$^]4?7
 BDFChar: 99 144 4 1 2 0 8
 ^qdb$^qdb$^]4?7
 BDFChar: 100 152 4 1 2 0 8
@@ -2559,5 +2946,137 @@ BDFChar: 346 1105 8 1 6 0 9
 bfg'3bfojtb]j*f
 BDFChar: 347 8361 9 0 8 0 9
 @fU9ECB/,Ms+"kbCB/haG5rfe
+BDFChar: 348 138 4 1 2 0 8
+^qdb$^qdb$^]4?7
+BDFChar: 349 140 4 1 2 0 8
+^qdb$^qdb$^]4?7
+BDFChar: 350 142 4 1 2 0 8
+^qdb$^qdb$^]4?7
+BDFChar: 351 154 4 0 2 0 8
+?smAM?smAM?iU0,
+BDFChar: 352 156 4 0 2 0 8
+?smAM?smAM?iU0,
+BDFChar: 353 158 4 1 2 0 8
+^qdb$^qdb$^]4?7
+BDFChar: 354 159 4 0 2 0 8
+?smAM?smAM?iU0,
+BDFChar: 355 8213 8 0 7 11 11
+rr<$!
+BDFChar: 356 913 9 1 8 0 9
+(`5@tAnGY(_nuHS
+BDFChar: 357 914 9 0 8 0 9
+IfNo-@=Vd:IfNo-@=Vd:@=Wh-
+BDFChar: 358 915 8 1 7 0 9
+rkQ=b^qdb$^q]pM
+BDFChar: 359 916 9 1 8 0 9
+(`5@tAnGYm_uB]:
+BDFChar: 360 917 8 1 7 0 9
+rkQ=br4p+`_#=<6
+BDFChar: 361 918 10 1 9 0 9
+s*t-#!rrN*$ih+E0E>J\^]=Cb
+BDFChar: 362 919 9 1 8 0 9
+_o'C0s22al_nuHS
+BDFChar: 363 920 9 1 8 0 9
+4D)LKs22alAip%n
+BDFChar: 364 921 3 1 2 0 9
+^qdb$^qdb$^q]pM
+BDFChar: 365 922 8 1 7 0 9
+`m!*)i:,CC`l7uY
+BDFChar: 366 923 9 1 8 0 9
+(`5@tAnGYm_nuHS
+BDFChar: 367 924 10 1 9 0 9
+_19@Pj+-0?pON!gh14=3aahK`
+BDFChar: 368 925 9 0 8 0 9
+@=W?JEI`=bD1HJRB7OKB@t8!<
+BDFChar: 369 926 8 1 7 0 9
+rr)ltI!bnorr)lt
+BDFChar: 370 927 9 0 8 0 9
+*WRtr@=Vd:@=Vd:@=Vd:1B8Hr
+BDFChar: 371 928 9 1 8 0 9
+s22al_o'C0_nuHS
+BDFChar: 372 929 9 0 8 0 9
+IfNo-@=Vd:@=Wh-?iXR7?iXR7
+BDFChar: 373 930 16 0 0 0 0
+z
+BDFChar: 374 931 8 1 7 0 9
+rkMnq(`4r7_#=<6
+BDFChar: 375 932 9 1 8 0 9
+rtlRi(`4),(`35Q
+BDFChar: 376 933 9 1 8 0 9
+_o'B(4;\nP(`35Q
+BDFChar: 377 934 9 1 8 0 9
+(k15ogY:K;IM`%b
+BDFChar: 378 935 8 1 7 0 9
+`l;h23&k_j`l7uY
+BDFChar: 379 936 9 1 8 0 9
+gY:K;gO9tV(`35Q
+BDFChar: 380 937 10 1 9 0 9
+4of'm_19@P_19@P@fSCe2?<K%
+BDFChar: 381 938 16 0 0 0 0
+z
+BDFChar: 382 939 16 0 0 0 0
+z
+BDFChar: 383 940 16 0 0 0 0
+z
+BDFChar: 384 941 16 0 0 0 0
+z
+BDFChar: 385 942 16 0 0 0 0
+z
+BDFChar: 386 943 16 0 0 0 0
+z
+BDFChar: 387 944 16 0 0 0 0
+z
+BDFChar: 388 945 8 1 7 0 6
+HHaUWbfkA5
+BDFChar: 389 946 7 1 6 -3 9
+Gg+CUprpt+bkSuh^]4?7
+BDFChar: 390 947 7 1 6 -3 6
+bfn:UG^(nr0JEJ,
+BDFChar: 391 948 7 1 6 0 9
+Gg'PLGg+CUb]j*f
+BDFChar: 392 949 7 1 6 0 6
+Gg*sB^s%$'
+BDFChar: 393 950 6 1 5 -3 9
+pb6*k^qdb$^i1,-Du]k<
+BDFChar: 394 951 7 1 6 -3 6
+prpt+bfn9>$k*+9
+BDFChar: 395 952 7 1 6 0 9
+Gg+CUr63C/b]j*f
+BDFChar: 396 953 4 1 2 0 6
+^qdb$^qd_c
+BDFChar: 397 954 7 1 6 0 6
+bh2FCnCYqb
+BDFChar: 398 955 7 1 6 0 9
+@,N^m3-]\lbfg%e
+BDFChar: 399 956 7 1 6 -3 6
+bfn;Tbfp"#^q]pM
+BDFChar: 400 957 7 1 6 0 6
+bfn;Tb]kfA
+BDFChar: 401 958 7 1 6 -3 9
+r%MNo^i7*)^j$7rGQ7^D
+BDFChar: 402 959 7 0 6 0 6
+4D&2;AnF.*
+BDFChar: 403 960 7 1 6 0 6
+r63C/bfn92
+BDFChar: 404 961 7 1 6 -3 6
+Gg+CUbfojt^q]pM
+BDFChar: 405 962 7 1 6 0 6
+Gg*sJ%*Wqr
+BDFChar: 406 963 8 1 7 0 6
+Ia$$[bfk;3
+BDFChar: 407 964 7 1 6 0 6
+r%KfY0JG0\
+BDFChar: 408 965 7 1 6 0 6
+bfn;Tbfk;3
+BDFChar: 409 966 9 1 8 -3 6
+IbWW3gY7/o(`35Q
+BDFChar: 410 967 7 1 6 0 6
+bfk;cGg+A3
+BDFChar: 411 968 9 1 8 -3 6
+gY:K;gY7/o(`35Q
+BDFChar: 412 969 9 1 8 0 6
+B#EBXgY6<?
+BDFChar: 413 970 16 0 0 0 0
+z
 EndBitmapFont
 EndSplineFont
