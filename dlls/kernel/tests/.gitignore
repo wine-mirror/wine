@@ -24,5 +24,6 @@ testlist.c
 thread.ok
 time.ok
 timer.ok
+toolhelp.ok
 virtual.ok
 volume.ok
