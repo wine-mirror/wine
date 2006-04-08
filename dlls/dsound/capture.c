@@ -458,11 +458,6 @@ HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(
 
     TRACE( "(%p,%p,%p,%p)\n",iface,lpcDSCBufferDesc,lplpDSCaptureBuffer,pUnk);
 
-    if (This == NULL) {
-	WARN("invalid parameter: This == NULL\n");
-	return DSERR_INVALIDPARAM;
-    }
-
     if (lpcDSCBufferDesc == NULL) {
 	WARN("invalid parameter: lpcDSCBufferDesc == NULL)\n");
 	return DSERR_INVALIDPARAM;
@@ -813,11 +808,6 @@ IDirectSoundCaptureBufferImpl_GetCaps(
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,%p)\n", This, lpDSCBCaps );
 
-    if (This == NULL) {
-        WARN("invalid parameter: This == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
     if (lpDSCBCaps == NULL) {
         WARN("invalid parameter: lpDSCBCaps == NULL\n");
         return DSERR_INVALIDPARAM;
@@ -852,11 +842,6 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     HRESULT hres = DS_OK;
     TRACE( "(%p,%p,%p)\n", This, lpdwCapturePosition, lpdwReadPosition );
-
-    if (This == NULL) {
-        WARN("invalid parameter: This == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
 
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
@@ -913,11 +898,6 @@ IDirectSoundCaptureBufferImpl_GetFormat(
     TRACE( "(%p,%p,0x%08lx,%p)\n", This, lpwfxFormat, dwSizeAllocated,
         lpdwSizeWritten );
 
-    if (This == NULL) {
-        WARN("invalid parameter: This == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
@@ -950,11 +930,6 @@ IDirectSoundCaptureBufferImpl_GetStatus(
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p, %p), thread is %04lx\n", This, lpdwStatus, GetCurrentThreadId() );
-
-    if (This == NULL) {
-        WARN("invalid parameter: This == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
 
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
@@ -1016,11 +991,6 @@ IDirectSoundCaptureBufferImpl_Lock(
         dwReadBytes, lplpvAudioPtr1, lpdwAudioBytes1, lplpvAudioPtr2,
         lpdwAudioBytes2, dwFlags, GetTickCount() );
 
-    if (This == NULL) {
-        WARN("invalid parameter: This == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
@@ -1079,11 +1049,6 @@ IDirectSoundCaptureBufferImpl_Start(
     HRESULT hres = DS_OK;
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,0x%08lx)\n", This, dwFlags );
-
-    if (This == NULL) {
-        WARN("invalid parameter: This == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
 
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
@@ -1237,11 +1202,6 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p)\n", This );
 
-    if (This == NULL) {
-        WARN("invalid parameter: This == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
         return DSERR_INVALIDPARAM;
@@ -1287,11 +1247,6 @@ IDirectSoundCaptureBufferImpl_Unlock(
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,%p,%08lu,%p,%08lu)\n", This, lpvAudioPtr1, dwAudioBytes1,
         lpvAudioPtr2, dwAudioBytes2 );
-
-    if (This == NULL) {
-        WARN("invalid parameter: This == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
 
     if (lpvAudioPtr1 == NULL) {
         WARN("invalid parameter: lpvAudioPtr1 == NULL\n");
