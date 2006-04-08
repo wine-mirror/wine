@@ -214,16 +214,20 @@ INT ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
 {
     INT ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
-    LDAPControlW **controlW = NULL;
+    LDAPControlW *controlW = NULL;
 
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, info, critical, control );
 
-    if (!ld) return ~0UL;
+    if (!ld || !control) return ~0UL;
 
-    ret = ldap_create_vlv_controlW( ld, info, critical, controlW );
+    ret = ldap_create_vlv_controlW( ld, info, critical, &controlW );
 
-    *control = controlWtoA( *controlW );
-    ldap_control_freeW( *controlW );
+    if (ret == LDAP_SUCCESS)
+    {
+        *control = controlWtoA( controlW );
+        if (!*control) ret = WLDAP32_LDAP_NO_MEMORY;
+        ldap_control_freeW( controlW );
+    }
 
 #endif
     return ret;
@@ -256,16 +260,20 @@ INT ldap_create_vlv_controlW( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
 {
     INT ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
-    LDAPControl **controlU = NULL;
+    LDAPControl *controlU = NULL;
 
     TRACE( "(%p, %p, 0x%02x, %p)\n", ld, info, critical, control );
 
-    if (!ld) return ~0UL;
+    if (!ld || !control) return ~0UL;
 
-    ret = ldap_create_vlv_control( ld, (LDAPVLVInfo *)info, controlU );
+    ret = ldap_create_vlv_control( ld, (LDAPVLVInfo *)info, &controlU );
 
-    *control = controlUtoW( *controlU );
-    ldap_control_free( *controlU );
+    if (ret == LDAP_SUCCESS)
+    {
+        *control = controlUtoW( controlU );
+        if (!*control) ret = WLDAP32_LDAP_NO_MEMORY;
+        ldap_control_free( controlU );
+    }
 
 #endif
     return ret;
