@@ -28,6 +28,7 @@
 #include "mpr_Cs.rc"
 #include "mpr_De.rc"
 #include "mpr_En.rc"
+#include "mpr_Eo.rc"
 #include "mpr_Es.rc"
 #include "mpr_Fr.rc"
 #include "mpr_Hu.rc"
