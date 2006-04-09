@@ -68,11 +68,11 @@
 @ stub DnsModifyRecordsInSet_A
 @ stub DnsModifyRecordsInSet_UTF8
 @ stub DnsModifyRecordsInSet_W
-@ stub DnsNameCompare_A
+@ stdcall DnsNameCompare_A(str str)
 @ stub DnsNameCompareEx_A
 @ stub DnsNameCompareEx_UTF8
 @ stub DnsNameCompareEx_W
-@ stub DnsNameCompare_W
+@ stdcall DnsNameCompare_W(wstr wstr)
 @ stub DnsNameCopy
 @ stub DnsNameCopyAllocate
 @ stub DnsNotifyResolver
