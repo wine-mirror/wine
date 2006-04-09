@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = dnsapi.dll
+IMPORTLIB = libdnsapi.$(IMPLIBEXT)
+IMPORTS   = kernel32
+EXTRALIBS = $(LIBUNICODE)
+
+C_SRCS = \
+        main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

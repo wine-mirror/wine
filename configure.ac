@@ -1509,6 +1509,7 @@ dlls/dmstyle/Makefile
 dlls/dmsynth/Makefile
 dlls/dmusic/Makefile
 dlls/dmusic32/Makefile
+dlls/dnsapi/Makefile
 dlls/dplay/Makefile
 dlls/dplayx/Makefile
 dlls/dpnet/Makefile

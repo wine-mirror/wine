@@ -51,6 +51,7 @@ BASEDIRS = \
 	dmsynth \
 	dmusic \
 	dmusic32 \
+	dnsapi \
 	dplay \
 	dplayx \
 	dpnet \
@@ -496,6 +497,7 @@ IMPORT_LIBS = \
 	dinput/libdinput.$(STATIC_IMPLIBEXT) \
 	dinput8/libdinput8.$(IMPLIBEXT) \
 	dmusic32/libdmusic32.$(IMPLIBEXT) \
+	dnsapi/libdnsapi.$(IMPLIBEXT) \
 	dplay/libdplay.$(IMPLIBEXT) \
 	dplayx/libdplayx.$(IMPLIBEXT) \
 	dpnet/libdpnet.$(IMPLIBEXT) \
@@ -667,6 +669,9 @@ dinput8/libdinput8.$(IMPLIBEXT): dinput8/dinput8.spec $(WINEBUILD)
 
 dmusic32/libdmusic32.$(IMPLIBEXT): dmusic32/dmusic32.spec $(WINEBUILD)
 	@cd dmusic32 && $(MAKE) libdmusic32.$(IMPLIBEXT)
+
+dnsapi/libdnsapi.$(IMPLIBEXT): dnsapi/dnsapi.spec $(WINEBUILD)
+	@cd dnsapi && $(MAKE) libdnsapi.$(IMPLIBEXT)
 
 dplay/libdplay.$(IMPLIBEXT): dplay/dplay.spec $(WINEBUILD)
 	@cd dplay && $(MAKE) libdplay.$(IMPLIBEXT)
