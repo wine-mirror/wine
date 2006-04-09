@@ -739,9 +739,18 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                                                            &listener_param);
                 ok(rc==DS_OK,"IDirectSound3dListener_GetAllParameters() "
                    "failed: %s\n",DXGetErrorString8(rc));
+            } else {
+                ok(listener==NULL, "IDirectSoundBuffer_QueryInterface() "
+                   "failed but returned a listener anyway\n");
+                ok(rc!=DS_OK, "IDirectSoundBuffer_QueryInterface() succeeded "
+                   "but returned a NULL listener\n");
+                if (listener) {
+                    ref=IDirectSound3DListener_Release(listener);
+                    ok(ref==0,"IDirectSound3dListener_Release() listener has "
+                       "%d references, should have 0\n",ref);
+                }
+                goto EXIT2;
             }
-            else
-                goto EXIT;
         }
 
         init_format(&wfx,WAVE_FORMAT_PCM,22050,16,2);
@@ -887,18 +896,28 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                    ref);
             }
         }
-    }
 EXIT1:
-    if (has_listener) {
-        ref=IDirectSound3DListener_Release(listener);
-        ok(ref==0,"IDirectSound3dListener_Release() listener has %d "
-           "references, should have 0\n",ref);
+        if (has_listener) {
+            ref=IDirectSound3DListener_Release(listener);
+            ok(ref==0,"IDirectSound3dListener_Release() listener has %d "
+               "references, should have 0\n",ref);
+        } else {
+            ref=IDirectSoundBuffer_Release(primary);
+            ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
+               "should have 0\n",ref);
+        }
     } else {
-        ref=IDirectSoundBuffer_Release(primary);
-        ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
-           "should have 0\n",ref);
+        ok(primary==NULL,"IDirectSound_CreateSoundBuffer(primary) failed "
+           "but primary created anyway\n");
+        ok(rc!=DS_OK,"IDirectSound_CreateSoundBuffer(primary) succeeded "
+           "but primary not created\n");
+        if (primary) {
+            ref=IDirectSoundBuffer_Release(primary);
+            ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
+               "should have 0\n",ref);
+        }
     }
-
+EXIT2:
     /* Set the CooperativeLevel back to normal */
     /* DSOUND: Setting DirectSound cooperative level to DSSCL_NORMAL */
     rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_NORMAL);
