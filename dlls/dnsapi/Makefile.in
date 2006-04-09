@@ -11,6 +11,8 @@ C_SRCS = \
 	main.c \
 	name.c
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

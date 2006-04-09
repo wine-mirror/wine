@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = dnsapi.dll
+IMPORTS   = dnsapi kernel32
+
+CTESTS = \
+	name.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:
