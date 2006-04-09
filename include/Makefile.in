@@ -265,6 +265,7 @@ WINDOWS_INCLUDES = \
 	wincon.h \
 	wincrypt.h \
 	windef.h \
+	windns.h \
 	windows.h \
 	windowsx.h \
 	winerror.h \
