@@ -22,6 +22,7 @@
 #include "Cs.rc"
 #include "De.rc"
 #include "En.rc"
+#include "Eo.rc"
 #include "Es.rc"
 #include "Fr.rc"
 #include "It.rc"
