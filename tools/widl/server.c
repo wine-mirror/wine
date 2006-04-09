@@ -357,10 +357,10 @@ static void write_function_stubs(type_t *iface)
                 if (is_attr(var->attrs, ATTR_OUT))
                 {
                     unsigned int alignment;
-                    buffer_size += get_required_buffer_size(var, &alignment);
+                    buffer_size += get_required_buffer_size(var, &alignment, PASS_OUT);
                     buffer_size += alignment;
                 }
-        
+
                 var = PREV_LINK(var);
             }
         }
@@ -368,7 +368,7 @@ static void write_function_stubs(type_t *iface)
         if (!is_void(def->type, NULL))
         {
             unsigned int alignment;
-            buffer_size += get_required_buffer_size(def, &alignment);
+            buffer_size += get_required_buffer_size(def, &alignment, PASS_RETURN);
             buffer_size += alignment;
         }
 

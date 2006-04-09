@@ -78,7 +78,7 @@ static void print_message_buffer_size(const func_t *func)
         {
             unsigned int alignment;
 
-            total_size += get_required_buffer_size(var, &alignment);
+            total_size += get_required_buffer_size(var, &alignment, PASS_IN);
             total_size += alignment;
 
             var = PREV_LINK(var);
