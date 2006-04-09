@@ -1997,7 +1997,7 @@ NTSTATUS WINAPI RtlGUIDFromString(PUNICODE_STRING str, GUID* guid)
   /* Convert string: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
    * to memory:       DWORD... WORD WORD BYTES............
    */
-  while (i < 37)
+  while (i <= 37)
   {
     switch (i)
     {
