@@ -1784,6 +1784,10 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
          if (names)
          {
              wine_tsx11_lock();
+             /* FIXME: we're at the mercy of the app sending the event here.
+              * Currently if they send a bogus atom, we will crash.
+              * We should handle BadAtom errors gracefully in this call.
+              */
              XGetAtomNames( display, atoms, nb_atoms, names );
              wine_tsx11_unlock();
              for (i = 0; i < nb_atoms; i++)
@@ -2790,6 +2794,13 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
     LPWINE_CLIPFORMAT lpFormats;
     LPWINE_CLIPDATA lpData;
 
+    /* Create X atoms for any clipboard types which don't have atoms yet.
+     * This avoids sending bogus zero atoms.
+     * Without this, copying might not have access to all clipboard types.
+     * FIXME: is it safe to call this here?
+     */
+    intern_atoms();
+
     /*
      * Count the number of items we wish to expose as selection targets.
      */
@@ -2804,7 +2815,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
         while (lpFormats)
         {
             if ((lpFormats->wFormatID == lpData->wFormatID) &&
-                lpFormats->lpDrvExportFunc)
+                lpFormats->lpDrvExportFunc && lpFormats->drvData)
                 cTargets++;
 
             lpFormats = lpFormats->NextFormat;
@@ -2832,7 +2843,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
         while (lpFormats)
         {
             if ((lpFormats->wFormatID == lpData->wFormatID) &&
-                lpFormats->lpDrvExportFunc)
+                lpFormats->lpDrvExportFunc && lpFormats->drvData)
                 targets[i++] = lpFormats->drvData;
 
             lpFormats = lpFormats->NextFormat;
@@ -2849,12 +2860,9 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
         unsigned int i;
         for ( i = 0; i < cTargets; i++)
         {
-            if (targets[i])
-            {
-                char *itemFmtName = XGetAtomName(display, targets[i]);
-                TRACE("\tAtom# %d:  Property %ld Type %s\n", i, targets[i], itemFmtName);
-                XFree(itemFmtName);
-            }
+            char *itemFmtName = XGetAtomName(display, targets[i]);
+            TRACE("\tAtom# %d:  Property %ld Type %s\n", i, targets[i], itemFmtName);
+            XFree(itemFmtName);
         }
     }
 
