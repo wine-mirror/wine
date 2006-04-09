@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2003, 2004 Stefan Leichter
- * Copyright (C) 2005 Detlef Riekenberg
+ * Copyright (C) 2005, 2006 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,10 +32,16 @@
 
 static char env_x86[] = "Windows NT x86";
 static char env_win9x_case[] = "windowS 4.0";
+static char winetest_monitor[] = "winetest";
 
 static HANDLE  hwinspool;
 static FARPROC pGetDefaultPrinterA;
 static FARPROC pSetDefaultPrinterA;
+
+struct monitor_entry {
+    LPSTR  env;
+    LPSTR  dllname;
+};
 
 /* report common behavior only once */
 static DWORD report_deactivated_spooler = 1;
@@ -104,6 +110,222 @@ static LPSTR find_default_printer(VOID)
         trace("default_printer: '%s'\n", default_printer);
     }
     return default_printer;
+}
+
+
+static struct monitor_entry * find_installed_monitor(void)
+{
+    MONITOR_INFO_2A mi2a; 
+    static struct  monitor_entry * entry = NULL;
+    DWORD   res;
+    DWORD   num_tests;
+    DWORD   i = 0;
+
+    static struct monitor_entry  monitor_table[] = {
+        {env_win9x_case, "localspl.dll"},
+        {env_x86,        "localspl.dll"},
+        {env_win9x_case, "localmon.dll"},
+        {env_x86,        "localmon.dll"},
+        {env_win9x_case, "tcpmon.dll"},
+        {env_x86,        "tcpmon.dll"},
+        {env_win9x_case, "usbmon.dll"},
+        {env_x86,        "usbmon.dll"},
+        {env_win9x_case, "mspp32.dll"},
+        {env_x86,        "win32spl.dll"},
+        {env_x86,        "redmonnt.dll"},
+        {env_x86,        "redmon35.dll"},
+        {env_win9x_case, "redmon95.dll"},
+        {env_x86,        "pdfcmnnt.dll"},
+        {env_win9x_case, "pdfcmn95.dll"},
+    };
+
+    if (entry) return entry;
+
+    num_tests = (sizeof(monitor_table)/sizeof(struct monitor_entry));
+
+    SetLastError(MAGIC_DEAD);
+    res = DeleteMonitorA(NULL, NULL, NULL);
+    if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) {
+        trace("DeleteMonitorA() not implemented yet\n");
+        return NULL;
+    }
+
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 0, NULL);
+    if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) {
+        trace("AddMonitorA() not implemented yet\n");
+        return NULL;
+    }
+
+    /* cleanup */
+    DeleteMonitorA(NULL, env_x86, winetest_monitor);
+    DeleteMonitorA(NULL, env_win9x_case, winetest_monitor);
+
+    /* find a usable monitor from the table */    
+    mi2a.pName = winetest_monitor;
+    while ((entry == NULL) && (i < num_tests)) {
+        entry = &monitor_table[i];
+        i++;
+        mi2a.pEnvironment = entry->env;
+        mi2a.pDLLName = entry->dllname;
+
+        if (AddMonitorA(NULL, 2, (LPBYTE) &mi2a)) {
+            /* we got one */
+            trace("using '%s', '%s'\n", entry->env, entry->dllname);
+            DeleteMonitorA(NULL, entry->env, winetest_monitor);
+        }
+        else
+        {
+            entry = NULL;
+        }
+    }
+    return entry;
+}
+
+/* ########################### */
+
+
+static void test_AddMonitor(void)
+{
+    MONITOR_INFO_2A mi2a; 
+    struct  monitor_entry * entry = NULL;
+    DWORD   res;
+
+    entry = find_installed_monitor();
+
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 1, NULL);
+    ok(!res && (GetLastError() == ERROR_INVALID_LEVEL), 
+        "returned %ld with %ld (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
+
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 3, NULL);
+    ok(!res && (GetLastError() == ERROR_INVALID_LEVEL), 
+        "returned %ld with %ld (expected '0' with ERROR_INVALID_LEVEL)\n",
+        res, GetLastError());
+
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, NULL);
+    /* NT: unchanged,  9x: ERROR_PRIVILEGE_NOT_HELD */
+    ok(!res &&
+        ((GetLastError() == MAGIC_DEAD) ||
+         (GetLastError() == ERROR_PRIVILEGE_NOT_HELD)), 
+        "returned %ld with %ld (expected '0' with: MAGIC_DEAD or " \
+        "ERROR_PRIVILEGE_NOT_HELD)\n", res, GetLastError());
+
+    ZeroMemory(&mi2a, sizeof(MONITOR_INFO_2A));
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+
+    if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
+        trace("skip tests (ACCESS_DENIED)\n");
+        return;
+    }
+
+    /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_INVALID_ENVIRONMENT */
+    ok(!res && ((GetLastError() == ERROR_INVALID_PARAMETER) ||
+                (GetLastError() == ERROR_INVALID_ENVIRONMENT)), 
+        "returned %ld with %ld (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "ERROR_INVALID_ENVIRONMENT)\n", res, GetLastError());
+
+    if (!entry) {
+        trace("No usable Monitor found: Skip tests\n");
+        return;
+    }
+
+#if 0
+    /* The Test is deactivated, because when mi2a.pName is NULL, the subkey
+       HKLM\System\CurrentControlSet\Control\Print\Monitors\C:\WINDOWS\SYSTEM
+       or HKLM\System\CurrentControlSet\Control\Print\Monitors\ì
+       is created on win9x and we do not want to hit this bug here. */
+
+    mi2a.pEnvironment = entry->env;
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_PRIVILEGE_NOT_HELD */
+#endif
+
+    mi2a.pEnvironment = entry->env;
+    mi2a.pName = "";
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_PRIVILEGE_NOT_HELD */
+    ok( !res &&
+        ((GetLastError() == ERROR_INVALID_PARAMETER) ||
+         (GetLastError() == ERROR_PRIVILEGE_NOT_HELD)), 
+        "returned %ld with %ld (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "ERROR_PRIVILEGE_NOT_HELD)\n",
+        res, GetLastError());
+
+    mi2a.pName = winetest_monitor;
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_PRIVILEGE_NOT_HELD */
+    ok( !res &&
+        ((GetLastError() == ERROR_INVALID_PARAMETER) ||
+         (GetLastError() == ERROR_PRIVILEGE_NOT_HELD)), 
+        "returned %ld with %ld (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "ERROR_PRIVILEGE_NOT_HELD)\n",
+        res, GetLastError());
+
+    mi2a.pDLLName = "";
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %ld with %ld (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+
+
+    mi2a.pDLLName = "does_not_exists.dll";
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    /* NT: ERROR_MOD_NOT_FOUND,  9x: ERROR_INVALID_PARAMETER */
+    ok( !res &&
+        ((GetLastError() == ERROR_MOD_NOT_FOUND) ||
+        (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %ld with %ld (expected '0' with: ERROR_MOD_NOT_FOUND or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+    mi2a.pDLLName = "version.dll";
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    /* NT: ERROR_PROC_NOT_FOUND,  9x: ERROR_INVALID_PARAMETER */
+    todo_wine {
+    ok( !res &&
+        ((GetLastError() == ERROR_PROC_NOT_FOUND) ||
+        (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %ld with %ld (expected '0' with: ERROR_PROC_NOT_FOUND or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+    if (res) DeleteMonitorA(NULL, entry->env, winetest_monitor); 
+    }
+
+   /* Test AddMonitor with real options */
+    mi2a.pDLLName = entry->dllname;
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
+    
+    /* add a monitor twice */
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    /* NT: ERROR_PRINT_MONITOR_ALREADY_INSTALLED (3006), 9x: ERROR_ALREADY_EXISTS (183) */
+    ok( !res &&
+        ((GetLastError() == ERROR_PRINT_MONITOR_ALREADY_INSTALLED) ||
+        (GetLastError() == ERROR_ALREADY_EXISTS)), 
+        "returned %ld with %ld (expected '0' with: " \
+        "ERROR_PRINT_MONITOR_ALREADY_INSTALLED or ERROR_ALREADY_EXISTS)\n",
+        res, GetLastError());
+
+    DeleteMonitorA(NULL, entry->env, winetest_monitor); 
+    SetLastError(MAGIC_DEAD);
+    res = AddMonitorA("", 2, (LPBYTE) &mi2a);
+    ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
+
+    /* cleanup */
+    DeleteMonitorA(NULL, entry->env, winetest_monitor);
+
 }
 
 /* ########################### */
@@ -698,6 +920,7 @@ START_TEST(info)
 
     find_default_printer();
 
+    test_AddMonitor();
     test_EnumMonitors(); 
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
