@@ -524,6 +524,9 @@
 /* Define to 1 if the system has the type `request_sense'. */
 #undef HAVE_REQUEST_SENSE
 
+/* Define if you have the resolver library and header */
+#undef HAVE_RESOLV
+
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
 

@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = dnsapi.dll
 IMPORTLIB = libdnsapi.$(IMPLIBEXT)
 IMPORTS   = kernel32
-EXTRALIBS = $(LIBUNICODE)
+EXTRALIBS = $(LIBUNICODE) @RESOLVLIBS@
 
 C_SRCS = \
 	main.c \

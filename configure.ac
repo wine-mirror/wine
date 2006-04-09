@@ -279,6 +279,43 @@ AC_CHECK_HEADERS(\
 )
 AC_HEADER_STAT()
 
+dnl **** Checks for headers that depend on other ones ****
+
+AC_CHECK_HEADERS([sys/mount.h sys/statfs.h sys/user.h sys/vfs.h],,,
+    [#include <sys/types.h>
+     #if HAVE_SYS_PARAM_H
+     # include <sys/param.h>
+     #endif])
+
+AC_CHECK_HEADERS([net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h netipx/ipx.h],,,
+    [#include <sys/types.h>
+     #if HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif])
+
+AC_CHECK_HEADERS([resolv.h],,,
+    [#include <sys/types.h>
+     #if HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif
+     #if HAVE_NETINET_IN_H
+     # include <netinet/in.h>
+     #endif
+     #if HAVE_ARPA_NAMESER_H
+     # include <arpa/nameser.h>
+     #endif])
+
+AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
+
+AC_CHECK_HEADERS([linux/ipx.h linux/videodev.h],,,
+[#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#include <sys/types.h>
+#ifdef HAVE_ASM_TYPES_H
+#include <asm/types.h>
+#endif])
+
 dnl Check for broken kernel header that doesn't define __user
 AC_CHECK_HEADERS([linux/capi.h],,,[#define __user])
 
@@ -536,6 +573,15 @@ then
                  AC_MSG_RESULT(yes)],
                 [AC_MSG_RESULT(no)])
     LIBS="$saved_libs"
+fi
+
+dnl **** Check for resolver library ***
+AC_SUBST(RESOLVLIBS,"")
+if test "$ac_cv_header_resolv_h" = "yes"
+then
+    AC_CHECK_LIB(resolv, res_query,
+        [AC_DEFINE(HAVE_RESOLV, 1, [Define if you have the resolver library and header])
+         RESOLVLIBS="-lresolv"])
 fi
 
 dnl **** Check for LittleCMS ***
@@ -1215,42 +1261,6 @@ AC_CHECK_FUNCS(\
 	waitpid \
 )
 
-dnl **** Checks for headers that depend on other ones ****
-
-AC_CHECK_HEADERS([sys/mount.h sys/statfs.h sys/user.h sys/vfs.h],,,
-    [#include <sys/types.h>
-     #if HAVE_SYS_PARAM_H
-     # include <sys/param.h>
-     #endif])
-
-AC_CHECK_HEADERS([net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h netipx/ipx.h],,,
-    [#include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif])
-
-AC_CHECK_HEADERS([resolv.h],,,
-    [#include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
-     #if HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #if HAVE_ARPA_NAMESER_H
-     # include <arpa/nameser.h>
-     #endif])
-
-AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
-
-AC_CHECK_HEADERS([linux/ipx.h linux/videodev.h],,,
-[#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-#include <sys/types.h>
-#ifdef HAVE_ASM_TYPES_H
-#include <asm/types.h>
-#endif])
 
 dnl **** Check for types ****
 
