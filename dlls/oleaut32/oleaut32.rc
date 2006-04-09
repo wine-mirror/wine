@@ -28,6 +28,7 @@
 #include "oleaut32_De.rc"
 #include "oleaut32_Dk.rc"
 #include "oleaut32_En.rc"
+#include "oleaut32_Eo.rc"
 #include "oleaut32_Es.rc"
 #include "oleaut32_Cz.rc"
 #include "oleaut32_Fr.rc"
