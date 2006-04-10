@@ -190,6 +190,16 @@ dispinterface DWebBrowserEvents
     void PropertyChange([in] BSTR Property);
 }
 
+typedef
+[
+    uuid(34a226e0-df30-11cf-89a9-00a0c9054129)
+]
+enum CommandStateChangeConstants {
+    CSC_UPDATECOMMANDS  = -1,
+    CSC_NAVIGATEFORWARD = 1,
+    CSC_NAVIGATEBACK    = 2
+} CommandStateChangeConstants;
+
 /*****************************************************************************
  * IWebBrowserApp interface
  */
@@ -270,6 +280,20 @@ interface IWebBrowser2 : IWebBrowserApp
     [id(556), propget] HRESULT Resizable([out, retval] VARIANT_BOOL *Value);
     [id(556), propput] HRESULT Resizable([in] VARIANT_BOOL Value);
 }
+
+typedef
+[
+    uuid(65507be0-91a8-11d3-a845-009027220e6d)
+]
+enum SecureLockIconConstants {
+    secureLockIconUnsecure          = 0,
+    secureLockIconMixed             = 1,
+    secureLockIconSecureUnknownBits = 2,
+    secureLockIconSecure40Bit       = 3,
+    secureLockIconSecure56Bit       = 4,
+    secureLockIconSecureFortezza    = 5,
+    secureLockIconSecure128Bit      = 6
+} SecureLockIconConstants;
 
 /*****************************************************************************
  * DWebBrowserEvents2 dispinterface
@@ -386,7 +410,7 @@ dispinterface DWebBrowserEvents2
 
     [id(DISPID_PRINTTEMPLATETEARDOWN)]
     void PrintTemplateTeardown([in] IDispatch *pDisp);
-    
+
     [id(DISPID_UPDATEPAGESTATUS)]
     void UpdatePageStatus(
             [in] IDispatch *pDisp,
@@ -395,6 +419,18 @@ dispinterface DWebBrowserEvents2
 
     [id(DISPID_PRIVACYIMPACTEDSTATECHANGE)]
     void PrivacyImpactedStateChange([in] VARIANT_BOOL bImpacted);
+}
+
+[
+    uuid(eab22ac3-30c1-11cf-a7eb-0000c05bae0b),
+    control
+]
+coclass WebBrowser_V1
+{
+    interface IWebBrowser2;
+    [default] interface IWebBrowser;
+    [source] dispinterface DWebBrowserEvents2;
+    [default, source] dispinterface DWebBrowserEvents;
 }
 
 [
@@ -420,6 +456,52 @@ coclass InternetExplorer
 }
 
 [
+    uuid(C08AFD90-F2A1-11D1-8455-00A0C91F3880),
+    hidden
+]
+coclass ShellBrowserWindow
+{
+    [default] interface IWebBrowser2;
+    interface IWebBrowserApp;
+    [default, source] dispinterface DWebBrowserEvents2;
+    [source] dispinterface DWebBrowserEvents;
+}
+
+typedef
+[
+    uuid(f41e6981-28e5-11d0-82b4-00a0c90c29c5)
+]
+enum ShellWindowTypeConstants {
+    SWC_EXPLORER = 0,
+    SWC_BROWSER  = 1,
+    SWC_3RDPARTY = 2,
+    SWC_CALLBACK = 4
+} ShellWindowTypeConstants;
+
+typedef
+[
+    uuid(7716a370-38Ca-11d0-a48B-00a0c90a8f39)
+]
+enum ShellWindowFindWindowOptions {
+    SWFO_NEEDDISPATCH   = 1,
+    SWFO_INCLUDEPENDING = 2,
+    SWFO_COOKIEPASSED   = 4
+} ShellWindowFindWindowOptions;
+
+[
+    uuid(FE4106E0-399A-11D0-A48C-00A0C90A8F39)
+]
+dispinterface DShellWindowsEvents {
+    properties:
+    methods:
+    [id(DISPID_WINDOWREGISTERED)]
+    void WindowRegistered([in] long lCookie);
+
+    [id(DISPID_WINDOWREVOKED)]
+    void WindowRevoked([in] long lCookie);
+}
+
+[
     object,
     oleautomation,
     uuid(85cb6900-4d95-11cf-960c-0080c7f4ee85)
@@ -436,7 +518,7 @@ interface IShellWindows : IDispatch
     [hidden] HRESULT Revoke( [in] long Cookie );
     [hidden] HRESULT OnNavigate( [in] long Cookie, [out] VARIANT *pvarLoc );
     [hidden] HRESULT OnActivated( [in] long Cookie, [in] VARIANT fActive );
-    [hidden] HRESULT FindWindowSW( [in] VARIANT *pvarLoc, [in] VARIANT *pvarLocRoot, 
+    [hidden] HRESULT FindWindowSW( [in] VARIANT *pvarLoc, [in] VARIANT *pvarLocRoot,
                 [in] int swClass, [out] long *phwnd, int swfwOptions,
                 IDispatch **ppdispOut );
     [hidden] HRESULT OnCreated( [in] long lCookie, [in] IUnknown *punk );
@@ -450,6 +532,328 @@ coclass ShellWindows
 {
     [default] interface IShellWindows;
     [default, source] dispinterface DShellWindowsEvents;
+}
+
+[
+    odl,
+    uuid(729fe2f8-1ea8-11d1-8f85-00C04fc2fbe1),
+    dual,
+    oleautomation
+]
+interface IShellUIHelper : IDispatch {
+    [id(1), hidden] HRESULT ResetFirstBootMode();
+    [id(2), hidden] HRESULT ResetSafeMode();
+    [id(3), hidden] HRESULT RefreshOfflineDesktop();
+
+    [id(4)] HRESULT AddFavorite(
+            [in] BSTR URL,
+            [in, optional] VARIANT* Title);
+
+    [id(5)] HRESULT AddChannel([in] BSTR URL);
+
+    [id(6)] HRESULT AddDesktopComponent(
+            [in] BSTR URL,
+            [in] BSTR Type,
+            [in, optional] VARIANT *Left,
+            [in, optional] VARIANT *Top,
+            [in, optional] VARIANT *Width,
+            [in, optional] VARIANT *Height);
+
+    [id(7)] HRESULT IsSubscribed(
+            [in] BSTR URL,
+            [out, retval] VARIANT_BOOL *pBool);
+
+    [id(8)] HRESULT NavigateAndFind(
+            [in] BSTR URL,
+            [in] BSTR strQuery,
+            [in] VARIANT *varTargetFrame);
+
+    [id(9)] HRESULT ImportExportFavorites(
+            [in] VARIANT_BOOL fImport,
+            [in] BSTR strImpExpPath);
+
+    [id(10)] HRESULT AutoCompleteSaveForm([in, optional] VARIANT *Form);
+
+    [id(11)] HRESULT AutoScan(
+            [in] BSTR strSearch,
+            [in] BSTR strFailureUrl,
+            [in, optional] VARIANT *pvarTargetFrame);
+
+    [id(12), hidden] HRESULT AutoCompleteAttach([in, optional] VARIANT *Reserved);
+
+    [id(13)] HRESULT ShowBrowserUI(
+            [in] BSTR bstrName,
+            [in] VARIANT *pvarIn,
+            [out, retval] VARIANT *pvarOut);
+}
+
+[
+    uuid(64ab4bb7-111e-11d1-8f79-00c04fc2fbe1)
+]
+coclass ShellUIHelper {
+    [default] interface IShellUIHelper;
+}
+
+[
+    uuid(55136806-b2de-11d1-b9f2-00a0c98bc547)
+]
+dispinterface DShellNameSpaceEvents {
+    properties:
+    methods:
+    [id(1)] void FavoritesSelectionChange(
+            [in] long cItems,
+            [in] long hItem,
+            [in] BSTR strName,
+            [in] BSTR strUrl,
+            [in] long cVisits,
+            [in] BSTR strDate,
+            [in] long fAvailableOffline);
+
+    [id(2)] void SelectionChange();
+    [id(3)] void DoubleClick();
+    [id(4)] void Initialized();
+}
+
+[
+    odl,
+    uuid(55136804-b2de-11d1-b9f2-00a0c98bc547),
+    hidden,
+    dual,
+    oleautomation
+]
+interface IShellFavoritesNameSpace : IDispatch {
+    [id(1)] HRESULT MoveSelectionUp();
+    [id(2)] HRESULT MoveSelectionDown();
+    [id(3)] HRESULT ResetSort();
+    [id(4)] HRESULT NewFolder();
+    [id(5)] HRESULT Synchronize();
+    [id(6)] HRESULT Import();
+    [id(7)] HRESULT Export();
+    [id(8)] HRESULT InvokeContextMenuCommand([in] BSTR strCommand);
+    [id(9)] HRESULT MoveSelectionTo();
+    [id(10), propget] HRESULT SubscriptionsEnabled([out, retval] VARIANT_BOOL *pBool);
+    [id(11)] HRESULT CreateSubscriptionForSelection([out, retval] VARIANT_BOOL *pBool);
+    [id(12)] HRESULT DeleteSubscriptionForSelection([out, retval] VARIANT_BOOL *pBool);
+    [id(13)] HRESULT SetRoot([in] BSTR bstrFullPath);
+}
+
+[
+    odl,
+    uuid(e572d3c9-37be-4ae2-825d-d521763e3108),
+    hidden,
+    dual,
+    oleautomation
+]
+interface IShellNameSpace : IShellFavoritesNameSpace {
+    [id(14), propget] HRESULT EnumOptions([out, retval] long* pgrfEnumFlags);
+    [id(14), propput] HRESULT EnumOptions([in] long pgrfEnumFlags);
+
+    [id(15), propget] HRESULT SelectedItem([out, retval] IDispatch **pItem);
+    [id(15), propput] HRESULT SelectedItem([in] IDispatch *pItem);
+
+    [id(16), propget] HRESULT Root([out, retval] VARIANT *pvar);
+    [id(16), propput] HRESULT Root([in] VARIANT pvar);
+
+    [id(17), propget] HRESULT Depth([out, retval] int *piDepth);
+    [id(17), propput] HRESULT Depth([in] int piDepth);
+
+    [id(18), propget] HRESULT Mode([out, retval] unsigned int *puMode);
+    [id(18), propput] HRESULT Mode([in] unsigned int puMode);
+
+    [id(19), propget] HRESULT Flags([out, retval] unsigned long *pdwFlags);
+    [id(19), propput] HRESULT Flags([in] unsigned long pdwFlags);
+
+    [id(20), propput] HRESULT TVFlags([in] unsigned long dwFlags);
+    [id(20), propget] HRESULT TVFlags([out, retval] unsigned long *dwFlags);
+
+    [id(21), propget] HRESULT Columns([out, retval] BSTR *bstrColumns);
+    [id(21), propput] HRESULT Columns([in] BSTR bstrColumns);
+
+    [id(22), propget] HRESULT CountViewTypes([out, retval] int *piTypes);
+
+    [id(23)] HRESULT SetViewType([in] int iType);
+    [id(24)] HRESULT SelectedItems([out, retval] IDispatch **ppid);
+    [id(25)] HRESULT Expand([in] VARIANT var,  int iDepth);
+    [id(26)] HRESULT UnselectAll();
+}
+
+[
+    uuid(55136805-b2de-11d1-b9f2-00a0c98bc547)
+]
+coclass ShellNameSpace {
+    [default] interface IShellNameSpace;
+    [default, source] dispinterface DShellNameSpaceEvents;
+}
+
+[
+    odl,
+    uuid(f3470f24-15fd-11d2-bb2e-00805ff7efca),
+    hidden,
+    dual,
+    oleautomation
+]
+interface IScriptErrorList : IDispatch {
+    [id(10)] HRESULT advanceError();
+    [id(11)] HRESULT retreatError();
+    [id(12)] HRESULT canAdvanceError([out, retval] long *pfCanAdvance);
+    [id(13)] HRESULT canRetreatError([out, retval] long *pfCanRetreat);
+    [id(14)] HRESULT getErrorLine([out, retval] long *plLine);
+    [id(15)] HRESULT getErrorChar([out, retval] long *plChar);
+    [id(16)] HRESULT getErrorCode([out, retval] long *plCode);
+    [id(17)] HRESULT getErrorMsg([out, retval] BSTR *pstr);
+    [id(18)] HRESULT getErrorUrl([out, retval] BSTR *pstr);
+    [id(23)] HRESULT getAlwaysShowLockState([out, retval] long *pfAlwaysShowLocked);
+    [id(19)] HRESULT getDetailsPaneOpen([out, retval] long *pfDetailsPaneOpen);
+    [id(20)] HRESULT setDetailsPaneOpen(long fDetailsPaneOpen);
+    [id(21)] HRESULT getPerErrorDisplay([out, retval] long *pfPerErrorDisplay);
+    [id(22)] HRESULT setPerErrorDisplay(long fPerErrorDisplay);
+}
+
+[
+    uuid(efd01300-160f-11d2-bb2e-00805ff7efca),
+    hidden
+]
+coclass CScriptErrorList {
+    [default] interface IScriptErrorList;
+}
+
+[
+    odl,
+    uuid(ba9239a4-3dd5-11d2-bf8b-00c04fb93661),
+    hidden,
+    dual,
+    oleautomation
+]
+interface ISearch : IDispatch {
+    [propget] HRESULT Title([out, retval] BSTR *pbstrTitle);
+    [propget] HRESULT Id([out, retval] BSTR *pbstrId);
+    [propget] HRESULT URL([out, retval] BSTR *pbstrUrl);
+}
+
+[
+    odl,
+    uuid(47c922a2-3dd5-11d2-bf8b-00c04fb93661),
+    hidden,
+    dual,
+    oleautomation
+]
+interface ISearches : IDispatch {
+    [propget] HRESULT Count([out, retval] long *plCount);
+    [propget] HRESULT Default([out, retval] BSTR *pbstrDefault);
+
+    HRESULT Item(
+            [in, optional] VARIANT index,
+            [out, retval] ISearch **ppid);
+
+    [id(-4)] HRESULT _NewEnum([out, retval] IUnknown **ppunk);
+}
+
+[
+    odl,
+    uuid(72423e8f-8011-11d2-be79-00a0c9a83da1),
+    hidden,
+    dual,
+    oleautomation
+]
+interface ISearchAssistantOC : IDispatch {
+    [id(1)] HRESULT AddNextMenuItem([in] BSTR bstrText, [in] long idItem);
+    [id(2)] HRESULT SetDefaultSearchUrl([in] BSTR bstrUrl);
+    [id(3)] HRESULT NavigateToDefaultSearch();
+
+    [id(4)] HRESULT IsRestricted(
+            [in] BSTR bstrGuid,
+            [out, retval] VARIANT_BOOL *pVal);
+
+    [id(5), propget] HRESULT ShellFeaturesEnabled([out, retval] VARIANT_BOOL *pVal);
+    [id(6), propget] HRESULT SearchAssistantDefault([out, retval] VARIANT_BOOL *pVal);
+    [id(7), propget] HRESULT Searches([out, retval] ISearches **ppid);
+    [id(8), propget] HRESULT InWebFolder([out, retval] VARIANT_BOOL *pVal);
+
+    [id(9)] HRESULT PutProperty(
+            [in] VARIANT_BOOL bPerLocale,
+            [in] BSTR bstrName,
+            [in] BSTR bstrValue);
+
+    [id(10)] HRESULT GetProperty(
+            [in] VARIANT_BOOL bPerLocale,
+            [in] BSTR bstrName,
+            [out, retval] BSTR *pbstrValue);
+
+    [id(11), propput] HRESULT EventHandled([in] VARIANT_BOOL rhs);
+    [id(12)] HRESULT ResetNextMenu();
+    [id(13)] HRESULT FindOnWeb();
+    [id(14)] HRESULT FindFilesOrFolders();
+    [id(15)] HRESULT FindComputer();
+    [id(16)] HRESULT FindPrinter();
+    [id(17)] HRESULT FindPeople();
+
+    [id(18)] HRESULT GetSearchAssistantURL(
+            [in] VARIANT_BOOL bSubstitute,
+            [in] VARIANT_BOOL bCustomize,
+            [out, retval] BSTR *pbstrValue);
+
+    [id(19)] HRESULT NotifySearchSettingsChanged();
+
+    [id(20), propput] HRESULT ASProvider([in] BSTR pProvider);
+    [id(20), propget] HRESULT ASProvider([out, retval] BSTR *pProvider);
+
+    [id(21), propput] HRESULT ASSetting([in] int pSetting);
+    [id(21), propget] HRESULT ASSetting([out, retval] int *pSetting);
+
+    [id(22)] HRESULT NETDetectNextNavigate();
+    [id(23)] HRESULT PutFindText([in] BSTR FindText);
+    [id(24), propget] HRESULT Version([out, retval] int *pVersion);
+
+    [id(25)] HRESULT EncodeString(
+            [in] BSTR bstrValue,
+            [in] BSTR bstrCharSet,
+            [in] VARIANT_BOOL bUseUTF8,
+            [out, retval] BSTR* pbstrResult);
+}
+
+[
+    odl,
+    uuid(72423e8f-8011-11d2-be79-00a0c9a83da2),
+    hidden,
+    dual,
+    oleautomation
+]
+interface ISearchAssistantOC2 : ISearchAssistantOC {
+    [id(26), propget] HRESULT ShowFindPrinter([out, retval] VARIANT_BOOL *pbShowFindPrinter);
+}
+
+[
+    odl,
+    uuid(72423e8f-8011-11d2-be79-00a0c9a83da3),
+    hidden,
+    dual,
+    oleautomation
+]
+interface ISearchAssistantOC3 : ISearchAssistantOC2 {
+    [id(27), propget] HRESULT SearchCompanionAvailable([out, retval] VARIANT_BOOL *pbAvailable);
+
+    [id(28), propput] HRESULT UseSearchCompanion([in] VARIANT_BOOL pbUseSC);
+    [id(28), propget] HRESULT UseSearchCompanion([out, retval] VARIANT_BOOL *pbUseSC);
+}
+
+[
+    uuid(1611fdda-445b-11d2-85de-00C04fa35c89),
+    hidden
+]
+dispinterface _SearchAssistantEvents {
+    properties:
+    methods:
+    [id(1)] void OnNextMenuSelect([in] long idItem);
+    [id(2)] void OnNewSearch();
+}
+
+[
+    uuid(b45ff030-4447-11d2-85de-00C04fa35c89),
+    hidden
+]
+coclass SearchAssistantOC {
+    [default] interface ISearchAssistantOC3;
+    [default, source] dispinterface _SearchAssistantEvents;
 }
 
 } /* library */
