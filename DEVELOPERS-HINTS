@@ -53,6 +53,7 @@ DLLs (under dlls/):
 	dmsynth/		- DirectMusic Software Synthesizer
 	dmusic/			- DirectMusic Core Services
 	dmusic32/		- DirectMusic Legacy Port
+	dnsapi/			- DNS support
 	dplay/			- DirectPlay (networking)
 	dplayx/			- DirectPlay (networking)
 	dpnet/                  - DirectPlay (networking)

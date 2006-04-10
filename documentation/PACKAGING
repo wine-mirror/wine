@@ -59,6 +59,12 @@ Here is a list of the soft dependencies. We suggest packagers
 install each and every last of those before building the package.
 These libraries are not dependencies in the RPM sense. In DEB packages,
 they should appear as "Suggests" or "Recommends", as the case may be.
+
+    * libresolv
+      This is the standard Unix domain name resolver library that is
+      used to implement DNS support found in dnsapi.dll. resolv.h as
+      well as libresolv.so should be present at build time.
+
     * FreeType: http://www.freetype.org
       This library is used for direct rendering of fonts. It provides
       better support of fonts than using the X11 fonts engine. It is
