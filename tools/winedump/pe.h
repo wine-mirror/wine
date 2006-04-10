@@ -19,7 +19,7 @@
  */
 
 extern void		dump_codeview(unsigned long ptr, unsigned long len);
-extern void		dump_coff(unsigned long coffbase, unsigned long len, void* sect_map);
+extern void		dump_coff(unsigned long coffbase, unsigned long len, const void* sect_map);
 extern void		dump_frame_pointer_omission(unsigned long base, unsigned long len);
 extern void	        dump_separate_dbg(void);
-extern void             pe_dump(void*);
+extern void             pe_dump(const void*);

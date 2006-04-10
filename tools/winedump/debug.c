@@ -99,14 +99,13 @@
  *    (OMFDirHeader.cDir)
  */
 
-extern IMAGE_NT_HEADERS*        PE_nt_headers;
+extern const IMAGE_NT_HEADERS*        PE_nt_headers;
+static const void*		cv_base /* = 0 */;
 
-static	void*		cv_base /* = 0 */;
-
-static int dump_cv_sst_module(OMFDirEntry* omfde)
+static int dump_cv_sst_module(const OMFDirEntry* omfde)
 {
-    OMFModule*	module;
-    OMFSegDesc*	segDesc;
+    const OMFModule*	module;
+    const OMFSegDesc*	segDesc;
     int		i;
 
     module = PRD(Offset(cv_base) + omfde->lfo, sizeof(OMFModule));
@@ -132,16 +131,16 @@ static int dump_cv_sst_module(OMFDirEntry* omfde)
     return TRUE;
 }
 
-static int dump_cv_sst_global_pub(OMFDirEntry* omfde)
+static int dump_cv_sst_global_pub(const OMFDirEntry* omfde)
 {
-    long	fileoffset;
-    OMFSymHash* header;
-    BYTE*	symbols;
-    BYTE*	curpos;
-    PUBSYM32*	sym;
-    unsigned 	symlen;
-    int		recordlen;
-    char 	nametmp[256];
+    long	        fileoffset;
+    const OMFSymHash*   header;
+    const BYTE*	        symbols;
+    const BYTE*	        curpos;
+    const PUBSYM32*	sym;
+    unsigned 	        symlen;
+    int		        recordlen;
+    char 	        nametmp[256];
 
     fileoffset = Offset(cv_base) + omfde->lfo;
     printf ("    GlobalPub section starts at file offset 0x%lx\n", fileoffset);
@@ -189,34 +188,34 @@ static int dump_cv_sst_global_pub(OMFDirEntry* omfde)
     return TRUE;
 }
 
-static int dump_cv_sst_global_sym(OMFDirEntry* omfde)
+static int dump_cv_sst_global_sym(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
     return TRUE;
 }
 
-static int dump_cv_sst_static_sym(OMFDirEntry* omfde)
+static int dump_cv_sst_static_sym(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
     return TRUE;
 }
 
-static int dump_cv_sst_libraries(OMFDirEntry* omfde)
+static int dump_cv_sst_libraries(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
     return TRUE;
 }
 
-static int dump_cv_sst_global_types(OMFDirEntry* omfde)
+static int dump_cv_sst_global_types(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
     return TRUE;
 }
 
-static int dump_cv_sst_seg_map(OMFDirEntry* omfde)
+static int dump_cv_sst_seg_map(const OMFDirEntry* omfde)
 {
-    OMFSegMap*		segMap;
-    OMFSegMapDesc*	segMapDesc;
+    const OMFSegMap*		segMap;
+    const OMFSegMapDesc*	segMapDesc;
     int		i;
 
     segMap = PRD(Offset(cv_base) + omfde->lfo, sizeof(OMFSegMap));
@@ -244,22 +243,22 @@ static int dump_cv_sst_seg_map(OMFDirEntry* omfde)
     return TRUE;
 }
 
-static int dump_cv_sst_file_index(OMFDirEntry* omfde)
+static int dump_cv_sst_file_index(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
     return TRUE;
 }
 
-static int dump_cv_sst_src_module(OMFDirEntry* omfde)
+static int dump_cv_sst_src_module(const OMFDirEntry* omfde)
 {
-    int 		i, j;
-    BYTE*		rawdata;
-    unsigned long*	seg_info_dw;
-    unsigned short*	seg_info_w;
-    unsigned		ofs;
-    OMFSourceModule*	sourceModule;
-    OMFSourceFile*	sourceFile;
-    OMFSourceLine*	sourceLine;
+    int 		        i, j;
+    const BYTE*		        rawdata;
+    const unsigned long*	seg_info_dw;
+    const unsigned short*	seg_info_w;
+    unsigned		        ofs;
+    const OMFSourceModule*	sourceModule;
+    const OMFSourceFile*	sourceFile;
+    const OMFSourceLine*	sourceLine;
 
     rawdata = PRD(Offset(cv_base) + omfde->lfo, omfde->cb);
     if (!rawdata) {printf("Can't get srcModule subsection details, aborting\n");return FALSE;}
@@ -340,17 +339,17 @@ static int dump_cv_sst_src_module(OMFDirEntry* omfde)
     return TRUE;
 }
 
-static int dump_cv_sst_align_sym(OMFDirEntry* omfde)
+static int dump_cv_sst_align_sym(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
 
     return TRUE;
 }
 
-static void dump_codeview_all_modules(OMFDirHeader *omfdh)
+static void dump_codeview_all_modules(const OMFDirHeader *omfdh)
 {
     unsigned 		i;
-    OMFDirEntry	       *dirEntry;
+    const OMFDirEntry*  dirEntry;
     const char*		str;
 
     if (!omfdh || !omfdh->cDir) return;
@@ -402,9 +401,9 @@ static void dump_codeview_all_modules(OMFDirHeader *omfdh)
 
 static void dump_codeview_headers(unsigned long base, unsigned long len)
 {
-    OMFDirHeader	*dirHeader;
-    OMFSignature	*signature;
-    OMFDirEntry		*dirEntry;
+    const OMFDirHeader* dirHeader;
+    const OMFSignature* signature;
+    const OMFDirEntry*  dirEntry;
     unsigned		i;
     int modulecount = 0, alignsymcount = 0, srcmodulecount = 0, librariescount = 0;
     int globalsymcount = 0, globalpubcount = 0, globaltypescount = 0;
@@ -507,14 +506,14 @@ static const char*   get_coff_name( PIMAGE_SYMBOL coff_sym, const char* coff_str
    return nampnt;
 }
 
-void	dump_coff(unsigned long coffbase, unsigned long len, void* pmt)
+void	dump_coff(unsigned long coffbase, unsigned long len, const void* pmt)
 {
     PIMAGE_COFF_SYMBOLS_HEADER coff;
     PIMAGE_SYMBOL                 coff_sym;
     PIMAGE_SYMBOL                 coff_symbols;
     PIMAGE_LINENUMBER             coff_linetab;
     char                        * coff_strtab;
-    IMAGE_SECTION_HEADER        * sectHead = pmt;
+    const IMAGE_SECTION_HEADER  * sectHead = pmt;
     unsigned int i;
     const char                  * nampnt;
     int naux;

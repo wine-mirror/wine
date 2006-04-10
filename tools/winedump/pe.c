@@ -46,7 +46,7 @@
 #include "winedump.h"
 #include "pe.h"
 
-static IMAGE_NT_HEADERS32*	PE_nt_headers;
+static const IMAGE_NT_HEADERS32*        PE_nt_headers;
 
 static	const char* get_machine_str(DWORD mach)
 {
@@ -66,7 +66,7 @@ static	const char* get_machine_str(DWORD mach)
     return "???";
 }
 
-static void*	RVA(unsigned long rva, unsigned long len)
+static const void*	RVA(unsigned long rva, unsigned long len)
 {
     IMAGE_SECTION_HEADER*	sectHead;
     int				i;
@@ -87,10 +87,10 @@ static void*	RVA(unsigned long rva, unsigned long len)
     return NULL;
 }
 
-static IMAGE_NT_HEADERS32 *get_nt_header( void *pmt )
+static const IMAGE_NT_HEADERS32 *get_nt_header( const void *pmt )
 {
-    IMAGE_DOS_HEADER *dos = pmt;
-    return (IMAGE_NT_HEADERS32 *)((BYTE *)dos + dos->e_lfanew);
+    const IMAGE_DOS_HEADER *dos = pmt;
+    return (const IMAGE_NT_HEADERS32 *)((const BYTE *)dos + dos->e_lfanew);
 }
 
 static int is_fake_dll( const void *base )
@@ -103,11 +103,11 @@ static int is_fake_dll( const void *base )
     return FALSE;
 }
 
-static void *get_dir_and_size(unsigned int idx, unsigned int *size)
+static const void *get_dir_and_size(unsigned int idx, unsigned int *size)
 {
     if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     {
-        IMAGE_OPTIONAL_HEADER64 *opt = (IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader;
+        const IMAGE_OPTIONAL_HEADER64 *opt = (const IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader;
         if (idx >= opt->NumberOfRvaAndSizes)
             return NULL;
         if(size)
@@ -117,7 +117,7 @@ static void *get_dir_and_size(unsigned int idx, unsigned int *size)
     }
     else
     {
-        IMAGE_OPTIONAL_HEADER32 *opt = (IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader;
+        const IMAGE_OPTIONAL_HEADER32 *opt = (const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader;
         if (idx >= opt->NumberOfRvaAndSizes)
             return NULL;
         if(size)
@@ -127,7 +127,7 @@ static void *get_dir_and_size(unsigned int idx, unsigned int *size)
     }
 }
 
-static	void*	get_dir(unsigned idx)
+static	const void*	get_dir(unsigned idx)
 {
     return get_dir_and_size(idx, 0);
 }
@@ -204,7 +204,7 @@ static inline void print_dllflags(const char *title, WORD value)
 #undef X
 }
 
-static inline void print_datadirectory(DWORD n, IMAGE_DATA_DIRECTORY *directory)
+static inline void print_datadirectory(DWORD n, const IMAGE_DATA_DIRECTORY *directory)
 {
     unsigned i;
     printf("Data Directory\n");
@@ -218,7 +218,7 @@ static inline void print_datadirectory(DWORD n, IMAGE_DATA_DIRECTORY *directory)
     }
 }
 
-static void dump_optional_header32(IMAGE_OPTIONAL_HEADER32 *optionalHeader)
+static void dump_optional_header32(const IMAGE_OPTIONAL_HEADER32 *optionalHeader)
 {
     print_word("Magic", optionalHeader->Magic);
     print_ver("linker version",
@@ -254,7 +254,7 @@ static void dump_optional_header32(IMAGE_OPTIONAL_HEADER32 *optionalHeader)
     print_datadirectory(optionalHeader->NumberOfRvaAndSizes, optionalHeader->DataDirectory);
 }
 
-static void dump_optional_header64(IMAGE_OPTIONAL_HEADER64 *optionalHeader)
+static void dump_optional_header64(const IMAGE_OPTIONAL_HEADER64 *optionalHeader)
 {
     print_word("Magic", optionalHeader->Magic);
     print_ver("linker version",
@@ -291,7 +291,7 @@ static void dump_optional_header64(IMAGE_OPTIONAL_HEADER64 *optionalHeader)
 
 static	void	dump_pe_header(void)
 {
-    IMAGE_FILE_HEADER		*fileHeader;
+    const IMAGE_FILE_HEADER     *fileHeader;
 
     printf("File Header\n");
     fileHeader = &PE_nt_headers->FileHeader;
@@ -330,10 +330,10 @@ static	void	dump_pe_header(void)
     printf("Optional Header (%s)\n", get_magic_type(PE_nt_headers->OptionalHeader.Magic));
     switch(PE_nt_headers->OptionalHeader.Magic) {
         case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-            dump_optional_header32((IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader);
+            dump_optional_header32((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader);
             break;
         case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-            dump_optional_header64((IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader);
+            dump_optional_header64((const IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader);
             break;
         default:
             printf("  Unknown header magic: 0x%-4X\n", PE_nt_headers->OptionalHeader.Magic);
@@ -342,9 +342,9 @@ static	void	dump_pe_header(void)
     printf("\n");
 }
 
-static	void	dump_sections(void* addr, unsigned num_sect)
+static	void	dump_sections(const void* addr, unsigned num_sect)
 {
-    IMAGE_SECTION_HEADER*	sectHead = addr;
+    const IMAGE_SECTION_HEADER*	sectHead = addr;
     unsigned			i;
 
     printf("Section Table\n");
@@ -416,19 +416,19 @@ static	void	dump_sections(void* addr, unsigned num_sect)
 static	void	dump_dir_exported_functions(void)
 {
     unsigned int size = 0;
-    IMAGE_EXPORT_DIRECTORY	*exportDir = get_dir_and_size(IMAGE_FILE_EXPORT_DIRECTORY, &size);
+    const IMAGE_EXPORT_DIRECTORY*exportDir = get_dir_and_size(IMAGE_FILE_EXPORT_DIRECTORY, &size);
     unsigned int		i;
-    DWORD*			pFunc;
-    DWORD*			pName;
-    WORD*			pOrdl;
-    DWORD*			map;
+    const DWORD*		pFunc;
+    const DWORD*		pName;
+    const WORD* 		pOrdl;
+    DWORD*		        map;
     parsed_symbol		symbol;
 
     if (!exportDir) return;
 
     printf("Exports table:\n");
     printf("\n");
-    printf("  Name:            %s\n", (char*)RVA(exportDir->Name, sizeof(DWORD)));
+    printf("  Name:            %s\n", (const char*)RVA(exportDir->Name, sizeof(DWORD)));
     printf("  Characteristics: %08lx\n", exportDir->Characteristics);
     printf("  TimeDateStamp:   %08lX %s\n",
 	   exportDir->TimeDateStamp, get_time_str(exportDir->TimeDateStamp));
@@ -455,11 +455,11 @@ static	void	dump_dir_exported_functions(void)
 
     for (i = 0; i < exportDir->NumberOfNames; i++, pName++, pOrdl++)
     {
-	char*	name;
+	const char*	name;
 
 	map[*pOrdl / 32] |= 1 << (*pOrdl % 32);
 
-	name = (char*)RVA(*pName, sizeof(DWORD));
+	name = (const char*)RVA(*pName, sizeof(DWORD));
 	if (name && globals.do_demangle)
 	{
 	    printf("  %08lX  %4lu ", pFunc[*pOrdl], exportDir->Base + *pOrdl);
@@ -478,9 +478,9 @@ static	void	dump_dir_exported_functions(void)
 	    printf("  %08lX  %4lu %s", pFunc[*pOrdl], exportDir->Base + *pOrdl, name);
 	}
         /* check for forwarded function */
-        if ((char *)RVA(pFunc[*pOrdl],sizeof(void*)) >= (char *)exportDir &&
-            (char *)RVA(pFunc[*pOrdl],sizeof(void*)) < (char *)exportDir + size)
-            printf( " (-> %s)", (char *)RVA(pFunc[*pOrdl],1));
+        if ((const char *)RVA(pFunc[*pOrdl],sizeof(void*)) >= (const char *)exportDir &&
+            (const char *)RVA(pFunc[*pOrdl],sizeof(void*)) < (const char *)exportDir + size)
+            printf( " (-> %s)", (const char *)RVA(pFunc[*pOrdl],1));
         printf("\n");
     }
     pFunc = RVA(exportDir->AddressOfFunctions, exportDir->NumberOfFunctions * sizeof(DWORD));
@@ -496,10 +496,10 @@ static	void	dump_dir_exported_functions(void)
     printf("\n");
 }
 
-static void dump_image_thunk_data64(IMAGE_THUNK_DATA64 *il)
+static void dump_image_thunk_data64(const IMAGE_THUNK_DATA64 *il)
 {
     /* FIXME: This does not properly handle large images */
-    IMAGE_IMPORT_BY_NAME* iibn;
+    const IMAGE_IMPORT_BY_NAME* iibn;
     for (; il->u1.Ordinal; il++)
     {
         if (IMAGE_SNAP_BY_ORDINAL64(il->u1.Ordinal))
@@ -515,9 +515,9 @@ static void dump_image_thunk_data64(IMAGE_THUNK_DATA64 *il)
     }
 }
 
-static void dump_image_thunk_data32(IMAGE_THUNK_DATA32 *il)
+static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il)
 {
-    IMAGE_IMPORT_BY_NAME* iibn;
+    const IMAGE_IMPORT_BY_NAME* iibn;
     for (; il->u1.Ordinal; il++)
     {
         if (IMAGE_SNAP_BY_ORDINAL32(il->u1.Ordinal))
@@ -535,18 +535,18 @@ static void dump_image_thunk_data32(IMAGE_THUNK_DATA32 *il)
 
 static	void	dump_dir_imported_functions(void)
 {
-    IMAGE_IMPORT_DESCRIPTOR	*importDesc = get_dir(IMAGE_FILE_IMPORT_DIRECTORY);
+    const IMAGE_IMPORT_DESCRIPTOR	*importDesc = get_dir(IMAGE_FILE_IMPORT_DIRECTORY);
     DWORD directorySize;
 
     if (!importDesc)	return;
     if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     {
-        IMAGE_OPTIONAL_HEADER64 *opt = (IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader;
+        const IMAGE_OPTIONAL_HEADER64 *opt = (const IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader;
         directorySize = opt->DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size;
     }
     else
     {
-        IMAGE_OPTIONAL_HEADER32 *opt = (IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader;
+        const IMAGE_OPTIONAL_HEADER32 *opt = (const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader;
         directorySize = opt->DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size;
     }
 
@@ -554,11 +554,11 @@ static	void	dump_dir_imported_functions(void)
 
     for (;;)
     {
-	IMAGE_THUNK_DATA32*	il;
+	const IMAGE_THUNK_DATA32*	il;
 
         if (!importDesc->Name || !importDesc->FirstThunk) break;
 
-	printf("  offset %08lx %s\n", Offset(importDesc), (char*)RVA(importDesc->Name, sizeof(DWORD)));
+	printf("  offset %08lx %s\n", Offset(importDesc), (const char*)RVA(importDesc->Name, sizeof(DWORD)));
 	printf("  Hint/Name Table: %08lX\n", (DWORD)importDesc->u.OriginalFirstThunk);
 	printf("  TimeDataStamp:   %08lX (%s)\n",
 	       importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
@@ -576,7 +576,7 @@ static	void	dump_dir_imported_functions(void)
         else
         {
             if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-                dump_image_thunk_data64((IMAGE_THUNK_DATA64*)il);
+                dump_image_thunk_data64((const IMAGE_THUNK_DATA64*)il);
             else
                 dump_image_thunk_data32(il);
             printf("\n");
@@ -588,7 +588,7 @@ static	void	dump_dir_imported_functions(void)
 
 static void dump_dir_delay_imported_functions(void)
 {
-    struct ImgDelayDescr
+    const struct ImgDelayDescr
     {
         DWORD grAttrs;
         DWORD szName;
@@ -604,12 +604,12 @@ static void dump_dir_delay_imported_functions(void)
     if (!importDesc) return;
     if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     {
-        IMAGE_OPTIONAL_HEADER64 *opt = (IMAGE_OPTIONAL_HEADER64 *)&PE_nt_headers->OptionalHeader;
+        const IMAGE_OPTIONAL_HEADER64 *opt = (const IMAGE_OPTIONAL_HEADER64 *)&PE_nt_headers->OptionalHeader;
         directorySize = opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size;
     }
     else
     {
-        IMAGE_OPTIONAL_HEADER32 *opt = (IMAGE_OPTIONAL_HEADER32 *)&PE_nt_headers->OptionalHeader;
+        const IMAGE_OPTIONAL_HEADER32 *opt = (const IMAGE_OPTIONAL_HEADER32 *)&PE_nt_headers->OptionalHeader;
         directorySize = opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size;
     }
 
@@ -617,27 +617,27 @@ static void dump_dir_delay_imported_functions(void)
 
     for (;;)
     {
-        BOOL use_rva = importDesc->grAttrs & 1;
-        IMAGE_THUNK_DATA32 *il;
+        BOOL                            use_rva = importDesc->grAttrs & 1;
+        const IMAGE_THUNK_DATA32*       il;
 
         if (!importDesc->szName || !importDesc->pIAT || !importDesc->pINT) break;
 
         printf("  grAttrs %08lx offset %08lx %s\n", importDesc->grAttrs, Offset(importDesc),
-               use_rva ? (char *)RVA(importDesc->szName, sizeof(DWORD)) : (char *)importDesc->szName);
+               use_rva ? (const char *)RVA(importDesc->szName, sizeof(DWORD)) : (char *)importDesc->szName);
         printf("  Hint/Name Table: %08lx\n", importDesc->pINT);
         printf("  TimeDataStamp:   %08lX (%s)\n",
                importDesc->dwTimeStamp, get_time_str(importDesc->dwTimeStamp));
 
         printf("  Ordn  Name\n");
 
-        il = use_rva ? (IMAGE_THUNK_DATA32 *)RVA(importDesc->pINT, sizeof(DWORD)) : (IMAGE_THUNK_DATA32 *)importDesc->pINT;
+        il = use_rva ? (const IMAGE_THUNK_DATA32 *)RVA(importDesc->pINT, sizeof(DWORD)) : (const IMAGE_THUNK_DATA32 *)importDesc->pINT;
 
         if (!il)
             printf("Can't grab thunk data, going to next imported DLL\n");
         else
         {
             if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-                dump_image_thunk_data64((IMAGE_THUNK_DATA64 *)il);
+                dump_image_thunk_data64((const IMAGE_THUNK_DATA64 *)il);
             else
                 dump_image_thunk_data32(il);
             printf("\n");
@@ -647,7 +647,7 @@ static void dump_dir_delay_imported_functions(void)
     printf("\n");
 }
 
-static	void	dump_dir_debug_dir(IMAGE_DEBUG_DIRECTORY* idd, int idx)
+static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
 {
     const	char*	str;
 
@@ -682,7 +682,7 @@ static	void	dump_dir_debug_dir(IMAGE_DEBUG_DIRECTORY* idd, int idx)
 	break;
     case IMAGE_DEBUG_TYPE_COFF:
 	dump_coff(idd->PointerToRawData, idd->SizeOfData, 
-                  (char*)PE_nt_headers + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader);
+                  (const char*)PE_nt_headers + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader);
 	break;
     case IMAGE_DEBUG_TYPE_CODEVIEW:
 	dump_codeview(idd->PointerToRawData, idd->SizeOfData);
@@ -692,7 +692,7 @@ static	void	dump_dir_debug_dir(IMAGE_DEBUG_DIRECTORY* idd, int idx)
 	break;
     case IMAGE_DEBUG_TYPE_MISC:
     {
-	IMAGE_DEBUG_MISC* misc = PRD(idd->PointerToRawData, idd->SizeOfData);
+	const IMAGE_DEBUG_MISC* misc = PRD(idd->PointerToRawData, idd->SizeOfData);
 	if (!misc) {printf("Can't get misc debug information\n"); break;}
 	printf("    DataType:          %lu (%s)\n",
 	       misc->DataType,
@@ -720,7 +720,7 @@ static	void	dump_dir_debug_dir(IMAGE_DEBUG_DIRECTORY* idd, int idx)
 
 static void	dump_dir_debug(void)
 {
-    IMAGE_DEBUG_DIRECTORY*	debugDir = get_dir(IMAGE_FILE_DEBUG_DIRECTORY);
+    const IMAGE_DEBUG_DIRECTORY*debugDir = get_dir(IMAGE_FILE_DEBUG_DIRECTORY);
     unsigned			nb_dbg, i;
 
     if (!debugDir) return;
@@ -781,15 +781,16 @@ static void dump_dir_tls(void)
 
 void	dump_separate_dbg(void)
 {
-    IMAGE_SEPARATE_DEBUG_HEADER*separateDebugHead = PRD(0, sizeof(separateDebugHead));
-    unsigned			nb_dbg;
-    unsigned			i;
-    IMAGE_DEBUG_DIRECTORY*	debugDir;
+    const IMAGE_SEPARATE_DEBUG_HEADER*  separateDebugHead;
+    unsigned			        nb_dbg;
+    unsigned			        i;
+    const IMAGE_DEBUG_DIRECTORY*	debugDir;
 
+    separateDebugHead = PRD(0, sizeof(separateDebugHead));
     if (!separateDebugHead) {printf("Can't grab the separate header, aborting\n"); return;}
 
     printf ("Signature:          %.2s (0x%4X)\n",
-	    (char*)&separateDebugHead->Signature, separateDebugHead->Signature);
+	    (const char*)&separateDebugHead->Signature, separateDebugHead->Signature);
     printf ("Flags:              0x%04X\n", separateDebugHead->Flags);
     printf ("Machine:            0x%04X (%s)\n",
 	    separateDebugHead->Machine, get_machine_str(separateDebugHead->Machine));
@@ -1075,7 +1076,7 @@ static void dump_dir_resource(void)
     printf( "\n\n" );
 }
 
-void pe_dump(void* pmt)
+void pe_dump(const void* pmt)
 {
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
 
@@ -1086,7 +1087,7 @@ void pe_dump(void* pmt)
     {
 	dump_pe_header();
 	/* FIXME: should check ptr */
-	dump_sections((char*)PE_nt_headers + sizeof(DWORD) +
+	dump_sections((const char*)PE_nt_headers + sizeof(DWORD) +
 		      sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader,
 		      PE_nt_headers->FileHeader.NumberOfSections);
     }
@@ -1153,13 +1154,13 @@ static void dll_close (void)
 }
 */
 
-static	void	do_grab_sym( enum FileSig sig, void* pmt )
+static	void	do_grab_sym( enum FileSig sig, const void* pmt )
 {
-    IMAGE_EXPORT_DIRECTORY	*exportDir;
+    const IMAGE_EXPORT_DIRECTORY*exportDir;
     unsigned			i, j;
-    DWORD*			pName;
-    DWORD*			pFunc;
-    WORD*			pOrdl;
+    const DWORD*		pName;
+    const DWORD*		pFunc;
+    const WORD* 		pOrdl;
     const char*			ptr;
     DWORD*			map;
 

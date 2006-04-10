@@ -132,19 +132,19 @@ void dump_unicode_str( const WCHAR *str, int len )
     printf( "\"" );
 }
 
-void*	PRD(unsigned long prd, unsigned long len)
+const void*	PRD(unsigned long prd, unsigned long len)
 {
-    return (prd + len > dump_total_len) ? NULL : (char*)dump_base + prd;
+    return (prd + len > dump_total_len) ? NULL : (const char*)dump_base + prd;
 }
 
-unsigned long Offset(void* ptr)
+unsigned long Offset(const void* ptr)
 {
     if (ptr < dump_base) {printf("<<<<<ptr below\n");return 0;}
-    if ((char *)ptr >= (char*)dump_base + dump_total_len) {printf("<<<<<ptr above\n");return 0;}
+    if ((const char *)ptr >= (const char*)dump_base + dump_total_len) {printf("<<<<<ptr above\n");return 0;}
     return (char*)ptr - (char*)dump_base;
 }
 
-static	void	do_dump( enum FileSig sig, void* pmt )
+static	void	do_dump( enum FileSig sig, const void* pmt )
 {
     if (sig == SIG_NE)
     {
@@ -163,9 +163,9 @@ static	void	do_dump( enum FileSig sig, void* pmt )
 
 static enum FileSig check_headers(void)
 {
-    WORD*		pw;
-    DWORD*		pdw;
-    IMAGE_DOS_HEADER*	dh;
+    const WORD*		pw;
+    const DWORD*		pdw;
+    const IMAGE_DOS_HEADER*	dh;
     enum FileSig	sig;
 
     pw = PRD(0, sizeof(WORD));
@@ -186,11 +186,11 @@ static enum FileSig check_headers(void)
 		{
 		    sig = SIG_PE;
 		}
-                else if (*(WORD *)pdw == IMAGE_OS2_SIGNATURE)
+                else if (*(const WORD *)pdw == IMAGE_OS2_SIGNATURE)
                 {
                     sig = SIG_NE;
                 }
-		else if (*(WORD *)pdw == IMAGE_VXD_SIGNATURE)
+		else if (*(const WORD *)pdw == IMAGE_VXD_SIGNATURE)
 		{
                     sig = SIG_LE;
 		}
@@ -223,7 +223,7 @@ static enum FileSig check_headers(void)
     return sig;
 }
 
-int dump_analysis(const char* name, void (*fn)(enum FileSig, void*), enum FileSig wanted_sig)
+int dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
 {
     int			fd;
     enum FileSig	effective_sig;

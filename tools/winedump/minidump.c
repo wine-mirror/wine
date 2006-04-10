@@ -37,17 +37,17 @@ static void dump_mdmp_data(const MINIDUMP_LOCATION_DESCRIPTOR* md, const char* p
 
 static void dump_mdmp_string(DWORD rva)
 {
-    MINIDUMP_STRING*    ms = PRD(rva, sizeof(MINIDUMP_STRING));
+    const MINIDUMP_STRING*      ms = PRD(rva, sizeof(MINIDUMP_STRING));
     if (ms)
         dump_unicode_str( ms->Buffer, ms->Length / sizeof(WCHAR) );
     else
         printf("<<?>>");
 }
 
-static MINIDUMP_DIRECTORY* get_mdmp_dir(const MINIDUMP_HEADER* hdr, int str_idx)
+static const MINIDUMP_DIRECTORY* get_mdmp_dir(const MINIDUMP_HEADER* hdr, int str_idx)
 {
-    MINIDUMP_DIRECTORY* dir;
-    unsigned int        i;
+    const MINIDUMP_DIRECTORY*   dir;
+    unsigned int                i;
 
     for (i = 0; i < hdr->NumberOfStreams; i++)
     {
@@ -61,10 +61,10 @@ static MINIDUMP_DIRECTORY* get_mdmp_dir(const MINIDUMP_HEADER* hdr, int str_idx)
 
 void mdmp_dump(void)
 {
-    MINIDUMP_HEADER*        hdr = (MINIDUMP_HEADER*)PRD(0, sizeof(MINIDUMP_HEADER));
-    ULONG                   idx, ndir = 0;
-    MINIDUMP_DIRECTORY*     dir;
-    void*                   stream;
+    const MINIDUMP_HEADER*      hdr = (const MINIDUMP_HEADER*)PRD(0, sizeof(MINIDUMP_HEADER));
+    ULONG                       idx, ndir = 0;
+    const MINIDUMP_DIRECTORY*   dir;
+    const void*                 stream;
 
     if (!hdr)
     {
@@ -72,7 +72,7 @@ void mdmp_dump(void)
         return;
     }
 
-    printf("Signature: %lu (%.4s)\n", hdr->Signature, (char*)&hdr->Signature);
+    printf("Signature: %lu (%.4s)\n", hdr->Signature, (const char*)&hdr->Signature);
     printf("Version: %lx\n", hdr->Version);
     printf("NumberOfStreams: %lu\n", hdr->NumberOfStreams);
     printf("StreamDirectoryRva: %lu\n", hdr->StreamDirectoryRva);
@@ -90,9 +90,9 @@ void mdmp_dump(void)
         {
         case ThreadListStream:
         {
-            MINIDUMP_THREAD_LIST*   mtl = (MINIDUMP_THREAD_LIST*)stream;
-            MINIDUMP_THREAD*        mt = &mtl->Threads[0];
-            unsigned int            i;
+            const MINIDUMP_THREAD_LIST* mtl = (const MINIDUMP_THREAD_LIST*)stream;
+            const MINIDUMP_THREAD*      mt = &mtl->Threads[0];
+            unsigned int                i;
 
             printf("Threads: %lu\n", mtl->NumberOfThreads);
             for (i = 0; i < mtl->NumberOfThreads; i++, mt++)
@@ -115,11 +115,11 @@ void mdmp_dump(void)
         case ModuleListStream:
         case 0xFFF0:
         {
-            MINIDUMP_MODULE_LIST*   mml = (MINIDUMP_MODULE_LIST*)stream;
-            MINIDUMP_MODULE*        mm = &mml->Modules[0];
-            unsigned int            i;
-            const char*             p1;
-            const char*             p2;
+            const MINIDUMP_MODULE_LIST* mml = (const MINIDUMP_MODULE_LIST*)stream;
+            const MINIDUMP_MODULE*      mm = &mml->Modules[0];
+            unsigned int                i;
+            const char*                 p1;
+            const char*                 p2;
 
             printf("Modules (%s): %lu\n",
                    dir->StreamType == ModuleListStream ? "PE" : "ELF",
@@ -207,9 +207,9 @@ void mdmp_dump(void)
         break;
         case MemoryListStream:
         {
-            MINIDUMP_MEMORY_LIST*   mml = (MINIDUMP_MEMORY_LIST*)stream;
-            MINIDUMP_MEMORY_DESCRIPTOR* mmd = &mml->MemoryRanges[0];
-            unsigned int                i;
+            const MINIDUMP_MEMORY_LIST*         mml = (const MINIDUMP_MEMORY_LIST*)stream;
+            const MINIDUMP_MEMORY_DESCRIPTOR*   mmd = &mml->MemoryRanges[0];
+            unsigned int                        i;
 
             printf("Memory Ranges: %lu\n", mml->NumberOfMemoryRanges);
             for (i = 0; i < mml->NumberOfMemoryRanges; i++, mmd++)
@@ -224,7 +224,7 @@ void mdmp_dump(void)
         break;
         case SystemInfoStream:
         {
-            MINIDUMP_SYSTEM_INFO*       msi = (MINIDUMP_SYSTEM_INFO*)stream;
+            const MINIDUMP_SYSTEM_INFO* msi = (const MINIDUMP_SYSTEM_INFO*)stream;
             const char*                 str;
             char                        tmp[128];
 
@@ -307,7 +307,7 @@ void mdmp_dump(void)
             if (msi->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
             {
                 printf("  x86.VendorId: %.12s\n", 
-                       (char*)&msi->Cpu.X86CpuInfo.VendorId[0]);
+                       (const char*)&msi->Cpu.X86CpuInfo.VendorId[0]);
                 printf("  x86.VersionInformation: %lx\n", 
                        msi->Cpu.X86CpuInfo.VersionInformation);
                 printf("  x86.FeatureInformation: %lx\n", 
@@ -319,7 +319,8 @@ void mdmp_dump(void)
         break;
         case MiscInfoStream:
         {
-            MINIDUMP_MISC_INFO* mmi = (MINIDUMP_MISC_INFO*)stream;
+            const MINIDUMP_MISC_INFO* mmi = (const MINIDUMP_MISC_INFO*)stream;
+
             printf("Misc Information\n");
             printf("  Size: %lu\n", mmi->SizeOfInfo);
             printf("  Flags: %s%s\n", 
@@ -337,8 +338,8 @@ void mdmp_dump(void)
         break;
         case ExceptionStream:
         {
-            MINIDUMP_EXCEPTION_STREAM*  mes = (MINIDUMP_EXCEPTION_STREAM*)stream;
-            unsigned int                i;
+            const MINIDUMP_EXCEPTION_STREAM*    mes = (const MINIDUMP_EXCEPTION_STREAM*)stream;
+            unsigned int                        i;
 
             printf("Exception:\n");
             printf("  ThreadId: %08lx\n", mes->ThreadId);

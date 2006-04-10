@@ -225,10 +225,10 @@ char *str_toupper (char *str);
 /* file dumping functions */
 enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE, SIG_LE, SIG_MDMP};
 
-void*		PRD(unsigned long prd, unsigned long len);
-unsigned long	Offset(void* ptr);
+const void*	PRD(unsigned long prd, unsigned long len);
+unsigned long	Offset(const void* ptr);
 
-typedef void (*file_dumper)(enum FileSig, void*);
+typedef void (*file_dumper)(enum FileSig, const void*);
 int             dump_analysis(const char*, file_dumper, enum FileSig);
 
 void            dump_data( const unsigned char *ptr, unsigned int size, const char *prefix );
