@@ -46,7 +46,9 @@ library SHDocVw
 [
     object,
     oleautomation,
-    uuid(eab22ac1-30c1-11cf-a7eb-0000c05bae0b)
+    uuid(eab22ac1-30c1-11cf-a7eb-0000c05bae0b),
+    hidden,
+    dual
 ]
 interface IWebBrowser : IDispatch
 {
@@ -88,7 +90,7 @@ interface IWebBrowser : IDispatch
     [id(200), propget] HRESULT Application([out, retval] IDispatch** ppDisp);
     [id(201), propget] HRESULT Parent([out, retval] IDispatch** ppDisp);
     [id(202), propget] HRESULT Container([out, retval] IDispatch** ppDisp);
-    [id(203), propget] HRESULT Document([out] IDispatch** ppDisp);
+    [id(203), propget] HRESULT Document([out, retval] IDispatch** ppDisp);
     [id(204), propget] HRESULT TopLevelContainer([out, retval] VARIANT_BOOL* pBool);
     [id(205), propget] HRESULT Type([out, retval] BSTR* Type);
     [id(206), propget] HRESULT Left([out, retval] long *pl);
@@ -100,7 +102,7 @@ interface IWebBrowser : IDispatch
     [id(209), propget] HRESULT Height([out, retval] long *pl);
     [id(209), propput] HRESULT Height([in] long Height);
     [id(210), propget] HRESULT LocationName([out, retval] BSTR *LocationName);
-    [id(211), propget] HRESULT LocationURL([out, retval] BSTR * LocationURL);
+    [id(211), propget] HRESULT LocationURL([out, retval] BSTR *LocationURL);
     [id(212), propget] HRESULT Busy([out, retval] VARIANT_BOOL *pBool);
 }
 
@@ -108,7 +110,8 @@ interface IWebBrowser : IDispatch
  * DWebBrowserEvents dispinterface
  */
 [
-    uuid(eab22ac2-30c1-11CF-a7eb-0000C05bae0b)
+    uuid(eab22ac2-30c1-11CF-a7eb-0000C05bae0b),
+    hidden
 ]
 dispinterface DWebBrowserEvents
 {
@@ -117,10 +120,10 @@ dispinterface DWebBrowserEvents
     [id(DISPID_BEFORENAVIGATE)]
     void BeforeNavigate(
         [in] BSTR URL,
-        [in] long Flags,
-        [in] BSTR TargetFrameName,
-        [in] VARIANT *PostData,
-        [in] BSTR Headers,
+        long Flags,
+        BSTR TargetFrameName,
+        VARIANT *PostData,
+        BSTR Headers,
         [in, out] VARIANT_BOOL *Cancel);
 
     [id(DISPID_NAVIGATECOMPLETE)]
@@ -156,10 +159,10 @@ dispinterface DWebBrowserEvents
     [id(DISPID_FRAMEBEFORENAVIGATE)]
     void FrameBeforeNavigate(
         [in] BSTR URL,
-        [in] long Flags,
-        [in] BSTR TargetFrameName,
-        [in] VARIANT *PostData,
-        [in] BSTR Headers,
+        long Flags,
+        BSTR TargetFrameName,
+        VARIANT *PostData,
+        BSTR Headers,
         [in, out]VARIANT_BOOL *Cancel);
 
     [id(DISPID_FRAMENAVIGATECOMPLETE)]
@@ -206,14 +209,16 @@ enum CommandStateChangeConstants {
 [
     object,
     oleautomation,
-    uuid(0002df05-0000-0000-c000-000000000046)
+    uuid(0002df05-0000-0000-c000-000000000046),
+    hidden,
+    dual
 ]
 interface IWebBrowserApp : IWebBrowser
 {
     [id(300)] HRESULT Quit();
     [id(301)] HRESULT ClientToWindow([in,out] int* pcx, [in,out] int* pcy);
-    [id(302)] HRESULT PutProperty([in] BSTR szProperty, [in] VARIANT vtValue);
-    [id(303)] HRESULT GetProperty([in] BSTR szProperty, [out, retval] VARIANT *pvtValue);
+    [id(302)] HRESULT PutProperty([in] BSTR Property, [in] VARIANT vtValue);
+    [id(303)] HRESULT GetProperty([in] BSTR Property, [out, retval] VARIANT *pvtValue);
     [id(0), propget] HRESULT Name([out, retval] BSTR* Name);
     [id(DISPID_HWND), propget] HRESULT HWND([out, retval] long *pHWND);
     [id(400), propget] HRESULT FullName([out, retval] BSTR* FullName);
@@ -226,9 +231,9 @@ interface IWebBrowserApp : IWebBrowser
     [id(404), propput] HRESULT StatusText([in] BSTR StatusText);
     [id(405), propget] HRESULT ToolBar([out, retval] int * Value);
     [id(405), propput] HRESULT ToolBar([in] int Value);
-    [id(406), propget] HRESULT MenuBar([out, retval] VARIANT_BOOL * Value);
+    [id(406), propget] HRESULT MenuBar([out, retval] VARIANT_BOOL *Value);
     [id(406), propput] HRESULT MenuBar([in] VARIANT_BOOL Value);
-    [id(407), propget] HRESULT FullScreen([out, retval] VARIANT_BOOL * pbFullScreen);
+    [id(407), propget] HRESULT FullScreen([out, retval] VARIANT_BOOL *pbFullScreen);
     [id(407), propput] HRESULT FullScreen([in] VARIANT_BOOL bFullScreen);
 }
 
@@ -238,7 +243,9 @@ interface IWebBrowserApp : IWebBrowser
 [
     object,
     oleautomation,
-    uuid(d30c1661-cdaf-11d0-8a3e-00c04fc9e26e)
+    uuid(d30c1661-cdaf-11d0-8a3e-00c04fc9e26e),
+    hidden,
+    dual
 ]
 interface IWebBrowser2 : IWebBrowserApp
 {
@@ -264,7 +271,9 @@ interface IWebBrowser2 : IWebBrowserApp
         [in, optional] VARIANT *pvarShow,
         [in, optional] VARIANT *pvarSize);
 
-    [id(DISPID_READYSTATE), propget] HRESULT ReadyState([out, retval] READYSTATE *plReadyState);
+    [id(DISPID_READYSTATE), propget, bindable]
+    HRESULT ReadyState([out, retval] READYSTATE *plReadyState);
+
     [id(550), propget] HRESULT Offline([out, retval] VARIANT_BOOL *pbOffline);
     [id(550), propput] HRESULT Offline([in] VARIANT_BOOL bOffline);
     [id(551), propget] HRESULT Silent([out, retval] VARIANT_BOOL *pbSilent);
@@ -299,7 +308,8 @@ enum SecureLockIconConstants {
  * DWebBrowserEvents2 dispinterface
  */
 [
-    uuid(34a715a0-6587-11d0-924a-0020afc7ac4d)
+    uuid(34a715a0-6587-11d0-924a-0020afc7ac4d),
+    hidden
 ]
 dispinterface DWebBrowserEvents2
 {
@@ -321,7 +331,7 @@ dispinterface DWebBrowserEvents2
     void DownloadComplete();
 
     [id(DISPID_TITLECHANGE)]
-    void TitleChange([in] BSTR szProperty);
+    void TitleChange([in] BSTR Text);
 
     [id(DISPID_PROPERTYCHANGE)]
     void PropertyChange([in] BSTR szProperty);
@@ -434,7 +444,8 @@ coclass WebBrowser_V1
 }
 
 [
-    uuid(8856f961-340a-11d0-a96b-00c04fd705a2)
+    uuid(8856f961-340a-11d0-a96b-00c04fd705a2),
+    control
 ]
 coclass WebBrowser
 {
@@ -504,25 +515,45 @@ dispinterface DShellWindowsEvents {
 [
     object,
     oleautomation,
-    uuid(85cb6900-4d95-11cf-960c-0080c7f4ee85)
+    uuid(85cb6900-4d95-11cf-960c-0080c7f4ee85),
+    dual
 ]
 interface IShellWindows : IDispatch
 {
-    [propget] HRESULT Count( [out] long *Count );
-    [id(0)] HRESULT Item( [in] VARIANT index, [out] IDispatch **Folder );
-    [id(-4)] HRESULT _NewEnum( [out] IUnknown **ppunk );
-    [hidden] HRESULT Register( [in] IDispatch *pid, [in] long hWnd, [in] int swClass,
-                [out] long *plCookie );
-    [hidden] HRESULT RegisterPending( [in] long lThread, [in] VARIANT *pvarloc,
-                [in] VARIANT *varlocRoot, [in] int swClass, [out] long *plCookie );
-    [hidden] HRESULT Revoke( [in] long Cookie );
-    [hidden] HRESULT OnNavigate( [in] long Cookie, [out] VARIANT *pvarLoc );
-    [hidden] HRESULT OnActivated( [in] long Cookie, [in] VARIANT fActive );
-    [hidden] HRESULT FindWindowSW( [in] VARIANT *pvarLoc, [in] VARIANT *pvarLocRoot,
-                [in] int swClass, [out] long *phwnd, int swfwOptions,
-                IDispatch **ppdispOut );
-    [hidden] HRESULT OnCreated( [in] long lCookie, [in] IUnknown *punk );
-    [hidden] HRESULT ProcessAttachDetach( [in] VARIANT_BOOL fAttach );
+    [propget] HRESULT Count([out, retval] long *Count);
+
+    [id(0)] HRESULT Item(
+            [in, optional] VARIANT index,
+            [out, retval] IDispatch **Folder);
+
+    [id(-4)] HRESULT _NewEnum([out, retval] IUnknown **ppunk);
+
+    [hidden] HRESULT Register(
+            [in] IDispatch *pid,
+            [in] long hWnd,
+            [in] int swClass,
+            [out] long *plCookie);
+
+    [hidden] HRESULT RegisterPending(
+            [in] long lThreadId,
+            [in] VARIANT *pvarloc,
+            [in] VARIANT *pvarlocRoot,
+            [in] int swClass,
+            [out] long *plCookie);
+
+    [hidden] HRESULT Revoke([in] long lCookie);
+    [hidden] HRESULT OnNavigate([in] long lCookie, [in] VARIANT *pvarLoc);
+    [hidden] HRESULT OnActivated([in] long lCookie, [in] VARIANT_BOOL fActive);
+    [hidden] HRESULT FindWindowSW(
+            [in] VARIANT *pvarLoc,
+            [in] VARIANT *pvarLocRoot,
+            [in] int swClass,
+            [out] long *phwnd,
+            [in] int swfwOptions,
+            [out, retval] IDispatch **ppdispOut);
+
+    [hidden] HRESULT OnCreated([in] long lCookie, [in] IUnknown *punk);
+    [hidden] HRESULT ProcessAttachDetach([in] VARIANT_BOOL fAttach);
 }
 
 [
