@@ -37,7 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 typedef struct tag_ieoc {
-    IOleContainerVtbl *lpVtbl;
+    const IOleContainerVtbl *lpVtbl;
     LONG ref;
 } ieoc;
 
@@ -99,7 +99,7 @@ static HRESULT WINAPI ic_LockContainer(IOleContainer *iface, BOOL fLock)
     return E_NOTIMPL;
 }
 
-static IOleContainerVtbl ocVtbl =
+static const IOleContainerVtbl ocVtbl =
 {
     ic_QueryInterface,
     ic_AddRef,
@@ -128,8 +128,8 @@ static IOleContainer * get_container(void)
 /**********************/
 
 typedef struct tag_iecs {
-    IOleClientSiteVtbl *lpVtbl;
-    IOleInPlaceSiteVtbl *lpInPlaceVtbl;
+    const IOleClientSiteVtbl *lpVtbl;
+    const IOleInPlaceSiteVtbl *lpInPlaceVtbl;
     LONG ref;
     IOleContainer *container;
     HWND hwnd;
@@ -248,7 +248,7 @@ static HRESULT WINAPI cs_RequestNewObjectLayout(IOleClientSite *iface)
     return E_NOTIMPL;
 }
 
-struct IOleClientSiteVtbl csVtbl =
+static const IOleClientSiteVtbl csVtbl =
 {
     cs_QueryInterface,
     cs_AddRef,
@@ -362,7 +362,7 @@ static HRESULT WINAPI is_DiscardUndoState(IOleInPlaceSite *iface)
     return E_NOTIMPL;
 }
 
-struct IOleInPlaceSiteVtbl isVtbl =
+static const IOleInPlaceSiteVtbl isVtbl =
 {
     is_QueryInterface,
     is_AddRef,
@@ -383,7 +383,7 @@ static const WCHAR szIEWinFrame[] = { 'I','E','F','r','a','m','e',0 };
 
 static LRESULT iewnd_OnCreate(HWND hwnd, LPCREATESTRUCTW lpcs)
 {
-    SetWindowLongPtrW(hwnd, 0, (LONG) lpcs->lpCreateParams);
+    SetWindowLongPtrW(hwnd, 0, (LONG_PTR) lpcs->lpCreateParams);
     return 0;
 }
 
