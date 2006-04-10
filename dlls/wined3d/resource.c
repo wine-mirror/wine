@@ -230,6 +230,14 @@ HRESULT WINAPI IWineD3DResourceImpl_GetParent(IWineD3DResource *iface, IUnknown 
     return WINED3D_OK;
 }
 
+void dumpResources(ResourceList *resources) {
+    ResourceList *iterator = resources;
+
+    while(iterator) {
+        FIXME("Leftover resource %p with type %d,%s\n", iterator->resource, IWineD3DResource_GetType(iterator->resource), debug_d3dresourcetype(IWineD3DResource_GetType(iterator->resource)));
+        iterator = iterator->next;
+    }
+}
 
 static const IWineD3DResourceVtbl IWineD3DResource_Vtbl =
 {

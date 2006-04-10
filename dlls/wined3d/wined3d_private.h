@@ -488,6 +488,9 @@ typedef struct ResourceList {
     struct ResourceList      *next;
 } ResourceList;
 
+/* A helper function that dumps a resource list */
+void dumpResources(ResourceList *resources);
+
 /*****************************************************************************
  * IWineD3DDevice implementation structure
  */

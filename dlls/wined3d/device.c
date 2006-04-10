@@ -434,11 +434,7 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
 
             if (This->resources != NULL ) {
                 FIXME("(%p) Device released with resources still bound, acceptable but unexpected\n", This);
-
-#if 0           /* TODO: Dump a list of all the resources still bound */
                 dumpResources(This->resources);
-#endif
-                /* TODO: set the resources to a lost state */
             }
 
         }
