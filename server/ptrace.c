@@ -274,8 +274,12 @@ void resume_after_ptrace( struct thread *thread )
 {
     if (thread->unix_pid == -1) return;
     assert( thread->attached );
-    ptrace( get_thread_single_step(thread) ? PTRACE_SINGLESTEP : PTRACE_CONT,
-            get_ptrace_pid(thread), (caddr_t)1, 0 /* cancel the SIGSTOP */ );
+    if (ptrace( PTRACE_DETACH, get_ptrace_pid(thread), (caddr_t)1, 0 ) == -1)
+    {
+        if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
+    }
+    if (debug_level) fprintf( stderr, "%04x: *detached*\n", thread->id );
+    thread->attached = 0;
 }
 
 /* read an int from a thread address space */
