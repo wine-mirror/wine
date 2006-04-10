@@ -139,7 +139,6 @@ inline static void init_thread_structure( struct thread *thread )
     thread->reply_fd        = NULL;
     thread->wait_fd         = NULL;
     thread->state           = RUNNING;
-    thread->attached        = 0;
     thread->exit_code       = 0;
     thread->priority        = THREAD_PRIORITY_NORMAL;
     thread->affinity        = 1;

@@ -428,7 +428,7 @@ static int debugger_attach( struct process *process, struct thread *debugger )
         goto error;
 
     suspend_process( process );
-    if (!attach_process( process ) || !set_process_debugger( process, debugger ))
+    if (!set_process_debugger( process, debugger ))
     {
         resume_process( process );
         return 0;
@@ -485,7 +485,6 @@ int debugger_detach( struct process *process, struct thread *debugger )
     /* remove relationships between process and its debugger */
     process->debugger = NULL;
     if (!set_process_debug_flag( process, 0 )) clear_error();  /* ignore error */
-    detach_process( process );
 
     /* from this function */
     resume_process( process );

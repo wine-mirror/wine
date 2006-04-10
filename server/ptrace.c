@@ -90,7 +90,6 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
     }
     if (thread && (WIFSIGNALED(status) || WIFEXITED(status)))
     {
-        thread->attached = 0;
         thread->unix_pid = -1;
         thread->unix_tid = -1;
         if (debug_level)
@@ -155,7 +154,6 @@ static int wait4_thread( struct thread *thread, int signal )
             {
                 thread->unix_pid = -1;
                 thread->unix_tid = -1;
-                thread->attached = 0;
             }
             else perror( "wait4" );
             stop_watchdog();
@@ -193,50 +191,9 @@ int send_thread_signal( struct thread *thread, int sig )
         {
             thread->unix_pid = -1;
             thread->unix_tid = -1;
-            thread->attached = 0;
         }
     }
     return (ret != -1);
-}
-
-/* attach to a Unix process with ptrace */
-int attach_process( struct process *process )
-{
-    struct thread *thread;
-    int ret = 1;
-
-    if (list_empty( &process->thread_list ))  /* need at least one running thread */
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
-
-    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
-    {
-        if (thread->attached) continue;
-        if (suspend_for_ptrace( thread )) resume_after_ptrace( thread );
-        else ret = 0;
-    }
-    return ret;
-}
-
-/* detach from a ptraced Unix process */
-void detach_process( struct process *process )
-{
-    struct thread *thread;
-
-    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
-    {
-        if (thread->attached)
-        {
-            /* make sure it is stopped */
-            suspend_for_ptrace( thread );
-            if (thread->unix_pid == -1) return;
-            if (debug_level) fprintf( stderr, "%04x: *detached*\n", thread->id );
-            ptrace( PTRACE_DETACH, get_ptrace_pid(thread), (caddr_t)1, 0 );
-            thread->attached = 0;
-        }
-    }
 }
 
 /* suspend a thread to allow using ptrace on it */
@@ -246,21 +203,11 @@ int suspend_for_ptrace( struct thread *thread )
     /* can't stop a thread while initialisation is in progress */
     if (thread->unix_pid == -1 || !is_process_init_done(thread->process)) goto error;
 
-    if (thread->attached)
+    /* this may fail if the client is already being debugged */
+    if (ptrace( PTRACE_ATTACH, get_ptrace_pid(thread), 0, 0 ) == -1)
     {
-        if (!send_thread_signal( thread, SIGSTOP )) goto error;
-    }
-    else
-    {
-        /* this may fail if the client is already being debugged */
-        if (!use_ptrace) goto error;
-        if (ptrace( PTRACE_ATTACH, get_ptrace_pid(thread), 0, 0 ) == -1)
-        {
-            if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
-            goto error;
-        }
-        if (debug_level) fprintf( stderr, "%04x: *attached*\n", thread->id );
-        thread->attached = 1;
+        if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
+        goto error;
     }
     if (wait4_thread( thread, SIGSTOP )) return 1;
     resume_after_ptrace( thread );
@@ -273,13 +220,10 @@ int suspend_for_ptrace( struct thread *thread )
 void resume_after_ptrace( struct thread *thread )
 {
     if (thread->unix_pid == -1) return;
-    assert( thread->attached );
     if (ptrace( PTRACE_DETACH, get_ptrace_pid(thread), (caddr_t)1, 0 ) == -1)
     {
         if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
     }
-    if (debug_level) fprintf( stderr, "%04x: *detached*\n", thread->id );
-    thread->attached = 0;
 }
 
 /* read an int from a thread address space */

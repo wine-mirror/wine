@@ -72,7 +72,6 @@ struct thread
     struct fd             *reply_fd;      /* fd to send a reply to a client */
     struct fd             *wait_fd;       /* fd to use to wake a sleeping client */
     enum run_state         state;         /* running state */
-    int                    attached;      /* is thread attached with ptrace? */
     int                    exit_code;     /* thread exit code */
     int                    unix_pid;      /* Unix pid of client */
     int                    unix_tid;      /* Unix tid of client */
@@ -122,8 +121,6 @@ extern struct token *thread_get_impersonation_token( struct thread *thread );
 
 extern void sigchld_callback(void);
 extern int get_ptrace_pid( struct thread *thread );
-extern int attach_process( struct process *process );
-extern void detach_process( struct process *process );
 extern int suspend_for_ptrace( struct thread *thread );
 extern void resume_after_ptrace( struct thread *thread );
 extern void *get_thread_ip( struct thread *thread );
