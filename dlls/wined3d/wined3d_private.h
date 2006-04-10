@@ -233,15 +233,18 @@ extern int num_lock;
 
 /* Checking of API calls */
 /* --------------------- */
-#define checkGLcall(A) \
-{ \
-    GLint err = glGetError();   \
-    if (err != GL_NO_ERROR) { \
-       FIXME(">>>>>>>>>>>>>>>>> %x from %s @ %s / %d\n", err, A, __FILE__, __LINE__); \
-    } else { \
-       TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__); \
-    } \
-}
+#define checkGLcall(A)                                          \
+{                                                               \
+    GLint err = glGetError();                                   \
+    if (err == GL_NO_ERROR) {                                   \
+       TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);    \
+                                                                \
+    } else do {                                                 \
+       FIXME(">>>>>>>>>>>>>>>>> %x from %s @ %s / %d\n",        \
+		err, A, __FILE__, __LINE__);                    \
+       err = glGetError();                                      \
+    } while (err != GL_NO_ERROR);                               \
+} 
 
 /* Trace routines / diagnostics */
 /* ---------------------------- */
@@ -312,14 +315,18 @@ extern const float identity[16];
 #endif
 
 /* Checking of per-vertex related GL calls */
-#define vcheckGLcall(A) \
-{ \
-    GLint err = glGetError();   \
-    if (err != GL_NO_ERROR) { \
-       FIXME(">>>>>>>>>>>>>>>>> %x from %s @ %s / %d\n", err, A, __FILE__, __LINE__); \
-    } else { \
+/* --------------------- */
+#define vcheckGLcall(A)                                         \
+{                                                               \
+    GLint err = glGetError();                                   \
+    if (err == GL_NO_ERROR) {                                   \
        VTRACE(("%s call ok %s / %d\n", A, __FILE__, __LINE__)); \
-    } \
+                                                                \
+    } else do {                                                 \
+       FIXME(">>>>>>>>>>>>>>>>> %x from %s @ %s / %d\n",        \
+                err, A, __FILE__, __LINE__);                    \
+       err = glGetError();                                      \
+    } while (err != GL_NO_ERROR);                               \
 }
 
 /* TODO: Confirm each of these works when wined3d move completed */
