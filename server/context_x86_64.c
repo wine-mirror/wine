@@ -261,22 +261,6 @@ void *get_thread_ip( struct thread *thread )
     return (void *)context.Rip;
 }
 
-/* send a signal to a specific thread */
-int tkill( int tgid, int pid, int sig )
-{
-#ifdef __linux__
-    int ret;
-    __asm__( "syscall" : "=a" (ret)
-             : "0" (200) /*SYS_tkill*/, "D" (pid), "S" (sig) );
-    if (ret >= 0) return ret;
-    errno = -ret;
-    return -1;
-#else
-    errno = ENOSYS;
-    return -1;
-#endif
-}
-
 /* retrieve the thread context */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {

@@ -172,14 +172,6 @@ void *get_thread_ip( struct thread *thread )
     return (void *)context.pc;
 }
 
-/* send a signal to a specific thread */
-int tkill( int tgid, int pid, int sig )
-{
-    /* FIXME: should do something here */
-    errno = ENOSYS;
-    return -1;
-}
-
 /* retrieve the thread context */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {

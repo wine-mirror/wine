@@ -173,6 +173,37 @@ int get_ptrace_pid( struct thread *thread )
     return thread->unix_pid;
 }
 
+/* send a signal to a specific thread */
+static inline int tkill( int tgid, int pid, int sig )
+{
+    int ret = -ENOSYS;
+
+#ifdef __linux__
+# ifdef __i386__
+    __asm__( "pushl %%ebx\n\t"
+             "movl %2,%%ebx\n\t"
+             "int $0x80\n\t"
+             "popl %%ebx\n\t"
+             : "=a" (ret)
+             : "0" (270) /*SYS_tgkill*/, "r" (tgid), "c" (pid), "d" (sig) );
+    if (ret == -ENOSYS)
+        __asm__( "pushl %%ebx\n\t"
+                 "movl %2,%%ebx\n\t"
+                 "int $0x80\n\t"
+                 "popl %%ebx\n\t"
+                 : "=a" (ret)
+                 : "0" (238) /*SYS_tkill*/, "r" (pid), "c" (sig) );
+# elif defined(__x86_64__)
+    __asm__( "syscall" : "=a" (ret)
+             : "0" (200) /*SYS_tkill*/, "D" (pid), "S" (sig) );
+# endif
+#endif  /* __linux__ */
+
+    if (ret >= 0) return ret;
+    errno = -ret;
+    return -1;
+}
+
 /* send a Unix signal to a specific thread */
 int send_thread_signal( struct thread *thread, int sig )
 {

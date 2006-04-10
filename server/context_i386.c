@@ -550,34 +550,6 @@ void *get_thread_ip( struct thread *thread )
     return (void *)context.Eip;
 }
 
-/* send a signal to a specific thread */
-int tkill( int tgid, int pid, int sig )
-{
-#ifdef __linux__
-    int ret;
-
-    __asm__( "pushl %%ebx\n\t"
-             "movl %2,%%ebx\n\t"
-             "int $0x80\n\t"
-             "popl %%ebx\n\t"
-             : "=a" (ret)
-             : "0" (270) /*SYS_tgkill*/, "r" (tgid), "c" (pid), "d" (sig) );
-    if (ret == -ENOSYS)
-        __asm__( "pushl %%ebx\n\t"
-                 "movl %2,%%ebx\n\t"
-                 "int $0x80\n\t"
-                 "popl %%ebx\n\t"
-                 : "=a" (ret)
-                 : "0" (238) /*SYS_tkill*/, "r" (pid), "c" (sig) );
-    if (ret >= 0) return ret;
-    errno = -ret;
-    return -1;
-#else
-    errno = ENOSYS;
-    return -1;
-#endif
-}
-
 /* retrieve the thread context */
 void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
 {
