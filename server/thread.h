@@ -124,7 +124,6 @@ extern int get_ptrace_pid( struct thread *thread );
 extern int suspend_for_ptrace( struct thread *thread );
 extern void resume_after_ptrace( struct thread *thread );
 extern void *get_thread_ip( struct thread *thread );
-extern int get_thread_single_step( struct thread *thread );
 extern void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags );
 extern void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags );
 extern int tkill( int tgid, int pid, int sig );

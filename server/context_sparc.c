@@ -172,12 +172,6 @@ void *get_thread_ip( struct thread *thread )
     return (void *)context.pc;
 }
 
-/* determine if we should continue the thread in single-step mode */
-int get_thread_single_step( struct thread *thread )
-{
-    return 0;  /* FIXME */
-}
-
 /* send a signal to a specific thread */
 int tkill( int tgid, int pid, int sig )
 {

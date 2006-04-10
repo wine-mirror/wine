@@ -550,15 +550,6 @@ void *get_thread_ip( struct thread *thread )
     return (void *)context.Eip;
 }
 
-/* determine if we should continue the thread in single-step mode */
-int get_thread_single_step( struct thread *thread )
-{
-    CONTEXT context;
-    if (thread->context) return 0;  /* don't single-step inside exception event */
-    get_thread_context_ptrace( thread, CONTEXT_CONTROL, &context );
-    return (context.EFlags & 0x100) != 0;
-}
-
 /* send a signal to a specific thread */
 int tkill( int tgid, int pid, int sig )
 {
