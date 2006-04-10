@@ -131,8 +131,8 @@ mapi32_test.exe$(DLLEXT): $(DLLDIR)/mapi32/tests/mapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/mapi32/tests/mapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mlang_test.exe$(DLLEXT): $(DLLDIR)/mlang/tests/mlang_test.exe$(DLLEXT)
 	cp $(DLLDIR)/mlang/tests/mlang_test.exe$(DLLEXT) $@ && $(STRIP) $@
-msacm32_test.exe$(DLLEXT): $(DLLDIR)/msacm/tests/msacm32_test.exe$(DLLEXT)
-	cp $(DLLDIR)/msacm/tests/msacm32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+msacm32_test.exe$(DLLEXT): $(DLLDIR)/msacm32/tests/msacm32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/msacm32/tests/msacm32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mscms_test.exe$(DLLEXT): $(DLLDIR)/mscms/tests/mscms_test.exe$(DLLEXT)
 	cp $(DLLDIR)/mscms/tests/mscms_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mshtml_test.exe$(DLLEXT): $(DLLDIR)/mshtml/tests/mshtml_test.exe$(DLLEXT)

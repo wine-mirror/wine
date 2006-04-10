@@ -80,7 +80,7 @@ BASEDIRS = \
 	mmdevldr.vxd \
 	monodebg.vxd \
 	mpr \
-	msacm \
+	msacm32 \
 	msadp32.acm \
 	mscms \
 	msdmo \
@@ -270,7 +270,6 @@ SYMLINKS_SO = \
 	kernel32.dll.so \
 	mciwave.drv.so \
 	msacm.drv.so \
-	msacm32.dll.so \
 	msisys.ocx.so \
 	riched32.dll.so \
 	twain_32.dll.so \
@@ -320,9 +319,6 @@ mciwave.drv.so: winmm/mciwave/mciwave.drv.so
 
 msacm.drv.so: winmm/wavemap/msacm.drv.so
 	$(RM) $@ && $(LN_S) winmm/wavemap/msacm.drv.so $@
-
-msacm32.dll.so: msacm/msacm32.dll.so
-	$(RM) $@ && $(LN_S) msacm/msacm32.dll.so $@
 
 msisys.ocx.so: msisys/msisys.ocx.so
 	$(RM) $@ && $(LN_S) msisys/msisys.ocx.so $@
@@ -457,7 +453,6 @@ IMPORT_SYMLINKS = \
 	libcomdlg32.$(IMPLIBEXT) \
 	libgdi32.$(IMPLIBEXT) \
 	libkernel32.$(IMPLIBEXT) \
-	libmsacm32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT)
 
 IMPORT_LIBS = \
@@ -514,7 +509,7 @@ IMPORT_LIBS = \
 	mapi32/libmapi32.$(IMPLIBEXT) \
 	mlang/libmlang.$(IMPLIBEXT) \
 	mpr/libmpr.$(IMPLIBEXT) \
-	msacm/libmsacm32.$(IMPLIBEXT) \
+	msacm32/libmsacm32.$(IMPLIBEXT) \
 	mscms/libmscms.$(IMPLIBEXT) \
 	msdmo/libmsdmo.$(IMPLIBEXT) \
 	mshtml/libmshtml.$(IMPLIBEXT) \
@@ -721,8 +716,8 @@ mlang/libmlang.$(IMPLIBEXT): mlang/mlang.spec $(WINEBUILD)
 mpr/libmpr.$(IMPLIBEXT): mpr/mpr.spec $(WINEBUILD)
 	@cd mpr && $(MAKE) libmpr.$(IMPLIBEXT)
 
-msacm/libmsacm32.$(IMPLIBEXT): msacm/msacm32.spec $(WINEBUILD)
-	@cd msacm && $(MAKE) libmsacm32.$(IMPLIBEXT)
+msacm32/libmsacm32.$(IMPLIBEXT): msacm32/msacm32.spec $(WINEBUILD)
+	@cd msacm32 && $(MAKE) libmsacm32.$(IMPLIBEXT)
 
 mscms/libmscms.$(IMPLIBEXT): mscms/mscms.spec $(WINEBUILD)
 	@cd mscms && $(MAKE) libmscms.$(IMPLIBEXT)
@@ -928,9 +923,6 @@ libgdi32.$(IMPLIBEXT): gdi/libgdi32.$(IMPLIBEXT)
 libkernel32.$(IMPLIBEXT): kernel/libkernel32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) kernel/libkernel32.$(IMPLIBEXT) $@
 
-libmsacm32.$(IMPLIBEXT): msacm/libmsacm32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) msacm/libmsacm32.$(IMPLIBEXT) $@
-
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
 
@@ -946,7 +938,6 @@ winmm/joystick/joystick.drv.so: winmm/joystick
 kernel/kernel32.dll.so: kernel
 winmm/mciwave/mciwave.drv.so: winmm/mciwave
 winmm/wavemap/msacm.drv.so: winmm/wavemap
-msacm/msacm32.dll.so: msacm
 msisys/msisys.ocx.so: msisys
 richedit/riched32.dll.so: richedit
 twain/twain_32.dll.so: twain
