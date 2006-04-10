@@ -183,8 +183,8 @@ static void test_menu_locked_by_window(void)
     BOOL ret;
     HMENU hmenu;
     HWND hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
-        WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        NULL, NULL, NULL, NULL);
+                               WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
+                               NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "CreateWindowEx failed with error %ld\n", GetLastError());
     hmenu = CreateMenu();
     ok(hmenu != NULL, "CreateMenu failed with error %ld\n", GetLastError());
@@ -219,8 +219,8 @@ static void test_menu_ownerdraw(void)
     HMENU hmenu;
     LONG leftcol;
     HWND hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
-            WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            NULL, NULL, NULL, NULL);
+                               WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
+                               NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "CreateWindowEx failed with error %ld\n", GetLastError());
     if( !hwnd) return;
     SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG)menu_ownerdraw_wnd_proc);
@@ -455,8 +455,8 @@ static void test_menu_bmp_and_string(void)
 
     memset( bmfill, 0x55, sizeof( bmfill));
     hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
-            WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            NULL, NULL, NULL, NULL);
+                          WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
+                          NULL, NULL, NULL, NULL);
     hbm_arrow=LoadBitmap( 0, (CHAR*)OBM_MNARROW);
     GetObject( hbm_arrow, sizeof(bm), &bm);
     arrowwidth = bm.bmWidth;
