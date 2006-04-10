@@ -443,20 +443,22 @@ static inline FT_Fixed FT_FixedFromFIXED(FIXED f)
 }
 
 
-static Face *find_face_from_filename(const WCHAR *name)
+static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_name)
 {
     Family *family;
     Face *face;
     char *file;
-    DWORD len = WideCharToMultiByte(CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL);
-    char *nameA = HeapAlloc(GetProcessHeap(), 0, len);
+    DWORD len = WideCharToMultiByte(CP_UNIXCP, 0, file_name, -1, NULL, 0, NULL, NULL);
+    char *file_nameA = HeapAlloc(GetProcessHeap(), 0, len);
     Face *ret = NULL;
 
-    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, nameA, len, NULL, NULL);
-    TRACE("looking for %s\n", debugstr_a(nameA));
+    WideCharToMultiByte(CP_UNIXCP, 0, file_name, -1, file_nameA, len, NULL, NULL);
+    TRACE("looking for file %s name %s\n", debugstr_a(file_nameA), debugstr_w(face_name));
 
     LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
     {
+        if(face_name && strcmpiW(face_name, family->FamilyName))
+            continue;
         LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
         {
             file = strrchr(face->file, '/');
@@ -464,12 +466,12 @@ static Face *find_face_from_filename(const WCHAR *name)
                 file = face->file;
             else
                 file++;
-            if(!strcmp(file, nameA))
+            if(!strcmp(file, file_nameA))
                 ret = face;
             break;
 	}
     }
-    HeapFree(GetProcessHeap(), 0, nameA);
+    HeapFree(GetProcessHeap(), 0, file_nameA);
     return ret;
 }
 
@@ -1041,7 +1043,6 @@ static BOOL init_system_links(void)
             for(entry = data; (char*)entry < (char*)data + data_len && *entry != 0; entry = next)
             {
                 WCHAR *face_name;
-                INT index;
                 CHILD_FONT *child_font;
 
                 TRACE("\t%s\n", debugstr_w(entry));
@@ -1049,30 +1050,26 @@ static BOOL init_system_links(void)
                 next = entry + strlenW(entry) + 1;
                 
                 face_name = strchrW(entry, ',');
-                if(!face_name)
-                    index = 0;
-                else
+                if(face_name)
                 {
-                    FIXME("don't yet handle ttc's correctly in linking.  Assuming index 0\n");
                     *face_name++ = 0;
                     while(isspaceW(*face_name))
                         face_name++;
-
-                    index = 0;
                 }
-                face = find_face_from_filename(entry);
+                face = find_face_from_filename(entry, face_name);
                 if(!face)
                 {
-                    TRACE("Unable to find file %s\n", debugstr_w(entry));
+                    TRACE("Unable to find file %s face name %s\n", debugstr_w(entry), debugstr_w(face_name));
                     continue;
                 }
 
                 child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
                 child_font->file_name = strdupA(face->file);
-                child_font->index = index;
+                child_font->index = face->face_index;
                 child_font->font = NULL;
                 fs.fsCsb[0] |= face->fs.fsCsb[0];
                 fs.fsCsb[1] |= face->fs.fsCsb[1];
+                TRACE("Adding file %s index %d\n", child_font->file_name, child_font->index);
                 list_add_tail(&font_link->links, &child_font->entry);
             }
             family = find_family_from_name(font_link->font_name);
@@ -1100,13 +1097,14 @@ static BOOL init_system_links(void)
     system_font_link->font_name = strdupW(System);
     list_init(&system_font_link->links);    
 
-    face = find_face_from_filename(tahoma_ttf);
+    face = find_face_from_filename(tahoma_ttf, Tahoma);
     if(face)
     {
         child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
         child_font->file_name = strdupA(face->file);
-        child_font->index = 0;
+        child_font->index = face->face_index;
         child_font->font = NULL;
+        TRACE("Found Tahoma in %s index %d\n", child_font->file_name, child_font->index);
         list_add_tail(&system_font_link->links, &child_font->entry);
     }
     LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
