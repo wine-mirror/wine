@@ -104,88 +104,9 @@ interface IWebBrowser : IDispatch
     [id(212), propget] HRESULT Busy([out, retval] VARIANT_BOOL *pBool);
 }
 
-
 /*****************************************************************************
- * IWebBrowserApp interface
+ * DWebBrowserEvents dispinterface
  */
-[
-    object,
-    oleautomation,
-    uuid(0002df05-0000-0000-c000-000000000046)
-]
-interface IWebBrowserApp : IWebBrowser
-{
-    [id(300)] HRESULT Quit();
-    [id(301)] HRESULT ClientToWindow([in,out] int* pcx, [in,out] int* pcy);
-    [id(302)] HRESULT PutProperty([in] BSTR szProperty, [in] VARIANT vtValue);
-    [id(303)] HRESULT GetProperty([in] BSTR szProperty, [out, retval] VARIANT *pvtValue);
-    [id(0), propget] HRESULT Name([out, retval] BSTR* Name);
-    [id(DISPID_HWND), propget] HRESULT HWND([out, retval] long *pHWND);
-    [id(400), propget] HRESULT FullName([out, retval] BSTR* FullName);
-    [id(401), propget] HRESULT Path([out, retval] BSTR* Path);
-    [id(402), propget] HRESULT Visible([out, retval] VARIANT_BOOL* pBool);
-    [id(402), propput] HRESULT Visible([in] VARIANT_BOOL Value);
-    [id(403), propget] HRESULT StatusBar([out, retval] VARIANT_BOOL* pBool);
-    [id(403), propput] HRESULT StatusBar([in] VARIANT_BOOL Value);
-    [id(404), propget] HRESULT StatusText([out, retval] BSTR *StatusText);
-    [id(404), propput] HRESULT StatusText([in] BSTR StatusText);
-    [id(405), propget] HRESULT ToolBar([out, retval] int * Value);
-    [id(405), propput] HRESULT ToolBar([in] int Value);
-    [id(406), propget] HRESULT MenuBar([out, retval] VARIANT_BOOL * Value);
-    [id(406), propput] HRESULT MenuBar([in] VARIANT_BOOL Value);
-    [id(407), propget] HRESULT FullScreen([out, retval] VARIANT_BOOL * pbFullScreen);
-    [id(407), propput] HRESULT FullScreen([in] VARIANT_BOOL bFullScreen);
-}
-
-/*****************************************************************************
- * IWebBrowser2 interface
- */
-[
-    object,
-    oleautomation,
-    uuid(d30c1661-cdaf-11d0-8a3e-00c04fc9e26e)
-]
-interface IWebBrowser2 : IWebBrowserApp
-{
-    [id(500)] HRESULT Navigate2(
-        [in] VARIANT *URL,
-        [in, optional] VARIANT *Flags,
-        [in, optional] VARIANT *TargetFrameName,
-        [in, optional] VARIANT *PostData,
-        [in, optional] VARIANT *Headers);
-
-    [id(501)] HRESULT QueryStatusWB(
-        [in] OLECMDID cmdID,
-        [out, retval] OLECMDF *pcmdf);
-
-    [id(502)] HRESULT ExecWB(
-        [in] OLECMDID cmdID,
-        [in] OLECMDEXECOPT cmdexecopt,
-        [in, optional] VARIANT *pvaIn,
-        [out, in, optional] VARIANT *pvaOut);
-
-    [id(503)] HRESULT ShowBrowserBar(
-        [in] VARIANT *pvaClsid,
-        [in, optional] VARIANT *pvarShow,
-        [in, optional] VARIANT *pvarSize);
-
-    [id(DISPID_READYSTATE), propget] HRESULT ReadyState([out, retval] READYSTATE *plReadyState);
-    [id(550), propget] HRESULT Offline([out, retval] VARIANT_BOOL *pbOffline);
-    [id(550), propput] HRESULT Offline([in] VARIANT_BOOL bOffline);
-    [id(551), propget] HRESULT Silent([out, retval] VARIANT_BOOL *pbSilent);
-    [id(551), propput] HRESULT Silent([in] VARIANT_BOOL bSilent);
-    [id(552), propget] HRESULT RegisterAsBrowser([out, retval] VARIANT_BOOL *pbRegister);
-    [id(552), propput] HRESULT RegisterAsBrowser([in] VARIANT_BOOL bRegister);
-    [id(553), propget] HRESULT RegisterAsDropTarget([out, retval] VARIANT_BOOL *pbRegister);
-    [id(553), propput] HRESULT RegisterAsDropTarget([in] VARIANT_BOOL bRegister);
-    [id(554), propget] HRESULT TheaterMode([out, retval] VARIANT_BOOL *pbRegister);
-    [id(554), propput] HRESULT TheaterMode([in] VARIANT_BOOL bRegister);
-    [id(555), propget] HRESULT AddressBar([out, retval] VARIANT_BOOL *Value);
-    [id(555), propput] HRESULT AddressBar([in] VARIANT_BOOL Value);
-    [id(556), propget] HRESULT Resizable([out, retval] VARIANT_BOOL *Value);
-    [id(556), propput] HRESULT Resizable([in] VARIANT_BOOL Value);
-}
-
 [
     uuid(eab22ac2-30c1-11CF-a7eb-0000C05bae0b)
 ]
@@ -269,6 +190,90 @@ dispinterface DWebBrowserEvents
     void PropertyChange([in] BSTR Property);
 }
 
+/*****************************************************************************
+ * IWebBrowserApp interface
+ */
+[
+    object,
+    oleautomation,
+    uuid(0002df05-0000-0000-c000-000000000046)
+]
+interface IWebBrowserApp : IWebBrowser
+{
+    [id(300)] HRESULT Quit();
+    [id(301)] HRESULT ClientToWindow([in,out] int* pcx, [in,out] int* pcy);
+    [id(302)] HRESULT PutProperty([in] BSTR szProperty, [in] VARIANT vtValue);
+    [id(303)] HRESULT GetProperty([in] BSTR szProperty, [out, retval] VARIANT *pvtValue);
+    [id(0), propget] HRESULT Name([out, retval] BSTR* Name);
+    [id(DISPID_HWND), propget] HRESULT HWND([out, retval] long *pHWND);
+    [id(400), propget] HRESULT FullName([out, retval] BSTR* FullName);
+    [id(401), propget] HRESULT Path([out, retval] BSTR* Path);
+    [id(402), propget] HRESULT Visible([out, retval] VARIANT_BOOL* pBool);
+    [id(402), propput] HRESULT Visible([in] VARIANT_BOOL Value);
+    [id(403), propget] HRESULT StatusBar([out, retval] VARIANT_BOOL* pBool);
+    [id(403), propput] HRESULT StatusBar([in] VARIANT_BOOL Value);
+    [id(404), propget] HRESULT StatusText([out, retval] BSTR *StatusText);
+    [id(404), propput] HRESULT StatusText([in] BSTR StatusText);
+    [id(405), propget] HRESULT ToolBar([out, retval] int * Value);
+    [id(405), propput] HRESULT ToolBar([in] int Value);
+    [id(406), propget] HRESULT MenuBar([out, retval] VARIANT_BOOL * Value);
+    [id(406), propput] HRESULT MenuBar([in] VARIANT_BOOL Value);
+    [id(407), propget] HRESULT FullScreen([out, retval] VARIANT_BOOL * pbFullScreen);
+    [id(407), propput] HRESULT FullScreen([in] VARIANT_BOOL bFullScreen);
+}
+
+/*****************************************************************************
+ * IWebBrowser2 interface
+ */
+[
+    object,
+    oleautomation,
+    uuid(d30c1661-cdaf-11d0-8a3e-00c04fc9e26e)
+]
+interface IWebBrowser2 : IWebBrowserApp
+{
+    [id(500)] HRESULT Navigate2(
+        [in] VARIANT *URL,
+        [in, optional] VARIANT *Flags,
+        [in, optional] VARIANT *TargetFrameName,
+        [in, optional] VARIANT *PostData,
+        [in, optional] VARIANT *Headers);
+
+    [id(501)] HRESULT QueryStatusWB(
+        [in] OLECMDID cmdID,
+        [out, retval] OLECMDF *pcmdf);
+
+    [id(502)] HRESULT ExecWB(
+        [in] OLECMDID cmdID,
+        [in] OLECMDEXECOPT cmdexecopt,
+        [in, optional] VARIANT *pvaIn,
+        [out, in, optional] VARIANT *pvaOut);
+
+    [id(503)] HRESULT ShowBrowserBar(
+        [in] VARIANT *pvaClsid,
+        [in, optional] VARIANT *pvarShow,
+        [in, optional] VARIANT *pvarSize);
+
+    [id(DISPID_READYSTATE), propget] HRESULT ReadyState([out, retval] READYSTATE *plReadyState);
+    [id(550), propget] HRESULT Offline([out, retval] VARIANT_BOOL *pbOffline);
+    [id(550), propput] HRESULT Offline([in] VARIANT_BOOL bOffline);
+    [id(551), propget] HRESULT Silent([out, retval] VARIANT_BOOL *pbSilent);
+    [id(551), propput] HRESULT Silent([in] VARIANT_BOOL bSilent);
+    [id(552), propget] HRESULT RegisterAsBrowser([out, retval] VARIANT_BOOL *pbRegister);
+    [id(552), propput] HRESULT RegisterAsBrowser([in] VARIANT_BOOL bRegister);
+    [id(553), propget] HRESULT RegisterAsDropTarget([out, retval] VARIANT_BOOL *pbRegister);
+    [id(553), propput] HRESULT RegisterAsDropTarget([in] VARIANT_BOOL bRegister);
+    [id(554), propget] HRESULT TheaterMode([out, retval] VARIANT_BOOL *pbRegister);
+    [id(554), propput] HRESULT TheaterMode([in] VARIANT_BOOL bRegister);
+    [id(555), propget] HRESULT AddressBar([out, retval] VARIANT_BOOL *Value);
+    [id(555), propput] HRESULT AddressBar([in] VARIANT_BOOL Value);
+    [id(556), propget] HRESULT Resizable([out, retval] VARIANT_BOOL *Value);
+    [id(556), propput] HRESULT Resizable([in] VARIANT_BOOL Value);
+}
+
+/*****************************************************************************
+ * DWebBrowserEvents2 dispinterface
+ */
 [
     uuid(34a715a0-6587-11d0-924a-0020afc7ac4d)
 ]
@@ -404,6 +409,17 @@ coclass WebBrowser
 }
 
 [
+    uuid(0002df01-0000-0000-c000-000000000046)
+]
+coclass InternetExplorer
+{
+    [default] interface IWebBrowser2;
+              interface IWebBrowserApp;
+    [default, source] dispinterface DWebBrowserEvents2;
+    [source]          dispinterface DWebBrowserEvents;
+}
+
+[
     object,
     oleautomation,
     uuid(85cb6900-4d95-11cf-960c-0080c7f4ee85)
@@ -435,17 +451,5 @@ coclass ShellWindows
     [default] interface IShellWindows;
     [default, source] dispinterface DShellWindowsEvents;
 }
-
-[
-    uuid(0002df01-0000-0000-c000-000000000046)
-]
-coclass InternetExplorer
-{
-    [default] interface IWebBrowser2;
-              interface IWebBrowserApp;
-    [default, source] dispinterface DWebBrowserEvents2;
-    [source]          dispinterface DWebBrowserEvents;
-}
-
 
 } /* library */
