@@ -169,7 +169,7 @@ interface IOleCommandTarget : IUnknown
 {
     typedef [unique] IOleCommandTarget *LPOLECOMMANDTARGET;
 
-    typedef enum
+    typedef enum OLECMDF
     {
         OLECMDF_SUPPORTED = 0x1,
         OLECMDF_ENABLED = 0x2,
@@ -193,14 +193,14 @@ interface IOleCommandTarget : IUnknown
         [size_is(cwBuf)] WCHAR rgwz[];
     } OLECMDTEXT;
 
-    typedef enum
+    typedef enum OLECMDTEXTF
     {
         OLECMDTEXTF_NONE = 0,
         OLECMDTEXTF_NAME = 1,
         OLECMDTEXTF_STATUS = 2
     } OLECMDTEXTF;
 
-    typedef enum
+    typedef enum OLECMDEXECOPT
     {
         OLECMDEXECOPT_DODEFAULT = 0,
         OLECMDEXECOPT_PROMPTUSER = 1,
