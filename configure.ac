@@ -1644,7 +1644,7 @@ dlls/stdole32.tlb/Makefile
 dlls/sti/Makefile
 dlls/strmiids/Makefile
 dlls/tapi32/Makefile
-dlls/twain/Makefile
+dlls/twain_32/Makefile
 dlls/unicows/Makefile
 dlls/url/Makefile
 dlls/urlmon/Makefile

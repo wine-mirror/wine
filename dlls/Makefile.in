@@ -139,7 +139,7 @@ BASEDIRS = \
 	stdole32.tlb \
 	sti \
 	tapi32 \
-	twain \
+	twain_32 \
 	unicows \
 	url \
 	urlmon \
@@ -270,7 +270,6 @@ SYMLINKS_SO = \
 	mciwave.drv.so \
 	msacm.drv.so \
 	msisys.ocx.so \
-	twain_32.dll.so \
 	user32.dll.so \
 	winealsa.drv.so \
 	winearts.drv.so \
@@ -317,9 +316,6 @@ msacm.drv.so: winmm/wavemap/msacm.drv.so
 
 msisys.ocx.so: msisys/msisys.ocx.so
 	$(RM) $@ && $(LN_S) msisys/msisys.ocx.so $@
-
-twain_32.dll.so: twain/twain_32.dll.so
-	$(RM) $@ && $(LN_S) twain/twain_32.dll.so $@
 
 user32.dll.so: user/user32.dll.so
 	$(RM) $@ && $(LN_S) user/user32.dll.so $@
@@ -926,7 +922,6 @@ kernel/kernel32.dll.so: kernel
 winmm/mciwave/mciwave.drv.so: winmm/mciwave
 winmm/wavemap/msacm.drv.so: winmm/wavemap
 msisys/msisys.ocx.so: msisys
-twain/twain_32.dll.so: twain
 user/user32.dll.so: user
 winmm/winealsa/winealsa.drv.so: winmm/winealsa
 winmm/winearts/winearts.drv.so: winmm/winearts
