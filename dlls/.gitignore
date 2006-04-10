@@ -15,7 +15,6 @@ gdi.exe16
 imm.dll16
 keyboard.drv16
 krnl386.exe16
-libcomdlg32.def
 libgdi32.def
 libkernel32.def
 libuser32.def

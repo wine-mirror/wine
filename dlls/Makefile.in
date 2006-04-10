@@ -29,7 +29,7 @@ BASEDIRS = \
 	cfgmgr32 \
 	comcat \
 	comctl32 \
-	commdlg \
+	comdlg32 \
 	crtdll \
 	crypt32 \
 	cryptdll \
@@ -264,7 +264,6 @@ WIN16_FILES = \
 SYMLINKS_SO = \
 	$(XFILES:%=%.dll.so) \
 	@WIN16_FILES@ \
-	comdlg32.dll.so \
 	gdi32.dll.so \
 	joystick.drv.so \
 	kernel32.dll.so \
@@ -298,9 +297,6 @@ x11drv.dll.so: winex11.drv.so
 	$(RM) $@ && $(LN_S) winex11.drv.so $@
 
 # Map symlink name to the corresponding library
-
-comdlg32.dll.so: commdlg/comdlg32.dll.so
-	$(RM) $@ && $(LN_S) commdlg/comdlg32.dll.so $@
 
 ddraw.dll.so: ddraw/ddraw.dll.so
 	$(RM) $@ && $(LN_S) ddraw/ddraw.dll.so $@
@@ -450,7 +446,6 @@ winsock.dll16:
 STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
 
 IMPORT_SYMLINKS = \
-	libcomdlg32.$(IMPLIBEXT) \
 	libgdi32.$(IMPLIBEXT) \
 	libkernel32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT)
@@ -474,7 +469,7 @@ IMPORT_LIBS = \
 	cards/libcards.$(IMPLIBEXT) \
 	cfgmgr32/libcfgmgr32.$(IMPLIBEXT) \
 	comctl32/libcomctl32.$(IMPLIBEXT) \
-	commdlg/libcomdlg32.$(IMPLIBEXT) \
+	comdlg32/libcomdlg32.$(IMPLIBEXT) \
 	crtdll/libcrtdll.$(IMPLIBEXT) \
 	crypt32/libcrypt32.$(IMPLIBEXT) \
 	cryptdll/libcryptdll.$(IMPLIBEXT) \
@@ -611,8 +606,8 @@ cfgmgr32/libcfgmgr32.$(IMPLIBEXT): cfgmgr32/cfgmgr32.spec $(WINEBUILD)
 comctl32/libcomctl32.$(IMPLIBEXT): comctl32/comctl32.spec $(WINEBUILD)
 	@cd comctl32 && $(MAKE) libcomctl32.$(IMPLIBEXT)
 
-commdlg/libcomdlg32.$(IMPLIBEXT): commdlg/comdlg32.spec $(WINEBUILD)
-	@cd commdlg && $(MAKE) libcomdlg32.$(IMPLIBEXT)
+comdlg32/libcomdlg32.$(IMPLIBEXT): comdlg32/comdlg32.spec $(WINEBUILD)
+	@cd comdlg32 && $(MAKE) libcomdlg32.$(IMPLIBEXT)
 
 crtdll/libcrtdll.$(IMPLIBEXT): crtdll/crtdll.spec $(WINEBUILD)
 	@cd crtdll && $(MAKE) libcrtdll.$(IMPLIBEXT)
@@ -914,9 +909,6 @@ wsock32/libwsock32.$(IMPLIBEXT): wsock32/wsock32.spec $(WINEBUILD)
 wtsapi32/libwtsapi32.$(IMPLIBEXT): wtsapi32/wtsapi32.spec $(WINEBUILD)
 	@cd wtsapi32 && $(MAKE) libwtsapi32.$(IMPLIBEXT)
 
-libcomdlg32.$(IMPLIBEXT): commdlg/libcomdlg32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) commdlg/libcomdlg32.$(IMPLIBEXT) $@
-
 libgdi32.$(IMPLIBEXT): gdi/libgdi32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) gdi/libgdi32.$(IMPLIBEXT) $@
 
@@ -931,7 +923,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
-commdlg/comdlg32.dll.so: commdlg
 ddraw/ddraw.dll.so: ddraw
 gdi/gdi32.dll.so: gdi
 winmm/joystick/joystick.drv.so: winmm/joystick

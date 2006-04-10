@@ -1489,7 +1489,7 @@ dlls/cfgmgr32/Makefile
 dlls/comcat/Makefile
 dlls/comctl32/Makefile
 dlls/comctl32/tests/Makefile
-dlls/commdlg/Makefile
+dlls/comdlg32/Makefile
 dlls/crtdll/Makefile
 dlls/crypt32/Makefile
 dlls/crypt32/tests/Makefile
