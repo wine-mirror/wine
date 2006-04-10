@@ -1081,7 +1081,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
             if (pshader_is_comment_token(*pToken)) { /** comment */
                 DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
                 ++pToken;
-                FIXME("#%s\n", (char*)pToken);
+                TRACE("#%s\n", (char*)pToken);
                 pToken += comment_len;
                 continue;
             }
