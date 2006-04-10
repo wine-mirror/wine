@@ -314,7 +314,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
     LEAVE_GL();
     /* Although this is not strictly required, a simple demo showed this does occur
        on (at least non-debug) d3d                                                  */
-    if (This->presentParms.SwapEffect & WINED3DSWAPEFFECT_DISCARD) {
+    if (This->presentParms.SwapEffect == WINED3DSWAPEFFECT_DISCARD) {
 
         TRACE("Clearing\n");
 
