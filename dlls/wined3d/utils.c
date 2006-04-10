@@ -1634,6 +1634,7 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A8P8:             retVal = GL_COLOR_INDEX8_EXT; break;
             /* Luminance */
         case WINED3DFMT_L8:               retVal = GL_LUMINANCE8; break;
+        case WINED3DFMT_L16:              retVal = GL_LUMINANCE16_EXT; break;
         case WINED3DFMT_A8L8:             retVal = GL_LUMINANCE8_ALPHA8; break;
         case WINED3DFMT_A4L4:             retVal = GL_LUMINANCE4_ALPHA4; break;
             /* Bump */
@@ -1655,6 +1656,7 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A8B8G8R8:         retVal = GL_RGBA8; break;
         case WINED3DFMT_A2R10G10B10:      retVal = GL_RGBA8; break;
         case WINED3DFMT_X8R8G8B8:         retVal = GL_RGB; break;
+        case WINED3DFMT_A16B16G16R16:     retVal = GL_RGBA16_EXT; break;  
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA8; break;
 
@@ -1700,6 +1702,7 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A8P8:             retVal = GL_COLOR_INDEX; break;
             /* Luminance */
         case WINED3DFMT_L8:               retVal = GL_LUMINANCE; break;
+        case WINED3DFMT_L16:              retVal = GL_LUMINANCE; break;
         case WINED3DFMT_A8L8:             retVal = GL_LUMINANCE_ALPHA; break;
         case WINED3DFMT_A4L4:             retVal = GL_LUMINANCE_ALPHA; break;
             /* Bump */
@@ -1721,6 +1724,7 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A8B8G8R8:         retVal = GL_RGBA; break;
         case WINED3DFMT_A2R10G10B10:      retVal = GL_BGRA; break;
         case WINED3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
+        case WINED3DFMT_A16B16G16R16:     retVal = GL_RGBA; break;
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA; break;
             /* Depth + Stencil */
@@ -1765,6 +1769,7 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A8P8:             retVal = GL_UNSIGNED_BYTE; break;
             /* Luminance */
         case WINED3DFMT_L8:               retVal = GL_UNSIGNED_BYTE; break;
+        case WINED3DFMT_L16:              retVal = GL_UNSIGNED_BYTE; break;
         case WINED3DFMT_A8L8:             retVal = GL_UNSIGNED_BYTE; break;
         case WINED3DFMT_A4L4:             retVal = GL_UNSIGNED_BYTE; break;
             /* Bump */
@@ -1828,6 +1833,7 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     case WINED3DFMT_A8B8G8R8:         retVal = 4; break;
     case WINED3DFMT_A2R10G10B10:      retVal = 4; break;
     case WINED3DFMT_X8R8G8B8:         retVal = 4; break;
+    case WINED3DFMT_A16B16G16R16:     retVal = 8; break;
         /* Paletted */
     case WINED3DFMT_P8:               retVal = 1; break;
     case WINED3DFMT_A8P8:             retVal = 2; break;
@@ -1842,6 +1848,7 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     case WINED3DFMT_D24X8:            retVal = 4; break;
         /* Luminance */
     case WINED3DFMT_L8:               retVal = 1; break;
+    case WINED3DFMT_L16:              retVal = 2; break;
     case WINED3DFMT_A4L4:             retVal = 1; break;
     case WINED3DFMT_A8L8:             retVal = 2; break;
         /* Bump */
@@ -1862,13 +1869,13 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         /* unknown */
     case WINED3DFMT_UNKNOWN:
         /* Guess at the highest value of the above */
-        TRACE("WINED3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %u\n", fmt);
-        retVal = 4;
+        TRACE("WINED3DFMT_UNKNOWN - Guessing at 8 bytes/pixel %u\n", fmt);
+        retVal = 8;
         break;
 
     default:
         FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
-        retVal = 4;
+        retVal = 8;
     }
     TRACE("bytes/Pxl for fmt(%u,%s) = %d\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
