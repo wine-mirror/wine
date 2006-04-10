@@ -893,7 +893,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             IWineD3DSurface_CleanDirtyRect(iface);
 
         } else {
-            FIXME("unsupported unlocking to Rendering surface surf@%p usage(%lu)\n", This, This->resource.usage);
+            FIXME("unsupported unlocking to Rendering surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
         }
         IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
 
@@ -906,7 +906,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         }
 
     } else {
-        FIXME("unsupported unlocking to surface surf@%p usage(%lu)\n", This, This->resource.usage);
+        FIXME("unsupported unlocking to surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
     }
 
     unlock_end:

@@ -1941,8 +1941,9 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
         PUSH2(GLX_GREEN_SIZE,  10);
         PUSH2(GLX_BLUE_SIZE,   10);
         break;
-
+        
     default:
+        FIXME("Unsupported color format: %s\n", debug_d3dformat(BackBufferFormat));
         break;
     }
     if(!alternate){
@@ -1983,6 +1984,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
         break;
 
     default:
+        FIXME("Unsupported stencil format: %s\n", debug_d3dformat(BackBufferFormat));
         break;
     }
 
@@ -2024,6 +2026,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
             break;
 
         default:
+            FIXME("Unsupported stencil format: %s\n", debug_d3dformat(BackBufferFormat));
             break;
         }
     }
