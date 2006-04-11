@@ -1072,6 +1072,7 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
 DWORD MacroExpansion[4*4];
 
 int ExpandMxMacro(DWORD macro_opcode, const DWORD* args) {
+ 
   int i;
   int nComponents = 0;
   DWORD opcode =0;
@@ -1500,56 +1501,36 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
           
             FIXME("Token %s requires greater functionality than Vertex_Progarm_ARB supports\n", curOpcode->name);
             pToken += curOpcode->num_params;
-      } else {
-        /* Build opcode for GL vertex_program */
-        switch (curOpcode->opcode) {
-        case D3DSIO_NOP:
+
+      } else if (D3DSIO_DEF == curOpcode->opcode) {
+
+            /* Handle definitions here, they don't fit well with the
+             * other instructions below [for now ] */
+
+            char tmpChar[80];
+            sprintf(tmpLine, "PARAM const%lu = {", *pToken & 0xFF);
+            sprintf(tmpChar,"%f ,", *(float *) (pToken + 1));
+            strcat(tmpLine, tmpChar);
+            sprintf(tmpChar,"%f ,", *(float *) (pToken + 2));
+            strcat(tmpLine, tmpChar);
+            sprintf(tmpChar,"%f ,", *(float *) (pToken + 3));
+            strcat(tmpLine, tmpChar);
+            sprintf(tmpChar,"%f}", *(float *) (pToken + 4));
+            strcat(tmpLine, tmpChar);
+
+            strcat(tmpLine,";\n");
+            ++lineNum;
+            TRACE("GL HW (%u, %u) : %s", lineNum, pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
+            PNSTRCAT(pgmStr, tmpLine);
+
+            pToken += 5;
             continue;
-        case D3DSIO_MOV:
-            /* Address registers must be loaded with the ARL instruction */
-            if ((((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) == D3DSPR_ADDR) {
-                if (((*pToken) & 0x00001FFF) < nUseAddressRegister) {
-                    strcpy(tmpLine, "ARL");
-                    break;
-                } else
-                FIXME("(%p) Try to load A%ld an undeclared address register!\n", This, ((*pToken) & 0x00001FFF));
-            }
-            /* fall through */
-        case D3DSIO_ADD:
-        case D3DSIO_SUB:
-        case D3DSIO_MAD:
-        case D3DSIO_MUL:
-        case D3DSIO_RCP:
-        case D3DSIO_RSQ:
-        case D3DSIO_DP3:
-        case D3DSIO_DP4:
-        case D3DSIO_MIN:
-        case D3DSIO_MAX:
-        case D3DSIO_SLT:
-        case D3DSIO_SGE:
-        case D3DSIO_LIT:
-        case D3DSIO_DST:
-        case D3DSIO_FRC:
-        case D3DSIO_EXPP:
-        case D3DSIO_LOGP:
-        case D3DSIO_EXP:
-        case D3DSIO_LOG:
-            strcpy(tmpLine, curOpcode->glname);
-            break;
-        case D3DSIO_M4x4:
-        case D3DSIO_M4x3:
-        case D3DSIO_M3x4:
-        case D3DSIO_M3x3:
-        case D3DSIO_M3x2:
-            /* Expand the macro and get nusprintf(tmpLine,mber of generated instruction */
-            nRemInstr = ExpandMxMacro(curOpcode->opcode, pToken);
-            /* Save point to next instruction */
-            pSavedToken = pToken + 3;
-            /* Execute expanded macro */
-            pToken = MacroExpansion;
-            continue;
-        /* dcl and def are handeled in the first pass */
-        case D3DSIO_DCL:
+
+      } else if (D3DSIO_DCL == curOpcode->opcode) {
+
+            /* Handle declarations here, they don't fit well with the
+             * other instructions below [for now ] */
+
             if (This->namedArrays) {
                 const char* attribName = "undefined";
                 switch(*pToken & 0xFFFF) {
@@ -1614,6 +1595,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                     ++pToken;
                     sprintf(tmpLine, "ATTRIB ");
                     vshader_program_add_param(This, *pToken, FALSE, tmpLine);
+
                     sprintf(tmpChar," = %s", attribName);
                     strcat(tmpLine, tmpChar);
                     strcat(tmpLine,";\n");
@@ -1632,31 +1614,58 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             }
             ++pToken;
             continue;
-        case D3DSIO_DEF:
-            {
-            char tmpChar[80];
-            sprintf(tmpLine, "PARAM const%lu = {", *pToken & 0xFF);
-            ++pToken;
-            sprintf(tmpChar,"%f ,", *(float *)pToken);
-            strcat(tmpLine, tmpChar);
-            ++pToken;
-            sprintf(tmpChar,"%f ,", *(float *)pToken);
-            strcat(tmpLine, tmpChar);
-            ++pToken;
-            sprintf(tmpChar,"%f ,", *(float *)pToken);
-            strcat(tmpLine, tmpChar);
-            ++pToken;
-            sprintf(tmpChar,"%f}", *(float *)pToken);
-            strcat(tmpLine, tmpChar);
 
-            strcat(tmpLine,";\n");
-            ++lineNum;
-            TRACE("GL HW (%u, %u) : %s", lineNum, pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
-            PNSTRCAT(pgmStr, tmpLine);
+      } else {
 
-            ++pToken;
+        /* Common Processing: ([instr] [dst] [src]*) */
+
+        switch (curOpcode->opcode) {
+        case D3DSIO_NOP:
             continue;
+        case D3DSIO_MOV:
+            /* Address registers must be loaded with the ARL instruction */
+            if ((((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) == D3DSPR_ADDR) {
+                if (((*pToken) & 0x00001FFF) < nUseAddressRegister) {
+                    strcpy(tmpLine, "ARL");
+                    break;
+                } else
+                FIXME("(%p) Try to load A%ld an undeclared address register!\n", This, ((*pToken) & 0x00001FFF));
             }
+            /* fall through */
+        case D3DSIO_ADD:
+        case D3DSIO_SUB:
+        case D3DSIO_MAD:
+        case D3DSIO_MUL:
+        case D3DSIO_RCP:
+        case D3DSIO_RSQ:
+        case D3DSIO_DP3:
+        case D3DSIO_DP4:
+        case D3DSIO_MIN:
+        case D3DSIO_MAX:
+        case D3DSIO_SLT:
+        case D3DSIO_SGE:
+        case D3DSIO_LIT:
+        case D3DSIO_DST:
+        case D3DSIO_FRC:
+        case D3DSIO_EXPP:
+        case D3DSIO_LOGP:
+        case D3DSIO_EXP:
+        case D3DSIO_LOG:
+            strcpy(tmpLine, curOpcode->glname);
+            break;
+        case D3DSIO_M4x4:
+        case D3DSIO_M4x3:
+        case D3DSIO_M3x4:
+        case D3DSIO_M3x3:
+        case D3DSIO_M3x2:
+            /* Expand the macro and get nusprintf(tmpLine,mber of generated instruction */
+            nRemInstr = ExpandMxMacro(curOpcode->opcode, pToken);
+            /* Save point to next instruction */
+            pSavedToken = pToken + 3;
+            /* Execute expanded macro */
+            pToken = MacroExpansion;
+            continue;
+
         default:
             if (curOpcode->glname == GLNAME_REQUIRE_GLSL) {
                 FIXME("Opcode %s requires Gl Shader languange 1.0\n", curOpcode->name);

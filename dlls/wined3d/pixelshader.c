@@ -1101,8 +1101,37 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 /* if the token isn't supported by this cross compiler then skip it and its parameters */
                 FIXME("Token %s requires greater functionality than Fragment_Progarm_ARB supports\n", curOpcode->name);
                 pToken += curOpcode->num_params;
+
+            } else if (D3DSIO_DEF == curOpcode->opcode) {
+
+                    /* Handle definitions here, they don't fit well with the
+                     * other instructions below [for now ] */
+
+                    DWORD reg = *pToken & REGMASK;
+
+                    TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d, \n",
+                    curOpcode->name, curOpcode->glname, curOpcode->num_params);
+
+                    sprintf(tmpLine, "PARAM C%lu = { %f, %f, %f, %f };\n", reg,
+                              *((const float *)(pToken + 1)),
+                              *((const float *)(pToken + 2)),
+                              *((const float *)(pToken + 3)),
+                              *((const float *)(pToken + 4)) );
+
+                    addline(&lineNum, pgmStr, &pgmLength, tmpLine);
+
+                    This->constants[reg] = 1;
+                    pToken += 5;
+                    continue;
+
             } else {
-                TRACE("Found opcode %s %s\n", curOpcode->name, curOpcode->glname);
+ 
+                /* Common processing: [inst] [dst] [src]* */
+
+
+                TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d, \n",
+                curOpcode->name, curOpcode->glname, curOpcode->num_params);
+
                 saturate = FALSE;
 
                 /* Build opcode for GL vertex_program */
@@ -1137,22 +1166,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     TRACE("Appending glname %s to tmpLine\n", curOpcode->glname);
                     strcpy(tmpLine, curOpcode->glname);
                     break;
-                case D3DSIO_DEF:
-                {
-                    DWORD reg = *pToken & REGMASK;
-                    sprintf(tmpLine, "PARAM C%lu = { %f, %f, %f, %f };\n", reg,
-                              *((const float *)(pToken + 1)),
-                              *((const float *)(pToken + 2)),
-                              *((const float *)(pToken + 3)),
-                              *((const float *)(pToken + 4)) );
-
-                    addline(&lineNum, pgmStr, &pgmLength, tmpLine);
-
-                    This->constants[reg] = 1;
-                    pToken += 5;
-                    continue;
-                }
-                break;
                 case D3DSIO_TEX:
                 {
                     char tmp[20];
@@ -1396,7 +1409,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     char swzstring[20];
                     int saturate = 0;
                     char tmpOp[256];
-                    TRACE("(%p): Opcode has %d params\n", This, curOpcode->num_params);
 
                     /* Generate lines that handle input modifier computation */
                     for (i = 1; i < curOpcode->num_params; ++i) {
