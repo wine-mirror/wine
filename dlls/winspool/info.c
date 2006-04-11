@@ -1318,9 +1318,59 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
  */
 BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
 {
-    FIXME("(%s,0x%08lx,%p), stub!\n", debugstr_a(pName), Level, pMonitors);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    LPWSTR  nameW = NULL;
+    INT     len;
+    BOOL    res;
+    LPMONITOR_INFO_2A mi2a;
+    MONITOR_INFO_2W mi2w;
+
+    mi2a = (LPMONITOR_INFO_2A) pMonitors;
+    TRACE("(%s, %ld, %p) :  %s %s %s\n", debugstr_a(pName), Level, pMonitors, 
+            mi2a ? debugstr_a(mi2a->pName) : NULL,
+            mi2a ? debugstr_a(mi2a->pEnvironment) : NULL,
+            mi2a ? debugstr_a(mi2a->pDLLName) : NULL);
+
+    if  (Level != 2) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    /* XP: unchanged, win9x: ERROR_INVALID_ENVIRONMENT */
+    if (mi2a == NULL) {
+        return FALSE;
+    }
+
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
+    }
+
+    memset(&mi2w, 0, sizeof(MONITOR_INFO_2W));
+    if (mi2a->pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, mi2a->pName, -1, NULL, 0);
+        mi2w.pName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, mi2a->pName, -1, mi2w.pName, len);
+    }
+    if (mi2a->pEnvironment) {
+        len = MultiByteToWideChar(CP_ACP, 0, mi2a->pEnvironment, -1, NULL, 0);
+        mi2w.pEnvironment = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, mi2a->pEnvironment, -1, mi2w.pEnvironment, len);
+    }
+    if (mi2a->pDLLName) {
+        len = MultiByteToWideChar(CP_ACP, 0, mi2a->pDLLName, -1, NULL, 0);
+        mi2w.pDLLName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, mi2a->pDLLName, -1, mi2w.pDLLName, len);
+    }
+
+    res = AddMonitorW(nameW, Level, (LPBYTE) &mi2w);
+
+    HeapFree(GetProcessHeap(), 0, mi2w.pName); 
+    HeapFree(GetProcessHeap(), 0, mi2w.pEnvironment); 
+    HeapFree(GetProcessHeap(), 0, mi2w.pDLLName); 
+
+    HeapFree(GetProcessHeap(), 0, nameW); 
+    return (res);
 }
 
 /******************************************************************************
@@ -1340,15 +1390,88 @@ BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
  * NOTES
  *  All Files for the Monitor must already be copied to %winsysdir% ("%SystemRoot%\system32")
  *
- * BUGS
- *  only a Stub
- *
  */
 BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 {
-    FIXME("(%s,0x%08lx,%p), stub!\n",debugstr_w(pName), Level, pMonitors);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    LPMONITOR_INFO_2W mi2w;
+    HKEY    hroot = NULL;
+    HKEY    hentry = NULL;
+    HMODULE hdll = NULL;
+    DWORD   disposition;
+    BOOL    res = FALSE;
+
+    mi2w = (LPMONITOR_INFO_2W) pMonitors;
+    TRACE("(%s, %ld, %p) :  %s %s %s\n", debugstr_w(pName), Level, pMonitors, 
+            mi2w ? debugstr_w(mi2w->pName) : NULL,
+            mi2w ? debugstr_w(mi2w->pEnvironment) : NULL,
+            mi2w ? debugstr_w(mi2w->pDLLName) : NULL);
+
+    if (Level != 2) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    /* XP: unchanged, win9x: ERROR_INVALID_ENVIRONMENT */
+    if (mi2w == NULL) {
+        return FALSE;
+    }
+
+    if (pName && (pName[0])) {
+        FIXME("for server %s not implemented\n", debugstr_w(pName));
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+
+
+    if (!mi2w->pName || (! mi2w->pName[0])) {
+        WARN("pName not valid : %s \n", debugstr_w(mi2w->pName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!mi2w->pEnvironment || lstrcmpW(mi2w->pEnvironment, envname_x86W)) {
+        WARN("Environment %s requested (we support only %s)\n", 
+                debugstr_w(mi2w->pEnvironment), debugstr_w(envname_x86W));
+        SetLastError(ERROR_INVALID_ENVIRONMENT);
+        return FALSE;
+    }
+
+    if (!mi2w->pDLLName || (! mi2w->pDLLName[0])) {
+        WARN("pDLLName not valid : %s \n", debugstr_w(mi2w->pDLLName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if ((hdll = LoadLibraryW(mi2w->pDLLName)) == NULL) {
+        return FALSE;
+    }
+    FreeLibrary(hdll);
+
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hroot) != ERROR_SUCCESS) {
+        ERR("unable to create key %s\n", debugstr_w(MonitorsW));
+        return FALSE;
+    }
+
+    if(RegCreateKeyExW(hroot, mi2w->pName, 0, NULL, REG_OPTION_NON_VOLATILE,
+                 KEY_WRITE, NULL, &hentry, &disposition) == ERROR_SUCCESS) {
+
+        if (disposition == REG_OPENED_EXISTING_KEY) {
+            TRACE("monitor %s already exists\n", debugstr_w(mi2w->pName));
+            /* NT: ERROR_PRINT_MONITOR_ALREADY_INSTALLED (3006)
+               9x: ERROR_ALREADY_EXISTS (183) */
+            SetLastError(ERROR_PRINT_MONITOR_ALREADY_INSTALLED);
+        }
+        else
+        {
+               INT len;
+               len = (lstrlenW(mi2w->pDLLName) +1) * sizeof(WCHAR);
+               res = (RegSetValueExW(hentry, DriverW, 0,
+                      REG_SZ, (LPBYTE) mi2w->pDLLName, len) == ERROR_SUCCESS);
+        }
+        RegCloseKey(hentry);
+    }
+
+    RegCloseKey(hroot);
+    return (res);
 }
 
 /******************************************************************
