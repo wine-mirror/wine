@@ -972,6 +972,27 @@ static void MSCDEX_Handler(CONTEXT86* context)
        SET_CX( context, (drive < 26) ? drive : 0 );
        break;
 
+    case 0x01: /* get drive device list */
+       {
+           CDROM_HEAP*          cdrom_heap = CDROM_GetHeap();
+           CDROM_DEVICE_HEADER* dev = &cdrom_heap->hdr;
+           SEGPTR ptr_dev = ISV86(context)
+               ? MAKESEGPTR( cdrom_heap->cdrom_segment,
+                             FIELD_OFFSET(CDROM_HEAP, hdr) )
+               : MAKESEGPTR( cdrom_heap->cdrom_selector,
+                             FIELD_OFFSET(CDROM_HEAP, hdr) );
+
+           p = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
+           for (drive = 0; drive < dev->units; drive++) {
+               *p = drive; /* subunit */
+               ++p;
+               *(DWORD*)p = ptr_dev;
+               p += sizeof(DWORD);
+           }
+           TRACE("Get drive device list\n");
+       }
+       break;
+
     case 0x0B: /* drive check */
        SET_AX( context, is_cdrom(CX_reg(context)) );
        SET_BX( context, 0xADAD );
