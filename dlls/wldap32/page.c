@@ -39,6 +39,10 @@
 #include "winldap_private.h"
 #include "wldap32.h"
 
+#ifndef LDAP_MAXINT
+#define LDAP_MAXINT  2147483647
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 /***********************************************************************
@@ -56,7 +60,8 @@ ULONG ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
     TRACE( "(%p, 0x%08lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
            critical, control );
 
-    if (!ld || !control) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld || !control || pagesize > LDAP_MAXINT)
+        return WLDAP32_LDAP_PARAM_ERROR;
 
     ret = ldap_create_page_controlW( ld, pagesize, cookie, critical, &controlW );
     if (ret == LDAP_SUCCESS)
@@ -77,6 +82,7 @@ static ULONG create_page_control( ULONG pagesize, struct WLDAP32_berval *cookie,
 {
     LDAPControlW *ctrl;
     BerElement *ber;
+    ber_tag_t tag;
     struct berval *berval, null_cookie = { 0, NULL };
     INT ret, len;
     char *val;
@@ -85,12 +91,15 @@ static ULONG create_page_control( ULONG pagesize, struct WLDAP32_berval *cookie,
     if (!ber) return WLDAP32_LDAP_NO_MEMORY;
 
     if (cookie)
-        ber_printf( ber, "{iO}", pagesize, cookie );
+        tag = ber_printf( ber, "{iO}", (ber_int_t)pagesize, cookie );
     else
-        ber_printf( ber, "{iO}", pagesize, &null_cookie );
+        tag = ber_printf( ber, "{iO}", (ber_int_t)pagesize, &null_cookie );
 
     ret = ber_flatten( ber, &berval );
     ber_free( ber, 1 );
+
+    if (tag == LBER_ERROR)
+        return WLDAP32_LDAP_ENCODING_ERROR;
 
     if (ret == -1)
         return WLDAP32_LDAP_NO_MEMORY;
@@ -146,7 +155,9 @@ ULONG ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
     TRACE( "(%p, 0x%08lx, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
            critical, control );
 
-    if (!ld || !control) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld || !control || pagesize > LDAP_MAXINT)
+        return WLDAP32_LDAP_PARAM_ERROR;
+
     return create_page_control( pagesize, cookie, critical, control );
 
 #endif
