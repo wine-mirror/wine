@@ -475,6 +475,7 @@ extern void WINAPI DOSVM_Int2aHandler(CONTEXT86*);
 
 /* int2f.c */
 extern void WINAPI DOSVM_Int2fHandler(CONTEXT86*);
+extern void MSCDEX_InstallCDROM(void);
 
 /* int31.c */
 extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);

@@ -197,6 +197,7 @@ static BOOL MZ_InitMemory(void)
     TRACE("Initializing DOS memory structures\n");
     DOSMEM_MapDosLayout();
     DOSDEV_InstallDOSDevices();
+    MSCDEX_InstallCDROM();
 
     return TRUE;
 }

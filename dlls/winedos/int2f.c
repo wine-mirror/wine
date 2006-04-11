@@ -1024,3 +1024,58 @@ static void MSCDEX_Handler(CONTEXT86* context)
        break;
     }
 }
+
+/* prototypes */
+static void WINAPI cdrom_strategy(CONTEXT86*ctx);
+static void WINAPI cdrom_interrupt(CONTEXT86*ctx);
+
+/* device info */
+static const WINEDEV cdromdev =
+{
+    "WINE_CD_",
+    ATTR_CHAR|ATTR_REMOVABLE|ATTR_IOCTL,
+    cdrom_strategy, cdrom_interrupt
+};
+
+static REQUEST_HEADER *cdrom_driver_request;
+
+/* Return to caller */
+static void do_lret(CONTEXT86*ctx)
+{
+    WORD *stack = CTX_SEG_OFF_TO_LIN(ctx, ctx->SegSs, ctx->Esp);
+
+    ctx->Eip   = *(stack++);
+    ctx->SegCs = *(stack++);
+    ctx->Esp  += 2*sizeof(WORD);
+}
+
+static void WINAPI cdrom_strategy(CONTEXT86*ctx)
+{
+    cdrom_driver_request = CTX_SEG_OFF_TO_LIN(ctx, ctx->SegEs, ctx->Ebx);
+    do_lret( ctx );
+}
+
+static void WINAPI cdrom_interrupt(CONTEXT86*ctx)
+{
+    if (cdrom_driver_request->unit > CDROM_GetHeap()->hdr.units)
+        cdrom_driver_request->status = STAT_ERROR | 1; /* unknown unit */
+    else
+        MSCDEX_Request((BYTE*)cdrom_driver_request, ISV86(ctx));
+
+    do_lret( ctx );
+}
+
+/**********************************************************************
+ *         MSCDEX_InstallCDROM  [internal]
+ *
+ * Install the CDROM driver into the DOS device driver chain.
+ */
+void MSCDEX_InstallCDROM(void)
+{
+    CDROM_HEAP *cdrom_heap = CDROM_GetHeap();
+
+    DOSDEV_SetupDevice( &cdromdev,
+                        cdrom_heap->cdrom_segment,
+                        FIELD_OFFSET(CDROM_HEAP, hdr),
+                        FIELD_OFFSET(CDROM_HEAP, thunk) );
+}
