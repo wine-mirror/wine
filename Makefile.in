@@ -55,9 +55,7 @@ INSTALLBOTHSUBDIRS = dlls libs tools
 INSTALLSUBDIRS = $(INSTALLDEVSUBDIRS) $(INSTALLLIBSUBDIRS)
 
 # Sub-directories to run make test into
-TESTSUBDIRS = \
-	dlls \
-	programs
+TESTSUBDIRS = dlls
 
 all: Make.rules wine
 	@echo "Wine build complete."
