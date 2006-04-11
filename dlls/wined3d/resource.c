@@ -126,6 +126,8 @@ HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFG
                 HeapFree(GetProcessHeap(), 0, *data);
                 return E_OUTOFMEMORY;
             }
+            (*data)->size = SizeOfData;
+            memcpy((*data)->ptr.data, pData, SizeOfData);
         }
         /* link it in */
         (*data)->next = This->resource.privateData;
