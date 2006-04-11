@@ -115,7 +115,7 @@ HRESULT AVIFILE_CreateACMStream(REFIID riid, LPVOID *ppv)
 
   *ppv = NULL;
 
-  pstream = HeapAlloc(GetProcessHeap(), 0, sizeof(IAVIStreamImpl));
+  pstream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIStreamImpl));
   if (pstream == NULL)
     return AVIERR_MEMORY;
 
@@ -712,7 +712,7 @@ static HRESULT AVIFILE_OpenCompressor(IAVIStreamImpl *This)
     if (This->lpOutFormat == NULL) {
       /* we must decode to default format */
       This->cbOutFormat = sizeof(PCMWAVEFORMAT);
-      This->lpOutFormat = HeapAlloc(GetProcessHeap(), 0, This->cbOutFormat);
+      This->lpOutFormat = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->cbOutFormat);
       if (This->lpOutFormat == NULL)
 	return AVIERR_MEMORY;
 

@@ -239,7 +239,7 @@ HRESULT AVIFILE_CreateAVIFile(REFIID riid, LPVOID *ppv)
 
   *ppv = NULL;
 
-  pfile = HeapAlloc(GetProcessHeap(), 0, sizeof(IAVIFileImpl));
+  pfile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIFileImpl));
   if (pfile == NULL)
     return AVIERR_MEMORY;
 
@@ -421,7 +421,7 @@ static HRESULT WINAPI IAVIFile_fnCreateStream(IAVIFile *iface,PAVISTREAM *avis,
 
   /* now it seems to be save to add the stream */
   assert(This->ppStreams[n] == NULL);
-  This->ppStreams[n] = HeapAlloc(GetProcessHeap(), 0,
+  This->ppStreams[n] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 						   sizeof(IAVIStreamImpl));
   if (This->ppStreams[n] == NULL)
     return AVIERR_MEMORY;
@@ -1389,10 +1389,10 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
       This->nIdxFmtChanges += 16;
       if (This->idxFmtChanges == NULL)
 	This->idxFmtChanges =
-	  HeapAlloc(GetProcessHeap(), 0, This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
+	  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
       else
 	This->idxFmtChanges =
-	  HeapReAlloc(GetProcessHeap(), 0, This->idxFmtChanges,
+	  HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->idxFmtChanges,
 			   This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
       if (This->idxFmtChanges == NULL)
 	return AVIERR_MEMORY;
@@ -1425,9 +1425,9 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
   if (This->idxFrames == NULL || This->lLastFrame + 1 >= This->nIdxFrames) {
     This->nIdxFrames += 512;
     if (This->idxFrames == NULL)
-      This->idxFrames = HeapAlloc(GetProcessHeap(), 0, This->nIdxFrames * sizeof(AVIINDEXENTRY));
+      This->idxFrames = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->nIdxFrames * sizeof(AVIINDEXENTRY));
       else
-	This->idxFrames = HeapReAlloc(GetProcessHeap(), 0, This->idxFrames,
+	This->idxFrames = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->idxFrames,
 			   This->nIdxFrames * sizeof(AVIINDEXENTRY));
     if (This->idxFrames == NULL)
       return AVIERR_MEMORY;
@@ -1453,7 +1453,7 @@ static HRESULT AVIFILE_AddRecord(IAVIFileImpl *This)
 
   if (This->idxRecords == NULL || This->cbIdxRecords == 0) {
     This->cbIdxRecords += 1024 * sizeof(AVIINDEXENTRY);
-    This->idxRecords = HeapAlloc(GetProcessHeap(), 0, This->cbIdxRecords);
+    This->idxRecords = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->cbIdxRecords);
     if (This->idxRecords == NULL)
       return AVIERR_MEMORY;
   }
@@ -1528,14 +1528,14 @@ static void    AVIFILE_ConstructAVIStream(IAVIFileImpl *paf, DWORD nr, LPAVISTRE
     if (asi->dwLength > 0) {
       /* pre-allocate mem for frame-index structure */
       pstream->idxFrames =
-	HeapAlloc(GetProcessHeap(), 0, asi->dwLength * sizeof(AVIINDEXENTRY));
+	HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, asi->dwLength * sizeof(AVIINDEXENTRY));
       if (pstream->idxFrames != NULL)
 	pstream->nIdxFrames = asi->dwLength;
     }
     if (asi->dwFormatChangeCount > 0) {
       /* pre-allocate mem for formatchange-index structure */
       pstream->idxFmtChanges =
-	HeapAlloc(GetProcessHeap(), 0, asi->dwFormatChangeCount * sizeof(AVIINDEXENTRY));
+	HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, asi->dwFormatChangeCount * sizeof(AVIINDEXENTRY));
       if (pstream->idxFmtChanges != NULL)
 	pstream->nIdxFmtChanges = asi->dwFormatChangeCount;
     }
@@ -1675,7 +1675,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
     if (ckLIST2.ckid == FOURCC_LIST &&
 	ckLIST2.fccType == listtypeSTREAMHEADER) {
       pStream = This->ppStreams[nStream] =
-	HeapAlloc(GetProcessHeap(), 0, sizeof(IAVIStreamImpl));
+	HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIStreamImpl));
       if (pStream == NULL)
 	return AVIERR_MEMORY;
       AVIFILE_ConstructAVIStream(This, nStream, NULL);
@@ -1940,7 +1940,7 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
       pStream->nIdxFrames = pStream->sInfo.dwLength;
 
     pStream->idxFrames =
-      HeapAlloc(GetProcessHeap(), 0, pStream->nIdxFrames * sizeof(AVIINDEXENTRY));
+      HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pStream->nIdxFrames * sizeof(AVIINDEXENTRY));
     if (pStream->idxFrames == NULL && pStream->nIdxFrames > 0) {
       pStream->nIdxFrames = 0;
       return AVIERR_MEMORY;

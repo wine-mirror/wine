@@ -76,7 +76,7 @@ PAVIFILE AVIFILE_CreateAVITempFile(int nStreams, PAVISTREAM *ppStreams) {
   ITmpFileImpl *tmpFile;
   int           i;
 
-  tmpFile = HeapAlloc(GetProcessHeap(), 0, sizeof(ITmpFileImpl));
+  tmpFile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ITmpFileImpl));
   if (tmpFile == NULL)
     return NULL;
 

@@ -187,7 +187,7 @@ PAVIEDITSTREAM AVIFILE_CreateEditStream(PAVISTREAM pstream)
 {
   IAVIEditStreamImpl *pedit = NULL;
 
-  pedit = HeapAlloc(GetProcessHeap(), 0, sizeof(IAVIEditStreamImpl));
+  pedit = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIEditStreamImpl));
   if (pedit == NULL)
     return NULL;
 
@@ -329,11 +329,11 @@ static BOOL AVIFILE_FormatsEqual(PAVISTREAM avi1, PAVISTREAM avi2)
     return FALSE;
 
   /* sizes match, now get formats and compare them */
-  fmt1 = HeapAlloc(GetProcessHeap(), 0, size1);
+  fmt1 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size1);
   if (fmt1 == NULL)
     return FALSE;
   if (SUCCEEDED(AVIStreamReadFormat(avi1, start1, fmt1, &size1))) {
-    fmt2 = HeapAlloc(GetProcessHeap(), 0, size1);
+    fmt2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size1);
     if (fmt2 != NULL) {
       if (SUCCEEDED(AVIStreamReadFormat(avi2, start2, fmt2, &size1)))
         status = (memcmp(fmt1, fmt2, size1) == 0);
@@ -469,7 +469,7 @@ static HRESULT WINAPI IAVIEditStream_fnCut(IAVIEditStream*iface,LONG*plStart,
     } else {
       /* splitting */
       if (This->nStreams + 1 >= This->nTableSize) {
-        This->pStreams = HeapReAlloc(GetProcessHeap(), 0, This->pStreams,
+        This->pStreams = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->pStreams,
                                      (This->nTableSize + 32) * sizeof(EditStreamTable));
         if (This->pStreams == NULL)
           return AVIERR_MEMORY;
@@ -661,7 +661,7 @@ static HRESULT WINAPI IAVIEditStream_fnPaste(IAVIEditStream*iface,LONG*plStart,
   if (This->nStreams + nStreams + 1 > This->nTableSize) {
     n = This->nStreams + nStreams + 33;
 
-    This->pStreams = HeapReAlloc(GetProcessHeap(), 0, This->pStreams, n * sizeof(EditStreamTable));
+    This->pStreams = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->pStreams, n * sizeof(EditStreamTable));
     if (This->pStreams == NULL)
       return AVIERR_MEMORY;
     This->nTableSize = n;
@@ -750,7 +750,7 @@ static HRESULT WINAPI IAVIEditStream_fnClone(IAVIEditStream*iface,
   if (pEdit == NULL)
     return AVIERR_MEMORY;
   if (This->nStreams > pEdit->nTableSize) {
-    pEdit->pStreams = HeapReAlloc(GetProcessHeap(), 0, pEdit->pStreams,
+    pEdit->pStreams = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pEdit->pStreams,
                                   This->nStreams * sizeof(EditStreamTable));
     if (pEdit->pStreams == NULL)
       return AVIERR_MEMORY;
@@ -839,7 +839,7 @@ static HRESULT WINAPI IEditAVIStream_fnCreate(IAVIStream*iface,
     return AVIERR_ERROR;
 
   if (This->pStreams == NULL) {
-    This->pStreams = HeapAlloc(GetProcessHeap(), 0, 256 * sizeof(EditStreamTable));
+    This->pStreams = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 256 * sizeof(EditStreamTable));
     if (This->pStreams == NULL)
       return AVIERR_MEMORY;
     This->nTableSize = 256;

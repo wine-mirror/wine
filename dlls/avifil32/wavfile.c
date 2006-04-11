@@ -224,7 +224,7 @@ HRESULT AVIFILE_CreateWAVFile(REFIID riid, LPVOID *ppv)
 
   *ppv = NULL;
 
-  pfile = HeapAlloc(GetProcessHeap(), 0, sizeof(IAVIFileImpl));
+  pfile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIFileImpl));
   if (pfile == NULL)
     return AVIERR_MEMORY;
 

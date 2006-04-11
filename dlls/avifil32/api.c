@@ -1050,7 +1050,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
   if (cbFilter < 2)
     return AVIERR_BADSIZE;
 
-  lp = HeapAlloc(GetProcessHeap(), 0, MAX_FILTERS * sizeof(AVIFilter));
+  lp = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MAX_FILTERS * sizeof(AVIFilter));
   if (lp == NULL)
     return AVIERR_MEMORY;
 
@@ -1273,7 +1273,7 @@ static BOOL AVISaveOptionsFmtChoose(HWND hWnd)
 			sInfo.dwStart, &size);
     if (size < (LONG)sizeof(PCMWAVEFORMAT))
       size = sizeof(PCMWAVEFORMAT);
-    afmtc.pwfxEnum = HeapAlloc(GetProcessHeap(), 0, size);
+    afmtc.pwfxEnum = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     if (afmtc.pwfxEnum != NULL) {
       AVIStreamReadFormat(SaveOpts.ppavis[SaveOpts.nCurrent],
 			  sInfo.dwStart, afmtc.pwfxEnum, &size);
@@ -1318,7 +1318,7 @@ static void AVISaveOptionsUpdate(HWND hWnd)
     szFormat[0] = 0;
 
     /* read format to build format description string */
-    lpFormat = HeapAlloc(GetProcessHeap(), 0, size);
+    lpFormat = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     if (lpFormat != NULL) {
       if (SUCCEEDED(AVIStreamReadFormat(SaveOpts.ppavis[SaveOpts.nCurrent],sInfo.dwStart,lpFormat, &size))) {
 	if (sInfo.fccType == streamtypeVIDEO) {
@@ -1481,7 +1481,7 @@ BOOL WINAPI AVISaveOptions(HWND hWnd, UINT uFlags, INT nStreams,
 
   /* save options in case the user presses cancel */
   if (ppOptions != NULL && nStreams > 1) {
-    pSavedOptions = HeapAlloc(GetProcessHeap(), 0, nStreams * sizeof(AVICOMPRESSOPTIONS));
+    pSavedOptions = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nStreams * sizeof(AVICOMPRESSOPTIONS));
     if (pSavedOptions == NULL)
       return FALSE;
 
@@ -1719,7 +1719,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
   }
 
   /* allocate buffer for formats, data, etc. of an initial size of 64 kBytes*/
-  lpBuffer = HeapAlloc(GetProcessHeap(), 0, cbBuffer = 0x00010000);
+  lpBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cbBuffer = 0x00010000);
   if (lpBuffer == NULL) {
     hres = AVIERR_MEMORY;
     goto error;
@@ -1862,7 +1862,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 				 lFirstVideo - lStart[curStream], lpBuffer,
 				 cbBuffer, &lReadBytes, &lReadSamples);
 	  } while ((hres == AVIERR_BUFFERTOOSMALL) &&
-		   (lpBuffer = HeapReAlloc(GetProcessHeap(), 0, lpBuffer, cbBuffer *= 2)) != NULL);
+		   (lpBuffer = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lpBuffer, cbBuffer *= 2)) != NULL);
 	  if (lpBuffer == NULL)
 	    hres = AVIERR_MEMORY;
 	  if (FAILED(hres))
@@ -1931,7 +1931,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 	    hres = AVIStreamRead(pInStreams[curStream],sInfo.dwStart,lSamples,
 				 lpBuffer,cbBuffer,&lReadBytes,&lReadSamples);
 	  } while ((hres == AVIERR_BUFFERTOOSMALL) &&
-		   (lpBuffer = HeapReAlloc(GetProcessHeap(), 0, lpBuffer, cbBuffer *= 2)) != NULL);
+		   (lpBuffer = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lpBuffer, cbBuffer *= 2)) != NULL);
 	  if (lpBuffer == NULL)
 	    hres = AVIERR_MEMORY;
 	  if (FAILED(hres))
@@ -1977,7 +1977,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 	    hres = AVIStreamRead(pInStreams[curStream], sInfo.dwStart, 1,
 				 lpBuffer, cbBuffer,&lReadBytes,&lReadSamples);
 	  } while ((hres == AVIERR_BUFFERTOOSMALL) &&
-		   (lpBuffer = HeapReAlloc(GetProcessHeap(), 0, lpBuffer, cbBuffer *= 2)) != NULL);
+		   (lpBuffer = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lpBuffer, cbBuffer *= 2)) != NULL);
 	  if (lpBuffer == NULL)
 	    hres = AVIERR_MEMORY;
 	  if (FAILED(hres))
