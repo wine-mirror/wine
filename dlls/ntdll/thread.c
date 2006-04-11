@@ -370,7 +370,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     struct ntdll_thread_data *thread_data;
     struct ntdll_thread_regs *thread_regs = NULL;
     struct startup_info *info = NULL;
-    void *addr;
+    void *addr = NULL;
     HANDLE handle = 0;
     TEB *teb;
     DWORD tid = 0;
