@@ -26,44 +26,6 @@
 
 #include "pshpack1.h"
 
-typedef struct {
-  BYTE ljmp1;
-  RMCBPROC strategy;
-  BYTE ljmp2;
-  RMCBPROC interrupt;
-} WINEDEV_THUNK;
-
-typedef struct {
-  BYTE size; /* length of header + data */
-  BYTE unit; /* unit (block devices only) */
-  BYTE command;
-  WORD status;
-  BYTE reserved[8];
-} REQUEST_HEADER;
-
-typedef struct {
-  REQUEST_HEADER hdr;
-  BYTE media; /* media descriptor from BPB */
-  SEGPTR buffer;
-  WORD count; /* byte/sector count */
-  WORD sector; /* starting sector (block devices) */
-  DWORD volume; /* volume ID (block devices) */
-} REQ_IO;
-
-typedef struct {
-  REQUEST_HEADER hdr;
-  BYTE data;
-} REQ_SAFEINPUT;
-
-typedef struct
-{
-    DWORD next_dev;
-    WORD  attr;
-    WORD  strategy;
-    WORD  interrupt;
-    char  name[8];
-} DOS_DEVICE_HEADER;
-
 /* Warning: need to return LOL ptr w/ offset 0 (&ptr_first_DPB) to programs ! */
 typedef struct _DOS_LISTOFLISTS
 {
@@ -111,45 +73,6 @@ enum strategy { SYSTEM_STRATEGY_NUL, SYSTEM_STRATEGY_CON, NB_SYSTEM_STRATEGIES }
 
 static void *strategy_data[NB_SYSTEM_STRATEGIES];
 
-#define NONEXT ((DWORD)-1)
-
-#define ATTR_STDIN     0x0001
-#define ATTR_STDOUT    0x0002
-#define ATTR_NUL       0x0004
-#define ATTR_CLOCK     0x0008
-#define ATTR_FASTCON   0x0010
-#define ATTR_RAW       0x0020
-#define ATTR_NOTEOF    0x0040
-#define ATTR_DEVICE    0x0080
-#define ATTR_REMOVABLE 0x0800
-#define ATTR_NONIBM    0x2000 /* block devices */
-#define ATTR_UNTILBUSY 0x2000 /* char devices */
-#define ATTR_IOCTL     0x4000
-#define ATTR_CHAR      0x8000
-
-#define CMD_INIT       0
-#define CMD_MEDIACHECK 1 /* block devices */
-#define CMD_BUILDBPB   2 /* block devices */
-#define CMD_INIOCTL    3
-#define CMD_INPUT      4 /* read data */
-#define CMD_SAFEINPUT  5 /* "non-destructive input no wait", char devices */
-#define CMD_INSTATUS   6 /* char devices */
-#define CMD_INFLUSH    7 /* char devices */
-#define CMD_OUTPUT     8 /* write data */
-#define CMD_SAFEOUTPUT 9 /* write data with verify */
-#define CMD_OUTSTATUS 10 /* char devices */
-#define CMD_OUTFLUSH  11 /* char devices */
-#define CMD_OUTIOCTL  12
-#define CMD_DEVOPEN   13
-#define CMD_DEVCLOSE  14
-#define CMD_REMOVABLE 15 /* block devices */
-#define CMD_UNTILBUSY 16 /* output until busy */
-
-#define STAT_MASK  0x00FF
-#define STAT_DONE  0x0100
-#define STAT_BUSY  0x0200
-#define STAT_ERROR 0x8000
-
 #define LJMP 0xea
 
 
@@ -160,14 +83,6 @@ static void WINAPI con_strategy(CONTEXT86*ctx);
 static void WINAPI con_interrupt(CONTEXT86*ctx);
 
 /* devices */
-typedef struct
-{
-    char name[8];
-    WORD attr;
-    RMCBPROC strategy;
-    RMCBPROC interrupt;
-} WINEDEV;
-
 static WINEDEV devs[] =
 {
   { "NUL     ",
@@ -541,9 +456,9 @@ void DOSDEV_InstallDOSDevices(void)
   for (n = 0; n < NR_DEVS; n++)
   {
     dataseg->thunk[n].ljmp1     = LJMP;
-    dataseg->thunk[n].strategy  = (RMCBPROC)DPMI_AllocInternalRMCB(devs[n].strategy);
+    dataseg->thunk[n].strategy  = DPMI_AllocInternalRMCB(devs[n].strategy);
     dataseg->thunk[n].ljmp2     = LJMP;
-    dataseg->thunk[n].interrupt = (RMCBPROC)DPMI_AllocInternalRMCB(devs[n].interrupt);
+    dataseg->thunk[n].interrupt = DPMI_AllocInternalRMCB(devs[n].interrupt);
   }
 
   /* CON is device 1 */

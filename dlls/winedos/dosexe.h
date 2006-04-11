@@ -245,6 +245,105 @@ typedef struct
 
 #include <poppack.h>
 
+/* Device driver header */
+
+#define NONEXT ((DWORD)-1)
+
+#define ATTR_STDIN     0x0001
+#define ATTR_STDOUT    0x0002
+#define ATTR_NUL       0x0004
+#define ATTR_CLOCK     0x0008
+#define ATTR_FASTCON   0x0010
+#define ATTR_RAW       0x0020
+#define ATTR_NOTEOF    0x0040
+#define ATTR_DEVICE    0x0080
+#define ATTR_REMOVABLE 0x0800
+#define ATTR_NONIBM    0x2000 /* block devices */
+#define ATTR_UNTILBUSY 0x2000 /* char devices */
+#define ATTR_IOCTL     0x4000
+#define ATTR_CHAR      0x8000
+
+#include <pshpack1.h>
+
+typedef struct
+{
+    DWORD next_dev;
+    WORD  attr;
+    WORD  strategy;
+    WORD  interrupt;
+    char  name[8];
+} DOS_DEVICE_HEADER;
+
+#include <poppack.h>
+
+/* DOS Device requests */
+
+#define CMD_INIT       0
+#define CMD_MEDIACHECK 1 /* block devices */
+#define CMD_BUILDBPB   2 /* block devices */
+#define CMD_INIOCTL    3
+#define CMD_INPUT      4 /* read data */
+#define CMD_SAFEINPUT  5 /* "non-destructive input no wait", char devices */
+#define CMD_INSTATUS   6 /* char devices */
+#define CMD_INFLUSH    7 /* char devices */
+#define CMD_OUTPUT     8 /* write data */
+#define CMD_SAFEOUTPUT 9 /* write data with verify */
+#define CMD_OUTSTATUS 10 /* char devices */
+#define CMD_OUTFLUSH  11 /* char devices */
+#define CMD_OUTIOCTL  12
+#define CMD_DEVOPEN   13
+#define CMD_DEVCLOSE  14
+#define CMD_REMOVABLE 15 /* block devices */
+#define CMD_UNTILBUSY 16 /* output until busy */
+
+#define STAT_MASK  0x00FF
+#define STAT_DONE  0x0100
+#define STAT_BUSY  0x0200
+#define STAT_ERROR 0x8000
+
+#include <pshpack1.h>
+
+typedef struct {
+    BYTE size;          /* length of header + data */
+    BYTE unit;          /* unit (block devices only) */
+    BYTE command;
+    WORD status;
+    BYTE reserved[8];
+} REQUEST_HEADER;
+
+typedef struct {
+    REQUEST_HEADER hdr;
+    BYTE media;         /* media descriptor from BPB */
+    SEGPTR buffer;
+    WORD count;         /* byte/sector count */
+    WORD sector;        /* starting sector (block devices) */
+    DWORD volume;       /* volume ID (block devices) */
+} REQ_IO;
+
+typedef struct {
+    REQUEST_HEADER hdr;
+    BYTE data;
+} REQ_SAFEINPUT;
+
+/* WINE device driver thunk from RM */
+typedef struct {
+    BYTE ljmp1;
+    FARPROC16 strategy;
+    BYTE ljmp2;
+    FARPROC16 interrupt;
+} WINEDEV_THUNK;
+
+#include <poppack.h>
+
+/* Device driver info (used for initialization) */
+typedef struct
+{
+    char name[8];
+    WORD attr;
+    RMCBPROC strategy;
+    RMCBPROC interrupt;
+} WINEDEV;
+
 /* module.c */
 extern void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile );
 extern BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
