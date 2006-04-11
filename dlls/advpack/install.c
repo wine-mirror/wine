@@ -31,6 +31,7 @@
 #include "setupapi.h"
 #include "advpub.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
@@ -40,6 +41,38 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 #define HRESULT_FROM_SPAPI(x)   ((x & SPAPI_MASK) | SPAPI_PREFIX)
 
 #define ADV_HRESULT(x)  ((x & SPAPI_ERROR) ? HRESULT_FROM_SPAPI(x) : HRESULT_FROM_WIN32(x))
+
+/* sequentially returns pointers to parameters in a parameter list
+ * returns NULL if the parameter is empty, e.g. one,,three  */
+LPWSTR get_parameter(LPWSTR *params, WCHAR separator)
+{
+    LPWSTR token = *params;
+
+    if (!*params)
+        return NULL;
+
+    *params = strchrW(*params, separator);
+    if (*params)
+        *(*params)++ = '\0';
+
+    if (!*token)
+        return NULL;
+
+    return token;
+}
+
+static BOOL is_full_path(LPWSTR path)
+{
+    const int MIN_PATH_LEN = 3;
+
+    if (!path || lstrlenW(path) < MIN_PATH_LEN)
+        return FALSE;
+
+    if (path[1] == ':' || (path[0] == '\\' && path[1] == '\\'))
+        return TRUE;
+
+    return FALSE;
+}
 
 /* this structure very closely resembles parameters of RunSetupCommand() */
 typedef struct
@@ -253,14 +286,51 @@ HRESULT WINAPI LaunchINFSectionExA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, IN
  *    'A' Always reboot.
  *    'I' Reboot if needed (default).
  *    'N' No reboot.
- *  
+ *
  * BUGS
- *  Unimplemented.
+ *  Doesn't handle the reboot flag.
  */
 HRESULT WINAPI LaunchINFSectionExW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, INT show)
 {
-    FIXME("(%p, %p, %s, %i): stub\n", hWnd, hInst, debugstr_w(cmdline), show);
-    return E_FAIL;
+    LPWSTR cmdline_copy, cmdline_ptr;
+    LPWSTR flags, ptr;
+    CABINFOW cabinfo;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p, %p, %s, %d)\n", hWnd, hInst, debugstr_w(cmdline), show);
+
+    if (!cmdline)
+        return E_INVALIDARG;
+
+    cmdline_copy = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmdline) + 1) * sizeof(WCHAR));
+    cmdline_ptr = cmdline_copy;
+    lstrcpyW(cmdline_copy, cmdline);
+
+    cabinfo.pszInf = get_parameter(&cmdline_ptr, ',');
+    cabinfo.pszSection = get_parameter(&cmdline_ptr, ',');
+    cabinfo.pszCab = get_parameter(&cmdline_ptr, ',');
+
+    flags = get_parameter(&cmdline_ptr, ',');
+    if (flags)
+        cabinfo.dwFlags = atolW(flags);
+
+    /* get the source path from the cab filename */
+    if (cabinfo.pszCab && *cabinfo.pszCab)
+    {
+        if (!is_full_path(cabinfo.pszCab))
+            goto done;
+
+        lstrcpyW(cabinfo.szSrcPath, cabinfo.pszCab);
+        ptr = strrchrW(cabinfo.szSrcPath, '\\');
+        *(++ptr) = '\0';
+    }
+
+    hr = ExecuteCabW(hWnd, &cabinfo, NULL);
+
+done:
+    HeapFree(GetProcessHeap(), 0, cmdline_copy);
+
+    return hr;
 }
 
 static HRESULT launch_exe(LPCWSTR cmd, LPCWSTR dir, HANDLE *phEXE)

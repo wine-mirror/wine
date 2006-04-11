@@ -34,6 +34,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
+LPWSTR get_parameter(LPWSTR *params, WCHAR separator);
+
 /* converts an ansi double null-terminated list to a unicode list */
 static LPWSTR ansi_to_unicode_list(LPCSTR ansi_list)
 {
@@ -450,25 +452,6 @@ HRESULT WINAPI DelNodeW(LPCWSTR pszFileOrDirName, DWORD dwFlags)
     }
 
     return ret;
-}
-
-/* sequentially returns pointers to parameters in a parameter list
- * returns NULL if the parameter is empty, e.g. one,,three  */
-static LPWSTR get_parameter(LPWSTR *params, WCHAR separator)
-{
-    LPWSTR token = *params;
-
-    if (!*params)
-        return NULL;
-
-    *params = strchrW(*params, separator);
-    if (*params)
-        *(*params)++ = '\0';
-
-    if (!*token)
-        return NULL;
-
-    return token;
 }
 
 /***********************************************************************
