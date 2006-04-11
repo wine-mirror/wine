@@ -102,6 +102,11 @@ static WCHAR const viprogid_keyname[25] = {
     'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
     0 };
 static char const tmodel_valuename[] = "ThreadingModel";
+static WCHAR const lcs32_keyname[] = {
+    'L','o','c','a','l','S','e','r','v','e','r','3','2',0 };
+static const WCHAR szIERelPath[] = {
+    'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','\\',
+    'i','e','x','p','l','o','r','e','.','e','x','e',0 };
 
 /***********************************************************************
  *		static helper functions
@@ -509,6 +514,14 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Shell.Explorer.2",
 	"Shell.Explorer"
     },
+    {   &CLSID_InternetExplorer,
+        "Internet Explorer(Ver 1.0)",
+        NULL,
+        NULL,
+        NULL,
+        "InternetExplorer.Application.1",
+        "InternetExplorer.Application"
+    },
     { NULL }			/* list terminator */
 };
 
@@ -519,6 +532,43 @@ static struct regsvr_coclass const coclass_list[] = {
 static struct regsvr_interface const interface_list[] = {
     { NULL }			/* list terminator */
 };
+
+static HRESULT register_localserver(void)
+{
+    HKEY coclass_key = 0, clsid_key = 0;
+    WCHAR buf[39], path[MAX_PATH];
+    LONG res;
+    UINT len;
+
+    res = SHGetFolderPathW(NULL, CSIDL_FLAG_CREATE|CSIDL_PROGRAM_FILES,
+                           NULL, SHGFP_TYPE_CURRENT, path);
+    if (FAILED(res))
+        return res;
+
+    len = lstrlenW(path);
+    if ((len + (sizeof szIERelPath/sizeof(WCHAR)) + 1) > MAX_PATH)
+        return E_FAIL;
+
+    path[len] = '\\';
+    lstrcpyW(&path[len+1], szIERelPath);
+
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0, NULL, 0,
+			  KEY_READ | KEY_WRITE, NULL, &coclass_key, NULL);
+    if (res != ERROR_SUCCESS) goto err;
+
+    StringFromGUID2(&CLSID_InternetExplorer, buf, 39);
+    res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+                          KEY_READ | KEY_WRITE, NULL, &clsid_key, NULL);
+    if (res != ERROR_SUCCESS) goto err;
+
+    res = register_key_defvalueW(clsid_key, lcs32_keyname, path);
+    if (res != ERROR_SUCCESS) goto err;
+
+err:
+    if (clsid_key) RegCloseKey(clsid_key);
+    if (coclass_key) RegCloseKey(coclass_key);
+    return (res == ERROR_SUCCESS) ? S_OK : E_FAIL;
+}
 
 /***********************************************************************
  *		DllRegisterServer (SHDOCVW.@)
@@ -532,6 +582,8 @@ HRESULT WINAPI DllRegisterServer(void)
     hr = register_coclasses(coclass_list);
     if (SUCCEEDED(hr))
 	hr = register_interfaces(interface_list);
+    if (SUCCEEDED(hr))
+        hr = register_localserver();
     return hr;
 }
 
