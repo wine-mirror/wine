@@ -161,7 +161,7 @@ static	void	do_dump( enum FileSig sig, void* pmt )
     pe_dump(pmt);
 }
 
-static	enum FileSig	check_headers(void** pmt)
+static enum FileSig check_headers(void)
 {
     WORD*		pw;
     DWORD*		pdw;
@@ -171,13 +171,12 @@ static	enum FileSig	check_headers(void** pmt)
     pw = PRD(0, sizeof(WORD));
     if (!pw) {printf("Can't get main signature, aborting\n"); return 0;}
 
-    *pmt = NULL;
     switch (*pw)
     {
     case IMAGE_DOS_SIGNATURE:
 	sig = SIG_DOS;
 	dh = PRD(0, sizeof(IMAGE_DOS_HEADER));
-	if (dh && dh->e_lfanew >= sizeof(*dh)) /* reasonable DOS header ? */
+	if (dh)
 	{
 	    /* the signature is the first DWORD */
 	    pdw = PRD(dh->e_lfanew, sizeof(DWORD));
@@ -185,7 +184,6 @@ static	enum FileSig	check_headers(void** pmt)
 	    {
 		if (*pdw == IMAGE_NT_SIGNATURE)
 		{
-		    *pmt = PRD(dh->e_lfanew, sizeof(DWORD)+sizeof(IMAGE_FILE_HEADER));
 		    sig = SIG_PE;
 		}
                 else if (*(WORD *)pdw == IMAGE_OS2_SIGNATURE)
@@ -231,7 +229,6 @@ int dump_analysis(const char* name, void (*fn)(enum FileSig, void*), enum FileSi
     enum FileSig	effective_sig;
     int			ret = 1;
     struct stat		s;
-    void*               pmt;
 
     setbuf(stdout, NULL);
 
@@ -249,7 +246,7 @@ int dump_analysis(const char* name, void (*fn)(enum FileSig, void*), enum FileSi
         if ((unsigned long)read( fd, dump_base, dump_total_len ) != dump_total_len) fatal( "Cannot read file" );
     }
 
-    effective_sig = check_headers(&pmt);
+    effective_sig = check_headers();
 
     if (effective_sig == SIG_UNKNOWN)
     {
@@ -266,7 +263,7 @@ int dump_analysis(const char* name, void (*fn)(enum FileSig, void*), enum FileSi
 	case SIG_NE:
 	case SIG_LE:
 	    printf("Contents of \"%s\": %ld bytes\n\n", name, dump_total_len);
-	    (*fn)(effective_sig, pmt);
+	    (*fn)(effective_sig, dump_base);
 	    break;
 	case SIG_DBG:
 	    dump_separate_dbg();

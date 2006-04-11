@@ -87,6 +87,22 @@ static void*	RVA(unsigned long rva, unsigned long len)
     return NULL;
 }
 
+static IMAGE_NT_HEADERS32 *get_nt_header( void *pmt )
+{
+    IMAGE_DOS_HEADER *dos = pmt;
+    return (IMAGE_NT_HEADERS32 *)((BYTE *)dos + dos->e_lfanew);
+}
+
+static int is_fake_dll( const void *base )
+{
+    static const char fakedll_signature[] = "Wine placeholder DLL";
+    const IMAGE_DOS_HEADER *dos = base;
+
+    if (dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
+        !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return TRUE;
+    return FALSE;
+}
+
 static void *get_dir_and_size(unsigned int idx, unsigned int *size)
 {
     if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
@@ -1063,7 +1079,9 @@ void pe_dump(void* pmt)
 {
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
 
-    PE_nt_headers = pmt;
+    PE_nt_headers = get_nt_header(pmt);
+    if (is_fake_dll(pmt)) printf( "*** This is a Wine fake DLL ***\n\n" );
+
     if (globals.do_dumpheader)
     {
 	dump_pe_header();
@@ -1145,7 +1163,7 @@ static	void	do_grab_sym( enum FileSig sig, void* pmt )
     const char*			ptr;
     DWORD*			map;
 
-    PE_nt_headers = pmt;
+    PE_nt_headers = get_nt_header(pmt);
     if (!(exportDir = get_dir(IMAGE_FILE_EXPORT_DIRECTORY))) return;
 
     pName = RVA(exportDir->AddressOfNames, exportDir->NumberOfNames * sizeof(DWORD));
