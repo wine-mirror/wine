@@ -1162,7 +1162,6 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	if( lpSelectPal->ihPal & 0x80000000 ) {
 		SelectPalette( hdc, GetStockObject(lpSelectPal->ihPal & 0x7fffffff), TRUE);
 	} else {
-	(handletable->objectHandle)[ lpSelectPal->ihPal ] =
 		SelectPalette( hdc, (handletable->objectHandle)[lpSelectPal->ihPal], TRUE);
 	}
 	break;
