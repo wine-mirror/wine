@@ -101,6 +101,7 @@ typedef struct
 {
     DOS_LISTOFLISTS    lol;
     DOS_DEVICE_HEADER  dev[NR_DEVS-1];
+    DOS_DEVICE_HEADER *last_dev; /* ptr to last registered device driver */
     WINEDEV_THUNK      thunk[NR_DEVS];
     REQ_IO             req;
     BYTE               buffer[CON_BUFFER];
@@ -415,6 +416,29 @@ Output of DOS 6.22:
   DOS_LOL->size_extended_mem		= 0xf000; /* very high value */
 }
 
+void DOSDEV_SetupDevice(const WINEDEV * devinfo,
+			WORD seg, WORD off_dev, WORD off_thunk)
+{
+  DOS_DEVICE_HEADER *dev = PTR_REAL_TO_LIN(seg, off_dev);
+  WINEDEV_THUNK *thunk = PTR_REAL_TO_LIN(seg, off_thunk);
+  DOS_DATASEG *dataseg = (DOS_DATASEG*)DOSMEM_LOL();
+
+  dev->attr = devinfo->attr;
+  dev->strategy  = off_thunk + FIELD_OFFSET(WINEDEV_THUNK, ljmp1);
+  dev->interrupt = off_thunk + FIELD_OFFSET(WINEDEV_THUNK, ljmp2);
+  memcpy(dev->name, devinfo->name, 8);
+
+  thunk->ljmp1     = LJMP;
+  thunk->strategy  = DPMI_AllocInternalRMCB(devinfo->strategy);
+  thunk->ljmp2     = LJMP;
+  thunk->interrupt = DPMI_AllocInternalRMCB(devinfo->interrupt);
+
+  dev->next_dev = NONEXT;
+  if (dataseg->last_dev)
+      dataseg->last_dev->next_dev = MAKESEGPTR(seg, off_dev);
+  dataseg->last_dev = dev;
+}
+
 void DOSDEV_InstallDOSDevices(void)
 {
   DOS_DATASEG *dataseg;
@@ -435,31 +459,18 @@ void DOSDEV_InstallDOSDevices(void)
   InitListOfLists(&dataseg->lol);
 
   /* Set up first device (NUL) */
-  dataseg->lol.NUL_dev.next_dev  = MAKESEGPTR(seg, DOS_DATASEG_OFF(dev[0]));
-  dataseg->lol.NUL_dev.attr      = devs[0].attr;
-  dataseg->lol.NUL_dev.strategy  = DOS_DATASEG_OFF(thunk[0].ljmp1);
-  dataseg->lol.NUL_dev.interrupt = DOS_DATASEG_OFF(thunk[0].ljmp2);
-  memcpy(dataseg->lol.NUL_dev.name, devs[0].name, 8);
+  dataseg->last_dev = NULL;
+  DOSDEV_SetupDevice( &devs[0],
+		      seg,
+		      DOS_DATASEG_OFF(lol.NUL_dev),
+		      DOS_DATASEG_OFF(thunk[0]) );
 
   /* Set up the remaining devices */
   for (n = 1; n < NR_DEVS; n++)
-  {
-    dataseg->dev[n-1].next_dev  = (n+1) == NR_DEVS ? NONEXT :
-                                  MAKESEGPTR(seg, DOS_DATASEG_OFF(dev[n]));
-    dataseg->dev[n-1].attr      = devs[n].attr;
-    dataseg->dev[n-1].strategy  = DOS_DATASEG_OFF(thunk[n].ljmp1);
-    dataseg->dev[n-1].interrupt = DOS_DATASEG_OFF(thunk[n].ljmp2);
-    memcpy(dataseg->dev[n-1].name, devs[n].name, 8);
-  }
-
-  /* Set up thunks */
-  for (n = 0; n < NR_DEVS; n++)
-  {
-    dataseg->thunk[n].ljmp1     = LJMP;
-    dataseg->thunk[n].strategy  = DPMI_AllocInternalRMCB(devs[n].strategy);
-    dataseg->thunk[n].ljmp2     = LJMP;
-    dataseg->thunk[n].interrupt = DPMI_AllocInternalRMCB(devs[n].interrupt);
-  }
+    DOSDEV_SetupDevice( &devs[n],
+			seg,
+			DOS_DATASEG_OFF(dev[n-1]),
+			DOS_DATASEG_OFF(thunk[n]) );
 
   /* CON is device 1 */
   dataseg->lol.ptr_CON_dev_hdr = MAKESEGPTR(seg, DOS_DATASEG_OFF(dev[0]));

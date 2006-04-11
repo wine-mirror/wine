@@ -366,6 +366,8 @@ extern UINT WINAPI DOSVM_GetTimer( void );
 
 /* devices.c */
 extern void DOSDEV_InstallDOSDevices(void);
+extern void DOSDEV_SetupDevice(const WINEDEV * devinfo,
+                               WORD seg, WORD off_dev, WORD off_thunk);
 extern DWORD DOSDEV_Console(void);
 extern DWORD DOSDEV_FindCharDevice(char*name);
 extern int DOSDEV_Peek(DWORD dev, BYTE*data);
