@@ -462,7 +462,7 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVert
     /* The Incredibles and Teenage Mutant Ninja Turtles require this in d3d9 for NumElements == 0,
     TODO: this needs to be tested against windows */
     if(*pSizeOfData == 0) {
-        TRACE("(%p) : Requested the vertex declaration without specefying the size of the return buffer\n", This);
+        TRACE("(%p) : Requested the vertex declaration without specifying the size of the return buffer\n", This);
         *pSizeOfData = This->declaration8Length;
         memcpy(pData, This->pDeclaration8, This->declaration8Length);
         return WINED3D_OK;
@@ -510,7 +510,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclar
         hr = IWineD3DVertexDeclarationImpl_GetDeclaration9(iface, (D3DVERTEXELEMENT9 *)pData, pSize);
     break;
     default:
-        FIXME("(%p)  : Unsupport DirectX version %u\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
+        FIXME("(%p)  : Unsupported DirectX version %u\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
     break;
     }
     return hr;
@@ -523,15 +523,15 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVertexDeclar
     TRACE("(%p) : d3d version %d\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
     switch (((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion) {
     case 8:
-        TRACE("Parsing declatation 8\n");
+        TRACE("Parsing declaration 8\n");
         hr = IWineD3DVertexDeclarationImpl_ParseDeclaration8(iface, (CONST DWORD *)pDecl);
     break;
     case 9:
-        FIXME("Parsing declatation 9\n");
+        TRACE("Parsing declaration 9\n");
         hr = IWineD3DVertexDeclarationImpl_ParseDeclaration9(iface, (CONST D3DVERTEXELEMENT9 *)pDecl);
     break;
     default:
-        FIXME("(%p)  : Unsupport DirectX version %u\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
+        FIXME("(%p)  : Unsupported DirectX version %u\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
     break;
     }
     TRACE("Returning\n");
