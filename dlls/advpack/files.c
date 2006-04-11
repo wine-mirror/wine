@@ -191,8 +191,8 @@ UINT CALLBACK pQueueCallback(PVOID Context, UINT Notification,
  * See AdvInstallFileW.
  */
 HRESULT WINAPI AdvInstallFileA(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourceFile,
-                              LPCSTR lpszDestDir, LPCSTR lpszDestFile,
-                              DWORD dwFlags, DWORD dwReserved)
+                               LPCSTR lpszDestDir, LPCSTR lpszDestFile,
+                               DWORD dwFlags, DWORD dwReserved)
 {
     UNICODE_STRING sourcedir, sourcefile;
     UNICODE_STRING destdir, destfile;
@@ -396,7 +396,7 @@ static HRESULT DELNODE_recurse_dirtree(LPWSTR fname, DWORD flags)
  *
  * See DelNodeW.
  */
-HRESULT WINAPI DelNodeA( LPCSTR pszFileOrDirName, DWORD dwFlags )
+HRESULT WINAPI DelNodeA(LPCSTR pszFileOrDirName, DWORD dwFlags)
 {
     UNICODE_STRING fileordirname;
     HRESULT res;
@@ -430,7 +430,7 @@ HRESULT WINAPI DelNodeA( LPCSTR pszFileOrDirName, DWORD dwFlags )
  *   - Native version apparently does a lot of checking to make sure
  *     we're not trying to delete a system directory etc.
  */
-HRESULT WINAPI DelNodeW( LPCWSTR pszFileOrDirName, DWORD dwFlags )
+HRESULT WINAPI DelNodeW(LPCWSTR pszFileOrDirName, DWORD dwFlags)
 {
     WCHAR fname[MAX_PATH];
     HRESULT ret = E_FAIL;
@@ -705,8 +705,8 @@ static DWORD fill_file_list(EXTRACTdest *extractDest, LPCSTR szCabName, LPSTR sz
  *   spaces, tabs, or colons can be before or after the list, but
  *   the list itself must only be separated by colons.
  */
-HRESULT WINAPI ExtractFilesA( LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
-                              LPCSTR FileList, LPVOID LReserved, DWORD Reserved)
+HRESULT WINAPI ExtractFilesA(LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
+                             LPCSTR FileList, LPVOID LReserved, DWORD Reserved)
 {   
     EXTRACTdest extractDest;
     HMODULE hCabinet;

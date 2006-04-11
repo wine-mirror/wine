@@ -162,7 +162,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  * RETURNS
  *   TRUE if user has admin rights, FALSE otherwise.
  */
-BOOL WINAPI IsNTAdmin( DWORD reserved, LPDWORD pReserved )
+BOOL WINAPI IsNTAdmin(DWORD reserved, LPDWORD pReserved)
 {
     SID_IDENTIFIER_AUTHORITY SidAuthority = {SECURITY_NT_AUTHORITY};
     PTOKEN_GROUPS pTokenGroups;
@@ -384,7 +384,7 @@ HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
 /***********************************************************************
  *             RegisterOCX    (ADVPACK.@)
  */
-void WINAPI RegisterOCX( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
+void WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
 {
     WCHAR wszBuff[MAX_PATH];
     WCHAR* pwcComma;

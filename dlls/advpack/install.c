@@ -304,7 +304,7 @@ static HRESULT launch_exe(LPCWSTR cmd, LPCWSTR dir, HANDLE *phEXE)
 HRESULT WINAPI RunSetupCommandA(HWND hWnd, LPCSTR szCmdName,
                                 LPCSTR szInfSection, LPCSTR szDir,
                                 LPCSTR lpszTitle, HANDLE *phEXE,
-                                DWORD dwFlags, LPVOID pvReserved )
+                                DWORD dwFlags, LPVOID pvReserved)
 {
     UNICODE_STRING cmdname, infsec;
     UNICODE_STRING dir, title;
@@ -365,7 +365,7 @@ HRESULT WINAPI RunSetupCommandA(HWND hWnd, LPCSTR szCmdName,
 HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
                                 LPCWSTR szInfSection, LPCWSTR szDir,
                                 LPCWSTR lpszTitle, HANDLE *phEXE,
-                                DWORD dwFlags, LPVOID pvReserved )
+                                DWORD dwFlags, LPVOID pvReserved)
 {
     HINF hinf;
 
