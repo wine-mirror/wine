@@ -2673,6 +2673,9 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
 
     ret = GetCharacterPlacementW(hdc, lpStringW, uCountW, nMaxExtent, &resultsW, dwFlags);
 
+    lpResults->nGlyphs = resultsW.nGlyphs;
+    lpResults->nMaxFit = resultsW.nMaxFit;
+
     if(lpResults->lpOutString) {
         WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
                             lpResults->lpOutString, uCount, NULL, NULL );
