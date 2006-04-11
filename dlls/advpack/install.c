@@ -74,6 +74,40 @@ static BOOL is_full_path(LPWSTR path)
     return FALSE;
 }
 
+/* performs a setupapi-level install of the INF file */
+static HRESULT spapi_install(HINF hinf, LPCWSTR install_sec, LPCWSTR source_path)
+{
+    BOOL ret;
+    HRESULT res;
+    PVOID context;
+
+    context = SetupInitDefaultQueueCallbackEx(NULL, INVALID_HANDLE_VALUE, 0, 0, NULL);
+    if (!context)
+        return ADV_HRESULT(GetLastError());
+
+    ret = SetupInstallFromInfSectionW(NULL, hinf, install_sec, SPINST_FILES,
+                                      NULL, source_path, SP_COPY_NEWER,
+                                      NULL, context, NULL, NULL);
+    if (!ret)
+    {
+        res = ADV_HRESULT(GetLastError());
+        SetupTermDefaultQueueCallback(context);
+
+        return res;
+    }
+
+    SetupTermDefaultQueueCallback(context);
+
+    ret = SetupInstallFromInfSectionW(NULL, hinf, install_sec,
+                                      SPINST_INIFILES | SPINST_REGISTRY,
+                                      HKEY_LOCAL_MACHINE, NULL, 0,
+                                      NULL, NULL, NULL, NULL);
+    if (!ret)
+        return ADV_HRESULT(GetLastError());
+
+    return S_OK;
+}
+
 /* this structure very closely resembles parameters of RunSetupCommand() */
 typedef struct
 {
@@ -438,6 +472,7 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
                                 DWORD dwFlags, LPVOID pvReserved)
 {
     HINF hinf;
+    HRESULT hr;
 
     TRACE("(%p, %s, %s, %s, %s, %p, %ld, %p)\n",
           hWnd, debugstr_w(szCmdName), debugstr_w(szInfSection),
@@ -457,6 +492,8 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
     if (hinf == INVALID_HANDLE_VALUE)
         return ADV_HRESULT(GetLastError());
 
+    hr = spapi_install(hinf, szInfSection, szDir);
+
     SetupCloseInfFile(hinf);
-    return E_UNEXPECTED;
+    return hr;
 }
