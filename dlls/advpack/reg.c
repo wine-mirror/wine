@@ -260,7 +260,7 @@ HRESULT WINAPI RegRestoreAllA(HWND hWnd, LPSTR pszTitleString, HKEY hkBackupKey)
     UNICODE_STRING title;
     HRESULT hr;
 
-    TRACE("(%p, %s, %p)\n", hWnd, pszTitleString, hkBackupKey);
+    TRACE("(%p, %s, %p)\n", hWnd, debugstr_a(pszTitleString), hkBackupKey);
 
     RtlCreateUnicodeStringFromAsciiz(&title, pszTitleString);
 
@@ -307,8 +307,9 @@ HRESULT WINAPI RegSaveRestoreA(HWND hWnd, LPCSTR pszTitleString, HKEY hkBackupKe
     UNICODE_STRING title, root, subkey, value;
     HRESULT hr;
 
-    TRACE("(%p, %p, %p, %p, %p, %p, %ld)\n", hWnd, pszTitleString,
-          hkBackupKey, pcszRootKey, pcszSubKey, pcszValueName, dwFlags);
+    TRACE("(%p, %s, %p, %s, %s, %s, %ld)\n", hWnd, debugstr_a(pszTitleString),
+          hkBackupKey, debugstr_a(pcszRootKey), debugstr_a(pcszSubKey),
+          debugstr_a(pcszValueName), dwFlags);
 
     RtlCreateUnicodeStringFromAsciiz(&title, pszTitleString);
     RtlCreateUnicodeStringFromAsciiz(&root, pcszRootKey);
@@ -351,8 +352,9 @@ HRESULT WINAPI RegSaveRestoreW(HWND hWnd, LPCWSTR pszTitleString, HKEY hkBackupK
                                LPCWSTR pcszRootKey, LPCWSTR pcszSubKey,
                                LPCWSTR pcszValueName, DWORD dwFlags)
 {
-    FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitleString,
-          hkBackupKey, pcszRootKey, pcszSubKey, pcszValueName, dwFlags);
+    FIXME("(%p, %s, %p, %s, %s, %s, %ld): stub\n", hWnd, debugstr_w(pszTitleString),
+          hkBackupKey, debugstr_w(pcszRootKey), debugstr_w(pcszSubKey),
+          debugstr_w(pcszValueName), dwFlags);
 
     return E_FAIL;   
 }
@@ -369,8 +371,9 @@ HRESULT WINAPI RegSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
     UNICODE_STRING title, inf, section;
     HRESULT hr;
 
-    TRACE("(%p, %p, %p, %p, %p, %p, %ld)\n", hWnd, pszTitle, pszINF,
-          pszSection, hHKLMBackKey, hHKCUBackKey, dwFlags);
+    TRACE("(%p, %s, %s, %s, %p, %p, %ld)\n", hWnd, debugstr_a(pszTitle),
+          debugstr_a(pszINF), debugstr_a(pszSection),
+          hHKLMBackKey, hHKCUBackKey, dwFlags);
 
     RtlCreateUnicodeStringFromAsciiz(&title, pszTitle);
     RtlCreateUnicodeStringFromAsciiz(&inf, pszINF);
@@ -411,8 +414,9 @@ HRESULT WINAPI RegSaveRestoreOnINFW(HWND hWnd, LPCWSTR pszTitle, LPCWSTR pszINF,
                                     LPCWSTR pszSection, HKEY hHKLMBackKey,
                                     HKEY hHKCUBackKey, DWORD dwFlags)
 {
-    FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, pszTitle, pszINF,
-          pszSection, hHKLMBackKey, hHKCUBackKey, dwFlags);
+    FIXME("(%p, %s, %s, %s, %p, %p, %ld): stub\n", hWnd, debugstr_w(pszTitle),
+          debugstr_w(pszINF), debugstr_w(pszSection),
+          hHKLMBackKey, hHKCUBackKey, dwFlags);
 
     return E_FAIL;   
 }

@@ -142,7 +142,7 @@ HRESULT WINAPI CloseINFEngine(HINF hInf)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("(%p, %ld, %p)\n",hinstDLL, fdwReason, lpvReserved);
+    TRACE("(%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     if (fdwReason == DLL_PROCESS_ATTACH)
         DisableThreadLibraryCalls(hinstDLL);
@@ -171,7 +171,7 @@ BOOL WINAPI IsNTAdmin(DWORD reserved, LPDWORD pReserved)
     HANDLE hToken;
     PSID pSid;
 
-    TRACE("(0x%08lx, %p)\n", reserved, pReserved);
+    TRACE("(%ld, %p)\n", reserved, pReserved);
 
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
         return FALSE;
@@ -233,7 +233,7 @@ BOOL WINAPI IsNTAdmin(DWORD reserved, LPDWORD pReserved)
  */
 DWORD WINAPI NeedRebootInit(VOID)
 {
-    FIXME("(): stub\n");
+    FIXME("(VOID): stub\n");
     return 0;
 }
 
@@ -253,7 +253,7 @@ DWORD WINAPI NeedRebootInit(VOID)
  */
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
 {
-    FIXME("(0x%08lx): stub\n", dwRebootCheck);
+    FIXME("(%ld): stub\n", dwRebootCheck);
     return FALSE;
 }
 
@@ -268,8 +268,8 @@ HRESULT WINAPI OpenINFEngineA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
     UNICODE_STRING filenameW, installW;
     HRESULT res;
 
-    TRACE("(%p, %p, %ld, %p, %p)\n", pszInfFilename, pszInstallSection,
-          dwFlags, phInf, pvReserved);
+    TRACE("(%s, %s, %ld, %p, %p)\n", debugstr_a(pszInfFilename),
+          debugstr_a(pszInstallSection), dwFlags, phInf, pvReserved);
 
     if (!pszInfFilename || !phInf)
         return E_INVALIDARG;
@@ -306,7 +306,7 @@ HRESULT WINAPI OpenINFEngineA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
 HRESULT WINAPI OpenINFEngineW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSection,
                               DWORD dwFlags, HINF *phInf, PVOID pvReserved)
 {
-    TRACE("(%p, %p, %ld, %p, %p)\n", debugstr_w(pszInfFilename),
+    TRACE("(%s, %s, %ld, %p, %p)\n", debugstr_w(pszInfFilename),
           debugstr_w(pszInstallSection), dwFlags, phInf, pvReserved);
 
     if (!pszInfFilename || !phInf)
@@ -375,7 +375,7 @@ HRESULT WINAPI RebootCheckOnInstallA(HWND hWnd, LPCSTR pszINF,
 HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
                                      LPWSTR pszSec, DWORD dwReserved)
 {
-    FIXME("(%p, %s, %s, %ld) stub\n", hWnd, debugstr_w(pszINF),
+    FIXME("(%p, %s, %s, %ld): stub\n", hWnd, debugstr_w(pszINF),
           debugstr_w(pszSec), dwReserved);
 
     return E_FAIL;
@@ -392,7 +392,7 @@ void WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
     DLLREGISTER pfnRegister;
     HRESULT hr;
 
-    TRACE("(%s)\n", cmdline);
+    TRACE("(%s)\n", debugstr_a(cmdline));
 
     MultiByteToWideChar(CP_ACP, 0, cmdline, strlen(cmdline), wszBuff, MAX_PATH);
     if ((pwcComma = strchrW( wszBuff, ',' ))) *pwcComma = 0;
@@ -560,7 +560,7 @@ HRESULT WINAPI TranslateInfStringA(LPCSTR pszInfFilename, LPCSTR pszInstallSecti
     HRESULT res;
     DWORD len = 0;
 
-    TRACE("(%s %s %s %s %p %ld %p %p)\n",
+    TRACE("(%s, %s, %s, %s, %p, %ld, %p, %p)\n",
           debugstr_a(pszInfFilename), debugstr_a(pszInstallSection),
           debugstr_a(pszTranslateSection), debugstr_a(pszTranslateKey),
           pszBuffer, dwBufferSize,pdwRequiredSize, pvReserved);
@@ -636,7 +636,7 @@ HRESULT WINAPI TranslateInfStringW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSec
 {
     HINF hInf;
 
-    TRACE("(%s %s %s %s %p %ld %p %p)\n",
+    TRACE("(%s, %s, %s, %s, %p, %ld, %p, %p)\n",
           debugstr_w(pszInfFilename), debugstr_w(pszInstallSection),
           debugstr_w(pszTranslateSection), debugstr_w(pszTranslateKey),
           pszBuffer, dwBufferSize,pdwRequiredSize, pvReserved);
@@ -679,7 +679,7 @@ HRESULT WINAPI TranslateInfStringExA(HINF hInf, LPCSTR pszInfFilename,
     HRESULT res;
     DWORD len = 0;
 
-    TRACE("(%p, %p, %p, %p, %p, %ld, %p, %p)\n", hInf, debugstr_a(pszInfFilename),
+    TRACE("(%p, %s, %s, %s, %s, %ld, %p, %p)\n", hInf, debugstr_a(pszInfFilename),
           debugstr_a(pszTranslateSection), debugstr_a(pszTranslateKey),
           debugstr_a(pszBuffer), dwBufferSize, pdwRequiredSize, pvReserved);
 
@@ -759,7 +759,7 @@ HRESULT WINAPI TranslateInfStringExW(HINF hInf, LPCWSTR pszInfFilename,
                                      LPWSTR pszBuffer, DWORD dwBufferSize,
                                      PDWORD pdwRequiredSize, PVOID pvReserved)
 {
-    TRACE("(%p, %p, %p, %p, %p, %ld, %p, %p)\n", hInf, debugstr_w(pszInfFilename),
+    TRACE("(%p, %s, %s, %s, %s, %ld, %p, %p)\n", hInf, debugstr_w(pszInfFilename),
           debugstr_w(pszTranslateSection), debugstr_w(pszTranslateKey),
           debugstr_w(pszBuffer), dwBufferSize, pdwRequiredSize, pvReserved);
 
@@ -789,7 +789,7 @@ HRESULT WINAPI UserInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
     UNICODE_STRING parmsW;
     HRESULT res;
 
-    TRACE("(%p, %p, %p, %i)\n", hWnd, hInstance, pszParms, nShow);
+    TRACE("(%p, %p, %s, %i)\n", hWnd, hInstance, debugstr_a(pszParms), nShow);
 
     if (!pszParms)
         return E_INVALIDARG;
@@ -809,7 +809,7 @@ HRESULT WINAPI UserInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
 HRESULT WINAPI UserInstStubWrapperW(HWND hWnd, HINSTANCE hInstance,
                                     LPWSTR pszParms, INT nShow)
 {
-    FIXME("(%p, %p, %p, %i) stub\n", hWnd, hInstance, pszParms, nShow);
+    FIXME("(%p, %p, %s, %i): stub\n", hWnd, hInstance, debugstr_w(pszParms), nShow);
 
     return E_FAIL;
 }
@@ -825,7 +825,7 @@ HRESULT WINAPI UserUnInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
     UNICODE_STRING parmsW;
     HRESULT res;
 
-    TRACE("(%p, %p, %p, %i)\n", hWnd, hInstance, pszParms, nShow);
+    TRACE("(%p, %p, %s, %i)\n", hWnd, hInstance, debugstr_a(pszParms), nShow);
 
     if (!pszParms)
         return E_INVALIDARG;
@@ -845,7 +845,7 @@ HRESULT WINAPI UserUnInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
 HRESULT WINAPI UserUnInstStubWrapperW(HWND hWnd, HINSTANCE hInstance,
                                       LPWSTR pszParms, INT nShow)
 {
-    FIXME("(%p, %p, %p, %i) stub\n", hWnd, hInstance, pszParms, nShow);
+    FIXME("(%p, %p, %s, %i): stub\n", hWnd, hInstance, debugstr_w(pszParms), nShow);
 
     return E_FAIL;
 }

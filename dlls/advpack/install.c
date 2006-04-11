@@ -69,7 +69,7 @@ HRESULT WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
     HINF hinf;
     void *callback_context;
 
-    TRACE("%p %s %s %s %s\n", setup->hwnd, debugstr_a(setup->title),
+    TRACE("%p, %s, %s, %s, %s\n", setup->hwnd, debugstr_a(setup->title),
           debugstr_a(setup->inf_name), debugstr_a(setup->dir),
           debugstr_a(setup->section_name));
 
@@ -151,7 +151,7 @@ HRESULT WINAPI ExecuteCabA(HWND hwnd, CABINFOA* pCab, LPVOID pReserved)
  */
 HRESULT WINAPI ExecuteCabW(HWND hwnd, CABINFOW* pCab, LPVOID pReserved)
 {
-    FIXME("(%p %p %p): stub\n", hwnd, pCab, pReserved);
+    FIXME("(%p, %p, %p): stub\n", hwnd, pCab, pReserved);
     return E_FAIL;
 }
 
@@ -165,7 +165,7 @@ INT WINAPI LaunchINFSectionA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show
     UNICODE_STRING cmd;
     HRESULT hr;
 
-    TRACE("(%p, %p, %s, %d)\n", hWnd, hInst, debugstr_a(cmdline), show);
+    TRACE("(%p, %p, %s, %i)\n", hWnd, hInst, debugstr_a(cmdline), show);
 
     RtlCreateUnicodeStringFromAsciiz(&cmd, cmdline);
 
@@ -205,7 +205,7 @@ INT WINAPI LaunchINFSectionA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show
  */
 INT WINAPI LaunchINFSectionW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, INT show)
 {
-    FIXME("(%p, %p, %s, %d): stub\n", hWnd, hInst, debugstr_w(cmdline), show);
+    FIXME("(%p, %p, %s, %i): stub\n", hWnd, hInst, debugstr_w(cmdline), show);
     return 0;
 }
 
@@ -219,7 +219,7 @@ HRESULT WINAPI LaunchINFSectionExA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, IN
     UNICODE_STRING cmd;
     HRESULT hr;
 
-    TRACE("(%p, %p, %s, %d): stub\n", hWnd, hInst, debugstr_a(cmdline), show);
+    TRACE("(%p, %p, %s, %i): stub\n", hWnd, hInst, debugstr_a(cmdline), show);
 
     RtlCreateUnicodeStringFromAsciiz(&cmd, cmdline);
 
@@ -259,7 +259,7 @@ HRESULT WINAPI LaunchINFSectionExA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, IN
  */
 HRESULT WINAPI LaunchINFSectionExW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, INT show)
 {
-    FIXME("(%p, %p, %s, %d): stub\n", hWnd, hInst, debugstr_w(cmdline), show );
+    FIXME("(%p, %p, %s, %i): stub\n", hWnd, hInst, debugstr_w(cmdline), show);
     return E_FAIL;
 }
 
@@ -310,10 +310,10 @@ HRESULT WINAPI RunSetupCommandA(HWND hWnd, LPCSTR szCmdName,
     UNICODE_STRING dir, title;
     HRESULT hr;
 
-    TRACE("(%p, %s, %s, %s, %s, %p, 0x%08lx, %p)\n",
-           hWnd, debugstr_a(szCmdName), debugstr_a(szInfSection),
-           debugstr_a(szDir), debugstr_a(lpszTitle),
-           phEXE, dwFlags, pvReserved);
+    TRACE("(%p, %s, %s, %s, %s, %p, %ld, %p)\n",
+          hWnd, debugstr_a(szCmdName), debugstr_a(szInfSection),
+          debugstr_a(szDir), debugstr_a(lpszTitle),
+          phEXE, dwFlags, pvReserved);
 
     if (!szCmdName || !szDir)
         return E_INVALIDARG;
@@ -369,10 +369,10 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
 {
     HINF hinf;
 
-    TRACE("(%p, %s, %s, %s, %s, %p, 0x%08lx, %p)\n",
-           hWnd, debugstr_w(szCmdName), debugstr_w(szInfSection),
-           debugstr_w(szDir), debugstr_w(lpszTitle),
-           phEXE, dwFlags, pvReserved);
+    TRACE("(%p, %s, %s, %s, %s, %p, %ld, %p)\n",
+          hWnd, debugstr_w(szCmdName), debugstr_w(szInfSection),
+          debugstr_w(szDir), debugstr_w(lpszTitle),
+          phEXE, dwFlags, pvReserved);
 
     if (dwFlags)
         FIXME("Unhandled flags: 0x%08lx\n", dwFlags);

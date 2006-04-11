@@ -61,8 +61,8 @@ HRESULT WINAPI AddDelBackupEntryA(LPCSTR lpcszFileList, LPCSTR lpcszBackupDir,
     LPWSTR filelist, backup;
     HRESULT res;
 
-    TRACE("(%p, %p, %p, %ld)\n", lpcszFileList, lpcszBackupDir,
-          lpcszBaseName, dwFlags);
+    TRACE("(%s, %s, %s, %ld)\n", debugstr_a(lpcszFileList),
+          debugstr_a(lpcszBackupDir), debugstr_a(lpcszBaseName), dwFlags);
 
     if (lpcszFileList)
         filelist = ansi_to_unicode_list(lpcszFileList);
@@ -125,8 +125,8 @@ HRESULT WINAPI AddDelBackupEntryW(LPCWSTR lpcszFileList, LPCWSTR lpcszBackupDir,
     static const WCHAR ini[] = {'.','i','n','i',0};
     static const WCHAR backup[] = {'b','a','c','k','u','p',0};
 
-    TRACE("(%p, %p, %p, %ld)\n", lpcszFileList, lpcszBackupDir,
-          lpcszBaseName, dwFlags);
+    TRACE("(%s, %s, %s, %ld)\n", debugstr_w(lpcszFileList),
+          debugstr_w(lpcszBackupDir), debugstr_w(lpcszBaseName), dwFlags);
 
     if (!lpcszFileList || !*lpcszFileList)
         return S_OK;
@@ -198,7 +198,7 @@ HRESULT WINAPI AdvInstallFileA(HWND hwnd, LPCSTR lpszSourceDir, LPCSTR lpszSourc
     UNICODE_STRING destdir, destfile;
     HRESULT res;
 
-    TRACE("(%p,%s,%s,%s,%s,%ld,%ld)\n", hwnd, debugstr_a(lpszSourceDir),
+    TRACE("(%p, %s, %s, %s, %s, %ld, %ld)\n", hwnd, debugstr_a(lpszSourceDir),
           debugstr_a(lpszSourceFile), debugstr_a(lpszDestDir),
           debugstr_a(lpszDestFile), dwFlags, dwReserved);
 
@@ -254,7 +254,7 @@ HRESULT WINAPI AdvInstallFileW(HWND hwnd, LPCWSTR lpszSourceDir, LPCWSTR lpszSou
     HSPFILEQ fileQueue;
     PVOID pContext;
 
-    TRACE("(%p,%s,%s,%s,%s,%ld,%ld)\n", hwnd, debugstr_w(lpszSourceDir),
+    TRACE("(%p, %s, %s, %s, %s, %ld, %ld)\n", hwnd, debugstr_w(lpszSourceDir),
           debugstr_w(lpszSourceFile), debugstr_w(lpszDestDir),
           debugstr_w(lpszDestFile), dwFlags, dwReserved);
 
@@ -401,7 +401,7 @@ HRESULT WINAPI DelNodeA(LPCSTR pszFileOrDirName, DWORD dwFlags)
     UNICODE_STRING fileordirname;
     HRESULT res;
 
-    TRACE("(%s, 0x%08lx)\n", debugstr_a(pszFileOrDirName), dwFlags);
+    TRACE("(%s, %ld)\n", debugstr_a(pszFileOrDirName), dwFlags);
 
     RtlCreateUnicodeStringFromAsciiz(&fileordirname, pszFileOrDirName);
 
@@ -435,7 +435,7 @@ HRESULT WINAPI DelNodeW(LPCWSTR pszFileOrDirName, DWORD dwFlags)
     WCHAR fname[MAX_PATH];
     HRESULT ret = E_FAIL;
     
-    TRACE("(%s, 0x%08lx)\n", debugstr_w(pszFileOrDirName), dwFlags);
+    TRACE("(%s, %ld)\n", debugstr_w(pszFileOrDirName), dwFlags);
     
     if (dwFlags)
         FIXME("Flags ignored!\n");
@@ -715,8 +715,8 @@ HRESULT WINAPI ExtractFilesA(LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
     DWORD dwFilesFound = 0;
     LPSTR szConvertedList = NULL;
 
-    TRACE("(%p %p %ld %p %p %ld)\n", CabName, ExpandDir, Flags,
-          FileList, LReserved, Reserved);
+    TRACE("(%s, %s, %ld, %s, %p, %ld)\n", debugstr_a(CabName), debugstr_a(ExpandDir),
+          Flags, debugstr_a(FileList), LReserved, Reserved);
 
     if (!CabName || !ExpandDir)
         return E_INVALIDARG;
@@ -774,7 +774,8 @@ done:
  */
 HRESULT WINAPI FileSaveMarkNotExistA(LPSTR pszFileList, LPSTR pszDir, LPSTR pszBaseName)
 {
-    TRACE("(%p, %p, %p)\n", pszFileList, pszDir, pszBaseName);
+    TRACE("(%s, %s, %s)\n", debugstr_a(pszFileList),
+          debugstr_a(pszDir), debugstr_a(pszBaseName));
 
     return AddDelBackupEntryA(pszFileList, pszDir, pszBaseName, AADBE_DEL_ENTRY);
 }
@@ -796,7 +797,8 @@ HRESULT WINAPI FileSaveMarkNotExistA(LPSTR pszFileList, LPSTR pszDir, LPSTR pszB
  */
 HRESULT WINAPI FileSaveMarkNotExistW(LPWSTR pszFileList, LPWSTR pszDir, LPWSTR pszBaseName)
 {
-    TRACE("(%p, %p, %p)\n", pszFileList, pszDir, pszBaseName);
+    TRACE("(%s, %s, %s)\n", debugstr_w(pszFileList),
+          debugstr_w(pszDir), debugstr_w(pszBaseName));
 
     return AddDelBackupEntryW(pszFileList, pszDir, pszBaseName, AADBE_DEL_ENTRY);
 }
@@ -812,8 +814,8 @@ HRESULT WINAPI FileSaveRestoreA(HWND hDlg, LPSTR pszFileList, LPSTR pszDir,
     UNICODE_STRING filelist, dir, basename;
     HRESULT hr;
 
-    TRACE("(%p, %s, %s, %s, %ld)\n", hDlg, pszFileList, pszDir,
-          pszBaseName, dwFlags);
+    TRACE("(%p, %s, %s, %s, %ld)\n", hDlg, debugstr_a(pszFileList),
+          debugstr_a(pszDir), debugstr_a(pszBaseName), dwFlags);
 
     RtlCreateUnicodeStringFromAsciiz(&filelist, pszFileList);
     RtlCreateUnicodeStringFromAsciiz(&dir, pszDir);
@@ -873,8 +875,9 @@ HRESULT WINAPI FileSaveRestoreOnINFA(HWND hWnd, LPCSTR pszTitle, LPCSTR pszINF,
     UNICODE_STRING backupdir, backupfile;
     HRESULT hr;
 
-    TRACE("(%p, %s, %s, %s, %s, %s, %ld) stub\n", hWnd, pszTitle, pszINF,
-          pszSection, pszBackupDir, pszBaseBackupFile, dwFlags);
+    TRACE("(%p, %s, %s, %s, %s, %s, %ld)\n", hWnd, debugstr_a(pszTitle),
+          debugstr_a(pszINF), debugstr_a(pszSection), debugstr_a(pszBackupDir),
+          debugstr_a(pszBaseBackupFile), dwFlags);
 
     RtlCreateUnicodeStringFromAsciiz(&title, pszTitle);
     RtlCreateUnicodeStringFromAsciiz(&inf, pszINF);
@@ -921,7 +924,7 @@ HRESULT WINAPI FileSaveRestoreOnINFW(HWND hWnd, LPCWSTR pszTitle, LPCWSTR pszINF
                                      LPCWSTR pszSection, LPCWSTR pszBackupDir,
                                      LPCWSTR pszBaseBackupFile, DWORD dwFlags)
 {
-    FIXME("(%p, %p, %p, %p, %p, %p, %ld) stub\n", hWnd, debugstr_w(pszTitle),
+    FIXME("(%p, %s, %s, %s, %s, %s, %ld): stub\n", hWnd, debugstr_w(pszTitle),
           debugstr_w(pszINF), debugstr_w(pszSection), debugstr_w(pszBackupDir),
           debugstr_w(pszBaseBackupFile), dwFlags);
 
@@ -936,7 +939,7 @@ HRESULT WINAPI FileSaveRestoreOnINFW(HWND hWnd, LPCWSTR pszTitle, LPCWSTR pszINF
 HRESULT WINAPI GetVersionFromFileA(LPCSTR Filename, LPDWORD MajorVer,
                                    LPDWORD MinorVer, BOOL Version )
 {
-    TRACE("(%s, %p, %p, %d)\n", Filename, MajorVer, MinorVer, Version);
+    TRACE("(%s, %p, %p, %d)\n", debugstr_a(Filename), MajorVer, MinorVer, Version);
     return GetVersionFromFileExA(Filename, MajorVer, MinorVer, Version);
 }
 
@@ -970,7 +973,8 @@ HRESULT WINAPI GetVersionFromFileExA(LPCSTR lpszFilename, LPDWORD pdwMSVer,
     UNICODE_STRING filename;
     HRESULT res;
 
-    TRACE("(%s, %p, %p, %d)\n", lpszFilename, pdwMSVer, pdwLSVer, bVersion);
+    TRACE("(%s, %p, %p, %d)\n", debugstr_a(lpszFilename),
+          pdwMSVer, pdwLSVer, bVersion);
 
     RtlCreateUnicodeStringFromAsciiz(&filename, lpszFilename);
 
