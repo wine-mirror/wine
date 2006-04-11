@@ -136,8 +136,26 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   new_para->member.para.nFirstMargin = run_para->member.para.nFirstMargin;
 
   new_para->member.para.bTable = run_para->member.para.bTable;
+  
+  /* Inherit previous cell definitions if any */
   new_para->member.para.pCells = NULL;
+  if (run_para->member.para.pCells)
+  {
+    ME_TableCell *pCell, *pNewCell;
 
+    for (pCell = run_para->member.para.pCells; pCell; pCell = pCell->next)
+    {
+      pNewCell = ALLOC_OBJ(ME_TableCell);
+      pNewCell->nRightBoundary = pCell->nRightBoundary;
+      pNewCell->next = NULL;
+      if (new_para->member.para.pCells)
+        new_para->member.para.pLastCell->next = pNewCell;
+      else
+        new_para->member.para.pCells = pNewCell;
+      new_para->member.para.pLastCell = pNewCell;
+    }
+  }
+    
   /* fix paragraph properties. FIXME only needed when called from RTF reader */
   if (run_para->member.para.pCells && !run_para->member.para.bTable)
   {

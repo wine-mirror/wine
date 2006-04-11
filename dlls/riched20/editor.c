@@ -488,6 +488,9 @@ static void ME_RTFTblAttrHook(RTF_Info *info)
       RTFFlushOutputBuffer(info);
       para = ME_GetParagraph(info->editor->pCursors[0].pRun);
       
+      /* Release possibly inherited cell definitions */
+      ME_DestroyTableCellList(para);
+      
       para->member.para.pCells = ALLOC_OBJ(ME_TableCell);
       para->member.para.pCells->nRightBoundary = 0;
       para->member.para.pCells->next = NULL;
