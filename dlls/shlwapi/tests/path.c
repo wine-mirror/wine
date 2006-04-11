@@ -849,7 +849,7 @@ static void test_PathMatchSpec(void)
     ok (PathMatchSpecA(file, spec1) == FALSE, "PathMatchSpec: Spec1 failed\n");
     ok (PathMatchSpecA(file, spec2) == TRUE, "PathMatchSpec: Spec2 failed\n");
     ok (PathMatchSpecA(file, spec3) == FALSE, "PathMatchSpec: Spec3 failed\n");
-    todo_wine ok (PathMatchSpecA(file, spec4) == TRUE, "PathMatchSpec: Spec4 failed\n");
+    ok (PathMatchSpecA(file, spec4) == TRUE, "PathMatchSpec: Spec4 failed\n");
     todo_wine ok (PathMatchSpecA(file, spec5) == TRUE, "PathMatchSpec: Spec5 failed\n");
     todo_wine ok (PathMatchSpecA(file, spec6) == TRUE, "PathMatchSpec: Spec6 failed\n");
     ok (PathMatchSpecA(file, spec7) == FALSE, "PathMatchSpec: Spec7 failed\n");

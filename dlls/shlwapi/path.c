@@ -1869,18 +1869,17 @@ BOOL WINAPI PathMatchSpecA(LPCSTR lpszPath, LPCSTR lpszMask)
 
   while (*lpszMask)
   {
+    while (*lpszMask == ' ')
+      lpszMask++; /* Eat leading spaces */
+
     if (PathMatchSingleMaskA(lpszPath, lpszMask))
       return TRUE; /* Matches the current mask */
 
     while (*lpszMask && *lpszMask != ';')
-      lpszMask = CharNextA(lpszMask);
+      lpszMask = CharNextA(lpszMask); /* masks separated by ';' */
 
     if (*lpszMask == ';')
-    {
       lpszMask++;
-      while (*lpszMask == ' ')
-        lpszMask++; /*  masks may be separated by "; " */
-    }
   }
   return FALSE;
 }
@@ -1901,18 +1900,17 @@ BOOL WINAPI PathMatchSpecW(LPCWSTR lpszPath, LPCWSTR lpszMask)
 
   while (*lpszMask)
   {
+    while (*lpszMask == ' ')
+      lpszMask++; /* Eat leading spaces */
+
     if (PathMatchSingleMaskW(lpszPath, lpszMask))
       return TRUE; /* Matches the current path */
 
     while (*lpszMask && *lpszMask != ';')
-      lpszMask++;
+      lpszMask++; /* masks separated by ';' */
 
     if (*lpszMask == ';')
-    {
       lpszMask++;
-      while (*lpszMask == ' ')
-        lpszMask++; /* Masks may be separated by "; " */
-    }
   }
   return FALSE;
 }
