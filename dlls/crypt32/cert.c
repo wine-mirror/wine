@@ -737,8 +737,8 @@ static void CertContext_SetKeyProvInfo(PCCERT_CONTEXT context,
 
             if (szContainer)
             {
-                ret = CryptGetProvParam(hProv, PP_CONTAINER, (BYTE *)szContainer,
-                                        &size, 0);
+                ret = CryptGetProvParam(hProv, PP_CONTAINER,
+                 (BYTE *)szContainer, &size, 0);
                 if (ret)
                 {
                     len = MultiByteToWideChar(CP_ACP, 0, szContainer, -1,
@@ -761,7 +761,8 @@ static void CertContext_SetKeyProvInfo(PCCERT_CONTEXT context,
 
             if (szProvider)
             {
-                ret = CryptGetProvParam(hProv, PP_NAME, (BYTE *)szProvider, &size, 0);
+                ret = CryptGetProvParam(hProv, PP_NAME, (BYTE *)szProvider,
+                 &size, 0);
                 if (ret)
                 {
                     len = MultiByteToWideChar(CP_ACP, 0, szProvider, -1,
@@ -889,7 +890,7 @@ static void CRYPT_MakeCertInfo(PCERT_INFO info,
     else
         GetSystemTimeAsFileTime(&info->NotBefore);
     if (pEndTime)
-        SystemTimeToFileTime(pStartTime, &info->NotBefore);
+        SystemTimeToFileTime(pStartTime, &info->NotAfter);
     else
     {
         SYSTEMTIME endTime;
