@@ -158,7 +158,8 @@ static UINT ACTION_AppSearchGetSignature(MSIPACKAGE *package, MSISIGNATURE *sig,
         TRACE("Languages is %s\n", debugstr_w(sig->Languages));
 
 end:
-        msiobj_release(&row->hdr);
+        if (row)
+            msiobj_release(&row->hdr);
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
     }
@@ -220,7 +221,8 @@ static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, BOOL *appFound,
          debugstr_w(guid));
 
 end:
-        msiobj_release(&row->hdr);
+        if (row)
+            msiobj_release(&row->hdr);
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
     }
@@ -393,7 +395,8 @@ end:
         msi_free( keyPath);
         msi_free( valueName);
 
-        msiobj_release(&row->hdr);
+        if (row)
+            msiobj_release(&row->hdr);
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
     }
@@ -448,7 +451,8 @@ static UINT ACTION_AppSearchIni(MSIPACKAGE *package, BOOL *appFound,
         msi_free( fileName);
 
 end:
-        msiobj_release(&row->hdr);
+        if (row)
+            msiobj_release(&row->hdr);
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
     }
@@ -872,7 +876,8 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, MSISIGNATURE *sig)
         rc = ACTION_SearchDirectory(package, sig, expanded, depth);
 
 end:
-        msiobj_release(&row->hdr);
+        if (row)
+            msiobj_release(&row->hdr);
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
     }
