@@ -1676,9 +1676,14 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
 {
     INT wlen;
     UINT codepage;
-    LPWSTR p = FONT_mbtowc(hdc, str, count, &wlen, &codepage);
+    LPWSTR p;
     BOOL ret;
     LPINT lpDxW = NULL;
+
+    if (flags & ETO_GLYPH_INDEX)
+        return ExtTextOutW( hdc, x, y, flags, lprect, (LPCWSTR)str, count, lpDx );
+
+    p = FONT_mbtowc(hdc, str, count, &wlen, &codepage);
 
     if (lpDx) {
         unsigned int i = 0, j = 0;
