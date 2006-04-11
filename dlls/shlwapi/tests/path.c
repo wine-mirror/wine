@@ -829,6 +829,39 @@ static void test_PathMakePretty(void)
    ok (strcmp(buff, "Test") == 0,  "PathMakePretty: 1st char lowercased %s\n", buff);
 }
 
+static void test_PathMatchSpec(void)
+{
+    static const char file[] = "c:\\foo\\bar\\filename.ext";
+    static const char spec1[] = ".ext";
+    static const char spec2[] = "*.ext";
+    static const char spec3[] = "*.ext ";
+    static const char spec4[] = "  *.ext";
+    static const char spec5[] = "* .ext";
+    static const char spec6[] = "*. ext";
+    static const char spec7[] = "* . ext";
+    static const char spec8[] = "*.e?t";
+    static const char spec9[] = "filename.ext";
+    static const char spec10[] = "*bar\\filename.ext";
+    static const char spec11[] = " foo; *.ext";
+    static const char spec12[] = "*.ext;*.bar";
+    static const char spec13[] = "*bar*";
+
+    ok (PathMatchSpecA(file, spec1) == FALSE, "PathMatchSpec: Spec1 failed\n");
+    ok (PathMatchSpecA(file, spec2) == TRUE, "PathMatchSpec: Spec2 failed\n");
+    ok (PathMatchSpecA(file, spec3) == FALSE, "PathMatchSpec: Spec3 failed\n");
+    todo_wine ok (PathMatchSpecA(file, spec4) == TRUE, "PathMatchSpec: Spec4 failed\n");
+    todo_wine ok (PathMatchSpecA(file, spec5) == TRUE, "PathMatchSpec: Spec5 failed\n");
+    todo_wine ok (PathMatchSpecA(file, spec6) == TRUE, "PathMatchSpec: Spec6 failed\n");
+    ok (PathMatchSpecA(file, spec7) == FALSE, "PathMatchSpec: Spec7 failed\n");
+    ok (PathMatchSpecA(file, spec8) == TRUE, "PathMatchSpec: Spec8 failed\n");
+    ok (PathMatchSpecA(file, spec9) == FALSE, "PathMatchSpec: Spec9 failed\n");
+    ok (PathMatchSpecA(file, spec10) == TRUE, "PathMatchSpec: Spec10 failed\n");
+    ok (PathMatchSpecA(file, spec11) == TRUE, "PathMatchSpec: Spec11 failed\n");
+    ok (PathMatchSpecA(file, spec12) == TRUE, "PathMatchSpec: Spec12 failed\n");
+    ok (PathMatchSpecA(file, spec13) == TRUE, "PathMatchSpec: Spec13 failed\n");
+}
+
+
 START_TEST(path)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
@@ -846,8 +879,9 @@ START_TEST(path)
   test_PathSearchAndQualify();
   test_PathCreateFromUrl();
   test_PathIsUrl();
-  
+
   test_PathMakePretty();
+  test_PathMatchSpec();
 
   /* For whatever reason, PathIsValidCharA and PathAppendA share the same
    * ordinal number in some native versions. Check this to prevent a crash.
