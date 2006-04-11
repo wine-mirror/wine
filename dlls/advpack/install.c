@@ -367,7 +367,7 @@ done:
     return hr;
 }
 
-static HRESULT launch_exe(LPCWSTR cmd, LPCWSTR dir, HANDLE *phEXE)
+HRESULT launch_exe(LPCWSTR cmd, LPCWSTR dir, HANDLE *phEXE)
 {
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;

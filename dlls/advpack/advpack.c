@@ -40,6 +40,17 @@ typedef HRESULT (WINAPI *DLLREGISTER) (void);
 #define MAX_FIELD_LENGTH    512
 #define PREFIX_LEN          5
 
+HRESULT launch_exe(LPCWSTR cmd, LPCWSTR dir, HANDLE *phEXE);
+
+/* registry path of the Installed Components key for per-user stubs */
+static const WCHAR setup_key[] = {
+    'S','O','F','T','W','A','R','E','\\',
+    'M','i','c','r','o','s','o','f','t','\\',
+    'A','c','t','i','v','e',' ','S','e','t','u','p','\\',
+    'I','n','s','t','a','l','l','e','d',' ',
+    'C','o','m','p','o','n','e','n','t','s',0
+};
+
 /* parses the destination directory parameters from pszSection
  * the parameters are of the form: root,key,value,unknown,fallback
  * we first read the reg value root\\key\\value and if that fails,
@@ -474,14 +485,6 @@ HRESULT WINAPI SetPerUserSecValuesW(PERUSERSECTIONW* pPerUser)
 {
     HKEY setup, guid;
 
-    static const WCHAR setup_key[] = {
-        'S','O','F','T','W','A','R','E','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'A','c','t','i','v','e',' ','S','e','t','u','p','\\',
-        'I','n','s','t','a','l','l','e','d',' ',
-        'C','o','m','p','o','n','e','n','t','s',0
-    };
-
     static const WCHAR stub_path[] = {'S','t','u','b','P','a','t','h',0};
     static const WCHAR version[] = {'V','e','r','s','i','o','n',0};
     static const WCHAR locale[] = {'L','o','c','a','l','e',0};
@@ -805,13 +808,66 @@ HRESULT WINAPI UserInstStubWrapperA(HWND hWnd, HINSTANCE hInstance,
 
 /***********************************************************************
  *             UserInstStubWrapperW   (ADVPACK.@)
+ *
+ * Launches the user stub wrapper specified by the RealStubPath
+ * registry value under Installed Components\szParms.
+ *
+ * PARAMS
+ *   hWnd      [I] Handle to the window used for the display.
+ *   hInstance [I] Instance of the process.
+ *   szParms   [I] The GUID of the installation.
+ *   show      [I] How the window should be shown.
+ *
+ * RETURNS
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
+ *
+ * TODO
+ *   If the type of the StubRealPath value is REG_EXPAND_SZ, then
+ *   we should call ExpandEnvironmentStrings on the value and
+ *   launch the result.
  */
 HRESULT WINAPI UserInstStubWrapperW(HWND hWnd, HINSTANCE hInstance,
                                     LPWSTR pszParms, INT nShow)
 {
-    FIXME("(%p, %p, %s, %i): stub\n", hWnd, hInstance, debugstr_w(pszParms), nShow);
+    HKEY setup, guid;
+    WCHAR stub[MAX_PATH];
+    DWORD size = MAX_PATH;
+    HRESULT hr = S_OK;
+    BOOL res;
 
-    return E_FAIL;
+    static const WCHAR real_stub_path[] = {
+        'R','e','a','l','S','t','u','b','P','a','t','h',0
+    };
+
+    TRACE("(%p, %p, %s, %i)\n", hWnd, hInstance, debugstr_w(pszParms), nShow);
+
+    if (!pszParms || !*pszParms)
+        return E_INVALIDARG;
+
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, setup_key, 0, KEY_READ, &setup))
+    {
+        return E_FAIL;
+    }
+
+    if (RegOpenKeyExW(setup, pszParms, 0, KEY_READ, &guid))
+    {
+        RegCloseKey(setup);
+        return E_FAIL;
+    }
+
+    res = RegQueryValueExW(guid, real_stub_path, NULL, NULL, (LPBYTE)stub, &size);
+    if (res || !*stub)
+        goto done;
+
+    /* launch the user stub wrapper */
+    hr = launch_exe(stub, NULL, NULL);
+
+done:
+    RegCloseKey(setup);
+    RegCloseKey(guid);
+
+    return hr;
 }
 
 /***********************************************************************
