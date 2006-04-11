@@ -40,18 +40,6 @@
 #include "hlink.h"
 
 /**********************************************************************
- * IClassFactory declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IClassFactoryVtbl *lpVtbl;
-    LONG ref;
-} IClassFactoryImpl;
-
-extern IClassFactoryImpl SHDOCVW_ClassFactory;
-
-/**********************************************************************
  * Shell Instance Objects
  */
 extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid, 
@@ -188,5 +176,6 @@ extern HINSTANCE shdocvw_hinstance;
 extern void register_iewindow_class(void);
 extern void unregister_iewindow_class(void);
 extern BOOL create_ie_window(LPCWSTR url);
+extern IClassFactory *get_class_factory(void);
 
 #endif /* __WINE_SHDOCVW_H */

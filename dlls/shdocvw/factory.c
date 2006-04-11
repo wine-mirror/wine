@@ -30,6 +30,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
  * (Based on implementation in ddraw/main.c)
  */
 
+typedef struct
+{
+    /* IUnknown fields */
+    const IClassFactoryVtbl *lpVtbl;
+    HRESULT (*cf)(LPUNKNOWN, REFIID, LPVOID *);
+    LONG ref;
+} IClassFactoryImpl;
+
+
 /**********************************************************************
  * WBCF_QueryInterface (IUnknown)
  */
@@ -78,7 +87,8 @@ static ULONG WINAPI WBCF_Release(LPCLASSFACTORY iface)
 static HRESULT WINAPI WBCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter,
                                           REFIID riid, LPVOID *ppobj)
 {
-    return WebBrowser_Create(pOuter, riid, ppobj);
+    IClassFactoryImpl *This = (IClassFactoryImpl *) iface;
+    return This->cf(pOuter, riid, ppobj);
 }
 
 /************************************************************************
@@ -105,4 +115,9 @@ static const IClassFactoryVtbl WBCF_Vtbl =
     WBCF_LockServer
 };
 
-IClassFactoryImpl SHDOCVW_ClassFactory = {&WBCF_Vtbl};
+static IClassFactoryImpl SHDOCVW_WBClassFactory = {&WBCF_Vtbl, WebBrowser_Create};
+
+IClassFactory *get_class_factory(void)
+{
+    return (IClassFactory*) &SHDOCVW_WBClassFactory;
+}

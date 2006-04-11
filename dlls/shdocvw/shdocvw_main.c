@@ -475,8 +475,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         IsEqualIID(&IID_IClassFactory, riid))
     {
         /* Pass back our shdocvw class factory */
-        *ppv = (LPVOID)&SHDOCVW_ClassFactory;
-        IClassFactory_AddRef((IClassFactory*)&SHDOCVW_ClassFactory);
+        IClassFactory *cf = get_class_factory();
+        IClassFactory_AddRef(cf);
+        *ppv = cf;
 
         return S_OK;
     }
