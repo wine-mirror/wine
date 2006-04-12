@@ -1668,6 +1668,16 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface, CONST
     return hr;
 }
 
+HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {
+    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
+    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, IWineD3D **ppD3D) {
    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
    *ppD3D= This->wineD3D;
@@ -6792,6 +6802,8 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreateVertexShader,
     IWineD3DDeviceImpl_CreatePixelShader,
     /*** Odd functions **/
+    IWineD3DDeviceImpl_Init3D,
+    IWineD3DDeviceImpl_Uninit3D,
     IWineD3DDeviceImpl_EvictManagedResources,
     IWineD3DDeviceImpl_GetAvailableTextureMem,
     IWineD3DDeviceImpl_GetBackBuffer,
