@@ -618,10 +618,21 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         RegCloseKey(hkey);
     }
 
-    if (!ppdFileName) {
-        res = ERROR_FILE_NOT_FOUND;
-        ERR ("Error %li getting PPD file name for printer '%s'\n", res, name);
-        goto closeprinter;
+    if (!ppdFileName)
+    {
+        const char *data_dir, *filename;
+
+        if ((data_dir = wine_get_data_dir())) filename = "/generic.ppd";
+        else if ((data_dir = wine_get_build_dir())) filename = "/dlls/wineps/generic.ppd";
+        else
+        {
+            res = ERROR_FILE_NOT_FOUND;
+            ERR ("Error %li getting PPD file name for printer '%s'\n", res, name);
+            goto closeprinter;
+        }
+        ppdFileName = HeapAlloc( PSDRV_Heap, 0, strlen(data_dir) + strlen(filename) + 1 );
+        strcpy( ppdFileName, data_dir );
+        strcat( ppdFileName, filename );
     } else {
         res = ERROR_SUCCESS;
         if (ppdType==REG_EXPAND_SZ) {
