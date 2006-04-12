@@ -202,10 +202,13 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     const union cptable *cptable;
     FT_SfntName sfntname;
     TT_OS2 *os2;
+
+#ifdef HAVE_FT_LOAD_SFNT_TABLE
     FT_ULong needed;
     eblcHeader_t *eblc;
     bitmapSizeTable_t *size_table;
     int num_sizes;
+#endif
 
     cptable = wine_cp_get_table(enc);
     if(!cptable)
@@ -220,6 +223,7 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
 
     ppem = face->size->metrics.y_ppem;
 
+#ifdef HAVE_FT_LOAD_SFNT_TABLE
     needed = 0;
     if(FT_Load_Sfnt_Table(face, TTAG_EBLC, 0, NULL, &needed))
         error("Can't find EBLC table\n");
@@ -241,6 +245,9 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
         size_table++;
     }
 
+    free(eblc);
+#endif
+
     /* Versions of fontforge prior to early 2006 have incorrect
        ascender values in the eblc table, so we won't find the 
        correct bitmapSizeTable.  In this case use the height of
@@ -252,8 +259,6 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
         ascent = face->glyph->metrics.horiBearingY >> 6;
         descent = ppem - ascent;
     }
-
-    free(eblc);
 
     start = sizeof(FNT_HEADER) + sizeof(FONTINFO16);
 

@@ -149,6 +149,9 @@
 /* Define to 1 if you have the `ftruncate' function. */
 #undef HAVE_FTRUNCATE
 
+/* Define to 1 if you have the `FT_Load_Sfnt_Table' function. */
+#undef HAVE_FT_LOAD_SFNT_TABLE
+
 /* Define to 1 if the system has the type `FT_TrueTypeEngineType'. */
 #undef HAVE_FT_TRUETYPEENGINETYPE
 
