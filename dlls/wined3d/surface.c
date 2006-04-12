@@ -1445,6 +1445,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL 
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD Flags) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -1469,6 +1474,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_UnlockRect,
     IWineD3DSurfaceImpl_GetDC,
     IWineD3DSurfaceImpl_ReleaseDC,
+    IWineD3DSurfaceImpl_Flip,
     /* Internal use: */
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,

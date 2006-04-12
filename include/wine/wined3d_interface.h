@@ -1100,6 +1100,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(UnlockRect)(THIS) PURE;
     STDMETHOD(GetDC)(THIS_ HDC *pHdc) PURE;
     STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
+    STDMETHOD(Flip)(THIS_ IWineD3DSurface *Override, DWORD FLAGS) PURE;
     /* Internally used methods */
     STDMETHOD(CleanDirtyRect)(THIS) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
