@@ -1590,14 +1590,6 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, UINT iSw
     return hr;
 }
 
-HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS*  pPresentationParameters) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    FIXME("(%p) : Stub\n",This);
-    return WINED3D_OK;
-
-}
-
 /*****
  * Vertex Declaration
  *****/
@@ -6527,7 +6519,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice* iface)
     return WINED3D_OK;
 }
 
-HRESULT  WINAPI  IWineD3DDeviceImpl_Rest(IWineD3DDevice* iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {
+HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     /** FIXME: Resource trascking needs to be done.
     * in effect this pulls all non only default
