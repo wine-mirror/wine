@@ -949,6 +949,10 @@ void* wld_start( void **stack )
         wld_mmap( preload_info[i].addr, preload_info[i].size,
                   PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 );
 
+    /* add an executable page at the top of the address space to defeat
+     * broken no-exec protections that play with the code selector limit */
+    wld_mprotect( (char *)0x80000000 - page_size, page_size, PROT_EXEC | PROT_READ );
+
     /* load the main binary */
     map_so_lib( argv[1], &main_binary_map );
 
