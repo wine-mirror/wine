@@ -704,7 +704,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_TEXCOORD, "texcrd",   "undefined",   2, pshader_texcoord,    D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
     {D3DSIO_TEXKILL,  "texkill",  "KIL",   1, pshader_texkill,     D3DPS_VERSION(1,0), D3DPS_VERSION(1,4)},
     {D3DSIO_TEX,      "tex",      "undefined",   1, pshader_tex,         0, D3DPS_VERSION(1,3)},
-    {D3DSIO_TEX,      "texld",    GLNAME_REQUIRE_GLSL,   2, pshader_texld,       D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    {D3DSIO_TEX,      "texld",    "undefined",   2, pshader_texld,       D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
     {D3DSIO_TEX,      "texld",    GLNAME_REQUIRE_GLSL,   3, pshader_texld,       D3DPS_VERSION(2,0), -1},
     {D3DSIO_TEXBEM,   "texbem",   "undefined",   2, pshader_texbem,      0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL,   2, pshader_texbeml,     D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
@@ -1176,13 +1176,12 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                         ++pToken;
                     } else {
-                        char reg[20];
+                        char reg2[20];
                         DWORD reg1 = *pToken & REGMASK;
-                        DWORD reg2 = *++pToken & REGMASK;
-                        if (gen_input_modifier_line(*pToken, 0, reg, tmpLine, This->constants)) {
+                        if (gen_input_modifier_line(*++pToken, 0, reg2, tmpLine, This->constants)) {
                             addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                         }
-                        sprintf(tmpLine,"TEX R%lu%s, %s, texture[%lu], 2D;\n", reg1, tmp, reg, reg2);
+                        sprintf(tmpLine,"TEX R%lu%s, %s, texture[%lu], 2D;\n", reg1, tmp, reg2, reg1);
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                         ++pToken;
                     }
