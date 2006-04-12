@@ -56,6 +56,7 @@ ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 iface) {
 
     if (ref == 0) {
         IWineD3DVertexShader_Release(This->wineD3DVertexShader);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -122,6 +123,8 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(LPDIRECT3DDEVICE9 iface, 
         FIXME("Call to IWineD3DDevice_CreateVertexShader failed\n");
         HeapFree(GetProcessHeap(), 0, object);
     }else{
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppShader = (IDirect3DVertexShader9 *)object;
         TRACE("(%p) : Created vertex shader %p\n", This, object);
     }

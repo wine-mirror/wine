@@ -541,6 +541,8 @@ typedef struct IDirect3DVertexDeclaration9Impl {
   /* IDirect3DVertexDeclaration9 fields */
   IWineD3DVertexDeclaration *wineD3DVertexDeclaration;
   
+  /* Parent reference */
+  LPDIRECT3DDEVICE9 parentDevice;
 } IDirect3DVertexDeclaration9Impl;
 
 /* ---------------------- */
@@ -563,6 +565,8 @@ typedef struct IDirect3DVertexShader9Impl {
   /* IDirect3DVertexShader9 fields */
   IWineD3DVertexShader *wineD3DVertexShader;
 
+  /* Parent reference */
+  LPDIRECT3DDEVICE9 parentDevice;
 } IDirect3DVertexShader9Impl;
 
 /* --------------------- */

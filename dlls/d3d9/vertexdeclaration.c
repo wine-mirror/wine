@@ -56,6 +56,7 @@ ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECLARATION
 
     if (ref == 0) {
         IWineD3DVertexDeclaration_Release(This->wineD3DVertexDeclaration);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -129,6 +130,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
         FIXME("(%p) call to IWineD3DDevice_CreateVertexDeclaration failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppDecl = (LPDIRECT3DVERTEXDECLARATION9) object;
          TRACE("(%p) : Created vertex declatanio %p\n", This, object);
     }
