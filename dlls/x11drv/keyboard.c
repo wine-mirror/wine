@@ -1113,6 +1113,17 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
     UINT message;
     KEYLP keylp;
     KBDLLHOOKSTRUCT hook;
+    WORD wVkStripped;
+
+    /* strip left/right for menu, control, shift */
+    if (wVk == VK_LMENU || wVk == VK_RMENU)
+        wVkStripped = VK_MENU;
+    else if (wVk == VK_LCONTROL || wVk == VK_RCONTROL)
+        wVkStripped = VK_CONTROL;
+    else if (wVk == VK_LSHIFT || wVk == VK_RSHIFT)
+        wVkStripped = VK_SHIFT;
+    else
+        wVkStripped = wVk;
 
     keylp.lp2 = 0;
     keylp.lp1.count = 1;
@@ -1128,14 +1139,16 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
     {
         message = WM_KEYUP;
         if ((key_state_table[VK_MENU] & 0x80) &&
-            ((wVk == VK_MENU) || (wVk == VK_CONTROL) || !(key_state_table[VK_CONTROL] & 0x80)))
+            ((wVkStripped == VK_MENU) || (wVkStripped == VK_CONTROL)
+             || !(key_state_table[VK_CONTROL] & 0x80)))
         {
             if( TrackSysKey == VK_MENU || /* <ALT>-down/<ALT>-up sequence */
-                (wVk != VK_MENU)) /* <ALT>-down...<something else>-up */
+                (wVkStripped != VK_MENU)) /* <ALT>-down...<something else>-up */
                 message = WM_SYSKEYUP;
             TrackSysKey = 0;
         }
         key_state_table[wVk] &= ~0x80;
+        key_state_table[wVkStripped] &= ~0x80;
         keylp.lp1.previous = 1;
         keylp.lp1.transition = 1;
     }
@@ -1145,12 +1158,13 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
         keylp.lp1.transition = 0;
         if (!(key_state_table[wVk] & 0x80)) key_state_table[wVk] ^= 0x01;
         key_state_table[wVk] |= 0xc0;
+        key_state_table[wVkStripped] |= 0xc0;
 
         message = WM_KEYDOWN;
         if ((key_state_table[VK_MENU] & 0x80) && !(key_state_table[VK_CONTROL] & 0x80))
         {
             message = WM_SYSKEYDOWN;
-            TrackSysKey = wVk;
+            TrackSysKey = wVkStripped;
         }
     }
 

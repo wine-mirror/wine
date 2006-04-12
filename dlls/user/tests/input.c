@@ -336,7 +336,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam,
     return 0;
 }
 
-START_TEST(input)
+static void test_Input_whitebox(void)
 {
     MSG msg;
     WNDCLASSA  wclass;
@@ -365,4 +365,164 @@ START_TEST(input)
 
     SendMessageA(hWndTest, WM_USER, 0, 0);
     DestroyWindow(hWndTest);
+}
+
+static void empty_message_queue(void) {
+    MSG msg;
+    while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+struct transition_s {
+    WORD wVk;
+    BYTE before_state;
+    BOOL _todo_wine;
+};
+
+struct sendinput_test_s {
+    WORD wVk;
+    DWORD dwFlags;
+    struct transition_s expected_transitions[MAXKEYEVENTS+1];
+    UINT expected_messages[MAXKEYMESSAGES+1];
+} sendinput_test[] = {
+    /* test ALT+F */
+    {VK_LMENU, 0, {{VK_MENU, 0x00, 0}, {VK_LMENU, 0x00, 0}, {0}},
+        {WM_SYSKEYDOWN, 0}},
+    {'F', 0, {{'F', 0x00, 0}, {0}},
+        {WM_SYSKEYDOWN, WM_SYSCHAR, WM_SYSCOMMAND, 0}},
+    {'F', KEYEVENTF_KEYUP, {{'F', 0x80, 0}, {0}}, {WM_SYSKEYUP, 0}},
+    {VK_LMENU, KEYEVENTF_KEYUP, {{VK_MENU, 0x80, 0}, {VK_LMENU, 0x80, 0}, {0}},
+        {WM_KEYUP, 0}},
+
+    /* test CTRL+O */
+    {VK_LCONTROL, 0, {{VK_CONTROL, 0x00, 0}, {VK_LCONTROL, 0x00, 0}, {0}},
+        {WM_KEYDOWN, 0}},
+    {'O', 0, {{'O', 0x00, 0}, {0}}, {WM_KEYDOWN, WM_CHAR, 0}},
+    {'O', KEYEVENTF_KEYUP, {{'O', 0x80, 0}, {0}}, {WM_KEYUP, 0}},
+    {VK_LCONTROL, KEYEVENTF_KEYUP,
+        {{VK_CONTROL, 0x80, 0}, {VK_LCONTROL, 0x80, 0}, {0}}, {WM_KEYUP, 0}},
+
+    /* test ALT+CTRL+X */
+    {VK_LMENU, 0, {{VK_MENU, 0x00, 0}, {VK_LMENU, 0x00, 0}, {0}},
+        {WM_SYSKEYDOWN, 0}},
+    {VK_LCONTROL, 0, {{VK_CONTROL, 0x00, 0}, {VK_LCONTROL, 0x00, 0}, {0}},
+        {WM_KEYDOWN, 0}},
+    {'X', 0, {{'X', 0x00, 0}, {0}}, {WM_KEYDOWN, 0}},
+    {'X', KEYEVENTF_KEYUP, {{'X', 0x80, 0}, {0}}, {WM_KEYUP, 0}},
+    {VK_LCONTROL, KEYEVENTF_KEYUP,
+        {{VK_CONTROL, 0x80, 0}, {VK_LCONTROL, 0x80, 0}, {0}},
+        {WM_SYSKEYUP, 0}},
+    {VK_LMENU, KEYEVENTF_KEYUP, {{VK_MENU, 0x80, 0}, {VK_LMENU, 0x80, 0}, {0}},
+        {WM_KEYUP, 0}},
+
+    /* test SHIFT+A */
+    {VK_LSHIFT, 0,
+        {{VK_SHIFT, 0x00, 0}, {VK_LSHIFT, 0x00, 0}, {0}}, {WM_KEYDOWN, 0}},
+    {'A', 0, {{'A', 0x00, 0}, {0}}, {WM_KEYDOWN, WM_CHAR, 0}},
+    {'A', KEYEVENTF_KEYUP, {{'A', 0x80, 0}, {0}}, {WM_KEYUP, 0}},
+    {VK_LSHIFT, KEYEVENTF_KEYUP,
+        {{VK_SHIFT, 0x80, 0}, {VK_LSHIFT, 0x80, 0}, {0}}, {WM_KEYUP, 0}},
+
+    {0, 0, {{0}}, {0}} /* end */
+};
+
+static struct sendinput_test_s *pTest = sendinput_test;
+static UINT *pMsg = sendinput_test[0].expected_messages;
+
+/* Verify that only specified key state transitions occur */
+static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct transition_s *t) {
+    int i;
+    while (t->wVk) {
+        int matched = ((ks1[t->wVk]&0x80) == (t->before_state&0x80)
+                       && (ks2[t->wVk]&0x80) == (~t->before_state&0x80));
+        if (t->_todo_wine) {
+            todo_wine {
+                ok(matched, "%02d: %02x from %02x -> %02x "
+                   "instead of %02x -> %02x\n", id, t->wVk,
+                   ks1[t->wVk]&0x80, ks2[t->wVk]&0x80, t->before_state,
+                   ~t->before_state&0x80);
+            }
+        } else {
+            ok(matched, "%02d: %02x from %02x -> %02x "
+               "instead of %02x -> %02x\n", id, t->wVk,
+               ks1[t->wVk]&0x80, ks2[t->wVk]&0x80, t->before_state,
+               ~t->before_state&0x80);
+        }
+        ks2[t->wVk] = ks1[t->wVk]; /* clear the match */
+        t++;
+    }
+    for (i = 0; i < 256; i++)
+        ok(ks2[i] == ks1[i], "%02d: %02x from %02x -> %02x unexpected\n",
+           id, i, ks1[i], ks2[i]);
+}
+
+/* WndProc2 checks that we get at least the messages specified */
+static LRESULT CALLBACK WndProc2(HWND hWnd, UINT Msg, WPARAM wParam,
+                                   LPARAM lParam)
+{
+    if (pTest->wVk != 0) { /* not end */
+        while(pTest->wVk != 0 && *pMsg == 0) {
+            pTest++;
+            pMsg = pTest->expected_messages;
+        }
+        if (Msg == *pMsg)
+            pMsg++;
+    }
+    return DefWindowProc(hWnd, Msg, wParam, lParam);
+}
+
+static void test_Input_blackbox(void)
+{
+    INPUT i;
+    int ii;
+    BYTE ks1[256], ks2[256];
+    LONG_PTR prevWndProc;
+
+    HWND window;
+    window = CreateWindow("Static", NULL, WS_POPUP|WS_HSCROLL|WS_VSCROLL
+        |WS_VISIBLE, 0, 0, 200, 60, NULL, NULL,
+        NULL, NULL);
+    ok(window != NULL, "error: %d\n", (int) GetLastError());
+
+    /* must process all initial messages, otherwise X11DRV_KeymapNotify unsets
+     * key state set by SendInput(). */
+    empty_message_queue();
+
+    prevWndProc = SetWindowLongPtr(window, GWLP_WNDPROC, (LONG_PTR) WndProc2);
+    ok(prevWndProc != 0 || (prevWndProc == 0 && GetLastError() == 0),
+       "error: %d\n", (int) GetLastError());
+
+    i.type = INPUT_KEYBOARD;
+    i.ki.wScan = 0;
+    i.ki.time = 0;
+    i.ki.dwExtraInfo = 0;
+
+    for (ii = 0; ii < sizeof(sendinput_test)/sizeof(struct sendinput_test_s)-1;
+         ii++) {
+        GetKeyboardState(ks1);
+        i.ki.dwFlags = sendinput_test[ii].dwFlags;
+        i.ki.wVk = sendinput_test[ii].wVk;
+        SendInput(1, &i, sizeof(INPUT));
+        empty_message_queue();
+        GetKeyboardState(ks2);
+        compare_and_check(ii, ks1, ks2,
+                          sendinput_test[ii].expected_transitions);
+    }
+
+    /* *pMsg should be 0 and (++pTest)->wVk should be 0 */
+    if (pTest->wVk && *pMsg == 0) pTest++;
+    while(pTest->wVk && pTest->expected_messages[0] == 0) {
+        ++pTest;
+    }
+    ok(*pMsg == 0 && pTest->wVk == 0,
+       "not enough messages found; looking for %x\n", *pMsg);
+    DestroyWindow(window);
+}
+
+START_TEST(input)
+{
+    test_Input_whitebox();
+    test_Input_blackbox();
 }

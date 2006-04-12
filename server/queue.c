@@ -1132,6 +1132,18 @@ static void update_input_key_state( struct thread_input *input, const struct mes
         case VK_MENU:
             set_input_key_state( input, extended ? VK_RMENU : VK_LMENU, down );
             break;
+        case VK_LCONTROL:
+        case VK_RCONTROL:
+            set_input_key_state( input, VK_CONTROL, down );
+            break;
+        case VK_LMENU:
+        case VK_RMENU:
+            set_input_key_state( input, VK_MENU, down );
+            break;
+        case VK_LSHIFT:
+        case VK_RSHIFT:
+            set_input_key_state( input, VK_SHIFT, down );
+            break;
         }
         break;
     }
