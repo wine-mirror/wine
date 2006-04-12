@@ -1216,7 +1216,8 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         SEE_MASK_UNICODE       | SEE_MASK_NO_CONSOLE   | SEE_MASK_ASYNCOK |
         SEE_MASK_HMONITOR;
 
-    WCHAR wszApplicationName[MAX_PATH+2], wszParameters[1024], wszDir[MAX_PATH];
+    WCHAR *wszApplicationName, wszParameters[1024], wszDir[MAX_PATH];
+    DWORD dwApplicationNameLen = MAX_PATH+2;
     SHELLEXECUTEINFOW sei_tmp;	/* modifiable copy of SHELLEXECUTEINFO struct */
     WCHAR wfileName[MAX_PATH];
     WCHAR *env;
@@ -1241,18 +1242,25 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
     /* make copies of all path/command strings */
     if (!sei_tmp.lpFile)
+    {
+        wszApplicationName = HeapAlloc(GetProcessHeap(), 0, dwApplicationNameLen*sizeof(WCHAR));
         *wszApplicationName = '\0';
+    }
     else if (*sei_tmp.lpFile == '\"')
     {
-        UINT l;
-        strcpyW(wszApplicationName, sei_tmp.lpFile+1);
-        l=lstrlenW(wszApplicationName);
+        DWORD l = strlenW(sei_tmp.lpFile+1);
+        if(l >= dwApplicationNameLen) dwApplicationNameLen = l+1;
+        wszApplicationName = HeapAlloc(GetProcessHeap(), 0, dwApplicationNameLen*sizeof(WCHAR));
+        memcpy(wszApplicationName, sei_tmp.lpFile+1, (l+1)*sizeof(WCHAR));
         if (wszApplicationName[l-1] == '\"')
             wszApplicationName[l-1] = '\0';
         TRACE("wszApplicationName=%s\n",debugstr_w(wszApplicationName));
+    } else {
+        DWORD l = strlenW(sei_tmp.lpFile)+1;
+        if(l > dwApplicationNameLen) dwApplicationNameLen = l+1;
+        wszApplicationName = HeapAlloc(GetProcessHeap(), 0, dwApplicationNameLen*sizeof(WCHAR));
+        memcpy(wszApplicationName, sei_tmp.lpFile, l*sizeof(WCHAR));
     }
-    else
-        strcpyW(wszApplicationName, sei_tmp.lpFile);
 
     if (sei_tmp.lpParameters)
 	strcpyW(wszParameters, sei_tmp.lpParameters);
@@ -1287,8 +1295,10 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
 	    IShellExecuteHookW_Release(pSEH);
 
-	    if (hr == S_OK)
+	    if (hr == S_OK) {
+                HeapFree(GetProcessHeap(), 0, wszApplicationName);
 		return TRUE;
+            }
 	}
 
         SHGetPathFromIDListW(sei_tmp.lpIDList, wszApplicationName);
@@ -1298,6 +1308,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     if ( ERROR_SUCCESS == ShellExecute_FromContextMenu( &sei_tmp ) )
     {
         sei->hInstApp = (HINSTANCE) 33;
+        HeapFree(GetProcessHeap(), 0, wszApplicationName);
         return TRUE;
     }
 
@@ -1323,10 +1334,9 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
             strcatW(wcmd, wszApplicationName);
         }
         retval = execfunc(wcmd, NULL, FALSE, &sei_tmp, sei);
-        if (retval > 32)
-            return TRUE;
-        else
-            return FALSE;
+
+        HeapFree(GetProcessHeap(), 0, wszApplicationName);
+        return retval > 32;
     }
 
     /* Has the IDList not yet been translated? */
@@ -1352,8 +1362,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 		    HCR_GetExecuteCommandW(0, wszFolder,
 		                           sei_tmp.lpVerb?sei_tmp.lpVerb:wszOpen,
 		                           buffer, sizeof(buffer))) {
-		    SHELL_ArgifyW(wszApplicationName,
-		                  sizeof(wszApplicationName)/sizeof(WCHAR),
+		    SHELL_ArgifyW(wszApplicationName, dwApplicationNameLen,
 		                  buffer, target, sei_tmp.lpIDList, NULL);
 		}
 		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
@@ -1452,8 +1461,10 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         sei_tmp.lpVerb = wszOpen;
 
     retval = execfunc(wcmd, NULL, FALSE, &sei_tmp, sei);
-    if (retval > 32)
+    if (retval > 32) {
+        HeapFree(GetProcessHeap(), 0, wszApplicationName);
         return TRUE;
+    }
 
     /* Else, try to find the executable */
     wcmd[0] = '\0';
@@ -1520,14 +1531,10 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
     TRACE("retval %u\n", retval);
 
-    if (retval <= 32)
-    {
-        sei->hInstApp = (HINSTANCE)retval;
-        return FALSE;
-    }
+    HeapFree(GetProcessHeap(), 0, wszApplicationName);
 
-    sei->hInstApp = (HINSTANCE)33;
-    return TRUE;
+    sei->hInstApp = (HINSTANCE)(retval > 32 ? 33 : retval);
+    return retval > 32;
 }
 
 /*************************************************************************
