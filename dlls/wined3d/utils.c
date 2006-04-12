@@ -1948,6 +1948,9 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
     }
     if(!alternate){
         switch (StencilBufferFormat) {
+    case 0:
+        break;
+
     case WINED3DFMT_D16_LOCKABLE:
     case WINED3DFMT_D16:
         PUSH2(GLX_DEPTH_SIZE,   16);
@@ -1984,12 +1987,15 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
         break;
 
     default:
-        FIXME("Unsupported stencil format: %s\n", debug_d3dformat(BackBufferFormat));
+        FIXME("Unsupported stencil format: %s\n", debug_d3dformat(StencilBufferFormat));
         break;
     }
 
     } else { /* it the device doesn't support the 'exact' format, try to find something close */
         switch (StencilBufferFormat) {
+        case 0:
+            break;
+            
         case WINED3DFMT_D16_LOCKABLE:
         case WINED3DFMT_D16:
             PUSH2(GLX_DEPTH_SIZE,   1);
@@ -2026,7 +2032,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
             break;
 
         default:
-            FIXME("Unsupported stencil format: %s\n", debug_d3dformat(BackBufferFormat));
+            FIXME("Unsupported stencil format: %s\n", debug_d3dformat(StencilBufferFormat));
             break;
         }
     }
