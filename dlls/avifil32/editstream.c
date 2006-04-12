@@ -329,11 +329,11 @@ static BOOL AVIFILE_FormatsEqual(PAVISTREAM avi1, PAVISTREAM avi2)
     return FALSE;
 
   /* sizes match, now get formats and compare them */
-  fmt1 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size1);
+  fmt1 = HeapAlloc(GetProcessHeap(), 0, size1);
   if (fmt1 == NULL)
     return FALSE;
   if (SUCCEEDED(AVIStreamReadFormat(avi1, start1, fmt1, &size1))) {
-    fmt2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size1);
+    fmt2 = HeapAlloc(GetProcessHeap(), 0, size1);
     if (fmt2 != NULL) {
       if (SUCCEEDED(AVIStreamReadFormat(avi2, start2, fmt2, &size1)))
         status = (memcmp(fmt1, fmt2, size1) == 0);

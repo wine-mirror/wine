@@ -712,7 +712,7 @@ static HRESULT AVIFILE_OpenCompressor(IAVIStreamImpl *This)
     if (This->lpOutFormat == NULL) {
       /* we must decode to default format */
       This->cbOutFormat = sizeof(PCMWAVEFORMAT);
-      This->lpOutFormat = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->cbOutFormat);
+      This->lpOutFormat = HeapAlloc(GetProcessHeap(), 0, This->cbOutFormat);
       if (This->lpOutFormat == NULL)
 	return AVIERR_MEMORY;
 
