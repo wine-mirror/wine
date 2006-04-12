@@ -309,6 +309,7 @@ typedef struct tagLISTVIEW_INFO
   WCHAR szSearchParam[ MAX_PATH ];
   BOOL bIsDrawing;
   INT nMeasureItemHeight;
+  INT xTrackLine;               /* The x coefficient of the track line or -1 if none */
 } LISTVIEW_INFO;
 
 /*
@@ -7521,6 +7522,40 @@ static BOOL LISTVIEW_Update(LISTVIEW_INFO *infoPtr, INT nItem)
     return TRUE;
 }
 
+/***
+ * DESCRIPTION:
+ * Draw the track line at the place defined in the infoPtr structure.
+ * The line is drawn with a XOR pen so drawing the line for the second time
+ * in the same place erases the line.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static BOOL LISTVIEW_DrawTrackLine(LISTVIEW_INFO *infoPtr)
+{
+    HPEN hOldPen;
+    HDC hdc;
+    INT oldROP;
+
+    if (infoPtr->xTrackLine == -1)
+        return FALSE;
+
+    if (!(hdc = GetDC(infoPtr->hwndSelf)))
+        return FALSE;
+    hOldPen = SelectObject(hdc, GetStockObject(BLACK_PEN));
+    oldROP = SetROP2(hdc, R2_XORPEN);
+    MoveToEx(hdc, infoPtr->xTrackLine, infoPtr->rcList.top, NULL);
+    LineTo(hdc, infoPtr->xTrackLine, infoPtr->rcList.bottom);
+    SetROP2(hdc, oldROP);
+    SelectObject(hdc, hOldPen);
+    ReleaseDC(infoPtr->hwndSelf, hdc);
+    return TRUE;
+}
+
 	
 /***
  * DESCRIPTION:
@@ -7573,6 +7608,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->nEditLabelItem = -1;
   infoPtr->dwHoverTime = -1; /* default system hover time */
   infoPtr->nMeasureItemHeight = 0;
+  infoPtr->xTrackLine = -1;  /* no track line */
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -7582,7 +7618,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 
   /* create header */
   infoPtr->hwndHeader =	CreateWindowW(WC_HEADERW, NULL,
-    WS_CHILD | HDS_HORZ | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS),
+    WS_CHILD | HDS_HORZ | HDS_FULLDRAG | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS),
     0, 0, 0, 0, hwnd, NULL,
     lpcs->hInstance, NULL);
   if (!infoPtr->hwndHeader) goto fail;
@@ -8365,20 +8401,48 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
     
     switch (lpnmh->hdr.code)
     {    
-        case HDN_ITEMCHANGINGW:
-        case HDN_ITEMCHANGINGA:
-            return notify_forward_header(infoPtr, lpnmh);
-	case HDN_ITEMCHANGEDW:
-	case HDN_ITEMCHANGEDA:
-            notify_forward_header(infoPtr, lpnmh);
-	    if (!IsWindow(hwndSelf))
-		break;
-            /* Fall through */
 	case HDN_TRACKW:
 	case HDN_TRACKA:
 	{
 	    COLUMN_INFO *lpColumnInfo;
+	    POINT ptOrigin;
+	    INT x;
+	    
+	    if (!lpnmh->pitem || !(lpnmh->pitem->mask & HDI_WIDTH))
+		break;
+
+            /* remove the old line (if any) */
+            LISTVIEW_DrawTrackLine(infoPtr);
+            
+            /* compute & draw the new line */
+            lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, lpnmh->iItem);
+            x = lpColumnInfo->rcHeader.left + lpnmh->pitem->cxy;
+            LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
+            infoPtr->xTrackLine = x + ptOrigin.x;
+            LISTVIEW_DrawTrackLine(infoPtr);
+            break;
+	}
+	
+	case HDN_ENDTRACKA:
+	case HDN_ENDTRACKW:
+	    /* remove the track line (if any) */
+	    LISTVIEW_DrawTrackLine(infoPtr);
+	    infoPtr->xTrackLine = -1;
+	    break;
+	    
+        case HDN_ITEMCHANGINGW:
+        case HDN_ITEMCHANGINGA:
+            return notify_forward_header(infoPtr, lpnmh);
+            
+	case HDN_ITEMCHANGEDW:
+	case HDN_ITEMCHANGEDA:
+	{
+	    COLUMN_INFO *lpColumnInfo;
 	    INT dx, cxy;
+	    
+            notify_forward_header(infoPtr, lpnmh);
+	    if (!IsWindow(hwndSelf))
+		break;
 
 	    if (!lpnmh->pitem || !(lpnmh->pitem->mask & HDI_WIDTH))
 	    {
