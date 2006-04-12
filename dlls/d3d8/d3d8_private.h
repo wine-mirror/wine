@@ -531,6 +531,9 @@ struct IDirect3DVertexShader8Impl {
   LONG ref;
 
   IWineD3DVertexShader             *wineD3DVertexShader;
+
+  /* Parent reference */
+  LPDIRECT3DDEVICE8                 parentDevice;
 };
 
 

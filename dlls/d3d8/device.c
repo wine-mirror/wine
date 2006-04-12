@@ -1070,6 +1070,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface, 
             FIXME("(%p) : Number of shaders exceeds the maximum number of possible shaders\n", This);
             hrc = E_OUTOFMEMORY;
         } else {
+            IUnknown_AddRef(iface);
+            object->parentDevice = iface;
             This->vShaders[i] = object;
             *ppShader = i + VS_HIGHESTFIXEDFXF + 1;
         }

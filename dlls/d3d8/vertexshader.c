@@ -56,6 +56,7 @@ ULONG WINAPI IDirect3DVertexShader8Impl_Release(IDirect3DVertexShader8 *iface) {
 
     if (ref == 0) {
         IWineD3DVertexShader_Release(This->wineD3DVertexShader);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
