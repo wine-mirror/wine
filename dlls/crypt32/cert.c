@@ -323,13 +323,13 @@ BOOL WINAPI CertGetEnhancedKeyUsage(PCCERT_CONTEXT pCertContext, DWORD dwFlags,
     DWORD bytesNeeded;
     BOOL ret = TRUE;
 
-    TRACE("(%p, %08lx, %p, %ld)\n", pCertContext, dwFlags, pUsage, *pcbUsage);
-
     if (!pCertContext || !pcbUsage)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+
+    TRACE("(%p, %08lx, %p, %ld)\n", pCertContext, dwFlags, pUsage, *pcbUsage);
 
     if (!(dwFlags & CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG))
     {
