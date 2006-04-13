@@ -2618,7 +2618,7 @@ static HWND create_header(HWND parent, Pane* pane, int id)
 	HD_ITEM hdi;
 	int idx;
 
-	HWND hwnd = CreateWindow(WC_HEADER, 0, WS_CHILD|WS_VISIBLE|HDS_HORZ/*TODO: |HDS_BUTTONS + sort orders*/,
+	HWND hwnd = CreateWindow(WC_HEADER, 0, WS_CHILD|WS_VISIBLE|HDS_HORZ|HDS_FULLDRAG/*TODO: |HDS_BUTTONS + sort orders*/,
 								0, 0, 0, 0, parent, (HMENU)id, Globals.hInstance, 0);
 	if (!hwnd)
 		return 0;
@@ -3608,8 +3608,7 @@ static void set_header(Pane* pane)
 static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 {
 	switch(pnmh->code) {
-		case HDN_TRACK:
-		case HDN_ENDTRACK: {
+		case HDN_ITEMCHANGED: {
 			HD_NOTIFY* phdn = (HD_NOTIFY*) pnmh;
 			int idx = phdn->iItem;
 			int dx = phdn->pitem->cxy - pane->widths[idx];
@@ -3617,9 +3616,6 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 
 			RECT clnt;
 			GetClientRect(pane->hwnd, &clnt);
-
-			/* move immediate to simulate HDS_FULLDRAG (for now [04/2000] not really needed with WINELIB) */
-			SendMessage(pane->hwndHeader, HDM_SETITEM, idx, (LPARAM) phdn->pitem);
 
 			pane->widths[idx] += dx;
 
