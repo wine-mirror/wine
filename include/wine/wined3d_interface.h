@@ -371,6 +371,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetDeviceCaps)(THIS_ WINED3DCAPS* pCaps) PURE;
     STDMETHOD(GetDirect3D)(THIS_ IWineD3D** ppD3D) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ UINT iSwapChain, WINED3DDISPLAYMODE* pMode) PURE;
+    STDMETHOD(GetHWND)(THIS_ HWND *hwnd) PURE;
+    STDMETHOD(SetHWND)(THIS_ HWND hwnd) PURE;
     STDMETHOD_(UINT, GetNumberOfSwapChains)(THIS) PURE;
     STDMETHOD(GetRasterStatus)(THIS_ UINT iSwapChain, WINED3DRASTER_STATUS* pRasterStatus) PURE;
     STDMETHOD(GetSwapChain)(THIS_ UINT iSwapChain, struct IWineD3DSwapChain **pSwapChain) PURE;
@@ -511,6 +513,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_GetDeviceCaps(p,a)                       (p)->lpVtbl->GetDeviceCaps(p,a)
 #define IWineD3DDevice_GetDirect3D(p,a)                         (p)->lpVtbl->GetDirect3D(p,a)
 #define IWineD3DDevice_GetDisplayMode(p,a,b)                    (p)->lpVtbl->GetDisplayMode(p,a,b)
+#define IWineD3DDevice_GetHWND(p, a)                            (p)->lpVtbl->GetHWND(p, a)
+#define IWineD3DDevice_SetHWND(p, a)                            (p)->lpVtbl->SetHWND(p, a)
 #define IWineD3DDevice_GetNumberOfSwapChains(p)                 (p)->lpVtbl->GetNumberOfSwapChains(p)
 #define IWineD3DDevice_Reset(p,a)                               (p)->lpVtbl->Reset(p,a)
 #define IWineD3DDevice_SetDialogBoxMode(p,a)                    (p)->lpVtbl->SetDialogBoxMode(p,a)

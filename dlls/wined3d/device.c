@@ -4770,6 +4770,19 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSw
     }
     return hr;
 }
+
+HRESULT WINAPI IWineD3DDeviceImpl_SetHWND(IWineD3DDevice *iface, HWND hWnd) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetHWND(IWineD3DDevice *iface, HWND *hWnd) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+
+    return WINED3DERR_INVALIDCALL;
+}
+
 /*****
  * Stateblock related functions
  *****/
@@ -6811,6 +6824,8 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetDeviceCaps,
     IWineD3DDeviceImpl_GetDirect3D,
     IWineD3DDeviceImpl_GetDisplayMode,
+    IWineD3DDeviceImpl_GetHWND,
+    IWineD3DDeviceImpl_SetHWND,
     IWineD3DDeviceImpl_GetNumberOfSwapChains,
     IWineD3DDeviceImpl_GetRasterStatus,
     IWineD3DDeviceImpl_GetSwapChain,
