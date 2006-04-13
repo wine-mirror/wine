@@ -1,19 +1,19 @@
-This is release 0.9.11 of Wine, a free implementation of Windows on Unix.
+This is release 0.9.12 of Wine, a free implementation of Windows on Unix.
 
 What's new in this release:
-  - Fake dll files created in the system directory to help installers.
-  - Desktop mode now properly supports multiple processes.
-  - Better type parsing in dbghelp.
-  - Several OpenGL fixes.
-  - A bunch of Unicode functions in advpack.
+  - New Winelib Internet Explorer application (all 5 lines of it).
+  - Several improvements to the font support.
+  - More work on the IDL compiler.
+  - Faster drawing of the cards in Solitaire (very important feature).
+  - A number of fixes for issues found by the Coverity code cheker.
   - Lots of bug fixes.
 
 Because of lags created by using mirrors, this message may reach you
 before the release is available at the public sites. The sources will
 be available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-0.9.11.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-0.9.11.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-0.9.12.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-0.9.12.tar.bz2
 
 Binary packages for various distributions will be available from:
 
