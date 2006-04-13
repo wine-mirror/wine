@@ -124,10 +124,31 @@ HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***ppSp, int *piNumSc
  */
 HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp)
 {
+    HDC phdc;
+    Scriptcache *pScriptcache;
+
     FIXME("%p,%p,%p\n", hdc, psc, sfp);
+    if  (!hdc && !*psc) {
+        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
+	return E_PENDING;
+    }   else 
+        if  (hdc && !*psc) {
+            pScriptcache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache) );
+            pScriptcache->hdc = (HDC) hdc;
+            phdc = hdc;
+            pScriptcache->HaveWidths = 0;
+            *psc = (Scriptcache *) pScriptcache;
+       }   else
+            if  (*psc) {
+                pScriptcache = (Scriptcache *) *psc;
+                phdc = pScriptcache->hdc;
+            }
+                
+    if (sfp->cBytes != sizeof(SCRIPT_FONTPROPERTIES))
+        return E_INVALIDARG;
+
     /* return something sensible? */
     if (NULL != sfp) {
-        sfp->cBytes        = sizeof(SCRIPT_FONTPROPERTIES);
         sfp->wgBlank       = 0;
         sfp->wgDefault     = 0;
         sfp->wgInvalid     = 0;
@@ -427,10 +448,6 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
      return 0;
 }
 
-/***********************************************************************
- *      ScriptGetCMap (USP10.@)
- *
- */
 /***********************************************************************
  *      ScriptGetCMap (USP10.@)
  *
