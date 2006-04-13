@@ -3,6 +3,7 @@
  * Finnish Language Support
  *
  * Copyright 2005 Kimmo Myllyvirta
+ * Copyright 2006 Anssi Hannula
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,7 +27,7 @@ IDR_WINECFG MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "Configure", IDC_AUDIO_CONFIGURE
+        MENUITEM "Asetukset", IDC_AUDIO_CONFIGURE
     END
 END
 
@@ -45,8 +46,8 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Sovelluksien Asetukset ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine voi matkia eri Windows versioita eri sovelluksille. Tämä välilehti toimii yhdessä Kirjastot ja Grafiikka -välilehtien kanssa sallien sovelluskohtaiset asetukset.",
+    GROUPBOX        " Sovellusten asetukset ",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wine voi jäljitellä Windowsin eri versioita eri sovelluksille. Tämä välilehti toimii yhdessä Kirjastot- ja Grafiikka-välilehtien kanssa sallien sovelluskohtaiset asetukset.",
                     IDC_STATIC,15,20,227,30
     CONTROL         "Sovellukset",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,150
@@ -60,35 +61,38 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Ikkunan asetukset ",IDC_STATIC,8,25,244,110
+    GROUPBOX        " Ikkuna-asetukset ",IDC_STATIC,8,25,244,180
 
     CONTROL	    "&Salli DirectX -sovellusten estää kursorin poistuminen ikkunasta",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL	    "&Työpöydän tuplapuskurointi",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    LTEXT 	    "Kun ikkunaohjelma hallitsee ikkunoita, niillä on normaalit reunat, ne noudattavat näennäistyöpöytiä ja näkyvät ikkunalistassa.\n\nMikäli ikkunaohjelma ei hallitse ikkunoita, ikkunat eivät integroidu yhtä hyvin työpöytääsi, mutta emulaatio on tarkempaa ja se voi auttaa joitain sovelluksia toimimaan paremmin.",
+    IDC_STATIC,15,58,228,80
+    CONTROL	    "Salli ikkunaohjelman hallita ikkunoita",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
 
     LTEXT           "Wine voi emuloida Windowsin työpöytää, jossa kaikki ikkunat ovat yhdessä virtuaalisessa näytössä, tai jossa kaikki ikkunat ovat työpöydälläsi erillisinä.",
-                    IDC_STATIC,15,73,228,28
-    LTEXT           "Työpöydän koko:",IDC_DESKTOP_SIZE,15,117,58,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,118,115,8,8,WS_DISABLED
+                    IDC_STATIC,15,146,228,28
+    LTEXT           "Työpöydän koko:",IDC_DESKTOP_SIZE,15,188,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,188,8,8,WS_DISABLED
     CONTROL         "&Emuloi virtuaalista töypöytää",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,173,230,10
 		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,74,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,127,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,188,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,210,244,50
 
-    LTEXT	    "Vertex Shader -tuki: ",IDC_STATIC,15,150,80,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,148,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT	    "Vertex Shader -tuki: ",IDC_STATIC,15,220,80,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,218,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Salli &Pixel Shader:n käyttö, jos laitteisto tukee",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
+    CONTROL         "Salli &Pixel Shader:n käyttö laitteiston tukiessa",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,237,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " DLL kirjastojen määritykset ",IDC_STATIC,8,4,244,240
-    LTEXT           "Dynaamisesti ladattavat kirjastot (DLL) voidaan määritellä yksitellen olemaan joko Winen tarjoamia (sisäänrakennettuja) tai Windowsin natiiveja kirjastoja (Windows -asennuksesta, tai sovellusten tarjoamia)."
+    GROUPBOX        " DLL-kirjastojen määritykset ",IDC_STATIC,8,4,244,240
+    LTEXT           "Dynaamisesti ladattavat kirjastot (DLL) voidaan määritellä yksitellen olemaan joko Winen tarjoamia (sisäänrakennettuja) tai Windowsin natiiveja kirjastoja (Windows-asennuksesta, tai sovellusten tarjoamia)."
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "Uusi määritys kirjastolle:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
@@ -104,12 +108,12 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Edit Override"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Latausjärjestys ",IDC_STATIC,8,4,94,66
+    GROUPBOX        " Lataamisjärjestys ",IDC_STATIC,8,4,94,66
     CONTROL         "&Sisäinen (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
     CONTROL         "&Natiivi (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
-    CONTROL         "S&isäinen sitten natiivi",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
-    CONTROL         "Natiivi sitten sisäinen",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
-    CONTROL         "&Disable",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    CONTROL         "S&isäinen, sitten natiivi",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "Natiivi, sitten sisäinen",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "&Poista käytöstä",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "Hyväksy",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "Peruuta",IDCANCEL,57,74,45,14,WS_GROUP
 END
@@ -155,21 +159,25 @@ IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Driver Selection ",IDC_STATIC,8,4,244,195
+    GROUPBOX        " Ajurin valinta ",IDC_STATIC,8,4,244,195
     LTEXT	    "Ääniajuri: ",IDC_STATIC,15,20,227,30
     CONTROL         "Devices",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
     PUSHBUTTON	    "&Hallintapaneeli",IDC_AUDIO_CONTROL_PANEL,170,50,79,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Laitteistopohjainen kiihdytys:",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Ajurin &emulointi",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
+    LTEXT           "Oletusnäytetaajuus:",IDC_STATIC,15,232,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Näytteiden oletusbittimäärä:",IDC_STATIC,137,232,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Ajurin &emulointi",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
+    GROUPBOX        " Ulkonäkö ",IDC_STATIC,8,4,244,106
     LTEXT           "Teema:",IDC_STATIC,15,16,230,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,230,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Asenna &teema...",IDC_THEME_INSTALL,152,38,93,14
@@ -191,18 +199,29 @@ BEGIN
     IDS_TAB_APPLICATIONS    "Sovellukset"
     IDS_TAB_DLLS            "Kirjastot"
     IDS_TAB_DRIVES          "Asemat"
-    IDS_CHOOSE_PATH         "Select the unix target directory, please."
+    IDS_CHOOSE_PATH         "Valitse unix-kohdekansio."
     IDS_HIDE_ADVANCED       "Piilota lisäasetukset"
     IDS_SHOW_ADVANCED       "Näytä lisäasetukset"
-    IDS_NOTHEME             "(Ei Teemaa)"
+    IDS_NOTHEME             "(Ei teemaa)"
     IDS_TAB_GRAPHICS        "Grafiikka"
-    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
+    IDS_TAB_DESKTOP_INTEGRATION "Työpöytäintegraatio"
     IDS_TAB_AUDIO           "Ääni"
     IDS_TAB_ABOUT           "Tietoja"
     IDS_WINECFG_TITLE       "Winen asetukset"
     IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
-    IDS_THEMEFILE           "Teema -tiedostot"
-    IDS_THEMEFILE_SELECT    "Valitse teeman tiedosto"
+    IDS_THEMEFILE           "Teematiedostot"
+    IDS_THEMEFILE_SELECT    "Valitse teematiedosto"
     IDS_SHELL_FOLDER        "Shell Folder"
     IDS_LINKS_TO            "Links to"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "Tämän kirjaston lataamisjärjestyksen muuttamista ei suositella.\nHaluatko silti jatkaa?"
+    IDS_DLL_WARNING_CAPTION "Varoitus: järjestelmäkirjasto"
+    IDS_DLL_NATIVE          "natiivi"
+    IDS_DLL_BUILTIN         "sisäinen"
+    IDS_DLL_NATIVE_BUILTIN  "natiivi, sisäinen"
+    IDS_DLL_BUILTIN_NATIVE  "sisäinen, natiivi"
+    IDS_DLL_DISABLED        "ei käytössä"
 END
