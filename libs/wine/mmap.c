@@ -218,6 +218,27 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 
 
 /***********************************************************************
+ *		mmap_reserve
+ *
+ * mmap wrapper used for reservations, only maps the specified address
+ */
+static inline int mmap_reserve( void *addr, size_t size )
+{
+    void *ptr;
+    int flags = MAP_PRIVATE | MAP_ANON | MAP_NORESERVE;
+
+#ifdef MAP_TRYFIXED
+    flags |= MAP_TRYFIXED;
+#elif defined(__svr4__) || defined(__NetBSD__) || defined(__APPLE__)
+    return try_mmap_fixed( addr, size, PROT_NONE, flags, get_fdzero(), 0 );
+#endif
+    ptr = mmap( addr, size, PROT_NONE, flags, get_fdzero(), 0 );
+    if (ptr != addr && ptr != (void *)-1)  munmap( ptr, size );
+    return (ptr == addr);
+}
+
+
+/***********************************************************************
  *           reserve_area
  *
  * Reserve as much memory as possible in the given area.
@@ -225,19 +246,14 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
  */
 static void reserve_area( void *addr, void *end )
 {
-    void *ptr;
     size_t size = (char *)end - (char *)addr;
 
     if (!size) return;
 
-    if ((ptr = wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE )) != (void *)-1)
+    if (mmap_reserve( addr, size ))
     {
-        if (ptr == addr)
-        {
-            wine_mmap_add_reserved_area( addr, size );
-            return;
-        }
-        else munmap( ptr, size );
+        wine_mmap_add_reserved_area( addr, size );
+        return;
     }
     if (size > granularity_mask + 1)
     {
