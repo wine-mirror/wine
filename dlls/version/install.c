@@ -473,8 +473,8 @@ DWORD WINAPI VerInstallFileA(
 		if (VerQueryValueA(buf1,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf1,&len1) &&
 		    VerQueryValueA(buf2,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf2,&len2)
 		) {
-		    /* irgendwas mit tbuf1 und tbuf2 machen
-		     * generiert DIFFLANG|MISMATCH
+                    /* Do something with tbuf1 and tbuf2
+		     * generates DIFFLANG|MISMATCH
 		     */
 		}
 		HeapFree(GetProcessHeap(), 0, buf2);
