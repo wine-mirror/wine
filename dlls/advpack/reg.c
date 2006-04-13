@@ -102,13 +102,13 @@ static void strentry_atow(STRENTRYA *aentry, STRENTRYW *wentry)
     DWORD name_len, val_len;
 
     name_len = MultiByteToWideChar(CP_ACP, 0, aentry->pszName, -1, NULL, 0);
-    val_len = MultiByteToWideChar(CP_ACP, 0, aentry->pszName, -1, NULL, 0);
+    val_len = MultiByteToWideChar(CP_ACP, 0, aentry->pszValue, -1, NULL, 0);
 
     wentry->pszName = HeapAlloc(GetProcessHeap(), 0, name_len * sizeof(WCHAR));
     wentry->pszValue = HeapAlloc(GetProcessHeap(), 0, val_len * sizeof(WCHAR));
 
     MultiByteToWideChar(CP_ACP, 0, aentry->pszName, -1, wentry->pszName, name_len);
-    MultiByteToWideChar(CP_ACP, 0, aentry->pszName, -1, wentry->pszValue, val_len);
+    MultiByteToWideChar(CP_ACP, 0, aentry->pszValue, -1, wentry->pszValue, val_len);
 }
 
 static STRTABLEW *strtable_atow(const STRTABLEA *atable)
