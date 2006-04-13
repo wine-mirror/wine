@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_MMAN_H
@@ -50,14 +51,32 @@ struct reserved_area
 static struct list reserved_areas = LIST_INIT(reserved_areas);
 static const int granularity_mask = 0xffff;  /* reserved areas have 64k granularity */
 
+#ifdef HAVE_MMAP
+
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
 #endif
-
-#ifndef HAVE_MMAP
-static inline int munmap( void *ptr, size_t size ) { return 0; }
+#ifndef MAP_PRIVATE
+#define MAP_PRIVATE 0
+#endif
+#ifndef MAP_ANON
+#define MAP_ANON 0
 #endif
 
+static inline int get_fdzero(void)
+{
+    static int fd = -1;
+
+    if (MAP_ANON == 0 && fd == -1)
+    {
+        if ((fd = open( "/dev/zero", O_RDONLY )) == -1)
+        {
+            perror( "/dev/zero: open" );
+            exit(1);
+        }
+    }
+    return fd;
+}
 
 #if (defined(__svr4__) || defined(__NetBSD__)) && !defined(MAP_TRYFIXED)
 /***********************************************************************
@@ -172,30 +191,12 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
  */
 void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 {
-#ifdef HAVE_MMAP
-    static int fdzero = -1;
-
-#ifdef MAP_ANON
-    flags |= MAP_ANON;
-#else
-    if (fdzero == -1)
-    {
-        if ((fdzero = open( "/dev/zero", O_RDONLY )) == -1)
-        {
-            perror( "/dev/zero: open" );
-            exit(1);
-        }
-    }
-#endif  /* MAP_ANON */
-
 #ifdef MAP_SHARED
     flags &= ~MAP_SHARED;
 #endif
 
     /* Linux EINVAL's on us if we don't pass MAP_PRIVATE to an anon mmap */
-#ifdef MAP_PRIVATE
-    flags |= MAP_PRIVATE;
-#endif
+    flags |= MAP_PRIVATE | MAP_ANON;
 
     if (!(flags & MAP_FIXED))
     {
@@ -208,18 +209,13 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
         /* If available, this will attempt a fixed mapping in-kernel */
         flags |= MAP_TRYFIXED;
 #elif defined(__svr4__) || defined(__NetBSD__) || defined(__APPLE__)
-        if ( try_mmap_fixed( start, size, prot, flags, fdzero, 0 ) )
+        if ( try_mmap_fixed( start, size, prot, flags, get_fdzero(), 0 ) )
             return start;
 #endif
     }
-    return mmap( start, size, prot, flags, fdzero, 0 );
-#else
-    return (void *)-1;
-#endif
+    return mmap( start, size, prot, flags, get_fdzero(), 0 );
 }
 
-
-#ifdef HAVE_MMAP
 
 /***********************************************************************
  *           reserve_area
@@ -328,6 +324,16 @@ void mmap_init(void)
 }
 
 #else /* HAVE_MMAP */
+
+void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
+{
+    return (void *)-1;
+}
+
+static inline int munmap( void *ptr, size_t size )
+{
+    return 0;
+}
 
 void mmap_init(void)
 {
