@@ -161,7 +161,7 @@ static void und_free_all(struct parsed_symbol* sym)
     while (sym->alloc_list)
     {
         next = *(void**)sym->alloc_list;
-        sym->mem_free_ptr(sym->alloc_list);
+        if(sym->mem_free_ptr) sym->mem_free_ptr(sym->alloc_list);
         sym->alloc_list = next;
     }
     sym->avail_in_first = 0;
