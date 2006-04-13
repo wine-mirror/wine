@@ -194,7 +194,7 @@ STRINGTABLE DISCARDABLE
 	IDS_HISTORY                 "Paikalliset asetukset\\Historia"
 	IDS_PROGRAM_FILES           "Ohjelmatiedostot"
 	IDS_MYPICTURES              "Omat kuvatiedostot"
-	IDS_PROGRAM_FILES_COMMON    "Ohjelmat\\Yhteiset tiedostot"
+	IDS_PROGRAM_FILES_COMMON    "Ohjelmatiedostot\\Yhteiset tiedostot"
 	IDS_COMMON_DOCUMENTS        "Dokumentit"
 	IDS_ADMINTOOLS              "Käynnistä-valikko\\Ohjelmat\\Administrative Tools"
 	IDS_COMMON_MUSIC            "Dokumentit\\Omat musiikkitiedostot"
