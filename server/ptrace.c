@@ -71,8 +71,6 @@
 inline static int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
 #endif  /* HAVE_SYS_PTRACE_H */
 
-static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
-
 /* handle a status returned by wait4 */
 static int handle_child_status( struct thread *thread, int pid, int status, int want_sig )
 {
