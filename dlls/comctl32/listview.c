@@ -3046,6 +3046,7 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     RANGES selection;
     LVITEMW item;
     ITERATOR i;
+    BOOL bOldChange;
 
     if (!(selection = ranges_create(100))) return;
 
@@ -3087,12 +3088,19 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	iterator_destroy(&i);
     }
 
+    bOldChange = infoPtr->bDoChangeNotify;
+    infoPtr->bDoChangeNotify = FALSE;
+
     LISTVIEW_DeselectAllSkipItems(infoPtr, selection);
+
+
     iterator_rangesitems(&i, selection);
     while(iterator_next(&i))
 	LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
     /* this will also destroy the selection */
     iterator_destroy(&i);
+
+    infoPtr->bDoChangeNotify = bOldChange;
     
     LISTVIEW_SetItemFocus(infoPtr, nItem);
 }
