@@ -750,6 +750,8 @@ static int encode_type(
 	break;
 
     case VT_R8:
+    case VT_I8:
+    case VT_UI8:
 	*encoded_type = default_type;
 	*width = 8;
 	*alignment = 8;
