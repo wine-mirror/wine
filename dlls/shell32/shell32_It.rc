@@ -1,6 +1,7 @@
 /*
  * Copyright 1998 Juergen Schmied
  * Copyright 2003-2004 Puoti
+ * Copyright 2006 Antonio Codazzi
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,8 +22,8 @@ LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
 
 MENU_001 MENU DISCARDABLE
 BEGIN
-	MENUITEM "&Icone Grandi",	FCIDM_SHVIEW_BIGICON
-	MENUITEM "&Icone Piccole",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "Icone &Grandi",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "Icone &Piccole",	FCIDM_SHVIEW_SMALLICON
 	MENUITEM "&Lista",		FCIDM_SHVIEW_LISTVIEW
 	MENUITEM "&Dettagli",		FCIDM_SHVIEW_REPORTVIEW
 END
@@ -36,8 +37,8 @@ BEGIN
 	BEGIN
 	  POPUP "&Visualizza"
 	  BEGIN
-	    MENUITEM "&Icone Grandi",	FCIDM_SHVIEW_BIGICON
-	    MENUITEM "&Icone Piccole",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "Icone &Grandi",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "Icone &Piccole",	FCIDM_SHVIEW_SMALLICON
 	    MENUITEM "&Lista",		FCIDM_SHVIEW_LISTVIEW
 	    MENUITEM "&Dettagli",	FCIDM_SHVIEW_REPORTVIEW
 	  END
@@ -46,7 +47,7 @@ BEGIN
 	  BEGIN
 	    MENUITEM "Per &Nome",	0x30	/* column 0 */
 	    MENUITEM "Per &Tipo",	0x32	/* column 2 */
-	    MENUITEM "Per &Dimensione",	0x31	/* ... */
+	    MENUITEM "Per Di&mensione",	0x31	/* ... */
 	    MENUITEM "Per &Data",	0x33
 	    MENUITEM SEPARATOR
 	    MENUITEM "&Disponi Automaticamente",	FCIDM_SHVIEW_AUTOARRANGE
@@ -61,7 +62,7 @@ BEGIN
 	  POPUP "Nuovo"
 	  BEGIN
 	    MENUITEM "Nuova &Cartella",	FCIDM_SHVIEW_NEWFOLDER
-	    MENUITEM "Nuovo &Collegamento",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM "Nuovo Co&llegamento",	FCIDM_SHVIEW_NEWLINK
 	    MENUITEM SEPARATOR
 	  END
 	  MENUITEM SEPARATOR
@@ -82,7 +83,7 @@ BEGIN
 	  MENUITEM "&Taglia",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Copia",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "&Crea Collegamento",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Crea Co&llegamento",	FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "&Cancella",		FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Rinomina",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
@@ -129,63 +130,75 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Annulla", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Esplora...", 12288, 170, 63, 50, 14, WS_TABSTOP
-}
-
-/*
-	special folders
-*/
-STRINGTABLE DISCARDABLE
-{
-	IDS_DESKTOP		"Desktop"
-	IDS_MYCOMPUTER		"Risorse del Computer"
-}
-
-/*
-	context menus
-*/
-STRINGTABLE DISCARDABLE
-{
-	IDS_VIEW_LARGE		"&Icone Grandi"
-	IDS_VIEW_SMALL		"I&cone Piccole"
-	IDS_VIEW_LIST		"&Lista"
-	IDS_VIEW_DETAILS	"&Dettagli"
-	IDS_SELECT		"Selezione"
-	IDS_OPEN		"Apri"
+ PUSHBUTTON "E&splora...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
 STRINGTABLE DISCARDABLE
 {
-	IDS_CREATEFOLDER_DENIED "Impossibile creare la cartella: Accesso negato."
-	IDS_CREATEFOLDER_CAPTION "Errore durante la creazione della cartella"
-	IDS_DELETEITEM_CAPTION "Confermare la cancallazione del file"
-	IDS_DELETEFOLDER_CAPTION "Confermare la cancellazione della cartella"
-	IDS_DELETEITEM_TEXT "Sei sicuro di voler cancellare '%1'?"
-	IDS_DELETEMULTIPLE_TEXT "Sei sicuro di voler cancellare questi %1 elementi?"
-	IDS_OVERWRITEFILE_TEXT "Sovrascrivere il File %1?"
-	IDS_OVERWRITEFILE_CAPTION "Confermare la sovrascrizione del File"
-}
-
-/*	columns in the shellview	*/
-STRINGTABLE
-BEGIN
+	/*	columns in the shellview	*/
 	IDS_SHV_COLUMN1		"File"
 	IDS_SHV_COLUMN2		"Dimensione"
 	IDS_SHV_COLUMN3		"Tipo"
 	IDS_SHV_COLUMN4		"Modificato"
 	IDS_SHV_COLUMN5		"Attributi"
-	IDS_SHV_COLUMN6		"Dimensione"
-	IDS_SHV_COLUMN7		"Dimensione disponibile"
+	IDS_SHV_COLUMN6		"Spazio"
+	IDS_SHV_COLUMN7		"Spazio disponibile"
 	IDS_SHV_COLUMN8		"Nome"
 	IDS_SHV_COLUMN9		"Commenti"
-END
 
+	/* special folder */
+	IDS_DESKTOP		"Desktop"
+	IDS_MYCOMPUTER		"Risorse del Computer"
 
-/* message box strings */
-STRINGTABLE DISCARDABLE
-{
+	/*  context menus  */
+	IDS_VIEW_LARGE		"Icone &Grandi"
+	IDS_VIEW_SMALL		"Icone &Piccole"
+	IDS_VIEW_LIST		"&Lista"
+	IDS_VIEW_DETAILS	"&Dettagli"
+	IDS_SELECT		"Selezione"
+	IDS_OPEN		"Apri"
+
+	IDS_CREATEFOLDER_DENIED "Impossibile creare la cartella: Accesso negato."
+	IDS_CREATEFOLDER_CAPTION "Errore durante la creazione della cartella"
+	IDS_DELETEITEM_CAPTION "Confermare la cancellazione del file"
+	IDS_DELETEFOLDER_CAPTION "Confermare la cancellazione della cartella"
+	IDS_DELETEITEM_TEXT "Sei sicuro di voler cancellare '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Sei sicuro di voler cancellare questi %1 elementi?"
+	IDS_OVERWRITEFILE_TEXT "Sovrascrivere il File %1?"
+	IDS_OVERWRITEFILE_CAPTION "Confermare la sovrascrizione del File"
+
+	/* message box strings */
        IDS_RESTART_TITLE       "Riavvia"
-       IDS_RESTART_PROMPT      "Vuoi simulare un riavvio do Windows?"
+       IDS_RESTART_PROMPT      "Vuoi simulare un riavvio di Windows?"
        IDS_SHUTDOWN_TITLE      "Termina sessione"
        IDS_SHUTDOWN_PROMPT     "Vuoi terminare la sessione di Wine?"
+
+	/* shell folder path default values */
+	IDS_STARTMENU               "Start Menu"
+	IDS_PROGRAMS                "Start Menu\\Programmi"
+	IDS_STARTUP                 "Start Menu\\Programmi\\StartUp"
+	IDS_ADMINTOOLS              "Start Menu\\Programmi\\Administrative Tools"
+	IDS_INTERNET_CACHE          "Settaggi Locali\\Temporary Internet Files"
+	IDS_HISTORY                 "Settaggi Locali\\Cronologia"
+	IDS_LOCAL_APPDATA           "Settaggi Locali\\Applicazioni"
+	IDS_CDBURN_AREA             "Settaggi Locali\\Applicazioni\\Microsoft\\CD Burning"
+	IDS_PROGRAM_FILES           "Programmi"
+	IDS_PROGRAM_FILES_COMMON    "Programmi\\Common Files"
+	IDS_COMMON_DOCUMENTS        "Documenti"
+	IDS_COMMON_MUSIC            "Documenti\\Musica"
+	IDS_COMMON_PICTURES         "Documenti\\Immagini"
+	IDS_COMMON_VIDEO            "Documenti\\Video"
+	IDS_PERSONAL                "Miei Documenti"
+	IDS_MYMUSIC                 "Musica"
+	IDS_MYVIDEO                 "Video"
+	IDS_MYPICTURES              "Immagini"
+	IDS_FAVORITES               "Favoriti"
+	IDS_RECENT                  "Recenti"
+	IDS_SENDTO                  "SendTo"
+	IDS_DESKTOPDIRECTORY        "Desktop"
+	IDS_NETHOOD                 "NetHood"
+	IDS_TEMPLATES               "Modelli"
+	IDS_APPDATA                 "Applicazioni"
+	IDS_PRINTHOOD               "PrintHood"
+	IDS_COOKIES                 "Cookies"
 }
