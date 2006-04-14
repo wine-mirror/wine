@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2003, 2004 Stefan Leichter
  * Copyright (C) 2005, 2006 Detlef Riekenberg
+ * Copyright (C) 2006 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -911,6 +912,92 @@ static void test_SetDefaultPrinter(void)
 
 }
 
+static void test_GetPrinterDriver(void)
+{
+    LPSTR default_printer;
+    HANDLE hprn;
+    BOOL ret;
+    BYTE *buf;
+    INT level;
+    DWORD needed, filled;
+
+    default_printer = find_default_printer();
+    if (!default_printer)
+    {
+        trace("There is no default printer installed, skiping the test\n");
+        return;
+    }
+
+    hprn = 0;
+    ret = OpenPrinter(default_printer, &hprn, NULL);
+    if (!ret)
+    {
+        trace("There is no printers installed, skiping the test\n");
+        return;
+    }
+    ok(hprn != 0, "wrong hprn %p\n", hprn);
+
+    for (level = -1; level <= 7; level++)
+    {
+        SetLastError(0xdeadbeef);
+        needed = (DWORD)-1;
+        ret = GetPrinterDriver(hprn, NULL, level, NULL, 0, &needed);
+        ok(!ret, "level %d: GetPrinterDriver should fail\n", level);
+        if (level >= 1 && level <= 6)
+        {
+            ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %ld\n", GetLastError());
+            ok(needed > 0,"not expected needed buffer size %ld\n", needed);
+        }
+        else
+        {
+            ok(GetLastError() == ERROR_INVALID_LEVEL, "wrong error %ld\n", GetLastError());
+            ok(needed == (DWORD)-1,"not expected needed buffer size %ld\n", needed);
+            continue;
+        }
+
+        buf = HeapAlloc(GetProcessHeap(), 0, needed);
+
+        SetLastError(0xdeadbeef);
+        filled = -1;
+        ret = GetPrinterDriver(hprn, NULL, level, buf, needed, &filled);
+        ok(ret, "level %d: GetPrinterDriver error %ld\n", level, GetLastError());
+        ok(needed == filled, "needed %ld != filled %ld\n", needed, filled);
+
+        if (level == 2)
+        {
+            DRIVER_INFO_2 *di_2 = (DRIVER_INFO_2 *)buf;
+            DWORD calculated = sizeof(*di_2);
+
+            ok(di_2->cVersion >= 0 && di_2->cVersion <= 3, "di_2->cVersion = %ld\n", di_2->cVersion);
+            ok(di_2->pName != NULL, "not expected NULL ptr\n");
+            ok(di_2->pEnvironment != NULL, "not expected NULL ptr\n");
+            ok(di_2->pDriverPath != NULL, "not expected NULL ptr\n");
+            ok(di_2->pDataFile != NULL, "not expected NULL ptr\n");
+            ok(di_2->pConfigFile != NULL, "not expected NULL ptr\n");
+
+            trace("cVersion %ld\n", di_2->cVersion);
+            trace("pName %s\n", di_2->pName);
+            calculated += strlen(di_2->pName) + 1;
+            trace("pEnvironment %s\n", di_2->pEnvironment);
+            calculated += strlen(di_2->pEnvironment) + 1;
+            trace("pDriverPath %s\n", di_2->pDriverPath);
+            calculated += strlen(di_2->pDriverPath) + 1;
+            trace("pDataFile %s\n", di_2->pDataFile);
+            calculated += strlen(di_2->pDataFile) + 1;
+            trace("pConfigFile %s\n", di_2->pConfigFile);
+            calculated += strlen(di_2->pConfigFile) + 1;
+
+            /* XP allocates memory for both ANSI and unicode names */
+            ok(filled >= calculated,"calculated %ld != filled %ld\n", calculated, filled);
+        }
+
+        HeapFree(GetProcessHeap(), 0, buf);
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = ClosePrinter(hprn);
+    ok(ret, "ClosePrinter error %ld\n", GetLastError());
+}
 
 START_TEST(info)
 {
@@ -925,5 +1012,6 @@ START_TEST(info)
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
     test_OpenPrinter();
+    test_GetPrinterDriver();
     test_SetDefaultPrinter();
 }
