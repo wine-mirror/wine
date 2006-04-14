@@ -32,6 +32,15 @@
 
 static char     selfname[MAX_PATH];
 
+/* Some functions are only in later versions of kernel32.dll */
+static HANDLE (WINAPI *pCreateToolhelp32Snapshot)(DWORD, DWORD);
+static BOOL (WINAPI *pModule32First)(HANDLE, LPMODULEENTRY32);
+static BOOL (WINAPI *pModule32Next)(HANDLE, LPMODULEENTRY32);
+static BOOL (WINAPI *pProcess32First)(HANDLE, LPPROCESSENTRY32);
+static BOOL (WINAPI *pProcess32Next)(HANDLE, LPPROCESSENTRY32);
+static BOOL (WINAPI *pThread32First)(HANDLE, LPTHREADENTRY32);
+static BOOL (WINAPI *pThread32Next)(HANDLE, LPTHREADENTRY32);
+
 /* 1 minute should be more than enough */
 #define WAIT_TIME       (60 * 1000)
 
@@ -100,12 +109,12 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
     unsigned            found = 0;
     int                 num = 0;
 
-    hSnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+    hSnapshot = pCreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
     ok(hSnapshot != NULL, "Cannot create snapshot\n");
 
     /* check that this current process is enumerated */
     pe.dwSize = sizeof(pe);
-    if (Process32First( hSnapshot, &pe ))
+    if (pProcess32First( hSnapshot, &pe ))
     {
         do
         {
@@ -113,13 +122,13 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
             if (pe.th32ProcessID == sub_pcs_pid) found++;
             trace("PID=%lx %s\n", pe.th32ProcessID, pe.szExeFile);
             num++;
-        } while (Process32Next( hSnapshot, &pe ));
+        } while (pProcess32Next( hSnapshot, &pe ));
     }
     ok(found == 2, "couldn't find self and/or sub-process in process list\n");
 
     /* check that first really resets the enumeration */
     found = 0;
-    if (Process32First( hSnapshot, &pe ))
+    if (pProcess32First( hSnapshot, &pe ))
     {
         do
         {
@@ -127,19 +136,19 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
             if (pe.th32ProcessID == sub_pcs_pid) found++;
             trace("PID=%lx %s\n", pe.th32ProcessID, pe.szExeFile);
             num--;
-        } while (Process32Next( hSnapshot, &pe ));
+        } while (pProcess32Next( hSnapshot, &pe ));
     }
     ok(found == 2, "couldn't find self and/or sub-process in process list\n");
     ok(!num, "mismatch in counting\n");
 
     te.dwSize = sizeof(te);
-    ok(!Thread32First( hSnapshot, &te ), "shouldn't return a thread\n");
+    ok(!pThread32First( hSnapshot, &te ), "shouldn't return a thread\n");
 
     me.dwSize = sizeof(me);
-    ok(!Module32First( hSnapshot, &me ), "shouldn't return a module\n");
+    ok(!pModule32First( hSnapshot, &me ), "shouldn't return a module\n");
 
     CloseHandle(hSnapshot);
-    ok(!Process32First( hSnapshot, &pe ), "shouldn't return a process\n");
+    ok(!pProcess32First( hSnapshot, &pe ), "shouldn't return a process\n");
 }
 
 static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
@@ -152,12 +161,12 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
     unsigned            curr_found = 0;
     unsigned            sub_found = 0;
     
-    hSnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 );
+    hSnapshot = pCreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 );
     ok(hSnapshot != NULL, "Cannot create snapshot\n");
 
     /* check that this current process is enumerated */
     te.dwSize = sizeof(te);
-    if (Thread32First( hSnapshot, &te ))
+    if (pThread32First( hSnapshot, &te ))
     {
         do
         {
@@ -165,7 +174,7 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
             if (te.th32OwnerProcessID == sub_pcs_pid) sub_found++;
             trace("PID=%lx TID=%lx %ld\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
             num++;
-        } while (Thread32Next( hSnapshot, &te ));
+        } while (pThread32Next( hSnapshot, &te ));
     }
     ok(curr_found == 1, "couldn't find self in thread list\n");
     ok(sub_found == 2, "couldn't find sub-process thread's in thread list\n");
@@ -173,7 +182,7 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
     /* check that first really resets enumeration */
     curr_found = 0;
     sub_found = 0;
-    if (Thread32First( hSnapshot, &te ))
+    if (pThread32First( hSnapshot, &te ))
     {
         do
         {
@@ -181,19 +190,19 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
             if (te.th32OwnerProcessID == sub_pcs_pid) sub_found++;
             trace("PID=%lx TID=%lx %ld\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
             num--;
-        } while (Thread32Next( hSnapshot, &te ));
+        } while (pThread32Next( hSnapshot, &te ));
     }
     ok(curr_found == 1, "couldn't find self in thread list\n");
     ok(sub_found == 2, "couldn't find sub-process thread's in thread list\n");
 
     pe.dwSize = sizeof(pe);
-    ok(!Process32First( hSnapshot, &pe ), "shouldn't return a process\n");
+    ok(!pProcess32First( hSnapshot, &pe ), "shouldn't return a process\n");
 
     me.dwSize = sizeof(me);
-    ok(!Module32First( hSnapshot, &me ), "shouldn't return a module\n");
+    ok(!pModule32First( hSnapshot, &me ), "shouldn't return a module\n");
 
     CloseHandle(hSnapshot);
-    ok(!Thread32First( hSnapshot, &te ), "shouldn't return a thread\n");
+    ok(!pThread32First( hSnapshot, &te ), "shouldn't return a thread\n");
 }
 
 static const char* curr_expected_modules[] =
@@ -222,12 +231,12 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
 
     ok(NUM_OF(found) >= num_expected, "Internal: bump found[] size\n");
 
-    hSnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPMODULE, pid );
+    hSnapshot = pCreateToolhelp32Snapshot( TH32CS_SNAPMODULE, pid );
     ok(hSnapshot != NULL, "Cannot create snapshot\n");
 
     for (i = 0; i < num_expected; i++) found[i] = 0;
     me.dwSize = sizeof(me);
-    if (Module32First( hSnapshot, &me ))
+    if (pModule32First( hSnapshot, &me ))
     {
         do
         {
@@ -237,7 +246,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
             for (i = 0; i < num_expected; i++)
                 if (!strcmp(expected[i], me.szModule)) found[i]++;
             num++;
-        } while (Module32Next( hSnapshot, &me ));
+        } while (pModule32Next( hSnapshot, &me ));
     }
     for (i = 0; i < num_expected; i++)
         ok(found[i] == 1, "Module %s is %s\n",
@@ -246,7 +255,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
     /* check that first really resets the enumeration */
     for (i = 0; i < num_expected; i++) found[i] = 0;
     me.dwSize = sizeof(me);
-    if (Module32First( hSnapshot, &me ))
+    if (pModule32First( hSnapshot, &me ))
     {
         do
         {
@@ -255,7 +264,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
             for (i = 0; i < num_expected; i++)
                 if (!strcmp(expected[i], me.szModule)) found[i]++;
             num--;
-        } while (Module32Next( hSnapshot, &me ));
+        } while (pModule32Next( hSnapshot, &me ));
     }
     for (i = 0; i < num_expected; i++)
         ok(found[i] == 1, "Module %s is %s\n",
@@ -263,13 +272,13 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
     ok(!num, "mismatch in counting\n");
 
     pe.dwSize = sizeof(pe);
-    ok(!Process32First( hSnapshot, &pe ), "shouldn't return a process\n");
+    ok(!pProcess32First( hSnapshot, &pe ), "shouldn't return a process\n");
 
     me.dwSize = sizeof(me);
-    ok(!Thread32First( hSnapshot, &te ), "shouldn't return a thread\n");
+    ok(!pThread32First( hSnapshot, &te ), "shouldn't return a thread\n");
 
     CloseHandle(hSnapshot);
-    ok(!Module32First( hSnapshot, &me ), "shouldn't return a module\n");
+    ok(!pModule32First( hSnapshot, &me ), "shouldn't return a module\n");
 }
 
 START_TEST(toolhelp)
@@ -282,6 +291,20 @@ START_TEST(toolhelp)
     STARTUPINFOA	startup;
     HANDLE              ev1, ev2;
     DWORD               w;
+    HANDLE              hkernel32 = GetModuleHandleA("kernel32");
+
+    pCreateToolhelp32Snapshot = (VOID *) GetProcAddress(hkernel32, "CreateToolhelp32Snapshot");
+    pModule32First = (VOID *) GetProcAddress(hkernel32, "Module32First");
+    pModule32Next = (VOID *) GetProcAddress(hkernel32, "Module32Next");
+    pProcess32First = (VOID *) GetProcAddress(hkernel32, "Process32First");
+    pProcess32Next = (VOID *) GetProcAddress(hkernel32, "Process32Next");
+    pThread32First = (VOID *) GetProcAddress(hkernel32, "Thread32First");
+    pThread32Next = (VOID *) GetProcAddress(hkernel32, "Thread32Next");
+
+    if (!pCreateToolhelp32Snapshot || 
+        !pModule32First || !pModule32Next ||
+        !pProcess32First || !pProcess32Next ||
+        !pThread32First || !pThread32Next) return;
 
     r = init();
     ok(r == 0, "Basic init of sub-process test\n");
