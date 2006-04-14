@@ -39,6 +39,7 @@
 
 #include "d3d9.h"
 #include "d3d9types.h"
+#include "ddraw.h"
 #include "wine/wined3d_interface.h"
 #include "wine/wined3d_gl.h"
 

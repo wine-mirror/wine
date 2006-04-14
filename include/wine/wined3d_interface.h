@@ -31,6 +31,10 @@
 # error You must include d3d.h, d3d8.h or d3d9.h header to use this header
 #endif
 
+#if !defined( __WINE_DDRAW_H)
+#error You must include ddraw.h to use this header
+#endif
+
 #include "wined3d_types.h"
 /*****************************************************************
  * THIS FILE MUST NOT CONTAIN X11 or MESA DEFINES 
@@ -1107,6 +1111,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(GetDC)(THIS_ HDC *pHdc) PURE;
     STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
     STDMETHOD(Flip)(THIS_ IWineD3DSurface *Override, DWORD FLAGS) PURE;
+    STDMETHOD(Blt)(THIS_ RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) PURE;
     /* Internally used methods */
     STDMETHOD(CleanDirtyRect)(THIS) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
@@ -1146,6 +1151,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_GetDC(p,a)                   (p)->lpVtbl->GetDC(p,a)
 #define IWineD3DSurface_ReleaseDC(p,a)               (p)->lpVtbl->ReleaseDC(p,a)
 #define IWineD3DSurface_Flip(p,a,b)                  (p)->lpVtbl->Flip(p,a,b)
+#define IWineD3DSurface_Blt(p,a,b,c,d,e)             (p)->lpVtbl->Blt(p,a,b,c,d,e)
 /*** IWineD3DSurface (Internal, no d3d mapping) methods ***/
 #define IWineD3DSurface_CleanDirtyRect(p)            (p)->lpVtbl->CleanDirtyRect(p)
 #define IWineD3DSurface_AddDirtyRect(p,a)            (p)->lpVtbl->AddDirtyRect(p,a)
