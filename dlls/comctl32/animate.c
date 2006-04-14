@@ -660,7 +660,7 @@ static BOOL ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
 	return FALSE;
 
     if (fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT,
-		      (DWORD_PTR)infoPtr->inbih, (DWORD_PTR)infoPtr->outbih) != outSize) 
+		      (DWORD_PTR)infoPtr->inbih, (DWORD_PTR)infoPtr->outbih) != ICERR_OK) 
     {
 	WARN("Can't get output BIH\n");
 	return FALSE;
