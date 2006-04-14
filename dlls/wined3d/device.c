@@ -4250,7 +4250,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface, IWineD3D
     }
 
     *ppShader =  This->stateBlock->pixelShader;
-    if (NULL != ppShader) {
+    if (NULL != *ppShader) {
         IWineD3DPixelShader_AddRef(*ppShader);
     }
     TRACE("(%p) : returning %p\n", This, *ppShader);
