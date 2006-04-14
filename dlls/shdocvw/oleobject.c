@@ -507,6 +507,11 @@ static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObject *iface,
 
     TRACE("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
 
+    memcpy(&This->pos_rect, lprcPosRect, sizeof(RECT));
+
+    if(lprcClipRect)
+        memcpy(&This->clip_rect, lprcClipRect, sizeof(RECT));
+
     if(This->shell_embedding_hwnd) {
         SetWindowPos(This->shell_embedding_hwnd, NULL,
                      lprcPosRect->left, lprcPosRect->top,
