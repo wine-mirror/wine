@@ -120,7 +120,7 @@ static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         return navigate2(This);
     }
 
-    return DefWindowProcA(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
 void create_doc_view_hwnd(WebBrowser *This)
@@ -149,7 +149,7 @@ void create_doc_view_hwnd(WebBrowser *This)
     GetClientRect(This->shell_embedding_hwnd, &rect);
     This->doc_view_hwnd = CreateWindowExW(0, wszShell_DocObject_View,
          wszShell_DocObject_View,
-         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP | WS_MAXIMIZEBOX,
+         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
          rect.left, rect.top, rect.right, rect.bottom, This->shell_embedding_hwnd,
          NULL, shdocvw_hinstance, This);
 }

@@ -58,7 +58,7 @@ static LRESULT WINAPI shell_embedding_proc(HWND hwnd, UINT msg, WPARAM wParam, L
         return resize_window(This, LOWORD(lParam), HIWORD(lParam));
     }
 
-    return DefWindowProcA(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
 static void create_shell_embedding_hwnd(WebBrowser *This)
@@ -91,10 +91,12 @@ static void create_shell_embedding_hwnd(WebBrowser *This)
         IOleInPlaceSite_Release(inplace);
     }
 
-    This->shell_embedding_hwnd = CreateWindowExW(0, wszShellEmbedding, wszShellEmbedding,
-         WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP | WS_MAXIMIZEBOX,
-         0, 0, 0, 0, parent,
-         NULL, shdocvw_hinstance, This);
+    This->shell_embedding_hwnd = CreateWindowExW(
+            WS_EX_WINDOWEDGE,
+            wszShellEmbedding, wszShellEmbedding,
+            WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
+            0, 0, 0, 0, parent,
+            NULL, shdocvw_hinstance, This);
 }
 
 /**********************************************************************
