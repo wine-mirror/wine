@@ -155,7 +155,7 @@ static struct icon *get_icon(HWND owner, UINT id)
 
     /* search for the icon */
     LIST_FOR_EACH_ENTRY( this, &tray.icons, struct icon, entry )
-        if ((this->id == id) && (this->owner = owner)) return this;
+        if ((this->id == id) && (this->owner == owner)) return this;
 
     return NULL;
 }
