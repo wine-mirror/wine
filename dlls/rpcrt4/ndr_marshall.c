@@ -112,7 +112,7 @@ static void WINAPI NdrBaseTypeBufferSize(PMIDL_STUB_MESSAGE, unsigned char *, PF
 static void WINAPI NdrBaseTypeFree(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
 static unsigned long WINAPI NdrBaseTypeMemorySize(PMIDL_STUB_MESSAGE, PFORMAT_STRING);
 
-NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
+const NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
   0,
   NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall,
   NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall, NdrBaseTypeMarshall,
@@ -149,7 +149,7 @@ NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
   0, 0, 0, 0,
   NdrUserMarshalMarshall
 };
-NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
+const NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
   0,
   NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall,
   NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall, NdrBaseTypeUnmarshall,
@@ -186,7 +186,7 @@ NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
   0, 0, 0, 0,
   NdrUserMarshalUnmarshall
 };
-NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
+const NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
   0,
   NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize,
   NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize, NdrBaseTypeBufferSize,
@@ -223,7 +223,7 @@ NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
   0, 0, 0, 0,
   NdrUserMarshalBufferSize
 };
-NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
+const NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
   0,
   NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize,
   NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize, NdrBaseTypeMemorySize,
@@ -253,7 +253,7 @@ NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
   0, 0, 0, 0,
   NdrUserMarshalMemorySize
 };
-NDR_FREE NdrFreer[NDR_TABLE_SIZE] = {
+const NDR_FREE NdrFreer[NDR_TABLE_SIZE] = {
   0,
   NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree,
   NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree, NdrBaseTypeFree,

@@ -42,10 +42,10 @@ typedef void           (WINAPI *NDR_BUFFERSIZE)(PMIDL_STUB_MESSAGE, unsigned cha
 typedef unsigned long  (WINAPI *NDR_MEMORYSIZE)(PMIDL_STUB_MESSAGE,                 PFORMAT_STRING);
 typedef void           (WINAPI *NDR_FREE)      (PMIDL_STUB_MESSAGE, unsigned char*, PFORMAT_STRING);
 
-extern NDR_MARSHALL   NdrMarshaller[];
-extern NDR_UNMARSHALL NdrUnmarshaller[];
-extern NDR_BUFFERSIZE NdrBufferSizer[];
-extern NDR_MEMORYSIZE NdrMemorySizer[];
-extern NDR_FREE       NdrFreer[];
+extern const NDR_MARSHALL   NdrMarshaller[];
+extern const NDR_UNMARSHALL NdrUnmarshaller[];
+extern const NDR_BUFFERSIZE NdrBufferSizer[];
+extern const NDR_MEMORYSIZE NdrMemorySizer[];
+extern const NDR_FREE       NdrFreer[];
 
 #endif  /* __WINE_NDR_MISC_H */
