@@ -392,15 +392,20 @@ HGLOBAL WINAPI GlobalAlloc(
 /***********************************************************************
  *           GlobalLock   (KERNEL32.@)
  *
- * Lock a global memory object.
+ * Lock a global memory object and return a pointer to first byte of the memory
+ *
+ * PARAMS
+ *  hmem [I] Handle of the global memory object
  *
  * RETURNS
- *      Pointer to first byte of block
- *      NULL: Failure
+ *  Success: Pointer to first byte of the memory block
+ *  Failure: NULL
+ *
+ * NOTES
+ *   When the handle is invalid, last error is set to ERROR_INVALID_HANDLE
+ *
  */
-LPVOID WINAPI GlobalLock(
-              HGLOBAL hmem /* [in] Handle of global memory object */
-)
+LPVOID WINAPI GlobalLock(HGLOBAL hmem)
 {
     PGLOBAL32_INTERN pintern;
     LPVOID           palloc;
@@ -422,14 +427,14 @@ LPVOID WINAPI GlobalLock(
         }
         else
         {
-            WARN("invalid handle %p\n", hmem);
+            WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
             palloc = NULL;
             SetLastError(ERROR_INVALID_HANDLE);
         }
     }
     __EXCEPT_PAGE_FAULT
     {
-        WARN("page fault on %p\n", hmem);
+        WARN("(%p): Page fault occurred ! Caused by bug ?\n", hmem);
         palloc = NULL;
         SetLastError(ERROR_INVALID_HANDLE);
     }
@@ -444,13 +449,19 @@ LPVOID WINAPI GlobalLock(
  *
  * Unlock a global memory object.
  *
+ * PARAMS
+ *  hmem [I] Handle of the global memory object
+ *
  * RETURNS
- *      TRUE: Object is still locked
- *      FALSE: Object is unlocked
+ *  Success: Object is still locked
+ *  Failure: FALSE (The Object is unlocked)
+ *
+ * NOTES
+ *   When the handle is invalid, last error is set to ERROR_INVALID_HANDLE
+ *
  */
-BOOL WINAPI GlobalUnlock(
-              HGLOBAL hmem /* [in] Handle of global memory object */
-) {
+BOOL WINAPI GlobalUnlock(HGLOBAL hmem)
+{
     PGLOBAL32_INTERN pintern;
     BOOL locked;
 
@@ -477,14 +488,14 @@ BOOL WINAPI GlobalUnlock(
         }
         else
         {
-            WARN("invalid handle\n");
+            WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
             SetLastError(ERROR_INVALID_HANDLE);
             locked=FALSE;
         }
     }
     __EXCEPT_PAGE_FAULT
     {
-        ERR("page fault occurred ! Caused by bug ?\n");
+        WARN("(%p): Page fault occurred ! Caused by bug ?\n", hmem);
         SetLastError( ERROR_INVALID_PARAMETER );
         locked=FALSE;
     }
