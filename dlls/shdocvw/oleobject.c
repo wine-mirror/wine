@@ -142,6 +142,11 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
         This->shell_embedding_hwnd = NULL;
     }
 
+    if(This->inplace) {
+        IOleInPlaceSite_Release(This->inplace);
+        This->inplace = NULL;
+    }
+
     if(This->hostui)
         IDocHostUIHandler_Release(This->hostui);
     if(This->client)
@@ -243,40 +248,43 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
     switch (iVerb)
     {
     case OLEIVERB_SHOW:
-    case OLEIVERB_INPLACEACTIVATE: {
-        IOleInPlaceSite *inplace;
-
+    case OLEIVERB_INPLACEACTIVATE:
         TRACE("OLEIVERB_INPLACEACTIVATE\n");
 
         if(!pActiveSite)
             return E_INVALIDARG;
 
-        hres = IOleClientSite_QueryInterface(pActiveSite, &IID_IOleInPlaceSite, (void**)&inplace);
+        if(This->inplace) {
+            IOleInPlaceSite_Release(This->inplace);
+            This->inplace = NULL;
+        }
+
+        hres = IOleClientSite_QueryInterface(pActiveSite, &IID_IOleInPlaceSite, (void**)&This->inplace);
         if(FAILED(hres)) {
             WARN("Could not get IOleInPlaceSite\n");
             return hres;
         }
 
-        hres = IOleInPlaceSite_CanInPlaceActivate(inplace);
+        hres = IOleInPlaceSite_CanInPlaceActivate(This->inplace);
         if(hres != S_OK) {
             WARN("CanInPlaceActivate returned: %08lx\n", hres);
-            IOleInPlaceSite_Release(inplace);
+            IOleInPlaceSite_Release(This->inplace);
             return E_FAIL;
         }
 
-        hres = IOleInPlaceSite_GetWindow(inplace, &This->iphwnd);
+        hres = IOleInPlaceSite_GetWindow(This->inplace, &This->iphwnd);
         if(FAILED(hres))
             This->iphwnd = hwndParent;
 
-        IOleInPlaceSite_OnInPlaceActivate(inplace);
+        IOleInPlaceSite_OnInPlaceActivate(This->inplace);
 
-        IOleInPlaceSite_GetWindowContext(inplace, &This->frame, &This->uiwindow,
+        IOleInPlaceSite_GetWindowContext(This->inplace, &This->frame, &This->uiwindow,
                                          &This->pos_rect, &This->clip_rect,
                                          &This->frameinfo);
 
 
         if(iVerb == OLEIVERB_INPLACEACTIVATE)
-            IOleInPlaceSite_Release(inplace);
+            IOleInPlaceSite_Release(This->inplace);
 
         SetWindowPos(This->shell_embedding_hwnd, NULL,
                      This->pos_rect.left, This->pos_rect.top,
@@ -297,8 +305,8 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
 
         TRACE("OLEIVERB_SHOW\n");
 
-        IOleInPlaceSite_OnUIActivate(inplace);
-        IOleInPlaceSite_Release(inplace);
+        IOleInPlaceSite_OnUIActivate(This->inplace);
+        IOleInPlaceSite_Release(This->inplace);
 
         if(This->frame)
             IOleInPlaceFrame_SetActiveObject(This->frame, ACTIVEOBJ(This), wszitem);
@@ -310,7 +318,6 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
          */
 
         return S_OK;
-    }
     default:
         FIXME("stub for %ld\n", iVerb);
         break;
@@ -760,6 +767,7 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
     This->lpWBOleCommandTargetVtbl     = &OleCommandTargetVtbl;
 
     This->client = NULL;
+    This->inplace = NULL;
     This->container = NULL;
     This->iphwnd = NULL;
     This->frame_hwnd = NULL;

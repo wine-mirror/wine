@@ -89,6 +89,7 @@ typedef struct {
     IOleContainer *container;
     IOleDocumentView *view;
     IDocHostUIHandler *hostui;
+    IOleInPlaceSite *inplace;
 
     LPOLESTR url;
 
