@@ -394,6 +394,24 @@ HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
 
 /***********************************************************************
  *             RegisterOCX    (ADVPACK.@)
+ *
+ * Registers an OCX.
+ *
+ * PARAMS
+ *   hWnd    [I] Handle to the window used for the display.
+ *   hInst   [I] Instance of the process.
+ *   cmdline [I] Contains parameters in the order OCX,reboot,install_cmd
+ *   show    [I] How the window should be shown.
+ *
+ * RETURNS
+ *   This function does not return anything.
+ *
+ * NOTES
+ *   OCX - Filename of the OCX to register.
+ *   reboot - smart reboot behavior
+ *    'I' Reboot if needed.
+ *    'N' No reboot.
+ *   install_cmd - Command line to pass to the OCX's DllInstall.
  */
 void WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
 {
