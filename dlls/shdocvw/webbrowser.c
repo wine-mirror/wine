@@ -297,57 +297,105 @@ static HRESULT WINAPI WebBrowser_get_Type(IWebBrowser2 *iface, BSTR *Type)
 static HRESULT WINAPI WebBrowser_get_Left(IWebBrowser2 *iface, long *pl)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pl);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pl);
+
+    *pl = This->pos_rect.left;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_Left(IWebBrowser2 *iface, long Left)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, Left);
-    return E_NOTIMPL;
+    RECT rect;
+
+    TRACE("(%p)->(%ld)\n", This, Left);
+
+    if(!This->inplace)
+        return E_UNEXPECTED;
+
+    memcpy(&rect, &This->pos_rect, sizeof(RECT));
+    rect.left = Left;
+
+    return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
 }
 
 static HRESULT WINAPI WebBrowser_get_Top(IWebBrowser2 *iface, long *pl)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pl);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pl);
+
+    *pl = This->pos_rect.top;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_Top(IWebBrowser2 *iface, long Top)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, Top);
-    return E_NOTIMPL;
+    RECT rect;
+
+    TRACE("(%p)->(%ld)\n", This, Top);
+
+    if(!This->inplace)
+        return E_UNEXPECTED;
+
+    memcpy(&rect, &This->pos_rect, sizeof(RECT));
+    rect.top = Top;
+
+    return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
 }
 
 static HRESULT WINAPI WebBrowser_get_Width(IWebBrowser2 *iface, long *pl)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pl);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pl);
+
+    *pl = This->pos_rect.right - This->pos_rect.left;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_Width(IWebBrowser2 *iface, long Width)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, Width);
-    return E_NOTIMPL;
+    RECT rect;
+
+    TRACE("(%p)->(%ld)\n", This, Width);
+
+    if(!This->inplace)
+        return E_UNEXPECTED;
+
+    memcpy(&rect, &This->pos_rect, sizeof(RECT));
+    rect.right = rect.left+Width;
+
+    return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
 }
 
 static HRESULT WINAPI WebBrowser_get_Height(IWebBrowser2 *iface, long *pl)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pl);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pl);
+
+    *pl = This->pos_rect.bottom - This->pos_rect.top;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_Height(IWebBrowser2 *iface, long Height)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, Height);
-    return E_NOTIMPL;
+    RECT rect;
+
+    TRACE("(%p)->(%ld)\n", This, Height);
+
+    if(!This->inplace)
+        return E_UNEXPECTED;
+
+    memcpy(&rect, &This->pos_rect, sizeof(RECT));
+    rect.bottom = rect.top+Height;
+
+    return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
 }
 
 static HRESULT WINAPI WebBrowser_get_LocationName(IWebBrowser2 *iface, BSTR *LocationName)
