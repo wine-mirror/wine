@@ -940,7 +940,7 @@ inline static int gen_input_modifier_line(const DWORD instr, int tmpreg, char *o
         strcat(line, tmpline);
         break;
     case D3DSPSM_DW:
-        sprintf(line, "RCP T%c, %s;", 'A' + tmpreg, regstr);
+        sprintf(line, "RCP T%c, %s.w;", 'A' + tmpreg, regstr);
         sprintf(tmpline, "MUL T%c, %s, T%c;", 'A' + tmpreg, regstr, 'A' + tmpreg);
         strcat(line, "\n"); /* Hack */
         strcat(line, tmpline);
