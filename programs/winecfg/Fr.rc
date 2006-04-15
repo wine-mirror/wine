@@ -26,7 +26,7 @@ IDR_WINECFG MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "Configure", IDC_AUDIO_CONFIGURE
+        MENUITEM "Configurer", IDC_AUDIO_CONFIGURE
     END
 END
 
@@ -60,29 +60,31 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Paramètres des fenêtres ",IDC_STATIC,8,25,244,110
+    GROUPBOX        " Paramètres des fenêtres ",IDC_STATIC,8,4,244,180
 
-    CONTROL	    "Permettre aux applications DirectX d'empêcher la souris de quitter leur fenêtre",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "Activer le double buffering du bureau",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    CONTROL	    "Permettre aux applications DirectX d'empêcher la souris de quitter leur fenêtre",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
+    CONTROL	    "Activer la double mise en tampon du bureau",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
+    LTEXT 	    "Si les fenêtres sont gérées par votre gestionnaire de fenêtres, elles auront des bordures standards, elles respecterons votre bureau virtuel et apparaîtront dans la liste des fenêtes. \n\nSi les fenêtres ne sont pas gérées, elles seront déconnectées de votre gestionnaire de fenêtres. Ceci signifie qu'elle ne seront pas parfaitement intégrées à votre bureau, mais que l'émulation sera plus précise ce qui permet à certains programmes de mieux fonctionner.",
+    		    IDC_STATIC,15,37,228,80
+    CONTROL	    "Permettre au gestionnaire de fenêtres de controller les fenêtres",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8
     
     /* FIXME: the wording of this explanation could be a lot better */
     LTEXT           "Vous avez le choix entre l'émulation d'un bureau Windows où toutes les fenêtres de vos programme swindows sont confinées ou bien d'afficher les fenêtres de ces programmes sur votre bureau standard.",
-                    IDC_STATIC,15,73,228,28
-    LTEXT           "Taille du bureau:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
+                    IDC_STATIC,15,146,228,28
+    LTEXT           "Taille du bureau:",IDC_DESKTOP_SIZE,15,115,60,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,129,115,8,8,WS_DISABLED
     CONTROL         "Emuler un bureau virtuel",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,105,230,10
 		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-
+    EDITTEXT        IDC_DESKTOP_WIDTH,84,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,137,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
  
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,50
 
-    LTEXT	    "Support du Vertex Shader: ",IDC_STATIC,15,150,100,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,110,148,100,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT	    "Support du Vertex Shader: ",IDC_STATIC,15,200,100,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,110,200,100,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Permettre le Pixel Shader (si supporté par le matériel)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
+    CONTROL         "Permettre le Pixel Shader (si supporté par le matériel)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,215,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -163,8 +165,12 @@ BEGIN
     PUSHBUTTON	    "Panneau de configuration",IDC_AUDIO_CONTROL_PANEL,160,60,86,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Accélération matérielle: ",IDC_STATIC,15,215,90,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Emulation pilote",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,50,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Taux d'échantillonage (défaut):",IDC_STATIC,15,232,130,8
+    COMBOBOX        IDC_DSOUND_RATES,117,230,38,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Bits par échantillon:",IDC_STATIC,160,232,80,8
+    COMBOBOX        IDC_DSOUND_BITS,223,230,25,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Emulation pilote",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
@@ -202,9 +208,21 @@ BEGIN
     IDS_TAB_AUDIO           "Audio"
     IDS_TAB_ABOUT           "A propos"
     IDS_WINECFG_TITLE       "Configuration de Wine"
-    IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
+    IDS_WINECFG_TITLE_APP   "Configuration de Wine pour %s"
     IDS_THEMEFILE           "Fichiers de thèmes"
     IDS_THEMEFILE_SELECT    "Sélectionnez un fichier de thème"
+    IDS_AUDIO_MISSING       "Aucun pilote audio n'est actuellement défini.\n\nLe pilote recommandé a été sélectionné pour vous.\nVous pouvez utiliser ce pilote ou en sélectionner un autre si disponible.\n\nVous devez cliquer sur Appliquer pour que la sélection prenne effet."
     IDS_SHELL_FOLDER        "Dossier système"
     IDS_LINKS_TO            "Lié à"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "La modification de l'ordre de chargement de cette bibliothèque n'est pas recommandé.\nÊtes-vous sûr de vouloir le faire ?"
+    IDS_DLL_WARNING_CAPTION "Attention: bibliothèque système"
+    IDS_DLL_NATIVE          "native"
+    IDS_DLL_BUILTIN         "inclue"
+    IDS_DLL_NATIVE_BUILTIN  "native, inclue"
+    IDS_DLL_BUILTIN_NATIVE  "inclue, native"
+    IDS_DLL_DISABLED        "désactivée"
 END
