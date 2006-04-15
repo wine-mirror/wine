@@ -1769,7 +1769,12 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 print_file(file, indent, "_StubMsg.pfnFree(%s);\n", var->name);
             }
             else if (phase != PHASE_FREE)
-                print_phase_function(file, indent, array_type, phase, var->name, *type_offset + 4);
+            {
+                if (pointer_type == RPC_FC_UP)
+                    print_phase_function(file, indent, "Pointer", phase, var->name, *type_offset);
+                else
+                    print_phase_function(file, indent, array_type, phase, var->name, *type_offset + 4);
+            }
         }
         else if (var->ptr_level == 0 && is_base_type(type->type))
         {
