@@ -5963,6 +5963,11 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface,DWORD 
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *iface, IWineD3DSurface *Front, IWineD3DSurface *Back) {
+    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice* iface, IWineD3DSurface **ppZStencilSurface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     *ppZStencilSurface = This->depthStencilBuffer;
@@ -6875,6 +6880,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetRenderState,
     IWineD3DDeviceImpl_SetRenderTarget,
     IWineD3DDeviceImpl_GetRenderTarget,
+    IWineD3DDeviceImpl_SetFrontBackBuffers,
     IWineD3DDeviceImpl_SetSamplerState,
     IWineD3DDeviceImpl_GetSamplerState,
     IWineD3DDeviceImpl_SetScissorRect,

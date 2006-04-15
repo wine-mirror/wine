@@ -425,6 +425,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD * pValue) PURE;
     STDMETHOD(SetRenderTarget)(THIS_ DWORD RenderTargetIndex, struct IWineD3DSurface* pRenderTarget) PURE;
     STDMETHOD(GetRenderTarget)(THIS_ DWORD RenderTargetIndex, struct IWineD3DSurface** ppRenderTarget) PURE;
+    STDMETHOD(SetFrontBackBuffers)(THIS_ struct IWineD3DSurface *Front, struct IWineD3DSurface *Back) PURE;
     STDMETHOD(SetSamplerState)(THIS_ DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD Value) PURE;
     STDMETHOD(GetSamplerState)(THIS_ DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD* Value) PURE;
     STDMETHOD(SetScissorRect)(THIS_ CONST RECT* pRect) PURE;
@@ -566,6 +567,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_GetRenderState(p,a,b)                    (p)->lpVtbl->GetRenderState(p,a,b)
 #define IWineD3DDevice_SetRenderTarget(p,a,b)                   (p)->lpVtbl->SetRenderTarget(p,a,b)
 #define IWineD3DDevice_GetRenderTarget(p,a,b)                   (p)->lpVtbl->GetRenderTarget(p,a,b)
+#define IWineD3DDevice_SetFrontBackBuffers(p, a, b)             (p)->lpVtbl->SetFrontBackBuffers(p,a,b);
 #define IWineD3DDevice_SetSamplerState(p,a,b,c)                 (p)->lpVtbl->SetSamplerState(p,a,b,c)
 #define IWineD3DDevice_GetSamplerState(p,a,b,c)                 (p)->lpVtbl->GetSamplerState(p,a,b,c)
 #define IWineD3DDevice_SetScissorRect(p,a)                      (p)->lpVtbl->SetScissorRect(p,a)
