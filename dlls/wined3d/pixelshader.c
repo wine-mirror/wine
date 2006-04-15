@@ -40,8 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 /* The maximum size of the program */
 #define PGMSIZE 65535
 
-#define REGMASK 0x00001FFF
-
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 /* *******************************************
    IWineD3DPixelShader IUnknown parts follow
@@ -776,7 +774,7 @@ inline static BOOL pshader_is_comment_token(DWORD token) {
 inline static void get_register_name(const DWORD param, char* regstr, char constants[WINED3D_PSHADER_MAX_CONSTANTS]) {
     static const char* rastout_reg_names[] = { "oC0", "oC1", "oC2", "oC3", "oDepth" };
 
-    DWORD reg = param & REGMASK;
+    DWORD reg = param & D3DSP_REGNUM_MASK;
     DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
 
     switch (regtype) {
@@ -1109,7 +1107,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     /* Handle definitions here, they don't fit well with the
                      * other instructions below [for now ] */
 
-                    DWORD reg = *pToken & REGMASK;
+                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
 
                     TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d, \n",
                     curOpcode->name, curOpcode->glname, curOpcode->num_params);
@@ -1173,13 +1171,13 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     char tmp[20];
                     get_write_mask(*pToken, tmp);
                     if (version != 14) {
-                        DWORD reg = *pToken & REGMASK;
+                        DWORD reg = *pToken & D3DSP_REGNUM_MASK;
                         sprintf(tmpLine,"TEX T%lu%s, T%lu, texture[%lu], 2D;\n", reg, tmp, reg, reg);
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                         ++pToken;
                     } else {
                         char reg2[20];
-                        DWORD reg1 = *pToken & REGMASK;
+                        DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
                         if (gen_input_modifier_line(*++pToken, 0, reg2, tmpLine, This->constants)) {
                             addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                         }
@@ -1195,13 +1193,13 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     char tmp[20];
                     get_write_mask(*pToken, tmp);
                     if (version != 14) {
-                        DWORD reg = *pToken & REGMASK;
+                        DWORD reg = *pToken & D3DSP_REGNUM_MASK;
                         sprintf(tmpLine, "MOV T%lu%s, fragment.texcoord[%lu];\n", reg, tmp, reg);
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                         ++pToken;
                     } else {
-                        DWORD reg1 = *pToken & REGMASK;
-                        DWORD reg2 = *++pToken & REGMASK;
+                        DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
+                        DWORD reg2 = *++pToken & D3DSP_REGNUM_MASK;
                         sprintf(tmpLine, "MOV R%lu%s, fragment.texcoord[%lu];\n", reg1, tmp, reg2);
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                         ++pToken;
@@ -1211,7 +1209,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 break;
                 case D3DSIO_TEXM3x2PAD:
                 {
-                    DWORD reg = *pToken & REGMASK;
+                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
                     char buf[50];
                     if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) {
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
@@ -1224,7 +1222,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 break;
                 case D3DSIO_TEXM3x2TEX:
                 {
-                    DWORD reg = *pToken & REGMASK;
+                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
                     char buf[50];
                     if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) {
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
@@ -1239,8 +1237,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 break;
                 case D3DSIO_TEXREG2AR:
                 {
-                    DWORD reg1 = *pToken & REGMASK;
-                    DWORD reg2 = *++pToken & REGMASK;
+                    DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
+                    DWORD reg2 = *++pToken & D3DSP_REGNUM_MASK;
                     sprintf(tmpLine, "MOV TMP.r, T%lu.a;\n", reg2);
                     addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                     sprintf(tmpLine, "MOV TMP.g, T%lu.r;\n", reg2);
@@ -1253,8 +1251,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 break;
                 case D3DSIO_TEXREG2GB:
                 {
-                    DWORD reg1 = *pToken & REGMASK;
-                    DWORD reg2 = *++pToken & REGMASK;
+                    DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
+                    DWORD reg2 = *++pToken & D3DSP_REGNUM_MASK;
                     sprintf(tmpLine, "MOV TMP.r, T%lu.g;\n", reg2);
                     addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                     sprintf(tmpLine, "MOV TMP.g, T%lu.b;\n", reg2);
@@ -1267,8 +1265,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 break;
                 case D3DSIO_TEXBEM:
                 {
-                    DWORD reg1 = *pToken & REGMASK;
-                    DWORD reg2 = *++pToken & REGMASK;
+                    DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
+                    DWORD reg2 = *++pToken & D3DSP_REGNUM_MASK;
 
                     /* FIXME: Should apply the BUMPMAPENV matrix */
                     sprintf(tmpLine, "ADD TMP.rg, fragment.texcoord[%lu], T%lu;\n", reg1, reg2);
@@ -1281,7 +1279,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 break;
                 case D3DSIO_TEXM3x3PAD:
                 {
-                    DWORD reg = *pToken & REGMASK;
+                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
                     char buf[50];
                     if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) {
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
@@ -1295,7 +1293,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 break;
                 case D3DSIO_TEXM3x3TEX:
                 {
-                    DWORD reg = *pToken & REGMASK;
+                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
                     char buf[50];
                     if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) {
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
@@ -1313,7 +1311,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 }
                 case D3DSIO_TEXM3x3VSPEC:
                 {
-                    DWORD reg = *pToken & REGMASK;
+                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
                     char buf[50];
                     if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) {
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
@@ -1347,8 +1345,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 break;
                 case D3DSIO_TEXM3x3SPEC:
                 {
-                    DWORD reg = *pToken & REGMASK;
-                    DWORD reg3 = *(pToken + 2) & REGMASK;
+                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
+                    DWORD reg3 = *(pToken + 2) & D3DSP_REGNUM_MASK;
                     char buf[50];
                     if (gen_input_modifier_line(*(pToken + 1), 0, buf, tmpLine, This->constants)) {
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);

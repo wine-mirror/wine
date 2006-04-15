@@ -711,7 +711,7 @@ inline static void vshader_program_dump_param(const DWORD param, int input) {
   static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" };
   static const char swizzle_reg_chars[] = "xyzw";
 
-  DWORD reg = param & 0x00001FFF;
+  DWORD reg = param & D3DSP_REGNUM_MASK;
   DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
 
   if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) TRACE("-");
@@ -787,7 +787,7 @@ inline static void vshader_program_dump_vs_param(const DWORD param, int input) {
    /* for registeres about 7 we have to add on bits 11 and 12 to get the correct register */
 #define EXTENDED_REG 0x1800
 
-  DWORD reg = param & D3DSP_REGNUM_MASK; /* 0x00001FFF;  isn't this D3DSP_REGNUM_MASK? */
+  DWORD reg = param & D3DSP_REGNUM_MASK; 
   DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) | ((param & EXTENDED_REG) >> 8);
 
   if(param & UNKNOWN_MASK) { /* if this register has any of the unknown bits set then report them*/
@@ -997,7 +997,7 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
   /* oPos, oFog and oPts in D3D */
   static const char* hwrastout_reg_names[] = { "result.position", "result.fogcoord", "result.pointsize" };
 
-  DWORD reg = param & 0x00001FFF;
+  DWORD reg = param & D3DSP_REGNUM_MASK;
   DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
   char  tmpReg[255];
   BOOL is_color = FALSE;
@@ -1323,7 +1323,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             } else {
                 if (curOpcode->opcode == D3DSIO_DCL){
                     INT usage = *pToken++;
-                    INT arrayNo = (*pToken++ & 0x00001FFF);
+                    INT arrayNo = (*pToken++ & D3DSP_REGNUM_MASK);
                     parse_decl_usage(This, usage, arrayNo);
                 } else if(curOpcode->opcode == D3DSIO_DEF) {
                             This->constantsUsedBitmap[*pToken & 0xFF] = VS_CONSTANT_CONSTANT;
@@ -1338,7 +1338,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                     /* Check to see if and tmp or addressing redisters are used */
                     if (curOpcode->num_params > 0) {
                         regtype = ((((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT));
-                        reg = ((*pToken)  & 0x00001FFF);
+                        reg = ((*pToken)  & D3DSP_REGNUM_MASK);
                         if (D3DSPR_ADDR == regtype && nUseAddressRegister <= reg) nUseAddressRegister = reg + 1;
                         if (D3DSPR_TEMP == regtype){
                             tmpsUsed[reg] = TRUE;
@@ -1347,7 +1347,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                         ++pToken;
                         for (i = 1; i < curOpcode->num_params; ++i) {
                             regtype = ((((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT));
-                            reg = ((*pToken)  & 0x00001FFF);
+                            reg = ((*pToken)  & D3DSP_REGNUM_MASK);
                             if (D3DSPR_ADDR == regtype && nUseAddressRegister <= reg) nUseAddressRegister = reg + 1;
                             if (D3DSPR_TEMP == regtype){
                                 tmpsUsed[reg] = TRUE;
@@ -1626,11 +1626,12 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
         case D3DSIO_MOV:
             /* Address registers must be loaded with the ARL instruction */
             if ((((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) == D3DSPR_ADDR) {
-                if (((*pToken) & 0x00001FFF) < nUseAddressRegister) {
+                if (((*pToken) & D3DSP_REGNUM_MASK) < nUseAddressRegister) {
                     strcpy(tmpLine, "ARL");
                     break;
                 } else
-                FIXME("(%p) Try to load A%ld an undeclared address register!\n", This, ((*pToken) & 0x00001FFF));
+                FIXME("(%p) Try to load A%ld an undeclared address register!\n", 
+                    This, ((*pToken) & D3DSP_REGNUM_MASK));
             }
             /* fall through */
         case D3DSIO_ADD:
@@ -1818,7 +1819,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
             if (curOpcode->num_params > 0) {
                 /* TRACE(">> execting opcode: pos=%d opcode_name=%s token=%08lX\n", pToken - vshader->function, curOpcode->name, *pToken); */
                 for (i = 0; i < curOpcode->num_params; ++i) {
-                    DWORD reg = pToken[i] & 0x00001FFF;
+                    DWORD reg = pToken[i] & D3DSP_REGNUM_MASK;
                     DWORD regtype = ((pToken[i] & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
     
                     switch (regtype << D3DSP_REGTYPE_SHIFT) {
