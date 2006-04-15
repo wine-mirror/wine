@@ -662,7 +662,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 
     /** FIXME: use direct access so add the others opcodes as stubs */
     /* DCL is a specil operation */
-    {D3DSIO_DCL,      "dcl",      NULL,   1, pshader_dcl,     0, 0},
+    {D3DSIO_DCL,      "dcl",      NULL,   2, pshader_dcl,     0, 0},
     {D3DSIO_POW,      "pow",      "POW",  3, pshader_pow,     0, 0},
     {D3DSIO_CRS,      "crs",      "XPS",  3, pshader_crs,     0, 0},
     /* TODO: sng can possibly be performed as
