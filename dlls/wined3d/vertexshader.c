@@ -1411,38 +1411,33 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
         case 10:
         case 11: numTemps=12;
                  numConstants=96;/* min(GL_LIMITS(constants),96) */
-                 strcpy(tmpLine, "!!ARBvp1.0\n");
-                 TRACE("GL HW (%u) : %s", pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
                  break;
         /* FIXME: if there are no calls or loops then use ARBvp1 otherwise use GLSL instead
            TODO: see if there are any operations in vs2/3 that aren't supported by ARBvp
             TODO: only map the maximum possible number of constants supported by openGL and not the maximum required by d3d (even better only map the used constants)*/
         case 20: numTemps=12; /* min(GL_LIMITS(temps),12) */
                  numConstants=96; /* min(GL_LIMITS(constants),256) */
-                 strcpy(tmpLine, "!!ARBvp1.0\n");
                  FIXME("No work done yet to support vs2.0 in hw\n");
-                 TRACE("GL HW (%u) : %s", pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
                  break;
         case 21: numTemps=12; /* min(GL_LIMITS(temps),12) */
                  numConstants=96; /* min(GL_LIMITS(constants),256) */
-                 strcpy(tmpLine, "!!ARBvp1.0\n");
                  FIXME("No work done yet to support vs2.1 in hw\n");
-                 TRACE("GL HW (%u) : %s", pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
                  break;
         case 30: numTemps=32; /* min(GL_LIMITS(temps),32) */
                  numConstants=96;/* min(GL_LIMITS(constants),256) */
-                 strcpy(tmpLine, "!!ARBvp3.0\n");
                  FIXME("No work done yet to support vs3.0 in hw\n");
-                 TRACE("GL HW (%u) : %s", pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
                  break;
         default:
                  numTemps=12;/* min(GL_LIMITS(temps),12) */
                  numConstants=96;/* min(GL_LIMITS(constants),96) */
-                 strcpy(tmpLine, "!!ARBvp1.0\n");
                  FIXME("Unrecognized vertex shader version %d!\n", version);
         }
-        PNSTRCAT(pgmStr, tmpLine);
 
+
+        /* FIXME: if jumps are used, use GLSL, else use ARB_vertex_program */
+        strcpy(tmpLine, "!!ARBvp1.0\n");
+        TRACE("GL HW (%u) : %s", pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
+        PNSTRCAT(pgmStr, tmpLine);
         ++lineNum;
 
         /* This should be a bitmap so that only temp registers that are used are declared. */

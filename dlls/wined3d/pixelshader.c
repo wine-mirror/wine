@@ -1019,24 +1019,23 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 case 13:
                 case 14: numTemps=12;
                         numConstants=8;
-                        strcpy(tmpLine, "!!ARBfp1.0\n");
                         break;
                 case 20: numTemps=12;
                         numConstants=8;
-                        strcpy(tmpLine, "!!ARBfp2.0\n");
                         FIXME("No work done yet to support ps2.0 in hw\n");
                         break;
                 case 30: numTemps=32;
                         numConstants=8;
-                        strcpy(tmpLine, "!!ARBfp3.0\n");
                         FIXME("No work done yet to support ps3.0 in hw\n");
                         break;
                 default:
                         numTemps=12;
                         numConstants=8;
-                        strcpy(tmpLine, "!!ARBfp1.0\n");
                         FIXME("Unrecognized pixel shader version!\n");
                 }
+
+                /* FIXME: if jumps are used, use GLSL, else use ARB_fragment_program */
+                strcpy(tmpLine, "!!ARBfp1.0\n");
                 addline(&lineNum, pgmStr, &pgmLength, tmpLine);
 
                 /* TODO: find out how many registers are really needed */
