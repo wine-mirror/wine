@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Dmitry Timoshkov
+ * Copyright 2006 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,13 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "msvidc32_private.h"
+LANGUAGE LANG_FRENCH, SUBLANG_DEFAULT
 
-#include "msvidc32_De.rc"
-#include "msvidc32_Fr.rc"
-#include "msvidc32_En.rc"
-#include "msvidc32_Hu.rc"
-#include "msvidc32_Ko.rc"
-#include "msvidc32_No.rc"
-#include "msvidc32_Tr.rc"
+STRINGTABLE DISCARDABLE
+{
+    IDS_NAME "WINE-MS-CRAM"
+    IDS_DESCRIPTION "codec vidéo Wine Video 1"
+}
