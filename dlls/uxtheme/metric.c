@@ -215,8 +215,8 @@ HRESULT WINAPI GetThemeSysString(HTHEME hTheme, int iStringID,
     TRACE("(%p, %d)\n", hTheme, iStringID);
     if(!hTheme)
         return E_HANDLE;
-    if(iStringID <= TMT_FIRSTSTRING || iStringID >= TMT_LASTSTRING) {
-        TRACE("Unknown StringID: %d\n", iStringID);
+    if(iStringID < TMT_FIRSTSTRING || iStringID > TMT_LASTSTRING) {
+        WARN("Unknown StringID: %d\n", iStringID);
         return STG_E_INVALIDPARAMETER;
     }
     if((tp = MSSTYLES_FindMetric(TMT_STRING, iStringID)))
