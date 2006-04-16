@@ -1378,7 +1378,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     } else {
                         FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
                     }
-                    pToken += curOpcode->num_params; /* maybe  + 1 */
+                    pToken += curOpcode->num_params; 
                     continue;
                 }
 

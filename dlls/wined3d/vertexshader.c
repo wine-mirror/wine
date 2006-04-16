@@ -1672,7 +1672,11 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             } else {
                 FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
             }
+
+            pToken += curOpcode->num_params;
+            continue;
         }
+
         if (curOpcode->num_params > 0) {
             vshader_program_add_param(This, *pToken, FALSE, tmpLine);
 
