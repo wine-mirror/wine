@@ -474,11 +474,11 @@ void vshader_loop(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_ret(WINED3DSHADERVECTOR* d) {
+void vshader_ret(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_endloop(WINED3DSHADERVECTOR* d) {
+void vshader_endloop(void) {
     FIXME(" : Stub\n");
 }
 
@@ -502,7 +502,7 @@ void vshader_sincos(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_rep(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+void vshader_rep(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
@@ -510,7 +510,7 @@ void vshader_endrep(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_if(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+void vshader_if(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
@@ -518,7 +518,7 @@ void vshader_ifc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_else(WINED3DSHADERVECTOR* d) {
+void vshader_else(void) {
     FIXME(" : Stub\n");
 }
 
@@ -526,15 +526,19 @@ void vshader_label(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_endif(WINED3DSHADERVECTOR* d) {
+void vshader_endif(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_break(WINED3DSHADERVECTOR* d) {
+void vshader_break(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_breakc(WINED3DSHADERVECTOR* d) {
+void vshader_breakc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+    FIXME(" : Stub\n");
+}
+
+void vshader_breakp(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
@@ -574,11 +578,6 @@ void vshader_texldl(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_breakp(WINED3DSHADERVECTOR* d) {
-    FIXME(" : Stub\n");
-}
-
-
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
  */
@@ -609,15 +608,8 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_M3x4, "m3x4", "undefined", 3, vshader_m3x4, 0, 0},
     {D3DSIO_M3x3, "m3x3", "undefined", 3, vshader_m3x3, 0, 0},
     {D3DSIO_M3x2, "m3x2", "undefined", 3, vshader_m3x2, 0, 0},
+
     /** FIXME: use direct access so add the others opcodes as stubs */
-    /* NOTE: gl function is currently NULL for calls and loops because they are not yet supported
-        They can be easily managed in software by introducing a call/loop stack and should be possible to implement in glsl ol NV_shader's */
-    {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL,   1, vshader_call,    0, 0},
-    {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL,   2, vshader_callnz,  0, 0},
-    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL,   2, vshader_loop,    0, 0},
-    {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL,   0, vshader_ret,     0, 0},
-    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL,   0, vshader_endloop, 0, 0},
-    {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL,   1, vshader_label,   0, 0},
     /* DCL is a specil operation */
     {D3DSIO_DCL,      "dcl",      NULL,   1, vshader_dcl,     0, 0},
     {D3DSIO_POW,      "pow",      "POW",  3, vshader_pow,     0, 0},
@@ -638,14 +630,24 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     */
     {D3DSIO_NRM,      "nrm",      NULL,   2, vshader_nrm,     0, 0},
     {D3DSIO_SINCOS,   "sincos",   NULL,   2, vshader_sincos,  0, 0},
-    {D3DSIO_REP ,     "rep",      GLNAME_REQUIRE_GLSL,   2, vshader_rep,     0, 0},
+
+    /* Flow control - requires GLSL or software shaders */
+    {D3DSIO_REP ,     "rep",      GLNAME_REQUIRE_GLSL,   1, vshader_rep,     0, 0},
     {D3DSIO_ENDREP,   "endrep",   GLNAME_REQUIRE_GLSL,   0, vshader_endrep,  0, 0},
-    {D3DSIO_IF,       "if",       GLNAME_REQUIRE_GLSL,   2, vshader_if,      0, 0},
+    {D3DSIO_IF,       "if",       GLNAME_REQUIRE_GLSL,   1, vshader_if,      0, 0},
     {D3DSIO_IFC,      "ifc",      GLNAME_REQUIRE_GLSL,   2, vshader_ifc,     0, 0},
-    {D3DSIO_ELSE,     "else",     GLNAME_REQUIRE_GLSL,   2, vshader_else,    0, 0},
-    {D3DSIO_ENDIF,    "endif",    GLNAME_REQUIRE_GLSL,   2, vshader_endif,   0, 0},
-    {D3DSIO_BREAK,    "break",    GLNAME_REQUIRE_GLSL,   2, vshader_break,   0, 0},
+    {D3DSIO_ELSE,     "else",     GLNAME_REQUIRE_GLSL,   0, vshader_else,    0, 0},
+    {D3DSIO_ENDIF,    "endif",    GLNAME_REQUIRE_GLSL,   0, vshader_endif,   0, 0},
+    {D3DSIO_BREAK,    "break",    GLNAME_REQUIRE_GLSL,   0, vshader_break,   0, 0},
     {D3DSIO_BREAKC,   "breakc",   GLNAME_REQUIRE_GLSL,   2, vshader_breakc,  0, 0},
+    {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL,   1, vshader_breakp,  0, 0},
+    {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL,   1, vshader_call,    0, 0},
+    {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL,   2, vshader_callnz,  0, 0},
+    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL,   2, vshader_loop,    0, 0},
+    {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL,   0, vshader_ret,     0, 0},
+    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL,   0, vshader_endloop, 0, 0},
+    {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL,   1, vshader_label,   0, 0},
+
     {D3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL,   2, vshader_mova,    0, 0},
     {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, vshader_defb,    0, 0},
     {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, vshader_defi,    0, 0},
@@ -685,7 +687,6 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL,   2, vshader_texldd,  0, 0},
     {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,   2, vshader_setp,    0, 0},
     {D3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL,   2, vshader_texldl,  0, 0},
-    {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL,   2, vshader_breakp,  0, 0},
     {D3DSIO_PHASE,    "phase",    GLNAME_REQUIRE_GLSL,   0, vshader_nop,     0, 0},
     {0,               NULL,       NULL,   0, NULL,            0, 0}
 };
