@@ -702,7 +702,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 
     {D3DSIO_TEXCOORD, "texcoord", "undefined",   1, pshader_texcoord,    0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEXCOORD, "texcrd",   "undefined",   2, pshader_texcoord,    D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_TEXKILL,  "texkill",  "KIL",   1, pshader_texkill,     D3DPS_VERSION(1,0), D3DPS_VERSION(1,4)},
+    {D3DSIO_TEXKILL,  "texkill",  "KIL",   1, pshader_texkill,     D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
     {D3DSIO_TEX,      "tex",      "undefined",   1, pshader_tex,         0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEX,      "texld",    "undefined",   2, pshader_texld,       D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
     {D3DSIO_TEX,      "texld",    GLNAME_REQUIRE_GLSL,   3, pshader_texld,       D3DPS_VERSION(2,0), -1},
