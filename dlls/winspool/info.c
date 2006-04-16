@@ -200,6 +200,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 				      DWORD cbBuf, LPDWORD pcbNeeded,
 				      BOOL unicode);
 static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey);
+static DWORD WINSPOOL_SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey);
 
 /******************************************************************
  *  validate the user-supplied printing-environment [internal]
@@ -1506,13 +1507,37 @@ DeletePrinterDriverW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pDriverName)
  * See DeleteMonitorW.
  *
  */
-BOOL WINAPI
-DeleteMonitorA (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
+BOOL WINAPI DeleteMonitorA (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
 {
-    FIXME("(%s,%s,%s):stub\n",debugstr_a(pName),debugstr_a(pEnvironment),
-          debugstr_a(pMonitorName));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    LPWSTR  nameW = NULL;
+    LPWSTR  EnvironmentW = NULL;
+    LPWSTR  MonitorNameW = NULL;
+    BOOL    res;
+    INT     len;
+
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
+    }
+
+    if (pEnvironment) {
+        len = MultiByteToWideChar(CP_ACP, 0, pEnvironment, -1, NULL, 0);
+        EnvironmentW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pEnvironment, -1, EnvironmentW, len);
+    }
+    if (pMonitorName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pMonitorName, -1, NULL, 0);
+        MonitorNameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pMonitorName, -1, MonitorNameW, len);
+    }
+
+    res = DeleteMonitorW(nameW, EnvironmentW, MonitorNameW);
+
+    HeapFree(GetProcessHeap(), 0, MonitorNameW); 
+    HeapFree(GetProcessHeap(), 0, EnvironmentW);
+    HeapFree(GetProcessHeap(), 0, nameW); 
+    return (res);
 }
 
 /******************************************************************
@@ -1529,17 +1554,50 @@ DeleteMonitorA (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
  *  Success: TRUE
  *  Failure: FALSE
  *
- * BUGS
- *  only a Stub
+ * NOTES
+ *  pEnvironment is ignored in Windows for the local Computer.
  *
  */
-BOOL WINAPI
-DeleteMonitorW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
+
+BOOL WINAPI DeleteMonitorW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
 {
-    FIXME("(%s,%s,%s):stub\n",debugstr_w(pName),debugstr_w(pEnvironment),
-          debugstr_w(pMonitorName));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    HKEY    hroot = NULL;
+
+    TRACE("(%s, %s, %s)\n",debugstr_w(pName),debugstr_w(pEnvironment),
+           debugstr_w(pMonitorName));
+
+    if (pName && (pName[0])) {
+        FIXME("for server %s not implemented\n", debugstr_w(pName));
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+
+    /*  pEnvironment is ignored in Windows for the local Computer */
+
+    if (!pMonitorName || !pMonitorName[0]) {
+        WARN("pMonitorName %s is invalid\n", debugstr_w(pMonitorName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hroot) != ERROR_SUCCESS) {
+        ERR("unable to create key %s\n", debugstr_w(MonitorsW));
+        return FALSE;
+    }
+
+    /* change this, when advapi32.dll/RegDeleteTree is implemented */
+    if(WINSPOOL_SHDeleteKeyW(hroot, pMonitorName) == ERROR_SUCCESS) {
+        TRACE("monitor %s deleted\n", debugstr_w(pMonitorName));
+        RegCloseKey(hroot);
+        return TRUE;
+    }
+
+    WARN("monitor %s does not exists\n", debugstr_w(pMonitorName));
+    RegCloseKey(hroot);
+
+    /* NT: ERROR_UNKNOWN_PRINT_MONITOR (3000), 9x: ERROR_INVALID_PARAMETER (87) */
+    SetLastError(ERROR_UNKNOWN_PRINT_MONITOR);
+    return (FALSE);
 }
 
 /******************************************************************
