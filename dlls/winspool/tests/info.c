@@ -331,6 +331,89 @@ static void test_AddMonitor(void)
 
 /* ########################### */
 
+static void test_DeleteMonitor(void)
+{
+    MONITOR_INFO_2A mi2a; 
+    struct  monitor_entry * entry = NULL;
+    DWORD   res;
+
+    entry = find_installed_monitor();
+
+    if (!entry) {
+        trace("No usable Monitor found: Skip tests\n");
+        return;
+    }
+
+    mi2a.pName = winetest_monitor;
+    mi2a.pEnvironment = entry->env;
+    mi2a.pDLLName = entry->dllname;
+
+    /* Testing DeleteMonitor with real options */
+    AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+
+    SetLastError(MAGIC_DEAD);
+    res = DeleteMonitorA(NULL, entry->env, winetest_monitor);
+    ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
+
+    /* Delete the Monitor twice */
+    SetLastError(MAGIC_DEAD);
+    res = DeleteMonitorA(NULL, entry->env, winetest_monitor);
+    /* NT: ERROR_UNKNOWN_PRINT_MONITOR (3000), 9x: ERROR_INVALID_PARAMETER (87) */
+    ok( !res &&
+        ((GetLastError() == ERROR_UNKNOWN_PRINT_MONITOR) ||
+        (GetLastError() == ERROR_INVALID_PARAMETER)), 
+        "returned %ld with %ld (expected '0' with: ERROR_UNKNOWN_PRINT_MONITOR" \
+        " or ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+    /* the environment */
+    AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    SetLastError(MAGIC_DEAD);
+    res = DeleteMonitorA(NULL, NULL, winetest_monitor);
+    ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
+
+    AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    SetLastError(MAGIC_DEAD);
+    res = DeleteMonitorA(NULL, "", winetest_monitor);
+    ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
+
+    AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    SetLastError(MAGIC_DEAD);
+    res = DeleteMonitorA(NULL, "bad_env", winetest_monitor);
+    ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
+
+    /* the monitor-name */
+    AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    SetLastError(MAGIC_DEAD);
+    res = DeleteMonitorA(NULL, entry->env, NULL);
+    /* NT: ERROR_INVALID_PARAMETER (87),  9x: ERROR_INVALID_NAME (123)*/
+    ok( !res &&
+        ((GetLastError() == ERROR_INVALID_PARAMETER) ||
+        (GetLastError() == ERROR_INVALID_NAME)),
+        "returned %ld with %ld (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "ERROR_INVALID_NAME)\n", res, GetLastError());
+
+    AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    SetLastError(MAGIC_DEAD);
+    res = DeleteMonitorA(NULL, entry->env, "");
+    /* NT: ERROR_INVALID_PARAMETER (87),  9x: ERROR_INVALID_NAME (123)*/
+    ok( !res && 
+        ((GetLastError() == ERROR_INVALID_PARAMETER) ||
+        (GetLastError() == ERROR_INVALID_NAME)),
+        "returned %ld with %ld (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "ERROR_INVALID_NAME)\n", res, GetLastError());
+
+    AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    SetLastError(MAGIC_DEAD);
+    res = DeleteMonitorA("", entry->env, winetest_monitor);
+    ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
+
+    /* cleanup */
+    DeleteMonitorA(NULL, entry->env, winetest_monitor);
+}
+
+
+/* ########################### */
+
 static void test_EnumMonitors(void)
 {
     DWORD   res;
@@ -1008,6 +1091,7 @@ START_TEST(info)
     find_default_printer();
 
     test_AddMonitor();
+    test_DeleteMonitor();
     test_EnumMonitors(); 
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
