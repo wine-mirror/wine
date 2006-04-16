@@ -11841,6 +11841,12 @@ IDR_AVI_SEARCHING AVI searching.avi
  '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
 } */
 
+/* BINRES search.avi */
+IDR_AVI_SEARCH AVI searching.avi
+
+/* BINRES filecopy.avi */
+IDR_AVI_FILECOPY AVI searching.avi
+
 /*--------------------- END FIXME ------------------------*/
 
 /*

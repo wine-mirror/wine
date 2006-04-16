@@ -119,6 +119,13 @@
 #define IDI_SHELL_FONTS_FOLDER      39
 #define IDI_SHELL_MY_DOCUMENTS     235
 
+/* 
+AVI resources, windows shell32 has 14 of them: 150-152 and 160-170
+FIXME: Need to add them, but for now just let them use the same: searching.avi 
+(also to limit shell32's size)
+*/
+#define IDR_AVI_SEARCH             150
 #define IDR_AVI_SEARCHING          151
+#define IDR_AVI_FILECOPY           161
 
 #endif
