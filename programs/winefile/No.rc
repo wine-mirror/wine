@@ -72,7 +72,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 
     POPUP "Kataloge&r"  {
         MENUITEM "&Neste nivå\t+",              301
-        MENUITEM "Utvid &re\t*",             302
+        MENUITEM "Utvid t&re\t*",             302
         MENUITEM "Utvid &alle\tStrg+*",         303
         MENUITEM "Slå sammen &tre\t-",           304
         MENUITEM SEPARATOR
