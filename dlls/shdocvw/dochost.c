@@ -194,7 +194,7 @@ void deactivate_document(WebBrowser *This)
 
         IOleObject_GetClientSite(oleobj, &client_site);
         if(client_site) {
-            if(client_site == CLIENTSITE(This))
+            if(client_site == CLIENTSITE(&This->doc_host))
                 IOleObject_SetClientSite(oleobj, NULL);
             IOleClientSite_Release(client_site);
         }
@@ -212,7 +212,7 @@ static HRESULT WINAPI ClOleCommandTarget_QueryInterface(IOleCommandTarget *iface
         REFIID riid, void **ppv)
 {
     WebBrowser *This = OLECMD_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+    return IOleClientSite_QueryInterface(CLIENTSITE(&This->doc_host), riid, ppv);
 }
 
 static ULONG WINAPI ClOleCommandTarget_AddRef(IOleCommandTarget *iface)
@@ -262,19 +262,19 @@ static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface,
                                                       REFIID riid, void **ppv)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
+    return IOleClientSite_QueryInterface(CLIENTSITE(&This->doc_host), riid, ppv);
 }
 
 static ULONG WINAPI DocHostUIHandler_AddRef(IDocHostUIHandler2 *iface)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This));
+    return IOleClientSite_AddRef(CLIENTSITE(&This->doc_host));
 }
 
 static ULONG WINAPI DocHostUIHandler_Release(IDocHostUIHandler2 *iface)
 {
     WebBrowser *This = DOCHOSTUI_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This));
+    return IOleClientSite_Release(CLIENTSITE(&This->doc_host));
 }
 
 static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface,

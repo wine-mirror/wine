@@ -51,7 +51,17 @@ extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid,
 
 typedef struct ConnectionPoint ConnectionPoint;
 
+struct WebBrowser;
+
 typedef struct {
+    const IOleClientSiteVtbl      *lpOleClientSiteVtbl;
+
+    IDispatch *disp;
+
+    struct WebBrowser *wb; /* FIXME */
+} DocHost;
+
+typedef struct WebBrowser {
     /* Interfaces available via WebBrowser object */
 
     const IWebBrowser2Vtbl              *lpWebBrowser2Vtbl;
@@ -69,7 +79,6 @@ typedef struct {
 
     /* Interfaces available for embeded document */
 
-    const IOleClientSiteVtbl            *lpOleClientSiteVtbl;
     const IOleInPlaceSiteVtbl           *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl        *lpDocHostUIHandlerVtbl;
     const IOleDocumentSiteVtbl          *lpOleDocumentSiteVtbl;
@@ -111,6 +120,8 @@ typedef struct {
     ConnectionPoint *cp_wbe2;
     ConnectionPoint *cp_wbe;
     ConnectionPoint *cp_pns;
+
+    DocHost doc_host;
 } WebBrowser;
 
 #define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowser2Vtbl)

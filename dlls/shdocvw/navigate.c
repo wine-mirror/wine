@@ -392,7 +392,7 @@ static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
     }
 
     IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
-                                 (IUnknown*)CLIENTSITE(This));
+                                 (IUnknown*)CLIENTSITE(&This->doc_host));
 
     /*
      * FIXME:
@@ -432,7 +432,7 @@ static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
     if(FAILED(hres))
         return hres;
 
-    hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This));
+    hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(&This->doc_host));
     IOleObject_Release(oleobj);
 
     PostMessageW(This->doc_view_hwnd, WB_WM_NAVIGATE2, 0, 0);

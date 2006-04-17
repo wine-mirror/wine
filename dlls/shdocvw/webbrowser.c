@@ -847,6 +847,8 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->document = NULL;
     ret->url = NULL;
 
+    ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);
+
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
     WebBrowser_Persist_Init(ret);
