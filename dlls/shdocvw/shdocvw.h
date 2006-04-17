@@ -57,9 +57,12 @@ typedef struct {
     const IOleClientSiteVtbl      *lpOleClientSiteVtbl;
     const IOleInPlaceSiteVtbl     *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl  *lpDocHostUIHandlerVtbl;
+    const IOleDocumentSiteVtbl    *lpOleDocumentSiteVtbl;
 
     IDispatch *disp;
 
+    IUnknown *document;
+    IOleDocumentView *view;
     IDocHostUIHandler *hostui;
 
     HWND hwnd;
@@ -86,7 +89,6 @@ typedef struct WebBrowser {
 
     /* Interfaces available for embeded document */
 
-    const IOleDocumentSiteVtbl          *lpOleDocumentSiteVtbl;
     const IOleCommandTargetVtbl         *lpClOleCommandTargetVtbl;
     const IDispatchVtbl                 *lpDispatchVtbl;
     const IServiceProviderVtbl          *lpClServiceProviderVtbl;
@@ -97,11 +99,8 @@ typedef struct WebBrowser {
 
     LONG ref;
 
-    IUnknown *document;
-
     IOleClientSite *client;
     IOleContainer *container;
-    IOleDocumentView *view;
     IOleInPlaceSite *inplace;
 
     LPOLESTR url;

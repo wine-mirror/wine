@@ -33,7 +33,7 @@ static void navigate_complete(WebBrowser *This)
     VARIANT url;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(This->document, &IID_IDispatch, (void**)&disp);
+    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IDispatch, (void**)&disp);
     if(FAILED(hres))
         FIXME("Could not get IDispatch interface\n");
 
@@ -65,12 +65,12 @@ static LRESULT navigate2(WebBrowser *This)
 
     TRACE("(%p)\n", This);
 
-    if(!This->document) {
+    if(!This->doc_host.document) {
         WARN("document == NULL\n");
         return 0;
     }
 
-    hres = IUnknown_QueryInterface(This->document, &IID_IHlinkTarget, (void**)&hlink);
+    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IHlinkTarget, (void**)&hlink);
     if(FAILED(hres)) {
         FIXME("Could not get IHlinkTarget interface\n");
         return 0;
@@ -94,8 +94,8 @@ static LRESULT resize_document(WebBrowser *This, LONG width, LONG height)
 
     TRACE("(%p)->(%ld %ld)\n", This, width, height);
 
-    if(This->view)
-        IOleDocumentView_SetRect(This->view, &rect);
+    if(This->doc_host.view)
+        IOleDocumentView_SetRect(This->doc_host.view, &rect);
 
     return 0;
 }
@@ -161,29 +161,29 @@ void deactivate_document(WebBrowser *This)
     IHlinkTarget *hlink = NULL;
     HRESULT hres;
 
-    if(This->view)
-        IOleDocumentView_UIActivate(This->view, FALSE);
+    if(This->doc_host.view)
+        IOleDocumentView_UIActivate(This->doc_host.view, FALSE);
 
-    hres = IUnknown_QueryInterface(This->document, &IID_IOleInPlaceObjectWindowless,
+    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IOleInPlaceObjectWindowless,
                                    (void**)&winobj);
     if(SUCCEEDED(hres)) {
         IOleInPlaceObjectWindowless_InPlaceDeactivate(winobj);
         IOleInPlaceObjectWindowless_Release(winobj);
     }
 
-    if(This->view) {
-        IOleDocumentView_Show(This->view, FALSE);
-        IOleDocumentView_CloseView(This->view, 0);
-        IOleDocumentView_SetInPlaceSite(This->view, NULL);
-        IOleDocumentView_Release(This->view);
-        This->view = NULL;
+    if(This->doc_host.view) {
+        IOleDocumentView_Show(This->doc_host.view, FALSE);
+        IOleDocumentView_CloseView(This->doc_host.view, 0);
+        IOleDocumentView_SetInPlaceSite(This->doc_host.view, NULL);
+        IOleDocumentView_Release(This->doc_host.view);
+        This->doc_host.view = NULL;
     }
 
-    hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&oleobj);
+    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IOleObject, (void**)&oleobj);
     if(SUCCEEDED(hres))
         IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
 
-    hres = IUnknown_QueryInterface(This->document, &IID_IHlinkTarget, (void**)&hlink);
+    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IHlinkTarget, (void**)&hlink);
     if(SUCCEEDED(hres)) {
         IHlinkTarget_SetBrowseContext(hlink, NULL);
         IHlinkTarget_Release(hlink);
@@ -202,8 +202,8 @@ void deactivate_document(WebBrowser *This)
         IOleObject_Release(oleobj);
     }
 
-    IUnknown_Release(This->document);
-    This->document = NULL;
+    IUnknown_Release(This->doc_host.document);
+    This->doc_host.document = NULL;
 }
 
 #define OLECMD_THIS(iface) DEFINE_THIS(WebBrowser, ClOleCommandTarget, iface)
@@ -483,6 +483,7 @@ void WebBrowser_DocHost_Init(WebBrowser *This)
     This->doc_host.lpDocHostUIHandlerVtbl = &DocHostUIHandler2Vtbl;
     This->lpClOleCommandTargetVtbl = &OleCommandTargetVtbl;
 
+    This->doc_host.document = NULL;
     This->doc_host.hostui = NULL;
 
     This->doc_host.hwnd = NULL;

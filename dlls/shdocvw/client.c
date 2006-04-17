@@ -49,7 +49,7 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
         *ppv = DOCHOSTUI2(This);
     }else if(IsEqualGUID(&IID_IOleDocumentSite, riid)) {
         TRACE("(%p)->(IID_IOleDocumentSite %p)\n", This, ppv);
-        *ppv = DOCSITE(This->wb);
+        *ppv = DOCSITE(This);
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
         *ppv = CLOLECMD(This->wb);
@@ -292,31 +292,31 @@ static const IOleInPlaceSiteVtbl OleInPlaceSiteVtbl = {
     InPlaceSite_OnPosRectChange
 };
 
-#define DOCSITE_THIS(iface) DEFINE_THIS(WebBrowser, OleDocumentSite, iface)
+#define DOCSITE_THIS(iface) DEFINE_THIS(DocHost, OleDocumentSite, iface)
 
 static HRESULT WINAPI OleDocumentSite_QueryInterface(IOleDocumentSite *iface,
                                                      REFIID riid, void **ppv)
 {
-    WebBrowser *This = DOCSITE_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(&This->doc_host), riid, ppv);
+    DocHost *This = DOCSITE_THIS(iface);
+    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
 }
 
 static ULONG WINAPI OleDocumentSite_AddRef(IOleDocumentSite *iface)
 {
-    WebBrowser *This = DOCSITE_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(&This->doc_host));
+    DocHost *This = DOCSITE_THIS(iface);
+    return IOleClientSite_AddRef(CLIENTSITE(This));
 }
 
 static ULONG WINAPI OleDocumentSite_Release(IOleDocumentSite *iface)
 {
-    WebBrowser *This = DOCSITE_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(&This->doc_host));
+    DocHost *This = DOCSITE_THIS(iface);
+    return IOleClientSite_Release(CLIENTSITE(This));
 }
 
 static HRESULT WINAPI OleDocumentSite_ActivateMe(IOleDocumentSite *iface,
                                                  IOleDocumentView *pViewToActivate)
 {
-    WebBrowser *This = DOCSITE_THIS(iface);
+    DocHost *This = DOCSITE_THIS(iface);
     IOleDocument *oledoc;
     RECT rect;
     HRESULT hres;
@@ -327,10 +327,10 @@ static HRESULT WINAPI OleDocumentSite_ActivateMe(IOleDocumentSite *iface,
     if(FAILED(hres))
         return hres;
 
-    IOleDocument_CreateView(oledoc, INPLACESITE(&This->doc_host), NULL, 0, &This->view);
+    IOleDocument_CreateView(oledoc, INPLACESITE(This), NULL, 0, &This->view);
     IOleDocument_Release(oledoc);
 
-    GetClientRect(This->doc_host.hwnd, &rect);
+    GetClientRect(This->hwnd, &rect);
     IOleDocumentView_SetRect(This->view, &rect);
 
     hres = IOleDocumentView_Show(This->view, TRUE);
@@ -468,17 +468,17 @@ void WebBrowser_ClientSite_Init(WebBrowser *This)
 {
     This->doc_host.lpOleClientSiteVtbl = &OleClientSiteVtbl;
     This->doc_host.lpOleInPlaceSiteVtbl = &OleInPlaceSiteVtbl;
-    This->lpOleDocumentSiteVtbl   = &OleDocumentSiteVtbl;
+    This->doc_host.lpOleDocumentSiteVtbl = &OleDocumentSiteVtbl;
     This->lpDispatchVtbl          = &DispatchVtbl;
     This->lpClServiceProviderVtbl = &ServiceProviderVtbl;
 
-    This->view = NULL;
+    This->doc_host.view = NULL;
 
     This->doc_host.wb = This;
 }
 
 void WebBrowser_ClientSite_Destroy(WebBrowser *This)
 {
-    if(This->view)
-        IOleDocumentView_Release(This->view);
+    if(This->doc_host.view)
+        IOleDocumentView_Release(This->doc_host.view);
 }

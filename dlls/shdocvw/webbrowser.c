@@ -125,8 +125,8 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        if(This->document)
-            IUnknown_Release(This->document);
+        if(This->doc_host.document)
+            IUnknown_Release(This->doc_host.document);
 
         WebBrowser_OleObject_Destroy(This);
         WebBrowser_Events_Destroy(This);
@@ -274,8 +274,8 @@ static HRESULT WINAPI WebBrowser_get_Document(IWebBrowser2 *iface, IDispatch **p
     TRACE("(%p)->(%p)\n", This, ppDisp);
 
     *ppDisp = NULL;
-    if(This->document)
-        IUnknown_QueryInterface(This->document, &IID_IDispatch, (void**)ppDisp);
+    if(This->doc_host.document)
+        IUnknown_QueryInterface(This->doc_host.document, &IID_IDispatch, (void**)ppDisp);
 
     return S_OK;
 }
@@ -844,7 +844,6 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->lpWebBrowser2Vtbl = &WebBrowser2Vtbl;
     ret->ref = 0;
 
-    ret->document = NULL;
     ret->url = NULL;
 
     ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);

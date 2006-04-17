@@ -400,19 +400,19 @@ static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
      * This should be fixed when mshtml.dll and urlmon.dll will be good enough.
      */
 
-    if(This->document)
+    if(This->doc_host.document)
         deactivate_document(This);
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
                             CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-                            &IID_IUnknown, (void**)&This->document);
+                            &IID_IUnknown, (void**)&This->doc_host.document);
 
     if(FAILED(hres)) {
         ERR("Could not create HTMLDocument: %08lx\n", hres);
         return hres;
     }
 
-    hres = IUnknown_QueryInterface(This->document, &IID_IPersistMoniker, (void**)&persist);
+    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IPersistMoniker, (void**)&persist);
     if(FAILED(hres))
         return hres;
 
@@ -428,7 +428,7 @@ static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
         return hres;
     }
 
-    hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&oleobj);
+    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IOleObject, (void**)&oleobj);
     if(FAILED(hres))
         return hres;
 
