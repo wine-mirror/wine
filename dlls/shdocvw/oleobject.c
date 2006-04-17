@@ -154,7 +154,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
 
     if(!pClientSite) {
         if(This->doc_host.document)
-            deactivate_document(This);
+            deactivate_document(&This->doc_host);
         This->client = NULL;
         return S_OK;
     }

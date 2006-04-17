@@ -154,36 +154,36 @@ void create_doc_view_hwnd(WebBrowser *This)
          NULL, shdocvw_hinstance, This);
 }
 
-void deactivate_document(WebBrowser *This)
+void deactivate_document(DocHost *This)
 {
     IOleInPlaceObjectWindowless *winobj;
     IOleObject *oleobj = NULL;
     IHlinkTarget *hlink = NULL;
     HRESULT hres;
 
-    if(This->doc_host.view)
-        IOleDocumentView_UIActivate(This->doc_host.view, FALSE);
+    if(This->view)
+        IOleDocumentView_UIActivate(This->view, FALSE);
 
-    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IOleInPlaceObjectWindowless,
+    hres = IUnknown_QueryInterface(This->document, &IID_IOleInPlaceObjectWindowless,
                                    (void**)&winobj);
     if(SUCCEEDED(hres)) {
         IOleInPlaceObjectWindowless_InPlaceDeactivate(winobj);
         IOleInPlaceObjectWindowless_Release(winobj);
     }
 
-    if(This->doc_host.view) {
-        IOleDocumentView_Show(This->doc_host.view, FALSE);
-        IOleDocumentView_CloseView(This->doc_host.view, 0);
-        IOleDocumentView_SetInPlaceSite(This->doc_host.view, NULL);
-        IOleDocumentView_Release(This->doc_host.view);
-        This->doc_host.view = NULL;
+    if(This->view) {
+        IOleDocumentView_Show(This->view, FALSE);
+        IOleDocumentView_CloseView(This->view, 0);
+        IOleDocumentView_SetInPlaceSite(This->view, NULL);
+        IOleDocumentView_Release(This->view);
+        This->view = NULL;
     }
 
-    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IOleObject, (void**)&oleobj);
+    hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&oleobj);
     if(SUCCEEDED(hres))
         IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
 
-    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IHlinkTarget, (void**)&hlink);
+    hres = IUnknown_QueryInterface(This->document, &IID_IHlinkTarget, (void**)&hlink);
     if(SUCCEEDED(hres)) {
         IHlinkTarget_SetBrowseContext(hlink, NULL);
         IHlinkTarget_Release(hlink);
@@ -194,7 +194,7 @@ void deactivate_document(WebBrowser *This)
 
         IOleObject_GetClientSite(oleobj, &client_site);
         if(client_site) {
-            if(client_site == CLIENTSITE(&This->doc_host))
+            if(client_site == CLIENTSITE(This))
                 IOleObject_SetClientSite(oleobj, NULL);
             IOleClientSite_Release(client_site);
         }
@@ -202,8 +202,8 @@ void deactivate_document(WebBrowser *This)
         IOleObject_Release(oleobj);
     }
 
-    IUnknown_Release(This->doc_host.document);
-    This->doc_host.document = NULL;
+    IUnknown_Release(This->document);
+    This->document = NULL;
 }
 
 #define OLECMD_THIS(iface) DEFINE_THIS(DocHost, OleCommandTarget, iface)

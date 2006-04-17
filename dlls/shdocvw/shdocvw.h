@@ -165,7 +165,7 @@ void WebBrowser_ClientSite_Destroy(WebBrowser*);
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 
 void create_doc_view_hwnd(WebBrowser *This);
-void deactivate_document(WebBrowser*);
+void deactivate_document(DocHost*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 HRESULT navigate_url(WebBrowser*,LPCWSTR,PBYTE,ULONG,LPWSTR);
 

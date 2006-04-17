@@ -401,7 +401,7 @@ static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
      */
 
     if(This->doc_host.document)
-        deactivate_document(This);
+        deactivate_document(&This->doc_host);
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
                             CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
