@@ -1746,6 +1746,7 @@ tools/wrc/Makefile])
 
 AC_OUTPUT
 
+exitcode=0
 if test "$have_x" = "no"
 then
   echo
@@ -1753,6 +1754,7 @@ then
   echo "*** X support, which currently does not work, and would probably not be"
   echo "*** what you want anyway. You will need to install devel packages of"
   echo "*** Xlib/Xfree86 at the very least."
+  exitcode=1
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"
@@ -1760,6 +1762,7 @@ then
   echo
   echo "*** Warning: old Mesa headers detected. Wine will be built without Direct3D"
   echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)."
+  exitcode=1
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"
@@ -1769,6 +1772,7 @@ then
   echo "*** installed, but 'freetype-config' is not in your PATH. Install the"
   echo "*** freetype-devel package (or its equivalent on your distribution) to"
   echo "*** enable Wine to use TrueType fonts."
+  exitcode=1
 fi
 
 if test "$wine_cv_msg_fonts" = "yes"
@@ -1776,6 +1780,7 @@ then
   echo
   echo "*** Warning: Freetype or Fontforge is missing."
   echo "*** Fonts will not be built. Dialog text may be invisible or unaligned."
+  exitcode=1
 fi
 
 if test -z "$ALSALIBS" -a \
@@ -1788,14 +1793,17 @@ if test -z "$ALSALIBS" -a \
         "$ac_cv_header_machine_soundcard_h" != "yes" -a \
         "$ac_cv_header_soundcard_h" != "yes"
 then
-    echo "*** No sound system was found. Windows applications will be silent."
-    echo "*** The currently supported sound systems are:"
-    echo "*** ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS"
+  echo "*** No sound system was found. Windows applications will be silent."
+  echo "*** The currently supported sound systems are:"
+  echo "*** ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS"
+  exitcode=1
 fi
 
 echo
 echo "Configure finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine."
 echo
+
+exit $exitcode
 
 dnl Local Variables:
 dnl comment-start: "dnl "
