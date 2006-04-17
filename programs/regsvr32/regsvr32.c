@@ -31,6 +31,7 @@
  *  [/i]    Call DllInstall passing it an optional [cmdline];
  *          when used with /u calls dll uninstall.
  *  [/n]    Do not call DllRegisterServer; this option must be used with [/i]
+ *  [/c]    Console output (seems to be deprecated and ignored)
  *
  *  Note the complication that this version may be passed unix format file names
  *  which might be mistaken for flags.  Conveniently the Windows version
@@ -242,6 +243,8 @@ int main(int argc, char* argv[])
         }
         else if((!strcasecmp(argv[i], "/n"))||(!strcasecmp(argv[i], "-n")))
             CallRegister = FALSE;
+        else if((!strcasecmp(argv[i], "/c"))||(!strcasecmp(argv[i], "-c")))
+            /* console output */;
         else if (argv[i][0] == '/' && (!argv[i][2] || argv[i][2] == ':'))
             printf("Unrecognized switch %s\n", argv[i]);
         else
