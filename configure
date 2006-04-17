@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS DLLDEFS build build_cpu build_vendor build_os host host_cpu host_vendor host_os WIN16_FILES WIN16_INSTALL SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS FONTFORGE PKG_CONFIG PRELINK LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS XML2LIBS XML2INCL XSLTLIBS XSLTINCL CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS RESOLVLIBS LCMSLIBS LDAPLIBS FREETYPELIBS FREETYPEINCL ft_devel ft_devel2 FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ESDCONFIG ESDLIBS ESDINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS BUILTINFLAG DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS LDEXERPATH LDDLLRPATH COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS MAIN_BINARY EXTRA_BINARIES LDD LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os WIN16_FILES WIN16_INSTALL SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS FONTFORGE PKG_CONFIG PRELINK LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS XML2LIBS XML2INCL XSLTLIBS XSLTINCL CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS RESOLVLIBS LCMSLIBS LDAPLIBS FREETYPELIBS FREETYPEINCL ft_devel ft_devel2 FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ESDCONFIG ESDLIBS ESDINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS BUILTINFLAG DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS LDEXERPATH LDDLLRPATH COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS MAIN_BINARY EXTRA_BINARIES LDD LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_IMPLIB_RULES MAKE_TEST_RULES MAKE_LIB_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -861,8 +861,6 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-win16         do not include Win16 support
-  --disable-debug         compile out all debugging messages
-  --disable-trace         compile out TRACE messages
   --enable-win64          build a Win64 emulator on AMD64 (won't run Win32
                           binaries)
 
@@ -1369,16 +1367,6 @@ if test "${enable_win16+set}" = set; then
   enableval="$enable_win16"
 
 fi;
-# Check whether --enable-debug or --disable-debug was given.
-if test "${enable_debug+set}" = set; then
-  enableval="$enable_debug"
-
-fi;
-# Check whether --enable-trace or --disable-trace was given.
-if test "${enable_trace+set}" = set; then
-  enableval="$enable_trace"
-
-fi;
 # Check whether --enable-win64 or --disable-win64 was given.
 if test "${enable_win64+set}" = set; then
   enableval="$enable_win64"
@@ -1403,17 +1391,6 @@ if test "${with_wine_tools+set}" = set; then
   withval="$with_wine_tools"
 
 fi;
-
-DLLDEFS=""
-
-if test "x$enable_debug" = "xno"
-then
-  DLLDEFS="$DLLDEFS -DWINE_NO_DEBUG_MSGS"
-fi
-if test "x$enable_trace" = "xno" -o "x$enable_debug" = "xno"
-then
-  DLLDEFS="$DLLDEFS -DWINE_NO_TRACE_MSGS"
-fi
 
 # Make sure we can run config.sub.
 $ac_config_sub sun4 >/dev/null 2>&1 ||
@@ -20279,7 +20256,6 @@ s,@ECHO_C@,$ECHO_C,;t t
 s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
-s,@DLLDEFS@,$DLLDEFS,;t t
 s,@build@,$build,;t t
 s,@build_cpu@,$build_cpu,;t t
 s,@build_vendor@,$build_vendor,;t t

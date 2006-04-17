@@ -6,9 +6,8 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DLLDEFS  = @DLLDEFS@
 DLLFLAGS = @DLLFLAGS@
-DEFS     = -D__WINESRC__ $(DLLDEFS) $(EXTRADEFS)
+DEFS     = -D__WINESRC__ $(EXTRADEFS)
 
 @MAKE_RULES@
 

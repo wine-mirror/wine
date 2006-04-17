@@ -13,23 +13,11 @@ AC_CONFIG_AUX_DIR(tools)
 dnl **** Command-line arguments ****
 
 AC_ARG_ENABLE(win16, AC_HELP_STRING([--disable-win16],[do not include Win16 support]))
-AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],[compile out all debugging messages]))
-AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE messages]))
 AC_ARG_ENABLE(win64, AC_HELP_STRING([--enable-win64], [build a Win64 emulator on AMD64 (won't run Win32 binaries)]))
 
 AC_ARG_WITH(opengl,    AC_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(curses,    AC_HELP_STRING([--without-curses],[do not use curses]))
 AC_ARG_WITH(wine-tools,AC_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
-
-AC_SUBST(DLLDEFS,"")
-if test "x$enable_debug" = "xno"
-then
-  DLLDEFS="$DLLDEFS -DWINE_NO_DEBUG_MSGS"
-fi
-if test "x$enable_trace" = "xno" -o "x$enable_debug" = "xno"
-then
-  DLLDEFS="$DLLDEFS -DWINE_NO_TRACE_MSGS"
-fi
 
 AC_CANONICAL_HOST
 case $host in

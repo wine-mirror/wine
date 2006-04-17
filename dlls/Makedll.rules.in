@@ -9,12 +9,11 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DLLDEFS     = @DLLDEFS@
 DLLFLAGS    = @DLLFLAGS@
 DLLEXT      = @DLLEXT@
 IMPLIBEXT   = @IMPLIBEXT@
 LDRPATH     = @LDDLLRPATH@
-DEFS        = -D__WINESRC__ $(DLLDEFS) $(EXTRADEFS)
+DEFS        = -D__WINESRC__ $(EXTRADEFS)
 BASEMODULE  = $(MODULE:%.dll=%)
 MAINSPEC    = $(BASEMODULE).spec
 SPEC_DEF    = lib$(BASEMODULE).def

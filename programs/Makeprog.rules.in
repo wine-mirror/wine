@@ -9,10 +9,9 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DLLDEFS     = @DLLDEFS@
 DLLFLAGS    = @DLLFLAGS@
 LDRPATH     = @LDDLLRPATH@
-DEFS        = $(DLLDEFS) $(EXTRADEFS)
+DEFS        = $(EXTRADEFS)
 ALL_IMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 ALL_LIBS    = $(ALL_IMPORTS:%=-l%) -L$(LIBDIR) -lwine $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
 BASEMODULE  = $(MODULE:.exe=)
