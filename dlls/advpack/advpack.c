@@ -404,7 +404,8 @@ HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
  *   show    [I] How the window should be shown.
  *
  * RETURNS
- *   This function does not return anything.
+ *   Success: S_OK.
+ *   Failure: E_FAIL.
  *
  * NOTES
  *   OCX - Filename of the OCX to register.
@@ -413,7 +414,7 @@ HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
  *    'N' No reboot.
  *   install_cmd - Command line to pass to the OCX's DllInstall.
  */
-void WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
+HRESULT WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
 {
     WCHAR wszBuff[MAX_PATH];
     WCHAR* pwcComma;
@@ -432,7 +433,7 @@ void WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
     if (!hm)
     {
         ERR("Couldn't load DLL: %s\n", debugstr_w(wszBuff));
-        return;
+        return E_FAIL;
     }
 
     pfnRegister = (DLLREGISTER)GetProcAddress(hm, "DllRegisterServer");
@@ -452,6 +453,7 @@ void WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
     TRACE("Successfully registered OCX\n");
 
     FreeLibrary(hm);
+    return S_OK;
 }
 
 /***********************************************************************
