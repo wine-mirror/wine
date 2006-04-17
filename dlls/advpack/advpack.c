@@ -86,7 +86,7 @@ static void get_dest_dir(HINF hInf, PCWSTR pszSection, PWSTR pszBuffer, DWORD dw
     if (RegOpenKeyW(root, key, &subkey) ||
         RegQueryValueExW(subkey, value, NULL, NULL, (LPBYTE)pszBuffer, &size))
     {
-        SetupGetStringFieldW(&context, 6, pszBuffer, dwSize, NULL);
+        SetupGetStringFieldW(&context, 5, pszBuffer, dwSize, NULL);
     }
 
     RegCloseKey(subkey);
