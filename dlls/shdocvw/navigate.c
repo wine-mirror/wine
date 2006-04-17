@@ -456,8 +456,8 @@ HRESULT navigate_url(WebBrowser *This, LPCWSTR url, PBYTE post_data, ULONG post_
         return hres;
     }
 
-    IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
-    TRACE("navigating to %s\n", debugstr_w(This->url));
+    IMoniker_GetDisplayName(mon, NULL, NULL, &This->doc_host.url);
+    TRACE("navigating to %s\n", debugstr_w(This->doc_host.url));
 
     callback = create_callback(This, post_data, post_data_len, (LPWSTR)headers, &cancel);
     CreateAsyncBindCtx(0, callback, 0, &bindctx);
@@ -517,7 +517,7 @@ HRESULT navigate_hlink(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
         return S_OK;
     }
 
-    This->url = url;
+    This->doc_host.url = url;
 
     return navigate(This, mon, bindctx, callback);
 }

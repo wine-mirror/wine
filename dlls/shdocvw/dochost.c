@@ -25,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static ATOM doc_view_atom = 0;
 
-static void navigate_complete(WebBrowser *This)
+static void navigate_complete(DocHost *This)
 {
     IDispatch *disp = NULL;
     DISPPARAMS dispparams;
@@ -33,7 +33,7 @@ static void navigate_complete(WebBrowser *This)
     VARIANT url;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IDispatch, (void**)&disp);
+    hres = IUnknown_QueryInterface(This->document, &IID_IDispatch, (void**)&disp);
     if(FAILED(hres))
         FIXME("Could not get IDispatch interface\n");
 
@@ -51,26 +51,26 @@ static void navigate_complete(WebBrowser *This)
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = This->url;
 
-    call_sink(This->doc_host.cp_wbe2, DISPID_NAVIGATECOMPLETE2, &dispparams);
-    call_sink(This->doc_host.cp_wbe2, DISPID_DOCUMENTCOMPLETE, &dispparams);
+    call_sink(This->cp_wbe2, DISPID_NAVIGATECOMPLETE2, &dispparams);
+    call_sink(This->cp_wbe2, DISPID_DOCUMENTCOMPLETE, &dispparams);
 
     if(disp)
         IDispatch_Release(disp);
 }
 
-static LRESULT navigate2(WebBrowser *This)
+static LRESULT navigate2(DocHost *This)
 {
     IHlinkTarget *hlink;
     HRESULT hres;
 
     TRACE("(%p)\n", This);
 
-    if(!This->doc_host.document) {
+    if(!This->document) {
         WARN("document == NULL\n");
         return 0;
     }
 
-    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IHlinkTarget, (void**)&hlink);
+    hres = IUnknown_QueryInterface(This->document, &IID_IHlinkTarget, (void**)&hlink);
     if(FAILED(hres)) {
         FIXME("Could not get IHlinkTarget interface\n");
         return 0;
@@ -88,26 +88,26 @@ static LRESULT navigate2(WebBrowser *This)
     return 0;
 }
 
-static LRESULT resize_document(WebBrowser *This, LONG width, LONG height)
+static LRESULT resize_document(DocHost *This, LONG width, LONG height)
 {
     RECT rect = {0, 0, width, height};
 
     TRACE("(%p)->(%ld %ld)\n", This, width, height);
 
-    if(This->doc_host.view)
-        IOleDocumentView_SetRect(This->doc_host.view, &rect);
+    if(This->view)
+        IOleDocumentView_SetRect(This->view, &rect);
 
     return 0;
 }
 
 static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    WebBrowser *This;
+    DocHost *This;
 
     static const WCHAR wszTHIS[] = {'T','H','I','S',0};
 
     if(msg == WM_CREATE) {
-        This = *(WebBrowser**)lParam;
+        This = *(DocHost**)lParam;
         SetPropW(hwnd, wszTHIS, This);
     }else {
         This = GetPropW(hwnd, wszTHIS);
@@ -123,7 +123,7 @@ static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
-void create_doc_view_hwnd(WebBrowser *This)
+void create_doc_view_hwnd(DocHost *This)
 {
     RECT rect;
 
@@ -146,11 +146,11 @@ void create_doc_view_hwnd(WebBrowser *This)
         doc_view_atom = RegisterClassExW(&wndclass);
     }
 
-    GetClientRect(This->shell_embedding_hwnd, &rect);
-    This->doc_host.hwnd = CreateWindowExW(0, wszShell_DocObject_View,
+    GetClientRect(This->frame_hwnd, &rect); /* FIXME */
+    This->hwnd = CreateWindowExW(0, wszShell_DocObject_View,
          wszShell_DocObject_View,
          WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
-         rect.left, rect.top, rect.right, rect.bottom, This->shell_embedding_hwnd,
+         rect.left, rect.top, rect.right, rect.bottom, This->frame_hwnd,
          NULL, shdocvw_hinstance, This);
 }
 

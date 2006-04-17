@@ -132,7 +132,7 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
 
         WebBrowser_OleObject_Destroy(This);
 
-        SysFreeString(This->url);
+        SysFreeString(This->doc_host.url);
         HeapFree(GetProcessHeap(), 0, This);
         SHDOCVW_UnlockModule();
     }
@@ -411,13 +411,13 @@ static HRESULT WINAPI WebBrowser_get_LocationURL(IWebBrowser2 *iface, BSTR *Loca
 
     FIXME("(%p)->(%p)\n", This, LocationURL);
 
-    if(!This->url) {
+    if(!This->doc_host.url) {
         static const WCHAR null_char = 0;
         *LocationURL = SysAllocString(&null_char);
         return S_FALSE;
     }
 
-    *LocationURL = SysAllocString(This->url);
+    *LocationURL = SysAllocString(This->doc_host.url);
     return S_OK;
 }
 
@@ -613,7 +613,7 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
     }
 
     if(!This->doc_host.hwnd)
-        create_doc_view_hwnd(This);
+        create_doc_view_hwnd(&This->doc_host);
 
     hres = navigate_url(This, V_BSTR(URL), post_data, post_data_len, headers);
 
@@ -844,7 +844,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->lpWebBrowser2Vtbl = &WebBrowser2Vtbl;
     ret->ref = 0;
 
-    ret->url = NULL;
+    ret->doc_host.url = NULL;
 
     ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);
     DocHost_Init(&ret->doc_host);

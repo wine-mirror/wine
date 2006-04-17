@@ -74,6 +74,8 @@ typedef struct {
     HWND hwnd;
     HWND frame_hwnd;
 
+    LPOLESTR url;
+
     /* Connection points */
 
     ConnectionPoint *cp_wbe2;
@@ -102,8 +104,6 @@ typedef struct WebBrowser {
     IOleClientSite *client;
     IOleContainer *container;
     IOleInPlaceSite *inplace;
-
-    LPOLESTR url;
 
     /* window context */
 
@@ -166,7 +166,7 @@ void DocHost_Events_Release(DocHost*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 
-void create_doc_view_hwnd(WebBrowser *This);
+void create_doc_view_hwnd(DocHost*);
 void deactivate_document(DocHost*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 HRESULT navigate_url(WebBrowser*,LPCWSTR,PBYTE,ULONG,LPWSTR);
