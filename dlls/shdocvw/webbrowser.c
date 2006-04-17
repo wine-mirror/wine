@@ -128,9 +128,9 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
         if(This->doc_host.document)
             IUnknown_Release(This->doc_host.document);
 
+        DocHost_Release(&This->doc_host);
+
         WebBrowser_OleObject_Destroy(This);
-        WebBrowser_Events_Destroy(This);
-        WebBrowser_ClientSite_Destroy(This);
 
         SysFreeString(This->url);
         HeapFree(GetProcessHeap(), 0, This);

@@ -475,8 +475,8 @@ void DocHost_ClientSite_Init(DocHost *This)
     This->view = NULL;
 }
 
-void WebBrowser_ClientSite_Destroy(WebBrowser *This)
+void DocHost_ClientSite_Release(DocHost *This)
 {
-    if(This->doc_host.view)
-        IOleDocumentView_Release(This->doc_host.view);
+    if(This->view)
+        IOleDocumentView_Release(This->view);
 }

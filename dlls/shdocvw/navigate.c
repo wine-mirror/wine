@@ -371,7 +371,7 @@ static void on_before_navigate2(WebBrowser *This, LPWSTR url, PBYTE post_data, U
     V_VT(params+6) = (VT_DISPATCH);
     V_DISPATCH(params+6) = (IDispatch*)WEBBROWSER2(This);
 
-    call_sink(This->cp_wbe2, DISPID_BEFORENAVIGATE2, &dispparams);
+    call_sink(This->doc_host.cp_wbe2, DISPID_BEFORENAVIGATE2, &dispparams);
 
     SysFreeString(V_BSTR(&var_url));
     if(post_data_len)

@@ -73,6 +73,12 @@ typedef struct {
 
     HWND hwnd;
     HWND frame_hwnd;
+
+    /* Connection points */
+
+    ConnectionPoint *cp_wbe2;
+    ConnectionPoint *cp_wbe;
+    ConnectionPoint *cp_pns;
 } DocHost;
 
 typedef struct WebBrowser {
@@ -111,12 +117,6 @@ typedef struct WebBrowser {
 
     HWND shell_embedding_hwnd;
 
-    /* Connection points */
-
-    ConnectionPoint *cp_wbe2;
-    ConnectionPoint *cp_wbe;
-    ConnectionPoint *cp_pns;
-
     DocHost doc_host;
 } WebBrowser;
 
@@ -153,14 +153,16 @@ void WebBrowser_ClassInfo_Init(WebBrowser*);
 void WebBrowser_Events_Init(WebBrowser*);
 void WebBrowser_HlinkFrame_Init(WebBrowser*);
 
+void WebBrowser_OleObject_Destroy(WebBrowser*);
+
 void DocHost_Init(DocHost*);
 void DocHost_ClientSite_Init(DocHost*);
-
+void DocHost_Events_Init(DocHost*);
 void DocHost_Frame_Init(DocHost*);
 
-void WebBrowser_OleObject_Destroy(WebBrowser*);
-void WebBrowser_Events_Destroy(WebBrowser*);
-void WebBrowser_ClientSite_Destroy(WebBrowser*);
+void DocHost_Release(DocHost*);
+void DocHost_ClientSite_Release(DocHost*);
+void DocHost_Events_Release(DocHost*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 

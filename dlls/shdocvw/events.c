@@ -30,7 +30,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 struct ConnectionPoint {
     const IConnectionPointVtbl *lpConnectionPointVtbl;
 
-    WebBrowser *webbrowser;
+    DocHost *doc_host;
+    IConnectionPointContainer *container;
 
     IDispatch **sinks;
     DWORD sinks_size;
@@ -87,13 +88,13 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
 
     if(IsEqualGUID(&DIID_DWebBrowserEvents2, riid)) {
         TRACE("(%p)->(DIID_DWebBrowserEvents2 %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->cp_wbe2);
+        *ppCP = CONPOINT(This->doc_host.cp_wbe2);
     }else if(IsEqualGUID(&DIID_DWebBrowserEvents, riid)) {
         TRACE("(%p)->(DIID_DWebBrowserEvents %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->cp_wbe);
+        *ppCP = CONPOINT(This->doc_host.cp_wbe);
     }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
         TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->cp_pns);
+        *ppCP = CONPOINT(This->doc_host.cp_pns);
     }
 
     if(*ppCP) {
@@ -139,7 +140,7 @@ static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
     }
 
     if(*ppv) {
-        IWebBrowser2_AddRef(WEBBROWSER(This->webbrowser));
+        IOleClientSite_AddRef(CLIENTSITE(This->doc_host));
         return S_OK;
     }
 
@@ -150,13 +151,13 @@ static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
 static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IWebBrowser2_AddRef(WEBBROWSER(This->webbrowser));
+    return IOleClientSite_AddRef(CLIENTSITE(This->doc_host));
 }
 
 static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IWebBrowser2_Release(WEBBROWSER(This->webbrowser));
+    return IOleClientSite_Release(CLIENTSITE(This->doc_host));
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
@@ -176,8 +177,8 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
 
     TRACE("(%p)->(%p)\n", This, ppCPC);
 
-    *ppCPC = CONPTCONT(This->webbrowser);
-    IConnectionPointContainer_AddRef(CONPTCONT(This->webbrowser));
+    *ppCPC = This->container;
+    IConnectionPointContainer_AddRef(This->container);
     return S_OK;
 }
 
@@ -267,15 +268,16 @@ void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams)
     }
 }
 
-static void ConnectionPoint_Create(WebBrowser *wb, REFIID riid, ConnectionPoint **cp)
+static void ConnectionPoint_Create(DocHost *doc_host, REFIID riid, ConnectionPoint **cp)
 {
     ConnectionPoint *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(ConnectionPoint));
 
     ret->lpConnectionPointVtbl = &ConnectionPointVtbl;
-    ret->webbrowser = wb;
 
+    ret->doc_host = doc_host;
     ret->sinks = NULL;
     ret->sinks_size = 0;
+    ret->container = NULL;
 
     memcpy(&ret->iid, riid, sizeof(IID));
 
@@ -295,18 +297,25 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
     HeapFree(GetProcessHeap(), 0, This);
 }
 
-void WebBrowser_Events_Init(WebBrowser *This)
+void DocHost_Events_Init(DocHost *This)
 {
-    This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
-
     ConnectionPoint_Create(This, &DIID_DWebBrowserEvents2, &This->cp_wbe2);
-    ConnectionPoint_Create(This, &DIID_DWebBrowserEvents, &This->cp_wbe);
+    ConnectionPoint_Create(This, &DIID_DWebBrowserEvents,  &This->cp_wbe);
     ConnectionPoint_Create(This, &IID_IPropertyNotifySink, &This->cp_pns);
 }
 
-void WebBrowser_Events_Destroy(WebBrowser *This)
+void DocHost_Events_Release(DocHost *This)
 {
     ConnectionPoint_Destroy(This->cp_wbe2);
     ConnectionPoint_Destroy(This->cp_wbe);
     ConnectionPoint_Destroy(This->cp_pns);
+}
+
+void WebBrowser_Events_Init(WebBrowser *This)
+{
+    This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
+
+    This->doc_host.cp_wbe2->container = CONPTCONT(This);
+    This->doc_host.cp_wbe->container  = CONPTCONT(This);
+    This->doc_host.cp_pns->container  = CONPTCONT(This);
 }
