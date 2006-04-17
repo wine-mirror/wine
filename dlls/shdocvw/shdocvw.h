@@ -62,6 +62,9 @@ typedef struct {
     const IDispatchVtbl           *lpDispatchVtbl;
     const IServiceProviderVtbl    *lpServiceProviderVtbl;
 
+    /* Interfaces of InPlaceFrame object */
+    const IOleInPlaceFrameVtbl          *lpOleInPlaceFrameVtbl;
+
     IDispatch *disp;
 
     IUnknown *document;
@@ -89,10 +92,6 @@ typedef struct WebBrowser {
     const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
     const IOleCommandTargetVtbl         *lpWBOleCommandTargetVtbl;
     const IHlinkFrameVtbl               *lpHlinkFrameVtbl;
-
-    /* Interfaces of InPlaceFrame object */
-
-    const IOleInPlaceFrameVtbl          *lpOleInPlaceFrameVtbl;
 
     LONG ref;
 
