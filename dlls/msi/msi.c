@@ -667,6 +667,9 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
 
     TRACE("%s\n", debugstr_w(szProduct));
 
+    if (!szProduct)
+        return INSTALLSTATE_INVALIDARG;
+
     rc = MSIREG_OpenUserProductsKey(szProduct,&hkey,FALSE);
     if (rc != ERROR_SUCCESS)
         goto end;

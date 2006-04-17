@@ -675,6 +675,9 @@ UINT WINAPI MsiEnumFeaturesW(LPCWSTR szProduct, DWORD index,
 
     TRACE("%s %ld %p %p\n",debugstr_w(szProduct),index,szFeature,szParent);
 
+    if( !szProduct )
+        return ERROR_INVALID_PARAMETER;
+
     r = MSIREG_OpenFeaturesKey(szProduct,&hkeyProduct,FALSE);
     if( r != ERROR_SUCCESS )
         return ERROR_NO_MORE_ITEMS;

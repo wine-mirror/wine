@@ -66,6 +66,21 @@ static void test_usefeature(void)
 
 }
 
+static void test_null(void)
+{
+    MSIHANDLE hpkg;
+    UINT r;
+
+    r = MsiOpenPackageExW(NULL, 0, &hpkg);
+    ok( r == ERROR_INVALID_PARAMETER,"wrong error");
+
+    r = MsiQueryProductStateW(NULL);
+    ok( r == INSTALLSTATE_INVALIDARG, "wrong return\n");
+
+    r = MsiEnumFeaturesW(NULL,0,NULL,NULL);
+    ok( r == ERROR_INVALID_PARAMETER,"wrong error");
+}
+
 START_TEST(msi)
 {
     HMODULE hmod = GetModuleHandle("msi.dll");
@@ -73,4 +88,5 @@ START_TEST(msi)
         GetProcAddress(hmod, "MsiUseFeatureExA");
 
     test_usefeature();
+    test_null();
 }

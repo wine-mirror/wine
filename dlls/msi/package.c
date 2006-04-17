@@ -514,6 +514,9 @@ UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phP
 
     TRACE("%s %08lx %p\n", debugstr_w(szPackage), dwOptions, phPackage );
 
+    if( szPackage == NULL )
+        return ERROR_INVALID_PARAMETER;
+
     if( dwOptions )
         FIXME("dwOptions %08lx not supported\n", dwOptions);
 
