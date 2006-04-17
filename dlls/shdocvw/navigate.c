@@ -288,7 +288,7 @@ static const IHttpNegotiateVtbl HttpNegotiateVtbl = {
     HttpNegotiate_OnResponse
 };
 
-static IBindStatusCallback *create_callback(WebBrowser *This, PBYTE post_data,
+static IBindStatusCallback *create_callback(DocHost *This, PBYTE post_data,
         ULONG post_data_len, LPWSTR headers, VARIANT_BOOL *cancel)
 {
     BindStatusCallback *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(BindStatusCallback));
@@ -315,7 +315,7 @@ static IBindStatusCallback *create_callback(WebBrowser *This, PBYTE post_data,
     return BINDSC(ret);
 }
 
-static void on_before_navigate2(WebBrowser *This, LPWSTR url, PBYTE post_data, ULONG post_data_len,
+static void on_before_navigate2(DocHost *This, LPWSTR url, PBYTE post_data, ULONG post_data_len,
                                 LPWSTR headers, VARIANT_BOOL *cancel)
 {
     VARIANT var_url, var_flags, var_frame_name, var_post_data, var_post_data2, var_headers;
@@ -369,16 +369,16 @@ static void on_before_navigate2(WebBrowser *This, LPWSTR url, PBYTE post_data, U
     V_BSTR(&var_url) = SysAllocString(url);
 
     V_VT(params+6) = (VT_DISPATCH);
-    V_DISPATCH(params+6) = (IDispatch*)WEBBROWSER2(This);
+    V_DISPATCH(params+6) = This->disp;
 
-    call_sink(This->doc_host.cp_wbe2, DISPID_BEFORENAVIGATE2, &dispparams);
+    call_sink(This->cp_wbe2, DISPID_BEFORENAVIGATE2, &dispparams);
 
     SysFreeString(V_BSTR(&var_url));
     if(post_data_len)
         SafeArrayDestroy(V_ARRAY(&var_post_data));
 }
 
-static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
+static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
                         IBindStatusCallback *callback)
 {
     IOleObject *oleobj;
@@ -392,7 +392,7 @@ static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
     }
 
     IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
-                                 (IUnknown*)CLIENTSITE(&This->doc_host));
+                                 (IUnknown*)CLIENTSITE(This));
 
     /*
      * FIXME:
@@ -400,19 +400,19 @@ static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
      * This should be fixed when mshtml.dll and urlmon.dll will be good enough.
      */
 
-    if(This->doc_host.document)
-        deactivate_document(&This->doc_host);
+    if(This->document)
+        deactivate_document(This);
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
                             CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-                            &IID_IUnknown, (void**)&This->doc_host.document);
+                            &IID_IUnknown, (void**)&This->document);
 
     if(FAILED(hres)) {
         ERR("Could not create HTMLDocument: %08lx\n", hres);
         return hres;
     }
 
-    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IPersistMoniker, (void**)&persist);
+    hres = IUnknown_QueryInterface(This->document, &IID_IPersistMoniker, (void**)&persist);
     if(FAILED(hres))
         return hres;
 
@@ -428,20 +428,20 @@ static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
         return hres;
     }
 
-    hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IOleObject, (void**)&oleobj);
+    hres = IUnknown_QueryInterface(This->document, &IID_IOleObject, (void**)&oleobj);
     if(FAILED(hres))
         return hres;
 
-    hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(&This->doc_host));
+    hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(This));
     IOleObject_Release(oleobj);
 
-    PostMessageW(This->doc_host.hwnd, WB_WM_NAVIGATE2, 0, 0);
+    PostMessageW(This->hwnd, WB_WM_NAVIGATE2, 0, 0);
 
     return hres;
 
 }
 
-HRESULT navigate_url(WebBrowser *This, LPCWSTR url, PBYTE post_data, ULONG post_data_len,
+HRESULT navigate_url(DocHost *This, LPCWSTR url, PBYTE post_data, ULONG post_data_len,
                      LPWSTR headers)
 {
     IBindStatusCallback *callback;
@@ -456,8 +456,8 @@ HRESULT navigate_url(WebBrowser *This, LPCWSTR url, PBYTE post_data, ULONG post_
         return hres;
     }
 
-    IMoniker_GetDisplayName(mon, NULL, NULL, &This->doc_host.url);
-    TRACE("navigating to %s\n", debugstr_w(This->doc_host.url));
+    IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
+    TRACE("navigating to %s\n", debugstr_w(This->url));
 
     callback = create_callback(This, post_data, post_data_len, (LPWSTR)headers, &cancel);
     CreateAsyncBindCtx(0, callback, 0, &bindctx);
@@ -469,7 +469,7 @@ HRESULT navigate_url(WebBrowser *This, LPCWSTR url, PBYTE post_data, ULONG post_
     return hres;
 }
 
-HRESULT navigate_hlink(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
+HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
                        IBindStatusCallback *callback)
 {
     IHttpNegotiate *http_negotiate;
@@ -517,7 +517,7 @@ HRESULT navigate_hlink(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
         return S_OK;
     }
 
-    This->doc_host.url = url;
+    This->url = url;
 
     return navigate(This, mon, bindctx, callback);
 }
@@ -586,7 +586,7 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
         return E_NOTIMPL;
     }
 
-    return navigate_hlink(This, mon, pbc, pibsc);
+    return navigate_hlink(&This->doc_host, mon, pbc, pibsc);
 }
 
 static HRESULT WINAPI HlinkFrame_OnNavigate(IHlinkFrame *iface, DWORD grfHLNF,

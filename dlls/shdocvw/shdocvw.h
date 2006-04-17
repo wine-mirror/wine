@@ -51,8 +51,6 @@ extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid,
 
 typedef struct ConnectionPoint ConnectionPoint;
 
-struct WebBrowser;
-
 typedef struct {
     const IOleClientSiteVtbl      *lpOleClientSiteVtbl;
     const IOleInPlaceSiteVtbl     *lpOleInPlaceSiteVtbl;
@@ -83,7 +81,7 @@ typedef struct {
     ConnectionPoint *cp_pns;
 } DocHost;
 
-typedef struct WebBrowser {
+typedef struct {
     /* Interfaces available via WebBrowser object */
 
     const IWebBrowser2Vtbl              *lpWebBrowser2Vtbl;
@@ -169,7 +167,7 @@ HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 void create_doc_view_hwnd(DocHost*);
 void deactivate_document(DocHost*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
-HRESULT navigate_url(WebBrowser*,LPCWSTR,PBYTE,ULONG,LPWSTR);
+HRESULT navigate_url(DocHost*,LPCWSTR,PBYTE,ULONG,LPWSTR);
 
 #define WB_WM_NAVIGATE2 (WM_USER+100)
 
