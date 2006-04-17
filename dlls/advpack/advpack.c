@@ -416,44 +416,46 @@ HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
  */
 HRESULT WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
 {
-    WCHAR wszBuff[MAX_PATH];
-    WCHAR* pwcComma;
-    HMODULE hm;
+    LPWSTR ocx_filename, str_flags, param;
+    LPWSTR cmdline_copy, cmdline_ptr;
+    UNICODE_STRING cmdlineW;
     DLLREGISTER pfnRegister;
-    HRESULT hr;
+    HRESULT hr = E_FAIL;
+    HMODULE hm = NULL;
+    DWORD size;
 
     TRACE("(%s)\n", debugstr_a(cmdline));
 
-    MultiByteToWideChar(CP_ACP, 0, cmdline, strlen(cmdline), wszBuff, MAX_PATH);
-    if ((pwcComma = strchrW( wszBuff, ',' ))) *pwcComma = 0;
+    RtlCreateUnicodeStringFromAsciiz(&cmdlineW, cmdline);
 
-    TRACE("Parsed DLL name (%s)\n", debugstr_w(wszBuff));
+    size = (lstrlenW(cmdlineW.Buffer) + 1) * sizeof(WCHAR);
+    cmdline_copy = HeapAlloc(GetProcessHeap(), 0, size);
+    cmdline_ptr = cmdline_copy;
+    lstrcpyW(cmdline_copy, cmdlineW.Buffer);
 
-    hm = LoadLibraryExW(wszBuff, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+    ocx_filename = get_parameter(&cmdline_ptr, ',');
+    if (!ocx_filename || !*ocx_filename)
+        goto done;
+
+    str_flags = get_parameter(&cmdline_ptr, ',');
+    param = get_parameter(&cmdline_ptr, ',');
+
+    hm = LoadLibraryExW(ocx_filename, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
     if (!hm)
-    {
-        ERR("Couldn't load DLL: %s\n", debugstr_w(wszBuff));
-        return E_FAIL;
-    }
+        goto done;
 
     pfnRegister = (DLLREGISTER)GetProcAddress(hm, "DllRegisterServer");
-    if (pfnRegister == NULL)
-    {
-        ERR("DllRegisterServer entry point not found\n");
-    }
-    else
-    {
-        hr = pfnRegister();
-        if (hr != S_OK)
-        {
-            ERR("DllRegisterServer entry point returned %08lx\n", hr);
-        }
-    }
+    if (!pfnRegister)
+        goto done;
 
-    TRACE("Successfully registered OCX\n");
+    hr = pfnRegister();
 
+done:
     FreeLibrary(hm);
-    return S_OK;
+    HeapFree(GetProcessHeap(), 0, cmdline_copy);
+    RtlFreeUnicodeString(&cmdlineW);
+
+    return hr;
 }
 
 /***********************************************************************
