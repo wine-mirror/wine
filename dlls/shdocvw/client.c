@@ -58,7 +58,7 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
         *ppv = CLDISP(This);
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
-        *ppv = CLSERVPROV(This->wb);
+        *ppv = SERVPROV(This);
     }
 
     if(*ppv) {
@@ -419,35 +419,35 @@ static const IDispatchVtbl DispatchVtbl = {
     ClDispatch_Invoke
 };
 
-#define SERVPROV_THIS(iface) DEFINE_THIS(WebBrowser, ClServiceProvider, iface)
+#define SERVPROV_THIS(iface) DEFINE_THIS(DocHost, ServiceProvider, iface)
 
 static HRESULT WINAPI ClServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid,
                                                        void **ppv)
 {
-    WebBrowser *This = SERVPROV_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(&This->doc_host), riid, ppv);
+    DocHost *This = SERVPROV_THIS(iface);
+    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
 }
 
 static ULONG WINAPI ClServiceProvider_AddRef(IServiceProvider *iface)
 {
-    WebBrowser *This = SERVPROV_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(&This->doc_host));
+    DocHost *This = SERVPROV_THIS(iface);
+    return IOleClientSite_AddRef(CLIENTSITE(This));
 }
 
 static ULONG WINAPI ClServiceProvider_Release(IServiceProvider *iface)
 {
-    WebBrowser *This = SERVPROV_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(&This->doc_host));
+    DocHost *This = SERVPROV_THIS(iface);
+    return IOleClientSite_Release(CLIENTSITE(This));
 }
 
 static HRESULT WINAPI ClServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
                                                      REFIID riid, void **ppv)
 {
-    WebBrowser *This = SERVPROV_THIS(iface);
+    DocHost *This = SERVPROV_THIS(iface);
 
     if(IsEqualGUID(&IID_IHlinkFrame, guidService)) {
         TRACE("(%p)->(IID_IHlinkFrame %s %p)\n", This, debugstr_guid(riid), ppv);
-        return IWebBrowser2_QueryInterface(WEBBROWSER(This), riid, ppv);
+        return IDispatch_QueryInterface(This->disp, riid, ppv);
     }
 
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
@@ -470,7 +470,7 @@ void WebBrowser_ClientSite_Init(WebBrowser *This)
     This->doc_host.lpOleInPlaceSiteVtbl = &OleInPlaceSiteVtbl;
     This->doc_host.lpOleDocumentSiteVtbl = &OleDocumentSiteVtbl;
     This->doc_host.lpDispatchVtbl          = &DispatchVtbl;
-    This->lpClServiceProviderVtbl = &ServiceProviderVtbl;
+    This->doc_host.lpServiceProviderVtbl = &ServiceProviderVtbl;
 
     This->doc_host.view = NULL;
 

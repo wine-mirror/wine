@@ -60,6 +60,7 @@ typedef struct {
     const IOleDocumentSiteVtbl    *lpOleDocumentSiteVtbl;
     const IOleCommandTargetVtbl   *lpOleCommandTargetVtbl;
     const IDispatchVtbl           *lpDispatchVtbl;
+    const IServiceProviderVtbl    *lpServiceProviderVtbl;
 
     IDispatch *disp;
 
@@ -88,10 +89,6 @@ typedef struct WebBrowser {
     const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
     const IOleCommandTargetVtbl         *lpWBOleCommandTargetVtbl;
     const IHlinkFrameVtbl               *lpHlinkFrameVtbl;
-
-    /* Interfaces available for embeded document */
-
-    const IServiceProviderVtbl          *lpClServiceProviderVtbl;
 
     /* Interfaces of InPlaceFrame object */
 
@@ -148,7 +145,7 @@ typedef struct WebBrowser {
 #define DOCSITE(x)      ((IOleDocumentSite*)            &(x)->lpOleDocumentSiteVtbl)
 #define CLOLECMD(x)     ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
 #define CLDISP(x)       ((IDispatch*)                   &(x)->lpDispatchVtbl)
-#define CLSERVPROV(x)   ((IServiceProvider*)            &(x)->lpClServiceProviderVtbl)
+#define SERVPROV(x)     ((IServiceProvider*)            &(x)->lpServiceProviderVtbl)
 
 #define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
 
