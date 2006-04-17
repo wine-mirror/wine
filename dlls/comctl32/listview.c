@@ -1634,6 +1634,7 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     SCROLLINFO horzInfo, vertInfo;
+    INT dx, dy;
 
     if ((infoPtr->dwStyle & LVS_NOSCROLL) || !is_redrawing(infoPtr)) return;
 
@@ -1666,7 +1667,8 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
   
     horzInfo.fMask = SIF_RANGE | SIF_PAGE;
     horzInfo.nMax = max(horzInfo.nMax - 1, 0);
-    SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &horzInfo, TRUE);
+    dx = GetScrollPos(infoPtr->hwndSelf, SB_HORZ);
+    dx -= SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &horzInfo, TRUE);
     TRACE("horzInfo=%s\n", debugscrollinfo(&horzInfo));
 
     /* Setting the horizontal scroll can change the listview size
@@ -1697,8 +1699,18 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 
     vertInfo.fMask = SIF_RANGE | SIF_PAGE;
     vertInfo.nMax = max(vertInfo.nMax - 1, 0);
-    SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &vertInfo, TRUE);
+    dy = GetScrollPos(infoPtr->hwndSelf, SB_VERT);
+    dy -= SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &vertInfo, TRUE);
     TRACE("vertInfo=%s\n", debugscrollinfo(&vertInfo));
+
+    /* Change of the range may have changed the scroll pos. If so move the content */
+    if (dx != 0 || dy != 0)
+    {
+        RECT listRect;
+        listRect = infoPtr->rcList;
+        ScrollWindowEx(infoPtr->hwndSelf, dx, dy, &listRect, &listRect, 0, 0,
+            SW_ERASE | SW_INVALIDATE);
+    }
 
     /* Update the Header Control */
     if (uView == LVS_REPORT)
