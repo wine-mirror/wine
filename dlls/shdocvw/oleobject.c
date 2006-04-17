@@ -147,8 +147,8 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
         This->inplace = NULL;
     }
 
-    if(This->hostui)
-        IDocHostUIHandler_Release(This->hostui);
+    if(This->doc_host.hostui)
+        IDocHostUIHandler_Release(This->doc_host.hostui);
     if(This->client)
         IOleClientSite_Release(This->client);
 
@@ -163,9 +163,9 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     IOleClientSite_AddRef(pClientSite);
 
     hres = IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler,
-                                         (void**)&This->hostui);
+                                         (void**)&This->doc_host.hostui);
     if(FAILED(hres))
-        This->hostui = NULL;
+        This->doc_host.hostui = NULL;
 
     create_shell_embedding_hwnd(This);
 

@@ -256,31 +256,31 @@ static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     ClOleCommandTarget_Exec
 };
 
-#define DOCHOSTUI_THIS(iface) DEFINE_THIS(WebBrowser, DocHostUIHandler, iface)
+#define DOCHOSTUI_THIS(iface) DEFINE_THIS(DocHost, DocHostUIHandler, iface)
 
 static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface,
                                                       REFIID riid, void **ppv)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(&This->doc_host), riid, ppv);
+    DocHost *This = DOCHOSTUI_THIS(iface);
+    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
 }
 
 static ULONG WINAPI DocHostUIHandler_AddRef(IDocHostUIHandler2 *iface)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(&This->doc_host));
+    DocHost *This = DOCHOSTUI_THIS(iface);
+    return IOleClientSite_AddRef(CLIENTSITE(This));
 }
 
 static ULONG WINAPI DocHostUIHandler_Release(IDocHostUIHandler2 *iface)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(&This->doc_host));
+    DocHost *This = DOCHOSTUI_THIS(iface);
+    return IOleClientSite_Release(CLIENTSITE(This));
 }
 
 static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface,
          DWORD dwID, POINT *ppt, IUnknown *pcmdtReserved, IDispatch *pdispReserved)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%ld %p %p %p)\n", This, dwID, ppt, pcmdtReserved, pdispReserved);
@@ -299,7 +299,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
 static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface,
         DOCHOSTUIINFO *pInfo)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pInfo);
@@ -320,7 +320,7 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
         IOleInPlaceActiveObject *pActiveObject, IOleCommandTarget *pCommandTarget,
         IOleInPlaceFrame *pFrame, IOleInPlaceUIWindow *pDoc)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)->(%ld %p %p %p %p)\n", This, dwID, pActiveObject, pCommandTarget,
           pFrame, pDoc);
     return E_NOTIMPL;
@@ -328,14 +328,14 @@ static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD d
 
 static HRESULT WINAPI DocHostUIHandler_HideUI(IDocHostUIHandler2 *iface)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI DocHostUIHandler_UpdateUI(IDocHostUIHandler2 *iface)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -343,7 +343,7 @@ static HRESULT WINAPI DocHostUIHandler_UpdateUI(IDocHostUIHandler2 *iface)
 static HRESULT WINAPI DocHostUIHandler_EnableModeless(IDocHostUIHandler2 *iface,
                                                       BOOL fEnable)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)->(%x)\n", This, fEnable);
     return E_NOTIMPL;
 }
@@ -351,7 +351,7 @@ static HRESULT WINAPI DocHostUIHandler_EnableModeless(IDocHostUIHandler2 *iface,
 static HRESULT WINAPI DocHostUIHandler_OnDocWindowActivate(IDocHostUIHandler2 *iface,
                                                            BOOL fActivate)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)->(%x)\n", This, fActivate);
     return E_NOTIMPL;
 }
@@ -359,7 +359,7 @@ static HRESULT WINAPI DocHostUIHandler_OnDocWindowActivate(IDocHostUIHandler2 *i
 static HRESULT WINAPI DocHostUIHandler_OnFrameWindowActivate(IDocHostUIHandler2 *iface,
                                                              BOOL fActivate)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)->(%x)\n", This, fActivate);
     return E_NOTIMPL;
 }
@@ -367,7 +367,7 @@ static HRESULT WINAPI DocHostUIHandler_OnFrameWindowActivate(IDocHostUIHandler2 
 static HRESULT WINAPI DocHostUIHandler_ResizeBorder(IDocHostUIHandler2 *iface,
         LPCRECT prcBorder, IOleInPlaceUIWindow *pUIWindow, BOOL fRameWindow)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)->(%p %p %X)\n", This, prcBorder, pUIWindow, fRameWindow);
     return E_NOTIMPL;
 }
@@ -375,7 +375,7 @@ static HRESULT WINAPI DocHostUIHandler_ResizeBorder(IDocHostUIHandler2 *iface,
 static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *iface,
         LPMSG lpMsg, const GUID *pguidCmdGroup, DWORD nCmdID)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)->(%p %p %ld)\n", This, lpMsg, pguidCmdGroup, nCmdID);
     return E_NOTIMPL;
 }
@@ -383,7 +383,7 @@ static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *
 static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *iface,
         LPOLESTR *pchKey, DWORD dw)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
 
     TRACE("(%p)->(%p %ld)\n", This, pchKey, dw);
 
@@ -396,7 +396,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *ifac
 static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
         IDropTarget *pDropTarget, IDropTarget **ppDropTarget)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
@@ -404,7 +404,7 @@ static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
 static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface,
         IDispatch **ppDispatch)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, ppDispatch);
     return E_NOTIMPL;
 }
@@ -412,7 +412,7 @@ static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface,
 static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface,
         DWORD dwTranslate, OLECHAR *pchURLIn, OLECHAR **ppchURLOut)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
 
     TRACE("(%p)->(%ld %s %p)\n", This, dwTranslate, debugstr_w(pchURLIn), ppchURLOut);
 
@@ -426,7 +426,7 @@ static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface,
 static HRESULT WINAPI DocHostUIHandler_FilterDataObject(IDocHostUIHandler2 *iface,
         IDataObject *pDO, IDataObject **ppDORet)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     FIXME("(%p)->(%p %p)\n", This, pDO, ppDORet);
     return E_NOTIMPL;
 }
@@ -434,17 +434,17 @@ static HRESULT WINAPI DocHostUIHandler_FilterDataObject(IDocHostUIHandler2 *ifac
 static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *iface,
         LPOLESTR *pchKey, DWORD dw)
 {
-    WebBrowser *This = DOCHOSTUI_THIS(iface);
+    DocHost *This = DOCHOSTUI_THIS(iface);
     IDocHostUIHandler2 *handler;
     HRESULT hres;
 
     TRACE("(%p)->(%p %ld)\n", This, pchKey, dw);
 
-    if(!This->client)
+    if(!This->hostui)
         return S_OK;
 
-    hres = IOleClientSite_QueryInterface(This->client, &IID_IDocHostUIHandler2,
-                                         (void**)&handler);
+    hres = IDocHostUIHandler_QueryInterface(This->hostui, &IID_IDocHostUIHandler2,
+                                            (void**)&handler);
     if(SUCCEEDED(hres)) {
         hres = IDocHostUIHandler2_GetOverrideKeyPath(handler, pchKey, dw);
         IDocHostUIHandler2_Release(handler);
@@ -480,10 +480,10 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandler2Vtbl = {
 
 void WebBrowser_DocHost_Init(WebBrowser *This)
 {
-    This->lpDocHostUIHandlerVtbl   = &DocHostUIHandler2Vtbl;
+    This->doc_host.lpDocHostUIHandlerVtbl = &DocHostUIHandler2Vtbl;
     This->lpClOleCommandTargetVtbl = &OleCommandTargetVtbl;
 
-    This->hostui = NULL;
+    This->doc_host.hostui = NULL;
 
     This->doc_host.hwnd = NULL;
     This->doc_host.frame_hwnd = NULL;

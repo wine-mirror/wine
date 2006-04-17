@@ -43,10 +43,10 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
         *ppv = INPLACESITE(This);
     }else if(IsEqualGUID(&IID_IDocHostUIHandler, riid)) {
         TRACE("(%p)->(IID_IDocHostUIHandler %p)\n", This, ppv);
-        *ppv = DOCHOSTUI(This->wb);
+        *ppv = DOCHOSTUI(This);
     }else if(IsEqualGUID(&IID_IDocHostUIHandler2, riid)) {
         TRACE("(%p)->(IID_IDocHostUIHandler2 %p)\n", This, ppv);
-        *ppv = DOCHOSTUI2(This->wb);
+        *ppv = DOCHOSTUI2(This);
     }else if(IsEqualGUID(&IID_IOleDocumentSite, riid)) {
         TRACE("(%p)->(IID_IOleDocumentSite %p)\n", This, ppv);
         *ppv = DOCSITE(This->wb);
