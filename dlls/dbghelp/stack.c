@@ -551,7 +551,6 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     frame64->Params[1] = (ULONG)frame32.Params[1];
     frame64->Params[2] = (ULONG)frame32.Params[2];
     frame64->Params[3] = (ULONG)frame32.Params[3];
-    frame64->Params[4] = (ULONG)frame32.Params[4];
     frame64->Far = frame32.Far;
     frame64->Virtual = frame32.Virtual;
     frame64->Reserved[0] = (ULONG)frame32.Reserved[0];
