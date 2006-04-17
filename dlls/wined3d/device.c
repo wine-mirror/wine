@@ -1668,6 +1668,26 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface, CONST
     return hr;
 }
 
+HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DWORD Flags, PALETTEENTRY *PalEnt, IWineD3DPalette **Palette, IUnknown *Parent) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DPaletteImpl *object;
+    TRACE("(%p)->(%lx, %p, %p, %p)\n", This, Flags, PalEnt, Palette, Parent);
+
+    /* Create the new object */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DPaletteImpl));
+    if(!object) {
+        ERR("Out of memory when allocating memory for a IWineD3DPalette implementation\n");
+        return DDERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &IWineD3DPalette_Vtbl;
+    object->ref = 1;
+
+    *Palette = (IWineD3DPalette *) object;
+
+    return DD_OK;
+}
+
 HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {
     FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
     return WINED3DERR_INVALIDCALL;
@@ -6819,6 +6839,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreateVertexDeclaration,
     IWineD3DDeviceImpl_CreateVertexShader,
     IWineD3DDeviceImpl_CreatePixelShader,
+    IWineD3DDeviceImpl_CreatePalette,
     /*** Odd functions **/
     IWineD3DDeviceImpl_Init3D,
     IWineD3DDeviceImpl_Uninit3D,

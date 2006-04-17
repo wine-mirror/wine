@@ -283,6 +283,7 @@ do {                                                                            
 /* Advance declaration of structures to satisfy compiler */
 typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
+typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
 
 /* Tracking */
 
@@ -1265,4 +1266,16 @@ typedef struct IWineD3DPixelShaderImpl {
 
 extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
+
+/*****************************************************************************
+ * IWineD3DPalette implementation structure
+ */
+struct IWineD3DPaletteImpl {
+    /* IUnknown parts */
+    const IWineD3DPaletteVtbl  *lpVtbl;
+    LONG                       ref;
+};
+
+extern const IWineD3DPaletteVtbl IWineD3DPalette_Vtbl;
+
 #endif

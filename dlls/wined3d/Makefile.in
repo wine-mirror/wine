@@ -15,6 +15,7 @@ C_SRCS = \
 	directx.c \
 	drawprim.c \
 	indexbuffer.c \
+	palette.c \
 	pixelshader.c \
 	query.c \
 	resource.c \

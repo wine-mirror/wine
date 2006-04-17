@@ -83,6 +83,7 @@
 struct IWineD3D;
 struct IWineD3DBase;
 struct IWineD3DDevice;
+struct IWineD3DPalette;
 struct IWineD3DResource;
 struct IWineD3DVertexBuffer;
 struct IWineD3DIndexBuffer;
@@ -112,6 +113,9 @@ DEFINE_GUID(IID_IWineD3DBase,
 DEFINE_GUID(IID_IWineD3DDevice, 
 0x108f9c44, 0x6f30, 0x11d9, 0xc6, 0x87, 0x0, 0x4, 0x61, 0x42, 0xc1, 0x4f);
 
+/* {f756720c-32b9-4439-b5a3-1d6c97037d9e} */
+DEFINE_GUID(IID_IWineD3DPalette,
+0xf756720c, 0x32b9, 0x4439, 0xb5, 0xa3, 0x1d, 0x6c, 0x97, 0x03, 0x7d, 0x9e);
 
 /* {1F3BFB34-6F30-11d9-C687-00046142C14F} */
 DEFINE_GUID(IID_IWineD3DResource, 
@@ -366,6 +370,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(CreateVertexDeclaration)(THIS_ CONST VOID* pDeclaration, struct IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent) PURE;
     STDMETHOD(CreateVertexShader)(THIS_ CONST DWORD *pDeclaration, CONST DWORD* pFunction, struct IWineD3DVertexShader** ppShader, IUnknown *pParent) PURE;
     STDMETHOD(CreatePixelShader)(THIS_ CONST DWORD* pFunction, struct IWineD3DPixelShader** ppShader, IUnknown *pParent) PURE;
+    STDMETHOD_(HRESULT,CreatePalette)(THIS_ DWORD Flags, PALETTEENTRY *PalEnt, struct IWineD3DPalette **Palette, IUnknown *Parent);
     STDMETHOD(Init3D)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain);
     STDMETHOD(Uninit3D)(THIS);
     STDMETHOD(EvictManagedResources)(THIS) PURE;
@@ -509,6 +514,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_CreateVertexDeclaration(p,b,c,d)         (p)->lpVtbl->CreateVertexDeclaration(p,b,c,d)
 #define IWineD3DDevice_CreateVertexShader(p,a,b,c,d)            (p)->lpVtbl->CreateVertexShader(p,a,b,c,d)
 #define IWineD3DDevice_CreatePixelShader(p,a,b,c)               (p)->lpVtbl->CreatePixelShader(p,a,b,c)
+#define IWineD3DDevice_CreatePalette(p, a, b, c, d)             (p)->lpVtbl->CreatePalette(p, a, b, c, d)
 #define IWineD3DDevice_Init3D(p, a, b)                          (p)->lpVtbl->Init3D(p, a, b)
 #define IWineD3DDevice_Uninit3D(p)                              (p)->lpVtbl->Uninit3D(p)
 #define IWineD3DDevice_EvictManagedResources(p)                 (p)->lpVtbl->EvictManagedResources(p)
@@ -1489,6 +1495,36 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IWineD3DBaseShader)
 /*** IWineD3DPixelShader methods ***/
 #define IWineD3DPixelShader_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DPixelShader_GetFunction(p,a,b)         (p)->lpVtbl->GetFunction(p,a,b)
+#endif
+
+/*****************************************************************************
+ * IWineD3DPalette interface
+ */
+#define INTERFACE IWineD3DPalette
+DECLARE_INTERFACE_(IWineD3DPalette,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DPalette methods ***/
+    STDMETHOD_(HRESULT,GetParent)(THIS_ IUnknown **Parent);
+    STDMETHOD_(HRESULT,GetEntries)(THIS_ DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt);
+    STDMETHOD_(HRESULT,GetCaps)(THIS_ DWORD *Caps);
+    STDMETHOD_(HRESULT,SetEntries)(THIS_ DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt);
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DPalette_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DPalette_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IWineD3DPalette_Release(p)                 (p)->lpVtbl->Release(p)
+/*** IWineD3DPalette methods ***/
+#define IWineD3DPalette_GetParent(p, a)            (p)->lpVtbl->GetParent(p, a)
+#define IWineD3DPalette_GetEntries(p, a, b, c, d)  (p)->lpVtbl->GetEntries(p, a, b, c, d)
+#define IWineD3DPalette_GetCaps(p, a)              (p)->lpVtbl->GetCaps(p, a)
+#define IWineD3DPalette_SetEntries(p, a, b, c, d)  (p)->lpVtbl->SetEntries(p, a, b, c, d)
 #endif
 
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */
