@@ -400,7 +400,7 @@ HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
  * PARAMS
  *   hWnd    [I] Handle to the window used for the display.
  *   hInst   [I] Instance of the process.
- *   cmdline [I] Contains parameters in the order OCX,reboot,install_cmd
+ *   cmdline [I] Contains parameters in the order OCX,flags,param.
  *   show    [I] How the window should be shown.
  *
  * RETURNS
@@ -409,10 +409,10 @@ HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
  *
  * NOTES
  *   OCX - Filename of the OCX to register.
- *   reboot - smart reboot behavior
- *    'I' Reboot if needed.
- *    'N' No reboot.
- *   install_cmd - Command line to pass to the OCX's DllInstall.
+ *   flags - Controls the operation of RegisterOCX.
+ *    'I' Call DllRegisterServer and DllInstall.
+ *    'N' Only call DllInstall.
+ *   param - Command line passed to DllInstall.
  */
 HRESULT WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
 {
