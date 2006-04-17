@@ -42,6 +42,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
 #define ADV_HRESULT(x)  ((x & SPAPI_ERROR) ? HRESULT_FROM_SPAPI(x) : HRESULT_FROM_WIN32(x))
 
+/* contains information about a specific install instance */
+typedef struct _ADVInfo
+{
+    HINF hinf;
+    LPWSTR inf_filename;
+    LPWSTR install_sec;
+    LPWSTR working_dir;
+    DWORD flags;
+    BOOL need_reboot;
+} ADVInfo;
+
 /* sequentially returns pointers to parameters in a parameter list
  * returns NULL if the parameter is empty, e.g. one,,three  */
 LPWSTR get_parameter(LPWSTR *params, WCHAR separator)
@@ -75,7 +86,7 @@ static BOOL is_full_path(LPWSTR path)
 }
 
 /* performs a setupapi-level install of the INF file */
-static HRESULT spapi_install(HINF hinf, LPCWSTR install_sec, LPCWSTR source_path)
+static HRESULT spapi_install(ADVInfo *info)
 {
     BOOL ret;
     HRESULT res;
@@ -85,9 +96,9 @@ static HRESULT spapi_install(HINF hinf, LPCWSTR install_sec, LPCWSTR source_path
     if (!context)
         return ADV_HRESULT(GetLastError());
 
-    ret = SetupInstallFromInfSectionW(NULL, hinf, install_sec, SPINST_FILES,
-                                      NULL, source_path, SP_COPY_NEWER,
-                                      SetupDefaultQueueCallbackW,
+    ret = SetupInstallFromInfSectionW(NULL, info->hinf, info->install_sec,
+                                      SPINST_FILES, NULL, info->working_dir,
+                                      SP_COPY_NEWER, SetupDefaultQueueCallbackW,
                                       context, NULL, NULL);
     if (!ret)
     {
@@ -99,7 +110,7 @@ static HRESULT spapi_install(HINF hinf, LPCWSTR install_sec, LPCWSTR source_path
 
     SetupTermDefaultQueueCallback(context);
 
-    ret = SetupInstallFromInfSectionW(NULL, hinf, install_sec,
+    ret = SetupInstallFromInfSectionW(NULL, info->hinf, info->install_sec,
                                       SPINST_INIFILES | SPINST_REGISTRY,
                                       HKEY_LOCAL_MACHINE, NULL, 0,
                                       NULL, NULL, NULL, NULL);
@@ -107,6 +118,86 @@ static HRESULT spapi_install(HINF hinf, LPCWSTR install_sec, LPCWSTR source_path
         return ADV_HRESULT(GetLastError());
 
     return S_OK;
+}
+
+/* loads the INF file and performs checks on it */
+HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
+                     LPCWSTR working_dir, DWORD flags, ADVInfo *info)
+{
+    DWORD len;
+    LPCWSTR ptr;
+
+    static const WCHAR default_install[] = {
+        'D','e','f','a','u','l','t','I','n','s','t','a','l','l',0
+    };
+
+    len = lstrlenW(inf_filename);
+
+    info->inf_filename = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    if (!info->inf_filename)
+        return E_OUTOFMEMORY;
+
+    lstrcpyW(info->inf_filename, inf_filename);
+
+    /* FIXME: determine the proper platform to install (NTx86, etc) */
+    if (!install_sec || !*install_sec)
+    {
+        len = sizeof(default_install) - 1;
+        ptr = default_install;
+    }
+    else
+    {
+        len = lstrlenW(install_sec);
+        ptr = install_sec;
+    }
+
+    info->install_sec = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    if (!info->install_sec)
+        return E_OUTOFMEMORY;
+
+    lstrcpyW(info->install_sec, ptr);
+
+    /* FIXME: need to get the real working directory */
+    if (!working_dir || !*working_dir)
+    {
+        ptr = strrchrW(info->inf_filename, '\\');
+        len = ptr - info->inf_filename + 1;
+        ptr = info->inf_filename;
+    }
+    else
+    {
+        len = lstrlenW(working_dir);
+        ptr = working_dir;
+    }
+
+    info->working_dir = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    if (!info->working_dir)
+        return E_OUTOFMEMORY;
+
+    lstrcpynW(info->working_dir, ptr, len);
+
+    info->hinf = SetupOpenInfFileW(info->inf_filename, NULL, INF_STYLE_WIN4, NULL);
+    if (info->hinf == INVALID_HANDLE_VALUE)
+        return ADV_HRESULT(GetLastError());
+
+    /* FIXME: set the ldids of the install section */
+    /* FIXME: check that the INF is advanced */
+
+    info->flags = flags;
+    info->need_reboot = FALSE;
+
+    return S_OK;
+}
+
+/* release the install instance information */
+void install_release(ADVInfo *info)
+{
+    if (info->hinf && info->hinf != INVALID_HANDLE_VALUE)
+        SetupCloseInfFile(info->hinf);
+
+    HeapFree(GetProcessHeap(), 0, info->inf_filename);
+    HeapFree(GetProcessHeap(), 0, info->install_sec);
+    HeapFree(GetProcessHeap(), 0, info->working_dir);
 }
 
 /* this structure very closely resembles parameters of RunSetupCommand() */
@@ -472,7 +563,7 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
                                 LPCWSTR lpszTitle, HANDLE *phEXE,
                                 DWORD dwFlags, LPVOID pvReserved)
 {
-    HINF hinf;
+    ADVInfo info;
     HRESULT hr;
 
     TRACE("(%p, %s, %s, %s, %s, %p, %ld, %p)\n",
@@ -489,12 +580,16 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
     if (!(dwFlags & RSC_FLAG_INF))
         return launch_exe(szCmdName, szDir, phEXE);
 
-    hinf = SetupOpenInfFileW(szCmdName, NULL, INF_STYLE_WIN4, NULL);
-    if (hinf == INVALID_HANDLE_VALUE)
-        return ADV_HRESULT(GetLastError());
+    ZeroMemory(&info, sizeof(ADVInfo));
 
-    hr = spapi_install(hinf, szInfSection, szDir);
+    hr = install_init(szCmdName, szInfSection, szDir, dwFlags, &info);
+    if (hr != S_OK)
+        goto done;
 
-    SetupCloseInfFile(hinf);
+    hr = spapi_install(&info);
+
+done:
+    install_release(&info);
+
     return hr;
 }
