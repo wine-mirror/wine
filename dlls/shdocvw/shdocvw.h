@@ -58,6 +58,7 @@ typedef struct {
     const IOleInPlaceSiteVtbl     *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl  *lpDocHostUIHandlerVtbl;
     const IOleDocumentSiteVtbl    *lpOleDocumentSiteVtbl;
+    const IOleCommandTargetVtbl   *lpOleCommandTargetVtbl;
 
     IDispatch *disp;
 
@@ -89,7 +90,6 @@ typedef struct WebBrowser {
 
     /* Interfaces available for embeded document */
 
-    const IOleCommandTargetVtbl         *lpClOleCommandTargetVtbl;
     const IDispatchVtbl                 *lpDispatchVtbl;
     const IServiceProviderVtbl          *lpClServiceProviderVtbl;
 
@@ -146,7 +146,7 @@ typedef struct WebBrowser {
 #define DOCHOSTUI(x)    ((IDocHostUIHandler*)           &(x)->lpDocHostUIHandlerVtbl)
 #define DOCHOSTUI2(x)   ((IDocHostUIHandler2*)          &(x)->lpDocHostUIHandlerVtbl)
 #define DOCSITE(x)      ((IOleDocumentSite*)            &(x)->lpOleDocumentSiteVtbl)
-#define CLOLECMD(x)     ((IOleCommandTarget*)           &(x)->lpClOleCommandTargetVtbl)
+#define CLOLECMD(x)     ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
 #define CLDISP(x)       ((IDispatch*)                   &(x)->lpDispatchVtbl)
 #define CLSERVPROV(x)   ((IServiceProvider*)            &(x)->lpClServiceProviderVtbl)
 
