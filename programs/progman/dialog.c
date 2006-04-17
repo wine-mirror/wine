@@ -328,6 +328,7 @@ static BOOL CALLBACK DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, 
 	case PM_BROWSE:
 	  {
 	    CHAR filename[MAX_PATHNAME_LEN];
+	    filename[0] = 0;
 	    if (DIALOG_BrowsePrograms(hDlg, filename, sizeof(filename)))
 	      SetDlgItemText(hDlg, PM_COMMAND_LINE, filename);
 	    return TRUE;
@@ -450,6 +451,7 @@ static BOOL CALLBACK DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, L
 	case PM_BROWSE:
 	  {
 	    CHAR filename[MAX_PATHNAME_LEN];
+	    filename[0] = 0;
 	    if (DIALOG_BrowseSymbols(hDlg, filename, sizeof(filename)))
 	      SetDlgItemText(hDlg, PM_ICON_FILE, filename);
 	    return TRUE;
@@ -518,6 +520,7 @@ static BOOL CALLBACK DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
 	case PM_BROWSE:
 	  {
 	    CHAR filename[MAX_PATHNAME_LEN];
+	    filename[0] = 0;
 	    if (DIALOG_BrowsePrograms(hDlg, filename, sizeof(filename)))
 	      SetDlgItemText(hDlg, PM_COMMAND, filename);
 	    return TRUE;
@@ -559,21 +562,19 @@ static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
 {
     OPENFILENAME openfilename;
 
-    CHAR szPath[MAX_PATH];
     CHAR szDir[MAX_PATH];
     CHAR szDefaultExt[] = "exe";
 
     ZeroMemory(&openfilename, sizeof(openfilename));
 
     GetCurrentDirectory(sizeof(szDir), szDir);
-    lstrcpy(szPath,"*.exe");
 
-    /* FIXME is this correct ? */
     openfilename.lStructSize       = sizeof(openfilename);
     openfilename.hwndOwner         = Globals.hMainWnd;
     openfilename.hInstance         = Globals.hInstance;
-    openfilename.lpstrFile         = szPath;
-    openfilename.nMaxFile          = sizeof(szPath);
+    openfilename.lpstrFilter       = lpszzFilter;
+    openfilename.lpstrFile         = lpstrFile;
+    openfilename.nMaxFile          = nMaxFile;
     openfilename.lpstrInitialDir   = szDir;
     openfilename.Flags             = 0;
     openfilename.lpstrDefExt       = szDefaultExt;
@@ -591,7 +592,6 @@ static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
     openfilename.lpTemplateName    = 0;
 
     return GetOpenFileName(&openfilename);
-    /* FIXME */
 }
 
 /***********************************************************************

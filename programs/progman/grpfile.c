@@ -399,16 +399,8 @@ BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
 			   MB_OKCANCEL | MB_DEFBUTTON2)) return FALSE;
   }
 
-  /* FIXME */
-  if (OpenFile(szPath, &dummy, OF_EXIST) == HFILE_ERROR)
-    {
-      CHAR msg[MAX_PATHNAME_LEN + 200];
-      wsprintf(msg, "Cause of a bug you must now touch the file %s\n", szPath);
-      MessageBox(Globals.hMainWnd, msg, "", MB_OK);
-    }
-
   /* Open file */
-  file = _lopen(szPath, OF_WRITE);
+  file = _lcreat(szPath, 0);
   if (file != HFILE_ERROR)
     {
       ret = GRPFILE_DoWriteGroupFile(file, group);
