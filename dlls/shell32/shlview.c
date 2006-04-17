@@ -366,10 +366,10 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 */
 static BOOL ShellView_InitList(IShellViewImpl * This)
 {
-	LVCOLUMNA	lvColumn;
+	LVCOLUMNW	lvColumn;
 	SHELLDETAILS	sd;
 	int	i;
-	char	szTemp[50];
+	WCHAR	szTemp[50];
 
 	TRACE("%p\n",This);
 
@@ -386,7 +386,7 @@ static BOOL ShellView_InitList(IShellViewImpl * This)
 	      break;
 	    lvColumn.fmt = sd.fmt;
 	    lvColumn.cx = sd.cxChar*8; /* chars->pixel */
-	    StrRetToStrNA( szTemp, 50, &sd.str, NULL);
+	    StrRetToStrNW( szTemp, 50, &sd.str, NULL);
 	    SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, i, (LPARAM) &lvColumn);
 	  }
 	}
