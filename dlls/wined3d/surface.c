@@ -1455,6 +1455,61 @@ HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, I
     return WINED3DERR_INVALIDCALL;
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Flags) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD Flags) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_IsLost(IWineD3DSurface *iface) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_Restore(IWineD3DSurface *iface) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_SetPixelFormat(IWineD3DSurface *iface, WINED3DFORMAT Format, BYTE *Surface, DWORD Size) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD3DPalette **Pal) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPalette *Pal) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, DDCOLORKEY *CKey) {
+    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
+    /* Nothing to do for now */
+    return WINED3D_OK;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -1481,6 +1536,16 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_ReleaseDC,
     IWineD3DSurfaceImpl_Flip,
     IWineD3DSurfaceImpl_Blt,
+    IWineD3DSurfaceImpl_GetBltStatus,
+    IWineD3DSurfaceImpl_GetFlipStatus,
+    IWineD3DSurfaceImpl_IsLost,
+    IWineD3DSurfaceImpl_Restore,
+    IWineD3DSurfaceImpl_BltFast,
+    IWineD3DSurfaceImpl_SetPixelFormat,
+    IWineD3DSurfaceImpl_GetPalette,
+    IWineD3DSurfaceImpl_SetPalette,
+    IWineD3DSurfaceImpl_RealizePalette,
+    IWineD3DSurfaceImpl_SetColorKey,
     /* Internal use: */
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,
@@ -1491,5 +1556,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_SetGlTextureDesc,
     IWineD3DSurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,
-    IWineD3DSurfaceImpl_SetFormat
+    IWineD3DSurfaceImpl_SetFormat,
+    IWineD3DSurfaceImpl_PrivateSetup
 };

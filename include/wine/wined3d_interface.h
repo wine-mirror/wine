@@ -1140,6 +1140,16 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
     STDMETHOD(Flip)(THIS_ IWineD3DSurface *Override, DWORD FLAGS) PURE;
     STDMETHOD(Blt)(THIS_ RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) PURE;
+    STDMETHOD(GetBltStatus)(THIS_ DWORD Flags) PURE;
+    STDMETHOD(GetFlipStatus)(THIS_ DWORD Flags) PURE;
+    STDMETHOD(IsLost)(THIS) PURE;
+    STDMETHOD(Restore)(THIS) PURE;
+    STDMETHOD(BltFast)(THIS_ DWORD dstx, DWORD dsty, IWineD3DSurface *src, RECT *rsrc, DWORD trans) PURE;
+    STDMETHOD(SetPixelFormat)(THIS_ WINED3DFORMAT Format, BYTE *Surface, DWORD Size) PURE;
+    STDMETHOD(GetPalette)(THIS_ struct IWineD3DPalette **Palette) PURE;
+    STDMETHOD(SetPalette)(THIS_ struct IWineD3DPalette *Palette) PURE;
+    STDMETHOD(RealizePalette)(THIS) PURE;
+    STDMETHOD(SetColorKey)(THIS_ DWORD Flags, DDCOLORKEY *CKey) PURE;
     /* Internally used methods */
     STDMETHOD(CleanDirtyRect)(THIS) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
@@ -1151,6 +1161,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD_(void,GetGlDesc)(THIS_ glDescriptor **glDescription) PURE;
     STDMETHOD_(CONST void *, GetData)(THIS) PURE;
     STDMETHOD(SetFormat)(THIS_ WINED3DFORMAT format) PURE;
+    STDMETHOD(PrivateSetup)(THIS) PURE;
 };
 #undef INTERFACE
 
@@ -1180,6 +1191,16 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_ReleaseDC(p,a)               (p)->lpVtbl->ReleaseDC(p,a)
 #define IWineD3DSurface_Flip(p,a,b)                  (p)->lpVtbl->Flip(p,a,b)
 #define IWineD3DSurface_Blt(p,a,b,c,d,e)             (p)->lpVtbl->Blt(p,a,b,c,d,e)
+#define IWineD3DSurface_GetBltStatus(p,a)            (p)->lpVtbl->GetBltStatus(p,a)
+#define IWineD3DSurface_GetFlipStatus(p,a)           (p)->lpVtbl->GetFlipStatus(p,a)
+#define IWineD3DSurface_IsLost(p)                    (p)->lpVtbl->IsLost(p)
+#define IWineD3DSurface_Restore(p)                   (p)->lpVtbl->Restore(p)
+#define IWineD3DSurface_BltFast(p,a,b,c,d,e)         (p)->lpVtbl->BltFast(p,a,b,c,d,e)
+#define IWineD3DSurface_SetPixelFormat(p,a,b,c)      (p)->lpVtbl->SetPixelFormat(p,a,b,c)
+#define IWineD3DSurface_GetPalette(p, a)             (p)->lpVtbl->GetPalette(p, a)
+#define IWineD3DSurface_SetPalette(p, a)             (p)->lpVtbl->SetPalette(p, a)
+#define IWineD3DSurface_RealizePalette(p)            (p)->lpVtbl->RealizePalette(p)
+#define IWineD3DSurface_SetColorKey(p, a, b)         (p)->lpVtbl->SetColorKey(p, a, b)
 /*** IWineD3DSurface (Internal, no d3d mapping) methods ***/
 #define IWineD3DSurface_CleanDirtyRect(p)            (p)->lpVtbl->CleanDirtyRect(p)
 #define IWineD3DSurface_AddDirtyRect(p,a)            (p)->lpVtbl->AddDirtyRect(p,a)
@@ -1191,6 +1212,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_GetGlDesc(p,a)               (p)->lpVtbl->GetGlDesc(p,a)
 #define IWineD3DSurface_GetData(p)                   (p)->lpVtbl->GetData(p)
 #define IWineD3DSurface_SetFormat(p,a)               (p)->lpVtbl->SetFormat(p,a)
+#define IWineD3DSurface_PrivateSetup(p)              (p)->lpVtbl->PrivateSetup(p)
 #endif
 
 /*****************************************************************************
