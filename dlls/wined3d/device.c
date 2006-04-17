@@ -1698,6 +1698,26 @@ HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
     return WINED3DERR_INVALIDCALL;
 }
 
+HRESULT WINAPI IWineD3DDeviceImpl_EnumDisplayModes(IWineD3DDevice *iface, DWORD Flags, UINT Width, UINT Height, WINED3DFORMAT pixelformat, LPVOID context, D3DCB_ENUMDISPLAYMODESCALLBACK callback) {
+    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, WINED3DDISPLAYMODE* pMode) {
+    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_EnumZBufferFormats(IWineD3DDevice *iface, D3DCB_ENUMPIXELFORMATS Callback, void *Context) {
+    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_EnumTextureFormats(IWineD3DDevice *iface, D3DCB_ENUMPIXELFORMATS Callback, void *Context) {
+    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, IWineD3D **ppD3D) {
    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
    *ppD3D= This->wineD3D;
@@ -6843,6 +6863,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     /*** Odd functions **/
     IWineD3DDeviceImpl_Init3D,
     IWineD3DDeviceImpl_Uninit3D,
+    IWineD3DDeviceImpl_EnumDisplayModes,
     IWineD3DDeviceImpl_EvictManagedResources,
     IWineD3DDeviceImpl_GetAvailableTextureMem,
     IWineD3DDeviceImpl_GetBackBuffer,
@@ -6850,6 +6871,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetDeviceCaps,
     IWineD3DDeviceImpl_GetDirect3D,
     IWineD3DDeviceImpl_GetDisplayMode,
+    IWineD3DDeviceImpl_SetDisplayMode,
     IWineD3DDeviceImpl_GetHWND,
     IWineD3DDeviceImpl_SetHWND,
     IWineD3DDeviceImpl_GetNumberOfSwapChains,
@@ -6861,6 +6883,8 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_SetCursorPosition,
     IWineD3DDeviceImpl_ShowCursor,
     IWineD3DDeviceImpl_TestCooperativeLevel,
+    IWineD3DDeviceImpl_EnumZBufferFormats,
+    IWineD3DDeviceImpl_EnumTextureFormats,
     /*** Getters and setters **/
     IWineD3DDeviceImpl_SetClipPlane,
     IWineD3DDeviceImpl_GetClipPlane,

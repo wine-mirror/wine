@@ -4,6 +4,7 @@
  * Copyright 2002-2003 The wine-d3d team
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
+ * Copyright 2006 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -260,6 +261,17 @@ typedef HRESULT WINAPI (*D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
                                                struct IWineD3DSwapChain **pSwapChain
                                                );
 
+typedef HRESULT WINAPI (*D3DCB_ENUMPIXELFORMATS) (struct IUnknown *pDevice,
+                                                  WINED3DFORMAT fmt,
+                                                  void *Context);
+
+typedef HRESULT WINAPI (*D3DCB_ENUMDISPLAYMODESCALLBACK) (IUnknown *pDevice,
+                                                          UINT Width,
+                                                          UINT Height,
+                                                          WINED3DFORMAT Pixelformat,
+                                                          FLOAT Refresh,
+                                                          LPVOID context);
+
 /*****************************************************************************
  * IWineD3DBase interface
  */
@@ -373,6 +385,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD_(HRESULT,CreatePalette)(THIS_ DWORD Flags, PALETTEENTRY *PalEnt, struct IWineD3DPalette **Palette, IUnknown *Parent);
     STDMETHOD(Init3D)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain);
     STDMETHOD(Uninit3D)(THIS);
+    STDMETHOD(EnumDisplayModes)(THIS_ DWORD Flags, UINT Width, UINT Height, WINED3DFORMAT Format, void *context, D3DCB_ENUMDISPLAYMODESCALLBACK cb) PURE;
     STDMETHOD(EvictManagedResources)(THIS) PURE;
     STDMETHOD_(UINT, GetAvailableTextureMem)(THIS) PURE;
     STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT BackBuffer, WINED3DBACKBUFFER_TYPE, struct IWineD3DSurface** ppBackBuffer) PURE;
@@ -380,6 +393,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(GetDeviceCaps)(THIS_ WINED3DCAPS* pCaps) PURE;
     STDMETHOD(GetDirect3D)(THIS_ IWineD3D** ppD3D) PURE;
     STDMETHOD(GetDisplayMode)(THIS_ UINT iSwapChain, WINED3DDISPLAYMODE* pMode) PURE;
+    STDMETHOD(SetDisplayMode)(THIS_ UINT iSwapChain, WINED3DDISPLAYMODE* pMode) PURE;
     STDMETHOD(GetHWND)(THIS_ HWND *hwnd) PURE;
     STDMETHOD(SetHWND)(THIS_ HWND hwnd) PURE;
     STDMETHOD_(UINT, GetNumberOfSwapChains)(THIS) PURE;
@@ -391,6 +405,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD_(void, SetCursorPosition)(THIS_ int XScreenSpace, int YScreenSpace, DWORD Flags) PURE;
     STDMETHOD_(BOOL, ShowCursor)(THIS_ BOOL bShow) PURE;
     STDMETHOD(TestCooperativeLevel)(THIS) PURE;
+    STDMETHOD(EnumZBufferFormats)(THIS_ D3DCB_ENUMPIXELFORMATS Callback, void *Context) PURE;
+    STDMETHOD(EnumTextureFormats)(THIS_ D3DCB_ENUMPIXELFORMATS Callback, void *Context) PURE;
     STDMETHOD(SetClipPlane)(THIS_ DWORD  Index,CONST float * pPlane) PURE;
     STDMETHOD(GetClipPlane)(THIS_ DWORD  Index,float * pPlane) PURE;
     STDMETHOD(SetClipStatus)(THIS_ CONST WINED3DCLIPSTATUS * pClipStatus) PURE;
@@ -517,6 +533,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_CreatePalette(p, a, b, c, d)             (p)->lpVtbl->CreatePalette(p, a, b, c, d)
 #define IWineD3DDevice_Init3D(p, a, b)                          (p)->lpVtbl->Init3D(p, a, b)
 #define IWineD3DDevice_Uninit3D(p)                              (p)->lpVtbl->Uninit3D(p)
+#define IWineD3DDevice_EnumDisplayModes(p,a,b,c,d,e,f)          (p)->lpVtbl->EnumDisplayModes(p,a,b,c,d,e,f)
 #define IWineD3DDevice_EvictManagedResources(p)                 (p)->lpVtbl->EvictManagedResources(p)
 #define IWineD3DDevice_GetAvailableTextureMem(p)                (p)->lpVtbl->GetAvailableTextureMem(p)
 #define IWineD3DDevice_GetBackBuffer(p,a,b,c,d)                 (p)->lpVtbl->GetBackBuffer(p,a,b,c,d)
@@ -524,6 +541,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_GetDeviceCaps(p,a)                       (p)->lpVtbl->GetDeviceCaps(p,a)
 #define IWineD3DDevice_GetDirect3D(p,a)                         (p)->lpVtbl->GetDirect3D(p,a)
 #define IWineD3DDevice_GetDisplayMode(p,a,b)                    (p)->lpVtbl->GetDisplayMode(p,a,b)
+#define IWineD3DDevice_SetDisplayMode(p,a,b)                    (p)->lpVtbl->SetDisplayMode(p,a,b)
 #define IWineD3DDevice_GetHWND(p, a)                            (p)->lpVtbl->GetHWND(p, a)
 #define IWineD3DDevice_SetHWND(p, a)                            (p)->lpVtbl->SetHWND(p, a)
 #define IWineD3DDevice_GetNumberOfSwapChains(p)                 (p)->lpVtbl->GetNumberOfSwapChains(p)
@@ -535,6 +553,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_TestCooperativeLevel(p)                  (p)->lpVtbl->TestCooperativeLevel(p)
 #define IWineD3DDevice_SetFVF(p,a)                              (p)->lpVtbl->SetFVF(p,a)
 #define IWineD3DDevice_GetFVF(p,a)                              (p)->lpVtbl->GetFVF(p,a)
+#define IWineD3DDevice_EnumZBufferFormats(p, a, b)              (p)->lpVtbl->EnumZBufferFormats(p, a, b)
+#define IWineD3DDevice_EnumTextureFormats(p, a, b)              (p)->lpVtbl->EnumTextureFormats(p, a, b)
 #define IWineD3DDevice_SetClipPlane(p,a,b)                      (p)->lpVtbl->SetClipPlane(p,a,b)
 #define IWineD3DDevice_GetClipPlane(p,a,b)                      (p)->lpVtbl->GetClipPlane(p,a,b)
 #define IWineD3DDevice_SetClipStatus(p,a)                       (p)->lpVtbl->SetClipStatus(p,a)
