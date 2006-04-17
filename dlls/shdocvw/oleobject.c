@@ -33,8 +33,8 @@ static ATOM shell_embedding_atom = 0;
 
 static LRESULT resize_window(WebBrowser *This, LONG width, LONG height)
 {
-    if(This->doc_view_hwnd)
-        SetWindowPos(This->doc_view_hwnd, NULL, 0, 0, width, height,
+    if(This->doc_host.hwnd)
+        SetWindowPos(This->doc_host.hwnd, NULL, 0, 0, width, height,
                      SWP_NOZORDER | SWP_NOACTIVATE);
 
     return 0;
@@ -91,7 +91,7 @@ static void create_shell_embedding_hwnd(WebBrowser *This)
         IOleInPlaceSite_Release(inplace);
     }
 
-    This->shell_embedding_hwnd = CreateWindowExW(
+    This->doc_host.frame_hwnd = This->shell_embedding_hwnd = CreateWindowExW(
             WS_EX_WINDOWEDGE,
             wszShellEmbedding, wszShellEmbedding,
             WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
@@ -133,9 +133,9 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     if(This->client == pClientSite)
         return S_OK;
 
-    if(This->doc_view_hwnd) {
-        DestroyWindow(This->doc_view_hwnd);
-        This->doc_view_hwnd = NULL;
+    if(This->doc_host.hwnd) {
+        DestroyWindow(This->doc_host.hwnd);
+        This->doc_host.hwnd = NULL;
     }
     if(This->shell_embedding_hwnd) {
         DestroyWindow(This->shell_embedding_hwnd);

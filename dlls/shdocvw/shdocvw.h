@@ -55,8 +55,12 @@ struct WebBrowser;
 
 typedef struct {
     const IOleClientSiteVtbl      *lpOleClientSiteVtbl;
+    const IOleInPlaceSiteVtbl     *lpOleInPlaceSiteVtbl;
 
     IDispatch *disp;
+
+    HWND hwnd;
+    HWND frame_hwnd;
 
     struct WebBrowser *wb; /* FIXME */
 } DocHost;
@@ -79,7 +83,6 @@ typedef struct WebBrowser {
 
     /* Interfaces available for embeded document */
 
-    const IOleInPlaceSiteVtbl           *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl        *lpDocHostUIHandlerVtbl;
     const IOleDocumentSiteVtbl          *lpOleDocumentSiteVtbl;
     const IOleCommandTargetVtbl         *lpClOleCommandTargetVtbl;
@@ -112,7 +115,6 @@ typedef struct WebBrowser {
     RECT clip_rect;
     OLEINPLACEFRAMEINFO frameinfo;
 
-    HWND doc_view_hwnd;
     HWND shell_embedding_hwnd;
 
     /* Connection points */

@@ -435,7 +435,7 @@ static HRESULT navigate(WebBrowser *This, IMoniker *mon, IBindCtx *bindctx,
     hres = IOleObject_SetClientSite(oleobj, CLIENTSITE(&This->doc_host));
     IOleObject_Release(oleobj);
 
-    PostMessageW(This->doc_view_hwnd, WB_WM_NAVIGATE2, 0, 0);
+    PostMessageW(This->doc_host.hwnd, WB_WM_NAVIGATE2, 0, 0);
 
     return hres;
 

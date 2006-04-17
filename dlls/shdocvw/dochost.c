@@ -147,7 +147,7 @@ void create_doc_view_hwnd(WebBrowser *This)
     }
 
     GetClientRect(This->shell_embedding_hwnd, &rect);
-    This->doc_view_hwnd = CreateWindowExW(0, wszShell_DocObject_View,
+    This->doc_host.hwnd = CreateWindowExW(0, wszShell_DocObject_View,
          wszShell_DocObject_View,
          WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
          rect.left, rect.top, rect.right, rect.bottom, This->shell_embedding_hwnd,
@@ -485,5 +485,6 @@ void WebBrowser_DocHost_Init(WebBrowser *This)
 
     This->hostui = NULL;
 
-    This->doc_view_hwnd = NULL;
+    This->doc_host.hwnd = NULL;
+    This->doc_host.frame_hwnd = NULL;
 }
