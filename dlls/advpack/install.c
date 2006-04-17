@@ -87,7 +87,8 @@ static HRESULT spapi_install(HINF hinf, LPCWSTR install_sec, LPCWSTR source_path
 
     ret = SetupInstallFromInfSectionW(NULL, hinf, install_sec, SPINST_FILES,
                                       NULL, source_path, SP_COPY_NEWER,
-                                      NULL, context, NULL, NULL);
+                                      SetupDefaultQueueCallbackW,
+                                      context, NULL, NULL);
     if (!ret)
     {
         res = ADV_HRESULT(GetLastError());
