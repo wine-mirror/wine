@@ -478,14 +478,17 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandler2Vtbl = {
     DocHostUIHandler_GetOverrideKeyPath
 };
 
-void WebBrowser_DocHost_Init(WebBrowser *This)
+void DocHost_Init(DocHost *This)
 {
-    This->doc_host.lpDocHostUIHandlerVtbl = &DocHostUIHandler2Vtbl;
-    This->doc_host.lpOleCommandTargetVtbl = &OleCommandTargetVtbl;
+    This->lpDocHostUIHandlerVtbl = &DocHostUIHandler2Vtbl;
+    This->lpOleCommandTargetVtbl = &OleCommandTargetVtbl;
 
-    This->doc_host.document = NULL;
-    This->doc_host.hostui = NULL;
+    This->document = NULL;
+    This->hostui = NULL;
 
-    This->doc_host.hwnd = NULL;
-    This->doc_host.frame_hwnd = NULL;
+    This->hwnd = NULL;
+    This->frame_hwnd = NULL;
+
+    DocHost_ClientSite_Init(This);
+    DocHost_Frame_Init(This);
 }

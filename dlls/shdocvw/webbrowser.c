@@ -847,15 +847,13 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->url = NULL;
 
     ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);
+    DocHost_Init(&ret->doc_host);
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
     WebBrowser_Persist_Init(ret);
     WebBrowser_ClassInfo_Init(ret);
     WebBrowser_Events_Init(ret);
-    WebBrowser_ClientSite_Init(ret);
-    WebBrowser_DocHost_Init(ret);
-    WebBrowser_Frame_Init(ret);
     WebBrowser_HlinkFrame_Init(ret);
 
     hres = IWebBrowser_QueryInterface(WEBBROWSER(ret), riid, ppv);

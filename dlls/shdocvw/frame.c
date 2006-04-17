@@ -174,7 +174,7 @@ static const IOleInPlaceFrameVtbl OleInPlaceFrameVtbl = {
     InPlaceFrame_TranslateAccelerator
 };
 
-void WebBrowser_Frame_Init(WebBrowser *This)
+void DocHost_Frame_Init(DocHost *This)
 {
-    This->doc_host.lpOleInPlaceFrameVtbl = &OleInPlaceFrameVtbl;
+    This->lpOleInPlaceFrameVtbl = &OleInPlaceFrameVtbl;
 }

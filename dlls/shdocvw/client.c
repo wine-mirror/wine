@@ -464,17 +464,15 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     ClServiceProvider_QueryService
 };
 
-void WebBrowser_ClientSite_Init(WebBrowser *This)
+void DocHost_ClientSite_Init(DocHost *This)
 {
-    This->doc_host.lpOleClientSiteVtbl = &OleClientSiteVtbl;
-    This->doc_host.lpOleInPlaceSiteVtbl = &OleInPlaceSiteVtbl;
-    This->doc_host.lpOleDocumentSiteVtbl = &OleDocumentSiteVtbl;
-    This->doc_host.lpDispatchVtbl          = &DispatchVtbl;
-    This->doc_host.lpServiceProviderVtbl = &ServiceProviderVtbl;
+    This->lpOleClientSiteVtbl   = &OleClientSiteVtbl;
+    This->lpOleInPlaceSiteVtbl  = &OleInPlaceSiteVtbl;
+    This->lpOleDocumentSiteVtbl = &OleDocumentSiteVtbl;
+    This->lpDispatchVtbl        = &DispatchVtbl;
+    This->lpServiceProviderVtbl = &ServiceProviderVtbl;
 
-    This->doc_host.view = NULL;
-
-    This->doc_host.wb = This;
+    This->view = NULL;
 }
 
 void WebBrowser_ClientSite_Destroy(WebBrowser *This)

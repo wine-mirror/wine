@@ -73,8 +73,6 @@ typedef struct {
 
     HWND hwnd;
     HWND frame_hwnd;
-
-    struct WebBrowser *wb; /* FIXME */
 } DocHost;
 
 typedef struct WebBrowser {
@@ -155,10 +153,10 @@ void WebBrowser_ClassInfo_Init(WebBrowser*);
 void WebBrowser_Events_Init(WebBrowser*);
 void WebBrowser_HlinkFrame_Init(WebBrowser*);
 
-void WebBrowser_ClientSite_Init(WebBrowser*);
-void WebBrowser_DocHost_Init(WebBrowser*);
+void DocHost_Init(DocHost*);
+void DocHost_ClientSite_Init(DocHost*);
 
-void WebBrowser_Frame_Init(WebBrowser*);
+void DocHost_Frame_Init(DocHost*);
 
 void WebBrowser_OleObject_Destroy(WebBrowser*);
 void WebBrowser_Events_Destroy(WebBrowser*);
