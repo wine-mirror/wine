@@ -59,6 +59,7 @@ typedef struct {
     const IDocHostUIHandler2Vtbl  *lpDocHostUIHandlerVtbl;
     const IOleDocumentSiteVtbl    *lpOleDocumentSiteVtbl;
     const IOleCommandTargetVtbl   *lpOleCommandTargetVtbl;
+    const IDispatchVtbl           *lpDispatchVtbl;
 
     IDispatch *disp;
 
@@ -90,7 +91,6 @@ typedef struct WebBrowser {
 
     /* Interfaces available for embeded document */
 
-    const IDispatchVtbl                 *lpDispatchVtbl;
     const IServiceProviderVtbl          *lpClServiceProviderVtbl;
 
     /* Interfaces of InPlaceFrame object */

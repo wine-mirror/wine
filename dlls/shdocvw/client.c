@@ -55,7 +55,7 @@ static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID ri
         *ppv = CLOLECMD(This);
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = CLDISP(This->wb);
+        *ppv = CLDISP(This);
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
         *ppv = CLSERVPROV(This->wb);
@@ -347,29 +347,29 @@ static const IOleDocumentSiteVtbl OleDocumentSiteVtbl = {
     OleDocumentSite_ActivateMe
 };
 
-#define DISP_THIS(iface) DEFINE_THIS(WebBrowser, Dispatch, iface)
+#define DISP_THIS(iface) DEFINE_THIS(DocHost, Dispatch, iface)
 
 static HRESULT WINAPI ClDispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
 {
-    WebBrowser *This = DISP_THIS(iface);
-    return IOleClientSite_QueryInterface(CLIENTSITE(&This->doc_host), riid, ppv);
+    DocHost *This = DISP_THIS(iface);
+    return IOleClientSite_QueryInterface(CLIENTSITE(This), riid, ppv);
 }
 
 static ULONG WINAPI ClDispatch_AddRef(IDispatch *iface)
 {
-    WebBrowser *This = DISP_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(&This->doc_host));
+    DocHost *This = DISP_THIS(iface);
+    return IOleClientSite_AddRef(CLIENTSITE(This));
 }
 
 static ULONG WINAPI ClDispatch_Release(IDispatch *iface)
 {
-    WebBrowser *This = DISP_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(&This->doc_host));
+    DocHost *This = DISP_THIS(iface);
+    return IOleClientSite_Release(CLIENTSITE(This));
 }
 
 static HRESULT WINAPI ClDispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 {
-    WebBrowser *This = DISP_THIS(iface);
+    DocHost *This = DISP_THIS(iface);
 
     TRACE("(%p)->(%p)\n", This, pctinfo);
 
@@ -379,7 +379,7 @@ static HRESULT WINAPI ClDispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinf
 static HRESULT WINAPI ClDispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
                                              ITypeInfo **ppTInfo)
 {
-    WebBrowser *This = DISP_THIS(iface);
+    DocHost *This = DISP_THIS(iface);
 
     TRACE("(%p)->(%u %ld %p)\n", This, iTInfo, lcid, ppTInfo);
 
@@ -389,7 +389,7 @@ static HRESULT WINAPI ClDispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID
 static HRESULT WINAPI ClDispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
                                                UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    WebBrowser *This = DISP_THIS(iface);
+    DocHost *This = DISP_THIS(iface);
 
     TRACE("(%p)->(%s %p %u %ld %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
@@ -401,7 +401,7 @@ static HRESULT WINAPI ClDispatch_Invoke(IDispatch *iface, DISPID dispIdMember, R
                                         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
                                         VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    WebBrowser *This = DISP_THIS(iface);
+    DocHost *This = DISP_THIS(iface);
     FIXME("(%p)->(%ld %s %ld %04x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return E_NOTIMPL;
@@ -469,7 +469,7 @@ void WebBrowser_ClientSite_Init(WebBrowser *This)
     This->doc_host.lpOleClientSiteVtbl = &OleClientSiteVtbl;
     This->doc_host.lpOleInPlaceSiteVtbl = &OleInPlaceSiteVtbl;
     This->doc_host.lpOleDocumentSiteVtbl = &OleDocumentSiteVtbl;
-    This->lpDispatchVtbl          = &DispatchVtbl;
+    This->doc_host.lpDispatchVtbl          = &DispatchVtbl;
     This->lpClServiceProviderVtbl = &ServiceProviderVtbl;
 
     This->doc_host.view = NULL;
