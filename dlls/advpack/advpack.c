@@ -392,6 +392,22 @@ HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
     return E_FAIL;
 }
 
+/* registers the OCX if do_reg is TRUE, unregisters it otherwise */
+HRESULT do_ocx_reg(HMODULE hocx, BOOL do_reg)
+{
+    DLLREGISTER reg_func;
+
+    if (do_reg)
+        reg_func = (DLLREGISTER)GetProcAddress(hocx, "DllRegisterServer");
+    else
+        reg_func = (DLLREGISTER)GetProcAddress(hocx, "DllUnregisterServer");
+
+    if (!reg_func)
+        return E_FAIL;
+
+    return reg_func();
+}
+
 /***********************************************************************
  *             RegisterOCX    (ADVPACK.@)
  *
@@ -419,7 +435,6 @@ HRESULT WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
     LPWSTR ocx_filename, str_flags, param;
     LPWSTR cmdline_copy, cmdline_ptr;
     UNICODE_STRING cmdlineW;
-    DLLREGISTER pfnRegister;
     HRESULT hr = E_FAIL;
     HMODULE hm = NULL;
     DWORD size;
@@ -444,11 +459,7 @@ HRESULT WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
     if (!hm)
         goto done;
 
-    pfnRegister = (DLLREGISTER)GetProcAddress(hm, "DllRegisterServer");
-    if (!pfnRegister)
-        goto done;
-
-    hr = pfnRegister();
+    hr = do_ocx_reg(hm, TRUE);
 
 done:
     FreeLibrary(hm);
