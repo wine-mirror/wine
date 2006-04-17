@@ -923,6 +923,13 @@ typedef enum _WINED3DDECLUSAGE {
 #define WINED3DUSAGE_AUTOGENMIPMAP                    0x00000400L 
 #define WINED3DUSAGE_DMAP                             0x00004000L
 
+typedef enum _WINED3DSURFTYPE {
+    SURFACE_UNKNOWN    = 0,   /* Default / Unknown surface type */
+    SURFACE_OPENGL,           /* OpenGL surface: Renders using libGL, needed for 3D */
+    SURFACE_GDI,              /* User surface. No 3D, DirectDraw rendering with GDI */
+    SURFACE_XRENDER           /* Future dreams: Use XRENDER / EXA / whatever stuff */
+} WINED3DSURFTYPE;
+
 #define WINED3DPRASTERCAPS_DITHER                     0x00000001L
 #define WINED3DPRASTERCAPS_ROP2                       0x00000002L
 #define WINED3DPRASTERCAPS_XOR                        0x00000004L
