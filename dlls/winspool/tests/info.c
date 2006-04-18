@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "winreg.h"
 #include "winspool.h"
 
@@ -1082,6 +1083,54 @@ static void test_GetPrinterDriver(void)
     ok(ret, "ClosePrinter error %ld\n", GetLastError());
 }
 
+static void test_DEVMODE(const DEVMODE *dm, LONG dmSize, LPCSTR exp_prn_name)
+{
+    ok(!strcmp(exp_prn_name, (LPCSTR)dm->dmDeviceName), "expected %s, got %s\n", exp_prn_name, dm->dmDeviceName);
+    ok(dm->dmSize + dm->dmDriverExtra == dmSize, "%u != %ld\n", dm->dmSize + dm->dmDriverExtra, dmSize);
+    trace("dmFields %08lx\n", dm->dmFields);
+}
+
+static void test_DocumentProperties(void)
+{
+    LPSTR default_printer;
+    HANDLE hprn;
+    LONG dm_size, ret;
+    DEVMODE *dm;
+
+    default_printer = find_default_printer();
+    if (!default_printer)
+    {
+        trace("There is no default printer installed, skiping the test\n");
+        return;
+    }
+
+    hprn = 0;
+    ret = OpenPrinter(default_printer, &hprn, NULL);
+    if (!ret)
+    {
+        trace("There is no printers installed, skiping the test\n");
+        return;
+    }
+    ok(hprn != 0, "wrong hprn %p\n", hprn);
+
+    dm_size = DocumentProperties(0, hprn, NULL, NULL, NULL, 0);
+    trace("DEVMODE required size %ld\n", dm_size);
+    ok(dm_size >= sizeof(DEVMODE), "unexpected DocumentProperties ret value %ld\n", dm_size);
+
+    dm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dm_size);
+
+    ret = DocumentProperties(0, hprn, NULL, dm, dm, DM_OUT_BUFFER);
+    ok(ret == IDOK, "DocumentProperties ret value %ld != expected IDOK\n", ret);
+
+    test_DEVMODE(dm, dm_size, default_printer);
+
+    HeapFree(GetProcessHeap(), 0, dm);
+
+    SetLastError(0xdeadbeef);
+    ret = ClosePrinter(hprn);
+    ok(ret, "ClosePrinter error %ld\n", GetLastError());
+}
+
 START_TEST(info)
 {
     hwinspool = GetModuleHandleA("winspool.drv");
@@ -1092,6 +1141,7 @@ START_TEST(info)
 
     test_AddMonitor();
     test_DeleteMonitor();
+    test_DocumentProperties();
     test_EnumMonitors(); 
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
