@@ -95,7 +95,7 @@ static void get_dest_dir(HINF hInf, PCWSTR pszSection, PWSTR pszBuffer, DWORD dw
 static void set_ldids(HINF hInf, LPCWSTR pszInstallSection)
 {
     WCHAR field[MAX_FIELD_LENGTH];
-    WCHAR key[MAX_FIELD_LENGTH];
+    WCHAR line[MAX_FIELD_LENGTH];
     WCHAR dest[MAX_PATH];
     INFCONTEXT context;
     DWORD size;
@@ -114,13 +114,46 @@ static void set_ldids(HINF hInf, LPCWSTR pszInstallSection)
 
     do
     {
-        SetupGetIntField(&context, 0, &ldid);
+        LPWSTR value, ptr, key, key_copy = NULL;
+
         SetupGetLineTextW(&context, NULL, NULL, NULL,
-                          key, MAX_FIELD_LENGTH, &size);
+                          line, MAX_FIELD_LENGTH, &size);
 
-        get_dest_dir(hInf, key, dest, MAX_PATH);
+        /* SetupGetLineTextW returns the value if there is only one key, but
+         * returns the whole line if there is more than one key
+         */
+        if (!(value = strchrW(line, '=')))
+        {
+            SetupGetStringFieldW(&context, 0, NULL, 0, &size);
+            key = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+            key_copy = key;
+            SetupGetStringFieldW(&context, 0, key, size, &size);
+            value = line;
+        }
+        else
+        {
+            key = line;
+            *(value++) = '\0';
+        }
 
-        SetupSetDirectoryIdW(hInf, ldid, dest);
+        /* remove leading whitespace from the value */
+        while (*value == ' ')
+            value++;
+
+        /* FIXME: need to check the query option */
+        ptr = strchrW(value, ',');
+        if (ptr)
+            *ptr = '\0';
+
+        get_dest_dir(hInf, value, dest, MAX_PATH);
+
+        /* set all ldids to dest */
+        while ((ptr = get_parameter(&key, ',')))
+        {
+            ldid = atolW(ptr);
+            SetupSetDirectoryIdW(hInf, ldid, dest);
+        }
+        HeapFree(GetProcessHeap(), 0, key_copy);
     } while (SetupFindNextLine(&context, &context));
 }
 
