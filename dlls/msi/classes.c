@@ -832,7 +832,6 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     static const WCHAR szInprocServer32[] = {'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
     static const WCHAR szFileType_fmt[] = {'F','i','l','e','T','y','p','e','\\','%','s','\\','%','i',0};
     HKEY hkey,hkey2,hkey3;
-    BOOL install_on_demand = FALSE;
     MSICLASS *cls;
 
     load_classes_and_such(package);
@@ -863,9 +862,9 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
          * yes. MSDN says that these are based on _Feature_ not on
          * Component.  So verify the feature is to be installed
          */
-        if (!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL ) ||
-            !(install_on_demand &&
-               ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED )))
+        if (!ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_LOCAL ))
+             /* && !(install_on_demand &&
+               ACTION_VerifyFeatureForAction( feature, INSTALLSTATE_ADVERTISED ))) */
         {
             TRACE("Skipping class %s reg due to disabled feature %s\n", 
                             debugstr_w(cls->clsid), 
