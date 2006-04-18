@@ -108,8 +108,8 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
         GetDIBits(hdcSrc, hbm, 0, bm.bmHeight, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS);
         SelectObject(hdcSrc, hbm);
 
-        lines = StretchDIBits(hdcDst, xDst, yDst, width, height, xSrc, ySrc, width, height,
-                              bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop);
+        lines = StretchDIBits(hdcDst, xDst, yDst, width, height, xSrc, bm.bmHeight - height - ySrc,
+                              width, height, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop);
 
         HeapFree(GetProcessHeap(), 0, bits);
         return (lines == bm.bmHeight);
@@ -186,8 +186,8 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
         GetDIBits(hdcSrc, hbm, 0, bm.bmHeight, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS);
         SelectObject(hdcSrc, hbm);
 
-        lines = StretchDIBits(hdcDst, xDst, yDst, widthDst, heightDst, xSrc, ySrc, widthSrc, heightSrc,
-                              bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop);
+        lines = StretchDIBits(hdcDst, xDst, yDst, widthDst, heightDst, xSrc, bm.bmHeight - heightSrc - ySrc,
+                              widthSrc, heightSrc, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop);
 
         HeapFree(GetProcessHeap(), 0, bits);
         return (lines == bm.bmHeight);
