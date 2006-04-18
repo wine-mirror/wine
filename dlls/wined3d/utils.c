@@ -2041,3 +2041,15 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
 }
 
 #undef GLINFO_LOCATION
+
+/* DirectDraw stuff */
+WINED3DFORMAT pixelformat_for_depth(DWORD depth) {
+    switch(depth) {
+        case 8:  return D3DFMT_P8; break;
+        case 15: return WINED3DFMT_X1R5G5B5; break;
+        case 16: return WINED3DFMT_R5G6B5; break;
+        case 24: return WINED3DFMT_R8G8B8; break;
+        case 32: return WINED3DFMT_X8R8G8B8; break;
+        default: return WINED3DFMT_UNKNOWN;
+    }
+}

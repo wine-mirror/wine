@@ -1283,4 +1283,7 @@ struct IWineD3DPaletteImpl {
 
 extern const IWineD3DPaletteVtbl IWineD3DPalette_Vtbl;
 
+/* DirectDraw utility functions */
+extern WINED3DFORMAT pixelformat_for_depth(DWORD depth);
+
 #endif

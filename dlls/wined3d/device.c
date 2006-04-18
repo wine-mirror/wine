@@ -1786,8 +1786,26 @@ HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_EnumDisplayModes(IWineD3DDevice *iface, DWORD Flags, UINT Width, UINT Height, WINED3DFORMAT pixelformat, LPVOID context, D3DCB_ENUMDISPLAYMODESCALLBACK callback) {
-    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    DEVMODEW DevModeW;
+    int i;
+
+    TRACE("(%p)->(%lx,%d,%d,%d,%p,%p)\n", This, Flags, Width, Height, pixelformat, context, callback);
+
+    for (i = 0; EnumDisplaySettingsExW(NULL, i, &DevModeW, 0); i++) {
+        /* Ignore some modes if a description was passed */
+        if ( (Width > 0)  && (Width != DevModeW.dmPelsWidth)) continue;
+        if ( (Height > 0)  && (Height != DevModeW.dmPelsHeight)) continue;
+        if ( (pixelformat != WINED3DFMT_UNKNOWN) && ( D3DFmtGetBpp(NULL, pixelformat) != DevModeW.dmBitsPerPel) ) continue;
+
+        TRACE("Enumerating %ldx%ld@%s\n", DevModeW.dmPelsWidth, DevModeW.dmPelsHeight, debug_d3dformat(pixelformat_for_depth(DevModeW.dmBitsPerPel)));
+
+        if (callback((IUnknown *) This, (UINT) DevModeW.dmPelsWidth, (UINT) DevModeW.dmPelsHeight, pixelformat_for_depth(DevModeW.dmBitsPerPel), 60.0, context) == DDENUMRET_CANCEL)
+            return D3D_OK;
+    }
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, WINED3DDISPLAYMODE* pMode) {
