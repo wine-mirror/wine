@@ -54,7 +54,8 @@
 #endif
 #ifdef HAVE_LINUX_JOYSTICK_H
 #include <linux/joystick.h>
-#define JOYDEV "/dev/js%d"
+#define JOYDEV_NEW "/dev/input/js%d"
+#define JOYDEV_OLD "/dev/js%d"
 #endif
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
@@ -166,12 +167,15 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
     if (jstick->dev > 0)
       return jstick->dev;
 
-    sprintf(buf, JOYDEV, jstick->joyIntf);
+    sprintf(buf, JOYDEV_NEW, jstick->joyIntf);
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     flags = O_RDONLY | O_NONBLOCK;
 #else
     flags = O_RDONLY;
 #endif
+    if ((jstick->dev = open(buf, flags)) < 0) {
+        sprintf(buf, JOYDEV_OLD, jstick->joyIntf);
+    }
     return (jstick->dev = open(buf, flags));
 }
 

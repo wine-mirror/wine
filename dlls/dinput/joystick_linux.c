@@ -69,7 +69,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
 
-#define JOYDEV "/dev/js"
+#define JOYDEV_NEW "/dev/input/js"
+#define JOYDEV_OLD "/dev/js"
 
 typedef struct {
     LONG lMin;
@@ -148,6 +149,19 @@ static void _dump_DIDEVCAPS(LPDIDEVCAPS lpDIDevCaps)
     }
 }
 
+static int joydev_get_device(char *dev, int id)
+{
+    int ret;
+    sprintf(dev, "%s%d", JOYDEV_NEW, id);
+    if ((ret = open(dev, O_RDONLY)) < 0) {
+        sprintf(dev, "%s%d", JOYDEV_OLD, id);
+        if ((ret = open(dev, O_RDONLY)) < 0) {
+            return -1;
+        }
+    }
+    return ret;
+}
+
 static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
     int fd = -1;
@@ -162,8 +176,7 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 	((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
 	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))) {
         /* check whether we have a joystick */
-        sprintf(dev, "%s%d", JOYDEV, id);
-        if ((fd = open(dev,O_RDONLY)) < 0) {
+        if ((fd = joydev_get_device(dev, id)) < 0) {
             WARN("open(%s,O_RDONLY) failed: %s\n", dev, strerror(errno));
             return FALSE;
         }
@@ -212,8 +225,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 	((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
 	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))) {
         /* check whether we have a joystick */
-        sprintf(dev, "%s%d", JOYDEV, id);
-        if ((fd = open(dev,O_RDONLY)) < 0) {
+        if ((fd = joydev_get_device(dev, id)) < 0) {
             WARN("open(%s,O_RDONLY) failed: %s\n", dev, strerror(errno));
             return FALSE;
         }
@@ -450,9 +462,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         return DIERR_OUTOFMEMORY;
     }
 
-    sprintf(newDevice->dev, "%s%d", JOYDEV, rguid->Data3);
-
-    if ((newDevice->joyfd = open(newDevice->dev,O_RDONLY)) < 0) {
+    if ((newDevice->joyfd = joydev_get_device(newDevice->dev, rguid->Data3)) < 0) {
         WARN("open(%s,O_RDONLY) failed: %s\n", newDevice->dev, strerror(errno));
         HeapFree(GetProcessHeap(), 0, newDevice);
         return DIERR_DEVICENOTREG;
