@@ -947,7 +947,7 @@ inline static LRESULT
 HEADER_GetUnicodeFormat (HWND hwnd)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    return infoPtr->bUnicode;
+    return (infoPtr->nNotifyFormat == NFR_UNICODE);
 }
 
 
@@ -1259,9 +1259,9 @@ inline static LRESULT
 HEADER_SetUnicodeFormat (HWND hwnd, WPARAM wParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    BOOL bTemp = infoPtr->bUnicode;
+    BOOL bTemp = (infoPtr->nNotifyFormat == NFR_UNICODE);
 
-    infoPtr->bUnicode = (BOOL)wParam;
+    infoPtr->nNotifyFormat = ((BOOL)wParam ? NFR_UNICODE : NFR_ANSI);
 
     return bTemp;
 }
