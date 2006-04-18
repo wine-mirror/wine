@@ -793,7 +793,7 @@ static void output_immediate_import_thunks( FILE *outfile )
 /* output the delayed import table of a Win32 module */
 static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 {
-    int i, j;
+    int i, j, mod;
 
     if (!nb_delayed) return;
 
@@ -804,14 +804,14 @@ static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 
     /* list of dlls */
 
-    for (i = j = 0; i < nb_imports; i++)
+    for (i = j = mod = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
         fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* grAttrs */
         fprintf( outfile, "\t%s .L__wine_delay_name_%d\n",       /* szName */
                  get_asm_ptr_keyword(), i );
         fprintf( outfile, "\t%s .L__wine_delay_modules+%d\n",    /* phmod */
-                 get_asm_ptr_keyword(), i * get_ptr_size() );
+                 get_asm_ptr_keyword(), mod * get_ptr_size() );
         fprintf( outfile, "\t%s .L__wine_delay_IAT+%d\n",        /* pIAT */
                  get_asm_ptr_keyword(), j * get_ptr_size() );
         fprintf( outfile, "\t%s .L__wine_delay_INT+%d\n",        /* pINT */
@@ -820,6 +820,7 @@ static void output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* pUnloadIAT */
         fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
         j += dll_imports[i]->nb_imports;
+        mod++;
     }
     fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* grAttrs */
     fprintf( outfile, "\t%s 0\n", get_asm_ptr_keyword() );   /* szName */
