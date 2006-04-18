@@ -1277,15 +1277,15 @@
 @ cdecl -private _wtoi(wstr)
 @ cdecl -private _wtoi64(wstr)
 @ cdecl -private _wtol(wstr)
-@ cdecl -private abs(long)
-@ cdecl -private atan(double)
+@ cdecl -private abs(long) NTDLL_abs
+@ cdecl -private atan(double) NTDLL_atan
 @ cdecl -private atoi(str) NTDLL_atoi
 @ cdecl -private atol(str) NTDLL_atol
 @ cdecl -private bsearch(ptr ptr long long ptr) NTDLL_bsearch
-@ cdecl -private ceil(double)
-@ cdecl -private cos(double)
-@ cdecl -private fabs(double)
-@ cdecl -private floor(double)
+@ cdecl -private ceil(double) NTDLL_ceil
+@ cdecl -private cos(double) NTDLL_cos
+@ cdecl -private fabs(double) NTDLL_fabs
+@ cdecl -private floor(double) NTDLL_floor
 @ cdecl -private isalnum(long) NTDLL_isalnum
 @ cdecl -private isalpha(long) NTDLL_isalpha
 @ cdecl -private iscntrl(long) NTDLL_iscntrl
@@ -1303,19 +1303,19 @@
 @ cdecl -private iswspace(long) NTDLL_iswspace
 @ cdecl -private iswxdigit(long) NTDLL_iswxdigit
 @ cdecl -private isxdigit(long) NTDLL_isxdigit
-@ cdecl -private labs(long)
-@ cdecl -private log(double)
+@ cdecl -private labs(long) NTDLL_labs
+@ cdecl -private log(double) NTDLL_log
 @ cdecl -private mbstowcs(ptr str long) NTDLL_mbstowcs
 @ cdecl -private memchr(ptr long long) NTDLL_memchr
 @ cdecl -private memcmp(ptr ptr long) NTDLL_memcmp
 @ cdecl -private memcpy(ptr ptr long) NTDLL_memcpy
 @ cdecl -private memmove(ptr ptr long) NTDLL_memmove
 @ cdecl -private memset(ptr long long) NTDLL_memset
-@ cdecl -private pow(double double)
+@ cdecl -private pow(double double) NTDLL_pow
 @ cdecl -private qsort(ptr long long ptr) NTDLL_qsort
-@ cdecl -private sin(double)
+@ cdecl -private sin(double) NTDLL_sin
 @ varargs -private sprintf(str str) NTDLL_sprintf
-@ cdecl -private sqrt(double)
+@ cdecl -private sqrt(double) NTDLL_sqrt
 @ varargs -private sscanf(str str) NTDLL_sscanf
 @ cdecl -private strcat(str str) NTDLL_strcat
 @ cdecl -private strchr(str long) NTDLL_strchr
@@ -1333,7 +1333,7 @@
 @ cdecl -private strtol(str ptr long) NTDLL_strtol
 @ cdecl -private strtoul(str ptr long) NTDLL_strtoul
 @ varargs -private swprintf(wstr wstr) NTDLL_swprintf
-@ cdecl -private tan(double)
+@ cdecl -private tan(double) NTDLL_tan
 @ cdecl -private tolower(long) NTDLL_tolower
 @ cdecl -private toupper(long) NTDLL_toupper
 @ cdecl -private towlower(long) NTDLL_towlower

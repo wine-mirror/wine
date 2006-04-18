@@ -136,3 +136,100 @@ double __cdecl NTDLL__CIpow(double x,double y)
 	return pow(x,y);
 }
 #endif /* !defined(__i386__) */
+
+
+/*********************************************************************
+ *                  abs   (NTDLL.@)
+ */
+int NTDLL_abs( int i )
+{
+    return abs( i );
+}
+
+/*********************************************************************
+ *                  labs   (NTDLL.@)
+ */
+long int NTDLL_labs( long int i )
+{
+    return labs( i );
+}
+
+/*********************************************************************
+ *                  atan   (NTDLL.@)
+ */
+double NTDLL_atan( double d )
+{
+    return atan( d );
+}
+
+/*********************************************************************
+ *                  ceil   (NTDLL.@)
+ */
+double NTDLL_ceil( double d )
+{
+    return ceil( d );
+}
+
+/*********************************************************************
+ *                  cos   (NTDLL.@)
+ */
+double NTDLL_cos( double d )
+{
+    return cos( d );
+}
+
+/*********************************************************************
+ *                  fabs   (NTDLL.@)
+ */
+double NTDLL_fabs( double d )
+{
+    return fabs( d );
+}
+
+/*********************************************************************
+ *                  floor   (NTDLL.@)
+ */
+double NTDLL_floor( double d )
+{
+    return floor( d );
+}
+
+/*********************************************************************
+ *                  log   (NTDLL.@)
+ */
+double NTDLL_log( double d )
+{
+    return log( d );
+}
+
+/*********************************************************************
+ *                  pow   (NTDLL.@)
+ */
+double NTDLL_pow( double x, double y )
+{
+    return pow( x, y );
+}
+
+/*********************************************************************
+ *                  sin   (NTDLL.@)
+ */
+double NTDLL_sin( double d )
+{
+    return sin( d );
+}
+
+/*********************************************************************
+ *                  sqrt   (NTDLL.@)
+ */
+double NTDLL_sqrt( double d )
+{
+    return sqrt( d );
+}
+
+/*********************************************************************
+ *                  tan   (NTDLL.@)
+ */
+double NTDLL_tan( double d )
+{
+    return tan( d );
+}
