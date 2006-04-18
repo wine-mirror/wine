@@ -92,7 +92,7 @@ static void get_dest_dir(HINF hInf, PCWSTR pszSection, PWSTR pszBuffer, DWORD dw
 }
 
 /* loads the LDIDs specified in the install section of an INF */
-static void set_ldids(HINF hInf, LPCWSTR pszInstallSection)
+static void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir)
 {
     WCHAR field[MAX_FIELD_LENGTH];
     WCHAR line[MAX_FIELD_LENGTH];
@@ -100,6 +100,8 @@ static void set_ldids(HINF hInf, LPCWSTR pszInstallSection)
     INFCONTEXT context;
     DWORD size;
     int ldid;
+
+    static const WCHAR source_dir[] = {'S','o','u','r','c','e','D','i','r',0};
 
     static const WCHAR custDestW[] = {
         'C','u','s','t','o','m','D','e','s','t','i','n','a','t','i','o','n',0
@@ -145,7 +147,11 @@ static void set_ldids(HINF hInf, LPCWSTR pszInstallSection)
         if (ptr)
             *ptr = '\0';
 
-        get_dest_dir(hInf, value, dest, MAX_PATH);
+        /* set dest to pszWorkingDir if key is SourceDir */
+        if (pszWorkingDir && !lstrcmpiW(value, source_dir))
+            lstrcpynW(dest, pszWorkingDir, MAX_PATH);
+        else
+            get_dest_dir(hInf, value, dest, MAX_PATH);
 
         /* set all ldids to dest */
         while ((ptr = get_parameter(&key, ',')))
@@ -359,7 +365,7 @@ HRESULT WINAPI OpenINFEngineW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSection,
     if (*phInf == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
-    set_ldids(*phInf, pszInstallSection);
+    set_ldids(*phInf, pszInstallSection, NULL);
     
     return S_OK;
 }
@@ -717,7 +723,7 @@ HRESULT WINAPI TranslateInfStringW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSec
     if (hInf == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
-    set_ldids(hInf, pszInstallSection);
+    set_ldids(hInf, pszInstallSection, NULL);
 
     if (!SetupGetLineTextW(NULL, hInf, pszTranslateSection, pszTranslateKey,
                            pszBuffer, dwBufferSize, pdwRequiredSize))
