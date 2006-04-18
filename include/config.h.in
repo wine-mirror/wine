@@ -56,6 +56,9 @@
 /* Define if you have the daylight variable */
 #undef HAVE_DAYLIGHT
 
+/* Define to 1 if you have the <dbus/dbus.h> header file. */
+#undef HAVE_DBUS_DBUS_H
+
 /* Define to 1 if you have the <direct.h> header file. */
 #undef HAVE_DIRECT_H
 
@@ -218,6 +221,9 @@
 /* Define to 1 if you have the <GL/gl.h> header file. */
 #undef HAVE_GL_GL_H
 
+/* Define to 1 if you have the <hal/libhal.h> header file. */
+#undef HAVE_HAL_LIBHAL_H
+
 /* Define to 1 if the ICU libraries are installed */
 #undef HAVE_ICU
 
@@ -283,6 +289,9 @@
 
 /* Define if you have the curses library (-lcurses) */
 #undef HAVE_LIBCURSES
+
+/* Define if you have the hal library */
+#undef HAVE_LIBHAL
 
 /* Define to 1 if you have the `i386' library (-li386). */
 #undef HAVE_LIBI386
@@ -953,6 +962,9 @@
 /* Define to the soname of the libcurses library. */
 #undef SONAME_LIBCURSES
 
+/* Define to the soname of the libdbus-1 library. */
+#undef SONAME_LIBDBUS_1
+
 /* Define to the soname of the libfontconfig library. */
 #undef SONAME_LIBFONTCONFIG
 
@@ -964,6 +976,9 @@
 
 /* Define to the soname of the libGL library. */
 #undef SONAME_LIBGL
+
+/* Define to the soname of the libhal library. */
+#undef SONAME_LIBHAL
 
 /* Define to the soname of the libjack library. */
 #undef SONAME_LIBJACK

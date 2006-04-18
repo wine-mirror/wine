@@ -505,6 +505,21 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 
+dnl **** Check for libhal ****
+AC_SUBST(HALINCL,"")
+if test "$PKG_CONFIG" != "false"
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_hal_libs="`$PKG_CONFIG --libs hal`"
+    ac_hal_cflags="`$PKG_CONFIG --cflags hal`"
+    CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
+    AC_CHECK_HEADERS([dbus/dbus.h hal/libhal.h],
+        [AC_CHECK_LIB(hal, libhal_ctx_new,
+            [AC_DEFINE(HAVE_LIBHAL, 1, [Define if you have the hal library])
+             HALINCL="$ac_hal_cflags"],,$ac_hal_libs)])
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
+
 dnl **** Check which curses lib to use ***
 CURSESLIBS=""
 if test "x$with_curses" != "xno"
@@ -1169,6 +1184,8 @@ then
   WINE_GET_SONAME(Xrandr,XRRQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
   WINE_GET_SONAME(GL,glXQueryExtension,[$X_LIBS $X_EXTRA_LIBS])
+  WINE_GET_SONAME(dbus-1,dbus_error_init)
+  WINE_GET_SONAME(hal,libhal_ctx_new)
   WINE_GET_SONAME(txc_dxtn,fetch_2d_texel_rgba_dxt1)
   WINE_GET_SONAME(cups,cupsGetDefault)
   WINE_GET_SONAME(jack,jack_client_new)
