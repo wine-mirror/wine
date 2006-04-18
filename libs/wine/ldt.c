@@ -80,7 +80,8 @@ static inline int modify_ldt( int func, struct modify_ldt_s *ptr, unsigned long 
                           : "0" (SYS_modify_ldt),
                             "r" (func),
                             "c" (ptr),
-                            "d" (count) );
+                            "d" (count),
+                            "m" (*ptr) );
     if (res >= 0) return res;
     errno = -res;
     return -1;
@@ -90,11 +91,11 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 {
     int res;
     __asm__ __volatile__( "pushl %%ebx\n\t"
-                          "movl %2,%%ebx\n\t"
+                          "movl %3,%%ebx\n\t"
                           "int $0x80\n\t"
                           "popl %%ebx"
-                          : "=a" (res)
-                          : "0" (243) /* SYS_set_thread_area */, "q" (ptr) );
+                          : "=a" (res), "=m" (*ptr)
+                          : "0" (243) /* SYS_set_thread_area */, "q" (ptr), "m" (*ptr) );
     if (res >= 0) return res;
     errno = -res;
     return -1;
