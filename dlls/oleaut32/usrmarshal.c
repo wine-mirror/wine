@@ -287,14 +287,14 @@ static unsigned char* interface_variant_marshal(unsigned long *pFlags, unsigned 
 
   working_memlocked = GlobalLock(working_mem);
   memcpy(Buffer, &size, sizeof(ULONG)); /* copy the buffersize */
-  Buffer += sizeof(ULONG);
-  memcpy(Buffer, working_memlocked, size);
+  memcpy(Buffer + sizeof(ULONG), working_memlocked, size);
   GlobalUnlock(working_mem);
 
   IStream_Release(working);
 
-  TRACE("done, size=%ld\n", sizeof(ULONG) + size);
-  return Buffer + sizeof(ULONG) + size;
+  /* size includes the ULONG for the size written above */
+  TRACE("done, size=%ld\n", size);
+  return Buffer + size;
 }
 
 /* helper: called for VT_DISPATCH / VT_UNKNOWN variants to unmarshal the buffer. returns Buffer on failure, new position otherwise */
@@ -314,8 +314,7 @@ static unsigned char *interface_variant_unmarshal(unsigned long *pFlags, unsigne
   /* get the buffersize */
   memcpy(&size, Buffer, sizeof(ULONG));
   TRACE("buffersize=%ld\n", size);
-  Buffer += sizeof(ULONG);
-  
+
   working_mem = GlobalAlloc(0, size);
   if (!working_mem) return oldpos;
 
@@ -328,7 +327,7 @@ static unsigned char *interface_variant_unmarshal(unsigned long *pFlags, unsigne
   working_memlocked = GlobalLock(working_mem);
   
   /* now we copy the contents of the marshalling buffer to working_memlocked, unlock it, and demarshal the stream */
-  memcpy(working_memlocked, Buffer, size);
+  memcpy(working_memlocked, Buffer + sizeof(ULONG), size);
   GlobalUnlock(working_mem);
 
   hr = CoUnmarshalInterface(working, riid, (void**)&V_UNKNOWN(pvar));
@@ -339,8 +338,9 @@ static unsigned char *interface_variant_unmarshal(unsigned long *pFlags, unsigne
 
   IStream_Release(working); /* this also frees the underlying hglobal */
 
-  TRACE("done, processed=%ld bytes\n", sizeof(ULONG) + size);
-  return Buffer + sizeof(ULONG) + size;
+  /* size includes the ULONG for the size written above */
+  TRACE("done, processed=%ld bytes\n", size);
+  return Buffer + size;
 }
 
 
