@@ -225,7 +225,7 @@
 307 cdecl ber_first_element(ptr ptr ptr) WLDAP32_ber_first_element
 308 cdecl ber_next_element(ptr ptr ptr) WLDAP32_ber_next_element
 309 cdecl ber_flatten(ptr ptr) WLDAP32_ber_flatten
-310 varargs ber_printf(ptr str)
+310 varargs ber_printf(ptr str) WLDAP32_ber_printf
 311 varargs ber_scanf(ptr str)
 312 cdecl ldap_conn_from_msg(ptr ptr)
 313 cdecl ldap_sasl_bindW(ptr wstr wstr ptr ptr ptr ptr)

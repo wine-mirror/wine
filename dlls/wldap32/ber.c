@@ -24,6 +24,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winldap.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 #ifndef LBER_ERROR
 # define LBER_ERROR (~0U)
@@ -166,12 +169,86 @@ ULONG WLDAP32_ber_skip_tag( BerElement *berelement, ULONG *len )
 }
 
 
-#ifndef HAVE_LDAP
-
-INT ber_printf( BerElement *berelement, PCHAR fmt, ... )
+/***********************************************************************
+ *      ber_printf     (WLDAP32.@)
+ */
+INT WLDAP32_ber_printf( BerElement *berelement, PCHAR fmt, ... )
 {
+#ifdef HAVE_LDAP
+    va_list list;
+    int ret = 0;
+    char new_fmt[2];
+
+    new_fmt[1] = 0;
+    va_start( list, fmt );
+    while (*fmt)
+    {
+        new_fmt[0] = *fmt++;
+        switch(new_fmt[0])
+        {
+        case 'b':
+        case 'e':
+        case 'i':
+            {
+                int i = va_arg( list, int );
+                ret = ber_printf( berelement, new_fmt, i );
+                break;
+            }
+        case 'o':
+        case 's':
+            {
+                char *str = va_arg( list, char * );
+                ret = ber_printf( berelement, new_fmt, str );
+                break;
+            }
+        case 't':
+            {
+                unsigned int tag = va_arg( list, unsigned int );
+                ret = ber_printf( berelement, new_fmt, tag );
+                break;
+            }
+        case 'v':
+            {
+                char **array = va_arg( list, char ** );
+                ret = ber_printf( berelement, new_fmt, array );
+                break;
+            }
+        case 'V':
+            {
+                struct berval **array = va_arg( list, struct berval ** );
+                ret = ber_printf( berelement, new_fmt, array );
+                break;
+            }
+        case 'X':
+            {
+                char *str = va_arg( list, char * );
+                int len = va_arg( list, int );
+                ret = ber_printf( berelement, "B" /* 'X' is deprecated */, str, len );
+                break;
+            }
+        case 'n':
+        case '{':
+        case '}':
+        case '[':
+        case ']':
+            ret = ber_printf( berelement, new_fmt );
+            break;
+        default:
+            FIXME( "Unknown format '%c'\n", new_fmt[0] );
+            ret = -1;
+            break;
+        }
+        if (ret == -1) break;
+    }
+    va_end( list );
+    return ret;
+#else
     return LBER_ERROR;
+#endif
 }
+
+
+#ifndef HAVE_LDAP
 
 INT ber_scanf( BerElement *berelement, PCHAR fmt, ... )
 {
