@@ -77,7 +77,6 @@ typedef struct
     BOOL      bCaptured;	/* Is the mouse captured? */
     BOOL      bPressed;		/* Is a header item pressed (down)? */
     BOOL      bTracking;	/* Is in tracking mode? */
-    BOOL      bUnicode;		/* Unicode flag */
     INT       iMoveItem;	/* index of tracked item. (Tracking mode) */
     INT       xTrackOffset;	/* distance between the right side of the tracked item and the cursor */
     INT       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */
@@ -170,7 +169,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
     HTHEME theme = GetWindowTheme (hwnd);
     NMCUSTOMDRAW nmcd;
 
-    TRACE("DrawItem(iItem %d bHotTrack %d unicode flag %d)\n", iItem, bHotTrack, infoPtr->bUnicode);
+    TRACE("DrawItem(iItem %d bHotTrack %d unicode flag %d)\n", iItem, bHotTrack, (infoPtr->nNotifyFormat == NFR_UNICODE));
 
     if (!infoPtr->bRectsValid)
     	HEADER_SetItemBounds(hwnd);
@@ -1292,7 +1291,6 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->iMoveItem = 0;
     infoPtr->himl = 0;
     infoPtr->iHotItem = -1;
-    infoPtr->bUnicode = IsWindowUnicode (hwnd);
     infoPtr->iMargin = 3*GetSystemMetrics(SM_CXEDGE);
     infoPtr->nNotifyFormat =
 	SendMessageW (infoPtr->hwndNotify, WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
