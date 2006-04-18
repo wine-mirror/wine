@@ -41,7 +41,7 @@
  51 cdecl ldap_search_st(ptr str long str ptr long ptr ptr) ldap_search_stA
  52 cdecl ldap_compare_s(ptr str str str) ldap_compare_sA
  53 cdecl LdapUnicodeToUTF8(wstr long ptr long)
- 54 cdecl ber_bvfree(ptr)
+ 54 cdecl ber_bvfree(ptr) WLDAP32_ber_bvfree
  55 cdecl cldap_openA(str long)
  56 cdecl ldap_addA(ptr str ptr)
  57 cdecl ldap_add_ext(ptr str ptr ptr ptr ptr) ldap_add_extA
@@ -215,16 +215,16 @@
 230 cdecl ldap_check_filterA(ptr str)
 231 cdecl ldap_check_filterW(ptr wstr)
 232 cdecl ldap_dn2ufnA(str)
-300 cdecl ber_init(ptr)
-301 cdecl ber_free(ptr long)
-302 cdecl ber_bvecfree(ptr)
-303 cdecl ber_bvdup(ptr)
-304 cdecl ber_alloc_t(long)
-305 cdecl ber_skip_tag(ptr ptr)
-306 cdecl ber_peek_tag(ptr ptr)
-307 cdecl ber_first_element(ptr ptr ptr)
-308 cdecl ber_next_element(ptr ptr ptr)
-309 cdecl ber_flatten(ptr ptr)
+300 cdecl ber_init(ptr) WLDAP32_ber_init
+301 cdecl ber_free(ptr long) WLDAP32_ber_free
+302 cdecl ber_bvecfree(ptr) WLDAP32_ber_bvecfree
+303 cdecl ber_bvdup(ptr) WLDAP32_ber_bvdup
+304 cdecl ber_alloc_t(long) WLDAP32_ber_alloc_t
+305 cdecl ber_skip_tag(ptr ptr) WLDAP32_ber_skip_tag
+306 cdecl ber_peek_tag(ptr ptr) WLDAP32_ber_peek_tag
+307 cdecl ber_first_element(ptr ptr ptr) WLDAP32_ber_first_element
+308 cdecl ber_next_element(ptr ptr ptr) WLDAP32_ber_next_element
+309 cdecl ber_flatten(ptr ptr) WLDAP32_ber_flatten
 310 varargs ber_printf(ptr str)
 311 varargs ber_scanf(ptr str)
 312 cdecl ldap_conn_from_msg(ptr ptr)

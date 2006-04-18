@@ -20,68 +20,155 @@
 
 #include "config.h"
 
-#ifndef HAVE_LDAP
-
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winldap.h"
 
-#define LBER_ERROR (~0U)
+#ifndef LBER_ERROR
+# define LBER_ERROR (~0U)
+#endif
 
-BerElement *ber_alloc_t( INT options )
+/***********************************************************************
+ *      ber_alloc_t     (WLDAP32.@)
+ */
+BerElement *WLDAP32_ber_alloc_t( INT options )
 {
+#ifdef HAVE_LDAP
+    return ber_alloc_t( options );
+#else
     return NULL;
+#endif
 }
 
-BERVAL *ber_bvdup( BERVAL *berval )
+
+/***********************************************************************
+ *      ber_bvdup     (WLDAP32.@)
+ */
+BERVAL *WLDAP32_ber_bvdup( BERVAL *berval )
 {
+#ifdef HAVE_LDAP
+    return ber_bvdup( berval );
+#else
     return NULL;
+#endif
 }
 
-void ber_bvecfree( PBERVAL *berval )
+
+/***********************************************************************
+ *      ber_bvecfree     (WLDAP32.@)
+ */
+void WLDAP32_ber_bvecfree( PBERVAL *berval )
 {
+#ifdef HAVE_LDAP
+    ber_bvecfree( berval );
+#endif
 }
 
-void ber_bvfree( BERVAL *berval )
+
+/***********************************************************************
+ *      ber_bvfree     (WLDAP32.@)
+ */
+void WLDAP32_ber_bvfree( BERVAL *berval )
 {
+#ifdef HAVE_LDAP
+    ber_bvfree( berval );
+#endif
 }
 
-ULONG ber_first_element( BerElement *berelement, ULONG *len, CHAR **opaque )
+
+/***********************************************************************
+ *      ber_first_element     (WLDAP32.@)
+ */
+ULONG WLDAP32_ber_first_element( BerElement *berelement, ULONG *len, CHAR **opaque )
 {
+#ifdef HAVE_LDAP
+    return ber_first_element( berelement, len, opaque );
+#else
     return LBER_ERROR;
+#endif
 }
 
-INT ber_flatten( BerElement *berelement, PBERVAL *berval )
+
+/***********************************************************************
+ *      ber_flatten     (WLDAP32.@)
+ */
+INT WLDAP32_ber_flatten( BerElement *berelement, PBERVAL *berval )
 {
+#ifdef HAVE_LDAP
+    return ber_flatten( berelement, berval );
+#else
     return LBER_ERROR;
+#endif
 }
 
-void ber_free( BerElement *berelement, INT buf )
+
+/***********************************************************************
+ *      ber_free     (WLDAP32.@)
+ */
+void WLDAP32_ber_free( BerElement *berelement, INT buf )
 {
+#ifdef HAVE_LDAP
+    ber_free( berelement, buf );
+#endif
 }
 
-BerElement *ber_init( BERVAL *berval )
+
+/***********************************************************************
+ *      ber_init     (WLDAP32.@)
+ */
+BerElement *WLDAP32_ber_init( BERVAL *berval )
 {
+#ifdef HAVE_LDAP
+    return ber_init( berval );
+#else
     return NULL;
+#endif
 }
 
-ULONG ber_next_element( BerElement *berelement, ULONG *len, CHAR *opaque )
+
+/***********************************************************************
+ *      ber_next_element     (WLDAP32.@)
+ */
+ULONG WLDAP32_ber_next_element( BerElement *berelement, ULONG *len, CHAR *opaque )
 {
+#ifdef HAVE_LDAP
+    return ber_next_element( berelement, len, opaque );
+#else
     return LBER_ERROR;
+#endif
 }
 
-ULONG ber_peek_tag( BerElement *berelement, ULONG *len )
+
+/***********************************************************************
+ *      ber_peek_tag     (WLDAP32.@)
+ */
+ULONG WLDAP32_ber_peek_tag( BerElement *berelement, ULONG *len )
 {
+#ifdef HAVE_LDAP
+    return ber_peek_tag( berelement, len );
+#else
     return LBER_ERROR;
+#endif
 }
+
+
+/***********************************************************************
+ *      ber_skip_tag     (WLDAP32.@)
+ */
+ULONG WLDAP32_ber_skip_tag( BerElement *berelement, ULONG *len )
+{
+#ifdef HAVE_LDAP
+    return ber_skip_tag( berelement, len );
+#else
+    return LBER_ERROR;
+#endif
+}
+
+
+#ifndef HAVE_LDAP
 
 INT ber_printf( BerElement *berelement, PCHAR fmt, ... )
-{
-    return LBER_ERROR;
-}
-
-ULONG ber_skip_tag( BerElement *berelement, ULONG *len )
 {
     return LBER_ERROR;
 }
