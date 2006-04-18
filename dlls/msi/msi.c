@@ -1891,29 +1891,29 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     FIXME("%s %s %li\n", debugstr_w(szProduct), debugstr_w(szFeature),
                            dwReinstallMode);
 
-    memset(reinstallmode,0,sizeof(reinstallmode));
     ptr = reinstallmode;
 
     if (dwReinstallMode & REINSTALLMODE_FILEMISSING)
-        { *ptr = 'p'; ptr++; }
+        *ptr++ = 'p';
     if (dwReinstallMode & REINSTALLMODE_FILEOLDERVERSION)
-        { *ptr = 'o'; ptr++; }
+        *ptr++ = 'o';
     if (dwReinstallMode & REINSTALLMODE_FILEEQUALVERSION)
-        { *ptr = 'w'; ptr++; }
+        *ptr++ = 'w';
     if (dwReinstallMode & REINSTALLMODE_FILEEXACT)
-        { *ptr = 'd'; ptr++; }
+        *ptr++ = 'd';
     if (dwReinstallMode & REINSTALLMODE_FILEVERIFY)
-        { *ptr = 'c'; ptr++; }
+        *ptr++ = 'c';
     if (dwReinstallMode & REINSTALLMODE_FILEREPLACE)
-        { *ptr = 'a'; ptr++; }
+        *ptr++ = 'a';
     if (dwReinstallMode & REINSTALLMODE_USERDATA)
-        { *ptr = 'u'; ptr++; }
+        *ptr++ = 'u';
     if (dwReinstallMode & REINSTALLMODE_MACHINEDATA)
-        { *ptr = 'm'; ptr++; }
+        *ptr++ = 'm';
     if (dwReinstallMode & REINSTALLMODE_SHORTCUT)
-        { *ptr = 's'; ptr++; }
+        *ptr++ = 's';
     if (dwReinstallMode & REINSTALLMODE_PACKAGE)
-        { *ptr = 'v'; ptr++; }
+        *ptr++ = 'v';
+    *ptr = 0;
     
     sz = sizeof(sourcepath);
     MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 

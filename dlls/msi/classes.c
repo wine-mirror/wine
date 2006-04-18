@@ -1160,8 +1160,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
          size += strlenW(verb->Argument);
      size += 4;
 
-     command = msi_alloc(size * sizeof (WCHAR));
-     memset(command,0,size*sizeof(WCHAR));
+     command = msi_alloc_zero(size * sizeof (WCHAR));
 
      strcpyW(command,advertise);
      if (verb->Argument)

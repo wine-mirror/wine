@@ -573,8 +573,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     MSI_SetPropertyW(package, szAction, szInstall);
 
-    package->script = msi_alloc(sizeof(MSISCRIPT));
-    memset(package->script,0,sizeof(MSISCRIPT));
+    package->script = msi_alloc_zero(sizeof(MSISCRIPT));
 
     package->script->InWhatSequence = SEQUENCE_INSTALL;
 
@@ -3383,7 +3382,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
             MSICOMPONENT* component = cl->component;
             WCHAR buf[21];
 
-            memset(buf,0,sizeof(buf));
+            buf[0] = 0;
             if (component->ComponentId)
             {
                 TRACE("From %s\n",debugstr_w(component->ComponentId));
@@ -3914,8 +3913,7 @@ static LPWSTR load_ttfname_from(LPCWSTR filename)
                                     ttRecord.uStringOffset + 
                                     ttNTHeader.uStorageOffset,
                                     NULL, FILE_BEGIN);
-                    buf = msi_alloc( ttRecord.uStringLength + 1 + strlen(tt) );
-                    memset(buf, 0, ttRecord.uStringLength + 1 + strlen(tt));
+                    buf = msi_alloc_zero( ttRecord.uStringLength + 1 + strlen(tt) );
                     ReadFile(handle, buf, ttRecord.uStringLength, &dwRead, NULL);
                     if (strlen(buf) > 0)
                     {
@@ -4080,8 +4078,7 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     sz+=3;
     sz *= sizeof(WCHAR);
            
-    output = msi_alloc(sz);
-    memset(output,0,sz);
+    output = msi_alloc_zero(sz);
     strcpyW(output,advertise);
     msi_free(advertise);
 
