@@ -1,10 +1,12 @@
 /*
  * IWineD3DDevice implementation
  *
+ * Copyright 2002 Lionel Ulmer
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
+ * Copyright 2006 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1814,8 +1816,34 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, UINT iSw
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_EnumZBufferFormats(IWineD3DDevice *iface, D3DCB_ENUMPIXELFORMATS Callback, void *Context) {
-    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    HRESULT ret;
+    int i = 0;
+    WINED3DFORMAT FormatList[] = {
+        WINED3DFMT_D16,
+        WINED3DFMT_D32,
+        WINED3DFMT_D24X4S4,
+        WINED3DFMT_D24S8,
+        WINED3DFMT_D24X8,
+        WINED3DFMT_D15S1,
+        WINED3DFMT_UNKNOWN  /* Terminate the list */
+    };
+
+    TRACE("(%p)->(%p,%p)\n", This, Callback, Context);
+
+    while(FormatList[i] != WINED3DFMT_UNKNOWN) {
+        TRACE("Enumerating %s\n", debug_d3dformat(FormatList[i]));
+        ret = Callback((IUnknown *) This, FormatList[i], Context);
+        if(ret != DDENUMRET_OK) {
+            TRACE("Enumeration cancelled by Application\n");
+            return WINED3D_OK;
+        }
+        i++;
+    }
+
+    TRACE("End of Enumeration\n");
+
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_EnumTextureFormats(IWineD3DDevice *iface, D3DCB_ENUMPIXELFORMATS Callback, void *Context) {
