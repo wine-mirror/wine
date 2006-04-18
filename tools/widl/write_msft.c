@@ -1730,6 +1730,9 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
             typeinfo->flags |= 0x80; /* TYPEFLAG_FNONEXTENSIBLE */
             break;
 
+        case ATTR_OBJECT:
+            break;
+
         case ATTR_ODL:
             break;
 

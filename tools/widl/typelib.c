@@ -268,6 +268,7 @@ void add_typedef(type_t *tdef, var_t *name)
      typelib_entry_t *entry;
      if (!typelib) return;
 
+     chat("add typedef: %s\n", name->name);
      entry = xmalloc(sizeof(*entry));
      entry->kind = TKIND_ALIAS;
      entry->u.tdef = xmalloc(sizeof(*entry->u.tdef));
