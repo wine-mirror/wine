@@ -1410,6 +1410,69 @@ void test_menu_search_bycommand( void )
     ok (rc, "Getting the menus info failed\n");
     ok (info.wID == (UINT)hmenuSub2, "IDs differ for popup menu\n");
     ok (!strcmp(info.dwTypeData, "Submenu2"), "Returned item has wrong label (%s)\n", info.dwTypeData);
+
+    DestroyMenu( hmenu );
+    DestroyMenu( hmenuSub );
+    DestroyMenu( hmenuSub2 );
+
+
+    /* 
+        Case 5: Menu containing a popup menu which in turn
+           contains an item with a different id than the popup menu.
+           This tests the fallback to a popup menu ID.
+     */
+
+    hmenu = CreateMenu();
+    hmenuSub = CreateMenu();
+
+    rc = AppendMenu(hmenu, MF_POPUP | MF_STRING, (UINT_PTR)hmenuSub, "Submenu");
+    ok (rc, "Appending the popup menu to the main menu failed\n");
+
+    rc = AppendMenu(hmenuSub, MF_STRING, 102, "Item");
+    ok (rc, "Appending the item to the popup menu failed\n");
+
+    /* Set the ID for hmenuSub */
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_ID;
+    info.wID = 101;
+
+    rc = SetMenuItemInfo(hmenu, 0, TRUE, &info);
+    ok(rc, "Setting the ID for the popup menu failed\n");
+
+    /* Check if the ID has been set */
+    info.wID = 0;
+    rc = GetMenuItemInfo(hmenu, 0, TRUE, &info);
+    ok(rc, "Getting the ID for the popup menu failed\n");
+    ok(info.wID == 101, "The ID for the popup menu has not been set\n");
+
+    /* Prove getting the item info via ID returns the popup menu */
+    memset( &info, 0, sizeof(info));
+    strback[0] = 0x00;
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_STRING | MIIM_ID;
+    info.dwTypeData = strback;
+    info.cch = sizeof(strback);
+
+    rc = GetMenuItemInfo(hmenu, 101, FALSE, &info);
+    ok (rc, "Getting the menu info failed\n");
+    ok (info.wID == 101, "IDs differ\n");
+    ok (!strcmp(info.dwTypeData, "Submenu"), "Returned item has wrong label (%s)\n", info.dwTypeData);
+
+    /* Also look for the menu item  */
+    memset( &info, 0, sizeof(info));
+    strback[0] = 0x00;
+    info.cbSize = sizeof(MENUITEMINFO);
+    info.fMask = MIIM_STRING | MIIM_ID;
+    info.dwTypeData = strback;
+    info.cch = sizeof(strback);
+
+    rc = GetMenuItemInfo(hmenu, 102, FALSE, &info);
+    ok (rc, "Getting the menu info failed\n");
+    ok (info.wID == 102, "IDs differ\n");
+    ok (!strcmp(info.dwTypeData, "Item"), "Returned item has wrong label (%s)\n", info.dwTypeData);
+
+    DestroyMenu(hmenu);
+    DestroyMenu(hmenuSub);
 }
 
 START_TEST(menu)

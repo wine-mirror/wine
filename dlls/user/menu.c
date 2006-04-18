@@ -580,6 +580,7 @@ static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
 {
     POPUPMENU *menu;
     MENUITEM *fallback = NULL;
+    UINT fallback_pos = 0;
     UINT i;
 
     if ((*hmenu == (HMENU)0xffff) || (!(menu = MENU_GetMenu(*hmenu)))) return NULL;
@@ -602,8 +603,12 @@ static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
 		    *hmenu = hsubmenu;
 		    return subitem;
 		}
-		if ((UINT_PTR)item->hSubMenu == *nPos)
-		    fallback = item; /* fallback to this item if nothing else found */
+		else if (item->wID == *nPos)
+		{
+		    /* fallback to this item if nothing else found */
+		    fallback_pos = i;
+		    fallback = item;
+		}
 	    }
 	    else if (item->wID == *nPos)
 	    {
@@ -612,6 +617,10 @@ static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
 	    }
 	}
     }
+
+    if (fallback)
+        *nPos = fallback_pos;
+
     return fallback;
 }
 
