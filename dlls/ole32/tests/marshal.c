@@ -1598,18 +1598,15 @@ static void test_WM_QUIT_handling(void)
     }
 }
 
-/* doesn't pass with Win9x COM DLLs (even though Essential COM says it should) */
-#if 0
-
 static HANDLE heventShutdown;
 
-static void LockModuleOOP()
+static void LockModuleOOP(void)
 {
     InterlockedIncrement(&cLocks); /* for test purposes only */
     CoAddRefServerProcess();
 }
 
-static void UnlockModuleOOP()
+static void UnlockModuleOOP(void)
 {
     InterlockedDecrement(&cLocks); /* for test purposes only */
     if (!CoReleaseServerProcess())
@@ -1751,7 +1748,6 @@ static void test_out_of_process_com(void)
 
     CloseHandle(heventShutdown);
 }
-#endif
 
 static void test_ROT(void)
 {
@@ -2013,7 +2009,8 @@ START_TEST(marshal)
     test_message_reentrancy();
     test_WM_QUIT_handling();
 
-/*    test_out_of_process_com(); */
+    /* doesn't pass with Win9x COM DLLs (even though Essential COM says it should) */
+    if (0) test_out_of_process_com();
 
     test_ROT();
     /* FIXME: test GIT */
