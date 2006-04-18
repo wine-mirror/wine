@@ -1249,18 +1249,18 @@
 @ cdecl -private _i64tow(double ptr long)
 @ cdecl -private _itoa(long ptr long)
 @ cdecl -private _itow(long ptr long)
-@ cdecl -private _lfind(ptr ptr ptr long ptr) lfind
+@ cdecl -private _lfind(ptr ptr ptr long ptr)
 @ cdecl -private _ltoa(long ptr long)
 @ cdecl -private _ltow(long ptr long)
-@ cdecl -private _memccpy(ptr ptr long long) memccpy
-@ cdecl -private _memicmp(str str long) NTDLL__memicmp
-@ varargs -private _snprintf(ptr long ptr) snprintf
+@ cdecl -private _memccpy(ptr ptr long long)
+@ cdecl -private _memicmp(str str long)
+@ varargs -private _snprintf(ptr long ptr)
 @ varargs -private _snwprintf(wstr long wstr)
 @ cdecl -private _splitpath(str ptr ptr ptr ptr)
-@ cdecl -private _strcmpi(str str) strcasecmp
-@ cdecl -private _stricmp(str str) strcasecmp
+@ cdecl -private _strcmpi(str str) _stricmp
+@ cdecl -private _stricmp(str str)
 @ cdecl -private _strlwr(str)
-@ cdecl -private _strnicmp(str str long) strncasecmp
+@ cdecl -private _strnicmp(str str long)
 @ cdecl -private _strupr(str)
 # @ stub -private _tolower
 # @ stub -private _toupper
@@ -1268,8 +1268,8 @@
 @ cdecl -private _ui64tow(double ptr long)
 @ cdecl -private _ultoa(long ptr long)
 @ cdecl -private _ultow(long ptr long)
-@ cdecl -private _vsnprintf(ptr long str ptr) vsnprintf
-@ cdecl -private _vsnwprintf(ptr long wstr ptr) vsnprintfW
+@ cdecl -private _vsnprintf(ptr long str ptr)
+@ cdecl -private _vsnwprintf(ptr long wstr ptr)
 @ cdecl -private _wcsicmp(wstr wstr) NTDLL__wcsicmp
 @ cdecl -private _wcslwr(wstr) NTDLL__wcslwr
 @ cdecl -private _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
@@ -1279,68 +1279,68 @@
 @ cdecl -private _wtol(wstr)
 @ cdecl -private abs(long)
 @ cdecl -private atan(double)
-@ cdecl -private atoi(str)
-@ cdecl -private atol(str)
-@ cdecl -private bsearch(ptr ptr long long ptr)
+@ cdecl -private atoi(str) NTDLL_atoi
+@ cdecl -private atol(str) NTDLL_atol
+@ cdecl -private bsearch(ptr ptr long long ptr) NTDLL_bsearch
 @ cdecl -private ceil(double)
 @ cdecl -private cos(double)
 @ cdecl -private fabs(double)
 @ cdecl -private floor(double)
-@ cdecl -private isalnum(long)
-@ cdecl -private isalpha(long)
-@ cdecl -private iscntrl(long)
-@ cdecl -private isdigit(long)
-@ cdecl -private isgraph(long)
-@ cdecl -private islower(long)
-@ cdecl -private isprint(long)
-@ cdecl -private ispunct(long)
-@ cdecl -private isspace(long)
-@ cdecl -private isupper(long)
+@ cdecl -private isalnum(long) NTDLL_isalnum
+@ cdecl -private isalpha(long) NTDLL_isalpha
+@ cdecl -private iscntrl(long) NTDLL_iscntrl
+@ cdecl -private isdigit(long) NTDLL_isdigit
+@ cdecl -private isgraph(long) NTDLL_isgraph
+@ cdecl -private islower(long) NTDLL_islower
+@ cdecl -private isprint(long) NTDLL_isprint
+@ cdecl -private ispunct(long) NTDLL_ispunct
+@ cdecl -private isspace(long) NTDLL_isspace
+@ cdecl -private isupper(long) NTDLL_isupper
 @ cdecl -private iswalpha(long) NTDLL_iswalpha
 @ cdecl -private iswctype(long long) NTDLL_iswctype
 @ cdecl -private iswdigit(long) NTDLL_iswdigit
 @ cdecl -private iswlower(long) NTDLL_iswlower
 @ cdecl -private iswspace(long) NTDLL_iswspace
 @ cdecl -private iswxdigit(long) NTDLL_iswxdigit
-@ cdecl -private isxdigit(long)
+@ cdecl -private isxdigit(long) NTDLL_isxdigit
 @ cdecl -private labs(long)
 @ cdecl -private log(double)
 @ cdecl -private mbstowcs(ptr str long) NTDLL_mbstowcs
-@ cdecl -private memchr(ptr long long)
-@ cdecl -private memcmp(ptr ptr long)
+@ cdecl -private memchr(ptr long long) NTDLL_memchr
+@ cdecl -private memcmp(ptr ptr long) NTDLL_memcmp
 @ cdecl -private memcpy(ptr ptr long) NTDLL_memcpy
-@ cdecl -private memmove(ptr ptr long)
-@ cdecl -private memset(ptr long long)
+@ cdecl -private memmove(ptr ptr long) NTDLL_memmove
+@ cdecl -private memset(ptr long long) NTDLL_memset
 @ cdecl -private pow(double double)
-@ cdecl -private qsort(ptr long long ptr)
+@ cdecl -private qsort(ptr long long ptr) NTDLL_qsort
 @ cdecl -private sin(double)
-@ varargs -private sprintf(str str)
+@ varargs -private sprintf(str str) NTDLL_sprintf
 @ cdecl -private sqrt(double)
-@ varargs -private sscanf(str str)
-@ cdecl -private strcat(str str)
-@ cdecl -private strchr(str long)
-@ cdecl -private strcmp(str str)
-@ cdecl -private strcpy(ptr str)
-@ cdecl -private strcspn(str str)
-@ cdecl -private strlen(str)
-@ cdecl -private strncat(str str long)
-@ cdecl -private strncmp(str str long)
-@ cdecl -private strncpy(ptr str long)
-@ cdecl -private strpbrk(str str)
-@ cdecl -private strrchr(str long)
-@ cdecl -private strspn(str str)
-@ cdecl -private strstr(str str)
-@ cdecl -private strtol(str ptr long)
-@ cdecl -private strtoul(str ptr long)
+@ varargs -private sscanf(str str) NTDLL_sscanf
+@ cdecl -private strcat(str str) NTDLL_strcat
+@ cdecl -private strchr(str long) NTDLL_strchr
+@ cdecl -private strcmp(str str) NTDLL_strcmp
+@ cdecl -private strcpy(ptr str) NTDLL_strcpy
+@ cdecl -private strcspn(str str) NTDLL_strcspn
+@ cdecl -private strlen(str) NTDLL_strlen
+@ cdecl -private strncat(str str long) NTDLL_strncat
+@ cdecl -private strncmp(str str long) NTDLL_strncmp
+@ cdecl -private strncpy(ptr str long) NTDLL_strncpy
+@ cdecl -private strpbrk(str str) NTDLL_strpbrk
+@ cdecl -private strrchr(str long) NTDLL_strrchr
+@ cdecl -private strspn(str str) NTDLL_strspn
+@ cdecl -private strstr(str str) NTDLL_strstr
+@ cdecl -private strtol(str ptr long) NTDLL_strtol
+@ cdecl -private strtoul(str ptr long) NTDLL_strtoul
 @ varargs -private swprintf(wstr wstr) NTDLL_swprintf
 @ cdecl -private tan(double)
-@ cdecl -private tolower(long)
-@ cdecl -private toupper(long)
+@ cdecl -private tolower(long) NTDLL_tolower
+@ cdecl -private toupper(long) NTDLL_toupper
 @ cdecl -private towlower(long) NTDLL_towlower
 @ cdecl -private towupper(long) NTDLL_towupper
 @ stdcall vDbgPrintEx(long long str ptr)
 @ stdcall vDbgPrintExWithPrefix(str long long str ptr)
-@ cdecl -private vsprintf(ptr str ptr)
+@ cdecl -private vsprintf(ptr str ptr) NTDLL_vsprintf
 @ cdecl -private wcscat(wstr wstr) NTDLL_wcscat
 @ cdecl -private wcschr(wstr long) NTDLL_wcschr
 @ cdecl -private wcscmp(wstr wstr) NTDLL_wcscmp

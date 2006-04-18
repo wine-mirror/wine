@@ -755,3 +755,12 @@ int __cdecl NTDLL_swprintf(WCHAR *str, const WCHAR *format, ...)
   va_end(valist);
   return retval;
 }
+
+
+/***********************************************************************
+ *        _vsnwprintf (NTDLL.@)
+ */
+int __cdecl _vsnwprintf( WCHAR *str, unsigned int len, const WCHAR *format, va_list args )
+{
+  return vsnprintfW( str, len, format, args );
+}
