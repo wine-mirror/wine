@@ -112,7 +112,7 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
                               width, height, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop);
 
         HeapFree(GetProcessHeap(), 0, bits);
-        return (lines == bm.bmHeight);
+        return (lines == height);
     }
     else if(dcDst)
         GDI_ReleaseObj( hdcDst );
@@ -190,7 +190,7 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
                               widthSrc, heightSrc, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop);
 
         HeapFree(GetProcessHeap(), 0, bits);
-        return (lines == bm.bmHeight);
+        return (lines == heightSrc);
     }
     else if(dcDst)
         GDI_ReleaseObj( hdcDst );
