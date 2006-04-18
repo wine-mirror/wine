@@ -316,7 +316,7 @@ static HRESULT DataObjectImpl_CreateText(LPSTR text, LPDATAOBJECT *lplpdataobj)
     return S_OK;
 }
 
-static void test_set_clipboard()
+static void test_set_clipboard(void)
 {
     HRESULT hr;
     ULONG ref;
