@@ -32,6 +32,7 @@
 #include "advpub.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "advpack_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
@@ -39,8 +40,6 @@ typedef HRESULT (WINAPI *DLLREGISTER) (void);
 
 #define MAX_FIELD_LENGTH    512
 #define PREFIX_LEN          5
-
-HRESULT launch_exe(LPCWSTR cmd, LPCWSTR dir, HANDLE *phEXE);
 
 /* registry path of the Installed Components key for per-user stubs */
 static const WCHAR setup_key[] = {

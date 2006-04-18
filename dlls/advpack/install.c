@@ -32,6 +32,7 @@
 #include "advpub.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "advpack_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 

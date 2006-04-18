@@ -31,10 +31,9 @@
 #include "advpub.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "advpack_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
-
-LPWSTR get_parameter(LPWSTR *params, WCHAR separator);
 
 /* converts an ansi double null-terminated list to a unicode list */
 static LPWSTR ansi_to_unicode_list(LPCSTR ansi_list)
