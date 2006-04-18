@@ -4992,15 +4992,19 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSw
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetHWND(IWineD3DDevice *iface, HWND hWnd) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p)->(%p)\n", This, hWnd);
 
-    return WINED3DERR_INVALIDCALL;
+    This->ddraw_window = hWnd;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetHWND(IWineD3DDevice *iface, HWND *hWnd) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p)->(%p)\n", This, hWnd);
 
-    return WINED3DERR_INVALIDCALL;
+    *hWnd = This->ddraw_window;
+    return WINED3D_OK;
 }
 
 /*****

@@ -583,7 +583,10 @@ typedef struct IWineD3DDeviceImpl
 
     /* process vertex shaders using software or hardware */
     BOOL softwareVertexProcessing;
-    
+
+    /* DirectDraw stuff */
+    HWND ddraw_window;
+
 } IWineD3DDeviceImpl;
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
