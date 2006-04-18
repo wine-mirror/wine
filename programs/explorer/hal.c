@@ -21,14 +21,11 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifdef HAVE_LIBHAL
-
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <sys/time.h>
-#include <dbus/dbus.h>
-#include <hal/libhal.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -43,6 +40,11 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(explorer);
+
+#ifdef HAVE_LIBHAL
+
+#include <dbus/dbus.h>
+#include <hal/libhal.h>
 
 struct dos_drive
 {
@@ -142,7 +144,7 @@ static char *get_dosdevices_path(void)
 }
 
 /* find or create a DOS drive for the corresponding device */
-static int add_drive( const char *device, const char *mount_point, const char *type )
+static int add_drive( const char *device, const char *type )
 {
     char *path, *p;
     char in_use[26];
@@ -189,7 +191,7 @@ static int add_drive( const char *device, const char *mount_point, const char *t
             {
                 in_use[drive] = 1;
                 if (!S_ISBLK( drive_st.st_mode )) continue;
-                if (dev_st.st_rdev == drive_st.st_rdev) goto update_mount_point;
+                if (dev_st.st_rdev == drive_st.st_rdev) goto done;
             }
         }
         if (avail != -1)
@@ -197,33 +199,39 @@ static int add_drive( const char *device, const char *mount_point, const char *t
             /* try to use the one we found */
             drive = avail;
             *p = 'a' + drive;
-            if (symlink( device, path ) != -1) goto update_mount_point;
+            if (symlink( device, path ) != -1) goto done;
             /* failed, retry the search */
         }
     }
-    HeapFree( GetProcessHeap(), 0, path );
-    return -1;
+    drive = -1;
 
-update_mount_point:
-    p[2] = 0;
-    unlink( path );
-    if (mount_point[0]) symlink( mount_point, path );
-    WINE_TRACE( "added drive %c: dev %s at %s\n",
-                'a' + drive, wine_dbgstr_a(device), wine_dbgstr_a(mount_point) );
+done:
     HeapFree( GetProcessHeap(), 0, path );
     return drive;
 }
 
-static void remove_drive( int drive )
+static void set_mount_point( struct dos_drive *drive, const char *mount_point )
 {
     char *path, *p;
+    struct stat path_st, mnt_st;
 
+    if (drive->drive == -1) return;
     if (!(path = get_dosdevices_path())) return;
     p = path + strlen(path) - 3;
-    *p = 'a' + drive;
+    *p = 'a' + drive->drive;
     p[2] = 0;
-    unlink( path );
-    /* we keep the device link around in case the device gets mounted again */
+
+    if (mount_point[0])
+    {
+        /* try to avoid unlinking if already set correctly */
+        if (stat( path, &path_st ) == -1 || stat( mount_point, &mnt_st ) == -1 ||
+            path_st.st_dev != mnt_st.st_dev || path_st.st_ino != mnt_st.st_ino)
+        {
+            unlink( path );
+            symlink( mount_point, path );
+        }
+    }
+    else unlink( path );
 
     HeapFree( GetProcessHeap(), 0, path );
 }
@@ -233,6 +241,12 @@ static void add_dos_device( const char *udi, const char *device,
 {
     struct dos_drive *drive;
 
+    /* first check if it already exists */
+    LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
+    {
+        if (!strcmp( udi, drive->udi )) goto found;
+    }
+
     if (!(drive = HeapAlloc( GetProcessHeap(), 0, sizeof(*drive) ))) return;
     if (!(drive->udi = HeapAlloc( GetProcessHeap(), 0, strlen(udi)+1 )))
     {
@@ -240,23 +254,19 @@ static void add_dos_device( const char *udi, const char *device,
         return;
     }
     strcpy( drive->udi, udi );
+    list_add_tail( &drives_list, &drive->entry );
 
-    drive->drive = add_drive( device, mount_point, type );
-
-    if (drive->drive == -1)
-    {
-        HeapFree( GetProcessHeap(), 0, drive->udi );
-        HeapFree( GetProcessHeap(), 0, drive );
-    }
-    else
+found:
+    drive->drive = add_drive( device, type );
+    if (drive->drive != -1)
     {
         HKEY hkey;
+
+        set_mount_point( drive, mount_point );
 
         WINE_TRACE( "added device %c: udi %s for %s on %s type %s\n",
                     'a' + drive->drive, wine_dbgstr_a(udi), wine_dbgstr_a(device),
                     wine_dbgstr_a(mount_point), wine_dbgstr_a(type) );
-
-        list_add_tail( &drives_list, &drive->entry );
 
         /* hack: force the drive type in the registry */
         if (!RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hkey ))
@@ -276,18 +286,21 @@ static void remove_dos_device( struct dos_drive *drive )
 {
     HKEY hkey;
 
-    remove_drive( drive->drive );
-
-    /* clear the registry key too */
-    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hkey ))
+    if (drive->drive != -1)
     {
-        char name[3] = "a:";
-        name[0] += drive->drive;
-        RegDeleteValueA( hkey, name );
-        RegCloseKey( hkey );
-    }
+        set_mount_point( drive, "" );
 
-    send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
+        /* clear the registry key too */
+        if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hkey ))
+        {
+            char name[3] = "a:";
+            name[0] += drive->drive;
+            RegDeleteValueA( hkey, name );
+            RegCloseKey( hkey );
+        }
+
+        send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
+    }
 
     list_remove( &drive->entry );
     HeapFree( GetProcessHeap(), 0, drive->udi );
@@ -301,9 +314,6 @@ static void new_device( LibHalContext *ctx, const char *udi )
     char *parent, *mount_point, *device, *type;
 
     p_dbus_error_init( &error );
-
-    if (!(mount_point = p_libhal_device_get_property_string( ctx, udi, "volume.mount_point", &error )))
-        goto done;
 
     if (!(device = p_libhal_device_get_property_string( ctx, udi, "block.device", &error )))
         goto done;
@@ -433,6 +443,7 @@ void initialize_hal(void)
 
 void initialize_hal(void)
 {
+    WINE_WARN( "HAL support not compiled in\n" );
 }
 
 #endif  /* HAVE_LIBHAL */
