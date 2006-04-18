@@ -1847,8 +1847,55 @@ HRESULT WINAPI IWineD3DDeviceImpl_EnumZBufferFormats(IWineD3DDevice *iface, D3DC
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_EnumTextureFormats(IWineD3DDevice *iface, D3DCB_ENUMPIXELFORMATS Callback, void *Context) {
-    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    HRESULT ret;
+    int i = 0;
+    
+    /* From old ddraw:
+     * WINED3DFMT_A1R5G5B5 needs to be the first 16 bit format, as some dumb apps depend on this
+     *
+     * Do not enumerate RGBA pixel formats: "some games choose the first 16 bit texture format
+     * with alpha they find enumerated, others the last one. And both want to have the ARGB one."
+     * But WineD3D doesn't support RGBA formats anyway...
+     */
+
+    WINED3DFORMAT FormatList[] = {
+        /* 32 bit */
+        WINED3DFMT_A8R8G8B8,
+        WINED3DFMT_X8R8G8B8,
+        /* 24 bit */
+        WINED3DFMT_R8G8B8,
+        /* 16 Bit */
+        WINED3DFMT_A1R5G5B5,
+        WINED3DFMT_A4R4G4B4,
+        WINED3DFMT_R5G6B5,
+        WINED3DFMT_X1R5G5B5,
+        /* 8 Bit */
+        WINED3DFMT_R3G3B2,
+        WINED3DFMT_P8,
+        /* FOURCC codes */
+        WINED3DFMT_DXT1,
+        WINED3DFMT_DXT3,
+        WINED3DFMT_DXT5,
+         /* Terminate the list */
+        WINED3DFMT_UNKNOWN
+    };
+
+    TRACE("(%p)->(%p,%p)\n", This, Callback, Context);
+
+    while(FormatList[i] != WINED3DFMT_UNKNOWN) {
+        TRACE("Enumerating %s\n", debug_d3dformat(FormatList[i]));
+        ret = Callback((IUnknown *) This, FormatList[i], Context);
+        if(ret != DDENUMRET_OK) {
+            TRACE("Enumeration cancelled by Application\n");
+            return WINED3D_OK;
+        }
+        i++;
+    }
+
+    TRACE("End of Enumeration\n");
+
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, IWineD3D **ppD3D) {
