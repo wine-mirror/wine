@@ -513,10 +513,14 @@ then
     ac_hal_libs="`$PKG_CONFIG --libs hal`"
     ac_hal_cflags="`$PKG_CONFIG --cflags hal`"
     CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
-    AC_CHECK_HEADERS([dbus/dbus.h hal/libhal.h],
-        [AC_CHECK_LIB(hal, libhal_ctx_new,
+    AC_CHECK_HEADERS([dbus/dbus.h hal/libhal.h])
+    if test "$ac_cv_header_dbus_dbus_h" = "yes" -a "$ac_cv_header_hal_libhal_h" = "yes"
+    then
+        AC_CHECK_LIB(hal, libhal_ctx_new,
+          [AC_CHECK_LIB(dbus-1, dbus_connection_close,
             [AC_DEFINE(HAVE_LIBHAL, 1, [Define if you have the hal library])
              HALINCL="$ac_hal_cflags"],,$ac_hal_libs)])
+    fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 
