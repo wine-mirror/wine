@@ -462,11 +462,12 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(unsigned long *pFlags, unsigned cha
 
   switch (var->vt) {
   case VT_BSTR:
+    V_BSTR(pvar) = NULL;
     Pos = BSTR_UserUnmarshal(pFlags, Pos, &V_BSTR(pvar));
     break;
   case VT_BSTR | VT_BYREF:
     pvar->n1.n2.n3.byref = CoTaskMemAlloc(sizeof(BSTR));
-    *(BSTR*)pvar->n1.n2.n3.byref = NULL;
+    *(BSTR*)V_BYREF(pvar) = NULL;
     Pos = BSTR_UserUnmarshal(pFlags, Pos, V_BSTRREF(pvar));
     break;
   case VT_VARIANT | VT_BYREF:
