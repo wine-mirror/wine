@@ -85,6 +85,14 @@ Specify a .spec file (see \fBSPEC FILE SYNTAX\fR for details),
 or a standard Windows .def file that defines the exports
 of the DLL or executable that is being built.
 .TP
+.B \--external-symbols
+Allow linking to external symbols directly from the spec
+file. Normally symbols exported by a dll have to be defined in the dll
+itself; this option makes it possible to use symbols defined in
+another Unix library (for symbols defined in another dll, a
+.I forward
+specification must be used instead).
+.TP
 .BI \-f\  flags
 Ignored for compatibility with the C compiler.
 .TP

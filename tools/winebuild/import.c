@@ -440,8 +440,25 @@ static void check_undefined_exports( DLLSPEC *spec )
         if (odp->flags & FLAG_FORWARD) continue;
         if (find_name( odp->link_name, &undef_symbols ))
         {
-            odp->flags |= FLAG_EXT_LINK;
-            add_name( &ext_link_imports, odp->link_name );
+            switch(odp->type)
+            {
+            case TYPE_PASCAL:
+            case TYPE_STDCALL:
+            case TYPE_CDECL:
+            case TYPE_VARARGS:
+                if (link_ext_symbols)
+                {
+                    odp->flags |= FLAG_EXT_LINK;
+                    add_name( &ext_link_imports, odp->link_name );
+                }
+                else error( "%s:%d: function '%s' not defined\n",
+                            spec->src_name, odp->lineno, odp->link_name );
+                break;
+            default:
+                error( "%s:%d: external symbol '%s' is not a function\n",
+                       spec->src_name, odp->lineno, odp->link_name );
+                break;
+            }
         }
     }
 }

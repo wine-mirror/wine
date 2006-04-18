@@ -85,6 +85,7 @@ typedef struct
 
 typedef struct
 {
+    char            *src_name;           /* file name of the source spec file */
     char            *file_name;          /* file name of the dll */
     char            *dll_name;           /* internal name of the dll */
     char            *init_func;          /* initialization routine */
@@ -214,6 +215,7 @@ extern int display_warnings;
 extern int kill_at;
 extern int verbose;
 extern int save_temps;
+extern int link_ext_symbols;
 
 extern char *input_file_name;
 extern char *spec_file_name;

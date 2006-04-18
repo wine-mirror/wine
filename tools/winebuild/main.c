@@ -47,6 +47,7 @@ int display_warnings = 0;
 int kill_at = 0;
 int verbose = 0;
 int save_temps = 0;
+int link_ext_symbols = 0;
 
 #ifdef __i386__
 enum target_cpu target_cpu = CPU_x86;
@@ -246,8 +247,9 @@ static const char usage_str[] =
 "       --as-cmd=AS          Command to use for assembling (default: as)\n"
 "   -d, --delay-lib=LIB      Import the specified library in delayed mode\n"
 "   -D SYM                   Ignored for C flags compatibility\n"
-"   -E, --export=FILE        Export the symbols defined in the .spec or .def file\n"
 "   -e, --entry=FUNC         Set the DLL entry point function (default: DllMain)\n"
+"   -E, --export=FILE        Export the symbols defined in the .spec or .def file\n"
+"       --external-symbols   Allow linking to external symbols\n"
 "   -f FLAGS                 Compiler flags (only -fPIC is supported)\n"
 "   -F, --filename=DLLFILE   Set the DLL filename (default: from input file name)\n"
 "   -h, --help               Display this help message\n"
@@ -285,6 +287,7 @@ enum long_options_values
     LONG_OPT_DEF,
     LONG_OPT_EXE,
     LONG_OPT_ASCMD,
+    LONG_OPT_EXTERNAL_SYMS,
     LONG_OPT_LDCMD,
     LONG_OPT_NMCMD,
     LONG_OPT_RELAY16,
@@ -299,18 +302,19 @@ static const char short_options[] = "C:D:E:F:H:I:K:L:M:N:d:e:f:hi:kl:m:o:r:u:vw"
 
 static const struct option long_options[] =
 {
-    { "dll",      0, 0, LONG_OPT_DLL },
-    { "def",      0, 0, LONG_OPT_DEF },
-    { "exe",      0, 0, LONG_OPT_EXE },
-    { "as-cmd",   1, 0, LONG_OPT_ASCMD },
-    { "ld-cmd",   1, 0, LONG_OPT_LDCMD },
-    { "nm-cmd",   1, 0, LONG_OPT_NMCMD },
-    { "relay16",  0, 0, LONG_OPT_RELAY16 },
-    { "relay32",  0, 0, LONG_OPT_RELAY32 },
-    { "save-temps",0, 0, LONG_OPT_SAVE_TEMPS },
-    { "subsystem",1, 0, LONG_OPT_SUBSYSTEM },
-    { "target",   1, 0, LONG_OPT_TARGET },
-    { "version",  0, 0, LONG_OPT_VERSION },
+    { "dll",           0, 0, LONG_OPT_DLL },
+    { "def",           0, 0, LONG_OPT_DEF },
+    { "exe",           0, 0, LONG_OPT_EXE },
+    { "as-cmd",        1, 0, LONG_OPT_ASCMD },
+    { "external-symbols", 0, 0, LONG_OPT_EXTERNAL_SYMS },
+    { "ld-cmd",        1, 0, LONG_OPT_LDCMD },
+    { "nm-cmd",        1, 0, LONG_OPT_NMCMD },
+    { "relay16",       0, 0, LONG_OPT_RELAY16 },
+    { "relay32",       0, 0, LONG_OPT_RELAY32 },
+    { "save-temps",    0, 0, LONG_OPT_SAVE_TEMPS },
+    { "subsystem",     1, 0, LONG_OPT_SUBSYSTEM },
+    { "target",        1, 0, LONG_OPT_TARGET },
+    { "version",       0, 0, LONG_OPT_VERSION },
     /* aliases for short options */
     { "delay-lib",     1, 0, 'd' },
     { "export",        1, 0, 'E' },
@@ -466,6 +470,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         case LONG_OPT_ASCMD:
             as_command = xstrdup( optarg );
             break;
+        case LONG_OPT_EXTERNAL_SYMS:
+            link_ext_symbols = 1;
+            break;
         case LONG_OPT_LDCMD:
             ld_command = xstrdup( optarg );
             break;
@@ -554,6 +561,7 @@ static int parse_input_file( DLLSPEC *spec )
     char *extension = strrchr( spec_file_name, '.' );
     int result;
 
+    spec->src_name = xstrdup( input_file_name );
     if (extension && !strcmp( extension, ".def" ))
         result = parse_def_file( input_file, spec );
     else
