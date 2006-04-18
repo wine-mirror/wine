@@ -869,49 +869,35 @@ void reduce_to_shortfilename(WCHAR* filename)
 LPWSTR create_component_advertise_string(MSIPACKAGE* package, 
                 MSICOMPONENT* component, LPCWSTR feature)
 {
-    GUID clsid;
-    WCHAR productid_85[21];
-    WCHAR component_85[21];
-    /*
-     * I have a fair bit of confusion as to when a < is used and when a > is
-     * used. I do not think i have it right...
-     *
-     * Ok it appears that the > is used if there is a guid for the compoenent
-     * and the < is used if not.
-     */
-    static const WCHAR fmt1[] = {'%','s','%','s','<',0,0};
-    static const WCHAR fmt2[] = {'%','s','%','s','>','%','s',0,0};
+    static const WCHAR fmt[] = {'%','s','%','s','%','c','%','s',0};
+    WCHAR productid_85[21], component_85[21];
     LPWSTR output = NULL;
     DWORD sz = 0;
+    GUID clsid;
 
-    memset(productid_85,0,sizeof(productid_85));
-    memset(component_85,0,sizeof(component_85));
+    /* > is used if there is a component GUID and < if not.  */
+
+    productid_85[0] = 0;
+    component_85[0] = 0;
 
     CLSIDFromString(package->ProductCode, &clsid);
-    
-    encode_base85_guid(&clsid,productid_85);
+    encode_base85_guid(&clsid, productid_85);
 
-    CLSIDFromString(component->ComponentId, &clsid);
-    encode_base85_guid(&clsid,component_85);
+    if (component)
+    {
+        CLSIDFromString(component->ComponentId, &clsid);
+        encode_base85_guid(&clsid, component_85);
+    }
 
-    TRACE("Doing something with this... %s %s %s\n", 
-            debugstr_w(productid_85), debugstr_w(feature),
-            debugstr_w(component_85));
+    TRACE("prod=%s feat=%s comp=%s\n", debugstr_w(productid_85),
+          debugstr_w(feature), debugstr_w(component_85));
  
-    sz = lstrlenW(productid_85) + lstrlenW(feature);
-    if (component)
-        sz += lstrlenW(component_85);
+    sz = 20 + lstrlenW(feature) + 20 + 3;
 
-    sz+=3;
-    sz *= sizeof(WCHAR);
-           
-    output = msi_alloc(sz);
-    memset(output,0,sz);
+    output = msi_alloc_zero(sz*sizeof(WCHAR));
 
-    if (component)
-        sprintfW(output,fmt2,productid_85,feature,component_85);
-    else
-        sprintfW(output,fmt1,productid_85,feature);
+    sprintfW(output, fmt, productid_85, feature,
+             component?'>':'<', component_85);
     
     return output;
 }
