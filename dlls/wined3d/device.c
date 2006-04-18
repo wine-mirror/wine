@@ -361,83 +361,33 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
 
     if (!refCount) {
         /* TODO: Clean up all the surfaces and textures! */
-        /* FIXME: Create targets and state blocks in d3d8 */
-        if (((IWineD3DImpl *)This->wineD3D)->dxVersion >= 8) { /*We don't create state blocks for d3d7 yet*/
-            /* NOTE: You must release the parent if the object was created via a callback
-            ** ***************************/
-            /* TODO: this is exactly the same as required by _Reset.., so at some point we need to move the code so that is can be called by reset add release...  */
-            /* Release all of the swapchains, except the implicit swapchain */
-            IUnknown* stencilBufferParent;
-            IUnknown* swapChainParent;
+        /* NOTE: You must release the parent if the object was created via a callback
+        ** ***************************/
 
-            /* NOTE: Don't release swapchain 0 here, it's 'special' */
-            SwapChainList *nextSwapchain = This->swapchains;
-            if (nextSwapchain != NULL) {
-                nextSwapchain = nextSwapchain->next;
-            } else {
-                WARN("Expected to find the implicit swapchain\n");
-            }
+        /* Release the update stateblock */
+        if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
+            if(This->updateStateBlock != This->stateBlock)
+                FIXME("(%p) Something's still holding the Update stateblock\n",This);
+        }
+        This->updateStateBlock = NULL;
+        { /* because were not doing proper internal refcounts releasing the primary state block
+            causes recursion with the extra checks in ResourceReleased, to avoid this we have
+            to set this->stateBlock = NULL; first */
+            IWineD3DStateBlock *stateBlock = (IWineD3DStateBlock *)This->stateBlock;
+            This->stateBlock = NULL;
 
-            /* release all the other swapchains */
-            while (nextSwapchain != NULL) {
-                SwapChainList *prevSwapchain = nextSwapchain;
-                nextSwapchain = nextSwapchain->next;
-                IWineD3DSwapChain_Release(prevSwapchain->swapchain);
-                /* NOTE: no need to free the list element, it will be done by the release callback
-                   HeapFree(GetProcessHeap(), 0, prevSwapchain); */
-            }
-             /* Release the buffers (with sanity checks)*/
-            if(This->stencilBufferTarget != NULL && (IWineD3DSurface_Release(This->stencilBufferTarget) >0)){
-                if(This->depthStencilBuffer != This->stencilBufferTarget)
-                    FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
-            }
-            This->stencilBufferTarget = NULL;
-
-            if(IWineD3DSurface_Release(This->renderTarget) >0){
-                 /* This check is a bit silly, itshould be in swapchain_release FIXME("(%p) Something's still holding the renderTarget\n",This); */
-            }
-            This->renderTarget = NULL;
-
-            IWineD3DSurface_GetParent(This->depthStencilBuffer, &stencilBufferParent);
-            IUnknown_Release(stencilBufferParent);          /* once for the get parent */
-            if(IUnknown_Release(stencilBufferParent)  >0){  /* the second time for when it was created */
-                FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
-            }
-            This->depthStencilBuffer = NULL;
-
-            /* Release the update stateblock */
-            if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
-                if(This->updateStateBlock != This->stateBlock)
+            /* Release the stateblock */
+            if(IWineD3DStateBlock_Release(stateBlock) > 0){
                     FIXME("(%p) Something's still holding the Update stateblock\n",This);
             }
-            This->updateStateBlock = NULL;
-            { /* because were not doing proper internal refcounts releasing the primary state block
-                causes recursion with the extra checks in ResourceReleased, to avoid this we have
-                to set this->stateBlock = NULL; first */
-                IWineD3DStateBlock *stateBlock = (IWineD3DStateBlock *)This->stateBlock;
-                This->stateBlock = NULL;
-
-                /* Release the stateblock */
-                if(IWineD3DStateBlock_Release(stateBlock) > 0){
-                        FIXME("(%p) Something's still holding the Update stateblock\n",This);
-                }
-            }
-
-            if (This->swapchains != NULL) {
-                /* Swapchain 0 is special because it's created in startup with a hanging parent, so we have to release its parent now */
-                IWineD3DSwapChain_GetParent(This->swapchains->swapchain, &swapChainParent);
-                IUnknown_Release(swapChainParent);           /* once for the get parent */
-                if (IUnknown_Release(swapChainParent)  > 0) {  /* the second time for when it was created */
-                    FIXME("(%p) Something's still holding the implicit swapchain\n", This);
-                }
-            }
-
-            if (This->resources != NULL ) {
-                FIXME("(%p) Device released with resources still bound, acceptable but unexpected\n", This);
-                dumpResources(This->resources);
-            }
-
         }
+
+        if (This->resources != NULL ) {
+            FIXME("(%p) Device released with resources still bound, acceptable but unexpected\n", This);
+            dumpResources(This->resources);
+        }
+
+
         IWineD3D_Release(This->wineD3D);
         This->wineD3D = NULL;
         HeapFree(GetProcessHeap(), 0, This);
@@ -1689,13 +1639,150 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DWORD Fla
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {
-    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DSwapChainImpl *swapchain;
+
+    TRACE("(%p)->(%p,%p)\n", This, pPresentationParameters, D3DCB_CreateAdditionalSwapChain);
+    if(This->d3d_initialized) return WINED3DERR_INVALIDCALL;
+
+    /* TODO: Test if OpenGL is compiled in and loaded */
+
+    /* Setup the implicit swapchain */
+    TRACE("Creating implicit swapchain\n");
+    if (D3D_OK != D3DCB_CreateAdditionalSwapChain((IUnknown *) This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain) || swapchain == NULL) {
+        WARN("Failed to create implicit swapchain\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if(swapchain->backBuffer) {
+        TRACE("Setting rendertarget to %p\n", swapchain->backBuffer);
+        This->renderTarget = swapchain->backBuffer;
+    }
+    else {
+        TRACE("Setting rendertarget to %p\n", swapchain->frontBuffer);
+        This->renderTarget = swapchain->frontBuffer;
+    }
+    IWineD3DSurface_AddRef(This->renderTarget);
+    /* Depth Stencil support */
+    This->stencilBufferTarget = This->depthStencilBuffer;
+    if (NULL != This->stencilBufferTarget) {
+        IWineD3DSurface_AddRef(This->stencilBufferTarget);
+    }
+
+    /* Set up some starting GL setup */
+    ENTER_GL();
+    /*
+    * Initialize openGL extension related variables
+    *  with Default values
+    */
+
+    ((IWineD3DImpl *) This->wineD3D)->isGLInfoValid = IWineD3DImpl_FillGLCaps( &((IWineD3DImpl *) This->wineD3D)->gl_info, swapchain->display);
+    /* Setup all the devices defaults */
+    IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
+#if 0
+    IWineD3DImpl_CheckGraphicsMemory();
+#endif
+    LEAVE_GL();
+
+    { /* Set a default viewport */
+        D3DVIEWPORT9 vp;
+        vp.X      = 0;
+        vp.Y      = 0;
+        vp.Width  = *(pPresentationParameters->BackBufferWidth);
+        vp.Height = *(pPresentationParameters->BackBufferHeight);
+        vp.MinZ   = 0.0f;
+        vp.MaxZ   = 1.0f;
+        IWineD3DDevice_SetViewport((IWineD3DDevice *)This, &vp);
+    }
+
+
+    /* Initialize the current view state */
+    This->modelview_valid = 1;
+    This->proj_valid = 0;
+    This->view_ident = 1;
+    This->last_was_rhw = 0;
+    glGetIntegerv(GL_MAX_LIGHTS, &This->maxConcurrentLights);
+    TRACE("(%p) All defaults now set up, leaving Init3D with %p\n", This, This);
+
+    /* Clear the screen */
+    IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
+
+    This->d3d_initialized = TRUE;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
-    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    int texstage;
+    IUnknown* stencilBufferParent;
+    IUnknown* swapChainParent;
+    SwapChainList *nextSwapchain;
+    TRACE("(%p)\n", This);
+
+    if(!This->d3d_initialized) return WINED3DERR_INVALIDCALL;
+
+    for(texstage = 0; texstage < GL_LIMITS(textures); texstage++) {
+        IWineD3DDevice_SetTexture(iface, texstage, NULL);
+    }
+
+    /* NOTE: You must release the parent if the object was created via a callback
+    ** ***************************/
+    /* Release all of the swapchains, except the implicit swapchain */
+
+    /* NOTE: Don't release swapchain 0 here, it's 'special' */
+    TRACE("Finding implicit swapchain\n");
+    nextSwapchain = This->swapchains;
+    if (nextSwapchain != NULL) {
+        nextSwapchain = nextSwapchain->next;
+    } else {
+        WARN("Expected to find the implicit swapchain\n");
+    }
+
+    TRACE("Releasing swapchains. nextSwapchain = %p\n", nextSwapchain);
+    /* release all the other swapchains */
+    while (nextSwapchain != NULL) {
+        SwapChainList *prevSwapchain = nextSwapchain;
+        nextSwapchain = nextSwapchain->next;
+        TRACE("Releasing swapchain %p\n", prevSwapchain->swapchain);
+        IWineD3DSwapChain_Release(prevSwapchain->swapchain);
+        /* NOTE: no need to free the list element, it will be done by the release callback
+            HeapFree(GetProcessHeap(), 0, prevSwapchain); */
+    }
+      /* Release the buffers (with sanity checks)*/
+    TRACE("Releasing the depth stencil buffer at %p\n", This->stencilBufferTarget);
+    if(This->stencilBufferTarget != NULL && (IWineD3DSurface_Release(This->stencilBufferTarget) >0)){
+        if(This->depthStencilBuffer != This->stencilBufferTarget)
+            FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
+    }
+    This->stencilBufferTarget = NULL;
+
+    TRACE("Releasing the render target at %p\n", This->renderTarget);
+    if(IWineD3DSurface_Release(This->renderTarget) >0){
+          /* This check is a bit silly, itshould be in swapchain_release FIXME("(%p) Something's still holding the renderTarget\n",This); */
+    }
+    TRACE("Setting rendertarget to NULL\n");
+    This->renderTarget = NULL;
+
+    IWineD3DSurface_GetParent(This->depthStencilBuffer, &stencilBufferParent);
+    IUnknown_Release(stencilBufferParent);          /* once for the get parent */
+    if(IUnknown_Release(stencilBufferParent)  >0){  /* the second time for when it was created */
+        FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
+    }
+    This->depthStencilBuffer = NULL;
+
+    TRACE("Releasing the implicit swapchain\n");
+    if (This->swapchains != NULL) {
+        /* Swapchain 0 is special because it's created in startup with a hanging parent, so we have to release its parent now */
+        IWineD3DSwapChain_GetParent(This->swapchains->swapchain, &swapChainParent);
+        IUnknown_Release(swapChainParent);           /* once for the get parent */
+        if (IUnknown_Release(swapChainParent)  > 0) {  /* the second time for when it was created */
+            FIXME("(%p) Something's still holding the implicit swapchain\n", This);
+        }
+    }
+    This->swapchains = NULL;
+
+    This->d3d_initialized = FALSE;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_EnumDisplayModes(IWineD3DDevice *iface, DWORD Flags, UINT Width, UINT Height, WINED3DFORMAT pixelformat, LPVOID context, D3DCB_ENUMDISPLAYMODESCALLBACK callback) {

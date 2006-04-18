@@ -323,7 +323,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapter, D3
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz;
     localParameters.PresentationInterval           = &pPresentationParameters->FullScreen_PresentationInterval;/* Renamed in dx9 */
 
-    hr =IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D8CB_CreateAdditionalSwapChain);
+    hr =IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &object->WineD3DDevice, (IUnknown *)object);
 
     if (hr != D3D_OK) {
         HeapFree(GetProcessHeap(), 0, object);
@@ -333,14 +333,12 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapter, D3
 
     TRACE("(%p) : Created Device %p\n", This, object);
 
-    /* Activate this when it's implemented in wined3d(d3d7 merge)
     hr = IWineD3DDevice_Init3D(object->WineD3DDevice, &localParameters, D3D8CB_CreateAdditionalSwapChain);
     if (hr != D3D_OK) {
         FIXME("(%p) D3D Initialization failed for WineD3DDevice %p\n", This, object->WineD3DDevice);
         HeapFree(GetProcessHeap(), 0, object);
         *ppReturnedDeviceInterface = NULL;
     }
-    */
 
     return hr;
 }

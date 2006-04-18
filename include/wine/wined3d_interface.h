@@ -324,7 +324,7 @@ DECLARE_INTERFACE_(IWineD3D, IWineD3DBase)
     STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, WINED3DDEVTYPE  DeviceType, WINED3DFORMAT  AdapterFormat, DWORD  Usage, WINED3DRESOURCETYPE  RType, WINED3DFORMAT  CheckFormat) PURE;
     STDMETHOD(CheckDeviceFormatConversion)(THIS_ UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DFORMAT SourceFormat, WINED3DFORMAT TargetFormat) PURE;
     STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, WINED3DDEVTYPE  DeviceType, WINED3DCAPS *pCaps) PURE;
-    STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, WINED3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS *pPresentationParameters, struct IWineD3DDevice **ppReturnedDeviceInterface, IUnknown *parent, D3DCB_CREATEADDITIONALSWAPCHAIN pFn3) PURE;
+    STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, WINED3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, struct IWineD3DDevice **ppReturnedDeviceInterface, IUnknown *parent) PURE;
 
 };
 #undef INTERFACE
@@ -350,7 +350,7 @@ DECLARE_INTERFACE_(IWineD3D, IWineD3DBase)
 #define IWineD3D_CheckDeviceFormat(p,a,b,c,d,e,f)         (p)->lpVtbl->CheckDeviceFormat(p,a,b,c,d,e,f)
 #define IWineD3D_CheckDeviceFormatConversion(p,a,b,c,d)   (p)->lpVtbl->CheckDeviceFormatConversion(p,a,b,c,d)
 #define IWineD3D_GetDeviceCaps(p,a,b,c)                   (p)->lpVtbl->GetDeviceCaps(p,a,b,c)
-#define IWineD3D_CreateDevice(p,a,b,c,d,e,f,g,h)          (p)->lpVtbl->CreateDevice(p,a,b,c,d,e,f,g,h)
+#define IWineD3D_CreateDevice(p,a,b,c,d,e,f)              (p)->lpVtbl->CreateDevice(p,a,b,c,d,e,f)
 #endif
 
 /* Define the main WineD3D entrypoint */

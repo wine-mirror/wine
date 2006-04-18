@@ -377,6 +377,10 @@ void drawPrimitive(IWineD3DDevice *iface,
                     const void *idxData,
                     int   minIndex);
 
+/* Routine to fill gl caps for swapchains and IWineD3D */
+BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info,
+                             Display* display);
+
 /*****************************************************************************
  * Structures required to draw primitives 
  */
@@ -569,6 +573,7 @@ typedef struct IWineD3DDeviceImpl
 
     /* Device state management */
     HRESULT                 state;
+    BOOL                    d3d_initialized;
 
     /* Screen buffer resources */
     glContext contextCache[CONTEXT_CACHE];
