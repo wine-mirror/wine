@@ -380,17 +380,6 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
                 }
             }
 
-            /* try the parent folder's path */
-            if (!path)
-            {
-                path = strdupW(p);
-                if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
-                {
-                    msi_free( path );
-                    path = NULL;
-                }
-            }
-
             /* try the root of the install */
             if (!path)
                 path = get_source_root( package );
