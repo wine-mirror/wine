@@ -478,8 +478,31 @@ static void test_open_storage(void)
     stg = NULL;
     r = StgOpenStorage( filename, NULL, STGM_PRIORITY, NULL, 0, &stg);
     ok(r == S_OK, "should succeed\n");
+    r = StgOpenStorage( filename, NULL, STGM_PRIORITY, NULL, 0, &stg2);
+    ok(r == S_OK, "should succeed\n");
+    if (stg2)
+        IStorage_Release(stg2);
     if (stg)
         IStorage_Release(stg);
+
+    stg = NULL;
+    r = StgOpenStorage( filename, NULL, STGM_PRIORITY | STGM_READWRITE, NULL, 0, &stg);
+    ok(r == STG_E_INVALIDFLAG, "should fail\n");
+
+    r = StgOpenStorage( filename, NULL, STGM_TRANSACTED | STGM_PRIORITY, NULL, 0, &stg);
+    ok(r == STG_E_INVALIDFLAG, "should fail\n");
+
+    r = StgOpenStorage( filename, NULL, STGM_SIMPLE | STGM_PRIORITY, NULL, 0, &stg);
+    ok(r == STG_E_INVALIDFLAG, "should fail\n");
+
+    r = StgOpenStorage( filename, NULL, STGM_DELETEONRELEASE | STGM_PRIORITY, NULL, 0, &stg);
+    ok(r == STG_E_INVALIDFUNCTION, "should fail\n");
+
+    r = StgOpenStorage( filename, NULL, STGM_NOSCRATCH | STGM_PRIORITY, NULL, 0, &stg);
+    ok(r == STG_E_INVALIDFLAG, "should fail\n");
+
+    r = StgOpenStorage( filename, NULL, STGM_NOSNAPSHOT | STGM_PRIORITY, NULL, 0, &stg);
+    ok(r == STG_E_INVALIDFLAG, "should fail\n");
 
     r = DeleteFileW(filename);
     ok(r, "file didn't exist\n");
