@@ -1115,6 +1115,8 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
     KBDLLHOOKSTRUCT hook;
     WORD wVkStripped;
 
+    wVk = LOBYTE(wVk);
+
     /* strip left/right for menu, control, shift */
     if (wVk == VK_LMENU || wVk == VK_RMENU)
         wVkStripped = VK_MENU;
