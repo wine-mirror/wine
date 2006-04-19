@@ -238,6 +238,15 @@ VOID RPCRT4_FreeHeader(RpcPktHdr *Header)
   HeapFree(GetProcessHeap(), 0, Header);
 }
 
+static int rpcrt4_conn_write(RpcConnection *Connection,
+                             const void *buffer, unsigned int count)
+{
+  DWORD dwWritten = 0;
+  if (!WriteFile(Connection->conn, buffer, count, &dwWritten, NULL))
+    return -1;
+  return dwWritten;
+}
+
 /***********************************************************************
  *           RPCRT4_Send (internal)
  * 
@@ -247,7 +256,8 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
                        void *Buffer, unsigned int BufferLength)
 {
   PUCHAR buffer_pos;
-  DWORD hdr_size, count;
+  DWORD hdr_size;
+  LONG count;
 
   buffer_pos = Buffer;
   /* The packet building functions save the packet header size, so we can use it. */
@@ -264,9 +274,10 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
     }
 
     /* transmit packet header */
-    if (!WriteFile(Connection->conn, Header, hdr_size, &count, NULL)) {
-      WARN("WriteFile failed with error %ld\n", GetLastError());
-      return GetLastError();
+    count = rpcrt4_conn_write(Connection, Header, hdr_size);
+    if (count<0) {
+      WARN("rpcrt4_conn_write failed\n");
+      return RPC_S_PROTOCOL_ERROR;
     }
 
     /* fragment consisted of header only and is the last one */
@@ -276,9 +287,10 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
     }
 
     /* send the fragment data */
-    if (!WriteFile(Connection->conn, buffer_pos, Header->common.frag_len - hdr_size, &count, NULL)) {
-      WARN("WriteFile failed with error %ld\n", GetLastError());
-      return GetLastError();
+    count = rpcrt4_conn_write(Connection, buffer_pos, Header->common.frag_len - hdr_size);
+    if (count<0) {
+      WARN("rpcrt4_conn_write failed\n");
+      return RPC_S_PROTOCOL_ERROR;
     }
 
     buffer_pos += Header->common.frag_len - hdr_size;
