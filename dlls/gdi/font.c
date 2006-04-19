@@ -2358,6 +2358,55 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
 }
 
 
+/******************************************************************************
+ * GetCharABCWidthsI [GDI32.@]
+ *
+ * Retrieves widths of characters in range.
+ *
+ * PARAMS
+ *    hdc       [I] Handle of device context
+ *    firstChar [I] First glyphs in range to query
+ *    count     [I] Last glyphs in range to query
+ *    pgi       [i] Array of glyphs to query
+ *    abc       [O] Address of character-width structure
+ *
+ * NOTES
+ *    Only works with TrueType fonts
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL WINAPI GetCharABCWidthsI( HDC hdc, UINT firstChar, UINT count,
+                               LPWORD pgi, LPABC abc)
+{
+    DC *dc = DC_GetDCPtr(hdc);
+    unsigned int i;
+    BOOL ret = FALSE;
+
+    if (!dc) return FALSE;
+
+    if(dc->gdiFont)
+        ret = WineEngGetCharABCWidthsI( dc->gdiFont, firstChar, count, pgi, abc );
+    else
+        FIXME(": stub\n");
+
+    if (ret)
+    {
+        /* convert device units to logical */
+        for( i = firstChar; i <= count; i++, abc++ ) {
+            abc->abcA = INTERNAL_XDSTOWS(dc, abc->abcA);
+            abc->abcB = INTERNAL_XDSTOWS(dc, abc->abcB);
+            abc->abcC = INTERNAL_XDSTOWS(dc, abc->abcC);
+	}
+        ret = TRUE;
+    }
+
+    GDI_ReleaseObj(hdc);
+    return ret;
+}
+
+
 /***********************************************************************
  *           GetGlyphOutlineA    (GDI32.@)
  */

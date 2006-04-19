@@ -3809,6 +3809,44 @@ BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
 }
 
 /*************************************************************
+ * WineEngGetCharABCWidthsI
+ *
+ */
+BOOL WineEngGetCharABCWidthsI(GdiFont font, UINT firstChar, UINT count, LPWORD pgi,
+			      LPABC buffer)
+{
+    UINT c;
+    GLYPHMETRICS gm;
+    FT_UInt glyph_index;
+    GdiFont linked_font;
+
+    if(!FT_IS_SCALABLE(font->ft_face))
+        return FALSE;
+
+    get_glyph_index_linked(font, 'a', &linked_font, &glyph_index);
+    if (!pgi)
+        for(c = firstChar; c < firstChar+count; c++) {
+            WineEngGetGlyphOutline(linked_font, c, GGO_METRICS | GGO_GLYPH_INDEX,
+                                   &gm, 0, NULL, NULL);
+            buffer[c - firstChar].abcA = linked_font->gm[c].lsb;
+            buffer[c - firstChar].abcB = linked_font->gm[c].bbx;
+            buffer[c - firstChar].abcC = linked_font->gm[c].adv - linked_font->gm[c].lsb 
+               - linked_font->gm[c].bbx;
+        }
+    else
+        for(c = 0; c < count; c++) {
+            WineEngGetGlyphOutline(linked_font, pgi[c], GGO_METRICS | GGO_GLYPH_INDEX,
+                                   &gm, 0, NULL, NULL);
+            buffer[c].abcA = linked_font->gm[pgi[c]].lsb;
+            buffer[c].abcB = linked_font->gm[pgi[c]].bbx;
+            buffer[c].abcC = linked_font->gm[pgi[c]].adv 
+               - linked_font->gm[pgi[c]].lsb - linked_font->gm[pgi[c]].bbx;
+        }
+
+    return TRUE;
+}
+
+/*************************************************************
  * WineEngGetTextExtentPoint
  *
  */

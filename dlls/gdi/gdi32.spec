@@ -237,7 +237,7 @@
 @ stdcall GetCharABCWidthsA(long long long ptr)
 @ stdcall GetCharABCWidthsFloatA(long long long ptr)
 @ stdcall GetCharABCWidthsFloatW(long long long ptr)
-# @ stub GetCharABCWidthsI
+@ stdcall GetCharABCWidthsI(long long long ptr ptr)
 @ stdcall GetCharABCWidthsW(long long long ptr)
 @ stdcall GetCharWidth32A(long long long long)
 @ stdcall GetCharWidth32W(long long long long)

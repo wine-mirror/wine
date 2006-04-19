@@ -367,6 +367,8 @@ extern BOOL WineEngDestroyFontInstance(HFONT handle);
 extern DWORD WineEngEnumFonts(LPLOGFONTW, FONTENUMPROCW, LPARAM);
 extern BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar,
                                     UINT lastChar, LPABC buffer);
+extern BOOL WineEngGetCharABCWidthsI(GdiFont font, UINT firstChar,
+                                    UINT count, LPWORD pgi, LPABC buffer);
 extern BOOL WineEngGetCharWidth(GdiFont, UINT, UINT, LPINT);
 extern DWORD WineEngGetFontData(GdiFont, DWORD, DWORD, LPVOID, DWORD);
 extern DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,
