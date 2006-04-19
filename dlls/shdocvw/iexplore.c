@@ -172,7 +172,7 @@ iecs_QueryInterface(iecs *This, REFIID riid, void **ppv)
         IsEqualGUID(riid, &IID_IOleClientSite))
     {
         iecs_AddRef(This);
-        *ppv = &This->lpVtbl;;
+        *ppv = &This->lpVtbl;
         return S_OK;
     }
     if (IsEqualGUID(riid, &IID_IOleInPlaceSite) ||
@@ -552,4 +552,31 @@ error:
         IOleObject_Release(wb);
 
     return r;
+}
+
+HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+{
+    InternetExplorer *ret;
+    HRESULT hres;
+
+    TRACE("(%p %s %p)\n", pOuter, debugstr_guid(riid), ppv);
+
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(InternetExplorer));
+    ret->ref = 0;
+
+    ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);
+    DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret));
+
+    InternetExplorer_WebBrowser_Init(ret);
+
+    /* create_frame_hwnd(ret); */
+    ret->doc_host.frame_hwnd = ret->frame_hwnd = NULL;
+
+    hres = IWebBrowser2_QueryInterface(WEBBROWSER2(ret), riid, ppv);
+    if(FAILED(hres)) {
+        HeapFree(GetProcessHeap(), 0, ret);
+        return hres;
+    }
+
+    return hres;
 }

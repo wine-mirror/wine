@@ -118,6 +118,16 @@ typedef struct {
     DocHost doc_host;
 } WebBrowser;
 
+typedef struct {
+    const IWebBrowser2Vtbl *lpWebBrowser2Vtbl;
+
+    LONG ref;
+
+    HWND frame_hwnd;
+
+    DocHost doc_host;
+} InternetExplorer;
+
 #define WEBBROWSER(x)   ((IWebBrowser*)                 &(x)->lpWebBrowser2Vtbl)
 #define WEBBROWSER2(x)  ((IWebBrowser2*)                &(x)->lpWebBrowser2Vtbl)
 #define OLEOBJ(x)       ((IOleObject*)                  &(x)->lpOleObjectVtbl)
@@ -170,6 +180,9 @@ void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 HRESULT navigate_url(DocHost*,LPCWSTR,PBYTE,ULONG,LPWSTR);
 
 HRESULT create_mozctl(REFIID,void**);
+
+HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**);
+void InternetExplorer_WebBrowser_Init(InternetExplorer*);
 
 #define WB_WM_NAVIGATE2 (WM_USER+100)
 

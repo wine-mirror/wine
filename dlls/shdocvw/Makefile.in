@@ -16,6 +16,7 @@ C_SRCS = \
 	events.c \
 	factory.c \
 	frame.c \
+	ie.c \
 	iexplore.c \
 	navigate.c \
 	oleobject.c \
