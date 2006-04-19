@@ -4,8 +4,10 @@
 # This list was updated to dll version 4.72
 
    2 stdcall -noname SHChangeNotifyRegister(long long long long long ptr)
+   3 stdcall SHDefExtractIconA(str long long ptr ptr long)
    4 stdcall -noname SHChangeNotifyDeregister(long)
    5 stdcall -noname SHChangeNotifyUpdateEntryList(long long long long)
+   6 stdcall SHDefExtractIconW(wstr long long ptr ptr long)
    9 stub -noname PifMgr_OpenProperties
   10 stub -noname PifMgr_GetProperties
   11 stub -noname PifMgr_SetProperties
@@ -319,8 +321,6 @@
 @ stdcall SHCreateDirectoryExA(long str ptr)
 @ stdcall SHCreateDirectoryExW(long wstr ptr)
 @ stub SHCreateProcessAsUserW
-@ stdcall SHDefExtractIconA(str long long ptr ptr long)
-@ stdcall SHDefExtractIconW(wstr long long ptr ptr long)
 @ stdcall SHEmptyRecycleBinA(long str long)
 @ stdcall SHEmptyRecycleBinW(long wstr long)
 @ stub SHExtractIconsW
