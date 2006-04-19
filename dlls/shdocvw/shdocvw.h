@@ -169,6 +169,8 @@ void deactivate_document(DocHost*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
 HRESULT navigate_url(DocHost*,LPCWSTR,PBYTE,ULONG,LPWSTR);
 
+HRESULT create_mozctl(REFIID,void**);
+
 #define WB_WM_NAVIGATE2 (WM_USER+100)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
@@ -184,6 +186,5 @@ extern HINSTANCE shdocvw_hinstance;
 extern void register_iewindow_class(void);
 extern void unregister_iewindow_class(void);
 extern BOOL create_ie_window(LPCWSTR url);
-extern IClassFactory *get_class_factory(void);
 
 #endif /* __WINE_SHDOCVW_H */

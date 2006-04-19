@@ -30,10 +30,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
  * (Based on implementation in ddraw/main.c)
  */
 
+#define FACTORY(x) ((IClassFactory*) &(x)->lpClassFactoryVtbl)
+
 typedef struct
 {
     /* IUnknown fields */
-    const IClassFactoryVtbl *lpVtbl;
+    const IClassFactoryVtbl *lpClassFactoryVtbl;
     HRESULT (*cf)(LPUNKNOWN, REFIID, LPVOID *);
     LONG ref;
 } IClassFactoryImpl;
@@ -115,9 +117,24 @@ static const IClassFactoryVtbl WBCF_Vtbl =
     WBCF_LockServer
 };
 
-static IClassFactoryImpl SHDOCVW_WBClassFactory = {&WBCF_Vtbl, WebBrowser_Create};
-
-IClassFactory *get_class_factory(void)
+/*************************************************************************
+ *              DllGetClassObject (SHDOCVW.@)
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    return (IClassFactory*) &SHDOCVW_WBClassFactory;
+    HRESULT hres;
+
+    static IClassFactoryImpl WBClassFactory = {&WBCF_Vtbl, WebBrowser_Create};
+
+    TRACE("\n");
+
+    if(IsEqualGUID(&CLSID_WebBrowser, rclsid))  {
+        hres = create_mozctl(riid, ppv);
+        if(SUCCEEDED(hres))
+            return hres;
+        return IClassFactory_QueryInterface(FACTORY(&WBClassFactory), riid, ppv);
+    }
+
+    /* As a last resort, figure if the CLSID belongs to a 'Shell Instance Object' */
+    return SHDOCVW_GetShellInstanceObjectClassObject(rclsid, riid, ppv);
 }

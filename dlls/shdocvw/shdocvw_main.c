@@ -444,46 +444,24 @@ static BOOL SHDOCVW_TryLoadMozillaControl(void)
     }
 }
 
-/*************************************************************************
- *              DllGetClassObject (SHDOCVW.@)
- */
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT create_mozctl(REFIID riid, void **ppv)
 {
-    TRACE("\n");
+    fnGetClassObject pGetClassObject;
+    HRESULT hres;
 
-    if( IsEqualGUID( &CLSID_WebBrowser, rclsid ) &&
-        SHDOCVW_TryLoadMozillaControl() )
-    {
-        HRESULT r;
-        fnGetClassObject pGetClassObject;
+    if(!SHDOCVW_TryLoadMozillaControl())
+        return CLASS_E_CLASSNOTAVAILABLE;
 
-        TRACE("WebBrowser class %s\n", debugstr_guid(rclsid) );
+    pGetClassObject = (fnGetClassObject)GetProcAddress( hMozCtl, "DllGetClassObject" );
 
-        pGetClassObject = (fnGetClassObject)
-            GetProcAddress( hMozCtl, "DllGetClassObject" );
+    if( !pGetClassObject )
+        return CLASS_E_CLASSNOTAVAILABLE;
 
-        if( !pGetClassObject )
-            return CLASS_E_CLASSNOTAVAILABLE;
-        r = pGetClassObject( &CLSID_MozillaBrowser, riid, ppv );
+    hres = pGetClassObject( &CLSID_MozillaBrowser, riid, ppv );
 
-        TRACE("r = %08lx  *ppv = %p\n", r, *ppv );
+    TRACE("hres = %08lx  *ppv = %p\n", hres, *ppv );
 
-        return r;
-    }
-
-    if (IsEqualCLSID(&CLSID_WebBrowser, rclsid) &&
-        IsEqualIID(&IID_IClassFactory, riid))
-    {
-        /* Pass back our shdocvw class factory */
-        IClassFactory *cf = get_class_factory();
-        IClassFactory_AddRef(cf);
-        *ppv = cf;
-
-        return S_OK;
-    }
-
-    /* As a last resort, figure if the CLSID belongs to a 'Shell Instance Object' */
-    return SHDOCVW_GetShellInstanceObjectClassObject(rclsid, riid, ppv);
+    return hres;
 }
 
 /***********************************************************************
