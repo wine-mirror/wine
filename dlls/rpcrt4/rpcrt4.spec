@@ -424,7 +424,7 @@
 @ stub RpcMgmtBindingInqParameter # win9x
 @ stub RpcMgmtBindingSetParameter # win9x
 @ stub RpcMgmtEnableIdleCleanup
-@ stub RpcMgmtEpEltInqBegin
+@ stdcall RpcMgmtEpEltInqBegin(ptr long ptr long ptr ptr)
 @ stub RpcMgmtEpEltInqDone
 @ stub RpcMgmtEpEltInqNextA
 @ stub RpcMgmtEpEltInqNextW

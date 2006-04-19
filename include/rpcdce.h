@@ -77,6 +77,19 @@ typedef struct
   RPC_IF_ID *IfId[1];
 } RPC_IF_ID_VECTOR;
 
+typedef I_RPC_HANDLE *RPC_EP_INQ_HANDLE;
+
+#define RPC_C_EP_ALL_ELTS 0
+#define RPC_C_EP_MATCH_BY_IF 1
+#define RPC_C_EP_MATCH_BY_OBJ 2
+#define RPC_C_EP_MATCH_BY_BOTH 3
+
+#define RPC_C_VERS_ALL 1
+#define RPC_C_VERS_COMPATIBLE 2
+#define RPC_C_VERS_EXACT 3
+#define RPC_C_VERS_MAJOR_ONLY 4
+#define RPC_C_VERS_UPTO 5
+
 #define RPC_C_BINDING_INFINITE_TIMEOUT 10
 #define RPC_C_BINDING_MIN_TIMEOUT 0
 #define RPC_C_BINDING_DEFAULT_TIMEOUT 5
@@ -239,6 +252,10 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcMgmtInqIfIds( RPC_BINDING_HANDLE Binding, RPC_IF_ID_VECTOR** IfIdVector );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcMgmtEpEltInqBegin( RPC_BINDING_HANDLE EpBinding, unsigned long InquiryType, RPC_IF_ID *IfId,
+                        unsigned long VersOption, UUID *ObjectUuid, RPC_EP_INQ_HANDLE *InquiryContext);
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv );

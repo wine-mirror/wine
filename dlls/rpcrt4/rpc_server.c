@@ -1051,8 +1051,22 @@ UINT WINAPI I_RpcWindowProc( void *hWnd, UINT Message, UINT wParam, ULONG lParam
   return 0;
 }
 
+/***********************************************************************
+ *             RpcMgmtInqIfIds (RPCRT4.@)
+ */
 RPC_STATUS WINAPI RpcMgmtInqIfIds(RPC_BINDING_HANDLE Binding, RPC_IF_ID_VECTOR **IfIdVector)
 {
   FIXME("(%p,%p): stub\n", Binding, IfIdVector);
+  return RPC_S_INVALID_BINDING;
+}
+
+/***********************************************************************
+ *             RpcMgmtEpEltInqBegin (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtEpEltInqBegin(RPC_BINDING_HANDLE Binding, unsigned long InquiryType,
+    RPC_IF_ID *IfId, unsigned long VersOption, UUID *ObjectUuid, RPC_EP_INQ_HANDLE* InquiryContext)
+{
+  FIXME("(%p,%lu,%p,%lu,%p,%p): stub\n",
+        Binding, InquiryType, IfId, VersOption, ObjectUuid, InquiryContext);
   return RPC_S_INVALID_BINDING;
 }
