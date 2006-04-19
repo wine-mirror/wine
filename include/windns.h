@@ -572,8 +572,40 @@ typedef struct _DnsRecordW
         } Data;
 } DNS_RECORDW, *PDNS_RECORDW;
 
-DECL_WINELIB_TYPE_AW(DNS_RECORD)
-DECL_WINELIB_TYPE_AW(PDNS_RECORD)
+#if defined(__WINESRC__) || defined(UNICODE)
+typedef DNS_RECORDW DNS_RECORD;
+typedef PDNS_RECORDW PDNS_RECORD;
+#else
+typedef DNS_RECORDA DNS_RECORD;
+typedef PDNS_RECORDA PDNS_RECORD;
+#endif
+
+typedef struct _DnsRRSet
+{
+    PDNS_RECORD pFirstRR;
+    PDNS_RECORD pLastRR;
+} DNS_RRSET, *PDNS_RRSET;
+
+#define DNS_RRSET_INIT( rrset )                          \
+{                                                        \
+    PDNS_RRSET  _prrset = &(rrset);                      \
+    _prrset->pFirstRR = NULL;                            \
+    _prrset->pLastRR = (PDNS_RECORD) &_prrset->pFirstRR; \
+}
+
+#define DNS_RRSET_ADD( rrset, pnewRR ) \
+{                                      \
+    PDNS_RRSET  _prrset = &(rrset);    \
+    PDNS_RECORD _prrnew = (pnewRR);    \
+    _prrset->pLastRR->pNext = _prrnew; \
+    _prrset->pLastRR = _prrnew;        \
+}
+
+#define DNS_RRSET_TERMINATE( rrset ) \
+{                                    \
+    PDNS_RRSET  _prrset = &(rrset);  \
+    _prrset->pLastRR->pNext = NULL;  \
+}
 
 DNS_STATUS WINAPI DnsAcquireContextHandle_A(DWORD,PVOID,HANDLE*);
 DNS_STATUS WINAPI DnsAcquireContextHandle_W(DWORD,PVOID,HANDLE*);
@@ -588,6 +620,12 @@ DNS_STATUS WINAPI DnsQuery_A(PCSTR,WORD,DWORD,PIP4_ARRAY,PDNS_RECORDA*,PVOID*);
 DNS_STATUS WINAPI DnsQuery_W(PCWSTR,WORD,DWORD,PIP4_ARRAY,PDNS_RECORDW*,PVOID*);
 DNS_STATUS WINAPI DnsQuery_UTF8(PCSTR,WORD,DWORD,PIP4_ARRAY,PDNS_RECORDA*,PVOID*);
 DNS_STATUS WINAPI DnsQueryConfig(DNS_CONFIG_TYPE,DWORD,PWSTR,PVOID,PVOID,PDWORD);
+BOOL WINAPI DnsRecordCompare(PDNS_RECORD,PDNS_RECORD);
+PDNS_RECORD WINAPI DnsRecordCopyEx(PDNS_RECORD,DNS_CHARSET,DNS_CHARSET);
+void WINAPI DnsRecordListFree(PDNS_RECORD,DNS_FREE_TYPE);
+BOOL WINAPI DnsRecordSetCompare(PDNS_RECORD,PDNS_RECORD,PDNS_RECORD*,PDNS_RECORD*);
+PDNS_RECORD WINAPI DnsRecordSetCopyEx(PDNS_RECORD,DNS_CHARSET,DNS_CHARSET);
+PDNS_RECORD WINAPI DnsRecordSetDetach(PDNS_RECORD);
 void WINAPI DnsReleaseContextHandle(HANDLE);
 DNS_STATUS WINAPI DnsReplaceRecordSetA(PDNS_RECORDA,DWORD,HANDLE,PIP4_ARRAY,PVOID);
 DNS_STATUS WINAPI DnsReplaceRecordSetW(PDNS_RECORDW,DWORD,HANDLE,PIP4_ARRAY,PVOID);
