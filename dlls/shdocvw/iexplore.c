@@ -590,10 +590,17 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
 {
     LPWSTR url;
     DWORD len;
+    HRESULT hres;
 
     FIXME("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
 
     CoInitialize(NULL);
+
+    hres = register_class_object(TRUE);
+    if(FAILED(hres)) {
+        CoUninitialize();
+        ExitProcess(1);
+    }
 
     /* FIXME: parse the command line properly, handle -Embedding */
 
@@ -605,7 +612,9 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
 
     HeapFree(GetProcessHeap(), 0, url);
 
-     CoUninitialize();
+    register_class_object(FALSE);
+
+    CoUninitialize();
 
     ExitProcess(0);
     return 0;

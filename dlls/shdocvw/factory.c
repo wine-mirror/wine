@@ -138,3 +138,28 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
     /* As a last resort, figure if the CLSID belongs to a 'Shell Instance Object' */
     return SHDOCVW_GetShellInstanceObjectClassObject(rclsid, riid, ppv);
 }
+
+HRESULT register_class_object(BOOL do_reg)
+{
+    HRESULT hres;
+
+    static DWORD cookie;
+    static IClassFactoryImpl IEClassFactory = {&WBCF_Vtbl, InternetExplorer_Create};
+
+    if(do_reg) {
+        hres = CoRegisterClassObject(&CLSID_InternetExplorer, (IUnknown*)FACTORY(&IEClassFactory),
+                                     CLSCTX_SERVER, REGCLS_MULTIPLEUSE|REGCLS_SUSPENDED, &cookie);
+        if (FAILED(hres)) {
+            ERR("failed to register object %08lx\n", hres);
+            return hres;
+        }
+
+        hres = CoResumeClassObjects();
+        if(SUCCEEDED(hres))
+            return hres;
+
+        ERR("failed to resume object %08lx\n", hres);
+    }
+
+    return CoRevokeClassObject(cookie);
+}
