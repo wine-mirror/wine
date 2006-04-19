@@ -154,6 +154,42 @@ static RPC_STATUS rpcrt4_connect_pipe(RpcConnection *Connection, LPCSTR pname)
   return RPC_S_SERVER_UNAVAILABLE;
 }
 
+static RPC_STATUS rpcrt4_open_pipe(RpcConnection *Connection, LPCSTR pname, BOOL wait)
+{
+  HANDLE conn;
+  DWORD err, dwMode;
+
+  TRACE("connecting to %s\n", pname);
+
+  while (TRUE) {
+    conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                       OPEN_EXISTING, 0, 0);
+    if (conn != INVALID_HANDLE_VALUE) break;
+    err = GetLastError();
+    if (err == ERROR_PIPE_BUSY) {
+      TRACE("connection failed, error=%lx\n", err);
+      return RPC_S_SERVER_TOO_BUSY;
+    }
+    if (!wait)
+      return RPC_S_SERVER_UNAVAILABLE;
+    if (!WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
+      err = GetLastError();
+      WARN("connection failed, error=%lx\n", err);
+      return RPC_S_SERVER_UNAVAILABLE;
+    }
+  }
+
+  /* success */
+  memset(&Connection->ovl, 0, sizeof(Connection->ovl));
+  /* pipe is connected; change to message-read mode. */
+  dwMode = PIPE_READMODE_MESSAGE; 
+  SetNamedPipeHandleState(conn, &dwMode, NULL, NULL);
+  Connection->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+  Connection->conn = conn;
+
+  return RPC_S_OK;
+}
+
 RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
 {
   RPC_STATUS r = RPC_S_OK;
@@ -196,73 +232,21 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
       if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
         static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
         LPSTR pname;
-        HANDLE conn;
-        DWORD err;
-        DWORD dwMode;
 
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
-        TRACE("connecting to %s\n", pname);
-        while (TRUE) {
-          if (WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
-            conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                               OPEN_EXISTING, 0, 0);
-            if (conn != INVALID_HANDLE_VALUE) break;
-            err = GetLastError();
-            if (err == ERROR_PIPE_BUSY) continue;
-            TRACE("connection failed, error=%lx\n", err);
-            HeapFree(GetProcessHeap(), 0, pname);
-            return RPC_S_SERVER_TOO_BUSY;
-          } else {
-            err = GetLastError();
-            WARN("connection failed, error=%lx\n", err);
-            HeapFree(GetProcessHeap(), 0, pname);
-            return RPC_S_SERVER_UNAVAILABLE;
-          }
-        }
-
-        /* success */
+        r = rpcrt4_open_pipe(Connection, pname, TRUE);
         HeapFree(GetProcessHeap(), 0, pname);
-        memset(&Connection->ovl, 0, sizeof(Connection->ovl));
-        /* pipe is connected; change to message-read mode. */
-        dwMode = PIPE_READMODE_MESSAGE; 
-        SetNamedPipeHandleState(conn, &dwMode, NULL, NULL);
-        Connection->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-        Connection->conn = conn;
       }
       /* protseq=ncacn_np: named pipes */
       else if (strcmp(Connection->Protseq, "ncacn_np") == 0) {
         static LPCSTR prefix = "\\\\.";
         LPSTR pname;
-        HANDLE conn;
-        DWORD err;
-        DWORD dwMode;
 
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
-        TRACE("connecting to %s\n", pname);
-        conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                           OPEN_EXISTING, 0, 0);
-        if (conn == INVALID_HANDLE_VALUE) {
-          err = GetLastError();
-          /* we don't need to handle ERROR_PIPE_BUSY here,
-           * the doc says that it is returned to the app */
-          WARN("connection failed, error=%lx\n", err);
-          HeapFree(GetProcessHeap(), 0, pname);
-          if (err == ERROR_PIPE_BUSY)
-            return RPC_S_SERVER_TOO_BUSY;
-          else
-            return RPC_S_SERVER_UNAVAILABLE;
-        }
-
-        /* success */
+        r = rpcrt4_open_pipe(Connection, pname, FALSE);
         HeapFree(GetProcessHeap(), 0, pname);
-        memset(&Connection->ovl, 0, sizeof(Connection->ovl));
-        /* pipe is connected; change to message-read mode. */
-        dwMode = PIPE_READMODE_MESSAGE;
-        SetNamedPipeHandleState(conn, &dwMode, NULL, NULL);
-        Connection->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-        Connection->conn = conn;
       } else {
         ERR("protseq %s not supported\n", Connection->Protseq);
         return RPC_S_PROTSEQ_NOT_SUPPORTED;
