@@ -568,6 +568,44 @@ HEADER_DrawTrackLine (HWND hwnd, HDC hdc, INT x)
     SelectObject (hdc, hOldPen);
 }
 
+/***
+ * DESCRIPTION:
+ * Convert a HDITEM into the correct format (ANSI/Unicode) to send it in a notify
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : the header that wants to send the notify
+ * [O] dest : The buffer to store the HDITEM for notify. It may be set to a HDITEMA of HDITEMW
+ * [I] src  : The source HDITEM. It may be a HDITEMA or HDITEMW
+ * [I] fSourceUnicode : is src a HDITEMW or HDITEMA
+ * [O] ppvScratch : a pointer to a scratch buffer that needs to be freed after
+ *                  the HDITEM is no longer in use or NULL if none was needed
+ * 
+ * NOTE: We depend on HDITEMA and HDITEMW having the same structure
+ */
+static void HEADER_CopyHDItemForNotify(HEADER_INFO *infoPtr, HDITEMW *dest,
+    HDITEMW *src, BOOL fSourceUnicode, LPVOID *ppvScratch)
+{
+    *ppvScratch = NULL;
+    *dest = *src;
+    
+    if (src->mask & HDI_TEXT && src->pszText != LPSTR_TEXTCALLBACKW) /* covers TEXTCALLBACKA as well */
+    {
+        if (fSourceUnicode && infoPtr->nNotifyFormat != NFR_UNICODE)
+        {
+            dest->pszText = NULL;
+            Str_SetPtrWtoA((LPSTR *)&dest->pszText, src->pszText);
+            *ppvScratch = dest->pszText;
+        }
+        
+        if (!fSourceUnicode && infoPtr->nNotifyFormat == NFR_UNICODE)
+        {
+            dest->pszText = NULL;
+            Str_SetPtrAtoW(&dest->pszText, (LPSTR)src->pszText);
+            *ppvScratch = dest->pszText;
+        }
+    }
+}
+
 static UINT HEADER_NotifyCodeWtoA(UINT code)
 {
     /* we use the fact that all the unicode messages are in HDN_FIRST_UNICODE..HDN_LAST*/
@@ -592,29 +630,38 @@ HEADER_SendSimpleNotify (HWND hwnd, UINT code)
 }
 
 static BOOL
-HEADER_SendHeaderNotifyT (HWND hwnd, UINT code, INT iItem, INT mask)
+HEADER_SendHeaderNotifyT (HWND hwnd, UINT code, INT iItem, INT mask, HDITEMW *lpItem)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    NMHEADERA nmhdr;
-    HDITEMA nmitem;
+    NMHEADERW nmhdr;
+    HDITEMW nmitem;
+    
+    if (lpItem == NULL)
+    {
+        /* lpItem == NULL means that we should take the actual data from the item */
+        if (mask & HDI_TEXT)
+        {
+            FIXME("(): invalid parameters - lpItem == NULL and (mask & HDI_TEXT)\n");
+            mask &= ~HDI_TEXT;
+        }
+        nmitem.mask = mask;
+        nmitem.cxy = infoPtr->items[iItem].cxy;
+        nmitem.hbm = infoPtr->items[iItem].hbm;
+        nmitem.pszText = NULL;
+        nmitem.cchTextMax = 0;
+        nmitem.fmt = infoPtr->items[iItem].fmt;
+        nmitem.lParam = infoPtr->items[iItem].lParam;
+        nmitem.iOrder = infoPtr->items[iItem].iOrder;
+        nmitem.iImage = infoPtr->items[iItem].iImage;
+        lpItem = &nmitem;
+    }
 
     nmhdr.hdr.hwndFrom = hwnd;
     nmhdr.hdr.idFrom   = GetWindowLongPtrW (hwnd, GWLP_ID);
     nmhdr.hdr.code = (infoPtr->nNotifyFormat == NFR_UNICODE ? code : HEADER_NotifyCodeWtoA(code));
     nmhdr.iItem = iItem;
     nmhdr.iButton = 0;
-    nmhdr.pitem = &nmitem;
-    nmitem.mask = mask;
-    nmitem.cxy = infoPtr->items[iItem].cxy;
-    nmitem.hbm = infoPtr->items[iItem].hbm;
-    nmitem.pszText = NULL;
-    nmitem.cchTextMax = 0;
-/*    nmitem.pszText = infoPtr->items[iItem].pszText; */
-/*    nmitem.cchTextMax = infoPtr->items[iItem].cchTextMax; */
-    nmitem.fmt = infoPtr->items[iItem].fmt;
-    nmitem.lParam = infoPtr->items[iItem].lParam;
-    nmitem.iOrder = infoPtr->items[iItem].iOrder;
-    nmitem.iImage = infoPtr->items[iItem].iImage;
+    nmhdr.pitem = lpItem;
 
     return (BOOL)SendMessageW (infoPtr->hwndNotify, WM_NOTIFY,
                                (WPARAM)nmhdr.hdr.idFrom, (LPARAM)&nmhdr);
@@ -1159,6 +1206,8 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     HEADER_ITEM *lpItem;
+    HDITEMW hdNotify;
+    void *pvScratch;
 
     if (phdi == NULL)
 	return FALSE;
@@ -1167,8 +1216,12 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 
     TRACE("[nItem=%d]\n", nItem);
 
-    if (HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMCHANGINGW, nItem, phdi->mask))
+    HEADER_CopyHDItemForNotify(infoPtr, &hdNotify, phdi, bUnicode, &pvScratch);
+    if (HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMCHANGINGW, nItem, phdi->mask, &hdNotify))
+    {
+        if (pvScratch) Free(pvScratch);
 	return FALSE;
+    }
 
     lpItem = &infoPtr->items[nItem];
     if (phdi->mask & HDI_BITMAP)
@@ -1245,12 +1298,14 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
         }
       }
 
-    HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMCHANGEDW, nItem, phdi->mask);
+    HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMCHANGEDW, nItem, phdi->mask, &hdNotify);
 
     HEADER_SetItemBounds (hwnd);
 
     InvalidateRect(hwnd, NULL, FALSE);
 
+    if (pvScratch != NULL)
+        Free(pvScratch);
     return TRUE;
 }
 
@@ -1361,9 +1416,9 @@ HEADER_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HEADER_InternalHitTest (hwnd, &pt, &flags, &nItem);
 
     if ((GetWindowLongW (hwnd, GWL_STYLE) & HDS_BUTTONS) && (flags == HHT_ONHEADER))
-        HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMDBLCLICKW, nItem,0);
+        HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMDBLCLICKW, nItem, 0, NULL);
     else if ((flags == HHT_ONDIVIDER) || (flags == HHT_ONDIVOPEN))
-        HEADER_SendHeaderNotifyT (hwnd, HDN_DIVIDERDBLCLICKW, nItem,0);
+        HEADER_SendHeaderNotifyT (hwnd, HDN_DIVIDERDBLCLICKW, nItem, 0, NULL);
 
     return 0;
 }
@@ -1399,7 +1454,7 @@ HEADER_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("Pressed item %d!\n", nItem);
     }
     else if ((flags == HHT_ONDIVIDER) || (flags == HHT_ONDIVOPEN)) {
-        if (!(HEADER_SendHeaderNotifyT (hwnd, HDN_BEGINTRACKW, nItem,0))) {
+        if (!(HEADER_SendHeaderNotifyT (hwnd, HDN_BEGINTRACKW, nItem, 0, NULL))) {
 	    SetCapture (hwnd);
 	    infoPtr->bCaptured = TRUE;
 	    infoPtr->bTracking = TRUE;
@@ -1474,7 +1529,7 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("End tracking item %d!\n", infoPtr->iMoveItem);
 	infoPtr->bTracking = FALSE;
 
-        HEADER_SendHeaderNotifyT (hwnd, HDN_ENDTRACKW, infoPtr->iMoveItem,HDI_WIDTH);
+        HEADER_SendHeaderNotifyT (hwnd, HDN_ENDTRACKW, infoPtr->iMoveItem, HDI_WIDTH, NULL);
 
         if (!(dwStyle & HDS_FULLDRAG)) {
 	    hdc = GetDC (hwnd);
@@ -1482,7 +1537,7 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
             ReleaseDC (hwnd, hdc);
         }
           
-        if (HEADER_SendHeaderNotifyT(hwnd, HDN_ITEMCHANGINGW, infoPtr->iMoveItem, HDI_WIDTH))
+        if (HEADER_SendHeaderNotifyT(hwnd, HDN_ITEMCHANGINGW, infoPtr->iMoveItem, HDI_WIDTH, NULL))
 	{
 	    infoPtr->items[infoPtr->iMoveItem].cxy = infoPtr->nOldWidth;
 	}
@@ -1495,7 +1550,7 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	HEADER_SetItemBounds (hwnd);
 	InvalidateRect(hwnd, NULL, TRUE);
-        HEADER_SendHeaderNotifyT(hwnd, HDN_ITEMCHANGEDW, infoPtr->iMoveItem, HDI_WIDTH);
+        HEADER_SendHeaderNotifyT(hwnd, HDN_ITEMCHANGEDW, infoPtr->iMoveItem, HDI_WIDTH, NULL);
     }
 
     if (infoPtr->bCaptured) {
@@ -1588,13 +1643,13 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
 	else if (infoPtr->bTracking) {
 	    if (dwStyle & HDS_FULLDRAG) {
-                if (!HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMCHANGINGW, infoPtr->iMoveItem, HDI_WIDTH))
+                if (!HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMCHANGINGW, infoPtr->iMoveItem, HDI_WIDTH, NULL))
 		{
 		nWidth = pt.x - infoPtr->items[infoPtr->iMoveItem].rect.left + infoPtr->xTrackOffset;
 		if (nWidth < 0)
 		  nWidth = 0;
 		infoPtr->items[infoPtr->iMoveItem].cxy = nWidth;
-                        HEADER_SendHeaderNotifyT(hwnd, HDN_ITEMCHANGEDW, infoPtr->iMoveItem, HDI_WIDTH);
+                        HEADER_SendHeaderNotifyT(hwnd, HDN_ITEMCHANGEDW, infoPtr->iMoveItem, HDI_WIDTH, NULL);
 		}
 		HEADER_SetItemBounds (hwnd);
 		InvalidateRect(hwnd, NULL, FALSE);
@@ -1609,7 +1664,7 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		    infoPtr->xOldTrack - infoPtr->items[infoPtr->iMoveItem].rect.left;
 		HEADER_DrawTrackLine (hwnd, hdc, infoPtr->xOldTrack);
 		ReleaseDC (hwnd, hdc);
-                HEADER_SendHeaderNotifyT (hwnd, HDN_TRACKW, infoPtr->iMoveItem, HDI_WIDTH);
+                HEADER_SendHeaderNotifyT (hwnd, HDN_TRACKW, infoPtr->iMoveItem, HDI_WIDTH, NULL);
 	    }
 
 	    TRACE("Tracking item %d!\n", infoPtr->iMoveItem);
