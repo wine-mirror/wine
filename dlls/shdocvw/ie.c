@@ -358,8 +358,11 @@ static HRESULT WINAPI InternetExplorer_get_Visible(IWebBrowser2 *iface, VARIANT_
 static HRESULT WINAPI InternetExplorer_put_Visible(IWebBrowser2 *iface, VARIANT_BOOL Value)
 {
     InternetExplorer *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, Value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%x)\n", This, Value);
+
+    ShowWindow(This->frame_hwnd, Value ? SW_SHOW : SW_HIDE);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InternetExplorer_get_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
