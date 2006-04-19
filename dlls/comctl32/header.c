@@ -99,7 +99,16 @@ typedef struct
 #define HEADER_GetInfoPtr(hwnd) ((HEADER_INFO *)GetWindowLongPtrW(hwnd,0))
 
 static const WCHAR themeClass[] = {'H','e','a','d','e','r',0};
+static WCHAR emptyString[] = {0};
 
+static void HEADER_DisposeItem(HEADER_ITEM *lpItem)
+{
+    if (lpItem->pszText && lpItem->pszText != emptyString &&
+        lpItem->pszText != LPSTR_TEXTCALLBACKW) /* covers LPSTR_TEXTCALLBACKA too */
+    {
+        Free(lpItem->pszText);
+    }
+}
 
 inline static LRESULT
 HEADER_IndexToOrder (HWND hwnd, INT iItem)
@@ -796,8 +805,7 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
 
     if (infoPtr->uNumItem == 1) {
         TRACE("Simple delete!\n");
-        if (infoPtr->items[0].pszText)
-            Free (infoPtr->items[0].pszText);
+        HEADER_DisposeItem(&infoPtr->items[0]);
         Free (infoPtr->items);
         Free(infoPtr->order);
         infoPtr->items = 0;
@@ -812,8 +820,7 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
 
         for (i = 0; i < infoPtr->uNumItem; i++)
            TRACE("%d: order=%d, iOrder=%d, ->iOrder=%d\n", i, infoPtr->order[i], infoPtr->items[i].iOrder, infoPtr->items[infoPtr->order[i]].iOrder);
-        if (infoPtr->items[iItem].pszText)
-            Free (infoPtr->items[iItem].pszText);
+        HEADER_DisposeItem(&infoPtr->items[iItem]);
         iOrder = infoPtr->items[iItem].iOrder;
 
         infoPtr->uNumItem--;
@@ -1111,7 +1118,7 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 
     if (phdi->mask & HDI_TEXT)
     {
-	if (!phdi->pszText) phdi->pszText = '\0'; /* null pointer check */
+        if (!phdi->pszText) phdi->pszText = emptyString; /* null pointer check */
         if (phdi->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
         {
             if (bUnicode)
@@ -1255,7 +1262,8 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
         {
             if (lpItem->pszText)
             {
-                Free(lpItem->pszText);
+                if (lpItem->pszText != emptyString && lpItem->pszText != LPSTR_TEXTCALLBACKW)
+                    Free(lpItem->pszText);
                 lpItem->pszText = NULL;
             }
             if (phdi->pszText)
@@ -1374,8 +1382,7 @@ HEADER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (infoPtr->items) {
         lpItem = infoPtr->items;
         for (nItem = 0; nItem < infoPtr->uNumItem; nItem++, lpItem++) {
-	    if ((lpItem->pszText) && (lpItem->pszText != LPSTR_TEXTCALLBACKW))
-		Free (lpItem->pszText);
+            HEADER_DisposeItem(lpItem);
         }
         Free (infoPtr->items);
     }
