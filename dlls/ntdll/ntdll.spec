@@ -177,7 +177,7 @@
 @ stdcall NtGetContextThread(long ptr)
 # @ stub NtGetDevicePowerState
 @ stub NtGetPlugPlayEvent
-@ stub NtGetTickCount
+@ stdcall NtGetTickCount()
 # @ stub NtGetWriteWatch
 @ stub NtImpersonateAnonymousToken
 @ stub NtImpersonateClientOfPort
@@ -1019,7 +1019,7 @@
 @ stdcall ZwGetContextThread(long ptr) NtGetContextThread
 # @ stub ZwGetDevicePowerState
 @ stub ZwGetPlugPlayEvent
-@ stub ZwGetTickCount
+@ stdcall ZwGetTickCount() NtGetTickCount
 # @ stub ZwGetWriteWatch
 # @ stub ZwImpersonateAnonymousToken
 @ stub ZwImpersonateClientOfPort

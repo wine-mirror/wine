@@ -877,6 +877,20 @@ NTSTATUS WINAPI NtQueryPerformanceCounter( PLARGE_INTEGER Counter, PLARGE_INTEGE
     return STATUS_SUCCESS;
 }
 
+
+/******************************************************************************
+ * NtGetTickCount   (NTDLL.@)
+ * ZwGetTickCount   (NTDLL.@)
+ */
+ULONG WINAPI NtGetTickCount(void)
+{
+    struct timeval current_time;
+
+    gettimeofday(&current_time, NULL);
+    return (current_time.tv_sec - server_start_time)*1000 + current_time.tv_usec/1000;
+}
+
+
 /***********************************************************************
  *        TIME_GetTZAsStr [internal]
  *
