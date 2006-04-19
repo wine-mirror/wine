@@ -39,6 +39,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+#define ALIGNED_LENGTH(_Len, _Align) (((_Len)+(_Align))&~(_Align))
+#define ALIGNED_POINTER(_Ptr, _Align) ((LPVOID)ALIGNED_LENGTH((ULONG_PTR)(_Ptr), _Align))
+#define ALIGN_LENGTH(_Len, _Align) _Len = ALIGNED_LENGTH(_Len, _Align)
+#define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
+
 /* FIXME: not supposed to be here */
 
 const CLSID CLSID_PSDispatch = {
@@ -79,26 +84,58 @@ static void dump_user_flags(unsigned long *pFlags)
 }
 
 /* CLEANLOCALSTORAGE */
-/* I'm not sure how this is supposed to work yet */
+
+#define CLS_FUNCDESC  0x66
+#define CLS_LIBATTR   0x6c
+#define CLS_TYPEATTR  0x74
+#define CLS_VARDESC   0x76
 
 unsigned long WINAPI CLEANLOCALSTORAGE_UserSize(unsigned long *pFlags, unsigned long Start, CLEANLOCALSTORAGE *pstg)
 {
-  return Start + sizeof(DWORD);
+    ALIGN_LENGTH(Start, 3);
+    return Start + sizeof(DWORD);
 }
 
 unsigned char * WINAPI CLEANLOCALSTORAGE_UserMarshal(unsigned long *pFlags, unsigned char *Buffer, CLEANLOCALSTORAGE *pstg)
 {
-  *(DWORD*)Buffer = 0;
-  return Buffer + sizeof(DWORD);
+    ALIGN_POINTER(Buffer, 3);
+    *(DWORD*)Buffer = pstg->flags;
+    switch(pstg->flags)
+    {
+    case CLS_LIBATTR:
+        ITypeLib_ReleaseTLibAttr((ITypeLib*)pstg->pInterface, *(TLIBATTR**)pstg->pStorage);
+        break;
+    case CLS_TYPEATTR:
+        ITypeInfo_ReleaseTypeAttr((ITypeInfo*)pstg->pInterface, *(TYPEATTR**)pstg->pStorage); 
+        break;
+    case CLS_FUNCDESC:
+        ITypeInfo_ReleaseFuncDesc((ITypeInfo*)pstg->pInterface, *(FUNCDESC**)pstg->pStorage); 
+        break;
+    case CLS_VARDESC:
+        ITypeInfo_ReleaseVarDesc((ITypeInfo*)pstg->pInterface, *(VARDESC**)pstg->pStorage);
+        break;
+
+    default:
+        ERR("Unknown type %lx\n", pstg->flags);
+    }
+
+    *(VOID**)pstg->pStorage = NULL;
+    IUnknown_Release(pstg->pInterface);
+    pstg->pInterface = NULL;
+
+    return Buffer + sizeof(DWORD);
 }
 
 unsigned char * WINAPI CLEANLOCALSTORAGE_UserUnmarshal(unsigned long *pFlags, unsigned char *Buffer, CLEANLOCALSTORAGE *pstr)
 {
-  return Buffer + sizeof(DWORD);
+    ALIGN_POINTER(Buffer, 3);
+    pstr->flags = *(DWORD*)Buffer;
+    return Buffer + sizeof(DWORD);
 }
 
 void WINAPI CLEANLOCALSTORAGE_UserFree(unsigned long *pFlags, CLEANLOCALSTORAGE *pstr)
 {
+    /* Nothing to do */
 }
 
 /* BSTR */
@@ -1516,6 +1553,11 @@ HRESULT CALLBACK ITypeLib_GetLibAttr_Proxy(
 {
     CLEANLOCALSTORAGE stg;
     TRACE("(%p, %p)\n", This, ppTLibAttr);
+
+    stg.flags = 0;
+    stg.pStorage = NULL;
+    stg.pInterface = NULL;
+
     return ITypeLib_RemoteGetLibAttr_Proxy(This, ppTLibAttr, &stg);    
 }
 
@@ -1524,8 +1566,18 @@ HRESULT __RPC_STUB ITypeLib_GetLibAttr_Stub(
     LPTLIBATTR* ppTLibAttr,
     CLEANLOCALSTORAGE* pDummy)
 {
+    HRESULT hr;
     TRACE("(%p, %p)\n", This, ppTLibAttr);
-    return ITypeLib_GetLibAttr(This, ppTLibAttr);
+    
+    hr = ITypeLib_GetLibAttr(This, ppTLibAttr);
+    if(hr != S_OK)
+        return hr;
+
+    pDummy->flags = CLS_LIBATTR;
+    ITypeLib_AddRef(This);
+    pDummy->pInterface = (IUnknown*)This;
+    pDummy->pStorage = ppTLibAttr;
+    return hr;
 }
 
 HRESULT CALLBACK ITypeLib_GetDocumentation_Proxy(
