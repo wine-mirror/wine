@@ -129,11 +129,42 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
   return RPC_S_OK;
 }
 
+static RPC_STATUS rpcrt4_connect_pipe(RpcConnection *Connection, LPCSTR pname)
+{
+  TRACE("listening on %s\n", pname);
+
+  Connection->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX,
+                                      PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
+                                      PIPE_UNLIMITED_INSTANCES,
+                                      RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
+  memset(&Connection->ovl, 0, sizeof(Connection->ovl));
+  Connection->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+  if (ConnectNamedPipe(Connection->conn, &Connection->ovl))
+     return RPC_S_OK;
+
+  WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
+  if (GetLastError() == ERROR_PIPE_CONNECTED) {
+    SetEvent(Connection->ovl.hEvent);
+    return RPC_S_OK;
+  }
+  if (GetLastError() == ERROR_IO_PENDING) {
+    /* FIXME: looks like we need to GetOverlappedResult here? */
+    return RPC_S_OK;
+  }
+  return RPC_S_SERVER_UNAVAILABLE;
+}
+
 RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
 {
+  RPC_STATUS r = RPC_S_OK;
+
   TRACE("(Connection == ^%p)\n", Connection);
-  if (!Connection->conn) {
-    if (Connection->server) { /* server */
+
+  /* already connected? */
+  if (Connection->conn)
+     return r;
+
+  if (Connection->server) { /* server */
       /* protseq=ncalrpc: supposed to use NT LPC ports,
        * but we'll implement it with named pipes for now */
       if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
@@ -142,22 +173,8 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
         TRACE("listening on %s\n", pname);
-        Connection->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX,
-                                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, PIPE_UNLIMITED_INSTANCES,
-                                         RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
+        r = rpcrt4_connect_pipe(Connection, pname);
         HeapFree(GetProcessHeap(), 0, pname);
-        memset(&Connection->ovl, 0, sizeof(Connection->ovl));
-        Connection->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-        if (!ConnectNamedPipe(Connection->conn, &Connection->ovl)) {
-          WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
-          if (GetLastError() == ERROR_PIPE_CONNECTED) {
-            SetEvent(Connection->ovl.hEvent);
-            return RPC_S_OK;
-          } else if (GetLastError() == ERROR_IO_PENDING) {
-            return RPC_S_OK;
-          }
-          return RPC_S_SERVER_UNAVAILABLE;
-        }
       }
       /* protseq=ncacn_np: named pipes */
       else if (strcmp(Connection->Protseq, "ncacn_np") == 0) {
@@ -165,30 +182,15 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         LPSTR pname;
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
-        TRACE("listening on %s\n", pname);
-        Connection->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX,
-                                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-                                         RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
+        r = rpcrt4_connect_pipe(Connection, pname);
         HeapFree(GetProcessHeap(), 0, pname);
-        memset(&Connection->ovl, 0, sizeof(Connection->ovl));
-        Connection->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-        if (!ConnectNamedPipe(Connection->conn, &Connection->ovl)) {
-          if (GetLastError() == ERROR_PIPE_CONNECTED) {
-            SetEvent(Connection->ovl.hEvent);
-            return RPC_S_OK;
-          } else if (GetLastError() == ERROR_IO_PENDING) {
-            return RPC_S_OK;
-          }
-          WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
-          return RPC_S_SERVER_UNAVAILABLE;
-        }
       }
       else {
         ERR("protseq %s not supported\n", Connection->Protseq);
         return RPC_S_PROTSEQ_NOT_SUPPORTED;
       }
-    }
-    else { /* client */
+  }
+  else { /* client */
       /* protseq=ncalrpc: supposed to use NT LPC ports,
        * but we'll implement it with named pipes for now */
       if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
@@ -265,9 +267,9 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         ERR("protseq %s not supported\n", Connection->Protseq);
         return RPC_S_PROTSEQ_NOT_SUPPORTED;
       }
-    }
   }
-  return RPC_S_OK;
+
+  return r;
 }
 
 RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection)
