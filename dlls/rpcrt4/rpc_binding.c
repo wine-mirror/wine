@@ -200,59 +200,37 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
   if (Connection->conn)
      return r;
 
-  if (Connection->server) { /* server */
-      /* protseq=ncalrpc: supposed to use NT LPC ports,
-       * but we'll implement it with named pipes for now */
-      if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
-        static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
-        LPSTR pname;
-        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
-        strcat(strcpy(pname, prefix), Connection->Endpoint);
-        TRACE("listening on %s\n", pname);
-        r = rpcrt4_connect_pipe(Connection, pname);
-        HeapFree(GetProcessHeap(), 0, pname);
-      }
-      /* protseq=ncacn_np: named pipes */
-      else if (strcmp(Connection->Protseq, "ncacn_np") == 0) {
-        static LPCSTR prefix = "\\\\.";
-        LPSTR pname;
-        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
-        strcat(strcpy(pname, prefix), Connection->Endpoint);
-        r = rpcrt4_connect_pipe(Connection, pname);
-        HeapFree(GetProcessHeap(), 0, pname);
-      }
-      else {
-        ERR("protseq %s not supported\n", Connection->Protseq);
-        return RPC_S_PROTSEQ_NOT_SUPPORTED;
-      }
+  /* protseq=ncalrpc: supposed to use NT LPC ports,
+   * but we'll implement it with named pipes for now */
+  if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
+    static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
+    LPSTR pname;
+    pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
+    strcat(strcpy(pname, prefix), Connection->Endpoint);
+
+    if (Connection->server)
+      r = rpcrt4_connect_pipe(Connection, pname);
+    else
+      r = rpcrt4_open_pipe(Connection, pname, TRUE);
+    HeapFree(GetProcessHeap(), 0, pname);
   }
-  else { /* client */
-      /* protseq=ncalrpc: supposed to use NT LPC ports,
-       * but we'll implement it with named pipes for now */
-      if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
-        static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
-        LPSTR pname;
-
-        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
-        strcat(strcpy(pname, prefix), Connection->Endpoint);
-        r = rpcrt4_open_pipe(Connection, pname, TRUE);
-        HeapFree(GetProcessHeap(), 0, pname);
-      }
-      /* protseq=ncacn_np: named pipes */
-      else if (strcmp(Connection->Protseq, "ncacn_np") == 0) {
-        static LPCSTR prefix = "\\\\.";
-        LPSTR pname;
-
-        pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
-        strcat(strcpy(pname, prefix), Connection->Endpoint);
-        r = rpcrt4_open_pipe(Connection, pname, FALSE);
-        HeapFree(GetProcessHeap(), 0, pname);
-      } else {
-        ERR("protseq %s not supported\n", Connection->Protseq);
-        return RPC_S_PROTSEQ_NOT_SUPPORTED;
-      }
+  /* protseq=ncacn_np: named pipes */
+  else if (strcmp(Connection->Protseq, "ncacn_np") == 0) {
+    static LPCSTR prefix = "\\\\.";
+    LPSTR pname;
+    pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
+    strcat(strcpy(pname, prefix), Connection->Endpoint);
+    if (Connection->server)
+      r = rpcrt4_connect_pipe(Connection, pname);
+    else
+      r = rpcrt4_open_pipe(Connection, pname, FALSE);
+    HeapFree(GetProcessHeap(), 0, pname);
   }
-
+  else {
+    ERR("protseq %s not supported\n", Connection->Protseq);
+    r = RPC_S_PROTSEQ_NOT_SUPPORTED;
+  }
+ 
   return r;
 }
 
