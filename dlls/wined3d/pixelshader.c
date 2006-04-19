@@ -1205,8 +1205,10 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
 
             } else {
  
-                /* Common processing: [inst] [dst] [src]* */
-
+                /* Common processing: [inst] [dst]* [src]* */
+                DWORD shift;
+                char output_rname[256];
+                char output_wmask[20];
 
                 TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d, \n",
                 curOpcode->name, curOpcode->glname, curOpcode->num_params);
@@ -1461,6 +1463,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     continue;
                 }
 
+                /* Process modifiers */
                 if (0 != (*pToken & D3DSP_DSTMOD_MASK)) {
                     DWORD mask = *pToken & D3DSP_DSTMOD_MASK;
                     switch (mask) {
@@ -1468,24 +1471,18 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
 #if 0 /* as yet unhandled modifiers */
                     case D3DSPDM_CENTROID: centroid = TRUE; break;
                     case D3DSPDM_PP: partialpresision = TRUE; break;
-                    case D3DSPDM_X2: X2 = TRUE; break;
-                    case D3DSPDM_X4: X4 = TRUE; break;
-                    case D3DSPDM_X8: X8 = TRUE; break;
-                    case D3DSPDM_D2: D2 = TRUE; break;
-                    case D3DSPDM_D4: D4 = TRUE; break;
-                    case D3DSPDM_D8: D8 = TRUE; break;
 #endif
                     default:
                         TRACE("_unhandled_modifier(0x%08lx)\n", mask);
                     }
                 }
+                shift = (*pToken & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
 
                 /* Generate input and output registers */
                 if (curOpcode->num_params > 0) {
                     char regs[5][50];
                     char operands[4][100];
                     char swzstring[20];
-                    int saturate = 0;
                     char tmpOp[256];
 
                     /* Generate lines that handle input modifier computation */
@@ -1496,15 +1493,11 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                         }
                     }
 
-                    /* Handle saturation only when no shift is present in the output modifier */
-                    if ((*pToken & D3DSPDM_SATURATE) && (0 == (*pToken & D3DSP_DSTSHIFT_MASK)))
-                        saturate = 1;
-
                     /* Handle output register */
-                    get_register_name(*pToken, tmpOp, This->constants);
-                    strcpy(operands[0], tmpOp);
-                    get_write_mask(*pToken, tmpOp);
-                    strcat(operands[0], tmpOp);
+                    get_register_name(*pToken, output_rname, This->constants);
+                    strcpy(operands[0], output_rname);
+                    get_write_mask(*pToken, output_wmask);
+                    strcat(operands[0], output_wmask);
 
                     /* This function works because of side effects from  gen_input_modifier_line */
                     /* Handle input registers */
@@ -1525,7 +1518,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                         sprintf(tmpLine, "CMP%s %s, TMP, %s, %s;\n", (saturate ? "_SAT" : ""), operands[0], operands[2], operands[3]);
                     break;
                     default:
-                        if (saturate)
+                        if (saturate && (shift == 0))
                             strcat(tmpLine, "_SAT");
                         strcat(tmpLine, " ");
                         strcat(tmpLine, operands[0]);
@@ -1536,24 +1529,14 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                         strcat(tmpLine,";\n");
                     }
                     addline(&lineNum, pgmStr, &pgmLength, tmpLine);
-                    pToken += curOpcode->num_params;
-                }
-#if 0           /* I Think this isn't needed because the code above generates the input / output registers. */
-                if (curOpcode->num_params > 0) {
-                    DWORD param = *(pInstr + 1);
-                    if (0 != (param & D3DSP_DSTSHIFT_MASK)) {
 
-                        /* Generate a line that handle the output modifier computation */
-                        char regstr[100];
-                        char write_mask[20];
-                        DWORD shift = (param & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
-                        get_register_name(param, regstr, This->constants);
-                        get_write_mask(param, write_mask);
-                        gen_output_modifier_line(saturate, write_mask, shift, regstr, tmpLine);
+                    /* A shift requires another line. */
+                    if (shift != 0) {
+                        gen_output_modifier_line(saturate, output_wmask, shift, output_rname, tmpLine);
                         addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                     }
+                    pToken += curOpcode->num_params;
                 }
-#endif
             }
         }
         /* TODO: What about result.depth? */
@@ -1595,6 +1578,31 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
 #if 1 /* if were using the data buffer of device then we don't need to free it */
     HeapFree(GetProcessHeap(), 0, pgmStr);
 #endif
+}
+
+inline static void pshader_program_dump_ins_modifiers(const DWORD output) {
+
+    DWORD shift = (output & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
+    DWORD mmask = output & D3DSP_DSTMOD_MASK;
+
+    switch (shift) {
+        case 0: break;
+        case 13: TRACE("_d8"); break;
+        case 14: TRACE("_d4"); break;
+        case 15: TRACE("_d2"); break;
+        case 1: TRACE("_x2"); break;
+        case 3: TRACE("_x4"); break;
+        case 7: TRACE("_x8"); break;
+        default: TRACE("_unhandled_shift(%ld)", shift); break;
+    }
+
+    switch(mmask) {
+        case D3DSPDM_NONE: break;
+        case D3DSPDM_SATURATE: TRACE("_sat"); break;
+        case D3DSPDM_PARTIALPRECISION: TRACE("_pp"); break;
+        case D3DSPDM_MSAMPCENTROID: TRACE("_centroid"); break;
+        default: TRACE("_unhandled_modifier(%#lx)", mmask); break;
+    } 
 }
 
 inline static void pshader_program_dump_ps_param(const DWORD param, int input) {
@@ -1660,25 +1668,8 @@ inline static void pshader_program_dump_ps_param(const DWORD param, int input) {
   }
 
     if (!input) {
-        /** operand output */
-        /**
-            * for better debugging traces it's done into opcode dump code
-            * @see pshader_program_dump_opcode
-        if (0 != (param & D3DSP_DSTMOD_MASK)) {
-            DWORD mask = param & D3DSP_DSTMOD_MASK;
-            switch (mask) {
-            case D3DSPDM_SATURATE: TRACE("_sat"); break;
-            default:
-            TRACE("_unhandled_modifier(0x%08lx)", mask);
-            }
-        }
-        if (0 != (param & D3DSP_DSTSHIFT_MASK)) {
-            DWORD shift = (param & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
-            if (shift > 0) {
-        TRACE("_x%u", 1 << shift);
-            }
-        }
-        */
+        /* operand output (for modifiers and shift, see dump_ins_modifiers) */
+
         if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
             TRACE(".");
             if (param & D3DSP_WRITEMASK_0) TRACE(".r");
@@ -1857,8 +1848,10 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
                         ++pToken;
                         ++len;
                 } else {
-                    TRACE("%s ", curOpcode->name);
+                    TRACE("%s", curOpcode->name);
                     if (curOpcode->num_params > 0) {
+                        pshader_program_dump_ins_modifiers(*pToken);
+                        TRACE(" ");
                         pshader_program_dump_ps_param(*pToken, 0);
                         ++pToken;
                         ++len;
