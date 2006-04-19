@@ -439,8 +439,48 @@ static HRESULT WINAPI InternetExplorer_Navigate2(IWebBrowser2 *iface, VARIANT *U
         VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
 {
     InternetExplorer *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p %p %p %p %p)\n", This, URL, Flags, TargetFrameName, PostData, Headers);
-    return E_NOTIMPL;
+    PBYTE post_data = NULL;
+    ULONG post_data_len = 0;
+    LPWSTR headers = NULL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p %p %p %p)\n", This, URL, Flags, TargetFrameName, PostData, Headers);
+
+    if((Flags && V_VT(Flags) != VT_EMPTY) 
+       || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY))
+        FIXME("Unsupported arguments\n");
+
+    if(!URL)
+        return S_OK;
+
+    if(V_VT(URL) != VT_BSTR)
+        return E_INVALIDARG;
+
+    if(PostData && V_VT(PostData) != VT_EMPTY) {
+        if(V_VT(PostData) != (VT_ARRAY | VT_UI1)
+           || V_ARRAY(PostData)->cDims != 1) {
+            WARN("Invalid PostData\n");
+            return E_INVALIDARG;
+        }
+
+        SafeArrayAccessData(V_ARRAY(PostData), (void**)&post_data);
+        post_data_len = V_ARRAY(PostData)->rgsabound[0].cElements;
+    }
+
+    if(Headers && V_VT(Headers) != VT_EMPTY) {
+        if(V_VT(Headers) != VT_BSTR)
+            return E_INVALIDARG;
+
+        headers = V_BSTR(Headers);
+        TRACE("Headers: %s\n", debugstr_w(headers));
+    }
+
+    hres = navigate_url(&This->doc_host, V_BSTR(URL), post_data, post_data_len, headers);
+
+    if(post_data)
+        SafeArrayUnaccessData(V_ARRAY(PostData));
+
+    return hres;
 }
 
 static HRESULT WINAPI InternetExplorer_QueryStatusWB(IWebBrowser2 *iface, OLECMDID cmdID, OLECMDF *pcmdf)
