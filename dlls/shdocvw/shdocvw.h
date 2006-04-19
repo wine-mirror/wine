@@ -153,7 +153,7 @@ void WebBrowser_HlinkFrame_Init(WebBrowser*);
 
 void WebBrowser_OleObject_Destroy(WebBrowser*);
 
-void DocHost_Init(DocHost*);
+void DocHost_Init(DocHost*,IDispatch*);
 void DocHost_ClientSite_Init(DocHost*);
 void DocHost_Events_Init(DocHost*);
 void DocHost_Frame_Init(DocHost*);

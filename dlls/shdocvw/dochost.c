@@ -478,16 +478,19 @@ static const IDocHostUIHandler2Vtbl DocHostUIHandler2Vtbl = {
     DocHostUIHandler_GetOverrideKeyPath
 };
 
-void DocHost_Init(DocHost *This)
+void DocHost_Init(DocHost *This, IDispatch *disp)
 {
     This->lpDocHostUIHandlerVtbl = &DocHostUIHandler2Vtbl;
     This->lpOleCommandTargetVtbl = &OleCommandTargetVtbl;
+
+    This->disp = disp;
 
     This->document = NULL;
     This->hostui = NULL;
 
     This->hwnd = NULL;
     This->frame_hwnd = NULL;
+    This->url = NULL;
 
     DocHost_ClientSite_Init(This);
     DocHost_Frame_Init(This);
@@ -498,4 +501,6 @@ void DocHost_Release(DocHost *This)
 {
     DocHost_ClientSite_Release(This);
     DocHost_Events_Release(This);
+
+    SysFreeString(This->url);
 }

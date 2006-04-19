@@ -132,7 +132,6 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
 
         WebBrowser_OleObject_Destroy(This);
 
-        SysFreeString(This->doc_host.url);
         HeapFree(GetProcessHeap(), 0, This);
         SHDOCVW_UnlockModule();
     }
@@ -844,10 +843,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->lpWebBrowser2Vtbl = &WebBrowser2Vtbl;
     ret->ref = 0;
 
-    ret->doc_host.url = NULL;
-
-    ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);
-    DocHost_Init(&ret->doc_host);
+    DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret));
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
