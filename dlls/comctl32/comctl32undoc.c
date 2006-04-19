@@ -1107,6 +1107,46 @@ BOOL Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc)
     return TRUE;
 }
 
+/**************************************************************************
+ * Str_SetPtrWtoA [internal]
+ *
+ * Converts a unicode string to a multi byte string.
+ * If the pointer to the destination buffer is NULL a buffer is allocated.
+ * If the destination buffer is too small to keep the converted wide
+ * string the destination buffer is reallocated. If the source pointer is
+ * NULL, the destination buffer is freed.
+ *
+ * PARAMS
+ *     lppDest [I/O] pointer to a pointer to the destination buffer
+ *     lpSrc   [I] pointer to a wide string
+ *
+ * RETURNS
+ *     TRUE: conversion successful
+ *     FALSE: error
+ */
+BOOL Str_SetPtrWtoA (LPSTR *lppDest, LPCWSTR lpSrc)
+{
+    TRACE("(%p %s)\n", lppDest, debugstr_w(lpSrc));
+
+    if (lpSrc) {
+        INT len = WideCharToMultiByte(CP_ACP,0,lpSrc,-1,NULL,0,NULL,FALSE);
+        LPSTR ptr = ReAlloc (*lppDest, len*sizeof(CHAR));
+
+        if (!ptr)
+            return FALSE;
+        WideCharToMultiByte(CP_ACP,0,lpSrc,-1,ptr,len,NULL,FALSE);
+        *lppDest = ptr;
+    }
+    else {
+        if (*lppDest) {
+            Free (*lppDest);
+            *lppDest = NULL;
+        }
+    }
+
+    return TRUE;
+}
+
 
 /**************************************************************************
  * Notification functions

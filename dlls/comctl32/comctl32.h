@@ -145,6 +145,7 @@ VOID COMCTL32_RefreshSysColors(void);
 void COMCTL32_DrawInsertMark(HDC hDC, const RECT *lpRect, COLORREF clrInsertMark, BOOL bHorizontal);
 INT  Str_GetPtrWtoA (LPCWSTR lpSrc, LPSTR lpDest, INT nMaxLen);
 BOOL Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc);
+BOOL Str_SetPtrWtoA (LPSTR *lppDest, LPCWSTR lpSrc);
 
 #define COMCTL32_VERSION_MINOR 80
 #define WINE_FILEVERSION 5, COMCTL32_VERSION_MINOR, 0, 0
