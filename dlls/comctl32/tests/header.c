@@ -24,8 +24,36 @@
 
 #include "wine/test.h"
 
+typedef struct tagEXPECTEDNOTIFY
+{
+    INT iCode;
+    BOOL fUnicode;
+    HDITEMA hdItem;
+} EXPECTEDNOTIFY;
+
+EXPECTEDNOTIFY expectedNotify[10];
+INT nExpectedNotify = 0;
+INT nReceivedNotify = 0;
+
 static HWND hHeaderParentWnd;
+static HWND hWndHeader;
 #define MAX_CHARS 100
+
+static void expect_notify(INT iCode, BOOL fUnicode, HDITEMA *lpItem)
+{
+    assert(nExpectedNotify < 10);
+    expectedNotify[nExpectedNotify].iCode = iCode;
+    expectedNotify[nExpectedNotify].fUnicode = fUnicode;
+    expectedNotify[nExpectedNotify].hdItem = *lpItem;
+    nExpectedNotify++;
+}
+
+static BOOL notifies_received()
+{
+    BOOL fRet = (nExpectedNotify == nReceivedNotify);
+    nExpectedNotify = nReceivedNotify = 0;
+    return fRet;
+}
 
 static LONG addItem(HWND hdex, int idx, LPCSTR text)
 {
@@ -37,13 +65,41 @@ static LONG addItem(HWND hdex, int idx, LPCSTR text)
     return (LONG)SendMessage(hdex, HDM_INSERTITEMA, (WPARAM)idx, (LPARAM)&hdItem);
 }
 
-static LONG setItem(HWND hdex, int idx, LPCSTR text)
+static LONG setItem(HWND hdex, int idx, LPCSTR text, BOOL fCheckNotifies)
 {
+    LONG ret;
     HDITEMA hdexItem;
     hdexItem.mask       = HDI_TEXT;
     hdexItem.pszText    = (LPSTR)text;
     hdexItem.cchTextMax = 0;
-    return (LONG)SendMessage(hdex, HDM_SETITEMA, (WPARAM)idx, (LPARAM)&hdexItem);
+    if (fCheckNotifies)
+    {
+        expect_notify(HDN_ITEMCHANGINGA, FALSE, &hdexItem);
+        expect_notify(HDN_ITEMCHANGEDA, FALSE, &hdexItem);
+    }
+    ret = (LONG)SendMessage(hdex, HDM_SETITEMA, (WPARAM)idx, (LPARAM)&hdexItem);
+    if (fCheckNotifies)
+        ok(notifies_received(), "setItem(): not all expected notifies were received\n");
+    return ret;
+}
+
+static LONG setItemUnicodeNotify(HWND hdex, int idx, LPCSTR text, LPCWSTR wText)
+{
+    LONG ret;
+    HDITEMA hdexItem;
+    HDITEMW hdexNotify;
+    hdexItem.mask       = HDI_TEXT;
+    hdexItem.pszText    = (LPSTR)text;
+    hdexItem.cchTextMax = 0;
+    
+    hdexNotify.mask    = HDI_TEXT;
+    hdexNotify.pszText = (LPWSTR)wText;
+    
+    expect_notify(HDN_ITEMCHANGINGW, TRUE, (HDITEMA*)&hdexNotify);
+    expect_notify(HDN_ITEMCHANGEDW, TRUE, (HDITEMA*)&hdexNotify);
+    ret = (LONG)SendMessage(hdex, HDM_SETITEMA, (WPARAM)idx, (LPARAM)&hdexItem);
+    ok(notifies_received(), "setItemUnicodeNotify(): not all expected notifies were received\n");
+    return ret;
 }
 
 static LONG delItem(HWND hdex, int idx)
@@ -91,8 +147,40 @@ static HWND create_header_control (void)
     return handle;
 }
 
+static void compare_items(INT iCode, HDITEMA *hdi1, HDITEMA *hdi2, BOOL fUnicode)
+{
+    ok(hdi1->mask == hdi2->mask, "Notify %d mask mismatch (%08x != %08x)\n", iCode, hdi1->mask, hdi2->mask);
+    if (hdi1->mask & HDI_WIDTH)
+    {
+        ok(hdi1->cxy == hdi2->cxy, "Notify %d cxy mismatch (%08x != %08x)\n", iCode, hdi1->cxy, hdi2->cxy);
+    }
+    if (hdi1->mask & HDI_TEXT)
+    {
+        if (fUnicode)
+        {
+            char buf1[260];
+            char buf2[260];
+            WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)hdi1->pszText, -1, buf1, 260, NULL, NULL);
+            WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)hdi2->pszText, -1, buf2, 260, NULL, NULL);
+            ok(lstrcmpW((LPWSTR)hdi1->pszText, (LPWSTR)hdi2->pszText)==0,
+                "Notify %d text mismatch (L\"%s\" vs L\"%s\")\n",
+                    iCode, buf1, buf2);
+        }
+        else
+        {
+            ok(strcmp(hdi1->pszText, hdi2->pszText)==0,
+                "Notify %d text mismatch (\"%s\" vs \"%s\")\n",
+                    iCode, hdi1->pszText, hdi2->pszText);
+            }
+    }
+}
+
 static const char *str_items[] =
     {"First Item", "Second Item", "Third Item", "Fourth Item", "Replace Item", "Out Of Range Item"};
+    
+static const char pszUniTestA[] = "TST";
+static const WCHAR pszUniTestW[] = {'T','S','T',0};
+
 
 #define TEST_GET_ITEM(i,c)\
 {   res = getItem(hWndHeader, i, buffer);\
@@ -107,7 +195,6 @@ static const char *str_items[] =
 
 static void test_header_control (void)
 {
-    HWND hWndHeader;
     LONG res;
     static char buffer[MAX_CHARS];
     int i;
@@ -145,21 +232,26 @@ static void test_header_control (void)
     }
 
     TEST_GET_ITEMCOUNT(6);
-    res=setItem(hWndHeader, 99, str_items[5]);
+    res=setItem(hWndHeader, 99, str_items[5], FALSE);
     ok(res == 0, "Setting Out of Range item should fail with 0 (%ld)\n", res);
-    res=setItem(hWndHeader, 5, str_items[5]);
+    res=setItem(hWndHeader, 5, str_items[5], TRUE);
     ok(res == 1, "Setting Out of Range item should fail with 1 (%ld)\n", res);
-    res=setItem(hWndHeader, -2, str_items[5]);
+    res=setItem(hWndHeader, -2, str_items[5], FALSE);
     ok(res == 0, "Setting Out of Range item should fail with 0 (%ld)\n", res);
     TEST_GET_ITEMCOUNT(6);
 
     for (i = 0; i < 4; i++)
     {
-        res = setItem(hWndHeader, i, str_items[4]);
+        res = setItem(hWndHeader, i, str_items[4], TRUE);
         ok(res != 0, "Setting %d item failed (%ld)\n", i+1, res);
         TEST_GET_ITEM(i, 4);
         TEST_GET_ITEMCOUNT(6);
     }
+    
+    SendMessageA(hWndHeader, HDM_SETUNICODEFORMAT, (WPARAM)TRUE, 0);
+    setItemUnicodeNotify(hWndHeader, 3, pszUniTestA, pszUniTestW);
+    SendMessageA(hWndHeader, WM_NOTIFYFORMAT, (WPARAM)hHeaderParentWnd, (LPARAM)NF_REQUERY);
+    setItem(hWndHeader, 3, str_items[4], TRUE);
 
     res = delItem(hWndHeader, 5);
     ok(res == 1, "Deleting Out of Range item should fail with 1 (%ld)\n", res);
@@ -183,16 +275,67 @@ static void test_header_control (void)
     DestroyWindow(hWndHeader);
 }
 
-START_TEST(header)
+
+LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    switch(msg) {
+
+    case WM_NOTIFY:
+    {
+        NMHEADERA *hdr = (NMHEADER *)lParam;
+        EXPECTEDNOTIFY *expected;
+        
+        if (nReceivedNotify >= nExpectedNotify || hdr->hdr.hwndFrom != hWndHeader )
+            break;
+
+        expected = &expectedNotify[nReceivedNotify];
+        if (hdr->hdr.code != expected->iCode)
+            break;
+        
+        nReceivedNotify++;
+        compare_items(hdr->hdr.code, &expected->hdItem, hdr->pitem, expected->fUnicode);
+        break;
+    }
+    
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+  
+    default:
+        return DefWindowProcA(hWnd, msg, wParam, lParam);
+    }
+    
+    return 0L;
+}
+
+static void init(void) {
+    WNDCLASSA wc;
     INITCOMMONCONTROLSEX icex;
 
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC  = ICC_USEREX_CLASSES;
     InitCommonControlsEx(&icex);
-    hHeaderParentWnd = CreateWindowExA(0, "static", "Header test", WS_OVERLAPPEDWINDOW,
-                        CW_USEDEFAULT, CW_USEDEFAULT, 480, 100, NULL, NULL, NULL, 0);
+
+    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+    wc.hInstance = GetModuleHandleA(NULL);
+    wc.hIcon = NULL;
+    wc.hCursor = LoadCursorA(NULL, MAKEINTRESOURCEA(IDC_ARROW));
+    wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
+    wc.lpszMenuName = NULL;
+    wc.lpszClassName = "HeaderTestClass";
+    wc.lpfnWndProc = HeaderTestWndProc;
+    RegisterClassA(&wc);
+
+    hHeaderParentWnd = CreateWindowExA(0, "HeaderTestClass", "Header test", WS_OVERLAPPEDWINDOW, 
+      CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, GetModuleHandleA(NULL), 0);
     assert(hHeaderParentWnd != NULL);
+}
+
+START_TEST(header)
+{
+    init();
 
     test_header_control();
 
