@@ -580,3 +580,33 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     return hres;
 }
+
+/******************************************************************
+ *		IEWinMain            (SHDOCVW.101)
+ *
+ * Only returns on error.
+ */
+DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
+{
+    LPWSTR url;
+    DWORD len;
+
+    FIXME("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
+
+    CoInitialize(NULL);
+
+    /* FIXME: parse the command line properly, handle -Embedding */
+
+    len = MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, NULL, 0);
+    url = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, url, len);
+
+    create_ie_window(url);
+
+    HeapFree(GetProcessHeap(), 0, url);
+
+     CoUninitialize();
+
+    ExitProcess(0);
+    return 0;
+}
