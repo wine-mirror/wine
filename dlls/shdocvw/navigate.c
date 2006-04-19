@@ -450,6 +450,9 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, PBYTE post_data, ULONG post_dat
     VARIANT_BOOL cancel = VARIANT_FALSE;
     HRESULT hres;
 
+    if(!This->hwnd)
+        create_doc_view_hwnd(This);
+
     hres = CreateURLMoniker(NULL, url, &mon);
     if(FAILED(hres)) {
         WARN("CreateURLMoniker failed: %08lx\n", hres);

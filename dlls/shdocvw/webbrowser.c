@@ -611,9 +611,6 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
         TRACE("Headers: %s\n", debugstr_w(headers));
     }
 
-    if(!This->doc_host.hwnd)
-        create_doc_view_hwnd(&This->doc_host);
-
     hres = navigate_url(&This->doc_host, V_BSTR(URL), post_data, post_data_len, headers);
 
     if(post_data)
