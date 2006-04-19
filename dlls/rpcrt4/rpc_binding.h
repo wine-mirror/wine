@@ -83,4 +83,7 @@ BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPC
 HANDLE RPCRT4_GetMasterMutex(void);
 HANDLE RPCRT4_RpcssNPConnect(void);
 
+int rpcrt4_conn_read(RpcConnection *Connection,
+                     void *buffer, unsigned int count);
+
 #endif

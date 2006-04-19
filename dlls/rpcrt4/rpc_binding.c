@@ -435,7 +435,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   /* we need to send a binding packet if we are client. */
   if (!(*Connection)->server) {
     RpcPktHdr *hdr;
-    DWORD count;
+    LONG count;
     BYTE *response;
     RpcPktHdr *response_hdr;
 
@@ -458,13 +458,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
       return E_OUTOFMEMORY;
     }
 
-    /* get a reply */
-    if (!ReadFile(NewConnection->conn, response, RPC_MAX_PACKET_SIZE, &count, NULL)) {
-      WARN("ReadFile failed with error %ld\n", GetLastError());
-      RPCRT4_DestroyConnection(*Connection);
-      return RPC_S_PROTOCOL_ERROR;
-    }
-
+    count = rpcrt4_conn_read(NewConnection, response, RPC_MAX_PACKET_SIZE);
     if (count < sizeof(response_hdr->common)) {
       WARN("received invalid header\n");
       RPCRT4_DestroyConnection(*Connection);

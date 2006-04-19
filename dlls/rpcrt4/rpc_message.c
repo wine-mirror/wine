@@ -306,8 +306,8 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
  *
  * Reads data from a connection
  */
-static int rpcrt4_conn_read(RpcConnection *Connection,
-                            void *buffer, unsigned int count)
+int rpcrt4_conn_read(RpcConnection *Connection,
+                     void *buffer, unsigned int count)
 {
   DWORD dwRead = 0;
   if (!ReadFile(Connection->conn, buffer, count, &dwRead, NULL) &&
