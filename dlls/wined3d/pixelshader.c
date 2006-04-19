@@ -955,6 +955,64 @@ inline static int gen_input_modifier_line(const DWORD instr, int tmpreg, char *o
 
     return insert_line;
 }
+
+inline static void pshader_program_get_registers_used(
+      IWineD3DPixelShaderImpl *This,
+      CONST DWORD* pToken, DWORD* tempsUsed, DWORD* texUsed) {
+  
+    if (pToken == NULL)
+        return;
+
+    *tempsUsed = 0;
+    *texUsed = 0;
+
+    while (D3DVS_END() != *pToken) {
+        CONST SHADER_OPCODE* curOpcode;
+
+        /* Skip version */
+        if (pshader_is_version_token(*pToken)) {
+             ++pToken;
+             continue;
+
+        /* Skip comments */
+        } else if (pshader_is_comment_token(*pToken)) {
+             DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+             ++pToken;
+             pToken += comment_len;
+             continue;
+        }
+
+        /* Fetch opcode */       
+        curOpcode = pshader_program_get_opcode(This, *pToken);
+        ++pToken;
+
+        /* Skip declarations (for now) */
+        if (D3DSIO_DCL == curOpcode->opcode) {
+            pToken += curOpcode->num_params;
+            continue;
+
+        /* Skip definitions (for now) */
+        } else if (D3DSIO_DEF == curOpcode->opcode) {
+            pToken += curOpcode->num_params;
+            continue;
+
+        /* Set texture registers, and temporary registers */
+        } else {
+            int i;
+                        
+            for (i = 0; i < curOpcode->num_params; ++i) {
+                DWORD regtype = (((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
+                DWORD reg = (*pToken) & D3DSP_REGNUM_MASK;
+                if (D3DSPR_TEXTURE == regtype) 
+                    *texUsed |= (1 << reg);
+                if (D3DSPR_TEMP == regtype)
+                    *tempsUsed |= (1 << reg);
+                ++pToken;
+             }
+        }
+    }
+}
+
 /* NOTE: A description of how to parse tokens can be found at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/graphics/hh/graphics/usermodedisplaydriver_shader_cc8e4e05-f5c3-4ec0-8853-8ce07c1551b2.xml.asp */
 inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
@@ -977,6 +1035,9 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
     /* Keep a running length for pgmStr so that we don't have to caculate strlen every time we concatanate */
     unsigned int pgmLength = 0;
 
+    /* Keep bitmaps of used temporary and texture registers */
+    DWORD tempsUsed, texUsed;
+
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
     if (This->device->fixupVertexBufferSize < PGMSIZE) {
@@ -990,11 +1051,17 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
     pgmStr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, PGMSIZE); /* 64kb should be enough */
 #endif
 
-
     /* TODO: Think about using a first pass to work out what's required for the second pass. */
     for(i = 0; i < WINED3D_PSHADER_MAX_CONSTANTS; i++)
         This->constants[i] = 0;
 
+    /* First pass: figure out which temporary and texture registers are used */
+    pshader_program_get_registers_used(This, pToken, &tempsUsed, &texUsed);
+    TRACE("Texture registers used: %#lx, Temp registers used %#lx\n", texUsed, tempsUsed);
+
+    /* TODO: check register usage against GL/Directx limits, and fail if they're exceeded */
+
+    /* Second pass, process opcodes */
     if (NULL != pToken) {
         while (D3DPS_END() != *pToken) {
 #if 0 /* For pixel and vertex shader versions 2_0 and later, bits 24 through 27 specify the size in DWORDs of the instruction */
@@ -1005,6 +1072,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
             if (pshader_is_version_token(*pToken)) { /** version */
                 int numTemps;
                 int numConstants;
+                int numTex;
 
                 /* Extract version *10 into integer value (ie. 1.0 == 10, 1.1==11 etc */
                 version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
@@ -1016,21 +1084,28 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 case 10:
                 case 11:
                 case 12:
-                case 13:
+                case 13:numTemps=12;
+                        numConstants=8;
+                        numTex=4;
+                        break;
                 case 14: numTemps=12;
                         numConstants=8;
+                        numTex=6;
                         break;
                 case 20: numTemps=12;
                         numConstants=8;
+                        numTex=8;
                         FIXME("No work done yet to support ps2.0 in hw\n");
                         break;
                 case 30: numTemps=32;
                         numConstants=8;
+                        numTex=0; 
                         FIXME("No work done yet to support ps3.0 in hw\n");
                         break;
                 default:
                         numTemps=12;
                         numConstants=8;
+                        numTex=8; 
                         FIXME("Unrecognized pixel shader version!\n");
                 }
 
@@ -1038,15 +1113,18 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 strcpy(tmpLine, "!!ARBfp1.0\n");
                 addline(&lineNum, pgmStr, &pgmLength, tmpLine);
 
-                /* TODO: find out how many registers are really needed */
-                for(i = 0; i < 6; i++) {
-                    sprintf(tmpLine, "TEMP T%lu;\n", i);
-                    addline(&lineNum, pgmStr, &pgmLength, tmpLine);
+                for(i = 0; i < numTex; i++) {
+                    if (texUsed & (1 << i)) {
+                        sprintf(tmpLine, "TEMP T%lu;\n", i);
+                        addline(&lineNum, pgmStr, &pgmLength, tmpLine);
+                    }
                 }
 
-                for(i = 0; i < 6; i++) {
-                    sprintf(tmpLine, "TEMP R%lu;\n", i);
-                    addline(&lineNum, pgmStr, &pgmLength, tmpLine);
+                for(i = 0; i < numTemps; i++) {
+                    if (tempsUsed & (1 << i)) {
+                        sprintf(tmpLine, "TEMP R%lu;\n", i);
+                        addline(&lineNum, pgmStr, &pgmLength, tmpLine);
+                    }
                 }
 
                 sprintf(tmpLine, "TEMP TMP;\n");
@@ -1067,9 +1145,11 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 strcpy(tmpLine, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
                 addline(&lineNum, pgmStr, &pgmLength, tmpLine);
 
-                for(i = 0; i < 4; i++) {
-                    sprintf(tmpLine, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
-                    addline(&lineNum, pgmStr, &pgmLength, tmpLine);
+                for(i = 0; i < numTex; i++) {
+                    if (texUsed & (1 << i)) {
+                        sprintf(tmpLine, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
+                        addline(&lineNum, pgmStr, &pgmLength, tmpLine);
+                    }
                 }
 
                 ++pToken;
