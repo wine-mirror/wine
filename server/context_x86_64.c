@@ -248,17 +248,10 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
     to->ContextFlags |= flags & ~CONTEXT_DEBUG_REGISTERS;
 }
 
-/* retrieve the current instruction pointer of a thread */
-void *get_thread_ip( struct thread *thread )
+/* retrieve the current instruction pointer of a context */
+void *get_context_ip( const CONTEXT *context )
 {
-    CONTEXT context;
-    context.Rip = 0;
-    if (suspend_for_ptrace( thread ))
-    {
-        get_thread_context_ptrace( thread, CONTEXT_CONTROL, &context );
-        resume_after_ptrace( thread );
-    }
-    return (void *)context.Rip;
+    return (void *)context->Rip;
 }
 
 /* retrieve the thread context */

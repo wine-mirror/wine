@@ -121,6 +121,7 @@ extern void kill_all_processes( struct process *skip, int exit_code );
 extern void kill_process( struct process *process, struct thread *skip, int exit_code );
 extern void kill_console_processes( struct thread *renderer, int exit_code );
 extern void kill_debugged_processes( struct thread *debugger, int exit_code );
+extern void break_process( struct process *process );
 extern void detach_debugged_processes( struct thread *debugger );
 extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );

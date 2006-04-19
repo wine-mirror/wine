@@ -616,19 +616,9 @@ DECL_HANDLER(debug_process)
     }
     else if (debugger_attach( process, current ))
     {
-        struct debug_event_exception data;
-        struct thread *thread = get_process_first_thread( process );
-
         generate_startup_debug_events( process, NULL );
+        break_process( process );
         resume_process( process );
-
-        data.record.ExceptionCode    = EXCEPTION_BREAKPOINT;
-        data.record.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-        data.record.ExceptionRecord  = NULL;
-        data.record.ExceptionAddress = get_thread_ip( thread );
-        data.record.NumberParameters = 0;
-        data.first = 1;
-        generate_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data );
     }
     release_object( process );
 }
@@ -704,22 +694,12 @@ DECL_HANDLER(debug_break)
     struct process *process;
 
     reply->self = 0;
-    if (!(process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION /*FIXME*/ )))
-        return;
-    if (process != current->process)
+    if ((process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION /*FIXME*/ )))
     {
-        /* find a suitable thread to signal */
-        struct thread *thread;
-        LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
-        {
-            if (send_thread_signal( thread, SIGTRAP )) goto done;
-        }
-        set_error( STATUS_ACCESS_DENIED );
+        if (process != current->process) break_process( process );
+        else reply->self = 1;
+        release_object( process );
     }
-    else reply->self = 1;
-
-done:
-    release_object( process );
 }
 
 /* set debugger kill on exit flag */

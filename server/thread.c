@@ -128,6 +128,7 @@ inline static void init_thread_structure( struct thread *thread )
     thread->teb             = NULL;
     thread->debug_ctx       = NULL;
     thread->debug_event     = NULL;
+    thread->debug_break     = 0;
     thread->queue           = NULL;
     thread->wait            = NULL;
     thread->error           = 0;
@@ -759,6 +760,23 @@ void kill_thread( struct thread *thread, int violent_death )
     release_object( thread );
 }
 
+/* trigger a breakpoint event in a given thread */
+void break_thread( struct thread *thread )
+{
+    struct debug_event_exception data;
+
+    assert( thread->context );
+
+    data.record.ExceptionCode    = EXCEPTION_BREAKPOINT;
+    data.record.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    data.record.ExceptionRecord  = NULL;
+    data.record.ExceptionAddress = get_context_ip( thread->context );
+    data.record.NumberParameters = 0;
+    data.first = 1;
+    generate_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data );
+    thread->debug_break = 0;
+}
+
 /* take a snapshot of currently running threads */
 struct thread_snapshot *thread_snap( int *count )
 {
@@ -1091,6 +1109,7 @@ DECL_HANDLER(set_thread_context)
         {
             memcpy( thread->suspend_context, get_req_data(), sizeof(CONTEXT) );
             thread->context = thread->suspend_context;
+            if (thread->debug_break) break_thread( thread );
         }
     }
     else if (thread != current && !thread->context)

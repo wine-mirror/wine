@@ -56,6 +56,7 @@ struct thread
     struct list            mutex_list;    /* list of currently owned mutexes */
     struct debug_ctx      *debug_ctx;     /* debugger context if this thread is a debugger */
     struct debug_event    *debug_event;   /* debug event being sent to debugger */
+    int                    debug_break;   /* debug breakpoint pending? */
     struct msg_queue      *queue;         /* message queue */
     struct thread_wait    *wait;          /* current wait condition if sleeping */
     struct list            system_apc;    /* queue of system async procedure calls */
@@ -108,6 +109,7 @@ extern int wake_thread( struct thread *thread );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int violent_death );
+extern void break_thread( struct thread *thread );
 extern void wake_up( struct object *obj, int max );
 extern int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
                              enum apc_type type, int system, void *arg1, void *arg2, void *arg3 );
@@ -123,7 +125,7 @@ extern void sigchld_callback(void);
 extern int get_ptrace_pid( struct thread *thread );
 extern int suspend_for_ptrace( struct thread *thread );
 extern void resume_after_ptrace( struct thread *thread );
-extern void *get_thread_ip( struct thread *thread );
+extern void *get_context_ip( const CONTEXT *context );
 extern void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags );
 extern void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags );
 extern int send_thread_signal( struct thread *thread, int sig );

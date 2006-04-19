@@ -159,17 +159,10 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, unsigned int flags )
     context |= flags & (CONTEXT_CONTROL|CONTEXT_INTEGER);
 }
 
-/* retrieve the current instruction pointer of a thread */
-void *get_thread_ip( struct thread *thread )
+/* retrieve the current instruction pointer of a context */
+void *get_context_ip( const CONTEXT *context )
 {
-    CONTEXT context;
-    context.pc = 0;
-    if (suspend_for_ptrace( thread ))
-    {
-        get_thread_context_ptrace( thread, CONTEXT_CONTROL, &context );
-        resume_after_ptrace( thread );
-    }
-    return (void *)context.pc;
+    return (void *)context->pc;
 }
 
 /* retrieve the thread context */
