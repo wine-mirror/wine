@@ -290,6 +290,21 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
 }
 
 /***********************************************************************
+ *           rpcrt4_conn_read (internal)
+ *
+ * Reads data from a connection
+ */
+static int rpcrt4_conn_read(RpcConnection *Connection,
+                            void *buffer, unsigned int count)
+{
+  DWORD dwRead = 0;
+  if (!ReadFile(Connection->conn, buffer, count, &dwRead, NULL) &&
+      (GetLastError() != ERROR_MORE_DATA))
+    return -1;
+  return dwRead;
+}
+
+/***********************************************************************
  *           RPCRT4_Receive (internal)
  * 
  * Receive a packet from connection and merge the fragments.
@@ -298,7 +313,8 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
                           PRPC_MESSAGE pMsg)
 {
   RPC_STATUS status;
-  DWORD dwRead, hdr_length;
+  DWORD hdr_length;
+  LONG dwRead;
   unsigned short first_flag;
   unsigned long data_length;
   unsigned long buffer_length;
@@ -310,13 +326,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   TRACE("(%p, %p, %p)\n", Connection, Header, pMsg);
 
   /* read packet common header */
-  if (!ReadFile(Connection->conn, &common_hdr, sizeof(common_hdr), &dwRead, NULL)) {
-    if (GetLastError() != ERROR_MORE_DATA) {
-      WARN("ReadFile failed with error %ld\n", GetLastError());
-      status = RPC_S_PROTOCOL_ERROR;
-      goto fail;
-    }
-  }
+  dwRead = rpcrt4_conn_read(Connection, &common_hdr, sizeof(common_hdr));
   if (dwRead != sizeof(common_hdr)) {
     WARN("Short read of header, %ld/%d bytes\n", dwRead, sizeof(common_hdr));
     status = RPC_S_PROTOCOL_ERROR;
@@ -342,14 +352,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   memcpy(*Header, &common_hdr, sizeof(common_hdr));
 
   /* read the rest of packet header */
-  if (!ReadFile(Connection->conn, &(*Header)->common + 1,
-                hdr_length - sizeof(common_hdr), &dwRead, NULL)) {
-    if (GetLastError() != ERROR_MORE_DATA) {
-      WARN("ReadFile failed with error %ld\n", GetLastError());
-      status = RPC_S_PROTOCOL_ERROR;
-      goto fail;
-    }
-  }
+  dwRead = rpcrt4_conn_read(Connection, &(*Header)->common + 1, hdr_length - sizeof(common_hdr));
   if (dwRead != hdr_length - sizeof(common_hdr)) {
     WARN("bad header length, %ld/%ld bytes\n", dwRead, hdr_length - sizeof(common_hdr));
     status = RPC_S_PROTOCOL_ERROR;
@@ -387,13 +390,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
     }
 
     if (data_length == 0) dwRead = 0; else
-    if (!ReadFile(Connection->conn, buffer_ptr, data_length, &dwRead, NULL)) {
-      if (GetLastError() != ERROR_MORE_DATA) {
-        WARN("ReadFile failed with error %ld\n", GetLastError());
-        status = RPC_S_PROTOCOL_ERROR;
-        goto fail;
-      }
-    }
+    dwRead = rpcrt4_conn_read(Connection, buffer_ptr, data_length);
     if (dwRead != data_length) {
       WARN("bad data length, %ld/%ld\n", dwRead, data_length);
       status = RPC_S_PROTOCOL_ERROR;
@@ -413,13 +410,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
       TRACE("next header\n");
 
       /* read the header of next packet */
-      if (!ReadFile(Connection->conn, *Header, hdr_length, &dwRead, NULL)) {
-        if (GetLastError() != ERROR_MORE_DATA) {
-          WARN("ReadFile failed with error %ld\n", GetLastError());
-          status = GetLastError();
-          goto fail;
-        }
-      }
+      dwRead = rpcrt4_conn_read(Connection, *Header, hdr_length);
       if (dwRead != hdr_length) {
         WARN("invalid packet header size (%ld)\n", dwRead);
         status = RPC_S_PROTOCOL_ERROR;
