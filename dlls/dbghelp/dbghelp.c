@@ -171,7 +171,8 @@ static BOOL check_live_target(struct process* pcs)
 {
     if (!GetProcessId(pcs->handle)) return FALSE;
     if (GetEnvironmentVariableA("DBGHELP_NOLIVE", NULL, 0)) return FALSE;
-    return elf_read_wine_loader_dbg_info(pcs);
+    elf_read_wine_loader_dbg_info(pcs);
+    return TRUE;
 }
 
 /******************************************************************
