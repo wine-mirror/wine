@@ -21,8 +21,12 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -81,6 +85,18 @@ static const char *build_new_path( const char *path, const char *name )
     return ret;
 }
 
+static void check_vmsplit( void *stack )
+{
+    if (stack < (void *)0x80000000)
+    {
+        /* if the stack is below 0x80000000, assume we can safely try a munmap there */
+        if (munmap( (void *)0x80000000, 1 ) == -1 && errno == EINVAL)
+            fprintf( stderr,
+                     "Warning: memory above 0x80000000 doesn't seem to be accessible.\n"
+                     "Wine requires a 3G/1G user/kernel memory split to work properly.\n" );
+    }
+}
+
 /**********************************************************************
  *           main
  */
@@ -103,6 +119,7 @@ int main( int argc, char *argv[] )
         loader = new_name;
     }
 
+    check_vmsplit( &argc );
     wine_exec_wine_binary( NULL, argv, loader );
     fprintf( stderr, "wine: could not exec %s\n", threads );
     exit(1);
