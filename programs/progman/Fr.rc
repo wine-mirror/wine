@@ -68,7 +68,7 @@ MAIN_MENU MENU
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Nouveau"
 {
 RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
@@ -83,7 +83,7 @@ PUSHBUTTON    "&Aide",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 /* Dialog `Move' */
 
 DIALOG_MOVE DIALOG 0, 0, 250, 65
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Déplacer un programme"
 {
 LTEXT         "Déplacer le programme :",    IDIGNORE,            5,  5,  90, 15
@@ -100,7 +100,7 @@ PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTO
 /* Dialog `Copy' */
 
 DIALOG_COPY DIALOG 0, 0, 250, 65
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Copier un programme"
 {
 LTEXT         "Copier le programme :",    IDIGNORE,            5,  5,  90, 15
@@ -117,7 +117,7 @@ PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTO
 /* Dialog `Group attributes' */
 
 DIALOG_GROUP DIALOG 0, 0, 230, 65
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Propriétés de groupe"
 {
 LTEXT     "&Nom :", PM_DESCRIPTION_TXT,   05, 18,  50, 10
@@ -132,7 +132,7 @@ PUSHBUTTON    "&Aide",          PM_HELP,             155, 45,  60, 15, WS_TABSTO
 /* Dialog `Program attributes' */
 
 DIALOG_PROGRAM DIALOG 0, 0, 250, 105
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Propriétés de programme"
 {
 LTEXT         "&Nom :",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
@@ -156,7 +156,7 @@ PUSHBUTTON    "&Aide",                 PM_HELP,             185, 85,  60, 15, WS
 /* Dialog `Symbol' */
 
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Changer l'icône"
 {
 LTEXT     "&Nom du fichier :",    PM_ICON_FILE_TXT,    5, 15,  40, 10
@@ -173,7 +173,7 @@ PUSHBUTTON    "&Aide",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 /* Dialog `Execute' */
 
 DIALOG_EXECUTE DIALOG 0, 0, 200, 85
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Exécuter un programme"
 {
 LTEXT     "&Ligne de commande :", IDIGNORE,   05, 15, 120, 10

@@ -66,7 +66,7 @@ POPUP "A&yuda" {
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Nuevo"
 {
 RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
@@ -81,7 +81,7 @@ PUSHBUTTON    "&Ayuda",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 /* Dialog `Move' */
 
 DIALOG_MOVE DIALOG 0, 0, 250, 65
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Mover programa"
 {
 LTEXT         "Mover programa:",    IDIGNORE,            5,  5,  90, 15
@@ -98,7 +98,7 @@ PUSHBUTTON    "&Ayuda",            PM_HELP,           185, 45,  60, 15, WS_TABST
 /* Dialog `Copy' */
 
 DIALOG_COPY DIALOG 0, 0, 250, 65
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Copar programa"
 {
 LTEXT         "Copiar programa:",    IDIGNORE,            5,  5,  90, 15
@@ -115,7 +115,7 @@ PUSHBUTTON    "&Ayudar",            PM_HELP,           185, 45,  60, 15, WS_TABS
 /* Dialog `Group attributes' */
 
 DIALOG_GROUP DIALOG 0, 0, 230, 65
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Atributos del grupo de programa"
 {
 LTEXT     "&Descripción:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
@@ -130,7 +130,7 @@ PUSHBUTTON    "&Ayuda",          PM_HELP,             155, 45,  60, 15, WS_TABST
 /* Dialog `Program attributes' */
 
 DIALOG_PROGRAM DIALOG 0, 0, 250, 105
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Atributos del programa"
 {
 LTEXT         "&Descripción:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
@@ -154,7 +154,7 @@ PUSHBUTTON    "&Ayuda",                 PM_HELP,             185, 85,  60, 15, W
 /* Dialog `Symbol' */
 
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Cambiar icono"
 {
 LTEXT     "&Nombre de archivo:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
@@ -171,7 +171,7 @@ PUSHBUTTON    "&Ayuda",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 /* Dialog `Execute' */
 
 DIALOG_EXECUTE DIALOG 0, 0, 200, 85
-STYLE DS_MODALFRAME
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Ejecutar programa"
 {
 LTEXT     "Línea de &comandos:", IDIGNORE,   05, 15, 120, 10
