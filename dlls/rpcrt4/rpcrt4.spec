@@ -431,7 +431,7 @@
 @ stub RpcMgmtEpUnregister
 @ stub RpcMgmtInqComTimeout
 @ stub RpcMgmtInqDefaultProtectLevel
-@ stub RpcMgmtInqIfIds
+@ stdcall RpcMgmtInqIfIds(ptr ptr)
 @ stub RpcMgmtInqParameter # win9x
 @ stub RpcMgmtInqServerPrincNameA
 @ stub RpcMgmtInqServerPrincNameW

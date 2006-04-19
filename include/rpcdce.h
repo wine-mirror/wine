@@ -71,6 +71,12 @@ typedef struct _RPC_IF_ID
   unsigned short VersMinor;
 } RPC_IF_ID;
 
+typedef struct
+{
+  unsigned long Count;
+  RPC_IF_ID *IfId[1];
+} RPC_IF_ID_VECTOR;
+
 #define RPC_C_BINDING_INFINITE_TIMEOUT 10
 #define RPC_C_BINDING_MIN_TIMEOUT 0
 #define RPC_C_BINDING_DEFAULT_TIMEOUT 5
@@ -230,6 +236,9 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcMgmtStopServerListening( RPC_BINDING_HANDLE Binding );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcMgmtInqIfIds( RPC_BINDING_HANDLE Binding, RPC_IF_ID_VECTOR** IfIdVector );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv );
