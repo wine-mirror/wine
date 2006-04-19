@@ -842,3 +842,29 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
     }
     return STATUS_SUCCESS;
 }
+
+NTSTATUS WINAPI NtCreateIoCompletion( PHANDLE CompletionPort, ACCESS_MASK DesiredAccess,
+                                      POBJECT_ATTRIBUTES ObjectAttributes, ULONG NumberOfConcurrentThreads )
+{
+    FIXME("(%p, %lx, %p, %ld)\n", CompletionPort, DesiredAccess,
+          ObjectAttributes, NumberOfConcurrentThreads);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS WINAPI NtSetIoCompletion( HANDLE CompletionPort, ULONG_PTR CompletionKey,
+                                   PIO_STATUS_BLOCK iosb, ULONG NumberOfBytesTransferred,
+                                   ULONG NumberOfBytesToTransfer )
+{
+    FIXME("(%p, %lx, %p, %ld, %ld)\n", CompletionPort, CompletionKey,
+          iosb, NumberOfBytesTransferred, NumberOfBytesToTransfer);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE CompletionPort, PULONG_PTR CompletionKey,
+                                      PIO_STATUS_BLOCK iosb, PULONG OperationStatus,
+                                      PLARGE_INTEGER WaitTime )
+{
+    FIXME("(%p, %p, %p, %p, %p)\n", CompletionPort, CompletionKey,
+          iosb, OperationStatus, WaitTime);
+    return STATUS_NOT_IMPLEMENTED;
+}

@@ -124,7 +124,7 @@
 @ stdcall NtCreateEvent(long long long long long)
 @ stub NtCreateEventPair
 @ stdcall NtCreateFile(ptr long ptr ptr long long long ptr long long ptr)
-@ stub NtCreateIoCompletion
+@ stdcall NtCreateIoCompletion(ptr long ptr long)
 # @ stub NtCreateJobObject
 # @ stub NtCreateJobSet
 @ stdcall NtCreateKey(ptr long ptr long ptr long long)
@@ -285,7 +285,7 @@
 @ stdcall NtReleaseMutant(long ptr)
 @ stub NtReleaseProcessMutant
 @ stdcall NtReleaseSemaphore(long long ptr)
-@ stub NtRemoveIoCompletion
+@ stdcall NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
 # @ stub NtRemoveProcessDebug
 # @ stub NtRenameKey
 @ stdcall NtReplaceKey(ptr long ptr)
@@ -328,7 +328,7 @@
 @ stdcall NtSetInformationThread(long long ptr long)
 @ stdcall NtSetInformationToken(long long ptr long)
 @ stdcall NtSetIntervalProfile(long long)
-@ stub NtSetIoCompletion
+@ stdcall NtSetIoCompletion(ptr long ptr long long)
 @ stub NtSetLdtEntries
 @ stub NtSetLowEventPair
 @ stub NtSetLowWaitHighEventPair
