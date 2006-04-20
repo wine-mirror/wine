@@ -6167,7 +6167,7 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     * NM_CLICK with the NMMOUSE structure. */
     nmmouse.dwHitInfo = nHit;
 
-    if (nmmouse.dwHitInfo < 0)
+    if (nHit < 0)
         nmmouse.dwItemSpec = -1;
     else
     {
