@@ -54,4 +54,21 @@ typedef struct
      *  call. */
 } PARAM_ATTRIBUTES;
 
+typedef struct
+{
+    unsigned char ServerMustSize : 1; /* 0x01 - the server must perform a
+     *  sizing pass. */
+    unsigned char ClientMustSize : 1; /* 0x02 - the client must perform a
+     *  sizing pass. */
+    unsigned char HasReturn : 1; /* 0x04 - procedure has a return value. */
+    unsigned char HasPipes : 1; /* 0x08 - the pipe package should be used. */
+    unsigned char Unused : 1; /* 0x10 - not used */
+    unsigned char HasAsyncUuid : 1; /* 0x20 - indicates an asynchronous DCOM
+     *  procedure. */
+    unsigned char HasExtensions : 1; /* 0x40 - indicates that Win2000
+     *  extensions are in use. */
+    unsigned char HasAsyncHandle : 1; /* 0x80 - indicates an asynchronous RPC
+     *  procedure. */
+} INTERPRETER_OPT_FLAGS, *PINTERPRETER_OPT_FLAGS;
+
 #endif

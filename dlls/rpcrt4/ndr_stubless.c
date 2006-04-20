@@ -198,21 +198,7 @@ typedef struct _NDR_PROC_PARTIAL_OIF_HEADER
      * sizing pass */
     unsigned short constant_server_buffer_size;
 
-    /* -Oif flags:
-     * RPC_FC_PROC_OI2F_SRVMUSTSIZE = 0x01 - the server must perform a
-     *   sizing pass.
-     * RPC_FC_PROC_OI2F_CLTMUSTSIZE = 0x02 - the client must perform a
-     *   sizing pass.
-     * RPC_FC_PROC_OI2F_HASRETURN = 0x04 - procedure has a return value.
-     * RPC_FC_PROC_OI2F_HASPIPES = 0x08 - the pipe package should be used.
-     * RPC_FC_PROC_OI2F_HASASYNCUUID = 0x20 - indicates an asynchronous DCOM
-     *   procedure.
-     * RPC_FC_PROC_OI2F_HASEXTS = 0x40 - indicates that Windows 2000
-     *   extensions are in use.
-     * RPC_FC_PROC_OI2F_HASASYNCHND = 0x80 - indicates an asynchronous RPC
-     *   procedure.
-     */
-    unsigned char Oif_flags;
+    INTERPRETER_OPT_FLAGS Oi2Flags;
 
     /* number of params */
     unsigned char number_of_params;
@@ -406,6 +392,19 @@ static void WINAPI dump_RPC_FC_PROC_PF(PARAM_ATTRIBUTES param_attributes)
     if (param_attributes.ServerAllocSize) TRACE(" ServerAllocSize = %d", param_attributes.ServerAllocSize * 8);
 }
 
+static void WINAPI dump_INTERPRETER_OPT_FLAGS(INTERPRETER_OPT_FLAGS Oi2Flags)
+{
+    if (Oi2Flags.ServerMustSize) TRACE(" ServerMustSize");
+    if (Oi2Flags.ClientMustSize) TRACE(" ClientMustSize");
+    if (Oi2Flags.HasReturn) TRACE(" HasReturn");
+    if (Oi2Flags.HasPipes) TRACE(" HasPipes");
+    if (Oi2Flags.Unused) TRACE(" Unused");
+    if (Oi2Flags.HasAsyncUuid) TRACE(" HasAsyncUuid");
+    if (Oi2Flags.HasExtensions) TRACE(" HasExtensions");
+    if (Oi2Flags.HasAsyncHandle) TRACE(" HasAsyncHandle");
+    TRACE("\n");
+}
+
 /* FIXME: this will be different on other plaftorms than i386 */
 #define ARG_FROM_OFFSET(args, offset) (*(unsigned char **)args + offset)
 
@@ -431,7 +430,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     /* counter */
     unsigned short i;
     /* cache of Oif_flags from v2 procedure header */
-    unsigned char Oif_flags = 0;
+    INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
     /* cache of extension flags from NDR_PROC_EXTENSION */
     unsigned char ext_flags = 0;
     /* the type of pass we are currently doing */
@@ -551,15 +550,15 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         NDR_PROC_PARTIAL_OIF_HEADER * pOIFHeader =
             (NDR_PROC_PARTIAL_OIF_HEADER*)&pFormat[current_offset];
 
-        Oif_flags = pOIFHeader->Oif_flags;
+        Oif_flags = pOIFHeader->Oi2Flags;
         number_of_params = pOIFHeader->number_of_params;
 
         current_offset += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
     }
 
-    TRACE("Oif_flags = 0x%02x\n", Oif_flags);
+    TRACE("Oif_flags = "); dump_INTERPRETER_OPT_FLAGS(Oif_flags);
 
-    if (Oif_flags & RPC_FC_PROC_OI2F_HASEXTS)
+    if (Oif_flags.HasExtensions)
     {
         NDR_PROC_EXTENSION * pExtensions =
             (NDR_PROC_EXTENSION *)&pFormat[current_offset];
@@ -596,7 +595,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCSSALLOC)
         NdrRpcSmSetClientToOsf(&stubMsg);
 
-    if (Oif_flags & RPC_FC_PROC_OI2F_HASPIPES)
+    if (Oif_flags.HasPipes)
     {
         FIXME("pipes not supported yet\n");
         RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
@@ -628,7 +627,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
             /* allocate the buffer */
             if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
                 NdrProxyGetBuffer(This, &stubMsg);
-            else if (Oif_flags & RPC_FC_PROC_OI2F_HASPIPES)
+            else if (Oif_flags.HasPipes)
                 /* NdrGetPipeBuffer(...) */
                 FIXME("pipes not supported yet\n");
             else
@@ -648,7 +647,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
              * params */
             if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
                 NdrProxySendReceive(This, &stubMsg);
-            else if (Oif_flags & RPC_FC_PROC_OI2F_HASPIPES)
+            else if (Oif_flags.HasPipes)
                 /* NdrPipesSendReceive(...) */
                 FIXME("pipes not supported yet\n");
             else
@@ -894,7 +893,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         /* NdrCorrelationFree(&stubMsg); */
     }
 
-    if (Oif_flags & RPC_FC_PROC_OI2F_HASPIPES)
+    if (Oif_flags.HasPipes)
     {
         /* NdrPipesDone(...) */
     }
@@ -997,7 +996,7 @@ long WINAPI NdrStubCall2(
     /* counter */
     unsigned short i;
     /* cache of Oif_flags from v2 procedure header */
-    unsigned char Oif_flags = 0;
+    INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
     /* cache of extension flags from NDR_PROC_EXTENSION */
     unsigned char ext_flags = 0;
     /* the type of pass we are currently doing */
@@ -1084,15 +1083,15 @@ long WINAPI NdrStubCall2(
         NDR_PROC_PARTIAL_OIF_HEADER * pOIFHeader =
             (NDR_PROC_PARTIAL_OIF_HEADER*)&pFormat[current_offset];
 
-        Oif_flags = pOIFHeader->Oif_flags;
+        Oif_flags = pOIFHeader->Oi2Flags;
         number_of_params = pOIFHeader->number_of_params;
 
         current_offset += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
     }
 
-    TRACE("Oif_flags = 0x%02x\n", Oif_flags);
+    TRACE("Oif_flags = "); dump_INTERPRETER_OPT_FLAGS(Oif_flags);
 
-    if (Oif_flags & RPC_FC_PROC_OI2F_HASEXTS)
+    if (Oif_flags.HasExtensions)
     {
         NDR_PROC_EXTENSION * pExtensions =
             (NDR_PROC_EXTENSION *)&pFormat[current_offset];
@@ -1125,7 +1124,7 @@ long WINAPI NdrStubCall2(
           FIXME("Set RPCSS memory allocation routines\n");
 #endif
 
-    if (Oif_flags & RPC_FC_PROC_OI2F_HASPIPES)
+    if (Oif_flags.HasPipes)
     {
         FIXME("pipes not supported yet\n");
         RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
@@ -1448,7 +1447,7 @@ long WINAPI NdrStubCall2(
         /* NdrCorrelationFree(&stubMsg); */
     }
 
-    if (Oif_flags & RPC_FC_PROC_OI2F_HASPIPES)
+    if (Oif_flags.HasPipes)
     {
         /* NdrPipesDone(...) */
     }
