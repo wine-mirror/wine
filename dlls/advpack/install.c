@@ -58,6 +58,9 @@ typedef HRESULT (*iterate_fields_func)(HINF hinf, PCWSTR field, void *arg);
 
 /* Advanced INF commands */
 static const WCHAR RegisterOCXs[] = {'R','e','g','i','s','t','e','r','O','C','X','s',0};
+static const WCHAR RunPostSetupCommands[] = {
+    'R','u','n','P','o','s','t','S','e','t','u','p','C','o','m','m','a','n','d','s',0
+};
 
 /* Advanced INF callbacks */
 static HRESULT register_ocxs_callback(HINF hinf, PCWSTR field, void *arg)
@@ -88,6 +91,30 @@ static HRESULT register_ocxs_callback(HINF hinf, PCWSTR field, void *arg)
             hr = E_FAIL;
 
         FreeLibrary(hm);
+    }
+
+    return hr;
+}
+
+static HRESULT run_post_setup_commands_callback(HINF hinf, PCWSTR field, void *arg)
+{
+    ADVInfo *info = (ADVInfo *)arg;
+    INFCONTEXT context;
+    HRESULT hr = S_OK;
+    DWORD size;
+
+    BOOL ok = SetupFindFirstLineW(hinf, field, NULL, &context);
+
+    for (; ok; ok = SetupFindNextLine(&context, &context))
+    {
+        WCHAR buffer[MAX_INF_STRING_LENGTH];
+
+        if (!SetupGetLineTextW(&context, NULL, NULL, NULL, buffer,
+                               MAX_INF_STRING_LENGTH, &size))
+            continue;
+
+        if (launch_exe(buffer, info->working_dir, NULL))
+            hr = E_FAIL;
     }
 
     return hr;
@@ -222,6 +249,13 @@ static HRESULT adv_install(ADVInfo *info)
 
     hr = iterate_section_fields(info->hinf, info->install_sec,
                                 RegisterOCXs, register_ocxs_callback, NULL);
+    if (hr != S_OK)
+        return hr;
+
+    hr = iterate_section_fields(info->hinf, info->install_sec, RunPostSetupCommands,
+                                run_post_setup_commands_callback, info);
+    if (hr != S_OK)
+        return hr;
 
     return hr;
 }
