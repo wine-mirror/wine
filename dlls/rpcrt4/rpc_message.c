@@ -238,15 +238,6 @@ VOID RPCRT4_FreeHeader(RpcPktHdr *Header)
   HeapFree(GetProcessHeap(), 0, Header);
 }
 
-static int rpcrt4_conn_write(RpcConnection *Connection,
-                             const void *buffer, unsigned int count)
-{
-  DWORD dwWritten = 0;
-  if (!WriteFile(Connection->conn, buffer, count, &dwWritten, NULL))
-    return -1;
-  return dwWritten;
-}
-
 /***********************************************************************
  *           RPCRT4_Send (internal)
  * 
@@ -299,21 +290,6 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
   }
 
   return RPC_S_OK;
-}
-
-/***********************************************************************
- *           rpcrt4_conn_read (internal)
- *
- * Reads data from a connection
- */
-int rpcrt4_conn_read(RpcConnection *Connection,
-                     void *buffer, unsigned int count)
-{
-  DWORD dwRead = 0;
-  if (!ReadFile(Connection->conn, buffer, count, &dwRead, NULL) &&
-      (GetLastError() != ERROR_MORE_DATA))
-    return -1;
-  return dwRead;
 }
 
 /***********************************************************************

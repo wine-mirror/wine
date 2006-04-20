@@ -23,20 +23,31 @@
 
 #include "wine/rpcss_shared.h"
 
+struct protseq_ops;
+
 typedef struct _RpcConnection
 {
   struct _RpcConnection* Next;
   struct _RpcBinding* Used;
   BOOL server;
-  LPSTR Protseq;
   LPSTR NetworkAddr;
   LPSTR Endpoint;
+  struct protseq_ops *ops;
   HANDLE conn, thread;
   OVERLAPPED ovl;
   USHORT MaxTransmissionSize;
   /* The active interface bound to server. */
   RPC_SYNTAX_IDENTIFIER ActiveInterface;
 } RpcConnection;
+
+struct protseq_ops {
+  char *name;
+  RPC_STATUS (*open_connection)(RpcConnection *conn);
+  HANDLE (*get_connect_wait_handle)(RpcConnection *conn);
+  int (*read)(RpcConnection *conn, void *buffer, unsigned int len);
+  int (*write)(RpcConnection *conn, const void *buffer, unsigned int len);
+  int (*close)(RpcConnection *conn);
+};
 
 /* don't know what MS's structure looks like */
 typedef struct _RpcBinding
@@ -62,7 +73,7 @@ void RPCRT4_strfree(LPSTR src);
 #define RPCRT4_strdupA(x) RPCRT4_strndupA((x),-1)
 #define RPCRT4_strdupW(x) RPCRT4_strndupW((x),-1)
 
-RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint, LPSTR NetworkOptions, RpcBinding* Binding);
+RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCSTR NetworkOptions, RpcBinding* Binding);
 RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection);
 RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection);
 RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection);
@@ -83,7 +94,31 @@ BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPC
 HANDLE RPCRT4_GetMasterMutex(void);
 HANDLE RPCRT4_RpcssNPConnect(void);
 
-int rpcrt4_conn_read(RpcConnection *Connection,
-                     void *buffer, unsigned int count);
+static inline const char *rpcrt4_conn_get_name(RpcConnection *Connection)
+{
+  return Connection->ops->name;
+}
+
+static inline int rpcrt4_conn_read(RpcConnection *Connection,
+                     void *buffer, unsigned int len)
+{
+  return Connection->ops->read(Connection, buffer, len);
+}
+
+static inline int rpcrt4_conn_write(RpcConnection *Connection,
+                     const void *buffer, unsigned int len)
+{
+  return Connection->ops->write(Connection, buffer, len);
+}
+
+static inline int rpcrt4_conn_close(RpcConnection *Connection)
+{
+  return Connection->ops->close(Connection);
+}
+
+static inline HANDLE rpcrt4_conn_get_wait_object(RpcConnection *Connection)
+{
+  return Connection->ops->get_connect_wait_handle(Connection);
+}
 
 #endif

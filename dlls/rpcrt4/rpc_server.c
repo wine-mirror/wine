@@ -455,11 +455,6 @@ static void RPCRT4_new_client(RpcConnection* conn)
   CloseHandle( thread );
 }
 
-static HANDLE rpcrt4_conn_get_wait_object(RpcConnection *conn)
-{
-  return conn->ovl.hEvent;
-}
-
 static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
 {
   HANDLE m_event = mgr_event, b_handle;

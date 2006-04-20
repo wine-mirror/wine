@@ -99,13 +99,20 @@ void RPCRT4_strfree(LPSTR src)
   HeapFree(GetProcessHeap(), 0, src);
 }
 
-RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint, LPSTR NetworkOptions, RpcBinding* Binding)
+static struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq);
+
+RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCSTR NetworkOptions, RpcBinding* Binding)
 {
+  struct protseq_ops *ops;
   RpcConnection* NewConnection;
+
+  ops = rpcrt4_get_protseq_ops(Protseq);
+  if (!ops)
+    return RPC_S_PROTSEQ_NOT_SUPPORTED;
 
   NewConnection = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection));
   NewConnection->server = server;
-  NewConnection->Protseq = RPCRT4_strdupA(Protseq);
+  NewConnection->ops = ops;
   NewConnection->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
   NewConnection->Endpoint = RPCRT4_strdupA(Endpoint);
   NewConnection->Used = Binding;
@@ -124,7 +131,6 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
   RPCRT4_CloseConnection(Connection);
   RPCRT4_strfree(Connection->Endpoint);
   RPCRT4_strfree(Connection->NetworkAddr);
-  RPCRT4_strfree(Connection->Protseq);
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;
 }
@@ -228,27 +234,32 @@ static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
   return r;
 }
 
-RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
+static HANDLE rpcrt4_conn_np_get_connect_event(RpcConnection *conn)
 {
-  TRACE("(Connection == ^%p)\n", Connection);
-
-  /* already connected? */
-  if (Connection->conn)
-     return RPC_S_OK;
-
-  if (strcmp(Connection->Protseq, "ncalrpc") == 0) 
-    return rpcrt4_ncalrpc_open(Connection);
-
-  if (strcmp(Connection->Protseq, "ncacn_np") == 0) 
-    return rpcrt4_ncacn_np_open(Connection);
-
-  ERR("protseq %s not supported\n", Connection->Protseq);
-  return RPC_S_PROTSEQ_NOT_SUPPORTED;
+  return conn->ovl.hEvent;
 }
 
-RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection)
+static int rpcrt4_conn_np_read(RpcConnection *Connection,
+                        void *buffer, unsigned int count)
 {
-  TRACE("(Connection == ^%p)\n", Connection);
+  DWORD dwRead = 0;
+  if (!ReadFile(Connection->conn, buffer, count, &dwRead, NULL) &&
+      (GetLastError() != ERROR_MORE_DATA))
+    return -1;
+  return dwRead;
+}
+
+static int rpcrt4_conn_np_write(RpcConnection *Connection,
+                             const void *buffer, unsigned int count)
+{
+  DWORD dwWritten = 0;
+  if (!WriteFile(Connection->conn, buffer, count, &dwWritten, NULL))
+    return -1;
+  return dwWritten;
+}
+
+static int rpcrt4_conn_np_close(RpcConnection *Connection)
+{
   if (Connection->conn) {
     FlushFileBuffers(Connection->conn);
     CloseHandle(Connection->conn);
@@ -258,14 +269,64 @@ RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection)
     CloseHandle(Connection->ovl.hEvent);
     Connection->ovl.hEvent = 0;
   }
+  return 0;
+}
+
+struct protseq_ops protseq_list[] = {
+  { "ncacn_np",
+    rpcrt4_ncalrpc_open,
+    rpcrt4_conn_np_get_connect_event,
+    rpcrt4_conn_np_read,
+    rpcrt4_conn_np_write,
+    rpcrt4_conn_np_close,
+  },
+  { "ncalrpc",
+    rpcrt4_ncacn_np_open,
+    rpcrt4_conn_np_get_connect_event,
+    rpcrt4_conn_np_read,
+    rpcrt4_conn_np_write,
+    rpcrt4_conn_np_close,
+  },
+};
+
+#define MAX_PROTSEQ (sizeof protseq_list / sizeof protseq_list[0])
+
+static struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq)
+{
+  int i;
+  for(i=0; i<MAX_PROTSEQ; i++)
+    if (!strcmp(protseq_list[i].name, protseq))
+      return &protseq_list[i];
+  return NULL;
+}
+
+RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
+{
+  TRACE("(Connection == ^%p)\n", Connection);
+
+  /* already connected? */
+  if (Connection->conn)
+    return RPC_S_OK;
+
+  return Connection->ops->open_connection(Connection);
+}
+
+RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection)
+{
+  TRACE("(Connection == ^%p)\n", Connection);
+  rpcrt4_conn_close(Connection);
   return RPC_S_OK;
 }
 
 RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* OldConnection)
 {
   RpcConnection* NewConnection;
-  RPC_STATUS err = RPCRT4_CreateConnection(&NewConnection, OldConnection->server, OldConnection->Protseq,
-                                           OldConnection->NetworkAddr, OldConnection->Endpoint, NULL, NULL);
+  RPC_STATUS err;
+
+  err = RPCRT4_CreateConnection(&NewConnection, OldConnection->server,
+                                rpcrt4_conn_get_name(OldConnection),
+                                OldConnection->NetworkAddr,
+                                OldConnection->Endpoint, NULL, NULL);
   if (err == RPC_S_OK) {
     /* because of the way named pipes work, we'll transfer the connected pipe
      * to the child, then reopen the server binding to continue listening */
@@ -378,7 +439,7 @@ RPC_STATUS RPCRT4_MakeBinding(RpcBinding** Binding, RpcConnection* Connection)
   TRACE("(RpcBinding == ^%p, Connection == ^%p)\n", Binding, Connection);
 
   RPCRT4_AllocBinding(&NewBinding, Connection->server);
-  NewBinding->Protseq = RPCRT4_strdupA(Connection->Protseq);
+  NewBinding->Protseq = RPCRT4_strdupA(rpcrt4_conn_get_name(Connection));
   NewBinding->NetworkAddr = RPCRT4_strdupA(Connection->NetworkAddr);
   NewBinding->Endpoint = RPCRT4_strdupA(Connection->Endpoint);
   NewBinding->FromConn = Connection;
