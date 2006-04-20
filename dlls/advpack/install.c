@@ -229,9 +229,7 @@ HRESULT WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
     HINF hinf;
     void *callback_context;
 
-    TRACE("%p, %s, %s, %s, %s\n", setup->hwnd, debugstr_a(setup->title),
-          debugstr_a(setup->inf_name), debugstr_a(setup->dir),
-          debugstr_a(setup->section_name));
+    TRACE("(%p)\n", setup);
 
     hinf = SetupOpenInfFileA(setup->inf_name, NULL, INF_STYLE_WIN4, NULL);
     if (hinf == INVALID_HANDLE_VALUE) return HRESULT_FROM_WIN32(GetLastError());
