@@ -123,6 +123,7 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
 {
     HDC phdc;
     Scriptcache *pScriptcache;
+    TEXTMETRICW ptm;
 
     TRACE("%p,%p,%p\n", hdc, psc, sfp);
     if  (!hdc && !*psc) {
@@ -146,9 +147,12 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
     /* return something sensible? */
     if (NULL != sfp) {
         sfp->wgBlank       = 0;
-        sfp->wgDefault     = 0;
+        if  (GetTextMetricsW(phdc, &ptm)) 
+            sfp->wgDefault = ptm.tmDefaultChar;
+        else
+            sfp->wgDefault = 0;
         sfp->wgInvalid     = 0;
-        sfp->wgKashida     = 1;
+        sfp->wgKashida     = 0xffff;
         sfp->iKashidaWidth = 0;
     }
     return 0;
