@@ -1010,9 +1010,8 @@ long WINAPI NdrStubCall2(
     int current_offset;
     /* -Oif or -Oicf generated format */
     BOOL bV2Format = FALSE;
-    /* the return value (not from this function, but to be put back onto
-     * the wire */
-    LONG_PTR RetVal = 0;
+    /* location to put retval into */
+    LONG_PTR *retval_ptr = NULL;
 
     TRACE("pThis %p, pChannel %p, pRpcMsg %p, pdwStubPhase %p\n", pThis, pChannel, pRpcMsg, pdwStubPhase);
 
@@ -1173,16 +1172,30 @@ long WINAPI NdrStubCall2(
             /* call the server function */
             if (pServerInfo->ThunkTable && pServerInfo->ThunkTable[pRpcMsg->ProcNum])
                 pServerInfo->ThunkTable[pRpcMsg->ProcNum](&stubMsg);
-                /* FIXME: RetVal is stored as the last argument - retrieve it */
-            else if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
-            {
-                SERVER_ROUTINE *vtbl = *(SERVER_ROUTINE **)((CStdStubBuffer *)pThis)->pvServerObject;
-                RetVal = call_server_func(vtbl[pRpcMsg->ProcNum], args, stack_size);
-            }
             else
-                RetVal = call_server_func(pServerInfo->DispatchTable[pRpcMsg->ProcNum], args, stack_size);
+            {
+                SERVER_ROUTINE func;
+                LONG_PTR retval;
 
-            TRACE("stub implementation returned %p\n", (void *)RetVal);
+                if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+                {
+                    SERVER_ROUTINE *vtbl = *(SERVER_ROUTINE **)((CStdStubBuffer *)pThis)->pvServerObject;
+                    func = vtbl[pRpcMsg->ProcNum];
+                }
+                else
+                    func = pServerInfo->DispatchTable[pRpcMsg->ProcNum];
+
+                /* FIXME: what happens with return values that don't fit into a single register on x86? */
+                retval = call_server_func(func, args, stack_size);
+
+                if (retval_ptr)
+                {
+                    TRACE("stub implementation returned 0x%lx\n", retval);
+                    *retval_ptr = retval;
+                }
+                else
+                    TRACE("void stub implementation\n");
+            }
 
             stubMsg.Buffer = NULL;
             stubMsg.BufferLength = 0;
@@ -1245,9 +1258,7 @@ long WINAPI NdrStubCall2(
                         switch (phase)
                         {
                         case STUBLESS_MARSHAL:
-                            if (pParam->param_attributes.IsReturn)
-                                call_marshaller(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
-                            else if (pParam->param_attributes.IsOut)
+                            if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
                             {
                                 if (pParam->param_attributes.IsSimpleRef)
                                     call_marshaller(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
@@ -1264,11 +1275,14 @@ long WINAPI NdrStubCall2(
                                 else
                                     call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
                             }
+
+                            /* make a note of the address of the return value parameter for later */
+                            if (pParam->param_attributes.IsReturn)
+                                retval_ptr = (LONG_PTR *)pArg;
+
                             break;
                         case STUBLESS_CALCSIZE:
-                            if (pParam->param_attributes.IsReturn)
-                                call_buffer_sizer(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
-                            else if (pParam->param_attributes.IsOut)
+                            if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
                             {
                                 if (pParam->param_attributes.IsSimpleRef)
                                     call_buffer_sizer(&stubMsg, *(unsigned char **)pArg, pTypeFormat);
@@ -1295,9 +1309,7 @@ long WINAPI NdrStubCall2(
                         switch (phase)
                         {
                         case STUBLESS_MARSHAL:
-                            if (pParam->param_attributes.IsReturn)
-                                call_marshaller(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
-                            else if (pParam->param_attributes.IsOut)
+                            if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
                             {
                                 if (pParam->param_attributes.IsByValue)
                                     call_marshaller(&stubMsg, pArg, pTypeFormat);
@@ -1317,17 +1329,15 @@ long WINAPI NdrStubCall2(
                                 else
                                     call_unmarshaller(&stubMsg, (unsigned char **)pArg, pTypeFormat, 0);
                             }
-                            else if ((pParam->param_attributes.IsOut) && 
-                                      !(pParam->param_attributes.IsByValue))
+                            else if (pParam->param_attributes.IsOut &&
+                                     !pParam->param_attributes.IsByValue)
                             {
                                 *(void **)pArg = NdrAllocate(&stubMsg, sizeof(void *));
                                 **(void ***)pArg = 0;
                             }
                             break;
                         case STUBLESS_CALCSIZE:
-                            if (pParam->param_attributes.IsReturn)
-                                call_buffer_sizer(&stubMsg, (unsigned char *)&RetVal, pTypeFormat);
-                            else if (pParam->param_attributes.IsOut)
+                            if (pParam->param_attributes.IsOut || pParam->param_attributes.IsReturn)
                             {
                                 if (pParam->param_attributes.IsByValue)
                                     call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
@@ -1367,10 +1377,7 @@ long WINAPI NdrStubCall2(
                         {
                         case STUBLESS_MARSHAL:
                             if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                            {
-                                unsigned char *pRetVal = (unsigned char *)&RetVal;
-                                call_marshaller(&stubMsg, (unsigned char *)&pRetVal, pTypeFormat);
-                            }
+                                call_marshaller(&stubMsg, pArg, pTypeFormat);
                             break;
                         case STUBLESS_UNMARSHAL:
                             if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
@@ -1378,10 +1385,7 @@ long WINAPI NdrStubCall2(
                             break;
                         case STUBLESS_CALCSIZE:
                             if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
-                            {
-                                unsigned char * pRetVal = (unsigned char *)&RetVal;
-                                call_buffer_sizer(&stubMsg, (unsigned char *)&pRetVal, pTypeFormat);
-                            }
+                                call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
                             break;
                         default:
                             RpcRaiseException(RPC_S_INTERNAL_ERROR);
@@ -1403,13 +1407,9 @@ long WINAPI NdrStubCall2(
                         switch (phase)
                         {
                         case STUBLESS_MARSHAL:
-                            if (pParam->param_direction == RPC_FC_RETURN_PARAM)
-                            {
-                                unsigned char *pRetVal = (unsigned char *)&RetVal;
-                                call_marshaller(&stubMsg, (unsigned char *)&pRetVal, pTypeFormat);
-                            }
-                            else if (pParam->param_direction == RPC_FC_OUT_PARAM ||
-                                pParam->param_direction == RPC_FC_IN_OUT_PARAM)
+                            if (pParam->param_direction == RPC_FC_OUT_PARAM ||
+                                pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
+                                pParam->param_direction == RPC_FC_RETURN_PARAM)
                                 call_marshaller(&stubMsg, pArg, pTypeFormat);
                             break;
                         case STUBLESS_UNMARSHAL:
@@ -1418,13 +1418,9 @@ long WINAPI NdrStubCall2(
                                 call_unmarshaller(&stubMsg, &pArg, pTypeFormat, 0);
                             break;
                         case STUBLESS_CALCSIZE:
-                            if (pParam->param_direction == RPC_FC_RETURN_PARAM)
-                            {
-                                unsigned char * pRetVal = (unsigned char *)&RetVal;
-                                call_buffer_sizer(&stubMsg, (unsigned char *)&pRetVal, pTypeFormat);
-                            }
-                            else if (pParam->param_direction == RPC_FC_OUT_PARAM ||
-                                pParam->param_direction == RPC_FC_IN_OUT_PARAM)
+                            if (pParam->param_direction == RPC_FC_OUT_PARAM ||
+                                pParam->param_direction == RPC_FC_IN_OUT_PARAM ||
+                                pParam->param_direction == RPC_FC_RETURN_PARAM)
                                 call_buffer_sizer(&stubMsg, pArg, pTypeFormat);
                             break;
                         default:
