@@ -936,9 +936,9 @@ __declspec(naked) LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigne
         rep movsd           ; Copy dword blocks
         call [ebp+8]        ; Call function
         lea esp, [ebp-8]    ; Restore stack
-        pop ebp             ; Restore registers
-        pop esi
+        pop esi             ; Restore registers
         pop edi
+        pop ebp
         ret
     }
 }
