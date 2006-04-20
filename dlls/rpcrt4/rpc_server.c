@@ -455,6 +455,11 @@ static void RPCRT4_new_client(RpcConnection* conn)
   CloseHandle( thread );
 }
 
+static HANDLE rpcrt4_conn_get_wait_object(RpcConnection *conn)
+{
+  return conn->ovl.hEvent;
+}
+
 static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
 {
   HANDLE m_event = mgr_event, b_handle;
@@ -476,16 +481,17 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
       conn = cps->conn;
       while (conn) {
         RPCRT4_OpenConnection(conn);
-        if (conn->ovl.hEvent) count++;
+        if (rpcrt4_conn_get_wait_object(conn))
+          count++;
         conn = conn->Next;
       }
       cps = cps->Next;
     }
     /* make array of connections */
     if (objs)
-	objs = HeapReAlloc(GetProcessHeap(), 0, objs, count*sizeof(HANDLE));
+      objs = HeapReAlloc(GetProcessHeap(), 0, objs, count*sizeof(HANDLE));
     else
-	objs = HeapAlloc(GetProcessHeap(), 0, count*sizeof(HANDLE));
+      objs = HeapAlloc(GetProcessHeap(), 0, count*sizeof(HANDLE));
 
     objs[0] = m_event;
     count = 1;
@@ -493,7 +499,8 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
     while (cps) {
       conn = cps->conn;
       while (conn) {
-        if (conn->ovl.hEvent) objs[count++] = conn->ovl.hEvent;
+        if ((objs[count] = rpcrt4_conn_get_wait_object(conn)))
+          count++;
         conn = conn->Next;
       }
       cps = cps->Next;
@@ -529,18 +536,18 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
       while (cps) {
         conn = cps->conn;
         while (conn) {
-          if (conn->ovl.hEvent == b_handle) break;
+          if (b_handle == rpcrt4_conn_get_wait_object(conn)) break;
           conn = conn->Next;
         }
         if (conn) break;
         cps = cps->Next;
       }
       cconn = NULL;
-      if (conn) RPCRT4_SpawnConnection(&cconn, conn);
-      LeaveCriticalSection(&server_cs);
-      if (!conn) {
+      if (conn)
+        RPCRT4_SpawnConnection(&cconn, conn);
+      else
         ERR("failed to locate connection for handle %p\n", b_handle);
-      }
+      LeaveCriticalSection(&server_cs);
       if (cconn) RPCRT4_new_client(cconn);
     }
   }
