@@ -358,16 +358,16 @@ PFORMAT_STRING ComputeConformanceOrVariance(
   switch (pFormat[0] & 0xf0) {
   case RPC_FC_NORMAL_CONFORMANCE:
     TRACE("normal conformance, ofs=%d\n", ofs);
-    ptr = pMemory + ofs;
+    ptr = pMemory;
     break;
   case RPC_FC_POINTER_CONFORMANCE:
     TRACE("pointer conformance, ofs=%d\n", ofs);
-    ptr = pStubMsg->Memory + ofs;
+    ptr = pStubMsg->Memory;
     break;
   case RPC_FC_TOP_LEVEL_CONFORMANCE:
     TRACE("toplevel conformance, ofs=%d\n", ofs);
     if (pStubMsg->StackTop) {
-      ptr = pStubMsg->StackTop + ofs;
+      ptr = pStubMsg->StackTop;
     }
     else {
       /* -Os mode, *pCount is already set */
@@ -382,7 +382,7 @@ PFORMAT_STRING ComputeConformanceOrVariance(
   case RPC_FC_TOP_LEVEL_MULTID_CONFORMANCE:
     FIXME("toplevel multidimensional conformance, ofs=%d\n", ofs);
     if (pStubMsg->StackTop) {
-      ptr = pStubMsg->StackTop + ofs;
+      ptr = pStubMsg->StackTop;
     }
     else {
       /* ? */
@@ -395,7 +395,7 @@ PFORMAT_STRING ComputeConformanceOrVariance(
 
   switch (pFormat[1]) {
   case RPC_FC_DEREFERENCE:
-    ptr = *(LPVOID*)ptr;
+    ptr = *(LPVOID*)((char *)ptr + ofs);
     break;
   case RPC_FC_CALLBACK:
   {
@@ -410,6 +410,7 @@ PFORMAT_STRING ComputeConformanceOrVariance(
     goto finish_conf;
   }
   default:
+    ptr = (char *)ptr + ofs;
     break;
   }
 
