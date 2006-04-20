@@ -261,7 +261,9 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
         conn->MaxTransmissionSize = hdr->bind.max_tsize;
       }
 
-      if (RPCRT4_Send(conn, response, NULL, 0) != RPC_S_OK)
+      status = RPCRT4_Send(conn, response, NULL, 0);
+      RPCRT4_FreeHeader(response);
+      if (status != RPC_S_OK)
         goto fail;
 
       break;
@@ -275,6 +277,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
                                            status);
 
         RPCRT4_Send(conn, response, NULL, 0);
+        RPCRT4_FreeHeader(response);
         break;
       }
 
@@ -342,6 +345,7 @@ fail:
   msg->Buffer = NULL;
   RPCRT4_FreeHeader(hdr);
   TlsSetValue(worker_tls, NULL);
+  HeapFree(GetProcessHeap(), 0, msg);
 }
 
 static DWORD CALLBACK RPCRT4_worker_thread(LPVOID the_arg)
@@ -414,6 +418,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     status = RPCRT4_Receive(conn, &hdr, msg);
     if (status != RPC_S_OK) {
       WARN("receive failed with error %lx\n", status);
+      HeapFree(GetProcessHeap(), 0, msg);
       break;
     }
 
@@ -430,7 +435,6 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
 #endif
     msg = NULL;
   }
-  HeapFree(GetProcessHeap(), 0, msg);
   RPCRT4_DestroyConnection(conn);
   return 0;
 }
@@ -1000,6 +1004,8 @@ RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
   }
   
   LeaveCriticalSection(&listen_cs);
+
+  FIXME("not waiting for server calls to finish\n");
 
   return RPC_S_OK;
 }

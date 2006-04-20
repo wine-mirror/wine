@@ -446,6 +446,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
                                  InterfaceId, TransferSyntax);
 
     status = RPCRT4_Send(*Connection, hdr, NULL, 0);
+    RPCRT4_FreeHeader(hdr);
     if (status != RPC_S_OK) {
       RPCRT4_DestroyConnection(*Connection);
       return status;
@@ -461,6 +462,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
     count = rpcrt4_conn_read(NewConnection, response, RPC_MAX_PACKET_SIZE);
     if (count < sizeof(response_hdr->common)) {
       WARN("received invalid header\n");
+      HeapFree(GetProcessHeap(), 0, response);
       RPCRT4_DestroyConnection(*Connection);
       return RPC_S_PROTOCOL_ERROR;
     }
@@ -471,12 +473,14 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
         response_hdr->common.rpc_ver_minor != RPC_VER_MINOR ||
         response_hdr->common.ptype != PKT_BIND_ACK) {
       WARN("invalid protocol version or rejection packet\n");
+      HeapFree(GetProcessHeap(), 0, response);
       RPCRT4_DestroyConnection(*Connection);
       return RPC_S_PROTOCOL_ERROR;
     }
 
     if (response_hdr->bind_ack.max_tsize < RPC_MIN_PACKET_SIZE) {
       WARN("server doesn't allow large enough packets\n");
+      HeapFree(GetProcessHeap(), 0, response);
       RPCRT4_DestroyConnection(*Connection);
       return RPC_S_PROTOCOL_ERROR;
     }
@@ -485,6 +489,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
 
     (*Connection)->MaxTransmissionSize = response_hdr->bind_ack.max_tsize;
     (*Connection)->ActiveInterface = *InterfaceId;
+    HeapFree(GetProcessHeap(), 0, response);
   }
 
   return RPC_S_OK;
