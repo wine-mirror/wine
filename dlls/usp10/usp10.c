@@ -70,9 +70,6 @@ static const SCRIPT_PROPERTIES *Global_Script[MAX_SCRIPTS] =
 
 typedef struct scriptcache {
        HDC hdc;
-       DWORD GlyphToChar[256];
-       int HaveWidths;
-       ABC CharWidths[256];
 } Scriptcache;
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
@@ -127,7 +124,7 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
     HDC phdc;
     Scriptcache *pScriptcache;
 
-    FIXME("%p,%p,%p\n", hdc, psc, sfp);
+    TRACE("%p,%p,%p\n", hdc, psc, sfp);
     if  (!hdc && !*psc) {
         TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
 	return E_PENDING;
@@ -136,9 +133,8 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
             pScriptcache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache) );
             pScriptcache->hdc = (HDC) hdc;
             phdc = hdc;
-            pScriptcache->HaveWidths = 0;
             *psc = (Scriptcache *) pScriptcache;
-       }   else
+        }   else
             if  (*psc) {
                 pScriptcache = (Scriptcache *) *psc;
                 phdc = pScriptcache->hdc;
@@ -303,6 +299,7 @@ HRESULT WINAPI ScriptIsComplex(const WCHAR* pwcInChars, int cInChars, DWORD dwFl
   FIXME("(%s,%d,0x%lx): stub\n",  debugstr_wn(pwcInChars, cInChars), cInChars, dwFlags);
    return E_NOTIMPL;
 }
+
 /***********************************************************************
  *      ScriptShape (USP10.@)
  *
@@ -333,10 +330,9 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 	return E_PENDING;
     }   else 
         if  (hdc && !*psc) {
-            pScriptcache = HeapAlloc( GetProcessHeap(), 0, sizeof(Scriptcache) );
+            pScriptcache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache) );
             pScriptcache->hdc = (HDC) hdc;
             phdc = hdc;
-            pScriptcache->HaveWidths = 0;
             *psc = (Scriptcache *) pScriptcache;
        }   else
             if  (*psc) {
@@ -354,16 +350,14 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
         TRACE("After:  ");
         for (cnt = 0; cnt < cChars; cnt++) {
              TRACE("%04x",pwOutGlyphs[cnt]);
-             pScriptcache->GlyphToChar[pwOutGlyphs[cnt]] = pwcChars[cnt]; /* save for ScriptPlace */
         }
-       TRACE("\n");
+        TRACE("\n");
     }
     else {
         TRACE("After:  ");
         for (cnt = 0; cnt < cChars; cnt++) {                           /* no translate so set up */
              pwOutGlyphs[cnt] = pwcChars[cnt];                         /* copy in to out and     */
              TRACE("%04x",pwOutGlyphs[cnt]);
-             pScriptcache->GlyphToChar[pwcChars[cnt]] = pwcChars[cnt]; /* set up a dummy table   */
         }
        TRACE("\n");
     }
@@ -417,33 +411,40 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
 
     /*   Here we need to calculate the width of the run unit.  At this point the input string
      *   has been converted to glyphs and we till need to translate back to the original chars
-     *   to get the correct ABC widths.  To make life easier the ABC widths are saved in the 
-     *   SCRIPT_CACHE.  This is ok as the cache must be invalidated if the font or font size 
-     *   changes.   */
+     *   to get the correct ABC widths.   */
 
-     lpABC = pScriptcache->CharWidths;
+     lpABC = HeapAlloc(GetProcessHeap(), 0 , sizeof(ABC)*cGlyphs);
      pABC->abcA = 0; 
      pABC->abcB = 0; 
      pABC->abcC = 0; 
-     if  (!pScriptcache->HaveWidths) {
-         if  (GetCharABCWidthsW(phdc, 0, 255, lpABC )) 
-             pScriptcache->HaveWidths = 1;
-         else {
-             WARN("Could not get ABC values\n");
+     if  (!GetCharABCWidthsI(phdc, 0, cGlyphs, (WORD *) pwGlyphs, lpABC )) 
+     {
+         WARN("Could not get ABC values\n");
+         for (wcnt = 0; wcnt < cGlyphs; wcnt++) {
+             piAdvance[wcnt] = 0;
+             pGoffset[wcnt].du = 0;
+             pGoffset[wcnt].dv = 0;
          }
      }
-
-     for (wcnt = 0; wcnt < cGlyphs ; wcnt++) {          /* add up the char lengths  */
-         TRACE("     Glyph=%04x, abcA=%d,  abcB=%d,  abcC=%d  wcnt=%d\n",
-                              pwGlyphs[wcnt], 
-                              lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcA,
-                              lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcB,
-                              lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcC, wcnt);
-         pABC->abcA += lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcA;
-         pABC->abcB += lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcB;
-         pABC->abcC += lpABC[pScriptcache->GlyphToChar[pwGlyphs[wcnt]]].abcC;
+     else
+     {
+         for (wcnt = 0; wcnt < cGlyphs ; wcnt++) {          /* add up the char lengths  */
+             TRACE("     Glyph=%04x,  abcA=%d,  abcB=%d,  abcC=%d  wcnt=%d\n",
+                                  pwGlyphs[wcnt],  
+                                  lpABC[wcnt].abcA,
+                                  lpABC[wcnt].abcB,
+                                  lpABC[wcnt].abcC, wcnt);
+             pABC->abcA += lpABC[wcnt].abcA;
+             pABC->abcB += lpABC[wcnt].abcB;
+             pABC->abcC += lpABC[wcnt].abcC;
+             piAdvance[wcnt] = lpABC[wcnt].abcA + lpABC[wcnt].abcB + lpABC[wcnt].abcC;
+             pGoffset[wcnt].du = 0;
+             pGoffset[wcnt].dv = 0;
+         }
      }
      TRACE("Total for run:   abcA=%d,  abcB=%d,  abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
+
+     HeapFree(GetProcessHeap(), 0, lpABC );
 
      return 0;
 }
@@ -469,7 +470,6 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
             pScriptcache = HeapAlloc( GetProcessHeap(), 0, sizeof(Scriptcache) );
             pScriptcache->hdc = hdc;
             phdc = hdc;
-            pScriptcache->HaveWidths = 0;
             *psc = pScriptcache;
         }   else
             if  (*psc) {
@@ -486,7 +486,6 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     TRACE("After:  ");
     for (cnt = 0; cnt < cChars; cnt++) {
          TRACE("%04x",pwOutGlyphs[cnt]);
-         pScriptcache->GlyphToChar[pwOutGlyphs[cnt]] = pwcInChars[cnt]; /* save for ScriptPlace */
     }
     TRACE("\n");
 
