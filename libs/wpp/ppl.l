@@ -821,9 +821,24 @@ static int make_number(int radix, YYSTYPE *val, const char *str, int len)
 	}
 
 	if(is_ll)
-		pp_internal_error(__FILE__, __LINE__, "long long constants not implemented yet");
-
-	if(is_u && is_l)
+	{
+/* Assume as in the declaration of wrc_ull_t and wrc_sll_t */
+#if defined(SIZEOF_LONGLONG) && SIZEOF_LONGLONG >= 8
+		if (is_u)
+		{
+			val->ull = strtoull(str, NULL, radix);
+			return tULONGLONG;
+		}
+		else
+		{
+			val->sll = strtoll(str, NULL, radix);
+			return tSLONGLONG;
+		}
+#else
+		pp_internal_error(__FILE__, __LINE__, "long long constants not supported on this platform");
+#endif
+	}
+	else if(is_u && is_l)
 	{
 		val->ulong = strtoul(str, NULL, radix);
 		return tULONG;
