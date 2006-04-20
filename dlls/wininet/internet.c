@@ -283,13 +283,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             WININET_hModule = (HMODULE)hinstDLL;
 
         case DLL_THREAD_ATTACH:
-	    {
-                LPWITHREADERROR lpwite = HeapAlloc(GetProcessHeap(), 0, sizeof(WITHREADERROR));
-		if (NULL == lpwite)
-                    return FALSE;
-
-                TlsSetValue(g_dwTlsErrIndex, (LPVOID)lpwite);
-	    }
 	    break;
 
         case DLL_THREAD_DETACH:
@@ -651,14 +644,22 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
 
     TRACE("\n");
 
-    *lpdwError = lpwite->dwError;
-    if (lpwite->dwError)
+    if (lpwite)
     {
-        memcpy(lpszBuffer, lpwite->response, *lpdwBufferLength);
-        *lpdwBufferLength = strlen(lpszBuffer);
+        *lpdwError = lpwite->dwError;
+        if (lpwite->dwError)
+        {
+            memcpy(lpszBuffer, lpwite->response, *lpdwBufferLength);
+            *lpdwBufferLength = strlen(lpszBuffer);
+        }
+        else
+            *lpdwBufferLength = 0;
     }
     else
+    {
+        *lpdwError = 0;
         *lpdwBufferLength = 0;
+    }
 
     return TRUE;
 }
@@ -680,14 +681,22 @@ BOOL WINAPI InternetGetLastResponseInfoW(LPDWORD lpdwError,
 
     TRACE("\n");
 
-    *lpdwError = lpwite->dwError;
-    if (lpwite->dwError)
+    if (lpwite)
     {
-        memcpy(lpszBuffer, lpwite->response, *lpdwBufferLength);
-        *lpdwBufferLength = lstrlenW(lpszBuffer);
+        *lpdwError = lpwite->dwError;
+        if (lpwite->dwError)
+        {
+            memcpy(lpszBuffer, lpwite->response, *lpdwBufferLength);
+            *lpdwBufferLength = lstrlenW(lpszBuffer);
+        }
+        else
+            *lpdwBufferLength = 0;
     }
     else
+    {
+        *lpdwError = 0;
         *lpdwBufferLength = 0;
+    }
 
     return TRUE;
 }
@@ -3048,6 +3057,12 @@ void INTERNET_SetLastError(DWORD dwError)
 {
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
 
+    if (!lpwite)
+    {
+        lpwite = HeapAlloc(GetProcessHeap(), 0, sizeof(*lpwite));
+        TlsSetValue(g_dwTlsErrIndex, lpwite);
+    }
+
     SetLastError(dwError);
     if(lpwite)
         lpwite->dwError = dwError;
@@ -3065,6 +3080,7 @@ void INTERNET_SetLastError(DWORD dwError)
 DWORD INTERNET_GetLastError(void)
 {
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
+    if (!lpwite) return 0;
     /* TlsGetValue clears last error, so set it again here */
     SetLastError(lpwite->dwError);
     return lpwite->dwError;
@@ -3476,6 +3492,11 @@ static VOID INTERNET_ExecuteWork(void)
 LPSTR INTERNET_GetResponseBuffer(void)
 {
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
+    if (!lpwite)
+    {
+        lpwite = HeapAlloc(GetProcessHeap(), 0, sizeof(*lpwite));
+        TlsSetValue(g_dwTlsErrIndex, lpwite);
+    }
     TRACE("\n");
     return lpwite->response;
 }
