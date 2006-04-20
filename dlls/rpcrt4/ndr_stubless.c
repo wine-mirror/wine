@@ -204,43 +204,6 @@ typedef struct _NDR_PROC_PARTIAL_OIF_HEADER
     unsigned char number_of_params;
 } NDR_PROC_PARTIAL_OIF_HEADER;
 
-/* Windows 2000 extensions */
-typedef struct _NDR_PROC_EXTENSION
-{
-    /* size in bytes of all following extensions */
-    unsigned char extension_version;
-
-    /* extension flags:
-     * HasNewCorrDesc = 0x01 - indicates new correlation descriptors in use
-     * ClientCorrCheck = 0x02 - client needs correlation check
-     * ServerCorrCheck = 0x04 - server needs correlation check
-     * HasNotify = 0x08 - should call MIDL [notify] routine @ NotifyIndex
-     * HasNotify2 = 0x10 - should call MIDL [notify_flag] routine @ 
-     *   NotifyIndex
-     */
-    unsigned char ext_flags;
-
-    /* client cache size hint */
-    unsigned short ClientCorrHint;
-
-    /* server cache size hint */
-    unsigned short ServerCorrHint;
-
-    /* index of routine in MIDL_STUB_DESC::NotifyRoutineTable to call if
-     * HasNotify or HasNotify2 flag set */
-    unsigned short NotifyIndex;
-} NDR_PROC_EXTENSION;
-
-/* usually generated only on IA64 */
-typedef struct _NDR_PROC_EXTENSION_64
-{
-    NDR_PROC_EXTENSION ext;
-
-    /* needed only on IA64 to cope with float/register loading */
-    unsigned short FloatDoubleMask;
-} NDR_PROC_EXTENSION_64;
-
-
 typedef struct _NDR_PARAM_OI_BASETYPE
 {
     /* parameter direction. One of:
@@ -431,8 +394,8 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     unsigned short i;
     /* cache of Oif_flags from v2 procedure header */
     INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
-    /* cache of extension flags from NDR_PROC_EXTENSION */
-    unsigned char ext_flags = 0;
+    /* cache of extension flags from NDR_PROC_HEADER_EXTS */
+    INTERPRETER_OPT_FLAGS2 ext_flags = { 0 };
     /* the type of pass we are currently doing */
     int phase;
     /* header for procedure string */
@@ -560,10 +523,10 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
     if (Oif_flags.HasExtensions)
     {
-        NDR_PROC_EXTENSION * pExtensions =
-            (NDR_PROC_EXTENSION *)&pFormat[current_offset];
-        ext_flags = pExtensions->ext_flags;
-        current_offset += pExtensions->extension_version;
+        NDR_PROC_HEADER_EXTS * pExtensions =
+            (NDR_PROC_HEADER_EXTS *)&pFormat[current_offset];
+        ext_flags = pExtensions->Flags2;
+        current_offset += pExtensions->Size;
     }
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
@@ -602,7 +565,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         /* init pipes package */
         /* NdrPipesInitialize(...) */
     }
-    if (ext_flags & RPC_FC_PROC_EXT_NEWCORRDESC)
+    if (ext_flags.HasNewCorrDesc)
     {
         /* initialize extra correlation package */
         FIXME("new correlation description not implemented\n");
@@ -887,7 +850,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
     /* FIXME: unbind the binding handle */
 
-    if (ext_flags & RPC_FC_PROC_EXT_NEWCORRDESC)
+    if (ext_flags.HasNewCorrDesc)
     {
         /* free extra correlation package */
         /* NdrCorrelationFree(&stubMsg); */
@@ -997,8 +960,8 @@ long WINAPI NdrStubCall2(
     unsigned short i;
     /* cache of Oif_flags from v2 procedure header */
     INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
-    /* cache of extension flags from NDR_PROC_EXTENSION */
-    unsigned char ext_flags = 0;
+    /* cache of extension flags from NDR_PROC_HEADER_EXTS */
+    INTERPRETER_OPT_FLAGS2 ext_flags = { 0 };
     /* the type of pass we are currently doing */
     int phase;
     /* header for procedure string */
@@ -1093,10 +1056,10 @@ long WINAPI NdrStubCall2(
 
     if (Oif_flags.HasExtensions)
     {
-        NDR_PROC_EXTENSION * pExtensions =
-            (NDR_PROC_EXTENSION *)&pFormat[current_offset];
-        ext_flags = pExtensions->ext_flags;
-        current_offset += pExtensions->extension_version;
+        NDR_PROC_HEADER_EXTS * pExtensions =
+            (NDR_PROC_HEADER_EXTS *)&pFormat[current_offset];
+        ext_flags = pExtensions->Flags2;
+        current_offset += pExtensions->Size;
     }
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
@@ -1131,7 +1094,7 @@ long WINAPI NdrStubCall2(
         /* init pipes package */
         /* NdrPipesInitialize(...) */
     }
-    if (ext_flags & RPC_FC_PROC_EXT_NEWCORRDESC)
+    if (ext_flags.HasNewCorrDesc)
     {
         /* initialize extra correlation package */
         FIXME("new correlation description not implemented\n");
@@ -1441,7 +1404,7 @@ long WINAPI NdrStubCall2(
 
     pRpcMsg->BufferLength = (unsigned int)(stubMsg.Buffer - (unsigned char *)pRpcMsg->Buffer);
 
-    if (ext_flags & RPC_FC_PROC_EXT_NEWCORRDESC)
+    if (ext_flags.HasNewCorrDesc)
     {
         /* free extra correlation package */
         /* NdrCorrelationFree(&stubMsg); */

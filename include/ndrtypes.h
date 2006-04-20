@@ -71,4 +71,59 @@ typedef struct
      *  procedure. */
 } INTERPRETER_OPT_FLAGS, *PINTERPRETER_OPT_FLAGS;
 
+typedef struct
+{
+    unsigned char HasNewCorrDesc : 1; /* 0x01 - indicates new correlation
+     *  descriptors in use. */
+    unsigned char ClientCorrCheck : 1; /* 0x02 - client needs correlation
+     *  check. */
+    unsigned char ServerCorrCheck : 1; /* 0x04 - server needs correlation
+     *  check. */
+    unsigned char HasNotify : 1; /* 0x08 - should call MIDL [notify]
+     *  routine @ NotifyIndex. */
+    unsigned char HasNotify2 : 1; /* 0x10 - should call MIDL [notify_flag] routine @ 
+     *  NotifyIndex. */
+    unsigned char Unused : 3;
+} INTERPRETER_OPT_FLAGS2, *PINTERPRETER_OPT_FLAGS2;
+
+/* Win2000 extensions */
+typedef struct
+{
+    /* size in bytes of all following extensions */
+    unsigned char Size;
+
+    INTERPRETER_OPT_FLAGS2 Flags2;
+
+    /* client cache size hint */
+    unsigned short ClientCorrHint;
+
+    /* server cache size hint */
+    unsigned short ServerCorrHint;
+
+    /* index of routine in MIDL_STUB_DESC::NotifyRoutineTable to call if
+     * HasNotify or HasNotify2 flag set */
+    unsigned short NotifyIndex;
+} NDR_PROC_HEADER_EXTS;
+
+typedef struct
+{
+    /* size in bytes of all following extensions */
+    unsigned char Size;
+
+    INTERPRETER_OPT_FLAGS2 Flags2;
+
+    /* client cache size hint */
+    unsigned short ClientCorrHint;
+
+    /* server cache size hint */
+    unsigned short ServerCorrHint;
+
+    /* index of routine in MIDL_STUB_DESC::NotifyRoutineTable to call if
+     * HasNotify or HasNotify2 flag set */
+    unsigned short NotifyIndex;
+
+    /* needed only on IA64 to cope with float/register loading */
+    unsigned short FloatArgMask;
+} NDR_PROC_HEADER_EXTS64;
+
 #endif
