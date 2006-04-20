@@ -379,7 +379,7 @@ HRESULT WINAPI LaunchINFSectionExA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, IN
     UNICODE_STRING cmd;
     HRESULT hr;
 
-    TRACE("(%p, %p, %s, %i): stub\n", hWnd, hInst, debugstr_a(cmdline), show);
+    TRACE("(%p, %p, %s, %i)\n", hWnd, hInst, debugstr_a(cmdline), show);
 
     RtlCreateUnicodeStringFromAsciiz(&cmd, cmdline);
 
