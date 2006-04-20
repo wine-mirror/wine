@@ -62,8 +62,35 @@ static const WCHAR RegisterOCXs[] = {'R','e','g','i','s','t','e','r','O','C','X'
 /* Advanced INF callbacks */
 static HRESULT register_ocxs_callback(HINF hinf, PCWSTR field, void *arg)
 {
-    FIXME("Unhandled command: RegisterOCXs\n");
-    return E_FAIL;
+    HMODULE hm;
+    INFCONTEXT context;
+    HRESULT hr = S_OK;
+
+    BOOL ok = SetupFindFirstLineW(hinf, field, NULL, &context);
+    
+    for (; ok; ok = SetupFindNextLine(&context, &context))
+    {
+        WCHAR buffer[MAX_INF_STRING_LENGTH];
+
+        /* get OCX filename */
+        if (!SetupGetStringFieldW(&context, 1, buffer,
+                                  sizeof(buffer) / sizeof(WCHAR), NULL))
+            continue;
+
+        hm = LoadLibraryExW(buffer, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+        if (!hm)
+        {
+            hr = E_FAIL;
+            continue;
+        }
+
+        if (do_ocx_reg(hm, TRUE))
+            hr = E_FAIL;
+
+        FreeLibrary(hm);
+    }
+
+    return hr;
 }
 
 /* sequentially returns pointers to parameters in a parameter list
