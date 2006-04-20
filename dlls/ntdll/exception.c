@@ -77,8 +77,6 @@ static RTL_CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0
 # error You must define GET_IP for this CPU
 #endif
 
-extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( const CONTEXT *context );
-
 /*******************************************************************
  *         EXC_RaiseHandler
  *
@@ -369,9 +367,7 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
 NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
     NTSTATUS status = raise_exception( rec, context, first_chance );
-#ifdef DEFINE_REGS_ENTRYPOINT
-    if (status == STATUS_SUCCESS) __wine_call_from_32_restore_regs( context );
-#endif
+    if (status == STATUS_SUCCESS) NtSetContextThread( GetCurrentThread(), context );
     return status;
 }
 
