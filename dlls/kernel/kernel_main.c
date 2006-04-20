@@ -59,8 +59,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION ldt_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static DWORD server_start_time;
-
 /***********************************************************************
  *           locking for LDT routines
  */
@@ -106,10 +104,6 @@ static void thread_detach(void)
 static BOOL process_attach(void)
 {
     SYSTEM_INFO si;
-    SYSTEM_TIMEOFDAY_INFORMATION sti;
-
-    NtQuerySystemInformation( SystemTimeOfDayInformation, &sti, sizeof(sti), NULL );
-    RtlTimeToSecondsSince1970( &sti.liKeBootTime, &server_start_time );
 
     /* FIXME: should probably be done in ntdll */
     GetSystemInfo( &si );
@@ -230,7 +224,5 @@ INT WINAPI MulDiv( INT nMultiplicand, INT nMultiplier, INT nDivisor)
  */
 DWORD WINAPI GetTickCount(void)
 {
-    struct timeval t;
-    gettimeofday( &t, NULL );
-    return ((t.tv_sec - server_start_time) * 1000) + (t.tv_usec / 1000);
+    return NtGetTickCount();
 }
