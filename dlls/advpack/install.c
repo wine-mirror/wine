@@ -516,14 +516,49 @@ INT WINAPI LaunchINFSectionA(HWND hWnd, HINSTANCE hInst, LPSTR cmdline, INT show
  *    'A' Always reboot.
  *    'I' Reboot if needed (default).
  *    'N' No reboot.
- * 
- * BUGS
- *  Unimplemented.
  */
 INT WINAPI LaunchINFSectionW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, INT show)
 {
-    FIXME("(%p, %p, %s, %i): stub\n", hWnd, hInst, debugstr_w(cmdline), show);
-    return 0;
+    ADVInfo info;
+    LPWSTR cmdline_copy, cmdline_ptr;
+    LPWSTR inf_filename, install_sec;
+    LPWSTR str_flags;
+    DWORD flags = 0;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p, %p, %s, %d)\n", hWnd, hInst, debugstr_w(cmdline), show);
+
+    if (!cmdline)
+        return E_INVALIDARG;
+
+    cmdline_copy = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmdline) + 1) * sizeof(WCHAR));
+    cmdline_ptr = cmdline_copy;
+    lstrcpyW(cmdline_copy, cmdline);
+
+    inf_filename = get_parameter(&cmdline_ptr, ',');
+    install_sec = get_parameter(&cmdline_ptr, ',');
+
+    str_flags = get_parameter(&cmdline_ptr, ',');
+    if (str_flags)
+        flags = atolW(str_flags);
+
+    ZeroMemory(&info, sizeof(ADVInfo));
+
+    hr = install_init(inf_filename, install_sec, NULL, flags, &info);
+    if (hr != S_OK)
+        goto done;
+
+    hr = spapi_install(&info);
+    if (hr != S_OK)
+        goto done;
+
+    hr = adv_install(&info);
+
+done:
+    install_release(&info);
+    HeapFree(GetProcessHeap(), 0, cmdline_copy);
+
+    return hr;
 }
 
 /***********************************************************************
