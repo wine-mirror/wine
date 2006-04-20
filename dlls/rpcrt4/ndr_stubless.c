@@ -1170,12 +1170,9 @@ long WINAPI NdrStubCall2(
         {
         case STUBLESS_CALLSERVER:
             /* call the server function */
-            if (pServerInfo->ThunkTable)
-            {
-                stubMsg.StackTop = args;
+            if (pServerInfo->ThunkTable && pServerInfo->ThunkTable[pRpcMsg->ProcNum])
                 pServerInfo->ThunkTable[pRpcMsg->ProcNum](&stubMsg);
                 /* FIXME: RetVal is stored as the last argument - retrieve it */
-            }
             else if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
             {
                 SERVER_ROUTINE *vtbl = *(SERVER_ROUTINE **)((CStdStubBuffer *)pThis)->pvServerObject;
