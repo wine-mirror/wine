@@ -54,6 +54,18 @@ typedef struct _ADVInfo
     BOOL need_reboot;
 } ADVInfo;
 
+typedef HRESULT (*iterate_fields_func)(HINF hinf, PCWSTR field, void *arg);
+
+/* Advanced INF commands */
+static const WCHAR RegisterOCXs[] = {'R','e','g','i','s','t','e','r','O','C','X','s',0};
+
+/* Advanced INF callbacks */
+static HRESULT register_ocxs_callback(HINF hinf, PCWSTR field, void *arg)
+{
+    FIXME("Unhandled command: RegisterOCXs\n");
+    return E_FAIL;
+}
+
 /* sequentially returns pointers to parameters in a parameter list
  * returns NULL if the parameter is empty, e.g. one,,three  */
 LPWSTR get_parameter(LPWSTR *params, WCHAR separator)
@@ -84,6 +96,61 @@ static BOOL is_full_path(LPWSTR path)
         return TRUE;
 
     return FALSE;
+}
+
+/* retrieves the contents of a field, dynamically growing the buffer if necessary */
+static WCHAR *get_field_string(INFCONTEXT *context, DWORD index, WCHAR *buffer,
+                               WCHAR *static_buffer, DWORD *size)
+{
+    DWORD required;
+
+    if (SetupGetStringFieldW(context, index, buffer, *size, &required)) return buffer;
+
+    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        /* now grow the buffer */
+        if (buffer != static_buffer) HeapFree(GetProcessHeap(), 0, buffer);
+        if (!(buffer = HeapAlloc(GetProcessHeap(), 0, required*sizeof(WCHAR)))) return NULL;
+        *size = required;
+        if (SetupGetStringFieldW(context, index, buffer, *size, &required)) return buffer;
+    }
+
+    if (buffer != static_buffer) HeapFree(GetProcessHeap(), 0, buffer);
+    return NULL;
+}
+
+/* iterates over all fields of a certain key of a certain section */
+static HRESULT iterate_section_fields(HINF hinf, PCWSTR section, PCWSTR key,
+                                      iterate_fields_func callback, void *arg)
+{
+    WCHAR static_buffer[200];
+    WCHAR *buffer = static_buffer;
+    DWORD size = sizeof(static_buffer) / sizeof(WCHAR);
+    INFCONTEXT context;
+    HRESULT hr = E_FAIL;
+
+    BOOL ok = SetupFindFirstLineW(hinf, section, key, &context);
+    while (ok)
+    {
+        UINT i, count = SetupGetFieldCount(&context);
+
+        for (i = 1; i <= count; i++)
+        {
+            if (!(buffer = get_field_string(&context, i, buffer, static_buffer, &size)))
+                goto done;
+
+            if ((hr = callback(hinf, buffer, arg)) != S_OK)
+                goto done;
+        }
+
+        ok = SetupFindNextMatchLineW(&context, key, &context);
+    }
+
+    hr = S_OK;
+
+ done:
+    if (buffer && buffer != static_buffer) HeapFree(GetProcessHeap(), 0, buffer);
+    return hr;
 }
 
 /* performs a setupapi-level install of the INF file */
@@ -119,6 +186,17 @@ static HRESULT spapi_install(ADVInfo *info)
         return ADV_HRESULT(GetLastError());
 
     return S_OK;
+}
+
+/* processes the Advanced INF commands */
+static HRESULT adv_install(ADVInfo *info)
+{
+    HRESULT hr;
+
+    hr = iterate_section_fields(info->hinf, info->install_sec,
+                                RegisterOCXs, register_ocxs_callback, NULL);
+
+    return hr;
 }
 
 /* loads the INF file and performs checks on it */
@@ -586,6 +664,10 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
         goto done;
 
     hr = spapi_install(&info);
+    if (hr != S_OK)
+        goto done;
+
+    hr = adv_install(&info);
 
 done:
     install_release(&info);
