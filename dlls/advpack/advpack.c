@@ -92,7 +92,7 @@ static void get_dest_dir(HINF hInf, PCWSTR pszSection, PWSTR pszBuffer, DWORD dw
 }
 
 /* loads the LDIDs specified in the install section of an INF */
-static void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir)
+void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir)
 {
     WCHAR field[MAX_FIELD_LENGTH];
     WCHAR line[MAX_FIELD_LENGTH];

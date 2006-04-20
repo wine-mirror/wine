@@ -259,7 +259,8 @@ HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
     if (info->hinf == INVALID_HANDLE_VALUE)
         return ADV_HRESULT(GetLastError());
 
-    /* FIXME: set the ldids of the install section */
+    set_ldids(info->hinf, info->install_sec, info->working_dir);
+
     /* FIXME: check that the INF is advanced */
 
     info->flags = flags;
