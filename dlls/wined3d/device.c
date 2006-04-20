@@ -1623,21 +1623,39 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface, CONST
 HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DWORD Flags, PALETTEENTRY *PalEnt, IWineD3DPalette **Palette, IUnknown *Parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DPaletteImpl *object;
+    HRESULT hr;
     TRACE("(%p)->(%lx, %p, %p, %p)\n", This, Flags, PalEnt, Palette, Parent);
 
     /* Create the new object */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DPaletteImpl));
     if(!object) {
         ERR("Out of memory when allocating memory for a IWineD3DPalette implementation\n");
-        return DDERR_OUTOFVIDEOMEMORY;
+        return E_OUTOFMEMORY;
     }
 
     object->lpVtbl = &IWineD3DPalette_Vtbl;
     object->ref = 1;
+    object->Flags = Flags;
+    object->parent = Parent;
+    object->wineD3DDevice = This;
+    object->palNumEntries = IWineD3DPaletteImpl_Size(Flags);
+	
+    object->hpal = CreatePalette((const LOGPALETTE*)&(object->palVersion));
+
+    if(!object->hpal) {
+        HeapFree( GetProcessHeap(), 0, object);
+        return E_OUTOFMEMORY;
+    }
+
+    hr = IWineD3DPalette_SetEntries((IWineD3DPalette *) object, 0, 0, IWineD3DPaletteImpl_Size(Flags), PalEnt);
+    if(FAILED(hr)) {
+        IWineD3DPalette_Release((IWineD3DPalette *) object);
+        return hr;
+    }
 
     *Palette = (IWineD3DPalette *) object;
 
-    return DD_OK;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {

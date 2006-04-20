@@ -830,6 +830,7 @@ struct IWineD3DSurfaceImpl
     /* IWineD3DSurface fields */
     IWineD3DBase              *container;
     WINED3DSURFACET_DESC      currentDesc;
+    IWineD3DPaletteImpl      *palette;
 
     UINT                      textureName;
     UINT                      bytesPerPixel;
@@ -1282,9 +1283,22 @@ struct IWineD3DPaletteImpl {
     /* IUnknown parts */
     const IWineD3DPaletteVtbl  *lpVtbl;
     LONG                       ref;
+
+    IUnknown                   *parent;
+    IWineD3DDeviceImpl         *wineD3DDevice;
+
+    /* IWineD3DPalette */
+    HPALETTE                   hpal;
+    WORD                       palVersion;     /*|               */
+    WORD                       palNumEntries;  /*|  LOGPALETTE   */
+    PALETTEENTRY               palents[256];   /*|               */
+    /* This is to store the palette in 'screen format' */
+    int                        screen_palents[256];
+    DWORD                      Flags;
 };
 
 extern const IWineD3DPaletteVtbl IWineD3DPalette_Vtbl;
+DWORD IWineD3DPaletteImpl_Size(DWORD dwFlags);
 
 /* DirectDraw utility functions */
 extern WINED3DFORMAT pixelformat_for_depth(DWORD depth);

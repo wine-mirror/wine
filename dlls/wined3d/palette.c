@@ -29,6 +29,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+#define SIZE_BITS (DDPCAPS_1BIT | DDPCAPS_2BIT | DDPCAPS_4BIT | DDPCAPS_8BIT)
+
 HRESULT WINAPI IWineD3DPaletteImpl_QueryInterface(IWineD3DPalette *iface, REFIID refiid, void **obj) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
@@ -67,24 +69,96 @@ ULONG WINAPI IWineD3DPaletteImpl_Release(IWineD3DPalette *iface) {
     return ref;
 }
 
-HRESULT WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return DDERR_INVALIDPARAMS;
+/* Not called from the vtable */
+DWORD IWineD3DPaletteImpl_Size(DWORD dwFlags) {
+    switch (dwFlags & SIZE_BITS) {
+        case DDPCAPS_1BIT: return 2;
+        case DDPCAPS_2BIT: return 4;
+        case DDPCAPS_4BIT: return 16;
+        case DDPCAPS_8BIT: return 256;
+        default: assert(0); return 256;
+    }
 }
 
-HRESULT WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return DDERR_INVALIDPARAMS;
+HRESULT WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt) {
+    IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
+
+    TRACE("(%p)->(%08lx,%ld,%ld,%p)\n",This,Flags,Start,Count,PalEnt);
+
+    if (Flags != 0) return WINED3DERR_INVALIDCALL; /* unchecked */
+    if (Start + Count > IWineD3DPaletteImpl_Size(This->Flags))
+        return WINED3DERR_INVALIDCALL;
+
+    if (This->Flags & DDPCAPS_8BITENTRIES)
+    {
+        unsigned int i;
+        LPBYTE entry = (LPBYTE)PalEnt;
+
+        for (i=Start; i < Count+Start; i++)
+            *entry++ = This->palents[i].peRed;
+    }
+    else
+        memcpy(PalEnt, This->palents+Start, Count * sizeof(PALETTEENTRY));
+
+    return WINED3D_OK;
+}
+
+HRESULT WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt)
+{
+    IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
+    ResourceList *res;
+
+    TRACE("(%p)->(%08lx,%ld,%ld,%p)\n",This,Flags,Start,Count,PalEnt);
+
+    if (This->Flags & DDPCAPS_8BITENTRIES) {
+        unsigned int i;
+        const BYTE* entry = (const BYTE*)PalEnt;
+
+        for (i=Start; i < Count+Start; i++)
+            This->palents[i].peRed = *entry++;
+    }
+    else {
+        memcpy(This->palents+Start, PalEnt, Count * sizeof(PALETTEENTRY));
+
+        if (This->hpal)
+            SetPaletteEntries(This->hpal, Start, Count, This->palents+Start);
+    }
+
+#if 0
+    /* Now, if we are in 'depth conversion mode', update the screen palette */
+    /* FIXME: we need to update the image or we won't get palette fading. */
+    if (This->ddraw->d->palette_convert != NULL)
+        This->ddraw->d->palette_convert(palent,This->screen_palents,start,count);
+#endif
+
+    /* If the palette is attached to the render target, update all render targets */
+
+    for(res = This->wineD3DDevice->resources; res != NULL; res=res->next) {
+        if(IWineD3DResource_GetType(res->resource) == D3DRTYPE_SURFACE) {
+            IWineD3DSurfaceImpl *impl = (IWineD3DSurfaceImpl *) res->resource;
+            if(impl->palette == This)
+                IWineD3DSurface_RealizePalette( (IWineD3DSurface *) res->resource);
+        }
+    }
+
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DPaletteImpl_GetCaps(IWineD3DPalette *iface, DWORD *Caps) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return DDERR_INVALIDPARAMS;
+    IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
+    TRACE("(%p)->(%p)\n", This, Caps);
+
+    *Caps = This->Flags;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DPaletteImpl_GetParent(IWineD3DPalette *iface, IUnknown **Parent) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return DDERR_INVALIDPARAMS;
+    IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
+    TRACE("(%p)->(%p)\n", This, Parent);
+
+    *Parent = (IUnknown *) This->parent;
+    IUnknown_AddRef( (IUnknown *) This->parent);
+    return WINED3D_OK;
 }
 
 const IWineD3DPaletteVtbl IWineD3DPalette_Vtbl =
