@@ -76,14 +76,14 @@ static CLASS *get_class_ptr( HWND hwnd, BOOL write_access )
     if (ptr)
     {
         if (ptr != WND_OTHER_PROCESS && ptr != WND_DESKTOP) return ptr->class;
+        if (!write_access) return CLASS_OTHER_PROCESS;
 
-        if (write_access && (ptr == WND_DESKTOP || IsWindow( hwnd ))) /* check other processes */
+        /* modifying classes in other processes is not allowed */
+        if (ptr == WND_DESKTOP || IsWindow( hwnd ))
         {
-            /* modifying classes in other processes is not allowed */
             SetLastError( ERROR_ACCESS_DENIED );
             return NULL;
         }
-        return CLASS_OTHER_PROCESS;
     }
     SetLastError( ERROR_INVALID_WINDOW_HANDLE );
     return NULL;
