@@ -1708,7 +1708,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                     fprintf(file, ";\n");
                 }
 
-                if (phase == PHASE_FREE)
+                if ((phase == PHASE_FREE) || (pointer_type == RPC_FC_UP))
                     print_phase_function(file, indent, "Pointer", phase, var->name, *type_offset);
                 else
                     print_phase_function(file, indent, "ConformantString", phase, var->name,
