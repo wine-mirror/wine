@@ -16,7 +16,199 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if defined(__WINE_PSHPACK_H3)
+#if defined(__WINE_PSHPACK_H15)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H15
+#  endif
+/* Depth == 15 */
+
+#  if __WINE_PSHPACK_H14 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H14 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H14 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H14)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H14
+#  endif
+/* Depth == 14 */
+
+#  if __WINE_PSHPACK_H13 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H13 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H13 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H13)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H13
+#  endif
+/* Depth == 13 */
+
+#  if __WINE_PSHPACK_H12 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H12 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H12 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H12)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H12
+#  endif
+/* Depth == 12 */
+
+#  if __WINE_PSHPACK_H11 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H11 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H11 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H11)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H11
+#  endif
+/* Depth == 11 */
+
+#  if __WINE_PSHPACK_H10 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H10 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H10 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H10)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H10
+#  endif
+/* Depth == 10 */
+
+#  if __WINE_PSHPACK_H9 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H9 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H9 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H9)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H9
+#  endif
+/* Depth == 9 */
+
+#  if __WINE_PSHPACK_H8 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H8 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H8 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H8)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H8
+#  endif
+/* Depth == 8 */
+
+#  if __WINE_PSHPACK_H7 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H7 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H7 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H7)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H7
+#  endif
+/* Depth == 7 */
+
+#  if __WINE_PSHPACK_H6 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H6 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H6 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H6)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H6
+#  endif
+/* Depth == 6 */
+
+#  if __WINE_PSHPACK_H5 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H5 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H5 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H5)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H5
+#  endif
+/* Depth == 5 */
+
+#  if __WINE_PSHPACK_H4 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H4 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H4 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H4)
+#  ifndef __WINE_INTERNAL_POPPACK
+#    undef __WINE_PSHPACK_H4
+#  endif
+/* Depth == 4 */
+
+#  if __WINE_PSHPACK_H3 == 1
+#    pragma pack(1)
+#  elif __WINE_PSHPACK_H3 == 2
+#    pragma pack(2)
+#  elif __WINE_PSHPACK_H3 == 8
+#    pragma pack(8)
+#  else
+#    pragma pack(4)
+#  endif
+
+#elif defined(__WINE_PSHPACK_H3)
 #  ifndef __WINE_INTERNAL_POPPACK
 #    undef __WINE_PSHPACK_H3
 #  endif

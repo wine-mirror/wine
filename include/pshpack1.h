@@ -16,10 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if defined(__WINE_PSHPACK_H3)
+#if defined(__WINE_PSHPACK_H15)
 
-   /* Depth > 3 */
-#  error "Alignment nesting > 3 is not supported"
+   /* Depth > 15 */
+#  error "Alignment nesting > 15 is not supported"
 
 #else
 
@@ -34,6 +34,66 @@
 #  elif !defined(__WINE_PSHPACK_H3)
 #    define __WINE_PSHPACK_H3 1
      /* Depth == 3 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H4)
+#    define __WINE_PSHPACK_H4 1
+     /* Depth == 4 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H5)
+#    define __WINE_PSHPACK_H5 1
+     /* Depth == 5 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H6)
+#    define __WINE_PSHPACK_H6 1
+     /* Depth == 6 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H7)
+#    define __WINE_PSHPACK_H7 1
+     /* Depth == 7 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H8)
+#    define __WINE_PSHPACK_H8 1
+     /* Depth == 8 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H9)
+#    define __WINE_PSHPACK_H9 1
+     /* Depth == 9 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H10)
+#    define __WINE_PSHPACK_H10 1
+     /* Depth == 10 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H11)
+#    define __WINE_PSHPACK_H11 1
+     /* Depth == 11 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H12)
+#    define __WINE_PSHPACK_H12 1
+     /* Depth == 12 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H13)
+#    define __WINE_PSHPACK_H13 1
+     /* Depth == 13 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H14)
+#    define __WINE_PSHPACK_H14 1
+     /* Depth == 14 */
+#    define __WINE_INTERNAL_POPPACK
+#    include <poppack.h>
+#  elif !defined(__WINE_PSHPACK_H15)
+#    define __WINE_PSHPACK_H15 1
+     /* Depth == 15 */
 #    define __WINE_INTERNAL_POPPACK
 #    include <poppack.h>
 #  endif
