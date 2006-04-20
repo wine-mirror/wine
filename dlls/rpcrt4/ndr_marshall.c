@@ -909,10 +909,12 @@ void WINAPI PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   case RPC_FC_BOGUS_STRUCT:
   case RPC_FC_BOGUS_ARRAY:
   case RPC_FC_USER_MARSHAL:
+  case RPC_FC_CARRAY:
+  case RPC_FC_CVARRAY:
     break;
   default:
     FIXME("unhandled data type=%02x\n", *desc);
-  case RPC_FC_CARRAY:
+    break;
   case RPC_FC_C_CSTRING:
   case RPC_FC_C_WSTRING:
     if (pStubMsg->ReuseBuffer) goto notfree;
