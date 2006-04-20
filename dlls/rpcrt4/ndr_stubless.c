@@ -585,6 +585,8 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 #endif
 
     stubMsg.BufferLength = 0;
+    /* needed for conformance of top-level objects */
+    stubMsg.StackTop = *(unsigned char **)args;
 
     /* store the RPC flags away */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
@@ -1138,7 +1140,6 @@ long WINAPI NdrStubCall2(
         stubMsg.fHasNewCorrDesc = TRUE;
     }
 
-
     /* convert strings, floating point values and endianess into our
      * preferred format */
     if ((pRpcMsg->DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
@@ -1148,8 +1149,8 @@ long WINAPI NdrStubCall2(
 
     TRACE("allocating memory for stack of size %x\n", stack_size);
 
-    args = HeapAlloc(GetProcessHeap(), 0, stack_size);
-    ZeroMemory(args, stack_size);
+    args = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, stack_size);
+    stubMsg.StackTop = args; /* used by conformance of top-level objects */
 
     /* add the implicit This pointer as the first arg to the function if we
      * are calling an object method */
