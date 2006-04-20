@@ -704,6 +704,20 @@ inline static void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
 
 
 /***********************************************************************
+ *           save_fpu
+ *
+ * Save the thread FPU context.
+ */
+inline static void save_fpu( CONTEXT *context )
+{
+#ifdef __GNUC__
+    context->ContextFlags |= CONTEXT_FLOATING_POINT;
+    __asm__ __volatile__( "fnsave %0; fwait" : "=m" (context->FloatSave) );
+#endif
+}
+
+
+/***********************************************************************
  *           restore_fpu
  *
  * Restore the FPU context to a sigcontext.
@@ -762,10 +776,7 @@ inline static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
     else
 #endif
     {
-#ifdef __GNUC__
-        context->ContextFlags |= CONTEXT_FLOATING_POINT;
-        __asm__ __volatile__( "fnsave %0; fwait" : "=m" (context->FloatSave) );
-#endif
+        save_fpu( context );
     }
 }
 
@@ -821,6 +832,19 @@ inline static void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
         restore_fpu( context );
     }
 }
+
+
+/***********************************************************************
+ *              get_cpu_context
+ *
+ * Register function to get the context of the current thread.
+ */
+void WINAPI __regs_get_cpu_context( CONTEXT *context, CONTEXT *regs )
+{
+    *context = *regs;
+    save_fpu( context );
+}
+DEFINE_REGS_ENTRYPOINT( get_cpu_context, 4, 4 );
 
 
 /***********************************************************************

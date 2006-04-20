@@ -32,6 +32,7 @@
 /* exceptions */
 extern void wait_suspend( CONTEXT *context );
 extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
+extern void get_cpu_context( CONTEXT *context );
 extern void set_cpu_context( const CONTEXT *context );
 
 /* debug helper */

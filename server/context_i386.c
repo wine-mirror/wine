@@ -550,10 +550,9 @@ void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int f
     flags &= ~CONTEXT_i386;  /* get rid of CPU id */
 
     if (thread->context)  /* thread is inside an exception event or suspended */
-    {
         copy_context( context, thread->context, flags );
-        flags &= CONTEXT_DEBUG_REGISTERS;
-    }
+
+    flags &= CONTEXT_DEBUG_REGISTERS;
 
     if (flags && suspend_for_ptrace( thread ))
     {

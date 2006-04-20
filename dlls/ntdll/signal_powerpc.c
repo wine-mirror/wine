@@ -269,6 +269,17 @@ inline static void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 
 
 /***********************************************************************
+ *              get_cpu_context
+ *
+ * Get the context of the current thread.
+ */
+void get_cpu_context( CONTEXT *context )
+{
+    FIXME("not implemented\n");
+}
+
+
+/***********************************************************************
  *           set_cpu_context
  *
  * Set the new CPU context.
