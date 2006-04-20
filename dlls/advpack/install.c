@@ -443,14 +443,33 @@ HRESULT WINAPI ExecuteCabA(HWND hwnd, CABINFOA* pCab, LPVOID pReserved)
  * RETURNS
  *   Success: S_OK.
  *   Failure: E_FAIL.
- *
- * BUGS
- *   Unimplemented
  */
 HRESULT WINAPI ExecuteCabW(HWND hwnd, CABINFOW* pCab, LPVOID pReserved)
 {
-    FIXME("(%p, %p, %p): stub\n", hwnd, pCab, pReserved);
-    return E_FAIL;
+    ADVInfo info;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p)\n", hwnd, pCab, pReserved);
+
+    ZeroMemory(&info, sizeof(ADVInfo));
+
+    if (pCab->pszCab && *pCab->pszCab)
+        FIXME("Cab archive not extracted!\n");
+
+    hr = install_init(pCab->pszInf, pCab->pszSection, pCab->szSrcPath, pCab->dwFlags, &info);
+    if (hr != S_OK)
+        goto done;
+
+    hr = spapi_install(&info);
+    if (hr != S_OK)
+        goto done;
+
+    hr = adv_install(&info);
+
+done:
+    install_release(&info);
+
+    return S_OK;
 }
 
 /***********************************************************************
