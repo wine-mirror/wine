@@ -1655,7 +1655,7 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
         case WINED3DFMT_A8B8G8R8:         retVal = GL_RGBA8; break;
         case WINED3DFMT_A2R10G10B10:      retVal = GL_RGBA8; break;
-        case WINED3DFMT_X8R8G8B8:         retVal = GL_RGB; break;
+        case WINED3DFMT_X8R8G8B8:         retVal = GL_RGB8; break;
         case WINED3DFMT_A16B16G16R16:     retVal = GL_RGBA16_EXT; break;  
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA8; break;
@@ -1769,7 +1769,7 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A8P8:             retVal = GL_UNSIGNED_BYTE; break;
             /* Luminance */
         case WINED3DFMT_L8:               retVal = GL_UNSIGNED_BYTE; break;
-        case WINED3DFMT_L16:              retVal = GL_UNSIGNED_BYTE; break;
+        case WINED3DFMT_L16:              retVal = GL_UNSIGNED_SHORT; break;
         case WINED3DFMT_A8L8:             retVal = GL_UNSIGNED_BYTE; break;
         case WINED3DFMT_A4L4:             retVal = GL_UNSIGNED_BYTE; break;
             /* Bump */
@@ -1789,6 +1789,7 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A8B8G8R8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
         case WINED3DFMT_A2R10G10B10:      retVal = GL_UNSIGNED_INT_2_10_10_10_REV; break;
         case WINED3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
+        case WINED3DFMT_A16B16G16R16:     retVal = GL_UNSIGNED_SHORT; break;
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA; break;
             /* Depth + Stencil */
@@ -1940,6 +1941,13 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
         PUSH2(GLX_RED_SIZE,    10);
         PUSH2(GLX_GREEN_SIZE,  10);
         PUSH2(GLX_BLUE_SIZE,   10);
+        break;
+
+    case WINED3DFMT_A16B16G16R16:        
+        PUSH2(GLX_ALPHA_SIZE,  16);
+        PUSH2(GLX_RED_SIZE,    16);
+        PUSH2(GLX_GREEN_SIZE,  16);
+        PUSH2(GLX_BLUE_SIZE,   16);
         break;
         
     default:
