@@ -399,7 +399,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
 {
     FIXME("(%p,0x%08x,%p) stub\n", PolicyHandle, InformationClass, Buffer);
 
-    if(!Buffer) return FALSE;
+    if(!Buffer) return STATUS_INVALID_PARAMETER;
     switch (InformationClass)
     {
         case PolicyAuditEventsInformation: /* 2 */
@@ -477,10 +477,10 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
         case  PolicyDnsDomainInformation:
         {
             FIXME("category not implemented\n");
-            return FALSE;
+            return STATUS_UNSUCCESSFUL;
         }
     }
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
