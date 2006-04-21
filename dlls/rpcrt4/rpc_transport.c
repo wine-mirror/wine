@@ -22,10 +22,28 @@
  *
  */
 
+#include "config.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#ifdef HAVE_SYS_TYPES
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -44,6 +62,8 @@
 #include "rpc_message.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
+
+/**** ncacn_np support ****/
 
 typedef struct _RpcConnection_np
 {
@@ -180,7 +200,7 @@ static RPC_STATUS rpcrt4_conn_np_handoff(RpcConnection *old_conn, RpcConnection 
   RpcConnection_np *new_npc = (RpcConnection_np *) new_conn;
   /* because of the way named pipes work, we'll transfer the connected pipe
    * to the child, then reopen the server binding to continue listening */
-  
+
   new_npc->pipe = old_npc->pipe;
   new_npc->ovl = old_npc->ovl;
   old_npc->pipe = 0;
@@ -224,9 +244,12 @@ static int rpcrt4_conn_np_close(RpcConnection *Connection)
   return 0;
 }
 
+/**** ncacn_ip_tcp support ****/
+
 typedef struct _RpcConnection_tcp
 {
   RpcConnection common;
+  int sock;
 } RpcConnection_tcp;
 
 static RpcConnection *rpcrt4_conn_tcp_alloc(void)
@@ -236,35 +259,86 @@ static RpcConnection *rpcrt4_conn_tcp_alloc(void)
 
 static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
 {
-  FIXME("(%s, %s) unimplemented\n", Connection->NetworkAddr, Connection->Endpoint);
+  RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
+  struct sockaddr_in sa;
+  int sock;
+
+  TRACE("(%s, %s)\n", Connection->NetworkAddr, Connection->Endpoint);
+
+  if (Connection->server)
+  {
+    ERR("ncacn_ip_tcp servers not supported yet\n");
+    return RPC_S_SERVER_UNAVAILABLE;
+  }
+
+  if (tcpc->sock)
+    return RPC_S_OK;
+
+  sa.sin_family = AF_INET;
+  inet_pton(AF_INET, Connection->NetworkAddr, &sa.sin_addr);
+  sa.sin_port = htons(atoi(Connection->Endpoint));
+
+  sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (sock < 0)
+  {
+    ERR("socket() failed\n");
+    goto error;
+  }
+
+  if (0>connect(sock, (struct sockaddr*) &sa, sizeof (sa)))
+  {
+    ERR("connect() failed\n");
+    goto error;
+  }
+
+  tcpc->sock = sock;
+
+  return RPC_S_OK;
+
+error:
+  close(sock);
   return RPC_S_SERVER_UNAVAILABLE;
 }
 
 static HANDLE rpcrt4_conn_tcp_get_wait_handle(RpcConnection *Connection)
 {
-  return NULL;
+  assert(0);
+  return 0;
 }
 
 static RPC_STATUS rpcrt4_conn_tcp_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
 {
+  assert(0);
   return RPC_S_SERVER_UNAVAILABLE;
 }
 
 static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
                                 void *buffer, unsigned int count)
 {
-  return -1;
+  RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
+  int r = read(tcpc->sock, buffer, count);
+  TRACE("%d %p %u -> %d\n", tcpc->sock, buffer, count, r);
+  return r;
 }
 
 static int rpcrt4_conn_tcp_write(RpcConnection *Connection,
                                  const void *buffer, unsigned int count)
 {
-  return -1;
+  RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
+  int r = write(tcpc->sock, buffer, count);
+  TRACE("%d %p %u -> %d\n", tcpc->sock, buffer, count, r);
+  return r;
 }
 
 static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
 {
-  return -1;
+  RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
+
+  TRACE("%d\n", tcpc->sock);
+  if (tcpc->sock)
+    close(tcpc->sock);
+  tcpc->sock = 0;
+  return 0;
 }
 
 struct protseq_ops protseq_list[] = {
@@ -307,6 +381,8 @@ static struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq)
       return &protseq_list[i];
   return NULL;
 }
+
+/**** interface to rest of code ****/
 
 RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
 {
