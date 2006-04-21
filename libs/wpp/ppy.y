@@ -361,8 +361,8 @@ pp_expr	: tSINT				{ $$.type = cv_sint;  $$.val.si = $1; }
 	| tUINT				{ $$.type = cv_uint;  $$.val.ui = $1; }
 	| tSLONG			{ $$.type = cv_slong; $$.val.sl = $1; }
 	| tULONG			{ $$.type = cv_ulong; $$.val.ul = $1; }
-	| tSLONGLONG			{ $$.type = cv_sll;   $$.val.sl = $1; }
-	| tULONGLONG			{ $$.type = cv_ull;   $$.val.ul = $1; }
+	| tSLONGLONG			{ $$.type = cv_sll;   $$.val.sll = $1; }
+	| tULONGLONG			{ $$.type = cv_ull;   $$.val.ull = $1; }
 	| tDEFINED tIDENT		{ $$.type = cv_sint;  $$.val.si = pplookup($2) != NULL; }
 	| tDEFINED '(' tIDENT ')'	{ $$.type = cv_sint;  $$.val.si = pplookup($3) != NULL; }
 	| tIDENT			{ $$.type = cv_sint;  $$.val.si = 0; }
