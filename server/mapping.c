@@ -243,7 +243,7 @@ static int get_image_params( struct mapping *mapping )
 
     mapping->size        = ROUND_SIZE( nt.OptionalHeader.SizeOfImage );
     mapping->base        = (void *)nt.OptionalHeader.ImageBase;
-    mapping->header_size = nt.OptionalHeader.SizeOfHeaders;
+    mapping->header_size = pos + size;
     mapping->protect     = VPROT_IMAGE;
 
     /* sanity check */
