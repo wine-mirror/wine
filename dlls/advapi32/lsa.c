@@ -107,7 +107,7 @@ NTSTATUS WINAPI LsaAddAccountRights(
 NTSTATUS WINAPI LsaClose(IN LSA_HANDLE ObjectHandle)
 {
     FIXME("(%p) stub\n", ObjectHandle);
-    return 0xc0000000;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
