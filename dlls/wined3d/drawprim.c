@@ -957,7 +957,7 @@ static void loadVertexData(IWineD3DDevice *iface, Direct3DVertexStridedData *sd)
 #endif
 
 
-            VTRACE(("glWeightPointerARB(%ld, GL_FLOAT, %ld, %p)\n",
+            VTRACE(("glWeightPointerARB(%d, GL_FLOAT, %ld, %p)\n",
                 WINED3D_ATR_SIZE(blendWeights) ,
                 sd->u.s.blendWeights.dwStride,
                 sd->u.s.blendWeights.lpData));
@@ -1484,7 +1484,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd
 		     D3DCOLOR_B_G(diffuseColor),
 		     D3DCOLOR_B_B(diffuseColor),
 		     D3DCOLOR_B_A(diffuseColor));
-            VTRACE(("glColor4ub: r,g,b,a=%u,%u,%u,%u\n", 
+            VTRACE(("glColor4ub: r,g,b,a=%lu,%lu,%lu,%lu\n", 
                     D3DCOLOR_B_R(diffuseColor),
 		    D3DCOLOR_B_G(diffuseColor),
 		    D3DCOLOR_B_B(diffuseColor),
@@ -1495,7 +1495,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd
 
         /* Specular ------------------------------- */
         if (sd->u.s.specular.lpData != NULL) {
-            VTRACE(("glSecondaryColor4ub: r,g,b=%u,%u,%u\n", 
+            VTRACE(("glSecondaryColor4ub: r,g,b=%lu,%lu,%lu\n", 
                     D3DCOLOR_B_R(specularColor), 
                     D3DCOLOR_B_G(specularColor), 
                     D3DCOLOR_B_B(specularColor)));

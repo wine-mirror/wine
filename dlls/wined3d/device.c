@@ -308,17 +308,17 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
            glDisable(GL_POINT_SMOOTH);
 
            /* Centre the texture on the vertex */
-           VTRACE("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
+           VTRACE(("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n"));
            glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
 
-           VTRACE("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n");
+           VTRACE(("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n"));
            glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
            checkGLcall("glTexEnvf(...)");
-           VTRACE("glEnable( GL_POINT_SPRITE_ARB )\n");
+           VTRACE(("glEnable( GL_POINT_SPRITE_ARB )\n"));
            glEnable( GL_POINT_SPRITE_ARB );
            checkGLcall("glEnable(...)");
         } else {
-           VTRACE("glDisable( GL_POINT_SPRITE_ARB )\n");
+           VTRACE(("glDisable( GL_POINT_SPRITE_ARB )\n"));
            glDisable( GL_POINT_SPRITE_ARB );
            checkGLcall("glEnable(...)");
         }
