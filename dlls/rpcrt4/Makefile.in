@@ -20,6 +20,7 @@ C_SRCS = \
 	rpc_epmap.c \
 	rpc_message.c \
 	rpc_server.c \
+	rpc_transport.c \
 	rpcrt4_main.c \
 	rpcss_np_client.c
 
