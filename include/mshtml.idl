@@ -57,6 +57,8 @@ interface IHTMLFiltersCollection : IDispatch
 library MSHTML
 {
 
+importlib("stdole2.tlb");
+
 /*****************************************************************************
  *    IHTMLStyle interface
  */

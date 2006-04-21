@@ -37,7 +37,7 @@ import "docobj.idl";
 library SHDocVw
 {
 
-/* importlib("stdole2.tlb"); */
+importlib("stdole2.tlb");
 
 
 /*****************************************************************************
