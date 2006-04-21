@@ -25,13 +25,6 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#include <time.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
 #include <signal.h>
 
 #include "windef.h"
