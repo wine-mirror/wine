@@ -278,3 +278,10 @@ void add_typedef(type_t *tdef, var_t *name)
      LINK(entry, typelib->entry);
      typelib->entry = entry;
 }
+
+void add_importlib(const char *name)
+{
+    if(!typelib) return;
+
+    warning("importlib is not yet supported.\n");
+}

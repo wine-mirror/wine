@@ -251,6 +251,7 @@ imp_statements:					{}
 	| imp_statements coclassdef		{ if (!parse_only) add_coclass($2); }
 	| imp_statements moduledef		{ if (!parse_only) add_module($2); }
 	| imp_statements statement		{}
+	| imp_statements importlib		{}
 	;
 
 int_statements:					{ $$ = NULL; }
@@ -276,6 +277,8 @@ import_start: tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
 	;
 import:   import_start imp_statements aEOF	{}
 	;
+
+importlib: tIMPORTLIB '(' aSTRING ')'		{ if(!parse_only) add_importlib($3); }
 
 libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	;
