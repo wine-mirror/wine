@@ -41,6 +41,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      ldap_searchA     (WLDAP32.@)
+ *
+ * See ldap_searchW.
+ */
 ULONG ldap_searchA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
     PCHAR attrs[], ULONG attrsonly )
 {
@@ -79,6 +84,29 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_searchW     (WLDAP32.@)
+ *
+ * Search a directory tree (asynchronous operation).
+ *
+ * PARAMS
+ *  ld        [I] Pointer to an LDAP context.
+ *  base      [I] Starting point for the search.
+ *  scope     [I] Search scope. One of LDAP_SCOPE_BASE,
+ *                LDAP_SCOPE_ONELEVEL and LDAP_SCOPE_SUBTREE.
+ *  filter    [I] Search filter.
+ *  attrs     [I] Attributes to return.
+ *  attrsonly [I] Return no values, only attributes.
+ *
+ * RETURNS
+ *  Success: Message ID of the search operation.
+ *  Failure: ~0UL
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. Cancel the operation by calling ldap_abandon
+ *  with the message ID.
+ */
 ULONG ldap_searchW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
     PWCHAR attrs[], ULONG attrsonly )
 {
@@ -124,6 +152,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_search_extA     (WLDAP32.@)
+ *
+ * See ldap_search_extW.
+ */
 ULONG ldap_search_extA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
     PCHAR filter, PCHAR attrs[], ULONG attrsonly, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, ULONG timelimit, ULONG sizelimit, ULONG *message )
@@ -177,6 +210,34 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_search_extW     (WLDAP32.@)
+ *
+ * Search a directory tree (asynchronous operation).
+ *
+ * PARAMS
+ *  ld          [I] Pointer to an LDAP context.
+ *  base        [I] Starting point for the search.
+ *  scope       [I] Search scope. One of LDAP_SCOPE_BASE,
+ *                  LDAP_SCOPE_ONELEVEL and LDAP_SCOPE_SUBTREE.
+ *  filter      [I] Search filter.
+ *  attrs       [I] Attributes to return.
+ *  attrsonly   [I] Return no values, only attributes.
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *  timelimit   [I] Timeout in seconds.
+ *  sizelimit   [I] Maximum number of entries to return. Zero means unlimited.
+ *  message     [O] Message ID of the search operation.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. Cancel the operation by calling ldap_abandon
+ *  with the message ID.
+ */
 ULONG ldap_search_extW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
     PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG timelimit, ULONG sizelimit, ULONG *message )
@@ -233,6 +294,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_search_ext_sA     (WLDAP32.@)
+ *
+ * See ldap_search_ext_sW.
+ */
 ULONG ldap_search_ext_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
     PCHAR filter, PCHAR attrs[], ULONG attrsonly, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, struct l_timeval* timeout, ULONG sizelimit, WLDAP32_LDAPMessage **res )
@@ -285,6 +351,32 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_search_ext_sW     (WLDAP32.@)
+ *
+ * Search a directory tree (synchronous operation).
+ *
+ * PARAMS
+ *  ld          [I] Pointer to an LDAP context.
+ *  base        [I] Starting point for the search.
+ *  scope       [I] Search scope. One of LDAP_SCOPE_BASE,
+ *                  LDAP_SCOPE_ONELEVEL and LDAP_SCOPE_SUBTREE.
+ *  filter      [I] Search filter.
+ *  attrs       [I] Attributes to return.
+ *  attrsonly   [I] Return no values, only attributes.
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *  timeout     [I] Timeout in seconds.
+ *  sizelimit   [I] Maximum number of entries to return. Zero means unlimited.
+ *  res         [O] Results of the search operation.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_msgfree to free the results.
+ */
 ULONG ldap_search_ext_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
     PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, struct l_timeval* timeout, ULONG sizelimit, WLDAP32_LDAPMessage **res )
@@ -337,6 +429,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_search_sA     (WLDAP32.@)
+ *
+ * See ldap_search_sW.
+ */
 ULONG ldap_search_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
     PCHAR attrs[], ULONG attrsonly, WLDAP32_LDAPMessage **res )
 {
@@ -375,6 +472,28 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_search_sW     (WLDAP32.@)
+ *
+ * Search a directory tree (synchronous operation).
+ *
+ * PARAMS
+ *  ld        [I] Pointer to an LDAP context.
+ *  base      [I] Starting point for the search.
+ *  scope     [I] Search scope. One of LDAP_SCOPE_BASE,
+ *                LDAP_SCOPE_ONELEVEL and LDAP_SCOPE_SUBTREE.
+ *  filter    [I] Search filter.
+ *  attrs     [I] Attributes to return.
+ *  attrsonly [I] Return no values, only attributes.
+ *  res       [O] Results of the search operation.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_msgfree to free the results.
+ */
 ULONG ldap_search_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
     PWCHAR attrs[], ULONG attrsonly, WLDAP32_LDAPMessage **res )
 {
@@ -414,6 +533,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_search_stA     (WLDAP32.@)
+ *
+ * See ldap_search_stW.
+ */
 ULONG ldap_search_stA( WLDAP32_LDAP *ld, const PCHAR base, ULONG scope,
     const PCHAR filter, PCHAR attrs[], ULONG attrsonly,
     struct l_timeval *timeout, WLDAP32_LDAPMessage **res )
@@ -455,6 +579,29 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_search_stW     (WLDAP32.@)
+ *
+ * Search a directory tree (synchronous operation).
+ *
+ * PARAMS
+ *  ld        [I] Pointer to an LDAP context.
+ *  base      [I] Starting point for the search.
+ *  scope     [I] Search scope. One of LDAP_SCOPE_BASE,
+ *                LDAP_SCOPE_ONELEVEL and LDAP_SCOPE_SUBTREE.
+ *  filter    [I] Search filter.
+ *  attrs     [I] Attributes to return.
+ *  attrsonly [I] Return no values, only attributes.
+ *  timeout   [I] Timeout in seconds.
+ *  res       [O] Results of the search operation.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_msgfree to free the results.
+ */
 ULONG ldap_search_stW( WLDAP32_LDAP *ld, const PWCHAR base, ULONG scope,
     const PWCHAR filter, PWCHAR attrs[], ULONG attrsonly,
     struct l_timeval *timeout, WLDAP32_LDAPMessage **res )
