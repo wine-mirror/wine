@@ -116,6 +116,10 @@ static RPC_STATUS rpcrt4_ncalrpc_open(RpcConnection* Connection)
   RPC_STATUS r;
   LPSTR pname;
 
+  /* already connected? */
+  if (Connection->conn)
+    return RPC_S_OK;
+
   /* protseq=ncalrpc: supposed to use NT LPC ports,
    * but we'll implement it with named pipes for now */
   pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
@@ -135,6 +139,10 @@ static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
   static LPCSTR prefix = "\\\\.";
   RPC_STATUS r;
   LPSTR pname;
+
+  /* already connected? */
+  if (Connection->conn)
+    return RPC_S_OK;
 
   /* protseq=ncacn_np: named pipes */
   pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
@@ -217,10 +225,6 @@ static struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq)
 RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
 {
   TRACE("(Connection == ^%p)\n", Connection);
-
-  /* already connected? */
-  if (Connection->conn)
-    return RPC_S_OK;
 
   return Connection->ops->open_connection(Connection);
 }
