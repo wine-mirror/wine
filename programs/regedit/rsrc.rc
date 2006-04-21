@@ -46,6 +46,7 @@ IDC_REGEDIT ACCELERATORS
 #include "En.rc"
 #include "Es.rc"
 #include "Fr.rc"
+#include "Hu.rc"
 #include "It.rc"
 #include "Ja.rc"
 #include "Ko.rc"

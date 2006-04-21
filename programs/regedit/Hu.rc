@@ -1,0 +1,300 @@
+/*
+ * Regedit resources
+ *
+ * Copyright 2006 Andras Kovacs
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/* Hungarian Resources */
+
+LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "&Regisztrációs Adatbázis"
+    BEGIN
+        MENUITEM "Regisztrációs adatbázis fájl &importálása...",    ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "Regisztrációs adatbázis fájl &exportálása...",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Csatlakozás hálózati regisztrációs adatbázishoz...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "Leválasztás a hálózati a&datbázisról...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Nyomtatás\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Ki&lépés",                       ID_REGISTRY_EXIT
+    END
+    POPUP "Sz&erkesztés"
+    BEGIN
+        MENUITEM "&Módosítás",                     ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&Új"
+        BEGIN
+            MENUITEM "&Kulcs",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Sztring érték",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Bináris érték",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD érték",                ID_EDIT_NEW_DWORDVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Törlés\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Átnevezés\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "Kul&csnév másolása",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Keresés\tCtrl+F",               ID_EDIT_FIND
+        MENUITEM "K&övetkezõ keresése\tF3",              ID_EDIT_FINDNEXT
+    END
+    POPUP "&Nézet"
+    BEGIN
+        MENUITEM "Álla&potsor",                 ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "Szétvá&lasztás",                      ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "F&rissítés\tF5",                ID_VIEW_REFRESH
+    END
+    POPUP "Ked&vencek"
+    BEGIN
+        MENUITEM "Hozzá&adás a kedvencekhez",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "Tö&rlés a kedvencekbõl",           ID_FAVORITES_REMOVEFAVORITE
+    END
+    POPUP "&Súgó"
+    BEGIN
+        MENUITEM "S&úgó témakörök\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "Regisztrációs &adatbázis szerkesztõ névjegye",      ID_HELP_ABOUT
+    END
+END
+
+/*
+ * Dialog
+ */
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Névjegy"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    ICON            IDI_REGEDIT,IDI_REGEDIT,14,9,16,16
+    LTEXT           "ReactOS regedit Verzió: 1.0",IDC_STATIC,49,10,119,8,
+                    SS_NOPREFIX
+    LTEXT           "Copyright (C) 2002 a ReactOS csapata",IDC_STATIC,49,20,119,8
+    DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Keresés"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Keresés:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "Keresés itt:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Kulcsok", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Érték nevek", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Érték tartalmak", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Csak teljes szöveg", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Keresés",IDOK,175,5,30,11,WS_GROUP
+    PUSHBUTTON      "Bezárás",IDCANCEL,175,22,30,11, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Kedvenc hozzáadása"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Név:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,140,40,30,11,WS_GROUP
+    PUSHBUTTON      "Mégse",IDCANCEL,175,40,30,11, WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Kedvenc törlése"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Név:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,140,73,30,11,WS_GROUP
+    PUSHBUTTON      "Mégse",IDCANCEL,175,73,30,11, WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Sztring szerkesztése"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Érték neve:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Érték adat:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,140,60,30,11,WS_GROUP
+    PUSHBUTTON   "Mégse",IDCANCEL,175,60,30,11,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "DWORD szerkesztése"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Érték neve:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Érték adat:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Alap", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Hexadecimális", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Decimális", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Mégse",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Bináris szerkesztése"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Érték neve:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Érték adat:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
+    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Mégse",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "Név"
+    IDS_LIST_COLUMN_TYPE    "Típus"
+    IDS_LIST_COLUMN_DATA    "Adat"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Regisztrációs adatbázis szerkesztõ"
+    IDC_REGEDIT             "REGEDIT"
+    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "Parancsokat tartalmaz az egész regisztrációs adatbázissal történõ munkához"
+    ID_EDIT_MENU            "Parancsokat tartalmaz az érték és kulcsszerkesztéshez"
+    ID_VIEW_MENU            "Parancsokat tartalmaz a regisztrációs adatbázis ablak testreszabásával kapcsolatban"
+    ID_FAVORITES_MENU       "Parancsokat tartalmaz a gyakran hozzáfért kulcsokhoz"
+    ID_HELP_MENU            "Parancsokat tartalmaz a Regisztrációs adatbázis szerkesztõ súgójának és információjának megjelenítéséhez"
+    ID_EDIT_NEW_MENU        "Parancsokat tartalmaz új kulcsok és értékek létrehozásához"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY          "Módosítja egy érték adatát"
+    ID_EDIT_NEW_KEY         "Hozzáad egy új kulcsot"
+    ID_EDIT_NEW_STRINGVALUE "Hozzáad egy új sztring értéket"
+    ID_EDIT_NEW_BINARYVALUE "Hozzáad egy új bináris értéket"
+    ID_EDIT_NEW_DWORDVALUE  "Hozzáad egy új duplaszó értéket"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Egy szövegfájlt importál a regisztrációs adatbázisba"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "Az egész regisztrációs adatbázist kiexportálja egy szövegfájlba"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "Kapcsolódik egy távoli számítógép regisztrációs adatbázisához"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "Lekapcsolódik egy távoli számítógép regisztrációs adatbázisáról"
+    ID_REGISTRY_PRINT       "Kinyomtatja az egész regisztrációs adatbázist, vagy annak egy részét"
+/*    ID_HELP_HELPTOPICS      "Megnyitja a Regisztrációs adatbázis szerkesztõ súgóját" */
+ID_HELP_ABOUT           "Megjeleníti a program információkat, verziószámot, és a szerzõi jogot"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "Kilép a Regisztrációs adatbázis szerkesztõbõl"
+    ID_FAVORITES_ADDTOFAVORITES "Kulcsokat ad hozzá a kedvencek listához"
+    ID_FAVORITES_REMOVEFAVORITE "Kulcsokat töröl a kedvencek listából"
+    ID_VIEW_STATUSBAR       "Megjeleníti vagy eltünteti az állapotsort"
+    ID_VIEW_SPLIT           "Megváltoztatja a két ablakrész pizícióját"
+    ID_VIEW_REFRESH         "Frissíti az ablakot"
+    ID_EDIT_DELETE          "Törli a kijelölést"
+    ID_EDIT_RENAME          "Átnevezi a kijelölést"
+    ID_EDIT_COPYKEYNAME     "A kijelölt kulcs nevét másolja a vágólapra"
+    ID_EDIT_FIND            "Megkeres egy szöveges sztringet egy kulcsban, értékben, vagy adatban"
+    ID_EDIT_FINDNEXT        "Keresi a következõ elõfordulást az elõzõ kereséstõl kezdve"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		    "Hiba"
+    IDS_BAD_KEY		    "Nem tudom lekérni a kulcsot: '%s'"
+    IDS_BAD_VALUE           "Nem tudom lekérni az értéket: '%s'"
+    IDS_UNSUPPORTED_TYPE    "Nem tudom ezt a típusú kulcsot szerkeszteni: (%ld)"
+    IDS_TOO_BIG_VALUE       "Az érték túl nagy: (%ld)"
+    IDS_DELETE_BOX_TITLE    "Értéktörlés jóváhagyása"
+    IDS_DELETE_BOX_TEXT     "Biztos hogy törölni szeretné a(z) '%s' kulcsot?"
+    IDS_NEWKEY              "Új kulcs #%d"
+    IDS_NEWVALUE            "Új érték #%d"
+    IDS_NOTFOUND            "A(z) '%s' keresési kifejezés nem található"
+END
+
+/*****************************************************************/
+
+
+/*
+ * Dialog
+ */
+
+IDD_DIALOG1 DIALOG DISCARDABLE  50, 50, 268, 98
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+END
+
+IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 187, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialógus"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,130,7,50,14
+    PUSHBUTTON      "Mégse",IDCANCEL,130,24,50,14
+END
+
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+
+
+/*
+ * String Table
+ */
+
+/*
+ *STRINGTABLE DISCARDABLE
+ *BEGIN
+ *    ID_HELP_HELPTOPICS      "Megnyitja a Regisztrációs adatbázis szerkesztõ súgóját."
+ *    ID_HELP_ABOUT           "Megjeleníti a program információkat, verziószámot, és a szerzõi jogot."
+ *END
+ */
+
+/*****************************************************************/
