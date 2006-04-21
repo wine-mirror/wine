@@ -725,21 +725,34 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR 
 }
 
 /***********************************************************************
+ *             alloc_serverprotoseq (internal)
+ */
+static RpcServerProtseq *alloc_serverprotoseq(UINT MaxCalls, char *Protseq, char *Endpoint)
+{
+  RpcServerProtseq* ps;
+
+  ps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcServerProtseq));
+  ps->MaxCalls = MaxCalls;
+  ps->Protseq = Protseq;
+  ps->Endpoint = Endpoint;
+
+  return ps;
+}
+
+/***********************************************************************
  *             RpcServerUseProtseqEpExA (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcServerUseProtseqEpExA( unsigned char *Protseq, UINT MaxCalls, unsigned char *Endpoint, LPVOID SecurityDescriptor,
                                             PRPC_POLICY lpPolicy )
 {
+  char *szps = (char*)Protseq, *szep = (char*)Endpoint;
   RpcServerProtseq* ps;
 
-  TRACE("(%s,%u,%s,%p,{%u,%lu,%lu})\n", debugstr_a( (char*)Protseq ), MaxCalls,
-       debugstr_a( (char*)Endpoint ), SecurityDescriptor,
+  TRACE("(%s,%u,%s,%p,{%u,%lu,%lu})\n", debugstr_a(szps), MaxCalls,
+       debugstr_a(szep), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
 
-  ps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcServerProtseq));
-  ps->MaxCalls = MaxCalls;
-  ps->Protseq = RPCRT4_strdupA((char*)Protseq);
-  ps->Endpoint = RPCRT4_strdupA((char*)Endpoint);
+  ps = alloc_serverprotoseq(MaxCalls, RPCRT4_strdupA(szps), RPCRT4_strdupA(szep));
 
   return RPCRT4_use_protseq(ps);
 }
@@ -756,10 +769,8 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWST
        debugstr_w( Endpoint ), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
 
-  ps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcServerProtseq));
-  ps->MaxCalls = MaxCalls;
-  ps->Protseq = RPCRT4_strdupWtoA(Protseq);
-  ps->Endpoint = RPCRT4_strdupWtoA(Endpoint);
+  ps = alloc_serverprotoseq(MaxCalls, RPCRT4_strdupWtoA(Protseq),
+                            RPCRT4_strdupWtoA(Endpoint));
 
   return RPCRT4_use_protseq(ps);
 }
