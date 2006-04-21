@@ -198,7 +198,6 @@ static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_r
 extern HINSTANCE shdocvw_hinstance;
 extern void register_iewindow_class(void);
 extern void unregister_iewindow_class(void);
-extern BOOL create_ie_window(LPCWSTR url);
 
 HRESULT register_class_object(BOOL);
 
