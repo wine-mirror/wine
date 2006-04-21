@@ -20,8 +20,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * TODO:
- *  - a whole lot
  */
 
 #include <stdarg.h>
@@ -161,6 +159,18 @@ static HANDLE rpcrt4_conn_np_get_connect_event(RpcConnection *conn)
   return conn->ovl.hEvent;
 }
 
+static RPC_STATUS rpcrt4_conn_np_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
+{
+  /* because of the way named pipes work, we'll transfer the connected pipe
+   * to the child, then reopen the server binding to continue listening */
+  
+  new_conn->conn = old_conn->conn;
+  new_conn->ovl = old_conn->ovl;
+  old_conn->conn = 0;
+  memset(&old_conn->ovl, 0, sizeof(old_conn->ovl));
+  return RPCRT4_OpenConnection(old_conn);
+}
+
 static int rpcrt4_conn_np_read(RpcConnection *Connection,
                         void *buffer, unsigned int count)
 {
@@ -198,6 +208,7 @@ struct protseq_ops protseq_list[] = {
   { "ncacn_np",
     rpcrt4_ncalrpc_open,
     rpcrt4_conn_np_get_connect_event,
+    rpcrt4_conn_np_handoff,
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
@@ -205,6 +216,7 @@ struct protseq_ops protseq_list[] = {
   { "ncalrpc",
     rpcrt4_ncacn_np_open,
     rpcrt4_conn_np_get_connect_event,
+    rpcrt4_conn_np_handoff,
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
@@ -261,23 +273,14 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCS
 
 RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* OldConnection)
 {
-  RpcConnection* NewConnection;
   RPC_STATUS err;
 
-  err = RPCRT4_CreateConnection(&NewConnection, OldConnection->server,
+  err = RPCRT4_CreateConnection(Connection, OldConnection->server,
                                 rpcrt4_conn_get_name(OldConnection),
                                 OldConnection->NetworkAddr,
                                 OldConnection->Endpoint, NULL, NULL);
-  if (err == RPC_S_OK) {
-    /* because of the way named pipes work, we'll transfer the connected pipe
-     * to the child, then reopen the server binding to continue listening */
-    NewConnection->conn = OldConnection->conn;
-    NewConnection->ovl = OldConnection->ovl;
-    OldConnection->conn = 0;
-    memset(&OldConnection->ovl, 0, sizeof(OldConnection->ovl));
-    *Connection = NewConnection;
-    RPCRT4_OpenConnection(OldConnection);
-  }
+  if (err == RPC_S_OK)
+    rpcrt4_conn_handoff(OldConnection, *Connection);
   return err;
 }
 

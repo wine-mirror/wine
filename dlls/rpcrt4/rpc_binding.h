@@ -44,6 +44,7 @@ struct protseq_ops {
   char *name;
   RPC_STATUS (*open_connection)(RpcConnection *conn);
   HANDLE (*get_connect_wait_handle)(RpcConnection *conn);
+  RPC_STATUS (*handoff)(RpcConnection *old_conn, RpcConnection *new_conn);
   int (*read)(RpcConnection *conn, void *buffer, unsigned int len);
   int (*write)(RpcConnection *conn, const void *buffer, unsigned int len);
   int (*close)(RpcConnection *conn);
@@ -119,6 +120,11 @@ static inline int rpcrt4_conn_close(RpcConnection *Connection)
 static inline HANDLE rpcrt4_conn_get_wait_object(RpcConnection *Connection)
 {
   return Connection->ops->get_connect_wait_handle(Connection);
+}
+
+static inline RPC_STATUS rpcrt4_conn_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
+{
+  return old_conn->ops->handoff(old_conn, new_conn);
 }
 
 #endif
