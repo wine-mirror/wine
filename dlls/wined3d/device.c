@@ -811,7 +811,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
         object->baseTexture.levels++;
         tmpW = Width;
         tmpH = Height;
-        while (tmpW > 1 && tmpH > 1) {
+        while (tmpW > 1 || tmpH > 1) {
             tmpW = max(1, tmpW >> 1);
             tmpH = max(1, tmpH >> 1);
             object->baseTexture.levels++;
@@ -889,7 +889,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
         tmpW = Width;
         tmpH = Height;
         tmpD = Depth;
-        while (tmpW > 1 && tmpH > 1 && tmpD > 1) {
+        while (tmpW > 1 || tmpH > 1 || tmpD > 1) {
             tmpW = max(1, tmpW >> 1);
             tmpH = max(1, tmpH >> 1);
             tmpD = max(1, tmpD >> 1);
