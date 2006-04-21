@@ -45,8 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
-static struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq);
-
 typedef struct _RpcConnection_np
 {
   RpcConnection common;
@@ -226,6 +224,49 @@ static int rpcrt4_conn_np_close(RpcConnection *Connection)
   return 0;
 }
 
+typedef struct _RpcConnection_tcp
+{
+  RpcConnection common;
+} RpcConnection_tcp;
+
+static RpcConnection *rpcrt4_conn_tcp_alloc(void)
+{
+  return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection_tcp));
+}
+
+static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
+{
+  FIXME("(%s, %s) unimplemented\n", Connection->NetworkAddr, Connection->Endpoint);
+  return RPC_S_SERVER_UNAVAILABLE;
+}
+
+static HANDLE rpcrt4_conn_tcp_get_wait_handle(RpcConnection *Connection)
+{
+  return NULL;
+}
+
+static RPC_STATUS rpcrt4_conn_tcp_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
+{
+  return RPC_S_SERVER_UNAVAILABLE;
+}
+
+static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
+                                void *buffer, unsigned int count)
+{
+  return -1;
+}
+
+static int rpcrt4_conn_tcp_write(RpcConnection *Connection,
+                                 const void *buffer, unsigned int count)
+{
+  return -1;
+}
+
+static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
+{
+  return -1;
+}
+
 struct protseq_ops protseq_list[] = {
   { "ncacn_np",
     rpcrt4_conn_np_alloc,
@@ -245,6 +286,15 @@ struct protseq_ops protseq_list[] = {
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
   },
+  { "ncacn_ip_tcp",
+    rpcrt4_conn_tcp_alloc,
+    rpcrt4_ncacn_ip_tcp_open,
+    rpcrt4_conn_tcp_get_wait_handle,
+    rpcrt4_conn_tcp_handoff,
+    rpcrt4_conn_tcp_read,
+    rpcrt4_conn_tcp_write,
+    rpcrt4_conn_tcp_close,
+  }
 };
 
 #define MAX_PROTSEQ (sizeof protseq_list / sizeof protseq_list[0])
