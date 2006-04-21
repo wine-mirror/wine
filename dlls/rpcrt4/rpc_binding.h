@@ -33,8 +33,6 @@ typedef struct _RpcConnection
   LPSTR NetworkAddr;
   LPSTR Endpoint;
   struct protseq_ops *ops;
-  HANDLE conn, thread;
-  OVERLAPPED ovl;
   USHORT MaxTransmissionSize;
   /* The active interface bound to server. */
   RPC_SYNTAX_IDENTIFIER ActiveInterface;
@@ -42,6 +40,7 @@ typedef struct _RpcConnection
 
 struct protseq_ops {
   char *name;
+  RpcConnection *(*alloc)(void);
   RPC_STATUS (*open_connection)(RpcConnection *conn);
   HANDLE (*get_connect_wait_handle)(RpcConnection *conn);
   RPC_STATUS (*handoff)(RpcConnection *old_conn, RpcConnection *new_conn);

@@ -47,22 +47,35 @@ WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
 static struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq);
 
+typedef struct _RpcConnection_np
+{
+  RpcConnection common;
+  HANDLE pipe, thread;
+  OVERLAPPED ovl;
+} RpcConnection_np;
+
+static RpcConnection *rpcrt4_conn_np_alloc(void)
+{
+  return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection_np));
+}
+
 static RPC_STATUS rpcrt4_connect_pipe(RpcConnection *Connection, LPCSTR pname)
 {
+  RpcConnection_np *npc = (RpcConnection_np *) Connection;
   TRACE("listening on %s\n", pname);
 
-  Connection->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX,
-                                      PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
-                                      PIPE_UNLIMITED_INSTANCES,
-                                      RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
-  memset(&Connection->ovl, 0, sizeof(Connection->ovl));
-  Connection->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-  if (ConnectNamedPipe(Connection->conn, &Connection->ovl))
+  npc->pipe = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX,
+                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
+                               PIPE_UNLIMITED_INSTANCES,
+                               RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
+  memset(&npc->ovl, 0, sizeof(npc->ovl));
+  npc->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+  if (ConnectNamedPipe(npc->pipe, &npc->ovl))
      return RPC_S_OK;
 
   WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
   if (GetLastError() == ERROR_PIPE_CONNECTED) {
-    SetEvent(Connection->ovl.hEvent);
+    SetEvent(npc->ovl.hEvent);
     return RPC_S_OK;
   }
   if (GetLastError() == ERROR_IO_PENDING) {
@@ -74,15 +87,16 @@ static RPC_STATUS rpcrt4_connect_pipe(RpcConnection *Connection, LPCSTR pname)
 
 static RPC_STATUS rpcrt4_open_pipe(RpcConnection *Connection, LPCSTR pname, BOOL wait)
 {
-  HANDLE conn;
+  RpcConnection_np *npc = (RpcConnection_np *) Connection;
+  HANDLE pipe;
   DWORD err, dwMode;
 
   TRACE("connecting to %s\n", pname);
 
   while (TRUE) {
-    conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
+    pipe = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
                        OPEN_EXISTING, 0, 0);
-    if (conn != INVALID_HANDLE_VALUE) break;
+    if (pipe != INVALID_HANDLE_VALUE) break;
     err = GetLastError();
     if (err == ERROR_PIPE_BUSY) {
       TRACE("connection failed, error=%lx\n", err);
@@ -98,24 +112,25 @@ static RPC_STATUS rpcrt4_open_pipe(RpcConnection *Connection, LPCSTR pname, BOOL
   }
 
   /* success */
-  memset(&Connection->ovl, 0, sizeof(Connection->ovl));
+  memset(&npc->ovl, 0, sizeof(npc->ovl));
   /* pipe is connected; change to message-read mode. */
   dwMode = PIPE_READMODE_MESSAGE;
-  SetNamedPipeHandleState(conn, &dwMode, NULL, NULL);
-  Connection->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-  Connection->conn = conn;
+  SetNamedPipeHandleState(pipe, &dwMode, NULL, NULL);
+  npc->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+  npc->pipe = pipe;
 
   return RPC_S_OK;
 }
 
 static RPC_STATUS rpcrt4_ncalrpc_open(RpcConnection* Connection)
 {
+  RpcConnection_np *npc = (RpcConnection_np *) Connection;
   static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
   RPC_STATUS r;
   LPSTR pname;
 
   /* already connected? */
-  if (Connection->conn)
+  if (npc->pipe)
     return RPC_S_OK;
 
   /* protseq=ncalrpc: supposed to use NT LPC ports,
@@ -134,12 +149,13 @@ static RPC_STATUS rpcrt4_ncalrpc_open(RpcConnection* Connection)
 
 static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
 {
+  RpcConnection_np *npc = (RpcConnection_np *) Connection;
   static LPCSTR prefix = "\\\\.";
   RPC_STATUS r;
   LPSTR pname;
 
   /* already connected? */
-  if (Connection->conn)
+  if (npc->pipe)
     return RPC_S_OK;
 
   /* protseq=ncacn_np: named pipes */
@@ -154,28 +170,32 @@ static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
   return r;
 }
 
-static HANDLE rpcrt4_conn_np_get_connect_event(RpcConnection *conn)
+static HANDLE rpcrt4_conn_np_get_connect_event(RpcConnection *Connection)
 {
-  return conn->ovl.hEvent;
+  RpcConnection_np *npc = (RpcConnection_np *) Connection;
+  return npc->ovl.hEvent;
 }
 
 static RPC_STATUS rpcrt4_conn_np_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
 {
+  RpcConnection_np *old_npc = (RpcConnection_np *) old_conn;
+  RpcConnection_np *new_npc = (RpcConnection_np *) new_conn;
   /* because of the way named pipes work, we'll transfer the connected pipe
    * to the child, then reopen the server binding to continue listening */
   
-  new_conn->conn = old_conn->conn;
-  new_conn->ovl = old_conn->ovl;
-  old_conn->conn = 0;
-  memset(&old_conn->ovl, 0, sizeof(old_conn->ovl));
+  new_npc->pipe = old_npc->pipe;
+  new_npc->ovl = old_npc->ovl;
+  old_npc->pipe = 0;
+  memset(&old_npc->ovl, 0, sizeof(old_npc->ovl));
   return RPCRT4_OpenConnection(old_conn);
 }
 
 static int rpcrt4_conn_np_read(RpcConnection *Connection,
                         void *buffer, unsigned int count)
 {
+  RpcConnection_np *npc = (RpcConnection_np *) Connection;
   DWORD dwRead = 0;
-  if (!ReadFile(Connection->conn, buffer, count, &dwRead, NULL) &&
+  if (!ReadFile(npc->pipe, buffer, count, &dwRead, NULL) &&
       (GetLastError() != ERROR_MORE_DATA))
     return -1;
   return dwRead;
@@ -184,28 +204,31 @@ static int rpcrt4_conn_np_read(RpcConnection *Connection,
 static int rpcrt4_conn_np_write(RpcConnection *Connection,
                              const void *buffer, unsigned int count)
 {
+  RpcConnection_np *npc = (RpcConnection_np *) Connection;
   DWORD dwWritten = 0;
-  if (!WriteFile(Connection->conn, buffer, count, &dwWritten, NULL))
+  if (!WriteFile(npc->pipe, buffer, count, &dwWritten, NULL))
     return -1;
   return dwWritten;
 }
 
 static int rpcrt4_conn_np_close(RpcConnection *Connection)
 {
-  if (Connection->conn) {
-    FlushFileBuffers(Connection->conn);
-    CloseHandle(Connection->conn);
-    Connection->conn = 0;
+  RpcConnection_np *npc = (RpcConnection_np *) Connection;
+  if (npc->pipe) {
+    FlushFileBuffers(npc->pipe);
+    CloseHandle(npc->pipe);
+    npc->pipe = 0;
   }
-  if (Connection->ovl.hEvent) {
-    CloseHandle(Connection->ovl.hEvent);
-    Connection->ovl.hEvent = 0;
+  if (npc->ovl.hEvent) {
+    CloseHandle(npc->ovl.hEvent);
+    npc->ovl.hEvent = 0;
   }
   return 0;
 }
 
 struct protseq_ops protseq_list[] = {
   { "ncacn_np",
+    rpcrt4_conn_np_alloc,
     rpcrt4_ncalrpc_open,
     rpcrt4_conn_np_get_connect_event,
     rpcrt4_conn_np_handoff,
@@ -214,6 +237,7 @@ struct protseq_ops protseq_list[] = {
     rpcrt4_conn_np_close,
   },
   { "ncalrpc",
+    rpcrt4_conn_np_alloc,
     rpcrt4_ncacn_np_open,
     rpcrt4_conn_np_get_connect_event,
     rpcrt4_conn_np_handoff,
@@ -257,7 +281,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCS
   if (!ops)
     return RPC_S_PROTSEQ_NOT_SUPPORTED;
 
-  NewConnection = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection));
+  NewConnection = ops->alloc();
   NewConnection->server = server;
   NewConnection->ops = ops;
   NewConnection->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
