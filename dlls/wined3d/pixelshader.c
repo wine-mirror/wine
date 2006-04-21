@@ -706,7 +706,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_TEXKILL,  "texkill",  "KIL",   1, pshader_texkill,     D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
     {D3DSIO_TEX,      "tex",      "undefined",   1, pshader_tex,         0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEX,      "texld",    "undefined",   2, pshader_texld,       D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_TEX,      "texld",    GLNAME_REQUIRE_GLSL,   3, pshader_texld,       D3DPS_VERSION(2,0), -1},
+    {D3DSIO_TEX,      "texld",    "undefined",   3, pshader_texld,       D3DPS_VERSION(2,0), -1},
     {D3DSIO_TEXBEM,   "texbem",   "undefined",   2, pshader_texbem,      0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL,   2, pshader_texbeml,     D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXREG2AR,"texreg2ar","undefined",   2, pshader_texreg2ar,   D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
@@ -1249,23 +1249,52 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     break;
                 case D3DSIO_TEX:
                 {
-                    char tmp[20];
-                    get_write_mask(*pToken, tmp);
-                    if (version != 14) {
-                        DWORD reg = *pToken & D3DSP_REGNUM_MASK;
-                        sprintf(tmpLine,"TEX T%lu%s, T%lu, texture[%lu], 2D;\n", reg, tmp, reg, reg);
-                        addline(&lineNum, pgmStr, &pgmLength, tmpLine);
-                        ++pToken;
-                    } else {
-                        char reg2[20];
-                        DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
-                        if (gen_input_modifier_line(*++pToken, 0, reg2, tmpLine, This->constants)) {
+                    char reg_dest[20];
+                    char reg_coord[20];
+                    char reg_coord_swz[20] = "";
+                    DWORD reg_dest_code;
+                    DWORD reg_sampler_code;
+
+                    /* All versions have a destination register */
+                    reg_dest_code = *pToken & D3DSP_REGNUM_MASK;
+                    get_register_name(*pToken++, reg_dest, This->constants);              
+                        
+                    /* 1.0-1.3: Use destination register as coordinate source. No modifiers.
+                       1.4: Use provided coordinate source register. _dw, _dz, swizzle allowed.
+                       2.0+: Use provided coordinate source register. No modifiers.
+                       3.0+: Use provided coordinate source register. Swizzle allowed */
+                    if (version < 14)
+                        strcpy(reg_coord, reg_dest);   
+              
+                    else if (version == 14) { 
+                        if (gen_input_modifier_line(*pToken, 0, reg_coord, tmpLine, This->constants))
                             addline(&lineNum, pgmStr, &pgmLength, tmpLine);
-                        }
-                        sprintf(tmpLine,"TEX R%lu%s, %s, texture[%lu], 2D;\n", reg1, tmp, reg2, reg1);
-                        addline(&lineNum, pgmStr, &pgmLength, tmpLine);
-                        ++pToken;
+                        get_input_register_swizzle(*pToken, reg_coord_swz);
+                        pToken++;
                     }
+                    else if (version > 14 && version < 30) {
+                        get_register_name(*pToken, reg_coord, This->constants);
+                        pToken++;
+                    }                        
+                    else if (version >= 30) {
+                        get_input_register_swizzle(*pToken, reg_coord_swz);
+                        get_register_name(*pToken, reg_coord, This->constants);
+                        pToken++;
+                    }
+
+                    /* 1.0-1.4: Use destination register number as texture code.
+                       2.0+: Use provided sampler number as texure code. */                              
+                    if (version < 20) 
+                        reg_sampler_code = reg_dest_code;
+
+                    else {
+                        reg_sampler_code = *pToken & D3DSP_REGNUM_MASK;
+                        pToken++;
+                    }
+
+                    sprintf(tmpLine, "TEX %s, %s%s, texture[%lu], 2D;\n",
+                        reg_dest, reg_coord, reg_coord_swz, reg_sampler_code);
+                    addline(&lineNum, pgmStr, &pgmLength, tmpLine);
                     continue;
                 }
                 break;
