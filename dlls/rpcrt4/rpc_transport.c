@@ -254,7 +254,10 @@ typedef struct _RpcConnection_tcp
 
 static RpcConnection *rpcrt4_conn_tcp_alloc(void)
 {
-  return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection_tcp));
+  RpcConnection_tcp *tcpc;
+  tcpc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection_tcp));
+  tcpc->sock = -1;
+  return &tcpc->common;
 }
 
 static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
@@ -271,7 +274,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
     return RPC_S_SERVER_UNAVAILABLE;
   }
 
-  if (tcpc->sock)
+  if (tcpc->sock != -1)
     return RPC_S_OK;
 
   sa.sin_family = AF_INET;
@@ -335,9 +338,9 @@ static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
   RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
 
   TRACE("%d\n", tcpc->sock);
-  if (tcpc->sock)
+  if (tcpc->sock != -1)
     close(tcpc->sock);
-  tcpc->sock = 0;
+  tcpc->sock = -1;
   return 0;
 }
 
