@@ -279,6 +279,7 @@ import:   import_start imp_statements aEOF	{}
 	;
 
 importlib: tIMPORTLIB '(' aSTRING ')'		{ if(!parse_only) add_importlib($3); }
+	;
 
 libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	;
