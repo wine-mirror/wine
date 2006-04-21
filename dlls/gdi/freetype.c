@@ -4136,6 +4136,13 @@ BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
     return FALSE;
 }
 
+BOOL WineEngGetCharABCWidthsI(GdiFont font, UINT firstChar, UINT count, LPWORD pgi,
+			      LPABC buffer)
+{
+    ERR("called but we don't have FreeType\n");
+    return FALSE;
+}
+
 BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
 			       LPSIZE size)
 {
