@@ -32,6 +32,82 @@
 #include <winerror.h>
 #include <usp10.h>
 
+void test_ScriptGetFontProperties(void)
+{
+    HRESULT         hr;
+    HDC             hdc;
+    HWND            hwnd;
+    SCRIPT_CACHE    psc,old_psc;
+    SCRIPT_FONTPROPERTIES sfp;
+
+    /* Only do the bare minumum to get a valid hdc */
+    hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
+    assert(hwnd != 0);
+
+    hdc = GetDC(hwnd);
+    ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
+
+    /* Some sanity checks for ScriptGetFontProperties */
+
+    hr = ScriptGetFontProperties(NULL,NULL,NULL);
+    ok( hr == E_INVALIDARG, "(NULL,NULL,NULL), expected E_INVALIDARG, got %08x\n", (unsigned int)hr);
+
+    hr = ScriptGetFontProperties(NULL,NULL,&sfp);
+    ok( hr == E_INVALIDARG, "(NULL,NULL,&sfp), expected E_INVALIDARG, got %08x\n", (unsigned int)hr);
+
+    /* Set psc to NULL, to be able to check if a pointer is returned in psc */
+    psc = NULL;
+    hr = ScriptGetFontProperties(NULL,&psc,NULL);
+    ok( hr == E_INVALIDARG, "(NULL,&psc,NULL), expected E_INVALIDARG, got %08x\n", (unsigned int)hr);
+    ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+
+    /* Set psc to NULL, to be able to check if a pointer is returned in psc */
+    psc = NULL;
+    hr = ScriptGetFontProperties(NULL,&psc,&sfp);
+    ok( hr == E_PENDING, "(NULL,&psc,&sfp), expected E_PENDING, got %08x\n", (unsigned int)hr);
+    ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+
+    hr = ScriptGetFontProperties(hdc,NULL,NULL);
+    ok( hr == E_INVALIDARG, "(hdc,NULL,NULL), expected E_INVALIDARG, got %08x\n", (unsigned int)hr);
+
+    hr = ScriptGetFontProperties(hdc,NULL,&sfp);
+    ok( hr == E_INVALIDARG, "(hdc,NULL,&sfp), expected E_INVALIDARG, got %08x\n", (unsigned int)hr);
+
+    /* Set psc to NULL, to be able to check if a pointer is returned in psc */
+    psc = NULL;
+    hr = ScriptGetFontProperties(hdc,&psc,NULL);
+    ok( hr == E_INVALIDARG, "(hdc,&psc,NULL), expected E_INVALIDARG, got %08x\n", (unsigned int)hr);
+    ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+
+    /* Pass an uninitialized sfp */
+    psc = NULL;
+    hr = ScriptGetFontProperties(hdc,&psc,&sfp);
+    ok( hr == E_INVALIDARG, "(hdc,&psc,&sfp) partly uninitialized, expected E_INVALIDARG, got %08x\n", (unsigned int)hr);
+    ok( psc != NULL, "Expected a pointer in psc, got NULL\n");
+    ScriptFreeCache(&psc);
+    ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+
+    /* Give it the correct cBytes, we don't care about what's coming back */
+    sfp.cBytes = sizeof(SCRIPT_FONTPROPERTIES);
+    psc = NULL;
+    hr = ScriptGetFontProperties(hdc,&psc,&sfp);
+    ok( hr == S_OK, "(hdc,&psc,&sfp) partly initialized, expected S_OK, got %08x\n", (unsigned int)hr);
+    ok( psc != NULL, "Expected a pointer in psc, got NULL\n");
+
+    /* Save the psc pointer */
+    old_psc = psc;
+    /* Now a NULL hdc again */
+    hr = ScriptGetFontProperties(NULL,&psc,&sfp);
+    ok( hr == S_OK, "(NULL,&psc,&sfp), expected S_OK, got %08x\n", (unsigned int)hr);
+    ok( psc == old_psc, "Expected psc not to be changed, was %p is now %p\n", old_psc, psc);
+    ScriptFreeCache(&psc);
+    ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+
+    /* Cleanup */
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(usp10)
 {
     HRESULT         hr;
@@ -211,5 +287,6 @@ START_TEST(usp10)
     DeleteObject(hrgn);
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
-    return;
+    
+    test_ScriptGetFontProperties();
 }
