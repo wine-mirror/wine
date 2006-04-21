@@ -123,7 +123,6 @@ static void create_frame_hwnd(InternetExplorer *This)
 static IWebBrowser2 *create_ie_window(LPCWSTR url)
 {
     IWebBrowser2 *wb = NULL;
-    MSG msg;
     VARIANT var_url;
 
     InternetExplorer_Create(NULL, &IID_IWebBrowser2, (void**)&wb);
@@ -139,13 +138,6 @@ static IWebBrowser2 *create_ie_window(LPCWSTR url)
     IWebBrowser2_Navigate2(wb, &var_url, NULL, NULL, NULL, NULL);
 
     SysFreeString(V_BSTR(&var_url));
-
-    /* run the message loop for this thread */
-    while (GetMessageW(&msg, 0, 0, 0))
-    {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
-    }
 
     return wb;
 }
@@ -184,8 +176,8 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
  */
 DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
 {
-    LPWSTR url;
-    DWORD len;
+    IWebBrowser2 *wb = NULL;
+    MSG msg;
     HRESULT hres;
 
     FIXME("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
@@ -198,15 +190,28 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
         ExitProcess(1);
     }
 
-    /* FIXME: parse the command line properly, handle -Embedding */
+    if(strcmp(szCommandLine, "-Embedding")) {
+        LPWSTR url;
+        DWORD len;
 
-    len = MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, NULL, 0);
-    url = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, url, len);
+        len = MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, NULL, 0);
+        url = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, url, len);
 
-    create_ie_window(url);
+        wb = create_ie_window(url);
 
-    HeapFree(GetProcessHeap(), 0, url);
+        HeapFree(GetProcessHeap(), 0, url);
+    }
+
+    /* run the message loop for this thread */
+    while (GetMessageW(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    if(wb)
+        IWebBrowser2_Release(wb);
 
     register_class_object(FALSE);
 
