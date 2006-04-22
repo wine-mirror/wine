@@ -934,8 +934,16 @@ static void write_rpc_interface(const type_t *iface)
   {
     write_iface_guid(iface);
     if (var) fprintf(header, "extern handle_t %s;\n", var);
-    fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_c_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
-    fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_s_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
+    if (old_names)
+    {
+        fprintf(header, "extern RPC_IF_HANDLE %s_ClientIfHandle;\n", iface->name);
+        fprintf(header, "extern RPC_IF_HANDLE %s_ServerIfHandle;\n", iface->name);
+    }
+    else
+    {
+        fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_c_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
+        fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_s_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
+    }
     write_function_proto(iface);
   }
   fprintf(header,"\n#endif  /* __%s_INTERFACE_DEFINED__ */\n\n", iface->name);

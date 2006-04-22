@@ -24,6 +24,8 @@ Generate header files.
 .IP "\fB-H \fIfile\fR"
 Name of header file to generate. The default header
 filename is infile.h.
+.IP "\fB--oldnames\fR"
+Use old naming conventions.
 .PP
 .B Type library options:
 .IP \fB-t\fR

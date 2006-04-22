@@ -31,6 +31,9 @@
 #include <assert.h>
 #include <ctype.h>
 #include <signal.h>
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
 
 #include "widl.h"
 #include "utils.h"
@@ -58,6 +61,7 @@ static char usage[] =
 "   -H file     Name of header file (default is infile.h)\n"
 "   -I path     Set include search dir to path (multiple -I allowed)\n"
 "   -N          Do not preprocess input\n"
+"   --oldnames  Use old naming conventions\n"
 "   -p          Generate proxy\n"
 "   -P file     Name of proxy file (default is infile_p.c)\n"
 "   -s          Generate server stub\n"
@@ -91,6 +95,7 @@ int do_proxies = 0;
 int do_client = 0;
 int do_server = 0;
 int no_preprocess = 0;
+int old_names = 0;
 
 char *input_name;
 char *header_name;
@@ -111,7 +116,13 @@ FILE *proxy;
 
 time_t now;
 
-int getopt (int argc, char *const *argv, const char *optstring);
+static const char *short_options =
+    "cC:d:D:EhH:I:NpP:sS:tT:VW";
+static struct option long_options[] = {
+    { "oldnames", 0, 0, 1 },
+    { 0, 0, 0, 0 }
+};
+
 static void rm_tempfile(void);
 static void segvhandler(int sig);
 
@@ -147,13 +158,17 @@ int main(int argc,char *argv[])
   extern int   optind;
   int optc;
   int ret = 0;
+  int opti = 0;
 
   signal(SIGSEGV, segvhandler);
 
   now = time(NULL);
 
-  while((optc = getopt(argc, argv, "cC:d:D:EhH:I:NpP:sS:tT:VW")) != EOF) {
+  while((optc = getopt_long(argc, argv, short_options, long_options, &opti)) != EOF) {
     switch(optc) {
+    case 1:
+      old_names = 1;
+      break;
     case 'c':
       do_everything = 0;
       do_client = 1;
