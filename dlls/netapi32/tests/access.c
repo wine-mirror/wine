@@ -45,6 +45,7 @@ static NET_API_STATUS (WINAPI *pNetApiBufferFree)(LPVOID)=NULL;
 static NET_API_STATUS (WINAPI *pNetApiBufferSize)(LPVOID,LPDWORD)=NULL;
 static NET_API_STATUS (WINAPI *pNetQueryDisplayInformation)(LPWSTR,DWORD,DWORD,DWORD,DWORD,LPDWORD,PVOID*)=NULL;
 static NET_API_STATUS (WINAPI *pNetUserGetInfo)(LPCWSTR,LPCWSTR,DWORD,LPBYTE*)=NULL;
+static NET_API_STATUS (WINAPI *pNetUserModalsGet)(LPCWSTR,DWORD,LPBYTE*)=NULL;
 
 static int init_access_tests(void)
 {
@@ -170,6 +171,18 @@ static void run_querydisplayinformation1_tests(void)
     ok(hasAdmin, "Has Administrator account\n");
 }
 
+static void run_usermodalsget_tests(void)
+{
+    NET_API_STATUS rc;
+    USER_MODALS_INFO_2 * umi2 = NULL;
+
+    rc = pNetUserModalsGet(NULL, 2, (LPBYTE *)&umi2);
+    ok(rc == ERROR_SUCCESS, "NetUserModalsGet failed, rc = %ld\n", rc);
+
+    if (umi2)
+        pNetApiBufferFree(umi2);
+}
+
 START_TEST(access)
 {
     HMODULE hnetapi32=LoadLibraryA("netapi32.dll");
@@ -177,11 +190,14 @@ START_TEST(access)
     pNetApiBufferSize=(void*)GetProcAddress(hnetapi32,"NetApiBufferSize");
     pNetQueryDisplayInformation=(void*)GetProcAddress(hnetapi32,"NetQueryDisplayInformation");
     pNetUserGetInfo=(void*)GetProcAddress(hnetapi32,"NetUserGetInfo");
+    pNetUserModalsGet=(void*)GetProcAddress(hnetapi32,"NetUserModalsGet");
+
     if (!pNetApiBufferSize)
         trace("It appears there is no netapi32 functionality on this platform\n");
 
     if (init_access_tests()) {
         run_usergetinfo_tests();
         run_querydisplayinformation1_tests();
+        run_usermodalsget_tests();
     }
 }
