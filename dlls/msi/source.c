@@ -499,6 +499,8 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         rc = OpenNetworkSubkey(sourcekey, &typekey, TRUE);
     else if (dwOptions & MSISOURCETYPE_URL)
         rc = OpenURLSubkey(sourcekey, &typekey, TRUE);
+    else if (dwOptions & MSISOURCETYPE_MEDIA)
+        rc = OpenMediaSubkey(sourcekey, &typekey, TRUE);
     else
     {
         ERR("unknown media type: %08lx\n", dwOptions);
