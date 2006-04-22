@@ -723,7 +723,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
 
     if (!(flags & RPC_FC_P_SIMPLEPOINTER))
     {
-        print_file(file, 2, "NdrFcShort(0x2);\n");
+        print_file(file, 2, "NdrFcShort(0x2),\n");
         *typestring_offset += 2;
     }
 
