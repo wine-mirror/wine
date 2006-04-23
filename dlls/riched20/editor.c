@@ -1956,7 +1956,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       DWORD flags = 0;
 
       buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
-      rc = WideCharToMultiByte(ex->codepage, flags, buffer, buflen, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
+      rc = WideCharToMultiByte(ex->codepage, flags, buffer, -1, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
 
       HeapFree(GetProcessHeap(),0,buffer);
       return rc;
@@ -2499,21 +2499,26 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
     int nLen = ME_StrLen(item->member.run.strText);
     if (nLen > nChars)
       nLen = nChars;
-      
+
     if (item->member.run.nFlags & MERF_ENDPARA)
     {
-      *buffer = '\r';
-      if (bCRLF)
-      {
-        *(++buffer) = '\n';
-        nWritten++;
+      if (!ME_FindItemFwd(item, diRun))
+        /* No '\r' is appended to the last paragraph. */
+        nLen = 0;
+      else {
+        *buffer = '\r';
+        if (bCRLF)
+        {
+          *(++buffer) = '\n';
+          nWritten++;
+        }
+        assert(nLen == 1);
+        /* our end paragraph consists of 2 characters now */
+        if (editor->bEmulateVersion10)
+          nChars--;
       }
-      assert(nLen == 1);
-      /* our end paragraph consists of 2 characters now */
-      if (editor->bEmulateVersion10)
-        nChars--;
     }
-    else      
+    else
       CopyMemory(buffer, item->member.run.strText->szData, sizeof(WCHAR)*nLen);
     nChars -= nLen;
     nWritten += nLen;

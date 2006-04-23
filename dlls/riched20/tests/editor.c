@@ -494,7 +494,6 @@ static void test_TM_PLAINTEXT()
   DestroyWindow(hwndRichEdit);
 }
 
-/* FIXME: Extra '\r' appended at end of gotten text*/
 static void test_WM_GETTEXT()
 {
     HWND hwndRichEdit = new_richedit(NULL);
@@ -505,10 +504,8 @@ static void test_WM_GETTEXT()
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,text);
-    todo_wine{
-      ok(result == 0, 
+    ok(result == 0, 
         "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
-    }
 }
 
 /* FIXME: need to test unimplemented options and robustly test wparam */
