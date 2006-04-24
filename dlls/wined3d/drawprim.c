@@ -2086,57 +2086,6 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
 
-#if 0 /* TODO: vertex and pixel shaders */
-    /* If we will be using a pixel, do some initialization for it */
-    if ((pixel_shader = PIXEL_SHADER(This->stateBlock->PixelShader))) {
-        TRACE("drawing with pixel shader handle %p\n", pixel_shader);
-        memset(&pixel_shader->input, 0, sizeof(PSHADERINPUTDATA8));
-
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixel_shader->prgId));
-        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixel_shader->prgId);");
-        glEnable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-
-        /* init Constants */
-        if (This->stateBlock->Changed.pixelShaderConstant) {
-            TRACE_(d3d_shader)("pixel shader initializing constants %p\n",pixel_shader);
-            IDirect3DPixelShaderImpl_SetConstantF(pixel_shader, 0, (CONST FLOAT*) &This->stateBlock->pixelShaderConstant[0], 8);
-        }
-        /* Update the constants */
-        for (i = 0; i < D3D8_PSHADER_MAX_CONSTANTS; ++i) {
-            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, i, (GLfloat *)&This->stateBlock->pixelShaderConstant[i]));
-            checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB");
-        }
-    }
-#endif /* TODO: vertex and pixel shaders */
-
-#if 0 /* TODO: vertex and pixel shaders */
-    /* If we will be using a pixel, do some initialization for it */
-    if ((pixel_shader = PIXEL_SHADER(This->stateBlock->PixelShader))) {
-        TRACE("drawing with pixel shader handle %p\n", pixel_shader);
-        memset(&pixel_shader->input, 0, sizeof(PSHADERINPUTDATA8));
-
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixel_shader->prgId));
-        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixel_shader->prgId);");
-        glEnable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-
-        /* init Constants */
-        if (This->stateBlock->Changed.pixelShaderConstant) {
-            TRACE_(d3d_shader)("pixel shader initializing constants %p\n",pixel_shader);
-            IDirect3DPixelShaderImpl_SetConstantF(pixel_shader, 0, (CONST FLOAT*) 
-                &This->stateBlock->pixelShaderConstant[0], 8);
-        }
-        /* Update the constants */
-        for (i = 0; i < D3D8_PSHADER_MAX_CONSTANTS; ++i) {
-            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, i, 
-                (GLfloat *)&This->stateBlock->pixelShaderConstant[i]));
-
-            checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB");
-        }
-    }
-#endif /* TODO: vertex and pixel shaders */
-
     /* Initialize all values to null */
     memset(&dataLocations, 0x00, sizeof(dataLocations));
     /* convert the FVF or vertexDeclaration into a strided stream (this should be done when the fvf or declaration is created) */
@@ -2197,32 +2146,6 @@ void drawPrimitive(IWineD3DDevice *iface,
         else glDisable(GL_LIGHTING);
         TRACE("Restored lighting to original state\n");
     }
-
-#if 0 /* TODO: vertex and pixel shaders */
-    if (pixel_shader)
-    {
-#if 0
-      GLint errPos;
-      glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
-      if (errPos != -1)
-        FIXME("HW PixelShader Error at position: %d\n%s\n", errPos, glGetString( GL_PROGRAM_ERROR_STRING_ARB) );
-#endif
-      glDisable(GL_FRAGMENT_PROGRAM_ARB);
-    }
-#endif
-
-#if 0 /* TODO: vertex and pixel shaders */
-    if (pixel_shader)
-    {
-#if 0
-      GLint errPos;
-      glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
-      if (errPos != -1)
-        FIXME("HW PixelShader Error at position: %d\n%s\n", errPos, glGetString( GL_PROGRAM_ERROR_STRING_ARB) );
-#endif
-      glDisable(GL_FRAGMENT_PROGRAM_ARB);
-    }
-#endif
 
     /* Finshed updating the screen, restore lock */
     LEAVE_GL();
