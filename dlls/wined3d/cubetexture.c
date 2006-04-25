@@ -58,8 +58,9 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_QueryInterface(IWineD3DCubeTexture *iface
         || IsEqualGUID(riid, &IID_IWineD3DTexture)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return WINED3D_OK;
+        return S_OK;
     }
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

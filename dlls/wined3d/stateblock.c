@@ -38,8 +38,9 @@ HRESULT WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface,R
         || IsEqualGUID(riid, &IID_IWineD3DStateBlock)){
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return WINED3D_OK;
+        return S_OK;
     }
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

@@ -37,8 +37,9 @@ HRESULT WINAPI IWineD3DResourceImpl_QueryInterface(IWineD3DResource *iface, REFI
         || IsEqualGUID(riid, &IID_IWineD3DResource)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return WINED3D_OK;
+        return S_OK;
     }
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

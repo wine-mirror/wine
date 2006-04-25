@@ -173,9 +173,9 @@ HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *p
         || IsEqualGUID(riid, &IID_IWineD3DDevice)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return WINED3D_OK;
+        return S_OK;
     }
-
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

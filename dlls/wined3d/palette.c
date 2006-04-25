@@ -42,6 +42,7 @@ HRESULT WINAPI IWineD3DPaletteImpl_QueryInterface(IWineD3DPalette *iface, REFIID
         return S_OK;
     }
     else {
+        *obj = NULL;
         return E_NOINTERFACE;
     }
 }

@@ -77,6 +77,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, RE
         *ppobj = This;
         return WINED3D_OK;
     }
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

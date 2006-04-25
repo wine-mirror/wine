@@ -42,6 +42,7 @@ HRESULT WINAPI IWineD3DTextureImpl_QueryInterface(IWineD3DTexture *iface, REFIID
         *ppobj = This;
         return WINED3D_OK;
     }
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 
