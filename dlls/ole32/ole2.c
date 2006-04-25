@@ -48,6 +48,7 @@
 
 #include "wine/unicode.h"
 #include "compobj_private.h"
+#include "wine/list.h"
 
 #include "wine/debug.h"
 
@@ -61,9 +62,8 @@ WINE_DECLARE_DEBUG_CHANNEL(accel);
 typedef struct tagDropTargetNode
 {
   HWND          hwndTarget;
-  IDropTarget*    dropTarget;
-  struct tagDropTargetNode* prevDropTarget;
-  struct tagDropTargetNode* nextDropTarget;
+  IDropTarget*  dropTarget;
+  struct list   entry;
 } DropTargetNode;
 
 typedef struct tagTrackerWindowInfo
@@ -117,7 +117,7 @@ static const char OLEDD_DRAGTRACKERCLASS[] = "WineDragDropTracker32";
 /*
  * This is the head of the Drop target container.
  */
-static DropTargetNode* targetListHead = NULL;
+static struct list targetListHead = LIST_INIT(targetListHead);
 
 /******************************************************************************
  * These are the prototypes of miscelaneous utility methods
@@ -148,12 +148,9 @@ extern void OLEClipbrd_Initialize(void);
  */
 static void            OLEDD_Initialize(void);
 static void            OLEDD_UnInitialize(void);
-static void            OLEDD_InsertDropTarget(
-			 DropTargetNode* nodeToAdd);
-static DropTargetNode* OLEDD_ExtractDropTarget(
-                         HWND hwndOfTarget);
 static DropTargetNode* OLEDD_FindDropTarget(
                          HWND hwndOfTarget);
+static void            OLEDD_FreeDropTarget(DropTargetNode*);
 static LRESULT WINAPI  OLEDD_DragTrackerWindowProc(
 			 HWND   hwnd,
 			 UINT   uMsg,
@@ -321,19 +318,17 @@ HRESULT WINAPI RegisterDragDrop(
     return E_OUTOFMEMORY;
 
   dropTargetInfo->hwndTarget     = hwnd;
-  dropTargetInfo->prevDropTarget = NULL;
-  dropTargetInfo->nextDropTarget = NULL;
 
   /*
    * Don't forget that this is an interface pointer, need to nail it down since
    * we keep a copy of it.
    */
+  IDropTarget_AddRef(pDropTarget);
   dropTargetInfo->dropTarget  = pDropTarget;
-  IDropTarget_AddRef(dropTargetInfo->dropTarget);
 
-  OLEDD_InsertDropTarget(dropTargetInfo);
+  list_add_tail(&targetListHead, &dropTargetInfo->entry);
 
-	return S_OK;
+  return S_OK;
 }
 
 /***********************************************************************
@@ -349,7 +344,7 @@ HRESULT WINAPI RevokeDragDrop(
   /*
    * First, check if the window is already registered.
    */
-  dropTargetInfo = OLEDD_ExtractDropTarget(hwnd);
+  dropTargetInfo = OLEDD_FindDropTarget(hwnd);
 
   /*
    * If it ain't in there, it's an error.
@@ -357,14 +352,9 @@ HRESULT WINAPI RevokeDragDrop(
   if (dropTargetInfo==NULL)
     return DRAGDROP_E_NOTREGISTERED;
 
-  /*
-   * If it's in there, clean-up it's used memory and
-   * references
-   */
-  IDropTarget_Release(dropTargetInfo->dropTarget);
-  HeapFree(GetProcessHeap(), 0, dropTargetInfo);
+  OLEDD_FreeDropTarget(dropTargetInfo);
 
-	return S_OK;
+  return S_OK;
 }
 
 /***********************************************************************
@@ -1841,148 +1831,33 @@ static void OLEDD_Initialize()
 }
 
 /***
+ * OLEDD_FreeDropTarget()
+ *
+ * Frees the drag and drop data structure
+ */
+static void OLEDD_FreeDropTarget(DropTargetNode *dropTargetInfo)
+{
+  list_remove(&dropTargetInfo->entry);
+  IDropTarget_Release(dropTargetInfo->dropTarget);
+  HeapFree(GetProcessHeap(), 0, dropTargetInfo);
+}
+
+/***
  * OLEDD_UnInitialize()
  *
  * Releases the OLE drag and drop data structures.
  */
-static void OLEDD_UnInitialize()
+static void OLEDD_UnInitialize(void)
 {
   /*
    * Simply empty the list.
    */
-  while (targetListHead!=NULL)
+  while (!list_empty(&targetListHead))
   {
-    RevokeDragDrop(targetListHead->hwndTarget);
+    DropTargetNode* curNode;
+    curNode = LIST_ENTRY(list_head(&targetListHead), DropTargetNode, entry);
+    OLEDD_FreeDropTarget(curNode);
   }
-}
-
-/***
- * OLEDD_InsertDropTarget()
- *
- * Insert the target node in the tree.
- */
-static void OLEDD_InsertDropTarget(DropTargetNode* nodeToAdd)
-{
-  DropTargetNode*  curNode;
-  DropTargetNode** parentNodeLink;
-
-  /*
-   * Iterate the tree to find the insertion point.
-   */
-  curNode        = targetListHead;
-  parentNodeLink = &targetListHead;
-
-  while (curNode!=NULL)
-  {
-    if (nodeToAdd->hwndTarget<curNode->hwndTarget)
-    {
-      /*
-       * If the node we want to add has a smaller HWND, go left
-       */
-      parentNodeLink = &curNode->prevDropTarget;
-      curNode        =  curNode->prevDropTarget;
-    }
-    else if (nodeToAdd->hwndTarget>curNode->hwndTarget)
-    {
-      /*
-       * If the node we want to add has a larger HWND, go right
-       */
-      parentNodeLink = &curNode->nextDropTarget;
-      curNode        =  curNode->nextDropTarget;
-    }
-    else
-    {
-      /*
-       * The item was found in the list. It shouldn't have been there
-       */
-      assert(FALSE);
-      return;
-    }
-  }
-
-  /*
-   * If we get here, we have found a spot for our item. The parentNodeLink
-   * pointer points to the pointer that we have to modify.
-   * The curNode should be NULL. We just have to establish the link and Voila!
-   */
-  assert(curNode==NULL);
-  assert(parentNodeLink!=NULL);
-  assert(*parentNodeLink==NULL);
-
-  *parentNodeLink=nodeToAdd;
-}
-
-/***
- * OLEDD_ExtractDropTarget()
- *
- * Removes the target node from the tree.
- */
-static DropTargetNode* OLEDD_ExtractDropTarget(HWND hwndOfTarget)
-{
-  DropTargetNode*  curNode;
-  DropTargetNode** parentNodeLink;
-
-  /*
-   * Iterate the tree to find the insertion point.
-   */
-  curNode        = targetListHead;
-  parentNodeLink = &targetListHead;
-
-  while (curNode!=NULL)
-  {
-    if (hwndOfTarget<curNode->hwndTarget)
-    {
-      /*
-       * If the node we want to add has a smaller HWND, go left
-       */
-      parentNodeLink = &curNode->prevDropTarget;
-      curNode        =  curNode->prevDropTarget;
-    }
-    else if (hwndOfTarget>curNode->hwndTarget)
-    {
-      /*
-       * If the node we want to add has a larger HWND, go right
-       */
-      parentNodeLink = &curNode->nextDropTarget;
-      curNode        =  curNode->nextDropTarget;
-    }
-    else
-    {
-      /*
-       * The item was found in the list. Detach it from it's parent and
-       * re-insert it's kids in the tree.
-       */
-      assert(parentNodeLink!=NULL);
-      assert(*parentNodeLink==curNode);
-
-      /*
-       * We arbitrately re-attach the left sub-tree to the parent.
-       */
-      *parentNodeLink = curNode->prevDropTarget;
-
-      /*
-       * And we re-insert the right subtree
-       */
-      if (curNode->nextDropTarget!=NULL)
-      {
-	OLEDD_InsertDropTarget(curNode->nextDropTarget);
-      }
-
-      /*
-       * The node we found is still a valid node once we complete
-       * the unlinking of the kids.
-       */
-      curNode->nextDropTarget=NULL;
-      curNode->prevDropTarget=NULL;
-
-      return curNode;
-    }
-  }
-
-  /*
-   * If we get here, the node is not in the tree
-   */
-  return NULL;
 }
 
 /***
@@ -1995,34 +1870,11 @@ static DropTargetNode* OLEDD_FindDropTarget(HWND hwndOfTarget)
   DropTargetNode*  curNode;
 
   /*
-   * Iterate the tree to find the HWND value.
+   * Iterate the list to find the HWND value.
    */
-  curNode        = targetListHead;
-
-  while (curNode!=NULL)
-  {
-    if (hwndOfTarget<curNode->hwndTarget)
-    {
-      /*
-       * If the node we want to add has a smaller HWND, go left
-       */
-      curNode =  curNode->prevDropTarget;
-    }
-    else if (hwndOfTarget>curNode->hwndTarget)
-    {
-      /*
-       * If the node we want to add has a larger HWND, go right
-       */
-      curNode =  curNode->nextDropTarget;
-    }
-    else
-    {
-      /*
-       * The item was found in the list.
-       */
+  LIST_FOR_EACH_ENTRY(curNode, &targetListHead, DropTargetNode, entry)
+    if (hwndOfTarget==curNode->hwndTarget)
       return curNode;
-    }
-  }
 
   /*
    * If we get here, the item is not in the list
