@@ -1299,6 +1299,7 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
 	{
 	    TREEVIEW_ITEM *aChild;
 	    TREEVIEW_ITEM *previousChild = NULL;
+            TREEVIEW_ITEM *originalFirst = parentItem->firstChild;
 	    BOOL bItemInserted = FALSE;
 
 	    aChild = parentItem->firstChild;
@@ -1317,6 +1318,9 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
 		if (comp < 0)	/* we are smaller than the current one */
 		{
 		    TREEVIEW_InsertBefore(newItem, aChild, parentItem);
+                    if (infoPtr->firstVisible == originalFirst &&
+                        aChild == originalFirst)
+                        TREEVIEW_SetFirstVisible(infoPtr, newItem, TRUE);
 		    bItemInserted = TRUE;
 		    break;
 		}
