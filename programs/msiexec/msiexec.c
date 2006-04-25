@@ -840,15 +840,8 @@ int main(int argc, char **argv)
 			FunctionUnknown = TRUE;
 			WINE_FIXME("Unknown parameter /D\n");
 		}
-		else if(strchrW(argvW[i], '='))
-		{
-			StringListAppend(&property_list, argvW[i]);
-		}
 		else
-		{
-			FunctionInstall = TRUE;
-			PackageName = argvW[i];
-		}
+			StringListAppend(&property_list, argvW[i]);
 	}
 
 	/* start the GUI */
