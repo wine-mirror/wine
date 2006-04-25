@@ -1206,24 +1206,9 @@ int _futime(int fd, struct MSVCRT__utimbuf *t)
 long _get_osfhandle(int fd)
 {
   HANDLE hand = msvcrt_fdtoh(fd);
-  HANDLE newhand = hand;
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
 
-  if (hand != INVALID_HANDLE_VALUE)
-  {
-    /* FIXME: I'm not convinced that I should be copying the
-     * handle here - it may be leaked if the app doesn't
-     * close it (and the API docs don't say that it should)
-     * Not duplicating it means that it can't be inherited
-     * and so lcc's wedit doesn't cope when it passes it to
-     * child processes. I've an idea that it should either
-     * be copied by CreateProcess, or marked as inheritable
-     * when initialised, or maybe both? JG 21-9-00.
-     */
-    DuplicateHandle(GetCurrentProcess(),hand,GetCurrentProcess(),
-		    &newhand,0,TRUE,DUPLICATE_SAME_ACCESS);
-  }
-  return (long)newhand;
+  return (long)hand;
 }
 
 /*********************************************************************

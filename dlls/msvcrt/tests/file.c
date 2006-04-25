@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <share.h>
 #include <sys/stat.h>
 #include <io.h>
 #include <windef.h>
@@ -464,6 +465,24 @@ static void test_fopen_fclose_fcloseall( void )
     ok(_unlink(fname3) == 0, "Couldn't unlink file named '%s'\n", fname3);
 }
 
+static void test_get_osfhandle(void)
+{
+    int fd;
+    char fname[] = "t_get_osfhanle";
+    DWORD bytes_written;
+    HANDLE handle;
+
+    fd = _sopen(fname, _O_CREAT|_O_RDWR, _SH_DENYRW, 0);
+    handle = (HANDLE)_get_osfhandle(fd);
+    WriteFile(handle, "bar", 3, &bytes_written, NULL);
+    _close(fd);
+    fd = _open(fname, _O_RDONLY, 0);
+    ok(fd != -1, "Coudn't open '%s' after _get_osfhanle()\n", fname);
+
+    CloseHandle(handle);
+    _unlink(fname);
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -489,4 +508,5 @@ START_TEST(file)
     test_fgetwc();
     test_file_put_get();
     test_tmpnam();
+    test_get_osfhandle();
 }
