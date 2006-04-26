@@ -967,7 +967,14 @@ static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, UINT *err
             HeapFree( GetProcessHeap(), 0, new_buff );
         }
     }
-    else err = parse_buffer( file, buffer, (WCHAR *)((char *)buffer + size), error_line );
+    else
+    {
+        WCHAR *new_buff = (WCHAR *)buffer;
+        /* UCS-16 files should start with the Unicode BOM; we should skip it */
+        if (*new_buff == 0xfeff)
+            new_buff++;
+        err = parse_buffer( file, new_buff, (WCHAR *)((char *)buffer + size), error_line );
+    }
 
     if (!err)  /* now check signature */
     {
