@@ -63,6 +63,7 @@ typedef struct
     SSL *ssl_s;
     char *peek_msg;
     char *peek_msg_mem;
+    size_t peek_len;
 #endif
 } WININET_NETCONNECTION;
 

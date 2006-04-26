@@ -305,6 +305,7 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
         HeapFree(GetProcessHeap(),0,connection->peek_msg_mem);
         connection->peek_msg = NULL;
         connection->peek_msg_mem = NULL;
+        connection->peek_len = 0;
 
         pSSL_shutdown(connection->ssl_s);
         pSSL_free(connection->ssl_s);
@@ -520,19 +521,19 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 	}
 	else if (flags & MSG_PEEK && connection->peek_msg)
 	{
-	    size_t peek_msg_len = strlen(connection->peek_msg);
-	    if (len < peek_msg_len)
+	    if (len < connection->peek_len)
 		FIXME("buffer isn't big enough. Do the expect us to wrap?\n");
-	    memcpy(buf, connection->peek_msg, min(len,peek_msg_len+1));
-	    *recvd = min(len, peek_msg_len);
+	    *recvd = min(len, connection->peek_len);
+	    memcpy(buf, connection->peek_msg, *recvd);
             return TRUE;
 	}
 	else if (connection->peek_msg)
 	{
-	    size_t peek_msg_len = strlen(connection->peek_msg);
-	    memcpy(buf, connection->peek_msg, min(len,peek_msg_len+1));
-	    connection->peek_msg += *recvd = min(len, peek_msg_len);
-	    if (*connection->peek_msg == '\0' || *(connection->peek_msg - 1) == '\0')
+	    *recvd = min(len, connection->peek_len);
+	    memcpy(buf, connection->peek_msg, *recvd);
+	    connection->peek_len -= *recvd;
+	    connection->peek_msg += *recvd;
+	    if (connection->peek_len == 0)
 	    {
 		HeapFree(GetProcessHeap(), 0, connection->peek_msg_mem);
 		connection->peek_msg_mem = NULL;
@@ -543,6 +544,7 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 	*recvd = pSSL_read(connection->ssl_s, buf, len);
 	if (flags & MSG_PEEK) /* must copy stuff into buffer */
 	{
+            connection->peek_len = *recvd;
 	    if (!*recvd)
 	    {
 		HeapFree(GetProcessHeap(), 0, connection->peek_msg_mem);
@@ -550,10 +552,7 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 		connection->peek_msg = NULL;
 	    }
 	    else
-	    {
 		memcpy(connection->peek_msg, buf, *recvd);
-		connection->peek_msg[*recvd] = '\0';
-	    }
 	}
 	if (*recvd < 1 && len)
             return FALSE;
