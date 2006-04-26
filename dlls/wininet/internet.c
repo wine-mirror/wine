@@ -3045,6 +3045,26 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
 }
 
 
+static LPWITHREADERROR INTERNET_AllocThreadError(void)
+{
+    LPWITHREADERROR lpwite = HeapAlloc(GetProcessHeap(), 0, sizeof(*lpwite));
+
+    if (lpwite)
+    {
+        lpwite->dwError = 0;
+        lpwite->response[0] = '\0';
+    }
+
+    if (!TlsSetValue(g_dwTlsErrIndex, lpwite))
+    {
+        HeapFree(GetProcessHeap(), 0, lpwite);
+        return NULL;
+    }
+
+    return lpwite;
+}
+
+
 /***********************************************************************
  *           INTERNET_SetLastError (internal)
  *
@@ -3058,10 +3078,7 @@ void INTERNET_SetLastError(DWORD dwError)
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
 
     if (!lpwite)
-    {
-        lpwite = HeapAlloc(GetProcessHeap(), 0, sizeof(*lpwite));
-        TlsSetValue(g_dwTlsErrIndex, lpwite);
-    }
+        lpwite = INTERNET_AllocThreadError();
 
     SetLastError(dwError);
     if(lpwite)
@@ -3493,10 +3510,7 @@ LPSTR INTERNET_GetResponseBuffer(void)
 {
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
     if (!lpwite)
-    {
-        lpwite = HeapAlloc(GetProcessHeap(), 0, sizeof(*lpwite));
-        TlsSetValue(g_dwTlsErrIndex, lpwite);
-    }
+        lpwite = INTERNET_AllocThreadError();
     TRACE("\n");
     return lpwite->response;
 }
