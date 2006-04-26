@@ -444,7 +444,7 @@ static LPCWSTR copy_package_to_temp( LPCWSTR szPackage, LPWSTR filename )
 
     if( !CopyFileW( szPackage, filename, FALSE ) )
     {
-        ERR("failed to copy package to temp path %s\n", debugstr_w(filename) );
+        ERR("failed to copy package %s\n", debugstr_w(szPackage) );
         return szPackage;
     }
 
