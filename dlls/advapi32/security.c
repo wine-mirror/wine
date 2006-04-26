@@ -1667,8 +1667,52 @@ ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
  */
 BOOL WINAPI ImpersonateLoggedOnUser(HANDLE hToken)
 {
-    FIXME("(%p):stub returning FALSE\n", hToken);
-    return FALSE;
+    NTSTATUS Status;
+    HANDLE ImpersonationToken;
+    TOKEN_TYPE Type = TokenImpersonation;
+
+    FIXME( "(%p)\n", hToken );
+
+    /* FIXME: get token type */
+
+    if (Type == TokenPrimary)
+    {
+        OBJECT_ATTRIBUTES ObjectAttributes;
+
+        InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL, NULL );
+
+        Status = NtDuplicateToken( hToken,
+                                   TOKEN_IMPERSONATE | TOKEN_QUERY,
+                                   &ObjectAttributes,
+                                   SecurityImpersonation,
+                                   TokenImpersonation,
+                                   &ImpersonationToken );
+        if (Status != STATUS_SUCCESS)
+        {
+            ERR( "NtDuplicateToken failed with error 0x%08lx\n", Status );
+            SetLastError( RtlNtStatusToDosError( Status ) );
+            return FALSE;
+        }
+    }
+    else
+        ImpersonationToken = hToken;
+
+    Status = NtSetInformationThread( GetCurrentThread(),
+                                     ThreadImpersonationToken,
+                                     &ImpersonationToken,
+                                     sizeof(ImpersonationToken) );
+
+    if (Type == TokenPrimary)
+        NtClose( ImpersonationToken );
+
+    if (Status != STATUS_SUCCESS)
+    {
+        ERR( "NtSetInformationThread failed with error 0x%08lx\n", Status );
+        SetLastError( RtlNtStatusToDosError( Status ) );
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
