@@ -377,18 +377,18 @@
 @ stub RpcBindingInqAuthClientExA
 @ stub RpcBindingInqAuthClientExW
 @ stub RpcBindingInqAuthClientW
-@ stub RpcBindingInqAuthInfoA
-@ stub RpcBindingInqAuthInfoExA
-@ stub RpcBindingInqAuthInfoExW
-@ stub RpcBindingInqAuthInfoW
+@ stdcall RpcBindingInqAuthInfoA(ptr ptr ptr ptr ptr ptr)
+@ stdcall RpcBindingInqAuthInfoExA(ptr ptr ptr ptr ptr ptr long ptr)
+@ stdcall RpcBindingInqAuthInfoExW(ptr ptr ptr ptr ptr ptr long ptr)
+@ stdcall RpcBindingInqAuthInfoW(ptr ptr ptr ptr ptr ptr)
 @ stdcall RpcBindingInqObject(ptr ptr)
 @ stub RpcBindingInqOption
 @ stub RpcBindingReset
 @ stub RpcBindingServerFromClient
-@ stub RpcBindingSetAuthInfoA
-@ stub RpcBindingSetAuthInfoExA
-@ stub RpcBindingSetAuthInfoExW
-@ stub RpcBindingSetAuthInfoW
+@ stdcall RpcBindingSetAuthInfoA(ptr str long long ptr long)
+@ stdcall RpcBindingSetAuthInfoExA(ptr str long long ptr long ptr)
+@ stdcall RpcBindingSetAuthInfoExW(ptr wstr long long ptr long ptr)
+@ stdcall RpcBindingSetAuthInfoW(ptr wstr long long ptr long)
 @ stdcall RpcBindingSetObject(ptr ptr)
 @ stub RpcBindingSetOption
 @ stdcall RpcBindingToStringBindingA(ptr ptr)

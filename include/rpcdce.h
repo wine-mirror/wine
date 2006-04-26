@@ -148,6 +148,13 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY_A
     unsigned long Flags;
 } SEC_WINNT_AUTH_IDENTITY_A, *PSEC_WINNT_AUTH_IDENTITY_A;
 
+typedef struct _RPC_SECURITY_QOS {
+    unsigned long Version;
+    unsigned long Capabilities;
+    unsigned long IdentityTracking;
+    unsigned long ImpersonationType;
+} RPC_SECURITY_QOS, *PRPC_SECURITY_QOS;
+
 #define _SEC_WINNT_AUTH_IDENTITY WINELIB_NAME_AW(_SEC_WINNT_AUTH_IDENTITY_)
 #define  SEC_WINNT_AUTH_IDENTITY WINELIB_NAME_AW(SEC_WINNT_AUTH_IDENTITY_)
 #define PSEC_WINNT_AUTH_IDENTITY WINELIB_NAME_AW(PSEC_WINNT_AUTH_IDENTITY_)
@@ -302,6 +309,46 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterAuthInfoW( unsigned short *ServerPrincName, unsigned long AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                               void *Arg );
 #define RpcServerRegisterAuthInfo WINELIB_NAME_AW(RpcServerRegisterAuthInfo)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrincName, unsigned long AuthnLevel,
+                            unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr,
+                            RPC_SECURITY_QOS *SecurityQos );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, unsigned short *ServerPrincName, unsigned long AuthnLevel,
+                            unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr,
+                            RPC_SECURITY_QOS *SecurityQos );
+#define RpcBindingSetAuthInfoEx WINELIB_NAME_AW(RpcBindingSetAuthInfoEx)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingSetAuthInfoA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrincName, unsigned long AuthnLevel,
+                          unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, unsigned short *ServerPrincName, unsigned long AuthnLevel,
+                          unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr );
+#define RpcBindingSetAuthInfo WINELIB_NAME_AW(RpcBindingSetAuthInfo)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingInqAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char ** ServerPrincName, unsigned long *AuthnLevel,
+                            unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc,
+                            unsigned long RpcQosVersion, RPC_SECURITY_QOS *SecurityQOS );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingInqAuthInfoExW( RPC_BINDING_HANDLE Binding, unsigned short ** ServerPrincName, unsigned long *AuthnLevel,
+                            unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc,
+                            unsigned long RpcQosVersion, RPC_SECURITY_QOS *SecurityQOS );
+#define RpcBindingInqAuthInfoEx WINELIB_NAME_AW(RpcBindingInqAuthInfoEx)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingInqAuthInfoA( RPC_BINDING_HANDLE Binding, unsigned char ** ServerPrincName, unsigned long *AuthnLevel,
+                          unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingInqAuthInfoW( RPC_BINDING_HANDLE Binding, unsigned short ** ServerPrincName, unsigned long *AuthnLevel,
+                          unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc );
+#define RpcBindingInqAuthInfo WINELIB_NAME_AW(RpcBindingInqAuthInfo)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcNetworkIsProtseqValidA( unsigned char *protseq );

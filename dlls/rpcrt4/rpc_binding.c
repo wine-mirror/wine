@@ -939,3 +939,104 @@ RPC_STATUS WINAPI RpcRevertToSelfEx(RPC_BINDING_HANDLE BindingHandle)
     FIXME("(%p): stub\n", BindingHandle);
     return RPC_S_OK;
 }
+
+/***********************************************************************
+ *             RpcBindingInqAuthInfoExA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingInqAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char ** ServerPrincName, unsigned long *AuthnLevel,
+                          unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc,
+                          unsigned long RpcQosVersion, RPC_SECURITY_QOS *SecurityQOS )
+{
+    FIXME("%p %p %p %p %p %p %lu %p\n", Binding, ServerPrincName, AuthnLevel,
+          AuthnSvc, AuthIdentity, AuthzSvc, RpcQosVersion, SecurityQOS);
+    return RPC_S_INVALID_BINDING;
+}
+
+/***********************************************************************
+ *             RpcBindingInqAuthInfoExW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingInqAuthInfoExW( RPC_BINDING_HANDLE Binding, unsigned short ** ServerPrincName, unsigned long *AuthnLevel,
+                          unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc,
+                          unsigned long RpcQosVersion, RPC_SECURITY_QOS *SecurityQOS )
+{
+    FIXME("%p %p %p %p %p %p %lu %p\n", Binding, ServerPrincName, AuthnLevel,
+          AuthnSvc, AuthIdentity, AuthzSvc, RpcQosVersion, SecurityQOS);
+    return RPC_S_INVALID_BINDING;
+}
+
+/***********************************************************************
+ *             RpcBindingInqAuthInfoA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingInqAuthInfoA( RPC_BINDING_HANDLE Binding, unsigned char ** ServerPrincName, unsigned long *AuthnLevel,
+                        unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc )
+{
+    FIXME("%p %p %p %p %p %p\n", Binding, ServerPrincName, AuthnLevel,
+          AuthnSvc, AuthIdentity, AuthzSvc);
+    return RPC_S_INVALID_BINDING;
+}
+
+/***********************************************************************
+ *             RpcBindingInqAuthInfoW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingInqAuthInfoW( RPC_BINDING_HANDLE Binding, unsigned short ** ServerPrincName, unsigned long *AuthnLevel,
+                        unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc )
+{
+    FIXME("%p %p %p %p %p %p\n", Binding, ServerPrincName, AuthnLevel,
+          AuthnSvc, AuthIdentity, AuthzSvc);
+    return RPC_S_INVALID_BINDING;
+}
+
+/***********************************************************************
+ *             RpcBindingSetAuthInfoExA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrincName,
+                          unsigned long AuthnLevel, unsigned long AuthnSvc,
+                          RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr,
+                          RPC_SECURITY_QOS *SecurityQos )
+{
+    FIXME("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_a((const char*)ServerPrincName),
+          AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
+    return RPC_S_OK;
+}
+
+/***********************************************************************
+ *             RpcBindingSetAuthInfoExW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, unsigned short *ServerPrincName, unsigned long AuthnLevel,
+                          unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr,
+                          RPC_SECURITY_QOS *SecurityQos )
+{
+    FIXME("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
+          AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
+    return RPC_S_OK;
+}
+
+/***********************************************************************
+ *             RpcBindingSetAuthInfoA (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingSetAuthInfoA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrincName, unsigned long AuthnLevel,
+                          unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr )
+{
+    FIXME("%p %s %lu %lu %p %lu\n", Binding, debugstr_a((const char*)ServerPrincName),
+          AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr);
+    return RPC_S_OK;
+}
+
+/***********************************************************************
+ *             RpcBindingSetAuthInfoW (RPCRT4.@)
+ */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, unsigned short *ServerPrincName, unsigned long AuthnLevel,
+                        unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr )
+{
+    FIXME("%p %s %lu %lu %p %lu\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
+          AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr);
+    return RPC_S_OK;
+}
