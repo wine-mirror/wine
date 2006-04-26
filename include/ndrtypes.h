@@ -126,4 +126,29 @@ typedef struct
     unsigned short FloatArgMask;
 } NDR_PROC_HEADER_EXTS64;
 
+typedef enum
+{
+    FC_BYTE = 0x01, /* 0x01 */
+    FC_CHAR, /* 0x02 */
+    FC_SMALL, /* 0x03 */
+    FC_USMALL, /* 0x04 */
+    FC_WCHAR, /* 0x05 */
+    FC_SHORT, /* 0x06 */
+    FC_USHORT, /* 0x07 */
+    FC_LONG, /* 0x08 */
+    FC_ULONG, /* 0x09 */
+    FC_FLOAT, /* 0x0a */
+    FC_HYPER, /* 0x0b */
+    FC_DOUBLE, /* 0x0c */
+    FC_ENUM16, /* 0x0d */
+    FC_ENUM32, /* 0x0e */
+    FC_IGNORE, /* 0x0f */
+    FC_ERROR_STATUS_T, /* 0x10 */
+
+    FC_RP, /* 0x11 */ /* reference pointer */
+    FC_UP, /* 0x12 */ /* unique pointer */
+    FC_OP, /* 0x13 */ /* object pointer */
+    FC_FP, /* 0x14 */ /* full pointer */
+} FORMAT_CHARACTER;
+
 #endif
