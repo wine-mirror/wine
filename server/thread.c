@@ -147,6 +147,7 @@ inline static void init_thread_structure( struct thread *thread )
     thread->creation_time   = time(NULL);
     thread->exit_time       = 0;
     thread->desktop_users   = 0;
+    thread->token           = NULL;
 
     list_init( &thread->mutex_list );
     list_init( &thread->system_apc );
@@ -187,8 +188,6 @@ struct thread *create_thread( int fd, struct process *process )
         release_object( thread );
         return NULL;
     }
-
-    thread->token = (struct token *) grab_object( process->token );
 
     set_fd_events( thread->request_fd, POLLIN );  /* start listening to events */
     add_process_thread( thread->process, thread );
