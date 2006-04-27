@@ -2407,7 +2407,7 @@ static HMENU MENU_PtMenu( HMENU hMenu, POINT pt )
  *
  * Execute a menu item (for instance when user pressed Enter).
  * Return the wID of the executed item. Otherwise, -1 indicating
- * that no menu item was executed;
+ * that no menu item was executed, -2 if a popup is shown;
  * Have to receive the flags for the TrackPopupMenu options to avoid
  * sending unwanted message.
  *
@@ -2444,7 +2444,10 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
 	}
     }
     else
+    {
 	pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd, hMenu, TRUE, wFlags);
+	return -2;
+    }
 
     return -1;
 }
@@ -2538,7 +2541,10 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
 	if( item && (ptmenu->FocusedItem == id ))
 	{
 	    if( !(item->fType & MF_POPUP) )
-		return MENU_ExecFocusedItem( pmt, hPtMenu, wFlags);
+	    {
+	        INT executedMenuId = MENU_ExecFocusedItem( pmt, hPtMenu, wFlags);
+	        return (executedMenuId < 0) ? -1 : executedMenuId;
+	    }
 
 	    /* If we are dealing with the top-level menu            */
 	    /* and this is a click on an already "popped" item:     */
@@ -3113,7 +3119,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    if (msg.wParam == '\r' || msg.wParam == ' ')
 		    {
                         executedMenuId = MENU_ExecFocusedItem(&mt,mt.hCurrentMenu, wFlags);
-                        fEndMenu = (executedMenuId != -1);
+                        fEndMenu = (executedMenuId != -2);
 
 			break;
 		    }
@@ -3131,7 +3137,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 			MENU_SelectItem( mt.hOwnerWnd, mt.hCurrentMenu, pos,
                                 TRUE, 0 );
                         executedMenuId = MENU_ExecFocusedItem(&mt,mt.hCurrentMenu, wFlags);
-                        fEndMenu = (executedMenuId != -1);
+                        fEndMenu = (executedMenuId != -2);
 		    }
 		}
 		break;
@@ -3182,7 +3188,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
     /* The return value is only used by TrackPopupMenu */
     if (!(wFlags & TPM_RETURNCMD)) return TRUE;
-    if (executedMenuId == -1) executedMenuId = 0;
+    if (executedMenuId < 0) executedMenuId = 0;
     return executedMenuId;
 }
 
