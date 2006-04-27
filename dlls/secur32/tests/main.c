@@ -2,6 +2,7 @@
  * Miscellaneous secur32 tests
  *
  * Copyright 2005 Kai Blin
+ * Copyright 2006 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,12 +21,14 @@
 
 #define SECURITY_WIN32
 
-#include <stdio.h>
 #include <stdarg.h>
-#include <windows.h>
-#include "wine/test.h"
+#include <stdio.h>
+#include <assert.h>
+#include <windef.h>
 #include <winbase.h>
 #include <sspi.h>
+
+#include "wine/test.h"
 
 #define BUFF_SIZE 2048
 #define MAX_MESSAGE 12000
@@ -72,6 +75,8 @@ void InitFunctionPtrs(void)
 
 static const char* getSecError(SECURITY_STATUS status)
 {
+    static char buf[20];
+
 #define _SEC_ERR(x) case (x): return #x;
     switch(status)
     {
@@ -93,9 +98,10 @@ static const char* getSecError(SECURITY_STATUS status)
         _SEC_ERR(SEC_E_ILLEGAL_MESSAGE);
         _SEC_ERR(SEC_E_LOGON_DENIED);
         _SEC_ERR(SEC_E_NO_CREDENTIALS);
+        _SEC_ERR(SEC_E_OUT_OF_SEQUENCE);
         default:
-            trace("Error = %ld\n", status);
-            return "Unknown error";
+            sprintf(buf, "%08lx\n", status);
+            return buf;
     }
 #undef _SEC_ERR
 }
@@ -106,7 +112,7 @@ static const char* getSecError(SECURITY_STATUS status)
 static SECURITY_STATUS setupPackageA(SEC_CHAR *p_package_name, 
         PSecPkgInfo *p_pkg_info)
 {
-    SECURITY_STATUS ret = SEC_E_SECPKG_NOT_FOUND;
+    SECURITY_STATUS ret;
     
     ret = pQuerySecurityPackageInfoA( p_package_name, p_pkg_info);
     return ret;
@@ -199,7 +205,7 @@ SECURITY_STATUS setupBuffers(PSecBufferDesc *new_in_buf,
     PSecBufferDesc in_buf = HeapAlloc(GetProcessHeap(), 0, 
             sizeof(SecBufferDesc));
     PSecBufferDesc out_buf = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(PSecBufferDesc));
+            sizeof(SecBufferDesc));
 
     if(in_buf != NULL)
     {
@@ -254,7 +260,7 @@ SECURITY_STATUS setupBuffers(PSecBufferDesc *new_in_buf,
         out_buf->cBuffers = 1;
         out_buf->pBuffers = sec_buffer;
 
-        sec_buffer->cbBuffer = 0;
+        sec_buffer->cbBuffer = size;
         sec_buffer->BufferType = SECBUFFER_TOKEN;
         sec_buffer->pvBuffer = buffer;
         *new_out_buf = out_buf;
@@ -272,7 +278,7 @@ SECURITY_STATUS setupBuffers(PSecBufferDesc *new_in_buf,
 
 void cleanupBuffers(PSecBufferDesc in_buf, PSecBufferDesc out_buf)
 {
-    int i;
+    ULONG i;
 
     if(in_buf != NULL)
     {
@@ -305,12 +311,67 @@ SECURITY_STATUS runClient(PCredHandle cred, PCtxtHandle ctxt,
     ULONG ctxt_attr;
     TimeStamp ttl;
 
+    assert(in_buf->cBuffers >= 1);
+    assert(in_buf->pBuffers[0].pvBuffer != NULL);
+    assert(in_buf->pBuffers[0].cbBuffer != 0);
+
+    assert(out_buf->cBuffers >= 1);
+    assert(out_buf->pBuffers[0].pvBuffer != NULL);
+    assert(out_buf->pBuffers[0].cbBuffer != 0);
+
     trace("Running the client the %s time.\n", first?"first":"second");
+
+    /* We can either use ISC_REQ_ALLOCATE_MEMORY flag to ask the provider
+     * always allocate output buffers for us, or initialize cbBuffer
+     * before each call because the API changes it to represent actual
+     * amount of data in the buffer.
+     */
+
+    /* test a failing call only the first time, otherwise we get
+     * SEC_E_OUT_OF_SEQUENCE
+     */
+    if (first)
+    {
+        void *old_buf;
+
+        /* pass NULL as an output buffer */
+        ret = pInitializeSecurityContextA(cred, NULL, NULL, req_attr, 
+            0, SECURITY_NATIVE_DREP, NULL, 0, ctxt, NULL,
+            &ctxt_attr, &ttl);
+
+        ok(ret == SEC_E_BUFFER_TOO_SMALL, "expected SEC_E_BUFFER_TOO_SMALL, got %s\n", getSecError(ret));
+
+        /* pass NULL as an output buffer */
+        old_buf = out_buf->pBuffers[0].pvBuffer;
+        out_buf->pBuffers[0].pvBuffer = NULL;
+
+        ret = pInitializeSecurityContextA(cred, NULL, NULL, req_attr, 
+            0, SECURITY_NATIVE_DREP, NULL, 0, ctxt, out_buf,
+            &ctxt_attr, &ttl);
+
+        ok(ret == SEC_E_INTERNAL_ERROR, "expected SEC_E_INTERNAL_ERROR, got %s\n", getSecError(ret));
+
+        out_buf->pBuffers[0].pvBuffer = old_buf;
+
+        /* pass an output buffer of 0 size */
+        out_buf->pBuffers[0].cbBuffer = 0;
+
+        ret = pInitializeSecurityContextA(cred, NULL, NULL, req_attr, 
+            0, SECURITY_NATIVE_DREP, NULL, 0, ctxt, out_buf,
+            &ctxt_attr, &ttl);
+
+        ok(ret == SEC_E_BUFFER_TOO_SMALL, "expected SEC_E_BUFFER_TOO_SMALL, got %s\n", getSecError(ret));
+
+        ok(out_buf->pBuffers[0].cbBuffer == 0,
+           "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
+    }
+
+    out_buf->pBuffers[0].cbBuffer = MAX_MESSAGE;
 
     ret = pInitializeSecurityContextA(cred, first?NULL:ctxt, NULL, req_attr, 
             0, SECURITY_NATIVE_DREP, first?NULL:in_buf, 0, ctxt, out_buf,
             &ctxt_attr, &ttl);
-    
+
     if(ret == SEC_I_COMPLETE_AND_CONTINUE || ret == SEC_I_COMPLETE_NEEDED)
     {
         pCompleteAuthToken(ctxt, out_buf);
@@ -319,7 +380,10 @@ SECURITY_STATUS runClient(PCredHandle cred, PCtxtHandle ctxt,
         else if(ret == SEC_I_COMPLETE_NEEDED)
             ret = SEC_E_OK;
     }       
-    
+
+    ok(out_buf->pBuffers[0].cbBuffer < MAX_MESSAGE,
+       "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
+
     return ret;
 }
 
@@ -345,7 +409,6 @@ SECURITY_STATUS runServer(PCredHandle cred, PCtxtHandle ctxt,
         else if(ret == SEC_I_COMPLETE_NEEDED)
             ret = SEC_E_OK;
     }
-    
 
     return ret;
 }
@@ -450,59 +513,52 @@ static void testEnumerateSecurityPackages(void)
 static void testQuerySecurityPackageInfo(void)
 {
     SECURITY_STATUS     sec_status;
-    SEC_CHAR            sec_pkg_name[256];
-    PSecPkgInfo         pkg_info = NULL;
-    ULONG               max_token = 0;
-    USHORT              version = 0;
+    PSecPkgInfo         pkg_info;
     
     trace("Running testQuerySecurityPackageInfo\n");
     
     /* Test with an existing package. Test should pass */
-    
-    lstrcpy(sec_pkg_name, "NTLM");
-    
-    sec_status = setupPackageA(sec_pkg_name, &pkg_info);
+
+    pkg_info = (void *)0xdeadbeef;
+    sec_status = setupPackageA("NTLM", &pkg_info);
 
     ok((sec_status == SEC_E_OK) || (sec_status == SEC_E_SECPKG_NOT_FOUND), 
        "Return value of QuerySecurityPackageInfo() shouldn't be %s\n",
        getSecError(sec_status) );
         
-    if(pkg_info != NULL){
-        max_token = pkg_info->cbMaxToken;
-        version   = pkg_info->wVersion;
-        ok(version == 1, "wVersion always should be 1, but is %d\n", version);
-        todo_wine{
-            ok(max_token == 12000, "cbMaxToken for NTLM is %ld, not 12000.\n",
-                max_token);
-        }
+    if (sec_status == SEC_E_OK)
+    {
+        ok(pkg_info != (void *)0xdeadbeef, "wrong pkg_info address %p\n", pkg_info);
+        ok(pkg_info->wVersion == 1, "wVersion always should be 1, but is %d\n", pkg_info->wVersion);
+        /* there is no point in testing pkg_info->cbMaxToken since it varies
+         * between implementations.
+         */
     }
-    
-    
-    sec_status = pFreeContextBuffer(&pkg_info);
-    
+
+    sec_status = pFreeContextBuffer(pkg_info);
+
     ok( sec_status == SEC_E_OK,
         "Return value of FreeContextBuffer() shouldn't be %s\n",
         getSecError(sec_status) );
 
     /* Test with a nonexistent package, test should fail */
-   
-    lstrcpy(sec_pkg_name, "Winetest");
 
-    sec_status = pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info);
+    pkg_info = (void *)0xdeadbeef;
+    sec_status = pQuerySecurityPackageInfoA("Winetest", &pkg_info);
 
     ok( sec_status != SEC_E_OK,
         "Return value of QuerySecurityPackageInfo() should not be %s for a nonexistent package\n", getSecError(SEC_E_OK));
 
-    sec_status = pFreeContextBuffer(&pkg_info);
+    ok(pkg_info == (void *)0xdeadbeef, "wrong pkg_info address %p\n", pkg_info);
+
+    sec_status = pFreeContextBuffer(pkg_info);
     
     ok( sec_status == SEC_E_OK,
         "Return value of FreeContextBuffer() shouldn't be %s\n",
         getSecError(sec_status) );
-
-
 }
 
-void testAuth(const char* sec_pkg, const char* domain)
+void testAuth(char* sec_pkg_name, const char* domain)
 {
     SECURITY_STATUS     sec_status;
     PSecPkgInfo         pkg_info = NULL;
@@ -510,17 +566,15 @@ void testAuth(const char* sec_pkg, const char* domain)
     CredHandle          client_cred;
     CtxtHandle          server_ctxt;
     CtxtHandle          client_ctxt;
-    SEC_CHAR            sec_pkg_name[256];
 
     PSecBufferDesc client_in = NULL, client_out = NULL;
     PSecBufferDesc server_in = NULL, server_out = NULL;
 
     BOOL continue_client = FALSE, continue_server = FALSE;
 
-    lstrcpy(sec_pkg_name, sec_pkg);
     if(setupPackageA(sec_pkg_name, &pkg_info) == SEC_E_OK)
     {
-        pFreeContextBuffer(&pkg_info);
+        pFreeContextBuffer(pkg_info);
         sec_status = setupClient(&client_cred, "testuser", "testpass", domain,
                 sec_pkg_name);
 
@@ -545,7 +599,7 @@ void testAuth(const char* sec_pkg, const char* domain)
 
         setupBuffers(&client_in, &client_out);
         setupBuffers(&server_in, &server_out);
-        
+
         sec_status = runClient(&client_cred, &client_ctxt, client_in, client_out, 
                 TRUE);
 
@@ -614,7 +668,6 @@ void testAuth(const char* sec_pkg, const char* domain)
     {
         trace("Package not installed, skipping test.\n");
     }
-    pFreeContextBuffer(&pkg_info);
 }
 
 

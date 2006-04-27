@@ -25,15 +25,10 @@
 #include "wine/list.h"
 
 /* Memory allocation functions for memory accessible by callers of secur32.
- * There is no REALLOC, because LocalReAlloc can only work if used in
- * conjunction with LMEM_MOVEABLE and LocalLock, but callers aren't using
- * LocalLock.  I don't use the Heap functions because there seems to be an
- * implicit assumption that LocalAlloc and Free will be used--MS' secur32
- * imports them (but not the heap functions), the sample SSP uses them, and
- * there isn't an exported secur32 function to allocate memory.
+ * The details are implementation specific.
  */
-#define SECUR32_ALLOC(bytes) LocalAlloc(0, (bytes))
-#define SECUR32_FREE(p)      LocalFree(p)
+#define SECUR32_ALLOC(bytes) HeapAlloc(GetProcessHeap(), 0, (bytes))
+#define SECUR32_FREE(p)      HeapFree(GetProcessHeap(), 0, (p))
 
 typedef struct _SecureProvider
 {

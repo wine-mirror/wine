@@ -544,22 +544,25 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                     HeapFree(GetProcessHeap(), 0, bin);
                     return ret;
                 }
-                
+
                 /* put the decoded client blob into the out buffer */
-                if(pOutput == NULL){
-                    TRACE("pOutput is NULL\n");
+
+                if (!pOutput || !pOutput->cBuffers || pOutput->pBuffers[0].cbBuffer < bin_len)
+                {
+                    TRACE("out buffer is NULL or has not enough space\n");
                     HeapFree(GetProcessHeap(), 0, buffer);
                     HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INSUFFICIENT_MEMORY;
+                    return SEC_E_BUFFER_TOO_SMALL;
                 }
 
-                if(pOutput->cBuffers < 1)
+                if (!pOutput->pBuffers[0].pvBuffer)
                 {
-                    TRACE("pOutput->cBuffers is %ld\n", pOutput->cBuffers);
+                    TRACE("out buffer is NULL\n");
                     HeapFree(GetProcessHeap(), 0, buffer);
                     HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INSUFFICIENT_MEMORY;
+                    return SEC_E_INTERNAL_ERROR;
                 }
+
                 pOutput->pBuffers[0].cbBuffer = bin_len;
                 pOutput->pBuffers[0].BufferType = SECBUFFER_DATA;
                 memcpy(pOutput->pBuffers[0].pvBuffer, bin, bin_len);
@@ -570,18 +573,18 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             {
                 /* handle second call here */
                 /* encode server data to base64 */
-                if(pInput == NULL)
+                if (!pInput || !pInput->cBuffers)
                 {
                     HeapFree(GetProcessHeap(), 0, buffer);
                     HeapFree(GetProcessHeap(), 0, bin);
                     return SEC_E_INCOMPLETE_MESSAGE;
                 }
-                
-                if(pInput->cBuffers < 1)
+
+                if (!pInput->pBuffers[0].pvBuffer)
                 {
                     HeapFree(GetProcessHeap(), 0, buffer);
                     HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INCOMPLETE_MESSAGE;
+                    return SEC_E_INTERNAL_ERROR;
                 }
 
                 if(pInput->pBuffers[0].cbBuffer > max_len)
@@ -638,18 +641,22 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                     return ret;
                 }
 
-                if(pOutput == NULL)
+                /* put the decoded client blob into the out buffer */
+
+                if (!pOutput || !pOutput->cBuffers || pOutput->pBuffers[0].cbBuffer < bin_len)
                 {
+                    TRACE("out buffer is NULL or has not enough space\n");
                     HeapFree(GetProcessHeap(), 0, buffer);
                     HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INSUFFICIENT_MEMORY;
+                    return SEC_E_BUFFER_TOO_SMALL;
                 }
 
-                if(pOutput->cBuffers < 1)
+                if (!pOutput->pBuffers[0].pvBuffer)
                 {
+                    TRACE("out buffer is NULL\n");
                     HeapFree(GetProcessHeap(), 0, buffer);
                     HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INSUFFICIENT_MEMORY;
+                    return SEC_E_INTERNAL_ERROR;
                 }
 
                 pOutput->pBuffers[0].cbBuffer = bin_len;
@@ -659,7 +666,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 ret = SEC_E_OK;
                 phNewContext->dwUpper = ctxt_attr;
                 phNewContext->dwLower = ret;
-
             }
             HeapFree(GetProcessHeap(), 0, buffer);
             HeapFree(GetProcessHeap(), 0, bin);

@@ -680,19 +680,9 @@ static void SECUR32_freeProviders(void)
  */
 SECURITY_STATUS WINAPI FreeContextBuffer(PVOID pv)
 {
-    SECURITY_STATUS ret;
+    if (pv) SECUR32_FREE(pv);
 
-    /* as it turns out, SECURITY_STATUSes are actually HRESULTS */
-    if (pv)
-    {
-        if (SECUR32_FREE(pv) == NULL)
-            ret = SEC_E_OK;
-        else
-            ret = HRESULT_FROM_WIN32(GetLastError());
-    }
-    else
-        ret = HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER);
-    return ret;
+    return SEC_E_OK;
 }
 
 /***********************************************************************
