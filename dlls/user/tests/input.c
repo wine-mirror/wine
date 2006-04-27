@@ -475,7 +475,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT Msg, WPARAM wParam,
 
 static void test_Input_blackbox(void)
 {
-    INPUT i;
+    TEST_INPUT i;
     int ii;
     BYTE ks1[256], ks2[256];
     LONG_PTR prevWndProc;
@@ -495,16 +495,16 @@ static void test_Input_blackbox(void)
        "error: %d\n", (int) GetLastError());
 
     i.type = INPUT_KEYBOARD;
-    i.ki.wScan = 0;
-    i.ki.time = 0;
-    i.ki.dwExtraInfo = 0;
+    i.u.ki.wScan = 0;
+    i.u.ki.time = 0;
+    i.u.ki.dwExtraInfo = 0;
 
     for (ii = 0; ii < sizeof(sendinput_test)/sizeof(struct sendinput_test_s)-1;
          ii++) {
         GetKeyboardState(ks1);
-        i.ki.dwFlags = sendinput_test[ii].dwFlags;
-        i.ki.wVk = sendinput_test[ii].wVk;
-        SendInput(1, &i, sizeof(INPUT));
+        i.u.ki.dwFlags = sendinput_test[ii].dwFlags;
+        i.u.ki.wVk = sendinput_test[ii].wVk;
+        SendInput(1, (INPUT*)&i, sizeof(TEST_INPUT));
         empty_message_queue();
         GetKeyboardState(ks2);
         compare_and_check(ii, ks1, ks2,
