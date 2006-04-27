@@ -436,10 +436,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 TRACE("According to a MS whitepaper pszTargetName is ignored.\n");
             }
             /* Handle all the flags */
-            if(fContextReq & ISC_REQ_ALLOCATE_MEMORY)
-            {
-                FIXME("InitializeSecurityContext(): ISC_REQ_ALLOCATE_MEMORY stub\n");
-            }
             if(fContextReq & ISC_REQ_CONFIDENTIALITY)
             {
                 FIXME("InitializeSecurityContext(): ISC_REQ_CONFIDENTIALITY stub\n");
@@ -547,6 +543,16 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
                 /* put the decoded client blob into the out buffer */
 
+                if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
+                {
+                    if (pOutput)
+                    {
+                        pOutput->cBuffers = 1;
+                        pOutput->pBuffers[0].pvBuffer = SECUR32_ALLOC(bin_len);
+                        pOutput->pBuffers[0].cbBuffer = bin_len;
+                    }
+                }
+
                 if (!pOutput || !pOutput->cBuffers || pOutput->pBuffers[0].cbBuffer < bin_len)
                 {
                     TRACE("out buffer is NULL or has not enough space\n");
@@ -642,6 +648,16 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 }
 
                 /* put the decoded client blob into the out buffer */
+
+                if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
+                {
+                    if (pOutput)
+                    {
+                        pOutput->cBuffers = 1;
+                        pOutput->pBuffers[0].pvBuffer = SECUR32_ALLOC(bin_len);
+                        pOutput->pBuffers[0].cbBuffer = bin_len;
+                    }
+                }
 
                 if (!pOutput || !pOutput->cBuffers || pOutput->pBuffers[0].cbBuffer < bin_len)
                 {
