@@ -362,103 +362,9 @@ void vshader_abs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
 }
 
     /* Stubs */
-void vshader_texcoord(WINED3DSHADERVECTOR* d) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texkill(WINED3DSHADERVECTOR* d) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_tex(WINED3DSHADERVECTOR* d) {
-    FIXME(" : Stub\n");
-}
-void vshader_texld(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texbem(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texbeml(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texreg2ar(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texreg2gb(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texm3x2pad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texm3x2tex(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texm3x3pad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texm3x3tex(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texm3x3diff(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texm3x3spec(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texm3x3vspec(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_cnd(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
-    FIXME(" : Stub\n");
-}
 
 /* Def is C[n] = {n.nf, n.nf, n.nf, n.nf} */
 void vshader_def(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texreg2rgb(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texdp3tex(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texm3x2depth(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texdp3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texm3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texdepth(WINED3DSHADERVECTOR* d) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_cmp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_bem(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
@@ -554,18 +460,6 @@ void vshader_defi(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_dp2add(WINED3DSHADERVECTOR* d) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_dsx(WINED3DSHADERVECTOR* d) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_dsy(WINED3DSHADERVECTOR* d) {
-    FIXME(" : Stub\n");
-}
-
 void vshader_texldd(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
@@ -651,46 +545,14 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL,   2, vshader_mova,    0, 0},
     {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, vshader_defb,    0, 0},
     {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, vshader_defi,    0, 0},
-
-    {D3DSIO_TEXCOORD, "texcoord", GLNAME_REQUIRE_GLSL,   1, vshader_texcoord,    D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXCOORD, "texcrd",   GLNAME_REQUIRE_GLSL,   2, vshader_texcoord,    D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_TEXKILL,  "texkill",  GLNAME_REQUIRE_GLSL,   1, vshader_texkill,     D3DPS_VERSION(1,0), D3DPS_VERSION(1,4)},
-    {D3DSIO_TEX,      "tex",      GLNAME_REQUIRE_GLSL,   1, vshader_tex,         D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEX,      "texld",    GLNAME_REQUIRE_GLSL,   2, vshader_texld,       D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_TEXBEM,   "texbem",   GLNAME_REQUIRE_GLSL,   2, vshader_texbem,      D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL,   2, vshader_texbeml,     D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXREG2AR,"texreg2ar",GLNAME_REQUIRE_GLSL,   2, vshader_texreg2ar,   D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXREG2GB,"texreg2gb",GLNAME_REQUIRE_GLSL,   2, vshader_texreg2gb,   D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x2PAD,   "texm3x2pad",   GLNAME_REQUIRE_GLSL,   2, vshader_texm3x2pad,   D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x2TEX,   "texm3x2tex",   GLNAME_REQUIRE_GLSL,   2, vshader_texm3x2tex,   D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3DIFF,  "texm3x3diff",  GLNAME_REQUIRE_GLSL,   2, vshader_texm3x3diff,  D3DPS_VERSION(0,0), D3DPS_VERSION(0,0)},
-    {D3DSIO_TEXM3x3SPEC,  "texm3x3spec",  GLNAME_REQUIRE_GLSL,   3, vshader_texm3x3spec,  D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3VSPEC, "texm3x3vspe",  GLNAME_REQUIRE_GLSL,   2, vshader_texm3x3vspec, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-
     {D3DSIO_EXPP,     "expp",     "EXP", 2, vshader_expp, 0, 0},
     {D3DSIO_LOGP,     "logp",     "LOG", 2, vshader_logp, 0, 0},
-    {D3DSIO_CND,      "cnd",      GLNAME_REQUIRE_GLSL,   4, vshader_cnd,         D3DPS_VERSION(1,1), D3DPS_VERSION(1,4)},
     /* def is a special operation */
-    {D3DSIO_DEF,      "def",      NULL,   5, vshader_def,         D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
-    {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL,   2, vshader_texreg2rgb,  D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL,   2, vshader_texdp3tex,   D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL,   2, vshader_texm3x2depth,D3DPS_VERSION(1,3), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXDP3,       "texdp3", GLNAME_REQUIRE_GLSL,  2, vshader_texdp3,     D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3,      "texm3x3", GLNAME_REQUIRE_GLSL, 2, vshader_texm3x3,    D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXDEPTH,     "texdepth", GLNAME_REQUIRE_GLSL,1, vshader_texdepth,   D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_CMP,      "cmp",      GLNAME_REQUIRE_GLSL,   4, vshader_cmp,     D3DPS_VERSION(1,1), D3DPS_VERSION(3,0)},
-    {D3DSIO_BEM,      "bem",      GLNAME_REQUIRE_GLSL,   3, vshader_bem,     D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    /* TODO: dp2add can be made out of multiple instuctions */
-    {D3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,   2, vshader_dp2add,  0, 0},
-    {D3DSIO_DSX,      "dsx",      GLNAME_REQUIRE_GLSL,   2, vshader_dsx,     0, 0},
-    {D3DSIO_DSY,      "dsy",      GLNAME_REQUIRE_GLSL,   2, vshader_dsy,     0, 0},
-    {D3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL,   2, vshader_texldd,  0, 0},
+    {D3DSIO_DEF,      "def",      NULL,   5, vshader_def, 0, 0},
     {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,   2, vshader_setp,    0, 0},
     {D3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL,   2, vshader_texldl,  0, 0},
-    {D3DSIO_PHASE,    "phase",    GLNAME_REQUIRE_GLSL,   0, vshader_nop,     0, 0},
     {0,               NULL,       NULL,   0, NULL,            0, 0}
 };
-
 
 inline static const SHADER_OPCODE* vshader_program_get_opcode(IWineD3DVertexShaderImpl *This, const DWORD code) {
     DWORD i = 0;

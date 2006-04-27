@@ -181,15 +181,6 @@ void pshader_expp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
                     s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_lit(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    d->x = 1.0f;
-    d->y = (0.0f < s0->x) ? s0->x : 0.0f;
-    d->z = (0.0f < s0->x && 0.0f < s0->y) ? powf(s0->y, s0->w) : 0.0f;
-    d->w = 1.0f;
-    PSTRACE(("executing lit: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
-                s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
-}
-
 void pshader_logp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     float tmp_f = fabsf(s0->w);
     d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE_VAL;
@@ -539,10 +530,6 @@ void pshader_pow(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
     FIXME(" : Stub\n");
 }
 
-void pshader_sng(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
 void pshader_nrm(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
@@ -588,10 +575,6 @@ void pshader_breakc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
 }
 
 void pshader_breakp(WINED3DSHADERVECTOR* d) {
-    FIXME(" : Stub\n");
-}
-
-void pshader_mova(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
@@ -648,7 +631,6 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_ABS,  "abs",  "ABS", 2, pshader_abs, 0, 0},
     {D3DSIO_EXP,  "exp",  "EX2", 2, pshader_exp, 0, 0},
     {D3DSIO_LOG,  "log",  "LG2", 2, pshader_log, 0, 0},
-    {D3DSIO_LIT,  "lit",  "LIT", 2, pshader_lit, 0, 0},
     {D3DSIO_DST,  "dst",  "DST", 3, pshader_dst, 0, 0},
     {D3DSIO_LRP,  "lrp",  "LRP", 4, pshader_lrp, 0, 0},
     {D3DSIO_FRC,  "frc",  "FRC", 2, pshader_frc, 0, 0},
@@ -664,10 +646,6 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_DCL,      "dcl",      NULL,   2, pshader_dcl,     0, 0},
     {D3DSIO_POW,      "pow",      "POW",  3, pshader_pow,     0, 0},
     {D3DSIO_CRS,      "crs",      "XPS",  3, pshader_crs,     0, 0},
-    /* TODO: sng can possibly be performed as
-        RCP tmp, vec
-        MUL out, tmp, vec*/
-    {D3DSIO_SGN,      "sng",      NULL,   2, pshader_sng,     0, 0},
     /* TODO: xyz normalise can be performed as VS_ARB using one temporary register,
         DP3 tmp , vec, vec;
         RSQ tmp, tmp.x;
@@ -698,7 +676,6 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL,   0, pshader_endloop, 0, 0},
     {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL,   1, pshader_label,   0, 0},
 
-    {D3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL,   2, pshader_mova,    0, 0},
     {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, pshader_defb,    0, 0},
     {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, pshader_defi,    0, 0},
 
@@ -742,7 +719,6 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_PHASE,    "phase",    GLNAME_REQUIRE_GLSL,   0, pshader_nop,     0, 0},
     {0,               NULL,       NULL,   0, NULL,            0, 0}
 };
-
 
 inline static const SHADER_OPCODE* pshader_program_get_opcode(IWineD3DPixelShaderImpl *This, const DWORD code) {
     DWORD i = 0;
@@ -1236,7 +1212,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 case D3DSIO_MAX:
                 case D3DSIO_SLT:
                 case D3DSIO_SGE:
-                case D3DSIO_LIT:
                 case D3DSIO_DST:
                 case D3DSIO_FRC:
                 case D3DSIO_EXPP:
