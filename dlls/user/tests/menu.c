@@ -1506,23 +1506,23 @@ static struct menu_mouse_tests_s {
     BOOL _todo_wine;
 } menu_tests[] = {
     /* for each test, send keys or clicks and check for menu visibility */
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, TRUE }, /* test 0 */
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, FALSE }, /* test 0 */
     { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, TRUE },
-    { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {'E', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, VK_ESCAPE, 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', VK_ESCAPE, 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', VK_ESCAPE, 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, TRUE },
-    { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {'E', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 'P', 0}, TRUE, TRUE },
-    { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, FALSE },
-    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 'P', 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 'P', 0}, TRUE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 'P', 0}, TRUE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {'E', 0}, FALSE, FALSE },
 
     { INPUT_MOUSE, {{1, 2}, {0}}, {0}, TRUE, TRUE }, /* test 18 */

@@ -527,7 +527,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         if( HIWORD(lParam) & KEYDATA_ALT )
         {
             /* if( HIWORD(lParam) & ~KEYDATA_PREVSTATE ) */
-              if( wParam == VK_MENU && !iMenuSysKey )
+              if ( (wParam == VK_MENU || wParam == VK_LMENU
+                    || wParam == VK_RMENU) && !iMenuSysKey )
                 iMenuSysKey = 1;
               else
                 iMenuSysKey = 0;
@@ -550,8 +551,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_KEYUP:
     case WM_SYSKEYUP:
         /* Press and release F10 or ALT */
-        if (((wParam == VK_MENU) && iMenuSysKey) ||
-            ((wParam == VK_F10) && iF10Key))
+        if (((wParam == VK_MENU || wParam == VK_LMENU || wParam == VK_RMENU)
+             && iMenuSysKey) || ((wParam == VK_F10) && iF10Key))
               SendMessageW( GetAncestor( hwnd, GA_ROOT ), WM_SYSCOMMAND, SC_KEYMENU, 0L );
         iMenuSysKey = iF10Key = 0;
         break;
