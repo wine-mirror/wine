@@ -20,6 +20,10 @@
 #ifndef __WINE_WPP_PRIVATE_H
 #define __WINE_WPP_PRIVATE_H
 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
+
 #include <stdio.h>
 #include <string.h>
 
@@ -133,14 +137,16 @@ typedef struct
 
 
 /*
- * I assume that 'long long' exists in the compiler when it has a size
- * of 8 or bigger. If not, then we revert to a simple 'long' for now.
+ * If the configure says we have long long then we can use it.  Presumably
+ * if we have long long then we have strtoull and strtoll too.  If that is
+ * not the case we will need to add to the configure tests.
+ * If we do not have long long , then we revert to a simple 'long' for now.
  * This should prevent most unexpected things with other compilers than
  * gcc and egcs for now.
  * In the future it should be possible to use another way, like a
  * structure, so that we can emulate the MS compiler.
  */
-#if defined(SIZEOF_LONGLONG) && SIZEOF_LONGLONG >= 8
+#ifdef HAVE_LONG_LONG
 typedef long long wrc_sll_t;
 typedef unsigned long long wrc_ull_t;
 #else

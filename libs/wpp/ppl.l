@@ -156,6 +156,7 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 
 %{
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -823,7 +824,7 @@ static int make_number(int radix, YYSTYPE *val, const char *str, int len)
 	if(is_ll)
 	{
 /* Assume as in the declaration of wrc_ull_t and wrc_sll_t */
-#if defined(SIZEOF_LONGLONG) && SIZEOF_LONGLONG >= 8
+#ifdef HAVE_LONG_LONG
 		if (is_u)
 		{
 			val->ull = strtoull(str, NULL, radix);
