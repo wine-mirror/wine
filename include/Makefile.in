@@ -180,6 +180,7 @@ WINDOWS_INCLUDES = \
 	mmddk.h \
 	mmreg.h \
 	mmsystem.h \
+	mprapi.h \
 	msacm.h \
 	msacmdlg.h \
 	msacmdrv.h \

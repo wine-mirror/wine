@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = mprapi.dll
+IMPORTLIB = libmprapi.$(IMPLIBEXT)
+IMPORTS   = kernel32
+
+C_SRCS = \
+	mprapi.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

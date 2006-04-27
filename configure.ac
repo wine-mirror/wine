@@ -1574,6 +1574,7 @@ dlls/mlang/tests/Makefile
 dlls/mmdevldr.vxd/Makefile
 dlls/monodebg.vxd/Makefile
 dlls/mpr/Makefile
+dlls/mprapi/Makefile
 dlls/msacm32/Makefile
 dlls/msacm32/tests/Makefile
 dlls/msadp32.acm/Makefile

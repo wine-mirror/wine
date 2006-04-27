@@ -80,6 +80,7 @@ BASEDIRS = \
 	mmdevldr.vxd \
 	monodebg.vxd \
 	mpr \
+	mprapi \
 	msacm32 \
 	msadp32.acm \
 	mscms \
@@ -496,6 +497,7 @@ IMPORT_LIBS = \
 	mapi32/libmapi32.$(IMPLIBEXT) \
 	mlang/libmlang.$(IMPLIBEXT) \
 	mpr/libmpr.$(IMPLIBEXT) \
+	mprapi/libmprapi.$(IMPLIBEXT) \
 	msacm32/libmsacm32.$(IMPLIBEXT) \
 	mscms/libmscms.$(IMPLIBEXT) \
 	msdmo/libmsdmo.$(IMPLIBEXT) \
@@ -702,6 +704,9 @@ mlang/libmlang.$(IMPLIBEXT): mlang/mlang.spec $(WINEBUILD)
 
 mpr/libmpr.$(IMPLIBEXT): mpr/mpr.spec $(WINEBUILD)
 	@cd mpr && $(MAKE) libmpr.$(IMPLIBEXT)
+
+mprapi/libmprapi.$(IMPLIBEXT): mprapi/mprapi.spec $(WINEBUILD)
+	@cd mprapi && $(MAKE) libmprapi.$(IMPLIBEXT)
 
 msacm32/libmsacm32.$(IMPLIBEXT): msacm32/msacm32.spec $(WINEBUILD)
 	@cd msacm32 && $(MAKE) libmsacm32.$(IMPLIBEXT)
