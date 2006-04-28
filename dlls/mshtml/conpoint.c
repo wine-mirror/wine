@@ -40,6 +40,7 @@ struct ConnectionPoint {
     const IConnectionPointVtbl *lpConnectionPointVtbl;
 
     HTMLDocument *doc;
+    IID iid;
 };
 
 #define CONPOINT_THIS(iface) DEFINE_THIS(ConnectionPoint, ConnectionPoint, iface)
@@ -83,8 +84,14 @@ static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
 static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pIID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pIID);
+
+    if(!pIID)
+        return E_POINTER;
+
+    memcpy(pIID, &This->iid, sizeof(IID));
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
@@ -145,6 +152,7 @@ static void ConnectionPoint_Create(HTMLDocument *doc, REFIID riid, ConnectionPoi
 
     ret->lpConnectionPointVtbl = &ConnectionPointVtbl;
     ret->doc = doc;
+    memcpy(&ret->iid, riid, sizeof(IID));
 
     *cp = ret;
 }
