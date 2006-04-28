@@ -2113,6 +2113,9 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringInIStream(
     return E_NOTIMPL;
 }
 
+/*
+ * TODO: handle dwFlag and lpFallBack
+*/
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringToUnicodeEx(
     IMultiLanguage2* iface,
     DWORD* pdwMode,
@@ -2125,9 +2128,28 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringToUnicodeEx(
     WCHAR* lpFallBack)
 {
     FIXME("\n");
-    return E_NOTIMPL;
+    return ConvertINetMultiByteToUnicode(pdwMode, dwEncoding,
+        pSrcStr, (LPINT)pcSrcSize, pDstStr, (LPINT)pcDstSize);
 }
 
+/*****************************************************************************
+ * MultiLanguage2::ConvertStringToUnicodeEx
+ *
+ * Translates the multibyte string from the specified code page to Unicode.
+ *
+ * PARAMS
+ *   see ConvertStringToUnicode
+ *   dwFlag 
+ *   lpFallBack if dwFlag contains MLCONVCHARF_USEDEFCHAR, lpFallBack string used
+ *              instead unconvertible characters.
+ *
+ * RETURNS
+ *   S_OK     Success.
+ *   S_FALSE  The conversion is not supported.
+ *   E_FAIL   Some error has occurred.
+ *
+ * TODO: handle dwFlag and lpFallBack
+*/
 static HRESULT WINAPI fnIMultiLanguage2_ConvertStringFromUnicodeEx(
     IMultiLanguage2* This,
     DWORD* pdwMode,
@@ -2140,7 +2162,8 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringFromUnicodeEx(
     WCHAR* lpFallBack)
 {
     FIXME("\n");
-    return E_NOTIMPL;
+    return ConvertINetUnicodeToMultiByte(pdwMode, dwEncoding,
+        pSrcStr, (LPINT)pcSrcSize, pDstStr, (LPINT)pcDstSize);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_DetectCodepageInIStream(
