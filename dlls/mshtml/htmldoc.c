@@ -107,6 +107,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IHlinkTarget, riid)) {
         TRACE("(%p)->(IID_IHlinkTarget, %p)\n", This, ppvObject);
         *ppvObject = HLNKTARGET(This);
+    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
+        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppvObject);
+        *ppvObject = CONPTCONT(This);
     }
 
     if(*ppvObject) {
@@ -1043,6 +1046,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_Window_Init(ret);
     HTMLDocument_Service_Init(ret);
     HTMLDocument_Hlink_Init(ret);
+    HTMLDocument_ConnectionPoints_Init(ret);
 
     ret->nscontainer = NSContainer_Create(ret, NULL);
 

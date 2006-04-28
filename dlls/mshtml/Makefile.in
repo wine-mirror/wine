@@ -9,6 +9,7 @@ EXTRALIBS = $(LIBUNICODE) -lstrmiids -luuid
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
+	conpoint.c \
 	hlink.c \
 	htmlbody.c \
 	htmldoc.c \

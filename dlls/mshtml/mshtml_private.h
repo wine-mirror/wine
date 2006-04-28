@@ -62,6 +62,7 @@ typedef struct {
     const IOleCommandTargetVtbl           *lpOleCommandTargetVtbl;
     const IOleControlVtbl                 *lpOleControlVtbl;
     const IHlinkTargetVtbl                *lpHlinkTargetVtbl;
+    const IConnectionPointContainerVtbl   *lpConnectionPointContainerVtbl;
 
     LONG ref;
 
@@ -171,6 +172,7 @@ typedef struct {
 #define CONTROL(x)       ((IOleControl*)                  &(x)->lpOleControlVtbl)
 #define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 #define HLNKTARGET(x)    ((IHlinkTarget*)                 &(x)->lpHlinkTargetVtbl)
+#define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
 
 #define NSWBCHROME(x)    ((nsIWebBrowserChrome*)          &(x)->lpWebBrowserChromeVtbl)
 #define NSCML(x)         ((nsIContextMenuListener*)       &(x)->lpContextMenuListenerVtbl)
@@ -198,6 +200,7 @@ void HTMLDocument_View_Init(HTMLDocument*);
 void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
+void HTMLDocument_ConnectionPoints_Init(HTMLDocument*);
 
 NSContainer *NSContainer_Create(HTMLDocument*,NSContainer*);
 void NSContainer_Release(NSContainer*);
