@@ -145,6 +145,12 @@ typedef struct {
     IUnknown *impl;
 } HTMLElement;
 
+typedef struct {
+    const IHTMLTextContainerVtbl *lpHTMLTextContainerVtbl;
+
+    IUnknown *impl;
+} HTMLTextContainer;
+
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
 #define HTMLDOC3(x)      ((IHTMLDocument3*)               &(x)->lpHTMLDocument3Vtbl)
 #define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
@@ -178,6 +184,8 @@ typedef struct {
 #define HTMLELEM(x)      ((IHTMLElement*)                 &(x)->lpHTMLElementVtbl)
 #define HTMLELEM2(x)     ((IHTMLElement2*)                &(x)->lpHTMLElement2Vtbl)
 #define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)
+
+#define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
@@ -232,6 +240,8 @@ void HTMLSelectElement_Create(HTMLElement*);
 void HTMLTextAreaElement_Create(HTMLElement*);
 
 void HTMLElement2_Init(HTMLElement*);
+
+void HTMLTextContainer_Init(HTMLTextContainer*,IUnknown*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
 HRESULT HTMLElement_QI(HTMLElement*,REFIID,void**);

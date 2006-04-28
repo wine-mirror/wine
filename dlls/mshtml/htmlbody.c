@@ -38,6 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 typedef struct {
     const IHTMLBodyElementVtbl *lpHTMLBodyElementVtbl;
 
+    HTMLTextContainer text_container;
+
     HTMLElement *element;
     nsIDOMHTMLBodyElement *nsbody;
 } HTMLBodyElement;
@@ -63,6 +65,9 @@ static HRESULT WINAPI HTMLBodyElement_QueryInterface(IHTMLBodyElement *iface,
     }else if(IsEqualGUID(&IID_IHTMLBodyElement, riid)) {
         TRACE("(%p)->(IID_IHTMLBodyElement %p)\n", This, ppv);
         *ppv = HTMLBODY(This);
+    }else if(IsEqualGUID(&IID_IHTMLTextContainer, riid)) {
+        TRACE("(%p)->(IID_IHTMLTextContainer %p)\n", This, ppv);
+        *ppv = HTMLTEXTCONT(&This->text_container);
     }
 
     if(*ppv) {
@@ -435,6 +440,8 @@ void HTMLBodyElement_Create(HTMLElement *element)
 
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
     ret->element = element;
+
+    HTMLTextContainer_Init(&ret->text_container, (IUnknown*)HTMLBODY(ret));
 
     nsres = nsIDOMHTMLElement_QueryInterface(element->nselem, &IID_nsIDOMHTMLBodyElement,
                                              (void**)&ret->nsbody);

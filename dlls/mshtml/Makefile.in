@@ -18,6 +18,7 @@ C_SRCS = \
 	htmlinput.c \
 	htmlnode.c \
 	htmlselect.c \
+	htmltextcont.c \
 	htmltextarea.c \
 	main.c \
 	navigate.c \
