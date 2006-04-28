@@ -1418,8 +1418,27 @@ HRESULT CALLBACK ITypeInfo_GetDocumentation_Proxy(
     DWORD* pdwHelpContext,
     BSTR* pBstrHelpFile)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    DWORD help_context;
+    BSTR name, doc_string, help_file;
+    HRESULT hr;
+    TRACE("(%p, %08lx, %p, %p, %p, %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+
+    /* FIXME: presumably refPtrFlags is supposed to be a bitmask of which ptrs we actually want? */
+    hr = ITypeInfo_RemoteGetDocumentation_Proxy(This, memid, 0, &name, &doc_string, &help_context, &help_file);
+    if(SUCCEEDED(hr))
+    {
+        if(pBstrName) *pBstrName = name;
+        else SysFreeString(name);
+
+        if(pBstrDocString) *pBstrDocString = doc_string;
+        else SysFreeString(doc_string);
+
+        if(pBstrHelpFile) *pBstrHelpFile = help_file;
+        else SysFreeString(help_file);
+
+        if(pdwHelpContext) *pdwHelpContext = help_context;
+    }
+    return hr;
 }
 
 HRESULT __RPC_STUB ITypeInfo_GetDocumentation_Stub(
@@ -1431,8 +1450,9 @@ HRESULT __RPC_STUB ITypeInfo_GetDocumentation_Stub(
     DWORD* pdwHelpContext,
     BSTR* pBstrHelpFile)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("(%p, %08lx, %08lx, %p, %p, %p, %p)\n", This, memid, refPtrFlags, pBstrName, pBstrDocString,
+          pdwHelpContext, pBstrHelpFile);
+    return ITypeInfo_GetDocumentation(This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
 }
 
 HRESULT CALLBACK ITypeInfo_GetDllEntry_Proxy(
