@@ -107,6 +107,7 @@ typedef nsISupports nsIDOMProcessingInstruction;
 typedef nsISupports nsIDOMEntityReference;
 typedef nsISupports nsIDOMHTMLFormElement;
 typedef nsISupports nsIDOMHTMLOptionsCollection;
+typedef nsISupports nsIDOMHTMLCollection;
 
 [
     object,
@@ -471,6 +472,33 @@ interface nsIDOMDocument : nsIDOMNode
     nsresult GetElementsByTagNameNS(const nsAString *namespaceURI, const nsAString *localName,
                                     nsIDOMNodeList **_retval);
     nsresult GetElementById(const nsAString *elementId, nsIDOMElement **_retval);
+}
+
+[
+    object,
+    uuid(a6cf9084-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMHTMLDocument : nsIDOMDocument
+{
+    nsresult GetTitle(nsAString *aTitle);
+    nsresult SetTitle(const nsAString *aTitle);
+    nsresult GetReferrer(nsAString *aReferrer);
+    nsresult GetDomain(nsAString *aDomain);
+    nsresult GetURL(nsAString *aURL);
+    nsresult GetBody(nsIDOMHTMLElement **aBody);
+    nsresult SetBody(nsIDOMHTMLElement *aBody);
+    nsresult GetImages(nsIDOMHTMLCollection **aImages);
+    nsresult GetApplets(nsIDOMHTMLCollection **aApplets);
+    nsresult GetLinks(nsIDOMHTMLCollection **aLinks);
+    nsresult GetForms(nsIDOMHTMLCollection **aForms);
+    nsresult GetAnchors(nsIDOMHTMLCollection **aAnchors);
+    nsresult GetCookie(nsAString *aCookie);
+    nsresult SetCookie(const nsAString *aCookie);
+    nsresult Open(void);
+    nsresult Close(void);
+    nsresult Write(const nsAString *text);
+    nsresult Writeln(const nsAString *text);
+    nsresult GetElementsByName(const nsAString *elementName, nsIDOMNodeList **_retval);
 }
 
 [
