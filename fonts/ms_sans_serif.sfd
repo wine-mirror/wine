@@ -48,7 +48,7 @@ AntiAlias: 0
 FitToEm: 1
 WinInfo: 667 29 23
 OnlyBitmaps: 1
-BeginChars: 65536 353
+BeginChars: 65536 354
 StartChar: space
 Encoding: 32 32 0
 Width: 2
@@ -1940,8 +1940,13 @@ Width: 5
 Flags: HW
 TeX: 97 0 0 0
 EndChar
+StartChar: scommaaccent
+Encoding: 537 537 353
+Width: 13
+TeX: 0 0 0 0
+EndChar
 EndChars
-BitmapFont: 13 353 11 2 1 
+BitmapFont: 13 354 11 2 1 
 BDFChar: 0 32 3 0 0 0 0
 z
 BDFChar: 1 33 3 1 1 0 8
@@ -2484,8 +2489,8 @@ BDFChar: 269 346 7 1 5 0 10
 &0PqJJ:MSE#`*F"
 BDFChar: 270 347 5 1 4 0 8
 &0Ls\O?aqM?iU0,
-BDFChar: 271 350 7 1 5 -2 10
-&0PqJJ:MSE#`*FB?iU0,
+BDFChar: 271 350 7 1 5 -2 8
+E/9$pE!Q`*E$/Ng
 BDFChar: 272 351 5 1 4 -2 5
 @$!VrOC02=
 BDFChar: 273 352 7 1 5 0 10
@@ -2649,7 +2654,7 @@ BDFChar: 351 1025 7 1 5 0 10
 BDFChar: 352 1105 6 1 5 0 7
 :]PHjn:6=6
 EndBitmapFont
-BitmapFont: 16 353 13 3 1 FontForge
+BitmapFont: 16 354 13 3 1 FontForge
 BDFChar: 0 32 3 0 0 0 0
 z
 BDFChar: 1 33 3 1 1 0 9
@@ -3357,7 +3362,7 @@ BDFChar: 351 1025 9 1 7 0 12
 BDFChar: 352 1105 8 1 6 0 9
 8,rX7KS98RKQmIs
 EndBitmapFont
-BitmapFont: 20 353 16 4 1 FontForge
+BitmapFont: 20 354 16 4 1 FontForge
 BDFChar: 0 32 4 0 0 0 0
 z
 BDFChar: 1 33 4 2 2 0 11
@@ -3832,6 +3837,10 @@ BDFChar: 263 338 5 0 3 0 11
 E,]c8E,]c8E,]c8
 BDFChar: 264 339 5 0 3 0 11
 E,]c8E,]c8E,]c8
+BDFChar: 271 350 11 1 9 -4 11
+4odkKJ:N.M5QEtJ!<<+M!.]TM5la(K#QOu-"998=
+BDFChar: 272 351 8 1 6 -4 8
+G_CTtGQ\/&GRt,d0E;(Q
 BDFChar: 273 352 5 0 3 0 11
 E,]c8E,]c8E,]c8
 BDFChar: 274 353 5 0 3 0 11
@@ -3958,5 +3967,7 @@ BDFChar: 351 1025 11 2 9 0 13
 ,QRjpJ:N1JJ:N0#JH#TL
 BDFChar: 352 1105 9 0 8 0 12
 z+ohTC)uq/_5lcB75QF%L5l`)/)uos=
+BDFChar: 353 537 20 0 0 0 0
+z
 EndBitmapFont
 EndSplineFont
