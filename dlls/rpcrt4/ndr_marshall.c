@@ -1422,6 +1422,20 @@ void WINAPI NdrSimpleStructFree(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 
+static long NonEncapsulatedUnionSize(PMIDL_STUB_MESSAGE pStubMsg,
+                                     PFORMAT_STRING pFormat)
+{
+    pFormat += 2;
+    if (pStubMsg->fHasNewCorrDesc)
+        pFormat += 6;
+    else
+        pFormat += 4;
+
+    pFormat += *(const SHORT*)pFormat;
+    TRACE("size %d\n", *(const SHORT*)pFormat);
+    return *(const SHORT*)pFormat;
+}
+
 unsigned long WINAPI EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
                                          PFORMAT_STRING pFormat)
 {
@@ -1433,6 +1447,8 @@ unsigned long WINAPI EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
     return *(const WORD*)&pFormat[2];
   case RPC_FC_USER_MARSHAL:
     return *(const WORD*)&pFormat[4];
+  case RPC_FC_NON_ENCAPSULATED_UNION:
+    return NonEncapsulatedUnionSize(pStubMsg, pFormat);
   default:
     FIXME("unhandled embedded type %02x\n", *pFormat);
   }
@@ -2799,6 +2815,83 @@ void WINAPI NdrEncapsulatedUnionFree(PMIDL_STUB_MESSAGE pStubMsg,
     FIXME("stub\n");
 }
 
+static PFORMAT_STRING get_arm_offset_from_union_arm_selector(PMIDL_STUB_MESSAGE pStubMsg,
+                                                             unsigned long discriminant,
+                                                             PFORMAT_STRING pFormat)
+{
+    unsigned short num_arms, arm, type;
+
+    num_arms = *(const SHORT*)pFormat & 0x0fff;
+    pFormat += 2;
+    for(arm = 0; arm < num_arms; arm++)
+    {
+        if(discriminant == *(const ULONG*)pFormat)
+        {
+            pFormat += 4;
+            break;
+        }
+        pFormat += 6;
+    }
+
+    type = *(const unsigned short*)pFormat;
+    TRACE("type %04x\n", type);
+    if(arm == num_arms) /* default arm extras */
+    {
+        if(type == 0xffff)
+        {
+            FIXME("should raise an exception here\n");
+            return NULL;
+        }
+        if(type == 0)
+        {
+            /* Don't marshall any type. FIXME is this correct? */
+            return NULL;
+        }
+    }
+    return pFormat;
+}
+
+static PFORMAT_STRING get_non_encapsulated_union_arm(PMIDL_STUB_MESSAGE pStubMsg,
+                                                     unsigned char *pMemory,
+                                                     PFORMAT_STRING pFormat)
+{
+    ULONG value;
+
+    pFormat = ComputeConformanceOrVariance(pStubMsg, pMemory, pFormat,
+                                           0, &value);
+    TRACE("got switch value %lx\n", value);
+    pFormat += *(const SHORT*)pFormat;
+    pFormat += 2;
+
+    return get_arm_offset_from_union_arm_selector(pStubMsg, value, pFormat);
+}
+
+static unsigned char *get_conformance_address(PMIDL_STUB_MESSAGE pStubMsg,
+                                              unsigned char *pMemory,
+                                              PFORMAT_STRING pFormat)
+{
+    short ofs = *(short *)&pFormat[2];
+    LPVOID ptr = NULL;
+
+    switch (pFormat[0] & 0xf0)
+    {
+    case RPC_FC_NORMAL_CONFORMANCE:
+        ptr = pMemory;
+        break;
+    default:
+        FIXME("Conformance type %x\n", pFormat[0]);
+        return NULL;
+    }
+
+    if(pFormat[1])
+    {
+        FIXME("Conformance op %x\n", pFormat[1]);
+        return NULL;
+    }
+
+    return (unsigned char *)ptr + ofs;
+}
+
 /***********************************************************************
  *           NdrNonEncapsulatedUnionMarshall [RPCRT4.@]
  */
@@ -2806,19 +2899,143 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionMarshall(PMIDL_STUB_MESSAGE pStub
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
+    unsigned char *discriminant;
+    unsigned short type;
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+    pFormat++;
+
+    /* Marshall discriminant */
+    discriminant = get_conformance_address(pStubMsg, pMemory, pFormat + 1);
+    NdrBaseTypeMarshall(pStubMsg, discriminant, pFormat);
+    pFormat++;
+
+    pFormat = get_non_encapsulated_union_arm(pStubMsg, pMemory, pFormat);
+    if(!pFormat)
+        return NULL;
+
+    type = *(const unsigned short*)pFormat;
+    if(type & 0x8000)
+    {
+        pFormat++; 
+        return NdrBaseTypeMarshall(pStubMsg, pMemory, pFormat);
+    }
+    else
+    {
+        PFORMAT_STRING desc = pFormat + *(const SHORT*)pFormat;
+        NDR_MARSHALL m = NdrMarshaller[*desc & NDR_TABLE_MASK];
+        if (m)
+        {
+            switch(*desc)
+            {
+            case RPC_FC_RP:
+            case RPC_FC_UP:
+            case RPC_FC_OP:
+            case RPC_FC_FP:
+                pMemory = *(void**)pMemory;
+                break;
+            }
+            m(pStubMsg, pMemory, desc);
+        }
+        else FIXME("no marshaller for embedded type %02x\n", *desc);
+    }
     return NULL;
 }
 
-/***********************************************************************
- *           NdrNonEncapsulatedUnionUnmarshall [RPCRT4.@]
+static long unmarshall_discriminant(PMIDL_STUB_MESSAGE pStubMsg,
+                                    PFORMAT_STRING *ppFormat)
+{
+    long discriminant = 0;
+
+    switch(**ppFormat)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+        discriminant = *(UCHAR *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(UCHAR);
+        break;
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_USHORT:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        discriminant = *(USHORT *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(USHORT);
+        break;
+    case RPC_FC_LONG:
+    case RPC_FC_ULONG:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG) - 1);
+        discriminant = *(ULONG *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(ULONG);
+        break;
+    default:
+        FIXME("Unhandled base type: 0x%02x\n", **ppFormat);
+    }
+    (*ppFormat)++;
+
+    if (pStubMsg->fHasNewCorrDesc)
+        *ppFormat += 6;
+    else
+        *ppFormat += 4;
+    return discriminant;
+}
+
+/**********************************************************************
+ *           NdrNonEncapsulatedUnionUnmarshall[RPCRT4.@]
  */
 unsigned char *  WINAPI NdrNonEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char **ppMemory,
                                 PFORMAT_STRING pFormat,
                                 unsigned char fMustAlloc)
 {
-    FIXME("stub\n");
+    long discriminant;
+    unsigned short type, size;
+
+    TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
+    pFormat++;
+
+    /* Unmarshall discriminant */
+    discriminant = unmarshall_discriminant(pStubMsg, &pFormat);
+    TRACE("unmarshalled discriminant %lx\n", discriminant);
+
+    pFormat += *(const SHORT*)pFormat;
+
+    size = *(const unsigned short*)pFormat;
+    pFormat += 2;
+
+    pFormat = get_arm_offset_from_union_arm_selector(pStubMsg, discriminant, pFormat);
+    if(!pFormat)
+        return NULL;
+
+    if(!*ppMemory || fMustAlloc)
+        *ppMemory = NdrAllocate(pStubMsg, size);
+
+    type = *(const unsigned short*)pFormat;
+    if(type & 0x8000)
+    {
+        pFormat++; 
+        return NdrBaseTypeUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
+    }
+    else
+    {
+        PFORMAT_STRING desc = pFormat + *(const SHORT*)pFormat;
+        NDR_UNMARSHALL m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
+        if (m)
+        {
+            switch(*desc)
+            {
+            case RPC_FC_RP:
+            case RPC_FC_UP:
+            case RPC_FC_OP:
+            case RPC_FC_FP:
+                **(void***)ppMemory = NULL;
+                break;
+            }
+            return m(pStubMsg, (unsigned char **)*ppMemory, desc, fMustAlloc);
+        }
+        else FIXME("no marshaller for embedded type %02x\n", *desc);
+    }
     return NULL;
 }
 
@@ -2829,7 +3046,44 @@ void WINAPI NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
+    unsigned short type;
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    pFormat++;
+    /* Add discriminant size */
+    NdrBaseTypeBufferSize(pStubMsg, pMemory, pFormat);
+    pFormat++;
+
+    pFormat = get_non_encapsulated_union_arm(pStubMsg, pMemory, pFormat);
+    if(!pFormat)
+        return;
+
+    type = *(const unsigned short*)pFormat;
+    if(type & 0x8000)
+    {
+        pFormat++; 
+        NdrBaseTypeBufferSize(pStubMsg, pMemory, pFormat);
+    }
+    else
+    {
+        PFORMAT_STRING desc = pFormat + *(const SHORT*)pFormat;
+        NDR_BUFFERSIZE m = NdrBufferSizer[*desc & NDR_TABLE_MASK];
+        if (m)
+        {
+            switch(*desc)
+            {
+            case RPC_FC_RP:
+            case RPC_FC_UP:
+            case RPC_FC_OP:
+            case RPC_FC_FP:
+                pMemory = *(void**)pMemory;
+                break;
+            }
+            m(pStubMsg, pMemory, desc);
+        }
+        else FIXME("no buffersizer for embedded type %02x\n", *desc);
+    }
+    return;
 }
 
 /***********************************************************************
