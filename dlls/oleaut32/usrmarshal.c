@@ -1166,6 +1166,41 @@ HRESULT __RPC_STUB IEnumVARIANT_Next_Stub(
   return hr;
 }
 
+/* TypeInfo related freers */
+
+static void free_embedded_typedesc(TYPEDESC *tdesc);
+static void free_embedded_arraydesc(ARRAYDESC *adesc)
+{
+    switch(adesc->tdescElem.vt)
+    {
+    case VT_PTR:
+    case VT_SAFEARRAY:
+        free_embedded_typedesc(adesc->tdescElem.u.lptdesc);
+        CoTaskMemFree(adesc->tdescElem.u.lptdesc);
+        break;
+    case VT_CARRAY:
+        free_embedded_arraydesc(adesc->tdescElem.u.lpadesc);
+        CoTaskMemFree(adesc->tdescElem.u.lpadesc);
+        break;
+    }
+}
+
+static void free_embedded_typedesc(TYPEDESC *tdesc)
+{
+    switch(tdesc->vt)
+    {
+    case VT_PTR:
+    case VT_SAFEARRAY:
+        free_embedded_typedesc(tdesc->u.lptdesc);
+        CoTaskMemFree(tdesc->u.lptdesc);
+        break;
+    case VT_CARRAY:
+        free_embedded_arraydesc(tdesc->u.lpadesc);
+        CoTaskMemFree(tdesc->u.lpadesc);
+        break;
+    }
+}
+
 /* ITypeComp */
 
 HRESULT CALLBACK ITypeComp_Bind_Proxy(
@@ -1223,9 +1258,16 @@ HRESULT __RPC_STUB ITypeComp_BindType_Stub(
 HRESULT CALLBACK ITypeInfo_GetTypeAttr_Proxy(
     ITypeInfo* This,
     TYPEATTR** ppTypeAttr)
+
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    CLEANLOCALSTORAGE stg;
+    TRACE("(%p, %p)\n", This, ppTypeAttr);
+
+    stg.flags = 0;
+    stg.pStorage = NULL;
+    stg.pInterface = NULL;
+
+    return ITypeInfo_RemoteGetTypeAttr_Proxy(This, ppTypeAttr, &stg);
 }
 
 HRESULT __RPC_STUB ITypeInfo_GetTypeAttr_Stub(
@@ -1233,8 +1275,18 @@ HRESULT __RPC_STUB ITypeInfo_GetTypeAttr_Stub(
     LPTYPEATTR* ppTypeAttr,
     CLEANLOCALSTORAGE* pDummy)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    HRESULT hr;
+    TRACE("(%p, %p)\n", This, ppTypeAttr);
+
+    hr = ITypeInfo_GetTypeAttr(This, ppTypeAttr);
+    if(hr != S_OK)
+        return hr;
+
+    pDummy->flags = CLS_TYPEATTR;
+    ITypeInfo_AddRef(This);
+    pDummy->pInterface = (IUnknown*)This;
+    pDummy->pStorage = ppTypeAttr;
+    return hr;
 }
 
 HRESULT CALLBACK ITypeInfo_GetFuncDesc_Proxy(
@@ -1459,14 +1511,16 @@ void CALLBACK ITypeInfo_ReleaseTypeAttr_Proxy(
     ITypeInfo* This,
     TYPEATTR* pTypeAttr)
 {
-  FIXME("not implemented\n");
+    TRACE("(%p, %p)\n", This, pTypeAttr);
+    free_embedded_typedesc(&pTypeAttr->tdescAlias);
+    CoTaskMemFree(pTypeAttr);
 }
 
 HRESULT __RPC_STUB ITypeInfo_ReleaseTypeAttr_Stub(
     ITypeInfo* This)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("nothing to do\n");
+    return S_OK;
 }
 
 void CALLBACK ITypeInfo_ReleaseFuncDesc_Proxy(
