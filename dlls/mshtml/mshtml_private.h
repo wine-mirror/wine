@@ -45,6 +45,7 @@
 
 typedef struct BindStatusCallback BindStatusCallback;
 typedef struct HTMLDOMNode HTMLDOMNode;
+typedef struct ConnectionPoint ConnectionPoint;
 
 typedef struct {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
@@ -83,6 +84,9 @@ typedef struct {
     BOOL container_locked;
 
     BindStatusCallback *status_callback;
+
+    ConnectionPoint *cp_htmldocevents;
+    ConnectionPoint *cp_htmldocevents2;
 
     HTMLDOMNode *nodes;
 } HTMLDocument;
