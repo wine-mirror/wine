@@ -401,14 +401,11 @@ static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **pp
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)
 {
     WebBrowser *This = OLEOBJ_THIS(iface);
-    HRESULT hres;
 
     TRACE("(%p)->(%lx, %p)\n", This, dwAspect, pdwStatus);
 
-    hres = OleRegGetMiscStatus(&CLSID_WebBrowser, dwAspect, pdwStatus);
-
-    if (FAILED(hres))
-        *pdwStatus = 0;
+    *pdwStatus = OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|OLEMISC_INSIDEOUT
+        |OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE;
 
     return S_OK;
 }
