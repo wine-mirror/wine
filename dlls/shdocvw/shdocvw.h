@@ -116,6 +116,7 @@ typedef struct {
     HWND shell_embedding_hwnd;
 
     VARIANT_BOOL visible;
+    VARIANT_BOOL menu_bar;
 
     DocHost doc_host;
 } WebBrowser;

@@ -559,15 +559,28 @@ static HRESULT WINAPI WebBrowser_put_ToolBar(IWebBrowser2 *iface, int Value)
 static HRESULT WINAPI WebBrowser_get_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL *Value)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, Value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, Value);
+
+    *Value = This->menu_bar;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL Value)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, Value);
-    return E_NOTIMPL;
+    VARIANTARG arg;
+    DISPPARAMS dispparams = {&arg, NULL, 1, 0};
+
+    TRACE("(%p)->(%x)\n", This, Value);
+
+    This->menu_bar = Value;
+
+    V_VT(&arg) = VT_BOOL;
+    V_BOOL(&arg) = Value;
+    call_sink(This->doc_host.cp_wbe2, DISPID_ONMENUBAR, &dispparams);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_FullScreen(IWebBrowser2 *iface, VARIANT_BOOL *pbFullScreen)
@@ -860,6 +873,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret));
 
     ret->visible = VARIANT_TRUE;
+    ret->menu_bar = VARIANT_TRUE;
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
