@@ -91,8 +91,15 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
         IConnectionPointContainer **ppCPC)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, ppCPC);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppCPC);
+
+    if(!ppCPC)
+        return E_POINTER;
+
+    *ppCPC = CONPTCONT(This->doc);
+    IConnectionPointContainer_AddRef(*ppCPC);
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *pUnkSink,
