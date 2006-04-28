@@ -2682,6 +2682,45 @@ interface IHTMLFormElement : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLTextContainer interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f230-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLTextContainer : IDispatch
+{
+    [id(DISPID_IHTMLTEXTCONTAINER_CREATECONTROLRANGE)]
+    HRESULT createControlRange([retval, out] IDispatch **range);
+
+    [propget, id(DISPID_IHTMLTEXTCONTAINER_SCROLLHEIGHT), displaybind, bindable]
+    HRESULT scrollHeight([retval, out] long *p);
+
+    [propget, id(DISPID_IHTMLTEXTCONTAINER_SCROLLWIDTH), displaybind, bindable]
+    HRESULT scrollWidth([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLTEXTCONTAINER_SCROLLTOP), displaybind, bindable]
+    HRESULT scrollTop([in] long v);
+
+    [propget, id(DISPID_IHTMLTEXTCONTAINER_SCROLLTOP), displaybind, bindable]
+    HRESULT scrollTop([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLTEXTCONTAINER_SCROLLLEFT), displaybind, bindable]
+    HRESULT scrollLeft([in] long v);
+
+    [propget, id(DISPID_IHTMLTEXTCONTAINER_SCROLLLEFT), displaybind, bindable]
+    HRESULT scrollLeft([retval, out] long *p);
+
+    [propput, id(DISPID_IHTMLTEXTCONTAINER_ONSCROLL), displaybind, bindable]
+    HRESULT onscroll([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTEXTCONTAINER_ONSCROLL), displaybind, bindable]
+    HRESULT onscroll([retval, out] VARIANT *p);
+}
+
+/*****************************************************************************
  *    IHTMLImgElement interface
  */
 [
