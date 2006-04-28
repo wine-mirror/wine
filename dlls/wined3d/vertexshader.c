@@ -569,77 +569,6 @@ inline static const SHADER_OPCODE* vshader_program_get_opcode(IWineD3DVertexShad
     return NULL;
 }
 
-inline static void vshader_program_dump_param(const DWORD param, int input) {
-  static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" };
-  static const char swizzle_reg_chars[] = "xyzw";
-
-  DWORD reg = param & D3DSP_REGNUM_MASK;
-  DWORD regtype = shader_get_regtype(param);
-
-  if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) TRACE("-");
-
-  switch (regtype) {
-  case D3DSPR_TEMP:
-    TRACE("R[%lu]", reg);
-    break;
-  case D3DSPR_INPUT:
-    TRACE("v%lu", reg);
-    break;
-  case D3DSPR_CONST:
-    TRACE("C[%s%lu]", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
-    break;
-  case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
-    TRACE("a[%lu]", reg);
-    break;
-  case D3DSPR_RASTOUT:
-    TRACE("%s", rastout_reg_names[reg]);
-    break;
-  case D3DSPR_ATTROUT:
-    TRACE("oD[%lu]", reg);
-    break;
-  case D3DSPR_TEXCRDOUT:
-    TRACE("oT[%lu]", reg);
-    break;
-  default:
-    FIXME("Unknown %lu %u reg %lu\n",regtype,  D3DSPR_ATTROUT, reg);
-    break;
-  }
-
-  if (!input) {
-    /** operand output */
-    if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
-      if (param & D3DSP_WRITEMASK_0) TRACE(".x");
-      if (param & D3DSP_WRITEMASK_1) TRACE(".y");
-      if (param & D3DSP_WRITEMASK_2) TRACE(".z");
-      if (param & D3DSP_WRITEMASK_3) TRACE(".w");
-    }
-  } else {
-    /** operand input */
-    DWORD swizzle = (param & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
-    DWORD swizzle_x = swizzle & 0x03;
-    DWORD swizzle_y = (swizzle >> 2) & 0x03;
-    DWORD swizzle_z = (swizzle >> 4) & 0x03;
-    DWORD swizzle_w = (swizzle >> 6) & 0x03;
-    /**
-     * swizzle bits fields:
-     *  WWZZYYXX
-     */
-    if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) != swizzle) { /* ! D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
-      if (swizzle_x == swizzle_y &&
-            swizzle_x == swizzle_z &&
-            swizzle_x == swizzle_w) {
-                TRACE(".%c", swizzle_reg_chars[swizzle_x]);
-            } else {
-                TRACE(".%c%c%c%c",
-                    swizzle_reg_chars[swizzle_x],
-                    swizzle_reg_chars[swizzle_y],
-                    swizzle_reg_chars[swizzle_z],
-                    swizzle_reg_chars[swizzle_w]);
-      }
-    }
-  }
-}
-
 inline static void vshader_program_dump_vs_param(const DWORD param, int input) {
   static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" };
   static const char swizzle_reg_chars[] = "xyzw";
@@ -1680,7 +1609,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
                     FIXME("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - This->baseShader.function, *(pToken - 1));
                 }
                 FIXME("unrecognized opcode param: pos=%d token=%08lX what=", pToken - This->baseShader.function, *pToken);
-                vshader_program_dump_param(*pToken, i);
+                vshader_program_dump_vs_param(*pToken, i);
                 TRACE("\n");
                 ++i;
                 ++pToken;
