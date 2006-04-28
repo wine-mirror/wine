@@ -466,8 +466,11 @@ static HRESULT WINAPI WebBrowser_get_Name(IWebBrowser2 *iface, BSTR *Name)
 static HRESULT WINAPI WebBrowser_get_HWND(IWebBrowser2 *iface, long *pHWND)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pHWND);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pHWND);
+
+    *pHWND = 0;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI WebBrowser_get_FullName(IWebBrowser2 *iface, BSTR *FullName)
