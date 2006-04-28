@@ -150,7 +150,7 @@ MAKE_FUNCPTR(FcObjectSetCreate);
 MAKE_FUNCPTR(FcObjectSetDestroy);
 MAKE_FUNCPTR(FcPatternCreate);
 MAKE_FUNCPTR(FcPatternDestroy);
-MAKE_FUNCPTR(FcPatternGet);
+MAKE_FUNCPTR(FcPatternGetString);
 #ifndef SONAME_LIBFONTCONFIG
 #define SONAME_LIBFONTCONFIG "libfontconfig.so"
 #endif
@@ -1173,7 +1173,6 @@ static void load_fontconfig_fonts(void)
     FcPattern *pat;
     FcObjectSet *os;
     FcFontSet *fontset;
-    FcValue v;
     int i, len;
     const char *file, *ext;
 
@@ -1193,7 +1192,7 @@ LOAD_FUNCPTR(FcObjectSetCreate);
 LOAD_FUNCPTR(FcObjectSetDestroy);
 LOAD_FUNCPTR(FcPatternCreate);
 LOAD_FUNCPTR(FcPatternDestroy);
-LOAD_FUNCPTR(FcPatternGet);
+LOAD_FUNCPTR(FcPatternGetString);
 #undef LOAD_FUNCPTR
 
     if(!pFcInit()) return;
@@ -1205,10 +1204,8 @@ LOAD_FUNCPTR(FcPatternGet);
     fontset = pFcFontList(config, pat, os);
     if(!fontset) return;
     for(i = 0; i < fontset->nfont; i++) {
-        if(pFcPatternGet(fontset->fonts[i], FC_FILE, 0, &v) != FcResultMatch)
+        if(pFcPatternGetString(fontset->fonts[i], FC_FILE, 0, (FcChar8**)&file) != FcResultMatch)
             continue;
-        if(v.type != FcTypeString) continue;
-        file = (LPCSTR) v.u.s;
         TRACE("fontconfig: %s\n", file);
 
         /* We're just interested in OT/TT fonts for now, so this hack just
