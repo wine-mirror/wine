@@ -44,7 +44,7 @@ AntiAlias: 0
 FitToEm: 1
 WinInfo: 0 20 18
 OnlyBitmaps: 1
-BeginChars: 65536 433
+BeginChars: 65536 437
 StartChar: space
 Encoding: 32 32 0
 Width: 4
@@ -2365,8 +2365,32 @@ Encoding: 976 976 432
 Width: 16
 TeX: 117 0 0 0
 EndChar
+StartChar: dotlessi
+Encoding: 305 305 433
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: Idotaccent
+Encoding: 304 304 434
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: gbreve
+Encoding: 287 287 435
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: Gbreve
+Encoding: 286 286 436
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
 EndChars
-BitmapFont: 16 433 13 3 1 
+BitmapFont: 16 437 13 3 1 
 BDFChar: 0 32 4 14 14 0 0
 z
 BDFChar: 1 33 4 1 2 0 9
@@ -3233,5 +3257,13 @@ BDFChar: 431 975 16 0 0 0 0
 z
 BDFChar: 432 976 16 0 0 0 0
 z
+BDFChar: 433 305 4 1 2 0 6
+^qdb$^qd_c
+BDFChar: 434 304 4 1 2 0 12
+^q]rc^qdb$^qdb$^]4?7
+BDFChar: 435 287 8 1 6 -3 9
+b]j,8bfn;Tb^9iCGQ7^D
+BDFChar: 436 286 10 1 8 0 12
+_gVSJB#DF"cbmY54TGH^
 EndBitmapFont
 EndSplineFont
