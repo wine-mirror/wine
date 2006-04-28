@@ -752,7 +752,7 @@ inline static void get_register_name(const DWORD param, char* regstr, char const
     static const char* rastout_reg_names[] = { "oC0", "oC1", "oC2", "oC3", "oDepth" };
 
     DWORD reg = param & D3DSP_REGNUM_MASK;
-    DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
+    DWORD regtype = shader_get_regtype(param);
 
     switch (regtype) {
     case D3DSPR_TEMP:
@@ -978,7 +978,7 @@ inline static void pshader_program_get_registers_used(
             int i;
                         
             for (i = 0; i < curOpcode->num_params; ++i) {
-                DWORD regtype = (((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
+                DWORD regtype = shader_get_regtype(*pToken);
                 DWORD reg = (*pToken) & D3DSP_REGNUM_MASK;
                 if (D3DSPR_TEXTURE == regtype) 
                     *texUsed |= (1 << reg);
@@ -1614,14 +1614,8 @@ inline static void pshader_program_dump_ps_param(const DWORD param, int input) {
   static const char* rastout_reg_names[] = { "oC0", "oC1", "oC2", "oC3", "oDepth" };
   static const char swizzle_reg_chars[] = "rgba";
 
-   /* the unknown mask is for bits not yet accounted for by any other mask... */
-#define UNKNOWN_MASK 0xC000
-
-   /* for registeres about 7 we have to add on bits 11 and 12 to get the correct register */
-#define EXTENDED_REG 0x1800
-
   DWORD reg = param & D3DSP_REGNUM_MASK;
-  DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) | ((param & EXTENDED_REG) >> 8);
+  DWORD regtype = shader_get_regtype(param);
 
   if (input) {
     if ( ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) ||
@@ -1737,9 +1731,7 @@ inline static void pshader_program_dump_ps_param(const DWORD param, int input) {
 inline static void pshader_program_dump_decl_usage(
     IWineD3DPixelShaderImpl *This, DWORD decl, DWORD param) {
 
-    DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) | 
-                    ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2);
-
+    DWORD regtype = shader_get_regtype(param);
     TRACE("dcl_");
 
     if (regtype == D3DSPR_SAMPLER) {

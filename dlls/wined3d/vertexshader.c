@@ -569,17 +569,12 @@ inline static const SHADER_OPCODE* vshader_program_get_opcode(IWineD3DVertexShad
     return NULL;
 }
 
-inline static int vshader_program_get_regtype(const DWORD param) {
-    return (((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) |
-                    ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2));
-}
-
 inline static void vshader_program_dump_param(const DWORD param, int input) {
   static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" };
   static const char swizzle_reg_chars[] = "xyzw";
 
   DWORD reg = param & D3DSP_REGNUM_MASK;
-  DWORD regtype = vshader_program_get_regtype(param);
+  DWORD regtype = shader_get_regtype(param);
 
   if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) TRACE("-");
 
@@ -650,11 +645,11 @@ inline static void vshader_program_dump_vs_param(const DWORD param, int input) {
   static const char swizzle_reg_chars[] = "xyzw";
 
   DWORD reg = param & D3DSP_REGNUM_MASK; 
-  DWORD regtype = vshader_program_get_regtype(param);
+  DWORD regtype = shader_get_regtype(param);
 
   if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) TRACE("-");
 
-  switch (regtype /*<< D3DSP_REGTYPE_SHIFT*/) {
+  switch (regtype) {
   case D3DSPR_TEMP:
     TRACE("r%lu", reg);
     break;
@@ -733,7 +728,7 @@ inline static void vshader_program_dump_vs_param(const DWORD param, int input) {
 
 inline static void vshader_program_dump_decl_usage(
     IWineD3DVertexShaderImpl *This, DWORD decl, DWORD param) {
-    DWORD regtype = vshader_program_get_regtype(param);
+    DWORD regtype = shader_get_regtype(param);
 
     TRACE("dcl_");
 
@@ -879,7 +874,7 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
   static const char* hwrastout_reg_names[] = { "result.position", "result.fogcoord", "result.pointsize" };
 
   DWORD reg = param & D3DSP_REGNUM_MASK;
-  DWORD regtype = vshader_program_get_regtype(param);
+  DWORD regtype = shader_get_regtype(param);
   char  tmpReg[255];
   BOOL is_color = FALSE;
 
@@ -1218,7 +1213,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                 } else {
                     /* Check to see if and tmp or addressing redisters are used */
                     if (curOpcode->num_params > 0) {
-                        regtype = vshader_program_get_regtype(*pToken);
+                        regtype = shader_get_regtype(*pToken);
                         reg = ((*pToken)  & D3DSP_REGNUM_MASK);
                         if (D3DSPR_ADDR == regtype && nUseAddressRegister <= reg) nUseAddressRegister = reg + 1;
                         if (D3DSPR_TEMP == regtype){
@@ -1227,7 +1222,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                         }
                         ++pToken;
                         for (i = 1; i < curOpcode->num_params; ++i) {
-                            regtype = vshader_program_get_regtype(*pToken);
+                            regtype = shader_get_regtype(*pToken);
                             reg = ((*pToken)  & D3DSP_REGNUM_MASK);
                             if (D3DSPR_ADDR == regtype && nUseAddressRegister <= reg) nUseAddressRegister = reg + 1;
                             if (D3DSPR_TEMP == regtype){
@@ -1501,7 +1496,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             continue;
         case D3DSIO_MOV:
             /* Address registers must be loaded with the ARL instruction */
-            if (vshader_program_get_regtype(*pToken) == D3DSPR_ADDR) {
+            if (shader_get_regtype(*pToken) == D3DSPR_ADDR) {
                 if (((*pToken) & D3DSP_REGNUM_MASK) < nUseAddressRegister) {
                     strcpy(tmpLine, "ARL");
                     break;
@@ -1696,9 +1691,9 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
                 /* TRACE(">> execting opcode: pos=%d opcode_name=%s token=%08lX\n", pToken - vshader->function, curOpcode->name, *pToken); */
                 for (i = 0; i < curOpcode->num_params; ++i) {
                     DWORD reg = pToken[i] & D3DSP_REGNUM_MASK;
-                    DWORD regtype = vshader_program_get_regtype(pToken[i]);
+                    DWORD regtype = shader_get_regtype(pToken[i]);
     
-                    switch (regtype /*<< D3DSP_REGTYPE_SHIFT*/) {
+                    switch (regtype) {
                     case D3DSPR_TEMP:
                         /* TRACE("p[%d]=R[%d]\n", i, reg); */
                         p[i] = &R[reg];
