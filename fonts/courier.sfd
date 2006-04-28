@@ -46,7 +46,7 @@ FitToEm: 1
 WinInfo: 902 22 21
 OnlyBitmaps: 1
 TeXData: 1 0 0 346030 173015 115343 0 1048576 115343 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65536 347
+BeginChars: 65536 352
 StartChar: space
 Encoding: 32 32 0
 Width: 8
@@ -1801,8 +1801,37 @@ Width: 8
 Flags: HW
 TeX: 97 0 0 0
 EndChar
+StartChar: dotlessi
+Encoding: 305 305 347
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: Idotaccent
+Encoding: 304 304 348
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: gbreve
+Encoding: 287 287 349
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: gcircumflex
+Encoding: 285 285 350
+Width: 8
+TeX: 0 0 0 0
+EndChar
+StartChar: Gbreve
+Encoding: 286 286 351
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
 EndChars
-BitmapFont: 13 347 11 2 1 
+BitmapFont: 13 352 11 2 1 
 BDFChar: 0 32 8 0 0 0 0
 z
 BDFChar: 1 33 8 4 4 0 8
@@ -2497,5 +2526,15 @@ BDFChar: 345 1025 8 1 7 0 10
 6id3Q5Y-,j5XPGM
 BDFChar: 346 1105 8 0 7 -1 9
 !$VCC5!aZ`5s>8K
+BDFChar: 347 305 8 2 6 0 5
+i#j-b+SYp:
+BDFChar: 348 304 8 2 6 0 10
++9;0Z+<VdL+<^FZ
+BDFChar: 349 287 8 1 7 -2 8
+6oY0qKS5#3Hj"Zo
+BDFChar: 350 285 8 0 0 0 0
+z
+BDFChar: 351 286 8 1 7 0 10
+6o[:qJ:N01JjMR"
 EndBitmapFont
 EndSplineFont
