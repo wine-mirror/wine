@@ -52,7 +52,23 @@ static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
+/* The MSVC headers ignore our NONAMELESSUNION requests so we have to define
+ * our own type */
+typedef struct
+{
+    DWORD type;
+    union
+    {
+        MOUSEINPUT      mi;
+        KEYBDINPUT      ki;
+        HARDWAREINPUT   hi;
+    } u;
+} TEST_INPUT;
+
 /* globals to communicate between test and wndproc */
+
+static BOOL bMenuVisible;
+static HMENU hMenus[4];
 
 #define MOD_SIZE 10
 #define MOD_NRMENUS 8
@@ -1475,6 +1491,196 @@ void test_menu_search_bycommand( void )
     DestroyMenu(hmenuSub);
 }
 
+struct menu_item_pair_s {
+    UINT uMenu; /* 1 - top level menu, [0-Menu 1-Enabled 2-Disabled]
+                 * 2 - 2nd level menu, [0-Popup 1-Enabled 2-Disabled]
+                 * 3 - 3rd level menu, [0-Enabled 1-Disabled] */
+    UINT uItem;
+};
+
+static struct menu_mouse_tests_s {
+    DWORD type;
+    struct menu_item_pair_s menu_item_pairs[5]; /* for mousing */
+    WORD wVk[5]; /* keys */
+    BOOL bMenuVisible;
+    BOOL _todo_wine;
+} menu_tests[] = {
+    /* for each test, send keys or clicks and check for menu visibility */
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, TRUE }, /* test 0 */
+    { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {'E', 0}, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, VK_ESCAPE, 0}, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', VK_ESCAPE, 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {'E', 0}, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 'P', 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {'D', 0}, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_LMENU, 'M', 'P', 0}, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {'E', 0}, FALSE, FALSE },
+
+    { INPUT_MOUSE, {{1, 2}, {0}}, {0}, TRUE, TRUE }, /* test 18 */
+    { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
+    { INPUT_MOUSE, {{1, 0}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
+    { INPUT_MOUSE, {{1, 0}, {2, 2}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{2, 1}, {0}}, {0}, FALSE, FALSE },
+    { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{3, 0}, {0}}, {0}, FALSE, FALSE },
+    { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{3, 1}, {0}}, {0}, TRUE, TRUE },
+    { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
+    { -1 }
+};
+
+static void send_key(WORD wVk)
+{
+    TEST_INPUT i[2];
+    memset(&i, 0, 2*sizeof(INPUT));
+    i[0].type = i[1].type = INPUT_KEYBOARD;
+    i[0].u.ki.wVk = i[1].u.ki.wVk = wVk;
+    i[1].u.ki.dwFlags = KEYEVENTF_KEYUP;
+    SendInput(2, (INPUT *) i, sizeof(INPUT));
+}
+
+static void click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
+{
+    HMENU hMenu = hMenus[mi->uMenu];
+    TEST_INPUT i[3];
+    MSG msg;
+    RECT r;
+    int screen_w = GetSystemMetrics(SM_CXSCREEN);
+    int screen_h = GetSystemMetrics(SM_CYSCREEN);
+
+    GetMenuItemRect(mi->uMenu > 2 ? NULL : hWnd, hMenu, mi->uItem, &r);
+
+    memset(&i, 0, 3*sizeof(INPUT));
+    i[0].type = i[1].type = i[2].type = INPUT_MOUSE;
+    i[0].u.mi.dx = i[1].u.mi.dx = i[2].u.mi.dx
+            = ((r.left + 5) * 65535) / screen_w;
+    i[0].u.mi.dy = i[1].u.mi.dy = i[2].u.mi.dy
+            = ((r.top + 5) * 65535) / screen_h;
+    i[0].u.mi.dwFlags = i[1].u.mi.dwFlags = i[2].u.mi.dwFlags
+            = MOUSEEVENTF_ABSOLUTE;
+    i[0].u.mi.dwFlags |= MOUSEEVENTF_MOVE;
+    i[1].u.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
+    i[2].u.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
+    SendInput(3, (INPUT *) i, sizeof(INPUT));
+
+    /* hack to prevent mouse message buildup in Wine */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+}
+
+static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
+{
+    int i, j;
+    HANDLE hWnd = lpParameter;
+
+    Sleep(500);
+    /* mixed keyboard/mouse test */
+    for (i = 0; menu_tests[i].type != -1; i++)
+    {
+        int elapsed = 0;
+
+        if (menu_tests[i].type == INPUT_KEYBOARD)
+            for (j = 0; menu_tests[i].wVk[j] != 0; j++)
+                send_key(menu_tests[i].wVk[j]);
+        else
+            for (j = 0; menu_tests[i].menu_item_pairs[j].uMenu != 0; j++)
+                click_menu(hWnd, &menu_tests[i].menu_item_pairs[j]);
+
+        while (menu_tests[i].bMenuVisible != bMenuVisible)
+        {
+            if (elapsed > 200)
+                break;
+            elapsed += 20;
+            Sleep(20);
+        }
+
+        if (menu_tests[i]._todo_wine)
+        {
+            todo_wine {
+                ok(menu_tests[i].bMenuVisible == bMenuVisible, "test %d\n", i);
+            }
+        }
+        else
+            ok(menu_tests[i].bMenuVisible == bMenuVisible, "test %d\n", i);
+    }
+    return 0;
+}
+
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam,
+        LPARAM lParam)
+{
+    switch (msg) {
+        case WM_ENTERMENULOOP:
+            bMenuVisible = TRUE;
+            break;
+        case WM_EXITMENULOOP:
+            bMenuVisible = FALSE;
+            break;
+        default:
+            return( DefWindowProcA( hWnd, msg, wParam, lParam ) );
+    }
+    return 0;
+}
+
+static void test_menu_input(void) {
+    MSG msg;
+    WNDCLASSA  wclass;
+    HINSTANCE hInstance = GetModuleHandleA( NULL );
+    HANDLE hThread, hWnd;
+
+    wclass.lpszClassName = "MenuTestClass";
+    wclass.style         = CS_HREDRAW | CS_VREDRAW;
+    wclass.lpfnWndProc   = WndProc;
+    wclass.hInstance     = hInstance;
+    wclass.hIcon         = LoadIconA( 0, (LPSTR)IDI_APPLICATION );
+    wclass.hCursor       = LoadCursorA( NULL, (LPSTR)IDC_ARROW);
+    wclass.hbrBackground = (HBRUSH)( COLOR_WINDOW + 1);
+    wclass.lpszMenuName  = 0;
+    wclass.cbClsExtra    = 0;
+    wclass.cbWndExtra    = 0;
+    assert (RegisterClassA( &wclass ));
+    assert (hWnd = CreateWindowA( wclass.lpszClassName, "MenuTest",
+                                  WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
+                                  400, 200, NULL, NULL, hInstance, NULL) );
+
+    /* fixed menus */
+    hMenus[3] = CreatePopupMenu();
+    AppendMenu(hMenus[3], MF_STRING, 0, "&Enabled");
+    AppendMenu(hMenus[3], MF_STRING|MF_DISABLED, 0, "&Disabled");
+
+    hMenus[2] = CreatePopupMenu();
+    AppendMenu(hMenus[2], MF_STRING|MF_POPUP, (UINT_PTR) hMenus[3], "&Popup");
+    AppendMenu(hMenus[2], MF_STRING, 0, "&Enabled");
+    AppendMenu(hMenus[2], MF_STRING|MF_DISABLED, 0, "&Disabled");
+
+    hMenus[1] = CreateMenu();
+    AppendMenu(hMenus[1], MF_STRING|MF_POPUP, (UINT_PTR) hMenus[2], "&Menu");
+    AppendMenu(hMenus[1], MF_STRING, 0, "&Enabled");
+    AppendMenu(hMenus[1], MF_STRING|MF_DISABLED, 0, "&Disabled");
+
+    SetMenu(hWnd, hMenus[1]);
+    ShowWindow(hWnd, SW_SHOW);
+    UpdateWindow(hWnd);
+
+    hThread = CreateThread(NULL, 0, test_menu_input_thread, hWnd, 0, NULL);
+    while(1)
+    {
+        if (WAIT_TIMEOUT != WaitForSingleObject(hThread, 50))
+            break;
+        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    }
+    DestroyWindow(hWnd);
+}
+
 START_TEST(menu)
 {
     pSetMenuInfo =
@@ -1490,4 +1696,5 @@ START_TEST(menu)
     test_menu_iteminfo();
     test_menu_search_bycommand();
     test_menu_bmp_and_string();
+    test_menu_input();
 }
