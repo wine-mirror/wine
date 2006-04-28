@@ -1201,6 +1201,13 @@ static void free_embedded_typedesc(TYPEDESC *tdesc)
     }
 }
 
+static void free_embedded_elemdesc(ELEMDESC *edesc)
+{
+    free_embedded_typedesc(&edesc->tdesc);
+    if(edesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+        CoTaskMemFree(edesc->u.paramdesc.pparamdescex);
+}
+
 /* ITypeComp */
 
 HRESULT CALLBACK ITypeComp_Bind_Proxy(
@@ -1294,8 +1301,14 @@ HRESULT CALLBACK ITypeInfo_GetFuncDesc_Proxy(
     UINT index,
     FUNCDESC** ppFuncDesc)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    CLEANLOCALSTORAGE stg;
+    TRACE("(%p, %d, %p)\n", This, index, ppFuncDesc);
+
+    stg.flags = 0;
+    stg.pStorage = NULL;
+    stg.pInterface = NULL;
+
+    return ITypeInfo_RemoteGetFuncDesc_Proxy(This, index, ppFuncDesc, &stg);
 }
 
 HRESULT __RPC_STUB ITypeInfo_GetFuncDesc_Stub(
@@ -1304,8 +1317,18 @@ HRESULT __RPC_STUB ITypeInfo_GetFuncDesc_Stub(
     LPFUNCDESC* ppFuncDesc,
     CLEANLOCALSTORAGE* pDummy)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    HRESULT hr;
+    TRACE("(%p, %d, %p)\n", This, index, ppFuncDesc);
+
+    hr = ITypeInfo_GetFuncDesc(This, index, ppFuncDesc);
+    if(hr != S_OK)
+        return hr;
+
+    pDummy->flags = CLS_FUNCDESC;
+    ITypeInfo_AddRef(This);
+    pDummy->pInterface = (IUnknown*)This;
+    pDummy->pStorage = ppFuncDesc;
+    return hr;
 }
 
 HRESULT CALLBACK ITypeInfo_GetVarDesc_Proxy(
@@ -1527,14 +1550,27 @@ void CALLBACK ITypeInfo_ReleaseFuncDesc_Proxy(
     ITypeInfo* This,
     FUNCDESC* pFuncDesc)
 {
-  FIXME("not implemented\n");
+    SHORT param;
+    TRACE("(%p, %p)\n", This, pFuncDesc);
+
+    for(param = 0; param < pFuncDesc->cParams; param++)
+        free_embedded_elemdesc(pFuncDesc->lprgelemdescParam + param);
+    if(param)
+        CoTaskMemFree(pFuncDesc->lprgelemdescParam);
+
+    free_embedded_elemdesc(&pFuncDesc->elemdescFunc);
+
+    if(pFuncDesc->cScodes != 0 && pFuncDesc->cScodes != -1)
+        CoTaskMemFree(pFuncDesc->lprgscode);
+
+    CoTaskMemFree(pFuncDesc);
 }
 
 HRESULT __RPC_STUB ITypeInfo_ReleaseFuncDesc_Stub(
     ITypeInfo* This)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("nothing to do\n");
+    return S_OK;
 }
 
 void CALLBACK ITypeInfo_ReleaseVarDesc_Proxy(
