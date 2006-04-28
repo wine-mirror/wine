@@ -1255,6 +1255,53 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+static void test_ConnectionPoint(IConnectionPointContainer *container, REFIID riid)
+{
+    IConnectionPointContainer *tmp_container = NULL;
+    IConnectionPoint *cp;
+    IID iid;
+    HRESULT hres;
+
+    hres = IConnectionPointContainer_FindConnectionPoint(container, riid, &cp);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IConnectionPoint_GetConnectionInterface(cp, &iid);
+    ok(hres == S_OK, "GetConnectionInterface failed: %08lx\n", hres);
+    ok(IsEqualGUID(riid, &iid), "wrong iid\n");
+
+    hres = IConnectionPoint_GetConnectionInterface(cp, NULL);
+    ok(hres == E_POINTER, "GetConnectionInterface failed: %08lx, expected E_POINTER\n", hres);
+
+    hres = IConnectionPoint_GetConnectionPointContainer(cp, &tmp_container);
+    ok(hres == S_OK, "GetConnectionPointContainer failed: %08lx\n", hres);
+    ok(tmp_container == container, "container != tmp_container\n");
+    if(SUCCEEDED(hres))
+        IConnectionPointContainer_Release(tmp_container);
+
+    hres = IConnectionPoint_GetConnectionPointContainer(cp, NULL);
+    ok(hres == E_POINTER, "GetConnectionPointContainer failed: %08lx, expected E_POINTER\n", hres);
+
+    IConnectionPoint_Release(cp);
+}
+
+static void test_ConnectionPointContainer(IUnknown *unk)
+{
+    IConnectionPointContainer *container;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IConnectionPointContainer, (void**)&container);
+    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    test_ConnectionPoint(container, &DIID_HTMLDocumentEvents);
+    test_ConnectionPoint(container, &DIID_HTMLDocumentEvents2);
+
+    IConnectionPointContainer_Release(container);
+}
+
 static void test_Load(IPersistMoniker *persist)
 {
     IMoniker *mon;
@@ -1927,6 +1974,7 @@ static void test_HTMLDocument(void)
     if(FAILED(hres))
         return;
 
+    test_ConnectionPointContainer(unk);
     test_Persist(unk);
     if(load_state == LD_NO)
         test_OnAmbientPropertyChange2(unk);
