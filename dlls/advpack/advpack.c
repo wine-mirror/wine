@@ -443,7 +443,8 @@ HRESULT do_ocx_reg(HMODULE hocx, BOOL do_reg)
     if (!reg_func)
         return E_FAIL;
 
-    return reg_func();
+    reg_func();
+    return S_OK;
 }
 
 /***********************************************************************
