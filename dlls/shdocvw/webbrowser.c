@@ -756,15 +756,28 @@ static HRESULT WINAPI WebBrowser_put_TheaterMode(IWebBrowser2 *iface, VARIANT_BO
 static HRESULT WINAPI WebBrowser_get_AddressBar(IWebBrowser2 *iface, VARIANT_BOOL *Value)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, Value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, Value);
+
+    *Value = This->address_bar;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_AddressBar(IWebBrowser2 *iface, VARIANT_BOOL Value)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, Value);
-    return E_NOTIMPL;
+    VARIANTARG arg;
+    DISPPARAMS dispparams = {&arg, NULL, 1, 0};
+
+    TRACE("(%p)->(%x)\n", This, Value);
+
+    This->address_bar = Value;
+
+    V_VT(&arg) = VT_BOOL;
+    V_BOOL(&arg) = Value;
+    call_sink(This->doc_host.cp_wbe2, DISPID_ONADDRESSBAR, &dispparams);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_Resizable(IWebBrowser2 *iface, VARIANT_BOOL *Value)
@@ -874,6 +887,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     ret->visible = VARIANT_TRUE;
     ret->menu_bar = VARIANT_TRUE;
+    ret->address_bar = VARIANT_TRUE;
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
