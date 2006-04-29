@@ -38,6 +38,7 @@ static const WCHAR MOD_PATH[] = {'_','M','O','D','_','P','A','T','H',0};
 static const WCHAR SYS_MOD_PATH[] = {'_','S','Y','S','_','M','O','D','_','P','A','T','H',0};
 static const WCHAR SystemRoot[] = {'S','y','s','t','e','m','R','o','o','t',0};
 static const WCHAR escaped_SystemRoot[] = {'%','S','y','s','t','e','m','R','o','o','t','%',0};
+static const WCHAR quote[] = {'\"',0};
 
 static BOOL get_temp_ini_path(LPWSTR name)
 {
@@ -170,6 +171,39 @@ HRESULT WINAPI RegInstallA(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTa
     return hr;
 }
 
+static HRESULT write_predefined_strings(HMODULE hm, LPWSTR ini_path)
+{
+    WCHAR mod_path[MAX_PATH + 2];
+    WCHAR sys_mod_path[MAX_PATH + 2];
+    WCHAR sys_root[MAX_PATH];
+
+    *mod_path = '\"';
+    if (!GetModuleFileNameW(hm, mod_path + 1, sizeof(mod_path) / sizeof(WCHAR) - 2))
+        return E_FAIL;
+
+    lstrcatW(mod_path, quote);
+    WritePrivateProfileStringW(Strings, MOD_PATH, mod_path, ini_path);
+
+    *sys_root = '\0';
+    GetEnvironmentVariableW(SystemRoot, sys_root, sizeof(sys_root) / sizeof(WCHAR));
+
+    if(!strncmpiW(sys_root, mod_path + 1, strlenW(sys_root)))
+    {
+        *sys_mod_path = '\"';
+        strcpyW(sys_mod_path + 1, escaped_SystemRoot);
+        strcatW(sys_mod_path, mod_path + 1 + strlenW(sys_root));
+    }
+    else
+    {
+        FIXME("SYS_MOD_PATH needs more work\n");
+        strcpyW(sys_mod_path, mod_path);
+    }
+
+    WritePrivateProfileStringW(Strings, SYS_MOD_PATH, sys_mod_path, ini_path);
+
+    return S_OK;
+}
+
 /***********************************************************************
  *          RegInstallW (advpack.@)
  *
@@ -189,32 +223,15 @@ HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstT
 {
     int i;
     WCHAR tmp_ini_path[MAX_PATH];
-    WCHAR mod_path[MAX_PATH + 2], sys_mod_path[MAX_PATH + 2], sys_root[MAX_PATH];
-    HINF hinf;
-    static const WCHAR quote[] = {'\"',0};
+    HINF hinf = INVALID_HANDLE_VALUE;
 
     TRACE("(%p, %s, %p)\n", hm, debugstr_w(pszSection), pstTable);
 
     if(!create_tmp_ini_file(hm, tmp_ini_path))
         return E_FAIL;
 
-    /* Write a couple of pre-defined strings */
-    mod_path[0] = '\"';
-    GetModuleFileNameW(hm, mod_path + 1, sizeof(mod_path)/sizeof(WCHAR) - 2);
-    strcatW(mod_path, quote);
-    WritePrivateProfileStringW(Strings, MOD_PATH, mod_path, tmp_ini_path);
-    
-    *sys_root = '\0';
-    GetEnvironmentVariableW(SystemRoot, sys_root, sizeof(sys_root)/sizeof(WCHAR));
-    if(!strncmpiW(sys_root, mod_path + 1, strlenW(sys_root))) {
-        sys_mod_path[0] = '\"';
-        strcpyW(sys_mod_path + 1, escaped_SystemRoot);
-        strcatW(sys_mod_path, mod_path + 1 + strlenW(sys_root));
-    } else {
-        FIXME("SYS_MOD_PATH needs more work\n");
-        strcpyW(sys_mod_path, mod_path);
-    }
-    WritePrivateProfileStringW(Strings, SYS_MOD_PATH, sys_mod_path, tmp_ini_path);
+    if (write_predefined_strings(hm, tmp_ini_path))
+        goto done;
 
     /* Write the additional string table */
     if (pstTable) for(i = 0; i < pstTable->cEntries; i++) {
@@ -233,7 +250,7 @@ HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstT
     if((hinf = SetupOpenInfFileW(tmp_ini_path, NULL, INF_STYLE_WIN4, NULL)) ==
        INVALID_HANDLE_VALUE) {
         ERR("Setupapi can't open inf\n");
-        return E_FAIL;
+        goto done;
     }
 
     /* append any layout files */
@@ -243,8 +260,11 @@ HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstT
     SetupInstallFromInfSectionW(NULL, hinf, pszSection,
                                 SPINST_INIFILES | SPINST_REGISTRY | SPINST_PROFILEITEMS,
                                 HKEY_LOCAL_MACHINE, NULL, 0, NULL, NULL, NULL, NULL);
-    
-    SetupCloseInfFile(hinf);
+
+done:
+    if (hinf != INVALID_HANDLE_VALUE)
+        SetupCloseInfFile(hinf);
+
     DeleteFileW(tmp_ini_path);
 
     return S_OK;
