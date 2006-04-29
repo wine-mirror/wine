@@ -797,9 +797,6 @@ HRESULT WINAPI RunSetupCommandA(HWND hWnd, LPCSTR szCmdName,
  *                                        Not supported on this Windows version
  *   E_UNEXPECTED                         Unexpected error
  *   HRESULT_FROM_WIN32(GetLastError())   Some other error
- *
- * BUGS
- *   INF install unimplemented.
  */
 HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
                                 LPCWSTR szInfSection, LPCWSTR szDir,
