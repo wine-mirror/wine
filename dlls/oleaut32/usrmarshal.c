@@ -140,50 +140,73 @@ void WINAPI CLEANLOCALSTORAGE_UserFree(unsigned long *pFlags, CLEANLOCALSTORAGE 
 
 /* BSTR */
 
+typedef struct
+{
+    DWORD len;          /* No. of chars not including trailing '\0' */
+    DWORD byte_len;     /* len * 2 or 0xffffffff if len == 0 */
+    DWORD len2;         /* == len */
+} bstr_wire_t;
+
 unsigned long WINAPI BSTR_UserSize(unsigned long *pFlags, unsigned long Start, BSTR *pstr)
 {
-  TRACE("(%lx,%ld,%p) => %p\n", *pFlags, Start, pstr, *pstr);
-  if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
-  Start += sizeof(FLAGGED_WORD_BLOB) + sizeof(OLECHAR) * (SysStringLen(*pstr) - 1);
-  TRACE("returning %ld\n", Start);
-  return Start;
+    TRACE("(%lx,%ld,%p) => %p\n", *pFlags, Start, pstr, *pstr);
+    if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
+    ALIGN_LENGTH(Start, 3);
+    Start += sizeof(bstr_wire_t) + sizeof(OLECHAR) * (SysStringLen(*pstr));
+    TRACE("returning %ld\n", Start);
+    return Start;
 }
 
 unsigned char * WINAPI BSTR_UserMarshal(unsigned long *pFlags, unsigned char *Buffer, BSTR *pstr)
 {
-  wireBSTR str = (wireBSTR)Buffer;
+    bstr_wire_t *header;
+    TRACE("(%lx,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
+    if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
 
-  TRACE("(%lx,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
-  if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
-  str->fFlags = 0;
-  str->clSize = SysStringLen(*pstr);
-  if (str->clSize)
-    memcpy(&str->asData, *pstr, sizeof(OLECHAR) * str->clSize);
-  return Buffer + sizeof(FLAGGED_WORD_BLOB) + sizeof(OLECHAR) * (str->clSize - 1);
+    ALIGN_POINTER(Buffer, 3);
+    header = (bstr_wire_t*)Buffer;
+    header->len = header->len2 = SysStringLen(*pstr);
+    if (header->len)
+    {
+        header->byte_len = header->len * sizeof(OLECHAR);
+        memcpy(header + 1, *pstr, header->byte_len);
+    }
+    else
+        header->byte_len = 0xffffffff; /* special case for an empty string */
+
+    return Buffer + sizeof(*header) + sizeof(OLECHAR) * header->len;
 }
 
 unsigned char * WINAPI BSTR_UserUnmarshal(unsigned long *pFlags, unsigned char *Buffer, BSTR *pstr)
 {
-  wireBSTR str = (wireBSTR)Buffer;
-  TRACE("(%lx,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
-  if (str->clSize) {
-    SysReAllocStringLen(pstr, (OLECHAR*)&str->asData, str->clSize);
-  }
-  else if (*pstr) {
-    SysFreeString(*pstr);
-    *pstr = NULL;
-  }
-  if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
-  return Buffer + sizeof(FLAGGED_WORD_BLOB) + sizeof(OLECHAR) * (str->clSize - 1);
+    bstr_wire_t *header;
+    TRACE("(%lx,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
+
+    ALIGN_POINTER(Buffer, 3);
+    header = (bstr_wire_t*)Buffer;
+    if(header->len != header->len2)
+        FIXME("len %08lx != len2 %08lx\n", header->len, header->len2);
+    
+    if(header->len)
+        SysReAllocStringLen(pstr, (OLECHAR*)(header + 1), header->len);
+    else if (*pstr)
+    {
+        SysFreeString(*pstr);
+        *pstr = NULL;
+    }
+
+    if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
+    return Buffer + sizeof(*header) + sizeof(OLECHAR) * header->len;
 }
 
 void WINAPI BSTR_UserFree(unsigned long *pFlags, BSTR *pstr)
 {
-  TRACE("(%lx,%p) => %p\n", *pFlags, pstr, *pstr);
-  if (*pstr) {
-    SysFreeString(*pstr);
-    *pstr = NULL;
-  }
+    TRACE("(%lx,%p) => %p\n", *pFlags, pstr, *pstr);
+    if (*pstr)
+    {
+        SysFreeString(*pstr);
+        *pstr = NULL;
+    }
 }
 
 /* VARIANT */

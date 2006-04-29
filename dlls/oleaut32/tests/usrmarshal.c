@@ -30,6 +30,7 @@
 /* doesn't work on Windows due to needing more of the
  * MIDL_STUB_MESSAGE structure to be filled out */
 #define LPSAFEARRAY_UNMARSHAL_WORKS 0
+#define BSTR_UNMARSHAL_WORKS 0
 
 static void test_marshal_LPSAFEARRAY(void)
 {
@@ -115,11 +116,78 @@ static void test_marshal_LPSAFEARRAY(void)
     HeapFree(GetProcessHeap(), 0, buffer);
 }
 
+static void test_marshal_BSTR(void)
+{
+    unsigned long size;
+    MIDL_STUB_MESSAGE stubMsg = { 0 };
+    USER_MARSHAL_CB umcb = { 0 };
+    unsigned char *buffer;
+    BSTR b, b2;
+    WCHAR str[] = {'m','a','r','s','h','a','l',' ','t','e','s','t','1',0};
+    DWORD *wireb, len;
+
+    umcb.Flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+    umcb.pReserve = NULL;
+    umcb.pStubMsg = &stubMsg;
+
+    b = SysAllocString(str);
+    len = SysStringLen(b);
+    ok(len == 13, "get %ld\n", len);
+
+    /* BSTRs are DWORD aligned */
+    size = BSTR_UserSize(&umcb.Flags, 1, &b);
+    ok(size == 42, "size %ld\n", size);
+
+    size = BSTR_UserSize(&umcb.Flags, 0, &b);
+    ok(size == 38, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    BSTR_UserMarshal(&umcb.Flags, buffer, &b);
+    wireb = (DWORD*)buffer;
+
+    ok(*wireb == len, "wv[0] %08lx\n", *wireb);
+    wireb++;
+    ok(*wireb == len * 2, "wv[1] %08lx\n", *wireb);
+    wireb++;
+    ok(*wireb == len, "wv[2] %08lx\n", *wireb);
+    wireb++;
+    ok(!memcmp(wireb, str, len * 2), "strings differ\n");
+
+    if (BSTR_UNMARSHAL_WORKS)
+    {
+        b2 = NULL;
+        BSTR_UserUnmarshal(&umcb.Flags, buffer, &b2);
+        ok(b2 != NULL, "NULL LPSAFEARRAY didn't unmarshal\n");
+        ok(!memcmp(b, b2, (len + 1) * 2), "strings differ\n");
+        BSTR_UserFree(&umcb.Flags, &b2);
+    }
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+    SysFreeString(b);
+
+    b = NULL;
+    size = BSTR_UserSize(&umcb.Flags, 0, &b);
+    ok(size == 12, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    BSTR_UserMarshal(&umcb.Flags, buffer, &b);
+    wireb = (DWORD*)buffer;
+    ok(*wireb == 0, "wv[0] %08lx\n", *wireb);
+    wireb++;
+    ok(*wireb == 0xffffffff, "wv[1] %08lx\n", *wireb);
+    wireb++;
+    ok(*wireb == 0, "wv[2] %08lx\n", *wireb);
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+}
+
 START_TEST(usrmarshal)
 {
     CoInitialize(NULL);
 
     test_marshal_LPSAFEARRAY();
+    test_marshal_BSTR();
 
     CoUninitialize();
 }
