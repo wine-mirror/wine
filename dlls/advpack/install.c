@@ -59,6 +59,9 @@ typedef HRESULT (*iterate_fields_func)(HINF hinf, PCWSTR field, void *arg);
 /* Advanced INF commands */
 static const WCHAR PerUserInstall[] = {'P','e','r','U','s','e','r','I','n','s','t','a','l','l',0};
 static const WCHAR RegisterOCXs[] = {'R','e','g','i','s','t','e','r','O','C','X','s',0};
+static const WCHAR RunPreSetupCommands[] = {
+    'R','u','n','P','r','e','S','e','t','u','p','C','o','m','m','a','n','d','s',0
+};
 static const WCHAR RunPostSetupCommands[] = {
     'R','u','n','P','o','s','t','S','e','t','u','p','C','o','m','m','a','n','d','s',0
 };
@@ -140,7 +143,7 @@ static HRESULT register_ocxs_callback(HINF hinf, PCWSTR field, void *arg)
     return hr;
 }
 
-static HRESULT run_post_setup_commands_callback(HINF hinf, PCWSTR field, void *arg)
+static HRESULT run_setup_commands_callback(HINF hinf, PCWSTR field, void *arg)
 {
     ADVInfo *info = (ADVInfo *)arg;
     INFCONTEXT context;
@@ -291,6 +294,11 @@ static HRESULT adv_install(ADVInfo *info)
 {
     HRESULT hr;
 
+    hr = iterate_section_fields(info->hinf, info->install_sec, RunPreSetupCommands,
+                                run_setup_commands_callback, info);
+    if (hr != S_OK)
+        return hr;
+
     hr = iterate_section_fields(info->hinf, info->install_sec,
                                 RegisterOCXs, register_ocxs_callback, NULL);
     if (hr != S_OK)
@@ -302,7 +310,7 @@ static HRESULT adv_install(ADVInfo *info)
         return hr;
 
     hr = iterate_section_fields(info->hinf, info->install_sec, RunPostSetupCommands,
-                                run_post_setup_commands_callback, info);
+                                run_setup_commands_callback, info);
     if (hr != S_OK)
         return hr;
 
