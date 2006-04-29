@@ -517,15 +517,28 @@ static HRESULT WINAPI WebBrowser_put_Visible(IWebBrowser2 *iface, VARIANT_BOOL V
 static HRESULT WINAPI WebBrowser_get_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pBool);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pBool);
+
+    *pBool = This->status_bar;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL Value)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, Value);
-    return E_NOTIMPL;
+    VARIANTARG arg;
+    DISPPARAMS dispparams = {&arg, NULL, 1, 0};
+
+    TRACE("(%p)->(%x)\n", This, Value);
+
+    This->status_bar = Value;
+
+    V_VT(&arg) = VT_BOOL;
+    V_BOOL(&arg) = Value;
+    call_sink(This->doc_host.cp_wbe2, DISPID_ONSTATUSBAR, &dispparams);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_StatusText(IWebBrowser2 *iface, BSTR *StatusText)
@@ -888,6 +901,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->visible = VARIANT_TRUE;
     ret->menu_bar = VARIANT_TRUE;
     ret->address_bar = VARIANT_TRUE;
+    ret->status_bar = VARIANT_TRUE;
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
