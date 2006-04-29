@@ -628,6 +628,7 @@ HRESULT WINAPI LaunchINFSectionExW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, I
     cabinfo.pszInf = get_parameter(&cmdline_ptr, ',');
     cabinfo.pszSection = get_parameter(&cmdline_ptr, ',');
     cabinfo.pszCab = get_parameter(&cmdline_ptr, ',');
+    *cabinfo.szSrcPath = '\0';
 
     flags = get_parameter(&cmdline_ptr, ',');
     if (flags)
