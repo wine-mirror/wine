@@ -236,15 +236,20 @@ HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstT
         goto done;
 
     /* Write the additional string table */
-    if (pstTable) for(i = 0; i < pstTable->cEntries; i++) {
-        WCHAR tmp_value[MAX_PATH + 2];
-
-        tmp_value[0] = '\"';
-        lstrcpyW(tmp_value + 1, pstTable->pse[i].pszValue);
-        lstrcatW(tmp_value, quote);
-
-        WritePrivateProfileStringW(Strings, pstTable->pse[i].pszName, tmp_value, tmp_ini_path);
+    if (pstTable)
+    {
+        for(i = 0; i < pstTable->cEntries; i++)
+        {
+            WCHAR tmp_value[MAX_PATH + 2];
+    
+            tmp_value[0] = '\"';
+            lstrcpyW(tmp_value + 1, pstTable->pse[i].pszValue);
+            lstrcatW(tmp_value, quote);
+    
+            WritePrivateProfileStringW(Strings, pstTable->pse[i].pszName, tmp_value, tmp_ini_path);
+        }
     }
+
     /* flush cache */
     WritePrivateProfileStringW(NULL, NULL, NULL, tmp_ini_path);
 
