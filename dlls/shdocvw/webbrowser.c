@@ -558,15 +558,28 @@ static HRESULT WINAPI WebBrowser_put_StatusText(IWebBrowser2 *iface, BSTR Status
 static HRESULT WINAPI WebBrowser_get_ToolBar(IWebBrowser2 *iface, int *Value)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, Value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, Value);
+
+    *Value = This->tool_bar;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_ToolBar(IWebBrowser2 *iface, int Value)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%d)\n", This, Value);
-    return E_NOTIMPL;
+    VARIANTARG arg;
+    DISPPARAMS dispparams = {&arg, NULL, 1, 0};
+
+    TRACE("(%p)->(%x)\n", This, Value);
+
+    This->tool_bar = Value ? VARIANT_TRUE : VARIANT_FALSE;
+
+    V_VT(&arg) = VT_BOOL;
+    V_BOOL(&arg) = Value;
+    call_sink(This->doc_host.cp_wbe2, DISPID_ONTOOLBAR, &dispparams);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL *Value)
@@ -902,6 +915,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->menu_bar = VARIANT_TRUE;
     ret->address_bar = VARIANT_TRUE;
     ret->status_bar = VARIANT_TRUE;
+    ret->tool_bar = VARIANT_TRUE;
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);

@@ -119,6 +119,7 @@ typedef struct {
     VARIANT_BOOL menu_bar;
     VARIANT_BOOL address_bar;
     VARIANT_BOOL status_bar;
+    VARIANT_BOOL tool_bar;
 
     DocHost doc_host;
 } WebBrowser;
