@@ -222,8 +222,10 @@ static HRESULT write_predefined_strings(HMODULE hm, LPWSTR ini_path)
 HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstTable)
 {
     int i;
+    CABINFOW cabinfo;
     WCHAR tmp_ini_path[MAX_PATH];
     HINF hinf = INVALID_HANDLE_VALUE;
+    HRESULT hr = E_FAIL;
 
     TRACE("(%p, %s, %p)\n", hm, debugstr_w(pszSection), pstTable);
 
@@ -246,20 +248,13 @@ HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstT
     /* flush cache */
     WritePrivateProfileStringW(NULL, NULL, NULL, tmp_ini_path);
 
+    /* FIXME: read AdvOptions val for dwFlags */
+    ZeroMemory(&cabinfo, sizeof(CABINFOW));
+    cabinfo.pszInf = tmp_ini_path;
+    cabinfo.pszSection = (LPWSTR)pszSection;
+    cabinfo.dwFlags = 0;
 
-    if((hinf = SetupOpenInfFileW(tmp_ini_path, NULL, INF_STYLE_WIN4, NULL)) ==
-       INVALID_HANDLE_VALUE) {
-        ERR("Setupapi can't open inf\n");
-        goto done;
-    }
-
-    /* append any layout files */
-    SetupOpenAppendInfFileW(NULL, hinf, NULL);
-
-    /* Need to do a lot more here */
-    SetupInstallFromInfSectionW(NULL, hinf, pszSection,
-                                SPINST_INIFILES | SPINST_REGISTRY | SPINST_PROFILEITEMS,
-                                HKEY_LOCAL_MACHINE, NULL, 0, NULL, NULL, NULL, NULL);
+    hr = ExecuteCabW(NULL, &cabinfo, NULL);
 
 done:
     if (hinf != INVALID_HANDLE_VALUE)
@@ -267,7 +262,7 @@ done:
 
     DeleteFileW(tmp_ini_path);
 
-    return S_OK;
+    return hr;
 }
 
 /***********************************************************************
