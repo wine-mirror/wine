@@ -57,12 +57,56 @@ typedef struct _ADVInfo
 typedef HRESULT (*iterate_fields_func)(HINF hinf, PCWSTR field, void *arg);
 
 /* Advanced INF commands */
+static const WCHAR PerUserInstall[] = {'P','e','r','U','s','e','r','I','n','s','t','a','l','l',0};
 static const WCHAR RegisterOCXs[] = {'R','e','g','i','s','t','e','r','O','C','X','s',0};
 static const WCHAR RunPostSetupCommands[] = {
     'R','u','n','P','o','s','t','S','e','t','u','p','C','o','m','m','a','n','d','s',0
 };
 
 /* Advanced INF callbacks */
+static HRESULT per_user_install_callback(HINF hinf, PCWSTR field, void *arg)
+{
+    PERUSERSECTIONW per_user;
+    INFCONTEXT context;
+    DWORD size;
+
+    static const WCHAR disp_name[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
+    static const WCHAR version[] = {'V','e','r','s','i','o','n',0};
+    static const WCHAR is_installed[] = {'I','s','I','n','s','t','a','l','l','e','d',0};
+    static const WCHAR comp_id[] = {'C','o','m','p','o','n','e','n','t','I','D',0};
+    static const WCHAR guid[] = {'G','U','I','D',0};
+    static const WCHAR locale[] = {'L','o','c','a','l','e',0};
+    static const WCHAR stub_path[] = {'S','t','u','b','P','a','t','h',0};
+
+    per_user.bRollback = FALSE;
+    per_user.dwIsInstalled = 0;
+
+    SetupGetLineTextW(NULL, hinf, field, disp_name, per_user.szDispName,
+                     sizeof(per_user.szDispName) / sizeof(WCHAR), &size);
+
+    SetupGetLineTextW(NULL, hinf, field, version, per_user.szVersion,
+                     sizeof(per_user.szVersion) / sizeof(WCHAR), &size);
+
+    if (SetupFindFirstLineW(hinf, field, is_installed, &context))
+    {
+        SetupGetIntField(&context, 1, (PINT)&per_user.dwIsInstalled);
+    }
+
+    SetupGetLineTextW(NULL, hinf, field, comp_id, per_user.szCompID,
+                     sizeof(per_user.szCompID) / sizeof(WCHAR), &size);
+
+    SetupGetLineTextW(NULL, hinf, field, guid, per_user.szGUID,
+                     sizeof(per_user.szGUID) / sizeof(WCHAR), &size);
+
+    SetupGetLineTextW(NULL, hinf, field, locale, per_user.szLocale,
+                     sizeof(per_user.szLocale) / sizeof(WCHAR), &size);
+
+    SetupGetLineTextW(NULL, hinf, field, stub_path, per_user.szStub,
+                     sizeof(per_user.szStub) / sizeof(WCHAR), &size);
+
+    return SetPerUserSecValuesW(&per_user);
+}
+
 static HRESULT register_ocxs_callback(HINF hinf, PCWSTR field, void *arg)
 {
     HMODULE hm;
@@ -249,6 +293,11 @@ static HRESULT adv_install(ADVInfo *info)
 
     hr = iterate_section_fields(info->hinf, info->install_sec,
                                 RegisterOCXs, register_ocxs_callback, NULL);
+    if (hr != S_OK)
+        return hr;
+
+    hr = iterate_section_fields(info->hinf, info->install_sec,
+                                PerUserInstall, per_user_install_callback, info);
     if (hr != S_OK)
         return hr;
 
