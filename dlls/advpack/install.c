@@ -469,7 +469,7 @@ HRESULT WINAPI ExecuteCabW(HWND hwnd, CABINFOW* pCab, LPVOID pReserved)
 done:
     install_release(&info);
 
-    return S_OK;
+    return hr;
 }
 
 /***********************************************************************
