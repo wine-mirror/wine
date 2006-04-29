@@ -306,11 +306,11 @@ HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
     }
     else
     {
-        len = lstrlenW(working_dir);
+        len = lstrlenW(working_dir) + 1;
         ptr = working_dir;
     }
 
-    info->working_dir = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    info->working_dir = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     if (!info->working_dir)
         return E_OUTOFMEMORY;
 
