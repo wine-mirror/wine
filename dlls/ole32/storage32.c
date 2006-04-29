@@ -4493,6 +4493,8 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
      */
     bigBlockBuffer =
       StorageImpl_GetROBigBlock(This->parentStorage, blockIndex);
+    if (!bigBlockBuffer)
+        return FALSE;
 
     memcpy(bufferWalker, bigBlockBuffer + offsetInBlock, bytesToReadInBuffer);
 
