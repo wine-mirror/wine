@@ -57,6 +57,9 @@ typedef struct _ADVInfo
 typedef HRESULT (*iterate_fields_func)(HINF hinf, PCWSTR field, void *arg);
 
 /* Advanced INF commands */
+static const WCHAR CheckAdminRights[] = {
+    'C','h','e','c','k','A','d','m','i','n','R','i','g','h','t','s',0
+};
 static const WCHAR PerUserInstall[] = {'P','e','r','U','s','e','r','I','n','s','t','a','l','l',0};
 static const WCHAR RegisterOCXs[] = {'R','e','g','i','s','t','e','r','O','C','X','s',0};
 static const WCHAR RunPreSetupCommands[] = {
@@ -254,6 +257,25 @@ static HRESULT iterate_section_fields(HINF hinf, PCWSTR section, PCWSTR key,
     return hr;
 }
 
+static HRESULT check_admin_rights(ADVInfo *info)
+{
+    INT check;
+    INFCONTEXT context;
+    HRESULT hr = S_OK;
+
+    if (!SetupFindFirstLineW(info->hinf, info->install_sec,
+                             CheckAdminRights, &context))
+        return S_OK;
+
+    if (!SetupGetIntField(&context, 1, &check))
+        return S_OK;
+
+    if (check == 1)
+        hr = IsNTAdmin(0, NULL) ? S_OK : E_FAIL;
+
+    return hr;
+}
+
 /* performs a setupapi-level install of the INF file */
 static HRESULT spapi_install(ADVInfo *info)
 {
@@ -293,6 +315,10 @@ static HRESULT spapi_install(ADVInfo *info)
 static HRESULT adv_install(ADVInfo *info)
 {
     HRESULT hr;
+
+    hr = check_admin_rights(info);
+    if (hr != S_OK)
+        return hr;
 
     hr = iterate_section_fields(info->hinf, info->install_sec, RunPreSetupCommands,
                                 run_setup_commands_callback, info);
