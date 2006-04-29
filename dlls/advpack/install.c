@@ -60,6 +60,7 @@ typedef HRESULT (*iterate_fields_func)(HINF hinf, PCWSTR field, void *arg);
 static const WCHAR CheckAdminRights[] = {
     'C','h','e','c','k','A','d','m','i','n','R','i','g','h','t','s',0
 };
+static const WCHAR DelDirs[] = {'D','e','l','D','i','r','s',0};
 static const WCHAR PerUserInstall[] = {'P','e','r','U','s','e','r','I','n','s','t','a','l','l',0};
 static const WCHAR RegisterOCXs[] = {'R','e','g','i','s','t','e','r','O','C','X','s',0};
 static const WCHAR RunPreSetupCommands[] = {
@@ -70,6 +71,29 @@ static const WCHAR RunPostSetupCommands[] = {
 };
 
 /* Advanced INF callbacks */
+static HRESULT del_dirs_callback(HINF hinf, PCWSTR field, void *arg)
+{
+    INFCONTEXT context;
+    HRESULT hr = S_OK;
+    DWORD size;
+
+    BOOL ok = SetupFindFirstLineW(hinf, field, NULL, &context);
+    
+    for (; ok; ok = SetupFindNextLine(&context, &context))
+    {
+        WCHAR directory[MAX_INF_STRING_LENGTH];
+
+        if (!SetupGetLineTextW(&context, NULL, NULL, NULL, directory,
+                               MAX_INF_STRING_LENGTH, &size))
+            continue;
+
+        if (DelNodeW(directory, 0))
+            hr = E_FAIL;
+    }
+
+    return hr;
+}
+
 static HRESULT per_user_install_callback(HINF hinf, PCWSTR field, void *arg)
 {
     PERUSERSECTIONW per_user;
@@ -337,6 +361,11 @@ static HRESULT adv_install(ADVInfo *info)
 
     hr = iterate_section_fields(info->hinf, info->install_sec, RunPostSetupCommands,
                                 run_setup_commands_callback, info);
+    if (hr != S_OK)
+        return hr;
+
+    hr = iterate_section_fields(info->hinf, info->install_sec,
+                                DelDirs, del_dirs_callback, info);
     if (hr != S_OK)
         return hr;
 
