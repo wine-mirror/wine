@@ -567,21 +567,31 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 		GetTickCount()
 	);
 
+        /* when this flag is set, writecursor is meaningless and must be calculated */
 	if (flags & DSBLOCK_FROMWRITECURSOR) {
-		DWORD writepos;
 		/* GetCurrentPosition does too much magic to duplicate here */
-		hres = IDirectSoundBufferImpl_GetCurrentPosition(iface, NULL, &writepos);
+		hres = IDirectSoundBufferImpl_GetCurrentPosition(iface, NULL, &writecursor);
 		if (hres != DS_OK) {
 			WARN("IDirectSoundBufferImpl_GetCurrentPosition failed\n");
 			return hres;
 		}
-		writecursor += writepos;
 	}
-	writecursor %= This->buflen;
+
+        /* when this flag is set, writebytes is meaningless and must be set */
 	if (flags & DSBLOCK_ENTIREBUFFER)
 		writebytes = This->buflen;
-	if (writebytes > This->buflen)
-		writebytes = This->buflen;
+
+	if (writecursor >= This->buflen) {
+		WARN("Invalid parameter, writecursor: %lu >= buflen: %lu\n",
+		     writecursor, This->buflen);
+		return DSERR_INVALIDPARAM;
+        }
+
+	if (writebytes > This->buflen) {
+		WARN("Invalid parameter, writebytes: %lu > buflen: %lu\n",
+		     writebytes, This->buflen);
+		return DSERR_INVALIDPARAM;
+        }
 
 	EnterCriticalSection(&(This->lock));
 
@@ -648,6 +658,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	}
 
 	LeaveCriticalSection(&(This->lock));
+
 	return DS_OK;
 }
 

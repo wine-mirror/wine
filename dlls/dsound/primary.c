@@ -665,6 +665,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetFormat(
 static HRESULT WINAPI PrimaryBufferImpl_Lock(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD writecursor,DWORD writebytes,LPVOID lplpaudioptr1,LPDWORD audiobytes1,LPVOID lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
 ) {
+	HRESULT hres;
         DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx) at %ld\n",
 		iface,
@@ -683,26 +684,33 @@ static HRESULT WINAPI PrimaryBufferImpl_Lock(
 		return DSERR_PRIOLEVELNEEDED;
 	}
 
+        /* when this flag is set, writecursor is meaningless and must be calculated */
 	if (flags & DSBLOCK_FROMWRITECURSOR) {
-		DWORD writepos;
-		HRESULT hres;
 		/* GetCurrentPosition does too much magic to duplicate here */
-		hres = IDirectSoundBuffer_GetCurrentPosition(iface, NULL, &writepos);
+		hres = IDirectSoundBuffer_GetCurrentPosition(iface, NULL, &writecursor);
 		if (hres != DS_OK) {
 			WARN("IDirectSoundBuffer_GetCurrentPosition failed\n");
 			return hres;
 		}
-		writecursor += writepos;
 	}
-	while (writecursor >= device->buflen)
-		writecursor -= device->buflen;
+
+        /* when this flag is set, writebytes is meaningless and must be set */
 	if (flags & DSBLOCK_ENTIREBUFFER)
 		writebytes = device->buflen;
-	if (writebytes > device->buflen)
-		writebytes = device->buflen;
+
+        if (writecursor >= device->buflen) {
+                WARN("Invalid parameter, writecursor: %lu >= buflen: %lu\n",
+		     writecursor, device->buflen);
+                return DSERR_INVALIDPARAM;
+        }
+                                                                                
+        if (writebytes > device->buflen) {
+                WARN("Invalid parameter, writebytes: %lu > buflen: %lu\n",
+		     writebytes, device->buflen);
+                return DSERR_INVALIDPARAM;
+        }
 
 	if (!(device->drvdesc.dwFlags & DSDDESC_DONTNEEDPRIMARYLOCK) && device->hwbuf) {
-		HRESULT hres;
 		hres = IDsDriverBuffer_Lock(device->hwbuf,
 					    lplpaudioptr1, audiobytes1,
 					    lplpaudioptr2, audiobytes2,
