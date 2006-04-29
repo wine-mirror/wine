@@ -328,6 +328,8 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
         LPDIRECTSOUND3DBUFFER buffer=NULL;
         DS3DBUFFER buffer_param;
         DWORD start_time,now;
+        LPVOID buffer1;
+        DWORD length1;
 
         if (winetest_interactive) {
             trace("    Playing %g second 440Hz tone at %ldx%dx%d\n", duration,
@@ -444,6 +446,20 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
                    DXGetErrorString8(rc));
             }
         }
+
+        /* try an offset past the end of the buffer */
+        rc = IDirectSoundBuffer_Lock(*dsbo, state.buffer_size, 0, &buffer1,
+                                      &length1, NULL, NULL,
+                                      DSBLOCK_ENTIREBUFFER);
+        ok(rc==DSERR_INVALIDPARAM, "IDirectSoundBuffer_Lock() should have "
+           "returned DSERR_INVALIDPARAM, returned %s\n", DXGetErrorString8(rc));
+
+        /* try a size larger than the buffer */
+        rc = IDirectSoundBuffer_Lock(*dsbo, 0, state.buffer_size + 1,
+                                     &buffer1, &length1, NULL, NULL,
+                                     DSBLOCK_FROMWRITECURSOR);
+        ok(rc==DSERR_INVALIDPARAM, "IDirectSoundBuffer_Lock() should have "
+           "returned DSERR_INVALIDPARAM, returned %s\n", DXGetErrorString8(rc));
 
         state.wave=wave_generate_la(&wfx,duration,&state.wave_len);
 
