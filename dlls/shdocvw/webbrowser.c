@@ -317,6 +317,8 @@ static HRESULT WINAPI WebBrowser_put_Left(IWebBrowser2 *iface, long Left)
     memcpy(&rect, &This->pos_rect, sizeof(RECT));
     rect.left = Left;
 
+    /* We don't really change the window position here.
+     * We just notify the embedder that he should do so. */
     return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
 }
 
@@ -343,6 +345,8 @@ static HRESULT WINAPI WebBrowser_put_Top(IWebBrowser2 *iface, long Top)
     memcpy(&rect, &This->pos_rect, sizeof(RECT));
     rect.top = Top;
 
+    /* We don't really change the window position here.
+     * We just notify the embedder that he should do so. */
     return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
 }
 
@@ -368,8 +372,10 @@ static HRESULT WINAPI WebBrowser_put_Width(IWebBrowser2 *iface, long Width)
 
     memcpy(&rect, &This->pos_rect, sizeof(RECT));
     rect.right = rect.left+Width;
-
-    return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
+ 
+    /* We don't really change the window size here.
+     * We just notify the embedder that he should do so. */
+   return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
 }
 
 static HRESULT WINAPI WebBrowser_get_Height(IWebBrowser2 *iface, long *pl)
@@ -395,6 +401,8 @@ static HRESULT WINAPI WebBrowser_put_Height(IWebBrowser2 *iface, long Height)
     memcpy(&rect, &This->pos_rect, sizeof(RECT));
     rect.bottom = rect.top+Height;
 
+    /* We don't really change the window size here.
+     * We just notify the embedder that he should do so. */
     return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
 }
 
@@ -469,6 +477,7 @@ static HRESULT WINAPI WebBrowser_get_HWND(IWebBrowser2 *iface, long *pHWND)
 
     TRACE("(%p)->(%p)\n", This, pHWND);
 
+    /* WebBrowser control never has a frame window (in opposition to InternetExplorer) */
     *pHWND = 0;
     return E_FAIL;
 }
@@ -534,6 +543,9 @@ static HRESULT WINAPI WebBrowser_put_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL
 
     This->status_bar = Value;
 
+    /* In opposition to InternetExplorer, all we should do here is
+     * inform the embedder about the status bar change. */
+
     V_VT(&arg) = VT_BOOL;
     V_BOOL(&arg) = Value;
     call_sink(This->doc_host.cp_wbe2, DISPID_ONSTATUSBAR, &dispparams);
@@ -575,6 +587,9 @@ static HRESULT WINAPI WebBrowser_put_ToolBar(IWebBrowser2 *iface, int Value)
 
     This->tool_bar = Value ? VARIANT_TRUE : VARIANT_FALSE;
 
+    /* In opposition to InternetExplorer, all we should do here is
+     * inform the embedder about the tool bar change. */
+
     V_VT(&arg) = VT_BOOL;
     V_BOOL(&arg) = Value;
     call_sink(This->doc_host.cp_wbe2, DISPID_ONTOOLBAR, &dispparams);
@@ -601,6 +616,9 @@ static HRESULT WINAPI WebBrowser_put_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL V
     TRACE("(%p)->(%x)\n", This, Value);
 
     This->menu_bar = Value;
+
+    /* In opposition to InternetExplorer, all we should do here is
+     * inform the embedder about the menu bar change. */
 
     V_VT(&arg) = VT_BOOL;
     V_BOOL(&arg) = Value;
@@ -798,6 +816,9 @@ static HRESULT WINAPI WebBrowser_put_AddressBar(IWebBrowser2 *iface, VARIANT_BOO
     TRACE("(%p)->(%x)\n", This, Value);
 
     This->address_bar = Value;
+
+    /* In opposition to InternetExplorer, all we should do here is
+     * inform the embedder about the address bar change. */
 
     V_VT(&arg) = VT_BOOL;
     V_BOOL(&arg) = Value;
