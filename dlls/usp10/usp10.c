@@ -129,7 +129,6 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
 
     if (!psc || !sfp)
         return E_INVALIDARG;
-
     if  (!hdc && !*psc) {
         TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
 	return E_PENDING;
@@ -466,7 +465,11 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     int cnt;
     DWORD hr;
     Scriptcache *pScriptcache;
-    FIXME("(%p,%p,%s,%d,0x%lx,%p): semi-stub\n", hdc, psc, debugstr_wn(pwcInChars,cChars), cChars, dwFlags, pwOutGlyphs);
+    FIXME("(%p,%p,%s,%d,0x%lx,%p): semi-stub\n", hdc, psc, debugstr_wn(pwcInChars,cChars), 
+                                                 cChars, dwFlags, pwOutGlyphs);
+
+    if  (!psc || !pwcInChars || !pwOutGlyphs)
+        return E_INVALIDARG;
 
     if  (!hdc && !*psc) {
         TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
@@ -507,8 +510,40 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
                              int iReserved, const WORD *pwGlyphs, int cGlyphs, const int *piAdvance, 
                              const int *piJustify, const GOFFSET *pGoffset)
 {
-     FIXME("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p): stub\n",
-           hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
-           piAdvance, piJustify, pGoffset);
-     return E_NOTIMPL;
+    HDC phdc;
+    DWORD hr;
+    Scriptcache *pScriptcache;
+    TRACE     ("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p): stub\n",
+         hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
+         piAdvance, piJustify, pGoffset);
+
+    if  (!psc || !piAdvance || !psa || !pwGlyphs)
+        return E_INVALIDARG;
+        
+    if  (!hdc && !*psc) {
+        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
+	return E_PENDING;
+    }   else 
+        if  (hdc && !*psc) {
+            pScriptcache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache) );
+            pScriptcache->hdc = hdc;
+            phdc = hdc;
+            *psc = pScriptcache;
+        }   else
+            if  (*psc) {
+                pScriptcache = *psc;
+                phdc = pScriptcache->hdc;
+            }
+
+    fuOptions &= ETO_CLIPPED + ETO_OPAQUE;
+    if  (!psa->fNoGlyphIndex)                                     /* Have Glyphs?                      */
+        fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do tranlastion to glyph */
+
+    hr = ExtTextOutW(phdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL);
+
+    if  (hr) return S_OK;
+    else {
+        FIXME("ExtTextOut returned:=%ld\n", hr);
+        return hr;
+    }
 }
