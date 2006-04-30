@@ -156,10 +156,7 @@ static HRESULT register_ocxs_callback(HINF hinf, PCWSTR field, void *arg)
 
         hm = LoadLibraryExW(buffer, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
         if (!hm)
-        {
-            hr = E_FAIL;
             continue;
-        }
 
         if (do_ocx_reg(hm, TRUE))
             hr = E_FAIL;
