@@ -4420,3 +4420,11 @@ BOOL WINAPI ShellMessageBoxWrapW(HMODULE mod, DWORD unknown1, UINT uId,
           mod, unknown1, uId, debugstr_w(title), unknown2, debugstr_w(filename));
     return TRUE;
 }
+
+HRESULT WINAPI IUnknown_QueryServiceExec(IUnknown *unk, REFIID service, REFIID clsid,
+                                         DWORD x1, DWORD x2, DWORD x3, void **ppvOut)
+{
+    FIXME("%p %s %s %08lx %08lx %08lx %p\n", unk,
+          debugstr_guid(service), debugstr_guid(clsid), x1, x2, x3, ppvOut);
+    return E_NOTIMPL;
+}

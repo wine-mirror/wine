@@ -481,7 +481,7 @@
 481 stdcall -noname IUnknown_HasFocusIO(ptr)
 482 stub -noname SHMessageBoxHelpA
 483 stub -noname SHMessageBoxHelpW
-484 stub -noname IUnknown_QueryServiceExec
+484 stdcall -noname IUnknown_QueryServiceExec(ptr ptr ptr long long long ptr)
 485 stub -noname MapWin32ErrorToSTG
 486 stub -noname ModeToCreateFileFlags
 
