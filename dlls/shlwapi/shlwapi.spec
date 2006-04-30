@@ -507,7 +507,7 @@
 511 stub -noname PathFileExistsDefExtAndAttributesW
 512 stub -noname IStream_ReadPidl
 513 stub -noname IStream_WritePidl
-514 stub -noname IUnknown_ProfferService
+514 stdcall -noname IUnknown_ProfferService(ptr ptr ptr ptr)
 
 516 stdcall -noname SKGetValueW(long wstr wstr long long long)
 517 stub -noname SKSetValueW

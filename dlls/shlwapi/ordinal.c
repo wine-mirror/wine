@@ -4428,3 +4428,9 @@ HRESULT WINAPI IUnknown_QueryServiceExec(IUnknown *unk, REFIID service, REFIID c
           debugstr_guid(service), debugstr_guid(clsid), x1, x2, x3, ppvOut);
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI IUnknown_ProfferService(IUnknown *unk, void *x0, void *x1, void *x2)
+{
+    FIXME("%p %p %p %p\n", unk, x0, x1, x2);
+    return E_NOTIMPL;
+}
