@@ -267,6 +267,9 @@ static HRESULT WINAPI StgStreamImpl_Read(
   TRACE("(%p, %p, %ld, %p)\n",
 	iface, pv, cb, pcbRead);
 
+  if (!This->parentStorage)
+    return STG_E_REVERTED;
+ 
   /*
    * If the caller is not interested in the number of bytes read,
    * we use another buffer to avoid "if" statements in the code.
@@ -375,6 +378,9 @@ static HRESULT WINAPI StgStreamImpl_Write(
   if (!pv)
     return STG_E_INVALIDPOINTER;
 
+  if (!This->parentStorage)
+    return STG_E_REVERTED;
+ 
   /*
    * If the caller is not interested in the number of bytes written,
    * we use another buffer to avoid "if" statements in the code.
@@ -463,9 +469,8 @@ static HRESULT WINAPI StgStreamImpl_Seek(
    * fail if the stream has no parent (as does windows)
    */
 
-  if(!(This->parentStorage)) {
+  if (!This->parentStorage)
     return STG_E_REVERTED;
-  }
 
   /*
    * The caller is allowed to pass in NULL as the new position return value.
@@ -527,9 +532,8 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
 
   TRACE("(%p, %ld)\n", iface, libNewSize.u.LowPart);
 
-  if(!This->parentStorage) {
+  if(!This->parentStorage)
     return STG_E_REVERTED;
-  }
 
   /*
    * As documented.
@@ -648,9 +652,8 @@ static HRESULT WINAPI StgStreamImpl_CopyTo(
    * Sanity check
    */
 
-  if(!This->parentStorage) {
+  if (!This->parentStorage)
     return STG_E_REVERTED;
-  }
 
   if ( pstm == 0 )
     return STG_E_INVALIDPOINTER;
@@ -724,9 +727,9 @@ static HRESULT WINAPI StgStreamImpl_Commit(
 {
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
-  if(!This->parentStorage) {
+  if (!This->parentStorage)
     return STG_E_REVERTED;
-  }
+
   return S_OK;
 }
 
@@ -752,9 +755,8 @@ static HRESULT WINAPI StgStreamImpl_LockRegion(
 {
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
-  if(!This->parentStorage) {
+  if (!This->parentStorage)
     return STG_E_REVERTED;
-  }
 
   FIXME("not implemented!\n");
   return E_NOTIMPL;
@@ -768,9 +770,8 @@ static HRESULT WINAPI StgStreamImpl_UnlockRegion(
 {
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
-  if(!This->parentStorage) {
+  if (!This->parentStorage)
     return STG_E_REVERTED;
-  }
 
   FIXME("not implemented!\n");
   return E_NOTIMPL;
@@ -798,9 +799,8 @@ static HRESULT WINAPI StgStreamImpl_Stat(
    * if stream has no parent, return STG_E_REVERTED
    */
 
-  if(!This->parentStorage) {
-	return STG_E_REVERTED;
-  }
+  if (!This->parentStorage)
+    return STG_E_REVERTED;
 
   /*
    * Read the information from the property.
@@ -848,9 +848,8 @@ static HRESULT WINAPI StgStreamImpl_Clone(
    * Sanity check
    */
 
-  if(!This->parentStorage) {
+  if (!This->parentStorage)
     return STG_E_REVERTED;
-  }
 
   if ( ppstm == 0 )
     return STG_E_INVALIDPOINTER;
