@@ -1096,8 +1096,16 @@ static void test_GetPrinterDriver(void)
 
 static void test_DEVMODE(const DEVMODE *dm, LONG dmSize, LPCSTR exp_prn_name)
 {
-    ok(!strcmp(exp_prn_name, (LPCSTR)dm->dmDeviceName), "expected %s, got %s\n", exp_prn_name, dm->dmDeviceName);
-    ok(dm->dmSize + dm->dmDriverExtra == dmSize, "%u != %ld\n", dm->dmSize + dm->dmDriverExtra, dmSize);
+    /* On NT3.51, some fields in DEVMODE are empty/zero
+      (dmDeviceName, dmSpecVersion, dmDriverVersion and dmDriverExtra)
+       We skip the Tests on this Platform */
+    if (dm->dmSpecVersion || dm->dmDriverVersion || dm->dmDriverExtra) {
+        /* The Printername can be larger (MAX_PATH) than CCHDEVICENAME  */
+        ok(!strncmp(exp_prn_name, (LPCSTR)dm->dmDeviceName, CCHDEVICENAME), 
+            "expected '%s', got '%s'\n", exp_prn_name, dm->dmDeviceName);
+        ok(dm->dmSize + dm->dmDriverExtra == dmSize,
+            "%u != %ld\n", dm->dmSize + dm->dmDriverExtra, dmSize);
+    }
     trace("dmFields %08lx\n", dm->dmFields);
 }
 
