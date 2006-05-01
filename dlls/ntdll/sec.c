@@ -1132,15 +1132,20 @@ NTSTATUS  WINAPI RtlDeleteAce(PACL pAcl, DWORD dwAceIndex)
 		PACE_HEADER pcAce;
 		DWORD len = 0;
 
+		/* skip over the ACE we are deleting */
 		pcAce = (PACE_HEADER)(((BYTE*)pAce)+pAce->AceSize);
+		dwAceIndex++;
+
+		/* calculate the length of the rest */
 		for (; dwAceIndex < pAcl->AceCount; dwAceIndex++)
 		{
 			len += pcAce->AceSize;
 			pcAce = (PACE_HEADER)(((BYTE*)pcAce) + pcAce->AceSize);
 		}
 
-		memcpy(pAce, ((BYTE*)pAce)+pAce->AceSize, len);
-                pAcl->AceCount--;
+		/* slide them all backwards */
+		memmove(pAce, ((BYTE*)pAce)+pAce->AceSize, len);
+		pAcl->AceCount--;
 	}
 
 	TRACE("pAcl=%p dwAceIndex=%ld status=0x%08lx\n", pAcl, dwAceIndex, status);
