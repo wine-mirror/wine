@@ -809,7 +809,7 @@ void WINAPI PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   NDR_BUFFERSIZE m;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, Pointer, pFormat);
-  TRACE("type=%d, attr=%d\n", type, attr);
+  TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(const SHORT*)pFormat;
@@ -851,7 +851,7 @@ unsigned long WINAPI PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   NDR_MEMORYSIZE m;
 
   FIXME("(%p,%p,%p): stub\n", pStubMsg, Buffer, pFormat);
-  TRACE("type=%d, attr=", type); dump_pointer_attr(attr);
+  TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(const SHORT*)pFormat;
@@ -886,7 +886,7 @@ void WINAPI PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   NDR_FREE m;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, Pointer, pFormat);
-  TRACE("type=%d, attr=", type); dump_pointer_attr(attr);
+  TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
   if (attr & RPC_FC_P_DONTFREE) return;
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
