@@ -6,7 +6,8 @@ TESTDLL   = dnsapi.dll
 IMPORTS   = dnsapi kernel32
 
 CTESTS = \
-	name.c
+	name.c \
+	record.c
 
 @MAKE_TEST_RULES@
 
