@@ -362,3 +362,308 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     }
     return TRUE;
 }
+
+static LPVOID dns_strcpyX( LPCVOID src, DNS_CHARSET in, DNS_CHARSET out )
+{
+    switch (in)
+    {
+    case DnsCharSetUnicode:
+    {
+        switch (out)
+        {
+        case DnsCharSetUnicode: return dns_strdup_w( src );
+        case DnsCharSetUtf8:    return dns_strdup_wu( src );
+        case DnsCharSetAnsi:    return dns_strdup_wa( src );
+        default:
+            WARN( "unhandled target charset: %d\n", out );
+            break;
+        }
+    }
+    case DnsCharSetUtf8:
+        switch (out)
+        {
+        case DnsCharSetUnicode: return dns_strdup_uw( src );
+        case DnsCharSetUtf8:    return dns_strdup_u( src );
+        case DnsCharSetAnsi:    return dns_strdup_ua( src );
+        default:
+            WARN( "unhandled target charset: %d\n", out );
+            break;
+        }
+    case DnsCharSetAnsi:
+        switch (out)
+        {
+        case DnsCharSetUnicode: return dns_strdup_aw( src );
+        case DnsCharSetUtf8:    return dns_strdup_au( src );
+        case DnsCharSetAnsi:    return dns_strdup_a( src );
+        default:
+            WARN( "unhandled target charset: %d\n", out );
+            break;
+        }
+    default:
+        WARN( "unhandled source charset: %d\n", in );
+        break;
+    }
+    return NULL;
+}
+
+/******************************************************************************
+ * DnsRecordCopyEx                         [DNSAPI.@]
+ *
+ */
+PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET out )
+{
+    DNS_RECORD *dst;
+    unsigned int i, size;
+
+    TRACE( "(%p,%d,%d)\n", src, in, out );
+
+    size = FIELD_OFFSET(DNS_RECORD, Data) + src->wDataLength;
+    dst = dns_zero_alloc( size );
+    if (!dst) return NULL;
+
+    memcpy( dst, src, size );
+
+    if (src->Flags.S.CharSet == DnsCharSetUtf8 ||
+        src->Flags.S.CharSet == DnsCharSetAnsi ||
+        src->Flags.S.CharSet == DnsCharSetUnicode) in = src->Flags.S.CharSet;
+
+    dst->Flags.S.CharSet = out;
+    dst->pName = dns_strcpyX( src->pName, in, out );
+    if (!dst->pName) goto error;
+
+    switch (src->wType)
+    {
+    case DNS_TYPE_HINFO:
+    case DNS_TYPE_ISDN:
+    case DNS_TYPE_TEXT:
+    case DNS_TYPE_X25:
+    {
+        for (i = 0; i < src->Data.TXT.dwStringCount; i++)
+        {
+            dst->Data.TXT.pStringArray[i] =
+                dns_strcpyX( src->Data.TXT.pStringArray[i], in, out );
+
+            if (!dst->Data.TXT.pStringArray[i])
+            {
+                for (--i; i >= 0; i--)
+                    dns_free( dst->Data.TXT.pStringArray[i] );
+                goto error;
+            }
+        }
+        break;
+    }
+    case DNS_TYPE_MINFO:
+    case DNS_TYPE_RP:
+    {
+        dst->Data.MINFO.pNameMailbox =
+            dns_strcpyX( src->Data.MINFO.pNameMailbox, in, out );
+        if (!dst->Data.MINFO.pNameMailbox) goto error;
+
+        dst->Data.MINFO.pNameErrorsMailbox =
+            dns_strcpyX( src->Data.MINFO.pNameErrorsMailbox, in, out );
+        if (!dst->Data.MINFO.pNameErrorsMailbox)
+        {
+            dns_free( dst->Data.MINFO.pNameMailbox );
+            goto error;
+        }
+        break;
+    }
+    case DNS_TYPE_AFSDB:
+    case DNS_TYPE_RT:
+    case DNS_TYPE_MX:
+    {
+        dst->Data.MX.pNameExchange =
+            dns_strcpyX( src->Data.MX.pNameExchange, in, out );
+        if (!dst->Data.MX.pNameExchange) goto error;
+        break;
+    }
+    case DNS_TYPE_NXT:
+    {
+        dst->Data.NXT.pNameNext =
+            dns_strcpyX( src->Data.NXT.pNameNext, in, out );
+        if (!dst->Data.NXT.pNameNext) goto error;
+        break;
+    }
+    case DNS_TYPE_CNAME:
+    case DNS_TYPE_MB:
+    case DNS_TYPE_MD:
+    case DNS_TYPE_MF:
+    case DNS_TYPE_MG:
+    case DNS_TYPE_MR:
+    case DNS_TYPE_NS:
+    case DNS_TYPE_PTR:
+    {
+        dst->Data.PTR.pNameHost =
+            dns_strcpyX( src->Data.PTR.pNameHost, in, out );
+        if (!dst->Data.PTR.pNameHost) goto error;
+        break;
+    }
+    case DNS_TYPE_SIG:
+    {
+        dst->Data.SIG.pNameSigner =
+            dns_strcpyX( src->Data.SIG.pNameSigner, in, out );
+        if (!dst->Data.SIG.pNameSigner) goto error;
+        break;
+    }
+    case DNS_TYPE_SOA:
+    {
+        dst->Data.SOA.pNamePrimaryServer =
+            dns_strcpyX( src->Data.SOA.pNamePrimaryServer, in, out );
+        if (!dst->Data.SOA.pNamePrimaryServer) goto error;
+
+        dst->Data.SOA.pNameAdministrator =
+            dns_strcpyX( src->Data.SOA.pNameAdministrator, in, out );
+        if (!dst->Data.SOA.pNameAdministrator)
+        {
+            dns_free( dst->Data.SOA.pNamePrimaryServer );
+            goto error;
+        }
+        break;
+    }
+    case DNS_TYPE_SRV:
+    {
+        dst->Data.SRV.pNameTarget =
+            dns_strcpyX( src->Data.SRV.pNameTarget, in, out );
+        if (!dst->Data.SRV.pNameTarget) goto error;
+        break;
+    }
+    default:
+        break;
+    }
+    return dst;
+
+error:
+    dns_free( dst->pName );
+    dns_free( dst );
+    return NULL;
+}
+
+/******************************************************************************
+ * DnsRecordListFree                       [DNSAPI.@]
+ *
+ */
+void WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
+{
+    DNS_RECORD *r, *next;
+    unsigned int i;
+
+    TRACE( "(%p,%d)\n", list, type );
+
+    if (!list) return;
+
+    switch (type)
+    {
+    case DnsFreeRecordList:
+    {
+        for (r = list; (list = r); r = next)
+        {
+            dns_free( r->pName );
+
+            switch (r->wType)
+            {
+            case DNS_TYPE_HINFO:
+            case DNS_TYPE_ISDN:
+            case DNS_TYPE_TEXT:
+            case DNS_TYPE_X25:
+            {
+                for (i = 0; i < r->Data.TXT.dwStringCount; i++)
+                    dns_free( r->Data.TXT.pStringArray[i] );
+
+                break;
+            }
+            case DNS_TYPE_MINFO:
+            case DNS_TYPE_RP:
+            {
+                dns_free( r->Data.MINFO.pNameMailbox );
+                dns_free( r->Data.MINFO.pNameErrorsMailbox );
+                break;
+            }
+            case DNS_TYPE_AFSDB:
+            case DNS_TYPE_RT:
+            case DNS_TYPE_MX:
+            {
+                dns_free( r->Data.MX.pNameExchange );
+                break;
+            }
+            case DNS_TYPE_NXT:
+            {
+                dns_free( r->Data.NXT.pNameNext );
+                break;
+            }
+            case DNS_TYPE_CNAME:
+            case DNS_TYPE_MB:
+            case DNS_TYPE_MD:
+            case DNS_TYPE_MF:
+            case DNS_TYPE_MG:
+            case DNS_TYPE_MR:
+            case DNS_TYPE_NS:
+            case DNS_TYPE_PTR:
+            {
+                dns_free( r->Data.PTR.pNameHost );
+                break;
+            }
+            case DNS_TYPE_SIG:
+            {
+                dns_free( r->Data.SIG.pNameSigner );
+                break;
+            }
+            case DNS_TYPE_SOA:
+            {
+                dns_free( r->Data.SOA.pNamePrimaryServer );
+                dns_free( r->Data.SOA.pNameAdministrator );
+                break;
+            }
+            case DNS_TYPE_SRV:
+            {
+                dns_free( r->Data.SRV.pNameTarget );
+                break;
+            }
+            default:
+                break;
+            }
+
+            next = r->pNext;
+            dns_free( r );
+        }
+        break;
+    }
+    case DnsFreeFlat:
+    case DnsFreeParsedMessageFields:
+    {
+        FIXME( "unhandled free type: %d\n", type );
+        break;
+    }
+    default:
+        WARN( "unknown free type: %d\n", type );
+        break;
+    }
+}
+
+/******************************************************************************
+ * DnsRecordSetCopyEx                      [DNSAPI.@]
+ *
+ */
+PDNS_RECORD WINAPI DnsRecordSetCopyEx( PDNS_RECORD src_set, DNS_CHARSET in, DNS_CHARSET out )
+{
+    DNS_RRSET dst_set;
+    DNS_RECORD *src, *dst;
+
+    TRACE( "(%p,%d,%d)\n", src_set, in, out );
+
+    DNS_RRSET_INIT( dst_set );
+
+    for (src = src_set; (src_set = src); src = src_set->pNext)
+    {
+        dst = DnsRecordCopyEx( src, in, out );
+        if (!dst)
+        {
+            DNS_RRSET_TERMINATE( dst_set );
+            DnsRecordListFree( dst_set.pFirstRR, DnsFreeRecordList );
+            return NULL;
+        }
+        DNS_RRSET_ADD( dst_set, dst );
+    }
+
+    DNS_RRSET_TERMINATE( dst_set );
+    return dst_set.pFirstRR;
+}

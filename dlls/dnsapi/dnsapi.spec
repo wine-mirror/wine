@@ -84,10 +84,10 @@
 @ stub DnsRecordBuild_UTF8
 @ stub DnsRecordBuild_W
 @ stdcall DnsRecordCompare(ptr ptr)
-@ stub DnsRecordCopyEx
-@ stub DnsRecordListFree
+@ stdcall DnsRecordCopyEx(ptr long long)
+@ stdcall DnsRecordListFree(ptr long)
 @ stub DnsRecordSetCompare
-@ stub DnsRecordSetCopyEx
+@ stdcall DnsRecordSetCopyEx(ptr long long)
 @ stub DnsRecordSetDetach
 @ stub DnsRecordStringForType
 @ stub DnsRecordStringForWritableType
