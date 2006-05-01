@@ -44,6 +44,9 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -263,8 +266,11 @@ static RpcConnection *rpcrt4_conn_tcp_alloc(void)
 static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
 {
   RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
-  struct sockaddr_in sa;
   int sock;
+  int ret;
+  struct addrinfo *ai;
+  struct addrinfo *ai_cur;
+  struct addrinfo hints;
 
   TRACE("(%s, %s)\n", Connection->NetworkAddr, Connection->Endpoint);
 
@@ -277,29 +283,57 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
   if (tcpc->sock != -1)
     return RPC_S_OK;
 
-  sa.sin_family = AF_INET;
-  inet_pton(AF_INET, Connection->NetworkAddr, &sa.sin_addr);
-  sa.sin_port = htons(atoi(Connection->Endpoint));
+  hints.ai_flags          = 0;
+  hints.ai_family         = PF_UNSPEC;
+  hints.ai_socktype       = SOCK_STREAM;
+  hints.ai_protocol       = IPPROTO_TCP;
+  hints.ai_addrlen        = 0;
+  hints.ai_addr           = NULL;
+  hints.ai_canonname      = NULL;
+  hints.ai_next           = NULL;
 
-  sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (sock < 0)
+  ret = getaddrinfo(Connection->NetworkAddr, Connection->Endpoint, &hints, &ai);
+  if (ret < 0)
   {
-    ERR("socket() failed\n");
-    goto error;
+    ERR("getaddrinfo failed with %d\n", ret);
+    return RPC_S_SERVER_UNAVAILABLE;
   }
 
-  if (0>connect(sock, (struct sockaddr*) &sa, sizeof (sa)))
+  for (ai_cur = ai; ai_cur; ai_cur = ai->ai_next)
   {
-    ERR("connect() failed\n");
-    goto error;
+    if (TRACE_ON(rpc))
+    {
+      char host[256];
+      char service[256];
+      getnameinfo(ai_cur->ai_addr, ai_cur->ai_addrlen,
+        host, sizeof(host), service, sizeof(service),
+        NI_NUMERICHOST | NI_NUMERICSERV);
+      TRACE("trying %s:%s\n", host, service);
+    }
+
+    sock = socket(ai_cur->ai_family, ai_cur->ai_socktype, ai_cur->ai_protocol);
+    if (sock < 0)
+    {
+      WARN("socket() failed\n");
+      continue;
+    }
+
+    if (0>connect(sock, ai_cur->ai_addr, ai_cur->ai_addrlen))
+    {
+      WARN("connect() failed\n");
+      close(sock);
+      continue;
+    }
+
+    tcpc->sock = sock;
+
+    freeaddrinfo(ai);
+    TRACE("connected\n");
+    return RPC_S_OK;
   }
 
-  tcpc->sock = sock;
-
-  return RPC_S_OK;
-
-error:
-  close(sock);
+  freeaddrinfo(ai);
+  ERR("couldn't connect to %s:%s\n", Connection->NetworkAddr, Connection->Endpoint);
   return RPC_S_SERVER_UNAVAILABLE;
 }
 
