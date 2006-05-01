@@ -345,8 +345,7 @@ NTSTATUS WINAPI RtlpNtEnumerateSubKey( HANDLE handle, UNICODE_STRING *out, ULONG
     }
   }
 
-  if (info)
-    RtlFreeHeap( GetProcessHeap(), 0, info );
+  RtlFreeHeap( GetProcessHeap(), 0, info );
   return ret;
 }
 

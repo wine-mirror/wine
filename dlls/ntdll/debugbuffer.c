@@ -107,9 +107,9 @@ NTSTATUS WINAPI RtlDestroyQueryDebugBuffer(IN PDEBUG_BUFFER iBuf)
    NTSTATUS nts = STATUS_SUCCESS;
    FIXME("(%p): stub\n", iBuf);
    if (NULL != iBuf) {
-     if (NULL != iBuf->ModuleInformation) RtlFreeHeap(GetProcessHeap(), 0, iBuf->ModuleInformation);
-     if (NULL != iBuf->HeapInformation) RtlFreeHeap(GetProcessHeap(), 0, iBuf->HeapInformation);
-     if (NULL != iBuf->LockInformation) RtlFreeHeap(GetProcessHeap(), 0, iBuf->LockInformation);
+     RtlFreeHeap(GetProcessHeap(), 0, iBuf->ModuleInformation);
+     RtlFreeHeap(GetProcessHeap(), 0, iBuf->HeapInformation);
+     RtlFreeHeap(GetProcessHeap(), 0, iBuf->LockInformation);
      RtlFreeHeap(GetProcessHeap(), 0, iBuf);
    }
    return nts;

@@ -470,7 +470,7 @@ error:
         SIZE_T size = 0;
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
-    if (info) RtlFreeHeap( GetProcessHeap(), 0, info );
+    RtlFreeHeap( GetProcessHeap(), 0, info );
     if (handle) NtClose( handle );
     close( request_pipe[1] );
     return status;
