@@ -2088,7 +2088,19 @@ void WINAPI NdrConformantVaryingArrayFree( PMIDL_STUB_MESSAGE pStubMsg,
                                            unsigned char* pMemory,
                                            PFORMAT_STRING pFormat )
 {
-    FIXME( "stub\n" );
+    TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
+
+    if (pFormat[0] != RPC_FC_CVARRAY)
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return;
+    }
+
+    pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
+    pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
+
+    EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
 
 
