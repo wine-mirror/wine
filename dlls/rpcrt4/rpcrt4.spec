@@ -390,7 +390,7 @@
 @ stdcall RpcBindingSetAuthInfoExW(ptr wstr long long ptr long ptr)
 @ stdcall RpcBindingSetAuthInfoW(ptr wstr long long ptr long)
 @ stdcall RpcBindingSetObject(ptr ptr)
-@ stub RpcBindingSetOption
+@ stdcall RpcBindingSetOption(ptr long long)
 @ stdcall RpcBindingToStringBindingA(ptr ptr)
 @ stdcall RpcBindingToStringBindingW(ptr ptr)
 @ stdcall RpcBindingVectorFree(ptr)

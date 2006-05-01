@@ -1040,3 +1040,12 @@ RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, unsigned short *ServerPrincN
           AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr);
     return RPC_S_OK;
 }
+
+/***********************************************************************
+ *             RpcBindingSetOption (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Option, ULONG OptionValue)
+{
+    FIXME("(%p, %ld, %ld): stub\n", BindingHandle, Option, OptionValue);
+    return RPC_S_OK;
+}
