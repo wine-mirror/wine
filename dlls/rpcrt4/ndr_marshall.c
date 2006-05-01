@@ -709,10 +709,6 @@ void WINAPI PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(const SHORT*)pFormat;
-  if (attr & RPC_FC_P_DEREF) {
-    Pointer = *(unsigned char**)Pointer;
-    TRACE("deref => %p\n", Pointer);
-  }
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
@@ -736,6 +732,10 @@ void WINAPI PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   TRACE("calling marshaller for type 0x%x\n", (int)*desc);
 
   if (Pointer) {
+    if (attr & RPC_FC_P_DEREF) {
+      Pointer = *(unsigned char**)Pointer;
+      TRACE("deref => %p\n", Pointer);
+    }
     m = NdrMarshaller[*desc & NDR_TABLE_MASK];
     if (m) m(pStubMsg, Pointer, desc);
     else FIXME("no marshaller for data type=%02x\n", *desc);
@@ -763,10 +763,6 @@ void WINAPI PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(const SHORT*)pFormat;
-  if (attr & RPC_FC_P_DEREF) {
-    pPointer = *(unsigned char***)pPointer;
-    TRACE("deref => %p\n", pPointer);
-  }
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
@@ -789,6 +785,12 @@ void WINAPI PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   }
 
   if (pointer_id) {
+    if (attr & RPC_FC_P_DEREF) {
+      if (!*pPointer || fMustAlloc)
+        *pPointer = NdrAllocate(pStubMsg, sizeof(void *));
+      pPointer = *(unsigned char***)pPointer;
+      TRACE("deref => %p\n", pPointer);
+    }
     m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
     if (m) m(pStubMsg, pPointer, desc, fMustAlloc);
     else FIXME("no unmarshaller for data type=%02x\n", *desc);
@@ -813,10 +815,6 @@ void WINAPI PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(const SHORT*)pFormat;
-  if (attr & RPC_FC_P_DEREF) {
-    Pointer = *(unsigned char**)Pointer;
-    TRACE("deref => %p\n", Pointer);
-  }
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
@@ -832,6 +830,11 @@ void WINAPI PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   default:
     FIXME("unhandled ptr type=%02x\n", type);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  if (attr & RPC_FC_P_DEREF) {
+    Pointer = *(unsigned char**)Pointer;
+    TRACE("deref => %p\n", Pointer);
   }
 
   m = NdrBufferSizer[*desc & NDR_TABLE_MASK];
@@ -855,9 +858,6 @@ unsigned long WINAPI PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(const SHORT*)pFormat;
-  if (attr & RPC_FC_P_DEREF) {
-    TRACE("deref\n");
-  }
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
@@ -865,6 +865,10 @@ unsigned long WINAPI PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   default:
     FIXME("unhandled ptr type=%02x\n", type);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  if (attr & RPC_FC_P_DEREF) {
+    TRACE("deref\n");
   }
 
   m = NdrMemorySizer[*desc & NDR_TABLE_MASK];
@@ -891,12 +895,13 @@ void WINAPI PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(const SHORT*)pFormat;
+
+  if (!Pointer) return;
+
   if (attr & RPC_FC_P_DEREF) {
     Pointer = *(unsigned char**)Pointer;
     TRACE("deref => %p\n", Pointer);
   }
-
-  if (!Pointer) return;
 
   m = NdrFreer[*desc & NDR_TABLE_MASK];
   if (m) m(pStubMsg, Pointer, desc);
