@@ -5646,7 +5646,7 @@ HRESULT WINAPI StgCreateDocfile(
   if ( FAILED( validateSTGM(grfMode) ))
     goto end;
 
-  /* StgCreateDocFile always opens for write */
+  /* StgCreateDocFile seems to refuse readonly access, despite MSDN */
   switch(STGM_ACCESS_MODE(grfMode))
   {
   case STGM_WRITE:
@@ -5656,20 +5656,19 @@ HRESULT WINAPI StgCreateDocfile(
     goto end;
   }
 
-  /* can't share write */
-  switch(STGM_SHARE_MODE(grfMode))
-  {
-  case STGM_SHARE_EXCLUSIVE:
-  case STGM_SHARE_DENY_WRITE:
-    break;
-  default:
-    goto end;
-  }
+  /* if no share mode given then DENY_NONE is the default */     
+  if (STGM_SHARE_MODE(grfMode) == 0)
+    grfMode |= STGM_SHARE_DENY_NONE;
 
-  /* shared reading requires transacted mode */
-  if( STGM_SHARE_MODE(grfMode) == STGM_SHARE_DENY_WRITE &&
-     !(grfMode&STGM_TRANSACTED) )
+  /* must have at least one access mode */
+  if (STGM_ACCESS_MODE(grfMode) == 0)
     goto end;
+  
+  /* in direct mode, can only use SHARE_EXCLUSIVE */
+  if (!(grfMode & STGM_TRANSACTED) && (STGM_SHARE_MODE(grfMode) != STGM_SHARE_EXCLUSIVE))
+    goto end;
+
+  /* but in transacted mode, any share mode is valid */
 
   /*
    * Generate a unique name.
