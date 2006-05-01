@@ -83,7 +83,7 @@
 @ stub DnsQuery_W
 @ stub DnsRecordBuild_UTF8
 @ stub DnsRecordBuild_W
-@ stub DnsRecordCompare
+@ stdcall DnsRecordCompare(ptr ptr)
 @ stub DnsRecordCopyEx
 @ stub DnsRecordListFree
 @ stub DnsRecordSetCompare
