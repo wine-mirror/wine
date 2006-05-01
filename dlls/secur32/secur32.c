@@ -396,14 +396,20 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
     {
         providerTable = HeapAlloc(GetProcessHeap(), 0, sizeof(SecureProviderTable));
         if (!providerTable)
+        {
+            LeaveCriticalSection(&cs);
             return NULL;
+        }
 
         list_init(&providerTable->table);
     }
 
     ret = HeapAlloc(GetProcessHeap(), 0, sizeof(SecureProvider));
     if (!ret)
+    {
+        LeaveCriticalSection(&cs);
         return NULL;
+    }
 
     list_add_tail(&providerTable->table, &ret->entry);
     ret->lib = NULL;
@@ -439,7 +445,10 @@ void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
     {
         packageTable = HeapAlloc(GetProcessHeap(), 0, sizeof(SecurePackageTable));
         if (!packageTable)
+        {
+            LeaveCriticalSection(&cs);
             return;
+        }
 
         packageTable->numPackages = 0;
         list_init(&packageTable->table);
