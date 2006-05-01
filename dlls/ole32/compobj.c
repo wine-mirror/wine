@@ -1878,11 +1878,8 @@ HRESULT WINAPI CoCreateInstance(
 			  &IID_IClassFactory,
 			  (LPVOID)&lpclf);
 
-  if (FAILED(hres)) {
-    FIXME("no classfactory created for CLSID %s, hres is 0x%08lx\n",
-	  debugstr_guid(rclsid),hres);
+  if (FAILED(hres))
     return hres;
-  }
 
   /*
    * Create the object and don't forget to release the factory
