@@ -19,10 +19,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
 #include <stdarg.h>
+#include <sys/types.h>
+
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_NAMESER_H
+# include <arpa/nameser.h>
+#endif
+#ifdef HAVE_RESOLV_H
+# include <resolv.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -86,4 +98,169 @@ BOOL WINAPI DnsNameCompare_W( LPWSTR name1, LPWSTR name2 )
         name2++;
     }
     return TRUE;
+}
+
+/******************************************************************************
+ * DnsValidateName_A              [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsValidateName_A( LPCSTR name, DNS_NAME_FORMAT format )
+{
+    LPWSTR nameW;
+    DNS_STATUS ret;
+
+    TRACE( "(%s, %d)\n", debugstr_a(name), format );
+
+    nameW = dns_strdup_aw( name );
+    ret = DnsValidateName_W( nameW, format );
+
+    dns_free( nameW );
+    return ret;
+}
+
+/******************************************************************************
+ * DnsValidateName_UTF8           [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsValidateName_UTF8( LPCSTR name, DNS_NAME_FORMAT format )
+{
+    LPWSTR nameW;
+    DNS_STATUS ret;
+
+    TRACE( "(%s, %d)\n", debugstr_a(name), format );
+
+    nameW = dns_strdup_uw( name );
+    ret = DnsValidateName_W( nameW, format );
+
+    dns_free( nameW );
+    return ret;
+}
+
+#define HAS_EXTENDED        0x0001
+#define HAS_NUMERIC         0x0002
+#define HAS_NON_NUMERIC     0x0004
+#define HAS_DOT             0x0008
+#define HAS_DOT_DOT         0x0010
+#define HAS_SPACE           0x0020
+#define HAS_INVALID         0x0040
+#define HAS_ASTERISK        0x0080
+#define HAS_UNDERSCORE      0x0100
+#define HAS_LONG_LABEL      0x0200
+
+/******************************************************************************
+ * DnsValidateName_W              [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsValidateName_W( LPCWSTR name, DNS_NAME_FORMAT format )
+{
+    const WCHAR *p;
+    unsigned int i, j, state = 0;
+    static const WCHAR invalid[] = {
+        '{','|','}','~','[','\\',']','^','\'',':',';','<','=','>',
+        '?','@','!','\"','#','$','%','^','`','(',')','+','/',',',0 };
+
+    TRACE( "(%s, %d)\n", debugstr_w(name), format );
+
+    if (!name) return ERROR_INVALID_NAME;
+
+    for (p = name, i = 0, j = 0; *p; p++, i++, j++)
+    {
+        if (*p == '.')
+        {
+            j = 0;
+            state |= HAS_DOT;
+            if (p[1] == '.') state |= HAS_DOT_DOT;
+        }
+        else if (*p < '0' || *p > '9') state |= HAS_NON_NUMERIC;
+        else state |= HAS_NUMERIC;
+
+        if (j > 62) state |= HAS_LONG_LABEL;
+
+        if (strchrW( invalid, *p )) state |= HAS_INVALID;
+        else if ((unsigned)*p > 127) state |= HAS_EXTENDED;
+        else if (*p == ' ') state |= HAS_SPACE;
+        else if (*p == '_') state |= HAS_UNDERSCORE;
+        else if (*p == '*') state |= HAS_ASTERISK;
+    }
+
+    if (i == 0 || i > 255 ||
+        (state & HAS_LONG_LABEL) ||
+        (state & HAS_DOT_DOT) ||
+        (name[0] == '.' && name[1])) return ERROR_INVALID_NAME;
+
+    switch (format)
+    {
+    case DnsNameDomain:
+    {
+        if (!(state & HAS_NON_NUMERIC) && (state & HAS_NUMERIC))
+            return DNS_ERROR_NUMERIC_NAME;
+        if ((state & HAS_EXTENDED) || (state & HAS_UNDERSCORE))
+            return DNS_ERROR_NON_RFC_NAME;
+        if ((state & HAS_SPACE) ||
+            (state & HAS_INVALID) ||
+            (state & HAS_ASTERISK)) return DNS_ERROR_INVALID_NAME_CHAR;
+        break;
+    }
+    case DnsNameDomainLabel:
+    {
+        if (state & HAS_DOT) return ERROR_INVALID_NAME;
+        if ((state & HAS_EXTENDED) || (state & HAS_UNDERSCORE))
+            return DNS_ERROR_NON_RFC_NAME;
+        if ((state & HAS_SPACE) ||
+            (state & HAS_INVALID) ||
+            (state & HAS_ASTERISK)) return DNS_ERROR_INVALID_NAME_CHAR;
+        break;
+    }
+    case DnsNameHostnameFull:
+    {
+        if (!(state & HAS_NON_NUMERIC) && (state & HAS_NUMERIC))
+            return DNS_ERROR_NUMERIC_NAME;
+        if ((state & HAS_EXTENDED) || (state & HAS_UNDERSCORE))
+            return DNS_ERROR_NON_RFC_NAME;
+        if ((state & HAS_SPACE) ||
+            (state & HAS_INVALID) ||
+            (state & HAS_ASTERISK)) return DNS_ERROR_INVALID_NAME_CHAR;
+        break;
+    }
+    case DnsNameHostnameLabel:
+    {
+        if (state & HAS_DOT) return ERROR_INVALID_NAME;
+        if (!(state & HAS_NON_NUMERIC) && (state & HAS_NUMERIC))
+            return DNS_ERROR_NUMERIC_NAME;
+        if ((state & HAS_EXTENDED) || (state & HAS_UNDERSCORE))
+            return DNS_ERROR_NON_RFC_NAME;
+        if ((state & HAS_SPACE) ||
+            (state & HAS_INVALID) ||
+            (state & HAS_ASTERISK)) return DNS_ERROR_INVALID_NAME_CHAR;
+        break;
+    }
+    case DnsNameWildcard:
+    {
+        if (!(state & HAS_NON_NUMERIC) && (state & HAS_NUMERIC))
+            return ERROR_INVALID_NAME;
+        if (name[0] != '*') return ERROR_INVALID_NAME;
+        if (name[1] && name[1] != '.')
+            return DNS_ERROR_INVALID_NAME_CHAR;
+        if ((state & HAS_EXTENDED) ||
+            (state & HAS_SPACE) ||
+            (state & HAS_INVALID)) return ERROR_INVALID_NAME;
+        break;
+    }
+    case DnsNameSrvRecord:
+    {
+        if (!(state & HAS_NON_NUMERIC) && (state & HAS_NUMERIC))
+            return ERROR_INVALID_NAME;
+        if (name[0] != '_') return ERROR_INVALID_NAME;
+        if ((state & HAS_UNDERSCORE) && !name[1])
+            return DNS_ERROR_NON_RFC_NAME;
+        if ((state & HAS_EXTENDED) ||
+            (state & HAS_SPACE) ||
+            (state & HAS_INVALID)) return ERROR_INVALID_NAME;
+        break;
+    }
+    default:
+        WARN( "unknown format: %d\n", format );
+        break;
+    }
+    return ERROR_SUCCESS;
 }

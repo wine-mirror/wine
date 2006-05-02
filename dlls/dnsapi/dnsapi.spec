@@ -117,9 +117,9 @@
 @ stub DnsUpdateTest_UTF8
 @ stub DnsUpdateTest_W
 @ stub DnsUtf8ToUnicode
-@ stub DnsValidateName_A
-@ stub DnsValidateName_UTF8
-@ stub DnsValidateName_W
+@ stdcall DnsValidateName_A(str long)
+@ stdcall DnsValidateName_UTF8(str long)
+@ stdcall DnsValidateName_W(wstr long)
 @ stub DnsValidateUtf8Byte
 @ stub DnsWinsRecordFlagForString
 @ stub DnsWinsRecordFlagString
