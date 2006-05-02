@@ -1029,13 +1029,21 @@ static void test_GetPrinterDriver(void)
         ok(!ret, "level %d: GetPrinterDriver should fail\n", level);
         if (level >= 1 && level <= 6)
         {
+            /* Not all levels are supported on all Windows-Versions */
+            if(GetLastError() == ERROR_INVALID_LEVEL) continue;
             ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %ld\n", GetLastError());
             ok(needed > 0,"not expected needed buffer size %ld\n", needed);
         }
         else
         {
-            ok(GetLastError() == ERROR_INVALID_LEVEL, "wrong error %ld\n", GetLastError());
-            ok(needed == (DWORD)-1,"not expected needed buffer size %ld\n", needed);
+            /* ERROR_OUTOFMEMORY found on win9x */
+            ok( ((GetLastError() == ERROR_INVALID_LEVEL) ||
+                 (GetLastError() == ERROR_OUTOFMEMORY)),
+                "%d: returned %d with %ld (expected '0' with: " \
+                "ERROR_INVALID_LEVEL or ERROR_OUTOFMEMORY)\n",
+                level, ret, GetLastError());
+            /* needed is modified in win9x. The modified Value depends on the
+               default Printer. testing for "needed == (DWORD)-1" will fail */
             continue;
         }
 
@@ -1052,7 +1060,10 @@ static void test_GetPrinterDriver(void)
             DRIVER_INFO_2 *di_2 = (DRIVER_INFO_2 *)buf;
             DWORD calculated = sizeof(*di_2);
 
-            ok(di_2->cVersion >= 0 && di_2->cVersion <= 3, "di_2->cVersion = %ld\n", di_2->cVersion);
+            /* MSDN is wrong: The Drivers on the win9x-CD's have cVersion=0x0400
+               NT351: 1, NT4.0+w2k(Kernelmode): 2, w2k and above(Usermode): 3  */
+            ok((di_2->cVersion >= 0 && di_2->cVersion <= 3) ||
+                (di_2->cVersion == 0x0400), "di_2->cVersion = %ld\n", di_2->cVersion);
             ok(di_2->pName != NULL, "not expected NULL ptr\n");
             ok(di_2->pEnvironment != NULL, "not expected NULL ptr\n");
             ok(di_2->pDriverPath != NULL, "not expected NULL ptr\n");
