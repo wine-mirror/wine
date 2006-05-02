@@ -1239,12 +1239,12 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     size->cx = size->cy = nFit = extent = 0;
     for(index = 0; index < count; index++)
     {
- 	if(!GetTextExtentPoint32W( hdc, str, 1, &tSize )) goto done;
+ 	if(!GetTextExtentPoint32W( hdc, str, index + 1, &tSize )) goto done;
         /* GetTextExtentPoint includes intercharacter spacing. */
         /* FIXME - justification needs doing yet.  Remember that the base
          * data will not be in logical coordinates.
          */
-	extent += tSize.cx;
+	extent = tSize.cx;
 	if( !lpnFit || extent <= maxExt )
         /* It is allowed to be equal. */
         {
@@ -1252,7 +1252,6 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
 	    if( alpDx ) alpDx[index] = extent;
         }
 	if( tSize.cy > size->cy ) size->cy = tSize.cy;
-	str++;
     }
     size->cx = extent;
     if(lpnFit) *lpnFit = nFit;
