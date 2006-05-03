@@ -19,7 +19,6 @@
  */
 /* 
  * TODO:
- * Add case sensitivity test for StringTableAddString/StringTableLookupString
  * Add test for StringTableStringFromIdEx
  */
 
@@ -48,6 +47,8 @@ static VOID     (WINAPI *pStringTableTrim)(HSTRING_TABLE);
 
 HMODULE hdll;
 static WCHAR string[] = {'s','t','r','i','n','g',0};
+static WCHAR String[] = {'S','t','r','i','n','g',0};
+static WCHAR foo[] = {'f','o','o',0};
 HANDLE table, table2;  /* Handles pointing to our tables */
 
 static void load_it_up(void)
@@ -89,10 +90,23 @@ static void test_StringTableInitialize(void)
 
 static void test_StringTableAddString(void)
 {
-    DWORD retval;
+    DWORD retval, retval2, retval3, retval4;
 
+    /* case insensitive */
     retval=pStringTableAddString(table,string,0);
     ok(retval!=-1,"Failed to add string to String Table\n");
+    
+    retval2=pStringTableAddString(table,String,0);
+    ok(retval2!=-1,"Failed to add String to String Table\n");    
+    ok(retval=retval2,"string and String have different IDs in String Table\n");        
+    
+    retval3=pStringTableAddString(table,foo,0);
+    ok(retval3!=-1,"Failed to add foo to String Table\n");        
+    ok(retval3!=retval2,"foo and String share the same ID in String Table\n");            
+    
+    /* case sensitive */    
+    retval4=pStringTableAddString(table,String,ST_CASE_SENSITIVE_COMPARE);
+    ok(retval!=retval4,"String and string share same ID in Table\n");        
 }
 
 static void test_StringTableDuplicate(void)
@@ -105,11 +119,29 @@ static void test_StringTableLookUpString(void)
 {   
     DWORD retval, retval2;
     
+    /* case insensitive */
     retval=pStringTableLookUpString(table,string,0);
     ok(retval!=-1,"Failed find string in String Table 1\n");
 
-    retval2=pStringTableLookUpString(table2,string,0);
-    ok(retval2!=-1,"Failed find string in String Table 2\n");
+    retval=pStringTableLookUpString(table2,string,0);
+    ok(retval!=-1,"Failed find string in String Table 2\n");
+    
+    retval=pStringTableLookUpString(table,String,0);
+    ok(retval!=-1,"Failed find String in String Table 1\n");
+
+    retval=pStringTableLookUpString(table2,String,0);
+    ok(retval!=-1,"Failed find String in String Table 2\n");    
+    
+    retval=pStringTableLookUpString(table,foo,0);
+    ok(retval!=-1,"Failed find foo in String Table 1\n");    
+    
+    retval=pStringTableLookUpString(table2,foo,0);
+    ok(retval!=-1,"Failed find foo in String Table 2\n");    
+    
+    /* case sensitive */
+    retval=pStringTableLookUpString(table,string,ST_CASE_SENSITIVE_COMPARE);
+    retval2=pStringTableLookUpString(table,String,ST_CASE_SENSITIVE_COMPARE);    
+    ok(retval!=retval2,"Lookup of string = String in Table 1\n");
 }
 
 static void test_StringTableStringFromId(void)
