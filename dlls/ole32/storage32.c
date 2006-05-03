@@ -302,7 +302,6 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
   StgProperty       currentProperty;
   ULONG             foundPropertyIndex;
   HRESULT           res = STG_E_UNKNOWN;
-  DWORD             parent_grfMode;
 
   TRACE("(%p, %s, %p, %lx, %ld, %p)\n",
 	iface, debugstr_w(pwcsName), reserved1, grfMode, reserved2, ppstm);
@@ -345,9 +344,8 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
    * Check that we're compatible with the parent's storage mode, but
    * only if we are not in transacted mode
    */
-  parent_grfMode = STGM_ACCESS_MODE( This->ancestorStorage->base.openFlags );
   if(!(This->ancestorStorage->base.openFlags & STGM_TRANSACTED)) {
-    if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+    if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
     {
       res = STG_E_ACCESSDENIED;
       goto end;
@@ -438,7 +436,6 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
   StgProperty            currentProperty;
   ULONG                  foundPropertyIndex;
   HRESULT                res = STG_E_UNKNOWN;
-  DWORD                  parent_grfMode;
 
   TRACE("(%p, %s, %p, %lx, %p, %ld, %p)\n",
 	iface, debugstr_w(pwcsName), pstgPriority,
@@ -484,9 +481,8 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
    * Check that we're compatible with the parent's storage mode,
    * but only if we are not transacted
    */
-  parent_grfMode = STGM_ACCESS_MODE( This->ancestorStorage->base.openFlags );
   if(!(This->ancestorStorage->base.openFlags & STGM_TRANSACTED)) {
-    if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+    if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
     {
       res = STG_E_ACCESSDENIED;
       goto end;
@@ -845,7 +841,6 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
   StgStreamImpl*    newStream;
   StgProperty       currentProperty, newStreamProperty;
   ULONG             foundPropertyIndex, newPropertyIndex;
-  DWORD             parent_grfMode;
 
   TRACE("(%p, %s, %lx, %ld, %ld, %p)\n",
 	iface, debugstr_w(pwcsName), grfMode,
@@ -883,9 +878,8 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
    * Check that we're compatible with the parent's storage mode
    * if not in transacted mode
    */
-  parent_grfMode = STGM_ACCESS_MODE( This->ancestorStorage->base.openFlags );
-  if(!(parent_grfMode & STGM_TRANSACTED)) {
-    if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+  if(!(This->ancestorStorage->base.openFlags & STGM_TRANSACTED)) {
+    if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->openFlags ) )
       return STG_E_ACCESSDENIED;
   }
 
@@ -1062,7 +1056,6 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   ULONG            foundPropertyIndex;
   ULONG            newPropertyIndex;
   HRESULT          hr;
-  DWORD            parent_grfMode;
 
   TRACE("(%p, %s, %lx, %ld, %ld, %p)\n",
 	iface, debugstr_w(pwcsName), grfMode,
@@ -1095,8 +1088,7 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   /*
    * Check that we're compatible with the parent's storage mode
    */
-  parent_grfMode = STGM_ACCESS_MODE( This->base.ancestorStorage->base.openFlags );
-  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( This->base.openFlags ) )
   {
     WARN("access denied\n");
     return STG_E_ACCESSDENIED;
