@@ -100,7 +100,7 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
 
     if(!lpsa)
     {
-        ok(*(DWORD *)wiresa == FALSE, "wiresa + 0x0 should be FALSE instead of 0x%08lx\n", *(DWORD *)wiresa);
+        ok(*(void **)wiresa == NULL, "wiresa + 0x0 should be NULL instead of 0x%08lx\n", *(DWORD *)wiresa);
         return;
     }
 
@@ -108,7 +108,7 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
     sftype = get_union_type(lpsa);
     cell_count = get_cell_count(lpsa);
 
-    ok(*(DWORD *)wiresa == TRUE, "wiresa + 0x0 should be TRUE instead of 0x%08lx\n", *(DWORD *)wiresa);
+    ok(*(DWORD *)wiresa, "wiresa + 0x0 should be non-NULL instead of 0x%08lx\n", *(DWORD *)wiresa); /* win2k: this is lpsa. winxp: this is 0x00000001 */
     wiresa += sizeof(DWORD);
     ok(*(DWORD *)wiresa == lpsa->cDims, "wiresa + 0x4 should be lpsa->cDims instead of 0x%08lx\n", *(DWORD *)wiresa);
     wiresa += sizeof(DWORD);
