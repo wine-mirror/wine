@@ -914,6 +914,11 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
     else
       return STG_E_FILEALREADYEXISTS;
   }
+  else if (STGM_ACCESS_MODE(This->openFlags) == STGM_READ)
+  {
+    WARN("read-only storage\n");
+    return STG_E_ACCESSDENIED;
+  }
 
   /*
    * memset the empty property
@@ -1119,6 +1124,11 @@ HRESULT WINAPI StorageImpl_CreateStorage(
       WARN("file already exists\n");
       return STG_E_FILEALREADYEXISTS;
     }
+  }
+  else if (STGM_ACCESS_MODE(This->base.openFlags) == STGM_READ)
+  {
+    WARN("read-only storage\n");
+    return STG_E_ACCESSDENIED;
   }
 
   /*
