@@ -202,9 +202,6 @@ NTSTATUS WINAPI NtQueryInformationToken(
 
     switch (tokeninfoclass)
     {
-    case TokenGroups:
-        len = sizeof(TOKEN_GROUPS);
-        break;
     case TokenOwner:
         len = sizeof(TOKEN_OWNER) + sizeof(SID);
         break;
