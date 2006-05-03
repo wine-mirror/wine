@@ -626,6 +626,7 @@ static void test_storage_refcount(void)
     static const WCHAR szDot[] = { '.',0 };
     WCHAR filename[MAX_PATH];
     IStorage *stg = NULL;
+    IStorage *stgprio = NULL;
     HRESULT r;
     IStream *stm = NULL;
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
@@ -673,10 +674,24 @@ static void test_storage_refcount(void)
     r = IStream_Release(stm);
     ok (r == 0, "stream not released\n");
 
-    /* test for grfMode open issue */
+    /* tests that STGM_PRIORITY doesn't prevent readwrite access from other
+     * StgOpenStorage calls in transacted mode */
+    r = StgOpenStorage( filename, NULL, STGM_PRIORITY, NULL, 0, &stgprio);
+    ok(r==S_OK, "StgOpenStorage failed with error 0x%08lx\n", r);
+
+    todo_wine {
+    /* non-transacted mode read/write fails */
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg);
+    ok(r==STG_E_LOCKVIOLATION, "StgOpenStorage should return STG_E_LOCKVIOLATION instead of 0x%08lx\n", r);
+    }
+
+    /* non-transacted mode read-only succeeds */
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_WRITE|STGM_READ, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed with error 0x%08lx\n", r);
+    IStorage_Release(stg);
 
     r = StgOpenStorage( filename, NULL, STGM_TRANSACTED|STGM_SHARE_DENY_WRITE|STGM_READWRITE, NULL, 0, &stg);
-    ok(r==S_OK, "StgOpenStorage failed\n");
+    ok(r==S_OK, "StgOpenStorage failed with error 0x%08lx\n", r);
     if(stg)
     {
         static const WCHAR stgname[] = { ' ',' ',' ','2','9',0 };
@@ -727,6 +742,7 @@ static void test_storage_refcount(void)
         r = IStorage_Release(stg);
         ok(r == 0, "wrong ref count\n");
     }
+    IStorage_Release(stgprio);
 
     DeleteFileW(filename);
 }

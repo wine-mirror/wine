@@ -5914,7 +5914,6 @@ HRESULT WINAPI StgOpenStorage(
     goto end;
   }
 
-  /* STGM_PRIORITY implies exclusive access */
   if (grfMode & STGM_PRIORITY)
   {
     if (grfMode & (STGM_TRANSACTED|STGM_SIMPLE|STGM_NOSCRATCH|STGM_NOSNAPSHOT))
@@ -5924,13 +5923,20 @@ HRESULT WINAPI StgOpenStorage(
     if(STGM_ACCESS_MODE(grfMode) != STGM_READ)
       return STG_E_INVALIDFLAG;
     grfMode &= ~0xf0; /* remove the existing sharing mode */
-    grfMode |= STGM_SHARE_DENY_WRITE;
+    grfMode |= STGM_SHARE_DENY_NONE;
+
+    /* STGM_PRIORITY stops other IStorage objects on the same file from
+     * committing until the STGM_PRIORITY IStorage is closed. it also
+     * stops non-transacted mode StgOpenStorage calls with write access from
+     * succeeding. obviously, both of these cannot be achieved through just
+     * file share flags */
+    FIXME("STGM_PRIORITY mode not implemented correctly\n");
   }
 
   /*
    * Validate the sharing mode
    */
-  if (!(grfMode & STGM_TRANSACTED))
+  if (!(grfMode & (STGM_TRANSACTED|STGM_PRIORITY)))
     switch(STGM_SHARE_MODE(grfMode))
     {
       case STGM_SHARE_EXCLUSIVE:
