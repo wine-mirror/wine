@@ -671,15 +671,31 @@ static void test_storage_refcount(void)
 
     /* test for grfMode open issue */
 
-    r = StgOpenStorage( filename, NULL, 0x00010020, NULL, 0, &stg);
+    r = StgOpenStorage( filename, NULL, STGM_TRANSACTED|STGM_SHARE_DENY_WRITE|STGM_READWRITE, NULL, 0, &stg);
     ok(r==S_OK, "StgOpenStorage failed\n");
     if(stg)
     {
-        r = IStorage_OpenStream( stg, stmname, 0, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
-        ok(r == S_OK, "OpenStream should succeed\n");
+        static const WCHAR stgname[] = { ' ',' ',' ','2','9',0 };
+        static const WCHAR stgname2[] = { 'C','V','_','i','e','w',0 };
+        static const WCHAR stmname2[] = { 'V','a','r','2','D','a','t','a',0 };
+        IStorage *stg2;
+        IStorage *stg3;
+
+        r = IStorage_CreateStorage( stg, stgname, STGM_SHARE_EXCLUSIVE, 0, 0, &stg2 );
+        ok(r == S_OK, "CreateStorage should have succeeded instead of returning 0x%08lx\n", r);
+
+        todo_wine {
+        r = IStorage_CreateStorage( stg2, stgname2, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &stg3 );
+        ok(r == STG_E_ACCESSDENIED, "CreateStorage should have returned STG_E_ACCESSDENIED instead of 0x%08lx\n", r);
+
+        r = IStorage_CreateStream( stg2, stmname2, STGM_CREATE|STGM_SHARE_EXCLUSIVE, 0, 0, &stm );
+        ok(r == STG_E_ACCESSDENIED, "CreateStream should have returned STG_E_ACCESSDENIED instead of 0x%08lx\n", r);
+
+        IStorage_Release(stg2);
 
         r = IStorage_Release(stg);
         ok(r == 0, "wrong ref count\n");
+        }
     }
 
     DeleteFileW(filename);
