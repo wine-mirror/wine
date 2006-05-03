@@ -5240,6 +5240,18 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
                     if (rgvt[i] == VT_VARIANT)
                         VariantCopy(&rgvarg[i], src_arg);
+                    else if (rgvt[i] == (VT_VARIANT | VT_BYREF))
+                    {
+                        if (rgvt[i] == V_VT(src_arg))
+                            V_VARIANTREF(&rgvarg[i]) = V_VARIANTREF(src_arg);
+                        else
+                        {
+                            VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
+                            hres = VariantCopy(&missing_arg[i], src_arg);
+                            V_VARIANTREF(&rgvarg[i]) = &missing_arg[i];
+                        }
+                        V_VT(&rgvarg[i]) = rgvt[i];
+                    }
                     else if ((rgvt[i] & VT_BYREF) && !V_ISBYREF(src_arg))
                     {
                         VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
