@@ -164,6 +164,8 @@ static void test_marshal_LPSAFEARRAY(void)
     *(DWORD *)lpsa->pvData = 0xcafebabe;
 
     lpsa->cLocks = 7;
+    size = LPSAFEARRAY_UserSize(&umcb.Flags, 1, &lpsa);
+    ok(size == 68, "size should be 68 bytes, not %ld\n", size);
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
     ok(size == 64, "size should be 64 bytes, not %ld\n", size);
     buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
@@ -196,6 +198,25 @@ static void test_marshal_LPSAFEARRAY(void)
         LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
+
+    sab.lLbound = 5;
+    sab.cElements = 10;
+
+    lpsa = SafeArrayCreate(VT_R8, 1, &sab);
+    *(double *)lpsa->pvData = 3.1415;
+
+    lpsa->cLocks = 7;
+    size = LPSAFEARRAY_UserSize(&umcb.Flags, 1, &lpsa);
+    ok(size == 128, "size should be 128 bytes, not %ld\n", size);
+    size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
+    ok(size == 128, "size should be 128 bytes, not %ld\n", size);
+    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
+
+    check_safearray(buffer, lpsa);
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+    SafeArrayDestroy(lpsa);
 }
 
 static void check_bstr(void *buffer, BSTR b)

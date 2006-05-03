@@ -662,6 +662,7 @@ unsigned long WINAPI LPSAFEARRAY_UserSize(unsigned long *pFlags, unsigned long S
 
     TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, *ppsa);
 
+    ALIGN_LENGTH(size, 3);
     size += sizeof(ULONG_PTR);
     if (*ppsa)
     {
@@ -726,10 +727,12 @@ unsigned long WINAPI LPSAFEARRAY_UserSize(unsigned long *pFlags, unsigned long S
                 }
                 break;
             }
+            case SF_I8:
+                ALIGN_LENGTH(size, 7);
+                /* fallthrough */
             case SF_I1:
             case SF_I2:
             case SF_I4:
-            case SF_I8:
                 size += ulCellCount * psa->cbElements;
                 break;
             default:
@@ -747,6 +750,7 @@ unsigned char * WINAPI LPSAFEARRAY_UserMarshal(unsigned long *pFlags, unsigned c
 
     TRACE("("); dump_user_flags(pFlags); TRACE(", %p, &%p\n", Buffer, *ppsa);
 
+    ALIGN_POINTER(Buffer, 3);
     *(ULONG_PTR *)Buffer = *ppsa ? TRUE : FALSE;
     Buffer += sizeof(ULONG_PTR);
     if (*ppsa)
@@ -836,10 +840,13 @@ unsigned char * WINAPI LPSAFEARRAY_UserMarshal(unsigned long *pFlags, unsigned c
                     }
                     break;
                 }
+
+                case SF_I8:
+                    ALIGN_POINTER(Buffer, 7);
+                    /* fallthrough */
                 case SF_I1:
                 case SF_I2:
                 case SF_I4:
-                case SF_I8:
                     /* Just copy the data over */
                     memcpy(Buffer, psa->pvData, ulCellCount * psa->cbElements);
                     Buffer += ulCellCount * psa->cbElements;
@@ -871,6 +878,7 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(unsigned long *pFlags, unsigned
 
     TRACE("("); dump_user_flags(pFlags); TRACE(", %p, %p\n", Buffer, ppsa);
 
+    ALIGN_POINTER(Buffer, 3);
     ptr = *(ULONG_PTR *)Buffer;
     Buffer += sizeof(ULONG_PTR);
 
@@ -964,10 +972,13 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(unsigned long *pFlags, unsigned
 
                 break;
             }
+
+            case SF_I8:
+                ALIGN_POINTER(Buffer, 7);
+                /* fallthrough */
             case SF_I1:
             case SF_I2:
             case SF_I4:
-            case SF_I8:
                 /* Just copy the data over */
                 memcpy((*ppsa)->pvData, Buffer, cell_count * (*ppsa)->cbElements);
                 Buffer += cell_count * (*ppsa)->cbElements;
