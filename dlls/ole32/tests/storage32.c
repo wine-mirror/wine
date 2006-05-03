@@ -646,6 +646,12 @@ static void test_storage_refcount(void)
                             STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
     ok(r==S_OK, "StgCreateDocfile failed\n");
 
+    r = WriteClassStg( stg, &test_stg_cls );
+    ok( r == S_OK, "WriteClassStg failed\n");
+
+    r = IStorage_Commit( stg, STGC_DEFAULT );
+    ok( r == S_OK, "IStorage_Commit failed\n");
+
     /* now create a stream */
     r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
     ok(r==S_OK, "IStorage->CreateStream failed\n");
@@ -680,9 +686,41 @@ static void test_storage_refcount(void)
         static const WCHAR stmname2[] = { 'V','a','r','2','D','a','t','a',0 };
         IStorage *stg2;
         IStorage *stg3;
+        STATSTG statstg;
+
+        r = IStorage_Stat( stg, &statstg, STATFLAG_NONAME );
+        ok(r == S_OK, "Stat should have succeded instead of returning 0x%08lx\n", r);
+        ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %ld\n", statstg.type);
+        ok(statstg.cbSize.LowPart == 0, "Statstg cbSize.LowPart should have been 0 instead of %ld\n", statstg.cbSize.LowPart);
+        ok(statstg.cbSize.HighPart == 0, "Statstg cbSize.HighPart should have been 0 instead of %ld\n", statstg.cbSize.HighPart);
+        todo_wine {
+        ok(statstg.grfMode == (STGM_TRANSACTED|STGM_SHARE_DENY_WRITE|STGM_READWRITE),
+            "Statstg grfMode should have been 0x10022 instead of 0x%lx\n", statstg.grfMode);
+        }
+        ok(statstg.grfLocksSupported == 0, "Statstg grfLocksSupported should have been 0 instead of %ld\n", statstg.grfLocksSupported);
+        ok(IsEqualCLSID(&statstg.clsid, &test_stg_cls), "Statstg clsid is not test_stg_cls\n");
+        ok(statstg.grfStateBits == 0, "Statstg grfStateBits should have been 0 instead of %ld\n", statstg.grfStateBits);
+        ok(statstg.reserved == 0, "Statstg reserved should have been 0 instead of %ld\n", statstg.reserved);
 
         r = IStorage_CreateStorage( stg, stgname, STGM_SHARE_EXCLUSIVE, 0, 0, &stg2 );
         ok(r == S_OK, "CreateStorage should have succeeded instead of returning 0x%08lx\n", r);
+
+        r = IStorage_Stat( stg2, &statstg, STATFLAG_DEFAULT );
+        ok(r == S_OK, "Stat should have succeded instead of returning 0x%08lx\n", r);
+        ok(!lstrcmpW(statstg.pwcsName, stgname),
+            "Statstg pwcsName should have been the name the storage was created with\n");
+        ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %ld\n", statstg.type);
+        ok(statstg.cbSize.LowPart == 0, "Statstg cbSize.LowPart should have been 0 instead of %ld\n", statstg.cbSize.LowPart);
+        ok(statstg.cbSize.HighPart == 0, "Statstg cbSize.HighPart should have been 0 instead of %ld\n", statstg.cbSize.HighPart);
+        todo_wine {
+        ok(statstg.grfMode == STGM_SHARE_EXCLUSIVE,
+            "Statstg grfMode should have been 0x10022 instead of 0x%lx\n", statstg.grfMode);
+        }
+        ok(statstg.grfLocksSupported == 0, "Statstg grfLocksSupported should have been 0 instead of %ld\n", statstg.grfLocksSupported);
+        ok(IsEqualCLSID(&statstg.clsid, &CLSID_NULL), "Statstg clsid is not CLSID_NULL\n");
+        ok(statstg.grfStateBits == 0, "Statstg grfStateBits should have been 0 instead of %ld\n", statstg.grfStateBits);
+        ok(statstg.reserved == 0, "Statstg reserved should have been 0 instead of %ld\n", statstg.reserved);
+        CoTaskMemFree(statstg.pwcsName);
 
         r = IStorage_CreateStorage( stg2, stgname2, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &stg3 );
         ok(r == STG_E_ACCESSDENIED, "CreateStorage should have returned STG_E_ACCESSDENIED instead of 0x%08lx\n", r);
