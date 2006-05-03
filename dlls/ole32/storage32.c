@@ -5792,7 +5792,7 @@ HRESULT WINAPI StgCreateStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD st
         return STG_E_INVALIDPARAMETER;  
     }
 
-    if (stgfmt != STGFMT_FILE && grfAttrs != 0 && grfAttrs != FILE_FLAG_NO_BUFFERING)
+    if (stgfmt == STGFMT_FILE && grfAttrs != 0 && grfAttrs != FILE_FLAG_NO_BUFFERING)
     {
         ERR("grfAttrs must be 0 or FILE_FLAG_NO_BUFFERING if stgfmt == STGFMT_FILE\n");
         return STG_E_INVALIDPARAMETER;  
@@ -5845,7 +5845,7 @@ HRESULT WINAPI StgOpenStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD stgf
         return STG_E_INVALIDPARAMETER;  
     }
 
-    if (stgfmt != STGFMT_DOCFILE && grfAttrs != 0 && grfAttrs != FILE_FLAG_NO_BUFFERING)
+    if (stgfmt == STGFMT_DOCFILE && grfAttrs != 0 && grfAttrs != FILE_FLAG_NO_BUFFERING)
     {
         ERR("grfAttrs must be 0 or FILE_FLAG_NO_BUFFERING if stgfmt == STGFMT_DOCFILE\n");
         return STG_E_INVALIDPARAMETER;  
