@@ -634,6 +634,7 @@ static void test_storage_refcount(void)
     LARGE_INTEGER pos;
     ULARGE_INTEGER upos;
     STATSTG stat;
+    char buffer[10];
 
     if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
         return;
@@ -658,6 +659,12 @@ static void test_storage_refcount(void)
 
     r = IStream_Stat( stm, &stat, STATFLAG_DEFAULT );
     ok (r == STG_E_REVERTED, "stat should fail\n");
+
+    r = IStream_Write( stm, "Test string", strlen("Test string"), NULL);
+    ok (r == STG_E_REVERTED, "IStream_Write should return STG_E_REVERTED instead of 0x%08lx\n", r);
+
+    r = IStream_Read( stm, buffer, sizeof(buffer), NULL);
+    ok (r == STG_E_REVERTED, "IStream_Read should return STG_E_REVERTED instead of 0x%08lx\n", r);
 
     r = IStream_Release(stm);
     ok (r == 0, "stream not released\n");
