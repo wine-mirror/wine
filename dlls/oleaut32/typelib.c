@@ -5239,7 +5239,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     dump_Variant(src_arg);
 
                     if (rgvt[i] == VT_VARIANT)
-                        VariantCopy(&rgvarg[i], src_arg);
+                        hres = VariantCopy(&rgvarg[i], src_arg);
                     else if (rgvt[i] == (VT_VARIANT | VT_BYREF))
                     {
                         if (rgvt[i] == V_VT(src_arg))
