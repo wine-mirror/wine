@@ -55,9 +55,7 @@ static void test_hglobal_storage_stat(void)
 
     ok( stat.pwcsName == NULL, "storage name not null\n");
     ok( stat.type == 1, "type is wrong\n");
-    todo_wine {
     ok( stat.grfMode == 0x12, "grf mode is incorrect\n");
-    }
     ok( !memcmp(&stat.clsid, &test_stg_cls, sizeof test_stg_cls), "CLSID is wrong\n");
 
     refcount = IStorage_Release( stg );
@@ -693,10 +691,8 @@ static void test_storage_refcount(void)
         ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %ld\n", statstg.type);
         ok(statstg.cbSize.LowPart == 0, "Statstg cbSize.LowPart should have been 0 instead of %ld\n", statstg.cbSize.LowPart);
         ok(statstg.cbSize.HighPart == 0, "Statstg cbSize.HighPart should have been 0 instead of %ld\n", statstg.cbSize.HighPart);
-        todo_wine {
         ok(statstg.grfMode == (STGM_TRANSACTED|STGM_SHARE_DENY_WRITE|STGM_READWRITE),
             "Statstg grfMode should have been 0x10022 instead of 0x%lx\n", statstg.grfMode);
-        }
         ok(statstg.grfLocksSupported == 0, "Statstg grfLocksSupported should have been 0 instead of %ld\n", statstg.grfLocksSupported);
         ok(IsEqualCLSID(&statstg.clsid, &test_stg_cls), "Statstg clsid is not test_stg_cls\n");
         ok(statstg.grfStateBits == 0, "Statstg grfStateBits should have been 0 instead of %ld\n", statstg.grfStateBits);
@@ -712,10 +708,8 @@ static void test_storage_refcount(void)
         ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %ld\n", statstg.type);
         ok(statstg.cbSize.LowPart == 0, "Statstg cbSize.LowPart should have been 0 instead of %ld\n", statstg.cbSize.LowPart);
         ok(statstg.cbSize.HighPart == 0, "Statstg cbSize.HighPart should have been 0 instead of %ld\n", statstg.cbSize.HighPart);
-        todo_wine {
         ok(statstg.grfMode == STGM_SHARE_EXCLUSIVE,
-            "Statstg grfMode should have been 0x10022 instead of 0x%lx\n", statstg.grfMode);
-        }
+            "Statstg grfMode should have been STGM_SHARE_EXCLUSIVE instead of 0x%lx\n", statstg.grfMode);
         ok(statstg.grfLocksSupported == 0, "Statstg grfLocksSupported should have been 0 instead of %ld\n", statstg.grfLocksSupported);
         ok(IsEqualCLSID(&statstg.clsid, &CLSID_NULL), "Statstg clsid is not CLSID_NULL\n");
         ok(statstg.grfStateBits == 0, "Statstg grfStateBits should have been 0 instead of %ld\n", statstg.grfStateBits);

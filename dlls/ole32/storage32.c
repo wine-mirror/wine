@@ -647,6 +647,8 @@ HRESULT WINAPI StorageBaseImpl_Stat(
       &curProperty,
       grfStatFlag);
 
+    pstatstg->grfMode = This->openFlags;
+
     res = S_OK;
     goto end;
   }
@@ -2298,7 +2300,7 @@ HRESULT StorageImpl_Construct(
   This->base.lpVtbl = &Storage32Impl_Vtbl;
   This->base.pssVtbl = &IPropertySetStorage_Vtbl;
   This->base.v_destructor = &StorageImpl_Destroy;
-  This->base.openFlags = openFlags;
+  This->base.openFlags = (openFlags & ~STGM_CREATE);
 
   /*
    * This is the top-level storage so initialize the ancestor pointer
@@ -4163,7 +4165,7 @@ StorageInternalImpl* StorageInternalImpl_Construct(
      */
     newStorage->base.lpVtbl = &Storage32InternalImpl_Vtbl;
     newStorage->base.v_destructor = &StorageInternalImpl_Destroy;
-    newStorage->base.openFlags = openFlags;
+    newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
 
     /*
      * Keep the ancestor storage pointer and nail a reference to it.
