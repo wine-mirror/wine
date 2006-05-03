@@ -268,7 +268,10 @@ static HRESULT WINAPI StgStreamImpl_Read(
 	iface, pv, cb, pcbRead);
 
   if (!This->parentStorage)
+  {
+    WARN("storage reverted\n");
     return STG_E_REVERTED;
+  }
  
   /*
    * If the caller is not interested in the number of bytes read,
@@ -372,6 +375,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
   case STGM_READWRITE:
       break;
   default:
+      WARN("access denied by flags: 0x%lx\n", STGM_ACCESS_MODE(This->grfMode));
       return STG_E_ACCESSDENIED;
   }
 
@@ -379,7 +383,10 @@ static HRESULT WINAPI StgStreamImpl_Write(
     return STG_E_INVALIDPOINTER;
 
   if (!This->parentStorage)
+  {
+    WARN("storage reverted\n");
     return STG_E_REVERTED;
+  }
  
   /*
    * If the caller is not interested in the number of bytes written,
@@ -395,6 +402,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
 
   if (cb == 0)
   {
+    TRACE("<-- S_OK, written 0\n");
     return S_OK;
   }
   else
@@ -441,6 +449,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
    */
   This->currentPosition.u.LowPart += *pcbWritten;
 
+  TRACE("<-- S_OK, written %lu\n", *pcbWritten);
   return S_OK;
 }
 
