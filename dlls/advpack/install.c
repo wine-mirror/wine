@@ -871,8 +871,8 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd, LPCWSTR szCmdName,
           debugstr_w(szDir), debugstr_w(lpszTitle),
           phEXE, dwFlags, pvReserved);
 
-    if (dwFlags)
-        FIXME("Unhandled flags: 0x%08lx\n", dwFlags);
+    if (dwFlags & RSC_FLAG_UPDHLPDLLS)
+        FIXME("Unhandled flag: RSC_FLAG_UPDHLPDLLS\n");
 
     if (!szCmdName || !szDir)
         return E_INVALIDARG;
