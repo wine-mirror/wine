@@ -87,7 +87,7 @@ static HRESULT del_dirs_callback(HINF hinf, PCWSTR field, void *arg)
                                MAX_INF_STRING_LENGTH, &size))
             continue;
 
-        if (DelNodeW(directory, 0))
+        if (DelNodeW(directory, ADN_DEL_IF_EMPTY))
             hr = E_FAIL;
     }
 
