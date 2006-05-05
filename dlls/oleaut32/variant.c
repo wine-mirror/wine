@@ -625,11 +625,6 @@ HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
         if (V_UNKNOWN(pVarg))
           IUnknown_Release(V_UNKNOWN(pVarg));
       }
-      else if (V_VT(pVarg) == VT_VARIANT)
-      {
-        if (V_VARIANTREF(pVarg))
-          VariantClear(V_VARIANTREF(pVarg));
-      }
     }
     V_VT(pVarg) = VT_EMPTY;
   }

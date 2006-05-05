@@ -273,11 +273,49 @@ static int IsValidVariantClearVT(VARTYPE vt, VARTYPE extraFlags)
   return ret;
 }
 
+typedef struct
+{
+    const IUnknownVtbl *lpVtbl;
+    LONG               ref;
+    LONG               events;
+} test_VariantClearImpl;
+
+static HRESULT WINAPI VC_QueryInterface(LPUNKNOWN iface,REFIID riid,LPVOID *ppobj)
+{
+    test_VariantClearImpl *This = (test_VariantClearImpl *)iface;
+    This->events |= 0x1;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI VC_AddRef(LPUNKNOWN iface) {
+    test_VariantClearImpl *This = (test_VariantClearImpl *)iface;
+    This->events |= 0x2;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI VC_Release(LPUNKNOWN iface) {
+    test_VariantClearImpl *This = (test_VariantClearImpl *)iface;
+    /* static class, won't be  freed */
+    This->events |= 0x4;
+    return InterlockedDecrement(&This->ref);
+}
+
+static const IUnknownVtbl test_VariantClear_vtbl = {
+    VC_QueryInterface,
+    VC_AddRef,
+    VC_Release,
+};
+
+static test_VariantClearImpl test_myVariantClearImpl = {&test_VariantClear_vtbl, 1, 0};
+
 static void test_VariantClear(void)
 {
   HRESULT hres;
   VARIANTARG v;
+  VARIANT v2;
   size_t i;
+  long i4;
+  IUnknown *punk;
 
 #if 0
   /* Crashes: Native does not test input for NULL, so neither does Wine */
@@ -319,6 +357,79 @@ static void test_VariantClear(void)
          hExpected, hres, vt, ExtraFlags[i]);
     }
   }
+
+  /* Some BYREF tests with non-NULL ptrs */
+
+  /* VARIANT BYREF */
+  V_VT(&v2) = VT_I4;
+  V_I4(&v2) = 0x1234;
+  V_VT(&v) = VT_VARIANT | VT_BYREF;
+  V_VARIANTREF(&v) = &v2;
+
+  hres = VariantClear(&v);
+  ok(hres == S_OK, "ret %08lx\n", hres);
+  ok(V_VT(&v) == 0, "vt %04x\n", V_VT(&v));
+  ok(V_VARIANTREF(&v) == &v2, "variant ref %p\n", V_VARIANTREF(&v2));
+  ok(V_VT(&v2) == VT_I4, "vt %04x\n", V_VT(&v2));
+  ok(V_I4(&v2) == 0x1234, "i4 %04lx\n", V_I4(&v2));
+
+  /* I4 BYREF */
+  i4 = 0x4321;
+  V_VT(&v) = VT_I4 | VT_BYREF;
+  V_I4REF(&v) = &i4;
+
+  hres = VariantClear(&v);
+  ok(hres == S_OK, "ret %08lx\n", hres);
+  ok(V_VT(&v) == 0, "vt %04x\n", V_VT(&v));
+  ok(V_I4REF(&v) == &i4, "i4 ref %p\n", V_I4REF(&v2));
+  ok(i4 == 0x4321, "i4 changed %08lx\n", i4);
+
+
+  /* UNKNOWN */
+  V_VT(&v) = VT_UNKNOWN;
+  V_UNKNOWN(&v) = (IUnknown*)&test_myVariantClearImpl;
+  test_myVariantClearImpl.events = 0;
+  hres = VariantClear(&v);
+  ok(hres == S_OK, "ret %08lx\n", hres);
+  ok(V_VT(&v) == 0, "vt %04x\n", V_VT(&v));
+  ok(V_UNKNOWN(&v) == (IUnknown*)&test_myVariantClearImpl, "unknown %p\n", V_UNKNOWN(&v));
+  /* Check that Release got called, but nothing else */
+  ok(test_myVariantClearImpl.events ==  0x4, "Unexpected call. events %08lx\n", test_myVariantClearImpl.events);
+
+  /* UNKNOWN BYREF */
+  punk = (IUnknown*)&test_myVariantClearImpl;
+  V_VT(&v) = VT_UNKNOWN | VT_BYREF;
+  V_UNKNOWNREF(&v) = &punk;
+  test_myVariantClearImpl.events = 0;
+  hres = VariantClear(&v);
+  ok(hres == S_OK, "ret %08lx\n", hres);
+  ok(V_VT(&v) == 0, "vt %04x\n", V_VT(&v));
+  ok(V_UNKNOWNREF(&v) == &punk, "unknown ref %p\n", V_UNKNOWNREF(&v));
+  /* Check that nothing got called */
+  ok(test_myVariantClearImpl.events ==  0, "Unexpected call. events %08lx\n", test_myVariantClearImpl.events);
+
+  /* DISPATCH */
+  V_VT(&v) = VT_DISPATCH;
+  V_DISPATCH(&v) = (IDispatch*)&test_myVariantClearImpl;
+  test_myVariantClearImpl.events = 0;
+  hres = VariantClear(&v);
+  ok(hres == S_OK, "ret %08lx\n", hres);
+  ok(V_VT(&v) == 0, "vt %04x\n", V_VT(&v));
+  ok(V_DISPATCH(&v) == (IDispatch*)&test_myVariantClearImpl, "dispatch %p\n", V_DISPATCH(&v));
+  /* Check that Release got called, but nothing else */
+  ok(test_myVariantClearImpl.events ==  0x4, "Unexpected call. events %08lx\n", test_myVariantClearImpl.events);
+
+  /* DISPATCH BYREF */
+  punk = (IUnknown*)&test_myVariantClearImpl;
+  V_VT(&v) = VT_DISPATCH | VT_BYREF;
+  V_DISPATCHREF(&v) = (IDispatch**)&punk;
+  test_myVariantClearImpl.events = 0;
+  hres = VariantClear(&v);
+  ok(hres == S_OK, "ret %08lx\n", hres);
+  ok(V_VT(&v) == 0, "vt %04x\n", V_VT(&v));
+  ok(V_DISPATCHREF(&v) == (IDispatch**)&punk, "dispatch ref %p\n", V_DISPATCHREF(&v));
+  /* Check that nothing got called */
+  ok(test_myVariantClearImpl.events ==  0, "Unexpected call. events %08lx\n", test_myVariantClearImpl.events);
 }
 
 static void test_VariantCopy(void)
