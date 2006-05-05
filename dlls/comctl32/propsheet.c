@@ -1606,8 +1606,7 @@ static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
      PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
   }
 
-  if ((psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD) &&
-      (ppshpage->dwFlags & PSP_USETITLE))
+  if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD)
   {
      PROPSHEET_SetTitleW(hwndDlg, psInfo->ppshheader.dwFlags,
                          psInfo->proppage[index].pszText);
