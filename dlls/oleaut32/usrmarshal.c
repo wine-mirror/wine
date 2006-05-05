@@ -646,23 +646,26 @@ void WINAPI VARIANT_UserFree(unsigned long *pFlags, VARIANT *pvar)
   VariantClear(pvar);
   if (!ref) return;
 
-  switch (vt) {
-  case VT_BSTR | VT_BYREF:
-    BSTR_UserFree(pFlags, ref);
-    break;
-  case VT_VARIANT | VT_BYREF:
-    VARIANT_UserFree(pFlags, ref);
-    break;
-  case VT_RECORD | VT_BYREF:
-    FIXME("handle BRECORD by ref\n");
-    break;
-  case VT_UNKNOWN:
-  case VT_DISPATCH:
-    IUnknown_Release(V_UNKNOWN(pvar));
-    break;
-  default:
-    FIXME("handle unknown complex type\n");
-    break;
+  if(vt & VT_ARRAY)
+    LPSAFEARRAY_UserFree(pFlags, V_ARRAYREF(pvar));
+  else
+  {
+    switch (vt)
+    {
+    case VT_BSTR | VT_BYREF:
+      BSTR_UserFree(pFlags, V_BSTRREF(pvar));
+      break;
+    case VT_VARIANT | VT_BYREF:
+      VARIANT_UserFree(pFlags, V_VARIANTREF(pvar));
+      break;
+    case VT_RECORD | VT_BYREF:
+      FIXME("handle BRECORD by ref\n");
+      break;
+    case VT_UNKNOWN | VT_BYREF:
+    case VT_DISPATCH | VT_BYREF:
+      IUnknown_Release(*V_UNKNOWNREF(pvar));
+      break;
+    }
   }
 
   CoTaskMemFree(ref);
