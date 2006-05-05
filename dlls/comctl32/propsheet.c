@@ -2925,26 +2925,69 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
   memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEA)));
 
   ppsp->dwFlags &= ~ PSP_INTERNAL_UNICODE;
-  if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) && HIWORD( ppsp->u.pszTemplate ) )
-  {
-     int len = strlen(lpPropSheetPage->u.pszTemplate);
 
-     ppsp->u.pszTemplate = Alloc( len+1 );
-     strcpy( (LPSTR)ppsp->u.pszTemplate, lpPropSheetPage->u.pszTemplate );
-  }
-  if ( (ppsp->dwFlags & PSP_USEICONID) && HIWORD( ppsp->u2.pszIcon ) )
-  {
-      PROPSHEET_AtoW(&ppsp->u2.pszIcon, lpPropSheetPage->u2.pszIcon);
-  }
+    if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) )
+    {
+        if (HIWORD( ppsp->u.pszTemplate ))
+        {
+            int len = strlen(lpPropSheetPage->u.pszTemplate) + 1;
+            ppsp->u.pszTemplate = Alloc( len );
+            strcpy( (LPSTR)ppsp->u.pszTemplate, lpPropSheetPage->u.pszTemplate );
+        }
+    }
 
-  if ((ppsp->dwFlags & PSP_USETITLE) && HIWORD( ppsp->pszTitle ))
-  {
-      PROPSHEET_AtoW(&ppsp->pszTitle, lpPropSheetPage->pszTitle);
-  }
-  else if ( !(ppsp->dwFlags & PSP_USETITLE) )
-      ppsp->pszTitle = NULL;
+    if (ppsp->dwFlags & PSP_USEICONID)
+    {
+        if (HIWORD( ppsp->u2.pszIcon ))
+            PROPSHEET_AtoW(&ppsp->u2.pszIcon, lpPropSheetPage->u2.pszIcon);
+    }
 
-  return (HPROPSHEETPAGE)ppsp;
+    if (ppsp->dwFlags & PSP_USETITLE)
+    {
+        if (HIWORD( ppsp->pszTitle ))
+            PROPSHEET_AtoW( &ppsp->pszTitle, lpPropSheetPage->pszTitle );
+        else
+        {
+            int len = LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszTitle), NULL, 0 ) + 1;
+            ppsp->pszTitle = Alloc( len );
+            LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszTitle), (LPWSTR)ppsp->pszTitle, len );
+        }
+    }
+    else
+        ppsp->pszTitle = NULL;
+
+    if (ppsp->dwFlags & PSP_HIDEHEADER)
+        ppsp->dwFlags &= ~(PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE);
+
+    if (ppsp->dwFlags & PSP_USEHEADERTITLE)
+    {
+        if (HIWORD( ppsp->pszHeaderTitle ))
+            PROPSHEET_AtoW(&ppsp->pszHeaderTitle, lpPropSheetPage->pszHeaderTitle);
+        else
+        {
+            int len = LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszHeaderTitle), NULL, 0 ) + 1;
+            ppsp->pszHeaderTitle = Alloc( len );
+            LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszHeaderTitle), (LPWSTR)ppsp->pszHeaderTitle, len );
+        }
+    }
+    else
+        ppsp->pszHeaderTitle = NULL;
+
+    if (ppsp->dwFlags & PSP_USEHEADERSUBTITLE)
+    {
+        if (HIWORD( ppsp->pszHeaderSubTitle ))
+            PROPSHEET_AtoW(&ppsp->pszHeaderSubTitle, lpPropSheetPage->pszHeaderSubTitle);
+        else
+        {
+            int len = LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszHeaderSubTitle), NULL, 0 ) + 1;
+            ppsp->pszHeaderSubTitle = Alloc( len );
+            LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszHeaderSubTitle), (LPWSTR)ppsp->pszHeaderSubTitle, len );
+        }
+    }
+    else
+        ppsp->pszHeaderSubTitle = NULL;
+
+    return (HPROPSHEETPAGE)ppsp;
 }
 
 /******************************************************************************
@@ -2960,30 +3003,84 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
 
   ppsp->dwFlags |= PSP_INTERNAL_UNICODE;
 
-  if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) && HIWORD( ppsp->u.pszTemplate ) )
-  {
-    int len = strlenW(lpPropSheetPage->u.pszTemplate);
+    if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) )
+    {
+        if (HIWORD( ppsp->u.pszTemplate ))
+        {
+            int len = strlenW(lpPropSheetPage->u.pszTemplate) + 1;
+            ppsp->u.pszTemplate = Alloc( len * sizeof (WCHAR) );
+            strcpyW( (WCHAR *)ppsp->u.pszTemplate, lpPropSheetPage->u.pszTemplate );
+        }
+    }
 
-    ppsp->u.pszTemplate = Alloc( (len+1)*sizeof (WCHAR) );
-    strcpyW( (WCHAR *)ppsp->u.pszTemplate, lpPropSheetPage->u.pszTemplate );
-  }
-  if ( (ppsp->dwFlags & PSP_USEICONID) && HIWORD( ppsp->u2.pszIcon ) )
-  {
-      int len = strlenW(lpPropSheetPage->u2.pszIcon);
-      ppsp->u2.pszIcon = Alloc( (len+1)*sizeof (WCHAR) );
-      strcpyW( (WCHAR *)ppsp->u2.pszIcon, lpPropSheetPage->u2.pszIcon );
-  }
+    if ( ppsp->dwFlags & PSP_USEICONID )
+    {
+        if (HIWORD( ppsp->u2.pszIcon ))
+        {
+            int len = strlenW(lpPropSheetPage->u2.pszIcon) + 1;
+            ppsp->u2.pszIcon = Alloc( len * sizeof (WCHAR) );
+            strcpyW( (WCHAR *)ppsp->u2.pszIcon, lpPropSheetPage->u2.pszIcon );
+        }
+    }
 
-  if ((ppsp->dwFlags & PSP_USETITLE) && HIWORD( ppsp->pszTitle ))
-  {
-      int len = strlenW(lpPropSheetPage->pszTitle);
-      ppsp->pszTitle = Alloc( (len+1)*sizeof (WCHAR) );
-      strcpyW( (WCHAR *)ppsp->pszTitle, lpPropSheetPage->pszTitle );
-  }
-  else if ( !(ppsp->dwFlags & PSP_USETITLE) )
-      ppsp->pszTitle = NULL;
+    if (ppsp->dwFlags & PSP_USETITLE)
+    {
+        if (HIWORD( ppsp->pszTitle ))
+        {
+            int len = strlenW(lpPropSheetPage->pszTitle) + 1;
+            ppsp->pszTitle = Alloc( len * sizeof (WCHAR) );
+            strcpyW( (WCHAR *)ppsp->pszTitle, lpPropSheetPage->pszTitle );
+        }
+        else
+        {
+            int len = LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszTitle), NULL, 0 ) + 1;
+            ppsp->pszTitle = Alloc( len );
+            LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszTitle), (LPWSTR)ppsp->pszTitle, len );
+        }
+    }
+    else
+        ppsp->pszTitle = NULL;
 
-  return (HPROPSHEETPAGE)ppsp;
+    if (ppsp->dwFlags & PSP_HIDEHEADER)
+        ppsp->dwFlags &= ~(PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE);
+
+    if (ppsp->dwFlags & PSP_USEHEADERTITLE)
+    {
+        if (HIWORD( ppsp->pszHeaderTitle ))
+        {
+            int len = strlenW(lpPropSheetPage->pszHeaderTitle) + 1;
+            ppsp->pszHeaderTitle = Alloc( len * sizeof (WCHAR) );
+            strcpyW( (WCHAR *)ppsp->pszHeaderTitle, lpPropSheetPage->pszHeaderTitle );
+        }
+        else
+        {
+            int len = LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszHeaderTitle), NULL, 0 ) + 1;
+            ppsp->pszHeaderTitle = Alloc( len );
+            LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszHeaderTitle), (LPWSTR)ppsp->pszHeaderTitle, len );
+        }
+    }
+    else
+        ppsp->pszHeaderTitle = NULL;
+
+    if (ppsp->dwFlags & PSP_USEHEADERSUBTITLE)
+    {
+        if (HIWORD( ppsp->pszHeaderSubTitle ))
+        {
+            int len = strlenW(lpPropSheetPage->pszHeaderSubTitle) + 1;
+            ppsp->pszHeaderSubTitle = Alloc( len * sizeof (WCHAR) );
+            strcpyW( (WCHAR *)ppsp->pszHeaderSubTitle, lpPropSheetPage->pszHeaderSubTitle );
+        }
+        else
+        {
+            int len = LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszHeaderSubTitle), NULL, 0 ) + 1;
+            ppsp->pszHeaderSubTitle = Alloc( len );
+            LoadStringW( ppsp->hInstance, LOWORD(ppsp->pszHeaderSubTitle), (LPWSTR)ppsp->pszHeaderSubTitle, len );
+        }
+    }
+    else
+        ppsp->pszHeaderSubTitle = NULL;
+
+    return (HPROPSHEETPAGE)ppsp;
 }
 
 /******************************************************************************
