@@ -144,7 +144,7 @@ typedef struct
  * Defines and global variables
  */
 
-const WCHAR PropSheetInfoStr[] =
+static const WCHAR PropSheetInfoStr[] =
     {'P','r','o','p','e','r','t','y','S','h','e','e','t','I','n','f','o',0 };
 
 #define PSP_INTERNAL_UNICODE 0x80000000
@@ -162,59 +162,18 @@ const WCHAR PropSheetInfoStr[] =
 /******************************************************************************
  * Prototypes
  */
-static INT_PTR PROPSHEET_CreateDialog(PropSheetInfo* psInfo);
-static BOOL PROPSHEET_SizeMismatch(HWND hwndDlg, PropSheetInfo* psInfo);
-static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo);
-static BOOL PROPSHEET_AdjustButtons(HWND hwndParent, PropSheetInfo* psInfo);
-static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
-                                       PropSheetInfo * psInfo);
-static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
-                                       PropSheetInfo * psInfo);
-static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
-                                      PropSheetInfo * psInfo,
-                                      int index);
-static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
-                                       PropSheetInfo * psInfo);
-static BOOL PROPSHEET_CreatePage(HWND hwndParent, int index,
-                                const PropSheetInfo * psInfo,
-                                LPCPROPSHEETPAGEW ppshpage);
-static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo);
 static PADDING_INFO PROPSHEET_GetPaddingInfo(HWND hwndDlg);
-static BOOL PROPSHEET_Back(HWND hwndDlg);
-static BOOL PROPSHEET_Next(HWND hwndDlg);
-static BOOL PROPSHEET_Finish(HWND hwndDlg);
-static BOOL PROPSHEET_Apply(HWND hwndDlg, LPARAM lParam);
-static void PROPSHEET_Cancel(HWND hwndDlg, LPARAM lParam);
-static void PROPSHEET_Help(HWND hwndDlg);
-static void PROPSHEET_Changed(HWND hwndDlg, HWND hwndDirtyPage);
-static void PROPSHEET_UnChanged(HWND hwndDlg, HWND hwndCleanPage);
-static void PROPSHEET_PressButton(HWND hwndDlg, int buttonID);
-static void PROPSHEET_SetFinishTextA(HWND hwndDlg, LPCSTR lpszText);
-static void PROPSHEET_SetFinishTextW(HWND hwndDlg, LPCWSTR lpszText);
-static void PROPSHEET_SetTitleA(HWND hwndDlg, DWORD dwStyle, LPCSTR lpszText);
 static void PROPSHEET_SetTitleW(HWND hwndDlg, DWORD dwStyle, LPCWSTR lpszText);
 static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg);
 static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
                                 int index,
                                 int skipdir,
                                 HPROPSHEETPAGE hpage);
-static void PROPSHEET_SetCurSelId(HWND hwndDlg, int id);
-static LRESULT PROPSHEET_QuerySiblings(HWND hwndDlg,
-                                       WPARAM wParam, LPARAM lParam);
-static BOOL PROPSHEET_AddPage(HWND hwndDlg,
-                              HPROPSHEETPAGE hpage);
-
-static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
-                                 int index,
-                                 HPROPSHEETPAGE hpage);
-static void PROPSHEET_CleanUp(HWND hwndDlg);
 static int PROPSHEET_GetPageIndex(HPROPSHEETPAGE hpage, PropSheetInfo* psInfo);
-static void PROPSHEET_SetWizButtons(HWND hwndDlg, DWORD dwFlags);
 static PADDING_INFO PROPSHEET_GetPaddingInfoWizard(HWND hwndDlg, const PropSheetInfo* psInfo);
-static BOOL PROPSHEET_IsDialogMessage(HWND hwnd, LPMSG lpMsg);
 static BOOL PROPSHEET_DoCommand(HWND hwnd, WORD wID);
 
-INT_PTR CALLBACK
+static INT_PTR CALLBACK
 PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 WINE_DEFAULT_DEBUG_CHANNEL(propsheet);
@@ -443,7 +402,7 @@ static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
  * Collect property sheet data.
  * With code taken from DIALOG_ParseTemplate32.
  */
-BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
+static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
                                PropSheetInfo * psInfo,
                                int index)
 {
@@ -3435,7 +3394,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 /******************************************************************************
  *            PROPSHEET_DialogProc
  */
-INT_PTR CALLBACK
+static INT_PTR CALLBACK
 PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   TRACE("hwnd=%p msg=0x%04x wparam=%x lparam=%lx\n",
