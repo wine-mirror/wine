@@ -31,6 +31,7 @@
  * MIDL_STUB_MESSAGE structure to be filled out */
 #define LPSAFEARRAY_UNMARSHAL_WORKS 0
 #define BSTR_UNMARSHAL_WORKS 0
+#define VARIANT_UNMARSHAL_WORKS 0
 
 static inline SF_TYPE get_union_type(SAFEARRAY *psa)
 {
@@ -126,7 +127,7 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
     wiresa += sizeof(DWORD);
     ok(*(DWORD *)wiresa == cell_count, "wiresa + 0x1c should be %lu instead of %lu\n", cell_count, *(DWORD *)wiresa);
     wiresa += sizeof(DWORD);
-    ok(*(DWORD_PTR *)wiresa == (DWORD_PTR)lpsa->pvData, "wirestgm + 0x20 should be lpsa->pvData instead of 0x%08lx\n", *(DWORD_PTR *)wiresa);
+    ok(*(DWORD_PTR *)wiresa == (DWORD_PTR)lpsa->pvData, "wiresa + 0x20 should be lpsa->pvData instead of 0x%08lx\n", *(DWORD_PTR *)wiresa);
     wiresa += sizeof(DWORD_PTR);
     if(sftype == SF_HAVEIID)
     {
@@ -175,8 +176,14 @@ static void test_marshal_LPSAFEARRAY(void)
 
     if (LPSAFEARRAY_UNMARSHAL_WORKS)
     {
+        VARTYPE vt, vt2;
         LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
         ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal\n");
+        SafeArrayGetVartype(lpsa, &vt);
+        SafeArrayGetVartype(lpsa2, &vt2);
+        todo_wine {
+        ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
+        }
         LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
@@ -293,12 +300,672 @@ static void test_marshal_BSTR(void)
 
 }
 
+static void check_variant_header(DWORD *wirev, VARIANT *v, unsigned long size)
+{
+    WORD *wp;
+    DWORD switch_is;
+
+    ok(*wirev == (size + 7) >> 3, "wv[0] %08lx, expected %08lx\n", *wirev, (size + 7) >> 3);
+    wirev++;
+    ok(*wirev == 0, "wv[1] %08lx\n", *wirev);
+    wirev++;
+    wp = (WORD*)wirev;
+    ok(*wp == V_VT(v), "vt %04x expected %04x\n", *wp, V_VT(v));
+    wp++;
+    ok(*wp == v->n1.n2.wReserved1, "res1 %04x expected %04x\n", *wp, v->n1.n2.wReserved1);
+    wp++;
+    ok(*wp == v->n1.n2.wReserved2, "res2 %04x expected %04x\n", *wp, v->n1.n2.wReserved2);
+    wp++;
+    ok(*wp == v->n1.n2.wReserved3, "res3 %04x expected %04x\n", *wp, v->n1.n2.wReserved3);
+    wp++;
+    wirev = (DWORD*)wp;
+    switch_is = V_VT(v);
+    if(switch_is & VT_ARRAY)
+        switch_is &= ~VT_TYPEMASK;
+    ok(*wirev == switch_is, "switch_is %08lx expected %08lx\n", *wirev, switch_is);
+}
+
+static void test_marshal_VARIANT(void)
+{
+    unsigned long size;
+    VARIANT v, v2;
+    MIDL_STUB_MESSAGE stubMsg = { 0 };
+    USER_MARSHAL_CB umcb = { 0 };
+    unsigned char *buffer, *next;
+    unsigned long ul;
+    short s;
+    double d;
+    DWORD *wirev;
+    BSTR b;
+    WCHAR str[] = {'m','a','r','s','h','a','l',' ','t','e','s','t',0};
+    SAFEARRAYBOUND sab;
+    LPSAFEARRAY lpsa;
+    DECIMAL dec, dec2;
+
+    umcb.Flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+    umcb.pReserve = NULL;
+    umcb.pStubMsg = &stubMsg;
+
+    /*** I1 ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_I1;
+    V_I1(&v) = 0x12;
+
+    /* Variants have an alignment of 8 */
+    size = VARIANT_UserSize(&umcb.Flags, 1, &v);
+    ok(size == 29, "size %ld\n", size);
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 21, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*(char*)wirev == V_I1(&v), "wv[5] %08lx\n", *wirev);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(V_I1(&v) == V_I1(&v2), "got i1 %x expect %x\n", V_I1(&v), V_I1(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** I2 ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = 0x1234;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 22, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*(short*)wirev == V_I2(&v), "wv[5] %08lx\n", *wirev);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(V_I2(&v) == V_I2(&v2), "got i2 %x expect %x\n", V_I2(&v), V_I2(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** I2 BYREF ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_I2 | VT_BYREF;
+    s = 0x1234;
+    V_I2REF(&v) = &s;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 26, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == 0x4, "wv[5] %08lx\n", *wirev);
+    wirev++;
+    ok(*(short*)wirev == s, "wv[6] %08lx\n", *wirev);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(*V_I2REF(&v) == *V_I2REF(&v2), "got i2 ref %x expect ui4 ref %x\n", *V_I2REF(&v), *V_I2REF(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** I4 ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0x1234;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 24, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == V_I4(&v), "wv[5] %08lx\n", *wirev);
+
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(V_I4(&v) == V_I4(&v2), "got i4 %lx expect %lx\n", V_I4(&v), V_I4(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** UI4 ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_UI4;
+    V_UI4(&v) = 0x1234;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 24, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == 0x1234, "wv[5] %08lx\n", *wirev);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(V_UI4(&v) == V_UI4(&v2), "got ui4 %lx expect %lx\n", V_UI4(&v), V_UI4(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** UI4 BYREF ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_UI4 | VT_BYREF;
+    ul = 0x1234;
+    V_UI4REF(&v) = &ul;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 28, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == 0x4, "wv[5] %08lx\n", *wirev);
+    wirev++;
+    ok(*wirev == ul, "wv[6] %08lx\n", *wirev);
+
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(*V_UI4REF(&v) == *V_UI4REF(&v2), "got ui4 ref %lx expect ui4 ref %lx\n", *V_UI4REF(&v), *V_UI4REF(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** R4 ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_R4;
+    V_R8(&v) = 3.1415;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 24, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+     
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*(float*)wirev == V_R4(&v), "wv[5] %08lx\n", *wirev);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(V_R4(&v) == V_R4(&v2), "got r4 %f expect %f\n", V_R4(&v), V_R4(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** R8 ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_R8;
+    V_R8(&v) = 3.1415;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 32, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    memset(buffer, 0xcc, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == 0xcccccccc, "wv[5] %08lx\n", *wirev); /* pad */
+    wirev++;
+    ok(*(double*)wirev == V_R8(&v), "wv[6] %08lx, wv[7] %08lx\n", *wirev, *(wirev+1));
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(V_R8(&v) == V_R8(&v2), "got r8 %f expect %f\n", V_R8(&v), V_R8(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** R8 BYREF ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_R8 | VT_BYREF;
+    d = 3.1415;
+    V_R8REF(&v) = &d;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 32, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == 8, "wv[5] %08lx\n", *wirev);
+    wirev++;
+    ok(*(double*)wirev == d, "wv[6] %08lx wv[7] %08lx\n", *wirev, *(wirev+1));
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(*V_R8REF(&v) == *V_R8REF(&v2), "got r8 ref %f expect %f\n", *V_R8REF(&v), *V_R8REF(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** VARIANT_BOOL ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = 0x1234;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 22, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*(short*)wirev == V_BOOL(&v), "wv[5] %04x\n", *(WORD*)wirev);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(V_BOOL(&v) == V_BOOL(&v2), "got bool %x expect %x\n", V_BOOL(&v), V_BOOL(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** DECIMAL ***/
+    VarDecFromI4(0x12345678, &dec);
+    VariantInit(&v);
+    V_DECIMAL(&v) = dec;
+    V_VT(&v) = VT_DECIMAL;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 40, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    memset(buffer, 0xcc, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == 0xcccccccc, "wirev[5] %08lx\n", *wirev); /* pad */
+    wirev++;
+    dec2 = dec;
+    dec2.wReserved = VT_DECIMAL;
+    ok(!memcmp(wirev, &dec2, sizeof(dec2)), "wirev[6] %08lx wirev[7] %08lx wirev[8] %08lx wirev[9] %08lx\n",
+       *wirev, *(wirev + 1), *(wirev + 2), *(wirev + 3));
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(!memcmp(&V_DECIMAL(&v), & V_DECIMAL(&v2), sizeof(DECIMAL)), "decimals differ\n");
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** DECIMAL BYREF ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_DECIMAL | VT_BYREF;
+    V_DECIMALREF(&v) = &dec;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 40, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == 16, "wv[5] %08lx\n", *wirev);
+    wirev++;
+    ok(!memcmp(wirev, &dec, sizeof(dec)), "wirev[6] %08lx wirev[7] %08lx wirev[8] %08lx wirev[9] %08lx\n", *wirev, *(wirev + 1), *(wirev + 2), *(wirev + 3));
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(!memcmp(V_DECIMALREF(&v), V_DECIMALREF(&v2), sizeof(DECIMAL)), "decimals differ\n");
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** EMPTY ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_EMPTY;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 20, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+
+    check_variant_header(wirev, &v, size);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** NULL ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_NULL;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 20, "size %ld\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+
+    check_variant_header(wirev, &v, size);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** BSTR ***/
+    b = SysAllocString(str);
+    VariantInit(&v);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = b;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 60, "size %ld\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev, "wv[5] %08lx\n", *wirev); /* win2k: this is b. winxp: this is (char*)b + 1 */
+    wirev++;
+    check_bstr(wirev, V_BSTR(&v));
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(SysStringByteLen(V_BSTR(&v)) == SysStringByteLen(V_BSTR(&v2)), "bstr string lens differ\n");
+        ok(!memcmp(V_BSTR(&v), V_BSTR(&v2), SysStringByteLen(V_BSTR(&v))), "bstrs differ\n");
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** BSTR BYREF ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_BSTR | VT_BYREF;
+    V_BSTRREF(&v) = &b;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 64, "size %ld\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == 0x4, "wv[5] %08lx\n", *wirev);
+    wirev++;
+    ok(*wirev, "wv[6] %08lx\n", *wirev); /* win2k: this is b. winxp: this is (char*)b + 1 */
+    wirev++;
+    check_bstr(wirev, b);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(SysStringByteLen(*V_BSTRREF(&v)) == SysStringByteLen(*V_BSTRREF(&v2)), "bstr string lens differ\n");
+        ok(!memcmp(*V_BSTRREF(&v), *V_BSTRREF(&v2), SysStringByteLen(*V_BSTRREF(&v))), "bstrs differ\n");
+
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+    SysFreeString(b);
+
+    /*** ARRAY ***/
+    sab.lLbound = 5;
+    sab.cElements = 10;
+
+    lpsa = SafeArrayCreate(VT_R8, 1, &sab);
+    *(DWORD *)lpsa->pvData = 0xcafebabe;
+    *((DWORD *)lpsa->pvData + 1) = 0xdeadbeef;
+    lpsa->cLocks = 7;
+
+    VariantInit(&v);
+    V_VT(&v) = VT_UI4 | VT_ARRAY;
+    V_ARRAY(&v) = lpsa;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 152, "size %ld\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev, "wv[5] %08lx\n", *wirev); /* win2k: this is lpsa. winxp: this is (char*)lpsa + 1 */
+    wirev++;
+    check_safearray(wirev, lpsa);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        long bound, bound2;
+        VARTYPE vt, vt2;
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(SafeArrayGetDim(V_ARRAY(&v)) == SafeArrayGetDim(V_ARRAY(&v)), "array dims differ\n");  
+        SafeArrayGetLBound(V_ARRAY(&v), 1, &bound);
+        SafeArrayGetLBound(V_ARRAY(&v2), 1, &bound2);
+        ok(bound == bound2, "array lbounds differ\n");
+        SafeArrayGetUBound(V_ARRAY(&v), 1, &bound);
+        SafeArrayGetUBound(V_ARRAY(&v2), 1, &bound2);
+        ok(bound == bound2, "array ubounds differ\n");
+        SafeArrayGetVartype(V_ARRAY(&v), &vt);
+        SafeArrayGetVartype(V_ARRAY(&v2), &vt2);
+        todo_wine {
+        ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
+        }
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    /*** ARRAY BYREF ***/
+    VariantInit(&v);
+    V_VT(&v) = VT_UI4 | VT_ARRAY | VT_BYREF;
+    V_ARRAYREF(&v) = &lpsa;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 152, "size %ld\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+    ok(*wirev == 4, "wv[5] %08lx\n", *wirev);
+    wirev++;
+    ok(*wirev, "wv[6] %08lx\n", *wirev); /* win2k: this is lpsa. winxp: this is (char*)lpsa + 1 */
+    wirev++;
+    check_safearray(wirev, lpsa);
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        long bound, bound2;
+        VARTYPE vt, vt2;
+        VariantInit(&v2);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
+        ok(SafeArrayGetDim(*V_ARRAYREF(&v)) == SafeArrayGetDim(*V_ARRAYREF(&v)), "array dims differ\n");  
+        SafeArrayGetLBound(*V_ARRAYREF(&v), 1, &bound);
+        SafeArrayGetLBound(*V_ARRAYREF(&v2), 1, &bound2);
+        ok(bound == bound2, "array lbounds differ\n");
+        SafeArrayGetUBound(*V_ARRAYREF(&v), 1, &bound);
+        SafeArrayGetUBound(*V_ARRAYREF(&v2), 1, &bound2);
+        ok(bound == bound2, "array ubounds differ\n");
+        SafeArrayGetVartype(*V_ARRAYREF(&v), &vt);
+        SafeArrayGetVartype(*V_ARRAYREF(&v2), &vt2);
+        ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
+        VARIANT_UserFree(&umcb.Flags, &v2);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+    SafeArrayDestroy(lpsa);
+
+    /*** VARIANT BYREF ***/
+    VariantInit(&v);
+    VariantInit(&v2);
+    V_VT(&v2) = VT_R8;
+    V_R8(&v2) = 3.1415;
+    V_VT(&v) = VT_VARIANT | VT_BYREF;
+    V_VARIANTREF(&v) = &v2;
+
+    size = VARIANT_UserSize(&umcb.Flags, 0, &v);
+    ok(size == 64, "size %ld\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    memset(buffer, 0xcc, size);
+    next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+    ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+    wirev = (DWORD*)buffer;
+    check_variant_header(wirev, &v, size);
+    wirev += 5;
+
+    ok(*wirev == 16, "wv[5] %08lx\n", *wirev);
+    wirev++;
+    ok(*wirev == ('U' | 's' << 8 | 'e' << 16 | 'r' << 24), "wv[6] %08lx\n", *wirev); /* 'User' */
+    wirev++;
+    ok(*wirev == 0xcccccccc, "wv[7] %08lx\n", *wirev); /* pad */
+    wirev++;
+    check_variant_header(wirev, &v2, size - 32);
+    wirev += 5;
+    ok(*wirev == 0xcccccccc, "wv[13] %08lx\n", *wirev); /* pad for VT_R8 */
+    wirev++;
+    ok(*(double*)wirev == V_R8(&v2), "wv[6] %08lx wv[7] %08lx\n", *wirev, *(wirev+1));
+    if (VARIANT_UNMARSHAL_WORKS)
+    {
+        VARIANT v3;
+        VariantInit(&v3);
+        next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
+        ok(next == buffer + size, "got %p expect %p\n", next, buffer + size);
+        ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
+        ok(V_VT(V_VARIANTREF(&v)) == V_VT(V_VARIANTREF(&v3)), "vts differ %x %x\n",
+           V_VT(V_VARIANTREF(&v)), V_VT(V_VARIANTREF(&v3))); 
+        ok(V_R8(V_VARIANTREF(&v)) == V_R8(V_VARIANTREF(&v3)), "r8s differ\n"); 
+        VARIANT_UserFree(&umcb.Flags, &v3);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+}
+
+
 START_TEST(usrmarshal)
 {
     CoInitialize(NULL);
 
     test_marshal_LPSAFEARRAY();
     test_marshal_BSTR();
+    test_marshal_VARIANT();
 
     CoUninitialize();
 }

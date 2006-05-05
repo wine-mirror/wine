@@ -210,55 +210,73 @@ void WINAPI BSTR_UserFree(unsigned long *pFlags, BSTR *pstr)
 }
 
 /* VARIANT */
-/* I'm not too sure how to do this yet */
 
-#define VARIANT_wiresize sizeof(struct _wireVARIANT)
-
-static unsigned wire_size(VARTYPE vt)
+typedef struct
 {
-  if (vt & VT_ARRAY) return 0;
+    DWORD clSize;
+    DWORD rpcReserverd;
+    USHORT vt;
+    USHORT wReserved1;
+    USHORT wReserved2;
+    USHORT wReserved3;
+    DWORD switch_is;
+} variant_wire_t;
 
-  switch (vt & ~VT_BYREF) {
-  case VT_EMPTY:
-  case VT_NULL:
-    return 0;
-  case VT_I1:
-  case VT_UI1:
-    return sizeof(CHAR);
-  case VT_I2:
-  case VT_UI2:
-    return sizeof(SHORT);
-  case VT_I4:
-  case VT_UI4:
-    return sizeof(LONG);
-  case VT_INT:
-  case VT_UINT:
-    return sizeof(INT);
-  case VT_R4:
-    return sizeof(FLOAT);
-  case VT_R8:
-    return sizeof(DOUBLE);
-  case VT_BOOL:
-    return sizeof(VARIANT_BOOL);
-  case VT_ERROR:
-    return sizeof(SCODE);
-  case VT_DATE:
-    return sizeof(DATE);
-  case VT_CY:
-    return sizeof(CY);
-  case VT_DECIMAL:
-    return sizeof(DECIMAL);
-  case VT_BSTR:
-  case VT_VARIANT:
-  case VT_UNKNOWN:
-  case VT_DISPATCH:
-  case VT_SAFEARRAY:
-  case VT_RECORD:
-    return 0;
-  default:
-    FIXME("unhandled VT %d\n", vt);
-    return 0;
-  }
+static unsigned int get_type_size(unsigned long *pFlags, VARIANT *pvar)
+{
+    if (V_VT(pvar) & VT_ARRAY) return 4;
+
+    switch (V_VT(pvar) & ~VT_BYREF) {
+    case VT_EMPTY:
+    case VT_NULL:
+        return 0;
+    case VT_I1:
+    case VT_UI1:
+        return sizeof(CHAR);
+    case VT_I2:
+    case VT_UI2:
+        return sizeof(SHORT);
+    case VT_I4:
+    case VT_UI4:
+        return sizeof(LONG);
+    case VT_INT:
+    case VT_UINT:
+        return sizeof(INT);
+    case VT_R4:
+        return sizeof(FLOAT);
+    case VT_R8:
+        return sizeof(DOUBLE);
+    case VT_BOOL:
+        return sizeof(VARIANT_BOOL);
+    case VT_ERROR:
+        return sizeof(SCODE);
+    case VT_DATE:
+        return sizeof(DATE);
+    case VT_CY:
+        return sizeof(CY);
+    case VT_DECIMAL:
+        return sizeof(DECIMAL);
+    case VT_BSTR:
+        return sizeof(BSTR);
+    case VT_VARIANT:
+        return sizeof(VARIANT);
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+    case VT_RECORD:
+        return 0;
+    default:
+        FIXME("unhandled VT %d\n", V_VT(pvar));
+        return 0;
+    }
+}
+
+static unsigned int get_type_alignment(unsigned long *pFlags, VARIANT *pvar)
+{
+    unsigned int size = get_type_size(pFlags, pvar);
+    if(V_VT(pvar) & VT_BYREF) return 3;
+    if(size == 0) return 0;
+    if(size <= 4) return size - 1;
+    return 7;
 }
 
 static unsigned interface_variant_size(unsigned long *pFlags, REFIID riid, VARIANT *pvar)
@@ -279,32 +297,36 @@ static unsigned interface_variant_size(unsigned long *pFlags, REFIID riid, VARIA
   return size;
 }
 
-static unsigned wire_extra(unsigned long *pFlags, VARIANT *pvar)
+static unsigned long wire_extra_user_size(unsigned long *pFlags, unsigned long Start, VARIANT *pvar)
 {
-  if (V_ISARRAY(pvar)) {
-    FIXME("wire-size safearray\n");
-    return 0;
+  if (V_ISARRAY(pvar))
+  {
+    if (V_ISBYREF(pvar))
+      return LPSAFEARRAY_UserSize(pFlags, Start, V_ARRAYREF(pvar));
+    else 
+      return LPSAFEARRAY_UserSize(pFlags, Start, &V_ARRAY(pvar));
   }
+
   switch (V_VT(pvar)) {
   case VT_BSTR:
-    return BSTR_UserSize(pFlags, 0, &V_BSTR(pvar));
+    return BSTR_UserSize(pFlags, Start, &V_BSTR(pvar));
   case VT_BSTR | VT_BYREF:
-    return BSTR_UserSize(pFlags, 0, V_BSTRREF(pvar));
-  case VT_SAFEARRAY:
-  case VT_SAFEARRAY | VT_BYREF:
-    FIXME("wire-size safearray\n");
-    return 0;
+    return BSTR_UserSize(pFlags, Start, V_BSTRREF(pvar));
   case VT_VARIANT | VT_BYREF:
-    return VARIANT_UserSize(pFlags, 0, V_VARIANTREF(pvar));
+    return VARIANT_UserSize(pFlags, Start, V_VARIANTREF(pvar));
   case VT_UNKNOWN:
-    return interface_variant_size(pFlags, &IID_IUnknown, pvar);
+    return Start + interface_variant_size(pFlags, &IID_IUnknown, pvar);
   case VT_DISPATCH:
-    return interface_variant_size(pFlags, &IID_IDispatch, pvar);
+    return Start + interface_variant_size(pFlags, &IID_IDispatch, pvar);
   case VT_RECORD:
     FIXME("wire-size record\n");
-    return 0;
+    return Start;
+  case VT_SAFEARRAY:
+  case VT_SAFEARRAY | VT_BYREF:
+    FIXME("wire-size safearray: shouldn't be marshaling this\n");
+    return Start;
   default:
-    return 0;
+    return Start;
   }
 }
 
@@ -328,7 +350,7 @@ static unsigned char* interface_variant_marshal(unsigned long *pFlags, unsigned 
    * but that would be overkill here, hence this implementation. We save the size because the unmarshal
    * code has no way to know how long the marshalled buffer is. */
 
-  size = wire_extra(pFlags, pvar);
+  size = wire_extra_user_size(pFlags, 0, pvar);
   
   working_mem = GlobalAlloc(0, size);
   if (!working_mem) return oldpos;
@@ -347,7 +369,7 @@ static unsigned char* interface_variant_marshal(unsigned long *pFlags, unsigned 
 
   working_memlocked = GlobalLock(working_mem);
   memcpy(Buffer, &size, sizeof(ULONG)); /* copy the buffersize */
-  memcpy(Buffer + sizeof(ULONG), working_memlocked, size);
+  memcpy(Buffer + sizeof(ULONG), working_memlocked, size - sizeof(ULONG));
   GlobalUnlock(working_mem);
 
   IStream_Release(working);
@@ -406,156 +428,209 @@ static unsigned char *interface_variant_unmarshal(unsigned long *pFlags, unsigne
 
 unsigned long WINAPI VARIANT_UserSize(unsigned long *pFlags, unsigned long Start, VARIANT *pvar)
 {
-  TRACE("(%lx,%ld,%p)\n", *pFlags, Start, pvar);
-  TRACE("vt=%04x\n", V_VT(pvar));
-  Start += VARIANT_wiresize + wire_extra(pFlags, pvar);
-  TRACE("returning %ld\n", Start);
-  return Start;
+    int align;
+    TRACE("(%lx,%ld,%p)\n", *pFlags, Start, pvar);
+    TRACE("vt=%04x\n", V_VT(pvar));
+
+    ALIGN_LENGTH(Start, 7);
+    Start += sizeof(variant_wire_t);
+    if(V_VT(pvar) & VT_BYREF)
+        Start += 4;
+
+    align = get_type_alignment(pFlags, pvar);
+    ALIGN_LENGTH(Start, align);
+    if(V_VT(pvar) == (VT_VARIANT | VT_BYREF))
+        Start += 4;
+    else
+        Start += get_type_size(pFlags, pvar);
+    Start = wire_extra_user_size(pFlags, Start, pvar);
+
+    TRACE("returning %ld\n", Start);
+    return Start;
 }
 
 unsigned char * WINAPI VARIANT_UserMarshal(unsigned long *pFlags, unsigned char *Buffer, VARIANT *pvar)
 {
-  wireVARIANT var = (wireVARIANT)Buffer;
-  unsigned size, extra;
-  unsigned char *Pos = Buffer + VARIANT_wiresize;
+    variant_wire_t *header;
+    unsigned long type_size;
+    int align;
+    unsigned char *Pos;
 
-  TRACE("(%lx,%p,%p)\n", *pFlags, Buffer, pvar);
-  TRACE("vt=%04x\n", V_VT(pvar));
+    TRACE("(%lx,%p,%p)\n", *pFlags, Buffer, pvar);
+    TRACE("vt=%04x\n", V_VT(pvar));
 
-  memset(var, 0, sizeof(*var));
-  var->clSize = sizeof(*var);
-  var->vt = pvar->n1.n2.vt;
+    ALIGN_POINTER(Buffer, 7);
 
-  var->rpcReserved = var->vt;
-  if ((var->vt & VT_ARRAY) ||
-      ((var->vt & VT_TYPEMASK) == VT_SAFEARRAY))
-    var->vt = VT_ARRAY | (var->vt & VT_BYREF);
+    header = (variant_wire_t *)Buffer; 
 
-  if (var->vt == VT_DECIMAL) {
-    /* special case because decVal is on a different level */
-    var->u.decVal = pvar->n1.decVal;
-    return Pos;
-  }
+    header->clSize = 0; /* fixed up at the end */
+    header->rpcReserverd = 0;
+    header->vt = pvar->n1.n2.vt;
+    header->wReserved1 = pvar->n1.n2.wReserved1;
+    header->wReserved2 = pvar->n1.n2.wReserved2;
+    header->wReserved3 = pvar->n1.n2.wReserved3;
+    header->switch_is = pvar->n1.n2.vt;
+    if(header->switch_is & VT_ARRAY)
+        header->switch_is &= ~VT_TYPEMASK;
 
-  size = wire_size(V_VT(pvar));
-  extra = wire_extra(pFlags, pvar);
-  var->wReserved1 = pvar->n1.n2.wReserved1;
-  var->wReserved2 = pvar->n1.n2.wReserved2;
-  var->wReserved3 = pvar->n1.n2.wReserved3;
-  if (size) {
-    if (var->vt & VT_BYREF)
-      memcpy(&var->u.cVal, pvar->n1.n2.n3.byref, size);
+    Pos = (unsigned char*)(header + 1);
+    type_size = get_type_size(pFlags, pvar);
+    align = get_type_alignment(pFlags, pvar);
+    ALIGN_POINTER(Pos, align);
+
+    if(header->vt & VT_BYREF)
+    {
+        *(DWORD *)Pos = max(type_size, 4);
+        Pos += 4;
+        if((header->vt & VT_TYPEMASK) != VT_VARIANT)
+        {
+            memcpy(Pos, pvar->n1.n2.n3.byref, type_size);
+            Pos += type_size;
+        }
+        else
+        {
+            *(DWORD*)Pos = 'U' | 's' << 8 | 'e' << 16 | 'r' << 24;
+            Pos += 4;
+        }
+    } 
     else
-      memcpy(&var->u.cVal, &pvar->n1.n2.n3, size);
-  }
-  if (!extra) return Pos;
+    {
+        if((header->vt & VT_TYPEMASK) == VT_DECIMAL)
+            memcpy(Pos, pvar, type_size);
+        else
+            memcpy(Pos, &pvar->n1.n2.n3, type_size);
+        Pos += type_size;
+    }
 
-  switch (var->vt) {
-  case VT_BSTR:
-    Pos = BSTR_UserMarshal(pFlags, Pos, &V_BSTR(pvar));
-    break;
-  case VT_BSTR | VT_BYREF:
-    Pos = BSTR_UserMarshal(pFlags, Pos, V_BSTRREF(pvar));
-    break;
-  case VT_VARIANT | VT_BYREF:
-    Pos = VARIANT_UserMarshal(pFlags, Pos, V_VARIANTREF(pvar));
-    break;
-  case VT_DISPATCH | VT_BYREF:
-    FIXME("handle DISPATCH by ref\n");
-    break;
-  case VT_UNKNOWN:
-    /* this should probably call WdtpInterfacePointer_UserMarshal in ole32.dll */
-    Pos = interface_variant_marshal(pFlags, Pos, &IID_IUnknown, pvar);
-    break;
-  case VT_DISPATCH:
-    /* this should probably call WdtpInterfacePointer_UserMarshal in ole32.dll */
-    Pos = interface_variant_marshal(pFlags, Pos, &IID_IDispatch, pvar);
-    break;
-  case VT_RECORD:
-    FIXME("handle BRECORD by val\n");
-    break;
-  case VT_RECORD | VT_BYREF:
-    FIXME("handle BRECORD by ref\n");
-    break;
-  default:
-    FIXME("handle unknown complex type\n");
-    break;
-  }
-  var->clSize = Pos - Buffer;
-  TRACE("marshalled size=%ld\n", var->clSize);
-  return Pos;
+    if(header->vt & VT_ARRAY)
+    {
+        if(header->vt & VT_BYREF)
+            Pos = LPSAFEARRAY_UserMarshal(pFlags, Pos, V_ARRAYREF(pvar));
+        else
+            Pos = LPSAFEARRAY_UserMarshal(pFlags, Pos, &V_ARRAY(pvar));
+    }
+    else
+    {
+        switch (header->vt)
+        {
+        case VT_BSTR:
+            Pos = BSTR_UserMarshal(pFlags, Pos, &V_BSTR(pvar));
+            break;
+        case VT_BSTR | VT_BYREF:
+            Pos = BSTR_UserMarshal(pFlags, Pos, V_BSTRREF(pvar));
+            break;
+        case VT_VARIANT | VT_BYREF:
+            Pos = VARIANT_UserMarshal(pFlags, Pos, V_VARIANTREF(pvar));
+            break;
+        case VT_DISPATCH | VT_BYREF:
+            FIXME("handle DISPATCH by ref\n");
+            break;
+        case VT_UNKNOWN:
+            /* this should probably call WdtpInterfacePointer_UserMarshal in ole32.dll */
+            Pos = interface_variant_marshal(pFlags, Pos, &IID_IUnknown, pvar);
+            break;
+        case VT_DISPATCH:
+            /* this should probably call WdtpInterfacePointer_UserMarshal in ole32.dll */
+            Pos = interface_variant_marshal(pFlags, Pos, &IID_IDispatch, pvar);
+            break;
+        case VT_RECORD:
+            FIXME("handle BRECORD by val\n");
+            break;
+        case VT_RECORD | VT_BYREF:
+            FIXME("handle BRECORD by ref\n");
+            break;
+        }
+    }
+    header->clSize = ((Pos - Buffer) + 7) >> 3;
+    TRACE("marshalled size=%ld\n", header->clSize);
+    return Pos;
 }
 
 unsigned char * WINAPI VARIANT_UserUnmarshal(unsigned long *pFlags, unsigned char *Buffer, VARIANT *pvar)
 {
-  wireVARIANT var = (wireVARIANT)Buffer;
-  unsigned size;
-  unsigned char *Pos = Buffer + VARIANT_wiresize;
+    variant_wire_t *header;
+    unsigned long type_size;
+    int align;
+    unsigned char *Pos;
 
-  TRACE("(%lx,%p,%p)\n", *pFlags, Buffer, pvar);
-  VariantInit(pvar);
-  pvar->n1.n2.vt = var->rpcReserved;
-  TRACE("marshalled: clSize=%ld, vt=%04x\n", var->clSize, var->vt);
-  TRACE("vt=%04x\n", V_VT(pvar));
-  TRACE("reserved: %d, %d, %d\n", var->wReserved1, var->wReserved2, var->wReserved3);
-  TRACE("val: %ld\n", var->u.lVal);
+    TRACE("(%lx,%p,%p)\n", *pFlags, Buffer, pvar);
 
-  if (var->vt == VT_DECIMAL) {
-    /* special case because decVal is on a different level */
-    pvar->n1.decVal = var->u.decVal;
-    return Pos;
-  }
+    ALIGN_POINTER(Buffer, 7);
+    VariantInit(pvar);
 
-  size = wire_size(V_VT(pvar));
-  pvar->n1.n2.wReserved1 = var->wReserved1;
-  pvar->n1.n2.wReserved2 = var->wReserved2;
-  pvar->n1.n2.wReserved3 = var->wReserved3;
-  if (size) {
-    if (var->vt & VT_BYREF) {
-      pvar->n1.n2.n3.byref = CoTaskMemAlloc(size);
-      memcpy(pvar->n1.n2.n3.byref, &var->u.cVal, size);
+    header = (variant_wire_t *)Buffer; 
+    
+    pvar->n1.n2.vt = header->vt;
+    pvar->n1.n2.wReserved1 = header->wReserved1;
+    pvar->n1.n2.wReserved2 = header->wReserved2;
+    pvar->n1.n2.wReserved3 = header->wReserved3;
+
+    Pos = (unsigned char*)(header + 1);
+    type_size = get_type_size(pFlags, pvar);
+    align = get_type_alignment(pFlags, pvar);
+    ALIGN_POINTER(Pos, align);
+
+    if(header->vt & VT_BYREF)
+    {
+        Pos += 4;
+        pvar->n1.n2.n3.byref = CoTaskMemAlloc(type_size);
+        memcpy(pvar->n1.n2.n3.byref, Pos, type_size); 
+        if((header->vt & VT_TYPEMASK) != VT_VARIANT)
+           Pos += type_size;
+        else
+            Pos += 4;
     }
     else
-      memcpy(&pvar->n1.n2.n3, &var->u.cVal, size);
-  }
-  if (var->clSize <= VARIANT_wiresize) return Pos;
+    {
+        if((header->vt & VT_TYPEMASK) == VT_DECIMAL)
+            memcpy(pvar, Pos, type_size);
+        else
+            memcpy(&pvar->n1.n2.n3, Pos, type_size);
+        Pos += type_size;
+    }
 
-  switch (var->vt) {
-  case VT_BSTR:
-    V_BSTR(pvar) = NULL;
-    Pos = BSTR_UserUnmarshal(pFlags, Pos, &V_BSTR(pvar));
-    break;
-  case VT_BSTR | VT_BYREF:
-    pvar->n1.n2.n3.byref = CoTaskMemAlloc(sizeof(BSTR));
-    *(BSTR*)V_BYREF(pvar) = NULL;
-    Pos = BSTR_UserUnmarshal(pFlags, Pos, V_BSTRREF(pvar));
-    break;
-  case VT_VARIANT | VT_BYREF:
-    pvar->n1.n2.n3.byref = CoTaskMemAlloc(sizeof(VARIANT));
-    Pos = VARIANT_UserUnmarshal(pFlags, Pos, V_VARIANTREF(pvar));
-    break;
-  case VT_RECORD:
-    FIXME("handle BRECORD by val\n");
-    break;
-  case VT_RECORD | VT_BYREF:
-    FIXME("handle BRECORD by ref\n");
-    break;
-  case VT_UNKNOWN:
-    Pos = interface_variant_unmarshal(pFlags, Pos, &IID_IUnknown, pvar);
-    break;
-  case VT_DISPATCH:
-    Pos = interface_variant_unmarshal(pFlags, Pos, &IID_IDispatch, pvar);
-    break;
-  case VT_DISPATCH | VT_BYREF:
-    FIXME("handle DISPATCH by ref\n");
-  default:
-    FIXME("handle unknown complex type\n");
-    break;
-  }
-  if (Pos != Buffer + var->clSize) {
-    ERR("size difference during unmarshal\n");
-  }
-  return Buffer + var->clSize;
+    if(header->vt & VT_ARRAY)
+    {
+        if(header->vt & VT_BYREF)
+            Pos = LPSAFEARRAY_UserUnmarshal(pFlags, Pos, V_ARRAYREF(pvar));
+        else
+            Pos = LPSAFEARRAY_UserUnmarshal(pFlags, Pos, &V_ARRAY(pvar));
+    }
+    else
+    {
+        switch (header->vt)
+        {
+        case VT_BSTR:
+            V_BSTR(pvar) = NULL;
+            Pos = BSTR_UserUnmarshal(pFlags, Pos, &V_BSTR(pvar));
+            break;
+        case VT_BSTR | VT_BYREF:
+            *V_BSTRREF(pvar) = NULL;
+            Pos = BSTR_UserUnmarshal(pFlags, Pos, V_BSTRREF(pvar));
+            break;
+        case VT_VARIANT | VT_BYREF:
+            Pos = VARIANT_UserUnmarshal(pFlags, Pos, V_VARIANTREF(pvar));
+            break;
+        case VT_DISPATCH | VT_BYREF:
+            FIXME("handle DISPATCH by ref\n");
+            break;
+        case VT_UNKNOWN:
+            /* this should probably call WdtpInterfacePointer_UserUnmarshal in ole32.dll */
+            Pos = interface_variant_unmarshal(pFlags, Pos, &IID_IUnknown, pvar);
+            break;
+        case VT_DISPATCH:
+            /* this should probably call WdtpInterfacePointer_UserUnmarshal in ole32.dll */
+            Pos = interface_variant_unmarshal(pFlags, Pos, &IID_IDispatch, pvar);
+            break;
+        case VT_RECORD:
+            FIXME("handle BRECORD by val\n");
+            break;
+        case VT_RECORD | VT_BYREF:
+            FIXME("handle BRECORD by ref\n");
+            break;
+        }
+    }
+    return Pos;
 }
 
 void WINAPI VARIANT_UserFree(unsigned long *pFlags, VARIANT *pvar)
