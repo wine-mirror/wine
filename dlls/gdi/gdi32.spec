@@ -244,7 +244,7 @@
 @ stdcall GetCharWidthA(long long long long) GetCharWidth32A
 @ stdcall GetCharWidthFloatA(long long long ptr)
 @ stdcall GetCharWidthFloatW(long long long ptr)
-# @ stub GetCharWidthI
+@ stdcall GetCharWidthI(ptr long long ptr ptr)
 # @ stub GetCharWidthInfo
 @ stdcall GetCharWidthW(long long long long) GetCharWidth32W
 @ stub GetCharWidthWOW
@@ -279,7 +279,7 @@
 @ stdcall GetFontLanguageInfo(long)
 @ stub GetFontResourceInfo
 @ stub GetFontResourceInfoW
-# @ stub GetFontUnicodeRanges
+@ stdcall GetFontUnicodeRanges(ptr ptr)
 @ stdcall GetGlyphIndicesA(long ptr long ptr long)
 @ stdcall GetGlyphIndicesW(long ptr long ptr long)
 @ stub GetGlyphOutline

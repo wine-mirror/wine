@@ -3068,3 +3068,21 @@ BOOL WINAPI EnableEUDC(BOOL fEnableEUDC)
     FIXME("(%d): stub\n", fEnableEUDC);
     return FALSE;
 }
+
+/***********************************************************************
+ *           GetCharWidthI    (GDI32.@)
+ */
+BOOL WINAPI GetCharWidthI(HDC hdc, UINT giFirst, UINT cgi, LPWORD pgi, LPINT lpBuffer)
+{
+    FIXME("(%p, %d, %d, %p, %p): stub\n", hdc, giFirst, cgi, pgi, lpBuffer);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetFontUnicodeRanges    (GDI32.@)
+ */
+DWORD WINAPI GetFontUnicodeRanges(HDC hdc, LPGLYPHSET lpgs)
+{
+    FIXME("(%p, %p): stub\n", hdc, lpgs);
+    return 0;
+}
