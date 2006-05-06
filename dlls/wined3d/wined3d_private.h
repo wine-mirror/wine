@@ -375,45 +375,12 @@ void drawPrimitive(IWineD3DDevice *iface,
                     long  StartIdx,
                     short idxBytes,
                     const void *idxData,
-                    int   minIndex);
+                    int   minIndex,
+                    WineDirect3DVertexStridedData *DrawPrimStrideData);
 
 /* Routine to fill gl caps for swapchains and IWineD3D */
 BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info,
                              Display* display);
-
-/*****************************************************************************
- * Structures required to draw primitives 
- */
-
-typedef struct Direct3DStridedData {
-    BYTE     *lpData;        /* Pointer to start of data               */
-    DWORD     dwStride;      /* Stride between occurances of this data */
-    DWORD     dwType;        /* Type (as in D3DVSDT_TYPE)              */
-} Direct3DStridedData;
-
-typedef struct Direct3DVertexStridedData {
-    union {
-        struct {
-             Direct3DStridedData  position;
-             Direct3DStridedData  blendWeights;
-             Direct3DStridedData  blendMatrixIndices;
-             Direct3DStridedData  normal;
-             Direct3DStridedData  pSize;
-             Direct3DStridedData  diffuse;
-             Direct3DStridedData  specular;
-             Direct3DStridedData  texCoords[MAX_TEXTURES];
-             Direct3DStridedData  position2; /* tween data */
-             Direct3DStridedData  normal2;   /* tween data */
-             Direct3DStridedData  tangent;
-             Direct3DStridedData  binormal;
-             Direct3DStridedData  tessFactor;
-             Direct3DStridedData  fog;
-             Direct3DStridedData  depth;
-             Direct3DStridedData  sample;
-        } s;
-        Direct3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
-    } u;
-} Direct3DVertexStridedData;
 
 /*****************************************************************************
  * Internal representation of a light

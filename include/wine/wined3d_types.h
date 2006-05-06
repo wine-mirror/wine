@@ -870,6 +870,59 @@ typedef struct glDescriptor {
     int/*GLenum*/ glFormatInternal;
     int/*GLenum*/ glType;
 } glDescriptor;
+
+typedef enum _WINED3DDECLTYPE {
+  WINED3DDECLTYPE_FLOAT1    =  0,
+  WINED3DDECLTYPE_FLOAT2    =  1,
+  WINED3DDECLTYPE_FLOAT3    =  2,
+  WINED3DDECLTYPE_FLOAT4    =  3,
+  WINED3DDECLTYPE_D3DCOLOR  =  4,
+  WINED3DDECLTYPE_UBYTE4    =  5,
+  WINED3DDECLTYPE_SHORT2    =  6,
+  WINED3DDECLTYPE_SHORT4    =  7,
+  /* VS 2.0 */
+  WINED3DDECLTYPE_UBYTE4N   =  8,
+  WINED3DDECLTYPE_SHORT2N   =  9,
+  WINED3DDECLTYPE_SHORT4N   = 10,
+  WINED3DDECLTYPE_USHORT2N  = 11,
+  WINED3DDECLTYPE_USHORT4N  = 12,
+  WINED3DDECLTYPE_UDEC3     = 13,
+  WINED3DDECLTYPE_DEC3N     = 14,
+  WINED3DDECLTYPE_FLOAT16_2 = 15,
+  WINED3DDECLTYPE_FLOAT16_4 = 16,
+  WINED3DDECLTYPE_UNUSED    = 17,
+} WINED3DDECLTYPE;
+
+typedef struct WineDirect3DStridedData {
+    BYTE     *lpData;        /* Pointer to start of data               */
+    DWORD     dwStride;      /* Stride between occurances of this data */
+    DWORD     dwType;        /* Type (as in D3DVSDT_TYPE)              */
+} WineDirect3DStridedData;
+
+typedef struct WineDirect3DVertexStridedData {
+    union {
+        struct {
+             WineDirect3DStridedData  position;
+             WineDirect3DStridedData  blendWeights;
+             WineDirect3DStridedData  blendMatrixIndices;
+             WineDirect3DStridedData  normal;
+             WineDirect3DStridedData  pSize;
+             WineDirect3DStridedData  diffuse;
+             WineDirect3DStridedData  specular;
+             WineDirect3DStridedData  texCoords[D3DDP_MAXTEXCOORD];
+             WineDirect3DStridedData  position2; /* tween data */
+             WineDirect3DStridedData  normal2;   /* tween data */
+             WineDirect3DStridedData  tangent;
+             WineDirect3DStridedData  binormal;
+             WineDirect3DStridedData  tessFactor;
+             WineDirect3DStridedData  fog;
+             WineDirect3DStridedData  depth;
+             WineDirect3DStridedData  sample;
+        } s;
+        WineDirect3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
+    } u;
+} WineDirect3DVertexStridedData;
+
 /**************************** 
  *  * Vertex Shaders Declaration
  *   */

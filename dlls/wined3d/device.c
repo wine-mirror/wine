@@ -5272,7 +5272,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, D3DPRIMIT
                                debug_d3dprimitivetype(PrimitiveType),
                                StartVertex, PrimitiveCount);
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, StartVertex, 0/* NumVertices */, -1 /* indxStart */,
-                  0 /* indxSize */, NULL /* indxData */, 0 /* minIndex */);
+                  0 /* indxSize */, NULL /* indxData */, 0 /* minIndex */, NULL);
 
 
     return WINED3D_OK;
@@ -5304,7 +5304,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
     }
 
     drawPrimitive(iface, PrimitiveType, primCount, baseVIndex, NumVertices, startIndex,
-                   idxStride, ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex);
+                   idxStride, ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex, NULL);
 
     return WINED3D_OK;
 }
@@ -5329,7 +5329,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIM
     This->stateBlock->streamIsUP = TRUE;
 
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* start vertex */, 0  /* NumVertices */,
-                  0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */);
+                  0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */, NULL);
     /* stream zero settings set to null at end, as per the msdn
             http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawPrimitiveUP.asp
     */
@@ -5372,7 +5372,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamIsUP = TRUE;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
 
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex);
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex, NULL);
     /* stream zero settings set to null at end as per the msdn
     http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawPrimitiveUP.asp
     */
@@ -5384,6 +5384,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
     return WINED3D_OK;
 }
 
+HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData) {
+
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, 0, NULL, 0, DrawPrimStrideData);
+    return WINED3D_OK;
+}
  /* Yet another way to update a texture, some apps use this to load default textures instead of using surface/texture lock/unlock */
 HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3DBaseTexture *pSourceTexture,  IWineD3DBaseTexture *pDestinationTexture){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -7176,6 +7181,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_DrawIndexedPrimitive,
     IWineD3DDeviceImpl_DrawPrimitiveUP,
     IWineD3DDeviceImpl_DrawIndexedPrimitiveUP,
+    IWineD3DDeviceImpl_DrawPrimitiveStrided,
     IWineD3DDeviceImpl_DrawRectPatch,
     IWineD3DDeviceImpl_DrawTriPatch,
     IWineD3DDeviceImpl_DeletePatch,

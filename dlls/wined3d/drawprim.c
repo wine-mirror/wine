@@ -315,7 +315,7 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
     return isLightingOn;
 }
 
-void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVertexShaderFunction, Direct3DVertexStridedData *strided, LONG BaseVertexIndex, DWORD *fvf, BOOL storeOrder, INT arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE]) {
+void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVertexShaderFunction, WineDirect3DVertexStridedData *strided, LONG BaseVertexIndex, DWORD *fvf, BOOL storeOrder, INT arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE]) {
      /* We need to deal with frequency data!*/
 
     int           textureNo =0;
@@ -557,7 +557,7 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
 
 }
 
-static void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedData *strided, LONG BaseVertexIndex) {
+static void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *strided, LONG BaseVertexIndex) {
 
     short         LoopThroughTo = 0;
     short         nStream;
@@ -845,7 +845,7 @@ static void draw_vertex(IWineD3DDevice *iface,                         /* interf
 }
 #endif /* TODO: Software shaders */
 
-void loadNumberedArrays(IWineD3DDevice *iface, Direct3DVertexStridedData *sd, INT arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE]) {
+void loadNumberedArrays(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, INT arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE]) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
 #define LOAD_NUMBERED_ARRAY(_arrayName, _lookupName) \
@@ -928,7 +928,7 @@ void loadNumberedArrays(IWineD3DDevice *iface, Direct3DVertexStridedData *sd, IN
 #undef LOAD_NUMBERED_ARRAY
 }
 
-static void loadVertexData(IWineD3DDevice *iface, Direct3DVertexStridedData *sd) {
+static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd) {
     unsigned int textureNo   = 0;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -1259,7 +1259,7 @@ static void drawStridedFast(IWineD3DDevice *iface,UINT numberOfVertices, GLenum 
  * Slower GL version which extracts info about each vertex in turn
  */
 	
-static void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
+static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd,
                      UINT NumVertexes, GLenum glPrimType,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
@@ -1555,7 +1555,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd
  * Note: strided data is uninitialized, as we need to pass the vertex
  *     shader directly as ordering irs yet
  */
-void drawStridedSoftwareVS(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
+void drawStridedSoftwareVS(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd,
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
@@ -1692,7 +1692,7 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
 
 #endif
 
-void inline  drawPrimitiveDrawStrided(IWineD3DDevice *iface, BOOL useVertexShaderFunction, BOOL usePixelShaderFunction, int useHW, Direct3DVertexStridedData *dataLocations,
+void inline  drawPrimitiveDrawStrided(IWineD3DDevice *iface, BOOL useVertexShaderFunction, BOOL usePixelShaderFunction, int useHW, WineDirect3DVertexStridedData *dataLocations,
 UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idxData, short idxSize, int minIndex, long StartIdx) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -1909,7 +1909,7 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
     }
 }
 
-void inline drawPrimitiveTraceDataLocations(Direct3DVertexStridedData *dataLocations,DWORD fvf) {
+void inline drawPrimitiveTraceDataLocations(WineDirect3DVertexStridedData *dataLocations,DWORD fvf) {
 
     /* Dump out what parts we have supplied */
     TRACE("Strided Data (from FVF/VS): %lx\n", fvf);
@@ -2042,15 +2042,16 @@ void inline drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void drawPrimitive(IWineD3DDevice *iface,
-                    int PrimitiveType,
-                    long NumPrimitives,
-                    /* for Indexed: */
-                    long  StartVertexIndex,
-                    UINT  numberOfVertices,
-                    long  StartIdx,
-                    short idxSize,
-                    const void *idxData,
-                    int   minIndex) {
+                   int PrimitiveType,
+                   long NumPrimitives,
+                   /* for Indexed: */
+                   long  StartVertexIndex,
+                   UINT  numberOfVertices,
+                   long  StartIdx,
+                   short idxSize,
+                   const void *idxData,
+                   int   minIndex,
+                   WineDirect3DVertexStridedData *DrawPrimStrideData) {
 
     BOOL                          rc = FALSE;
     DWORD                         fvf = 0;
@@ -2058,7 +2059,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     BOOL                          useVertexShaderFunction = FALSE;
     BOOL                          usePixelShaderFunction = FALSE;
     BOOL                          isLightingOn = FALSE;
-    Direct3DVertexStridedData     dataLocations;
+    WineDirect3DVertexStridedData *dataLocations;
     int                           useHW = FALSE;
 
     if (This->stateBlock->vertexShader != NULL && wined3d_settings.vs_mode != VS_NONE 
@@ -2086,23 +2087,35 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
 
-    /* Initialize all values to null */
-    memset(&dataLocations, 0x00, sizeof(dataLocations));
     /* convert the FVF or vertexDeclaration into a strided stream (this should be done when the fvf or declaration is created) */
 
-    if (This->stateBlock->vertexDecl != NULL || (useVertexShaderFunction  && NULL != ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration)) {
+    if(DrawPrimStrideData) {
+        TRACE("================ Strided Input ===================\n");
+        dataLocations = DrawPrimStrideData;
+    }
+    else if (This->stateBlock->vertexDecl != NULL || (useVertexShaderFunction  && NULL != ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration)) {
         BOOL storeArrays = useVertexShaderFunction && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->declaredArrays == FALSE && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->namedArrays == FALSE;
 
         TRACE("================ Vertex Declaration  ===================\n");
-        primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction, &dataLocations, StartVertexIndex, &fvf, storeArrays,
+        dataLocations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dataLocations));
+        if(!dataLocations) {
+            ERR("Out of memory!\n");
+            return;
+        }
+        primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction, dataLocations, StartVertexIndex, &fvf, storeArrays,
         ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->arrayUsageMap);
     } else {
         TRACE("================ FVF ===================\n");
-        primitiveConvertToStridedData(iface, &dataLocations, StartVertexIndex);
+        dataLocations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dataLocations));
+        if(!dataLocations) {
+            ERR("Out of memory!\n");
+            return;
+        }
+        primitiveConvertToStridedData(iface, dataLocations, StartVertexIndex);
     }
 
     /* write out some debug information*/
-    drawPrimitiveTraceDataLocations(&dataLocations, fvf);
+    drawPrimitiveTraceDataLocations(dataLocations, fvf);
 
     /* Setup transform matrices and sort out */
     if (useHW) {
@@ -2120,7 +2133,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     }
 
     /* Now initialize the materials state */
-    init_materials(iface, (dataLocations.u.s.diffuse.lpData != NULL));
+    init_materials(iface, (dataLocations->u.s.diffuse.lpData != NULL));
 
     drawPrimitiveUploadTextures(This);
 
@@ -2137,8 +2150,10 @@ void drawPrimitive(IWineD3DDevice *iface,
 #endif
         if (numberOfVertices == 0 )
             numberOfVertices = calculatedNumberOfindices;
-        drawPrimitiveDrawStrided(iface, useVertexShaderFunction, usePixelShaderFunction, useHW, &dataLocations, numberOfVertices, calculatedNumberOfindices, glPrimType, idxData, idxSize, minIndex, StartIdx);
+        drawPrimitiveDrawStrided(iface, useVertexShaderFunction, usePixelShaderFunction, useHW, dataLocations, numberOfVertices, calculatedNumberOfindices, glPrimType, idxData, idxSize, minIndex, StartIdx);
     }
+
+    if(!DrawPrimStrideData) HeapFree(GetProcessHeap(), 0, dataLocations);
 
     /* If vertex shaders or no normals, restore previous lighting state */
     if (useVertexShaderFunction || !(fvf & D3DFVF_NORMAL)) {
