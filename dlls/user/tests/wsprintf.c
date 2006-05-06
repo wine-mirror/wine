@@ -50,8 +50,51 @@ static void wsprintfWTest(void)
        "wsprintfW zero padded negative value failure\n");
 }
 
+/* Test if the CharUpper / CharLower functions return true 16 bit results,
+   if the input is a 16 bit input value. Upto Wine 11-2003 the input value
+   0xff returns 0xffffffff. */
+
+static void CharUpperTest(void)
+{
+    int i,out,failed;
+
+    failed = 0;
+    for (i=0;i<256;i++)
+    	{
+	out = (int) CharUpper((LPTSTR)i);
+	/* printf("%0x ",out); */
+	if ((out >> 16) != 0)
+	   {
+	   failed = 1;
+	   break;
+	   }
+	}
+    ok(!failed,"CharUpper failed - 16bit input (0x%0x) returned 32bit result (0x%0x)",i,out);
+}
+
+static void CharLowerTest(void)
+{
+    int i,out,failed;
+
+    failed = 0;
+    for (i=0;i<256;i++)
+    	{
+	out = (int) CharLower((LPTSTR)i);
+	/* printf("%0x ",out); */
+	if ((out >> 16) != 0)
+	   {
+	   failed = 1;
+	   break;
+	   }
+	}
+    ok(!failed,"CharLower failed - 16bit input (0x%0x) returned 32bit result (0x%0x)",i,out);
+}
+
+
 START_TEST(wsprintf)
 {
     wsprintfATest();
     wsprintfWTest();
+    CharUpperTest();
+    CharLowerTest();
 }
