@@ -368,7 +368,13 @@ static HRESULT WINAPI IDirectInputWImpl_CreateDevice(LPDIRECTINPUT7A iface,
 }
 
 static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTANCE hinst, DWORD x) {
-	return DIERR_ALREADYINITIALIZED;
+	TRACE("(this=%p,%p,%lx)\n",iface, hinst, x);
+	
+	/* Initialize can return: DIERR_BETADIRECTINPUTVERSION, DIERR_OLDDIRECTINPUTVERSION and DI_OK.
+	 * Since we already initialized the device, return DI_OK. In the past we returned DIERR_ALREADYINITIALIZED
+	 * which broke applications like Tomb Raider Legend because it isn't a legal return value.
+	 */
+	return DI_OK;
 }
 
 static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUT7A iface,
