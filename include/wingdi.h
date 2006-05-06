@@ -3244,6 +3244,19 @@ typedef struct _DRAWPATRECT
     WORD  wPattern;
 } DRAWPATRECT, *PDRAWPATRECT;
 
+typedef struct tagWCRANGE {
+  WCHAR  wcLow;
+  USHORT cGlyphs;
+} WCRANGE, *PWCRANGE, *LPWCRANGE;
+
+typedef struct tagGLYPHSET {
+  DWORD    cbThis;
+  DWORD    flAccel;
+  DWORD    cGlyphsSupported;
+  DWORD    cRanges;
+  WCRANGE  ranges[1];
+} GLYPHSET, *PGLYPHSET, *LPGLYPHSET;
+
 INT         WINAPI AbortDoc(HDC);
 BOOL        WINAPI AbortPath(HDC);
 INT         WINAPI AddFontResourceA(LPCSTR);
