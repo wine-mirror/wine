@@ -1510,7 +1510,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		  item_index = ListView_GetNextItem(This->hWndList,
 			item_index, LVNI_SELECTED);
 		  item.iItem = item_index;
-		  item.mask |= LVIF_PARAM;
+		  item.mask = LVIF_PARAM;
 		  SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &item);
 
 		  /* get item pidl */
