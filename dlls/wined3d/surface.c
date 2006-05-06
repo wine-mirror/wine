@@ -312,22 +312,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
         TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
     }
 
-    /* DXTn formats don't have exact pitches as they are to the new row of blocks,
-         where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt2/3/4/5)
-          ie pitch = (width/4) * bytes per block                                  */
-    if (This->resource.format == WINED3DFMT_DXT1) /* DXT1 is 8 bytes per block */
-        pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 3;
-    else if (This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
-             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
-        pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 4;
-    else {
-        if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
-            /* Front and back buffers are always lockes/unlocked on currentDesc.Width */
-            pLockedRect->Pitch = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
-        } else {
-            pLockedRect->Pitch = This->bytesPerPixel * This->pow2Width;
-        }
-    }
+    pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
 
     if (NULL == pRect) {
         pLockedRect->pBits = This->resource.allocatedMemory;
@@ -1524,6 +1509,31 @@ HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
+DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    DWORD ret;
+    TRACE("(%p)\n", This);
+
+    /* DXTn formats don't have exact pitches as they are to the new row of blocks,
+         where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt2/3/4/5)
+          ie pitch = (width/4) * bytes per block                                  */
+    if (This->resource.format == WINED3DFMT_DXT1) /* DXT1 is 8 bytes per block */
+        ret = (This->currentDesc.Width >> 2) << 3;
+    else if (This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
+             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
+        ret = (This->currentDesc.Width >> 2) << 4;
+    else {
+        if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+            /* Front and back buffers are always lockes/unlocked on currentDesc.Width */
+            ret = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
+        } else {
+            ret = This->bytesPerPixel * This->pow2Width;
+        }
+    }
+    TRACE("(%p) Returning %ld\n", This, ret);
+    return ret;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -1560,6 +1570,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_SetPalette,
     IWineD3DSurfaceImpl_RealizePalette,
     IWineD3DSurfaceImpl_SetColorKey,
+    IWineD3DSurfaceImpl_GetPitch,
     /* Internal use: */
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,
