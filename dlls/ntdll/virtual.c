@@ -1072,6 +1072,12 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         if (sec->Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
         if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_READ|VPROT_WRITECOPY;
         if (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE) vprot |= VPROT_EXEC;
+
+        /* Dumb game crack lets the AOEP point into a data section. Adjust. */
+        if ((nt->OptionalHeader.AddressOfEntryPoint >= sec->VirtualAddress) &&
+            (nt->OptionalHeader.AddressOfEntryPoint < sec->VirtualAddress + size))
+            vprot |= VPROT_EXEC;
+
         VIRTUAL_SetProt( view, ptr + sec->VirtualAddress, size, vprot );
     }
 
