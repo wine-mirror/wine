@@ -786,6 +786,16 @@ typedef struct _WINED3DSURFACET_DESC
 } WINED3DSURFACET_DESC;
 
 /*****************************************************************************
+ * Structure for DIB Surfaces (GetDC and GDI surfaces)
+ */
+typedef struct wineD3DSurface_DIB {
+    HBITMAP DIBsection;
+    void* bitmap_data;
+    HGDIOBJ holdbitmap;
+    BOOL client_memory;
+} wineD3DSurface_DIB;
+
+/*****************************************************************************
  * IWineD3DSurface implementation structure
  */
 struct IWineD3DSurfaceImpl
@@ -819,6 +829,10 @@ struct IWineD3DSurfaceImpl
     RECT                      dirtyRect;
 
     glDescriptor              glDescription;
+
+    /* For GetDC */
+    wineD3DSurface_DIB        dib;
+    HDC                       hDC;
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
@@ -837,6 +851,8 @@ extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
 #define SFLAG_NONPOW2     0x0400 /* Surface sizes are not a power of 2 */
 #define SFLAG_DYNLOCK     0x0800 /* Surface is often locked by the app */
 #define SFLAG_DYNCHANGE   0x1800 /* Surface contents are changed very often, implies DYNLOCK */
+#define SFLAG_DCINUSE     0x2000 /* Set between GetDC and ReleaseDC calls */
+#define SFLAG_NEWDC       0x4000 /* To inform LockRect about a new dc */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL
@@ -1299,5 +1315,9 @@ DWORD IWineD3DPaletteImpl_Size(DWORD dwFlags);
 
 /* DirectDraw utility functions */
 extern WINED3DFORMAT pixelformat_for_depth(DWORD depth);
+LONG get_bitmask_red(WINED3DFORMAT fmt);
+LONG get_bitmask_green(WINED3DFORMAT fmt);
+LONG get_bitmask_blue(WINED3DFORMAT fmt);
+LONG get_bitmask_alpha(WINED3DFORMAT fmt);
 
 #endif

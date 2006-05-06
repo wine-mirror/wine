@@ -1,6 +1,7 @@
 /*
  * IWineD3DSurface Implementation
  *
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004 Christian Costa
@@ -70,6 +71,17 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
             glDeleteTextures(1, &This->glDescription.textureName);
             LEAVE_GL();
         }
+
+        if(This->Flags & SFLAG_DIBSECTION) {
+            /* Release the DC */
+            SelectObject(This->hDC, This->dib.holdbitmap);
+            DeleteDC(This->hDC);
+            /* Release the DIB section */
+            DeleteObject(This->dib.DIBsection);
+            This->dib.bitmap_data = NULL;
+            This->resource.allocatedMemory = NULL;
+        }
+
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
 
         TRACE("(%p) Released\n", This);
@@ -344,12 +356,15 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
         These resources may be POOL_SYSTEMMEM, so they must not access the device */
         TRACE("locking an ordinarary surface\n");
         /* Check to see if memory has already been allocated from the surface*/
-        if (NULL == This->resource.allocatedMemory) { /* TODO: check to see if an update has been performed on the surface (an update could just clobber allocatedMemory */
+        if ((NULL == This->resource.allocatedMemory) ||
+            (This->Flags & SFLAG_NEWDC) ){ /* TODO: check to see if an update has been performed on the surface (an update could just clobber allocatedMemory */
             /* Non-system memory surfaces */
 
             /*Surface has no memory currently allocated to it!*/
             TRACE("(%p) Locking rect\n" , This);
-            This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->pow2Size);
+            if(!This->resource.allocatedMemory) {
+                This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->pow2Size);
+            }
             if (0 != This->glDescription.textureName) {
                 /* Now I have to copy thing bits back */
                 This->Flags |= SFLAG_ACTIVELOCK; /* When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory */
@@ -704,6 +719,22 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             GLint  prev_draw;
             GLint  prev_rasterpos[4];
 
+            /* Some drivers(radeon dri, others?) don't like exceptions during
+             * glDrawPixels. If the surface is a DIB section, it might be in GDIMode
+             * after ReleaseDC. Reading it will cause an exception, which x11drv will
+             * catch to put the dib section in InSync mode, which leads to a crash
+             * and a blocked x server on my radeon card.
+             *
+             * The following lines read the dib section so it is put in inSync mode
+             * before glDrawPixels is called and the crash is prevented. There won't
+             * be any interfering gdi accesses, because UnlockRect is called from
+             * ReleaseDC, and the app won't use the dc any more afterwards.
+             */
+            if(This->Flags & SFLAG_DIBSECTION) {
+                volatile BYTE read;
+                read = This->resource.allocatedMemory[0];
+            }
+
             ENTER_GL();
 
             glFlush();
@@ -906,14 +937,216 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    FIXME("No support for GetDC yet for surface %p\n", This);
-    return WINED3DERR_INVALIDCALL;
+    WINED3DLOCKED_RECT lock;
+    UINT usage;
+    BITMAPINFO* b_info;
+    HDC ddc;
+    DWORD *masks;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n",This,pHDC);
+
+    /* Give more detailed info for ddraw */
+    if (This->Flags & SFLAG_DCINUSE)
+        return DDERR_DCALREADYCREATED;
+
+    /* Can't GetDC if the surface is locked */
+    if (This->Flags & SFLAG_LOCKED)
+        return WINED3DERR_INVALIDCALL;
+
+    memset(&lock, 0, sizeof(lock)); /* To be sure */
+
+    /* Create a DIB section if there isn't a hdc yet */
+    if(!This->hDC)
+    {
+        RGBQUAD col[256];
+
+        if(This->Flags & SFLAG_ACTIVELOCK)
+        {
+            ERR("Creating a DIB section while a lock is active. Uncertain consequences\n");
+        }
+
+        switch (This->bytesPerPixel)
+        {
+            case 2:
+            case 4:
+                /* Allocate extra space to store the RGB bit masks. */
+                b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD));
+                break;
+
+            case 3:
+                b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER));
+                break;
+
+            default:
+                /* Allocate extra space for a palette. */
+                b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                  sizeof(BITMAPINFOHEADER)
+                                  + sizeof(RGBQUAD)
+                                  * (1 << (This->bytesPerPixel * 8)));
+                break;
+        }
+
+        b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        b_info->bmiHeader.biWidth = This->pow2Width;
+        b_info->bmiHeader.biHeight = -This->pow2Height;
+        b_info->bmiHeader.biPlanes = 1;
+        b_info->bmiHeader.biBitCount = This->bytesPerPixel * 8;
+
+        b_info->bmiHeader.biSizeImage = This->resource.size;
+
+        b_info->bmiHeader.biXPelsPerMeter = 0;
+        b_info->bmiHeader.biYPelsPerMeter = 0;
+        b_info->bmiHeader.biClrUsed = 0;
+        b_info->bmiHeader.biClrImportant = 0;
+
+        /* Get the bit masks */
+        masks = (DWORD *) &(b_info->bmiColors);
+        switch (This->resource.format)
+        {
+            case WINED3DFMT_R8G8B8:
+                usage = DIB_RGB_COLORS;
+                b_info->bmiHeader.biCompression = BI_RGB;
+                break;
+
+            case WINED3DFMT_X1R5G5B5:
+            case WINED3DFMT_A1R5G5B5:
+            case WINED3DFMT_A4R4G4B4:
+            case WINED3DFMT_X4R4G4B4:
+            case WINED3DFMT_R3G3B2:
+            case WINED3DFMT_A8R3G3B2:
+            case WINED3DFMT_A2B10G10R10:
+            case WINED3DFMT_A8B8G8R8:
+            case WINED3DFMT_X8B8G8R8:
+            case WINED3DFMT_A2R10G10B10:
+            case WINED3DFMT_R5G6B5:
+            case WINED3DFMT_A16B16G16R16:
+                usage = 0;
+                b_info->bmiHeader.biCompression = BI_BITFIELDS;
+                masks[0] = get_bitmask_red(This->resource.format);
+                masks[1] = get_bitmask_green(This->resource.format);
+                masks[2] = get_bitmask_blue(This->resource.format);
+                break;
+
+            default:
+                /* Don't know palette */
+                b_info->bmiHeader.biCompression = BI_RGB;
+                usage = 0;
+                break;
+        }
+
+        ddc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+        if (ddc == 0)
+        {
+            HeapFree(GetProcessHeap(), 0, b_info);
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+
+        TRACE("Creating a DIB section with size %ldx%ldx%d, size=%ld\n", b_info->bmiHeader.biWidth, b_info->bmiHeader.biHeight, b_info->bmiHeader.biBitCount, b_info->bmiHeader.biSizeImage);
+        This->dib.DIBsection = CreateDIBSection(ddc, b_info, usage, &This->dib.bitmap_data, 0 /* Handle */, 0 /* Offset */);
+        DeleteDC(ddc);
+
+        if (!This->dib.DIBsection)
+        {
+            ERR("CreateDIBSection failed!\n");
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+        HeapFree(GetProcessHeap(), 0, b_info);
+
+        TRACE("DIBSection at : %p\n", This->dib.bitmap_data);
+
+        /* copy the existing surface to the dib section */
+        if(This->resource.allocatedMemory)
+        {
+            memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, This->resource.size);
+            /* We won't need that any more */
+            HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+        }
+
+        /* Use the dib section from now on */
+        This->resource.allocatedMemory = This->dib.bitmap_data;
+
+        /* Now allocate a HDC */
+        This->hDC = CreateCompatibleDC(0);
+        This->dib.holdbitmap = SelectObject(This->hDC, This->dib.DIBsection);
+        TRACE("using wined3d palette %p\n", This->palette);
+        SelectPalette(This->hDC,
+                      This->palette ? This->palette->hpal : 0,
+                      FALSE);
+
+        if(This->resource.format == WINED3DFMT_P8 ||
+           This->resource.format == WINED3DFMT_A8P8)
+        {
+            unsigned int n;
+            if(This->palette)
+            {
+                PALETTEENTRY ent[256];
+
+                GetPaletteEntries(This->palette->hpal, 0, 256, ent);
+                for (n=0; n<256; n++)
+                {
+                    col[n].rgbRed   = ent[n].peRed;
+                    col[n].rgbGreen = ent[n].peGreen;
+                    col[n].rgbBlue  = ent[n].peBlue;
+                    col[n].rgbReserved = 0;
+                }
+            }
+            else
+            {
+                IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+                for (n=0; n<256; n++)
+                {
+                    col[n].rgbRed   = device->palettes[device->currentPalette][n].peRed;
+                    col[n].rgbGreen = device->palettes[device->currentPalette][n].peGreen;
+                    col[n].rgbBlue  = device->palettes[device->currentPalette][n].peBlue;
+                    col[n].rgbReserved = 0;
+                }
+
+            }
+            SetDIBColorTable(This->hDC, 0, 256, col);
+        }
+
+        /* This is to make LockRect read the gl Texture although memory is allocated */
+        This->Flags |= SFLAG_NEWDC;
+
+        This->Flags |= SFLAG_DIBSECTION;
+    }
+
+    /* Lock the surface */
+    hr = IWineD3DSurface_LockRect(iface,
+                                  &lock,
+                                  NULL,
+                                  0);
+    This->Flags &= ~SFLAG_NEWDC;
+    if(FAILED(hr))
+    {
+        ERR("IWineD3DSurface_LockRect failed with hr = %08lx\n", hr);
+        /* keep the dib section */
+        return hr;
+    }
+
+    *pHDC = This->hDC;
+    TRACE("returning %p\n",*pHDC);
+    This->Flags |= SFLAG_DCINUSE;
+
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    FIXME("No support for ReleaseDC yet for surface %p\n", This);
-    return WINED3DERR_INVALIDCALL;
+
+    TRACE("(%p)->(%p)\n",This,hDC);
+
+    if (!(This->Flags & SFLAG_DCINUSE))
+        return D3DERR_INVALIDCALL;
+
+    /* we locked first, so unlock now */
+    IWineD3DSurface_UnlockRect(iface);
+
+    This->Flags &= ~SFLAG_DCINUSE;
+
+    return WINED3D_OK;
 }
 
 /* ******************************************************

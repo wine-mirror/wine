@@ -2061,3 +2061,184 @@ WINED3DFORMAT pixelformat_for_depth(DWORD depth) {
         default: return WINED3DFMT_UNKNOWN;
     }
 }
+
+LONG get_bitmask_red(WINED3DFORMAT fmt)
+{
+    switch (fmt) {
+      case WINED3DFMT_R8G8B8:
+      case WINED3DFMT_A8R8G8B8:
+      case WINED3DFMT_X8R8G8B8:
+          return 0x00ff0000;
+
+      case WINED3DFMT_X1R5G5B5:
+      case WINED3DFMT_A1R5G5B5:
+          return 0x7C00;
+
+      case WINED3DFMT_A4R4G4B4:
+      case WINED3DFMT_X4R4G4B4:
+          return 0xF00;
+
+      case WINED3DFMT_R3G3B2:
+      case WINED3DFMT_A8R3G3B2:
+          return 0xE0;
+
+      case WINED3DFMT_A2R10G10B10:
+          return 0x3F0000;
+          break;
+
+      case WINED3DFMT_A2B10G10R10:
+          return 0x3FF;
+
+      case WINED3DFMT_A8B8G8R8:
+      case WINED3DFMT_X8B8G8R8:
+          return 0xff;
+
+      case WINED3DFMT_R5G6B5:
+          return 0xF800;
+
+      case WINED3DFMT_P8:
+          /* No fixed mask for this format */
+          return 0;
+
+#if 0
+      case WINED3DFMT_A16B16G16R16:
+          return 0x00000000ffff;
+          break;
+#endif
+
+      default:
+          ERR("Unknown bitmask for format %d\n", fmt);
+          return 0;
+    }
+}
+
+LONG get_bitmask_green(WINED3DFORMAT fmt)
+{
+    switch (fmt) {
+      case WINED3DFMT_R8G8B8:
+      case WINED3DFMT_A8R8G8B8:
+      case WINED3DFMT_X8R8G8B8:
+          return 0x0000ff00;
+
+      case WINED3DFMT_X1R5G5B5:
+      case WINED3DFMT_A1R5G5B5:
+          return 0x3E0;
+
+      case WINED3DFMT_A4R4G4B4:
+      case WINED3DFMT_X4R4G4B4:
+          return 0xF0;
+
+      case WINED3DFMT_R3G3B2:
+      case WINED3DFMT_A8R3G3B2:
+          return 0x1C;
+
+      case WINED3DFMT_A2B10G10R10:
+          return 0xFFC00;
+
+      case WINED3DFMT_A8B8G8R8:
+      case WINED3DFMT_X8B8G8R8:
+          return 0xFF00;
+          break;
+
+      case WINED3DFMT_A2R10G10B10:
+          return 0xFFC00;
+          break;
+
+      case WINED3DFMT_R5G6B5:
+          return 0x7E0;
+
+      case WINED3DFMT_P8:
+          /* No fixed mask for this format */
+          return 0;
+
+#if 0
+      case WINED3DFMT_A16B16G16R16:
+          return 0x0000ffff0000;
+          break;
+#endif
+
+      default:
+          ERR("Unknown bitmask for format %d\n", fmt);
+          return 0;
+    }
+}
+
+LONG get_bitmask_blue(WINED3DFORMAT fmt)
+{
+    switch (fmt) {
+      case WINED3DFMT_R8G8B8:
+      case WINED3DFMT_A8R8G8B8:
+      case WINED3DFMT_X8R8G8B8:
+          return 0x000000ff;
+
+      case WINED3DFMT_X1R5G5B5:
+      case WINED3DFMT_A1R5G5B5:
+          return 0x1f;
+
+      case WINED3DFMT_A4R4G4B4:
+      case WINED3DFMT_X4R4G4B4:
+          return 0xF;
+
+      case WINED3DFMT_R3G3B2:
+      case WINED3DFMT_A8R3G3B2:
+          return 0x3;
+
+      case WINED3DFMT_A2B10G10R10:
+          return 0x3F0000;
+
+      case WINED3DFMT_A8B8G8R8:
+      case WINED3DFMT_X8B8G8R8:
+          return 0xFF0000;
+
+      case WINED3DFMT_A2R10G10B10:
+          return 0x3FF;
+
+      case WINED3DFMT_R5G6B5:
+          return 0x1F;
+
+      case WINED3DFMT_P8:
+          /* No fixed mask for this format */
+          return 0;
+
+#if 0
+      case WINED3DFMT_A16B16G16R16:
+          return 0xffff00000000;
+          break;
+#endif
+
+      default:
+          ERR("Unknown bitmask for format %d\n", fmt);
+          return 0;
+
+    }
+}
+
+LONG get_bitmask_alpha(WINED3DFORMAT fmt)
+{
+    switch (fmt) {
+      case WINED3DFMT_A8R8G8B8:
+          return 0xff000000;
+
+      case WINED3DFMT_A1R5G5B5:
+          return 0x8000;
+
+      case WINED3DFMT_A4R4G4B4:
+          return 0xF000;
+
+      case WINED3DFMT_A8R3G3B2:
+          return 0xff00;
+
+      case WINED3DFMT_A2B10G10R10:
+          return 0xb0000000;
+
+      case WINED3DFMT_A8B8G8R8:
+          return 0xFF000000;
+
+      case WINED3DFMT_A2R10G10B10:
+          return 0xb0000000;
+
+      default:
+          return 0;
+
+    }
+}
