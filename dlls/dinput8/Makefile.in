@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = dinput8.dll
 IMPORTLIB = libdinput8.$(IMPLIBEXT)
 IMPORTS   = dinput kernel32
-EXTRALIBS = -luuid
+EXTRALIBS = -luuid -ldxguid
 
 C_SRCS = \
 	dinput8_main.c
