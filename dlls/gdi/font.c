@@ -344,59 +344,17 @@ static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRIC
 /***********************************************************************
  *           FONT_mbtowc
  *
- * Returns a Unicode translation of str using the charset of the
- * currently selected font in hdc.  If count is -1 then str is assumed
- * to be '\0' terminated, otherwise it contains the number of bytes to
- * convert.  If plenW is non-NULL, on return it will point to the
- * number of WCHARs that have been written.  If pCP is non-NULL, on
- * return it will point to the codepage used in the conversion.  The
- * caller should free the returned LPWSTR from the process heap
- * itself.
+ * Returns a Unicode translation of str. If count is -1 then str is
+ * assumed to be '\0' terminated, otherwise it contains the number of
+ * bytes to convert.  If plenW is non-NULL, on return it will point to
+ * the number of WCHARs that have been written.  The caller should free
+ * the returned LPWSTR from the process heap itself.
  */
-static LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
+static LPWSTR FONT_mbtowc(LPCSTR str, INT count, INT *plenW)
 {
     UINT cp = CP_ACP;
     INT lenW;
     LPWSTR strW;
-    CHARSETINFO csi;
-    int charset = GetTextCharset(hdc);
-
-    /* Hmm, nicely designed api this one! */
-    if(TranslateCharsetInfo((DWORD*)charset, &csi, TCI_SRCCHARSET))
-        cp = csi.ciACP;
-    else {
-        switch(charset) {
-        case OEM_CHARSET:
-            cp = GetOEMCP();
-            break;
-        case DEFAULT_CHARSET:
-            cp = GetACP();
-            break;
-
-        case VISCII_CHARSET:
-        case TCVN_CHARSET:
-        case KOI8_CHARSET:
-        case ISO3_CHARSET:
-        case ISO4_CHARSET:
-        case ISO10_CHARSET:
-        case CELTIC_CHARSET:
-            /* FIXME: These have no place here, but because x11drv
-               enumerates fonts with these (made up) charsets some apps
-               might use them and then the FIXME below would become
-               annoying.  Now we could pick the intended codepage for
-               each of these, but since it's broken anyway we'll just
-               use CP_ACP and hope it'll go away...
-            */
-            cp = CP_ACP;
-            break;
-
-        default:
-            FIXME("Can't find codepage for charset %d\n", charset);
-            break;
-        }
-    }
-
-    TRACE("charset %d => cp %d\n", charset, cp);
 
     if(count == -1) count = strlen(str);
     lenW = MultiByteToWideChar(cp, 0, str, count, NULL, 0);
@@ -404,7 +362,6 @@ static LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
     MultiByteToWideChar(cp, 0, str, count, strW, lenW);
     TRACE("mapped %s -> %s\n", debugstr_an(str, count), debugstr_wn(strW, lenW));
     if(plenW) *plenW = lenW;
-    if(pCP) *pCP = cp;
     return strW;
 }
 
@@ -1066,7 +1023,7 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
 {
     BOOL ret = FALSE;
     INT wlen;
-    LPWSTR p = FONT_mbtowc(hdc, str, count, &wlen, NULL);
+    LPWSTR p = FONT_mbtowc(str, count, &wlen);
 
     if (p) {
 	ret = GetTextExtentPoint32W( hdc, p, wlen, size );
@@ -1187,7 +1144,7 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
 {
     BOOL ret;
     INT wlen;
-    LPWSTR p = FONT_mbtowc( hdc, str, count, &wlen, NULL);
+    LPWSTR p = FONT_mbtowc(str, count, &wlen);
     ret = GetTextExtentExPointW( hdc, p, wlen, maxExt, lpnFit, alpDx, size);
     if (lpnFit) *lpnFit = WideCharToMultiByte(CP_ACP,0,p,*lpnFit,NULL,0,NULL,NULL);
     HeapFree( GetProcessHeap(), 0, p );
@@ -1646,7 +1603,7 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
     for(i = 0; i < count; i++)
 	str[i] = (BYTE)(firstChar + i);
 
-    wstr = FONT_mbtowc(hdc, str, count, &wlen, NULL);
+    wstr = FONT_mbtowc(str, count, &wlen);
 
     for(i = 0; i < wlen; i++)
     {
@@ -1674,7 +1631,6 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
                          const RECT *lprect, LPCSTR str, UINT count, const INT *lpDx )
 {
     INT wlen;
-    UINT codepage;
     LPWSTR p;
     BOOL ret;
     LPINT lpDxW = NULL;
@@ -1682,14 +1638,14 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
     if (flags & ETO_GLYPH_INDEX)
         return ExtTextOutW( hdc, x, y, flags, lprect, (LPCWSTR)str, count, lpDx );
 
-    p = FONT_mbtowc(hdc, str, count, &wlen, &codepage);
+    p = FONT_mbtowc(str, count, &wlen);
 
     if (lpDx) {
         unsigned int i = 0, j = 0;
 
         lpDxW = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
         while(i < count) {
-            if(IsDBCSLeadByteEx(codepage, str[i])) {
+            if(IsDBCSLeadByte(str[i])) {
                 lpDxW[j++] = lpDx[i] + lpDx[i+1];
                 i = i + 2;
             } else {
@@ -2290,7 +2246,7 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
     for(i = 0; i < count; i++)
 	str[i] = (BYTE)(firstChar + i);
 
-    wstr = FONT_mbtowc(hdc, str, count, &wlen, NULL);
+    wstr = FONT_mbtowc(str, count, &wlen);
 
     for(i = 0; i < wlen; i++)
     {
@@ -2428,7 +2384,7 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
             len = 1;
             mbchs[0] = (uChar & 0xff);
         }
-        p = FONT_mbtowc(hdc, mbchs, len, NULL, NULL);
+        p = FONT_mbtowc(mbchs, len, NULL);
 	c = p[0];
     } else
         c = uChar;
@@ -2667,7 +2623,7 @@ DWORD WINAPI GetGlyphIndicesA(HDC hdc, LPCSTR lpstr, INT count,
     TRACE("(%p, %s, %d, %p, 0x%lx)\n",
           hdc, debugstr_an(lpstr, count), count, pgi, flags);
 
-    lpstrW = FONT_mbtowc(hdc, lpstr, count, &countW, NULL);
+    lpstrW = FONT_mbtowc(lpstr, count, &countW);
     ret = GetGlyphIndicesW(hdc, lpstrW, countW, pgi, flags);
     HeapFree(GetProcessHeap(), 0, lpstrW);
 
@@ -2712,7 +2668,6 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
     INT uCountW;
     GCP_RESULTSW resultsW;
     DWORD ret;
-    UINT font_cp;
 
     TRACE("%s, %d, %d, 0x%08lx\n",
           debugstr_an(lpString, uCount), uCount, nMaxExtent, dwFlags);
@@ -2720,7 +2675,7 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
     /* both structs are equal in size */
     memcpy(&resultsW, lpResults, sizeof(resultsW));
 
-    lpStringW = FONT_mbtowc(hdc, lpString, uCount, &uCountW, &font_cp);
+    lpStringW = FONT_mbtowc(lpString, uCount, &uCountW);
     if(lpResults->lpOutString)
         resultsW.lpOutString = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*uCountW);
 
@@ -2730,7 +2685,7 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
     lpResults->nMaxFit = resultsW.nMaxFit;
 
     if(lpResults->lpOutString) {
-        WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
+        WideCharToMultiByte(CP_ACP, 0, resultsW.lpOutString, uCountW,
                             lpResults->lpOutString, uCount, NULL, NULL );
     }
 
@@ -2860,7 +2815,7 @@ BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, LPABCFLOAT a
     for(i = 0; i < count; i++)
         str[i] = (BYTE)(first + i);
 
-    wstr = FONT_mbtowc( hdc, str, count, &wlen, NULL );
+    wstr = FONT_mbtowc(str, count, &wlen);
 
     for (i = 0; i < wlen; i++)
     {
