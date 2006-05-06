@@ -1225,8 +1225,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     break;
                 case D3DSIO_TEX:
                 {
-                    char reg_dest[20];
-                    char reg_coord[20];
+                    char reg_dest[40];
+                    char reg_coord[40];
                     char reg_coord_swz[20] = "";
                     DWORD reg_dest_code;
                     DWORD reg_sampler_code;
