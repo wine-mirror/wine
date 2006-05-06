@@ -245,7 +245,7 @@ void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT te
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     TRACE("(%p) : setting textureName %u, target %i\n", This, textureName, target);
     if (This->glDescription.textureName == 0 && textureName != 0) {
-        This->Dirty = TRUE;
+        This->Flags |= SFLAG_DIRTY;
         IWineD3DSurface_AddDirtyRect(iface, NULL);
     }
     This->glDescription.textureName = textureName;
@@ -275,13 +275,13 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
     static UINT messages = 0; /* holds flags to disable fixme messages */
 
     /* fixme: should we really lock as such? */
-    if (This->inTexture && This->inPBuffer) {
+    if((This->Flags & (SFLAG_INTEXTURE | SFLAG_INPBUFFER)) ==
+                      (SFLAG_INTEXTURE | SFLAG_INPBUFFER) ) {
         FIXME("Warning: Surface is in texture memory or pbuffer\n");
-        This->inTexture = 0;
-        This->inPBuffer = 0;
+        This->Flags &= ~(SFLAG_INTEXTURE | SFLAG_INPBUFFER);
     }
 
-    if (FALSE == This->lockable) {
+    if (!(This->Flags & SFLAG_LOCKABLE)) {
         /* Note: UpdateTextures calls CopyRects which calls this routine to populate the
               texture regions, and since the destination is an unlockable region we need
               to tolerate this                                                           */
@@ -350,7 +350,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
         This->lockedRect.bottom = pRect->bottom;
     }
 
-    if (This->nonpow2) {
+    if (This->Flags & SFLAG_NONPOW2) {
         TRACE("Locking non-power 2 texture\n");
     }
 
@@ -367,7 +367,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
             This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->pow2Size);
             if (0 != This->glDescription.textureName) {
                 /* Now I have to copy thing bits back */
-                This->activeLock = TRUE; /* When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory */
+                This->Flags |= SFLAG_ACTIVELOCK; /* When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory */
                 /* TODO: make activeLock a bit more intelligent, maybe implement a method to purge the texture memory. */
                 ENTER_GL();
     
@@ -441,7 +441,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
         
                         internally the texture is still stored in a boxed format so any references to textureName will get a boxed texture with width pow2width and not a texture of width currentDesc.Width.
                         */
-                        if (This->nonpow2) {
+                        if (This->Flags & SFLAG_NONPOW2) {
                             BYTE* dataa, *datab;
                             int pitcha = 0, pitchb = 0;
                             int y;
@@ -493,7 +493,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
         if (This->resource.allocatedMemory == NULL)
                 This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 ,This->resource.size);
 
-        This->activeLock = TRUE; /*When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory*/
+        This->Flags |= SFLAG_ACTIVELOCK; /*When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory*/
         pLockedRect->pBits = This->resource.allocatedMemory;
 
         glFlush();
@@ -655,9 +655,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
         }
     }
 
-    TRACE("returning memory@%p, pitch(%d) dirtyfied(%d)\n", pLockedRect->pBits, pLockedRect->Pitch, This->Dirty);
+    TRACE("returning memory@%p, pitch(%d) dirtyfied(%d)\n", pLockedRect->pBits, pLockedRect->Pitch, This->Flags & SFLAG_DIRTY ? 0 : 1);
 
-    This->locked = TRUE;
+    This->Flags |= SFLAG_LOCKED;
     return WINED3D_OK;
 }
 
@@ -668,7 +668,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     const char *buffername = "";
     IWineD3DSwapChainImpl *swapchain = NULL;
 
-    if (FALSE == This->locked) {
+    if (!(This->Flags & SFLAG_LOCKED)) {
         WARN("trying to Unlock an unlocked surf@%p\n", This);
         return WINED3DERR_INVALIDCALL;
     }
@@ -691,9 +691,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
     }
 
-    TRACE("(%p %s) : dirtyfied(%d)\n", This, buffername, This->Dirty);
+    TRACE("(%p %s) : dirtyfied(%d)\n", This, buffername, This->Flags & SFLAG_DIRTY ? 1 : 0);
 
-    if (FALSE == This->Dirty) {
+    if (!(This->Flags & SFLAG_DIRTY)) {
         TRACE("(%p) : Not Dirtified so nothing to do, return now\n", This);
         goto unlock_end;
     }
@@ -914,7 +914,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     }
 
     unlock_end:
-    This->locked = FALSE;
+    This->Flags &= ~SFLAG_LOCKED;
     memset(&This->lockedRect, 0, sizeof(RECT));
     return WINED3D_OK;
 }
@@ -937,16 +937,16 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
 HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
-    if (This->inTexture) {
+    if (This->Flags & SFLAG_INTEXTURE) {
         TRACE("Surface already in texture\n");
         return WINED3D_OK;
     }
-    if (This->Dirty == FALSE) {
+    if (!(This->Flags & SFLAG_DIRTY)) {
         TRACE("surface isn't dirty\n");
         return WINED3D_OK;
     }
 
-    This->Dirty = FALSE;
+    This->Flags &= ~SFLAG_DIRTY;
 
     /* Resources are placed in system RAM and do not need to be recreated when a device is lost.
     *  These resources are not bound by device size or format restrictions. Because of this,
@@ -961,7 +961,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (This->inPBuffer) {
+    if (This->Flags & SFLAG_INPBUFFER) {
         ENTER_GL();
 
         if (This->glDescription.level != 0)
@@ -991,7 +991,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             glReadBuffer(prevRead);
             vcheckGLcall("glReadBuffer");
             TRACE("Updating target %d\n", This->glDescription.target);
-            This->inTexture = TRUE;
+            This->Flags |= SFLAG_INTEXTURE;
         }
         LEAVE_GL();
         return WINED3D_OK;
@@ -1083,7 +1083,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
             LEAVE_GL();
 
-            if(This->activeLock == FALSE){
+            if(!(This->Flags & SFLAG_DONOTFREE)){
                 HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
                 This->resource.allocatedMemory = NULL;
             }
@@ -1091,7 +1091,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     } else {
 
        /* TODO: possibly use texture rectangle (though we are probably more compatible without it) */
-        if (NP2_REPACK == wined3d_settings.nonpower2_mode && This->nonpow2 == TRUE) {
+        if (NP2_REPACK == wined3d_settings.nonpower2_mode && (This->Flags & SFLAG_NONPOW2)) {
 
 
             TRACE("non power of two support\n");
@@ -1183,7 +1183,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             */
         }
 #endif
-        if(This->activeLock == FALSE){
+        if(!(This->Flags & SFLAG_DONOTFREE)){
             HeapFree(GetProcessHeap(),0,This->resource.allocatedMemory);
             This->resource.allocatedMemory = NULL;
         }
@@ -1223,7 +1223,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
 /* check to see if were a 'virtual' texture e.g. were not a pbuffer of texture were a back buffer*/
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapChain);
 
-    if (swapChain || This->inPBuffer) { /* if were not a real texture then read the back buffer into a real texture*/
+    if (swapChain || (This->Flags & SFLAG_INPBUFFER)) { /* if were not a real texture then read the back buffer into a real texture*/
 /* we don't want to interfere with the back buffer so read the data into a temporary texture and then save the data out of the temporary texture */
         GLint prevRead;
         ENTER_GL();
@@ -1337,12 +1337,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
 
 HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    This->Dirty = FALSE;
+    This->Flags &= ~SFLAG_DIRTY;
     This->dirtyRect.left   = This->currentDesc.Width;
     This->dirtyRect.top    = This->currentDesc.Height;
     This->dirtyRect.right  = 0;
     This->dirtyRect.bottom = 0;
-    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left,
+    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Flags & SFLAG_DIRTY ? 1 : 0, This->dirtyRect.left,
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     return WINED3D_OK;
 }
@@ -1353,7 +1353,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface) {
 extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pDirtyRect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DBaseTexture *baseTexture = NULL;
-    This->Dirty = TRUE;
+    This->Flags |= SFLAG_DIRTY;
     if (NULL != pDirtyRect) {
         This->dirtyRect.left   = min(This->dirtyRect.left,   pDirtyRect->left);
         This->dirtyRect.top    = min(This->dirtyRect.top,    pDirtyRect->top);
@@ -1365,7 +1365,7 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
         This->dirtyRect.right  = This->currentDesc.Width;
         This->dirtyRect.bottom = This->currentDesc.Height;
     }
-    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left,
+    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Flags & SFLAG_DIRTY, This->dirtyRect.left,
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     /* if the container is a basetexture then mark it dirty. */
     if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
@@ -1431,7 +1431,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
         This->pow2Size      = 0;
     }
 
-    This->lockable = (WINED3DFMT_D16_LOCKABLE == format) ? TRUE : This->lockable;
+    This->Flags |= (WINED3DFMT_D16_LOCKABLE == format) ? SFLAG_LOCKABLE : 0;
 
     This->resource.format = format;
 
@@ -1444,8 +1444,18 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL inPBuffer, BOOL  inTexture) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
-    This->inPBuffer = inPBuffer;
-    This->inTexture = inTexture;
+    if(inPBuffer) {
+        This->Flags |= SFLAG_INPBUFFER;
+    } else {
+        This->Flags &= ~SFLAG_INPBUFFER;
+    }
+
+    if(inTexture) {
+        This->Flags |= SFLAG_INTEXTURE;
+    } else {
+        This->Flags &= ~SFLAG_INTEXTURE;
+    }
+
     return WINED3D_OK;
 }
 

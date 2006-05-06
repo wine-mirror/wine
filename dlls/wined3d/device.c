@@ -702,9 +702,14 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     /* Internal data */
     object->pow2Width  = pow2Width;
     object->pow2Height = pow2Height;
-    object->nonpow2    = (pow2Width != Width || pow2Height != Height) ? TRUE : FALSE;
-    object->discard    = Discard;
-    object->activeLock = FALSE;
+
+    /* Flags */
+    object->Flags      = 0; /* We start without flags set */
+    object->Flags     |= (pow2Width != Width || pow2Height != Height) ? SFLAG_NONPOW2 : 0;
+    object->Flags     |= Discard ? SFLAG_DISCARD : 0;
+    object->Flags     |= (WINED3DFMT_D16_LOCKABLE == Format) ? SFLAG_LOCKABLE : 0;
+    object->Flags     |= Lockable ? SFLAG_LOCKABLE : 0;
+
 
     if (WINED3DFMT_UNKNOWN != Format) {
         object->bytesPerPixel = D3DFmtGetBpp(This, Format);
@@ -750,10 +755,6 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     if (Usage & WINED3DUSAGE_RENDERTARGET && Pool != WINED3DPOOL_DEFAULT) {
         FIXME("Trying to create a render target that isn't in the default pool\n");
     }
-
-
-    object->locked   = FALSE;
-    object->lockable = (WINED3DFMT_D16_LOCKABLE == Format) ? TRUE : Lockable;
 
     /* mark the texture as dirty so that it get's loaded first time around*/
     IWineD3DSurface_AddDirtyRect(*ppSurface, NULL);

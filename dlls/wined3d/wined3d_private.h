@@ -836,7 +836,7 @@ struct IWineD3DSurfaceImpl
     UINT                      bytesPerPixel;
 
     /* TODO: move this off into a management class(maybe!) */
-    BOOL                      nonpow2;
+    WORD                      Flags;
 
     UINT                      pow2Width;
     UINT                      pow2Height;
@@ -848,22 +848,47 @@ struct IWineD3DSurfaceImpl
     float                     pow2scalingFactorY; /* =  (Height / pow2Height) */
 #endif
 
-    BOOL                      lockable;
-    BOOL                      discard;
-    BOOL                      locked;
-    BOOL                      activeLock;
-    
     RECT                      lockedRect;
     RECT                      dirtyRect;
-    BOOL                      Dirty;
-    
-    BOOL                      inTexture;
-    BOOL                      inPBuffer;
 
     glDescriptor              glDescription;
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
+
+/* Surface flags: */
+#define SFLAG_OVERSIZE    0x0001 /* Surface is bigger than gl size, blts only */
+#define SFLAG_CONVERTED   0x0002 /* Converted for color keying or Palettized */
+#define SFLAG_DIBSECTION  0x0004 /* Has a DIB section attached for getdc */
+#define SFLAG_DIRTY       0x0008 /* Surface was locked by the app */
+#define SFLAG_LOCKABLE    0x0010 /* Surface can be locked */
+#define SFLAG_DISCARD     0x0020 /* ??? */
+#define SFLAG_LOCKED      0x0040 /* Surface is locked atm */
+#define SFLAG_ACTIVELOCK  0x0080 /* Not locked, but surface memory is needed */
+#define SFLAG_INTEXTURE   0x0100 /* ??? */
+#define SFLAG_INPBUFFER   0x0200 /* ??? */
+#define SFLAG_NONPOW2     0x0400 /* Surface sizes are not a power of 2 */
+#define SFLAG_DYNLOCK     0x0800 /* Surface is often locked by the app */
+#define SFLAG_DYNCHANGE   0x1800 /* Surface contents are changed very often, implies DYNLOCK */
+
+/* In some conditions the surface memory must not be freed:
+ * SFLAG_OVERSIZE: Not all data can be kept in GL
+ * SFLAG_CONVERTED: Converting the data back would take too long
+ * SFLAG_DIBSECTION: The dib code manages the memory
+ * SFLAG_DIRTY: GL surface isn't up to date
+ * SFLAG_LOCKED: The app requires access to the surface data
+ * SFLAG_ACTIVELOCK: Some wined3d code needs the memory
+ * SFLAG_DYNLOCK: Avoid freeing the data for performance
+ * SFLAG_DYNCHANGE: Same reason as DYNLOCK
+ */
+#define SFLAG_DONOTFREE  (SFLAG_OVERSIZE   | \
+                          SFLAG_CONVERTED  | \
+                          SFLAG_DIBSECTION | \
+                          SFLAG_DIRTY      | \
+                          SFLAG_LOCKED     | \
+                          SFLAG_ACTIVELOCK | \
+                          SFLAG_DYNLOCK    | \
+                          SFLAG_DYNCHANGE    )
 
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
