@@ -1708,7 +1708,7 @@ HRESULT WINAPI CoGetClassObject(
     }
 
     if (FAILED(hres))
-        ERR("no class object %s could be created for for context 0x%lx\n",
+        ERR("no class object %s could be created for context 0x%lx\n",
             debugstr_guid(rclsid), dwClsContext);
     return hres;
 }
