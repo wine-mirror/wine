@@ -883,6 +883,11 @@ BOOL WINAPI ClearCommError(HANDLE handle, LPDWORD errors, LPCOMSTAT lpStat)
  *  Called after CreateFile to hint to the communication resource to use
  *  specified sizes for input and output buffers rather than the default values.
  *
+ * PARAMS
+ *      handle  [in]    The just created communication resource handle
+ *      insize  [in]    The suggested size of the communication resources input buffer in bytes
+ *      outsize [in]    The suggested size of the communication resources output buffer in bytes
+ *
  * RETURNS
  *
  *  True if successful, false if the communications resource handle is bad.
@@ -891,18 +896,14 @@ BOOL WINAPI ClearCommError(HANDLE handle, LPDWORD errors, LPCOMSTAT lpStat)
  *
  *  Stub.
  */
-BOOL WINAPI SetupComm(
-    HANDLE handle,  /* [in] The just created communication resource handle. */
-    DWORD  insize,  /* [in] The suggested size of the communication resources input buffer in bytes. */
-    DWORD  outsize) /* [in] The suggested size of the communication resources output buffer in bytes. */
+BOOL WINAPI SetupComm(HANDLE handle, DWORD insize, DWORD outsize)
 {
-    int fd;
+    SERIAL_QUEUE_SIZE   sqs;
 
-    FIXME("insize %ld outsize %ld unimplemented stub\n", insize, outsize);
-    fd=get_comm_fd( handle, FILE_READ_DATA );
-    if(0>fd) return FALSE;
-    release_comm_fd( handle, fd );
-    return TRUE;
+    sqs.InSize = insize;
+    sqs.OutSize = outsize;
+    return DeviceIoControl(handle, IOCTL_SERIAL_SET_QUEUE_SIZE,
+                           &sqs, sizeof(sqs), NULL, 0, NULL, NULL);
 }
 
 /*****************************************************************************

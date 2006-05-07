@@ -729,6 +729,12 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_queue_size(int fd, const SERIAL_QUEUE_SIZE* sqs)
+{
+    FIXME("insize %ld outsize %ld unimplemented stub\n", sqs->InSize, sqs->OutSize);
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_special_chars(int fd, const SERIAL_CHARS* sc)
 {
     struct termios port;
@@ -982,6 +988,12 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
     case IOCTL_SERIAL_SET_LINE_CONTROL:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_LINE_CONTROL))
             status = set_line_control(fd, (const SERIAL_LINE_CONTROL*)lpInBuffer);
+        else
+            status = STATUS_INVALID_PARAMETER;
+        break;
+    case IOCTL_SERIAL_SET_QUEUE_SIZE:
+        if (lpInBuffer && nInBufferSize == sizeof(SERIAL_QUEUE_SIZE))
+            status = set_queue_size(fd, (const SERIAL_QUEUE_SIZE*)lpInBuffer);
         else
             status = STATUS_INVALID_PARAMETER;
         break;
