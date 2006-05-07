@@ -360,6 +360,80 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
     return STATUS_SUCCESS;
 }
 
+static int whack_modem(int fd, unsigned int andy, unsigned int orrie)
+{
+#ifdef TIOCMGET
+    unsigned int mstat, okay;
+    okay = ioctl(fd, TIOCMGET, &mstat);
+    if (okay) return okay;
+    if (andy) mstat &= andy;
+    mstat |= orrie;
+    return ioctl(fd, TIOCMSET, &mstat);
+#else
+    return 0;
+#endif
+}
+
+static NTSTATUS set_handflow(int fd, const SERIAL_HANDFLOW* shf)
+{
+    struct termios port;
+
+    if ((shf->FlowReplace & (SERIAL_RTS_CONTROL | SERIAL_RTS_HANDSHAKE)) == 
+        (SERIAL_RTS_CONTROL | SERIAL_RTS_HANDSHAKE))
+        return STATUS_NOT_SUPPORTED;
+
+    if (tcgetattr(fd, &port) == -1)
+    {
+        ERR("tcgetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    
+#ifdef CRTSCTS
+    if ((shf->ControlHandShake & SERIAL_CTS_HANDSHAKE) ||
+        (shf->FlowReplace & SERIAL_RTS_HANDSHAKE))
+    {
+        port.c_cflag |= CRTSCTS;
+        TRACE("CRTSCTS\n");
+    }
+    else
+        port.c_cflag &= ~CRTSCTS;
+#endif
+#ifdef TIOCM_DTR
+    if (shf->ControlHandShake & SERIAL_DTR_HANDSHAKE)
+    {
+        WARN("DSR/DTR flow control not supported\n");
+    } else if (shf->ControlHandShake & SERIAL_DTR_CONTROL)
+        whack_modem(fd, ~TIOCM_DTR, 0);
+    else    
+        whack_modem(fd, 0, TIOCM_DTR);
+#endif
+#ifdef TIOCM_RTS
+    if (!(shf->ControlHandShake & SERIAL_DSR_HANDSHAKE))
+    {
+        if ((shf->FlowReplace & (SERIAL_RTS_CONTROL|SERIAL_RTS_HANDSHAKE)) == 0)
+            whack_modem(fd, ~TIOCM_RTS, 0);
+        else    
+            whack_modem(fd, 0, TIOCM_RTS);
+    }
+#endif
+
+    if (shf->FlowReplace & SERIAL_AUTO_RECEIVE)
+        port.c_iflag |= IXON;
+    else
+        port.c_iflag &= ~IXON;
+    if (shf->FlowReplace & SERIAL_AUTO_TRANSMIT)
+        port.c_iflag |= IXOFF;
+    else
+        port.c_iflag &= ~IXOFF;
+    if (tcsetattr(fd, TCSANOW, &port) == -1)
+    {
+        ERR("tcsetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
 {
     struct termios port;
@@ -583,6 +657,12 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 	FIXME("ioctl not available\n");
 	status = STATUS_NOT_SUPPORTED;
 #endif
+        break;
+    case IOCTL_SERIAL_SET_HANDFLOW:
+        if (lpInBuffer && nInBufferSize == sizeof(SERIAL_HANDFLOW))
+            status = set_handflow(fd, (const SERIAL_HANDFLOW*)lpInBuffer);
+        else
+            status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_SET_LINE_CONTROL:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_LINE_CONTROL))

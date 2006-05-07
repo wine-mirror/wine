@@ -989,6 +989,7 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
 
     SERIAL_BAUD_RATE           sbr;
     SERIAL_LINE_CONTROL        slc;
+    SERIAL_HANDFLOW            shf;
 
     if (lpdcb == NULL)
     {
@@ -1003,11 +1004,54 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
     slc.Parity = lpdcb->Parity;
     slc.WordLength = lpdcb->ByteSize;
 
+    shf.ControlHandShake = 0;
+    shf.FlowReplace = 0;
+    if (lpdcb->fOutxCtsFlow)      shf.ControlHandShake |= SERIAL_CTS_HANDSHAKE;
+    if (lpdcb->fOutxDsrFlow)      shf.ControlHandShake |= SERIAL_DSR_HANDSHAKE;
+    switch (lpdcb->fDtrControl)
+    {
+    case DTR_CONTROL_DISABLE:                                                  break;
+    case DTR_CONTROL_ENABLE:      shf.ControlHandShake |= SERIAL_DTR_CONTROL;  break;
+    case DTR_CONTROL_HANDSHAKE:   shf.ControlHandShake |= SERIAL_DTR_HANDSHAKE;break;
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    switch (lpdcb->fDtrControl)
+    {
+    case RTS_CONTROL_DISABLE:                                                  break;
+    case RTS_CONTROL_ENABLE:      shf.FlowReplace |= SERIAL_RTS_CONTROL;       break;
+    case RTS_CONTROL_HANDSHAKE:   shf.FlowReplace |= SERIAL_RTS_HANDSHAKE;     break;
+    case RTS_CONTROL_TOGGLE:      shf.FlowReplace |= SERIAL_RTS_CONTROL | 
+                                                     SERIAL_RTS_HANDSHAKE;     break;
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (lpdcb->fDsrSensitivity)   shf.ControlHandShake |= SERIAL_DSR_SENSITIVITY;
+    if (lpdcb->fAbortOnError)     shf.ControlHandShake |= SERIAL_ERROR_ABORT;
+
+    if (lpdcb->fErrorChar)        shf.FlowReplace |= SERIAL_ERROR_CHAR;
+    if (lpdcb->fNull)             shf.FlowReplace |= SERIAL_NULL_STRIPPING;
+    if (lpdcb->fTXContinueOnXoff) shf.FlowReplace |= SERIAL_XOFF_CONTINUE;
+    if (lpdcb->fOutX)             shf.FlowReplace |= SERIAL_AUTO_TRANSMIT;
+    if (lpdcb->fInX)              shf.FlowReplace |= SERIAL_AUTO_RECEIVE;
+
+    shf.XonLimit = lpdcb->XonLim;
+    shf.XoffLimit = lpdcb->XoffLim;
+
+    /* note: change DTR/RTS lines after setting the comm attributes,
+     * so flow control does not interfere.
+     */
     if (!DeviceIoControl(handle, IOCTL_SERIAL_SET_BAUD_RATE,
                          &sbr, sizeof(sbr), NULL, 0, NULL, NULL))
         return FALSE;
     if (!DeviceIoControl(handle, IOCTL_SERIAL_SET_LINE_CONTROL,
                          &slc, sizeof(slc), NULL, 0, NULL, NULL))
+        return FALSE;
+
+    if (!DeviceIoControl(handle, IOCTL_SERIAL_SET_HANDFLOW,
+                         &shf, sizeof(shf), NULL, 0, NULL, NULL))
         return FALSE;
 
      fd = get_comm_fd( handle, FILE_READ_DATA );
@@ -1023,25 +1067,6 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
 	port.c_cc[VMIN] = 0;
 	port.c_cc[VTIME] = 1;
 
-#ifdef CRTSCTS
-	if (	lpdcb->fOutxCtsFlow 			||
-		lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE
-	)
-	  {
-	    port.c_cflag |= CRTSCTS;
-	    TRACE("CRTSCTS\n");
-	  }
-#endif
-
-	if (lpdcb->fInX)
-		port.c_iflag |= IXON;
-	else
-		port.c_iflag &= ~IXON;
-	if (lpdcb->fOutX)
-		port.c_iflag |= IXOFF;
-	else
-		port.c_iflag &= ~IXOFF;
-
 	if (tcsetattr(fd,TCSANOW,&port)==-1) { /* otherwise it hangs with pending input*/
                 ERR("tcsetattr error '%s'\n", strerror(errno));
 		ret = FALSE;
@@ -1050,28 +1075,6 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
 		ret = TRUE;
 	}
 
-        /* note: change DTR/RTS lines after setting the comm attributes,
-         * so flow control does not interfere. */
-#ifdef TIOCM_DTR
-	if (lpdcb->fDtrControl == DTR_CONTROL_HANDSHAKE)
-        {
-             WARN("DSR/DTR flow control not supported\n");
-	} else if(lpdcb->fDtrControl == DTR_CONTROL_DISABLE)
-            COMM_WhackModem(fd, ~TIOCM_DTR, 0);
-        else    
-            COMM_WhackModem(fd, 0, TIOCM_DTR);
-#endif
-#ifdef TIOCM_RTS
-	if(!lpdcb->fOutxCtsFlow )
-        {
-            if(lpdcb->fRtsControl == RTS_CONTROL_DISABLE)
-                COMM_WhackModem(fd, ~TIOCM_RTS, 0);
-            else    
-                COMM_WhackModem(fd, 0, TIOCM_RTS);
-        }
-#endif
-        if(lpdcb->fRtsControl == RTS_CONTROL_TOGGLE)
-            FIXME("RTS_CONTROL_TOGGLE is not supported.\n");
         release_comm_fd( handle, fd );
         return ret;
 
