@@ -229,37 +229,36 @@ struct module* module_get_containee(const struct process* pcs,
  *   container (and also force the ELF container's debug info loading if deferred)
  * - otherwise return the module itself if it has some debug info
  */
-struct module* module_get_debug(const struct process* pcs, struct module* module)
+BOOL module_get_debug(const struct process* pcs, struct module_pair* pair)
 {
-    struct module*                      parent;
     IMAGEHLP_DEFERRED_SYMBOL_LOAD64     idsl64;
 
-    if (!module) return NULL;
-    /* for a PE builtin, always get info from parent */
-    if ((parent = module_get_container(pcs, module)))
-        module = parent;
+    if (!pair->requested) return FALSE;
+    /* for a PE builtin, always get info from container */
+    if (!(pair->effective = module_get_container(pcs, pair->requested)))
+        pair->effective = pair->requested;
     /* if deferred, force loading */
-    if (module->module.SymType == SymDeferred)
+    if (pair->effective->module.SymType == SymDeferred)
     {
         BOOL ret;
         
-        if (module->is_virtual) ret = FALSE;
-        else switch (module->type)
+        if (pair->effective->is_virtual) ret = FALSE;
+        else switch (pair->effective->type)
         {
         case DMT_ELF:
-            ret = elf_load_debug_info(module, NULL);
+            ret = elf_load_debug_info(pair->effective, NULL);
             break;
         case DMT_PE:
             idsl64.SizeOfStruct = sizeof(idsl64);
-            idsl64.BaseOfImage = module->module.BaseOfImage;
-            idsl64.CheckSum = module->module.CheckSum;
-            idsl64.TimeDateStamp = module->module.TimeDateStamp;
-            strcpy(idsl64.FileName, module->module.ImageName);
+            idsl64.BaseOfImage = pair->effective->module.BaseOfImage;
+            idsl64.CheckSum = pair->effective->module.CheckSum;
+            idsl64.TimeDateStamp = pair->effective->module.TimeDateStamp;
+            strcpy(idsl64.FileName, pair->effective->module.ImageName);
             idsl64.Reparse = FALSE;
             idsl64.hFile = INVALID_HANDLE_VALUE;
 
             pcs_callback(pcs, CBA_DEFERRED_SYMBOL_LOAD_START, &idsl64);
-            ret = pe_load_debug_info(pcs, module);
+            ret = pe_load_debug_info(pcs, pair->effective);
             pcs_callback(pcs,
                          ret ? CBA_DEFERRED_SYMBOL_LOAD_COMPLETE : CBA_DEFERRED_SYMBOL_LOAD_FAILURE,
                          &idsl64);
@@ -268,11 +267,11 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
             ret = FALSE;
             break;
         }
-        if (!ret) module->module.SymType = SymNone;
-        assert(module->module.SymType != SymDeferred);
-        module_compute_num_syms(module);
+        if (!ret) pair->effective->module.SymType = SymNone;
+        assert(pair->effective->module.SymType != SymDeferred);
+        module_compute_num_syms(pair->effective);
     }
-    return (module && module->module.SymType != SymNone) ? module : NULL;
+    return pair->effective->module.SymType != SymNone;
 }
 
 /***********************************************************************

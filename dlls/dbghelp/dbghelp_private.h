@@ -315,6 +315,12 @@ struct line_info
     } u;
 };
 
+struct module_pair
+{
+    struct module*              requested; /* in:  to module_get_debug() */
+    struct module*              effective; /* out: module with debug info */
+};
+
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess);
 extern HANDLE hMsvcrt;
@@ -342,8 +348,7 @@ extern struct module*
 extern struct module*
                     module_find_by_name(const struct process* pcs, 
                                         const char* name, enum module_type type);
-extern struct module*
-                    module_get_debug(const struct process* pcs, struct module*);
+extern BOOL         module_get_debug(const struct process* pcs, struct module_pair*);
 extern struct module*
                     module_new(struct process* pcs, const char* name, 
                                enum module_type type, BOOL virtual,

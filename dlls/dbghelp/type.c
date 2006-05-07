@@ -373,7 +373,7 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
                          PVOID UserContext)
 {
     struct process*     pcs;
-    struct module*      module;
+    struct module_pair  pair;
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        sym_info = (SYMBOL_INFO*)buffer;
     const char*         tmp;
@@ -386,20 +386,20 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
           UserContext);
 
     if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
-    module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
-    if (!(module = module_get_debug(pcs, module))) return FALSE;
+    pair.requested = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
+    if (!module_get_debug(pcs, &pair)) return FALSE;
 
     sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
     sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
 
-    while ((pos = vector_iter_up(&module->vtypes, pos)))
+    while ((pos = vector_iter_up(&pair.effective->vtypes, pos)))
     {
         type = *(struct symt**)pos;
         sym_info->TypeIndex = (DWORD)type;
         sym_info->info = 0; /* FIXME */
         symt_get_info(type, TI_GET_LENGTH, &size);
         sym_info->Size = size;
-        sym_info->ModBase = module->module.BaseOfImage;
+        sym_info->ModBase = pair.requested->module.BaseOfImage;
         sym_info->Flags = 0; /* FIXME */
         sym_info->Value = 0; /* FIXME */
         sym_info->Address = 0; /* FIXME */
@@ -788,12 +788,12 @@ BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase,
                            PVOID pInfo)
 {
     struct process*     pcs = process_find_by_handle(hProcess);
-    struct module*      module;
+    struct module_pair  pair;
 
     if (!pcs) return FALSE;
 
-    module = module_find_by_addr(pcs, ModBase, DMT_UNKNOWN);
-    if (!(module = module_get_debug(pcs, module)))
+    pair.requested = module_find_by_addr(pcs, ModBase, DMT_UNKNOWN);
+    if (!module_get_debug(pcs, &pair))
     {
         FIXME("Someone didn't properly set ModBase (%s)\n", wine_dbgstr_longlong(ModBase));
         return FALSE;

@@ -102,7 +102,7 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
                                PVOID UserContext)
 {
     struct process*     pcs;
-    struct module*      module;
+    struct module_pair  pair;
     SOURCEFILE          sf;
     char*               ptr;
     
@@ -112,15 +112,15 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
          
     if (ModBase)
     {
-        module = module_find_by_addr(pcs, ModBase, DMT_UNKNOWN);
-        if (!(module = module_get_debug(pcs, module))) return FALSE;
+        pair.requested = module_find_by_addr(pcs, ModBase, DMT_UNKNOWN);
+        if (!module_get_debug(pcs, &pair)) return FALSE;
     }
     else
     {
         if (Mask[0] == '!')
         {
-            module = module_find_by_name(pcs, Mask + 1, DMT_UNKNOWN);
-            if (!(module = module_get_debug(pcs, module))) return FALSE;
+            pair.requested = module_find_by_name(pcs, Mask + 1, DMT_UNKNOWN);
+            if (!module_get_debug(pcs, &pair)) return FALSE;
         }
         else
         {
@@ -128,8 +128,8 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
             return FALSE;
         }
     }
-    if (!module->sources) return FALSE;
-    for (ptr = module->sources; *ptr; ptr += strlen(ptr) + 1)
+    if (!pair.effective->sources) return FALSE;
+    for (ptr = pair.effective->sources; *ptr; ptr += strlen(ptr) + 1)
     {
         /* FIXME: not using Mask */
         sf.ModBase = ModBase;
@@ -148,7 +148,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
                          PCSTR srcfile, PSYM_ENUMLINES_CALLBACK cb, PVOID user)
 {
     struct process*             pcs;
-    struct module*              module;
+    struct module_pair          pair;
     struct hash_table_iter      hti;
     struct symt_ht*             sym;
     regex_t                     re;
@@ -168,13 +168,13 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
         return FALSE;
     }
     if (compiland) FIXME("Unsupported yet (filtering on compiland %s)\n", compiland);
-    module = module_find_by_addr(pcs, base, DMT_UNKNOWN);
-    if (!(module = module_get_debug(pcs, module))) return FALSE;
+    pair.requested = module_find_by_addr(pcs, base, DMT_UNKNOWN);
+    if (!module_get_debug(pcs, &pair)) return FALSE;
 
     sci.SizeOfStruct = sizeof(sci);
     sci.ModBase      = base;
 
-    hash_table_iter_init(&module->ht_symbols, &hti, NULL);
+    hash_table_iter_init(&pair.effective->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
     {
         sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
@@ -186,7 +186,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
         {
             if (dli->is_source_file)
             {
-                file = (char*)source_get(module, dli->u.source_file);
+                file = (char*)source_get(pair.effective, dli->u.source_file);
                 if (regexec(&re, file, 0, NULL, 0) != 0) file = "";
                 strcpy(sci.FileName, file);
             }
