@@ -1448,8 +1448,14 @@ HRESULT CALLBACK ITypeInfo_GetVarDesc_Proxy(
     UINT index,
     VARDESC** ppVarDesc)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    CLEANLOCALSTORAGE stg;
+    TRACE("(%p, %d, %p)\n", This, index, ppVarDesc);
+
+    stg.flags = 0;
+    stg.pStorage = NULL;
+    stg.pInterface = NULL;
+
+    return ITypeInfo_RemoteGetVarDesc_Proxy(This, index, ppVarDesc, &stg);
 }
 
 HRESULT __RPC_STUB ITypeInfo_GetVarDesc_Stub(
@@ -1458,8 +1464,18 @@ HRESULT __RPC_STUB ITypeInfo_GetVarDesc_Stub(
     LPVARDESC* ppVarDesc,
     CLEANLOCALSTORAGE* pDummy)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    HRESULT hr;
+    TRACE("(%p, %d, %p)\n", This, index, ppVarDesc);
+
+    hr = ITypeInfo_GetVarDesc(This, index, ppVarDesc);
+    if(hr != S_OK)
+        return hr;
+
+    pDummy->flags = CLS_VARDESC;
+    ITypeInfo_AddRef(This);
+    pDummy->pInterface = (IUnknown*)This;
+    pDummy->pStorage = ppVarDesc;
+    return hr;
 }
 
 HRESULT CALLBACK ITypeInfo_GetNames_Proxy(
@@ -1709,14 +1725,23 @@ void CALLBACK ITypeInfo_ReleaseVarDesc_Proxy(
     ITypeInfo* This,
     VARDESC* pVarDesc)
 {
-  FIXME("not implemented\n");
+    TRACE("(%p, %p)\n", This, pVarDesc);
+
+    if(pVarDesc->lpstrSchema)
+        CoTaskMemFree(pVarDesc->lpstrSchema);
+
+    if(pVarDesc->varkind == VAR_CONST)
+        CoTaskMemFree(pVarDesc->u.lpvarValue);
+
+    free_embedded_elemdesc(&pVarDesc->elemdescVar);
+    CoTaskMemFree(pVarDesc);
 }
 
 HRESULT __RPC_STUB ITypeInfo_ReleaseVarDesc_Stub(
     ITypeInfo* This)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("nothing to do\n");
+    return S_OK;
 }
 
 
