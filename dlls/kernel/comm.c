@@ -1180,45 +1180,44 @@ BOOL WINAPI TransmitCommChar(HANDLE hComm, CHAR chTransmit)
  *
  *  Obtains the request timeout values for the communications device.
  *
+ * PARAMS
+ *      hComm           [in]    The communications device
+ *      lptimeouts      [out]   The struct of request timeouts
+ *
  * RETURNS
  *
  *  True on success, false if communications device handle is bad
  *  or the target structure is null.
  */
-BOOL WINAPI GetCommTimeouts(
-    HANDLE         hComm,      /* [in] The communications device. */
-    LPCOMMTIMEOUTS lptimeouts) /* [out] The struct of request timeouts. */
+BOOL WINAPI GetCommTimeouts(HANDLE hComm, LPCOMMTIMEOUTS lptimeouts)
 {
-    BOOL ret;
+    SERIAL_TIMEOUTS     st;
 
-    TRACE("(%p,%p)\n",hComm,lptimeouts);
-
-    if(!lptimeouts)
+    TRACE("(%p, %p)\n", hComm, lptimeouts);
+    if (!lptimeouts)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-
-    SERVER_START_REQ( get_serial_info )
-    {
-        req->handle = hComm;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            lptimeouts->ReadIntervalTimeout         = reply->readinterval;
-            lptimeouts->ReadTotalTimeoutMultiplier  = reply->readmult;
-            lptimeouts->ReadTotalTimeoutConstant    = reply->readconst;
-            lptimeouts->WriteTotalTimeoutMultiplier = reply->writemult;
-            lptimeouts->WriteTotalTimeoutConstant   = reply->writeconst;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    if (!DeviceIoControl(hComm, IOCTL_SERIAL_GET_TIMEOUTS,
+                         NULL, 0, &st, sizeof(st), NULL, NULL))
+        return FALSE;
+    lptimeouts->ReadIntervalTimeout         = st.ReadIntervalTimeout;
+    lptimeouts->ReadTotalTimeoutMultiplier  = st.ReadTotalTimeoutMultiplier;
+    lptimeouts->ReadTotalTimeoutConstant    = st.ReadTotalTimeoutConstant;
+    lptimeouts->WriteTotalTimeoutMultiplier = st.WriteTotalTimeoutMultiplier;
+    lptimeouts->WriteTotalTimeoutConstant   = st.WriteTotalTimeoutConstant;
+    return TRUE;
 }
 
 /*****************************************************************************
  *	SetCommTimeouts		(KERNEL32.@)
  *
  * Sets the timeouts used when reading and writing data to/from COMM ports.
+ *
+ * PARAMS
+ *      hComm           [in]    handle of COMM device
+ *      lptimeouts      [in]    pointer to COMMTIMEOUTS structure
  *
  * ReadIntervalTimeout
  *     - converted and passes to linux kernel as c_cc[VTIME]
@@ -1231,72 +1230,25 @@ BOOL WINAPI GetCommTimeouts(
  *
  *  True if the timeouts were set, false otherwise.
  */
-BOOL WINAPI SetCommTimeouts(
-    HANDLE hComm,              /* [in] handle of COMM device */
-    LPCOMMTIMEOUTS lptimeouts) /* [in] pointer to COMMTIMEOUTS structure */
+BOOL WINAPI SetCommTimeouts(HANDLE hComm, LPCOMMTIMEOUTS lptimeouts)
 {
-    BOOL ret;
-    int fd;
-    struct termios tios;
+    SERIAL_TIMEOUTS     st;
 
-    TRACE("(%p,%p)\n",hComm,lptimeouts);
+    TRACE("(%p, %p)\n", hComm, lptimeouts);
 
-    if(!lptimeouts)
+    if (lptimeouts == NULL)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-
-    SERVER_START_REQ( set_serial_info )
-    {
-        req->handle       = hComm;
-        req->flags        = SERIALINFO_SET_TIMEOUTS;
-        req->readinterval = lptimeouts->ReadIntervalTimeout ;
-        req->readmult     = lptimeouts->ReadTotalTimeoutMultiplier ;
-        req->readconst    = lptimeouts->ReadTotalTimeoutConstant ;
-        req->writemult    = lptimeouts->WriteTotalTimeoutMultiplier ;
-        req->writeconst   = lptimeouts->WriteTotalTimeoutConstant ;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    if (!ret) return FALSE;
-
-    /* FIXME: move this stuff to the server */
-    fd = get_comm_fd( hComm, FILE_READ_DATA );
-    if (fd < 0) return FALSE;
-
-    if (-1==tcgetattr(fd,&tios)) {
-        FIXME("tcgetattr on fd %d failed!\n",fd);
-        release_comm_fd( hComm, fd );
-        return FALSE;
-    }
-
-    /* VTIME is in 1/10 seconds */
-	{
-		unsigned int ux_timeout;
-
-		if(lptimeouts->ReadIntervalTimeout == 0) /* 0 means no timeout */
-		{
-			ux_timeout = 0;
-		}
-		else
-		{
-			ux_timeout = (lptimeouts->ReadIntervalTimeout+99)/100;
-			if(ux_timeout == 0)
-			{
-				ux_timeout = 1; /* must be at least some timeout */
-			}
-		}
-		tios.c_cc[VTIME] = ux_timeout;
-	}
-
-    if (-1==tcsetattr(fd,0,&tios)) {
-        FIXME("tcsetattr on fd %d failed!\n",fd);
-        release_comm_fd( hComm, fd );
-        return FALSE;
-    }
-    release_comm_fd( hComm, fd );
-    return TRUE;
+    st.ReadIntervalTimeout         = lptimeouts->ReadIntervalTimeout;
+    st.ReadTotalTimeoutMultiplier  = lptimeouts->ReadTotalTimeoutMultiplier;
+    st.ReadTotalTimeoutConstant    = lptimeouts->ReadTotalTimeoutConstant;
+    st.WriteTotalTimeoutMultiplier = lptimeouts->WriteTotalTimeoutMultiplier;
+    st.WriteTotalTimeoutConstant   = lptimeouts->WriteTotalTimeoutConstant;
+ 
+    return DeviceIoControl(hComm, IOCTL_SERIAL_SET_TIMEOUTS,
+                           &st, sizeof(st), NULL, 0, NULL, NULL);
 }
 
 /***********************************************************************

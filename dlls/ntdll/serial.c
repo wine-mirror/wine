@@ -368,6 +368,25 @@ static NTSTATUS get_status(int fd, SERIAL_STATUS* ss)
     return status;
 }
 
+static NTSTATUS get_timeouts(HANDLE handle, SERIAL_TIMEOUTS* st)
+{
+    NTSTATUS    status;
+    SERVER_START_REQ( get_serial_info )
+    {
+        req->handle = handle;
+        if (!(status = wine_server_call( req )))
+        {
+            st->ReadIntervalTimeout         = reply->readinterval;
+            st->ReadTotalTimeoutMultiplier  = reply->readmult;
+            st->ReadTotalTimeoutConstant    = reply->readconst;
+            st->WriteTotalTimeoutMultiplier = reply->writemult;
+            st->WriteTotalTimeoutConstant   = reply->writeconst;
+        }
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
 static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD* mask)
 {
     NTSTATUS    status;
@@ -738,6 +757,51 @@ static NTSTATUS set_special_chars(int fd, const SERIAL_CHARS* sc)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_timeouts(HANDLE handle, int fd, const SERIAL_TIMEOUTS* st)
+{
+    NTSTATUS            status;
+    struct termios      port;
+    unsigned int        ux_timeout;
+
+    SERVER_START_REQ( set_serial_info )
+    {
+        req->handle       = handle;
+        req->flags        = SERIALINFO_SET_TIMEOUTS;
+        req->readinterval = st->ReadIntervalTimeout ;
+        req->readmult     = st->ReadTotalTimeoutMultiplier ;
+        req->readconst    = st->ReadTotalTimeoutConstant ;
+        req->writemult    = st->WriteTotalTimeoutMultiplier ;
+        req->writeconst   = st->WriteTotalTimeoutConstant ;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (status) return status;
+
+    if (tcgetattr(fd, &port) == -1)
+    {
+        FIXME("tcgetattr on fd %d failed (%s)!\n", fd, strerror(errno));
+        return FILE_GetNtStatus();
+    }
+
+    /* VTIME is in 1/10 seconds */
+    if (st->ReadIntervalTimeout == 0) /* 0 means no timeout */
+        ux_timeout = 0;
+    else
+    {
+        ux_timeout = (st->ReadIntervalTimeout + 99) / 100;
+        if (ux_timeout == 0)
+            ux_timeout = 1; /* must be at least some timeout */
+    }
+    port.c_cc[VTIME] = ux_timeout;
+
+    if (tcsetattr(fd, 0, &port) == -1)
+    {
+        FIXME("tcsetattr on fd %d failed (%s)!\n", fd, strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
 {
     NTSTATUS status;
@@ -777,7 +841,7 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 {
     DWORD       sz = 0, access = FILE_READ_DATA;
     NTSTATUS    status = STATUS_SUCCESS;
-    int         fd;
+    int         fd = -1;
 
     TRACE("%p %s %p %ld %p %ld %p\n",
           hDevice, iocode2str(dwIoControlCode), lpInBuffer, nInBufferSize,
@@ -785,7 +849,9 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 
     piosb->Information = 0;
 
-    if ((status = wine_server_handle_to_fd( hDevice, access, &fd, NULL ))) goto error;
+    if (dwIoControlCode != IOCTL_SERIAL_GET_TIMEOUTS)
+        if ((status = wine_server_handle_to_fd( hDevice, access, &fd, NULL )))
+            goto error;
 
     switch (dwIoControlCode)
     {
@@ -840,6 +906,15 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
                 sz = sizeof(DWORD);
         }
         else status = STATUS_INVALID_PARAMETER;
+        break;
+    case IOCTL_SERIAL_GET_TIMEOUTS:
+        if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_TIMEOUTS))
+        {
+            if (!(status = get_timeouts(hDevice, (SERIAL_TIMEOUTS*)lpInBuffer)))
+                sz = sizeof(SERIAL_TIMEOUTS);
+        }
+        else
+            status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_GET_WAIT_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
@@ -910,6 +985,12 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
         else
             status = STATUS_INVALID_PARAMETER;
         break;
+    case IOCTL_SERIAL_SET_TIMEOUTS:
+        if (lpInBuffer && nInBufferSize == sizeof(SERIAL_TIMEOUTS))
+            status = set_timeouts(hDevice, fd, (const SERIAL_TIMEOUTS*)lpInBuffer);
+        else
+            status = STATUS_INVALID_PARAMETER;
+        break;
     case IOCTL_SERIAL_SET_WAIT_MASK:
         if (lpInBuffer && nInBufferSize == sizeof(DWORD))
         {
@@ -925,7 +1006,7 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
         status = STATUS_INVALID_PARAMETER;
         break;
     }
-    wine_server_release_fd( hDevice, fd );
+    if (fd != -1) wine_server_release_fd( hDevice, fd );
  error:
     piosb->u.Status = status;
     piosb->Information = sz;
