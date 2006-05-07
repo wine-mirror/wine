@@ -1077,12 +1077,9 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
  */
 BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
 {
-     struct termios port;
-     int fd;
-     int stat = DTR_CONTROL_ENABLE | RTS_CONTROL_ENABLE;
-
     SERIAL_BAUD_RATE    sbr;
     SERIAL_LINE_CONTROL slc;
+    SERIAL_HANDFLOW     shf;
 
     TRACE("handle %p, ptr %p\n", handle, lpdcb);
 
@@ -1091,13 +1088,17 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    lpdcb->DCBlength = sizeof(*lpdcb);
     
     if (!DeviceIoControl(handle, IOCTL_SERIAL_GET_BAUD_RATE,
                          NULL, 0, &sbr, sizeof(sbr), NULL, NULL) ||
         !DeviceIoControl(handle, IOCTL_SERIAL_GET_LINE_CONTROL,
-                         NULL, 0, &slc, sizeof(slc), NULL, NULL))
+                         NULL, 0, &slc, sizeof(slc), NULL, NULL) ||
+        !DeviceIoControl(handle, IOCTL_SERIAL_GET_HANDFLOW,
+                         NULL, 0, &shf, sizeof(shf), NULL, NULL))
         return FALSE;
+
+    memset(lpdcb, 0, sizeof(*lpdcb));
+    lpdcb->DCBlength = sizeof(*lpdcb);
 
     /* yes, they seem no never be (re)set on NT */
     lpdcb->fBinary = 1;
@@ -1109,69 +1110,37 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
     lpdcb->Parity = slc.Parity;
     lpdcb->ByteSize = slc.WordLength;
 
-     fd = get_comm_fd( handle, FILE_READ_DATA );
-     if (fd < 0) return FALSE;
-     if (tcgetattr(fd, &port) == -1) {
-                int save_error=errno;
-                ERR("tcgetattr error '%s'\n", strerror(save_error));
-                release_comm_fd( handle, fd );
-		return FALSE;
-	}
-	
-#ifdef TIOCMGET
-     if (ioctl(fd, TIOCMGET, &stat) == -1)
-     {
-          int save_error=errno;
-          WARN("ioctl error '%s'\n", strerror(save_error));
-          stat = DTR_CONTROL_ENABLE | RTS_CONTROL_ENABLE;
-     }
-#endif
-     release_comm_fd( handle, fd );
-        if(port.c_iflag & INPCK)
-            lpdcb->fParity = TRUE;
-        else
-            lpdcb->fParity = FALSE;
+    if (shf.ControlHandShake & SERIAL_CTS_HANDSHAKE)    lpdcb->fOutxCtsFlow = 1;
+    if (shf.ControlHandShake & SERIAL_DSR_HANDSHAKE)    lpdcb->fOutxDsrFlow = 1;
+    switch (shf.ControlHandShake & (SERIAL_DTR_CONTROL | SERIAL_DTR_HANDSHAKE))
+    {
+    case 0:                     lpdcb->fDtrControl = DTR_CONTROL_DISABLE; break;
+    case SERIAL_DTR_CONTROL:    lpdcb->fDtrControl = DTR_CONTROL_ENABLE; break;
+    case SERIAL_DTR_HANDSHAKE:  lpdcb->fDtrControl = DTR_CONTROL_HANDSHAKE; break;
+    }
+    switch (shf.FlowReplace & (SERIAL_RTS_CONTROL | SERIAL_RTS_HANDSHAKE))
+    {
+    case 0:                     lpdcb->fRtsControl = RTS_CONTROL_DISABLE; break;
+    case SERIAL_RTS_CONTROL:    lpdcb->fRtsControl = RTS_CONTROL_ENABLE; break;
+    case SERIAL_RTS_HANDSHAKE:  lpdcb->fRtsControl = RTS_CONTROL_HANDSHAKE; break;
+    case SERIAL_RTS_CONTROL | SERIAL_RTS_HANDSHAKE:
+                                lpdcb->fRtsControl = RTS_CONTROL_TOGGLE; break;
+    }
+    if (shf.ControlHandShake & SERIAL_DSR_SENSITIVITY)  lpdcb->fDsrSensitivity = 1;
+    if (shf.ControlHandShake & SERIAL_ERROR_ABORT)      lpdcb->fAbortOnError = 1;
+    if (shf.FlowReplace & SERIAL_ERROR_CHAR)            lpdcb->fErrorChar = 1;
+    if (shf.FlowReplace & SERIAL_NULL_STRIPPING)        lpdcb->fNull = 1;
+    if (shf.FlowReplace & SERIAL_XOFF_CONTINUE)         lpdcb->fTXContinueOnXoff = 1;
+    lpdcb->XonLim = shf.XonLimit;
+    lpdcb->XoffLim = shf.XoffLimit;
 
-	lpdcb->fNull = 0;
+    if (shf.FlowReplace & SERIAL_AUTO_TRANSMIT) lpdcb->fOutX = 1;
+    if (shf.FlowReplace & SERIAL_AUTO_RECEIVE)  lpdcb->fInX = 1;
 
-	/* termios does not support DTR/DSR flow control */
-	lpdcb->fOutxDsrFlow = 0;
-	lpdcb->fDtrControl =
-#ifdef TIOCM_DTR
-            !(stat & TIOCM_DTR) ?  DTR_CONTROL_DISABLE:
-#endif
-                DTR_CONTROL_ENABLE  ;
-
-#ifdef CRTSCTS
-
-	if (port.c_cflag & CRTSCTS) {
-		lpdcb->fRtsControl = RTS_CONTROL_HANDSHAKE;
-		lpdcb->fOutxCtsFlow = 1;
-	} else
-#endif
-	{
-		lpdcb->fRtsControl = 
-#ifdef TIOCM_RTS
-                    !(stat & TIOCM_RTS) ?  RTS_CONTROL_DISABLE :
-#endif
-                    RTS_CONTROL_ENABLE ;
-		lpdcb->fOutxCtsFlow = 0;
-	}
-	if (port.c_iflag & IXON)
-		lpdcb->fInX = 1;
-	else
-		lpdcb->fInX = 0;
-
-	if (port.c_iflag & IXOFF)
-		lpdcb->fOutX = 1;
-	else
-		lpdcb->fOutX = 0;
 /*
 	lpdcb->XonChar =
 	lpdcb->XoffChar =
  */
-	lpdcb->XonLim = 10;
-	lpdcb->XoffLim = 10;
 
     TRACE("OK\n");
     dump_dcb(lpdcb);

@@ -185,6 +185,54 @@ static NTSTATUS get_baud_rate(int fd, SERIAL_BAUD_RATE* sbr)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_hand_flow(int fd, SERIAL_HANDFLOW* shf)
+{
+    int stat;
+    struct termios port;
+    
+    if (tcgetattr(fd, &port) == -1)
+    {
+        ERR("tcgetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+#ifdef TIOCMGET
+    if (ioctl(fd, TIOCMGET, &stat) == -1)
+    {
+        WARN("ioctl error '%s'\n", strerror(errno));
+        stat = DTR_CONTROL_ENABLE | RTS_CONTROL_ENABLE;
+    }
+#endif
+    /* termios does not support DTR/DSR flow control */
+    shf->ControlHandShake = 0;
+    shf->FlowReplace = 0;
+#ifdef TIOCM_DTR
+    if (stat & TIOCM_DTR)
+#endif
+        shf->ControlHandShake |= SERIAL_DTR_CONTROL;
+#ifdef CRTSCTS
+    if (port.c_cflag & CRTSCTS)
+    {
+        shf->ControlHandShake |= SERIAL_DTR_CONTROL | SERIAL_DTR_HANDSHAKE;
+        shf->ControlHandShake |= SERIAL_CTS_HANDSHAKE;
+    }
+    else
+#endif
+    {
+#ifdef TIOCM_RTS
+        if (stat & TIOCM_RTS)
+#endif
+            shf->ControlHandShake |= SERIAL_RTS_CONTROL;
+    }
+    if (port.c_iflag & IXON)
+        shf->FlowReplace |= SERIAL_AUTO_RECEIVE;
+    if (port.c_iflag & IXOFF)
+        shf->FlowReplace |= SERIAL_AUTO_TRANSMIT;
+
+    shf->XonLimit = 10;
+    shf->XoffLimit = 10;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS get_line_control(int fd, SERIAL_LINE_CONTROL* slc)
 {
     struct termios port;
@@ -738,6 +786,15 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
                 sz = sizeof(SERIAL_STATUS);
         }
         else status = STATUS_INVALID_PARAMETER;
+        break;
+    case IOCTL_SERIAL_GET_HANDFLOW:
+        if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_HANDFLOW))
+        {
+            if (!(status = get_hand_flow(fd, (SERIAL_HANDFLOW*)lpOutBuffer)))
+                sz = sizeof(SERIAL_HANDFLOW);
+        }
+        else
+            status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_GET_LINE_CONTROL:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_LINE_CONTROL))
