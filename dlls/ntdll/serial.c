@@ -129,6 +129,62 @@ static const char* iocode2str(DWORD ioc)
     }
 }
 
+static NTSTATUS get_baud_rate(int fd, SERIAL_BAUD_RATE* sbr)
+{
+    struct termios port;
+    int speed;
+    
+    if (tcgetattr(fd, &port) == -1)
+    {
+        ERR("tcgetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+#ifndef __EMX__
+#ifdef CBAUD
+    speed = port.c_cflag & CBAUD;
+#else
+    speed = cfgetospeed(&port);
+#endif
+    switch (speed)
+    {
+    case B0:            sbr->BaudRate = 0;      break;
+    case B50:           sbr->BaudRate = 50;	break;
+    case B75:		sbr->BaudRate = 75;	break;
+    case B110:		sbr->BaudRate = 110;	break;
+    case B134:		sbr->BaudRate = 134;	break;
+    case B150:		sbr->BaudRate = 150;	break;
+    case B200:		sbr->BaudRate = 200;	break;
+    case B300:		sbr->BaudRate = 300;	break;
+    case B600:		sbr->BaudRate = 600;	break;
+    case B1200:		sbr->BaudRate = 1200;	break;
+    case B1800:		sbr->BaudRate = 1800;	break;
+    case B2400:		sbr->BaudRate = 2400;	break;
+    case B4800:		sbr->BaudRate = 4800;	break;
+    case B9600:		sbr->BaudRate = 9600;	break;
+    case B19200:	sbr->BaudRate = 19200;	break;
+    case B38400:	sbr->BaudRate = 38400;	break;
+#ifdef B57600
+    case B57600:	sbr->BaudRate = 57600;	break;
+#endif
+#ifdef B115200
+    case B115200:	sbr->BaudRate = 115200;	break;
+#endif
+#ifdef B230400
+    case B230400:	sbr->BaudRate = 230400;	break;
+#endif
+#ifdef B460800
+    case B460800:	sbr->BaudRate = 460800;	break;
+#endif
+    default:
+        ERR("unknown speed %x\n", speed);
+        return STATUS_INVALID_PARAMETER;
+    }
+#else
+    return STATUS_INVALID_PARAMETER;
+#endif
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS get_modem_status(int fd, DWORD* lpModemStat)
 {
     NTSTATUS    status = STATUS_SUCCESS;
@@ -619,7 +675,16 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 
     switch (dwIoControlCode)
     {
-    case IOCTL_SERIAL_GET_COMMSTATUS:
+    case IOCTL_SERIAL_GET_BAUD_RATE:
+        if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_BAUD_RATE))
+        {
+            if (!(status = get_baud_rate(fd, (SERIAL_BAUD_RATE*)lpOutBuffer)))
+                sz = sizeof(SERIAL_BAUD_RATE);
+        }
+        else
+            status = STATUS_INVALID_PARAMETER;
+        break;
+     case IOCTL_SERIAL_GET_COMMSTATUS:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_STATUS))
         {
             if (!(status = get_status(fd, (SERIAL_STATUS*)lpOutBuffer)))

@@ -1063,6 +1063,10 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
  *
  *  Fills in a device control block with information from a communications device.
  *
+ * PARAMS
+ *      handle          [in]    The communications device
+ *      lpdcb           [out]   The device control block
+ *
  * RETURNS
  *
  *  True on success, false if the communication device handle is bad etc
@@ -1071,16 +1075,31 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
  *
  *  XonChar and XoffChar are not set.
  */
-BOOL WINAPI GetCommState(
-    HANDLE handle, /* [in] The communications device. */
-    LPDCB  lpdcb)  /* [out] The device control block. */
+BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
 {
      struct termios port;
-     int fd,speed;
+     int fd;
      int stat = DTR_CONTROL_ENABLE | RTS_CONTROL_ENABLE;
 
-     TRACE("handle %p, ptr %p\n", handle, lpdcb);
+    SERIAL_BAUD_RATE    sbr;
 
+    TRACE("handle %p, ptr %p\n", handle, lpdcb);
+
+    if (!lpdcb)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    lpdcb->DCBlength = sizeof(*lpdcb);
+    
+    if (!DeviceIoControl(handle, IOCTL_SERIAL_GET_BAUD_RATE,
+                         NULL, 0, &sbr, sizeof(sbr), NULL, NULL))
+        return FALSE;
+    /* yes, they seem no never be (re)set on NT */
+    lpdcb->fBinary = 1;
+    lpdcb->fParity = 0;
+
+    lpdcb->BaudRate = sbr.BaudRate;
      fd = get_comm_fd( handle, FILE_READ_DATA );
      if (fd < 0) return FALSE;
      if (tcgetattr(fd, &port) == -1) {
@@ -1099,85 +1118,6 @@ BOOL WINAPI GetCommState(
      }
 #endif
      release_comm_fd( handle, fd );
-#ifndef __EMX__
-#ifdef CBAUD
-     speed= (port.c_cflag & CBAUD);
-#else
-     speed= (cfgetospeed(&port));
-#endif
-     switch (speed) {
-		case B0:
-			lpdcb->BaudRate = 0;
-			break;
-		case B50:
-			lpdcb->BaudRate = 50;
-			break;
-		case B75:
-			lpdcb->BaudRate = 75;
-			break;
-		case B110:
-			lpdcb->BaudRate = 110;
-			break;
-		case B134:
-			lpdcb->BaudRate = 134;
-			break;
-		case B150:
-			lpdcb->BaudRate = 150;
-			break;
-		case B200:
-			lpdcb->BaudRate = 200;
-			break;
-		case B300:
-			lpdcb->BaudRate = 300;
-			break;
-		case B600:
-			lpdcb->BaudRate = 600;
-			break;
-		case B1200:
-			lpdcb->BaudRate = 1200;
-			break;
-		case B1800:
-			lpdcb->BaudRate = 1800;
-			break;
-		case B2400:
-			lpdcb->BaudRate = 2400;
-			break;
-		case B4800:
-			lpdcb->BaudRate = 4800;
-			break;
-		case B9600:
-			lpdcb->BaudRate = 9600;
-			break;
-		case B19200:
-			lpdcb->BaudRate = 19200;
-			break;
-		case B38400:
-			lpdcb->BaudRate = 38400;
-			break;
-#ifdef B57600
-		case B57600:
-			lpdcb->BaudRate = 57600;
-			break;
-#endif
-#ifdef B115200
-		case B115200:
-			lpdcb->BaudRate = 115200;
-			break;
-#endif
-#ifdef B230400
-                case B230400:
-			lpdcb->BaudRate = 230400;
-			break;
-#endif
-#ifdef B460800
-                case B460800:
-			lpdcb->BaudRate = 460800;
-			break;
-#endif
-	        default:
-		        ERR("unknown speed %x\n", speed);
-	}
-#endif
 	switch (port.c_cflag & CSIZE) {
 		case CS5:
 			lpdcb->ByteSize = 5;
@@ -1233,7 +1173,6 @@ BOOL WINAPI GetCommState(
             lpdcb->StopBits = ONESTOPBIT;
 
 	lpdcb->fNull = 0;
-	lpdcb->fBinary = 1;
 
 	/* termios does not support DTR/DSR flow control */
 	lpdcb->fOutxDsrFlow = 0;
@@ -1274,28 +1213,10 @@ BOOL WINAPI GetCommState(
 	lpdcb->XonLim = 10;
 	lpdcb->XoffLim = 10;
 
-        TRACE("OK\n");
+    TRACE("OK\n");
+    dump_dcb(lpdcb);
 
-	TRACE("bytesize %d baudrate %ld fParity %d Parity %d stopbits %d\n",
-	      lpdcb->ByteSize,lpdcb->BaudRate,lpdcb->fParity, lpdcb->Parity,
-	      (lpdcb->StopBits == ONESTOPBIT)?1:
-	      (lpdcb->StopBits == TWOSTOPBITS)?2:0);
-	TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
-	      (lpdcb->fOutX)?"IXOFF":"~IXOFF");
-         TRACE("fOutxCtsFlow %d fRtsControl %d\n", lpdcb->fOutxCtsFlow,
-                 lpdcb->fRtsControl);
-         TRACE("fOutxDsrFlow %d fDtrControl%d\n", lpdcb->fOutxDsrFlow,
-                 lpdcb->fDtrControl);
-#ifdef CRTSCTS
-	if (	lpdcb->fOutxCtsFlow 			||
-		lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE
-		)
-	  TRACE("CRTSCTS\n");
-        else
-
-	  TRACE("~CRTSCTS\n");
-#endif
-	return TRUE;
+    return TRUE;
 }
 
 /*****************************************************************************
