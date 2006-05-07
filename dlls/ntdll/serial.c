@@ -823,6 +823,44 @@ static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
     return status;
 }
 
+static NTSTATUS set_XOff(int fd)
+{
+    struct termios      port;
+
+    if (tcgetattr(fd,&port) == -1)
+    {
+        FIXME("tcgetattr on fd %d failed (%s)!\n", fd, strerror(errno));
+        return FILE_GetNtStatus();
+
+
+    }
+    port.c_iflag |= IXOFF;
+    if (tcsetattr(fd, TCSADRAIN, &port) == -1)
+    {
+        FIXME("tcsetattr on fd %d failed (%s)!\n", fd, strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS set_XOn(int fd)
+{
+    struct termios      port;
+
+    if (tcgetattr(fd,&port) == -1)
+    {
+        FIXME("tcgetattr on fd %d failed (%s)!\n", fd, strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    port.c_iflag |= IXON;
+    if (tcsetattr(fd, TCSADRAIN, &port) == -1)
+    {
+        FIXME("tcsetattr on fd %d failed (%s)!\n", fd, strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS xmit_immediate(HANDLE hDevice, int fd, char* ptr)
 {
     /* FIXME: not perfect as it should bypass the in-queue */
@@ -861,6 +899,20 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 
     switch (dwIoControlCode)
     {
+    case IOCTL_SERIAL_CLR_DTR:
+#ifdef TIOCM_DTR
+        if (whack_modem(fd, ~TIOCM_DTR, 0) == -1) status = FILE_GetNtStatus();
+#else
+        status = STATUS_NOT_SUPPORTED;
+#endif
+        break;
+    case IOCTL_SERIAL_CLR_RTS:
+#ifdef TIOCM_RTS
+        if (whack_modem(fd, ~TIOCM_RTS, 0) == -1) status = FILE_GetNtStatus();
+#else
+        status = STATUS_NOT_SUPPORTED;
+#endif
+        break;
     case IOCTL_SERIAL_GET_BAUD_RATE:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_BAUD_RATE))
         {
@@ -943,6 +995,9 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
         else
             status = STATUS_INVALID_PARAMETER;
         break;
+    case IOCTL_SERIAL_RESET_DEVICE:
+        FIXME("Unsupported\n");
+        break;
     case IOCTL_SERIAL_SET_BAUD_RATE:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_BAUD_RATE))
             status = set_baud_rate(fd, (const SERIAL_BAUD_RATE*)lpInBuffer);
@@ -979,6 +1034,13 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
         else
             status = STATUS_INVALID_PARAMETER;
         break;
+    case IOCTL_SERIAL_SET_DTR:
+#ifdef TIOCM_DTR
+        if (whack_modem(fd, 0, TIOCM_DTR) == -1) status = FILE_GetNtStatus();
+#else
+        status = STATUS_NOT_SUPPORTED;
+#endif
+        break;
     case IOCTL_SERIAL_SET_HANDFLOW:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_HANDFLOW))
             status = set_handflow(fd, (const SERIAL_HANDFLOW*)lpInBuffer);
@@ -997,6 +1059,13 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
         else
             status = STATUS_INVALID_PARAMETER;
         break;
+    case IOCTL_SERIAL_SET_RTS:
+#ifdef TIOCM_RTS
+        if (whack_modem(fd, 0, TIOCM_RTS) == -1) status = FILE_GetNtStatus();
+#else
+        status = STATUS_NOT_SUPPORTED;
+#endif
+        break;
     case IOCTL_SERIAL_SET_TIMEOUTS:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_TIMEOUTS))
             status = set_timeouts(hDevice, fd, (const SERIAL_TIMEOUTS*)lpInBuffer);
@@ -1009,6 +1078,12 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
             status = set_wait_mask(hDevice, *(DWORD*)lpInBuffer);
         }
         else status = STATUS_INVALID_PARAMETER;
+        break;
+    case IOCTL_SERIAL_SET_XOFF:
+        status = set_XOff(fd);
+        break;
+    case IOCTL_SERIAL_SET_XON:
+        status = set_XOn(fd);
         break;
     default:
         FIXME("Unsupported IOCTL %lx (type=%lx access=%lx func=%lx meth=%lx)\n", 

@@ -146,19 +146,6 @@ static int COMM_GetEInfo(int fd, serial_irq_info *irq_info)
     return -1;
 }
 
-static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
-{
-#ifdef TIOCMGET
-    unsigned int mstat, okay;
-    okay = ioctl(fd, TIOCMGET, &mstat);
-    if (okay) return okay;
-    if (andy) mstat &= andy;
-    mstat |= orrie;
-    return ioctl(fd, TIOCMSET, &mstat);
-#else
-    return 0;
-#endif
-}
 
 /***********************************************************************
  *           COMM_Parse*   (Internal)
@@ -699,111 +686,38 @@ BOOL WINAPI ClearCommBreak(HANDLE handle)
  *
  *  Directs a communication device to perform an extended function.
  *
+ * PARAMS
+ *
+ *      handle          [in] The communication device to perform the extended function
+ *      nFunction       [in] The extended function to be performed
+ *
  * RETURNS
  *
  *  True or requested data on successful completion of the command,
  *  false if the device is not present cannot execute the command
  *  or the command failed.
  */
-BOOL WINAPI EscapeCommFunction(
-    HANDLE handle,    /* [in] The communication device to perform the extended function. */
-    UINT   nFunction) /* [in] The extended function to be performed. */
+BOOL WINAPI EscapeCommFunction(HANDLE handle, UINT func)
 {
-	int fd,direct=FALSE,result=FALSE;
-	struct termios	port;
+    DWORD       ioc;
 
-    	TRACE("handle %p, function=%d\n", handle, nFunction);
-	fd = get_comm_fd( handle, FILE_READ_DATA );
-	if(fd<0) return FALSE;
-
-	if (tcgetattr(fd,&port) == -1) {
-		release_comm_fd( handle, fd );
-		return FALSE;
-	}
-
-	switch (nFunction) {
-		case RESETDEV:
-		        TRACE("\n");
-			break;
-
-		case CLRDTR:
-		        TRACE("CLRDTR\n");
-#ifdef TIOCM_DTR
-			direct=TRUE;
-			result= COMM_WhackModem(fd, ~TIOCM_DTR, 0);
-			break;
-#endif
-
-		case CLRRTS:
-		        TRACE("CLRRTS\n");
-#ifdef TIOCM_RTS
-			direct=TRUE;
-			result= COMM_WhackModem(fd, ~TIOCM_RTS, 0);
-			break;
-#endif
-
-		case SETDTR:
-		        TRACE("SETDTR\n");
-#ifdef TIOCM_DTR
-			direct=TRUE;
-			result= COMM_WhackModem(fd, 0, TIOCM_DTR);
-			break;
-#endif
-
-		case SETRTS:
-		        TRACE("SETRTS\n");
-#ifdef TIOCM_RTS
-			direct=TRUE;
-			result= COMM_WhackModem(fd, 0, TIOCM_RTS);
-			break;
-#endif
-
-		case SETXOFF:
-		        TRACE("SETXOFF\n");
-			port.c_iflag |= IXOFF;
-			break;
-
-		case SETXON:
-		        TRACE("SETXON\n");
-			port.c_iflag |= IXON;
-			break;
-		case SETBREAK:
-			TRACE("setbreak\n");
-#ifdef 	TIOCSBRK
-			direct=TRUE;
-			result = ioctl(fd,TIOCSBRK,0);
-			break;
-#endif
-		case CLRBREAK:
-			TRACE("clrbreak\n");
-#ifdef 	TIOCSBRK
-			direct=TRUE;
-			result = ioctl(fd,TIOCCBRK,0);
-			break;
-#endif
-		default:
-			WARN("(handle=%p,nFunction=%d): Unknown function\n",
-			handle, nFunction);
-			break;
-	}
-
-	if (!direct)
-	  if (tcsetattr(fd, TCSADRAIN, &port) == -1) {
-		release_comm_fd( handle, fd );
-		return FALSE;
-	  } else
-	        result= TRUE;
-	else
-	  {
-	    if (result == -1)
-	      {
-		result= FALSE;
-	      }
-	    else
-	      result = TRUE;
-	  }
-	release_comm_fd( handle, fd );
-	return result;
+    switch (func)
+    {
+    case CLRDTR:        ioc = IOCTL_SERIAL_CLR_DTR;             break;
+    case CLRRTS:        ioc = IOCTL_SERIAL_CLR_RTS;             break;
+    case SETDTR:        ioc = IOCTL_SERIAL_SET_DTR;             break;
+    case SETRTS:        ioc = IOCTL_SERIAL_SET_RTS;             break;
+    case SETXOFF:       ioc = IOCTL_SERIAL_SET_XOFF;            break;
+    case SETXON:        ioc = IOCTL_SERIAL_SET_XON;             break;
+    case SETBREAK:      ioc = IOCTL_SERIAL_SET_BREAK_ON;        break;
+    case CLRBREAK:      ioc = IOCTL_SERIAL_SET_BREAK_OFF;       break;
+    case RESETDEV:      ioc = IOCTL_SERIAL_RESET_DEVICE;        break;
+    default:
+        ERR("Unknown function code (%u)\n", func);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    return DeviceIoControl(handle, ioc, NULL, 0, NULL, 0, NULL, NULL);
 }
 
 /********************************************************************
