@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = winmm.dll
-IMPORTS   = winmm kernel32
+IMPORTS   = winmm user32 kernel32
 
 CTESTS = \
 	capture.c \
