@@ -85,10 +85,10 @@ static void dump_user_flags(unsigned long *pFlags)
 
 /* CLEANLOCALSTORAGE */
 
-#define CLS_FUNCDESC  0x66
-#define CLS_LIBATTR   0x6c
-#define CLS_TYPEATTR  0x74
-#define CLS_VARDESC   0x76
+#define CLS_FUNCDESC  'f'
+#define CLS_LIBATTR   'l'
+#define CLS_TYPEATTR  't'
+#define CLS_VARDESC   'v'
 
 unsigned long WINAPI CLEANLOCALSTORAGE_UserSize(unsigned long *pFlags, unsigned long Start, CLEANLOCALSTORAGE *pstg)
 {
