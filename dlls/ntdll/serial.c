@@ -540,6 +540,34 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_special_chars(int fd, const SERIAL_CHARS* sc)
+{
+    struct termios port;
+    
+    if (tcgetattr(fd, &port) == -1)
+    {
+        ERR("tcgetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    
+    port.c_cc[VMIN  ] = 0;
+    port.c_cc[VTIME ] = 1;
+    
+    port.c_cc[VEOF  ] = sc->EofChar;
+    /* FIXME: sc->ErrorChar is not supported */
+    /* FIXME: sc->BreakChar is not supported */
+    /* FIXME: sc->EventChar is not supported */
+    port.c_cc[VSTART] = sc->XonChar;
+    port.c_cc[VSTOP ] = sc->XoffChar;
+    
+    if (tcsetattr(fd, TCSANOW, &port) == -1)
+    {
+        ERR("tcsetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
 {
     NTSTATUS status;
@@ -657,6 +685,12 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 	FIXME("ioctl not available\n");
 	status = STATUS_NOT_SUPPORTED;
 #endif
+        break;
+    case IOCTL_SERIAL_SET_CHARS:
+        if (lpInBuffer && nInBufferSize == sizeof(SERIAL_CHARS))
+            status = set_special_chars(fd, (const SERIAL_CHARS*)lpInBuffer);
+        else
+            status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_SET_HANDFLOW:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_HANDFLOW))

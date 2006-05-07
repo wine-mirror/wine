@@ -983,13 +983,10 @@ static void dump_dcb(const DCB* lpdcb)
  */
 BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
 {
-     struct termios port;
-     int fd;
-     BOOL ret;
-
     SERIAL_BAUD_RATE           sbr;
     SERIAL_LINE_CONTROL        slc;
     SERIAL_HANDFLOW            shf;
+    SERIAL_CHARS               sc;
 
     if (lpdcb == NULL)
     {
@@ -1040,44 +1037,24 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
     shf.XonLimit = lpdcb->XonLim;
     shf.XoffLimit = lpdcb->XoffLim;
 
+    sc.EofChar = lpdcb->EofChar;
+    sc.ErrorChar = lpdcb->ErrorChar;
+    sc.BreakChar = 0;
+    sc.EventChar = lpdcb->EvtChar;
+    sc.XonChar = lpdcb->XonChar;
+    sc.XoffChar = lpdcb->XoffChar;
+
     /* note: change DTR/RTS lines after setting the comm attributes,
      * so flow control does not interfere.
      */
-    if (!DeviceIoControl(handle, IOCTL_SERIAL_SET_BAUD_RATE,
-                         &sbr, sizeof(sbr), NULL, 0, NULL, NULL))
-        return FALSE;
-    if (!DeviceIoControl(handle, IOCTL_SERIAL_SET_LINE_CONTROL,
-                         &slc, sizeof(slc), NULL, 0, NULL, NULL))
-        return FALSE;
-
-    if (!DeviceIoControl(handle, IOCTL_SERIAL_SET_HANDFLOW,
-                         &shf, sizeof(shf), NULL, 0, NULL, NULL))
-        return FALSE;
-
-     fd = get_comm_fd( handle, FILE_READ_DATA );
-     if (fd < 0) return FALSE;
-
-     if ((tcgetattr(fd,&port)) == -1) {
-         int save_error = errno;
-         release_comm_fd( handle, fd );
-         ERR("tcgetattr error '%s'\n", strerror(save_error));
-         return FALSE;
-     }
-
-	port.c_cc[VMIN] = 0;
-	port.c_cc[VTIME] = 1;
-
-	if (tcsetattr(fd,TCSANOW,&port)==-1) { /* otherwise it hangs with pending input*/
-                ERR("tcsetattr error '%s'\n", strerror(errno));
-		ret = FALSE;
-	} else {
-                ClearCommError(handle, NULL, NULL);
-		ret = TRUE;
-	}
-
-        release_comm_fd( handle, fd );
-        return ret;
-
+    return (DeviceIoControl(handle, IOCTL_SERIAL_SET_BAUD_RATE,
+                            &sbr, sizeof(sbr), NULL, 0, NULL, NULL) &&
+            DeviceIoControl(handle, IOCTL_SERIAL_SET_LINE_CONTROL,
+                            &slc, sizeof(slc), NULL, 0, NULL, NULL) &&
+            DeviceIoControl(handle, IOCTL_SERIAL_SET_HANDFLOW,
+                            &shf, sizeof(shf), NULL, 0, NULL, NULL) &&
+            DeviceIoControl(handle, IOCTL_SERIAL_SET_CHARS,
+                            &sc, sizeof(sc), NULL, 0, NULL, NULL));
 }
 
 
