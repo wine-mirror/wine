@@ -950,6 +950,21 @@ BOOL WINAPI SetCommMask(HANDLE handle, DWORD evtmask)
                            &evtmask, sizeof(evtmask), NULL, 0, NULL, NULL);
 }
 
+static void dump_dcb(const DCB* lpdcb)
+{
+    TRACE("bytesize=%d baudrate=%ld fParity=%d Parity=%d stopbits=%d\n",
+          lpdcb->ByteSize, lpdcb->BaudRate, lpdcb->fParity, lpdcb->Parity,
+          (lpdcb->StopBits == ONESTOPBIT) ? 1 :
+          (lpdcb->StopBits == TWOSTOPBITS) ? 2 : 0);
+    TRACE("%sIXON %sIXOFF\n", (lpdcb->fInX) ? "" : "~", (lpdcb->fOutX) ? "" : "~");
+    TRACE("fOutxCtsFlow=%d fRtsControl=%d\n", lpdcb->fOutxCtsFlow, lpdcb->fRtsControl);
+    TRACE("fOutxDsrFlow=%d fDtrControl=%d\n", lpdcb->fOutxDsrFlow, lpdcb->fDtrControl);
+    if (lpdcb->fOutxCtsFlow || lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE)
+        TRACE("CRTSCTS\n");
+    else
+        TRACE("~CRTSCTS\n");
+}
+
 /*****************************************************************************
  *	SetCommState    (KERNEL32.@)
  *
@@ -957,30 +972,34 @@ BOOL WINAPI SetCommMask(HANDLE handle, DWORD evtmask)
  *  with values from a device control block without effecting the input and output
  *  queues.
  *
+ * PARAMS
+ *
+ *      handle  [in]    The communications device
+ *      lpdcb   [out]   The device control block
+ *
  * RETURNS
  *
  *  True on success, false on failure eg if the XonChar is equal to the XoffChar.
  */
-BOOL WINAPI SetCommState(
-    HANDLE handle, /* [in] The communications device. */
-    LPDCB  lpdcb)  /* [out] The device control block. */
+BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
 {
      struct termios port;
      int fd, bytesize, stopbits;
      BOOL ret;
 
-     TRACE("handle %p, ptr %p\n", handle, lpdcb);
-     TRACE("bytesize %d baudrate %ld fParity %d Parity %d stopbits %d\n",
-	   lpdcb->ByteSize,lpdcb->BaudRate,lpdcb->fParity, lpdcb->Parity,
-	   (lpdcb->StopBits == ONESTOPBIT)?1:
-	   (lpdcb->StopBits == TWOSTOPBITS)?2:0);
-     TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
-	   (lpdcb->fOutX)?"IXOFF":"~IXOFF");
-     TRACE("fOutxCtsFlow %d fRtsControl %d\n", lpdcb->fOutxCtsFlow,
-             lpdcb->fRtsControl);
-     TRACE("fOutxDsrFlow %d fDtrControl%d\n", lpdcb->fOutxDsrFlow,
-             lpdcb->fDtrControl);
-             
+    SERIAL_BAUD_RATE    sbr;
+ 
+    if (lpdcb == NULL)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    dump_dcb(lpdcb);
+
+    sbr.BaudRate = lpdcb->BaudRate;
+    if (!DeviceIoControl(handle, IOCTL_SERIAL_SET_BAUD_RATE,
+                         &sbr, sizeof(sbr), NULL, 0, NULL, NULL))
+        return FALSE;
 
      fd = get_comm_fd( handle, FILE_READ_DATA );
      if (fd < 0) return FALSE;
@@ -1010,202 +1029,6 @@ BOOL WINAPI SetCommState(
 	port.c_lflag &= ~(ICANON|ECHO|ISIG);
 	port.c_lflag |= NOFLSH;
 
-#ifdef CBAUD
-	port.c_cflag &= ~CBAUD;
-	switch (lpdcb->BaudRate) {
-		case 0:
-			port.c_cflag |= B0;
-			break;
-		case 50:
-			port.c_cflag |= B50;
-			break;
-		case 75:
-			port.c_cflag |= B75;
-			break;
-		case 110:
-		case CBR_110:
-			port.c_cflag |= B110;
-			break;
-		case 134:
-			port.c_cflag |= B134;
-			break;
-		case 150:
-			port.c_cflag |= B150;
-			break;
-		case 200:
-			port.c_cflag |= B200;
-			break;
-		case 300:
-		case CBR_300:
-			port.c_cflag |= B300;
-			break;
-		case 600:
-		case CBR_600:
-			port.c_cflag |= B600;
-			break;
-		case 1200:
-		case CBR_1200:
-			port.c_cflag |= B1200;
-			break;
-		case 1800:
-			port.c_cflag |= B1800;
-			break;
-		case 2400:
-		case CBR_2400:
-			port.c_cflag |= B2400;
-			break;
-		case 4800:
-		case CBR_4800:
-			port.c_cflag |= B4800;
-			break;
-		case 9600:
-		case CBR_9600:
-			port.c_cflag |= B9600;
-			break;
-		case 19200:
-		case CBR_19200:
-			port.c_cflag |= B19200;
-			break;
-		case 38400:
-		case CBR_38400:
-			port.c_cflag |= B38400;
-			break;
-#ifdef B57600
-		case 57600:
-			port.c_cflag |= B57600;
-			break;
-#endif
-#ifdef B115200
-		case 115200:
-			port.c_cflag |= B115200;
-			break;
-#endif
-#ifdef B230400
-		case 230400:
-			port.c_cflag |= B230400;
-			break;
-#endif
-#ifdef B460800
-		case 460800:
-			port.c_cflag |= B460800;
-			break;
-#endif
-       	        default:
-#if defined (HAVE_LINUX_SERIAL_H) && defined (TIOCSSERIAL)
-                        {   struct serial_struct nuts;
-			    int arby;
-			    ioctl(fd, TIOCGSERIAL, &nuts);
-			    nuts.custom_divisor = nuts.baud_base / lpdcb->BaudRate;
-			    if (!(nuts.custom_divisor)) nuts.custom_divisor = 1;
-			    arby = nuts.baud_base / nuts.custom_divisor;
-			    nuts.flags &= ~ASYNC_SPD_MASK;
-			    nuts.flags |= ASYNC_SPD_CUST;
-			    WARN("You (or a program acting at your behest) have specified\n"
-                                 "a non-standard baud rate %ld.  Wine will set the rate to %d,\n"
-                                 "which is as close as we can get by our present understanding of your\n"
-                                 "hardware. I hope you know what you are doing.  Any disruption Wine\n"
-                                 "has caused to your linux system can be undone with setserial \n"
-                                 "(see man setserial). If you have incapacitated a Hayes type modem,\n"
-                                 "reset it and it will probably recover.\n", lpdcb->BaudRate, arby);
-  			    ioctl(fd, TIOCSSERIAL, &nuts);
-			    port.c_cflag |= B38400;
- 			}
- 			break;
-#endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
-
-
-                        release_comm_fd( handle, fd );
-			ERR("baudrate %ld\n",lpdcb->BaudRate);
-			return FALSE;
-	}
-#elif !defined(__EMX__)
-        switch (lpdcb->BaudRate) {
-                case 0:
-                        port.c_ospeed = B0;
-                        break;
-                case 50:
-                        port.c_ospeed = B50;
-                        break;
-                case 75:
-                        port.c_ospeed = B75;
-                        break;
-                case 110:
-                case CBR_110:
-                        port.c_ospeed = B110;
-                        break;
-                case 134:
-                        port.c_ospeed = B134;
-                        break;
-                case 150:
-                        port.c_ospeed = B150;
-                        break;
-                case 200:
-                        port.c_ospeed = B200;
-                        break;
-                case 300:
-                case CBR_300:
-                        port.c_ospeed = B300;
-                        break;
-                case 600:
-                case CBR_600:
-                        port.c_ospeed = B600;
-                        break;
-                case 1200:
-                case CBR_1200:
-                        port.c_ospeed = B1200;
-                        break;
-                case 1800:
-                        port.c_ospeed = B1800;
-                        break;
-                case 2400:
-                case CBR_2400:
-                        port.c_ospeed = B2400;
-                        break;
-                case 4800:
-                case CBR_4800:
-                        port.c_ospeed = B4800;
-                        break;
-                case 9600:
-                case CBR_9600:
-                        port.c_ospeed = B9600;
-                        break;
-                case 19200:
-                case CBR_19200:
-                        port.c_ospeed = B19200;
-                        break;
-                case 38400:
-                case CBR_38400:
-                        port.c_ospeed = B38400;
-                        break;
-#ifdef B57600
-		case 57600:
-		case CBR_57600:
-			port.c_cflag |= B57600;
-			break;
-#endif
-#ifdef B115200
-		case 115200:
-		case CBR_115200:
-			port.c_cflag |= B115200;
-			break;
-#endif
-#ifdef B230400
-		case 230400:
-			port.c_cflag |= B230400;
-			break;
-#endif
-#ifdef B460800
-		case 460800:
-			port.c_cflag |= B460800;
-			break;
-#endif
-                default:
-                        release_comm_fd( handle, fd );
-			ERR("baudrate %ld\n",lpdcb->BaudRate);
-                        return FALSE;
-        }
-        port.c_ispeed = port.c_ospeed;
-#endif
         bytesize=lpdcb->ByteSize;
         stopbits=lpdcb->StopBits;
 
