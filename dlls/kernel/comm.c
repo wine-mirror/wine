@@ -1080,6 +1080,7 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
     SERIAL_BAUD_RATE    sbr;
     SERIAL_LINE_CONTROL slc;
     SERIAL_HANDFLOW     shf;
+    SERIAL_CHARS        sc;
 
     TRACE("handle %p, ptr %p\n", handle, lpdcb);
 
@@ -1094,7 +1095,9 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
         !DeviceIoControl(handle, IOCTL_SERIAL_GET_LINE_CONTROL,
                          NULL, 0, &slc, sizeof(slc), NULL, NULL) ||
         !DeviceIoControl(handle, IOCTL_SERIAL_GET_HANDFLOW,
-                         NULL, 0, &shf, sizeof(shf), NULL, NULL))
+                         NULL, 0, &shf, sizeof(shf), NULL, NULL) ||
+        !DeviceIoControl(handle, IOCTL_SERIAL_GET_CHARS,
+                         NULL, 0, &sc, sizeof(sc), NULL, NULL))
         return FALSE;
 
     memset(lpdcb, 0, sizeof(*lpdcb));
@@ -1137,10 +1140,11 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
     if (shf.FlowReplace & SERIAL_AUTO_TRANSMIT) lpdcb->fOutX = 1;
     if (shf.FlowReplace & SERIAL_AUTO_RECEIVE)  lpdcb->fInX = 1;
 
-/*
-	lpdcb->XonChar =
-	lpdcb->XoffChar =
- */
+    lpdcb->EofChar = sc.EofChar;
+    lpdcb->ErrorChar = sc.ErrorChar;
+    lpdcb->EvtChar = sc.EventChar;
+    lpdcb->XonChar = sc.XonChar;
+    lpdcb->XoffChar = sc.XoffChar;
 
     TRACE("OK\n");
     dump_dcb(lpdcb);

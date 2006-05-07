@@ -319,6 +319,25 @@ static NTSTATUS get_modem_status(int fd, DWORD* lpModemStat)
     return status;
 }
 
+static NTSTATUS get_special_chars(int fd, SERIAL_CHARS* sc)
+{
+    struct termios port;
+    
+    if (tcgetattr(fd, &port) == -1)
+    {
+        ERR("tcgetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    sc->EofChar   = port.c_cc[VEOF];
+    sc->ErrorChar = 0xFF;
+    sc->BreakChar = 0; /* FIXME */
+    sc->EventChar = 0; /* FIXME */
+    sc->XonChar   = port.c_cc[VSTART];
+    sc->XoffChar  = port.c_cc[VSTOP];
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS get_status(int fd, SERIAL_STATUS* ss)
 {
     NTSTATUS    status = STATUS_SUCCESS;
@@ -775,6 +794,15 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
         {
             if (!(status = get_baud_rate(fd, (SERIAL_BAUD_RATE*)lpOutBuffer)))
                 sz = sizeof(SERIAL_BAUD_RATE);
+        }
+        else
+            status = STATUS_INVALID_PARAMETER;
+        break;
+    case IOCTL_SERIAL_GET_CHARS:
+        if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_CHARS))
+        {
+            if (!(status = get_special_chars(fd, (SERIAL_CHARS*)lpOutBuffer)))
+                sz = sizeof(SERIAL_CHARS);
         }
         else
             status = STATUS_INVALID_PARAMETER;
