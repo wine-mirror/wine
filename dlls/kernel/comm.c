@@ -1082,6 +1082,7 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
      int stat = DTR_CONTROL_ENABLE | RTS_CONTROL_ENABLE;
 
     SERIAL_BAUD_RATE    sbr;
+    SERIAL_LINE_CONTROL slc;
 
     TRACE("handle %p, ptr %p\n", handle, lpdcb);
 
@@ -1093,13 +1094,21 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
     lpdcb->DCBlength = sizeof(*lpdcb);
     
     if (!DeviceIoControl(handle, IOCTL_SERIAL_GET_BAUD_RATE,
-                         NULL, 0, &sbr, sizeof(sbr), NULL, NULL))
+                         NULL, 0, &sbr, sizeof(sbr), NULL, NULL) ||
+        !DeviceIoControl(handle, IOCTL_SERIAL_GET_LINE_CONTROL,
+                         NULL, 0, &slc, sizeof(slc), NULL, NULL))
         return FALSE;
+
     /* yes, they seem no never be (re)set on NT */
     lpdcb->fBinary = 1;
     lpdcb->fParity = 0;
 
     lpdcb->BaudRate = sbr.BaudRate;
+
+    lpdcb->StopBits = slc.StopBits;
+    lpdcb->Parity = slc.Parity;
+    lpdcb->ByteSize = slc.WordLength;
+
      fd = get_comm_fd( handle, FILE_READ_DATA );
      if (fd < 0) return FALSE;
      if (tcgetattr(fd, &port) == -1) {
@@ -1118,59 +1127,10 @@ BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
      }
 #endif
      release_comm_fd( handle, fd );
-	switch (port.c_cflag & CSIZE) {
-		case CS5:
-			lpdcb->ByteSize = 5;
-			break;
-		case CS6:
-			lpdcb->ByteSize = 6;
-			break;
-		case CS7:
-			lpdcb->ByteSize = 7;
-			break;
-		case CS8:
-			lpdcb->ByteSize = 8;
-			break;
-	        default:
-		        ERR("unknown size %x\n", port.c_cflag & CSIZE);
-	}
-
         if(port.c_iflag & INPCK)
             lpdcb->fParity = TRUE;
         else
             lpdcb->fParity = FALSE;
-#ifdef CMSPAR
-	switch (port.c_cflag & (PARENB | PARODD | CMSPAR))
-#else
-	switch (port.c_cflag & (PARENB | PARODD))
-#endif
-	{
-		case 0:
-			lpdcb->Parity = NOPARITY;
-			break;
-		case PARENB:
-			lpdcb->Parity = EVENPARITY;
-			break;
-		case (PARENB | PARODD):
-			lpdcb->Parity = ODDPARITY;
-			break;
-#ifdef CMSPAR
-		case (PARENB | CMSPAR):
-			lpdcb->Parity = MARKPARITY;
-			break;
-                case (PARENB | PARODD | CMSPAR):
-			lpdcb->Parity = SPACEPARITY;
-			break;
-#endif
-	}
-
-	if (port.c_cflag & CSTOPB)
-            if(lpdcb->ByteSize == 5)
-                lpdcb->StopBits = ONE5STOPBITS;
-            else
-                lpdcb->StopBits = TWOSTOPBITS;
-	else
-            lpdcb->StopBits = ONESTOPBIT;
 
 	lpdcb->fNull = 0;
 

@@ -185,6 +185,53 @@ static NTSTATUS get_baud_rate(int fd, SERIAL_BAUD_RATE* sbr)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_line_control(int fd, SERIAL_LINE_CONTROL* slc)
+{
+    struct termios port;
+    
+    if (tcgetattr(fd, &port) == -1)
+    {
+        ERR("tcgetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    
+#ifdef CMSPAR
+    switch (port.c_cflag & (PARENB | PARODD | CMSPAR))
+#else
+    switch (port.c_cflag & (PARENB | PARODD))
+#endif
+    {
+    case 0:                     slc->Parity = NOPARITY;         break;
+    case PARENB:                slc->Parity = EVENPARITY;       break;
+    case PARENB|PARODD:         slc->Parity = ODDPARITY;        break;
+#ifdef CMSPAR
+    case PARENB|CMSPAR:         slc->Parity = MARKPARITY;       break;
+    case PARENB|PARODD|CMSPAR:  slc->Parity = SPACEPARITY;      break;
+        break;
+#endif
+    }
+    switch (port.c_cflag & CSIZE)
+    {
+    case CS5:   slc->WordLength = 5;    break;
+    case CS6:   slc->WordLength = 6;    break;
+    case CS7:   slc->WordLength = 7;	break;
+    case CS8:	slc->WordLength = 8;	break;
+    default: ERR("unknown size %x\n", port.c_cflag & CSIZE);
+    }
+    
+    if (port.c_cflag & CSTOPB)
+    {
+        if (slc->WordLength == 5)
+            slc->StopBits = ONE5STOPBITS;
+        else
+            slc->StopBits = TWOSTOPBITS;
+    }
+    else
+        slc->StopBits = ONESTOPBIT;
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS get_modem_status(int fd, DWORD* lpModemStat)
 {
     NTSTATUS    status = STATUS_SUCCESS;
@@ -691,6 +738,15 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
                 sz = sizeof(SERIAL_STATUS);
         }
         else status = STATUS_INVALID_PARAMETER;
+        break;
+    case IOCTL_SERIAL_GET_LINE_CONTROL:
+        if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_LINE_CONTROL))
+        {
+            if (!(status = get_line_control(fd, (SERIAL_LINE_CONTROL*)lpOutBuffer)))
+                sz = sizeof(SERIAL_LINE_CONTROL);
+        }
+        else
+            status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_GET_MODEMSTATUS:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
