@@ -202,3 +202,16 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     }
     return TRUE;
 }
+
+/******************************************************************
+ *		SymGetSourceFileToken (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetSourceFileToken(HANDLE hProcess, ULONG64 base,
+                                  PCSTR src, PVOID* token, DWORD* size)
+{
+    FIXME("%p %s %s %p %p: stub!\n",
+          hProcess, wine_dbgstr_longlong(base), debugstr_a(src), token, size);
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}

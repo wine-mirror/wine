@@ -64,7 +64,7 @@
 @ stdcall SymGetOptions()
 @ stdcall SymGetSearchPath(long str long)
 @ stub SymGetSourceFileFromToken
-@ stub SymGetSourceFileToken
+@ stdcall SymGetSourceFileToken(ptr double str ptr ptr)
 @ stub SymGetSourceVarFromToken
 @ stub SymGetSymFromAddr64
 @ stdcall SymGetSymFromAddr(long long ptr ptr)
