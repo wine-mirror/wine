@@ -984,11 +984,12 @@ static void dump_dcb(const DCB* lpdcb)
 BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
 {
      struct termios port;
-     int fd, bytesize, stopbits;
+     int fd;
      BOOL ret;
 
-    SERIAL_BAUD_RATE    sbr;
- 
+    SERIAL_BAUD_RATE           sbr;
+    SERIAL_LINE_CONTROL        slc;
+
     if (lpdcb == NULL)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -997,8 +998,16 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
     dump_dcb(lpdcb);
 
     sbr.BaudRate = lpdcb->BaudRate;
+             
+    slc.StopBits = lpdcb->StopBits;
+    slc.Parity = lpdcb->Parity;
+    slc.WordLength = lpdcb->ByteSize;
+
     if (!DeviceIoControl(handle, IOCTL_SERIAL_SET_BAUD_RATE,
                          &sbr, sizeof(sbr), NULL, 0, NULL, NULL))
+        return FALSE;
+    if (!DeviceIoControl(handle, IOCTL_SERIAL_SET_LINE_CONTROL,
+                         &slc, sizeof(slc), NULL, 0, NULL, NULL))
         return FALSE;
 
      fd = get_comm_fd( handle, FILE_READ_DATA );
@@ -1014,113 +1023,6 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
 	port.c_cc[VMIN] = 0;
 	port.c_cc[VTIME] = 1;
 
-#ifdef IMAXBEL
-	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|PARMRK|IMAXBEL);
-#else
-	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|PARMRK);
-#endif
-	port.c_iflag |= (IGNBRK);
-
-	port.c_oflag &= ~(OPOST);
-
-	port.c_cflag &= ~(HUPCL);
-	port.c_cflag |= CLOCAL | CREAD;
-
-	port.c_lflag &= ~(ICANON|ECHO|ISIG);
-	port.c_lflag |= NOFLSH;
-
-        bytesize=lpdcb->ByteSize;
-        stopbits=lpdcb->StopBits;
-
-#ifdef CMSPAR
-	port.c_cflag &= ~(PARENB | PARODD | CMSPAR);
-#else
-	port.c_cflag &= ~(PARENB | PARODD);
-#endif
-	if (lpdcb->fParity)
-            port.c_iflag |= INPCK;
-        else
-            port.c_iflag &= ~INPCK;
-        switch (lpdcb->Parity) {
-                case NOPARITY:
-                        break;
-                case ODDPARITY:
-                        port.c_cflag |= (PARENB | PARODD);
-                        break;
-                case EVENPARITY:
-                        port.c_cflag |= PARENB;
-                        break;
-#ifdef CMSPAR
-                /* Linux defines mark/space (stick) parity */
-                case MARKPARITY:
-                        port.c_cflag |= (PARENB | CMSPAR);
-                        break;
-                case SPACEPARITY:
-                        port.c_cflag |= (PARENB | PARODD |  CMSPAR);
-                        break;
-#else
-                /* try the POSIX way */
-                case MARKPARITY:
-                        if( stopbits == ONESTOPBIT) {
-                            stopbits = TWOSTOPBITS;
-                            port.c_iflag &= ~INPCK;
-                        } else {
-                            release_comm_fd( handle, fd );
-                            ERR("Cannot set MARK Parity\n");
-                            return FALSE;
-                        }
-                        break;
-                case SPACEPARITY:
-                        if( bytesize < 8) {
-                            bytesize +=1;
-                            port.c_iflag &= ~INPCK;
-                        } else {
-                            release_comm_fd( handle, fd );
-                            ERR("Cannot set SPACE Parity\n");
-                            return FALSE;
-                        }
-                        break;
-#endif
-               default:
-                        release_comm_fd( handle, fd );
-			ERR("Parity\n");
-                        return FALSE;
-        }
-
-
-	port.c_cflag &= ~CSIZE;
-	switch (bytesize) {
-		case 5:
-			port.c_cflag |= CS5;
-			break;
-		case 6:
-			port.c_cflag |= CS6;
-			break;
-		case 7:
-			port.c_cflag |= CS7;
-			break;
-		case 8:
-			port.c_cflag |= CS8;
-			break;
-		default:
-                        release_comm_fd( handle, fd );
-			ERR("ByteSize\n");
-			return FALSE;
-	}
-
-	switch (stopbits) {
-		case ONESTOPBIT:
-				port.c_cflag &= ~CSTOPB;
-				break;
-		case ONE5STOPBITS: /* will be selected if bytesize is 5 */
-		case TWOSTOPBITS:
-				port.c_cflag |= CSTOPB;
-				break;
-		default:
-                        release_comm_fd( handle, fd );
-			ERR("StopBits\n");
-			return FALSE;
-	}
 #ifdef CRTSCTS
 	if (	lpdcb->fOutxCtsFlow 			||
 		lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE

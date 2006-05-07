@@ -360,6 +360,112 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
+{
+    struct termios port;
+    unsigned bytesize, stopbits;
+    
+    if (tcgetattr(fd, &port) == -1)
+    {
+        ERR("tcgetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    
+#ifdef IMAXBEL
+    port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|PARMRK|IMAXBEL);
+#else
+    port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|PARMRK);
+#endif
+    port.c_iflag |= IGNBRK | INPCK;
+    
+    port.c_oflag &= ~(OPOST);
+    
+    port.c_cflag &= ~(HUPCL);
+    port.c_cflag |= CLOCAL | CREAD;
+    
+    port.c_lflag &= ~(ICANON|ECHO|ISIG);
+    port.c_lflag |= NOFLSH;
+    
+    bytesize = slc->WordLength;
+    stopbits = slc->StopBits;
+    
+#ifdef CMSPAR
+    port.c_cflag &= ~(PARENB | PARODD | CMSPAR);
+#else
+    port.c_cflag &= ~(PARENB | PARODD);
+#endif
+
+    switch (slc->Parity)
+    {
+    case NOPARITY:      port.c_iflag &= ~INPCK;                         break;
+    case ODDPARITY:     port.c_cflag |= PARENB | PARODD;                break;
+    case EVENPARITY:    port.c_cflag |= PARENB;                         break;
+#ifdef CMSPAR
+        /* Linux defines mark/space (stick) parity */
+    case MARKPARITY:    port.c_cflag |= PARENB | CMSPAR;                break;
+    case SPACEPARITY:   port.c_cflag |= PARENB | PARODD |  CMSPAR;      break;
+#else
+        /* try the POSIX way */
+    case MARKPARITY:
+        if (slc->StopBits == ONESTOPBIT)
+        {
+            stopbits = TWOSTOPBITS;
+            port.c_iflag &= ~INPCK;
+        }
+        else
+        {
+            ERR("Cannot set MARK Parity\n");
+            return STATUS_NOT_SUPPORTED;
+        }
+        break;
+    case SPACEPARITY:
+        if (slc->WordLength < 8)
+        {
+            bytesize +=1;
+            port.c_iflag &= ~INPCK;
+        }
+        else
+        {
+            ERR("Cannot set SPACE Parity\n");
+            return STATUS_NOT_SUPPORTED;
+        }
+        break;
+#endif
+    default:
+        ERR("Parity\n");
+        return STATUS_NOT_SUPPORTED;
+    }
+    
+    port.c_cflag &= ~CSIZE;
+    switch (bytesize)
+    {
+    case 5:     port.c_cflag |= CS5;    break;
+    case 6:     port.c_cflag |= CS6;    break;
+    case 7:	port.c_cflag |= CS7;	break;
+    case 8:	port.c_cflag |= CS8;	break;
+    default:
+        ERR("ByteSize\n");
+        return STATUS_NOT_SUPPORTED;
+    }
+    
+    switch (stopbits)
+    {
+    case ONESTOPBIT:    port.c_cflag &= ~CSTOPB;        break;
+    case ONE5STOPBITS: /* will be selected if bytesize is 5 */
+    case TWOSTOPBITS:	port.c_cflag |= CSTOPB;		break;
+    default:
+        ERR("StopBits\n");
+        return STATUS_NOT_SUPPORTED;
+    }
+    /* otherwise it hangs with pending input*/
+    if (tcsetattr(fd, TCSANOW, &port) == -1)
+    {
+        ERR("tcsetattr error '%s'\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
 {
     NTSTATUS status;
@@ -477,6 +583,12 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
 	FIXME("ioctl not available\n");
 	status = STATUS_NOT_SUPPORTED;
 #endif
+        break;
+    case IOCTL_SERIAL_SET_LINE_CONTROL:
+        if (lpInBuffer && nInBufferSize == sizeof(SERIAL_LINE_CONTROL))
+            status = set_line_control(fd, (const SERIAL_LINE_CONTROL*)lpInBuffer);
+        else
+            status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_SET_WAIT_MASK:
         if (lpInBuffer && nInBufferSize == sizeof(DWORD))
