@@ -1658,7 +1658,7 @@ EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker, ULONG tabSize,
 
     /* Initialize the virtual function table. */
     newEnumMoniker->lpVtbl       = &VT_EnumMonikerImpl;
-    newEnumMoniker->ref          = 0;
+    newEnumMoniker->ref          = 1;
 
     newEnumMoniker->tabSize=tabSize;
     newEnumMoniker->currentPos=currentPos;
