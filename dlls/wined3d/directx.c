@@ -489,6 +489,9 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - GL_MAX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
                 gl_info->max_samplers = min(MAX_SAMPLERS, gl_max);
+            } else if (strcmp(ThisExtn, "GL_ARB_shading_language_100") == 0) {
+                TRACE_(d3d_caps)(" FOUND: GL Shading Language v100 support\n");
+                gl_info->supported[ARB_SHADING_LANGUAGE_100] = TRUE;
             } else if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Multisample support\n");
                 gl_info->supported[ARB_MULTISAMPLE] = TRUE;
@@ -1674,28 +1677,48 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
     *pCaps->MaxStreams          = MAX_STREAMS;
     *pCaps->MaxStreamStride     = 1024;
 
-    if (((wined3d_settings.vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) || (wined3d_settings.vs_mode == VS_SW) || (DeviceType == WINED3DDEVTYPE_REF)) {
-      *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
-
-      if (This->gl_info.gl_vendor == VENDOR_MESA ||
-          This->gl_info.gl_vendor == VENDOR_WINE) {
-        *pCaps->MaxVertexShaderConst = 95;
-      } else {
-        *pCaps->MaxVertexShaderConst = WINED3D_VSHADER_MAX_CONSTANTS;
-      }
+    if (wined3d_settings.vs_mode == VS_HW && GL_SUPPORT(ARB_SHADING_LANGUAGE_100) && DeviceType != WINED3DDEVTYPE_REF) {
+        /* FIXME: Uncomment the line below and remove the line beneath that to set Vertex Shader 2.0+ capability */
+        /* *pCaps->VertexShaderVersion = D3DVS_VERSION(3,0); */
+        *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
+        TRACE_(d3d_caps)("Hardware Vertex Shaders versions 2.0+ enabled\n");
+    } else if (wined3d_settings.vs_mode == VS_HW && GL_SUPPORT(ARB_VERTEX_PROGRAM) && DeviceType != WINED3DDEVTYPE_REF) {
+        *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
+        TRACE_(d3d_caps)("Hardware Vertex Shader version 1.1 enabled\n");
+    } else if (wined3d_settings.vs_mode == VS_SW || DeviceType == WINED3DDEVTYPE_REF) {
+        *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
+        TRACE_(d3d_caps)("Software Vertex Shader version 1.1 enabled\n");
     } else {
         *pCaps->VertexShaderVersion  = 0;
-        *pCaps->MaxVertexShaderConst = 0;
+        TRACE_(d3d_caps)("Vertex Shader functionality not available\n");
     }
 
-    if ((wined3d_settings.ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != WINED3DDEVTYPE_REF)) {
+    if (This->gl_info.gl_vendor == VENDOR_MESA || This->gl_info.gl_vendor == VENDOR_WINE) {
+        *pCaps->MaxVertexShaderConst = 95;
+    } else {
+        *pCaps->MaxVertexShaderConst = WINED3D_VSHADER_MAX_CONSTANTS;
+    }
+
+    if (wined3d_settings.ps_mode == PS_HW && GL_SUPPORT(ARB_SHADING_LANGUAGE_100) && DeviceType != WINED3DDEVTYPE_REF) {
+        /* FIXME: Uncomment the following line and remove the line beneath that to set Pixel Shader 2.0+ capability */
+        /* *pCaps->PixelShaderVersion = D3DPS_VERSION(3,0); */
         *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
+        TRACE_(d3d_caps)("Hardware Pixel Shaders versions 2.0+ enabled\n");
+    } else if (wined3d_settings.ps_mode == PS_HW && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && DeviceType != WINED3DDEVTYPE_REF) {
+        *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
+        *pCaps->PixelShader1xMaxValue = 1.0;
+        TRACE_(d3d_caps)("Hardware Pixel Shaders version 1.4 enabled\n");
+    /* FIXME: Uncomment this when there is support for software Pixel Shader 1.4 and PS_SW is defined
+    } else if (wined3d_settings.ps_mode == PS_SW || DeviceType == WINED3DDEVTYPE_REF) {
+        *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
+        *pCaps->PixelShader1xMaxValue = 1.0;
+        TRACE_(d3d_caps)("Software Pixel Shader version 1.4 enabled\n"); */
     } else {
         *pCaps->PixelShaderVersion    = 0;
         *pCaps->PixelShader1xMaxValue = 0.0;
+        TRACE_(d3d_caps)("Pixel Shader functionality not available\n");
     }
-    /* TODO: ARB_FRAGMENT_PROGRAM_100 */
 
     /* ------------------------------------------------
        The following fields apply to d3d9 only
