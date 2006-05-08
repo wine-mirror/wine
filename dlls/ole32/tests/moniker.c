@@ -644,11 +644,8 @@ static void test_generic_composite_moniker(void)
     hr = CreateGenericComposite(moniker1, moniker2, &moniker);
     ok_ole_success(hr, CreateGenericComposite);
 
-    /* FIXME: marshal data test commented out as the written custom marshal
-     * size in the OBJREF header doesn't match in ours and native don't match,
-     * probably due to a bug in Microsoft's implementation. */
     test_moniker("generic composite moniker", moniker, 
-        NULL /*expected_gc_moniker_marshal_data*/, sizeof(expected_gc_moniker_marshal_data),
+        expected_gc_moniker_marshal_data, sizeof(expected_gc_moniker_marshal_data),
         expected_gc_moniker_saved_data, sizeof(expected_gc_moniker_saved_data),
         expected_gc_moniker_comparison_data, sizeof(expected_gc_moniker_comparison_data));
 

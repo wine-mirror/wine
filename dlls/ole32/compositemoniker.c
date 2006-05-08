@@ -1368,7 +1368,7 @@ static HRESULT WINAPI CompositeMonikerMarshalImpl_GetMarshalSizeMax(
     TRACE("(%s, %p, %lx, %p, %lx, %p)\n", debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags, pSize);
 
-    *pSize = 0;
+    *pSize = 0x10; /* to match native */
 
     hr = IMoniker_Enum(This, TRUE, &pEnumMk);
     if (FAILED(hr)) return hr;
