@@ -219,6 +219,29 @@ static const BYTE expected_item_moniker_marshal_data[] =
      0x00,0x00,0x54,0x65,0x73,0x74,0x00,
 };
 
+static const BYTE expected_anti_moniker_marshal_data[] =
+{
+    0x4d,0x45,0x4f,0x57,0x04,0x00,0x00,0x00,
+    0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x05,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x00,0x00,0x00,0x00,0x14,0x00,0x00,0x00,
+    0x01,0x00,0x00,0x00,
+};
+
+static const BYTE expected_anti_moniker_saved_data[] =
+{
+    0x01,0x00,0x00,0x00,
+};
+
+static const BYTE expected_anti_moniker_comparison_data[] =
+{
+    0x05,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x01,0x00,0x00,0x00,
+};
+
 static void test_moniker(
     const char *testname, IMoniker *moniker,
     const BYTE *expected_moniker_marshal_data, size_t sizeof_expected_moniker_marshal_data,
@@ -469,7 +492,7 @@ static void test_file_monikers(void)
     }
 }
 
-static void test_item_moniker()
+static void test_item_moniker(void)
 {
     HRESULT hr;
     IMoniker *moniker;
@@ -508,6 +531,44 @@ static void test_item_moniker()
     IMoniker_Release(moniker);
 }
 
+static void test_anti_moniker(void)
+{
+    HRESULT hr;
+    IMoniker *moniker;
+    IMoniker *inverse;
+    DWORD moniker_type;
+    DWORD hash;
+
+    hr = CreateAntiMoniker(&moniker);
+    ok_ole_success(hr, CreateAntiMoniker);
+    if (!moniker) return;
+
+    test_moniker("anti moniker", moniker, 
+        expected_anti_moniker_marshal_data, sizeof(expected_anti_moniker_marshal_data),
+        expected_anti_moniker_saved_data, sizeof(expected_anti_moniker_saved_data),
+        expected_anti_moniker_comparison_data, sizeof(expected_anti_moniker_comparison_data));
+
+    /* Hashing */
+    hr = IMoniker_Hash(moniker, &hash);
+    ok_ole_success(hr, IMoniker_Hash);
+    ok(hash == 0x80000001,
+        "Hash value != 0x80000001, instead was 0x%08lx\n",
+        hash);
+
+    /* IsSystemMoniker test */
+    hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
+    ok_ole_success(hr, IMoniker_IsSystemMoniker);
+    ok(moniker_type == MKSYS_ANTIMONIKER,
+        "dwMkSys != MKSYS_ANTIMONIKER, instead was 0x%08lx",
+        moniker_type);
+
+    hr = IMoniker_Inverse(moniker, &inverse);
+    ok(hr == MK_E_NOINVERSE, "IMoniker_Inverse should have returned MK_E_NOINVERSE instead of 0x%08lx\n", hr);
+    ok(inverse == NULL, "inverse should have been set to NULL instead of %p\n", inverse);
+
+    IMoniker_Release(moniker);
+}
+
 START_TEST(moniker)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -516,6 +577,7 @@ START_TEST(moniker)
     test_class_moniker();
     test_file_monikers();
     test_item_moniker();
+    test_anti_moniker();
 
     /* FIXME: test moniker creation funcs and parsing other moniker formats */
 

@@ -339,7 +339,7 @@ static HRESULT WINAPI AntiMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
     if (pdwHash==NULL)
         return E_POINTER;
 
-    *pdwHash=0;
+    *pdwHash = 0x80000001;
 
     return S_OK;
 }
@@ -539,11 +539,21 @@ static ULONG WINAPI AntiMonikerROTDataImpl_Release(IROTData* iface)
  *        AntiMonikerIROTData_GetComparaisonData
  ******************************************************************************/
 static HRESULT WINAPI
-AntiMonikerROTDataImpl_GetComparaisonData(IROTData* iface, BYTE* pbData,
+AntiMonikerROTDataImpl_GetComparisonData(IROTData* iface, BYTE* pbData,
                                           ULONG cbMax, ULONG* pcbData)
 {
-    FIXME("(),stub!\n");
-    return E_NOTIMPL;
+    DWORD constant = 1;
+
+    TRACE("(%p, %lu, %p)\n", pbData, cbMax, pcbData);
+
+    *pcbData = sizeof(CLSID) + sizeof(DWORD);
+    if (cbMax < *pcbData)
+        return E_OUTOFMEMORY;
+
+    memcpy(pbData, &CLSID_AntiMoniker, sizeof(CLSID));
+    memcpy(pbData+sizeof(CLSID), &constant, sizeof(DWORD));
+
+    return S_OK;
 }
 
 /********************************************************************************/
@@ -583,7 +593,7 @@ static const IROTDataVtbl VT_ROTDataImpl =
     AntiMonikerROTDataImpl_QueryInterface,
     AntiMonikerROTDataImpl_AddRef,
     AntiMonikerROTDataImpl_Release,
-    AntiMonikerROTDataImpl_GetComparaisonData
+    AntiMonikerROTDataImpl_GetComparisonData
 };
 
 /******************************************************************************
