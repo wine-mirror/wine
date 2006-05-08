@@ -712,6 +712,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 {
     int rc,arg;
     int f,c,r;
+    BOOL has_mixer = FALSE;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
     if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0,-1,-1,-1) != 0)
@@ -731,6 +732,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
                                     ossdev->out_caps.szPname, 
                                     sizeof(ossdev->out_caps.szPname) / sizeof(WCHAR));
                 TRACE("%s: %s\n", ossdev->mixer_name, ossdev->ds_desc.szDesc);
+                has_mixer = TRUE;
             } else {
                 /* FreeBSD up to at least 5.2 provides this ioctl, but does not
                  * implement it properly, and there are probably similar issues
@@ -755,7 +757,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     ossdev->out_caps.wChannels = 1;
     ossdev->out_caps.dwFormats = 0x00000000;
     ossdev->out_caps.wReserved1 = 0;
-    ossdev->out_caps.dwSupport = WAVECAPS_VOLUME;
+    ossdev->out_caps.dwSupport = has_mixer ? WAVECAPS_VOLUME : 0;
 
     /* direct sound caps */
     ossdev->ds_caps.dwFlags = DSCAPS_CERTIFIED;
@@ -795,7 +797,8 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYMONO;
 	    } else if (c == 2) {
                 ossdev->out_caps.wChannels = 2;
-                ossdev->out_caps.dwSupport|=WAVECAPS_LRVOLUME;
+                if (has_mixer)
+                    ossdev->out_caps.dwSupport|=WAVECAPS_LRVOLUME;
 		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYSTEREO;
             } else
                 ossdev->out_caps.wChannels = c;
@@ -974,6 +977,7 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
     int rc,arg;
     int f,c,r;
     int caps;
+    BOOL has_mixer = FALSE;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
     /* The OSS documentation says we must call SNDCTL_SETDUPLEX
@@ -990,6 +994,28 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
         return;
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
+
+#ifdef SOUND_MIXER_INFO
+    {
+        int mixer;
+        if ((mixer = open(ossdev->mixer_name, O_RDWR|O_NDELAY)) >= 0) {
+            mixer_info info;
+            if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
+                has_mixer = TRUE;
+            } else {
+                /* FreeBSD up to at least 5.2 provides this ioctl, but does not
+                 * implement it properly, and there are probably similar issues
+                 * on other platforms, so we warn but try to go ahead.
+                 */
+                WARN("%s: cannot read SOUND_MIXER_INFO!\n", ossdev->mixer_name);
+            }
+            close(mixer);
+        } else {
+            WARN("open(%s) failed (%s)\n", ossdev->mixer_name , strerror(errno));
+        }
+    }
+#endif /* SOUND_MIXER_INFO */
+
     TRACE("%s\n", ossdev->ds_desc.szDesc);
 
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0)
@@ -999,7 +1025,7 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 
     ossdev->duplex_out_caps.wChannels = 1;
     ossdev->duplex_out_caps.dwFormats = 0x00000000;
-    ossdev->duplex_out_caps.dwSupport = WAVECAPS_VOLUME;
+    ossdev->duplex_out_caps.dwSupport = has_mixer ? WAVECAPS_VOLUME : 0;
 
     if (WINE_TRACE_ON(wave))
         OSS_Info(ossdev->fd);
@@ -1026,7 +1052,8 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYMONO;
 	    } else if (c == 2) {
                 ossdev->duplex_out_caps.wChannels = 2;
-                ossdev->duplex_out_caps.dwSupport|=WAVECAPS_LRVOLUME;
+                if (has_mixer)
+                    ossdev->duplex_out_caps.dwSupport|=WAVECAPS_LRVOLUME;
 		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYSTEREO;
             } else
                 ossdev->duplex_out_caps.wChannels = c;
@@ -2244,6 +2271,17 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
         WARN("invalid parameter\n");
         return MMSYSERR_INVALPARAM;
     }
+    if (WOutDev[wDevID].ossdev->open_access == O_RDWR) {
+        if (!(WOutDev[wDevID].ossdev->duplex_out_caps.dwSupport & WAVECAPS_VOLUME)) { 
+            TRACE("Volume not supported\n");
+            return MMSYSERR_NOTSUPPORTED;
+        }
+    } else {
+        if (!(WOutDev[wDevID].ossdev->out_caps.dwSupport & WAVECAPS_VOLUME)) { 
+            TRACE("Volume not supported\n");
+            return MMSYSERR_NOTSUPPORTED;
+        }
+    }
 
     if ((mixer = open(WOutDev[wDevID].ossdev->mixer_name, O_RDONLY|O_NDELAY)) < 0) {
         WARN("mixer device not available !\n");
@@ -2288,6 +2326,17 @@ DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     if (wDevID >= numOutDev) {
         WARN("invalid parameter: wDevID > %d\n", numOutDev);
         return MMSYSERR_INVALPARAM;
+    }
+    if (WOutDev[wDevID].ossdev->open_access == O_RDWR) {
+        if (!(WOutDev[wDevID].ossdev->duplex_out_caps.dwSupport & WAVECAPS_VOLUME)) { 
+            TRACE("Volume not supported\n");
+            return MMSYSERR_NOTSUPPORTED;
+        }
+    } else {
+        if (!(WOutDev[wDevID].ossdev->out_caps.dwSupport & WAVECAPS_VOLUME)) { 
+            TRACE("Volume not supported\n");
+            return MMSYSERR_NOTSUPPORTED;
+        }
     }
     if ((mixer = open(WOutDev[wDevID].ossdev->mixer_name, O_WRONLY|O_NDELAY)) < 0) {
         WARN("open(%s) failed (%s)\n", WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
