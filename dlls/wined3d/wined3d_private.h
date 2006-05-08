@@ -1198,6 +1198,19 @@ typedef struct SHADER_OPCODE {
     DWORD         max_version;
 } SHADER_OPCODE;
 
+#define SHADER_PGMSIZE 65535
+typedef struct SHADER_BUFFER {
+    char* buffer;
+    size_t bsize;
+    unsigned int lineNo;
+} SHADER_BUFFER;
+
+/* Base Shader utility functions. 
+ * (may move callers into the same file in the future) */
+extern int shader_addline(
+    SHADER_BUFFER* buffer,
+    const char* fmt, ...);
+
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
  */

@@ -1047,8 +1047,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     const SHADER_OPCODE* curOpcode = NULL;
     int nRemInstr = -1;
     DWORD i;
-    unsigned lineNum = 0;
-    char *pgmStr = NULL;
+    SHADER_BUFFER buffer;
     char  tmpLine[255];
     DWORD nUseAddressRegister = 0;
     DWORD nUseTempRegister = 0;
@@ -1059,31 +1058,20 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     BOOL hasLoops = FALSE;
 #endif
 
-#define PGMSIZE 65535
-/* Keep a running length for pgmStr so that we don't have to caculate strlen every time we concatanate */
-    int pgmLength = 0;
-
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
-    if (This->device->fixupVertexBufferSize < PGMSIZE) {
+    if (This->device->fixupVertexBufferSize < SHADER_PGMSIZE) {
         HeapFree(GetProcessHeap(), 0, This->fixupVertexBuffer);
-        This->fixupVertexBuffer = HeapAlloc(GetProcessHeap() , 0, PGMSIZE);
+        This->fixupVertexBuffer = HeapAlloc(GetProcessHeap() , 0, SHADER_PGMSIZE);
         This->fixupVertexBufferSize = PGMSIZE;
         This->fixupVertexBuffer[0] = 0;
     }
-    pgmStr = This->device->fixupVertexBuffer;
+    buffer.buffer = This->device->fixupVertexBuffer;
 #endif
-#define PNSTRCAT(_pgmStr, _tmpLine) { \
-        int _tmpLineLen = strlen(_tmpLine); \
-        if(_tmpLineLen + pgmLength > PGMSIZE) { \
-            ERR("The buffer allocated for the vertex program string pgmStr is too small at %d bytes, at least %d bytes in total are required.\n", PGMSIZE, _tmpLineLen + pgmLength); \
-        } else { \
-           memcpy(_pgmStr + pgmLength, _tmpLine, _tmpLineLen); \
-        } \
-        pgmLength += _tmpLineLen; \
-        }
+    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE); 
+    buffer.bsize = 0;
+    buffer.lineNo = 0;
 
-    pgmStr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 65535); /* 64kb should be enough */
     /* Initialise the shader */
     This->namedArrays = FALSE;
     This->declaredArrays = FALSE;
@@ -1240,43 +1228,31 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
 
 
         /* FIXME: if jumps are used, use GLSL, else use ARB_vertex_program */
-        strcpy(tmpLine, "!!ARBvp1.0\n");
-        TRACE("GL HW (%u) : %s", pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
-        PNSTRCAT(pgmStr, tmpLine);
-        ++lineNum;
+        shader_addline(&buffer, "!!ARBvp1.0\n");
 
         /* This should be a bitmap so that only temp registers that are used are declared. */
         for (i = 0; i < nUseTempRegister /* we should check numTemps here */ ; i++) {
-            if (tmpsUsed[i]) { /* only write out the temps if they are actually in use */
-                sprintf(tmpLine, "TEMP T%ld;\n", i);
-                ++lineNum;
-                TRACE("GL HW (%u, %u) : %s", lineNum, pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
-                PNSTRCAT(pgmStr, tmpLine);
-
-            }
+            if (tmpsUsed[i])
+                shader_addline(&buffer, "TEMP T%ld;\n", i);
         }
         /* TODO: loop register counts as an address register */
         for (i = 0; i < nUseAddressRegister; i++) {
-            sprintf(tmpLine, "ADDRESS A%ld;\n", i);
-            ++lineNum;
-            TRACE("GL HW (%u, %u) : %s", lineNum, pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
-                PNSTRCAT(pgmStr, tmpLine);
-
+            shader_addline(&buffer, "ADDRESS A%ld;\n", i);
         }
+
         /* Due to the dynamic constants binding mechanism, we need to declare
         * all the constants for relative addressing. */
         /* Mesa supports only 95 constants for VS1.X although we should have at least 96. */
         if (GL_VEND(MESA) || GL_VEND(WINE)) {
             numConstants = 95;
         }
-        /* FIXME: We should  be counting the number of constants in the first pass and then validating that many are supported
-                Looking at some of the shaders in use by applications we'd need to create a list of all used env variables
-        */
-        sprintf(tmpLine, "PARAM C[%d] = { program.env[0..%d] };\n", numConstants, numConstants - 1);
-        TRACE("GL HW (%u,%u) : %s", lineNum, pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
-        PNSTRCAT(pgmStr, tmpLine);
 
-        ++lineNum;
+        /* FIXME: We should be counting the number of constants in the first pass 
+         * and then validating that many are supported. Looking at some of the shaders in use 
+         * by applications we'd need to create a list of all used env variables
+         */
+        shader_addline(&buffer, "PARAM C[%d] = { program.env[0..%d] };\n", 
+           numConstants, numConstants - 1);
 
         ++pToken;
         continue;
@@ -1308,21 +1284,12 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             /* Handle definitions here, they don't fit well with the
              * other instructions below [for now ] */
 
-            char tmpChar[80];
-            sprintf(tmpLine, "PARAM const%lu = {", *pToken & 0xFF);
-            sprintf(tmpChar,"%f ,", *(float *) (pToken + 1));
-            strcat(tmpLine, tmpChar);
-            sprintf(tmpChar,"%f ,", *(float *) (pToken + 2));
-            strcat(tmpLine, tmpChar);
-            sprintf(tmpChar,"%f ,", *(float *) (pToken + 3));
-            strcat(tmpLine, tmpChar);
-            sprintf(tmpChar,"%f}", *(float *) (pToken + 4));
-            strcat(tmpLine, tmpChar);
-
-            strcat(tmpLine,";\n");
-            ++lineNum;
-            TRACE("GL HW (%u, %u) : %s", lineNum, pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
-            PNSTRCAT(pgmStr, tmpLine);
+            shader_addline(&buffer, 
+                "PARAM const%lu = { %f, %f, %f, %f };\n", *pToken & 0xFF, 
+                  *(float *) (pToken + 1), 
+                  *(float *) (pToken + 2), 
+                  *(float *) (pToken + 3), 
+                  *(float *) (pToken + 4));
 
             pToken += 5;
             continue;
@@ -1392,22 +1359,11 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                     FIXME("Unrecognised dcl %08lx", *pToken & 0xFFFF);
                 }
                 {
-                    char tmpChar[80];
                     ++pToken;
                     sprintf(tmpLine, "ATTRIB ");
                     vshader_program_add_param(This, *pToken, FALSE, tmpLine);
-
-                    sprintf(tmpChar," = %s", attribName);
-                    strcat(tmpLine, tmpChar);
-                    strcat(tmpLine,";\n");
-                    ++lineNum;
-                    if (This->namedArrays) {
-                        TRACE("GL HW (%u, %u) : %s", lineNum, pgmLength, tmpLine);
-                        PNSTRCAT(pgmStr, tmpLine);
-
-                    } else {
-                        TRACE("GL HW (%u, %u) : %s", lineNum, pgmLength, tmpLine);
-                    }
+                    if (This->namedArrays) 
+                        shader_addline(&buffer, "%s = %s;\n", tmpLine, attribName);
                 }
             } else {
                 /* eat the token so it doesn't generate a warning */
@@ -1489,21 +1445,14 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                 ++pToken;
             }
         }
-        strcat(tmpLine,";\n");
-        ++lineNum;
-        TRACE("GL HW (%u, %u) : %s", lineNum, pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
-        PNSTRCAT(pgmStr, tmpLine);
-
+        shader_addline(&buffer, "%s;\n", tmpLine);
       }
     }
-    strcpy(tmpLine, "END\n"); 
-    ++lineNum;
-    TRACE("GL HW (%u, %u) : %s", lineNum, pgmLength, tmpLine); /* Don't add \n to this line as already in tmpLine */
-    PNSTRCAT(pgmStr, tmpLine);
-
+    shader_addline(&buffer, "END\n"); 
   }
-  /* finally null terminate the pgmStr*/
-  pgmStr[pgmLength] = 0;
+
+  /* finally null terminate the buffer */
+  buffer.buffer[buffer.bsize] = 0;
 
   /* Check that Vertex Shaders are supported */
   if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
@@ -1514,7 +1463,9 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
       GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->baseShader.prgId));
 
       /* Create the program and check for errors */
-      GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(pgmStr)/*pgmLength*/, pgmStr));
+      GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, 
+          buffer.bsize, buffer.buffer));
+
       if (glGetError() == GL_INVALID_OPERATION) {
           GLint errPos;
           glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
@@ -1524,9 +1475,8 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
       }
   }
 #if 1 /* if were using the data buffer of device then we don't need to free it */
-  HeapFree(GetProcessHeap(), 0, pgmStr);
+  HeapFree(GetProcessHeap(), 0, buffer.buffer);
 #endif
-#undef PNSTRCAT
 }
 
 BOOL IWineD3DVertexShaderImpl_ExecuteHAL(IWineD3DVertexShader* iface, WINEVSHADERINPUTDATA* input, WINEVSHADEROUTPUTDATA* output) {
