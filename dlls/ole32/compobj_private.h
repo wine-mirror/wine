@@ -41,6 +41,9 @@
 struct apartment;
 typedef struct apartment APARTMENT;
 
+extern const CLSID CLSID_PSFactoryBuffer;
+extern const CLSID CLSID_DfMarshal;
+
 /* Thread-safety Annotation Legend:
  *
  * RO    - The value is read only. It never changes after creation, so no
