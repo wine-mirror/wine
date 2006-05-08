@@ -193,6 +193,32 @@ static const BYTE expected_class_moniker_comparison_data[] =
      0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
 };
 
+static const BYTE expected_item_moniker_comparison_data[] =
+{
+     0x04,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+     0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+     0x21,0x00,0x54,0x00,0x45,0x00,0x53,0x00,
+     0x54,0x00,0x00,0x00,
+};
+
+static const BYTE expected_item_moniker_saved_data[] =
+{
+     0x02,0x00,0x00,0x00,0x21,0x00,0x05,0x00,
+     0x00,0x00,0x54,0x65,0x73,0x74,0x00,
+};
+
+static const BYTE expected_item_moniker_marshal_data[] =
+{
+     0x4d,0x45,0x4f,0x57,0x04,0x00,0x00,0x00,
+     0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+     0x04,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+     0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+     0x00,0x00,0x00,0x00,0x36,0x00,0x00,0x00,
+     0x02,0x00,0x00,0x00,0x21,0x00,0x05,0x00,
+     0x00,0x00,0x54,0x65,0x73,0x74,0x00,
+};
+
 static void test_moniker(
     const char *testname, IMoniker *moniker,
     const BYTE *expected_moniker_marshal_data, size_t sizeof_expected_moniker_marshal_data,
@@ -443,6 +469,45 @@ static void test_file_monikers(void)
     }
 }
 
+static void test_item_moniker()
+{
+    HRESULT hr;
+    IMoniker *moniker;
+    DWORD moniker_type;
+    DWORD hash;
+    static const WCHAR wszDelimeter[] = {'!',0};
+    static const WCHAR wszObjectName[] = {'T','e','s','t',0};
+
+    hr = CreateItemMoniker(wszDelimeter, wszObjectName, &moniker);
+    ok_ole_success(hr, CreateItemMoniker);
+
+    test_moniker("item moniker", moniker, 
+        expected_item_moniker_marshal_data, sizeof(expected_item_moniker_marshal_data),
+        expected_item_moniker_saved_data, sizeof(expected_item_moniker_saved_data),
+        expected_item_moniker_comparison_data, sizeof(expected_item_moniker_comparison_data));
+
+    /* Hashing */
+
+    hr = IMoniker_Hash(moniker, &hash);
+    ok_ole_success(hr, IMoniker_Hash);
+
+    todo_wine
+    ok(hash == 0x73c,
+        "Hash value != 0x73c, instead was 0x%08lx\n",
+        hash);
+
+    /* IsSystemMoniker test */
+
+    hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
+    ok_ole_success(hr, IMoniker_IsSystemMoniker);
+
+    ok(moniker_type == MKSYS_ITEMMONIKER,
+        "dwMkSys != MKSYS_ITEMMONIKER, instead was 0x%08lx",
+        moniker_type);
+
+    IMoniker_Release(moniker);
+}
+
 START_TEST(moniker)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -450,6 +515,7 @@ START_TEST(moniker)
     test_MkParseDisplayName();
     test_class_moniker();
     test_file_monikers();
+    test_item_moniker();
 
     /* FIXME: test moniker creation funcs and parsing other moniker formats */
 
