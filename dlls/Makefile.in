@@ -60,6 +60,7 @@ BASEDIRS = \
 	dswave \
 	dxdiagn \
 	gdi \
+	gphoto2.ds \
 	hhctrl.ocx \
 	iccvid \
 	icmp \

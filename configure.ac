@@ -565,6 +565,37 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 
+dnl **** Check for libgphoto2 ****
+AC_CHECK_PROG(gphoto2_devel,gphoto2-config,gphoto2-config,no)
+AC_CHECK_PROG(gphoto2port_devel,gphoto2-port-config,gphoto2-port-config,no)
+AC_SUBST(GPHOTO2LIBS,"")
+AC_SUBST(GPHOTO2INCL,"")
+if test "$gphoto2_devel" != "no" -a "$gphoto2port_devel" != "no"
+then
+    GPHOTO2INCL="`$gphoto2_devel --cflags` `$gphoto2port_devel --cflags`"
+    GPHOTO2LIBS=""
+    for i in `$gphoto2_devel --libs` `$gphoto2port_devel --libs`
+    do
+      case "$i" in
+        -L/usr/lib|-L/usr/lib64) ;;
+        -L*|-l*) GPHOTO2LIBS="$GPHOTO2LIBS $i";;
+      esac
+    done
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_save_LIBS="$LIBS"
+    CPPFLAGS="$CPPFLAGS $GPHOTO2INCL"
+    LIBS="$LIBS $GPHOTO2LIBS"
+    AC_CHECK_HEADER(gphoto2-camera.h,
+                    [AC_CHECK_LIB(gphoto2,gp_camera_new,
+                                  [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have libgphoto2 development environment])],
+                                  [GPHOTO2LIBS=""
+                                  GPHOTO2INCL=""])],
+                    [GPHOTO2LIBS=""
+                    GPHOTO2INCL=""])
+    LIBS="$ac_save_LIBS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
+
 dnl **** Check for the ICU library ****
 if test "$ac_cv_header_unicode_ubidi_h" = "yes"
 then
@@ -1549,6 +1580,7 @@ dlls/gdi/Makefile
 dlls/gdi/tests/Makefile
 dlls/glu32/Makefile
 dlls/glut32/Makefile
+dlls/gphoto2.ds/Makefile
 dlls/hhctrl.ocx/Makefile
 dlls/iccvid/Makefile
 dlls/icmp/Makefile
