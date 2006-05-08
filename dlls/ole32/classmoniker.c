@@ -242,8 +242,33 @@ static HRESULT WINAPI ClassMoniker_BindToObject(IMoniker* iface,
                                             REFIID riid,
                                             VOID** ppvResult)
 {
-    FIXME("(%p,%p,%p,%p)\n", pbc, pmkToLeft, riid, ppvResult);
-    return E_NOTIMPL;
+    ClassMoniker *This = (ClassMoniker *)iface;
+    BIND_OPTS2 bindopts;
+    IClassActivator *pActivator;
+    HRESULT hr;
+
+    TRACE("(%p,%p,%p,%p)\n", pbc, pmkToLeft, riid, ppvResult);
+
+    bindopts.cbStruct = sizeof(bindopts);
+    IBindCtx_GetBindOptions(pbc, (BIND_OPTS *)&bindopts);
+
+    if (!pmkToLeft)
+        return CoGetClassObject(&This->clsid, bindopts.dwClassContext, NULL,
+                                riid, ppvResult);
+    else
+    {
+        hr = IMoniker_BindToObject(pmkToLeft, pbc, NULL, &IID_IClassActivator,
+                                   (void **)&pActivator);
+        if (FAILED(hr)) return hr;
+
+        hr = IClassActivator_GetClassObject(pActivator, &This->clsid,
+                                            bindopts.dwClassContext,
+                                            bindopts.locale, riid, ppvResult);
+
+        IClassActivator_Release(pActivator);
+
+        return hr;
+    }
 }
 
 /******************************************************************************
@@ -255,8 +280,8 @@ static HRESULT WINAPI ClassMoniker_BindToStorage(IMoniker* iface,
                                              REFIID riid,
                                              VOID** ppvResult)
 {
-    FIXME("(%p,%p,%p,%p)\n",pbc, pmkToLeft, riid, ppvResult);
-    return E_NOTIMPL;
+    TRACE("(%p,%p,%p,%p)\n",pbc, pmkToLeft, riid, ppvResult);
+    return ClassMoniker_BindToObject(iface, pbc, pmkToLeft, riid, ppvResult);
 }
 
 /******************************************************************************
@@ -424,8 +449,9 @@ static HRESULT WINAPI ClassMoniker_IsRunning(IMoniker* iface,
                                          IMoniker* pmkToLeft,
                                          IMoniker* pmkNewlyRunning)
 {
-    FIXME("(%p, %p, %p)\n", pbc, pmkToLeft, pmkNewlyRunning);
+    TRACE("(%p, %p, %p)\n", pbc, pmkToLeft, pmkNewlyRunning);
 
+    /* as in native */
     return E_NOTIMPL;
 }
 
@@ -437,8 +463,9 @@ static HRESULT WINAPI ClassMoniker_GetTimeOfLastChange(IMoniker* iface,
                                                    IMoniker* pmkToLeft,
                                                    FILETIME* pItemTime)
 {
-    FIXME("(%p, %p, %p)\n", pbc, pmkToLeft, pItemTime);
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %p)\n", pbc, pmkToLeft, pItemTime);
+
+    return MK_E_UNAVAILABLE;
 }
 
 /******************************************************************************
@@ -463,18 +490,25 @@ static HRESULT WINAPI ClassMoniker_CommonPrefixWith(IMoniker* iface,IMoniker* pm
     
     TRACE("(%p, %p)\n", pmkOther, ppmkPrefix);
 
+    *ppmkPrefix = NULL;
+
     IMoniker_IsSystemMoniker(pmkOther, &mkSys);
 
     /* If the other moniker is an class moniker that is equal to this moniker, this method sets *ppmkPrefix */
     /* to this moniker and returns MK_S_US */
 
-    if((mkSys == MKSYS_CLASSMONIKER) && (IMoniker_IsEqual(iface, pmkOther) == S_OK) ){
+    if (mkSys == MKSYS_CLASSMONIKER)
+    {
+        if (IMoniker_IsEqual(iface, pmkOther) == S_OK)
+        {
+            *ppmkPrefix = iface;
 
-        *ppmkPrefix = iface;
+            IMoniker_AddRef(iface);
 
-        IMoniker_AddRef(iface);
-
-        return MK_S_US;
+            return MK_S_US;
+        }
+        else
+            return MK_E_NOPREFIX;
     }
     else
         /* otherwise, the method calls the MonikerCommonPrefixWith function. This function correctly handles */
