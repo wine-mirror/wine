@@ -163,39 +163,97 @@ static void test_MkParseDisplayName(void)
     IBindCtx_Release(pbc);
 }
 
-static const BYTE expected_moniker_data[] =
-{
-	0x4d,0x45,0x4f,0x57,0x04,0x00,0x00,0x00,
-	0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
-	0x1a,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
-	0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
-	0x00,0x00,0x00,0x00,0x14,0x00,0x00,0x00,
-	0x05,0xe0,0x02,0x00,0x00,0x00,0x00,0x00,
-	0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
-	0x00,0x00,0x00,0x00,
-};
-
 static const LARGE_INTEGER llZero;
 
-static void test_class_moniker(void)
+static const BYTE expected_class_moniker_marshal_data[] =
+{
+    0x4d,0x45,0x4f,0x57,0x04,0x00,0x00,0x00,
+    0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x1a,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x00,0x00,0x00,0x00,0x14,0x00,0x00,0x00,
+    0x05,0xe0,0x02,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x00,0x00,0x00,0x00,
+};
+
+static const BYTE expected_class_moniker_saved_data[] =
+{
+     0x05,0xe0,0x02,0x00,0x00,0x00,0x00,0x00,
+     0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+     0x00,0x00,0x00,0x00,
+};
+
+static const BYTE expected_class_moniker_comparison_data[] =
+{
+     0x1a,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+     0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+     0x05,0xe0,0x02,0x00,0x00,0x00,0x00,0x00,
+     0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+};
+
+static void test_moniker(
+    const char *testname, IMoniker *moniker,
+    const BYTE *expected_moniker_marshal_data, size_t sizeof_expected_moniker_marshal_data,
+    const BYTE *expected_moniker_saved_data, size_t sizeof_expected_moniker_saved_data,
+    const BYTE *expected_moniker_comparison_data, size_t sizeof_expected_moniker_comparison_data)
 {
     IStream * stream;
-    IMoniker * moniker;
+    IROTData * rotdata;
     HRESULT hr;
     HGLOBAL hglobal;
     LPBYTE moniker_data;
     DWORD moniker_size;
     DWORD i;
     BOOL same = TRUE;
+    BYTE buffer[128];
 
-    hr = CreateClassMoniker(&CLSID_StdComponentCategoriesMgr, &moniker);
-    todo_wine { ok_ole_success(hr, CreateClassMoniker); }
+    /* IROTData::GetComparisonData test */
 
+    hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rotdata);
+    ok_ole_success(hr, IMoniker_QueryInterface(IID_IROTData));
+
+    hr = IROTData_GetComparisonData(rotdata, buffer, sizeof(buffer), &moniker_size);
+    ok_ole_success(hr, IROTData_GetComparisonData);
+
+    if (hr != S_OK) moniker_size = 0;
+
+    /* first check we have the right amount of data */
+    ok(moniker_size == sizeof_expected_moniker_comparison_data,
+        "%s: Size of comparison data differs (expected %d, actual %ld)\n",
+        testname, sizeof_expected_moniker_comparison_data, moniker_size);
+
+    /* then do a byte-by-byte comparison */
+    for (i = 0; i < min(moniker_size, sizeof_expected_moniker_comparison_data); i++)
+    {
+        if (expected_moniker_comparison_data[i] != buffer[i])
+        {
+            same = FALSE;
+            break;
+        }
+    }
+
+    ok(same, "%s: Comparison data differs\n", testname);
+    if (!same)
+    {
+        for (i = 0; i < moniker_size; i++)
+        {
+            if (i % 8 == 0) trace("     ");
+            trace("0x%02x,", buffer[i]);
+            if (i % 8 == 7) trace("\n");
+        }
+        trace("\n");
+    }
+
+    IROTData_Release(rotdata);
+  
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+  
+    /* Saving */
 
-    hr = CoMarshalInterface(stream, &IID_IMoniker, (IUnknown *)moniker, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
-    todo_wine { ok_ole_success(hr, CoMarshalInterface); }
+    hr = IMoniker_Save(moniker, stream, TRUE);
+    ok_ole_success(hr, IMoniker_Save);
 
     hr = GetHGlobalFromStream(stream, &hglobal);
     ok_ole_success(hr, GetHGlobalFromStream);
@@ -205,42 +263,122 @@ static void test_class_moniker(void)
     moniker_data = GlobalLock(hglobal);
 
     /* first check we have the right amount of data */
-    todo_wine {
-    ok(moniker_size == sizeof(expected_moniker_data),
-        "Size of marshaled data differs (expected %d, actual %ld)\n",
-        sizeof(expected_moniker_data), moniker_size);
-    }
+    ok(moniker_size == sizeof_expected_moniker_saved_data,
+        "%s: Size of saved data differs (expected %d, actual %ld)\n",
+        testname, sizeof_expected_moniker_saved_data, moniker_size);
 
     /* then do a byte-by-byte comparison */
-    for (i = 0; i < min(moniker_size, sizeof(expected_moniker_data)); i++)
+    for (i = 0; i < min(moniker_size, sizeof_expected_moniker_saved_data); i++)
     {
-        if (expected_moniker_data[i] != moniker_data[i])
+        if (expected_moniker_saved_data[i] != moniker_data[i])
         {
             same = FALSE;
             break;
         }
     }
 
-    ok(same, "Marshaled data differs\n");
+    ok(same, "%s: Saved data differs\n", testname);
     if (!same)
     {
-        trace("Dumping marshaled moniker data:\n");
         for (i = 0; i < moniker_size; i++)
         {
+            if (i % 8 == 0) trace("     ");
             trace("0x%02x,", moniker_data[i]);
             if (i % 8 == 7) trace("\n");
-            if (i % 8 == 0) trace("     ");
         }
+        trace("\n");
+    }
+
+    GlobalUnlock(hglobal);
+
+    IStream_Release(stream);
+
+    /* Marshaling tests */
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    hr = CoMarshalInterface(stream, &IID_IMoniker, (IUnknown *)moniker, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok_ole_success(hr, GetHGlobalFromStream);
+
+    moniker_size = GlobalSize(hglobal);
+
+    moniker_data = GlobalLock(hglobal);
+
+    /* first check we have the right amount of data */
+    ok(moniker_size == sizeof_expected_moniker_marshal_data,
+        "%s: Size of marshaled data differs (expected %d, actual %ld)\n",
+        testname, sizeof_expected_moniker_marshal_data, moniker_size);
+
+    /* then do a byte-by-byte comparison */
+    for (i = 0; i < min(moniker_size, sizeof_expected_moniker_marshal_data); i++)
+    {
+        if (expected_moniker_marshal_data[i] != moniker_data[i])
+        {
+            same = FALSE;
+            break;
+        }
+    }
+
+    ok(same, "%s: Marshaled data differs\n", testname);
+    if (!same)
+    {
+        for (i = 0; i < moniker_size; i++)
+        {
+            if (i % 8 == 0) trace("     ");
+            trace("0x%02x,", moniker_data[i]);
+            if (i % 8 == 7) trace("\n");
+        }
+        trace("\n");
     }
 
     GlobalUnlock(hglobal);
 
     IStream_Seek(stream, llZero, STREAM_SEEK_SET, NULL);
     hr = CoReleaseMarshalData(stream);
-    todo_wine { ok_ole_success(hr, CoReleaseMarshalData); }
+    ok_ole_success(hr, CoReleaseMarshalData);
 
     IStream_Release(stream);
-    if (moniker) IMoniker_Release(moniker);
+}
+
+static void test_class_moniker(void)
+{
+    HRESULT hr;
+    IMoniker *moniker;
+    DWORD moniker_type;
+    DWORD hash;
+
+    hr = CreateClassMoniker(&CLSID_StdComponentCategoriesMgr, &moniker);
+    todo_wine ok_ole_success(hr, CreateClassMoniker);
+    if (!moniker) return;
+
+    test_moniker("class moniker", moniker, 
+        expected_class_moniker_marshal_data, sizeof(expected_class_moniker_marshal_data),
+        expected_class_moniker_saved_data, sizeof(expected_class_moniker_saved_data),
+        expected_class_moniker_comparison_data, sizeof(expected_class_moniker_comparison_data));
+
+    /* Hashing */
+
+    hr = IMoniker_Hash(moniker, &hash);
+    ok_ole_success(hr, IMoniker_Hash);
+
+    ok(hash == CLSID_StdComponentCategoriesMgr.Data1,
+        "Hash value != Data1 field of clsid, instead was 0x%08lx\n",
+        hash);
+
+    /* IsSystemMoniker test */
+
+    hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
+    ok_ole_success(hr, IMoniker_IsSystemMoniker);
+
+    ok(moniker_type == MKSYS_CLASSMONIKER,
+        "dwMkSys != MKSYS_CLASSMONIKER, instead was 0x%08lx",
+        moniker_type);
+
+    IMoniker_Release(moniker);
 }
 
 static void test_file_moniker(WCHAR* path)
