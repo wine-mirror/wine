@@ -1212,14 +1212,95 @@ static ULONG WINAPI CompositeMonikerROTDataImpl_Release(IROTData* iface)
 }
 
 /******************************************************************************
- *        CompositeMonikerIROTData_GetComparaisonData
+ *        CompositeMonikerIROTData_GetComparisonData
  ******************************************************************************/
 static HRESULT WINAPI
-CompositeMonikerROTDataImpl_GetComparaisonData(IROTData* iface,
+CompositeMonikerROTDataImpl_GetComparisonData(IROTData* iface,
                BYTE* pbData, ULONG cbMax, ULONG* pcbData)
 {
-    FIXME("(),stub!\n");
-    return E_NOTIMPL;
+    IMoniker *This = impl_from_IROTData(iface);
+    IEnumMoniker *pEnumMk;
+    IMoniker *pmk;
+    HRESULT hr;
+
+    TRACE("(%p, %lu, %p)\n", pbData, cbMax, pcbData);
+
+    *pcbData = sizeof(CLSID);
+
+    hr = IMoniker_Enum(This, TRUE, &pEnumMk);
+    if (FAILED(hr)) return hr;
+
+    while(IEnumMoniker_Next(pEnumMk, 1, &pmk, NULL) == S_OK)
+    {
+        IROTData *pROTData;
+        hr = IMoniker_QueryInterface(pmk, &IID_IROTData, (void **)&pROTData);
+        if (FAILED(hr))
+            ERR("moniker doesn't support IROTData interface\n");
+
+        if (SUCCEEDED(hr))
+        {
+            ULONG cbData;
+            hr = IROTData_GetComparisonData(pROTData, NULL, 0, &cbData);
+            IROTData_Release(pROTData);
+            if (SUCCEEDED(hr) || (hr == E_OUTOFMEMORY))
+            {
+                *pcbData += cbData;
+                hr = S_OK;
+            }
+            else
+                ERR("IROTData_GetComparisonData failed with error 0x%08lx\n", hr);
+        }
+
+        IMoniker_Release(pmk);
+
+        if (FAILED(hr))
+        {
+            IEnumMoniker_Release(pEnumMk);
+            return hr;
+        }
+    }
+    if (cbMax < *pcbData)
+        return E_OUTOFMEMORY;
+
+    IEnumMoniker_Reset(pEnumMk);
+
+    memcpy(pbData, &CLSID_CompositeMoniker, sizeof(CLSID));
+    pbData += sizeof(CLSID);
+    cbMax -= sizeof(CLSID);
+
+    while (IEnumMoniker_Next(pEnumMk, 1, &pmk, NULL) == S_OK)
+    {
+        IROTData *pROTData;
+        hr = IMoniker_QueryInterface(pmk, &IID_IROTData, (void **)&pROTData);
+        if (FAILED(hr))
+            ERR("moniker doesn't support IROTData interface\n");
+
+        if (SUCCEEDED(hr))
+        {
+            ULONG cbData;
+            hr = IROTData_GetComparisonData(pROTData, pbData, cbMax, &cbData);
+            IROTData_Release(pROTData);
+            if (SUCCEEDED(hr))
+            {
+                pbData += cbData;
+                cbMax -= cbData;
+            }
+            else
+                ERR("IROTData_GetComparisonData failed with error 0x%08lx\n", hr);
+        }
+
+        IMoniker_Release(pmk);
+
+        if (FAILED(hr))
+        {
+            IEnumMoniker_Release(pEnumMk);
+            return hr;
+        }
+    }
+
+    IEnumMoniker_Release(pEnumMk);
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -1458,7 +1539,7 @@ static const IROTDataVtbl VT_ROTDataImpl =
     CompositeMonikerROTDataImpl_QueryInterface,
     CompositeMonikerROTDataImpl_AddRef,
     CompositeMonikerROTDataImpl_Release,
-    CompositeMonikerROTDataImpl_GetComparaisonData
+    CompositeMonikerROTDataImpl_GetComparisonData
 };
 
 /******************************************************************************
