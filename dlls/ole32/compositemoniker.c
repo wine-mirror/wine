@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-static const CLSID CLSID_CompositeMoniker = {
+const CLSID CLSID_CompositeMoniker = {
   0x309, 0, 0, {0xC0, 0, 0, 0, 0, 0, 0, 0x46}
 };
 
@@ -1943,4 +1943,71 @@ MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMoniker** ppmkComm
 {
     FIXME("(),stub!\n");
     return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CompositeMonikerCF_QueryInterface(LPCLASSFACTORY iface,
+                                                  REFIID riid, LPVOID *ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IClassFactory))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI CompositeMonikerCF_AddRef(LPCLASSFACTORY iface)
+{
+    return 2; /* non-heap based object */
+}
+
+static ULONG WINAPI CompositeMonikerCF_Release(LPCLASSFACTORY iface)
+{
+    return 1; /* non-heap based object */
+}
+
+static HRESULT WINAPI CompositeMonikerCF_CreateInstance(LPCLASSFACTORY iface,
+    LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv)
+{
+    CompositeMonikerImpl* newCompositeMoniker;
+    HRESULT  hr;
+
+    TRACE("(%p, %s, %p)\n", pUnk, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    if (pUnk)
+        return CLASS_E_NOAGGREGATION;
+
+    hr = CompositeMonikerImpl_Construct(&newCompositeMoniker, NULL, NULL);
+
+    if (SUCCEEDED(hr))
+        hr = CompositeMonikerImpl_QueryInterface((IMoniker*)newCompositeMoniker, riid, ppv);
+    if (FAILED(hr))
+        HeapFree(GetProcessHeap(),0,newCompositeMoniker);
+
+    return hr;
+}
+
+static HRESULT WINAPI CompositeMonikerCF_LockServer(LPCLASSFACTORY iface, BOOL fLock)
+{
+    FIXME("(%d), stub!\n",fLock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl CompositeMonikerCFVtbl =
+{
+    CompositeMonikerCF_QueryInterface,
+    CompositeMonikerCF_AddRef,
+    CompositeMonikerCF_Release,
+    CompositeMonikerCF_CreateInstance,
+    CompositeMonikerCF_LockServer
+};
+static const IClassFactoryVtbl *CompositeMonikerCF = &CompositeMonikerCFVtbl;
+
+HRESULT CompositeMonikerCF_Create(REFIID riid, LPVOID *ppv)
+{
+    return IClassFactory_QueryInterface((IClassFactory *)&CompositeMonikerCF, riid, ppv);
 }
