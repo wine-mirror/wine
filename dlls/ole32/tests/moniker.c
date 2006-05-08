@@ -194,6 +194,13 @@ static const BYTE expected_class_moniker_comparison_data[] =
      0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
 };
 
+static const WCHAR expected_class_moniker_display_name[] =
+{
+    'c','l','s','i','d',':','0','0','0','2','E','0','0','5','-','0','0','0',
+    '0','-','0','0','0','0','-','C','0','0','0','-','0','0','0','0','0','0',
+    '0','0','0','0','4','6',':',0
+};
+
 static const BYTE expected_item_moniker_comparison_data[] =
 {
      0x04,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -299,7 +306,8 @@ static void test_moniker(
     const char *testname, IMoniker *moniker,
     const BYTE *expected_moniker_marshal_data, size_t sizeof_expected_moniker_marshal_data,
     const BYTE *expected_moniker_saved_data, size_t sizeof_expected_moniker_saved_data,
-    const BYTE *expected_moniker_comparison_data, size_t sizeof_expected_moniker_comparison_data)
+    const BYTE *expected_moniker_comparison_data, size_t sizeof_expected_moniker_comparison_data,
+    LPCWSTR expected_display_name)
 {
     IStream * stream;
     IROTData * rotdata;
@@ -311,9 +319,23 @@ static void test_moniker(
     BOOL same = TRUE;
     BYTE buffer[128];
     IMoniker * moniker_proxy;
+    LPOLESTR display_name;
+    IBindCtx *bindctx;
 
     hr = IMoniker_IsDirty(moniker);
     ok(hr == S_FALSE, "%s: IMoniker_IsDirty should return S_FALSE, not 0x%08lx\n", testname, hr);
+
+    /* Display Name */
+
+    hr = CreateBindCtx(0, &bindctx);
+    ok_ole_success(hr, CreateBindCtx);
+
+    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &display_name);
+    ok_ole_success(hr, IMoniker_GetDisplayName);
+	ok(!lstrcmpW(display_name, expected_display_name), "display name wasn't what was expected\n");
+
+    CoTaskMemFree(display_name);
+    IBindCtx_Release(bindctx);
 
     /* IROTData::GetComparisonData test */
 
@@ -468,7 +490,8 @@ static void test_class_moniker(void)
     test_moniker("class moniker", moniker, 
         expected_class_moniker_marshal_data, sizeof(expected_class_moniker_marshal_data),
         expected_class_moniker_saved_data, sizeof(expected_class_moniker_saved_data),
-        expected_class_moniker_comparison_data, sizeof(expected_class_moniker_comparison_data));
+        expected_class_moniker_comparison_data, sizeof(expected_class_moniker_comparison_data),
+        expected_class_moniker_display_name);
 
     /* Hashing */
 
@@ -561,6 +584,7 @@ static void test_item_moniker(void)
     DWORD hash;
     static const WCHAR wszDelimeter[] = {'!',0};
     static const WCHAR wszObjectName[] = {'T','e','s','t',0};
+    static const WCHAR expected_display_name[] = { '!','T','e','s','t',0 };
 
     hr = CreateItemMoniker(wszDelimeter, wszObjectName, &moniker);
     ok_ole_success(hr, CreateItemMoniker);
@@ -568,7 +592,8 @@ static void test_item_moniker(void)
     test_moniker("item moniker", moniker, 
         expected_item_moniker_marshal_data, sizeof(expected_item_moniker_marshal_data),
         expected_item_moniker_saved_data, sizeof(expected_item_moniker_saved_data),
-        expected_item_moniker_comparison_data, sizeof(expected_item_moniker_comparison_data));
+        expected_item_moniker_comparison_data, sizeof(expected_item_moniker_comparison_data),
+        expected_display_name);
 
     /* Hashing */
 
@@ -598,6 +623,7 @@ static void test_anti_moniker(void)
     IMoniker *inverse;
     DWORD moniker_type;
     DWORD hash;
+    static const WCHAR expected_display_name[] = { '\\','.','.',0 };
 
     hr = CreateAntiMoniker(&moniker);
     ok_ole_success(hr, CreateAntiMoniker);
@@ -606,7 +632,8 @@ static void test_anti_moniker(void)
     test_moniker("anti moniker", moniker, 
         expected_anti_moniker_marshal_data, sizeof(expected_anti_moniker_marshal_data),
         expected_anti_moniker_saved_data, sizeof(expected_anti_moniker_saved_data),
-        expected_anti_moniker_comparison_data, sizeof(expected_anti_moniker_comparison_data));
+        expected_anti_moniker_comparison_data, sizeof(expected_anti_moniker_comparison_data),
+        expected_display_name);
 
     /* Hashing */
     hr = IMoniker_Hash(moniker, &hash);
@@ -641,6 +668,7 @@ static void test_generic_composite_moniker(void)
     static const WCHAR wszObjectName1[] = {'T','e','s','t',0};
     static const WCHAR wszDelimeter2[] = {'#',0};
     static const WCHAR wszObjectName2[] = {'W','i','n','e',0};
+    static const WCHAR expected_display_name[] = { '!','T','e','s','t','#','W','i','n','e',0 };
 
     hr = CreateItemMoniker(wszDelimeter1, wszObjectName1, &moniker1);
     ok_ole_success(hr, CreateItemMoniker);
@@ -652,7 +680,8 @@ static void test_generic_composite_moniker(void)
     test_moniker("generic composite moniker", moniker, 
         expected_gc_moniker_marshal_data, sizeof(expected_gc_moniker_marshal_data),
         expected_gc_moniker_saved_data, sizeof(expected_gc_moniker_saved_data),
-        expected_gc_moniker_comparison_data, sizeof(expected_gc_moniker_comparison_data));
+        expected_gc_moniker_comparison_data, sizeof(expected_gc_moniker_comparison_data),
+        expected_display_name);
 
     /* Hashing */
 
