@@ -86,7 +86,7 @@
 @ stdcall DnsRecordCompare(ptr ptr)
 @ stdcall DnsRecordCopyEx(ptr long long)
 @ stdcall DnsRecordListFree(ptr long)
-@ stub DnsRecordSetCompare
+@ stdcall DnsRecordSetCompare(ptr ptr ptr ptr)
 @ stdcall DnsRecordSetCopyEx(ptr long long)
 @ stub DnsRecordSetDetach
 @ stub DnsRecordStringForType

@@ -640,6 +640,88 @@ void WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
 }
 
 /******************************************************************************
+ * DnsRecordSetCompare                     [DNSAPI.@]
+ *
+ */
+BOOL WINAPI DnsRecordSetCompare( PDNS_RECORD set1, PDNS_RECORD set2,
+                                 PDNS_RECORD *diff1, PDNS_RECORD *diff2 )
+{
+    BOOL ret = TRUE;
+    DNS_RECORD *r, *s1, *s2, *t, *u;
+    DNS_RRSET rr1, rr2;
+
+    TRACE( "(%p,%p,%p,%p)\n", set1, set2, diff1, diff2 );
+
+    if (!set1 && !set2) return FALSE;
+
+    if (diff1) *diff1 = NULL;
+    if (diff2) *diff2 = NULL;
+
+    if (set1 && !set2)
+    {
+        if (diff1) *diff1 = DnsRecordSetCopyEx( set1, 0, set1->Flags.S.CharSet );
+        return FALSE;
+    }
+    if (!set1 && set2)
+    {
+        if (diff2) *diff2 = DnsRecordSetCopyEx( set2, 0, set2->Flags.S.CharSet );
+        return FALSE;
+    }
+
+    DNS_RRSET_INIT( rr1 );
+    DNS_RRSET_INIT( rr2 );
+
+    for (r = s1 = set1; (s1 = r); r = r->pNext)
+    {
+        for (t = s2 = set2; (s2 = t); t = t->pNext)
+        {
+            u = DnsRecordCopyEx( r, r->Flags.S.CharSet, t->Flags.S.CharSet );
+            if (!u) goto error;
+
+            if (!DnsRecordCompare( t, u ))
+            {
+                DNS_RRSET_ADD( rr1, u );
+                ret = FALSE;
+            }
+            else dns_free( u );
+        }
+    }
+
+    for (t = s2 = set2; (s2 = t); t = t->pNext)
+    {
+        for (r = s1 = set1; (s1 = r); r = r->pNext)
+        {
+            u = DnsRecordCopyEx( t, t->Flags.S.CharSet, r->Flags.S.CharSet );
+            if (!u) goto error;
+
+            if (!DnsRecordCompare( r, u ))
+            {
+                DNS_RRSET_ADD( rr2, u );
+                ret = FALSE;
+            }
+            else dns_free( u );
+        }
+    }
+
+    DNS_RRSET_TERMINATE( rr1 );
+    DNS_RRSET_TERMINATE( rr2 );
+    
+    if (diff1) *diff1 = rr1.pFirstRR;
+    if (diff2) *diff2 = rr2.pFirstRR;
+
+    return ret;
+
+error:
+    DNS_RRSET_TERMINATE( rr1 );
+    DNS_RRSET_TERMINATE( rr2 );
+
+    DnsRecordListFree( rr1.pFirstRR, DnsFreeRecordList );
+    DnsRecordListFree( rr2.pFirstRR, DnsFreeRecordList );
+    
+    return FALSE;
+}
+
+/******************************************************************************
  * DnsRecordSetCopyEx                      [DNSAPI.@]
  *
  */
