@@ -1205,6 +1205,15 @@ typedef struct SHADER_BUFFER {
     unsigned int lineNo;
 } SHADER_BUFFER;
 
+typedef struct SHADER_LIMITS {
+    unsigned int temporary;
+    unsigned int texture;
+    unsigned int constant_int;
+    unsigned int constant_float;
+    unsigned int constant_bool;
+    unsigned int address;
+} SHADER_LIMITS;
+
 /* Base Shader utility functions. 
  * (may move callers into the same file in the future) */
 extern int shader_addline(
@@ -1217,6 +1226,8 @@ extern int shader_addline(
 typedef struct IWineD3DBaseShaderClass
 {
     DWORD                           version;
+    DWORD                           hex_version;
+    SHADER_LIMITS                   limits;
     CONST SHADER_OPCODE             *shader_ins;
     CONST DWORD                     *function;
     UINT                            functionLength;

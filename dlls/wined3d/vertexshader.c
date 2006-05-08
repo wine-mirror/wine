@@ -1036,6 +1036,51 @@ static void parse_decl_usage(IWineD3DVertexShaderImpl *This, INT usage, INT arra
     }
 }
 
+void vshader_set_version(
+      IWineD3DVertexShaderImpl *This,
+      DWORD version) {
+
+      DWORD major = (version >> 8) & 0x0F;
+      DWORD minor = version & 0x0F;
+
+      This->baseShader.hex_version = version;
+      This->baseShader.version = major * 10 + minor;
+      TRACE("vs_%lu_%lu\n", major, minor);
+
+      This->baseShader.limits.texture = 0;
+
+      /* Must match D3DCAPS9.MaxVertexShaderConst: at least 256 for vs_2_0 */
+      This->baseShader.limits.constant_float = WINED3D_VSHADER_MAX_CONSTANTS;
+
+      switch (This->baseShader.version) {
+          case 10:
+          case 11: This->baseShader.limits.temporary = 12;
+                   This->baseShader.limits.constant_bool = 0;
+                   This->baseShader.limits.constant_int = 0;
+                   This->baseShader.limits.address = 1;
+                   break;
+      
+          case 20:
+          case 21: This->baseShader.limits.temporary = 12;
+                   This->baseShader.limits.constant_bool = 16;
+                   This->baseShader.limits.constant_int = 16;
+                   This->baseShader.limits.address = 1;
+                   break;
+
+          case 30: This->baseShader.limits.temporary = 32;
+                   This->baseShader.limits.constant_bool = 32;
+                   This->baseShader.limits.constant_int = 32;
+                   This->baseShader.limits.address = 1;
+                   break;
+
+          default: This->baseShader.limits.temporary = 12;
+                   This->baseShader.limits.constant_bool = 0;
+                   This->baseShader.limits.constant_int = 0;
+                   This->baseShader.limits.address = 1;
+                   FIXME("Unrecognized vertex shader version %lu!\n", version);
+      }
+}
+
 /**
  * Function parser ...
  */
@@ -1179,6 +1224,29 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
         nUseTempRegister    <=  GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB
     */
 
+    /* Mesa supports only 95 constants */
+    if (GL_VEND(MESA) || GL_VEND(WINE))
+        This->baseShader.limits.constant_float = 
+           min(95, This->baseShader.limits.constant_float);
+
+    /* FIXME: if jumps are used, use GLSL, else use ARB_vertex_program */
+    shader_addline(&buffer, "!!ARBvp1.0\n");
+
+    /* Declare necessary things.
+     * FIXME: replace with a bitmap
+     * FIXME: loop counts as an address register */
+
+    for (i = 0; i < nUseTempRegister /* we should check numTemps here */ ; i++) {
+        if (tmpsUsed[i])
+            shader_addline(&buffer, "TEMP T%ld;\n", i);
+    }
+    for (i = 0; i < nUseAddressRegister; i++) 
+        shader_addline(&buffer, "ADDRESS A%ld;\n", i);
+
+    shader_addline(&buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
+        This->baseShader.limits.constant_float, 
+        This->baseShader.limits.constant_float - 1);            
+
   /** second pass, now generate */
   pToken = pFunction;
 
@@ -1191,73 +1259,14 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
       if (D3DVS_END() == *pToken)
             break;
 
-      if (vshader_is_version_token(*pToken)) { /** version */
-        /* Extract version *10 into integer value (ie. 1.0 == 10, 1.1==11 etc */
-        int version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
-        int numTemps;
-        int numConstants;
+      /* Skip version */
+      if (vshader_is_version_token(*pToken)) {
+            ++pToken;
+            continue;
+      }
 
-        TRACE("found version token vs.%lu.%lu;\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
-
-        /* Each release of vertex shaders has had different numbers of temp registers */
-        switch (version) {
-        case 10:
-        case 11: numTemps=12;
-                 numConstants=96;/* min(GL_LIMITS(constants),96) */
-                 break;
-        /* FIXME: if there are no calls or loops then use ARBvp1 otherwise use GLSL instead
-           TODO: see if there are any operations in vs2/3 that aren't supported by ARBvp
-            TODO: only map the maximum possible number of constants supported by openGL and not the maximum required by d3d (even better only map the used constants)*/
-        case 20: numTemps=12; /* min(GL_LIMITS(temps),12) */
-                 numConstants=96; /* min(GL_LIMITS(constants),256) */
-                 FIXME("No work done yet to support vs2.0 in hw\n");
-                 break;
-        case 21: numTemps=12; /* min(GL_LIMITS(temps),12) */
-                 numConstants=96; /* min(GL_LIMITS(constants),256) */
-                 FIXME("No work done yet to support vs2.1 in hw\n");
-                 break;
-        case 30: numTemps=32; /* min(GL_LIMITS(temps),32) */
-                 numConstants=96;/* min(GL_LIMITS(constants),256) */
-                 FIXME("No work done yet to support vs3.0 in hw\n");
-                 break;
-        default:
-                 numTemps=12;/* min(GL_LIMITS(temps),12) */
-                 numConstants=96;/* min(GL_LIMITS(constants),96) */
-                 FIXME("Unrecognized vertex shader version %d!\n", version);
-        }
-
-
-        /* FIXME: if jumps are used, use GLSL, else use ARB_vertex_program */
-        shader_addline(&buffer, "!!ARBvp1.0\n");
-
-        /* This should be a bitmap so that only temp registers that are used are declared. */
-        for (i = 0; i < nUseTempRegister /* we should check numTemps here */ ; i++) {
-            if (tmpsUsed[i])
-                shader_addline(&buffer, "TEMP T%ld;\n", i);
-        }
-        /* TODO: loop register counts as an address register */
-        for (i = 0; i < nUseAddressRegister; i++) {
-            shader_addline(&buffer, "ADDRESS A%ld;\n", i);
-        }
-
-        /* Due to the dynamic constants binding mechanism, we need to declare
-        * all the constants for relative addressing. */
-        /* Mesa supports only 95 constants for VS1.X although we should have at least 96. */
-        if (GL_VEND(MESA) || GL_VEND(WINE)) {
-            numConstants = 95;
-        }
-
-        /* FIXME: We should be counting the number of constants in the first pass 
-         * and then validating that many are supported. Looking at some of the shaders in use 
-         * by applications we'd need to create a list of all used env variables
-         */
-        shader_addline(&buffer, "PARAM C[%d] = { program.env[0..%d] };\n", 
-           numConstants, numConstants - 1);
-
-        ++pToken;
-        continue;
-        }
-        if (vshader_is_comment_token(*pToken)) { /** comment */
+      /* Skip comments */
+      if (vshader_is_comment_token(*pToken)) {
             DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
             ++pToken;
             TRACE("#%s\n", (char*)pToken);
@@ -1885,7 +1894,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
     if (NULL != pToken) {
         while (D3DVS_END() != *pToken) {
             if (vshader_is_version_token(*pToken)) { /** version */
-                TRACE("vs_%lu_%lu\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
+                vshader_set_version(This, *pToken);
                 ++pToken;
                 ++len;
                 continue;

@@ -975,6 +975,61 @@ inline static void pshader_program_get_registers_used(
     }
 }
 
+void pshader_set_version(
+      IWineD3DPixelShaderImpl *This, 
+      DWORD version) {
+
+      DWORD major = (version >> 8) & 0x0F;
+      DWORD minor = version & 0x0F;
+
+      This->baseShader.hex_version = version;
+      This->baseShader.version = major * 10 + minor;
+      TRACE("ps_%lu_%lu\n", major, minor);
+
+      This->baseShader.limits.address = 0;
+
+      switch (This->baseShader.version) {
+          case 10:
+          case 11:
+          case 12:
+          case 13: This->baseShader.limits.temporary = 2;
+                   This->baseShader.limits.constant_float = 8;
+                   This->baseShader.limits.constant_int = 0;
+                   This->baseShader.limits.constant_bool = 0;
+                   This->baseShader.limits.texture = 4;
+                   break;
+
+          case 14: This->baseShader.limits.temporary = 6;
+                   This->baseShader.limits.constant_float = 8;
+                   This->baseShader.limits.constant_int = 0;
+                   This->baseShader.limits.constant_bool = 0;
+                   This->baseShader.limits.texture = 6;
+                   break;
+               
+          /* FIXME: temporaries must match D3DPSHADERCAPS2_0.NumTemps */ 
+          case 20: This->baseShader.limits.temporary = 32;
+                   This->baseShader.limits.constant_float = 32;
+                   This->baseShader.limits.constant_int = 16;
+                   This->baseShader.limits.constant_bool = 16;
+                   This->baseShader.limits.texture = 8;
+                   break;
+
+          case 30: This->baseShader.limits.temporary = 32;
+                   This->baseShader.limits.constant_float = 224;
+                   This->baseShader.limits.constant_int = 16;
+                   This->baseShader.limits.constant_bool = 16;
+                   This->baseShader.limits.texture = 0;
+                   break;
+
+          default: This->baseShader.limits.temporary = 32;
+                   This->baseShader.limits.constant_float = 8;
+                   This->baseShader.limits.constant_int = 0;
+                   This->baseShader.limits.constant_bool = 0;
+                   This->baseShader.limits.texture = 8;
+                   FIXME("Unrecognized pixel shader version %lu!\n", version);
+      }
+}
+
 /* NOTE: A description of how to parse tokens can be found at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/graphics/hh/graphics/usermodedisplaydriver_shader_cc8e4e05-f5c3-4ec0-8853-8ce07c1551b2.xml.asp */
 inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
@@ -991,7 +1046,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
     BOOL saturate; /* clamp to 0.0 -> 1.0*/
     int row = 0; /* not sure, something to do with macros? */
     DWORD tcw[2];
-    int version = 0; /* The version of the shader */
+    int version = This->baseShader.version; 
 
     /* Keep bitmaps of used temporary and texture registers */
     DWORD tempsUsed, texUsed;
@@ -1011,6 +1066,9 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
     buffer.bsize = 0;
     buffer.lineNo = 0;
 
+    /* FIXME: if jumps are used, use GLSL, else use ARB_fragment_program */
+    shader_addline(&buffer, "!!ARBfp1.0\n");
+
     /* TODO: Think about using a first pass to work out what's required for the second pass. */
     for(i = 0; i < WINED3D_PSHADER_MAX_CONSTANTS; i++)
         This->constants[i] = 0;
@@ -1021,6 +1079,33 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
 
     /* TODO: check register usage against GL/Directx limits, and fail if they're exceeded */
 
+    /* Pre-declare registers */
+    for(i = 0; i < This->baseShader.limits.texture; i++) {
+        if (texUsed & (1 << i))
+            shader_addline(&buffer,"TEMP T%lu;\n", i);
+    }
+
+    for(i = 0; i < This->baseShader.limits.temporary; i++) {
+        if (tempsUsed & (1 << i))
+             shader_addline(&buffer, "TEMP R%lu;\n", i);
+    }
+
+    /* Necessary for internal operations */
+    shader_addline(&buffer, "TEMP TMP;\n");
+    shader_addline(&buffer, "TEMP TMP2;\n");
+    shader_addline(&buffer, "TEMP TA;\n");
+    shader_addline(&buffer, "TEMP TB;\n");
+    shader_addline(&buffer, "TEMP TC;\n");
+    shader_addline(&buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
+    shader_addline(&buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
+    shader_addline(&buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
+
+    /* Texture coordinate registers must be pre-loaded */
+    for (i = 0; i < This->baseShader.limits.texture; i++) {
+       if (texUsed & (1 << i))
+          shader_addline(&buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
+    }
+
     /* Second pass, process opcodes */
     if (NULL != pToken) {
         while (D3DPS_END() != *pToken) {
@@ -1029,79 +1114,15 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 instructionSize = pToken & SIZEBITS >> 27;
             }
 #endif
-            if (pshader_is_version_token(*pToken)) { /** version */
-                int numTemps;
-                int numConstants;
-                int numTex;
 
-                /* Extract version *10 into integer value (ie. 1.0 == 10, 1.1==11 etc */
-                version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
-
-                TRACE("found version token ps.%lu.%lu;\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
-
-                /* Each release of pixel shaders has had different numbers of temp registers */
-                switch (version) {
-                case 10:
-                case 11:
-                case 12:
-                case 13:numTemps=12;
-                        numConstants=8;
-                        numTex=4;
-                        break;
-                case 14: numTemps=12;
-                        numConstants=8;
-                        numTex=6;
-                        break;
-                case 20: numTemps=12;
-                        numConstants=8;
-                        numTex=8;
-                        FIXME("No work done yet to support ps2.0 in hw\n");
-                        break;
-                case 30: numTemps=32;
-                        numConstants=8;
-                        numTex=0; 
-                        FIXME("No work done yet to support ps3.0 in hw\n");
-                        break;
-                default:
-                        numTemps=12;
-                        numConstants=8;
-                        numTex=8; 
-                        FIXME("Unrecognized pixel shader version!\n");
-                }
-
-                /* FIXME: if jumps are used, use GLSL, else use ARB_fragment_program */
-                shader_addline(&buffer, "!!ARBfp1.0\n");
-
-                for(i = 0; i < numTex; i++) {
-                    if (texUsed & (1 << i)) 
-                        shader_addline(&buffer,"TEMP T%lu;\n", i);
-                }
-
-                for(i = 0; i < numTemps; i++) {
-                    if (tempsUsed & (1 << i)) 
-                        shader_addline(&buffer, "TEMP R%lu;\n", i);
-                }
-
-                shader_addline(&buffer, "TEMP TMP;\n");
-                shader_addline(&buffer, "TEMP TMP2;\n");
-                shader_addline(&buffer, "TEMP TA;\n");
-                shader_addline(&buffer, "TEMP TB;\n");
-                shader_addline(&buffer, "TEMP TC;\n");
-
-                shader_addline(&buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
-                shader_addline(&buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
-                shader_addline(&buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
-
-                for(i = 0; i < numTex; i++) {
-                    if (texUsed & (1 << i)) 
-                        shader_addline(&buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
-                }
-
+            /* Skip version token */
+            if (pshader_is_version_token(*pToken)) {
                 ++pToken;
                 continue;
             }
 
-            if (pshader_is_comment_token(*pToken)) { /** comment */
+            /* Skip comment tokens */
+            if (pshader_is_comment_token(*pToken)) {
                 DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
                 ++pToken;
                 TRACE("#%s\n", (char*)pToken);
@@ -1742,8 +1763,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
     if (NULL != pToken) {
         while (D3DPS_END() != *pToken) {
             if (pshader_is_version_token(*pToken)) { /** version */
-                This->baseShader.version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
-                TRACE("ps_%lu_%lu\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
+                pshader_set_version(This, *pToken);
                 ++pToken;
                 ++len;
                 continue;
