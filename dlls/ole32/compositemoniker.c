@@ -385,7 +385,7 @@ CompositeMonikerImpl_BindToObject(IMoniker* iface, IBindCtx* pbc,
         res=IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
         IMoniker_Release(antiMk);
 
-        res=CompositeMonikerImpl_BindToObject(mostRigthMk,pbc,tempMk,riid,ppvResult);
+        res=IMoniker_BindToObject(mostRigthMk,pbc,tempMk,riid,ppvResult);
 
         IMoniker_Release(tempMk);
         IMoniker_Release(mostRigthMk);
@@ -422,7 +422,7 @@ CompositeMonikerImpl_BindToStorage(IMoniker* iface, IBindCtx* pbc,
         res=IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
         IMoniker_Release(antiMk);
 
-        res=CompositeMonikerImpl_BindToStorage(mostRigthMk,pbc,tempMk,riid,ppvResult);
+        res=IMoniker_BindToStorage(mostRigthMk,pbc,tempMk,riid,ppvResult);
 
         IMoniker_Release(tempMk);
 
