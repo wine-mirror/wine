@@ -54,6 +54,8 @@ typedef struct CompositeMonikerImpl{
      */
     const IROTDataVtbl*  lpvtbl2;  /* VTable relative to the IROTData interface.*/
 
+    const IMarshalVtbl*  lpvtblMarshal;  /* VTable relative to the IMarshal interface.*/
+
     LONG ref; /* reference counter for this object */
 
     IMoniker** tabMoniker; /* dynamaic table containing all components (monikers) of this composite moniker */
@@ -85,6 +87,11 @@ static inline IMoniker *impl_from_IROTData( IROTData *iface )
     return (IMoniker *)((char*)iface - FIELD_OFFSET(CompositeMonikerImpl, lpvtbl2));
 }
 
+static inline IMoniker *impl_from_IMarshal( IMarshal *iface )
+{
+    return (IMoniker *)((char*)iface - FIELD_OFFSET(CompositeMonikerImpl, lpvtblMarshal));
+}
+
 static HRESULT EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,ULONG tabSize,ULONG currentPos,BOOL leftToRigth,IEnumMoniker ** ppmk);
 
 /*******************************************************************************
@@ -113,6 +120,8 @@ CompositeMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject
         *ppvObject = iface;
     else if (IsEqualIID(&IID_IROTData, riid))
         *ppvObject = (IROTData*)&(This->lpvtbl2);
+    else if (IsEqualIID(&IID_IMarshal, riid))
+        *ppvObject = (IROTData*)&(This->lpvtblMarshal);
 
     /* Check that we obtained an interface.*/
     if ((*ppvObject)==0)
@@ -1307,6 +1316,178 @@ CompositeMonikerROTDataImpl_GetComparisonData(IROTData* iface,
     return S_OK;
 }
 
+static HRESULT WINAPI CompositeMonikerMarshalImpl_QueryInterface(IMarshal *iface, REFIID riid, LPVOID *ppv)
+{
+    IMoniker *This = impl_from_IMarshal(iface);
+
+    TRACE("(%p,%s,%p)\n",iface,debugstr_guid(riid),ppv);
+
+    return CompositeMonikerImpl_QueryInterface(This, riid, ppv);
+}
+
+static ULONG WINAPI CompositeMonikerMarshalImpl_AddRef(IMarshal *iface)
+{
+    IMoniker *This = impl_from_IMarshal(iface);
+
+    TRACE("(%p)\n",iface);
+
+    return CompositeMonikerImpl_AddRef(This);
+}
+
+static ULONG WINAPI CompositeMonikerMarshalImpl_Release(IMarshal *iface)
+{
+    IMoniker *This = impl_from_IMarshal(iface);
+
+    TRACE("(%p)\n",iface);
+
+    return CompositeMonikerImpl_Release(This);
+}
+
+static HRESULT WINAPI CompositeMonikerMarshalImpl_GetUnmarshalClass(
+  LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext,
+  void* pvDestContext, DWORD mshlflags, CLSID* pCid)
+{
+    IMoniker *This = impl_from_IMarshal(iface);
+
+    TRACE("(%s, %p, %lx, %p, %lx, %p)\n", debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags, pCid);
+
+    return IMoniker_GetClassID(This, pCid);
+}
+
+static HRESULT WINAPI CompositeMonikerMarshalImpl_GetMarshalSizeMax(
+  LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext,
+  void* pvDestContext, DWORD mshlflags, DWORD* pSize)
+{
+    IMoniker *This = impl_from_IMarshal(iface);
+    IEnumMoniker *pEnumMk;
+    IMoniker *pmk;
+    HRESULT hr;
+    ULARGE_INTEGER size;
+
+    TRACE("(%s, %p, %lx, %p, %lx, %p)\n", debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags, pSize);
+
+    *pSize = 0;
+
+    hr = IMoniker_Enum(This, TRUE, &pEnumMk);
+    if (FAILED(hr)) return hr;
+
+    hr = IMoniker_GetSizeMax(This, &size);
+
+    while (IEnumMoniker_Next(pEnumMk, 1, &pmk, NULL) == S_OK)
+    {
+        ULONG size;
+
+        hr = CoGetMarshalSizeMax(&size, &IID_IMoniker, (IUnknown *)pmk, dwDestContext, pvDestContext, mshlflags);
+        if (SUCCEEDED(hr))
+            *pSize += size;
+
+        IMoniker_Release(pmk);
+
+        if (FAILED(hr))
+        {
+            IEnumMoniker_Release(pEnumMk);
+            return hr;
+        }
+    }
+
+    IEnumMoniker_Release(pEnumMk);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI CompositeMonikerMarshalImpl_MarshalInterface(LPMARSHAL iface, IStream *pStm, 
+    REFIID riid, void* pv, DWORD dwDestContext,
+    void* pvDestContext, DWORD mshlflags)
+{
+    IMoniker *This = impl_from_IMarshal(iface);
+    IEnumMoniker *pEnumMk;
+    IMoniker *pmk;
+    HRESULT hr;
+    ULONG i = 0;
+
+    TRACE("(%p, %s, %p, %lx, %p, %lx)\n", pStm, debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags);
+
+    hr = IMoniker_Enum(This, TRUE, &pEnumMk);
+    if (FAILED(hr)) return hr;
+
+    while (IEnumMoniker_Next(pEnumMk, 1, &pmk, NULL) == S_OK)
+    {
+        hr = CoMarshalInterface(pStm, &IID_IMoniker, (IUnknown *)pmk, dwDestContext, pvDestContext, mshlflags);
+
+        IMoniker_Release(pmk);
+
+        if (FAILED(hr))
+        {
+            IEnumMoniker_Release(pEnumMk);
+            return hr;
+        }
+        i++;
+    }
+
+    if (i != 2)
+        FIXME("moniker count of %ld not supported\n", i);
+
+    IEnumMoniker_Release(pEnumMk);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI CompositeMonikerMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv)
+{
+    CompositeMonikerImpl *This = (CompositeMonikerImpl *)impl_from_IMarshal(iface);
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p)\n", pStm, debugstr_guid(riid), ppv);
+
+    CompositeMonikerImpl_ReleaseMonikersInTable(This);
+
+    /* resize the table if needed */
+    if (This->tabLastIndex + 2 > This->tabSize)
+    {
+        This->tabSize += max(BLOCK_TAB_SIZE, 2);
+        This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,This->tabSize*sizeof(IMoniker));
+
+        if (This->tabMoniker==NULL)
+            return E_OUTOFMEMORY;
+    }
+
+    hr = CoUnmarshalInterface(pStm, &IID_IMoniker, (void**)&This->tabMoniker[This->tabLastIndex]);
+    if (FAILED(hr))
+    {
+        ERR("couldn't unmarshal moniker, hr = 0x%08lx\n", hr);
+        return hr;
+    }
+    This->tabLastIndex++;
+    hr = CoUnmarshalInterface(pStm, &IID_IMoniker, (void**)&This->tabMoniker[This->tabLastIndex]);
+    if (FAILED(hr))
+    {
+        ERR("couldn't unmarshal moniker, hr = 0x%08lx\n", hr);
+        return hr;
+    }
+    This->tabLastIndex++;
+
+    return IMoniker_QueryInterface((IMoniker *)&This->lpvtbl1, riid, ppv);
+}
+
+static HRESULT WINAPI CompositeMonikerMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm)
+{
+    TRACE("(%p)\n", pStm);
+    /* can't release a state-based marshal as nothing on server side to
+     * release */
+    return S_OK;
+}
+
+static HRESULT WINAPI CompositeMonikerMarshalImpl_DisconnectObject(LPMARSHAL iface, DWORD dwReserved)
+{
+    TRACE("(0x%lx)\n", dwReserved);
+    /* can't disconnect a state-based marshal as nothing on server side to
+     * disconnect from */
+    return S_OK;
+}
+
 /******************************************************************************
  *        EnumMonikerImpl_QueryInterface
  ******************************************************************************/
@@ -1548,6 +1729,19 @@ static const IROTDataVtbl VT_ROTDataImpl =
     CompositeMonikerROTDataImpl_GetComparisonData
 };
 
+static const IMarshalVtbl VT_MarshalImpl =
+{
+    CompositeMonikerMarshalImpl_QueryInterface,
+    CompositeMonikerMarshalImpl_AddRef,
+    CompositeMonikerMarshalImpl_Release,
+    CompositeMonikerMarshalImpl_GetUnmarshalClass,
+    CompositeMonikerMarshalImpl_GetMarshalSizeMax,
+    CompositeMonikerMarshalImpl_MarshalInterface,
+    CompositeMonikerMarshalImpl_UnmarshalInterface,
+    CompositeMonikerMarshalImpl_ReleaseMarshalData,
+    CompositeMonikerMarshalImpl_DisconnectObject
+};
+
 /******************************************************************************
  *         Composite-Moniker_Construct (local function)
  *******************************************************************************/
@@ -1565,6 +1759,7 @@ CompositeMonikerImpl_Construct(CompositeMonikerImpl* This,
     /* Initialize the virtual function table. */
     This->lpvtbl1      = &VT_CompositeMonikerImpl;
     This->lpvtbl2      = &VT_ROTDataImpl;
+    This->lpvtblMarshal= &VT_MarshalImpl;
     This->ref          = 0;
 
     This->tabSize=BLOCK_TAB_SIZE;
