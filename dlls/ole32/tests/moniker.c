@@ -570,7 +570,6 @@ static void test_item_moniker(void)
     hr = IMoniker_Hash(moniker, &hash);
     ok_ole_success(hr, IMoniker_Hash);
 
-    todo_wine
     ok(hash == 0x73c,
         "Hash value != 0x73c, instead was 0x%08lx\n",
         hash);

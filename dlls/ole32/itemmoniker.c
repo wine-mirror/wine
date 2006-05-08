@@ -661,8 +661,8 @@ HRESULT WINAPI ItemMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker
 HRESULT WINAPI ItemMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
 {
     ItemMonikerImpl *This = (ItemMonikerImpl *)iface;
-
-    int  h = 0,i,skip,len;
+    DWORD h = 0;
+    int  i,len;
     int  off = 0;
     LPOLESTR val;
 
@@ -672,17 +672,8 @@ HRESULT WINAPI ItemMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
     val =  This->itemName;
     len = lstrlenW(val);
 
-    if (len < 16) {
-        for (i = len ; i > 0; i--) {
-            h = (h * 37) + val[off++];
-        }
-    } else {
-        /* only sample some characters */
- 	skip = len / 8;
- 	for (i = len ; i > 0; i -= skip, off += skip) {
-            h = (h * 39) + val[off];
- 	}
-    }
+    for (i = len ; i > 0; i--)
+        h = (h * 3) ^ toupperW(val[off++]);
 
     *pdwHash=h;
 
