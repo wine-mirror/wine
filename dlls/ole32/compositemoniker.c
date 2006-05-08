@@ -601,11 +601,7 @@ CompositeMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
     if(FAILED(res))
         return res;
 
-    while(1){
-        res=IEnumMoniker_Next(enumMoniker,1,&tempMk,NULL);
-        if(FAILED(res))
-            break;
-            
+    while(IEnumMoniker_Next(enumMoniker,1,&tempMk,NULL)==S_OK){
         res = IMoniker_Hash(tempMk, &tempHash);
         if(FAILED(res))
             break;
