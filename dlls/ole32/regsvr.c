@@ -458,6 +458,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"ole32.dll",
 	"Both"
     },
+    {   &CLSID_CompositeMoniker,
+	"CompositeMoniker",
+	NULL,
+	"ole32.dll",
+	"Both"
+    },
     {   &CLSID_DfMarshal,
 	"DfMarshal",
 	NULL,
