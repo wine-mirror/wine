@@ -310,6 +310,7 @@ static void test_moniker(
     DWORD i;
     BOOL same = TRUE;
     BYTE buffer[128];
+    IMoniker * moniker_proxy;
 
     /* IROTData::GetComparisonData test */
 
@@ -443,10 +444,11 @@ static void test_moniker(
     GlobalUnlock(hglobal);
 
     IStream_Seek(stream, llZero, STREAM_SEEK_SET, NULL);
-    hr = CoReleaseMarshalData(stream);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    hr = CoUnmarshalInterface(stream, &IID_IMoniker, (void **)&moniker_proxy);
+    ok_ole_success(hr, CoUnmarshalInterface);
 
     IStream_Release(stream);
+    IMoniker_Release(moniker_proxy);
 }
 
 static void test_class_moniker(void)
