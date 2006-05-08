@@ -7,6 +7,7 @@ extern const CLSID CLSID_AntiMoniker;
 
 HRESULT FileMonikerCF_Create(REFIID riid, LPVOID *ppv);
 HRESULT ItemMonikerCF_Create(REFIID riid, LPVOID *ppv);
+HRESULT AntiMonikerCF_Create(REFIID riid, LPVOID *ppv);
 
 HRESULT MonikerMarshal_Create(IMoniker *inner, IUnknown **outer);
 
