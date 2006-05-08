@@ -202,9 +202,8 @@ static HRESULT WINAPI
 CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 {
     HRESULT res;
-    DWORD constant;
-    CLSID clsid;
-    WCHAR string[1]={0};
+    DWORD moniker_count;
+    DWORD i;
 
     CompositeMonikerImpl *This = (CompositeMonikerImpl *)iface;
 
@@ -212,54 +211,20 @@ CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 
     /* this function call OleLoadFromStream function for each moniker within this object */
 
-    /* read the a constant written by CompositeMonikerImpl_Save (see CompositeMonikerImpl_Save for more details)*/
-    res=IStream_Read(pStm,&constant,sizeof(DWORD),NULL);
-
-    if (SUCCEEDED(res)&& constant!=3)
+    res=IStream_Read(pStm,&moniker_count,sizeof(DWORD),NULL);
+    if (res != S_OK)
+    {
+        ERR("couldn't reading moniker count from stream\n");
         return E_FAIL;
+    }
 
-    while(1){
-#if 0
+    for (i = 0; i < moniker_count; i++)
+    {
         res=OleLoadFromStream(pStm,&IID_IMoniker,(void**)&This->tabMoniker[This->tabLastIndex]);
-#endif
-        res=ReadClassStm(pStm,&clsid);
-        DPRINTF("res=%ld",res);
         if (FAILED(res))
-            break;
-
-        if (IsEqualIID(&clsid,&CLSID_FileMoniker)){
-            res=CreateFileMoniker(string,&This->tabMoniker[This->tabLastIndex]);
-            if (FAILED(res))
-                break;
-            res=IMoniker_Load(This->tabMoniker[This->tabLastIndex],pStm);
-            if (FAILED(res))
-                break;
-        }
-        else if (IsEqualIID(&clsid,&CLSID_ItemMoniker)){
-            CreateItemMoniker(string,string,&This->tabMoniker[This->tabLastIndex]);
-            if (res!=S_OK)
-                break;
-            IMoniker_Load(This->tabMoniker[This->tabLastIndex],pStm);
-            if (FAILED(res))
-                break;
-        }
-        else if (IsEqualIID(&clsid,&CLSID_AntiMoniker)){
-            CreateAntiMoniker(&This->tabMoniker[This->tabLastIndex]);
-            if (FAILED(res))
-                break;
-            IMoniker_Load(This->tabMoniker[This->tabLastIndex],pStm);
-            if (FAILED(res))
-                break;
-        }
-        else if (IsEqualIID(&clsid,&CLSID_CompositeMoniker))
-            return E_FAIL;
-
-        else
         {
-            FIXME("()\n");
-            /* FIXME: To whoever wrote this code: It's either return or break. it cannot be both! */
+            ERR("couldn't load moniker from stream, res = 0x%08lx\n", res);
             break;
-            return E_NOTIMPL;
         }
 
         /* resize the table if needed */
@@ -282,10 +247,11 @@ CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 static HRESULT WINAPI
 CompositeMonikerImpl_Save(IMoniker* iface,IStream* pStm,BOOL fClearDirty)
 {
+    CompositeMonikerImpl *This = (CompositeMonikerImpl *)iface;
     HRESULT res;
     IEnumMoniker *enumMk;
     IMoniker *pmk;
-    DWORD constant=3;
+    DWORD moniker_count = This->tabLastIndex;
 
     TRACE("(%p,%p,%d)\n",iface,pStm,fClearDirty);
 
@@ -295,7 +261,8 @@ CompositeMonikerImpl_Save(IMoniker* iface,IStream* pStm,BOOL fClearDirty)
      * at the beginning of the stream. I don't known why (there's no
      * indication in the specification) !
      */
-    res=IStream_Write(pStm,&constant,sizeof(constant),NULL);
+    res=IStream_Write(pStm,&moniker_count,sizeof(moniker_count),NULL);
+    if (FAILED(res)) return res;
 
     IMoniker_Enum(iface,TRUE,&enumMk);
 
@@ -307,7 +274,7 @@ CompositeMonikerImpl_Save(IMoniker* iface,IStream* pStm,BOOL fClearDirty)
 
         if (FAILED(res)){
 
-            IEnumMoniker_Release(pmk);
+            IEnumMoniker_Release(enumMk);
             return res;
         }
     }
