@@ -409,7 +409,7 @@ AntiMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** p
 
     IMoniker_IsSystemMoniker(pmkOther,&mkSys);
 
-    if(mkSys==MKSYS_ITEMMONIKER){
+    if(mkSys==MKSYS_ANTIMONIKER){
 
         IMoniker_AddRef(iface);
 
