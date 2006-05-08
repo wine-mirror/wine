@@ -509,22 +509,35 @@ static int describeContext(Wine_GLContext* ctx) {
 
 static int describeDrawable(Wine_GLContext* ctx, Drawable drawable) {
   int tmp;
-  int draw_vis_id;
+  int nElements;
+  int attribList[3] = { GLX_FBCONFIG_ID, 0, None };
+  GLXFBConfig *fbCfgs;
+
   if (3 > wine_glx.version || NULL == wine_glx.p_glXQueryDrawable)  {
     /** glXQueryDrawable not available so returns not supported */
     return -1;
   }
+
   TRACE(" Drawable %p have :\n", (void*) drawable);
-  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
-  TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
-  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_VISUAL_ID, (unsigned int*) &tmp);
-  TRACE(" - VISUAL_ID as 0x%x\n", tmp);
-  draw_vis_id = tmp;
   wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_WIDTH, (unsigned int*) &tmp);
   TRACE(" - WIDTH as %d\n", tmp);
   wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_HEIGHT, (unsigned int*) &tmp);
   TRACE(" - HEIGHT as %d\n", tmp);
-  return draw_vis_id;
+  wine_glx.p_glXQueryDrawable(ctx->display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
+  TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
+
+  attribList[1] = tmp;
+  fbCfgs = wine_glx.p_glXChooseFBConfig(ctx->display, DefaultScreen(ctx->display), attribList, &nElements);
+  if (fbCfgs == NULL) {
+    return -1;
+  }
+ 
+  wine_glx.p_glXGetFBConfigAttrib(ctx->display, fbCfgs[0], GLX_VISUAL_ID, &tmp);
+  TRACE(" - VISUAL_ID as 0x%x\n", tmp);
+
+  XFree(fbCfgs);
+ 
+  return tmp;
 }
 
 /***********************************************************************
