@@ -402,7 +402,7 @@ CompositeMonikerImpl_BindToStorage(IMoniker* iface, IBindCtx* pbc,
                IMoniker* pmkToLeft, REFIID riid, VOID** ppvResult)
 {
     HRESULT   res;
-    IMoniker *tempMk,*antiMk,*mostRigthMk;
+    IMoniker *tempMk,*antiMk,*mostRigthMk,*leftMk;
     IEnumMoniker *enumMoniker;
 
     TRACE("(%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,riid,ppvResult);
@@ -412,26 +412,34 @@ CompositeMonikerImpl_BindToStorage(IMoniker* iface, IBindCtx* pbc,
     /* This method recursively calls BindToStorage on the rightmost component of the composite, */
     /* passing the rest of the composite as the pmkToLeft parameter for that call. */
 
-    if (pmkToLeft!=NULL){
-
-        IMoniker_Enum(iface,FALSE,&enumMoniker);
-        IEnumMoniker_Next(enumMoniker,1,&mostRigthMk,NULL);
-        IEnumMoniker_Release(enumMoniker);
-
-        res=CreateAntiMoniker(&antiMk);
-        res=IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
-        IMoniker_Release(antiMk);
-
-        res=IMoniker_BindToStorage(mostRigthMk,pbc,tempMk,riid,ppvResult);
-
-        IMoniker_Release(tempMk);
-
-        IMoniker_Release(mostRigthMk);
-
-        return res;
+    if (pmkToLeft)
+    {
+        res = IMoniker_ComposeWith(pmkToLeft, iface, FALSE, &leftMk);
+        if (FAILED(res)) return res;
     }
     else
-        return IMoniker_BindToStorage(iface,pbc,NULL,riid,ppvResult);
+        leftMk = iface;
+
+    IMoniker_Enum(iface, FALSE, &enumMoniker);
+    IEnumMoniker_Next(enumMoniker, 1, &mostRigthMk, NULL);
+    IEnumMoniker_Release(enumMoniker);
+
+    res = CreateAntiMoniker(&antiMk);
+    if (FAILED(res)) return res;
+    res = IMoniker_ComposeWith(leftMk, antiMk, 0, &tempMk);
+    if (FAILED(res)) return res;
+    IMoniker_Release(antiMk);
+
+    res = IMoniker_BindToStorage(mostRigthMk, pbc, tempMk, riid, ppvResult);
+
+    IMoniker_Release(tempMk);
+
+    IMoniker_Release(mostRigthMk);
+
+    if (pmkToLeft)
+        IMoniker_Release(leftMk);
+
+    return res;
 }
 
 /******************************************************************************
