@@ -470,6 +470,14 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   } else {
     cif = pMsg->RpcInterfaceInformation;
     if (!cif) return RPC_S_INTERFACE_NOT_FOUND; /* ? */
+
+    if (!bind->Endpoint || !bind->Endpoint[0])
+    {
+      TRACE("automatically resolving partially bound binding\n");
+      status = RpcEpResolveBinding(bind, cif);
+      if (status != RPC_S_OK) return status;
+    }
+
     status = RPCRT4_OpenBinding(bind, &conn, &cif->TransferSyntax,
                                 &cif->InterfaceId);
   }
@@ -533,6 +541,14 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
     } else {
       cif = pMsg->RpcInterfaceInformation;
       if (!cif) return RPC_S_INTERFACE_NOT_FOUND; /* ? */
+
+      if (!bind->Endpoint || !bind->Endpoint[0])
+      {
+        TRACE("automatically resolving partially bound binding\n");
+        status = RpcEpResolveBinding(bind, cif);
+        if (status != RPC_S_OK) return status;
+      }
+
       status = RPCRT4_OpenBinding(bind, &conn, &cif->TransferSyntax,
                                   &cif->InterfaceId);
     }
