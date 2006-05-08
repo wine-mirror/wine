@@ -1379,8 +1379,10 @@ EnumMonikerImpl_Next(IEnumMoniker* iface,ULONG celt, IMoniker** rgelt,
 
     /* retrieve the requested number of moniker from the current position */
     for(i=0;((This->currentPos < This->tabSize) && (i < celt));i++)
-
+    {
         rgelt[i]=This->tabMoniker[This->currentPos++];
+        IMoniker_AddRef(rgelt[i]);
+    }
 
     if (pceltFethed!=NULL)
         *pceltFethed= i;
