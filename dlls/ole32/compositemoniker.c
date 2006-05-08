@@ -618,6 +618,8 @@ CompositeMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
     if(FAILED(res))
         return res;
 
+    *pdwHash = 0;
+
     while(IEnumMoniker_Next(enumMoniker,1,&tempMk,NULL)==S_OK){
         res = IMoniker_Hash(tempMk, &tempHash);
         if(FAILED(res))
