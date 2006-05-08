@@ -137,6 +137,12 @@ they should appear as "Suggests" or "Recommends", as the case may be.
     * capi4linux
       Used to implement our capi2032.dll.
 
+    * libgphoto2
+      Used to implement our gphoto2.ds (TWAIN datasource)
+
+    * hal, dbus-1
+      Used to implement CD mount handling (via explorer.exe).
+
 GOALS
 ~~~~~
 

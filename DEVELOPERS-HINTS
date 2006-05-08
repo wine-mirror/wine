@@ -64,6 +64,7 @@ DLLs (under dlls/):
 	gdi/			- GDI (graphics)
 	glu32/			- OpenGL Utility library (graphics)
 	glut32/			- OpenGL Utility Toolkit
+	gphoto2.ds/             - Contains libgphoto2 based TWAIN datasource driver
 	hhctrl.ocx/             - HHCTRL OCX implementation
 	iccvid/			- Radius Cinepak Video Decoder
 	icmp/			- ICMP protocol (networking)
@@ -128,6 +129,7 @@ DLLs (under dlls/):
 	rpcrt4/			- Remote Procedure Call runtime
 	rsabase/		- RSA encryption
 	rsaenh/			- Crypto API (DES, 3DES, RSA, etc.)
+	sane.ds/                - Contains sane based TWAIN datasource driver
 	secur32/                - Contains Windows Security functions
 	security/               - Security Support Provider Interface
 	sensapi/		- System Event Notification Service
@@ -144,7 +146,7 @@ DLLs (under dlls/):
 	stdole32.tlb/		- Standard OLE typelib
 	sti/			- Still Image service
 	tapi32/			- Telephone interface
-	twain/			- TWAIN Imaging device communications
+	twain_32/		- TWAIN Imaging device communications
 	unicows/		- Unicows replacement (Unicode layer for Win9x)
 	url/			- Internet shortcut shell extension
 	urlmon/			- URL Moniker allows binding to a URL
