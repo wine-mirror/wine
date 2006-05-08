@@ -3,24 +3,14 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = twain_32.dll
-IMPORTS   = comctl32 user32 gdi32 kernel32 ntdll
-EXTRALIBS = @SANELIBS@
-EXTRAINCL = @SANEINCL@
+IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
-	capability.c \
-	ds_audio.c \
-	ds_ctrl.c \
-	ds_image.c \
 	dsm_ctrl.c \
-	twain32_main.c \
-	ui.c
+	twain32_main.c
 
 C_SRCS16 = \
 	twain16_main.c
-
-RC_SRCS = \
-	rsrc.rc
 
 SPEC_SRCS16 = twain.spec
 

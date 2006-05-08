@@ -1636,6 +1636,7 @@ dlls/rsabase/Makefile
 dlls/rsabase/tests/Makefile
 dlls/rsaenh/Makefile
 dlls/rsaenh/tests/Makefile
+dlls/sane.ds/Makefile
 dlls/secur32/Makefile
 dlls/secur32/tests/Makefile
 dlls/security/Makefile

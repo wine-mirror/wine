@@ -33,7 +33,7 @@
 #include "wingdi.h"
 #include "prsht.h"
 #include "twain.h"
-#include "twain_i.h"
+#include "sane_i.h"
 #include "wine/debug.h"
 #include "resource.h"
 
@@ -138,7 +138,7 @@ static int create_trailing_edit(HDC hdc, LPDLGITEMTEMPLATEW* template_out, int i
 }
 
 
-static int create_item(activeDS *pSource,HDC hdc, const SANE_Option_Descriptor *opt,
+static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
         INT id, LPDLGITEMTEMPLATEW *template_out, int y, int *cx, int* count)
 {
     LPDLGITEMTEMPLATEW tpl = NULL,rc = NULL;
@@ -175,7 +175,7 @@ static int create_item(activeDS *pSource,HDC hdc, const SANE_Option_Descriptor *
     {
         SANE_Int i;
 
-        sane_control_option(pSource->deviceHandle, id-ID_BASE,
+        sane_control_option(activeDS.deviceHandle, id-ID_BASE,
                 SANE_ACTION_GET_VALUE, &i,NULL);
 
         sprintf(buffer,"%i",i);
@@ -211,7 +211,7 @@ static int create_item(activeDS *pSource,HDC hdc, const SANE_Option_Descriptor *
 
         i = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(SANE_Word));
 
-        sane_control_option(pSource->deviceHandle, id-ID_BASE,
+        sane_control_option(activeDS.deviceHandle, id-ID_BASE,
                 SANE_ACTION_GET_VALUE, i, NULL);
 
         dd = SANE_UNFIX(*i);
@@ -255,7 +255,7 @@ static int create_item(activeDS *pSource,HDC hdc, const SANE_Option_Descriptor *
         }
         leading_len += create_leading_static(hdc, opt->title, &lead_static, y,
                 id+ID_STATIC_BASE);
-        sane_control_option(pSource->deviceHandle, id-ID_BASE,
+        sane_control_option(activeDS.deviceHandle, id-ID_BASE,
                 SANE_ACTION_GET_VALUE, buffer,NULL);
 
         title = buffer;
@@ -369,7 +369,7 @@ static int create_item(activeDS *pSource,HDC hdc, const SANE_Option_Descriptor *
 }
 
 
-static LPDLGTEMPLATEW create_options_page(HDC hdc, activeDS *pSource, int *from_index,
+static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
                                           BOOL split_tabs)
 {
     SANE_Status rc;
@@ -385,7 +385,7 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, activeDS *pSource, int *from_
     int group_offset = -1;
     INT control_count = 0;
 
-    rc = sane_control_option(pSource->deviceHandle, 0, SANE_ACTION_GET_VALUE, 
+    rc = sane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE, 
             &optcount, NULL);
 
     if (rc != SANE_STATUS_GOOD)
@@ -404,7 +404,7 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, activeDS *pSource, int *from_
         int count;
         int hold_for_group = 0;
 
-        opt = sane_get_option_descriptor(pSource->deviceHandle, i);
+        opt = sane_get_option_descriptor(activeDS.deviceHandle, i);
         if (opt->type == SANE_TYPE_GROUP && split_tabs)
         {
             if (control_len > 0)
@@ -419,8 +419,7 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, activeDS *pSource, int *from_
             }
         }
 
-        len = create_item(pSource, hdc, opt, ID_BASE + i, &item_tpl, y, &x,
-                &count);
+        len = create_item(hdc, opt, ID_BASE + i, &item_tpl, y, &x, &count);
 
         control_count += count;
 
@@ -523,7 +522,7 @@ exit:
     return tpl;
 }
 
-BOOL DoScannerUI(activeDS *pSource)
+BOOL DoScannerUI(void)
 {
     HDC hdc;
     PROPSHEETPAGEW psp[10];
@@ -539,15 +538,15 @@ BOOL DoScannerUI(activeDS *pSource)
     hdc = GetDC(0);
 
     memset(&psp,0,sizeof(psp));
-    rc = sane_control_option(pSource->deviceHandle, 0, SANE_ACTION_GET_VALUE, 
+    rc = sane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE, 
             &optcount, NULL);
 
     while (index < optcount)
     {
         const SANE_Option_Descriptor *opt;
-        psp[page_count].u.pResource = create_options_page(hdc, pSource, &index,
+        psp[page_count].u.pResource = create_options_page(hdc, &index,
                 TRUE);
-        opt = sane_get_option_descriptor(pSource->deviceHandle, index);
+        opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
 
         if (opt->type == SANE_TYPE_GROUP)
         {
@@ -565,29 +564,27 @@ BOOL DoScannerUI(activeDS *pSource)
         {
             psp[page_count].dwSize = sizeof(PROPSHEETPAGEW);
             psp[page_count].dwFlags =  PSP_DLGINDIRECT | PSP_USETITLE;
-            psp[page_count].hInstance = DSM_instance;
+            psp[page_count].hInstance = SANE_instance;
             psp[page_count].pfnDlgProc = DialogProc;
-            psp[page_count].lParam = (LPARAM)pSource;
+            psp[page_count].lParam = (LPARAM)&activeDS;
             page_count ++;
         }
        
         index ++;
     }
  
-    len = lstrlenA(device_list[pSource->deviceIndex]->vendor)
-         + lstrlenA(device_list[pSource->deviceIndex]->model) + 2;
-
+    len = lstrlenA(activeDS.identity.Manufacturer)
+         + lstrlenA(activeDS.identity.ProductName) + 2;
     szCaption = HeapAlloc(GetProcessHeap(),0,len *sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP,0,device_list[pSource->deviceIndex]->vendor,-1,
+    MultiByteToWideChar(CP_ACP,0,activeDS.identity.Manufacturer,-1,
             szCaption,len);
-    szCaption[lstrlenA(device_list[pSource->deviceIndex]->vendor)] = ' ';
-    MultiByteToWideChar(CP_ACP,0,device_list[pSource->deviceIndex]->model,-1,
-            &szCaption[lstrlenA(device_list[pSource->deviceIndex]->vendor)+1],len);
-    
+    szCaption[lstrlenA(activeDS.identity.Manufacturer)] = ' ';
+    MultiByteToWideChar(CP_ACP,0,activeDS.identity.ProductName,-1,
+            &szCaption[lstrlenA(activeDS.identity.Manufacturer)+1],len);
     psh.dwSize = sizeof(PROPSHEETHEADERW);
     psh.dwFlags = PSH_PROPSHEETPAGE|PSH_PROPTITLE|PSH_USECALLBACK;
-    psh.hwndParent = DSM_parentHWND;
-    psh.hInstance = DSM_instance;
+    psh.hwndParent = activeDS.hwndOwner;
+    psh.hInstance = SANE_instance;
     psh.u.pszIcon = 0;
     psh.pszCaption = szCaption;
     psh.nPages = page_count;
@@ -616,7 +613,7 @@ static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt,
     HWND edit_w;
     CHAR unit[20];
 
-    LoadStringA(DSM_instance, opt->unit, unit,20);
+    LoadStringA(SANE_instance, opt->unit, unit,20);
 
     if (opt->type == SANE_TYPE_INT)
     {
@@ -652,7 +649,7 @@ static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt,
 
 }
 
-static BOOL UpdateSaneScrollOption(activeDS *pSource, 
+static BOOL UpdateSaneScrollOption(
         const SANE_Option_Descriptor *opt, int index, DWORD position)
 {
     SANE_Status rc = SANE_STATUS_GOOD;  
@@ -667,7 +664,7 @@ static BOOL UpdateSaneScrollOption(activeDS *pSource,
         else
             si = position;
 
-        rc = sane_control_option (pSource->deviceHandle,index,
+        rc = sane_control_option (activeDS.deviceHandle,index,
             SANE_ACTION_SET_VALUE, &si, &result);
 
     }
@@ -687,7 +684,7 @@ static BOOL UpdateSaneScrollOption(activeDS *pSource,
 
         *sf = SANE_FIX(dd);
 
-        rc = sane_control_option (pSource->deviceHandle,index,
+        rc = sane_control_option (activeDS.deviceHandle,index,
             SANE_ACTION_SET_VALUE, sf, &result);
 
         HeapFree(GetProcessHeap(),0,sf);
@@ -702,7 +699,7 @@ static BOOL UpdateSaneScrollOption(activeDS *pSource,
     return FALSE;
 }
 
-static BOOL UpdateSaneBoolOption(activeDS *pSource, int index, BOOL position)
+static BOOL UpdateSaneBoolOption(int index, BOOL position)
 {
     SANE_Status rc = SANE_STATUS_GOOD;  
     SANE_Int result = 0;
@@ -710,7 +707,7 @@ static BOOL UpdateSaneBoolOption(activeDS *pSource, int index, BOOL position)
 
     si = position;
 
-    rc = sane_control_option (pSource->deviceHandle,index,
+    rc = sane_control_option (activeDS.deviceHandle,index,
             SANE_ACTION_SET_VALUE, &si, &result);
 
     if(rc == SANE_STATUS_GOOD)
@@ -722,13 +719,12 @@ static BOOL UpdateSaneBoolOption(activeDS *pSource, int index, BOOL position)
     return FALSE;
 }
 
-static BOOL UpdateSaneStringOption(activeDS *pSource, int index, 
-        SANE_String value)
+static BOOL UpdateSaneStringOption(int index, SANE_String value)
 {
     SANE_Status rc = SANE_STATUS_GOOD;  
     SANE_Int result = 0;
 
-    rc = sane_control_option (pSource->deviceHandle,index,
+    rc = sane_control_option (activeDS.deviceHandle,index,
             SANE_ACTION_SET_VALUE, value, &result);
 
     if(rc == SANE_STATUS_GOOD)
@@ -740,14 +736,14 @@ static BOOL UpdateSaneStringOption(activeDS *pSource, int index,
     return FALSE;
 }
 
-static INT_PTR InitializeDialog(HWND hwnd, activeDS *pSource)
+static INT_PTR InitializeDialog(HWND hwnd)
 {
     SANE_Status rc;
     SANE_Int optcount;
     HWND control;
     int i;
 
-    rc = sane_control_option(pSource->deviceHandle, 0, SANE_ACTION_GET_VALUE, 
+    rc = sane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE, 
             &optcount, NULL);
 
     for ( i = 1; i < optcount; i++)
@@ -759,7 +755,7 @@ static INT_PTR InitializeDialog(HWND hwnd, activeDS *pSource)
         if (!control)
             continue;
 
-        opt = sane_get_option_descriptor(pSource->deviceHandle, i);
+        opt = sane_get_option_descriptor(activeDS.deviceHandle, i);
 
         TRACE("%i %s %i %i\n",i,opt->title,opt->type,opt->constraint_type);
         
@@ -781,13 +777,13 @@ static INT_PTR InitializeDialog(HWND hwnd, activeDS *pSource)
                         (LPARAM)opt->constraint.string_list[j]);
                 j++;
             }
-            sane_control_option(pSource->deviceHandle, i, SANE_ACTION_GET_VALUE, buffer,NULL);
+            sane_control_option(activeDS.deviceHandle, i, SANE_ACTION_GET_VALUE, buffer,NULL);
             SendMessageA(control,CB_SELECTSTRING,0,(LPARAM)buffer);
         }
         else if (opt->type == SANE_TYPE_BOOL)
         {
             SANE_Bool b;
-            sane_control_option(pSource->deviceHandle, i,
+            sane_control_option(activeDS.deviceHandle, i,
                     SANE_ACTION_GET_VALUE, &b, NULL);
             if (b)
                 SendMessageA(control,BM_SETCHECK,BST_CHECKED,0);
@@ -810,7 +806,7 @@ static INT_PTR InitializeDialog(HWND hwnd, activeDS *pSource)
 
                 SendMessageA(control,SBM_SETRANGE,min,max);
 
-                sane_control_option(pSource->deviceHandle, i,
+                sane_control_option(activeDS.deviceHandle, i,
                         SANE_ACTION_GET_VALUE, &si,NULL);
                 if (opt->constraint.range->quant)
                     si = si / opt->constraint.range->quant;
@@ -846,7 +842,7 @@ static INT_PTR InitializeDialog(HWND hwnd, activeDS *pSource)
 
 
                 sf = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(SANE_Word));
-                sane_control_option(pSource->deviceHandle, i,
+                sane_control_option(activeDS.deviceHandle, i,
                         SANE_ACTION_GET_VALUE, sf,NULL);
 
                 dd = SANE_UNFIX(*sf);
@@ -867,8 +863,7 @@ static INT_PTR InitializeDialog(HWND hwnd, activeDS *pSource)
     return TRUE;
 }
 
-static INT_PTR ProcessScroll(HWND hwnd, activeDS *pSource, WPARAM wParam, 
-        LPARAM lParam)
+static INT_PTR ProcessScroll(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     int index;
     const SANE_Option_Descriptor *opt;
@@ -879,7 +874,7 @@ static INT_PTR ProcessScroll(HWND hwnd, activeDS *pSource, WPARAM wParam,
     if (index < 0)
         return FALSE;
 
-    opt = sane_get_option_descriptor(pSource->deviceHandle, index);
+    opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
 
     if (!opt)
         return FALSE;
@@ -918,14 +913,14 @@ static INT_PTR ProcessScroll(HWND hwnd, activeDS *pSource, WPARAM wParam,
     position = SendMessageW((HWND)lParam,SBM_GETPOS,0,0);
 
     UpdateRelevantEdit(hwnd, opt, index, position);
-    if (UpdateSaneScrollOption(pSource, opt, index, position))
-        InitializeDialog(hwnd,pSource);
+    if (UpdateSaneScrollOption(opt, index, position))
+        InitializeDialog(hwnd);
 
     return TRUE;
 }
 
 
-static void ButtonClicked(HWND hwnd, activeDS* pSource,INT id, HWND control)
+static void ButtonClicked(HWND hwnd, INT id, HWND control)
 {
     int index;
     const SANE_Option_Descriptor *opt;
@@ -934,7 +929,7 @@ static void ButtonClicked(HWND hwnd, activeDS* pSource,INT id, HWND control)
     if (index < 0)
         return;
 
-    opt = sane_get_option_descriptor(pSource->deviceHandle, index);
+    opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
 
     if (!opt)
         return;
@@ -942,12 +937,12 @@ static void ButtonClicked(HWND hwnd, activeDS* pSource,INT id, HWND control)
     if (opt->type == SANE_TYPE_BOOL)
     {
         BOOL r = SendMessageW(control,BM_GETCHECK,0,0)==BST_CHECKED;
-        if (UpdateSaneBoolOption(pSource, index, r))
-                InitializeDialog(hwnd,pSource);
+        if (UpdateSaneBoolOption(index, r))
+                InitializeDialog(hwnd);
     }
 }
 
-static void ComboChanged(HWND hwnd, activeDS* pSource,INT id, HWND control)
+static void ComboChanged(HWND hwnd, INT id, HWND control)
 {
     int index;
     int selection;
@@ -959,7 +954,7 @@ static void ComboChanged(HWND hwnd, activeDS* pSource,INT id, HWND control)
     if (index < 0)
         return;
 
-    opt = sane_get_option_descriptor(pSource->deviceHandle, index);
+    opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
 
     if (!opt)
         return;
@@ -973,23 +968,20 @@ static void ComboChanged(HWND hwnd, activeDS* pSource,INT id, HWND control)
 
     if (opt->type == SANE_TYPE_STRING)
     {
-        if (UpdateSaneStringOption(pSource, index, value))
-                InitializeDialog(hwnd,pSource);
+        if (UpdateSaneStringOption(index, value))
+                InitializeDialog(hwnd);
     }
 }
 
 
 static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    static activeDS *pSource = NULL;
-
     switch (msg)
     {
         case WM_INITDIALOG:
-            pSource = (activeDS*)((LPPROPSHEETPAGEW)lParam)->lParam;
-            return InitializeDialog(hwndDlg, pSource);
+            return InitializeDialog(hwndDlg);
         case WM_HSCROLL:
-            return ProcessScroll(hwndDlg, pSource, wParam, lParam);
+            return ProcessScroll(hwndDlg, wParam, lParam);
             break;
         case WM_NOTIFY:
             {
@@ -999,15 +991,15 @@ static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
                     case PSN_APPLY:
                         if (psn->lParam == TRUE)
                         {
-                            pSource->currentState = 6;
-                            pSource->pendingEvent.TWMessage = MSG_XFERREADY;
+                            activeDS.currentState = 6;
+                            activeDS.pendingEvent.TWMessage = MSG_XFERREADY;
                         }
                         break;
                     case PSN_QUERYCANCEL:
-                        pSource->pendingEvent.TWMessage = MSG_CLOSEDSREQ;
+                        activeDS.pendingEvent.TWMessage = MSG_CLOSEDSREQ;
                         break;
                     case PSN_SETACTIVE:
-                        InitializeDialog(hwndDlg, pSource);
+                        InitializeDialog(hwndDlg);
                         break;
                 }
             }
@@ -1016,11 +1008,11 @@ static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
                 switch (HIWORD(wParam))
                 {
                     case BN_CLICKED:
-                        ButtonClicked(hwndDlg, pSource,LOWORD(wParam),
+                        ButtonClicked(hwndDlg,LOWORD(wParam),
                                 (HWND)lParam);
                         break;
                     case CBN_SELCHANGE:
-                        ComboChanged(hwndDlg, pSource,LOWORD(wParam),
+                        ComboChanged(hwndDlg,LOWORD(wParam),
                                 (HWND)lParam);
                 }
             }
@@ -1046,10 +1038,10 @@ static INT_PTR CALLBACK ScanningProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     return FALSE;
 }
 
-HWND ScanningDialogBox(HWND dialog, DWORD progress)
+HWND ScanningDialogBox(HWND dialog, LONG progress)
 {
     if (!dialog)
-        dialog = CreateDialogW(DSM_instance,
+        dialog = CreateDialogW(SANE_instance,
                 (LPWSTR)MAKEINTRESOURCE(IDD_DIALOG1), NULL, ScanningProc);
 
     if (progress == -1)
@@ -1066,7 +1058,7 @@ HWND ScanningDialogBox(HWND dialog, DWORD progress)
 
 #else  /* HAVE_SANE */
 
-BOOL DoScannerUI(activeDS *pSource)
+BOOL DoScannerUI(void)
 {
     return FALSE;
 }

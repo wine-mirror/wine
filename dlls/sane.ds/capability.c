@@ -26,13 +26,12 @@
 #include "windef.h"
 #include "winbase.h"
 #include "twain.h"
-#include "twain_i.h"
+#include "sane_i.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
-TW_UINT16 TWAIN_SaneCapability (activeDS *pSource, pTW_CAPABILITY pCapability,
-                                TW_UINT16 action)
+TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_SUCCESS;
 
@@ -158,7 +157,7 @@ TW_UINT16 TWAIN_SaneCapability (activeDS *pSource, pTW_CAPABILITY pCapability,
             twCC = TWCC_CAPUNSUPPORTED;
             break;
         case ICAP_XFERMECH:
-            twCC = TWAIN_ICAPXferMech (pSource, pCapability, action);
+            twCC = SANE_ICAPXferMech (pCapability, action);
             break;
         case ICAP_UNDEFINEDIMAGESIZE:
         case CAP_CAMERAPREVIEWUI:
@@ -206,8 +205,7 @@ static TW_BOOL TWAIN_OneValueGet (pTW_CAPABILITY pCapability, TW_UINT32 *pValue)
 }
 
 /* ICAP_XFERMECH */
-TW_UINT16 TWAIN_ICAPXferMech (activeDS *pSource, pTW_CAPABILITY pCapability,
-                              TW_UINT16 action)
+TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TRACE("ICAP_XFERMECH\n");
 
@@ -216,7 +214,7 @@ TW_UINT16 TWAIN_ICAPXferMech (activeDS *pSource, pTW_CAPABILITY pCapability,
         case MSG_GET:
             if (pCapability->ConType == TWON_ONEVALUE)
             {
-                if (!TWAIN_OneValueSet (pCapability, pSource->capXferMech))
+                if (!TWAIN_OneValueSet (pCapability, activeDS.capXferMech))
                     return TWCC_LOWMEMORY;
             }
             break;
@@ -226,7 +224,7 @@ TW_UINT16 TWAIN_ICAPXferMech (activeDS *pSource, pTW_CAPABILITY pCapability,
 		TW_UINT32 xfermechtemp = 0;
                 if (!TWAIN_OneValueGet (pCapability, &xfermechtemp))
                     return TWCC_LOWMEMORY;
-		pSource->capXferMech = xfermechtemp;
+		activeDS.capXferMech = xfermechtemp;
             }
             else if (pCapability->ConType == TWON_ENUMERATION)
             {
@@ -234,7 +232,7 @@ TW_UINT16 TWAIN_ICAPXferMech (activeDS *pSource, pTW_CAPABILITY pCapability,
             }
             break;
         case MSG_GETCURRENT:
-            if (!TWAIN_OneValueSet (pCapability, pSource->capXferMech))
+            if (!TWAIN_OneValueSet (pCapability, activeDS.capXferMech))
                 return TWCC_LOWMEMORY;
             break;
         case MSG_GETDEFAULT:
@@ -242,7 +240,7 @@ TW_UINT16 TWAIN_ICAPXferMech (activeDS *pSource, pTW_CAPABILITY pCapability,
                 return TWCC_LOWMEMORY;
             break;
         case MSG_RESET:
-            pSource->capXferMech = TWSX_NATIVE;
+            activeDS.capXferMech = TWSX_NATIVE;
             break;
     }
     return TWCC_SUCCESS;

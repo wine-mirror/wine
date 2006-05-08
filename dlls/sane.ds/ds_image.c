@@ -26,13 +26,13 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "twain.h"
-#include "twain_i.h"
+#include "sane_i.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 /* DG_IMAGE/DAT_CIECOLOR/MSG_GET */
-TW_UINT16 TWAIN_CIEColorGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_CIEColorGet (pTW_IDENTITY pOrigin, 
                              TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -41,7 +41,7 @@ TW_UINT16 TWAIN_CIEColorGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_EXTIMAGEINFO/MSG_GET */
-TW_UINT16 TWAIN_ExtImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_ExtImageInfoGet (pTW_IDENTITY pOrigin, 
                                  TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -50,7 +50,7 @@ TW_UINT16 TWAIN_ExtImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_GRAYRESPONSE/MSG_RESET */
-TW_UINT16 TWAIN_GrayResponseReset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_GrayResponseReset (pTW_IDENTITY pOrigin, 
                                    TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -59,7 +59,7 @@ TW_UINT16 TWAIN_GrayResponseReset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_GRAYRESPONSE/MSG_SET */
-TW_UINT16 TWAIN_GrayResponseSet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_GrayResponseSet (pTW_IDENTITY pOrigin, 
                                  TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -68,7 +68,7 @@ TW_UINT16 TWAIN_GrayResponseSet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_IMAGEFILEXFER/MSG_GET */
-TW_UINT16 TWAIN_ImageFileXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_ImageFileXferGet (pTW_IDENTITY pOrigin, 
                                   TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -77,7 +77,7 @@ TW_UINT16 TWAIN_ImageFileXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_IMAGEINFO/MSG_GET */
-TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin, 
                               TW_MEMREF pData)
 {
 #ifndef HAVE_SANE
@@ -85,28 +85,22 @@ TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 #else
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_IMAGEINFO pImageInfo = (pTW_IMAGEINFO) pData;
-    activeDS *pSource = TWAIN_LookupSource (pDest);
     SANE_Status status;
 
     TRACE("DG_IMAGE/DAT_IMAGEINFO/MSG_GET\n");
 
-    if (!pSource)
+    if (activeDS.currentState != 6 && activeDS.currentState != 7)
     {
         twRC = TWRC_FAILURE;
-        DSM_twCC = TWCC_BADDEST;
-    }
-    else if (pSource->currentState != 6 && pSource->currentState != 7)
-    {
-        twRC = TWRC_FAILURE;
-        pSource->twCC = TWCC_SEQERROR;
+        activeDS.twCC = TWCC_SEQERROR;
     }
     else
     {
-        if (pSource->currentState == 6)
+        if (activeDS.currentState == 6)
         {
             /* return general image description information about the image about to be transferred */
-            status = sane_get_parameters (pSource->deviceHandle, &pSource->sane_param);
-            pSource->sane_param_valid = TRUE;
+            status = sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+            activeDS.sane_param_valid = TRUE;
             TRACE("Getting parameters\n");
         }
 
@@ -114,37 +108,37 @@ TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         pImageInfo->XResolution.Frac = 0;
         pImageInfo->YResolution.Whole = -1;
         pImageInfo->YResolution.Frac = 0;
-        pImageInfo->ImageWidth = pSource->sane_param.pixels_per_line;
-        pImageInfo->ImageLength = pSource->sane_param.lines;
+        pImageInfo->ImageWidth = activeDS.sane_param.pixels_per_line;
+        pImageInfo->ImageLength = activeDS.sane_param.lines;
 
-        TRACE("Bits per Sample %i\n",pSource->sane_param.depth);
-        TRACE("Frame Format %i\n",pSource->sane_param.format);
+        TRACE("Bits per Sample %i\n",activeDS.sane_param.depth);
+        TRACE("Frame Format %i\n",activeDS.sane_param.format);
 
-        if (pSource->sane_param.format == SANE_FRAME_RGB )
+        if (activeDS.sane_param.format == SANE_FRAME_RGB )
         {
-            pImageInfo->BitsPerPixel = pSource->sane_param.depth * 3;
+            pImageInfo->BitsPerPixel = activeDS.sane_param.depth * 3;
             pImageInfo->Compression = TWCP_NONE;
             pImageInfo->Planar = TRUE;
             pImageInfo->SamplesPerPixel = 3;
-            pImageInfo->BitsPerSample[0] = pSource->sane_param.depth;
-            pImageInfo->BitsPerSample[1] = pSource->sane_param.depth;
-            pImageInfo->BitsPerSample[2] = pSource->sane_param.depth;
+            pImageInfo->BitsPerSample[0] = activeDS.sane_param.depth;
+            pImageInfo->BitsPerSample[1] = activeDS.sane_param.depth;
+            pImageInfo->BitsPerSample[2] = activeDS.sane_param.depth;
             pImageInfo->PixelType = TWPT_RGB;
         }
-        else if (pSource->sane_param.format == SANE_FRAME_GRAY)
+        else if (activeDS.sane_param.format == SANE_FRAME_GRAY)
         {
-            pImageInfo->BitsPerPixel = pSource->sane_param.depth;
+            pImageInfo->BitsPerPixel = activeDS.sane_param.depth;
             pImageInfo->Compression = TWCP_NONE;
             pImageInfo->Planar = TRUE;
             pImageInfo->SamplesPerPixel = 1;
-            pImageInfo->BitsPerSample[0] = pSource->sane_param.depth;
+            pImageInfo->BitsPerSample[0] = activeDS.sane_param.depth;
             pImageInfo->PixelType = TWPT_GRAY;
         }
         else
         {
-            ERR("Unhandled source frame type %i\n",pSource->sane_param.format);
+            ERR("Unhandled source frame type %i\n",activeDS.sane_param.format);
             twRC = TWRC_FAILURE;
-            pSource->twCC = TWCC_SEQERROR;
+            activeDS.twCC = TWCC_SEQERROR;
         }
     }
 
@@ -153,7 +147,7 @@ TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_IMAGELAYOUT/MSG_GET */
-TW_UINT16 TWAIN_ImageLayoutGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_ImageLayoutGet (pTW_IDENTITY pOrigin, 
                                 TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -162,7 +156,7 @@ TW_UINT16 TWAIN_ImageLayoutGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_IMAGELAYOUT/MSG_GETDEFAULT */
-TW_UINT16 TWAIN_ImageLayoutGetDefault (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_ImageLayoutGetDefault (pTW_IDENTITY pOrigin, 
                                        TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -171,7 +165,7 @@ TW_UINT16 TWAIN_ImageLayoutGetDefault (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_IMAGELAYOUT/MSG_RESET */
-TW_UINT16 TWAIN_ImageLayoutReset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_ImageLayoutReset (pTW_IDENTITY pOrigin, 
                                   TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -180,7 +174,7 @@ TW_UINT16 TWAIN_ImageLayoutReset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_IMAGELAYOUT/MSG_SET */
-TW_UINT16 TWAIN_ImageLayoutSet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_ImageLayoutSet (pTW_IDENTITY pOrigin, 
                                 TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -189,7 +183,7 @@ TW_UINT16 TWAIN_ImageLayoutSet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_IMAGEMEMXFER/MSG_GET */
-TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin, 
                                  TW_MEMREF pData)
 {
 #ifndef HAVE_SANE
@@ -197,20 +191,14 @@ TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 #else
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_IMAGEMEMXFER pImageMemXfer = (pTW_IMAGEMEMXFER) pData;
-    activeDS *pSource = TWAIN_LookupSource (pDest);
     SANE_Status status = SANE_STATUS_GOOD;
 
     TRACE ("DG_IMAGE/DAT_IMAGEMEMXFER/MSG_GET\n");
 
-    if (!pSource)
+    if (activeDS.currentState < 6 || activeDS.currentState > 7)
     {
         twRC = TWRC_FAILURE;
-        DSM_twCC = TWCC_NODS;
-    }
-    else if (pSource->currentState < 6 || pSource->currentState > 7)
-    {
-        twRC = TWRC_FAILURE;
-        pSource->twCC = TWCC_SEQERROR;
+        activeDS.twCC = TWCC_SEQERROR;
     }
     else
     {
@@ -221,48 +209,48 @@ TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         int rows;
 
         /* Transfer an image from the source to the application */
-        if (pSource->currentState == 6)
+        if (activeDS.currentState == 6)
         {
 
             /* trigger scanning dialog */
-            pSource->progressWnd = ScanningDialogBox(NULL,0);
+            activeDS.progressWnd = ScanningDialogBox(NULL,0);
 
-            ScanningDialogBox(pSource->progressWnd,0);
+            ScanningDialogBox(activeDS.progressWnd,0);
 
-            status = sane_start (pSource->deviceHandle);
+            status = sane_start (activeDS.deviceHandle);
             if (status != SANE_STATUS_GOOD)
             {
                 WARN("sane_start: %s\n", sane_strstatus (status));
-                sane_cancel (pSource->deviceHandle);
-                pSource->twCC = TWCC_OPERATIONERROR;
+                sane_cancel (activeDS.deviceHandle);
+                activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
 
-            status = sane_get_parameters (pSource->deviceHandle,
-                    &pSource->sane_param);
-            pSource->sane_param_valid = TRUE;
+            status = sane_get_parameters (activeDS.deviceHandle,
+                    &activeDS.sane_param);
+            activeDS.sane_param_valid = TRUE;
 
             if (status != SANE_STATUS_GOOD)
             {
                 WARN("sane_get_parameters: %s\n", sane_strstatus (status));
-                sane_cancel (pSource->deviceHandle);
-                pSource->twCC = TWCC_OPERATIONERROR;
+                sane_cancel (activeDS.deviceHandle);
+                activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
 
             TRACE("Acquiring image %dx%dx%d bits (format=%d last=%d) from sane...\n"
-              , pSource->sane_param.pixels_per_line, pSource->sane_param.lines,
-              pSource->sane_param.depth, pSource->sane_param.format,
-              pSource->sane_param.last_frame);
+              , activeDS.sane_param.pixels_per_line, activeDS.sane_param.lines,
+              activeDS.sane_param.depth, activeDS.sane_param.format,
+              activeDS.sane_param.last_frame);
 
-            pSource->currentState = 7;
+            activeDS.currentState = 7;
         }
 
         /* access memory buffer */
-        if (pImageMemXfer->Memory.Length < pSource->sane_param.bytes_per_line)
+        if (pImageMemXfer->Memory.Length < activeDS.sane_param.bytes_per_line)
         {
-            sane_cancel (pSource->deviceHandle);
-            pSource->twCC = TWCC_BADVALUE;
+            sane_cancel (activeDS.deviceHandle);
+            activeDS.twCC = TWCC_BADVALUE;
             return TWRC_FAILURE;
         }
 
@@ -278,14 +266,14 @@ TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 
         ptr = buffer;
         consumed_len = 0;
-        rows = pImageMemXfer->Memory.Length / pSource->sane_param.bytes_per_line;
+        rows = pImageMemXfer->Memory.Length / activeDS.sane_param.bytes_per_line;
 
         /* must fill full lines */
-        while (consumed_len < (pSource->sane_param.bytes_per_line*rows) && 
+        while (consumed_len < (activeDS.sane_param.bytes_per_line*rows) && 
                 status == SANE_STATUS_GOOD)
         {
-            status = sane_read (pSource->deviceHandle, ptr, 
-                    (pSource->sane_param.bytes_per_line*rows) - consumed_len ,
+            status = sane_read (activeDS.deviceHandle, ptr, 
+                    (activeDS.sane_param.bytes_per_line*rows) - consumed_len ,
                     &buff_len);
             consumed_len += buff_len;
             ptr += buff_len;
@@ -294,30 +282,30 @@ TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         if (status == SANE_STATUS_GOOD || status == SANE_STATUS_EOF)
         {
             pImageMemXfer->Compression = TWCP_NONE;
-            pImageMemXfer->BytesPerRow = pSource->sane_param.bytes_per_line;
-            pImageMemXfer->Columns = pSource->sane_param.pixels_per_line;
+            pImageMemXfer->BytesPerRow = activeDS.sane_param.bytes_per_line;
+            pImageMemXfer->Columns = activeDS.sane_param.pixels_per_line;
             pImageMemXfer->Rows = rows;
             pImageMemXfer->XOffset = 0;
             pImageMemXfer->YOffset = 0;
             pImageMemXfer->BytesWritten = consumed_len;
 
-            ScanningDialogBox(pSource->progressWnd, consumed_len);
+            ScanningDialogBox(activeDS.progressWnd, consumed_len);
 
             if (status == SANE_STATUS_EOF)
             {
-                ScanningDialogBox(pSource->progressWnd, -1);
+                ScanningDialogBox(activeDS.progressWnd, -1);
                 TRACE("sane_read: %s\n", sane_strstatus (status));
-                sane_cancel (pSource->deviceHandle);
+                sane_cancel (activeDS.deviceHandle);
                 twRC = TWRC_XFERDONE;
             }
-            pSource->twCC = TWRC_SUCCESS;
+            activeDS.twCC = TWRC_SUCCESS;
         }
         else if (status != SANE_STATUS_EOF)
         {
-            ScanningDialogBox(pSource->progressWnd, -1);
+            ScanningDialogBox(activeDS.progressWnd, -1);
             WARN("sane_read: %s\n", sane_strstatus (status));
-            sane_cancel (pSource->deviceHandle);
-            pSource->twCC = TWCC_OPERATIONERROR;
+            sane_cancel (activeDS.deviceHandle);
+            activeDS.twCC = TWCC_OPERATIONERROR;
             twRC = TWRC_FAILURE;
         }
     }
@@ -330,7 +318,7 @@ TW_UINT16 TWAIN_ImageMemXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET */
-TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin, 
                                     TW_MEMREF pData)
 {
 #ifndef HAVE_SANE
@@ -338,7 +326,6 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 #else
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_UINT32 pHandle = (pTW_UINT32) pData;
-    activeDS *pSource = TWAIN_LookupSource (pDest);
     SANE_Status status;
     SANE_Byte buffer[32*1024];
     int buff_len;
@@ -349,49 +336,44 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 
     TRACE("DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET\n");
 
-    if (!pSource)
+    if (activeDS.currentState != 6)
     {
         twRC = TWRC_FAILURE;
-        DSM_twCC = TWCC_NODS;
-    }
-    else if (pSource->currentState != 6)
-    {
-        twRC = TWRC_FAILURE;
-        pSource->twCC = TWCC_SEQERROR;
+        activeDS.twCC = TWCC_SEQERROR;
     }
     else
     {
         /* Transfer an image from the source to the application */
-        status = sane_start (pSource->deviceHandle);
+        status = sane_start (activeDS.deviceHandle);
         if (status != SANE_STATUS_GOOD)
         {
             WARN("sane_start: %s\n", sane_strstatus (status));
-            sane_cancel (pSource->deviceHandle);
-            pSource->twCC = TWCC_OPERATIONERROR;
+            sane_cancel (activeDS.deviceHandle);
+            activeDS.twCC = TWCC_OPERATIONERROR;
             return TWRC_FAILURE;
         }
 
-        status = sane_get_parameters (pSource->deviceHandle, &pSource->sane_param);
-        pSource->sane_param_valid = TRUE;
+        status = sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+        activeDS.sane_param_valid = TRUE;
         if (status != SANE_STATUS_GOOD)
         {
             WARN("sane_get_parameters: %s\n", sane_strstatus (status));
-            sane_cancel (pSource->deviceHandle);
-            pSource->twCC = TWCC_OPERATIONERROR;
+            sane_cancel (activeDS.deviceHandle);
+            activeDS.twCC = TWCC_OPERATIONERROR;
             return TWRC_FAILURE;
         }
 
         TRACE("Acquiring image %dx%dx%d bits (format=%d last=%d) from sane...\n"
-              , pSource->sane_param.pixels_per_line, pSource->sane_param.lines,
-              pSource->sane_param.depth, pSource->sane_param.format,
-              pSource->sane_param.last_frame);
+              , activeDS.sane_param.pixels_per_line, activeDS.sane_param.lines,
+              activeDS.sane_param.depth, activeDS.sane_param.format,
+              activeDS.sane_param.last_frame);
 
         ZeroMemory (&bmpInfo, sizeof (BITMAPINFO));
         bmpInfo.bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
-        bmpInfo.bmiHeader.biWidth = pSource->sane_param.pixels_per_line;
-        bmpInfo.bmiHeader.biHeight = pSource->sane_param.lines;
+        bmpInfo.bmiHeader.biWidth = activeDS.sane_param.pixels_per_line;
+        bmpInfo.bmiHeader.biHeight = activeDS.sane_param.lines;
         bmpInfo.bmiHeader.biPlanes = 1;
-        bmpInfo.bmiHeader.biBitCount = pSource->sane_param.depth;
+        bmpInfo.bmiHeader.biBitCount = activeDS.sane_param.depth;
         bmpInfo.bmiHeader.biCompression = BI_RGB;
         bmpInfo.bmiHeader.biSizeImage = 0;
         bmpInfo.bmiHeader.biXPelsPerMeter = 0;
@@ -401,18 +383,18 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         bmpInfo.bmiColors[0].rgbBlue = 128;
         bmpInfo.bmiColors[0].rgbGreen = 128;
         bmpInfo.bmiColors[0].rgbRed = 128;
-        hDIB = CreateDIBSection ((dc = GetDC(pSource->hwndOwner)), &bmpInfo,
+        hDIB = CreateDIBSection ((dc = GetDC(activeDS.hwndOwner)), &bmpInfo,
                                  DIB_RGB_COLORS, &pBits, 0, 0);
         if (!hDIB)
         {
-            sane_cancel (pSource->deviceHandle);
-            pSource->twCC = TWCC_LOWMEMORY;
+            sane_cancel (activeDS.deviceHandle);
+            activeDS.twCC = TWCC_LOWMEMORY;
             return TWRC_FAILURE;
         }
 
         do
         {
-            status = sane_read (pSource->deviceHandle, buffer,
+            status = sane_read (activeDS.deviceHandle, buffer,
                                 sizeof (buffer),  &buff_len);
             if (status == SANE_STATUS_GOOD)
             {
@@ -422,25 +404,25 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
             else if (status != SANE_STATUS_EOF)
             {
                 WARN("sane_read: %s\n", sane_strstatus (status));
-                sane_cancel (pSource->deviceHandle);
-                pSource->twCC = TWCC_OPERATIONERROR;
+                sane_cancel (activeDS.deviceHandle);
+                activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
         } while (status == SANE_STATUS_GOOD);
 
-        sane_cancel (pSource->deviceHandle);
-        ReleaseDC (pSource->hwndOwner, dc);
+        sane_cancel (activeDS.deviceHandle);
+        ReleaseDC (activeDS.hwndOwner, dc);
         *pHandle = (TW_UINT32)hDIB;
         twRC = TWRC_XFERDONE;
-        pSource->twCC = TWCC_SUCCESS;
-        pSource->currentState = 7;
+        activeDS.twCC = TWCC_SUCCESS;
+        activeDS.currentState = 7;
     }
     return twRC;
 #endif
 }
 
 /* DG_IMAGE/DAT_JPEGCOMPRESSION/MSG_GET */
-TW_UINT16 TWAIN_JPEGCompressionGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_JPEGCompressionGet (pTW_IDENTITY pOrigin, 
                                     TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -449,8 +431,8 @@ TW_UINT16 TWAIN_JPEGCompressionGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_JPEGCOMPRESSION/MSG_GETDEFAULT */
-TW_UINT16 TWAIN_JPEGCompressionGetDefault (pTW_IDENTITY pOrigin,
-                                           pTW_IDENTITY pDest,
+TW_UINT16 SANE_JPEGCompressionGetDefault (pTW_IDENTITY pOrigin,
+                                           
                                            TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -459,7 +441,7 @@ TW_UINT16 TWAIN_JPEGCompressionGetDefault (pTW_IDENTITY pOrigin,
 }
 
 /* DG_IMAGE/DAT_JPEGCOMPRESSION/MSG_RESET */
-TW_UINT16 TWAIN_JPEGCompressionReset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_JPEGCompressionReset (pTW_IDENTITY pOrigin, 
                                       TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -468,7 +450,7 @@ TW_UINT16 TWAIN_JPEGCompressionReset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_JPEGCOMPRESSION/MSG_SET */
-TW_UINT16 TWAIN_JPEGCompressionSet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_JPEGCompressionSet (pTW_IDENTITY pOrigin, 
                                     TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -477,7 +459,7 @@ TW_UINT16 TWAIN_JPEGCompressionSet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_PALETTE8/MSG_GET */
-TW_UINT16 TWAIN_Palette8Get (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_Palette8Get (pTW_IDENTITY pOrigin, 
                              TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -486,7 +468,7 @@ TW_UINT16 TWAIN_Palette8Get (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_PALETTE8/MSG_GETDEFAULT */
-TW_UINT16 TWAIN_Palette8GetDefault (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_Palette8GetDefault (pTW_IDENTITY pOrigin, 
                                     TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -495,7 +477,7 @@ TW_UINT16 TWAIN_Palette8GetDefault (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_PALETTE8/MSG_RESET */
-TW_UINT16 TWAIN_Palette8Reset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_Palette8Reset (pTW_IDENTITY pOrigin, 
                                TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -504,7 +486,7 @@ TW_UINT16 TWAIN_Palette8Reset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_PALETTE8/MSG_SET */
-TW_UINT16 TWAIN_Palette8Set (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_Palette8Set (pTW_IDENTITY pOrigin, 
                              TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -513,7 +495,7 @@ TW_UINT16 TWAIN_Palette8Set (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_RGBRESPONSE/MSG_RESET */
-TW_UINT16 TWAIN_RGBResponseReset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_RGBResponseReset (pTW_IDENTITY pOrigin, 
                                   TW_MEMREF pData)
 {
     FIXME ("stub!\n");
@@ -522,7 +504,7 @@ TW_UINT16 TWAIN_RGBResponseReset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_IMAGE/DAT_RGBRESPONSE/MSG_SET */
-TW_UINT16 TWAIN_RGBResponseSet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
+TW_UINT16 SANE_RGBResponseSet (pTW_IDENTITY pOrigin, 
                                 TW_MEMREF pData)
 {
     FIXME ("stub!\n");

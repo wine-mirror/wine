@@ -124,6 +124,7 @@ BASEDIRS = \
 	rpcrt4 \
 	rsabase \
 	rsaenh \
+	sane.ds \
 	secur32 \
 	security \
 	sensapi \

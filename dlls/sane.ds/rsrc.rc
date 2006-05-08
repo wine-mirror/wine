@@ -25,9 +25,9 @@
 
 #include "resource.h"
 
-#include "twain_De.rc"
-#include "twain_En.rc"
-#include "twain_Fi.rc"
-#include "twain_Fr.rc"
-#include "twain_Ko.rc"
-#include "twain_No.rc"
+#include "sane_De.rc"
+#include "sane_En.rc"
+#include "sane_Fi.rc"
+#include "sane_Fr.rc"
+#include "sane_Ko.rc"
+#include "sane_No.rc"
