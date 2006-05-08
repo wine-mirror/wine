@@ -303,19 +303,17 @@ CompositeMonikerImpl_GetSizeMax(IMoniker* iface,ULARGE_INTEGER* pcbSize)
     if (!pcbSize)
         return E_POINTER;
 
-    pcbSize->u.LowPart =0;
-    pcbSize->u.HighPart=0;
+    pcbSize->QuadPart = sizeof(DWORD);
 
     IMoniker_Enum(iface,TRUE,&enumMk);
 
-    while(IEnumMoniker_Next(enumMk,1,&pmk,NULL)){
+    while(IEnumMoniker_Next(enumMk,1,&pmk,NULL)==S_OK){
 
         IMoniker_GetSizeMax(pmk,&ptmpSize);
 
         IMoniker_Release(pmk);
 
-        pcbSize->u.LowPart +=ptmpSize.u.LowPart;
-        pcbSize->u.HighPart+=ptmpSize.u.HighPart;
+        pcbSize->QuadPart = ptmpSize.QuadPart + sizeof(CLSID);
     }
 
     IEnumMoniker_Release(enumMk);
