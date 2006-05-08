@@ -694,17 +694,6 @@ HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName,
     return MK_E_SYNTAX;
 }
 
-/******************************************************************************
- *              CreateClassMoniker        [OLE32.@]
- */
-HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker ** ppmk)
-{
-    FIXME("%s\n", debugstr_guid( rclsid ));
-    if( ppmk )
-        *ppmk = NULL;
-    return E_NOTIMPL;
-}
-
 /* Virtual function table for the IRunningObjectTable class. */
 static const IRunningObjectTableVtbl VT_RunningObjectTableImpl =
 {

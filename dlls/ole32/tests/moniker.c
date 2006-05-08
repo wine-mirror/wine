@@ -488,7 +488,7 @@ static void test_class_moniker(void)
     FILETIME filetime;
 
     hr = CreateClassMoniker(&CLSID_StdComponentCategoriesMgr, &moniker);
-    todo_wine ok_ole_success(hr, CreateClassMoniker);
+    ok_ole_success(hr, CreateClassMoniker);
     if (!moniker) return;
 
     test_moniker("class moniker", moniker, 
@@ -523,13 +523,16 @@ static void test_class_moniker(void)
     ok(hr == E_NOTIMPL, "IMoniker_IsRunning should return E_NOTIMPL, not 0x%08lx\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
+    todo_wine
     ok(hr == MK_E_UNAVAILABLE, "IMoniker_GetTimeOfLastChange should return MK_E_UNAVAILABLE, not 0x%08lx\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    todo_wine
     ok_ole_success(hr, IMoniker_BindToStorage);
     IUnknown_Release(unknown);
 
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    todo_wine
     ok_ole_success(hr, IMoniker_BindToStorage);
     IUnknown_Release(unknown);
 
