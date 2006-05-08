@@ -1746,13 +1746,19 @@ static const IMarshalVtbl VT_MarshalImpl =
  *         Composite-Moniker_Construct (local function)
  *******************************************************************************/
 static HRESULT
-CompositeMonikerImpl_Construct(CompositeMonikerImpl* This,
+CompositeMonikerImpl_Construct(CompositeMonikerImpl** ppThis,
                LPMONIKER pmkFirst, LPMONIKER pmkRest)
 {
     DWORD mkSys;
     IEnumMoniker *enumMoniker;
     IMoniker *tempMk;
     HRESULT res;
+    CompositeMonikerImpl *This;
+
+    *ppThis = This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+
+    if (!This)
+        return E_OUTOFMEMORY;
 
     TRACE("(%p,%p,%p)\n",This,pmkFirst,pmkRest);
 
@@ -1768,6 +1774,9 @@ CompositeMonikerImpl_Construct(CompositeMonikerImpl* This,
     This->tabMoniker=HeapAlloc(GetProcessHeap(),0,This->tabSize*sizeof(IMoniker));
     if (This->tabMoniker==NULL)
         return E_OUTOFMEMORY;
+
+    if (!pmkFirst && !pmkRest)
+        return S_OK;
 
     IMoniker_IsSystemMoniker(pmkFirst,&mkSys);
 
@@ -1918,26 +1927,12 @@ CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest,
     else  if (pmkFirst==NULL && pmkRest==NULL)
         return S_OK;
 
-    newCompositeMoniker = HeapAlloc(GetProcessHeap(), 0,sizeof(CompositeMonikerImpl));
+    hr = CompositeMonikerImpl_Construct(&newCompositeMoniker,pmkFirst,pmkRest);
 
-    if (newCompositeMoniker == 0)
-        return STG_E_INSUFFICIENTMEMORY;
-
-    hr = CompositeMonikerImpl_Construct(newCompositeMoniker,pmkFirst,pmkRest);
-
-    if (FAILED(hr)){
-
-        HeapFree(GetProcessHeap(),0,newCompositeMoniker);
+    if (FAILED(hr))
         return hr;
-    }
-    if (newCompositeMoniker->tabLastIndex==1)
 
-        hr = IMoniker_QueryInterface(newCompositeMoniker->tabMoniker[0],&IID_IMoniker,(void**)ppmkComposite);
-    else
-
-        hr = IMoniker_QueryInterface((IMoniker*)newCompositeMoniker,&IID_IMoniker,(void**)ppmkComposite);
-
-    return hr;
+    return IMoniker_QueryInterface((IMoniker*)newCompositeMoniker,&IID_IMoniker,(void**)ppmkComposite);
 }
 
 /******************************************************************************
