@@ -727,9 +727,8 @@ static HRESULT WINAPI
 CompositeMonikerImpl_GetTimeOfLastChange(IMoniker* iface, IBindCtx* pbc,
                IMoniker* pmkToLeft, FILETIME* pCompositeTime)
 {
-    IRunningObjectTable* rot;
     HRESULT res;
-    IMoniker *tempMk,*antiMk,*mostRigthMk;
+    IMoniker *tempMk,*antiMk,*mostRigthMk,*leftMk;
     IEnumMoniker *enumMoniker;
 
     TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pCompositeTime);
@@ -741,36 +740,45 @@ CompositeMonikerImpl_GetTimeOfLastChange(IMoniker* iface, IBindCtx* pbc,
     /* retrieve the time of last change. If the object is not in the ROT, the method recursively calls  */
     /* IMoniker::GetTimeOfLastChange on the rightmost component of the composite, passing the remainder */
     /* of the composite as the pmkToLeft parameter for that call.                                       */
-    if (pmkToLeft!=NULL){
+    if (pmkToLeft)
+    {
+        IRunningObjectTable* rot;
 
-        res=CreateGenericComposite(pmkToLeft,iface,&tempMk);
+        res = IMoniker_ComposeWith(pmkToLeft, iface, FALSE, &leftMk);
 
-        res=IBindCtx_GetRunningObjectTable(pbc,&rot);
-
+        res = IBindCtx_GetRunningObjectTable(pbc,&rot);
         if (FAILED(res))
+        {
+            IMoniker_Release(leftMk);
             return res;
+        }
 
-        if (IRunningObjectTable_GetTimeOfLastChange(rot,tempMk,pCompositeTime)==S_OK)
+        if (IRunningObjectTable_GetTimeOfLastChange(rot,leftMk,pCompositeTime)==S_OK)
+        {
+            IMoniker_Release(leftMk);
             return res;
-        else
-
-            IMoniker_Enum(iface,FALSE,&enumMoniker);
-            IEnumMoniker_Next(enumMoniker,1,&mostRigthMk,NULL);
-            IEnumMoniker_Release(enumMoniker);
-
-            res=CreateAntiMoniker(&antiMk);
-            res=IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
-            IMoniker_Release(antiMk);
-
-            res=CompositeMonikerImpl_GetTimeOfLastChange(mostRigthMk,pbc,tempMk,pCompositeTime);
-
-            IMoniker_Release(tempMk);
-            IMoniker_Release(mostRigthMk);
-
-            return res;
+        }
     }
     else
-        return IMoniker_GetTimeOfLastChange(iface,pbc,NULL,pCompositeTime);
+        leftMk = iface;
+
+    IMoniker_Enum(iface, FALSE, &enumMoniker);
+    IEnumMoniker_Next(enumMoniker, 1, &mostRigthMk, NULL);
+    IEnumMoniker_Release(enumMoniker);
+
+    res = CreateAntiMoniker(&antiMk);
+    res = IMoniker_ComposeWith(leftMk, antiMk, 0, &tempMk);
+    IMoniker_Release(antiMk);
+
+    res = IMoniker_GetTimeOfLastChange(mostRigthMk, pbc, tempMk, pCompositeTime);
+
+    IMoniker_Release(tempMk);
+    IMoniker_Release(mostRigthMk);
+
+    if (pmkToLeft)
+        IMoniker_Release(leftMk);
+
+    return res;
 }
 
 /******************************************************************************
