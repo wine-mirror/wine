@@ -233,12 +233,14 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	if (!hmod) {
 		ERR("Failed to load TWAIN Source %s\n", modname);
 		DSM_twCC = TWCC_OPERATIONERROR;
+                HeapFree(GetProcessHeap(), 0, newSource);
 		return TWRC_FAILURE;
 	}
 	newSource->hmod = hmod; 
 	newSource->dsEntry = (DSENTRYPROC)GetProcAddress(hmod, "DS_Entry"); 
 	if (TWRC_SUCCESS != newSource->dsEntry (pOrigin, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, pIdentity)) {
 		DSM_twCC = TWCC_OPERATIONERROR;
+                HeapFree(GetProcessHeap(), 0, newSource);
 		return TWRC_FAILURE;
 	}
 	/* Assign name and id for the opened data source */
