@@ -622,7 +622,7 @@ CompositeMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
         res = IMoniker_Hash(tempMk, &tempHash);
         if(FAILED(res))
             break;
-        *pdwHash = (*pdwHash * 37) + tempHash;
+        *pdwHash = *pdwHash ^ tempHash;
         
         IMoniker_Release(tempMk);
     }

@@ -657,11 +657,9 @@ static void test_generic_composite_moniker(void)
     hr = IMoniker_Hash(moniker, &hash);
     ok_ole_success(hr, IMoniker_Hash);
 
-    todo_wine {
     ok(hash == 0xd87,
         "Hash value != 0xd87, instead was 0x%08lx\n",
         hash);
-    }
 
     /* IsSystemMoniker test */
 
