@@ -1450,13 +1450,13 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
 
     hr = IMarshal_GetMarshalSizeMax(pMarshal, riid, pUnk, dwDestContext,
                                     pvDestContext, mshlFlags, pulSize);
-    /* add on the size of the common header */
-    *pulSize += FIELD_OFFSET(OBJREF, u_objref);
-
-    /* if custom marshaling, add on size of custom header */
-    if (!IsEqualCLSID(&marshaler_clsid, &CLSID_DfMarshal))
-        *pulSize += FIELD_OFFSET(OBJREF, u_objref.u_custom.pData) - 
-                    FIELD_OFFSET(OBJREF, u_objref.u_custom);
+    if (IsEqualCLSID(&marshaler_clsid, &CLSID_DfMarshal))
+        /* add on the size of the common header */
+        *pulSize += FIELD_OFFSET(OBJREF, u_objref);
+    else
+        /* custom marshaling: add on the size of the whole OBJREF structure
+         * like native does */
+        *pulSize += sizeof(OBJREF);
 
     IMarshal_Release(pMarshal);
     return hr;
