@@ -137,6 +137,16 @@ CompositeMonikerImpl_AddRef(IMoniker* iface)
     return InterlockedIncrement(&This->ref);
 }
 
+static void CompositeMonikerImpl_ReleaseMonikersInTable(CompositeMonikerImpl *This)
+{
+    ULONG i;
+
+    for (i = 0; i < This->tabLastIndex; i++)
+        IMoniker_Release(This->tabMoniker[i]);
+
+    This->tabLastIndex = 0;
+}
+
 /******************************************************************************
  *        CompositeMoniker_Release
  ******************************************************************************/
@@ -144,7 +154,6 @@ static ULONG WINAPI
 CompositeMonikerImpl_Release(IMoniker* iface)
 {
     CompositeMonikerImpl *This = (CompositeMonikerImpl *)iface;
-    ULONG i;
     ULONG ref;
 
     TRACE("(%p)\n",This);
@@ -155,8 +164,7 @@ CompositeMonikerImpl_Release(IMoniker* iface)
     if (ref == 0){
 
         /* release all the components before destroying this object */
-        for (i=0;i<This->tabLastIndex;i++)
-            IMoniker_Release(This->tabMoniker[i]);
+        CompositeMonikerImpl_ReleaseMonikersInTable(This);
 
         HeapFree(GetProcessHeap(),0,This->tabMoniker);
         HeapFree(GetProcessHeap(),0,This);
@@ -217,6 +225,8 @@ CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
         ERR("couldn't reading moniker count from stream\n");
         return E_FAIL;
     }
+
+    CompositeMonikerImpl_ReleaseMonikersInTable(This);
 
     for (i = 0; i < moniker_count; i++)
     {
