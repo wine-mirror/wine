@@ -22,6 +22,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -242,6 +243,58 @@ static const BYTE expected_anti_moniker_comparison_data[] =
     0x01,0x00,0x00,0x00,
 };
 
+static const BYTE expected_gc_moniker_marshal_data[] =
+{
+    0x4d,0x45,0x4f,0x57,0x04,0x00,0x00,0x00,
+    0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x09,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x00,0x00,0x00,0x00,0x2c,0x01,0x00,0x00,
+    0x4d,0x45,0x4f,0x57,0x04,0x00,0x00,0x00,
+    0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x04,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x00,0x00,0x00,0x00,0x36,0x00,0x00,0x00,
+    0x02,0x00,0x00,0x00,0x21,0x00,0x05,0x00,
+    0x00,0x00,0x54,0x65,0x73,0x74,0x00,0x4d,
+    0x45,0x4f,0x57,0x04,0x00,0x00,0x00,0x0f,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xc0,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x46,0x04,
+    0x03,0x00,0x00,0x00,0x00,0x00,0x00,0xc0,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x46,0x00,
+    0x00,0x00,0x00,0x36,0x00,0x00,0x00,0x02,
+    0x00,0x00,0x00,0x23,0x00,0x05,0x00,0x00,
+    0x00,0x57,0x69,0x6e,0x65,0x00,
+};
+
+static const BYTE expected_gc_moniker_saved_data[] =
+{
+    0x02,0x00,0x00,0x00,0x04,0x03,0x00,0x00,
+    0x00,0x00,0x00,0x00,0xc0,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x46,0x02,0x00,0x00,0x00,
+    0x21,0x00,0x05,0x00,0x00,0x00,0x54,0x65,
+    0x73,0x74,0x00,0x04,0x03,0x00,0x00,0x00,
+    0x00,0x00,0x00,0xc0,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x46,0x02,0x00,0x00,0x00,0x23,
+    0x00,0x05,0x00,0x00,0x00,0x57,0x69,0x6e,
+    0x65,0x00,
+};
+
+static const BYTE expected_gc_moniker_comparison_data[] =
+{
+    0x09,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x04,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+    0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46,
+    0x21,0x00,0x54,0x00,0x45,0x00,0x53,0x00,
+    0x54,0x00,0x00,0x00,0x04,0x03,0x00,0x00,
+    0x00,0x00,0x00,0x00,0xc0,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x46,0x23,0x00,0x57,0x00,
+    0x49,0x00,0x4e,0x00,0x45,0x00,0x00,0x00,
+};
+
 static void test_moniker(
     const char *testname, IMoniker *moniker,
     const BYTE *expected_moniker_marshal_data, size_t sizeof_expected_moniker_marshal_data,
@@ -288,11 +341,11 @@ static void test_moniker(
     {
         for (i = 0; i < moniker_size; i++)
         {
-            if (i % 8 == 0) trace("     ");
-            trace("0x%02x,", buffer[i]);
-            if (i % 8 == 7) trace("\n");
+            if (i % 8 == 0) printf("     ");
+            printf("0x%02x,", buffer[i]);
+            if (i % 8 == 7) printf("\n");
         }
-        trace("\n");
+        printf("\n");
     }
 
     IROTData_Release(rotdata);
@@ -331,11 +384,11 @@ static void test_moniker(
     {
         for (i = 0; i < moniker_size; i++)
         {
-            if (i % 8 == 0) trace("     ");
-            trace("0x%02x,", moniker_data[i]);
-            if (i % 8 == 7) trace("\n");
+            if (i % 8 == 0) printf("     ");
+            printf("0x%02x,", moniker_data[i]);
+            if (i % 8 == 7) printf("\n");
         }
-        trace("\n");
+        printf("\n");
     }
 
     GlobalUnlock(hglobal);
@@ -363,12 +416,15 @@ static void test_moniker(
         testname, sizeof_expected_moniker_marshal_data, moniker_size);
 
     /* then do a byte-by-byte comparison */
-    for (i = 0; i < min(moniker_size, sizeof_expected_moniker_marshal_data); i++)
+    if (expected_moniker_marshal_data)
     {
-        if (expected_moniker_marshal_data[i] != moniker_data[i])
+        for (i = 0; i < min(moniker_size, sizeof_expected_moniker_marshal_data); i++)
         {
-            same = FALSE;
-            break;
+            if (expected_moniker_marshal_data[i] != moniker_data[i])
+            {
+                same = FALSE;
+                break;
+            }
         }
     }
 
@@ -377,11 +433,11 @@ static void test_moniker(
     {
         for (i = 0; i < moniker_size; i++)
         {
-            if (i % 8 == 0) trace("     ");
-            trace("0x%02x,", moniker_data[i]);
-            if (i % 8 == 7) trace("\n");
+            if (i % 8 == 0) printf("     ");
+            printf("0x%02x,", moniker_data[i]);
+            if (i % 8 == 7) printf("\n");
         }
-        trace("\n");
+        printf("\n");
     }
 
     GlobalUnlock(hglobal);
@@ -569,6 +625,57 @@ static void test_anti_moniker(void)
     IMoniker_Release(moniker);
 }
 
+static void test_generic_composite_moniker(void)
+{
+    HRESULT hr;
+    IMoniker *moniker;
+    IMoniker *moniker1;
+    IMoniker *moniker2;
+    DWORD moniker_type;
+    DWORD hash;
+    static const WCHAR wszDelimeter1[] = {'!',0};
+    static const WCHAR wszObjectName1[] = {'T','e','s','t',0};
+    static const WCHAR wszDelimeter2[] = {'#',0};
+    static const WCHAR wszObjectName2[] = {'W','i','n','e',0};
+
+    hr = CreateItemMoniker(wszDelimeter1, wszObjectName1, &moniker1);
+    ok_ole_success(hr, CreateItemMoniker);
+    hr = CreateItemMoniker(wszDelimeter2, wszObjectName2, &moniker2);
+    ok_ole_success(hr, CreateItemMoniker);
+    hr = CreateGenericComposite(moniker1, moniker2, &moniker);
+    ok_ole_success(hr, CreateGenericComposite);
+
+    /* FIXME: marshal data test commented out as the written custom marshal
+     * size in the OBJREF header doesn't match in ours and native don't match,
+     * probably due to a bug in Microsoft's implementation. */
+    test_moniker("generic composite moniker", moniker, 
+        NULL /*expected_gc_moniker_marshal_data*/, sizeof(expected_gc_moniker_marshal_data),
+        expected_gc_moniker_saved_data, sizeof(expected_gc_moniker_saved_data),
+        expected_gc_moniker_comparison_data, sizeof(expected_gc_moniker_comparison_data));
+
+    /* Hashing */
+
+    hr = IMoniker_Hash(moniker, &hash);
+    ok_ole_success(hr, IMoniker_Hash);
+
+    todo_wine {
+    ok(hash == 0xd87,
+        "Hash value != 0xd87, instead was 0x%08lx\n",
+        hash);
+    }
+
+    /* IsSystemMoniker test */
+
+    hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
+    ok_ole_success(hr, IMoniker_IsSystemMoniker);
+
+    ok(moniker_type == MKSYS_GENERICCOMPOSITE,
+        "dwMkSys != MKSYS_GENERICCOMPOSITE, instead was 0x%08lx",
+        moniker_type);
+
+    IMoniker_Release(moniker);
+}
+
 START_TEST(moniker)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -578,6 +685,7 @@ START_TEST(moniker)
     test_file_monikers();
     test_item_moniker();
     test_anti_moniker();
+    test_generic_composite_moniker();
 
     /* FIXME: test moniker creation funcs and parsing other moniker formats */
 
