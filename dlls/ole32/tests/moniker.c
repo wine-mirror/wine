@@ -312,6 +312,9 @@ static void test_moniker(
     BYTE buffer[128];
     IMoniker * moniker_proxy;
 
+    hr = IMoniker_IsDirty(moniker);
+    ok(hr == S_FALSE, "%s: IMoniker_IsDirty should return S_FALSE, not 0x%08lx\n", testname, hr);
+
     /* IROTData::GetComparisonData test */
 
     hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rotdata);
