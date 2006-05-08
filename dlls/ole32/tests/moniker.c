@@ -482,6 +482,10 @@ static void test_class_moniker(void)
     IMoniker *moniker;
     DWORD moniker_type;
     DWORD hash;
+    IBindCtx *bindctx;
+    IMoniker *inverse;
+    IUnknown *unknown;
+    FILETIME filetime;
 
     hr = CreateClassMoniker(&CLSID_StdComponentCategoriesMgr, &moniker);
     todo_wine ok_ole_success(hr, CreateClassMoniker);
@@ -510,6 +514,30 @@ static void test_class_moniker(void)
     ok(moniker_type == MKSYS_CLASSMONIKER,
         "dwMkSys != MKSYS_CLASSMONIKER, instead was 0x%08lx",
         moniker_type);
+
+    hr = CreateBindCtx(0, &bindctx);
+    ok_ole_success(hr, CreateBindCtx);
+
+    /* IsRunning test */
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
+    ok(hr == E_NOTIMPL, "IMoniker_IsRunning should return E_NOTIMPL, not 0x%08lx\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
+    ok(hr == MK_E_UNAVAILABLE, "IMoniker_GetTimeOfLastChange should return MK_E_UNAVAILABLE, not 0x%08lx\n", hr);
+
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    ok_ole_success(hr, IMoniker_BindToStorage);
+    IUnknown_Release(unknown);
+
+    hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    ok_ole_success(hr, IMoniker_BindToStorage);
+    IUnknown_Release(unknown);
+
+    IBindCtx_Release(bindctx);
+
+    hr = IMoniker_Inverse(moniker, &inverse);
+    ok_ole_success(hr, IMoniker_Inverse);
+    IMoniker_Release(inverse);
 
     IMoniker_Release(moniker);
 }
@@ -582,6 +610,9 @@ static void test_item_moniker(void)
     IMoniker *moniker;
     DWORD moniker_type;
     DWORD hash;
+    IBindCtx *bindctx;
+    IMoniker *inverse;
+    IUnknown *unknown;
     static const WCHAR wszDelimeter[] = {'!',0};
     static const WCHAR wszObjectName[] = {'T','e','s','t',0};
     static const WCHAR expected_display_name[] = { '!','T','e','s','t',0 };
@@ -613,6 +644,25 @@ static void test_item_moniker(void)
         "dwMkSys != MKSYS_ITEMMONIKER, instead was 0x%08lx",
         moniker_type);
 
+    hr = CreateBindCtx(0, &bindctx);
+    ok_ole_success(hr, CreateBindCtx);
+
+    /* IsRunning test */
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
+    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08lx\n", hr);
+
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    ok(hr == E_INVALIDARG, "IMoniker_BindToStorage should return E_INVALIDARG, not 0x%08lx\n", hr);
+
+    hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    ok(hr == E_INVALIDARG, "IMoniker_BindToObject should return E_INVALIDARG, not 0x%08lx\n", hr);
+
+    IBindCtx_Release(bindctx);
+
+    hr = IMoniker_Inverse(moniker, &inverse);
+    ok_ole_success(hr, IMoniker_Inverse);
+    IMoniker_Release(inverse);
+
     IMoniker_Release(moniker);
 }
 
@@ -620,9 +670,12 @@ static void test_anti_moniker(void)
 {
     HRESULT hr;
     IMoniker *moniker;
-    IMoniker *inverse;
     DWORD moniker_type;
     DWORD hash;
+    IBindCtx *bindctx;
+    FILETIME filetime;
+    IMoniker *inverse;
+    IUnknown *unknown;
     static const WCHAR expected_display_name[] = { '\\','.','.',0 };
 
     hr = CreateAntiMoniker(&moniker);
@@ -653,6 +706,24 @@ static void test_anti_moniker(void)
     ok(hr == MK_E_NOINVERSE, "IMoniker_Inverse should have returned MK_E_NOINVERSE instead of 0x%08lx\n", hr);
     ok(inverse == NULL, "inverse should have been set to NULL instead of %p\n", inverse);
 
+    hr = CreateBindCtx(0, &bindctx);
+    ok_ole_success(hr, CreateBindCtx);
+
+    /* IsRunning test */
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
+    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08lx\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
+    ok(hr == E_NOTIMPL, "IMoniker_GetTimeOfLastChange should return E_NOTIMPL, not 0x%08lx\n", hr);
+
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    ok(hr == E_NOTIMPL, "IMoniker_BindToObject should return E_NOTIMPL, not 0x%08lx\n", hr);
+
+    hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    ok(hr == E_NOTIMPL, "IMoniker_BindToStorage should return E_NOTIMPL, not 0x%08lx\n", hr);
+
+    IBindCtx_Release(bindctx);
+
     IMoniker_Release(moniker);
 }
 
@@ -664,6 +735,10 @@ static void test_generic_composite_moniker(void)
     IMoniker *moniker2;
     DWORD moniker_type;
     DWORD hash;
+    IBindCtx *bindctx;
+    FILETIME filetime;
+    IMoniker *inverse;
+    IUnknown *unknown;
     static const WCHAR wszDelimeter1[] = {'!',0};
     static const WCHAR wszObjectName1[] = {'T','e','s','t',0};
     static const WCHAR wszDelimeter2[] = {'#',0};
@@ -700,6 +775,31 @@ static void test_generic_composite_moniker(void)
     ok(moniker_type == MKSYS_GENERICCOMPOSITE,
         "dwMkSys != MKSYS_GENERICCOMPOSITE, instead was 0x%08lx",
         moniker_type);
+
+    hr = CreateBindCtx(0, &bindctx);
+    ok_ole_success(hr, CreateBindCtx);
+
+    /* IsRunning test */
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
+    todo_wine
+    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08lx\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
+    ok(hr == MK_E_NOTBINDABLE, "IMoniker_GetTimeOfLastChange should return MK_E_NOTBINDABLE, not 0x%08lx\n", hr);
+
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    todo_wine
+    ok(hr == E_INVALIDARG, "IMoniker_BindToObject should return E_INVALIDARG, not 0x%08lx\n", hr);
+
+    todo_wine
+    hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    ok(hr == E_INVALIDARG, "IMoniker_BindToStorage should return E_INVALIDARG, not 0x%08lx\n", hr);
+
+    IBindCtx_Release(bindctx);
+
+    hr = IMoniker_Inverse(moniker, &inverse);
+    ok_ole_success(hr, IMoniker_Inverse);
+    IMoniker_Release(inverse);
 
     IMoniker_Release(moniker);
 }
