@@ -181,9 +181,7 @@ static void test_marshal_LPSAFEARRAY(void)
         ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal\n");
         SafeArrayGetVartype(lpsa, &vt);
         SafeArrayGetVartype(lpsa2, &vt2);
-        todo_wine {
         ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
-        }
         LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
@@ -865,9 +863,7 @@ static void test_marshal_VARIANT(void)
         ok(bound == bound2, "array ubounds differ\n");
         SafeArrayGetVartype(V_ARRAY(&v), &vt);
         SafeArrayGetVartype(V_ARRAY(&v2), &vt2);
-        todo_wine {
         ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
-        }
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);

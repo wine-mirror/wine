@@ -1004,7 +1004,8 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(unsigned long *pFlags, unsigned
 
     /* be careful about which flags we set since they could be a security
      * risk */
-    (*ppsa)->fFeatures = wiresa->fFeatures & ~(FADF_AUTOSETFLAGS);
+    (*ppsa)->fFeatures &= FADF_AUTOSETFLAGS;
+    (*ppsa)->fFeatures |= (wiresa->fFeatures & ~(FADF_AUTOSETFLAGS));
     /* FIXME: there should be a limit on how large wiresa->cbElements can be */
     (*ppsa)->cbElements = wiresa->cbElements;
     (*ppsa)->cLocks = LOWORD(wiresa->cLocks);
