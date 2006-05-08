@@ -519,8 +519,13 @@ static void findAudioDrivers(void)
     SetCursor(old_cursor);
 
     /* terminate list with empty driver */
-    loadedAudioDrv = HeapReAlloc(GetProcessHeap(), 0, loadedAudioDrv, (numFound + 1) * sizeof(AUDIO_DRIVER));
-    CopyMemory(&loadedAudioDrv[numFound], pAudioDrv, sizeof(AUDIO_DRIVER));
+    if (numFound) {
+        loadedAudioDrv = HeapReAlloc(GetProcessHeap(), 0, loadedAudioDrv, (numFound + 1) * sizeof(AUDIO_DRIVER));
+        CopyMemory(&loadedAudioDrv[numFound], pAudioDrv, sizeof(AUDIO_DRIVER));
+    } else {
+        loadedAudioDrv = HeapAlloc(GetProcessHeap(), 0, sizeof(AUDIO_DRIVER));
+        ZeroMemory(&loadedAudioDrv[0], sizeof(AUDIO_DRIVER));
+    }
 }
 
 /* check local copy of registry string for unloadable drivers */
