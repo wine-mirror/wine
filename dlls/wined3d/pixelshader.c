@@ -609,42 +609,41 @@ void pshader_texldl(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
+/* Prototype */
+void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
+
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
  */
 CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
-    {D3DSIO_NOP,  "nop", "NOP", 0, pshader_nop, 0, 0},
-    {D3DSIO_MOV,  "mov", "MOV", 2, pshader_mov, 0, 0},
-    {D3DSIO_ADD,  "add", "ADD", 3, pshader_add, 0, 0},
-    {D3DSIO_SUB,  "sub", "SUB", 3, pshader_sub, 0, 0},
-    {D3DSIO_MAD,  "mad", "MAD", 4, pshader_mad, 0, 0},
-    {D3DSIO_MUL,  "mul", "MUL", 3, pshader_mul, 0, 0},
-    {D3DSIO_RCP,  "rcp", "RCP",  2, pshader_rcp, 0, 0},
-    {D3DSIO_RSQ,  "rsq",  "RSQ", 2, pshader_rsq, 0, 0},
-    {D3DSIO_DP3,  "dp3",  "DP3", 3, pshader_dp3, 0, 0},
-    {D3DSIO_DP4,  "dp4",  "DP4", 3, pshader_dp4, 0, 0},
-    {D3DSIO_MIN,  "min",  "MIN", 3, pshader_min, 0, 0},
-    {D3DSIO_MAX,  "max",  "MAX", 3, pshader_max, 0, 0},
-    {D3DSIO_SLT,  "slt",  "SLT", 3, pshader_slt, 0, 0},
-    {D3DSIO_SGE,  "sge",  "SGE", 3, pshader_sge, 0, 0},
-    {D3DSIO_ABS,  "abs",  "ABS", 2, pshader_abs, 0, 0},
-    {D3DSIO_EXP,  "exp",  "EX2", 2, pshader_exp, 0, 0},
-    {D3DSIO_LOG,  "log",  "LG2", 2, pshader_log, 0, 0},
-    {D3DSIO_DST,  "dst",  "DST", 3, pshader_dst, 0, 0},
-    {D3DSIO_LRP,  "lrp",  "LRP", 4, pshader_lrp, 0, 0},
-    {D3DSIO_FRC,  "frc",  "FRC", 2, pshader_frc, 0, 0},
-    {D3DSIO_M4x4, "m4x4", "undefined", 3, pshader_m4x4, 0, 0},
-    {D3DSIO_M4x3, "m4x3", "undefined", 3, pshader_m4x3, 0, 0},
-    {D3DSIO_M3x4, "m3x4", "undefined", 3, pshader_m3x4, 0, 0},
-    {D3DSIO_M3x3, "m3x3", "undefined", 3, pshader_m3x3, 0, 0},
-    {D3DSIO_M3x2, "m3x2", "undefined", 3, pshader_m3x2, 0, 0},
 
-
-    /** FIXME: use direct access so add the others opcodes as stubs */
-    /* DCL is a specil operation */
-    {D3DSIO_DCL,      "dcl",      NULL,   2, pshader_dcl,     0, 0},
-    {D3DSIO_POW,      "pow",      "POW",  3, pshader_pow,     0, 0},
-    {D3DSIO_CRS,      "crs",      "XPS",  3, pshader_crs,     0, 0},
+    /* Arithmethic */
+    {D3DSIO_NOP,  "nop", "NOP", 0, pshader_nop, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_MOV,  "mov", "MOV", 2, pshader_mov, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_ADD,  "add", "ADD", 3, pshader_add, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_SUB,  "sub", "SUB", 3, pshader_sub, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_MAD,  "mad", "MAD", 4, pshader_mad, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_MUL,  "mul", "MUL", 3, pshader_mul, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_RCP,  "rcp", "RCP",  2, pshader_rcp, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_RSQ,  "rsq",  "RSQ", 2, pshader_rsq, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_DP3,  "dp3",  "DP3", 3, pshader_dp3, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_DP4,  "dp4",  "DP4", 3, pshader_dp4, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_MIN,  "min",  "MIN", 3, pshader_min, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_MAX,  "max",  "MAX", 3, pshader_max, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_SLT,  "slt",  "SLT", 3, pshader_slt, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_SGE,  "sge",  "SGE", 3, pshader_sge, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_ABS,  "abs",  "ABS", 2, pshader_abs, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_EXP,  "exp",  "EX2", 2, pshader_exp, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_LOG,  "log",  "LG2", 2, pshader_log, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_EXPP, "expp", "EXP", 2, pshader_expp, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_LOGP, "logp", "LOG", 2, pshader_logp, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_DST,  "dst",  "DST", 3, pshader_dst, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_LRP,  "lrp",  "LRP", 4, pshader_lrp, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_FRC,  "frc",  "FRC", 2, pshader_frc, pshader_hw_map2gl, 0, 0},
+    {D3DSIO_CND,  "cnd",  GLNAME_REQUIRE_GLSL, 4, pshader_cnd, NULL, D3DPS_VERSION(1,1), D3DPS_VERSION(1,4)},
+    {D3DSIO_CMP,  "cmp",  GLNAME_REQUIRE_GLSL, 4, pshader_cmp, NULL, D3DPS_VERSION(1,1), D3DPS_VERSION(3,0)},
+    {D3DSIO_POW,  "pow",  "POW", 3, pshader_pow,  NULL, 0, 0},
+    {D3DSIO_CRS,  "crs",  "XPS", 3, pshader_crs,  NULL, 0, 0},
     /* TODO: xyz normalise can be performed as VS_ARB using one temporary register,
         DP3 tmp , vec, vec;
         RSQ tmp, tmp.x;
@@ -655,67 +654,75 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
         MUL vec, vec, tmp;
 
     */
-    {D3DSIO_NRM,      "nrm",      NULL,   2, pshader_nrm,     0, 0},
-    {D3DSIO_SINCOS,   "sincos",   NULL,   2, pshader_sincos,  0, 0},
+    {D3DSIO_NRM,      "nrm",      NULL,   2, pshader_nrm,     NULL, 0, 0},
+    {D3DSIO_SINCOS,   "sincos",   NULL,   2, pshader_sincos,  NULL, 0, 0},
+    /* TODO: dp2add can be made out of multiple instuctions */
+    {D3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  2, pshader_dp2add,  NULL, 0, 0},
+
+    /* Matrix */
+    {D3DSIO_M4x4, "m4x4", "undefined", 3, pshader_m4x4, NULL, 0, 0},
+    {D3DSIO_M4x3, "m4x3", "undefined", 3, pshader_m4x3, NULL, 0, 0},
+    {D3DSIO_M3x4, "m3x4", "undefined", 3, pshader_m3x4, NULL, 0, 0},
+    {D3DSIO_M3x3, "m3x3", "undefined", 3, pshader_m3x3, NULL, 0, 0},
+    {D3DSIO_M3x2, "m3x2", "undefined", 3, pshader_m3x2, NULL, 0, 0},
+
+    /* Register declarations */
+    {D3DSIO_DCL,      "dcl",      NULL,   2, pshader_dcl,     NULL, 0, 0},
 
     /* Flow control - requires GLSL or software shaders */
-    {D3DSIO_REP ,     "rep",      GLNAME_REQUIRE_GLSL,   1, pshader_rep,     0, 0},
-    {D3DSIO_ENDREP,   "endrep",   GLNAME_REQUIRE_GLSL,   0, pshader_endrep,  0, 0},
-    {D3DSIO_IF,       "if",       GLNAME_REQUIRE_GLSL,   1, pshader_if,      0, 0},
-    {D3DSIO_IFC,      "ifc",      GLNAME_REQUIRE_GLSL,   2, pshader_ifc,     0, 0},
-    {D3DSIO_ELSE,     "else",     GLNAME_REQUIRE_GLSL,   0, pshader_else,    0, 0},
-    {D3DSIO_ENDIF,    "endif",    GLNAME_REQUIRE_GLSL,   0, pshader_endif,   0, 0},
-    {D3DSIO_BREAK,    "break",    GLNAME_REQUIRE_GLSL,   0, pshader_break,   0, 0},
-    {D3DSIO_BREAKC,   "breakc",   GLNAME_REQUIRE_GLSL,   2, pshader_breakc,  0, 0},
-    {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL,   1, pshader_breakp,  0, 0},
-    {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL,   1, pshader_call,    0, 0},
-    {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL,   2, pshader_callnz,  0, 0},
-    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL,   2, pshader_loop,    0, 0},
-    {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL,   0, pshader_ret,     0, 0},
-    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL,   0, pshader_endloop, 0, 0},
-    {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL,   1, pshader_label,   0, 0},
+    {D3DSIO_REP ,     "rep",      GLNAME_REQUIRE_GLSL,   1, pshader_rep,     NULL, 0, 0},
+    {D3DSIO_ENDREP,   "endrep",   GLNAME_REQUIRE_GLSL,   0, pshader_endrep,  NULL, 0, 0},
+    {D3DSIO_IF,       "if",       GLNAME_REQUIRE_GLSL,   1, pshader_if,      NULL, 0, 0},
+    {D3DSIO_IFC,      "ifc",      GLNAME_REQUIRE_GLSL,   2, pshader_ifc,     NULL, 0, 0},
+    {D3DSIO_ELSE,     "else",     GLNAME_REQUIRE_GLSL,   0, pshader_else,    NULL, 0, 0},
+    {D3DSIO_ENDIF,    "endif",    GLNAME_REQUIRE_GLSL,   0, pshader_endif,   NULL, 0, 0},
+    {D3DSIO_BREAK,    "break",    GLNAME_REQUIRE_GLSL,   0, pshader_break,   NULL, 0, 0},
+    {D3DSIO_BREAKC,   "breakc",   GLNAME_REQUIRE_GLSL,   2, pshader_breakc,  NULL, 0, 0},
+    {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL,   1, pshader_breakp,  NULL, 0, 0},
+    {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL,   1, pshader_call,    NULL, 0, 0},
+    {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL,   2, pshader_callnz,  NULL, 0, 0},
+    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL,   2, pshader_loop,    NULL, 0, 0},
+    {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL,   0, pshader_ret,     NULL, 0, 0},
+    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL,   0, pshader_endloop, NULL, 0, 0},
+    {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL,   1, pshader_label,   NULL, 0, 0},
 
-    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, pshader_defb,    0, 0},
-    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, pshader_defi,    0, 0},
+    /* Constant definitions */
+    {D3DSIO_DEF,      "def",      "undefined",           5, pshader_def,     NULL, 0, 0},
+    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, pshader_defb,    NULL, 0, 0},
+    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, pshader_defi,    NULL, 0, 0},
 
-    {D3DSIO_TEXCOORD, "texcoord", "undefined",   1, pshader_texcoord,    0, D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXCOORD, "texcrd",   "undefined",   2, pshader_texcoord,    D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_TEXKILL,  "texkill",  "KIL",   1, pshader_texkill,     D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
-    {D3DSIO_TEX,      "tex",      "undefined",   1, pshader_tex,         0, D3DPS_VERSION(1,3)},
-    {D3DSIO_TEX,      "texld",    "undefined",   2, pshader_texld,       D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_TEX,      "texld",    "undefined",   3, pshader_texld,       D3DPS_VERSION(2,0), -1},
-    {D3DSIO_TEXBEM,   "texbem",   "undefined",   2, pshader_texbem,      0, D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL,   2, pshader_texbeml,     D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXREG2AR,"texreg2ar","undefined",   2, pshader_texreg2ar,   D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXREG2GB,"texreg2gb","undefined",   2, pshader_texreg2gb,   D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x2PAD,   "texm3x2pad",   "undefined",   2, pshader_texm3x2pad,   D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x2TEX,   "texm3x2tex",   "undefined",   2, pshader_texm3x2tex,   D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3PAD,   "texm3x3pad",   "undefined",   2, pshader_texm3x3pad,   D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3DIFF,  "texm3x3diff",  GLNAME_REQUIRE_GLSL,   2, pshader_texm3x3diff,  D3DPS_VERSION(0,0), D3DPS_VERSION(0,0)},
-    {D3DSIO_TEXM3x3SPEC,  "texm3x3spec",  "undefined",   3, pshader_texm3x3spec,  D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3VSPEC, "texm3x3vspe",  "undefined",   2, pshader_texm3x3vspec, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3TEX,   "texm3x3tex",   "undefined",   2, pshader_texm3x3tex,   D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_EXPP,     "expp",     "EXP", 2, pshader_expp, 0, 0},
-    {D3DSIO_LOGP,     "logp",     "LOG", 2, pshader_logp, 0, 0},
-    {D3DSIO_CND,      "cnd",      GLNAME_REQUIRE_GLSL,   4, pshader_cnd,         D3DPS_VERSION(1,1), D3DPS_VERSION(1,4)},
-    /* def is a special operation */
-    {D3DSIO_DEF,      "def",      "undefined",   5, pshader_def,         0, 0},
-    {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL,   2, pshader_texreg2rgb,  D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL,   2, pshader_texdp3tex,   D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL,   2, pshader_texm3x2depth,D3DPS_VERSION(1,3), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXDP3,       "texdp3", GLNAME_REQUIRE_GLSL,  2, pshader_texdp3,     D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3,      "texm3x3", GLNAME_REQUIRE_GLSL, 2, pshader_texm3x3,    D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXDEPTH,     "texdepth", GLNAME_REQUIRE_GLSL,1, pshader_texdepth,   D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_CMP,      "cmp",      GLNAME_REQUIRE_GLSL,   4, pshader_cmp,     D3DPS_VERSION(1,1), D3DPS_VERSION(3,0)},
-    {D3DSIO_BEM,      "bem",      GLNAME_REQUIRE_GLSL,   3, pshader_bem,     D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    /* Texture */
+    {D3DSIO_TEXCOORD, "texcoord", "undefined",   1, pshader_texcoord,    NULL, 0, D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXCOORD, "texcrd",   "undefined",   2, pshader_texcoord,    NULL, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    {D3DSIO_TEXKILL,  "texkill",  "KIL",         1, pshader_texkill,     pshader_hw_map2gl, D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
+    {D3DSIO_TEX,      "tex",      "undefined",   1, pshader_tex,         NULL, 0, D3DPS_VERSION(1,3)},
+    {D3DSIO_TEX,      "texld",    "undefined",   2, pshader_texld,       NULL, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    {D3DSIO_TEX,      "texld",    "undefined",   3, pshader_texld,       NULL, D3DPS_VERSION(2,0), -1},
+    {D3DSIO_TEXBEM,   "texbem",   "undefined",   2, pshader_texbem,      NULL, 0, D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL,   2, pshader_texbeml, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXREG2AR,"texreg2ar","undefined",   2, pshader_texreg2ar,   NULL, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXREG2GB,"texreg2gb","undefined",   2, pshader_texreg2gb,   NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x2PAD,   "texm3x2pad",   "undefined",   2, pshader_texm3x2pad,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x2TEX,   "texm3x2tex",   "undefined",   2, pshader_texm3x2tex,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3PAD,   "texm3x3pad",   "undefined",   2, pshader_texm3x3pad,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3DIFF,  "texm3x3diff",  GLNAME_REQUIRE_GLSL,   2, pshader_texm3x3diff,  NULL, D3DPS_VERSION(0,0), D3DPS_VERSION(0,0)},
+    {D3DSIO_TEXM3x3SPEC,  "texm3x3spec",  "undefined",   3, pshader_texm3x3spec,  NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3VSPEC, "texm3x3vspe",  "undefined",   2, pshader_texm3x3vspec, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3TEX,   "texm3x3tex",   "undefined",   2, pshader_texm3x3tex,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL,   2, pshader_texreg2rgb,  NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL,   2, pshader_texdp3tex,   NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL,   2, pshader_texm3x2depth, NULL, D3DPS_VERSION(1,3), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXDP3,   "texdp3",   GLNAME_REQUIRE_GLSL,  2, pshader_texdp3,   NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3,  "texm3x3",  GLNAME_REQUIRE_GLSL,  2, pshader_texm3x3,  NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXDEPTH, "texdepth", GLNAME_REQUIRE_GLSL,  1, pshader_texdepth, NULL, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    {D3DSIO_BEM,      "bem",      GLNAME_REQUIRE_GLSL,  3, pshader_bem,      NULL, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
     /* TODO: dp2add can be made out of multiple instuctions */
-    {D3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,   2, pshader_dp2add,  0, 0},
-    {D3DSIO_DSX,      "dsx",      GLNAME_REQUIRE_GLSL,   2, pshader_dsx,     0, 0},
-    {D3DSIO_DSY,      "dsy",      GLNAME_REQUIRE_GLSL,   2, pshader_dsy,     0, 0},
-    {D3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL,   2, pshader_texldd,  0, 0},
-    {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,   2, pshader_setp,    0, 0},
-    {D3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL,   2, pshader_texldl,  0, 0},
-    {D3DSIO_PHASE,    "phase",    GLNAME_REQUIRE_GLSL,   0, pshader_nop,     0, 0},
+    {D3DSIO_DSX,      "dsx",      GLNAME_REQUIRE_GLSL,  2, pshader_dsx,     NULL, 0, 0},
+    {D3DSIO_DSY,      "dsy",      GLNAME_REQUIRE_GLSL,  2, pshader_dsy,     NULL, 0, 0},
+    {D3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL,  2, pshader_texldd,  NULL, 0, 0},
+    {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,  2, pshader_setp,    NULL, 0, 0},
+    {D3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL,  2, pshader_texldl,  NULL, 0, 0},
+    {D3DSIO_PHASE,    "phase",    GLNAME_REQUIRE_GLSL,  0, pshader_nop,     NULL, 0, 0},
     {0,               NULL,       NULL,   0, NULL,            0, 0}
 };
 
@@ -954,6 +961,102 @@ void pshader_set_version(
       }
 }
 
+/* Map the opcode 1-to-1 to the GL code */
+/* FIXME: fix CMP/CND, get rid of this switch */
+void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
+
+     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+     CONST SHADER_OPCODE* curOpcode = arg->opcode;
+     SHADER_BUFFER* buffer = arg->buffer;
+     DWORD dst = arg->dst;
+     DWORD* src = arg->src;
+
+     unsigned int i;
+     char tmpLine[256];
+     char output_rname[256];
+     char output_wmask[20];
+     BOOL saturate = FALSE;
+     DWORD shift;
+
+     TRACE("Appending glname %s to tmpLine\n", curOpcode->glname);
+     strcpy(tmpLine, curOpcode->glname);
+
+     /* Process modifiers */
+     if (0 != (dst & D3DSP_DSTMOD_MASK)) {
+         DWORD mask = dst & D3DSP_DSTMOD_MASK;
+         switch (mask) {
+             case D3DSPDM_SATURATE: saturate = TRUE; break;
+#if 0 /* as yet unhandled modifiers */
+             case D3DSPDM_CENTROID: centroid = TRUE; break;
+             case D3DSPDM_PP: partialpresision = TRUE; break;
+#endif
+             default:
+                 TRACE("_unhandled_modifier(0x%08lx)\n", mask);
+         }
+      }
+      shift = (dst & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
+
+      /* Generate input and output registers */
+      if (curOpcode->num_params > 0) {
+          char regs[5][50];
+          char operands[4][100];
+          char swzstring[20];
+          char tmpOp[256];
+
+          /* Generate lines that handle input modifier computation */
+          for (i = 1; i < curOpcode->num_params; ++i) {
+              TRACE("(%p) : Param %u token %lx\n", This, i, src[i - 1]);
+              if (gen_input_modifier_line(src[i - 1], i - 1, regs[i - 1], tmpOp, This->constants))
+                  shader_addline(buffer, tmpOp);
+          }
+
+          /* Handle output register */
+          get_register_name(dst, output_rname, This->constants);
+          strcpy(operands[0], output_rname);
+          get_write_mask(dst, output_wmask);
+          strcat(operands[0], output_wmask);
+
+          /* This function works because of side effects from  gen_input_modifier_line */
+          /* Handle input registers */
+          for (i = 1; i < curOpcode->num_params; ++i) {
+              TRACE("(%p) : Regs = %s\n", This, regs[i - 1]);
+              strcpy(operands[i], regs[i - 1]);
+              get_input_register_swizzle(src[i - 1], swzstring);
+              strcat(operands[i], swzstring);
+          }
+
+          switch(curOpcode->opcode) {
+              case D3DSIO_CMP:
+                  sprintf(tmpLine, "CMP%s %s, %s, %s, %s;\n", (saturate ? "_SAT" : ""),
+                      operands[0], operands[1], operands[3], operands[2]);
+              break;
+            case D3DSIO_CND:
+                  shader_addline(buffer, "ADD TMP, -%s, coefdiv.x;\n", operands[1]);
+                  sprintf(tmpLine, "CMP%s %s, TMP, %s, %s;\n", (saturate ? "_SAT" : ""),
+                      operands[0], operands[2], operands[3]);
+              break;
+
+              default:
+                  if (saturate && (shift == 0))
+                      strcat(tmpLine, "_SAT");
+                  strcat(tmpLine, " ");
+                  strcat(tmpLine, operands[0]);
+                  for (i = 1; i < curOpcode->num_params; i++) {
+                      strcat(tmpLine, ", ");
+                      strcat(tmpLine, operands[i]);
+                  }
+                  strcat(tmpLine,";\n");
+          }
+          shader_addline(buffer, tmpLine);
+
+          /* A shift requires another line. */
+          if (shift != 0) {
+              gen_output_modifier_line(saturate, output_wmask, shift, output_rname, tmpLine);
+              shader_addline(buffer, tmpLine);
+          }
+      }
+}
+
 /* NOTE: A description of how to parse tokens can be found at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/graphics/hh/graphics/usermodedisplaydriver_shader_cc8e4e05-f5c3-4ec0-8853-8ce07c1551b2.xml.asp */
 inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
@@ -967,7 +1070,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
 #endif
     SHADER_BUFFER buffer;
 
-    BOOL saturate; /* clamp to 0.0 -> 1.0*/
     int row = 0; /* not sure, something to do with macros? */
     DWORD tcw[2];
     int version = This->baseShader.version; 
@@ -1092,48 +1194,34 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     pToken += 5;
                     continue;
 
+            /* If a generator function is set, use it */
+            } else if (curOpcode->hw_fct != NULL) {
+
+                SHADER_OPCODE_ARG hw_arg;
+
+                hw_arg.shader = (IWineD3DBaseShader*) This;
+                hw_arg.opcode = curOpcode;
+                hw_arg.buffer = &buffer;
+                if (curOpcode->num_params > 0) {
+                    hw_arg.dst = *pToken;
+
+                    /* FIXME: this does not account for relative address tokens */
+                    for (i = 1; i < curOpcode->num_params; i++)
+                       hw_arg.src[i-1] = *(pToken + i);
+                }
+
+                curOpcode->hw_fct(&hw_arg);
+                pToken += curOpcode->num_params;
+
             } else {
- 
-                /* Common processing: [inst] [dst]* [src]* */
-                DWORD shift;
-                char output_rname[256];
-                char output_wmask[20];
 
                 TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d, \n",
                 curOpcode->name, curOpcode->glname, curOpcode->num_params);
-
-                saturate = FALSE;
 
                 /* Build opcode for GL vertex_program */
                 switch (curOpcode->opcode) {
                 case D3DSIO_NOP:
                 case D3DSIO_PHASE:
-                    continue;
-                case D3DSIO_MOV:
-                case D3DSIO_CND:
-                case D3DSIO_CMP:
-                case D3DSIO_ADD:
-                case D3DSIO_SUB:
-                case D3DSIO_MAD:
-                case D3DSIO_MUL:
-                case D3DSIO_RCP:
-                case D3DSIO_RSQ:
-                case D3DSIO_DP3:
-                case D3DSIO_DP4:
-                case D3DSIO_MIN:
-                case D3DSIO_MAX:
-                case D3DSIO_SLT:
-                case D3DSIO_SGE:
-                case D3DSIO_DST:
-                case D3DSIO_FRC:
-                case D3DSIO_EXPP:
-                case D3DSIO_LOGP:
-                case D3DSIO_EXP:
-                case D3DSIO_LOG:
-                case D3DSIO_LRP:
-                case D3DSIO_TEXKILL:
-                    TRACE("Appending glname %s to tmpLine\n", curOpcode->glname);
-                    strcpy(tmpLine, curOpcode->glname);
                     break;
                 case D3DSIO_TEX:
                 {
@@ -1182,7 +1270,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
 
                     shader_addline(&buffer, "TEX %s, %s%s, texture[%lu], 2D;\n",
                         reg_dest, reg_coord, reg_coord_swz, reg_sampler_code);
-                    continue;
                 }
                 break;
                 case D3DSIO_TEXCOORD:
@@ -1199,7 +1286,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                         shader_addline(&buffer, "MOV R%lu%s, fragment.texcoord[%lu];\n", reg1, tmp, reg2);
                         ++pToken;
                     }
-                    continue;
                 }
                 break;
                 case D3DSIO_TEXM3x2PAD:
@@ -1210,7 +1296,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                         shader_addline(&buffer, tmpLine);
                     shader_addline(&buffer, "DP3 TMP.x, T%lu, %s;\n", reg, buf);
                     ++pToken;
-                    continue;
                 }
                 break;
                 case D3DSIO_TEXM3x2TEX:
@@ -1222,7 +1307,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     shader_addline(&buffer, "DP3 TMP.y, T%lu, %s;\n", reg, buf);
                     shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg, reg);
                     ++pToken;
-                    continue;
                 }
                 break;
                 case D3DSIO_TEXREG2AR:
@@ -1233,7 +1317,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     shader_addline(&buffer, "MOV TMP.g, T%lu.r;\n", reg2);
                     shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
                     ++pToken;
-                    continue;
                 }
                 break;
                 case D3DSIO_TEXREG2GB:
@@ -1244,7 +1327,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     shader_addline(&buffer, "MOV TMP.g, T%lu.b;\n", reg2);
                     shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
                     ++pToken;
-                    continue;
                 }
                 break;
                 case D3DSIO_TEXBEM:
@@ -1256,7 +1338,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     shader_addline(&buffer, "ADD TMP.rg, fragment.texcoord[%lu], T%lu;\n", reg1, reg2);
                     shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
                     ++pToken;
-                    continue;
                 }
                 break;
                 case D3DSIO_TEXM3x3PAD:
@@ -1268,7 +1349,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     shader_addline(&buffer, "DP3 TMP.%c, T%lu, %s;\n", 'x'+row, reg, buf);
                     tcw[row++] = reg;
                     ++pToken;
-                    continue;
                 }
                 break;
                 case D3DSIO_TEXM3x3TEX:
@@ -1283,8 +1363,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
                     row = 0;
                     ++pToken;
-                    continue;
                 }
+                break;
                 case D3DSIO_TEXM3x3VSPEC:
                 {
                     DWORD reg = *pToken & D3DSP_REGNUM_MASK;
@@ -1307,7 +1387,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
                     row = 0;
                     ++pToken;
-                    continue;
                 }
                 break;
                 case D3DSIO_TEXM3x3SPEC:
@@ -1328,7 +1407,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
                     row = 0;
                     pToken += 3;
-                    continue;
                 }
                 break;
 
@@ -1340,82 +1418,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                     }
                     pToken += curOpcode->num_params; 
                     continue;
-                }
-
-                /* Process modifiers */
-                if (0 != (*pToken & D3DSP_DSTMOD_MASK)) {
-                    DWORD mask = *pToken & D3DSP_DSTMOD_MASK;
-                    switch (mask) {
-                    case D3DSPDM_SATURATE: saturate = TRUE; break;
-#if 0 /* as yet unhandled modifiers */
-                    case D3DSPDM_CENTROID: centroid = TRUE; break;
-                    case D3DSPDM_PP: partialpresision = TRUE; break;
-#endif
-                    default:
-                        TRACE("_unhandled_modifier(0x%08lx)\n", mask);
-                    }
-                }
-                shift = (*pToken & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
-
-                /* Generate input and output registers */
-                if (curOpcode->num_params > 0) {
-                    char regs[5][50];
-                    char operands[4][100];
-                    char swzstring[20];
-                    char tmpOp[256];
-
-                    /* Generate lines that handle input modifier computation */
-                    for (i = 1; i < curOpcode->num_params; ++i) {
-                        TRACE("(%p) : Param %ld token %lx\n", This, i, *(pToken + i));
-                        if (gen_input_modifier_line(*(pToken + i), i - 1, regs[i - 1], tmpOp, This->constants)) {
-                            shader_addline(&buffer, tmpOp);
-                        }
-                    }
-
-                    /* Handle output register */
-                    get_register_name(*pToken, output_rname, This->constants);
-                    strcpy(operands[0], output_rname);
-                    get_write_mask(*pToken, output_wmask);
-                    strcat(operands[0], output_wmask);
-
-                    /* This function works because of side effects from  gen_input_modifier_line */
-                    /* Handle input registers */
-                    for (i = 1; i < curOpcode->num_params; ++i) {
-                        TRACE("(%p) : Regs = %s\n", This, regs[i - 1]);
-                        strcpy(operands[i], regs[i - 1]);
-                        get_input_register_swizzle(*(pToken + i), swzstring);
-                        strcat(operands[i], swzstring);
-                    }
-
-                    switch(curOpcode->opcode) {
-                    case D3DSIO_CMP:
-                        sprintf(tmpLine, "CMP%s %s, %s, %s, %s;\n", (saturate ? "_SAT" : ""), 
-                           operands[0], operands[1], operands[3], operands[2]);
-                    break;
-                    case D3DSIO_CND:
-                        shader_addline(&buffer, "ADD TMP, -%s, coefdiv.x;\n", operands[1]);
-                        sprintf(tmpLine, "CMP%s %s, TMP, %s, %s;\n", (saturate ? "_SAT" : ""), 
-                           operands[0], operands[2], operands[3]);
-                    break;
-                    default:
-                        if (saturate && (shift == 0))
-                            strcat(tmpLine, "_SAT");
-                        strcat(tmpLine, " ");
-                        strcat(tmpLine, operands[0]);
-                        for (i = 1; i < curOpcode->num_params; i++) {
-                            strcat(tmpLine, ", ");
-                            strcat(tmpLine, operands[i]);
-                        }
-                        strcat(tmpLine,";\n");
-                    }
-                    shader_addline(&buffer, tmpLine);
-
-                    /* A shift requires another line. */
-                    if (shift != 0) {
-                        gen_output_modifier_line(saturate, output_wmask, shift, output_rname, tmpLine);
-                        shader_addline(&buffer, tmpLine);
-                    }
-                    pToken += curOpcode->num_params;
                 }
             }
         }

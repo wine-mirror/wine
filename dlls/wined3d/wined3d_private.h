@@ -1197,17 +1197,9 @@ enum vsConstantsEnum {
     VS_CONSTANT_FLOAT
 };
 
+struct SHADER_OPCODE_ARG;
 typedef void (*shader_fct_t)();
-
-typedef struct SHADER_OPCODE {
-    unsigned int  opcode;
-    const char*   name;
-    const char*   glname;
-    CONST UINT    num_params;
-    shader_fct_t  soft_fct;
-    DWORD         min_version;
-    DWORD         max_version;
-} SHADER_OPCODE;
+typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
 
 #define SHADER_PGMSIZE 65535
 typedef struct SHADER_BUFFER {
@@ -1215,6 +1207,25 @@ typedef struct SHADER_BUFFER {
     size_t bsize;
     unsigned int lineNo;
 } SHADER_BUFFER;
+
+typedef struct SHADER_OPCODE {
+    unsigned int  opcode;
+    const char*   name;
+    const char*   glname;
+    CONST UINT    num_params;
+    shader_fct_t  soft_fct;
+    SHADER_HANDLER hw_fct;
+    DWORD         min_version;
+    DWORD         max_version;
+} SHADER_OPCODE;
+
+typedef struct SHADER_OPCODE_ARG {
+    IWineD3DBaseShader* shader;
+    CONST SHADER_OPCODE* opcode;
+    DWORD dst;
+    DWORD src[4];
+    SHADER_BUFFER* buffer;
+} SHADER_OPCODE_ARG;
 
 typedef struct SHADER_LIMITS {
     unsigned int temporary;
