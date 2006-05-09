@@ -54,4 +54,28 @@ int shader_addline(
     return 0;
 }
 
+const SHADER_OPCODE* shader_get_opcode(
+    IWineD3DBaseShader *iface, const DWORD code) {
+
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl*) iface;
+
+    DWORD i = 0;
+    DWORD version = This->baseShader.version;
+    DWORD hex_version = This->baseShader.hex_version;
+    const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
+
+    /** TODO: use dichotomic search */
+    while (NULL != shader_ins[i].name) {
+        if (((code & D3DSI_OPCODE_MASK) == shader_ins[i].opcode) &&
+            (((hex_version >= shader_ins[i].min_version) && (hex_version <= shader_ins[i].max_version)) ||
+            ((shader_ins[i].min_version == 0) && (shader_ins[i].max_version == 0)))) {
+            return &shader_ins[i];
+        }
+        ++i;
+    }
+    FIXME("Unsupported opcode %lx(%ld) masked %lx version %ld\n", 
+       code, code, code & D3DSI_OPCODE_MASK, version);
+    return NULL;
+}
+
 /* TODO: Move other shared code here */

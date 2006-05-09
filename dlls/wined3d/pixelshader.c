@@ -719,25 +719,6 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {0,               NULL,       NULL,   0, NULL,            0, 0}
 };
 
-inline static const SHADER_OPCODE* pshader_program_get_opcode(IWineD3DPixelShaderImpl *This, const DWORD code) {
-    DWORD i = 0;
-    DWORD version = This->baseShader.version;
-    DWORD hex_version = D3DPS_VERSION(version/10, version%10);
-    const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
-
-    /** TODO: use dichotomic search */
-    while (NULL != shader_ins[i].name) {
-        if (((code & D3DSI_OPCODE_MASK) == shader_ins[i].opcode) &&
-            (((hex_version >= shader_ins[i].min_version) && (hex_version <= shader_ins[i].max_version)) ||
-            ((shader_ins[i].min_version == 0) && (shader_ins[i].max_version == 0)))) {
-            return &shader_ins[i];
-        }
-        ++i;
-    }
-    FIXME("Unsupported opcode %lx(%ld) masked %lx version %ld\n", code, code, code & D3DSI_OPCODE_MASK, version);
-    return NULL;
-}
-
 inline static BOOL pshader_is_version_token(DWORD token) {
     return 0xFFFF0000 == (token & 0xFFFF0000);
 }
@@ -945,7 +926,7 @@ inline static void pshader_program_get_registers_used(
         }
 
         /* Fetch opcode */       
-        curOpcode = pshader_program_get_opcode(This, *pToken);
+        curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
         ++pToken;
 
         /* Skip declarations (for now) */
@@ -1134,7 +1115,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
             code = *pToken;
 #endif
             pInstr = pToken;
-            curOpcode = pshader_program_get_opcode(This, *pToken);
+            curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
             ++pToken;
             if (NULL == curOpcode) {
                 /* unknown current opcode ... (shouldn't be any!) */
@@ -1779,7 +1760,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
             if (!This->baseShader.version) {
                 WARN("(%p) : pixel shader doesn't have a valid version identifier\n", This);
             }
-            curOpcode = pshader_program_get_opcode(This, *pToken);
+            curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
             ++pToken;
             ++len;
             if (NULL == curOpcode) {

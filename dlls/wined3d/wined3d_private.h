@@ -1220,6 +1220,10 @@ extern int shader_addline(
     SHADER_BUFFER* buffer,
     const char* fmt, ...);
 
+extern const SHADER_OPCODE* shader_get_opcode(
+    IWineD3DBaseShader *iface, 
+    const DWORD code);
+
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
  */
