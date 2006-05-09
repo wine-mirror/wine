@@ -77,7 +77,7 @@
 @ stub DnsNameCopyAllocate
 @ stub DnsNotifyResolver
 @ stub DnsQuery_A
-@ stub DnsQueryConfig
+@ stdcall DnsQueryConfig(long long wstr ptr ptr ptr)
 @ stub DnsQueryEx
 @ stub DnsQuery_UTF8
 @ stub DnsQuery_W

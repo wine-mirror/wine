@@ -10,6 +10,7 @@ EXTRALIBS = $(LIBUNICODE) @RESOLVLIBS@
 C_SRCS = \
 	main.c \
 	name.c \
+	query.c \
 	record.c
 
 SUBDIRS = tests
