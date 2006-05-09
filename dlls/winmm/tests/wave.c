@@ -640,6 +640,9 @@ static void wave_out_test_deviceOut(int device, double duration,
     frag.dwFlags=0;
     frag.dwLoops=0;
 
+    rc=waveOutGetVolume(wout,0);
+    ok(rc==MMSYSERR_INVALPARAM,"waveOutGetVolume(%s,0) expected "
+       "MMSYSERR_INVALPARAM, got %s\n", dev_name(device),wave_out_error(rc));
     rc=waveOutGetVolume(wout,&volume);
     ok(has_volume ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED,
        "waveOutGetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));

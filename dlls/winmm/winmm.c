@@ -2425,7 +2425,12 @@ UINT WINAPI waveOutGetVolume(HWAVEOUT hWaveOut, LPDWORD lpdw)
 
     TRACE("(%p, %08lx);\n", hWaveOut, (DWORD)lpdw);
 
-     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, TRUE)) == NULL)
+    if (lpdw == NULL) {
+        WARN("invalid parameter\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, TRUE)) == NULL)
         return MMSYSERR_INVALHANDLE;
 
     return MMDRV_Message(wmld, WODM_GETVOLUME, (DWORD_PTR)lpdw, 0L, TRUE);
