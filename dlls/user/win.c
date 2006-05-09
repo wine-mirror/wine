@@ -2213,7 +2213,7 @@ LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
 
     if (is_winproc)
     {
-        WNDPROC new_proc = WINPROC_AllocProc( (WNDPROC)newval, WIN_PROC_16 );
+        WNDPROC new_proc = WINPROC_AllocProc16( (WNDPROC16)newval );
         WNDPROC old_proc = (WNDPROC)SetWindowLongA( WIN_Handle32(hwnd), offset, (LONG_PTR)new_proc );
         return (LONG)WINPROC_GetProc16( (WNDPROC)old_proc );
     }

@@ -178,6 +178,19 @@ static WNDPROC CLASS_GetProc( CLASS *classPtr, WINDOWPROCTYPE type )
 
 
 /***********************************************************************
+ *           CLASS_SetProc16
+ *
+ * Set the class winproc for a given proc type.
+ * Returns the previous window proc.
+ */
+static void CLASS_SetProc16( CLASS *classPtr, WNDPROC16 newproc )
+{
+    classPtr->winprocA = WINPROC_AllocProc16( newproc );
+    classPtr->winprocW = 0;
+}
+
+
+/***********************************************************************
  *           CLASS_SetProc
  *
  * Set the class winproc for a given proc type.
@@ -953,7 +966,7 @@ LONG WINAPI SetClassLong16( HWND16 hwnd16, INT16 offset, LONG newval )
     case GCLP_WNDPROC:
         if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
         retval = (LONG)CLASS_GetProc16( class );
-        CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_16 );
+        CLASS_SetProc16( class, (WNDPROC16)newval );
         release_class_ptr( class );
         return retval;
     case GCLP_MENUNAME:

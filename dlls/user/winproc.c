@@ -22,6 +22,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -142,31 +143,50 @@ static BOOL is_valid_winproc( WINDOWPROC *proc )
     return (proc->type != WIN_PROC_INVALID);
 }
 
+/* find an existing winproc for a given 16-bit function and type */
+/* FIXME: probably should do something more clever than a linear search */
+static inline WINDOWPROC *find_winproc16( WNDPROC16 func )
+{
+    unsigned int i;
+
+    for (i = 0; i < winproc_used; i++)
+    {
+        if (winproc_array[i].type == WIN_PROC_16 && winproc_array[i].thunk.t_from32.proc == func)
+            return &winproc_array[i];
+    }
+    return NULL;
+}
+
 /* find an existing winproc for a given function and type */
 /* FIXME: probably should do something more clever than a linear search */
 static inline WINDOWPROC *find_winproc( WNDPROC func, WINDOWPROCTYPE type )
 {
     unsigned int i;
 
-    if (type == WIN_PROC_16)
+    for (i = 0; i < winproc_used; i++)
     {
-        for (i = 0; i < winproc_used; i++)
-        {
-            if (winproc_array[i].type == type &&
-                winproc_array[i].thunk.t_from32.proc == (WNDPROC16)func)
-                return &winproc_array[i];
-        }
-    }
-    else
-    {
-        for (i = 0; i < winproc_used; i++)
-        {
-            if (winproc_array[i].type == type &&
-                winproc_array[i].thunk.t_from16.proc == func)
-                return &winproc_array[i];
-        }
+        if (winproc_array[i].type == type && winproc_array[i].thunk.t_from16.proc == func)
+            return &winproc_array[i];
     }
     return NULL;
+}
+
+/* initialize a new 16-bit winproc */
+static inline void set_winproc16( WINDOWPROC *proc, WNDPROC16 func )
+{
+#ifdef __i386__
+    proc->thunk.t_from32.popl_eax    = 0x58;   /* popl  %eax */
+    proc->thunk.t_from32.pushl_func  = 0x68;   /* pushl $proc */
+    proc->thunk.t_from32.proc        = func;
+    proc->thunk.t_from32.pushl_eax   = 0x50;   /* pushl %eax */
+    proc->thunk.t_from32.jmp         = 0xe9;   /* jmp   relay*/
+    proc->thunk.t_from32.relay =  /* relative jump */
+        (void(*)())((DWORD)WINPROC_CallProc32ATo16 -
+                    (DWORD)(&proc->thunk.t_from32.relay + 1));
+#else /* __i386__ */
+    proc->thunk.t_from32.proc = func;
+#endif /* __i386__ */
+    proc->type = WIN_PROC_16;
 }
 
 /* initialize a new winproc */
@@ -175,66 +195,36 @@ static inline void set_winproc( WINDOWPROC *proc, WNDPROC func, WINDOWPROCTYPE t
 #ifdef __i386__
     static FARPROC16 relay_32A, relay_32W;
 
+    proc->thunk.t_from16.popl_eax     = 0x58;   /* popl  %eax */
+    proc->thunk.t_from16.pushl_func   = 0x68;   /* pushl $proc */
+    proc->thunk.t_from16.proc         = func;
+    proc->thunk.t_from16.pushl_eax    = 0x50;   /* pushl %eax */
+    proc->thunk.t_from16.ljmp         = 0xea;   /* ljmp   relay*/
     switch(type)
     {
-    case WIN_PROC_16:
-        proc->thunk.t_from32.popl_eax    = 0x58;   /* popl  %eax */
-        proc->thunk.t_from32.pushl_func  = 0x68;   /* pushl $proc */
-        proc->thunk.t_from32.proc        = (WNDPROC16)func;
-        proc->thunk.t_from32.pushl_eax   = 0x50;   /* pushl %eax */
-        proc->thunk.t_from32.jmp         = 0xe9;   /* jmp   relay*/
-        proc->thunk.t_from32.relay =  /* relative jump */
-            (void(*)())((DWORD)WINPROC_CallProc32ATo16 -
-                        (DWORD)(&proc->thunk.t_from32.relay + 1));
-        break;
     case WIN_PROC_32A:
         if (!relay_32A) relay_32A = GetProcAddress16( GetModuleHandle16("user"),
                                                       "__wine_call_wndproc_32A" );
-        proc->thunk.t_from16.popl_eax     = 0x58;   /* popl  %eax */
-        proc->thunk.t_from16.pushl_func   = 0x68;   /* pushl $proc */
-        proc->thunk.t_from16.proc         = func;
-        proc->thunk.t_from16.pushl_eax    = 0x50;   /* pushl %eax */
-        proc->thunk.t_from16.ljmp         = 0xea;   /* ljmp   relay*/
         proc->thunk.t_from16.relay_offset = OFFSETOF(relay_32A);
         proc->thunk.t_from16.relay_sel    = SELECTOROF(relay_32A);
-        proc->jmp.jmp  = 0xe9;
-        /* Fixup relative jump */
-        proc->jmp.proc = (WNDPROC)((DWORD)func - (DWORD)(&proc->jmp.proc + 1));
         break;
     case WIN_PROC_32W:
         if (!relay_32W) relay_32W = GetProcAddress16( GetModuleHandle16("user"),
                                                       "__wine_call_wndproc_32W" );
-        proc->thunk.t_from16.popl_eax     = 0x58;   /* popl  %eax */
-        proc->thunk.t_from16.pushl_func   = 0x68;   /* pushl $proc */
-        proc->thunk.t_from16.proc         = func;
-        proc->thunk.t_from16.pushl_eax    = 0x50;   /* pushl %eax */
-        proc->thunk.t_from16.ljmp         = 0xea;   /* ljmp   relay*/
         proc->thunk.t_from16.relay_offset = OFFSETOF(relay_32W);
         proc->thunk.t_from16.relay_sel    = SELECTOROF(relay_32W);
-        proc->jmp.jmp  = 0xe9;
-        /* Fixup relative jump */
-        proc->jmp.proc = (WNDPROC)((char *)func - (char *)(&proc->jmp.proc + 1));
         break;
     default:
         /* Should not happen */
+        assert(0);
         break;
     }
+    proc->jmp.jmp  = 0xe9;
+    /* Fixup relative jump */
+    proc->jmp.proc = (WNDPROC)((DWORD)func - (DWORD)(&proc->jmp.proc + 1));
 #else /* __i386__ */
-    switch(type)
-    {
-    case WIN_PROC_16:
-        proc->thunk.t_from32.proc = (WNDPROC16)func;
-        break;
-    case WIN_PROC_32A:
-    case WIN_PROC_32W:
-        proc->thunk.t_from16.proc = func;
-        break;
-    default:
-        /* Should not happen */
-        break;
-    }
+    proc->thunk.t_from16.proc = func;
 #endif /* __i386__ */
-
     proc->type = type;
 }
 
@@ -566,6 +556,47 @@ WNDPROC WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type )
     else
         /* Some Win16 programs want to get back the proc they set */
         return (WNDPROC)ptr->thunk.t_from16.proc;
+}
+
+
+/**********************************************************************
+ *	     WINPROC_AllocProc16
+ *
+ * Allocate a window procedure for a window or class.
+ *
+ * Note that allocated winprocs are never freed; the idea is that even if an app creates a
+ * lot of windows, it will usually only have a limited number of window procedures, so the
+ * array won't grow too large, and this way we avoid the need to track allocations per window.
+ */
+WNDPROC WINPROC_AllocProc16( WNDPROC16 func )
+{
+    WINDOWPROC *proc;
+
+    if (!func) return NULL;
+
+    EnterCriticalSection( &winproc_cs );
+
+    /* check if the function is already a win proc */
+    if (!(proc = WINPROC_GetPtr( (WNDPROC)func )))
+    {
+        /* then check if we already have a winproc for that function */
+        if (!(proc = find_winproc16( func )))
+        {
+            if (winproc_used >= MAX_WINPROCS)
+                FIXME( "too many winprocs, cannot allocate one for 16-bit %p\n", func );
+            else
+            {
+                proc = &winproc_array[winproc_used++];
+                set_winproc16( proc, func );
+                TRACE( "allocated %p for %p/16-bit (%d/%d used)\n",
+                       proc, func, winproc_used, MAX_WINPROCS );
+            }
+        }
+        else TRACE( "reusing %p for %p/16-bit\n", proc, func );
+    }
+
+    LeaveCriticalSection( &winproc_cs );
+    return (WNDPROC)proc;
 }
 
 

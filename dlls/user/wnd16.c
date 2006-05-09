@@ -72,7 +72,7 @@ INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type )
  */
 UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout, TIMERPROC16 proc )
 {
-    TIMERPROC proc32 = (TIMERPROC)WINPROC_AllocProc( (WNDPROC)proc, WIN_PROC_16 );
+    TIMERPROC proc32 = (TIMERPROC)WINPROC_AllocProc16( (WNDPROC16)proc );
     return SetTimer( WIN_Handle32(hwnd), id, timeout, proc32 );
 }
 
@@ -82,7 +82,7 @@ UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout, TIMERPROC16 pr
  */
 UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout, TIMERPROC16 proc )
 {
-    TIMERPROC proc32 = (TIMERPROC)WINPROC_AllocProc( (WNDPROC)proc, WIN_PROC_16 );
+    TIMERPROC proc32 = (TIMERPROC)WINPROC_AllocProc16( (WNDPROC16)proc );
     return SetSystemTimer( WIN_Handle32(hwnd), id, timeout, proc32 );
 }
 
@@ -1323,7 +1323,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 
     wc32.cbSize        = sizeof(wc32);
     wc32.style         = wc->style;
-    wc32.lpfnWndProc   = WINPROC_AllocProc( (WNDPROC)wc->lpfnWndProc, WIN_PROC_16 );
+    wc32.lpfnWndProc   = WINPROC_AllocProc16( wc->lpfnWndProc );
     wc32.cbClsExtra    = wc->cbClsExtra;
     wc32.cbWndExtra    = wc->cbWndExtra;
     wc32.hInstance     = HINSTANCE_32(GetExePtr(wc->hInstance));
