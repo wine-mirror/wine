@@ -855,6 +855,7 @@ extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
 #define SFLAG_DYNCHANGE   0x1800 /* Surface contents are changed very often, implies DYNLOCK */
 #define SFLAG_DCINUSE     0x2000 /* Set between GetDC and ReleaseDC calls */
 #define SFLAG_NEWDC       0x4000 /* To inform LockRect about a new dc */
+#define SFLAG_LOST        0x8000 /* Surface lost flag for DDraw */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL

@@ -1698,13 +1698,19 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD F
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_IsLost(IWineD3DSurface *iface) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    TRACE("(%p)\n", This);
+
+    return This->Flags & SFLAG_LOST ? DDERR_SURFACELOST : WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_Restore(IWineD3DSurface *iface) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    TRACE("(%p)\n", This);
+
+    /* So far we don't lose anything :) */
+    This->Flags &= ~SFLAG_LOST;
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans) {
