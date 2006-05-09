@@ -944,6 +944,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     HDC ddc;
     DWORD *masks;
     HRESULT hr;
+    RGBQUAD col[256];
 
     TRACE("(%p)->(%p)\n",This,pHDC);
 
@@ -958,17 +959,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     memset(&lock, 0, sizeof(lock)); /* To be sure */
 
     /* Create a DIB section if there isn't a hdc yet */
-    if(!This->hDC)
-    {
-        RGBQUAD col[256];
-
-        if(This->Flags & SFLAG_ACTIVELOCK)
-        {
+    if(!This->hDC) {
+        if(This->Flags & SFLAG_ACTIVELOCK) {
             ERR("Creating a DIB section while a lock is active. Uncertain consequences\n");
         }
 
-        switch (This->bytesPerPixel)
-        {
+        switch (This->bytesPerPixel) {
             case 2:
             case 4:
                 /* Allocate extra space to store the RGB bit masks. */
@@ -1003,8 +999,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
 
         /* Get the bit masks */
         masks = (DWORD *) &(b_info->bmiColors);
-        switch (This->resource.format)
-        {
+        switch (This->resource.format) {
             case WINED3DFMT_R8G8B8:
                 usage = DIB_RGB_COLORS;
                 b_info->bmiHeader.biCompression = BI_RGB;
@@ -1037,8 +1032,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         }
 
         ddc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-        if (ddc == 0)
-        {
+        if (ddc == 0) {
             HeapFree(GetProcessHeap(), 0, b_info);
             return HRESULT_FROM_WIN32(GetLastError());
         }
@@ -1047,8 +1041,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         This->dib.DIBsection = CreateDIBSection(ddc, b_info, usage, &This->dib.bitmap_data, 0 /* Handle */, 0 /* Offset */);
         DeleteDC(ddc);
 
-        if (!This->dib.DIBsection)
-        {
+        if (!This->dib.DIBsection) {
             ERR("CreateDIBSection failed!\n");
             return HRESULT_FROM_WIN32(GetLastError());
         }
@@ -1057,8 +1050,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         TRACE("DIBSection at : %p\n", This->dib.bitmap_data);
 
         /* copy the existing surface to the dib section */
-        if(This->resource.allocatedMemory)
-        {
+        if(This->resource.allocatedMemory) {
             memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, This->resource.size);
             /* We won't need that any more */
             HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
@@ -1075,39 +1067,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
                       This->palette ? This->palette->hpal : 0,
                       FALSE);
 
-        if(This->resource.format == WINED3DFMT_P8 ||
-           This->resource.format == WINED3DFMT_A8P8)
-        {
-            unsigned int n;
-            if(This->palette)
-            {
-                PALETTEENTRY ent[256];
-
-                GetPaletteEntries(This->palette->hpal, 0, 256, ent);
-                for (n=0; n<256; n++)
-                {
-                    col[n].rgbRed   = ent[n].peRed;
-                    col[n].rgbGreen = ent[n].peGreen;
-                    col[n].rgbBlue  = ent[n].peBlue;
-                    col[n].rgbReserved = 0;
-                }
-            }
-            else
-            {
-                IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-
-                for (n=0; n<256; n++)
-                {
-                    col[n].rgbRed   = device->palettes[device->currentPalette][n].peRed;
-                    col[n].rgbGreen = device->palettes[device->currentPalette][n].peGreen;
-                    col[n].rgbBlue  = device->palettes[device->currentPalette][n].peBlue;
-                    col[n].rgbReserved = 0;
-                }
-
-            }
-            SetDIBColorTable(This->hDC, 0, 256, col);
-        }
-
         /* This is to make LockRect read the gl Texture although memory is allocated */
         This->Flags |= SFLAG_NEWDC;
 
@@ -1120,11 +1079,37 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
                                   NULL,
                                   0);
     This->Flags &= ~SFLAG_NEWDC;
-    if(FAILED(hr))
-    {
+    if(FAILED(hr)) {
         ERR("IWineD3DSurface_LockRect failed with hr = %08lx\n", hr);
         /* keep the dib section */
         return hr;
+    }
+
+    if(This->resource.format == WINED3DFMT_P8 ||
+        This->resource.format == WINED3DFMT_A8P8) {
+        unsigned int n;
+        if(This->palette) {
+            PALETTEENTRY ent[256];
+
+            GetPaletteEntries(This->palette->hpal, 0, 256, ent);
+            for (n=0; n<256; n++) {
+                col[n].rgbRed   = ent[n].peRed;
+                col[n].rgbGreen = ent[n].peGreen;
+                col[n].rgbBlue  = ent[n].peBlue;
+                col[n].rgbReserved = 0;
+            }
+        } else {
+            IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+            for (n=0; n<256; n++) {
+                col[n].rgbRed   = device->palettes[device->currentPalette][n].peRed;
+                col[n].rgbGreen = device->palettes[device->currentPalette][n].peGreen;
+                col[n].rgbBlue  = device->palettes[device->currentPalette][n].peBlue;
+                col[n].rgbReserved = 0;
+            }
+
+        }
+        SetDIBColorTable(This->hDC, 0, 256, col);
     }
 
     *pHDC = This->hDC;
