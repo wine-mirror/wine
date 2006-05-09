@@ -1232,8 +1232,8 @@ static DWORD WINAPI Comm_CheckEvents(int fd, DWORD mask, serial_irq_info *new, s
 	if (!queue)
 #endif
            ret |= EV_TXEMPTY;
+	TRACE("OUTQUEUE %ld, Transmitter %sempty\n", queue, (ret & EV_TXEMPTY)?"":"not ");
     }
-    TRACE("OUTQUEUE %ld, Transmitter %sempty\n", queue, (ret & EV_TXEMPTY)?"":"not ");
     return ret;
     
 }
