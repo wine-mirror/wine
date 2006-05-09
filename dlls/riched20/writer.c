@@ -782,8 +782,7 @@ ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int n
         nSize = WideCharToMultiByte(nCodePage, 0, item->member.run.strText->szData + nStart,
                                     nLen, NULL, 0, NULL, NULL);
         if (nSize > nBufLen) {
-          if (buffer)
-            FREE_OBJ(buffer);
+          FREE_OBJ(buffer);
           buffer = ALLOC_N_OBJ(char, nSize);
           nBufLen = nSize;
         }
@@ -800,8 +799,7 @@ ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int n
     item = ME_FindItemFwd(item, diRun);
   }
   
-  if (buffer)
-    FREE_OBJ(buffer);
+  FREE_OBJ(buffer);
   return success;
 }
 

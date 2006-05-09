@@ -1336,9 +1336,7 @@ static void process_detach(void)
 
   /* Do not leak memory... */
   wgl_ext_finalize_extensions();
-  if (NULL != internal_gl_extensions) {
-    HeapFree(GetProcessHeap(), 0, internal_gl_extensions);
-  }
+  HeapFree(GetProcessHeap(), 0, internal_gl_extensions);
 }
 
 /***********************************************************************

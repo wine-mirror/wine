@@ -666,8 +666,7 @@ static void SECUR32_freeProviders(void)
     {
         LIST_FOR_EACH_ENTRY(provider, &providerTable->table, SecureProvider, entry)
         {
-            if (provider->moduleName)
-                SECUR32_FREE(provider->moduleName);
+            SECUR32_FREE(provider->moduleName);
             if (provider->lib)
                 FreeLibrary(provider->lib);
         }
@@ -689,7 +688,7 @@ static void SECUR32_freeProviders(void)
  */
 SECURITY_STATUS WINAPI FreeContextBuffer(PVOID pv)
 {
-    if (pv) SECUR32_FREE(pv);
+    SECUR32_FREE(pv);
 
     return SEC_E_OK;
 }

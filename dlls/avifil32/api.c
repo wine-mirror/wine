@@ -1284,9 +1284,7 @@ static BOOL AVISaveOptionsFmtChoose(HWND hWnd)
     if (ret == S_OK)
       pOptions->dwFlags |= AVICOMPRESSF_VALID;
 
-    if (afmtc.pwfxEnum != NULL)
-      HeapFree(GetProcessHeap(), 0, afmtc.pwfxEnum);
-
+    HeapFree(GetProcessHeap(), 0, afmtc.pwfxEnum);
     return (ret == S_OK ? TRUE : FALSE);
   } else {
     ERR(": unknown streamtype 0x%08lX\n", sInfo.fccType);
@@ -2007,8 +2005,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
   }
 
  error:
-  if (lpBuffer != NULL)
-    HeapFree(GetProcessHeap(), 0, lpBuffer);
+  HeapFree(GetProcessHeap(), 0, lpBuffer);
   if (pfile != NULL) {
     for (curStream = 0; curStream < nStreams; curStream++) {
       if (pOutStreams[curStream] != NULL)

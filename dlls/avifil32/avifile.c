@@ -1964,8 +1964,7 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
 		       pos, &bAbsolute);
   }
 
-  if (lp != NULL)
-    HeapFree(GetProcessHeap(), 0, lp);
+  HeapFree(GetProcessHeap(), 0, lp);
 
   /* checking ... */
   for (n = 0; n < This->fInfo.dwStreams; n++) {

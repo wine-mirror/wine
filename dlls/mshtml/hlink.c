@@ -211,8 +211,7 @@ static HRESULT WINAPI Hlink_SetMonikerReference(IHlink *iface, DWORD grfHLSETF,
 
     if(This->mon)
         IMoniker_Release(This->mon);
-    if(This->location)
-        HeapFree(GetProcessHeap(), 0, This->location);
+    HeapFree(GetProcessHeap(), 0, This->location);
 
     if(pimkTarget)
         IMoniker_AddRef(pimkTarget);

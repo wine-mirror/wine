@@ -340,8 +340,7 @@ static BOOL AVIFILE_FormatsEqual(PAVISTREAM avi1, PAVISTREAM avi2)
     }
   }
 
-  if (fmt2 != NULL)
-    HeapFree(GetProcessHeap(), 0, fmt2);
+  HeapFree(GetProcessHeap(), 0, fmt2);
   HeapFree(GetProcessHeap(), 0, fmt1);
 
   return status;

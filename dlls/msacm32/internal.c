@@ -635,7 +635,7 @@ static void MSACM_ReorderDriversByPriority(void)
     
 errCleanUp:
     if (hPriorityKey != NULL) RegCloseKey(hPriorityKey);
-    if (driverList != NULL) HeapFree(MSACM_hHeap, 0, driverList);
+    HeapFree(MSACM_hHeap, 0, driverList);
 }
 
 /***********************************************************************

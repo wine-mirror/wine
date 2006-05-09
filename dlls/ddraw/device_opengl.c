@@ -3821,7 +3821,7 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 			 buffer_color, buffer_format, dst);
 
 	    if (current_width > buffer_width) {
-		if (buffer != NULL) HeapFree(GetProcessHeap(), 0, buffer);
+                HeapFree(GetProcessHeap(), 0, buffer);
 		buffer_width = current_width;
 		buffer = HeapAlloc(GetProcessHeap(), 0, buffer_width);
 	    }

@@ -1078,7 +1078,7 @@ HPBUFFERARB WINAPI wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, in
 
 create_failed:
   if (NULL != cfgs) XFree(cfgs);
-  if (NULL != object) HeapFree(GetProcessHeap(), 0, object);
+  HeapFree(GetProcessHeap(), 0, object);
   TRACE("->(FAILED)\n");
   return (HPBUFFERARB) NULL;
 }

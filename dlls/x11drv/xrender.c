@@ -344,8 +344,7 @@ static void FreeEntry(int entry)
             formatEntry->realized = NULL;
             if(formatEntry->bitmaps) {
                 for(i = 0; i < formatEntry->nrealized; i++)
-                    if(formatEntry->bitmaps[i])
-                        HeapFree(GetProcessHeap(), 0, formatEntry->bitmaps[i]);
+                    HeapFree(GetProcessHeap(), 0, formatEntry->bitmaps[i]);
                 HeapFree(GetProcessHeap(), 0, formatEntry->bitmaps);
                 formatEntry->bitmaps = NULL;
                 HeapFree(GetProcessHeap(), 0, formatEntry->gis);

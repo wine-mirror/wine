@@ -1437,14 +1437,10 @@ void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
     TRACE("(%p)\n", pc);
     ret = ICSendMessage(pc->hic, ICM_COMPRESS_END, 0, 0);
     TRACE(" -- %lx", ret);
-    if (pc->lpbiIn)
-       HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
-    if (pc->lpBitsPrev)
-       HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
-    if (pc->lpBitsOut)
-       HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
-    if (pc->lpState)
-       HeapFree(GetProcessHeap(), 0, pc->lpState);
+    HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
+    HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
+    HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
+    HeapFree(GetProcessHeap(), 0, pc->lpState);
     pc->lpbiIn = pc->lpBitsPrev = pc->lpBitsOut = pc->lpState = NULL;
 }
 

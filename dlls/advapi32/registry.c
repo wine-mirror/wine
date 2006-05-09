@@ -1455,7 +1455,7 @@ LONG WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
         (dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND)))
     {
         do {
-            if (pvBuf) HeapFree(GetProcessHeap(), 0, pvBuf);
+            HeapFree(GetProcessHeap(), 0, pvBuf);
             
             pvBuf = HeapAlloc(GetProcessHeap(), 0, cbData);
             if (!pvBuf)
@@ -1494,7 +1494,7 @@ LONG WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
                 CopyMemory(pvData, pvBuf, *pcbData);
         }
 
-        if (pvBuf) HeapFree(GetProcessHeap(), 0, pvBuf);
+        HeapFree(GetProcessHeap(), 0, pvBuf);
     }
 
     if (pszSubKey && pszSubKey[0])
@@ -1547,7 +1547,7 @@ LONG WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
         (dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND)))
     {
         do {
-            if (pvBuf) HeapFree(GetProcessHeap(), 0, pvBuf);
+            HeapFree(GetProcessHeap(), 0, pvBuf);
 
             pvBuf = HeapAlloc(GetProcessHeap(), 0, cbData);
             if (!pvBuf)
@@ -1586,7 +1586,7 @@ LONG WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
                 CopyMemory(pvData, pvBuf, *pcbData);
         }
 
-        if (pvBuf) HeapFree(GetProcessHeap(), 0, pvBuf);
+        HeapFree(GetProcessHeap(), 0, pvBuf);
     }
 
     if (pszSubKey && pszSubKey[0])

@@ -1041,12 +1041,10 @@ static int ALSA_AddCommonDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcmn
 */  
 static void ALSA_FreeDevice(WINE_WAVEDEV *ww)
 {
-    if (ww->pcmname)
-        HeapFree(GetProcessHeap(), 0, ww->pcmname);
+    HeapFree(GetProcessHeap(), 0, ww->pcmname);
     ww->pcmname = NULL;
 
-    if (ww->ctlname)
-        HeapFree(GetProcessHeap(), 0, ww->ctlname);
+    HeapFree(GetProcessHeap(), 0, ww->ctlname);
     ww->ctlname = NULL;
 }
 
@@ -1627,11 +1625,8 @@ LONG ALSA_WaveInit(void)
             ALSA_AddUserSpecifiedDevice(ctl_name, pcm_name);
         }
 
-        if (ctl_name)
-            HeapFree(GetProcessHeap(), 0, ctl_name);
-
-        if (pcm_name)
-            HeapFree(GetProcessHeap(), 0, pcm_name);
+        HeapFree(GetProcessHeap(), 0, ctl_name);
+        HeapFree(GetProcessHeap(), 0, pcm_name);
     }
 
     if (key)

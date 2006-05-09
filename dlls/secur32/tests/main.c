@@ -162,12 +162,9 @@ SECURITY_STATUS setupClient(PCredHandle cred, const char *user,
 
     if( identity != NULL)
     {
-        if(identity->Domain != 0)
-            HeapFree(GetProcessHeap(), 0, identity->Domain);
-        if(identity->User != 0)
-            HeapFree(GetProcessHeap(), 0, identity->User);
-        if(identity->Password != 0)
-            HeapFree(GetProcessHeap(), 0, identity->Password);
+        HeapFree(GetProcessHeap(), 0, identity->Domain);
+        HeapFree(GetProcessHeap(), 0, identity->User);
+        HeapFree(GetProcessHeap(), 0, identity->Password);
         HeapFree(GetProcessHeap(), 0, identity);
     }       
 

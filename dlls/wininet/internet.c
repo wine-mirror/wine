@@ -1533,8 +1533,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
              debugstr_wn(lpUC->lpszUrlPath,lpUC->dwUrlPathLength),
              debugstr_wn(lpUC->lpszExtraInfo,lpUC->dwExtraInfoLength));
 
-    if (lpszUrl_decode)
-	 HeapFree(GetProcessHeap(), 0, lpszUrl_decode );
+    HeapFree(GetProcessHeap(), 0, lpszUrl_decode );
     return TRUE;
 }
 

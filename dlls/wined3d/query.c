@@ -60,9 +60,7 @@ ULONG WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        if(This->extendedData != NULL){
-            HeapFree(GetProcessHeap(), 0, This->extendedData);
-        }
+        HeapFree(GetProcessHeap(), 0, This->extendedData);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;

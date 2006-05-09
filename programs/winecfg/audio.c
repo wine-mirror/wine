@@ -480,11 +480,8 @@ static void findAudioDrivers(void)
     HCURSOR old_cursor;
 
     /* delete an existing list */
-    if (loadedAudioDrv)
-    {
-        HeapFree(GetProcessHeap(), 0, loadedAudioDrv);
-        loadedAudioDrv = 0;
-    }
+    HeapFree(GetProcessHeap(), 0, loadedAudioDrv);
+    loadedAudioDrv = 0;
 
     /* change to the wait cursor because this can take a while if there is a
      * misbehaving driver that takes a long time to open

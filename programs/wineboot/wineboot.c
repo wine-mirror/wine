@@ -326,8 +326,7 @@ static BOOL pendingRename(void)
         res=TRUE;
     
 end:
-    if( buffer!=NULL )
-        HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, buffer);
 
     if( hSession!=NULL )
         RegCloseKey( hSession );

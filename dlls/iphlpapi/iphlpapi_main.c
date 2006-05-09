@@ -755,8 +755,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
         }
         else
           ret = ERROR_OUTOFMEMORY;
-        if (ipAddrTable)
-          HeapFree(GetProcessHeap(), 0, ipAddrTable);
+        HeapFree(GetProcessHeap(), 0, ipAddrTable);
       }
     }
     else

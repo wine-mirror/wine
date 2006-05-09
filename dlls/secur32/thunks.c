@@ -77,10 +77,8 @@ SECURITY_STATUS SEC_ENTRY thunk_AcquireCredentialsHandleW(
         ret = AcquireCredentialsHandleA(principal, package, fCredentialsUse,
          pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential,
          ptsExpiry);
-        if (principal)
-            SECUR32_FREE(principal);
-        if (package)
-            SECUR32_FREE(package);
+        SECUR32_FREE(principal);
+        SECUR32_FREE(package);
     }
     else
         ret = SEC_E_SECPKG_NOT_FOUND;
@@ -262,8 +260,7 @@ SECURITY_STATUS SEC_ENTRY thunk_InitializeSecurityContextW(
                  phCredential, phContext, target, fContextReq, Reserved1,
                  TargetDataRep, pInput, Reserved2, phNewContext, pOutput,
                  pfContextAttr, ptsExpiry);
-                if (target)
-                    SECUR32_FREE(target);
+                SECUR32_FREE(target);
             }
             else
                 ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -898,7 +895,6 @@ SECURITY_STATUS SEC_ENTRY thunk_ImportSecurityContextW(
     TRACE("%s %p %p %p\n", debugstr_w(pszPackage), pPackedContext, Token,
      phContext);
     ret = ImportSecurityContextA(package, pPackedContext, Token, phContext);
-    if (package)
-        SECUR32_FREE(package);
+    SECUR32_FREE(package);
     return ret;
 }

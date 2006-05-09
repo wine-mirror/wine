@@ -2280,7 +2280,6 @@ BOOL WINAPI CommitUrlCacheEntryA(
 	        {
 	        dwError = GetLastError();
                 }
-	        if (original_url)
 	    	HeapFree(GetProcessHeap(), 0, original_url);
 	    }
 		else

@@ -110,7 +110,7 @@ static void Main_DirectDrawSurface_Destroy(IDirectDrawSurfaceImpl* This)
     }
     This->final_release(This);
     if (This->private != This+1) HeapFree(GetProcessHeap(), 0, This->private);
-    if (This->tex_private) HeapFree(GetProcessHeap(), 0, This->tex_private);
+    HeapFree(GetProcessHeap(), 0, This->tex_private);
     HeapFree(GetProcessHeap(), 0, This);
 }
 

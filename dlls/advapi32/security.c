@@ -1841,9 +1841,7 @@ LookupAccountNameA(
 
     RtlFreeUnicodeString(&lpSystemW);
     RtlFreeUnicodeString(&lpAccountW);
-
-    if (lpReferencedDomainNameW)
-        HeapFree(GetProcessHeap(), 0, lpReferencedDomainNameW);
+    HeapFree(GetProcessHeap(), 0, lpReferencedDomainNameW);
 
     return ret;
 }

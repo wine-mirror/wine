@@ -628,8 +628,7 @@ done:
     SendMessage(hwndTV, WM_SETREDRAW, TRUE, 0);
     SetCursor(hcursorOld);
     expanding = FALSE;
-    if (keyPath)
-        HeapFree(GetProcessHeap(), 0, keyPath);
+    HeapFree(GetProcessHeap(), 0, keyPath);
 
     return TRUE;
 }
