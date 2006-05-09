@@ -1029,6 +1029,13 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         SERVER_END_REQ;
         break;
 
+    case FSCTL_LOCK_VOLUME:
+    case FSCTL_UNLOCK_VOLUME:
+        FIXME("stub! return success - Unsupported fsctl %lx (device=%lx access=%lx func=%lx method=%lx)\n",
+              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+        io->u.Status = STATUS_SUCCESS;
+        break;
+
     default:
         FIXME("Unsupported fsctl %lx (device=%lx access=%lx func=%lx method=%lx)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
