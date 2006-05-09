@@ -2006,7 +2006,7 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
     case GWLP_USERDATA:
         break;
     case DWLP_DLGPROC:
-        if ((wndPtr->cbWndExtra + sizeof(LONG_PTR) >= DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
+        if ((wndPtr->cbWndExtra - sizeof(LONG_PTR) >= DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
         {
             WNDPROC *ptr = (WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
             retval = (ULONG_PTR)WINPROC_GetProc( *ptr, type );
