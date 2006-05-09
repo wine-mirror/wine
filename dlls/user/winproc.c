@@ -529,34 +529,43 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC handle )
 
 
 /**********************************************************************
+ *	     WINPROC_GetProc16
+ *
+ * Get a window procedure pointer that can be passed to the Windows program.
+ */
+WNDPROC16 WINPROC_GetProc16( WNDPROC proc )
+{
+    WINDOWPROC *ptr = (WINDOWPROC *)proc;
+
+    if (!proc) return 0;
+
+    if (ptr->type == WIN_PROC_16)
+        return ptr->thunk.t_from32.proc;
+    else
+        return (WNDPROC16)MAKESEGPTR( get_winproc_selector(),
+                                      (char *)&ptr->thunk - (char *)winproc_array );
+}
+
+
+/**********************************************************************
  *	     WINPROC_GetProc
  *
  * Get a window procedure pointer that can be passed to the Windows program.
  */
-WNDPROC16 WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type )
+WNDPROC WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type )
 {
     WINDOWPROC *ptr = (WINDOWPROC *)proc;
 
     if (!proc) return NULL;
-    if (type == WIN_PROC_16)  /* We want a 16:16 address */
-    {
-        if (ptr->type == WIN_PROC_16)
-            return ptr->thunk.t_from32.proc;
-        else
-            return (WNDPROC16)MAKESEGPTR( get_winproc_selector(),
-                                          (char *)&ptr->thunk - (char *)winproc_array );
-    }
-    else  /* We want a 32-bit address */
-    {
-        if (ptr->type == WIN_PROC_16)
-            return (WNDPROC16)&ptr->thunk;
-        else if (type != ptr->type)
-            /* Have to return the jmp address if types don't match */
-            return (WNDPROC16)&ptr->jmp;
-        else
-            /* Some Win16 programs want to get back the proc they set */
-            return (WNDPROC16)ptr->thunk.t_from16.proc;
-    }
+
+    if (ptr->type == WIN_PROC_16)
+        return (WNDPROC)&ptr->thunk;
+    else if (type != ptr->type)
+        /* Have to return the jmp address if types don't match */
+        return (WNDPROC)&ptr->jmp;
+    else
+        /* Some Win16 programs want to get back the proc they set */
+        return (WNDPROC)ptr->thunk.t_from16.proc;
 }
 
 
@@ -3205,11 +3214,6 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     if (!(proc = WINPROC_GetPtr( (WNDPROC)func )))
         return WINPROC_CallWndProc16( func, hwnd, msg, wParam, lParam );
 
-#if testing
-    func = WINPROC_GetProc( (WNDPROC)proc, WIN_PROC_16 );
-    return WINPROC_CallWndProc16( func, hwnd, msg, wParam, lParam );
-#endif
-
     switch(proc->type)
     {
     case WIN_PROC_16:
@@ -3267,11 +3271,6 @@ LRESULT WINAPI CallWindowProcA(
     if (!(proc = WINPROC_GetPtr( func )))
         return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
-#if testing
-    func = WINPROC_GetProc( (WNDPROC)proc, WIN_PROC_32A );
-    return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-#endif
-
     switch(proc->type)
     {
     case WIN_PROC_16:
@@ -3307,11 +3306,6 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
 
     if (!(proc = WINPROC_GetPtr( (WNDPROC)func )))
         return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-
-#if testing
-    func = WINPROC_GetProc( (WNDPROC)proc, WIN_PROC_32W );
-    return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-#endif
 
     switch(proc->type)
     {

@@ -149,7 +149,20 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG newval )
  *
  * Get the class winproc for a given proc type
  */
-static WNDPROC16 CLASS_GetProc( CLASS *classPtr, WINDOWPROCTYPE type )
+static WNDPROC16 CLASS_GetProc16( CLASS *classPtr )
+{
+    WNDPROC proc = classPtr->winprocA;
+    if (!proc) proc = classPtr->winprocW;
+    return WINPROC_GetProc16( proc );
+}
+
+
+/***********************************************************************
+ *           CLASS_GetProc
+ *
+ * Get the class winproc for a given proc type
+ */
+static WNDPROC CLASS_GetProc( CLASS *classPtr, WINDOWPROCTYPE type )
 {
     WNDPROC proc = classPtr->winprocA;
 
@@ -170,10 +183,9 @@ static WNDPROC16 CLASS_GetProc( CLASS *classPtr, WINDOWPROCTYPE type )
  * Set the class winproc for a given proc type.
  * Returns the previous window proc.
  */
-static WNDPROC16 CLASS_SetProc( CLASS *classPtr, WNDPROC newproc, WINDOWPROCTYPE type )
+static void CLASS_SetProc( CLASS *classPtr, WNDPROC newproc, WINDOWPROCTYPE type )
 {
     WNDPROC *proc = &classPtr->winprocA;
-    WNDPROC16 ret;
 
     if (classPtr->winprocW)
     {
@@ -182,7 +194,6 @@ static WNDPROC16 CLASS_SetProc( CLASS *classPtr, WNDPROC newproc, WINDOWPROCTYPE
          */
         if (!*proc || type == WIN_PROC_32W) proc = &classPtr->winprocW;
     }
-    ret = WINPROC_GetProc( *proc, type );
     *proc = WINPROC_AllocProc( newproc, type );
     /* now clear the one that we didn't set */
     if (classPtr->winprocA && classPtr->winprocW)
@@ -192,7 +203,6 @@ static WNDPROC16 CLASS_SetProc( CLASS *classPtr, WNDPROC newproc, WINDOWPROCTYPE
         else
             classPtr->winprocA = 0;
     }
-    return ret;
 }
 
 
@@ -730,7 +740,7 @@ LONG WINAPI GetClassLong16( HWND16 hwnd16, INT16 offset )
     case GCLP_WNDPROC:
         if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
         if (class == CLASS_OTHER_PROCESS) break;
-        ret = (LONG)CLASS_GetProc( class, WIN_PROC_16 );
+        ret = (LONG)CLASS_GetProc16( class );
         release_class_ptr( class );
         return ret;
     case GCLP_MENUNAME:
@@ -942,7 +952,8 @@ LONG WINAPI SetClassLong16( HWND16 hwnd16, INT16 offset, LONG newval )
     {
     case GCLP_WNDPROC:
         if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
-        retval = (LONG)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_16 );
+        retval = (LONG)CLASS_GetProc16( class );
+        CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_16 );
         release_class_ptr( class );
         return retval;
     case GCLP_MENUNAME:
@@ -982,7 +993,8 @@ DWORD WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
         retval = 0;  /* Old value is now meaningless anyway */
         break;
     case GCLP_WNDPROC:
-        retval = (DWORD)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32W );
+        retval = (DWORD)CLASS_GetProc( class, WIN_PROC_32W );
+        CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32W );
         break;
     case GCLP_HBRBACKGROUND:
         retval = (DWORD)class->hbrBackground;
@@ -1048,7 +1060,10 @@ DWORD WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
     if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
 
     if (offset == GCLP_WNDPROC)
-        retval = (DWORD)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32A );
+    {
+        retval = (DWORD)CLASS_GetProc( class, WIN_PROC_32A );
+        CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32A );
+    }
     else  /* GCL_MENUNAME */
     {
         CLASS_SetMenuNameA( class, (LPCSTR)newval );

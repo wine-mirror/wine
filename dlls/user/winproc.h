@@ -52,7 +52,8 @@ typedef struct
 
 struct tagWINDOWPROC;
 
-extern WNDPROC16 WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type );
+extern WNDPROC16 WINPROC_GetProc16( WNDPROC proc );
+extern WNDPROC WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type );
 extern WNDPROC WINPROC_AllocProc( WNDPROC func, WINDOWPROCTYPE type );
 extern WINDOWPROCTYPE WINPROC_GetProcType( WNDPROC proc );
 

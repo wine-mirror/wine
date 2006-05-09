@@ -2165,7 +2165,7 @@ LONG WINAPI GetWindowLong16( HWND16 hwnd, INT16 offset )
         }
     }
     retvalue = GetWindowLongA( WIN_Handle32(hwnd), offset );
-    if (is_winproc) retvalue = (LONG_PTR)WINPROC_GetProc( (WNDPROC)retvalue, WIN_PROC_16 );
+    if (is_winproc) retvalue = (LONG_PTR)WINPROC_GetProc16( (WNDPROC)retvalue );
     return retvalue;
 }
 
@@ -2215,7 +2215,7 @@ LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
     {
         WNDPROC new_proc = WINPROC_AllocProc( (WNDPROC)newval, WIN_PROC_16 );
         WNDPROC old_proc = (WNDPROC)SetWindowLongA( WIN_Handle32(hwnd), offset, (LONG_PTR)new_proc );
-        return (LONG)WINPROC_GetProc( (WNDPROC)old_proc, WIN_PROC_16 );
+        return (LONG)WINPROC_GetProc16( (WNDPROC)old_proc );
     }
     else return SetWindowLongA( WIN_Handle32(hwnd), offset, newval );
 }
