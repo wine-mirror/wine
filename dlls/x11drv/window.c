@@ -736,6 +736,8 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
         XUnsetICFocus( data->xic );
         XDestroyIC( data->xic );
     }
+    /* Outlook stops processing messages after destroying a dialog, so we need an explicit flush */
+    XFlush( display );
     wine_tsx11_unlock();
     RemovePropA( data->hwnd, whole_window_prop );
 }
