@@ -1529,7 +1529,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
         /* Position -------------------------------- */
         if (sd->u.s.position.lpData != NULL) {
-            if (1.0f == rhw || ((rhw < 0.0001f) && (rhw > -0.0001f))) {
+            if (1.0f == rhw || ((rhw < eps) && (rhw > -eps))) {
                 VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
                 glVertex3f(x, y, z);
             } else {

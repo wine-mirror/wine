@@ -378,6 +378,8 @@ void drawPrimitive(IWineD3DDevice *iface,
                     int   minIndex,
                     WineDirect3DVertexStridedData *DrawPrimStrideData);
 
+#define eps 1e-8
+
 /* Routine to fill gl caps for swapchains and IWineD3D */
 BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info,
                              Display* display);
