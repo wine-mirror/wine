@@ -35,9 +35,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dialog);
 /***********************************************************************
  *           DEFDLG_GetDlgProc
  */
-static WNDPROC DEFDLG_GetDlgProc( HWND hwnd )
+static DLGPROC DEFDLG_GetDlgProc( HWND hwnd )
 {
-    WNDPROC ret;
+    DLGPROC ret;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
     if (!wndPtr) return 0;
@@ -46,7 +46,7 @@ static WNDPROC DEFDLG_GetDlgProc( HWND hwnd )
         ERR( "cannot get dlg proc %p from other process\n", hwnd );
         return 0;
     }
-    ret = *(WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
+    ret = *(DLGPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
     WIN_ReleasePtr( wndPtr );
     return ret;
 }
@@ -381,7 +381,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                              LPARAM lParam )
 {
     DIALOGINFO *dlgInfo;
-    WNDPROC16 dlgproc;
+    DLGPROC16 dlgproc;
     HWND hwnd32 = WIN_Handle32( hwnd );
     BOOL result = FALSE;
 
@@ -390,14 +390,8 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
     SetWindowLongPtrW( hwnd32, DWLP_MSGRESULT, 0 );
 
-    if ((dlgproc = (WNDPROC16)DEFDLG_GetDlgProc( hwnd32 )))
-    {
-        /* Call dialog procedure */
-        result = CallWindowProc16( dlgproc, hwnd, msg, wParam, lParam );
-        /* 16 bit dlg procs only return BOOL16 */
-        if( WINPROC_GetProcType( (WNDPROC)dlgproc ) == WIN_PROC_16 )
-            result = LOWORD(result);
-    }
+    if ((dlgproc = (DLGPROC16)DEFDLG_GetDlgProc( hwnd32 ))) /* Call dialog procedure */
+        result = WINPROC_CallDlgProc16( dlgproc, hwnd, msg, wParam, lParam );
 
     if (!result && IsWindow(hwnd32))
     {
@@ -439,7 +433,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     DIALOGINFO *dlgInfo;
-    WNDPROC dlgproc;
+    DLGPROC dlgproc;
     BOOL result = FALSE;
 
     /* Perform DIALOGINFO initialization if not done */
@@ -447,14 +441,8 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, 0 );
 
-    if ((dlgproc = DEFDLG_GetDlgProc( hwnd )))
-    {
-        /* Call dialog procedure */
-        result = CallWindowProcA( dlgproc, hwnd, msg, wParam, lParam );
-        /* 16 bit dlg procs only return BOOL16 */
-        if( WINPROC_GetProcType( dlgproc ) == WIN_PROC_16 )
-            result = LOWORD(result);
-    }
+    if ((dlgproc = DEFDLG_GetDlgProc( hwnd ))) /* Call dialog procedure */
+        result = WINPROC_CallDlgProcA( dlgproc, hwnd, msg, wParam, lParam );
 
     if (!result && IsWindow(hwnd))
     {
@@ -497,21 +485,15 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     DIALOGINFO *dlgInfo;
     BOOL result = FALSE;
-    WNDPROC dlgproc;
+    DLGPROC dlgproc;
 
     /* Perform DIALOGINFO intialization if not done */
     if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return -1;
 
     SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, 0 );
 
-    if ((dlgproc = DEFDLG_GetDlgProc( hwnd )))
-    {
-        /* Call dialog procedure */
-        result = CallWindowProcW( dlgproc, hwnd, msg, wParam, lParam );
-        /* 16 bit dlg procs only return BOOL16 */
-        if( WINPROC_GetProcType( dlgproc ) == WIN_PROC_16 )
-            result = LOWORD(result);
-    }
+    if ((dlgproc = DEFDLG_GetDlgProc( hwnd ))) /* Call dialog procedure */
+        result = WINPROC_CallDlgProcW( dlgproc, hwnd, msg, wParam, lParam );
 
     if (!result && IsWindow(hwnd))
     {

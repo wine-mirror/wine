@@ -3272,3 +3272,84 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
         return 0;
     }
 }
+
+
+/**********************************************************************
+ *		WINPROC_CallDlgProc16
+ */
+INT_PTR WINPROC_CallDlgProc16( DLGPROC16 func, HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
+{
+    WINDOWPROC *proc;
+
+    if (!func) return 0;
+
+    if (!(proc = handle16_to_proc( (WNDPROC16)func )))
+        return LOWORD( WINPROC_CallWndProc16( (WNDPROC16)func, hwnd, msg, wParam, lParam ) );
+
+    switch(proc->type)
+    {
+    case WIN_PROC_16:
+        return LOWORD( WINPROC_CallWndProc16( proc->proc16, hwnd, msg, wParam, lParam ) );
+    case WIN_PROC_32A:
+        return __wine_call_wndproc_32A( hwnd, msg, wParam, lParam, proc->thunk.proc );
+    case WIN_PROC_32W:
+        return __wine_call_wndproc_32W( hwnd, msg, wParam, lParam, proc->thunk.proc );
+    default:
+        WARN_(relay)("Invalid proc %p\n", proc );
+        return 0;
+    }
+}
+
+
+/**********************************************************************
+ *		WINPROC_CallDlgProcA
+ */
+INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    WINDOWPROC *proc;
+
+    if (!func) return 0;
+
+    if (!(proc = handle_to_proc( (WNDPROC)func )))
+        return WINPROC_CallWndProc( (WNDPROC)func, hwnd, msg, wParam, lParam );
+
+    switch(proc->type)
+    {
+    case WIN_PROC_16:
+        return LOWORD( WINPROC_CallProc32ATo16( proc->proc16, hwnd, msg, wParam, lParam ) );
+    case WIN_PROC_32A:
+        return WINPROC_CallWndProc( proc->thunk.proc, hwnd, msg, wParam, lParam );
+    case WIN_PROC_32W:
+        return WINPROC_CallProc32ATo32W( proc->thunk.proc, hwnd, msg, wParam, lParam );
+    default:
+        WARN_(relay)("Invalid proc %p\n", proc );
+        return 0;
+    }
+}
+
+
+/**********************************************************************
+ *		WINPROC_CallDlgProcW
+ */
+INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    WINDOWPROC *proc;
+
+    if (!func) return 0;
+
+    if (!(proc = handle_to_proc( (WNDPROC)func )))
+        return WINPROC_CallWndProc( (WNDPROC)func, hwnd, msg, wParam, lParam );
+
+    switch(proc->type)
+    {
+    case WIN_PROC_16:
+        return LOWORD( WINPROC_CallProc32WTo16( proc->proc16, hwnd, msg, wParam, lParam ));
+    case WIN_PROC_32A:
+        return WINPROC_CallProc32WTo32A( proc->thunk.proc, hwnd, msg, wParam, lParam );
+    case WIN_PROC_32W:
+        return WINPROC_CallWndProc( proc->thunk.proc, hwnd, msg, wParam, lParam );
+    default:
+        WARN_(relay)("Invalid proc %p\n", proc );
+        return 0;
+    }
+}

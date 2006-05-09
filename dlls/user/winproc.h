@@ -85,6 +85,10 @@ extern void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam,
 extern void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam,
                                      LPARAM lParam, MSGPARAM16* pm16 );
 
+extern INT_PTR WINPROC_CallDlgProc16( DLGPROC16 func, HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam );
+extern INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+extern INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+
 /* map a Unicode string to a 16-bit pointer */
 inline static SEGPTR map_str_32W_to_16( LPCWSTR str )
 {
