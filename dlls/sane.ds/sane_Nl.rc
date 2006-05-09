@@ -1,7 +1,7 @@
 /*
- * Top level resource file for Twain
+ * Dutch resources for Twain
  *
- * Copyright 2006 CodeWeavers, Aric Stewart
+ * Copyright 2006 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,17 +18,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
+LANGUAGE LANG_DUTCH, SUBLANG_DEFAULT
 
-#include "resource.h"
+IDD_DIALOG1 DIALOG DISCARDABLE 0, 0, 186, 46
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | DS_CENTER | DS_SETFOREGROUND
+CAPTION "Scannen"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT   "SCANNEN.... Even geduld",IDC_STATIC,53,19,85,8
+END
 
-#include "sane_De.rc"
-#include "sane_En.rc"
-#include "sane_Fi.rc"
-#include "sane_Fr.rc"
-#include "sane_Ko.rc"
-#include "sane_Nl.rc"
-#include "sane_No.rc"
+STRINGTABLE DISCARDABLE
+{
+ 0 ""
+ 1 "px"
+ 2 "b"
+ 3 "mm"
+ 4 "dpi"
+ 5 "%"
+ 6 "ns"
+}
