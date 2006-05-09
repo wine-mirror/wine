@@ -472,9 +472,10 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
         trace("waveOutGetPosition(%s): TIME_SAMPLES not supported, "
               "returned %s\n",dev_name(device),wave_time_format(mmtime.wType));
     returned = time_to_bytes(&mmtime, pwfx);
-    ok(returned == bytes, "waveOutGetPosition(%s): returned %ld samples, "
-       "should be %ld\n", dev_name(device), bytes_to_samples(returned, pwfx),
-       bytes_to_samples(bytes, pwfx));
+    ok(returned == bytes, "waveOutGetPosition(%s): returned %ld samples "
+       "(%ld bytes), should be %ld (%ld bytes)\n", dev_name(device),
+       bytes_to_samples(returned, pwfx), returned,
+       bytes_to_samples(bytes, pwfx), bytes);
 
     mmtime.wType = TIME_MS;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
