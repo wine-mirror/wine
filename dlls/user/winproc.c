@@ -3248,14 +3248,10 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     switch(proc->type)
     {
     case WIN_PROC_16:
-        if (!proc->thunk.t_from32.proc) return 0;
-        return WINPROC_CallWndProc16( proc->thunk.t_from32.proc,
-                                      hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc16( proc->thunk.t_from32.proc, hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
-        if (!proc->thunk.t_from16.proc) return 0;
         return __wine_call_wndproc_32A( hwnd, msg, wParam, lParam, proc->thunk.t_from16.proc );
     case WIN_PROC_32W:
-        if (!proc->thunk.t_from16.proc) return 0;
         return __wine_call_wndproc_32W( hwnd, msg, wParam, lParam, proc->thunk.t_from16.proc );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
@@ -3305,17 +3301,11 @@ LRESULT WINAPI CallWindowProcA(
     switch(proc->type)
     {
     case WIN_PROC_16:
-        if (!proc->thunk.t_from32.proc) return 0;
-        return WINPROC_CallProc32ATo16( proc->thunk.t_from32.proc,
-                                        hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32ATo16( proc->thunk.t_from32.proc, hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
-        if (!proc->thunk.t_from16.proc) return 0;
-        return WINPROC_CallWndProc( proc->thunk.t_from16.proc,
-                                      hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc( proc->thunk.t_from16.proc, hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        if (!proc->thunk.t_from16.proc) return 0;
-        return WINPROC_CallProc32ATo32W( proc->thunk.t_from16.proc,
-                                         hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32ATo32W( proc->thunk.t_from16.proc, hwnd, msg, wParam, lParam );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
@@ -3335,23 +3325,17 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
 
     if (!func) return 0;
 
-    if (!(proc = WINPROC_GetPtr( (WNDPROC)func )))
+    if (!(proc = WINPROC_GetPtr( func )))
         return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
     switch(proc->type)
     {
     case WIN_PROC_16:
-        if (!proc->thunk.t_from32.proc) return 0;
-        return WINPROC_CallProc32WTo16( proc->thunk.t_from32.proc,
-                                        hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32WTo16( proc->thunk.t_from32.proc, hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
-        if (!proc->thunk.t_from16.proc) return 0;
-        return WINPROC_CallProc32WTo32A( proc->thunk.t_from16.proc,
-                                         hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32WTo32A( proc->thunk.t_from16.proc, hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        if (!proc->thunk.t_from16.proc) return 0;
-        return WINPROC_CallWndProc( proc->thunk.t_from16.proc,
-                                      hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc( proc->thunk.t_from16.proc, hwnd, msg, wParam, lParam );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
