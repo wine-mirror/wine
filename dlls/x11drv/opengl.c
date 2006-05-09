@@ -660,7 +660,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
  *		SwapBuffers (X11DRV.@)
  */
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
-  ERR("No OpenGL support compiled in.\n");
+  ERR_(opengl)("No OpenGL support compiled in.\n");
 
   return FALSE;
 }
