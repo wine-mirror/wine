@@ -1759,18 +1759,68 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPixelFormat(IWineD3DSurface *iface, WINED3
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD3DPalette **Pal) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    TRACE("(%p)->(%p)\n", This, Pal);
+
+    *Pal = (IWineD3DPalette *) This->palette;
+    return DD_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    RGBQUAD col[256];
+    IWineD3DPaletteImpl *pal = This->palette;
+    unsigned int n;
+    TRACE("(%p)\n", This);
+
+    if(This->resource.format == WINED3DFMT_P8 ||
+       This->resource.format == WINED3DFMT_A8P8)
+    {
+        TRACE("Dirtifying surface\n");
+        This->Flags |= SFLAG_DIRTY;
+    }
+
+    TRACE("(%p): Updating the palette\n", This);
+    for (n=0; n<256; n++) {
+        col[n].rgbRed   = pal->palents[n].peRed;
+        col[n].rgbGreen = pal->palents[n].peGreen;
+        col[n].rgbBlue  = pal->palents[n].peBlue;
+        col[n].rgbReserved = 0;
+    }
+    SetDIBColorTable(This->hDC, 0, 256, col);
+
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPalette *Pal) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    IWineD3DPaletteImpl *PalImpl = (IWineD3DPaletteImpl *) Pal;
+    TRACE("(%p)->(%p)\n", This, Pal);
+
+    if(This->palette != NULL) 
+        if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+            This->palette->Flags &= ~DDPCAPS_PRIMARYSURFACE;
+
+    if(PalImpl != NULL) {
+        if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+            /* Set the device's main palette if the palette
+             * wasn't a primary palette before
+             */
+            if(!(PalImpl->Flags & DDPCAPS_PRIMARYSURFACE)) {
+                IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+                unsigned int i;
+
+                for(i=0; i < 256; i++) {
+                    device->palettes[device->currentPalette][i] = PalImpl->palents[i];
+                }
+            }
+
+            (PalImpl)->Flags |= DDPCAPS_PRIMARYSURFACE;
+        }
+    }
+    This->palette = PalImpl;
+
+    return IWineD3DSurface_RealizePalette(iface);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, DDCOLORKEY *CKey) {
