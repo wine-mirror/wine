@@ -392,16 +392,12 @@ static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
  * If yes, we unprotect the resources to let broken apps continue
  * (Windows does this too).
  */
-inline static BOOL check_resource_write( const EXCEPTION_RECORD *rec )
+inline static BOOL check_resource_write( void *addr )
 {
-    void *addr, *rsrc;
+    void *rsrc;
     DWORD size;
     MEMORY_BASIC_INFORMATION info;
 
-    if (rec->ExceptionCode != EXCEPTION_ACCESS_VIOLATION) return FALSE;
-    if (rec->NumberParameters < 2) return FALSE;
-    if (!rec->ExceptionInformation[0]) return FALSE;  /* not a write access */
-    addr = (void *)rec->ExceptionInformation[1];
     if (!VirtualQuery( addr, &info, sizeof(info) )) return FALSE;
     if (info.State == MEM_FREE || !(info.Type & MEM_IMAGE)) return FALSE;
     if (!(rsrc = RtlImageDirectoryEntryToData( (HMODULE)info.AllocationBase, TRUE,
@@ -415,15 +411,57 @@ inline static BOOL check_resource_write( const EXCEPTION_RECORD *rec )
 
 
 /*******************************************************************
+ *         check_no_exec
+ *
+ * Check for executing a protected area.
+ */
+inline static BOOL check_no_exec( void *addr )
+{
+    MEMORY_BASIC_INFORMATION info;
+
+    if (!VirtualQuery( addr, &info, sizeof(info) )) return FALSE;
+    if (info.State == MEM_FREE) return FALSE;
+
+    /* prot |= PAGE_EXECUTE would be a lot easier, but MS developers
+     * apparently don't grasp the notion of protection bits */
+    switch(info.Protect)
+    {
+    case PAGE_READONLY: info.Protect = PAGE_EXECUTE_READ; break;
+    case PAGE_READWRITE: info.Protect = PAGE_EXECUTE_READWRITE; break;
+    case PAGE_WRITECOPY: info.Protect = PAGE_EXECUTE_WRITECOPY; break;
+    default: return FALSE;
+    }
+    /* FIXME: we should probably have a per-app option, and maybe a message box */
+    FIXME( "No-exec fault triggered at %p, enabling work-around\n", addr );
+    return VirtualProtect( addr, 1, info.Protect, NULL );
+}
+
+
+/*******************************************************************
  *         UnhandledExceptionFilter   (KERNEL32.@)
  */
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
-    if (check_resource_write( epointers->ExceptionRecord )) return EXCEPTION_CONTINUE_EXECUTION;
+    const EXCEPTION_RECORD *rec = epointers->ExceptionRecord;
+
+    if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && rec->NumberParameters >= 2)
+    {
+        switch(rec->ExceptionInformation[0])
+        {
+        case 1:  /* write access */
+            if (check_resource_write( (void *)rec->ExceptionInformation[1] ))
+                return EXCEPTION_CONTINUE_EXECUTION;
+            break;
+        case 8:  /* execute access */
+            if (check_no_exec( (void *)rec->ExceptionInformation[1] ))
+                return EXCEPTION_CONTINUE_EXECUTION;
+            break;
+        }
+    }
 
     if (!NtCurrentTeb()->Peb->BeingDebugged)
     {
-        if (epointers->ExceptionRecord->ExceptionCode == CONTROL_C_EXIT)
+        if (rec->ExceptionCode == CONTROL_C_EXIT)
         {
             /* do not launch the debugger on ^C, simply terminate the process */
             TerminateProcess( GetCurrentProcess(), 1 );
