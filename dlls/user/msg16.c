@@ -67,7 +67,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
         if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd16, GWLP_WNDPROC ))) return 0;
 
         SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wparam, lparam );
-        result = CallWindowProc16( (WNDPROC16)winproc, hwnd16, msg, wparam, lparam );
+        result = CallWindowProc16( winproc, hwnd16, msg, wparam, lparam );
         SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, result, wparam, lparam );
     }
     else  /* map to 32-bit unicode for inter-thread/process message */
@@ -369,7 +369,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    winproc = (WNDPROC16)wndPtr->winproc;
+    winproc = WINPROC_GetProc16( wndPtr->winproc );
     WIN_ReleasePtr( wndPtr );
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE16, hwnd, msg->message, msg->wParam, msg->lParam );
