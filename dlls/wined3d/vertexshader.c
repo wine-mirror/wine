@@ -1079,14 +1079,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     DWORD i;
     SHADER_BUFFER buffer;
     char  tmpLine[255];
-    DWORD nUseAddressRegister = 0;
-    DWORD nUseTempRegister = 0;
-    DWORD regtype;
-    DWORD reg;
-    BOOL tmpsUsed[32];
-#if 0 /* TODO: loope register (just another address register ) */
-    BOOL hasLoops = FALSE;
-#endif
+    DWORD addressUsed, tempsUsed;
 
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
@@ -1102,87 +1095,11 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     buffer.bsize = 0;
     buffer.lineNo = 0;
 
-    /* set all the tmpsUsed to not used */
-    memset(tmpsUsed, FALSE , sizeof(tmpsUsed));
+    /* First pass: figure out which temporary and texture registers are used */
+    shader_get_registers_used((IWineD3DBaseShader*) This, pToken, &tempsUsed, &addressUsed);
+    TRACE("Address registers used: %#lx, Temp registers used %#lx\n", addressUsed, tempsUsed);
 
-    /* TODO: renumbering of attributes if the values are higher than the highest supported attribute but the total number of attributes is less than the highest supported attribute */
-    This->highestConstant = -1;
-
-  /**
-   * First pass to determine what we need to declare:
-   *  - Temporary variables
-   *  - Address variables
-   */ 
-    if (NULL != pToken) {
-        while (D3DVS_END() != *pToken) {
-            if (vshader_is_version_token(*pToken)) {
-            /** skip version */
-            ++pToken;
-            continue;
-            }
-            if (vshader_is_comment_token(*pToken)) { /** comment */
-                DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
-                ++pToken;
-                pToken += comment_len;
-                continue;
-            }
-            curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
-            ++pToken;
-            /* TODO: dcl's */
-            /* TODO: Consts */
-
-            if (NULL == curOpcode) {
-                while (*pToken & 0x80000000) {
-                    FIXME("unrecognized opcode: %08lx\n", *pToken);
-                    /* skip unrecognized opcode */
-                    ++pToken;
-                }
-            } else {
-       
-                /* Skip declarations, handled earlier */
-                if (curOpcode->opcode == D3DSIO_DCL){
-                    pToken += 2;
-                
-                /* Skip definition of immediate constants, handled later */    
-                } else if(curOpcode->opcode == D3DSIO_DEF) {
-                    pToken += 5;
-
-                } else {
-                    /* Check to see if and tmp or addressing redisters are used */
-                    if (curOpcode->num_params > 0) {
-                        regtype = shader_get_regtype(*pToken);
-                        reg = ((*pToken)  & D3DSP_REGNUM_MASK);
-                        if (D3DSPR_ADDR == regtype && nUseAddressRegister <= reg) nUseAddressRegister = reg + 1;
-                        if (D3DSPR_TEMP == regtype){
-                            tmpsUsed[reg] = TRUE;
-                            if(nUseTempRegister    <= reg) nUseTempRegister    = reg + 1;
-                        }
-                        ++pToken;
-                        for (i = 1; i < curOpcode->num_params; ++i) {
-                            regtype = shader_get_regtype(*pToken);
-                            reg = ((*pToken)  & D3DSP_REGNUM_MASK);
-                            if (D3DSPR_ADDR == regtype && nUseAddressRegister <= reg) nUseAddressRegister = reg + 1;
-                            if (D3DSPR_TEMP == regtype){
-                                tmpsUsed[reg] = TRUE;
-                                if(nUseTempRegister    <= reg) nUseTempRegister    = reg + 1;
-                            }
-                            ++pToken;
-                        }
-                    }
-                }
-#if 1 /* TODO: if the shaders uses calls or loops then we need to convert the shader into glsl */
-                if (curOpcode->glname == GLNAME_REQUIRE_GLSL) {
-                    FIXME("This shader requires gl shader language support\n");
-#if 0
-                    This->shaderLanguage = GLSHADER_GLSL;
-#endif
-                }
-#endif
-            }
-        }
-    }
-
-    /* TODO: validate
+    /* TODO: check register usage against GL/Directx limits, and fail if they're exceeded
         nUseAddressRegister < = GL_MAX_PROGRAM_ADDRESS_REGISTERS_AR
         nUseTempRegister    <=  GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB
     */
@@ -1195,17 +1112,18 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     /* FIXME: if jumps are used, use GLSL, else use ARB_vertex_program */
     shader_addline(&buffer, "!!ARBvp1.0\n");
 
-    /* Declare necessary things.
-     * FIXME: replace with a bitmap
-     * FIXME: loop counts as an address register */
-
-    for (i = 0; i < nUseTempRegister /* we should check numTemps here */ ; i++) {
-        if (tmpsUsed[i])
-            shader_addline(&buffer, "TEMP T%ld;\n", i);
+    /* Pre-declare registers */
+    for (i = 0; i < This->baseShader.limits.temporary; i++) {
+        if (tempsUsed & (1 << i))
+            shader_addline(&buffer, "TEMP T%lu;\n", i);
     }
-    for (i = 0; i < nUseAddressRegister; i++) 
-        shader_addline(&buffer, "ADDRESS A%ld;\n", i);
 
+    for (i = 0; i < This->baseShader.limits.address; i++) {
+        if (addressUsed & (1 << i))
+            shader_addline(&buffer, "ADDRESS A%ld;\n", i);
+    }
+
+    /* Why do we need to alias those? */
     shader_addline(&buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
         This->baseShader.limits.constant_float, 
         This->baseShader.limits.constant_float - 1);            
@@ -1355,12 +1273,8 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
         case D3DSIO_MOV:
             /* Address registers must be loaded with the ARL instruction */
             if (shader_get_regtype(*pToken) == D3DSPR_ADDR) {
-                if (((*pToken) & D3DSP_REGNUM_MASK) < nUseAddressRegister) {
-                    strcpy(tmpLine, "ARL");
-                    break;
-                } else
-                FIXME("(%p) Try to load A%ld an undeclared address register!\n", 
-                    This, ((*pToken) & D3DSP_REGNUM_MASK));
+                strcpy(tmpLine, "ARL");
+                break;
             }
             /* fall through */
         case D3DSIO_ADD:

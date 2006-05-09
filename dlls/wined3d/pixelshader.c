@@ -899,63 +899,6 @@ inline static int gen_input_modifier_line(const DWORD instr, int tmpreg, char *o
     return insert_line;
 }
 
-inline static void pshader_program_get_registers_used(
-      IWineD3DPixelShaderImpl *This,
-      CONST DWORD* pToken, DWORD* tempsUsed, DWORD* texUsed) {
-  
-    if (pToken == NULL)
-        return;
-
-    *tempsUsed = 0;
-    *texUsed = 0;
-
-    while (D3DVS_END() != *pToken) {
-        CONST SHADER_OPCODE* curOpcode;
-
-        /* Skip version */
-        if (pshader_is_version_token(*pToken)) {
-             ++pToken;
-             continue;
-
-        /* Skip comments */
-        } else if (pshader_is_comment_token(*pToken)) {
-             DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
-             ++pToken;
-             pToken += comment_len;
-             continue;
-        }
-
-        /* Fetch opcode */       
-        curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
-        ++pToken;
-
-        /* Skip declarations (for now) */
-        if (D3DSIO_DCL == curOpcode->opcode) {
-            pToken += curOpcode->num_params;
-            continue;
-
-        /* Skip definitions (for now) */
-        } else if (D3DSIO_DEF == curOpcode->opcode) {
-            pToken += curOpcode->num_params;
-            continue;
-
-        /* Set texture registers, and temporary registers */
-        } else {
-            int i;
-                        
-            for (i = 0; i < curOpcode->num_params; ++i) {
-                DWORD regtype = shader_get_regtype(*pToken);
-                DWORD reg = (*pToken) & D3DSP_REGNUM_MASK;
-                if (D3DSPR_TEXTURE == regtype) 
-                    *texUsed |= (1 << reg);
-                if (D3DSPR_TEMP == regtype)
-                    *tempsUsed |= (1 << reg);
-                ++pToken;
-             }
-        }
-    }
-}
-
 void pshader_set_version(
       IWineD3DPixelShaderImpl *This, 
       DWORD version) {
@@ -1055,7 +998,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
         This->constants[i] = 0;
 
     /* First pass: figure out which temporary and texture registers are used */
-    pshader_program_get_registers_used(This, pToken, &tempsUsed, &texUsed);
+    shader_get_registers_used((IWineD3DBaseShader*) This, pToken, &tempsUsed, &texUsed);
     TRACE("Texture registers used: %#lx, Temp registers used %#lx\n", texUsed, tempsUsed);
 
     /* TODO: check register usage against GL/Directx limits, and fail if they're exceeded */

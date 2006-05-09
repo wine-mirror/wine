@@ -1258,6 +1258,12 @@ typedef struct IWineD3DBaseShaderImpl {
     IWineD3DBaseShaderClass         baseShader;
 } IWineD3DBaseShaderImpl;
 
+extern void shader_get_registers_used(
+    IWineD3DBaseShader *iface,
+    CONST DWORD* pToken,
+    DWORD* tempsUsed,
+    DWORD* texUsed);
+
 inline static int shader_get_regtype(const DWORD param) {
     return (((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) |
             ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2));
