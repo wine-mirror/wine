@@ -540,6 +540,112 @@ static BOOL BrsFolder_OnCommand( browse_info *info, UINT id )
     return FALSE;
 }
 
+static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection, 
+    BOOL is_str, HTREEITEM *pItem)
+{
+    LPITEMIDLIST pidlSelection = (LPITEMIDLIST)selection;
+    LPCITEMIDLIST pidlCurrent, pidlRoot;
+    TVITEMEXW item;
+    BOOL bResult = FALSE;
+    
+    /* If 'selection' is a string, convert to a Shell ID List. */ 
+    if (is_str) {
+        IShellFolder *psfDesktop;
+        HRESULT hr;
+
+        hr = SHGetDesktopFolder(&psfDesktop);
+        if (FAILED(hr))
+            goto done;
+
+        hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, 
+                     (LPOLESTR)selection, NULL, &pidlSelection, NULL);
+        IShellFolder_Release(psfDesktop);
+        if (FAILED(hr)) 
+            goto done;
+    }
+
+    /* Move pidlCurrent behind the SHITEMIDs in pidlSelection, which are the root of
+     * the sub-tree currently displayed. */
+    pidlRoot = info->lpBrowseInfo->pidlRoot;
+    pidlCurrent = pidlSelection;
+    while (!_ILIsEmpty(pidlRoot) && _ILIsEqualSimple(pidlRoot, pidlCurrent)) {
+        pidlRoot = ILGetNext(pidlRoot);
+        pidlCurrent = ILGetNext(pidlCurrent);
+    }
+
+    /* The given ID List is not part of the SHBrowseForFolder's current sub-tree. */
+    if (!_ILIsEmpty(pidlRoot))
+        goto done;
+
+    /* Initialize item to point to the first child of the root folder. */
+    memset(&item, 0, sizeof(item));
+    item.mask = TVIF_PARAM;
+    item.hItem = TreeView_GetRoot(info->hwndTreeView);
+    if (item.hItem) 
+        item.hItem = TreeView_GetChild(info->hwndTreeView, item.hItem);
+
+    /* Walk the tree along the nodes corresponding to the remaining ITEMIDLIST */
+    while (item.hItem && !_ILIsEmpty(pidlCurrent)) {
+        LPTV_ITEMDATA pItemData;
+
+        TreeView_GetItemW(info->hwndTreeView, &item);
+        pItemData = (LPTV_ITEMDATA)item.lParam;
+
+        if (_ILIsEqualSimple(pItemData->lpi, pidlCurrent)) {
+            pidlCurrent = ILGetNext(pidlCurrent);
+            if (!_ILIsEmpty(pidlCurrent)) {
+                /* Only expand current node and move on to it's first child,
+                 * if we didn't already reach the last SHITEMID */
+                TreeView_Expand(info->hwndTreeView, item.hItem, TVE_EXPAND);
+                item.hItem = TreeView_GetChild(info->hwndTreeView, item.hItem);
+            }
+        } else {
+            item.hItem = TreeView_GetNextSibling(info->hwndTreeView, item.hItem);
+        }
+    }
+
+    if (_ILIsEmpty(pidlCurrent) && item.hItem) 
+        bResult = TRUE;
+
+done:
+    if (pidlSelection && pidlSelection != (LPITEMIDLIST)selection)
+        ILFree(pidlSelection);
+
+    if (pItem) 
+        *pItem = item.hItem;
+    
+    return bResult;
+}
+
+static BOOL BrsFolder_OnSetSelectionW(browse_info *info, LPVOID selection, BOOL is_str) {
+    HTREEITEM hItem;
+    BOOL bResult;
+
+    bResult = BrsFolder_OnSetExpanded(info, selection, is_str, &hItem);
+    if (bResult)
+        TreeView_Select(info->hwndTreeView, hItem, TVGN_CARET);
+    return bResult;
+}
+
+static BOOL BrsFolder_OnSetSelectionA(browse_info *info, LPVOID selection, BOOL is_str) {
+    LPWSTR selectionW = NULL;
+    BOOL result = FALSE;
+    int length;
+    
+    if (!is_str)
+        return BrsFolder_OnSetSelectionW(info, selection, is_str);
+    
+    if ((length = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)selection, -1, NULL, 0)) &&
+        (selectionW = HeapAlloc(GetProcessHeap(), 0, length)) &&
+        MultiByteToWideChar(CP_ACP, 0, (LPCSTR)selection, -1, selectionW, length))
+    {
+        result = BrsFolder_OnSetSelectionW(info, selectionW, is_str);
+    }
+
+    HeapFree(GetProcessHeap(), 0, selectionW);
+    return result;
+}
+
 /*************************************************************************
  *             BrsFolderDlgProc32  (not an exported API function)
  */
@@ -584,25 +690,13 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
         break;
 
     case BFFM_SETSELECTIONA:
-        if (wParam)
-            FIXME("Set selection %s\n", debugstr_a((LPSTR)lParam));
-        else
-            FIXME("Set selection %p\n", (void*)lParam);
-        break;
+        return BrsFolder_OnSetSelectionA(info, (LPVOID)lParam, (BOOL)wParam);
 
     case BFFM_SETSELECTIONW:
-        if (wParam)
-            FIXME("Set selection %s\n", debugstr_w((LPWSTR)lParam));
-        else
-            FIXME("Set selection %p\n", (void*)lParam);
-        break;
+        return BrsFolder_OnSetSelectionW(info, (LPVOID)lParam, (BOOL)wParam);
 
     case BFFM_SETEXPANDED: /* unicode only */
-        if (wParam)
-            FIXME("Set expanded %s\n", debugstr_w((LPWSTR)lParam));
-        else
-            FIXME("Set expanded %p\n", (void*)lParam);
-        break;
+        return BrsFolder_OnSetExpanded(info, (LPVOID)lParam, (BOOL)wParam, NULL);
     }
     return FALSE;
 }
