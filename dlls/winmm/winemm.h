@@ -29,7 +29,7 @@
 #include "mmddk.h"
 
 #define WINE_DEFAULT_WINMM_DRIVER     "oss"
-#define WINE_DEFAULT_WINMM_MAPPER     "msacm.drv"
+#define WINE_DEFAULT_WINMM_MAPPER     "msacm32.drv"
 #define WINE_DEFAULT_WINMM_MIDI       "midimap.dll"
 
 typedef enum {

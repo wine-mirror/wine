@@ -1608,6 +1608,7 @@ dlls/mmdevldr.vxd/Makefile
 dlls/monodebg.vxd/Makefile
 dlls/mpr/Makefile
 dlls/mprapi/Makefile
+dlls/msacm32.drv/Makefile
 dlls/msacm32/Makefile
 dlls/msacm32/tests/Makefile
 dlls/msadp32.acm/Makefile
@@ -1723,7 +1724,6 @@ dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
 dlls/winmm/joystick/Makefile
 dlls/winmm/tests/Makefile
-dlls/winmm/wavemap/Makefile
 dlls/winmm/winealsa/Makefile
 dlls/winmm/winearts/Makefile
 dlls/winmm/wineaudioio/Makefile
