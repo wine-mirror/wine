@@ -1169,12 +1169,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;
-    const DWORD *pInstr;
     DWORD i;
     char  tmpLine[255];
-#if 0 /* TODO: loop register (just another address register ) */
-    BOOL hasLoops = FALSE;
-#endif
     SHADER_BUFFER buffer;
 
     int row = 0; /* not sure, something to do with macros? */
@@ -1261,21 +1257,23 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 pToken += comment_len;
                 continue;
             }
-#if 0 /* Not sure what these are here for, they're not required for vshaders */
-            code = *pToken;
-#endif
-            pInstr = pToken;
+
+            /* Read opcode */
             curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
             ++pToken;
+
+            /* Unknown opcode and its parameters */
             if (NULL == curOpcode) {
-                /* unknown current opcode ... (shouldn't be any!) */
                 while (*pToken & 0x80000000) { /* TODO: Think of a sensible name for 0x80000000 */
                     FIXME("unrecognized opcode: %08lx\n", *pToken);
                     ++pToken;
                 }
+
+            /* Unhandled opcode */
             } else if (GLNAME_REQUIRE_GLSL == curOpcode->glname) {
-                /* if the token isn't supported by this cross compiler then skip it and its parameters */
-                FIXME("Token %s requires greater functionality than Fragment_Progarm_ARB supports\n", curOpcode->name);
+
+                FIXME("Token %s requires greater functionality than "
+                    "Fragment_Progarm_ARB supports\n", curOpcode->name);
                 pToken += curOpcode->num_params;
 
             } else if (D3DSIO_DEF == curOpcode->opcode) {
@@ -1420,13 +1418,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 break;
 
                 default:
-                    if (curOpcode->glname == GLNAME_REQUIRE_GLSL) {
-                        FIXME("Opcode %s requires Gl Shader languange 1.0\n", curOpcode->name);
-                    } else {
-                        FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
-                    }
+                    FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
                     pToken += curOpcode->num_params; 
-                    continue;
                 }
             }
         }

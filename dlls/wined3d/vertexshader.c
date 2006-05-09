@@ -1190,18 +1190,22 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             continue;
       }
 
+      /* Read opcode */
       curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
       ++pToken;
+
+      /* Unknown opcode and its parameters */
       if (NULL == curOpcode) {
-        /* unknown current opcode ... (shouldn't be any!) */
         while (*pToken & 0x80000000) {
             FIXME("unrecognized opcode: %08lx\n", *pToken);
             ++pToken;
         }
+
+      /* Unhandled opcode */
       } else if (GLNAME_REQUIRE_GLSL == curOpcode->glname) {
-            /* if the token isn't supported by this cross compiler then skip it and its parameters */
           
-            FIXME("Token %s requires greater functionality than Vertex_Progarm_ARB supports\n", curOpcode->name);
+            FIXME("Token %s requires greater functionality than "
+                 "Vertex_Program_ARB supports\n", curOpcode->name);
             pToken += curOpcode->num_params;
 
       } else if (D3DSIO_DEF == curOpcode->opcode) {
@@ -1336,12 +1340,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             break;
 
         default:
-            if (curOpcode->glname == GLNAME_REQUIRE_GLSL) {
-                FIXME("Opcode %s requires Gl Shader languange 1.0\n", curOpcode->name);
-            } else {
-                FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
-            }
-
+            FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
             pToken += curOpcode->num_params;
         }
       }
