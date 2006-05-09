@@ -1102,12 +1102,6 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     buffer.bsize = 0;
     buffer.lineNo = 0;
 
-    /* Initialise the shader */
-    This->namedArrays = FALSE;
-    This->declaredArrays = FALSE;
-    for (i = 0; i < WINED3DSHADERDECLUSAGE_MAX_USAGE; i++) {
-        This->arrayUsageMap[i] = -1;
-    }
     /* set all the tmpsUsed to not used */
     memset(tmpsUsed, FALSE , sizeof(tmpsUsed));
 
@@ -1144,18 +1138,14 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                     ++pToken;
                 }
             } else {
+       
+                /* Skip declarations, handled earlier */
                 if (curOpcode->opcode == D3DSIO_DCL){
-                    INT usage = *pToken++;
-                    INT arrayNo = (*pToken++ & D3DSP_REGNUM_MASK);
-                    parse_decl_usage(This, usage, arrayNo);
+                    pToken += 2;
+                
+                /* Skip definition of immediate constants, handled later */    
                 } else if(curOpcode->opcode == D3DSIO_DEF) {
-                            This->constantsUsedBitmap[*pToken & 0xFF] = VS_CONSTANT_CONSTANT;
-                            FIXME("Constant %ld\n", *pToken & 0xFF);
-                            ++pToken;
-                            ++pToken;
-                            ++pToken;
-                            ++pToken;
-                            ++pToken;
+                    pToken += 5;
 
                 } else {
                     /* Check to see if and tmp or addressing redisters are used */
@@ -1191,19 +1181,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             }
         }
     }
-#if 1
-#define VSHADER_ALWAYS_NUMBERED
-#endif
 
-#ifdef VSHADER_ALWAYS_NUMBERED /* handy for debugging using numbered arrays instead of named arrays */
-    /* TODO: using numbered arrays for software shaders makes things easier */
-    This->declaredArrays = TRUE;
-#endif
-
-    /* named arrays and declared arrays are mutually exclusive */
-    if (This->declaredArrays) {
-        This->namedArrays = FALSE;
-    }
     /* TODO: validate
         nUseAddressRegister < = GL_MAX_PROGRAM_ADDRESS_REGISTERS_AR
         nUseTempRegister    <=  GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB
@@ -1285,6 +1263,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
                   *(float *) (pToken + 3), 
                   *(float *) (pToken + 4));
 
+            This->constantsUsedBitmap[*pToken & 0xFF] = VS_CONSTANT_CONSTANT;
             pToken += 5;
             continue;
 
@@ -1876,6 +1855,12 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
     DWORD i;
     TRACE("(%p) : Parsing programme\n", This);
 
+    /* Initialise vertex input arrays */
+    This->namedArrays = FALSE;
+    This->declaredArrays = FALSE;
+    for (i = 0; i < WINED3DSHADERDECLUSAGE_MAX_USAGE; i++)
+        This->arrayUsageMap[i] = -1;
+
     if (NULL != pToken) {
         while (D3DVS_END() != *pToken) {
             if (vshader_is_version_token(*pToken)) { /** version */
@@ -1907,12 +1892,16 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
 
             } else {
                 if (curOpcode->opcode == D3DSIO_DCL) {
-                    vshader_program_dump_decl_usage(This, *pToken, *(pToken + 1));
-                    ++pToken;
-                    ++len;
-                    vshader_program_dump_vs_param(*pToken, 0);
-                    ++pToken;
-                    ++len;
+
+                    DWORD usage = *pToken;
+                    DWORD param = *(pToken + 1);
+
+                    parse_decl_usage(This, usage, param & D3DSP_REGNUM_MASK);
+                    vshader_program_dump_decl_usage(This, usage, param);
+                    vshader_program_dump_vs_param(param, 0);
+                    pToken += 2;
+                    len += 2;
+
                 } else 
                     if (curOpcode->opcode == D3DSIO_DEF) {
                         TRACE("def c%lu = ", *pToken & 0xFF);
@@ -1951,6 +1940,16 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
     } else {
         This->baseShader.functionLength = 1; /* no Function defined use fixed function vertex processing */
     }
+
+/* Handy for debugging using numbered arrays instead of named arrays */
+#if 1
+    /* TODO: using numbered arrays for software shaders makes things easier */
+    This->declaredArrays = TRUE;
+#endif
+
+    /* named arrays and declared arrays are mutually exclusive */
+    if (This->declaredArrays) 
+        This->namedArrays = FALSE;
 
     /* Generate HW shader in needed */
     if (NULL != pFunction  && wined3d_settings.vs_mode == VS_HW) {
