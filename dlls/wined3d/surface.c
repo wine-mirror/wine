@@ -6,6 +6,7 @@
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
+ * Copyright 2006 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1703,13 +1704,32 @@ HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, I
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Flags) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    TRACE("(%p)->(%lx)\n", This, Flags);
+
+    switch (Flags)
+    {
+    case DDGBS_CANBLT:
+    case DDGBS_ISBLTDONE:
+        return DD_OK;
+
+    default:
+        return DDERR_INVALIDPARAMS;
+    }
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD Flags) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    /* XXX: DDERR_INVALIDSURFACETYPE */
+
+    TRACE("(%p)->(%08lx)\n",iface,Flags);
+    switch (Flags) {
+    case DDGFS_CANFLIP:
+    case DDGFS_ISFLIPDONE:
+        return DD_OK;
+
+    default:
+        return DDERR_INVALIDPARAMS;
+    }
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_IsLost(IWineD3DSurface *iface) {
