@@ -106,7 +106,7 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
  *
  * Returns TRUE on success else FALSE
  */
-BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
+BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, LPVOID bmBits )
 {
     X_PHYSBITMAP *physBitmap;
     BITMAP bitmap;
@@ -145,9 +145,9 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         return FALSE;
     }
 
-    if (bitmap.bmBits) /* Set bitmap bits */
+    if (bmBits) /* Set bitmap bits */
     {
-        X11DRV_SetBitmapBits( hbitmap, bitmap.bmBits, bitmap.bmHeight * bitmap.bmWidthBytes );
+        X11DRV_SetBitmapBits( hbitmap, bmBits, bitmap.bmHeight * bitmap.bmWidthBytes );
     }
     else  /* else clear the bitmap */
     {

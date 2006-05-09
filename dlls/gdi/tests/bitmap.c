@@ -1001,6 +1001,25 @@ static void test_bitmap(void)
     DeleteDC(hdc);
 }
 
+static void test_bmBits(void)
+{
+    BYTE bits[4];
+    HBITMAP hbmp;
+    BITMAP bmp;
+
+    memset(bits, 0, sizeof(bits));
+    hbmp = CreateBitmap(2, 2, 1, 4, bits);
+    ok(hbmp != NULL, "CreateBitmap failed\n");
+
+    memset(&bmp, 0xFF, sizeof(bmp));
+    ok(GetObject(hbmp, sizeof(bmp), &bmp) == sizeof(bmp),
+       "GetObject failed or returned a wrong structure size\n");
+    ok(!bmp.bmBits, "bmBits must be NULL for device-dependent bitmaps\n");
+
+    DeleteObject(hbmp);
+}
+
+
 START_TEST(bitmap)
 {
     is_win9x = GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC) == 0;
@@ -1009,4 +1028,5 @@ START_TEST(bitmap)
     test_dibsections();
     test_mono_dibsection();
     test_bitmap();
+    test_bmBits();
 }

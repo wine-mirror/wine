@@ -72,7 +72,7 @@ typedef struct tagDC_FUNCS
     INT      (*pChoosePixelFormat)(PHYSDEV,const PIXELFORMATDESCRIPTOR *);
     BOOL     (*pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pCloseFigure)(PHYSDEV);
-    BOOL     (*pCreateBitmap)(PHYSDEV,HBITMAP);
+    BOOL     (*pCreateBitmap)(PHYSDEV,HBITMAP,LPVOID);
     BOOL     (*pCreateDC)(HDC,PHYSDEV *,LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
     HBITMAP  (*pCreateDIBSection)(PHYSDEV,HBITMAP,const BITMAPINFO *,UINT);
     BOOL     (*pDeleteBitmap)(HBITMAP);

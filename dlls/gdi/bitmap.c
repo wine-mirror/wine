@@ -528,7 +528,8 @@ BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc )
     ret = TRUE;
     if (!bitmap->funcs)  /* not owned by a DC yet */
     {
-        if (dc->funcs->pCreateBitmap) ret = dc->funcs->pCreateBitmap( dc->physDev, hbitmap );
+        if (dc->funcs->pCreateBitmap) ret = dc->funcs->pCreateBitmap( dc->physDev, hbitmap,
+                                                                      bitmap->bitmap.bmBits );
         if (ret) bitmap->funcs = dc->funcs;
     }
     else if (bitmap->funcs != dc->funcs)
@@ -705,6 +706,7 @@ static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer
     else
     {
         memcpy( buffer, &bmp->bitmap, sizeof(BITMAP) );
+        ((BITMAP *) buffer)->bmBits = NULL;
         return sizeof(BITMAP);
     }
 }
