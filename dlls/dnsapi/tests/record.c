@@ -65,6 +65,9 @@ static void test_DnsRecordCompare( void )
     r1.Flags.S.CharSet = DnsCharSetAnsi;
     ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
 
+    r1.dwTtl = 0;
+    ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == TRUE, "failed unexpectedly\n" );
+
     r2.Data.A.IpAddress = 0;
     ok( pDnsRecordCompare( (PDNS_RECORD)&r1, (PDNS_RECORD)&r2 ) == FALSE, "succeeded unexpectedly\n" );
 }

@@ -134,7 +134,6 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     if (r1->wType       != r2->wType       ||
         r1->wDataLength != r2->wDataLength ||
         r1->Flags.DW    != r2->Flags.DW    ||
-        r1->dwTtl       != r2->dwTtl       ||
         r1->dwReserved  != r2->dwReserved) return FALSE;
 
     wide = (r1->Flags.S.CharSet == DnsCharSetUnicode) ? TRUE : FALSE;
