@@ -611,6 +611,11 @@ void pshader_texldl(WINED3DSHADERVECTOR* d) {
 
 /* Prototype */
 void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
+void pshader_hw_tex(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texbem(SHADER_OPCODE_ARG* arg);
 
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
@@ -692,16 +697,17 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, pshader_defi,    NULL, 0, 0},
 
     /* Texture */
-    {D3DSIO_TEXCOORD, "texcoord", "undefined",   1, pshader_texcoord,    NULL, 0, D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXCOORD, "texcrd",   "undefined",   2, pshader_texcoord,    NULL, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    {D3DSIO_TEXCOORD, "texcoord", "undefined",   1, pshader_texcoord,    pshader_hw_texcoord, 0, D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXCOORD, "texcrd",   "undefined",   2, pshader_texcoord,    pshader_hw_texcoord, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
     {D3DSIO_TEXKILL,  "texkill",  "KIL",         1, pshader_texkill,     pshader_hw_map2gl, D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
-    {D3DSIO_TEX,      "tex",      "undefined",   1, pshader_tex,         NULL, 0, D3DPS_VERSION(1,3)},
-    {D3DSIO_TEX,      "texld",    "undefined",   2, pshader_texld,       NULL, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {D3DSIO_TEX,      "texld",    "undefined",   3, pshader_texld,       NULL, D3DPS_VERSION(2,0), -1},
-    {D3DSIO_TEXBEM,   "texbem",   "undefined",   2, pshader_texbem,      NULL, 0, D3DPS_VERSION(1,3)},
+    {D3DSIO_TEX,      "tex",      "undefined",   1, pshader_tex,         pshader_hw_tex, 0, D3DPS_VERSION(1,3)},
+    {D3DSIO_TEX,      "texld",    "undefined",   2, pshader_texld,       pshader_hw_tex, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    {D3DSIO_TEX,      "texld",    "undefined",   3, pshader_texld,       pshader_hw_tex, D3DPS_VERSION(2,0), -1},
+    {D3DSIO_TEXBEM,   "texbem",   "undefined",   2, pshader_texbem,      pshader_hw_texbem, 0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL,   2, pshader_texbeml, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXREG2AR,"texreg2ar","undefined",   2, pshader_texreg2ar,   NULL, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXREG2GB,"texreg2gb","undefined",   2, pshader_texreg2gb,   NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXREG2AR,"texreg2ar","undefined",   2, pshader_texreg2ar,   pshader_hw_texreg2ar, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXREG2GB,"texreg2gb","undefined",   2, pshader_texreg2gb,   pshader_hw_texreg2gb, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL,   2, pshader_texreg2rgb,  NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x2PAD,   "texm3x2pad",   "undefined",   2, pshader_texm3x2pad,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x2TEX,   "texm3x2tex",   "undefined",   2, pshader_texm3x2tex,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x3PAD,   "texm3x3pad",   "undefined",   2, pshader_texm3x3pad,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
@@ -709,7 +715,6 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_TEXM3x3SPEC,  "texm3x3spec",  "undefined",   3, pshader_texm3x3spec,  NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x3VSPEC, "texm3x3vspe",  "undefined",   2, pshader_texm3x3vspec, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x3TEX,   "texm3x3tex",   "undefined",   2, pshader_texm3x3tex,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL,   2, pshader_texreg2rgb,  NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL,   2, pshader_texdp3tex,   NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL,   2, pshader_texm3x2depth, NULL, D3DPS_VERSION(1,3), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXDP3,   "texdp3",   GLNAME_REQUIRE_GLSL,  2, pshader_texdp3,   NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
@@ -1057,6 +1062,108 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
       }
 }
 
+void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD dst = arg->dst;
+    DWORD* src = arg->src;
+    SHADER_BUFFER* buffer = arg->buffer;
+    DWORD version = This->baseShader.version;
+   
+    char tmpLine[256];
+    char reg_dest[40];
+    char reg_coord[40];
+    char reg_coord_swz[20] = "";
+    DWORD reg_dest_code;
+    DWORD reg_sampler_code;
+
+    /* All versions have a destination register */
+    reg_dest_code = dst & D3DSP_REGNUM_MASK;
+    get_register_name(dst, reg_dest, This->constants);
+
+    /* 1.0-1.3: Use destination register as coordinate source. No modifiers.
+       1.4: Use provided coordinate source register. _dw, _dz, swizzle allowed.
+       2.0+: Use provided coordinate source register. No modifiers.
+       3.0+: Use provided coordinate source register. Swizzle allowed */
+   if (version < 14)
+      strcpy(reg_coord, reg_dest);
+   else if (version == 14) {
+      if (gen_input_modifier_line(src[0], 0, reg_coord, tmpLine, This->constants))
+         shader_addline(buffer, tmpLine);
+      get_input_register_swizzle(src[0], reg_coord_swz);
+   }
+   else if (version > 14 && version < 30)
+      get_register_name(src[0], reg_coord, This->constants);
+   else if (version >= 30) {
+      get_input_register_swizzle(src[0], reg_coord_swz);
+      get_register_name(src[0], reg_coord, This->constants);
+   }
+
+  /* 1.0-1.4: Use destination register number as texture code.
+     2.0+: Use provided sampler number as texure code. */
+  if (version < 20)
+     reg_sampler_code = reg_dest_code;
+  else 
+     reg_sampler_code = src[1] & D3DSP_REGNUM_MASK;
+
+  shader_addline(buffer, "TEX %s, %s%s, texture[%lu], 2D;\n",
+      reg_dest, reg_coord, reg_coord_swz, reg_sampler_code);
+}
+
+void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD dst = arg->dst;
+    DWORD* src = arg->src;
+    SHADER_BUFFER* buffer = arg->buffer;
+    DWORD version = This->baseShader.version;
+
+    char tmp[20];
+    get_write_mask(dst, tmp);
+    if (version != 14) {
+        DWORD reg = dst & D3DSP_REGNUM_MASK;
+        shader_addline(buffer, "MOV T%lu%s, fragment.texcoord[%lu];\n", reg, tmp, reg);
+    } else {
+        DWORD reg1 = dst & D3DSP_REGNUM_MASK;
+        DWORD reg2 = src[0] & D3DSP_REGNUM_MASK;
+        shader_addline(buffer, "MOV R%lu%s, fragment.texcoord[%lu];\n", reg1, tmp, reg2);
+   }
+}
+
+void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
+
+     SHADER_BUFFER* buffer = arg->buffer;
+ 
+     DWORD reg1 = arg->dst & D3DSP_REGNUM_MASK;
+     DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
+     shader_addline(buffer, "MOV TMP.r, T%lu.a;\n", reg2);
+     shader_addline(buffer, "MOV TMP.g, T%lu.r;\n", reg2);
+     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
+}
+
+void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
+ 
+     SHADER_BUFFER* buffer = arg->buffer;
+    
+     DWORD reg1 = arg->dst & D3DSP_REGNUM_MASK;
+     DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
+     shader_addline(buffer, "MOV TMP.r, T%lu.g;\n", reg2);
+     shader_addline(buffer, "MOV TMP.g, T%lu.b;\n", reg2);
+     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
+}
+
+void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
+
+     SHADER_BUFFER* buffer = arg->buffer;
+ 
+     DWORD reg1 = arg->dst  & D3DSP_REGNUM_MASK;
+     DWORD reg2 = arg->src[0] & D3DSP_REGNUM_MASK;
+
+     /* FIXME: Should apply the BUMPMAPENV matrix */
+     shader_addline(buffer, "ADD TMP.rg, fragment.texcoord[%lu], T%lu;\n", reg1, reg2);
+     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
+}
+
 /* NOTE: A description of how to parse tokens can be found at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/graphics/hh/graphics/usermodedisplaydriver_shader_cc8e4e05-f5c3-4ec0-8853-8ce07c1551b2.xml.asp */
 inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
@@ -1072,7 +1179,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
 
     int row = 0; /* not sure, something to do with macros? */
     DWORD tcw[2];
-    int version = This->baseShader.version; 
 
     /* Keep bitmaps of used temporary and texture registers */
     DWORD tempsUsed, texUsed;
@@ -1155,7 +1261,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 pToken += comment_len;
                 continue;
             }
-/* here */
 #if 0 /* Not sure what these are here for, they're not required for vshaders */
             code = *pToken;
 #endif
@@ -1223,71 +1328,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 case D3DSIO_NOP:
                 case D3DSIO_PHASE:
                     break;
-                case D3DSIO_TEX:
-                {
-                    char reg_dest[40];
-                    char reg_coord[40];
-                    char reg_coord_swz[20] = "";
-                    DWORD reg_dest_code;
-                    DWORD reg_sampler_code;
-
-                    /* All versions have a destination register */
-                    reg_dest_code = *pToken & D3DSP_REGNUM_MASK;
-                    get_register_name(*pToken++, reg_dest, This->constants);              
-                        
-                    /* 1.0-1.3: Use destination register as coordinate source. No modifiers.
-                       1.4: Use provided coordinate source register. _dw, _dz, swizzle allowed.
-                       2.0+: Use provided coordinate source register. No modifiers.
-                       3.0+: Use provided coordinate source register. Swizzle allowed */
-                    if (version < 14)
-                        strcpy(reg_coord, reg_dest);   
-              
-                    else if (version == 14) { 
-                        if (gen_input_modifier_line(*pToken, 0, reg_coord, tmpLine, This->constants))
-                            shader_addline(&buffer, tmpLine);
-                        get_input_register_swizzle(*pToken, reg_coord_swz);
-                        pToken++;
-                    }
-                    else if (version > 14 && version < 30) {
-                        get_register_name(*pToken, reg_coord, This->constants);
-                        pToken++;
-                    }                        
-                    else if (version >= 30) {
-                        get_input_register_swizzle(*pToken, reg_coord_swz);
-                        get_register_name(*pToken, reg_coord, This->constants);
-                        pToken++;
-                    }
-
-                    /* 1.0-1.4: Use destination register number as texture code.
-                       2.0+: Use provided sampler number as texure code. */                              
-                    if (version < 20) 
-                        reg_sampler_code = reg_dest_code;
-
-                    else {
-                        reg_sampler_code = *pToken & D3DSP_REGNUM_MASK;
-                        pToken++;
-                    }
-
-                    shader_addline(&buffer, "TEX %s, %s%s, texture[%lu], 2D;\n",
-                        reg_dest, reg_coord, reg_coord_swz, reg_sampler_code);
-                }
-                break;
-                case D3DSIO_TEXCOORD:
-                {
-                    char tmp[20];
-                    get_write_mask(*pToken, tmp);
-                    if (version != 14) {
-                        DWORD reg = *pToken & D3DSP_REGNUM_MASK;
-                        shader_addline(&buffer, "MOV T%lu%s, fragment.texcoord[%lu];\n", reg, tmp, reg);
-                        ++pToken;
-                    } else {
-                        DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
-                        DWORD reg2 = *++pToken & D3DSP_REGNUM_MASK;
-                        shader_addline(&buffer, "MOV R%lu%s, fragment.texcoord[%lu];\n", reg1, tmp, reg2);
-                        ++pToken;
-                    }
-                }
-                break;
                 case D3DSIO_TEXM3x2PAD:
                 {
                     DWORD reg = *pToken & D3DSP_REGNUM_MASK;
@@ -1306,37 +1346,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                         shader_addline(&buffer, tmpLine);
                     shader_addline(&buffer, "DP3 TMP.y, T%lu, %s;\n", reg, buf);
                     shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg, reg);
-                    ++pToken;
-                }
-                break;
-                case D3DSIO_TEXREG2AR:
-                {
-                    DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
-                    DWORD reg2 = *++pToken & D3DSP_REGNUM_MASK;
-                    shader_addline(&buffer, "MOV TMP.r, T%lu.a;\n", reg2);
-                    shader_addline(&buffer, "MOV TMP.g, T%lu.r;\n", reg2);
-                    shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
-                    ++pToken;
-                }
-                break;
-                case D3DSIO_TEXREG2GB:
-                {
-                    DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
-                    DWORD reg2 = *++pToken & D3DSP_REGNUM_MASK;
-                    shader_addline(&buffer, "MOV TMP.r, T%lu.g;\n", reg2);
-                    shader_addline(&buffer, "MOV TMP.g, T%lu.b;\n", reg2);
-                    shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
-                    ++pToken;
-                }
-                break;
-                case D3DSIO_TEXBEM:
-                {
-                    DWORD reg1 = *pToken & D3DSP_REGNUM_MASK;
-                    DWORD reg2 = *++pToken & D3DSP_REGNUM_MASK;
-
-                    /* FIXME: Should apply the BUMPMAPENV matrix */
-                    shader_addline(&buffer, "ADD TMP.rg, fragment.texcoord[%lu], T%lu;\n", reg1, reg2);
-                    shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
                     ++pToken;
                 }
                 break;
