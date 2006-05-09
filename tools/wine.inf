@@ -245,7 +245,7 @@ HKLM,System\CurrentControlSet\Hardware Profiles\Current\Software\Fonts,"LogPixel
 HKLM,%Mci32Str%,"AVIVideo",,"mciavi32.dll"
 HKLM,%Mci32Str%,"CDAudio",,"mcicda.dll"
 HKLM,%Mci32Str%,"Sequencer",,"mciseq.dll"
-HKLM,%Mci32Str%,"WaveAudio",,"mciwave.drv"
+HKLM,%Mci32Str%,"WaveAudio",,"mciwave.dll"
 
 HKLM,%MciExtStr%,"aifc",,"MPEGVideo"
 HKLM,%MciExtStr%,"asf",,"MPEGVideo"
@@ -2150,7 +2150,7 @@ system.ini, mci,,"cdaudio=mcicda.dll"
 system.ini, mci,,"sequencer=mciseq.dll" 
 system.ini, mci,,"vcr=mcivisca.drv" 
 system.ini, mci,,"; videodisc=mcipionr.drv" 
-system.ini, mci,,"waveaudio=mciwave.drv" 
+system.ini, mci,,"waveaudio=mciwave.dll" 
 
 system.ini, drivers32,,"MSACM.imaadpcm=imaadp32.acm" 
 system.ini, drivers32,,"MSACM.msadpcm=msadp32.acm" 
