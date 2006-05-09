@@ -1678,8 +1678,23 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL 
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD Flags) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DDevice *D3D = (IWineD3DDevice *) This->resource.wineD3DDevice;
+    TRACE("(%p)->(%p,%lx)\n", This, override, Flags);
+
+    /* Flipping is only supported on RenderTargets */
+    if( !(This->resource.usage & WINED3DUSAGE_RENDERTARGET) ) return DDERR_NOTFLIPPABLE;
+
+    if(override) {
+        /* DDraw sets this for the X11 surfaces, so don't confuse the user 
+         * FIXME("(%p) Target override is not supported by now\n", This);
+         * Additionally, it isn't really possible to support triple-buffering
+         * properly on opengl at all
+         */
+    }
+
+    /* Flipping a OpenGL surface -> Use WineD3DDevice::Present */
+    return IWineD3DDevice_Present(D3D, NULL, NULL, 0, NULL);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) {
