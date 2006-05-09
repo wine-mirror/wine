@@ -185,8 +185,18 @@ static WNDPROC CLASS_GetProc( CLASS *classPtr, WINDOWPROCTYPE type )
  */
 static void CLASS_SetProc16( CLASS *classPtr, WNDPROC16 newproc )
 {
-    classPtr->winprocA = WINPROC_AllocProc16( newproc );
-    classPtr->winprocW = 0;
+    WNDPROC proc = WINPROC_AllocProc16( newproc );
+
+    if (WINPROC_GetProcType( proc ) == WIN_PROC_32W)
+    {
+        classPtr->winprocA = 0;
+        classPtr->winprocW = proc;
+    }
+    else
+    {
+        classPtr->winprocA = proc;
+        classPtr->winprocW = 0;
+    }
 }
 
 
@@ -198,23 +208,17 @@ static void CLASS_SetProc16( CLASS *classPtr, WNDPROC16 newproc )
  */
 static void CLASS_SetProc( CLASS *classPtr, WNDPROC newproc, WINDOWPROCTYPE type )
 {
-    WNDPROC *proc = &classPtr->winprocA;
+    WNDPROC proc = WINPROC_AllocProc( newproc, type );
 
-    if (classPtr->winprocW)
+    if (WINPROC_GetProcType( proc ) == WIN_PROC_32W)
     {
-        /* if we have a Unicode proc, use it if we have no ASCII proc
-         * or if we have both and Unicode was requested
-         */
-        if (!*proc || type == WIN_PROC_32W) proc = &classPtr->winprocW;
+        classPtr->winprocA = 0;
+        classPtr->winprocW = proc;
     }
-    *proc = WINPROC_AllocProc( newproc, type );
-    /* now clear the one that we didn't set */
-    if (classPtr->winprocA && classPtr->winprocW)
+    else
     {
-        if (proc == &classPtr->winprocA)
-            classPtr->winprocW = 0;
-        else
-            classPtr->winprocA = 0;
+        classPtr->winprocA = proc;
+        classPtr->winprocW = 0;
     }
 }
 
