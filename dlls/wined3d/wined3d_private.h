@@ -835,6 +835,14 @@ struct IWineD3DSurfaceImpl
     /* For GetDC */
     wineD3DSurface_DIB        dib;
     HDC                       hDC;
+
+    /* Color keys for DDraw */
+    DDCOLORKEY                DestBltCKey;
+    DDCOLORKEY                DestOverlayCKey;
+    DDCOLORKEY                SrcOverlayCKey;
+    DDCOLORKEY                SrcBltCKey;
+    DWORD                     CKeyFlags;
+
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;

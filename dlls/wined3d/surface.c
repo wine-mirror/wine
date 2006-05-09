@@ -1739,8 +1739,89 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPa
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, DDCOLORKEY *CKey) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    BOOL dirtify = FALSE;
+    TRACE("(%p)->(%08lx,%p)\n", This, Flags, CKey);
+
+    if ((Flags & DDCKEY_COLORSPACE) != 0) {
+        FIXME(" colorkey value not supported (%08lx) !\n", Flags);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    /* Dirtify the surface, but only if a key was changed */
+    if(CKey) {
+        switch (Flags & ~DDCKEY_COLORSPACE) {
+            case DDCKEY_DESTBLT:
+                if(!(This->CKeyFlags & DDSD_CKDESTBLT)) {
+                    dirtify = TRUE;
+                } else {
+                    dirtify = memcmp(&This->DestBltCKey, CKey, sizeof(*CKey) ) != 0;
+                }
+                This->DestBltCKey = *CKey;
+                This->CKeyFlags |= DDSD_CKDESTBLT;
+                break;
+
+            case DDCKEY_DESTOVERLAY:
+                if(!(This->CKeyFlags & DDSD_CKDESTOVERLAY)) {
+                    dirtify = TRUE;
+                } else {
+                    dirtify = memcmp(&This->DestOverlayCKey, CKey, sizeof(*CKey)) != 0;
+                }
+                This->DestOverlayCKey = *CKey;
+                This->CKeyFlags |= DDSD_CKDESTOVERLAY;
+                break;
+
+            case DDCKEY_SRCOVERLAY:
+                if(!(This->CKeyFlags & DDSD_CKSRCOVERLAY)) {
+                    dirtify = TRUE;
+                } else {
+                    dirtify = memcmp(&This->SrcOverlayCKey, CKey, sizeof(*CKey)) != 0;
+                }
+                This->SrcOverlayCKey = *CKey;
+                This->CKeyFlags |= DDSD_CKSRCOVERLAY;
+                break;
+
+            case DDCKEY_SRCBLT:
+                if(!(This->CKeyFlags & DDSD_CKSRCBLT)) {
+                    dirtify = TRUE;
+                } else {
+                    dirtify = memcmp(&This->SrcBltCKey, CKey, sizeof(*CKey)) != 0;
+                }
+                This->SrcBltCKey = *CKey;
+                This->CKeyFlags |= DDSD_CKSRCBLT;
+                break;
+        }
+    }
+    else {
+        switch (Flags & ~DDCKEY_COLORSPACE) {
+            case DDCKEY_DESTBLT:
+                dirtify = This->CKeyFlags & DDSD_CKDESTBLT;
+                This->CKeyFlags &= ~DDSD_CKDESTBLT;
+                break;
+
+            case DDCKEY_DESTOVERLAY:
+                dirtify = This->CKeyFlags & DDSD_CKDESTOVERLAY;
+                This->CKeyFlags &= ~DDSD_CKDESTOVERLAY;
+                break;
+
+            case DDCKEY_SRCOVERLAY:
+                dirtify = This->CKeyFlags & DDSD_CKSRCOVERLAY;
+                This->CKeyFlags &= ~DDSD_CKSRCOVERLAY;
+                break;
+
+            case DDCKEY_SRCBLT:
+                dirtify = This->CKeyFlags & DDSD_CKSRCBLT;
+                This->CKeyFlags &= ~DDSD_CKSRCBLT;
+                break;
+        }
+    }
+
+    if(dirtify) {
+        TRACE("Color key changed, dirtifing surface\n");
+        This->Flags |= SFLAG_DIRTY;
+    }
+
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
