@@ -79,6 +79,14 @@ typedef struct tagWINDOWPROC
     WNDPROC16      proc16;   /* 16-bit window proc */
 } WINDOWPROC;
 
+typedef enum
+{
+    WIN_PROC_INVALID,
+    WIN_PROC_16,
+    WIN_PROC_32A,
+    WIN_PROC_32W
+} WINDOWPROCTYPE;
+
 #define WINPROC_HANDLE (~0UL >> 16)
 #define MAX_WINPROCS  (0x10000 / sizeof(WINDOWPROC))
 

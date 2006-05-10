@@ -28,14 +28,6 @@
 #include "wine/winbase16.h"
 #include "winnls.h"
 
-typedef enum
-{
-    WIN_PROC_INVALID,
-    WIN_PROC_16,
-    WIN_PROC_32A,
-    WIN_PROC_32W
-} WINDOWPROCTYPE;
-
 typedef struct
 {
     WPARAM16	wParam;
@@ -134,7 +126,7 @@ inline static void unmap_str_16_to_32W( LPCWSTR str )
 struct tagCLASS;  /* opaque structure */
 struct tagWND;
 extern void CLASS_RegisterBuiltinClasses(void);
-extern void CLASS_AddWindow( struct tagCLASS *class, struct tagWND *win, WINDOWPROCTYPE type );
+extern void CLASS_AddWindow( struct tagCLASS *class, struct tagWND *win, BOOL unicode );
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 
 #endif  /* __WINE_WINPROC_H */

@@ -520,9 +520,9 @@ void CLASS_RegisterBuiltinClasses(void)
  * Add a new window using this class, and set the necessary
  * information inside the window structure.
  */
-void CLASS_AddWindow( CLASS *class, WND *win, WINDOWPROCTYPE type )
+void CLASS_AddWindow( CLASS *class, WND *win, BOOL unicode )
 {
-    if (type == WIN_PROC_32W)
+    if (unicode)
     {
         if (!(win->winproc = class->winprocW)) win->winproc = class->winprocA;
     }
@@ -532,7 +532,7 @@ void CLASS_AddWindow( CLASS *class, WND *win, WINDOWPROCTYPE type )
     }
     win->class    = class;
     win->clsStyle = class->style;
-    if (WINPROC_IsUnicode( win->winproc, (type == WIN_PROC_32W) )) win->flags |= WIN_ISUNICODE;
+    if (WINPROC_IsUnicode( win->winproc, unicode )) win->flags |= WIN_ISUNICODE;
 }
 
 

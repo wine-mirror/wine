@@ -55,7 +55,7 @@ static void *user_handles[NB_USER_HANDLES];
  * Create a window handle with the server.
  */
 static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
-                                  HINSTANCE instance, WINDOWPROCTYPE type )
+                                  HINSTANCE instance, BOOL unicode )
 {
     WORD index;
     WND *win;
@@ -125,7 +125,7 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
     win->flags      = 0;
     win->cbWndExtra = extra_bytes;
     memset( win->wExtra, 0, extra_bytes );
-    CLASS_AddWindow( class, win, type );
+    CLASS_AddWindow( class, win, unicode );
     return win;
 }
 
@@ -846,25 +846,20 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
  *
  * Implementation of CreateWindowEx().
  */
-static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
-				WINDOWPROCTYPE type )
+static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
 {
     INT sw = SW_SHOW;
     WND *wndPtr;
     HWND hwnd, parent, owner, top_child = 0;
-    BOOL unicode = (type == WIN_PROC_32W);
+    BOOL unicode = (flags & WIN_ISUNICODE) != 0;
     MDICREATESTRUCTA mdi_cs;
 
     TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
-          (type == WIN_PROC_32W) ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
-          (type == WIN_PROC_32W) ? debugstr_w((LPCWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
+          unicode ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
+          unicode ? debugstr_w((LPCWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
           cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams );
-
     if(TRACE_ON(win)) dump_window_styles( cs->style, cs->dwExStyle );
-
-    TRACE("winproc type is %d (%s)\n", type, (type == WIN_PROC_16) ? "WIN_PROC_16" :
-	    ((type == WIN_PROC_32A) ? "WIN_PROC_32A" : "WIN_PROC_32W") );
 
     /* Fix the styles for MDI children */
     if (cs->dwExStyle & WS_EX_MDICHILD)
@@ -976,7 +971,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Create the window structure */
 
-    if (!(wndPtr = create_window_handle( parent, owner, classAtom, cs->hInstance, type )))
+    if (!(wndPtr = create_window_handle( parent, owner, classAtom, cs->hInstance, unicode )))
         return 0;
     hwnd = wndPtr->hwndSelf;
 
@@ -995,7 +990,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->hIcon          = 0;
     wndPtr->hIconSmall     = 0;
     wndPtr->hSysMenu       = 0;
-    if (type != WIN_PROC_16) wndPtr->flags |= WIN_ISWIN32;
+    wndPtr->flags         |= (flags & WIN_ISWIN32);
 
     if (wndPtr->dwStyle & WS_SYSMENU) SetSystemMenu( hwnd, 0 );
 
@@ -1172,7 +1167,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return HWND_16( WIN_CreateWindowEx( &cs, classAtom, WIN_PROC_16 ));
+    return HWND_16( WIN_CreateWindowEx( &cs, classAtom, 0 ));
 }
 
 
@@ -1225,7 +1220,7 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return WIN_CreateWindowEx( &cs, classAtom, WIN_PROC_32A );
+    return WIN_CreateWindowEx( &cs, classAtom, WIN_ISWIN32 );
 }
 
 
@@ -1280,7 +1275,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
 
     /* Note: we rely on the fact that CREATESTRUCTA and */
     /* CREATESTRUCTW have the same layout. */
-    return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, classAtom, WIN_PROC_32W );
+    return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, classAtom, WIN_ISWIN32 | WIN_ISUNICODE );
 }
 
 
