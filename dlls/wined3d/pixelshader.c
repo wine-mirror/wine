@@ -616,6 +616,7 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg);
 void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg);
 void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg);
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg);
+void pshader_hw_def(SHADER_OPCODE_ARG* arg);
 
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
@@ -692,7 +693,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL,   1, pshader_label,   NULL, 0, 0},
 
     /* Constant definitions */
-    {D3DSIO_DEF,      "def",      "undefined",           5, pshader_def,     NULL, 0, 0},
+    {D3DSIO_DEF,      "def",      "undefined",           5, pshader_def,     pshader_hw_def, 0, 0},
     {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, pshader_defb,    NULL, 0, 0},
     {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, pshader_defi,    NULL, 0, 0},
 
@@ -1164,6 +1165,22 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
      shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
 }
 
+void pshader_hw_def(SHADER_OPCODE_ARG* arg) {
+    
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    SHADER_BUFFER* buffer = arg->buffer;
+    
+    shader_addline(buffer, 
+              "PARAM C%lu = { %f, %f, %f, %f };\n", reg,
+              *((float*) (arg->src + 0)),
+              *((float*) (arg->src + 1)),
+              *((float*) (arg->src + 2)),
+              *((float*) (arg->src + 3)) );
+
+    shader->constants[reg] = 1;
+}
+                    
 /* NOTE: A description of how to parse tokens can be found at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/graphics/hh/graphics/usermodedisplaydriver_shader_cc8e4e05-f5c3-4ec0-8853-8ce07c1551b2.xml.asp */
 inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
@@ -1275,27 +1292,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 FIXME("Token %s requires greater functionality than "
                     "Fragment_Progarm_ARB supports\n", curOpcode->name);
                 pToken += curOpcode->num_params;
-
-            } else if (D3DSIO_DEF == curOpcode->opcode) {
-
-                    /* Handle definitions here, they don't fit well with the
-                     * other instructions below [for now ] */
-
-                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
-
-                    TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d, \n",
-                    curOpcode->name, curOpcode->glname, curOpcode->num_params);
-
-                    shader_addline(&buffer, 
-                              "PARAM C%lu = { %f, %f, %f, %f };\n", reg,
-                              *((const float *)(pToken + 1)),
-                              *((const float *)(pToken + 2)),
-                              *((const float *)(pToken + 3)),
-                              *((const float *)(pToken + 4)) );
-
-                    This->constants[reg] = 1;
-                    pToken += 5;
-                    continue;
 
             /* If a generator function is set, use it */
             } else if (curOpcode->hw_fct != NULL) {

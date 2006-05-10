@@ -474,6 +474,8 @@ void vshader_texldl(WINED3DSHADERVECTOR* d) {
 
 /* Prototype */
 void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
+void vshader_hw_dcl(SHADER_OPCODE_ARG* arg);
+void vshader_hw_def(SHADER_OPCODE_ARG* arg);
 
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
@@ -531,10 +533,10 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_M3x2, "m3x2", "undefined", 3, vshader_m3x2, NULL, 0, 0},
 
     /* Declare registers */
-    {D3DSIO_DCL,      "dcl",      NULL,                  2, vshader_dcl,     NULL, 0, 0},
+    {D3DSIO_DCL,      "dcl",      NULL,                  2, vshader_dcl,     vshader_hw_dcl, 0, 0},
 
     /* Constant definitions */
-    {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     NULL, 0, 0},
+    {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     vshader_hw_def, 0, 0},
     {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, vshader_defb,    NULL, 0, 0},
     {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, vshader_defi,    NULL, 0, 0},
 
@@ -1027,6 +1029,97 @@ void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
    shader_addline(buffer, "%s;\n", tmpLine);
 }
 
+void vshader_hw_dcl(SHADER_OPCODE_ARG* arg) {
+    
+    DWORD dst = arg->dst;
+    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl*) arg->shader;
+    char tmpLine[256];
+    SHADER_BUFFER* buffer = arg->buffer;
+    
+    if (This->namedArrays) {
+        const char* attribName = "undefined";
+        switch(dst & 0xFFFF) {
+            case D3DDECLUSAGE_POSITION:
+            attribName = "vertex.position";
+            break;
+            case D3DDECLUSAGE_BLENDINDICES:
+            /* not supported by openGL */
+            attribName = "vertex.blend";
+            break;
+            case D3DDECLUSAGE_BLENDWEIGHT:
+            attribName = "vertex.weight";
+            break;
+            case D3DDECLUSAGE_NORMAL:
+            attribName = "vertex.normal";
+            break;
+            case D3DDECLUSAGE_PSIZE:
+            attribName = "vertex.psize";
+            break;
+            case D3DDECLUSAGE_COLOR:
+            if((dst & 0xF0000) >> 16 == 0)  {
+                attribName = "vertex.color";
+            } else {
+                attribName = "vertex.color.secondary";
+            }
+            break;
+            case D3DDECLUSAGE_TEXCOORD:
+            {
+                char tmpChar[100];
+                tmpChar[0] = 0;
+                sprintf(tmpChar,"vertex.texcoord[%lu]",(dst & 0xF0000) >> 16);
+                attribName = tmpChar;
+                break;
+            }
+            /* The following aren't directly supported by openGL, so shouldn't come up using namedarrays. */
+            case D3DDECLUSAGE_TANGENT:
+            attribName = "vertex.tangent";
+            break;
+            case D3DDECLUSAGE_BINORMAL:
+            attribName = "vertex.binormal";
+            break;
+            case D3DDECLUSAGE_TESSFACTOR:
+            attribName = "vertex.tessfactor";
+            break;
+            case D3DDECLUSAGE_POSITIONT:
+            attribName = "vertex.possitionT";
+            break;
+            case D3DDECLUSAGE_FOG:
+            attribName = "vertex.fogcoord";
+            break;
+            case D3DDECLUSAGE_DEPTH:
+            attribName = "vertex.depth";
+            break;
+            case D3DDECLUSAGE_SAMPLE:
+            attribName = "vertex.sample";
+            break;
+            default:
+            FIXME("Unrecognised dcl %08lx", dst & 0xFFFF);
+        }
+        {
+            sprintf(tmpLine, "ATTRIB ");
+            vshader_program_add_param(This, dst, FALSE, tmpLine);
+            if (This->namedArrays) 
+                shader_addline(buffer, "%s = %s;\n", tmpLine, attribName);
+        }
+    }
+}
+
+void vshader_hw_def(SHADER_OPCODE_ARG* arg) {
+    
+    IWineD3DVertexShaderImpl* shader = (IWineD3DVertexShaderImpl*) arg->shader;
+    SHADER_BUFFER* buffer = arg->buffer;
+    DWORD reg = arg->dst;
+
+    shader_addline(buffer, 
+        "PARAM const%lu = { %f, %f, %f, %f };\n", reg & 0xFF, 
+          *((const float *)(arg->src + 0)), 
+          *((const float *)(arg->src + 1)), 
+          *((const float *)(arg->src + 2)), 
+          *((const float *)(arg->src + 3)) );
+
+    shader->constantsUsedBitmap[reg & 0xFF] = VS_CONSTANT_CONSTANT;
+}
+
 /**
  * Function parser ...
  */
@@ -1133,100 +1226,6 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
             FIXME("Token %s requires greater functionality than "
                  "Vertex_Program_ARB supports\n", curOpcode->name);
             pToken += curOpcode->num_params;
-
-      } else if (D3DSIO_DEF == curOpcode->opcode) {
-
-            /* Handle definitions here, they don't fit well with the
-             * other instructions below [for now ] */
-
-            shader_addline(&buffer, 
-                "PARAM const%lu = { %f, %f, %f, %f };\n", *pToken & 0xFF, 
-                  *(float *) (pToken + 1), 
-                  *(float *) (pToken + 2), 
-                  *(float *) (pToken + 3), 
-                  *(float *) (pToken + 4));
-
-            This->constantsUsedBitmap[*pToken & 0xFF] = VS_CONSTANT_CONSTANT;
-            pToken += 5;
-            continue;
-
-      } else if (D3DSIO_DCL == curOpcode->opcode) {
-
-            /* Handle declarations here, they don't fit well with the
-             * other instructions below [for now ] */
-
-            if (This->namedArrays) {
-                const char* attribName = "undefined";
-                switch(*pToken & 0xFFFF) {
-                    case D3DDECLUSAGE_POSITION:
-                    attribName = "vertex.position";
-                    break;
-                    case D3DDECLUSAGE_BLENDINDICES:
-                    /* not supported by openGL */
-                    attribName = "vertex.blend";
-                    break;
-                    case D3DDECLUSAGE_BLENDWEIGHT:
-                    attribName = "vertex.weight";
-                    break;
-                    case D3DDECLUSAGE_NORMAL:
-                    attribName = "vertex.normal";
-                    break;
-                    case D3DDECLUSAGE_PSIZE:
-                    attribName = "vertex.psize";
-                    break;
-                    case D3DDECLUSAGE_COLOR:
-                    if((*pToken & 0xF0000) >> 16 == 0)  {
-                        attribName = "vertex.color";
-                    } else {
-                        attribName = "vertex.color.secondary";
-                    }
-                    break;
-                    case D3DDECLUSAGE_TEXCOORD:
-                    {
-                        char tmpChar[100];
-                        tmpChar[0] = 0;
-                        sprintf(tmpChar,"vertex.texcoord[%lu]",(*pToken & 0xF0000) >> 16);
-                        attribName = tmpChar;
-                        break;
-                    }
-                    /* The following aren't directly supported by openGL, so shouldn't come up using namedarrays. */
-                    case D3DDECLUSAGE_TANGENT:
-                    attribName = "vertex.tangent";
-                    break;
-                    case D3DDECLUSAGE_BINORMAL:
-                    attribName = "vertex.binormal";
-                    break;
-                    case D3DDECLUSAGE_TESSFACTOR:
-                    attribName = "vertex.tessfactor";
-                    break;
-                    case D3DDECLUSAGE_POSITIONT:
-                    attribName = "vertex.possitionT";
-                    break;
-                    case D3DDECLUSAGE_FOG:
-                    attribName = "vertex.fogcoord";
-                    break;
-                    case D3DDECLUSAGE_DEPTH:
-                    attribName = "vertex.depth";
-                    break;
-                    case D3DDECLUSAGE_SAMPLE:
-                    attribName = "vertex.sample";
-                    break;
-                    default:
-                    FIXME("Unrecognised dcl %08lx", *pToken & 0xFFFF);
-                }
-                {
-                    ++pToken;
-                    sprintf(tmpLine, "ATTRIB ");
-                    vshader_program_add_param(This, *pToken, FALSE, tmpLine);
-                    if (This->namedArrays) 
-                        shader_addline(&buffer, "%s = %s;\n", tmpLine, attribName);
-                }
-            } else {
-                /* eat the token so it doesn't generate a warning */
-                ++pToken;
-            }
-            ++pToken;
-            continue;
 
       /* If a generator function is set, use it */
       } else if (curOpcode->hw_fct != NULL) {
