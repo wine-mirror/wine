@@ -406,7 +406,7 @@ NTSTATUS WINAPI NtCreatePort(PHANDLE PortHandle,POBJECT_ATTRIBUTES ObjectAttribu
 {
   FIXME("(%p,%p,%lu,%lu,%p),stub!\n",PortHandle,ObjectAttributes,
         MaxConnectInfoLength,MaxDataLength,reserved);
-  return 0;
+  return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
@@ -429,7 +429,7 @@ NTSTATUS WINAPI NtConnectPort(
           pConnectInfoLength);
     if (ConnectInfo && pConnectInfoLength)
         TRACE("\tMessage = %s\n",debugstr_an(ConnectInfo,*pConnectInfoLength));
-    return 0;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
@@ -439,7 +439,7 @@ NTSTATUS WINAPI NtConnectPort(
 NTSTATUS WINAPI NtListenPort(HANDLE PortHandle,PLPC_MESSAGE pLpcMessage)
 {
   FIXME("(%p,%p),stub!\n",PortHandle,pLpcMessage);
-  return 0;
+  return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
@@ -456,7 +456,7 @@ NTSTATUS WINAPI NtAcceptConnectPort(
 {
   FIXME("(%p,%lu,%p,%d,%p,%p),stub!\n",
         PortHandle,PortIdentifier,pLpcMessage,Accept,WriteSection,ReadSection);
-  return 0;
+  return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
@@ -466,7 +466,7 @@ NTSTATUS WINAPI NtAcceptConnectPort(
 NTSTATUS WINAPI NtCompleteConnectPort(HANDLE PortHandle)
 {
   FIXME("(%p),stub!\n",PortHandle);
-  return 0;
+  return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
@@ -476,7 +476,7 @@ NTSTATUS WINAPI NtCompleteConnectPort(HANDLE PortHandle)
 NTSTATUS WINAPI NtRegisterThreadTerminatePort(HANDLE PortHandle)
 {
   FIXME("(%p),stub!\n",PortHandle);
-  return 0;
+  return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
@@ -503,7 +503,7 @@ NTSTATUS WINAPI NtRequestWaitReplyPort(
     TRACE("\tData                = %s\n",
       debugstr_an((const char*)pLpcMessageIn->Data,pLpcMessageIn->DataSize));
   }
-  return 0;
+  return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
@@ -517,7 +517,7 @@ NTSTATUS WINAPI NtReplyWaitReceivePort(
         PLPC_MESSAGE Message)
 {
   FIXME("(%p,%p,%p,%p),stub!\n",PortHandle,PortIdentifier,ReplyMessage,Message);
-  return 0;
+  return STATUS_NOT_IMPLEMENTED;
 }
 
 /*
