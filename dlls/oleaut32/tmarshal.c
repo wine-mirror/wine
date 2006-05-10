@@ -42,6 +42,7 @@
 #include "winuser.h"
 
 #include "ole2.h"
+#include "propidl.h" /* for LPSAFEARRAY_User* functions */
 #include "typelib.h"
 #include "variant.h"
 #include "wine/debug.h"
@@ -802,6 +803,17 @@ serialize_param(
 	if (debugout) TRACE_(olerelay)("]");
 	return S_OK;
     }
+    case VT_SAFEARRAY: {
+        if (writeit)
+        {
+            unsigned long flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+            unsigned long size = LPSAFEARRAY_UserSize(&flags, buf->curoff, (LPSAFEARRAY *)arg);
+            xbuf_resize(buf, size);
+            LPSAFEARRAY_UserMarshal(&flags, buf->base + buf->curoff, (LPSAFEARRAY *)arg);
+            buf->curoff = size;
+        }
+        return S_OK;
+    }
     default:
 	ERR("Unhandled marshal type %d.\n",tdesc->vt);
 	return S_OK;
@@ -1129,6 +1141,16 @@ deserialize_param(
 		    (DWORD*)((LPBYTE)(arg)+i*_xsize(&adesc->tdescElem)),
 		    buf
 		);
+	    return S_OK;
+	}
+    case VT_SAFEARRAY: {
+	    if (readit)
+	    {
+		unsigned long flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+		unsigned char *buffer;
+		buffer = LPSAFEARRAY_UserUnmarshal(&flags, buf->base + buf->curoff, (LPSAFEARRAY *)arg);
+		buf->curoff = buffer - buf->base;
+	    }
 	    return S_OK;
 	}
 	default:
