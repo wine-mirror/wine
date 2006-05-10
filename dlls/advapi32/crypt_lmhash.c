@@ -89,3 +89,26 @@ NTSTATUS WINAPI SystemFunction008(const LPBYTE challenge, const LPBYTE hash, LPB
 
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * SystemFunction001  [ADVAPI32.@]
+ *
+ * Encrypts a single block of data using DES
+ *
+ * PARAMS
+ *   data    [I] data to encrypt    (8 bytes)
+ *   key     [I] key data           (7 bytes)
+ *   output  [O] the encrypted data (8 bytes)
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_UNSUCCESSFUL
+ *
+ */
+NTSTATUS WINAPI SystemFunction001(const LPBYTE data, const LPBYTE key, LPBYTE output)
+{
+    if (!data || !output)
+        return STATUS_UNSUCCESSFUL;
+    CRYPT_DEShash(output, key, data);
+    return STATUS_SUCCESS;
+}

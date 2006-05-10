@@ -29,10 +29,12 @@
 #include "winternl.h"
 
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
-typedef DWORD (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction001)(const LPBYTE, const LPBYTE, LPBYTE);
 
 fnSystemFunction006 pSystemFunction006;
 fnSystemFunction008 pSystemFunction008;
+fnSystemFunction001 pSystemFunction001;
 
 static void test_SystemFunction006(void)
 {
@@ -93,6 +95,25 @@ static void test_SystemFunction008(void)
     ok( !memcmp(output, expected, sizeof expected), "response wrong\n");
 }
 
+static void test_SystemFunction001(void)
+{
+    unsigned char key[8] = { 0xff, 0x37, 0x50, 0xbc, 0xc2, 0xb2, 0x24, 0 };
+    unsigned char data[8] = { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
+    unsigned char expected[8] = { 0xc3, 0x37, 0xcd, 0x5c, 0xbd, 0x44, 0xfc, 0x97 };
+    unsigned char output[16];
+    NTSTATUS r;
+
+    r = pSystemFunction001(0,0,0);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    memset(output, 0, sizeof output);
+
+    r = pSystemFunction001(data,key,output);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+
+    ok(!memcmp(output, expected, sizeof expected), "response wrong\n");
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
@@ -106,6 +127,10 @@ START_TEST(crypt_lmhash)
     pSystemFunction008 = (fnSystemFunction008)GetProcAddress( module, "SystemFunction008" );
     if (pSystemFunction008)
         test_SystemFunction008();
+
+    pSystemFunction001 = (fnSystemFunction001)GetProcAddress( module, "SystemFunction001" );
+    if (pSystemFunction001)
+        test_SystemFunction001();
 
     FreeLibrary( module );
 }
