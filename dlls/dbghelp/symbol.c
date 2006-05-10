@@ -562,11 +562,24 @@ struct sym_enum
     PSYM_ENUMERATESYMBOLS_CALLBACK      cb;
     PVOID                               user;
     SYMBOL_INFO*                        sym_info;
+    DWORD                               index;
+    DWORD                               tag;
+    DWORD64                             addr;
     char                                buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
 };
+
+static BOOL send_symbol(const struct sym_enum* se, struct module_pair* pair,
+                        const struct symt* sym)
+{
+    symt_fill_sym_info(pair, sym, se->sym_info);
+    if (se->index && se->sym_info->info != se->index) return FALSE;
+    if (se->tag && se->sym_info->Tag != se->tag) return FALSE;
+    if (se->addr && !(se->addr >= se->sym_info->Address && se->addr < se->sym_info->Address + se->sym_info->Size)) return FALSE;
+    return !se->cb(se->sym_info, se->sym_info->Size, se->user);
+}
+
 static BOOL symt_enum_module(struct module_pair* pair, regex_t* regex,
                              const struct sym_enum* se)
-    
 {
     void*                       ptr;
     struct symt_ht*             sym = NULL;
@@ -581,8 +594,7 @@ static BOOL symt_enum_module(struct module_pair* pair, regex_t* regex,
         {
             se->sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
             se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
-            symt_fill_sym_info(pair, &sym->symt, se->sym_info);
-            if (!se->cb(se->sym_info, se->sym_info->Size, se->user)) return TRUE;
+            if (send_symbol(se, pair, &sym->symt)) return TRUE;
         }
     }   
     return FALSE;
@@ -713,9 +725,7 @@ static BOOL symt_enum_locals_helper(struct process* pcs, struct module_pair* pai
         case SymTagData:
             if (regexec(preg, symt_get_name(lsym), 0, NULL, 0) == 0)
             {
-                symt_fill_sym_info(pair, lsym, se->sym_info);
-                if (!se->cb(se->sym_info, se->sym_info->Size, se->user))
-                    return FALSE;
+                if (send_symbol(se, pair, lsym)) return FALSE;
             }
             break;
         case SymTagLabel:
@@ -759,8 +769,7 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
         return ret;
         
     }
-    symt_fill_sym_info(&pair, &sym->symt, se->sym_info);
-    return se->cb(se->sym_info, se->sym_info->Size, se->user);
+    return send_symbol(se, &pair, &sym->symt);
 }
 
 /******************************************************************
@@ -885,6 +894,9 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
 
     se.cb = EnumSymbolsCallback;
     se.user = UserContext;
+    se.index = 0;
+    se.tag = 0;
+    se.addr = 0;
     se.sym_info = (PSYMBOL_INFO)se.buffer;
 
     return sym_enum(hProcess, BaseOfDll, Mask, &se);
@@ -1456,34 +1468,26 @@ BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
                       PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                       PVOID UserContext, DWORD Options)
 {
+    struct sym_enum     se;
+
     TRACE("(%p %s %lu %lu %s %s %p %p %lx)\n",
           hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, Mask, 
           wine_dbgstr_longlong(Address), EnumSymbolsCallback,
           UserContext, Options);
 
-    if (Index != 0)
-    {
-        FIXME("Unsupported searching for a given Index (%lu)\n", Index);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    if (SymTag != 0)
-    {
-        FIXME("Unsupported searching for a given SymTag (%lu)\n", SymTag);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    if (Address != 0)
-    {
-        FIXME("Unsupported searching for a given Address (%s)\n", wine_dbgstr_longlong(Address));
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
     if (Options != SYMSEARCH_GLOBALSONLY)
     {
         FIXME("Unsupported searching with options (%lx)\n", Options);
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    return SymEnumSymbols(hProcess, BaseOfDll, Mask, EnumSymbolsCallback, UserContext);
+
+    se.cb = EnumSymbolsCallback;
+    se.user = UserContext;
+    se.index = Index;
+    se.tag = SymTag;
+    se.addr = Address;
+    se.sym_info = (PSYMBOL_INFO)se.buffer;
+
+    return sym_enum(hProcess, BaseOfDll, Mask, &se);
 }
