@@ -484,35 +484,35 @@ void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
 CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
 
     /* Arithmetic */ 
-    {D3DSIO_NOP,  "nop",  "NOP", 0, vshader_nop,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_MOV,  "mov",  "MOV", 2, vshader_mov,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_ADD,  "add",  "ADD", 3, vshader_add,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_SUB,  "sub",  "SUB", 3, vshader_sub,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_MAD,  "mad",  "MAD", 4, vshader_mad,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_MUL,  "mul",  "MUL", 3, vshader_mul,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_RCP,  "rcp",  "RCP", 2, vshader_rcp,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_RSQ,  "rsq",  "RSQ", 2, vshader_rsq,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_DP3,  "dp3",  "DP3", 3, vshader_dp3,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_DP4,  "dp4",  "DP4", 3, vshader_dp4,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_MIN,  "min",  "MIN", 3, vshader_min,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_MAX,  "max",  "MAX", 3, vshader_max,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_SLT,  "slt",  "SLT", 3, vshader_slt,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_SGE,  "sge",  "SGE", 3, vshader_sge,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_ABS,  "abs",  "ABS", 2, vshader_abs,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_EXP,  "exp",  "EX2", 2, vshader_exp,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_LOG,  "log",  "LG2", 2, vshader_log,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_EXPP, "expp", "EXP", 2, vshader_expp, vshader_hw_map2gl, 0, 0},
-    {D3DSIO_LOGP, "logp", "LOG", 2, vshader_logp, vshader_hw_map2gl, 0, 0},
-    {D3DSIO_LIT,  "lit",  "LIT", 2, vshader_lit,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_DST,  "dst",  "DST", 3, vshader_dst,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_LRP,  "lrp",  "LRP", 4, vshader_lrp,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_FRC,  "frc",  "FRC", 2, vshader_frc,  vshader_hw_map2gl, 0, 0},
-    {D3DSIO_POW,  "pow",  "POW", 3, vshader_pow,  NULL, 0, 0},
-    {D3DSIO_CRS,  "crs",  "XPS", 3, vshader_crs,  NULL, 0, 0},
+    {D3DSIO_NOP,  "nop",  "NOP", 0, vshader_nop,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_MOV,  "mov",  "MOV", 2, vshader_mov,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_ADD,  "add",  "ADD", 3, vshader_add,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_SUB,  "sub",  "SUB", 3, vshader_sub,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_MAD,  "mad",  "MAD", 4, vshader_mad,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_MUL,  "mul",  "MUL", 3, vshader_mul,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_RCP,  "rcp",  "RCP", 2, vshader_rcp,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_RSQ,  "rsq",  "RSQ", 2, vshader_rsq,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_DP3,  "dp3",  "DP3", 3, vshader_dp3,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_DP4,  "dp4",  "DP4", 3, vshader_dp4,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_MIN,  "min",  "MIN", 3, vshader_min,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_MAX,  "max",  "MAX", 3, vshader_max,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_SLT,  "slt",  "SLT", 3, vshader_slt,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_SGE,  "sge",  "SGE", 3, vshader_sge,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_ABS,  "abs",  "ABS", 2, vshader_abs,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_EXP,  "exp",  "EX2", 2, vshader_exp,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_LOG,  "log",  "LG2", 2, vshader_log,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_EXPP, "expp", "EXP", 2, vshader_expp, vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_LOGP, "logp", "LOG", 2, vshader_logp, vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_LIT,  "lit",  "LIT", 2, vshader_lit,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_DST,  "dst",  "DST", 3, vshader_dst,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_LRP,  "lrp",  "LRP", 4, vshader_lrp,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_FRC,  "frc",  "FRC", 2, vshader_frc,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_POW,  "pow",  "POW", 3, vshader_pow,  NULL, NULL, 0, 0},
+    {D3DSIO_CRS,  "crs",  "XPS", 3, vshader_crs,  NULL, NULL, 0, 0},
     /* TODO: sng can possibly be performed a  s
         RCP tmp, vec
         MUL out, tmp, vec*/
-    {D3DSIO_SGN,  "sng",  NULL,  2, vshader_sng,  NULL,   0, 0},
+    {D3DSIO_SGN,  "sng",  NULL,  2, vshader_sng,  NULL,   NULL, 0, 0},
     /* TODO: xyz normalise can be performed as VS_ARB using one temporary register,
         DP3 tmp , vec, vec;
         RSQ tmp, tmp.x;
@@ -523,45 +523,45 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
         MUL vec, vec, tmp;
 
     */
-    {D3DSIO_NRM,      "nrm",      NULL,   2, vshader_nrm,    NULL, 0, 0},
-    {D3DSIO_SINCOS,   "sincos",   NULL,   2, vshader_sincos, NULL, 0, 0},
+    {D3DSIO_NRM,      "nrm",      NULL,   2, vshader_nrm,    NULL, NULL, 0, 0},
+    {D3DSIO_SINCOS,   "sincos",   NULL,   2, vshader_sincos, NULL, NULL, 0, 0},
 
     /* Matrix */
-    {D3DSIO_M4x4, "m4x4", "undefined", 3, vshader_m4x4, vshader_hw_mnxn, 0, 0},
-    {D3DSIO_M4x3, "m4x3", "undefined", 3, vshader_m4x3, vshader_hw_mnxn, 0, 0},
-    {D3DSIO_M3x4, "m3x4", "undefined", 3, vshader_m3x4, vshader_hw_mnxn, 0, 0},
-    {D3DSIO_M3x3, "m3x3", "undefined", 3, vshader_m3x3, vshader_hw_mnxn, 0, 0},
-    {D3DSIO_M3x2, "m3x2", "undefined", 3, vshader_m3x2, vshader_hw_mnxn, 0, 0},
+    {D3DSIO_M4x4, "m4x4", "undefined", 3, vshader_m4x4, vshader_hw_mnxn, NULL, 0, 0},
+    {D3DSIO_M4x3, "m4x3", "undefined", 3, vshader_m4x3, vshader_hw_mnxn, NULL, 0, 0},
+    {D3DSIO_M3x4, "m3x4", "undefined", 3, vshader_m3x4, vshader_hw_mnxn, NULL, 0, 0},
+    {D3DSIO_M3x3, "m3x3", "undefined", 3, vshader_m3x3, vshader_hw_mnxn, NULL, 0, 0},
+    {D3DSIO_M3x2, "m3x2", "undefined", 3, vshader_m3x2, vshader_hw_mnxn, NULL, 0, 0},
 
     /* Declare registers */
-    {D3DSIO_DCL,      "dcl",      NULL,                  2, vshader_dcl,     vshader_hw_dcl, 0, 0},
+    {D3DSIO_DCL,      "dcl",      NULL,                  2, vshader_dcl,     vshader_hw_dcl, NULL, 0, 0},
 
     /* Constant definitions */
-    {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     vshader_hw_def, 0, 0},
-    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, vshader_defb,    NULL, 0, 0},
-    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, vshader_defi,    NULL, 0, 0},
+    {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     vshader_hw_def, NULL, 0, 0},
+    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, vshader_defb,    NULL, NULL, 0, 0},
+    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, vshader_defi,    NULL, NULL, 0, 0},
 
     /* Flow control - requires GLSL or software shaders */
-    {D3DSIO_REP ,     "rep",      GLNAME_REQUIRE_GLSL,   1, vshader_rep,     NULL, 0, 0},
-    {D3DSIO_ENDREP,   "endrep",   GLNAME_REQUIRE_GLSL,   0, vshader_endrep,  NULL, 0, 0},
-    {D3DSIO_IF,       "if",       GLNAME_REQUIRE_GLSL,   1, vshader_if,      NULL, 0, 0},
-    {D3DSIO_IFC,      "ifc",      GLNAME_REQUIRE_GLSL,   2, vshader_ifc,     NULL, 0, 0},
-    {D3DSIO_ELSE,     "else",     GLNAME_REQUIRE_GLSL,   0, vshader_else,    NULL, 0, 0},
-    {D3DSIO_ENDIF,    "endif",    GLNAME_REQUIRE_GLSL,   0, vshader_endif,   NULL, 0, 0},
-    {D3DSIO_BREAK,    "break",    GLNAME_REQUIRE_GLSL,   0, vshader_break,   NULL, 0, 0},
-    {D3DSIO_BREAKC,   "breakc",   GLNAME_REQUIRE_GLSL,   2, vshader_breakc,  NULL, 0, 0},
-    {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL,   1, vshader_breakp,  NULL, 0, 0},
-    {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL,   1, vshader_call,    NULL, 0, 0},
-    {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL,   2, vshader_callnz,  NULL, 0, 0},
-    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL,   2, vshader_loop,    NULL, 0, 0},
-    {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL,   0, vshader_ret,     NULL, 0, 0},
-    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL,   0, vshader_endloop, NULL, 0, 0},
-    {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL,   1, vshader_label,   NULL, 0, 0},
+    {D3DSIO_REP ,     "rep",      GLNAME_REQUIRE_GLSL,   1, vshader_rep,     NULL, NULL, 0, 0},
+    {D3DSIO_ENDREP,   "endrep",   GLNAME_REQUIRE_GLSL,   0, vshader_endrep,  NULL, NULL, 0, 0},
+    {D3DSIO_IF,       "if",       GLNAME_REQUIRE_GLSL,   1, vshader_if,      NULL, NULL, 0, 0},
+    {D3DSIO_IFC,      "ifc",      GLNAME_REQUIRE_GLSL,   2, vshader_ifc,     NULL, NULL, 0, 0},
+    {D3DSIO_ELSE,     "else",     GLNAME_REQUIRE_GLSL,   0, vshader_else,    NULL, NULL, 0, 0},
+    {D3DSIO_ENDIF,    "endif",    GLNAME_REQUIRE_GLSL,   0, vshader_endif,   NULL, NULL, 0, 0},
+    {D3DSIO_BREAK,    "break",    GLNAME_REQUIRE_GLSL,   0, vshader_break,   NULL, NULL, 0, 0},
+    {D3DSIO_BREAKC,   "breakc",   GLNAME_REQUIRE_GLSL,   2, vshader_breakc,  NULL, NULL, 0, 0},
+    {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL,   1, vshader_breakp,  NULL, NULL, 0, 0},
+    {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL,   1, vshader_call,    NULL, NULL, 0, 0},
+    {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL,   2, vshader_callnz,  NULL, NULL, 0, 0},
+    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL,   2, vshader_loop,    NULL, NULL, 0, 0},
+    {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL,   0, vshader_ret,     NULL, NULL, 0, 0},
+    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL,   0, vshader_endloop, NULL, NULL, 0, 0},
+    {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL,   1, vshader_label,   NULL, NULL, 0, 0},
 
-    {D3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL,   2, vshader_mova,    NULL, 0, 0},
-    {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,   2, vshader_setp,    NULL, 0, 0},
-    {D3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL,   2, vshader_texldl,  NULL, 0, 0},
-    {0,               NULL,       NULL,   0, NULL,            0, 0}
+    {D3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL,   2, vshader_mova,    NULL, NULL, 0, 0},
+    {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,   2, vshader_setp,    NULL, NULL, 0, 0},
+    {D3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL,   2, vshader_texldl,  NULL, NULL, 0, 0},
+    {0,               NULL,       NULL,   0, NULL,            NULL, 0, 0}
 };
 
 inline static void vshader_program_dump_vs_param(const DWORD param, int input) {

@@ -1215,6 +1215,7 @@ typedef struct SHADER_OPCODE {
     CONST UINT    num_params;
     shader_fct_t  soft_fct;
     SHADER_HANDLER hw_fct;
+    SHADER_HANDLER hw_glsl_fct;
     DWORD         min_version;
     DWORD         max_version;
 } SHADER_OPCODE;
