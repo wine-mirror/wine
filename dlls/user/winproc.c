@@ -119,13 +119,14 @@ static inline WINDOWPROC *find_winproc16( WNDPROC16 func )
 
 /* find an existing winproc for a given function and type */
 /* FIXME: probably should do something more clever than a linear search */
-static inline WINDOWPROC *find_winproc( WNDPROC func, WINDOWPROCTYPE type )
+static inline WINDOWPROC *find_winproc( WNDPROC func, BOOL unicode )
 {
     unsigned int i;
 
     for (i = 0; i < winproc_used; i++)
     {
-        if (winproc_array[i].type == type && winproc_array[i].thunk.proc == func)
+        if (winproc_array[i].thunk.proc == func &&
+            winproc_array[i].type == (unicode ? WIN_PROC_32W : WIN_PROC_32A))
             return &winproc_array[i];
     }
     return NULL;
@@ -139,7 +140,7 @@ static inline void set_winproc16( WINDOWPROC *proc, WNDPROC16 func )
 }
 
 /* initialize a new winproc */
-static inline void set_winproc( WINDOWPROC *proc, WNDPROC func, WINDOWPROCTYPE type )
+static inline void set_winproc( WINDOWPROC *proc, WNDPROC func, BOOL unicode )
 {
 #ifdef __i386__
     static FARPROC16 relay_32A, relay_32W;
@@ -148,29 +149,24 @@ static inline void set_winproc( WINDOWPROC *proc, WNDPROC func, WINDOWPROCTYPE t
     proc->thunk.pushl_func   = 0x68;   /* pushl $proc */
     proc->thunk.pushl_eax    = 0x50;   /* pushl %eax */
     proc->thunk.ljmp         = 0xea;   /* ljmp   relay*/
-    switch(type)
+    if (!unicode)
     {
-    case WIN_PROC_32A:
         if (!relay_32A) relay_32A = GetProcAddress16( GetModuleHandle16("user"),
                                                       "__wine_call_wndproc_32A" );
         proc->thunk.relay_offset = OFFSETOF(relay_32A);
         proc->thunk.relay_sel    = SELECTOROF(relay_32A);
-        break;
-    case WIN_PROC_32W:
+    }
+    else
+    {
         if (!relay_32W) relay_32W = GetProcAddress16( GetModuleHandle16("user"),
                                                       "__wine_call_wndproc_32W" );
         proc->thunk.relay_offset = OFFSETOF(relay_32W);
         proc->thunk.relay_sel    = SELECTOROF(relay_32W);
-        break;
-    default:
-        /* Should not happen */
-        assert(0);
-        break;
     }
 #endif /* __i386__ */
     proc->thunk.proc = func;
     proc->proc16 = 0;
-    proc->type = type;
+    proc->type = unicode ? WIN_PROC_32W : WIN_PROC_32A;
 }
 
 static WORD get_winproc_selector(void)
@@ -479,11 +475,11 @@ WNDPROC16 WINPROC_GetProc16( WNDPROC proc )
  *
  * Get a window procedure pointer that can be passed to the Windows program.
  */
-WNDPROC WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type )
+WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode )
 {
     WINDOWPROC *ptr = handle_to_proc( proc );
 
-    if (!ptr || type != ptr->type) return proc;
+    if (!ptr || ptr->type != (unicode ? WIN_PROC_32W : WIN_PROC_32A)) return proc;
     return ptr->thunk.proc;  /* we can return the original proc in that case */
 }
 
@@ -538,34 +534,35 @@ WNDPROC WINPROC_AllocProc16( WNDPROC16 func )
  * lot of windows, it will usually only have a limited number of window procedures, so the
  * array won't grow too large, and this way we avoid the need to track allocations per window.
  */
-WNDPROC WINPROC_AllocProc( WNDPROC func, WINDOWPROCTYPE type )
+WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
 {
     WINDOWPROC *proc;
 
     if (!func) return NULL;
 
-    EnterCriticalSection( &winproc_cs );
-
     /* check if the function is already a win proc */
     if (!(proc = handle_to_proc( func )))
     {
+        EnterCriticalSection( &winproc_cs );
+
         /* then check if we already have a winproc for that function */
-        if (!(proc = find_winproc( func, type )))
+        if (!(proc = find_winproc( func, unicode )))
         {
             if (winproc_used >= MAX_WINPROCS)
-                FIXME( "too many winprocs, cannot allocate one for %p/%d\n", func, type );
+                FIXME( "too many winprocs, cannot allocate one for %p %c\n", func, unicode ? 'W' : 'A' );
             else
             {
                 proc = &winproc_array[winproc_used++];
-                set_winproc( proc, func, type );
-                TRACE( "allocated %p for %p/%d (%d/%d used)\n",
-                       proc_to_handle(proc), func, type, winproc_used, MAX_WINPROCS );
+                set_winproc( proc, func, unicode );
+                TRACE( "allocated %p for %p %c (%d/%d used)\n",
+                       proc_to_handle(proc), func, unicode ? 'W' : 'A', winproc_used, MAX_WINPROCS );
             }
         }
-        else TRACE( "reusing %p for %p/%d\n", proc_to_handle(proc), func, type );
+        else TRACE( "reusing %p for %p %c\n", proc_to_handle(proc), func, unicode ? 'W' : 'A' );
+
+        LeaveCriticalSection( &winproc_cs );
     }
 
-    LeaveCriticalSection( &winproc_cs );
     return proc_to_handle( proc );
 }
 

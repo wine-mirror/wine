@@ -1832,7 +1832,7 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
  *
  * Helper function for GetWindowLong().
  */
-static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
+static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, BOOL unicode )
 {
     LONG_PTR retvalue = 0;
     WND *wndPtr;
@@ -1897,7 +1897,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
         retvalue = *(LONG_PTR *)(((char *)wndPtr->wExtra) + offset);
         /* Special case for dialog window procedure */
         if ((offset == DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
-            retvalue = (LONG_PTR)WINPROC_GetProc( (WNDPROC)retvalue, type );
+            retvalue = (LONG_PTR)WINPROC_GetProc( (WNDPROC)retvalue, unicode );
         WIN_ReleasePtr( wndPtr );
         return retvalue;
     }
@@ -1908,7 +1908,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
     case GWL_STYLE:      retvalue = wndPtr->dwStyle; break;
     case GWL_EXSTYLE:    retvalue = wndPtr->dwExStyle; break;
     case GWLP_ID:        retvalue = (ULONG_PTR)wndPtr->wIDmenu; break;
-    case GWLP_WNDPROC:   retvalue = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, type ); break;
+    case GWLP_WNDPROC:   retvalue = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, unicode ); break;
     case GWLP_HINSTANCE: retvalue = (ULONG_PTR)wndPtr->hInstance; break;
     default:
         WARN("Unknown offset %d\n", offset );
@@ -1928,15 +1928,14 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
  * 0 is the failure code. However, in the case of failure SetLastError
  * must be set to distinguish between a 0 return value and a failure.
  */
-static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
-                                   WINDOWPROCTYPE type )
+static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL unicode )
 {
     STYLESTRUCT style;
     BOOL ok;
     LONG_PTR retval = 0;
     WND *wndPtr;
 
-    TRACE( "%p %d %lx %x\n", hwnd, offset, newval, type );
+    TRACE( "%p %d %lx %c\n", hwnd, offset, newval, unicode ? 'W' : 'A' );
 
     if (is_broadcast(hwnd))
     {
@@ -1992,8 +1991,8 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
     case GWLP_WNDPROC:
     {
         UINT old_flags = wndPtr->flags;
-        retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, type );
-        wndPtr->winproc = WINPROC_AllocProc( (WNDPROC)newval, type );
+        retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, unicode );
+        wndPtr->winproc = WINPROC_AllocProc( (WNDPROC)newval, unicode );
         if (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W) wndPtr->flags |= WIN_ISUNICODE;
         else wndPtr->flags &= ~WIN_ISUNICODE;
         if (!((old_flags ^ wndPtr->flags) & WIN_ISUNICODE))
@@ -2012,8 +2011,8 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
         if ((wndPtr->cbWndExtra - sizeof(LONG_PTR) >= DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
         {
             WNDPROC *ptr = (WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
-            retval = (ULONG_PTR)WINPROC_GetProc( *ptr, type );
-            *ptr = WINPROC_AllocProc( (WNDPROC)newval, type );
+            retval = (ULONG_PTR)WINPROC_GetProc( *ptr, unicode );
+            *ptr = WINPROC_AllocProc( (WNDPROC)newval, unicode );
             WIN_ReleasePtr( wndPtr );
             return retval;
         }
@@ -2178,7 +2177,7 @@ LONG WINAPI GetWindowLong16( HWND16 hwnd, INT16 offset )
  */
 LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
 {
-    return WIN_GetWindowLong( hwnd, offset, WIN_PROC_32A );
+    return WIN_GetWindowLong( hwnd, offset, FALSE );
 }
 
 
@@ -2187,7 +2186,7 @@ LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
  */
 LONG WINAPI GetWindowLongW( HWND hwnd, INT offset )
 {
-    return WIN_GetWindowLong( hwnd, offset, WIN_PROC_32W );
+    return WIN_GetWindowLong( hwnd, offset, TRUE );
 }
 
 
@@ -2231,7 +2230,7 @@ LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
  */
 LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
 {
-    return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_32A );
+    return WIN_SetWindowLong( hwnd, offset, newval, FALSE );
 }
 
 
@@ -2306,7 +2305,7 @@ LONG WINAPI SetWindowLongW(
     INT offset, /* [in] offset, in bytes, of location to alter */
     LONG newval /* [in] new value of location */
 ) {
-    return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_32W );
+    return WIN_SetWindowLong( hwnd, offset, newval, TRUE );
 }
 
 
