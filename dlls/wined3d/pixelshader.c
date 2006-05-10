@@ -617,6 +617,12 @@ void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg);
 void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg);
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg);
 void pshader_hw_def(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg);
+void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg);
 
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
@@ -709,13 +715,13 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_TEXREG2AR,"texreg2ar","undefined",   2, pshader_texreg2ar,   pshader_hw_texreg2ar, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXREG2GB,"texreg2gb","undefined",   2, pshader_texreg2gb,   pshader_hw_texreg2gb, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL,   2, pshader_texreg2rgb,  NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x2PAD,   "texm3x2pad",   "undefined",   2, pshader_texm3x2pad,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x2TEX,   "texm3x2tex",   "undefined",   2, pshader_texm3x2tex,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3PAD,   "texm3x3pad",   "undefined",   2, pshader_texm3x3pad,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x2PAD,   "texm3x2pad",   "undefined",   2, pshader_texm3x2pad,   pshader_hw_texm3x2pad, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x2TEX,   "texm3x2tex",   "undefined",   2, pshader_texm3x2tex,   pshader_hw_texm3x2tex, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3PAD,   "texm3x3pad",   "undefined",   2, pshader_texm3x3pad,   pshader_hw_texm3x3pad, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x3DIFF,  "texm3x3diff",  GLNAME_REQUIRE_GLSL,   2, pshader_texm3x3diff,  NULL, D3DPS_VERSION(0,0), D3DPS_VERSION(0,0)},
-    {D3DSIO_TEXM3x3SPEC,  "texm3x3spec",  "undefined",   3, pshader_texm3x3spec,  NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3VSPEC, "texm3x3vspe",  "undefined",   2, pshader_texm3x3vspec, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXM3x3TEX,   "texm3x3tex",   "undefined",   2, pshader_texm3x3tex,   NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3SPEC,  "texm3x3spec",  "undefined",   3, pshader_texm3x3spec,  pshader_hw_texm3x3spec, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3VSPEC, "texm3x3vspe",  "undefined",   2, pshader_texm3x3vspec, pshader_hw_texm3x3vspec, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXM3x3TEX,   "texm3x3tex",   "undefined",   2, pshader_texm3x3tex,   pshader_hw_texm3x3tex, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL,   2, pshader_texdp3tex,   NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL,   2, pshader_texm3x2depth, NULL, D3DPS_VERSION(1,3), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXDP3,   "texdp3",   GLNAME_REQUIRE_GLSL,  2, pshader_texdp3,   NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
@@ -1180,6 +1186,119 @@ void pshader_hw_def(SHADER_OPCODE_ARG* arg) {
 
     shader->constants[reg] = 1;
 }
+
+void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    SHADER_BUFFER* buffer = arg->buffer;
+    char tmpLine[256];
+    char buf[50];
+
+    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
+        shader_addline(buffer, tmpLine);
+    shader_addline(buffer, "DP3 TMP.x, T%lu, %s;\n", reg, buf);
+}
+
+void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    SHADER_BUFFER* buffer = arg->buffer;
+    char tmpLine[256];
+    char buf[50];
+
+    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
+        shader_addline(buffer, tmpLine);
+    shader_addline(buffer, "DP3 TMP.y, T%lu, %s;\n", reg, buf);
+    shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg, reg);
+}
+
+void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    SHADER_BUFFER* buffer = arg->buffer;
+    SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
+    char tmpLine[256];
+    char buf[50];
+
+    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
+        shader_addline(buffer, tmpLine);
+    shader_addline(buffer, "DP3 TMP.%c, T%lu, %s;\n", 'x' + current_state.current_row, reg, buf);
+    current_state.texcoord_w[current_state.current_row++] = reg;
+}
+
+void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    SHADER_BUFFER* buffer = arg->buffer;
+    SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
+    char tmpLine[256];
+    char buf[50];
+
+    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
+        shader_addline(buffer, tmpLine);
+    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, buf);
+
+    /* Cubemap textures will be more used than 3D ones. */
+    shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
+    current_state.current_row = 0;
+}
+
+void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    SHADER_BUFFER* buffer = arg->buffer;
+    SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
+    char tmpLine[256];
+    char buf[50];
+
+    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
+        shader_addline(buffer, tmpLine);
+    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, buf);
+
+    /* Construct the eye-ray vector from w coordinates */
+    shader_addline(buffer, "MOV TMP2.x, fragment.texcoord[%lu].w;\n", current_state.texcoord_w[0]);
+    shader_addline(buffer, "MOV TMP2.y, fragment.texcoord[%lu].w;\n", current_state.texcoord_w[1]);
+    shader_addline(buffer, "MOV TMP2.z, fragment.texcoord[%lu].w;\n", reg);
+
+    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
+    shader_addline(buffer, "DP3 TMP.w, TMP, TMP2;\n");
+    shader_addline(buffer, "MUL TMP, TMP.w, TMP;\n");
+    shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -TMP2;\n");
+
+    /* Cubemap textures will be more used than 3D ones. */
+    shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
+    current_state.current_row = 0;
+}
+
+void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
+
+    IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD reg3 = arg->src[1] & D3DSP_REGNUM_MASK;
+    SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
+    SHADER_BUFFER* buffer = arg->buffer;
+    char tmpLine[256];
+    char buf[50];
+
+    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
+        shader_addline(buffer, tmpLine);
+    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, buf);
+
+    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
+    shader_addline(buffer, "DP3 TMP.w, TMP, C[%lu];\n", reg3);
+    shader_addline(buffer, "MUL TMP, TMP.w, TMP;\n");
+    shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -C[%lu];\n", reg3);
+
+    /* Cubemap textures will be more used than 3D ones. */
+    shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
+    current_state.current_row = 0;
+}
+
                     
 /* NOTE: A description of how to parse tokens can be found at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/graphics/hh/graphics/usermodedisplaydriver_shader_cc8e4e05-f5c3-4ec0-8853-8ce07c1551b2.xml.asp */
 inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
@@ -1187,14 +1306,13 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;
     DWORD i;
-    char  tmpLine[255];
     SHADER_BUFFER buffer;
-
-    int row = 0; /* not sure, something to do with macros? */
-    DWORD tcw[2];
 
     /* Keep bitmaps of used temporary and texture registers */
     DWORD tempsUsed, texUsed;
+
+    /* Initialize current parsing state */
+    This->baseShader.parse_state.current_row = 0;
 
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
@@ -1320,98 +1438,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
                 /* Build opcode for GL vertex_program */
                 switch (curOpcode->opcode) {
                 case D3DSIO_NOP:
-                case D3DSIO_PHASE:
                     break;
-                case D3DSIO_TEXM3x2PAD:
-                {
-                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
-                    char buf[50];
-                    if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) 
-                        shader_addline(&buffer, tmpLine);
-                    shader_addline(&buffer, "DP3 TMP.x, T%lu, %s;\n", reg, buf);
-                    ++pToken;
-                }
-                break;
-                case D3DSIO_TEXM3x2TEX:
-                {
-                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
-                    char buf[50];
-                    if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) 
-                        shader_addline(&buffer, tmpLine);
-                    shader_addline(&buffer, "DP3 TMP.y, T%lu, %s;\n", reg, buf);
-                    shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg, reg);
-                    ++pToken;
-                }
-                break;
-                case D3DSIO_TEXM3x3PAD:
-                {
-                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
-                    char buf[50];
-                    if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) 
-                        shader_addline(&buffer, tmpLine);
-                    shader_addline(&buffer, "DP3 TMP.%c, T%lu, %s;\n", 'x'+row, reg, buf);
-                    tcw[row++] = reg;
-                    ++pToken;
-                }
-                break;
-                case D3DSIO_TEXM3x3TEX:
-                {
-                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
-                    char buf[50];
-                    if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) 
-                        shader_addline(&buffer, tmpLine);
-                    shader_addline(&buffer, "DP3 TMP.z, T%lu, %s;\n", reg, buf);
-
-                    /* Cubemap textures will be more used than 3D ones. */
-                    shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
-                    row = 0;
-                    ++pToken;
-                }
-                break;
-                case D3DSIO_TEXM3x3VSPEC:
-                {
-                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
-                    char buf[50];
-                    if (gen_input_modifier_line(*++pToken, 0, buf, tmpLine, This->constants)) 
-                        shader_addline(&buffer, tmpLine);
-                    shader_addline(&buffer, "DP3 TMP.z, T%lu, %s;\n", reg, buf);
-
-                    /* Construct the eye-ray vector from w coordinates */
-                    shader_addline(&buffer, "MOV TMP2.x, fragment.texcoord[%lu].w;\n", tcw[0]);
-                    shader_addline(&buffer, "MOV TMP2.y, fragment.texcoord[%lu].w;\n", tcw[1]);
-                    shader_addline(&buffer, "MOV TMP2.z, fragment.texcoord[%lu].w;\n", reg);
-
-                    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
-                    shader_addline(&buffer, "DP3 TMP.w, TMP, TMP2;\n");
-                    shader_addline(&buffer, "MUL TMP, TMP.w, TMP;\n");
-                    shader_addline(&buffer, "MAD TMP, coefmul.x, TMP, -TMP2;\n");
-
-                    /* Cubemap textures will be more used than 3D ones. */
-                    shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
-                    row = 0;
-                    ++pToken;
-                }
-                break;
-                case D3DSIO_TEXM3x3SPEC:
-                {
-                    DWORD reg = *pToken & D3DSP_REGNUM_MASK;
-                    DWORD reg3 = *(pToken + 2) & D3DSP_REGNUM_MASK;
-                    char buf[50];
-                    if (gen_input_modifier_line(*(pToken + 1), 0, buf, tmpLine, This->constants)) 
-                        shader_addline(&buffer, tmpLine);
-                    shader_addline(&buffer, "DP3 TMP.z, T%lu, %s;\n", reg, buf);
-
-                    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
-                    shader_addline(&buffer, "DP3 TMP.w, TMP, C[%lu];\n", reg3);
-                    shader_addline(&buffer, "MUL TMP, TMP.w, TMP;\n");
-                    shader_addline(&buffer, "MAD TMP, coefmul.x, TMP, -C[%lu];\n", reg3);
-
-                    /* Cubemap textures will be more used than 3D ones. */
-                    shader_addline(&buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
-                    row = 0;
-                    pToken += 3;
-                }
-                break;
 
                 default:
                     FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);

@@ -1236,6 +1236,13 @@ typedef struct SHADER_LIMITS {
     unsigned int address;
 } SHADER_LIMITS;
 
+/** Keeps track of details for TEX_M#x# shader opcodes which need to 
+    maintain state information between multiple codes */
+typedef struct SHADER_PARSE_STATE {
+    unsigned int current_row;
+    DWORD texcoord_w[2];
+} SHADER_PARSE_STATE;
+
 /* Base Shader utility functions. 
  * (may move callers into the same file in the future) */
 extern int shader_addline(
@@ -1254,6 +1261,7 @@ typedef struct IWineD3DBaseShaderClass
     DWORD                           version;
     DWORD                           hex_version;
     SHADER_LIMITS                   limits;
+    SHADER_PARSE_STATE              parse_state;
     CONST SHADER_OPCODE             *shader_ins;
     CONST DWORD                     *function;
     UINT                            functionLength;

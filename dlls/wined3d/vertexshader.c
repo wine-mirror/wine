@@ -1136,7 +1136,6 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     const SHADER_OPCODE* curOpcode = NULL;
     DWORD i;
     SHADER_BUFFER buffer;
-    char  tmpLine[255];
     DWORD addressUsed, tempsUsed;
 
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
@@ -1191,7 +1190,6 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
 
   if (NULL != pToken) {
     while (1) {
-      tmpLine[0] = 0;
 
       if (D3DVS_END() == *pToken)
             break;
