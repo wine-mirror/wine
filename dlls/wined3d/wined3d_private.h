@@ -734,6 +734,13 @@ typedef struct IWineD3DCubeTextureImpl
 
 extern const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl;
 
+typedef struct _WINED3DVOLUMET_DESC
+{
+    UINT                    Width;
+    UINT                    Height;
+    UINT                    Depth;
+} WINED3DVOLUMET_DESC;
+
 /*****************************************************************************
  * IWineD3DVolume implementation structure (extends IUnknown)
  */
@@ -744,7 +751,7 @@ typedef struct IWineD3DVolumeImpl
     IWineD3DResourceClass      resource;
 
     /* WineD3DVolume Information */
-    D3DVOLUME_DESC          currentDesc;
+    WINED3DVOLUMET_DESC      currentDesc;
     IWineD3DBase            *container;
     UINT                    bytesPerPixel;
 
