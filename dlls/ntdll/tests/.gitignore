@@ -9,6 +9,7 @@ info.ok
 large_int.ok
 om.ok
 path.ok
+port.ok
 reg.ok
 rtl.ok
 rtlbitmap.ok

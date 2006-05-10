@@ -14,8 +14,9 @@ CTESTS = \
 	generated.c \
 	info.c \
 	large_int.c \
-	path.c \
 	om.c \
+	path.c \
+	port.c \
 	reg.c \
 	rtl.c \
 	rtlbitmap.c \
