@@ -27,6 +27,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
+#define GLNAME_REQUIRE_GLSL  ((const char *)1)
+
 inline static BOOL shader_is_version_token(DWORD token) {
     return 0xFFFF0000 == (token & 0xFFFF0000) || 
            0xFFFE0000 == (token & 0xFFFF0000);
@@ -235,5 +237,129 @@ void shader_program_dump_decl_usage(
         }
     }
 }
+
+/** Shared code in order to generate the bulk of the shader string.
+    Use the shader_header_fct & shader_footer_fct to add strings
+    that are specific to pixel or vertex functions
+    NOTE: A description of how to parse tokens can be found at:
+          http://msdn.microsoft.com/library/default.asp?url=/library/en-us/graphics/hh/graphics/usermodedisplaydriver_shader_cc8e4e05-f5c3-4ec0-8853-8ce07c1551b2.xml.asp */
+void generate_base_shader(
+    IWineD3DBaseShader *iface,
+    SHADER_BUFFER* buffer,
+    CONST DWORD* pFunction) {
+
+    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    const DWORD *pToken = pFunction;
+    const SHADER_OPCODE *curOpcode = NULL;
+    DWORD i;
+
+    /* Initialize current parsing state */
+    This->baseShader.parse_state.current_row = 0;
+
+    /* First pass: figure out which temporary and texture registers are used */
+    shader_get_registers_used(iface, pToken);
+    TRACE("Texture/Address registers used: %#lx, Temp registers used %#lx\n",
+          This->baseShader.textures_used, This->baseShader.temps_used);
+
+    /* TODO: check register usage against GL/Directx limits, and fail if they're exceeded
+        nUseAddressRegister < = GL_MAX_PROGRAM_ADDRESS_REGISTERS_AR
+        nUseTempRegister    <=  GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB
+    */
+
+    /* Pre-declare registers */
+    for(i = 0; i < This->baseShader.limits.temporary; i++) {
+        if (This->baseShader.temps_used & (1 << i))
+             shader_addline(buffer, "TEMP R%lu;\n", i);
+    }
+
+    for (i = 0; i < This->baseShader.limits.address; i++) {
+        if (This->baseShader.textures_used & (1 << i))
+            shader_addline(buffer, "ADDRESS A%ld;\n", i);
+    }
+
+    for(i = 0; i < This->baseShader.limits.texture; i++) {
+        if (This->baseShader.textures_used & (1 << i))
+            shader_addline(buffer,"TEMP T%lu;\n", i);
+    }
+
+    /* Texture coordinate registers must be pre-loaded */
+    for (i = 0; i < This->baseShader.limits.texture; i++) {
+       if (This->baseShader.textures_used & (1 << i))
+          shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
+    }
+
+    /* Second pass, process opcodes */
+    if (NULL != pToken) {
+        while (D3DPS_END() != *pToken) {
+
+            /* Skip version token */
+            if (shader_is_version_token(*pToken)) {
+                ++pToken;
+                continue;
+            }
+
+            /* Skip comment tokens */
+            if (shader_is_comment_token(*pToken)) {
+                DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+                ++pToken;
+                TRACE("#%s\n", (char*)pToken);
+                pToken += comment_len;
+                continue;
+            }
+
+            /* Read opcode */
+            curOpcode = shader_get_opcode(iface, *pToken);
+            ++pToken;
+
+            /* Unknown opcode and its parameters */
+            if (NULL == curOpcode) {
+                while (*pToken & 0x80000000) { /* TODO: Think of a sensible name for 0x80000000 */
+                    FIXME("unrecognized opcode: %08lx\n", *pToken);
+                    ++pToken;
+                }
+
+            /* Unhandled opcode */
+            } else if (GLNAME_REQUIRE_GLSL == curOpcode->glname) {
+
+                FIXME("Token %s requires greater functionality than "
+                    "Vertex or Fragment_Program_ARB supports\n", curOpcode->name);
+                pToken += curOpcode->num_params;
+
+            /* If a generator function is set, use it */
+            } else if (curOpcode->hw_fct != NULL) {
+
+                SHADER_OPCODE_ARG hw_arg;
+
+                hw_arg.shader = iface;
+                hw_arg.opcode = curOpcode;
+                hw_arg.buffer = buffer;
+                if (curOpcode->num_params > 0) {
+                    hw_arg.dst = *pToken;
+
+                    /* FIXME: this does not account for relative address tokens */
+                    for (i = 1; i < curOpcode->num_params; i++)
+                       hw_arg.src[i-1] = *(pToken + i);
+                }
+
+                curOpcode->hw_fct(&hw_arg);
+                pToken += curOpcode->num_params;
+
+            } else {
+
+                TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d, \n",
+                curOpcode->name, curOpcode->glname, curOpcode->num_params);
+
+                /* Unless we encounter a no-op command, this opcode is unrecognized */
+                if (curOpcode->opcode != D3DSIO_NOP) {
+                    FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
+                    pToken += curOpcode->num_params;
+                }
+            }
+        }
+        /* TODO: What about result.depth? */
+
+    }
+}
+
 
 /* TODO: Move other shared code here */
