@@ -323,6 +323,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
     (*Connection)->ActiveInterface = *InterfaceId;
     HeapFree(GetProcessHeap(), 0, response);
   }
+  Binding->FromConn = *Connection;
 
   return RPC_S_OK;
 }
