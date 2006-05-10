@@ -601,7 +601,7 @@
 @ stub SystemFunction004
 @ stub SystemFunction005
 @ stdcall SystemFunction006(ptr ptr)
-@ stub SystemFunction007
+@ stdcall SystemFunction007(ptr ptr)
 @ stdcall SystemFunction008(ptr ptr ptr)
 @ stub SystemFunction009
 @ stub SystemFunction010

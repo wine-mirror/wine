@@ -35,7 +35,10 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
+#include "winternl.h"
 
 typedef struct
 {
@@ -266,4 +269,30 @@ static void MD4Transform( unsigned int buf[4], const unsigned int in[16] )
     buf[1] += b;
     buf[2] += c;
     buf[3] += d;
+}
+
+/******************************************************************************
+ * SystemFunction007  [ADVAPI32.@]
+ *
+ * MD4 hash a unicode string
+ *
+ * PARAMS
+ *   string  [I] the string to hash
+ *   output  [O] the md4 hash of the string (16 bytes)
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_UNSUCCESSFUL
+ *
+ */
+NTSTATUS WINAPI SystemFunction007(PUNICODE_STRING string, LPBYTE hash)
+{
+    MD4_CTX ctx;
+
+    MD4Init( &ctx );
+    MD4Update( &ctx, (BYTE*) string->Buffer, string->Length );
+    MD4Final( &ctx );
+    memcpy( hash, ctx.digest, 0x10 );
+
+    return STATUS_SUCCESS;
 }

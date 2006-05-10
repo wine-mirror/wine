@@ -20,10 +20,13 @@
 
 #include <stdio.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winternl.h"
 
 typedef struct
 {
@@ -36,10 +39,12 @@ typedef struct
 typedef VOID (WINAPI *fnMD4Init)( MD4_CTX *ctx );
 typedef VOID (WINAPI *fnMD4Update)( MD4_CTX *ctx, const unsigned char *src, const int len );
 typedef VOID (WINAPI *fnMD4Final)( MD4_CTX *ctx );
+typedef int (WINAPI *fnSystemFunction007)(PUNICODE_STRING,LPBYTE);
 
 fnMD4Init pMD4Init;
 fnMD4Update pMD4Update;
 fnMD4Final pMD4Final;
+fnSystemFunction007 pSystemFunction007;
 
 #define ctxcmp( a, b ) memcmp( (char*)a, (char*)b, FIELD_OFFSET( MD4_CTX, in ) )
 
@@ -52,7 +57,6 @@ static void test_md4_ctx(void)
         "In our bodies, there is Die";
 
     int size = sizeof(message) - 1;
-    HMODULE module;
 
     MD4_CTX ctx;
     MD4_CTX ctx_initialized = 
@@ -77,13 +81,6 @@ static void test_md4_ctx(void)
         { 0x5f, 0xd3, 0x9b, 0x29, 0x47, 0x53, 0x47, 0xaf,
           0xa5, 0xba, 0x0c, 0x05, 0xff, 0xc0, 0xc7, 0xda };
 
-    if (!(module = LoadLibrary( "advapi32.dll" ))) return;
-
-    pMD4Init = (fnMD4Init)GetProcAddress( module, "MD4Init" );
-    pMD4Update = (fnMD4Update)GetProcAddress( module, "MD4Update" );
-    pMD4Final = (fnMD4Final)GetProcAddress( module, "MD4Final" );
-
-    if (!pMD4Init || !pMD4Update || !pMD4Final) goto out;
 
     memset( &ctx, 0, sizeof(ctx) );
     pMD4Init( &ctx );
@@ -99,11 +96,50 @@ static void test_md4_ctx(void)
     ok( ctxcmp( &ctx, &ctx_initialized ), "context has changed\n" );
     ok( !memcmp( ctx.digest, expect, sizeof(expect) ), "incorrect result\n" );
 
-out:
-    FreeLibrary( module );
+}
+
+static void test_SystemFunction007(void)
+{
+    int r;
+    UNICODE_STRING str;
+    BYTE output[0x10];
+    BYTE expected[0x10] = { 0x24, 0x0a, 0xf0, 0x9d, 0x84, 0x1c, 0xda, 0xcf, 
+                            0x56, 0xeb, 0x6b, 0x96, 0x55, 0xec, 0xcf, 0x0a };
+    WCHAR szFoo[] = {'f','o','o',0 };
+
+#if 0
+    /* crashes */
+    r = pSystemFunction007(NULL, NULL);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+#endif
+
+    str.Buffer = szFoo;
+    str.Length = 4*sizeof(WCHAR);
+    str.MaximumLength = str.Length;
+
+    memset(output, 0, sizeof output);
+    r = pSystemFunction007(&str, output);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+
+    ok(!memcmp(output, expected, sizeof expected), "response wrong\n");
 }
 
 START_TEST(crypt_md4)
 {
-    test_md4_ctx();
+    HMODULE module;
+
+    if (!(module = LoadLibrary( "advapi32.dll" ))) return;
+
+    pMD4Init = (fnMD4Init)GetProcAddress( module, "MD4Init" );
+    pMD4Update = (fnMD4Update)GetProcAddress( module, "MD4Update" );
+    pMD4Final = (fnMD4Final)GetProcAddress( module, "MD4Final" );
+
+    if (pMD4Init && pMD4Update && pMD4Final)
+        test_md4_ctx();
+
+    pSystemFunction007 = (fnSystemFunction007)GetProcAddress( module, "SystemFunction007" );
+    if (pSystemFunction007)
+        test_SystemFunction007();
+
+    FreeLibrary( module );
 }
