@@ -340,6 +340,34 @@ done:
     return pFormat+4;
 }
 
+/* writes the conformance value to the buffer */
+static inline void WriteConformance(MIDL_STUB_MESSAGE *pStubMsg)
+{
+    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->MaxCount);
+    pStubMsg->Buffer += 4;
+}
+
+/* writes the variance values to the buffer */
+static inline void WriteVariance(MIDL_STUB_MESSAGE *pStubMsg)
+{
+    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->Offset);
+    pStubMsg->Buffer += 4;
+    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->ActualCount);
+    pStubMsg->Buffer += 4;
+}
+
+/* requests buffer space for the conformance value */
+static inline void SizeConformance(MIDL_STUB_MESSAGE *pStubMsg)
+{
+    pStubMsg->BufferLength += 4;
+}
+
+/* requests buffer space for the variance values */
+static inline void SizeVariance(MIDL_STUB_MESSAGE *pStubMsg)
+{
+    pStubMsg->BufferLength += 8;
+}
+
 PFORMAT_STRING ComputeConformanceOrVariance(
     MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pMemory,
     PFORMAT_STRING pFormat, ULONG_PTR def, ULONG *pCount)
@@ -483,7 +511,6 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg,
   unsigned char *pszMessage, PFORMAT_STRING pFormat)
 { 
   unsigned long len, esize;
-  unsigned char *c;
 
   TRACE("(pStubMsg == ^%p, pszMessage == ^%p, pFormat == ^%p)\n", pStubMsg, pszMessage, pFormat);
   
@@ -510,15 +537,13 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg,
 
   assert( (pStubMsg->BufferLength >= (len*esize + 13)) && (pStubMsg->Buffer != NULL) );
 
-  c = pStubMsg->Buffer;
-  memset(c, 0, 12);
-  NDR_LOCAL_UINT32_WRITE(c, len); /* max length: strlen + 1 (for '\0') */
-  c += 8;                         /* offset: 0 */
-  NDR_LOCAL_UINT32_WRITE(c, len); /* actual length: (same) */
-  c += 4;
-  memcpy(c, pszMessage, len*esize); /* the string itself */
-  c += len*esize;
-  pStubMsg->Buffer = c;
+  pStubMsg->MaxCount = pStubMsg->ActualCount = len;
+  pStubMsg->Offset = 0;
+  WriteConformance(pStubMsg);
+  WriteVariance(pStubMsg);
+
+  memcpy(pStubMsg->Buffer, pszMessage, len*esize); /* the string itself */
+  pStubMsg->Buffer += len*esize;
 
   STD_OVERFLOW_CHECK(pStubMsg);
 
@@ -534,16 +559,19 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 {
   TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
 
+  SizeConformance(pStubMsg);
+  SizeVariance(pStubMsg);
+
   assert(pFormat);
   if (*pFormat == RPC_FC_C_CSTRING) {
-    /* we need 12 octets for the [maxlen, offset, len] DWORDS, + 1 octet for '\0' */
+    /* we need + 1 octet for '\0' */
     TRACE("string=%s\n", debugstr_a((char*)pMemory));
-    pStubMsg->BufferLength += strlen((char*)pMemory) + 13 + BUFFER_PARANOIA;
+    pStubMsg->BufferLength += strlen((char*)pMemory) + 1 + BUFFER_PARANOIA;
   }
   else if (*pFormat == RPC_FC_C_WSTRING) {
-    /* we need 12 octets for the [maxlen, offset, len] DWORDS, + 2 octets for L'\0' */
+    /* we need + 2 octets for L'\0' */
     TRACE("string=%s\n", debugstr_w((LPWSTR)pMemory));
-    pStubMsg->BufferLength += strlenW((LPWSTR)pMemory)*2 + 14 + BUFFER_PARANOIA;
+    pStubMsg->BufferLength += strlenW((LPWSTR)pMemory)*2 + 2 + BUFFER_PARANOIA;
   }
   else {
     ERR("Unhandled string type: %#x\n", *pFormat); 
@@ -1914,8 +1942,7 @@ unsigned char * WINAPI NdrConformantArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
   size = pStubMsg->MaxCount;
 
-  NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, size);
-  pStubMsg->Buffer += 4;
+  WriteConformance(pStubMsg);
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
@@ -1977,7 +2004,8 @@ void WINAPI NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
   size = pStubMsg->MaxCount;
-  pStubMsg->BufferLength += 4;
+
+  SizeVariance(pStubMsg);
 
   ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
@@ -2043,12 +2071,8 @@ unsigned char* WINAPI NdrConformantVaryingArrayMarshall( PMIDL_STUB_MESSAGE pStu
     pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
     pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
 
-    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->MaxCount);
-    pStubMsg->Buffer += 4;
-    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->Offset);
-    pStubMsg->Buffer += 4;
-    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->ActualCount);
-    pStubMsg->Buffer += 4;
+    WriteConformance(pStubMsg);
+    WriteVariance(pStubMsg);
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
@@ -2146,8 +2170,8 @@ void WINAPI NdrConformantVaryingArrayBufferSize( PMIDL_STUB_MESSAGE pStubMsg,
     /* compute length */
     pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
 
-    /* conformance + offset + variance */
-    pStubMsg->BufferLength += 3 * sizeof(DWORD);
+    SizeConformance(pStubMsg);
+    SizeVariance(pStubMsg);
 
     ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
@@ -2200,15 +2224,9 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, pStubMsg->MaxCount);
   TRACE("variance = %ld\n", pStubMsg->ActualCount);
 
-  NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->MaxCount);
-  pStubMsg->Buffer += 4;
+  WriteConformance(pStubMsg);
   if (variance_present)
-  {
-    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->Offset);
-    pStubMsg->Buffer += 4;
-    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->ActualCount);
-    pStubMsg->Buffer += 4;
-  }
+    WriteVariance(pStubMsg);
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
@@ -2292,14 +2310,14 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat, def);
   TRACE("conformance = %ld\n", pStubMsg->MaxCount);
-  pStubMsg->BufferLength += sizeof(ULONG);
+  SizeConformance(pStubMsg);
 
   variance_present = IsConformanceOrVariancePresent(pFormat);
   pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, pStubMsg->MaxCount);
   TRACE("variance = %ld\n", pStubMsg->ActualCount);
 
   if (variance_present)
-    pStubMsg->BufferLength += 2*sizeof(ULONG);
+    SizeVariance(pStubMsg);
 
   ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
