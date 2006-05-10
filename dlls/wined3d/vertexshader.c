@@ -1641,6 +1641,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
 
                     parse_decl_usage(This, usage, param & D3DSP_REGNUM_MASK);
                     shader_program_dump_decl_usage(usage, param);
+                    shader_dump_ins_modifiers(param);
                     TRACE(" ");
                     vshader_program_dump_vs_param(param, 0);
                     pToken += 2;
@@ -1664,8 +1665,10 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
                         ++pToken;
                         ++len;
                 } else {
-                    TRACE("%s ", curOpcode->name);
+                    TRACE("%s", curOpcode->name);
                     if (curOpcode->num_params > 0) {
+                        shader_dump_ins_modifiers(*pToken);
+                        TRACE(" ");
                         vshader_program_dump_vs_param(*pToken, 0);
                         ++pToken;
                         ++len;

@@ -395,4 +395,29 @@ void generate_base_shader(
 }
 
 
+void shader_dump_ins_modifiers(const DWORD output) {
+
+    DWORD shift = (output & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
+    DWORD mmask = output & D3DSP_DSTMOD_MASK;
+
+    switch (shift) {
+        case 0: break;
+        case 13: TRACE("_d8"); break;
+        case 14: TRACE("_d4"); break;
+        case 15: TRACE("_d2"); break;
+        case 1: TRACE("_x2"); break;
+        case 2: TRACE("_x4"); break;
+        case 3: TRACE("_x8"); break;
+        default: TRACE("_unhandled_shift(%ld)", shift); break;
+    }
+
+    switch(mmask) {
+        case D3DSPDM_NONE: break;
+        case D3DSPDM_SATURATE: TRACE("_sat"); break;
+        case D3DSPDM_PARTIALPRECISION: TRACE("_pp"); break;
+        case D3DSPDM_MSAMPCENTROID: TRACE("_centroid"); break;
+        default: TRACE("_unhandled_modifier(%#lx)", mmask); break;
+    }
+}
+
 /* TODO: Move other shared code here */

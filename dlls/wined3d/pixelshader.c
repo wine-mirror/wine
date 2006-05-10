@@ -1370,31 +1370,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 #endif
 }
 
-inline static void pshader_program_dump_ins_modifiers(const DWORD output) {
-
-    DWORD shift = (output & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
-    DWORD mmask = output & D3DSP_DSTMOD_MASK;
-
-    switch (shift) {
-        case 0: break;
-        case 13: TRACE("_d8"); break;
-        case 14: TRACE("_d4"); break;
-        case 15: TRACE("_d2"); break;
-        case 1: TRACE("_x2"); break;
-        case 2: TRACE("_x4"); break;
-        case 3: TRACE("_x8"); break;
-        default: TRACE("_unhandled_shift(%ld)", shift); break;
-    }
-
-    switch(mmask) {
-        case D3DSPDM_NONE: break;
-        case D3DSPDM_SATURATE: TRACE("_sat"); break;
-        case D3DSPDM_PARTIALPRECISION: TRACE("_pp"); break;
-        case D3DSPDM_MSAMPCENTROID: TRACE("_centroid"); break;
-        default: TRACE("_unhandled_modifier(%#lx)", mmask); break;
-    } 
-}
-
 inline static void pshader_program_dump_ps_param(const DWORD param, int input) {
   static const char* rastout_reg_names[] = { "oC0", "oC1", "oC2", "oC3", "oDepth" };
   static const char swizzle_reg_chars[] = "rgba";
@@ -1568,7 +1543,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
                     else
                          TRACE("dcl");
 
-                    pshader_program_dump_ins_modifiers(param);
+                    shader_dump_ins_modifiers(param);
                     TRACE(" ");
                     pshader_program_dump_ps_param(param, 0);
                     pToken += 2;
@@ -1594,7 +1569,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
                 } else {
                     TRACE("%s", curOpcode->name);
                     if (curOpcode->num_params > 0) {
-                        pshader_program_dump_ins_modifiers(*pToken);
+                        shader_dump_ins_modifiers(*pToken);
                         TRACE(" ");
                         pshader_program_dump_ps_param(*pToken, 0);
                         ++pToken;
