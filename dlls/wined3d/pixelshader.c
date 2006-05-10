@@ -962,7 +962,7 @@ void pshader_set_version(
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.texture = 8;
-                   FIXME("Unrecognized pixel shader version %lu!\n", version);
+                   FIXME("Unrecognized pixel shader version %lx!\n", version);
       }
 }
 
@@ -1606,80 +1606,6 @@ inline static void pshader_program_dump_ps_param(const DWORD param, int input) {
     }
 }
 
-inline static void pshader_program_dump_decl_usage(
-    IWineD3DPixelShaderImpl *This, DWORD decl, DWORD param) {
-
-    DWORD regtype = shader_get_regtype(param);
-    TRACE("dcl_");
-
-    if (regtype == D3DSPR_SAMPLER) {
-        DWORD ttype = decl & D3DSP_TEXTURETYPE_MASK;
-
-        switch (ttype) {
-            case D3DSTT_2D: TRACE("2d "); break;
-            case D3DSTT_CUBE: TRACE("cube "); break;
-            case D3DSTT_VOLUME: TRACE("volume "); break;
-            default: TRACE("unknown_ttype(%08lx) ", ttype); 
-       }
-
-    } else { 
-
-        DWORD usage = decl & D3DSP_DCL_USAGE_MASK;
-        DWORD idx = (decl & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
-
-        switch(usage) {
-        case D3DDECLUSAGE_POSITION:
-            TRACE("%s%ld ", "position", idx);
-            break;
-        case D3DDECLUSAGE_BLENDINDICES:
-            TRACE("%s ", "blend");
-            break;
-        case D3DDECLUSAGE_BLENDWEIGHT:
-            TRACE("%s ", "weight");
-            break;
-        case D3DDECLUSAGE_NORMAL:
-            TRACE("%s%ld ", "normal", idx);
-            break;
-        case D3DDECLUSAGE_PSIZE:
-            TRACE("%s ", "psize");
-            break;
-        case D3DDECLUSAGE_COLOR:
-            if(idx == 0)  {
-                TRACE("%s ", "color");
-            } else {
-                TRACE("%s%ld ", "specular", (idx - 1));
-            }
-            break;
-        case D3DDECLUSAGE_TEXCOORD:
-            TRACE("%s%ld ", "texture", idx);
-            break;
-        case D3DDECLUSAGE_TANGENT:
-            TRACE("%s ", "tangent");
-            break;
-        case D3DDECLUSAGE_BINORMAL:
-            TRACE("%s ", "binormal");
-            break;
-        case D3DDECLUSAGE_TESSFACTOR:
-            TRACE("%s ", "tessfactor");
-            break;
-        case D3DDECLUSAGE_POSITIONT:
-            TRACE("%s%ld ", "positionT", idx);
-            break;
-        case D3DDECLUSAGE_FOG:
-            TRACE("%s ", "fog");
-            break;
-        case D3DDECLUSAGE_DEPTH:
-            TRACE("%s ", "depth");
-            break;
-        case D3DDECLUSAGE_SAMPLE:
-            TRACE("%s ", "sample");
-            break;
-        default:
-            FIXME("Unrecognised dcl %08lx", usage);
-        }
-    }
-}
-
 HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const DWORD* pToken = pFunction;
@@ -1724,12 +1650,23 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
 
             } else {
                 if (curOpcode->opcode == D3DSIO_DCL) {
-                    pshader_program_dump_decl_usage(This, *pToken, *(pToken + 1));
-                    ++pToken;
-                    ++len;
-                    pshader_program_dump_ps_param(*pToken, 0);
-                    ++pToken;
-                    ++len;
+                    DWORD usage = *pToken;
+                    DWORD param = *(pToken + 1);
+                    DWORD regtype = shader_get_regtype(param);
+
+                    /* Only print extended declaration for samplers or 3.0 input registers */
+                    if (regtype == D3DSPR_SAMPLER ||
+                        (This->baseShader.version >= 30 && regtype == D3DSPR_INPUT))
+                         shader_program_dump_decl_usage(usage, param);
+                    else
+                         TRACE("dcl");
+
+                    pshader_program_dump_ins_modifiers(param);
+                    TRACE(" ");
+                    pshader_program_dump_ps_param(param, 0);
+                    pToken += 2;
+                    len += 2;
+
                 } else 
                     if (curOpcode->opcode == D3DSIO_DEF) {
                         TRACE("def c%lu = ", *pToken & 0xFF);

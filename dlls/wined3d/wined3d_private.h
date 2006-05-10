@@ -1275,6 +1275,10 @@ extern void shader_get_registers_used(
     DWORD* tempsUsed,
     DWORD* texUsed);
 
+extern void shader_program_dump_decl_usage(
+    DWORD dcl,
+    DWORD param);
+
 inline static int shader_get_regtype(const DWORD param) {
     return (((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) |
             ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2));

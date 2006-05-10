@@ -647,80 +647,6 @@ inline static void vshader_program_dump_vs_param(const DWORD param, int input) {
   }
 }
 
-inline static void vshader_program_dump_decl_usage(
-    IWineD3DVertexShaderImpl *This, DWORD decl, DWORD param) {
-    DWORD regtype = shader_get_regtype(param);
-
-    TRACE("dcl_");
-
-    if (regtype == D3DSPR_SAMPLER) {
-        DWORD ttype = decl & D3DSP_TEXTURETYPE_MASK;
-
-        switch (ttype) {
-            case D3DSTT_2D: TRACE("2d "); break;
-            case D3DSTT_CUBE: TRACE("cube "); break;
-            case D3DSTT_VOLUME: TRACE("volume "); break;
-            default: TRACE("unknown_ttype(%08lx) ", ttype);
-       }
-
-    } else {
-
-        DWORD usage = decl & D3DSP_DCL_USAGE_MASK;
-        DWORD idx = (decl & D3DSP_DCL_USAGEINDEX_MASK) >> D3DSP_DCL_USAGEINDEX_SHIFT;
-
-        switch(usage) {
-        case D3DDECLUSAGE_POSITION:
-            TRACE("%s%ld ", "position", idx);
-            break;
-        case D3DDECLUSAGE_BLENDINDICES:
-            TRACE("%s ", "blend");
-            break;
-        case D3DDECLUSAGE_BLENDWEIGHT:
-            TRACE("%s ", "weight");
-            break;
-        case D3DDECLUSAGE_NORMAL:
-            TRACE("%s%ld ", "normal", idx);
-            break;
-        case D3DDECLUSAGE_PSIZE:
-            TRACE("%s ", "psize");
-            break;
-        case D3DDECLUSAGE_COLOR:
-            if(idx == 0)  {
-                TRACE("%s ", "color");
-            } else {
-                TRACE("%s ", "specular");
-            }
-            break;
-        case D3DDECLUSAGE_TEXCOORD:
-            TRACE("%s%ld ", "texture", idx);
-            break;
-        case D3DDECLUSAGE_TANGENT:
-            TRACE("%s ", "tangent");
-            break;
-        case D3DDECLUSAGE_BINORMAL:
-            TRACE("%s ", "binormal");
-            break;
-        case D3DDECLUSAGE_TESSFACTOR:
-            TRACE("%s ", "tessfactor");
-            break;
-        case D3DDECLUSAGE_POSITIONT:
-            TRACE("%s%ld ", "positionT", idx);
-            break;
-        case D3DDECLUSAGE_FOG:
-            TRACE("%s ", "fog");
-            break;
-        case D3DDECLUSAGE_DEPTH:
-            TRACE("%s ", "depth");
-            break;
-        case D3DDECLUSAGE_SAMPLE:
-            TRACE("%s ", "sample");
-            break;
-        default:
-            FIXME("Unrecognised dcl %08lx", usage);
-        }
-    }
-}
-
 inline static BOOL vshader_is_version_token(DWORD token) {
   return 0xFFFE0000 == (token & 0xFFFE0000);
 }
@@ -1069,7 +995,7 @@ void vshader_set_version(
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.address = 1;
-                   FIXME("Unrecognized vertex shader version %lu!\n", version);
+                   FIXME("Unrecognized vertex shader version %lx!\n", version);
       }
 }
 
@@ -1821,7 +1747,8 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
                     DWORD param = *(pToken + 1);
 
                     parse_decl_usage(This, usage, param & D3DSP_REGNUM_MASK);
-                    vshader_program_dump_decl_usage(This, usage, param);
+                    shader_program_dump_decl_usage(usage, param);
+                    TRACE(" ");
                     vshader_program_dump_vs_param(param, 0);
                     pToken += 2;
                     len += 2;
