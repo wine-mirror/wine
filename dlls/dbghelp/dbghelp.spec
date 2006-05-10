@@ -134,7 +134,7 @@
 @ stdcall SymRegisterFunctionEntryCallback(ptr ptr ptr)
 @ stdcall SymRegisterFunctionEntryCallback64(ptr ptr double)
 @ stdcall SymSearch(long double long long str double ptr ptr long)
-@ stub SymSearchW
+@ stdcall SymSearchW(long double long long wstr double ptr ptr long)
 @ stdcall SymSetContext(long ptr ptr)
 @ stub SymSetHomeDirectory
 @ stub SymSetHomeDirectoryW

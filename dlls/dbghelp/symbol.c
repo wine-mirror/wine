@@ -1538,3 +1538,38 @@ BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
 
     return sym_enum(hProcess, BaseOfDll, Mask, &se);
 }
+
+/******************************************************************
+ *		SymSearchW (DBGHELP.@)
+ */
+BOOL WINAPI SymSearchW(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
+                       DWORD SymTag, PCWSTR Mask, DWORD64 Address,
+                       PSYM_ENUMERATESYMBOLS_CALLBACKW EnumSymbolsCallback,
+                       PVOID UserContext, DWORD Options)
+{
+    struct sym_enumW    sew;
+    BOOL                ret = FALSE;
+    char*               maskA = NULL;
+
+    TRACE("(%p %s %lu %lu %s %s %p %p %lx)\n",
+          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, debugstr_w(Mask), 
+          wine_dbgstr_longlong(Address), EnumSymbolsCallback,
+          UserContext, Options);
+
+    sew.ctx = UserContext;
+    sew.cb = EnumSymbolsCallback;
+    sew.sym_info = (PSYMBOL_INFOW)sew.buffer;
+
+    if (Mask)
+    {
+        unsigned len = WideCharToMultiByte(CP_ACP, 0, Mask, -1, NULL, 0, NULL, NULL);
+        maskA = HeapAlloc(GetProcessHeap(), 0, len);
+        if (!maskA) return FALSE;
+        WideCharToMultiByte(CP_ACP, 0, Mask, -1, maskA, len, NULL, NULL);
+    }
+    ret = SymSearch(hProcess, BaseOfDll, Index, SymTag, maskA, Address,
+                    sym_enumW, &sew, Options);
+    HeapFree(GetProcessHeap(), 0, maskA);
+
+    return ret;
+}
