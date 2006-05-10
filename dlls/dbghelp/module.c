@@ -520,9 +520,9 @@ BOOL module_remove(struct process* pcs, struct module* module)
     HeapFree(GetProcessHeap(), 0, (char*)module->sources);
     HeapFree(GetProcessHeap(), 0, module->addr_sorttab);
     pool_destroy(&module->pool);
-    if (module->module.SymType != SymNone)
-        pcs_callback(pcs, CBA_SYMBOLS_UNLOADED, NULL);
-
+    /* native dbghelp doesn't invoke registered callback(,CBA_SYMBOLS_UNLOADED,) here
+     * so do we
+     */
     for (p = &pcs->lmodules; *p; p = &(*p)->next)
     {
         if (*p == module)
