@@ -70,7 +70,7 @@
 @ stub SymGetHomeDirectoryW
 @ stdcall SymGetLineFromAddr(long long ptr ptr)
 @ stdcall SymGetLineFromAddr64(long double ptr ptr)
-@ stub SymGetLineFromAddrW64
+@ stdcall SymGetLineFromAddrW64(long double ptr ptr)
 @ stub SymGetLineFromName
 @ stub SymGetLineFromName64
 @ stdcall SymGetLineNext(long ptr)

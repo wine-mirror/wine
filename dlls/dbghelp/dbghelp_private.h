@@ -301,6 +301,9 @@ struct process
     unsigned long               dbg_hdr_addr;
 
     IMAGEHLP_STACK_FRAME        ctx_frame;
+
+    unsigned                    buffer_size;
+    void*                       buffer;
 };
 
 struct line_info
@@ -327,6 +330,7 @@ extern struct process* process_find_by_handle(HANDLE hProcess);
 extern HANDLE hMsvcrt;
 extern BOOL         validate_addr64(DWORD64 addr);
 extern BOOL         pcs_callback(const struct process* pcs, ULONG action, void* data);
+extern void*        fetch_buffer(struct process* pcs, unsigned size);
 
 /* elf_module.c */
 typedef BOOL (*elf_enum_modules_cb)(const char*, unsigned long addr, void* user);

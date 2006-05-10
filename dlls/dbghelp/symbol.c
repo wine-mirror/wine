@@ -1170,6 +1170,22 @@ static void copy_line_64_from_32(IMAGEHLP_LINE64* l64, const IMAGEHLP_LINE* l32)
 }
 
 /******************************************************************
+ *		copy_line_W64_from_32 (internal)
+ *
+ */
+static void copy_line_W64_from_32(struct process* pcs, IMAGEHLP_LINEW64* l64, const IMAGEHLP_LINE* l32)
+{
+    unsigned len;
+
+    l64->Key = l32->Key;
+    l64->LineNumber = l32->LineNumber;
+    len = MultiByteToWideChar(CP_ACP, 0, l32->FileName, -1, NULL, 0);
+    if ((l64->FileName = fetch_buffer(pcs, len * sizeof(WCHAR))))
+        MultiByteToWideChar(CP_ACP, 0, l32->FileName, -1, l64->FileName, len);
+    l64->Address = l32->Address;
+}
+
+/******************************************************************
  *		copy_line_32_from_64 (internal)
  *
  */
@@ -1197,6 +1213,26 @@ BOOL WINAPI SymGetLineFromAddr64(HANDLE hProcess, DWORD64 dwAddr,
     if (!SymGetLineFromAddr(hProcess, (DWORD)dwAddr, pdwDisplacement, &line32))
         return FALSE;
     copy_line_64_from_32(Line, &line32);
+    return TRUE;
+}
+
+/******************************************************************
+ *		SymGetLineFromAddrW64 (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetLineFromAddrW64(HANDLE hProcess, DWORD64 dwAddr, 
+                                  PDWORD pdwDisplacement, PIMAGEHLP_LINEW64 Line)
+{
+    struct process*     pcs = process_find_by_handle(hProcess);
+    IMAGEHLP_LINE       line32;
+
+    if (!pcs) return FALSE;
+    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
+    if (!validate_addr64(dwAddr)) return FALSE;
+    line32.SizeOfStruct = sizeof(line32);
+    if (!SymGetLineFromAddr(hProcess, (DWORD)dwAddr, pdwDisplacement, &line32))
+        return FALSE;
+    copy_line_W64_from_32(pcs, Line, &line32);
     return TRUE;
 }
 

@@ -116,6 +116,24 @@ BOOL validate_addr64(DWORD64 addr)
 }
 
 /******************************************************************
+ *		fetch_buffer
+ *
+ * Ensures process' internal buffer is large enough.
+ */
+void* fetch_buffer(struct process* pcs, unsigned size)
+{
+    if (size > pcs->buffer_size)
+    {
+        if (pcs->buffer)
+            pcs->buffer = HeapReAlloc(GetProcessHeap(), 0, pcs->buffer, size);
+        else
+            pcs->buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        pcs->buffer_size = (pcs->buffer) ? size : 0;
+    }
+    return pcs->buffer;
+}
+
+/******************************************************************
  *		SymSetSearchPathW (DBGHELP.@)
  *
  */
