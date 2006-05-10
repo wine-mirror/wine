@@ -152,7 +152,7 @@ unsigned long WINAPI BSTR_UserSize(unsigned long *pFlags, unsigned long Start, B
     TRACE("(%lx,%ld,%p) => %p\n", *pFlags, Start, pstr, *pstr);
     if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
     ALIGN_LENGTH(Start, 3);
-    Start += sizeof(bstr_wire_t) + sizeof(OLECHAR) * (SysStringLen(*pstr));
+    Start += sizeof(bstr_wire_t) + ((SysStringByteLen(*pstr) + 1) & ~1);
     TRACE("returning %ld\n", Start);
     return Start;
 }
@@ -160,19 +160,21 @@ unsigned long WINAPI BSTR_UserSize(unsigned long *pFlags, unsigned long Start, B
 unsigned char * WINAPI BSTR_UserMarshal(unsigned long *pFlags, unsigned char *Buffer, BSTR *pstr)
 {
     bstr_wire_t *header;
+    DWORD len = SysStringByteLen(*pstr);
+
     TRACE("(%lx,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
     if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
 
     ALIGN_POINTER(Buffer, 3);
     header = (bstr_wire_t*)Buffer;
-    header->len = header->len2 = SysStringLen(*pstr);
-    if (header->len)
+    header->len = header->len2 = (len + 1) / 2;
+    if (*pstr)
     {
-        header->byte_len = header->len * sizeof(OLECHAR);
-        memcpy(header + 1, *pstr, header->byte_len);
+        header->byte_len = len;
+        memcpy(header + 1, *pstr, header->len * 2);
     }
     else
-        header->byte_len = 0xffffffff; /* special case for an empty string */
+        header->byte_len = 0xffffffff; /* special case for a null bstr */
 
     return Buffer + sizeof(*header) + sizeof(OLECHAR) * header->len;
 }
@@ -187,13 +189,14 @@ unsigned char * WINAPI BSTR_UserUnmarshal(unsigned long *pFlags, unsigned char *
     if(header->len != header->len2)
         FIXME("len %08lx != len2 %08lx\n", header->len, header->len2);
     
-    if(header->len)
-        SysReAllocStringLen(pstr, (OLECHAR*)(header + 1), header->len);
-    else if (*pstr)
+    if(*pstr)
     {
         SysFreeString(*pstr);
         *pstr = NULL;
     }
+
+    if(header->byte_len != 0xffffffff)
+        *pstr = SysAllocStringByteLen((char*)(header + 1), header->byte_len);
 
     if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
     return Buffer + sizeof(*header) + sizeof(OLECHAR) * header->len;
