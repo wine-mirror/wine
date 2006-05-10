@@ -43,9 +43,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "wtypes.h"
-#include "excpt.h"
 #include "wine/unicode.h"
-#include "wine/exception.h"
 
 #include "compobj_private.h"
 
@@ -113,13 +111,6 @@ struct dispatch_params
     RPC_STATUS         status; /* status (out) */
     HRESULT            hr; /* hresult (out) */
 };
-
-static WINE_EXCEPTION_FILTER(ole_filter)
-{
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
-        return EXCEPTION_CONTINUE_SEARCH;
-    return EXCEPTION_EXECUTE_HANDLER;
-}
 
 static HRESULT WINAPI RpcChannelBuffer_QueryInterface(LPRPCCHANNELBUFFER iface, REFIID riid, LPVOID *ppv)
 {
@@ -510,15 +501,8 @@ HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan)
 
 void RPC_ExecuteCall(struct dispatch_params *params)
 {
-    __TRY
-    {
-        params->hr = IRpcStubBuffer_Invoke(params->stub, params->msg, params->chan);
-    }
-    __EXCEPT(ole_filter)
-    {
-        params->hr = GetExceptionCode();
-    }
-    __ENDTRY
+    params->hr = IRpcStubBuffer_Invoke(params->stub, params->msg, params->chan);
+
     IRpcStubBuffer_Release(params->stub);
     IRpcChannelBuffer_Release(params->chan);
     if (params->handle) SetEvent(params->handle);
