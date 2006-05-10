@@ -1299,7 +1299,77 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     current_state.current_row = 0;
 }
 
-                    
+/** Generate a pixel shader string using either GL_FRAGMENT_PROGRAM_ARB
+    or GLSL and send it to the card */
+inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
+    IWineD3DPixelShader *iface,
+    CONST DWORD *pFunction) {
+
+    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
+    SHADER_BUFFER buffer;
+
+#if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
+        it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
+    if (This->device->fixupVertexBufferSize < SHADER_PGMSIZE) {
+        HeapFree(GetProcessHeap(), 0, This->fixupVertexBuffer);
+        This->fixupVertexBuffer = HeapAlloc(GetProcessHeap() , 0, SHADER_PGMSIZE);
+        This->fixupVertexBufferSize = PGMSIZE;
+        This->fixupVertexBuffer[0] = 0;
+    }
+    buffer.buffer = This->device->fixupVertexBuffer;
+#else
+    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE); 
+#endif
+    buffer.bsize = 0;
+    buffer.lineNo = 0;
+
+    /* TODO: Optionally, generate the GLSL shader instead */
+    if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+        /*  Create the hw ARB shader */
+        shader_addline(&buffer, "!!ARBfp1.0\n");
+
+        shader_addline(&buffer, "TEMP TMP;\n");     /* Used in matrix ops */
+        shader_addline(&buffer, "TEMP TMP2;\n");    /* Used in matrix ops */
+        shader_addline(&buffer, "TEMP TA;\n");      /* Used for modifiers */
+        shader_addline(&buffer, "TEMP TB;\n");      /* Used for modifiers */
+        shader_addline(&buffer, "TEMP TC;\n");      /* Used for modifiers */
+        shader_addline(&buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
+        shader_addline(&buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
+        shader_addline(&buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
+
+        /** Call the base shader generation routine to generate most 
+            of the pixel shader string for us */
+        generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);
+
+        /*FIXME: This next line isn't valid for certain pixel shader versions */
+        shader_addline(&buffer, "MOV result.color, R0;\n");
+        shader_addline(&buffer, "END\n\0"); 
+
+        /* TODO: change to resource.glObjectHandle or something like that */
+        GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
+
+        TRACE("Creating a hw pixel shader, prg=%d\n", This->baseShader.prgId);
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, This->baseShader.prgId));
+
+        TRACE("Created hw pixel shader, prg=%d\n", This->baseShader.prgId);
+        /* Create the program and check for errors */
+        GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+            buffer.bsize, buffer.buffer));
+
+        if (glGetError() == GL_INVALID_OPERATION) {
+            GLint errPos;
+            glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+            FIXME("HW PixelShader Error at position %d: %s\n",
+                  errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+            This->baseShader.prgId = -1;
+        }
+    }
+
+#if 1 /* if were using the data buffer of device then we don't need to free it */
+  HeapFree(GetProcessHeap(), 0, buffer.buffer);
+#endif
+}
+
 /* NOTE: A description of how to parse tokens can be found at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/graphics/hh/graphics/usermodedisplaydriver_shader_cc8e4e05-f5c3-4ec0-8853-8ce07c1551b2.xml.asp */
 inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
