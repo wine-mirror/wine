@@ -426,13 +426,13 @@ sub parse_c_file($$) {
 
 		$argument =~ s/^\s*(.*?)\s*$/$1/;
 		# print "  " . ($n + 1) . ": '$argument'\n";
-		$argument =~ s/^(IN OUT(?=\s)|IN(?=\s)|OUT(?=\s)|\s*)\s*//;
-		$argument =~ s/^(const(?=\s)|CONST(?=\s)|volatile(?=\s)|\s*)\s*//;
+		$argument =~ s/^(?:IN OUT|IN|OUT)?\s+//;
+		$argument =~ s/^(?:const|CONST|volatile)?\s+//;
 		if($argument =~ /^\.\.\.$/) {
 		    $argument_type = "...";
 		    $argument_name = "...";
 		} elsif($argument =~ /^
-			((?:interface\s+|struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
+			((?:interface\s+|struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)?
 			  (?:short\s+(?=int)|long\s+(?=int))?)?(?:\w+|ElfW\(\w+\)|WS\(\w+\)))\s*
 			((?:__RPC_FAR|const|CONST|volatile)?\s*(?:\*\s*(?:__RPC_FAR|const|CONST|volatile)?\s*?)*)\s*
 			(\w*)\s*(\[\])?(?:\s+OPTIONAL)?$/x)
@@ -446,7 +446,7 @@ sub parse_c_file($$) {
 		    }
 		    $argument_name = $3;
 		} elsif ($argument =~ /^
-			((?:interface\s+|struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
+			((?:interface\s+|struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)?
 			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
 			((?:const|volatile)?\s*(?:\*\s*(?:const|volatile)?\s*?)*)\s*
 			(?:__cdecl\s+|__stdcall\s+|__RPC_STUB\s+|__RPC_USER\s+|CALLBACK\s+|CDECL\s+|NET_API_FUNCTION\s+|RPC_ENTRY\s+|STDMETHODCALLTYPE\s+|VFWAPIV\s+|VFWAPI\s+|WINAPIV\s+|WINAPI\s+)?
