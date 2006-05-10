@@ -68,19 +68,35 @@ static char *relaystr(WCHAR *in) {
 }
 
 static HRESULT
-xbuf_add(marshal_state *buf, LPBYTE stuff, DWORD size) {
-    while (buf->size - buf->curoff < size) {
-	if (buf->base) {
-	    buf->size += 100;
-	    buf->base = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,buf->base,buf->size);
-	    if (!buf->base)
-		return E_OUTOFMEMORY;
-	} else {
-	    buf->base = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,32);
-	    buf->size = 32;
-	    if (!buf->base)
-		return E_OUTOFMEMORY;
-	}
+xbuf_resize(marshal_state *buf, DWORD newsize)
+{
+    if(buf->size >= newsize)
+        return S_FALSE;
+
+    if(buf->base)
+    {
+        buf->base = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf->base, newsize);
+        if(!buf->base)
+            return E_OUTOFMEMORY;
+    }
+    else
+    {
+        buf->base = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, newsize);
+        if(!buf->base)
+            return E_OUTOFMEMORY;
+    }
+    return S_OK;
+}
+
+static HRESULT
+xbuf_add(marshal_state *buf, LPBYTE stuff, DWORD size)
+{
+    HRESULT hr;
+
+    if(buf->size - buf->curoff < size)
+    {
+        hr = xbuf_resize(buf, buf->size + size + 100);
+        if(FAILED(hr)) return hr;
     }
     memcpy(buf->base+buf->curoff,stuff,size);
     buf->curoff += size;
