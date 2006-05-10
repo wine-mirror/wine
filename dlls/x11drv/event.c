@@ -535,7 +535,7 @@ static void EVENT_FocusOut( HWND hwnd, XEvent *xev )
         wine_tsx11_unlock();
     }
     if (hwnd != GetForegroundWindow()) return;
-    SendMessageA( hwnd, WM_CANCELMODE, 0, 0 );
+    SendMessageW( hwnd, WM_CANCELMODE, 0, 0 );
 
     /* don't reset the foreground window, if the window which is
        getting the focus is a Wine window */

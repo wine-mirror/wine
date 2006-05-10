@@ -743,7 +743,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     {
         /* child windows get WM_CHILDACTIVATE message */
         if ((GetWindowLongW( winpos->hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD)
-            SendMessageA( winpos->hwnd, WM_CHILDACTIVATE, 0, 0 );
+            SendMessageW( winpos->hwnd, WM_CHILDACTIVATE, 0, 0 );
         else
             SetForegroundWindow( winpos->hwnd );
     }
@@ -1102,7 +1102,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         WIN_SetStyle( hwnd, style, WS_MINIMIZE );
         WIN_ReleasePtr( win );
 
-        SendMessageA( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
+        SendMessageW( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
         data->lock_changes++;
         SetWindowPos( hwnd, 0, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
                       SWP_NOZORDER );
@@ -1137,7 +1137,7 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
         WIN_ReleasePtr( win );
 
         EndMenu();
-        SendMessageA( hwnd, WM_SHOWWINDOW, SW_MINIMIZE, 0 );
+        SendMessageW( hwnd, WM_SHOWWINDOW, SW_MINIMIZE, 0 );
         data->lock_changes++;
         SetWindowPos( hwnd, 0, 0, 0, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
                       SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
@@ -1602,7 +1602,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     /* repaint the window before moving it around */
     RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 
-    SendMessageA( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
+    SendMessageW( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
     set_movesize_capture( hwnd );
 
     /* grab the server only when moving top-level windows without desktop */
@@ -1695,7 +1695,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 /* determine the hit location */
                 if (hittest >= HTLEFT && hittest <= HTBOTTOMRIGHT)
                     wpSizingHit = WMSZ_LEFT + (hittest - HTLEFT);
-                SendMessageA( hwnd, WM_SIZING, wpSizingHit, (LPARAM)&newRect );
+                SendMessageW( hwnd, WM_SIZING, wpSizingHit, (LPARAM)&newRect );
 
                 if (!iconic)
                 {
@@ -1741,8 +1741,8 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     if (HOOK_CallHooks( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizingRect, TRUE ))
         moved = FALSE;
 
-    SendMessageA( hwnd, WM_EXITSIZEMOVE, 0, 0 );
-    SendMessageA( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
+    SendMessageW( hwnd, WM_EXITSIZEMOVE, 0, 0 );
+    SendMessageW( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
 
     /* window moved or resized */
     if (moved)
@@ -1776,7 +1776,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         if( !moved )
         {
             if(style & WS_SYSMENU )
-                SendMessageA( hwnd, WM_SYSCOMMAND,
+                SendMessageW( hwnd, WM_SYSCOMMAND,
                               SC_MOUSEMENU + HTSYSMENU, MAKELONG(pt.x,pt.y));
         }
         else WINPOS_ShowIconTitle( hwnd, TRUE );
