@@ -68,7 +68,8 @@ typedef struct tagWND
 #define WIN_ISMDICLIENT           0x0008 /* Window is an MDIClient */
 #define WIN_ISDIALOG              0x0010 /* Window is a dialog */
 #define WIN_ISWIN32               0x0020 /* Understands Win32 messages */
-#define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0040 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
+#define WIN_ISUNICODE             0x0040 /* Window is Unicode */
+#define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0080 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
 
   /* Window functions */
 extern WND *WIN_GetPtr( HWND hwnd );

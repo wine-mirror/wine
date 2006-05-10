@@ -532,6 +532,7 @@ void CLASS_AddWindow( CLASS *class, WND *win, WINDOWPROCTYPE type )
     }
     win->class    = class;
     win->clsStyle = class->style;
+    if (WINPROC_GetProcType( win->winproc ) == WIN_PROC_32W) win->flags |= WIN_ISUNICODE;
 }
 
 

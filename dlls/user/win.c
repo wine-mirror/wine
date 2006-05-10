@@ -122,6 +122,7 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
     win->parent     = full_parent;
     win->owner      = full_owner;
     win->dwMagic    = WND_MAGIC;
+    win->flags      = 0;
     win->cbWndExtra = extra_bytes;
     memset( win->wExtra, 0, extra_bytes );
     CLASS_AddWindow( class, win, type );
@@ -988,13 +989,13 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->dwExStyle      = cs->dwExStyle;
     wndPtr->wIDmenu        = 0;
     wndPtr->helpContext    = 0;
-    wndPtr->flags          = (type == WIN_PROC_16) ? 0 : WIN_ISWIN32;
     wndPtr->pVScroll       = NULL;
     wndPtr->pHScroll       = NULL;
     wndPtr->userdata       = 0;
     wndPtr->hIcon          = 0;
     wndPtr->hIconSmall     = 0;
     wndPtr->hSysMenu       = 0;
+    if (type != WIN_PROC_16) wndPtr->flags |= WIN_ISWIN32;
 
     if (wndPtr->dwStyle & WS_SYSMENU) SetSystemMenu( hwnd, 0 );
 
@@ -1032,7 +1033,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         req->style     = wndPtr->dwStyle;
         req->ex_style  = wndPtr->dwExStyle;
         req->instance  = (void *)wndPtr->hInstance;
-        req->is_unicode = (type == WIN_PROC_32W);
+        req->is_unicode = (wndPtr->flags & WIN_ISUNICODE) != 0;
         req->extra_offset = -1;
         wine_server_call( req );
     }
@@ -1683,7 +1684,7 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
 
     if (wndPtr != WND_OTHER_PROCESS)
     {
-        retvalue = (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W);
+        retvalue = (wndPtr->flags & WIN_ISUNICODE) != 0;
         WIN_ReleasePtr( wndPtr );
     }
     else
@@ -1990,10 +1991,12 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
         }
     case GWLP_WNDPROC:
     {
-        WINDOWPROCTYPE old_type = WINPROC_GetProcType( wndPtr->winproc );
+        UINT old_flags = wndPtr->flags;
         retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, type );
         wndPtr->winproc = WINPROC_AllocProc( (WNDPROC)newval, type );
-        if (old_type == type)
+        if (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W) wndPtr->flags |= WIN_ISUNICODE;
+        else wndPtr->flags &= ~WIN_ISUNICODE;
+        if (!((old_flags ^ wndPtr->flags) & WIN_ISUNICODE))
         {
             WIN_ReleasePtr( wndPtr );
             return retval;
@@ -2059,7 +2062,7 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
             break;
         case GWLP_WNDPROC:
             req->flags = SET_WIN_UNICODE;
-            req->is_unicode = (type == WIN_PROC_32W);
+            req->is_unicode = (wndPtr->flags & WIN_ISUNICODE) != 0;
             break;
         case GWLP_USERDATA:
             req->flags = SET_WIN_USERDATA;
