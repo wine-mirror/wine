@@ -553,7 +553,7 @@ static void wave_out_test_deviceOut(int device, double duration,
     WORD nChannels = pwfx->nChannels;
     WORD wBitsPerSample = pwfx->wBitsPerSample;
     DWORD nSamplesPerSec = pwfx->nSamplesPerSec;
-    BOOL has_volume = pcaps->dwSupport & WAVECAPS_VOLUME;
+    BOOL has_volume = pcaps->dwSupport & WAVECAPS_VOLUME ? TRUE : FALSE;
     double paused = 0.0;
     double actual;
     DWORD callback = 0;
@@ -659,7 +659,7 @@ static void wave_out_test_deviceOut(int device, double duration,
               pwfx->wBitsPerSample,pwfx->nChannels,
               get_format_str(pwfx->wFormatTag),
               wave_open_flags(flags));
-        if (sine && !volume)
+        if (sine && has_volume && volume == 0)
             trace("*** Warning the sound is muted, you will not hear the test\n");
 
         /* Check that the position is 0 at start */
