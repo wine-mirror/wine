@@ -36,6 +36,7 @@
 
 #include "wine/debug.h"
 #include "dbghelp_private.h"
+#include "winnls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 WINE_DECLARE_DEBUG_CHANNEL(dbghelp_symt);
@@ -763,6 +764,31 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
 }
 
 /******************************************************************
+ *		copy_symbolW
+ *
+ * Helper for transforming an ANSI symbol info into an UNICODE one.
+ * Assume that MaxNameLen is the same for both version (A & W).
+ */
+static void copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si)
+{
+    siw->SizeOfStruct = si->SizeOfStruct;
+    siw->TypeIndex = si->TypeIndex; 
+    siw->Reserved[0] = si->Reserved[0];
+    siw->Reserved[1] = si->Reserved[1];
+    siw->Index = si->info; /* FIXME: see dbghelp.h */
+    siw->Size = si->Size;
+    siw->ModBase = si->ModBase;
+    siw->Flags = si->Flags;
+    siw->Value = si->Value;
+    siw->Address = si->Address;
+    siw->Register = si->Register;
+    siw->Scope = si->Scope;
+    siw->Tag = si->Tag;
+    siw->NameLen = si->NameLen;
+    siw->MaxNameLen = si->MaxNameLen;
+    MultiByteToWideChar(CP_ACP, 0, si->Name, -1, siw->Name, siw->MaxNameLen);
+}
+/******************************************************************
  *		SymEnumSymbols (DBGHELP.@)
  *
  * cases BaseOfDll = 0
@@ -898,6 +924,31 @@ BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address,
     symt_fill_sym_info(&pair, &sym->symt, Symbol);
     *Displacement = Address - Symbol->Address;
     return TRUE;
+}
+
+/******************************************************************
+ *		SymFromAddrW (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymFromAddrW(HANDLE hProcess, DWORD64 Address, 
+                         DWORD64* Displacement, PSYMBOL_INFOW Symbol)
+{
+    PSYMBOL_INFO        si;
+    unsigned            len;
+    BOOL                ret;
+
+    len = sizeof(*si) + Symbol->MaxNameLen * sizeof(WCHAR);
+    si = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!si) return FALSE;
+
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen = Symbol->MaxNameLen;
+    if ((ret = SymFromAddr(hProcess, Address, Displacement, si)))
+    {
+        copy_symbolW(Symbol, si);
+    }
+    HeapFree(GetProcessHeap(), 0, si);
+    return ret;
 }
 
 /******************************************************************

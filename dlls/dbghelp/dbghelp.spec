@@ -56,7 +56,7 @@
 @ stdcall SymFindFileInPath(long str str ptr long long long ptr ptr ptr)
 @ stub SymFindFileInPathW
 @ stdcall SymFromAddr(ptr double ptr ptr)
-@ stub SymFromAddrW
+@ stdcall SymFromAddrW(ptr double ptr ptr)
 @ stub SymFromIndex
 @ stub SymFromIndexW
 @ stdcall SymFromName(long str ptr)
