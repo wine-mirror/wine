@@ -1201,6 +1201,13 @@ struct SHADER_OPCODE_ARG;
 typedef void (*shader_fct_t)();
 typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
 
+
+/* This must be 0 in the main branch until GLSL is at least mostly implemented.
+   Also, think about making it a winecfg option to use GLSL (if the card supports it)
+   or ARB_vertex_program. Ideally, we want to use GLSL if it's available, but until
+   everything is implemented, we'll probably have better luck with the ARB generation */
+#define USING_GLSL 0
+
 #define SHADER_PGMSIZE 65535
 typedef struct SHADER_BUFFER {
     char* buffer;

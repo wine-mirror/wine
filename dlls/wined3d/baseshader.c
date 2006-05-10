@@ -238,6 +238,43 @@ void shader_program_dump_decl_usage(
     }
 }
 
+/** Generate the variable & register declarations for the ARB_vertex_program
+    output target */
+void generate_arb_declarations(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer) {
+
+    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    DWORD i;
+
+    for(i = 0; i < This->baseShader.limits.temporary; i++) {
+        if (This->baseShader.temps_used & (1 << i))
+            shader_addline(buffer, "TEMP R%lu;\n", i);
+    }
+
+    for (i = 0; i < This->baseShader.limits.address; i++) {
+        if (This->baseShader.textures_used & (1 << i))
+            shader_addline(buffer, "ADDRESS A%ld;\n", i);
+    }
+
+    for(i = 0; i < This->baseShader.limits.texture; i++) {
+        if (This->baseShader.textures_used & (1 << i))
+            shader_addline(buffer,"TEMP T%lu;\n", i);
+    }
+
+    /* Texture coordinate registers must be pre-loaded */
+    for (i = 0; i < This->baseShader.limits.texture; i++) {
+    if (This->baseShader.textures_used & (1 << i))
+        shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
+    }
+}
+
+/** Generate the variable & register declarations for the GLSL
+    output target */
+void generate_glsl_declarations(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer) {
+
+    FIXME("GLSL not fully implemented yet.\n");
+
+}
+
 /** Shared code in order to generate the bulk of the shader string.
     Use the shader_header_fct & shader_footer_fct to add strings
     that are specific to pixel or vertex functions
@@ -267,26 +304,10 @@ void generate_base_shader(
     */
 
     /* Pre-declare registers */
-    for(i = 0; i < This->baseShader.limits.temporary; i++) {
-        if (This->baseShader.temps_used & (1 << i))
-             shader_addline(buffer, "TEMP R%lu;\n", i);
-    }
-
-    for (i = 0; i < This->baseShader.limits.address; i++) {
-        if (This->baseShader.textures_used & (1 << i))
-            shader_addline(buffer, "ADDRESS A%ld;\n", i);
-    }
-
-    for(i = 0; i < This->baseShader.limits.texture; i++) {
-        if (This->baseShader.textures_used & (1 << i))
-            shader_addline(buffer,"TEMP T%lu;\n", i);
-    }
-
-    /* Texture coordinate registers must be pre-loaded */
-    for (i = 0; i < This->baseShader.limits.texture; i++) {
-       if (This->baseShader.textures_used & (1 << i))
-          shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
-    }
+    if (USING_GLSL)
+        generate_glsl_declarations(iface, buffer);
+    else
+        generate_arb_declarations(iface, buffer);
 
     /* Second pass, process opcodes */
     if (NULL != pToken) {
@@ -318,15 +339,22 @@ void generate_base_shader(
                     ++pToken;
                 }
 
-            /* Unhandled opcode */
-            } else if (GLNAME_REQUIRE_GLSL == curOpcode->glname) {
+            /* Using GLSL & no generator function exists */
+            } else if (USING_GLSL && curOpcode->hw_glsl_fct == NULL) {
+
+                FIXME("Token %s is not yet implemented with GLSL\n", curOpcode->name);
+                pToken += curOpcode->num_params;
+
+            /* Unhandled opcode in ARB */
+            } else if ( !USING_GLSL && GLNAME_REQUIRE_GLSL == curOpcode->glname) {
 
                 FIXME("Token %s requires greater functionality than "
                     "Vertex or Fragment_Program_ARB supports\n", curOpcode->name);
                 pToken += curOpcode->num_params;
 
-            /* If a generator function is set, use it */
-            } else if (curOpcode->hw_fct != NULL) {
+            /* If a generator function is set for current shader target, use it */
+            } else if ((!USING_GLSL && curOpcode->hw_fct != NULL) ||
+                       (USING_GLSL && curOpcode->hw_glsl_fct != NULL)) {
 
                 SHADER_OPCODE_ARG hw_arg;
 
@@ -341,7 +369,12 @@ void generate_base_shader(
                        hw_arg.src[i-1] = *(pToken + i);
                 }
 
-                curOpcode->hw_fct(&hw_arg);
+                /* Call appropriate function for output target */
+                if (USING_GLSL)
+                    curOpcode->hw_glsl_fct(&hw_arg);
+                else
+                    curOpcode->hw_fct(&hw_arg);
+
                 pToken += curOpcode->num_params;
 
             } else {
