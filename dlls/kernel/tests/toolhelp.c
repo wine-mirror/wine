@@ -244,7 +244,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
                   me.th32ProcessID, me.modBaseAddr, me.modBaseSize, me.szExePath, me.szModule);
             ok(me.th32ProcessID == pid, "wrong returned process id");
             for (i = 0; i < num_expected; i++)
-                if (!strcmp(expected[i], me.szModule)) found[i]++;
+                if (!lstrcmpi(expected[i], me.szModule)) found[i]++;
             num++;
         } while (pModule32Next( hSnapshot, &me ));
     }
@@ -262,7 +262,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
             trace("PID=%lx base=%p size=%lx %s %s\n",
                   me.th32ProcessID, me.modBaseAddr, me.modBaseSize, me.szExePath, me.szModule);
             for (i = 0; i < num_expected; i++)
-                if (!strcmp(expected[i], me.szModule)) found[i]++;
+                if (!lstrcmpi(expected[i], me.szModule)) found[i]++;
             num--;
         } while (pModule32Next( hSnapshot, &me ));
     }
