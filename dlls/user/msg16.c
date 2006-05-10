@@ -369,7 +369,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    winproc = WINPROC_GetProc16( wndPtr->winproc );
+    winproc = WINPROC_GetProc16( wndPtr->winproc, wndPtr->flags & WIN_ISUNICODE );
     WIN_ReleasePtr( wndPtr );
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE16, hwnd, msg->message, msg->wParam, msg->lParam );

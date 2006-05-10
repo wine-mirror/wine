@@ -44,7 +44,7 @@ typedef struct
 
 struct tagWINDOWPROC;
 
-extern WNDPROC16 WINPROC_GetProc16( WNDPROC proc );
+extern WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode );
 extern WNDPROC WINPROC_AllocProc16( WNDPROC16 func );
 extern WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode );
 extern WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode );

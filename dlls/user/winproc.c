@@ -144,8 +144,8 @@ static inline WINDOWPROC *find_winproc( WNDPROC func, BOOL unicode )
     return NULL;
 }
 
-/* allocate and initialize a new winproc */
-static inline WINDOWPROC *alloc_winproc(void)
+/* initialize a new winproc */
+static inline WINDOWPROC *init_winproc(void)
 {
     WINDOWPROC *proc;
 
@@ -215,6 +215,36 @@ static inline WINDOWPROC *handle16_to_proc( WNDPROC16 handle )
 static inline WNDPROC proc_to_handle( WINDOWPROC *proc )
 {
     return (WNDPROC)(ULONG_PTR)((proc - winproc_array) | (WINPROC_HANDLE << 16));
+}
+
+/* allocate and initialize a new winproc */
+static inline WINDOWPROC *alloc_winproc( WNDPROC func, BOOL unicode )
+{
+    WINDOWPROC *proc;
+
+    if (!func) return NULL;
+
+    /* check if the function is already a win proc */
+    if ((proc = handle_to_proc( func ))) return proc;
+
+    EnterCriticalSection( &winproc_cs );
+
+    /* check if we already have a winproc for that function */
+    if (!(proc = find_winproc( func, unicode )))
+    {
+        if ((proc = init_winproc()))
+        {
+            proc->type = unicode ? WIN_PROC_32W : WIN_PROC_32A;
+            proc->u.proc32 = func;
+            TRACE( "allocated %p for %p %c (%d/%d used)\n",
+                   proc_to_handle(proc), func, unicode ? 'W' : 'A', winproc_used, MAX_WINPROCS );
+        }
+        else FIXME( "too many winprocs, cannot allocate one for %p %c\n", func, unicode ? 'W' : 'A' );
+    }
+    else TRACE( "reusing %p for %p %c\n", proc_to_handle(proc), func, unicode ? 'W' : 'A' );
+
+    LeaveCriticalSection( &winproc_cs );
+    return proc;
 }
 
 
@@ -456,9 +486,9 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
  *
  * Get a window procedure pointer that can be passed to the Windows program.
  */
-WNDPROC16 WINPROC_GetProc16( WNDPROC proc )
+WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode )
 {
-    WINDOWPROC *ptr = handle_to_proc( proc );
+    WINDOWPROC *ptr = alloc_winproc( proc, unicode );
 
     if (!ptr) return 0;
 
@@ -507,7 +537,7 @@ WNDPROC WINPROC_AllocProc16( WNDPROC16 func )
         /* then check if we already have a winproc for that function */
         if (!(proc = find_winproc16( func )))
         {
-            if ((proc = alloc_winproc()))
+            if ((proc = init_winproc()))
             {
                 proc->type = WIN_PROC_16;
                 proc->u.proc16 = func;
@@ -537,29 +567,7 @@ WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
 {
     WINDOWPROC *proc;
 
-    if (!func) return NULL;
-
-    /* check if the function is already a win proc */
-    if (!(proc = handle_to_proc( func )))
-    {
-        EnterCriticalSection( &winproc_cs );
-
-        /* then check if we already have a winproc for that function */
-        if (!(proc = find_winproc( func, unicode )))
-        {
-            if ((proc = alloc_winproc()))
-            {
-                proc->type = unicode ? WIN_PROC_32W : WIN_PROC_32A;
-                proc->u.proc32 = func;
-                TRACE( "allocated %p for %p %c (%d/%d used)\n",
-                       proc_to_handle(proc), func, unicode ? 'W' : 'A', winproc_used, MAX_WINPROCS );
-            }
-            else FIXME( "too many winprocs, cannot allocate one for %p %c\n", func, unicode ? 'W' : 'A' );
-        }
-        else TRACE( "reusing %p for %p %c\n", proc_to_handle(proc), func, unicode ? 'W' : 'A' );
-
-        LeaveCriticalSection( &winproc_cs );
-    }
+    if (!(proc = alloc_winproc( func, unicode ))) return NULL;
     return proc_to_handle( proc );
 }
 

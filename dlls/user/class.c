@@ -151,9 +151,8 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG newval )
  */
 static WNDPROC16 CLASS_GetProc16( CLASS *classPtr )
 {
-    WNDPROC proc = classPtr->winprocA;
-    if (!proc) proc = classPtr->winprocW;
-    return WINPROC_GetProc16( proc );
+    if (classPtr->winprocA) return WINPROC_GetProc16( classPtr->winprocA, FALSE );
+    else return WINPROC_GetProc16( classPtr->winprocW, TRUE );
 }
 
 
