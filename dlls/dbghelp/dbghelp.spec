@@ -39,7 +39,7 @@
 @ stub SymEnumSourceFilesW
 @ stub SymEnumSym
 @ stdcall SymEnumSymbols(ptr double str ptr ptr)
-@ stub SymEnumSymbolsW
+@ stdcall SymEnumSymbolsW(ptr double wstr ptr ptr)
 @ stub SymEnumSymbolsForAddr
 @ stub SymEnumSymbolsForAddrW
 @ stdcall SymEnumTypes(ptr double ptr ptr)

@@ -902,6 +902,53 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
     return sym_enum(hProcess, BaseOfDll, Mask, &se);
 }
 
+struct sym_enumW
+{
+    PSYM_ENUMERATESYMBOLS_CALLBACKW     cb;
+    void*                               ctx;
+    PSYMBOL_INFOW                       sym_info;
+    char                                buffer[sizeof(SYMBOL_INFOW) + MAX_SYM_NAME];
+
+};
+    
+static BOOL CALLBACK sym_enumW(PSYMBOL_INFO si, ULONG size, PVOID ctx)
+{
+    struct sym_enumW*   sew = ctx;
+
+    copy_symbolW(sew->sym_info, si);
+
+    return (sew->cb)(sew->sym_info, size, sew->ctx);
+}
+
+/******************************************************************
+ *		SymEnumSymbolsW (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymEnumSymbolsW(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
+                            PSYM_ENUMERATESYMBOLS_CALLBACKW EnumSymbolsCallback,
+                            PVOID UserContext)
+{
+    struct sym_enumW    sew;
+    BOOL                ret = FALSE;
+    char*               maskA = NULL;
+
+    sew.ctx = UserContext;
+    sew.cb = EnumSymbolsCallback;
+    sew.sym_info = (PSYMBOL_INFOW)sew.buffer;
+
+    if (Mask)
+    {
+        unsigned len = WideCharToMultiByte(CP_ACP, 0, Mask, -1, NULL, 0, NULL, NULL);
+        maskA = HeapAlloc(GetProcessHeap(), 0, len);
+        if (!maskA) return FALSE;
+        WideCharToMultiByte(CP_ACP, 0, Mask, -1, maskA, len, NULL, NULL);
+    }
+    ret = SymEnumSymbols(hProcess, BaseOfDll, maskA, sym_enumW, &sew);
+    HeapFree(GetProcessHeap(), 0, maskA);
+
+    return ret;
+}
+
 struct sym_enumerate
 {
     void*                       ctx;
