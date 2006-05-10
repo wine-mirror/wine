@@ -52,7 +52,7 @@
 @ stdcall CertGetCertificateContextProperty(ptr long ptr ptr)
 @ stdcall CertGetEnhancedKeyUsage(ptr long ptr ptr)
 @ stub CertGetIntendedKeyUsage
-@ stub CertGetIssuerCertificateFromStore
+@ stdcall CertGetIssuerCertificateFromStore(long ptr ptr ptr)
 @ stdcall CertGetNameStringA(ptr long long ptr ptr long)
 @ stdcall CertGetNameStringW(ptr long long ptr ptr long)
 @ stub CertGetPublicKeyLength

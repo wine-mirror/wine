@@ -2646,6 +2646,13 @@ static BOOL compare_cert_by_subject_cert(PCCERT_CONTEXT pCertContext,
     return ret;
 }
 
+static BOOL compare_cert_by_issuer(PCCERT_CONTEXT pCertContext,
+ DWORD dwType, DWORD dwFlags, const void *pvPara)
+{
+    return compare_cert_by_subject_cert(pCertContext, dwType, dwFlags,
+     ((PCCERT_CONTEXT)pvPara)->pCertInfo);
+}
+
 PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
 		DWORD dwCertEncodingType, DWORD dwFlags, DWORD dwType,
 		const void *pvPara, PCCERT_CONTEXT pPrevCertContext)
@@ -2672,6 +2679,9 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         break;
     case CERT_COMPARE_SUBJECT_CERT:
         compare = compare_cert_by_subject_cert;
+        break;
+    case CERT_COMPARE_ISSUER_OF:
+        compare = compare_cert_by_issuer;
         break;
     default:
         FIXME("find type %08lx unimplemented\n", dwType);
@@ -2711,6 +2721,50 @@ PCCERT_CONTEXT WINAPI CertGetSubjectCertificateFromStore(HCERTSTORE hCertStore,
     }
     return CertFindCertificateInStore(hCertStore, dwCertEncodingType, 0,
      CERT_FIND_SUBJECT_CERT, pCertId, NULL);
+}
+
+PCCERT_CONTEXT WINAPI CertGetIssuerCertificateFromStore(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pSubjectContext, PCCERT_CONTEXT pPrevIssuerContext,
+ DWORD *pdwFlags)
+{
+    static const DWORD supportedFlags = CERT_STORE_REVOCATION_FLAG |
+     CERT_STORE_SIGNATURE_FLAG | CERT_STORE_TIME_VALIDITY_FLAG;
+    PCCERT_CONTEXT ret;
+
+    TRACE("(%p, %p, %p, %08lx)\n", hCertStore, pSubjectContext,
+     pPrevIssuerContext, *pdwFlags);
+
+    if (*pdwFlags & ~supportedFlags)
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+    ret = CertFindCertificateInStore(hCertStore,
+     pSubjectContext->dwCertEncodingType, 0, CERT_FIND_ISSUER_OF,
+     pSubjectContext, pPrevIssuerContext);
+    if (ret)
+    {
+        if (*pdwFlags & CERT_STORE_REVOCATION_FLAG)
+        {
+            FIXME("revocation check requires CRL support\n");
+            *pdwFlags |= CERT_STORE_NO_CRL_FLAG;
+        }
+        if (*pdwFlags & CERT_STORE_TIME_VALIDITY_FLAG)
+        {
+            if (0 == CertVerifyTimeValidity(NULL, pSubjectContext->pCertInfo))
+                *pdwFlags &= ~CERT_STORE_TIME_VALIDITY_FLAG;
+        }
+        if (*pdwFlags & CERT_STORE_SIGNATURE_FLAG)
+        {
+            if (CryptVerifyCertificateSignatureEx(0,
+             pSubjectContext->dwCertEncodingType,
+             CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT, (void *)pSubjectContext,
+             CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)ret, 0, NULL))
+                *pdwFlags &= ~CERT_STORE_SIGNATURE_FLAG;
+        }
+    }
+
+    return ret;
 }
 
 BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
