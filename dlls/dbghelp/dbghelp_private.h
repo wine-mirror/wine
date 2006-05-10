@@ -325,6 +325,28 @@ struct module_pair
     struct module*              effective; /* out: module with debug info */
 };
 
+enum pdb_kind {PDB_JG, PDB_DS};
+
+struct pdb_lookup
+{
+    const char*                 filename;
+    DWORD                       age;
+    enum pdb_kind               kind;
+    union
+    {
+        struct
+        {
+            DWORD               timestamp;
+            struct PDB_JG_TOC*  toc;
+        } jg;
+        struct
+        {
+            GUID                guid;
+            struct PDB_DS_TOC*  toc;
+        } ds;
+    } u;
+};
+
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess);
 extern HANDLE hMsvcrt;
@@ -376,6 +398,8 @@ extern BOOL         pe_load_debug_directory(const struct process* pcs,
                                             const BYTE* mapping,
                                             const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
+extern BOOL         pdb_fetch_file_info(struct pdb_lookup* pdb_lookup);
+
 /* pe_module.c */
 extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth);
 extern struct module*

@@ -1300,7 +1300,7 @@ struct PDB_JG_ROOT
 {
     DWORD               Version;
     DWORD               TimeDateStamp;
-    DWORD               unknown;
+    DWORD               Age;
     DWORD               cbNames;
     CHAR                names[1];
 };
@@ -1309,7 +1309,7 @@ struct PDB_DS_ROOT
 {
     DWORD               Version;
     DWORD               TimeDateStamp;
-    DWORD               unknown;
+    DWORD               Age;
     GUID                guid;
     DWORD               cbNames;
     CHAR                names[1];
@@ -1409,7 +1409,7 @@ typedef struct _PDB_SYMBOL_IMPORT
     DWORD       unknown1;
     DWORD       unknown2;
     DWORD       TimeDateStamp;
-    DWORD       nRequests;
+    DWORD       Age;
     CHAR        filename[1];
 } PDB_SYMBOL_IMPORT, *PPDB_SYMBOL_IMPORT;
 
@@ -1556,5 +1556,3 @@ typedef struct _CV_ENTRY_GLOBAL_TYPES
                 types_record[];
 */
 } CV_ENTRY_GLOBAL_TYPES;
-
-

@@ -229,7 +229,6 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
 {
     struct sffip*       s = (struct sffip*)user;
     DWORD               size, checksum;
-    DWORD_PTR           timestamp;
 
     /* FIXME: should check that id/two/three match the file pointed
      * by buffer
@@ -240,6 +239,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
         {
             HANDLE  hFile, hMap;
             void*   mapping;
+            DWORD   timestamp;
 
             timestamp = ~(DWORD_PTR)s->id;
             size = ~s->two;
@@ -282,7 +282,49 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
         }
         break;
     case DMT_PDB:
-        FIXME("NIY on '%s'\n", buffer);
+        {
+            struct pdb_lookup   pdb_lookup;
+
+            pdb_lookup.filename = buffer;
+
+            if (!pdb_fetch_file_info(&pdb_lookup)) return FALSE;
+            switch (pdb_lookup.kind)
+            {
+            case PDB_JG:
+                if (s->flags & SSRVOPT_GUIDPTR)
+                {
+                    WARN("Found %s, but wrong PDB version\n", buffer);
+                    return FALSE;
+                }
+                if (pdb_lookup.u.jg.timestamp != (DWORD_PTR)s->id)
+                {
+                    WARN("Found %s, but wrong signature: %08lx %08lx\n",
+                         buffer, pdb_lookup.u.jg.timestamp, (DWORD_PTR)s->id);
+                    return FALSE;
+                }
+                break;
+            case PDB_DS:
+                if (!(s->flags & SSRVOPT_GUIDPTR))
+                {
+                    WARN("Found %s, but wrong PDB version\n", buffer);
+                    return FALSE;
+                }
+                if (!(memcmp(&pdb_lookup.u.ds.guid, (GUID*)s->id, sizeof(GUID))))
+                {
+                    WARN("Found %s, but wrong GUID: %s %s\n",
+                         buffer, debugstr_guid(&pdb_lookup.u.ds.guid),
+                         debugstr_guid((GUID*)s->id));
+                    return FALSE;
+                }
+                break;
+            }
+            if (pdb_lookup.age != s->two)
+            {
+                WARN("Found %s, but wrong age: %08lx %08lx\n",
+                     buffer, pdb_lookup.age, s->two);
+                return FALSE;
+            }
+        }
         break;
     default:
         FIXME("What the heck??\n");
