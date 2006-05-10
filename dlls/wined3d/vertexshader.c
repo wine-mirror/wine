@@ -476,6 +476,7 @@ void vshader_texldl(WINED3DSHADERVECTOR* d) {
 void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
 void vshader_hw_dcl(SHADER_OPCODE_ARG* arg);
 void vshader_hw_def(SHADER_OPCODE_ARG* arg);
+void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
 
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
@@ -526,11 +527,11 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_SINCOS,   "sincos",   NULL,   2, vshader_sincos, NULL, 0, 0},
 
     /* Matrix */
-    {D3DSIO_M4x4, "m4x4", "undefined", 3, vshader_m4x4, NULL, 0, 0},
-    {D3DSIO_M4x3, "m4x3", "undefined", 3, vshader_m4x3, NULL, 0, 0},
-    {D3DSIO_M3x4, "m3x4", "undefined", 3, vshader_m3x4, NULL, 0, 0},
-    {D3DSIO_M3x3, "m3x3", "undefined", 3, vshader_m3x3, NULL, 0, 0},
-    {D3DSIO_M3x2, "m3x2", "undefined", 3, vshader_m3x2, NULL, 0, 0},
+    {D3DSIO_M4x4, "m4x4", "undefined", 3, vshader_m4x4, vshader_hw_mnxn, 0, 0},
+    {D3DSIO_M4x3, "m4x3", "undefined", 3, vshader_m4x3, vshader_hw_mnxn, 0, 0},
+    {D3DSIO_M3x4, "m3x4", "undefined", 3, vshader_m3x4, vshader_hw_mnxn, 0, 0},
+    {D3DSIO_M3x3, "m3x3", "undefined", 3, vshader_m3x3, vshader_hw_mnxn, 0, 0},
+    {D3DSIO_M3x2, "m3x2", "undefined", 3, vshader_m3x2, vshader_hw_mnxn, 0, 0},
 
     /* Declare registers */
     {D3DSIO_DCL,      "dcl",      NULL,                  2, vshader_dcl,     vshader_hw_dcl, 0, 0},
@@ -793,46 +794,6 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
   } else {
     vshader_program_add_input_param_swizzle(param, is_color, hwLine);
   }
-}
-
-DWORD MacroExpansion[4*4];
-
-int ExpandMxMacro(DWORD macro_opcode, const DWORD* args) {
- 
-  int i;
-  int nComponents = 0;
-  DWORD opcode =0;
-  switch(macro_opcode) {
-    case D3DSIO_M4x4:
-      nComponents = 4;
-      opcode = D3DSIO_DP4;
-      break;
-    case D3DSIO_M4x3:
-      nComponents = 3;
-      opcode = D3DSIO_DP4;
-      break;
-    case D3DSIO_M3x4:
-      nComponents = 4;
-      opcode = D3DSIO_DP3;
-      break;
-    case D3DSIO_M3x3:
-      nComponents = 3;
-      opcode = D3DSIO_DP3;
-      break;
-    case D3DSIO_M3x2:
-      nComponents = 2;
-      opcode = D3DSIO_DP3;
-      break;
-    default:
-      break;
-  }
-  for (i = 0; i < nComponents; i++) {
-    MacroExpansion[i*4+0] = opcode;
-    MacroExpansion[i*4+1] = ((*args) & ~D3DSP_WRITEMASK_ALL)|(D3DSP_WRITEMASK_0<<i);
-    MacroExpansion[i*4+2] = *(args+1);
-    MacroExpansion[i*4+3] = (*(args+2))+i;
-  }
-  return nComponents;
 }
 
 static void parse_decl_usage(IWineD3DVertexShaderImpl *This, INT usage, INT arrayNo)
@@ -1120,6 +1081,51 @@ void vshader_hw_def(SHADER_OPCODE_ARG* arg) {
     shader->constantsUsedBitmap[reg & 0xFF] = VS_CONSTANT_CONSTANT;
 }
 
+/** Handles transforming all D3DSIO_M?x? opcodes for 
+    Vertex shaders to ARB_vertex_program codes */
+void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
+
+    int i;
+    int nComponents = 0;
+    SHADER_OPCODE_ARG tmpArg;
+    
+    /* Set constants for the temporary argument */
+    tmpArg.shader = arg->shader;
+    tmpArg.buffer = arg->buffer;
+    tmpArg.src[0] = arg->src[0];
+   
+    switch(arg->opcode->opcode) {
+    case D3DSIO_M4x4:
+        nComponents = 4;
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP4];
+        break;
+    case D3DSIO_M4x3:
+        nComponents = 3;
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP4];
+        break;
+    case D3DSIO_M3x4:
+        nComponents = 4;
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP3];
+        break;
+    case D3DSIO_M3x3:
+        nComponents = 3;
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP3];
+        break;
+    case D3DSIO_M3x2:
+        nComponents = 2;
+        tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[D3DSIO_DP3];
+        break;
+    default:
+        break;
+    }
+    
+    for (i = 0; i < nComponents; i++) {
+        tmpArg.dst = ((arg->dst) & ~D3DSP_WRITEMASK_ALL)|(D3DSP_WRITEMASK_0<<i);
+        tmpArg.src[1] = arg->src[1]+i;
+        vshader_hw_map2gl(&tmpArg);
+    }
+}
+
 /**
  * Function parser ...
  */
@@ -1127,9 +1133,7 @@ void vshader_hw_def(SHADER_OPCODE_ARG* arg) {
 inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexShader *iface, CONST DWORD* pFunction) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     const DWORD* pToken = pFunction;
-    const DWORD* pSavedToken = NULL;
     const SHADER_OPCODE* curOpcode = NULL;
-    int nRemInstr = -1;
     DWORD i;
     SHADER_BUFFER buffer;
     char  tmpLine[255];
@@ -1188,9 +1192,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
   if (NULL != pToken) {
     while (1) {
       tmpLine[0] = 0;
-      if ((nRemInstr >= 0) && (--nRemInstr == -1))
-            /* Macro is finished, continue normal path */ 
-            pToken = pSavedToken;
+
       if (D3DVS_END() == *pToken)
             break;
 
@@ -1246,24 +1248,12 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
           curOpcode->hw_fct(&hw_arg);
           pToken += curOpcode->num_params;
 
+      /* Unrecognized or No-Op code */
       } else {
 
         switch (curOpcode->opcode) {
         case D3DSIO_NOP:
             break;
-        case D3DSIO_M4x4:
-        case D3DSIO_M4x3:
-        case D3DSIO_M3x4:
-        case D3DSIO_M3x3:
-        case D3DSIO_M3x2:
-            /* Expand the macro and get nusprintf(tmpLine,mber of generated instruction */
-            nRemInstr = ExpandMxMacro(curOpcode->opcode, pToken);
-            /* Save point to next instruction */
-            pSavedToken = pToken + 3;
-            /* Execute expanded macro */
-            pToken = MacroExpansion;
-            break;
-
         default:
             FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
             pToken += curOpcode->num_params;
