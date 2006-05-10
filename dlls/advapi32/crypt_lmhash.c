@@ -54,3 +54,38 @@ NTSTATUS WINAPI SystemFunction006( LPCSTR password, LPSTR hash )
 
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * SystemFunction008  [ADVAPI32.@]
+ *
+ * Creates a LM response from a challenge and a password hash
+ *
+ * PARAMS
+ *   challenge  [I] Challenge from authentication server
+ *   hash       [I] NTLM hash (from SystemFunction006)
+ *   response   [O] response to send back to the server
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_UNSUCCESSFUL
+ *
+ * NOTES
+ *  see http://davenport.sourceforge.net/ntlm.html#theLmResponse
+ *
+ */
+NTSTATUS WINAPI SystemFunction008(const LPBYTE challenge, const LPBYTE hash, LPBYTE response)
+{
+    BYTE key[7*3];
+
+    if (!challenge || !response)
+        return STATUS_UNSUCCESSFUL;
+
+    memset(key, 0, sizeof key);
+    memcpy(key, hash, 0x10);
+
+    CRYPT_DEShash(response, key, challenge);
+    CRYPT_DEShash(response+8, key+7, challenge);
+    CRYPT_DEShash(response+16, key+14, challenge);
+
+    return STATUS_SUCCESS;
+}

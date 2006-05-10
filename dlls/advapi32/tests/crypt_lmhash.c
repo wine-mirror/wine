@@ -1,7 +1,8 @@
 /*
- * Unit tests for SystemFunction006 (LMHash?)
+ * Unit tests for SystemFunctionXXX (LMHash?)
  *
  * Copyright 2004 Hans Leidekker
+ * Copyright 2006 Mike McCormack
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,12 +21,18 @@
 
 #include <stdio.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
+typedef DWORD (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
+
 fnSystemFunction006 pSystemFunction006;
+fnSystemFunction008 pSystemFunction008;
 
 static void test_SystemFunction006(void)
 {
@@ -45,6 +52,47 @@ static void test_SystemFunction006(void)
         lmhash[12], lmhash[13], lmhash[14], lmhash[15] );
 }
 
+static void test_SystemFunction008(void)
+{
+    /* example data from http://davenport.sourceforge.net/ntlm.html */
+    unsigned char hash[0x40] = {
+        0xff, 0x37, 0x50, 0xbc, 0xc2, 0xb2, 0x24, 0x12,
+        0xc2, 0x26, 0x5b, 0x23, 0x73, 0x4e, 0x0d, 0xac };
+    unsigned char challenge[0x40] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
+    unsigned char expected[0x18] = {
+        0xc3, 0x37, 0xcd, 0x5c, 0xbd, 0x44, 0xfc, 0x97,
+        0x82, 0xa6, 0x67, 0xaf, 0x6d, 0x42, 0x7c, 0x6d,
+        0xe6, 0x7c, 0x20, 0xc2, 0xd3, 0xe7, 0x7c, 0x56 };
+    unsigned char output[0x18];
+    NTSTATUS r;
+
+    r = pSystemFunction008(0,0,0);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    r = pSystemFunction008(challenge,0,0);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    r = pSystemFunction008(challenge, hash, 0);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    /* crashes */
+    if (0)
+    {
+        r = pSystemFunction008(challenge, 0, output);
+        ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+    }
+
+    r = pSystemFunction008(0, 0, output);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    memset(output, 0, sizeof output);
+    r = pSystemFunction008(challenge, hash, output);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+
+    ok( !memcmp(output, expected, sizeof expected), "response wrong\n");
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
@@ -52,12 +100,12 @@ START_TEST(crypt_lmhash)
     if (!(module = LoadLibrary("advapi32.dll"))) return;
 
     pSystemFunction006 = (fnSystemFunction006)GetProcAddress( module, "SystemFunction006" );
-
-    if (!pSystemFunction006) goto out;
-
     if (pSystemFunction006) 
         test_SystemFunction006();
 
-out:
+    pSystemFunction008 = (fnSystemFunction008)GetProcAddress( module, "SystemFunction008" );
+    if (pSystemFunction008)
+        test_SystemFunction008();
+
     FreeLibrary( module );
 }
