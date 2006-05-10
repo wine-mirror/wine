@@ -11,6 +11,7 @@ EXTRALIBS = $(LIBUNICODE)
 C_SRCS = \
 	advapi.c \
 	crypt.c \
+	crypt_arc4.c \
 	crypt_des.c \
 	crypt_lmhash.c \
 	crypt_md4.c \

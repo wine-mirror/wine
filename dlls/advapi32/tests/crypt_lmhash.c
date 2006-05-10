@@ -28,13 +28,21 @@
 #include "winbase.h"
 #include "winternl.h"
 
+struct ustring {
+    DWORD Length;
+    DWORD MaximumLength;
+    unsigned char *Buffer;
+};
+
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
 typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction001)(const LPBYTE, const LPBYTE, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);
 
 fnSystemFunction006 pSystemFunction006;
 fnSystemFunction008 pSystemFunction008;
 fnSystemFunction001 pSystemFunction001;
+fnSystemFunction032 pSystemFunction032;
 
 static void test_SystemFunction006(void)
 {
@@ -114,6 +122,30 @@ static void test_SystemFunction001(void)
     ok(!memcmp(output, expected, sizeof expected), "response wrong\n");
 }
 
+static void test_SystemFunction032(void)
+{
+    struct ustring key, data;
+    unsigned char szKey[] = { 'f','o','o',0 };
+    unsigned char szData[8] = { 'b','a','r',0 };
+    unsigned char expected[] = {0x28, 0xb9, 0xf8, 0xe1};
+    int r;
+
+    /* crashes:    pSystemFunction032(NULL,NULL); */
+
+    key.Buffer = szKey;
+    key.Length = sizeof szKey;
+    key.MaximumLength = key.Length;
+
+    data.Buffer = szData;
+    data.Length = 4;
+    data.MaximumLength = 8;
+
+    r = pSystemFunction032(&data, &key);
+    ok(r == STATUS_SUCCESS, "function failed\n");
+
+    ok( !memcmp(expected, data.Buffer, data.Length), "wrong result\n");
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
@@ -131,6 +163,10 @@ START_TEST(crypt_lmhash)
     pSystemFunction001 = (fnSystemFunction001)GetProcAddress( module, "SystemFunction001" );
     if (pSystemFunction001)
         test_SystemFunction001();
+
+    pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
+    if (pSystemFunction032)
+        test_SystemFunction032();
 
     FreeLibrary( module );
 }
