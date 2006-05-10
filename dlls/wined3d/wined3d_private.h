@@ -1287,6 +1287,11 @@ extern void shader_program_dump_decl_usage(
     DWORD dcl,
     DWORD param);
 
+extern void generate_base_shader(
+    IWineD3DBaseShader *iface,
+    SHADER_BUFFER* buffer,
+    CONST DWORD* pFunction);
+
 inline static int shader_get_regtype(const DWORD param) {
     return (((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) |
             ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2));

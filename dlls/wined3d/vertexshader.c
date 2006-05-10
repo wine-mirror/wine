@@ -1126,6 +1126,75 @@ void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
     }
 }
 
+/** Generate a vertex shader string using either GL_VERTEX_PROGRAM_ARB
+    or GLSL and send it to the card */
+inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
+    IWineD3DVertexShader *iface,
+    CONST DWORD *pFunction) {
+
+    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
+    SHADER_BUFFER buffer;
+
+#if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
+        it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
+    if (This->device->fixupVertexBufferSize < SHADER_PGMSIZE) {
+        HeapFree(GetProcessHeap(), 0, This->fixupVertexBuffer);
+        This->fixupVertexBuffer = HeapAlloc(GetProcessHeap() , 0, SHADER_PGMSIZE);
+        This->fixupVertexBufferSize = PGMSIZE;
+        This->fixupVertexBuffer[0] = 0;
+    }
+    buffer.buffer = This->device->fixupVertexBuffer;
+#else
+    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE); 
+#endif
+    buffer.bsize = 0;
+    buffer.lineNo = 0;
+
+    /* TODO: Optionally, generate the GLSL shader instead */
+    if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+        /*  Create the hw ARB shader */
+        shader_addline(&buffer, "!!ARBvp1.0\n");
+
+        /* Mesa supports only 95 constants */
+        if (GL_VEND(MESA) || GL_VEND(WINE))
+            This->baseShader.limits.constant_float = 
+                min(95, This->baseShader.limits.constant_float);
+
+        shader_addline(&buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
+            This->baseShader.limits.constant_float, 
+            This->baseShader.limits.constant_float - 1);
+
+        /** Call the base shader generation routine to generate most 
+            of the vertex shader string for us */
+        generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);
+
+        shader_addline(&buffer, "END\n\0"); 
+
+        /* TODO: change to resource.glObjectHandle or something like that */
+        GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
+
+        TRACE("Creating a hw vertex shader, prg=%d\n", This->baseShader.prgId);
+        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->baseShader.prgId));
+
+        TRACE("Created hw vertex shader, prg=%d\n", This->baseShader.prgId);
+        /* Create the program and check for errors */
+        GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+            buffer.bsize, buffer.buffer));
+
+        if (glGetError() == GL_INVALID_OPERATION) {
+            GLint errPos;
+            glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+            FIXME("HW VertexShader Error at position %d: %s\n",
+                  errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+            This->baseShader.prgId = -1;
+        }
+    }
+
+#if 1 /* if were using the data buffer of device then we don't need to free it */
+  HeapFree(GetProcessHeap(), 0, buffer.buffer);
+#endif
+}
+
 /**
  * Function parser ...
  */
