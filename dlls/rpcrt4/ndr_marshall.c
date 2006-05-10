@@ -754,8 +754,7 @@ void WINAPI PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   case RPC_FC_UP: /* unique pointer */
   case RPC_FC_OP: /* object pointer - same as unique here */
     TRACE("writing %p to buffer\n", Pointer);
-    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, (unsigned long)Pointer);
-    pStubMsg->Buffer += 4;
+    NDR_LOCAL_UINT32_WRITE(Buffer, (unsigned long)Pointer);
     break;
   case RPC_FC_FP:
   default:
@@ -803,12 +802,12 @@ void WINAPI PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     pointer_id = ~0UL;
     break;
   case RPC_FC_UP: /* unique pointer */
-    pointer_id = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
-    pStubMsg->Buffer += 4;
+    pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
+    TRACE("pointer_id is 0x%08lx\n", pointer_id);
     break;
   case RPC_FC_OP: /* object pointer - we must free data before overwriting it */
-    pointer_id = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
-    pStubMsg->Buffer += 4;
+    pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
+    TRACE("pointer_id is 0x%08lx\n", pointer_id);
     if (*pPointer)
         FIXME("free object pointer %p\n", *pPointer);
     break;
@@ -855,7 +854,6 @@ void WINAPI PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     break;
   case RPC_FC_OP:
   case RPC_FC_UP:
-    pStubMsg->BufferLength += 4;
     /* NULL pointer has no further representation */
     if (!Pointer)
         return;
@@ -1285,9 +1283,22 @@ unsigned char * WINAPI NdrPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                           unsigned char *pMemory,
                                           PFORMAT_STRING pFormat)
 {
+  unsigned char *Buffer;
+
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
-  pStubMsg->BufferMark = pStubMsg->Buffer;
+  /* incremement the buffer here instead of in PointerMarshall,
+   * as that is used by embedded pointers which already handle the incrementing
+   * the buffer, and shouldn't write any additional pointer data to the wire */
+  if (*pFormat != RPC_FC_RP)
+  {
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
+    Buffer = pStubMsg->Buffer;
+    pStubMsg->Buffer += 4;
+  }
+  else
+    Buffer = pStubMsg->Buffer;
+
   PointerMarshall(pStubMsg, pStubMsg->Buffer, pMemory, pFormat);
 
   STD_OVERFLOW_CHECK(pStubMsg);
@@ -1303,10 +1314,24 @@ unsigned char * WINAPI NdrPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                             PFORMAT_STRING pFormat,
                                             unsigned char fMustAlloc)
 {
+  unsigned char *Buffer;
+
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
-  pStubMsg->BufferMark = pStubMsg->Buffer;
-  PointerUnmarshall(pStubMsg, pStubMsg->Buffer, ppMemory, pFormat, fMustAlloc);
+  /* incremement the buffer here instead of in PointerUnmarshall,
+   * as that is used by embedded pointers which already handle the incrementing
+   * the buffer, and shouldn't read any additional pointer data from the
+   * buffer */
+  if (*pFormat != RPC_FC_RP)
+  {
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
+    Buffer = pStubMsg->Buffer;
+    pStubMsg->Buffer += 4;
+  }
+  else
+    Buffer = pStubMsg->Buffer;
+
+  PointerUnmarshall(pStubMsg, Buffer, ppMemory, pFormat, fMustAlloc);
 
   return NULL;
 }
@@ -1319,6 +1344,16 @@ void WINAPI NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                       PFORMAT_STRING pFormat)
 {
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
+
+  /* incremement the buffer length here instead of in PointerBufferSize,
+   * as that is used by embedded pointers which already handle the buffer
+   * length, and shouldn't write anything more to the wire */
+  if (*pFormat != RPC_FC_RP)
+  {
+    ALIGN_LENGTH(pStubMsg->BufferLength, 4);
+    pStubMsg->BufferLength += 4;
+  }
+
   PointerBufferSize(pStubMsg, pMemory, pFormat);
 }
 
