@@ -30,6 +30,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "winnls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
@@ -460,6 +461,39 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
 
     return SymLoadModule(hProcess, hFile, (char*)ImageName, (char*)ModuleName,
                          (DWORD)BaseOfDll, DllSize);
+}
+
+/***********************************************************************
+ *			SymLoadModuleExW (DBGHELP.@)
+ */
+DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageName,
+                                 PCWSTR wModuleName, DWORD64 BaseOfDll, DWORD DllSize,
+                                 PMODLOAD_DATA Data, DWORD Flags)
+{
+    LPSTR       ImageName, ModuleName;
+    unsigned    len;
+    BOOL        ret;
+
+    if (wImageName)
+    {
+        len = WideCharToMultiByte(CP_ACP,0, wImageName, -1, NULL, 0, NULL, NULL);
+        ImageName = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_ACP,0, wImageName, -1, ImageName, len, NULL, NULL);
+    }
+    else ImageName = NULL;
+    if (wModuleName)
+    {
+        len = WideCharToMultiByte(CP_ACP,0, wModuleName, -1, NULL, 0, NULL, NULL);
+        ModuleName = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_ACP,0, wModuleName, -1, ModuleName, len, NULL, NULL);
+    }
+    else ModuleName = NULL;
+
+    ret = SymLoadModuleEx(hProcess, hFile, ImageName, ModuleName,
+                          BaseOfDll, DllSize, Data, Flags);
+    HeapFree(GetProcessHeap(), 0, ImageName);
+    HeapFree(GetProcessHeap(), 0, ModuleName);
+    return ret;
 }
 
 /***********************************************************************

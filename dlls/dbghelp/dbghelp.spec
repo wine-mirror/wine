@@ -117,7 +117,7 @@
 @ stdcall SymLoadModule(long long str str long long)
 @ stdcall SymLoadModule64(long long str str double long)
 @ stdcall SymLoadModuleEx(long long str str double long ptr long)
-@ stub SymLoadModuleExW
+@ stdcall SymLoadModuleExW(long long wstr wstr double long ptr long)
 @ stdcall SymMatchFileName(str str ptr ptr)
 @ stub SymMatchFileNameW
 @ stdcall SymMatchString(str str long)
