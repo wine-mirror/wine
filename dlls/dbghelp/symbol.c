@@ -557,11 +557,17 @@ static void symt_fill_sym_info(const struct module_pair* pair,
                          wine_dbgstr_longlong(sym_info->Address));
 }
 
-static BOOL symt_enum_module(struct module_pair* pair, regex_t* regex,
-                             PSYM_ENUMERATESYMBOLS_CALLBACK cb, PVOID user)
+struct sym_enum
 {
-    char                        buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
-    SYMBOL_INFO*                sym_info = (SYMBOL_INFO*)buffer;
+    PSYM_ENUMERATESYMBOLS_CALLBACK      cb;
+    PVOID                               user;
+    SYMBOL_INFO*                        sym_info;
+    char                                buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+};
+static BOOL symt_enum_module(struct module_pair* pair, regex_t* regex,
+                             const struct sym_enum* se)
+    
+{
     void*                       ptr;
     struct symt_ht*             sym = NULL;
     struct hash_table_iter      hti;
@@ -573,10 +579,10 @@ static BOOL symt_enum_module(struct module_pair* pair, regex_t* regex,
         if (sym->hash_elt.name &&
             regexec(regex, sym->hash_elt.name, 0, NULL, 0) == 0)
         {
-            sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
-            sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
-            symt_fill_sym_info(pair, &sym->symt, sym_info);
-            if (!cb(sym_info, sym_info->Size, user)) return TRUE;
+            se->sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
+            se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
+            symt_fill_sym_info(pair, &sym->symt, se->sym_info);
+            if (!se->cb(se->sym_info, se->sym_info->Size, se->user)) return TRUE;
         }
     }   
     return FALSE;
@@ -683,8 +689,7 @@ int symt_find_nearest(struct module* module, DWORD addr)
 }
 
 static BOOL symt_enum_locals_helper(struct process* pcs, struct module_pair* pair,
-                                    regex_t* preg, PSYM_ENUMERATESYMBOLS_CALLBACK cb,
-                                    PVOID user, SYMBOL_INFO* sym_info,
+                                    regex_t* preg, const struct sym_enum* se,
                                     struct vector* v)
 {
     struct symt**       plsym = NULL;
@@ -701,16 +706,15 @@ static BOOL symt_enum_locals_helper(struct process* pcs, struct module_pair* pai
                 struct symt_block*  block = (struct symt_block*)lsym;
                 if (pc < block->address || block->address + block->size <= pc)
                     continue;
-                if (!symt_enum_locals_helper(pcs, pair, preg, cb, user, 
-                                             sym_info, &block->vchildren))
+                if (!symt_enum_locals_helper(pcs, pair, preg, se, &block->vchildren))
                     return FALSE;
             }
             break;
         case SymTagData:
             if (regexec(preg, symt_get_name(lsym), 0, NULL, 0) == 0)
             {
-                symt_fill_sym_info(pair, lsym, sym_info);
-                if (!cb(sym_info, sym_info->Size, user))
+                symt_fill_sym_info(pair, lsym, se->sym_info);
+                if (!se->cb(se->sym_info, se->sym_info->Size, se->user))
                     return FALSE;
             }
             break;
@@ -726,19 +730,16 @@ static BOOL symt_enum_locals_helper(struct process* pcs, struct module_pair* pai
     return TRUE;
 }
 
-static BOOL symt_enum_locals(struct process* pcs, const char* mask,
-                             PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
-                             PVOID UserContext)
+static BOOL symt_enum_locals(struct process* pcs, const char* mask, 
+                             const struct sym_enum* se)
 {
     struct module_pair  pair;
     struct symt_ht*     sym;
-    char                buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
-    SYMBOL_INFO*        sym_info = (SYMBOL_INFO*)buffer;
     DWORD               pc = pcs->ctx_frame.InstructionOffset;
     int                 idx;
 
-    sym_info->SizeOfStruct = sizeof(*sym_info);
-    sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
+    se->sym_info->SizeOfStruct = sizeof(*se->sym_info);
+    se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
 
     pair.requested = module_find_by_addr(pcs, pc, DMT_UNKNOWN);
     if (!module_get_debug(pcs, &pair)) return FALSE;
@@ -752,15 +753,14 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
 
         compile_regex(mask ? mask : "*", -1, &preg,
                       dbghelp_options & SYMOPT_CASE_INSENSITIVE);
-        ret = symt_enum_locals_helper(pcs, &pair, &preg, EnumSymbolsCallback, 
-                                      UserContext, sym_info, 
+        ret = symt_enum_locals_helper(pcs, &pair, &preg, se, 
                                       &((struct symt_function*)sym)->vchildren);
         regfree(&preg);
         return ret;
         
     }
-    symt_fill_sym_info(&pair, &sym->symt, sym_info);
-    return EnumSymbolsCallback(sym_info, sym_info->Size, UserContext);
+    symt_fill_sym_info(&pair, &sym->symt, se->sym_info);
+    return se->cb(se->sym_info, se->sym_info->Size, se->user);
 }
 
 /******************************************************************
@@ -788,37 +788,25 @@ static void copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si)
     siw->MaxNameLen = si->MaxNameLen;
     MultiByteToWideChar(CP_ACP, 0, si->Name, -1, siw->Name, siw->MaxNameLen);
 }
+
 /******************************************************************
- *		SymEnumSymbols (DBGHELP.@)
+ *		sym_enum
  *
- * cases BaseOfDll = 0
- *      !foo fails always (despite what MSDN states)
- *      RE1!RE2 looks up all modules matching RE1, and in all these modules, lookup RE2
- *      no ! in Mask, lookup in local Context
- * cases BaseOfDll != 0
- *      !foo fails always (despite what MSDN states)
- *      RE1!RE2 gets RE2 from BaseOfDll (whatever RE1 is)
+ * Core routine for most of the enumeration of symbols
  */
-BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
-                           PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
-                           PVOID UserContext)
+static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
+                     const struct sym_enum* se)
 {
     struct process*     pcs = process_find_by_handle(hProcess);
     struct module_pair  pair;
     const char*         bang;
     regex_t             mod_regex, sym_regex;
 
-    TRACE("(%p %s %s %p %p)\n", 
-          hProcess, wine_dbgstr_longlong(BaseOfDll), debugstr_a(Mask),
-          EnumSymbolsCallback, UserContext);
-
-    if (!pcs) return FALSE;
-
     if (BaseOfDll == 0)
     {
         /* do local variables ? */
         if (!Mask || !(bang = strchr(Mask, '!')))
-            return symt_enum_locals(pcs, Mask, EnumSymbolsCallback, UserContext);
+            return symt_enum_locals(pcs, Mask, se);
 
         if (bang == Mask) return FALSE;
 
@@ -831,8 +819,7 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
             if (pair.requested->type == DMT_PE && module_get_debug(pcs, &pair))
             {
                 if (regexec(&mod_regex, pair.requested->module.ModuleName, 0, NULL, 0) == 0 &&
-                    symt_enum_module(&pair, &sym_regex, 
-                                     EnumSymbolsCallback, UserContext))
+                    symt_enum_module(&pair, &sym_regex, se))
                     break;
             }
         }
@@ -847,7 +834,7 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
                     module_get_debug(pcs, &pair))
                 {
                     if (regexec(&mod_regex, pair.requested->module.ModuleName, 0, NULL, 0) == 0 &&
-                        symt_enum_module(&pair, &sym_regex, EnumSymbolsCallback, UserContext))
+                        symt_enum_module(&pair, &sym_regex, se))
                     break;
                 }
             }
@@ -869,10 +856,38 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
 
     compile_regex(Mask ? Mask : "*", -1, &sym_regex, 
                   dbghelp_options & SYMOPT_CASE_INSENSITIVE);
-    symt_enum_module(&pair, &sym_regex, EnumSymbolsCallback, UserContext);
+    symt_enum_module(&pair, &sym_regex, se);
     regfree(&sym_regex);
 
     return TRUE;
+}
+
+/******************************************************************
+ *		SymEnumSymbols (DBGHELP.@)
+ *
+ * cases BaseOfDll = 0
+ *      !foo fails always (despite what MSDN states)
+ *      RE1!RE2 looks up all modules matching RE1, and in all these modules, lookup RE2
+ *      no ! in Mask, lookup in local Context
+ * cases BaseOfDll != 0
+ *      !foo fails always (despite what MSDN states)
+ *      RE1!RE2 gets RE2 from BaseOfDll (whatever RE1 is)
+ */
+BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
+                           PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
+                           PVOID UserContext)
+{
+    struct sym_enum     se;
+
+    TRACE("(%p %s %s %p %p)\n", 
+          hProcess, wine_dbgstr_longlong(BaseOfDll), debugstr_a(Mask),
+          EnumSymbolsCallback, UserContext);
+
+    se.cb = EnumSymbolsCallback;
+    se.user = UserContext;
+    se.sym_info = (PSYMBOL_INFO)se.buffer;
+
+    return sym_enum(hProcess, BaseOfDll, Mask, &se);
 }
 
 struct sym_enumerate
