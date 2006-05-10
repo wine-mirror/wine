@@ -94,7 +94,7 @@
 @ stub SymGetSourceFileFromToken
 @ stub SymGetSourceFileFromTokenW
 @ stdcall SymGetSourceFileToken(ptr double str ptr ptr)
-@ stub SymGetSourceFileTokenW
+@ stdcall SymGetSourceFileTokenW(ptr double wstr ptr ptr)
 @ stub SymGetSourceFileW
 @ stub SymGetSourceVarFromToken
 @ stub SymGetSourceVarFromTokenW

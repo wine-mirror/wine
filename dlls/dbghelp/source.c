@@ -215,3 +215,16 @@ BOOL WINAPI SymGetSourceFileToken(HANDLE hProcess, ULONG64 base,
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/******************************************************************
+ *		SymGetSourceFileTokenW (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetSourceFileTokenW(HANDLE hProcess, ULONG64 base,
+                                   PCWSTR src, PVOID* token, DWORD* size)
+{
+    FIXME("%p %s %s %p %p: stub!\n",
+          hProcess, wine_dbgstr_longlong(base), debugstr_w(src), token, size);
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
