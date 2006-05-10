@@ -661,6 +661,39 @@ BOOL  WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr,
 }
 
 /******************************************************************
+ *		SymGetModuleInfoW (DBGHELP.@)
+ *
+ */
+BOOL  WINAPI SymGetModuleInfoW(HANDLE hProcess, DWORD dwAddr, 
+                               PIMAGEHLP_MODULEW ModuleInfo)
+{
+    IMAGEHLP_MODULE     mi;
+    IMAGEHLP_MODULEW    miw;
+
+    if (sizeof(miw) < ModuleInfo->SizeOfStruct) FIXME("Wrong size\n");
+
+    mi.SizeOfStruct = sizeof(mi);
+    if (!SymGetModuleInfo(hProcess, dwAddr, &mi)) return FALSE;
+
+    miw.SizeOfStruct  = mi.SizeOfStruct;
+    miw.BaseOfImage   = mi.BaseOfImage;
+    miw.ImageSize     = mi.ImageSize;
+    miw.TimeDateStamp = mi.TimeDateStamp;
+    miw.CheckSum      = mi.CheckSum;
+    miw.NumSyms       = mi.NumSyms;
+    miw.SymType       = mi.SymType;
+    MultiByteToWideChar(CP_ACP, 0, mi.ModuleName, -1,   
+                        miw.ModuleName, sizeof(miw.ModuleName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, mi.ImageName, -1,   
+                        miw.ImageName, sizeof(miw.ImageName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, mi.LoadedImageName, -1,   
+                        miw.LoadedImageName, sizeof(miw.LoadedImageName) / sizeof(WCHAR));
+    memcpy(ModuleInfo, &miw, ModuleInfo->SizeOfStruct);
+
+    return TRUE;
+}
+
+/******************************************************************
  *		SymGetModuleInfo64 (DBGHELP.@)
  *
  */
@@ -717,6 +750,54 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
         }
     }
     memcpy(ModuleInfo, &mod, mod.SizeOfStruct);
+    return TRUE;
+}
+
+/******************************************************************
+ *		SymGetModuleInfoW64 (DBGHELP.@)
+ *
+ */
+BOOL  WINAPI SymGetModuleInfoW64(HANDLE hProcess, DWORD64 dwAddr, 
+                                 PIMAGEHLP_MODULEW64 ModuleInfo)
+{
+    IMAGEHLP_MODULE64   mi;
+    IMAGEHLP_MODULEW64  miw;
+
+    if (sizeof(miw) < ModuleInfo->SizeOfStruct) FIXME("Wrong size\n");
+
+    mi.SizeOfStruct = sizeof(mi);
+    if (!SymGetModuleInfo64(hProcess, dwAddr, &mi)) return FALSE;
+
+    miw.SizeOfStruct  = mi.SizeOfStruct;
+    miw.BaseOfImage   = mi.BaseOfImage;
+    miw.ImageSize     = mi.ImageSize;
+    miw.TimeDateStamp = mi.TimeDateStamp;
+    miw.CheckSum      = mi.CheckSum;
+    miw.NumSyms       = mi.NumSyms;
+    miw.SymType       = mi.SymType;
+    MultiByteToWideChar(CP_ACP, 0, mi.ModuleName, -1,   
+                        miw.ModuleName, sizeof(miw.ModuleName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, mi.ImageName, -1,   
+                        miw.ImageName, sizeof(miw.ImageName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, mi.LoadedImageName, -1,   
+                        miw.LoadedImageName, sizeof(miw.LoadedImageName) / sizeof(WCHAR));
+
+    miw.CVSig         = mi.CVSig;
+    MultiByteToWideChar(CP_ACP, 0, mi.CVData, -1,   
+                        miw.CVData, sizeof(miw.CVData) / sizeof(WCHAR));
+    miw.PdbSig        = mi.PdbSig;
+    miw.PdbSig70      = mi.PdbSig70;
+    miw.PdbAge        = mi.PdbAge;
+    miw.PdbUnmatched  = mi.PdbUnmatched;
+    miw.DbgUnmatched  = mi.DbgUnmatched;
+    miw.LineNumbers   = mi.LineNumbers;
+    miw.GlobalSymbols = mi.GlobalSymbols;
+    miw.TypeInfo      = mi.TypeInfo;
+    miw.SourceIndexed = mi.SourceIndexed;
+    miw.Publics       = mi.Publics;
+
+    memcpy(ModuleInfo, &miw, ModuleInfo->SizeOfStruct);
+
     return TRUE;
 }
 

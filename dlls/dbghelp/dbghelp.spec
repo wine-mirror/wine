@@ -83,8 +83,8 @@
 @ stdcall SymGetModuleBase64(long double)
 @ stdcall SymGetModuleInfo(long long ptr)
 @ stdcall SymGetModuleInfo64(long double ptr)
-@ stub SymGetModuleInfoW
-@ stub SymGetModuleInfoW64
+@ stdcall SymGetModuleInfoW(long long ptr)
+@ stdcall SymGetModuleInfoW64(long double ptr)
 @ stub SymGetOmapBlockBase
 @ stdcall SymGetOptions()
 @ stub SymGetScope

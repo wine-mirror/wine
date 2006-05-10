@@ -172,7 +172,7 @@ typedef struct _IMAGEHLP_MODULE64
     BOOL                        Publics;
 } IMAGEHLP_MODULE64, *PIMAGEHLP_MODULE64;
 
-typedef struct _IMAGEHLP_MODULE64W
+typedef struct _IMAGEHLP_MODULEW64
 {
     DWORD                       SizeOfStruct;
     DWORD64                     BaseOfImage;
