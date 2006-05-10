@@ -53,7 +53,6 @@ typedef struct tagCLASS
     INT              cbClsExtra;    /* Class extra bytes */
     INT              cbWndExtra;    /* Window extra bytes */
     LPWSTR           menuName;      /* Default menu name (Unicode followed by ASCII) */
-    SEGPTR           segMenuName;   /* Default menu name as SEGPTR */
     HINSTANCE        hInstance;     /* Module that created the task */
     HICON            hIcon;         /* Default icon */
     HICON            hIconSm;       /* Default small icon */
@@ -149,18 +148,6 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG newval )
  *
  * Get the class winproc for a given proc type
  */
-static WNDPROC16 CLASS_GetProc16( CLASS *classPtr )
-{
-    if (classPtr->winprocA) return WINPROC_GetProc16( classPtr->winprocA, FALSE );
-    else return WINPROC_GetProc16( classPtr->winprocW, TRUE );
-}
-
-
-/***********************************************************************
- *           CLASS_GetProc
- *
- * Get the class winproc for a given proc type
- */
 static WNDPROC CLASS_GetProc( CLASS *classPtr, BOOL unicode )
 {
     WNDPROC proc = classPtr->winprocA;
@@ -173,29 +160,6 @@ static WNDPROC CLASS_GetProc( CLASS *classPtr, BOOL unicode )
         if (!proc || unicode) proc = classPtr->winprocW;
     }
     return WINPROC_GetProc( proc, unicode );
-}
-
-
-/***********************************************************************
- *           CLASS_SetProc16
- *
- * Set the class winproc for a given proc type.
- * Returns the previous window proc.
- */
-static void CLASS_SetProc16( CLASS *classPtr, WNDPROC16 newproc )
-{
-    WNDPROC proc = WINPROC_AllocProc16( newproc );
-
-    if (WINPROC_IsUnicode( proc, FALSE ))
-    {
-        classPtr->winprocA = 0;
-        classPtr->winprocW = proc;
-    }
-    else
-    {
-        classPtr->winprocA = proc;
-        classPtr->winprocW = 0;
-    }
 }
 
 
@@ -235,20 +199,6 @@ inline static LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
 
 
 /***********************************************************************
- *           CLASS_GetMenuName16
- *
- * Get the menu name as a SEGPTR.
- */
-inline static SEGPTR CLASS_GetMenuName16( CLASS *classPtr )
-{
-    if (!HIWORD(classPtr->menuName)) return (SEGPTR)classPtr->menuName;
-    if (!classPtr->segMenuName)
-        classPtr->segMenuName = MapLS( CLASS_GetMenuNameA(classPtr) );
-    return classPtr->segMenuName;
-}
-
-
-/***********************************************************************
  *           CLASS_GetMenuNameW
  *
  * Get the menu name as a Unicode string.
@@ -266,8 +216,6 @@ inline static LPWSTR CLASS_GetMenuNameW( CLASS *classPtr )
  */
 static void CLASS_SetMenuNameA( CLASS *classPtr, LPCSTR name )
 {
-    UnMapLS( classPtr->segMenuName );
-    classPtr->segMenuName = 0;
     if (HIWORD(classPtr->menuName)) HeapFree( GetProcessHeap(), 0, classPtr->menuName );
     if (HIWORD(name))
     {
@@ -288,8 +236,6 @@ static void CLASS_SetMenuNameA( CLASS *classPtr, LPCSTR name )
  */
 static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
 {
-    UnMapLS( classPtr->segMenuName );
-    classPtr->segMenuName = 0;
     if (HIWORD(classPtr->menuName)) HeapFree( GetProcessHeap(), 0, classPtr->menuName );
     if (HIWORD(name))
     {
@@ -318,7 +264,6 @@ static void CLASS_FreeClass( CLASS *classPtr )
     list_remove( &classPtr->entry );
     if (classPtr->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         DeleteObject( classPtr->hbrBackground );
-    UnMapLS( classPtr->segMenuName );
     HeapFree( GetProcessHeap(), 0, classPtr->menuName );
     HeapFree( GetProcessHeap(), 0, classPtr );
     USER_Unlock();
@@ -742,40 +687,6 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
 
 
 /***********************************************************************
- *		GetClassLong (USER.131)
- */
-LONG WINAPI GetClassLong16( HWND16 hwnd16, INT16 offset )
-{
-    CLASS *class;
-    LONG ret;
-    HWND hwnd = (HWND)(ULONG_PTR)hwnd16;  /* no need for full handle */
-
-    TRACE("%p %d\n",hwnd, offset);
-
-    switch( offset )
-    {
-    case GCLP_WNDPROC:
-        if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
-        if (class == CLASS_OTHER_PROCESS) break;
-        ret = (LONG)CLASS_GetProc16( class );
-        release_class_ptr( class );
-        return ret;
-    case GCLP_MENUNAME:
-        if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
-        if (class == CLASS_OTHER_PROCESS) break;
-        ret = (LONG)CLASS_GetMenuName16( class );
-        release_class_ptr( class );
-        return ret;
-    default:
-        return GetClassLongA( hwnd, offset );
-    }
-    FIXME( "offset %d not supported on other process window %p\n", offset, hwnd );
-    SetLastError( ERROR_INVALID_HANDLE );
-    return 0;
-}
-
-
-/***********************************************************************
  *		GetClassLongW (USER32.@)
  */
 DWORD WINAPI GetClassLongW( HWND hwnd, INT offset )
@@ -951,34 +862,6 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
     SERVER_END_REQ;
     release_class_ptr( class );
     return retval;
-}
-
-
-/***********************************************************************
- *		SetClassLong (USER.132)
- */
-LONG WINAPI SetClassLong16( HWND16 hwnd16, INT16 offset, LONG newval )
-{
-    CLASS *class;
-    LONG retval;
-    HWND hwnd = (HWND)(ULONG_PTR)hwnd16;  /* no need for full handle */
-
-    TRACE("%p %d %lx\n", hwnd, offset, newval);
-
-    switch(offset)
-    {
-    case GCLP_WNDPROC:
-        if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
-        retval = (LONG)CLASS_GetProc16( class );
-        CLASS_SetProc16( class, (WNDPROC16)newval );
-        release_class_ptr( class );
-        return retval;
-    case GCLP_MENUNAME:
-        newval = (LONG)MapSL( newval );
-        /* fall through */
-    default:
-        return SetClassLongA( hwnd, offset, newval );
-    }
 }
 
 

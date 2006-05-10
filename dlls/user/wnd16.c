@@ -661,6 +661,47 @@ WORD WINAPI SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
 }
 
 
+/***********************************************************************
+ *		GetClassLong (USER.131)
+ */
+LONG WINAPI GetClassLong16( HWND16 hwnd16, INT16 offset )
+{
+    LONG_PTR ret = GetClassLongA( WIN_Handle32(hwnd16), offset );
+
+    switch( offset )
+    {
+    case GCLP_WNDPROC:
+        return (LONG_PTR)WINPROC_GetProc16( (WNDPROC)ret, FALSE );
+    case GCLP_MENUNAME:
+        return MapLS( (void *)ret );  /* leak */
+    default:
+        return ret;
+    }
+}
+
+
+/***********************************************************************
+ *		SetClassLong (USER.132)
+ */
+LONG WINAPI SetClassLong16( HWND16 hwnd16, INT16 offset, LONG newval )
+{
+    switch( offset )
+    {
+    case GCLP_WNDPROC:
+        {
+            WNDPROC new_proc = WINPROC_AllocProc16( (WNDPROC16)newval );
+            WNDPROC old_proc = (WNDPROC)SetClassLongA( WIN_Handle32(hwnd16), offset, (LONG_PTR)new_proc );
+            return (LONG)WINPROC_GetProc16( (WNDPROC)old_proc, FALSE );
+        }
+    case GCLP_MENUNAME:
+        newval = (LONG)MapSL( newval );
+        /* fall through */
+    default:
+        return SetClassLongA( WIN_Handle32(hwnd16), offset, newval );
+    }
+}
+
+
 /**************************************************************************
  *              GetWindowWord   (USER.133)
  */
