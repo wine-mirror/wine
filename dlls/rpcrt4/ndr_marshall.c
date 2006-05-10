@@ -1906,6 +1906,8 @@ unsigned char * WINAPI NdrConformantArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                   PFORMAT_STRING pFormat)
 {
   DWORD size = 0, esize = *(const WORD*)(pFormat+2);
+  unsigned char alignment = pFormat[1] + 1;
+
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
@@ -1914,6 +1916,8 @@ unsigned char * WINAPI NdrConformantArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, size);
   pStubMsg->Buffer += 4;
+
+  ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
   memcpy(pStubMsg->Buffer, pMemory, size*esize);
   pStubMsg->BufferMark = pStubMsg->Buffer;
@@ -1935,6 +1939,8 @@ unsigned char * WINAPI NdrConformantArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                     unsigned char fMustAlloc)
 {
   DWORD size = 0, esize = *(const WORD*)(pFormat+2);
+  unsigned char alignment = pFormat[1] + 1;
+
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
@@ -1943,6 +1949,8 @@ unsigned char * WINAPI NdrConformantArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   if (fMustAlloc || !*ppMemory)
     *ppMemory = NdrAllocate(pStubMsg, size*esize);
+
+  ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
   memcpy(*ppMemory, pStubMsg->Buffer, size*esize);
 
@@ -1962,14 +1970,19 @@ void WINAPI NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                          PFORMAT_STRING pFormat)
 {
   DWORD size = 0, esize = *(const WORD*)(pFormat+2);
+  unsigned char alignment = pFormat[1] + 1;
+
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
   size = pStubMsg->MaxCount;
+  pStubMsg->BufferLength += 4;
+
+  ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
   /* conformance value plus array */
-  pStubMsg->BufferLength += sizeof(DWORD) + size*esize;
+  pStubMsg->BufferLength += size*esize;
 
   EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
@@ -2015,6 +2028,7 @@ unsigned char* WINAPI NdrConformantVaryingArrayMarshall( PMIDL_STUB_MESSAGE pStu
                                                          unsigned char* pMemory,
                                                          PFORMAT_STRING pFormat )
 {
+    unsigned char alignment = pFormat[1] + 1;
     DWORD esize = *(const WORD*)(pFormat+2);
 
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
@@ -2036,6 +2050,8 @@ unsigned char* WINAPI NdrConformantVaryingArrayMarshall( PMIDL_STUB_MESSAGE pStu
     NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->ActualCount);
     pStubMsg->Buffer += 4;
 
+    ALIGN_POINTER(pStubMsg->Buffer, alignment);
+
     memcpy(pStubMsg->Buffer, pMemory + pStubMsg->Offset, pStubMsg->ActualCount*esize);
     pStubMsg->BufferMark = pStubMsg->Buffer;
     pStubMsg->Buffer += pStubMsg->ActualCount*esize;
@@ -2056,6 +2072,7 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
                                                            PFORMAT_STRING pFormat,
                                                            unsigned char fMustAlloc )
 {
+    unsigned char alignment = pFormat[1] + 1;
     DWORD esize = *(const WORD*)(pFormat+2);
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
@@ -2066,8 +2083,11 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
         RpcRaiseException(RPC_S_INTERNAL_ERROR);
         return NULL;
     }
+
     pFormat = ReadConformance(pStubMsg, pFormat);
     pFormat = ReadVariance(pStubMsg, pFormat);
+
+    ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
     if (!*ppMemory || fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, pStubMsg->MaxCount * esize);
@@ -2109,6 +2129,7 @@ void WINAPI NdrConformantVaryingArrayFree( PMIDL_STUB_MESSAGE pStubMsg,
 void WINAPI NdrConformantVaryingArrayBufferSize( PMIDL_STUB_MESSAGE pStubMsg,
                                                  unsigned char* pMemory, PFORMAT_STRING pFormat )
 {
+    unsigned char alignment = pFormat[1] + 1;
     DWORD esize = *(const WORD*)(pFormat+2);
 
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
@@ -2125,8 +2146,12 @@ void WINAPI NdrConformantVaryingArrayBufferSize( PMIDL_STUB_MESSAGE pStubMsg,
     /* compute length */
     pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
 
-    /* conformance + offset + variance + array */
-    pStubMsg->BufferLength += 3*sizeof(DWORD) + pStubMsg->ActualCount*esize;
+    /* conformance + offset + variance */
+    pStubMsg->BufferLength += 3 * sizeof(DWORD);
+
+    ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
+
+    pStubMsg->BufferLength += pStubMsg->ActualCount*esize;
 
     EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
@@ -2152,6 +2177,7 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 {
   ULONG count, def;
   BOOL variance_present;
+  unsigned char alignment;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
@@ -2161,6 +2187,8 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       RpcRaiseException(RPC_S_INTERNAL_ERROR);
       return NULL;
   }
+
+  alignment = pFormat[1] + 1;
 
   def = *(const WORD*)&pFormat[2];
   pFormat += 4;
@@ -2182,6 +2210,8 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     pStubMsg->Buffer += 4;
   }
 
+  ALIGN_POINTER(pStubMsg->Buffer, alignment);
+
   for (count = 0; count < pStubMsg->ActualCount; count++)
     pMemory = ComplexMarshall(pStubMsg, pMemory, pFormat, NULL);
 
@@ -2199,6 +2229,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  unsigned char fMustAlloc)
 {
   ULONG count, esize;
+  unsigned char alignment;
   unsigned char *pMemory;
 
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
@@ -2209,6 +2240,8 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       RpcRaiseException(RPC_S_INTERNAL_ERROR);
       return NULL;
   }
+
+  alignment = pFormat[1] + 1;
 
   pFormat += 4;
 
@@ -2222,6 +2255,8 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     *ppMemory = NdrAllocate(pStubMsg, pStubMsg->MaxCount * esize);
     memset(*ppMemory, 0, pStubMsg->MaxCount * esize);
   }
+
+  ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
   pMemory = *ppMemory;
   for (count = 0; count < pStubMsg->ActualCount; count++)
@@ -2238,6 +2273,7 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                       PFORMAT_STRING pFormat)
 {
   ULONG count, def;
+  unsigned char alignment;
   BOOL variance_present;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
@@ -2248,6 +2284,8 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       RpcRaiseException(RPC_S_INTERNAL_ERROR);
       return;
   }
+
+  alignment = pFormat[1] + 1;
 
   def = *(const WORD*)&pFormat[2];
   pFormat += 4;
@@ -2262,6 +2300,8 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
   if (variance_present)
     pStubMsg->BufferLength += 2*sizeof(ULONG);
+
+  ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
   for (count=0; count < pStubMsg->ActualCount; count++)
     pMemory = ComplexBufferSize(pStubMsg, pMemory, pFormat, NULL);
