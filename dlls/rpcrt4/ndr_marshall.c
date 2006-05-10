@@ -90,9 +90,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
     LITTLE_ENDIAN_UINT32_READ(pchar)
 #endif
 
-/* _Align must be the desired alignment minus 1,
- * e.g. ALIGN_LENGTH(len, 3) to align on a dword boundary. */
-#define ALIGNED_LENGTH(_Len, _Align) (((_Len)+(_Align))&~(_Align))
+/* _Align must be the desired alignment,
+ * e.g. ALIGN_LENGTH(len, 4) to align on a dword boundary. */
+#define ALIGNED_LENGTH(_Len, _Align) (((_Len)+(_Align)-1)&~((_Align)-1))
 #define ALIGNED_POINTER(_Ptr, _Align) ((LPVOID)ALIGNED_LENGTH((ULONG_PTR)(_Ptr), _Align))
 #define ALIGN_LENGTH(_Len, _Align) _Len = ALIGNED_LENGTH(_Len, _Align)
 #define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
@@ -1494,10 +1494,10 @@ unsigned char * WINAPI ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pMemory += 4;
       break;
     case RPC_FC_ALIGNM4:
-      ALIGN_POINTER(pMemory, 3);
+      ALIGN_POINTER(pMemory, 4);
       break;
     case RPC_FC_ALIGNM8:
-      ALIGN_POINTER(pMemory, 7);
+      ALIGN_POINTER(pMemory, 8);
       break;
     case RPC_FC_STRUCTPAD2:
       pMemory += 2;
@@ -1560,10 +1560,10 @@ unsigned char * WINAPI ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pMemory += 4;
       break;
     case RPC_FC_ALIGNM4:
-      ALIGN_POINTER(pMemory, 3);
+      ALIGN_POINTER(pMemory, 4);
       break;
     case RPC_FC_ALIGNM8:
-      ALIGN_POINTER(pMemory, 7);
+      ALIGN_POINTER(pMemory, 8);
       break;
     case RPC_FC_STRUCTPAD2:
       pMemory += 2;
@@ -1620,10 +1620,10 @@ unsigned char * WINAPI ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       pMemory += 4;
       break;
     case RPC_FC_ALIGNM4:
-      ALIGN_POINTER(pMemory, 3);
+      ALIGN_POINTER(pMemory, 4);
       break;
     case RPC_FC_ALIGNM8:
-      ALIGN_POINTER(pMemory, 7);
+      ALIGN_POINTER(pMemory, 8);
       break;
     case RPC_FC_STRUCTPAD2:
       pMemory += 2;
@@ -1676,10 +1676,10 @@ unsigned char * WINAPI ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
       pMemory += 4;
       break;
     case RPC_FC_ALIGNM4:
-      ALIGN_POINTER(pMemory, 3);
+      ALIGN_POINTER(pMemory, 4);
       break;
     case RPC_FC_ALIGNM8:
-      ALIGN_POINTER(pMemory, 7);
+      ALIGN_POINTER(pMemory, 8);
       break;
     case RPC_FC_STRUCTPAD2:
       pMemory += 2;
@@ -1726,10 +1726,10 @@ unsigned long WINAPI ComplexStructSize(PMIDL_STUB_MESSAGE pStubMsg,
       size += 4;
       break;
     case RPC_FC_ALIGNM4:
-      ALIGN_LENGTH(size, 3);
+      ALIGN_LENGTH(size, 4);
       break;
     case RPC_FC_ALIGNM8:
-      ALIGN_LENGTH(size, 7);
+      ALIGN_LENGTH(size, 8);
       break;
     case RPC_FC_STRUCTPAD2:
       size += 2;
@@ -2976,13 +2976,13 @@ static long unmarshall_discriminant(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
         discriminant = *(USHORT *)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(USHORT);
         break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG));
         discriminant = *(ULONG *)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(ULONG);
         break;
@@ -3252,7 +3252,7 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
         *(USHORT *)pStubMsg->Buffer = *(USHORT *)pMemory;
         pStubMsg->Buffer += sizeof(USHORT);
         TRACE("value: 0x%04x\n", *(USHORT *)pMemory);
@@ -3261,23 +3261,23 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(
     case RPC_FC_ULONG:
     case RPC_FC_ERROR_STATUS_T:
     case RPC_FC_ENUM32:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG));
         *(ULONG *)pStubMsg->Buffer = *(ULONG *)pMemory;
         pStubMsg->Buffer += sizeof(ULONG);
         TRACE("value: 0x%08lx\n", *(ULONG *)pMemory);
         break;
     case RPC_FC_FLOAT:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(float) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(float));
         *(float *)pStubMsg->Buffer = *(float *)pMemory;
         pStubMsg->Buffer += sizeof(float);
         break;
     case RPC_FC_DOUBLE:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(double) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(double));
         *(double *)pStubMsg->Buffer = *(double *)pMemory;
         pStubMsg->Buffer += sizeof(double);
         break;
     case RPC_FC_HYPER:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONGLONG) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONGLONG));
         *(ULONGLONG *)pStubMsg->Buffer = *(ULONGLONG *)pMemory;
         pStubMsg->Buffer += sizeof(ULONGLONG);
         TRACE("value: %s\n", wine_dbgstr_longlong(*(ULONGLONG*)pMemory));
@@ -3286,7 +3286,7 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(
         /* only 16-bits on the wire, so do a sanity check */
         if (*(UINT *)pMemory > USHRT_MAX)
             RpcRaiseException(RPC_X_ENUM_VALUE_OUT_OF_RANGE);
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
         *(USHORT *)pStubMsg->Buffer = *(UINT *)pMemory;
         pStubMsg->Buffer += sizeof(USHORT);
         TRACE("value: 0x%04x\n", *(UINT *)pMemory);
@@ -3330,7 +3330,7 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
         **(USHORT **)ppMemory = *(USHORT *)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(USHORT);
         TRACE("value: 0x%04x\n", **(USHORT **)ppMemory);
@@ -3339,31 +3339,31 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
     case RPC_FC_ULONG:
     case RPC_FC_ERROR_STATUS_T:
     case RPC_FC_ENUM32:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG));
         **(ULONG **)ppMemory = *(ULONG *)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(ULONG);
         TRACE("value: 0x%08lx\n", **(ULONG **)ppMemory);
         break;
    case RPC_FC_FLOAT:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(float) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(float));
         **(float **)ppMemory = *(float *)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(float);
         TRACE("value: %f\n", **(float **)ppMemory);
         break;
     case RPC_FC_DOUBLE:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(double) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(double));
         **(double **)ppMemory = *(double*)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(double);
         TRACE("value: %f\n", **(double **)ppMemory);
         break;
     case RPC_FC_HYPER:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONGLONG) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONGLONG));
         **(ULONGLONG **)ppMemory = *(ULONGLONG *)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(ULONGLONG);
         TRACE("value: %s\n", wine_dbgstr_longlong(**(ULONGLONG **)ppMemory));
         break;
     case RPC_FC_ENUM16:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT) - 1);
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
         /* 16-bits on the wire, but int in memory */
         **(UINT **)ppMemory = *(USHORT *)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(USHORT);
@@ -3400,29 +3400,29 @@ static void WINAPI NdrBaseTypeBufferSize(
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
     case RPC_FC_ENUM16:
-        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(USHORT) - 1);
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(USHORT));
         pStubMsg->BufferLength += sizeof(USHORT);
         break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
-        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(ULONG) - 1);
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(ULONG));
         pStubMsg->BufferLength += sizeof(ULONG);
         break;
     case RPC_FC_FLOAT:
-        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(float) - 1);
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(float));
         pStubMsg->BufferLength += sizeof(float);
         break;
     case RPC_FC_DOUBLE:
-        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(double) - 1);
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(double));
         pStubMsg->BufferLength += sizeof(double);
         break;
     case RPC_FC_HYPER:
-        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(ULONGLONG) - 1);
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(ULONGLONG));
         pStubMsg->BufferLength += sizeof(ULONGLONG);
         break;
     case RPC_FC_ERROR_STATUS_T:
-        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(error_status_t) - 1);
+        ALIGN_LENGTH(pStubMsg->BufferLength, sizeof(error_status_t));
         pStubMsg->BufferLength += sizeof(error_status_t);
         break;
     default:
