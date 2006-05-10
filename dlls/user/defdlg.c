@@ -159,15 +159,15 @@ static BOOL DEFDLG_SetDefId( HWND hwndDlg, DIALOGINFO *dlgInfo, WPARAM wParam)
 
     /* Make sure the old default control is a valid push button ID */
     hwndOld = GetDlgItem( hwndDlg, old_id );
-    if (!hwndOld || !(SendMessageA( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON))
+    if (!hwndOld || !(SendMessageW( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON))
         hwndOld = DEFDLG_FindDefButton( hwndDlg );
     if (hwndOld && hwndOld != hwndNew)
-        SendMessageA( hwndOld, BM_SETSTYLE, BS_PUSHBUTTON, TRUE );
+        SendMessageW( hwndOld, BM_SETSTYLE, BS_PUSHBUTTON, TRUE );
 
     if (hwndNew)
     {
         if(dlgcode & DLGC_UNDEFPUSHBUTTON)
-            SendMessageA( hwndNew, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
+            SendMessageW( hwndNew, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
     }
     return TRUE;
 }
@@ -197,15 +197,15 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo, HWND hwndNew
     }
 
     /* Make sure the old default control is a valid push button ID */
-    if (!hwndOld || !(SendMessageA( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON))
+    if (!hwndOld || !(SendMessageW( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON))
         hwndOld = DEFDLG_FindDefButton( hwndDlg );
     if (hwndOld && hwndOld != hwndNew)
-        SendMessageA( hwndOld, BM_SETSTYLE, BS_PUSHBUTTON, TRUE );
+        SendMessageW( hwndOld, BM_SETSTYLE, BS_PUSHBUTTON, TRUE );
 
     if (hwndNew)
     {
         if(dlgcode & DLGC_UNDEFPUSHBUTTON)
-            SendMessageA( hwndNew, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
+            SendMessageW( hwndNew, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
     }
     return TRUE;
 }
@@ -300,8 +300,8 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
                 if (hwndFocus)
                 {
                     /* always make combo box hide its listbox control */
-                    if (!SendMessageA( hwndFocus, CB_SHOWDROPDOWN, FALSE, 0 ))
-                        SendMessageA( GetParent(hwndFocus), CB_SHOWDROPDOWN, FALSE, 0 );
+                    if (!SendMessageW( hwndFocus, CB_SHOWDROPDOWN, FALSE, 0 ))
+                        SendMessageW( GetParent(hwndFocus), CB_SHOWDROPDOWN, FALSE, 0 );
                 }
             }
             return DefWindowProcA( hwnd, msg, wParam, lParam );

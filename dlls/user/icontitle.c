@@ -228,8 +228,8 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
             if (wParam) ICONTITLE_SetTitlePos( hWnd, owner );
 	     return 0;
 	case WM_ERASEBKGND:
-            if( GetWindowLongA( owner, GWL_STYLE ) & WS_CHILD )
-                lParam = SendMessageA( owner, WM_ISACTIVEICON, 0, 0 );
+            if( GetWindowLongW( owner, GWL_STYLE ) & WS_CHILD )
+                lParam = SendMessageW( owner, WM_ISACTIVEICON, 0, 0 );
             else
                 lParam = (owner == GetActiveWindow());
             if( ICONTITLE_Paint( hWnd, owner, (HDC)wParam, (BOOL)lParam ) )

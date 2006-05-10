@@ -385,7 +385,7 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
             *hittest = HTCLIENT;
             break;
         }
-        res = SendMessageA( list[i], WM_NCHITTEST, 0, MAKELONG(pt.x,pt.y) );
+        res = SendMessageW( list[i], WM_NCHITTEST, 0, MAKELONG(pt.x,pt.y) );
         if (res != HTTRANSPARENT)
         {
             *hittest = res;  /* Found the window */
@@ -679,7 +679,7 @@ BOOL WINPOS_RedrawIconTitle( HWND hWnd )
     {
 	if( lpPos->hwndIconTitle )
 	{
-	    SendMessageA( lpPos->hwndIconTitle, WM_SHOWWINDOW, TRUE, 0);
+	    SendMessageW( lpPos->hwndIconTitle, WM_SHOWWINDOW, TRUE, 0);
 	    InvalidateRect( lpPos->hwndIconTitle, NULL, TRUE );
 	    return TRUE;
 	}
@@ -706,7 +706,7 @@ BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
         {
             if (!IsWindowVisible(title))
             {
-                SendMessageA( title, WM_SHOWWINDOW, TRUE, 0 );
+                SendMessageW( title, WM_SHOWWINDOW, TRUE, 0 );
                 SetWindowPos( title, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
                               SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
             }
@@ -795,7 +795,7 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
         MinMax.ptMaxPosition.y = -yinc;
     }
 
-    SendMessageA( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&MinMax );
+    SendMessageW( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&MinMax );
 
       /* Some sanity checks */
 

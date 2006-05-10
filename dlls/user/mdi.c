@@ -671,7 +671,7 @@ static LONG MDICascade( HWND client, MDICLIENTINFO *ci )
     int i, total;
 
     if (IsZoomed(ci->hwndActiveChild))
-        SendMessageA(client, WM_MDIRESTORE, (WPARAM)ci->hwndActiveChild, 0);
+        SendMessageW(client, WM_MDIRESTORE, (WPARAM)ci->hwndActiveChild, 0);
 
     if (ci->nActiveChildren == 0) return 0;
 
@@ -724,7 +724,7 @@ static void MDITile( HWND client, MDICLIENTINFO *ci, WPARAM wParam )
     BOOL has_icons = FALSE;
 
     if (IsZoomed(ci->hwndActiveChild))
-        SendMessageA(client, WM_MDIRESTORE, (WPARAM)ci->hwndActiveChild, 0);
+        SendMessageW(client, WM_MDIRESTORE, (WPARAM)ci->hwndActiveChild, 0);
 
     if (ci->nActiveChildren == 0) return;
 

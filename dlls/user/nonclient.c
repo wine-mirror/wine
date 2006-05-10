@@ -1318,9 +1318,9 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
         return;
 
     if (wParam == HTMINBUTTON)
-        SendMessageA( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
+        SendMessageW( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
     else
-        SendMessageA( hwnd, WM_SYSCOMMAND,
+        SendMessageW( hwnd, WM_SYSCOMMAND,
                       IsZoomed(hwnd) ? SC_RESTORE:SC_MAXIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
 }
 
@@ -1377,7 +1377,7 @@ static void NC_TrackCloseButton (HWND hwnd, WORD wParam)
     ReleaseDC( hwnd, hdc );
     if (!pressed) return;
 
-    SendMessageA( hwnd, WM_SYSCOMMAND, SC_CLOSE, MAKELONG(msg.pt.x,msg.pt.y) );
+    SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, MAKELONG(msg.pt.x,msg.pt.y) );
 }
 
 
@@ -1573,7 +1573,7 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
         break;
 
     case SC_CLOSE:
-        return SendMessageA( hwnd, WM_CLOSE, 0, 0 );
+        return SendMessageW( hwnd, WM_CLOSE, 0, 0 );
 
     case SC_VSCROLL:
     case SC_HSCROLL:
