@@ -5330,9 +5330,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIM
 
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* start vertex */, 0  /* NumVertices */,
                   0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */, NULL);
-    /* stream zero settings set to null at end, as per the msdn
-            http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawPrimitiveUP.asp
-    */
+
+    /* MSDN specifies stream zero settings must be set to NULL */
     This->stateBlock->streamStride[0] = 0;
     This->stateBlock->streamSource[0] = NULL;
 
@@ -5373,13 +5372,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
 
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex, NULL);
-    /* stream zero settings set to null at end as per the msdn
-    http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/DrawPrimitiveUP.asp
-    */
 
-    /* stream zero settings set to null at end as per the msdn */
+    /* MSDN specifies stream zero settings and index buffer must be set to NULL */
     This->stateBlock->streamSource[0] = NULL;
     This->stateBlock->streamStride[0] = 0;
+    This->stateBlock->pIndexData = NULL;
 
     return WINED3D_OK;
 }
