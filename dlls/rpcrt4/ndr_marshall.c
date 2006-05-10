@@ -1427,20 +1427,6 @@ void WINAPI NdrSimpleStructFree(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 
-static long NonEncapsulatedUnionSize(PMIDL_STUB_MESSAGE pStubMsg,
-                                     PFORMAT_STRING pFormat)
-{
-    pFormat += 2;
-    if (pStubMsg->fHasNewCorrDesc)
-        pFormat += 6;
-    else
-        pFormat += 4;
-
-    pFormat += *(const SHORT*)pFormat;
-    TRACE("size %d\n", *(const SHORT*)pFormat);
-    return *(const SHORT*)pFormat;
-}
-
 unsigned long WINAPI EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
                                          PFORMAT_STRING pFormat)
 {
@@ -1453,7 +1439,7 @@ unsigned long WINAPI EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
   case RPC_FC_USER_MARSHAL:
     return *(const WORD*)&pFormat[4];
   case RPC_FC_NON_ENCAPSULATED_UNION:
-    return NonEncapsulatedUnionSize(pStubMsg, pFormat);
+    return NdrNonEncapsulatedUnionMemorySize(pStubMsg, pFormat);
   default:
     FIXME("unhandled embedded type %02x\n", *pFormat);
   }
@@ -3109,8 +3095,15 @@ void WINAPI NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrNonEncapsulatedUnionMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
-    return 0;
+    pFormat += 2;
+    if (pStubMsg->fHasNewCorrDesc)
+        pFormat += 6;
+    else
+        pFormat += 4;
+
+    pFormat += *(const SHORT*)pFormat;
+    TRACE("size %d\n", *(const SHORT*)pFormat);
+    return *(const SHORT*)pFormat;
 }
 
 /***********************************************************************
