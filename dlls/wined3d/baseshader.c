@@ -96,9 +96,11 @@ const SHADER_OPCODE* shader_get_opcode(
 
 void shader_get_registers_used(
     IWineD3DBaseShader *iface,
-    CONST DWORD* pToken, 
-    DWORD* tempsUsed, 
-    DWORD* texUsed) {
+    CONST DWORD* pToken) {
+
+    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    DWORD* tempsUsed = &This->baseShader.temps_used;
+    DWORD* texUsed = &This->baseShader.textures_used;
 
     if (pToken == NULL)
         return;

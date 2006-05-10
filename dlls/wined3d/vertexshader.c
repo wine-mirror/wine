@@ -1153,7 +1153,10 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     buffer.lineNo = 0;
 
     /* First pass: figure out which temporary and texture registers are used */
-    shader_get_registers_used((IWineD3DBaseShader*) This, pToken, &tempsUsed, &addressUsed);
+    shader_get_registers_used((IWineD3DBaseShader*) This, pToken);
+    addressUsed = This->baseShader.textures_used;
+    tempsUsed = This->baseShader.temps_used;
+
     TRACE("Address registers used: %#lx, Temp registers used %#lx\n", addressUsed, tempsUsed);
 
     /* TODO: check register usage against GL/Directx limits, and fail if they're exceeded

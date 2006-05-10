@@ -1337,7 +1337,10 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateProgramArbHW(IWineD3DPixelSha
         This->constants[i] = 0;
 
     /* First pass: figure out which temporary and texture registers are used */
-    shader_get_registers_used((IWineD3DBaseShader*) This, pToken, &tempsUsed, &texUsed);
+    shader_get_registers_used((IWineD3DBaseShader*) This, pToken);
+    texUsed = This->baseShader.textures_used;
+    tempsUsed = This->baseShader.temps_used;
+
     TRACE("Texture registers used: %#lx, Temp registers used %#lx\n", texUsed, tempsUsed);
 
     /* TODO: check register usage against GL/Directx limits, and fail if they're exceeded */
