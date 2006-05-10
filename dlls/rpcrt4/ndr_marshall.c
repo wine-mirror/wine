@@ -308,6 +308,7 @@ static inline BOOL IsConformanceOrVariancePresent(PFORMAT_STRING pFormat)
 
 PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
 {
+  ALIGN_POINTER(pStubMsg->Buffer, 4);
   pStubMsg->MaxCount = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
   pStubMsg->Buffer += 4;
   TRACE("unmarshalled conformance is %ld\n", pStubMsg->MaxCount);
@@ -326,6 +327,7 @@ static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_S
     goto done;
   }
 
+  ALIGN_POINTER(pStubMsg->Buffer, 4);
   pStubMsg->Offset      = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
   pStubMsg->Buffer += 4;
   TRACE("offset is %ld\n", pStubMsg->Offset);
@@ -343,6 +345,7 @@ done:
 /* writes the conformance value to the buffer */
 static inline void WriteConformance(MIDL_STUB_MESSAGE *pStubMsg)
 {
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
     NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->MaxCount);
     pStubMsg->Buffer += 4;
 }
@@ -350,6 +353,7 @@ static inline void WriteConformance(MIDL_STUB_MESSAGE *pStubMsg)
 /* writes the variance values to the buffer */
 static inline void WriteVariance(MIDL_STUB_MESSAGE *pStubMsg)
 {
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
     NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->Offset);
     pStubMsg->Buffer += 4;
     NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, pStubMsg->ActualCount);
@@ -359,12 +363,14 @@ static inline void WriteVariance(MIDL_STUB_MESSAGE *pStubMsg)
 /* requests buffer space for the conformance value */
 static inline void SizeConformance(MIDL_STUB_MESSAGE *pStubMsg)
 {
+    ALIGN_LENGTH(pStubMsg->BufferLength, 4);
     pStubMsg->BufferLength += 4;
 }
 
 /* requests buffer space for the variance values */
 static inline void SizeVariance(MIDL_STUB_MESSAGE *pStubMsg)
 {
+    ALIGN_LENGTH(pStubMsg->BufferLength, 4);
     pStubMsg->BufferLength += 8;
 }
 
