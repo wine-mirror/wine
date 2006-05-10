@@ -298,7 +298,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
  *		SymFindFileInPath (DBGHELP.@)
  *
  */
-BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path,
+BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR inSearchPath, PCSTR full_path,
                               PVOID id, DWORD two, DWORD three, DWORD flags,
                               LPSTR buffer, PFINDFILEINPATHCALLBACK cb,
                               PVOID user)
@@ -308,13 +308,22 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path
     char                tmp[MAX_PATH];
     char*               ptr;
     const char*         filename;
+    const char*         searchPath = inSearchPath;
 
     TRACE("(%p %s %s %p %08lx %08lx %08lx %p %p %p)\n",
           hProcess, searchPath, full_path, id, two, three, flags, 
           buffer, cb, user);
 
     if (!pcs) return FALSE;
-    if (!searchPath) searchPath = pcs->search_path;
+    if (!searchPath)
+    {
+        unsigned len = WideCharToMultiByte(CP_ACP, 0, pcs->search_path, -1, NULL, 0, NULL, NULL);
+        char* buf;
+
+        searchPath = buf = HeapAlloc(GetProcessHeap(), 0, len);
+        if (!searchPath) return FALSE;
+        WideCharToMultiByte(CP_ACP, 0, pcs->search_path, -1, buf, len, NULL, NULL);
+    }
 
     s.id = id;
     s.two = two;
@@ -330,6 +339,8 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path
     if (sffip_cb(full_path, &s))
     {
         strcpy(buffer, full_path);
+        if (searchPath != inSearchPath)
+            HeapFree(GetProcessHeap(), 0, (char*)searchPath);
         return TRUE;
     }
 
@@ -350,8 +361,12 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path
         if (do_search(filename, tmp, FALSE, sffip_cb, &s))
         {
             strcpy(buffer, tmp);
+            if (searchPath != inSearchPath)
+                HeapFree(GetProcessHeap(), 0, (char*)searchPath);
             return TRUE;
         }
     }
+    if (searchPath != inSearchPath)
+        HeapFree(GetProcessHeap(), 0, (char*)searchPath);
     return FALSE;
 }

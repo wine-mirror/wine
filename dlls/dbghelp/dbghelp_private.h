@@ -291,7 +291,7 @@ struct process
 {
     struct process*             next;
     HANDLE                      handle;
-    char*                       search_path;
+    WCHAR*                      search_path;
     
     PSYMBOL_REGISTERED_CALLBACK64       reg_cb;
     DWORD64                     reg_user;

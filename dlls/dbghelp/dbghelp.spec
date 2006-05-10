@@ -89,7 +89,8 @@
 @ stdcall SymGetOptions()
 @ stub SymGetScope
 @ stub SymGetScopeW
-@ stdcall SymGetSearchPath(long str long)
+@ stdcall SymGetSearchPath(long ptr long)
+@ stdcall SymGetSearchPathW(long ptr long)
 @ stub SymGetSourceFileFromToken
 @ stub SymGetSourceFileFromTokenW
 @ stdcall SymGetSourceFileToken(ptr double str ptr ptr)
@@ -112,7 +113,7 @@
 @ stdcall SymGetTypeInfo(ptr double long long ptr)
 @ stub SymGetTypeInfoEx
 @ stdcall SymInitialize(long str long)
-@ stub SymInitializeW
+@ stdcall SymInitializeW(long wstr long)
 @ stdcall SymLoadModule(long long str str long long)
 @ stdcall SymLoadModule64(long long str str double long)
 @ stdcall SymLoadModuleEx(long long str str double long ptr long)
@@ -140,7 +141,7 @@
 @ stdcall SymSetOptions(long)
 @ stdcall SymSetParentWindow(long)
 @ stdcall SymSetSearchPath(long str)
-@ stub SymSetSearchPathW
+@ stdcall SymSetSearchPathW(long wstr)
 @ stub SymSetSymWithAddr64
 @ stub SymSrvDeltaName
 @ stub SymSrvDeltaNameW

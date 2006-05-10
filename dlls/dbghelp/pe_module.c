@@ -31,6 +31,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "winnls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
@@ -336,12 +337,19 @@ struct module* pe_load_module(struct process* pcs, const char* name,
     loaded_name[0] = '\0';
     if (!hFile)
     {
+        unsigned len = WideCharToMultiByte(CP_ACP,0, pcs->search_path, -1, NULL, 0, NULL, NULL);
+        char* sp;
+
         if (!name)
         {
             /* FIXME SetLastError */
             return NULL;
         }
-        if ((hFile = FindExecutableImage(name, pcs->search_path, loaded_name)) == NULL)
+        sp = HeapAlloc(GetProcessHeap(), 0, len);
+        if (!sp) return FALSE;
+        WideCharToMultiByte(CP_ACP,0, pcs->search_path, -1, sp, len, NULL, NULL);
+
+        if ((hFile = FindExecutableImage(name, sp, loaded_name)) == NULL)
             return NULL;
         opened = TRUE;
     }

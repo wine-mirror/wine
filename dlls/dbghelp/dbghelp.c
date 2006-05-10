@@ -25,6 +25,7 @@
 #include "psapi.h"
 #include "wine/debug.h"
 #include "wdbgexts.h"
+#include "winnls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
@@ -115,10 +116,10 @@ BOOL validate_addr64(DWORD64 addr)
 }
 
 /******************************************************************
- *		SymSetSearchPath (DBGHELP.@)
+ *		SymSetSearchPathW (DBGHELP.@)
  *
  */
-BOOL WINAPI SymSetSearchPath(HANDLE hProcess, PCSTR searchPath)
+BOOL WINAPI SymSetSearchPathW(HANDLE hProcess, PCWSTR searchPath)
 {
     struct process* pcs = process_find_by_handle(hProcess);
 
@@ -126,8 +127,43 @@ BOOL WINAPI SymSetSearchPath(HANDLE hProcess, PCSTR searchPath)
     if (!searchPath) return FALSE;
 
     HeapFree(GetProcessHeap(), 0, pcs->search_path);
-    pcs->search_path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(searchPath) + 1),
-                              searchPath);
+    pcs->search_path = lstrcpyW(HeapAlloc(GetProcessHeap(), 0, 
+                                          (lstrlenW(searchPath) + 1) * sizeof(WCHAR)),
+                                searchPath);
+    return TRUE;
+}
+
+/******************************************************************
+ *		SymSetSearchPath (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymSetSearchPath(HANDLE hProcess, PCSTR searchPath)
+{
+    BOOL        ret = FALSE;
+    unsigned    len;
+    WCHAR*      sp;
+
+    len = MultiByteToWideChar(CP_ACP, 0, searchPath, -1, NULL, 0);
+    if ((sp = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+    {
+        MultiByteToWideChar(CP_ACP, 0, searchPath, -1, sp, len);
+
+        ret = SymSetSearchPathW(hProcess, sp);
+        HeapFree(GetProcessHeap(), 0, sp);
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *		SymGetSearchPathW (DBGHELP.@)
+ */
+BOOL WINAPI SymGetSearchPathW(HANDLE hProcess, LPWSTR szSearchPath, 
+                              DWORD SearchPathLength)
+{
+    struct process* pcs = process_find_by_handle(hProcess);
+    if (!pcs) return FALSE;
+
+    lstrcpynW(szSearchPath, pcs->search_path, SearchPathLength);
     return TRUE;
 }
 
@@ -137,11 +173,19 @@ BOOL WINAPI SymSetSearchPath(HANDLE hProcess, PCSTR searchPath)
 BOOL WINAPI SymGetSearchPath(HANDLE hProcess, LPSTR szSearchPath, 
                              DWORD SearchPathLength)
 {
-    struct process* pcs = process_find_by_handle(hProcess);
-    if (!pcs) return FALSE;
+    WCHAR*      buffer = HeapAlloc(GetProcessHeap(), 0, SearchPathLength);
+    BOOL        ret = FALSE;
 
-    lstrcpynA(szSearchPath, pcs->search_path, SearchPathLength);
-    return TRUE;
+    if (buffer)
+    {
+        ret = SymGetSearchPathW(hProcess, buffer,
+                                SearchPathLength * sizeof(WCHAR));
+        if (ret)
+            WideCharToMultiByte(CP_ACP, 0, buffer, SearchPathLength,
+                                szSearchPath, SearchPathLength, NULL, NULL);
+        HeapFree(GetProcessHeap(), 0, buffer);
+    }
+    return ret;
 }
 
 /******************************************************************
@@ -176,7 +220,7 @@ static BOOL check_live_target(struct process* pcs)
 }
 
 /******************************************************************
- *		SymInitialize (DBGHELP.@)
+ *		SymInitializeW (DBGHELP.@)
  *
  * The initialisation of a dbghelp's context.
  * Note that hProcess doesn't need to be a valid process handle (except
@@ -201,11 +245,11 @@ static BOOL check_live_target(struct process* pcs)
  * Note also that this scheme can be intertwined with the deferred loading 
  * mechanism (ie only load the debug information when we actually need it).
  */
-BOOL WINAPI SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess)
+BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeProcess)
 {
     struct process*     pcs;
 
-    TRACE("(%p %s %u)\n", hProcess, debugstr_a(UserSearchPath), fInvadeProcess);
+    TRACE("(%p %s %u)\n", hProcess, debugstr_w(UserSearchPath), fInvadeProcess);
 
     if (process_find_by_handle(hProcess))
         FIXME("what to do ??\n");
@@ -217,33 +261,36 @@ BOOL WINAPI SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadePro
 
     if (UserSearchPath)
     {
-        pcs->search_path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(UserSearchPath) + 1), 
-                                  UserSearchPath);
+        pcs->search_path = lstrcpyW(HeapAlloc(GetProcessHeap(), 0,      
+                                              (lstrlenW(UserSearchPath) + 1) * sizeof(WCHAR)),
+                                    UserSearchPath);
     }
     else
     {
         unsigned        size;
         unsigned        len;
+        static const WCHAR      sym_path[] = {'_','N','T','_','S','Y','M','B','O','L','_','P','A','T','H',0};
+        static const WCHAR      alt_sym_path[] = {'_','N','T','_','A','L','T','E','R','N','A','T','E','_','S','Y','M','B','O','L','_','P','A','T','H',0};
 
-        pcs->search_path = HeapAlloc(GetProcessHeap(), 0, len = MAX_PATH);
-        while ((size = GetCurrentDirectoryA(len, pcs->search_path)) >= len)
-            pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, len *= 2);
-        pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, size + 1);
+        pcs->search_path = HeapAlloc(GetProcessHeap(), 0, (len = MAX_PATH) * sizeof(WCHAR));
+        while ((size = GetCurrentDirectoryW(len, pcs->search_path)) >= len)
+            pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, (len *= 2) * sizeof(WCHAR));
+        pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, (size + 1) * sizeof(WCHAR));
 
-        len = GetEnvironmentVariableA("_NT_SYMBOL_PATH", NULL, 0);
+        len = GetEnvironmentVariableW(sym_path, NULL, 0);
         if (len)
         {
-            pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, size + 1 + len + 1);
+            pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, (size + 1 + len + 1) * sizeof(WCHAR));
             pcs->search_path[size] = ';';
-            GetEnvironmentVariableA("_NT_SYMBOL_PATH", pcs->search_path + size + 1, len);
+            GetEnvironmentVariableW(sym_path, pcs->search_path + size + 1, len);
             size += 1 + len;
         }
-        len = GetEnvironmentVariableA("_NT_ALTERNATE_SYMBOL_PATH", NULL, 0);
+        len = GetEnvironmentVariableW(alt_sym_path, NULL, 0);
         if (len)
         {
-            pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, size + 1 + len + 1);
+            pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, (size + 1 + len + 1) * sizeof(WCHAR));
             pcs->search_path[size] = ';';
-            GetEnvironmentVariableA("_NT_ALTERNATE_SYMBOL_PATH", pcs->search_path + size + 1, len);
+            GetEnvironmentVariableW(alt_sym_path, pcs->search_path + size + 1, len);
             size += 1 + len;
         }
     }
@@ -267,6 +314,30 @@ BOOL WINAPI SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadePro
     }
 
     return TRUE;
+}
+
+/******************************************************************
+ *		SymInitialize (DBGHELP.@)
+ *
+ *
+ */
+BOOL WINAPI SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess)
+{
+    WCHAR*              sp = NULL;
+    BOOL                ret;
+
+    if (UserSearchPath)
+    {
+        unsigned len;
+
+        len = MultiByteToWideChar(CP_ACP, 0, UserSearchPath, -1, NULL, 0);
+        sp = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, UserSearchPath, -1, sp, len);
+    }
+
+    ret = SymInitializeW(hProcess, sp, fInvadeProcess);
+    HeapFree(GetProcessHeap(), 0, sp);
+    return ret;
 }
 
 /******************************************************************
