@@ -1993,7 +1993,7 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL 
         UINT old_flags = wndPtr->flags;
         retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, unicode );
         wndPtr->winproc = WINPROC_AllocProc( (WNDPROC)newval, unicode );
-        if (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W) wndPtr->flags |= WIN_ISUNICODE;
+        if (WINPROC_IsUnicode( wndPtr->winproc, unicode )) wndPtr->flags |= WIN_ISUNICODE;
         else wndPtr->flags &= ~WIN_ISUNICODE;
         if (!((old_flags ^ wndPtr->flags) & WIN_ISUNICODE))
         {

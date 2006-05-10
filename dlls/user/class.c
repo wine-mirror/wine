@@ -187,7 +187,7 @@ static void CLASS_SetProc16( CLASS *classPtr, WNDPROC16 newproc )
 {
     WNDPROC proc = WINPROC_AllocProc16( newproc );
 
-    if (WINPROC_GetProcType( proc ) == WIN_PROC_32W)
+    if (WINPROC_IsUnicode( proc, FALSE ))
     {
         classPtr->winprocA = 0;
         classPtr->winprocW = proc;
@@ -210,7 +210,7 @@ static void CLASS_SetProc( CLASS *classPtr, WNDPROC newproc, BOOL unicode )
 {
     WNDPROC proc = WINPROC_AllocProc( newproc, unicode );
 
-    if (WINPROC_GetProcType( proc ) == WIN_PROC_32W)
+    if (WINPROC_IsUnicode( proc, unicode ))
     {
         classPtr->winprocA = 0;
         classPtr->winprocW = proc;
@@ -532,7 +532,7 @@ void CLASS_AddWindow( CLASS *class, WND *win, WINDOWPROCTYPE type )
     }
     win->class    = class;
     win->clsStyle = class->style;
-    if (WINPROC_GetProcType( win->winproc ) == WIN_PROC_32W) win->flags |= WIN_ISUNICODE;
+    if (WINPROC_IsUnicode( win->winproc, (type == WIN_PROC_32W) )) win->flags |= WIN_ISUNICODE;
 }
 
 

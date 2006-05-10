@@ -568,16 +568,16 @@ WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
 
 
 /**********************************************************************
- *	     WINPROC_GetProcType
+ *	     WINPROC_IsUnicode
  *
- * Return the window procedure type.
+ * Return the window procedure type, or the default value if not a winproc handle.
  */
-WINDOWPROCTYPE WINPROC_GetProcType( WNDPROC proc )
+BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val )
 {
     WINDOWPROC *ptr = handle_to_proc( proc );
 
-    if (!ptr) return WIN_PROC_INVALID;
-    return ptr->type;
+    if (!ptr) return def_val;
+    return (ptr->type == WIN_PROC_32W);
 }
 
 
