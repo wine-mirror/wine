@@ -736,7 +736,7 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
 
   switch (regtype) {
   case D3DSPR_TEMP:
-    sprintf(tmpReg, "T%lu", reg);
+    sprintf(tmpReg, "R%lu", reg);
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_INPUT:
@@ -1175,7 +1175,7 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateProgramArbHW(IWineD3DVertexS
     /* Pre-declare registers */
     for (i = 0; i < This->baseShader.limits.temporary; i++) {
         if (tempsUsed & (1 << i))
-            shader_addline(&buffer, "TEMP T%lu;\n", i);
+            shader_addline(&buffer, "TEMP R%lu;\n", i);
     }
 
     for (i = 0; i < This->baseShader.limits.address; i++) {
