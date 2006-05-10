@@ -137,7 +137,7 @@ static HRESULT register_interfaces(struct regsvr_interface const *list)
 	}
 
 	if (list->base_iid) {
-	    register_key_guid(iid_key, base_ifa_keyname, list->base_iid);
+	    res = register_key_guid(iid_key, base_ifa_keyname, list->base_iid);
 	    if (res != ERROR_SUCCESS) goto error_close_iid_key;
 	}
 
