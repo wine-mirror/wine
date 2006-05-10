@@ -1,13 +1,17 @@
 @ stub DbgHelpCreateUserDump
 @ stub DbgHelpCreateUserDumpW
 @ stdcall EnumDirTree(long str str ptr ptr ptr)
-@ stub EnumerateLoadedModules64
+@ stub EnumDirTreeW
 @ stdcall EnumerateLoadedModules(long ptr ptr)
+@ stub EnumerateLoadedModules64
+@ stub EnumerateLoadedModulesW64
 @ stdcall ExtensionApiVersion()
 @ stdcall FindDebugInfoFile(str str ptr)
 @ stdcall FindDebugInfoFileEx(str str ptr ptr ptr)
+@ stub FindDebugInfoFileExW
 @ stdcall FindExecutableImage(str str str)
 @ stub FindExecutableImageEx
+@ stub FindExecutableImageExW
 @ stub FindFileInPath
 @ stub FindFileInSearchPath
 @ stdcall GetTimestampForLoadedLibrary(long)
@@ -23,89 +27,159 @@
 @ stdcall MiniDumpReadDumpStream(ptr long ptr ptr ptr)
 @ stdcall MiniDumpWriteDump(ptr long ptr long long long long)
 @ stdcall SearchTreeForFile(str str str)
-@ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
+@ stub SearchTreeForFileW
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
+@ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
 @ stub SymAddSymbol
+@ stub SymAddSymbolW
 @ stdcall SymCleanup(long)
 @ stdcall SymEnumLines(ptr double str str ptr ptr)
+@ stub SymEnumLinesW
 @ stdcall SymEnumSourceFiles(ptr double str ptr ptr)
+@ stub SymEnumSourceFilesW
 @ stub SymEnumSym
 @ stdcall SymEnumSymbols(ptr double str ptr ptr)
+@ stub SymEnumSymbolsW
 @ stub SymEnumSymbolsForAddr
+@ stub SymEnumSymbolsForAddrW
 @ stdcall SymEnumTypes(ptr double ptr ptr)
-@ stub SymEnumerateModules64
+@ stub SymEnumTypesW
 @ stdcall SymEnumerateModules(long ptr ptr)
-@ stub SymEnumerateSymbols64
+@ stub SymEnumerateModules64
+@ stub SymEnumerateModulesW64
 @ stdcall SymEnumerateSymbols(long long ptr ptr)
-@ stub SymEnumerateSymbolsW64
+@ stub SymEnumerateSymbols64
 @ stub SymEnumerateSymbolsW
+@ stub SymEnumerateSymbolsW64
+@ stub SymFindDebugInfoFile
+@ stub SymFindDebugInfoFileW
 @ stdcall SymFindFileInPath(long str str ptr long long long ptr ptr ptr)
+@ stub SymFindFileInPathW
 @ stdcall SymFromAddr(ptr double ptr ptr)
+@ stub SymFromAddrW
+@ stub SymFromIndex
+@ stub SymFromIndexW
 @ stdcall SymFromName(long str ptr)
+@ stub SymFromNameW
 @ stub SymFromToken
-@ stdcall SymFunctionTableAccess64(long double)
+@ stub SymFromTokenW
 @ stdcall SymFunctionTableAccess(long long)
+@ stdcall SymFunctionTableAccess64(long double)
 @ stub SymGetFileLineOffsets64
 @ stub SymGetHomeDirectory
-@ stdcall SymGetLineFromAddr64(long double ptr ptr)
+@ stub SymGetHomeDirectoryW
 @ stdcall SymGetLineFromAddr(long long ptr ptr)
-@ stub SymGetLineFromName64
+@ stdcall SymGetLineFromAddr64(long double ptr ptr)
+@ stub SymGetLineFromAddrW64
 @ stub SymGetLineFromName
-@ stdcall SymGetLineNext64(long ptr)
+@ stub SymGetLineFromName64
 @ stdcall SymGetLineNext(long ptr)
-@ stdcall SymGetLinePrev64(long ptr)
+@ stdcall SymGetLineNext64(long ptr)
+@ stub SymGetLineNextW64
 @ stdcall SymGetLinePrev(long ptr)
-@ stdcall SymGetModuleBase64(long double)
+@ stdcall SymGetLinePrev64(long ptr)
+@ stub SymGetLinePrevW64
 @ stdcall SymGetModuleBase(long long)
-@ stdcall SymGetModuleInfo64(long double ptr)
+@ stdcall SymGetModuleBase64(long double)
 @ stdcall SymGetModuleInfo(long long ptr)
-@ stub SymGetModuleInfoW64
+@ stdcall SymGetModuleInfo64(long double ptr)
 @ stub SymGetModuleInfoW
+@ stub SymGetModuleInfoW64
+@ stub SymGetOmapBlockBase
 @ stdcall SymGetOptions()
+@ stub SymGetScope
+@ stub SymGetScopeW
 @ stdcall SymGetSearchPath(long str long)
 @ stub SymGetSourceFileFromToken
+@ stub SymGetSourceFileFromTokenW
 @ stdcall SymGetSourceFileToken(ptr double str ptr ptr)
+@ stub SymGetSourceFileTokenW
+@ stub SymGetSourceFileW
 @ stub SymGetSourceVarFromToken
-@ stub SymGetSymFromAddr64
+@ stub SymGetSourceVarFromTokenW
 @ stdcall SymGetSymFromAddr(long long ptr ptr)
-@ stub SymGetSymFromName64
+@ stub SymGetSymFromAddr64
 @ stdcall SymGetSymFromName(long str ptr)
-@ stub SymGetSymNext64
+@ stub SymGetSymFromName64
 @ stdcall SymGetSymNext(long ptr)
-@ stub SymGetSymPrev64
+@ stub SymGetSymNext64
 @ stdcall SymGetSymPrev(long ptr)
+@ stub SymGetSymPrev64
+@ stub SymGetSymbolFile
+@ stub SymGetSymbolFileW
 @ stdcall SymGetTypeFromName(ptr double str ptr)
+@ stub SymGetTypeFromNameW
 @ stdcall SymGetTypeInfo(ptr double long long ptr)
+@ stub SymGetTypeInfoEx
 @ stdcall SymInitialize(long str long)
-@ stdcall SymLoadModule64(long long str str double long)
+@ stub SymInitializeW
 @ stdcall SymLoadModule(long long str str long long)
+@ stdcall SymLoadModule64(long long str str double long)
 @ stdcall SymLoadModuleEx(long long str str double long ptr long)
+@ stub SymLoadModuleExW
 @ stdcall SymMatchFileName(str str ptr ptr)
+@ stub SymMatchFileNameW
 @ stdcall SymMatchString(str str long)
-@ stdcall SymRegisterCallback64(long ptr double)
+@ stub SymMatchStringA
+@ stub SymMatchStringW
+@ stub SymNext
+@ stub SymNextW
+@ stub SymPrev
+@ stub SymPrevW
+@ stub SymRefreshModuleList
 @ stdcall SymRegisterCallback(long ptr ptr)
-@ stdcall SymRegisterFunctionEntryCallback64(ptr ptr double)
+@ stdcall SymRegisterCallback64(long ptr double)
+@ stub SymRegisterCallbackW64
 @ stdcall SymRegisterFunctionEntryCallback(ptr ptr ptr)
+@ stdcall SymRegisterFunctionEntryCallback64(ptr ptr double)
 @ stdcall SymSearch(long double long long str double ptr ptr long)
+@ stub SymSearchW
 @ stdcall SymSetContext(long ptr ptr)
+@ stub SymSetHomeDirectory
+@ stub SymSetHomeDirectoryW
 @ stdcall SymSetOptions(long)
 @ stdcall SymSetParentWindow(long)
 @ stdcall SymSetSearchPath(long str)
+@ stub SymSetSearchPathW
 @ stub SymSetSymWithAddr64
-@ stub SymUnDName64
+@ stub SymSrvDeltaName
+@ stub SymSrvDeltaNameW
+@ stub SymSrvGetFileIndexInfo
+@ stub SymSrvGetFileIndexInfoW
+@ stub SymSrvGetFileIndexString
+@ stub SymSrvGetFileIndexStringW
+@ stub SymSrvGetFileIndexes
+@ stub SymSrvGetFileIndexesW
+@ stub SymSrvGetSupplement
+@ stub SymSrvGetSupplementW
+@ stub SymSrvIsStore
+@ stub SymSrvIsStoreW
+@ stub SymSrvStoreFile
+@ stub SymSrvStoreFileW
+@ stub SymSrvStoreSupplement
+@ stub SymSrvStoreSupplementW
+# @ stub SymSetSymWithAddr64 no longer present ??
 @ stdcall SymUnDName(ptr str long)
-@ stdcall SymUnloadModule64(long double)
+@ stub SymUnDName64
 @ stdcall SymUnloadModule(long long)
+@ stdcall SymUnloadModule64(long double)
 @ stdcall UnDecorateSymbolName(str str long long)
+@ stub UnDecorateSymbolNameW
 @ stdcall UnmapDebugInformation(ptr)
 @ stdcall WinDbgExtensionDllInit(ptr long long)
+#@ stub block
+#@ stub chksym
 #@ stub dbghelp
 #@ stub dh
 #@ stub fptr
-#@ stub lm
+#@ stub homedir
+#@ stub itoldyouso
 #@ stub lmi
+#@ stub lminfo
 #@ stub omap
 #@ stub srcfiles
+#@ stub stack_force_ebp
+#@ stub stackdbg
 #@ stub sym
-#@ stub symsvr
+#@ stub symsrv
 #@ stub vc7fpo
