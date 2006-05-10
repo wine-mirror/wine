@@ -479,8 +479,62 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
 BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
 {
     TRACE("%p %lu %p\n", pcs, action, data);
+
     if (!pcs->reg_cb) return FALSE;
+    if (pcs->reg_is_unicode)
+    {
+        IMAGEHLP_DEFERRED_SYMBOL_LOAD64*    idsl;
+        IMAGEHLP_DEFERRED_SYMBOL_LOADW64    idslW;
+
+        switch (action)
+        {
+        case CBA_DEBUG_INFO:
+        case CBA_DEFERRED_SYMBOL_LOAD_CANCEL:
+        case CBA_SET_OPTIONS:
+        case CBA_SYMBOLS_UNLOADED:
+            break;
+        case CBA_DEFERRED_SYMBOL_LOAD_COMPLETE:
+        case CBA_DEFERRED_SYMBOL_LOAD_FAILURE:
+        case CBA_DEFERRED_SYMBOL_LOAD_PARTIAL:
+        case CBA_DEFERRED_SYMBOL_LOAD_START:
+            idsl = (IMAGEHLP_DEFERRED_SYMBOL_LOAD64*)(DWORD)data;
+            idslW.SizeOfStruct = sizeof(idslW);
+            idslW.BaseOfImage = idsl->BaseOfImage;
+            idslW.CheckSum = idsl->CheckSum;
+            idslW.TimeDateStamp = idsl->TimeDateStamp;
+            MultiByteToWideChar(CP_ACP, 0, idsl->FileName, -1, 
+                                idslW.FileName, sizeof(idslW.FileName) / sizeof(WCHAR));
+            idslW.Reparse = idsl->Reparse;
+            data = &idslW;
+            break;
+        case CBA_DUPLICATE_SYMBOL:
+        case CBA_EVENT:
+        case CBA_READ_MEMORY:
+        default:
+            FIXME("No mapping for action %lu\n", action);
+            return FALSE;
+        }
+    }
     return pcs->reg_cb(pcs->handle, action, (ULONG64)(DWORD_PTR)data, pcs->reg_user);
+}
+
+/******************************************************************
+ *		sym_register_cb
+ *
+ * Helper for registering a callback.
+ */
+static BOOL sym_register_cb(HANDLE hProcess, 
+                            PSYMBOL_REGISTERED_CALLBACK64 cb,
+                            DWORD64 user, BOOL unicode)
+{
+    struct process* pcs = process_find_by_handle(hProcess);
+
+    if (!pcs) return FALSE;
+    pcs->reg_cb = cb;
+    pcs->reg_is_unicode = unicode;
+    pcs->reg_user = user;
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -491,7 +545,9 @@ BOOL WINAPI SymRegisterCallback(HANDLE hProcess,
                                 PVOID UserContext)
 {
     DWORD64 tmp = ((ULONGLONG)(DWORD)CallbackFunction << 32) | (DWORD)UserContext;
-    return SymRegisterCallback64(hProcess, reg_cb64to32, tmp);
+    TRACE("(%p, %p, %p)\n", 
+          hProcess, CallbackFunction, UserContext);
+    return sym_register_cb(hProcess, reg_cb64to32, tmp, FALSE);
 }
 
 /***********************************************************************
@@ -501,15 +557,21 @@ BOOL WINAPI SymRegisterCallback64(HANDLE hProcess,
                                   PSYMBOL_REGISTERED_CALLBACK64 CallbackFunction,
                                   ULONG64 UserContext)
 {
-    struct process* pcs = process_find_by_handle(hProcess);
-
     TRACE("(%p, %p, %s)\n", 
           hProcess, CallbackFunction, wine_dbgstr_longlong(UserContext));
-    if (!pcs) return FALSE;
-    pcs->reg_cb = CallbackFunction;
-    pcs->reg_user = UserContext;
+    return sym_register_cb(hProcess, CallbackFunction, UserContext, FALSE);
+}
 
-    return TRUE;
+/***********************************************************************
+ *		SymRegisterCallbackW64 (DBGHELP.@)
+ */
+BOOL WINAPI SymRegisterCallbackW64(HANDLE hProcess, 
+                                   PSYMBOL_REGISTERED_CALLBACK64 CallbackFunction,
+                                   ULONG64 UserContext)
+{
+    TRACE("(%p, %p, %s)\n", 
+          hProcess, CallbackFunction, wine_dbgstr_longlong(UserContext));
+    return sym_register_cb(hProcess, CallbackFunction, UserContext, TRUE);
 }
 
 /* This is imagehlp version not dbghelp !! */

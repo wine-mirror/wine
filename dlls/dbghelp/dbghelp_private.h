@@ -294,6 +294,7 @@ struct process
     WCHAR*                      search_path;
     
     PSYMBOL_REGISTERED_CALLBACK64       reg_cb;
+    BOOL                        reg_is_unicode;
     DWORD64                     reg_user;
 
     struct module*              lmodules;

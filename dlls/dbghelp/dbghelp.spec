@@ -130,7 +130,7 @@
 @ stub SymRefreshModuleList
 @ stdcall SymRegisterCallback(long ptr ptr)
 @ stdcall SymRegisterCallback64(long ptr double)
-@ stub SymRegisterCallbackW64
+@ stdcall SymRegisterCallbackW64(long ptr double)
 @ stdcall SymRegisterFunctionEntryCallback(ptr ptr ptr)
 @ stdcall SymRegisterFunctionEntryCallback64(ptr ptr double)
 @ stdcall SymSearch(long double long long str double ptr ptr long)
