@@ -193,6 +193,41 @@ BOOL WINAPI CryptVerifyCertificateSignature(HCRYPTPROV hCryptProv,
      CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY, pPublicKey, 0, NULL);
 }
 
+static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV hCryptProv,
+ DWORD dwCertEncodingType, PCERT_PUBLIC_KEY_INFO pubKeyInfo,
+ PCERT_SIGNED_CONTENT_INFO signedCert)
+{
+    BOOL ret;
+    ALG_ID algID = CertOIDToAlgId(pubKeyInfo->Algorithm.pszObjId);
+    HCRYPTKEY key;
+
+    /* Load the default provider if necessary */
+    if (!hCryptProv)
+        hCryptProv = CRYPT_GetDefaultProvider();
+    ret = CryptImportPublicKeyInfoEx(hCryptProv, dwCertEncodingType,
+     pubKeyInfo, algID, 0, NULL, &key);
+    if (ret)
+    {
+        HCRYPTHASH hash;
+
+        /* Some key algorithms aren't hash algorithms, so map them */
+        if (algID == CALG_RSA_SIGN || algID == CALG_RSA_KEYX)
+            algID = CALG_SHA1;
+        ret = CryptCreateHash(hCryptProv, algID, 0, 0, &hash);
+        if (ret)
+        {
+            ret = CryptHashData(hash, signedCert->ToBeSigned.pbData,
+             signedCert->ToBeSigned.cbData, 0);
+            if (ret)
+                ret = CryptVerifySignatureW(hash, signedCert->Signature.pbData,
+                 signedCert->Signature.cbData, key, NULL, 0);
+            CryptDestroyHash(hash);
+        }
+        CryptDestroyKey(key);
+    }
+    return ret;
+}
+
 BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV hCryptProv,
  DWORD dwCertEncodingType, DWORD dwSubjectType, void *pvSubject,
  DWORD dwIssuerType, void *pvIssuer, DWORD dwFlags, void *pvReserved)
@@ -249,48 +284,18 @@ BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV hCryptProv,
             switch (dwIssuerType)
             {
             case CRYPT_VERIFY_CERT_SIGN_ISSUER_PUBKEY:
-            {
-                PCERT_PUBLIC_KEY_INFO pubKeyInfo =
-                 (PCERT_PUBLIC_KEY_INFO)pvIssuer;
-                ALG_ID algID = CertOIDToAlgId(pubKeyInfo->Algorithm.pszObjId);
-
-                if (algID)
-                {
-                    HCRYPTKEY key;
-
-                    ret = CryptImportPublicKeyInfoEx(hCryptProv,
-                     dwCertEncodingType, pubKeyInfo, algID, 0, NULL, &key);
-                    if (ret)
-                    {
-                        HCRYPTHASH hash;
-
-                        ret = CryptCreateHash(hCryptProv, algID, 0, 0, &hash);
-                        if (ret)
-                        {
-                            ret = CryptHashData(hash,
-                             signedCert->ToBeSigned.pbData,
-                             signedCert->ToBeSigned.cbData, 0);
-                            if (ret)
-                            {
-                                ret = CryptVerifySignatureW(hash,
-                                 signedCert->Signature.pbData,
-                                 signedCert->Signature.cbData, key, NULL, 0);
-                            }
-                            CryptDestroyHash(hash);
-                        }
-                        CryptDestroyKey(key);
-                    }
-                }
-                else
-                {
-                    SetLastError(NTE_BAD_ALGID);
-                    ret = FALSE;
-                }
+                ret = CRYPT_VerifyCertSignatureFromPublicKeyInfo(hCryptProv,
+                 dwCertEncodingType, (PCERT_PUBLIC_KEY_INFO)pvIssuer,
+                 signedCert);
                 break;
-            }
             case CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT:
+                ret = CRYPT_VerifyCertSignatureFromPublicKeyInfo(hCryptProv,
+                 dwCertEncodingType,
+                 &((PCCERT_CONTEXT)pvIssuer)->pCertInfo->SubjectPublicKeyInfo,
+                 signedCert);
+                break;
             case CRYPT_VERIFY_CERT_SIGN_ISSUER_CHAIN:
-                FIXME("issuer type %ld: stub\n", dwIssuerType);
+                FIXME("CRYPT_VERIFY_CERT_SIGN_ISSUER_CHAIN: stub\n");
                 ret = FALSE;
                 break;
             case CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL:
