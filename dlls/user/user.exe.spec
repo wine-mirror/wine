@@ -563,5 +563,4 @@
 1001 pascal -ret16 GetProcessDefaultLayout(ptr) GetProcessDefaultLayout16
 
 # Wine internal functions
-1010 pascal __wine_call_wndproc_32A(word word word long long) __wine_call_wndproc_32A
-1011 pascal __wine_call_wndproc_32W(word word word long long) __wine_call_wndproc_32W
+1010 pascal __wine_call_wndproc(word word word long long) __wine_call_wndproc

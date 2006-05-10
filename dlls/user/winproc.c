@@ -54,10 +54,10 @@ typedef struct
 {
     BYTE       popl_eax;             /* popl  %eax (return address) */
     BYTE       pushl_func;           /* pushl $proc */
-    WNDPROC    proc;
+    struct tagWINDOWPROC *proc;
     BYTE       pushl_eax;            /* pushl %eax */
     BYTE       ljmp;                 /* ljmp relay*/
-    DWORD      relay_offset;         /* __wine_call_wndproc_32A/W */
+    DWORD      relay_offset;         /* __wine_call_wndproc */
     WORD       relay_sel;
 } WINPROC_THUNK;
 
@@ -76,7 +76,11 @@ typedef struct tagWINDOWPROC
 {
     WINPROC_THUNK  thunk;    /* Thunk */
     BYTE           type;     /* Function type */
-    WNDPROC16      proc16;   /* 16-bit window proc */
+    union
+    {
+        WNDPROC16      proc16;   /* 16-bit window proc */
+        WNDPROC        proc32;   /* 32-bit window proc */
+    } u;
 } WINDOWPROC;
 
 typedef enum
@@ -119,7 +123,7 @@ static inline WINDOWPROC *find_winproc16( WNDPROC16 func )
 
     for (i = 0; i < winproc_used; i++)
     {
-        if (winproc_array[i].type == WIN_PROC_16 && winproc_array[i].proc16 == func)
+        if (winproc_array[i].type == WIN_PROC_16 && winproc_array[i].u.proc16 == func)
             return &winproc_array[i];
     }
     return NULL;
@@ -133,48 +137,36 @@ static inline WINDOWPROC *find_winproc( WNDPROC func, BOOL unicode )
 
     for (i = 0; i < winproc_used; i++)
     {
-        if (winproc_array[i].thunk.proc == func &&
+        if (winproc_array[i].u.proc32 == func &&
             winproc_array[i].type == (unicode ? WIN_PROC_32W : WIN_PROC_32A))
             return &winproc_array[i];
     }
     return NULL;
 }
 
-/* initialize a new 16-bit winproc */
-static inline void set_winproc16( WINDOWPROC *proc, WNDPROC16 func )
+/* allocate and initialize a new winproc */
+static inline WINDOWPROC *alloc_winproc(void)
 {
-    proc->proc16 = func;
-    proc->type = WIN_PROC_16;
-}
+    WINDOWPROC *proc;
 
-/* initialize a new winproc */
-static inline void set_winproc( WINDOWPROC *proc, WNDPROC func, BOOL unicode )
-{
+    if (winproc_used >= MAX_WINPROCS) return NULL;
+    proc = &winproc_array[winproc_used++];
 #ifdef __i386__
-    static FARPROC16 relay_32A, relay_32W;
+    {
+        static FARPROC16 relay;
 
-    proc->thunk.popl_eax     = 0x58;   /* popl  %eax */
-    proc->thunk.pushl_func   = 0x68;   /* pushl $proc */
-    proc->thunk.pushl_eax    = 0x50;   /* pushl %eax */
-    proc->thunk.ljmp         = 0xea;   /* ljmp   relay*/
-    if (!unicode)
-    {
-        if (!relay_32A) relay_32A = GetProcAddress16( GetModuleHandle16("user"),
-                                                      "__wine_call_wndproc_32A" );
-        proc->thunk.relay_offset = OFFSETOF(relay_32A);
-        proc->thunk.relay_sel    = SELECTOROF(relay_32A);
-    }
-    else
-    {
-        if (!relay_32W) relay_32W = GetProcAddress16( GetModuleHandle16("user"),
-                                                      "__wine_call_wndproc_32W" );
-        proc->thunk.relay_offset = OFFSETOF(relay_32W);
-        proc->thunk.relay_sel    = SELECTOROF(relay_32W);
+        if (!relay) relay = GetProcAddress16( GetModuleHandle16("user"), "__wine_call_wndproc" );
+
+        proc->thunk.popl_eax     = 0x58;   /* popl  %eax */
+        proc->thunk.pushl_func   = 0x68;   /* pushl $proc */
+        proc->thunk.proc         = proc;
+        proc->thunk.pushl_eax    = 0x50;   /* pushl %eax */
+        proc->thunk.ljmp         = 0xea;   /* ljmp   relay*/
+        proc->thunk.relay_offset = OFFSETOF(relay);
+        proc->thunk.relay_sel    = SELECTOROF(relay);
     }
 #endif /* __i386__ */
-    proc->thunk.proc = func;
-    proc->proc16 = 0;
-    proc->type = unicode ? WIN_PROC_32W : WIN_PROC_32A;
+    return proc;
 }
 
 static WORD get_winproc_selector(void)
@@ -471,7 +463,7 @@ WNDPROC16 WINPROC_GetProc16( WNDPROC proc )
     if (!ptr) return 0;
 
     if (ptr->type == WIN_PROC_16)
-        return ptr->proc16;
+        return ptr->u.proc16;
     else
         return (WNDPROC16)MAKESEGPTR( get_winproc_selector(),
                                       (char *)&ptr->thunk - (char *)winproc_array );
@@ -488,7 +480,7 @@ WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode )
     WINDOWPROC *ptr = handle_to_proc( proc );
 
     if (!ptr || ptr->type != (unicode ? WIN_PROC_32W : WIN_PROC_32A)) return proc;
-    return ptr->thunk.proc;  /* we can return the original proc in that case */
+    return ptr->u.proc32;  /* we can return the original proc in that case */
 }
 
 
@@ -507,28 +499,27 @@ WNDPROC WINPROC_AllocProc16( WNDPROC16 func )
 
     if (!func) return NULL;
 
-    EnterCriticalSection( &winproc_cs );
-
     /* check if the function is already a win proc */
     if (!(proc = handle16_to_proc( func )))
     {
+        EnterCriticalSection( &winproc_cs );
+
         /* then check if we already have a winproc for that function */
         if (!(proc = find_winproc16( func )))
         {
-            if (winproc_used >= MAX_WINPROCS)
-                FIXME( "too many winprocs, cannot allocate one for 16-bit %p\n", func );
-            else
+            if ((proc = alloc_winproc()))
             {
-                proc = &winproc_array[winproc_used++];
-                set_winproc16( proc, func );
+                proc->type = WIN_PROC_16;
+                proc->u.proc16 = func;
                 TRACE( "allocated %p for %p/16-bit (%d/%d used)\n",
                        proc_to_handle(proc), func, winproc_used, MAX_WINPROCS );
             }
+            else FIXME( "too many winprocs, cannot allocate one for 16-bit %p\n", func );
         }
         else TRACE( "reusing %p for %p/16-bit\n", proc_to_handle(proc), func );
-    }
 
-    LeaveCriticalSection( &winproc_cs );
+        LeaveCriticalSection( &winproc_cs );
+    }
     return proc_to_handle( proc );
 }
 
@@ -556,21 +547,19 @@ WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
         /* then check if we already have a winproc for that function */
         if (!(proc = find_winproc( func, unicode )))
         {
-            if (winproc_used >= MAX_WINPROCS)
-                FIXME( "too many winprocs, cannot allocate one for %p %c\n", func, unicode ? 'W' : 'A' );
-            else
+            if ((proc = alloc_winproc()))
             {
-                proc = &winproc_array[winproc_used++];
-                set_winproc( proc, func, unicode );
+                proc->type = unicode ? WIN_PROC_32W : WIN_PROC_32A;
+                proc->u.proc32 = func;
                 TRACE( "allocated %p for %p %c (%d/%d used)\n",
                        proc_to_handle(proc), func, unicode ? 'W' : 'A', winproc_used, MAX_WINPROCS );
             }
+            else FIXME( "too many winprocs, cannot allocate one for %p %c\n", func, unicode ? 'W' : 'A' );
         }
         else TRACE( "reusing %p for %p %c\n", proc_to_handle(proc), func, unicode ? 'W' : 'A' );
 
         LeaveCriticalSection( &winproc_cs );
     }
-
     return proc_to_handle( proc );
 }
 
@@ -3077,10 +3066,10 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
 
 
 /**********************************************************************
- *	     __wine_call_wndproc_32A   (USER.1010)
+ *	     WINPROC_CallProc16To32A
  */
-LRESULT WINAPI __wine_call_wndproc_32A( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
-                                        WNDPROC func )
+static LRESULT WINPROC_CallProc16To32A( WNDPROC func, HWND16 hwnd, UINT16 msg,
+                                        WPARAM16 wParam, LPARAM lParam )
 {
     LRESULT result;
     UINT msg32;
@@ -3098,10 +3087,10 @@ LRESULT WINAPI __wine_call_wndproc_32A( HWND16 hwnd, UINT16 msg, WPARAM16 wParam
 
 
 /**********************************************************************
- *	     __wine_call_wndproc_32W   (USER.1011)
+ *	     WINPROC_CallProc16To32W
  */
-LRESULT WINAPI  __wine_call_wndproc_32W( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
-                                         WNDPROC func )
+static LRESULT WINPROC_CallProc16To32W( WNDPROC func, HWND16 hwnd, UINT16 msg,
+                                        WPARAM16 wParam, LPARAM lParam )
 {
     LRESULT result;
     UINT msg32;
@@ -3116,6 +3105,27 @@ LRESULT WINAPI  __wine_call_wndproc_32W( HWND16 hwnd, UINT16 msg, WPARAM16 wPara
     result = WINPROC_CallWndProc( func, hwnd32, msg32, wParam32, lParam );
     return WINPROC_UnmapMsg16To32W( hwnd32, msg32, wParam32, lParam, result,
         func );
+}
+
+
+/**********************************************************************
+ *	     __wine_call_wndproc   (USER.1010)
+ */
+LRESULT WINAPI __wine_call_wndproc( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
+                                    WINDOWPROC *proc )
+{
+    switch(proc->type)
+    {
+    case WIN_PROC_16:
+        return WINPROC_CallWndProc16( proc->u.proc16, hwnd, msg, wParam, lParam );
+    case WIN_PROC_32A:
+        return WINPROC_CallProc16To32A( proc->u.proc32, hwnd, msg, wParam, lParam );
+    case WIN_PROC_32W:
+        return WINPROC_CallProc16To32W( proc->u.proc32, hwnd, msg, wParam, lParam );
+    default:
+        WARN_(relay)("Invalid proc %p\n", proc );
+        return 0;
+    }
 }
 
 
@@ -3184,11 +3194,11 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     switch(proc->type)
     {
     case WIN_PROC_16:
-        return WINPROC_CallWndProc16( proc->proc16, hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc16( proc->u.proc16, hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
-        return __wine_call_wndproc_32A( hwnd, msg, wParam, lParam, proc->thunk.proc );
+        return WINPROC_CallProc16To32A( proc->u.proc32, hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        return __wine_call_wndproc_32W( hwnd, msg, wParam, lParam, proc->thunk.proc );
+        return WINPROC_CallProc16To32W( proc->u.proc32, hwnd, msg, wParam, lParam );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
@@ -3237,11 +3247,11 @@ LRESULT WINAPI CallWindowProcA(
     switch(proc->type)
     {
     case WIN_PROC_16:
-        return WINPROC_CallProc32ATo16( proc->proc16, hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32ATo16( proc->u.proc16, hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
-        return WINPROC_CallWndProc( proc->thunk.proc, hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc( proc->u.proc32, hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        return WINPROC_CallProc32ATo32W( proc->thunk.proc, hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32ATo32W( proc->u.proc32, hwnd, msg, wParam, lParam );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
@@ -3267,11 +3277,11 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
     switch(proc->type)
     {
     case WIN_PROC_16:
-        return WINPROC_CallProc32WTo16( proc->proc16, hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32WTo16( proc->u.proc16, hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
-        return WINPROC_CallProc32WTo32A( proc->thunk.proc, hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32WTo32A( proc->u.proc32, hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        return WINPROC_CallWndProc( proc->thunk.proc, hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc( proc->u.proc32, hwnd, msg, wParam, lParam );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
@@ -3294,11 +3304,11 @@ INT_PTR WINPROC_CallDlgProc16( DLGPROC16 func, HWND16 hwnd, UINT16 msg, WPARAM16
     switch(proc->type)
     {
     case WIN_PROC_16:
-        return LOWORD( WINPROC_CallWndProc16( proc->proc16, hwnd, msg, wParam, lParam ) );
+        return LOWORD( WINPROC_CallWndProc16( proc->u.proc16, hwnd, msg, wParam, lParam ) );
     case WIN_PROC_32A:
-        return __wine_call_wndproc_32A( hwnd, msg, wParam, lParam, proc->thunk.proc );
+        return WINPROC_CallProc16To32A( proc->u.proc32, hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        return __wine_call_wndproc_32W( hwnd, msg, wParam, lParam, proc->thunk.proc );
+        return WINPROC_CallProc16To32W( proc->u.proc32, hwnd, msg, wParam, lParam );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
@@ -3321,11 +3331,11 @@ INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
     switch(proc->type)
     {
     case WIN_PROC_16:
-        return LOWORD( WINPROC_CallProc32ATo16( proc->proc16, hwnd, msg, wParam, lParam ) );
+        return LOWORD( WINPROC_CallProc32ATo16( proc->u.proc16, hwnd, msg, wParam, lParam ) );
     case WIN_PROC_32A:
-        return WINPROC_CallWndProc( proc->thunk.proc, hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc( proc->u.proc32, hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        return WINPROC_CallProc32ATo32W( proc->thunk.proc, hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32ATo32W( proc->u.proc32, hwnd, msg, wParam, lParam );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
@@ -3348,11 +3358,11 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
     switch(proc->type)
     {
     case WIN_PROC_16:
-        return LOWORD( WINPROC_CallProc32WTo16( proc->proc16, hwnd, msg, wParam, lParam ));
+        return LOWORD( WINPROC_CallProc32WTo16( proc->u.proc16, hwnd, msg, wParam, lParam ));
     case WIN_PROC_32A:
-        return WINPROC_CallProc32WTo32A( proc->thunk.proc, hwnd, msg, wParam, lParam );
+        return WINPROC_CallProc32WTo32A( proc->u.proc32, hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
-        return WINPROC_CallWndProc( proc->thunk.proc, hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc( proc->u.proc32, hwnd, msg, wParam, lParam );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
