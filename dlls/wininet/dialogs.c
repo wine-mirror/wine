@@ -80,7 +80,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
 
     /* FIXME: perhaps it would be better to use InternetCrackUrl here */
     p = strchrW(szBuf, ':');
-    if(*p)
+    if (p)
         *p = 0;
 
     return TRUE;
