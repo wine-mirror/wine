@@ -339,9 +339,15 @@ BOOL WINAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
  */
 BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    LPWININETFTPSESSIONW lpwfs = NULL;
     LPWININETAPPINFOW hIC = NULL;
     BOOL r = FALSE;
+
+    if (!lpszDirectory)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        goto lend;
+    }
 
     lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hConnect );
     if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
