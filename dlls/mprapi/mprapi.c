@@ -44,6 +44,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+/***********************************************************************
+ *      MprAdminIsServiceRunning (MPRAPI.@)
+ */
 BOOL APIENTRY MprAdminIsServiceRunning(LPWSTR server)
 {
     FIXME("(%s): stub!\n", debugstr_w(server));

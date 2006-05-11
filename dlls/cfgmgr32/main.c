@@ -45,6 +45,9 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
+/***********************************************************************
+ *		CM_Get_Device_ID_ListA  (CFGMGR32.@)
+ */
 CONFIGRET WINAPI CM_Get_Device_ID_ListA( 
     PCSTR pszFilter, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
 {
@@ -53,6 +56,9 @@ CONFIGRET WINAPI CM_Get_Device_ID_ListA(
     return CR_SUCCESS;
 }
 
+/***********************************************************************
+ *		CM_Get_Device_ID_Size  (CFGMGR32.@)
+ */
 CONFIGRET WINAPI CM_Get_Device_ID_Size( ULONG*  pulLen, LPVOID dnDevInst,
                                         ULONG  ulFlags)
 {
@@ -61,6 +67,9 @@ CONFIGRET WINAPI CM_Get_Device_ID_Size( ULONG*  pulLen, LPVOID dnDevInst,
     return CR_SUCCESS;
 }
 
+/***********************************************************************
+ *		CM_Get_Device_IDA  (CFGMGR32.@)
+ */
 CONFIGRET WINAPI CM_Get_Device_IDA( LPVOID dnDevInst, LPSTR Buffer, 
                                    ULONG  BufferLen, ULONG  ulFlags)
 {

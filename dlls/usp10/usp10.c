@@ -72,6 +72,10 @@ typedef struct scriptcache {
        HDC hdc;
 } Scriptcache;
 
+/***********************************************************************
+ *      DllMain
+ *
+ */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {

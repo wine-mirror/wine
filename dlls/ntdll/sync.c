@@ -843,6 +843,9 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
     return STATUS_SUCCESS;
 }
 
+/******************************************************************
+ *		NtCreateIoCompletion (NTDLL.@)
+ */
 NTSTATUS WINAPI NtCreateIoCompletion( PHANDLE CompletionPort, ACCESS_MASK DesiredAccess,
                                       POBJECT_ATTRIBUTES ObjectAttributes, ULONG NumberOfConcurrentThreads )
 {

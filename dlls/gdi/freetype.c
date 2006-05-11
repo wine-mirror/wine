@@ -4074,6 +4074,8 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 
 #else /* HAVE_FREETYPE */
 
+/*************************************************************************/
+
 BOOL WineEngInit(void)
 {
     return FALSE;

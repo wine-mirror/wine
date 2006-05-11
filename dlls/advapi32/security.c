@@ -2174,6 +2174,9 @@ VOID WINAPI BuildTrusteeWithObjectsAndNameW( PTRUSTEEW pTrustee, POBJECTS_AND_NA
     pTrustee->ptstrName = (LPWSTR)pObjName;
 }
 
+/******************************************************************************
+ * BuildTrusteeWithObjectsAndSidA [ADVAPI32.@]
+ */
 VOID WINAPI BuildTrusteeWithObjectsAndSidA( PTRUSTEEA pTrustee, POBJECTS_AND_SID pObjSid,
                                             GUID* pObjectGuid, GUID* pInheritedObjectGuid, PSID pSid )
 {
@@ -2215,6 +2218,9 @@ VOID WINAPI BuildTrusteeWithObjectsAndSidA( PTRUSTEEA pTrustee, POBJECTS_AND_SID
     pTrustee->ptstrName = (LPSTR) pObjSid;
 }
 
+/******************************************************************************
+ * BuildTrusteeWithObjectsAndSidW [ADVAPI32.@]
+ */
 VOID WINAPI BuildTrusteeWithObjectsAndSidW( PTRUSTEEW pTrustee, POBJECTS_AND_SID pObjSid,
                                             GUID* pObjectGuid, GUID* pInheritedObjectGuid, PSID pSid )
 {

@@ -308,6 +308,9 @@ IMPL_WIREM_HANDLE(HACCEL)
 IMPL_WIREM_HANDLE(HMENU)
 IMPL_WIREM_HANDLE(HWND)
 
+/******************************************************************************
+ *           HGLOBAL_UserSize [OLE32.@]
+ */
 unsigned long __RPC_USER HGLOBAL_UserSize(unsigned long *pFlags, unsigned long StartingSize, HGLOBAL *phGlobal)
 {
     unsigned long size = StartingSize;
@@ -443,6 +446,9 @@ unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(unsigned long *pFlags, unsigned
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HGLOBAL_UserFree [OLE32.@]
+ */
 void __RPC_USER HGLOBAL_UserFree(unsigned long *pFlags, HGLOBAL *phGlobal)
 {
     TRACE("("); dump_user_flags(pFlags); TRACE(", &%p\n", *phGlobal);
