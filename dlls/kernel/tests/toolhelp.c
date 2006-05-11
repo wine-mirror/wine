@@ -242,7 +242,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
         {
             trace("PID=%lx base=%p size=%lx %s %s\n",
                   me.th32ProcessID, me.modBaseAddr, me.modBaseSize, me.szExePath, me.szModule);
-            ok(me.th32ProcessID == pid, "wrong returned process id");
+            ok(me.th32ProcessID == pid, "wrong returned process id\n");
             for (i = 0; i < num_expected; i++)
                 if (!lstrcmpi(expected[i], me.szModule)) found[i]++;
             num++;

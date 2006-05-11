@@ -72,13 +72,13 @@ static void test_null(void)
     UINT r;
 
     r = MsiOpenPackageExW(NULL, 0, &hpkg);
-    ok( r == ERROR_INVALID_PARAMETER,"wrong error");
+    ok( r == ERROR_INVALID_PARAMETER,"wrong error\n");
 
     r = MsiQueryProductStateW(NULL);
     ok( r == INSTALLSTATE_INVALIDARG, "wrong return\n");
 
     r = MsiEnumFeaturesW(NULL,0,NULL,NULL);
-    ok( r == ERROR_INVALID_PARAMETER,"wrong error");
+    ok( r == ERROR_INVALID_PARAMETER,"wrong error\n");
 }
 
 START_TEST(msi)

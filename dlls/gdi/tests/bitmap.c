@@ -299,7 +299,7 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     ok(ret == sizeof(ds), "%d != %d\n", ret, sizeof(ds));
 
     ok(ds.dsBm.bmBits == bits, "wrong bm.bmBits %p != %p\n", ds.dsBm.bmBits, bits);
-    ok(ds.dsBmih.biSizeImage == ds.dsBm.bmWidthBytes * ds.dsBm.bmHeight, "%lu != %u",
+    ok(ds.dsBmih.biSizeImage == ds.dsBm.bmWidthBytes * ds.dsBm.bmHeight, "%lu != %u\n",
        ds.dsBmih.biSizeImage, ds.dsBm.bmWidthBytes * ds.dsBm.bmHeight);
     ok(bmih->biSizeImage == 0, "%lu != 0\n", bmih->biSizeImage);
     ds.dsBmih.biSizeImage = 0;

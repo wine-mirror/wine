@@ -1425,7 +1425,7 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 
 
     if (!mi2w->pName || (! mi2w->pName[0])) {
-        WARN("pName not valid : %s \n", debugstr_w(mi2w->pName));
+        WARN("pName not valid : %s\n", debugstr_w(mi2w->pName));
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -1437,7 +1437,7 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
     }
 
     if (!mi2w->pDLLName || (! mi2w->pDLLName[0])) {
-        WARN("pDLLName not valid : %s \n", debugstr_w(mi2w->pDLLName));
+        WARN("pDLLName not valid : %s\n", debugstr_w(mi2w->pDLLName));
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }

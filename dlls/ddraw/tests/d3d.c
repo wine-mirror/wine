@@ -469,13 +469,13 @@ static void ProcessVerticesTest()
     /* Play with some matrices. */
 
     rc = IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_VIEW, &view);
-    ok(rc==D3D_OK, "IDirect3DDevice7_SetTransform failed");
+    ok(rc==D3D_OK, "IDirect3DDevice7_SetTransform failed\n");
 
     rc = IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_PROJECTION, &proj);
-    ok(rc==D3D_OK, "IDirect3DDevice7_SetTransform failed");
+    ok(rc==D3D_OK, "IDirect3DDevice7_SetTransform failed\n");
 
     rc = IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_WORLD, &world);
-    ok(rc==D3D_OK, "IDirect3DDevice7_SetTransform failed");
+    ok(rc==D3D_OK, "IDirect3DDevice7_SetTransform failed\n");
 
     rc = IDirect3DVertexBuffer7_ProcessVertices(lpVBufDest1, D3DVOP_TRANSFORM, 0, 4, lpVBufSrc, 0, lpD3DDevice, 0);
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::ProcessVertices returned: %lx\n", rc);
@@ -492,7 +492,7 @@ static void ProcessVerticesTest()
     vp.dvMinZ = 1.0;
     vp.dvMaxZ = 0.0;
     rc = IDirect3DDevice7_SetViewport(lpD3DDevice, &vp);
-    ok(rc==D3D_OK, "IDirect3DDevice7_SetViewport failed");
+    ok(rc==D3D_OK, "IDirect3DDevice7_SetViewport failed\n");
 
     /* Check the results */
     if( !comparefloat(out[0].x, 256.0 ) ||    /* X coordinate is cut at the surface edges */

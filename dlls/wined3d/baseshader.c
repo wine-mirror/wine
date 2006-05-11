@@ -379,7 +379,7 @@ void generate_base_shader(
 
             } else {
 
-                TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d, \n",
+                TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d,\n",
                 curOpcode->name, curOpcode->glname, curOpcode->num_params);
 
                 /* Unless we encounter a no-op command, this opcode is unrecognized */

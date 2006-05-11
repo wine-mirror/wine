@@ -515,7 +515,7 @@ static void test_class_moniker(void)
     ok_ole_success(hr, IMoniker_IsSystemMoniker);
 
     ok(moniker_type == MKSYS_CLASSMONIKER,
-        "dwMkSys != MKSYS_CLASSMONIKER, instead was 0x%08lx",
+        "dwMkSys != MKSYS_CLASSMONIKER, instead was 0x%08lx\n",
         moniker_type);
 
     hr = CreateBindCtx(0, &bindctx);
@@ -644,7 +644,7 @@ static void test_item_moniker(void)
     ok_ole_success(hr, IMoniker_IsSystemMoniker);
 
     ok(moniker_type == MKSYS_ITEMMONIKER,
-        "dwMkSys != MKSYS_ITEMMONIKER, instead was 0x%08lx",
+        "dwMkSys != MKSYS_ITEMMONIKER, instead was 0x%08lx\n",
         moniker_type);
 
     hr = CreateBindCtx(0, &bindctx);
@@ -702,7 +702,7 @@ static void test_anti_moniker(void)
     hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
     ok_ole_success(hr, IMoniker_IsSystemMoniker);
     ok(moniker_type == MKSYS_ANTIMONIKER,
-        "dwMkSys != MKSYS_ANTIMONIKER, instead was 0x%08lx",
+        "dwMkSys != MKSYS_ANTIMONIKER, instead was 0x%08lx\n",
         moniker_type);
 
     hr = IMoniker_Inverse(moniker, &inverse);
@@ -776,7 +776,7 @@ static void test_generic_composite_moniker(void)
     ok_ole_success(hr, IMoniker_IsSystemMoniker);
 
     ok(moniker_type == MKSYS_GENERICCOMPOSITE,
-        "dwMkSys != MKSYS_GENERICCOMPOSITE, instead was 0x%08lx",
+        "dwMkSys != MKSYS_GENERICCOMPOSITE, instead was 0x%08lx\n",
         moniker_type);
 
     hr = CreateBindCtx(0, &bindctx);

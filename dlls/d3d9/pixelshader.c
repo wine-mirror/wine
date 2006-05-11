@@ -100,7 +100,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(LPDIRECT3DDEVICE9 iface, C
     IDirect3DPixelShader9Impl *object;
     HRESULT hrc = D3D_OK;
 
-    TRACE("(%p) Relay \n", This);
+    TRACE("(%p) Relay\n", This);
 
     if (ppShader == NULL) {
         TRACE("(%p) Invalid call\n", This);
