@@ -23,6 +23,13 @@ use strict;
 use output qw($output);
 use options qw($options);
 
+# Defined a couple common regexp tidbits
+my $CALL_CONVENTION="__cdecl|__stdcall|" .
+                    "__RPC_API|__RPC_STUB|__RPC_USER|RPC_ENTRY|" .
+		    "RPC_VAR_ENTRY|STDMETHODCALLTYPE|NET_API_FUNCTION|" .
+                    "CALLBACK|CDECL|NTAPI|PASCAL|APIENTRY|" .
+		    "VFWAPI|VFWAPIV|WINAPI|WINAPIV|";
+
 sub parse_c_file($$) {
     my $file = shift;
     my $callbacks = shift;
@@ -373,7 +380,7 @@ sub parse_c_file($$) {
 	    }
 	    next;
 	} elsif(/(extern\s+|static\s+)?((interface\s+|struct\s+|union\s+|enum\s+|signed\s+|unsigned\s+)?\w+((\s*\*)+\s*|\s+))
-            ((__cdecl|__stdcall|__RPC_STUB|__RPC_USER|CDECL|NET_API_FUNCTION|RPC_ENTRY|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
+            (($CALL_CONVENTION)\s+)?
 	    (\w+(\(\w+\))?)\s*\((.*?)\)\s*(\{|\;)/sx)
         {
 	    my @lines = split(/\n/, $&);
@@ -449,8 +456,8 @@ sub parse_c_file($$) {
 			((?:interface\s+|struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)?
 			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
 			((?:const|volatile)?\s*(?:\*\s*(?:const|volatile)?\s*?)*)\s*
-			(?:__cdecl\s+|__stdcall\s+|__RPC_STUB\s+|__RPC_USER\s+|CALLBACK\s+|CDECL\s+|NET_API_FUNCTION\s+|RPC_ENTRY\s+|STDMETHODCALLTYPE\s+|VFWAPIV\s+|VFWAPI\s+|WINAPIV\s+|WINAPI\s+)?
-			\(\s*(?:__cdecl|__stdcall|__RPC_STUB|__RPC_USER|CALLBACK|CDECL|NET_API_FUNCTION|RPC_ENTRY|STDMETHODCALLTYPE|VFWAPIV|VFWAPI|WINAPIV|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
+			(?:(?:$CALL_CONVENTION)\s+)?
+			\(\s*(?:$CALL_CONVENTION)?\s*\*\s*((?:\w+)?)\s*\)\s*
 			\(\s*(.*?)\s*\)$/x) 
 		{
 		    my $return_type = $1;

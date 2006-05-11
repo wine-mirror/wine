@@ -37,7 +37,7 @@ use c_type;
 my $CALL_CONVENTION="__cdecl|__stdcall|" .
                     "__RPC_API|__RPC_STUB|__RPC_USER|" .
 		    "CALLBACK|CDECL|NTAPI|PASCAL|RPC_ENTRY|RPC_VAR_ENTRY|" .
-		    "VFWAPI|VFWAPIV|WINAPI|WINAPIV|";
+		    "VFWAPI|VFWAPIV|WINAPI|WINAPIV|APIENTRY|";
 
 
 sub parse_c_function($$$$$);
