@@ -316,8 +316,8 @@ TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin,
 	}
 
     if (!activeDS.progressWnd)
-        activeDS.progressWnd = TransferingDialogBox(NULL,0);
-    TransferingDialogBox(activeDS.progressWnd,0);
+        activeDS.progressWnd = TransferringDialogBox(NULL,0);
+    TransferringDialogBox(activeDS.progressWnd,0);
 
         activeDS.currentState = 7;
     } else {
@@ -355,7 +355,7 @@ TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin,
     pImageMemXfer->Columns	= activeDS.jd.output_width; /* we do whole strips */
     pImageMemXfer->BytesWritten = curoff;
 
-    TransferingDialogBox(activeDS.progressWnd,0);
+    TransferringDialogBox(activeDS.progressWnd,0);
 
     if (activeDS.jd.output_scanline == activeDS.jd.output_height) {
         pjpeg_finish_decompress(&activeDS.jd);
@@ -364,7 +364,7 @@ TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin,
 	activeDS.file = NULL;
 	TRACE("xfer is done!\n");
 
-	/*TransferingDialogBox(activeDS.progressWnd, -1);*/
+	/*TransferringDialogBox(activeDS.progressWnd, -1);*/
 	twRC = TWRC_XFERDONE;
     }
     activeDS.twCC = TWRC_SUCCESS;

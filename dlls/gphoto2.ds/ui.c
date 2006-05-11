@@ -238,7 +238,7 @@ static INT_PTR CALLBACK ProgressProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	    return FALSE;
 }   
 
-HWND TransferingDialogBox(HWND dialog, DWORD progress)
+HWND TransferringDialogBox(HWND dialog, DWORD progress)
 {
 	if (!dialog)
 		dialog = CreateDialogW(GPHOTO2_instance,

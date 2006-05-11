@@ -363,8 +363,8 @@ TW_UINT16 GPHOTO2_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
         activeDS.currentState = 5;
         /* Notify the application that it can close the data source */
         activeDS.pendingEvent.TWMessage = MSG_CLOSEDSREQ;
-        /* close any Transfering dialog */
-        TransferingDialogBox(activeDS.progressWnd,-1);
+        /* close any Transferring dialog */
+        TransferringDialogBox(activeDS.progressWnd,-1);
         activeDS.progressWnd = 0;
     }
     activeDS.twCC = TWCC_SUCCESS;
