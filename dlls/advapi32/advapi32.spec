@@ -596,7 +596,7 @@
 # @ stub StopTraceW
 @ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
 @ stdcall SystemFunction001(ptr ptr ptr)
-@ stub SystemFunction002
+@ stdcall SystemFunction002(ptr ptr ptr)
 @ stub SystemFunction003
 @ stub SystemFunction004
 @ stub SystemFunction005

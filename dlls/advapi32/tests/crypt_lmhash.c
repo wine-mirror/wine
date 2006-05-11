@@ -37,11 +37,13 @@ struct ustring {
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
 typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction001)(const LPBYTE, const LPBYTE, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction002)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);
 
 fnSystemFunction006 pSystemFunction006;
 fnSystemFunction008 pSystemFunction008;
 fnSystemFunction001 pSystemFunction001;
+fnSystemFunction002 pSystemFunction002;
 fnSystemFunction032 pSystemFunction032;
 
 static void test_SystemFunction006(void)
@@ -122,6 +124,21 @@ static void test_SystemFunction001(void)
     ok(!memcmp(output, expected, sizeof expected), "response wrong\n");
 }
 
+static void test_SystemFunction002(void)
+{
+    /* reverse of SystemFunction001 */
+    unsigned char key[8] = { 0xff, 0x37, 0x50, 0xbc, 0xc2, 0xb2, 0x24, 0 };
+    unsigned char expected[8] = { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
+    unsigned char data[8] = { 0xc3, 0x37, 0xcd, 0x5c, 0xbd, 0x44, 0xfc, 0x97 };
+    unsigned char output[8];
+    int r;
+
+    memset(output, 0, sizeof output);
+    r = pSystemFunction002(data, key, output);
+    ok(r == STATUS_SUCCESS, "function failed\n");
+    ok(!memcmp(output, expected, sizeof expected), "response wrong\n");
+}
+
 static void test_SystemFunction032(void)
 {
     struct ustring key, data;
@@ -143,7 +160,7 @@ static void test_SystemFunction032(void)
     r = pSystemFunction032(&data, &key);
     ok(r == STATUS_SUCCESS, "function failed\n");
 
-    ok( !memcmp(expected, data.Buffer, data.Length), "wrong result\n");
+    ok(!memcmp(expected, data.Buffer, data.Length), "wrong result\n");
 }
 
 START_TEST(crypt_lmhash)
@@ -167,6 +184,10 @@ START_TEST(crypt_lmhash)
     pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
     if (pSystemFunction032)
         test_SystemFunction032();
+
+    pSystemFunction002 = (fnSystemFunction002)GetProcAddress( module, "SystemFunction002" );
+    if (pSystemFunction002)
+        test_SystemFunction002();
 
     FreeLibrary( module );
 }

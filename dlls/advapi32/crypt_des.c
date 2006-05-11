@@ -1,5 +1,6 @@
 /*
  *  Copyright 2004 Hans Leidekker
+ *  Copyright 2006 Mike McCormack
  *
  *  Based on DES.c from libcifs
  *
@@ -159,9 +160,9 @@ static void Permute( unsigned char *dst, const unsigned char *src, const unsigne
         if (GETBIT( src, map[i] ))
             SETBIT( dst, i );
     }
-} 
+}
 
-static void KeyShift( unsigned char *key, const int numbits )
+static void KeyShiftLeft( unsigned char *key, const int numbits )
 {
     int i;
     unsigned char keep = key[0];
@@ -187,6 +188,35 @@ static void KeyShift( unsigned char *key, const int numbits )
             SETBIT( key, 27 );
 
         keep <<= 1;
+    }
+}
+
+static void KeyShiftRight( unsigned char *key, const int numbits )
+{
+    int i;
+    unsigned char keep = key[6];
+
+    for (i = 0; i < numbits; i++)
+    {
+        int j;
+
+        for (j = 7; j >= 0; j--)
+        {
+            if (j!=7 && (key[j] & 0x01))
+                key[j+1] |=  0x80;
+            key[j] >>= 1;
+        }
+
+        if (GETBIT( key, 28 ))
+        {
+            CLRBIT( key, 28 );
+            SETBIT( key, 0 );
+        }
+
+        if (keep & 0x01)
+            SETBIT( key, 28 );
+
+        keep >>= 1;
     }
 }
 
@@ -267,7 +297,7 @@ unsigned char *CRYPT_DEShash( unsigned char *dst, const unsigned char *key, cons
         unsigned char  Rn[4];
         unsigned char  SubK[6];
 
-        KeyShift( K, KeyRotation[i] );
+        KeyShiftLeft( K, KeyRotation[i] );
         Permute( SubK, K, KeyCompression, 6 );
 
         Permute( Rexp, R, DataExpansion, 6 );
@@ -282,6 +312,47 @@ unsigned char *CRYPT_DEShash( unsigned char *dst, const unsigned char *key, cons
             L[j] = R[j];
             R[j] = Rn[j];
         }
+    }
+
+    Permute( dst, D, FinalPermuteMap, 8 );
+
+    return dst;
+}
+
+unsigned char *CRYPT_DESunhash( unsigned char *dst, const unsigned char *key, const unsigned char *src )
+{
+    int i;
+    unsigned char K[7];
+    unsigned char D[8];
+
+    Permute( K, key, KeyPermuteMap, 7 );
+    Permute( D, src, InitialPermuteMap, 8 );
+
+    for (i = 0; i < 16; i++)
+    {
+        int j;
+        unsigned char *L = D;
+        unsigned char *R = &(D[4]);
+        unsigned char  Rexp[6];
+        unsigned char  Rn[4];
+        unsigned char  SubK[6];
+
+        Permute( SubK, K, KeyCompression, 6 );
+
+        Permute( Rexp, R, DataExpansion, 6 );
+        xor( Rexp, Rexp, SubK, 6 );
+
+        sbox( Rn, Rexp );
+        Permute( Rexp, Rn, PBox, 4 );
+        xor( Rn, L, Rexp, 4 );
+
+        for (j = 0; j < 4; j++)
+        {
+            L[j] = R[j];
+            R[j] = Rn[j];
+        }
+
+        KeyShiftRight( K, KeyRotation[15 - i] );
     }
 
     Permute( dst, D, FinalPermuteMap, 8 );
