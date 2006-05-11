@@ -149,22 +149,22 @@ typedef struct _RPC_POLICY
 
 typedef struct _SEC_WINNT_AUTH_IDENTITY_W
 {
-    unsigned short __RPC_FAR* User;
+    unsigned short* User;
     unsigned long UserLength;
-    unsigned short __RPC_FAR* Domain;
+    unsigned short* Domain;
     unsigned long DomainLength;
-    unsigned short __RPC_FAR* Password;
+    unsigned short* Password;
     unsigned long PasswordLength;
     unsigned long Flags;
 } SEC_WINNT_AUTH_IDENTITY_W, *PSEC_WINNT_AUTH_IDENTITY_W;
 
 typedef struct _SEC_WINNT_AUTH_IDENTITY_A
 {
-    unsigned char __RPC_FAR* User;
+    unsigned char* User;
     unsigned long UserLength;
-    unsigned char __RPC_FAR* Domain;
+    unsigned char* Domain;
     unsigned long DomainLength;
-    unsigned char __RPC_FAR* Password;
+    unsigned char* Password;
     unsigned long PasswordLength;
     unsigned long Flags;
 } SEC_WINNT_AUTH_IDENTITY_A, *PSEC_WINNT_AUTH_IDENTITY_A;

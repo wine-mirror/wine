@@ -134,9 +134,9 @@ typedef struct IDirectMusicContainer *LPDIRECTMUSICCONTAINER;
 typedef struct IDirectMusicContainer    IDirectMusicContainer8,    *LPDIRECTMUSICCONTAINER8;
 
 /* RPC declarations */
-typedef struct IDirectMusicBand   __RPC_FAR *LPDMUS_BAND;
-typedef struct IDirectMusicLoader __RPC_FAR *LPDMUS_LOADER;
-typedef struct IDirectMusicObject __RPC_FAR *LPDMUS_OBJECT;
+typedef struct IDirectMusicBand   *LPDMUS_BAND;
+typedef struct IDirectMusicLoader *LPDMUS_LOADER;
+typedef struct IDirectMusicObject *LPDMUS_OBJECT;
 
 /* GUIDs - all types loader */
 DEFINE_GUID(GUID_DirectMusicAllTypes,         0xd2ac2893,0xb39b,0x11d1,0x87,0x04,0x00,0x60,0x08,0x93,0xb1,0xbd);
