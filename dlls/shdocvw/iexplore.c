@@ -149,7 +149,7 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     TRACE("(%p %s %p)\n", pOuter, debugstr_guid(riid), ppv);
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(InternetExplorer));
+    ret = shdocvw_alloc(sizeof(InternetExplorer));
     ret->ref = 0;
 
     ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);
@@ -162,7 +162,7 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     hres = IWebBrowser2_QueryInterface(WEBBROWSER2(ret), riid, ppv);
     if(FAILED(hres)) {
-        HeapFree(GetProcessHeap(), 0, ret);
+        shdocvw_free(ret);
         return hres;
     }
 
@@ -195,12 +195,12 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
         DWORD len;
 
         len = MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, NULL, 0);
-        url = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+        url = shdocvw_alloc(len*sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, url, len);
 
         wb = create_ie_window(url);
 
-        HeapFree(GetProcessHeap(), 0, url);
+        shdocvw_free(url);
     }
 
     /* run the message loop for this thread */

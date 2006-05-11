@@ -206,10 +206,10 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
         }
 
         if(i == This->sinks_size)
-            This->sinks = HeapReAlloc(GetProcessHeap(), 0, This->sinks,
-                                      (++This->sinks_size)*sizeof(*This->sinks));
+            This->sinks = shdocvw_realloc(This->sinks,
+                                          (++This->sinks_size)*sizeof(*This->sinks));
     }else {
-        This->sinks = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->sinks));
+        This->sinks = shdocvw_alloc(sizeof(*This->sinks));
         This->sinks_size = 1;
         i = 0;
     }
@@ -270,7 +270,7 @@ void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams)
 
 static void ConnectionPoint_Create(DocHost *doc_host, REFIID riid, ConnectionPoint **cp)
 {
-    ConnectionPoint *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(ConnectionPoint));
+    ConnectionPoint *ret = shdocvw_alloc(sizeof(ConnectionPoint));
 
     ret->lpConnectionPointVtbl = &ConnectionPointVtbl;
 
@@ -293,8 +293,8 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
             IDispatch_Release(This->sinks[i]);
     }
 
-    HeapFree(GetProcessHeap(), 0, This->sinks);
-    HeapFree(GetProcessHeap(), 0, This);
+    shdocvw_free(This->sinks);
+    shdocvw_free(This);
 }
 
 void DocHost_Events_Init(DocHost *This)

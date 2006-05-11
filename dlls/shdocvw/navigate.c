@@ -137,8 +137,8 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     if(!ref) {
         if(This->post_data)
             GlobalFree(This->post_data);
-        HeapFree(GetProcessHeap(), 0, This->headers);
-        HeapFree(GetProcessHeap(), 0, This);
+        shdocvw_free(This->headers);
+        shdocvw_free(This);
     }
 
     return ref;
@@ -293,7 +293,7 @@ static const IHttpNegotiateVtbl HttpNegotiateVtbl = {
 static IBindStatusCallback *create_callback(DocHost *This, PBYTE post_data,
         ULONG post_data_len, LPWSTR headers, VARIANT_BOOL *cancel)
 {
-    BindStatusCallback *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(BindStatusCallback));
+    BindStatusCallback *ret = shdocvw_alloc(sizeof(BindStatusCallback));
 
     ret->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
     ret->lpHttpNegotiateVtbl      = &HttpNegotiateVtbl;
@@ -310,7 +310,7 @@ static IBindStatusCallback *create_callback(DocHost *This, PBYTE post_data,
 
     if(headers) {
         int size = (strlenW(headers)+1)*sizeof(WCHAR);
-        ret->headers = HeapAlloc(GetProcessHeap(), 0, size);
+        ret->headers = shdocvw_alloc(size);
         memcpy(ret->headers, headers, size);
     }
 

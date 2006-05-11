@@ -207,4 +207,21 @@ extern void unregister_iewindow_class(void);
 
 HRESULT register_class_object(BOOL);
 
+/* memory allocation functions */
+
+static inline void *shdocvw_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void *shdocvw_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
+static inline BOOL shdocvw_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
 #endif /* __WINE_SHDOCVW_H */

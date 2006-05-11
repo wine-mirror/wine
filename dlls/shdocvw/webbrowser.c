@@ -133,7 +133,7 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
 
         WebBrowser_OleObject_Destroy(This);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        shdocvw_free(This);
         SHDOCVW_UnlockModule();
     }
 
@@ -925,7 +925,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     TRACE("(%p %s %p)\n", pOuter, debugstr_guid(riid), ppv);
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(WebBrowser));
+    ret = shdocvw_alloc(sizeof(WebBrowser));
 
     ret->lpWebBrowser2Vtbl = &WebBrowser2Vtbl;
     ret->ref = 0;
@@ -949,7 +949,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     if(SUCCEEDED(hres)) {
         SHDOCVW_LockModule();
     }else {
-        HeapFree(GetProcessHeap(), 0, ret);
+        shdocvw_free(ret);
         return hres;
     }
 

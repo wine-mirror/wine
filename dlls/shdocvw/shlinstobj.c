@@ -60,7 +60,7 @@ static void RegistryPropertyBag_Destroy(RegistryPropertyBag *This) {
     TRACE("This=%p)\n", This);
 
     RegCloseKey(This->m_hInitPropertyBagKey);
-    HeapFree(GetProcessHeap(), 0, This);
+    shdocvw_free(This);
 }
 
 static HRESULT WINAPI RegistryPropertyBag_IPropertyBag_QueryInterface(IPropertyBag *iface,
@@ -131,20 +131,20 @@ static HRESULT WINAPI RegistryPropertyBag_IPropertyBag_Read(IPropertyBag *iface,
     if (res != ERROR_SUCCESS) 
         return E_INVALIDARG;
 
-    pwszValue = HeapAlloc(GetProcessHeap(), 0, cbData);
+    pwszValue = shdocvw_alloc(cbData);
     if (!pwszValue)
         return E_OUTOFMEMORY;
  
     res = RegQueryValueExW(This->m_hInitPropertyBagKey, pwszPropName, NULL, &dwType, 
                            (LPBYTE)pwszValue, &cbData);
     if (res != ERROR_SUCCESS) {
-        HeapFree(GetProcessHeap(), 0, pwszValue);
+        shdocvw_free(pwszValue);
         return E_INVALIDARG;
     }
 
     V_VT(pVar) = VT_BSTR;
     V_BSTR(pVar) = SysAllocString(pwszValue);
-    HeapFree(GetProcessHeap(), 0, pwszValue);
+    shdocvw_free(pwszValue);
 
     if (vtDst != VT_BSTR) {
         hr = VariantChangeTypeEx(pVar, pVar, LOCALE_SYSTEM_DEFAULT, 0, vtDst);
@@ -177,7 +177,7 @@ HRESULT RegistryPropertyBag_Constructor(HKEY hInitPropertyBagKey, REFIID riid, L
     TRACE("(hInitPropertyBagKey=%p, riid=%s, ppvObject=%p)\n", hInitPropertyBagKey, 
         debugstr_guid(riid), ppvObject);
     
-    pRegistryPropertyBag = HeapAlloc(GetProcessHeap(), 0, sizeof(RegistryPropertyBag));
+    pRegistryPropertyBag = shdocvw_alloc(sizeof(RegistryPropertyBag));
     if (pRegistryPropertyBag) {
         pRegistryPropertyBag->lpIPropertyBagVtbl = &RegistryPropertyBag_IPropertyBagVtbl;
         pRegistryPropertyBag->m_cRef = 0;
@@ -207,7 +207,7 @@ typedef struct _InstanceObjectFactory {
 
 static void InstanceObjectFactory_Destroy(InstanceObjectFactory *This) {
     IPropertyBag_Release(This->m_pPropertyBag);
-    HeapFree(GetProcessHeap(), 0, This);
+    shdocvw_free(This);
 }
 
 static HRESULT WINAPI InstanceObjectFactory_IClassFactory_QueryInterface(IClassFactory *iface, 
@@ -323,7 +323,7 @@ HRESULT InstanceObjectFactory_Constructor(REFCLSID rclsid, IPropertyBag *pProper
     TRACE("(RegistryPropertyBag=%p, riid=%s, ppvObject=%p)\n", pPropertyBag,
         debugstr_guid(riid), ppvObject);
 
-    pInstanceObjectFactory = HeapAlloc(GetProcessHeap(), 0, sizeof(InstanceObjectFactory));
+    pInstanceObjectFactory = shdocvw_alloc(sizeof(InstanceObjectFactory));
     if (pInstanceObjectFactory) {
         pInstanceObjectFactory->lpIClassFactoryVtbl = &InstanceObjectFactory_IClassFactoryVtbl;
         pInstanceObjectFactory->m_cRef = 0;

@@ -180,7 +180,7 @@ static ULONG WINAPI dlRelease( IBindStatusCallback* iface )
     if( !ref )
     {
         DestroyWindow( This->hDialog );
-        HeapFree( GetProcessHeap(), 0, This );
+        shdocvw_free(This);
     }
 
     SHDOCVW_UnlockModule();
@@ -285,7 +285,7 @@ static IBindStatusCallback* create_dl(HWND dlg, BOOL *pbCancelled)
 {
     IBindStatusCallbackImpl *This;
 
-    This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
+    This = shdocvw_alloc(sizeof(*This));
     This->vtbl = &dlVtbl;
     This->ref = 1;
     This->hDialog = dlg;
