@@ -792,9 +792,11 @@ static void test_OpenPrinter(void)
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(NULL, &hprinter, &defaults);
+        todo_wine {
         ok(!res && GetLastError() == ERROR_ACCESS_DENIED,
             "returned %ld with %ld (expected '0' with ERROR_ACCESS_DENIED)\n", 
             res, GetLastError());
+        }
         if (res) ClosePrinter(hprinter);
 
     }
@@ -828,6 +830,17 @@ static void test_OpenPrinter(void)
        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
     if(res) ClosePrinter(hprinter);
 
+    hprinter = (HANDLE) MAGIC_DEAD;
+    SetLastError(MAGIC_DEAD);
+    res = OpenPrinter("", &hprinter, NULL);
+    /* NT: ERROR_INVALID_PRINTER_NAME,  9x: ERROR_INVALID_PARAMETER */
+    ok( !res &&
+        ((GetLastError() == ERROR_INVALID_PRINTER_NAME) || 
+        (GetLastError() == ERROR_INVALID_PARAMETER) ),
+        "returned %ld with %ld (expected '0' with: ERROR_INVALID_PRINTER_NAME" \
+        " or ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+    if(res) ClosePrinter(hprinter);
+
 
     /* Get Handle for the default Printer */
     if ((default_printer = find_default_printer()))
@@ -837,11 +850,18 @@ static void test_OpenPrinter(void)
         res = OpenPrinter(default_printer, &hprinter, NULL);
         if((!res) && (GetLastError() == RPC_S_SERVER_UNAVAILABLE))
         {
-                trace("The Service 'Spooler' is required for '%s'\n", default_printer);
+            trace("The Service 'Spooler' is required for '%s'\n", default_printer);
             return;
         }
         ok(res, "returned %ld with %ld (expected '!=0')\n", res, GetLastError());
         if(res) ClosePrinter(hprinter);
+
+        SetLastError(MAGIC_DEAD);
+        res = OpenPrinter(default_printer, NULL, NULL);
+        /* NT: FALSE with ERROR_INVALID_PARAMETER, 9x: TRUE */
+        ok(res || (GetLastError() == ERROR_INVALID_PARAMETER),
+            "returned %ld with %ld (expected '!=0' or '0' with " \
+            "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
         defaults.pDatatype=NULL;
         defaults.pDevMode=NULL;
