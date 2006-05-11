@@ -273,12 +273,12 @@ static void test_registerOIDFunction(void)
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
      */
     /* On windows XP, GetLastError is incorrectly being set with an HRESULT,
-     * HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER)
+     * E_INVALIDARG
      */
     ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "foo", NULL, bogusDll,
      NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected ERROR_INVALID_PARAMETER: %ld\n", GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG: %ld\n", GetLastError());
     /* This has no effect, but "succeeds" on XP */
     ret = CryptRegisterOIDFunction(X509_ASN_ENCODING, "foo",
      "1.2.3.4.5.6.7.8.9.10", NULL, NULL);

@@ -525,7 +525,7 @@ static BOOL CRYPT_CollectionAddCert(PWINECRYPT_CERTSTORE store,
         }
         LeaveCriticalSection(&cs->cs);
         if (!storeEntry)
-            SetLastError(HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED));
+            SetLastError(E_ACCESSDENIED);
     }
     if (ppStoreContext && childContext)
     {
@@ -1410,7 +1410,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
 
     if (!pvPara)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return NULL;
     }
 
@@ -1458,7 +1458,7 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
          debugstr_w(storeName));
         return NULL;
     default:
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return NULL;
     }
 
@@ -1693,7 +1693,7 @@ HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV hProv,
 {
     if (!szSubSystemProtocol)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return 0;
     }
     return CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, hProv,
@@ -1705,7 +1705,7 @@ HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV hProv,
 {
     if (!szSubSystemProtocol)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return 0;
     }
     return CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, hProv,
@@ -1985,7 +1985,7 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
     case CERT_CERT_PROP_ID:
     case CERT_CRL_PROP_ID:
     case CERT_CTL_PROP_ID:
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         ret = FALSE;
         break;
     case CERT_ACCESS_STATE_PROP_ID:
@@ -2172,7 +2172,7 @@ BOOL WINAPI CertSetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
     case CERT_CERT_PROP_ID:
     case CERT_CRL_PROP_ID:
     case CERT_CTL_PROP_ID:
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return FALSE;
     }
     ret = CertContext_SetProperty((PWINE_CERT_CONTEXT)pCertContext, dwPropId,
@@ -2716,7 +2716,7 @@ PCCERT_CONTEXT WINAPI CertGetSubjectCertificateFromStore(HCERTSTORE hCertStore,
 
     if (!pCertId)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return NULL;
     }
     return CertFindCertificateInStore(hCertStore, dwCertEncodingType, 0,
@@ -2782,17 +2782,17 @@ BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
         return TRUE;
     if (collection->hdr.dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return FALSE;
     }
     if (collection->hdr.type != StoreTypeCollection)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return FALSE;
     }
     if (sibling->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return FALSE;
     }
 
@@ -2848,14 +2848,14 @@ void WINAPI CertRemoveStoreFromCollection(HCERTSTORE hCollectionStore,
         return;
     if (collection->hdr.dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return;
     }
     if (collection->hdr.type != StoreTypeCollection)
         return;
     if (sibling->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return;
     }
     EnterCriticalSection(&collection->cs);

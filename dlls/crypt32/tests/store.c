@@ -207,10 +207,8 @@ static void testAddCert(void)
                 /* but adding a new certificate isn't allowed. */
                 ret = CertAddCertificateContextToStore(collection, context,
                  CERT_STORE_ADD_ALWAYS, NULL);
-                ok(!ret && GetLastError() ==
-                 HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
-                 "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08lx\n",
-                 GetLastError());
+                ok(!ret && GetLastError() == E_ACCESSDENIED,
+                 "Expected E_ACCESSDENIED, got %08lx\n", GetLastError());
                 CertFreeCertificateContext(context);
             }
 
@@ -396,10 +394,8 @@ static void testGetSubjectCert(void)
 
         context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
          NULL);
-        ok(!context2 && GetLastError() ==
-         HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-         GetLastError());
+        ok(!context2 && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
          &info);
         ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
@@ -736,9 +732,8 @@ static void testCollectionStore(void)
     /* Try adding a cert to any empty collection */
     ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
      bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
-     "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_ACCESSDENIED,
+     "Expected E_ACCESSDENIED, got %08lx\n", GetLastError());
 
     /* Create and add a cert to a memory store */
     store1 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
@@ -760,9 +755,8 @@ static void testCollectionStore(void)
     /* Check that adding to the collection isn't allowed */
     ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
      bigCert2, sizeof(bigCert2), CERT_STORE_ADD_ALWAYS, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED),
-     "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_ACCESSDENIED,
+     "Expected E_ACCESSDENIED, got %08lx\n", GetLastError());
 
     /* Create a new memory store */
     store2 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
@@ -770,9 +764,8 @@ static void testCollectionStore(void)
     /* Try adding a store to a non-collection store */
     ret = CertAddStoreToCollection(store1, store2,
      CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Try adding some bogus stores */
     /* This crashes in Windows
     ret = CertAddStoreToCollection(0, store2,
@@ -1363,10 +1356,8 @@ static void testSystemRegStore(void)
     {
         BOOL ret = CertAddStoreToCollection(store, memStore, 0, 0);
 
-        ok(!ret && GetLastError() ==
-         HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-         GetLastError());
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         CertCloseStore(memStore, 0);
     }
     CertCloseStore(store, 0);
@@ -1387,19 +1378,16 @@ static void testSystemRegStore(void)
     RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
 
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0, 0, NULL);
-    ok(!store && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!store && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
      CERT_SYSTEM_STORE_LOCAL_MACHINE | CERT_SYSTEM_STORE_CURRENT_USER, MyA);
-    ok(!store && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!store && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
      CERT_SYSTEM_STORE_LOCAL_MACHINE | CERT_SYSTEM_STORE_CURRENT_USER, MyW);
-    ok(!store && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!store && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* The name is expected to be UNICODE, check with an ASCII name */
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, MyA);
@@ -1487,9 +1475,8 @@ static void testCertOpenSystemStore(void)
     HCERTSTORE store;
 
     store = CertOpenSystemStoreW(0, NULL);
-    ok(!store && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!store && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* This succeeds, and on WinXP at least, the Bogus key is created under
      * HKCU (but not under HKLM, even when run as an administrator.)
      */
@@ -1552,20 +1539,16 @@ static void testCertProperties(void)
 
         /* Tests with a NULL cert context.  Prop ID 0 fails.. */
         ret = CertSetCertificateContextProperty(NULL, 0, 0, NULL);
-        ok(!ret && GetLastError() ==
-         HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-         GetLastError());
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         /* while this just crashes.
         ret = CertSetCertificateContextProperty(NULL,
          CERT_KEY_PROV_HANDLE_PROP_ID, 0, NULL);
          */
 
         ret = CertSetCertificateContextProperty(context, 0, 0, NULL);
-        ok(!ret && GetLastError() ==
-         HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-         GetLastError());
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         /* Can't set the cert property directly, this crashes.
         ret = CertSetCertificateContextProperty(context,
          CERT_CERT_PROP_ID, 0, bigCert2);
@@ -1684,66 +1667,56 @@ static void testAddSerialized(void)
     hdr->cb = 0;
     ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 0,
      NULL, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Test with a bad size in property header */
     hdr->cb = sizeof(bigCert) - 1;
     memcpy(buf + sizeof(struct CertPropIDHeader), bigCert, sizeof(bigCert));
     ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 0,
      NULL, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
      sizeof(struct CertPropIDHeader) + sizeof(bigCert), 0, 0, 0, NULL,
      NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
      sizeof(struct CertPropIDHeader) + sizeof(bigCert), CERT_STORE_ADD_NEW,
      0, 0, NULL, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Kosher size in property header, but no context type */
     hdr->cb = sizeof(bigCert);
     ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 0,
      NULL, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
      sizeof(struct CertPropIDHeader) + sizeof(bigCert), 0, 0, 0, NULL,
      NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
      sizeof(struct CertPropIDHeader) + sizeof(bigCert), CERT_STORE_ADD_NEW,
      0, 0, NULL, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* With a bad context type */
     ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 
      CERT_STORE_CRL_CONTEXT_FLAG, NULL, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
      sizeof(struct CertPropIDHeader) + sizeof(bigCert), 0, 0, 
      CERT_STORE_CRL_CONTEXT_FLAG, NULL, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     ret = CertAddSerializedElementToStore(store, buf,
      sizeof(struct CertPropIDHeader) + sizeof(bigCert), CERT_STORE_ADD_NEW,
      0, CERT_STORE_CRL_CONTEXT_FLAG, NULL, NULL);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Bad unknown field, good type */
     hdr->unknown1 = 2;
     ret = CertAddSerializedElementToStore(store, buf, sizeof(buf), 0, 0, 

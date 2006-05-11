@@ -187,18 +187,15 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
 
     if(pCryptVerifyCertificateSignatureEx) {
         ret = pCryptVerifyCertificateSignatureEx(0, 0, 0, NULL, 0, NULL, 0, NULL);
-        ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-         GetLastError());
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         ret = pCryptVerifyCertificateSignatureEx(csp, 0, 0, NULL, 0, NULL, 0, NULL);
-        ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-        GetLastError());
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING, 0, NULL, 0,
          NULL, 0, NULL);
-        ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-         "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-         GetLastError());
+        ok(!ret && GetLastError() == E_INVALIDARG,
+         "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         /* This crashes
         ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
          CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, NULL, 0, NULL, 0, NULL);
@@ -234,17 +231,13 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
             certBlob.pbData = cert;
             ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
              CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
-            ok(!ret && GetLastError() ==
-             HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-             "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-             GetLastError());
+            ok(!ret && GetLastError() == E_INVALIDARG,
+             "Expected E_INVALIDARG, got %08lx\n", GetLastError());
             ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
              CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,
              CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL, NULL, 0, NULL);
-            ok(!ret && GetLastError() ==
-             HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-             "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-             GetLastError());
+            ok(!ret && GetLastError() == E_INVALIDARG,
+             "Expected E_INVALIDARG, got %08lx\n", GetLastError());
             /* This crashes
             ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
              CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob,

@@ -1010,7 +1010,7 @@ static BOOL WINAPI CRYPT_AsnEncodeNameValue(DWORD dwCertEncodingType,
         break;
     case CERT_RDN_ANY_TYPE:
         /* explicitly disallowed */
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return FALSE;
     default:
         FIXME("String type %ld unimplemented\n", value->dwValueType);
@@ -1325,7 +1325,7 @@ static BOOL CRYPT_AsnEncodeAltNameEntry(const CERT_ALT_NAME_ENTRY *entry,
         FIXME("name type %ld unimplemented\n", entry->dwAltNameChoice);
         return FALSE;
     default:
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return FALSE;
     }
     if (ret)
@@ -1539,7 +1539,7 @@ static BOOL WINAPI CRYPT_AsnEncodeRsaPubKey(DWORD dwCertEncodingType,
 
         if (hdr->bType != PUBLICKEYBLOB)
         {
-            SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+            SetLastError(E_INVALIDARG);
             ret = FALSE;
         }
         else
@@ -2171,7 +2171,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCRLDistPoints(DWORD dwCertEncodingType,
 
         if (!info->cDistPoint)
         {
-            SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+            SetLastError(E_INVALIDARG);
             ret = FALSE;
         }
         else

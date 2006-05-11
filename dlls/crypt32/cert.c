@@ -266,7 +266,7 @@ BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV hCryptProv,
         break;
     }
     default:
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         ret = FALSE;
     }
 
@@ -301,18 +301,18 @@ BOOL WINAPI CryptVerifyCertificateSignatureEx(HCRYPTPROV hCryptProv,
             case CRYPT_VERIFY_CERT_SIGN_ISSUER_NULL:
                 if (pvIssuer)
                 {
-                    SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+                    SetLastError(E_INVALIDARG);
                     ret = FALSE;
                 }
                 else
                 {
                     FIXME("unimplemented for NULL signer\n");
-                    SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+                    SetLastError(E_INVALIDARG);
                     ret = FALSE;
                 }
                 break;
             default:
-                SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+                SetLastError(E_INVALIDARG);
                 ret = FALSE;
             }
             LocalFree(signedCert);

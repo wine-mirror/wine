@@ -244,10 +244,8 @@ static void test_cryptTls(void)
             /* Not sure if this fails because TlsFree should fail, so leave as
              * todo for now.
              */
-            todo_wine ok(!ret && GetLastError() ==
-             HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-             "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-             GetLastError());
+            todo_wine ok(!ret && GetLastError() == E_INVALIDARG,
+             "Expected E_INVALIDARG, got %08lx\n", GetLastError());
         }
         /* Similar pass, check I_CryptDetachTls */
         index = pI_CryptAllocTls();

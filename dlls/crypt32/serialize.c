@@ -251,7 +251,7 @@ static const WINE_CERT_PROP_HEADER *CRYPT_findPropID(const BYTE *buf,
             buf += sizeof(WINE_CERT_PROP_HEADER);
             if (size < hdr->cb)
             {
-                SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+                SetLastError(E_INVALIDARG);
                 done = TRUE;
             }
             else if (!hdr->propID)
@@ -348,7 +348,7 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement, DWORD cbElement,
             contextInterface = &gCTLInterface;
             break;
         default:
-            SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+            SetLastError(E_INVALIDARG);
             ret = FALSE;
         }
         if (!hdr)
@@ -375,8 +375,7 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement, DWORD cbElement,
                     pbElement += sizeof(WINE_CERT_PROP_HEADER);
                     if (cbElement < hdr->cb)
                     {
-                        SetLastError(HRESULT_FROM_WIN32(
-                         ERROR_INVALID_PARAMETER));
+                        SetLastError(E_INVALIDARG);
                         ret = FALSE;
                     }
                     else if (!hdr->propID)
@@ -492,7 +491,7 @@ BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
             contextInterface = &gCTLInterface;
             break;
         default:
-            SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+            SetLastError(E_INVALIDARG);
         }
         if (contextInterface)
         {

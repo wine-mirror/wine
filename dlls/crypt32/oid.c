@@ -453,7 +453,7 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
      */
     if (!pszFuncName || !pszOID)
     {
-        SetLastError(HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER));
+        SetLastError(E_INVALIDARG);
         return FALSE;
     }
 

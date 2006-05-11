@@ -800,8 +800,8 @@ static void test_encodeName(DWORD dwEncoding)
     attrs[0].dwValueType = CERT_RDN_ANY_TYPE;
     ret = CryptEncodeObjectEx(dwEncoding, X509_NAME, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected ERROR_INVALID_PARAMETER, got %08lx\n", GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     for (i = 0; i < sizeof(names) / sizeof(names[0]); i++)
     {
         rdn.cRDNAttr = 1;
@@ -1028,9 +1028,8 @@ static void test_encodeAltName(DWORD dwEncoding)
     info.rgAltEntry = &entry;
     ret = CryptEncodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Test with an empty pointer */
     entry.dwAltNameChoice = CERT_ALT_NAME_URL;
     ret = CryptEncodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, &info,
@@ -1637,9 +1636,8 @@ static void test_encodeRsaPublicKey(DWORD dwEncoding)
     ret = CryptEncodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
      toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
      &bufSize);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Now with a bogus reserved field */
     hdr->bType = PUBLICKEYBLOB;
     hdr->reserved = 1;
@@ -2421,9 +2419,8 @@ static void test_encodeCRLDistPoints(DWORD dwEncoding)
     /* Test with an empty info */
     ret = CryptEncodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
-     "Expected HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), got %08lx\n",
-     GetLastError());
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Test with one empty dist point */
     info.cDistPoint = 1;
     info.rgDistPoint = &point;
