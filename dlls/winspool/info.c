@@ -100,6 +100,9 @@ typedef struct {
 typedef struct {
     LPCWSTR  envname;
     LPCWSTR  subdir;
+    DWORD    driverversion;
+    LPCWSTR  versionregpath;
+    LPCWSTR  versionsubdir;
 } printenv_t;
 
 /* ############################### */
@@ -124,7 +127,7 @@ static const WCHAR DriversW[] = { 'S','y','s','t','e','m','\\',
                                   'c','o','n','t','r','o','l','\\',
                                   'P','r','i','n','t','\\',
                                   'E','n','v','i','r','o','n','m','e','n','t','s','\\',
-                                  '%','s','\\','D','r','i','v','e','r','s','\\',0 };
+                                  '%','s','\\','D','r','i','v','e','r','s','%','s',0 };
 
 static const WCHAR MonitorsW[] =  { 'S','y','s','t','e','m','\\',
                                   'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -157,6 +160,8 @@ static const WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','
 static const WCHAR envname_x86W[] =   {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
 static const WCHAR subdir_win40W[] = {'w','i','n','4','0',0};
 static const WCHAR subdir_x86W[] =   {'w','3','2','x','8','6',0};
+static const WCHAR Version3_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','3',0};
+static const WCHAR Version3_SubdirW[] = {'\\','3',0};
 
 static const WCHAR spooldriversW[] = {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',0};
 
@@ -226,8 +231,10 @@ static DWORD WINSPOOL_SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey);
 
 static const  printenv_t * validate_envW(LPCWSTR env)
 {
-    static const printenv_t env_x86 =   {envname_x86W, subdir_x86W};
-    static const printenv_t env_win40 = {envname_win40W, subdir_win40W};
+    static const printenv_t env_x86 =   {envname_x86W, subdir_x86W,
+                                         3, Version3_RegPathW, Version3_SubdirW};
+    static const printenv_t env_win40 = {envname_win40W, subdir_win40W,
+                                         0, emptyStringW, emptyStringW};
     static const printenv_t * const all_printenv[]={&env_x86, &env_win40};
 
     const printenv_t *result = NULL;
@@ -1854,57 +1861,37 @@ BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
  */
 static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
 {   
-    static const WCHAR WinNTW[] = { 'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0 };
-    static const WCHAR Win40W[] = { 'W','i','n','d','o','w','s',' ','4','.','0',0 };
-    HKEY  retval;
-    LPWSTR lpKey, buffer = NULL;
-    LPCWSTR pEnvW;
+    HKEY  retval = NULL;
+    LPWSTR buffer;
+    const printenv_t * env;
 
-    TRACE("%s\n",
-	  (unicode) ? debugstr_w(pEnvironment) : debugstr_a(pEnvironment));
+    TRACE("(%s, %d)\n",
+	  (unicode) ? debugstr_w(pEnvironment) : debugstr_a(pEnvironment), unicode);
 
-    if(pEnvironment) {
-        if (unicode) {
-            pEnvW = pEnvironment;
-        } else {
-            INT len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pEnvironment, -1, NULL, 0);
-            buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            if (buffer) MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pEnvironment, -1, buffer, len);
-            pEnvW = buffer;
-        }
-    } else {
-        OSVERSIONINFOW ver;
-        ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
-
-        if(!GetVersionExW( &ver))
-            return 0;
-
-        switch (ver.dwPlatformId) {
-             case VER_PLATFORM_WIN32s:
-                  ERR("win32 style printing used with 16 bits app, try specifying 'win95' Windows version\n");
-                  return 0;
-             case VER_PLATFORM_WIN32_NT:
-                  pEnvW = WinNTW;
-                  break;
-             default:
-                  pEnvW = Win40W;
-                  break;
-        }
-        TRACE("set environment to %s\n", debugstr_w(pEnvW));
+    if (!pEnvironment || unicode) {
+        /* pEnvironment was NULL or an Unicode-String: use it direct */
+        env = validate_envW(pEnvironment);
     }
+    else
+    {
+        /* pEnvironment was an ANSI-String: convert to unicode first */
+        LPWSTR  buffer;
+        INT len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pEnvironment, -1, NULL, 0);
+        buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (buffer) MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pEnvironment, -1, buffer, len);
+        env = validate_envW(buffer);
+        HeapFree(GetProcessHeap(), 0, buffer);
+    }
+    if (!env) return NULL;
 
-    lpKey = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       (strlenW(pEnvW) + strlenW(DriversW) + 1) * sizeof(WCHAR));
-    wsprintfW( lpKey, DriversW, pEnvW);
-
-    TRACE("%s\n", debugstr_w(lpKey));
-
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, lpKey, &retval) != ERROR_SUCCESS)
-       retval = 0;
-
-    HeapFree( GetProcessHeap(), 0, buffer);
-    HeapFree( GetProcessHeap(), 0, lpKey);
-
+    buffer = HeapAlloc( GetProcessHeap(), 0,
+                (strlenW(DriversW) + strlenW(env->envname) + 
+                 strlenW(env->versionregpath) + 1) * sizeof(WCHAR));
+    if(buffer) {
+        wsprintfW(buffer, DriversW, env->envname, env->versionregpath);
+        RegCreateKeyW(HKEY_LOCAL_MACHINE, buffer, &retval);
+        HeapFree(GetProcessHeap(), 0, buffer);
+    }
     return retval;
 }
 
