@@ -1905,7 +1905,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Fla
     }
 
     if(dirtify) {
-        TRACE("Color key changed, dirtifing surface\n");
+        TRACE("Color key changed, dirtifying surface\n");
         This->Flags |= SFLAG_DIRTY;
     }
 

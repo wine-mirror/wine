@@ -21815,7 +21815,7 @@ fi
 if test "$wine_cv_msg_fonts" = "yes"
 then
   echo
-  echo "*** Warning: Freetype or Fontforge is missing."
+  echo "*** Warning: FreeType or FontForge is missing."
   echo "*** Fonts will not be built. Dialog text may be invisible or unaligned."
   exitcode=1
 fi

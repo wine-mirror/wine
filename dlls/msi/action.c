@@ -1459,7 +1459,7 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
     tgt_short = p;
     src_short = folder_split_path( p, ':' );
 
-    /* split the long and short pathes */
+    /* split the long and short paths */
     tgt_long = folder_split_path( tgt_short, '|' );
     src_long = folder_split_path( src_short, '|' );
 

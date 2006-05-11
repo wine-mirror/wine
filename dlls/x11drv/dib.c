@@ -1609,8 +1609,8 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
      * Hack for now
      * This condition is true when GetImageBits has been called by
      * UpdateDIBSection. For now, GetNearestIndex is too slow to support
-     * 256 colormaps, so we'll just use for for GetDIBits calls.
-     * (In somes cases, in a updateDIBSection, the returned colors are bad too)
+     * 256 colormaps, so we'll just use it for GetDIBits calls.
+     * (In some cases, in an updateDIBSection, the returned colors are bad too)
      */
     if (!srccolors) goto updatesection;
 

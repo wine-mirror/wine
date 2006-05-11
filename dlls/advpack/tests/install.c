@@ -61,7 +61,7 @@ static void test_RunSetupCommand()
     hr = pRunSetupCommand(NULL, "winver.exe", "Install", NULL, "Title", NULL, 0, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %ld\n", hr);
 
-    /* try to run a non-existent exe */
+    /* try to run a nonexistent exe */
     hexe = (HANDLE)0xdeadbeef;
     hr = pRunSetupCommand(NULL, "idontexist.exe", "Install", "c:\\windows\\system32", "Title", &hexe, 0, NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),

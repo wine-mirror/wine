@@ -51,7 +51,7 @@ static void wsprintfWTest(void)
 }
 
 /* Test if the CharUpper / CharLower functions return true 16 bit results,
-   if the input is a 16 bit input value. Upto Wine 11-2003 the input value
+   if the input is a 16 bit input value. Up to Wine 11-2003 the input value
    0xff returns 0xffffffff. */
 
 static void CharUpperTest(void)
@@ -69,7 +69,7 @@ static void CharUpperTest(void)
 	   break;
 	   }
 	}
-    ok(!failed,"CharUpper failed - 16bit input (0x%0x) returned 32bit result (0x%0x)",i,out);
+    ok(!failed,"CharUpper failed - 16bit input (0x%0x) returned 32bit result (0x%0x)\n",i,out);
 }
 
 static void CharLowerTest(void)
@@ -87,7 +87,7 @@ static void CharLowerTest(void)
 	   break;
 	   }
 	}
-    ok(!failed,"CharLower failed - 16bit input (0x%0x) returned 32bit result (0x%0x)",i,out);
+    ok(!failed,"CharLower failed - 16bit input (0x%0x) returned 32bit result (0x%0x)\n",i,out);
 }
 
 
