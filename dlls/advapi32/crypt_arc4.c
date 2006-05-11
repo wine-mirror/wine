@@ -103,7 +103,7 @@ NTSTATUS WINAPI SystemFunction032(struct ustring *data, struct ustring *key)
     arc4_info a4i;
 
     arc4_init(&a4i, key->Buffer, key->Length);
-    arc4_ProcessString(&a4i, data->Buffer, key->Length);
+    arc4_ProcessString(&a4i, data->Buffer, data->Length);
 
     return STATUS_SUCCESS;
 }
