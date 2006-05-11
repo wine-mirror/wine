@@ -21,6 +21,7 @@
 
 #include <lmcons.h>
 #include <ras.h>
+/* FIXME: #include <in6addr.h> */
 
 #ifdef __cplusplus
 extern "C" {
