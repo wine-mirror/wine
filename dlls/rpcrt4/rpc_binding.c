@@ -1023,11 +1023,11 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, unsigned short *ServerPrin
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
 RpcBindingSetAuthInfoA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrincName, unsigned long AuthnLevel,
-                          unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr )
+                        unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr )
 {
-    FIXME("%p %s %lu %lu %p %lu\n", Binding, debugstr_a((const char*)ServerPrincName),
+    TRACE("%p %s %lu %lu %p %lu\n", Binding, debugstr_a((const char*)ServerPrincName),
           AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr);
-    return RPC_S_OK;
+    return RpcBindingSetAuthInfoExA(Binding, ServerPrincName, AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, NULL);
 }
 
 /***********************************************************************
@@ -1037,9 +1037,9 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, unsigned short *ServerPrincName, unsigned long AuthnLevel,
                         unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr )
 {
-    FIXME("%p %s %lu %lu %p %lu\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
+    TRACE("%p %s %lu %lu %p %lu\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
           AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr);
-    return RPC_S_OK;
+    return RpcBindingSetAuthInfoExW(Binding, ServerPrincName, AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, NULL);
 }
 
 /***********************************************************************
