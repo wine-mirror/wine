@@ -160,6 +160,7 @@ typedef union
 #define PKT_BIND_NACK          13
 #define PKT_ALTER_CONTEXT      14
 #define PKT_ALTER_CONTEXT_RESP 15
+#define PKT_AUTH3              16
 #define PKT_SHUTDOWN           17
 #define PKT_CO_CANCEL          18
 #define PKT_ORPHANED           19
