@@ -1453,18 +1453,6 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
 	      STHook->wYear, STHook->wMonth, STHook->wDay, STHook->wDayOfWeek,
 	      STHook->wHour, STHook->wMinute, STHook->wSecond, STHook->wMilliseconds);
     }
-    else if (dwInfoLevel & HTTP_QUERY_FLAG_COALESCE)
-    {
-	    if (*lpdwIndex >= lphttpHdr->wCount)
-		{
-	        INTERNET_SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
-		}
-	    else
-	    {
-	    /* Copy strncpyW(lpBuffer, lphttpHdr[*lpdwIndex], len); */
-            (*lpdwIndex)++;
-	    }
-    }
     else if (lphttpHdr->lpszValue)
     {
         DWORD len = (strlenW(lphttpHdr->lpszValue) + 1) * sizeof(WCHAR);
