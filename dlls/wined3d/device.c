@@ -2250,42 +2250,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface, D3DTR
         FIXME("Unhandled transform state!!\n");
     }
 
-    /* Copied from ddraw code:  */
-    temp.u.s._11 = (mat->u.s._11 * pMatrix->u.s._11) + (mat->u.s._21 * pMatrix->u.s._12) +
-      (mat->u.s._31 * pMatrix->u.s._13) + (mat->u.s._41 * pMatrix->u.s._14);
-    temp.u.s._21 = (mat->u.s._11 * pMatrix->u.s._21) + (mat->u.s._21 * pMatrix->u.s._22) +
-      (mat->u.s._31 * pMatrix->u.s._23) + (mat->u.s._41 * pMatrix->u.s._24);
-    temp.u.s._31 = (mat->u.s._11 * pMatrix->u.s._31) + (mat->u.s._21 * pMatrix->u.s._32) +
-      (mat->u.s._31 * pMatrix->u.s._33) + (mat->u.s._41 * pMatrix->u.s._34);
-    temp.u.s._41 = (mat->u.s._11 * pMatrix->u.s._41) + (mat->u.s._21 * pMatrix->u.s._42) +
-      (mat->u.s._31 * pMatrix->u.s._43) + (mat->u.s._41 * pMatrix->u.s._44);
-
-    temp.u.s._12 = (mat->u.s._12 * pMatrix->u.s._11) + (mat->u.s._22 * pMatrix->u.s._12) +
-      (mat->u.s._32 * pMatrix->u.s._13) + (mat->u.s._42 * pMatrix->u.s._14);
-    temp.u.s._22 = (mat->u.s._12 * pMatrix->u.s._21) + (mat->u.s._22 * pMatrix->u.s._22) +
-      (mat->u.s._32 * pMatrix->u.s._23) + (mat->u.s._42 * pMatrix->u.s._24);
-    temp.u.s._32 = (mat->u.s._12 * pMatrix->u.s._31) + (mat->u.s._22 * pMatrix->u.s._32) +
-      (mat->u.s._32 * pMatrix->u.s._33) + (mat->u.s._42 * pMatrix->u.s._34);
-    temp.u.s._42 = (mat->u.s._12 * pMatrix->u.s._41) + (mat->u.s._22 * pMatrix->u.s._42) +
-      (mat->u.s._32 * pMatrix->u.s._43) + (mat->u.s._42 * pMatrix->u.s._44);
-
-    temp.u.s._13 = (mat->u.s._13 * pMatrix->u.s._11) + (mat->u.s._23 * pMatrix->u.s._12) +
-      (mat->u.s._33 * pMatrix->u.s._13) + (mat->u.s._43 * pMatrix->u.s._14);
-    temp.u.s._23 = (mat->u.s._13 * pMatrix->u.s._21) + (mat->u.s._23 * pMatrix->u.s._22) +
-      (mat->u.s._33 * pMatrix->u.s._23) + (mat->u.s._43 * pMatrix->u.s._24);
-    temp.u.s._33 = (mat->u.s._13 * pMatrix->u.s._31) + (mat->u.s._23 * pMatrix->u.s._32) +
-      (mat->u.s._33 * pMatrix->u.s._33) + (mat->u.s._43 * pMatrix->u.s._34);
-    temp.u.s._43 = (mat->u.s._13 * pMatrix->u.s._41) + (mat->u.s._23 * pMatrix->u.s._42) +
-      (mat->u.s._33 * pMatrix->u.s._43) + (mat->u.s._43 * pMatrix->u.s._44);
-
-    temp.u.s._14 = (mat->u.s._14 * pMatrix->u.s._11) + (mat->u.s._24 * pMatrix->u.s._12) +
-      (mat->u.s._34 * pMatrix->u.s._13) + (mat->u.s._44 * pMatrix->u.s._14);
-    temp.u.s._24 = (mat->u.s._14 * pMatrix->u.s._21) + (mat->u.s._24 * pMatrix->u.s._22) +
-      (mat->u.s._34 * pMatrix->u.s._23) + (mat->u.s._44 * pMatrix->u.s._24);
-    temp.u.s._34 = (mat->u.s._14 * pMatrix->u.s._31) + (mat->u.s._24 * pMatrix->u.s._32) +
-      (mat->u.s._34 * pMatrix->u.s._33) + (mat->u.s._44 * pMatrix->u.s._34);
-    temp.u.s._44 = (mat->u.s._14 * pMatrix->u.s._41) + (mat->u.s._24 * pMatrix->u.s._42) +
-      (mat->u.s._34 * pMatrix->u.s._43) + (mat->u.s._44 * pMatrix->u.s._44);
+    multiply_matrix(&temp, mat, (D3DMATRIX *) pMatrix);
 
     /* Apply change via set transform - will reapply to eg. lights this way */
     return IWineD3DDeviceImpl_SetTransform(iface, State, &temp);
@@ -4631,10 +4596,276 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantN(IWineD3DDevice *iface,
             0);
 }
 
+#define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
+static HRESULT
+process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount, WineDirect3DVertexStridedData *lpStrideData, DWORD SrcFVF, IWineD3DVertexBufferImpl *dest, DWORD dwFlags) {
+    char *dest_ptr;
+    unsigned int i;
+    DWORD DestFVF = dest->fvf;
+    D3DVIEWPORT9 vp;
+    D3DMATRIX mat, proj_mat, view_mat, world_mat;
+    BOOL doClip;
+    int numTextures;
+
+    if (SrcFVF & D3DFVF_NORMAL) {
+        WARN(" lighting state not saved yet... Some strange stuff may happen !\n");
+    }
+
+    if ( (SrcFVF & D3DFVF_POSITION_MASK) != D3DFVF_XYZ) {
+        ERR("Source has no position mask\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (dest->resource.allocatedMemory == NULL) {
+        ERR("Destination buffer has no memory allocated\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* Should I clip?
+     * a) D3DRS_CLIPPING is enabled
+     * b) WINED3DVOP_CLIP is passed
+     */
+    if(This->stateBlock->renderState[WINED3DRS_CLIPPING] == TRUE) {
+        static BOOL warned = FALSE;
+        /*
+         * The clipping code is not quite correct. Some things need
+         * to be checked against IDirect3DDevice3 (!), d3d8 and d3d9,
+         * so disable clipping for now.
+         * (The graphics in Half-Life are broken, and my processvertices
+         *  test crashes with IDirect3DDevice3)
+        doClip = TRUE;
+         */
+        doClip = FALSE;
+        if(!warned) {
+           warned = TRUE;
+           FIXME("Clipping is broken and disabled for now\n");
+        }
+    } else doClip = FALSE;
+    dest_ptr = ((char *) dest->resource.allocatedMemory) + dwDestIndex * get_flexible_vertex_size(DestFVF);
+
+    IWineD3DDevice_GetTransform( (IWineD3DDevice *) This,
+                                 D3DTS_VIEW,
+                                 &view_mat);
+    IWineD3DDevice_GetTransform( (IWineD3DDevice *) This,
+                                 D3DTS_PROJECTION,
+                                 &proj_mat);
+    IWineD3DDevice_GetTransform( (IWineD3DDevice *) This,
+                                 D3DTS_WORLDMATRIX(0),
+                                 &world_mat);
+
+    TRACE("View mat: \n");
+    TRACE("%f %f %f %f\n", view_mat.u.s._11, view_mat.u.s._12, view_mat.u.s._13, view_mat.u.s._14); \
+    TRACE("%f %f %f %f\n", view_mat.u.s._21, view_mat.u.s._22, view_mat.u.s._23, view_mat.u.s._24); \
+    TRACE("%f %f %f %f\n", view_mat.u.s._31, view_mat.u.s._32, view_mat.u.s._33, view_mat.u.s._34); \
+    TRACE("%f %f %f %f\n", view_mat.u.s._41, view_mat.u.s._42, view_mat.u.s._43, view_mat.u.s._44); \
+
+    TRACE("Proj mat: \n");
+    TRACE("%f %f %f %f\n", proj_mat.u.s._11, proj_mat.u.s._12, proj_mat.u.s._13, proj_mat.u.s._14); \
+    TRACE("%f %f %f %f\n", proj_mat.u.s._21, proj_mat.u.s._22, proj_mat.u.s._23, proj_mat.u.s._24); \
+    TRACE("%f %f %f %f\n", proj_mat.u.s._31, proj_mat.u.s._32, proj_mat.u.s._33, proj_mat.u.s._34); \
+    TRACE("%f %f %f %f\n", proj_mat.u.s._41, proj_mat.u.s._42, proj_mat.u.s._43, proj_mat.u.s._44); \
+
+    TRACE("World mat: \n");
+    TRACE("%f %f %f %f\n", world_mat.u.s._11, world_mat.u.s._12, world_mat.u.s._13, world_mat.u.s._14); \
+    TRACE("%f %f %f %f\n", world_mat.u.s._21, world_mat.u.s._22, world_mat.u.s._23, world_mat.u.s._24); \
+    TRACE("%f %f %f %f\n", world_mat.u.s._31, world_mat.u.s._32, world_mat.u.s._33, world_mat.u.s._34); \
+    TRACE("%f %f %f %f\n", world_mat.u.s._41, world_mat.u.s._42, world_mat.u.s._43, world_mat.u.s._44); \
+
+    /* Get the viewport */
+    IWineD3DDevice_GetViewport( (IWineD3DDevice *) This, &vp);
+    TRACE("Viewport: X=%ld, Y=%ld, Width=%ld, Height=%ld, MinZ=%f, MaxZ=%f\n",
+          vp.X, vp.Y, vp.Width, vp.Height, vp.MinZ, vp.MaxZ);
+
+    multiply_matrix(&mat,&view_mat,&world_mat);
+    multiply_matrix(&mat,&proj_mat,&mat);
+
+    numTextures = (DestFVF & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+
+    for (i = 0; i < dwCount; i+= 1) {
+        unsigned int tex_index;
+
+        if ( ((DestFVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZ ) ||
+             ((DestFVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW ) ) {
+            /* The position first */
+            float *p =
+              (float *) (((char *) lpStrideData->u.s.position.lpData) + i * lpStrideData->u.s.position.dwStride);
+            float x, y, z, rhw;
+            TRACE("In: ( %06.2f %06.2f %06.2f )\n", p[0], p[1], p[2]);
+
+            /* Multiplication with world, view and projection matrix */
+            x =   (p[0] * mat.u.s._11) + (p[1] * mat.u.s._21) + (p[2] * mat.u.s._31) + (1.0 * mat.u.s._41);
+            y =   (p[0] * mat.u.s._12) + (p[1] * mat.u.s._22) + (p[2] * mat.u.s._32) + (1.0 * mat.u.s._42);
+            z =   (p[0] * mat.u.s._13) + (p[1] * mat.u.s._23) + (p[2] * mat.u.s._33) + (1.0 * mat.u.s._43);
+            rhw = (p[0] * mat.u.s._14) + (p[1] * mat.u.s._24) + (p[2] * mat.u.s._34) + (1.0 * mat.u.s._44);
+
+            TRACE("x=%f y=%f z=%f rhw=%f\n", x, y, z, rhw);
+
+            /* WARNING: The following things are taken from d3d7 and were not yet checked
+             * against d3d8 or d3d9!
+             */
+
+            /* Clipping conditions: From
+             * http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/fixedfunction/viewportsclipping/clippingvolumes.asp
+             *
+             * A vertex is clipped if it does not match the following requirements
+             * -rhw < x <= rhw
+             * -rhw < y <= rhw
+             *    0 < z <= rhw
+             *    0 < rhw ( Not in d3d7, but tested in d3d7)
+             *
+             * If clipping is on is determined by the D3DVOP_CLIP flag in D3D7, and
+             * by the D3DRS_CLIPPING in D3D9(according to the msdn, not checked)
+             *
+             */
+
+            if( doClip == FALSE ||
+                ( (-rhw -eps < x) && (-rhw -eps < y) && ( -eps < z) &&
+                  (x <= rhw + eps) && (y <= rhw + eps ) && (z <= rhw + eps) && 
+                  ( rhw > eps ) ) ) {
+
+                /* "Normal" viewport transformation (not clipped)
+                 * 1) The values are divided trough rhw
+                 * 2) The y axis is negative, so multiply it with -1
+                 * 3) Screen coordinates go from -(Width/2) to +(Width/2) and
+                 *    -(Height/2) to +(Height/2). The z range is MinZ to MaxZ
+                 * 4) Multiply x with Width/2 and add Width/2
+                 * 5) The same for the height
+                 * 6) Add the viewpoint X and Y to the 2D coordinates and
+                 *    The minimum Z value to z
+                 * 7) rhw = 1 / rhw Reciprocal of Homogeneous W....
+                 *
+                 * Well, basically it's simply a linear transformation into viewport
+                 * coordinates
+                 */
+
+                x /= rhw;
+                y /= rhw;
+                z /= rhw;
+
+                y *= -1;
+
+                x *= vp.Width / 2;
+                y *= vp.Height / 2;
+                z *= vp.MaxZ - vp.MinZ;
+
+                x += vp.Width / 2 + vp.X;
+                y += vp.Height / 2 + vp.Y;
+                z += vp.MinZ;
+
+                rhw = 1 / rhw;
+            } else {
+                /* That vertex got clipped
+                 * Contrary to OpenGL it is not dropped completely, it just
+                 * undergoes a different calculation.
+                 */
+                TRACE("Vertex got clipped\n");
+                x += rhw;
+                y += rhw;
+
+                x  /= 2;
+                y  /= 2;
+
+                /* Msdn mentiones that Direct3D9 keeps a list of clipped vertices
+                 * outside of the main vertex buffer memory. That needs some more
+                 * investigation...
+                 */
+            }
+
+            TRACE("Writing (%f %f %f) %f\n", x, y, z, rhw);
+
+
+            ( (float *) dest_ptr)[0] = x;
+            ( (float *) dest_ptr)[1] = y;
+            ( (float *) dest_ptr)[2] = z;
+            ( (float *) dest_ptr)[3] = rhw; /* SIC, see ddraw test! */
+
+            dest_ptr += 3 * sizeof(float);
+
+            if((DestFVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) {
+                dest_ptr += sizeof(float);
+            }
+        }
+        if (DestFVF & D3DFVF_PSIZE) {
+            dest_ptr += sizeof(DWORD);
+        }
+        if (DestFVF & D3DFVF_NORMAL) {
+            float *normal =
+              (float *) (((float *) lpStrideData->u.s.normal.lpData) + i * lpStrideData->u.s.normal.dwStride);
+            /* AFAIK this should go into the lighting information */
+            FIXME("Didn't expect the destination to have a normal\n");
+            copy_and_next(dest_ptr, normal, 3 * sizeof(float));
+        }
+
+        if (DestFVF & D3DFVF_DIFFUSE) {
+            DWORD *color_d = 
+              (DWORD *) (((char *) lpStrideData->u.s.diffuse.lpData) + i * lpStrideData->u.s.diffuse.dwStride);
+            if(!color_d) {
+                static BOOL warned = FALSE;
+
+                if(warned == FALSE) {
+                    ERR("No diffuse color in source, but destination has one\n");
+                    warned = TRUE;
+                }
+
+                *( (DWORD *) dest_ptr) = 0xffffffff;
+                dest_ptr += sizeof(DWORD);
+            }
+            else
+                copy_and_next(dest_ptr, color_d, sizeof(DWORD));
+        }
+
+        if (DestFVF & D3DFVF_SPECULAR) { 
+            /* What's the color value in the feedback buffer? */
+            DWORD *color_s = 
+              (DWORD *) (((char *) lpStrideData->u.s.specular.lpData) + i * lpStrideData->u.s.specular.dwStride);
+            if(!color_s) {
+                static BOOL warned = FALSE;
+
+                if(warned == FALSE) {
+                    ERR("No specular color in source, but destination has one\n");
+                    warned = TRUE;
+                }
+
+                *( (DWORD *) dest_ptr) = 0xFF000000;
+                dest_ptr += sizeof(DWORD);
+            }
+            else {
+                copy_and_next(dest_ptr, color_s, sizeof(DWORD));
+            }
+        }
+
+        for (tex_index = 0; tex_index < numTextures; tex_index++) {
+            float *tex_coord =
+              (float *) (((char *) lpStrideData->u.s.texCoords[tex_index].lpData) + 
+                            i * lpStrideData->u.s.texCoords[tex_index].dwStride);
+            if(!tex_coord) {
+                ERR("No source texture, but destination requests one\n");
+                dest_ptr+=GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
+            }
+            else {
+                copy_and_next(dest_ptr, tex_coord, GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float));
+            }
+        }
+    }
+
+    return WINED3D_OK;
+}
+#undef copy_and_next
+
 HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return WINED3D_OK;
+    IWineD3DVertexBufferImpl *SrcImpl = (IWineD3DVertexBufferImpl *) pVertexDecl;
+    WineDirect3DVertexStridedData strided;
+    HRESULT hr;
+    TRACE("(%p)->(%d,%d,%d,%p,%p,%ld\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
+
+    hr = IWineD3DDevice_SetFVF(iface, SrcImpl->fvf);
+    hr = IWineD3DDevice_SetStreamSource(iface, 0, pVertexDecl, get_flexible_vertex_size(SrcImpl->fvf) * SrcStartIndex, get_flexible_vertex_size(SrcImpl->fvf));
+
+    memset(&strided, 0, sizeof(strided));
+    primitiveConvertToStridedData(iface, &strided, 0);
+
+    return process_vertices_strided(This, DestIndex, VertexCount, &strided, SrcImpl->fvf, (IWineD3DVertexBufferImpl *) pDestBuffer, Flags);
 }
 
 /*****

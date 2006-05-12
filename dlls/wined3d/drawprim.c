@@ -557,7 +557,7 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
 
 }
 
-static void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *strided, LONG BaseVertexIndex) {
+void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *strided, LONG BaseVertexIndex) {
 
     short         LoopThroughTo = 0;
     short         nStream;

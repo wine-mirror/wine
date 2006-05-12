@@ -378,7 +378,16 @@ void drawPrimitive(IWineD3DDevice *iface,
                     int   minIndex,
                     WineDirect3DVertexStridedData *DrawPrimStrideData);
 
+void primitiveConvertToStridedData(IWineD3DDevice *iface,
+                                   WineDirect3DVertexStridedData *strided,
+                                   LONG BaseVertexIndex);
+
+DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
+
 #define eps 1e-8
+
+#define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
+    (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
 
 /* Routine to fill gl caps for swapchains and IWineD3D */
 BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info,
@@ -1137,6 +1146,8 @@ GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
 
 int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate);
 
+/* Math utils */
+void multiply_matrix(D3DMATRIX *dest, D3DMATRIX *src1, D3DMATRIX *src2);
 
 /*****************************************************************************
  * To enable calling of inherited functions, requires prototypes 
