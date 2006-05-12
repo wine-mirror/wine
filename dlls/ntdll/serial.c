@@ -968,7 +968,7 @@ NTSTATUS COMM_DeviceIoControl(HANDLE hDevice,
     case IOCTL_SERIAL_GET_TIMEOUTS:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_TIMEOUTS))
         {
-            if (!(status = get_timeouts(hDevice, (SERIAL_TIMEOUTS*)lpInBuffer)))
+            if (!(status = get_timeouts(hDevice, (SERIAL_TIMEOUTS*)lpOutBuffer)))
                 sz = sizeof(SERIAL_TIMEOUTS);
         }
         else
