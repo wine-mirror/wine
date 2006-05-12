@@ -239,6 +239,78 @@ VOID RPCRT4_FreeHeader(RpcPktHdr *Header)
 }
 
 /***********************************************************************
+ *           RPCRT4_SendAuth (internal)
+ * 
+ * Transmit a packet with authorization data over connection in acceptable fragments.
+ */
+static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
+                                  void *Buffer, unsigned int BufferLength,
+                                  void *Auth, unsigned int AuthLength)
+{
+  PUCHAR buffer_pos;
+  DWORD hdr_size;
+  LONG count;
+  unsigned char *pkt, *auth_hdr;
+  LONG alen = AuthLength ? (AuthLength + 8) : 0;
+
+  buffer_pos = Buffer;
+  /* The packet building functions save the packet header size, so we can use it. */
+  hdr_size = Header->common.frag_len;
+  Header->common.auth_len = AuthLength;
+  Header->common.flags |= RPC_FLG_FIRST;
+  Header->common.flags &= ~RPC_FLG_LAST;
+  while (!(Header->common.flags & RPC_FLG_LAST)) {
+    /* decide if we need to split the packet into fragments */
+    if ((BufferLength + hdr_size + alen) <= Connection->MaxTransmissionSize) {
+      Header->common.flags |= RPC_FLG_LAST;
+      Header->common.frag_len = BufferLength + hdr_size + alen;
+    } else {
+      Header->common.frag_len = Connection->MaxTransmissionSize;
+    }
+
+    pkt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Header->common.frag_len);
+
+    memcpy(pkt, Header, hdr_size);
+
+    /* fragment consisted of header only and is the last one */
+    if (hdr_size == Header->common.frag_len)
+      goto write;
+
+    memcpy(pkt + hdr_size, buffer_pos, Header->common.frag_len - hdr_size - alen);
+
+    /* add the authorization info */
+    if (AuthLength)
+    {
+      auth_hdr = &pkt[Header->common.frag_len - alen];
+
+      /* FIXME: is this per fragment or per message? */
+      auth_hdr[0] = RPC_C_AUTHN_WINNT;
+      auth_hdr[1] = RPC_C_AUTHN_LEVEL_CONNECT;
+      auth_hdr[2] = 0x00; /* FIXME: add padding */
+      auth_hdr[3] = 0x00;
+
+      /* a unique number... */
+      memcpy(&auth_hdr[4], &Connection, 4);
+      memcpy(&auth_hdr[8], Auth, AuthLength);
+    }
+
+write:
+    count = rpcrt4_conn_write(Connection, pkt, Header->common.frag_len);
+    HeapFree(GetProcessHeap(), 0, pkt);
+    if (count<0) {
+      WARN("rpcrt4_conn_write failed (auth)\n");
+      return RPC_S_PROTOCOL_ERROR;
+    }
+
+    buffer_pos += Header->common.frag_len - hdr_size - alen;
+    BufferLength -= Header->common.frag_len - hdr_size - alen;
+    Header->common.flags &= ~RPC_FLG_FIRST;
+  }
+
+  return RPC_S_OK;
+}
+
+/***********************************************************************
  *           RPCRT4_Send (internal)
  * 
  * Transmit a packet over connection in acceptable fragments.
@@ -246,50 +318,7 @@ VOID RPCRT4_FreeHeader(RpcPktHdr *Header)
 RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
                        void *Buffer, unsigned int BufferLength)
 {
-  PUCHAR buffer_pos;
-  DWORD hdr_size;
-  LONG count;
-
-  buffer_pos = Buffer;
-  /* The packet building functions save the packet header size, so we can use it. */
-  hdr_size = Header->common.frag_len;
-  Header->common.flags |= RPC_FLG_FIRST;
-  Header->common.flags &= ~RPC_FLG_LAST;
-  while (!(Header->common.flags & RPC_FLG_LAST)) {
-    /* decide if we need to split the packet into fragments */
-    if ((BufferLength + hdr_size) <= Connection->MaxTransmissionSize) {
-      Header->common.flags |= RPC_FLG_LAST;
-      Header->common.frag_len = BufferLength + hdr_size;
-    } else {
-      Header->common.frag_len = Connection->MaxTransmissionSize;
-    }
-
-    /* transmit packet header */
-    count = rpcrt4_conn_write(Connection, Header, hdr_size);
-    if (count<0) {
-      WARN("rpcrt4_conn_write failed\n");
-      return RPC_S_PROTOCOL_ERROR;
-    }
-
-    /* fragment consisted of header only and is the last one */
-    if (hdr_size == Header->common.frag_len &&
-        Header->common.flags & RPC_FLG_LAST) {
-      return RPC_S_OK;
-    }
-
-    /* send the fragment data */
-    count = rpcrt4_conn_write(Connection, buffer_pos, Header->common.frag_len - hdr_size);
-    if (count<0) {
-      WARN("rpcrt4_conn_write failed\n");
-      return RPC_S_PROTOCOL_ERROR;
-    }
-
-    buffer_pos += Header->common.frag_len - hdr_size;
-    BufferLength -= Header->common.frag_len - hdr_size;
-    Header->common.flags &= ~RPC_FLG_FIRST;
-  }
-
-  return RPC_S_OK;
+  return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
 }
 
 /***********************************************************************
