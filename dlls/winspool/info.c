@@ -1645,14 +1645,9 @@ DeletePortW (LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 /******************************************************************************
  *    SetPrinterW  [WINSPOOL.@]
  */
-BOOL WINAPI
-SetPrinterW(
-  HANDLE  hPrinter,
-  DWORD     Level,
-  LPBYTE    pPrinter,
-  DWORD     Command) {
-
-    FIXME("():stub\n");
+BOOL WINAPI SetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter, DWORD Command)
+{
+    FIXME("(%p, %ld, %p, %ld): stub\n", hPrinter, Level, pPrinter, Command);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
