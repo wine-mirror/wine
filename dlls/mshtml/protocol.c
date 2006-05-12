@@ -414,8 +414,14 @@ static HRESULT WINAPI AboutProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, L
     }
 
     if(ParseAction == PARSE_DOMAIN) {
-        /* Tests show that we don't have to do anything here */
-        return S_OK;
+        if(!pcchResult)
+            return E_POINTER;
+
+        if(pwzUrl)
+            *pcchResult = strlenW(pwzUrl)+1;
+        else
+            *pcchResult = 1;
+        return E_FAIL;
     }
 
     return INET_E_DEFAULT_ACTION;
@@ -810,8 +816,14 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
     }
 
     if(ParseAction == PARSE_DOMAIN) {
-        /* Tests show that we don't have to do anything here */
-        return S_OK;
+        if(!pcchResult)
+            return E_POINTER;
+
+        if(pwzUrl)
+            *pcchResult = strlenW(pwzUrl)+1;
+        else
+            *pcchResult = 1;
+        return E_FAIL;
     }
 
     return INET_E_DEFAULT_ACTION;

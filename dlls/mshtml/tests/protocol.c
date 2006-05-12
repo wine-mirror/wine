@@ -290,21 +290,51 @@ static void test_res_protocol(void)
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == MK_E_SYNTAX, "ParseUrl failed: %08lx, expected MK_E_SYNTAX\n", hres);
 
+        size = 0xdeadbeef;
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
-        ok(hres == S_OK, "ParseUrl failed: %08lx\n", hres);
+        ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08lx\n", hres);
         ok(buf[0] == '?', "buf changed\n");
+        ok(size == sizeof(blank_url)/sizeof(WCHAR),
+           "size=%ld, ezpected %d\n", size, sizeof(wrong_url1)/sizeof(WCHAR));
 
+        size = 0xdeadbeef;
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url1, PARSE_DOMAIN, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
-        ok(hres == S_OK, "ParseUrl failed: %08lx, expected MK_E_SYNTAX\n", hres);
+        ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08lx\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
+        ok(size == sizeof(wrong_url1)/sizeof(WCHAR),
+           "size=%ld, ezpected %d\n", size, sizeof(wrong_url1)/sizeof(WCHAR));
+
+#if 0   /* Crashes on win9x */
+        size = 0xdeadbeef;
+        buf[0] = '?';
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == E_FAIL, "ParseUrl failed: %08lx\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
+        ok(size == 1, "size=%ld, ezpected 1\n", size);
+
+        buf[0] = '?';
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), NULL, 0);
+        ok(hres == E_POINTER, "ParseUrl failed: %08lx\n", hres);
         ok(buf[0] == '?', "buf changed\n");
 
+        buf[0] = '?';
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), NULL, 0);
+        ok(hres == E_POINTER, "ParseUrl failed: %08lx\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
+#endif
+
+        buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_UNESCAPE+1, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == INET_E_DEFAULT_ACTION,
                 "ParseUrl failed: %08lx, expected INET_E_DEFAULT_ACTION\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
 
         IInternetProtocolInfo_Release(protocol_info);
     }
@@ -437,11 +467,36 @@ static void test_about_protocol(void)
         ok(hres == S_OK, "ParseUrl failed: %08lx\n", hres);
         ok(!lstrcmpW(test_url, buf), "buf != test_url\n");
 
+        size = 0xdeadbeef;
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
-        ok(hres == S_OK, "ParseUrl failed: %08lx\n", hres);
+        ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08lx\n", hres);
         ok(buf[0] == '?', "buf changed\n");
+        ok(size == sizeof(blank_url)/sizeof(WCHAR),
+           "size=%ld, expected %d\n", size, sizeof(blank_url)/sizeof(WCHAR));
+
+#if 0   /* Crashes on win9x */
+        size = 0xdeadbeef;
+        buf[0] = '?';
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == E_FAIL, "ParseUrl failed: %08lx\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
+        ok(size == 1, "size=%ld, ezpected 1\n", size);
+
+        buf[0] = '?';
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), NULL, 0);
+        ok(hres == E_POINTER, "ParseUrl failed: %08lx\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
+
+        buf[0] = '?';
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), NULL, 0);
+        ok(hres == E_POINTER, "ParseUrl failed: %08lx\n", hres);
+        ok(buf[0] == '?', "buf changed\n");
+#endif
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_UNESCAPE+1, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
