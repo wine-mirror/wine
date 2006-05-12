@@ -25,6 +25,8 @@
 #include "shdocvw.h"
 #include "mshtml.h"
 #include "exdispid.h"
+#include "shellapi.h"
+#include "winreg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -378,6 +380,39 @@ static void on_before_navigate2(DocHost *This, LPWSTR url, PBYTE post_data, ULON
         SafeArrayDestroy(V_ARRAY(&var_post_data));
 }
 
+static BOOL try_application_url(LPCWSTR url)
+{
+    SHELLEXECUTEINFOW exec_info;
+    WCHAR app[64];
+    HKEY hkey;
+    DWORD res, type;
+    HRESULT hres;
+
+    static const WCHAR wszURLProtocol[] = {'U','R','L',' ','P','r','o','t','o','c','o','l',0};
+
+    hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, app, sizeof(app)/sizeof(WCHAR), NULL, 0);
+    if(FAILED(hres))
+        return FALSE;
+
+    res = RegOpenKeyW(HKEY_CLASSES_ROOT, app, &hkey);
+    if(res != ERROR_SUCCESS)
+        return FALSE;
+
+    res = RegQueryValueExW(hkey, wszURLProtocol, NULL, &type, NULL, NULL);
+    RegCloseKey(hkey);
+    if(res != ERROR_SUCCESS || type != REG_SZ)
+        return FALSE;
+
+    TRACE("openning application %s\n", debugstr_w(app));
+ 
+    memset(&exec_info, 0, sizeof(exec_info));
+    exec_info.cbSize = sizeof(exec_info);
+    exec_info.lpFile = url;
+    exec_info.nShow = SW_SHOW;
+
+    return ShellExecuteExW(&exec_info);
+}
+
 static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
                         IBindStatusCallback *callback)
 {
@@ -519,6 +554,10 @@ HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
         CoTaskMemFree(url);
         return S_OK;
     }
+
+    /* FIXME: We should do it after BindToObject call */
+    if(try_application_url(url))
+        return S_OK;
 
     This->url = url;
 
