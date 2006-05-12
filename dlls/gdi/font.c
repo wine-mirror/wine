@@ -1144,10 +1144,28 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
 {
     BOOL ret;
     INT wlen;
-    LPWSTR p = FONT_mbtowc(str, count, &wlen);
-    ret = GetTextExtentExPointW( hdc, p, wlen, maxExt, lpnFit, alpDx, size);
+    INT *walpDx = NULL;
+    LPWSTR p = NULL;
+    
+    if (alpDx &&
+       NULL == (walpDx = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT))))
+       return FALSE;
+    
+    p = FONT_mbtowc(str, count, &wlen);
+    ret = GetTextExtentExPointW( hdc, p, wlen, maxExt, lpnFit, walpDx, size);
+    if (walpDx)
+    {
+        INT n = lpnFit ? *lpnFit : wlen;
+        INT i, j;
+        for(i = 0, j = 0; i < n; i++, j++)
+        {
+            alpDx[j] = walpDx[i];
+            if (IsDBCSLeadByte(str[j])) alpDx[++j] = walpDx[i];
+        }
+    }
     if (lpnFit) *lpnFit = WideCharToMultiByte(CP_ACP,0,p,*lpnFit,NULL,0,NULL,NULL);
     HeapFree( GetProcessHeap(), 0, p );
+    HeapFree( GetProcessHeap(), 0, walpDx );
     return ret;
 }
 
