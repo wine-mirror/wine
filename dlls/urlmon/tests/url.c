@@ -753,7 +753,9 @@ START_TEST(url)
 
     trace("about test...\n");
     test_protocol = ABOUT_TEST;
+    CoInitialize(NULL);
     test_BindToStorage();
+    CoUninitialize();
 
     trace("emulated about test...\n");
     emulate_protocol = TRUE;

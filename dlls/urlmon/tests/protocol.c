@@ -118,7 +118,7 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
 
     ok(!lstrcmpW(szURL, http_url), "szURL != http_url\n");
 
-    ok(szHeaders == NULL, "szHeaders != NULL\n");
+    ok(szHeaders != NULL, "szHeaders == NULL\n");
     if(szHeaders) {
         static const WCHAR header[] =
             {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',':',
