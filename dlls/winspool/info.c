@@ -132,6 +132,12 @@ static const WCHAR MonitorsW[] =  { 'S','y','s','t','e','m','\\',
                                   'P','r','i','n','t','\\',
                                   'M','o','n','i','t','o','r','s',0};
 
+static const WCHAR PrintersW[] = {'S','y','s','t','e','m','\\',
+                                  'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                  'C','o','n','t','r','o','l','\\',
+                                  'P','r','i','n','t','\\',
+                                  'P','r','i','n','t','e','r','s',0};
+
 static const WCHAR LocalPortW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
 
 static const WCHAR user_default_reg_key[] = { 'S','o','f','t','w','a','r','e','\\',
@@ -776,12 +782,15 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
 /******************************************************************
  *  get_opened_printer_entry
  *  Get the first place empty in the opened printer table
+ *
+ * ToDo:
+ *  - pDefault is ignored
  */
-static HANDLE get_opened_printer_entry( LPCWSTR name )
+static HANDLE get_opened_printer_entry(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
 {
     UINT_PTR handle = nb_printer_handles, i;
     jobqueue_t *queue = NULL;
-    opened_printer_t *printer;
+    opened_printer_t *printer = NULL;
 
     EnterCriticalSection(&printer_handles_cs);
 
@@ -792,8 +801,11 @@ static HANDLE get_opened_printer_entry( LPCWSTR name )
             if(handle == nb_printer_handles)
                 handle = i;
         }
-        else if(!queue && !strcmpW(name, printer_handles[i]->name))
-            queue = printer_handles[i]->queue;
+        else
+        {
+            if(!queue && (name) && !lstrcmpW(name, printer_handles[i]->name))
+                queue = printer_handles[i]->queue;
+        }
     }
 
     if (handle >= nb_printer_handles)
@@ -815,29 +827,45 @@ static HANDLE get_opened_printer_entry( LPCWSTR name )
         nb_printer_handles += 16;
     }
 
-    if (!(printer = HeapAlloc(GetProcessHeap(), 0, sizeof(*printer))))
+    if (!(printer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*printer))))
     {
         handle = 0;
         goto end;
     }
 
-    printer->name = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
-    strcpyW(printer->name, name);
+    if(name) {
+        printer->name = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
+        if (!printer->name) {
+            handle = 0;
+            goto end;
+        }
+        strcpyW(printer->name, name);
+    }
+
     if(queue)
         printer->queue = queue;
     else
     {
         printer->queue = HeapAlloc(GetProcessHeap(), 0, sizeof(*queue));
+        if (!printer->queue) {
+            handle = 0;
+            goto end;
+        }
         list_init(&printer->queue->jobs);
         printer->queue->ref = 0;
     }
     InterlockedIncrement(&printer->queue->ref);
-    printer->doc = NULL;
 
     printer_handles[handle] = printer;
     handle++;
 end:
     LeaveCriticalSection(&printer_handles_cs);
+    if (!handle && printer) {
+        /* Something Failed: Free the Buffers */
+        HeapFree(GetProcessHeap(), 0, printer->name);
+        if (!queue) HeapFree(GetProcessHeap(), 0, printer->queue);
+        HeapFree(GetProcessHeap(), 0, printer);
+    }
 
     return (HANDLE)handle;
 }
@@ -1258,57 +1286,51 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
  *|  XcvPort: "Servername,XcvPort PortName"
  *
  * BUGS
- *|  Printserver not supported
  *|  Printer-Object not supported
  *|  XcvMonitor not supported
  *|  XcvPort not supported
- *|  pDefaults not supported
+ *|  pDefaults is ignored
  *
  */
-BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
-			 LPPRINTER_DEFAULTSW pDefault)
+BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAULTSW pDefault)
 {
-    HKEY hkeyPrinters, hkeyPrinter;
+    HKEY hkeyPrinters = NULL;
+    HKEY hkeyPrinter = NULL;
 
-    if (!lpPrinterName) {
-       FIXME("(printerName: NULL, pDefault %p Ret: False\n", pDefault);
-       SetLastError(ERROR_INVALID_PARAMETER);
-       return FALSE;
+    TRACE("(%s, %p, %p)\n", debugstr_w(lpPrinterName), phPrinter, pDefault);
+    if (pDefault) {
+        FIXME("PRINTER_DEFAULTS ignored => %s,%p,0x%08lx\n",
+        debugstr_w(pDefault->pDatatype), pDefault->pDevMode, pDefault->DesiredAccess);
     }
 
-    TRACE("(printerName: %s, pDefault %p)\n", debugstr_w(lpPrinterName),
-	  pDefault);
+    if(lpPrinterName != NULL)
+    {
+        /* Check any Printer exists */
+        if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) != ERROR_SUCCESS) {
+            ERR("Can't create Printers key\n");
+            SetLastError(ERROR_FILE_NOT_FOUND);
+            return FALSE;
+        }
+        if((lpPrinterName[0] == '\0') ||        /* explicitly exclude "" */
+           (RegOpenKeyW(hkeyPrinters, lpPrinterName, &hkeyPrinter) != ERROR_SUCCESS)) {
 
-    /* Check Printer exists */
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
-       ERROR_SUCCESS) {
-        ERR("Can't create Printers key\n");
-	SetLastError(ERROR_FILE_NOT_FOUND); /* ?? */
-	return FALSE;
+            WARN("Printer not found in Registry: '%s'\n", debugstr_w(lpPrinterName));
+            RegCloseKey(hkeyPrinters);
+            SetLastError(ERROR_INVALID_PRINTER_NAME);
+            return FALSE;
+        }
+        RegCloseKey(hkeyPrinter);
+        RegCloseKey(hkeyPrinters);
+    }
+    if(!phPrinter) {
+        /* NT: FALSE with ERROR_INVALID_PARAMETER, 9x: TRUE */
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
 
-    if(lpPrinterName[0] == '\0' || /* explicitly exclude "" */
-       RegOpenKeyW(hkeyPrinters, lpPrinterName, &hkeyPrinter)
-       != ERROR_SUCCESS) {
-        TRACE("Can't find printer %s in registry\n",
-	      debugstr_w(lpPrinterName));
-	RegCloseKey(hkeyPrinters);
-        SetLastError(ERROR_INVALID_PRINTER_NAME);
-	return FALSE;
-    }
-    RegCloseKey(hkeyPrinter);
-    RegCloseKey(hkeyPrinters);
-
-    if(!phPrinter) /* This seems to be what win95 does anyway */
-        return TRUE;
-
-    /* Get the unique handle of the printer*/
-    *phPrinter = get_opened_printer_entry( lpPrinterName );
-
-    if (pDefault != NULL)
-        FIXME("Not handling pDefault\n");
-
-    return TRUE;
+    /* Get the unique handle of the printer or Printserver */
+    *phPrinter = get_opened_printer_entry(lpPrinterName, pDefault);
+    return (*phPrinter != 0);
 }
 
 /******************************************************************
