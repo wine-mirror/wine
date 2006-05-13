@@ -6545,6 +6545,16 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
     
     ZeroMemory(&hdi, sizeof(HDITEMW));
     column_fill_hditem(infoPtr, &hdi, nColumn, lpColumn, isW);
+    
+    /*
+     * when the iSubItem is available Windows copies it to the header lParam. It seems
+     * to happen only in LVM_INSERTCOLUMN - not in LVM_SETCOLUMN
+     */
+    if (lpColumn->mask & LVCF_SUBITEM)
+    {
+        hdi.mask |= HDI_LPARAM;
+        hdi.lParam = lpColumn->iSubItem;
+    }
 
     /* insert item in header control */
     nNewColumn = SendMessageW(infoPtr->hwndHeader, 
