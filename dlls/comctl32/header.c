@@ -94,10 +94,14 @@ typedef struct
 
 #define VERT_BORDER     3
 #define DIVIDER_WIDTH  10
+#define MAX_HEADER_TEXT_LEN 260
 #define HDN_UNICODE_OFFSET 20
 #define HDN_FIRST_UNICODE (HDN_FIRST-HDN_UNICODE_OFFSET)
 
 #define HEADER_GetInfoPtr(hwnd) ((HEADER_INFO *)GetWindowLongPtrW(hwnd,0))
+
+static BOOL HEADER_PrepareCallbackItems(HWND hwnd, INT iItem, INT reqMask);
+static void HEADER_FreeCallbackItems(HEADER_ITEM *lpItem);
 
 static const WCHAR themeClass[] = {'H','e','a','d','e','r',0};
 static WCHAR emptyString[] = {0};
@@ -235,6 +239,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
     if (r.right - r.left == 0)
 	return phdi->rect.right;
 
+    HEADER_PrepareCallbackItems(hwnd, iItem, HDI_TEXT|HDI_IMAGE);
     if (theme != NULL) {
         int state = (phdi->bDown) ? HIS_PRESSED :
             (bHotTrack ? HIS_HOT : HIS_NORMAL);
@@ -422,6 +427,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
         }
     }/*Ownerdrawn*/
 
+    HEADER_FreeCallbackItems(phdi);
     return phdi->rect.right;
 }
 
@@ -725,96 +731,117 @@ HEADER_SendHeaderNotifyT (HWND hwnd, UINT code, INT iItem, INT mask, HDITEMW *lp
 }
 
 /**
- * Send Disp Info notification. 
+ * Prepare callback items
  *   depends on NMHDDISPINFOW having same structure as NMHDDISPINFOA 
  *   (so we handle the two cases only doing a specific cast for pszText).
+ * Checks if any of the required field are callback. If there are sends a 
+ * NMHDISPINFO notify to retrieve these items. The items are stored in the
+ * HEADER_ITEM pszText and iImage fields. They should be freed with
+ * HEADER_FreeCallbackItems.
  *
  * @param hwnd : hwnd header container handler
- * @param mask : notification mask (usually HDI_TEXT or HDI_IMAGE)
- * @param pDispInfo : NMHDDISPINFO structure (can be unicode or ansi)
- * @param isW : TRUE if dispinfo is Unicode
+ * @param iItem : the header item id
+ * @param reqMask : required fields. If any of them is callback this function will fetch it
+ *
+ * @return TRUE on success, else FALSE
  */
 static BOOL
-HEADER_SendHeaderDispInfoNotify(HWND hwnd, INT iItem, INT mask, LPHDITEMW phdi, HEADER_ITEM* lpItem, BOOL isW)
+HEADER_PrepareCallbackItems(HWND hwnd, INT iItem, INT reqMask)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    BOOL ret;
-    BOOL convertToAnsi = FALSE;
-    BOOL convertToUnicode = FALSE;
-    BOOL isUnicodeNotify = FALSE;
+    HEADER_ITEM *lpItem = &infoPtr->items[iItem];
+    DWORD mask = reqMask & lpItem->callbackMask;
     NMHDDISPINFOW dispInfo;
+    void *pvBuffer = NULL;
 
-    if (mask & HDI_TEXT)
+    if (mask == 0)
+        return TRUE;
+    if (mask&HDI_TEXT && lpItem->pszText != NULL)
     {
-        convertToAnsi = (isW && infoPtr->nNotifyFormat == NFR_ANSI);
-        convertToUnicode = (!isW && infoPtr->nNotifyFormat == NFR_UNICODE);
+        ERR("(): function called without a call to FreeCallbackItems\n");
+        Free(lpItem->pszText);
+        lpItem->pszText = NULL;
     }
-    isUnicodeNotify = (isW && !convertToAnsi);
     
     memset(&dispInfo, 0, sizeof(NMHDDISPINFOW));
     dispInfo.hdr.hwndFrom = hwnd;
     dispInfo.hdr.idFrom   = GetWindowLongPtrW (hwnd, GWLP_ID);
-    if (isUnicodeNotify || convertToUnicode) 
+    if (infoPtr->nNotifyFormat == NFR_UNICODE)
     {
         dispInfo.hdr.code = HDN_GETDISPINFOW;
+        if (mask & HDI_TEXT)
+            pvBuffer = Alloc(MAX_HEADER_TEXT_LEN * sizeof(WCHAR));
     }
     else
     {
         dispInfo.hdr.code = HDN_GETDISPINFOA;
+        if (mask & HDI_TEXT)
+            pvBuffer = Alloc(MAX_HEADER_TEXT_LEN * sizeof(CHAR));
     }
+    dispInfo.pszText      = (LPWSTR)pvBuffer;
+    dispInfo.cchTextMax   = (pvBuffer!=NULL?MAX_HEADER_TEXT_LEN:0);
     dispInfo.iItem        = iItem;
     dispInfo.mask         = mask;
-    /*
-    dispInfo.pszText      = Alloc(sizeof(WCHAR) * 260);
-    dispInfo.cchTextMax   = 260;
-    */
-    ret = (BOOL) SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, 
-                              (WPARAM) dispInfo.hdr.idFrom, 
-                              (LPARAM) &dispInfo);
+    dispInfo.lParam       = lpItem->lParam;
+    
+    TRACE("Sending HDN_GETDISPINFO%c\n", infoPtr->nNotifyFormat == NFR_UNICODE?'W':'A');
+    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, 
+                 (WPARAM) dispInfo.hdr.idFrom, 
+                 (LPARAM) &dispInfo);
 
     TRACE("SendMessage returns(mask:0x%x,str:%s,lParam:%p)\n", 
           dispInfo.mask,
-          (isUnicodeNotify ? debugstr_w(dispInfo.pszText) : (LPSTR) dispInfo.pszText),
+          (infoPtr->nNotifyFormat == NFR_UNICODE ? debugstr_w(dispInfo.pszText) : (LPSTR) dispInfo.pszText),
           (void*) dispInfo.lParam);
-	  
+          
+    if (mask & HDI_IMAGE)
+        lpItem->iImage = dispInfo.iImage;
+    if (mask & HDI_TEXT)
+    {
+        if (infoPtr->nNotifyFormat == NFR_UNICODE)
+        {
+            lpItem->pszText = (LPWSTR)pvBuffer;
+
+            /* the user might have used his own buffer */
+            if (dispInfo.pszText != lpItem->pszText)
+                Str_GetPtrW(dispInfo.pszText, lpItem->pszText, MAX_HEADER_TEXT_LEN);
+        }
+        else
+        {
+            Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)dispInfo.pszText);
+            Free(pvBuffer);
+        }
+    }
+        
     if (dispInfo.mask & HDI_DI_SETITEM) 
     {
-        if (dispInfo.mask & HDI_IMAGE) 
-        {
-            lpItem->iImage = dispInfo.iImage;
-            lpItem->callbackMask &= ~HDI_IMAGE;
-        }
-        if (dispInfo.mask & HDI_TEXT) 
-        {
-            if (isUnicodeNotify || convertToUnicode)
-                Str_SetPtrW(&lpItem->pszText, (LPCWSTR)dispInfo.pszText);
-            else /*if (convertToAnsi || !isW)*/
-                Str_SetPtrAtoW(&lpItem->pszText, (LPCSTR)dispInfo.pszText);
-            lpItem->callbackMask &= ~HDI_TEXT;
-        }
-        
-        FIXME("NMHDDISPINFO returns with flags HDI_DI_SETITEM\n");
+        /* make the items permanent */
+        lpItem->callbackMask &= ~dispInfo.mask;
     }
     
-    if (NULL != phdi)
-    {
-        if ((phdi->mask & mask) & HDI_IMAGE) 
-        {
-            phdi->iImage = dispInfo.iImage;
-        }
-        if ((phdi->mask & mask) & HDI_TEXT) 
-        {
-            if (isUnicodeNotify)
-                Str_GetPtrW ((LPCWSTR)dispInfo.pszText, phdi->pszText, phdi->cchTextMax);
-            else if (convertToUnicode)
-                Str_GetPtrWtoA ((LPCWSTR)dispInfo.pszText, (LPSTR)phdi->pszText, phdi->cchTextMax);
-            else /*if (!isW) */
-                Str_GetPtrA ((LPCSTR)dispInfo.pszText, (LPSTR)phdi->pszText, phdi->cchTextMax);
-        }
-    }
-    return ret;
+    return TRUE;
 }
 
+/***
+ * DESCRIPTION:
+ * Free the items that might be allocated with HEADER_PrepareCallbackItems
+ *
+ * PARAMETER(S):
+ * [I] lpItem : the item to free the data
+ *
+ */
+static void
+HEADER_FreeCallbackItems(HEADER_ITEM *lpItem)
+{
+    if (lpItem->callbackMask&HDI_TEXT && lpItem->pszText != NULL)
+    {
+        Free(lpItem->pszText);
+        lpItem->pszText = NULL;
+    }
+    
+    if (lpItem->callbackMask&HDI_IMAGE)
+        lpItem->iImage = I_IMAGECALLBACK;
+}
 
 static BOOL
 HEADER_SendClickNotify (HWND hwnd, UINT code, INT iItem)
@@ -940,6 +967,7 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
         return FALSE;
 
     lpItem = &infoPtr->items[nItem];
+    HEADER_PrepareCallbackItems(hwnd, nItem, phdi->mask);
 
     if (phdi->mask & HDI_BITMAP)
         phdi->hbm = lpItem->hbm;
@@ -956,10 +984,6 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     if (phdi->mask & HDI_IMAGE) 
     {
         phdi->iImage = lpItem->iImage;
-        if (lpItem->callbackMask & HDI_IMAGE)
-        {
-            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_IMAGE, phdi, lpItem, bUnicode);
-        }
     }
 
     if (phdi->mask & HDI_ORDER)
@@ -967,19 +991,13 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 
     if (phdi->mask & HDI_TEXT)
     {
-        if (lpItem->callbackMask & HDI_TEXT)
-        {
-            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_TEXT, phdi, lpItem, bUnicode);
-        }
+        if (bUnicode)
+            Str_GetPtrW (lpItem->pszText, phdi->pszText, phdi->cchTextMax);
         else
-        {
-            if (bUnicode)
-                Str_GetPtrW (lpItem->pszText, phdi->pszText, phdi->cchTextMax);
-            else
-                Str_GetPtrWtoA (lpItem->pszText, (LPSTR)phdi->pszText, phdi->cchTextMax);
-        }
+            Str_GetPtrWtoA (lpItem->pszText, (LPSTR)phdi->pszText, phdi->cchTextMax);
     }
 
+    HEADER_FreeCallbackItems(lpItem);
     return TRUE;
 }
 
