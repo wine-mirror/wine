@@ -320,7 +320,7 @@ PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pForm
 
 static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
 {
-  if (!IsConformanceOrVariancePresent(pFormat))
+  if (pFormat && !IsConformanceOrVariancePresent(pFormat))
   {
     pStubMsg->Offset = 0;
     pStubMsg->ActualCount = pStubMsg->MaxCount;
@@ -626,18 +626,15 @@ unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
 unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg,
   unsigned char** ppMemory, PFORMAT_STRING pFormat, unsigned char fMustAlloc )
 {
-  unsigned long len, esize, ofs;
+  unsigned long len, esize;
 
   TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
     pStubMsg, *ppMemory, pFormat, fMustAlloc);
 
   assert(pFormat && ppMemory && pStubMsg);
 
-  pStubMsg->Buffer += 4;
-  ofs = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
-  pStubMsg->Buffer += 4;
-  len = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
-  pStubMsg->Buffer += 4;
+  ReadConformance(pStubMsg, NULL);
+  ReadVariance(pStubMsg, NULL);
 
   if (*pFormat == RPC_FC_C_CSTRING) esize = 1;
   else if (*pFormat == RPC_FC_C_WSTRING) esize = 2;
@@ -650,6 +647,8 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   if (pFormat[1] != RPC_FC_PAD) {
     FIXME("sized string format=%d\n", pFormat[1]);
   }
+
+  len = pStubMsg->ActualCount;
 
   if (fMustAlloc || !*ppMemory)
     *ppMemory = NdrAllocate(pStubMsg, len*esize + BUFFER_PARANOIA);
