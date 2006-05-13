@@ -58,10 +58,10 @@ typedef struct
   RpcPktCommonHdr common;
   unsigned long alloc_hint;       /* Data size in bytes excluding header and tail. */
   unsigned short context_id;      /* Presentation context identifier */
-  unsigned char alert_count;      /* Pending alert count */
-  unsigned char padding[3];       /* Force alignment! */
+  unsigned char cancel_count;     /* Received cancel count */
+  unsigned char reserved;         /* Force alignment! */
   unsigned long status;           /* Runtime fault code (RPC_STATUS) */
-  unsigned long reserved;
+  unsigned long reserved2;
 } RpcPktFaultHdr;
 
 typedef struct
