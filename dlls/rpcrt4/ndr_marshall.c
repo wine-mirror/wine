@@ -2374,8 +2374,13 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
-  DWORD size = 0;
-  FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
+  ULONG count, esize;
+  unsigned char alignment;
+  unsigned char *Buffer;
+  unsigned long SavedMemorySize;
+  unsigned long MemorySize;
+
+  TRACE("(%p,%p)\n", pStubMsg, pFormat);
 
   if (pFormat[0] != RPC_FC_BOGUS_ARRAY)
   {
@@ -2384,15 +2389,30 @@ unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       return 0;
   }
 
+  alignment = pFormat[1] + 1;
+
   pFormat += 4;
 
   pFormat = ReadConformance(pStubMsg, pFormat);
-  size = pStubMsg->MaxCount;
-  TRACE("conformance=%ld\n", size);
+  pFormat = ReadVariance(pStubMsg, pFormat);
 
-  pFormat += 4;
+  ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
-  return 0;
+  SavedMemorySize = pStubMsg->MemorySize;
+
+  Buffer = pStubMsg->Buffer;
+  esize = ComplexStructSize(pStubMsg, pFormat);
+  pStubMsg->Buffer = Buffer;
+
+  MemorySize = esize * pStubMsg->MaxCount;
+
+  for (count = 0; count < pStubMsg->ActualCount; count++)
+    ComplexStructSize(pStubMsg, pFormat);
+
+  pStubMsg->MemorySize = SavedMemorySize;
+
+  pStubMsg->MemorySize += MemorySize;
+  return MemorySize;
 }
 
 /***********************************************************************
