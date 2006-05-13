@@ -1922,11 +1922,14 @@ void WINAPI NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                 PFORMAT_STRING pFormat)
 {
-  /* unsigned size = *(LPWORD)(pFormat+2); */
+  unsigned size = *(const WORD*)(pFormat+2);
   PFORMAT_STRING conf_array = NULL;
   PFORMAT_STRING pointer_desc = NULL;
+  unsigned long saved_memory_size;
 
-  FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
+  TRACE("(%p,%p)\n", pStubMsg, pFormat);
+
+  ALIGN_POINTER(pStubMsg->Buffer, pFormat[1] + 1);
 
   pFormat += 4;
   if (*(const WORD*)pFormat) conf_array = pFormat + *(const WORD*)pFormat;
@@ -1934,7 +1937,14 @@ unsigned long WINAPI NdrComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   if (*(const WORD*)pFormat) pointer_desc = pFormat + *(const WORD*)pFormat;
   pFormat += 2;
 
-  return 0;
+  saved_memory_size = pStubMsg->MemorySize;
+  ComplexStructSize(pStubMsg, pFormat);
+  pStubMsg->MemorySize = saved_memory_size;
+
+  if (conf_array)
+    NdrConformantArrayMemorySize(pStubMsg, conf_array);
+
+  return size;
 }
 
 /***********************************************************************
