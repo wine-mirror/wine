@@ -110,6 +110,51 @@ static void HEADER_DisposeItem(HEADER_ITEM *lpItem)
     }
 }
 
+static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, HDITEMW *phdi, BOOL fUnicode)
+{
+    if (phdi->mask & HDI_BITMAP)
+        lpItem->hbm = phdi->hbm;
+
+    if (phdi->mask & HDI_FORMAT)
+        lpItem->fmt = phdi->fmt;
+
+    if (phdi->mask & HDI_LPARAM)
+        lpItem->lParam = phdi->lParam;
+
+    if (phdi->mask & HDI_WIDTH)
+        lpItem->cxy = phdi->cxy;
+
+    if (phdi->mask & HDI_IMAGE) 
+    {
+        lpItem->iImage = phdi->iImage;
+    }
+
+    if (phdi->mask & HDI_TEXT)
+    {
+        if (!phdi->pszText) phdi->pszText = emptyString; /* null pointer check */
+        if (phdi->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
+        {
+            if (lpItem->pszText)
+            {
+                if (lpItem->pszText != emptyString && lpItem->pszText != LPSTR_TEXTCALLBACKW)
+                    Free(lpItem->pszText);
+                lpItem->pszText = NULL;
+            }
+            if (phdi->pszText)
+            {
+                if (fUnicode)
+                    Str_SetPtrW(&lpItem->pszText, phdi->pszText);
+                else
+                    Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)phdi->pszText);
+            }
+        }
+        else
+        {
+            lpItem->pszText = phdi->pszText;
+        }  
+    }
+}
+
 inline static LRESULT
 HEADER_IndexToOrder (HWND hwnd, INT iItem)
 {
@@ -1085,44 +1130,11 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     }
 
     lpItem = &infoPtr->items[nItem];
-    lpItem->bDown = FALSE;
-
-    if (phdi->mask & HDI_WIDTH)
-	lpItem->cxy = phdi->cxy;
-
-    if (phdi->mask & HDI_FORMAT)
-	lpItem->fmt = phdi->fmt;
-
-    if (lpItem->fmt == 0)
-	lpItem->fmt = HDF_LEFT;
-
-    if (phdi->mask & HDI_BITMAP)
-        lpItem->hbm = phdi->hbm;
-
-    if (phdi->mask & HDI_LPARAM)
-        lpItem->lParam = phdi->lParam;
-
-    if (phdi->mask & HDI_IMAGE) 
-    {
-        lpItem->iImage = phdi->iImage;
-    }
+    ZeroMemory(lpItem, sizeof(HEADER_ITEM));
+    HEADER_StoreHDItemInHeader(lpItem, phdi, bUnicode);
 
     if (phdi->mask & HDI_TEXT)
-    {
-        if (!phdi->pszText) phdi->pszText = emptyString; /* null pointer check */
-        if (phdi->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
-        {
-            if (bUnicode)
-                Str_SetPtrW(&lpItem->pszText, phdi->pszText);
-            else
-                Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)phdi->pszText);
-        }
-        else 
-        {
-            lpItem->pszText = phdi->pszText;
-        }
         lpItem->fmt |= HDF_STRING;
-    }
 
     lpItem->iOrder = iOrder;
 
@@ -1221,46 +1233,7 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     }
 
     lpItem = &infoPtr->items[nItem];
-    if (phdi->mask & HDI_BITMAP)
-	lpItem->hbm = phdi->hbm;
-
-    if (phdi->mask & HDI_FORMAT)
-	lpItem->fmt = phdi->fmt;
-
-    if (phdi->mask & HDI_LPARAM)
-	lpItem->lParam = phdi->lParam;
-
-    if (phdi->mask & HDI_WIDTH)
-	lpItem->cxy = phdi->cxy;
-
-    if (phdi->mask & HDI_IMAGE) 
-    {
-        lpItem->iImage = phdi->iImage;
-    }
-
-    if (phdi->mask & HDI_TEXT)
-    {
-        if (phdi->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
-        {
-            if (lpItem->pszText)
-            {
-                if (lpItem->pszText != emptyString && lpItem->pszText != LPSTR_TEXTCALLBACKW)
-                    Free(lpItem->pszText);
-                lpItem->pszText = NULL;
-            }
-            if (phdi->pszText)
-            {
-                if (bUnicode)
-                    Str_SetPtrW(&lpItem->pszText, phdi->pszText);
-                else
-                    Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)phdi->pszText);
-            }
-	}
-	else 
-	{
-            lpItem->pszText = phdi->pszText;
-        }  
-    }
+    HEADER_StoreHDItemInHeader(lpItem, phdi, bUnicode);
 
     if (phdi->mask & HDI_ORDER)
       {
