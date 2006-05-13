@@ -1152,9 +1152,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
 
     D3DCREATEOBJECTINSTANCE(object, SwapChain)
 
-    /* Initialize other useful values */
-    object->presentParms.BackBufferCount = 1; /* TODO:? support for gl_aux buffers */
-
     /*********************
     * Lookup the window Handle and the relating X window handle
     ********************/
@@ -1382,18 +1379,34 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
                              NULL /* pShared (always null)*/);
     if (object->frontBuffer != NULL)
         IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
-    TRACE("calling rendertarget CB\n");
-    hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
-                             object->presentParms.BackBufferWidth,
-                             object->presentParms.BackBufferHeight,
-                             object->presentParms.BackBufferFormat,
-                             object->presentParms.MultiSampleType,
-                             object->presentParms.MultiSampleQuality,
-                             TRUE /* Lockable */,
-                             &object->backBuffer,
-                             NULL /* pShared (always null)*/);
-    if (object->backBuffer != NULL)
+    if(object->presentParms.BackBufferCount > 0) {
+        TRACE("calling rendertarget CB\n");
+        hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
+                                object->presentParms.BackBufferWidth,
+                                object->presentParms.BackBufferHeight,
+                                object->presentParms.BackBufferFormat,
+                                object->presentParms.MultiSampleType,
+                                object->presentParms.MultiSampleQuality,
+                                TRUE /* Lockable */,
+                                &object->backBuffer,
+                                NULL /* pShared (always null)*/);
+    } else {
+        object->backBuffer = NULL;
+    }
+
+    if (object->backBuffer != NULL) {
         IWineD3DSurface_SetContainer(object->backBuffer, (IWineD3DBase *)object);
+        ENTER_GL();
+        glDrawBuffer(GL_BACK);
+        checkGLcall("glDrawBuffer(GL_BACK)");
+        LEAVE_GL();
+    } else {
+        /* Single buffering - draw to front buffer */
+        ENTER_GL();
+        glDrawBuffer(GL_FRONT);
+        checkGLcall("glDrawBuffer(GL_FRONT)");
+        LEAVE_GL();
+    }
 
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
     if (pPresentationParameters->EnableAutoDepthStencil) {
