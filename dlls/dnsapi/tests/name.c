@@ -30,6 +30,7 @@
 static HMODULE dnsapi;
 
 static BOOL        (WINAPI *pDnsNameCompare_A)(LPSTR,LPSTR);
+static DNS_STATUS  (WINAPI *pDnsValidateName_A)(LPCSTR,DNS_NAME_FORMAT);
 
 #define GETFUNCPTR(func) p##func = (void *)GetProcAddress( dnsapi, #func ); \
     if (!p##func) return FALSE;
@@ -37,7 +38,132 @@ static BOOL        (WINAPI *pDnsNameCompare_A)(LPSTR,LPSTR);
 static BOOL init_function_ptrs( void )
 {
     GETFUNCPTR( DnsNameCompare_A )
+    GETFUNCPTR( DnsValidateName_A )
     return TRUE;
+}
+
+static const struct
+{
+    LPSTR name;
+    DNS_NAME_FORMAT format;
+    DNS_STATUS status;
+}
+test_data[] =
+{
+    { "", DnsNameDomain, ERROR_INVALID_NAME },
+    { ".", DnsNameDomain, ERROR_SUCCESS },
+    { "..", DnsNameDomain, ERROR_INVALID_NAME },
+    { ".a", DnsNameDomain, ERROR_INVALID_NAME },
+    { "a.", DnsNameDomain, ERROR_SUCCESS },
+    { "a..", DnsNameDomain, ERROR_INVALID_NAME },
+    { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", DnsNameDomain, ERROR_INVALID_NAME },
+    { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", DnsNameDomain, ERROR_INVALID_NAME },
+    { "a.?", DnsNameDomain, DNS_ERROR_INVALID_NAME_CHAR },
+    { "a.*", DnsNameDomain, DNS_ERROR_INVALID_NAME_CHAR },
+    { "a ", DnsNameDomain, DNS_ERROR_INVALID_NAME_CHAR },
+    { "a._b", DnsNameDomain, DNS_ERROR_NON_RFC_NAME },
+    { "123", DnsNameDomain, DNS_ERROR_NUMERIC_NAME },
+    { "123.456", DnsNameDomain, DNS_ERROR_NUMERIC_NAME },
+    { "a.b", DnsNameDomain, ERROR_SUCCESS },
+
+    { "", DnsNameDomainLabel, ERROR_INVALID_NAME },
+    { ".", DnsNameDomainLabel, ERROR_INVALID_NAME },
+    { "..", DnsNameDomainLabel, ERROR_INVALID_NAME },
+    { ".c", DnsNameDomainLabel, ERROR_INVALID_NAME },
+    { "c.", DnsNameDomainLabel, ERROR_INVALID_NAME },
+    { "c..", DnsNameDomainLabel, ERROR_INVALID_NAME },
+    { "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", DnsNameDomainLabel, ERROR_INVALID_NAME },
+    { "?", DnsNameDomainLabel, DNS_ERROR_INVALID_NAME_CHAR },
+    { "*", DnsNameDomainLabel, DNS_ERROR_INVALID_NAME_CHAR },
+    { "c ", DnsNameDomainLabel, DNS_ERROR_INVALID_NAME_CHAR },
+    { "_c", DnsNameDomainLabel, DNS_ERROR_NON_RFC_NAME },
+    { "456", DnsNameDomainLabel, ERROR_SUCCESS },
+    { "456.789", DnsNameDomainLabel, ERROR_INVALID_NAME },
+    { "c.d", DnsNameDomainLabel, ERROR_INVALID_NAME },
+
+    { "", DnsNameHostnameFull, ERROR_INVALID_NAME },
+    { ".", DnsNameHostnameFull, ERROR_SUCCESS },
+    { "..", DnsNameHostnameFull, ERROR_INVALID_NAME },
+    { ".e", DnsNameHostnameFull, ERROR_INVALID_NAME },
+    { "e.", DnsNameHostnameFull, ERROR_SUCCESS },
+    { "e..", DnsNameHostnameFull, ERROR_INVALID_NAME },
+    { "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", DnsNameDomain, ERROR_INVALID_NAME },
+    { "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", DnsNameHostnameFull, ERROR_INVALID_NAME },
+    { "?", DnsNameHostnameLabel, DNS_ERROR_INVALID_NAME_CHAR },
+    { "e.?", DnsNameHostnameFull, DNS_ERROR_INVALID_NAME_CHAR },
+    { "e.*", DnsNameHostnameFull, DNS_ERROR_INVALID_NAME_CHAR },
+    { "e ", DnsNameHostnameFull, DNS_ERROR_INVALID_NAME_CHAR },
+    { "e._f", DnsNameHostnameFull, DNS_ERROR_NON_RFC_NAME },
+    { "789", DnsNameHostnameFull, DNS_ERROR_NUMERIC_NAME },
+    { "789.456", DnsNameHostnameFull, DNS_ERROR_NUMERIC_NAME },
+    { "e.f", DnsNameHostnameFull, ERROR_SUCCESS },
+
+    { "", DnsNameHostnameLabel, ERROR_INVALID_NAME },
+    { ".", DnsNameHostnameLabel, ERROR_INVALID_NAME },
+    { "..", DnsNameHostnameLabel, ERROR_INVALID_NAME },
+    { ".g", DnsNameHostnameLabel, ERROR_INVALID_NAME },
+    { "g.", DnsNameHostnameLabel, ERROR_INVALID_NAME },
+    { "g..", DnsNameHostnameLabel, ERROR_INVALID_NAME },
+    { "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg", DnsNameHostnameLabel, ERROR_INVALID_NAME },
+    { "*", DnsNameHostnameLabel, DNS_ERROR_INVALID_NAME_CHAR },
+    { "g ", DnsNameHostnameLabel, DNS_ERROR_INVALID_NAME_CHAR },
+    { "_g", DnsNameHostnameLabel, DNS_ERROR_NON_RFC_NAME },
+    { "123", DnsNameHostnameLabel, DNS_ERROR_NUMERIC_NAME },
+    { "123.456", DnsNameHostnameLabel, ERROR_INVALID_NAME },
+    { "g.h", DnsNameHostnameLabel, ERROR_INVALID_NAME },
+
+    { "", DnsNameWildcard, ERROR_INVALID_NAME },
+    { ".", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "..", DnsNameWildcard, ERROR_INVALID_NAME },
+    { ".j", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "j.", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "j..", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj.jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj.jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj.jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "?", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "i ", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "_i", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "123", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "123.456", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "i.j", DnsNameWildcard, ERROR_INVALID_NAME },
+    { "*", DnsNameWildcard, ERROR_SUCCESS },
+    { "*j", DnsNameWildcard, DNS_ERROR_INVALID_NAME_CHAR },
+    { "*.j", DnsNameWildcard, ERROR_SUCCESS },
+    { "i.*", DnsNameWildcard, ERROR_INVALID_NAME },
+
+    { "", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { ".", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "..", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { ".k", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "k.", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "k..", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "?", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "k ", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "_k", DnsNameSrvRecord, ERROR_SUCCESS },
+    { "123", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "123.456", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "k.l", DnsNameSrvRecord, ERROR_INVALID_NAME },
+    { "_", DnsNameSrvRecord, DNS_ERROR_NON_RFC_NAME },
+    { "_k.l", DnsNameSrvRecord, ERROR_SUCCESS },
+    { "k._l", DnsNameSrvRecord, ERROR_INVALID_NAME }
+};
+
+static void test_DnsValidateName_A( void )
+{
+    unsigned int i;
+    DNS_STATUS status;
+
+    status = pDnsValidateName_A( NULL, DnsNameDomain );
+    ok( status == ERROR_INVALID_NAME, "succeeded unexpectedly\n" );
+
+    for (i = 0; i < sizeof(test_data) / sizeof(test_data[0]); i++)
+    {
+        status = pDnsValidateName_A( test_data[i].name, test_data[i].format );
+        ok( status == test_data[i].status, "%d: \'%s\': got %ld, expected %ld\n",
+            i, test_data[i].name, status, test_data[i].status );
+    }
 }
 
 static void test_DnsNameCompare_A( void )
@@ -84,6 +210,7 @@ START_TEST(name)
         return;
     }
 
+    test_DnsValidateName_A();
     test_DnsNameCompare_A();
 
     FreeLibrary( dnsapi );
