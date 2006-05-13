@@ -1104,15 +1104,7 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 
     if (phdi->mask & HDI_IMAGE) 
     {
-        if (phdi->iImage != I_IMAGECALLBACK) 
-        {
-            lpItem->iImage = phdi->iImage;
-        } 
-        else 
-        {
-            lpItem->iImage = phdi->iImage;
-            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_IMAGE, NULL, lpItem, bUnicode);
-        }
+        lpItem->iImage = phdi->iImage;
     }
 
     if (phdi->mask & HDI_TEXT)
@@ -1128,7 +1120,6 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
         else 
         {
             lpItem->pszText = phdi->pszText;
-            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_TEXT, NULL, lpItem, bUnicode);
         }
         lpItem->fmt |= HDF_STRING;
     }
@@ -1244,15 +1235,7 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 
     if (phdi->mask & HDI_IMAGE) 
     {
-        if (phdi->iImage != I_IMAGECALLBACK) 
-        {
-            lpItem->iImage = phdi->iImage;
-        } 
-        else 
-        {
-            lpItem->iImage = phdi->iImage;
-            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_IMAGE, NULL, lpItem, bUnicode);
-        }
+        lpItem->iImage = phdi->iImage;
     }
 
     if (phdi->mask & HDI_TEXT)
@@ -1276,7 +1259,6 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 	else 
 	{
             lpItem->pszText = phdi->pszText;
-            HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_TEXT, NULL, lpItem, bUnicode);
         }  
     }
 
