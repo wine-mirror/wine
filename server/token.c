@@ -93,7 +93,7 @@ struct privilege
     unsigned    def      : 1; /* is the privilege enabled by default? */
 };
 
-struct sid_and_attributes
+struct group
 {
     struct list entry;
     unsigned    enabled  : 1; /* is the sid currently enabled? */
@@ -397,7 +397,7 @@ static void token_destroy( struct object *obj )
 
     LIST_FOR_EACH_SAFE( cursor, cursor_next, &token->groups )
     {
-        struct sid_and_attributes *group = LIST_ENTRY( cursor, struct sid_and_attributes, entry );
+        struct group *group = LIST_ENTRY( cursor, struct group, entry );
         list_remove( &group->entry );
         free( group );
     }
@@ -436,8 +436,8 @@ static struct token *create_token( unsigned primary, const SID *user,
         /* copy groups */
         for (i = 0; i < group_count; i++)
         {
-            size_t size = FIELD_OFFSET( struct sid_and_attributes, sid.SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] );
-            struct sid_and_attributes *group = mem_alloc( size );
+            size_t size = FIELD_OFFSET( struct group, sid.SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] );
+            struct group *group = mem_alloc( size );
 
             if (!group)
             {
@@ -696,11 +696,11 @@ int token_check_privileges( struct token *token, int all_required,
 
 static int token_sid_present( struct token *token, const SID *sid, int deny )
 {
-    struct sid_and_attributes *group;
+    struct group *group;
 
     if (security_equal_sid( token->user, sid )) return TRUE;
 
-    LIST_FOR_EACH_ENTRY( group, &token->groups, struct sid_and_attributes, entry )
+    LIST_FOR_EACH_ENTRY( group, &token->groups, struct group, entry )
     {
         if (!group->enabled) continue;
         if (group->deny_only && !deny) continue;
@@ -1023,14 +1023,14 @@ DECL_HANDLER(duplicate_token)
         if (token)
         {
             struct privilege *privilege;
-            struct sid_and_attributes *group;
+            struct group *group;
             unsigned int access;
 
             /* copy groups */
-            LIST_FOR_EACH_ENTRY( group, &src_token->groups, struct sid_and_attributes, entry )
+            LIST_FOR_EACH_ENTRY( group, &src_token->groups, struct group, entry )
             {
-                size_t size = FIELD_OFFSET( struct sid_and_attributes, sid.SubAuthority[group->sid.SubAuthorityCount] );
-                struct sid_and_attributes *newgroup = mem_alloc( size );
+                size_t size = FIELD_OFFSET( struct group, sid.SubAuthority[group->sid.SubAuthorityCount] );
+                struct group *newgroup = mem_alloc( size );
                 if (!newgroup)
                 {
                     release_object( token );
@@ -1132,7 +1132,7 @@ DECL_HANDLER(access_check)
     }
 }
 
-/* */
+/* retrives the SID of the user that the token represents */
 DECL_HANDLER(get_token_user)
 {
     struct token *token;
@@ -1151,6 +1151,64 @@ DECL_HANDLER(get_token_user)
             SID *user_reply = set_reply_data_size( reply->user_len );
             if (user_reply)
                 memcpy( user_reply, user, reply->user_len );
+        }
+        else set_error( STATUS_BUFFER_TOO_SMALL );
+
+        release_object( token );
+    }
+}
+
+/* retrieves the groups that the user represented by the token belongs to */
+DECL_HANDLER(get_token_groups)
+{
+    struct token *token;
+
+    reply->user_len = 0;
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 TOKEN_QUERY,
+                                                 &token_ops )))
+    {
+        size_t size_needed = sizeof(struct token_groups);
+        unsigned int group_count = 0;
+        const struct group *group;
+
+        LIST_FOR_EACH_ENTRY( group, &token->groups, const struct group, entry )
+        {
+            group_count++;
+            size_needed += FIELD_OFFSET(SID, SubAuthority[group->sid.SubAuthorityCount]);
+        }
+        size_needed += sizeof(unsigned int) * group_count;
+
+        reply->user_len = size_needed;
+
+        if (size_needed <= get_reply_max_size())
+        {
+            struct token_groups *tg = set_reply_data_size( size_needed );
+            if (tg)
+            {
+                unsigned int *attr_ptr = (unsigned int *)(tg + 1);
+                SID *sid_ptr = (SID *)(attr_ptr + group_count);
+
+                tg->count = group_count;
+
+                LIST_FOR_EACH_ENTRY( group, &token->groups, const struct group, entry )
+                {
+
+                    *attr_ptr = 0;
+                    if (group->mandatory) *attr_ptr |= SE_GROUP_MANDATORY;
+                    if (group->def) *attr_ptr |= SE_GROUP_ENABLED_BY_DEFAULT;
+                    if (group->enabled) *attr_ptr |= SE_GROUP_ENABLED;
+                    if (group->owner) *attr_ptr |= SE_GROUP_OWNER;
+                    if (group->deny_only) *attr_ptr |= SE_GROUP_USE_FOR_DENY_ONLY;
+                    if (group->resource) *attr_ptr |= SE_GROUP_RESOURCE;
+
+                    memcpy(sid_ptr, &group->sid, FIELD_OFFSET(SID, SubAuthority[group->sid.SubAuthorityCount]));
+
+                    sid_ptr = (SID *)((char *)sid_ptr + FIELD_OFFSET(SID, SubAuthority[group->sid.SubAuthorityCount]));
+                    attr_ptr++;
+                }
+            }
         }
         else set_error( STATUS_BUFFER_TOO_SMALL );
 

@@ -177,6 +177,13 @@ struct security_descriptor
 
 };
 
+struct token_groups
+{
+    unsigned int count;
+
+
+};
+
 
 
 
@@ -3574,6 +3581,18 @@ struct get_token_user_reply
     /* VARARG(user,SID); */
 };
 
+struct get_token_groups_request
+{
+    struct request_header __header;
+    obj_handle_t    handle;
+};
+struct get_token_groups_reply
+{
+    struct reply_header __header;
+    size_t          user_len;
+    /* VARARG(user,token_groups); */
+};
+
 
 struct create_mailslot_request
 {
@@ -3913,6 +3932,7 @@ enum request
     REQ_duplicate_token,
     REQ_access_check,
     REQ_get_token_user,
+    REQ_get_token_groups,
     REQ_create_mailslot,
     REQ_open_mailslot,
     REQ_set_mailslot_info,
@@ -4132,6 +4152,7 @@ union generic_request
     struct duplicate_token_request duplicate_token_request;
     struct access_check_request access_check_request;
     struct get_token_user_request get_token_user_request;
+    struct get_token_groups_request get_token_groups_request;
     struct create_mailslot_request create_mailslot_request;
     struct open_mailslot_request open_mailslot_request;
     struct set_mailslot_info_request set_mailslot_info_request;
@@ -4349,6 +4370,7 @@ union generic_reply
     struct duplicate_token_reply duplicate_token_reply;
     struct access_check_reply access_check_reply;
     struct get_token_user_reply get_token_user_reply;
+    struct get_token_groups_reply get_token_groups_reply;
     struct create_mailslot_reply create_mailslot_reply;
     struct open_mailslot_reply open_mailslot_reply;
     struct set_mailslot_info_reply set_mailslot_info_reply;
@@ -4359,6 +4381,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 232
+#define SERVER_PROTOCOL_VERSION 233
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

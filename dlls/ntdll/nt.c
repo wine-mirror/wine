@@ -252,22 +252,69 @@ NTSTATUS WINAPI NtQueryInformationToken(
         SERVER_END_REQ;
         break;
     case TokenGroups:
-        if (tokeninfo)
-        {
-            TOKEN_GROUPS *tgroups = tokeninfo;
-            SID_IDENTIFIER_AUTHORITY sid = {SECURITY_NT_AUTHORITY};
+    {
+        char stack_buffer[256];
+        unsigned int server_buf_len = sizeof(stack_buffer);
+        void *buffer = stack_buffer;
+        BOOLEAN need_more_memory = FALSE;
 
-            /* we need to show admin privileges ! */
-            tgroups->GroupCount = 1;
-            tgroups->Groups->Attributes = SE_GROUP_ENABLED;
-            RtlAllocateAndInitializeSid( &sid,
-                                         2,
-                                         SECURITY_BUILTIN_DOMAIN_RID,
-                                         DOMAIN_ALIAS_RID_ADMINS,
-                                         0, 0, 0, 0, 0, 0,
-                                         &(tgroups->Groups->Sid));
-        }
+        /* we cannot work out the size of the server buffer required for the
+         * input size, since there are two factors affecting how much can be
+         * stored in the buffer - number of groups and lengths of sids */
+        do
+        {
+            SERVER_START_REQ( get_token_groups )
+            {
+                TOKEN_GROUPS *groups = tokeninfo;
+
+                req->handle = token;
+                wine_server_set_reply( req, buffer, server_buf_len );
+                status = wine_server_call( req );
+                if (status == STATUS_BUFFER_TOO_SMALL)
+                {
+                    if (buffer == stack_buffer)
+                        buffer = RtlAllocateHeap(GetProcessHeap(), 0, reply->user_len);
+                    else
+                        buffer = RtlReAllocateHeap(GetProcessHeap(), 0, buffer, reply->user_len);
+                    if (!buffer) return STATUS_NO_MEMORY;
+
+                    server_buf_len = reply->user_len;
+                    need_more_memory = TRUE;
+                }
+                else if (status == STATUS_SUCCESS)
+                {
+                    struct token_groups *tg = buffer;
+                    unsigned int *attr = (unsigned int *)(tg + 1);
+                    ULONG i;
+                    const int non_sid_portion = (sizeof(struct token_groups) + tg->count * sizeof(unsigned long));
+                    SID *sids = (SID *)((char *)tokeninfo + FIELD_OFFSET( TOKEN_GROUPS, Groups[tg->count] ));
+                    ULONG needed_bytes = FIELD_OFFSET( TOKEN_GROUPS, Groups[tg->count] ) +
+                        reply->user_len - non_sid_portion;
+
+                    if (retlen) *retlen = needed_bytes;
+
+                    if (needed_bytes <= tokeninfolength)
+                    {
+                        groups->GroupCount = tg->count;
+                        memcpy( sids, (char *)buffer + non_sid_portion,
+                                reply->user_len - non_sid_portion );
+
+                        for (i = 0; i < tg->count; i++)
+                        {
+                            groups->Groups[i].Attributes = attr[i];
+                            groups->Groups[i].Sid = sids;
+                            sids = (SID *)((char *)sids + RtlLengthSid(sids));
+                        }
+                    }
+                    else status = STATUS_BUFFER_TOO_SMALL;
+                }
+                else if (retlen) *retlen = 0;
+            }
+            SERVER_END_REQ;
+        } while (need_more_memory);
+        if (buffer != stack_buffer) RtlFreeHeap(GetProcessHeap(), 0, buffer);
         break;
+    }
     case TokenPrimaryGroup:
         if (tokeninfo)
         {

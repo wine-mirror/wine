@@ -193,6 +193,13 @@ struct security_descriptor
     /* VARARGS(dacl,ACL); */
 };
 
+struct token_groups
+{
+    unsigned int count;
+    /* unsigned int attributes[count]; */
+    /* VARARGS(sids,SID); */
+};
+
 /****************************************************************/
 /* Request declarations */
 
@@ -2507,6 +2514,13 @@ enum message_type
 @REPLY
     size_t          user_len;     /* length needed to store user */
     VARARG(user,SID);             /* sid of the user the token represents */
+@END
+
+@REQ(get_token_groups)
+    obj_handle_t    handle;       /* handle to the token */
+@REPLY
+    size_t          user_len;     /* length needed to store user */
+    VARARG(user,token_groups); /* groups the token's user belongs to */
 @END
 
 /* Create a mailslot */

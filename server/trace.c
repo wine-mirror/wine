@@ -560,6 +560,43 @@ static void dump_varargs_security_descriptor( size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_token_groups( size_t size )
+{
+    const struct token_groups *tg = cur_data;
+    fputc( '{', stderr );
+    if (size >= sizeof(struct token_groups))
+    {
+        size_t offset = sizeof(*tg);
+        fprintf( stderr, "count=%08x,", tg->count );
+        if (tg->count * sizeof(unsigned int) <= size)
+        {
+            unsigned int i;
+            const unsigned int *attr = (const unsigned int *)(tg + 1);
+
+            offset += tg->count * sizeof(unsigned int);
+
+            fputc( '[', stderr );
+            for (i = 0; i < tg->count; i++)
+            {
+                const SID *sid = (const SID *)((const char *)cur_data + offset);
+                if (i != 0)
+                    fputc( ',', stderr );
+                fputc( '{', stderr );
+                fprintf( stderr, "attributes=%08x", attr[i] );
+                fprintf( stderr, ",sid=" );
+                dump_inline_sid( sid, size - offset );
+                if ((offset + FIELD_OFFSET(SID, SubAuthority[0]) > size) ||
+                    (offset + FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]) > size))
+                    break;
+                offset += FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]);
+                fputc( '}', stderr );
+            }
+            fputc( ']', stderr );
+        }
+    }
+    fputc( '}', stderr );
+}
+
 typedef void (*dump_func)( const void *req );
 
 /* Everything below this line is generated automatically by tools/make_requests */
@@ -3096,6 +3133,18 @@ static void dump_get_token_user_reply( const struct get_token_user_reply *req )
     dump_varargs_SID( cur_size );
 }
 
+static void dump_get_token_groups_request( const struct get_token_groups_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_token_groups_reply( const struct get_token_groups_reply *req )
+{
+    fprintf( stderr, " user_len=%lu,", (unsigned long)req->user_len );
+    fprintf( stderr, " user=" );
+    dump_varargs_token_groups( cur_size );
+}
+
 static void dump_create_mailslot_request( const struct create_mailslot_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
@@ -3418,6 +3467,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_duplicate_token_request,
     (dump_func)dump_access_check_request,
     (dump_func)dump_get_token_user_request,
+    (dump_func)dump_get_token_groups_request,
     (dump_func)dump_create_mailslot_request,
     (dump_func)dump_open_mailslot_request,
     (dump_func)dump_set_mailslot_info_request,
@@ -3633,6 +3683,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_duplicate_token_reply,
     (dump_func)dump_access_check_reply,
     (dump_func)dump_get_token_user_reply,
+    (dump_func)dump_get_token_groups_reply,
     (dump_func)dump_create_mailslot_reply,
     (dump_func)dump_open_mailslot_reply,
     (dump_func)dump_set_mailslot_info_reply,
@@ -3848,6 +3899,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "duplicate_token",
     "access_check",
     "get_token_user",
+    "get_token_groups",
     "create_mailslot",
     "open_mailslot",
     "set_mailslot_info",
