@@ -666,6 +666,8 @@ static int alloc_importfile(
 
 static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure);
 static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface);
+static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration);
+
 
 /****************************************************************************
  *	encode_type
@@ -893,6 +895,9 @@ static int encode_type(
                 break;
             case RPC_FC_IP:
                 add_interface_typeinfo(typelib, type);
+                break;
+            case RPC_FC_ENUM16:
+                add_enum_typeinfo(typelib, type);
                 break;
             case 0:
                 error("encode_type: VT_USERDEFINED - can't yet add typedef's on the fly\n");
