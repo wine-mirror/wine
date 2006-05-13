@@ -3553,24 +3553,40 @@ static unsigned long WINAPI NdrBaseTypeMemorySize(
     case RPC_FC_CHAR:
     case RPC_FC_SMALL:
     case RPC_FC_USMALL:
+        pStubMsg->Buffer += sizeof(UCHAR);
+        pStubMsg->MemorySize += sizeof(UCHAR);
         return sizeof(UCHAR);
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
+        pStubMsg->Buffer += sizeof(USHORT);
+        pStubMsg->MemorySize += sizeof(USHORT);
         return sizeof(USHORT);
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
+        pStubMsg->Buffer += sizeof(ULONG);
+        pStubMsg->MemorySize += sizeof(ULONG);
         return sizeof(ULONG);
     case RPC_FC_FLOAT:
+        pStubMsg->Buffer += sizeof(float);
+        pStubMsg->MemorySize += sizeof(float);
         return sizeof(float);
     case RPC_FC_DOUBLE:
+        pStubMsg->Buffer += sizeof(double);
+        pStubMsg->MemorySize += sizeof(double);
         return sizeof(double);
     case RPC_FC_HYPER:
+        pStubMsg->Buffer += sizeof(ULONGLONG);
+        pStubMsg->MemorySize += sizeof(ULONGLONG);
         return sizeof(ULONGLONG);
     case RPC_FC_ERROR_STATUS_T:
+        pStubMsg->Buffer += sizeof(error_status_t);
+        pStubMsg->MemorySize += sizeof(error_status_t);
         return sizeof(error_status_t);
     case RPC_FC_ENUM16:
     case RPC_FC_ENUM32:
+        pStubMsg->Buffer += sizeof(INT);
+        pStubMsg->MemorySize += sizeof(INT);
         return sizeof(INT);
     default:
         FIXME("Unhandled base type: 0x%02x\n", *pFormat);
