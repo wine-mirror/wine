@@ -76,7 +76,7 @@ typedef struct tagMSFT_Header {
         INT   res44;            /* unknown always: 0x20 (guid hash size?) */
         INT   res48;            /* unknown always: 0x80 (name hash size?) */
         INT   dispatchpos;      /* HREFTYPE to IDispatch, or -1 if no IDispatch */
-/*0x50*/INT   res50;            /* is zero becomes one when an interface is derived */
+/*0x50*/INT   nimpinfos;        /* number of impinfos */
 } MSFT_Header;
 
 /* segments in the type lib file have a structure like this: */

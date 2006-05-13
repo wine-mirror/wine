@@ -156,7 +156,7 @@ static void ctl2_init_header(
     typelib->typelib_header.res44 = 0x20;
     typelib->typelib_header.res48 = 0x80;
     typelib->typelib_header.dispatchpos = -1;
-    typelib->typelib_header.res50 = 0;
+    typelib->typelib_header.nimpinfos = 0;
 }
 
 /****************************************************************************
@@ -607,6 +607,8 @@ static int alloc_importinfo(
 	    return offset;
 	}
     }
+
+    impinfo->flags |= typelib->typelib_header.nimpinfos++;
 
     offset = ctl2_alloc_segment(typelib, MSFT_SEG_IMPORTINFO, sizeof(MSFT_ImpInfo), 0);
     if (offset == -1) return -1;
@@ -1801,9 +1803,6 @@ static void add_dispatch(msft_typelib_t *typelib)
     impinfo.oImpFile = impfile_offset;
     impinfo.oGuid = ctl2_alloc_guid(typelib, &guidentry);
     typelib->typelib_header.dispatchpos = alloc_importinfo(typelib, &impinfo) | 0x01;
-
-    typelib->typelib_header.res50 = 1;
-
 }
 
 static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinterface)
