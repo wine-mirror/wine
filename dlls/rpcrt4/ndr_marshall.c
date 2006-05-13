@@ -1778,22 +1778,28 @@ unsigned long WINAPI ComplexStructSize(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
       size += 2;
+      pStubMsg->Buffer += 2;
       break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
       size += 4;
+      pStubMsg->Buffer += 4;
       break;
     case RPC_FC_POINTER:
       size += 4;
+      pStubMsg->Buffer += 4;
       break;
     case RPC_FC_ALIGNM4:
       ALIGN_LENGTH(size, 4);
+      ALIGN_POINTER(pStubMsg->Buffer, 4);
       break;
     case RPC_FC_ALIGNM8:
       ALIGN_LENGTH(size, 8);
+      ALIGN_POINTER(pStubMsg->Buffer, 8);
       break;
     case RPC_FC_STRUCTPAD2:
       size += 2;
+      pStubMsg->Buffer += 2;
       break;
     case RPC_FC_EMBEDDED_COMPLEX:
       size += pFormat[1];
