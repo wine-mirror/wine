@@ -259,9 +259,13 @@ static void test_ports_server(void)
         status = pNtReplyWaitReceivePort(PortHandle, NULL, NULL, LpcMessage);
         todo_wine
         {
-            ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %ld\n", status);
+            ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %ld(%lx)\n", status, status);
         }
-        if (status == STATUS_NOT_IMPLEMENTED) return;
+        /* STATUS_INVALID_HANDLE: win2k without admin rights will perform an
+         *                        endless loop here
+         */
+        if ((status == STATUS_NOT_IMPLEMENTED) ||
+            (status == STATUS_INVALID_HANDLE)) return;
 
         switch (LpcMessage->MessageType)
         {
