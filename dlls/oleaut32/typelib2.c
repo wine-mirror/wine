@@ -232,7 +232,7 @@ static void ctl2_init_header(
     This->typelib_header.res44 = 0x20;
     This->typelib_header.res48 = 0x80;
     This->typelib_header.dispatchpos = -1;
-    This->typelib_header.res50 = 0;
+    This->typelib_header.nimpinfos = 0;
 }
 
 /****************************************************************************
@@ -676,6 +676,8 @@ static int ctl2_alloc_importinfo(
 	    return offset;
 	}
     }
+
+    impinfo->flags |= This->typelib_header.nimpinfos++;
 
     offset = ctl2_alloc_segment(This, MSFT_SEG_IMPORTINFO, sizeof(MSFT_ImpInfo), 0);
     if (offset == -1) return -1;
@@ -1252,7 +1254,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
 	ctl2_alloc_importinfo(This->typelib, &impinfo);
 
 	This->typelib->typelib_header.dispatchpos = 1;
-	This->typelib->typelib_header.res50 = 1;
 
 	This->typeinfo->typekind |= 0x10;
 	This->typeinfo->typekind &= ~0x0f;
