@@ -508,6 +508,7 @@ typedef struct IWineD3DDeviceImpl
     UINT                    alphafunc;
     UINT                    stencilfunc;
     BOOL                    texture_shader_active;  /* TODO: Confirm use is correct */
+    BOOL                    last_was_notclipped;
 
     /* State block related */
     BOOL                    isRecordingState;
@@ -564,6 +565,7 @@ typedef struct IWineD3DDeviceImpl
 
     /* DirectDraw stuff */
     HWND ddraw_window;
+    IWineD3DSurface *ddraw_primary;
 
 } IWineD3DDeviceImpl;
 
@@ -587,6 +589,9 @@ typedef struct PrivateData
 
     DWORD size;
 } PrivateData;
+
+/* OpenGL ortho matrix setup */
+void d3ddevice_set_ortho(IWineD3DDeviceImpl *This, BOOL dontclip);
 
 /*****************************************************************************
  * IWineD3DResource implementation structure
@@ -862,6 +867,47 @@ struct IWineD3DSurfaceImpl
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
+extern const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl;
+
+/* Predeclare the shared Surface functions */
+HRESULT WINAPI IWineD3DSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID riid, LPVOID *ppobj);
+ULONG WINAPI IWineD3DSurfaceImpl_AddRef(IWineD3DSurface *iface);
+ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **pParent);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetDevice(IWineD3DSurface *iface, IWineD3DDevice** ppDevice);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetPrivateData(IWineD3DSurface *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetPrivateData(IWineD3DSurface *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
+HRESULT WINAPI IWineD3DSurfaceImpl_FreePrivateData(IWineD3DSurface *iface, REFGUID refguid);
+DWORD   WINAPI IWineD3DSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD PriorityNew);
+DWORD   WINAPI IWineD3DSurfaceImpl_GetPriority(IWineD3DSurface *iface);
+void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface);
+WINED3DRESOURCETYPE WINAPI IWineD3DSurfaceImpl_GetType(IWineD3DSurface *iface);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetContainerParent(IWineD3DSurface* iface, IUnknown **ppContainerParent);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFIID riid, void** ppContainer);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC *pDesc);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD Flags);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD Flags);
+HRESULT WINAPI IWineD3DSurfaceImpl_IsLost(IWineD3DSurface *iface);
+HRESULT WINAPI IWineD3DSurfaceImpl_Restore(IWineD3DSurface *iface);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetPixelFormat(IWineD3DSurface *iface, WINED3DFORMAT Format, BYTE *Surface, DWORD Size);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD3DPalette **Pal);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPalette *Pal);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, DDCOLORKEY *CKey);
+HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface);
+extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pDirtyRect);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3DBase *container);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL inPBuffer, BOOL  inTexture);
+void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target);
+void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription);
+const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format);
+HRESULT WINAPI IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx);
+HRESULT WINAPI IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans);
+HRESULT WINAPI IWineD3DSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPalette *Pal);
+HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC);
+HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC);
+DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface);
+HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface);
 
 /* Surface flags: */
 #define SFLAG_OVERSIZE    0x0001 /* Surface is bigger than gl size, blts only */
@@ -1421,5 +1467,6 @@ LONG get_bitmask_red(WINED3DFORMAT fmt);
 LONG get_bitmask_green(WINED3DFORMAT fmt);
 LONG get_bitmask_blue(WINED3DFORMAT fmt);
 LONG get_bitmask_alpha(WINED3DFORMAT fmt);
+BOOL isFourcc(WINED3DFORMAT fmt);
 
 #endif

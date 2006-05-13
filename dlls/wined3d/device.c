@@ -761,7 +761,30 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
            This, Width, Height, Format, debug_d3dformat(Format),
            (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->resource.allocatedMemory, object->resource.size);
-    return WINED3D_OK;
+
+    /* Store the DirectDraw primary surface. This is the first rendertarget surface created */
+    if( (Usage & WINED3DUSAGE_RENDERTARGET) && (!This->ddraw_primary) )
+        This->ddraw_primary = (IWineD3DSurface *) object;
+
+    /* Look at the implementation and set the correct Vtable */
+    switch(Impl) {
+        case SURFACE_OPENGL:
+            /* Nothing to do, it's set already */
+            break;
+
+        case SURFACE_GDI:
+            object->lpVtbl = &IWineGDISurface_Vtbl;
+            break;
+
+        default:
+            /* To be sure to catch this */
+            ERR("Unknown requested surface implementation %d!\n", Impl);
+            IWineD3DSurface_Release((IWineD3DSurface *) object);
+            return WINED3DERR_INVALIDCALL;
+    }
+
+    /* Call the private setup routine */
+    return IWineD3DSurface_PrivateSetup( (IWineD3DSurface *) object );
 
 }
 

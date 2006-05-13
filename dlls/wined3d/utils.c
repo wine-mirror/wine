@@ -2292,3 +2292,16 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
 
     return size;
 }
+
+BOOL isFourcc(WINED3DFORMAT fmt) {
+    return (fmt == WINED3DFMT_UYVY) ||
+           (fmt == WINED3DFMT_YUY2) ||
+           (fmt == WINED3DFMT_DXT1) ||
+           (fmt == WINED3DFMT_DXT2) ||
+           (fmt == WINED3DFMT_DXT3) ||
+           (fmt == WINED3DFMT_DXT4) ||
+           (fmt == WINED3DFMT_DXT5) ||
+           (fmt == WINED3DFMT_MULTI2_ARGB) ||
+           (fmt == WINED3DFMT_G8R8_G8B8) ||
+           (fmt == WINED3DFMT_R8G8_B8G8);
+}
