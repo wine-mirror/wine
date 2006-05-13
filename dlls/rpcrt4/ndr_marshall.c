@@ -3074,10 +3074,10 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionMarshall(PMIDL_STUB_MESSAGE pStub
         return NULL;
 
     type = *(const unsigned short*)pFormat;
-    if(type & 0x8000)
+    if((type & 0xff00) == 0x8000)
     {
-        pFormat++; 
-        return NdrBaseTypeMarshall(pStubMsg, pMemory, pFormat);
+        unsigned char basetype = LOBYTE(type);
+        return NdrBaseTypeMarshall(pStubMsg, pMemory, &basetype);
     }
     else
     {
@@ -3171,10 +3171,10 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pSt
         *ppMemory = NdrAllocate(pStubMsg, size);
 
     type = *(const unsigned short*)pFormat;
-    if(type & 0x8000)
+    if((type & 0xff00) == 0x8000)
     {
-        pFormat++; 
-        return NdrBaseTypeUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
+        unsigned char basetype = LOBYTE(type);
+        return NdrBaseTypeUnmarshall(pStubMsg, ppMemory, &basetype, fMustAlloc);
     }
     else
     {
@@ -3218,10 +3218,10 @@ void WINAPI NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
         return;
 
     type = *(const unsigned short*)pFormat;
-    if(type & 0x8000)
+    if((type & 0xff00) == 0x8000)
     {
-        pFormat++; 
-        NdrBaseTypeBufferSize(pStubMsg, pMemory, pFormat);
+        unsigned char basetype = LOBYTE(type);
+        NdrBaseTypeBufferSize(pStubMsg, pMemory, &basetype);
     }
     else
     {
