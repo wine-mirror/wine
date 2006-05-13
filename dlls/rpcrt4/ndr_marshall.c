@@ -2289,6 +2289,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   ULONG count, esize;
   unsigned char alignment;
   unsigned char *pMemory;
+  unsigned char *Buffer;
 
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -2306,7 +2307,9 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ReadConformance(pStubMsg, pFormat);
   pFormat = ReadVariance(pStubMsg, pFormat);
 
+  Buffer = pStubMsg->Buffer;
   esize = ComplexStructSize(pStubMsg, pFormat);
+  pStubMsg->Buffer = Buffer;
 
   if (fMustAlloc || !*ppMemory)
   {
@@ -3423,7 +3426,11 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
     TRACE("pStubMsg: %p, ppMemory: %p, type: 0x%02x, fMustAlloc: %s\n", pStubMsg, ppMemory, *pFormat, fMustAlloc ? "true" : "false");
 
     if (fMustAlloc || !*ppMemory)
+    {
+        unsigned char *Buffer = pStubMsg->Buffer;
         *ppMemory = NdrAllocate(pStubMsg, NdrBaseTypeMemorySize(pStubMsg, pFormat));
+        pStubMsg->Buffer = Buffer;
+    }
 
     TRACE("*ppMemory: %p\n", *ppMemory);
 
