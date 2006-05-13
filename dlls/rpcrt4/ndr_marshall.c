@@ -1298,7 +1298,7 @@ unsigned char * WINAPI NdrPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   else
     Buffer = pStubMsg->Buffer;
 
-  PointerMarshall(pStubMsg, pStubMsg->Buffer, pMemory, pFormat);
+  PointerMarshall(pStubMsg, Buffer, pMemory, pFormat);
 
   STD_OVERFLOW_CHECK(pStubMsg);
 
