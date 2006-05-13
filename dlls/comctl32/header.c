@@ -892,20 +892,20 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     lpItem = &infoPtr->items[nItem];
 
     if (phdi->mask & HDI_BITMAP)
-	phdi->hbm = (lpItem != NULL) ? lpItem->hbm : 0;
+        phdi->hbm = lpItem->hbm;
 
     if (phdi->mask & HDI_FORMAT)
-	phdi->fmt = (lpItem != NULL) ? lpItem->fmt : 0;
+        phdi->fmt = lpItem->fmt;
 
     if (phdi->mask & HDI_WIDTH)
-	phdi->cxy = (lpItem != NULL) ? lpItem->cxy : 0;
+        phdi->cxy = lpItem->cxy;
 
     if (phdi->mask & HDI_LPARAM)
-	phdi->lParam = (lpItem != NULL) ? lpItem->lParam : 0;
+        phdi->lParam = lpItem->lParam;
 
     if (phdi->mask & HDI_IMAGE) 
     {
-        phdi->iImage = (lpItem != NULL) ? lpItem->iImage : 0;
+        phdi->iImage = lpItem->iImage;
         if (lpItem->iImage == I_IMAGECALLBACK) 
         {
             HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_IMAGE, phdi, lpItem, bUnicode);
@@ -913,12 +913,11 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     }
 
     if (phdi->mask & HDI_ORDER)
-	phdi->iOrder = (lpItem != NULL) ? lpItem->iOrder : 0;
+        phdi->iOrder = lpItem->iOrder;
 
     if (phdi->mask & HDI_TEXT)
     {
-        if (lpItem == NULL) *phdi->pszText = 0;  /* null pointer check */
-        else if (lpItem->pszText == LPSTR_TEXTCALLBACKW) /* covers == TEXTCALLBACKA too */
+        if (lpItem->pszText == LPSTR_TEXTCALLBACKW) /* covers == TEXTCALLBACKA too */
         {
             HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_TEXT, phdi, lpItem, bUnicode);
         }
