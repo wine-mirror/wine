@@ -61,6 +61,7 @@ typedef struct
 
     BOOL    bDown;		/* is item pressed? (used for drawing) */
     RECT    rect;		/* bounding rectangle of the item */
+    DWORD   callbackMask;       /* HDI_* flags for items that are callback */
 } HEADER_ITEM;
 
 
@@ -103,8 +104,7 @@ static WCHAR emptyString[] = {0};
 
 static void HEADER_DisposeItem(HEADER_ITEM *lpItem)
 {
-    if (lpItem->pszText && lpItem->pszText != emptyString &&
-        lpItem->pszText != LPSTR_TEXTCALLBACKW) /* covers LPSTR_TEXTCALLBACKA too */
+    if (lpItem->pszText)
     {
         Free(lpItem->pszText);
     }
@@ -127,14 +127,17 @@ static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, HDITEMW *phdi, BOOL 
     if (phdi->mask & HDI_IMAGE) 
     {
         lpItem->iImage = phdi->iImage;
+        if (phdi->iImage == I_IMAGECALLBACK)
+            lpItem->callbackMask |= HDI_IMAGE;
+        else
+            lpItem->callbackMask &= ~HDI_IMAGE;
     }
 
     if (phdi->mask & HDI_TEXT)
     {
         if (lpItem->pszText)
         {
-            if (lpItem->pszText != emptyString && lpItem->pszText != LPSTR_TEXTCALLBACKW)
-                Free(lpItem->pszText);
+            Free(lpItem->pszText);
             lpItem->pszText = NULL;
         }
 
@@ -145,10 +148,12 @@ static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, HDITEMW *phdi, BOOL 
                 Str_SetPtrW(&lpItem->pszText, pszText);
             else
                 Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)pszText);
+            lpItem->callbackMask &= ~HDI_TEXT;
         }
         else
         {
-            lpItem->pszText = phdi->pszText;
+            lpItem->pszText = NULL;
+            lpItem->callbackMask |= HDI_TEXT;
         }  
     }
 }
@@ -777,6 +782,7 @@ HEADER_SendHeaderDispInfoNotify(HWND hwnd, INT iItem, INT mask, LPHDITEMW phdi, 
         if (dispInfo.mask & HDI_IMAGE) 
         {
             lpItem->iImage = dispInfo.iImage;
+            lpItem->callbackMask &= ~HDI_IMAGE;
         }
         if (dispInfo.mask & HDI_TEXT) 
         {
@@ -784,6 +790,7 @@ HEADER_SendHeaderDispInfoNotify(HWND hwnd, INT iItem, INT mask, LPHDITEMW phdi, 
                 Str_SetPtrW(&lpItem->pszText, (LPCWSTR)dispInfo.pszText);
             else /*if (convertToAnsi || !isW)*/
                 Str_SetPtrAtoW(&lpItem->pszText, (LPCSTR)dispInfo.pszText);
+            lpItem->callbackMask &= ~HDI_TEXT;
         }
         
         FIXME("NMHDDISPINFO returns with flags HDI_DI_SETITEM\n");
@@ -949,7 +956,7 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     if (phdi->mask & HDI_IMAGE) 
     {
         phdi->iImage = lpItem->iImage;
-        if (lpItem->iImage == I_IMAGECALLBACK) 
+        if (lpItem->callbackMask & HDI_IMAGE)
         {
             HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_IMAGE, phdi, lpItem, bUnicode);
         }
@@ -960,7 +967,7 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 
     if (phdi->mask & HDI_TEXT)
     {
-        if (lpItem->pszText == LPSTR_TEXTCALLBACKW) /* covers == TEXTCALLBACKA too */
+        if (lpItem->callbackMask & HDI_TEXT)
         {
             HEADER_SendHeaderDispInfoNotify(hwnd, nItem, HDI_TEXT, phdi, lpItem, bUnicode);
         }
