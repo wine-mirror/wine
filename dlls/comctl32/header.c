@@ -131,22 +131,21 @@ static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, HDITEMW *phdi, BOOL 
 
     if (phdi->mask & HDI_TEXT)
     {
-        if (!phdi->pszText) phdi->pszText = emptyString; /* null pointer check */
         if (phdi->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
         {
+            LPWSTR pszText;
             if (lpItem->pszText)
             {
                 if (lpItem->pszText != emptyString && lpItem->pszText != LPSTR_TEXTCALLBACKW)
                     Free(lpItem->pszText);
                 lpItem->pszText = NULL;
             }
-            if (phdi->pszText)
-            {
-                if (fUnicode)
-                    Str_SetPtrW(&lpItem->pszText, phdi->pszText);
-                else
-                    Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)phdi->pszText);
-            }
+
+            pszText = (phdi->pszText != NULL ? phdi->pszText : emptyString);
+            if (fUnicode)
+                Str_SetPtrW(&lpItem->pszText, pszText);
+            else
+                Str_SetPtrAtoW(&lpItem->pszText, (LPSTR)pszText);
         }
         else
         {
