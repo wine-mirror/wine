@@ -26,6 +26,7 @@
 #include "winerror.h"
 #include "aclapi.h"
 #include "winnt.h"
+#include "sddl.h"
 
 typedef VOID (WINAPI *fnBuildTrusteeWithSidA)( PTRUSTEEA pTrustee, PSID pSid );
 typedef VOID (WINAPI *fnBuildTrusteeWithNameA)( PTRUSTEEA pTrustee, LPSTR pName );
@@ -693,6 +694,74 @@ static void test_AccessCheck(void)
     HeapFree(GetProcessHeap(), 0, PrivSet);
 }
 
+/* test GetTokenInformation for the various attributes */
+static void test_token_attr(void)
+{
+    HANDLE Token;
+    DWORD Size;
+    TOKEN_PRIVILEGES *Privileges;
+    TOKEN_GROUPS *Groups;
+    TOKEN_USER *User;
+    BOOL ret;
+    DWORD i;
+    LPTSTR SidString;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &Token);
+    ok(ret, "OpenProcessToken failed with error %ld\n", GetLastError());
+
+    /* groups */
+    ret = GetTokenInformation(Token, TokenGroups, NULL, 0, &Size);
+    Groups = HeapAlloc(GetProcessHeap(), 0, Size);
+    ret = GetTokenInformation(Token, TokenGroups, Groups, Size, &Size);
+    ok(ret, "GetTokenInformation(TokenGroups) failed with error %ld\n", GetLastError());
+    trace("TokenGroups:\n");
+    for (i = 0; i < Groups->GroupCount; i++)
+    {
+        DWORD NameLength = 255;
+        TCHAR Name[255];
+        DWORD DomainLength = 255;
+        TCHAR Domain[255];
+        SID_NAME_USE SidNameUse;
+        ConvertSidToStringSid(Groups->Groups[i].Sid, &SidString);
+        Name[0] = '\0';
+        Domain[0] = '\0';
+        ret = LookupAccountSid(NULL, Groups->Groups[i].Sid, Name, &NameLength, Domain, &DomainLength, &SidNameUse);
+        ok(ret, "LookupAccountSid failed with error %ld\n", GetLastError());
+        trace("\t%s, %s\\%s attr: 0x%08lx\n", SidString, Domain, Name, Groups->Groups[i].Attributes);
+        LocalFree(SidString);
+    }
+
+    /* user */
+    ret = GetTokenInformation(Token, TokenUser, NULL, 0, &Size);
+    ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "GetTokenInformation(TokenUser) failed with error %ld\n", GetLastError());
+    User = HeapAlloc(GetProcessHeap(), 0, Size);
+    ret = GetTokenInformation(Token, TokenUser, User, Size, &Size);
+    ok(ret,
+        "GetTokenInformation(TokenUser) failed with error %ld\n", GetLastError());
+
+    ConvertSidToStringSid(User->User.Sid, &SidString);
+    trace("TokenUser: %s attr: 0x%08lx\n", SidString, User->User.Attributes);
+    LocalFree(SidString);
+
+    /* privileges */
+    ret = GetTokenInformation(Token, TokenPrivileges, NULL, 0, &Size);
+    ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "GetTokenInformation(TokenPrivileges) failed with error %ld\n", GetLastError());
+    Privileges = HeapAlloc(GetProcessHeap(), 0, Size);
+    ret = GetTokenInformation(Token, TokenPrivileges, Privileges, Size, &Size);
+    ok(ret,
+        "GetTokenInformation(TokenPrivileges) failed with error %ld\n", GetLastError());
+    trace("TokenPrivileges:\n");
+    for (i = 0; i < Privileges->PrivilegeCount; i++)
+    {
+        TCHAR Name[256];
+        DWORD NameLen = sizeof(Name)/sizeof(Name[0]);
+        LookupPrivilegeName(NULL, &Privileges->Privileges[i].Luid, Name, &NameLen);
+        trace("\t%s, 0x%lx\n", Name, Privileges->Privileges[i].Attributes);
+    }
+}
+
 START_TEST(security)
 {
     init();
@@ -702,4 +771,5 @@ START_TEST(security)
     test_luid();
     test_FileSecurity();
     test_AccessCheck();
+    test_token_attr();
 }
