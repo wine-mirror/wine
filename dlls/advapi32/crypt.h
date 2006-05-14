@@ -88,4 +88,10 @@ extern unsigned char *CRYPT_DEShash( unsigned char *dst, const unsigned char *ke
 extern unsigned char *CRYPT_DESunhash( unsigned char *dst, const unsigned char *key,
                                        const unsigned char *src );
 
+struct ustring {
+    DWORD Length;
+    DWORD MaximumLength;
+    unsigned char *Buffer;
+};
+
 #endif /* __WINE_CRYPT_H_ */

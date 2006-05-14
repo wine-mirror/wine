@@ -37,6 +37,7 @@ struct ustring {
 typedef NTSTATUS (WINAPI *fnSystemFunction001)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction002)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction003)(const LPBYTE, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction004)(const struct ustring *, const struct ustring *, struct ustring *);
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
 typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);
@@ -44,6 +45,7 @@ typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring 
 fnSystemFunction001 pSystemFunction001;
 fnSystemFunction002 pSystemFunction002;
 fnSystemFunction003 pSystemFunction003;
+fnSystemFunction004 pSystemFunction004;
 fnSystemFunction006 pSystemFunction006;
 fnSystemFunction008 pSystemFunction008;
 fnSystemFunction032 pSystemFunction032;
@@ -190,6 +192,88 @@ static void test_SystemFunction003(void)
     ok( !memcmp(exp2, output, sizeof output), "decrypted message wrong\n");
 }
 
+static void test_SystemFunction004(void)
+{
+    unsigned char inbuf[0x100], keybuf[0x100], resbuf[0x100];
+    unsigned char output[8];
+    int r;
+    struct ustring in, key, out;
+
+    /* crash 
+    r = pSystemFunction004(NULL, NULL, NULL);
+    ok(r == STATUS_UNSUCCESSFUL, "function failed\n");
+    */
+
+    memset(inbuf, 0, sizeof inbuf);
+    memset(keybuf, 0, sizeof keybuf);
+    memset(resbuf, 0, sizeof resbuf);
+
+    in.Buffer = NULL;
+    in.Length = in.MaximumLength = 0;
+
+    key.Buffer = NULL;
+    key.Length = key.MaximumLength = 0;
+
+    out.Buffer = NULL;
+    out.Length = out.MaximumLength = 0;
+
+    r = pSystemFunction004(&in, &key, &out);
+    ok(r == STATUS_INVALID_PARAMETER_2, "function failed\n");
+
+    key.Buffer = keybuf;
+    key.Length = 0x100;
+    key.MaximumLength = 0x100;
+
+    r = pSystemFunction004(&in, &key, (struct ustring *)&out);
+    ok(r == STATUS_BUFFER_TOO_SMALL, "function failed\n");
+
+    in.Buffer = inbuf;
+    in.Length = 0x0c;
+    in.MaximumLength = 0;
+
+    /* add two identical blocks... */
+    inbuf[0] = 1;
+    inbuf[1] = 2;
+    inbuf[2] = 3;
+    inbuf[3] = 4;
+
+    inbuf[8] = 1;
+    inbuf[9] = 2;
+    inbuf[10] = 3;
+    inbuf[11] = 4;
+
+    /* check that the Length field is really obeyed */
+    keybuf[6] = 1;
+
+    key.Buffer = keybuf;
+    key.Length = 6;
+    key.MaximumLength = 0;
+
+    keybuf[1] = 0x33;
+
+    out.Buffer = resbuf;
+    out.Length = 0;
+    out.MaximumLength = 0x40;
+    r = pSystemFunction004(&in, &key, &out);
+    ok(r == STATUS_SUCCESS, "function failed\n");
+
+    keybuf[6] = 0;
+
+    memset(output, 0, sizeof output);
+    r = pSystemFunction002(out.Buffer, key.Buffer, output);
+
+    ok(((unsigned int*)output)[0] == in.Length, "crypted length wrong\n");
+    ok(((unsigned int*)output)[1] == 1, "crypted value wrong\n");
+
+    memset(output, 0, sizeof output);
+    r = pSystemFunction002(out.Buffer+8, key.Buffer, output);
+    ok(!memcmp(output, inbuf, sizeof output), "crypted data wrong\n");
+
+    memset(output, 0, sizeof output);
+    r = pSystemFunction002(out.Buffer+16, key.Buffer, output);
+    ok(!memcmp(output, inbuf, sizeof output), "crypted data wrong\n");
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
@@ -207,6 +291,10 @@ START_TEST(crypt_lmhash)
     pSystemFunction003 = (fnSystemFunction003)GetProcAddress( module, "SystemFunction003" );
     if (pSystemFunction003)
         test_SystemFunction003();
+
+    pSystemFunction004 = (fnSystemFunction004)GetProcAddress( module, "SystemFunction004" );
+    if (pSystemFunction004)
+        test_SystemFunction004();
 
     pSystemFunction006 = (fnSystemFunction006)GetProcAddress( module, "SystemFunction006" );
     if (pSystemFunction006) 

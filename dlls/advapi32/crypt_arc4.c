@@ -27,6 +27,8 @@
 #include "windef.h"
 #include "winternl.h"
 
+#include "crypt.h"
+
 typedef struct tag_arc4_info {
     unsigned char state[256];
     unsigned char x, y;
@@ -75,12 +77,6 @@ static void arc4_ProcessString(arc4_info *a4i, BYTE *inoutString, unsigned int l
     a4i->x = x;
     a4i->y = y;
 }
-
-struct ustring {
-    DWORD Length;
-    DWORD MaximumLength;
-    unsigned char *Buffer;
-};
 
 /******************************************************************************
  * SystemFunction032  [ADVAPI32.@]

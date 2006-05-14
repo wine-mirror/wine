@@ -598,7 +598,7 @@
 @ stdcall SystemFunction001(ptr ptr ptr)
 @ stdcall SystemFunction002(ptr ptr ptr)
 @ stdcall SystemFunction003(ptr ptr)
-@ stub SystemFunction004
+@ stdcall SystemFunction004(ptr ptr ptr)
 @ stub SystemFunction005
 @ stdcall SystemFunction006(ptr ptr)
 @ stdcall SystemFunction007(ptr ptr)

@@ -157,3 +157,65 @@ NTSTATUS WINAPI SystemFunction003(const LPBYTE key, LPBYTE output)
     CRYPT_DEShash(output, key, CRYPT_LMhash_Magic);
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * SystemFunction004  [ADVAPI32.@]
+ *
+ * Encrypts a block of data with DES in ECB mode, preserving the length
+ *
+ * PARAMS
+ *   data    [I] data to encrypt
+ *   key     [I] key data (up to 7 bytes)
+ *   output  [O] buffer to receive encrypted data
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_BUFFER_TOO_SMALL     if the output buffer is too small
+ *  Failure: STATUS_INVALID_PARAMETER_2  if the key is zero length
+ *
+ * NOTES
+ *  Encrypt buffer size should be input size rounded up to 8 bytes
+ *   plus an extra 8 bytes.
+ */
+NTSTATUS WINAPI SystemFunction004(const struct ustring *in,
+                                  const struct ustring *key,
+                                  struct ustring *out)
+{
+    union {
+         unsigned char uc[8];
+         unsigned int  ui[2];
+    } data;
+    unsigned char deskey[7];
+    int crypt_len, ofs;
+
+    if (key->Length<=0)
+        return STATUS_INVALID_PARAMETER_2;
+
+    crypt_len = ((in->Length+7)&~7);
+    if (out->MaximumLength < (crypt_len+8))
+        return STATUS_BUFFER_TOO_SMALL;
+
+    data.ui[0] = in->Length;
+    data.ui[1] = 1;
+
+    if (key->Length<sizeof deskey)
+    {
+        memset(deskey, 0, sizeof deskey);
+        memcpy(deskey, key->Buffer, key->Length);
+    }
+    else
+        memcpy(deskey, key->Buffer, sizeof deskey);
+
+    CRYPT_DEShash(out->Buffer, deskey, data.uc);
+
+    for(ofs=0; ofs<(crypt_len-8); ofs+=8)
+        CRYPT_DEShash(out->Buffer+8+ofs, deskey, in->Buffer+ofs);
+
+    memset(data.uc, 0, sizeof data.uc);
+    memcpy(data.uc, in->Buffer+ofs, in->Length +8-crypt_len);
+    CRYPT_DEShash(out->Buffer+8+ofs, deskey, data.uc);
+
+    out->Length = crypt_len+8;
+
+    return STATUS_SUCCESS;
+}
