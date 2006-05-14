@@ -4122,32 +4122,30 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         }
         break;
     }
-    case WINED3DRS_SEPARATEALPHABLENDENABLE   :
-    case WINED3DRS_SRCBLENDALPHA              :
-    case WINED3DRS_DESTBLENDALPHA             :
-    case WINED3DRS_BLENDOPALPHA               :
-    case WINED3DRS_MULTISAMPLEMASK            :
-    case WINED3DRS_PATCHEDGESTYLE             :
-    case WINED3DRS_PATCHSEGMENTS              :
-    case WINED3DRS_DEBUGMONITORTOKEN          :
-    case WINED3DRS_POSITIONORDER              :
-    case WINED3DRS_NORMALORDER                :
-    case WINED3DRS_MINTESSELLATIONLEVEL       :
-    case WINED3DRS_MAXTESSELLATIONLEVEL       :
-    case WINED3DRS_ADAPTIVETESS_X             :
-    case WINED3DRS_ADAPTIVETESS_Y             :
-    case WINED3DRS_ADAPTIVETESS_Z             :
-    case WINED3DRS_ADAPTIVETESS_W             :
-    case WINED3DRS_ENABLEADAPTIVETESSELLATION :
-    case WINED3DRS_COLORWRITEENABLE1          :
-    case WINED3DRS_COLORWRITEENABLE2          :
-    case WINED3DRS_COLORWRITEENABLE3          :
-    case WINED3DRS_BLENDFACTOR                :
-    case WINED3DRS_SRGBWRITEENABLE            :
-        FIXME("(%p)->(%s,%ld) not handled yet\n", This, debug_d3drenderstate(State), Value);
+
+    case WINED3DRS_TEXTUREPERSPECTIVE    :
+    {
+        if (Value)
+            glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+        else
+            glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
         break;
+    }
+
+    case WINED3DRS_STIPPLEDALPHA    :
+    {
+        if (Value)
+            ERR(" Stippled Alpha not supported yet.\n");
+        break;
+    }
+    case WINED3DRS_ANTIALIAS :
+    {
+        if (Value)
+            ERR(" Antialias not supported yet.\n");
+        break;
+    }
     default:
-        FIXME("(%p)->(%d,%ld) unrecognized\n", This, State, Value);
+        FIXME("(%p)->(%s,%ld) not handled yet\n", This, debug_d3drenderstate(State), Value);
     }
 
     LEAVE_GL();
