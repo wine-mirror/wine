@@ -1954,7 +1954,8 @@ DECL_HANDLER(set_registry_notification)
             notify = find_notify( key, current->process, req->hkey );
             if (notify)
             {
-                release_object( notify->event );
+                if (notify->event)
+                    release_object( notify->event );
                 grab_object( event );
                 notify->event = event;
             }
