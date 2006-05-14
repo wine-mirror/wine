@@ -34,16 +34,18 @@ struct ustring {
     unsigned char *Buffer;
 };
 
-typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
-typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction001)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction002)(const LPBYTE, const LPBYTE, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction003)(const LPBYTE, LPBYTE);
+typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
+typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);
 
-fnSystemFunction006 pSystemFunction006;
-fnSystemFunction008 pSystemFunction008;
 fnSystemFunction001 pSystemFunction001;
 fnSystemFunction002 pSystemFunction002;
+fnSystemFunction003 pSystemFunction003;
+fnSystemFunction006 pSystemFunction006;
+fnSystemFunction008 pSystemFunction008;
 fnSystemFunction032 pSystemFunction032;
 
 static void test_SystemFunction006(void)
@@ -163,11 +165,48 @@ static void test_SystemFunction032(void)
     ok(!memcmp(expected, data.Buffer, data.Length), "wrong result\n");
 }
 
+static void test_SystemFunction003(void)
+{
+    unsigned char output[8], data[8];
+    unsigned char key[7] = { 0xff, 0x37, 0x50, 0xbc, 0xc2, 0xb2, 0x24 };
+    unsigned char exp1[8] = { 0x9d, 0x21, 0xc8, 0x86, 0x6c, 0x21, 0xcf, 0x43 };
+    char exp2[] = "KGS!@#$%";
+    int r;
+
+    r = pSystemFunction003(NULL, NULL);
+    ok(r == STATUS_UNSUCCESSFUL, "function failed\n");
+
+    r = pSystemFunction003(key, NULL);
+    ok(r == STATUS_UNSUCCESSFUL, "function failed\n");
+
+    memset(data, 0, sizeof data);
+    r = pSystemFunction003(key, data);
+    ok(r == STATUS_SUCCESS, "function failed\n");
+    ok( !memcmp(exp1, data, sizeof data), "decrypted message wrong\n");
+
+    memset(output, 0, sizeof output);
+    r = pSystemFunction002(data, key, output);
+
+    ok( !memcmp(exp2, output, sizeof output), "decrypted message wrong\n");
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
 
     if (!(module = LoadLibrary("advapi32.dll"))) return;
+
+    pSystemFunction001 = (fnSystemFunction001)GetProcAddress( module, "SystemFunction001" );
+    if (pSystemFunction001)
+        test_SystemFunction001();
+
+    pSystemFunction002 = (fnSystemFunction002)GetProcAddress( module, "SystemFunction002" );
+    if (pSystemFunction002)
+        test_SystemFunction002();
+
+    pSystemFunction003 = (fnSystemFunction003)GetProcAddress( module, "SystemFunction003" );
+    if (pSystemFunction003)
+        test_SystemFunction003();
 
     pSystemFunction006 = (fnSystemFunction006)GetProcAddress( module, "SystemFunction006" );
     if (pSystemFunction006) 
@@ -177,17 +216,9 @@ START_TEST(crypt_lmhash)
     if (pSystemFunction008)
         test_SystemFunction008();
 
-    pSystemFunction001 = (fnSystemFunction001)GetProcAddress( module, "SystemFunction001" );
-    if (pSystemFunction001)
-        test_SystemFunction001();
-
     pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
     if (pSystemFunction032)
         test_SystemFunction032();
-
-    pSystemFunction002 = (fnSystemFunction002)GetProcAddress( module, "SystemFunction002" );
-    if (pSystemFunction002)
-        test_SystemFunction002();
 
     FreeLibrary( module );
 }

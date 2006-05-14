@@ -135,3 +135,25 @@ NTSTATUS WINAPI SystemFunction002(const LPBYTE data, const LPBYTE key, LPBYTE ou
     CRYPT_DESunhash(output, key, data);
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * SystemFunction003  [ADVAPI32.@]
+ *
+ * Hashes a key using DES and a fixed datablock
+ *
+ * PARAMS
+ *   key     [I] key data    (7 bytes)
+ *   output  [O] hashed key  (8 bytes)
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_UNSUCCESSFUL
+ *
+ */
+NTSTATUS WINAPI SystemFunction003(const LPBYTE key, LPBYTE output)
+{
+    if (!output)
+        return STATUS_UNSUCCESSFUL;
+    CRYPT_DEShash(output, key, CRYPT_LMhash_Magic);
+    return STATUS_SUCCESS;
+}
