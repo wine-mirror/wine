@@ -1367,9 +1367,26 @@ extern void generate_base_shader(
 extern void shader_dump_ins_modifiers(
     const DWORD output);
 
+extern void shader_dump_param(
+    IWineD3DBaseShader *iface,
+    const DWORD param,
+    int input);
+
 inline static int shader_get_regtype(const DWORD param) {
     return (((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) |
             ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2));
+}
+
+inline static BOOL shader_is_pshader_version(DWORD token) {
+    return 0xFFFF0000 == (token & 0xFFFF0000);
+}
+
+inline static BOOL shader_is_vshader_version(DWORD token) {
+    return 0xFFFE0000 == (token & 0xFFFF0000);
+}
+
+inline static BOOL shader_is_comment(DWORD token) {
+    return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
 }
 
 /*****************************************************************************

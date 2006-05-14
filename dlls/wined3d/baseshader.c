@@ -30,12 +30,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
 inline static BOOL shader_is_version_token(DWORD token) {
-    return 0xFFFF0000 == (token & 0xFFFF0000) || 
-           0xFFFE0000 == (token & 0xFFFF0000);
-}
-
-inline static BOOL shader_is_comment_token(DWORD token) {
-    return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
+    return shader_is_pshader_version(token) ||
+           shader_is_vshader_version(token);
 }
 
 int shader_addline(
@@ -119,7 +115,7 @@ void shader_get_registers_used(
              continue;
 
         /* Skip comments */
-        } else if (shader_is_comment_token(*pToken)) {
+        } else if (shader_is_comment(*pToken)) {
              DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
              ++pToken;
              pToken += comment_len;
@@ -238,6 +234,146 @@ void shader_program_dump_decl_usage(
     }
 }
 
+void shader_dump_param(
+    IWineD3DBaseShader *iface,
+    const DWORD param, 
+    int input) {
+
+    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" };
+    char swizzle_reg_chars[4];
+
+    DWORD reg = param & D3DSP_REGNUM_MASK;
+    DWORD regtype = shader_get_regtype(param);
+
+    /* There are some minor differences between pixel and vertex shaders */
+    BOOL pshader = shader_is_pshader_version(This->baseShader.hex_version);
+
+    /* For one, we'd prefer color components to be shown for pshaders.
+     * FIXME: use the swizzle function for this */
+
+    swizzle_reg_chars[0] = pshader? 'r': 'x';
+    swizzle_reg_chars[1] = pshader? 'g': 'y';
+    swizzle_reg_chars[2] = pshader? 'b': 'z';
+    swizzle_reg_chars[3] = pshader? 'a': 'w';
+
+    if (input) {
+        if ( ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) ||
+             ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_BIASNEG) ||
+             ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_SIGNNEG) ||
+             ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_X2NEG) )
+            TRACE("-");
+        else if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_COMP)
+            TRACE("1-");
+    }
+
+    switch (regtype) {
+        case D3DSPR_TEMP:
+            TRACE("r%lu", reg);
+            break;
+        case D3DSPR_INPUT:
+            TRACE("v%lu", reg);
+            break;
+        case D3DSPR_CONST:
+            TRACE("c%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+            break;
+        case D3DSPR_TEXTURE: /* vs: case D3DSPR_ADDR */
+            TRACE("%c%lu", (pshader? 't':'a'), reg);
+            break;        
+        case D3DSPR_RASTOUT:
+            TRACE("%s", rastout_reg_names[reg]);
+            break;
+        case D3DSPR_COLOROUT:
+            TRACE("oC%lu", reg);
+            break;
+        case D3DSPR_DEPTHOUT:
+            TRACE("oDepth");
+            break;
+        case D3DSPR_ATTROUT:
+            TRACE("oD%lu", reg);
+            break;
+        case D3DSPR_TEXCRDOUT:
+            TRACE("oT%lu", reg);
+            break;
+        case D3DSPR_CONSTINT:
+            TRACE("i%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+            break;
+        case D3DSPR_CONSTBOOL:
+            TRACE("b%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+            break;
+        case D3DSPR_LABEL:
+            TRACE("l%lu", reg);
+            break;
+        case D3DSPR_LOOP:
+            TRACE("aL%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+            break;
+        case D3DSPR_SAMPLER:
+            TRACE("s%lu", reg);
+            break;
+        default:
+            TRACE("unhandled_rtype(%lx)", regtype);
+            break;
+   }
+
+   if (!input) {
+       /* operand output (for modifiers and shift, see dump_ins_modifiers) */
+
+       if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
+           TRACE(".");
+           if (param & D3DSP_WRITEMASK_0) TRACE("%c", swizzle_reg_chars[0]);
+           if (param & D3DSP_WRITEMASK_1) TRACE("%c", swizzle_reg_chars[1]);
+           if (param & D3DSP_WRITEMASK_2) TRACE("%c", swizzle_reg_chars[2]);
+           if (param & D3DSP_WRITEMASK_3) TRACE("%c", swizzle_reg_chars[3]);
+       }
+
+   } else {
+        /** operand input */
+        DWORD swizzle = (param & D3DSP_SWIZZLE_MASK) >> D3DSP_SWIZZLE_SHIFT;
+        DWORD swizzle_r = swizzle & 0x03;
+        DWORD swizzle_g = (swizzle >> 2) & 0x03;
+        DWORD swizzle_b = (swizzle >> 4) & 0x03;
+        DWORD swizzle_a = (swizzle >> 6) & 0x03;
+
+        if (0 != (param & D3DSP_SRCMOD_MASK)) {
+            DWORD mask = param & D3DSP_SRCMOD_MASK;
+            /*TRACE("_modifier(0x%08lx) ", mask);*/
+            switch (mask) {
+                case D3DSPSM_NONE:    break;
+                case D3DSPSM_NEG:     break;
+                case D3DSPSM_BIAS:    TRACE("_bias"); break;
+                case D3DSPSM_BIASNEG: TRACE("_bias"); break;
+                case D3DSPSM_SIGN:    TRACE("_bx2"); break;
+                case D3DSPSM_SIGNNEG: TRACE("_bx2"); break;
+                case D3DSPSM_COMP:    break;
+                case D3DSPSM_X2:      TRACE("_x2"); break;
+                case D3DSPSM_X2NEG:   TRACE("_x2"); break;
+                case D3DSPSM_DZ:      TRACE("_dz"); break;
+                case D3DSPSM_DW:      TRACE("_dw"); break;
+                default:
+                    TRACE("_unknown(0x%08lx)", mask);
+            }
+        }
+
+        /**
+        * swizzle bits fields:
+        *  RRGGBBAA
+        */
+        if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) != swizzle) { /* ! D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
+            if (swizzle_r == swizzle_g &&
+                swizzle_r == swizzle_b &&
+                swizzle_r == swizzle_a) {
+                    TRACE(".%c", swizzle_reg_chars[swizzle_r]);
+            } else {
+                TRACE(".%c%c%c%c",
+                swizzle_reg_chars[swizzle_r],
+                swizzle_reg_chars[swizzle_g],
+                swizzle_reg_chars[swizzle_b],
+                swizzle_reg_chars[swizzle_a]);
+            }
+        }
+    }
+}
+
 /** Generate the variable & register declarations for the ARB_vertex_program
     output target */
 void generate_arb_declarations(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer) {
@@ -320,7 +456,7 @@ void generate_base_shader(
             }
 
             /* Skip comment tokens */
-            if (shader_is_comment_token(*pToken)) {
+            if (shader_is_comment(*pToken)) {
                 DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
                 ++pToken;
                 TRACE("#%s\n", (char*)pToken);

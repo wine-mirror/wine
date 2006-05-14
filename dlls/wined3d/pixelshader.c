@@ -738,15 +738,6 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {0,               NULL,       NULL,   0, NULL,            NULL, 0, 0}
 };
 
-inline static BOOL pshader_is_version_token(DWORD token) {
-    return 0xFFFF0000 == (token & 0xFFFF0000);
-}
-
-inline static BOOL pshader_is_comment_token(DWORD token) {
-    return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
-}
-
-
 inline static void get_register_name(const DWORD param, char* regstr, char constants[WINED3D_PSHADER_MAX_CONSTANTS]) {
     static const char* rastout_reg_names[] = { "oC0", "oC1", "oC2", "oC3", "oDepth" };
 
@@ -1370,124 +1361,6 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 #endif
 }
 
-inline static void pshader_program_dump_ps_param(const DWORD param, int input) {
-  static const char* rastout_reg_names[] = { "oC0", "oC1", "oC2", "oC3", "oDepth" };
-  static const char swizzle_reg_chars[] = "rgba";
-
-  DWORD reg = param & D3DSP_REGNUM_MASK;
-  DWORD regtype = shader_get_regtype(param);
-
-  if (input) {
-    if ( ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) ||
-         ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_BIASNEG) ||
-         ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_SIGNNEG) ||
-         ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_X2NEG) )
-      TRACE("-");
-    else if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_COMP)
-      TRACE("1-");
-  }
-
-  switch (regtype) { 
-  case D3DSPR_TEMP:
-    TRACE("r%lu", reg);
-    break;
-  case D3DSPR_INPUT:
-    TRACE("v%lu", reg);
-    break;
-  case D3DSPR_CONST:
-    TRACE("c%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
-    break;
-
-  case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
-    TRACE("t%lu", reg);
-    break;
-  case D3DSPR_RASTOUT:
-    TRACE("%s", rastout_reg_names[reg]);
-    break;
-  case D3DSPR_ATTROUT:
-    TRACE("oD%lu", reg);
-    break;
-  case D3DSPR_TEXCRDOUT:
-    TRACE("oT%lu", reg);
-    break;
-  case D3DSPR_CONSTINT:
-    TRACE("i%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
-    break;
-  case D3DSPR_CONSTBOOL:
-    TRACE("b%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
-    break;
-  case D3DSPR_LABEL:
-    TRACE("l%lu", reg);
-    break;
-  case D3DSPR_LOOP:
-    TRACE("aL%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
-    break;
-  case D3DSPR_SAMPLER:
-    TRACE("s%lu", reg);
-    break;
-  default:
-    TRACE("unhandled_rtype(%lx)", regtype);
-    break;
-  }
-
-    if (!input) {
-        /* operand output (for modifiers and shift, see dump_ins_modifiers) */
-
-        if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
-            TRACE(".");
-            if (param & D3DSP_WRITEMASK_0) TRACE(".r");
-            if (param & D3DSP_WRITEMASK_1) TRACE(".g");
-            if (param & D3DSP_WRITEMASK_2) TRACE(".b");
-            if (param & D3DSP_WRITEMASK_3) TRACE(".a");
-        }
-    } else {
-        /** operand input */
-        DWORD swizzle = (param & D3DSP_SWIZZLE_MASK) >> D3DSP_SWIZZLE_SHIFT;
-        DWORD swizzle_r = swizzle & 0x03;
-        DWORD swizzle_g = (swizzle >> 2) & 0x03;
-        DWORD swizzle_b = (swizzle >> 4) & 0x03;
-        DWORD swizzle_a = (swizzle >> 6) & 0x03;
-
-        if (0 != (param & D3DSP_SRCMOD_MASK)) {
-            DWORD mask = param & D3DSP_SRCMOD_MASK;
-            /*TRACE("_modifier(0x%08lx) ", mask);*/
-            switch (mask) {
-                case D3DSPSM_NONE:    break;
-                case D3DSPSM_NEG:     break;
-                case D3DSPSM_BIAS:    TRACE("_bias"); break;
-                case D3DSPSM_BIASNEG: TRACE("_bias"); break;
-                case D3DSPSM_SIGN:    TRACE("_bx2"); break;
-                case D3DSPSM_SIGNNEG: TRACE("_bx2"); break;
-                case D3DSPSM_COMP:    break;
-                case D3DSPSM_X2:      TRACE("_x2"); break;
-                case D3DSPSM_X2NEG:   TRACE("_x2"); break;
-                case D3DSPSM_DZ:      TRACE("_dz"); break;
-                case D3DSPSM_DW:      TRACE("_dw"); break;
-                default:
-                    TRACE("_unknown(0x%08lx)", mask);
-            }
-        }
-
-        /**
-        * swizzle bits fields:
-        *  RRGGBBAA
-        */
-        if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) != swizzle) { /* ! D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
-            if (swizzle_r == swizzle_g &&
-                swizzle_r == swizzle_b &&
-                swizzle_r == swizzle_a) {
-                    TRACE(".%c", swizzle_reg_chars[swizzle_r]);
-            } else {
-                TRACE(".%c%c%c%c",
-                swizzle_reg_chars[swizzle_r],
-                swizzle_reg_chars[swizzle_g],
-                swizzle_reg_chars[swizzle_b],
-                swizzle_reg_chars[swizzle_a]);
-            }
-        }
-    }
-}
-
 HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const DWORD* pToken = pFunction;
@@ -1498,13 +1371,13 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
 
     if (NULL != pToken) {
         while (D3DPS_END() != *pToken) {
-            if (pshader_is_version_token(*pToken)) { /** version */
+            if (shader_is_pshader_version(*pToken)) { /** version */
                 pshader_set_version(This, *pToken);
                 ++pToken;
                 ++len;
                 continue;
             }
-            if (pshader_is_comment_token(*pToken)) { /** comment */
+            if (shader_is_comment(*pToken)) { /** comment */
                 DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
                 ++pToken;
                 TRACE("//%s\n", (char*)pToken);
@@ -1545,7 +1418,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
 
                     shader_dump_ins_modifiers(param);
                     TRACE(" ");
-                    pshader_program_dump_ps_param(param, 0);
+                    shader_dump_param((IWineD3DBaseShader*) This, param, 0);
                     pToken += 2;
                     len += 2;
 
@@ -1571,12 +1444,12 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
                     if (curOpcode->num_params > 0) {
                         shader_dump_ins_modifiers(*pToken);
                         TRACE(" ");
-                        pshader_program_dump_ps_param(*pToken, 0);
+                        shader_dump_param((IWineD3DBaseShader*) This, *pToken, 0);
                         ++pToken;
                         ++len;
                         for (i = 1; i < curOpcode->num_params; ++i) {
                             TRACE(", ");
-                            pshader_program_dump_ps_param(*pToken, 1);
+                            shader_dump_param((IWineD3DBaseShader*) This, *pToken, 1);
                             ++pToken;
                             ++len;
                         }
