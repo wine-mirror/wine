@@ -202,7 +202,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
                      memory) just do the copy                                              */
                 if (src->changed) {
                     TRACE("Updating lights for light %ld\n", src->OriginalIndex);
-                    memcpy(&src->OriginalParms, &realLight->OriginalParms, sizeof(PLIGHTINFOEL));
+                    memcpy(&src->OriginalParms, &realLight->OriginalParms, sizeof(src->OriginalParms));
                 }
 
                 /* If 'enabledchanged' then its a LightEnable command */
