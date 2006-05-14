@@ -490,6 +490,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             break;
         }
         tgt_process_active_close_process(dbg_curr_process, FALSE);
+        dbg_printf("Process of pid=0x%08lx has terminated\n", de->dwProcessId);
         break;
 
     case CREATE_THREAD_DEBUG_EVENT:
@@ -917,7 +918,6 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
         if (!kill && !DebugActiveProcessStop(dbg_curr_pid)) return FALSE;
     }
     SymCleanup(pcs->handle);
-    dbg_printf("Process of pid=0x%08lx has terminated\n", pcs->pid);
     dbg_del_process(pcs);
 
     return TRUE;

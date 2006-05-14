@@ -313,7 +313,11 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
                 dbg_printf("Can't get context for thread 0x%lx in current process\n",
                            tid);
             }
-            else backtrace();
+            else
+            {
+                stack_fetch_frames();
+                backtrace();
+            }
             ResumeThread(dbg_curr_thread->handle);
         }
         else dbg_printf("Can't suspend thread 0x%lx in current process\n", tid);
@@ -331,6 +335,7 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
  */
 static void backtrace_all(void)
 {
+    struct dbg_process* process = dbg_curr_process;
     THREADENTRY32       entry;
     HANDLE              snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
 
@@ -370,6 +375,8 @@ static void backtrace_all(void)
             dbg_curr_process->process_io->close_process(dbg_curr_process, FALSE);
     }
     CloseHandle(snapshot);
+    dbg_curr_process = process;
+    dbg_curr_pid = process ? process->pid : 0;
 }
 
 void stack_backtrace(DWORD tid)
