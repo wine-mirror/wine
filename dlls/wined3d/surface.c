@@ -985,8 +985,16 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         }
 
         b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        b_info->bmiHeader.biWidth = This->pow2Width;
-        b_info->bmiHeader.biHeight = -This->pow2Height;
+        if( (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)) {
+            b_info->bmiHeader.biWidth = This->currentDesc.Width;
+            b_info->bmiHeader.biHeight = -This->currentDesc.Height;
+            /* Use the full pow2 image size(assigned below) because LockRect
+             * will need it for a full glGetTexImage call
+             */
+        } else {
+            b_info->bmiHeader.biWidth = This->pow2Width;
+            b_info->bmiHeader.biHeight = -This->pow2Height;
+        }
         b_info->bmiHeader.biPlanes = 1;
         b_info->bmiHeader.biBitCount = This->bytesPerPixel * 8;
 
