@@ -34,6 +34,8 @@ typedef struct tagEXPECTEDNOTIFY
 EXPECTEDNOTIFY expectedNotify[10];
 INT nExpectedNotify = 0;
 INT nReceivedNotify = 0;
+INT unexpectedNotify[10];
+INT nUnexpectedNotify = 0;
 
 static HWND hHeaderParentWnd;
 static HWND hWndHeader;
@@ -48,10 +50,17 @@ static void expect_notify(INT iCode, BOOL fUnicode, HDITEMA *lpItem)
     nExpectedNotify++;
 }
 
+static void dont_expect_notify(INT iCode)
+{
+    assert(nUnexpectedNotify < 10);
+    unexpectedNotify[nUnexpectedNotify++] = iCode;
+}
+
 static BOOL notifies_received()
 {
     BOOL fRet = (nExpectedNotify == nReceivedNotify);
     nExpectedNotify = nReceivedNotify = 0;
+    nUnexpectedNotify = 0;
     return fRet;
 }
 
@@ -156,6 +165,11 @@ static void compare_items(INT iCode, HDITEMA *hdi1, HDITEMA *hdi2, BOOL fUnicode
     }
     if (hdi1->mask & HDI_TEXT)
     {
+        if (hdi1->pszText == LPSTR_TEXTCALLBACKA)
+        {
+            ok(hdi1->pszText == LPSTR_TEXTCALLBACKA, "Notify %d - only one item is LPSTR_TEXTCALLBACK\n", iCode);
+        }
+        else
         if (fUnicode)
         {
             char buf1[260];
@@ -252,6 +266,17 @@ static void test_header_control (void)
     setItemUnicodeNotify(hWndHeader, 3, pszUniTestA, pszUniTestW);
     SendMessageA(hWndHeader, WM_NOTIFYFORMAT, (WPARAM)hHeaderParentWnd, (LPARAM)NF_REQUERY);
     setItem(hWndHeader, 3, str_items[4], TRUE);
+    
+    dont_expect_notify(HDN_GETDISPINFOA);
+    dont_expect_notify(HDN_GETDISPINFOW);
+    addItem(hWndHeader, 0, LPSTR_TEXTCALLBACKA);
+    setItem(hWndHeader, 0, str_items[4], TRUE);
+    /* unexpected notifies cleared by notifies_received in setItem */
+    dont_expect_notify(HDN_GETDISPINFOA);
+    dont_expect_notify(HDN_GETDISPINFOW);
+    setItem(hWndHeader, 0, LPSTR_TEXTCALLBACKA, TRUE);
+    /* unexpected notifies cleared by notifies_received in setItem */
+    delItem(hWndHeader, 0);
 
     res = delItem(hWndHeader, 5);
     ok(res == 1, "Deleting Out of Range item should fail with 1 (%ld)\n", res);
@@ -284,6 +309,10 @@ LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     {
         NMHEADERA *hdr = (NMHEADER *)lParam;
         EXPECTEDNOTIFY *expected;
+        int i;
+        
+        for (i=0; i<nUnexpectedNotify; i++)
+            ok(hdr->hdr.code != unexpectedNotify[i], "Received invalid notify %d\n", hdr->hdr.code);
         
         if (nReceivedNotify >= nExpectedNotify || hdr->hdr.hwndFrom != hWndHeader )
             break;
