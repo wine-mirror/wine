@@ -25,12 +25,12 @@
 #endif
 
 #if !defined(HAVE_JPEGLIB_H)
-# warning "ghoto2 in twain needs jpeg development headers"
+# warning "gphoto2 support in twain needs jpeg development headers"
 # undef HAVE_GPHOTO2
 #endif
 
 #ifdef HAVE_GPHOTO2
-/* Hack for gphoto2, who changes behaviour when WIN32 is set. */
+/* Hack for gphoto2, which changes behaviour when WIN32 is set. */
 #undef WIN32
 #include <gphoto2/gphoto2-camera.h>
 #define WIN32
