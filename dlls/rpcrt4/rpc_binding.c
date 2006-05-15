@@ -267,9 +267,8 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   /* we need to send a binding packet if we are client. */
   if (!(*Connection)->server) {
     RpcPktHdr *hdr;
-    LONG count;
-    BYTE *response;
     RpcPktHdr *response_hdr;
+    RPC_MESSAGE msg;
 
     TRACE("sending bind request to server\n");
 
@@ -284,35 +283,17 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
       return status;
     }
 
-    response = HeapAlloc(GetProcessHeap(), 0, RPC_MAX_PACKET_SIZE);
-    if (response == NULL) {
-      WARN("Can't allocate memory for binding response\n");
+    status = RPCRT4_Receive(NewConnection, &response_hdr, &msg);
+    if (status != RPC_S_OK) {
+      ERR("receive failed\n");
       RPCRT4_DestroyConnection(*Connection);
-      return E_OUTOFMEMORY;
+      return status;
     }
 
-    count = rpcrt4_conn_read(NewConnection, response, RPC_MAX_PACKET_SIZE);
-    if (count < sizeof(response_hdr->common)) {
-      WARN("received invalid header\n");
-      HeapFree(GetProcessHeap(), 0, response);
-      RPCRT4_DestroyConnection(*Connection);
-      return RPC_S_PROTOCOL_ERROR;
-    }
-
-    response_hdr = (RpcPktHdr*)response;
-
-    if (response_hdr->common.rpc_ver != RPC_VER_MAJOR ||
-        response_hdr->common.rpc_ver_minor != RPC_VER_MINOR ||
-        response_hdr->common.ptype != PKT_BIND_ACK) {
-      WARN("invalid protocol version or rejection packet\n");
-      HeapFree(GetProcessHeap(), 0, response);
-      RPCRT4_DestroyConnection(*Connection);
-      return RPC_S_PROTOCOL_ERROR;
-    }
-
-    if (response_hdr->bind_ack.max_tsize < RPC_MIN_PACKET_SIZE) {
-      WARN("server doesn't allow large enough packets\n");
-      HeapFree(GetProcessHeap(), 0, response);
+    if (response_hdr->common.ptype != PKT_BIND_ACK ||
+        response_hdr->bind_ack.max_tsize < RPC_MIN_PACKET_SIZE) {
+      ERR("failed to bind\n");
+      RPCRT4_FreeHeader(response_hdr);
       RPCRT4_DestroyConnection(*Connection);
       return RPC_S_PROTOCOL_ERROR;
     }
@@ -321,7 +302,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
 
     (*Connection)->MaxTransmissionSize = response_hdr->bind_ack.max_tsize;
     (*Connection)->ActiveInterface = *InterfaceId;
-    HeapFree(GetProcessHeap(), 0, response);
+    RPCRT4_FreeHeader(response_hdr);
   }
   Binding->FromConn = *Connection;
 
