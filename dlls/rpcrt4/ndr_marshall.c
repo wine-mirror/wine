@@ -981,6 +981,7 @@ unsigned char * WINAPI EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned char *Mark = pStubMsg->BufferMark;
   unsigned long Offset = pStubMsg->Offset;
   unsigned ofs, rep, count, stride, xofs;
+  unsigned i;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
@@ -1016,17 +1017,17 @@ unsigned char * WINAPI EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pFormat += 8;
       break;
     }
-    /* ofs doesn't seem to matter in this context */
-    while (rep) {
+    for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = pMemory + xofs;
+      unsigned char *membase = pMemory + (i * stride);
+      unsigned char *bufbase = Mark + (i * stride);
       unsigned u;
+      /* ofs doesn't seem to matter in this context */
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
-        unsigned char *bufptr = Mark + *(const SHORT*)&info[2];
+        unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
         PointerMarshall(pStubMsg, bufptr, *(unsigned char**)memptr, info+4);
       }
-      rep--;
     }
     pFormat += 8 * count;
   }
@@ -1047,6 +1048,7 @@ unsigned char * WINAPI EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned char *Mark = pStubMsg->BufferMark;
   unsigned long Offset = pStubMsg->Offset;
   unsigned ofs, rep, count, stride, xofs;
+  unsigned i;
 
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -1054,6 +1056,7 @@ unsigned char * WINAPI EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
 
   while (pFormat[0] != RPC_FC_END) {
+    TRACE("pFormat[0] = 0x%x\n", pFormat[0]);
     switch (pFormat[0]) {
     default:
       FIXME("unknown repeat type %d\n", pFormat[0]);
@@ -1083,16 +1086,17 @@ unsigned char * WINAPI EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     }
     /* ofs doesn't seem to matter in this context */
-    while (rep) {
+    for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = *ppMemory + xofs;
+      unsigned char *membase = *ppMemory + (i * stride);
+      unsigned char *bufbase = Mark + (i * stride);
       unsigned u;
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
-        unsigned char *bufptr = Mark + *(const SHORT*)&info[2];
+        unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
+        *(void **)memptr = NULL;
         PointerUnmarshall(pStubMsg, bufptr, (unsigned char**)memptr, info+4, fMustAlloc);
       }
-      rep--;
     }
     pFormat += 8 * count;
   }
@@ -1109,8 +1113,12 @@ void WINAPI EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 {
   unsigned long Offset = pStubMsg->Offset;
   unsigned ofs, rep, count, stride, xofs;
+  unsigned i;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
+
+  if (pStubMsg->IgnoreEmbeddedPointers) return;
+
   if (*pFormat != RPC_FC_PP) return;
   pFormat += 2;
 
@@ -1144,15 +1152,14 @@ void WINAPI EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     }
     /* ofs doesn't seem to matter in this context */
-    while (rep) {
+    for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = pMemory + xofs;
+      unsigned char *membase = pMemory + (i * stride);
       unsigned u;
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
         PointerBufferSize(pStubMsg, *(unsigned char**)memptr, info+4);
       }
-      rep--;
     }
     pFormat += 8 * count;
   }
@@ -1167,8 +1174,10 @@ unsigned long WINAPI EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned long Offset = pStubMsg->Offset;
   unsigned char *Mark = pStubMsg->BufferMark;
   unsigned ofs, rep, count, stride, xofs;
+  unsigned i;
 
   FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
+
   if (*pFormat != RPC_FC_PP) return 0;
   pFormat += 2;
 
@@ -1202,14 +1211,14 @@ unsigned long WINAPI EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     }
     /* ofs doesn't seem to matter in this context */
-    while (rep) {
+    for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
+      unsigned char *bufbase = Mark + (i * stride);
       unsigned u;
       for (u=0; u<count; u++,info+=8) {
-        unsigned char *bufptr = Mark + *(const SHORT*)&info[2];
+        unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
         PointerMemorySize(pStubMsg, bufptr, info+4);
       }
-      rep--;
     }
     pFormat += 8 * count;
   }
@@ -1226,6 +1235,7 @@ void WINAPI EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
 {
   unsigned long Offset = pStubMsg->Offset;
   unsigned ofs, rep, count, stride, xofs;
+  unsigned i;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   if (*pFormat != RPC_FC_PP) return;
@@ -1261,15 +1271,14 @@ void WINAPI EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     }
     /* ofs doesn't seem to matter in this context */
-    while (rep) {
+    for (i = 0; i < rep; i++) {
       PFORMAT_STRING info = pFormat;
-      unsigned char *membase = pMemory + xofs;
+      unsigned char *membase = pMemory + (i * stride);
       unsigned u;
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
         PointerFree(pStubMsg, *(unsigned char**)memptr, info+4);
       }
-      rep--;
     }
     pFormat += 8 * count;
   }
