@@ -6474,8 +6474,70 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface,DWORD 
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *iface, IWineD3DSurface *Front, IWineD3DSurface *Back) {
-    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSurfaceImpl *FrontImpl = (IWineD3DSurfaceImpl *) Front;
+    IWineD3DSurfaceImpl *BackImpl = (IWineD3DSurfaceImpl *) Back;
+    IWineD3DSwapChainImpl *Swapchain;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p,%p)\n", This, FrontImpl, BackImpl);
+
+    hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **) &Swapchain);
+    if(hr != WINED3D_OK) {
+        ERR("Can't get the swapchain\n");
+        return hr;
+    }
+
+    /* Make sure to release the swapchain */
+    IWineD3DSwapChain_Release((IWineD3DSwapChain *) Swapchain);
+
+    if(FrontImpl && !(FrontImpl->resource.usage & WINED3DUSAGE_RENDERTARGET) ) {
+        ERR("Trying to set a front buffer which doesn't have WINED3DUSAGE_RENDERTARGET usage\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    else if(BackImpl && !(BackImpl->resource.usage & WINED3DUSAGE_RENDERTARGET)) {
+        ERR("Trying to set a back buffer which doesn't have WINED3DUSAGE_RENDERTARGET usage\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if(Swapchain->frontBuffer != Front) {
+        TRACE("Changing the front buffer from %p to %p\n", Swapchain->frontBuffer, Front);
+
+        if(Swapchain->frontBuffer)
+            IWineD3DSurface_SetContainer(Swapchain->frontBuffer, NULL);
+        Swapchain->frontBuffer = Front;
+
+        if(Swapchain->frontBuffer) {
+            IWineD3DSurface_SetContainer(Swapchain->frontBuffer, (IWineD3DBase *) Swapchain);
+        }
+    }
+    if(Swapchain->backBuffer != Back) {
+        TRACE("Changing the back buffer from %p to %p\n", Swapchain->backBuffer, Back);
+        ENTER_GL();
+        if(!Swapchain->backBuffer) {
+            /* GL was told to draw to the front buffer at creation,
+             * undo that
+             */
+            glDrawBuffer(GL_BACK);
+            checkGLcall("glDrawBuffer(GL_BACK)");
+        } else if (!Back) {
+            /* That makes problems - disable for now */
+            /* glDrawBuffer(GL_FRONT); */
+            checkGLcall("glDrawBuffer(GL_FRONT)");
+        }
+        LEAVE_GL();
+
+        if(Swapchain->backBuffer)
+            IWineD3DSurface_SetContainer(Swapchain->backBuffer, NULL);
+        Swapchain->backBuffer = Back;
+
+        if(Swapchain->backBuffer) {
+            IWineD3DSurface_SetContainer(Swapchain->backBuffer, (IWineD3DBase *) Swapchain);
+        }
+
+    }
+
+    return WINED3D_OK;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice* iface, IWineD3DSurface **ppZStencilSurface) {
