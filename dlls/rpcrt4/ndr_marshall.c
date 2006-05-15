@@ -3113,16 +3113,20 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionMarshall(PMIDL_STUB_MESSAGE pStub
         NDR_MARSHALL m = NdrMarshaller[*desc & NDR_TABLE_MASK];
         if (m)
         {
+            unsigned char *saved_buffer = NULL;
             switch(*desc)
             {
             case RPC_FC_RP:
             case RPC_FC_UP:
             case RPC_FC_OP:
             case RPC_FC_FP:
-                pMemory = *(void**)pMemory;
+                saved_buffer = pStubMsg->Buffer;
+                pStubMsg->Buffer += 4; /* for pointer ID */
+                PointerMarshall(pStubMsg, saved_buffer, *(unsigned char **)pMemory, desc);
                 break;
+            default:
+                m(pStubMsg, pMemory, desc);
             }
-            m(pStubMsg, pMemory, desc);
         }
         else FIXME("no marshaller for embedded type %02x\n", *desc);
     }
@@ -3210,6 +3214,7 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pSt
         NDR_UNMARSHALL m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
         if (m)
         {
+            unsigned char *saved_buffer = NULL;
             switch(*desc)
             {
             case RPC_FC_RP:
@@ -3217,9 +3222,14 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pSt
             case RPC_FC_OP:
             case RPC_FC_FP:
                 **(void***)ppMemory = NULL;
+                ALIGN_POINTER(pStubMsg->Buffer, 4);
+                saved_buffer = pStubMsg->Buffer;
+                pStubMsg->Buffer += 4; /* for pointer ID */
+                PointerUnmarshall(pStubMsg, saved_buffer, *(unsigned char ***)ppMemory, desc, fMustAlloc);
                 break;
+            default:
+                m(pStubMsg, ppMemory, desc, fMustAlloc);
             }
-            return m(pStubMsg, (unsigned char **)*ppMemory, desc, fMustAlloc);
         }
         else FIXME("no marshaller for embedded type %02x\n", *desc);
     }
@@ -3263,10 +3273,13 @@ void WINAPI NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
             case RPC_FC_UP:
             case RPC_FC_OP:
             case RPC_FC_FP:
-                pMemory = *(void**)pMemory;
+                ALIGN_LENGTH(pStubMsg->BufferLength, 4);
+                pStubMsg->BufferLength += 4; /* for pointer ID */
+                PointerBufferSize(pStubMsg, *(unsigned char **)pMemory, desc);
                 break;
+            default:
+                m(pStubMsg, pMemory, desc);
             }
-            m(pStubMsg, pMemory, desc);
         }
         else FIXME("no buffersizer for embedded type %02x\n", *desc);
     }
