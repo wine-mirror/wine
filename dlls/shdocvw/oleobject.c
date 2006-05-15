@@ -282,10 +282,6 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
                                          &This->pos_rect, &This->clip_rect,
                                          &This->frameinfo);
 
-
-        if(iVerb == OLEIVERB_INPLACEACTIVATE)
-            IOleInPlaceSite_Release(This->inplace);
-
         SetWindowPos(This->shell_embedding_hwnd, NULL,
                      This->pos_rect.left, This->pos_rect.top,
                      This->pos_rect.right-This->pos_rect.left,
@@ -306,7 +302,6 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
         TRACE("OLEIVERB_SHOW\n");
 
         IOleInPlaceSite_OnUIActivate(This->inplace);
-        IOleInPlaceSite_Release(This->inplace);
 
         if(This->frame)
             IOleInPlaceFrame_SetActiveObject(This->frame, ACTIVEOBJ(This), wszitem);
