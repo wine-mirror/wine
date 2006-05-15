@@ -86,6 +86,7 @@ xbuf_resize(marshal_state *buf, DWORD newsize)
         if(!buf->base)
             return E_OUTOFMEMORY;
     }
+    buf->size = newsize;
     return S_OK;
 }
 
