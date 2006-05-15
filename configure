@@ -14188,7 +14188,7 @@ echo "${ECHO_T}$ac_cv_c_dll_macho" >&6
           then
             LIBEXT="dylib"
             LDDLLFLAGS="-bundle"
-            LDSHARED="\$(CC) -dynamiclib"
+            LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME) \$(SOVERSION:%=-compatibility_version %)"
             STRIP="$STRIP -u -r"
                         COREFOUNDATIONLIB="-framework CoreFoundation"
 

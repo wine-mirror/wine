@@ -30,7 +30,4 @@ CONFIGDIRS = \
 config.o: config.c $(RELPATH)
 	$(CC) -c $(ALLCFLAGS) -o $@ $(SRCDIR)/config.c $(CONFIGDIRS)
 
-$(RELPATH):
-	@cd $(TOOLSDIR)/tools && $(MAKE) relpath
-
 ### Dependencies:

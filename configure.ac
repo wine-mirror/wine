@@ -1127,7 +1127,7 @@ case $host_os in
           then
             LIBEXT="dylib"
             LDDLLFLAGS="-bundle"
-            LDSHARED="\$(CC) -dynamiclib"
+            LDSHARED="\$(CC) -dynamiclib -install_name @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/\$(DYNAME) \$(SOVERSION:%=-compatibility_version %)"
             STRIP="$STRIP -u -r"
             dnl declare needed frameworks
             AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")

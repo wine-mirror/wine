@@ -13,6 +13,7 @@ LIBEXT    = @LIBEXT@
 LIBNAME   = lib$(LIBRARY)
 DEFNAME   = $(LIBRARY).def
 SONAME    = $(LIBNAME).so.$(SOVERSION)
+DYNAME    = $(LIBNAME).$(SOVERSION).dylib
 MODULE    = $(LIBNAME).$(LIBEXT)
 
 all: $(MODULE) $(MODULE:.dll=.a)
@@ -31,8 +32,8 @@ $(LIBNAME).a: $(DEFNAME)
 $(LIBNAME).dll: $(OBJS) $(DEFNAME) Makefile.in
 	$(DLLWRAP) --def $(SRCDIR)/$(DEFNAME) -o $@ $(OBJS) $(EXTRALIBS)
 
-$(LIBNAME).$(SOVERSION).dylib: $(OBJS) Makefile.in
-	$(LDSHARED) -install_name $(libdir)/$(LIBNAME).$(SOVERSION).dylib $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
+$(LIBNAME).$(SOVERSION).dylib: $(OBJS) $(RELPATH) Makefile.in
+	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
 
 $(LIBNAME).dylib: $(LIBNAME).$(SOVERSION).dylib
 	$(RM) $@ && $(LN_S) $(LIBNAME).$(SOVERSION).dylib $@
@@ -71,3 +72,6 @@ uninstall::
 
 clean::
 	$(RM) $(LIBNAME).so.$(SOVERSION) $(LIBNAME).dll $(LIBNAME).$(SOVERSION).dylib
+
+$(RELPATH):
+	@cd $(TOOLSDIR)/tools && $(MAKE) relpath
