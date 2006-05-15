@@ -459,9 +459,11 @@ PFORMAT_STRING ComputeConformanceOrVariance(
   case RPC_FC_USHORT:
     data = *(USHORT*)ptr;
     break;
+  case RPC_FC_CHAR:
   case RPC_FC_SMALL:
     data = *(CHAR*)ptr;
     break;
+  case RPC_FC_BYTE:
   case RPC_FC_USMALL:
     data = *(UCHAR*)ptr;
     break;
@@ -478,6 +480,18 @@ done_conf_grab:
     break;
   case RPC_FC_DEREFERENCE:
     /* already handled */
+    break;
+  case RPC_FC_ADD_1:
+    *pCount = data + 1;
+    break;
+  case RPC_FC_SUB_1:
+    *pCount = data - 1;
+    break;
+  case RPC_FC_MULT_2:
+    *pCount = data * 2;
+    break;
+  case RPC_FC_DIV_2:
+    *pCount = data / 2;
     break;
   default:
     FIXME("unknown conformance op %d\n", pFormat[1]);
