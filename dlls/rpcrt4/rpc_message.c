@@ -173,6 +173,22 @@ RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation,
   return header;
 }
 
+RpcPktHdr *RPCRT4_BuildAuthHeader(unsigned long DataRepresentation)
+{
+  RpcPktHdr *header;
+
+  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                     sizeof(header->common) + 12);
+  if (header == NULL)
+    return NULL;
+
+  RPCRT4_BuildCommonHeader(header, PKT_AUTH3, DataRepresentation);
+  header->common.frag_len = 0x14;
+  header->common.auth_len = 0;
+
+  return header;
+}
+
 RpcPktHdr *RPCRT4_BuildBindNackHeader(unsigned long DataRepresentation,
                                       unsigned char RpcVersion,
                                       unsigned char RpcVersionMinor)
@@ -279,13 +295,12 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
     memcpy(pkt + hdr_size, buffer_pos, Header->common.frag_len - hdr_size - alen);
 
     /* add the authorization info */
-    if (AuthLength)
+    if (Connection->Used && AuthLength)
     {
       auth_hdr = &pkt[Header->common.frag_len - alen];
 
-      /* FIXME: is this per fragment or per message? */
-      auth_hdr[0] = RPC_C_AUTHN_WINNT;
-      auth_hdr[1] = RPC_C_AUTHN_LEVEL_CONNECT;
+      auth_hdr[0] = Connection->Used->AuthnSvc;
+      auth_hdr[1] = Connection->Used->AuthnLevel;
       auth_hdr[2] = 0x00; /* FIXME: add padding */
       auth_hdr[3] = 0x00;
 
@@ -311,6 +326,87 @@ write:
 }
 
 /***********************************************************************
+ *           RPCRT4_AuthNegotiate (internal)
+ */
+static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
+{
+  SECURITY_STATUS r;
+  SecBufferDesc out_desc;
+  unsigned char *buffer;
+  RpcBinding *bind = conn->Used;
+
+  buffer = HeapAlloc(GetProcessHeap(), 0, 0x100);
+
+  out->BufferType = SECBUFFER_TOKEN;
+  out->cbBuffer = 0x100;
+  out->pvBuffer = buffer;
+
+  out_desc.ulVersion = 0;
+  out_desc.cBuffers = 1;
+  out_desc.pBuffers = out;
+
+  conn->attr = 0;
+  conn->ctx.dwLower = 0;
+  conn->ctx.dwUpper = 0;
+
+  r = InitializeSecurityContextA(&bind->cred, NULL, NULL,
+        ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE | ISC_REQ_MUTUAL_AUTH |
+        ISC_REQ_DELEGATE, 0, SECURITY_NETWORK_DREP,
+        NULL, 0, &conn->ctx, &out_desc, &conn->attr, &bind->exp);
+
+  TRACE("r = %08lx cbBuffer = %ld attr = %08lx\n", r, out->cbBuffer, conn->attr);
+}
+
+/***********************************************************************
+ *           RPCRT4_AuthorizeBinding (internal)
+ */
+static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
+                                            BYTE *challenge, ULONG count)
+{
+  SecBufferDesc inp_desc, out_desc;
+  SecBuffer inp, out;
+  SECURITY_STATUS r;
+  unsigned char buffer[0x100];
+  RpcPktHdr *resp_hdr;
+  RPC_STATUS status;
+
+  TRACE("challenge %s, %ld bytes\n", challenge, count);
+
+  out.BufferType = SECBUFFER_TOKEN;
+  out.cbBuffer = sizeof buffer;
+  out.pvBuffer = buffer;
+
+  out_desc.ulVersion = 0;
+  out_desc.cBuffers = 1;
+  out_desc.pBuffers = &out;
+
+  inp.BufferType = SECBUFFER_TOKEN;
+  inp.pvBuffer = challenge;
+  inp.cbBuffer = count;
+
+  inp_desc.cBuffers = 1;
+  inp_desc.pBuffers = &inp;
+  inp_desc.ulVersion = 0;
+
+  r = InitializeSecurityContextA(&conn->Used->cred, &conn->ctx, NULL,
+        ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE | ISC_REQ_MUTUAL_AUTH |
+        ISC_REQ_DELEGATE, 0, SECURITY_NETWORK_DREP,
+        &inp_desc, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
+  if (r)
+    return r;
+
+  resp_hdr = RPCRT4_BuildAuthHeader(NDR_LOCAL_DATA_REPRESENTATION);
+  if (!resp_hdr)
+    return E_OUTOFMEMORY;
+
+  status = RPCRT4_SendAuth(conn, resp_hdr, NULL, 0, out.pvBuffer, out.cbBuffer);
+
+  RPCRT4_FreeHeader(resp_hdr);
+
+  return status;
+}
+
+/***********************************************************************
  *           RPCRT4_Send (internal)
  * 
  * Transmit a packet over connection in acceptable fragments.
@@ -318,7 +414,37 @@ write:
 RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
                        void *Buffer, unsigned int BufferLength)
 {
-  return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
+  RPC_STATUS r;
+  SecBuffer out;
+
+  /* if we've already authenticated, just send the context */
+  if (Connection->ctx.dwUpper || Connection->ctx.dwLower)
+  {
+    unsigned char buffer[0x10];
+
+    memset(buffer, 0, sizeof buffer);
+    buffer[0] = 1; /* version number lsb */
+
+    return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, buffer, sizeof buffer);
+  }
+
+  if (Connection->Used == NULL ||
+      Connection->Used->AuthnLevel == RPC_C_AUTHN_LEVEL_DEFAULT ||
+      Connection->Used->AuthnLevel == RPC_C_AUTHN_LEVEL_NONE)
+  {
+    return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
+  }
+
+  out.BufferType = SECBUFFER_TOKEN;
+  out.cbBuffer = 0;
+  out.pvBuffer = NULL;
+
+  /* tack on a negotiate packet */
+  RPCRT4_AuthNegotiate(Connection, &out);
+  r = RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, out.pvBuffer, out.cbBuffer);
+  HeapFree(GetProcessHeap(), 0, out.pvBuffer);
+
+  return r;
 }
 
 /***********************************************************************
@@ -437,6 +563,16 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
       buffer_ptr += data_length;
       first_flag = 0;
     }
+  }
+
+  /* respond to authorization request */
+  if (common_hdr.ptype == PKT_BIND_ACK && common_hdr.auth_len > 8)
+  {
+    unsigned int offset;
+
+    offset = common_hdr.frag_len - hdr_length - common_hdr.auth_len;
+    RPCRT_AuthorizeConnection(Connection, (LPBYTE)pMsg->Buffer + offset,
+                              common_hdr.auth_len);
   }
 
   /* success */

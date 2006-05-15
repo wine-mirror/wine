@@ -981,9 +981,45 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrinc
                           RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr,
                           RPC_SECURITY_QOS *SecurityQos )
 {
-    FIXME("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_a((const char*)ServerPrincName),
-          AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
-    return RPC_S_OK;
+  RpcBinding* bind = (RpcBinding*)Binding;
+  RPC_STATUS r;
+
+  TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_a((const char*)ServerPrincName),
+        AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
+
+  if (!AuthIdentity)
+    return RPC_S_INVALID_AUTH_IDENTITY;
+
+  if (AuthnLevel != RPC_C_AUTHN_LEVEL_CONNECT)
+  {
+    FIXME("unsupported AuthnLevel %lu\n", AuthnLevel);
+    return RPC_S_UNKNOWN_AUTHN_LEVEL;
+  }
+
+  if (AuthnSvc != RPC_C_AUTHN_WINNT)
+  {
+    FIXME("unsupported AuthnSvc %lu\n", AuthnSvc);
+    return RPC_S_UNKNOWN_AUTHN_SERVICE;
+  }
+
+  if (AuthzSvr)
+  {
+    FIXME("unsupported AuthzSvr %lu\n", AuthzSvr);
+    return RPC_S_UNKNOWN_AUTHZ_SERVICE;
+  }
+
+  if (SecurityQos)
+    FIXME("SecurityQos ignored\n");
+
+  r = AcquireCredentialsHandleA(NULL, "NTLM", SECPKG_CRED_OUTBOUND, NULL,
+                                AuthIdentity, NULL, NULL, &bind->cred, &bind->exp);
+  if (r == ERROR_SUCCESS)
+  {
+    bind->AuthnSvc = AuthnSvc;
+    bind->AuthnLevel = AuthnLevel;
+  }
+  TRACE("AcquireCredentialsHandleA returned %08lx\n", r);
+  return r;
 }
 
 /***********************************************************************

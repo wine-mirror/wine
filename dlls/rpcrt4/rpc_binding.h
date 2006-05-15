@@ -22,6 +22,7 @@
 #define __WINE_RPC_BINDING_H
 
 #include "wine/rpcss_shared.h"
+#include "security.h"
 
 struct protseq_ops;
 
@@ -36,6 +37,11 @@ typedef struct _RpcConnection
   USHORT MaxTransmissionSize;
   /* The active interface bound to server. */
   RPC_SYNTAX_IDENTIFIER ActiveInterface;
+
+  /* authentication */
+  CtxtHandle ctx;
+  TimeStamp exp;
+  ULONG attr;
 } RpcConnection;
 
 struct protseq_ops {
@@ -62,6 +68,12 @@ typedef struct _RpcBinding
   RPC_BLOCKING_FN BlockingFn;
   ULONG ServerTid;
   RpcConnection* FromConn;
+
+  /* authentication */
+  unsigned long AuthnLevel;
+  unsigned long AuthnSvc;
+  CredHandle cred;
+  TimeStamp exp;
 } RpcBinding;
 
 LPSTR RPCRT4_strndupA(LPCSTR src, INT len);
