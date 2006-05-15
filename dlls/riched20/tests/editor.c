@@ -747,6 +747,70 @@ static void test_EM_SCROLL()
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_SETUNDOLIMIT()
+{
+  /* cases we test for:
+   * default behaviour - limiting at 100 undo's 
+   * undo disabled - setting a limit of 0
+   * undo limited -  undo limit set to some to some number, like 2
+   * bad input - sending a negative number should default to 100 undo's */
+ 
+  HWND hwndRichEdit = new_richedit(NULL);
+  CHARRANGE cr;
+  int i;
+  int result;
+  
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "x");
+  cr.cpMin = 0;
+  cr.cpMax = 1;
+  SendMessage(hwndRichEdit, WM_COPY, 0, 0);
+    /*Load "x" into the clipboard. Paste is an easy, undo'able operation.
+      also, multiple pastes don't combine like WM_CHAR would */
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
+
+  /* first case - check the default */
+  SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0); 
+  for (i=0; i<101; i++) /* Put 101 undo's on the stack */
+    SendMessage(hwndRichEdit, WM_PASTE, 0, 0); 
+  for (i=0; i<100; i++) /* Undo 100 of them */
+    SendMessage(hwndRichEdit, WM_UNDO, 0, 0); 
+  ok(!SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0),
+     "EM_SETUNDOLIMIT allowed more than a hundred undo's by default.\n");
+
+  /* second case - cannot undo */
+  SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0, 0); 
+  SendMessage(hwndRichEdit, EM_SETUNDOLIMIT, 0, 0); 
+  SendMessage(hwndRichEdit,
+              WM_PASTE, 0, 0); /* Try to put something in the undo stack */
+  ok(!SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0),
+     "EM_SETUNDOLIMIT allowed undo with UNDOLIMIT set to 0\n");
+
+  /* third case - set it to an arbitrary number */
+  SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0, 0); 
+  SendMessage(hwndRichEdit, EM_SETUNDOLIMIT, 2, 0); 
+  SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
+  SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
+  SendMessage(hwndRichEdit, WM_PASTE, 0, 0); 
+  /* If SETUNDOLIMIT is working, there should only be two undo's after this */
+  ok(SendMessage(hwndRichEdit, EM_CANUNDO, 0,0),
+     "EM_SETUNDOLIMIT didn't allow the first undo with UNDOLIMIT set to 2\n");
+  SendMessage(hwndRichEdit, WM_UNDO, 0, 0);
+  ok(SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0),
+     "EM_SETUNDOLIMIT didn't allow a second undo with UNDOLIMIT set to 2\n");
+  SendMessage(hwndRichEdit, WM_UNDO, 0, 0); 
+  ok(!SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0),
+     "EM_SETUNDOLIMIT allowed a third undo with UNDOLIMIT set to 2\n");
+  
+  /* fourth case - setting negative numbers should default to 100 undos */
+  SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0); 
+  result = SendMessage(hwndRichEdit, EM_SETUNDOLIMIT, -1, 0);
+  ok (result == 100, 
+      "EM_SETUNDOLIMIT returned %d when set to -1, instead of 100",result);
+      
+  DestroyWindow(hwndRichEdit);
+}
+
+
 START_TEST( editor )
 {
   MSG msg;
@@ -764,6 +828,7 @@ START_TEST( editor )
   test_EM_SETOPTIONS();
   test_WM_GETTEXT();
   test_EM_AUTOURLDETECT();
+  test_EM_SETUNDOLIMIT();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

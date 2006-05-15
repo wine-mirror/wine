@@ -117,7 +117,7 @@
   + EM_SETTEXTEX 3.0 (unicode only, no rich text insertion handling, proper style?)
   - EM_SETTEXTMODE 2.0
   - EM_SETTYPOGRAPHYOPTIONS 3.0
-  - EM_SETUNDOLIMIT 2.0
+  + EM_SETUNDOLIMIT 2.0
   + EM_SETWORDBREAKPROC (used only for word movement at the moment)
   - EM_SETWORDBREAKPROCEX
   - EM_SETWORDWRAPMODE 1.0asian
@@ -229,6 +229,9 @@
 #include "imm.h"
 #include "textserv.h"
 #include "rtf.h"
+
+#define STACK_SIZE_DEFAULT  100
+#define STACK_SIZE_MAX     1000
  
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
@@ -1119,7 +1122,9 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->bCaretAtEnd = FALSE;
   ed->nEventMask = 0;
   ed->nModifyStep = 0;
-  ed->pUndoStack = ed->pRedoStack = NULL;
+  ed->pUndoStack = ed->pRedoStack = ed->pUndoStackBottom = NULL;
+  ed->nUndoStackSize = 0;
+  ed->nUndoLimit = STACK_SIZE_DEFAULT;
   ed->nUndoMode = umAddToUndo;
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
@@ -1426,7 +1431,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETTABSTOPS)
   UNSUPPORTED_MSG(EM_SETTARGETDEVICE)
   UNSUPPORTED_MSG(EM_SETTYPOGRAPHYOPTIONS)
-  UNSUPPORTED_MSG(EM_SETUNDOLIMIT)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
   UNSUPPORTED_MSG(EM_SHOWSCROLLBAR)
   UNSUPPORTED_MSG(WM_SETFONT)
@@ -1476,6 +1480,17 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_GetSelection(editor, (int *)&pRange->cpMin, (int *)&pRange->cpMax);
     TRACE("EM_EXGETSEL = (%ld,%ld)\n", pRange->cpMin, pRange->cpMax);
     return 0;
+  }
+  case EM_SETUNDOLIMIT:
+  {
+    if ((int)wParam < 0)
+      editor->nUndoLimit = STACK_SIZE_DEFAULT;
+    else
+      editor->nUndoLimit = min(wParam, STACK_SIZE_MAX);
+    /* Setting a max stack size keeps wine from getting killed 
+      for hogging memory. Windows allocates all this memory at once, so
+      no program would realisticly set a value above our maxiumum. */  
+    return editor->nUndoLimit;
   }
   case EM_CANUNDO:
     return editor->pUndoStack != NULL;

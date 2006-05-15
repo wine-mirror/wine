@@ -298,7 +298,9 @@ typedef struct tagME_TextEditor
   BOOL bCaretAtEnd;
   int nEventMask;
   int nModifyStep;
-  ME_DisplayItem *pUndoStack, *pRedoStack;
+  ME_DisplayItem *pUndoStack, *pRedoStack, *pUndoStackBottom;
+  int nUndoStackSize;
+  int nUndoLimit;
   ME_UndoMode nUndoMode;
   int nParagraphs;
   int nLastSelStart, nLastSelEnd;
