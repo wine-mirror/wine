@@ -2089,7 +2089,7 @@ void WINAPI NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
   size = pStubMsg->MaxCount;
 
-  SizeVariance(pStubMsg);
+  SizeConformance(pStubMsg);
 
   ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
