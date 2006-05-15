@@ -59,9 +59,7 @@ static void test_mktime(void)
 
     ok (res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
     /* Bias may be positive or negative, to use offset of one day */
-    secs= SECSPERDAY - (tzinfo.Bias +
-      ( res == TIME_ZONE_ID_STANDARD ? tzinfo.StandardBias :
-      ( res == TIME_ZONE_ID_DAYLIGHT ? tzinfo.DaylightBias : 0 ))) * SECSPERMIN;
+    secs= SECSPERDAY - tzinfo.Bias * SECSPERMIN;
     my_tm.tm_mday = 1 + secs/SECSPERDAY;
     secs = secs % SECSPERDAY;
     my_tm.tm_hour = secs / SECSPERHOUR;
@@ -150,9 +148,7 @@ static void test_localtime(void)
 {
     TIME_ZONE_INFORMATION tzinfo;
     DWORD res =  GetTimeZoneInformation(&tzinfo);
-    time_t gmt = (time_t)(SECSPERDAY + (tzinfo.Bias +
-      ( res == TIME_ZONE_ID_STANDARD ? tzinfo.StandardBias :
-      ( res == TIME_ZONE_ID_DAYLIGHT ? tzinfo.DaylightBias : 0 ))) * SECSPERMIN);
+    time_t gmt = (time_t)(SECSPERDAY + tzinfo.Bias * SECSPERMIN);
 
     char TZ_env[256];
     struct tm* lt;
@@ -161,9 +157,8 @@ static void test_localtime(void)
     lt = localtime(&gmt);
     ok(((lt->tm_year == 70) && (lt->tm_mon  == 0) && (lt->tm_yday  == 1) &&
 	(lt->tm_mday ==  2) && (lt->tm_wday == 5) && (lt->tm_hour  == 0) &&
-	(lt->tm_min  ==  0) && (lt->tm_sec  == 0) && (lt->tm_isdst ==
-                                                      (res == TIME_ZONE_ID_DAYLIGHT))),
-       "Wrong date:Year %4d mon %2d yday %3d mday %2d wday %1d hour%2d min %2d sec %2d dst %2d\n",
+	(lt->tm_min  ==  0) && (lt->tm_sec  == 0) && (lt->tm_isdst == 0)),
+       "Wrong date:Year %4d mon %2d yday %3d mday %2d wday %1d hour %2d min %2d sec %2d dst %2d\n",
        lt->tm_year, lt->tm_mon, lt->tm_yday, lt->tm_mday, lt->tm_wday, lt->tm_hour, 
        lt->tm_min, lt->tm_sec, lt->tm_isdst); 
 
@@ -172,12 +167,24 @@ static void test_localtime(void)
     lt = localtime(&gmt);
     ok(((lt->tm_year == 70) && (lt->tm_mon  == 0) && (lt->tm_yday  == 1) &&
 	(lt->tm_mday ==  2) && (lt->tm_wday == 5) && (lt->tm_hour  == 0) &&
-	(lt->tm_min  ==  0) && (lt->tm_sec  == 0) && (lt->tm_isdst ==
-                                                      (res == TIME_ZONE_ID_DAYLIGHT))),
-       "Wrong date:Year %4d mon %2d yday %3d mday %2d wday %1d hour%2d min %2d sec %2d dst %2d\n",
+	(lt->tm_min  ==  0) && (lt->tm_sec  == 0) && (lt->tm_isdst == 0)),
+       "Wrong date:Year %4d mon %2d yday %3d mday %2d wday %1d hour %2d min %2d sec %2d dst %2d\n",
        lt->tm_year, lt->tm_mon, lt->tm_yday, lt->tm_mday, lt->tm_wday, lt->tm_hour, 
        lt->tm_min, lt->tm_sec, lt->tm_isdst); 
     putenv(TZ_env);
+
+    /* June 22 */
+    gmt += 201 * SECSPERDAY +
+        ( res == TIME_ZONE_ID_STANDARD ? tzinfo.StandardBias :
+        ( res == TIME_ZONE_ID_DAYLIGHT ? tzinfo.DaylightBias : 0 )) * SECSPERMIN;
+    lt = localtime(&gmt);
+    ok(((lt->tm_year == 70) && (lt->tm_mon  == 6) && (lt->tm_yday  == 202) &&
+	(lt->tm_mday == 22) && (lt->tm_wday == 3) && (lt->tm_hour  == 0) &&
+	(lt->tm_min  ==  0) && (lt->tm_sec  == 0) && (lt->tm_isdst ==
+                                                      (res == TIME_ZONE_ID_DAYLIGHT))),
+       "Wrong date:Year %4d mon %2d yday %3d mday %2d wday %1d hour %2d min %2d sec %2d dst %2d\n",
+       lt->tm_year, lt->tm_mon, lt->tm_yday, lt->tm_mday, lt->tm_wday, lt->tm_hour, 
+       lt->tm_min, lt->tm_sec, lt->tm_isdst); 
 }
 static void test_strdate(void)
 {
