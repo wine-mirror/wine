@@ -130,6 +130,15 @@ static LONG getItem(HWND hdex, int idx, LPSTR textBuffer)
     return (LONG)SendMessage(hdex, HDM_GETITEMA, (WPARAM)idx, (LPARAM)&hdItem);
 }
 
+static void addReadDelItem(HWND hdex, HDITEMA *phdiCreate, int maskRead, HDITEMA *phdiRead)
+{
+    ok(SendMessage(hdex, HDM_INSERTITEMA, (WPARAM)0, (LPARAM)phdiCreate)!=-1, "Adding item failed\n");
+    ZeroMemory(phdiRead, sizeof(HDITEMA));
+    phdiRead->mask = maskRead;
+    ok(SendMessage(hdex, HDM_GETITEMA, (WPARAM)0, (LPARAM)phdiRead)!=0, "Getting item data failed\n");
+    ok(SendMessage(hdex, HDM_DELETEITEM, (WPARAM)0, (LPARAM)0)!=0, "Deleteing item failed\n");
+}
+
 static HWND create_header_control (void)
 {
     HWND handle;
@@ -207,6 +216,59 @@ static const WCHAR pszUniTestW[] = {'T','S','T',0};
     ok(res == i, "Got Item Count as %ld\n", res);\
 }
 
+static void check_auto_format(void)
+{
+    HDITEMA hdiCreate;
+    HDITEMA hdiRead;
+    ZeroMemory(&hdiCreate, sizeof(HDITEMA));
+
+    /* Windows implicitly sets some format bits in INSERTITEM */
+
+    /* HDF_STRING is automaticaly set and cleared for no text */
+    hdiCreate.mask = HDI_TEXT|HDI_WIDTH|HDI_FORMAT;
+    hdiCreate.pszText = "Test";
+    hdiCreate.cxy = 100;
+    hdiCreate.fmt=HDF_CENTER;
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
+    ok(hdiRead.fmt == (HDF_STRING|HDF_CENTER), "HDF_STRING not set automatically (fmt=%x)\n", hdiRead.fmt);
+
+    hdiCreate.mask = HDI_WIDTH|HDI_FORMAT;
+    hdiCreate.pszText = "Test";
+    hdiCreate.fmt = HDF_CENTER|HDF_STRING;
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
+    ok(hdiRead.fmt == (HDF_CENTER), "HDF_STRING should be automatically cleared (fmt=%x)\n", hdiRead.fmt);
+
+    /* HDF_BITMAP is automatically set and cleared for a NULL bitmap or no bitmap */
+    hdiCreate.mask = HDI_BITMAP|HDI_WIDTH|HDI_FORMAT;
+    hdiCreate.hbm = CreateBitmap(16, 16, 1, 8, NULL);
+    hdiCreate.fmt = HDF_CENTER;
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
+    ok(hdiRead.fmt == (HDF_BITMAP|HDF_CENTER), "HDF_BITMAP not set automatically (fmt=%x)\n", hdiRead.fmt);
+    DeleteObject(hdiCreate.hbm);
+
+    hdiCreate.hbm = NULL;
+    hdiCreate.fmt = HDF_CENTER|HDF_BITMAP;
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
+    ok(hdiRead.fmt == HDF_CENTER, "HDF_BITMAP not cleared automatically for NULL bitmap (fmt=%x)\n", hdiRead.fmt);
+
+    hdiCreate.mask = HDI_WIDTH|HDI_FORMAT;
+    hdiCreate.fmt = HDF_CENTER|HDF_BITMAP;
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
+    ok(hdiRead.fmt == HDF_CENTER, "HDF_BITMAP not cleared automatically for no bitmap (fmt=%x)\n", hdiRead.fmt);
+
+    /* HDF_IMAGE is automatically set but not cleared */
+    hdiCreate.mask = HDI_IMAGE|HDI_WIDTH|HDI_FORMAT;
+    hdiCreate.iImage = 17;
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
+    ok(hdiRead.fmt == (HDF_IMAGE|HDF_CENTER), "HDF_IMAGE not set automatically (fmt=%x)\n", hdiRead.fmt);
+
+    hdiCreate.mask = HDI_WIDTH|HDI_FORMAT;
+    hdiCreate.fmt = HDF_CENTER|HDF_IMAGE;
+    hdiCreate.iImage = 0;
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
+    ok(hdiRead.fmt == (HDF_CENTER|HDF_IMAGE), "HDF_IMAGE shouldn't be cleared automatically (fmt=%x)\n", hdiRead.fmt);
+}
+
 static void test_header_control (void)
 {
     LONG res;
@@ -277,6 +339,9 @@ static void test_header_control (void)
     setItem(hWndHeader, 0, LPSTR_TEXTCALLBACKA, TRUE);
     /* unexpected notifies cleared by notifies_received in setItem */
     delItem(hWndHeader, 0);
+
+    check_auto_format();
+    TEST_GET_ITEMCOUNT(6);
 
     res = delItem(hWndHeader, 5);
     ok(res == 1, "Deleting Out of Range item should fail with 1 (%ld)\n", res);

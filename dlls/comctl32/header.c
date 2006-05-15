@@ -1156,8 +1156,19 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     ZeroMemory(lpItem, sizeof(HEADER_ITEM));
     HEADER_StoreHDItemInHeader(lpItem, phdi, bUnicode);
 
+    /* set automatically some format bits */
     if (phdi->mask & HDI_TEXT)
         lpItem->fmt |= HDF_STRING;
+    else
+        lpItem->fmt &= ~HDF_STRING;
+
+    if (lpItem->hbm != NULL)
+        lpItem->fmt |= HDF_BITMAP;
+    else
+        lpItem->fmt &= ~HDF_BITMAP;
+
+    if (phdi->mask & HDI_IMAGE)
+        lpItem->fmt |= HDF_IMAGE;
 
     lpItem->iOrder = iOrder;
 
