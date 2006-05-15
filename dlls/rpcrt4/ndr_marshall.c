@@ -2283,7 +2283,7 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                unsigned char *pMemory,
                                                PFORMAT_STRING pFormat)
 {
-  ULONG count, def;
+  ULONG i, count, def;
   BOOL variance_present;
   unsigned char alignment;
 
@@ -2314,7 +2314,8 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
-  for (count = 0; count < pStubMsg->ActualCount; count++)
+  count = pStubMsg->ActualCount;
+  for (i = 0; i < count; i++)
     pMemory = ComplexMarshall(pStubMsg, pMemory, pFormat, NULL);
 
   STD_OVERFLOW_CHECK(pStubMsg);
@@ -2330,7 +2331,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  PFORMAT_STRING pFormat,
                                                  unsigned char fMustAlloc)
 {
-  ULONG count, esize;
+  ULONG i, count, esize;
   unsigned char alignment;
   unsigned char *pMemory;
   unsigned char *Buffer;
@@ -2364,7 +2365,8 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
   pMemory = *ppMemory;
-  for (count = 0; count < pStubMsg->ActualCount; count++)
+  count = pStubMsg->ActualCount;
+  for (i = 0; i < count; i++)
     pMemory = ComplexUnmarshall(pStubMsg, pMemory, pFormat, NULL, fMustAlloc);
 
   return NULL;
@@ -2377,7 +2379,7 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                       unsigned char *pMemory,
                                       PFORMAT_STRING pFormat)
 {
-  ULONG count, def;
+  ULONG i, count, def;
   unsigned char alignment;
   BOOL variance_present;
 
@@ -2408,7 +2410,8 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
   ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
-  for (count=0; count < pStubMsg->ActualCount; count++)
+  count = pStubMsg->ActualCount;
+  for (i = 0; i < count; i++)
     pMemory = ComplexBufferSize(pStubMsg, pMemory, pFormat, NULL);
 }
 
@@ -2418,7 +2421,7 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
-  ULONG count, esize;
+  ULONG i, count, esize;
   unsigned char alignment;
   unsigned char *Buffer;
   unsigned long SavedMemorySize;
@@ -2450,7 +2453,8 @@ unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 
   MemorySize = esize * pStubMsg->MaxCount;
 
-  for (count = 0; count < pStubMsg->ActualCount; count++)
+  count = pStubMsg->ActualCount;
+  for (i = 0; i < count; i++)
     ComplexStructMemorySize(pStubMsg, pFormat);
 
   pStubMsg->MemorySize = SavedMemorySize;
@@ -2466,7 +2470,7 @@ void WINAPI NdrComplexArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-  ULONG count, def;
+  ULONG i, count, def;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
@@ -2486,7 +2490,8 @@ void WINAPI NdrComplexArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, pStubMsg->MaxCount);
   TRACE("variance = %ld\n", pStubMsg->ActualCount);
 
-  for (count=0; count < pStubMsg->ActualCount; count++)
+  count = pStubMsg->ActualCount;
+  for (i = 0; i < count; i++)
     pMemory = ComplexFree(pStubMsg, pMemory, pFormat, NULL);
 }
 
