@@ -65,6 +65,7 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
+        IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->resource.wineD3DDevice;
         TRACE("(%p) : cleaning up\n", This);
         if (This->glDescription.textureName != 0) { /* release the openGL texture.. */
             ENTER_GL();
@@ -84,6 +85,8 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         }
 
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
+        if(iface == device->ddraw_primary)
+            device->ddraw_primary = NULL;
 
         TRACE("(%p) Released\n", This);
         HeapFree(GetProcessHeap(), 0, This);
