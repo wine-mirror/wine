@@ -1491,11 +1491,17 @@ void WINAPI NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrSimpleStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
-  /* unsigned size = *(LPWORD)(pFormat+2); */
-  FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
+  unsigned short size = *(LPWORD)(pFormat+2);
+
+  TRACE("(%p,%p)\n", pStubMsg, pFormat);
+
+  ALIGN_POINTER(pStubMsg->Buffer, pFormat[1] + 1);
+  pStubMsg->MemorySize += size;
+  pStubMsg->Buffer += size;
+
   if (pFormat[0] != RPC_FC_STRUCT)
     EmbeddedPointerMemorySize(pStubMsg, pFormat+4);
-  return 0;
+  return size;
 }
 
 /***********************************************************************
