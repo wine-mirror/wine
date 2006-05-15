@@ -114,21 +114,21 @@ static void HEADER_DisposeItem(HEADER_ITEM *lpItem)
     }
 }
 
-static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, HDITEMW *phdi, BOOL fUnicode)
+static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, UINT mask, HDITEMW *phdi, BOOL fUnicode)
 {
-    if (phdi->mask & HDI_BITMAP)
+    if (mask & HDI_BITMAP)
         lpItem->hbm = phdi->hbm;
 
-    if (phdi->mask & HDI_FORMAT)
+    if (mask & HDI_FORMAT)
         lpItem->fmt = phdi->fmt;
 
-    if (phdi->mask & HDI_LPARAM)
+    if (mask & HDI_LPARAM)
         lpItem->lParam = phdi->lParam;
 
-    if (phdi->mask & HDI_WIDTH)
+    if (mask & HDI_WIDTH)
         lpItem->cxy = phdi->cxy;
 
-    if (phdi->mask & HDI_IMAGE) 
+    if (mask & HDI_IMAGE) 
     {
         lpItem->iImage = phdi->iImage;
         if (phdi->iImage == I_IMAGECALLBACK)
@@ -137,7 +137,7 @@ static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, HDITEMW *phdi, BOOL 
             lpItem->callbackMask &= ~HDI_IMAGE;
     }
 
-    if (phdi->mask & HDI_TEXT)
+    if (mask & HDI_TEXT)
     {
         if (lpItem->pszText)
         {
@@ -1092,6 +1092,7 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     HEADER_ITEM *lpItem;
     INT       iOrder;
     UINT      i;
+    UINT      copyMask;
 
     if ((phdi == NULL) || (nItem < 0))
 	return -1;
@@ -1154,7 +1155,9 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 
     lpItem = &infoPtr->items[nItem];
     ZeroMemory(lpItem, sizeof(HEADER_ITEM));
-    HEADER_StoreHDItemInHeader(lpItem, phdi, bUnicode);
+    /* cxy, fmt and lParam are copied even if not in the HDITEM mask */
+    copyMask = phdi->mask | HDI_WIDTH | HDI_FORMAT | HDI_LPARAM;
+    HEADER_StoreHDItemInHeader(lpItem, copyMask, phdi, bUnicode);
 
     /* set automatically some format bits */
     if (phdi->mask & HDI_TEXT)
@@ -1267,7 +1270,7 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     }
 
     lpItem = &infoPtr->items[nItem];
-    HEADER_StoreHDItemInHeader(lpItem, phdi, bUnicode);
+    HEADER_StoreHDItemInHeader(lpItem, phdi->mask, phdi, bUnicode);
 
     if (phdi->mask & HDI_ORDER)
       {

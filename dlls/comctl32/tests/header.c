@@ -269,6 +269,58 @@ static void check_auto_format(void)
     ok(hdiRead.fmt == (HDF_CENTER|HDF_IMAGE), "HDF_IMAGE shouldn't be cleared automatically (fmt=%x)\n", hdiRead.fmt);
 }
 
+static void check_auto_fields(void)
+{
+    HDITEMA hdiCreate;
+    HDITEMA hdiRead;
+    LRESULT res;
+
+    /* Windows stores the format, width, lparam even if they are not in the item's mask */
+    ZeroMemory(&hdiCreate, sizeof(HDITEMA));
+    hdiCreate.mask = HDI_TEXT;
+    hdiCreate.cxy = 100;
+    hdiCreate.pszText = "Test";
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_WIDTH, &hdiRead);
+    TEST_GET_ITEMCOUNT(6);
+    ok(hdiRead.cxy == hdiCreate.cxy, "cxy should be automatically set\n");
+
+    ZeroMemory(&hdiCreate, sizeof(HDITEMA));
+    hdiCreate.mask = HDI_TEXT;
+    hdiCreate.pszText = "Test";
+    hdiCreate.lParam = 0x12345678;
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_LPARAM, &hdiRead);
+    TEST_GET_ITEMCOUNT(6);
+    ok(hdiRead.lParam == hdiCreate.lParam, "lParam should be automatically set\n");
+
+    ZeroMemory(&hdiCreate, sizeof(HDITEMA));
+    hdiCreate.mask = HDI_TEXT;
+    hdiCreate.pszText = "Test";
+    hdiCreate.fmt = HDF_STRING|HDF_CENTER;
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
+    TEST_GET_ITEMCOUNT(6);
+    ok(hdiRead.fmt == hdiCreate.fmt, "fmt should be automatically set\n");
+
+    /* others fields are not set */
+    ZeroMemory(&hdiCreate, sizeof(HDITEMA));
+    hdiCreate.mask = HDI_TEXT;
+    hdiCreate.pszText = "Test";
+    hdiCreate.hbm = CreateBitmap(16, 16, 1, 8, NULL);
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_BITMAP, &hdiRead);
+    TEST_GET_ITEMCOUNT(6);
+    ok(hdiRead.hbm == NULL, "hbm should not be automatically set\n");
+    DeleteObject(hdiCreate.hbm);
+
+    ZeroMemory(&hdiCreate, sizeof(HDITEMA));
+    hdiCreate.mask = HDI_IMAGE;
+    hdiCreate.iImage = 17;
+    hdiCreate.pszText = "Test";
+    addReadDelItem(hWndHeader, &hdiCreate, HDI_TEXT, &hdiRead);
+    TEST_GET_ITEMCOUNT(6);
+    ok(hdiRead.pszText==NULL, "pszText shouldn't be automatically set\n");
+
+    /* field from comctl >4.0 not tested as the system probably won't touch them */
+}
+
 static void test_header_control (void)
 {
     LONG res;
@@ -341,6 +393,8 @@ static void test_header_control (void)
     delItem(hWndHeader, 0);
 
     check_auto_format();
+    TEST_GET_ITEMCOUNT(6);
+    check_auto_fields();
     TEST_GET_ITEMCOUNT(6);
 
     res = delItem(hWndHeader, 5);
