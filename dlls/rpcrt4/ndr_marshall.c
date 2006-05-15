@@ -3386,44 +3386,13 @@ static PFORMAT_STRING get_arm_offset_from_union_arm_selector(PMIDL_STUB_MESSAGE 
 }
 
 static PFORMAT_STRING get_non_encapsulated_union_arm(PMIDL_STUB_MESSAGE pStubMsg,
-                                                     unsigned char *pMemory,
+                                                     ULONG value,
                                                      PFORMAT_STRING pFormat)
 {
-    ULONG value;
-
-    pFormat = ComputeConformanceOrVariance(pStubMsg, pMemory, pFormat,
-                                           0, &value);
-    TRACE("got switch value %lx\n", value);
     pFormat += *(const SHORT*)pFormat;
     pFormat += 2;
 
     return get_arm_offset_from_union_arm_selector(pStubMsg, value, pFormat);
-}
-
-static unsigned char *get_conformance_address(PMIDL_STUB_MESSAGE pStubMsg,
-                                              unsigned char *pMemory,
-                                              PFORMAT_STRING pFormat)
-{
-    short ofs = *(short *)&pFormat[2];
-    LPVOID ptr = NULL;
-
-    switch (pFormat[0] & 0xf0)
-    {
-    case RPC_FC_NORMAL_CONFORMANCE:
-        ptr = pMemory;
-        break;
-    default:
-        FIXME("Conformance type %x\n", pFormat[0]);
-        return NULL;
-    }
-
-    if(pFormat[1])
-    {
-        FIXME("Conformance op %x\n", pFormat[1]);
-        return NULL;
-    }
-
-    return (unsigned char *)ptr + ofs;
 }
 
 /***********************************************************************
@@ -3433,18 +3402,21 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionMarshall(PMIDL_STUB_MESSAGE pStub
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    unsigned char *discriminant;
     unsigned short type;
+    unsigned char switch_type;
 
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
     pFormat++;
 
-    /* Marshall discriminant */
-    discriminant = get_conformance_address(pStubMsg, pMemory, pFormat + 1);
-    NdrBaseTypeMarshall(pStubMsg, discriminant, pFormat);
+    switch_type = *pFormat;
     pFormat++;
 
-    pFormat = get_non_encapsulated_union_arm(pStubMsg, pMemory, pFormat);
+    pFormat = ComputeConformance(pStubMsg, pMemory, pFormat, 0);
+    TRACE("got switch value 0x%lx\n", pStubMsg->MaxCount);
+    /* Marshall discriminant */
+    NdrBaseTypeMarshall(pStubMsg, (unsigned char *)&pStubMsg->MaxCount, &switch_type);
+
+    pFormat = get_non_encapsulated_union_arm(pStubMsg, pStubMsg->MaxCount, pFormat);
     if(!pFormat)
         return NULL;
 
@@ -3591,14 +3563,20 @@ void WINAPI NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     unsigned short type;
+    unsigned char switch_type;
+
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
-
     pFormat++;
+
+    switch_type = *pFormat;
+    pFormat++;
+
+    pFormat = ComputeConformance(pStubMsg, pMemory, pFormat, 0);
+    TRACE("got switch value 0x%lx\n", pStubMsg->MaxCount);
     /* Add discriminant size */
-    NdrBaseTypeBufferSize(pStubMsg, pMemory, pFormat);
-    pFormat++;
+    NdrBaseTypeBufferSize(pStubMsg, (unsigned char *)&pStubMsg->MaxCount, &switch_type);
 
-    pFormat = get_non_encapsulated_union_arm(pStubMsg, pMemory, pFormat);
+    pFormat = get_non_encapsulated_union_arm(pStubMsg, pStubMsg->MaxCount, pFormat);
     if(!pFormat)
         return;
 
