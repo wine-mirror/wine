@@ -337,6 +337,7 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
      lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr1)==0,
      "GetTempFileNameA returned '%s' which doesn't match '%s' or '%s'. id=%x\n",
      newdir,tmpstr,tmpstr1,id);
+  ok(DeleteFileA(newdir),"Couldn't delete the temporary file we just created\n");     
 
   ok((id=GetTempFileNameA(tmppath,NULL,0,newdir)),"GetTempFileNameA failed\n");
   sprintf(tmpstr,"%.4x.tmp",id & 0xffff);
@@ -345,7 +346,7 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
      lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr1)==0,
      "GetTempFileNameA returned '%s' which doesn't match '%s' or '%s'. id=%x\n",
      newdir,tmpstr,tmpstr1,id);
-
+  ok(DeleteFileA(newdir),"Couldn't delete the temporary file we just created\n");
 
 /* Find first valid drive letter that is neither newdir[0] nor curDrive */
   drives = GetLogicalDrives() & ~(1<<(newdir[0]-'A'));
@@ -361,6 +362,7 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
    really understand how they work.
    More formal tests should be done along with CreateFile tests
 */
+  ok((id=GetTempFileNameA(tmppath,"path",0,newdir)),"GetTempFileNameA failed\n");
   ok(CreateDirectoryA(newdir,NULL)==0,
      "CreateDirectoryA succeeded even though a file of the same name exists\n");
   ok(DeleteFileA(newdir),"Couldn't delete the temporary file we just created\n");
