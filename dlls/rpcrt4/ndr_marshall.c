@@ -1523,11 +1523,33 @@ unsigned long WINAPI EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
   case RPC_FC_USER_MARSHAL:
     return *(const WORD*)&pFormat[4];
   case RPC_FC_NON_ENCAPSULATED_UNION:
-    return NdrNonEncapsulatedUnionMemorySize(pStubMsg, pFormat);
+    pFormat += 2;
+    if (pStubMsg->fHasNewCorrDesc)
+        pFormat += 6;
+    else
+        pFormat += 4;
+
+    pFormat += *(const SHORT*)pFormat;
+    return *(const SHORT*)pFormat;
   default:
     FIXME("unhandled embedded type %02x\n", *pFormat);
   }
   return 0;
+}
+
+
+unsigned long WINAPI EmbeddedComplexMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                               PFORMAT_STRING pFormat)
+{
+  NDR_MEMORYSIZE m = NdrMemorySizer[*pFormat & NDR_TABLE_MASK];
+
+  if (!m)
+  {
+    FIXME("no memorysizer for data type=%02x\n", *pFormat);
+    return 0;
+  }
+
+  return m(pStubMsg, pFormat);
 }
 
 
@@ -1776,7 +1798,7 @@ unsigned char * WINAPI ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
   return pMemory;
 }
 
-unsigned long WINAPI ComplexStructSize(PMIDL_STUB_MESSAGE pStubMsg,
+unsigned long WINAPI ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                        PFORMAT_STRING pFormat)
 {
   PFORMAT_STRING desc;
@@ -1814,7 +1836,7 @@ unsigned long WINAPI ComplexStructSize(PMIDL_STUB_MESSAGE pStubMsg,
       size += pFormat[1];
       pFormat += 2;
       desc = pFormat + *(const SHORT*)pFormat;
-      size += EmbeddedComplexSize(pStubMsg, desc);
+      size += EmbeddedComplexMemorySize(pStubMsg, desc);
       pFormat += 2;
       continue;
     case RPC_FC_PAD:
@@ -1940,7 +1962,6 @@ unsigned long WINAPI NdrComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned size = *(const WORD*)(pFormat+2);
   PFORMAT_STRING conf_array = NULL;
   PFORMAT_STRING pointer_desc = NULL;
-  unsigned long saved_memory_size;
 
   TRACE("(%p,%p)\n", pStubMsg, pFormat);
 
@@ -1952,9 +1973,7 @@ unsigned long WINAPI NdrComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   if (*(const WORD*)pFormat) pointer_desc = pFormat + *(const WORD*)pFormat;
   pFormat += 2;
 
-  saved_memory_size = pStubMsg->MemorySize;
-  ComplexStructSize(pStubMsg, pFormat);
-  pStubMsg->MemorySize = saved_memory_size;
+  ComplexStructMemorySize(pStubMsg, pFormat);
 
   if (conf_array)
     NdrConformantArrayMemorySize(pStubMsg, conf_array);
@@ -2333,7 +2352,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ReadVariance(pStubMsg, pFormat);
 
   Buffer = pStubMsg->Buffer;
-  esize = ComplexStructSize(pStubMsg, pFormat);
+  esize = ComplexStructMemorySize(pStubMsg, pFormat);
   pStubMsg->Buffer = Buffer;
 
   if (fMustAlloc || !*ppMemory)
@@ -2426,13 +2445,13 @@ unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   SavedMemorySize = pStubMsg->MemorySize;
 
   Buffer = pStubMsg->Buffer;
-  esize = ComplexStructSize(pStubMsg, pFormat);
+  esize = ComplexStructMemorySize(pStubMsg, pFormat);
   pStubMsg->Buffer = Buffer;
 
   MemorySize = esize * pStubMsg->MaxCount;
 
   for (count = 0; count < pStubMsg->ActualCount; count++)
-    ComplexStructSize(pStubMsg, pFormat);
+    ComplexStructMemorySize(pStubMsg, pFormat);
 
   pStubMsg->MemorySize = SavedMemorySize;
 
