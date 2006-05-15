@@ -43,8 +43,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-#define BUFFER_PARANOIA 20
-
 #if defined(__i386__)
 # define LITTLE_ENDIAN_UINT32_WRITE(pchar, uint32) \
     (*((UINT32 *)(pchar)) = (uint32))
@@ -581,12 +579,12 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   if (*pFormat == RPC_FC_C_CSTRING) {
     /* we need + 1 octet for '\0' */
     TRACE("string=%s\n", debugstr_a((char*)pMemory));
-    pStubMsg->BufferLength += strlen((char*)pMemory) + 1 + BUFFER_PARANOIA;
+    pStubMsg->BufferLength += strlen((char*)pMemory) + 1;
   }
   else if (*pFormat == RPC_FC_C_WSTRING) {
     /* we need + 2 octets for L'\0' */
     TRACE("string=%s\n", debugstr_w((LPWSTR)pMemory));
-    pStubMsg->BufferLength += strlenW((LPWSTR)pMemory)*2 + 2 + BUFFER_PARANOIA;
+    pStubMsg->BufferLength += strlenW((LPWSTR)pMemory)*2 + 2;
   }
   else {
     ERR("Unhandled string type: %#x\n", *pFormat); 
@@ -652,7 +650,7 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   len = pStubMsg->ActualCount;
 
   if (fMustAlloc || !*ppMemory)
-    *ppMemory = NdrAllocate(pStubMsg, len*esize + BUFFER_PARANOIA);
+    *ppMemory = NdrAllocate(pStubMsg, len*esize);
 
   memcpy(*ppMemory, pStubMsg->Buffer, len*esize);
 
