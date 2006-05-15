@@ -2894,15 +2894,21 @@ unsigned char *  WINAPI NdrConformantVaryingStructMarshall(PMIDL_STUB_MESSAGE pS
     }
 
     WriteConformance(pStubMsg);
-    WriteVariance(pStubMsg);
 
     ALIGN_POINTER(pStubMsg->Buffer, pCVStructFormat->alignment + 1);
 
     TRACE("memory_size = %d\n", pCVStructFormat->memory_size);
 
+    /* write constant sized part */
     pStubMsg->BufferMark = pStubMsg->Buffer;
-    memcpy(pStubMsg->Buffer, pMemory, pCVStructFormat->memory_size + pStubMsg->MaxCount * esize);
-    pStubMsg->Buffer += pCVStructFormat->memory_size + pStubMsg->MaxCount * esize;
+    memcpy(pStubMsg->Buffer, pMemory, pCVStructFormat->memory_size);
+    pStubMsg->Buffer += pCVStructFormat->memory_size;
+
+    WriteVariance(pStubMsg);
+
+    /* write array part */
+    memcpy(pStubMsg->Buffer, pMemory + pCVStructFormat->memory_size, pStubMsg->ActualCount * esize);
+    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
 
     EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
 
@@ -2942,7 +2948,6 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     case RPC_FC_CVARRAY:
         esize = *(const WORD*)(pCVArrayFormat+2);
         pCVArrayFormat = ReadConformance(pStubMsg, pCVArrayFormat + 4);
-        pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat);
         break;
     case RPC_FC_C_CSTRING:
         esize = sizeof(char);
@@ -2975,10 +2980,17 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
         *ppMemory = NdrAllocate(pStubMsg, size);
     }
 
-    /* now copy the data */
+    /* copy the constant data */
     pStubMsg->BufferMark = pStubMsg->Buffer;
-    memcpy(*ppMemory, pStubMsg->Buffer, pCVStructFormat->memory_size + pStubMsg->MaxCount * esize);
-    pStubMsg->Buffer += pCVStructFormat->memory_size + pStubMsg->MaxCount * esize;
+    memcpy(*ppMemory, pStubMsg->Buffer, pCVStructFormat->memory_size);
+    pStubMsg->Buffer += pCVStructFormat->memory_size;
+
+    pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat);
+
+    /* copy the array data */
+    memcpy(*ppMemory + pCVStructFormat->memory_size, pStubMsg->Buffer,
+           pStubMsg->ActualCount * esize);
+    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
 
     if (cvarray_type == RPC_FC_C_CSTRING)
         TRACE("string=%s\n", debugstr_a((char *)(*ppMemory + pCVStructFormat->memory_size)));
@@ -3050,13 +3062,14 @@ void WINAPI NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     }
 
     SizeConformance(pStubMsg);
-    SizeVariance(pStubMsg);
 
     ALIGN_LENGTH(pStubMsg->BufferLength, pCVStructFormat->alignment + 1);
 
     TRACE("memory_size = %d\n", pCVStructFormat->memory_size);
 
-    pStubMsg->BufferLength += pCVStructFormat->memory_size + esize * pStubMsg->MaxCount;
+    pStubMsg->BufferLength += pCVStructFormat->memory_size;
+    SizeVariance(pStubMsg);
+    pStubMsg->BufferLength += esize * pStubMsg->MaxCount;
 
     EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
@@ -3071,7 +3084,6 @@ unsigned long WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pSt
     PFORMAT_STRING pCVArrayFormat;
     ULONG esize;
     unsigned char cvarray_type;
-    ULONG size;
 
     TRACE("(%p, %p)\n", pStubMsg, pFormat);
 
@@ -3091,7 +3103,6 @@ unsigned long WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pSt
     case RPC_FC_CVARRAY:
         esize = *(const WORD*)(pCVArrayFormat+2);
         pCVArrayFormat = ReadConformance(pStubMsg, pCVArrayFormat + 4);
-        pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat);
         break;
     case RPC_FC_C_CSTRING:
         esize = sizeof(char);
@@ -3117,13 +3128,15 @@ unsigned long WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pSt
 
     TRACE("memory_size = %d\n", pCVStructFormat->memory_size);
 
-    size = pCVStructFormat->memory_size + pStubMsg->MaxCount * esize;
-    pStubMsg->Buffer += size;
-    pStubMsg->MemorySize += size;
+    pStubMsg->Buffer += pCVStructFormat->memory_size;
+    pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat);
+    pStubMsg->Buffer += pCVStructFormat->memory_size + pStubMsg->ActualCount * esize;
+
+    pStubMsg->MemorySize += pCVStructFormat->memory_size + pStubMsg->MaxCount * esize;
 
     EmbeddedPointerMemorySize(pStubMsg, pFormat);
 
-    return size;
+    return pCVStructFormat->memory_size + pStubMsg->MaxCount * esize;
 }
 
 /***********************************************************************
