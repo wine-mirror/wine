@@ -143,6 +143,14 @@ static void test_null(void)
   ok(GetLastError() == ERROR_INVALID_HANDLE, "wrong error\n");
   ok(hc == NULL, "connect failed\n");
 
+  hc = InternetOpenUrlW(hi, NULL, NULL, 0, 0, 0);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error\n");
+  ok(hc == NULL, "connect failed\n");
+
+  hc = InternetOpenUrlW(hi, szServer, NULL, 0, 0, 0);
+  ok(GetLastError() == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "wrong error\n");
+  ok(hc == NULL, "connect failed\n");
+
   InternetCloseHandle(hi);
 }
 

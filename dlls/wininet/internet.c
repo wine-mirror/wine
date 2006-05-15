@@ -2934,6 +2934,7 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
 	/* gopher doesn't seem to be implemented in wine, but it's supposed
 	 * to be supported by InternetOpenUrlA. */
     default:
+        INTERNET_SetLastError(ERROR_INTERNET_UNRECOGNIZED_SCHEME);
 	break;
     }
 
@@ -2961,6 +2962,12 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	      dwHeadersLength, dwFlags, dwContext);
 	TRACE("  flags :");
 	dump_INTERNET_FLAGS(dwFlags);
+    }
+
+    if (!lpszUrl)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        goto lend;
     }
 
     hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
