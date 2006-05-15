@@ -3188,6 +3188,20 @@ void WINAPI NdrConformantVaryingStructFree(PMIDL_STUB_MESSAGE pStubMsg,
     EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
 
+typedef struct
+{
+    unsigned char type;
+    unsigned char alignment;
+    unsigned short total_size;
+} NDR_SMFARRAY_FORMAT;
+
+typedef struct
+{
+    unsigned char type;
+    unsigned char alignment;
+    unsigned long total_size;
+} NDR_LGFARRAY_FORMAT;
+
 /***********************************************************************
  *           NdrFixedArrayMarshall [RPCRT4.@]
  */
@@ -3195,7 +3209,37 @@ unsigned char *  WINAPI NdrFixedArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
+    const NDR_SMFARRAY_FORMAT *pSmFArrayFormat = (const NDR_SMFARRAY_FORMAT *)pFormat;
+    unsigned long total_size;
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    if ((pSmFArrayFormat->type != RPC_FC_SMFARRAY) &&
+        (pSmFArrayFormat->type != RPC_FC_LGFARRAY))
+    {
+        ERR("invalid format type %x\n", pSmFArrayFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+
+    ALIGN_POINTER(pStubMsg->Buffer, pSmFArrayFormat->alignment + 1);
+
+    if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
+    {
+        total_size = pSmFArrayFormat->total_size;
+        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+    }
+    else
+    {
+        const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
+        total_size = pLgFArrayFormat->total_size;
+        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+    }
+    memcpy(pStubMsg->Buffer, pMemory, total_size);
+    pStubMsg->Buffer += total_size;
+
+    pFormat = EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
+
     return NULL;
 }
 
@@ -3207,7 +3251,40 @@ unsigned char *  WINAPI NdrFixedArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat,
                                 unsigned char fMustAlloc)
 {
-    FIXME("stub\n");
+    const NDR_SMFARRAY_FORMAT *pSmFArrayFormat = (const NDR_SMFARRAY_FORMAT *)pFormat;
+    unsigned long total_size;
+
+    TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
+
+    if ((pSmFArrayFormat->type != RPC_FC_SMFARRAY) &&
+        (pSmFArrayFormat->type != RPC_FC_LGFARRAY))
+    {
+        ERR("invalid format type %x\n", pSmFArrayFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+
+    ALIGN_POINTER(pStubMsg->Buffer, pSmFArrayFormat->alignment + 1);
+
+    if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
+    {
+        total_size = pSmFArrayFormat->total_size;
+        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+    }
+    else
+    {
+        const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
+        total_size = pLgFArrayFormat->total_size;
+        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+    }
+
+    if (fMustAlloc || !*ppMemory)
+        *ppMemory = NdrAllocate(pStubMsg, total_size);
+    memcpy(*ppMemory, pStubMsg->Buffer, total_size);
+    pStubMsg->Buffer += total_size;
+
+    pFormat = EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
+
     return NULL;
 }
 
@@ -3218,7 +3295,35 @@ void WINAPI NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
+    const NDR_SMFARRAY_FORMAT *pSmFArrayFormat = (const NDR_SMFARRAY_FORMAT *)pFormat;
+    unsigned long total_size;
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    if ((pSmFArrayFormat->type != RPC_FC_SMFARRAY) &&
+        (pSmFArrayFormat->type != RPC_FC_LGFARRAY))
+    {
+        ERR("invalid format type %x\n", pSmFArrayFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return;
+    }
+
+    ALIGN_LENGTH(pStubMsg->BufferLength, pSmFArrayFormat->alignment + 1);
+
+    if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
+    {
+        total_size = pSmFArrayFormat->total_size;
+        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+    }
+    else
+    {
+        const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
+        total_size = pLgFArrayFormat->total_size;
+        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+    }
+    pStubMsg->BufferLength += total_size;
+
+    EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
 
 /***********************************************************************
@@ -3227,8 +3332,38 @@ void WINAPI NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrFixedArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
-    return 0;
+    const NDR_SMFARRAY_FORMAT *pSmFArrayFormat = (const NDR_SMFARRAY_FORMAT *)pFormat;
+    unsigned long total_size;
+
+    TRACE("(%p, %p)\n", pStubMsg, pFormat);
+
+    if ((pSmFArrayFormat->type != RPC_FC_SMFARRAY) &&
+        (pSmFArrayFormat->type != RPC_FC_LGFARRAY))
+    {
+        ERR("invalid format type %x\n", pSmFArrayFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return 0;
+    }
+
+    ALIGN_POINTER(pStubMsg->Buffer, pSmFArrayFormat->alignment + 1);
+
+    if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
+    {
+        total_size = pSmFArrayFormat->total_size;
+        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+    }
+    else
+    {
+        const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
+        total_size = pLgFArrayFormat->total_size;
+        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+    }
+    pStubMsg->Buffer += total_size;
+    pStubMsg->MemorySize += total_size;
+
+    EmbeddedPointerMemorySize(pStubMsg, pFormat);
+
+    return total_size;
 }
 
 /***********************************************************************
@@ -3238,7 +3373,27 @@ void WINAPI NdrFixedArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
+    const NDR_SMFARRAY_FORMAT *pSmFArrayFormat = (const NDR_SMFARRAY_FORMAT *)pFormat;
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    if ((pSmFArrayFormat->type != RPC_FC_SMFARRAY) &&
+        (pSmFArrayFormat->type != RPC_FC_LGFARRAY))
+    {
+        ERR("invalid format type %x\n", pSmFArrayFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return;
+    }
+
+    if (pSmFArrayFormat->type == RPC_FC_SMFARRAY)
+        pFormat = (unsigned char *)(pSmFArrayFormat + 1);
+    else
+    {
+        const NDR_LGFARRAY_FORMAT *pLgFArrayFormat = (const NDR_LGFARRAY_FORMAT *)pFormat;
+        pFormat = (unsigned char *)(pLgFArrayFormat + 1);
+    }
+
+    EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
 
 /***********************************************************************
