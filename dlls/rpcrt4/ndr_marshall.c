@@ -2651,10 +2651,12 @@ unsigned char *  WINAPI NdrConformantStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     const NDR_CSTRUCT_FORMAT * pCStructFormat = (NDR_CSTRUCT_FORMAT*)pFormat;
-    pFormat += sizeof(NDR_CSTRUCT_FORMAT);
+    PFORMAT_STRING pCArrayFormat;
+    ULONG esize;
 
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
 
+    pFormat += sizeof(NDR_CSTRUCT_FORMAT);
     if ((pCStructFormat->type != RPC_FC_CPSTRUCT) && (pCStructFormat->type != RPC_FC_CSTRUCT))
     {
         ERR("invalid format type %x\n", pCStructFormat->type);
@@ -2662,22 +2664,35 @@ unsigned char *  WINAPI NdrConformantStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
         return NULL;
     }
 
+    pCArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
+        pCStructFormat->offset_to_array_description;
+    if (*pCArrayFormat != RPC_FC_CARRAY)
+    {
+        ERR("invalid array format type %x\n", pCStructFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+    esize = *(const WORD*)(pCArrayFormat+2);
+
+    ComputeConformance(pStubMsg, pMemory + pCStructFormat->memory_size,
+                       pCArrayFormat + 4, 0);
+
+    WriteConformance(pStubMsg);
+
     ALIGN_POINTER(pStubMsg->Buffer, pCStructFormat->alignment + 1);
 
     TRACE("memory_size = %d\n", pCStructFormat->memory_size);
 
     /* copy constant sized part of struct */
-    memcpy(pStubMsg->Buffer, pMemory, pCStructFormat->memory_size);
-    pStubMsg->Buffer += pCStructFormat->memory_size;
+    pStubMsg->BufferMark = pStubMsg->Buffer;
+    memcpy(pStubMsg->Buffer, pMemory, pCStructFormat->memory_size + pStubMsg->MaxCount * esize);
+    pStubMsg->Buffer += pCStructFormat->memory_size + pStubMsg->MaxCount * esize;
 
-    if (pCStructFormat->offset_to_array_description)
-    {
-        PFORMAT_STRING pArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
-            pCStructFormat->offset_to_array_description;
-        NdrConformantArrayMarshall(pStubMsg, pMemory + pCStructFormat->memory_size, pArrayFormat);
-    }
     if (pCStructFormat->type == RPC_FC_CPSTRUCT)
         EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
+
+    STD_OVERFLOW_CHECK(pStubMsg);
+
     return NULL;
 }
 
@@ -2690,16 +2705,29 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
                                 unsigned char fMustAlloc)
 {
     const NDR_CSTRUCT_FORMAT * pCStructFormat = (NDR_CSTRUCT_FORMAT*)pFormat;
-    pFormat += sizeof(NDR_CSTRUCT_FORMAT);
+    PFORMAT_STRING pCArrayFormat;
+    ULONG esize;
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
+    pFormat += sizeof(NDR_CSTRUCT_FORMAT);
     if ((pCStructFormat->type != RPC_FC_CPSTRUCT) && (pCStructFormat->type != RPC_FC_CSTRUCT))
     {
         ERR("invalid format type %x\n", pCStructFormat->type);
         RpcRaiseException(RPC_S_INTERNAL_ERROR);
         return NULL;
     }
+    pCArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
+        pCStructFormat->offset_to_array_description;
+    if (*pCArrayFormat != RPC_FC_CARRAY)
+    {
+        ERR("invalid array format type %x\n", pCStructFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+    esize = *(const WORD*)(pCArrayFormat+2);
+
+    pCArrayFormat = ReadConformance(pStubMsg, pCArrayFormat + 4);
 
     ALIGN_POINTER(pStubMsg->Buffer, pCStructFormat->alignment + 1);
 
@@ -2708,35 +2736,18 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
     /* work out how much memory to allocate if we need to do so */
     if (!*ppMemory || fMustAlloc)
     {
-        SIZE_T size = pCStructFormat->memory_size;
-    
-        if (pCStructFormat->offset_to_array_description)
-        {
-            unsigned char *buffer;
-            PFORMAT_STRING pArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
-                pCStructFormat->offset_to_array_description;
-            buffer = pStubMsg->Buffer;
-            pStubMsg->Buffer += pCStructFormat->memory_size;
-            size += NdrConformantArrayMemorySize(pStubMsg, pArrayFormat);
-            pStubMsg->Buffer = buffer;
-        }
+        SIZE_T size = pCStructFormat->memory_size + pStubMsg->MaxCount * esize;
         *ppMemory = NdrAllocate(pStubMsg, size);
     }
 
     /* now copy the data */
-    memcpy(*ppMemory, pStubMsg->Buffer, pCStructFormat->memory_size);
-    pStubMsg->Buffer += pCStructFormat->memory_size;
-    if (pCStructFormat->offset_to_array_description)
-    {
-        PFORMAT_STRING pArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
-            pCStructFormat->offset_to_array_description;
-        unsigned char *pMemoryArray = *ppMemory + pCStructFormat->memory_size;
-        /* note that we pass fMustAlloc as 0 as we have already allocated the
-         * memory */
-        NdrConformantArrayUnmarshall(pStubMsg, &pMemoryArray, pArrayFormat, 0);
-    }
+    pStubMsg->BufferMark = pStubMsg->Buffer;
+    memcpy(*ppMemory, pStubMsg->Buffer, pCStructFormat->memory_size + pStubMsg->MaxCount * esize);
+    pStubMsg->Buffer += pCStructFormat->memory_size + pStubMsg->MaxCount * esize;
+
     if (pCStructFormat->type == RPC_FC_CPSTRUCT)
         EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
+
     return NULL;
 }
 
@@ -2748,29 +2759,37 @@ void WINAPI NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     const NDR_CSTRUCT_FORMAT * pCStructFormat = (NDR_CSTRUCT_FORMAT*)pFormat;
-    pFormat += sizeof(NDR_CSTRUCT_FORMAT);
+    PFORMAT_STRING pCArrayFormat;
+    ULONG esize;
+
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
 
+    pFormat += sizeof(NDR_CSTRUCT_FORMAT);
     if ((pCStructFormat->type != RPC_FC_CPSTRUCT) && (pCStructFormat->type != RPC_FC_CSTRUCT))
     {
         ERR("invalid format type %x\n", pCStructFormat->type);
         RpcRaiseException(RPC_S_INTERNAL_ERROR);
         return;
     }
+    pCArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
+        pCStructFormat->offset_to_array_description;
+    if (*pCArrayFormat != RPC_FC_CARRAY)
+    {
+        ERR("invalid array format type %x\n", pCStructFormat->type);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return;
+    }
+    esize = *(const WORD*)(pCArrayFormat+2);
+
+    pCArrayFormat = ComputeConformance(pStubMsg, pMemory + pCStructFormat->memory_size, pCArrayFormat+4, 0);
+    SizeConformance(pStubMsg);
 
     ALIGN_LENGTH(pStubMsg->BufferLength, pCStructFormat->alignment + 1);
 
     TRACE("memory_size = %d\n", pCStructFormat->memory_size);
 
-    /* add constant sized part of struct to buffer size */
-    pStubMsg->BufferLength += pCStructFormat->memory_size;
+    pStubMsg->BufferLength += pCStructFormat->memory_size + esize * pStubMsg->MaxCount;
 
-    if (pCStructFormat->offset_to_array_description)
-    {
-        PFORMAT_STRING pArrayFormat = (unsigned char*)&pCStructFormat->offset_to_array_description +
-            pCStructFormat->offset_to_array_description;
-        NdrConformantArrayBufferSize(pStubMsg, pMemory + pCStructFormat->memory_size, pArrayFormat);
-    }
     if (pCStructFormat->type == RPC_FC_CPSTRUCT)
         EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
