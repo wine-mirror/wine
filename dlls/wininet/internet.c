@@ -812,17 +812,26 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
     DWORD dwService, DWORD dwFlags, DWORD dwContext)
 {
     LPWININETAPPINFOW hIC;
-    HINTERNET rc = (HINTERNET) NULL;
+    HINTERNET rc = NULL;
 
     TRACE("(%p, %s, %i, %s, %s, %li, %li, %li)\n", hInternet, debugstr_w(lpszServerName),
 	  nServerPort, debugstr_w(lpszUserName), debugstr_w(lpszPassword),
 	  dwService, dwFlags, dwContext);
 
+    if (!lpszServerName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
     /* Clear any error information */
     INTERNET_SetLastError(0);
     hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
     if ( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
         goto lend;
+    }
 
     switch (dwService)
     {

@@ -119,8 +119,36 @@ static void test_get_cookie(void)
     ret ? "TRUE" : "FALSE", GetLastError());
 }
 
+static void test_null(void)
+{
+  HINTERNET hi, hc;
+  static const WCHAR szServer[] = { 's','e','r','v','e','r',0 };
+
+  hi = InternetOpenW(NULL, 0, NULL, NULL, 0);
+  ok(hi != NULL, "open failed\n");
+
+  hc = InternetConnectW(hi, NULL, 0, NULL, NULL, 0, 0, 0);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error\n");
+  ok(hc == NULL, "connect failed\n");
+
+  hc = InternetConnectW(hi, NULL, 0, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error\n");
+  ok(hc == NULL, "connect failed\n");
+
+  hc = InternetConnectW(hi, NULL, 0, NULL, NULL, INTERNET_SERVICE_FTP, 0, 0);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error\n");
+  ok(hc == NULL, "connect failed\n");
+
+  hc = InternetConnectW(NULL, szServer, 0, NULL, NULL, INTERNET_SERVICE_FTP, 0, 0);
+  ok(GetLastError() == ERROR_INVALID_HANDLE, "wrong error\n");
+  ok(hc == NULL, "connect failed\n");
+
+  InternetCloseHandle(hi);
+}
+
 START_TEST(internet)
 {
   InternetQueryOptionA_test();
   test_get_cookie();
+  test_null();
 }
