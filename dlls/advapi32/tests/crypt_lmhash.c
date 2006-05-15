@@ -38,6 +38,7 @@ typedef NTSTATUS (WINAPI *fnSystemFunction001)(const LPBYTE, const LPBYTE, LPBYT
 typedef NTSTATUS (WINAPI *fnSystemFunction002)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction003)(const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction004)(const struct ustring *, const struct ustring *, struct ustring *);
+typedef NTSTATUS (WINAPI *fnSystemFunction005)(const struct ustring *, const struct ustring *, struct ustring *);
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
 typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);
@@ -46,6 +47,7 @@ fnSystemFunction001 pSystemFunction001;
 fnSystemFunction002 pSystemFunction002;
 fnSystemFunction003 pSystemFunction003;
 fnSystemFunction004 pSystemFunction004;
+fnSystemFunction004 pSystemFunction005;
 fnSystemFunction006 pSystemFunction006;
 fnSystemFunction008 pSystemFunction008;
 fnSystemFunction032 pSystemFunction032;
@@ -274,6 +276,63 @@ static void test_SystemFunction004(void)
     ok(!memcmp(output, inbuf, sizeof output), "crypted data wrong\n");
 }
 
+static void test_SystemFunction005(void)
+{
+    char output[0x40], result[0x40];
+    int r;
+    struct ustring in, key, out, res;
+    char *datastr = "twinkle twinkle little star";
+    char *keystr = "byolnim";
+
+    in.Buffer = (unsigned char *) datastr;
+    in.Length = strlen(datastr);
+    in.MaximumLength = 0;
+
+    key.Buffer = (unsigned char *)keystr;
+    key.Length = strlen(keystr);
+    key.MaximumLength = 0;
+
+    out.Buffer = (unsigned char *)output;
+    out.Length = out.MaximumLength = sizeof output;
+
+    r = pSystemFunction004(&in, &key, &out);
+    ok(r == STATUS_SUCCESS, "function failed\n");
+
+    memset(result, 0, sizeof result);
+    res.Buffer = (unsigned char *)result;
+    res.Length = 0;
+    res.MaximumLength = sizeof result;
+
+    r = pSystemFunction005(&out, &key, &res);
+    ok(r == STATUS_SUCCESS, "function failed\n");
+
+    r = pSystemFunction005(&out, &key, &res);
+    ok(r == STATUS_SUCCESS, "function failed\n");
+
+    ok(res.Length == in.Length, "Length wrong\n");
+    ok(!memcmp(res.Buffer, in.Buffer, in.Length), "data wrong\n");
+
+    out.Length = 0;
+    out.MaximumLength = 0;
+    r = pSystemFunction005(&out, &key, &res);
+    ok(r == STATUS_SUCCESS, "function failed\n");
+
+    ok(res.Length == in.Length, "Length wrong\n");
+    ok(!memcmp(res.Buffer, in.Buffer, in.Length), "data wrong\n");
+
+    res.MaximumLength = 0;
+    r = pSystemFunction005(&out, &key, &res);
+    ok(r == STATUS_BUFFER_TOO_SMALL, "function failed\n");
+
+    key.Length = 1;
+    r = pSystemFunction005(&out, &key, &res);
+    ok(r == STATUS_UNKNOWN_REVISION, "function failed\n");
+
+    key.Length = 0;
+    r = pSystemFunction005(&out, &key, &res);
+    ok(r == STATUS_INVALID_PARAMETER_2, "function failed\n");
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
@@ -295,6 +354,10 @@ START_TEST(crypt_lmhash)
     pSystemFunction004 = (fnSystemFunction004)GetProcAddress( module, "SystemFunction004" );
     if (pSystemFunction004)
         test_SystemFunction004();
+
+    pSystemFunction005 = (fnSystemFunction005)GetProcAddress( module, "SystemFunction005" );
+    if (pSystemFunction005)
+        test_SystemFunction005();
 
     pSystemFunction006 = (fnSystemFunction006)GetProcAddress( module, "SystemFunction006" );
     if (pSystemFunction006) 

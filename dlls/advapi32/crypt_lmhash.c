@@ -219,3 +219,64 @@ NTSTATUS WINAPI SystemFunction004(const struct ustring *in,
 
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * SystemFunction005  [ADVAPI32.@]
+ *
+ * Decrypts a block of data with DES in ECB mode
+ *
+ * PARAMS
+ *   data    [I] data to decrypt
+ *   key     [I] key data (up to 7 bytes)
+ *   output  [O] buffer to receive decrypted data
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_BUFFER_TOO_SMALL     if the output buffer is too small
+ *  Failure: STATUS_INVALID_PARAMETER_2  if the key is zero length
+ *
+ */
+NTSTATUS WINAPI SystemFunction005(const struct ustring *in,
+                                  const struct ustring *key,
+                                  struct ustring *out)
+{
+    union {
+         unsigned char uc[8];
+         unsigned int  ui[2];
+    } data;
+    unsigned char deskey[7];
+    int ofs, crypt_len;
+
+    if (key->Length<=0)
+        return STATUS_INVALID_PARAMETER_2;
+
+    if (key->Length<sizeof deskey)
+    {
+        memset(deskey, 0, sizeof deskey);
+        memcpy(deskey, key->Buffer, key->Length);
+    }
+    else
+        memcpy(deskey, key->Buffer, sizeof deskey);
+
+    CRYPT_DESunhash(data.uc, deskey, in->Buffer);
+
+    if (data.ui[1] != 1)
+        return STATUS_UNKNOWN_REVISION;
+
+    crypt_len = data.ui[0];
+    if (crypt_len > out->MaximumLength)
+        return STATUS_BUFFER_TOO_SMALL;
+
+    for (ofs=0; (ofs+8)<crypt_len; ofs+=8)
+        CRYPT_DESunhash(out->Buffer+ofs, deskey, in->Buffer+ofs+8);
+
+    if (ofs<crypt_len)
+    {
+        CRYPT_DESunhash(data.uc, deskey, in->Buffer+ofs+8);
+        memcpy(out->Buffer+ofs, data.uc, crypt_len-ofs);
+    }
+
+    out->Length = crypt_len;
+
+    return STATUS_SUCCESS;
+}
