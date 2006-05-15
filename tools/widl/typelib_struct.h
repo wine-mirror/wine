@@ -34,6 +34,8 @@
  * with ICreateTypeLib2 have "MSFT".
  */
 
+#define MSFT_MAGIC 0x5446534d
+
 /*****************************************************
  *                MSFT typelibs
  *
@@ -162,7 +164,7 @@ typedef struct tagMSFT_ImpInfo {
                             /*               if clear oGuid is a typeinfo index in the specified typelib */
                             /* bits 24 - 31: TKIND of reference */
     INT     oImpFile;       /* offset in the Import File table */
-    INT     oGuid;          /* offset in Guid table or typeinfo index (see bit 16 of res0) */
+    INT     oGuid;          /* offset in Guid table or typeinfo index (see bit 16 of flags) */
 } MSFT_ImpInfo;
 
 #define MSFT_IMPINFO_OFFSET_IS_GUID 0x00010000

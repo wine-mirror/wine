@@ -42,6 +42,8 @@ typedef struct _func_t func_t;
 typedef struct _ifref_t ifref_t;
 typedef struct _class_t class_t;
 typedef struct _typelib_entry_t typelib_entry_t;
+typedef struct _importlib_t importlib_t;
+typedef struct _importinfo_t importinfo_t;
 typedef struct _typelib_t typelib_t;
 
 #define DECL_LINK(type) \
@@ -260,11 +262,37 @@ struct _typelib_entry_t {
     DECL_LINK(typelib_entry_t)
 };
 
+struct _importinfo_t {
+    int offset;
+    GUID guid;
+    int flags;
+    int id;
+
+    char *name;
+
+    importlib_t *importlib;
+};
+
+struct _importlib_t {
+    char *name;
+
+    int version;
+    GUID guid;
+
+    importinfo_t *importinfos;
+    int ntypeinfos;
+
+    int allocated;
+
+    DECL_LINK(importlib_t);
+};
+
 struct _typelib_t {
     char *name;
     char *filename;
     attr_t *attrs;
     typelib_entry_t *entry;
+    importlib_t *importlibs;
 };
 
 #endif
