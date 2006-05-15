@@ -530,19 +530,18 @@ finish_conf:
 unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg,
   unsigned char *pszMessage, PFORMAT_STRING pFormat)
 { 
-  unsigned long len, esize;
+  unsigned long esize;
 
   TRACE("(pStubMsg == ^%p, pszMessage == ^%p, pFormat == ^%p)\n", pStubMsg, pszMessage, pFormat);
   
-  assert(pFormat);
   if (*pFormat == RPC_FC_C_CSTRING) {
     TRACE("string=%s\n", debugstr_a((char*)pszMessage));
-    len = strlen((char*)pszMessage)+1;
+    pStubMsg->ActualCount = strlen((char*)pszMessage)+1;
     esize = 1;
   }
   else if (*pFormat == RPC_FC_C_WSTRING) {
     TRACE("string=%s\n", debugstr_w((LPWSTR)pszMessage));
-    len = strlenW((LPWSTR)pszMessage)+1;
+    pStubMsg->ActualCount = strlenW((LPWSTR)pszMessage)+1;
     esize = 2;
   }
   else {
@@ -551,19 +550,16 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg,
     return NULL;
   }
 
-  if (pFormat[1] != RPC_FC_PAD) {
-    FIXME("sized string format=%d\n", pFormat[1]);
-  }
-
-  assert( (pStubMsg->BufferLength >= (len*esize + 13)) && (pStubMsg->Buffer != NULL) );
-
-  pStubMsg->MaxCount = pStubMsg->ActualCount = len;
+  if (pFormat[1] == RPC_FC_STRING_SIZED)
+    pFormat = ComputeConformance(pStubMsg, pszMessage, pFormat + 2, 0);
+  else
+    pStubMsg->MaxCount = pStubMsg->ActualCount;
   pStubMsg->Offset = 0;
   WriteConformance(pStubMsg);
   WriteVariance(pStubMsg);
 
-  memcpy(pStubMsg->Buffer, pszMessage, len*esize); /* the string itself */
-  pStubMsg->Buffer += len*esize;
+  memcpy(pStubMsg->Buffer, pszMessage, pStubMsg->ActualCount*esize); /* the string itself */
+  pStubMsg->Buffer += pStubMsg->ActualCount*esize;
 
   STD_OVERFLOW_CHECK(pStubMsg);
 
@@ -582,7 +578,6 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   SizeConformance(pStubMsg);
   SizeVariance(pStubMsg);
 
-  assert(pFormat);
   if (*pFormat == RPC_FC_C_CSTRING) {
     /* we need + 1 octet for '\0' */
     TRACE("string=%s\n", debugstr_a((char*)pMemory));
@@ -596,10 +591,6 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   else {
     ERR("Unhandled string type: %#x\n", *pFormat); 
     /* FIXME: raise an exception */
-  }
-
-  if (pFormat[1] != RPC_FC_PAD) {
-    FIXME("sized string format=%d\n", pFormat[1]);
   }
 }
 
@@ -656,10 +647,6 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
     ERR("Unhandled string type: %#x\n", *pFormat);
     /* FIXME: raise an exception */
     esize = 0;
-  }
-
-  if (pFormat[1] != RPC_FC_PAD) {
-    FIXME("sized string format=%d\n", pFormat[1]);
   }
 
   len = pStubMsg->ActualCount;
