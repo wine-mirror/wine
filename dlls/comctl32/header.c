@@ -98,6 +98,11 @@ typedef struct
 #define HDN_UNICODE_OFFSET 20
 #define HDN_FIRST_UNICODE (HDN_FIRST-HDN_UNICODE_OFFSET)
 
+#define HDI_SUPPORTED_FIELDS (HDI_WIDTH|HDI_TEXT|HDI_FORMAT|HDI_LPARAM|HDI_BITMAP|HDI_IMAGE|HDI_ORDER)
+#define HDI_UNSUPPORTED_FIELDS (HDI_FILTER)
+#define HDI_UNKNOWN_FIELDS (~(HDI_SUPPORTED_FIELDS|HDI_UNSUPPORTED_FIELDS|HDI_DI_SETITEM))
+#define HDI_COMCTL32_4_0_FIELDS (HDI_WIDTH|HDI_TEXT|HDI_FORMAT|HDI_LPARAM|HDI_BITMAP)
+
 #define HEADER_GetInfoPtr(hwnd) ((HEADER_INFO *)GetWindowLongPtrW(hwnd,0))
 
 static BOOL HEADER_PrepareCallbackItems(HWND hwnd, INT iItem, INT reqMask);
@@ -116,6 +121,9 @@ static void HEADER_DisposeItem(HEADER_ITEM *lpItem)
 
 static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, UINT mask, HDITEMW *phdi, BOOL fUnicode)
 {
+    if (mask & HDI_UNSUPPORTED_FIELDS)
+        FIXME("unsupported header fields %x\n", (mask & HDI_UNSUPPORTED_FIELDS));
+    
     if (mask & HDI_BITMAP)
         lpItem->hbm = phdi->hbm;
 
@@ -955,41 +963,46 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     HEADER_ITEM *lpItem;
+    UINT mask = phdi->mask;
 
     if (!phdi)
 	return FALSE;
 
     TRACE("[nItem=%d]\n", nItem);
 
-    if (phdi->mask == 0)
+    if (mask == 0)
 	return TRUE;
     if ((nItem < 0) || (nItem >= (INT)infoPtr->uNumItem))
         return FALSE;
 
+    if (mask & HDI_UNKNOWN_FIELDS)
+    {
+        TRACE("mask %x contains unknown fields. Using only comctl32 4.0 fields\n", mask);
+        mask &= HDI_COMCTL32_4_0_FIELDS;
+    }
+    
     lpItem = &infoPtr->items[nItem];
-    HEADER_PrepareCallbackItems(hwnd, nItem, phdi->mask);
+    HEADER_PrepareCallbackItems(hwnd, nItem, mask);
 
-    if (phdi->mask & HDI_BITMAP)
+    if (mask & HDI_BITMAP)
         phdi->hbm = lpItem->hbm;
 
-    if (phdi->mask & HDI_FORMAT)
+    if (mask & HDI_FORMAT)
         phdi->fmt = lpItem->fmt;
 
-    if (phdi->mask & HDI_WIDTH)
+    if (mask & HDI_WIDTH)
         phdi->cxy = lpItem->cxy;
 
-    if (phdi->mask & HDI_LPARAM)
+    if (mask & HDI_LPARAM)
         phdi->lParam = lpItem->lParam;
 
-    if (phdi->mask & HDI_IMAGE) 
-    {
+    if (mask & HDI_IMAGE) 
         phdi->iImage = lpItem->iImage;
-    }
 
-    if (phdi->mask & HDI_ORDER)
+    if (mask & HDI_ORDER)
         phdi->iOrder = lpItem->iOrder;
 
-    if (phdi->mask & HDI_TEXT)
+    if (mask & HDI_TEXT)
     {
         if (bUnicode)
             Str_GetPtrW (lpItem->pszText, phdi->pszText, phdi->cchTextMax);
@@ -1094,7 +1107,7 @@ HEADER_InsertItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     UINT      i;
     UINT      copyMask;
 
-    if ((phdi == NULL) || (nItem < 0))
+    if ((phdi == NULL) || (nItem < 0) || (phdi->mask == 0))
 	return -1;
 
     if (nItem > infoPtr->uNumItem)

@@ -321,6 +321,60 @@ static void check_auto_fields(void)
     /* field from comctl >4.0 not tested as the system probably won't touch them */
 }
 
+static void check_mask()
+{
+    HDITEMA hdi;
+    LRESULT ret;
+
+    /* don't create items if the mask is zero */
+    ZeroMemory(&hdi, sizeof(hdi));
+    hdi.mask = 0;
+    hdi.cxy = 200;
+    hdi.pszText = "ABC";
+    hdi.fmt = 0;
+    hdi.iOrder = 0;
+    hdi.lParam = 17;
+    hdi.cchTextMax = 260;
+    ret = SendMessage(hWndHeader, HDM_INSERTITEM, (WPARAM)0, (LPARAM)&hdi);
+    ok(ret == -1, "Creating an item with a zero mask should have failed\n");
+    if (ret != -1) SendMessage(hWndHeader, HDM_DELETEITEM, (WPARAM)0, (LPARAM)0);
+
+    /* with a non-zero mask creation will succeed */
+    ZeroMemory(&hdi, sizeof(hdi));
+    hdi.mask = HDI_LPARAM;
+    ret = SendMessage(hWndHeader, HDM_INSERTITEM, (WPARAM)0, (LPARAM)&hdi);
+    ok(ret != -1, "Adding item with non-zero mask failed\n");
+    if (ret != -1)
+        SendMessage(hWndHeader, HDM_DELETEITEM, (WPARAM)0, (LPARAM)0);
+
+    /* in SETITEM if the mask contains a unknown bit, it is ignored */
+    ZeroMemory(&hdi, sizeof(hdi));
+    hdi.mask = 0x08000000 | HDI_LPARAM | HDI_IMAGE;
+    hdi.lParam = 133;
+    hdi.iImage = 17;
+    ret = SendMessage(hWndHeader, HDM_INSERTITEM, (WPARAM)0, (LPARAM)&hdi);
+    ok(ret != -1, "Adding item failed\n");
+
+    if (ret != -1)
+    {
+        /* check result */
+        ZeroMemory(&hdi, sizeof(hdi));
+        hdi.mask = HDI_LPARAM | HDI_IMAGE;
+        SendMessage(hWndHeader, HDM_GETITEM, (WPARAM)0, (LPARAM)&hdi);
+        ok(hdi.lParam == 133, "comctl32 4.0 field not set\n");
+        ok(hdi.iImage == 17, "comctl32 >4.0 field not set\n");
+
+        /* but in GETITEM if an unknown bit is set, comctl32 uses only version 4.0 fields */
+        ZeroMemory(&hdi, sizeof(hdi));
+        hdi.mask = 0x08000000 | HDI_LPARAM | HDI_IMAGE;
+        SendMessage(hWndHeader, HDM_GETITEM, (WPARAM)0, (LPARAM)&hdi);
+        ok(hdi.lParam == 133, "comctl32 4.0 field not read\n");
+        ok(hdi.iImage == 0, "comctl32 >4.0 field shouldn't be read\n");
+
+        SendMessage(hWndHeader, HDM_DELETEITEM, (WPARAM)0, (LPARAM)0);
+    }
+}
+
 static void test_header_control (void)
 {
     LONG res;
@@ -395,6 +449,8 @@ static void test_header_control (void)
     check_auto_format();
     TEST_GET_ITEMCOUNT(6);
     check_auto_fields();
+    TEST_GET_ITEMCOUNT(6);
+    check_mask();
     TEST_GET_ITEMCOUNT(6);
 
     res = delItem(hWndHeader, 5);
