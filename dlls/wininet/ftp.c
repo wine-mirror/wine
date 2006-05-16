@@ -252,6 +252,7 @@ BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
+    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
 
     /* Open file to be uploaded */
     if (INVALID_HANDLE_VALUE ==
@@ -261,7 +262,6 @@ BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
         goto lend;
     }
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
     SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext, INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
 
     if (FTP_SendStore(lpwfs, lpszNewRemoteFile, dwFlags))
