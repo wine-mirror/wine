@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wininet.h"
+#include "winsock.h"
 
 #include "wine/test.h"
 
@@ -802,6 +803,118 @@ static void HttpHeaders_test(void)
     ok(InternetCloseHandle(hSession), "Close session handle failed\n");
 }
 
+static const char okmsg[] =
+"HTTP/1.0 200 OK\r\n"
+"Server: winetest\r\n"
+"\r\n";
+
+static const char page1[] =
+"<HTML>\r\n"
+"<HEAD><TITLE>wininet test page</TITLE></HEAD>\r\n"
+"<BODY>The quick brown fox jumped over the lazy dog<P></BODY>\r\n"
+"</HTML>\r\n\r\n";
+
+struct server_info {
+    HANDLE hEvent;
+    int port;
+};
+
+static DWORD CALLBACK server_thread(LPVOID param)
+{
+    struct server_info *si = param;
+    int r, s, c, i;
+    struct sockaddr_in sa;
+    char buffer[0x100];
+    WSADATA wsaData;
+
+    WSAStartup(MAKEWORD(1,1), &wsaData);
+
+    s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s<0)
+        return FALSE;
+
+    memset(&sa, 0, sizeof sa);
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons(si->port);
+    sa.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+
+    r = bind(s, (struct sockaddr*) &sa, sizeof sa);
+    if (r<0)
+        return 1;
+
+    listen(s, 1);
+
+    SetEvent(si->hEvent);
+
+    c = accept(s, NULL, NULL);
+
+    memset(buffer, 0, sizeof buffer);
+    for(i=0; i<(sizeof buffer-1); i++)
+    {
+        r = recv(c, &buffer[i], 1, 0);
+        if (r != 1)
+            break;
+        if (i<4) continue;
+        if (buffer[i-2] == '\n' && buffer[i] == '\n' &&
+            buffer[i-3] == '\r' && buffer[i-1] == '\r')
+            break;
+    }
+
+    send(c, okmsg, sizeof okmsg-1, 0);
+    send(c, page1, sizeof page1-1, 0);
+
+    closesocket(c);
+    closesocket(s);
+
+    return 0;
+}
+
+static void test_http_connection(void)
+{
+    struct server_info si;
+    HINTERNET hi, hc, hr;
+    HANDLE hThread;
+    DWORD id = 0, r, count;
+    char buffer[0x100];
+
+    si.hEvent = CreateEvent(NULL, 0, 0, NULL);
+    si.port = 7531;
+
+    hThread = CreateThread(NULL, 0, server_thread, (LPVOID) &si, 0, &id);
+    ok( hThread != NULL, "create thread failed\n");
+
+    r = WaitForSingleObject(si.hEvent, 3000);
+    ok (r == WAIT_OBJECT_0, "failed to start wininet test server\n");
+    if (r != WAIT_OBJECT_0)
+        return;
+
+    hi = InternetOpen(NULL, 0, NULL, NULL, 0);
+    ok(hi != NULL, "open failed\n");
+
+    hc = InternetConnect(hi, "localhost", si.port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(hc != NULL, "connect failed\n");
+
+    hr = HttpOpenRequest(hc, NULL, "/test", NULL, NULL, NULL, 0, 0);
+    ok(hr != NULL, "HttpOpenRequest failed\n");
+
+    r = HttpSendRequest(hr, NULL, 0, NULL, 0);
+    ok(r, "HttpSendRequest failed\n");
+
+    count = 0;
+    memset(buffer, 0, sizeof buffer);
+    r = InternetReadFile(hr, buffer, sizeof buffer, &count);
+    ok(r, "InternetReadFile failed\n");
+    ok(count == sizeof page1 - 1, "count was wrong\n");
+    ok(!memcmp(buffer, page1, sizeof page1), "http data wrong\n");
+
+    InternetCloseHandle(hr);
+    InternetCloseHandle(hc);
+    InternetCloseHandle(hi);
+
+    r = WaitForSingleObject(hThread, 3000);
+    ok( r == WAIT_OBJECT_0, "thread wait failed\n");
+    CloseHandle(hThread);
+}
 
 START_TEST(http)
 {
@@ -815,4 +928,5 @@ START_TEST(http)
     InternetTimeToSystemTimeW_test();
     HttpSendRequestEx_test();
     HttpHeaders_test();
+    test_http_connection();
 }
