@@ -37,14 +37,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
  */
 long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
-    long int            rtn = 0;
+    long int            rtn;
     LONGLONG            val;
     DWORD               tag, bt;
     DWORD64             size;
 
     if (lvalue->type.id == dbg_itype_none ||
         !types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
-        return 0;
+        RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
 
     if (lvalue->type.id == dbg_itype_segptr)
     {
@@ -63,17 +63,19 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
         if (size > sizeof(rtn))
         {
             WINE_ERR("Size too large (%s)\n", wine_dbgstr_longlong(size));
-            return 0;
+            RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
         }
         switch (bt)
         {
         case btChar:
         case btInt:
-            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, TRUE, &val)) return 0;
+            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, TRUE, &val))
+                RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             rtn = (long)val;
             break;
         case btUInt:
-            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, FALSE, &val)) return 0;
+            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, FALSE, &val))
+                RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             rtn = (DWORD)(DWORD64)val;
             break;
         case btFloat:
@@ -81,20 +83,26 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
         }
         break;
     case SymTagPointerType:
-        if (!memory_read_value(lvalue, sizeof(void*), &rtn)) return 0;
+        if (!memory_read_value(lvalue, sizeof(void*), &rtn))
+            RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagArrayType:
     case SymTagUDT:
         assert(lvalue->cookie == DLV_TARGET);
-        if (!memory_read_value(lvalue, sizeof(rtn), &rtn)) return 0;
+        if (!memory_read_value(lvalue, sizeof(rtn), &rtn))
+            RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagEnum:
         assert(lvalue->cookie == DLV_TARGET);
-        if (!memory_read_value(lvalue, sizeof(rtn), &rtn)) return 0;
+        if (!memory_read_value(lvalue, sizeof(rtn), &rtn))
+            RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
+        break;
+    case SymTagFunctionType:
+        rtn = (unsigned)memory_to_linear_addr(&lvalue->addr);
         break;
     default:
         WINE_FIXME("Unsupported tag %lu\n", tag);
-        rtn = 0;
+        RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
         break;
     }
 
