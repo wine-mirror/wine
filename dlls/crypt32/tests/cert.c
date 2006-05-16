@@ -682,6 +682,160 @@ static void testKeyUsage(void)
     }
 }
 
+static void testCompareCertName(void)
+{
+    static const BYTE bogus[] = { 1, 2, 3, 4 };
+    static const BYTE bogusPrime[] = { 0, 1, 2, 3, 4 };
+    static const BYTE emptyPrime[] = { 0x30, 0x00, 0x01 };
+    BOOL ret;
+    CERT_NAME_BLOB blob1, blob2;
+
+    /* crashes
+    ret = CertCompareCertificateName(0, NULL, NULL);
+     */
+    /* An empty name checks against itself.. */
+    blob1.pbData = (LPBYTE)emptyCert;
+    blob1.cbData = sizeof(emptyCert);
+    ret = CertCompareCertificateName(0, &blob1, &blob1);
+    ok(ret, "CertCompareCertificateName failed: %08lx\n", GetLastError());
+    /* It doesn't have to be a valid encoded name.. */
+    blob1.pbData = (LPBYTE)bogus;
+    blob1.cbData = sizeof(bogus);
+    ret = CertCompareCertificateName(0, &blob1, &blob1);
+    ok(ret, "CertCompareCertificateName failed: %08lx\n", GetLastError());
+    /* Leading zeroes matter.. */
+    blob2.pbData = (LPBYTE)bogusPrime;
+    blob2.cbData = sizeof(bogusPrime);
+    ret = CertCompareCertificateName(0, &blob1, &blob2);
+    ok(!ret, "Expected failure\n");
+    /* As do trailing extra bytes. */
+    blob2.pbData = (LPBYTE)emptyPrime;
+    blob2.cbData = sizeof(emptyPrime);
+    ret = CertCompareCertificateName(0, &blob1, &blob2);
+    ok(!ret, "Expected failure\n");
+}
+
+static const BYTE int1[] = { 0x88, 0xff, 0xff, 0xff };
+static const BYTE int2[] = { 0x88, 0xff };
+static const BYTE int3[] = { 0x23, 0xff };
+static const BYTE int4[] = { 0x7f, 0x00 };
+static const BYTE int5[] = { 0x7f };
+static const BYTE int6[] = { 0x80, 0x00, 0x00, 0x00 };
+static const BYTE int7[] = { 0x80, 0x00 };
+
+struct IntBlobTest
+{
+    CRYPT_INTEGER_BLOB blob1;
+    CRYPT_INTEGER_BLOB blob2;
+    BOOL areEqual;
+} intBlobs[] = {
+ { { sizeof(int1), (LPBYTE)int1 }, { sizeof(int2), (LPBYTE)int2 }, TRUE },
+ { { sizeof(int3), (LPBYTE)int3 }, { sizeof(int3), (LPBYTE)int3 }, TRUE },
+ { { sizeof(int4), (LPBYTE)int4 }, { sizeof(int5), (LPBYTE)int5 }, TRUE },
+ { { sizeof(int6), (LPBYTE)int6 }, { sizeof(int7), (LPBYTE)int7 }, TRUE },
+ { { sizeof(int1), (LPBYTE)int1 }, { sizeof(int7), (LPBYTE)int7 }, FALSE },
+};
+
+static void testCompareIntegerBlob(void)
+{
+    DWORD i;
+    BOOL ret;
+
+    for (i = 0; i < sizeof(intBlobs) / sizeof(intBlobs[0]); i++)
+    {
+        ret = CertCompareIntegerBlob(&intBlobs[i].blob1, &intBlobs[i].blob2);
+        ok(ret == intBlobs[i].areEqual,
+         "%ld: expected blobs %s compare\n", i, intBlobs[i].areEqual ?
+         "to" : "not to");
+    }
+}
+
+static void testComparePublicKeyInfo(void)
+{
+    BOOL ret;
+    CERT_PUBLIC_KEY_INFO info1 = { { 0 } }, info2 = { { 0 } };
+    static const BYTE bits1[] = { 1, 0 };
+    static const BYTE bits2[] = { 0 };
+    static const BYTE bits3[] = { 1 };
+
+    /* crashes
+    ret = CertComparePublicKeyInfo(0, NULL, NULL);
+     */
+    /* Empty public keys compare */
+    ret = CertComparePublicKeyInfo(0, &info1, &info2);
+    ok(ret, "CertComparePublicKeyInfo failed: %08lx\n", GetLastError());
+    /* Different OIDs appear to compare */
+    info1.Algorithm.pszObjId = szOID_RSA_RSA;
+    info2.Algorithm.pszObjId = szOID_RSA_SHA1RSA;
+    ret = CertComparePublicKeyInfo(0, &info1, &info2);
+    ok(ret, "CertComparePublicKeyInfo failed: %08lx\n", GetLastError());
+    info2.Algorithm.pszObjId = szOID_X957_DSA;
+    ret = CertComparePublicKeyInfo(0, &info1, &info2);
+    ok(ret, "CertComparePublicKeyInfo failed: %08lx\n", GetLastError());
+    info1.PublicKey.cbData = sizeof(bits1);
+    info1.PublicKey.pbData = (LPBYTE)bits1;
+    info1.PublicKey.cUnusedBits = 0;
+    info2.PublicKey.cbData = sizeof(bits1);
+    info2.PublicKey.pbData = (LPBYTE)bits1;
+    info2.PublicKey.cUnusedBits = 0;
+    ret = CertComparePublicKeyInfo(0, &info1, &info2);
+    ok(ret, "CertComparePublicKeyInfo failed: %08lx\n", GetLastError());
+    /* Even though they compare in their used bits, these do not compare */
+    info1.PublicKey.cbData = sizeof(bits2);
+    info1.PublicKey.pbData = (LPBYTE)bits2;
+    info1.PublicKey.cUnusedBits = 0;
+    info2.PublicKey.cbData = sizeof(bits3);
+    info2.PublicKey.pbData = (LPBYTE)bits3;
+    info2.PublicKey.cUnusedBits = 1;
+    ret = CertComparePublicKeyInfo(0, &info1, &info2);
+    /* Simple (non-comparing) case */
+    ok(!ret, "Expected keys not to compare\n");
+    info2.PublicKey.cbData = sizeof(bits1);
+    info2.PublicKey.pbData = (LPBYTE)bits1;
+    info2.PublicKey.cUnusedBits = 0;
+    ret = CertComparePublicKeyInfo(0, &info1, &info2);
+    ok(!ret, "Expected keys not to compare\n");
+}
+
+static const BYTE subjectName2[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
+ 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61,
+ 0x6e, 0x67, 0x00 };
+
+static const BYTE serialNum[] = { 1 };
+
+void testCompareCert(void)
+{
+    CERT_INFO info1 = { 0 }, info2 = { 0 };
+    BOOL ret;
+
+    /* Crashes
+    ret = CertCompareCertificate(X509_ASN_ENCODING, NULL, NULL);
+     */
+
+    /* Certs with the same issuer and serial number are equal, even if they
+     * differ in other respects (like subject).
+     */
+    info1.SerialNumber.pbData = (LPBYTE)serialNum;
+    info1.SerialNumber.cbData = sizeof(serialNum);
+    info1.Issuer.pbData = (LPBYTE)subjectName;
+    info1.Issuer.cbData = sizeof(subjectName);
+    info1.Subject.pbData = (LPBYTE)subjectName2;
+    info1.Subject.cbData = sizeof(subjectName2);
+    info2.SerialNumber.pbData = (LPBYTE)serialNum;
+    info2.SerialNumber.cbData = sizeof(serialNum);
+    info2.Issuer.pbData = (LPBYTE)subjectName;
+    info2.Issuer.cbData = sizeof(subjectName);
+    info2.Subject.pbData = (LPBYTE)subjectName;
+    info2.Subject.cbData = sizeof(subjectName);
+    ret = CertCompareCertificate(X509_ASN_ENCODING, &info1, &info2);
+    ok(ret, "Expected certs to be equal\n");
+
+    info2.Issuer.pbData = (LPBYTE)subjectName2;
+    info2.Issuer.cbData = sizeof(subjectName2);
+    ret = CertCompareCertificate(X509_ASN_ENCODING, &info1, &info2);
+    ok(!ret, "Expected certs not to be equal\n");
+}
+
 START_TEST(cert)
 {
     init_function_pointers();
@@ -689,4 +843,8 @@ START_TEST(cert)
     testCertSigs();
     testCreateSelfSignCert();
     testKeyUsage();
+    testCompareCertName();
+    testCompareIntegerBlob();
+    testComparePublicKeyInfo();
+    testCompareCert();
 }

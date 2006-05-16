@@ -2693,6 +2693,15 @@ BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
  const BYTE *pbElement, DWORD cbElement, DWORD dwAddDisposition, DWORD dwFlags,
  DWORD dwContextTypeFlags, DWORD *pdwContentType, const void **ppvContext);
 
+BOOL WINAPI CertCompareCertificate(DWORD dwCertEncodingType,
+ PCERT_INFO pCertId1, PCERT_INFO pCertId2);
+BOOL WINAPI CertCompareCertificateName(DWORD dwCertEncodingType,
+ PCERT_NAME_BLOB pCertName1, PCERT_NAME_BLOB pCertName2);
+BOOL WINAPI CertCompareIntegerBlob(PCRYPT_INTEGER_BLOB pInt1,
+ PCRYPT_INTEGER_BLOB pInt2);
+BOOL WINAPI CertComparePublicKeyInfo(DWORD dwCertEncodingType,
+ PCERT_PUBLIC_KEY_INFO pPublicKey1, PCERT_PUBLIC_KEY_INFO pPublicKey2);
+
 const void *CertCreateContext(DWORD dwContextType, DWORD dwEncodingType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCERT_CREATE_CONTEXT_PARA pCreatePara);

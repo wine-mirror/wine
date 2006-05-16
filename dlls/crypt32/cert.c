@@ -29,6 +29,94 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+BOOL WINAPI CertCompareCertificate(DWORD dwCertEncodingType,
+ PCERT_INFO pCertId1, PCERT_INFO pCertId2)
+{
+    TRACE("(%08lx, %p, %p)\n", dwCertEncodingType, pCertId1, pCertId2);
+
+    return CertCompareCertificateName(dwCertEncodingType, &pCertId1->Issuer,
+     &pCertId2->Issuer) && CertCompareIntegerBlob(&pCertId1->SerialNumber,
+     &pCertId2->SerialNumber);
+}
+
+BOOL WINAPI CertCompareCertificateName(DWORD dwCertEncodingType,
+ PCERT_NAME_BLOB pCertName1, PCERT_NAME_BLOB pCertName2)
+{
+    BOOL ret;
+
+    TRACE("(%08lx, %p, %p)\n", dwCertEncodingType, pCertName1, pCertName2);
+
+    if (pCertName1->cbData == pCertName2->cbData)
+    {
+        if (pCertName1->cbData)
+            ret = !memcmp(pCertName1->pbData, pCertName2->pbData,
+             pCertName1->cbData);
+        else
+            ret = TRUE;
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
+/* Returns the number of significant bytes in pInt, where a byte is
+ * insignificant if it's a leading 0 for positive numbers or a leading 0xff
+ * for negative numbers.  pInt is assumed to be little-endian.
+ */
+static DWORD CRYPT_significantBytes(PCRYPT_INTEGER_BLOB pInt)
+{
+    DWORD ret = pInt->cbData;
+
+    while (ret > 1)
+    {
+        if (pInt->pbData[ret - 2] <= 0x7f && pInt->pbData[ret - 1] == 0)
+            ret--;
+        else if (pInt->pbData[ret - 2] >= 0x80 && pInt->pbData[ret - 1] == 0xff)
+            ret--;
+        else
+            break;
+    }
+    return ret;
+}
+
+BOOL WINAPI CertCompareIntegerBlob(PCRYPT_INTEGER_BLOB pInt1,
+ PCRYPT_INTEGER_BLOB pInt2)
+{
+    BOOL ret;
+    DWORD cb1, cb2;
+
+    TRACE("(%p, %p)\n", pInt1, pInt2);
+
+    cb1 = CRYPT_significantBytes(pInt1);
+    cb2 = CRYPT_significantBytes(pInt2);
+    if (cb1 == cb2)
+        ret = !memcmp(pInt1->pbData, pInt1->pbData, cb1);
+    else
+        ret = FALSE;
+    return ret;
+}
+
+BOOL WINAPI CertComparePublicKeyInfo(DWORD dwCertEncodingType,
+ PCERT_PUBLIC_KEY_INFO pPublicKey1, PCERT_PUBLIC_KEY_INFO pPublicKey2)
+{
+    BOOL ret;
+
+    TRACE("(%08lx, %p, %p)\n", dwCertEncodingType, pPublicKey1, pPublicKey2);
+
+    if (pPublicKey1->PublicKey.cbData == pPublicKey2->PublicKey.cbData &&
+     pPublicKey1->PublicKey.cUnusedBits == pPublicKey2->PublicKey.cUnusedBits)
+    {
+        if (pPublicKey2->PublicKey.cbData)
+            ret = !memcmp(pPublicKey1->PublicKey.pbData,
+             pPublicKey2->PublicKey.pbData, pPublicKey1->PublicKey.cbData);
+        else
+            ret = TRUE;
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
 PCRYPT_ATTRIBUTE WINAPI CertFindAttribute(LPCSTR pszObjId, DWORD cAttr,
  CRYPT_ATTRIBUTE rgAttr[])
 {

@@ -11,10 +11,10 @@
 @ stdcall CertAddStoreToCollection(ptr ptr long long)
 @ stdcall CertAlgIdToOID(long)
 @ stdcall CertCloseStore(ptr long)
-@ stub CertCompareCertificate
-@ stub CertCompareCertificateName
-@ stub CertCompareIntegerBlob
-@ stub CertComparePublicKeyInfo
+@ stdcall CertCompareCertificate(long ptr ptr)
+@ stdcall CertCompareCertificateName(long ptr ptr)
+@ stdcall CertCompareIntegerBlob(ptr ptr)
+@ stdcall CertComparePublicKeyInfo(long ptr ptr)
 @ stdcall CertControlStore(long long long ptr)
 @ stdcall CertCreateCRLContext(long ptr long)
 @ stdcall CertCreateCTLContext(long ptr long)
