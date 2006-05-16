@@ -1931,9 +1931,14 @@ static BOOL WINAPI CertContext_GetProperty(PWINE_CERT_CONTEXT context,
              context->cert.pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData,
              pvData, pcbData);
             break;
-        case CERT_SIGNATURE_HASH_PROP_ID:
         case CERT_ISSUER_SERIAL_NUMBER_MD5_HASH_PROP_ID:
-            FIXME("implicit property %ld\n", dwPropId);
+            ret = CertContext_GetHashProp(context, dwPropId, CALG_MD5,
+             context->cert.pCertInfo->SerialNumber.pbData,
+             context->cert.pCertInfo->SerialNumber.cbData,
+             pvData, pcbData);
+            break;
+        case CERT_SIGNATURE_HASH_PROP_ID:
+            FIXME("CERT_SIGNATURE_HASH_PROP_ID unimplemented\n");
             SetLastError(CRYPT_E_NOT_FOUND);
             break;
         default:
