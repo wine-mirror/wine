@@ -328,6 +328,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
             RECT rcBackground = r;
 
             rcBackground.right -= cxEdge;
+            rcBackground.left += cxEdge;
             FillRect(hdc, &rcBackground, hbr);
             DeleteObject(hbr);
         }
