@@ -149,6 +149,10 @@ static void testAddCert(void)
             CRYPT_DATA_BLOB hash = { sizeof(bigCert2Hash),
              (LPBYTE)bigCert2Hash };
 
+            /* Duplicate (AddRef) the context so we can still use it after
+             * deleting it from the store.
+             */
+            CertDuplicateCertificateContext(context);
             CertDeleteCertificateFromStore(context);
             /* Set the same hash as bigCert2, and try to readd it */
             ret = CertSetCertificateContextProperty(context, CERT_HASH_PROP_ID,
