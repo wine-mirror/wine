@@ -634,8 +634,74 @@ static const struct message WmShowChildSeq_4[] = {
     { WM_CHILDACTIVATE, sent },
     { 0 }
 };
+/* ShowWindow(SW_MINIMIZE) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq_1[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOZORDER|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOCOPYBITS|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCOPYBITS|0x8000 },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+/* repeated ShowWindow(SW_MINIMIZE) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq_1r[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
+    { 0 }
+};
+/* ShowWindow(SW_MAXIMIZE) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq_2[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_CHILDACTIVATE, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCLIENTMOVE|0x8000 },
+    { WM_SIZE, sent|defwinproc },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+/* repeated ShowWindow(SW_MAXIMIZE) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq_2r[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { 0 }
+};
+/* ShowWindow(SW_SHOWMINIMIZED) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq_3[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINIMIZED },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_CHILDACTIVATE, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCOPYBITS|0x8000 },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+/* repeated ShowWindow(SW_SHOWMINIMIZED) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq_3r[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINIMIZED },
+    { 0 }
+};
+/* ShowWindow(SW_SHOWMINNOACTIVE) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq_4[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINNOACTIVE },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOCOPYBITS|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCOPYBITS|0x8000 },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+/* repeated ShowWindow(SW_SHOWMINNOACTIVE) for child with invisible parent */
+static const struct message WmShowChildInvisibleParentSeq_4r[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINNOACTIVE },
+    { 0 }
+};
 /* ShowWindow(SW_SHOW) for child with invisible parent */
-static const struct message WmShowChildInvisibleParentSeq[] = {
+static const struct message WmShowChildInvisibleParentSeq_5[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { 0 }
 };
@@ -645,7 +711,7 @@ static const struct message WmHideChildInvisibleParentSeq[] = {
     { 0 }
 };
 /* SetWindowPos(SWP_SHOWWINDOW) for child with invisible parent */
-static const struct message WmShowChildInvisibleParentSeq_2[] = {
+static const struct message WmShowChildInvisibleParentSeq_6[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER },
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
@@ -1342,9 +1408,21 @@ static void ok_sequence_(const struct message *expected, const char *context, in
 		     context, expected->message, expected->wParam, actual->wParam);
 	    }
 	    if (expected->flags & lparam)
+            {
+		if (expected->lParam != actual->lParam && todo)
+		{
+		    todo_wine {
+                        failcount ++;
+                        ok_( file, line) (FALSE,
+			    "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
+			    context, expected->message, expected->lParam, actual->lParam);
+		    }
+		}
+		else
 		 ok_( file, line) (expected->lParam == actual->lParam,
 		     "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
 		     context, expected->message, expected->lParam, actual->lParam);
+            }
 	    ok_( file, line) ((expected->flags & defwinproc) == (actual->flags & defwinproc),
 		"%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
 		context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
@@ -3554,40 +3632,6 @@ static void test_messages(void)
     DialogBoxA( 0, "TEST_DIALOG", hparent, TestModalDlgProcA );
     ok_sequence(WmModalDialogSeq, "ModalDialog", TRUE);
 
-    /* test showing child with hidden parent */
-    ShowWindow( hparent, SW_HIDE );
-    flush_sequence();
-
-    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
-                             0, 0, 10, 10, hparent, 0, 0, NULL);
-    ok (hchild != 0, "Failed to create child window\n");
-    ok_sequence(WmCreateChildSeq, "CreateWindow:child", FALSE);
-
-    ShowWindow( hchild, SW_SHOW );
-    ok_sequence(WmShowChildInvisibleParentSeq, "ShowWindow:show child with invisible parent", FALSE);
-    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
-    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
-
-    ShowWindow( hchild, SW_HIDE );
-    ok_sequence(WmHideChildInvisibleParentSeq, "ShowWindow:hide child with invisible parent", FALSE);
-    ok(!(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should be not set\n");
-    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
-
-    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
-    ok_sequence(WmShowChildInvisibleParentSeq_2, "SetWindowPos:show child with invisible parent", FALSE);
-    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
-    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
-
-    SetWindowPos(hchild, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
-    ok_sequence(WmHideChildInvisibleParentSeq_2, "SetWindowPos:hide child with invisible parent", FALSE);
-    ok(!(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should not be set\n");
-    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
-
-    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
-    flush_sequence();
-    DestroyWindow(hchild);
-    ok_sequence(WmDestroyInvisibleChildSeq, "DestroyInvisibleChildSeq", FALSE);
-
     DestroyWindow(hparent);
     flush_sequence();
 
@@ -3677,6 +3721,155 @@ static void test_messages(void)
     flush_sequence();
 
     test_showwindow();
+}
+
+static void invisible_parent_tests(void)
+{
+    HWND hparent, hchild;
+
+    hparent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hparent != 0, "Failed to create parent window\n");
+    flush_sequence();
+
+    /* test showing child with hidden parent */
+
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+    ok_sequence(WmCreateChildSeq, "CreateWindow:child", FALSE);
+
+    ShowWindow( hchild, SW_MINIMIZE );
+    ok_sequence(WmShowChildInvisibleParentSeq_1, "ShowWindow(SW_MINIMIZE) child with invisible parent", TRUE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    /* repeat */
+    flush_events();
+    ShowWindow( hchild, SW_MINIMIZE );
+    ok_sequence(WmShowChildInvisibleParentSeq_1r, "ShowWindow(SW_MINIMIZE) child with invisible parent", TRUE);
+
+    DestroyWindow(hchild);
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    flush_sequence();
+
+    ShowWindow( hchild, SW_MAXIMIZE );
+    ok_sequence(WmShowChildInvisibleParentSeq_2, "ShowWindow(SW_MAXIMIZE) child with invisible parent", TRUE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    /* repeat */
+    flush_events();
+    ShowWindow( hchild, SW_MAXIMIZE );
+    ok_sequence(WmShowChildInvisibleParentSeq_2r, "ShowWindow(SW_MAXIMIZE) child with invisible parent", TRUE);
+
+    DestroyWindow(hchild);
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    flush_sequence();
+
+    ShowWindow( hchild, SW_SHOWMINIMIZED );
+    ok_sequence(WmShowChildInvisibleParentSeq_3, "ShowWindow(SW_SHOWMINIMIZED) child with invisible parent", TRUE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    /* repeat */
+    flush_events();
+    ShowWindow( hchild, SW_SHOWMINIMIZED );
+    ok_sequence(WmShowChildInvisibleParentSeq_3r, "ShowWindow(SW_SHOWMINIMIZED) child with invisible parent", TRUE);
+
+    DestroyWindow(hchild);
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    flush_sequence();
+
+    /* same as ShowWindow( hchild, SW_MAXIMIZE ); */
+    ShowWindow( hchild, SW_SHOWMAXIMIZED );
+    ok_sequence(WmShowChildInvisibleParentSeq_2, "ShowWindow(SW_SHOWMAXIMIZED) child with invisible parent", TRUE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    DestroyWindow(hchild);
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    flush_sequence();
+
+    ShowWindow( hchild, SW_SHOWMINNOACTIVE );
+    ok_sequence(WmShowChildInvisibleParentSeq_4, "ShowWindow(SW_SHOWMINNOACTIVE) child with invisible parent", TRUE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    /* repeat */
+    flush_events();
+    ShowWindow( hchild, SW_SHOWMINNOACTIVE );
+    ok_sequence(WmShowChildInvisibleParentSeq_4r, "ShowWindow(SW_SHOWMINNOACTIVE) child with invisible parent", TRUE);
+
+    DestroyWindow(hchild);
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    flush_sequence();
+
+    /* FIXME: looks like XP SP2 doesn't know about SW_FORCEMINIMIZE at all */
+    ShowWindow( hchild, SW_FORCEMINIMIZE );
+    ok_sequence(WmEmptySeq, "ShowWindow(SW_FORCEMINIMIZE) child with invisible parent", TRUE);
+todo_wine {
+    ok(!(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should be not set\n");
+}
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    DestroyWindow(hchild);
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    flush_sequence();
+
+    ShowWindow( hchild, SW_SHOWNA );
+    ok_sequence(WmShowChildInvisibleParentSeq_5, "ShowWindow(SW_SHOWNA) child with invisible parent", FALSE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    /* repeat */
+    flush_events();
+    ShowWindow( hchild, SW_SHOWNA );
+    ok_sequence(WmShowChildInvisibleParentSeq_5, "ShowWindow(SW_SHOWNA) child with invisible parent", FALSE);
+
+    DestroyWindow(hchild);
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    flush_sequence();
+
+    ShowWindow( hchild, SW_SHOW );
+    ok_sequence(WmShowChildInvisibleParentSeq_5, "ShowWindow(SW_SHOW) child with invisible parent", FALSE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    /* repeat */
+    flush_events();
+    ShowWindow( hchild, SW_SHOW );
+    ok_sequence(WmEmptySeq, "ShowWindow(SW_SHOW) child with invisible parent", FALSE);
+
+    ShowWindow( hchild, SW_HIDE );
+    ok_sequence(WmHideChildInvisibleParentSeq, "ShowWindow:hide child with invisible parent", FALSE);
+    ok(!(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should be not set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+    ok_sequence(WmShowChildInvisibleParentSeq_6, "SetWindowPos:show child with invisible parent", FALSE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+    ok_sequence(WmHideChildInvisibleParentSeq_2, "SetWindowPos:hide child with invisible parent", FALSE);
+    ok(!(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should not be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
+
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+    flush_sequence();
+    DestroyWindow(hchild);
+    ok_sequence(WmDestroyInvisibleChildSeq, "DestroyInvisibleChildSeq", FALSE);
+
+    DestroyWindow(hparent);
+    flush_sequence();
 }
 
 /****************** button message test *************************/
@@ -7269,6 +7462,7 @@ START_TEST(msg)
     test_PeekMessage();
     test_scrollwindowex();
     test_messages();
+    invisible_parent_tests();
     test_mdi_messages();
     test_button_messages();
     test_paint_messages();
