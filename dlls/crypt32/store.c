@@ -1749,10 +1749,8 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
     return pcrl;
 }
 
-/* Decodes the encoded certificate and creates the certificate context for it.
- */
-static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
- DWORD dwCertEncodingType, const BYTE *pbCertEncoded, DWORD cbCertEncoded)
+PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
+ const BYTE *pbCertEncoded, DWORD cbCertEncoded)
 {
     PWINE_CERT_CONTEXT_DATA cert = NULL;
     BOOL ret;
@@ -1809,19 +1807,6 @@ static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
     }
 
 end:
-    return (PWINE_CERT_CONTEXT)cert;
-}
-
-PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
- const BYTE *pbCertEncoded, DWORD cbCertEncoded)
-{
-    PWINE_CERT_CONTEXT cert;
-
-    TRACE("(%08lx, %p, %ld)\n", dwCertEncodingType, pbCertEncoded,
-     cbCertEncoded);
-
-    cert = CRYPT_CreateCertificateContext(dwCertEncodingType, pbCertEncoded,
-     cbCertEncoded);
     return (PCCERT_CONTEXT)cert;
 }
 
@@ -2293,14 +2278,14 @@ BOOL WINAPI CertAddEncodedCertificateToStore(HCERTSTORE hCertStore,
         ret = FALSE;
     else
     {
-        PWINE_CERT_CONTEXT cert = CRYPT_CreateCertificateContext(
+        PCCERT_CONTEXT cert = CertCreateCertificateContext(
          dwCertEncodingType, pbCertEncoded, cbCertEncoded);
 
         if (cert)
         {
             ret = CertAddCertificateContextToStore(hCertStore,
-             (PCCERT_CONTEXT)cert, dwAddDisposition, ppCertContext);
-            CertFreeCertificateContext((PCCERT_CONTEXT)cert);
+             cert, dwAddDisposition, ppCertContext);
+            CertFreeCertificateContext(cert);
         }
         else
             ret = FALSE;
