@@ -469,8 +469,11 @@ static void test_swprintf( void )
     double pnumber=789456123;
     const wchar_t TwentyThreePoint15e[]= {'%','+','#','2','3','.','1','5','e',0};
     const wchar_t e008[] = {'e','+','0','0','8',0};
-    const char string[]={'s','t','r','i','n','g',0};
+    const wchar_t string_w[] = {'s','t','r','i','n','g',0};
+    const char string[] = "string";
     const wchar_t S[]={'%','S',0};
+    const wchar_t hs[] = {'%', 'h', 's', 0};
+
     swprintf(buffer,TwentyThreePoint15e,pnumber);
     todo_wine
       {
@@ -480,6 +483,8 @@ static void test_swprintf( void )
       ok(wcslen(buffer) == 11,"Problem with long long\n");
     swprintf(buffer,S,string);
       ok(wcslen(buffer) == 6,"Problem with \"%%S\" interpretation\n");
+   swprintf(buffer, hs, string);
+   ok( wcscmp(string_w,buffer) == 0, "swprintf failed with %%hs\n");
 }
 
 static void test_fwprintf( void )

@@ -357,6 +357,26 @@ static inline int pf_output_format_A( pf_output *out, LPCSTR str,
     return r;
 }
 
+static int pf_handle_string_format( pf_output *out, const void* str, int len,
+                             pf_flags *flags, BOOL capital_letter)
+{
+     if(str == NULL)  /* catch NULL pointer */
+        return pf_output_format_A( out, "(null)", -1, flags);
+
+     /* prefixes take priority over %c,%s vs. %C,%S, so we handle them first */
+    if(flags->WideString || flags->IntegerLength == 'l')
+        return pf_output_format_W( out, str, len, flags);
+    if(flags->IntegerLength == 'h')
+        return pf_output_format_A( out, str, len, flags);
+
+    /* %s,%c ->  chars in ansi functions & wchars in unicode
+     * %S,%C -> wchars in ansi functions &  chars in unicode */
+    if( capital_letter == out->unicode) /* either both TRUE or both FALSE */
+        return pf_output_format_A( out, str, len, flags);
+    else
+        return pf_output_format_W( out, str, len, flags);
+}
+
 static inline BOOL pf_is_integer_format( char fmt )
 {
     static const char float_fmts[] = "diouxX";
@@ -602,50 +622,17 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
         flags.Format = *p;
         r = 0;
 
-        /* output a unicode string */
-        if( ( flags.Format == 's' && (flags.WideString || flags.IntegerLength == 'l' )) ||
-            ( !out->unicode && flags.Format == 'S' ) ||
-            ( out->unicode && flags.Format == 's' ) )
+        /* output a string */
+        if(  flags.Format == 's' || flags.Format == 'S' )
+            r = pf_handle_string_format( out, va_arg(valist, const void*), -1,
+                                         &flags, (flags.Format == 'S') );
+
+        /* output a single character */
+        else if( flags.Format == 'c' || flags.Format == 'C' )
         {
-            LPCWSTR str = va_arg( valist, const WCHAR * );
+            INT ch = va_arg( valist, int );
 
-            if( str )
-                r = pf_output_format_W( out, str, -1, &flags );
-            else
-                r = pf_output_format_A( out, "(null)", -1, &flags );
-        }
-
-        /* output a ASCII string */
-        else if( ( flags.Format == 's' && flags.IntegerLength == 'h' ) ||
-            ( out->unicode && flags.Format == 'S' ) ||
-            ( !out->unicode && flags.Format == 's' ) )
-        {
-            LPCSTR str = va_arg( valist, const CHAR * );
-
-            if( str )
-                r = pf_output_format_A( out, str, -1, &flags );
-            else
-                r = pf_output_format_A( out, "(null)", -1, &flags );
-        }
-
-        /* output a single wide character */
-        else if( ( flags.Format == 'c' && flags.IntegerLength == 'w' ) ||
-            ( out->unicode && flags.Format == 'c' ) ||
-            ( !out->unicode && flags.Format == 'C' ) )
-        {
-            WCHAR ch = va_arg( valist, int );
-
-            r = pf_output_format_W( out, &ch, 1, &flags );
-        }
-
-        /* output a single ascii character */
-        else if( ( flags.Format == 'c' && flags.IntegerLength == 'h' ) ||
-            ( out->unicode && flags.Format == 'C' ) ||
-            ( !out->unicode && flags.Format == 'c' ) )
-        {
-            CHAR ch = va_arg( valist, int );
-
-            r = pf_output_format_A( out, &ch, 1, &flags );
+            r = pf_handle_string_format( out, &ch, 1, &flags, (flags.Format == 'C') );
         }
 
         /* output a pointer */
