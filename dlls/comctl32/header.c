@@ -1465,7 +1465,7 @@ HEADER_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("Pressed item %d!\n", nItem);
     }
     else if ((flags == HHT_ONDIVIDER) || (flags == HHT_ONDIVOPEN)) {
-        if (!(HEADER_SendHeaderNotifyT (hwnd, HDN_BEGINTRACKW, nItem, 0, NULL))) {
+        if (!(HEADER_SendHeaderNotifyT (hwnd, HDN_BEGINTRACKW, nItem, HDI_WIDTH, NULL))) {
 	    SetCapture (hwnd);
 	    infoPtr->bCaptured = TRUE;
 	    infoPtr->bTracking = TRUE;
