@@ -109,13 +109,16 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
  */
 HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***ppSp, int *piNumScripts)
 {
-    TRACE("%p,%p\n",ppSp, piNumScripts);
+    TRACE("%p,%p\n", ppSp, piNumScripts);
 
-/*  Set up a sensible default and intialise pointers  */
-    *piNumScripts = MAX_SCRIPTS;
-    *ppSp =  Global_Script;
-    TRACE("ppSp:%p, *ppSp:%p, **ppSp:%p, %d\n", ppSp, *ppSp, **ppSp, 
-                                                *piNumScripts);
+    if (!ppSp && !piNumScripts) return E_INVALIDARG;
+
+    /* Set up a sensible default and intialise pointers  */
+    if (piNumScripts) *piNumScripts = MAX_SCRIPTS;
+    if (ppSp) *ppSp = Global_Script;
+    TRACE("ppSp:%p, *ppSp:%p, **ppSp:%p, %d\n",
+          ppSp, ppSp ? *ppSp : NULL, (ppSp && *ppSp) ? **ppSp : NULL,
+          piNumScripts ? *piNumScripts : -1);
     return 0;
 }
 
