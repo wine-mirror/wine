@@ -41,6 +41,11 @@ static LDAPMod *nullmods[] = { NULL };
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      ldap_modifyA     (WLDAP32.@)
+ *
+ * See ldap_modifyW.
+ */
 ULONG ldap_modifyA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -73,6 +78,26 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modifyW     (WLDAP32.@)
+ *
+ * Change an entry in a directory tree (asynchronous operation).
+ *
+ * PARAMS
+ *  ld     [I] Pointer to an LDAP context.
+ *  dn     [I] DN of the entry to change.
+ *  mods   [I] Pointer to an array of LDAPModW structures, each
+ *             specifying an attribute and its values to change.
+ *
+ * RETURNS
+ *  Success: Message ID of the modify operation.
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. Cancel the operation by calling ldap_abandon
+ *  with the message ID.
+ */
 ULONG ldap_modifyW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -112,6 +137,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modify_extA     (WLDAP32.@)
+ *
+ * See ldap_modify_extW.
+ */
 ULONG ldap_modify_extA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[],
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls, ULONG *message )
 {
@@ -157,6 +187,29 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modify_extW     (WLDAP32.@)
+ *
+ * Change an entry in a directory tree (asynchronous operation).
+ *
+ * PARAMS
+ *  ld          [I] Pointer to an LDAP context.
+ *  dn          [I] DN of the entry to change.
+ *  mods        [I] Pointer to an array of LDAPModW structures, each
+ *                  specifying an attribute and its values to change.
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *  message     [O] Message ID of the modify operation.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. The serverctrls and clientctrls parameters are
+ *  optional and should be set to NULL if not used.
+ */
 ULONG ldap_modify_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[],
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls, ULONG *message )
 {
@@ -204,6 +257,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modify_ext_sA     (WLDAP32.@)
+ *
+ * See ldap_modify_ext_sW.
+ */
 ULONG ldap_modify_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[],
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
 {
@@ -249,6 +307,27 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modify_ext_sW     (WLDAP32.@)
+ *
+ * Change an entry in a directory tree (synchronous operation).
+ *
+ * PARAMS
+ *  ld          [I] Pointer to an LDAP context.
+ *  dn          [I] DN of the entry to change.
+ *  mods        [I] Pointer to an array of LDAPModW structures, each
+ *                  specifying an attribute and its values to change.
+ *  serverctrls [I] Array of LDAP server controls.
+ *  clientctrls [I] Array of LDAP client controls.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  The serverctrls and clientctrls parameters are optional and
+ *  should be set to NULL if not used.
+ */
 ULONG ldap_modify_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[],
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
 {
@@ -295,6 +374,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modify_sA     (WLDAP32.@)
+ *
+ * See ldap_modify_sW.
+ */
 ULONG ldap_modify_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -327,6 +411,21 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modify_sW     (WLDAP32.@)
+ *
+ * Change an entry in a directory tree (synchronous operation).
+ *
+ * PARAMS
+ *  ld      [I] Pointer to an LDAP context.
+ *  dn      [I] DN of the entry to change.
+ *  attrs   [I] Pointer to an array of LDAPModW structures, each
+ *              specifying an attribute and its values to change.
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ */
 ULONG ldap_modify_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;

@@ -40,6 +40,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+/***********************************************************************
+ *      ldap_modrdnA     (WLDAP32.@)
+ *
+ * See ldap_modrdnW.
+ */
 ULONG ldap_modrdnA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -70,6 +75,25 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modrdnW     (WLDAP32.@)
+ *
+ * Change the RDN of a directory entry (asynchronous operation).
+ *
+ * PARAMS
+ *  ld      [I] Pointer to an LDAP context.
+ *  dn      [I] DN of the entry to change.
+ *  newdn   [I] New DN for the entry. 
+ *
+ * RETURNS
+ *  Success: Message ID of the modrdn operation.
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. Cancel the operation by calling ldap_abandon
+ *  with the message ID.
+ */
 ULONG ldap_modrdnW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -106,6 +130,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modrdn2A     (WLDAP32.@)
+ *
+ * See ldap_modrdn2W.
+ */
 ULONG ldap_modrdn2A( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn, INT delete )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -136,6 +165,26 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modrdn2W     (WLDAP32.@)
+ *
+ * Change the RDN of a directory entry (asynchronous operation).
+ *
+ * PARAMS
+ *  ld      [I] Pointer to an LDAP context.
+ *  dn      [I] DN of the entry to change.
+ *  newdn   [I] New DN for the entry. 
+ *  delete  [I] Delete old DN?
+ *
+ * RETURNS
+ *  Success: Message ID of the modrdn operation.
+ *  Failure: An LDAP error code.
+ *
+ * NOTES
+ *  Call ldap_result with the message ID to get the result of
+ *  the operation. Cancel the operation by calling ldap_abandon
+ *  with the message ID.
+ */
 ULONG ldap_modrdn2W( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT delete )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -172,6 +221,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modrdn2_sA     (WLDAP32.@)
+ *
+ * See ldap_modrdn2_sW.
+ */
 ULONG ldap_modrdn2_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn, INT delete )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -202,6 +256,21 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modrdn2_sW     (WLDAP32.@)
+ *
+ * Change the RDN of a directory entry (synchronous operation).
+ *
+ * PARAMS
+ *  ld      [I] Pointer to an LDAP context.
+ *  dn      [I] DN of the entry to change.
+ *  newdn   [I] New DN for the entry. 
+ *  delete  [I] Delete old DN?
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ */
 ULONG ldap_modrdn2_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT delete )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -232,6 +301,11 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modrdn_sA     (WLDAP32.@)
+ *
+ * See ldap_modrdn_sW.
+ */
 ULONG ldap_modrdn_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -262,6 +336,20 @@ exit:
     return ret;
 }
 
+/***********************************************************************
+ *      ldap_modrdn_sW     (WLDAP32.@)
+ *
+ * Change the RDN of a directory entry (synchronous operation).
+ *
+ * PARAMS
+ *  ld      [I] Pointer to an LDAP context.
+ *  dn      [I] DN of the entry to change.
+ *  newdn   [I] New DN for the entry. 
+ *
+ * RETURNS
+ *  Success: LDAP_SUCCESS
+ *  Failure: An LDAP error code.
+ */
 ULONG ldap_modrdn_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
