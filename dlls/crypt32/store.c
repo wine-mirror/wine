@@ -1764,12 +1764,12 @@ static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
      cbCertEncoded);
 
     /* First try to decode it as a signed cert. */
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT, pbCertEncoded,
+    ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT, pbCertEncoded,
      cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&signedCert, &size);
     if (ret)
     {
         size = 0;
-        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
+        ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_TO_BE_SIGNED,
          signedCert->ToBeSigned.pbData, signedCert->ToBeSigned.cbData,
          CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&certInfo, &size);
         LocalFree(signedCert);
@@ -1778,7 +1778,7 @@ static PWINE_CERT_CONTEXT CRYPT_CreateCertificateContext(
     if (!ret)
     {
         size = 0;
-        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CERT_TO_BE_SIGNED,
+        ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_TO_BE_SIGNED,
          pbCertEncoded, cbCertEncoded,
          CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
          (BYTE *)&certInfo, &size);
