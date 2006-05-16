@@ -1123,8 +1123,8 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
     const DWORD* pToken = This->baseShader.function;
     const SHADER_OPCODE* curOpcode = NULL;
     /** functions parameters */
-    WINED3DSHADERVECTOR* p[4];
-    WINED3DSHADERVECTOR* p_send[4];
+    WINED3DSHADERVECTOR* p[6];
+    WINED3DSHADERVECTOR* p_send[6];
     DWORD i;
 
     /** init temporary register */
