@@ -619,6 +619,11 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_WINE_MOUSE_LL_HOOK:
         push_data( data, (MSLLHOOKSTRUCT *)lparam, sizeof(MSLLHOOKSTRUCT) );
         return 0;
+    case WM_NCPAINT:
+        if (wparam <= 1) return 0;
+        FIXME( "WM_NCPAINT hdc packing not supported yet\n" );
+        data->count = -1;
+        return 0;
     case WM_PAINT:
         if (!wparam) return 0;
         /* fall through */
@@ -629,7 +634,6 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     /* these contain an HDC */
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
-    case WM_NCPAINT:
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
     case WM_CTLCOLORLISTBOX:
@@ -879,6 +883,10 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_WINE_MOUSE_LL_HOOK:
         minsize = sizeof(MSLLHOOKSTRUCT);
         break;
+    case WM_NCPAINT:
+        if (*wparam <= 1) return TRUE;
+        FIXME( "WM_NCPAINT hdc unpacking not supported\n" );
+        return FALSE;
     case WM_PAINT:
         if (!*wparam) return TRUE;
         /* fall through */
@@ -889,7 +897,6 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     /* these contain an HDC */
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
-    case WM_NCPAINT:
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
     case WM_CTLCOLORLISTBOX:
