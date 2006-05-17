@@ -3991,7 +3991,9 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
     if (fMustAlloc || !*ppMemory)
     {
         unsigned char *Buffer = pStubMsg->Buffer;
+        unsigned long MemorySize = pStubMsg->MemorySize;
         *ppMemory = NdrAllocate(pStubMsg, NdrBaseTypeMemorySize(pStubMsg, pFormat));
+        pStubMsg->MemorySize = MemorySize;
         pStubMsg->Buffer = Buffer;
     }
 

@@ -7,6 +7,7 @@ IMPORTS   = rpcrt4 kernel32
 
 CTESTS = \
 	generated.c \
+	ndr_marshall.c \
 	rpc.c
 
 @MAKE_TEST_RULES@
