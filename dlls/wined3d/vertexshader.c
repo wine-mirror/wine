@@ -4,6 +4,7 @@
  * Copyright 2002-2003 Jason Edmeades
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
+ * Copyright 2006 Ivan Gyurdiev
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1570,18 +1571,31 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
                         ++pToken;
                         ++len;
                 } else {
+
+                    DWORD param, addr_token;
+                    int tokens_read;
+
                     TRACE("%s", curOpcode->name);
                     if (curOpcode->num_params > 0) {
-                        shader_dump_ins_modifiers(*pToken);
+
+                        tokens_read = shader_get_param((IWineD3DBaseShader*) This,
+                            pToken, &param, &addr_token);
+                        pToken += tokens_read;
+                        len += tokens_read;
+
+                        shader_dump_ins_modifiers(param);
                         TRACE(" ");
-                        shader_dump_param((IWineD3DBaseShader*) This, *pToken, 0);
-                        ++pToken;
-                        ++len;
+                        shader_dump_param((IWineD3DBaseShader*) This, param, 0);
+
                         for (i = 1; i < curOpcode->num_params; ++i) {
+
+                            tokens_read = shader_get_param((IWineD3DBaseShader*) This,
+                               pToken, &param, &addr_token);
+                            pToken += tokens_read;
+                            len += tokens_read;
+
                             TRACE(", ");
-                            shader_dump_param((IWineD3DBaseShader*) This, *pToken, 1);
-                            ++pToken;
-                            ++len;
+                            shader_dump_param((IWineD3DBaseShader*) This, param, 1);
                         }
                     }
                 }

@@ -4,6 +4,7 @@
  * Copyright 2002-2003 Jason Edmeades
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
+ * Copyright 2006 Ivan Gyurdiev
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -214,13 +215,17 @@ void shader_get_registers_used(
             int i;
 
             for (i = 0; i < curOpcode->num_params; ++i) {
-                DWORD regtype = (((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
-                DWORD reg = (*pToken) & D3DSP_REGNUM_MASK;
+
+                DWORD param, addr_token, reg, regtype;
+                pToken += shader_get_param(iface, pToken, &param, &addr_token);
+
+                regtype = (param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT;
+                reg = param & D3DSP_REGNUM_MASK;
+
                 if (D3DSPR_TEXTURE == regtype)
                     *texUsed |= (1 << reg);
                 if (D3DSPR_TEMP == regtype)
                     *tempsUsed |= (1 << reg);
-                ++pToken;
              }
         }
     }
@@ -563,12 +568,33 @@ void generate_base_shader(
                 hw_arg.shader = iface;
                 hw_arg.opcode = curOpcode;
                 hw_arg.buffer = buffer;
-                if (curOpcode->num_params > 0) {
-                    hw_arg.dst = *pToken;
 
-                    /* FIXME: this does not account for relative address tokens */
-                    for (i = 1; i < curOpcode->num_params; i++)
-                       hw_arg.src[i-1] = *(pToken + i);
+                if (curOpcode->num_params > 0) {
+
+                    DWORD param, addr_token = 0;
+
+                    /* DCL instruction has usage dst parameter, not register */
+                    if (curOpcode->opcode == D3DSIO_DCL)
+                        param = *pToken++;
+                    else
+                        pToken += shader_get_param(iface, pToken, &param, &addr_token);
+
+                    hw_arg.dst = param;
+                    hw_arg.dst_addr = addr_token;
+
+                    for (i = 1; i < curOpcode->num_params; i++) {
+                        /* DEF* instructions have constant src parameters, not registers */
+                        if (curOpcode->opcode == D3DSIO_DEF || 
+                            curOpcode->opcode == D3DSIO_DEFI || 
+                            curOpcode->opcode == D3DSIO_DEFB) {
+                            param = *pToken++;
+
+                        } else
+                            pToken += shader_get_param(iface, pToken, &param, &addr_token);
+
+                        hw_arg.src[i-1] = param;
+                        hw_arg.src_addr[i-1] = addr_token;
+                    }
                 }
 
                 /* Call appropriate function for output target */
@@ -576,8 +602,6 @@ void generate_base_shader(
                     curOpcode->hw_glsl_fct(&hw_arg);
                 else
                     curOpcode->hw_fct(&hw_arg);
-
-                pToken += curOpcode->num_params;
 
             } else {
 
