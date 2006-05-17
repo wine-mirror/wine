@@ -1523,7 +1523,7 @@ void WINAPI NdrSimpleStructFree(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 
-unsigned long WINAPI EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned long EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
                                          PFORMAT_STRING pFormat)
 {
   switch (*pFormat) {
@@ -1550,7 +1550,7 @@ unsigned long WINAPI EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 
-unsigned long WINAPI EmbeddedComplexMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned long EmbeddedComplexMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
   NDR_MEMORYSIZE m = NdrMemorySizer[*pFormat & NDR_TABLE_MASK];
@@ -1565,7 +1565,7 @@ unsigned long WINAPI EmbeddedComplexMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 
-unsigned char * WINAPI ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                        unsigned char *pMemory,
                                        PFORMAT_STRING pFormat,
                                        PFORMAT_STRING pPointer)
@@ -1629,7 +1629,7 @@ unsigned char * WINAPI ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   return pMemory;
 }
 
-unsigned char * WINAPI ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                          unsigned char *pMemory,
                                          PFORMAT_STRING pFormat,
                                          PFORMAT_STRING pPointer,
@@ -1696,7 +1696,7 @@ unsigned char * WINAPI ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   return pMemory;
 }
 
-unsigned char * WINAPI ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                          unsigned char *pMemory,
                                          PFORMAT_STRING pFormat,
                                          PFORMAT_STRING pPointer)
@@ -1754,7 +1754,7 @@ unsigned char * WINAPI ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   return pMemory;
 }
 
-unsigned char * WINAPI ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
                                    unsigned char *pMemory,
                                    PFORMAT_STRING pFormat,
                                    PFORMAT_STRING pPointer)
@@ -1810,7 +1810,7 @@ unsigned char * WINAPI ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
   return pMemory;
 }
 
-unsigned long WINAPI ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                        PFORMAT_STRING pFormat)
 {
   PFORMAT_STRING desc;
