@@ -698,6 +698,7 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
     break;
   default:
     FIXME("Unknown reg type %ld %ld\n", regtype, reg);
+    strcat(hwLine, "unrecognized_register");
     break;
   }
 

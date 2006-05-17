@@ -781,6 +781,7 @@ inline static void get_register_name(const DWORD param, char* regstr, char const
     break;
     default:
         FIXME("Unhandled register name Type(%ld)\n", regtype);
+        sprintf(regstr, "unrecognized_register");
     break;
     }
 }
