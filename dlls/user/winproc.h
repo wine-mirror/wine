@@ -47,7 +47,7 @@ struct tagWINDOWPROC;
 extern WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode );
 extern WNDPROC WINPROC_AllocProc16( WNDPROC16 func );
 extern WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode );
-extern WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode );
+extern WNDPROC WINPROC_AllocProc( WNDPROC funcA, WNDPROC funcW );
 extern BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val );
 
 extern INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam,

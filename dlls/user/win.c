@@ -1987,7 +1987,8 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL 
     {
         UINT old_flags = wndPtr->flags;
         retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, unicode );
-        wndPtr->winproc = WINPROC_AllocProc( (WNDPROC)newval, unicode );
+        if (unicode) wndPtr->winproc = WINPROC_AllocProc( NULL, (WNDPROC)newval );
+        else wndPtr->winproc = WINPROC_AllocProc( (WNDPROC)newval, NULL );
         if (WINPROC_IsUnicode( wndPtr->winproc, unicode )) wndPtr->flags |= WIN_ISUNICODE;
         else wndPtr->flags &= ~WIN_ISUNICODE;
         if (!((old_flags ^ wndPtr->flags) & WIN_ISUNICODE))
@@ -2007,7 +2008,8 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval, BOOL 
         {
             WNDPROC *ptr = (WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
             retval = (ULONG_PTR)WINPROC_GetProc( *ptr, unicode );
-            *ptr = WINPROC_AllocProc( (WNDPROC)newval, unicode );
+            if (unicode) *ptr = WINPROC_AllocProc( NULL, (WNDPROC)newval );
+            else *ptr = WINPROC_AllocProc( (WNDPROC)newval, NULL );
             WIN_ReleasePtr( wndPtr );
             return retval;
         }

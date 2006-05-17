@@ -48,8 +48,7 @@ typedef struct tagCLASS
     struct list      entry;         /* Entry in class list */
     UINT             style;         /* Class style */
     BOOL             local;         /* Local class? */
-    WNDPROC          winprocA;      /* Window procedure (ASCII) */
-    WNDPROC          winprocW;      /* Window procedure (Unicode) */
+    WNDPROC          winproc;       /* Window procedure */
     INT              cbClsExtra;    /* Class extra bytes */
     INT              cbWndExtra;    /* Window extra bytes */
     LPWSTR           menuName;      /* Default menu name (Unicode followed by ASCII) */
@@ -140,49 +139,6 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG newval )
     }
     SERVER_END_REQ;
     return ret;
-}
-
-
-/***********************************************************************
- *           CLASS_GetProc
- *
- * Get the class winproc for a given proc type
- */
-static WNDPROC CLASS_GetProc( CLASS *classPtr, BOOL unicode )
-{
-    WNDPROC proc = classPtr->winprocA;
-
-    if (classPtr->winprocW)
-    {
-        /* if we have a Unicode proc, use it if we have no ASCII proc
-         * or if we have both and Unicode was requested
-         */
-        if (!proc || unicode) proc = classPtr->winprocW;
-    }
-    return WINPROC_GetProc( proc, unicode );
-}
-
-
-/***********************************************************************
- *           CLASS_SetProc
- *
- * Set the class winproc for a given proc type.
- * Returns the previous window proc.
- */
-static void CLASS_SetProc( CLASS *classPtr, WNDPROC newproc, BOOL unicode )
-{
-    WNDPROC proc = WINPROC_AllocProc( newproc, unicode );
-
-    if (WINPROC_IsUnicode( proc, unicode ))
-    {
-        classPtr->winprocA = 0;
-        classPtr->winprocW = proc;
-    }
-    else
-    {
-        classPtr->winprocA = proc;
-        classPtr->winprocW = 0;
-    }
 }
 
 
@@ -417,9 +373,7 @@ static CLASS *register_builtin( const struct builtin_class_descr *descr )
 
     classPtr->hCursor       = LoadCursorA( 0, (LPSTR)descr->cursor );
     classPtr->hbrBackground = descr->brush;
-
-    if (descr->procA) classPtr->winprocA = WINPROC_AllocProc( descr->procA, FALSE );
-    if (descr->procW) classPtr->winprocW = WINPROC_AllocProc( descr->procW, TRUE );
+    classPtr->winproc       = WINPROC_AllocProc( descr->procA, descr->procW );
     release_class_ptr( classPtr );
     return classPtr;
 }
@@ -466,16 +420,9 @@ void CLASS_RegisterBuiltinClasses(void)
  */
 void CLASS_AddWindow( CLASS *class, WND *win, BOOL unicode )
 {
-    if (unicode)
-    {
-        if (!(win->winproc = class->winprocW)) win->winproc = class->winprocA;
-    }
-    else
-    {
-        if (!(win->winproc = class->winprocA)) win->winproc = class->winprocW;
-    }
     win->class    = class;
     win->clsStyle = class->style;
+    win->winproc  = class->winproc;
     if (WINPROC_IsUnicode( win->winproc, unicode )) win->flags |= WIN_ISUNICODE;
 }
 
@@ -565,7 +512,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     classPtr->hIconSm       = wc->hIconSm;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
-    classPtr->winprocA      = WINPROC_AllocProc( wc->lpfnWndProc, FALSE );
+    classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, NULL );
     CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
     release_class_ptr( classPtr );
     return atom;
@@ -603,7 +550,7 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     classPtr->hIconSm       = wc->hIconSm;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
-    classPtr->winprocW      = WINPROC_AllocProc( wc->lpfnWndProc, TRUE );
+    classPtr->winproc       = WINPROC_AllocProc( NULL, wc->lpfnWndProc );
     CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
     release_class_ptr( classPtr );
     return atom;
@@ -782,7 +729,7 @@ DWORD WINAPI GetClassLongW( HWND hwnd, INT offset )
         retvalue = (DWORD)class->hInstance;
         break;
     case GCLP_WNDPROC:
-        retvalue = (DWORD)CLASS_GetProc( class, TRUE );
+        retvalue = (DWORD)WINPROC_GetProc( class->winproc, TRUE );
         break;
     case GCLP_MENUNAME:
         retvalue = (DWORD)CLASS_GetMenuNameW( class );
@@ -822,7 +769,7 @@ DWORD WINAPI GetClassLongA( HWND hwnd, INT offset )
     }
 
     if (offset == GCLP_WNDPROC)
-        retvalue = (DWORD)CLASS_GetProc( class, FALSE );
+        retvalue = (DWORD)WINPROC_GetProc( class->winproc, FALSE );
     else  /* GCL_MENUNAME */
         retvalue = (DWORD)CLASS_GetMenuNameA( class );
 
@@ -893,8 +840,8 @@ DWORD WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
         retval = 0;  /* Old value is now meaningless anyway */
         break;
     case GCLP_WNDPROC:
-        retval = (DWORD)CLASS_GetProc( class, TRUE );
-        CLASS_SetProc( class, (WNDPROC)newval, TRUE );
+        retval = (DWORD)WINPROC_GetProc( class->winproc, TRUE );
+        class->winproc = WINPROC_AllocProc( NULL, (WNDPROC)newval );
         break;
     case GCLP_HBRBACKGROUND:
         retval = (DWORD)class->hbrBackground;
@@ -961,8 +908,8 @@ DWORD WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
 
     if (offset == GCLP_WNDPROC)
     {
-        retval = (DWORD)CLASS_GetProc( class, FALSE );
-        CLASS_SetProc( class, (WNDPROC)newval, FALSE );
+        retval = (DWORD)WINPROC_GetProc( class->winproc, FALSE );
+        class->winproc = WINPROC_AllocProc( (WNDPROC)newval, NULL );
     }
     else  /* GCL_MENUNAME */
     {
@@ -1084,7 +1031,7 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
         return FALSE;
     }
     wc->style         = classPtr->style;
-    wc->lpfnWndProc   = (WNDPROC)CLASS_GetProc( classPtr, FALSE );
+    wc->lpfnWndProc   = WINPROC_GetProc( classPtr->winproc, FALSE );
     wc->cbClsExtra    = classPtr->cbClsExtra;
     wc->cbWndExtra    = classPtr->cbWndExtra;
     wc->hInstance     = (hInstance == user32_module) ? 0 : hInstance;
@@ -1119,7 +1066,7 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
         return FALSE;
     }
     wc->style         = classPtr->style;
-    wc->lpfnWndProc   = (WNDPROC)CLASS_GetProc( classPtr, TRUE );
+    wc->lpfnWndProc   = WINPROC_GetProc( classPtr->winproc, TRUE );
     wc->cbClsExtra    = classPtr->cbClsExtra;
     wc->cbWndExtra    = classPtr->cbWndExtra;
     wc->hInstance     = (hInstance == user32_module) ? 0 : hInstance;
