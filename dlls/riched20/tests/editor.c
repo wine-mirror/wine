@@ -386,8 +386,8 @@ static void test_EM_SETTEXTMODE(void)
 
   /*Test that the two formattings are not the same*/
   ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects != cf2test.dwEffects),
-      "expected different formats - cf2.dwMask: %f, cf2test.dwMask: %f, cf2.dwEffects: %f, cf2test.dwEffects: %f\n",
-      (double) cf2.dwMask, (double) cf2test.dwMask, (double) cf2.dwEffects, (double) cf2test.dwEffects);
+      "expected different formats - cf2.dwMask: %lx, cf2test.dwMask: %lx, cf2.dwEffects: %lx, cf2test.dwEffects: %lx\n",
+      cf2.dwMask, cf2test.dwMask, cf2.dwEffects, cf2test.dwEffects);
 
   DestroyWindow(hwndRichEdit);
 }
@@ -437,8 +437,8 @@ static void test_TM_PLAINTEXT()
   /*Test that they are the same as plain text allows only one formatting*/
 
   ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
-     "two selections' formats differ - cf2.dwMask: %f, cf2test.dwMask %f, cf2.dwEffects: %f, cf2test.dwEffects: %f\n",
-     (double) cf2.dwMask, (double) cf2test.dwMask, (double) cf2.dwEffects, (double) cf2test.dwEffects);
+     "two selections' formats differ - cf2.dwMask: %lx, cf2test.dwMask %lx, cf2.dwEffects: %lx, cf2test.dwEffects: %lx\n",
+     cf2.dwMask, cf2test.dwMask, cf2.dwEffects, cf2test.dwEffects);
   
   /*Fill the control with a "wine" string, which when inserted will be bold*/
 
@@ -489,8 +489,8 @@ static void test_TM_PLAINTEXT()
   /*Compare the two formattings. They should be the same.*/
 
   ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
-     "Copied text retained formatting - cf2.dwMask: %f, cf2test.dwMask: %f, cf2.dwEffects: %f, cf2test.dwEffects: %f\n",
-     (double) cf2.dwMask, (double) cf2test.dwMask, (double) cf2.dwEffects, (double) cf2test.dwEffects);
+     "Copied text retained formatting - cf2.dwMask: %lx, cf2test.dwMask: %lx, cf2.dwEffects: %lx, cf2test.dwEffects: %lx\n",
+     cf2.dwMask, cf2test.dwMask, cf2.dwEffects, cf2test.dwEffects);
   DestroyWindow(hwndRichEdit);
 }
 
