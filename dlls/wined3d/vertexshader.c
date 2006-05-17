@@ -510,7 +510,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_LOGP, "logp", "LOG", 2, vshader_logp, vshader_hw_map2gl, NULL, 0, 0},
     {D3DSIO_LIT,  "lit",  "LIT", 2, vshader_lit,  vshader_hw_map2gl, NULL, 0, 0},
     {D3DSIO_DST,  "dst",  "DST", 3, vshader_dst,  vshader_hw_map2gl, NULL, 0, 0},
-    {D3DSIO_LRP,  "lrp",  "LRP", 4, vshader_lrp,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_LRP,  "lrp",  "LRP", 4, vshader_lrp,  NULL,              NULL, 0, 0},
     {D3DSIO_FRC,  "frc",  "FRC", 2, vshader_frc,  vshader_hw_map2gl, NULL, 0, 0},
     {D3DSIO_POW,  "pow",  "POW", 3, vshader_pow,  NULL, NULL, 0, 0},
     {D3DSIO_CRS,  "crs",  "XPS", 3, vshader_crs,  NULL, NULL, 0, 0},
