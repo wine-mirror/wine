@@ -1865,7 +1865,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
             selectionCacheSrc = x11drv_atom(CLIPBOARD);
         else
         {
-            Atom xstr = XA_PRIMARY;
+            Atom xstr = XA_STRING;
 
             /* Selection Owner doesn't understand TARGETS, try retrieving XA_STRING */
             if (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, XA_STRING, &xe))
