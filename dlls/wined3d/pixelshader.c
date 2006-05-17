@@ -745,7 +745,6 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 };
 
 inline static void get_register_name(const DWORD param, char* regstr, char constants[WINED3D_PSHADER_MAX_CONSTANTS]) {
-    static const char* rastout_reg_names[] = { "oC0", "oC1", "oC2", "oC3", "oDepth" };
 
     DWORD reg = param & D3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
@@ -770,8 +769,17 @@ inline static void get_register_name(const DWORD param, char* regstr, char const
     case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
         sprintf(regstr,"T%lu", reg);
     break;
-    case D3DSPR_RASTOUT:
-        sprintf(regstr, "%s", rastout_reg_names[reg]);
+    case D3DSPR_COLOROUT:
+        if (reg == 0)
+            sprintf(regstr, "result.color");
+        else {
+            /* TODO: See GL_ARB_draw_buffers */
+            FIXME("Unsupported write to render target %lu\n", reg);
+            sprintf(regstr, "unsupported_register");
+        }
+    break;
+    case D3DSPR_DEPTHOUT:
+        sprintf(regstr, "result.depth");
     break;
     case D3DSPR_ATTROUT:
         sprintf(regstr, "oD[%lu]", reg);
@@ -1341,8 +1349,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
             of the pixel shader string for us */
         generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);
 
-        /*FIXME: This next line isn't valid for certain pixel shader versions */
-        shader_addline(&buffer, "MOV result.color, R0;\n");
+        if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
+            shader_addline(&buffer, "MOV result.color, R0;\n");
         shader_addline(&buffer, "END\n\0"); 
 
         /* TODO: change to resource.glObjectHandle or something like that */
