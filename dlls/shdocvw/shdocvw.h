@@ -52,6 +52,12 @@ extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid,
 typedef struct ConnectionPoint ConnectionPoint;
 
 typedef struct {
+    ConnectionPoint *wbe2;
+    ConnectionPoint *wbe;
+    ConnectionPoint *pns;
+} ConnectionPointContainer;
+
+typedef struct {
     const IOleClientSiteVtbl      *lpOleClientSiteVtbl;
     const IOleInPlaceSiteVtbl     *lpOleInPlaceSiteVtbl;
     const IDocHostUIHandler2Vtbl  *lpDocHostUIHandlerVtbl;
@@ -74,11 +80,7 @@ typedef struct {
 
     LPOLESTR url;
 
-    /* Connection points */
-
-    ConnectionPoint *cp_wbe2;
-    ConnectionPoint *cp_wbe;
-    ConnectionPoint *cp_pns;
+    ConnectionPointContainer cps;
 } DocHost;
 
 typedef struct {

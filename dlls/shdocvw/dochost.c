@@ -51,8 +51,8 @@ static void navigate_complete(DocHost *This)
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = This->url;
 
-    call_sink(This->cp_wbe2, DISPID_NAVIGATECOMPLETE2, &dispparams);
-    call_sink(This->cp_wbe2, DISPID_DOCUMENTCOMPLETE, &dispparams);
+    call_sink(This->cps.wbe2, DISPID_NAVIGATECOMPLETE2, &dispparams);
+    call_sink(This->cps.wbe2, DISPID_DOCUMENTCOMPLETE, &dispparams);
 
     if(disp)
         IDispatch_Release(disp);

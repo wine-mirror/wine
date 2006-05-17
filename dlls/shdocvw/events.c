@@ -88,13 +88,13 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
 
     if(IsEqualGUID(&DIID_DWebBrowserEvents2, riid)) {
         TRACE("(%p)->(DIID_DWebBrowserEvents2 %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->doc_host.cp_wbe2);
+        *ppCP = CONPOINT(This->doc_host.cps.wbe2);
     }else if(IsEqualGUID(&DIID_DWebBrowserEvents, riid)) {
         TRACE("(%p)->(DIID_DWebBrowserEvents %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->doc_host.cp_wbe);
+        *ppCP = CONPOINT(This->doc_host.cps.wbe);
     }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
         TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->doc_host.cp_pns);
+        *ppCP = CONPOINT(This->doc_host.cps.pns);
     }
 
     if(*ppCP) {
@@ -299,23 +299,23 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
 
 void DocHost_Events_Init(DocHost *This)
 {
-    ConnectionPoint_Create(This, &DIID_DWebBrowserEvents2, &This->cp_wbe2);
-    ConnectionPoint_Create(This, &DIID_DWebBrowserEvents,  &This->cp_wbe);
-    ConnectionPoint_Create(This, &IID_IPropertyNotifySink, &This->cp_pns);
+    ConnectionPoint_Create(This, &DIID_DWebBrowserEvents2, &This->cps.wbe2);
+    ConnectionPoint_Create(This, &DIID_DWebBrowserEvents,  &This->cps.wbe);
+    ConnectionPoint_Create(This, &IID_IPropertyNotifySink, &This->cps.pns);
 }
 
 void DocHost_Events_Release(DocHost *This)
 {
-    ConnectionPoint_Destroy(This->cp_wbe2);
-    ConnectionPoint_Destroy(This->cp_wbe);
-    ConnectionPoint_Destroy(This->cp_pns);
+    ConnectionPoint_Destroy(This->cps.wbe2);
+    ConnectionPoint_Destroy(This->cps.wbe);
+    ConnectionPoint_Destroy(This->cps.pns);
 }
 
 void WebBrowser_Events_Init(WebBrowser *This)
 {
     This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
 
-    This->doc_host.cp_wbe2->container = CONPTCONT(This);
-    This->doc_host.cp_wbe->container  = CONPTCONT(This);
-    This->doc_host.cp_pns->container  = CONPTCONT(This);
+    This->doc_host.cps.wbe2->container = CONPTCONT(This);
+    This->doc_host.cps.wbe->container  = CONPTCONT(This);
+    This->doc_host.cps.pns->container  = CONPTCONT(This);
 }

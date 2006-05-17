@@ -518,7 +518,7 @@ static HRESULT WINAPI WebBrowser_put_Visible(IWebBrowser2 *iface, VARIANT_BOOL V
 
     V_VT(&arg) = VT_BOOL;
     V_BOOL(&arg) = Value;
-    call_sink(This->doc_host.cp_wbe2, DISPID_ONVISIBLE, &dispparams);
+    call_sink(This->doc_host.cps.wbe2, DISPID_ONVISIBLE, &dispparams);
 
     return S_OK;
 }
@@ -548,7 +548,7 @@ static HRESULT WINAPI WebBrowser_put_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL
 
     V_VT(&arg) = VT_BOOL;
     V_BOOL(&arg) = Value;
-    call_sink(This->doc_host.cp_wbe2, DISPID_ONSTATUSBAR, &dispparams);
+    call_sink(This->doc_host.cps.wbe2, DISPID_ONSTATUSBAR, &dispparams);
 
     return S_OK;
 }
@@ -592,7 +592,7 @@ static HRESULT WINAPI WebBrowser_put_ToolBar(IWebBrowser2 *iface, int Value)
 
     V_VT(&arg) = VT_BOOL;
     V_BOOL(&arg) = Value;
-    call_sink(This->doc_host.cp_wbe2, DISPID_ONTOOLBAR, &dispparams);
+    call_sink(This->doc_host.cps.wbe2, DISPID_ONTOOLBAR, &dispparams);
 
     return S_OK;
 }
@@ -622,7 +622,7 @@ static HRESULT WINAPI WebBrowser_put_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL V
 
     V_VT(&arg) = VT_BOOL;
     V_BOOL(&arg) = Value;
-    call_sink(This->doc_host.cp_wbe2, DISPID_ONMENUBAR, &dispparams);
+    call_sink(This->doc_host.cps.wbe2, DISPID_ONMENUBAR, &dispparams);
 
     return S_OK;
 }
@@ -822,7 +822,7 @@ static HRESULT WINAPI WebBrowser_put_AddressBar(IWebBrowser2 *iface, VARIANT_BOO
 
     V_VT(&arg) = VT_BOOL;
     V_BOOL(&arg) = Value;
-    call_sink(This->doc_host.cp_wbe2, DISPID_ONADDRESSBAR, &dispparams);
+    call_sink(This->doc_host.cps.wbe2, DISPID_ONADDRESSBAR, &dispparams);
 
     return S_OK;
 }

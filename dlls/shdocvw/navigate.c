@@ -373,7 +373,7 @@ static void on_before_navigate2(DocHost *This, LPWSTR url, PBYTE post_data, ULON
     V_VT(params+6) = (VT_DISPATCH);
     V_DISPATCH(params+6) = This->disp;
 
-    call_sink(This->cp_wbe2, DISPID_BEFORENAVIGATE2, &dispparams);
+    call_sink(This->cps.wbe2, DISPID_BEFORENAVIGATE2, &dispparams);
 
     SysFreeString(V_BSTR(&var_url));
     if(post_data_len)
