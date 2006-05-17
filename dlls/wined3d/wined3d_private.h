@@ -1372,6 +1372,7 @@ extern void shader_dump_ins_modifiers(
 extern void shader_dump_param(
     IWineD3DBaseShader *iface,
     const DWORD param,
+    const DWORD addr_token,
     int input);
 
 extern int shader_get_param(

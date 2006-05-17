@@ -146,7 +146,7 @@ int shader_skip_unrecognized(
 
         FIXME("Unrecognized opcode param: token=%08lX "
             "addr_token=%08lX name=", param, addr_token);
-        shader_dump_param(iface, param, i);
+        shader_dump_param(iface, param, addr_token, i);
         FIXME("\n");
         ++i;
     }
@@ -306,9 +306,31 @@ void shader_program_dump_decl_usage(
     }
 }
 
+static void shader_dump_arr_entry(
+    IWineD3DBaseShader *iface,
+    const DWORD param,
+    const DWORD addr_token,
+    int input) {
+
+    DWORD reg = param & D3DSP_REGNUM_MASK;
+    char relative =
+        ((param & D3DSHADER_ADDRESSMODE_MASK) == D3DSHADER_ADDRMODE_RELATIVE);
+
+    TRACE("[");
+    if (relative) {
+        if (addr_token)
+            shader_dump_param(iface, addr_token, 0, input);
+        else
+            TRACE("a0.x");
+        TRACE(" + ");
+     }
+     TRACE("%lu]", reg);
+}
+
 void shader_dump_param(
     IWineD3DBaseShader *iface,
     const DWORD param, 
+    const DWORD addr_token,
     int input) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
@@ -347,7 +369,8 @@ void shader_dump_param(
             TRACE("v%lu", reg);
             break;
         case D3DSPR_CONST:
-            TRACE("c%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+            TRACE("c");
+            shader_dump_arr_entry(iface, param, addr_token, input);
             break;
         case D3DSPR_TEXTURE: /* vs: case D3DSPR_ADDR */
             TRACE("%c%lu", (pshader? 't':'a'), reg);
@@ -368,16 +391,19 @@ void shader_dump_param(
             TRACE("oT%lu", reg);
             break;
         case D3DSPR_CONSTINT:
-            TRACE("i%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+            TRACE("i");
+            shader_dump_arr_entry(iface, param, addr_token, input);
             break;
         case D3DSPR_CONSTBOOL:
-            TRACE("b%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+            TRACE("b");
+            shader_dump_arr_entry(iface, param, addr_token, input);
             break;
         case D3DSPR_LABEL:
             TRACE("l%lu", reg);
             break;
         case D3DSPR_LOOP:
-            TRACE("aL%s%lu", (param & D3DVS_ADDRMODE_RELATIVE) ? "a0.x + " : "", reg);
+            TRACE("aL");
+            shader_dump_arr_entry(iface, param, addr_token, input);
             break;
         case D3DSPR_SAMPLER:
             TRACE("s%lu", reg);

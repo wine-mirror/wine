@@ -1427,7 +1427,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
 
                     shader_dump_ins_modifiers(param);
                     TRACE(" ");
-                    shader_dump_param((IWineD3DBaseShader*) This, param, 0);
+                    shader_dump_param((IWineD3DBaseShader*) This, param, 0, 0);
                     pToken += 2;
                     len += 2;
 
@@ -1463,7 +1463,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
 
                         shader_dump_ins_modifiers(param);
                         TRACE(" ");
-                        shader_dump_param((IWineD3DBaseShader*) This, param, 0);
+                        shader_dump_param((IWineD3DBaseShader*) This, param, addr_token, 0);
                          
                         for (i = 1; i < curOpcode->num_params; ++i) {
 
@@ -1473,7 +1473,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
                             len += tokens_read;
 
                             TRACE(", ");
-                            shader_dump_param((IWineD3DBaseShader*) This, param, 1);
+                            shader_dump_param((IWineD3DBaseShader*) This, param, addr_token, 1);
                         }
                     }
                 }
