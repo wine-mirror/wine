@@ -3526,12 +3526,13 @@ static PFORMAT_STRING get_arm_offset_from_union_arm_selector(PMIDL_STUB_MESSAGE 
     {
         if(type == 0xffff)
         {
-            FIXME("should raise an exception here\n");
+            ERR("no arm for 0x%lx and no default case\n", discriminant);
+            RpcRaiseException(RPC_S_INVALID_TAG);
             return NULL;
         }
         if(type == 0)
         {
-            /* Don't marshall any type. FIXME is this correct? */
+            TRACE("falling back to empty default case for 0x%lx\n", discriminant);
             return NULL;
         }
     }
