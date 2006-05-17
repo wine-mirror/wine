@@ -456,7 +456,7 @@ void vshader_defb(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_defi(WINED3DSHADERVECTOR* d) {
+void vshader_defi(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
     FIXME(" : Stub\n");
 }
 
@@ -539,7 +539,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     /* Constant definitions */
     {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     vshader_hw_def, NULL, 0, 0},
     {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, vshader_defb,    NULL, NULL, 0, 0},
-    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, vshader_defi,    NULL, NULL, 0, 0},
+    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   5, vshader_defi,    NULL, NULL, 0, 0},
 
     /* Flow control - requires GLSL or software shaders */
     {D3DSIO_REP ,     "rep",      GLNAME_REQUIRE_GLSL,   1, vshader_rep,     NULL, NULL, 0, 0},
