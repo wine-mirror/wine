@@ -5,6 +5,7 @@
  *  - IConnectionPoint
  *
  * Copyright 2001 John R. Sheets (for CodeWeavers)
+ * Copyright 2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,7 +31,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 struct ConnectionPoint {
     const IConnectionPointVtbl *lpConnectionPointVtbl;
 
-    DocHost *doc_host;
     IConnectionPointContainer *container;
 
     IDispatch **sinks;
@@ -45,31 +45,31 @@ struct ConnectionPoint {
  * Implement the IConnectionPointContainer interface
  */
 
-#define CONPTCONT_THIS(iface) DEFINE_THIS(WebBrowser, ConnectionPointContainer, iface)
+#define CONPTCONT_THIS(iface) DEFINE_THIS(ConnectionPointContainer, ConnectionPointContainer, iface)
 
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
-        REFIID riid, LPVOID *ppobj)
+        REFIID riid, LPVOID *ppv)
 {
-    WebBrowser *This = CONPTCONT_THIS(iface);
-    return IWebBrowser_QueryInterface(WEBBROWSER(This), riid, ppobj);
+    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    return IUnknown_QueryInterface(This->impl, riid, ppv);
 }
 
 static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
 {
-    WebBrowser *This = CONPTCONT_THIS(iface);
-    return IWebBrowser_AddRef(WEBBROWSER(This));
+    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    return IUnknown_AddRef(This->impl);
 }
 
 static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
 {
-    WebBrowser *This = CONPTCONT_THIS(iface);
-    return IWebBrowser_Release(WEBBROWSER(This));
+    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
+    return IUnknown_Release(This->impl);
 }
 
 static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
         LPENUMCONNECTIONPOINTS *ppEnum)
 {
-    WebBrowser *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
     FIXME("(%p)->(%p)\n", This, ppEnum);
     return E_NOTIMPL;
 }
@@ -77,7 +77,7 @@ static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionP
 static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
         REFIID riid, LPCONNECTIONPOINT *ppCP)
 {
-    WebBrowser *This = CONPTCONT_THIS(iface);
+    ConnectionPointContainer *This = CONPTCONT_THIS(iface);
 
     if(!ppCP) {
         WARN("ppCP == NULL\n");
@@ -88,13 +88,13 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
 
     if(IsEqualGUID(&DIID_DWebBrowserEvents2, riid)) {
         TRACE("(%p)->(DIID_DWebBrowserEvents2 %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->doc_host.cps.wbe2);
+        *ppCP = CONPOINT(This->wbe2);
     }else if(IsEqualGUID(&DIID_DWebBrowserEvents, riid)) {
         TRACE("(%p)->(DIID_DWebBrowserEvents %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->doc_host.cps.wbe);
+        *ppCP = CONPOINT(This->wbe);
     }else if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
         TRACE("(%p)->(IID_IPropertyNotifySink %p)\n", This, ppCP);
-        *ppCP = CONPOINT(This->doc_host.cps.pns);
+        *ppCP = CONPOINT(This->pns);
     }
 
     if(*ppCP) {
@@ -140,7 +140,7 @@ static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
     }
 
     if(*ppv) {
-        IOleClientSite_AddRef(CLIENTSITE(This->doc_host));
+        IConnectionPointContainer_AddRef(This->container);
         return S_OK;
     }
 
@@ -151,13 +151,13 @@ static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
 static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IOleClientSite_AddRef(CLIENTSITE(This->doc_host));
+    return IConnectionPointContainer_AddRef(This->container);
 }
 
 static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
 {
     ConnectionPoint *This = CONPOINT_THIS(iface);
-    return IOleClientSite_Release(CLIENTSITE(This->doc_host));
+    return IConnectionPointContainer_Release(This->container);
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *pIID)
@@ -268,16 +268,16 @@ void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams)
     }
 }
 
-static void ConnectionPoint_Create(DocHost *doc_host, REFIID riid, ConnectionPoint **cp)
+static void ConnectionPoint_Create(REFIID riid, ConnectionPoint **cp,
+                                   IConnectionPointContainer *container)
 {
     ConnectionPoint *ret = shdocvw_alloc(sizeof(ConnectionPoint));
 
     ret->lpConnectionPointVtbl = &ConnectionPointVtbl;
 
-    ret->doc_host = doc_host;
     ret->sinks = NULL;
     ret->sinks_size = 0;
-    ret->container = NULL;
+    ret->container = container;
 
     memcpy(&ret->iid, riid, sizeof(IID));
 
@@ -297,25 +297,20 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
     shdocvw_free(This);
 }
 
-void DocHost_Events_Init(DocHost *This)
-{
-    ConnectionPoint_Create(This, &DIID_DWebBrowserEvents2, &This->cps.wbe2);
-    ConnectionPoint_Create(This, &DIID_DWebBrowserEvents,  &This->cps.wbe);
-    ConnectionPoint_Create(This, &IID_IPropertyNotifySink, &This->cps.pns);
-}
-
-void DocHost_Events_Release(DocHost *This)
-{
-    ConnectionPoint_Destroy(This->cps.wbe2);
-    ConnectionPoint_Destroy(This->cps.wbe);
-    ConnectionPoint_Destroy(This->cps.pns);
-}
-
-void WebBrowser_Events_Init(WebBrowser *This)
+void ConnectionPointContainer_Init(ConnectionPointContainer *This, IUnknown *impl)
 {
     This->lpConnectionPointContainerVtbl = &ConnectionPointContainerVtbl;
 
-    This->doc_host.cps.wbe2->container = CONPTCONT(This);
-    This->doc_host.cps.wbe->container  = CONPTCONT(This);
-    This->doc_host.cps.pns->container  = CONPTCONT(This);
+    ConnectionPoint_Create(&DIID_DWebBrowserEvents2, &This->wbe2, CONPTCONT(This));
+    ConnectionPoint_Create(&DIID_DWebBrowserEvents,  &This->wbe,  CONPTCONT(This));
+    ConnectionPoint_Create(&IID_IPropertyNotifySink, &This->pns,  CONPTCONT(This));
+
+    This->impl = impl;
+}
+
+void ConnectionPointContainer_Destroy(ConnectionPointContainer *This)
+{
+    ConnectionPoint_Destroy(This->wbe2);
+    ConnectionPoint_Destroy(This->wbe);
+    ConnectionPoint_Destroy(This->pns);
 }

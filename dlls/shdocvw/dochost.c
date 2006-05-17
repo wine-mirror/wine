@@ -494,13 +494,15 @@ void DocHost_Init(DocHost *This, IDispatch *disp)
 
     DocHost_ClientSite_Init(This);
     DocHost_Frame_Init(This);
-    DocHost_Events_Init(This);
+
+    ConnectionPointContainer_Init(&This->cps, (IUnknown*)disp);
 }
 
 void DocHost_Release(DocHost *This)
 {
     DocHost_ClientSite_Release(This);
-    DocHost_Events_Release(This);
+
+    ConnectionPointContainer_Destroy(&This->cps);
 
     SysFreeString(This->url);
 }

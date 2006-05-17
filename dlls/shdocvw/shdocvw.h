@@ -52,9 +52,13 @@ extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid,
 typedef struct ConnectionPoint ConnectionPoint;
 
 typedef struct {
+    const IConnectionPointContainerVtbl *lpConnectionPointContainerVtbl;
+
     ConnectionPoint *wbe2;
     ConnectionPoint *wbe;
     ConnectionPoint *pns;
+
+    IUnknown *impl;
 } ConnectionPointContainer;
 
 typedef struct {
@@ -93,7 +97,6 @@ typedef struct {
     const IPersistStorageVtbl           *lpPersistStorageVtbl;
     const IPersistStreamInitVtbl        *lpPersistStreamInitVtbl;
     const IProvideClassInfo2Vtbl        *lpProvideClassInfoVtbl;
-    const IConnectionPointContainerVtbl *lpConnectionPointContainerVtbl;
     const IViewObject2Vtbl              *lpViewObjectVtbl;
     const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
     const IOleCommandTargetVtbl         *lpWBOleCommandTargetVtbl;
@@ -166,19 +169,19 @@ void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_ViewObject_Init(WebBrowser*);
 void WebBrowser_Persist_Init(WebBrowser*);
 void WebBrowser_ClassInfo_Init(WebBrowser*);
-void WebBrowser_Events_Init(WebBrowser*);
 void WebBrowser_HlinkFrame_Init(WebBrowser*);
 
 void WebBrowser_OleObject_Destroy(WebBrowser*);
 
 void DocHost_Init(DocHost*,IDispatch*);
 void DocHost_ClientSite_Init(DocHost*);
-void DocHost_Events_Init(DocHost*);
 void DocHost_Frame_Init(DocHost*);
 
 void DocHost_Release(DocHost*);
 void DocHost_ClientSite_Release(DocHost*);
-void DocHost_Events_Release(DocHost*);
+
+void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);
+void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 
 HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
 
