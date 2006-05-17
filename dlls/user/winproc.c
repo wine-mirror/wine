@@ -45,36 +45,8 @@ WINE_DECLARE_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
-#ifdef __i386__
-
-#include "pshpack1.h"
-
-/* Window procedure 16-to-32-bit thunk */
-typedef struct
-{
-    BYTE       popl_eax;             /* popl  %eax (return address) */
-    BYTE       pushl_func;           /* pushl $proc */
-    struct tagWINDOWPROC *proc;
-    BYTE       pushl_eax;            /* pushl %eax */
-    BYTE       ljmp;                 /* ljmp relay*/
-    DWORD      relay_offset;         /* __wine_call_wndproc */
-    WORD       relay_sel;
-} WINPROC_THUNK;
-
-#include "poppack.h"
-
-#else /* __i386__ */
-
-typedef struct
-{
-    WNDPROC    proc;
-} WINPROC_THUNK;
-
-#endif /* __i386__ */
-
 typedef struct tagWINDOWPROC
 {
-    WINPROC_THUNK  thunk;    /* Thunk */
     BYTE           type;     /* Function type */
     union
     {
@@ -105,15 +77,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": winproc_cs") }
 };
 static CRITICAL_SECTION winproc_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-static BOOL is_valid_winproc( WINDOWPROC *proc )
-{
-    /* check alignment */
-    if (((BYTE *)proc - (BYTE *)winproc_array) % sizeof(*proc)) return FALSE;
-    /* check array limits */
-    if (proc < winproc_array || proc >= winproc_array + winproc_used) return FALSE;
-    return (proc->type != WIN_PROC_INVALID);
-}
 
 /* find an existing winproc for a given 16-bit function and type */
 /* FIXME: probably should do something more clever than a linear search */
@@ -151,41 +114,7 @@ static inline WINDOWPROC *init_winproc(void)
 
     if (winproc_used >= MAX_WINPROCS) return NULL;
     proc = &winproc_array[winproc_used++];
-#ifdef __i386__
-    {
-        static FARPROC16 relay;
-
-        if (!relay) relay = GetProcAddress16( GetModuleHandle16("user"), "__wine_call_wndproc" );
-
-        proc->thunk.popl_eax     = 0x58;   /* popl  %eax */
-        proc->thunk.pushl_func   = 0x68;   /* pushl $proc */
-        proc->thunk.proc         = proc;
-        proc->thunk.pushl_eax    = 0x50;   /* pushl %eax */
-        proc->thunk.ljmp         = 0xea;   /* ljmp   relay*/
-        proc->thunk.relay_offset = OFFSETOF(relay);
-        proc->thunk.relay_sel    = SELECTOROF(relay);
-    }
-#endif /* __i386__ */
     return proc;
-}
-
-static WORD get_winproc_selector(void)
-{
-    static LONG winproc_selector;
-    WORD ret;
-
-    if (!(ret = winproc_selector))
-    {
-        LDT_ENTRY entry;
-        WORD sel = wine_ldt_alloc_entries(1);
-        wine_ldt_set_base( &entry, winproc_array );
-        wine_ldt_set_limit( &entry, sizeof(winproc_array) - 1 );
-        wine_ldt_set_flags( &entry, WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
-        wine_ldt_set_entry( sel, &entry );
-        if (!(ret = InterlockedCompareExchange( &winproc_selector, sel, 0 ))) ret = sel;
-        else wine_ldt_free_entries( sel, 1 );  /* somebody beat us to it */
-    }
-    return ret;
 }
 
 /* return the window proc for a given handle, or NULL for an invalid handle */
@@ -195,20 +124,6 @@ static inline WINDOWPROC *handle_to_proc( WNDPROC handle )
     if ((ULONG_PTR)handle >> 16 != WINPROC_HANDLE) return NULL;
     if (index >= winproc_used) return NULL;
     return &winproc_array[index];
-}
-
-/* return the window proc for a given handle, or NULL for an invalid handle */
-static inline WINDOWPROC *handle16_to_proc( WNDPROC16 handle )
-{
-    if (HIWORD(handle) == get_winproc_selector())
-    {
-        BYTE *ptr = (BYTE *)winproc_array + LOWORD(handle);
-        /* It must be the thunk address */
-        WINDOWPROC *proc = (WINDOWPROC *)(ptr - FIELD_OFFSET(WINDOWPROC,thunk));
-        if (is_valid_winproc(proc)) return proc;
-        return NULL;
-    }
-    return handle_to_proc( (WNDPROC)handle );
 }
 
 /* create a handle for a given window proc */
@@ -246,6 +161,106 @@ static inline WINDOWPROC *alloc_winproc( WNDPROC func, BOOL unicode )
     LeaveCriticalSection( &winproc_cs );
     return proc;
 }
+
+
+#ifdef __i386__
+
+#include "pshpack1.h"
+
+/* Window procedure 16-to-32-bit thunk */
+typedef struct
+{
+    BYTE        popl_eax;        /* popl  %eax (return address) */
+    BYTE        pushl_func;      /* pushl $proc */
+    WINDOWPROC *proc;
+    BYTE        pushl_eax;       /* pushl %eax */
+    BYTE        ljmp;            /* ljmp relay*/
+    DWORD       relay_offset;    /* __wine_call_wndproc */
+    WORD        relay_sel;
+} WINPROC_THUNK;
+
+#include "poppack.h"
+
+#define MAX_THUNKS  (0x10000 / sizeof(WINPROC_THUNK))
+
+static WINPROC_THUNK *thunk_array;
+static UINT thunk_selector;
+static UINT thunk_used;
+
+/* return the window proc for a given handle, or NULL for an invalid handle */
+static inline WINDOWPROC *handle16_to_proc( WNDPROC16 handle )
+{
+    if (HIWORD(handle) == thunk_selector)
+    {
+        UINT index = LOWORD(handle) / sizeof(WINPROC_THUNK);
+        /* check alignment */
+        if (index * sizeof(WINPROC_THUNK) != LOWORD(handle)) return NULL;
+        /* check array limits */
+        if (index >= thunk_used) return NULL;
+        return thunk_array[index].proc;
+    }
+    return handle_to_proc( (WNDPROC)handle );
+}
+
+/* allocate a 16-bit thunk for an existing window proc */
+static WNDPROC16 alloc_win16_thunk( WINDOWPROC *proc )
+{
+    static FARPROC16 relay;
+    WNDPROC16 ret = 0;
+    UINT i;
+
+    EnterCriticalSection( &winproc_cs );
+
+    if (!thunk_array)  /* allocate the array and its selector */
+    {
+        LDT_ENTRY entry;
+
+        if (!(thunk_selector = wine_ldt_alloc_entries(1))) goto done;
+        if (!(thunk_array = VirtualAlloc( NULL, MAX_THUNKS * sizeof(WINPROC_THUNK), MEM_COMMIT,
+                                          PAGE_EXECUTE_READWRITE ))) goto done;
+        wine_ldt_set_base( &entry, thunk_array );
+        wine_ldt_set_limit( &entry, MAX_THUNKS * sizeof(WINPROC_THUNK) - 1 );
+        wine_ldt_set_flags( &entry, WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+        wine_ldt_set_entry( thunk_selector, &entry );
+        relay = GetProcAddress16( GetModuleHandle16("user"), "__wine_call_wndproc" );
+    }
+
+    /* check if it already exists */
+    for (i = 0; i < thunk_used; i++) if (thunk_array[i].proc == proc) break;
+
+    if (i == thunk_used)  /* create a new one */
+    {
+        WINPROC_THUNK *thunk;
+
+        if (thunk_used >= MAX_THUNKS) goto done;
+        thunk = &thunk_array[thunk_used++];
+        thunk->popl_eax     = 0x58;   /* popl  %eax */
+        thunk->pushl_func   = 0x68;   /* pushl $proc */
+        thunk->proc         = proc;
+        thunk->pushl_eax    = 0x50;   /* pushl %eax */
+        thunk->ljmp         = 0xea;   /* ljmp   relay*/
+        thunk->relay_offset = OFFSETOF(relay);
+        thunk->relay_sel    = SELECTOROF(relay);
+    }
+    ret = (WNDPROC16)MAKESEGPTR( thunk_selector, i * sizeof(WINPROC_THUNK) );
+done:
+    LeaveCriticalSection( &winproc_cs );
+    return ret;
+}
+
+#else  /* __i386__ */
+
+static inline WINDOWPROC *handle16_to_proc( WNDPROC16 handle )
+{
+    return handle_to_proc( (WNDPROC)handle );
+}
+
+static inline WNDPROC16 alloc_win16_thunk( WINDOWPROC *proc )
+{
+    return 0;
+}
+
+#endif  /* __i386__ */
 
 
 #ifdef __i386__
@@ -495,8 +510,7 @@ WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode )
     if (ptr->type == WIN_PROC_16)
         return ptr->u.proc16;
     else
-        return (WNDPROC16)MAKESEGPTR( get_winproc_selector(),
-                                      (char *)&ptr->thunk - (char *)winproc_array );
+        return alloc_win16_thunk( ptr );
 }
 
 
