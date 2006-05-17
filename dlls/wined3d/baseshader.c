@@ -547,13 +547,13 @@ void shader_dump_ins_modifiers(const DWORD output) {
         default: TRACE("_unhandled_shift(%ld)", shift); break;
     }
 
-    switch(mmask) {
-        case D3DSPDM_NONE: break;
-        case D3DSPDM_SATURATE: TRACE("_sat"); break;
-        case D3DSPDM_PARTIALPRECISION: TRACE("_pp"); break;
-        case D3DSPDM_MSAMPCENTROID: TRACE("_centroid"); break;
-        default: TRACE("_unhandled_modifier(%#lx)", mmask); break;
-    }
+    if (mmask & D3DSPDM_SATURATE)         TRACE("_sat");
+    if (mmask & D3DSPDM_PARTIALPRECISION) TRACE("_pp");
+    if (mmask & D3DSPDM_MSAMPCENTROID)    TRACE("_centroid");
+
+    mmask &= ~(D3DSPDM_SATURATE | D3DSPDM_PARTIALPRECISION | D3DSPDM_MSAMPCENTROID);
+    if (mmask)
+        FIXME("_unrecognized_modifier(%#lx)", mmask >> D3DSP_DSTMOD_SHIFT);
 }
 
 /* TODO: Move other shared code here */

@@ -981,9 +981,13 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
      unsigned int i;
      char tmpLine[256];
+
+     /* Output token related */
      char output_rname[256];
      char output_wmask[20];
      BOOL saturate = FALSE;
+     BOOL centroid = FALSE;
+     BOOL partialprecision = FALSE;
      DWORD shift;
 
      TRACE("Appending glname %s to tmpLine\n", curOpcode->glname);
@@ -992,17 +996,19 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
      /* Process modifiers */
      if (0 != (dst & D3DSP_DSTMOD_MASK)) {
          DWORD mask = dst & D3DSP_DSTMOD_MASK;
-         switch (mask) {
-             case D3DSPDM_SATURATE: saturate = TRUE; break;
-#if 0 /* as yet unhandled modifiers */
-             case D3DSPDM_CENTROID: centroid = TRUE; break;
-             case D3DSPDM_PP: partialpresision = TRUE; break;
-#endif
-             default:
-                 TRACE("_unhandled_modifier(0x%08lx)\n", mask);
-         }
-      }
-      shift = (dst & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
+
+         saturate = mask & D3DSPDM_SATURATE;
+         centroid = mask & D3DSPDM_MSAMPCENTROID;
+         partialprecision = mask & D3DSPDM_PARTIALPRECISION;
+         mask &= ~(D3DSPDM_MSAMPCENTROID | D3DSPDM_PARTIALPRECISION | D3DSPDM_SATURATE);
+
+         if (mask)
+            FIXME("Unrecognized modifier(0x%#lx)\n", mask >> D3DSP_DSTMOD_SHIFT);
+
+         if (centroid)
+             FIXME("Unhandled modifier(0x%#lx)\n", mask >> D3DSP_DSTMOD_SHIFT);
+     }
+     shift = (dst & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
 
       /* Generate input and output registers */
       if (curOpcode->num_params > 0) {
