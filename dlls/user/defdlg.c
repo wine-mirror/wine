@@ -313,9 +313,6 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
             PostMessageA( hwnd, WM_COMMAND, MAKEWPARAM(IDCANCEL, BN_CLICKED),
                             (LPARAM)GetDlgItem( hwnd, IDCANCEL ) );
             return 0;
-
-        case WM_NOTIFYFORMAT:
-            return DefWindowProcA( hwnd, msg, wParam, lParam );
     }
     return 0;
 }
