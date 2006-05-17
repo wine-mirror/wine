@@ -339,14 +339,18 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
      newdir,tmpstr,tmpstr1,id);
   ok(DeleteFileA(newdir),"Couldn't delete the temporary file we just created\n");     
 
-  ok((id=GetTempFileNameA(tmppath,NULL,0,newdir)),"GetTempFileNameA failed\n");
-  sprintf(tmpstr,"%.4x.tmp",id & 0xffff);
-  sprintf(tmpstr1,"%x.tmp",id & 0xffff);
-  ok(lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr)==0 ||
-     lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr1)==0,
-     "GetTempFileNameA returned '%s' which doesn't match '%s' or '%s'. id=%x\n",
-     newdir,tmpstr,tmpstr1,id);
-  ok(DeleteFileA(newdir),"Couldn't delete the temporary file we just created\n");
+  id=GetTempFileNameA(tmppath,NULL,0,newdir);
+/* Windows 95, 98 return 0==id, while Windows 2000, XP return 0!=id */
+  if (id)
+  {
+    sprintf(tmpstr,"%.4x.tmp",id & 0xffff);
+    sprintf(tmpstr1,"%x.tmp",id & 0xffff);
+    ok(lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr)==0 ||
+       lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr1)==0,
+       "GetTempFileNameA returned '%s' which doesn't match '%s' or '%s'. id=%x\n",
+       newdir,tmpstr,tmpstr1,id);
+    ok(DeleteFileA(newdir),"Couldn't delete the temporary file we just created\n");
+  }
 
 /* Find first valid drive letter that is neither newdir[0] nor curDrive */
   drives = GetLogicalDrives() & ~(1<<(newdir[0]-'A'));
