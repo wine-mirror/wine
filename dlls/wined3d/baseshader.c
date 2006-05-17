@@ -85,6 +85,29 @@ const SHADER_OPCODE* shader_get_opcode(
     return NULL;
 }
 
+/* Read a parameter opcode from the input stream,
+ * and possibly a relative addressing token.
+ * Return the number of tokens read */
+int shader_get_param(
+    IWineD3DBaseShader* iface,
+    const DWORD* pToken,
+    DWORD* param,
+    DWORD* addr_token) {
+
+    /* PS >= 3.0 have relative addressing (with token)
+     * VS >= 2.0 have relative addressing (with token)
+     * VS >= 1.0 < 2.0 have relative addressing (without token)
+     * The version check below should work in general */
+
+    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    char rel_token = D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2 &&
+        ((*pToken & D3DSHADER_ADDRESSMODE_MASK) == D3DSHADER_ADDRMODE_RELATIVE);
+
+    *param = *pToken;
+    *addr_token = rel_token? *(pToken + 1): 0;
+    return rel_token? 2:1;
+}
+
 /* Return the number of parameters to skip for an opcode */
 static inline int shader_skip_opcode(
     IWineD3DBaseShaderImpl* This,
@@ -97,6 +120,36 @@ static inline int shader_skip_opcode(
     return (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)?
         ((opcode_token & D3DSI_INSTLENGTH_MASK) >> D3DSI_INSTLENGTH_SHIFT):
         curOpcode->num_params;
+}
+
+/* Read the parameters of an unrecognized opcode from the input stream
+ * Return the number of tokens read. 
+ * 
+ * Note: This function assumes source or destination token format.
+ * It will not work with specially-formatted tokens like DEF or DCL, 
+ * but hopefully those would be recognized */
+
+int shader_skip_unrecognized(
+    IWineD3DBaseShader* iface,
+    const DWORD* pToken) {
+
+    int tokens_read = 0;
+    int i = 0;
+
+    /* TODO: Think of a good name for 0x80000000 and replace it with a constant */
+    while (*pToken & 0x80000000) {
+
+        DWORD param, addr_token;
+        tokens_read += shader_get_param(iface, pToken, &param, &addr_token);
+        pToken += tokens_read;
+
+        FIXME("Unrecognized opcode param: token=%08lX "
+            "addr_token=%08lX name=", param, addr_token);
+        shader_dump_param(iface, param, i);
+        FIXME("\n");
+        ++i;
+    }
+    return tokens_read;
 }
 
 /* Note: For vertex shaders,
@@ -484,11 +537,9 @@ void generate_base_shader(
             curOpcode = shader_get_opcode(iface, opcode_token);
 
             /* Unknown opcode and its parameters */
-            if (NULL == curOpcode) {
-                while (*pToken & 0x80000000) { /* TODO: Think of a sensible name for 0x80000000 */
-                    FIXME("unrecognized opcode: %08lx\n", *pToken);
-                    ++pToken;
-                }
+           if (NULL == curOpcode) {
+              FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
+              pToken += shader_skip_unrecognized(iface, pToken); 
 
             /* Using GLSL & no generator function exists */
             } else if (USING_GLSL && curOpcode->hw_glsl_fct == NULL) {

@@ -1116,7 +1116,8 @@ BOOL IWineD3DVertexShaderImpl_ExecuteHAL(IWineD3DVertexShader* iface, WINEVSHADE
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, WINEVSHADERINPUTDATA* input, WINEVSHADEROUTPUTDATA* output) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-        
+    DWORD opcode_token;   
+ 
     /** Vertex Shader Temporary Registers */
     WINED3DSHADERVECTOR R[12];
       /*D3DSHADERSCALAR A0;*/
@@ -1175,23 +1176,15 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
             pToken += comment_len;
             continue ;
         }
-        curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
-        ++pToken;
+
+        opcode_token = *pToken++;
+        curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, opcode_token);
+
         if (NULL == curOpcode) {
-            i = 0;
-            /* unknown current opcode ... */
-            /* TODO: Think of a name for 0x80000000 and replace its use with a constant */
-            while (*pToken & 0x80000000) {
-                if (i == 0) {
-                    FIXME("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - This->baseShader.function, *(pToken - 1));
-                }
-                FIXME("unrecognized opcode param: pos=%d token=%08lX what=", pToken - This->baseShader.function, *pToken);
-                shader_dump_param((IWineD3DBaseShader*) This, *pToken, i);
-                TRACE("\n");
-                ++i;
-                ++pToken;
-            }
+            FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
+            pToken += shader_skip_unrecognized((IWineD3DBaseShader*) This, pToken);
             /* return FALSE; */
+
         } else {
             if (curOpcode->num_params > 0) {
                 /* TRACE(">> execting opcode: pos=%d opcode_name=%s token=%08lX\n", pToken - vshader->function, curOpcode->name, *pToken); */
@@ -1505,6 +1498,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
     const DWORD* pToken = pFunction;
     const SHADER_OPCODE* curOpcode = NULL;
+    DWORD opcode_token;
     DWORD len = 0;
     DWORD i;
     TRACE("(%p) : Parsing programme\n", This);
@@ -1531,18 +1525,18 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
                 len += comment_len + 1;
                 continue;
             }
-            curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
-            ++pToken;
-            ++len;
+
+            opcode_token = *pToken++;
+            curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, opcode_token);
+            len++;
+
             if (NULL == curOpcode) {
-                /* TODO: Think of a good name for 0x80000000 and replace it with a constant */
-                while (*pToken & 0x80000000) {
-                    /* unknown current opcode ... */
-                    FIXME("unrecognized opcode: %08lx", *pToken);
-                    ++pToken;
-                    ++len;
-                    TRACE("\n");
-                }
+                int tokens_read;
+
+                FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
+                tokens_read = shader_skip_unrecognized((IWineD3DBaseShader*) This, pToken);
+                pToken += tokens_read;
+                len += tokens_read;
 
             } else {
                 if (curOpcode->opcode == D3DSIO_DCL) {

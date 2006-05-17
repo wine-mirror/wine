@@ -1376,6 +1376,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const DWORD* pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;
+    DWORD opcode_token;
     DWORD len = 0;
     DWORD i;
     TRACE("(%p) : Parsing programme\n", This);
@@ -1399,20 +1400,16 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
             if (!This->baseShader.version) {
                 WARN("(%p) : pixel shader doesn't have a valid version identifier\n", This);
             }
-            curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, *pToken);
-            ++pToken;
-            ++len;
+            opcode_token = *pToken++;
+            curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, opcode_token);
+            len++;
             if (NULL == curOpcode) {
+                int tokens_read;
 
-                /* TODO: Think of a good name for 0x80000000 and replace it with a constant */
-                while (*pToken & 0x80000000) {
-
-                    /* unknown current opcode ... */
-                    TRACE("unrecognized opcode: %08lx", *pToken);
-                    ++pToken;
-                    ++len;
-                    TRACE("\n");
-                }
+                FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
+                tokens_read = shader_skip_unrecognized((IWineD3DBaseShader*) This, pToken);
+                pToken += tokens_read;
+                len += tokens_read;
 
             } else {
                 if (curOpcode->opcode == D3DSIO_DCL) {

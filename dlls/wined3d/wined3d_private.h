@@ -1372,6 +1372,16 @@ extern void shader_dump_param(
     const DWORD param,
     int input);
 
+extern int shader_get_param(
+    IWineD3DBaseShader* iface,
+    const DWORD* pToken,
+    DWORD* param,
+    DWORD* addr_token);
+
+extern int shader_skip_unrecognized(
+    IWineD3DBaseShader* iface,
+    const DWORD* pToken);
+
 inline static int shader_get_regtype(const DWORD param) {
     return (((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) |
             ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2));
