@@ -44,6 +44,9 @@ static HRESULT WINAPI InternetExplorer_QueryInterface(IWebBrowser2 *iface, REFII
     }else if(IsEqualGUID(&IID_IWebBrowser2, riid)) {
         TRACE("(%p)->(IID_IWebBrowser2 %p)\n", This, ppv);
         *ppv = WEBBROWSER(This);
+    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
+        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
+        *ppv = CONPTCONT(&This->doc_host.cps);
     }
 
     if(*ppv) {
