@@ -324,8 +324,17 @@ void WINAPI NdrInterfacePointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrInterfacePointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                   PFORMAT_STRING pFormat)
 {
-  FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
-  return 0;
+  ULONG size;
+
+  TRACE("(%p,%p)\n", pStubMsg, pFormat);
+
+  size = *(ULONG *)pStubMsg->Buffer;
+  pStubMsg->Buffer += 4;
+  pStubMsg->MemorySize += 4;
+
+  pStubMsg->Buffer += size;
+
+  return pStubMsg->MemorySize;
 }
 
 /***********************************************************************
