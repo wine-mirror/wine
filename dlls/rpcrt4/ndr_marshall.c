@@ -139,7 +139,7 @@ const NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
   /* 0x2a */
   NdrEncapsulatedUnionMarshall,
   NdrNonEncapsulatedUnionMarshall,
-  0,
+  NdrByteCountPointerMarshall,
   NdrXmitOrRepAsMarshall, NdrXmitOrRepAsMarshall,
   /* 0x2f */
   NdrInterfacePointerMarshall,
@@ -176,7 +176,7 @@ const NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
   /* 0x2a */
   NdrEncapsulatedUnionUnmarshall,
   NdrNonEncapsulatedUnionUnmarshall,
-  0,
+  NdrByteCountPointerUnmarshall,
   NdrXmitOrRepAsUnmarshall, NdrXmitOrRepAsUnmarshall,
   /* 0x2f */
   NdrInterfacePointerUnmarshall,
@@ -213,7 +213,7 @@ const NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
   /* 0x2a */
   NdrEncapsulatedUnionBufferSize,
   NdrNonEncapsulatedUnionBufferSize,
-  0,
+  NdrByteCountPointerBufferSize,
   NdrXmitOrRepAsBufferSize, NdrXmitOrRepAsBufferSize,
   /* 0x2f */
   NdrInterfacePointerBufferSize,
@@ -234,17 +234,24 @@ const NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
   NdrPointerMemorySize, NdrPointerMemorySize,
   /* 0x15 */
   NdrSimpleStructMemorySize, NdrSimpleStructMemorySize,
-  0, 0, 0,
+  NdrConformantStructMemorySize, NdrConformantStructMemorySize,
+  NdrConformantVaryingStructMemorySize,
   NdrComplexStructMemorySize,
   /* 0x1b */
-  NdrConformantArrayMemorySize, 0, 0, 0, 0, 0,
+  NdrConformantArrayMemorySize,
+  NdrConformantVaryingArrayMemorySize,
+  NdrFixedArrayMemorySize, NdrFixedArrayMemorySize,
+  NdrVaryingArrayMemorySize, NdrVaryingArrayMemorySize,
   NdrComplexArrayMemorySize,
   /* 0x22 */
   NdrConformantStringMemorySize, 0, 0,
   NdrConformantStringMemorySize,
   NdrNonConformantStringMemorySize, 0, 0, 0,
   /* 0x2a */
-  0, 0, 0, 0, 0,
+  NdrEncapsulatedUnionMemorySize,
+  NdrNonEncapsulatedUnionMemorySize,
+  NdrByteCountPointerMemorySize,
+  NdrXmitOrRepAsMemorySize, NdrXmitOrRepAsMemorySize,
   /* 0x2f */
   NdrInterfacePointerMemorySize,
   /* 0xb0 */
