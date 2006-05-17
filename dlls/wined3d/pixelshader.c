@@ -860,7 +860,6 @@ inline static int gen_input_modifier_line(const DWORD instr, int tmpreg, char *o
     /* Get register name */
     get_register_name(instr, regstr, constants);
 
-    TRACE(" Register name %s\n", regstr);
     switch (instr & D3DSP_SRCMOD_MASK) {
     case D3DSPSM_NONE:
         strcpy(outregstr, regstr);
@@ -992,7 +991,6 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
      BOOL partialprecision = FALSE;
      DWORD shift;
 
-     TRACE("Appending glname %s to tmpLine\n", curOpcode->glname);
      strcpy(tmpLine, curOpcode->glname);
 
      /* Process modifiers */
@@ -1021,7 +1019,6 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
           /* Generate lines that handle input modifier computation */
           for (i = 1; i < curOpcode->num_params; ++i) {
-              TRACE("(%p) : Param %u token %lx\n", This, i, src[i - 1]);
               if (gen_input_modifier_line(src[i - 1], i - 1, regs[i - 1], tmpOp, This->constants))
                   shader_addline(buffer, tmpOp);
           }
@@ -1035,7 +1032,6 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
           /* This function works because of side effects from  gen_input_modifier_line */
           /* Handle input registers */
           for (i = 1; i < curOpcode->num_params; ++i) {
-              TRACE("(%p) : Regs = %s\n", This, regs[i - 1]);
               strcpy(operands[i], regs[i - 1]);
               get_input_register_swizzle(src[i - 1], swzstring);
               strcat(operands[i], swzstring);
