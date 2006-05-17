@@ -700,7 +700,7 @@ static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
     InPlaceActiveObject_EnableModeless
 };
 
-#define OLECMD_THIS(iface) DEFINE_THIS(WebBrowser, WBOleCommandTarget, iface)
+#define OLECMD_THIS(iface) DEFINE_THIS(WebBrowser, OleCommandTarget, iface)
 
 static HRESULT WINAPI WBOleCommandTarget_QueryInterface(IOleCommandTarget *iface,
         REFIID riid, void **ppv)
@@ -756,7 +756,7 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
     This->lpOleInPlaceObjectVtbl       = &OleInPlaceObjectVtbl;
     This->lpOleControlVtbl             = &OleControlVtbl;
     This->lpOleInPlaceActiveObjectVtbl = &OleInPlaceActiveObjectVtbl;
-    This->lpWBOleCommandTargetVtbl     = &OleCommandTargetVtbl;
+    This->lpOleCommandTargetVtbl     = &OleCommandTargetVtbl;
 
     This->client = NULL;
     This->inplace = NULL;
