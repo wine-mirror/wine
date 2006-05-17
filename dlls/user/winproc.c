@@ -2955,11 +2955,10 @@ void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
  *
  * Call a window procedure, translating args from Ansi to Unicode.
  */
-static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
-                                         UINT msg, WPARAM wParam,
-                                         LPARAM lParam )
+static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam,
+                                         LPARAM lParam, BOOL dialog )
 {
-    LRESULT result;
+    LRESULT ret;
     int unmap;
 
     TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
@@ -2970,9 +2969,18 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
                        SPY_GetMsgName(msg, hwnd), wParam, lParam );
         return 0;
     }
-    result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-    if (unmap) result = WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam, result, func );
-    return result;
+    ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+    if (unmap)
+    {
+        if (dialog)
+        {
+            LRESULT result = GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
+            result = WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam, result, NULL );
+            SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
+        }
+        else ret = WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam, ret, func );
+    }
+    return ret;
 }
 
 
@@ -3052,27 +3060,35 @@ static BOOL WINPROC_CallProc32WTo32A_fast( WNDPROC func, HWND hwnd,
  *
  * Call a window procedure, translating args from Unicode to Ansi.
  */
-static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
-                                         UINT msg, WPARAM wParam,
-                                         LPARAM lParam )
+static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam,
+                                         LPARAM lParam, BOOL dialog )
 {
-    LRESULT result;
+    LRESULT ret;
     int unmap;
 
     TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                 func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
-    if (WINPROC_CallProc32WTo32A_fast( func, hwnd, msg, wParam, lParam, &result ))
-        return result;
+    if (WINPROC_CallProc32WTo32A_fast( func, hwnd, msg, wParam, lParam, &ret ))
+        return ret;
 
     if ((unmap = WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam )) == -1) {
         ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
                        SPY_GetMsgName(msg, hwnd), wParam, lParam );
         return 0;
     }
-    result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-    if( unmap ) result = WINPROC_UnmapMsg32WTo32A( hwnd, msg, wParam, lParam, result );
-    return result;
+    ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+    if (unmap)
+    {
+        if (dialog)
+        {
+            LRESULT result = GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
+            result = WINPROC_UnmapMsg32WTo32A( hwnd, msg, wParam, lParam, result );
+            SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
+        }
+        else ret = WINPROC_UnmapMsg32WTo32A( hwnd, msg, wParam, lParam, ret );
+    }
+    return ret;
 }
 
 
@@ -3080,9 +3096,9 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
  *	     WINPROC_CallProc16To32A
  */
 static LRESULT WINPROC_CallProc16To32A( WNDPROC func, HWND16 hwnd, UINT16 msg,
-                                        WPARAM16 wParam, LPARAM lParam )
+                                        WPARAM16 wParam, LPARAM lParam, BOOL dialog )
 {
-    LRESULT result;
+    LRESULT ret;
     UINT msg32;
     WPARAM wParam32;
     HWND hwnd32 = WIN_Handle32( hwnd );
@@ -3092,8 +3108,16 @@ static LRESULT WINPROC_CallProc16To32A( WNDPROC func, HWND16 hwnd, UINT16 msg,
 
     if (WINPROC_MapMsg16To32A( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) == -1)
         return 0;
-    result = WINPROC_CallWndProc( func, hwnd32, msg32, wParam32, lParam );
-    return WINPROC_UnmapMsg16To32A( hwnd32, msg32, wParam32, lParam, result );
+    ret = WINPROC_CallWndProc( func, hwnd32, msg32, wParam32, lParam );
+    if (dialog)
+    {
+        LRESULT result = GetWindowLongPtrW( hwnd32, DWLP_MSGRESULT );
+        result = WINPROC_UnmapMsg16To32A( hwnd32, msg32, wParam32, lParam, result );
+        SetWindowLongPtrW( hwnd32, DWLP_MSGRESULT, result );
+    }
+    else ret = WINPROC_UnmapMsg16To32A( hwnd32, msg32, wParam32, lParam, ret );
+
+    return ret;
 }
 
 
@@ -3101,9 +3125,9 @@ static LRESULT WINPROC_CallProc16To32A( WNDPROC func, HWND16 hwnd, UINT16 msg,
  *	     WINPROC_CallProc16To32W
  */
 static LRESULT WINPROC_CallProc16To32W( WNDPROC func, HWND16 hwnd, UINT16 msg,
-                                        WPARAM16 wParam, LPARAM lParam )
+                                        WPARAM16 wParam, LPARAM lParam, BOOL dialog )
 {
-    LRESULT result;
+    LRESULT ret;
     UINT msg32;
     WPARAM wParam32;
     HWND hwnd32 = WIN_Handle32( hwnd );
@@ -3113,9 +3137,17 @@ static LRESULT WINPROC_CallProc16To32W( WNDPROC func, HWND16 hwnd, UINT16 msg,
 
     if (WINPROC_MapMsg16To32W( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) == -1)
         return 0;
-    result = WINPROC_CallWndProc( func, hwnd32, msg32, wParam32, lParam );
-    return WINPROC_UnmapMsg16To32W( hwnd32, msg32, wParam32, lParam, result,
-        func );
+
+    ret = WINPROC_CallWndProc( func, hwnd32, msg32, wParam32, lParam );
+    if (dialog)
+    {
+        LRESULT result = GetWindowLongPtrW( hwnd32, DWLP_MSGRESULT );
+        result = WINPROC_UnmapMsg16To32W( hwnd32, msg32, wParam32, lParam, result, NULL );
+        SetWindowLongPtrW( hwnd32, DWLP_MSGRESULT, result );
+    }
+    else ret = WINPROC_UnmapMsg16To32W( hwnd32, msg32, wParam32, lParam, ret, func );
+
+    return ret;
 }
 
 
@@ -3125,8 +3157,8 @@ static LRESULT WINPROC_CallProc16To32W( WNDPROC func, HWND16 hwnd, UINT16 msg,
 LRESULT WINAPI __wine_call_wndproc( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
                                     WINDOWPROC *proc )
 {
-    if (proc->procA) return WINPROC_CallProc16To32A( proc->procA, hwnd, msg, wParam, lParam );
-    else return WINPROC_CallProc16To32W( proc->procW, hwnd, msg, wParam, lParam );
+    if (proc->procA) return WINPROC_CallProc16To32A( proc->procA, hwnd, msg, wParam, lParam, FALSE );
+    else return WINPROC_CallProc16To32W( proc->procW, hwnd, msg, wParam, lParam, FALSE );
 }
 
 
@@ -3135,9 +3167,10 @@ LRESULT WINAPI __wine_call_wndproc( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LP
  *
  * Call a 16-bit window procedure, translating the 32-bit args.
  */
-static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
-                                        UINT msg, WPARAM wParam, LPARAM lParam )
+static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd, UINT msg,
+                                        WPARAM wParam, LPARAM lParam, BOOL dialog )
 {
+    LRESULT ret;
     UINT16 msg16;
     MSGPARAM16 mp16;
 
@@ -3147,10 +3180,21 @@ static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
     mp16.lParam = lParam;
     if (WINPROC_MapMsg32ATo16( hwnd, msg, wParam, &msg16, &mp16.wParam, &mp16.lParam ) == -1)
         return 0;
-    mp16.lResult = WINPROC_CallWndProc16( func, HWND_16(hwnd), msg16,
-                                          mp16.wParam, mp16.lParam );
-    WINPROC_UnmapMsg32ATo16( hwnd, msg, wParam, lParam, &mp16 );
-    return mp16.lResult;
+    ret = WINPROC_CallWndProc16( func, HWND_16(hwnd), msg16, mp16.wParam, mp16.lParam );
+    if (dialog)
+    {
+        mp16.lResult = GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
+        WINPROC_UnmapMsg32ATo16( hwnd, msg, wParam, lParam, &mp16 );
+        SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, mp16.lResult );
+        ret = LOWORD(ret);
+    }
+    else
+    {
+        mp16.lResult = ret;
+        WINPROC_UnmapMsg32ATo16( hwnd, msg, wParam, lParam, &mp16 );
+        ret = mp16.lResult;
+    }
+    return ret;
 }
 
 
@@ -3159,9 +3203,10 @@ static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
  *
  * Call a 16-bit window procedure, translating the 32-bit args.
  */
-static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
-                                        UINT msg, WPARAM wParam, LPARAM lParam )
+static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd, UINT msg,
+                                        WPARAM wParam, LPARAM lParam, BOOL dialog )
 {
+    LRESULT ret;
     UINT16 msg16;
     MSGPARAM16 mp16;
 
@@ -3169,13 +3214,23 @@ static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
                 func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     mp16.lParam = lParam;
-    if (WINPROC_MapMsg32WTo16( hwnd, msg, wParam, &msg16, &mp16.wParam,
-                               &mp16.lParam ) == -1)
+    if (WINPROC_MapMsg32WTo16( hwnd, msg, wParam, &msg16, &mp16.wParam, &mp16.lParam ) == -1)
         return 0;
-    mp16.lResult = WINPROC_CallWndProc16( func, HWND_16(hwnd), msg16,
-                                          mp16.wParam, mp16.lParam );
-    WINPROC_UnmapMsg32WTo16( hwnd, msg, wParam, lParam, &mp16 );
-    return mp16.lResult;
+    ret = WINPROC_CallWndProc16( func, HWND_16(hwnd), msg16, mp16.wParam, mp16.lParam );
+    if (dialog)
+    {
+        mp16.lResult = GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
+        WINPROC_UnmapMsg32WTo16( hwnd, msg, wParam, lParam, &mp16 );
+        SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, mp16.lResult );
+        ret = LOWORD(ret);
+    }
+    else
+    {
+        mp16.lResult = ret;
+        WINPROC_UnmapMsg32WTo16( hwnd, msg, wParam, lParam, &mp16 );
+        ret = mp16.lResult;
+    }
+    return ret;
 }
 
 
@@ -3192,8 +3247,8 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     if (!(proc = handle16_to_proc( func )))
         return WINPROC_CallWndProc16( func, hwnd, msg, wParam, lParam );
 
-    if (proc->procA) return WINPROC_CallProc16To32A( proc->procA, hwnd, msg, wParam, lParam );
-    if (proc->procW) return WINPROC_CallProc16To32W( proc->procW, hwnd, msg, wParam, lParam );
+    if (proc->procA) return WINPROC_CallProc16To32A( proc->procA, hwnd, msg, wParam, lParam, FALSE );
+    if (proc->procW) return WINPROC_CallProc16To32W( proc->procW, hwnd, msg, wParam, lParam, FALSE );
     return WINPROC_CallWndProc16( proc->proc16, hwnd, msg, wParam, lParam );
 }
 
@@ -3237,8 +3292,8 @@ LRESULT WINAPI CallWindowProcA(
         return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
     if (proc->procA) return WINPROC_CallWndProc( proc->procA, hwnd, msg, wParam, lParam );
-    if (proc->procW) return WINPROC_CallProc32ATo32W( proc->procW, hwnd, msg, wParam, lParam );
-    return WINPROC_CallProc32ATo16( proc->proc16, hwnd, msg, wParam, lParam );
+    if (proc->procW) return WINPROC_CallProc32ATo32W( proc->procW, hwnd, msg, wParam, lParam, FALSE );
+    return WINPROC_CallProc32ATo16( proc->proc16, hwnd, msg, wParam, lParam, FALSE );
 }
 
 
@@ -3258,8 +3313,8 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
         return WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
 
     if (proc->procW) return WINPROC_CallWndProc( proc->procW, hwnd, msg, wParam, lParam );
-    if (proc->procA) return WINPROC_CallProc32WTo32A( proc->procA, hwnd, msg, wParam, lParam );
-    return WINPROC_CallProc32WTo16( proc->proc16, hwnd, msg, wParam, lParam );
+    if (proc->procA) return WINPROC_CallProc32WTo32A( proc->procA, hwnd, msg, wParam, lParam, FALSE );
+    return WINPROC_CallProc32WTo16( proc->proc16, hwnd, msg, wParam, lParam, FALSE );
 }
 
 
@@ -3275,8 +3330,8 @@ INT_PTR WINPROC_CallDlgProc16( DLGPROC16 func, HWND16 hwnd, UINT16 msg, WPARAM16
     if (!(proc = handle16_to_proc( (WNDPROC16)func )))
         return LOWORD( WINPROC_CallWndProc16( (WNDPROC16)func, hwnd, msg, wParam, lParam ) );
 
-    if (proc->procA) return WINPROC_CallProc16To32A( proc->procA, hwnd, msg, wParam, lParam );
-    if (proc->procW) return WINPROC_CallProc16To32W( proc->procW, hwnd, msg, wParam, lParam );
+    if (proc->procA) return WINPROC_CallProc16To32A( proc->procA, hwnd, msg, wParam, lParam, TRUE );
+    if (proc->procW) return WINPROC_CallProc16To32W( proc->procW, hwnd, msg, wParam, lParam, TRUE );
     return LOWORD( WINPROC_CallWndProc16( proc->proc16, hwnd, msg, wParam, lParam ) );
 }
 
@@ -3294,8 +3349,8 @@ INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
         return WINPROC_CallWndProc( (WNDPROC)func, hwnd, msg, wParam, lParam );
 
     if (proc->procA) return WINPROC_CallWndProc( proc->procA, hwnd, msg, wParam, lParam );
-    if (proc->procW) return WINPROC_CallProc32ATo32W( proc->procW, hwnd, msg, wParam, lParam );
-    return LOWORD( WINPROC_CallProc32ATo16( proc->proc16, hwnd, msg, wParam, lParam ) );
+    if (proc->procW) return WINPROC_CallProc32ATo32W( proc->procW, hwnd, msg, wParam, lParam, TRUE );
+    return WINPROC_CallProc32ATo16( proc->proc16, hwnd, msg, wParam, lParam, TRUE );
 }
 
 
@@ -3312,6 +3367,6 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
         return WINPROC_CallWndProc( (WNDPROC)func, hwnd, msg, wParam, lParam );
 
     if (proc->procW) return WINPROC_CallWndProc( proc->procW, hwnd, msg, wParam, lParam );
-    if (proc->procA) return WINPROC_CallProc32WTo32A( proc->procA, hwnd, msg, wParam, lParam );
-    return LOWORD( WINPROC_CallProc32WTo16( proc->proc16, hwnd, msg, wParam, lParam ));
+    if (proc->procA) return WINPROC_CallProc32WTo32A( proc->procA, hwnd, msg, wParam, lParam, TRUE );
+    return WINPROC_CallProc32WTo16( proc->proc16, hwnd, msg, wParam, lParam, TRUE );
 }
