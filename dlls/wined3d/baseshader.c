@@ -85,6 +85,20 @@ const SHADER_OPCODE* shader_get_opcode(
     return NULL;
 }
 
+/* Return the number of parameters to skip for an opcode */
+static inline int shader_skip_opcode(
+    IWineD3DBaseShaderImpl* This,
+    const SHADER_OPCODE* curOpcode,
+    DWORD opcode_token) {
+
+   /* Shaders >= 2.0 may contain address tokens, but fortunately they
+    * have a useful legnth mask - use it here. Shaders 1.0 contain no such tokens */
+
+    return (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)?
+        ((opcode_token & D3DSI_INSTLENGTH_MASK) >> D3DSI_INSTLENGTH_SHIFT):
+        curOpcode->num_params;
+}
+
 /* Note: For vertex shaders,
  * texUsed = addrUsed, and 
  * D3DSPR_TEXTURE = D3DSPR_ADDR. 
@@ -424,6 +438,7 @@ void generate_base_shader(
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;
+    DWORD opcode_token;
     DWORD i;
 
     /* Initialize current parsing state */
@@ -465,8 +480,8 @@ void generate_base_shader(
             }
 
             /* Read opcode */
-            curOpcode = shader_get_opcode(iface, *pToken);
-            ++pToken;
+            opcode_token = *pToken++;
+            curOpcode = shader_get_opcode(iface, opcode_token);
 
             /* Unknown opcode and its parameters */
             if (NULL == curOpcode) {
@@ -479,14 +494,14 @@ void generate_base_shader(
             } else if (USING_GLSL && curOpcode->hw_glsl_fct == NULL) {
 
                 FIXME("Token %s is not yet implemented with GLSL\n", curOpcode->name);
-                pToken += curOpcode->num_params;
+                pToken += shader_skip_opcode(This, curOpcode, opcode_token);
 
             /* Unhandled opcode in ARB */
             } else if ( !USING_GLSL && GLNAME_REQUIRE_GLSL == curOpcode->glname) {
 
                 FIXME("Token %s requires greater functionality than "
                     "Vertex or Fragment_Program_ARB supports\n", curOpcode->name);
-                pToken += curOpcode->num_params;
+                pToken += shader_skip_opcode(This, curOpcode, opcode_token);
 
             /* If a generator function is set for current shader target, use it */
             } else if ((!USING_GLSL && curOpcode->hw_fct != NULL) ||
@@ -515,13 +530,10 @@ void generate_base_shader(
 
             } else {
 
-                TRACE("Found opcode D3D:%s GL:%s, PARAMS:%d,\n",
-                curOpcode->name, curOpcode->glname, curOpcode->num_params);
-
                 /* Unless we encounter a no-op command, this opcode is unrecognized */
                 if (curOpcode->opcode != D3DSIO_NOP) {
                     FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
-                    pToken += curOpcode->num_params;
+                    pToken += shader_skip_opcode(This, curOpcode, opcode_token);
                 }
             }
         }
