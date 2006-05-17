@@ -533,8 +533,12 @@ void pshader_nrm(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_sincos(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+void pshader_sincos3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
+}
+
+void pshader_sincos2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+     FIXME(" : Stub\n");
 }
 
 void pshader_rep(WINED3DSHADERVECTOR* d) {
@@ -667,7 +671,8 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 
     */
     {D3DSIO_NRM,      "nrm",      NULL,   2, pshader_nrm,     NULL, NULL, 0, 0},
-    {D3DSIO_SINCOS,   "sincos",   NULL,   2, pshader_sincos,  NULL, NULL, 0, 0},
+    {D3DSIO_SINCOS,   "sincos",   NULL,   4, pshader_sincos2, NULL, NULL, D3DPS_VERSION(2,0), D3DPS_VERSION(2,0)},
+    {D3DSIO_SINCOS,   "sincos",   NULL,   2, pshader_sincos3, NULL, NULL, D3DPS_VERSION(3,0), -1},
     /* TODO: dp2add can be made out of multiple instuctions */
     {D3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  2, pshader_dp2add,  NULL, NULL, 0, 0},
 

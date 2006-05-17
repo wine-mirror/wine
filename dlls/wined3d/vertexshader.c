@@ -404,8 +404,12 @@ void vshader_nrm(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_sincos(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+void vshader_sincos3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
+}
+
+void vshader_sincos2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+     FIXME(" : Stub\n");
 }
 
 void vshader_rep(WINED3DSHADERVECTOR* d) {
@@ -524,7 +528,8 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
 
     */
     {D3DSIO_NRM,      "nrm",      NULL,   2, vshader_nrm,    NULL, NULL, 0, 0},
-    {D3DSIO_SINCOS,   "sincos",   NULL,   2, vshader_sincos, NULL, NULL, 0, 0},
+    {D3DSIO_SINCOS,   "sincos",   NULL,   4, vshader_sincos2, NULL, NULL, D3DVS_VERSION(2,0), D3DVS_VERSION(2,0)},
+    {D3DSIO_SINCOS,   "sincos",   NULL,   2, vshader_sincos3, NULL, NULL, D3DVS_VERSION(3,0), -1},
 
     /* Matrix */
     {D3DSIO_M4x4, "m4x4", "undefined", 3, vshader_m4x4, vshader_hw_mnxn, NULL, 0, 0},
