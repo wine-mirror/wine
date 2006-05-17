@@ -852,13 +852,23 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 
     if (IsIconic( hwnd ))
     {
-        if (cmd == SW_MINIMIZE) return SWP_NOSIZE | SWP_NOMOVE;
+        switch (cmd)
+        {
+        case SW_SHOWMINNOACTIVE:
+        case SW_SHOWMINIMIZED:
+        case SW_FORCEMINIMIZE:
+        case SW_MINIMIZE:
+            return SWP_NOSIZE | SWP_NOMOVE;
+        }
         if (!SendMessageW( hwnd, WM_QUERYOPEN, 0, 0 )) return SWP_NOSIZE | SWP_NOMOVE;
         swpFlags |= SWP_NOCOPYBITS;
     }
 
     switch( cmd )
     {
+    case SW_SHOWMINNOACTIVE:
+    case SW_SHOWMINIMIZED:
+    case SW_FORCEMINIMIZE:
     case SW_MINIMIZE:
         if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
         if( wndPtr->dwStyle & WS_MAXIMIZE) wndPtr->flags |= WIN_RESTORE_MAX;
@@ -877,6 +887,9 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         break;
 
     case SW_MAXIMIZE:
+        old_style = GetWindowLongW( hwnd, GWL_STYLE );
+        if ((old_style & WS_MAXIMIZE) && (old_style & WS_CHILD)) return SWP_NOSIZE | SWP_NOMOVE;
+
         WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
 
         old_style = WIN_SetStyle( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
@@ -933,7 +946,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     HWND parent;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     BOOL wasVisible = (style & WS_VISIBLE) != 0;
-    BOOL showFlag = TRUE;
+    BOOL showFlag = TRUE, state_change = FALSE;
     RECT newPos = {0, 0, 0, 0};
     UINT swp = 0;
 
@@ -949,23 +962,24 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
                 swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
 
+	case SW_MINIMIZE:
 	case SW_SHOWMINNOACTIVE:
             swp |= SWP_NOACTIVATE | SWP_NOZORDER;
             /* fall through */
 	case SW_SHOWMINIMIZED:
         case SW_FORCEMINIMIZE: /* FIXME: Does not work if thread is hung. */
-            swp |= SWP_SHOWWINDOW;
+            swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
             /* fall through */
-	case SW_MINIMIZE:
-            swp |= SWP_FRAMECHANGED;
-            if( !(style & WS_MINIMIZE) )
-		 swp |= WINPOS_MinMaximize( hwnd, SW_MINIMIZE, &newPos );
-            else swp |= SWP_NOSIZE | SWP_NOMOVE;
+            swp |= WINPOS_MinMaximize( hwnd, cmd, &newPos );
+            if (style & WS_MINIMIZE) return wasVisible;
+            state_change = TRUE;
 	    break;
 
 	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
             swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
             swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
+            if ((style & WS_MAXIMIZE) && (style & WS_CHILD)) return wasVisible;
+            state_change = TRUE;
             break;
 
 	case SW_SHOWNA:
@@ -979,6 +993,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 
 	case SW_RESTORE:
 	    swp |= SWP_FRAMECHANGED;
+            state_change = TRUE;
             /* fall through */
 	case SW_SHOWNOACTIVATE:
             swp |= SWP_NOACTIVATE | SWP_NOZORDER;
@@ -993,14 +1008,14 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 	    break;
     }
 
-    if ((showFlag != wasVisible || cmd == SW_SHOWNA) && cmd != SW_SHOWMAXIMIZED)
+    if ((showFlag != wasVisible || cmd == SW_SHOWNA) && !state_change)
     {
         SendMessageW( hwnd, WM_SHOWWINDOW, showFlag, 0 );
         if (!IsWindow( hwnd )) return wasVisible;
     }
 
     parent = GetAncestor( hwnd, GA_PARENT );
-    if (parent && !IsWindowVisible( parent ))
+    if (parent && !IsWindowVisible( parent ) && !state_change)
     {
         /* if parent is not visible simply toggle WS_VISIBLE and return */
         if (showFlag) WIN_SetStyle( hwnd, WS_VISIBLE, 0 );
@@ -1009,8 +1024,19 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     else
     {
         /* ShowWindow won't activate a not being maximized child window */
-        if ((style & WS_CHILD) && cmd != SW_MAXIMIZE)
-            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+        if (style & WS_CHILD)
+        {
+            if (!state_change)
+                swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+            else
+            {
+                /* it appears that Windows always adds an undocumented 0x8000
+                 * flag if the state of a window changes.
+                 * FIXME: real SWP_xxxx name?
+                 */
+                swp |= 0x8000;
+            }
+        }
 
         SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
                       newPos.right, newPos.bottom, LOWORD(swp) );
