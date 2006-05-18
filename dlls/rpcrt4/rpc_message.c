@@ -393,7 +393,10 @@ static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
         ISC_REQ_DELEGATE, 0, SECURITY_NETWORK_DREP,
         &inp_desc, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
   if (r)
-    return r;
+  {
+    WARN("InitializeSecurityContext failed with error 0x%08lx\n", r);
+    return ERROR_ACCESS_DENIED;
+  }
 
   resp_hdr = RPCRT4_BuildAuthHeader(NDR_LOCAL_DATA_REPRESENTATION);
   if (!resp_hdr)
@@ -571,8 +574,10 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
     unsigned int offset;
 
     offset = common_hdr.frag_len - hdr_length - common_hdr.auth_len;
-    RPCRT_AuthorizeConnection(Connection, (LPBYTE)pMsg->Buffer + offset,
-                              common_hdr.auth_len);
+    status = RPCRT_AuthorizeConnection(Connection, (LPBYTE)pMsg->Buffer + offset,
+                                       common_hdr.auth_len);
+    if (status)
+        goto fail;
   }
 
   /* success */
