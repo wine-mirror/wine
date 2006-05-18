@@ -2985,13 +2985,19 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd, UINT msg, WPAR
 
 
 /**********************************************************************
- *	     WINPROC_CallProc32WTo32A_fast
+ *	     WINPROC_CallProc32WTo32A
  *
+ * Call a window procedure, translating args from Unicode to Ansi.
  */
-static BOOL WINPROC_CallProc32WTo32A_fast( WNDPROC func, HWND hwnd,
-                                           UINT msg, WPARAM wParam,
-                                           LPARAM lParam, LRESULT *result )
+static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam,
+                                         LPARAM lParam, BOOL dialog )
 {
+    LRESULT ret = 0;
+    int unmap;
+
+    TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+                func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+
     switch(msg)
     {
     case WM_NCCREATE:
@@ -3020,7 +3026,7 @@ static BOOL WINPROC_CallProc32WTo32A_fast( WNDPROC func, HWND hwnd,
             if (class_lenA + name_lenA + 2 > sizeof(buffer))
             {
                 cls = HeapAlloc(GetProcessHeap(), 0, class_lenA + name_lenA + 2);
-                if (!cls) return FALSE;
+                if (!cls) break;
             }
 
             RtlUnicodeToMultiByteN(cls, class_lenA, NULL, csW->lpszClass, class_lenW);
@@ -3043,43 +3049,20 @@ static BOOL WINPROC_CallProc32WTo32A_fast( WNDPROC func, HWND hwnd,
                 csA.lpCreateParams = &mdi_cs;
             }
 
-            lParam = (LPARAM)&csA;
-            *result = WINPROC_CallWndProc(func, hwnd, msg, wParam, lParam);
+            ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, (LPARAM)&csA );
 
             if (cls != buffer) HeapFree(GetProcessHeap(), 0, cls);
         }
-        return TRUE;
+        break;
 
     default:
-        return FALSE;
-    }
-}
-
-/**********************************************************************
- *	     WINPROC_CallProc32WTo32A
- *
- * Call a window procedure, translating args from Unicode to Ansi.
- */
-static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam,
-                                         LPARAM lParam, BOOL dialog )
-{
-    LRESULT ret;
-    int unmap;
-
-    TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
-                func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
-
-    if (WINPROC_CallProc32WTo32A_fast( func, hwnd, msg, wParam, lParam, &ret ))
-        return ret;
-
-    if ((unmap = WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam )) == -1) {
-        ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
-                       SPY_GetMsgName(msg, hwnd), wParam, lParam );
-        return 0;
-    }
-    ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-    if (unmap)
-    {
+        if ((unmap = WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam )) == -1) {
+            ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
+                      SPY_GetMsgName(msg, hwnd), wParam, lParam );
+            return 0;
+        }
+        ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+        if (!unmap) break;
         if (dialog)
         {
             LRESULT result = GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
@@ -3087,7 +3070,9 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
             SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
         }
         else ret = WINPROC_UnmapMsg32WTo32A( hwnd, msg, wParam, lParam, ret );
+        break;
     }
+
     return ret;
 }
 
