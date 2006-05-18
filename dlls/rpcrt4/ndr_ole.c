@@ -254,7 +254,7 @@ unsigned char * WINAPI NdrInterfacePointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   pStubMsg->MaxCount = 0;
   if (!LoadCOM()) return NULL;
-  if (pStubMsg->Buffer + sizeof(DWORD) < (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength) {
+  if (pStubMsg->Buffer + sizeof(DWORD) <= (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength) {
     stream = RpcStream_Create(pStubMsg, TRUE);
     if (stream) {
       if (pMemory)
