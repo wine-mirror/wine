@@ -1017,9 +1017,12 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrinc
                           RPC_SECURITY_QOS *SecurityQos )
 {
   RpcBinding* bind = (RpcBinding*)Binding;
-  RPC_STATUS r;
+  SECURITY_STATUS r;
   CredHandle cred;
   TimeStamp exp;
+  ULONG package_count;
+  ULONG i;
+  PSecPkgInfoA packages;
 
   TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_a((const char*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
@@ -1033,12 +1036,6 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrinc
     return RPC_S_UNKNOWN_AUTHN_LEVEL;
   }
 
-  if (AuthnSvc != RPC_C_AUTHN_WINNT)
-  {
-    FIXME("unsupported AuthnSvc %lu\n", AuthnSvc);
-    return RPC_S_UNKNOWN_AUTHN_SERVICE;
-  }
-
   if (AuthzSvr)
   {
     FIXME("unsupported AuthzSvr %lu\n", AuthzSvr);
@@ -1048,8 +1045,28 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrinc
   if (SecurityQos)
     FIXME("SecurityQos ignored\n");
 
-  r = AcquireCredentialsHandleA(NULL, "NTLM", SECPKG_CRED_OUTBOUND, NULL,
+  r = EnumerateSecurityPackagesA(&package_count, &packages);
+  if (r != SEC_E_OK)
+  {
+    ERR("EnumerateSecurityPackagesA failed with error 0x%08lx\n", r);
+    return RPC_S_SEC_PKG_ERROR;
+  }
+
+  for (i = 0; i < package_count; i++)
+    if (packages[i].wRPCID == AuthnSvc)
+        break;
+
+  if (i == package_count)
+  {
+    FIXME("unsupported AuthnSvc %lu\n", AuthnSvc);
+    FreeContextBuffer(packages);
+    return RPC_S_UNKNOWN_AUTHN_SERVICE;
+  }
+
+  TRACE("found package %s for service %ld\n", packages[i].Name, AuthnSvc);
+  r = AcquireCredentialsHandleA(NULL, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
+  FreeContextBuffer(packages);
   if (r == ERROR_SUCCESS)
   {
     if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
@@ -1057,10 +1074,13 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrinc
     r = RpcAuthInfo_Create(AuthnLevel, AuthnSvc, cred, exp, &bind->AuthInfo);
     if (r != RPC_S_OK)
       FreeCredentialsHandle(&cred);
+    return RPC_S_OK;
   }
   else
+  {
     ERR("AcquireCredentialsHandleA failed with error 0x%08lx\n", r);
-  return r;
+    return RPC_S_SEC_PKG_ERROR;
+  }
 }
 
 /***********************************************************************
