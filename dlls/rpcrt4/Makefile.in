@@ -5,7 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rpcrt4.dll
 IMPORTLIB = librpcrt4.$(IMPLIBEXT)
-IMPORTS   = secur32 iphlpapi advapi32 kernel32 ntdll
+IMPORTS   = iphlpapi advapi32 kernel32 ntdll
+DELAYIMPORTS = secur32
 EXTRALIBS = -luuid
 
 C_SRCS = \
