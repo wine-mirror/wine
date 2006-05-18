@@ -1543,6 +1543,8 @@ static unsigned long EmbeddedComplexSize(PMIDL_STUB_MESSAGE pStubMsg,
 
     pFormat += *(const SHORT*)pFormat;
     return *(const SHORT*)pFormat;
+  case RPC_FC_IP:
+    return sizeof(void *);
   default:
     FIXME("unhandled embedded type %02x\n", *pFormat);
   }
