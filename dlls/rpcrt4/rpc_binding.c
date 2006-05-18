@@ -1027,9 +1027,6 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrinc
   TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_a((const char*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
 
-  if (!AuthIdentity)
-    return RPC_S_INVALID_AUTH_IDENTITY;
-
   if (AuthnLevel != RPC_C_AUTHN_LEVEL_CONNECT)
   {
     FIXME("unsupported AuthnLevel %lu\n", AuthnLevel);
@@ -1064,7 +1061,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrinc
   }
 
   TRACE("found package %s for service %ld\n", packages[i].Name, AuthnSvc);
-  r = AcquireCredentialsHandleA(NULL, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
+  r = AcquireCredentialsHandleA((SEC_CHAR *)ServerPrincName, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
   FreeContextBuffer(packages);
   if (r == ERROR_SUCCESS)
