@@ -583,7 +583,7 @@ static int ctl2_alloc_string(
 }
 
 /****************************************************************************
- *	alloc_importinfo
+ *	alloc_msft_importinfo
  *
  *  Allocates and initializes an import information structure in a type library.
  *
@@ -592,7 +592,7 @@ static int ctl2_alloc_string(
  *  Success: The offset of the new importinfo.
  *  Failure: -1 (this is invariably an out of memory condition).
  */
-static int alloc_importinfo(
+static int alloc_msft_importinfo(
         msft_typelib_t *typelib,   /* [I] The type library to allocate in. */
         MSFT_ImpInfo *impinfo)     /* [I] The import information to store. */
 {
@@ -662,6 +662,79 @@ static int alloc_importfile(
     memcpy(&importfile->filename, encoded_string, length);
 
     return offset;
+}
+
+static void alloc_importinfo(msft_typelib_t *typelib, importinfo_t *importinfo)
+{
+    importlib_t *importlib = importinfo->importlib;
+
+    chat("alloc_importinfo: %s\n", importinfo->name);
+
+    if(!importlib->allocated) {
+        MSFT_GuidEntry guid;
+        int guid_idx;
+
+        chat("allocating importlib %s\n", importlib->name);
+
+        importlib->allocated = -1;
+
+        memcpy(&guid.guid, &importlib->guid, sizeof(GUID));
+        guid.hreftype = 2;
+
+        guid_idx = ctl2_alloc_guid(typelib, &guid);
+
+        alloc_importfile(typelib, guid_idx, importlib->version&0xffff,
+                         importlib->version>>16, importlib->name);
+    }
+
+    if(importinfo->offset == -1 || !(importinfo->flags & MSFT_IMPINFO_OFFSET_IS_GUID)) {
+        MSFT_ImpInfo impinfo;
+
+        impinfo.flags = importinfo->flags;
+        impinfo.oImpFile = 0;
+
+        if(importinfo->flags & MSFT_IMPINFO_OFFSET_IS_GUID) {
+            MSFT_GuidEntry guid;
+
+            guid.hreftype = 0;
+            memcpy(&guid.guid, &importinfo->guid, sizeof(GUID));
+
+            impinfo.oGuid = ctl2_alloc_guid(typelib, &guid);
+
+            importinfo->offset = alloc_msft_importinfo(typelib, &impinfo);
+
+            typelib->typelib_segment_data[MSFT_SEG_GUID][impinfo.oGuid+sizeof(GUID)]
+                = importinfo->offset+1;
+
+            if(!strcmp(importinfo->name, "IDispatch"))
+                typelib->typelib_header.dispatchpos = importinfo->offset+1;
+        }else {
+            impinfo.oGuid = importinfo->id;
+            importinfo->offset = alloc_msft_importinfo(typelib, &impinfo);
+        }
+    }
+}
+
+static importinfo_t *find_importinfo(msft_typelib_t *typelib, const char *name)
+{
+    importlib_t *importlib;
+    int i;
+
+    chat("search importlib %s\n", name);
+
+    if(!name)
+        return NULL;
+
+    for(importlib = typelib->typelib->importlibs; importlib; importlib = NEXT_LINK(importlib)) {
+        for(i=0; i < importlib->ntypeinfos; i++) {
+            if(!strcmp(name, importlib->importinfos[i].name)) {
+                chat("Found %s in importlib.\n", name);
+                return importlib->importinfos+i;
+            }
+        }
+    }
+
+    return NULL;
 }
 
 static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure);
@@ -1634,14 +1707,20 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     return S_OK;
 }
 
-static HRESULT add_impl_type(msft_typeinfo_t *typeinfo, type_t *ref)
+static HRESULT add_impl_type(msft_typeinfo_t *typeinfo, type_t *ref, importinfo_t *importinfo)
 {
-    if(ref->typelib_idx == -1)
-        add_interface_typeinfo(typeinfo->typelib, ref);
-    if(ref->typelib_idx == -1)
-        error("add_impl_type: unable to add inherited interface\n");
+    if(importinfo) {
+        alloc_importinfo(typeinfo->typelib, importinfo);
+        typeinfo->typeinfo->datatype1 = importinfo->offset+1;
+    }else {
+        if(ref->typelib_idx == -1)
+            add_interface_typeinfo(typeinfo->typelib, ref);
+        if(ref->typelib_idx == -1)
+            error("add_impl_type: unable to add inherited interface\n");
 
-    typeinfo->typeinfo->datatype1 = typeinfo->typelib->typelib_typeinfo_offsets[ref->typelib_idx];
+        typeinfo->typeinfo->datatype1 = typeinfo->typelib->typelib_typeinfo_offsets[ref->typelib_idx];
+    }
+
     typeinfo->typeinfo->cImplTypes++;
     return S_OK;
 }
@@ -1807,7 +1886,7 @@ static void add_dispatch(msft_typelib_t *typelib)
     impinfo.flags = TKIND_INTERFACE << 24 | MSFT_IMPINFO_OFFSET_IS_GUID;
     impinfo.oImpFile = impfile_offset;
     impinfo.oGuid = ctl2_alloc_guid(typelib, &guidentry);
-    typelib->typelib_header.dispatchpos = alloc_importinfo(typelib, &impinfo) | 0x01;
+    typelib->typelib_header.dispatchpos = alloc_msft_importinfo(typelib, &impinfo) | 0x01;
 }
 
 static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinterface)
@@ -1861,6 +1940,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     func_t *func;
     type_t *ref;
     msft_typeinfo_t *msft_typeinfo;
+    importinfo_t *ref_importinfo = NULL;
     int num_parents = 0, num_funcs = 0;
     const attr_t *attr;
     const type_t *derived;
@@ -1872,8 +1952,12 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     /* midl adds the parent interface first, unless the parent itself
        has no parent (i.e. it stops before IUnknown). */
 
-    if(interface->ref && interface->ref->ref && interface->ref->typelib_idx == -1)
-        add_interface_typeinfo(typelib, interface->ref);
+    if(interface->ref) {
+        ref_importinfo = find_importinfo(typelib, interface->ref->name);
+
+        if(!ref_importinfo && interface->ref->ref && interface->ref->typelib_idx == -1)
+            add_interface_typeinfo(typelib, interface->ref);
+    }
 
     interface->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_INTERFACE, interface->name, interface->attrs,
@@ -1890,7 +1974,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
         msft_typeinfo->typeinfo->flags &= ~0x40; /* TYPEFLAG_FDUAL */
 
     if(interface->ref)
-        add_impl_type(msft_typeinfo, interface->ref);
+        add_impl_type(msft_typeinfo, interface->ref, ref_importinfo);
 
     /* count the number of inherited interfaces and non-local functions */
     for(ref = interface->ref; ref; ref = ref->ref) {
