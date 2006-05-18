@@ -54,6 +54,7 @@ typedef BOOL (WINAPI *AddContextToStoreFunc)(HCERTSTORE hCertStore,
 typedef BOOL (WINAPI *AddEncodedContextToStoreFunc)(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwAddDisposition, const void **ppContext);
+typedef const void *(WINAPI *DuplicateContextFunc)(const void *context);
 typedef const void *(WINAPI *EnumContextsInStoreFunc)(HCERTSTORE hCertStore,
  const void *pPrevContext);
 typedef BOOL (WINAPI *GetContextPropertyFunc)(const void *context,
@@ -71,6 +72,7 @@ typedef struct _WINE_CONTEXT_INTERFACE
     CreateContextFunc            create;
     AddContextToStoreFunc        addContextToStore;
     AddEncodedContextToStoreFunc addEncodedToStore;
+    DuplicateContextFunc         duplicate;
     EnumContextsInStoreFunc      enumContextsInStore;
     GetContextPropertyFunc       getProp;
     SetContextPropertyFunc       setProp;
@@ -83,6 +85,7 @@ static const WINE_CONTEXT_INTERFACE gCertInterface = {
     (CreateContextFunc)CertCreateCertificateContext,
     (AddContextToStoreFunc)CertAddCertificateContextToStore,
     (AddEncodedContextToStoreFunc)CertAddEncodedCertificateToStore,
+    (DuplicateContextFunc)CertDuplicateCertificateContext,
     (EnumContextsInStoreFunc)CertEnumCertificatesInStore,
     (GetContextPropertyFunc)CertGetCertificateContextProperty,
     (SetContextPropertyFunc)CertSetCertificateContextProperty,
@@ -95,6 +98,7 @@ static const WINE_CONTEXT_INTERFACE gCRLInterface = {
     (CreateContextFunc)CertCreateCRLContext,
     (AddContextToStoreFunc)CertAddCRLContextToStore,
     (AddEncodedContextToStoreFunc)CertAddEncodedCRLToStore,
+    (DuplicateContextFunc)CertDuplicateCRLContext,
     (EnumContextsInStoreFunc)CertEnumCRLsInStore,
     (GetContextPropertyFunc)CertGetCRLContextProperty,
     (SetContextPropertyFunc)CertSetCRLContextProperty,
@@ -107,6 +111,7 @@ static const WINE_CONTEXT_INTERFACE gCTLInterface = {
     (CreateContextFunc)CertCreateCTLContext,
     (AddContextToStoreFunc)CertAddCTLContextToStore,
     (AddEncodedContextToStoreFunc)CertAddEncodedCTLToStore,
+    (DuplicateContextFunc)CertDuplicateCTLContext,
     (EnumContextsInStoreFunc)CertEnumCTLsInStore,
     (GetContextPropertyFunc)CertGetCTLContextProperty,
     (SetContextPropertyFunc)CertSetCTLContextProperty,
@@ -2355,6 +2360,12 @@ BOOL WINAPI CertAddCRLContextToStore( HCERTSTORE hCertStore,
     return TRUE;
 }
 
+PCCRL_CONTEXT WINAPI CertDuplicateCRLContext(PCCRL_CONTEXT pCrlContext)
+{
+    FIXME("(%p): stub\n", pCrlContext);
+    return pCrlContext;
+}
+
 BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext)
 {
     FIXME("%p\n", pCrlContext );
@@ -2400,6 +2411,12 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
     FIXME("(%p, %p, %08lx, %p): stub\n", hCertStore, pCtlContext,
      dwAddDisposition, ppStoreContext);
     return TRUE;
+}
+
+PCCTL_CONTEXT WINAPI CertDuplicateCTLContext(PCCTL_CONTEXT pCtlContext)
+{
+    FIXME("(%p): stub\n", pCtlContext );
+    return pCtlContext;
 }
 
 BOOL WINAPI CertFreeCTLContext(PCCTL_CONTEXT pCtlContext)

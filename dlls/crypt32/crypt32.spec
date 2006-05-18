@@ -24,8 +24,8 @@
 @ stdcall CertDeleteCRLFromStore(ptr)
 @ stdcall CertDeleteCTLFromStore(ptr)
 @ stdcall CertDeleteCertificateFromStore(ptr)
-@ stub CertDuplicateCRLContext
-@ stub CertDuplicateCTLContext
+@ stdcall CertDuplicateCRLContext(ptr)
+@ stdcall CertDuplicateCTLContext(ptr)
 @ stdcall CertDuplicateCertificateContext(ptr)
 @ stdcall CertDuplicateStore(ptr)
 @ stub CertEnumCRLContextProperties
