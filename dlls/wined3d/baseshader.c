@@ -551,6 +551,7 @@ void generate_base_shader(
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;
+    SHADER_HANDLER hw_fct = NULL;
     DWORD opcode_token;
     DWORD i;
 
@@ -568,10 +569,12 @@ void generate_base_shader(
     */
 
     /* Pre-declare registers */
-    if (USING_GLSL)
+    if (USING_GLSL) {
         generate_glsl_declarations(iface, buffer);
-    else
+        shader_addline(buffer, "void main() {\n");
+    } else {
         generate_arb_declarations(iface, buffer);
+    }
 
     /* Second pass, process opcodes */
     if (NULL != pToken) {
@@ -595,28 +598,15 @@ void generate_base_shader(
             /* Read opcode */
             opcode_token = *pToken++;
             curOpcode = shader_get_opcode(iface, opcode_token);
+            hw_fct = USING_GLSL ? curOpcode->hw_glsl_fct : curOpcode->hw_fct;
 
             /* Unknown opcode and its parameters */
            if (NULL == curOpcode) {
               FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
               pToken += shader_skip_unrecognized(iface, pToken); 
 
-            /* Using GLSL & no generator function exists */
-            } else if (USING_GLSL && curOpcode->hw_glsl_fct == NULL) {
-
-                FIXME("Token %s is not yet implemented with GLSL\n", curOpcode->name);
-                pToken += shader_skip_opcode(This, curOpcode, opcode_token);
-
-            /* Unhandled opcode in ARB */
-            } else if ( !USING_GLSL && GLNAME_REQUIRE_GLSL == curOpcode->glname) {
-
-                FIXME("Token %s requires greater functionality than "
-                    "Vertex or Fragment_Program_ARB supports\n", curOpcode->name);
-                pToken += shader_skip_opcode(This, curOpcode, opcode_token);
-
             /* If a generator function is set for current shader target, use it */
-            } else if ((!USING_GLSL && curOpcode->hw_fct != NULL) ||
-                       (USING_GLSL && curOpcode->hw_glsl_fct != NULL)) {
+            } else if (hw_fct != NULL) {
 
                 SHADER_OPCODE_ARG hw_arg;
 
@@ -656,10 +646,7 @@ void generate_base_shader(
                 }
 
                 /* Call appropriate function for output target */
-                if (USING_GLSL)
-                    curOpcode->hw_glsl_fct(&hw_arg);
-                else
-                    curOpcode->hw_fct(&hw_arg);
+                hw_fct(&hw_arg);
 
             } else {
 
