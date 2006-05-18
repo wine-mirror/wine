@@ -992,29 +992,6 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 {
     switch(msg)
     {
-    case WM_MDICREATE:
-        {
-            MDICREATESTRUCTA *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) );
-            if (!cs) return -1;
-            *cs = *(MDICREATESTRUCTA *)*plparam;
-            if (HIWORD(cs->szTitle))
-            {
-                int len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)cs->szTitle, -1, NULL, 0, 0, 0);
-                LPSTR buf = HeapAlloc(GetProcessHeap(), 0, len);
-                if (buf) WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)cs->szTitle, -1, buf, len, 0, 0);
-                cs->szTitle = buf;
-            }
-            if (HIWORD(cs->szClass))
-            {
-                int len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)cs->szClass, -1, NULL, 0, 0, 0);
-                LPSTR buf = HeapAlloc(GetProcessHeap(), 0, len);
-                if (buf) WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)cs->szClass, -1, buf, len, 0, 0);
-                cs->szClass = buf;
-            }
-            *plparam = (LPARAM)cs;
-        }
-        return 1;
-
 /* Listbox */
     case LB_ADDSTRING:
     case LB_INSERTSTRING:
@@ -1124,17 +1101,6 @@ static LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPA
 {
     switch(msg)
     {
-    case WM_MDICREATE:
-        {
-            MDICREATESTRUCTA *cs = (MDICREATESTRUCTA *)lParam;
-            if (HIWORD(cs->szTitle))
-                HeapFree( GetProcessHeap(), 0, (LPVOID)cs->szTitle );
-            if (HIWORD(cs->szClass))
-                HeapFree( GetProcessHeap(), 0, (LPVOID)cs->szClass );
-            HeapFree( GetProcessHeap(), 0, cs );
-        }
-        break;
-
 /* Listbox */
     case LB_ADDSTRING:
     case LB_INSERTSTRING:
@@ -3050,6 +3016,43 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
                 ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, (LPARAM)ptr );
                 free_buffer( buffer, ptr );
             }
+        }
+        break;
+
+    case WM_MDICREATE:
+        {
+            char *ptr, buffer[1024];
+            DWORD title_lenA = 0, title_lenW = 0, class_lenA = 0, class_lenW = 0;
+            MDICREATESTRUCTW *csW = (MDICREATESTRUCTW *)lParam;
+            MDICREATESTRUCTA csA;
+
+            memcpy( &csA, csW, sizeof(csA) );
+
+            if (HIWORD(csW->szTitle))
+            {
+                title_lenW = (strlenW(csW->szTitle) + 1) * sizeof(WCHAR);
+                RtlUnicodeToMultiByteSize( &title_lenA, csW->szTitle, title_lenW );
+            }
+            if (HIWORD(csW->szClass))
+            {
+                class_lenW = (strlenW(csW->szClass) + 1) * sizeof(WCHAR);
+                RtlUnicodeToMultiByteSize( &class_lenA, csW->szClass, class_lenW );
+            }
+
+            if (!(ptr = get_buffer( buffer, sizeof(buffer), title_lenA + class_lenA ))) break;
+
+            if (title_lenA)
+            {
+                RtlUnicodeToMultiByteN( ptr, title_lenA, NULL, csW->szTitle, title_lenW );
+                csA.szTitle = ptr;
+            }
+            if (class_lenA)
+            {
+                RtlUnicodeToMultiByteN( ptr + title_lenA, class_lenA, NULL, csW->szClass, class_lenW );
+                csA.szClass = ptr + title_lenA;
+            }
+            ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, (LPARAM)&csA );
+            free_buffer( buffer, ptr );
         }
         break;
 
