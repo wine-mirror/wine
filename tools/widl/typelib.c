@@ -402,6 +402,13 @@ void add_importlib(const char *name)
 
     if(!typelib) return;
 
+    for(importlib = typelib->importlibs; importlib; importlib = NEXT_LINK(importlib)) {
+        if(!strcmp(name, importlib->name))
+            return;
+    }
+
+    chat("add_importlib: %s\n", name);
+
     importlib = xmalloc(sizeof(*importlib));
     importlib->name = xstrdup(name);
 
@@ -409,6 +416,4 @@ void add_importlib(const char *name)
 
     LINK(importlib, typelib->importlibs);
     typelib->importlibs = importlib;
-
-    warning("importlib is not yet supported.\n");
 }
