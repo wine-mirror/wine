@@ -246,8 +246,11 @@ static HRESULT WINAPI InPlaceSite_OnUIDeactivate(IOleInPlaceSite *iface, BOOL fU
 static HRESULT WINAPI InPlaceSite_OnInPlaceDeactivate(IOleInPlaceSite *iface)
 {
     DocHost *This = INPLACESITE_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    /* Nothing to do here */
+    return S_OK;
 }
 
 static HRESULT WINAPI InPlaceSite_DiscardUndoState(IOleInPlaceSite *iface)
