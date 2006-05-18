@@ -92,7 +92,7 @@ typedef struct
 } HEADER_INFO;
 
 
-#define VERT_BORDER     3
+#define VERT_BORDER     4
 #define DIVIDER_WIDTH  10
 #define MAX_HEADER_TEXT_LEN 260
 #define HDN_UNICODE_OFFSET 20
