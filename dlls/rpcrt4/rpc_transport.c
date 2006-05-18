@@ -488,3 +488,40 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;
 }
+
+/***********************************************************************
+ *             RpcNetworkIsProtseqValidW (RPCRT4.@)
+ *
+ * Checks if the given protocol sequence is known by the RPC system.
+ * If it is, returns RPC_S_OK, otherwise RPC_S_PROTSEQ_NOT_SUPPORTED.
+ *
+ */
+RPC_STATUS WINAPI RpcNetworkIsProtseqValidW(LPWSTR protseq)
+{
+  char ps[0x10];
+
+  WideCharToMultiByte(CP_ACP, 0, protseq, -1,
+                      ps, sizeof ps, NULL, NULL);
+  if (rpcrt4_get_protseq_ops(ps))
+    return RPC_S_OK;
+
+  FIXME("Unknown protseq %s\n", debugstr_w(protseq));
+
+  return RPC_S_INVALID_RPC_PROTSEQ;
+}
+
+/***********************************************************************
+ *             RpcNetworkIsProtseqValidA (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcNetworkIsProtseqValidA(unsigned char *protseq)
+{
+  UNICODE_STRING protseqW;
+
+  if (RtlCreateUnicodeStringFromAsciiz(&protseqW, (char*)protseq))
+  {
+    RPC_STATUS ret = RpcNetworkIsProtseqValidW(protseqW.Buffer);
+    RtlFreeUnicodeString(&protseqW);
+    return ret;
+  }
+  return RPC_S_OUT_OF_MEMORY;
+}

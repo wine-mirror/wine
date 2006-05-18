@@ -165,10 +165,22 @@ static void TestDceErrorInqText (void)
         ok (0, "Cannot set up for DceErrorInqText\n");
 }
 
+static void test_rpc_ncacn_ip_tcp(void)
+{
+    RPC_STATUS status;
+
+    status = RpcNetworkIsProtseqValid((unsigned char*)"foo");
+    ok(status == RPC_S_INVALID_RPC_PROTSEQ, "return wrong\n");
+
+    status = RpcNetworkIsProtseqValid((unsigned char*)"ncacn_ip_tcp");
+    ok(status == RPC_S_OK, "return wrong\n");
+}
+
 START_TEST( rpc )
 {
     trace ( " ** Uuid Conversion and Comparison Tests **\n" );
     UuidConversionAndComparison();
     trace ( " ** DceErrorInqText **\n");
     TestDceErrorInqText();
+    test_rpc_ncacn_ip_tcp();
 }

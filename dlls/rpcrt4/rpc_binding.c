@@ -835,49 +835,6 @@ RPC_STATUS WINAPI I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING
 }
 
 /***********************************************************************
- *             RpcNetworkIsProtseqValidA (RPCRT4.@)
- */
-RPC_STATUS WINAPI RpcNetworkIsProtseqValidA(unsigned char *protseq) {
-  UNICODE_STRING protseqW;
-
-  if (!protseq) return RPC_S_INVALID_RPC_PROTSEQ; /* ? */
-  
-  if (RtlCreateUnicodeStringFromAsciiz(&protseqW, (char*)protseq)) {
-    RPC_STATUS ret = RpcNetworkIsProtseqValidW(protseqW.Buffer);
-    RtlFreeUnicodeString(&protseqW);
-    return ret;
-  } else return RPC_S_OUT_OF_MEMORY;
-}
-
-/***********************************************************************
- *             RpcNetworkIsProtseqValidW (RPCRT4.@)
- * 
- * Checks if the given protocol sequence is known by the RPC system.
- * If it is, returns RPC_S_OK, otherwise RPC_S_PROTSEQ_NOT_SUPPORTED.
- *
- * We currently support:
- *   ncalrpc   local-only rpc over LPC (LPC is not really used)
- *   ncacn_np  rpc over named pipes
- */
-RPC_STATUS WINAPI RpcNetworkIsProtseqValidW(LPWSTR protseq) {
-  static const WCHAR protseqsW[][15] = { 
-    {'n','c','a','l','r','p','c',0},
-    {'n','c','a','c','n','_','n','p',0}
-  };
-  static const int count = sizeof(protseqsW) / sizeof(protseqsW[0]);
-  int i;
-
-  if (!protseq) return RPC_S_INVALID_RPC_PROTSEQ; /* ? */
-
-  for (i = 0; i < count; i++) {
-    if (!strcmpW(protseq, protseqsW[i])) return RPC_S_OK;
-  }
-  
-  FIXME("Unknown protseq %s - we probably need to implement it one day\n", debugstr_w(protseq));
-  return RPC_S_PROTSEQ_NOT_SUPPORTED;
-}
-
-/***********************************************************************
  *             RpcImpersonateClient (RPCRT4.@)
  *
  * Impersonates the client connected via a binding handle so that security
