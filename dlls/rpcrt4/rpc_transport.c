@@ -451,6 +451,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCS
   NewConnection->Endpoint = RPCRT4_strdupA(Endpoint);
   NewConnection->Used = Binding;
   NewConnection->MaxTransmissionSize = RPC_MAX_PACKET_SIZE;
+  NewConnection->NextCallId = 1;
 
   TRACE("connection: %p\n", NewConnection);
   *Connection = NewConnection;

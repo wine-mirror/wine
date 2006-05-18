@@ -37,6 +37,7 @@ typedef struct _RpcConnection
   USHORT MaxTransmissionSize;
   /* The active interface bound to server. */
   RPC_SYNTAX_IDENTIFIER ActiveInterface;
+  USHORT NextCallId;
 
   /* authentication */
   CtxtHandle ctx;

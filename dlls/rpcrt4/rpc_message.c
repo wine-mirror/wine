@@ -666,6 +666,7 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
     hdr = RPCRT4_BuildRequestHeader(pMsg->DataRepresentation,
                                     pMsg->BufferLength, pMsg->ProcNum,
                                     &bind->ObjectUuid);
+    hdr->common.call_id = conn->NextCallId++;
   }
 
   status = RPCRT4_Send(conn, hdr, pMsg->Buffer, pMsg->BufferLength);
