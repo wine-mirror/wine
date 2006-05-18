@@ -381,7 +381,7 @@ static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
 struct protseq_ops protseq_list[] = {
   { "ncacn_np",
     rpcrt4_conn_np_alloc,
-    rpcrt4_ncalrpc_open,
+    rpcrt4_ncacn_np_open,
     rpcrt4_conn_np_get_connect_event,
     rpcrt4_conn_np_handoff,
     rpcrt4_conn_np_read,
@@ -390,7 +390,7 @@ struct protseq_ops protseq_list[] = {
   },
   { "ncalrpc",
     rpcrt4_conn_np_alloc,
-    rpcrt4_ncacn_np_open,
+    rpcrt4_ncalrpc_open,
     rpcrt4_conn_np_get_connect_event,
     rpcrt4_conn_np_handoff,
     rpcrt4_conn_np_read,
