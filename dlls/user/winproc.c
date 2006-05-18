@@ -992,21 +992,6 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 {
     switch(msg)
     {
-    case WM_CHARTOITEM:
-    case WM_MENUCHAR:
-    case WM_CHAR:
-    case WM_DEADCHAR:
-    case WM_SYSCHAR:
-    case WM_SYSDEADCHAR:
-    case EM_SETPASSWORDCHAR:
-        {
-            WCHAR wch = LOWORD(*pwparam);
-            BYTE ch;
-            WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)&ch, 1, NULL, NULL );
-            *pwparam = MAKEWPARAM( ch, HIWORD(*pwparam) );
-        }
-        return 0;
-
     case WM_IME_CHAR:
         {
             WCHAR wch = LOWORD(*pwparam);
@@ -3004,6 +2989,22 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
                 else ret = result;
             }
             free_buffer( buffer, ptr );
+        }
+        break;
+
+    case WM_CHARTOITEM:
+    case WM_MENUCHAR:
+    case WM_CHAR:
+    case WM_DEADCHAR:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+    case EM_SETPASSWORDCHAR:
+        {
+            WCHAR wch = LOWORD(wParam);
+            BYTE ch;
+            RtlUnicodeToMultiByteN( (LPSTR)&ch, 1, NULL, &wch, sizeof(WCHAR) );
+            wParam = MAKEWPARAM( ch, HIWORD(wParam) );
+            ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
         }
         break;
 
