@@ -3834,15 +3834,59 @@ void WINAPI NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrNonEncapsulatedUnionMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
-    pFormat += 2;
-    if (pStubMsg->fHasNewCorrDesc)
-        pFormat += 6;
-    else
-        pFormat += 4;
+    unsigned long discriminant;
+    unsigned short type, size;
+
+    pFormat++;
+    /* Unmarshall discriminant */
+    discriminant = unmarshall_discriminant(pStubMsg, &pFormat);
+    TRACE("unmarshalled discriminant 0x%lx\n", discriminant);
 
     pFormat += *(const SHORT*)pFormat;
-    TRACE("size %d\n", *(const SHORT*)pFormat);
-    return *(const SHORT*)pFormat;
+
+    size = *(const unsigned short*)pFormat;
+    pFormat += 2;
+
+    pFormat = get_arm_offset_from_union_arm_selector(pStubMsg, discriminant, pFormat);
+    if(!pFormat)
+        return 0;
+
+    pStubMsg->Memory += size;
+
+    type = *(const unsigned short*)pFormat;
+    if((type & 0xff00) == 0x8000)
+    {
+        return NdrBaseTypeMemorySize(pStubMsg, pFormat);
+    }
+    else
+    {
+        PFORMAT_STRING desc = pFormat + *(const SHORT*)pFormat;
+        NDR_MEMORYSIZE m = NdrMemorySizer[*desc & NDR_TABLE_MASK];
+        unsigned char *saved_buffer;
+        if (m)
+        {
+            switch(*desc)
+            {
+            case RPC_FC_RP:
+            case RPC_FC_UP:
+            case RPC_FC_OP:
+            case RPC_FC_FP:
+                ALIGN_POINTER(pStubMsg->Buffer, 4);
+                saved_buffer = pStubMsg->Buffer;
+                pStubMsg->Buffer += 4;
+                ALIGN_LENGTH(pStubMsg->MemorySize, 4);
+                pStubMsg->MemorySize += 4;
+                PointerMemorySize(pStubMsg, saved_buffer, pFormat);
+                break;
+            default:
+                return m(pStubMsg, desc);
+            }
+        }
+        else FIXME("no marshaller for embedded type %02x\n", *desc);
+    }
+
+    TRACE("size %d\n", size);
+    return size;
 }
 
 /***********************************************************************
