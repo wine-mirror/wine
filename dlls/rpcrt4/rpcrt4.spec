@@ -436,7 +436,7 @@
 @ stub RpcMgmtInqServerPrincNameA
 @ stub RpcMgmtInqServerPrincNameW
 @ stub RpcMgmtInqStats
-@ stub RpcMgmtIsServerListening
+@ stdcall RpcMgmtIsServerListening(ptr)
 @ stub RpcMgmtSetAuthorizationFn
 @ stub RpcMgmtSetCancelTimeout
 @ stub RpcMgmtSetComTimeout

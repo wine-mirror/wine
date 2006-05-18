@@ -1090,3 +1090,12 @@ RPC_STATUS WINAPI RpcMgmtEpEltInqBegin(RPC_BINDING_HANDLE Binding, unsigned long
         Binding, InquiryType, IfId, VersOption, ObjectUuid, InquiryContext);
   return RPC_S_INVALID_BINDING;
 }
+
+/***********************************************************************
+ *             RpcMgmtEpEltInqBegin (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding)
+{
+  FIXME("(%p): stub\n", Binding);
+  return RPC_S_INVALID_BINDING;
+}
