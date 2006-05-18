@@ -5231,11 +5231,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
     }
 
     if(pTexture != NULL) {
-        /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH; The same is
-        *  the case for WINED3DPOOL_SYSTEMMEM textures unless WINED3DDEVCAPS_TEXTURESYSTEMMORY is set.
-        *  We don't check the caps as GetDeviceCaps is inefficient and we don't set the cap anyway.
-        */
-        if(((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SCRATCH || ((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SYSTEMMEM) {
+        /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH; 
+         */
+        if(((IWineD3DTextureImpl*)pTexture)->resource.pool == WINED3DPOOL_SCRATCH) {
             WARN("(%p) Attempt to set scratch texture rejected\n", pTexture);
             return WINED3DERR_INVALIDCALL;
         }
@@ -6435,8 +6433,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD3DSurfa
     DWORD       *data;
     TRACE("(%p) Colour fill Surface: %p rect: %p color: %ld\n", This, pSurface, pRect, color);
 
-    if (surface->resource.pool != WINED3DPOOL_DEFAULT) {
-        FIXME("call to colorfill with non WINED3DPOOL_DEFAULT surface\n");
+    if (surface->resource.pool != WINED3DPOOL_DEFAULT && surface->resource.pool != WINED3DPOOL_SYSTEMMEM) {
+        FIXME("call to colorfill with non WINED3DPOOL_DEFAULT or WINED3DPOOL_SYSTEMMEM surface\n");
         return WINED3DERR_INVALIDCALL;
     }
 

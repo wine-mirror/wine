@@ -1170,9 +1170,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     *  In general never store scratch or system mem textures in the video ram. However it is allowed
     *  for system memory textures when WINED3DDEVCAPS_TEXTURESYSTEMMEMORY is set but it isn't right now.
     */
-    if (This->resource.pool == WINED3DPOOL_SCRATCH || This->resource.pool == WINED3DPOOL_SYSTEMMEM)
+    if (This->resource.pool == WINED3DPOOL_SCRATCH)
     {
-        FIXME("(%p) Operation not supported for scratch or SYSTEMMEM textures\n",This);
+        FIXME("(%p) Operation not supported for scratch textures\n",This);
         return WINED3DERR_INVALIDCALL;
     }
 
