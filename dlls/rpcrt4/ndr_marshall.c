@@ -2592,11 +2592,16 @@ unsigned long WINAPI NdrUserMarshalMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                               PFORMAT_STRING pFormat)
 {
   unsigned index = *(const WORD*)&pFormat[2];
-/*  DWORD memsize = *(const WORD*)&pFormat[4]; */
-  FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
+  DWORD memsize = *(const WORD*)&pFormat[4];
+  DWORD bufsize = *(const WORD*)&pFormat[6];
+
+  TRACE("(%p,%p)\n", pStubMsg, pFormat);
   TRACE("index=%d\n", index);
 
-  return 0;
+  pStubMsg->MemorySize += memsize;
+  pStubMsg->Buffer += bufsize;
+
+  return pStubMsg->MemorySize;
 }
 
 /***********************************************************************
