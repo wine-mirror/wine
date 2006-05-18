@@ -992,16 +992,6 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 {
     switch(msg)
     {
-    case WM_GETTEXT:
-    case WM_ASKCBFORMATNAME:
-        {
-            LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, *pwparam + sizeof(LPARAM) );
-            if (!ptr) return -1;
-            *ptr++ = *plparam;  /* Store previous lParam */
-            *plparam = (LPARAM)ptr;
-        }
-        return 1;
-
     case WM_SETTEXT:
     case WM_WININICHANGE:
     case WM_DEVMODECHANGE:
@@ -1152,22 +1142,6 @@ static LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPA
 {
     switch(msg)
     {
-    case WM_GETTEXT:
-    case WM_ASKCBFORMATNAME:
-        {
-            LPARAM *ptr = (LPARAM *)lParam - 1;
-            if (!wParam) result = 0;
-            else if (!(result = MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1,
-                                                     (LPWSTR)*ptr, wParam )))
-            {
-                ((LPWSTR)*ptr)[wParam-1] = 0;
-                result = wParam - 1;
-            }
-            else result--;  /* do not count terminating null */
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
-        break;
-
     case WM_SETTEXT:
     case WM_WININICHANGE:
     case WM_DEVMODECHANGE:
@@ -3057,6 +3031,29 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
 
             ret = WINPROC_CallWndProc(func, hwnd, msg, wParam, (LPARAM)&csA);
             free_buffer( buffer, cls );
+        }
+        break;
+
+    case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
+        {
+            char *ptr, buffer[512];
+            DWORD len = wParam * 2;
+
+            if (!(ptr = get_buffer( buffer, sizeof(buffer), len ))) break;
+            ret = WINPROC_CallWndProc( func, hwnd, msg, len, (LPARAM)ptr );
+            if (ret && len)
+            {
+                RtlMultiByteToUnicodeN( (LPWSTR)lParam, wParam*sizeof(WCHAR), &len, ptr, strlen(ptr)+1 );
+                ret = len/sizeof(WCHAR) - 1;  /* do not count terminating null */
+                ((LPWSTR)lParam)[ret] = 0;
+                if (dialog)
+                {
+                    SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, ret );
+                    ret = TRUE;
+                }
+            }
+            free_buffer( buffer, ptr );
         }
         break;
 
