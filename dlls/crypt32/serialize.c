@@ -26,77 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-/* Some typedefs that make it easier to abstract which type of context we're
- * working with.
- */
-typedef const void *(WINAPI *CreateContextFunc)(DWORD dwCertEncodingType,
- const BYTE *pbCertEncoded, DWORD cbCertEncoded);
-typedef BOOL (WINAPI *AddContextToStoreFunc)(HCERTSTORE hCertStore,
- const void *context, DWORD dwAddDisposition, const void **ppStoreContext);
-typedef BOOL (WINAPI *AddEncodedContextToStoreFunc)(HCERTSTORE hCertStore,
- DWORD dwCertEncodingType, const BYTE *pbEncoded, DWORD cbEncoded,
- DWORD dwAddDisposition, const void **ppContext);
-typedef const void *(WINAPI *EnumContextsInStoreFunc)(HCERTSTORE hCertStore,
- const void *pPrevContext);
-typedef BOOL (WINAPI *GetContextPropertyFunc)(const void *context,
- DWORD dwPropID, void *pvData, DWORD *pcbData);
-typedef BOOL (WINAPI *SetContextPropertyFunc)(const void *context,
- DWORD dwPropID, DWORD dwFlags, const void *pvData);
-typedef BOOL (WINAPI *SerializeElementFunc)(const void *context, DWORD dwFlags,
- BYTE *pbElement, DWORD *pcbElement);
-typedef BOOL (WINAPI *FreeContextFunc)(const void *context);
-typedef BOOL (WINAPI *DeleteContextFunc)(const void *context);
-
-/* An abstract context (certificate, CRL, or CTL) interface */
-typedef struct _WINE_CONTEXT_INTERFACE
-{
-    CreateContextFunc            create;
-    AddContextToStoreFunc        addContextToStore;
-    AddEncodedContextToStoreFunc addEncodedToStore;
-    EnumContextsInStoreFunc      enumContextsInStore;
-    GetContextPropertyFunc       getProp;
-    SetContextPropertyFunc       setProp;
-    SerializeElementFunc         serialize;
-    FreeContextFunc              free;
-    DeleteContextFunc            deleteFromStore;
-} WINE_CONTEXT_INTERFACE, *PWINE_CONTEXT_INTERFACE;
-
-static const WINE_CONTEXT_INTERFACE gCertInterface = {
-    (CreateContextFunc)CertCreateCertificateContext,
-    (AddContextToStoreFunc)CertAddCertificateContextToStore,
-    (AddEncodedContextToStoreFunc)CertAddEncodedCertificateToStore,
-    (EnumContextsInStoreFunc)CertEnumCertificatesInStore,
-    (GetContextPropertyFunc)CertGetCertificateContextProperty,
-    (SetContextPropertyFunc)CertSetCertificateContextProperty,
-    (SerializeElementFunc)CertSerializeCertificateStoreElement,
-    (FreeContextFunc)CertFreeCertificateContext,
-    (DeleteContextFunc)CertDeleteCertificateFromStore,
-};
-
-static const WINE_CONTEXT_INTERFACE gCRLInterface = {
-    (CreateContextFunc)CertCreateCRLContext,
-    (AddContextToStoreFunc)CertAddCRLContextToStore,
-    (AddEncodedContextToStoreFunc)CertAddEncodedCRLToStore,
-    (EnumContextsInStoreFunc)CertEnumCRLsInStore,
-    (GetContextPropertyFunc)CertGetCRLContextProperty,
-    (SetContextPropertyFunc)CertSetCRLContextProperty,
-    (SerializeElementFunc)CertSerializeCRLStoreElement,
-    (FreeContextFunc)CertFreeCRLContext,
-    (DeleteContextFunc)CertDeleteCRLFromStore,
-};
-
-static const WINE_CONTEXT_INTERFACE gCTLInterface = {
-    (CreateContextFunc)CertCreateCTLContext,
-    (AddContextToStoreFunc)CertAddCTLContextToStore,
-    (AddEncodedContextToStoreFunc)CertAddEncodedCTLToStore,
-    (EnumContextsInStoreFunc)CertEnumCTLsInStore,
-    (GetContextPropertyFunc)CertGetCTLContextProperty,
-    (SetContextPropertyFunc)CertSetCTLContextProperty,
-    (SerializeElementFunc)CertSerializeCTLStoreElement,
-    (FreeContextFunc)CertFreeCTLContext,
-    (DeleteContextFunc)CertDeleteCTLFromStore,
-};
-
 /* An extended certificate property in serialized form is prefixed by this
  * header.
  */
@@ -339,13 +268,13 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement, DWORD cbElement,
         switch (type)
         {
         case CERT_STORE_CERTIFICATE_CONTEXT:
-            contextInterface = &gCertInterface;
+            contextInterface = pCertInterface;
             break;
         case CERT_STORE_CRL_CONTEXT:
-            contextInterface = &gCRLInterface;
+            contextInterface = pCRLInterface;
             break;
         case CERT_STORE_CTL_CONTEXT:
-            contextInterface = &gCTLInterface;
+            contextInterface = pCTLInterface;
             break;
         default:
             SetLastError(E_INVALIDARG);
@@ -482,13 +411,13 @@ BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
         switch (type)
         {
         case CERT_STORE_CERTIFICATE_CONTEXT:
-            contextInterface = &gCertInterface;
+            contextInterface = pCertInterface;
             break;
         case CERT_STORE_CRL_CONTEXT:
-            contextInterface = &gCRLInterface;
+            contextInterface = pCRLInterface;
             break;
         case CERT_STORE_CTL_CONTEXT:
-            contextInterface = &gCTLInterface;
+            contextInterface = pCTLInterface;
             break;
         default:
             SetLastError(E_INVALIDARG);
