@@ -2118,17 +2118,22 @@ unsigned long WINAPI NdrConformantArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                   PFORMAT_STRING pFormat)
 {
   DWORD size = 0, esize = *(const WORD*)(pFormat+2);
-  unsigned char *buffer;
+  unsigned char alignment = pFormat[1] + 1;
 
   TRACE("(%p,%p)\n", pStubMsg, pFormat);
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
-  buffer = pStubMsg->Buffer;
   pFormat = ReadConformance(pStubMsg, pFormat+4);
-  pStubMsg->Buffer = buffer;
   size = pStubMsg->MaxCount;
+  pStubMsg->MemorySize += size*esize;
 
-  return size*esize;
+  ALIGN_POINTER(pStubMsg->Buffer, alignment);
+  pStubMsg->BufferMark = pStubMsg->Buffer;
+  pStubMsg->Buffer += size*esize;
+
+  EmbeddedPointerMemorySize(pStubMsg, pFormat);
+
+  return pStubMsg->MemorySize;
 }
 
 /***********************************************************************
