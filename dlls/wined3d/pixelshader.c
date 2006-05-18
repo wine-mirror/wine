@@ -764,7 +764,7 @@ inline static void get_register_name(const DWORD param, char* regstr, char const
         if (constants[reg])
             sprintf(regstr, "C%lu", reg);
         else
-            sprintf(regstr, "program.env[%lu]", reg);
+            sprintf(regstr, "C[%lu]", reg);
     break;
     case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
         sprintf(regstr,"T%lu", reg);

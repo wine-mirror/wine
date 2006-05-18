@@ -1073,10 +1073,6 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
             This->baseShader.limits.constant_float = 
                 min(95, This->baseShader.limits.constant_float);
 
-        shader_addline(&buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
-            This->baseShader.limits.constant_float, 
-            This->baseShader.limits.constant_float - 1);
-
         /** Call the base shader generation routine to generate most 
             of the vertex shader string for us */
         generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);

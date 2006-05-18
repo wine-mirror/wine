@@ -523,6 +523,11 @@ void generate_arb_declarations(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer)
     if (This->baseShader.textures_used & (1 << i))
         shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
     }
+
+    /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
+    shader_addline(buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
+                   This->baseShader.limits.constant_float,
+                   This->baseShader.limits.constant_float - 1);
 }
 
 /** Generate the variable & register declarations for the GLSL
