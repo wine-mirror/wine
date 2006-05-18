@@ -77,6 +77,7 @@ struct received_message_info
 struct send_message_info
 {
     enum message_type type;
+    DWORD             dest_tid;
     HWND              hwnd;
     UINT              msg;
     WPARAM            wparam;
@@ -1296,7 +1297,7 @@ static HGLOBAL dde_get_pair(HGLOBAL shm)
  *
  * Post a DDE message
  */
-static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const struct send_message_info *info )
+static BOOL post_dde_message( struct packed_message *data, const struct send_message_info *info )
 {
     void*       ptr = NULL;
     int         size = 0;
@@ -1383,7 +1384,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
     }
     SERVER_START_REQ( send_message )
     {
-        req->id      = dest_tid;
+        req->id      = info->dest_tid;
         req->type    = info->type;
         req->flags   = 0;
         req->win     = info->hwnd;
@@ -2166,8 +2167,7 @@ static void wait_message_reply( UINT flags )
  * Put a sent message into the destination queue.
  * For inter-process message, reply_size is set to expected size of reply data.
  */
-static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info *info,
-                                  size_t *reply_size )
+static BOOL put_message_in_queue( const struct send_message_info *info, size_t *reply_size )
 {
     struct packed_message data;
     unsigned int res;
@@ -2194,12 +2194,12 @@ static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info
     }
     else if (info->type == MSG_POSTED && info->msg >= WM_DDE_FIRST && info->msg <= WM_DDE_LAST)
     {
-        return post_dde_message( dest_tid, &data, info );
+        return post_dde_message( &data, info );
     }
 
     SERVER_START_REQ( send_message )
     {
-        req->id      = dest_tid;
+        req->id      = info->dest_tid;
         req->type    = info->type;
         req->flags   = 0;
         req->win     = info->hwnd;
@@ -2276,8 +2276,7 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
 /***********************************************************************
  *		send_inter_thread_message
  */
-static LRESULT send_inter_thread_message( DWORD dest_tid, const struct send_message_info *info,
-                                          LRESULT *res_ptr )
+static LRESULT send_inter_thread_message( const struct send_message_info *info, LRESULT *res_ptr )
 {
     size_t reply_size = 0;
 
@@ -2286,7 +2285,7 @@ static LRESULT send_inter_thread_message( DWORD dest_tid, const struct send_mess
 
     USER_CheckNotLock();
 
-    if (!put_message_in_queue( dest_tid, info, &reply_size )) return 0;
+    if (!put_message_in_queue( info, &reply_size )) return 0;
 
     /* there's no reply to wait for on notify/callback messages */
     if (info->type == MSG_NOTIFY || info->type == MSG_CALLBACK) return 1;
@@ -2311,13 +2310,14 @@ LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
 
     assert( msg & 0x80000000 );  /* must be an internal Wine message */
 
-    info.type    = MSG_UNICODE;
-    info.hwnd    = 0;
-    info.msg     = msg;
-    info.wparam  = wparam;
-    info.lparam  = lparam;
-    info.flags   = flags;
-    info.timeout = timeout;
+    info.type     = MSG_UNICODE;
+    info.dest_tid = dest_tid;
+    info.hwnd     = 0;
+    info.msg      = msg;
+    info.wparam   = wparam;
+    info.lparam   = lparam;
+    info.flags    = flags;
+    info.timeout  = timeout;
 
     if (USER_IsExitingThread( dest_tid )) return 0;
 
@@ -2329,7 +2329,7 @@ LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
     else
     {
         if (dest_pid != GetCurrentProcessId()) info.type = MSG_OTHER_PROCESS;
-        ret = send_inter_thread_message( dest_tid, &info, &result );
+        ret = send_inter_thread_message( &info, &result );
     }
     if (ret && res_ptr) *res_ptr = result;
     return ret;
@@ -2343,7 +2343,7 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
                                     UINT flags, UINT timeout, PDWORD_PTR res_ptr )
 {
     struct send_message_info info;
-    DWORD dest_tid, dest_pid;
+    DWORD dest_pid;
     LRESULT ret, result;
 
     info.type    = MSG_UNICODE;
@@ -2361,13 +2361,13 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         return 1;
     }
 
-    if (!(dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
+    if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
 
-    if (USER_IsExitingThread( dest_tid )) return 0;
+    if (USER_IsExitingThread( info.dest_tid )) return 0;
 
     SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
 
-    if (dest_tid == GetCurrentThreadId())
+    if (info.dest_tid == GetCurrentThreadId())
     {
         result = call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
         ret = 1;
@@ -2375,7 +2375,7 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     else
     {
         if (dest_pid != GetCurrentProcessId()) info.type = MSG_OTHER_PROCESS;
-        ret = send_inter_thread_message( dest_tid, &info, &result );
+        ret = send_inter_thread_message( &info, &result );
     }
 
     SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, result, wparam, lparam );
@@ -2391,7 +2391,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
                                     UINT flags, UINT timeout, PDWORD_PTR res_ptr )
 {
     struct send_message_info info;
-    DWORD dest_tid, dest_pid;
+    DWORD dest_pid;
     LRESULT ret, result;
 
     info.type    = MSG_ASCII;
@@ -2409,20 +2409,20 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         return 1;
     }
 
-    if (!(dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
+    if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, &dest_pid ))) return 0;
 
-    if (USER_IsExitingThread( dest_tid )) return 0;
+    if (USER_IsExitingThread( info.dest_tid )) return 0;
 
     SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wparam, lparam );
 
-    if (dest_tid == GetCurrentThreadId())
+    if (info.dest_tid == GetCurrentThreadId())
     {
         result = call_window_proc( hwnd, msg, wparam, lparam, FALSE, TRUE );
         ret = 1;
     }
     else if (dest_pid == GetCurrentProcessId())
     {
-        ret = send_inter_thread_message( dest_tid, &info, &result );
+        ret = send_inter_thread_message( &info, &result );
     }
     else
     {
@@ -2432,11 +2432,11 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         {
             if (WINPROC_MapMsg32ATo32W( info.hwnd, info.msg, &info.wparam, &info.lparam ) == -1)
                 return 0;
-            ret = send_inter_thread_message( dest_tid, &info, &result );
+            ret = send_inter_thread_message( &info, &result );
             result = WINPROC_UnmapMsg32ATo32W( info.hwnd, info.msg, info.wparam,
                                                info.lparam, result, NULL );
         }
-        else ret = send_inter_thread_message( dest_tid, &info, &result );
+        else ret = send_inter_thread_message( &info, &result );
     }
     SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, result, wparam, lparam );
     if (ret && res_ptr) *res_ptr = result;
@@ -2481,7 +2481,6 @@ BOOL WINAPI SendNotifyMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     struct send_message_info info;
-    DWORD dest_tid;
     LRESULT result;
 
     if (is_pointer_message(msg))
@@ -2503,16 +2502,16 @@ BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return TRUE;
     }
 
-    if (!(dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
+    if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
 
-    if (USER_IsExitingThread( dest_tid )) return TRUE;
+    if (USER_IsExitingThread( info.dest_tid )) return TRUE;
 
-    if (dest_tid == GetCurrentThreadId())
+    if (info.dest_tid == GetCurrentThreadId())
     {
         call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
         return TRUE;
     }
-    return send_inter_thread_message( dest_tid, &info, &result );
+    return send_inter_thread_message( &info, &result );
 }
 
 
@@ -2535,7 +2534,6 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 {
     struct send_message_info info;
     LRESULT result;
-    DWORD dest_tid;
 
     if (is_pointer_message(msg))
     {
@@ -2558,18 +2556,18 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         return TRUE;
     }
 
-    if (!(dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
+    if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
 
-    if (USER_IsExitingThread( dest_tid )) return TRUE;
+    if (USER_IsExitingThread( info.dest_tid )) return TRUE;
 
-    if (dest_tid == GetCurrentThreadId())
+    if (info.dest_tid == GetCurrentThreadId())
     {
         result = call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
         call_sendmsg_callback( callback, hwnd, msg, data, result );
         return TRUE;
     }
     FIXME( "callback will not be called\n" );
-    return send_inter_thread_message( dest_tid, &info, &result );
+    return send_inter_thread_message( &info, &result );
 }
 
 
@@ -2622,7 +2620,6 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     struct send_message_info info;
-    DWORD dest_tid;
 
     if (is_pointer_message( msg ))
     {
@@ -2648,11 +2645,11 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 
     if (!hwnd) return PostThreadMessageW( GetCurrentThreadId(), msg, wparam, lparam );
 
-    if (!(dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
+    if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
 
-    if (USER_IsExitingThread( dest_tid )) return TRUE;
+    if (USER_IsExitingThread( info.dest_tid )) return TRUE;
 
-    return put_message_in_queue( dest_tid, &info, NULL );
+    return put_message_in_queue( &info, NULL );
 }
 
 
@@ -2679,13 +2676,14 @@ BOOL WINAPI PostThreadMessageW( DWORD thread, UINT msg, WPARAM wparam, LPARAM lp
     }
     if (USER_IsExitingThread( thread )) return TRUE;
 
-    info.type   = MSG_POSTED;
-    info.hwnd   = 0;
-    info.msg    = msg;
-    info.wparam = wparam;
-    info.lparam = lparam;
-    info.flags  = 0;
-    return put_message_in_queue( thread, &info, NULL );
+    info.type     = MSG_POSTED;
+    info.dest_tid = thread;
+    info.hwnd     = 0;
+    info.msg      = msg;
+    info.wparam   = wparam;
+    info.lparam   = lparam;
+    info.flags    = 0;
+    return put_message_in_queue( &info, NULL );
 }
 
 
