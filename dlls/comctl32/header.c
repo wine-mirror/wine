@@ -247,7 +247,6 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
     if (r.right - r.left == 0)
 	return phdi->rect.right;
 
-    HEADER_PrepareCallbackItems(hwnd, iItem, HDI_TEXT|HDI_IMAGE);
     if (theme != NULL) {
         int state = (phdi->bDown) ? HIS_PRESSED :
             (bHotTrack ? HIS_HOT : HIS_NORMAL);
@@ -319,6 +318,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	     cw, tw, iw, bw;
 	BITMAP bmp;
 
+        HEADER_PrepareCallbackItems(hwnd, iItem, HDI_TEXT|HDI_IMAGE);
 	cw = tw = iw = bw = 0;
 	rw = r.right - r.left;
 	rh = r.bottom - r.top;
@@ -434,9 +434,9 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	    if (oldBkMode != TRANSPARENT)
 	        SetBkMode(hdc, oldBkMode);
         }
+        HEADER_FreeCallbackItems(phdi);
     }/*Ownerdrawn*/
 
-    HEADER_FreeCallbackItems(phdi);
     return phdi->rect.right;
 }
 
