@@ -2984,6 +2984,17 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd, UINT msg, WPAR
 }
 
 
+static inline void *get_buffer( void *static_buffer, size_t size, size_t need )
+{
+    if (size >= need) return static_buffer;
+    return HeapAlloc( GetProcessHeap(), 0, need );
+}
+
+static inline void free_buffer( void *static_buffer, void *buffer )
+{
+    if (buffer != static_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+}
+
 /**********************************************************************
  *	     WINPROC_CallProc32WTo32A
  *
@@ -3005,8 +3016,7 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
         {   /* csW->lpszName and csW->lpszClass are NOT supposed to be atoms
              * at this point.
              */
-            char buffer[1024];
-            char *cls = buffer, *name;
+            char buffer[1024], *cls, *name;
             CREATESTRUCTW *csW = (CREATESTRUCTW *)lParam;
             CREATESTRUCTA csA = *(CREATESTRUCTA *)csW;
             MDICREATESTRUCTA mdi_cs;
@@ -3023,11 +3033,7 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
             else
                 name_lenW = name_lenA = 0;
 
-            if (class_lenA + name_lenA + 2 > sizeof(buffer))
-            {
-                cls = HeapAlloc(GetProcessHeap(), 0, class_lenA + name_lenA + 2);
-                if (!cls) break;
-            }
+            if (!(cls = get_buffer( buffer, sizeof(buffer), class_lenA + name_lenA + 2 ))) break;
 
             RtlUnicodeToMultiByteN(cls, class_lenA, NULL, csW->lpszClass, class_lenW);
             cls[class_lenA] = 0;
@@ -3049,9 +3055,8 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
                 csA.lpCreateParams = &mdi_cs;
             }
 
-            ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, (LPARAM)&csA );
-
-            if (cls != buffer) HeapFree(GetProcessHeap(), 0, cls);
+            ret = WINPROC_CallWndProc(func, hwnd, msg, wParam, (LPARAM)&csA);
+            free_buffer( buffer, cls );
         }
         break;
 
