@@ -242,6 +242,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   /* if we try to bind a new interface and the connection is already opened,
    * close the current connection and create a new with the new binding. */ 
   if (!Binding->server && Binding->FromConn &&
+      (Binding->AuthInfo == Binding->FromConn->AuthInfo) &&
       memcmp(&Binding->FromConn->ActiveInterface, InterfaceId,
              sizeof(RPC_SYNTAX_IDENTIFIER))) {
 
