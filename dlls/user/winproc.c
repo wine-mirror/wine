@@ -1205,17 +1205,12 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
 
             if (!msg32) return -1;
             msg32->hwnd = WIN_Handle32( msg16->hwnd );
+            msg32->message = msg16->message;
+            msg32->wParam = msg16->wParam;
             msg32->lParam = msg16->lParam;
             msg32->time = msg16->time;
             msg32->pt.x = msg16->pt.x;
             msg32->pt.y = msg16->pt.y;
-            /* this is right, right? */
-            if (WINPROC_MapMsg16To32A( msg32->hwnd, msg16->message,msg16->wParam,
-                                     &msg32->message,&msg32->wParam,
-                                     &msg32->lParam)<0) {
-                HeapFree( GetProcessHeap(), 0, msg32 );
-                return -1;
-            }
             *plparam = (LPARAM)msg32;
             return 1;
         }
@@ -1410,9 +1405,6 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
         if (lParam)
         {
             LPMSG msg32 = (LPMSG)lParam;
-
-            WINPROC_UnmapMsg16To32A( hwnd, msg32->message, msg32->wParam, msg32->lParam,
-                                     result);
             HeapFree( GetProcessHeap(), 0, msg32 );
         }
         break;
@@ -1505,16 +1497,22 @@ INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
 
             if (!msg32) return -1;
             msg32->hwnd = WIN_Handle32( msg16->hwnd );
+            msg32->message = msg16->message;
+            msg32->wParam = msg16->wParam;
             msg32->lParam = msg16->lParam;
             msg32->time = msg16->time;
             msg32->pt.x = msg16->pt.x;
             msg32->pt.y = msg16->pt.y;
-            /* this is right, right? */
-            if (WINPROC_MapMsg16To32W(hwnd, msg16->message,msg16->wParam,
-                                     &msg32->message,&msg32->wParam,
-                                     &msg32->lParam)<0) {
-                HeapFree( GetProcessHeap(), 0, msg32 );
-                return -1;
+            switch(msg32->message)
+            {
+            case WM_CHAR:
+            case WM_DEADCHAR:
+            case WM_SYSCHAR:
+            case WM_SYSDEADCHAR:
+                ch = msg16->wParam;
+                MultiByteToWideChar( CP_ACP, 0, &ch, 1, &wch, 1);
+                msg32->wParam = wch;
+                break;
             }
             *plparam = (LPARAM)msg32;
             return 1;
@@ -1601,9 +1599,6 @@ LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
         if (lParam)
         {
             LPMSG msg32 = (LPMSG)lParam;
-
-            WINPROC_UnmapMsg16To32W( hwnd, msg32->message, msg32->wParam, msg32->lParam,
-                                     result, dispatch );
             HeapFree( GetProcessHeap(), 0, msg32 );
         }
         break;
@@ -2080,17 +2075,12 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
 
             if (!msg16) return -1;
             msg16->hwnd = HWND_16( msg32->hwnd );
+            msg16->message = msg32->message;
+            msg16->wParam = msg32->wParam;
             msg16->lParam = msg32->lParam;
             msg16->time = msg32->time;
             msg16->pt.x = msg32->pt.x;
             msg16->pt.y = msg32->pt.y;
-            /* this is right, right? */
-            if (WINPROC_MapMsg32ATo16(msg32->hwnd,msg32->message,msg32->wParam,
-                         &msg16->message,&msg16->wParam, &msg16->lParam)<0)
-            {
-                HeapFree( GetProcessHeap(), 0, msg16 );
-                return -1;
-            }
             *plparam = MapLS( msg16 );
             return 1;
         }
@@ -2381,13 +2371,7 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         if (p16->lParam)
         {
             LPMSG16 msg16 = MapSL(p16->lParam);
-            MSGPARAM16 msgp16;
             UnMapLS( p16->lParam );
-            msgp16.wParam=msg16->wParam;
-            msgp16.lParam=msg16->lParam;
-            WINPROC_UnmapMsg32ATo16(((LPMSG)lParam)->hwnd, ((LPMSG)lParam)->message,
-                    ((LPMSG)lParam)->wParam, ((LPMSG)lParam)->lParam,
-                    &msgp16 );
             HeapFree( GetProcessHeap(), 0, msg16 );
         }
         break;
