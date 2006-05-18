@@ -992,24 +992,6 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 {
     switch(msg)
     {
-    case WM_SETTEXT:
-    case WM_WININICHANGE:
-    case WM_DEVMODECHANGE:
-    case CB_DIR:
-    case LB_DIR:
-    case LB_ADDFILE:
-    case EM_REPLACESEL:
-        if (*plparam)
-        {
-            LPCWSTR str = (LPCWSTR)*plparam;
-            int len = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, 0, 0);
-            *plparam = (LPARAM)HeapAlloc(GetProcessHeap(), 0, len);
-            if (!*plparam) return -1;
-            WideCharToMultiByte(CP_ACP, 0, str, -1, (LPSTR)*plparam, len, 0, 0);
-            return 1;
-        }
-        return 0;
-
     case WM_MDICREATE:
         {
             MDICREATESTRUCTA *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) );
@@ -1142,16 +1124,6 @@ static LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPA
 {
     switch(msg)
     {
-    case WM_SETTEXT:
-    case WM_WININICHANGE:
-    case WM_DEVMODECHANGE:
-    case CB_DIR:
-    case LB_DIR:
-    case LB_ADDFILE:
-    case EM_REPLACESEL:
-        HeapFree( GetProcessHeap(), 0, (void *)lParam );
-        break;
-
     case WM_MDICREATE:
         {
             MDICREATESTRUCTA *cs = (MDICREATESTRUCTA *)lParam;
@@ -3054,6 +3026,30 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
                 }
             }
             free_buffer( buffer, ptr );
+        }
+        break;
+
+    case WM_SETTEXT:
+    case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
+    case CB_DIR:
+    case LB_DIR:
+    case LB_ADDFILE:
+    case EM_REPLACESEL:
+        if (!lParam) ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+        else
+        {
+            char *ptr, buffer[512];
+            LPCWSTR strW = (LPCWSTR)lParam;
+            DWORD lenA, lenW = (strlenW(strW) + 1) * sizeof(WCHAR);
+
+            RtlUnicodeToMultiByteSize( &lenA, strW, lenW );
+            if ((ptr = get_buffer( buffer, sizeof(buffer), lenA )))
+            {
+                RtlUnicodeToMultiByteN( ptr, lenA, NULL, strW, lenW );
+                ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, (LPARAM)ptr );
+                free_buffer( buffer, ptr );
+            }
         }
         break;
 
