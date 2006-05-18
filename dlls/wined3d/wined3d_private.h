@@ -137,6 +137,7 @@ typedef struct wined3d_settings_s {
   int vs_mode;
   int ps_mode;
   int vbo_mode;
+  BOOL glslRequested;
 /* nonpower 2 function */
   int nonpower2_mode;
 } wined3d_settings_t;

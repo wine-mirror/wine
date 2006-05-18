@@ -36,7 +36,8 @@ wined3d_settings_t wined3d_settings =
 {
   VS_HW,   /* Hardware by default */
   PS_NONE, /* Disabled by default */
-  VBO_HW   /* Hardware by default */
+  VBO_HW,   /* Hardware by default */
+  FALSE    /* Use of GLSL disabled by default */
 };
 
 WineD3DGlobalStatistics *wineD3DGlobalStatistics = NULL;
@@ -168,6 +169,18 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                     wined3d_settings.vbo_mode = VBO_HW;
                 }
             }
+            if ( !get_config_key( hkey, appkey, "UseGLSL", buffer, size) )
+            {
+                if (!strcmp(buffer,"enabled"))
+                {
+                    TRACE("Use of GL Shading Language enabled for systems that support it\n");
+                    wined3d_settings.glslRequested = TRUE;
+                }
+                else
+                {
+                    TRACE("Use of GL Shading Language disabled\n");
+                }
+            }
             if ( !get_config_key( hkey, appkey, "Nonpower2Mode", buffer, size) )
             {
                 if (!strcmp(buffer,"none"))
@@ -190,6 +203,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
            TRACE("Disable pixel shaders\n");
        if (wined3d_settings.vbo_mode == VBO_NONE)
            TRACE("Disable Vertex Buffer Hardware support\n");
+       if (wined3d_settings.glslRequested)
+           TRACE("If supported by your system, GL Shading Language will be used\n");
        if (wined3d_settings.nonpower2_mode == NP2_REPACK)
            TRACE("Repacking non-power2 textures\n");
 
