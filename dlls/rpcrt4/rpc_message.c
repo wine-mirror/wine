@@ -295,12 +295,12 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
     memcpy(pkt + hdr_size, buffer_pos, Header->common.frag_len - hdr_size - alen);
 
     /* add the authorization info */
-    if (Connection->Used && AuthLength)
+    if (Connection->AuthInfo && AuthLength)
     {
       auth_hdr = &pkt[Header->common.frag_len - alen];
 
-      auth_hdr[0] = Connection->Used->AuthnSvc;
-      auth_hdr[1] = Connection->Used->AuthnLevel;
+      auth_hdr[0] = Connection->AuthInfo->AuthnSvc;
+      auth_hdr[1] = Connection->AuthInfo->AuthnLevel;
       auth_hdr[2] = 0x00; /* FIXME: add padding */
       auth_hdr[3] = 0x00;
 
@@ -333,7 +333,6 @@ static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
   SECURITY_STATUS r;
   SecBufferDesc out_desc;
   unsigned char *buffer;
-  RpcBinding *bind = conn->Used;
 
   buffer = HeapAlloc(GetProcessHeap(), 0, 0x100);
 
@@ -349,10 +348,10 @@ static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
   conn->ctx.dwLower = 0;
   conn->ctx.dwUpper = 0;
 
-  r = InitializeSecurityContextA(&bind->cred, NULL, NULL,
+  r = InitializeSecurityContextA(&conn->AuthInfo->cred, NULL, NULL,
         ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE | ISC_REQ_MUTUAL_AUTH |
         ISC_REQ_DELEGATE, 0, SECURITY_NETWORK_DREP,
-        NULL, 0, &conn->ctx, &out_desc, &conn->attr, &bind->exp);
+        NULL, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
 
   TRACE("r = %08lx cbBuffer = %ld attr = %08lx\n", r, out->cbBuffer, conn->attr);
 }
@@ -388,7 +387,7 @@ static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
   inp_desc.pBuffers = &inp;
   inp_desc.ulVersion = 0;
 
-  r = InitializeSecurityContextA(&conn->Used->cred, &conn->ctx, NULL,
+  r = InitializeSecurityContextA(&conn->AuthInfo->cred, &conn->ctx, NULL,
         ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE | ISC_REQ_MUTUAL_AUTH |
         ISC_REQ_DELEGATE, 0, SECURITY_NETWORK_DREP,
         &inp_desc, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
@@ -431,9 +430,9 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
     return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, buffer, sizeof buffer);
   }
 
-  if (Connection->Used == NULL ||
-      Connection->Used->AuthnLevel == RPC_C_AUTHN_LEVEL_DEFAULT ||
-      Connection->Used->AuthnLevel == RPC_C_AUTHN_LEVEL_NONE)
+  if (!Connection->AuthInfo ||
+      Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_DEFAULT ||
+      Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_NONE)
   {
     return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
   }

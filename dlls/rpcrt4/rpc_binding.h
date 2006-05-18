@@ -24,6 +24,17 @@
 #include "wine/rpcss_shared.h"
 #include "security.h"
 
+
+typedef struct _RpcAuthInfo
+{
+  LONG refs;
+
+  unsigned long AuthnLevel;
+  unsigned long AuthnSvc;
+  CredHandle cred;
+  TimeStamp exp;
+} RpcAuthInfo;
+
 struct protseq_ops;
 
 typedef struct _RpcConnection
@@ -43,6 +54,7 @@ typedef struct _RpcConnection
   CtxtHandle ctx;
   TimeStamp exp;
   ULONG attr;
+  RpcAuthInfo *AuthInfo;
 } RpcConnection;
 
 struct protseq_ops {
@@ -71,10 +83,7 @@ typedef struct _RpcBinding
   RpcConnection* FromConn;
 
   /* authentication */
-  unsigned long AuthnLevel;
-  unsigned long AuthnSvc;
-  CredHandle cred;
-  TimeStamp exp;
+  RpcAuthInfo *AuthInfo;
 } RpcBinding;
 
 LPSTR RPCRT4_strndupA(LPCSTR src, INT len);
@@ -86,7 +95,10 @@ void RPCRT4_strfree(LPSTR src);
 #define RPCRT4_strdupA(x) RPCRT4_strndupA((x),-1)
 #define RPCRT4_strdupW(x) RPCRT4_strndupW((x),-1)
 
-RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCSTR NetworkOptions, RpcBinding* Binding);
+ULONG RpcAuthInfo_AddRef(RpcAuthInfo *AuthInfo);
+ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo);
+
+RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcBinding* Binding);
 RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection);
 RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection);
 RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection);

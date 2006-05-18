@@ -435,7 +435,9 @@ RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection)
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCSTR NetworkOptions, RpcBinding* Binding)
+RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
+    LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint,
+    LPCSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcBinding* Binding)
 {
   struct protseq_ops *ops;
   RpcConnection* NewConnection;
@@ -452,6 +454,8 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCS
   NewConnection->Used = Binding;
   NewConnection->MaxTransmissionSize = RPC_MAX_PACKET_SIZE;
   NewConnection->NextCallId = 1;
+  if (AuthInfo) RpcAuthInfo_AddRef(AuthInfo);
+  NewConnection->AuthInfo = AuthInfo;
 
   TRACE("connection: %p\n", NewConnection);
   *Connection = NewConnection;
@@ -466,7 +470,8 @@ RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* Old
   err = RPCRT4_CreateConnection(Connection, OldConnection->server,
                                 rpcrt4_conn_get_name(OldConnection),
                                 OldConnection->NetworkAddr,
-                                OldConnection->Endpoint, NULL, NULL);
+                                OldConnection->Endpoint, NULL,
+                                OldConnection->AuthInfo, NULL);
   if (err == RPC_S_OK)
     rpcrt4_conn_handoff(OldConnection, *Connection);
   return err;
@@ -479,6 +484,7 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
   RPCRT4_CloseConnection(Connection);
   RPCRT4_strfree(Connection->Endpoint);
   RPCRT4_strfree(Connection->NetworkAddr);
+  RpcAuthInfo_Release(Connection->AuthInfo);
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;
 }

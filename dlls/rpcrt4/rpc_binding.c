@@ -257,7 +257,9 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   }
   
   /* create a new connection */
-  RPCRT4_CreateConnection(&NewConnection, Binding->server, Binding->Protseq, Binding->NetworkAddr, Binding->Endpoint, NULL, Binding);
+  RPCRT4_CreateConnection(&NewConnection, Binding->server, Binding->Protseq,
+                          Binding->NetworkAddr, Binding->Endpoint, NULL,
+                          Binding->AuthInfo, Binding);
   *Connection = NewConnection;
   status = RPCRT4_OpenConnection(NewConnection);
   if (status != RPC_S_OK) {
@@ -922,6 +924,38 @@ RPC_STATUS WINAPI RpcRevertToSelfEx(RPC_BINDING_HANDLE BindingHandle)
     return RPC_S_OK;
 }
 
+static RPC_STATUS RpcAuthInfo_Create(unsigned long AuthnLevel, unsigned long AuthnSvc, CredHandle cred, TimeStamp exp, RpcAuthInfo **ret)
+{
+    RpcAuthInfo *AuthInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*AuthInfo));
+    if (!AuthInfo)
+        return ERROR_OUTOFMEMORY;
+
+    AuthInfo->AuthnLevel = AuthnLevel;
+    AuthInfo->AuthnSvc = AuthnSvc;
+    AuthInfo->cred = cred;
+    AuthInfo->exp = exp;
+    *ret = AuthInfo;
+    return RPC_S_OK;
+}
+
+ULONG RpcAuthInfo_AddRef(RpcAuthInfo *AuthInfo)
+{
+    return InterlockedIncrement(&AuthInfo->refs);
+}
+
+ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo)
+{
+    ULONG refs = InterlockedDecrement(&AuthInfo->refs);
+
+    if (!refs)
+    {
+        FreeCredentialsHandle(&AuthInfo->cred);
+        HeapFree(GetProcessHeap(), 0, AuthInfo);
+    }
+
+    return refs;
+}
+
 /***********************************************************************
  *             RpcBindingInqAuthInfoExA (RPCRT4.@)
  */
@@ -983,6 +1017,8 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrinc
 {
   RpcBinding* bind = (RpcBinding*)Binding;
   RPC_STATUS r;
+  CredHandle cred;
+  TimeStamp exp;
 
   TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_a((const char*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
@@ -1012,13 +1048,17 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, unsigned char *ServerPrinc
     FIXME("SecurityQos ignored\n");
 
   r = AcquireCredentialsHandleA(NULL, "NTLM", SECPKG_CRED_OUTBOUND, NULL,
-                                AuthIdentity, NULL, NULL, &bind->cred, &bind->exp);
+                                AuthIdentity, NULL, NULL, &cred, &exp);
   if (r == ERROR_SUCCESS)
   {
-    bind->AuthnSvc = AuthnSvc;
-    bind->AuthnLevel = AuthnLevel;
+    if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
+    bind->AuthInfo = NULL;
+    r = RpcAuthInfo_Create(AuthnLevel, AuthnSvc, cred, exp, &bind->AuthInfo);
+    if (r != RPC_S_OK)
+      FreeCredentialsHandle(&cred);
   }
-  TRACE("AcquireCredentialsHandleA returned %08lx\n", r);
+  else
+    ERR("AcquireCredentialsHandleA failed with error 0x%08lx\n", r);
   return r;
 }
 
