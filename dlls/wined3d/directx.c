@@ -1471,7 +1471,8 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
     *pCaps->CursorCaps              = 0;
 
 
-    *pCaps->DevCaps                 = WINED3DDEVCAPS_EXECUTESYSTEMMEMORY |
+    *pCaps->DevCaps                 = WINED3DDEVCAPS_FLOATTLVERTEX       |
+                                      WINED3DDEVCAPS_EXECUTESYSTEMMEMORY |
                                       WINED3DDEVCAPS_TLVERTEXSYSTEMMEMORY|
                                       WINED3DDEVCAPS_TLVERTEXVIDEOMEMORY |
                                       WINED3DDEVCAPS_DRAWPRIMTLVERTEX    |
@@ -1480,8 +1481,10 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
                                       WINED3DDEVCAPS_PUREDEVICE          |
                                       WINED3DDEVCAPS_HWRASTERIZATION     |
                                       WINED3DDEVCAPS_TEXTUREVIDEOMEMORY  |
-                                      WINED3DDEVCAPS_TEXTURESYSTEMMEMORY;
-
+                                      WINED3DDEVCAPS_TEXTURESYSTEMMEMORY |
+                                      WINED3DDEVCAPS_CANRENDERAFTERFLIP  |
+                                      WINED3DDEVCAPS_DRAWPRIMITIVES2     |
+                                      WINED3DDEVCAPS_DRAWPRIMITIVES2EX;
 
     *pCaps->PrimitiveMiscCaps       = D3DPMISCCAPS_CULLCCW               |
                                       D3DPMISCCAPS_CULLCW                |
@@ -1497,7 +1500,11 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
                                       WINED3DPRASTERCAPS_ZFOG      |
                                       WINED3DPRASTERCAPS_FOGVERTEX |
                                       WINED3DPRASTERCAPS_FOGTABLE  |
-                                      WINED3DPRASTERCAPS_FOGRANGE;
+                                      WINED3DPRASTERCAPS_FOGRANGE  |
+                                      WINED3DPRASTERCAPS_FOGRANGE  |
+                                      WINED3DPRASTERCAPS_STIPPLE   |
+                                      WINED3DPRASTERCAPS_SUBPIXEL  |
+                                      WINED3DPRASTERCAPS_ZTEST;
 
     if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
       *pCaps->RasterCaps |= WINED3DPRASTERCAPS_ANISOTROPY    |
@@ -1525,24 +1532,23 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
     *pCaps->AlphaCmpCaps  = 0xFFFFFFFF;   /*FIXME: Tidy up later */
 
     *pCaps->ShadeCaps     = WINED3DPSHADECAPS_SPECULARGOURAUDRGB |
-                            WINED3DPSHADECAPS_COLORGOURAUDRGB;
+                            WINED3DPSHADECAPS_COLORGOURAUDRGB    |
+                            WINED3DPSHADECAPS_ALPHAFLATBLEND     |
+                            WINED3DPSHADECAPS_ALPHAGOURAUDBLEND  |
+                            WINED3DPSHADECAPS_COLORFLATRGB       |
+                            WINED3DPSHADECAPS_FOGFLAT            |
+                            WINED3DPSHADECAPS_FOGGOURAUD         |
+                            WINED3DPSHADECAPS_SPECULARFLATRGB;
 
     *pCaps->TextureCaps =  WINED3DPTEXTURECAPS_ALPHA              |
                            WINED3DPTEXTURECAPS_ALPHAPALETTE       |
+                           WINED3DPTEXTURECAPS_BORDER             |
                            WINED3DPTEXTURECAPS_VOLUMEMAP          |
                            WINED3DPTEXTURECAPS_MIPMAP             |
                            WINED3DPTEXTURECAPS_PROJECTED          |
                            WINED3DPTEXTURECAPS_PERSPECTIVE        |
-                           WINED3DPTEXTURECAPS_VOLUMEMAP_POW2 ;
-                          /* TODO: add support for NON-POW2 if avaialble
-
-                          */
-    if (This->dxVersion >= 8) {
-        *pCaps->TextureCaps |= WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL;
-
-    } else {  /* NONPOW2 isn't accessible by d3d8 yet */
-        *pCaps->TextureCaps |= WINED3DPTEXTURECAPS_POW2;
-    }
+                           WINED3DPTEXTURECAPS_VOLUMEMAP_POW2     |
+                           WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL;
 
     if (GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
         *pCaps->TextureCaps |= WINED3DPTEXTURECAPS_CUBEMAP     |
@@ -1551,12 +1557,18 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
 
     }
 
-    *pCaps->TextureFilterCaps = WINED3DPTFILTERCAPS_MAGFLINEAR |
-                                WINED3DPTFILTERCAPS_MAGFPOINT  |
-                                WINED3DPTFILTERCAPS_MINFLINEAR |
-                                WINED3DPTFILTERCAPS_MINFPOINT  |
-                                WINED3DPTFILTERCAPS_MIPFLINEAR |
-                                WINED3DPTFILTERCAPS_MIPFPOINT;
+    *pCaps->TextureFilterCaps = WINED3DPTFILTERCAPS_MAGFLINEAR       |
+                                WINED3DPTFILTERCAPS_MAGFPOINT        |
+                                WINED3DPTFILTERCAPS_MINFLINEAR       |
+                                WINED3DPTFILTERCAPS_MINFPOINT        |
+                                WINED3DPTFILTERCAPS_MIPFLINEAR       |
+                                WINED3DPTFILTERCAPS_MIPFPOINT        |
+                                WINED3DPTFILTERCAPS_LINEAR           |
+                                WINED3DPTFILTERCAPS_LINEARMIPLINEAR  |
+                                WINED3DPTFILTERCAPS_LINEARMIPNEAREST |
+                                WINED3DPTFILTERCAPS_MIPLINEAR        |
+                                WINED3DPTFILTERCAPS_MIPNEAREST       |
+                                WINED3DPTFILTERCAPS_NEAREST;
 
     *pCaps->CubeTextureFilterCaps = 0;
     *pCaps->VolumeTextureFilterCaps = 0;
@@ -1671,7 +1683,8 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
     *pCaps->VertexProcessingCaps = WINED3DVTXPCAPS_DIRECTIONALLIGHTS |
                                    WINED3DVTXPCAPS_MATERIALSOURCE7   |
                                    WINED3DVTXPCAPS_POSITIONALLIGHTS  |
-                                   WINED3DVTXPCAPS_LOCALVIEWER |
+                                   WINED3DVTXPCAPS_LOCALVIEWER       |
+                                   WINED3DVTXPCAPS_VERTEXFOG         |
                                    WINED3DVTXPCAPS_TEXGEN;
                                   /* FIXME: Add 
                                      D3DVTXPCAPS_TWEENING */
@@ -1749,12 +1762,6 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
 #endif
         *pCaps->NumSimultaneousRTs                = max_buffers;
         *pCaps->StretchRectFilterCaps             = 0;
-        /* TODO: add
-           WINED3DPTFILTERCAPS_MINFPOINT
-           WINED3DPTFILTERCAPS_MAGFPOINT
-           WINED3DPTFILTERCAPS_MINFLINEAR
-           WINED3DPTFILTERCAPS_MAGFLINEAR
-        */
         *pCaps->VS20Caps.Caps                     = 0;
         *pCaps->PS20Caps.Caps                     = 0;
         *pCaps->VertexTextureFilterCaps           = 0;
