@@ -845,6 +845,9 @@ struct IWineD3DSurfaceImpl
     UINT                      pow2Height;
     UINT                      pow2Size;
 
+    /* Oversized texture */
+    RECT                      glRect;
+
 #if 0
     /* precalculated x and y scalings for texture coords */
     float                     pow2scalingFactorX; /* =  (Width  / pow2Width ) */

@@ -644,19 +644,6 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
         }
     }
 
-    /** Check against the maximum texture sizes supported by the video card **/
-    if (pow2Width > GL_LIMITS(texture_size) || pow2Height > GL_LIMITS(texture_size)) {
-        /* one of three options
-        1: Do the same as we do with nonpow 2 and scale the texture, (any texture ops would require the texture to be scaled which is potentially slow)
-        2: Set the texture to the maxium size (bad idea)
-        3:    WARN and return WINED3DERR_NOTAVAILABLE;
-        */
-        WARN("(%p) Application requested a surface w %d, h %d, but the graphics card only supports %d\n", This, Width, Height, GL_LIMITS(texture_size));
-         return WINED3DERR_NOTAVAILABLE;
-    }
-
-
-
     /** DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
      *  it is based around 4x4 pixel blocks it requires padding, so allocate enough
      *  space!
@@ -850,12 +837,12 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     {
         /* use the callback to create the texture surface */
         hr = D3DCB_CreateSurface(This->parent, tmpW, tmpH, Format, Usage, Pool, i, &object->surfaces[i],NULL);
-        if (hr!= WINED3D_OK) {
+        if (hr!= WINED3D_OK || ( (IWineD3DSurfaceImpl *) object->surfaces[i])->Flags & SFLAG_OVERSIZE) {
             int j;
             FIXME("Failed to create surface  %p\n", object);
             /* clean up */
-            for (j = 0 ; j < i ; j++) {
-                IWineD3DSurface_Release(object->surfaces[j]);
+            for (j = 0 ; j <= i ; j++) {
+                if(object->surfaces[j]) IWineD3DSurface_Release(object->surfaces[j]);
             }
             /* heap free object */
             HeapFree(GetProcessHeap(), 0, object);

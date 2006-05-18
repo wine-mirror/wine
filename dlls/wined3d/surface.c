@@ -1161,6 +1161,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         return WINED3D_OK;
     }
 
+    if(!This->Flags & SFLAG_OVERSIZE) {
+        ERR("Loading an oversized texture not supported yet, will follow soon\n");
+        return WINED3D_OK;  /* Return OK for now, easier for merging the code */
+    }
+
     This->Flags &= ~SFLAG_DIRTY;
 
     /* Resources are placed in system RAM and do not need to be recreated when a device is lost.
@@ -1916,7 +1921,34 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Fla
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
-    /* Nothing to do for now */
+    /** Check against the maximum texture sizes supported by the video card **/
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+
+    TRACE("%p\n", This);
+    if ((This->pow2Width > GL_LIMITS(texture_size) || This->pow2Height > GL_LIMITS(texture_size)) && !(This->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL))) {
+        /* one of three options
+        1: Do the same as we do with nonpow 2 and scale the texture, (any texture ops would require the texture to be scaled which is potentially slow)
+        2: Set the texture to the maxium size (bad idea)
+        3:    WARN and return WINED3DERR_NOTAVAILABLE;
+        4: Create the surface, but allow it to be used only for DirectDraw Blts. Some apps(e.g. Swat 3) create textures with a Height of 16 and a Width > 3000 and blt 16x16 letter areas from them to the render target.
+        */
+        WARN("(%p) Creating an oversized surface\n", This);
+        This->Flags |= SFLAG_OVERSIZE;
+
+        /* This will be initialized on the first blt */
+        This->glRect.left = 0;
+        This->glRect.top = 0;
+        This->glRect.right = 0;
+        This->glRect.bottom = 0;
+    } else {
+        /* No oversize, gl rect is the full texture size */
+        This->Flags &= ~SFLAG_OVERSIZE;
+        This->glRect.left = 0;
+        This->glRect.top = 0;
+        This->glRect.right = This->pow2Width;
+        This->glRect.bottom = This->pow2Height;
+    }
+
     return WINED3D_OK;
 }
 
