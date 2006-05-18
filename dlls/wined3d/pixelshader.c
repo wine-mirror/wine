@@ -606,7 +606,7 @@ void pshader_texldd(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_setp(WINED3DSHADERVECTOR* d) {
+void pshader_setp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
@@ -738,7 +738,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_DSX,      "dsx",      GLNAME_REQUIRE_GLSL,  2, pshader_dsx,     NULL, NULL, 0, 0},
     {D3DSIO_DSY,      "dsy",      GLNAME_REQUIRE_GLSL,  2, pshader_dsy,     NULL, NULL, 0, 0},
     {D3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL,  2, pshader_texldd,  NULL, NULL, 0, 0},
-    {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,  2, pshader_setp,    NULL, NULL, 0, 0},
+    {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,  3, pshader_setp,    NULL, NULL, 0, 0},
     {D3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL,  2, pshader_texldl,  NULL, NULL, 0, 0},
     {D3DSIO_PHASE,    "phase",    GLNAME_REQUIRE_GLSL,  0, pshader_nop,     NULL, NULL, 0, 0},
     {0,               NULL,       NULL,   0, NULL,            NULL, 0, 0}

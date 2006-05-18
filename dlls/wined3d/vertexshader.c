@@ -469,7 +469,7 @@ void vshader_texldd(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_setp(WINED3DSHADERVECTOR* d) {
+void vshader_setp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
@@ -565,7 +565,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL,   1, vshader_label,   NULL, NULL, 0, 0},
 
     {D3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL,   2, vshader_mova,    NULL, NULL, 0, 0},
-    {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,   2, vshader_setp,    NULL, NULL, 0, 0},
+    {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL,   3, vshader_setp,    NULL, NULL, 0, 0},
     {D3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL,   2, vshader_texldl,  NULL, NULL, 0, 0},
     {0,               NULL,       NULL,   0, NULL,            NULL, 0, 0}
 };
