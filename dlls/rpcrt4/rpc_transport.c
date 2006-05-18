@@ -484,7 +484,7 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
   RPCRT4_CloseConnection(Connection);
   RPCRT4_strfree(Connection->Endpoint);
   RPCRT4_strfree(Connection->NetworkAddr);
-  RpcAuthInfo_Release(Connection->AuthInfo);
+  if (Connection->AuthInfo) RpcAuthInfo_Release(Connection->AuthInfo);
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;
 }
