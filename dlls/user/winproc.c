@@ -992,18 +992,6 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 {
     switch(msg)
     {
-    case WM_IME_CHAR:
-        {
-            WCHAR wch = LOWORD(*pwparam);
-            BYTE ch[2];
-
-            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)ch, 2, NULL, NULL ) == 2)
-                *pwparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(*pwparam) );
-            else
-                *pwparam = MAKEWPARAM( ch[0], HIWORD(*pwparam) );
-        }
-        return 0;
-
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg, hwnd),msg );
@@ -3004,6 +2992,21 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
             BYTE ch;
             RtlUnicodeToMultiByteN( (LPSTR)&ch, 1, NULL, &wch, sizeof(WCHAR) );
             wParam = MAKEWPARAM( ch, HIWORD(wParam) );
+            ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+        }
+        break;
+
+    case WM_IME_CHAR:
+        {
+            WCHAR wch = LOWORD(wParam);
+            BYTE ch[2];
+            DWORD len;
+
+            RtlUnicodeToMultiByteN( (LPSTR)ch, 2, &len, &wch, sizeof(WCHAR) );
+            if (len == 2)
+                wParam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(wParam) );
+            else
+                wParam = MAKEWPARAM( ch[0], HIWORD(wParam) );
             ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
         }
         break;
