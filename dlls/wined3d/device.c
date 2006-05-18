@@ -1969,11 +1969,11 @@ UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     static BOOL showfixmes = TRUE;
     if (showfixmes) {
-        FIXME("(%p) : stub, emulating %dMib for now, returning %dMib\n", This, (emulated_textureram/(1024*1024)),
+        FIXME("(%p) : stub, emulating %dMB for now, returning %dMB\n", This, (emulated_textureram/(1024*1024)),
          ((emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
          showfixmes = FALSE;
     }
-    TRACE("(%p) :  emulating %dMib for now, returning %dMib\n",  This, (emulated_textureram/(1024*1024)),
+    TRACE("(%p) :  emulating %dMB for now, returning %dMB\n",  This, (emulated_textureram/(1024*1024)),
          ((emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
     /* videomemory is simulated videomemory + AGP memory left */
     return (emulated_textureram - wineD3DGlobalStatistics->glsurfaceram);

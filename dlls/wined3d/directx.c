@@ -1680,17 +1680,17 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
     if (wined3d_settings.vs_mode == VS_HW && GL_SUPPORT(ARB_SHADING_LANGUAGE_100) &&
     wined3d_settings.glslRequested && DeviceType != WINED3DDEVTYPE_REF) {
         *pCaps->VertexShaderVersion = D3DVS_VERSION(3,0);
-        TRACE_(d3d_caps)("Hardware Vertex Shaders versions 2.0+ enabled\n");
+        TRACE_(d3d_caps)("Hardware vertex shader versions 2.0+ enabled\n");
     } else if (wined3d_settings.vs_mode == VS_HW && GL_SUPPORT(ARB_VERTEX_PROGRAM) && DeviceType != WINED3DDEVTYPE_REF) {
         *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
-        TRACE_(d3d_caps)("Hardware Vertex Shader version 1.1 enabled\n");
+        TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled\n");
     } else if (wined3d_settings.vs_mode == VS_SW || DeviceType == WINED3DDEVTYPE_REF) {
         /* FIXME: Change the following line (when needed) to reflect the reported software vertex shader version implemented */
         *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
-        TRACE_(d3d_caps)("Software Vertex Shader version 1.1 enabled\n");
+        TRACE_(d3d_caps)("Software vertex shader version 1.1 enabled\n");
     } else {
         *pCaps->VertexShaderVersion  = 0;
-        TRACE_(d3d_caps)("Vertex Shader functionality not available\n");
+        TRACE_(d3d_caps)("Vertex shader functionality not available\n");
     }
 
     if (This->gl_info.gl_vendor == VENDOR_MESA || This->gl_info.gl_vendor == VENDOR_WINE) {
@@ -1704,20 +1704,20 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
         *pCaps->PixelShaderVersion = D3DPS_VERSION(3,0);
         /* FIXME: The following line is card dependant. -1.0 to 1.0 is a safe default clamp range for now */
         *pCaps->PixelShader1xMaxValue = 1.0;
-        TRACE_(d3d_caps)("Hardware Pixel Shaders versions 2.0+ enabled\n");
+        TRACE_(d3d_caps)("Hardware pixel shader versions 2.0+ enabled\n");
     } else if (wined3d_settings.ps_mode == PS_HW && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && DeviceType != WINED3DDEVTYPE_REF) {
         *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
-        TRACE_(d3d_caps)("Hardware Pixel Shaders version 1.4 enabled\n");
+        TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled\n");
     /* FIXME: Uncomment this when there is support for software Pixel Shader 1.4 and PS_SW is defined
     } else if (wined3d_settings.ps_mode == PS_SW || DeviceType == WINED3DDEVTYPE_REF) {
         *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
-        TRACE_(d3d_caps)("Software Pixel Shader version 1.4 enabled\n"); */
+        TRACE_(d3d_caps)("Software pixel shader version 1.4 enabled\n"); */
     } else {
         *pCaps->PixelShaderVersion    = 0;
         *pCaps->PixelShader1xMaxValue = 0.0;
-        TRACE_(d3d_caps)("Pixel Shader functionality not available\n");
+        TRACE_(d3d_caps)("Pixel shader functionality not available\n");
     }
 
     /* ------------------------------------------------
