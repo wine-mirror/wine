@@ -2518,6 +2518,10 @@ unsigned long UserMarshalFlags(PMIDL_STUB_MESSAGE pStubMsg)
                   pStubMsg->RpcMsg->DataRepresentation);
 }
 
+#define USER_MARSHAL_PTR_PREFIX \
+        ( (DWORD)'U'         | ( (DWORD)'s' << 8 ) | \
+        ( (DWORD)'e' << 16 ) | ( (DWORD)'r' << 24 ) )
+
 /***********************************************************************
  *           NdrUserMarshalMarshall [RPCRT4.@]
  */
@@ -2525,11 +2529,21 @@ unsigned char * WINAPI NdrUserMarshalMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                               unsigned char *pMemory,
                                               PFORMAT_STRING pFormat)
 {
-/*  unsigned flags = pFormat[1]; */
+  unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
   unsigned long uflag = UserMarshalFlags(pStubMsg);
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   TRACE("index=%d\n", index);
+
+  if (flags & USER_MARSHAL_POINTER)
+  {
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
+    NDR_LOCAL_UINT32_WRITE(pStubMsg->Buffer, USER_MARSHAL_PTR_PREFIX);
+    pStubMsg->Buffer += 4;
+    ALIGN_POINTER(pStubMsg->Buffer, 8);
+  }
+  else
+    ALIGN_POINTER(pStubMsg->Buffer, (flags & 0xf) + 1);
 
   pStubMsg->Buffer =
     pStubMsg->StubDesc->aUserMarshalQuadruple[index].pfnMarshall(
@@ -2548,12 +2562,22 @@ unsigned char * WINAPI NdrUserMarshalUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  PFORMAT_STRING pFormat,
                                                  unsigned char fMustAlloc)
 {
-/*  unsigned flags = pFormat[1];*/
+  unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
   DWORD memsize = *(const WORD*)&pFormat[4];
   unsigned long uflag = UserMarshalFlags(pStubMsg);
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
   TRACE("index=%d\n", index);
+
+  if (flags & USER_MARSHAL_POINTER)
+  {
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
+    /* skip pointer prefix */
+    pStubMsg->Buffer += 4;
+    ALIGN_POINTER(pStubMsg->Buffer, 8);
+  }
+  else
+    ALIGN_POINTER(pStubMsg->Buffer, (flags & 0xf) + 1);
 
   if (fMustAlloc || !*ppMemory)
     *ppMemory = NdrAllocate(pStubMsg, memsize);
@@ -2572,12 +2596,22 @@ void WINAPI NdrUserMarshalBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                       unsigned char *pMemory,
                                       PFORMAT_STRING pFormat)
 {
-/*  unsigned flags = pFormat[1];*/
+  unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
   DWORD bufsize = *(const WORD*)&pFormat[6];
   unsigned long uflag = UserMarshalFlags(pStubMsg);
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   TRACE("index=%d\n", index);
+
+  if (flags & USER_MARSHAL_POINTER)
+  {
+    ALIGN_LENGTH(pStubMsg->BufferLength, 4);
+    /* skip pointer prefix */
+    pStubMsg->BufferLength += 4;
+    ALIGN_LENGTH(pStubMsg->BufferLength, 8);
+  }
+  else
+    ALIGN_LENGTH(pStubMsg->BufferLength, (flags & 0xf) + 1);
 
   if (bufsize) {
     TRACE("size=%ld\n", bufsize);
@@ -2596,6 +2630,7 @@ void WINAPI NdrUserMarshalBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrUserMarshalMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                               PFORMAT_STRING pFormat)
 {
+  unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
   DWORD memsize = *(const WORD*)&pFormat[4];
   DWORD bufsize = *(const WORD*)&pFormat[6];
@@ -2604,6 +2639,17 @@ unsigned long WINAPI NdrUserMarshalMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   TRACE("index=%d\n", index);
 
   pStubMsg->MemorySize += memsize;
+
+  if (flags & USER_MARSHAL_POINTER)
+  {
+    ALIGN_POINTER(pStubMsg->Buffer, 4);
+    /* skip pointer prefix */
+    pStubMsg->Buffer += 4;
+    ALIGN_POINTER(pStubMsg->Buffer, 8);
+  }
+  else
+    ALIGN_POINTER(pStubMsg->Buffer, (flags & 0xf) + 1);
+
   pStubMsg->Buffer += bufsize;
 
   return pStubMsg->MemorySize;
