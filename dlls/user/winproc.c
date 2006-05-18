@@ -982,26 +982,6 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 }
 
 
-/**********************************************************************
- *	     WINPROC_MapMsg32WTo32A
- *
- * Map a message from Unicode to Ansi.
- * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
- */
-static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plparam )
-{
-    switch(msg)
-    {
-    case WM_PAINTCLIPBOARD:
-    case WM_SIZECLIPBOARD:
-        FIXME_(msg)("message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg, hwnd),msg );
-        return -1;
-    default:  /* No translation needed */
-        return 0;
-    }
-}
-
-
 static UINT convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
 {
     HANDLE      dst;
@@ -2756,7 +2736,6 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
                                          LPARAM lParam, BOOL dialog )
 {
     LRESULT ret = 0;
-    int unmap;
 
     TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                 func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
@@ -3011,12 +2990,13 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
         }
         break;
 
+    case WM_PAINTCLIPBOARD:
+    case WM_SIZECLIPBOARD:
+        FIXME_(msg)( "message %s (%04x) needs translation, please report\n",
+                     SPY_GetMsgName(msg, hwnd), msg );
+        break;
+
     default:
-        if ((unmap = WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam )) == -1) {
-            ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
-                      SPY_GetMsgName(msg, hwnd), wParam, lParam );
-            return 0;
-        }
         ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
         break;
     }
