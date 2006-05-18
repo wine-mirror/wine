@@ -55,8 +55,9 @@ extern WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode );
 extern WNDPROC WINPROC_AllocProc( WNDPROC funcA, WNDPROC funcW );
 extern BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val );
 
-extern INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam,
-                                     LPARAM *plparam );
+extern LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg,
+                                     WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg );
+
 extern INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16,
                                     UINT *pmsg32, WPARAM *pwparam32,
                                     LPARAM *plparam );
@@ -69,9 +70,6 @@ extern INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32,
 extern INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32,
                                     WPARAM wParam32, UINT16 *pmsg16,
                                     WPARAM16 *pwparam16, LPARAM *plparam );
-extern LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam,
-                                         LPARAM lParam, LRESULT result,
-                                         WNDPROC dispatch );
 extern LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam,
                                         LPARAM lParam, LRESULT result );
 extern LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam,

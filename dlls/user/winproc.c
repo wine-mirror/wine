@@ -688,7 +688,7 @@ inline static BOOL WINPROC_TestLBForStr( HWND hwnd, UINT msg )
  *  the first four bytes are the handle of the icon
  *  when the WM_SETTEXT message has been used to set the icon
  */
-INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plparam )
+static INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plparam )
 {
     switch(msg)
     {
@@ -859,8 +859,8 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
  *
  * Unmap a message that was mapped from Ansi to Unicode.
  */
-LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                                  LRESULT result, WNDPROC dispatch )
+static LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                         LRESULT result, WNDPROC dispatch )
 {
     switch(msg)
     {
@@ -2642,8 +2642,8 @@ void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
  *
  * Call a window procedure, translating args from Ansi to Unicode.
  */
-static LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, WPARAM wParam,
-                                     LPARAM lParam, LRESULT *result, void *arg )
+LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, WPARAM wParam,
+                              LPARAM lParam, LRESULT *result, void *arg )
 {
     LRESULT ret;
     int unmap;

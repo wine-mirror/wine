@@ -2383,6 +2383,16 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     return ret;
 }
 
+static LRESULT send_inter_thread_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                           LRESULT *result, void *arg )
+{
+    struct send_message_info *info = arg;
+    info->hwnd   = hwnd;
+    info->msg    = msg;
+    info->wparam = wp;
+    info->lparam = lp;
+    return send_inter_thread_message( info, result );
+}
 
 /***********************************************************************
  *		SendMessageTimeoutA  (USER32.@)
@@ -2429,13 +2439,8 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         /* inter-process message: need to map to Unicode */
         info.type = MSG_OTHER_PROCESS;
         if (is_unicode_message( info.msg ))
-        {
-            if (WINPROC_MapMsg32ATo32W( info.hwnd, info.msg, &info.wparam, &info.lparam ) == -1)
-                return 0;
-            ret = send_inter_thread_message( &info, &result );
-            result = WINPROC_UnmapMsg32ATo32W( info.hwnd, info.msg, info.wparam,
-                                               info.lparam, result, NULL );
-        }
+            ret = WINPROC_CallProcAtoW( send_inter_thread_callback, info.hwnd, info.msg,
+                                        info.wparam, info.lparam, &result, &info );
         else ret = send_inter_thread_message( &info, &result );
     }
     SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, result, wparam, lparam );
