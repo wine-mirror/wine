@@ -992,28 +992,6 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 {
     switch(msg)
     {
-/* Listbox */
-    case LB_GETTEXT:                    /* FIXME: fixed sized buffer */
-        { if ( WINPROC_TestLBForStr( hwnd ))
-          { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
-            if (!ptr) return -1;
-            *ptr++ = *plparam;  /* Store previous lParam */
-            *plparam = (LPARAM)ptr;
-          }
-        }
-        return 1;
-
-/* Combobox */
-    case CB_GETLBTEXT:          /* FIXME: fixed sized buffer */
-        { if ( WINPROC_TestCBForStr( hwnd ))
-          { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
-            if (!ptr) return -1;
-            *ptr++ = *plparam;  /* Store previous lParam */
-            *plparam = (LPARAM)ptr;
-          }
-        }
-        return 1;
-
 /* Multiline edit */
     case EM_GETLINE:
         { WORD len = (WORD)*plparam;
@@ -1071,32 +1049,6 @@ static LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPA
 {
     switch(msg)
     {
-/* Listbox */
-    case LB_GETTEXT:
-        if ( WINPROC_TestLBForStr( hwnd ))
-        {
-            LPARAM *ptr = (LPARAM *)lParam - 1;
-            if (result >= 0)
-                result = MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, (LPWSTR)*ptr, 0x7fffffff ) - 1;
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
-        break;
-
-/* Combobox */
-    case CB_GETLBTEXT:
-        if ( result < 0) /* CB_ERR and CB_ERRSPACE */
-        {
-            LPARAM *ptr = (LPARAM *)lParam - 1;
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
-        else if ( WINPROC_TestCBForStr( hwnd ))
-        {
-            LPARAM *ptr = (LPARAM *)lParam - 1;
-            result = MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, (LPWSTR)*ptr, 0x7fffffff ) - 1;
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
-        break;
-
 /* Multiline edit */
     case EM_GETLINE:
         {
@@ -3019,6 +2971,26 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
         ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
         break;
 
+    case LB_GETTEXT:
+        if (lParam && WINPROC_TestLBForStr( hwnd ))
+        {
+            char buffer[512];  /* FIXME: fixed sized buffer */
+            LRESULT result;
+
+            ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, (LPARAM)buffer );
+            result = dialog ? GetWindowLongPtrW( hwnd, DWLP_MSGRESULT ) : ret;
+            if (result >= 0)
+            {
+                DWORD len;
+                RtlMultiByteToUnicodeN( (LPWSTR)lParam, ~0u, &len, buffer, strlen(buffer) + 1 );
+                result = len / sizeof(WCHAR) - 1;
+                if (dialog) SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
+                else ret = result;
+            }
+        }
+        else ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+        break;
+
 /* Combobox */
     case CB_ADDSTRING:
     case CB_INSERTSTRING:
@@ -3027,6 +2999,26 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
     case CB_SELECTSTRING:
         if (lParam && WINPROC_TestCBForStr( hwnd )) goto handle_wm_settext;
         ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+        break;
+
+    case CB_GETLBTEXT:
+        if (lParam && WINPROC_TestCBForStr( hwnd ))
+        {
+            char buffer[512];  /* FIXME: fixed sized buffer */
+            LRESULT result;
+
+            ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, (LPARAM)buffer );
+            result = dialog ? GetWindowLongPtrW( hwnd, DWLP_MSGRESULT ) : ret;
+            if (result >= 0)
+            {
+                DWORD len;
+                RtlMultiByteToUnicodeN( (LPWSTR)lParam, ~0u, &len, buffer, strlen(buffer) + 1 );
+                result = len / sizeof(WCHAR) - 1;
+                if (dialog) SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
+                else ret = result;
+            }
+        }
+        else ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
         break;
 
     default:
