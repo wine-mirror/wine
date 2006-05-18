@@ -459,7 +459,7 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
     hOldFont = SelectObject (hdc, hFont);
 
     /* draw Background */
-    if (theme == NULL) {
+    if (infoPtr->uNumItem == 0 && theme == NULL) {
         hbrBk = GetSysColorBrush(COLOR_3DFACE);
         FillRect(hdc, &rect, hbrBk);
     }
@@ -478,9 +478,9 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
         }
         else {
             if (GetWindowLongW (hwnd, GWL_STYLE) & HDS_BUTTONS)
-                DrawEdge (hdc, &rect, EDGE_RAISED, BF_TOP|BF_LEFT|BF_BOTTOM|BF_SOFT);
+                DrawEdge (hdc, &rect, EDGE_RAISED, BF_TOP|BF_LEFT|BF_BOTTOM|BF_SOFT|BF_MIDDLE);
             else
-                DrawEdge (hdc, &rect, EDGE_ETCHED, BF_BOTTOM);
+                DrawEdge (hdc, &rect, EDGE_ETCHED, BF_BOTTOM|BF_MIDDLE);
         }
     }
 
