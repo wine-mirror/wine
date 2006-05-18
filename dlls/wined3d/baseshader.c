@@ -387,8 +387,17 @@ void shader_dump_param(
         case D3DSPR_ATTROUT:
             TRACE("oD%lu", reg);
             break;
-        case D3DSPR_TEXCRDOUT:
-            TRACE("oT%lu", reg);
+        case D3DSPR_TEXCRDOUT: 
+
+            /* Vertex shaders >= 3.0 use general purpose output registers
+             * (D3DSPR_OUTPUT), which can include an address token */
+
+            if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3) {
+                TRACE("o");
+                shader_dump_arr_entry(iface, param, addr_token, input);
+            }
+            else 
+               TRACE("oT%lu", reg);
             break;
         case D3DSPR_CONSTINT:
             TRACE("i");
@@ -403,13 +412,15 @@ void shader_dump_param(
             break;
         case D3DSPR_LOOP:
             TRACE("aL");
-            shader_dump_arr_entry(iface, param, addr_token, input);
             break;
         case D3DSPR_SAMPLER:
             TRACE("s%lu", reg);
             break;
+        case D3DSPR_PREDICATE:
+            TRACE("p%lu", reg);
+            break;
         default:
-            TRACE("unhandled_rtype(%lx)", regtype);
+            TRACE("unhandled_rtype(%#lx)", regtype);
             break;
    }
 
