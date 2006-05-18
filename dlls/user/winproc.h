@@ -46,6 +46,8 @@ struct tagWINDOWPROC;
 
 typedef LRESULT (*winproc_callback_t)( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                        LRESULT *result, void *arg );
+typedef LRESULT (*winproc_callback16_t)( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp,
+                                         LRESULT *result, void *arg );
 
 extern WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode );
 extern WNDPROC WINPROC_AllocProc16( WNDPROC16 func );
