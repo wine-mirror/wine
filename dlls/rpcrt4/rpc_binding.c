@@ -261,14 +261,15 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   RPCRT4_CreateConnection(&NewConnection, Binding->server, Binding->Protseq,
                           Binding->NetworkAddr, Binding->Endpoint, NULL,
                           Binding->AuthInfo, Binding);
-  *Connection = NewConnection;
   status = RPCRT4_OpenConnection(NewConnection);
-  if (status != RPC_S_OK) {
+  if (status != RPC_S_OK)
+  {
+    RPCRT4_DestroyConnection(NewConnection);
     return status;
   }
-
+ 
   /* we need to send a binding packet if we are client. */
-  if (!(*Connection)->server) {
+  if (!NewConnection->server) {
     RpcPktHdr *hdr;
     RpcPktHdr *response_hdr;
     RPC_MESSAGE msg;
@@ -279,17 +280,17 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
                                  RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE,
                                  InterfaceId, TransferSyntax);
 
-    status = RPCRT4_Send(*Connection, hdr, NULL, 0);
+    status = RPCRT4_Send(NewConnection, hdr, NULL, 0);
     RPCRT4_FreeHeader(hdr);
     if (status != RPC_S_OK) {
-      RPCRT4_DestroyConnection(*Connection);
+      RPCRT4_DestroyConnection(NewConnection);
       return status;
     }
 
     status = RPCRT4_Receive(NewConnection, &response_hdr, &msg);
     if (status != RPC_S_OK) {
       ERR("receive failed\n");
-      RPCRT4_DestroyConnection(*Connection);
+      RPCRT4_DestroyConnection(NewConnection);
       return status;
     }
 
@@ -297,17 +298,19 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
         response_hdr->bind_ack.max_tsize < RPC_MIN_PACKET_SIZE) {
       ERR("failed to bind\n");
       RPCRT4_FreeHeader(response_hdr);
-      RPCRT4_DestroyConnection(*Connection);
+      RPCRT4_DestroyConnection(NewConnection);
       return RPC_S_PROTOCOL_ERROR;
     }
 
     /* FIXME: do more checks? */
 
-    (*Connection)->MaxTransmissionSize = response_hdr->bind_ack.max_tsize;
-    (*Connection)->ActiveInterface = *InterfaceId;
+    NewConnection->MaxTransmissionSize = response_hdr->bind_ack.max_tsize;
+    NewConnection->ActiveInterface = *InterfaceId;
     RPCRT4_FreeHeader(response_hdr);
   }
-  Binding->FromConn = *Connection;
+
+  Binding->FromConn = NewConnection;
+  *Connection = NewConnection;
 
   return RPC_S_OK;
 }
