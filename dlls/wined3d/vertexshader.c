@@ -1576,9 +1576,18 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
                     DWORD param, addr_token;
                     int tokens_read;
 
+                    /* Print out predication source token first - it follows
+                     * the destination token. */
+                    if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
+                        TRACE("(");
+                        shader_dump_param((IWineD3DBaseShader*) This, *(pToken + 2), 0, 1);
+                        TRACE(") ");
+                    }
+
                     TRACE("%s", curOpcode->name);
                     if (curOpcode->num_params > 0) {
 
+                        /* Destination token */
                         tokens_read = shader_get_param((IWineD3DBaseShader*) This,
                             pToken, &param, &addr_token);
                         pToken += tokens_read;
@@ -1588,6 +1597,13 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
                         TRACE(" ");
                         shader_dump_param((IWineD3DBaseShader*) This, param, addr_token, 0);
 
+                        /* Predication token - already printed out, just skip it */
+                        if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
+                            pToken++;
+                            len++;
+                        }
+
+                        /* Other source tokens */
                         for (i = 1; i < curOpcode->num_params; ++i) {
 
                             tokens_read = shader_get_param((IWineD3DBaseShader*) This,

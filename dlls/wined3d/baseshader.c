@@ -176,6 +176,7 @@ void shader_get_registers_used(
 
     while (D3DVS_END() != *pToken) {
         CONST SHADER_OPCODE* curOpcode;
+        DWORD opcode_token;
 
         /* Skip version */
         if (shader_is_version_token(*pToken)) {
@@ -191,8 +192,8 @@ void shader_get_registers_used(
         }
 
         /* Fetch opcode */
-        curOpcode = shader_get_opcode(iface, *pToken);
-        ++pToken;
+        opcode_token = *pToken++;
+        curOpcode = shader_get_opcode(iface, opcode_token);
 
         /* Unhandled opcode, and its parameters */
         if (NULL == curOpcode) {
@@ -212,9 +213,19 @@ void shader_get_registers_used(
 
         /* Set texture registers, and temporary registers */
         } else {
-            int i;
+            int i, limit;
 
-            for (i = 0; i < curOpcode->num_params; ++i) {
+            /* This will loop over all the registers and try to
+             * make a bitmask of the ones we're interested in. 
+             *
+             * Relative addressing tokens are ignored, but that's 
+             * okay, since we'll catch any address registers when 
+             * they are initialized (required by spec) */
+
+            limit = (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED)?
+                curOpcode->num_params + 1: curOpcode->num_params;
+
+            for (i = 0; i < limit; ++i) {
 
                 DWORD param, addr_token, reg, regtype;
                 pToken += shader_get_param(iface, pToken, &param, &addr_token);
@@ -359,6 +370,8 @@ void shader_dump_param(
             TRACE("-");
         else if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_COMP)
             TRACE("1-");
+        else if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NOT)
+            TRACE("!");
     }
 
     switch (regtype) {
@@ -445,10 +458,10 @@ void shader_dump_param(
 
         if (0 != (param & D3DSP_SRCMOD_MASK)) {
             DWORD mask = param & D3DSP_SRCMOD_MASK;
-            /*TRACE("_modifier(0x%08lx) ", mask);*/
             switch (mask) {
                 case D3DSPSM_NONE:    break;
                 case D3DSPSM_NEG:     break;
+                case D3DSPSM_NOT:     break;
                 case D3DSPSM_BIAS:    TRACE("_bias"); break;
                 case D3DSPSM_BIASNEG: TRACE("_bias"); break;
                 case D3DSPSM_SIGN:    TRACE("_bx2"); break;
@@ -459,7 +472,7 @@ void shader_dump_param(
                 case D3DSPSM_DZ:      TRACE("_dz"); break;
                 case D3DSPSM_DW:      TRACE("_dw"); break;
                 default:
-                    TRACE("_unknown(0x%08lx)", mask);
+                    TRACE("_unknown_modifier(%#lx)", mask >> D3DSP_SRCMOD_SHIFT);
             }
         }
 
@@ -618,6 +631,9 @@ void generate_base_shader(
 
                     hw_arg.dst = param;
                     hw_arg.dst_addr = addr_token;
+
+                    if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) 
+                        hw_arg.predicate = *pToken++;
 
                     for (i = 1; i < curOpcode->num_params; i++) {
                         /* DEF* instructions have constant src parameters, not registers */

@@ -1296,6 +1296,7 @@ typedef struct SHADER_OPCODE_ARG {
     CONST SHADER_OPCODE* opcode;
     DWORD dst;
     DWORD dst_addr;
+    DWORD predicate;
     DWORD src[4];
     DWORD src_addr[4];
     SHADER_BUFFER* buffer;
