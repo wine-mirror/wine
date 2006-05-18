@@ -567,6 +567,8 @@ typedef struct IWineD3DDeviceImpl
     /* DirectDraw stuff */
     HWND ddraw_window;
     IWineD3DSurface *ddraw_primary;
+    DWORD ddraw_width, ddraw_height;
+    WINED3DFORMAT ddraw_format;
 
 } IWineD3DDeviceImpl;
 

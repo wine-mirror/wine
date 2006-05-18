@@ -1316,7 +1316,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
                      *(pPresentationParameters->BackBufferWidth),
                      *(pPresentationParameters->BackBufferHeight), SWP_SHOWWINDOW | SWP_FRAMECHANGED);
 
-
+        /* For GetDisplayMode */
+        This->ddraw_width = devmode.dmPelsWidth;
+        This->ddraw_height = devmode.dmPelsHeight;
+        This->ddraw_format = *(pPresentationParameters->BackBufferFormat);
     }
 
 
@@ -1866,8 +1869,60 @@ HRESULT WINAPI IWineD3DDeviceImpl_EnumDisplayModes(IWineD3DDevice *iface, DWORD 
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, WINED3DDISPLAYMODE* pMode) {
-    FIXME("This call is a d3d7 merge stub. It will be implemented later\n");
-    return WINED3DERR_INVALIDCALL;
+    DEVMODEW devmode;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    LONG ret;
+
+    TRACE("(%p)->(%d,%p) Mode=%dx%dx@%d, %s\n", This, iSwapChain, pMode, pMode->Width, pMode->Height, pMode->RefreshRate, debug_d3dformat(pMode->Format));
+
+    /* Resize the screen even without a window:
+     * The app could have unset it with SetCooperativeLevel, but not called
+     * RestoreDisplayMode first. Then the release will call RestoreDisplayMode,
+     * but we don't have any hwnd
+     */
+
+    devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+    devmode.dmBitsPerPel = D3DFmtGetBpp(This, pMode->Format) * 8;
+    if(devmode.dmBitsPerPel == 24) devmode.dmBitsPerPel = 32;
+    devmode.dmPelsWidth  = pMode->Width;
+    devmode.dmPelsHeight = pMode->Height;
+
+    devmode.dmDisplayFrequency = pMode->RefreshRate;
+    if (pMode->RefreshRate != 0)  {
+        devmode.dmFields |= DM_DISPLAYFREQUENCY;
+    }
+
+    /* Only change the mode if necessary */
+    if( (This->ddraw_width == pMode->Width) &&
+        (This->ddraw_height == pMode->Height) &&
+        (This->ddraw_format == pMode->Format) &&
+        (pMode->RefreshRate == 0) ) {
+        return D3D_OK;
+    }
+
+    ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL);
+    if (ret != DISP_CHANGE_SUCCESSFUL) {
+        if(devmode.dmDisplayFrequency != 0) {
+            WARN("ChangeDisplaySettingsExW failed, trying without the refresh rate\n");
+            devmode.dmFields &= ~DM_DISPLAYFREQUENCY;
+            devmode.dmDisplayFrequency = 0;
+            ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL) != DISP_CHANGE_SUCCESSFUL;
+        }
+        if(ret != DISP_CHANGE_SUCCESSFUL) {
+            return DDERR_INVALIDMODE;
+        }
+    }
+
+    /* Store the new values */
+    This->ddraw_width = pMode->Width;
+    This->ddraw_height = pMode->Height;
+    This->ddraw_format = pMode->Format;
+
+    /* Only do this with a window of course */
+    if(This->ddraw_window)
+      MoveWindow(This->ddraw_window, 0, 0, pMode->Width, pMode->Height, TRUE);
+
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_EnumZBufferFormats(IWineD3DDevice *iface, D3DCB_ENUMPIXELFORMATS Callback, void *Context) {
@@ -5265,13 +5320,29 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSw
     IWineD3DSwapChain *swapChain;
     HRESULT hr;
 
-    hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
-    if (hr == WINED3D_OK) {
-        hr = IWineD3DSwapChain_GetDisplayMode(swapChain, pMode);
-        IWineD3DSwapChain_Release(swapChain);
+    if(iSwapChain > 0) {
+        hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
+        if (hr == WINED3D_OK) {
+            hr = IWineD3DSwapChain_GetDisplayMode(swapChain, pMode);
+            IWineD3DSwapChain_Release(swapChain);
+        } else {
+            FIXME("(%p) Error getting display mode\n", This);
+        }
     } else {
-        FIXME("(%p) Error getting display mode\n", This);
+        /* Don't read the real display mode,
+           but return the stored mode instead. X11 can't change the color
+           depth, and some apps are pretty angry if they SetDisplayMode from
+           24 to 16 bpp and find out that GetDisplayMode still returns 24 bpp
+
+           Also don't relay to the swapchain because with ddraw it's possible
+           that there isn't a swapchain at all */
+        pMode->Width = This->ddraw_width;
+        pMode->Height = This->ddraw_height;
+        pMode->Format = This->ddraw_format;
+        pMode->RefreshRate = 0;
+        hr = WINED3D_OK;
     }
+
     return hr;
 }
 
