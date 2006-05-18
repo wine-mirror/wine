@@ -590,24 +590,17 @@ BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val )
 
 
 /**********************************************************************
- *	     WINPROC_TestCBForStr
- *
- * Return TRUE if the lparam is a string
- */
-inline static BOOL WINPROC_TestCBForStr( HWND hwnd )
-{
-    DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
-    return (!(style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) || (style & CBS_HASSTRINGS));
-}
-/**********************************************************************
  *	     WINPROC_TestLBForStr
  *
  * Return TRUE if the lparam is a string
  */
-inline static BOOL WINPROC_TestLBForStr( HWND hwnd )
+inline static BOOL WINPROC_TestLBForStr( HWND hwnd, UINT msg )
 {
     DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
-    return (!(style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || (style & LBS_HASSTRINGS));
+    if (msg <= CB_MSGMAX)
+        return (!(style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) || (style & CBS_HASSTRINGS));
+    else
+        return (!(style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || (style & LBS_HASSTRINGS));
 
 }
 /**********************************************************************
@@ -721,14 +714,19 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
         }
         return 1;
 
-/* Listbox */
+/* Listbox / Combobox */
     case LB_ADDSTRING:
     case LB_INSERTSTRING:
     case LB_FINDSTRING:
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
+    case CB_ADDSTRING:
+    case CB_INSERTSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_FINDSTRING:
+    case CB_SELECTSTRING:
         if(!*plparam) return 0;
-        if ( WINPROC_TestLBForStr( hwnd ))
+        if ( WINPROC_TestLBForStr( hwnd, msg ))
         {
             UNICODE_STRING usBuffer;
             RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)*plparam);
@@ -737,37 +735,13 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
         return (*plparam ? 1 : -1);
 
     case LB_GETTEXT:                /* FIXME: fixed sized buffer */
-        { if ( WINPROC_TestLBForStr( hwnd ))
-          { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
-            if (!ptr) return -1;
-            *ptr++ = *plparam;  /* Store previous lParam */
-            *plparam = (LPARAM)ptr;
-          }
-        }
-        return 1;
-
-/* Combobox */
-    case CB_ADDSTRING:
-    case CB_INSERTSTRING:
-    case CB_FINDSTRINGEXACT:
-    case CB_FINDSTRING:
-    case CB_SELECTSTRING:
-        if(!*plparam) return 0;
-        if ( WINPROC_TestCBForStr( hwnd ))
+    case CB_GETLBTEXT:
+        if ( WINPROC_TestLBForStr( hwnd, msg ))
         {
-            UNICODE_STRING usBuffer;
-            RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)*plparam);
-            *plparam = (LPARAM)usBuffer.Buffer;
-        }
-        return (*plparam ? 1 : -1);
-
-    case CB_GETLBTEXT:    /* FIXME: fixed sized buffer */
-        { if ( WINPROC_TestCBForStr( hwnd ))
-          { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
+            LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
-          }
         }
         return 1;
 
@@ -920,48 +894,29 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         HeapFree( GetProcessHeap(), 0, (void *)lParam );
         break;
 
-/* Listbox */
+/* Listbox / Combobox */
     case LB_ADDSTRING:
     case LB_INSERTSTRING:
     case LB_FINDSTRING:
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
-        if ( WINPROC_TestLBForStr( hwnd ))
-          HeapFree( GetProcessHeap(), 0, (void *)lParam );
-        break;
-
-    case LB_GETTEXT:
-        if ( WINPROC_TestLBForStr( hwnd ))
-        {
-            LPARAM *ptr = (LPARAM *)lParam - 1;
-            if (result >= 0)
-                result = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
-                                              (LPSTR)*ptr, 0x7fffffff, NULL, NULL ) - 1;
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
-        break;
-
-/* Combobox */
     case CB_ADDSTRING:
     case CB_INSERTSTRING:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
     case CB_SELECTSTRING:
-        if ( WINPROC_TestCBForStr( hwnd ))
+        if ( WINPROC_TestLBForStr( hwnd, msg ))
           HeapFree( GetProcessHeap(), 0, (void *)lParam );
         break;
 
+    case LB_GETTEXT:
     case CB_GETLBTEXT:
-        if ( result < 0) /* CB_ERR and CB_ERRSPACE */
+        if ( WINPROC_TestLBForStr( hwnd, msg ))
         {
             LPARAM *ptr = (LPARAM *)lParam - 1;
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
-        else if ( WINPROC_TestCBForStr( hwnd ))
-        {
-            LPARAM *ptr = (LPARAM *)lParam - 1;
-            result = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
-                                          (LPSTR)*ptr, 0x7fffffff, NULL, NULL ) - 1;
+            if (result >= 0)
+                result = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
+                                              (LPSTR)*ptr, 0x7fffffff, NULL, NULL ) - 1;
             HeapFree( GetProcessHeap(), 0, ptr );
         }
         break;
@@ -2533,20 +2488,12 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         *plparam = map_str_32W_to_16( (LPWSTR)*plparam );
         return 1;
     case LB_GETTEXT:
-        if ( WINPROC_TestLBForStr( hwnd ))
-        {
-            LPSTR str = HeapAlloc( GetProcessHeap(), 0, 512 ); /* FIXME: fixed sized buffer */
-            if (!str) return -1;
-            *pmsg16    = LB_GETTEXT16;
-            *plparam   = (LPARAM)MapLS(str);
-        }
-        return 1;
     case CB_GETLBTEXT:
-        if ( WINPROC_TestCBForStr( hwnd ))
+        if ( WINPROC_TestLBForStr( hwnd, msg32 ))
         {
             LPSTR str = HeapAlloc( GetProcessHeap(), 0, 512 ); /* FIXME: fixed sized buffer */
             if (!str) return -1;
-            *pmsg16    = CB_GETLBTEXT16;
+            *pmsg16    = (msg32 == LB_GETTEXT) ? LB_GETTEXT16 : CB_GETLBTEXT16;
             *plparam   = (LPARAM)MapLS(str);
         }
         return 1;
@@ -2658,16 +2605,8 @@ void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         }
         break;
     case LB_GETTEXT:
-        if ( WINPROC_TestLBForStr( hwnd ))
-        {
-            LPSTR str = MapSL(p16->lParam);
-            UnMapLS( p16->lParam );
-            p16->lResult = MultiByteToWideChar( CP_ACP, 0, str, -1, (LPWSTR)lParam, 0x7fffffff ) - 1;
-            HeapFree( GetProcessHeap(), 0, (LPARAM *)str );
-        }
-        break;
     case CB_GETLBTEXT:
-        if ( WINPROC_TestCBForStr( hwnd ))
+        if ( WINPROC_TestLBForStr( hwnd, msg ))
         {
             LPSTR str = MapSL(p16->lParam);
             UnMapLS( p16->lParam );
@@ -2814,6 +2753,22 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
         }
         break;
 
+    case LB_ADDSTRING:
+    case LB_INSERTSTRING:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_SELECTSTRING:
+    case CB_ADDSTRING:
+    case CB_INSERTSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_SELECTSTRING:
+        if (!lParam || !WINPROC_TestLBForStr( hwnd, msg ))
+        {
+            ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
+            break;
+        }
+        /* fall through */
     case WM_SETTEXT:
     case WM_WININICHANGE:
     case WM_DEVMODECHANGE:
@@ -2821,7 +2776,6 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
     case LB_DIR:
     case LB_ADDFILE:
     case EM_REPLACESEL:
-    handle_wm_settext:
         if (!lParam) ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
         else
         {
@@ -2876,48 +2830,9 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
         }
         break;
 
-/* Listbox */
-    case LB_ADDSTRING:
-    case LB_INSERTSTRING:
-    case LB_FINDSTRING:
-    case LB_FINDSTRINGEXACT:
-    case LB_SELECTSTRING:
-        if (lParam && WINPROC_TestLBForStr( hwnd )) goto handle_wm_settext;
-        ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-        break;
-
     case LB_GETTEXT:
-        if (lParam && WINPROC_TestLBForStr( hwnd ))
-        {
-            char buffer[512];  /* FIXME: fixed sized buffer */
-            LRESULT result;
-
-            ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, (LPARAM)buffer );
-            result = dialog ? GetWindowLongPtrW( hwnd, DWLP_MSGRESULT ) : ret;
-            if (result >= 0)
-            {
-                DWORD len;
-                RtlMultiByteToUnicodeN( (LPWSTR)lParam, ~0u, &len, buffer, strlen(buffer) + 1 );
-                result = len / sizeof(WCHAR) - 1;
-                if (dialog) SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
-                else ret = result;
-            }
-        }
-        else ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-        break;
-
-/* Combobox */
-    case CB_ADDSTRING:
-    case CB_INSERTSTRING:
-    case CB_FINDSTRING:
-    case CB_FINDSTRINGEXACT:
-    case CB_SELECTSTRING:
-        if (lParam && WINPROC_TestCBForStr( hwnd )) goto handle_wm_settext;
-        ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-        break;
-
     case CB_GETLBTEXT:
-        if (lParam && WINPROC_TestCBForStr( hwnd ))
+        if (lParam && WINPROC_TestLBForStr( hwnd, msg ))
         {
             char buffer[512];  /* FIXME: fixed sized buffer */
             LRESULT result;
@@ -2936,7 +2851,6 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd, UINT msg, WPAR
         else ret = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
         break;
 
-/* Multiline edit */
     case EM_GETLINE:
         {
             char *ptr, buffer[512];
