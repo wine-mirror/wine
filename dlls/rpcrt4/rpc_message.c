@@ -271,8 +271,8 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
   PUCHAR buffer_pos;
   DWORD hdr_size;
   LONG count;
-  unsigned char *pkt, *auth_hdr;
-  LONG alen = AuthLength ? (AuthLength + 8) : 0;
+  unsigned char *pkt;
+  LONG alen = AuthLength ? (AuthLength + sizeof(RpcAuthVerifier)) : 0;
 
   buffer_pos = Buffer;
   /* The packet building functions save the packet header size, so we can use it. */
@@ -309,16 +309,16 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
     /* add the authorization info */
     if (Connection->AuthInfo && AuthLength)
     {
-      auth_hdr = &pkt[Header->common.frag_len - alen];
+      RpcAuthVerifier *auth_hdr = (RpcAuthVerifier *)&pkt[Header->common.frag_len - alen];
 
-      auth_hdr[0] = Connection->AuthInfo->AuthnSvc;
-      auth_hdr[1] = Connection->AuthInfo->AuthnLevel;
-      auth_hdr[2] = auth_pad_len;
-      auth_hdr[3] = 0x00;
-
+      auth_hdr->auth_type = Connection->AuthInfo->AuthnSvc;
+      auth_hdr->auth_level = Connection->AuthInfo->AuthnLevel;
+      auth_hdr->auth_pad_length = auth_pad_len;
+      auth_hdr->auth_reserved = 0;
       /* a unique number... */
-      memcpy(&auth_hdr[4], &Connection, 4);
-      memcpy(&auth_hdr[8], Auth, AuthLength);
+      auth_hdr->auth_context_id = (unsigned long)Connection;
+
+      memcpy(auth_hdr + 1, Auth, AuthLength);
     }
 
 write:

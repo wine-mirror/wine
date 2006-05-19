@@ -134,6 +134,15 @@ typedef union
   RpcPktBindNAckHdr bind_nack;
 } RpcPktHdr;
 
+typedef struct
+{
+  unsigned char auth_type;       /* authentication scheme in use */
+  unsigned char auth_level;      /* RPC_C_AUTHN_LEVEL* */
+  unsigned char auth_pad_length; /* length of padding to restore n % 4 alignment */
+  unsigned char auth_reserved;   /* reserved, must be zero */
+  unsigned long auth_context_id; /* unique value for the authenticated connection */
+} RpcAuthVerifier;
+
 #define RPC_VER_MAJOR             5
 #define RPC_VER_MINOR             0
 
