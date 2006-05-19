@@ -18,9 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * TODO:
- *  - figure out whether we *really* got this right
- *  - check for errors and throw exceptions
- *  - what are the marshalling functions supposed to return?
+ *  - fix the wire-protocol to match MS/RPC
  *  - finish RpcStream_Vtbl
  */
 

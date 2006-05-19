@@ -2,6 +2,7 @@
  * NDR data marshalling
  *
  * Copyright 2002 Greg Turner
+ * Copyright 2003-2006 CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,8 +19,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * TODO:
- *  - figure out whether we *really* got this right
- *  - check for errors and throw exceptions
+ *  - Non-conformant strings
+ *  - String structs
+ *  - Varying arrays
+ *  - Encapsulated unions
+ *  - Byte count pointers
+ *  - transmit_as/represent as
+ *  - Multi-dimensional arrays
+ *  - Conversion functions (NdrConvert)
+ *  - Checks for integer overflow when calculating array sizes
+ *  - Checks for out-of-memory conditions
  */
 
 #include <stdarg.h>
