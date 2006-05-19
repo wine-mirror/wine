@@ -470,8 +470,23 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
             case RPC_FC_BIND_CONTEXT: /* explicit context */
                 {
                     NDR_EHD_CONTEXT * pDesc = (NDR_EHD_CONTEXT *)&pFormat[current_offset];
+                    NDR_CCONTEXT context_handle;
                     TRACE("Explicit bind context\n");
-                    hBinding = NDRCContextBinding(*(NDR_CCONTEXT *)ARG_FROM_OFFSET(args, pDesc->offset));
+                    if (pDesc->flags & HANDLE_PARAM_IS_VIA_PTR)
+                    {
+                        TRACE("\tHANDLE_PARAM_IS_VIA_PTR\n");
+                        context_handle = **(NDR_CCONTEXT **)ARG_FROM_OFFSET(args, pDesc->offset);
+                    }
+                    else
+                        context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(args, pDesc->offset);
+                    if ((pDesc->flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL) &&
+                        !context_handle)
+                    {
+                        ERR("null context handle isn't allowed\n");
+                        RpcRaiseException(RPC_X_SS_IN_NULL_CONTEXT);
+                        return 0;
+                    }
+                    hBinding = NDRCContextBinding(context_handle);
                     /* FIXME: should we store this structure in stubMsg.pContext? */
                     current_offset += sizeof(NDR_EHD_CONTEXT);
                     break;
