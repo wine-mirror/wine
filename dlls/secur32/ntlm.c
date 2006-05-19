@@ -395,312 +395,234 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
  PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
+    PNegoHelper helper;
+    ULONG ctxt_attr = 0;
+    char* buffer;
+    PBYTE bin;
+    int buffer_len, bin_len, max_len = NTLM_MAX_BUF;
 
     TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-    if(phCredential){
-        /* As the server side of sspi never calls this, make sure that 
-         * the handler is a client handler.
-         */
-        PNegoHelper helper = (PNegoHelper)phCredential->dwLower;
-        ULONG ctxt_attr = 0;
-        if(helper->mode == NTLM_CLIENT)
+    if(!phCredential)
+        return SEC_E_INVALID_HANDLE;
+
+    /* As the server side of sspi never calls this, make sure that
+     * the handler is a client handler.
+     */
+    helper = (PNegoHelper)phCredential->dwLower;
+    if(helper->mode != NTLM_CLIENT)
+    {
+        TRACE("Helper mode = %d\n", helper->mode);
+        return SEC_E_INVALID_HANDLE;
+    }
+
+    /****************************************
+     * When communicating with the client, there can be the
+     * following reply packets:
+     * YR <base64 blob>         should be sent to the server
+     * PW                       should be sent back to helper with
+     *                          base64 encoded password
+     * AF <base64 blob>         client is done, blob should be
+     *                          sent to server with KK prefixed
+     * BH <char reason>         something broke
+     */
+    /* The squid cache size is 2010 chars, and that's what ntlm_auth uses */
+
+    if (pszTargetName)
+    {
+        TRACE("According to a MS whitepaper pszTargetName is ignored.\n");
+    }
+    /* Handle all the flags */
+    if(fContextReq & ISC_REQ_CONFIDENTIALITY)
+    {
+        FIXME("InitializeSecurityContext(): ISC_REQ_CONFIDENTIALITY stub\n");
+    }
+    if(fContextReq & ISC_REQ_CONNECTION)
+    {
+        /* This is default, so we'll enable it */
+        ctxt_attr |= ISC_RET_CONNECTION;
+    }
+    if(fContextReq & ISC_REQ_EXTENDED_ERROR)
+        FIXME("ISC_REQ_EXTENDED_ERROR\n");
+    if(fContextReq & ISC_REQ_INTEGRITY)
+        FIXME("ISC_REQ_INTEGRITY\n");
+    if(fContextReq & ISC_REQ_MUTUAL_AUTH)
+        FIXME("ISC_REQ_MUTUAL_AUTH\n");
+    if(fContextReq & ISC_REQ_REPLAY_DETECT)
+        FIXME("ISC_REQ_REPLAY_DETECT\n");
+    if(fContextReq & ISC_REQ_SEQUENCE_DETECT)
+        FIXME("ISC_REQ_SEQUENCE_DETECT\n");
+    if(fContextReq & ISC_REQ_STREAM)
+        FIXME("ISC_REQ_STREAM\n");
+
+    /* Done with the flags */
+    if(TargetDataRep == SECURITY_NETWORK_DREP){
+        FIXME("Don't know how to do SECURITY_NETWORK_DREP\n");
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(char) * NTLM_MAX_BUF);
+    bin = HeapAlloc(GetProcessHeap(), 0, sizeof(BYTE) * NTLM_MAX_BUF);
+
+    if((phContext == NULL) && (pInput == NULL))
+    {
+        TRACE("First time in ISC()\n");
+        /* Request a challenge request from ntlm_auth */
+        if(helper->password == NULL)
         {
-            /****************************************
-             * When communicating with the client, there can be the 
-             * following reply packets:
-             * YR <base64 blob>         should be sent to the server
-             * PW                       should be sent back to helper with
-             *                          base64 encoded password
-             * AF <base64 blob>         client is done, blob should be 
-             *                          sent to server with KK prefixed
-             * BH <char reason>         something broke
-             */
-            BOOL first = FALSE;
-            /* The squid cache size is 2010 chars, and that's what ntlm_auth uses */
-            char* buffer = HeapAlloc(GetProcessHeap(), 0, 
-                    sizeof(char) * NTLM_MAX_BUF);
-            PBYTE bin = HeapAlloc(GetProcessHeap(), 0, sizeof(BYTE) * 
-                    NTLM_MAX_BUF);
-            int buffer_len, bin_len, max_len = NTLM_MAX_BUF;
-            
-            if((phContext == NULL) && (pInput == NULL))
-                first = TRUE;
-            if (pszTargetName)
-            {
-                TRACE("According to a MS whitepaper pszTargetName is ignored.\n");
-            }
-            /* Handle all the flags */
-            if(fContextReq & ISC_REQ_CONFIDENTIALITY)
-            {
-                FIXME("InitializeSecurityContext(): ISC_REQ_CONFIDENTIALITY stub\n");
-            }
-            if(fContextReq & ISC_REQ_CONNECTION)
-            {
-                /* This is default, so we'll enable it */
-                ctxt_attr |= ISC_RET_CONNECTION;
-            }
-            if(fContextReq & ISC_REQ_EXTENDED_ERROR)
-            {
-                FIXME("InitializeSecurityContext(): ISC_REQ_EXTENDED_ERROR stub\n");
-            }
-            if(fContextReq & ISC_REQ_INTEGRITY)
-            {
-                FIXME("InitializeSecurityContext(): ISC_REQ_INTEGRITY stub\n");
-            }
-            if(fContextReq & ISC_REQ_MUTUAL_AUTH)
-            {
-                FIXME("InitializeSecurityContext(): ISC_REQ_MUTUAL_AUTH stub\n");
-            }
-            if(fContextReq & ISC_REQ_REPLAY_DETECT)
-            {
-                FIXME("InitializeSecurityContext(): ISC_REQ_REPLAY_DETECT stub\n");
-            }
-            if(fContextReq & ISC_REQ_SEQUENCE_DETECT)
-            {
-                FIXME("InitializeSecurityContext(): ISC_REQ_SEQUENCE_DETECT stub\n");
-            }
-            if(fContextReq & ISC_REQ_STREAM)
-            {
-                FIXME("InitializeSecurityContext(): ISC_REQ_STREAM stub\n");
-            }
-            /* Done with the flags */
-            if(TargetDataRep == SECURITY_NETWORK_DREP){
-                FIXME("Don't know how to do SECURITY_NETWORK_DREP\n");
-                HeapFree(GetProcessHeap(), 0, buffer);
-                HeapFree(GetProcessHeap(), 0, bin);
-                return SEC_E_UNSUPPORTED_FUNCTION;
-            }
-
-            if(first)
-            {
-                TRACE("First time in ISC()\n");
-                /* Request a challenge request from ntlm_auth */
-                if(helper->password == NULL)
-                {
-                    FIXME("Using empty password for now.\n");
-                    lstrcpynA(buffer, "PW AA==", max_len-1);
-                }
-                else
-                {
-                    lstrcpynA(buffer, "PW ", max_len-1);
-                    if((ret = encodeBase64((unsigned char*)helper->password, 
-                                helper->pwlen-2, buffer+3,
-                                max_len-3, &buffer_len)) != SEC_E_OK)
-                    {
-                        TRACE("Deleting password!\n");
-                        memset(helper->password, 0, helper->pwlen-2);
-                        HeapFree(GetProcessHeap(), 0, helper->password);
-                        HeapFree(GetProcessHeap(), 0, buffer);
-                        HeapFree(GetProcessHeap(), 0, bin);
-                        return ret;
-                    }
-                                    
-                }
-
-                TRACE("Sending to helper: %s\n", debugstr_a(buffer));
-                if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != 
-                    SEC_E_OK)
-                {
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return ret;
-                }
-                TRACE("Helper returned %s\n", debugstr_a(buffer));
-                lstrcpynA(buffer, "YR", max_len-1);
-
-                if((ret = run_helper(helper, buffer, max_len, &buffer_len)) !=
-                        SEC_E_OK)
-                {
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return ret;
-                }
-
-                TRACE("%s\n", buffer);
-                 
-                if(strncmp(buffer, "YR ", 3) != 0)
-                {
-                    
-                    /* Something borked */
-                    TRACE("Helper returned %c%c\n", buffer[0], buffer[1]);
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INTERNAL_ERROR;
-                }
-                if((ret = decodeBase64(buffer+3, buffer_len-3, bin, 
-                                max_len-1, &bin_len)) != SEC_E_OK)
-                {
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return ret;
-                }
-
-                /* put the decoded client blob into the out buffer */
-
-                if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
-                {
-                    if (pOutput)
-                    {
-                        pOutput->cBuffers = 1;
-                        pOutput->pBuffers[0].pvBuffer = SECUR32_ALLOC(bin_len);
-                        pOutput->pBuffers[0].cbBuffer = bin_len;
-                    }
-                }
-
-                if (!pOutput || !pOutput->cBuffers || pOutput->pBuffers[0].cbBuffer < bin_len)
-                {
-                    TRACE("out buffer is NULL or has not enough space\n");
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_BUFFER_TOO_SMALL;
-                }
-
-                if (!pOutput->pBuffers[0].pvBuffer)
-                {
-                    TRACE("out buffer is NULL\n");
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INTERNAL_ERROR;
-                }
-
-                pOutput->pBuffers[0].cbBuffer = bin_len;
-                pOutput->pBuffers[0].BufferType = SECBUFFER_DATA;
-                memcpy(pOutput->pBuffers[0].pvBuffer, bin, bin_len);
-                
-                ret = SEC_I_CONTINUE_NEEDED;
-            }
-            else
-            {
-                /* handle second call here */
-                /* encode server data to base64 */
-                if (!pInput || !pInput->cBuffers)
-                {
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INCOMPLETE_MESSAGE;
-                }
-
-                if (!pInput->pBuffers[0].pvBuffer)
-                {
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INTERNAL_ERROR;
-                }
-
-                if(pInput->pBuffers[0].cbBuffer > max_len)
-                {
-                    TRACE("pInput->pBuffers[0].cbBuffer is: %ld\n", 
-                            pInput->pBuffers[0].cbBuffer);
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INVALID_TOKEN;
-                }
-                else
-                    bin_len = pInput->pBuffers[0].cbBuffer;
-
-                memcpy(bin, pInput->pBuffers[0].pvBuffer, bin_len);
-
-                lstrcpynA(buffer, "TT ", max_len-1);
-
-                if((ret = encodeBase64(bin, bin_len, buffer+3,
-                                max_len-3, &buffer_len)) != SEC_E_OK)
-                {
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return ret;
-                }
-
-                TRACE("Server sent: %s\n", debugstr_a(buffer));
-
-                /* send TT base64 blob to ntlm_auth */
-                if((ret = run_helper(helper, buffer, max_len, &buffer_len)) !=
-                        SEC_E_OK)
-                {
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return ret;
-                }
-                
-                TRACE("Helper replied: %s\n", debugstr_a(buffer));
-                                
-                if( (strncmp(buffer, "KK ", 3) != 0) && 
-                        (strncmp(buffer, "AF ", 3) !=0))
-                {
-                    TRACE("Helper returned %c%c\n", buffer[0], buffer[1]);
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INVALID_TOKEN;
-                }
-
-                /* decode the blob and send it to server */
-                if((ret = decodeBase64(buffer+3, buffer_len-3, bin, max_len, 
-                                &bin_len)) != SEC_E_OK)
-                {
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return ret;
-                }
-
-                /* put the decoded client blob into the out buffer */
-
-                if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
-                {
-                    if (pOutput)
-                    {
-                        pOutput->cBuffers = 1;
-                        pOutput->pBuffers[0].pvBuffer = SECUR32_ALLOC(bin_len);
-                        pOutput->pBuffers[0].cbBuffer = bin_len;
-                    }
-                }
-
-                if (!pOutput || !pOutput->cBuffers || pOutput->pBuffers[0].cbBuffer < bin_len)
-                {
-                    TRACE("out buffer is NULL or has not enough space\n");
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_BUFFER_TOO_SMALL;
-                }
-
-                if (!pOutput->pBuffers[0].pvBuffer)
-                {
-                    TRACE("out buffer is NULL\n");
-                    HeapFree(GetProcessHeap(), 0, buffer);
-                    HeapFree(GetProcessHeap(), 0, bin);
-                    return SEC_E_INTERNAL_ERROR;
-                }
-
-                pOutput->pBuffers[0].cbBuffer = bin_len;
-                pOutput->pBuffers[0].BufferType = SECBUFFER_DATA;
-                memcpy(pOutput->pBuffers[0].pvBuffer, bin, bin_len);
-                
-                ret = SEC_E_OK;
-                phNewContext->dwUpper = ctxt_attr;
-                phNewContext->dwLower = ret;
-            }
-            HeapFree(GetProcessHeap(), 0, buffer);
-            HeapFree(GetProcessHeap(), 0, bin);
-            if(ret != SEC_I_CONTINUE_NEEDED)
-            {
-                TRACE("Deleting password!\n");
-                if(helper->password)
-                    memset(helper->password, 0, helper->pwlen-2);
-                HeapFree(GetProcessHeap(), 0, helper->password);
-            }
-
+            FIXME("Using empty password for now.\n");
+            lstrcpynA(buffer, "PW AA==", max_len-1);
         }
         else
         {
-            ret = SEC_E_INVALID_HANDLE;
-            TRACE("Helper mode = %d\n", helper->mode);
+            lstrcpynA(buffer, "PW ", max_len-1);
+            if((ret = encodeBase64((unsigned char*)helper->password,
+                        helper->pwlen-2, buffer+3,
+                        max_len-3, &buffer_len)) != SEC_E_OK)
+            {
+                TRACE("Deleting password!\n");
+                memset(helper->password, 0, helper->pwlen-2);
+                HeapFree(GetProcessHeap(), 0, helper->password);
+                goto end;
+            }
+
         }
+
+        TRACE("Sending to helper: %s\n", debugstr_a(buffer));
+        if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
+            goto end;
+
+        TRACE("Helper returned %s\n", debugstr_a(buffer));
+        lstrcpynA(buffer, "YR", max_len-1);
+
+        if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
+            goto end;
+
+        TRACE("%s\n", buffer);
+
+        if(strncmp(buffer, "YR ", 3) != 0)
+        {
+            /* Something borked */
+            TRACE("Helper returned %c%c\n", buffer[0], buffer[1]);
+            ret = SEC_E_INTERNAL_ERROR;
+            goto end;
+        }
+        if((ret = decodeBase64(buffer+3, buffer_len-3, bin,
+                        max_len-1, &bin_len)) != SEC_E_OK)
+            goto end;
+
+        /* put the decoded client blob into the out buffer */
+
+        ret = SEC_I_CONTINUE_NEEDED;
     }
     else
     {
-        ret = SEC_E_INVALID_HANDLE;
+        /* handle second call here */
+        /* encode server data to base64 */
+        if (!pInput || !pInput->cBuffers)
+        {
+            ret = SEC_E_INCOMPLETE_MESSAGE;
+            goto end;
+        }
+
+        if (!pInput->pBuffers[0].pvBuffer)
+        {
+            ret = SEC_E_INTERNAL_ERROR;
+            goto end;
+        }
+
+        if(pInput->pBuffers[0].cbBuffer > max_len)
+        {
+            TRACE("pInput->pBuffers[0].cbBuffer is: %ld\n",
+                    pInput->pBuffers[0].cbBuffer);
+            ret = SEC_E_INVALID_TOKEN;
+            goto end;
+        }
+        else
+            bin_len = pInput->pBuffers[0].cbBuffer;
+
+        memcpy(bin, pInput->pBuffers[0].pvBuffer, bin_len);
+
+        lstrcpynA(buffer, "TT ", max_len-1);
+
+        if((ret = encodeBase64(bin, bin_len, buffer+3,
+                        max_len-3, &buffer_len)) != SEC_E_OK)
+            goto end;
+
+        TRACE("Server sent: %s\n", debugstr_a(buffer));
+
+        /* send TT base64 blob to ntlm_auth */
+        if((ret = run_helper(helper, buffer, max_len, &buffer_len)) != SEC_E_OK)
+            goto end;
+
+        TRACE("Helper replied: %s\n", debugstr_a(buffer));
+
+        if( (strncmp(buffer, "KK ", 3) != 0) &&
+                (strncmp(buffer, "AF ", 3) !=0))
+        {
+            TRACE("Helper returned %c%c\n", buffer[0], buffer[1]);
+            HeapFree(GetProcessHeap(), 0, buffer);
+            HeapFree(GetProcessHeap(), 0, bin);
+            return SEC_E_INVALID_TOKEN;
+        }
+
+        /* decode the blob and send it to server */
+        if((ret = decodeBase64(buffer+3, buffer_len-3, bin, max_len,
+                        &bin_len)) != SEC_E_OK)
+        {
+            HeapFree(GetProcessHeap(), 0, buffer);
+            HeapFree(GetProcessHeap(), 0, bin);
+            return ret;
+        }
+
+        phNewContext->dwUpper = ctxt_attr;
+        phNewContext->dwLower = ret;
+
+        ret = SEC_E_OK;
     }
+
+    /* put the decoded client blob into the out buffer */
+
+    if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
+    {
+        if (pOutput)
+        {
+            pOutput->cBuffers = 1;
+            pOutput->pBuffers[0].pvBuffer = SECUR32_ALLOC(bin_len);
+            pOutput->pBuffers[0].cbBuffer = bin_len;
+        }
+    }
+
+    if (!pOutput || !pOutput->cBuffers || pOutput->pBuffers[0].cbBuffer < bin_len)
+    {
+        TRACE("out buffer is NULL or has not enough space\n");
+        ret = SEC_E_BUFFER_TOO_SMALL;
+        goto end;
+    }
+
+    if (!pOutput->pBuffers[0].pvBuffer)
+    {
+        TRACE("out buffer is NULL\n");
+        ret = SEC_E_INTERNAL_ERROR;
+        goto end;
+    }
+
+    pOutput->pBuffers[0].cbBuffer = bin_len;
+    pOutput->pBuffers[0].BufferType = SECBUFFER_DATA;
+    memcpy(pOutput->pBuffers[0].pvBuffer, bin, bin_len);
+
+    if(ret != SEC_I_CONTINUE_NEEDED)
+    {
+        TRACE("Deleting password!\n");
+        if(helper->password)
+            memset(helper->password, 0, helper->pwlen-2);
+        HeapFree(GetProcessHeap(), 0, helper->password);
+    }
+end:
+    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, bin);
     return ret;
 }
 
