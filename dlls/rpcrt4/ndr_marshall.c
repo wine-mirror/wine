@@ -1109,8 +1109,7 @@ static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
         unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
-        *(void **)memptr = NULL;
-        PointerUnmarshall(pStubMsg, bufptr, (unsigned char**)memptr, info+4, fMustAlloc);
+        PointerUnmarshall(pStubMsg, bufptr, (unsigned char**)memptr, info+4, TRUE);
       }
     }
     pFormat += 8 * count;
@@ -1667,9 +1666,8 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pMemory += 4;
       break;
     case RPC_FC_POINTER:
-      *(unsigned char**)pMemory = NULL;
       TRACE("pointer => %p\n", pMemory);
-      NdrPointerUnmarshall(pStubMsg, (unsigned char**)pMemory, pPointer, fMustAlloc);
+      NdrPointerUnmarshall(pStubMsg, (unsigned char**)pMemory, pPointer, TRUE);
       pPointer += 4;
       pMemory += 4;
       break;
@@ -3767,11 +3765,10 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pSt
             case RPC_FC_UP:
             case RPC_FC_OP:
             case RPC_FC_FP:
-                **(void***)ppMemory = NULL;
                 ALIGN_POINTER(pStubMsg->Buffer, 4);
                 saved_buffer = pStubMsg->Buffer;
                 pStubMsg->Buffer += 4; /* for pointer ID */
-                PointerUnmarshall(pStubMsg, saved_buffer, *(unsigned char ***)ppMemory, desc, fMustAlloc);
+                PointerUnmarshall(pStubMsg, saved_buffer, *(unsigned char ***)ppMemory, desc, TRUE);
                 break;
             default:
                 m(pStubMsg, ppMemory, desc, fMustAlloc);
