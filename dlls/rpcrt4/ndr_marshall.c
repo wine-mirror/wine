@@ -1444,9 +1444,8 @@ unsigned char * WINAPI NdrSimpleStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     *ppMemory = NdrAllocate(pStubMsg, size);
     memcpy(*ppMemory, pStubMsg->Buffer, size);
   } else {
-    if (pStubMsg->ReuseBuffer && !*ppMemory)
-      /* for servers, we may just point straight into the RPC buffer, I think
-       * (I guess that's what MS does since MIDL code doesn't try to free) */
+    if (!pStubMsg->IsClient && !*ppMemory)
+      /* for servers, we just point straight into the RPC buffer */
       *ppMemory = pStubMsg->Buffer;
     else
       /* for clients, memory should be provided by caller */

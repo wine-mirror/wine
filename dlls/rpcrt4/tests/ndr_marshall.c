@@ -76,6 +76,8 @@ static void test_pointer_marshal(const unsigned char *formattypes,
                                  long srcsize,
                                  const void *wiredata,
                                  long wiredatalen,
+                                 int(*cmp)(const void*,const void*,size_t),
+                                 long num_additional_allocs,
                                  const char *msgpfx)
 {
     RPC_MESSAGE RpcMessage;
@@ -86,6 +88,8 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     unsigned char *mem, *mem_orig;
 
     my_alloc_called = my_free_called = 0;
+    if(!cmp)
+        cmp = memcmp;
 
     StubDesc = Object_StubDesc;
     StubDesc.pFormatTypes = formattypes;
@@ -159,16 +163,12 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
     ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
     ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
-    if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
-        ok(!memcmp(*(void**)mem, *(void**)memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
-    else
-        ok(!memcmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
+    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     ok(StubMsg.MemorySize == 0, "%s: memorysize %ld\n", msgpfx, StubMsg.MemorySize);
-    if(formattypes[1] & 0x10)
-        my_alloc_called--; /* this should call my_alloc */
-    ok(my_alloc_called == 0, "%s: didn't expect call to my_alloc\n", msgpfx);
- 
+    ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
+    my_alloc_called = 0;
+
     /* reset the buffer and call with must alloc */
     StubMsg.Buffer = StubMsg.BufferStart;
     if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
@@ -179,19 +179,14 @@ static void test_pointer_marshal(const unsigned char *formattypes,
 todo_wine {
     ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
  }
-    if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
-        ok(!memcmp(*(void**)mem, *(void**)memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
-    else
-        ok(!memcmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
+    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     ok(StubMsg.MemorySize == 0, "%s: memorysize %ld\n", msgpfx, StubMsg.MemorySize);
 
-    if(formattypes[1] & 0x10)
-        my_alloc_called--; /* this should call my_alloc */
 todo_wine {
-    ok(my_alloc_called == 0, "%s: didn't expect call to my_alloc\n", msgpfx);
-    my_alloc_called = 0;
+    ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
 }
+    my_alloc_called = 0;
     if(formattypes[0] != 0x11 /* FC_RP */)
     {
         /* now pass the address of a NULL ptr */
@@ -200,10 +195,11 @@ todo_wine {
         ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
         ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
         ok(mem != StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem points to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
-        ok(!memcmp(mem, memsrc, size), "%s: incorrectly unmarshaled\n", msgpfx);
+        ok(!cmp(mem, memsrc, size), "%s: incorrectly unmarshaled\n", msgpfx);
         ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
         ok(StubMsg.MemorySize == 0, "%s: memorysize %ld\n", msgpfx, StubMsg.MemorySize);
-        ok(my_alloc_called == 1, "%s: expected call to my_alloc\n", msgpfx);
+        ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
+        my_alloc_called = 0;
         NdrPointerFree(&StubMsg, mem, formattypes);
  
         /* again pass address of NULL ptr, but pretend we're a server */
@@ -215,16 +211,23 @@ todo_wine {
 todo_wine {
         ok(mem == StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem doesn't point to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
  }
-        ok(!memcmp(mem, memsrc, size), "%s: incorrecly unmarshaled\n", msgpfx);
+        ok(!cmp(mem, memsrc, size), "%s: incorrecly unmarshaled\n", msgpfx);
         ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
         ok(StubMsg.MemorySize == 0, "%s: memorysize %ld\n", msgpfx, StubMsg.MemorySize); 
 todo_wine {
-        ok(my_alloc_called == 1, "%s: didn't expect call to my_alloc\n", msgpfx);
+        ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
+        my_alloc_called = 0;
  }
     }
     HeapFree(GetProcessHeap(), 0, mem_orig);
     HeapFree(GetProcessHeap(), 0, StubMsg.BufferStart);
 }
+
+static int deref_cmp(const void *s1, const void *s2, size_t num)
+{
+    return memcmp(*(void**)s1, *(void**)s2, num);
+}
+
 
 static void test_simple_types()
 {
@@ -360,60 +363,342 @@ static void test_simple_types()
     *(void**)wiredata = ch_ptr;
     wiredata[sizeof(void*)] = ch;
  
-    test_pointer_marshal(fmtstr_up_char, ch_ptr, 1, wiredata, 5,  "up_char");
-    test_pointer_marshal(fmtstr_up_byte, ch_ptr, 1, wiredata, 5,  "up_byte");
-    test_pointer_marshal(fmtstr_up_small, ch_ptr, 1, wiredata, 5,  "up_small");
-    test_pointer_marshal(fmtstr_up_usmall, ch_ptr, 1, wiredata, 5, "up_usmall");
+    test_pointer_marshal(fmtstr_up_char, ch_ptr, 1, wiredata, 5, NULL, 0, "up_char");
+    test_pointer_marshal(fmtstr_up_byte, ch_ptr, 1, wiredata, 5, NULL, 0, "up_byte");
+    test_pointer_marshal(fmtstr_up_small, ch_ptr, 1, wiredata, 5, NULL, 0,  "up_small");
+    test_pointer_marshal(fmtstr_up_usmall, ch_ptr, 1, wiredata, 5, NULL, 0, "up_usmall");
 
-    test_pointer_marshal(fmtstr_rp_char, ch_ptr, 1, &ch, 1, "rp_char");
+    test_pointer_marshal(fmtstr_rp_char, ch_ptr, 1, &ch, 1, NULL, 0, "rp_char");
 
-    test_pointer_marshal(fmtstr_rpup_char, &ch_ptr, 1, wiredata, 5, "rpup_char");
-    test_pointer_marshal(fmtstr_rpup_char2, ch_ptr, 1, wiredata, 5, "rpup_char2");
+    test_pointer_marshal(fmtstr_rpup_char, &ch_ptr, 1, wiredata, 5, deref_cmp, 1, "rpup_char");
+    test_pointer_marshal(fmtstr_rpup_char2, ch_ptr, 1, wiredata, 5, NULL, 0, "rpup_char2");
 
     s = 0xa597;
     *(void**)wiredata = &s;
     *(unsigned short*)(wiredata + sizeof(void*)) = s;
 
-    test_pointer_marshal(fmtstr_up_wchar, &s, 2, wiredata, 6,  "up_wchar");
-    test_pointer_marshal(fmtstr_up_short, &s, 2, wiredata, 6,  "up_short");
-    test_pointer_marshal(fmtstr_up_ushort, &s, 2, wiredata, 6,  "up_ushort");
+    test_pointer_marshal(fmtstr_up_wchar, &s, 2, wiredata, 6, NULL, 0, "up_wchar");
+    test_pointer_marshal(fmtstr_up_short, &s, 2, wiredata, 6, NULL, 0, "up_short");
+    test_pointer_marshal(fmtstr_up_ushort, &s, 2, wiredata, 6, NULL, 0, "up_ushort");
 
     i = s;
     *(void**)wiredata = &i;
 #if 0 /* Not sure why this crashes under Windows */
-    test_pointer_marshal(fmtstr_up_enum16, &i, 2, wiredata, 6,  "up_enum16");
+    test_pointer_marshal(fmtstr_up_enum16, &i, 2, wiredata, 6, NULL, 0, "up_enum16");
 #endif
 
     l = 0xcafebabe;
     *(void**)wiredata = &l;
     *(unsigned long*)(wiredata + sizeof(void*)) = l;
 
-    test_pointer_marshal(fmtstr_up_long, &l, 4, wiredata, 8,  "up_long");
-    test_pointer_marshal(fmtstr_up_ulong, &l, 4, wiredata, 8,  "up_ulong");
-    test_pointer_marshal(fmtstr_up_enum32, &l, 4, wiredata, 8,  "up_emun32");
-    test_pointer_marshal(fmtstr_up_errorstatus, &l, 4, wiredata, 8,  "up_errorstatus");
+    test_pointer_marshal(fmtstr_up_long, &l, 4, wiredata, 8, NULL, 0, "up_long");
+    test_pointer_marshal(fmtstr_up_ulong, &l, 4, wiredata, 8, NULL, 0,  "up_ulong");
+    test_pointer_marshal(fmtstr_up_enum32, &l, 4, wiredata, 8, NULL, 0,  "up_emun32");
+    test_pointer_marshal(fmtstr_up_errorstatus, &l, 4, wiredata, 8, NULL, 0,  "up_errorstatus");
 
     ll = ((ULONGLONG)0xcafebabe) << 32 | 0xdeadbeef;
     *(void**)wiredata = &ll;
     *(void**)(wiredata + sizeof(void*)) = NULL;
     *(ULONGLONG*)(wiredata + 2 * sizeof(void*)) = ll;
-    test_pointer_marshal(fmtstr_up_longlong, &ll, 8, wiredata, 16,  "up_longlong");
+    test_pointer_marshal(fmtstr_up_longlong, &ll, 8, wiredata, 16, NULL, 0, "up_longlong");
 
     f = 3.1415;
     *(void**)wiredata = &f;
     *(float*)(wiredata + sizeof(void*)) = f;
-    test_pointer_marshal(fmtstr_up_float, &f, 4, wiredata, 8,  "up_float");
+    test_pointer_marshal(fmtstr_up_float, &f, 4, wiredata, 8, NULL, 0, "up_float");
 
     d = 3.1415;
     *(void**)wiredata = &d;
     *(void**)(wiredata + sizeof(void*)) = NULL;
     *(double*)(wiredata + 2 * sizeof(void*)) = d;
-    test_pointer_marshal(fmtstr_up_double, &d, 8, wiredata, 16,  "up_double");
+    test_pointer_marshal(fmtstr_up_double, &d, 8, wiredata, 16, NULL, 0,  "up_double");
 
 }
 
+static void test_simple_struct_marshal(const unsigned char *formattypes,
+                                       void *memsrc,
+                                       long srcsize,
+                                       const void *wiredata,
+                                       long wiredatalen,
+                                       int(*cmp)(const void*,const void*,size_t),
+                                       long num_additional_allocs,
+                                       const char *msgpfx)
+{
+    RPC_MESSAGE RpcMessage;
+    MIDL_STUB_MESSAGE StubMsg;
+    MIDL_STUB_DESC StubDesc;
+    DWORD size;
+    void *ptr;
+    unsigned char *mem, *mem_orig;
+
+    my_alloc_called = my_free_called = 0;
+    if(!cmp)
+        cmp = memcmp;
+
+    StubDesc = Object_StubDesc;
+    StubDesc.pFormatTypes = formattypes;
+
+    NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 0);
+
+    StubMsg.BufferLength = 0;
+    NdrSimpleStructBufferSize( &StubMsg, (unsigned char *)memsrc, formattypes );
+    ok(StubMsg.BufferLength >= wiredatalen, "%s: length %ld\n", msgpfx, StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
+    StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
+    ptr = NdrSimpleStructMarshall( &StubMsg,  (unsigned char*)memsrc, formattypes );
+    ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
+    ok(!memcmp(StubMsg.BufferStart, wiredata, wiredatalen), "%s: incorrectly marshaled %08lx %08lx %08lx\n", msgpfx, *(DWORD*)StubMsg.BufferStart,*((DWORD*)StubMsg.BufferStart+1),*((DWORD*)StubMsg.BufferStart+2));
+
+#if 0
+    StubMsg.Buffer = StubMsg.BufferStart;
+    StubMsg.MemorySize = 0;
+    size = NdrSimpleStructMemorySize( &StubMsg, formattypes );
+    ok(size == StubMsg.MemorySize, "%s: size != MemorySize\n", msgpfx);
+    ok(size == srcsize, "%s: mem size %ld\n", msgpfx, size);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
+
+    StubMsg.Buffer = StubMsg.BufferStart;
+    size = NdrSimpleStructMemorySize( &StubMsg, formattypes );
+todo_wine {
+    ok(size == StubMsg.MemorySize, "%s: size != MemorySize\n", msgpfx);
+}
+    ok(StubMsg.MemorySize == ((srcsize + 3) & ~3) + srcsize, "%s: mem size %ld\n", msgpfx, size);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
+#endif
+    size = srcsize;
+    /*** Unmarshalling first with must_alloc false ***/
+
+    StubMsg.Buffer = StubMsg.BufferStart;
+    StubMsg.MemorySize = 0;
+    mem_orig = mem = HeapAlloc(GetProcessHeap(), 0, srcsize);
+    ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 0 );
+    ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
+    ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
+    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
+    ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
+    my_alloc_called = 0;
+    ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
+
+    /* if we're a server we still use the suppiled memory */
+    StubMsg.Buffer = StubMsg.BufferStart;
+    StubMsg.IsClient = 0;
+    ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 0 );
+    ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+    ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
+    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx); 
+    ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    my_alloc_called = 0;
+    ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
+
+    /* ...unless we pass a NULL ptr, then the buffer is used. 
+       Passing a NULL ptr while we're a client && !must_alloc
+       crashes on Windows, so we won't do that. */
+
+#if 0 /* This unmarshal doesn't work correctly under Wine with a
+         pstruct (and worse trashes the buffer, so further tests
+         fail).  When reusing the buffer the ptrs get overwritten with
+         newly alloc'ed ptrs.  In Wine at the moment these get zero'ed
+         before the call to PointerUnmarshall in
+         EmbeddedPointerUnmarshall, this zeros the buffer ptrs, so
+         PointerUnmarshall thinks they're null-ptrs. */
+    mem = NULL;
+    StubMsg.IsClient = 0;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 0 );
+    ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+    ok(mem == StubMsg.BufferStart, "%s: mem not equal buffer\n", msgpfx);
+    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
+    ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    my_alloc_called = 0;
+    ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
+#endif
+    /*** now must_alloc is true ***/
+
+    /* with must_alloc set we always allocate new memory whether or not we're
+       a server and also when passing NULL */
+    mem = mem_orig;
+    StubMsg.IsClient = 1;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 1 );
+    ok(ptr == NULL, "ret %p\n", ptr);
+    ok(mem != mem_orig, "mem not changed %p %p\n", mem, mem_orig);
+    ok(!cmp(mem, memsrc, srcsize), "incorrectly unmarshaled\n");
+    ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    my_alloc_called = 0;
+    ok(StubMsg.MemorySize == 0, "memorysize touched in unmarshal\n");
+
+    mem = NULL;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 1 );
+    ok(ptr == NULL, "ret %p\n", ptr);
+    ok(mem != mem_orig, "mem not changed %p %p\n", mem, mem_orig);
+    ok(!cmp(mem, memsrc, srcsize), "incorrectly unmarshaled\n");
+    ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    my_alloc_called = 0; 
+    ok(StubMsg.MemorySize == 0, "memorysize touched in unmarshal\n");
+
+    mem = mem_orig;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    StubMsg.IsClient = 0;
+    StubMsg.ReuseBuffer = 1;
+    ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 1 );
+    ok(ptr == NULL, "ret %p\n", ptr);
+    ok(mem != mem_orig, "mem not changed %p %p\n", mem, mem_orig);
+    ok(mem != StubMsg.BufferStart, "mem is buffer mem\n");
+    ok(!cmp(mem, memsrc, srcsize), "incorrectly unmarshaled\n");
+    ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    my_alloc_called = 0;
+    ok(StubMsg.MemorySize == 0, "memorysize touched in unmarshal\n");
+
+    mem = NULL;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    StubMsg.IsClient = 0;
+    StubMsg.ReuseBuffer = 1;
+    ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 1 );
+    ok(ptr == NULL, "ret %p\n", ptr);
+    ok(mem != StubMsg.BufferStart, "mem is buffer mem\n");
+    ok(!cmp(mem, memsrc, srcsize), "incorrectly unmarshaled\n"); 
+    ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+    my_alloc_called = 0;
+    ok(StubMsg.MemorySize == 0, "memorysize touched in unmarshal\n");
+
+}
+
+typedef struct
+{
+    long l1;
+    long *pl1;
+    char *pc1;
+} ps1_t;
+
+static int ps1_cmp(const void *s1, const void *s2, size_t num)
+{
+    const ps1_t *p1, *p2;
+
+    p1 = s1;
+    p2 = s2;
+
+    if(p1->l1 != p2->l1)
+        return 1;
+
+    if(p1->pl1 && p2->pl1)
+    {
+        if(*p1->pl1 != *p2->pl1)
+            return 1;
+    }
+    else if(p1->pl1 || p1->pl1)
+        return 1;
+
+    if(p1->pc1 && p2->pc1)
+    {
+        if(*p1->pc1 != *p2->pc1)
+            return 1;
+    }
+    else if(p1->pc1 || p1->pc1)
+        return 1;
+
+    return 0;
+}
+
+static void test_simple_struct(void)
+{
+    unsigned char wiredata[28];
+    unsigned long wiredatalen;
+    long l;
+    char c;
+    ps1_t ps1;
+
+    static const unsigned char fmtstr_simple_struct[] =
+    {
+        0x12, 0x0,      /* FC_UP */
+        NdrFcShort( 0x2 ), /* Offset=2 */
+        0x15, 0x3,      /* FC_STRUCT [align 4] */
+        NdrFcShort( 0x18 ),      /* [size 24] */
+        0x6,            /* FC_SHORT */
+        0x2,            /* FC_CHAR */ 
+        0x38,		/* FC_ALIGNM4 */
+	0x8,		/* FC_LONG */
+	0x8,		/* FC_LONG */
+        0x39,		/* FC_ALIGNM8 */
+        0xb,		/* FC_HYPER */ 
+        0x5b,		/* FC_END */
+    };
+    struct {
+        short s;
+        char c;
+        long l1, l2;
+        LONGLONG ll;
+    } s1;
+
+    static const unsigned char fmtstr_pointer_struct[] =
+    { 
+        0x12, 0x0,      /* FC_UP */
+        NdrFcShort( 0x2 ), /* Offset=2 */
+        0x16, 0x3,      /* FC_PSTRUCT [align 4] */
+        NdrFcShort( 0xc ),      /* [size 12] */
+        0x4b,		/* FC_PP */
+        0x5c,		/* FC_PAD */
+        0x46,		/* FC_NO_REPEAT */
+        0x5c,		/* FC_PAD */
+        NdrFcShort( 0x4 ),	/* 4 */
+	NdrFcShort( 0x4 ),	/* 4 */
+        0x13, 0x8,	/* FC_OP [simple_pointer] */
+        0x8,		/* FC_LONG */
+        0x5c,		/* FC_PAD */
+        0x46,		/* FC_NO_REPEAT */
+        0x5c,		/* FC_PAD */
+	NdrFcShort( 0x8 ),	/* 8 */
+	NdrFcShort( 0x8 ),	/* 8 */
+	0x13, 0x8,	/* FC_OP [simple_pointer] */
+        0x2,		/* FC_CHAR */
+        0x5c,		/* FC_PAD */
+        0x5b,		/* FC_END */
+        0x8,		/* FC_LONG */
+        0x8,		/* FC_LONG */
+        0x8,		/* FC_LONG */
+        0x5c,		/* FC_PAD */
+        0x5b,		/* FC_END */
+
+    };
+
+    /* FC_STRUCT */
+    s1.s = 0x1234;
+    s1.c = 0xa5;
+    s1.l1 = 0xdeadbeef;
+    s1.l2 = 0xcafebabe;
+    s1.ll = ((LONGLONG) 0xbadefeed << 32) || 0x2468ace0;
+
+    wiredatalen = 24;
+    memcpy(wiredata, &s1, wiredatalen); 
+    test_simple_struct_marshal(fmtstr_simple_struct + 4, &s1, 24, wiredata, 24, NULL, 0, "struct");
+
+    *(void**)wiredata = &s1;
+    memcpy(wiredata + 4, &s1, wiredatalen);
+#if 0 /* one of the unmarshallings crashes Wine */
+    test_pointer_marshal(fmtstr_simple_struct, &s1, 24, wiredata, 28, NULL, 0, "struct");
+#endif
+
+    /* FC_PSTRUCT */
+    ps1.l1 = 0xdeadbeef;
+    l = 0xcafebabe;
+    ps1.pl1 = &l;
+    c = 'a';
+    ps1.pc1 = &c;
+    memcpy(wiredata + 4, &ps1, 12);
+    memcpy(wiredata + 16, &l, 4);
+    memcpy(wiredata + 20, &c, 1);
+
+    test_simple_struct_marshal(fmtstr_pointer_struct + 4, &ps1, 17, wiredata + 4, 17, ps1_cmp, 2, "pointer_struct");
+    *(void**)wiredata = &ps1;
+#if 0 /* one of the unmarshallings crashes Wine */
+    test_pointer_marshal(fmtstr_pointer_struct, &ps1, 17, wiredata, 21, ps1_cmp, 2, "pointer_struct");
+#endif
+}
 
 START_TEST( ndr_marshall )
 {
     test_simple_types();
+    test_simple_struct();
 }
