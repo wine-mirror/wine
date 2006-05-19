@@ -132,16 +132,15 @@ HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface, REFIID
 HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DVOLUME_DESC *pDesc) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
     WINED3DVOLUME_DESC     wined3ddesc;
-    UINT                   tmpInt = -1;
 
     TRACE("(%p) Relay\n", This);
 
-    /* As d3d8 and d3d8 structures differ, pass in ptrs to where data needs to go */
+    /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
     wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
     wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
     wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
-    wined3ddesc.Size                = &tmpInt;
+    wined3ddesc.Size                = &pDesc->Size;
     wined3ddesc.Width               = &pDesc->Width;
     wined3ddesc.Height              = &pDesc->Height;
     wined3ddesc.Depth               = &pDesc->Depth;
