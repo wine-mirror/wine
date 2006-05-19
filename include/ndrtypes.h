@@ -149,6 +149,33 @@ typedef enum
     FC_UP, /* 0x12 */ /* unique pointer */
     FC_OP, /* 0x13 */ /* object pointer */
     FC_FP, /* 0x14 */ /* full pointer */
+
+    FC_STRUCT, /* 0x15 */ /* simple structure */
+    FC_PSTRUCT, /* 0x16 */ /* simple structure w/ pointers */
+    FC_CSTRUCT, /* 0x17 */ /* conformant structure */
+    FC_CPSTRUCT, /* 0x18 */ /* conformant structure w/ pointers */
+    FC_CVSTRUCT, /* 0x19 */ /* conformant varying struct */
+    FC_BOGUS_STRUCT, /* 0x1a */ /* complex structure */
+
+    FC_CARRAY, /* 0x1b */ /* conformant array */
+    FC_CVARRAY, /* 0x1c */ /* conformant varying array */
+    FC_SMFARRAY, /* 0x1d */ /* small (<64K) fixed array */
+    FC_LGFARRAY, /* 0x1e */ /* large (>= 64k) fixed array */
+    FC_SMVARRAY, /* 0x1f */ /* small (<64k) varying array */
+    FC_LGVARRAY, /* 0x20 */ /* large (>= 64k) varying array */
+    FC_BOGUS_ARRAY, /* 0x21 */ /* complex array */
 } FORMAT_CHARACTER;
+
+/* flags for all handle types */
+#define HANDLE_PARAM_IS_VIA_PTR 0x80
+#define HANDLE_PARAM_IS_IN      0x40
+#define HANDLE_PARAM_IS_OUT     0x20
+#define HANDLE_PARAM_IS_RETURN  0x10
+
+/* flags for context handles */
+#define NDR_STRICT_CONTEXT_HANDLE           0x08
+#define NDR_CONTEXT_HANDLE_NOSERIALIZE      0x04
+#define NDR_CONTEXT_HANDLE_SERIALIZE        0x02
+#define NDR_CONTEXT_HANDLE_CANNOT_BE_NULL   0x01
 
 #endif
