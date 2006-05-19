@@ -353,7 +353,7 @@ static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
                                 void *buffer, unsigned int count)
 {
   RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
-  int r = read(tcpc->sock, buffer, count);
+  int r = recv(tcpc->sock, buffer, count, MSG_WAITALL);
   TRACE("%d %p %u -> %d\n", tcpc->sock, buffer, count, r);
   return r;
 }
