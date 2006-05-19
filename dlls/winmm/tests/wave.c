@@ -534,8 +534,13 @@ static DWORD WINAPI callback_thread(LPVOID lpParameter)
 {
     MSG msg;
 
-    while (GetMessage(&msg, 0, 0, 0))
-        SetEvent((HANDLE)lpParameter);
+    while (GetMessage(&msg, 0, 0, 0)) {
+        UINT message = msg.message;
+        ok (message == WOM_OPEN || message == WOM_DONE || message == WOM_CLOSE,
+            "GetMessage returned unexpected message: %u\n", message);
+        if (message == WOM_OPEN || message == WOM_DONE || message == WOM_CLOSE)
+            SetEvent((HANDLE)lpParameter);
+    }
 
     return 0;
 }
@@ -579,16 +584,20 @@ static void wave_out_test_deviceOut(int device, double duration,
             callback_instance = 0;
         } else {
             trace("CreateThread() failed\n");
+            CloseHandle(hevent);
             return;
         }
     } else if ((flags & CALLBACK_TYPEMASK) == CALLBACK_WINDOW) {
         trace("CALLBACK_THREAD not implemented\n");
+        CloseHandle(hevent);
         return;
     } else if (flags && CALLBACK_TYPEMASK) {
         trace("Undefined callback type!\n");
+        CloseHandle(hevent);
         return;
     } else {
         trace("CALLBACK_NULL not implemented\n");
+        CloseHandle(hevent);
         return;
     }
     wout=NULL;
@@ -728,12 +737,12 @@ static void wave_out_test_deviceOut(int device, double duration,
        wave_out_error(rc));
     free(frag.lpData);
 
-    CloseHandle(hevent);
     rc=waveOutClose(wout);
     ok(rc==MMSYSERR_NOERROR,"waveOutClose(%s): rc=%s\n",dev_name(device),
        wave_out_error(rc));
     if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD)
         TerminateThread(thread, 0);
+    CloseHandle(hevent);
 }
 
 static void wave_out_test_device(int device)
