@@ -42,6 +42,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
+/* note: the DCE/RPC spec says the alignment amount should be 4, but
+ * MS/RPC servers seem to always use 16 */
+#define AUTH_ALIGNMENT 16
+
+/* gets the amount needed to round a value up to the specified alignment */
+#define ROUND_UP_AMOUNT(value, alignment) \
+    (((alignment) - (((value) % (alignment)))) % (alignment))
+
 static DWORD RPCRT4_GetHeaderSize(RpcPktHdr *Header)
 {
   static const DWORD header_sizes[] = {
@@ -273,12 +281,19 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
   Header->common.flags |= RPC_FLG_FIRST;
   Header->common.flags &= ~RPC_FLG_LAST;
   while (!(Header->common.flags & RPC_FLG_LAST)) {
+    unsigned char auth_pad_len = ROUND_UP_AMOUNT(BufferLength, AUTH_ALIGNMENT);
+    unsigned short pkt_size = BufferLength + hdr_size + alen + auth_pad_len;
+
     /* decide if we need to split the packet into fragments */
-    if ((BufferLength + hdr_size + alen) <= Connection->MaxTransmissionSize) {
-      Header->common.flags |= RPC_FLG_LAST;
-      Header->common.frag_len = BufferLength + hdr_size + alen;
+   if (pkt_size <= Connection->MaxTransmissionSize) {
+     Header->common.flags |= RPC_FLG_LAST;
+     Header->common.frag_len = pkt_size;
     } else {
-      Header->common.frag_len = Connection->MaxTransmissionSize;
+      auth_pad_len = 0;
+      /* make sure packet payload will be a multiple of 16 */
+      Header->common.frag_len =
+        ((Connection->MaxTransmissionSize - hdr_size - alen) & ~(AUTH_ALIGNMENT-1)) +
+        hdr_size + alen;
     }
 
     pkt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Header->common.frag_len);
@@ -298,7 +313,7 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
 
       auth_hdr[0] = Connection->AuthInfo->AuthnSvc;
       auth_hdr[1] = Connection->AuthInfo->AuthnLevel;
-      auth_hdr[2] = 0x00; /* FIXME: add padding */
+      auth_hdr[2] = auth_pad_len;
       auth_hdr[3] = 0x00;
 
       /* a unique number... */
@@ -314,8 +329,8 @@ write:
       return RPC_S_PROTOCOL_ERROR;
     }
 
-    buffer_pos += Header->common.frag_len - hdr_size - alen;
-    BufferLength -= Header->common.frag_len - hdr_size - alen;
+    buffer_pos += Header->common.frag_len - hdr_size - alen - auth_pad_len;
+    BufferLength -= Header->common.frag_len - hdr_size - alen - auth_pad_len;
     Header->common.flags &= ~RPC_FLG_FIRST;
   }
 
