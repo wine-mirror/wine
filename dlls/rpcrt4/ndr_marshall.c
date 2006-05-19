@@ -4106,49 +4106,43 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
 
     TRACE("*ppMemory: %p\n", *ppMemory);
 
+#define BASE_TYPE_UNMARSHALL(type) \
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(type)); \
+        **(type **)ppMemory = *(type *)pStubMsg->Buffer; \
+        pStubMsg->Buffer += sizeof(type);
+
     switch(*pFormat)
     {
     case RPC_FC_BYTE:
     case RPC_FC_CHAR:
     case RPC_FC_SMALL:
     case RPC_FC_USMALL:
-        **(UCHAR **)ppMemory = *(UCHAR *)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(UCHAR);
+        BASE_TYPE_UNMARSHALL(UCHAR);
         TRACE("value: 0x%02x\n", **(UCHAR **)ppMemory);
         break;
     case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
-        **(USHORT **)ppMemory = *(USHORT *)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(USHORT);
+        BASE_TYPE_UNMARSHALL(USHORT);
         TRACE("value: 0x%04x\n", **(USHORT **)ppMemory);
         break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ERROR_STATUS_T:
     case RPC_FC_ENUM32:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONG));
-        **(ULONG **)ppMemory = *(ULONG *)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(ULONG);
+        BASE_TYPE_UNMARSHALL(ULONG);
         TRACE("value: 0x%08lx\n", **(ULONG **)ppMemory);
         break;
    case RPC_FC_FLOAT:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(float));
-        **(float **)ppMemory = *(float *)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(float);
+        BASE_TYPE_UNMARSHALL(float);
         TRACE("value: %f\n", **(float **)ppMemory);
         break;
     case RPC_FC_DOUBLE:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(double));
-        **(double **)ppMemory = *(double*)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(double);
+        BASE_TYPE_UNMARSHALL(double);
         TRACE("value: %f\n", **(double **)ppMemory);
         break;
     case RPC_FC_HYPER:
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(ULONGLONG));
-        **(ULONGLONG **)ppMemory = *(ULONGLONG *)pStubMsg->Buffer;
-        pStubMsg->Buffer += sizeof(ULONGLONG);
+        BASE_TYPE_UNMARSHALL(ULONGLONG);
         TRACE("value: %s\n", wine_dbgstr_longlong(**(ULONGLONG **)ppMemory));
         break;
     case RPC_FC_ENUM16:
@@ -4161,6 +4155,7 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
     default:
         FIXME("Unhandled base type: 0x%02x\n", *pFormat);
     }
+#undef BASE_TYPE_UNMARSHALL
 
     /* FIXME: what is the correct return value? */
 
