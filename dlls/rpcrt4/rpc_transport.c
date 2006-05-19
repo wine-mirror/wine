@@ -89,6 +89,11 @@ static RPC_STATUS rpcrt4_connect_pipe(RpcConnection *Connection, LPCSTR pname)
                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
                                PIPE_UNLIMITED_INSTANCES,
                                RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
+  if (npc->pipe == INVALID_HANDLE_VALUE) {
+    WARN("CreateNamedPipe failed with error %ld\n", GetLastError());
+    return RPC_S_SERVER_UNAVAILABLE;
+  }
+
   memset(&npc->ovl, 0, sizeof(npc->ovl));
   npc->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
   if (ConnectNamedPipe(npc->pipe, &npc->ovl))
