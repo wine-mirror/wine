@@ -743,7 +743,7 @@ static inline void dump_pointer_attr(unsigned char attr)
 /***********************************************************************
  *           PointerMarshall
  */
-void WINAPI PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
+static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                             unsigned char *Buffer,
                             unsigned char *Pointer,
                             PFORMAT_STRING pFormat)
@@ -794,7 +794,7 @@ void WINAPI PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           PointerUnmarshall
  */
-void WINAPI PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
+static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                               unsigned char *Buffer,
                               unsigned char **pPointer,
                               PFORMAT_STRING pFormat,
@@ -849,7 +849,7 @@ void WINAPI PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           PointerBufferSize
  */
-void WINAPI PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+static void PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                               unsigned char *Pointer,
                               PFORMAT_STRING pFormat)
 {
@@ -891,7 +891,7 @@ void WINAPI PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           PointerMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned long PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                        unsigned char *Buffer,
                                        PFORMAT_STRING pFormat)
 {
@@ -927,7 +927,7 @@ unsigned long WINAPI PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           PointerFree [RPCRT4.@]
  */
-void WINAPI PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
+static void PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
                         unsigned char *Pointer,
                         PFORMAT_STRING pFormat)
 {
@@ -989,7 +989,7 @@ notfree:
 /***********************************************************************
  *           EmbeddedPointerMarshall
  */
-unsigned char * WINAPI EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned char * EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                unsigned char *pMemory,
                                                PFORMAT_STRING pFormat)
 {
@@ -1055,7 +1055,7 @@ unsigned char * WINAPI EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           EmbeddedPointerUnmarshall
  */
-unsigned char * WINAPI EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  unsigned char **ppMemory,
                                                  PFORMAT_STRING pFormat,
                                                  unsigned char fMustAlloc)
@@ -1122,7 +1122,7 @@ unsigned char * WINAPI EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           EmbeddedPointerBufferSize
  */
-void WINAPI EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+static void EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                       unsigned char *pMemory,
                                       PFORMAT_STRING pFormat)
 {
@@ -1183,7 +1183,7 @@ void WINAPI EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           EmbeddedPointerMemorySize
  */
-unsigned long WINAPI EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+static unsigned long EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
 {
   unsigned long Offset = pStubMsg->Offset;
@@ -1244,7 +1244,7 @@ unsigned long WINAPI EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           EmbeddedPointerFree
  */
-void WINAPI EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
+static void EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
