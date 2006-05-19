@@ -3543,6 +3543,30 @@ BOOL WINAPI EncryptFileA(LPCSTR lpFileName)
 }
 
 /******************************************************************************
+ * FileEncryptionStatusW [ADVAPI32.@]
+ */
+BOOL WINAPI FileEncryptionStatusW(LPCWSTR lpFileName, LPDWORD lpStatus)
+{
+    FIXME("(%s %p): stub\n", debugstr_w(lpFileName), lpStatus);
+    if (!lpStatus)
+        return FALSE;
+    *lpStatus = FILE_SYSTEM_NOT_SUPPORT;
+    return TRUE;
+}
+
+/******************************************************************************
+ * FileEncryptionStatusA [ADVAPI32.@]
+ */
+BOOL WINAPI FileEncryptionStatusA(LPCSTR lpFileName, LPDWORD lpStatus)
+{
+    FIXME("(%s %p): stub\n", debugstr_a(lpFileName), lpStatus);
+    if (!lpStatus)
+        return FALSE;
+    *lpStatus = FILE_SYSTEM_NOT_SUPPORT;
+    return TRUE;
+}
+
+/******************************************************************************
  * SetSecurityInfo [ADVAPI32.@]
  */
 DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType, 

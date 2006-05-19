@@ -625,6 +625,19 @@ typedef struct _TIME_ZONE_INFORMATION{
 #define FILE_TYPE_PIPE          3
 #define FILE_TYPE_REMOTE        32768
 
+/* File encryption status
+ */
+#define FILE_ENCRYPTABLE         0
+#define FILE_IS_ENCRYPTED        1
+#define FILE_SYSTEM_ATTR         2
+#define FILE_ROOT_DIR            3
+#define FILE_SYSTEM_DIR          4
+#define FILE_UNKNOWN             5
+#define FILE_SYSTEM_NOT_SUPPORT  6
+#define FILE_USER_DISALLOWED     7
+#define FILE_READ_ONLY           8
+#define FILE_DIR_DISALOWED       9
+
 /* File creation flags
  */
 #define FILE_FLAG_WRITE_THROUGH    0x80000000UL
@@ -1385,6 +1398,9 @@ void        WINAPI FatalAppExitA(UINT,LPCSTR);
 void        WINAPI FatalAppExitW(UINT,LPCWSTR);
 void        WINAPI FatalExit(int);
 #define     FatalAppExit WINELIB_NAME_AW(FatalAppExit)
+BOOL        WINAPI FileEncryptionStatusA(LPCSTR,LPDWORD);
+BOOL        WINAPI FileEncryptionStatusW(LPCWSTR,LPDWORD);
+#define     FileEncryptionStatus WINELIB_NAME_AW(FileEncryptionStatus)
 BOOL        WINAPI FileTimeToDosDateTime(const FILETIME*,LPWORD,LPWORD);
 BOOL        WINAPI FileTimeToLocalFileTime(const FILETIME*,LPFILETIME);
 BOOL        WINAPI FileTimeToSystemTime(const FILETIME*,LPSYSTEMTIME);
