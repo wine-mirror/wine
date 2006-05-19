@@ -962,14 +962,15 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
                 swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
 
-	case SW_MINIMIZE:
 	case SW_SHOWMINNOACTIVE:
             swp |= SWP_NOACTIVATE | SWP_NOZORDER;
             /* fall through */
-	case SW_SHOWMINIMIZED:
+        case SW_MINIMIZE:
         case SW_FORCEMINIMIZE: /* FIXME: Does not work if thread is hung. */
-            swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
+            if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
             /* fall through */
+	case SW_SHOWMINIMIZED:
+            swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
             swp |= WINPOS_MinMaximize( hwnd, cmd, &newPos );
             if (style & WS_MINIMIZE) return wasVisible;
             state_change = TRUE;
@@ -989,6 +990,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 	case SW_SHOW:
             if (wasVisible) return TRUE;
 	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+            if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
 
 	case SW_RESTORE:
@@ -1001,10 +1003,10 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
 	case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
 	    swp |= SWP_SHOWWINDOW;
-
             if (style & (WS_MINIMIZE | WS_MAXIMIZE))
 		 swp |= WINPOS_MinMaximize( hwnd, SW_RESTORE, &newPos );
             else swp |= SWP_NOSIZE | SWP_NOMOVE;
+            if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
     }
 
@@ -1023,12 +1025,9 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     }
     else
     {
-        /* ShowWindow won't activate a not being maximized child window */
         if (style & WS_CHILD)
         {
-            if (!state_change)
-                swp |= SWP_NOACTIVATE | SWP_NOZORDER;
-            else
+            if (state_change)
             {
                 /* it appears that Windows always adds an undocumented 0x8000
                  * flag if the state of a window changes.
