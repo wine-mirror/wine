@@ -33,9 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 #define NTLM_MAX_BUF 2010
 
-static char ntlm_name_A[] = "NTLM";
-static WCHAR ntlm_name_W[] = {'N', 'T', 'L', 'M', 0};
-
 
 /***********************************************************************
  *              QueryCredentialsAttributesA
@@ -1232,10 +1229,47 @@ static SecurityFunctionTableW ntlmTableW = {
     NULL,   /* SetContextAttributesW */
 };
 
-static WCHAR ntlm_comment_W[] = { 'N', 'T', 'L', 'M', ' ', 'S', 'e',
-    'c', 'u', 'r', 'i', 't', 'y', ' ', 'P', 'a', 'c', 'k', 'a', 'g', 'e',0};
+#define NTLM_COMMENT \
+   { 'N', 'T', 'L', 'M', ' ', \
+     'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ', \
+     'P', 'a', 'c', 'k', 'a', 'g', 'e', 0}
 
-static CHAR ntlm_comment_A[] = "NTLM Security Package";
+static CHAR ntlm_comment_A[] = NTLM_COMMENT;
+static WCHAR ntlm_comment_W[] = NTLM_COMMENT;
+
+#define NTLM_NAME {'N', 'T', 'L', 'M', 0}
+
+static char ntlm_name_A[] = NTLM_NAME;
+static WCHAR ntlm_name_W[] = NTLM_NAME;
+
+/* According to Windows, NTLM has the following capabilities.  */
+#define CAPS ( \
+        SECPKG_FLAG_INTEGRITY | \
+        SECPKG_FLAG_PRIVACY | \
+        SECPKG_FLAG_TOKEN_ONLY | \
+        SECPKG_FLAG_CONNECTION | \
+        SECPKG_FLAG_MULTI_REQUIRED | \
+        SECPKG_FLAG_IMPERSONATION | \
+        SECPKG_FLAG_ACCEPT_WIN32_NAME | \
+        SECPKG_FLAG_READONLY_WITH_CHECKSUM)
+
+static const SecPkgInfoW infoW = {
+    CAPS,
+    1,
+    RPC_C_AUTHN_WINNT,
+    NTLM_MAX_BUF,
+    ntlm_name_W,
+    ntlm_comment_W
+};
+
+static const SecPkgInfoA infoA = {
+    CAPS,
+    1,
+    RPC_C_AUTHN_WINNT,
+    NTLM_MAX_BUF,
+    ntlm_name_A,
+    ntlm_comment_A
+};
 
 void SECUR32_initNTLMSP(void)
 {   
@@ -1254,40 +1288,12 @@ void SECUR32_initNTLMSP(void)
         helper->version = -1;
     }
     else
-    {
         check_version(helper);
-    }
 
     if(helper->version > 2)
     {
-
-        SecureProvider *provider = SECUR32_addProvider(&ntlmTableA, &ntlmTableW,
-            NULL);
-        /* According to Windows, NTLM has the following capabilities. 
-         */
-    
-        static const LONG caps =
-            SECPKG_FLAG_INTEGRITY |
-            SECPKG_FLAG_PRIVACY |
-            SECPKG_FLAG_TOKEN_ONLY |
-            SECPKG_FLAG_CONNECTION |
-            SECPKG_FLAG_MULTI_REQUIRED |
-            SECPKG_FLAG_IMPERSONATION |
-            SECPKG_FLAG_ACCEPT_WIN32_NAME |
-            SECPKG_FLAG_READONLY_WITH_CHECKSUM;
-
-        static const USHORT version = 1;
-        static const USHORT rpcid = 10;
-        /* In Windows, this is 12000, but ntlm_auth won't take more than 2010 
-         * characters, so there is no use reporting a bigger size */
-        static const ULONG  max_token = NTLM_MAX_BUF;
-        const SecPkgInfoW infoW = { caps, version, rpcid, max_token, ntlm_name_W,
-            ntlm_comment_W};
-        const SecPkgInfoA infoA = { caps, version, rpcid, max_token, ntlm_name_A,
-            ntlm_comment_A};
-
+        SecureProvider *provider = SECUR32_addProvider(&ntlmTableA, &ntlmTableW, NULL);
         SECUR32_addPackages(provider, 1L, &infoA, &infoW);
     }
     cleanup_helper(helper);
-    
 }
