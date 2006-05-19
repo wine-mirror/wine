@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ntdsapi.dll
+IMPORTLIB = libntdsapi.$(IMPLIBEXT)
+IMPORTS   = kernel32
+
+C_SRCS = \
+	ntdsapi.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

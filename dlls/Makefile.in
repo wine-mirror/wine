@@ -107,6 +107,7 @@ BASEDIRS = \
 	netapi32 \
 	newdev \
 	ntdll \
+	ntdsapi \
 	objsel \
 	odbc32 \
 	odbccp32 \
@@ -507,6 +508,7 @@ IMPORT_LIBS = \
 	netapi32/libnetapi32.$(IMPLIBEXT) \
 	newdev/libnewdev.$(IMPLIBEXT) \
 	ntdll/libntdll.$(IMPLIBEXT) \
+	ntdsapi/libntdsapi.$(IMPLIBEXT) \
 	odbc32/libodbc32.$(IMPLIBEXT) \
 	odbccp32/libodbccp32.$(IMPLIBEXT) \
 	ole32/libole32.$(IMPLIBEXT) \
@@ -746,6 +748,9 @@ newdev/libnewdev.$(IMPLIBEXT): newdev/newdev.spec $(WINEBUILD)
 
 ntdll/libntdll.$(IMPLIBEXT): ntdll/ntdll.spec $(WINEBUILD)
 	@cd ntdll && $(MAKE) libntdll.$(IMPLIBEXT)
+
+ntdsapi/libntdsapi.$(IMPLIBEXT): ntdsapi/ntdsapi.spec $(WINEBUILD)
+	@cd ntdsapi && $(MAKE) libntdsapi.$(IMPLIBEXT)
 
 odbc32/libodbc32.$(IMPLIBEXT): odbc32/odbc32.spec $(WINEBUILD)
 	@cd odbc32 && $(MAKE) libodbc32.$(IMPLIBEXT)

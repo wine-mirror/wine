@@ -1641,6 +1641,7 @@ dlls/netapi32/tests/Makefile
 dlls/newdev/Makefile
 dlls/ntdll/Makefile
 dlls/ntdll/tests/Makefile
+dlls/ntdsapi/Makefile
 dlls/objsel/Makefile
 dlls/odbc32/Makefile
 dlls/odbccp32/Makefile
