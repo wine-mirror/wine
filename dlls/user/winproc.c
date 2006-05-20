@@ -775,20 +775,6 @@ static INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
     case LB_GETTEXTLEN:
         return 1;  /* need to map result */
 
-    case WM_CHARTOITEM:
-    case WM_MENUCHAR:
-    case WM_CHAR:
-    case WM_DEADCHAR:
-    case WM_SYSCHAR:
-    case WM_SYSDEADCHAR:
-    case EM_SETPASSWORDCHAR:
-        *pwparam = map_wparam_char_AtoW( *pwparam, 1 );
-        return 0;
-
-    case WM_IME_CHAR:
-        *pwparam = map_wparam_char_AtoW( *pwparam, 2 );
-        return 0;
-
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg, hwnd), msg );
@@ -2702,6 +2688,20 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
             }
             free_buffer( buffer, ptr );
         }
+        break;
+
+    case WM_CHARTOITEM:
+    case WM_MENUCHAR:
+    case WM_CHAR:
+    case WM_DEADCHAR:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+    case EM_SETPASSWORDCHAR:
+        ret = callback( hwnd, msg, map_wparam_char_AtoW(wParam,1), lParam, result, arg );
+        break;
+
+    case WM_IME_CHAR:
+        ret = callback( hwnd, msg, map_wparam_char_AtoW(wParam,2), lParam, result, arg );
         break;
 
     default:
