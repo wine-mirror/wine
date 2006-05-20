@@ -4,8 +4,10 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = d3d9.dll
 IMPORTS   = user32 kernel32
+EXTRALIBS = -ldxerr9
 
 CTESTS = \
+	device.c \
 	shader.c \
 	stateblock.c \
 	vertexdeclaration.c

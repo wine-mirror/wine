@@ -1,4 +1,5 @@
 Makefile
+device.ok
 shader.ok
 stateblock.ok
 testlist.c
