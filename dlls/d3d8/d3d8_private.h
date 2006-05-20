@@ -229,6 +229,9 @@ struct IDirect3DSwapChain8Impl
 
     /* IDirect3DSwapChain8 fields */
     IWineD3DSwapChain             *wineD3DSwapChain;
+
+    /* Parent reference */
+    LPDIRECT3DDEVICE8              parentDevice;
 };
 
 /* ----------------- */
@@ -321,6 +324,9 @@ struct IDirect3DIndexBuffer8Impl
 
     /* IDirect3DResource8 fields */
     IWineD3DIndexBuffer             *wineD3DIndexBuffer;
+
+    /* Parent reference */
+    LPDIRECT3DDEVICE8                parentDevice;
 };
 
 /* --------------------- */
@@ -360,6 +366,9 @@ struct IDirect3DCubeTexture8Impl
 
     /* IDirect3DResource8 fields */
     IWineD3DCubeTexture             *wineD3DCubeTexture;
+
+    /* Parent reference */
+    LPDIRECT3DDEVICE8                parentDevice;
 };
 
 /* ----------------- */
@@ -382,6 +391,9 @@ struct IDirect3DTexture8Impl
 
     /* IDirect3DResourc8 fields */
     IWineD3DTexture             *wineD3DTexture;
+
+    /* Parent reference */
+    LPDIRECT3DDEVICE8            parentDevice;
 };
 
 /* ----------------------- */
@@ -404,6 +416,9 @@ struct IDirect3DVolumeTexture8Impl
 
     /* IDirect3DResource8 fields */
     IWineD3DVolumeTexture             *wineD3DVolumeTexture;
+
+    /* Parent reference */
+    LPDIRECT3DDEVICE8                  parentDevice;
 };
 
 /* ----------------------- */
@@ -532,9 +547,6 @@ struct IDirect3DVertexShader8Impl {
   LONG ref;
 
   IWineD3DVertexShader             *wineD3DVertexShader;
-
-  /* Parent reference */
-  LPDIRECT3DDEVICE8                 parentDevice;
 };
 
 

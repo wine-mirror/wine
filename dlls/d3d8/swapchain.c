@@ -56,6 +56,7 @@ ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) {
 
     if (ref == 0) {
         IWineD3DSwapChain_Release(This->wineD3DSwapChain);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;

@@ -56,6 +56,7 @@ ULONG WINAPI IDirect3DIndexBuffer8Impl_Release(LPDIRECT3DINDEXBUFFER8 iface) {
 
     if (ref == 0) {
         IWineD3DIndexBuffer_Release(This->wineD3DIndexBuffer);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;

@@ -57,6 +57,7 @@ ULONG WINAPI IDirect3DVolumeTexture8Impl_Release(LPDIRECT3DVOLUMETEXTURE8 iface)
 
     if (ref == 0) {
         IWineD3DVolumeTexture_Release(This->wineD3DVolumeTexture);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;

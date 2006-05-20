@@ -214,6 +214,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE8 
         HeapFree(GetProcessHeap(), 0 , object);
         *pSwapChain = NULL;
     }else{
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *pSwapChain = (IDirect3DSwapChain8 *)object;
     }
     TRACE("(%p) returning %p\n", This, *pSwapChain);
@@ -312,6 +314,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UINT 
         HeapFree(GetProcessHeap(), 0, object);
 /*      *ppTexture = NULL; */
    } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppTexture = (LPDIRECT3DTEXTURE8) object;
    }
 
@@ -350,6 +354,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 iface,
         HeapFree(GetProcessHeap(), 0, object);
         *ppVolumeTexture = NULL;
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE8) object;
     }
     TRACE("(%p)  returning %p\n", This , *ppVolumeTexture);
@@ -387,6 +393,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface, U
         HeapFree(GetProcessHeap(), 0, object);
         *ppCubeTexture = NULL;
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppCubeTexture = (LPDIRECT3DCUBETEXTURE8) object;
     }
 
@@ -452,6 +460,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface, U
         HeapFree(GetProcessHeap(), 0, object);
         *ppIndexBuffer = NULL;
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppIndexBuffer = (LPDIRECT3DINDEXBUFFER8)object;
     }
     return hrc;
@@ -1071,8 +1081,6 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface, 
             FIXME("(%p) : Number of shaders exceeds the maximum number of possible shaders\n", This);
             hrc = E_OUTOFMEMORY;
         } else {
-            IUnknown_AddRef(iface);
-            object->parentDevice = iface;
             This->vShaders[i] = object;
             *ppShader = i + VS_HIGHESTFIXEDFXF + 1;
         }
