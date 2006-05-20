@@ -770,11 +770,6 @@ static INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
             *plparam = (LPARAM)buf;
             return (*plparam ? 1 : -1);
         }
-    case WM_GETTEXTLENGTH:
-    case CB_GETLBTEXTLEN:
-    case LB_GETTEXTLEN:
-        return 1;  /* need to map result */
-
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg, hwnd), msg );
@@ -2702,6 +2697,33 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
 
     case WM_IME_CHAR:
         ret = callback( hwnd, msg, map_wparam_char_AtoW(wParam,2), lParam, result, arg );
+        break;
+
+    case WM_GETTEXTLENGTH:
+    case CB_GETLBTEXTLEN:
+    case LB_GETTEXTLEN:
+        ret = callback( hwnd, msg, wParam, lParam, result, arg );
+        if (*result >= 0)
+        {
+            WCHAR *ptr, buffer[512];
+            LRESULT tmp;
+            DWORD len = *result + 1;
+            /* Determine respective GETTEXT message */
+            UINT msgGetText = (msg == WM_GETTEXTLENGTH) ? WM_GETTEXT :
+                              ((msg == CB_GETLBTEXTLEN) ? CB_GETLBTEXT : LB_GETTEXT);
+            /* wParam differs between the messages */
+            WPARAM wp = (msg == WM_GETTEXTLENGTH) ? len : wParam;
+
+            if (!(ptr = get_buffer( buffer, sizeof(buffer), len * sizeof(WCHAR) ))) break;
+
+            if (callback == call_window_proc)  /* FIXME: hack */
+                callback( hwnd, msgGetText, wp, (LPARAM)ptr, &tmp, arg );
+            else
+                tmp = SendMessageW( hwnd, msgGetText, wp, (LPARAM)ptr );
+            RtlUnicodeToMultiByteSize( &len, ptr, tmp * sizeof(WCHAR) );
+            *result = len;
+            free_buffer( buffer, ptr );
+        }
         break;
 
     default:
