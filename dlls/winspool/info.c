@@ -6,6 +6,7 @@
  * Copyright 1999 Klaas van Gend
  * Copyright 1999, 2000 Huw D M Davies
  * Copyright 2001 Marcus Meissner
+ * Copyright 2005, 2006 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -4042,9 +4043,9 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
           Level, pDriverInfo, cbBuf, unicode);
 
     /* check for local drivers */
-    if(pName) {
-        ERR("remote drivers unsupported! Current remote host is %s\n",
-             debugstr_w(pName));
+    if((pName) && (pName[0])) {
+        FIXME("remote drivers (%s) not supported!\n", debugstr_w(pName));
+        SetLastError(ERROR_ACCESS_DENIED);
         return FALSE;
     }
 
