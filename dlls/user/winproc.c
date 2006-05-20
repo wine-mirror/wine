@@ -775,17 +775,6 @@ static INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
     case LB_GETTEXTLEN:
         return 1;  /* need to map result */
 
-/* Multiline edit */
-    case EM_GETLINE:
-        { WORD len = (WORD)*plparam;
-          LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(WCHAR) );
-          if (!ptr) return -1;
-          *ptr++ = *plparam;  /* Store previous lParam */
-          *((WORD *) ptr) = len;   /* Store the length */
-          *plparam = (LPARAM)ptr;
-        }
-        return 1;
-
     case WM_CHARTOITEM:
     case WM_MENUCHAR:
     case WM_CHAR:
@@ -872,18 +861,6 @@ static LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPA
     case LB_ADDFILE:
     case EM_REPLACESEL:
         HeapFree( GetProcessHeap(), 0, (void *)lParam );
-        break;
-
-/* Multiline edit */
-    case EM_GETLINE:
-        {
-            LPARAM * ptr = (LPARAM *)lParam - 1;  /* get the old lParam */
-            WORD len = *(WORD *) lParam;
-            result = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, result,
-                                          (LPSTR)*ptr, len, NULL, NULL );
-            if (result < len) ((LPSTR)*ptr)[result] = 0;
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
         break;
     }
     return result;
@@ -2708,6 +2685,25 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
         else ret = callback( hwnd, msg, wParam, lParam, result, arg );
         break;
 
+    case EM_GETLINE:
+        {
+            WCHAR *ptr, buffer[512];
+            WORD len = *(WORD *)lParam;
+
+            if (!(ptr = get_buffer( buffer, sizeof(buffer), len * sizeof(WCHAR) ))) break;
+            *((WORD *)ptr) = len;   /* store the length */
+            ret = callback( hwnd, msg, wParam, (LPARAM)ptr, result, arg );
+            if (*result)
+            {
+                DWORD reslen;
+                RtlUnicodeToMultiByteN( (LPSTR)lParam, len, &reslen, ptr, *result * sizeof(WCHAR) );
+                if (reslen < len) ((LPSTR)lParam)[reslen] = 0;
+                *result = reslen;
+            }
+            free_buffer( buffer, ptr );
+        }
+        break;
+
     default:
         if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
             ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
@@ -2911,7 +2907,7 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
             if (*result)
             {
                 DWORD reslen;
-                RtlMultiByteToUnicodeN( (LPWSTR)lParam, len*sizeof(WCHAR), &reslen, buffer, *result );
+                RtlMultiByteToUnicodeN( (LPWSTR)lParam, len*sizeof(WCHAR), &reslen, ptr, *result );
                 *result = reslen / sizeof(WCHAR);
                 if (*result < len) ((LPWSTR)lParam)[*result] = 0;
             }
