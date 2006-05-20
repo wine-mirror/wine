@@ -26,23 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "winnls.h"
-
-typedef struct
-{
-    WPARAM16	wParam;
-    LPARAM	lParam;
-    LRESULT	lResult;
-} MSGPARAM16;
-
-typedef struct
-{
-    WPARAM    wParam;
-    LPARAM	lParam;
-    LRESULT	lResult;
-} MSGPARAM;
-
-struct tagWINDOWPROC;
 
 typedef LRESULT (*winproc_callback_t)( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                        LRESULT *result, void *arg );
@@ -65,69 +48,13 @@ extern LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd
 extern INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16,
                                     UINT *pmsg32, WPARAM *pwparam32,
                                     LPARAM *plparam );
-extern INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16,
-                                    UINT *pmsg32, WPARAM *pwparam32,
-                                    LPARAM *plparam );
 extern INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32,
                                     WPARAM wParam32, UINT16 *pmsg16,
                                     WPARAM16 *pwparam16, LPARAM *plparam );
-extern INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32,
-                                    WPARAM wParam32, UINT16 *pmsg16,
-                                    WPARAM16 *pwparam16, LPARAM *plparam );
-extern LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam,
-                                        LPARAM lParam, LRESULT result );
-extern LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam,
-                                        LPARAM lParam, LRESULT result,
-                                        WNDPROC dispatch );
-extern void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam,
-                                     LPARAM lParam, MSGPARAM16* pm16 );
-extern void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam,
-                                     LPARAM lParam, MSGPARAM16* pm16 );
 
 extern INT_PTR WINPROC_CallDlgProc16( DLGPROC16 func, HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam );
 extern INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 extern INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-
-/* map a Unicode string to a 16-bit pointer */
-inline static SEGPTR map_str_32W_to_16( LPCWSTR str )
-{
-    LPSTR ret;
-    INT len;
-
-    if (!HIWORD(str)) return (SEGPTR)LOWORD(str);
-    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
-        WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
-    return MapLS(ret);
-}
-
-/* unmap a Unicode string that was converted to a 16-bit pointer */
-inline static void unmap_str_32W_to_16( SEGPTR str )
-{
-    if (!HIWORD(str)) return;
-    HeapFree( GetProcessHeap(), 0, MapSL(str) );
-    UnMapLS( str );
-}
-
-/* map a 16-bit pointer to a Unicode string */
-inline static LPWSTR map_str_16_to_32W( SEGPTR str )
-{
-    LPWSTR ret;
-    INT len;
-
-    if (!HIWORD(str)) return (LPWSTR)(ULONG_PTR)LOWORD(str);
-    len = MultiByteToWideChar( CP_ACP, 0, MapSL(str), -1, NULL, 0 );
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-        MultiByteToWideChar( CP_ACP, 0, MapSL(str), -1, ret, len );
-    return ret;
-}
-
-/* unmap a 16-bit pointer that was converted to a Unicode string */
-inline static void unmap_str_16_to_32W( LPCWSTR str )
-{
-    if (HIWORD(str)) HeapFree( GetProcessHeap(), 0, (void *)str );
-}
-
 
 /* Class functions */
 struct tagCLASS;  /* opaque structure */

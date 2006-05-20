@@ -67,6 +67,53 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION winproc_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+typedef struct
+{
+    WPARAM16 wParam;
+    LPARAM   lParam;
+    LRESULT  lResult;
+} MSGPARAM16;
+
+/* map a Unicode string to a 16-bit pointer */
+inline static SEGPTR map_str_32W_to_16( LPCWSTR str )
+{
+    LPSTR ret;
+    INT len;
+
+    if (!HIWORD(str)) return (SEGPTR)LOWORD(str);
+    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
+        WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    return MapLS(ret);
+}
+
+/* unmap a Unicode string that was converted to a 16-bit pointer */
+inline static void unmap_str_32W_to_16( SEGPTR str )
+{
+    if (!HIWORD(str)) return;
+    HeapFree( GetProcessHeap(), 0, MapSL(str) );
+    UnMapLS( str );
+}
+
+/* map a 16-bit pointer to a Unicode string */
+inline static LPWSTR map_str_16_to_32W( SEGPTR str )
+{
+    LPWSTR ret;
+    INT len;
+
+    if (!HIWORD(str)) return (LPWSTR)(ULONG_PTR)LOWORD(str);
+    len = MultiByteToWideChar( CP_ACP, 0, MapSL(str), -1, NULL, 0 );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        MultiByteToWideChar( CP_ACP, 0, MapSL(str), -1, ret, len );
+    return ret;
+}
+
+/* unmap a 16-bit pointer that was converted to a Unicode string */
+inline static void unmap_str_16_to_32W( LPCWSTR str )
+{
+    if (HIWORD(str)) HeapFree( GetProcessHeap(), 0, (void *)str );
+}
+
 /* find an existing winproc for a given 16-bit function and type */
 /* FIXME: probably should do something more clever than a linear search */
 static inline WINDOWPROC *find_winproc16( WNDPROC16 func )
@@ -1367,8 +1414,8 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
  *
  * Unmap a message that was mapped from 16- to 32-bit Ansi.
  */
-LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                                 LRESULT result )
+static LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                        LRESULT result )
 {
     switch(msg)
     {
@@ -1485,8 +1532,8 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
  * Map a message from 16- to 32-bit Unicode.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
-                           WPARAM *pwparam32, LPARAM *plparam )
+static INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
+                                  WPARAM *pwparam32, LPARAM *plparam )
 {
     *pmsg32=(UINT)msg16;
     *pwparam32 = (WPARAM)wParam16;
@@ -1603,8 +1650,8 @@ INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
  *
  * Unmap a message that was mapped from 16- to 32-bit Unicode.
  */
-LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                                 LRESULT result, WNDPROC dispatch )
+static LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                        LRESULT result, WNDPROC dispatch )
 {
     switch(msg)
     {
@@ -2233,8 +2280,8 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
  *
  * Unmap a message that was mapped from 32-bit Ansi to 16-bit.
  */
-void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                              MSGPARAM16* p16 )
+static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                     MSGPARAM16* p16 )
 {
     switch(msg)
     {
@@ -2442,9 +2489,8 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
  * Map a message from 32-bit Unicode to 16-bit.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
-                             UINT16 *pmsg16, WPARAM16 *pwparam16,
-                             LPARAM *plparam )
+static INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
+                                  UINT16 *pmsg16, WPARAM16 *pwparam16, LPARAM *plparam )
 {
     *pmsg16    = LOWORD(msg32);
     *pwparam16 = LOWORD(wParam32);
@@ -2558,8 +2604,8 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
  *
  * Unmap a message that was mapped from 32-bit Unicode to 16-bit.
  */
-void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                              MSGPARAM16* p16 )
+static void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                     MSGPARAM16* p16 )
 {
     switch(msg)
     {
