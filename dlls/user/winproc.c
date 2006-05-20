@@ -774,26 +774,6 @@ static INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
     case CB_GETLBTEXTLEN:
     case LB_GETTEXTLEN:
         return 1;  /* need to map result */
-    case WM_MDICREATE:
-        {
-            MDICREATESTRUCTW *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) );
-            if (!cs) return -1;
-            *cs = *(MDICREATESTRUCTW *)*plparam;
-            if (HIWORD(cs->szClass))
-            {
-                UNICODE_STRING usBuffer;
-                RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)cs->szClass);
-                cs->szClass = usBuffer.Buffer;
-            }
-            if (HIWORD(cs->szTitle))
-            {
-                UNICODE_STRING usBuffer;
-                RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)cs->szTitle);
-                cs->szTitle = usBuffer.Buffer;
-            }
-            *plparam = (LPARAM)cs;
-        }
-        return 1;
 
 /* Listbox / Combobox */
     case LB_ADDSTRING:
@@ -912,17 +892,6 @@ static LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPA
                 result = WideCharToMultiByte( CP_ACP, 0, p, n, NULL, 0, 0, NULL );
                 HeapFree (GetProcessHeap(), 0, p);
             }
-        }
-        break;
-
-    case WM_MDICREATE:
-        {
-            MDICREATESTRUCTW *cs = (MDICREATESTRUCTW *)lParam;
-            if (HIWORD(cs->szTitle))
-                HeapFree( GetProcessHeap(), 0, (LPVOID)cs->szTitle );
-            if (HIWORD(cs->szClass))
-                HeapFree( GetProcessHeap(), 0, (LPVOID)cs->szClass );
-            HeapFree( GetProcessHeap(), 0, cs );
         }
         break;
 
@@ -2677,6 +2646,44 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
                 csW.lpCreateParams = &mdi_cs;
             }
 
+            ret = callback( hwnd, msg, wParam, (LPARAM)&csW, result, arg );
+            free_buffer( buffer, ptr );
+        }
+        break;
+
+    case WM_MDICREATE:
+        {
+            WCHAR *ptr, buffer[512];
+            DWORD title_lenA = 0, title_lenW = 0, class_lenA = 0, class_lenW = 0;
+            MDICREATESTRUCTA *csA = (MDICREATESTRUCTA *)lParam;
+            MDICREATESTRUCTW csW;
+
+            memcpy( &csW, csA, sizeof(csW) );
+
+            if (HIWORD(csA->szTitle))
+            {
+                title_lenA = strlen(csA->szTitle) + 1;
+                RtlMultiByteToUnicodeSize( &title_lenW, csA->szTitle, title_lenA );
+            }
+            if (HIWORD(csA->szClass))
+            {
+                class_lenA = strlen(csA->szClass) + 1;
+                RtlMultiByteToUnicodeSize( &class_lenW, csA->szClass, class_lenA );
+            }
+
+            if (!(ptr = get_buffer( buffer, sizeof(buffer), title_lenW + class_lenW ))) break;
+
+            if (title_lenW)
+            {
+                csW.szTitle = ptr;
+                RtlMultiByteToUnicodeN( ptr, title_lenW, NULL, csA->szTitle, title_lenA );
+            }
+            if (class_lenW)
+            {
+                csW.szClass = ptr + title_lenW/sizeof(WCHAR);
+                RtlMultiByteToUnicodeN( ptr + title_lenW/sizeof(WCHAR), class_lenW, NULL,
+                                        csA->szClass, class_lenA );
+            }
             ret = callback( hwnd, msg, wParam, (LPARAM)&csW, result, arg );
             free_buffer( buffer, ptr );
         }
