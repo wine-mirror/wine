@@ -2433,16 +2433,22 @@ static void PROPSHEET_SetWizButtons(HWND hwndDlg, DWORD dwFlags)
   EnableWindow(hwndNext, FALSE);
   EnableWindow(hwndFinish, FALSE);
 
+  /* set the default pushbutton to an enabled button */
+  if (((dwFlags & PSWIZB_FINISH) || psInfo->hasFinish) && !(dwFlags & PSWIZB_DISABLEDFINISH))
+    SendMessageW(hwndDlg, DM_SETDEFID, IDC_FINISH_BUTTON, 0);
+  else if (dwFlags & PSWIZB_NEXT)
+    SendMessageW(hwndDlg, DM_SETDEFID, IDC_NEXT_BUTTON, 0);
+  else if (dwFlags & PSWIZB_BACK)
+    SendMessageW(hwndDlg, DM_SETDEFID, IDC_BACK_BUTTON, 0);
+  else
+    SendMessageW(hwndDlg, DM_SETDEFID, IDCANCEL, 0);
+
+
   if (dwFlags & PSWIZB_BACK)
     EnableWindow(hwndBack, TRUE);
 
   if (dwFlags & PSWIZB_NEXT)
-  {
     EnableWindow(hwndNext, TRUE);
-
-    /* Set the Next button as the default pushbutton  */
-    SendMessageW(hwndDlg, DM_SETDEFID, IDC_NEXT_BUTTON, 0);
-  }
 
   if (!psInfo->hasFinish)
   {
@@ -2455,12 +2461,7 @@ static void PROPSHEET_SetWizButtons(HWND hwndDlg, DWORD dwFlags)
       ShowWindow(hwndFinish, SW_SHOW);
 
       if (!(dwFlags & PSWIZB_DISABLEDFINISH))
-      {
         EnableWindow(hwndFinish, TRUE);
-
-        /* Set the Finish button as the default pushbutton  */
-        SendMessageW(hwndDlg, DM_SETDEFID, IDC_FINISH_BUTTON, 0);
-      }
     }
     else
     {
