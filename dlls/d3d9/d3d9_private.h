@@ -270,6 +270,8 @@ typedef struct IDirect3DSwapChain9Impl
     /* IDirect3DSwapChain9 fields */
     IWineD3DSwapChain      *wineD3DSwapChain;
 
+    /* Parent reference */
+    LPDIRECT3DDEVICE9       parentDevice;
 } IDirect3DSwapChain9Impl;
 
 /* ------------------ */
@@ -379,6 +381,8 @@ typedef struct IDirect3DIndexBuffer9Impl
     /* IDirect3DResource9 fields */
     IWineD3DIndexBuffer    *wineD3DIndexBuffer;
 
+    /* Parent reference */
+    LPDIRECT3DDEVICE9       parentDevice;
 } IDirect3DIndexBuffer9Impl;
 
 /* --------------------- */
@@ -444,11 +448,13 @@ typedef struct IDirect3DCubeTexture9Impl
 {
     /* IUnknown fields */
     const IDirect3DCubeTexture9Vtbl *lpVtbl;
-    LONG                      ref;
+    LONG                    ref;
 
     /* IDirect3DResource9 fields */
-    IWineD3DCubeTexture      *wineD3DCubeTexture;
-    
+    IWineD3DCubeTexture    *wineD3DCubeTexture;
+
+    /* Parent reference */
+    LPDIRECT3DDEVICE9       parentDevice;
 }  IDirect3DCubeTexture9Impl;
 
 
@@ -473,6 +479,8 @@ typedef struct IDirect3DTexture9Impl
     /* IDirect3DResource9 fields */
     IWineD3DTexture        *wineD3DTexture;
 
+    /* Parent reference */
+    LPDIRECT3DDEVICE9       parentDevice;
 } IDirect3DTexture9Impl;
 
 /* ----------------------- */
@@ -491,11 +499,13 @@ typedef struct IDirect3DVolumeTexture9Impl
 {
     /* IUnknown fields */
     const IDirect3DVolumeTexture9Vtbl *lpVtbl;
-    LONG                        ref;
+    LONG                    ref;
 
     /* IDirect3DResource9 fields */
-    IWineD3DVolumeTexture      *wineD3DVolumeTexture;
-    
+    IWineD3DVolumeTexture  *wineD3DVolumeTexture;
+
+    /* Parent reference */
+    LPDIRECT3DDEVICE9       parentDevice;
 } IDirect3DVolumeTexture9Impl;
 
 /* ----------------------- */
@@ -511,13 +521,15 @@ extern const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl;
  * IDirect3DStateBlock9 implementation structure
  */
 typedef struct  IDirect3DStateBlock9Impl {
-  /* IUnknown fields */
-  const IDirect3DStateBlock9Vtbl *lpVtbl;
-  LONG                      ref;
+    /* IUnknown fields */
+    const IDirect3DStateBlock9Vtbl *lpVtbl;
+    LONG                    ref;
 
-  /* IDirect3DStateBlock9 fields */
-  IWineD3DStateBlock       *wineD3DStateBlock;
+    /* IDirect3DStateBlock9 fields */
+    IWineD3DStateBlock     *wineD3DStateBlock;
 
+    /* Parent reference */
+    LPDIRECT3DDEVICE9       parentDevice;
 } IDirect3DStateBlock9Impl;
 
 
@@ -584,11 +596,13 @@ extern const IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl;
 typedef struct IDirect3DPixelShader9Impl {
   /* IUnknown fields */
     const IDirect3DPixelShader9Vtbl *lpVtbl;
-    LONG  ref;
+    LONG                    ref;
 
     /* IDirect3DPixelShader9 fields */
-    IWineD3DPixelShader       *wineD3DPixelShader;
+    IWineD3DPixelShader    *wineD3DPixelShader;
 
+    /* Parent reference */
+    LPDIRECT3DDEVICE9       parentDevice;
 } IDirect3DPixelShader9Impl;
 
 /* --------------- */
@@ -610,7 +624,9 @@ typedef struct IDirect3DQuery9Impl {
 
     /* IDirect3DQuery9 fields */
     IWineD3DQuery       *wineD3DQuery;
-    
+
+    /* Parent reference */
+    LPDIRECT3DDEVICE9    parentDevice;
 } IDirect3DQuery9Impl;
 
 

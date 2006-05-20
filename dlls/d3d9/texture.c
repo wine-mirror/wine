@@ -59,6 +59,7 @@ ULONG WINAPI IDirect3DTexture9Impl_Release(LPDIRECT3DTEXTURE9 iface) {
 
     if (ref == 0) {
         IWineD3DTexture_Release(This->wineD3DTexture);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -263,7 +264,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9 iface, UIN
         FIXME("(%p) call to IWineD3DDevice_CreateTexture failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
    } else {
-
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppTexture= (LPDIRECT3DTEXTURE9) object;
         TRACE("(%p) Created Texture %p, %p\n", This, object, object->wineD3DTexture);
    }

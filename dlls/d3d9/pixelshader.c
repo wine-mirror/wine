@@ -56,6 +56,7 @@ ULONG WINAPI IDirect3DPixelShader9Impl_Release(LPDIRECT3DPIXELSHADER9 iface) {
 
     if (ref == 0) {
         IWineD3DPixelShader_Release(This->wineD3DPixelShader);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -123,6 +124,8 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(LPDIRECT3DDEVICE9 iface, C
         FIXME("(%p) call to IWineD3DDevice_CreatePixelShader failed\n", This);
         HeapFree(GetProcessHeap(), 0 , object);
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppShader = (IDirect3DPixelShader9*) object;
         TRACE("(%p) : Created pixel shader %p\n", This, object);
     }

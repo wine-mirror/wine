@@ -60,6 +60,7 @@ ULONG WINAPI IDirect3DCubeTexture9Impl_Release(LPDIRECT3DCUBETEXTURE9 iface) {
     if (ref == 0) {
         TRACE("Releasing child %p\n", This->wineD3DCubeTexture);
         IWineD3DCubeTexture_Release(This->wineD3DCubeTexture);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -270,6 +271,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateCubeTexture(LPDIRECT3DDEVICE9 iface,
         FIXME("(%p) call to IWineD3DDevice_CreateCubeTexture failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppCubeTexture = (LPDIRECT3DCUBETEXTURE9) object;
         TRACE("(%p) : Created cube texture %p\n", This, object);
     }

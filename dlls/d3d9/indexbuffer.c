@@ -57,6 +57,7 @@ ULONG WINAPI IDirect3DIndexBuffer9Impl_Release(LPDIRECT3DINDEXBUFFER9 iface) {
 
     if (ref == 0) {
         IWineD3DIndexBuffer_Release(This->wineD3DIndexBuffer);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -180,6 +181,8 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(LPDIRECT3DDEVICE9 iface,
         FIXME("(%p) call to IWineD3DDevice_CreateIndexBuffer failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppIndexBuffer = (LPDIRECT3DINDEXBUFFER9) object;
         TRACE("(%p) : Created index buffer %p\n", This, object);
     }

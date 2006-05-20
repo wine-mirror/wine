@@ -56,6 +56,7 @@ ULONG WINAPI IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface) {
     TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
 
     if (ref == 0) {
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -145,6 +146,8 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface, D3DQUER
         FIXME("(%p) call to IWineD3DDevice_CreateQuery failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppQuery = (LPDIRECT3DQUERY9) object;
         TRACE("(%p) : Created query %p\n", This , object);
     }

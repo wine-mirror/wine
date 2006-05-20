@@ -57,6 +57,7 @@ ULONG WINAPI IDirect3DStateBlock9Impl_Release(LPDIRECT3DSTATEBLOCK9 iface) {
 
     if (ref == 0) {
         IWineD3DStateBlock_Release(This->wineD3DStateBlock);    
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -116,8 +117,10 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateStateBlock(LPDIRECT3DDEVICE9 iface, D3
        FIXME("(%p) Call to IWineD3DDevice_CreateStateBlock failed.\n", This);
        HeapFree(GetProcessHeap(), 0, object);
    } else {
-       *ppStateBlock = (IDirect3DStateBlock9*)object;
-       TRACE("(%p) : Created stateblock %p\n", This, object);
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
+        *ppStateBlock = (IDirect3DStateBlock9*)object;
+        TRACE("(%p) : Created stateblock %p\n", This, object);
    }
    TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, object);
    return hrc;

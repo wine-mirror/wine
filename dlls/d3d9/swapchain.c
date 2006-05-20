@@ -58,6 +58,7 @@ ULONG WINAPI IDirect3DSwapChain9Impl_Release(LPDIRECT3DSWAPCHAIN9 iface) {
 
     if (ref == 0) {
         IWineD3DSwapChain_Release(This->wineD3DSwapChain);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -192,7 +193,9 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE
     if (hrc != D3D_OK) {
         FIXME("(%p) call to IWineD3DDevice_CreateAdditionalSwapChain failed\n", This);
         HeapFree(GetProcessHeap(), 0 , object);
-    }else{
+    } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *pSwapChain = (IDirect3DSwapChain9 *)object;
         TRACE("(%p) : Created swapchain %p\n", This, *pSwapChain);
     }

@@ -58,6 +58,7 @@ ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9 iface)
 
     if (ref == 0) {
         IWineD3DVolumeTexture_Release(This->wineD3DVolumeTexture);
+        IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -267,6 +268,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVolumeTexture(LPDIRECT3DDEVICE9 ifac
         FIXME("(%p) call to IWineD3DDevice_CreateVolumeTexture failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE9) object;
         TRACE("(%p) : Created volume texture %p\n", This, object);
     }
