@@ -268,3 +268,33 @@ LONG WINAPI DBToAmpFactor(LONG db)
 	return 0;
     return 100;
 }
+
+DWORD WINAPI AMGetErrorTextA(HRESULT hr, char *buffer, DWORD maxlen)
+{
+    int len;
+    static const char format[] = "Error: 0x%lx";
+    char error[MAX_ERROR_TEXT_LEN];
+
+    FIXME("(%lx,%p,%ld) stub\n", hr, buffer, maxlen);
+
+    if (!buffer) return 0;
+    wsprintfA(error, format, hr);
+    if ((len = lstrlenA(error)) >= maxlen) return 0; 
+    lstrcpyA(buffer, error);
+    return len;
+}
+
+DWORD WINAPI AMGetErrorTextW(HRESULT hr, WCHAR *buffer, DWORD maxlen)
+{
+    int len;
+    static const WCHAR format[] = {'E','r','r','o','r',':',' ','0','x','%','l','x',0};
+    WCHAR error[MAX_ERROR_TEXT_LEN];
+
+    FIXME("(%lx,%p,%ld) stub\n", hr, buffer, maxlen);
+
+    if (!buffer) return 0;
+    wsprintfW(error, format, hr);
+    if ((len = lstrlenW(error)) >= maxlen) return 0; 
+    lstrcpyW(buffer, error);
+    return len;
+}

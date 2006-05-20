@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002 Alexandre Julliard
+ * Copyright (C) 2006 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,35 +16,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __DSHOW_INCLUDED__
-#define __DSHOW_INCLUDED__
+#ifndef __ERRORS__
+#define __ERRORS__
 
-#define AM_NOVTABLE
-
-#include <windef.h>
-#include <wingdi.h>
-#include <objbase.h>
-#include <ddraw.h>
-#include <mmsystem.h>
-
-#ifndef NUMELMS
-#define NUMELMS(array) (sizeof(array)/sizeof((array)[0]))
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#include <strmif.h>
-/*#include <amvideo.h>*/
-/*#include <amaudio.h>*/
-#include <control.h>
-/*#include <evcode.h>*/
-#include <uuids.h>
-#include <errors.h>
-#include <audevcod.h>
+#define VFW_FIRST_CODE      0x200
+#define MAX_ERROR_TEXT_LEN  160
 
-#ifndef OATRUE
-#define OATRUE (-1)
-#endif
-#ifndef OAFALSE
-#define OAFALSE (0)
+#include <vfwmsgs.h>
+
+DWORD WINAPI AMGetErrorTextA(HRESULT hr, char *buffer, DWORD maxlen);
+DWORD WINAPI AMGetErrorTextW(HRESULT hr, WCHAR *buffer, DWORD maxlen);
+
+#define AMGetErrorText WINELIB_NAME_AW(AMGetErrorText)
+
+#ifdef __cplusplus
+}
 #endif
 
-#endif /* __DSHOW_INCLUDED__ */
+#endif /* __ERRORS__ */

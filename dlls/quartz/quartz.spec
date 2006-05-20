@@ -1,5 +1,5 @@
-@ stub AMGetErrorTextA
-@ stub AMGetErrorTextW
+@ stdcall AMGetErrorTextA(long ptr long)
+@ stdcall AMGetErrorTextW(long ptr long)
 @ stdcall AmpFactorToDB(long)
 @ stdcall DBToAmpFactor(long)
 @ stdcall -private DllCanUnloadNow()

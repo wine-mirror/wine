@@ -131,6 +131,7 @@ WINDOWS_INCLUDES = \
 	dxerr8.h \
 	dxerr9.h \
 	dxfile.h \
+	errors.h \
 	evcode.h \
 	evntrace.h \
 	excpt.h \
