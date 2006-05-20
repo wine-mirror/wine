@@ -91,10 +91,10 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM 
     UINT msg32;
     HWND hwnd = WIN_Handle32( hwnd16 );
 
-    switch (WINPROC_MapMsg16To32W( hwnd, msg, wparam, &msg32, &wparam32, &lparam ))
+    switch (WINPROC_MapMsg16To32A( hwnd, msg, wparam, &msg32, &wparam32, &lparam ))
     {
     case 0:
-        return PostMessageW( hwnd, msg32, wparam32, lparam );
+        return PostMessageA( hwnd, msg32, wparam32, lparam );
     case 1:
         ERR( "16-bit message 0x%04x contains pointer, cannot post\n", msg );
         return FALSE;
@@ -114,10 +114,10 @@ BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 msg, WPARAM16 wparam, LPAR
     DWORD tid = HTASK_32( hTask );
     if (!tid) return FALSE;
 
-    switch (WINPROC_MapMsg16To32W( 0, msg, wparam, &msg32, &wparam32, &lparam ))
+    switch (WINPROC_MapMsg16To32A( 0, msg, wparam, &msg32, &wparam32, &lparam ))
     {
     case 0:
-        return PostThreadMessageW( tid, msg32, wparam32, lparam );
+        return PostThreadMessageA( tid, msg32, wparam32, lparam );
     case 1:
         ERR( "16-bit message %x contains pointer, cannot post\n", msg );
         return FALSE;
@@ -157,7 +157,7 @@ BOOL16 WINAPI PeekMessage32_16( MSG32_16 *msg16, HWND16 hwnd16,
 
     if(USER16_AlertableWait)
         MsgWaitForMultipleObjectsEx( 0, NULL, 1, 0, MWMO_ALERTABLE );
-    if (!PeekMessageW( &msg, hwnd, first, last, flags )) return FALSE;
+    if (!PeekMessageA( &msg, hwnd, first, last, flags )) return FALSE;
 
     msg16->msg.hwnd    = HWND_16( msg.hwnd );
     msg16->msg.lParam  = msg.lParam;
@@ -166,7 +166,7 @@ BOOL16 WINAPI PeekMessage32_16( MSG32_16 *msg16, HWND16 hwnd16,
     msg16->msg.pt.y    = (INT16)msg.pt.y;
     if (wHaveParamHigh) msg16->wParamHigh = HIWORD(msg.wParam);
 
-    return (WINPROC_MapMsg32WTo16( msg.hwnd, msg.message, msg.wParam,
+    return (WINPROC_MapMsg32ATo16( msg.hwnd, msg.message, msg.wParam,
                                    &msg16->msg.message, &msg16->msg.wParam,
                                    &msg16->msg.lParam ) != -1);
 }
@@ -288,7 +288,7 @@ BOOL16 WINAPI GetMessage32_16( MSG32_16 *msg16, HWND16 hwnd16, UINT16 first,
     {
         if(USER16_AlertableWait)
             MsgWaitForMultipleObjectsEx( 0, NULL, INFINITE, 0, MWMO_ALERTABLE );
-        GetMessageW( &msg, hwnd, first, last );
+        GetMessageA( &msg, hwnd, first, last );
         msg16->msg.hwnd    = HWND_16( msg.hwnd );
         msg16->msg.lParam  = msg.lParam;
         msg16->msg.time    = msg.time;
@@ -296,7 +296,7 @@ BOOL16 WINAPI GetMessage32_16( MSG32_16 *msg16, HWND16 hwnd16, UINT16 first,
         msg16->msg.pt.y    = (INT16)msg.pt.y;
         if (wHaveParamHigh) msg16->wParamHigh = HIWORD(msg.wParam);
     }
-    while (WINPROC_MapMsg32WTo16( msg.hwnd, msg.message, msg.wParam,
+    while (WINPROC_MapMsg32ATo16( msg.hwnd, msg.message, msg.wParam,
                                   &msg16->msg.message, &msg16->msg.wParam,
                                   &msg16->msg.lParam ) == -1);
 
@@ -419,11 +419,10 @@ BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, MSG16 *msg16 )
     case WM_KEYDOWN:
     case WM_CHAR:
     case WM_SYSCHAR:
-        msg.lParam = msg16->lParam;
-        WINPROC_MapMsg16To32W( msg.hwnd, msg16->message, msg16->wParam,
-                               &msg.message, &msg.wParam, &msg.lParam );
-        /* these messages don't need an unmap */
-        return IsDialogMessageW( hwndDlg32, &msg );
+        msg.message = msg16->message;
+        msg.wParam  = msg16->wParam;
+        msg.lParam  = msg16->lParam;
+        return IsDialogMessageA( hwndDlg32, &msg );
     }
 
     if ((hwndDlg32 != msg.hwnd) && !IsChild( hwndDlg32, msg.hwnd )) return FALSE;
