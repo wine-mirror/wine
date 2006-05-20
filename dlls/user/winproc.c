@@ -67,6 +67,17 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION winproc_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static inline void *get_buffer( void *static_buffer, size_t size, size_t need )
+{
+    if (size >= need) return static_buffer;
+    return HeapAlloc( GetProcessHeap(), 0, need );
+}
+
+static inline void free_buffer( void *static_buffer, void *buffer )
+{
+    if (buffer != static_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+}
+
 /* map a Unicode string to a 16-bit pointer */
 inline static SEGPTR map_str_32W_to_16( LPCWSTR str )
 {
@@ -763,50 +774,6 @@ static INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
     case CB_GETLBTEXTLEN:
     case LB_GETTEXTLEN:
         return 1;  /* need to map result */
-    case WM_NCCREATE:
-    case WM_CREATE:
-        {
-            UNICODE_STRING usBuffer;
-            struct s
-            { CREATESTRUCTW cs;         /* new structure */
-              LPCWSTR lpszName;         /* allocated Name */
-              LPCWSTR lpszClass;        /* allocated Class */
-            };
-
-            struct s *xs = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct s));
-            if (!xs) return -1;
-            xs->cs = *(CREATESTRUCTW *)*plparam;
-            if (HIWORD(xs->cs.lpszName))
-            {
-                RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)xs->cs.lpszName);
-                xs->lpszName = xs->cs.lpszName = usBuffer.Buffer;
-            }
-            if (HIWORD(xs->cs.lpszClass))
-            {
-                RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)xs->cs.lpszClass);
-                xs->lpszClass = xs->cs.lpszClass = usBuffer.Buffer;
-            }
-
-            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-            {
-                MDICREATESTRUCTW *mdi_cs = HeapAlloc(GetProcessHeap(), 0, sizeof(*mdi_cs));
-                *mdi_cs = *(MDICREATESTRUCTW *)xs->cs.lpCreateParams;
-                if (HIWORD(mdi_cs->szTitle))
-                {
-                    RtlCreateUnicodeStringFromAsciiz(&usBuffer, (LPCSTR)mdi_cs->szTitle);
-                    mdi_cs->szTitle = usBuffer.Buffer;
-                }
-                if (HIWORD(mdi_cs->szClass))
-                {
-                    RtlCreateUnicodeStringFromAsciiz(&usBuffer, (LPCSTR)mdi_cs->szClass);
-                    mdi_cs->szClass = usBuffer.Buffer;
-                }
-                xs->cs.lpCreateParams = mdi_cs;
-            }
-
-            *plparam = (LPARAM)xs;
-        }
-        return 1;
     case WM_MDICREATE:
         {
             MDICREATESTRUCTW *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) );
@@ -945,30 +912,6 @@ static LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPA
                 result = WideCharToMultiByte( CP_ACP, 0, p, n, NULL, 0, 0, NULL );
                 HeapFree (GetProcessHeap(), 0, p);
             }
-        }
-        break;
-    case WM_NCCREATE:
-    case WM_CREATE:
-        {
-            struct s
-            { CREATESTRUCTW cs;         /* new structure */
-              LPWSTR lpszName;          /* allocated Name */
-              LPWSTR lpszClass;         /* allocated Class */
-            };
-            struct s *xs = (struct s *)lParam;
-            HeapFree( GetProcessHeap(), 0, xs->lpszName );
-            HeapFree( GetProcessHeap(), 0, xs->lpszClass );
-
-            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-            {
-                MDICREATESTRUCTW *mdi_cs = (MDICREATESTRUCTW *)xs->cs.lpCreateParams;
-                if (HIWORD(mdi_cs->szTitle))
-                    HeapFree(GetProcessHeap(), 0, (LPVOID)mdi_cs->szTitle);
-                if (HIWORD(mdi_cs->szClass))
-                    HeapFree(GetProcessHeap(), 0, (LPVOID)mdi_cs->szClass);
-                HeapFree(GetProcessHeap(), 0, mdi_cs);
-            }
-            HeapFree( GetProcessHeap(), 0, xs );
         }
         break;
 
@@ -2684,35 +2627,76 @@ static void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, WPARAM wParam,
                               LPARAM lParam, LRESULT *result, void *arg )
 {
-    LRESULT ret;
+    LRESULT ret = 0;
     int unmap;
 
     TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                 hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
-    if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
-        ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
-                       SPY_GetMsgName(msg, hwnd), wParam, lParam );
-        return 0;
-    }
-    ret = callback( hwnd, msg, wParam, lParam, result, arg );
-    if (unmap)
+    switch(msg)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+        {
+            WCHAR *ptr, buffer[512];
+            CREATESTRUCTA *csA = (CREATESTRUCTA *)lParam;
+            CREATESTRUCTW csW = *(CREATESTRUCTW *)csA;
+            MDICREATESTRUCTW mdi_cs;
+            DWORD name_lenA = 0, name_lenW = 0, class_lenA = 0, class_lenW = 0;
+
+            if (HIWORD(csA->lpszClass))
+            {
+                class_lenA = strlen(csA->lpszClass) + 1;
+                RtlMultiByteToUnicodeSize( &class_lenW, csA->lpszClass, class_lenA );
+            }
+            if (HIWORD(csA->lpszName))
+            {
+                name_lenA = strlen(csA->lpszName) + 1;
+                RtlMultiByteToUnicodeSize( &name_lenW, csA->lpszName, name_lenA );
+            }
+
+            if (!(ptr = get_buffer( buffer, sizeof(buffer), class_lenW + name_lenW ))) break;
+
+            if (class_lenW)
+            {
+                csW.lpszClass = ptr;
+                RtlMultiByteToUnicodeN( ptr, class_lenW, NULL, csA->lpszClass, class_lenA );
+            }
+            if (name_lenW)
+            {
+                csW.lpszName = ptr + class_lenW/sizeof(WCHAR);
+                RtlMultiByteToUnicodeN( ptr + class_lenW/sizeof(WCHAR), name_lenW, NULL,
+                                        csA->lpszName, name_lenA );
+            }
+
+            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            {
+                mdi_cs = *(MDICREATESTRUCTW *)csA->lpCreateParams;
+                mdi_cs.szTitle = csW.lpszName;
+                mdi_cs.szClass = csW.lpszClass;
+                csW.lpCreateParams = &mdi_cs;
+            }
+
+            ret = callback( hwnd, msg, wParam, (LPARAM)&csW, result, arg );
+            free_buffer( buffer, ptr );
+        }
+        break;
+
+    default:
+        if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
+            ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
+                      SPY_GetMsgName(msg, hwnd), wParam, lParam );
+            return 0;
+        }
+        ret = callback( hwnd, msg, wParam, lParam, result, arg );
+        if (!unmap) break;
         *result = WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam, *result,
                                             (callback == call_window_proc) ? arg : NULL  /*FIXME: hack*/ );
+        break;
+    }
     return ret;
 }
 
-
-static inline void *get_buffer( void *static_buffer, size_t size, size_t need )
-{
-    if (size >= need) return static_buffer;
-    return HeapAlloc( GetProcessHeap(), 0, need );
-}
-
-static inline void free_buffer( void *static_buffer, void *buffer )
-{
-    if (buffer != static_buffer) HeapFree( GetProcessHeap(), 0, buffer );
-}
 
 /**********************************************************************
  *	     WINPROC_CallProcWtoA
