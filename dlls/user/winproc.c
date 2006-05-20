@@ -2967,8 +2967,8 @@ LRESULT WINAPI __wine_call_wndproc( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LP
  *
  * Call a 16-bit window procedure, translating the 32-bit args.
  */
-static LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT msg,
-                                        WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg )
+LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT msg,
+                                 WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg )
 {
     LRESULT ret;
     UINT16 msg16;

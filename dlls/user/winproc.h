@@ -59,6 +59,8 @@ extern LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UIN
                                      WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg );
 extern LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT16 msg,
                                         WPARAM16 wParam, LPARAM lParam, LRESULT *result, void *arg );
+extern LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT msg,
+                                        WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg );
 
 extern INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16,
                                     UINT *pmsg32, WPARAM *pwparam32,

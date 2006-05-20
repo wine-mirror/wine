@@ -133,6 +133,50 @@ static LRESULT call_hook_16( INT id, INT code, WPARAM wp, LPARAM lp )
 }
 
 
+struct wndproc_hook_params
+{
+    HHOOK  hhook;
+    INT    code;
+    WPARAM wparam;
+};
+
+/* callback for WINPROC_Call16To32A */
+static LRESULT wndproc_hook_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                      LRESULT *result, void *arg )
+{
+    struct wndproc_hook_params *params = arg;
+    CWPSTRUCT cwp;
+
+    cwp.hwnd    = hwnd;
+    cwp.message = msg;
+    cwp.wParam  = wp;
+    cwp.lParam  = lp;
+    *result = 0;
+    return CallNextHookEx( params->hhook, params->code, params->wparam, (LPARAM)&cwp );
+}
+
+/* callback for WINPROC_Call32ATo16 */
+static LRESULT wndproc_hook_callback16( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp,
+                                        LRESULT *result, void *arg )
+{
+    struct wndproc_hook_params *params = arg;
+    CWPSTRUCT16 cwp;
+    LRESULT ret;
+
+    cwp.hwnd    = hwnd;
+    cwp.message = msg;
+    cwp.wParam  = wp;
+    cwp.lParam  = lp;
+
+    lp = MapLS( &cwp );
+    ret = call_hook_16( WH_CALLWNDPROC, params->code, params->wparam, lp );
+    UnMapLS( lp );
+
+    *result = 0;
+    return ret;
+}
+
+
 /***********************************************************************
  *		call_WH_MSGFILTER
  */
@@ -184,26 +228,14 @@ static LRESULT CALLBACK call_WH_GETMESSAGE( INT code, WPARAM wp, LPARAM lp )
  */
 static LRESULT CALLBACK call_WH_CALLWNDPROC( INT code, WPARAM wp, LPARAM lp )
 {
+    struct wndproc_hook_params params;
     CWPSTRUCT *cwp32 = (CWPSTRUCT *)lp;
-    CWPSTRUCT16 cwp16;
-    MSGPARAM16 mp16;
-    LRESULT ret;
+    LRESULT result;
 
-    cwp16.hwnd   = HWND_16(cwp32->hwnd);
-    cwp16.lParam = cwp32->lParam;
-
-    WINPROC_MapMsg32ATo16( cwp32->hwnd, cwp32->message, cwp32->wParam,
-                           &cwp16.message, &cwp16.wParam, &cwp16.lParam );
-
-    lp = MapLS( &cwp16 );
-    ret = call_hook_16( WH_CALLWNDPROC, code, wp, lp );
-    UnMapLS( lp );
-
-    mp16.wParam  = cwp16.wParam;
-    mp16.lParam  = cwp16.lParam;
-    mp16.lResult = 0;
-    WINPROC_UnmapMsg32ATo16( cwp32->hwnd, cwp32->message, cwp32->wParam, cwp32->lParam, &mp16 );
-    return ret;
+    params.code   = code;
+    params.wparam = wp;
+    return WINPROC_CallProc32ATo16( wndproc_hook_callback16, cwp32->hwnd, cwp32->message,
+                                    cwp32->wParam, cwp32->lParam, &result, &params );
 }
 
 
@@ -499,15 +531,14 @@ LRESULT WINAPI CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wparam, LPARA
     case WH_CALLWNDPROC:
     {
         CWPSTRUCT16 *cwp16 = MapSL(lparam);
-        CWPSTRUCT cwp32;
+        LRESULT result;
+        struct wndproc_hook_params params;
 
-        cwp32.hwnd   = WIN_Handle32(cwp16->hwnd);
-        cwp32.lParam = cwp16->lParam;
-
-        WINPROC_MapMsg16To32A( cwp32.hwnd, cwp16->message, cwp16->wParam,
-                               &cwp32.message, &cwp32.wParam, &cwp32.lParam );
-        ret = CallNextHookEx( hhook, code, wparam, (LPARAM)&cwp32 );
-        WINPROC_UnmapMsg16To32A( cwp32.hwnd, cwp32.message, cwp32.wParam, cwp32.lParam, 0 );
+        params.hhook  = hhook;
+        params.code   = code;
+        params.wparam = wparam;
+        ret = WINPROC_CallProc16To32A( wndproc_hook_callback, cwp16->hwnd, cwp16->message,
+                                       cwp16->wParam, cwp16->lParam, &result, &params );
         break;
     }
 
