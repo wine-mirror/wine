@@ -2902,8 +2902,8 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 /**********************************************************************
  *	     WINPROC_CallProc16To32A
  */
-static LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT16 msg,
-                                        WPARAM16 wParam, LPARAM lParam, LRESULT *result, void *arg )
+LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT16 msg,
+                                 WPARAM16 wParam, LPARAM lParam, LRESULT *result, void *arg )
 {
     LRESULT ret;
     UINT msg32;
