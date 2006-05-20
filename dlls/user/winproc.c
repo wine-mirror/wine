@@ -500,31 +500,6 @@ static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
     return ret;
 }
 
-/**********************************************************************
- *	     WINPROC_CallWndProc32
- *
- * Call a 32-bit WndProc.
- */
-static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
-                                      WPARAM wParam, LPARAM lParam )
-{
-    LRESULT retvalue;
-
-    USER_CheckNotLock();
-
-    hwnd = WIN_GetFullHandle( hwnd );
-    if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Call window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
-                 GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
-
-    retvalue = WINPROC_wrapper( proc, hwnd, msg, wParam, lParam );
-
-    if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Ret  window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
-                 GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam, retvalue );
-    return retvalue;
-}
-
 /* call a 16-bit window procedure */
 static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam,
                                    LRESULT *result, void *arg )
@@ -727,120 +702,6 @@ inline static BOOL WINPROC_TestLBForStr( HWND hwnd, UINT msg )
     else
         return (!(style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || (style & LBS_HASSTRINGS));
 
-}
-/**********************************************************************
- *	     WINPROC_MapMsg32ATo32W
- *
- * Map a message from Ansi to Unicode.
- * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
- *
- * FIXME:
- *  WM_GETTEXT/WM_SETTEXT and static control with SS_ICON style:
- *  the first four bytes are the handle of the icon
- *  when the WM_SETTEXT message has been used to set the icon
- */
-static INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plparam )
-{
-    switch(msg)
-    {
-    case WM_GETTEXT:
-    case WM_ASKCBFORMATNAME:
-        {
-            LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0,
-                                     *pwparam * sizeof(WCHAR) + sizeof(LPARAM) );
-            if (!ptr) return -1;
-            *ptr++ = *plparam;  /* Store previous lParam */
-            *plparam = (LPARAM)ptr;
-        }
-        return 1;
-    /* lparam is string (0-terminated) */
-    case WM_SETTEXT:
-    case WM_WININICHANGE:
-    case WM_DEVMODECHANGE:
-    case CB_DIR:
-    case LB_DIR:
-    case LB_ADDFILE:
-    case EM_REPLACESEL:
-        if (!*plparam) return 0;
-        else
-        {
-            DWORD len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*plparam, -1, NULL, 0);
-            WCHAR *buf = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)*plparam, -1, buf, len);
-            *plparam = (LPARAM)buf;
-            return (*plparam ? 1 : -1);
-        }
-    default:  /* No translation needed */
-        return 0;
-    }
-}
-
-
-/**********************************************************************
- *	     WINPROC_UnmapMsg32ATo32W
- *
- * Unmap a message that was mapped from Ansi to Unicode.
- */
-static LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                                         LRESULT result, WNDPROC dispatch )
-{
-    switch(msg)
-    {
-    case WM_GETTEXT:
-    case WM_ASKCBFORMATNAME:
-        {
-            LPARAM *ptr = (LPARAM *)lParam - 1;
-            if (!wParam) result = 0;
-            else if (!(result = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
-                                                    (LPSTR)*ptr, wParam, NULL, NULL )))
-            {
-                ((LPSTR)*ptr)[wParam-1] = 0;
-                result = wParam - 1;
-            }
-            else result--;  /* do not count terminating null */
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
-        break;
-    case WM_GETTEXTLENGTH:
-    case CB_GETLBTEXTLEN:
-    case LB_GETTEXTLEN:
-        if (result >= 0)
-        {
-            /* Determine respective GETTEXT message */
-            UINT msgGetText =
-              (msg == WM_GETTEXTLENGTH) ? WM_GETTEXT :
-              ((msg == CB_GETLBTEXTLEN) ? CB_GETLBTEXT : LB_GETTEXT);
-            /* wParam differs between the messages */
-            WPARAM wp = (msg == WM_GETTEXTLENGTH) ? (WPARAM)(result + 1) : wParam;
-
-            WCHAR* p = HeapAlloc (GetProcessHeap(), 0, (result + 1) * sizeof(WCHAR));
-
-            if (p)
-            {
-                LRESULT n;
-
-                if (dispatch)
-                    n = WINPROC_CallWndProc(dispatch, hwnd, msgGetText, wp, (LPARAM)p);
-                else
-                    n = SendMessageW (hwnd, msgGetText, wp, (LPARAM)p);
-
-                result = WideCharToMultiByte( CP_ACP, 0, p, n, NULL, 0, 0, NULL );
-                HeapFree (GetProcessHeap(), 0, p);
-            }
-        }
-        break;
-
-    case WM_SETTEXT:
-    case WM_WININICHANGE:
-    case WM_DEVMODECHANGE:
-    case CB_DIR:
-    case LB_DIR:
-    case LB_ADDFILE:
-    case EM_REPLACESEL:
-        HeapFree( GetProcessHeap(), 0, (void *)lParam );
-        break;
-    }
-    return result;
 }
 
 
@@ -1340,17 +1201,6 @@ static INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
     *pwparam32 = (WPARAM)wParam16;
     switch(msg16)
     {
-    case WM_GETTEXT:
-    case WM_SETTEXT:
-    case WM_WININICHANGE:
-    case WM_DEVMODECHANGE:
-    case WM_ASKCBFORMATNAME:
-        *plparam = (LPARAM)MapSL(*plparam);
-        return WINPROC_MapMsg32ATo32W( hwnd, *pmsg32, pwparam32, plparam );
-    case WM_GETTEXTLENGTH:
-    case CB_GETLBTEXTLEN:
-    case LB_GETTEXTLEN:
-        return 1;  /* need to map result */
     case WM_NCCREATE:
     case WM_CREATE:
         {
@@ -1452,17 +1302,10 @@ static INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
  * Unmap a message that was mapped from 16- to 32-bit Unicode.
  */
 static LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                                        LRESULT result, WNDPROC dispatch )
+                                        LRESULT result )
 {
     switch(msg)
     {
-    case WM_GETTEXT:
-    case WM_SETTEXT:
-    case WM_GETTEXTLENGTH:
-    case CB_GETLBTEXTLEN:
-    case LB_GETTEXTLEN:
-    case WM_ASKCBFORMATNAME:
-        return WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam, result, dispatch );
     case WM_NCCREATE:
     case WM_CREATE:
         {
@@ -2996,12 +2839,32 @@ static LRESULT WINPROC_CallProc16To32W( winproc_callback_t callback, HWND16 hwnd
     TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                  hwnd32, SPY_GetMsgName(msg, hwnd32), wParam, lParam);
 
-    if (WINPROC_MapMsg16To32W( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) == -1)
-        return 0;
+    switch(msg)
+    {
+    case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
+    case WM_SETTEXT:
+    case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
+    case CB_DIR:
+    case LB_DIR:
+    case LB_ADDFILE:
+    case EM_REPLACESEL:
+        ret = WINPROC_CallProcAtoW( callback, hwnd32, msg, wParam, (LPARAM)MapSL(lParam), result, arg );
+        break;
 
-    ret = callback( hwnd32, msg32, wParam32, lParam, result, arg );
-    *result = WINPROC_UnmapMsg16To32W( hwnd32, msg32, wParam32, lParam, *result,
-                                       (callback == call_window_proc) ? arg : NULL  /*FIXME: hack*/ );
+    case WM_GETTEXTLENGTH:
+    case CB_GETLBTEXTLEN:
+    case LB_GETTEXTLEN:
+        ret = WINPROC_CallProcAtoW( callback, hwnd32, msg, wParam, lParam, result, arg );
+        break;
+
+    default:
+        if (WINPROC_MapMsg16To32W( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) == -1)
+            return 0;
+        ret = callback( hwnd32, msg32, wParam32, lParam, result, arg );
+        *result = WINPROC_UnmapMsg16To32W( hwnd32, msg32, wParam32, lParam, *result );
+    }
     return ret;
 }
 
