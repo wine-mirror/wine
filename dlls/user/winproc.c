@@ -770,10 +770,6 @@ static INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
             *plparam = (LPARAM)buf;
             return (*plparam ? 1 : -1);
         }
-    case WM_PAINTCLIPBOARD:
-    case WM_SIZECLIPBOARD:
-        FIXME_(msg)("message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg, hwnd), msg );
-        return -1;
     default:  /* No translation needed */
         return 0;
     }
@@ -2497,7 +2493,6 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
                               LPARAM lParam, LRESULT *result, void *arg )
 {
     LRESULT ret = 0;
-    int unmap;
 
     TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                 hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
@@ -2726,16 +2721,14 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
         }
         break;
 
+    case WM_PAINTCLIPBOARD:
+    case WM_SIZECLIPBOARD:
+        FIXME_(msg)( "message %s (0x%x) needs translation, please report\n",
+                     SPY_GetMsgName(msg, hwnd), msg );
+        break;
+
     default:
-        if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
-            ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
-                      SPY_GetMsgName(msg, hwnd), wParam, lParam );
-            return 0;
-        }
         ret = callback( hwnd, msg, wParam, lParam, result, arg );
-        if (!unmap) break;
-        *result = WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam, *result,
-                                            (callback == call_window_proc) ? arg : NULL  /*FIXME: hack*/ );
         break;
     }
     return ret;
