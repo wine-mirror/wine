@@ -2438,14 +2438,6 @@ static void PROPSHEET_SetWizButtons(HWND hwndDlg, DWORD dwFlags)
 
   if (dwFlags & PSWIZB_NEXT)
   {
-    if (!psInfo->hasFinish)
-    {
-      /* Hide the Finish button */
-      ShowWindow(hwndFinish, SW_HIDE);
-    }
-
-    /* Show and enable the Next button */
-    ShowWindow(hwndNext, SW_SHOW);
     EnableWindow(hwndNext, TRUE);
 
     /* Set the Next button as the default pushbutton  */
@@ -2469,6 +2461,13 @@ static void PROPSHEET_SetWizButtons(HWND hwndDlg, DWORD dwFlags)
         /* Set the Finish button as the default pushbutton  */
         SendMessageW(hwndDlg, DM_SETDEFID, IDC_FINISH_BUTTON, 0);
       }
+    }
+    else
+    {
+      /* Hide the Finish button */
+      ShowWindow(hwndFinish, SW_HIDE);
+      /* Show the Next button */
+      ShowWindow(hwndNext, SW_SHOW);
     }
   }
   else if (!(dwFlags & PSWIZB_DISABLEDFINISH))
