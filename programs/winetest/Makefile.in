@@ -19,7 +19,7 @@ RC_BINSRC = winetest.rc
 RC_BINARIES = wine.ico 
 
 XFILES = ddraw_test.exe$(DLLEXT)
-OPENGLFILES = d3d9_test.exe$(DLLEXT)
+OPENGLFILES = d3d8_test.exe$(DLLEXT) d3d9_test.exe$(DLLEXT)
 
 TESTBINS = \
 	@OPENGLFILES@ \
@@ -112,6 +112,8 @@ comctl32_test.exe$(DLLEXT): $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 crypt32_test.exe$(DLLEXT): $(DLLDIR)/crypt32/tests/crypt32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/crypt32/tests/crypt32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+d3d8_test.exe$(DLLEXT): $(DLLDIR)/d3d8/tests/d3d8_test.exe$(DLLEXT)
+	cp $(DLLDIR)/d3d8/tests/d3d8_test.exe$(DLLEXT) $@ && $(STRIP) $@
 d3d9_test.exe$(DLLEXT): $(DLLDIR)/d3d9/tests/d3d9_test.exe$(DLLEXT)
 	cp $(DLLDIR)/d3d9/tests/d3d9_test.exe$(DLLEXT) $@ && $(STRIP) $@
 ddraw_test.exe$(DLLEXT): $(DLLDIR)/ddraw/tests/ddraw_test.exe$(DLLEXT)

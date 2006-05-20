@@ -1540,6 +1540,7 @@ dlls/crypt32/tests/Makefile
 dlls/cryptdll/Makefile
 dlls/ctl3d32/Makefile
 dlls/d3d8/Makefile
+dlls/d3d8/tests/Makefile
 dlls/d3d9/Makefile
 dlls/d3d9/tests/Makefile
 dlls/d3dim/Makefile
