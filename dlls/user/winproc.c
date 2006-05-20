@@ -775,17 +775,6 @@ static INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
     case LB_GETTEXTLEN:
         return 1;  /* need to map result */
 
-    case LB_GETTEXT:                /* FIXME: fixed sized buffer */
-    case CB_GETLBTEXT:
-        if ( WINPROC_TestLBForStr( hwnd, msg ))
-        {
-            LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
-            if (!ptr) return -1;
-            *ptr++ = *plparam;  /* Store previous lParam */
-            *plparam = (LPARAM)ptr;
-        }
-        return 1;
-
 /* Multiline edit */
     case EM_GETLINE:
         { WORD len = (WORD)*plparam;
@@ -883,18 +872,6 @@ static LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPA
     case LB_ADDFILE:
     case EM_REPLACESEL:
         HeapFree( GetProcessHeap(), 0, (void *)lParam );
-        break;
-
-    case LB_GETTEXT:
-    case CB_GETLBTEXT:
-        if ( WINPROC_TestLBForStr( hwnd, msg ))
-        {
-            LPARAM *ptr = (LPARAM *)lParam - 1;
-            if (result >= 0)
-                result = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1,
-                                              (LPSTR)*ptr, 0x7fffffff, NULL, NULL ) - 1;
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
         break;
 
 /* Multiline edit */
@@ -2711,6 +2688,24 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
                 free_buffer( buffer, ptr );
             }
         }
+        break;
+
+    case LB_GETTEXT:
+    case CB_GETLBTEXT:
+        if (lParam && WINPROC_TestLBForStr( hwnd, msg ))
+        {
+            WCHAR buffer[512];  /* FIXME: fixed sized buffer */
+
+            ret = callback( hwnd, msg, wParam, (LPARAM)buffer, result, arg );
+            if (*result >= 0)
+            {
+                DWORD len;
+                RtlUnicodeToMultiByteN( (LPSTR)lParam, ~0u, &len,
+                                        buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+                *result = len - 1;
+            }
+        }
+        else ret = callback( hwnd, msg, wParam, lParam, result, arg );
         break;
 
     default:
