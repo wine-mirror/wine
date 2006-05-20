@@ -2689,6 +2689,25 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
         }
         break;
 
+    case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
+        {
+            WCHAR *ptr, buffer[512];
+            LPSTR str = (LPSTR)lParam;
+            DWORD len = wParam * sizeof(WCHAR);
+
+            if (!(ptr = get_buffer( buffer, sizeof(buffer), len ))) break;
+            ret = callback( hwnd, msg, wParam, (LPARAM)ptr, result, arg );
+            if (*result && wParam)
+            {
+                RtlUnicodeToMultiByteN( str, wParam - 1, &len, ptr, strlenW(ptr) * sizeof(WCHAR) );
+                str[len] = 0;
+                *result = len;
+            }
+            free_buffer( buffer, ptr );
+        }
+        break;
+
     default:
         if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
             ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
