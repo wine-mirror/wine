@@ -120,9 +120,6 @@ static INT (WINAPI *GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
                                               LPDEVMODEA lpdmInput, LPSTR lpszProfile,
                                               DWORD fwMode );
 
-static const char Printers[] =
-"System\\CurrentControlSet\\control\\Print\\Printers\\";
-
 static const WCHAR DriversW[] = { 'S','y','s','t','e','m','\\',
                                   'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
                                   'c','o','n','t','r','o','l','\\',
@@ -350,7 +347,7 @@ static BOOL CUPS_LoadPrinters(void)
     DYNCUPS(cupsPrintFile);
 #undef DYNCUPS
 
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
         ERR("Can't create Printers key\n");
 	return FALSE;
@@ -479,7 +476,7 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
     }
     HeapFree(GetProcessHeap(),0,devline);
     
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
         ERR("Can't create Printers key\n");
 	ret = FALSE;
@@ -609,7 +606,7 @@ void WINSPOOL_LoadSystemPrinters(void)
     /* This ensures that all printer entries have a valid Name value.  If causes
        problems later if they don't.  If one is found to be missed we create one
        and set it equal to the name of the key */
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) == ERROR_SUCCESS) {
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) == ERROR_SUCCESS) {
         if(RegQueryInfoKeyA(hkeyPrinters, NULL, NULL, NULL, &num, NULL, NULL,
                             NULL, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
             for(i = 0; i < num; i++) {
@@ -921,7 +918,7 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
 
     if(!name) return ERROR_INVALID_HANDLE;
 
-    if((ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters)) !=
+    if((ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters)) !=
        ERROR_SUCCESS)
         return ret;
 
@@ -1931,7 +1928,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
         SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
         ERR("Can't create Printers key\n");
 	return 0;
@@ -2204,7 +2201,7 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    if(RegOpenKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) == ERROR_SUCCESS) {
+    if(RegOpenKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) == ERROR_SUCCESS) {
         WINSPOOL_SHDeleteKeyW(hkeyPrinters, lpNameW);
         RegCloseKey(hkeyPrinters);
     }
@@ -3035,7 +3032,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
         return FALSE;
     }
 
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
         ERR("Can't create Printers key\n");
 	return FALSE;
@@ -3186,7 +3183,7 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
 	return FALSE;
     }
 
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
         ERR("Can't create Printers key\n");
 	return FALSE;
@@ -3568,7 +3565,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
         SetLastError(ERROR_INVALID_LEVEL);
 	return FALSE;
     }
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
         ERR("Can't create Printers key\n");
 	return FALSE;
