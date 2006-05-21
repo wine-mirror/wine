@@ -52,7 +52,7 @@
 @ stub DsLogEntry
 @ stub DsMakePasswordCredentialsA
 @ stub DsMakePasswordCredentialsW
-@ stub DsMakeSpnA
+@ stdcall DsMakeSpnA(str str str long str ptr ptr)
 @ stdcall DsMakeSpnW(wstr wstr wstr long wstr ptr ptr)
 @ stub DsMapSchemaGuidsA
 @ stub DsMapSchemaGuidsW
