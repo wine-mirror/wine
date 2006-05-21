@@ -2119,10 +2119,13 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dbghelp.dll
 11,,ddraw.dll
 11,,gdi32.dll
-11,,imagehlp.dll
 11,,help.exe,winhelp.exe
 11,,hhctrl.ocx
+11,,imaadp32.acm
+11,,imagehlp.dll
 11,,kernel32.dll
+11,,msadp32.acm
+11,,msg711.acm
 11,,msiexec.exe
 11,,msvcrt.dll
 11,,notepad.exe
