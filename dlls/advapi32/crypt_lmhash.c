@@ -91,6 +91,16 @@ NTSTATUS WINAPI SystemFunction008(const LPBYTE challenge, const LPBYTE hash, LPB
 }
 
 /******************************************************************************
+ * SystemFunction009  [ADVAPI32.@]
+ *
+ * Seems to do the same as SystemFunction008 ...
+ */
+NTSTATUS WINAPI SystemFunction009(const LPBYTE challenge, const LPBYTE hash, LPBYTE response)
+{
+    return SystemFunction008(challenge, hash, response);
+}
+
+/******************************************************************************
  * SystemFunction001  [ADVAPI32.@]
  *
  * Encrypts a single block of data using DES

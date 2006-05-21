@@ -41,6 +41,7 @@ typedef NTSTATUS (WINAPI *fnSystemFunction004)(const struct ustring *, const str
 typedef NTSTATUS (WINAPI *fnSystemFunction005)(const struct ustring *, const struct ustring *, struct ustring *);
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
 typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction009)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);
 
 fnSystemFunction001 pSystemFunction001;
@@ -50,6 +51,7 @@ fnSystemFunction004 pSystemFunction004;
 fnSystemFunction004 pSystemFunction005;
 fnSystemFunction006 pSystemFunction006;
 fnSystemFunction008 pSystemFunction008;
+fnSystemFunction008 pSystemFunction009;
 fnSystemFunction032 pSystemFunction032;
 
 static void test_SystemFunction006(void)
@@ -333,6 +335,26 @@ static void test_SystemFunction005(void)
     ok(r == STATUS_INVALID_PARAMETER_2, "function failed\n");
 }
 
+static void test_SystemFunction009(void)
+{
+    unsigned char hash[0x10] = {
+        0xff, 0x37, 0x50, 0xbc, 0xc2, 0xb2, 0x24, 0x12,
+        0xc2, 0x26, 0x5b, 0x23, 0x73, 0x4e, 0x0d, 0xac };
+    unsigned char challenge[8] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
+    unsigned char expected[0x18] = {
+        0xc3, 0x37, 0xcd, 0x5c, 0xbd, 0x44, 0xfc, 0x97,
+        0x82, 0xa6, 0x67, 0xaf, 0x6d, 0x42, 0x7c, 0x6d,
+        0xe6, 0x7c, 0x20, 0xc2, 0xd3, 0xe7, 0x7c, 0x56 };
+    unsigned char output[0x18];
+    int r;
+
+    memset(output, 0, sizeof output);
+    r = pSystemFunction009(challenge, hash, output);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+    ok(!memcmp(output, expected, sizeof expected), "response wrong\n");
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
@@ -366,6 +388,10 @@ START_TEST(crypt_lmhash)
     pSystemFunction008 = (fnSystemFunction008)GetProcAddress( module, "SystemFunction008" );
     if (pSystemFunction008)
         test_SystemFunction008();
+
+    pSystemFunction009 = (fnSystemFunction009)GetProcAddress( module, "SystemFunction009" );
+    if (pSystemFunction009)
+        test_SystemFunction009();
 
     pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
     if (pSystemFunction032)

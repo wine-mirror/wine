@@ -603,7 +603,7 @@
 @ stdcall SystemFunction006(ptr ptr)
 @ stdcall SystemFunction007(ptr ptr)
 @ stdcall SystemFunction008(ptr ptr ptr)
-@ stub SystemFunction009
+@ stdcall SystemFunction009(ptr ptr ptr)
 @ stub SystemFunction010
 @ stub SystemFunction011
 @ stub SystemFunction012
