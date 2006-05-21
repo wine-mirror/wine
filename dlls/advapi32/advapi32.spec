@@ -620,8 +620,8 @@
 @ stdcall SystemFunction023(ptr ptr ptr) SystemFunction013
 @ stdcall SystemFunction024(ptr ptr ptr)
 @ stdcall SystemFunction025(ptr ptr ptr)
-@ stub SystemFunction026
-@ stub SystemFunction027
+@ stdcall SystemFunction026(ptr ptr ptr) SystemFunction024
+@ stdcall SystemFunction027(ptr ptr ptr) SystemFunction025
 @ stub SystemFunction028
 @ stub SystemFunction029
 @ stub SystemFunction030

@@ -70,8 +70,14 @@ descrypt pSystemFunction019;
 descrypt pSystemFunction021;
 descrypt pSystemFunction023;
 
+/* encrypt two blocks with a 32bit key */
 descrypt pSystemFunction024;
 descrypt pSystemFunction025;
+
+/* decrypt two blocks with a 32bit key */
+descrypt pSystemFunction026;
+descrypt pSystemFunction027;
+
 fnSystemFunction032 pSystemFunction032;
 
 static void test_SystemFunction006(void)
@@ -425,55 +431,47 @@ static void test_SystemFunction_decrypt(descrypt func, int num)
     ok( !memcmp(des_plaintext, output, sizeof des_plaintext), "plaintext wrong (%d)\n", num);
 }
 
-static void test_SystemFunction024(void)
+static unsigned char des_ciphertext32[] = { 
+    0x69, 0x51, 0x35, 0x69, 0x0d, 0x29, 0x24, 0xad,
+    0x23, 0x6d, 0xfd, 0x43, 0x0d, 0xd3, 0x25, 0x81, 0
+};
+
+static void test_SystemFunction_enc32(descrypt func, int num)
 {
-    unsigned char key[0x10], output[0x20];
+    unsigned char key[4], output[0x11];
     int r;
 
+    if (!func)
+        return;
+
     memset(output, 0, sizeof output);
-    memset(key, 0, sizeof key);
 
     /* two keys are generated using 4 bytes, repeated 4 times ... */
     memcpy(key, "foo", 4);
 
-    r = pSystemFunction024(des_plaintext, key, output);
-    ok( r == STATUS_SUCCESS, "wrong error code\n");
+    r = func(des_plaintext, key, output);
+    ok( r == STATUS_SUCCESS, "wrong error code (%d)\n", num);
 
-    memcpy(key, "foo", 4);
-    memcpy(key+4, "foo", 4);
-    memcpy(key+8, "foo", 4);
-    memcpy(key+12, "foo", 4);
-
-    r = pSystemFunction022(des_plaintext, key, output+0x10);
-    ok( r == STATUS_SUCCESS, "wrong error code\n");
-
-    ok( !memcmp( output, output+0x10, 0x10), "ciphertext wrong\n");
+    ok( !memcmp( output, des_ciphertext32, sizeof des_ciphertext32), "ciphertext wrong (%d)\n", num);
 }
 
-static void test_SystemFunction025(void)
+static void test_SystemFunction_dec32(descrypt func, int num)
 {
-    unsigned char key[0x10], output[0x20];
+    unsigned char key[4], output[0x11];
     int r;
 
+    if (!func)
+        return;
+
     memset(output, 0, sizeof output);
-    memset(key, 0, sizeof key);
 
     /* two keys are generated using 4 bytes, repeated 4 times ... */
     memcpy(key, "foo", 4);
 
-    /* decrypts output of function 025 */
-    r = pSystemFunction025(des_ciphertext, key, output);
-    ok( r == STATUS_SUCCESS, "wrong error code\n");
+    r = func(des_ciphertext32, key, output);
+    ok( r == STATUS_SUCCESS, "wrong error code (%d)\n", num);
 
-    memcpy(key, "foo", 4);
-    memcpy(key+4, "foo", 4);
-    memcpy(key+8, "foo", 4);
-    memcpy(key+12, "foo", 4);
-
-    r = pSystemFunction023(des_ciphertext, key, output+0x10);
-    ok( r == STATUS_SUCCESS, "wrong error code\n");
-
-    ok( !memcmp( output, output+0x10, 0x10), "plaintext wrong\n");
+    ok( !memcmp( output, des_plaintext, sizeof des_plaintext), "plaintext wrong (%d)\n", num);
 }
 
 START_TEST(crypt_lmhash)
@@ -548,12 +546,15 @@ START_TEST(crypt_lmhash)
     test_SystemFunction_decrypt(pSystemFunction023, 23);
 
     pSystemFunction024 = (descrypt) GetProcAddress( module, "SystemFunction024");
-    if (pSystemFunction024)
-        test_SystemFunction024();
-
     pSystemFunction025 = (descrypt) GetProcAddress( module, "SystemFunction025");
-    if (pSystemFunction025)
-        test_SystemFunction025();
+    pSystemFunction026 = (descrypt) GetProcAddress( module, "SystemFunction026");
+    pSystemFunction027 = (descrypt) GetProcAddress( module, "SystemFunction027");
 
-    FreeLibrary( module );
+    /* these encrypt two DES blocks with a short key */
+    test_SystemFunction_enc32(pSystemFunction024, 24);
+    test_SystemFunction_enc32(pSystemFunction026, 26);
+
+    /* these descrypt two DES blocks with a short key */
+    test_SystemFunction_dec32(pSystemFunction025, 25);
+    test_SystemFunction_dec32(pSystemFunction027, 27);
 }
