@@ -294,8 +294,12 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
      */
     D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
     /* Set the default alpha blend color */
-    glBlendColor(col[0], col[1], col[2], col[3]);
-    checkGLcall("glBlendColor");
+    if (GL_SUPPORT(ARB_IMAGING)) {
+        GL_EXTCALL(glBlendColor(col[0], col[1], col[2], col[3]));
+        checkGLcall("glBlendColor");
+    } else {
+        WARN("Unsupported in local OpenGL implementation: glBlendColor\n");
+    }
 
     D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
@@ -3347,9 +3351,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
             default:
                 FIXME("Unrecognized/Unhandled D3DBLENDOP value %ld\n", Value);
             }
-            TRACE("glBlendEquation(%x)\n", glParm);
-            glBlendEquation(glParm);
-            checkGLcall("glBlendEquation");
+
+            if(GL_SUPPORT(ARB_IMAGING)) {
+                TRACE("glBlendEquation(%x)\n", glParm);
+                GL_EXTCALL(glBlendEquation(glParm));
+                checkGLcall("glBlendEquation");
+            } else {
+                WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
+            }
         }
         break;
 
@@ -3362,8 +3371,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
             float col[4];
             D3DCOLORTOGLFLOAT4(Value, col);
             /* Set the default alpha blend color */
-            glBlendColor(col[0], col[1], col[2], col[3]);
-            checkGLcall("glBlendColor");
+            if (GL_SUPPORT(ARB_IMAGING)) {
+                GL_EXTCALL(glBlendColor(col[0], col[1], col[2], col[3]));
+                checkGLcall("glBlendColor");
+            } else {
+                WARN("Unsupported in local OpenGL implementation: glBlendColor\n");
+            }
 
             /* And now the default texture color as well */
             for (i = 0; i < GL_LIMITS(textures); i++) {

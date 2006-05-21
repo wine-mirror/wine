@@ -489,6 +489,9 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - GL_MAX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
                 gl_info->max_samplers = min(MAX_SAMPLERS, gl_max);
+            } else if (strcmp(ThisExtn, "GL_ARB_imaging") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB imaging support\n");
+                gl_info->supported[ARB_IMAGING] = TRUE;
             } else if (strcmp(ThisExtn, "GL_ARB_shading_language_100") == 0) {
                 TRACE_(d3d_caps)(" FOUND: GL Shading Language v100 support\n");
                 gl_info->supported[ARB_SHADING_LANGUAGE_100] = TRUE;
