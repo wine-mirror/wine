@@ -348,3 +348,59 @@ NTSTATUS WINAPI SystemFunction013(const LPBYTE in, const LPBYTE key, LPBYTE out)
     CRYPT_DESunhash(out+8, key+7, in+8);
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * SystemFunction024  [ADVAPI32.@]
+ *
+ * Encrypts two DES blocks with a 32 bit key...
+ *
+ * PARAMS
+ *   data    [I] data to encrypt (16 bytes)
+ *   key     [I] key data (4 bytes)
+ *   output  [O] buffer to receive encrypted data (16 bytes)
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ */
+NTSTATUS WINAPI SystemFunction024(const LPBYTE in, const LPBYTE key, LPBYTE out)
+{
+    BYTE deskey[0x10];
+
+    memcpy(deskey, key, 4);
+    memcpy(deskey+4, key, 4);
+    memcpy(deskey+8, key, 4);
+    memcpy(deskey+12, key, 4);
+
+    CRYPT_DEShash(out, deskey, in);
+    CRYPT_DEShash(out+8, deskey+7, in+8);
+
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * SystemFunction025  [ADVAPI32.@]
+ *
+ * Decrypts two DES blocks with a 32 bit key...
+ *
+ * PARAMS
+ *   data    [I] data to encrypt (16 bytes)
+ *   key     [I] key data (4 bytes)
+ *   output  [O] buffer to receive encrypted data (16 bytes)
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ */
+NTSTATUS WINAPI SystemFunction025(const LPBYTE in, const LPBYTE key, LPBYTE out)
+{
+    BYTE deskey[0x10];
+
+    memcpy(deskey, key, 4);
+    memcpy(deskey+4, key, 4);
+    memcpy(deskey+8, key, 4);
+    memcpy(deskey+12, key, 4);
+
+    CRYPT_DESunhash(out, deskey, in);
+    CRYPT_DESunhash(out+8, deskey+7, in+8);
+
+    return STATUS_SUCCESS;
+}

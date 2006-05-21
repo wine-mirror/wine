@@ -70,6 +70,8 @@ descrypt pSystemFunction019;
 descrypt pSystemFunction021;
 descrypt pSystemFunction023;
 
+descrypt pSystemFunction024;
+descrypt pSystemFunction025;
 fnSystemFunction032 pSystemFunction032;
 
 static void test_SystemFunction006(void)
@@ -423,6 +425,57 @@ static void test_SystemFunction_decrypt(descrypt func, int num)
     ok( !memcmp(des_plaintext, output, sizeof des_plaintext), "plaintext wrong (%d)\n", num);
 }
 
+static void test_SystemFunction024(void)
+{
+    unsigned char key[0x10], output[0x20];
+    int r;
+
+    memset(output, 0, sizeof output);
+    memset(key, 0, sizeof key);
+
+    /* two keys are generated using 4 bytes, repeated 4 times ... */
+    memcpy(key, "foo", 4);
+
+    r = pSystemFunction024(des_plaintext, key, output);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+
+    memcpy(key, "foo", 4);
+    memcpy(key+4, "foo", 4);
+    memcpy(key+8, "foo", 4);
+    memcpy(key+12, "foo", 4);
+
+    r = pSystemFunction022(des_plaintext, key, output+0x10);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+
+    ok( !memcmp( output, output+0x10, 0x10), "ciphertext wrong\n");
+}
+
+static void test_SystemFunction025(void)
+{
+    unsigned char key[0x10], output[0x20];
+    int r;
+
+    memset(output, 0, sizeof output);
+    memset(key, 0, sizeof key);
+
+    /* two keys are generated using 4 bytes, repeated 4 times ... */
+    memcpy(key, "foo", 4);
+
+    /* decrypts output of function 025 */
+    r = pSystemFunction025(des_ciphertext, key, output);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+
+    memcpy(key, "foo", 4);
+    memcpy(key+4, "foo", 4);
+    memcpy(key+8, "foo", 4);
+    memcpy(key+12, "foo", 4);
+
+    r = pSystemFunction023(des_ciphertext, key, output+0x10);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+
+    ok( !memcmp( output, output+0x10, 0x10), "plaintext wrong\n");
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
@@ -493,6 +546,14 @@ START_TEST(crypt_lmhash)
     test_SystemFunction_decrypt(pSystemFunction019, 19);
     test_SystemFunction_decrypt(pSystemFunction021, 21);
     test_SystemFunction_decrypt(pSystemFunction023, 23);
+
+    pSystemFunction024 = (descrypt) GetProcAddress( module, "SystemFunction024");
+    if (pSystemFunction024)
+        test_SystemFunction024();
+
+    pSystemFunction025 = (descrypt) GetProcAddress( module, "SystemFunction025");
+    if (pSystemFunction025)
+        test_SystemFunction025();
 
     FreeLibrary( module );
 }
