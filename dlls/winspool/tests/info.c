@@ -207,6 +207,8 @@ static void test_AddMonitor(void)
         "returned %ld with %ld (expected '0' with ERROR_INVALID_LEVEL)\n",
         res, GetLastError());
 
+#if 0
+    /* This test crash with win9x on vmware (works with win9x on qemu 0.8.1) */
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, NULL);
     /* NT: unchanged,  9x: ERROR_PRIVILEGE_NOT_HELD */
@@ -215,6 +217,7 @@ static void test_AddMonitor(void)
          (GetLastError() == ERROR_PRIVILEGE_NOT_HELD)), 
         "returned %ld with %ld (expected '0' with: MAGIC_DEAD or " \
         "ERROR_PRIVILEGE_NOT_HELD)\n", res, GetLastError());
+#endif
 
     ZeroMemory(&mi2a, sizeof(MONITOR_INFO_2A));
     SetLastError(MAGIC_DEAD);
