@@ -709,7 +709,7 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
   }
 }
 
-static void parse_decl_usage(IWineD3DVertexShaderImpl *This, INT usage, INT arrayNo)
+static void vshader_parse_input_decl_usage(IWineD3DVertexShaderImpl *This, INT usage, INT arrayNo)
 {
     switch(usage & 0xFFFF) {
         case D3DDECLUSAGE_POSITION:
@@ -1541,8 +1541,10 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface,
 
                     DWORD usage = *pToken;
                     DWORD param = *(pToken + 1);
+                    DWORD regtype = shader_get_regtype(param);
 
-                    parse_decl_usage(This, usage, param & D3DSP_REGNUM_MASK);
+                    if (regtype == D3DSPR_INPUT)
+                        vshader_parse_input_decl_usage(This, usage, param & D3DSP_REGNUM_MASK);
                     shader_program_dump_decl_usage(usage, param);
                     shader_dump_ins_modifiers(param);
                     TRACE(" ");
