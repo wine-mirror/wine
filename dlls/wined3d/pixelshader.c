@@ -805,7 +805,7 @@ inline static void get_write_mask(const DWORD output_reg, char *write_mask) {
     }
 }
 
-inline static void get_input_register_swizzle(const DWORD instr, char *swzstring) {
+static void pshader_get_input_register_swizzle(const DWORD instr, char *swzstring) {
     static const char swizzle_reg_chars[] = "rgba";
     DWORD swizzle = (instr & D3DSP_SWIZZLE_MASK) >> D3DSP_SWIZZLE_SHIFT;
     DWORD swizzle_x = swizzle & 0x03;
@@ -851,15 +851,28 @@ static const char* shift_tab[] = {
     "coefdiv.x"  /* 15 (d2)   */ 
 };
 
-inline static void gen_output_modifier_line(int saturate, char *write_mask, int shift, char *regstr, char* line) {
+inline static void pshader_gen_output_modifier_line(
+    SHADER_BUFFER* buffer,
+    int saturate,
+    char *write_mask,
+    int shift,
+    char *regstr) {
+
     /* Generate a line that does the output modifier computation */
-    sprintf(line, "MUL%s %s%s, %s, %s;", saturate ? "_SAT" : "", regstr, write_mask, regstr, shift_tab[shift]);
+    shader_addline(buffer, "MUL%s %s%s, %s, %s;\n", saturate ? "_SAT" : "",
+        regstr, write_mask, regstr, shift_tab[shift]);
 }
 
-inline static int gen_input_modifier_line(const DWORD instr, int tmpreg, char *outregstr, char *line, char constants[WINED3D_PSHADER_MAX_CONSTANTS]) {
+static void pshader_gen_input_modifier_line (
+    SHADER_BUFFER* buffer,
+    const DWORD instr,
+    int tmpreg,
+    char *outregstr,
+    char constants[WINED3D_PSHADER_MAX_CONSTANTS]) {
+
     /* Generate a line that does the input modifier computation and return the input register to use */
-    static char regstr[256];
-    static char tmpline[256];
+    char regstr[256];
+    char swzstr[20];
     int insert_line;
 
     /* Assume a new line will be added */
@@ -867,60 +880,54 @@ inline static int gen_input_modifier_line(const DWORD instr, int tmpreg, char *o
 
     /* Get register name */
     get_register_name(instr, regstr, constants);
+    pshader_get_input_register_swizzle(instr, swzstr);
 
     switch (instr & D3DSP_SRCMOD_MASK) {
     case D3DSPSM_NONE:
-        strcpy(outregstr, regstr);
+        sprintf(outregstr, "%s%s", regstr, swzstr);
         insert_line = 0;
         break;
     case D3DSPSM_NEG:
-        sprintf(outregstr, "-%s", regstr);
+        sprintf(outregstr, "-%s%s", regstr, swzstr);
         insert_line = 0;
         break;
     case D3DSPSM_BIAS:
-        sprintf(line, "ADD T%c, %s, -coefdiv.x;", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "ADD T%c, %s, -coefdiv.x;\n", 'A' + tmpreg, regstr);
         break;
     case D3DSPSM_BIASNEG:
-        sprintf(line, "ADD T%c, -%s, coefdiv.x;", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "ADD T%c, -%s, coefdiv.x;\n", 'A' + tmpreg, regstr);
         break;
     case D3DSPSM_SIGN:
-        sprintf(line, "MAD T%c, %s, coefmul.x, -one.x;", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "MAD T%c, %s, coefmul.x, -one.x;\n", 'A' + tmpreg, regstr);
         break;
     case D3DSPSM_SIGNNEG:
-        sprintf(line, "MAD T%c, %s, -coefmul.x, one.x;", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "MAD T%c, %s, -coefmul.x, one.x;\n", 'A' + tmpreg, regstr);
         break;
     case D3DSPSM_COMP:
-        sprintf(line, "SUB T%c, one.x, %s;", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "SUB T%c, one.x, %s;\n", 'A' + tmpreg, regstr);
         break;
     case D3DSPSM_X2:
-        sprintf(line, "ADD T%c, %s, %s;", 'A' + tmpreg, regstr, regstr);
+        shader_addline(buffer, "ADD T%c, %s, %s;\n", 'A' + tmpreg, regstr, regstr);
         break;
     case D3DSPSM_X2NEG:
-        sprintf(line, "ADD T%c, -%s, -%s;", 'A' + tmpreg, regstr, regstr);
+        shader_addline(buffer, "ADD T%c, -%s, -%s;\n", 'A' + tmpreg, regstr, regstr);
         break;
     case D3DSPSM_DZ:
-        sprintf(line, "RCP T%c, %s.z;", 'A' + tmpreg, regstr);
-        sprintf(tmpline, "MUL T%c, %s, T%c;", 'A' + tmpreg, regstr, 'A' + tmpreg);
-        strcat(line, "\n"); /* Hack */
-        strcat(line, tmpline);
+        shader_addline(buffer, "RCP T%c, %s.z;\n", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "MUL T%c, %s, T%c;\n", 'A' + tmpreg, regstr, 'A' + tmpreg);
         break;
     case D3DSPSM_DW:
-        sprintf(line, "RCP T%c, %s.w;", 'A' + tmpreg, regstr);
-        sprintf(tmpline, "MUL T%c, %s, T%c;", 'A' + tmpreg, regstr, 'A' + tmpreg);
-        strcat(line, "\n"); /* Hack */
-        strcat(line, tmpline);
+        shader_addline(buffer, "RCP T%c, %s.w;\n", 'A' + tmpreg, regstr);
+        shader_addline(buffer, "MUL T%c, %s, T%c;\n", 'A' + tmpreg, regstr, 'A' + tmpreg);
         break;
     default:
-        strcpy(outregstr, regstr);
+        sprintf(outregstr, "%s%s", regstr, swzstr);
         insert_line = 0;
     }
 
-    if (insert_line) {
-        /* Substitute the register name */
-        sprintf(outregstr, "T%c", 'A' + tmpreg);
-    }
-
-    return insert_line;
+    /* Return modified or original register, with swizzle */
+    if (insert_line)
+        sprintf(outregstr, "T%c%s", 'A' + tmpreg, swzstr);
 }
 
 void pshader_set_version(
@@ -1020,30 +1027,17 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
       /* Generate input and output registers */
       if (curOpcode->num_params > 0) {
-          char regs[5][50];
           char operands[4][100];
-          char swzstring[20];
-          char tmpOp[256];
 
-          /* Generate lines that handle input modifier computation */
-          for (i = 1; i < curOpcode->num_params; ++i) {
-              if (gen_input_modifier_line(src[i - 1], i - 1, regs[i - 1], tmpOp, This->constants))
-                  shader_addline(buffer, tmpOp);
-          }
+          /* Generate input register names (with modifiers) */
+          for (i = 1; i < curOpcode->num_params; ++i)
+              pshader_gen_input_modifier_line(buffer, src[i-1], i-1, operands[i], This->constants);
 
           /* Handle output register */
           get_register_name(dst, output_rname, This->constants);
           strcpy(operands[0], output_rname);
           get_write_mask(dst, output_wmask);
           strcat(operands[0], output_wmask);
-
-          /* This function works because of side effects from  gen_input_modifier_line */
-          /* Handle input registers */
-          for (i = 1; i < curOpcode->num_params; ++i) {
-              strcpy(operands[i], regs[i - 1]);
-              get_input_register_swizzle(src[i - 1], swzstring);
-              strcat(operands[i], swzstring);
-          }
 
           switch(curOpcode->opcode) {
               case D3DSIO_CMP:
@@ -1070,10 +1064,8 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
           shader_addline(buffer, tmpLine);
 
           /* A shift requires another line. */
-          if (shift != 0) {
-              gen_output_modifier_line(saturate, output_wmask, shift, output_rname, tmpLine);
-              shader_addline(buffer, tmpLine);
-          }
+          if (shift != 0)
+              pshader_gen_output_modifier_line(buffer, saturate, output_wmask, shift, output_rname);
       }
 }
 
@@ -1085,10 +1077,8 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD version = This->baseShader.version;
    
-    char tmpLine[256];
     char reg_dest[40];
     char reg_coord[40];
-    char reg_coord_swz[20] = "";
     DWORD reg_dest_code;
     DWORD reg_sampler_code;
 
@@ -1096,23 +1086,12 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
     reg_dest_code = dst & D3DSP_REGNUM_MASK;
     get_register_name(dst, reg_dest, This->constants);
 
-    /* 1.0-1.3: Use destination register as coordinate source. No modifiers.
-       1.4: Use provided coordinate source register. _dw, _dz, swizzle allowed.
-       2.0+: Use provided coordinate source register. No modifiers.
-       3.0+: Use provided coordinate source register. Swizzle allowed */
+    /* 1.0-1.3: Use destination register as coordinate source.
+       2.0+: Use provided coordinate source register. */
    if (version < 14)
       strcpy(reg_coord, reg_dest);
-   else if (version == 14) {
-      if (gen_input_modifier_line(src[0], 0, reg_coord, tmpLine, This->constants))
-         shader_addline(buffer, tmpLine);
-      get_input_register_swizzle(src[0], reg_coord_swz);
-   }
-   else if (version > 14 && version < 30)
-      get_register_name(src[0], reg_coord, This->constants);
-   else if (version >= 30) {
-      get_input_register_swizzle(src[0], reg_coord_swz);
-      get_register_name(src[0], reg_coord, This->constants);
-   }
+   else
+      pshader_gen_input_modifier_line(buffer, src[0], 0, reg_coord, This->constants);
 
   /* 1.0-1.4: Use destination register number as texture code.
      2.0+: Use provided sampler number as texure code. */
@@ -1121,8 +1100,8 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
   else 
      reg_sampler_code = src[1] & D3DSP_REGNUM_MASK;
 
-  shader_addline(buffer, "TEX %s, %s%s, texture[%lu], 2D;\n",
-      reg_dest, reg_coord, reg_coord_swz, reg_sampler_code);
+  shader_addline(buffer, "TEX %s, %s, texture[%lu], 2D;\n",
+      reg_dest, reg_coord, reg_sampler_code);
 }
 
 void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
@@ -1200,12 +1179,10 @@ void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
-    char tmpLine[256];
-    char buf[50];
+    char src0_name[50];
 
-    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
-        shader_addline(buffer, tmpLine);
-    shader_addline(buffer, "DP3 TMP.x, T%lu, %s;\n", reg, buf);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, shader->constants);
+    shader_addline(buffer, "DP3 TMP.x, T%lu, %s;\n", reg, src0_name);
 }
 
 void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
@@ -1213,12 +1190,10 @@ void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
-    char tmpLine[256];
-    char buf[50];
+    char src0_name[50];
 
-    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
-        shader_addline(buffer, tmpLine);
-    shader_addline(buffer, "DP3 TMP.y, T%lu, %s;\n", reg, buf);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, shader->constants);
+    shader_addline(buffer, "DP3 TMP.y, T%lu, %s;\n", reg, src0_name);
     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg, reg);
 }
 
@@ -1228,12 +1203,10 @@ void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
-    char tmpLine[256];
-    char buf[50];
+    char src0_name[50];
 
-    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
-        shader_addline(buffer, tmpLine);
-    shader_addline(buffer, "DP3 TMP.%c, T%lu, %s;\n", 'x' + current_state.current_row, reg, buf);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, shader->constants);
+    shader_addline(buffer, "DP3 TMP.%c, T%lu, %s;\n", 'x' + current_state.current_row, reg, src0_name);
     current_state.texcoord_w[current_state.current_row++] = reg;
 }
 
@@ -1243,12 +1216,10 @@ void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
-    char tmpLine[256];
-    char buf[50];
+    char src0_name[50];
 
-    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
-        shader_addline(buffer, tmpLine);
-    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, buf);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, shader->constants);
+    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
 
     /* Cubemap textures will be more used than 3D ones. */
     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], CUBE;\n", reg, reg);
@@ -1261,12 +1232,10 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
-    char tmpLine[256];
-    char buf[50];
+    char src0_name[50];
 
-    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
-        shader_addline(buffer, tmpLine);
-    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, buf);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, shader->constants);
+    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
 
     /* Construct the eye-ray vector from w coordinates */
     shader_addline(buffer, "MOV TMP2.x, fragment.texcoord[%lu].w;\n", current_state.texcoord_w[0]);
@@ -1290,12 +1259,10 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     DWORD reg3 = arg->src[1] & D3DSP_REGNUM_MASK;
     SHADER_PARSE_STATE current_state = shader->baseShader.parse_state;
     SHADER_BUFFER* buffer = arg->buffer;
-    char tmpLine[256];
-    char buf[50];
+    char src0_name[50];
 
-    if (gen_input_modifier_line(arg->src[0], 0, buf, tmpLine, shader->constants)) 
-        shader_addline(buffer, tmpLine);
-    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, buf);
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name, shader->constants);
+    shader_addline(buffer, "DP3 TMP.z, T%lu, %s;\n", reg, src0_name);
 
     /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
     shader_addline(buffer, "DP3 TMP.w, TMP, C[%lu];\n", reg3);
