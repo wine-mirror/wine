@@ -722,7 +722,7 @@ static void test_token_attr(void)
         DWORD DomainLength = 255;
         TCHAR Domain[255];
         SID_NAME_USE SidNameUse;
-        ConvertSidToStringSid(Groups->Groups[i].Sid, &SidString);
+        pConvertSidToStringSidA(Groups->Groups[i].Sid, &SidString);
         Name[0] = '\0';
         Domain[0] = '\0';
         ret = LookupAccountSid(NULL, Groups->Groups[i].Sid, Name, &NameLength, Domain, &DomainLength, &SidNameUse);
@@ -740,7 +740,7 @@ static void test_token_attr(void)
     ok(ret,
         "GetTokenInformation(TokenUser) failed with error %ld\n", GetLastError());
 
-    ConvertSidToStringSid(User->User.Sid, &SidString);
+    pConvertSidToStringSidA(User->User.Sid, &SidString);
     trace("TokenUser: %s attr: 0x%08lx\n", SidString, User->User.Attributes);
     LocalFree(SidString);
 
