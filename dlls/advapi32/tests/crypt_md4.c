@@ -40,13 +40,14 @@ typedef VOID (WINAPI *fnMD4Init)( MD4_CTX *ctx );
 typedef VOID (WINAPI *fnMD4Update)( MD4_CTX *ctx, const unsigned char *src, const int len );
 typedef VOID (WINAPI *fnMD4Final)( MD4_CTX *ctx );
 typedef int (WINAPI *fnSystemFunction007)(PUNICODE_STRING,LPBYTE);
-typedef int (WINAPI *fnSystemFunction010)(LPVOID, const LPBYTE, LPBYTE);
+typedef int (WINAPI *md4hashfunc)(LPVOID, const LPBYTE, LPBYTE);
 
 fnMD4Init pMD4Init;
 fnMD4Update pMD4Update;
 fnMD4Final pMD4Final;
 fnSystemFunction007 pSystemFunction007;
-fnSystemFunction010 pSystemFunction010;
+md4hashfunc pSystemFunction010;
+md4hashfunc pSystemFunction011;
 
 #define ctxcmp( a, b ) memcmp( (char*)a, (char*)b, FIELD_OFFSET( MD4_CTX, in ) )
 
@@ -126,7 +127,7 @@ static void test_SystemFunction007(void)
     ok(!memcmp(output, expected, sizeof expected), "response wrong\n");
 }
 
-static void test_SystemFunction010(void)
+static void test_md4hashfunc(md4hashfunc func)
 {
     unsigned char expected[0x10] = {
         0x48, 0x7c, 0x3f, 0x5e, 0x2b, 0x0d, 0x6a, 0x79,
@@ -134,9 +135,12 @@ static void test_SystemFunction010(void)
     unsigned char in[0x10], output[0x10];
     int r;
 
+    if (!func)
+        return;
+
     memset(in, 0, sizeof in);
     memset(output, 0, sizeof output);
-    r = pSystemFunction010(0, in, output);
+    r = func(0, in, output);
     ok( r == STATUS_SUCCESS, "wrong error code\n");
     ok( !memcmp(expected, output, sizeof output), "output wrong\n");
 }
@@ -158,9 +162,11 @@ START_TEST(crypt_md4)
     if (pSystemFunction007)
         test_SystemFunction007();
 
-    pSystemFunction010 = (fnSystemFunction010)GetProcAddress( module, "SystemFunction010" );
-    if (pSystemFunction010)
-        test_SystemFunction010();
+    pSystemFunction010 = (md4hashfunc)GetProcAddress( module, "SystemFunction010" );
+    pSystemFunction011 = (md4hashfunc)GetProcAddress( module, "SystemFunction011" );
+
+    test_md4hashfunc(pSystemFunction010);
+    test_md4hashfunc(pSystemFunction011);
 
     FreeLibrary( module );
 }

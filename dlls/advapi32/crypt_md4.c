@@ -299,6 +299,7 @@ NTSTATUS WINAPI SystemFunction007(PUNICODE_STRING string, LPBYTE hash)
 
 /******************************************************************************
  * SystemFunction010  [ADVAPI32.@]
+ * SystemFunction011  [ADVAPI32.@]
  *
  * MD4 hashes 16 bytes of data
  *
