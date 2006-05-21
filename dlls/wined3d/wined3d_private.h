@@ -1341,8 +1341,6 @@ typedef struct IWineD3DBaseShaderClass
 {
     DWORD                           version;
     DWORD                           hex_version;
-    DWORD                           temps_used;
-    DWORD                           textures_used;
     SHADER_LIMITS                   limits;
     SHADER_PARSE_STATE              parse_state;
     CONST SHADER_OPCODE             *shader_ins;
@@ -1359,10 +1357,6 @@ typedef struct IWineD3DBaseShaderImpl {
     /* IWineD3DBaseShader */
     IWineD3DBaseShaderClass         baseShader;
 } IWineD3DBaseShaderImpl;
-
-extern void shader_get_registers_used(
-    IWineD3DBaseShader *iface,
-    CONST DWORD* pToken);
 
 extern void shader_program_dump_decl_usage(
     DWORD dcl,

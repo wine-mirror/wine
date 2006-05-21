@@ -30,6 +30,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
+typedef struct shader_reg_maps {
+    DWORD texcoord;
+    DWORD temporary;
+    DWORD address;
+} shader_reg_maps;
+
 inline static BOOL shader_is_version_token(DWORD token) {
     return shader_is_pshader_version(token) ||
            shader_is_vshader_version(token);
@@ -153,26 +159,22 @@ int shader_skip_unrecognized(
     return tokens_read;
 }
 
-/* Note: For vertex shaders,
- * texUsed = addrUsed, and 
- * D3DSPR_TEXTURE = D3DSPR_ADDR. 
- *
- * Also note that this does not count the loop register
- * as an address register. */   
+/* Note that this does not count the loop register
+ * as an address register. */
 
-void shader_get_registers_used(
+static void shader_get_registers_used(
     IWineD3DBaseShader *iface,
+    shader_reg_maps* reg_maps,
     CONST DWORD* pToken) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
-    DWORD* tempsUsed = &This->baseShader.temps_used;
-    DWORD* texUsed = &This->baseShader.textures_used;
 
     if (pToken == NULL)
         return;
 
-    *tempsUsed = 0;
-    *texUsed = 0;
+    reg_maps->temporary = 0;
+    reg_maps->texcoord = 0;
+    reg_maps->address = 0;
 
     while (D3DVS_END() != *pToken) {
         CONST SHADER_OPCODE* curOpcode;
@@ -233,10 +235,16 @@ void shader_get_registers_used(
                 regtype = (param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT;
                 reg = param & D3DSP_REGNUM_MASK;
 
-                if (D3DSPR_TEXTURE == regtype)
-                    *texUsed |= (1 << reg);
+                if (D3DSPR_TEXTURE == regtype) { /* vs: D3DSPR_ADDR */
+
+                    if (shader_is_pshader_version(This->baseShader.hex_version))
+                        reg_maps->texcoord |= (1 << reg);
+                    else
+                        reg_maps->address |= (1 << reg);
+                }
+
                 if (D3DSPR_TEMP == regtype)
-                    *tempsUsed |= (1 << reg);
+                    reg_maps->temporary |= (1 << reg);
              }
         }
     }
@@ -498,30 +506,33 @@ void shader_dump_param(
 
 /** Generate the variable & register declarations for the ARB_vertex_program
     output target */
-void generate_arb_declarations(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer) {
+void generate_arb_declarations(
+    IWineD3DBaseShader *iface,
+    shader_reg_maps* reg_maps,
+    SHADER_BUFFER* buffer) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     DWORD i;
 
     for(i = 0; i < This->baseShader.limits.temporary; i++) {
-        if (This->baseShader.temps_used & (1 << i))
+        if (reg_maps->temporary & (1 << i))
             shader_addline(buffer, "TEMP R%lu;\n", i);
     }
 
     for (i = 0; i < This->baseShader.limits.address; i++) {
-        if (This->baseShader.textures_used & (1 << i))
+        if (reg_maps->address & (1 << i))
             shader_addline(buffer, "ADDRESS A%ld;\n", i);
     }
 
     for(i = 0; i < This->baseShader.limits.texture; i++) {
-        if (This->baseShader.textures_used & (1 << i))
+        if (reg_maps->texcoord & (1 << i))
             shader_addline(buffer,"TEMP T%lu;\n", i);
     }
 
     /* Texture coordinate registers must be pre-loaded */
     for (i = 0; i < This->baseShader.limits.texture; i++) {
-    if (This->baseShader.textures_used & (1 << i))
-        shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
+        if (reg_maps->texcoord & (1 << i))
+            shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
     }
 
     /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
@@ -532,7 +543,10 @@ void generate_arb_declarations(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer)
 
 /** Generate the variable & register declarations for the GLSL
     output target */
-void generate_glsl_declarations(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer) {
+void generate_glsl_declarations(
+    IWineD3DBaseShader *iface,
+    shader_reg_maps* reg_maps,
+    SHADER_BUFFER* buffer) {
 
     FIXME("GLSL not fully implemented yet.\n");
 
@@ -554,14 +568,13 @@ void generate_base_shader(
     SHADER_HANDLER hw_fct = NULL;
     DWORD opcode_token;
     DWORD i;
+    shader_reg_maps reg_maps;
 
     /* Initialize current parsing state */
     This->baseShader.parse_state.current_row = 0;
 
     /* First pass: figure out which temporary and texture registers are used */
-    shader_get_registers_used(iface, pToken);
-    TRACE("Texture/Address registers used: %#lx, Temp registers used %#lx\n",
-          This->baseShader.textures_used, This->baseShader.temps_used);
+    shader_get_registers_used(iface, &reg_maps, pToken);
 
     /* TODO: check register usage against GL/Directx limits, and fail if they're exceeded
         nUseAddressRegister < = GL_MAX_PROGRAM_ADDRESS_REGISTERS_AR
@@ -570,10 +583,10 @@ void generate_base_shader(
 
     /* Pre-declare registers */
     if (USING_GLSL) {
-        generate_glsl_declarations(iface, buffer);
+        generate_glsl_declarations(iface, &reg_maps, buffer);
         shader_addline(buffer, "void main() {\n");
     } else {
-        generate_arb_declarations(iface, buffer);
+        generate_arb_declarations(iface, &reg_maps, buffer);
     }
 
     /* Second pass, process opcodes */
