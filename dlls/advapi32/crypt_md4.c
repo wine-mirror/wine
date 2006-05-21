@@ -296,3 +296,30 @@ NTSTATUS WINAPI SystemFunction007(PUNICODE_STRING string, LPBYTE hash)
 
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * SystemFunction010  [ADVAPI32.@]
+ *
+ * MD4 hashes 16 bytes of data
+ *
+ * PARAMS
+ *   unknown []  seems to have no effect on the output
+ *   data    [I] pointer to data to hash (16 bytes)
+ *   output  [O] the md4 hash of the data (16 bytes)
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_UNSUCCESSFUL
+ *
+ */
+NTSTATUS WINAPI SystemFunction010(LPVOID unknown, LPBYTE data, LPBYTE hash)
+{
+    MD4_CTX ctx;
+
+    MD4Init( &ctx );
+    MD4Update( &ctx, data, 0x10 );
+    MD4Final( &ctx );
+    memcpy( hash, ctx.digest, 0x10 );
+
+    return STATUS_SUCCESS;
+}
