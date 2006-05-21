@@ -703,11 +703,18 @@ static void test_token_attr(void)
     TOKEN_GROUPS *Groups;
     TOKEN_USER *User;
     BOOL ret;
-    DWORD i;
-    LPTSTR SidString;
+    DWORD i, GLE;
+    LPSTR SidString;
 
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &Token);
-    ok(ret, "OpenProcessToken failed with error %ld\n", GetLastError());
+    GLE = GetLastError();
+    ok(ret || (GLE == ERROR_CALL_NOT_IMPLEMENTED), 
+        "OpenProcessToken failed with error %ld\n", GLE);
+    if(!ret && (GLE == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        trace("OpenProcessToken() not implemented, skipping test_token_attr()\n");
+        return;
+    }
 
     /* groups */
     ret = GetTokenInformation(Token, TokenGroups, NULL, 0, &Size);
