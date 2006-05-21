@@ -42,6 +42,7 @@ typedef NTSTATUS (WINAPI *fnSystemFunction005)(const struct ustring *, const str
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
 typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction009)(const LPBYTE, const LPBYTE, LPBYTE);
+typedef int (WINAPI *descrypt)(unsigned char *, unsigned char *, unsigned char *);
 typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);
 
 fnSystemFunction001 pSystemFunction001;
@@ -52,6 +53,23 @@ fnSystemFunction004 pSystemFunction005;
 fnSystemFunction006 pSystemFunction006;
 fnSystemFunction008 pSystemFunction008;
 fnSystemFunction008 pSystemFunction009;
+
+/* encrypt two blocks */
+descrypt pSystemFunction012;
+descrypt pSystemFunction014;
+descrypt pSystemFunction016;
+descrypt pSystemFunction018;
+descrypt pSystemFunction020;
+descrypt pSystemFunction022;
+
+/* decrypt two blocks */
+descrypt pSystemFunction013;
+descrypt pSystemFunction015;
+descrypt pSystemFunction017;
+descrypt pSystemFunction019;
+descrypt pSystemFunction021;
+descrypt pSystemFunction023;
+
 fnSystemFunction032 pSystemFunction032;
 
 static void test_SystemFunction006(void)
@@ -355,6 +373,56 @@ static void test_SystemFunction009(void)
     ok(!memcmp(output, expected, sizeof expected), "response wrong\n");
 }
 
+static unsigned char des_key[] = { 
+    0xff, 0x37, 0x50, 0xbc, 0xc2, 0xb2, 0x24, 
+    0xff, 0x37, 0x50, 0xbc, 0xc2, 0xb2, 0x24, 
+};
+static unsigned char des_plaintext[] = { 
+    0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 
+    0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0 
+};
+static unsigned char des_ciphertext[] = { 
+    0xc3, 0x37, 0xcd, 0x5c, 0xbd, 0x44, 0xfc, 0x97,
+    0xc3, 0x37, 0xcd, 0x5c, 0xbd, 0x44, 0xfc, 0x97, 0
+};
+
+/* test functions that encrypt two DES blocks */
+static void test_SystemFunction_encrypt(descrypt func, int num)
+{
+    unsigned char output[0x11];
+    int r;
+
+    if (!func)
+        return;
+
+    r = func(NULL, NULL, NULL);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    memset(output, 0, sizeof output);
+    r = func(des_plaintext, des_key, output);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+    ok( !memcmp(des_ciphertext, output, sizeof des_ciphertext), "ciphertext wrong (%d)\n", num);
+}
+
+/* test functions that decrypt two DES blocks */
+static void test_SystemFunction_decrypt(descrypt func, int num)
+{
+    unsigned char output[0x11];
+    int r;
+
+    if (!func)
+        return;
+
+    r = func(NULL, NULL, NULL);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    memset(output, 0, sizeof output);
+
+    r = func(des_ciphertext, des_key, output);
+    ok( r == STATUS_SUCCESS, "wrong error code\n");
+    ok( !memcmp(des_plaintext, output, sizeof des_plaintext), "plaintext wrong (%d)\n", num);
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
@@ -396,6 +464,35 @@ START_TEST(crypt_lmhash)
     pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
     if (pSystemFunction032)
         test_SystemFunction032();
+
+    pSystemFunction012 = (descrypt) GetProcAddress( module, "SystemFunction012");
+    pSystemFunction013 = (descrypt) GetProcAddress( module, "SystemFunction013");
+    pSystemFunction014 = (descrypt) GetProcAddress( module, "SystemFunction014");
+    pSystemFunction015 = (descrypt) GetProcAddress( module, "SystemFunction015");
+    pSystemFunction016 = (descrypt) GetProcAddress( module, "SystemFunction016");
+    pSystemFunction017 = (descrypt) GetProcAddress( module, "SystemFunction017");
+    pSystemFunction018 = (descrypt) GetProcAddress( module, "SystemFunction018");
+    pSystemFunction019 = (descrypt) GetProcAddress( module, "SystemFunction019");
+    pSystemFunction020 = (descrypt) GetProcAddress( module, "SystemFunction020");
+    pSystemFunction021 = (descrypt) GetProcAddress( module, "SystemFunction021");
+    pSystemFunction022 = (descrypt) GetProcAddress( module, "SystemFunction022");
+    pSystemFunction023 = (descrypt) GetProcAddress( module, "SystemFunction023");
+
+    /* these all encrypt two DES blocks */
+    test_SystemFunction_encrypt(pSystemFunction012, 12);
+    test_SystemFunction_encrypt(pSystemFunction014, 14);
+    test_SystemFunction_encrypt(pSystemFunction016, 16);
+    test_SystemFunction_encrypt(pSystemFunction018, 18);
+    test_SystemFunction_encrypt(pSystemFunction020, 20);
+    test_SystemFunction_encrypt(pSystemFunction022, 22);
+
+    /* these all decrypt two DES blocks */
+    test_SystemFunction_decrypt(pSystemFunction013, 13);
+    test_SystemFunction_decrypt(pSystemFunction015, 15);
+    test_SystemFunction_decrypt(pSystemFunction017, 17);
+    test_SystemFunction_decrypt(pSystemFunction019, 19);
+    test_SystemFunction_decrypt(pSystemFunction021, 21);
+    test_SystemFunction_decrypt(pSystemFunction023, 23);
 
     FreeLibrary( module );
 }

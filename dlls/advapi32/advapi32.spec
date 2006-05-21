@@ -606,18 +606,18 @@
 @ stdcall SystemFunction009(ptr ptr ptr)
 @ stdcall SystemFunction010(ptr ptr ptr)
 @ stub SystemFunction011
-@ stub SystemFunction012
-@ stub SystemFunction013
-@ stub SystemFunction014
-@ stub SystemFunction015
-@ stub SystemFunction016
-@ stub SystemFunction017
-@ stub SystemFunction018
-@ stub SystemFunction019
-@ stub SystemFunction020
-@ stub SystemFunction021
-@ stub SystemFunction022
-@ stub SystemFunction023
+@ stdcall SystemFunction012(ptr ptr ptr)
+@ stdcall SystemFunction013(ptr ptr ptr)
+@ stdcall SystemFunction014(ptr ptr ptr) SystemFunction012
+@ stdcall SystemFunction015(ptr ptr ptr) SystemFunction013
+@ stdcall SystemFunction016(ptr ptr ptr) SystemFunction012
+@ stdcall SystemFunction017(ptr ptr ptr) SystemFunction013
+@ stdcall SystemFunction018(ptr ptr ptr) SystemFunction012
+@ stdcall SystemFunction019(ptr ptr ptr) SystemFunction013
+@ stdcall SystemFunction020(ptr ptr ptr) SystemFunction012
+@ stdcall SystemFunction021(ptr ptr ptr) SystemFunction013
+@ stdcall SystemFunction022(ptr ptr ptr) SystemFunction012
+@ stdcall SystemFunction023(ptr ptr ptr) SystemFunction013
 @ stub SystemFunction024
 @ stub SystemFunction025
 @ stub SystemFunction026

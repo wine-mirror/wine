@@ -290,3 +290,61 @@ NTSTATUS WINAPI SystemFunction005(const struct ustring *in,
 
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * SystemFunction012  [ADVAPI32.@]
+ * SystemFunction014  [ADVAPI32.@]
+ * SystemFunction016  [ADVAPI32.@]
+ * SystemFunction018  [ADVAPI32.@]
+ * SystemFunction020  [ADVAPI32.@]
+ * SystemFunction022  [ADVAPI32.@]
+ *
+ * Encrypts two DES blocks with two keys
+ *
+ * PARAMS
+ *   data    [I] data to encrypt (16 bytes)
+ *   key     [I] key data (two lots of 7 bytes)
+ *   output  [O] buffer to receive encrypted data (16 bytes)
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_UNSUCCESSFUL  if the input or output buffer is NULL
+ */
+NTSTATUS WINAPI SystemFunction012(const LPBYTE in, const LPBYTE key, LPBYTE out)
+{
+    if (!in || !out)
+        return STATUS_UNSUCCESSFUL;
+
+    CRYPT_DEShash(out, key, in);
+    CRYPT_DEShash(out+8, key+7, in+8);
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * SystemFunction013  [ADVAPI32.@]
+ * SystemFunction015  [ADVAPI32.@]
+ * SystemFunction017  [ADVAPI32.@]
+ * SystemFunction019  [ADVAPI32.@]
+ * SystemFunction021  [ADVAPI32.@]
+ * SystemFunction023  [ADVAPI32.@]
+ *
+ * Decrypts two DES blocks with two keys
+ *
+ * PARAMS
+ *   data    [I] data to decrypt (16 bytes)
+ *   key     [I] key data (two lots of 7 bytes)
+ *   output  [O] buffer to receive decrypted data (16 bytes)
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_UNSUCCESSFUL  if the input or output buffer is NULL
+ */
+NTSTATUS WINAPI SystemFunction013(const LPBYTE in, const LPBYTE key, LPBYTE out)
+{
+    if (!in || !out)
+        return STATUS_UNSUCCESSFUL;
+
+    CRYPT_DESunhash(out, key, in);
+    CRYPT_DESunhash(out+8, key+7, in+8);
+    return STATUS_SUCCESS;
+}
