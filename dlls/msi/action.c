@@ -1471,14 +1471,18 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
 
     if (!tgt_long)
         tgt_long = tgt_short;
-    if (!src_short)
-        src_short = tgt_long;
+	
+    if (!src_short) {
+        src_short = tgt_short;
+        src_long = tgt_long;
+    }
+    
     if (!src_long)
         src_long = src_short;
 
     /* FIXME: use the target short path too */
     folder->TargetDefault = strdupW(tgt_long);
-    folder->SourceShortPath = strdupW(src_long);
+    folder->SourceShortPath = strdupW(src_short);
     folder->SourceLongPath = strdupW(src_long);
     msi_free(p);
 
