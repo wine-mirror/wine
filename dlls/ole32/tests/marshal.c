@@ -1400,13 +1400,18 @@ static void test_proxybuffer(REFIID riid)
     ok_ole_success(hr, IPSFactoryBuffer_CreateProxy);
     ok(lpvtbl != NULL, "IPSFactoryBuffer_CreateProxy succeeded, but returned a NULL vtable!\n");
 
+    /* release our reference to the outer unknown object - the PS factory
+     * buffer will have AddRef's it in the CreateProxy call */
+    refs = IUnknown_Release((IUnknown *)pUnkOuter);
+    ok(refs == 1, "Ref count of outer unknown should have been 1 instead of %ld\n", refs);
+
     refs = IPSFactoryBuffer_Release(psfb);
 #if 0 /* not reliable on native. maybe it leaks references! */
     ok(refs == 0, "Ref-count leak of %ld on IPSFactoryBuffer\n", refs);
 #endif
 
     refs = IUnknown_Release((IUnknown *)lpvtbl);
-    ok(refs == 1, "Ref-count leak of %ld on IRpcProxyBuffer\n", refs-1);
+    ok(refs == 0, "Ref-count leak of %ld on IRpcProxyBuffer\n", refs);
 
     refs = IRpcProxyBuffer_Release(proxy);
     ok(refs == 0, "Ref-count leak of %ld on IRpcProxyBuffer\n", refs);
