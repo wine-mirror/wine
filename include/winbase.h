@@ -171,6 +171,16 @@ typedef struct _OFSTRUCT
 #define COPY_FILE_RESTARTABLE           0x00000002
 #define COPY_FILE_OPEN_SOURCE_FOR_WRITE 0x00000004
 
+/* return values for CopyProgressRoutine */
+#define PROGRESS_CONTINUE   0
+#define PROGRESS_CANCEL     1
+#define PROGRESS_STOP       2
+#define PROGRESS_QUIET      3
+
+/* reason codes for CopyProgressRoutine */
+#define CALLBACK_CHUNK_FINISHED 0
+#define CALLBACK_STREAM_SWITCH  1
+
 /* GetTempFileName() Flags */
 #define TF_FORCEDRIVE	        0x80
 
