@@ -304,7 +304,7 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
     if (hdr_size == Header->common.frag_len)
       goto write;
 
-    memcpy(pkt + hdr_size, buffer_pos, Header->common.frag_len - hdr_size - alen);
+    memcpy(pkt + hdr_size, buffer_pos, Header->common.frag_len - hdr_size - auth_pad_len - alen);
 
     /* add the authorization info */
     if (Connection->AuthInfo && AuthLength)
