@@ -482,7 +482,8 @@ static void remove_queue_message( struct msg_queue *queue, struct message *msg,
         if (list_empty( &queue->msg_list[kind] )) clear_queue_bits( queue, QS_SENDMESSAGE );
         break;
     case POST_MESSAGE:
-        if (list_empty( &queue->msg_list[kind] )) clear_queue_bits( queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
+        if (list_empty( &queue->msg_list[kind] ) && !queue->quit_message)
+            clear_queue_bits( queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
         break;
     }
     free_message( msg );
@@ -702,8 +703,11 @@ static int get_quit_message( struct msg_queue *queue, unsigned int flags,
         reply->info   = 0;
 
         if (flags & GET_MSG_REMOVE)
+        {
             queue->quit_message = 0;
-
+            if (list_empty( &queue->msg_list[POST_MESSAGE] ))
+                clear_queue_bits( queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
+        }
         return 1;
     }
     else
