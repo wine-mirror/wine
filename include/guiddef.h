@@ -27,11 +27,6 @@ typedef struct _GUID
 } GUID;
 #endif
 
-#ifndef __LPCGUID_DEFINED__
-#define __LPCGUID_DEFINED__
-typedef const GUID *LPCGUID;
-#endif
-
 #undef DEFINE_GUID
 
 #ifdef INITGUID
@@ -55,19 +50,36 @@ typedef const GUID *LPCGUID;
 #ifndef _GUIDDEF_H_
 #define _GUIDDEF_H_
 
+#ifndef __LPGUID_DEFINED__
+#define __LPGUID_DEFINED___
 typedef GUID *LPGUID;
-typedef GUID CLSID,*LPCLSID;
+#endif
+
+#ifndef __LPCGUID_DEFINED__
+#define __LPCGUID_DEFINED__
+typedef const GUID *LPCGUID;
+#endif
+
 #ifndef __IID_DEFINED__
 #define __IID_DEFINED__
+
 typedef GUID IID,*LPIID;
-#endif /* ndef __IID_DEFINED__ */
+typedef GUID CLSID,*LPCLSID;
 typedef GUID FMTID,*LPFMTID;
+#define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)
+#define IsEqualCLSID(rclsid1, rclsid2) IsEqualGUID(rclsid1, rclsid2)
+#define IsEqualFMTID(rfmtid1, rfmtid2) IsEqualGUID(rfmtid1, rfmtid2)
+#define IID_NULL   GUID_NULL
+#define CLSID_NULL GUID_NULL
+#define FMTID_NULL GUID_NULL
 
 #ifdef __midl_proxy
 #define __MIDL_CONST
 #else
 #define __MIDL_CONST const
 #endif
+
+#endif /* ndef __IID_DEFINED__ */
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
 #define REFGUID             const GUID &
@@ -86,8 +98,6 @@ typedef GUID FMTID,*LPFMTID;
 #else /* defined(__cplusplus) && !defined(CINTERFACE) */
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))
 #endif /* defined(__cplusplus) && !defined(CINTERFACE) */
-#define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)
-#define IsEqualCLSID(rclsid1, rclsid2) IsEqualGUID(rclsid1, rclsid2)
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
 #include <string.h>
@@ -102,8 +112,5 @@ inline bool operator!=(const GUID& guidOne, const GUID& guidOther)
 #endif
 
 extern const IID GUID_NULL;
-#define IID_NULL            GUID_NULL
-#define CLSID_NULL GUID_NULL
-#define FMTID_NULL          GUID_NULL
 
 #endif /* _GUIDDEF_H_ */
