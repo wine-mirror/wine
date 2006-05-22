@@ -543,9 +543,7 @@ static void ifproxy_destroy(struct ifproxy * This)
         This->chan = NULL;
     }
 
-    /* note: we don't call Release for This->proxy because its lifetime is
-     * controlled by the return value from ClientIdentity_Release, which this
-     * function is always called from */
+    if (This->proxy) IRpcProxyBuffer_Release(This->proxy);
 
     HeapFree(GetProcessHeap(), 0, This);
 }

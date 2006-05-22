@@ -66,6 +66,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 const CLSID CLSID_DfMarshal       = { 0x0000030b, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
 const CLSID CLSID_PSFactoryBuffer = { 0x00000320, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
 
+static ULONG WINAPI RURpcProxyBufferImpl_Release(LPRPCPROXYBUFFER iface);
+
 /* From: http://msdn.microsoft.com/library/en-us/com/cmi_m_4lda.asp
  *
  * The first time a client requests a pointer to an interface on a
@@ -345,18 +347,11 @@ static ULONG   WINAPI CFProxy_AddRef(LPCLASSFACTORY iface) {
 }
 
 static ULONG   WINAPI CFProxy_Release(LPCLASSFACTORY iface) {
-    ULONG ref;
     ICOM_THIS_MULTI(CFProxy,lpvtbl_cf,iface);
     if (This->outer_unknown)
-        ref = IUnknown_Release(This->outer_unknown);
-    else    
-        ref = InterlockedDecrement(&This->ref);
-
-    if (!ref) {
-      	if (This->chanbuf) IRpcChannelBuffer_Release(This->chanbuf);
-        HeapFree(GetProcessHeap(),0,This);
-    }
-    return ref;
+        return IUnknown_Release(This->outer_unknown);
+    else
+        return IRpcProxyBufferImpl_Release((IRpcProxyBuffer *)&This->lpvtbl_proxy);
 }
 
 static HRESULT WINAPI CFProxy_CreateInstance(
@@ -712,19 +707,12 @@ static ULONG WINAPI RemUnkProxy_AddRef(LPREMUNKNOWN iface)
 static ULONG WINAPI RemUnkProxy_Release(LPREMUNKNOWN iface)
 {
   RemUnkProxy *This = (RemUnkProxy *)iface;
-  ULONG refs;
 
   TRACE("(%p)->Release()\n",This);
   if (This->outer_unknown)
-      refs = IUnknown_Release(This->outer_unknown);
-  else    
-      refs = InterlockedDecrement(&This->refs);
-
-  if (!refs) {
-      if (This->chan) IRpcChannelBuffer_Release(This->chan);
-      HeapFree(GetProcessHeap(),0,This);
-  }
-  return refs;
+      return IUnknown_Release(This->outer_unknown);
+  else
+      return IRpcProxyBufferImpl_Release((IRpcProxyBuffer *)&This->lpvtbl_proxy);
 }
 
 static HRESULT WINAPI RemUnkProxy_RemQueryInterface(LPREMUNKNOWN iface,
