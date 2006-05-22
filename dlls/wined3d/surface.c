@@ -1,6 +1,7 @@
 /*
  * IWineD3DSurface Implementation
  *
+ * Copyright 1998 Lionel Ulmer
  * Copyright 2000-2001 TransGaming Technologies Inc.
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2003 Raphael Junqueira
@@ -1149,6 +1150,271 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
 /* ******************************************************
    IWineD3DSurface Internal (No mapping to directx api) parts follow
    ****************************************************** */
+
+typedef enum {
+    NO_CONVERSION,
+    CONVERT_PALETTED,
+    CONVERT_PALETTED_CK,
+    CONVERT_CK_565,
+    CONVERT_CK_5551,
+    CONVERT_CK_4444,
+    CONVERT_CK_4444_ARGB,
+    CONVERT_CK_1555,
+    CONVERT_555,
+    CONVERT_CK_RGB24,
+    CONVERT_CK_8888,
+    CONVERT_CK_8888_ARGB,
+    CONVERT_RGB32_888
+} CONVERT_TYPES;
+
+HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp) {
+    BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & DDSD_CKSRCBLT);
+
+    /* Default values: From the surface */
+    *format = D3DFmt2GLFmt(This->resource.wineD3DDevice,
+                           This->resource.format);
+    *internal = D3DFmt2GLIntFmt(This->resource.wineD3DDevice,
+                                This->resource.format);
+    *type = D3DFmt2GLType(This->resource.wineD3DDevice,
+                          This->resource.format);
+    *convert = NO_CONVERSION;
+    *target_bpp = This->bytesPerPixel;
+
+    /* Ok, now look if we have to do any conversion */
+    switch(This->resource.format) {
+        case WINED3DFMT_P8:
+            /* ****************
+                Paletted Texture
+                **************** */
+            if(!GL_SUPPORT(EXT_PALETTED_TEXTURE) || colorkey_active) {
+                *format = GL_RGBA;
+                *internal = GL_RGBA;
+                *type = GL_UNSIGNED_BYTE;
+                *target_bpp = 4;
+                if(colorkey_active) {
+                    *convert = CONVERT_PALETTED;
+                } else {
+                    *convert = CONVERT_PALETTED_CK;
+                }
+            }
+
+            break;
+
+        case WINED3DFMT_R3G3B2:
+            /* **********************
+                GL_UNSIGNED_BYTE_3_3_2
+                ********************** */
+            if (colorkey_active) {
+                /* This texture format will never be used.. So do not care about color keying
+                    up until the point in time it will be needed :-) */
+                FIXME(" ColorKeying not supported in the RGB 332 format !\n");
+            }
+            break;
+
+        case WINED3DFMT_R5G6B5:
+            if (colorkey_active) {
+                *convert = CONVERT_CK_565;
+                *format = GL_RGBA;
+                *internal = GL_RGBA;
+                *type = GL_UNSIGNED_SHORT_5_5_5_1;
+            }
+            break;
+
+        case WINED3DFMT_R8G8B8:
+            if (colorkey_active) {
+                *convert = CONVERT_CK_RGB24;
+                *format = GL_RGBA;
+                *internal = GL_RGBA;
+                *type = GL_UNSIGNED_INT_8_8_8_8;
+                *target_bpp = 4;
+            }
+            break;
+
+        case WINED3DFMT_X8R8G8B8:
+            if (colorkey_active) {
+                *convert = CONVERT_RGB32_888;
+                *format = GL_RGBA;
+                *internal = GL_RGBA;
+                *type = GL_UNSIGNED_INT_8_8_8_8;
+            }
+            break;
+#if 0
+        /* Not sure if we should do color keying on Alpha-Enabled surfaces */
+        case WINED3DFMT_A4R4G4B4:
+            if (colorkey_active)
+            {
+                *convert = CONVERT_CK_4444_ARGB;
+                *format = GL_RGBA;
+                *internal = GL_RGBA;
+                *type = GL_UNSIGNED_SHORT_4_4_4_4;
+            }
+            break;
+
+        case WINED3DFMT_A1R5G5B5:
+            if (colorkey_active)
+            {
+                *convert = CONVERT_CK_1555;
+            }
+
+        case WINED3DFMT_A8R8G8B8:
+            if (colorkey_active)
+            {
+                *convert = CONVERT_CK_8888_ARGB;
+                *format = GL_RGBA;
+                *internal = GL_RGBA;
+                *type = GL_UNSIGNED_INT_8_8_8_8;
+            }
+            break;
+#endif
+        default:
+            break;
+    }
+
+    return WINED3D_OK;
+}
+
+HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf) {
+    TRACE("(%p)->(%p),(%ld,%d,%p)\n", src, dst, len, convert, surf);
+
+    switch (convert) {
+        case NO_CONVERSION:
+        {
+            memcpy(dst, src, len * surf->bytesPerPixel);
+            break;
+        }
+        case CONVERT_PALETTED:
+        case CONVERT_PALETTED_CK:
+        {
+            IWineD3DPaletteImpl* pal = surf->palette;
+            BYTE table[256][4];
+            unsigned int i;
+            unsigned int x;
+
+            if( pal == NULL) {
+                /* TODO: If we are a sublevel, try to get the palette from level 0 */
+            }
+
+            if (pal == NULL) {
+                /* Still no palette? Use the device's palette */
+                /* Get the surface's palette */
+                for (i = 0; i < 256; i++) {
+                    IWineD3DDeviceImpl *device = surf->resource.wineD3DDevice;
+
+                    table[i][0] = device->palettes[device->currentPalette][i].peRed;
+                    table[i][1] = device->palettes[device->currentPalette][i].peGreen;
+                    table[i][2] = device->palettes[device->currentPalette][i].peBlue;
+                    if ((convert == CONVERT_PALETTED_CK) &&
+                        (i >= surf->SrcBltCKey.dwColorSpaceLowValue) &&
+                        (i <= surf->SrcBltCKey.dwColorSpaceHighValue)) {
+                        /* We should maybe here put a more 'neutral' color than the standard bright purple
+                          one often used by application to prevent the nice purple borders when bi-linear
+                          filtering is on */
+                        table[i][3] = 0x00;
+                    } else {
+                        table[i][3] = 0xFF;
+                    }
+                }
+            } else {
+                TRACE("Using surface palette %p\n", pal);
+                /* Get the surface's palette */
+                for (i = 0; i < 256; i++) {
+                    table[i][0] = pal->palents[i].peRed;
+                    table[i][1] = pal->palents[i].peGreen;
+                    table[i][2] = pal->palents[i].peBlue;
+                    if ((convert == CONVERT_PALETTED_CK) &&
+                        (i >= surf->SrcBltCKey.dwColorSpaceLowValue) &&
+                        (i <= surf->SrcBltCKey.dwColorSpaceHighValue)) {
+                        /* We should maybe here put a more 'neutral' color than the standard bright purple
+                          one often used by application to prevent the nice purple borders when bi-linear
+                          filtering is on */
+                        table[i][3] = 0x00;
+                    } else {
+                        table[i][3] = 0xFF;
+                    }
+                }
+            }
+
+            for (x = 0; x < len; x++) {
+                BYTE color = *src++;
+                *dst++ = table[color][0];
+                *dst++ = table[color][1];
+                *dst++ = table[color][2];
+                *dst++ = table[color][3];
+            }
+        }
+        break;
+
+        case CONVERT_CK_565:
+        {
+            /* Converting the 565 format in 5551 packed to emulate color-keying.
+
+              Note : in all these conversion, it would be best to average the averaging
+                      pixels to get the color of the pixel that will be color-keyed to
+                      prevent 'color bleeding'. This will be done later on if ever it is
+                      too visible.
+
+              Note2: when using color-keying + alpha, are the alpha bits part of the
+                      color-space or not ?
+            */
+            unsigned int x;
+            WORD *Source = (WORD *) src;
+            WORD *Dest = (WORD *) dst;
+
+            TRACE("Color keyed 565\n");
+
+            for (x = 0; x < len; x++ ) {
+                WORD color = *Source++;
+                *Dest = ((color & 0xFFC0) | ((color & 0x1F) << 1));
+                if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
+                    (color > surf->SrcBltCKey.dwColorSpaceHighValue)) {
+                    *Dest |= 0x0001;
+                }
+                Dest++;
+            }
+        }
+        break;
+
+        case CONVERT_CK_1555:
+        {
+            unsigned int x;
+            WORD *Source = (WORD *) src;
+            WORD *Dest = (WORD *) dst;
+
+            for (x = 0; x < len * sizeof(WORD); x+=sizeof(WORD)) {
+                WORD color = *Source++;
+                *Dest = (color & 0x7FFF);
+                if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
+                    (color > surf->SrcBltCKey.dwColorSpaceHighValue))
+                    *Dest |= (color & 0x8000);
+                Dest++;
+            }
+        }
+        break;
+
+        case CONVERT_CK_4444_ARGB:
+        {
+            /* Move the four Alpha bits... */
+            unsigned int x;
+            WORD *Source = (WORD *) src;
+            WORD *Dest = (WORD *) dst;
+
+            for (x = 0; x < len; x++) {
+                WORD color = *Source++;
+                *dst = (color & 0x0FFF) << 4;
+                if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
+                    (color > surf->SrcBltCKey.dwColorSpaceHighValue))
+                    *Dest |= (color & 0xF000) >> 12;
+                Dest++;
+            }
+        } break;
+
+        default:
+            ERR("Unsupported conversation type %d\n", convert);
+    }
+
+    return WINED3D_OK;
+}
+
 HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
@@ -1161,19 +1427,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         return WINED3D_OK;
     }
 
-    if(!This->Flags & SFLAG_OVERSIZE) {
-        ERR("Loading an oversized texture not supported yet, will follow soon\n");
-        return WINED3D_OK;  /* Return OK for now, easier for merging the code */
-    }
-
     This->Flags &= ~SFLAG_DIRTY;
 
     /* Resources are placed in system RAM and do not need to be recreated when a device is lost.
     *  These resources are not bound by device size or format restrictions. Because of this,
     *  these resources cannot be accessed by the Direct3D device nor set as textures or render targets.
     *  However, these resources can always be created, locked, and copied.
-    *  In general never store scratch or system mem textures in the video ram. However it is allowed
-    *  for system memory textures when WINED3DDEVCAPS_TEXTURESYSTEMMEMORY is set but it isn't right now.
     */
     if (This->resource.pool == WINED3DPOOL_SCRATCH)
     {
@@ -1217,58 +1476,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         return WINED3D_OK;
     }
 
-    if ((This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) &&
-        !GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
-        /**
-         * wanted a paletted texture and not really support it in HW
-         * so software emulation code begin
-         */
-        UINT i;
-        PALETTEENTRY* pal = This->resource.wineD3DDevice->palettes[This->resource.wineD3DDevice->currentPalette];
-        VOID* surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->currentDesc.Width * This->currentDesc.Height * sizeof(DWORD));
-        BYTE* dst = (BYTE*) surface;
-        BYTE* src = (BYTE*) This->resource.allocatedMemory;
-
-        for (i = 0; i < This->currentDesc.Width * This->currentDesc.Height; i++) {
-            BYTE color = *src++;
-            *dst++ = pal[color].peRed;
-            *dst++ = pal[color].peGreen;
-            *dst++ = pal[color].peBlue;
-            if (This->resource.format == WINED3DFMT_A8P8)
-                *dst++ = pal[color].peFlags;
-            else
-                *dst++ = 0xFF;
-        }
-
-        ENTER_GL();
-
-        TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-              This->glDescription.target,
-              This->glDescription.level,
-              GL_RGBA,
-              This->currentDesc.Width,
-              This->currentDesc.Height,
-              0,
-              GL_RGBA,
-              GL_UNSIGNED_BYTE,
-              surface);
-        glTexImage2D(This->glDescription.target,
-                     This->glDescription.level,
-                     GL_RGBA,
-                     This->currentDesc.Width,
-                     This->currentDesc.Height,
-                     0,
-                     GL_RGBA,
-                     GL_UNSIGNED_BYTE,
-                     surface);
-        checkGLcall("glTexImage2D");
-        HeapFree(GetProcessHeap(), 0, surface);
-
-        LEAVE_GL();
-
-        return WINED3D_OK;
-    }
-
     /* TODO: Compressed non-power 2 support */
 
     if (This->resource.format == WINED3DFMT_DXT1 ||
@@ -1309,9 +1516,41 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             }
         }
     } else {
+        GLenum format, internal, type;
+        CONVERT_TYPES convert;
+        int bpp;
+        BYTE *mem;
+
+        d3dfmt_get_conv(This, TRUE /* We need color keying */, &format, &internal, &type, &convert, &bpp);
+
+        if((convert != NO_CONVERSION) &&
+	   This->resource.allocatedMemory) {
+            int width = This->glRect.right - This->glRect.left;
+            int height = This->glRect.bottom - This->glRect.top;
+            int row;
+
+            mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
+            if(!mem) {
+                ERR("Out of memory %d, %d!\n", width, height);
+                return WINED3DERR_OUTOFVIDEOMEMORY;
+            }
+
+            for(row = This->glRect.top; row < This->glRect.bottom; row++) {
+                BYTE *cur = This->resource.allocatedMemory + row * This->pow2Width * This->bytesPerPixel;
+                d3dfmt_convert_surface(cur + This->glRect.left * This->bytesPerPixel,
+                                       mem + row * width * bpp,
+                                       width,
+                                       convert,
+                                       This);
+            }
+            This->Flags |= SFLAG_CONVERTED;
+        } else {
+            This->Flags &= ~SFLAG_CONVERTED;
+            mem = This->resource.allocatedMemory;
+        }
 
        /* TODO: possibly use texture rectangle (though we are probably more compatible without it) */
-        if (NP2_REPACK == wined3d_settings.nonpower2_mode && (This->Flags & SFLAG_NONPOW2)) {
+        if (NP2_REPACK == wined3d_settings.nonpower2_mode && (This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE) ) {
 
 
             TRACE("non power of two support\n");
@@ -1359,31 +1598,37 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
         } else {
 
-            TRACE("Calling 2 glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
+            TRACE("Calling 2 glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%ld, h=%ld,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
                 This->glDescription.target,
                 This->glDescription.level,
                 debug_d3dformat(This->resource.format),
                 This->glDescription.glFormatInternal,
-                This->pow2Width,
-                This->pow2Height,
+                This->glRect.right - This->glRect.left,
+                This->glRect.bottom - This->glRect.top,
                 0,
                 This->glDescription.glFormat,
                 This->glDescription.glType,
-                This->resource.allocatedMemory);
+                mem);
 
             ENTER_GL();
+
+            /* OK, create the texture */
             glTexImage2D(This->glDescription.target,
                         This->glDescription.level,
-                        This->glDescription.glFormatInternal,
-                        This->pow2Width,
-                        This->pow2Height,
+                        internal,
+                        This->glRect.right - This->glRect.left,
+                        This->glRect.bottom - This->glRect.top,
                         0 /* border */,
-                        This->glDescription.glFormat,
-                        This->glDescription.glType,
-                        This->resource.allocatedMemory);
+                        format,
+                        type,
+                        mem);
+
             checkGLcall("glTexImage2D");
+
             LEAVE_GL();
         }
+        if(mem != This->resource.allocatedMemory)
+            HeapFree(GetProcessHeap(), 0, mem);
 
 #if 0
         {
