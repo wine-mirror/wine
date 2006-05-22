@@ -466,8 +466,10 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
 
     x = rect.left;
     for (i = 0; x <= rect.right && i < infoPtr->uNumItem; i++) {
-        x = HEADER_DrawItem (hwnd, hdc, HEADER_OrderToIndex(hwnd,i), 
-            infoPtr->iHotItem == i);
+        int idx = HEADER_OrderToIndex(hwnd,i);
+        if (RectVisible(hdc, &infoPtr->items[idx].rect))
+            HEADER_DrawItem (hwnd, hdc, idx, infoPtr->iHotItem == i);
+        x = infoPtr->items[idx].rect.right;
     }
 
     if ((x <= rect.right) && (infoPtr->uNumItem > 0)) {
