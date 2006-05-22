@@ -320,12 +320,12 @@ static void InternetCrackUrlW_test(void)
     comp.dwExtraInfoLength = sizeof(extra)/sizeof(extra[0]);
 
     r = InternetCrackUrlW(url2, 0, 0, &comp);
-    ok( r, "InternetCrackUrl failed, error %lx\n",GetLastError());
-    ok(!comp.dwSchemeLength,".dwSchemeLength should be 0, but is %ld\n", comp.dwSchemeLength);
-    ok(!comp.dwHostNameLength,".dwHostNameLength should be 0, but is %ld\n", comp.dwHostNameLength);
-    ok(!comp.dwUserNameLength,".dwUserNameLength should be 0, but is %ld\n", comp.dwUserNameLength);
-    ok(!comp.dwPasswordLength,".dwPasswordLength should be 0, but is %ld\n", comp.dwPasswordLength);
-    ok(!comp.dwExtraInfoLength,".dwExtraInfoLength should be 0, but is %ld\n", comp.dwExtraInfoLength);
+    todo_wine {
+    ok(!r, "InternetCrackUrl should have failed\n");
+    ok(GetLastError() == ERROR_INTERNET_UNRECOGNIZED_SCHEME,
+        "InternetCrackUrl should have failed with error ERROR_INTERNET_UNRECOGNIZED_SCHEME instead of error %ld\n",
+        GetLastError());
+    }
 }
 
 static void fill_url_components(LPURL_COMPONENTS lpUrlComponents)
