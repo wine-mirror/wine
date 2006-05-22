@@ -930,7 +930,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface);
 #define SFLAG_DYNLOCK     0x0800 /* Surface is often locked by the app */
 #define SFLAG_DYNCHANGE   0x1800 /* Surface contents are changed very often, implies DYNLOCK */
 #define SFLAG_DCINUSE     0x2000 /* Set between GetDC and ReleaseDC calls */
-#define SFLAG_NEWDC       0x4000 /* To inform LockRect about a new dc */
+#define SFLAG_GLDIRTY     0x4000 /* The opengl texture is more up to date than the surface mem */
 #define SFLAG_LOST        0x8000 /* Surface lost flag for DDraw */
 
 /* In some conditions the surface memory must not be freed:
@@ -951,6 +951,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface);
                           SFLAG_ACTIVELOCK | \
                           SFLAG_DYNLOCK    | \
                           SFLAG_DYNCHANGE    )
+
+BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
 
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
