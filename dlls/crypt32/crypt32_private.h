@@ -95,10 +95,54 @@ const void *CRYPT_ReadSerializedElement(const BYTE *pbElement,
  DWORD cbElement, DWORD dwContextTypeFlags, DWORD *pdwContentType);
 
 /**
- *  Context property list functions
+ *  Context functions
  */
+
+/* Allocates a new data context, a context which owns properties directly.
+ * contextSize is the size of the public data type associated with context,
+ * which should be one of CERT_CONTEXT, CRL_CONTEXT, or CTL_CONTEXT.
+ * Free with Context_Release.
+ */
+void *Context_CreateDataContext(size_t contextSize);
+
+/* Creates a new link context with extra bytes.  The context refers to linked
+ * rather than owning its own properties.  If addRef is TRUE (which ordinarily
+ * it should be) linked is addref'd.
+ * Free with Context_Release.
+ */
+void *Context_CreateLinkContext(size_t contextSize, void *linked, size_t extra,
+ BOOL addRef);
+
+/* Returns a pointer to the extra bytes allocated with context, which must be
+ * a link context.
+ */
+void *Context_GetExtra(const void *context, size_t contextSize);
+
+/* Gets the context linked to by context, which must be a link context. */
+void *Context_GetLinkedContext(void *context, size_t contextSize);
+
 struct _CONTEXT_PROPERTY_LIST;
 typedef struct _CONTEXT_PROPERTY_LIST *PCONTEXT_PROPERTY_LIST;
+
+/* Returns context's properties, or the linked context's properties if context
+ * is a link context.
+ */
+PCONTEXT_PROPERTY_LIST Context_GetProperties(void *context, size_t contextSize);
+
+void Context_AddRef(void *context, size_t contextSize);
+
+typedef void (*ContextFreeFunc)(void *context);
+
+/* Decrements context's ref count.  If context is a link context, releases its
+ * linked context as well.
+ * If a data context has its ref count reach 0, calls dataContextFree on it.
+ */
+void Context_Release(void *context, size_t contextSize,
+ ContextFreeFunc dataContextFree);
+
+/**
+ *  Context property list functions
+ */
 
 PCONTEXT_PROPERTY_LIST ContextPropertyList_Create(void);
 
@@ -120,5 +164,23 @@ void ContextPropertyList_Copy(PCONTEXT_PROPERTY_LIST to,
  PCONTEXT_PROPERTY_LIST from);
 
 void ContextPropertyList_Free(PCONTEXT_PROPERTY_LIST list);
+
+/**
+ *  Context list functions.  A context list is a simple list of link contexts.
+ */
+struct ContextList;
+
+struct ContextList *ContextList_Create(
+ PCWINE_CONTEXT_INTERFACE contextInterface, size_t contextSize);
+
+void *ContextList_Add(struct ContextList *list, void *toLink, void *toReplace);
+
+void *ContextList_Enum(struct ContextList *list, void *pPrev);
+
+void ContextList_Delete(struct ContextList *list, void *context);
+
+void ContextList_Empty(struct ContextList *list);
+
+void ContextList_Free(struct ContextList *list);
 
 #endif
