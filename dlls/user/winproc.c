@@ -2523,6 +2523,27 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
         }
         break;
 
+    case WM_GETDLGCODE:
+        if (lParam)
+        {
+            MSG newmsg = *(MSG *)lParam;
+            switch(newmsg.message)
+            {
+            case WM_CHAR:
+            case WM_DEADCHAR:
+            case WM_SYSCHAR:
+            case WM_SYSDEADCHAR:
+                newmsg.wParam = map_wparam_char_AtoW( newmsg.wParam, 1 );
+                break;
+            case WM_IME_CHAR:
+                newmsg.wParam = map_wparam_char_AtoW( newmsg.wParam, 2 );
+                break;
+            }
+            ret = callback( hwnd, msg, wParam, (LPARAM)&newmsg, result, arg );
+        }
+        else ret = callback( hwnd, msg, wParam, lParam, result, arg );
+        break;
+
     case WM_CHARTOITEM:
     case WM_MENUCHAR:
     case WM_CHAR:
@@ -2771,6 +2792,27 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
             }
             free_buffer( buffer, ptr );
         }
+        break;
+
+    case WM_GETDLGCODE:
+        if (lParam)
+        {
+            MSG newmsg = *(MSG *)lParam;
+            switch(newmsg.message)
+            {
+            case WM_CHAR:
+            case WM_DEADCHAR:
+            case WM_SYSCHAR:
+            case WM_SYSDEADCHAR:
+                newmsg.wParam = map_wparam_char_WtoA( newmsg.wParam, 1 );
+                break;
+            case WM_IME_CHAR:
+                newmsg.wParam = map_wparam_char_WtoA( newmsg.wParam, 2 );
+                break;
+            }
+            ret = callback( hwnd, msg, wParam, (LPARAM)&newmsg, result, arg );
+        }
+        else ret = callback( hwnd, msg, wParam, lParam, result, arg );
         break;
 
     case WM_CHARTOITEM:
