@@ -281,7 +281,7 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
   Header->common.flags |= RPC_FLG_FIRST;
   Header->common.flags &= ~RPC_FLG_LAST;
   while (!(Header->common.flags & RPC_FLG_LAST)) {
-    unsigned char auth_pad_len = ROUND_UP_AMOUNT(BufferLength, AUTH_ALIGNMENT);
+    unsigned char auth_pad_len = AuthLength ? ROUND_UP_AMOUNT(BufferLength, AUTH_ALIGNMENT) : 0;
     unsigned short pkt_size = BufferLength + hdr_size + alen + auth_pad_len;
 
     /* decide if we need to split the packet into fragments */
