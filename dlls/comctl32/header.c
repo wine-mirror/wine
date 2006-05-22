@@ -1657,14 +1657,25 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (dwStyle & HDS_FULLDRAG) {
                 if (!HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMCHANGINGW, infoPtr->iMoveItem, HDI_WIDTH, NULL))
 		{
-		nWidth = pt.x - infoPtr->items[infoPtr->iMoveItem].rect.left + infoPtr->xTrackOffset;
-		if (nWidth < 0)
-		  nWidth = 0;
-		infoPtr->items[infoPtr->iMoveItem].cxy = nWidth;
-                        HEADER_SendHeaderNotifyT(hwnd, HDN_ITEMCHANGEDW, infoPtr->iMoveItem, HDI_WIDTH, NULL);
+                    HEADER_ITEM *lpItem = &infoPtr->items[infoPtr->iMoveItem];
+                    INT nOldWidth = lpItem->rect.right - lpItem->rect.left;
+                    RECT rcClient;
+                    RECT rcScroll;
+                    
+                    nWidth = pt.x - lpItem->rect.left + infoPtr->xTrackOffset;
+                    if (nWidth < 0) nWidth = 0;
+                    infoPtr->items[infoPtr->iMoveItem].cxy = nWidth;
+                    HEADER_SetItemBounds(hwnd);
+                    
+                    GetClientRect(hwnd, &rcClient);
+                    rcScroll = rcClient;
+                    rcScroll.left = lpItem->rect.left + nOldWidth;
+                    ScrollWindowEx(hwnd, nWidth - nOldWidth, 0, &rcScroll, &rcClient, NULL, NULL, 0);
+                    InvalidateRect(hwnd, &lpItem->rect, FALSE);
+                    UpdateWindow(hwnd);
+                    
+                    HEADER_SendHeaderNotifyT(hwnd, HDN_ITEMCHANGEDW, infoPtr->iMoveItem, HDI_WIDTH, NULL);
 		}
-		HEADER_SetItemBounds (hwnd);
-		InvalidateRect(hwnd, NULL, FALSE);
 	    }
 	    else {
 		hdc = GetDC (hwnd);
