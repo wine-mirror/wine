@@ -110,6 +110,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppvObject);
         *ppvObject = CONPTCONT(This);
+    }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
+        TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppvObject);
+        *ppvObject = PERSTRINIT(This);
     }
 
     if(*ppvObject) {

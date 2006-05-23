@@ -643,11 +643,90 @@ static const IPersistFileVtbl PersistFileVtbl = {
     PersistFile_GetCurFile
 };
 
+#define PERSTRINIT_THIS(iface) DEFINE_THIS(HTMLDocument, PersistStreamInit, iface);
+
+static HRESULT WINAPI PersistStreamInit_QueryInterface(IPersistStreamInit *iface,
+                                                       REFIID riid, void **ppv)
+{
+    HTMLDocument *This = PERSTRINIT_THIS(iface);
+    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+}
+
+static ULONG WINAPI PersistStreamInit_AddRef(IPersistStreamInit *iface)
+{
+    HTMLDocument *This = PERSTRINIT_THIS(iface);
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI PersistStreamInit_Release(IPersistStreamInit *iface)
+{
+    HTMLDocument *This = PERSTRINIT_THIS(iface);
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
+}
+
+static HRESULT WINAPI PersistStreamInit_GetClassID(IPersistStreamInit *iface, CLSID *pClassID)
+{
+    HTMLDocument *This = PERSTRINIT_THIS(iface);
+    return IPersist_GetClassID(PERSIST(This), pClassID);
+}
+
+static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
+{
+    HTMLDocument *This = PERSTRINIT_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM pStm)
+{
+    HTMLDocument *This = PERSTRINIT_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pStm);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM pStm,
+                                             BOOL fClearDirty)
+{
+    HTMLDocument *This = PERSTRINIT_THIS(iface);
+    FIXME("(%p)->(%p %x)\n", This, pStm, fClearDirty);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_GetSizeMax(IPersistStreamInit *iface,
+                                                   ULARGE_INTEGER *pcbSize)
+{
+    HTMLDocument *This = PERSTRINIT_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pcbSize);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
+{
+    HTMLDocument *This = PERSTRINIT_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+#undef PERSTRINIT_THIS
+
+static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
+    PersistStreamInit_QueryInterface,
+    PersistStreamInit_AddRef,
+    PersistStreamInit_Release,
+    PersistStreamInit_GetClassID,
+    PersistStreamInit_IsDirty,
+    PersistStreamInit_Load,
+    PersistStreamInit_Save,
+    PersistStreamInit_GetSizeMax,
+    PersistStreamInit_InitNew
+};
+
 void HTMLDocument_Persist_Init(HTMLDocument *This)
 {
     This->lpPersistMonikerVtbl = &PersistMonikerVtbl;
     This->lpPersistFileVtbl = &PersistFileVtbl;
     This->lpMonikerPropVtbl = &MonikerPropVtbl;
+    This->lpPersistStreamInitVtbl = &PersistStreamInitVtbl;
 
     This->status_callback = NULL;
 }
