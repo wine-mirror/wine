@@ -1403,6 +1403,24 @@ void WINAPI NdrPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
+ *           NdrSimpleTypeMarshall [RPCRT4.@]
+ */
+void WINAPI NdrSimpleTypeMarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                   unsigned char FormatChar )
+{
+    FIXME("stub\n");
+}
+
+/***********************************************************************
+ *           NdrSimpleTypeUnmarshall [RPCRT4.@]
+ */
+void WINAPI NdrSimpleTypeUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                                     unsigned char FormatChar )
+{
+    FIXME("stub\n");
+}
+
+/***********************************************************************
  *           NdrSimpleStructMarshall [RPCRT4.@]
  */
 unsigned char * WINAPI NdrSimpleStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
@@ -1459,27 +1477,6 @@ unsigned char * WINAPI NdrSimpleStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   return NULL;
 }
-
-
-/***********************************************************************
- *           NdrSimpleStructUnmarshall [RPCRT4.@]
- */
-void WINAPI NdrSimpleTypeMarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
-                                   unsigned char FormatChar )
-{
-    FIXME("stub\n");
-}
-
-
-/***********************************************************************
- *           NdrSimpleStructUnmarshall [RPCRT4.@]
- */
-void WINAPI NdrSimpleTypeUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
-                                     unsigned char FormatChar )
-{
-    FIXME("stub\n");
-}
-
 
 /***********************************************************************
  *           NdrSimpleStructBufferSize [RPCRT4.@]
