@@ -99,6 +99,59 @@ static void create_shell_embedding_hwnd(WebBrowser *This)
             NULL, shdocvw_hinstance, This);
 }
 
+static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site, HWND parent_hwnd)
+{
+    HRESULT hres;
+
+    if(!active_site)
+        return E_INVALIDARG;
+
+    if(This->inplace) {
+        IOleInPlaceSite_Release(This->inplace);
+        This->inplace = NULL;
+    }
+
+    hres = IOleClientSite_QueryInterface(active_site, &IID_IOleInPlaceSite,
+                                         (void**)&This->inplace);
+    if(FAILED(hres)) {
+        WARN("Could not get IOleInPlaceSite\n");
+        return hres;
+    }
+
+    hres = IOleInPlaceSite_CanInPlaceActivate(This->inplace);
+    if(hres != S_OK) {
+        WARN("CanInPlaceActivate returned: %08lx\n", hres);
+        IOleInPlaceSite_Release(This->inplace);
+        return E_FAIL;
+    }
+
+    hres = IOleInPlaceSite_GetWindow(This->inplace, &This->iphwnd);
+    if(FAILED(hres))
+        This->iphwnd = parent_hwnd;
+
+    IOleInPlaceSite_OnInPlaceActivate(This->inplace);
+
+    IOleInPlaceSite_GetWindowContext(This->inplace, &This->frame, &This->uiwindow,
+                                     &This->pos_rect, &This->clip_rect,
+                                     &This->frameinfo);
+
+    SetWindowPos(This->shell_embedding_hwnd, NULL,
+                 This->pos_rect.left, This->pos_rect.top,
+                 This->pos_rect.right-This->pos_rect.left,
+                 This->pos_rect.bottom-This->pos_rect.top,
+                 SWP_NOZORDER | SWP_SHOWWINDOW);
+
+    if(This->client) {
+        IOleClientSite_ShowObject(This->client);
+        IOleClientSite_GetContainer(This->client, &This->container);
+    }
+
+    if(This->frame)
+        IOleInPlaceFrame_GetWindow(This->frame, &This->frame_hwnd);
+
+    return S_OK;
+}
+
 /**********************************************************************
  * Implement the IOleObject interface for the WebBrowser control
  */
@@ -247,59 +300,16 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
 
     switch (iVerb)
     {
-    case OLEIVERB_SHOW:
     case OLEIVERB_INPLACEACTIVATE:
         TRACE("OLEIVERB_INPLACEACTIVATE\n");
+        return activate_inplace(This, pActiveSite, hwndParent);
 
-        if(!pActiveSite)
-            return E_INVALIDARG;
-
-        if(This->inplace) {
-            IOleInPlaceSite_Release(This->inplace);
-            This->inplace = NULL;
-        }
-
-        hres = IOleClientSite_QueryInterface(pActiveSite, &IID_IOleInPlaceSite, (void**)&This->inplace);
-        if(FAILED(hres)) {
-            WARN("Could not get IOleInPlaceSite\n");
-            return hres;
-        }
-
-        hres = IOleInPlaceSite_CanInPlaceActivate(This->inplace);
-        if(hres != S_OK) {
-            WARN("CanInPlaceActivate returned: %08lx\n", hres);
-            IOleInPlaceSite_Release(This->inplace);
-            return E_FAIL;
-        }
-
-        hres = IOleInPlaceSite_GetWindow(This->inplace, &This->iphwnd);
-        if(FAILED(hres))
-            This->iphwnd = hwndParent;
-
-        IOleInPlaceSite_OnInPlaceActivate(This->inplace);
-
-        IOleInPlaceSite_GetWindowContext(This->inplace, &This->frame, &This->uiwindow,
-                                         &This->pos_rect, &This->clip_rect,
-                                         &This->frameinfo);
-
-        SetWindowPos(This->shell_embedding_hwnd, NULL,
-                     This->pos_rect.left, This->pos_rect.top,
-                     This->pos_rect.right-This->pos_rect.left,
-                     This->pos_rect.bottom-This->pos_rect.top,
-                     SWP_NOZORDER | SWP_SHOWWINDOW);
-
-        if(This->client) {
-            IOleClientSite_ShowObject(This->client);
-            IOleClientSite_GetContainer(This->client, &This->container);
-        }
-
-        if(This->frame)
-            IOleInPlaceFrame_GetWindow(This->frame, &This->frame_hwnd);
-
-        if(iVerb == OLEIVERB_INPLACEACTIVATE)
-            return S_OK;
-
+    case OLEIVERB_SHOW:
         TRACE("OLEIVERB_SHOW\n");
+
+        hres = activate_inplace(This, pActiveSite, hwndParent);
+        if(FAILED(hres))
+            return hres;
 
         IOleInPlaceSite_OnUIActivate(This->inplace);
 
