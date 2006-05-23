@@ -1388,6 +1388,10 @@ extern int shader_skip_unrecognized(
     IWineD3DBaseShader* iface,
     const DWORD* pToken);
 
+extern void print_glsl_info_log(
+    WineD3D_GL_Info *gl_info,
+    GLhandleARB obj);
+
 inline static int shader_get_regtype(const DWORD param) {
     return (((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) |
             ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2));

@@ -29,6 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
+#define GLINFO_LOCATION      (*gl_info)
 
 typedef struct shader_reg_maps {
     DWORD texcoord;
@@ -675,6 +676,26 @@ void generate_base_shader(
     }
 }
 
+/** Prints the GLSL info log which will contain error messages if they exist */
+void print_glsl_info_log(
+    WineD3D_GL_Info *gl_info,
+    GLhandleARB obj)
+{
+    int infologLength = 0;
+    char *infoLog;
+
+    GL_EXTCALL(glGetObjectParameterivARB(obj,
+               GL_OBJECT_INFO_LOG_LENGTH_ARB,
+               &infologLength));
+
+    if (infologLength > 0)
+    {
+        infoLog = (char *)HeapAlloc(GetProcessHeap(), 0, infologLength);
+        GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
+        FIXME("Error received from GLSL shader #%i: %s", obj, debugstr_a(infoLog));
+        HeapFree(GetProcessHeap(), 0, infoLog);
+    }
+}
 
 void shader_dump_ins_modifiers(const DWORD output) {
 
