@@ -325,8 +325,9 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 	    lppd->Flags &= ~PD_PAGENUMS;
 
 	if (IsDlgButtonChecked(hDlg, chx1) == BST_CHECKED) {/* Print to file */
+	    static char file[] = "FILE:";
 	    lppd->Flags |= PD_PRINTTOFILE;
-	    pi->pPortName = "FILE:";
+	    pi->pPortName = file;
 	}
 
 	if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED) { /* Collate */
