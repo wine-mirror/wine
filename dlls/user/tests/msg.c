@@ -40,6 +40,8 @@
 #define SWP_NOCLIENTSIZE	0x0800
 #define SWP_NOCLIENTMOVE	0x1000
 
+#define SW_NORMALNA	        0xCC    /* undoc. flag in MinMaximize */
+
 #define WND_PARENT_ID		1
 #define WND_POPUP_ID		2
 #define WND_CHILD_ID		3
@@ -258,6 +260,7 @@ static const struct message WmShowOverlappedSeq[] = {
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -1833,7 +1836,7 @@ static const struct message WmCreateMDIchildVisibleMaxSeq1[] = {
 static const struct message WmCreateMDIchildVisibleMaxSeq2[] = {
     /* restore the 1st MDI child */
     { WM_SETREDRAW, sent|wparam, 0 },
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWNORMAL },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
@@ -2019,7 +2022,7 @@ static const struct message WmDestroyMDIchildVisibleMaxSeq2[] = {
     { WM_MDIACTIVATE, sent|defwinproc }, /* in the 1st MDI child */
 
     /* maximize the 1st MDI child */
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
     { WM_GETMINMAXINFO, sent|defwinproc },
     { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_FRAMECHANGED|0x8000 },
     { WM_NCCALCSIZE, sent|defwinproc|wparam, 1 },
@@ -2029,7 +2032,7 @@ static const struct message WmDestroyMDIchildVisibleMaxSeq2[] = {
 
     /* restore the 2nd MDI child */
     { WM_SETREDRAW, sent|defwinproc|wparam, 0 },
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_NORMALNA },
     { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_SHOWWINDOW|SWP_NOZORDER|0x8000 },
     { WM_NCCALCSIZE, sent|defwinproc|wparam, 1 },
 
@@ -2182,7 +2185,7 @@ static const struct message WmDestroyMDIchildVisibleMaxSeq1[] = {
     { WM_NCACTIVATE, sent|wparam, 0 },
     { WM_MDIACTIVATE, sent },
 
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWNORMAL },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_SHOWWINDOW|0x8000 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
 
@@ -2246,7 +2249,7 @@ static const struct message WmDestroyMDIchildVisibleMaxSeq1[] = {
 };
 /* ShowWindow(SW_MAXIMIZE) for a not visible MDI child window */
 static const struct message WmMaximizeMDIchildInvisibleSeq[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|0x8000 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
@@ -2279,7 +2282,7 @@ static const struct message WmMaximizeMDIchildInvisibleSeq[] = {
 /* WM_MDIMAXIMIZE for an MDI child window with invisible parent */
 static const struct message WmMaximizeMDIchildInvisibleParentSeq[] = {
     { WM_MDIMAXIMIZE, sent }, /* in MDI client */
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
     { WM_GETMINMAXINFO, sent|defwinproc },
@@ -2293,6 +2296,7 @@ static const struct message WmMaximizeMDIchildInvisibleParentSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
     { WM_NCCALCSIZE, sent|wparam|defwinproc, 1 },
     { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc|optional, 1 },
      /* in MDI frame */
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
     { WM_NCCALCSIZE, sent|wparam, 1 },
@@ -2312,11 +2316,14 @@ static const struct message WmMaximizeMDIchildInvisibleParentSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCLIENTMOVE },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_MAXIMIZED },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 }, /* MDI child */
+    { WM_NCCALCSIZE, sent|wparam|defwinproc|optional, 1 },
+     /* in MDI frame */
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
     { 0 }
 };
 /* ShowWindow(SW_MAXIMIZE) for a visible MDI child window */
 static const struct message WmMaximizeMDIchildVisibleSeq[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
@@ -2333,7 +2340,7 @@ static const struct message WmMaximizeMDIchildVisibleSeq[] = {
 };
 /* ShowWindow(SW_RESTORE) for a visible MDI child window */
 static const struct message WmRestoreMDIchildVisibleSeq[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
@@ -2349,7 +2356,7 @@ static const struct message WmRestoreMDIchildVisibleSeq[] = {
 };
 /* ShowWindow(SW_RESTORE) for a not visible MDI child window */
 static const struct message WmRestoreMDIchildInisibleSeq[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|0x8000 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
