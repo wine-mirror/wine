@@ -583,7 +583,7 @@ void generate_base_shader(
     */
 
     /* Pre-declare registers */
-    if (USING_GLSL) {
+    if (wined3d_settings.shader_mode == SHADER_GLSL) {
         generate_glsl_declarations(iface, &reg_maps, buffer);
         shader_addline(buffer, "void main() {\n");
     } else {
@@ -612,7 +612,8 @@ void generate_base_shader(
             /* Read opcode */
             opcode_token = *pToken++;
             curOpcode = shader_get_opcode(iface, opcode_token);
-            hw_fct = USING_GLSL ? curOpcode->hw_glsl_fct : curOpcode->hw_fct;
+            hw_fct = (wined3d_settings.shader_mode == 
+                    SHADER_GLSL ? curOpcode->hw_glsl_fct : curOpcode->hw_fct);
 
             /* Unknown opcode and its parameters */
            if (NULL == curOpcode) {
@@ -692,7 +693,7 @@ void print_glsl_info_log(
     {
         infoLog = (char *)HeapAlloc(GetProcessHeap(), 0, infologLength);
         GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
-        FIXME("Error received from GLSL shader #%i: %s", obj, debugstr_a(infoLog));
+        FIXME("Error received from GLSL shader #%u: %s", obj, debugstr_a(infoLog));
         HeapFree(GetProcessHeap(), 0, infoLog);
     }
 }

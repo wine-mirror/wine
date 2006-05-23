@@ -132,12 +132,20 @@ WINED3DGLTYPE static const glTypeLookup[D3DDECLTYPE_UNUSED] = {
 #define NP2_NONE   0
 #define NP2_REPACK 1
 
+#define SHADER_SW   0
+#define SHADER_ARB  1
+#define SHADER_GLSL 2
+
 typedef struct wined3d_settings_s {
 /* vertex and pixel shader modes */
   int vs_mode;
   int ps_mode;
   int vbo_mode;
+/* Ideally, we don't want the user to have to request GLSL.  If the hardware supports GLSL,
+    we should use it.  However, until it's fully implemented, we'll leave it as a registry
+    setting for developers. */
   BOOL glslRequested;
+  int shader_mode;
 /* nonpower 2 function */
   int nonpower2_mode;
 } wined3d_settings_t;
@@ -1272,13 +1280,6 @@ enum vsConstantsEnum {
 struct SHADER_OPCODE_ARG;
 typedef void (*shader_fct_t)();
 typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
-
-
-/* This must be 0 in the main branch until GLSL is at least mostly implemented.
-   Also, think about making it a winecfg option to use GLSL (if the card supports it)
-   or ARB_vertex_program. Ideally, we want to use GLSL if it's available, but until
-   everything is implemented, we'll probably have better luck with the ARB generation */
-#define USING_GLSL 0
 
 #define SHADER_PGMSIZE 65535
 typedef struct SHADER_BUFFER {
