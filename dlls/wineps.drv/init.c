@@ -623,7 +623,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         const char *data_dir, *filename;
 
         if ((data_dir = wine_get_data_dir())) filename = "/generic.ppd";
-        else if ((data_dir = wine_get_build_dir())) filename = "/dlls/wineps/generic.ppd";
+        else if ((data_dir = wine_get_build_dir())) filename = "/dlls/wineps.drv/generic.ppd";
         else
         {
             res = ERROR_FILE_NOT_FOUND;

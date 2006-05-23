@@ -1486,7 +1486,7 @@ WINE_CONFIG_EXTRA_DIR(dlls/gdi/enhmfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/mfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/kernel/messages)
 WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
-WINE_CONFIG_EXTRA_DIR(dlls/wineps/data)
+WINE_CONFIG_EXTRA_DIR(dlls/wineps.drv/data)
 WINE_CONFIG_EXTRA_DIR(include/wine)
 
 MAKE_RULES=Make.rules
@@ -1720,7 +1720,7 @@ dlls/winecrt0/Makefile
 dlls/wined3d/Makefile
 dlls/winedos/Makefile
 dlls/winemp3.acm/Makefile
-dlls/wineps/Makefile
+dlls/wineps.drv/Makefile
 dlls/wininet/Makefile
 dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
