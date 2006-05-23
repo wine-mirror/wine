@@ -1501,7 +1501,6 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
                                       WINED3DPRASTERCAPS_FOGVERTEX |
                                       WINED3DPRASTERCAPS_FOGTABLE  |
                                       WINED3DPRASTERCAPS_FOGRANGE  |
-                                      WINED3DPRASTERCAPS_FOGRANGE  |
                                       WINED3DPRASTERCAPS_STIPPLE   |
                                       WINED3DPRASTERCAPS_SUBPIXEL  |
                                       WINED3DPRASTERCAPS_ZTEST;
