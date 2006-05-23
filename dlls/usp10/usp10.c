@@ -295,6 +295,28 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
 }
 
 /***********************************************************************
+ *      ScriptStringOut (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa, 
+                               int iX, 
+                               int iY, 
+                               UINT uOptions, 
+                               const RECT *prc, 
+                               int iMinSel, 
+                               int iMaxSel, 
+                               BOOL fDisabled)
+{
+    FIXME("(%p,%d,%d,0x%1x,%p,%d,%d,%d): stub\n",
+         ssa, iX, iY, uOptions, prc, iMinSel, iMaxSel, fDisabled);
+    if  (!ssa) {
+        return E_INVALIDARG;
+    }
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *      ScriptStringFree (USP10.@)
  *
  */

@@ -447,6 +447,41 @@ void test_ScriptTextOut(void)
     DestroyWindow(hwnd);
 }
 
+static void test_ScriptString(void)
+{
+    HRESULT         hr;
+    HDC             hdc = 0;
+    WCHAR           teststr[6] = {'T', 'e', 's', 't', '1', '\0'};
+    void            *pString = (WCHAR *) &teststr;
+    int             cString = 5;
+    int             cGlyphs = cString * 2 + 16;
+    int             iCharset = -1;
+    DWORD           dwFlags = SSA_GLYPHS;
+    int             iReqWidth = 100;
+    SCRIPT_CONTROL  psControl;
+    SCRIPT_STATE    psState;
+    const int       piDx[5] = {10, 10, 10, 10, 10};
+    SCRIPT_TABDEF   pTabdef;
+    const BYTE      pbInClass = 0;
+    SCRIPT_STRING_ANALYSIS pssa;
+
+    int iX = 10; 
+    int iY = 100;
+    UINT uOptions = 0; 
+    const RECT prc = {0, 50, 100, 100}; 
+    int iMinSel = 0; 
+    int iMaxSel = 0;
+    BOOL fDisabled = FALSE;
+    hr = ScriptStringAnalyse( hdc, pString, cString, cGlyphs, iCharset, dwFlags,
+                              iReqWidth, &psControl, &psState, piDx, &pTabdef,
+                              pbInClass, &pssa);
+    ok(hr == E_INVALIDARG, "ScriptStringAnalyse Stub should return E_INVALIDARG not %08x\n", (unsigned int) hr);
+    hr = ScriptStringOut(pssa, iX, iY, uOptions, &prc, iMinSel, iMaxSel,fDisabled);
+    ok(hr == E_NOTIMPL, "ScriptStringOut Stub should return E_NOTIMPL not %08x\n", (unsigned int) hr);
+    hr = ScriptStringFree(&pssa);
+    ok(hr == S_OK, "ScriptStringFree Stub should return S_OK not %08x\n", (unsigned int) hr);
+}
+
 START_TEST(usp10)
 {
     unsigned short  pwOutGlyphs[256];
@@ -455,4 +490,5 @@ START_TEST(usp10)
     test_ScriptGetCMap(pwOutGlyphs);
     test_ScriptGetFontProperties();
     test_ScriptTextOut();
+    test_ScriptString();
 }

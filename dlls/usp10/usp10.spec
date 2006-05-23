@@ -22,7 +22,7 @@
 @ stdcall ScriptStringFree(ptr)
 @ stub ScriptStringGetLogicalWidths
 @ stub ScriptStringGetOrder
-@ stub ScriptStringOut
+@ stdcall ScriptStringOut(ptr long long long ptr long long long)
 @ stub ScriptStringValidate
 @ stub ScriptStringXtoCP
 @ stub ScriptString_pLogAttr
