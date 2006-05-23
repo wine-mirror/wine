@@ -152,6 +152,30 @@ static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site, H
     return S_OK;
 }
 
+static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site, HWND parent_hwnd)
+{
+    HRESULT hres;
+
+    static const WCHAR wszitem[] = {'i','t','e','m',0};
+
+    hres = activate_inplace(This, active_site, parent_hwnd);
+    if(FAILED(hres))
+        return hres;
+
+    IOleInPlaceSite_OnUIActivate(This->inplace);
+
+    if(This->frame)
+        IOleInPlaceFrame_SetActiveObject(This->frame, ACTIVEOBJ(This), wszitem);
+    if(This->uiwindow)
+        IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, ACTIVEOBJ(This), wszitem);
+
+    /* TODO:
+     * IOleInPlaceFrmae_SetMenu
+     */
+
+    return S_OK;
+}
+
 /**********************************************************************
  * Implement the IOleObject interface for the WebBrowser control
  */
@@ -291,38 +315,18 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
         LPOLECLIENTSITE pActiveSite, LONG lindex, HWND hwndParent, LPCRECT lprcPosRect)
 {
     WebBrowser *This = OLEOBJ_THIS(iface);
-    HRESULT hres;
-
-    static const WCHAR wszitem[] = {'i','t','e','m',0};
 
     TRACE("(%p)->(%ld %p %p %ld %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent,
             lprcPosRect);
 
     switch (iVerb)
     {
+    case OLEIVERB_SHOW:
+        TRACE("OLEIVERB_SHOW\n");
+        return activate_ui(This, pActiveSite, hwndParent);
     case OLEIVERB_INPLACEACTIVATE:
         TRACE("OLEIVERB_INPLACEACTIVATE\n");
         return activate_inplace(This, pActiveSite, hwndParent);
-
-    case OLEIVERB_SHOW:
-        TRACE("OLEIVERB_SHOW\n");
-
-        hres = activate_inplace(This, pActiveSite, hwndParent);
-        if(FAILED(hres))
-            return hres;
-
-        IOleInPlaceSite_OnUIActivate(This->inplace);
-
-        if(This->frame)
-            IOleInPlaceFrame_SetActiveObject(This->frame, ACTIVEOBJ(This), wszitem);
-        if(This->uiwindow)
-            IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, ACTIVEOBJ(This), wszitem);
-
-        /* TODO:
-         * IOleInPlaceFrmae_SetMenu
-         */
-
-        return S_OK;
     default:
         FIXME("stub for %ld\n", iVerb);
         break;
