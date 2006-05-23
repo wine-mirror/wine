@@ -325,6 +325,9 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
     case OLEIVERB_SHOW:
         TRACE("OLEIVERB_SHOW\n");
         return activate_ui(This, pActiveSite, hwndParent);
+    case OLEIVERB_UIACTIVATE:
+        TRACE("OLEIVERB_UIACTIVATE\n");
+        return activate_ui(This, pActiveSite, hwndParent);
     case OLEIVERB_INPLACEACTIVATE:
         TRACE("OLEIVERB_INPLACEACTIVATE\n");
         return activate_inplace(This, pActiveSite, hwndParent);
