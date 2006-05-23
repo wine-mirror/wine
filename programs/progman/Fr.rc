@@ -49,7 +49,7 @@ MAIN_MENU MENU
    MENUITEM "&Réorganiser les icônes",       PM_ARRANGE
  }
  
- POPUP "&Aide" {
+ POPUP "Aid&e" {
    MENUITEM "&Sommaire",         PM_CONTENTS
    MENUITEM "&Rechercher...",           PM_SEARCH
    MENUITEM SEPARATOR
@@ -77,7 +77,7 @@ RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
 LTEXT         "&Programme", PM_NEW_PROGRAM,  20, 38,  80, 15
 DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aid&e",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Move' */
@@ -94,7 +94,7 @@ LTEXT         "&Vers le groupe :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aid&e",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Copy' */
@@ -111,7 +111,7 @@ LTEXT         "&Vers le groupe :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aid&e",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Group attributes' */
@@ -126,7 +126,7 @@ LTEXT     "&Fichier du groupe :",        PM_FILE_TXT,          05, 38,  50, 10
 EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
 DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aid&e",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Program attributes' */
@@ -150,7 +150,7 @@ DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_
 PUSHBUTTON    "Annuler",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Pa&rcourir...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Changer l'icône...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aid&e",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Symbol' */
@@ -167,7 +167,7 @@ COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
 DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Pa&rcourir...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aid&e",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Execute' */
@@ -183,7 +183,7 @@ LTEXT         "Réduire à l'&utilisation",   IDIGNORE,   20, 45, 120, 10
 DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Pa&rcourir...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Aide",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aid&e",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Strings */

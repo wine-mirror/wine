@@ -32,7 +32,7 @@ BEGIN
     BEGIN
         MENUITEM "&Quitter",                       ID_REGISTRY_EXIT
     END
-    POPUP "&Aide"
+    POPUP "Aid&e"
     BEGIN
         MENUITEM "&A propos...",                  ID_HELP_ABOUT
     END
@@ -52,7 +52,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Quitter",                       ID_REGISTRY_EXIT
     END
-    POPUP "&Edition"
+    POPUP "É&dition"
     BEGIN
         MENUITEM "&Modifier",                     ID_EDIT_MODIFY
         MENUITEM SEPARATOR
@@ -86,7 +86,7 @@ BEGIN
         MENUITEM "&Ajouter aux Favoris",          ID_FAVORITES_ADDTOFAVORITES
         MENUITEM "&Supprimer des Favoris",        ID_FAVORITES_REMOVEFAVORITE
     END
-    POPUP "&Aide"
+    POPUP "Aid&e"
     BEGIN
         MENUITEM "&Sujets de l'aide",                ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR

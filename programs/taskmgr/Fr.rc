@@ -80,7 +80,7 @@ BEGIN
         MENUITEM "&Cascade",                    ID_WINDOWS_CASCADE
         MENUITEM "Toujours &visible",             ID_WINDOWS_BRINGTOFRONT
     END
-    POPUP "&Aide"
+    POPUP "Aid&e"
     BEGIN
         MENUITEM "Rubriques d'aide du Gestionnaire des tâches",   ID_HELP_TOPICS
         MENUITEM SEPARATOR

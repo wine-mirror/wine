@@ -137,7 +137,7 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "&Actualiser\tF5",             ID_REFRESH
     }
 
-    POPUP "&Aide"  {
+    POPUP "Aid&e"  {
         MENUITEM "&Sommaire de l'aide\tF1",     ID_HELP
         MENUITEM "&Rechercher dans l'aide\tF1", ID_HELP
         MENUITEM "&Utiliser l'aide\tF1",        ID_HELP_USING
@@ -161,7 +161,7 @@ FONT 8, "MS Shell Dlg"
     CONTROL         "Sous forme d'icône", 214, "Button", BS_AUTOCHECKBOX|WS_TABSTOP,3, 45, 71, 12
     DEFPUSHBUTTON   "OK", 1, 158, 6, 47, 14
     PUSHBUTTON      "Annuler", 2, 158, 23, 47, 14
-    PUSHBUTTON      "&Aide", 254, 158, 43, 47, 14
+    PUSHBUTTON      "Aid&e", 254, 158, 43, 47, 14
 }
 
 IDD_SELECT_DESTINATION DIALOG FIXED IMPURE 15, 13, 210, 63

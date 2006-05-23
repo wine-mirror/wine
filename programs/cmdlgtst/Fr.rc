@@ -55,7 +55,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Imprimer", CM_F_PRINT
  }
 
- POPUP "&Aide"
+ POPUP "Aid&e"
  {
   MENUITEM "&Usage", CM_H_USAGE
   MENUITEM "&A propos...", CM_H_ABOUT

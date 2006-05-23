@@ -33,7 +33,7 @@ MAIN_MENU MENU
    MENUITEM SEPARATOR
   MENUITEM "&Quitter", MNID_FILE_EXIT
  }
- POPUP "&Edition" {
+ POPUP "É&dition" {
    MENUITEM "&Copier...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
    MENUITEM "&Annotation...", MNID_EDIT_ANNOTATE
@@ -41,7 +41,7 @@ MAIN_MENU MENU
  POPUP "&Signet" {
    MENUITEM "&Définir...", MNID_BKMK_DEFINE
  }
- POPUP "&Aide" {
+ POPUP "Aid&e" {
    MENUITEM "&Utiliser l'aide", MNID_HELP_HELPON
    MENUITEM "&Toujours visible", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
