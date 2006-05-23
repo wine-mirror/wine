@@ -18,6 +18,7 @@ krnl386.exe16
 libgdi32.def
 libkernel32.def
 libuser32.def
+libwinspool.def
 lzexpand.dll16
 mmsystem.dll16
 mouse.drv16

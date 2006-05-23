@@ -192,8 +192,8 @@ version_test.exe$(DLLEXT): $(DLLDIR)/version/tests/version_test.exe$(DLLEXT)
 	cp $(DLLDIR)/version/tests/version_test.exe$(DLLEXT) $@ && $(STRIP) $@
 winmm_test.exe$(DLLEXT): $(DLLDIR)/winmm/tests/winmm_test.exe$(DLLEXT)
 	cp $(DLLDIR)/winmm/tests/winmm_test.exe$(DLLEXT) $@ && $(STRIP) $@
-winspool.drv_test.exe$(DLLEXT): $(DLLDIR)/winspool/tests/winspool.drv_test.exe$(DLLEXT)
-	cp $(DLLDIR)/winspool/tests/winspool.drv_test.exe$(DLLEXT) $@ && $(STRIP) $@
+winspool.drv_test.exe$(DLLEXT): $(DLLDIR)/winspool.drv/tests/winspool.drv_test.exe$(DLLEXT)
+	cp $(DLLDIR)/winspool.drv/tests/winspool.drv_test.exe$(DLLEXT) $@ && $(STRIP) $@
 ws2_32_test.exe$(DLLEXT): $(DLLDIR)/ws2_32/tests/ws2_32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/ws2_32/tests/ws2_32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 

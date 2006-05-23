@@ -18,8 +18,8 @@ SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 
-$(IMPORTLIB): lib$(BASEMODULE).$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) lib$(BASEMODULE).$(IMPLIBEXT) $@
+$(IMPORTLIB): $(MAINSPEC)
+	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
 
 clean::
 	$(RM) $(IMPORTLIB)

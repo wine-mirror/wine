@@ -175,7 +175,7 @@ BASEDIRS = \
 	winmm/winenas \
 	winmm/wineoss \
 	winnls32 \
-	winspool \
+	winspool.drv \
 	wintab32 \
 	wintrust \
 	wldap32 \
@@ -278,8 +278,7 @@ SYMLINKS_SO = \
 	wineesd.drv.so \
 	winejack.drv.so \
 	winenas.drv.so \
-	wineoss.drv.so \
-	winspool.drv.so
+	wineoss.drv.so
 
 # Main target
 
@@ -334,9 +333,6 @@ wineoss.drv.so: winmm/wineoss/wineoss.drv.so
 
 winex11.drv.so: x11drv/winex11.drv.so
 	$(RM) $@ && $(LN_S) x11drv/winex11.drv.so $@
-
-winspool.drv.so: winspool/winspool.drv.so
-	$(RM) $@ && $(LN_S) winspool/winspool.drv.so $@
 
 # Placeholders for 16-bit libraries
 
@@ -428,7 +424,8 @@ STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
 IMPORT_SYMLINKS = \
 	libgdi32.$(IMPLIBEXT) \
 	libkernel32.$(IMPLIBEXT) \
-	libuser32.$(IMPLIBEXT)
+	libuser32.$(IMPLIBEXT) \
+	libwinspool.$(IMPLIBEXT)
 
 IMPORT_LIBS = \
 	$(IMPORT_SYMLINKS) \
@@ -543,7 +540,7 @@ IMPORT_LIBS = \
 	wininet/libwininet.$(IMPLIBEXT) \
 	winmm/libwinmm.$(IMPLIBEXT) \
 	winnls32/libwinnls32.$(IMPLIBEXT) \
-	winspool/libwinspool.$(IMPLIBEXT) \
+	winspool.drv/libwinspool.$(IMPLIBEXT) \
 	wintab32/libwintab32.$(IMPLIBEXT) \
 	wintrust/libwintrust.$(IMPLIBEXT) \
 	wldap32/libwldap32.$(IMPLIBEXT) \
@@ -870,8 +867,8 @@ winmm/libwinmm.$(IMPLIBEXT): winmm/winmm.spec $(WINEBUILD)
 winnls32/libwinnls32.$(IMPLIBEXT): winnls32/winnls32.spec $(WINEBUILD)
 	@cd winnls32 && $(MAKE) libwinnls32.$(IMPLIBEXT)
 
-winspool/libwinspool.$(IMPLIBEXT): winspool/winspool.drv.spec $(WINEBUILD)
-	@cd winspool && $(MAKE) libwinspool.$(IMPLIBEXT)
+winspool.drv/libwinspool.$(IMPLIBEXT): winspool.drv/winspool.drv.spec $(WINEBUILD)
+	@cd winspool.drv && $(MAKE) libwinspool.$(IMPLIBEXT)
 
 wintab32/libwintab32.$(IMPLIBEXT): wintab32/wintab32.spec $(WINEBUILD)
 	@cd wintab32 && $(MAKE) libwintab32.$(IMPLIBEXT)
@@ -906,6 +903,9 @@ libkernel32.$(IMPLIBEXT): kernel/libkernel32.$(IMPLIBEXT)
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
 
+libwinspool.$(IMPLIBEXT): winspool.drv/libwinspool.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.$(IMPLIBEXT) $@
+
 $(BUILDSUBDIRS): $(IMPORT_LIBS)
 $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPORT_LIBS)
 
@@ -924,7 +924,6 @@ winmm/winejack/winejack.drv.so: winmm/winejack
 winmm/winenas/winenas.drv.so: winmm/winenas
 winmm/wineoss/wineoss.drv.so: winmm/wineoss
 x11drv/winex11.drv.so: x11drv
-winspool/winspool.drv.so: winspool
 dxerr8/libdxerr8.a: dxerr8
 dxerr9/libdxerr9.a: dxerr9
 dxguid/libdxguid.a: dxguid

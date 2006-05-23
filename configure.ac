@@ -1734,8 +1734,8 @@ dlls/winmm/winejack/Makefile
 dlls/winmm/winenas/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winnls32/Makefile
-dlls/winspool/Makefile
-dlls/winspool/tests/Makefile
+dlls/winspool.drv/Makefile
+dlls/winspool.drv/tests/Makefile
 dlls/wintab32/Makefile
 dlls/wintrust/Makefile
 dlls/wldap32/Makefile
