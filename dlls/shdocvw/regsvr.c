@@ -506,6 +506,14 @@ static LONG recursive_delete_keyW(HKEY base, WCHAR const *name)
  *		coclass list
  */
 static struct regsvr_coclass const coclass_list[] = {
+    {   &CLSID_WebBrowser_V1,
+        "Microsoft Web Browser Version 1",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        "Shell.Explorer.1",
+        "Shell.Explorer"
+    },
     {   &CLSID_WebBrowser,
 	"Microsoft Web Browser",
 	NULL,
