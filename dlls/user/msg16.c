@@ -50,6 +50,34 @@ static LRESULT send_message_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
     return *result;
 }
 
+static LRESULT post_message_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                      LRESULT *result, void *arg )
+{
+    *result = 0;
+    return PostMessageA( hwnd, msg, wp, lp );
+}
+
+static LRESULT post_thread_message_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                             LRESULT *result, void *arg )
+{
+    DWORD_PTR tid = (DWORD_PTR)arg;
+    *result = 0;
+    return PostThreadMessageA( tid, msg, wp, lp );
+}
+
+static LRESULT get_message_callback( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp,
+                                     LRESULT *result, void *arg )
+{
+    MSG16 *msg16 = arg;
+
+    msg16->hwnd    = hwnd;
+    msg16->message = msg;
+    msg16->wParam  = wp;
+    msg16->lParam  = lp;
+    *result = 0;
+    return 0;
+}
+
 
 /***********************************************************************
  *		SendMessage  (USER.111)
@@ -85,22 +113,10 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
 /***********************************************************************
  *		PostMessage  (USER.110)
  */
-BOOL16 WINAPI PostMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM lparam )
+BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wparam, LPARAM lparam )
 {
-    WPARAM wparam32;
-    UINT msg32;
-    HWND hwnd = WIN_Handle32( hwnd16 );
-
-    switch (WINPROC_MapMsg16To32A( hwnd, msg, wparam, &msg32, &wparam32, &lparam ))
-    {
-    case 0:
-        return PostMessageA( hwnd, msg32, wparam32, lparam );
-    case 1:
-        ERR( "16-bit message 0x%04x contains pointer, cannot post\n", msg );
-        return FALSE;
-    default:
-        return FALSE;
-    }
+    LRESULT unused;
+    return WINPROC_CallProc16To32A( post_message_callback, hwnd, msg, wparam, lparam, &unused, NULL );
 }
 
 
@@ -109,21 +125,12 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM 
  */
 BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 msg, WPARAM16 wparam, LPARAM lparam )
 {
-    WPARAM wparam32;
-    UINT msg32;
-    DWORD tid = HTASK_32( hTask );
-    if (!tid) return FALSE;
+    LRESULT unused;
+    DWORD_PTR tid = HTASK_32( hTask );
 
-    switch (WINPROC_MapMsg16To32A( 0, msg, wparam, &msg32, &wparam32, &lparam ))
-    {
-    case 0:
-        return PostThreadMessageA( tid, msg32, wparam32, lparam );
-    case 1:
-        ERR( "16-bit message %x contains pointer, cannot post\n", msg );
-        return FALSE;
-    default:
-        return FALSE;
-    }
+    if (!tid) return FALSE;
+    return WINPROC_CallProc16To32A( post_thread_message_callback, 0, msg, wparam, lparam,
+                                    &unused, (void *)tid );
 }
 
 
@@ -153,22 +160,20 @@ BOOL16 WINAPI PeekMessage32_16( MSG32_16 *msg16, HWND16 hwnd16,
                                 BOOL16 wHaveParamHigh )
 {
     MSG msg;
+    LRESULT unused;
     HWND hwnd = WIN_Handle32( hwnd16 );
 
     if(USER16_AlertableWait)
         MsgWaitForMultipleObjectsEx( 0, NULL, 1, 0, MWMO_ALERTABLE );
     if (!PeekMessageA( &msg, hwnd, first, last, flags )) return FALSE;
 
-    msg16->msg.hwnd    = HWND_16( msg.hwnd );
-    msg16->msg.lParam  = msg.lParam;
     msg16->msg.time    = msg.time;
     msg16->msg.pt.x    = (INT16)msg.pt.x;
     msg16->msg.pt.y    = (INT16)msg.pt.y;
     if (wHaveParamHigh) msg16->wParamHigh = HIWORD(msg.wParam);
-
-    return (WINPROC_MapMsg32ATo16( msg.hwnd, msg.message, msg.wParam,
-                                   &msg16->msg.message, &msg16->msg.wParam,
-                                   &msg16->msg.lParam ) != -1);
+    WINPROC_CallProc32ATo16( get_message_callback, msg.hwnd, msg.message, msg.wParam, msg.lParam,
+                             &unused, &msg16->msg );
+    return TRUE;
 }
 
 
@@ -282,23 +287,18 @@ BOOL16 WINAPI GetMessage32_16( MSG32_16 *msg16, HWND16 hwnd16, UINT16 first,
                                UINT16 last, BOOL16 wHaveParamHigh )
 {
     MSG msg;
+    LRESULT unused;
     HWND hwnd = WIN_Handle32( hwnd16 );
 
-    do
-    {
-        if(USER16_AlertableWait)
-            MsgWaitForMultipleObjectsEx( 0, NULL, INFINITE, 0, MWMO_ALERTABLE );
-        GetMessageA( &msg, hwnd, first, last );
-        msg16->msg.hwnd    = HWND_16( msg.hwnd );
-        msg16->msg.lParam  = msg.lParam;
-        msg16->msg.time    = msg.time;
-        msg16->msg.pt.x    = (INT16)msg.pt.x;
-        msg16->msg.pt.y    = (INT16)msg.pt.y;
-        if (wHaveParamHigh) msg16->wParamHigh = HIWORD(msg.wParam);
-    }
-    while (WINPROC_MapMsg32ATo16( msg.hwnd, msg.message, msg.wParam,
-                                  &msg16->msg.message, &msg16->msg.wParam,
-                                  &msg16->msg.lParam ) == -1);
+    if(USER16_AlertableWait)
+        MsgWaitForMultipleObjectsEx( 0, NULL, INFINITE, 0, MWMO_ALERTABLE );
+    GetMessageA( &msg, hwnd, first, last );
+    msg16->msg.time    = msg.time;
+    msg16->msg.pt.x    = (INT16)msg.pt.x;
+    msg16->msg.pt.y    = (INT16)msg.pt.y;
+    if (wHaveParamHigh) msg16->wParamHigh = HIWORD(msg.wParam);
+    WINPROC_CallProc32ATo16( get_message_callback, msg.hwnd, msg.message, msg.wParam, msg.lParam,
+                             &unused, &msg16->msg );
 
     TRACE( "message %04x, hwnd %p, filter(%04x - %04x)\n",
            msg16->msg.message, hwnd, first, last );

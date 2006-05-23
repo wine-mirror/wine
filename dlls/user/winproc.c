@@ -728,8 +728,8 @@ static UINT convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
  * Map a message from 16- to 32-bit Ansi.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
-                             WPARAM *pwparam32, LPARAM *plparam )
+static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
+                                  WPARAM *pwparam32, LPARAM *plparam )
 {
     *pmsg32 = (UINT)msg16;
     *pwparam32 = (WPARAM)wParam16;
@@ -1372,9 +1372,8 @@ static HANDLE16 convert_handle_32_to_16(UINT src, unsigned int flags)
  * Map a message from 32-bit Ansi to 16-bit.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
-                             UINT16 *pmsg16, WPARAM16 *pwparam16,
-                             LPARAM *plparam )
+static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
+                                  UINT16 *pmsg16, WPARAM16 *pwparam16, LPARAM *plparam )
 {
     *pmsg16 = (UINT16)msg32;
     *pwparam16 = (WPARAM16)LOWORD(wParam32);
