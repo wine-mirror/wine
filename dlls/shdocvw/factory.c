@@ -124,7 +124,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
     HRESULT hres;
 
-    static IClassFactoryImpl WBClassFactory = {&WBCF_Vtbl, WebBrowser_Create};
+    static IClassFactoryImpl WB1ClassFactory = {&WBCF_Vtbl, WebBrowserV1_Create};
+    static IClassFactoryImpl WB2ClassFactory = {&WBCF_Vtbl, WebBrowserV2_Create};
 
     TRACE("\n");
 
@@ -132,8 +133,12 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
         hres = create_mozctl(riid, ppv);
         if(SUCCEEDED(hres))
             return hres;
-        return IClassFactory_QueryInterface(FACTORY(&WBClassFactory), riid, ppv);
+        return IClassFactory_QueryInterface(FACTORY(&WB2ClassFactory), riid, ppv);
     }
+
+    if(IsEqualGUID(&CLSID_WebBrowser_V1, rclsid))
+        return IClassFactory_QueryInterface(FACTORY(&WB1ClassFactory), riid, ppv);
+
 
     /* As a last resort, figure if the CLSID belongs to a 'Shell Instance Object' */
     return SHDOCVW_GetShellInstanceObjectClassObject(rclsid, riid, ppv);

@@ -104,6 +104,8 @@ typedef struct {
 
     LONG ref;
 
+    INT version;
+
     IOleClientSite *client;
     IOleContainer *container;
     IOleInPlaceSite *inplace;
@@ -182,7 +184,8 @@ void DocHost_ClientSite_Release(DocHost*);
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 
-HRESULT WebBrowser_Create(IUnknown*,REFIID,void**);
+HRESULT WebBrowserV1_Create(IUnknown*,REFIID,void**);
+HRESULT WebBrowserV2_Create(IUnknown*,REFIID,void**);
 
 void create_doc_view_hwnd(DocHost*);
 void deactivate_document(DocHost*);

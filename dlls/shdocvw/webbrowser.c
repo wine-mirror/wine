@@ -918,7 +918,7 @@ static const IWebBrowser2Vtbl WebBrowser2Vtbl =
     WebBrowser_put_Resizable
 };
 
-HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, void **ppv)
 {
     WebBrowser *ret;
     HRESULT hres;
@@ -929,6 +929,7 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     ret->lpWebBrowser2Vtbl = &WebBrowser2Vtbl;
     ret->ref = 0;
+    ret->version = version;
 
     DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret));
 
@@ -953,4 +954,14 @@ HRESULT WebBrowser_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     }
 
     return hres;
+}
+
+HRESULT WebBrowserV1_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+{
+    return WebBrowser_Create(1, pOuter, riid, ppv);
+}
+
+HRESULT WebBrowserV2_Create(IUnknown *pOuter, REFIID riid, void **ppv)
+{
+    return WebBrowser_Create(2, pOuter, riid, ppv);
 }
