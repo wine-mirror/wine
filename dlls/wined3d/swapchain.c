@@ -382,7 +382,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UIN
     }
 
     /* Note inc ref on returned surface */
-    IWineD3DSurface_AddRef(*ppBackBuffer);
+    if(*ppBackBuffer) IWineD3DSurface_AddRef(*ppBackBuffer);
     return WINED3D_OK;
 
 }
