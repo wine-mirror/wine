@@ -320,7 +320,7 @@ static inline BOOL IsConformanceOrVariancePresent(PFORMAT_STRING pFormat)
     return (*(const ULONG *)pFormat != -1);
 }
 
-PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
+static PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
 {
   ALIGN_POINTER(pStubMsg->Buffer, 4);
   pStubMsg->MaxCount = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
