@@ -496,13 +496,6 @@ todo_wine {
        Passing a NULL ptr while we're a client && !must_alloc
        crashes on Windows, so we won't do that. */
 
-#if 0 /* This unmarshal doesn't work correctly under Wine with a
-         pstruct (and worse trashes the buffer, so further tests
-         fail).  When reusing the buffer the ptrs get overwritten with
-         newly alloc'ed ptrs.  In Wine at the moment these get zero'ed
-         before the call to PointerUnmarshall in
-         EmbeddedPointerUnmarshall, this zeros the buffer ptrs, so
-         PointerUnmarshall thinks they're null-ptrs. */
     mem = NULL;
     StubMsg.IsClient = 0;
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -513,7 +506,7 @@ todo_wine {
     ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
     my_alloc_called = 0;
     ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
-#endif
+
     /*** now must_alloc is true ***/
 
     /* with must_alloc set we always allocate new memory whether or not we're
