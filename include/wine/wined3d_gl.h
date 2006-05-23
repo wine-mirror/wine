@@ -521,6 +521,82 @@ typedef GLvoid* (APIENTRY * PGLFNMAPBUFFERARBPROC) (GLenum target, GLenum access
 typedef GLboolean (APIENTRY * PGLFNUNMAPBUFFERARBPROC) (GLenum target);
 typedef void (APIENTRY * PGLFNGETBUFFERPARAMETERIVARBPROC) (GLenum target, GLenum pname, GLint *params);
 typedef void (APIENTRY * PGLFNGETBUFFERPOINTERVARBPROC) (GLenum target, GLenum pname, GLvoid* *params);
+/* GL_ARB_shader_objects (GLSL) */
+#ifndef GL_ARB_shader_objects
+#define GL_ARB_shader_objects 1
+typedef char GLcharARB;
+typedef unsigned int GLhandleARB;
+#endif
+#ifndef GL_ARB_fragment_shader
+#define GL_ARB_fragment_shader 1
+#define GL_FRAGMENT_SHADER_ARB                  0x8B30
+#define GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB  0x8B49
+#endif
+#ifndef GL_ARB_vertex_shader
+#define GL_ARB_vertex_shader 1
+#define GL_PROGRAM_OBJECT_ARB             0x8B40
+#define GL_SHADER_OBJECT_ARB              0x8B48
+#define GL_OBJECT_TYPE_ARB                0x8B4E
+#define GL_OBJECT_SUBTYPE_ARB             0x8B4F
+#define GL_FLOAT_VEC2_ARB                 0x8B50
+#define GL_FLOAT_VEC3_ARB                 0x8B51
+#define GL_FLOAT_VEC4_ARB                 0x8B52
+#define GL_INT_VEC2_ARB                   0x8B53
+#define GL_INT_VEC3_ARB                   0x8B54
+#define GL_INT_VEC4_ARB                   0x8B55
+#define GL_BOOL_ARB                       0x8B56
+#define GL_BOOL_VEC2_ARB                  0x8B57
+#define GL_BOOL_VEC3_ARB                  0x8B58
+#define GL_BOOL_VEC4_ARB                  0x8B59
+#define GL_FLOAT_MAT2_ARB                 0x8B5A
+#define GL_FLOAT_MAT3_ARB                 0x8B5B
+#define GL_FLOAT_MAT4_ARB                 0x8B5C
+#define GL_SAMPLER_1D_ARB                 0x8B5D
+#define GL_SAMPLER_2D_ARB                 0x8B5E
+#define GL_SAMPLER_3D_ARB                 0x8B5F
+#define GL_SAMPLER_CUBE_ARB               0x8B60
+#define GL_SAMPLER_1D_SHADOW_ARB          0x8B61
+#define GL_SAMPLER_2D_SHADOW_ARB          0x8B62
+#endif
+typedef void (APIENTRY * WINED3D_PFNGLGETOBJECTPARAMETERIVARBPROC) (GLhandleARB obj, GLenum pname, GLint *params);
+typedef void (APIENTRY * WINED3D_PFNGLGETOBJECTPARAMETERFVARBPROC) (GLhandleARB obj, GLenum pname, GLfloat *params);
+typedef GLint (APIENTRY * WINED3D_PFNGLGETUNIFORMLOCATIONARBPROC) (GLhandleARB programObj, const GLcharARB *name);
+typedef void (APIENTRY * WINED3D_PFNGLGETACTIVEUNIFORMARBPROC) (GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM1IARBPROC) (GLint location, GLint v0);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM2IARBPROC) (GLint location, GLint v0, GLint v1);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM3IARBPROC) (GLint location, GLint v0, GLint v1, GLint v2);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM4IARBPROC) (GLint location, GLint v0, GLint v1, GLint v2, GLint v3);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM1FARBPROC) (GLint location, GLfloat v0);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM2FARBPROC) (GLint location, GLfloat v0, GLfloat v1);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM3FARBPROC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM4FARBPROC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM1IVARBPROC) (GLint location, GLsizei count, const GLint *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM2IVARBPROC) (GLint location, GLsizei count, const GLint *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM3IVARBPROC) (GLint location, GLsizei count, const GLint *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM4IVARBPROC) (GLint location, GLsizei count, const GLint *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM1FVARBPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM2FVARBPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM3FVARBPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORM4FVARBPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORMMATRIX2FVARBPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORMMATRIX3FVARBPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY * WINED3D_PFNGLUNIFORMMATRIX4FVARBPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY * WINED3D_PFNGLGETUNIFORMFVARBPROC) (GLhandleARB programObj, GLint location, GLfloat *params);
+typedef void (APIENTRY * WINED3D_PFNGLGETUNIFORMIVARBPROC) (GLhandleARB programObj, GLint location, GLint *params);
+typedef void (APIENTRY * WINED3D_PFNGLGETINFOLOGARBPROC) (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog);
+typedef void (APIENTRY * WINED3D_PFNGLUSEPROGRAMOBJECTARBPROC) (GLhandleARB programObj);
+typedef GLhandleARB (APIENTRY * WINED3D_PFNGLCREATESHADEROBJECTARBPROC) (GLenum shaderType);
+typedef void (APIENTRY * WINED3D_PFNGLSHADERSOURCEARBPROC) (GLhandleARB shaderObj, GLsizei count, const GLcharARB* *string, const GLint *length);
+typedef void (APIENTRY * WINED3D_PFNGLCOMPILESHADERARBPROC) (GLhandleARB shaderObj);
+typedef GLhandleARB (APIENTRY * WINED3D_PFNGLCREATEPROGRAMOBJECTARBPROC) (void);
+typedef void (APIENTRY * WINED3D_PFNGLATTACHOBJECTARBPROC) (GLhandleARB containerObj, GLhandleARB obj);
+typedef void (APIENTRY * WINED3D_PFNGLLINKPROGRAMARBPROC) (GLhandleARB programObj);
+typedef void (APIENTRY * WINED3D_PFNGLDETACHOBJECTARBPROC) (GLhandleARB containerObj, GLhandleARB attachedObj);
+typedef void (APIENTRY * WINED3D_PFNGLDELETEOBJECTARBPROC) (GLhandleARB obj);
+typedef void (APIENTRY * WINED3D_PFNGLVALIDATEPROGRAMARBPROC) (GLhandleARB programObj);
+typedef void (APIENTRY * WINED3D_PFNGLGETATTACHEDOBJECTSARBPROC) (GLhandleARB containerObj, GLsizei maxCount, GLsizei *count, GLhandleARB *obj);
+typedef GLhandleARB (APIENTRY * WINED3D_PFNGLGETHANDLEARBPROC) (GLenum pname);
+typedef void (APIENTRY * WINED3D_PFNGLGETSHADERSOURCEARBPROC) (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source);
 /* GL_EXT_texture_compression_s3tc */
 #ifndef GL_EXT_texture_compression_s3tc
 #define GL_EXT_texture_compression_s3tc 1
@@ -1233,6 +1309,46 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNVERTEXATTRIBPOINTERARBPROC,      glVertexAttribPointerARB); \
     USE_GL_FUNC(PGLFNENABLEVERTEXATTRIBARRAYARBPROC,  glEnableVertexAttribArrayARB); \
     USE_GL_FUNC(PGLFNDISABLEVERTEXATTRIBARRAYARBPROC, glDisableVertexAttribArrayARB); \
+    /* GL_ARB_shader_objects */ \
+    USE_GL_FUNC(WINED3D_PFNGLGETOBJECTPARAMETERIVARBPROC,     glGetObjectParameterivARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETOBJECTPARAMETERFVARBPROC,     glGetObjectParameterfvARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETUNIFORMLOCATIONARBPROC,       glGetUniformLocationARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETACTIVEUNIFORMARBPROC,         glGetActiveUniformARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1IARBPROC,                glUniform1iARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM2IARBPROC,                glUniform2iARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM3IARBPROC,                glUniform3iARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM4IARBPROC,                glUniform4iARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1IARBPROC,                glUniform1fARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM2FARBPROC,                glUniform2fARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM3FARBPROC,                glUniform3fARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM4FARBPROC,                glUniform4fARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1IVARBPROC,               glUniform1fvARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM2IVARBPROC,               glUniform2fvARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM3IVARBPROC,               glUniform3fvARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM4FVARBPROC,               glUniform4fvARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM1IVARBPROC,               glUniform1ivARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM2IVARBPROC,               glUniform2ivARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM3IVARBPROC,               glUniform3ivARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORM4IVARBPROC,               glUniform4ivARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORMMATRIX2FVARBPROC,         glUniformMatrix2fvARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORMMATRIX3FVARBPROC,         glUniformMatrix3fvARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUNIFORMMATRIX4FVARBPROC,         glUniformMatrix4fvARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETUNIFORMFVARBPROC,             glGetUniform4fvARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETUNIFORMIVARBPROC,             glGetUniform4ivARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETINFOLOGARBPROC,               glGetInfoLogARB); \
+    USE_GL_FUNC(WINED3D_PFNGLUSEPROGRAMOBJECTARBPROC,         glUseProgramObjectARB); \
+    USE_GL_FUNC(WINED3D_PFNGLCREATESHADEROBJECTARBPROC,       glCreateShaderObjectARB); \
+    USE_GL_FUNC(WINED3D_PFNGLSHADERSOURCEARBPROC,             glShaderSourceARB); \
+    USE_GL_FUNC(WINED3D_PFNGLCOMPILESHADERARBPROC,            glCompileShaderARB); \
+    USE_GL_FUNC(WINED3D_PFNGLCREATEPROGRAMOBJECTARBPROC,      glCreateProgramObjectARB); \
+    USE_GL_FUNC(WINED3D_PFNGLATTACHOBJECTARBPROC,             glAttachObjectARB); \
+    USE_GL_FUNC(WINED3D_PFNGLLINKPROGRAMARBPROC,              glLinkProgramARB); \
+    USE_GL_FUNC(WINED3D_PFNGLDETACHOBJECTARBPROC,             glDetachObjectARB); \
+    USE_GL_FUNC(WINED3D_PFNGLDELETEOBJECTARBPROC,             glDeleteObjectARB); \
+    USE_GL_FUNC(WINED3D_PFNGLVALIDATEPROGRAMARBPROC,          glValidateProgramARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETATTACHEDOBJECTSARBPROC,       glGetAttachedObjectsARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETHANDLEARBPROC,                glGetHandleARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETSHADERSOURCEARBPROC,          glGetShaderSourceARB); \
     /* GL_EXT_stencil_two_side */ \
     USE_GL_FUNC(PGLFNACTIVESTENCILFACEEXTPROC, glActiveStencilFaceEXT); \
     /* GL_ATI_separate_stencil */ \
