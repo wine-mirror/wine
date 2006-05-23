@@ -103,13 +103,11 @@ static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site, H
 {
     HRESULT hres;
 
+    if(This->inplace)
+        return S_OK;
+
     if(!active_site)
         return E_INVALIDARG;
-
-    if(This->inplace) {
-        IOleInPlaceSite_Release(This->inplace);
-        This->inplace = NULL;
-    }
 
     hres = IOleClientSite_QueryInterface(active_site, &IID_IOleInPlaceSite,
                                          (void**)&This->inplace);
@@ -157,6 +155,9 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site, HWND p
     HRESULT hres;
 
     static const WCHAR wszitem[] = {'i','t','e','m',0};
+
+    if(This->inplace)
+        return S_OK;
 
     hres = activate_inplace(This, active_site, parent_hwnd);
     if(FAILED(hres))
