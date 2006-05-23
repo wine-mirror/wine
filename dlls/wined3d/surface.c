@@ -2357,7 +2357,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 LEAVE_GL();
 
                 if(!(This->Flags & SFLAG_DONOTFREE)) {
-                    if(This->resource.allocatedMemory) HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+                    HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
                     This->resource.allocatedMemory = NULL;
                 } else {
                     This->Flags |= SFLAG_GLDIRTY;
