@@ -5584,7 +5584,7 @@ static DWORD cbt_hook_thread_id;
 
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
 { 
-    static const char *CBT_code_name[10] = {
+    static const char * const CBT_code_name[10] = {
 	"HCBT_MOVESIZE",
 	"HCBT_MINMAX",
 	"HCBT_QS",
@@ -6009,8 +6009,8 @@ static const struct message WmGlobalHookSeq_2[] = {
 
 static const struct message WmMouseLLHookSeq[] = {
     { WM_MOUSEMOVE, hook },
-    { WM_LBUTTONDOWN, hook },
     { WM_LBUTTONUP, hook },
+    { WM_MOUSEMOVE, hook },
     { 0 }
 };
 
@@ -6182,9 +6182,13 @@ static DWORD WINAPI mouse_ll_global_thread_proc(void *param)
 
     flush_sequence();
 
-    mouse_event(MOUSEEVENTF_MOVE, 100, 0, 0, 0);
-    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    /* Windows doesn't like when a thread plays games with the focus,
+     * that leads to all kinds of misbehaviours and failures to activate
+     * a window. So, better don't generate a mouse click message below.
+     */
+    mouse_event(MOUSEEVENTF_MOVE, -1, 0, 0, 0);
     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_MOVE, 1, 0, 0, 0);
 
     SetEvent(hevent);
     while (GetMessage(&msg, 0, 0, 0))
@@ -6374,9 +6378,9 @@ static void test_winevents(void)
     ok_sequence(WmMouseLLHookSeq, "MOUSE_LL hook other thread", FALSE);
     flush_sequence();
 
-    mouse_event(MOUSEEVENTF_MOVE, 0, 0, 0, 0);
-    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_MOVE, -1, 0, 0, 0);
     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_MOVE, 1, 0, 0, 0);
 
     ok_sequence(WmMouseLLHookSeq, "MOUSE_LL hook same thread", FALSE);
 
@@ -7477,9 +7481,12 @@ START_TEST(msg)
 
     /* Fix message sequences before removing 4 lines below */
 #if 1
-    ret = pUnhookWinEvent(hEvent_hook);
-    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
-    pUnhookWinEvent = 0;
+    if (pUnhookWinEvent && hEvent_hook)
+    {
+        ret = pUnhookWinEvent(hEvent_hook);
+        ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
+        pUnhookWinEvent = 0;
+    }
     hEvent_hook = 0;
 #endif
 
