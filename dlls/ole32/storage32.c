@@ -4812,21 +4812,6 @@ BOOL BlockChainStream_SetSize(
   }
   else
   {
-    ULARGE_INTEGER fileSize =
-      BIGBLOCKFILE_GetSize(This->parentStorage->bigBlockFile);
-
-    ULONG diff = newSize.u.LowPart - size.u.LowPart;
-
-    /*
-     * Make sure the file stays a multiple of blocksize
-     */
-    if ((diff % This->parentStorage->bigBlockSize) != 0)
-      diff += (This->parentStorage->bigBlockSize -
-                (diff % This->parentStorage->bigBlockSize) );
-
-    fileSize.u.LowPart += diff;
-    BIGBLOCKFILE_SetSize(This->parentStorage->bigBlockFile, fileSize);
-
     BlockChainStream_Enlarge(This, newSize);
   }
 
