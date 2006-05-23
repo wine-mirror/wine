@@ -1623,7 +1623,7 @@ dlls/mshtml/tests/Makefile
 dlls/msi/Makefile
 dlls/msi/tests/Makefile
 dlls/msimg32/Makefile
-dlls/msisys/Makefile
+dlls/msisys.ocx/Makefile
 dlls/msnet32/Makefile
 dlls/msrle32/Makefile
 dlls/msvcrt/Makefile

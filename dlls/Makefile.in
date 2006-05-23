@@ -93,7 +93,7 @@ BASEDIRS = \
 	mshtml \
 	msi \
 	msimg32 \
-	msisys \
+	msisys.ocx \
 	msnet32 \
 	msrle32 \
 	msvcrt \
@@ -271,7 +271,6 @@ SYMLINKS_SO = \
 	gdi32.dll.so \
 	joystick.drv.so \
 	kernel32.dll.so \
-	msisys.ocx.so \
 	user32.dll.so \
 	winealsa.drv.so \
 	winearts.drv.so \
@@ -309,9 +308,6 @@ joystick.drv.so: winmm/joystick/joystick.drv.so
 
 kernel32.dll.so: kernel/kernel32.dll.so
 	$(RM) $@ && $(LN_S) kernel/kernel32.dll.so $@
-
-msisys.ocx.so: msisys/msisys.ocx.so
-	$(RM) $@ && $(LN_S) msisys/msisys.ocx.so $@
 
 user32.dll.so: user/user32.dll.so
 	$(RM) $@ && $(LN_S) user/user32.dll.so $@
@@ -923,7 +919,6 @@ ddraw/ddraw.dll.so: ddraw
 gdi/gdi32.dll.so: gdi
 winmm/joystick/joystick.drv.so: winmm/joystick
 kernel/kernel32.dll.so: kernel
-msisys/msisys.ocx.so: msisys
 user/user32.dll.so: user
 winmm/winealsa/winealsa.drv.so: winmm/winealsa
 winmm/winearts/winearts.drv.so: winmm/winearts
