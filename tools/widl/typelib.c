@@ -38,8 +38,6 @@
 #include "windef.h"
 #include "winbase.h"
 
-#include "wine/unicode.h"
-
 #include "widl.h"
 #include "utils.h"
 #include "parser.h"

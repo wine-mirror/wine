@@ -45,8 +45,6 @@
 #include "winbase.h"
 #include "winnls.h"
 
-#include "wine/unicode.h"
-
 #include "widltypes.h"
 #include "typelib.h"
 #include "typelib_struct.h"
