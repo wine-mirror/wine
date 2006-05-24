@@ -6363,7 +6363,12 @@ static void test_winevents(void)
 
     /****** start of MOUSE_LL hook test *************/
     hCBT_global_hook = SetWindowsHookExA(WH_MOUSE_LL, cbt_global_hook_proc, GetModuleHandleA(0), 0);
-    assert(hCBT_global_hook);
+    /* WH_MOUSE_LL is not supported on Win9x platforms */
+    if (!hCBT_global_hook)
+    {
+        trace("Skipping WH_MOUSE_LL test on this platform\n");
+        goto skip_mouse_ll_hook_test;
+    }
 
     hevent = CreateEventA(NULL, 0, 0, NULL);
     assert(hevent);
@@ -6393,6 +6398,7 @@ static void test_winevents(void)
     CloseHandle(hevent);
     ok(!IsWindow(hwnd2), "window should be destroyed on thread exit\n");
     /****** end of MOUSE_LL hook test *************/
+skip_mouse_ll_hook_test:
 
     ok(DestroyWindow(hwnd), "failed to destroy window\n");
 }
@@ -7183,18 +7189,22 @@ static void test_PeekMessage(void)
     DWORD tid, qstatus;
     UINT qs_all_input = QS_ALLINPUT;
     UINT qs_input = QS_INPUT;
+    BOOL ret;
     struct peekmsg_info info;
 
     info.hwnd = CreateWindowA("TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
                               100, 100, 200, 200, 0, 0, 0, NULL);
+    assert(info.hwnd);
     ShowWindow(info.hwnd, SW_SHOW);
     UpdateWindow(info.hwnd);
+    SetFocus(info.hwnd);
 
     info.hevent[EV_START_STOP] = CreateEventA(NULL, 0, 0, NULL);
     info.hevent[EV_SENDMSG] = CreateEventA(NULL, 0, 0, NULL);
     info.hevent[EV_ACK] = CreateEventA(NULL, 0, 0, NULL);
 
     hthread = CreateThread(NULL, 0, send_msg_thread_2, &info, 0, &tid);
+    Sleep(100);
 
     trace("signalling to start looping\n");
     SetEvent(info.hevent[EV_START_STOP]);
@@ -7374,6 +7384,52 @@ todo_wine {
 
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     ok_sequence(WmChar, "WmChar", TRUE); /* todo_wine */
+
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == 0,
+       "wrong qstatus %08lx\n", qstatus);
+
+    /* test whether presence of the quit flag in the queue affects
+     * the queue state
+     */
+    PostQuitMessage(0x1234abcd);
+
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE),
+       "wrong qstatus %08lx\n", qstatus);
+
+    PostMessageA(info.hwnd, WM_USER, 0, 0);
+
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE),
+       "wrong qstatus %08lx\n", qstatus);
+
+    msg.message = 0;
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok(ret && msg.message == WM_USER,
+       "got %d and %x instead of TRUE and WM_USER\n", ret, msg.message);
+
+    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
+       "wrong qstatus %08lx\n", qstatus);
+
+    msg.message = 0;
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok(ret && msg.message == WM_QUIT,
+       "got %d and %x instead of TRUE and WM_QUIT\n", ret, msg.message);
+    ok(msg.wParam == 0x1234abcd, "got wParam %x instead of 0x1234abcd\n", msg.wParam);
+    ok(msg.lParam == 0, "got lParam %lx instead of 0\n", msg.lParam);
+
+    qstatus = GetQueueStatus(qs_all_input);
+todo_wine {
+    ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
+       "wrong qstatus %08lx\n", qstatus);
+}
+
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok(!ret,
+       "PeekMessageA should have returned FALSE instead of msg %x\n",
+        msg.message);
 
     qstatus = GetQueueStatus(qs_all_input);
     ok(qstatus == 0,
