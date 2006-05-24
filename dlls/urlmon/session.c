@@ -29,8 +29,18 @@
 #include "urlmon_main.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
+
+typedef struct name_space {
+    LPWSTR protocol;
+    IClassFactory *cf;
+
+    struct name_space *next;
+} name_space;
+
+static name_space *name_space_list = NULL;
 
 HRESULT get_protocol_iface(LPCWSTR url, IUnknown **ret)
 {
@@ -111,16 +121,63 @@ static HRESULT WINAPI InternetSession_RegisterNameSpace(IInternetSession *iface,
         IClassFactory *pCF, REFCLSID rclsid, LPCWSTR pwzProtocol, ULONG cPatterns,
         const LPCWSTR *ppwzPatterns, DWORD dwReserved)
 {
-    FIXME("(%p %s %s %ld %p %ld)\n", pCF, debugstr_guid(rclsid), debugstr_w(pwzProtocol),
-            cPatterns, ppwzPatterns, dwReserved);
-    return E_NOTIMPL;
+    name_space *new_name_space;
+    int size;
+
+    TRACE("(%p %s %s %ld %p %ld)\n", pCF, debugstr_guid(rclsid), debugstr_w(pwzProtocol),
+          cPatterns, ppwzPatterns, dwReserved);
+
+    if(cPatterns || ppwzPatterns)
+        FIXME("patterns not supported\n");
+    if(dwReserved)
+        WARN("dwReserved = %ld\n", dwReserved);
+
+    if(!pCF || !pwzProtocol)
+        return E_INVALIDARG;
+
+    new_name_space = HeapAlloc(GetProcessHeap(), 0, sizeof(name_space));
+
+    size = (strlenW(pwzProtocol)+1)*sizeof(WCHAR);
+    new_name_space->protocol = HeapAlloc(GetProcessHeap(), 0, size);
+    memcpy(new_name_space->protocol, pwzProtocol, size);
+
+    IClassFactory_AddRef(pCF);
+    new_name_space->cf = pCF;
+
+    new_name_space->next = name_space_list;
+    name_space_list = new_name_space;
+    return S_OK;
 }
 
 static HRESULT WINAPI InternetSession_UnregisterNameSpace(IInternetSession *iface,
         IClassFactory *pCF, LPCWSTR pszProtocol)
 {
-    FIXME("(%p %s)\n", pCF, debugstr_w(pszProtocol));
-    return E_NOTIMPL;
+    name_space *iter, *last = NULL;
+
+    TRACE("(%p %s)\n", pCF, debugstr_w(pszProtocol));
+
+    if(!pCF || !pszProtocol)
+        return E_INVALIDARG;
+
+    for(iter = name_space_list; iter; iter = iter->next) {
+        if(iter->cf == pCF && !strcmpW(iter->protocol, pszProtocol))
+            break;
+        last = iter;
+    }
+
+    if(!iter)
+        return S_OK;
+
+    if(last)
+        last->next = iter->next;
+    else
+        name_space_list = iter->next;
+
+    IClassFactory_Release(iter->cf);
+    HeapFree(GetProcessHeap(), 0, iter->protocol);
+    HeapFree(GetProcessHeap(), 0, iter);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InternetSession_RegisterMimeFilter(IInternetSession *iface,
