@@ -82,8 +82,6 @@ HINSTANCE OLE32_hInstance = 0; /* FIXME: make static ... */
 static HRESULT COM_GetRegisteredClassObject(REFCLSID rclsid, DWORD dwClsContext, LPUNKNOWN*  ppUnk);
 static void COM_RevokeAllClasses(void);
 
-const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
-
 APARTMENT *MTA; /* protected by csApartment */
 static struct list apts = LIST_INIT( apts ); /* protected by csApartment */
 
