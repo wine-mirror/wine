@@ -89,6 +89,7 @@ HRESULT WINAPI IDirect3DSwapChain9Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN9 iface,
        IWineD3DSurface_GetParent(mySurface, (IUnknown **)ppBackBuffer);
        IWineD3DSurface_Release(mySurface);
     }
+    /* Do not touch the **ppBackBuffer pointer otherwise! (see device test) */
     return hrc;
 }
 
@@ -172,6 +173,11 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE
     object->ref = 1;
     object->lpVtbl = &Direct3DSwapChain9_Vtbl;
 
+    /* The back buffer count is set to one if it's 0 */
+    if(pPresentationParameters->BackBufferCount == 0) {
+        pPresentationParameters->BackBufferCount = 1;
+    }
+
     /* Allocate an associated WineD3DDevice object */
     localParameters.BackBufferWidth                = &pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
@@ -214,6 +220,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetSwapChain(LPDIRECT3DDEVICE9 iface, UINT
     if (hrc == D3D_OK && NULL != swapchain) {
        IWineD3DSwapChain_GetParent(swapchain, (IUnknown **)pSwapChain);
        IWineD3DSwapChain_Release(swapchain);
+    } else {
+        *pSwapChain = NULL;
     }
     return hrc;
 }

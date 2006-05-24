@@ -90,9 +90,6 @@ ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
     if (refCount == 0) {
         IUnknown* bufferParent;
 
-        /* tell the device that we've been released */
-        IWineD3DDevice_SwapChainReleased((IWineD3DDevice *)This->wineD3DDevice, iface);
-
         /* release the ref to the front and back buffer parents */
         if(This->frontBuffer) {
             IWineD3DSurface_SetContainer(This->frontBuffer, 0);
@@ -377,7 +374,11 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UIN
     TRACE("(%p) : BackBuf %d Type %d  returning %p\n", This, iBackBuffer, Type, *ppBackBuffer);
 
     if (iBackBuffer > This->presentParms.BackBufferCount - 1) {
-        FIXME("Only one backBuffer currently supported\n");
+        TRACE("Back buffer count out of range\n");
+        /* Native d3d9 doesn't set NULL here, just as wine's d3d9. But set it here
+         * in wined3d to avoid problems in other libs
+         */
+        *ppBackBuffer = NULL;
         return WINED3DERR_INVALIDCALL;
     }
 

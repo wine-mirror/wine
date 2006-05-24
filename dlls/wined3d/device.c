@@ -1141,6 +1141,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
    * or does the swap chain notify the device of its destruction.
     *******************************/
 
+    /* Check the params */
+    if(*pPresentationParameters->BackBufferCount > 1) {
+        ERR("App requested %d back buffers, this is not supported for now\n", *pPresentationParameters->BackBufferCount);
+        return WINED3DERR_INVALIDCALL;
+    }
+
     D3DCREATEOBJECTINSTANCE(object, SwapChain)
 
     /*********************
@@ -1361,6 +1367,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
    /*********************
    * Create the back, front and stencil buffers
    *******************/
+
     TRACE("calling rendertarget CB\n");
     hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
                              object->presentParms.BackBufferWidth,
@@ -1477,22 +1484,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
         checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
 
         /* switch back to the original context (if there was one)*/
-        if (This->swapchains != NULL) {
+        if (This->swapchains) {
             /** TODO: restore the context and drawable **/
             glXMakeCurrent(object->display, oldDrawable, oldContext);
         }
 
         LEAVE_GL();
 
-        { /* Finally add the swapchain to the end of the devices' swapchain list */
-            SwapChainList **nextSwapchain;
-            nextSwapchain = &This->swapchains;
-            while (*nextSwapchain != NULL) {
-                nextSwapchain = &((*nextSwapchain)->next);
-            }
-            (*nextSwapchain) = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->swapchains));
-            (*nextSwapchain)->swapchain = (IWineD3DSwapChain *)object;
-        }
         TRACE("Set swapchain to %p\n", object);
     } else { /* something went wrong so clean up */
         IUnknown* bufferParent;
@@ -1530,47 +1528,25 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
 /** NOTE: These are ahead of the other getters and setters to save using a forward declaration **/
 UINT     WINAPI  IWineD3DDeviceImpl_GetNumberOfSwapChains(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    unsigned int numberOfSwapChains = 0;
-    SwapChainList          *swapchain;
+    TRACE("(%p)\n", This);
 
-    swapchain = This->swapchains;
-    /* itterate through the list to get a count */
-    while (swapchain != NULL) {
-        swapchain = swapchain->next;
-        numberOfSwapChains++;
-    }
-
-    TRACE("(%p) returning %d\n", This, numberOfSwapChains);
-    return numberOfSwapChains;
+    return This->NumberOfSwapChains;
 }
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, UINT iSwapChain, IWineD3DSwapChain **pSwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    SwapChainList *swapchain;
-    int i = iSwapChain;
-    HRESULT hr = WINED3DERR_INVALIDCALL;
-    swapchain = This->swapchains;
     TRACE("(%p) : swapchain %d\n", This, iSwapChain);
 
-
-    TRACE("(%p) Finding swapchain %d\n", This, iSwapChain);
-    while (i > 0 && swapchain != NULL) {
-        swapchain = swapchain->next;
-        --i;
-    }
-
-    if (i > 0) {
-        FIXME("(%p) Unable to find swapchain %d\n", This, iSwapChain);
-        *pSwapChain = NULL;
-    } else if (swapchain != NULL) {
-        /** TODO: move off to a linkesList implementation **/
-        *pSwapChain = swapchain->swapchain;
+    if(iSwapChain < This->NumberOfSwapChains) {
+        *pSwapChain = This->swapchains[iSwapChain];
         IWineD3DSwapChain_AddRef(*pSwapChain);
-        hr = WINED3D_OK;
+        TRACE("(%p) returning %p\n", This, *pSwapChain);
+        return WINED3D_OK;
+    } else {
+        TRACE("Swapchain out of range\n");
+        *pSwapChain = NULL;
+        return WINED3DERR_INVALIDCALL;
     }
-
-    TRACE("(%p) returning %p\n", This, *pSwapChain);
-    return hr;
 }
 
 /*****
@@ -1705,6 +1681,15 @@ HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_P
         return WINED3DERR_INVALIDCALL;
     }
 
+    This->NumberOfSwapChains = 1;
+    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->NumberOfSwapChains * sizeof(IWineD3DSwapChain *));
+    if(!This->swapchains) {
+        ERR("Out of memory!\n");
+        IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
+        return E_OUTOFMEMORY;
+    }
+    This->swapchains[0] = (IWineD3DSwapChain *) swapchain;
+
     if(swapchain->backBuffer) {
         TRACE("Setting rendertarget to %p\n", swapchain->backBuffer);
         This->renderTarget = swapchain->backBuffer;
@@ -1767,7 +1752,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
     int texstage;
     IUnknown* stencilBufferParent;
     IUnknown* swapChainParent;
-    SwapChainList *nextSwapchain;
+    uint i;
     TRACE("(%p)\n", This);
 
     if(!This->d3d_initialized) return WINED3DERR_INVALIDCALL;
@@ -1776,30 +1761,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
         IWineD3DDevice_SetTexture(iface, texstage, NULL);
     }
 
-    /* NOTE: You must release the parent if the object was created via a callback
-    ** ***************************/
-    /* Release all of the swapchains, except the implicit swapchain */
-
-    /* NOTE: Don't release swapchain 0 here, it's 'special' */
-    TRACE("Finding implicit swapchain\n");
-    nextSwapchain = This->swapchains;
-    if (nextSwapchain != NULL) {
-        nextSwapchain = nextSwapchain->next;
-    } else {
-        WARN("Expected to find the implicit swapchain\n");
-    }
-
-    TRACE("Releasing swapchains. nextSwapchain = %p\n", nextSwapchain);
-    /* release all the other swapchains */
-    while (nextSwapchain != NULL) {
-        SwapChainList *prevSwapchain = nextSwapchain;
-        nextSwapchain = nextSwapchain->next;
-        TRACE("Releasing swapchain %p\n", prevSwapchain->swapchain);
-        IWineD3DSwapChain_Release(prevSwapchain->swapchain);
-        /* NOTE: no need to free the list element, it will be done by the release callback
-            HeapFree(GetProcessHeap(), 0, prevSwapchain); */
-    }
-      /* Release the buffers (with sanity checks)*/
+    /* Release the buffers (with sanity checks)*/
     TRACE("Releasing the depth stencil buffer at %p\n", This->stencilBufferTarget);
     if(This->stencilBufferTarget != NULL && (IWineD3DSurface_Release(This->stencilBufferTarget) >0)){
         if(This->depthStencilBuffer != This->stencilBufferTarget)
@@ -1821,16 +1783,19 @@ HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
     }
     This->depthStencilBuffer = NULL;
 
-    TRACE("Releasing the implicit swapchain\n");
-    if (This->swapchains != NULL) {
+    for(i=0; i < This->NumberOfSwapChains; i++) {
+        TRACE("Releasing the implicit swapchain %d\n", i);
         /* Swapchain 0 is special because it's created in startup with a hanging parent, so we have to release its parent now */
-        IWineD3DSwapChain_GetParent(This->swapchains->swapchain, &swapChainParent);
+        IWineD3DSwapChain_GetParent(This->swapchains[i], &swapChainParent);
         IUnknown_Release(swapChainParent);           /* once for the get parent */
         if (IUnknown_Release(swapChainParent)  > 0) {  /* the second time for when it was created */
             FIXME("(%p) Something's still holding the implicit swapchain\n", This);
         }
     }
+
+    HeapFree(GetProcessHeap(), 0, This->swapchains);
     This->swapchains = NULL;
+    This->NumberOfSwapChains = 0;
 
     This->d3d_initialized = FALSE;
     return WINED3D_OK;
@@ -7395,45 +7360,6 @@ void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IWineD3DR
 
 }
 
-
-/** This function is to be called by the swapchain when it is released and it's ref = 0
- *****************************************************/
-void WINAPI IWineD3DDeviceImpl_SwapChainReleased(IWineD3DDevice *iface, IWineD3DSwapChain *swapChain){
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    SwapChainList **nextSwapchain;
-    nextSwapchain = &This->swapchains;
-
-    /* Check to see if the swapchian is being used as the render target */
-    if (This->renderTarget != NULL) {
-        IWineD3DSurface *swapchainBackBuffer;
-
-        IWineD3DSwapChain_GetBackBuffer(swapChain, 0 ,( D3DBACKBUFFER_TYPE) 0, &swapchainBackBuffer);
-        if (This->renderTarget == swapchainBackBuffer) {
-            /* Don't know what to do, so warn and carry on as usual (which in this case leaves the renderterget in limbo) */
-            FIXME("Atempting to release a swapchain that is currently beuing used as a render target, behaviour is undefined\n");
-        }
-    }
-
-    /* Go through the swapchain list and try to find the swapchain being released */
-    while(*nextSwapchain != NULL && (*nextSwapchain)->swapchain != swapChain) {
-        nextSwapchain = &(*nextSwapchain)->next;
-    }
-
-    /* Check to see if we found the swapchain */
-    if (NULL != *nextSwapchain) {
-        /* We found the swapchain so remove it from the list */
-        TRACE("(%p) releasing swapchain(%p)\n", iface, swapChain);
-        HeapFree(GetProcessHeap(), 0 , *nextSwapchain);
-        *nextSwapchain = (*nextSwapchain)->next;
-    } else {
-        /* We didn't find the swapchain on the list, this can only heppen because of a programming error in wined3d */
-        FIXME("(%p) Attempting to release a swapchain (%p) that hasn't been stored\n", iface, swapChain);
-    }
-
-    TRACE("swapchain (%p) released\n", swapChain);
-    return;
-}
-
 /**********************************************************
  * IWineD3DDevice VTbl follows
  **********************************************************/
@@ -7588,7 +7514,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     /*** Internal use IWineD3DDevice methods ***/
     IWineD3DDeviceImpl_SetupTextureStates,
     /*** object tracking ***/
-    IWineD3DDeviceImpl_SwapChainReleased,
     IWineD3DDeviceImpl_ResourceReleased
 };
 

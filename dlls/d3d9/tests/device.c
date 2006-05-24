@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2006 Vitaliy Margolen
+ * Copyright (C) 2006 Stefan Dösinger(For CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,6 +37,150 @@ static int get_refcount(IUnknown *object)
     } else {\
         trace("%s failed: %s\n", c, DXGetErrorString9(r)); \
     }
+
+void test_swapchain(void)
+{
+    HRESULT                      hr;
+    HWND                         hwnd               = NULL;
+    IDirect3D9                  *pD3d               = NULL;
+    IDirect3DDevice9            *pDevice            = NULL;
+    IDirect3DSwapChain9         *swapchain0         = NULL;
+    IDirect3DSwapChain9         *swapchain1         = NULL;
+    IDirect3DSwapChain9         *swapchain2         = NULL;
+    IDirect3DSwapChain9         *swapchain3         = NULL;
+    IDirect3DSwapChain9         *swapchainX         = NULL;
+    IDirect3DSurface9           *backbuffer         = NULL;
+    D3DPRESENT_PARAMETERS        d3dpp;
+    D3DDISPLAYMODE               d3ddm;
+
+    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.BackBufferCount  = 0;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    if (FAILED(hr)) goto cleanup;
+
+    /* Check if the back buffer count was modified */
+    ok(d3dpp.BackBufferCount == 1, "The back buffer count in the presentparams struct is %d\n", d3dpp.BackBufferCount);
+
+    /* Get the implicit swapchain */
+    hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &swapchain0);
+    ok(SUCCEEDED(hr), "Failed to get the impicit swapchain (%s)\n", DXGetErrorString9(hr));
+    if(swapchain0) IDirect3DSwapChain9_Release(swapchain0);
+
+    /* Check if there is a back buffer */
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+    ok(backbuffer != NULL, "The back buffer is NULL\n");
+    if(backbuffer) IDirect3DSurface9_Release(backbuffer);
+
+    /* Try to get a nonexistant swapchain */
+    hr = IDirect3DDevice9_GetSwapChain(pDevice, 1, &swapchainX);
+    ok(hr == D3DERR_INVALIDCALL, "GetSwapChain on an non-existant swapchain returned (%s)\n", DXGetErrorString9(hr));
+    ok(swapchainX == NULL, "Swapchain 1 is %p\n", swapchainX);
+    if(swapchainX) IDirect3DSwapChain9_Release(swapchainX);
+
+    /* Create a bunch of swapchains */
+    d3dpp.BackBufferCount = 0;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain1);
+    ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString9(hr));
+    ok(d3dpp.BackBufferCount == 1, "The back buffer count in the presentparams struct is %d\n", d3dpp.BackBufferCount);
+
+    d3dpp.BackBufferCount  = 1;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain2);
+    ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString9(hr));
+
+    /* Unsupported by wine for now */
+    d3dpp.BackBufferCount  = 2;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain3);
+    todo_wine ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr)) {
+        /* Swapchain 3, created with backbuffercount 2 */
+        backbuffer = (void *) 0xdeadbeef;
+        hr = IDirect3DSwapChain9_GetBackBuffer(swapchain3, 0, 0, &backbuffer);
+        ok(SUCCEEDED(hr), "Failed to get the 1st back buffer (%s)\n", DXGetErrorString9(hr));
+        ok(backbuffer != NULL && backbuffer != (void *) 0xdeadbeef, "The back buffer is %p\n", backbuffer);
+        if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
+
+        backbuffer = (void *) 0xdeadbeef;
+        hr = IDirect3DSwapChain9_GetBackBuffer(swapchain3, 1, 0, &backbuffer);
+        ok(SUCCEEDED(hr), "Failed to get the 2nd back buffer (%s)\n", DXGetErrorString9(hr));
+        ok(backbuffer != NULL && backbuffer != (void *) 0xdeadbeef, "The back buffer is %p\n", backbuffer);
+        if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
+
+        backbuffer = (void *) 0xdeadbeef;
+        hr = IDirect3DSwapChain9_GetBackBuffer(swapchain3, 2, 0, &backbuffer);
+        ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %s\n", DXGetErrorString9(hr));
+        ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
+        if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
+
+        backbuffer = (void *) 0xdeadbeef;
+        hr = IDirect3DSwapChain9_GetBackBuffer(swapchain3, 3, 0, &backbuffer);
+        ok(FAILED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+        ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
+        if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
+    }
+
+    /* Check the back buffers of the swapchains */
+    /* Swapchain 1, created with backbuffercount 0 */
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain1, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+    ok(backbuffer != NULL, "The back buffer is NULL (%s)\n", DXGetErrorString9(hr));
+    if(backbuffer) IDirect3DSurface9_Release(backbuffer);
+
+    backbuffer = (void *) 0xdeadbeef;
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain1, 1, 0, &backbuffer);
+    ok(FAILED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+    ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
+    if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
+
+    /* Swapchain 2 - created with backbuffercount 1 */
+    backbuffer = (void *) 0xdeadbeef;
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain2, 0, 0, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+    ok(backbuffer != NULL && backbuffer != (void *) 0xdeadbeef, "The back buffer is %p\n", backbuffer);
+    if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
+
+    backbuffer = (void *) 0xdeadbeef;
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain2, 1, 0, &backbuffer);
+    ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %s\n", DXGetErrorString9(hr));
+    ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
+    if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
+
+    backbuffer = (void *) 0xdeadbeef;
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain2, 2, 0, &backbuffer);
+    ok(FAILED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+    ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
+    if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
+
+    /* Try getSwapChain on a manually created swapchain
+     * it should fail, apparently GetSwapChain only returns implicit swapchains
+     */
+    swapchainX = (void *) 0xdeadbeef;
+    hr = IDirect3DDevice9_GetSwapChain(pDevice, 1, &swapchainX);
+    ok(hr == D3DERR_INVALIDCALL, "Failed to get the secound swapchain (%s)\n", DXGetErrorString9(hr));
+    ok(swapchainX == NULL, "The swapchain pointer is %p\n", swapchainX);
+    if(swapchainX && swapchainX != (void *) 0xdeadbeef ) IDirect3DSwapChain9_Release(swapchainX);
+
+    cleanup:
+    if(swapchain1) IDirect3DSwapChain9_Release(swapchain1);
+    if(swapchain2) IDirect3DSwapChain9_Release(swapchain2);
+    if(swapchain3) IDirect3DSwapChain9_Release(swapchain3);
+    if(pDevice) IDirect3DDevice9_Release(pDevice);
+    if(pD3d) IDirect3DDevice9_Release(pD3d);
+    DestroyWindow( hwnd );
+}
 
 void test_refcount(void)
 {
@@ -195,6 +340,7 @@ START_TEST(device)
     pDirect3DCreate9 = (void *)GetProcAddress( d3d9_handle, "Direct3DCreate9" );
     if (pDirect3DCreate9)
     {
+        test_swapchain();
         test_refcount();
     }
 }

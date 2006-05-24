@@ -444,11 +444,6 @@ typedef struct IWineD3DImpl
 
 extern const IWineD3DVtbl IWineD3D_Vtbl;
 
-typedef struct SwapChainList {
-    IWineD3DSwapChain         *swapchain;
-    struct SwapChainList      *next;
-} SwapChainList;
-
 /** Hacked out start of a context manager!! **/
 typedef struct glContext {
     int Width;
@@ -529,7 +524,8 @@ typedef struct IWineD3DDeviceImpl
     UINT                            adapterNo;
     D3DDEVTYPE                      devType;
 
-    SwapChainList          *swapchains;
+    IWineD3DSwapChain     **swapchains;
+    uint                    NumberOfSwapChains;
 
     ResourceList           *resources; /* a linked list to track resources created by the device */
 
