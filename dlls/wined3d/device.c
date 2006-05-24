@@ -731,7 +731,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     break;
     case WINED3DPOOL_DEFAULT: /*TODO: Create offscreen plain can cause this check to fail..., find out if it should */
         if(!(Usage & WINED3DUSAGE_DYNAMIC) && !(Usage & WINED3DUSAGE_RENDERTARGET)
-           && !(Usage && WINED3DUSAGE_DEPTHSTENCIL ) && Lockable == TRUE)
+           && !(Usage && WINED3DUSAGE_DEPTHSTENCIL ) && Lockable)
             FIXME("Creating a surface with a POOL of DEFAULT with Locable true, that doesn't specify DYNAMIC usage.\n");
     break;
     default:
@@ -4701,7 +4701,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
      * a) D3DRS_CLIPPING is enabled
      * b) WINED3DVOP_CLIP is passed
      */
-    if(This->stateBlock->renderState[WINED3DRS_CLIPPING] == TRUE) {
+    if(This->stateBlock->renderState[WINED3DRS_CLIPPING]) {
         static BOOL warned = FALSE;
         /*
          * The clipping code is not quite correct. Some things need
@@ -6938,7 +6938,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
 
         IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
     }
-    else if (pbuffer_support == TRUE && cfgs != NULL /* && some test to make sure that opengl supports pbuffers */) {
+    else if (pbuffer_support && cfgs != NULL /* && some test to make sure that opengl supports pbuffers */) {
 
         /** ********************************************************************
         * This is a quickly hacked out implementation of offscreen textures.
