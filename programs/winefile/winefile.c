@@ -2235,7 +2235,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 	switch(nmsg) {
 		case WM_CLOSE:
-			if (Globals.saveSettings == TRUE)  
+			if (Globals.saveSettings)
 				save_registry_settings();  
 			
 			DestroyWindow(hwnd);
@@ -2396,7 +2396,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 				case ID_VIEW_SAVESETTINGS:
 					Globals.saveSettings = !Globals.saveSettings;
 					CheckMenuItem(Globals.hMenuOptions, ID_VIEW_SAVESETTINGS,
-                                                      Globals.saveSettings == TRUE ? MF_CHECKED : MF_UNCHECKED );
+                                                      Globals.saveSettings ? MF_CHECKED : MF_UNCHECKED );
 					break;
 
 				case ID_EXECUTE: {

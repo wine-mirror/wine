@@ -2883,7 +2883,7 @@ BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT a
     if (!abc) return FALSE;
 
     ret = GetCharABCWidthsW( hdc, first, last, abc );
-    if (ret == TRUE)
+    if (ret)
     {
         for (i = first; i <= last; i++, abc++, abcf++)
         {

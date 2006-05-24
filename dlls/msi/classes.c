@@ -716,7 +716,7 @@ static void mark_progid_for_install( MSIPACKAGE* package, MSIPROGID *progid )
     if (!progid)
         return;
 
-    if (progid->InstallMe == TRUE)
+    if (progid->InstallMe)
         return;
 
     progid->InstallMe = TRUE;

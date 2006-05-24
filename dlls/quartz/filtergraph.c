@@ -1379,7 +1379,7 @@ static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter
                 break;
             }
         }
-        if (source == TRUE)
+        if (source)
         {
             TRACE("Found a source filter %p\n", pfilter);
             IEnumPins_Reset(pEnum);
