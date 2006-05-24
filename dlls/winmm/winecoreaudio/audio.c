@@ -301,31 +301,23 @@ static DWORD WINAPI messageThread(LPVOID p)
 static DWORD wodSendDriverCallbackMessage(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
     CFDataRef data;
-    UInt32 *buffer;
+    UInt32 buffer[4];
     SInt32 ret;
     
     CFMessagePortRef messagePort;
     messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MessageThreadPortName);
         
-    buffer = CFAllocatorAllocate(NULL, sizeof(UInt32) * 4, 0);
-    if (!buffer)
-        return 0;
-    
     buffer[0] = (UInt32) wwo->woID;
     buffer[1] = (UInt32) wMsg;
     buffer[2] = (UInt32) dwParam1;
     buffer[3] = (UInt32) dwParam2;
-    
-    data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)buffer, sizeof(UInt32) * 4);
+
+    data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)buffer, sizeof(buffer));
     if (!data)
-    {
-        CFAllocatorDeallocate(NULL, buffer);
         return 0;
-    }
     
     ret = CFMessagePortSendRequest(messagePort, kWaveOutCallbackMessage, data, 0.0, 0.0, NULL, NULL);
     CFRelease(data);
-    CFAllocatorDeallocate(NULL, buffer);
     CFRelease(messagePort);
     
     return (ret == kCFMessagePortSuccess)?1:0;
