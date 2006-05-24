@@ -368,8 +368,7 @@ static void WINAPI dump_INTERPRETER_OPT_FLAGS(INTERPRETER_OPT_FLAGS Oi2Flags)
     TRACE("\n");
 }
 
-/* FIXME: this will be different on other plaftorms than i386 */
-#define ARG_FROM_OFFSET(args, offset) (*(unsigned char **)args + offset)
+#define ARG_FROM_OFFSET(stubMsg, offset) (stubMsg.StackTop + offset)
 
 /* the return type should be CLIENT_CALL_RETURN, but this is incompatible
  * with the way gcc returns structures. "void *" should be the largest type
@@ -377,8 +376,6 @@ static void WINAPI dump_INTERPRETER_OPT_FLAGS(INTERPRETER_OPT_FLAGS Oi2Flags)
 LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, ...)
 {
     /* pointer to start of stack where arguments start */
-    /* FIXME: not portable */
-    unsigned char *args = (unsigned char *)(&pFormat+1);
     RPC_MESSAGE rpcMsg;
     MIDL_STUB_MESSAGE stubMsg;
     handle_t hBinding = NULL;
@@ -412,7 +409,13 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     void * This = NULL;
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
-    TRACE("&first_argument = %p -> %p\n", args, ARG_FROM_OFFSET(args, 0));
+
+    /* needed for conformance of top-level objects */
+#ifdef __i386__
+    stubMsg.StackTop = *(unsigned char **)(&pFormat+1);
+#else
+# warning Stack not retrieved for your CPU architecture
+#endif
 
     /* Later NDR language versions probably won't be backwards compatible */
     if (pStubDesc->Version > 0x50002)
@@ -456,9 +459,9 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                     TRACE("Explicit primitive handle @ %d\n", pDesc->offset);
 
                     if (pDesc->flag) /* pointer to binding */
-                        hBinding = **(handle_t **)ARG_FROM_OFFSET(args, pDesc->offset);
+                        hBinding = **(handle_t **)ARG_FROM_OFFSET(stubMsg, pDesc->offset);
                     else
-                        hBinding = *(handle_t *)ARG_FROM_OFFSET(args, pDesc->offset);
+                        hBinding = *(handle_t *)ARG_FROM_OFFSET(stubMsg, pDesc->offset);
                     current_offset += sizeof(NDR_EHD_PRIMITIVE);
                     break;
                 }
@@ -475,10 +478,10 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                     if (pDesc->flags & HANDLE_PARAM_IS_VIA_PTR)
                     {
                         TRACE("\tHANDLE_PARAM_IS_VIA_PTR\n");
-                        context_handle = **(NDR_CCONTEXT **)ARG_FROM_OFFSET(args, pDesc->offset);
+                        context_handle = **(NDR_CCONTEXT **)ARG_FROM_OFFSET(stubMsg, pDesc->offset);
                     }
                     else
-                        context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(args, pDesc->offset);
+                        context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(stubMsg, pDesc->offset);
                     if ((pDesc->flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL) &&
                         !context_handle)
                     {
@@ -547,7 +550,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
     {
         /* object is always the first argument */
-        This = *(void **)ARG_FROM_OFFSET(args, 0);
+        This = *(void **)ARG_FROM_OFFSET(stubMsg, 0);
         NdrProxyInitialize(This, &rpcMsg, &stubMsg, pStubDesc, procedure_number);
     }
     else
@@ -562,8 +565,6 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 #endif
 
     stubMsg.BufferLength = 0;
-    /* needed for conformance of top-level objects */
-    stubMsg.StackTop = *(unsigned char **)args;
 
     /* store the RPC flags away */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
@@ -665,7 +666,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                     unsigned char * pArg;
 
                     current_stack_offset = pParam->stack_offset;
-                    pArg = ARG_FROM_OFFSET(args, current_stack_offset);
+                    pArg = ARG_FROM_OFFSET(stubMsg, current_stack_offset);
 
                     TRACE("param[%d]: new format\n", i);
                     TRACE("\tparam_attributes:"); dump_RPC_FC_PROC_PF(pParam->param_attributes); TRACE("\n");
@@ -771,7 +772,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 {
                     NDR_PARAM_OI_BASETYPE * pParam =
                         (NDR_PARAM_OI_BASETYPE *)&pFormat[current_offset];
-                    unsigned char * pArg = ARG_FROM_OFFSET(args, current_stack_offset);
+                    unsigned char * pArg = ARG_FROM_OFFSET(stubMsg, current_stack_offset);
 
                     /* no more parameters; exit loop */
                     if (current_stack_offset > stack_size)
