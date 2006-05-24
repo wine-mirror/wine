@@ -1526,6 +1526,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     ySrc      = pts[0].y;
     widthSrc  = pts[1].x - pts[0].x;
     heightSrc = pts[1].y - pts[0].y;
+    if (!widthDst || !heightDst || !widthSrc || !heightSrc) return TRUE;
 
 #ifndef HAVE_XRENDERSETPICTURETRANSFORM
     if(widthDst != widthSrc || heightDst != heightSrc)
