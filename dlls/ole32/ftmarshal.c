@@ -38,6 +38,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+const CLSID CLSID_InProcFreeMarshaler = { 0x33A, 0, 0, {0xC0, 0, 0, 0, 0, 0, 0, 0x46} };
+
 typedef struct _FTMarshalImpl {
 	const IUnknownVtbl *lpVtbl;
 	LONG ref;
@@ -138,7 +140,12 @@ static HRESULT WINAPI
 FTMarshalImpl_GetUnmarshalClass (LPMARSHAL iface, REFIID riid, void *pv, DWORD dwDestContext,
 						void *pvDestContext, DWORD mshlflags, CLSID * pCid)
 {
-    FIXME ("(), stub!\n");
+    TRACE("(%s, %p, 0x%lx, %p, 0x%lx, %p)\n", debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags, pCid);
+    if (dwDestContext == MSHCTX_INPROC || dwDestContext == MSHCTX_CROSSCTX)
+        memcpy(pCid, &CLSID_InProcFreeMarshaler, sizeof(CLSID_InProcFreeMarshaler));
+    else
+        memcpy(pCid, &CLSID_DfMarshal, sizeof(CLSID_InProcFreeMarshaler));
     return S_OK;
 }
 
@@ -175,7 +182,6 @@ FTMarshalImpl_MarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, vo
 
     IMarshal *pMarshal = NULL;
     HRESULT hres;
-    DWORD magic = 0x57dfd54d /* MEOW */;
 
     TRACE("(%p, %s, %p, 0x%lx, %p, 0x%lx)\n", pStm, debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags);
@@ -210,13 +216,6 @@ FTMarshalImpl_MarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, vo
         return S_OK;
     }
 
-    /* FIXME: this isn't exactly corret. it looks like the standard marshaler
-     * for native writes all of the OBJREF data into the stream, so we should
-     * really rely on it to write this constant for us. however, we need a
-     * constant to differentiate the outofproc data from the inproc data */
-    hres = IStream_Write (pStm, &magic, sizeof (magic), NULL);
-    if (hres != S_OK) return STG_E_MEDIUMFULL;
-
     /* use the standard marshaler to handle all other cases */
     CoGetStandardMarshal (riid, pv, dwDestContext, pvDestContext, mshlflags, &pMarshal);
     hres = IMarshal_MarshalInterface (pMarshal, pStm, riid, pv, dwDestContext, pvDestContext, mshlflags);
@@ -228,6 +227,9 @@ static HRESULT WINAPI
 FTMarshalImpl_UnmarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, void **ppv)
 {
     DWORD mshlflags;
+    IUnknown *object;
+    DWORD constant;
+    GUID unknown_guid;
     HRESULT hres;
 
     TRACE ("(%p, %s, %p)\n", pStm, debugstr_guid(riid), ppv);
@@ -235,42 +237,29 @@ FTMarshalImpl_UnmarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, 
     hres = IStream_Read (pStm, &mshlflags, sizeof (mshlflags), NULL);
     if (hres != S_OK) return STG_E_READFAULT;
 
-    if (mshlflags == 0x57dfd54d /* MEOW */) {
-        IMarshal *pMarshal;
+    hres = IStream_Read (pStm, &object, sizeof (object), NULL);
+    if (hres != S_OK) return STG_E_READFAULT;
 
-        hres = CoCreateInstance (&CLSID_DfMarshal, NULL, CLSCTX_INPROC, &IID_IMarshal, (void **)&pMarshal);
-        if (FAILED(hres)) return hres;
+    hres = IStream_Read (pStm, &constant, sizeof (constant), NULL);
+    if (hres != S_OK) return STG_E_READFAULT;
+    if (constant != 0)
+        FIXME("constant is 0x%lx instead of 0\n", constant);
 
-        hres = IMarshal_UnmarshalInterface (pMarshal, pStm, riid, ppv);
-        IMarshal_Release (pMarshal);
-        return hres;
-    }
-    else {
-        IUnknown *object;
-        DWORD constant;
-        GUID unknown_guid;
+    hres = IStream_Read (pStm, &unknown_guid, sizeof (unknown_guid), NULL);
+    if (hres != S_OK) return STG_E_READFAULT;
 
-        hres = IStream_Read (pStm, &object, sizeof (object), NULL);
-        if (hres != S_OK) return STG_E_READFAULT;
-
-        hres = IStream_Read (pStm, &constant, sizeof (constant), NULL);
-        if (hres != S_OK) return STG_E_READFAULT;
-        if (constant != 0)
-            FIXME("constant is 0x%lx instead of 0\n", constant);
-
-        hres = IStream_Read (pStm, &unknown_guid, sizeof (unknown_guid), NULL);
-        if (hres != S_OK) return STG_E_READFAULT;
-
-        hres = IUnknown_QueryInterface(object, riid, ppv);
-        if (!(mshlflags & (MSHLFLAGS_TABLEWEAK|MSHLFLAGS_TABLESTRONG)))
-            IUnknown_Release(object);
-        return hres;
-    }
+    hres = IUnknown_QueryInterface(object, riid, ppv);
+    if (!(mshlflags & (MSHLFLAGS_TABLEWEAK|MSHLFLAGS_TABLESTRONG)))
+        IUnknown_Release(object);
+    return hres;
 }
 
 static HRESULT WINAPI FTMarshalImpl_ReleaseMarshalData (LPMARSHAL iface, IStream * pStm)
 {
     DWORD mshlflags;
+    IUnknown *object;
+    DWORD constant;
+    GUID unknown_guid;
     HRESULT hres;
 
     TRACE ("(%p)\n", pStm);
@@ -278,35 +267,19 @@ static HRESULT WINAPI FTMarshalImpl_ReleaseMarshalData (LPMARSHAL iface, IStream
     hres = IStream_Read (pStm, &mshlflags, sizeof (mshlflags), NULL);
     if (hres != S_OK) return STG_E_READFAULT;
 
-    if (mshlflags == 0x57dfd54d /* MEOW */) {
-        IMarshal *pMarshal;
+    hres = IStream_Read (pStm, &object, sizeof (object), NULL);
+    if (hres != S_OK) return STG_E_READFAULT;
 
-        hres = CoCreateInstance (&CLSID_DfMarshal, NULL, CLSCTX_INPROC, &IID_IMarshal, (void **)&pMarshal);
-        if (FAILED(hres)) return hres;
+    hres = IStream_Read (pStm, &constant, sizeof (constant), NULL);
+    if (hres != S_OK) return STG_E_READFAULT;
+    if (constant != 0)
+        FIXME("constant is 0x%lx instead of 0\n", constant);
 
-        hres = IMarshal_ReleaseMarshalData (pMarshal, pStm);
-        IMarshal_Release (pMarshal);
-        return hres;
-    }
-    else {
-        IUnknown *object;
-        DWORD constant;
-        GUID unknown_guid;
+    hres = IStream_Read (pStm, &unknown_guid, sizeof (unknown_guid), NULL);
+    if (hres != S_OK) return STG_E_READFAULT;
 
-        hres = IStream_Read (pStm, &object, sizeof (object), NULL);
-        if (hres != S_OK) return STG_E_READFAULT;
-
-        hres = IStream_Read (pStm, &constant, sizeof (constant), NULL);
-        if (hres != S_OK) return STG_E_READFAULT;
-        if (constant != 0)
-            FIXME("constant is 0x%lx instead of 0\n", constant);
-
-        hres = IStream_Read (pStm, &unknown_guid, sizeof (unknown_guid), NULL);
-        if (hres != S_OK) return STG_E_READFAULT;
-
-        IUnknown_Release(object);
-        return S_OK;
-    }
+    IUnknown_Release(object);
+    return S_OK;
 }
 
 static HRESULT WINAPI FTMarshalImpl_DisconnectObject (LPMARSHAL iface, DWORD dwReserved)
