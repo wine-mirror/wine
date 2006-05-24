@@ -319,7 +319,7 @@ static const WCHAR FixedSys_Value[] = {'F','I','X','E','D','F','O','N','.','F','
 static const WCHAR System_Value[] = {'F','O','N','T','S','.','F','O','N','\0'};
 static const WCHAR OEMFont_Value[] = {'O','E','M','F','O','N','T','.','F','O','N','\0'};
 
-static const WCHAR *SystemFontValues[4] = {
+static const WCHAR const *SystemFontValues[4] = {
     System_Value,
     OEMFont_Value,
     FixedSys_Value,

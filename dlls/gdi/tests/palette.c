@@ -29,7 +29,7 @@
 
 #include "wine/test.h"
 
-static PALETTEENTRY logpalettedata[8] = {
+static const PALETTEENTRY logpalettedata[8] = {
     { 0x10, 0x20, 0x30, PC_NOCOLLAPSE },
     { 0x20, 0x30, 0x40, PC_NOCOLLAPSE },
     { 0x30, 0x40, 0x50, PC_NOCOLLAPSE },

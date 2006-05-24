@@ -421,7 +421,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
    NB. RGBQUAD and PALETTEENTRY have different orderings of red, green
    and blue - sigh */
 
-static RGBQUAD EGAColorsQuads[16] = {
+static const RGBQUAD EGAColorsQuads[16] = {
 /* rgbBlue, rgbGreen, rgbRed, rgbReserved */
     { 0x00, 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x80, 0x00 },
@@ -441,7 +441,7 @@ static RGBQUAD EGAColorsQuads[16] = {
     { 0xff, 0xff, 0xff, 0x00 }
 };
 
-static RGBTRIPLE EGAColorsTriples[16] = {
+static const RGBTRIPLE EGAColorsTriples[16] = {
 /* rgbBlue, rgbGreen, rgbRed */
     { 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x80 },
@@ -461,7 +461,7 @@ static RGBTRIPLE EGAColorsTriples[16] = {
     { 0xff, 0xff, 0xff }
 };
 
-static RGBQUAD DefLogPaletteQuads[20] = { /* Copy of Default Logical Palette */
+static const RGBQUAD DefLogPaletteQuads[20] = { /* Copy of Default Logical Palette */
 /* rgbBlue, rgbGreen, rgbRed, rgbReserved */
     { 0x00, 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x80, 0x00 },
@@ -485,7 +485,7 @@ static RGBQUAD DefLogPaletteQuads[20] = { /* Copy of Default Logical Palette */
     { 0xff, 0xff, 0xff, 0x00 }
 };
 
-static RGBTRIPLE DefLogPaletteTriples[20] = { /* Copy of Default Logical Palette */
+static const RGBTRIPLE DefLogPaletteTriples[20] = { /* Copy of Default Logical Palette */
 /* rgbBlue, rgbGreen, rgbRed */
     { 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x80 },
