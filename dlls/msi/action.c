@@ -2816,8 +2816,8 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     LPCWSTR buffer, extension;
     MSICOMPONENT *comp;
     static const WCHAR szlnk[]={'.','l','n','k',0};
-    IShellLinkW *sl;
-    IPersistFile *pf;
+    IShellLinkW *sl = NULL;
+    IPersistFile *pf = NULL;
     HRESULT res;
 
     buffer = MSI_RecordGetString(row,4);
@@ -2841,17 +2841,17 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     res = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                     &IID_IShellLinkW, (LPVOID *) &sl );
 
-    if (FAILED(res))
+    if (FAILED( res ))
     {
-        ERR("Is IID_IShellLink\n");
-        return ERROR_SUCCESS;
+        ERR("CLSID_ShellLink not available\n");
+        goto err;
     }
 
     res = IShellLinkW_QueryInterface( sl, &IID_IPersistFile,(LPVOID*) &pf );
-    if( FAILED( res ) )
+    if (FAILED( res ))
     {
-        ERR("Is IID_IPersistFile\n");
-        return ERROR_SUCCESS;
+        ERR("QueryInterface(IID_IPersistFile) failed\n");
+        goto err;
     }
 
     buffer = MSI_RecordGetString(row,2);
@@ -2937,8 +2937,11 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 
     msi_free(target_file);    
 
-    IPersistFile_Release( pf );
-    IShellLinkW_Release( sl );
+err:
+    if (pf)
+        IPersistFile_Release( pf );
+    if (sl)
+        IShellLinkW_Release( sl );
 
     return ERROR_SUCCESS;
 }
