@@ -238,6 +238,8 @@ FTMarshalImpl_UnmarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, 
         if (FAILED(hres)) return hres;
 
         hres = IMarshal_UnmarshalInterface (pMarshal, pStm, riid, ppv);
+        IMarshal_Release (pMarshal);
+        return hres;
     }
     else {
         IUnknown *object;
@@ -259,8 +261,6 @@ FTMarshalImpl_UnmarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, 
         IUnknown_Release(object);
         return hres;
     }
-
-    return S_OK;
 }
 
 static HRESULT WINAPI FTMarshalImpl_ReleaseMarshalData (LPMARSHAL iface, IStream * pStm)
