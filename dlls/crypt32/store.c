@@ -2044,6 +2044,12 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
     TRACE("(%p, %p, %08lx, %p)\n", hCertStore, pCertContext,
      dwAddDisposition, ppStoreContext);
 
+    /* Weird case to pass a test */
+    if (dwAddDisposition == 0)
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        return FALSE;
+    }
     if (dwAddDisposition != CERT_STORE_ADD_ALWAYS)
     {
         BYTE hashToAdd[20];
@@ -2095,8 +2101,11 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
 
     if (toAdd)
     {
-        ret = store->certs.addContext(store, (void *)toAdd, (void *)existing,
-         (const void **)ppStoreContext);
+        if (store)
+            ret = store->certs.addContext(store, (void *)toAdd,
+             (void *)existing, (const void **)ppStoreContext);
+        else if (ppStoreContext)
+            *ppStoreContext = CertDuplicateCertificateContext(toAdd);
         CertFreeCertificateContext(toAdd);
     }
     CertFreeCertificateContext(existing);

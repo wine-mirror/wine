@@ -152,6 +152,28 @@ static void testAddCert(void)
         PCCERT_CONTEXT context;
         BOOL ret;
 
+        /* Weird--bad add disposition leads to an access violation in Windows.
+         */
+        ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
+         sizeof(bigCert), 0, NULL);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), 0, NULL);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+
+        /* Weird--can add a cert to the NULL store (does this have special
+         * meaning?)
+         */
+        context = NULL;
+        ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
+         sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
+        ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
+         GetLastError());
+        if (context)
+            CertFreeCertificateContext(context);
+
         ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
          bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
         ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n",
