@@ -1603,6 +1603,184 @@ static void test_WM_QUIT_handling(void)
     }
 }
 
+static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *ptr, DWORD mshlflags)
+{
+    HGLOBAL hglobal;
+    DWORD size;
+    char *marshal_data;
+    HRESULT hr;
+
+    hr = GetHGlobalFromStream(pStream, &hglobal);
+    ok_ole_success(hr, GetHGlobalFromStream);
+
+    size = GlobalSize(hglobal);
+
+    marshal_data = (char *)GlobalLock(hglobal);
+
+    if (mshctx == MSHCTX_INPROC)
+    {
+        DWORD expected_size = sizeof(DWORD) + sizeof(void *) + sizeof(DWORD) + sizeof(GUID);
+        ok(size == expected_size, "size should have been %ld instead of %ld\n", expected_size, size);
+
+        ok(*(DWORD *)marshal_data == mshlflags, "expected 0x%lx, but got 0x%lx for mshctx\n", mshlflags, *(DWORD *)marshal_data);
+        marshal_data += sizeof(DWORD);
+        ok(*(void **)marshal_data == ptr, "expected %p, but got %p for mshctx\n", ptr, *(void **)marshal_data);
+        marshal_data += sizeof(void *);
+        ok(*(DWORD *)marshal_data == 0, "expected 0x0, but got 0x%lx\n", *(DWORD *)marshal_data);
+        marshal_data += sizeof(DWORD);
+        trace("got guid data: {%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+            ((GUID *)marshal_data)->Data1, ((GUID *)marshal_data)->Data2, ((GUID *)marshal_data)->Data3,
+            ((GUID *)marshal_data)->Data4[0], ((GUID *)marshal_data)->Data4[1], ((GUID *)marshal_data)->Data4[2], ((GUID *)marshal_data)->Data4[3],
+            ((GUID *)marshal_data)->Data4[4], ((GUID *)marshal_data)->Data4[5], ((GUID *)marshal_data)->Data4[6], ((GUID *)marshal_data)->Data4[7]);
+    }
+    else
+    {
+        ok(size > sizeof(DWORD), "size should have been > sizeof(DWORD), not %ld\n", size);
+        ok(*(DWORD *)marshal_data == 0x574f454d /* MEOW */,
+            "marshal data should be filled by standard marshal and start with MEOW signature\n");
+    }
+
+    GlobalUnlock(hglobal);
+}
+
+static void test_freethreadedmarshaler(void)
+{
+    HRESULT hr;
+    IUnknown *pFTUnknown;
+    IMarshal *pFTMarshal;
+    IStream *pStream;
+    IUnknown *pProxy;
+    static const LARGE_INTEGER llZero;
+
+    cLocks = 0;
+    hr = CoCreateFreeThreadedMarshaler(NULL, &pFTUnknown);
+    ok_ole_success(hr, CoCreateFreeThreadedMarshaler);
+    hr = IUnknown_QueryInterface(pFTUnknown, &IID_IMarshal, (void **)&pFTMarshal);
+    ok_ole_success(hr, IUnknown_QueryInterface);
+    IUnknown_Release(pFTUnknown);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    /* inproc normal marshaling */
+
+    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory,
+        (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, IMarshal_MarshalInterface);
+
+    ok_more_than_one_lock();
+
+    test_freethreadedmarshaldata(pStream, MSHCTX_INPROC, &Test_ClassFactory, MSHLFLAGS_NORMAL);
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_UnmarshalInterface(pFTMarshal, pStream, &IID_IUnknown, (void **)&pProxy);
+    ok_ole_success(hr, IMarshal_UnmarshalInterface);
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+
+/* native doesn't allow us to unmarshal or release the stream data,
+ * presumably because it wants us to call CoMarshalInterface instead */
+#if 0
+    /* local normal marshaling */
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, IMarshal_MarshalInterface);
+
+    ok_more_than_one_lock();
+
+    test_freethreadedmarshaldata(pStream, MSHCTX_LOCAL, &Test_ClassFactory, MSHLFLAGS_NORMAL);
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_ReleaseMarshalData(pFTMarshal, pStream);
+    ok_ole_success(hr, IMarshal_ReleaseMarshalData);
+
+    ok_no_locks();
+#endif
+
+    /* inproc table-strong marshaling */
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory,
+        (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, (void *)0xdeadbeef,
+        MSHLFLAGS_TABLESTRONG);
+    ok_ole_success(hr, IMarshal_MarshalInterface);
+
+    ok_more_than_one_lock();
+
+    test_freethreadedmarshaldata(pStream, MSHCTX_INPROC, &Test_ClassFactory, MSHLFLAGS_TABLESTRONG);
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_UnmarshalInterface(pFTMarshal, pStream, &IID_IUnknown, (void **)&pProxy);
+    ok_ole_success(hr, IMarshal_UnmarshalInterface);
+
+    IUnknown_Release(pProxy);
+
+    todo_wine ok_more_than_one_lock();
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_ReleaseMarshalData(pFTMarshal, pStream);
+    ok_ole_success(hr, IMarshal_ReleaseMarshalData);
+
+    ok_no_locks();
+
+    /* inproc table-weak marshaling */
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory,
+        (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, (void *)0xdeadbeef,
+        MSHLFLAGS_TABLEWEAK);
+    ok_ole_success(hr, IMarshal_MarshalInterface);
+
+    todo_wine ok_no_locks();
+
+    test_freethreadedmarshaldata(pStream, MSHCTX_INPROC, &Test_ClassFactory, MSHLFLAGS_TABLEWEAK);
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_UnmarshalInterface(pFTMarshal, pStream, &IID_IUnknown, (void **)&pProxy);
+    ok_ole_success(hr, IMarshal_UnmarshalInterface);
+
+    ok_more_than_one_lock();
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+
+    /* inproc normal marshaling (for extraordinary cases) */
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory,
+        (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, IMarshal_MarshalInterface);
+
+    ok_more_than_one_lock();
+
+    /* this call shows that DisconnectObject does nothing */
+    hr = IMarshal_DisconnectObject(pFTMarshal, 0);
+    ok_ole_success(hr, IMarshal_DisconnectObject);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_ReleaseMarshalData(pFTMarshal, pStream);
+    ok_ole_success(hr, IMarshal_ReleaseMarshalData);
+
+    todo_wine ok_no_locks();
+
+    /* doesn't enforce marshaling rules here and allows us to unmarshal the
+     * interface, even though it was freed above */
+    IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    hr = IMarshal_UnmarshalInterface(pFTMarshal, pStream, &IID_IUnknown, (void **)&pProxy);
+    ok_ole_success(hr, IMarshal_UnmarshalInterface);
+
+    todo_wine ok_no_locks();
+
+    IStream_Release(pStream);
+    IMarshal_Release(pFTMarshal);
+}
+
 static HANDLE heventShutdown;
 
 static void LockModuleOOP(void)
@@ -2013,6 +2191,7 @@ START_TEST(marshal)
     test_proxybuffer(&IID_IClassFactory);
     test_message_reentrancy();
     test_WM_QUIT_handling();
+    test_freethreadedmarshaler();
 
     /* doesn't pass with Win9x COM DLLs (even though Essential COM says it should) */
     if (0) test_out_of_process_com();

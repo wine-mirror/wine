@@ -34,6 +34,8 @@
 
 #include "wine/debug.h"
 
+#include "compobj_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 typedef struct _FTMarshalImpl {
@@ -173,16 +175,43 @@ FTMarshalImpl_MarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, vo
 
     IMarshal *pMarshal = NULL;
     HRESULT hres;
+    DWORD magic = 0x57dfd54d /* MEOW */;
 
-    FTMarshalImpl *This = impl_from_IMarshal(iface);
-
-    FIXME ("(), stub!\n");
+    TRACE("(%p, %s, %p, 0x%lx, %p, 0x%lx)\n", pStm, debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags);
 
     /* if the marshalling happens inside the same process the interface pointer is
        copied between the apartments */
     if (dwDestContext == MSHCTX_INPROC || dwDestContext == MSHCTX_CROSSCTX) {
-	return IStream_Write (pStm, This, sizeof (This), 0);
+        void *object;
+        DWORD constant = 0;
+        GUID unknown_guid = { 0 };
+
+        hres = IUnknown_QueryInterface((IUnknown *)pv, riid, &object);
+        if (FAILED(hres))
+            return hres;
+
+        hres = IStream_Write (pStm, &mshlflags, sizeof (mshlflags), NULL);
+        if (hres != S_OK) return STG_E_MEDIUMFULL;
+
+        hres = IStream_Write (pStm, &object, sizeof (object), NULL);
+        if (hres != S_OK) return STG_E_MEDIUMFULL;
+
+        hres = IStream_Write (pStm, &constant, sizeof (constant), NULL);
+        if (hres != S_OK) return STG_E_MEDIUMFULL;
+
+        hres = IStream_Write (pStm, &unknown_guid, sizeof (unknown_guid), NULL);
+        if (hres != S_OK) return STG_E_MEDIUMFULL;
+
+        return S_OK;
     }
+
+    /* FIXME: this isn't exactly corret. it looks like the standard marshaler
+     * for native writes all of the OBJREF data into the stream, so we should
+     * really rely on it to write this constant for us. however, we need a
+     * constant to differentiate the outofproc data from the inproc data */
+    hres = IStream_Write (pStm, &magic, sizeof (magic), NULL);
+    if (hres != S_OK) return STG_E_MEDIUMFULL;
 
     /* use the standard marshaler to handle all other cases */
     CoGetStandardMarshal (riid, pv, dwDestContext, pvDestContext, mshlflags, &pMarshal);
@@ -194,7 +223,43 @@ FTMarshalImpl_MarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, vo
 static HRESULT WINAPI
 FTMarshalImpl_UnmarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, void **ppv)
 {
-    FIXME ("(), stub!\n");
+    DWORD mshlflags;
+    HRESULT hres;
+
+    TRACE ("(%p, %s, %p)\n", pStm, debugstr_guid(riid), ppv);
+
+    hres = IStream_Read (pStm, &mshlflags, sizeof (mshlflags), NULL);
+    if (hres != S_OK) return STG_E_READFAULT;
+
+    if (mshlflags == 0x57dfd54d /* MEOW */) {
+        IMarshal *pMarshal;
+
+        hres = CoCreateInstance (&CLSID_DfMarshal, NULL, CLSCTX_INPROC, &IID_IMarshal, (void **)&pMarshal);
+        if (FAILED(hres)) return hres;
+
+        hres = IMarshal_UnmarshalInterface (pMarshal, pStm, riid, ppv);
+    }
+    else {
+        IUnknown *object;
+        DWORD constant;
+        GUID unknown_guid;
+
+        hres = IStream_Read (pStm, &object, sizeof (object), NULL);
+        if (hres != S_OK) return STG_E_READFAULT;
+
+        hres = IStream_Read (pStm, &constant, sizeof (constant), NULL);
+        if (hres != S_OK) return STG_E_READFAULT;
+        if (constant != 0)
+            FIXME("constant is 0x%lx instead of 0\n", constant);
+
+        hres = IStream_Read (pStm, &unknown_guid, sizeof (unknown_guid), NULL);
+        if (hres != S_OK) return STG_E_READFAULT;
+
+        hres = IUnknown_QueryInterface(object, riid, ppv);
+        IUnknown_Release(object);
+        return hres;
+    }
+
     return S_OK;
 }
 
