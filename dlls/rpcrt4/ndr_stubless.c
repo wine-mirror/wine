@@ -394,9 +394,23 @@ static PFORMAT_STRING client_get_handle(
                 return pFormat + sizeof(NDR_EHD_PRIMITIVE);
             }
         case RPC_FC_BIND_GENERIC: /* explicit generic */
-            FIXME("RPC_FC_BIND_GENERIC\n");
-            RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
-            return pFormat + sizeof(NDR_EHD_GENERIC);
+            {
+                NDR_EHD_GENERIC * pDesc = (NDR_EHD_GENERIC *)pFormat;
+                void *pObject = NULL;
+                void *pArg;
+                const GENERIC_BINDING_ROUTINE_PAIR *pGenPair;
+
+                TRACE("Explicit generic binding handle #%d\n", pDesc->binding_routine_pair_index);
+
+                if (pDesc->flag_and_size & HANDLE_PARAM_IS_VIA_PTR)
+                    pArg = *(void **)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                else
+                    pArg = (void *)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                memcpy(&pObject, pArg, pDesc->flag_and_size & 0xf);
+                pGenPair = &pStubMsg->StubDesc->aGenericBindingRoutinePairs[pDesc->binding_routine_pair_index];
+                *phBinding = pGenPair->pfnBind(pObject);
+                return pFormat + sizeof(NDR_EHD_GENERIC);
+            }
         case RPC_FC_BIND_CONTEXT: /* explicit context */
             {
                 NDR_EHD_CONTEXT * pDesc = (NDR_EHD_CONTEXT *)pFormat;
@@ -451,6 +465,57 @@ static PFORMAT_STRING client_get_handle(
     return pFormat;
 }
 
+static void client_free_handle(
+    PMIDL_STUB_MESSAGE pStubMsg, const NDR_PROC_HEADER *pProcHeader,
+    PFORMAT_STRING pFormat, handle_t hBinding)
+{
+    /* binding */
+    switch (pProcHeader->handle_type)
+    {
+    /* explicit binding: parse additional section */
+    case RPC_FC_BIND_EXPLICIT:
+        switch (*pFormat) /* handle_type */
+        {
+        case RPC_FC_BIND_GENERIC: /* explicit generic */
+            {
+                NDR_EHD_GENERIC * pDesc = (NDR_EHD_GENERIC *)pFormat;
+                void *pObject = NULL;
+                void *pArg;
+                const GENERIC_BINDING_ROUTINE_PAIR *pGenPair;
+
+                TRACE("Explicit generic binding handle #%d\n", pDesc->binding_routine_pair_index);
+
+                if (pDesc->flag_and_size & HANDLE_PARAM_IS_VIA_PTR)
+                    pArg = *(void **)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                else
+                    pArg = (void *)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                memcpy(&pObject, pArg, pDesc->flag_and_size & 0xf);
+                pGenPair = &pStubMsg->StubDesc->aGenericBindingRoutinePairs[pDesc->binding_routine_pair_index];
+                pGenPair->pfnUnbind(pObject, hBinding);
+                break;
+            }
+        case RPC_FC_BIND_CONTEXT: /* explicit context */
+        case RPC_FC_BIND_PRIMITIVE: /* explicit primitive */
+            break;
+        default:
+            ERR("bad explicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
+            RpcRaiseException(RPC_X_BAD_STUB_DATA);
+        }
+        break;
+    case RPC_FC_BIND_GENERIC: /* implicit generic */
+        FIXME("RPC_FC_BIND_GENERIC\n");
+        RpcRaiseException(RPC_X_BAD_STUB_DATA); /* FIXME: remove when implemented */
+        break;
+    case RPC_FC_CALLBACK_HANDLE: /* implicit callback */
+    case RPC_FC_BIND_PRIMITIVE: /* implicit primitive */
+    case RPC_FC_AUTO_HANDLE: /* implicit auto handle */
+        break;
+    default:
+        ERR("bad implicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
+}
+
 /* the return type should be CLIENT_CALL_RETURN, but this is incompatible
  * with the way gcc returns structures. "void *" should be the largest type
  * that MIDL should allow you to return anyway */
@@ -480,6 +545,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     LONG_PTR RetVal = 0;
     /* the pointer to the object when in OLE mode */
     void * This = NULL;
+    PFORMAT_STRING pHandleFormat;
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
@@ -524,10 +590,12 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 # warning Stack not retrieved for your CPU architecture
 #endif
 
+    pHandleFormat = pFormat;
+
     /* we only need a handle if this isn't an object method */
     if (!(pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT))
     {
-        pFormat = client_get_handle(&stubMsg, pProcHeader, pFormat, &hBinding);
+        pFormat = client_get_handle(&stubMsg, pProcHeader, pHandleFormat, &hBinding);
         if (!pFormat) return 0;
     }
 
@@ -890,7 +958,10 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
         NdrProxyFreeBuffer(This, &stubMsg);
     else
+    {
         NdrFreeBuffer(&stubMsg);
+        client_free_handle(&stubMsg, pProcHeader, pHandleFormat, hBinding);
+    }
 
     TRACE("RetVal = 0x%lx\n", RetVal);
 
