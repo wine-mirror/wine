@@ -445,6 +445,7 @@ LONG CoreAudio_WaveInit(void)
     OSStatus status;
     UInt32 propertySize;
     CHAR szPname[MAXPNAMELEN];
+    pthread_mutexattr_t mutexattr;
     int i;
     HANDLE hThread;
 
@@ -476,6 +477,9 @@ LONG CoreAudio_WaveInit(void)
     CoreAudio_DefaultDevice.interface_name=HeapAlloc(GetProcessHeap(),0,strlen(CoreAudio_DefaultDevice.dev_name)+1);
     sprintf(CoreAudio_DefaultDevice.interface_name, "%s", CoreAudio_DefaultDevice.dev_name);
     
+    pthread_mutexattr_init(&mutexattr);
+    pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
+
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
     {
         WOutDev[i].state = WINE_WS_CLOSED;
@@ -509,7 +513,11 @@ LONG CoreAudio_WaveInit(void)
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1S08;
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
+
+        pthread_mutex_init(&WOutDev[i].lock, &mutexattr); /* initialize the mutex */
     }
+
+    pthread_mutexattr_destroy(&mutexattr);
     
     /* create mach messages handler */
     hThread = CreateThread(NULL, 0, messageThread, NULL, 0, NULL);
@@ -526,12 +534,18 @@ void CoreAudio_WaveRelease(void)
 {
     /* Stop CFRunLoop in messageThread */
     CFMessagePortRef messagePort;
+    int i;
 
     TRACE("()\n");
 
     messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, CFSTR("WaveMessagePort"));
     CFMessagePortSendRequest(messagePort, kStopLoopMessage, NULL, 0.0, 0.0, NULL, NULL);
     CFRelease(messagePort);
+
+    for (i = 0; i < MAX_WAVEOUTDRV; ++i)
+    {
+        pthread_mutex_destroy(&WOutDev[i].lock);
+    }
 }
 
 /*======================================================================*
@@ -591,9 +605,6 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 
 /**************************************************************************
 * 				wodOpen				[internal]
-*
-* NOTE: doesn't it seem like there is a race condition if you try to open 
-* the same device twice?
 */
 static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
@@ -637,9 +648,18 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     
     wwo = &WOutDev[wDevID];
+    pthread_mutex_lock(&wwo->lock);
+
+    if (wwo->state != WINE_WS_CLOSED)
+    {
+        pthread_mutex_unlock(&wwo->lock);
+        return MMSYSERR_ALLOCATED;
+    }
+
     if (!AudioUnit_CreateDefaultAudioUnit((void *) wwo, &wwo->audioUnit))
     {
         ERR("CoreAudio_CreateDefaultAudioUnit(%p) failed\n", wwo);
+        pthread_mutex_unlock(&wwo->lock);
         return MMSYSERR_ERROR;
     }
 
@@ -647,11 +667,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         !(wwo->caps.dwSupport & WAVECAPS_DIRECTSOUND))
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
-
-    if (wwo->state != WINE_WS_CLOSED) return MMSYSERR_ALLOCATED;
-    
-    pthread_mutex_init(&wwo->lock, NULL); /* initialize the mutex */
-    pthread_mutex_lock(&wwo->lock);
 
     streamFormat.mFormatID = kAudioFormatLinearPCM;
     
@@ -677,8 +692,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwo->streamDescription = streamFormat;
     wwo->state = WINE_WS_STOPPED;
-        
-    pthread_mutex_unlock(&wwo->lock);
                 
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
     
@@ -695,6 +708,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
+        
+    pthread_mutex_unlock(&wwo->lock);
     
     retval = wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
     
@@ -718,9 +733,11 @@ static DWORD wodClose(WORD wDevID)
     }
     
     wwo = &WOutDev[wDevID];
+    pthread_mutex_lock(&wwo->lock);
     if (wwo->lpQueuePtr)
     {
         WARN("buffers still playing !\n");
+        pthread_mutex_unlock(&wwo->lock);
         ret = WAVERR_STILLPLAYING;
     } else
     {
@@ -736,17 +753,17 @@ static DWORD wodClose(WORD wDevID)
                                                             (char) (err >> 16),
                                                             (char) (err >> 8),
                                                             (char) err);
-            pthread_mutex_destroy(&wwo->lock);
+            pthread_mutex_unlock(&wwo->lock);
             return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
         }
         
         if ( !AudioUnit_CloseAudioUnit(wwo->audioUnit) )
         {
             ERR("Can't close AudioUnit\n");
-            pthread_mutex_destroy(&wwo->lock);
+            pthread_mutex_unlock(&wwo->lock);
             return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
         }  
-        pthread_mutex_destroy(&wwo->lock);
+        pthread_mutex_unlock(&wwo->lock);
         
         ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
