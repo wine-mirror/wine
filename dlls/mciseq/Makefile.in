@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mciseq.dll
 IMPORTS   = winmm user32 kernel32
+EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	mcimidi.c

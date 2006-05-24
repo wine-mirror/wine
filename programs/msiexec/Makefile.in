@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = msiexec.exe
 APPMODE   = -mconsole
 IMPORTS   = msi ole32 advapi32 user32 kernel32
+EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	msiexec.c

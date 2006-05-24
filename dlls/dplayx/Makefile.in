@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = dplayx.dll
 IMPORTLIB = libdplayx.$(IMPLIBEXT)
 IMPORTS   = winmm ole32 user32 advapi32 kernel32
-EXTRALIBS = -ldxguid -luuid
+EXTRALIBS = $(LIBUNICODE) -ldxguid -luuid
 
 C_SRCS = \
 	dpclassfactory.c \

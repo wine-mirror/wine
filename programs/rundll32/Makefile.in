@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = rundll32.exe
 APPMODE   = -mconsole
 IMPORTS   = user32 kernel32
+EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	rundll32.c

@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm32.drv
 IMPORTS   = msacm32 winmm user32 kernel32
+EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	wavemap.c
