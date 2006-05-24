@@ -1,14 +1,45 @@
 LIBRARY libwine_unicode.dll
 
 EXPORTS
+    atoiW
+    atolW
+    get_char_typeW
+    is_dbcs_leadbyte
+    isalnumW
+    isalphaW
+    iscntrlW
+    isdigitW
+    isgraphW
+    islowerW
+    isprintW
+    ispunctW
+    isspaceW
+    isupperW
+    isxdigitW
+    memchrW
     memicmpW
+    memrchrW
     snprintfW
     sprintfW
+    strcatW
+    strchrW
+    strcmpW
     strcmpiW
+    strcpyW
+    strcspnW
+    strlenW
+    strlwrW
+    strncmpW
     strncmpiW
+    strpbrkW
+    strrchrW
+    strspnW
     strstrW
     strtolW
     strtoulW
+    struprW
+    tolowerW
+    toupperW
     vsnprintfW
     vsprintfW
     wine_casemap_lower
