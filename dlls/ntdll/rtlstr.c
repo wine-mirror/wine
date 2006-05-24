@@ -638,7 +638,7 @@ WCHAR WINAPI RtlAnsiCharToUnicodeChar(LPSTR *ansi)
     WCHAR str;
     DWORD charSize = sizeof(CHAR);
 
-    if (is_dbcs_leadbyte(ansi_table, **ansi))
+    if (wine_is_dbcs_leadbyte(ansi_table, **ansi))
         charSize++;
 
     RtlMultiByteToUnicodeN(&str, sizeof(WCHAR), NULL, *ansi, charSize);

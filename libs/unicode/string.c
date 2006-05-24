@@ -27,7 +27,7 @@ extern const WCHAR wine_casemap_lower[];
 extern const WCHAR wine_casemap_upper[];
 extern const unsigned short wine_wctype_table[];
 
-int is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
+int wine_is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {
     return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
 }

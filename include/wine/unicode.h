@@ -95,7 +95,7 @@ extern int snprintfW( WCHAR *str, size_t len, const WCHAR *format, ... );
 extern int vsprintfW( WCHAR *str, const WCHAR *format, va_list valist );
 extern int vsnprintfW( WCHAR *str, size_t len, const WCHAR *format, va_list valist );
 
-extern inline int is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
+extern inline int wine_is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {
     return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
 }

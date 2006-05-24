@@ -4,7 +4,6 @@ WINE_1.0
     atoiW;
     atolW;
     get_char_typeW;
-    is_dbcs_leadbyte;
     isalnumW;
     isalphaW;
     iscntrlW;
@@ -53,6 +52,7 @@ WINE_1.0
     wine_cpsymbol_wcstombs;
     wine_fold_string;
     wine_get_sortkey;
+    wine_is_dbcs_leadbyte;
     wine_utf8_mbstowcs;
     wine_utf8_wcstombs;
     wine_wctype_table;

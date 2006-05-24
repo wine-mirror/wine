@@ -1279,7 +1279,7 @@ BOOL WINAPI IsValidCodePage( UINT codepage )
 BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
 {
     const union cptable *table = get_codepage_table( codepage );
-    return table && is_dbcs_leadbyte( table, testchar );
+    return table && wine_is_dbcs_leadbyte( table, testchar );
 }
 
 
@@ -1299,7 +1299,7 @@ BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
 BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 {
     if (!ansi_cptable) return FALSE;
-    return is_dbcs_leadbyte( ansi_cptable, testchar );
+    return wine_is_dbcs_leadbyte( ansi_cptable, testchar );
 }
 
 
