@@ -674,13 +674,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
     streamFormat.mFormatID = kAudioFormatLinearPCM;
-    
+    streamFormat.mFormatFlags = kLinearPCMFormatFlagIsPacked;
     /* FIXME check for 32bits float -> kLinearPCMFormatFlagIsFloat */
-    streamFormat.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger
+    if (lpDesc->lpFormat->wBitsPerSample != 8)
+        streamFormat.mFormatFlags |= kLinearPCMFormatFlagIsSignedInteger;
 # ifdef WORDS_BIGENDIAN
-            | kLinearPCMFormatFlagIsBigEndian /* FIXME Wave format is little endian */
+    streamFormat.mFormatFlags |= kLinearPCMFormatFlagIsBigEndian; /* FIXME Wave format is little endian */
 # endif
-            | kLinearPCMFormatFlagIsPacked;
 
     streamFormat.mSampleRate = lpDesc->lpFormat->nSamplesPerSec;
     streamFormat.mChannelsPerFrame = lpDesc->lpFormat->nChannels;	
