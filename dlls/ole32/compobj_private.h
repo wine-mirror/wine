@@ -178,6 +178,7 @@ extern HRESULT WINE_StringFromCLSID(const CLSID *id,LPSTR idstr);
 
 HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY *key);
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
+HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv);
 
 /* Stub Manager */
 

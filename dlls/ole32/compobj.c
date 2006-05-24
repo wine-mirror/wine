@@ -1642,6 +1642,9 @@ HRESULT WINAPI CoGetClassObject(
         static const WCHAR wszInprocServer32[] = {'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
         HKEY hkey;
 
+        if (IsEqualCLSID(rclsid, &CLSID_InProcFreeMarshaler))
+            return FTMarshalCF_Create(iid, ppv);
+
         hres = COM_OpenKeyForCLSID(rclsid, wszInprocServer32, KEY_READ, &hkey);
         if (FAILED(hres))
         {

@@ -325,3 +325,68 @@ HRESULT WINAPI CoCreateFreeThreadedMarshaler (LPUNKNOWN punkOuter, LPUNKNOWN * p
     *ppunkMarshal = _IFTMUnknown_ (ftm);
     return S_OK;
 }
+
+static HRESULT WINAPI FTMarshalCF_QueryInterface(LPCLASSFACTORY iface,
+                                                  REFIID riid, LPVOID *ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IClassFactory))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI FTMarshalCF_AddRef(LPCLASSFACTORY iface)
+{
+    return 2; /* non-heap based object */
+}
+
+static ULONG WINAPI FTMarshalCF_Release(LPCLASSFACTORY iface)
+{
+    return 1; /* non-heap based object */
+}
+
+static HRESULT WINAPI FTMarshalCF_CreateInstance(LPCLASSFACTORY iface,
+    LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv)
+{
+    IUnknown *pUnknown;
+    HRESULT  hr;
+
+    TRACE("(%p, %s, %p)\n", pUnk, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    hr = CoCreateFreeThreadedMarshaler(pUnk, &pUnknown);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IUnknown_QueryInterface(pUnknown, riid, ppv);
+        IUnknown_Release(pUnknown);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI FTMarshalCF_LockServer(LPCLASSFACTORY iface, BOOL fLock)
+{
+    FIXME("(%d), stub!\n",fLock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl FTMarshalCFVtbl =
+{
+    FTMarshalCF_QueryInterface,
+    FTMarshalCF_AddRef,
+    FTMarshalCF_Release,
+    FTMarshalCF_CreateInstance,
+    FTMarshalCF_LockServer
+};
+static const IClassFactoryVtbl *FTMarshalCF = &FTMarshalCFVtbl;
+
+HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv)
+{
+    return IClassFactory_QueryInterface((IClassFactory *)&FTMarshalCF, riid, ppv);
+}
