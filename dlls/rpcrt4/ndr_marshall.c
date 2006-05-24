@@ -4344,3 +4344,16 @@ RPC_BINDING_HANDLE WINAPI NDRCContextBinding(NDR_CCONTEXT CContext)
     FIXME("(%p): stub\n", CContext);
     return NULL;
 }
+
+void WINAPI NDRCContextMarshall(NDR_CCONTEXT CContext, void *pBuff)
+{
+    FIXME("(%p %p): stub\n", CContext, pBuff);
+}
+
+void WINAPI NDRCContextUnmarshall(NDR_CCONTEXT *CContext,
+                                  RPC_BINDING_HANDLE hBinding,
+                                  void *pBuff,
+                                  unsigned long DataRepresentation)
+{
+    FIXME("(%p %p %p %08lx): stub\n", CContext, hBinding, pBuff, DataRepresentation);
+}

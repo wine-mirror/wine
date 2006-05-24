@@ -138,8 +138,8 @@
 @ stub MqGetContext # win9x
 @ stub MqRegisterQueue # win9x
 @ stdcall NDRCContextBinding(ptr)
-@ stub NDRCContextMarshall
-@ stub NDRCContextUnmarshall
+@ stdcall NDRCContextMarshall(ptr ptr)
+@ stdcall NDRCContextUnmarshall(ptr ptr ptr long)
 @ stub NDRSContextMarshall2
 @ stub NDRSContextMarshall
 @ stub NDRSContextMarshallEx
