@@ -1376,51 +1376,66 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
                                      UInt32 inNumberFrames, 
                                      AudioBufferList *ioData)
 {
-    UInt32 channel;
+    UInt32 buffer;
     WINE_WAVEOUT *wwo = (WINE_WAVEOUT *) inRefCon;
     int nextPtr = 0;
     int needNotify = 0;
-    
-    pthread_mutex_lock(&wwo->lock);
-    if(wwo->state == WINE_WS_PLAYING)
-    {
-        unsigned int available;
-        unsigned int count = ioData->mBuffers[0].mDataByteSize;
-        
-        available = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
-        
-        for (channel = 0; channel < ioData->mNumberBuffers; channel++)
-        {
-            if ( available >= count)
-            { 
-                memcpy(ioData->mBuffers[channel].mData, wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, count);
-                wwo->dwPartialOffset += count;
-                wwo->dwPlayedTotal += count;
-            }
-            else
-            {
-                int s;
-                memcpy(ioData->mBuffers[channel].mData, wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, available);
-                wwo->dwPartialOffset += available;
-                wwo->dwPlayedTotal += available;
-                
-                /* Fill with silence */
-                for (s = available; s < count; s++)
-                    ((int *)ioData->mBuffers[channel].mData)[s] = 0;
-                
-                nextPtr = 1;
-            }
-        }
-        needNotify = 1;
-    }
-    else
-    {
-        for (channel = 0; channel < ioData->mNumberBuffers; channel++)
-            memset(ioData->mBuffers[channel].mData, 0, ioData->mBuffers[channel].mDataByteSize);
-    }
-    pthread_mutex_unlock(&wwo->lock);
 
-    if (nextPtr) wodHelper_PlayPtrNext(wwo); 
+    unsigned int dataNeeded = ioData->mBuffers[0].mDataByteSize;
+    unsigned int dataProvided = 0;
+
+    while (dataNeeded > 0)
+    {
+        pthread_mutex_lock(&wwo->lock);
+
+        if (wwo->state == WINE_WS_PLAYING && wwo->lpPlayPtr)
+        {
+            unsigned int available = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
+            unsigned int toCopy;
+
+            if (available >= dataNeeded)
+                toCopy = dataNeeded;
+            else
+                toCopy = available;
+
+            if (toCopy > 0)
+            {
+                memcpy((char*)ioData->mBuffers[0].mData + dataProvided,
+                    wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toCopy);
+                wwo->dwPartialOffset += toCopy;
+                wwo->dwPlayedTotal += toCopy;
+                dataProvided += toCopy;
+                dataNeeded -= toCopy;
+                available -= toCopy;
+            }
+
+            if (available == 0)
+                nextPtr = 1;
+
+            needNotify = 1;
+        }
+        else
+        {
+            memset((char*)ioData->mBuffers[0].mData + dataProvided, 0, dataNeeded);
+            dataProvided += dataNeeded;
+            dataNeeded = 0;
+        }
+
+        pthread_mutex_unlock(&wwo->lock);
+
+        if (nextPtr)
+        {
+            wodHelper_PlayPtrNext(wwo);
+            nextPtr = 0;
+        }
+    }
+
+    /* We only fill buffer 0.  Set any others that might be requested to 0. */
+    for (buffer = 1; buffer < ioData->mNumberBuffers; buffer++)
+    {
+        memset(ioData->mBuffers[buffer].mData, 0, ioData->mBuffers[buffer].mDataByteSize);
+    }
+
     if (needNotify) wodHelper_NotifyCompletions(wwo, FALSE);
     return noErr;
 }
