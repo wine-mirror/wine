@@ -1718,7 +1718,7 @@ static void test_freethreadedmarshaler(void)
 
     IUnknown_Release(pProxy);
 
-    todo_wine ok_more_than_one_lock();
+    ok_more_than_one_lock();
 
     IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
     hr = IMarshal_ReleaseMarshalData(pFTMarshal, pStream);
@@ -1767,7 +1767,7 @@ static void test_freethreadedmarshaler(void)
     hr = IMarshal_ReleaseMarshalData(pFTMarshal, pStream);
     ok_ole_success(hr, IMarshal_ReleaseMarshalData);
 
-    todo_wine ok_no_locks();
+    ok_no_locks();
 
     /* doesn't enforce marshaling rules here and allows us to unmarshal the
      * interface, even though it was freed above */
@@ -1775,7 +1775,7 @@ static void test_freethreadedmarshaler(void)
     hr = IMarshal_UnmarshalInterface(pFTMarshal, pStream, &IID_IUnknown, (void **)&pProxy);
     ok_ole_success(hr, IMarshal_UnmarshalInterface);
 
-    todo_wine ok_no_locks();
+    ok_no_locks();
 
     IStream_Release(pStream);
     IMarshal_Release(pFTMarshal);
