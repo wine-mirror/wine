@@ -201,6 +201,7 @@ void test_refcount(void)
     IDirect3DSurface9           *pRenderTarget      = NULL;
     IDirect3DSurface9           *pTextureLevel      = NULL;
     IDirect3DStateBlock9        *pStateBlock        = NULL;
+    IDirect3DStateBlock9        *pStateBlock1       = NULL;
     IDirect3DSwapChain9         *pSwapChain         = NULL;
     IDirect3DQuery9             *pQuery             = NULL;
     D3DPRESENT_PARAMETERS        d3dpp;
@@ -302,6 +303,12 @@ void test_refcount(void)
     hr = IDirect3DDevice9_CreateQuery( pDevice, D3DQUERYTYPE_EVENT, &pQuery );
     CHECK_CALL( hr, "CreateQuery", pDevice, refcount+1 );
 
+    refcount = get_refcount( (IUnknown *)pDevice );
+    hr = IDirect3DDevice9_BeginStateBlock( pDevice );
+    CHECK_CALL( hr, "BeginStateBlock", pDevice, refcount );
+    hr = IDirect3DDevice9_EndStateBlock( pDevice, &pStateBlock1 );
+    CHECK_CALL( hr, "EndStateBlock", pDevice, refcount+1 );
+
 cleanup:
     if (pDevice)              IUnknown_Release( pDevice );
 
@@ -327,6 +334,7 @@ cleanup:
     if (pSwapChain)           IUnknown_Release( pSwapChain );
     */
     if (pQuery)               IUnknown_Release( pQuery );
+    if (pStateBlock1)         IUnknown_Release( pStateBlock1 );
 
     if (pD3d)                 IUnknown_Release( pD3d );
 

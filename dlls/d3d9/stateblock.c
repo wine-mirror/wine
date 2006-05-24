@@ -150,12 +150,17 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_EndStateBlock(LPDIRECT3DDEVICE9 iface, IDi
     }    
     /* allocate a new IDirectD3DStateBlock */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY ,sizeof(IDirect3DStateBlock9Impl));      
+    if (!object) {
+        FIXME("(%p)  Failed to allocate %d bytes\n", This, sizeof(IDirect3DStateBlock9Impl));
+        return E_OUTOFMEMORY;
+    }
     object->ref = 1;
     object->lpVtbl = &Direct3DStateBlock9_Vtbl;
-      
-    object->wineD3DStateBlock=wineD3DStateBlock;
-  
-    *ppSB=(IDirect3DStateBlock9*)object;        
+    object->wineD3DStateBlock = wineD3DStateBlock;
+
+    IUnknown_AddRef(iface);
+    object->parentDevice = iface;
+    *ppSB=(IDirect3DStateBlock9*)object;
     TRACE("(%p)Returning %p %p\n", This, *ppSB, wineD3DStateBlock);
     return D3D_OK;
 }
