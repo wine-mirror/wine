@@ -101,6 +101,7 @@ typedef struct
     msi_dialog* dialog;
     msi_control *parent;
     DWORD       attributes;
+    LPWSTR      propval;
 } radio_button_group_descr;
 
 const WCHAR szMsiDialogClass[] = {
@@ -1344,6 +1345,9 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
         return ERROR_FUNCTION_FAILED;
     control->handler = msi_dialog_radiogroup_handler;
 
+    if (!lstrcmpW(control->name, group->propval))
+        SendMessageW(control->hwnd, BM_SETCHECK, BST_CHECKED, 0);
+
     prop = MSI_RecordGetString( rec, 1 );
     if( prop )
         control->property = strdupW( prop );
@@ -1395,9 +1399,11 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     group.dialog = dialog;
     group.parent = control;
     group.attributes = MSI_RecordGetInteger( rec, 8 );
+    group.propval = msi_dup_property( dialog->package, control->property );
 
     r = MSI_IterateRecords( view, 0, msi_dialog_create_radiobutton, &group );
     msiobj_release( &view->hdr );
+    msi_free( group.propval );
 
     return r;
 }
