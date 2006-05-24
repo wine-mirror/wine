@@ -1041,7 +1041,11 @@ static unsigned char * EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
         unsigned char *bufptr = bufbase + *(const SHORT*)&info[2];
+        unsigned char *saved_memory = pStubMsg->Memory;
+
+        pStubMsg->Memory = pMemory;
         PointerMarshall(pStubMsg, bufptr, *(unsigned char**)memptr, info+4);
+        pStubMsg->Memory = saved_memory;
       }
     }
     pFormat += 8 * count;
@@ -1172,7 +1176,11 @@ static void EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       unsigned u;
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
+        unsigned char *saved_memory = pStubMsg->Memory;
+
+        pStubMsg->Memory = pMemory;
         PointerBufferSize(pStubMsg, *(unsigned char**)memptr, info+4);
+        pStubMsg->Memory = saved_memory;
       }
     }
     pFormat += 8 * count;
@@ -1291,7 +1299,11 @@ static void EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
       unsigned u;
       for (u=0; u<count; u++,info+=8) {
         unsigned char *memptr = membase + *(const SHORT*)&info[0];
+        unsigned char *saved_memory = pStubMsg->Memory;
+
+        pStubMsg->Memory = pMemory;
         PointerFree(pStubMsg, *(unsigned char**)memptr, info+4);
+        pStubMsg->Memory = saved_memory;
       }
     }
     pFormat += 8 * count;
