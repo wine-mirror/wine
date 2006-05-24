@@ -606,6 +606,19 @@ typedef void (APIENTRY * PGLFNGETBUFFERPOINTERVARBPROC) (GLenum target, GLenum p
 #define GL_ARB_shader_objects 1
 typedef char GLcharARB;
 typedef unsigned int GLhandleARB;
+#define GL_OBJECT_DELETE_STATUS_ARB             0x8B80
+#define GL_OBJECT_COMPILE_STATUS_ARB            0x8B81
+#define GL_OBJECT_LINK_STATUS_ARB               0x8B82
+#define GL_OBJECT_VALIDATE_STATUS_ARB           0x8B83
+#define GL_OBJECT_INFO_LOG_LENGTH_ARB           0x8B84
+#define GL_OBJECT_ATTACHED_OBJECTS_ARB          0x8B85
+#define GL_OBJECT_ACTIVE_UNIFORMS_ARB           0x8B86
+#define GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB 0x8B87
+#define GL_OBJECT_SHADER_SOURCE_LENGTH_ARB      0x8B88
+#endif
+#ifndef GL_ARB_shading_language_100
+#define GL_ARB_shading_language_100         1
+#define GL_SHADING_LANGUAGE_VERSION_ARB     0x8B8C
 #endif
 #ifndef GL_ARB_fragment_shader
 #define GL_ARB_fragment_shader 1
@@ -677,6 +690,8 @@ typedef void (APIENTRY * WINED3D_PFNGLVALIDATEPROGRAMARBPROC) (GLhandleARB progr
 typedef void (APIENTRY * WINED3D_PFNGLGETATTACHEDOBJECTSARBPROC) (GLhandleARB containerObj, GLsizei maxCount, GLsizei *count, GLhandleARB *obj);
 typedef GLhandleARB (APIENTRY * WINED3D_PFNGLGETHANDLEARBPROC) (GLenum pname);
 typedef void (APIENTRY * WINED3D_PFNGLGETSHADERSOURCEARBPROC) (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source);
+typedef void (APIENTRY * WINED3D_PFNGLBINDATTRIBLOCATIONARBPROC) (GLhandleARB programObj, GLuint index, const GLcharARB *name);
+typedef GLint (APIENTRY * WINED3D_PFNGLGETATTRIBLOCATIONARBPROC) (GLhandleARB programObj, const GLcharARB *name);
 /* GL_EXT_texture_compression_s3tc */
 #ifndef GL_EXT_texture_compression_s3tc
 #define GL_EXT_texture_compression_s3tc 1
@@ -1433,6 +1448,8 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(WINED3D_PFNGLGETATTACHEDOBJECTSARBPROC,       glGetAttachedObjectsARB); \
     USE_GL_FUNC(WINED3D_PFNGLGETHANDLEARBPROC,                glGetHandleARB); \
     USE_GL_FUNC(WINED3D_PFNGLGETSHADERSOURCEARBPROC,          glGetShaderSourceARB); \
+    USE_GL_FUNC(WINED3D_PFNGLBINDATTRIBLOCATIONARBPROC,       glBindAttribLocationARB); \
+    USE_GL_FUNC(WINED3D_PFNGLGETATTRIBLOCATIONARBPROC,        glGetAttribLocationARB); \
     /* GL_EXT_stencil_two_side */ \
     USE_GL_FUNC(PGLFNACTIVESTENCILFACEEXTPROC, glActiveStencilFaceEXT); \
     /* GL_ATI_separate_stencil */ \
