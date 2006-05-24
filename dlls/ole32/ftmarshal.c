@@ -191,6 +191,10 @@ FTMarshalImpl_MarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, vo
         if (FAILED(hres))
             return hres;
 
+        /* don't hold a reference to table-weak marshaled interfaces */
+        if (mshlflags & MSHLFLAGS_TABLEWEAK)
+            IUnknown_Release((IUnknown *)object);
+
         hres = IStream_Write (pStm, &mshlflags, sizeof (mshlflags), NULL);
         if (hres != S_OK) return STG_E_MEDIUMFULL;
 
@@ -258,7 +262,8 @@ FTMarshalImpl_UnmarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, 
         if (hres != S_OK) return STG_E_READFAULT;
 
         hres = IUnknown_QueryInterface(object, riid, ppv);
-        IUnknown_Release(object);
+        if (!(mshlflags & MSHLFLAGS_TABLEWEAK))
+            IUnknown_Release(object);
         return hres;
     }
 }

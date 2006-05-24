@@ -1734,7 +1734,7 @@ static void test_freethreadedmarshaler(void)
         MSHLFLAGS_TABLEWEAK);
     ok_ole_success(hr, IMarshal_MarshalInterface);
 
-    todo_wine ok_no_locks();
+    ok_no_locks();
 
     test_freethreadedmarshaldata(pStream, MSHCTX_INPROC, &Test_ClassFactory, MSHLFLAGS_TABLEWEAK);
 
