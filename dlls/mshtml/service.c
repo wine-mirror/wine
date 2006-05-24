@@ -63,11 +63,11 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
 {
     HTMLDocument *This = SERVPROV_THIS(iface);
     
-    /* NOTE:
-     * IE queries for service {3050f84b-98b5-11cf-bb82-00aa00bdce0b}.
-     * Its interface has the same IID and HTMLDocument also implements this
-     * interface. I conldn't find that interface is it.
-     */
+    /* See http://msdn.microsoft.com/workshop/browser/hosting/wbcustompart2.asp */
+    if(IsEqualGUID(&CLSID_CMarkup, guidService)) {
+        FIXME("(%p)->(CLSID_CMarkup %s %p)\n", This, debugstr_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
 
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
     
