@@ -286,7 +286,11 @@ static DWORD WINAPI messageThread(LPVOID p)
     CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopDefaultMode);
         
     CFRunLoopRun();
-    
+
+    CFRunLoopSourceInvalidate(source);
+    CFRelease(source);
+    CFRelease(local);
+
     return 0;
 }
 
@@ -318,6 +322,7 @@ static DWORD wodSendDriverCallbackMessage(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dw
     ret = CFMessagePortSendRequest(messagePort, kWaveOutCallbackMessage, data, 0.0, 0.0, NULL, NULL);
     CFRelease(data);
     CFAllocatorDeallocate(NULL, buffer);
+    CFRelease(messagePort);
     
     return (ret == kCFMessagePortSuccess)?1:0;
 }
@@ -687,6 +692,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     ret = AudioUnit_InitializeWithStreamDescription(wwo->audioUnit, &streamFormat);
     if (!ret) 
     {
+        AudioUnit_CloseAudioUnit(wwo->audioUnit);
         pthread_mutex_unlock(&wwo->lock);
         return WAVERR_BADFORMAT; /* FIXME return an error based on the OSStatus */
     }
@@ -881,19 +887,24 @@ static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
     pthread_mutex_lock(&wwo->lock);
     
     lpWaveHdr = wwo->lpPlayPtr;
-    
+    if (!lpWaveHdr)
+    {
+        pthread_mutex_unlock(&wwo->lock);
+        return NULL;
+    }
+
     wwo->dwPartialOffset = 0;
     if ((lpWaveHdr->dwFlags & WHDR_ENDLOOP) && wwo->lpLoopPtr)
     {
         /* We're at the end of a loop, loop if required */
-        if (--wwo->dwLoops > 0)
+        if (wwo->dwLoops > 1)
         {
+            wwo->dwLoops--;
             wwo->lpPlayPtr = wwo->lpLoopPtr;
         } else
         {
             /* Handle overlapping loops correctly */
             if (wwo->lpLoopPtr != lpWaveHdr && (lpWaveHdr->dwFlags & WHDR_BEGINLOOP)) {
-                fprintf(stderr, "trace:winecoreaudio:wodHelper_PlayPtrNext Correctly handled case ? (ending loop buffer also starts a new loop)\n");
                 /* shall we consider the END flag for the closing loop or for
                 * the opening one or for both ???
                 * code assumes for closing loop only
@@ -962,26 +973,21 @@ static  void  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
     FIXME("\n");
    
     /* updates current notify list */
-    wodHelper_NotifyCompletions(wwo, FALSE);
+    /* if resetting, remove all wave headers and notify client that all headers were completed */
+    wodHelper_NotifyCompletions(wwo, reset);
+    
+    pthread_mutex_lock(&wwo->lock);
     
     if (reset)
     {
-        /* remove all wave headers and notify client that all headers were completed */
-        wodHelper_NotifyCompletions(wwo, TRUE);
-
-        pthread_mutex_lock(&wwo->lock);
-        
         wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
         wwo->state = WINE_WS_STOPPED;
         wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
         
         wwo->dwPartialOffset = 0;        /* Clear partial wavehdr */
-        
-        pthread_mutex_unlock(&wwo->lock);
     } 
     else
     {
-        pthread_mutex_lock(&wwo->lock);
         if (wwo->lpLoopPtr)
         {
             /* complicated case, not handled yet (could imply modifying the loop counter) */
@@ -996,7 +1002,7 @@ static  void  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
             
             /* reset all the data as if we had written only up to lpPlayedTotal bytes */
             /* compute the max size playable from lpQueuePtr */
-            for (ptr = wwo->lpQueuePtr; ptr != wwo->lpPlayPtr; ptr = ptr->lpNext)
+            for (ptr = wwo->lpQueuePtr; ptr && ptr != wwo->lpPlayPtr; ptr = ptr->lpNext)
             {
                 sz += ptr->dwBufferLength;
             }
@@ -1009,8 +1015,9 @@ static  void  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
         }
         
         wwo->state = WINE_WS_PAUSED;
-        pthread_mutex_unlock(&wwo->lock);
     }
+
+    pthread_mutex_unlock(&wwo->lock);
 }
 
 
@@ -1052,7 +1059,8 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 
     pthread_mutex_lock(&wwo->lock);
     /* insert buffer at the end of queue */
-    for (wh = &(wwo->lpQueuePtr); *wh; wh = &((*wh)->lpNext));
+    for (wh = &(wwo->lpQueuePtr); *wh; wh = &((*wh)->lpNext))
+        /* Do nothing */;
     *wh = lpWaveHdr;
     
     if (!wwo->lpPlayPtr)
@@ -1263,7 +1271,7 @@ DWORD WINAPI CoreAudio_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
         case DRVM_ENABLE:
         case DRVM_DISABLE:
             
-            // FIXME: Pretend this is supported //
+            /* FIXME: Pretend this is supported */
             return 0;
         case WODM_OPEN:         return wodOpen(wDevID, (LPWAVEOPENDESC) dwParam1, dwParam2);          
         case WODM_CLOSE:        return wodClose(wDevID);
