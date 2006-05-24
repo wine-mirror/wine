@@ -474,7 +474,7 @@ static void test_ScriptString(void)
     BOOL fDisabled = FALSE;
     hr = ScriptStringAnalyse( hdc, pString, cString, cGlyphs, iCharset, dwFlags,
                               iReqWidth, &psControl, &psState, piDx, &pTabdef,
-                              pbInClass, &pssa);
+                              &pbInClass, &pssa);
     ok(hr == E_INVALIDARG, "ScriptStringAnalyse Stub should return E_INVALIDARG not %08x\n", (unsigned int) hr);
     hr = ScriptStringOut(pssa, iX, iY, uOptions, &prc, iMinSel, iMaxSel,fDisabled);
     ok(hr == E_NOTIMPL, "ScriptStringOut Stub should return E_NOTIMPL not %08x\n", (unsigned int) hr);
