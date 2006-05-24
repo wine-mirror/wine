@@ -241,7 +241,7 @@ HRESULT WINAPI CoCreateFreeThreadedMarshaler (LPUNKNOWN punkOuter, LPUNKNOWN * p
     ftm->lpVtbl = &iunkvt;
     ftm->lpvtblFTM = &ftmvtbl;
     ftm->ref = 1;
-    ftm->pUnkOuter = punkOuter;
+    ftm->pUnkOuter = punkOuter ? punkOuter : _IFTMUnknown_(ftm);
 
     *ppunkMarshal = _IFTMUnknown_ (ftm);
     return S_OK;
