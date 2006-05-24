@@ -368,7 +368,88 @@ static void WINAPI dump_INTERPRETER_OPT_FLAGS(INTERPRETER_OPT_FLAGS Oi2Flags)
     TRACE("\n");
 }
 
-#define ARG_FROM_OFFSET(stubMsg, offset) (stubMsg.StackTop + offset)
+#define ARG_FROM_OFFSET(stubMsg, offset) ((stubMsg).StackTop + (offset))
+
+static PFORMAT_STRING client_get_handle(
+    PMIDL_STUB_MESSAGE pStubMsg, const NDR_PROC_HEADER *pProcHeader,
+    PFORMAT_STRING pFormat, handle_t *phBinding)
+{
+    /* binding */
+    switch (pProcHeader->handle_type)
+    {
+    /* explicit binding: parse additional section */
+    case RPC_FC_BIND_EXPLICIT:
+        switch (*pFormat) /* handle_type */
+        {
+        case RPC_FC_BIND_PRIMITIVE: /* explicit primitive */
+            {
+                NDR_EHD_PRIMITIVE * pDesc = (NDR_EHD_PRIMITIVE *)pFormat;
+
+                TRACE("Explicit primitive handle @ %d\n", pDesc->offset);
+
+                if (pDesc->flag) /* pointer to binding */
+                    *phBinding = **(handle_t **)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                else
+                    *phBinding = *(handle_t *)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                return pFormat + sizeof(NDR_EHD_PRIMITIVE);
+            }
+        case RPC_FC_BIND_GENERIC: /* explicit generic */
+            FIXME("RPC_FC_BIND_GENERIC\n");
+            RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
+            return pFormat + sizeof(NDR_EHD_GENERIC);
+        case RPC_FC_BIND_CONTEXT: /* explicit context */
+            {
+                NDR_EHD_CONTEXT * pDesc = (NDR_EHD_CONTEXT *)pFormat;
+                NDR_CCONTEXT context_handle;
+                TRACE("Explicit bind context\n");
+                if (pDesc->flags & HANDLE_PARAM_IS_VIA_PTR)
+                {
+                    TRACE("\tHANDLE_PARAM_IS_VIA_PTR\n");
+                    context_handle = **(NDR_CCONTEXT **)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                }
+                else
+                    context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(*pStubMsg, pDesc->offset);
+                if ((pDesc->flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL) &&
+                    !context_handle)
+                {
+                    ERR("null context handle isn't allowed\n");
+                    RpcRaiseException(RPC_X_SS_IN_NULL_CONTEXT);
+                    return NULL;
+                }
+                *phBinding = NDRCContextBinding(context_handle);
+                /* FIXME: should we store this structure in stubMsg.pContext? */
+                return pFormat + sizeof(NDR_EHD_CONTEXT);
+            }
+        default:
+            ERR("bad explicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
+            RpcRaiseException(RPC_X_BAD_STUB_DATA);
+        }
+        break;
+    case RPC_FC_BIND_GENERIC: /* implicit generic */
+        FIXME("RPC_FC_BIND_GENERIC\n");
+        RpcRaiseException(RPC_X_BAD_STUB_DATA); /* FIXME: remove when implemented */
+        break;
+    case RPC_FC_BIND_PRIMITIVE: /* implicit primitive */
+        TRACE("Implicit primitive handle\n");
+        *phBinding = *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pPrimitiveHandle;
+        break;
+    case RPC_FC_CALLBACK_HANDLE: /* implicit callback */
+        FIXME("RPC_FC_CALLBACK_HANDLE\n");
+        break;
+    case RPC_FC_AUTO_HANDLE: /* implicit auto handle */
+        /* strictly speaking, it isn't necessary to set hBinding here
+         * since it isn't actually used (hence the automatic in its name),
+         * but then why does MIDL generate a valid entry in the
+         * MIDL_STUB_DESC for it? */
+        TRACE("Implicit auto handle\n");
+        *phBinding = *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle;
+        break;
+    default:
+        ERR("bad implicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
+    return pFormat;
+}
 
 /* the return type should be CLIENT_CALL_RETURN, but this is incompatible
  * with the way gcc returns structures. "void *" should be the largest type
@@ -383,12 +464,8 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     unsigned short procedure_number;
     /* size of stack */
     unsigned short stack_size;
-    /* current stack offset */
-    unsigned short current_stack_offset;
     /* number of parameters. optional for client to give it to us */
     unsigned char number_of_params = ~0;
-    /* counter */
-    unsigned short i;
     /* cache of Oif_flags from v2 procedure header */
     INTERPRETER_OPT_FLAGS Oif_flags = { 0 };
     /* cache of extension flags from NDR_PROC_HEADER_EXTS */
@@ -397,10 +474,6 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     int phase;
     /* header for procedure string */
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
-    /* offset in format string for start of params */
-    int parameter_start_offset;
-    /* current format string offset */
-    int current_offset;
     /* -Oif or -Oicf generated format */
     BOOL bV2Format = FALSE;
     /* the value to return to the client from the remote procedure */
@@ -422,14 +495,14 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         NDR_PROC_HEADER_RPC * pProcHeader = (NDR_PROC_HEADER_RPC *)&pFormat[0];
         stack_size = pProcHeader->stack_size;
         procedure_number = pProcHeader->proc_num;
-        current_offset = sizeof(NDR_PROC_HEADER_RPC);
+        pFormat += sizeof(NDR_PROC_HEADER_RPC);
     }
     else
     {
         stack_size = pProcHeader->stack_size;
         procedure_number = pProcHeader->proc_num;
         TRACE("proc num: %d\n", procedure_number);
-        current_offset = sizeof(NDR_PROC_HEADER);
+        pFormat += sizeof(NDR_PROC_HEADER);
     }
 
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
@@ -454,83 +527,8 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     /* we only need a handle if this isn't an object method */
     if (!(pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT))
     {
-        /* binding */
-        switch (pProcHeader->handle_type)
-        {
-        /* explicit binding: parse additional section */
-        case RPC_FC_BIND_EXPLICIT:
-            switch (pFormat[current_offset]) /* handle_type */
-            {
-            case RPC_FC_BIND_PRIMITIVE: /* explicit primitive */
-                {
-                    NDR_EHD_PRIMITIVE * pDesc = (NDR_EHD_PRIMITIVE *)&pFormat[current_offset];
-
-                    TRACE("Explicit primitive handle @ %d\n", pDesc->offset);
-
-                    if (pDesc->flag) /* pointer to binding */
-                        hBinding = **(handle_t **)ARG_FROM_OFFSET(stubMsg, pDesc->offset);
-                    else
-                        hBinding = *(handle_t *)ARG_FROM_OFFSET(stubMsg, pDesc->offset);
-                    current_offset += sizeof(NDR_EHD_PRIMITIVE);
-                    break;
-                }
-            case RPC_FC_BIND_GENERIC: /* explicit generic */
-                FIXME("RPC_FC_BIND_GENERIC\n");
-                RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
-                current_offset += sizeof(NDR_EHD_GENERIC);
-                break;
-            case RPC_FC_BIND_CONTEXT: /* explicit context */
-                {
-                    NDR_EHD_CONTEXT * pDesc = (NDR_EHD_CONTEXT *)&pFormat[current_offset];
-                    NDR_CCONTEXT context_handle;
-                    TRACE("Explicit bind context\n");
-                    if (pDesc->flags & HANDLE_PARAM_IS_VIA_PTR)
-                    {
-                        TRACE("\tHANDLE_PARAM_IS_VIA_PTR\n");
-                        context_handle = **(NDR_CCONTEXT **)ARG_FROM_OFFSET(stubMsg, pDesc->offset);
-                    }
-                    else
-                        context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(stubMsg, pDesc->offset);
-                    if ((pDesc->flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL) &&
-                        !context_handle)
-                    {
-                        ERR("null context handle isn't allowed\n");
-                        RpcRaiseException(RPC_X_SS_IN_NULL_CONTEXT);
-                        return 0;
-                    }
-                    hBinding = NDRCContextBinding(context_handle);
-                    /* FIXME: should we store this structure in stubMsg.pContext? */
-                    current_offset += sizeof(NDR_EHD_CONTEXT);
-                    break;
-                }
-            default:
-                ERR("bad explicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
-                RpcRaiseException(RPC_X_BAD_STUB_DATA);
-            }
-            break;
-        case RPC_FC_BIND_GENERIC: /* implicit generic */
-            FIXME("RPC_FC_BIND_GENERIC\n");
-            RpcRaiseException(RPC_X_BAD_STUB_DATA); /* FIXME: remove when implemented */
-            break;
-        case RPC_FC_BIND_PRIMITIVE: /* implicit primitive */
-            TRACE("Implicit primitive handle\n");
-            hBinding = *pStubDesc->IMPLICIT_HANDLE_INFO.pPrimitiveHandle;
-            break;
-        case RPC_FC_CALLBACK_HANDLE: /* implicit callback */
-            FIXME("RPC_FC_CALLBACK_HANDLE\n");
-            break;
-        case RPC_FC_AUTO_HANDLE: /* implicit auto handle */
-            /* strictly speaking, it isn't necessary to set hBinding here
-            * since it isn't actually used (hence the automatic in its name),
-            * but then why does MIDL generate a valid entry in the
-            * MIDL_STUB_DESC for it? */
-            TRACE("Implicit auto handle\n");
-            hBinding = *pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle;
-            break;
-        default:
-            ERR("bad implicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
-            RpcRaiseException(RPC_X_BAD_STUB_DATA);
-        }
+        pFormat = client_get_handle(&stubMsg, pProcHeader, pFormat, &hBinding);
+        if (!pFormat) return 0;
     }
 
     bV2Format = (pStubDesc->Version >= 0x20000);
@@ -538,12 +536,12 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     if (bV2Format)
     {
         NDR_PROC_PARTIAL_OIF_HEADER * pOIFHeader =
-            (NDR_PROC_PARTIAL_OIF_HEADER*)&pFormat[current_offset];
+            (NDR_PROC_PARTIAL_OIF_HEADER*)pFormat;
 
         Oif_flags = pOIFHeader->Oi2Flags;
         number_of_params = pOIFHeader->number_of_params;
 
-        current_offset += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
+        pFormat += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
     }
 
     TRACE("Oif_flags = "); dump_INTERPRETER_OPT_FLAGS(Oif_flags);
@@ -551,9 +549,9 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     if (Oif_flags.HasExtensions)
     {
         NDR_PROC_HEADER_EXTS * pExtensions =
-            (NDR_PROC_HEADER_EXTS *)&pFormat[current_offset];
+            (NDR_PROC_HEADER_EXTS *)pFormat;
         ext_flags = pExtensions->Flags2;
-        current_offset += pExtensions->Size;
+        pFormat += pExtensions->Size;
     }
 
     /* create the full pointer translation tables, if requested */
@@ -588,8 +586,6 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         stubMsg.fHasNewCorrDesc = TRUE;
     }
 
-    parameter_start_offset = current_offset;
-
     /* order of phases:
      * 1. PROXY_CALCSIZE - calculate the buffer size
      * 2. PROXY_GETBUFFER - allocate the buffer
@@ -599,6 +595,13 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
      */
     for (phase = PROXY_CALCSIZE; phase <= PROXY_UNMARSHAL; phase++)
     {
+        /* current format string offset */
+        int current_offset;
+        /* current stack offset */
+        unsigned short current_stack_offset;
+        /* counter */
+        unsigned short i;
+
         TRACE("phase = %d\n", phase);
         switch (phase)
         {
@@ -650,7 +653,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         case PROXY_CALCSIZE:
         case PROXY_MARSHAL:
         case PROXY_UNMARSHAL:
-            current_offset = parameter_start_offset;
+            current_offset = 0;
             current_stack_offset = 0;
 
             /* NOTE: V1 style format does't terminate on the number_of_params
