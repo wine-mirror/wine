@@ -1,3 +1,3157 @@
+2006-05-24  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/usp10/tests/usp10.c:
+	usp10: Fixed a compiler warning.
+
+	* dlls/avifil32/Makefile.in, dlls/comdlg32/Makefile.in,
+	  dlls/dmloader/Makefile.in, dlls/dmusic/Makefile.in,
+	  dlls/dplayx/Makefile.in, dlls/hhctrl.ocx/Makefile.in,
+	  dlls/mciavi32/Makefile.in, dlls/mciseq/Makefile.in,
+	  dlls/mciwave/Makefile.in, dlls/midimap/Makefile.in,
+	  dlls/msacm32.drv/Makefile.in, dlls/msdmo/Makefile.in,
+	  dlls/odbc32/Makefile.in, dlls/rpcrt4/Makefile.in,
+	  dlls/shdocvw/Makefile.in, dlls/urlmon/Makefile.in,
+	  dlls/winmm/winearts/Makefile.in, dlls/winmm/winenas/Makefile.in,
+	  dlls/winmm/wineoss/Makefile.in, programs/msiexec/Makefile.in,
+	  programs/rundll32/Makefile.in, programs/winemenubuilder/Makefile.in:
+	Link against libwine_unicode everywhere we use Unicode functions.
+
+	* dlls/ntdll/tests/atom.c, dlls/ntdll/tests/env.c,
+	  dlls/ntdll/tests/port.c, dlls/oleaut32/tests/vartype.c,
+	  dlls/rpcrt4/tests/ndr_marshall.c, dlls/rpcrt4/tests/rpc.c,
+	  dlls/shdocvw/tests/shortcut.c, dlls/shell32/tests/shlfolder.c,
+	  dlls/shlwapi/tests/path.c:
+	Tests should not use wine/unicode.h.
+
+	* tools/widl/typelib.c, tools/widl/write_msft.c:
+	widl: Get rid of unnecessary inclusion of unicode.h.
+
+	* libs/wine/debug.c:
+	libwine: Don't use libwine_unicode functions.
+
+2006-05-24  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/gdi/font.c, dlls/msi/classes.c, dlls/quartz/filtergraph.c,
+	  programs/winefile/winefile.c:
+	Fixed more boolean comparisons against TRUE.
+
+	* dlls/rpcrt4/ndr_marshall.c, dlls/rpcrt4/rpcrt4.spec:
+	rpcrt4: Add stub implementations for NDRCContext(Un)Marshall.
+
+	* dlls/wininet/dialogs.c:
+	wininet: Fix a possible NULL pointer deference.
+
+2006-05-21  Detlef Riekenberg <wine.dev@web.de>
+
+	* Makefile.in:
+	Makefile.in: find needs a slash when the source dir is a symlink.
+
+2006-05-22  Hwang YunSong <hys545@dreamwiz.com>
+
+	* dlls/gphoto2.ds/gphoto2_Ko.rc, dlls/gphoto2.ds/rsrc.rc:
+	gphoto2.ds: Added Korean resources.
+
+2006-05-24  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/kernel/locale.c, dlls/ntdll/rtlstr.c, include/wine/unicode.h,
+	  libs/unicode/string.c, libs/unicode/wine_unicode.def,
+	  libs/unicode/wine_unicode.map:
+	libwine_unicode: Renamed is_dbcs_leadbyte to wine_is_dbcs_leadbyte.
+
+	* include/wine/unicode.h, libs/unicode/string.c,
+	  libs/unicode/wine_unicode.def, libs/unicode/wine_unicode.map:
+	libwine_unicode: Define all functions in the library even if they can be inlined.
+
+2006-05-24  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/user/tests/msg.c:
+	user: Add a test to check the queue status if there is a pending
+	posted message and the quit flag is set.
+
+2006-05-24  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/d3d9/swapchain.c, dlls/d3d9/tests/device.c, dlls/wined3d/device.c,
+	  dlls/wined3d/swapchain.c, dlls/wined3d/wined3d_private.h,
+	  include/wine/wined3d_interface.h:
+	wined3d: Swapchain and back buffer corrections + tests.
+
+2006-05-24  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/msi/dialog.c:
+	msi: Set a default radio button.
+
+	* dlls/msi/action.c:
+	msi: Fix a possible memory leak.
+
+2006-05-21  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/wined3d/device.c, dlls/wined3d/directx.c,
+	  include/wine/wined3d_gl.h:
+	wined3d: Fix ARB_imaging abuse.
+
+2006-05-24  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/wined3d/device.c:
+	wined3d: Fixed a couple of boolean comparisons against TRUE.
+
+2006-05-23  Jason Green <jave27@gmail.com>
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/directx.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Replaced USING_GLSL define with a new wined3d_settings option based
+	on the registry.
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/wined3d_private.h:
+	wined3d: Add function to print the infolog of a GLSL shader on errors.
+	With assistance from H. Verbeet.
+
+	* include/wine/wined3d_gl.h:
+	wined3d: Added some GLSL defines and function prototypes.
+
+2006-05-23  Andrew Talbot <Andrew.Talbot@talbotville.com>
+
+	* dlls/comdlg32/printdlg.c:
+	comdlg32: Write-strings warning fix.
+
+2006-05-23  Jonathan Ernst <jonathan@ernstfamily.ch>
+
+	* dlls/comctl32/comctl_Fr.rc, dlls/comdlg32/cdlg_Fr.rc,
+	  dlls/msacm32/msacm_Fr.rc, programs/cmdlgtst/Fr.rc,
+	  programs/notepad/Fr.rc, programs/progman/Fr.rc,
+	  programs/regedit/Fr.rc, programs/taskmgr/Fr.rc,
+	  programs/winefile/Fr.rc, programs/winhelp/Fr.rc,
+	  programs/wordpad/Fr.rc:
+	Uniformization of French main menu accelerators.
+
+2006-05-23  Hans Leidekker <hans@it.vu.nl>
+
+	* programs/uninstaller/Nl.rc, programs/uninstaller/rsrc.rc:
+	uninstaller: Add Dutch resources.
+
+2006-05-24  Marcus Meissner <marcus@jet.franken.de>
+
+	* dlls/x11drv/xrender.c:
+	x11drv: GdiAlphaBlend fix for X errors if width or height is 0.
+
+2006-05-23  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/store.c, dlls/crypt32/tests/store.c:
+	crypt32: Test and fix a couple CertAddCertificateContextToStore corner cases.
+
+2006-05-23  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/directx.c:
+	wined3d: Remove a double cap flag.
+
+	* dlls/wined3d/surface.c:
+	wined3d: Remove an unnecessary NULL check.
+
+2006-05-23  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/htmldoc.c, dlls/mshtml/mshtml_private.h,
+	  dlls/mshtml/persist.c:
+	mshtml: Added stub implementation of IPersistStreamInit.
+
+	* dlls/shdocvw/oleobject.c:
+	shdocvw: Added OLEIVERB_UIACTIVATE implementation.
+
+	* dlls/shdocvw/oleobject.c:
+	shdocvw: Don't do verb that is already done.
+
+	* dlls/shdocvw/oleobject.c:
+	shdocvw: Move UI activating to the separated function.
+
+	* dlls/shdocvw/oleobject.c:
+	shdocvw: Move inplace activating code to the separated function.
+
+	* dlls/shdocvw/factory.c, dlls/shdocvw/shdocvw.h,
+	  dlls/shdocvw/webbrowser.c:
+	shdocvw: Added WebBrowser v1 implementation.
+
+	* dlls/shdocvw/regsvr.c:
+	shdocvw: Added WebBrowser v1 registration.
+
+2006-05-23  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/comctl32/propsheet.c:
+	comctl32: Fix the loading of strings for the property sheet page by
+	caching the ID of the string to load before overwriting it with an
+	Alloc call.
+
+2006-05-23  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/winproc.c:
+	user: Reuse the fast A->W function to implement the 16->32W case.
+	Get rid of the no longer needed 16->32W mapping functions.
+
+	* dlls/user/winproc.c:
+	user: Reuse the fast W->A function to implement the 32W->16 case.
+	Get rid of the no longer needed 32W->16 mapping functions.
+
+	* dlls/user/msg16.c, dlls/user/winproc.c, dlls/user/winproc.h:
+	user: Use winproc callbacks for the remaining 16-bit messaging functions.
+
+2006-05-22  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Don't try to draw items outside the clipping rect.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Make the column resizing smooth in full drag mode.
+	Make the column resizing smooth in full drag mode even for listview
+	with lots of elements by redrawing only the resized column and calling
+	UpdateWindow.
+
+2006-05-22  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/Makefile.in, dlls/crypt32/context.c,
+	  dlls/crypt32/crypt32_private.h, dlls/crypt32/store.c:
+	crypt32: Abstract contexts.
+	- create an abstract interface for contexts, and use it for certificates
+	- create a simple context list, and use it for memory stores
+
+2006-05-23  Jeff Latimer <lats@yless4u.com.au>
+
+	* dlls/usp10/tests/usp10.c, dlls/usp10/usp10.c, dlls/usp10/usp10.spec:
+	usp10: Add stub for ScriptStringOut.
+
+2006-05-23  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/swapchain.c:
+	wined3d: Do not addref a NULL backbuffer in IWineD3DSwapChain::GetBackBuffer.
+
+2006-05-23  Huw Davies <huw@codeweavers.com>
+
+	* dlls/rpcrt4/tests/ndr_marshall.c:
+	rpcrt4: Uncomment test now that it works correctly.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Add another static.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Fix some comments and move the NdrSimpleType* functions out from
+	amongst the NdrSimpleStruct* ones.
+
+2006-05-23  Alexandre Julliard <julliard@winehq.org>
+
+	* configure, configure.ac, dlls/.gitignore, dlls/Makefile.in,
+	  dlls/winspool.drv/.gitignore, dlls/winspool.drv/Bg.rc,
+	  dlls/winspool.drv/De.rc, dlls/winspool.drv/En.rc,
+	  dlls/winspool.drv/Eo.rc, dlls/winspool.drv/Fi.rc,
+	  dlls/winspool.drv/It.rc, dlls/winspool.drv/Ko.rc,
+	  dlls/winspool.drv/Makefile.in, dlls/winspool.drv/Nl.rc,
+	  dlls/winspool.drv/Ru.rc, dlls/winspool.drv/Tr.rc,
+	  dlls/winspool.drv/info.c, dlls/winspool.drv/tests/.gitignore,
+	  dlls/winspool.drv/tests/Makefile.in, dlls/winspool.drv/tests/info.c,
+	  dlls/winspool.drv/winspool.drv.spec, dlls/winspool.drv/winspool.rc,
+	  dlls/winspool.drv/wspool.c, dlls/winspool.drv/wspool.h,
+	  dlls/winspool/.gitignore, dlls/winspool/Bg.rc, dlls/winspool/De.rc,
+	  dlls/winspool/En.rc, dlls/winspool/Eo.rc, dlls/winspool/Fi.rc,
+	  dlls/winspool/It.rc, dlls/winspool/Ko.rc, dlls/winspool/Makefile.in,
+	  dlls/winspool/Nl.rc, dlls/winspool/Ru.rc, dlls/winspool/Tr.rc,
+	  dlls/winspool/info.c, dlls/winspool/tests/.gitignore,
+	  dlls/winspool/tests/Makefile.in, dlls/winspool/tests/info.c,
+	  dlls/winspool/winspool.drv.spec, dlls/winspool/winspool.rc,
+	  dlls/winspool/wspool.c, dlls/winspool/wspool.h,
+	  programs/winetest/Makefile.in:
+	winspool: Renamed the directory to winspool.drv.
+
+	* configure, configure.ac, dlls/Makefile.in, dlls/wineps.drv/.gitignore,
+	  dlls/wineps.drv/Makefile.in, dlls/wineps.drv/afm.c,
+	  dlls/wineps.drv/afm2c.c, dlls/wineps.drv/bitblt.c,
+	  dlls/wineps.drv/bitmap.c, dlls/wineps.drv/brush.c,
+	  dlls/wineps.drv/builtin.c, dlls/wineps.drv/clipping.c,
+	  dlls/wineps.drv/color.c, dlls/wineps.drv/data/AvantGarde_Book.c,
+	  dlls/wineps.drv/data/AvantGarde_BookOblique.c,
+	  dlls/wineps.drv/data/AvantGarde_Demi.c,
+	  dlls/wineps.drv/data/AvantGarde_DemiOblique.c,
+	  dlls/wineps.drv/data/Bookman_Demi.c,
+	  dlls/wineps.drv/data/Bookman_DemiItalic.c,
+	  dlls/wineps.drv/data/Bookman_Light.c,
+	  dlls/wineps.drv/data/Bookman_LightItalic.c,
+	  dlls/wineps.drv/data/COPYRIGHTS, dlls/wineps.drv/data/Courier.c,
+	  dlls/wineps.drv/data/Courier_Bold.c,
+	  dlls/wineps.drv/data/Courier_BoldOblique.c,
+	  dlls/wineps.drv/data/Courier_Oblique.c,
+	  dlls/wineps.drv/data/Helvetica.c,
+	  dlls/wineps.drv/data/Helvetica_Bold.c,
+	  dlls/wineps.drv/data/Helvetica_BoldOblique.c,
+	  dlls/wineps.drv/data/Helvetica_Narrow.c,
+	  dlls/wineps.drv/data/Helvetica_Narrow_Bold.c,
+	  dlls/wineps.drv/data/Helvetica_Narrow_BoldOblique.c,
+	  dlls/wineps.drv/data/Helvetica_Narrow_Oblique.c,
+	  dlls/wineps.drv/data/Helvetica_Oblique.c,
+	  dlls/wineps.drv/data/NewCenturySchlbk_Bold.c,
+	  dlls/wineps.drv/data/NewCenturySchlbk_BoldItalic.c,
+	  dlls/wineps.drv/data/NewCenturySchlbk_Italic.c,
+	  dlls/wineps.drv/data/NewCenturySchlbk_Roman.c,
+	  dlls/wineps.drv/data/Palatino_Bold.c,
+	  dlls/wineps.drv/data/Palatino_BoldItalic.c,
+	  dlls/wineps.drv/data/Palatino_Italic.c,
+	  dlls/wineps.drv/data/Palatino_Roman.c, dlls/wineps.drv/data/Symbol.c,
+	  dlls/wineps.drv/data/Times_Bold.c,
+	  dlls/wineps.drv/data/Times_BoldItalic.c,
+	  dlls/wineps.drv/data/Times_Italic.c,
+	  dlls/wineps.drv/data/Times_Roman.c,
+	  dlls/wineps.drv/data/ZapfChancery_MediumItalic.c,
+	  dlls/wineps.drv/data/ZapfDingbats.c, dlls/wineps.drv/data/agl.c,
+	  dlls/wineps.drv/data/agl.h, dlls/wineps.drv/download.c,
+	  dlls/wineps.drv/driver.c, dlls/wineps.drv/encode.c,
+	  dlls/wineps.drv/escape.c, dlls/wineps.drv/font.c,
+	  dlls/wineps.drv/generic.ppd, dlls/wineps.drv/glyphlist.c,
+	  dlls/wineps.drv/graphics.c, dlls/wineps.drv/init.c,
+	  dlls/wineps.drv/mkagl.c, dlls/wineps.drv/objects.c,
+	  dlls/wineps.drv/pen.c, dlls/wineps.drv/ppd.c, dlls/wineps.drv/ps.c,
+	  dlls/wineps.drv/psdlg.h, dlls/wineps.drv/psdrv.h,
+	  dlls/wineps.drv/rsrc.rc, dlls/wineps.drv/text.c,
+	  dlls/wineps.drv/truetype.c, dlls/wineps.drv/type1.c,
+	  dlls/wineps.drv/type1afm.c, dlls/wineps.drv/type42.c,
+	  dlls/wineps.drv/wineps.drv.spec, dlls/wineps.drv/wineps16.drv.spec,
+	  dlls/wineps.drv/wps_Bg.rc, dlls/wineps.drv/wps_Cs.rc,
+	  dlls/wineps.drv/wps_De.rc, dlls/wineps.drv/wps_En.rc,
+	  dlls/wineps.drv/wps_Es.rc, dlls/wineps.drv/wps_Fr.rc,
+	  dlls/wineps.drv/wps_Hu.rc, dlls/wineps.drv/wps_It.rc,
+	  dlls/wineps.drv/wps_Ja.rc, dlls/wineps.drv/wps_Ko.rc,
+	  dlls/wineps.drv/wps_Nl.rc, dlls/wineps.drv/wps_No.rc,
+	  dlls/wineps.drv/wps_Pt.rc, dlls/wineps.drv/wps_Ru.rc,
+	  dlls/wineps.drv/wps_Si.rc, dlls/wineps.drv/wps_Sk.rc,
+	  dlls/wineps.drv/wps_Tr.rc, dlls/wineps.drv/wps_xx.rc,
+	  dlls/wineps/.gitignore, dlls/wineps/Makefile.in, dlls/wineps/afm.c,
+	  dlls/wineps/afm2c.c, dlls/wineps/bitblt.c, dlls/wineps/bitmap.c,
+	  dlls/wineps/brush.c, dlls/wineps/builtin.c, dlls/wineps/clipping.c,
+	  dlls/wineps/color.c, dlls/wineps/data/AvantGarde_Book.c,
+	  dlls/wineps/data/AvantGarde_BookOblique.c,
+	  dlls/wineps/data/AvantGarde_Demi.c,
+	  dlls/wineps/data/AvantGarde_DemiOblique.c,
+	  dlls/wineps/data/Bookman_Demi.c,
+	  dlls/wineps/data/Bookman_DemiItalic.c,
+	  dlls/wineps/data/Bookman_Light.c,
+	  dlls/wineps/data/Bookman_LightItalic.c, dlls/wineps/data/COPYRIGHTS,
+	  dlls/wineps/data/Courier.c, dlls/wineps/data/Courier_Bold.c,
+	  dlls/wineps/data/Courier_BoldOblique.c,
+	  dlls/wineps/data/Courier_Oblique.c, dlls/wineps/data/Helvetica.c,
+	  dlls/wineps/data/Helvetica_Bold.c,
+	  dlls/wineps/data/Helvetica_BoldOblique.c,
+	  dlls/wineps/data/Helvetica_Narrow.c,
+	  dlls/wineps/data/Helvetica_Narrow_Bold.c,
+	  dlls/wineps/data/Helvetica_Narrow_BoldOblique.c,
+	  dlls/wineps/data/Helvetica_Narrow_Oblique.c,
+	  dlls/wineps/data/Helvetica_Oblique.c,
+	  dlls/wineps/data/NewCenturySchlbk_Bold.c,
+	  dlls/wineps/data/NewCenturySchlbk_BoldItalic.c,
+	  dlls/wineps/data/NewCenturySchlbk_Italic.c,
+	  dlls/wineps/data/NewCenturySchlbk_Roman.c,
+	  dlls/wineps/data/Palatino_Bold.c,
+	  dlls/wineps/data/Palatino_BoldItalic.c,
+	  dlls/wineps/data/Palatino_Italic.c,
+	  dlls/wineps/data/Palatino_Roman.c, dlls/wineps/data/Symbol.c,
+	  dlls/wineps/data/Times_Bold.c, dlls/wineps/data/Times_BoldItalic.c,
+	  dlls/wineps/data/Times_Italic.c, dlls/wineps/data/Times_Roman.c,
+	  dlls/wineps/data/ZapfChancery_MediumItalic.c,
+	  dlls/wineps/data/ZapfDingbats.c, dlls/wineps/data/agl.c,
+	  dlls/wineps/data/agl.h, dlls/wineps/download.c, dlls/wineps/driver.c,
+	  dlls/wineps/encode.c, dlls/wineps/escape.c, dlls/wineps/font.c,
+	  dlls/wineps/generic.ppd, dlls/wineps/glyphlist.c,
+	  dlls/wineps/graphics.c, dlls/wineps/init.c, dlls/wineps/mkagl.c,
+	  dlls/wineps/objects.c, dlls/wineps/pen.c, dlls/wineps/ppd.c,
+	  dlls/wineps/ps.c, dlls/wineps/psdlg.h, dlls/wineps/psdrv.h,
+	  dlls/wineps/rsrc.rc, dlls/wineps/text.c, dlls/wineps/truetype.c,
+	  dlls/wineps/type1.c, dlls/wineps/type1afm.c, dlls/wineps/type42.c,
+	  dlls/wineps/wineps.drv.spec, dlls/wineps/wineps16.drv.spec,
+	  dlls/wineps/wps_Bg.rc, dlls/wineps/wps_Cs.rc, dlls/wineps/wps_De.rc,
+	  dlls/wineps/wps_En.rc, dlls/wineps/wps_Es.rc, dlls/wineps/wps_Fr.rc,
+	  dlls/wineps/wps_Hu.rc, dlls/wineps/wps_It.rc, dlls/wineps/wps_Ja.rc,
+	  dlls/wineps/wps_Ko.rc, dlls/wineps/wps_Nl.rc, dlls/wineps/wps_No.rc,
+	  dlls/wineps/wps_Pt.rc, dlls/wineps/wps_Ru.rc, dlls/wineps/wps_Si.rc,
+	  dlls/wineps/wps_Sk.rc, dlls/wineps/wps_Tr.rc, dlls/wineps/wps_xx.rc:
+	wineps: Renamed the directory to wineps.drv.
+
+	* configure, configure.ac, dlls/Makefile.in, dlls/msisys.ocx/.gitignore,
+	  dlls/msisys.ocx/Makefile.in, dlls/msisys.ocx/msisys.c,
+	  dlls/msisys.ocx/msisys.ocx.spec, dlls/msisys/.gitignore,
+	  dlls/msisys/Makefile.in, dlls/msisys/msisys.c,
+	  dlls/msisys/msisys.ocx.spec:
+	msisys: Renamed the directory to msisys.ocx.
+
+2006-05-18  Jonathan Ernst <jonathan@ernstfamily.ch>
+
+	* COPYING.LIB, LICENSE, aclocal.m4, dlls/activeds/activeds_main.c,
+	  dlls/advapi32/advapi.c, dlls/advapi32/crypt.c, dlls/advapi32/crypt.h,
+	  dlls/advapi32/crypt_arc4.c, dlls/advapi32/crypt_des.c,
+	  dlls/advapi32/crypt_lmhash.c, dlls/advapi32/crypt_md4.c,
+	  dlls/advapi32/crypt_md5.c, dlls/advapi32/crypt_sha.c,
+	  dlls/advapi32/eventlog.c, dlls/advapi32/lsa.c,
+	  dlls/advapi32/registry.c, dlls/advapi32/security.c,
+	  dlls/advapi32/service.c, dlls/advapi32/tests/crypt.c,
+	  dlls/advapi32/tests/crypt_lmhash.c, dlls/advapi32/tests/crypt_md4.c,
+	  dlls/advapi32/tests/crypt_md5.c, dlls/advapi32/tests/crypt_sha.c,
+	  dlls/advapi32/tests/lsa.c, dlls/advapi32/tests/registry.c,
+	  dlls/advapi32/tests/security.c, dlls/advpack/advpack.c,
+	  dlls/advpack/advpack_private.h, dlls/advpack/files.c,
+	  dlls/advpack/install.c, dlls/advpack/reg.c,
+	  dlls/advpack/tests/advpack.c, dlls/advpack/tests/files.c,
+	  dlls/advpack/tests/install.c, dlls/amstream/amstream.c,
+	  dlls/amstream/amstream_private.h, dlls/amstream/main.c,
+	  dlls/amstream/mediastream.c, dlls/amstream/regsvr.c,
+	  dlls/amstream/version.rc, dlls/atl/atl_main.c, dlls/atl/atlbase.h,
+	  dlls/atl/atliface.idl, dlls/atl/registrar.c, dlls/atl/rsrc.rc,
+	  dlls/avicap32/avicap32_main.c, dlls/avifil32/acmstream.c,
+	  dlls/avifil32/api.c, dlls/avifil32/avifile.c,
+	  dlls/avifil32/avifile_Cs.rc, dlls/avifil32/avifile_De.rc,
+	  dlls/avifil32/avifile_En.rc, dlls/avifil32/avifile_Es.rc,
+	  dlls/avifil32/avifile_Fr.rc, dlls/avifil32/avifile_Hu.rc,
+	  dlls/avifil32/avifile_It.rc, dlls/avifil32/avifile_Ja.rc,
+	  dlls/avifil32/avifile_Ko.rc, dlls/avifil32/avifile_Nl.rc,
+	  dlls/avifil32/avifile_No.rc, dlls/avifil32/avifile_Pl.rc,
+	  dlls/avifil32/avifile_Pt.rc, dlls/avifil32/avifile_Ru.rc,
+	  dlls/avifil32/avifile_Si.rc, dlls/avifil32/avifile_Tr.rc,
+	  dlls/avifil32/avifile_private.h, dlls/avifil32/editstream.c,
+	  dlls/avifil32/extrachunk.c, dlls/avifil32/extrachunk.h,
+	  dlls/avifil32/factory.c, dlls/avifil32/getframe.c,
+	  dlls/avifil32/icmstream.c, dlls/avifil32/regsvr.c,
+	  dlls/avifil32/rsrc.rc, dlls/avifil32/tmpfile.c,
+	  dlls/avifil32/wavfile.c, dlls/cabinet/cabinet.h,
+	  dlls/cabinet/cabinet.rc, dlls/cabinet/cabinet_main.c,
+	  dlls/cabinet/fci.c, dlls/cabinet/fdi.c, dlls/cabinet/tests/extract.c,
+	  dlls/capi2032/cap20wxx.c, dlls/capi2032/cap20wxx.h,
+	  dlls/cards/cards.c, dlls/cards/cards.h, dlls/cards/cards.rc,
+	  dlls/cards/version.rc, dlls/cfgmgr32/main.c,
+	  dlls/comcat/comcat_main.c, dlls/comcat/comcat_private.h,
+	  dlls/comcat/factory.c, dlls/comcat/information.c,
+	  dlls/comcat/manager.c, dlls/comcat/register.c, dlls/comcat/regsvr.c,
+	  dlls/comcat/version.rc, dlls/comctl32/animate.c,
+	  dlls/comctl32/comboex.c, dlls/comctl32/comctl32.h,
+	  dlls/comctl32/comctl32undoc.c, dlls/comctl32/comctl_Bg.rc,
+	  dlls/comctl32/comctl_Cn.rc, dlls/comctl32/comctl_Cs.rc,
+	  dlls/comctl32/comctl_De.rc, dlls/comctl32/comctl_En.rc,
+	  dlls/comctl32/comctl_Eo.rc, dlls/comctl32/comctl_Es.rc,
+	  dlls/comctl32/comctl_Fr.rc, dlls/comctl32/comctl_Hu.rc,
+	  dlls/comctl32/comctl_It.rc, dlls/comctl32/comctl_Ja.rc,
+	  dlls/comctl32/comctl_Ko.rc, dlls/comctl32/comctl_Nl.rc,
+	  dlls/comctl32/comctl_No.rc, dlls/comctl32/comctl_Pl.rc,
+	  dlls/comctl32/comctl_Pt.rc, dlls/comctl32/comctl_Ru.rc,
+	  dlls/comctl32/comctl_Si.rc, dlls/comctl32/comctl_Sv.rc,
+	  dlls/comctl32/comctl_Th.rc, dlls/comctl32/comctl_Tr.rc,
+	  dlls/comctl32/comctl_Uk.rc, dlls/comctl32/commctrl.c,
+	  dlls/comctl32/datetime.c, dlls/comctl32/dpa.c,
+	  dlls/comctl32/draglist.c, dlls/comctl32/dsa.c,
+	  dlls/comctl32/flatsb.c, dlls/comctl32/header.c,
+	  dlls/comctl32/hotkey.c, dlls/comctl32/imagelist.c,
+	  dlls/comctl32/imagelist.h, dlls/comctl32/ipaddress.c,
+	  dlls/comctl32/listview.c, dlls/comctl32/monthcal.c,
+	  dlls/comctl32/nativefont.c, dlls/comctl32/pager.c,
+	  dlls/comctl32/progress.c, dlls/comctl32/propsheet.c,
+	  dlls/comctl32/rebar.c, dlls/comctl32/rsrc.rc,
+	  dlls/comctl32/smoothscroll.c, dlls/comctl32/status.c,
+	  dlls/comctl32/string.c, dlls/comctl32/syslink.c, dlls/comctl32/tab.c,
+	  dlls/comctl32/tests/comboex.c, dlls/comctl32/tests/dpa.c,
+	  dlls/comctl32/tests/header.c, dlls/comctl32/tests/imagelist.c,
+	  dlls/comctl32/tests/monthcal.c, dlls/comctl32/tests/mru.c,
+	  dlls/comctl32/tests/progress.c, dlls/comctl32/tests/propsheet.c,
+	  dlls/comctl32/tests/propsheet.rc, dlls/comctl32/tests/subclass.c,
+	  dlls/comctl32/tests/tab.c, dlls/comctl32/tests/toolbar.c,
+	  dlls/comctl32/tests/tooltips.c, dlls/comctl32/tests/treeview.c,
+	  dlls/comctl32/tests/updown.c, dlls/comctl32/theme_combo.c,
+	  dlls/comctl32/theme_dialog.c, dlls/comctl32/theme_edit.c,
+	  dlls/comctl32/theme_listbox.c, dlls/comctl32/theming.c,
+	  dlls/comctl32/toolbar.c, dlls/comctl32/tooltips.c,
+	  dlls/comctl32/trackbar.c, dlls/comctl32/treeview.c,
+	  dlls/comctl32/updown.c, dlls/comdlg32/cdlg.h, dlls/comdlg32/cdlg16.h,
+	  dlls/comdlg32/cdlg32.c, dlls/comdlg32/cdlg_Bg.rc,
+	  dlls/comdlg32/cdlg_Ca.rc, dlls/comdlg32/cdlg_Cn.rc,
+	  dlls/comdlg32/cdlg_Cs.rc, dlls/comdlg32/cdlg_Da.rc,
+	  dlls/comdlg32/cdlg_De.rc, dlls/comdlg32/cdlg_En.rc,
+	  dlls/comdlg32/cdlg_Eo.rc, dlls/comdlg32/cdlg_Es.rc,
+	  dlls/comdlg32/cdlg_Fi.rc, dlls/comdlg32/cdlg_Fr.rc,
+	  dlls/comdlg32/cdlg_Hu.rc, dlls/comdlg32/cdlg_It.rc,
+	  dlls/comdlg32/cdlg_Ja.rc, dlls/comdlg32/cdlg_Ko.rc,
+	  dlls/comdlg32/cdlg_Nl.rc, dlls/comdlg32/cdlg_No.rc,
+	  dlls/comdlg32/cdlg_Pl.rc, dlls/comdlg32/cdlg_Pt.rc,
+	  dlls/comdlg32/cdlg_Ru.rc, dlls/comdlg32/cdlg_Si.rc,
+	  dlls/comdlg32/cdlg_Sk.rc, dlls/comdlg32/cdlg_Sv.rc,
+	  dlls/comdlg32/cdlg_Th.rc, dlls/comdlg32/cdlg_Tr.rc,
+	  dlls/comdlg32/cdlg_Uk.rc, dlls/comdlg32/cdlg_Wa.rc,
+	  dlls/comdlg32/cdlg_Zh.rc, dlls/comdlg32/cdlg_xx.rc,
+	  dlls/comdlg32/colordlg.c, dlls/comdlg32/colordlg16.c,
+	  dlls/comdlg32/filedlg.c, dlls/comdlg32/filedlg16.c,
+	  dlls/comdlg32/filedlg31.c, dlls/comdlg32/filedlg31.h,
+	  dlls/comdlg32/filedlgbrowser.c, dlls/comdlg32/filedlgbrowser.h,
+	  dlls/comdlg32/filetitle.c, dlls/comdlg32/finddlg.c,
+	  dlls/comdlg32/finddlg32.c, dlls/comdlg32/fontdlg.c,
+	  dlls/comdlg32/fontdlg16.c, dlls/comdlg32/printdlg.c,
+	  dlls/comdlg32/printdlg.h, dlls/comdlg32/printdlg16.c,
+	  dlls/comdlg32/rsrc.rc, dlls/crtdll/crtdll_main.c,
+	  dlls/crypt32/cert.c, dlls/crypt32/crypt32.rc,
+	  dlls/crypt32/crypt32_De.rc, dlls/crypt32/crypt32_En.rc,
+	  dlls/crypt32/crypt32_Ko.rc, dlls/crypt32/crypt32_No.rc,
+	  dlls/crypt32/crypt32_private.h, dlls/crypt32/cryptres.h,
+	  dlls/crypt32/decode.c, dlls/crypt32/encode.c, dlls/crypt32/main.c,
+	  dlls/crypt32/oid.c, dlls/crypt32/proplist.c,
+	  dlls/crypt32/protectdata.c, dlls/crypt32/serialize.c,
+	  dlls/crypt32/store.c, dlls/crypt32/str.c, dlls/crypt32/tests/cert.c,
+	  dlls/crypt32/tests/encode.c, dlls/crypt32/tests/main.c,
+	  dlls/crypt32/tests/oid.c, dlls/crypt32/tests/protectdata.c,
+	  dlls/crypt32/tests/store.c, dlls/crypt32/tests/str.c,
+	  dlls/crypt32/version.rc, dlls/cryptdll/cryptdll.c,
+	  dlls/ctl3d32/ctl3d.c, dlls/ctl3d32/ctl3d32.c,
+	  dlls/d3d8/basetexture.c, dlls/d3d8/cubetexture.c,
+	  dlls/d3d8/d3d8_main.c, dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c,
+	  dlls/d3d8/directx.c, dlls/d3d8/indexbuffer.c,
+	  dlls/d3d8/pixelshader.c, dlls/d3d8/resource.c,
+	  dlls/d3d8/stateblock.c, dlls/d3d8/surface.c, dlls/d3d8/swapchain.c,
+	  dlls/d3d8/tests/device.c, dlls/d3d8/texture.c, dlls/d3d8/version.rc,
+	  dlls/d3d8/vertexbuffer.c, dlls/d3d8/vertexshader.c,
+	  dlls/d3d8/volume.c, dlls/d3d8/volumetexture.c,
+	  dlls/d3d9/basetexture.c, dlls/d3d9/cubetexture.c,
+	  dlls/d3d9/d3d9_main.c, dlls/d3d9/d3d9_private.h, dlls/d3d9/device.c,
+	  dlls/d3d9/directx.c, dlls/d3d9/indexbuffer.c,
+	  dlls/d3d9/pixelshader.c, dlls/d3d9/query.c, dlls/d3d9/resource.c,
+	  dlls/d3d9/stateblock.c, dlls/d3d9/surface.c, dlls/d3d9/swapchain.c,
+	  dlls/d3d9/tests/device.c, dlls/d3d9/tests/shader.c,
+	  dlls/d3d9/tests/stateblock.c, dlls/d3d9/tests/vertexdeclaration.c,
+	  dlls/d3d9/texture.c, dlls/d3d9/version.rc, dlls/d3d9/vertexbuffer.c,
+	  dlls/d3d9/vertexdeclaration.c, dlls/d3d9/vertexshader.c,
+	  dlls/d3d9/volume.c, dlls/d3d9/volumetexture.c,
+	  dlls/d3d9/vshaderdeclaration.c, dlls/d3dim/d3dim_main.c,
+	  dlls/d3dim/version.rc, dlls/d3drm/d3drm_main.c,
+	  dlls/d3drm/version.rc, dlls/d3dx8/d3dx8_main.c,
+	  dlls/d3dx8/d3dx8core_private.h, dlls/d3dx8/d3dxbuffer.c,
+	  dlls/d3dxof/d3dxof.c, dlls/d3dxof/d3dxof_private.h,
+	  dlls/d3dxof/main.c, dlls/d3dxof/regsvr.c, dlls/d3dxof/version.rc,
+	  dlls/dbghelp/coff.c, dlls/dbghelp/dbghelp.c,
+	  dlls/dbghelp/dbghelp_private.h, dlls/dbghelp/dwarf.c,
+	  dlls/dbghelp/elf_module.c, dlls/dbghelp/image.c,
+	  dlls/dbghelp/memory.c, dlls/dbghelp/minidump.c,
+	  dlls/dbghelp/module.c, dlls/dbghelp/msc.c, dlls/dbghelp/mscvpdb.h,
+	  dlls/dbghelp/path.c, dlls/dbghelp/pe_module.c, dlls/dbghelp/source.c,
+	  dlls/dbghelp/stabs.c, dlls/dbghelp/stack.c, dlls/dbghelp/storage.c,
+	  dlls/dbghelp/symbol.c, dlls/dbghelp/type.c, dlls/dbghelp/wdbgexts.h,
+	  dlls/dciman32/dciman_main.c, dlls/ddraw/clipper.c,
+	  dlls/ddraw/d3d_private.h, dlls/ddraw/d3d_utils.c,
+	  dlls/ddraw/ddcomimpl.h, dlls/ddraw/ddraw_hal.c,
+	  dlls/ddraw/ddraw_main.c, dlls/ddraw/ddraw_private.h,
+	  dlls/ddraw/ddraw_thunks.c, dlls/ddraw/ddraw_user.c,
+	  dlls/ddraw/ddraw_utils.c, dlls/ddraw/device_main.c,
+	  dlls/ddraw/device_opengl.c, dlls/ddraw/direct3d_main.c,
+	  dlls/ddraw/direct3d_opengl.c, dlls/ddraw/executebuffer.c,
+	  dlls/ddraw/gl_api.h, dlls/ddraw/gl_private.h, dlls/ddraw/light.c,
+	  dlls/ddraw/main.c, dlls/ddraw/material.c,
+	  dlls/ddraw/opengl_private.h, dlls/ddraw/opengl_utils.c,
+	  dlls/ddraw/palette_hal.c, dlls/ddraw/palette_main.c,
+	  dlls/ddraw/regsvr.c, dlls/ddraw/surface_dib.c,
+	  dlls/ddraw/surface_fakezbuffer.c, dlls/ddraw/surface_gamma.c,
+	  dlls/ddraw/surface_hal.c, dlls/ddraw/surface_main.c,
+	  dlls/ddraw/surface_thunks.c, dlls/ddraw/surface_user.c,
+	  dlls/ddraw/surface_wndproc.c, dlls/ddraw/tests/d3d.c,
+	  dlls/ddraw/tests/ddrawmodes.c, dlls/ddraw/tests/dsurface.c,
+	  dlls/ddraw/texture.c, dlls/ddraw/version.rc,
+	  dlls/ddraw/vertexbuffer.c, dlls/ddraw/viewport.c,
+	  dlls/devenum/createdevenum.c, dlls/devenum/devenum.rc,
+	  dlls/devenum/devenum_main.c, dlls/devenum/devenum_private.h,
+	  dlls/devenum/factory.c, dlls/devenum/mediacatenum.c,
+	  dlls/devenum/parsedisplayname.c, dlls/dinput/data_formats.c,
+	  dlls/dinput/device.c, dlls/dinput/device_private.h,
+	  dlls/dinput/dinput_main.c, dlls/dinput/dinput_private.h,
+	  dlls/dinput/effect_linuxinput.c, dlls/dinput/joystick_linux.c,
+	  dlls/dinput/joystick_linuxinput.c, dlls/dinput/keyboard.c,
+	  dlls/dinput/mouse.c, dlls/dinput/regsvr.c,
+	  dlls/dinput/tests/dinput_test.h, dlls/dinput/tests/joystick.c,
+	  dlls/dinput/tests/keyboard.c, dlls/dinput/tests/mouse.c,
+	  dlls/dinput/version.rc, dlls/dinput8/dinput8_main.c,
+	  dlls/dinput8/version.rc, dlls/dmband/band.c, dlls/dmband/bandtrack.c,
+	  dlls/dmband/dmband_main.c, dlls/dmband/dmband_private.h,
+	  dlls/dmband/dmutils.c, dlls/dmband/dmutils.h, dlls/dmband/regsvr.c,
+	  dlls/dmband/version.rc, dlls/dmcompos/chordmap.c,
+	  dlls/dmcompos/chordmaptrack.c, dlls/dmcompos/composer.c,
+	  dlls/dmcompos/dmcompos_main.c, dlls/dmcompos/dmcompos_private.h,
+	  dlls/dmcompos/regsvr.c, dlls/dmcompos/signposttrack.c,
+	  dlls/dmcompos/version.rc, dlls/dmime/audiopath.c,
+	  dlls/dmime/dmime_main.c, dlls/dmime/dmime_private.h,
+	  dlls/dmime/dmutils.c, dlls/dmime/dmutils.h, dlls/dmime/graph.c,
+	  dlls/dmime/lyricstrack.c, dlls/dmime/markertrack.c,
+	  dlls/dmime/paramcontroltrack.c, dlls/dmime/patterntrack.c,
+	  dlls/dmime/performance.c, dlls/dmime/regsvr.c, dlls/dmime/segment.c,
+	  dlls/dmime/segmentstate.c, dlls/dmime/segtriggertrack.c,
+	  dlls/dmime/seqtrack.c, dlls/dmime/sysextrack.c,
+	  dlls/dmime/tempotrack.c, dlls/dmime/timesigtrack.c,
+	  dlls/dmime/tool.c, dlls/dmime/version.rc, dlls/dmime/wavetrack.c,
+	  dlls/dmloader/classfactory.c, dlls/dmloader/container.c,
+	  dlls/dmloader/debug.c, dlls/dmloader/debug.h,
+	  dlls/dmloader/dmloader_main.c, dlls/dmloader/dmloader_private.h,
+	  dlls/dmloader/loader.c, dlls/dmloader/loaderstream.c,
+	  dlls/dmloader/regsvr.c, dlls/dmloader/version.rc,
+	  dlls/dmscript/dmscript_main.c, dlls/dmscript/dmscript_private.h,
+	  dlls/dmscript/regsvr.c, dlls/dmscript/script.c,
+	  dlls/dmscript/scripttrack.c, dlls/dmscript/version.rc,
+	  dlls/dmstyle/auditiontrack.c, dlls/dmstyle/chordtrack.c,
+	  dlls/dmstyle/commandtrack.c, dlls/dmstyle/dmstyle_main.c,
+	  dlls/dmstyle/dmstyle_private.h, dlls/dmstyle/dmutils.c,
+	  dlls/dmstyle/dmutils.h, dlls/dmstyle/motiftrack.c,
+	  dlls/dmstyle/mutetrack.c, dlls/dmstyle/regsvr.c,
+	  dlls/dmstyle/style.c, dlls/dmstyle/styletrack.c,
+	  dlls/dmstyle/version.rc, dlls/dmsynth/dmsynth_main.c,
+	  dlls/dmsynth/dmsynth_private.h, dlls/dmsynth/regsvr.c,
+	  dlls/dmsynth/synth.c, dlls/dmsynth/synthsink.c,
+	  dlls/dmsynth/version.rc, dlls/dmusic/buffer.c, dlls/dmusic/clock.c,
+	  dlls/dmusic/collection.c, dlls/dmusic/dmusic.c,
+	  dlls/dmusic/dmusic_main.c, dlls/dmusic/dmusic_private.h,
+	  dlls/dmusic/download.c, dlls/dmusic/downloadedinstrument.c,
+	  dlls/dmusic/instrument.c, dlls/dmusic/port.c,
+	  dlls/dmusic/portdownload.c, dlls/dmusic/regsvr.c, dlls/dmusic/thru.c,
+	  dlls/dmusic/version.rc, dlls/dmusic32/dmusic32_main.c,
+	  dlls/dmusic32/version.rc, dlls/dnsapi/dnsapi.h, dlls/dnsapi/main.c,
+	  dlls/dnsapi/name.c, dlls/dnsapi/query.c, dlls/dnsapi/record.c,
+	  dlls/dnsapi/tests/name.c, dlls/dnsapi/tests/record.c,
+	  dlls/dplay/version.rc, dlls/dplayx/dpclassfactory.c,
+	  dlls/dplayx/dpinit.h, dlls/dplayx/dplay.c,
+	  dlls/dplayx/dplay_global.h, dlls/dplayx/dplaysp.c,
+	  dlls/dplayx/dplaysp.h, dlls/dplayx/dplayx_global.c,
+	  dlls/dplayx/dplayx_global.h, dlls/dplayx/dplayx_main.c,
+	  dlls/dplayx/dplayx_messages.c, dlls/dplayx/dplayx_messages.h,
+	  dlls/dplayx/dplayx_queue.h, dlls/dplayx/dplobby.c,
+	  dlls/dplayx/lobbysp.c, dlls/dplayx/lobbysp.h,
+	  dlls/dplayx/name_server.c, dlls/dplayx/name_server.h,
+	  dlls/dplayx/regsvr.c, dlls/dplayx/version.rc, dlls/dpnet/address.c,
+	  dlls/dpnet/client.c, dlls/dpnet/dpnet_main.c,
+	  dlls/dpnet/dpnet_private.h, dlls/dpnet/peer.c, dlls/dpnet/regsvr.c,
+	  dlls/dpnet/server.c, dlls/dpnet/version.rc, dlls/dpnhpast/main.c,
+	  dlls/dpnhpast/version.rc, dlls/dsound/buffer.c,
+	  dlls/dsound/capture.c, dlls/dsound/dsound.c,
+	  dlls/dsound/dsound_main.c, dlls/dsound/dsound_private.h,
+	  dlls/dsound/duplex.c, dlls/dsound/mixer.c, dlls/dsound/primary.c,
+	  dlls/dsound/propset.c, dlls/dsound/regsvr.c, dlls/dsound/sound3d.c,
+	  dlls/dsound/tests/capture.c, dlls/dsound/tests/ds3d.c,
+	  dlls/dsound/tests/ds3d8.c, dlls/dsound/tests/dsound.c,
+	  dlls/dsound/tests/dsound8.c, dlls/dsound/tests/dsound_test.h,
+	  dlls/dsound/tests/duplex.c, dlls/dsound/tests/propset.c,
+	  dlls/dsound/version.rc, dlls/dswave/dswave.c,
+	  dlls/dswave/dswave_main.c, dlls/dswave/dswave_private.h,
+	  dlls/dswave/regsvr.c, dlls/dswave/version.rc,
+	  dlls/dxdiagn/container.c, dlls/dxdiagn/dxdiag_main.c,
+	  dlls/dxdiagn/dxdiag_private.h, dlls/dxdiagn/provider.c,
+	  dlls/dxdiagn/regsvr.c, dlls/dxdiagn/version.rc, dlls/dxerr8/dxerr8.c,
+	  dlls/dxerr9/dxerr9.c, dlls/dxguid/dx8guid.c, dlls/dxguid/dx9guid.c,
+	  dlls/dxguid/dxguid.c, dlls/gdi/bidi.c, dlls/gdi/bidi16.c,
+	  dlls/gdi/bitblt.c, dlls/gdi/bitmap.c, dlls/gdi/brush.c,
+	  dlls/gdi/clipping.c, dlls/gdi/dc.c, dlls/gdi/dib.c,
+	  dlls/gdi/dispdib.c, dlls/gdi/driver.c, dlls/gdi/enhmetafile.c,
+	  dlls/gdi/enhmfdrv/bitblt.c, dlls/gdi/enhmfdrv/dc.c,
+	  dlls/gdi/enhmfdrv/enhmetafiledrv.h, dlls/gdi/enhmfdrv/graphics.c,
+	  dlls/gdi/enhmfdrv/init.c, dlls/gdi/enhmfdrv/mapping.c,
+	  dlls/gdi/enhmfdrv/objects.c, dlls/gdi/env.c, dlls/gdi/font.c,
+	  dlls/gdi/freetype.c, dlls/gdi/gdi16.c, dlls/gdi/gdi_main.c,
+	  dlls/gdi/gdi_private.h, dlls/gdi/gdiobj.c, dlls/gdi/icm.c,
+	  dlls/gdi/mapping.c, dlls/gdi/metafile.c, dlls/gdi/metafile16.c,
+	  dlls/gdi/mfdrv/bitblt.c, dlls/gdi/mfdrv/dc.c,
+	  dlls/gdi/mfdrv/graphics.c, dlls/gdi/mfdrv/init.c,
+	  dlls/gdi/mfdrv/mapping.c, dlls/gdi/mfdrv/metafiledrv.h,
+	  dlls/gdi/mfdrv/objects.c, dlls/gdi/mfdrv/text.c, dlls/gdi/painting.c,
+	  dlls/gdi/palette.c, dlls/gdi/path.c, dlls/gdi/pen.c,
+	  dlls/gdi/printdrv.c, dlls/gdi/region.c, dlls/gdi/tests/bitmap.c,
+	  dlls/gdi/tests/brush.c, dlls/gdi/tests/clipping.c,
+	  dlls/gdi/tests/dc.c, dlls/gdi/tests/font.c, dlls/gdi/tests/gdiobj.c,
+	  dlls/gdi/tests/mapping.c, dlls/gdi/tests/metafile.c,
+	  dlls/gdi/tests/palette.c, dlls/gdi/tests/pen.c, dlls/gdi/version.rc,
+	  dlls/gdi/version16.rc, dlls/gdi/wing.c, dlls/glu32/glu.c,
+	  dlls/glut32/glut.c, dlls/gphoto2.ds/capability.c,
+	  dlls/gphoto2.ds/ds_ctrl.c, dlls/gphoto2.ds/ds_image.c,
+	  dlls/gphoto2.ds/gphoto2_En.rc, dlls/gphoto2.ds/gphoto2_Fr.rc,
+	  dlls/gphoto2.ds/gphoto2_Nl.rc, dlls/gphoto2.ds/gphoto2_i.h,
+	  dlls/gphoto2.ds/gphoto2_main.c, dlls/gphoto2.ds/resource.h,
+	  dlls/gphoto2.ds/rsrc.rc, dlls/gphoto2.ds/ui.c, dlls/hhctrl.ocx/Cs.rc,
+	  dlls/hhctrl.ocx/De.rc, dlls/hhctrl.ocx/En.rc, dlls/hhctrl.ocx/Fi.rc,
+	  dlls/hhctrl.ocx/Hu.rc, dlls/hhctrl.ocx/Ko.rc, dlls/hhctrl.ocx/Nl.rc,
+	  dlls/hhctrl.ocx/No.rc, dlls/hhctrl.ocx/Tr.rc, dlls/hhctrl.ocx/chm.c,
+	  dlls/hhctrl.ocx/chm.h, dlls/hhctrl.ocx/help.c,
+	  dlls/hhctrl.ocx/hhctrl.c, dlls/hhctrl.ocx/hhctrl.rc,
+	  dlls/hhctrl.ocx/main.c, dlls/hhctrl.ocx/regsvr.c,
+	  dlls/hhctrl.ocx/resource.h, dlls/hhctrl.ocx/version.rc,
+	  dlls/hhctrl.ocx/webbrowser.c, dlls/hhctrl.ocx/webbrowser.h,
+	  dlls/iccvid/iccvid.c, dlls/iccvid/iccvid_De.rc,
+	  dlls/iccvid/iccvid_En.rc, dlls/iccvid/iccvid_Fr.rc,
+	  dlls/iccvid/iccvid_Hu.rc, dlls/iccvid/iccvid_Ko.rc,
+	  dlls/iccvid/iccvid_No.rc, dlls/iccvid/iccvid_Tr.rc,
+	  dlls/iccvid/iccvid_private.h, dlls/iccvid/rsrc.rc,
+	  dlls/icmp/icmp_main.c, dlls/ifsmgr.vxd/ifsmgr.c,
+	  dlls/imaadp32.acm/imaadp32.c, dlls/imagehlp/access.c,
+	  dlls/imagehlp/imagehlp_main.c, dlls/imagehlp/integrity.c,
+	  dlls/imagehlp/internal.c, dlls/imagehlp/modify.c, dlls/imm32/imm.c,
+	  dlls/iphlpapi/ifenum.c, dlls/iphlpapi/ifenum.h,
+	  dlls/iphlpapi/iphlpapi_main.c, dlls/iphlpapi/ipstats.c,
+	  dlls/iphlpapi/ipstats.h, dlls/iphlpapi/tests/iphlpapi.c,
+	  dlls/itss/itss.c, dlls/itss/itsstor.h, dlls/itss/moniker.c,
+	  dlls/itss/regsvr.c, dlls/itss/storage.c, dlls/kernel/actctx.c,
+	  dlls/kernel/atom.c, dlls/kernel/atom16.c, dlls/kernel/change.c,
+	  dlls/kernel/comm.c, dlls/kernel/computername.c,
+	  dlls/kernel/console.c, dlls/kernel/console_private.h,
+	  dlls/kernel/cpu.c, dlls/kernel/debugger.c, dlls/kernel/dosmem.c,
+	  dlls/kernel/editline.c, dlls/kernel/environ.c, dlls/kernel/error16.c,
+	  dlls/kernel/except.c, dlls/kernel/fiber.c, dlls/kernel/file.c,
+	  dlls/kernel/file16.c, dlls/kernel/format_msg.c,
+	  dlls/kernel/global16.c, dlls/kernel/heap.c, dlls/kernel/instr.c,
+	  dlls/kernel/kernel.rc, dlls/kernel/kernel16.c,
+	  dlls/kernel/kernel16_private.h, dlls/kernel/kernel_main.c,
+	  dlls/kernel/kernel_private.h, dlls/kernel/lcformat.c,
+	  dlls/kernel/local16.c, dlls/kernel/locale.c,
+	  dlls/kernel/locale_rc.rc, dlls/kernel/lzexpand.c,
+	  dlls/kernel/messages/winerr_enu.mc, dlls/kernel/module.c,
+	  dlls/kernel/ne_module.c, dlls/kernel/ne_segment.c,
+	  dlls/kernel/nls/afk.nls, dlls/kernel/nls/ara.nls,
+	  dlls/kernel/nls/arb.nls, dlls/kernel/nls/are.nls,
+	  dlls/kernel/nls/arg.nls, dlls/kernel/nls/arh.nls,
+	  dlls/kernel/nls/ari.nls, dlls/kernel/nls/arj.nls,
+	  dlls/kernel/nls/ark.nls, dlls/kernel/nls/arl.nls,
+	  dlls/kernel/nls/arm.nls, dlls/kernel/nls/aro.nls,
+	  dlls/kernel/nls/arq.nls, dlls/kernel/nls/ars.nls,
+	  dlls/kernel/nls/art.nls, dlls/kernel/nls/aru.nls,
+	  dlls/kernel/nls/ary.nls, dlls/kernel/nls/aze.nls,
+	  dlls/kernel/nls/azl.nls, dlls/kernel/nls/bel.nls,
+	  dlls/kernel/nls/bgr.nls, dlls/kernel/nls/brf.nls,
+	  dlls/kernel/nls/cat.nls, dlls/kernel/nls/chs.nls,
+	  dlls/kernel/nls/cht.nls, dlls/kernel/nls/cor.nls,
+	  dlls/kernel/nls/csy.nls, dlls/kernel/nls/cym.nls,
+	  dlls/kernel/nls/dan.nls, dlls/kernel/nls/dea.nls,
+	  dlls/kernel/nls/dec.nls, dlls/kernel/nls/del.nls,
+	  dlls/kernel/nls/des.nls, dlls/kernel/nls/deu.nls,
+	  dlls/kernel/nls/div.nls, dlls/kernel/nls/ell.nls,
+	  dlls/kernel/nls/ena.nls, dlls/kernel/nls/enb.nls,
+	  dlls/kernel/nls/enc.nls, dlls/kernel/nls/eng.nls,
+	  dlls/kernel/nls/eni.nls, dlls/kernel/nls/enj.nls,
+	  dlls/kernel/nls/enl.nls, dlls/kernel/nls/enp.nls,
+	  dlls/kernel/nls/ens.nls, dlls/kernel/nls/ent.nls,
+	  dlls/kernel/nls/enu.nls, dlls/kernel/nls/enw.nls,
+	  dlls/kernel/nls/enz.nls, dlls/kernel/nls/eox.nls,
+	  dlls/kernel/nls/esa.nls, dlls/kernel/nls/esb.nls,
+	  dlls/kernel/nls/esc.nls, dlls/kernel/nls/esd.nls,
+	  dlls/kernel/nls/ese.nls, dlls/kernel/nls/esf.nls,
+	  dlls/kernel/nls/esg.nls, dlls/kernel/nls/esh.nls,
+	  dlls/kernel/nls/esi.nls, dlls/kernel/nls/esl.nls,
+	  dlls/kernel/nls/esm.nls, dlls/kernel/nls/esn.nls,
+	  dlls/kernel/nls/eso.nls, dlls/kernel/nls/esp.nls,
+	  dlls/kernel/nls/esr.nls, dlls/kernel/nls/ess.nls,
+	  dlls/kernel/nls/esu.nls, dlls/kernel/nls/esv.nls,
+	  dlls/kernel/nls/esy.nls, dlls/kernel/nls/esz.nls,
+	  dlls/kernel/nls/eti.nls, dlls/kernel/nls/euq.nls,
+	  dlls/kernel/nls/far.nls, dlls/kernel/nls/fin.nls,
+	  dlls/kernel/nls/fos.nls, dlls/kernel/nls/fra.nls,
+	  dlls/kernel/nls/frb.nls, dlls/kernel/nls/frc.nls,
+	  dlls/kernel/nls/frl.nls, dlls/kernel/nls/frm.nls,
+	  dlls/kernel/nls/frs.nls, dlls/kernel/nls/gae.nls,
+	  dlls/kernel/nls/gdh.nls, dlls/kernel/nls/gdv.nls,
+	  dlls/kernel/nls/glc.nls, dlls/kernel/nls/guj.nls,
+	  dlls/kernel/nls/heb.nls, dlls/kernel/nls/hin.nls,
+	  dlls/kernel/nls/hrv.nls, dlls/kernel/nls/hun.nls,
+	  dlls/kernel/nls/hye.nls, dlls/kernel/nls/ind.nls,
+	  dlls/kernel/nls/isl.nls, dlls/kernel/nls/ita.nls,
+	  dlls/kernel/nls/its.nls, dlls/kernel/nls/jpn.nls,
+	  dlls/kernel/nls/kan.nls, dlls/kernel/nls/kat.nls,
+	  dlls/kernel/nls/kkz.nls, dlls/kernel/nls/knk.nls,
+	  dlls/kernel/nls/kor.nls, dlls/kernel/nls/kyr.nls,
+	  dlls/kernel/nls/lth.nls, dlls/kernel/nls/lvi.nls,
+	  dlls/kernel/nls/mar.nls, dlls/kernel/nls/mki.nls,
+	  dlls/kernel/nls/mon.nls, dlls/kernel/nls/msb.nls,
+	  dlls/kernel/nls/msl.nls, dlls/kernel/nls/nlb.nls,
+	  dlls/kernel/nls/nld.nls, dlls/kernel/nls/nls.nls,
+	  dlls/kernel/nls/non.nls, dlls/kernel/nls/nor.nls,
+	  dlls/kernel/nls/pan.nls, dlls/kernel/nls/plk.nls,
+	  dlls/kernel/nls/ptb.nls, dlls/kernel/nls/ptg.nls,
+	  dlls/kernel/nls/rom.nls, dlls/kernel/nls/rus.nls,
+	  dlls/kernel/nls/san.nls, dlls/kernel/nls/sky.nls,
+	  dlls/kernel/nls/slv.nls, dlls/kernel/nls/sqi.nls,
+	  dlls/kernel/nls/srb.nls, dlls/kernel/nls/srl.nls,
+	  dlls/kernel/nls/sve.nls, dlls/kernel/nls/svf.nls,
+	  dlls/kernel/nls/swk.nls, dlls/kernel/nls/syr.nls,
+	  dlls/kernel/nls/tam.nls, dlls/kernel/nls/tel.nls,
+	  dlls/kernel/nls/tha.nls, dlls/kernel/nls/trk.nls,
+	  dlls/kernel/nls/ttt.nls, dlls/kernel/nls/ukr.nls,
+	  dlls/kernel/nls/urd.nls, dlls/kernel/nls/uzb.nls,
+	  dlls/kernel/nls/uzl.nls, dlls/kernel/nls/vit.nls,
+	  dlls/kernel/nls/wal.nls, dlls/kernel/nls/zhh.nls,
+	  dlls/kernel/nls/zhi.nls, dlls/kernel/nls/zhm.nls,
+	  dlls/kernel/oldconfig.c, dlls/kernel/path.c, dlls/kernel/powermgnt.c,
+	  dlls/kernel/process.c, dlls/kernel/profile.c, dlls/kernel/pthread.c,
+	  dlls/kernel/registry16.c, dlls/kernel/relay16.c,
+	  dlls/kernel/resource.c, dlls/kernel/resource16.c,
+	  dlls/kernel/selector.c, dlls/kernel/snoop16.c, dlls/kernel/stress.c,
+	  dlls/kernel/string.c, dlls/kernel/sync.c, dlls/kernel/syslevel.c,
+	  dlls/kernel/system.c, dlls/kernel/tape.c, dlls/kernel/task.c,
+	  dlls/kernel/tests/alloc.c, dlls/kernel/tests/atom.c,
+	  dlls/kernel/tests/change.c, dlls/kernel/tests/codepage.c,
+	  dlls/kernel/tests/comm.c, dlls/kernel/tests/console.c,
+	  dlls/kernel/tests/directory.c, dlls/kernel/tests/drive.c,
+	  dlls/kernel/tests/environ.c, dlls/kernel/tests/file.c,
+	  dlls/kernel/tests/format_msg.c, dlls/kernel/tests/heap.c,
+	  dlls/kernel/tests/locale.c, dlls/kernel/tests/mailslot.c,
+	  dlls/kernel/tests/module.c, dlls/kernel/tests/path.c,
+	  dlls/kernel/tests/pipe.c, dlls/kernel/tests/process.c,
+	  dlls/kernel/tests/profile.c, dlls/kernel/tests/sync.c,
+	  dlls/kernel/tests/thread.c, dlls/kernel/tests/time.c,
+	  dlls/kernel/tests/timer.c, dlls/kernel/tests/toolhelp.c,
+	  dlls/kernel/tests/virtual.c, dlls/kernel/tests/volume.c,
+	  dlls/kernel/thread.c, dlls/kernel/thunk.c, dlls/kernel/time.c,
+	  dlls/kernel/toolhelp.c, dlls/kernel/toolhelp.h,
+	  dlls/kernel/toolhelp16.c, dlls/kernel/utthunk.c,
+	  dlls/kernel/version.c, dlls/kernel/version.rc,
+	  dlls/kernel/version16.rc, dlls/kernel/virtual.c,
+	  dlls/kernel/volume.c, dlls/kernel/vxd.c, dlls/kernel/win87em.c,
+	  dlls/kernel/windebug.c, dlls/kernel/wowthunk.c,
+	  dlls/lz32/lzexpand16.c, dlls/lz32/tests/lzexpand_main.c,
+	  dlls/make_dlls, dlls/mapi32/imalloc.c, dlls/mapi32/mapi32_main.c,
+	  dlls/mapi32/prop.c, dlls/mapi32/sendmail.c,
+	  dlls/mapi32/tests/imalloc.c, dlls/mapi32/tests/prop.c,
+	  dlls/mapi32/tests/util.c, dlls/mapi32/util.c, dlls/mciavi32/info.c,
+	  dlls/mciavi32/mciavi.c, dlls/mciavi32/mciavi_res.rc,
+	  dlls/mciavi32/mmoutput.c, dlls/mciavi32/private_mciavi.h,
+	  dlls/mciavi32/wnd.c, dlls/mcicda/mcicda.c, dlls/mciseq/mcimidi.c,
+	  dlls/mciwave/mciwave.c, dlls/midimap/midimap.c, dlls/mlang/mlang.c,
+	  dlls/mlang/regsvr.c, dlls/mlang/tests/mlang.c,
+	  dlls/mmdevldr.vxd/mmdevldr.c, dlls/monodebg.vxd/monodebg.c,
+	  dlls/mpr/auth.c, dlls/mpr/mpr.rc, dlls/mpr/mpr_Bg.rc,
+	  dlls/mpr/mpr_Cs.rc, dlls/mpr/mpr_De.rc, dlls/mpr/mpr_En.rc,
+	  dlls/mpr/mpr_Eo.rc, dlls/mpr/mpr_Es.rc, dlls/mpr/mpr_Fr.rc,
+	  dlls/mpr/mpr_Hu.rc, dlls/mpr/mpr_It.rc, dlls/mpr/mpr_Ja.rc,
+	  dlls/mpr/mpr_Ko.rc, dlls/mpr/mpr_Nl.rc, dlls/mpr/mpr_No.rc,
+	  dlls/mpr/mpr_Pt.rc, dlls/mpr/mpr_Tr.rc, dlls/mpr/mpr_main.c,
+	  dlls/mpr/mprres.h, dlls/mpr/multinet.c, dlls/mpr/netspi.h,
+	  dlls/mpr/nps.c, dlls/mpr/pwcache.c, dlls/mpr/version.rc,
+	  dlls/mpr/wnet.c, dlls/mpr/wnetpriv.h, dlls/mprapi/mprapi.c,
+	  dlls/msacm32.drv/wavemap.c, dlls/msacm32/driver.c,
+	  dlls/msacm32/filter.c, dlls/msacm32/format.c,
+	  dlls/msacm32/internal.c, dlls/msacm32/msacm.rc,
+	  dlls/msacm32/msacm32_main.c, dlls/msacm32/msacm_Cs.rc,
+	  dlls/msacm32/msacm_De.rc, dlls/msacm32/msacm_En.rc,
+	  dlls/msacm32/msacm_Es.rc, dlls/msacm32/msacm_Fr.rc,
+	  dlls/msacm32/msacm_Hu.rc, dlls/msacm32/msacm_It.rc,
+	  dlls/msacm32/msacm_Ja.rc, dlls/msacm32/msacm_Ko.rc,
+	  dlls/msacm32/msacm_Nl.rc, dlls/msacm32/msacm_No.rc,
+	  dlls/msacm32/msacm_Pl.rc, dlls/msacm32/msacm_Pt.rc,
+	  dlls/msacm32/msacm_Tr.rc, dlls/msacm32/msacm_main.c,
+	  dlls/msacm32/pcmconverter.c, dlls/msacm32/stream.c,
+	  dlls/msacm32/tests/msacm.c, dlls/msacm32/wineacm.h,
+	  dlls/msadp32.acm/msadp32.c, dlls/mscms/handle.c, dlls/mscms/icc.c,
+	  dlls/mscms/mscms_main.c, dlls/mscms/mscms_priv.h,
+	  dlls/mscms/profile.c, dlls/mscms/stub.c, dlls/mscms/tests/profile.c,
+	  dlls/mscms/transform.c, dlls/mscms/version.rc, dlls/msdmo/dmoreg.c,
+	  dlls/msdmo/dmort.c, dlls/msdmo/rsrc.rc, dlls/msg711.acm/msg711.c,
+	  dlls/mshtml/Bg.rc, dlls/mshtml/De.rc, dlls/mshtml/En.rc,
+	  dlls/mshtml/Fi.rc, dlls/mshtml/Fr.rc, dlls/mshtml/Hu.rc,
+	  dlls/mshtml/Ko.rc, dlls/mshtml/Nl.rc, dlls/mshtml/No.rc,
+	  dlls/mshtml/Tr.rc, dlls/mshtml/conpoint.c, dlls/mshtml/hlink.c,
+	  dlls/mshtml/htmlbody.c, dlls/mshtml/htmldoc.c,
+	  dlls/mshtml/htmldoc3.c, dlls/mshtml/htmlelem.c,
+	  dlls/mshtml/htmlelem2.c, dlls/mshtml/htmlinput.c,
+	  dlls/mshtml/htmlnode.c, dlls/mshtml/htmlselect.c,
+	  dlls/mshtml/htmltextarea.c, dlls/mshtml/htmltextcont.c,
+	  dlls/mshtml/main.c, dlls/mshtml/mshtml_private.h,
+	  dlls/mshtml/navigate.c, dlls/mshtml/nsembed.c,
+	  dlls/mshtml/nsiface.idl, dlls/mshtml/nsio.c, dlls/mshtml/nsservice.c,
+	  dlls/mshtml/oleobj.c, dlls/mshtml/olewnd.c, dlls/mshtml/persist.c,
+	  dlls/mshtml/protocol.c, dlls/mshtml/resource.h, dlls/mshtml/rsrc.rc,
+	  dlls/mshtml/service.c, dlls/mshtml/tests/htmldoc.c,
+	  dlls/mshtml/tests/protocol.c, dlls/mshtml/view.c, dlls/msi/action.c,
+	  dlls/msi/action.h, dlls/msi/appsearch.c, dlls/msi/classes.c,
+	  dlls/msi/cond.y, dlls/msi/create.c, dlls/msi/custom.c,
+	  dlls/msi/database.c, dlls/msi/delete.c, dlls/msi/dialog.c,
+	  dlls/msi/distinct.c, dlls/msi/events.c, dlls/msi/files.c,
+	  dlls/msi/format.c, dlls/msi/handle.c, dlls/msi/helpers.c,
+	  dlls/msi/insert.c, dlls/msi/install.c, dlls/msi/msi.c,
+	  dlls/msi/msi.rc, dlls/msi/msi_Bg.rc, dlls/msi/msi_De.rc,
+	  dlls/msi/msi_En.rc, dlls/msi/msi_Eo.rc, dlls/msi/msi_Es.rc,
+	  dlls/msi/msi_Fi.rc, dlls/msi/msi_Fr.rc, dlls/msi/msi_Hu.rc,
+	  dlls/msi/msi_It.rc, dlls/msi/msi_Ko.rc, dlls/msi/msi_Nl.rc,
+	  dlls/msi/msi_No.rc, dlls/msi/msi_Pt.rc, dlls/msi/msi_Tr.rc,
+	  dlls/msi/msipriv.h, dlls/msi/msiquery.c, dlls/msi/order.c,
+	  dlls/msi/package.c, dlls/msi/preview.c, dlls/msi/query.h,
+	  dlls/msi/record.c, dlls/msi/registry.c, dlls/msi/regsvr.c,
+	  dlls/msi/select.c, dlls/msi/source.c, dlls/msi/sql.y,
+	  dlls/msi/string.c, dlls/msi/suminfo.c, dlls/msi/table.c,
+	  dlls/msi/tests/db.c, dlls/msi/tests/format.c, dlls/msi/tests/msi.c,
+	  dlls/msi/tests/package.c, dlls/msi/tests/record.c,
+	  dlls/msi/tests/suminfo.c, dlls/msi/update.c, dlls/msi/upgrade.c,
+	  dlls/msi/version.rc, dlls/msi/where.c, dlls/msimg32/msimg32_main.c,
+	  dlls/msisys/msisys.c, dlls/msnet32/msnet_main.c,
+	  dlls/msrle32/msrle32.c, dlls/msrle32/msrle_Bg.rc,
+	  dlls/msrle32/msrle_Cs.rc, dlls/msrle32/msrle_De.rc,
+	  dlls/msrle32/msrle_En.rc, dlls/msrle32/msrle_Es.rc,
+	  dlls/msrle32/msrle_Fr.rc, dlls/msrle32/msrle_Hu.rc,
+	  dlls/msrle32/msrle_It.rc, dlls/msrle32/msrle_Ja.rc,
+	  dlls/msrle32/msrle_Ko.rc, dlls/msrle32/msrle_Nl.rc,
+	  dlls/msrle32/msrle_No.rc, dlls/msrle32/msrle_Pt.rc,
+	  dlls/msrle32/msrle_Ru.rc, dlls/msrle32/msrle_Si.rc,
+	  dlls/msrle32/msrle_Tr.rc, dlls/msrle32/msrle_private.h,
+	  dlls/msrle32/rsrc.rc, dlls/msvcrt/console.c, dlls/msvcrt/cpp.c,
+	  dlls/msvcrt/cppexcept.c, dlls/msvcrt/cppexcept.h,
+	  dlls/msvcrt/ctype.c, dlls/msvcrt/data.c, dlls/msvcrt/dir.c,
+	  dlls/msvcrt/environ.c, dlls/msvcrt/errno.c, dlls/msvcrt/except.c,
+	  dlls/msvcrt/exit.c, dlls/msvcrt/file.c, dlls/msvcrt/heap.c,
+	  dlls/msvcrt/locale.c, dlls/msvcrt/lock.c, dlls/msvcrt/main.c,
+	  dlls/msvcrt/math.c, dlls/msvcrt/mbcs.c, dlls/msvcrt/misc.c,
+	  dlls/msvcrt/msvcrt.h, dlls/msvcrt/mtdll.h, dlls/msvcrt/process.c,
+	  dlls/msvcrt/rsrc.rc, dlls/msvcrt/scanf.c, dlls/msvcrt/scanf.h,
+	  dlls/msvcrt/string.c, dlls/msvcrt/tests/cpp.c,
+	  dlls/msvcrt/tests/dir.c, dlls/msvcrt/tests/environ.c,
+	  dlls/msvcrt/tests/file.c, dlls/msvcrt/tests/headers.c,
+	  dlls/msvcrt/tests/heap.c, dlls/msvcrt/tests/printf.c,
+	  dlls/msvcrt/tests/scanf.c, dlls/msvcrt/tests/string.c,
+	  dlls/msvcrt/tests/time.c, dlls/msvcrt/thread.c, dlls/msvcrt/time.c,
+	  dlls/msvcrt/undname.c, dlls/msvcrt/wcs.c, dlls/msvcrt20/msvcrt20.c,
+	  dlls/msvcrtd/debug.c, dlls/msvcrtd/tests/debug.c,
+	  dlls/msvfw32/drawdib.c, dlls/msvfw32/mciwnd.c,
+	  dlls/msvfw32/msvfw32_De.rc, dlls/msvfw32/msvfw32_En.rc,
+	  dlls/msvfw32/msvfw32_Fr.rc, dlls/msvfw32/msvfw32_Hu.rc,
+	  dlls/msvfw32/msvfw32_Ko.rc, dlls/msvfw32/msvfw32_No.rc,
+	  dlls/msvfw32/msvfw32_Tr.rc, dlls/msvfw32/msvideo16.c,
+	  dlls/msvfw32/msvideo_main.c, dlls/msvfw32/msvideo_private.h,
+	  dlls/msvfw32/rsrc.rc, dlls/msvfw32/vfw16.h,
+	  dlls/msvidc32/msvidc32_De.rc, dlls/msvidc32/msvidc32_En.rc,
+	  dlls/msvidc32/msvidc32_Fr.rc, dlls/msvidc32/msvidc32_Hu.rc,
+	  dlls/msvidc32/msvidc32_Ko.rc, dlls/msvidc32/msvidc32_No.rc,
+	  dlls/msvidc32/msvidc32_Tr.rc, dlls/msvidc32/msvidc32_private.h,
+	  dlls/msvidc32/msvideo1.c, dlls/msvidc32/rsrc.rc,
+	  dlls/mswsock/mswsock.c, dlls/mswsock/version.rc,
+	  dlls/msxml3/attribute.c, dlls/msxml3/comment.c, dlls/msxml3/domdoc.c,
+	  dlls/msxml3/element.c, dlls/msxml3/factory.c, dlls/msxml3/main.c,
+	  dlls/msxml3/msxml_private.h, dlls/msxml3/node.c,
+	  dlls/msxml3/nodelist.c, dlls/msxml3/nodemap.c,
+	  dlls/msxml3/parseerror.c, dlls/msxml3/tests/domdoc.c,
+	  dlls/msxml3/text.c, dlls/netapi32/access.c, dlls/netapi32/apibuf.c,
+	  dlls/netapi32/browsr.c, dlls/netapi32/ds.c,
+	  dlls/netapi32/nbcmdqueue.c, dlls/netapi32/nbcmdqueue.h,
+	  dlls/netapi32/nbnamecache.c, dlls/netapi32/nbnamecache.h,
+	  dlls/netapi32/nbt.c, dlls/netapi32/netapi32.c,
+	  dlls/netapi32/netapi32_misc.h, dlls/netapi32/netbios.c,
+	  dlls/netapi32/netbios.h, dlls/netapi32/share.c,
+	  dlls/netapi32/tests/access.c, dlls/netapi32/tests/apibuf.c,
+	  dlls/netapi32/tests/ds.c, dlls/netapi32/tests/wksta.c,
+	  dlls/netapi32/wksta.c, dlls/newdev/main.c, dlls/ntdll/atom.c,
+	  dlls/ntdll/cdrom.c, dlls/ntdll/critsection.c,
+	  dlls/ntdll/debugbuffer.c, dlls/ntdll/debugtools.c,
+	  dlls/ntdll/directory.c, dlls/ntdll/env.c, dlls/ntdll/error.c,
+	  dlls/ntdll/exception.c, dlls/ntdll/file.c, dlls/ntdll/handletable.c,
+	  dlls/ntdll/heap.c, dlls/ntdll/large_int.c, dlls/ntdll/loader.c,
+	  dlls/ntdll/loadorder.c, dlls/ntdll/misc.c, dlls/ntdll/nt.c,
+	  dlls/ntdll/ntdll_misc.h, dlls/ntdll/om.c, dlls/ntdll/path.c,
+	  dlls/ntdll/process.c, dlls/ntdll/reg.c, dlls/ntdll/relay.c,
+	  dlls/ntdll/resource.c, dlls/ntdll/rtl.c, dlls/ntdll/rtlbitmap.c,
+	  dlls/ntdll/rtlstr.c, dlls/ntdll/sec.c, dlls/ntdll/serial.c,
+	  dlls/ntdll/server.c, dlls/ntdll/signal_i386.c,
+	  dlls/ntdll/signal_powerpc.c, dlls/ntdll/signal_sparc.c,
+	  dlls/ntdll/signal_x86_64.c, dlls/ntdll/string.c, dlls/ntdll/sync.c,
+	  dlls/ntdll/tape.c, dlls/ntdll/tests/atom.c,
+	  dlls/ntdll/tests/change.c, dlls/ntdll/tests/env.c,
+	  dlls/ntdll/tests/error.c, dlls/ntdll/tests/exception.c,
+	  dlls/ntdll/tests/info.c, dlls/ntdll/tests/large_int.c,
+	  dlls/ntdll/tests/ntdll_test.h, dlls/ntdll/tests/om.c,
+	  dlls/ntdll/tests/path.c, dlls/ntdll/tests/port.c,
+	  dlls/ntdll/tests/reg.c, dlls/ntdll/tests/rtl.c,
+	  dlls/ntdll/tests/rtlbitmap.c, dlls/ntdll/tests/rtlstr.c,
+	  dlls/ntdll/tests/string.c, dlls/ntdll/tests/time.c,
+	  dlls/ntdll/thread.c, dlls/ntdll/threadpool.c, dlls/ntdll/time.c,
+	  dlls/ntdll/version.c, dlls/ntdll/virtual.c, dlls/ntdll/wcstring.c,
+	  dlls/ntdsapi/ntdsapi.c, dlls/objsel/factory.c, dlls/objsel/objsel.c,
+	  dlls/objsel/objsel.rc, dlls/objsel/objsel_private.h,
+	  dlls/objsel/regsvr.c, dlls/odbc32/proxyodbc.c,
+	  dlls/odbc32/proxyodbc.h, dlls/odbccp32/odbccp32.c,
+	  dlls/ole32/antimoniker.c, dlls/ole32/bindctx.c,
+	  dlls/ole32/classmoniker.c, dlls/ole32/clipboard.c,
+	  dlls/ole32/compobj.c, dlls/ole32/compobj_private.h,
+	  dlls/ole32/compositemoniker.c, dlls/ole32/datacache.c,
+	  dlls/ole32/dcom.idl, dlls/ole32/defaulthandler.c,
+	  dlls/ole32/dictionary.c, dlls/ole32/dictionary.h,
+	  dlls/ole32/errorinfo.c, dlls/ole32/filemoniker.c,
+	  dlls/ole32/ftmarshal.c, dlls/ole32/git.c, dlls/ole32/hglobalstream.c,
+	  dlls/ole32/ifs.c, dlls/ole32/ifs.h, dlls/ole32/itemmoniker.c,
+	  dlls/ole32/marshal.c, dlls/ole32/memlockbytes.c,
+	  dlls/ole32/memlockbytes16.c, dlls/ole32/moniker.c,
+	  dlls/ole32/ole16.c, dlls/ole32/ole2.c, dlls/ole32/ole2_16.c,
+	  dlls/ole32/ole2impl.c, dlls/ole32/ole2nls.c, dlls/ole32/ole2stubs.c,
+	  dlls/ole32/ole32_main.c, dlls/ole32/ole32res.rc, dlls/ole32/oleobj.c,
+	  dlls/ole32/oleproxy.c, dlls/ole32/olestd.h, dlls/ole32/regsvr.c,
+	  dlls/ole32/rpc.c, dlls/ole32/stg_bigblockfile.c,
+	  dlls/ole32/stg_prop.c, dlls/ole32/stg_stream.c, dlls/ole32/storage.c,
+	  dlls/ole32/storage32.c, dlls/ole32/storage32.h,
+	  dlls/ole32/stubmanager.c, dlls/ole32/tests/clipboard.c,
+	  dlls/ole32/tests/compobj.c, dlls/ole32/tests/marshal.c,
+	  dlls/ole32/tests/moniker.c, dlls/ole32/tests/propvariant.c,
+	  dlls/ole32/tests/stg_prop.c, dlls/ole32/tests/storage32.c,
+	  dlls/ole32/usrmarshal.c, dlls/ole32/version.rc, dlls/oleacc/main.c,
+	  dlls/oleaut32/connpt.c, dlls/oleaut32/connpt.h,
+	  dlls/oleaut32/dispatch.c, dlls/oleaut32/hash.c,
+	  dlls/oleaut32/ole2disp.c, dlls/oleaut32/ole2disp.h,
+	  dlls/oleaut32/oleaut.c, dlls/oleaut32/oleaut32.rc,
+	  dlls/oleaut32/oleaut32_Bg.rc, dlls/oleaut32/oleaut32_Cz.rc,
+	  dlls/oleaut32/oleaut32_De.rc, dlls/oleaut32/oleaut32_Dk.rc,
+	  dlls/oleaut32/oleaut32_En.rc, dlls/oleaut32/oleaut32_Eo.rc,
+	  dlls/oleaut32/oleaut32_Es.rc, dlls/oleaut32/oleaut32_Fr.rc,
+	  dlls/oleaut32/oleaut32_Hu.rc, dlls/oleaut32/oleaut32_It.rc,
+	  dlls/oleaut32/oleaut32_Ko.rc, dlls/oleaut32/oleaut32_Nl.rc,
+	  dlls/oleaut32/oleaut32_No.rc, dlls/oleaut32/oleaut32_Pl.rc,
+	  dlls/oleaut32/oleaut32_Pt.rc, dlls/oleaut32/oleaut32_Ru.rc,
+	  dlls/oleaut32/oleaut32_Sv.rc, dlls/oleaut32/oleaut32_Th.rc,
+	  dlls/oleaut32/oleaut32_Tr.rc, dlls/oleaut32/olefont.c,
+	  dlls/oleaut32/olepicture.c, dlls/oleaut32/recinfo.c,
+	  dlls/oleaut32/regsvr.c, dlls/oleaut32/resource.h,
+	  dlls/oleaut32/safearray.c, dlls/oleaut32/stubs.c,
+	  dlls/oleaut32/tests/olefont.c, dlls/oleaut32/tests/olepicture.c,
+	  dlls/oleaut32/tests/safearray.c, dlls/oleaut32/tests/typelib.c,
+	  dlls/oleaut32/tests/usrmarshal.c, dlls/oleaut32/tests/vartest.c,
+	  dlls/oleaut32/tests/vartype.c, dlls/oleaut32/tmarshal.c,
+	  dlls/oleaut32/typelib.c, dlls/oleaut32/typelib.h,
+	  dlls/oleaut32/typelib16.c, dlls/oleaut32/typelib2.c,
+	  dlls/oleaut32/usrmarshal.c, dlls/oleaut32/varformat.c,
+	  dlls/oleaut32/variant.c, dlls/oleaut32/variant.h,
+	  dlls/oleaut32/vartype.c, dlls/oleaut32/version.rc,
+	  dlls/olecli32/olecli16.c, dlls/olecli32/olecli_main.c,
+	  dlls/oledlg/insobjdlg.c, dlls/oledlg/oledlg_Cs.rc,
+	  dlls/oledlg/oledlg_De.rc, dlls/oledlg/oledlg_En.rc,
+	  dlls/oledlg/oledlg_Es.rc, dlls/oledlg/oledlg_Fr.rc,
+	  dlls/oledlg/oledlg_Hu.rc, dlls/oledlg/oledlg_It.rc,
+	  dlls/oledlg/oledlg_Ja.rc, dlls/oledlg/oledlg_Ko.rc,
+	  dlls/oledlg/oledlg_Nl.rc, dlls/oledlg/oledlg_No.rc,
+	  dlls/oledlg/oledlg_Pt.rc, dlls/oledlg/oledlg_Tr.rc,
+	  dlls/oledlg/oledlg_main.c, dlls/oledlg/resource.h,
+	  dlls/oledlg/rsrc.rc, dlls/olepro32/olepro32stubs.c,
+	  dlls/olesvr32/olesvr_main.c, dlls/opengl32/make_opengl,
+	  dlls/opengl32/opengl_ext.h, dlls/opengl32/version.rc,
+	  dlls/opengl32/wgl.c, dlls/opengl32/wgl_ext.c,
+	  dlls/opengl32/wgl_ext.h, dlls/powrprof/powrprof.c,
+	  dlls/psapi/psapi_main.c, dlls/psapi/tests/psapi_main.c,
+	  dlls/qcap/capture.h, dlls/qcap/capturegraph.c, dlls/qcap/dllsetup.c,
+	  dlls/qcap/dllsetup.h, dlls/qcap/enummedia.c, dlls/qcap/enumpins.c,
+	  dlls/qcap/pin.c, dlls/qcap/pin.h, dlls/qcap/qcap_main.c,
+	  dlls/qcap/qcap_main.h, dlls/qcap/v4l.c, dlls/qcap/version.rc,
+	  dlls/qcap/vfwcapture.c, dlls/qcap/yuv.c, dlls/quartz/acmwrapper.c,
+	  dlls/quartz/avidec.c, dlls/quartz/avisplit.c, dlls/quartz/control.c,
+	  dlls/quartz/control_private.h, dlls/quartz/dsoundrender.c,
+	  dlls/quartz/enumfilters.c, dlls/quartz/enummedia.c,
+	  dlls/quartz/enummoniker.c, dlls/quartz/enumpins.c,
+	  dlls/quartz/enumregfilters.c, dlls/quartz/filesource.c,
+	  dlls/quartz/filtergraph.c, dlls/quartz/filtermapper.c,
+	  dlls/quartz/fourcc.h, dlls/quartz/main.c, dlls/quartz/memallocator.c,
+	  dlls/quartz/parser.c, dlls/quartz/parser.h, dlls/quartz/pin.c,
+	  dlls/quartz/pin.h, dlls/quartz/quartz_private.h,
+	  dlls/quartz/regsvr.c, dlls/quartz/systemclock.c,
+	  dlls/quartz/tests/filtergraph.c, dlls/quartz/tests/memallocator.c,
+	  dlls/quartz/transform.c, dlls/quartz/transform.h,
+	  dlls/quartz/version.rc, dlls/quartz/videorenderer.c,
+	  dlls/quartz/waveparser.c, dlls/rasapi32/rasapi.c,
+	  dlls/riched20/caret.c, dlls/riched20/clipboard.c,
+	  dlls/riched20/context.c, dlls/riched20/editor.c,
+	  dlls/riched20/editor.h, dlls/riched20/editstr.h,
+	  dlls/riched20/list.c, dlls/riched20/paint.c, dlls/riched20/para.c,
+	  dlls/riched20/reader.c, dlls/riched20/richole.c, dlls/riched20/row.c,
+	  dlls/riched20/run.c, dlls/riched20/string.c, dlls/riched20/style.c,
+	  dlls/riched20/tests/editor.c, dlls/riched20/txtsrv.c,
+	  dlls/riched20/undo.c, dlls/riched20/version.rc, dlls/riched20/wrap.c,
+	  dlls/riched20/writer.c, dlls/riched32/richedit.c,
+	  dlls/rpcrt4/cproxy.c, dlls/rpcrt4/cpsf.c, dlls/rpcrt4/cpsf.h,
+	  dlls/rpcrt4/cstub.c, dlls/rpcrt4/ndr_marshall.c,
+	  dlls/rpcrt4/ndr_midl.c, dlls/rpcrt4/ndr_misc.h,
+	  dlls/rpcrt4/ndr_ole.c, dlls/rpcrt4/ndr_stubless.c,
+	  dlls/rpcrt4/rpc_binding.c, dlls/rpcrt4/rpc_binding.h,
+	  dlls/rpcrt4/rpc_defs.h, dlls/rpcrt4/rpc_epmap.c,
+	  dlls/rpcrt4/rpc_message.c, dlls/rpcrt4/rpc_message.h,
+	  dlls/rpcrt4/rpc_misc.h, dlls/rpcrt4/rpc_server.c,
+	  dlls/rpcrt4/rpc_server.h, dlls/rpcrt4/rpc_transport.c,
+	  dlls/rpcrt4/rpcrt4_main.c, dlls/rpcrt4/rpcss_np_client.c,
+	  dlls/rpcrt4/rpcss_np_client.h, dlls/rpcrt4/tests/ndr_marshall.c,
+	  dlls/rpcrt4/tests/rpc.c, dlls/rsabase/tests/rsabase.c,
+	  dlls/rsaenh/des.c, dlls/rsaenh/handle.c, dlls/rsaenh/handle.h,
+	  dlls/rsaenh/implglue.c, dlls/rsaenh/implglue.h, dlls/rsaenh/md2.c,
+	  dlls/rsaenh/mpi.c, dlls/rsaenh/rc2.c, dlls/rsaenh/rc4.c,
+	  dlls/rsaenh/rsa.c, dlls/rsaenh/rsaenh.c, dlls/rsaenh/tests/rsaenh.c,
+	  dlls/rsaenh/tomcrypt.h, dlls/sane.ds/capability.c,
+	  dlls/sane.ds/ds_ctrl.c, dlls/sane.ds/ds_image.c,
+	  dlls/sane.ds/resource.h, dlls/sane.ds/rsrc.rc,
+	  dlls/sane.ds/sane_De.rc, dlls/sane.ds/sane_En.rc,
+	  dlls/sane.ds/sane_Fi.rc, dlls/sane.ds/sane_Fr.rc,
+	  dlls/sane.ds/sane_Ko.rc, dlls/sane.ds/sane_Nl.rc,
+	  dlls/sane.ds/sane_No.rc, dlls/sane.ds/sane_i.h,
+	  dlls/sane.ds/sane_main.c, dlls/sane.ds/ui.c,
+	  dlls/secur32/base64_codec.c, dlls/secur32/dispatcher.c,
+	  dlls/secur32/negotiate.c, dlls/secur32/ntlm.c,
+	  dlls/secur32/schannel.c, dlls/secur32/secur32.c,
+	  dlls/secur32/secur32_priv.h, dlls/secur32/tests/main.c,
+	  dlls/secur32/thunks.c, dlls/secur32/thunks.h, dlls/secur32/wrapper.c,
+	  dlls/sensapi/sensapi.c, dlls/serialui/Bg.rc, dlls/serialui/Cs.rc,
+	  dlls/serialui/De.rc, dlls/serialui/En.rc, dlls/serialui/Eo.rc,
+	  dlls/serialui/Es.rc, dlls/serialui/Fi.rc, dlls/serialui/Fr.rc,
+	  dlls/serialui/Hu.rc, dlls/serialui/It.rc, dlls/serialui/Ja.rc,
+	  dlls/serialui/Ko.rc, dlls/serialui/Nl.rc, dlls/serialui/No.rc,
+	  dlls/serialui/Pt.rc, dlls/serialui/Ru.rc, dlls/serialui/Tr.rc,
+	  dlls/serialui/confdlg.c, dlls/serialui/serialui.h,
+	  dlls/serialui/serialui_rc.rc, dlls/setupapi/Bg.rc,
+	  dlls/setupapi/Cs.rc, dlls/setupapi/De.rc, dlls/setupapi/En.rc,
+	  dlls/setupapi/Eo.rc, dlls/setupapi/Es.rc, dlls/setupapi/Fi.rc,
+	  dlls/setupapi/Fr.rc, dlls/setupapi/Hu.rc, dlls/setupapi/It.rc,
+	  dlls/setupapi/Ja.rc, dlls/setupapi/Ko.rc, dlls/setupapi/Nl.rc,
+	  dlls/setupapi/No.rc, dlls/setupapi/Pl.rc, dlls/setupapi/Pt.rc,
+	  dlls/setupapi/Ru.rc, dlls/setupapi/Sv.rc, dlls/setupapi/Tr.rc,
+	  dlls/setupapi/devinst.c, dlls/setupapi/devinst16.c,
+	  dlls/setupapi/dirid.c, dlls/setupapi/diskspace.c,
+	  dlls/setupapi/fakedll.c, dlls/setupapi/infparse.c,
+	  dlls/setupapi/install.c, dlls/setupapi/misc.c,
+	  dlls/setupapi/parser.c, dlls/setupapi/query.c, dlls/setupapi/queue.c,
+	  dlls/setupapi/setupapi.rc, dlls/setupapi/setupapi_private.h,
+	  dlls/setupapi/setupcab.c, dlls/setupapi/setupx16.h,
+	  dlls/setupapi/setupx_main.c, dlls/setupapi/stringtable.c,
+	  dlls/setupapi/stubs.c, dlls/setupapi/tests/parser.c,
+	  dlls/setupapi/tests/query.c, dlls/setupapi/tests/stringtable.c,
+	  dlls/setupapi/virtcopy.c, dlls/sfc/sfc_main.c, dlls/shdocvw/Bg.rc,
+	  dlls/shdocvw/De.rc, dlls/shdocvw/En.rc, dlls/shdocvw/Es.rc,
+	  dlls/shdocvw/Fi.rc, dlls/shdocvw/Fr.rc, dlls/shdocvw/Hu.rc,
+	  dlls/shdocvw/Ko.rc, dlls/shdocvw/Nl.rc, dlls/shdocvw/No.rc,
+	  dlls/shdocvw/Pt.rc, dlls/shdocvw/Tr.rc, dlls/shdocvw/classinfo.c,
+	  dlls/shdocvw/client.c, dlls/shdocvw/dochost.c, dlls/shdocvw/events.c,
+	  dlls/shdocvw/factory.c, dlls/shdocvw/frame.c, dlls/shdocvw/ie.c,
+	  dlls/shdocvw/iexplore.c, dlls/shdocvw/navigate.c,
+	  dlls/shdocvw/oleobject.c, dlls/shdocvw/persist.c,
+	  dlls/shdocvw/regsvr.c, dlls/shdocvw/shdocvw.h,
+	  dlls/shdocvw/shdocvw.rc, dlls/shdocvw/shdocvw_main.c,
+	  dlls/shdocvw/shlinstobj.c, dlls/shdocvw/tests/shortcut.c,
+	  dlls/shdocvw/version.rc, dlls/shdocvw/view.c,
+	  dlls/shdocvw/webbrowser.c, dlls/shell32/autocomplete.c,
+	  dlls/shell32/brsfolder.c, dlls/shell32/changenotify.c,
+	  dlls/shell32/classes.c, dlls/shell32/clipboard.c,
+	  dlls/shell32/control.c, dlls/shell32/cpanel.h,
+	  dlls/shell32/cpanelfolder.c, dlls/shell32/dataobject.c,
+	  dlls/shell32/dde.c, dlls/shell32/debughlp.c, dlls/shell32/debughlp.h,
+	  dlls/shell32/dialogs.c, dlls/shell32/dragdrophelper.c,
+	  dlls/shell32/enumidlist.c, dlls/shell32/enumidlist.h,
+	  dlls/shell32/folders.c, dlls/shell32/iconcache.c,
+	  dlls/shell32/pidl.c, dlls/shell32/pidl.h, dlls/shell32/regsvr.c,
+	  dlls/shell32/shell.c, dlls/shell32/shell32_Bg.rc,
+	  dlls/shell32/shell32_Ca.rc, dlls/shell32/shell32_Cn.rc,
+	  dlls/shell32/shell32_Cs.rc, dlls/shell32/shell32_Da.rc,
+	  dlls/shell32/shell32_De.rc, dlls/shell32/shell32_En.rc,
+	  dlls/shell32/shell32_Eo.rc, dlls/shell32/shell32_Es.rc,
+	  dlls/shell32/shell32_Fi.rc, dlls/shell32/shell32_Fr.rc,
+	  dlls/shell32/shell32_Hu.rc, dlls/shell32/shell32_It.rc,
+	  dlls/shell32/shell32_Ja.rc, dlls/shell32/shell32_Ko.rc,
+	  dlls/shell32/shell32_Nl.rc, dlls/shell32/shell32_No.rc,
+	  dlls/shell32/shell32_Pl.rc, dlls/shell32/shell32_Pt.rc,
+	  dlls/shell32/shell32_Ru.rc, dlls/shell32/shell32_Si.rc,
+	  dlls/shell32/shell32_Sk.rc, dlls/shell32/shell32_Sv.rc,
+	  dlls/shell32/shell32_Tr.rc, dlls/shell32/shell32_Uk.rc,
+	  dlls/shell32/shell32_Wa.rc, dlls/shell32/shell32_Zh.rc,
+	  dlls/shell32/shell32_main.c, dlls/shell32/shell32_main.h,
+	  dlls/shell32/shell32_xx.rc, dlls/shell32/shellfolder.h,
+	  dlls/shell32/shelllink.c, dlls/shell32/shellole.c,
+	  dlls/shell32/shellord.c, dlls/shell32/shellpath.c,
+	  dlls/shell32/shellreg.c, dlls/shell32/shellstring.c,
+	  dlls/shell32/shfldr.h, dlls/shell32/shfldr_desktop.c,
+	  dlls/shell32/shfldr_fs.c, dlls/shell32/shfldr_mycomp.c,
+	  dlls/shell32/shfldr_unixfs.c, dlls/shell32/shlexec.c,
+	  dlls/shell32/shlfileop.c, dlls/shell32/shlfolder.c,
+	  dlls/shell32/shlfsbind.c, dlls/shell32/shlmenu.c,
+	  dlls/shell32/shlview.c, dlls/shell32/shpolicy.c,
+	  dlls/shell32/shres.rc, dlls/shell32/shresdef.h,
+	  dlls/shell32/shv_bg_cmenu.c, dlls/shell32/shv_item_cmenu.c,
+	  dlls/shell32/systray.c, dlls/shell32/tests/shell32_test.h,
+	  dlls/shell32/tests/shelllink.c, dlls/shell32/tests/shellpath.c,
+	  dlls/shell32/tests/shlexec.c, dlls/shell32/tests/shlfileop.c,
+	  dlls/shell32/tests/shlfolder.c, dlls/shell32/tests/string.c,
+	  dlls/shell32/undocshell.h, dlls/shell32/version.h,
+	  dlls/shell32/version.rc, dlls/shell32/version16.rc,
+	  dlls/shlwapi/assoc.c, dlls/shlwapi/clist.c, dlls/shlwapi/istream.c,
+	  dlls/shlwapi/msgbox.c, dlls/shlwapi/ordinal.c, dlls/shlwapi/path.c,
+	  dlls/shlwapi/reg.c, dlls/shlwapi/regstream.c,
+	  dlls/shlwapi/resource.h, dlls/shlwapi/shlwapi.rc,
+	  dlls/shlwapi/shlwapi_De.rc, dlls/shlwapi/shlwapi_En.rc,
+	  dlls/shlwapi/shlwapi_Eo.rc, dlls/shlwapi/shlwapi_Es.rc,
+	  dlls/shlwapi/shlwapi_Fi.rc, dlls/shlwapi/shlwapi_Fr.rc,
+	  dlls/shlwapi/shlwapi_Hu.rc, dlls/shlwapi/shlwapi_It.rc,
+	  dlls/shlwapi/shlwapi_Ja.rc, dlls/shlwapi/shlwapi_Ko.rc,
+	  dlls/shlwapi/shlwapi_Nl.rc, dlls/shlwapi/shlwapi_No.rc,
+	  dlls/shlwapi/shlwapi_Pt.rc, dlls/shlwapi/shlwapi_Tr.rc,
+	  dlls/shlwapi/shlwapi_main.c, dlls/shlwapi/stopwatch.c,
+	  dlls/shlwapi/string.c, dlls/shlwapi/tests/clist.c,
+	  dlls/shlwapi/tests/clsid.c, dlls/shlwapi/tests/ordinal.c,
+	  dlls/shlwapi/tests/path.c, dlls/shlwapi/tests/shreg.c,
+	  dlls/shlwapi/tests/string.c, dlls/shlwapi/thread.c,
+	  dlls/shlwapi/url.c, dlls/shlwapi/version.rc, dlls/shlwapi/wsprintf.c,
+	  dlls/snmpapi/main.c, dlls/spoolss/spoolss_main.c,
+	  dlls/stdole2.tlb/rsrc.rc, dlls/stdole2.tlb/std_ole_v2.idl,
+	  dlls/stdole32.tlb/rsrc.rc, dlls/stdole32.tlb/std_ole_v1.idl,
+	  dlls/sti/sti_main.c, dlls/strmiids/strmiids.c,
+	  dlls/tapi32/assisted.c, dlls/tapi32/line.c, dlls/tapi32/phone.c,
+	  dlls/twain_32/dsm_ctrl.c, dlls/twain_32/twain16_main.c,
+	  dlls/twain_32/twain32_main.c, dlls/twain_32/twain_i.h,
+	  dlls/url/url_main.c, dlls/urlmon/binding.c, dlls/urlmon/file.c,
+	  dlls/urlmon/format.c, dlls/urlmon/ftp.c, dlls/urlmon/http.c,
+	  dlls/urlmon/internet.c, dlls/urlmon/regsvr.c, dlls/urlmon/rsrc.rc,
+	  dlls/urlmon/sec_mgr.c, dlls/urlmon/session.c,
+	  dlls/urlmon/tests/misc.c, dlls/urlmon/tests/protocol.c,
+	  dlls/urlmon/tests/url.c, dlls/urlmon/umon.c, dlls/urlmon/umstream.c,
+	  dlls/urlmon/urlmon_main.c, dlls/urlmon/urlmon_main.h,
+	  dlls/urlmon/version.rc, dlls/user/bidi16.c, dlls/user/button.c,
+	  dlls/user/caret.c, dlls/user/class.c, dlls/user/clipboard.c,
+	  dlls/user/combo.c, dlls/user/comm16.c, dlls/user/controls.h,
+	  dlls/user/cursoricon.c, dlls/user/dde_client.c, dlls/user/dde_misc.c,
+	  dlls/user/dde_private.h, dlls/user/dde_server.c, dlls/user/ddeml16.c,
+	  dlls/user/defdlg.c, dlls/user/defwnd.c, dlls/user/desktop.c,
+	  dlls/user/dialog.c, dlls/user/dialog16.c, dlls/user/display.c,
+	  dlls/user/driver.c, dlls/user/driver16.c, dlls/user/edit.c,
+	  dlls/user/exticon.c, dlls/user/focus.c, dlls/user/hook.c,
+	  dlls/user/hook16.c, dlls/user/icontitle.c, dlls/user/input.c,
+	  dlls/user/kbd16.c, dlls/user/listbox.c, dlls/user/lstr.c,
+	  dlls/user/mdi.c, dlls/user/menu.c, dlls/user/message.c,
+	  dlls/user/misc.c, dlls/user/mouse16.c, dlls/user/msg16.c,
+	  dlls/user/msgbox.c, dlls/user/network.c, dlls/user/nonclient.c,
+	  dlls/user/painting.c, dlls/user/property.c, dlls/user/resource.c,
+	  dlls/user/resources/display.rc, dlls/user/resources/mouse.rc,
+	  dlls/user/resources/user32.rc, dlls/user/resources/user32_Bg.rc,
+	  dlls/user/resources/user32_Ca.rc, dlls/user/resources/user32_Cs.rc,
+	  dlls/user/resources/user32_Da.rc, dlls/user/resources/user32_De.rc,
+	  dlls/user/resources/user32_En.rc, dlls/user/resources/user32_Eo.rc,
+	  dlls/user/resources/user32_Es.rc, dlls/user/resources/user32_Fi.rc,
+	  dlls/user/resources/user32_Fr.rc, dlls/user/resources/user32_Hu.rc,
+	  dlls/user/resources/user32_It.rc, dlls/user/resources/user32_Ja.rc,
+	  dlls/user/resources/user32_Ko.rc, dlls/user/resources/user32_Nl.rc,
+	  dlls/user/resources/user32_No.rc, dlls/user/resources/user32_Pl.rc,
+	  dlls/user/resources/user32_Pt.rc, dlls/user/resources/user32_Ru.rc,
+	  dlls/user/resources/user32_Si.rc, dlls/user/resources/user32_Sk.rc,
+	  dlls/user/resources/user32_Sv.rc, dlls/user/resources/user32_Tr.rc,
+	  dlls/user/resources/user32_Uk.rc, dlls/user/resources/user32_Wa.rc,
+	  dlls/user/resources/user32_Zh.rc, dlls/user/resources/user32_bin.rc,
+	  dlls/user/resources/version.rc, dlls/user/resources/version16.rc,
+	  dlls/user/scroll.c, dlls/user/spy.c, dlls/user/static.c,
+	  dlls/user/sysparams.c, dlls/user/tests/class.c,
+	  dlls/user/tests/clipboard.c, dlls/user/tests/dce.c,
+	  dlls/user/tests/dde.c, dlls/user/tests/dialog.c,
+	  dlls/user/tests/edit.c, dlls/user/tests/input.c,
+	  dlls/user/tests/listbox.c, dlls/user/tests/menu.c,
+	  dlls/user/tests/monitor.c, dlls/user/tests/msg.c,
+	  dlls/user/tests/resource.c, dlls/user/tests/resource.rc,
+	  dlls/user/tests/sysparams.c, dlls/user/tests/text.c,
+	  dlls/user/tests/win.c, dlls/user/tests/winstation.c,
+	  dlls/user/tests/wsprintf.c, dlls/user/text.c, dlls/user/uitools.c,
+	  dlls/user/user16.c, dlls/user/user_main.c, dlls/user/user_private.h,
+	  dlls/user/win.c, dlls/user/winhelp.c, dlls/user/winpos.c,
+	  dlls/user/winproc.c, dlls/user/winproc.h, dlls/user/winstation.c,
+	  dlls/user/wnd16.c, dlls/user/wsprintf.c, dlls/usp10/tests/usp10.c,
+	  dlls/usp10/usp10.c, dlls/uuid/uuid.c, dlls/uxtheme/draw.c,
+	  dlls/uxtheme/main.c, dlls/uxtheme/metric.c, dlls/uxtheme/msstyles.c,
+	  dlls/uxtheme/msstyles.h, dlls/uxtheme/property.c,
+	  dlls/uxtheme/stylemap.c, dlls/uxtheme/system.c, dlls/uxtheme/uxini.c,
+	  dlls/uxtheme/uxthemedll.h, dlls/uxtheme/version.rc,
+	  dlls/vdhcp.vxd/vdhcp.c, dlls/vdmdbg/vdmdbg.c, dlls/version/info.c,
+	  dlls/version/install.c, dlls/version/resource.c,
+	  dlls/version/tests/info.c, dlls/version/tests/install.c,
+	  dlls/version/tests/version.rc, dlls/version/ver16.c,
+	  dlls/vmm.vxd/vmm.c, dlls/vnbt.vxd/vnbt.c,
+	  dlls/vnetbios.vxd/vnetbios.c, dlls/vtdapi.vxd/vtdapi.c,
+	  dlls/vwin32.vxd/vwin32.c, dlls/w32skrnl/w32skernel.c,
+	  dlls/w32skrnl/w32sys.c, dlls/w32skrnl/win32s16.c,
+	  dlls/winecrt0/crt0_private.h, dlls/winecrt0/delay_load.c,
+	  dlls/winecrt0/dll_entry.c, dlls/winecrt0/dll_main.c,
+	  dlls/winecrt0/drv_entry.c, dlls/winecrt0/exe_entry.c,
+	  dlls/winecrt0/exe_main.c, dlls/winecrt0/exe_wentry.c,
+	  dlls/winecrt0/exe_wmain.c, dlls/winecrt0/init.c,
+	  dlls/winecrt0/stub.c, dlls/wined3d/baseshader.c,
+	  dlls/wined3d/basetexture.c, dlls/wined3d/cubetexture.c,
+	  dlls/wined3d/device.c, dlls/wined3d/directx.c,
+	  dlls/wined3d/drawprim.c, dlls/wined3d/indexbuffer.c,
+	  dlls/wined3d/palette.c, dlls/wined3d/pixelshader.c,
+	  dlls/wined3d/query.c, dlls/wined3d/resource.c,
+	  dlls/wined3d/stateblock.c, dlls/wined3d/surface.c,
+	  dlls/wined3d/surface_gdi.c, dlls/wined3d/swapchain.c,
+	  dlls/wined3d/texture.c, dlls/wined3d/utils.c,
+	  dlls/wined3d/vertexbuffer.c, dlls/wined3d/vertexdeclaration.c,
+	  dlls/wined3d/vertexshader.c, dlls/wined3d/volume.c,
+	  dlls/wined3d/volumetexture.c, dlls/wined3d/wined3d_main.c,
+	  dlls/wined3d/wined3d_private.h, dlls/winedos/devices.c,
+	  dlls/winedos/dma.c, dlls/winedos/dosaspi.c, dlls/winedos/dosconf.c,
+	  dlls/winedos/dosexe.h, dlls/winedos/dosmem.c, dlls/winedos/dosvm.c,
+	  dlls/winedos/dosvm.h, dlls/winedos/fpu.c, dlls/winedos/himem.c,
+	  dlls/winedos/int09.c, dlls/winedos/int10.c, dlls/winedos/int11.c,
+	  dlls/winedos/int13.c, dlls/winedos/int15.c, dlls/winedos/int16.c,
+	  dlls/winedos/int17.c, dlls/winedos/int19.c, dlls/winedos/int1a.c,
+	  dlls/winedos/int20.c, dlls/winedos/int21.c, dlls/winedos/int25.c,
+	  dlls/winedos/int26.c, dlls/winedos/int29.c, dlls/winedos/int2f.c,
+	  dlls/winedos/int31.c, dlls/winedos/int33.c, dlls/winedos/int41.c,
+	  dlls/winedos/int5c.c, dlls/winedos/int67.c,
+	  dlls/winedos/interrupts.c, dlls/winedos/ioports.c,
+	  dlls/winedos/module.c, dlls/winedos/ppdev.c, dlls/winedos/relay.c,
+	  dlls/winedos/soundblaster.c, dlls/winedos/timer.c,
+	  dlls/winedos/vga.c, dlls/winedos/vga.h, dlls/winedos/vxd.c,
+	  dlls/winedos/xms.c, dlls/winemp3.acm/common.c,
+	  dlls/winemp3.acm/dct64_i386.c, dlls/winemp3.acm/decode_i386.c,
+	  dlls/winemp3.acm/huffman.h, dlls/winemp3.acm/interface.c,
+	  dlls/winemp3.acm/l2tables.h, dlls/winemp3.acm/layer1.c,
+	  dlls/winemp3.acm/layer2.c, dlls/winemp3.acm/layer3.c,
+	  dlls/winemp3.acm/mpegl3.c, dlls/winemp3.acm/mpg123.h,
+	  dlls/winemp3.acm/mpglib.h, dlls/winemp3.acm/tabinit.c,
+	  dlls/wineps/afm.c, dlls/wineps/afm2c.c, dlls/wineps/bitblt.c,
+	  dlls/wineps/bitmap.c, dlls/wineps/brush.c, dlls/wineps/builtin.c,
+	  dlls/wineps/clipping.c, dlls/wineps/color.c, dlls/wineps/download.c,
+	  dlls/wineps/driver.c, dlls/wineps/encode.c, dlls/wineps/escape.c,
+	  dlls/wineps/font.c, dlls/wineps/glyphlist.c, dlls/wineps/graphics.c,
+	  dlls/wineps/init.c, dlls/wineps/mkagl.c, dlls/wineps/objects.c,
+	  dlls/wineps/pen.c, dlls/wineps/ppd.c, dlls/wineps/ps.c,
+	  dlls/wineps/psdlg.h, dlls/wineps/psdrv.h, dlls/wineps/rsrc.rc,
+	  dlls/wineps/text.c, dlls/wineps/truetype.c, dlls/wineps/type1.c,
+	  dlls/wineps/type1afm.c, dlls/wineps/type42.c, dlls/wineps/wps_Bg.rc,
+	  dlls/wineps/wps_Cs.rc, dlls/wineps/wps_De.rc, dlls/wineps/wps_En.rc,
+	  dlls/wineps/wps_Es.rc, dlls/wineps/wps_Fr.rc, dlls/wineps/wps_Hu.rc,
+	  dlls/wineps/wps_It.rc, dlls/wineps/wps_Ja.rc, dlls/wineps/wps_Ko.rc,
+	  dlls/wineps/wps_Nl.rc, dlls/wineps/wps_No.rc, dlls/wineps/wps_Pt.rc,
+	  dlls/wineps/wps_Ru.rc, dlls/wineps/wps_Si.rc, dlls/wineps/wps_Sk.rc,
+	  dlls/wineps/wps_Tr.rc, dlls/wineps/wps_xx.rc, dlls/wininet/cookie.c,
+	  dlls/wininet/dialogs.c, dlls/wininet/ftp.c, dlls/wininet/gopher.c,
+	  dlls/wininet/http.c, dlls/wininet/internet.c,
+	  dlls/wininet/internet.h, dlls/wininet/netconnection.c,
+	  dlls/wininet/resource.h, dlls/wininet/rsrc.rc,
+	  dlls/wininet/tests/http.c, dlls/wininet/tests/internet.c,
+	  dlls/wininet/tests/url.c, dlls/wininet/tests/wininet_test.h,
+	  dlls/wininet/urlcache.c, dlls/wininet/utility.c,
+	  dlls/wininet/version.rc, dlls/wininet/wininet_Bg.rc,
+	  dlls/wininet/wininet_Cs.rc, dlls/wininet/wininet_De.rc,
+	  dlls/wininet/wininet_En.rc, dlls/wininet/wininet_Eo.rc,
+	  dlls/wininet/wininet_Es.rc, dlls/wininet/wininet_Fi.rc,
+	  dlls/wininet/wininet_Fr.rc, dlls/wininet/wininet_Hu.rc,
+	  dlls/wininet/wininet_It.rc, dlls/wininet/wininet_Ja.rc,
+	  dlls/wininet/wininet_Ko.rc, dlls/wininet/wininet_Nl.rc,
+	  dlls/wininet/wininet_No.rc, dlls/wininet/wininet_Pt.rc,
+	  dlls/wininet/wininet_Ru.rc, dlls/wininet/wininet_Si.rc,
+	  dlls/wininet/wininet_Tr.rc, dlls/wininet/wininet_main.c,
+	  dlls/winmm/driver.c, dlls/winmm/joystick.c,
+	  dlls/winmm/joystick/joystick.c, dlls/winmm/lolvldrv.c,
+	  dlls/winmm/mci.c, dlls/winmm/message16.c, dlls/winmm/mmio.c,
+	  dlls/winmm/mmsystem.c, dlls/winmm/playsound.c, dlls/winmm/sound16.c,
+	  dlls/winmm/tests/capture.c, dlls/winmm/tests/mixer.c,
+	  dlls/winmm/tests/mmio.c, dlls/winmm/tests/timer.c,
+	  dlls/winmm/tests/wave.c, dlls/winmm/tests/winmm_test.h,
+	  dlls/winmm/time.c, dlls/winmm/winealsa/alsa.c,
+	  dlls/winmm/winealsa/alsa.h, dlls/winmm/winealsa/audio.c,
+	  dlls/winmm/winealsa/midi.c, dlls/winmm/winearts/arts.c,
+	  dlls/winmm/winearts/arts.h, dlls/winmm/winearts/audio.c,
+	  dlls/winmm/wineaudioio/audio.c, dlls/winmm/wineaudioio/audioio.c,
+	  dlls/winmm/wineesd/audio.c, dlls/winmm/wineesd/esound.c,
+	  dlls/winmm/wineesd/esound.h, dlls/winmm/winejack/audio.c,
+	  dlls/winmm/winejack/jack.c, dlls/winmm/winejack/jack.h,
+	  dlls/winmm/winemm.h, dlls/winmm/winemm16.h,
+	  dlls/winmm/winenas/audio.c, dlls/winmm/winenas/nas.c,
+	  dlls/winmm/winenas/nas.h, dlls/winmm/wineoss/audio.c,
+	  dlls/winmm/wineoss/audio.h, dlls/winmm/wineoss/dscapture.c,
+	  dlls/winmm/wineoss/dsrender.c, dlls/winmm/wineoss/midi.c,
+	  dlls/winmm/wineoss/midipatch.c, dlls/winmm/wineoss/mixer.c,
+	  dlls/winmm/wineoss/mmaux.c, dlls/winmm/wineoss/oss.c,
+	  dlls/winmm/wineoss/oss.h, dlls/winmm/winmm.c, dlls/winmm/winmm_Cs.rc,
+	  dlls/winmm/winmm_De.rc, dlls/winmm/winmm_En.rc,
+	  dlls/winmm/winmm_Es.rc, dlls/winmm/winmm_Fr.rc,
+	  dlls/winmm/winmm_It.rc, dlls/winmm/winmm_Ja.rc,
+	  dlls/winmm/winmm_Ko.rc, dlls/winmm/winmm_Nl.rc,
+	  dlls/winmm/winmm_No.rc, dlls/winmm/winmm_Pt.rc,
+	  dlls/winmm/winmm_Ru.rc, dlls/winmm/winmm_Si.rc,
+	  dlls/winmm/winmm_Sk.rc, dlls/winmm/winmm_Tr.rc,
+	  dlls/winmm/winmm_res.rc, dlls/winnls32/winnls.c, dlls/winspool/Bg.rc,
+	  dlls/winspool/De.rc, dlls/winspool/En.rc, dlls/winspool/Eo.rc,
+	  dlls/winspool/Fi.rc, dlls/winspool/It.rc, dlls/winspool/Ko.rc,
+	  dlls/winspool/Nl.rc, dlls/winspool/Ru.rc, dlls/winspool/Tr.rc,
+	  dlls/winspool/info.c, dlls/winspool/tests/info.c,
+	  dlls/winspool/winspool.rc, dlls/winspool/wspool.c,
+	  dlls/winspool/wspool.h, dlls/wintab32/context.c,
+	  dlls/wintab32/manager.c, dlls/wintab32/wintab16.c,
+	  dlls/wintab32/wintab32.c, dlls/wintab32/wintab_internal.h,
+	  dlls/wintrust/version.rc, dlls/wintrust/wintrust_main.c,
+	  dlls/wldap32/add.c, dlls/wldap32/ber.c, dlls/wldap32/bind.c,
+	  dlls/wldap32/compare.c, dlls/wldap32/control.c,
+	  dlls/wldap32/delete.c, dlls/wldap32/dn.c, dlls/wldap32/error.c,
+	  dlls/wldap32/extended.c, dlls/wldap32/init.c, dlls/wldap32/main.c,
+	  dlls/wldap32/misc.c, dlls/wldap32/modify.c, dlls/wldap32/modrdn.c,
+	  dlls/wldap32/option.c, dlls/wldap32/page.c, dlls/wldap32/parse.c,
+	  dlls/wldap32/rename.c, dlls/wldap32/search.c, dlls/wldap32/value.c,
+	  dlls/wldap32/winldap_private.h, dlls/wldap32/wldap32.h,
+	  dlls/wldap32/wldap32.rc, dlls/wldap32/wldap32_De.rc,
+	  dlls/wldap32/wldap32_En.rc, dlls/wldap32/wldap32_Fr.rc,
+	  dlls/wldap32/wldap32_Ko.rc, dlls/wldap32/wldap32_Nl.rc,
+	  dlls/wldap32/wldap32_No.rc, dlls/wldap32/wldap32_Ru.rc,
+	  dlls/wldap32/wldap32_Tr.rc, dlls/wnaspi32/aspi.c,
+	  dlls/wnaspi32/aspi.h, dlls/wnaspi32/winaspi16.c,
+	  dlls/wnaspi32/winaspi32.c, dlls/wnaspi32/winescsi.h,
+	  dlls/wow32/wow_main.c, dlls/ws2_32/async.c, dlls/ws2_32/protocol.c,
+	  dlls/ws2_32/socket.c, dlls/ws2_32/socket16.c,
+	  dlls/ws2_32/tests/protocol.c, dlls/ws2_32/tests/sock.c,
+	  dlls/ws2_32/version.rc, dlls/wsock32/protocol.c,
+	  dlls/wsock32/service.c, dlls/wsock32/socket.c,
+	  dlls/wsock32/version.rc, dlls/wsock32/wscontrol.h,
+	  dlls/wtsapi32/wtsapi32.c, dlls/x11drv/bitblt.c, dlls/x11drv/bitmap.c,
+	  dlls/x11drv/brush.c, dlls/x11drv/clipboard.c, dlls/x11drv/clipping.c,
+	  dlls/x11drv/codepage.c, dlls/x11drv/dce.c, dlls/x11drv/desktop.c,
+	  dlls/x11drv/dga2.c, dlls/x11drv/dga2.h, dlls/x11drv/dib.c,
+	  dlls/x11drv/dib_convert.c, dlls/x11drv/dib_dst_swap.c,
+	  dlls/x11drv/dib_src_swap.c, dlls/x11drv/event.c,
+	  dlls/x11drv/graphics.c, dlls/x11drv/init.c, dlls/x11drv/keyboard.c,
+	  dlls/x11drv/mouse.c, dlls/x11drv/mwm.h, dlls/x11drv/opengl.c,
+	  dlls/x11drv/palette.c, dlls/x11drv/pen.c, dlls/x11drv/scroll.c,
+	  dlls/x11drv/settings.c, dlls/x11drv/text.c, dlls/x11drv/window.c,
+	  dlls/x11drv/winpos.c, dlls/x11drv/wintab.c, dlls/x11drv/x11ddraw.c,
+	  dlls/x11drv/x11ddraw.h, dlls/x11drv/x11drv.h,
+	  dlls/x11drv/x11drv_main.c, dlls/x11drv/x11font.h, dlls/x11drv/xdnd.c,
+	  dlls/x11drv/xfont.c, dlls/x11drv/xim.c, dlls/x11drv/xrandr.c,
+	  dlls/x11drv/xrandr.h, dlls/x11drv/xrender.c, dlls/x11drv/xvidmode.c,
+	  dlls/x11drv/xvidmode.h, fonts/courier.sfd, fonts/marlett.sfd,
+	  fonts/ms_sans_serif.sfd, fonts/small_fonts.sfd, fonts/system.sfd,
+	  include/accctrl.h, include/aclapi.h, include/activscp.idl,
+	  include/adshlp.h, include/advpub.h, include/amstream.idl,
+	  include/amvideo.idl, include/appmgmt.h, include/audevcod.h,
+	  include/austream.idl, include/aviriff.h, include/axcore.idl,
+	  include/axextend.idl, include/basetsd.h, include/basetyps.h,
+	  include/cderr.h, include/cguid.h, include/comcat.idl,
+	  include/commctrl.h, include/commdlg.h, include/compobj.h,
+	  include/control.idl, include/cpl.h, include/custcntl.h,
+	  include/cvconst.h, include/d3d.h, include/d3d8.h, include/d3d8caps.h,
+	  include/d3d8types.h, include/d3d9.h, include/d3d9caps.h,
+	  include/d3d9types.h, include/d3dcaps.h, include/d3dhal.h,
+	  include/d3drm.h, include/d3dtypes.h, include/d3dvec.inl,
+	  include/d3dx8core.h, include/dbghelp.h, include/dbt.h,
+	  include/dciddi.h, include/dciman.h, include/dde.h, include/ddeml.h,
+	  include/ddk/cfgmgr32.h, include/ddk/ntddcdvd.h,
+	  include/ddk/ntddser.h, include/ddk/ntddtape.h, include/ddk/wdm.h,
+	  include/ddk/winsplp.h, include/ddraw.h, include/ddrawi.h,
+	  include/ddstream.idl, include/devenum.idl, include/devguid.h,
+	  include/digitalv.h, include/dinput.h, include/dispdib.h,
+	  include/dispex.idl, include/dlgs.h, include/dls1.h, include/dls2.h,
+	  include/dmdls.h, include/dmerror.h, include/dmo.h, include/dmoreg.h,
+	  include/dmort.h, include/dmplugin.h, include/dmusbuff.h,
+	  include/dmusicc.h, include/dmusicf.h, include/dmusici.h,
+	  include/dmusics.h, include/docobj.idl, include/downloadmgr.idl,
+	  include/dpaddr.h, include/dplay.h, include/dplay8.h,
+	  include/dplobby.h, include/dplobby8.h, include/dpnathlp.h,
+	  include/dsconf.h, include/dsdriver.h, include/dshow.h,
+	  include/dsound.h, include/dsrole.h, include/dxdiag.h,
+	  include/dxerr8.h, include/dxerr9.h, include/dxfile.h,
+	  include/dyngraph.idl, include/errors.h, include/evcode.h,
+	  include/evntrace.h, include/excpt.h, include/exdisp.idl,
+	  include/exdispid.h, include/fci.h, include/fdi.h, include/gdi.h,
+	  include/guiddef.h, include/heap.h, include/hlink.idl,
+	  include/htmlhelp.h, include/iads.idl, include/icm.h,
+	  include/icmpapi.h, include/idispids.h, include/imagehlp.h,
+	  include/imm.h, include/initguid.h, include/ipexport.h,
+	  include/iphlpapi.h, include/ipifcons.h, include/iprtrmib.h,
+	  include/iptypes.h, include/ks.h, include/ksguid.h, include/ksmedia.h,
+	  include/lm.h, include/lmaccess.h, include/lmapibuf.h,
+	  include/lmbrowsr.h, include/lmcons.h, include/lmerr.h,
+	  include/lmjoin.h, include/lmserver.h, include/lmshare.h,
+	  include/lmstats.h, include/lmwksta.h, include/lzexpand.h,
+	  include/mapi.h, include/mapicode.h, include/mapidefs.h,
+	  include/mapiguid.h, include/mapitags.h, include/mapiutil.h,
+	  include/mapival.h, include/mapix.h, include/mciavi.h, include/mcx.h,
+	  include/mediaerr.h, include/mediaobj.idl, include/mimeinfo.idl,
+	  include/minmax.h, include/mlang.idl, include/mmddk.h,
+	  include/mmreg.h, include/mmstream.idl, include/mmsystem.h,
+	  include/mprapi.h, include/msacm.h, include/msacmdlg.h,
+	  include/msacmdrv.h, include/mscat.h, include/mshtmcid.h,
+	  include/mshtmdid.h, include/mshtmhst.idl, include/mshtml.idl,
+	  include/msi.h, include/msidefs.h, include/msiquery.h,
+	  include/mssip.h, include/msvcrt/crtdbg.h, include/msvcrt/eh.h,
+	  include/msvcrt/errno.h, include/msvcrt/locale.h,
+	  include/msvcrt/malloc.h, include/msvcrt/mbctype.h,
+	  include/msvcrt/mbstring.h, include/msvcrt/search.h,
+	  include/msvcrt/setjmp.h, include/msvcrt/signal.h,
+	  include/msvcrt/stddef.h, include/msvcrt/sys/locking.h,
+	  include/msvcrt/sys/timeb.h, include/msvcrt/sys/types.h,
+	  include/msvcrt/sys/utime.h, include/msvcrt/time.h,
+	  include/msvcrt/wctype.h, include/mswsock.h, include/msxml.idl,
+	  include/msxml2.idl, include/msxml2did.h, include/msxmldid.h,
+	  include/nb30.h, include/ndrtypes.h, include/npapi.h,
+	  include/nspapi.h, include/ntddcdrm.h, include/ntddscsi.h,
+	  include/ntddstor.h, include/ntdsapi.h, include/ntsecapi.h,
+	  include/ntstatus.h, include/oaidl.idl, include/objbase.h,
+	  include/objidl.idl, include/objsafe.idl, include/ocidl.idl,
+	  include/odbcinst.h, include/ole2.h, include/ole2ver.h,
+	  include/oleauto.h, include/olectl.h, include/oledlg.h,
+	  include/oleidl.idl, include/pktdef.h, include/poppack.h,
+	  include/powrprof.h, include/propidl.idl, include/prsht.h,
+	  include/psapi.h, include/pshpack1.h, include/pshpack2.h,
+	  include/pshpack4.h, include/pshpack8.h, include/pstore.idl,
+	  include/ras.h, include/reason.h, include/regstr.h,
+	  include/richedit.h, include/richole.idl, include/rpc.h,
+	  include/rpcdce.h, include/rpcdcep.h, include/rpcndr.h,
+	  include/rpcnterr.h, include/rpcproxy.h, include/schannel.h,
+	  include/schemadef.h, include/schnlsp.h, include/sddl.h,
+	  include/secext.h, include/security.h, include/sensapi.h,
+	  include/sensevts.idl, include/servprov.idl, include/setupapi.h,
+	  include/sfc.h, include/shellapi.h, include/shldisp.idl,
+	  include/shlguid.h, include/shlobj.h, include/shlwapi.h,
+	  include/shobjidl.idl, include/shtypes.idl, include/sipbase.h,
+	  include/snmp.h, include/softpub.h, include/sql.h, include/sqlext.h,
+	  include/sqltypes.h, include/sspi.h, include/storage.h,
+	  include/strmif.idl, include/tapi.h, include/tchar.h,
+	  include/textserv.h, include/thread.h, include/tlhelp32.h,
+	  include/tmschema.h, include/unknwn.idl, include/urlmon.idl,
+	  include/usp10.h, include/uuids.h, include/uxtheme.h, include/ver.h,
+	  include/vfw.h, include/vfwmsgs.h, include/win.h, include/winbase.h,
+	  include/wincon.h, include/wincrypt.h, include/windef.h,
+	  include/windns.h, include/windows.h, include/windowsx.h,
+	  include/wine/debug.h, include/wine/exception.h,
+	  include/wine/itss.idl, include/wine/library.h, include/wine/list.h,
+	  include/wine/mmsystem16.h, include/wine/port.h,
+	  include/wine/pthread.h, include/wine/rpcss_shared.h,
+	  include/wine/server.h, include/wine/test.h, include/wine/unicode.h,
+	  include/wine/winaspi.h, include/wine/winbase16.h,
+	  include/wine/windef16.h, include/wine/wine_common_ver.rc,
+	  include/wine/wined3d_gl.h, include/wine/wined3d_interface.h,
+	  include/wine/wined3d_types.h, include/wine/wingdi16.h,
+	  include/wine/winnet16.h, include/wine/winsock16.h,
+	  include/wine/winuser16.h, include/wine/wpp.h, include/winerror.h,
+	  include/wingdi.h, include/wininet.h, include/winioctl.h,
+	  include/winldap.h, include/winnetwk.h, include/winnls.h,
+	  include/winnls32.h, include/winnt.h, include/winpos.h,
+	  include/winreg.h, include/winres.h, include/winresrc.h,
+	  include/winsock.h, include/winsock2.h, include/winspool.h,
+	  include/winsvc.h, include/wintab.h, include/wintabx.h,
+	  include/winternl.h, include/wintrust.h, include/winuser.h,
+	  include/winver.h, include/wmistr.h, include/wnaspi32.h,
+	  include/wownt32.h, include/ws2spi.h, include/ws2tcpip.h,
+	  include/wshisotp.h, include/wsipx.h, include/wsnwlink.h,
+	  include/wtsapi32.h, include/wtypes.idl, include/xcmc.h,
+	  include/xmldom.idl, include/xmldomdid.h, include/xmldso.idl,
+	  include/xmldsodid.h, include/zmouse.h, libs/port/ffs.c,
+	  libs/port/fstatvfs.c, libs/port/futimes.c, libs/port/getopt.c,
+	  libs/port/getopt.h, libs/port/getopt1.c, libs/port/getpagesize.c,
+	  libs/port/gettid.c, libs/port/interlocked.c, libs/port/lstat.c,
+	  libs/port/memcpy_unaligned.c, libs/port/memmove.c,
+	  libs/port/mkstemps.c, libs/port/pread.c, libs/port/pwrite.c,
+	  libs/port/readlink.c, libs/port/sigsetjmp.c, libs/port/spawn.c,
+	  libs/port/statvfs.c, libs/port/strcasecmp.c, libs/port/strerror.c,
+	  libs/port/strncasecmp.c, libs/port/usleep.c, libs/unicode/cpmap.pl,
+	  libs/unicode/cptable.c, libs/unicode/defaults, libs/unicode/fold.c,
+	  libs/unicode/mbtowc.c, libs/unicode/sortkey.c, libs/unicode/string.c,
+	  libs/unicode/utf8.c, libs/unicode/wctomb.c, libs/wine/config.c,
+	  libs/wine/debug.c, libs/wine/ldt.c, libs/wine/loader.c,
+	  libs/wine/mmap.c, libs/wine/port.c, libs/wpp/ppl.l, libs/wpp/ppy.y,
+	  libs/wpp/preproc.c, libs/wpp/wpp.c, libs/wpp/wpp_private.h,
+	  loader/glibc.c, loader/kthread.c, loader/main.c, loader/main.h,
+	  loader/preloader.c, loader/pthread.c, programs/clock/Cs.rc,
+	  programs/clock/Da.rc, programs/clock/De.rc, programs/clock/En.rc,
+	  programs/clock/Eo.rc, programs/clock/Es.rc, programs/clock/Fi.rc,
+	  programs/clock/Fr.rc, programs/clock/Hu.rc, programs/clock/It.rc,
+	  programs/clock/Ko.rc, programs/clock/Nl.rc, programs/clock/No.rc,
+	  programs/clock/Pl.rc, programs/clock/Pt.rc, programs/clock/Ru.rc,
+	  programs/clock/Si.rc, programs/clock/Sk.rc, programs/clock/Sw.rc,
+	  programs/clock/Th.rc, programs/clock/Tr.rc, programs/clock/Wa.rc,
+	  programs/clock/Zh.rc, programs/clock/clock_res.h,
+	  programs/clock/main.c, programs/clock/main.h, programs/clock/rsrc.rc,
+	  programs/clock/winclock.c, programs/clock/winclock.h,
+	  programs/cmdlgtst/Cs.rc, programs/cmdlgtst/De.rc,
+	  programs/cmdlgtst/En.rc, programs/cmdlgtst/Es.rc,
+	  programs/cmdlgtst/Fr.rc, programs/cmdlgtst/It.rc,
+	  programs/cmdlgtst/Ko.rc, programs/cmdlgtst/Nl.rc,
+	  programs/cmdlgtst/No.rc, programs/cmdlgtst/Pt.rc,
+	  programs/cmdlgtst/Ru.rc, programs/cmdlgtst/Si.rc,
+	  programs/cmdlgtst/Tr.rc, programs/cmdlgtst/cmdlgr.rc,
+	  programs/cmdlgtst/cmdlgtst.c, programs/cmdlgtst/cmdlgtst.h,
+	  programs/control/control.c, programs/control/params.h,
+	  programs/eject/eject.c, programs/expand/expand.c,
+	  programs/explorer/desktop.c, programs/explorer/explorer.c,
+	  programs/explorer/explorer_private.h, programs/explorer/hal.c,
+	  programs/explorer/systray.c, programs/hh/main.c,
+	  programs/icinfo/icinfo.c, programs/iexplore/main.c,
+	  programs/make_progs, programs/msiexec/msiexec.c,
+	  programs/msiexec/rsrc.rc, programs/msiexec/version.rc,
+	  programs/notepad/Bg.rc, programs/notepad/Cs.rc,
+	  programs/notepad/Da.rc, programs/notepad/De.rc,
+	  programs/notepad/En.rc, programs/notepad/Eo.rc,
+	  programs/notepad/Es.rc, programs/notepad/Fi.rc,
+	  programs/notepad/Fr.rc, programs/notepad/Hu.rc,
+	  programs/notepad/It.rc, programs/notepad/Ja.rc,
+	  programs/notepad/Ko.rc, programs/notepad/Nl.rc,
+	  programs/notepad/No.rc, programs/notepad/Pl.rc,
+	  programs/notepad/Pt.rc, programs/notepad/Ru.rc,
+	  programs/notepad/Si.rc, programs/notepad/Sk.rc,
+	  programs/notepad/Sw.rc, programs/notepad/Th.rc,
+	  programs/notepad/Tr.rc, programs/notepad/Wa.rc,
+	  programs/notepad/Zh.rc, programs/notepad/dialog.c,
+	  programs/notepad/dialog.h, programs/notepad/main.c,
+	  programs/notepad/main.h, programs/notepad/notepad_res.h,
+	  programs/notepad/rsrc.rc, programs/progman/Cs.rc,
+	  programs/progman/Da.rc, programs/progman/De.rc,
+	  programs/progman/En.rc, programs/progman/Es.rc,
+	  programs/progman/Fi.rc, programs/progman/Fr.rc,
+	  programs/progman/Hu.rc, programs/progman/It.rc,
+	  programs/progman/Ko.rc, programs/progman/Nl.rc,
+	  programs/progman/No.rc, programs/progman/Pt.rc,
+	  programs/progman/Ru.rc, programs/progman/Si.rc,
+	  programs/progman/Sk.rc, programs/progman/Sw.rc,
+	  programs/progman/Tr.rc, programs/progman/Va.rc,
+	  programs/progman/Wa.rc, programs/progman/Xx.rc,
+	  programs/progman/Zh.rc, programs/progman/accel.rc,
+	  programs/progman/dialog.c, programs/progman/group.c,
+	  programs/progman/grpfile.c, programs/progman/main.c,
+	  programs/progman/progman.h, programs/progman/program.c,
+	  programs/progman/rsrc.rc, programs/progman/string.c,
+	  programs/regedit/Bg.rc, programs/regedit/Cs.rc,
+	  programs/regedit/De.rc, programs/regedit/En.rc,
+	  programs/regedit/Es.rc, programs/regedit/Fr.rc,
+	  programs/regedit/Hu.rc, programs/regedit/It.rc,
+	  programs/regedit/Ja.rc, programs/regedit/Ko.rc,
+	  programs/regedit/Nl.rc, programs/regedit/No.rc,
+	  programs/regedit/Pl.rc, programs/regedit/Pt.rc,
+	  programs/regedit/Ru.rc, programs/regedit/Si.rc,
+	  programs/regedit/Tr.rc, programs/regedit/about.c,
+	  programs/regedit/childwnd.c, programs/regedit/edit.c,
+	  programs/regedit/framewnd.c, programs/regedit/hexedit.c,
+	  programs/regedit/listview.c, programs/regedit/main.c,
+	  programs/regedit/main.h, programs/regedit/regedit.c,
+	  programs/regedit/regproc.c, programs/regedit/regproc.h,
+	  programs/regedit/resource.h, programs/regedit/resource.rc,
+	  programs/regedit/rsrc.rc, programs/regedit/treeview.c,
+	  programs/regsvr32/regsvr32.c, programs/regsvr32/regsvr32.rc,
+	  programs/rpcss/epmap_server.c, programs/rpcss/np_server.c,
+	  programs/rpcss/rpcss.h, programs/rpcss/rpcss_main.c,
+	  programs/rundll32/rundll32.c, programs/start/Cs.rc,
+	  programs/start/De.rc, programs/start/En.rc, programs/start/Es.rc,
+	  programs/start/Fr.rc, programs/start/It.rc, programs/start/Ko.rc,
+	  programs/start/Nl.rc, programs/start/No.rc, programs/start/Pt.rc,
+	  programs/start/Ru.rc, programs/start/Si.rc, programs/start/Tr.rc,
+	  programs/start/resources.h, programs/start/rsrc.rc,
+	  programs/start/start.c, programs/taskmgr/De.rc,
+	  programs/taskmgr/En.rc, programs/taskmgr/Fr.rc,
+	  programs/taskmgr/Ko.rc, programs/taskmgr/Nl.rc,
+	  programs/taskmgr/No.rc, programs/taskmgr/Tr.rc,
+	  programs/taskmgr/about.c, programs/taskmgr/affinity.c,
+	  programs/taskmgr/applpage.c, programs/taskmgr/column.c,
+	  programs/taskmgr/column.h, programs/taskmgr/dbgchnl.c,
+	  programs/taskmgr/debug.c, programs/taskmgr/endproc.c,
+	  programs/taskmgr/graph.c, programs/taskmgr/graphctl.c,
+	  programs/taskmgr/graphctl.h, programs/taskmgr/optnmenu.c,
+	  programs/taskmgr/perfdata.c, programs/taskmgr/perfdata.h,
+	  programs/taskmgr/perfpage.c, programs/taskmgr/priority.c,
+	  programs/taskmgr/proclist.c, programs/taskmgr/procpage.c,
+	  programs/taskmgr/run.c, programs/taskmgr/taskmgr.c,
+	  programs/taskmgr/taskmgr.h, programs/taskmgr/taskmgr.rc,
+	  programs/taskmgr/trayicon.c, programs/uninstaller/Bg.rc,
+	  programs/uninstaller/Cs.rc, programs/uninstaller/De.rc,
+	  programs/uninstaller/En.rc, programs/uninstaller/Eo.rc,
+	  programs/uninstaller/Es.rc, programs/uninstaller/Fi.rc,
+	  programs/uninstaller/Fr.rc, programs/uninstaller/It.rc,
+	  programs/uninstaller/Ko.rc, programs/uninstaller/No.rc,
+	  programs/uninstaller/Pt.rc, programs/uninstaller/Tr.rc,
+	  programs/uninstaller/main.c, programs/uninstaller/resource.h,
+	  programs/uninstaller/rsrc.rc, programs/view/Cs.rc,
+	  programs/view/De.rc, programs/view/En.rc, programs/view/Eo.rc,
+	  programs/view/Es.rc, programs/view/Fr.rc, programs/view/It.rc,
+	  programs/view/Ko.rc, programs/view/Nl.rc, programs/view/No.rc,
+	  programs/view/Pt.rc, programs/view/Ru.rc, programs/view/Si.rc,
+	  programs/view/Tr.rc, programs/view/globals.h, programs/view/init.c,
+	  programs/view/resource.h, programs/view/view.c,
+	  programs/view/viewrc.rc, programs/view/winmain.c,
+	  programs/wcmd/Cs.rc, programs/wcmd/De.rc, programs/wcmd/En.rc,
+	  programs/wcmd/Es.rc, programs/wcmd/Fr.rc, programs/wcmd/Ja.rc,
+	  programs/wcmd/Ko.rc, programs/wcmd/Nl.rc, programs/wcmd/No.rc,
+	  programs/wcmd/Pl.rc, programs/wcmd/Pt.rc, programs/wcmd/Ru.rc,
+	  programs/wcmd/Si.rc, programs/wcmd/Tr.rc, programs/wcmd/batch.c,
+	  programs/wcmd/builtins.c, programs/wcmd/directory.c,
+	  programs/wcmd/wcmd.h, programs/wcmd/wcmdmain.c,
+	  programs/wcmd/wcmdrc.rc, programs/wineapploader.in,
+	  programs/wineboot/wineboot.c, programs/winebrowser/main.c,
+	  programs/winecfg/Bg.rc, programs/winecfg/Cs.rc,
+	  programs/winecfg/De.rc, programs/winecfg/En.rc,
+	  programs/winecfg/Es.rc, programs/winecfg/Fi.rc,
+	  programs/winecfg/Fr.rc, programs/winecfg/Hu.rc,
+	  programs/winecfg/It.rc, programs/winecfg/Ja.rc,
+	  programs/winecfg/Ko.rc, programs/winecfg/Nl.rc,
+	  programs/winecfg/No.rc, programs/winecfg/Pt.rc,
+	  programs/winecfg/Ru.rc, programs/winecfg/Si.rc,
+	  programs/winecfg/Tr.rc, programs/winecfg/appdefaults.c,
+	  programs/winecfg/audio.c, programs/winecfg/drive.c,
+	  programs/winecfg/drivedetect.c, programs/winecfg/driveui.c,
+	  programs/winecfg/libraries.c, programs/winecfg/main.c,
+	  programs/winecfg/properties.h, programs/winecfg/resource.h,
+	  programs/winecfg/theme.c, programs/winecfg/winecfg.c,
+	  programs/winecfg/winecfg.h, programs/winecfg/winecfg.rc,
+	  programs/winecfg/x11drvdlg.c, programs/wineconsole/curses.c,
+	  programs/wineconsole/dialog.c, programs/wineconsole/registry.c,
+	  programs/wineconsole/user.c, programs/wineconsole/winecon_private.h,
+	  programs/wineconsole/winecon_user.h,
+	  programs/wineconsole/wineconsole.c,
+	  programs/wineconsole/wineconsole_Cs.rc,
+	  programs/wineconsole/wineconsole_De.rc,
+	  programs/wineconsole/wineconsole_En.rc,
+	  programs/wineconsole/wineconsole_Eo.rc,
+	  programs/wineconsole/wineconsole_Es.rc,
+	  programs/wineconsole/wineconsole_Fr.rc,
+	  programs/wineconsole/wineconsole_Hu.rc,
+	  programs/wineconsole/wineconsole_It.rc,
+	  programs/wineconsole/wineconsole_Ko.rc,
+	  programs/wineconsole/wineconsole_Nl.rc,
+	  programs/wineconsole/wineconsole_No.rc,
+	  programs/wineconsole/wineconsole_Pl.rc,
+	  programs/wineconsole/wineconsole_Pt.rc,
+	  programs/wineconsole/wineconsole_Ru.rc,
+	  programs/wineconsole/wineconsole_Tr.rc,
+	  programs/wineconsole/wineconsole_Zh.rc,
+	  programs/wineconsole/wineconsole_res.h,
+	  programs/wineconsole/wineconsole_res.rc, programs/winedbg/be_alpha.c,
+	  programs/winedbg/be_cpu.h, programs/winedbg/be_i386.c,
+	  programs/winedbg/be_ppc.c, programs/winedbg/break.c,
+	  programs/winedbg/dbg.y, programs/winedbg/debug.l,
+	  programs/winedbg/debugger.h, programs/winedbg/display.c,
+	  programs/winedbg/expr.c, programs/winedbg/expr.h,
+	  programs/winedbg/gdbproxy.c, programs/winedbg/info.c,
+	  programs/winedbg/intvar.h, programs/winedbg/memory.c,
+	  programs/winedbg/source.c, programs/winedbg/stack.c,
+	  programs/winedbg/symbol.c, programs/winedbg/tgt_active.c,
+	  programs/winedbg/tgt_minidump.c, programs/winedbg/types.c,
+	  programs/winedbg/winedbg.c, programs/winefile/Cs.rc,
+	  programs/winefile/De.rc, programs/winefile/En.rc,
+	  programs/winefile/Es.rc, programs/winefile/Fr.rc,
+	  programs/winefile/Hu.rc, programs/winefile/It.rc,
+	  programs/winefile/Ko.rc, programs/winefile/Nl.rc,
+	  programs/winefile/No.rc, programs/winefile/Pl.rc,
+	  programs/winefile/Pt.rc, programs/winefile/Ru.rc,
+	  programs/winefile/Si.rc, programs/winefile/Sv.rc,
+	  programs/winefile/Tr.rc, programs/winefile/Zh.rc,
+	  programs/winefile/resource.h, programs/winefile/resource.rc,
+	  programs/winefile/rsrc.rc, programs/winefile/splitpath.c,
+	  programs/winefile/winefile.c, programs/winefile/winefile.h,
+	  programs/winelauncher.in, programs/winemenubuilder/winemenubuilder.c,
+	  programs/winemine/Cs.rc, programs/winemine/De.rc,
+	  programs/winemine/En.rc, programs/winemine/Es.rc,
+	  programs/winemine/Fi.rc, programs/winemine/Fr.rc,
+	  programs/winemine/It.rc, programs/winemine/Ko.rc,
+	  programs/winemine/Nl.rc, programs/winemine/No.rc,
+	  programs/winemine/Pl.rc, programs/winemine/Pt.rc,
+	  programs/winemine/Ru.rc, programs/winemine/Si.rc,
+	  programs/winemine/Tr.rc, programs/winemine/dialog.c,
+	  programs/winemine/dialog.h, programs/winemine/main.c,
+	  programs/winemine/main.h, programs/winemine/resource.h,
+	  programs/winemine/rsrc.rc, programs/winepath/winepath.c,
+	  programs/winetest/dist.rc, programs/winetest/gui.c,
+	  programs/winetest/main.c, programs/winetest/resource.h,
+	  programs/winetest/send.c, programs/winetest/util.c,
+	  programs/winetest/winetest.h, programs/winetest/winetest.rc,
+	  programs/winevdm/winevdm.c, programs/winhelp/Bg.rc,
+	  programs/winhelp/Cs.rc, programs/winhelp/Da.rc,
+	  programs/winhelp/De.rc, programs/winhelp/En.rc,
+	  programs/winhelp/Eo.rc, programs/winhelp/Es.rc,
+	  programs/winhelp/Fi.rc, programs/winhelp/Fr.rc,
+	  programs/winhelp/Hu.rc, programs/winhelp/It.rc,
+	  programs/winhelp/Ko.rc, programs/winhelp/Nl.rc,
+	  programs/winhelp/No.rc, programs/winhelp/Pl.rc,
+	  programs/winhelp/Pt.rc, programs/winhelp/Ru.rc,
+	  programs/winhelp/Si.rc, programs/winhelp/Sk.rc,
+	  programs/winhelp/Sw.rc, programs/winhelp/Tr.rc,
+	  programs/winhelp/Va.rc, programs/winhelp/Wa.rc,
+	  programs/winhelp/Zh.rc, programs/winhelp/callback.c,
+	  programs/winhelp/hlpfile.c, programs/winhelp/hlpfile.h,
+	  programs/winhelp/macro.c, programs/winhelp/macro.h,
+	  programs/winhelp/macro.lex.l, programs/winhelp/rsrc.rc,
+	  programs/winhelp/string.c, programs/winhelp/winhelp.c,
+	  programs/winhelp/winhelp.h, programs/winver/winver.c,
+	  programs/wordpad/De.rc, programs/wordpad/En.rc,
+	  programs/wordpad/Fr.rc, programs/wordpad/Hu.rc,
+	  programs/wordpad/Ko.rc, programs/wordpad/Nl.rc,
+	  programs/wordpad/No.rc, programs/wordpad/Ru.rc,
+	  programs/wordpad/Tr.rc, programs/wordpad/resource.h,
+	  programs/wordpad/rsrc.rc, programs/wordpad/wordpad.c, server/atom.c,
+	  server/change.c, server/class.c, server/clipboard.c,
+	  server/console.c, server/console.h, server/context_alpha.c,
+	  server/context_i386.c, server/context_powerpc.c,
+	  server/context_sparc.c, server/context_x86_64.c, server/debugger.c,
+	  server/directory.c, server/event.c, server/fd.c, server/file.c,
+	  server/file.h, server/handle.c, server/handle.h, server/hook.c,
+	  server/mailslot.c, server/main.c, server/mapping.c, server/mutex.c,
+	  server/named_pipe.c, server/object.c, server/object.h,
+	  server/process.c, server/process.h, server/protocol.def,
+	  server/ptrace.c, server/queue.c, server/region.c, server/registry.c,
+	  server/request.c, server/request.h, server/security.h,
+	  server/semaphore.c, server/serial.c, server/signal.c,
+	  server/snapshot.c, server/sock.c, server/symlink.c, server/thread.c,
+	  server/thread.h, server/timer.c, server/token.c, server/trace.c,
+	  server/unicode.c, server/unicode.h, server/user.c, server/user.h,
+	  server/window.c, server/winstation.c, tools/bin2res.c,
+	  tools/bug_report.pl, tools/c2man.pl, tools/examine-relay,
+	  tools/fnt2bdf.c, tools/fnt2bdf.h, tools/fnt2fon.c,
+	  tools/font_convert.sh, tools/genpatch, tools/make_authors,
+	  tools/make_ctests.c, tools/make_requests, tools/makedep.c,
+	  tools/relpath.c, tools/runtest, tools/sfnt2fnt.c,
+	  tools/widl/client.c, tools/widl/hash.c, tools/widl/hash.h,
+	  tools/widl/header.c, tools/widl/header.h, tools/widl/parser.h,
+	  tools/widl/parser.l, tools/widl/parser.y, tools/widl/proxy.c,
+	  tools/widl/server.c, tools/widl/typegen.c, tools/widl/typegen.h,
+	  tools/widl/typelib.c, tools/widl/typelib.h,
+	  tools/widl/typelib_struct.h, tools/widl/utils.c, tools/widl/utils.h,
+	  tools/widl/widl.c, tools/widl/widl.h, tools/widl/widltypes.h,
+	  tools/widl/write_msft.c, tools/winapi/c_function.pm,
+	  tools/winapi/c_parser.pm, tools/winapi/c_type.pm,
+	  tools/winapi/config.pm, tools/winapi/function.pm,
+	  tools/winapi/make_filter, tools/winapi/make_filter_options.pm,
+	  tools/winapi/make_parser.pm, tools/winapi/modules.pm,
+	  tools/winapi/msvcmaker_options.pm, tools/winapi/nativeapi.pm,
+	  tools/winapi/options.pm, tools/winapi/output.pm,
+	  tools/winapi/preprocessor.pm, tools/winapi/setup.pm,
+	  tools/winapi/tests.pm, tools/winapi/trampoline, tools/winapi/type.pm,
+	  tools/winapi/util.pm, tools/winapi/winapi.pm,
+	  tools/winapi/winapi_c_parser.pm, tools/winapi/winapi_check,
+	  tools/winapi/winapi_check_options.pm, tools/winapi/winapi_cleanup,
+	  tools/winapi/winapi_cleanup_options.pm,
+	  tools/winapi/winapi_documentation.pm, tools/winapi/winapi_extract,
+	  tools/winapi/winapi_extract_options.pm, tools/winapi/winapi_fixup,
+	  tools/winapi/winapi_fixup_documentation.pm,
+	  tools/winapi/winapi_fixup_editor.pm,
+	  tools/winapi/winapi_fixup_options.pm,
+	  tools/winapi/winapi_fixup_statements.pm,
+	  tools/winapi/winapi_function.pm, tools/winapi/winapi_global.pm,
+	  tools/winapi/winapi_local.pm, tools/winapi/winapi_module_user.pm,
+	  tools/winapi/winapi_parser.pm, tools/winapi/winapi_test,
+	  tools/winapi/winapi_test_options.pm, tools/wine.inf,
+	  tools/winebuild/build.h, tools/winebuild/import.c,
+	  tools/winebuild/main.c, tools/winebuild/parser.c,
+	  tools/winebuild/relay.c, tools/winebuild/res16.c,
+	  tools/winebuild/res32.c, tools/winebuild/spec16.c,
+	  tools/winebuild/spec32.c, tools/winebuild/utils.c,
+	  tools/winedump/cvinclude.h, tools/winedump/debug.c,
+	  tools/winedump/dump.c, tools/winedump/emf.c,
+	  tools/winedump/function_grep.pl, tools/winedump/le.c,
+	  tools/winedump/lnk.c, tools/winedump/main.c,
+	  tools/winedump/minidump.c, tools/winedump/misc.c,
+	  tools/winedump/msmangle.c, tools/winedump/ne.c,
+	  tools/winedump/output.c, tools/winedump/pe.c, tools/winedump/pe.h,
+	  tools/winedump/search.c, tools/winedump/symbol.c,
+	  tools/winedump/winedump.h, tools/winegcc/utils.c,
+	  tools/winegcc/utils.h, tools/winegcc/winegcc.c, tools/wineinstall,
+	  tools/winemaker, tools/wineprefixcreate.in, tools/wineshelllink,
+	  tools/winewrapper, tools/wmc/lang.c, tools/wmc/lang.h,
+	  tools/wmc/mcl.c, tools/wmc/mcy.y, tools/wmc/utils.c,
+	  tools/wmc/utils.h, tools/wmc/wmc.c, tools/wmc/wmc.h,
+	  tools/wmc/wmctypes.h, tools/wmc/write.c, tools/wmc/write.h,
+	  tools/wrc/dumpres.c, tools/wrc/dumpres.h, tools/wrc/genres.c,
+	  tools/wrc/genres.h, tools/wrc/newstruc.c, tools/wrc/newstruc.h,
+	  tools/wrc/parser.h, tools/wrc/parser.l, tools/wrc/parser.y,
+	  tools/wrc/readres.c, tools/wrc/readres.h, tools/wrc/translation.c,
+	  tools/wrc/utils.c, tools/wrc/utils.h, tools/wrc/wrc.c,
+	  tools/wrc/wrc.h, tools/wrc/wrctypes.h, tools/wrc/writeres.c:
+	Update the address of the Free Software Foundation.
+
+2006-05-21  Labrousse Jean <jlabrous@altern.org>
+
+	* dlls/msi/action.c:
+	msi: Fix short name and long name mismatch in action.c.
+
+2006-05-23  Troy Rollo <wine@troy.rollo.name>
+
+	* dlls/ole32/storage32.c:
+	ole32: Fix excessive file sizes for Storage files.
+	The IStorage (DocFile) implementation was adding empty blocks at the
+	end of the file every time a caller wrote data that was not a multiple
+	of 512 bytes.  If the caller made a lot of very small writes the file
+	size could be huge even though the data in the file was tiny. This was
+	caused by BlockChainStream_SetSize trying to allocate file blocks for
+	the new data using a condition that bore no relationship to the
+	required condition, and it was not necessary to do so at that time
+	since it is done (the right way) by StorageImpl_GetNextFreeBigBlock
+	(called via BlockChainStream_Enlarge).
+
+2006-05-23  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/user/tests/msg.c:
+	user/tests: Don't generate a mouse click message in mouse_ll_global_thread_proc.
+	Windows doesn't like when a thread plays games with the focus, that
+	leads to all kinds of misbehaviours and failures to activate a
+	window. So, better don't generate a mouse click message in
+	mouse_ll_global_thread_proc.
+
+	* dlls/user/tests/msg.c:
+	user/tests: Add lparam to all HCBT_MINMAX hook messages.
+
+2006-05-23  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/surface.c, dlls/wined3d/utils.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: OpengGL accelerated blits.
+	Implement some basic opengl accelerated blts from and to render
+	targets. It's not perfect yet, but enought to make some D3D apps
+	happy. For now the only supported operations are:
+	- Full screen back -> Front buffer: Just call present
+	- Offscreen surface -> render target
+	- Render target -> offscreen surface(slow)
+	- render target colorfill
+
+2006-05-22  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/surface.c:
+	wined3d: Surface pixel format conversion code.
+
+2006-05-22  Robert Shearman <rob@codeweavers.com>
+
+	* server/queue.c:
+	server: Don't clear the QS_POSTMESSAGE flag if there is a pending quit message.
+
+	* dlls/ole32/tests/marshal.c:
+	ole32: Release the outer unknown in the proxybuffer test.
+	Release the outer unknown in the proxybuffer test to show that the
+	last release of the outer unknown doesn't free the proxy buffer.
+
+	* dlls/ole32/marshal.c, dlls/ole32/oleproxy.c:
+	ole32: Release the proxy buffer object on the last release of the proxy's
+	outer unknown.
+	Release the proxy buffer object on the last release of the proxy's outer
+	unknown, otherwise memory is leaked for the Ndr implementation of
+	IRpcProxyBuffer.
+	Fix up the hand-coded proxies to match the behaviour from the Ndr
+	implementation.
+
+	* dlls/wininet/tests/url.c:
+	wininet: Fix a failing test.
+
+	* dlls/rpcrt4/rpc_message.c:
+	rpcrt4: Fix copying too much data from the buffer by not taking into account
+	the fact that auth_pad_len has been included in the fragment length.
+
+	* dlls/rpcrt4/rpc_message.c:
+	rpcrt4: Authentication padding should only be generated if there is
+	authentication data.
+
+	* include/winbase.h:
+	include: Add defines used in CopyFileEx.
+
+	* include/guiddef.h:
+	include: Make guiddef.h defines match PSDK.
+	Protect LPGUID typedef by __LPGUID_DEFINED__ being defined.
+	Protect LPCLSID and LPFMTID typedefs, IsEqualGUID, IsEqualIID,
+	IsEqualCLSID, IID_NULL, CLSID_NULL and FMTID_NULL defines by
+	__IID_DEFINED__ being defined.
+
+2006-05-22  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/winproc.c:
+	user: Added A<->W mapping for WM_GETDLGCODE.
+
+2006-05-20  Hans Leidekker <hans@it.vu.nl>
+
+	* dlls/quartz/main.c, dlls/quartz/quartz.spec, include/Makefile.in,
+	  include/dshow.h, include/errors.h:
+	quartz: Add stub implementation for AMGetErrorText{A,W}.
+
+2006-05-21  Ivan Gyurdiev <ivg2@cornell.edu>
+
+	* dlls/wined3d/pixelshader.c:
+	wined3d: Simplify input/output modifier line handling.
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/wined3d_private.h:
+	wined3d: Clean up register use maps.
+
+	* dlls/wined3d/drawprim.c:
+	wined3d: Allow use of pixel shaders with drawStridedSlow.
+
+	* dlls/wined3d/vertexshader.c:
+	wined3d: Only run parse_decl_usage on vshader INPUT registers.
+
+2006-05-22  Saulius Krasuckas <saulius2@ar.fi.lt>
+
+	* dlls/advapi32/tests/security.c:
+	advapi32: Skip token attribute testing if OpenProcessToken() is not implemented.
+
+2006-05-21  Saulius Krasuckas <saulius2@ar.fi.lt>
+
+	* dlls/advapi32/tests/security.c:
+	advapi32: Make test loadable on win9x.
+
+2006-05-22  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/winspool/tests/info.c:
+	winspool/test: Disable a test that crashes on win9x.
+
+2006-05-21  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/winspool/info.c:
+	winspool: Remove cross calls W->A for the "Printers" registry path.
+
+2006-05-20  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/winspool/info.c:
+	winspool: An empty string as server name is valid (EnumPrinterDrivers).
+
+2006-05-21  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/tests/crypt_lmhash.c:
+	advapi32: Implement and test SystemFunction026+027.
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt_md4.c,
+	  dlls/advapi32/tests/crypt_md4.c:
+	advapi32: Implement and test SystemFunction011.
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt_lmhash.c,
+	  dlls/advapi32/tests/crypt_lmhash.c:
+	advapi32: Test and implement SystemFunction024/025.
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt_lmhash.c,
+	  dlls/advapi32/tests/crypt_lmhash.c:
+	advapi32: Implement and test SystemFunction(012-023).
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt_md4.c,
+	  dlls/advapi32/tests/crypt_md4.c:
+	advapi32: Implement and test SystemFunction010.
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt_lmhash.c,
+	  dlls/advapi32/tests/crypt_lmhash.c:
+	advapi32: Implement and test SystemFunction009.
+
+2006-05-21  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/ntdsapi/ntdsapi.spec:
+	ntdsapi: Add DsMakeSpnA to the spec file.
+
+2006-05-20  Vitaliy Margolen <wine-patch@kievinfo.com>
+
+	* tools/wine.inf:
+	wine.inf: Create fake dlls for ADPCM codecs.
+
+2006-05-21  Vitaliy Margolen <wine-patch@kievinfo.com>
+
+	* dlls/d3d8/version.rc, dlls/d3d9/version.rc, dlls/ddraw/version.rc,
+	  dlls/dmusic/version.rc, dlls/dplayx/version.rc,
+	  dlls/dsound/version.rc:
+	directx: Update file versions to dx9c (compared to win2k).
+
+2006-05-20  Vitaliy Margolen <wine-patch@kievinfo.com>
+
+	* dlls/d3d9/tests/.gitignore, dlls/d3d9/tests/Makefile.in,
+	  dlls/d3d9/tests/device.c:
+	d3d9: Add refcount tests for all objects created by device.
+
+	* dlls/d3d9/cubetexture.c, dlls/d3d9/d3d9_private.h,
+	  dlls/d3d9/indexbuffer.c, dlls/d3d9/pixelshader.c, dlls/d3d9/query.c,
+	  dlls/d3d9/stateblock.c, dlls/d3d9/swapchain.c, dlls/d3d9/texture.c,
+	  dlls/d3d9/volumetexture.c:
+	d3d9: All objects created by device should keep reference to it.
+
+	* configure, configure.ac, dlls/d3d8/Makefile.in,
+	  dlls/d3d8/tests/.gitignore, dlls/d3d8/tests/Makefile.in,
+	  dlls/d3d8/tests/device.c, programs/winetest/Makefile.in:
+	d3d8: Add refcount test.
+
+	* dlls/d3d8/cubetexture.c, dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c,
+	  dlls/d3d8/indexbuffer.c, dlls/d3d8/swapchain.c, dlls/d3d8/texture.c,
+	  dlls/d3d8/vertexshader.c, dlls/d3d8/volumetexture.c:
+	d3d8: All objects created by device should keep reference to it.
+
+	* include/d3d8.h:
+	include: SwapChain::GetBackBuffer takes 3 parameters, not 4.
+
+2006-05-20  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/comctl32/propsheet.c:
+	comctl32: Make sure to always have the default pushbutton for wizards as an
+	enabled button.
+
+	* dlls/comctl32/propsheet.c:
+	comctl32: A PSM_SETWIZBUTTONS message specifying PSWIZB_FINISH or
+	PSWIZB_DISABLEDFINISH, followed by another one without those flags
+	should show the next button again and hide the finish button.
+
+2006-05-20  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/winproc.c:
+	user: Get rid of the WINPROC_Map/UnmapMsg32ATo32W functions.
+
+	* dlls/user/winproc.c:
+	user: Added fast A->W mapping for the remaining messages.
+
+	* dlls/user/winproc.c:
+	user: Added fast A->W mapping for WM_GETTEXTLENGTH and related messages.
+
+	* dlls/user/winproc.c:
+	user: Added fast A->W mapping for WM_CHAR and related messages.
+
+	* dlls/user/winproc.c:
+	user: Added fast A->W mapping for EM_GETLINE.
+
+	* dlls/user/winproc.c:
+	user: Added fast A->W mapping for LB_GETTEXT and CB_GETLBTEXT.
+
+	* dlls/user/winproc.c:
+	user: Added fast A->W mapping for WM_SETTEXT and related messages.
+
+	* dlls/user/winproc.c:
+	user: Added fast A->W mapping for WM_GETTEXT and WM_ASKCBFORNAME.
+
+	* dlls/user/winproc.c:
+	user: Added fast A->W mapping for WM_MDICREATE.
+
+	* dlls/user/winproc.c:
+	user: Added fast A->W mapping for WM_CREATE and WM_NCCREATE.
+
+2006-05-19  Peter Beutner <p.beutner@gmx.net>
+
+	* dlls/d3d8/cubetexture.c, dlls/d3d8/surface.c, dlls/d3d8/texture.c,
+	  dlls/d3d8/volume.c:
+	d3d8: Fix GetDesc and GetLevelDesc for surfaces and textures.
+	In DX8 the D3DSURFACE_DESC structure has a size field which needs to be set.
+
+2006-05-18  Jason Green <jave27@gmail.com>
+
+	* dlls/wined3d/baseshader.c:
+	wined3d: Simplify generate_base_shader() when checking for USING_GLSL usage.
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/pixelshader.c,
+	  dlls/wined3d/vertexshader.c:
+	wined3d: Move PARAM C[] program.env[] into baseshader and out of vertex shaders.
+
+2006-05-19  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/ndr_stubless.c:
+	rpcrt4: Handle pointers to context handles in the stubless code.
+	Implement check for NULL context handles if requested.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: We don't need to free object pointers if we are told we must allocate.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Use macros to generate the code for unmarshaling base types.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Don't set the memory pointer to NULL before calling PointerUnmarshall.
+	Call it with fMustAlloc set to TRUE instead to achieve the same result
+	without side-effects.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Make more internal functions static.
+
+	* dlls/rpcrt4/rpc_defs.h, dlls/rpcrt4/rpc_message.c:
+	rpcrt4: Add the definition of RpcAuthVerifier to rpc_defs.h from the DCE/RPC
+	spec.
+	Use it in RPCRT4_SendAuth instead of writing out the data byte-by-byte.
+
+	* include/ndrtypes.h:
+	rpcrt4: Add more format characters and add context handle flags to ndrtypes.h.
+
+2006-05-19  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* configure, configure.ac, dlls/Makefile.in, dlls/ntdsapi/.gitignore,
+	  dlls/ntdsapi/Makefile.in, dlls/ntdsapi/ntdsapi.c,
+	  dlls/ntdsapi/ntdsapi.spec, include/Makefile.in, include/ntdsapi.h:
+	Add a stub implementation of ntdsapi.dll.
+
+2006-05-19  Paul Chitescu <paulc@voip.null.ro>
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/security.c,
+	  include/winbase.h:
+	advapi32: Add stub FileEncryptionStatus and declarations.
+
+2006-05-18  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/winproc.c:
+	user: Get rid of the MSGPARAMS16 structure.
+
+2006-05-20  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/winproc.c, dlls/user/winproc.h:
+	user: Make a lot of winproc functions static.
+
+	* dlls/user/msg16.c:
+	user: Call the A version of message functions from 16-bit code.
+	This avoids having to export too many different message translation
+	functions.
+
+	* dlls/user/hook16.c, dlls/user/winproc.c, dlls/user/winproc.h:
+	user: Use winproc callbacks instead of message map/unmap for 16-bit hooks.
+
+	* dlls/user/msg16.c, dlls/user/winproc.c, dlls/user/winproc.h:
+	user: Use winproc callbacks instead of message map/unmap in SendMessage16.
+
+2006-05-18  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/message.c, dlls/user/winproc.c, dlls/user/winproc.h:
+	user: Use a winproc callback instead of a message map/unmap in
+	SendMessageTimeoutA.
+
+	* dlls/user/message.c:
+	user: Store the destination thread id in the send_message_info structure.
+
+2006-05-18  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Make sure no message is sent between
+	PrepareCallbackItems/FreeCallbackItems.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Don't erase the background in HEADER_Refresh.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: The border size is 4 not 3.
+
+2006-05-19  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/device.c, dlls/wined3d/surface.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Sort of oversized surface support.
+
+2006-05-18  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/directx.c:
+	wined3d: Add more device caps.
+
+	* dlls/wined3d/device.c, dlls/wined3d/directx.c, dlls/wined3d/surface.c:
+	wined3d: Allow SYSTEMMEM textures and surfaces.
+
+2006-05-18  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/wined3d/device.c, dlls/wined3d/directx.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Implement IWineD3DDevice::SetDisplayMode.
+
+2006-05-19  Huw Davies <huw@codeweavers.com>
+
+	* dlls/rpcrt4/ndr_marshall.c, dlls/rpcrt4/tests/ndr_marshall.c:
+	rpcrt4: Use IsClient to determine whether we can use the Buffer memory or not.
+	Add simple struct tests.
+
+2006-05-19  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/rpc_transport.c:
+	rpcrt4: Warn if CreateNamedPipe fails.
+
+	* dlls/rpcrt4/rpc_message.c:
+	rpcrt4: Add the correct amount of auth padding to messages.
+
+	* dlls/rpcrt4/rpc_transport.c:
+	rpcrt4: Wait for all of the requested bytes to be returned for tcp connections.
+
+	* dlls/rpcrt4/ndr_marshall.c, dlls/rpcrt4/ndr_ole.c,
+	  dlls/rpcrt4/rpc_binding.c, dlls/rpcrt4/rpc_message.c:
+	rpcrt4: Update the todo lists and copyrights.
+
+2006-05-18  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/rpc_transport.c:
+	rpcrt4: Fix for the open functions in the transports being transposed between
+	ncacn_np and ncalrpc.
+
+	* dlls/rpcrt4/rpc_transport.c:
+	rpcrt4: Don't release the auth info if it isn't present.
+
+2006-05-19  Robert Reif <reif@earthlink.net>
+
+	* dlls/winmm/tests/wave.c:
+	winmm: Fix wave test handle use after close bug.
+
+2006-05-19  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/x11drv/winpos.c:
+	x11drv: Fix the regression caused by the recent ShowWindow fixes.
+
+2006-05-19  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/secur32/ntlm.c:
+	secur32: Cleanup InitializeSecurityContext (reduce indent and duplication).
+
+	* dlls/secur32/ntlm.c:
+	secur32: Tidy up the initialization code a little.
+
+2006-05-18  Jacek Caban <jacek@codeweavers.com>
+
+	* tools/widl/typelib.c:
+	widl: Don't add importlib if it is already on the list. Remove warning.
+
+	* tools/widl/write_msft.c:
+	widl: Added support for importing parent interfaces from importlib.
+
+	* dlls/shdocvw/client.c:
+	shdocvw: Return S_OK in OnInPlaceDeactivate.
+
+2006-05-18  Phil Costin <philcostin@hotmail.com>
+
+	* dlls/wined3d/device.c, dlls/wined3d/directx.c:
+	wined3d: Trace output corrections and cleanups.
+
+2006-05-18  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/cert.c, dlls/crypt32/store.c:
+	crypt32: Move CertFindCertificateInStore and related functions to cert.c.
+
+	* dlls/crypt32/crypt32_private.h, dlls/crypt32/serialize.c,
+	  dlls/crypt32/store.c:
+	crypt32: Move context interface definition to common header.
+
+2006-05-18  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/winproc.c, dlls/user/winproc.h:
+	user: Convert the 16-bit winproc functions to use a callback pointer.
+
+	* dlls/user/winproc.c:
+	user: Convert the other winproc 32-bit functions to use a callback pointer.
+
+	* dlls/user/winproc.c, dlls/user/winproc.h:
+	user: Make WINPROC_CallProc32WTo32A take a callback function pointer.
+	This way it doesn't need to know about dialog procedures. Also renamed
+	it to WINPROC_CallProcWtoA.
+
+2006-05-18  Phil Costin <philcostin@hotmail.com>
+
+	* dlls/wined3d/directx.c, dlls/wined3d/wined3d_main.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Check registry for UseGLSL enabled.
+
+2006-05-18  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/rpcrt4/rpc_binding.c:
+	rpcrt4: Fix a possible memory leak, cleanup a bit.
+
+	* dlls/rpcrt4/rpc_binding.c, dlls/rpcrt4/rpc_transport.c,
+	  dlls/rpcrt4/tests/rpc.c:
+	rpcrt4: Fix and test RpcNetworkIsProtseqValid.
+
+	* dlls/rpcrt4/rpc_server.c, dlls/rpcrt4/rpcrt4.spec:
+	rpcrt4: Add a stub implementation for RpcMgmtIsServerListening.
+
+2006-05-18  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/tests/dialog.c:
+	user: Fixed a broken trace in the dialog test.
+
+	* dlls/user/winproc.c:
+	user: Added helper functions for A<->W conversion of single characters.
+
+	* dlls/user/winproc.c:
+	user: Simplify 16-bit mappings of the WM_GETDLGCODE message.
+
+	* dlls/user/winproc.c:
+	user: Unify the mapping of listbox and combobox messages.
+
+	* dlls/user/winproc.c:
+	user: Get rid of the WINPROC_MapMsg32WTo32A function.
+
+	* dlls/user/winproc.c:
+	user: Added fast W->A mapping for WM_IME_CHAR.
+
+	* dlls/user/winproc.c:
+	user: Added fast W->A mapping for WM_CHAR and related messages.
+
+	* dlls/user/winproc.c:
+	user: Added fast W->A mapping for EM_GETLINE.
+
+	* dlls/user/winproc.c:
+	user: Added fast W->A mapping for LB_GETTEXT and CB_GETLBTEXT.
+
+	* dlls/user/winproc.c:
+	user: Added fast W->A mapping for LB_ADDSTRING and related messages.
+
+	* dlls/user/winproc.c:
+	user: Added fast W->A mapping for WM_MDICREATE.
+
+	* dlls/user/winproc.c:
+	user: Added fast W->A mapping for WM_SETTEXT and related messages.
+
+	* dlls/user/winproc.c:
+	user: Added fast W->A mapping for WM_GETTEXT and WM_ASKCBFORNAME.
+
+	* dlls/user/winproc.c:
+	user: Added helper functions for buffer management in WINPROC_CallProc32WTo32A..
+
+	* dlls/user/winproc.c:
+	user: Merged WINPROC_CallProc32WTo32A_fast into WINPROC_CallProc32WTo32A.
+
+2006-05-17  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/crypt32.spec, dlls/crypt32/store.c:
+	crypt32: Add stubs for CertDuplicateCRLContext and CertDuplicateCTLContext.
+
+2006-05-16  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/user/message.c:
+	user32: Allow interprocess WM_NCPAINT messages when wParam is 0 or 1.
+
+2006-05-18  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/rpc_binding.c:
+	rpcrt4: Implement RpcBindingSetAuthInfoExW based on the implementation for
+	RpcBindingSetAuthInfoExA.
+
+	* dlls/rpcrt4/rpc_binding.c:
+	rpcrt4: A NULL AuthInfo is allowed.
+	Pass the server principal name into AcquireCredentialsHandleA.
+
+	* dlls/rpcrt4/rpc_binding.c:
+	rpcrt4: Support all available security packages in RpcBindingSetAuthInfoExA,
+	instead of just NTLM.
+
+	* dlls/rpcrt4/rpc_binding.c:
+	rpcrt4: Only use the cached connection if the authentication information
+	is compatible.
+
+	* dlls/rpcrt4/rpc_binding.c, dlls/rpcrt4/rpc_binding.h,
+	  dlls/rpcrt4/rpc_message.c, dlls/rpcrt4/rpc_server.c,
+	  dlls/rpcrt4/rpc_transport.c:
+	rpcrt4: Store non-connection-specific authentication information in a ref-counted
+	structure that is shared between connections and bindings.
+
+	* dlls/rpcrt4/ndr_ole.c:
+	rpcrt4: Fix an off-by-one error when checking the size of the buffer in
+	NdrInterfacePointerMarshall.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Handle interface pointers in EmbeddedComplexSize.
+
+	* dlls/rpcrt4/Makefile.in:
+	rpcrt4: Make secur32 into a delayed import, as most of the time it won't
+	be needed.
+
+	* dlls/rpcrt4/rpc_binding.h, dlls/rpcrt4/rpc_message.c,
+	  dlls/rpcrt4/rpc_transport.c:
+	rpcrt4: Increment the call id field of the request header.
+	This is necessary for compatibility with MS/RPC servers.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Implement NdrNonEncapsulatedUnionMemorySize.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Fix the wire protocol of the user marshal functions to match MS/RPC.
+
+	* dlls/rpcrt4/rpc_message.c:
+	rpcrt4: If the authorisation failed during a send then we should return
+	ERROR_ACCESS_DENIED.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Fix NdrConformantArrayMemorySize.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Implement NdrUserMarshalMemorySize.
+
+2006-05-17  Ivan Gyurdiev <ivg2@cornell.edu>
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/pixelshader.c,
+	  dlls/wined3d/vertexshader.c, dlls/wined3d/wined3d_private.h:
+	wined3d: Take predication tokens into account.
+	Each instruction can have a predication token. Account for it in the
+	trace pass, register count pass, and store it in the SHADER_OPCODE_ARG
+	structure for generation. MSDN claims the token is at the end of the
+	instruction, but that's not true - testing a demo, which lets me
+	manipulate the shader shows the predication token is the first source
+	token immediately following the destination token.
+
+	* dlls/wined3d/baseshader.c:
+	wined3d: Parameter trace corrections.
+
+	* dlls/wined3d/pixelshader.c, dlls/wined3d/vertexshader.c:
+	wined3d: SETP takes 3 parameters.
+
+2006-05-17  Huw Davies <huw@codeweavers.com>
+
+	* dlls/rpcrt4/ndr_marshall.c, dlls/rpcrt4/tests/.gitignore,
+	  dlls/rpcrt4/tests/Makefile.in, dlls/rpcrt4/tests/ndr_marshall.c:
+	rpcrt4: Don't update StubMsg->MemorySize while unmarshaling.
+	Add a bunch of marshaling tests (based on a program by Rob Shearman).
+
+2006-05-16  Andrew Ziem <ahziem1@mailbolt.com>
+
+	* dlls/kernel/tests/path.c:
+	kernel: Fix path test to pass on 95 and 98.
+
+2006-05-17  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/shdocvw/client.c, dlls/shdocvw/oleobject.c, dlls/shdocvw/shdocvw.h,
+	  dlls/shdocvw/webbrowser.c:
+	shdocvw: Code cleanup.
+
+	* dlls/shdocvw/ie.c:
+	shdocvw: Added IConnectionPointContainer to InternetExplorer::QueryInterface.
+
+	* dlls/shdocvw/dochost.c, dlls/shdocvw/events.c, dlls/shdocvw/shdocvw.h,
+	  dlls/shdocvw/webbrowser.c:
+	shdocvw: Move IConnectionPointContainer implementation to separated object.
+
+	* dlls/shdocvw/dochost.c, dlls/shdocvw/events.c, dlls/shdocvw/navigate.c,
+	  dlls/shdocvw/shdocvw.h, dlls/shdocvw/webbrowser.c:
+	shdocvw: Move connection points to the new ConnectionPointContainer struct.
+
+2006-05-15  Jacek Caban <jacek@codeweavers.com>
+
+	* tools/widl/typelib.c, tools/widl/typelib_struct.h,
+	  tools/widl/widltypes.h:
+	widl: Added importlib reading implementation.
+
+2006-05-17  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Don't erase the left header egde.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Send the width in HDN_BEGINTRACK.
+
+	* dlls/comctl32/listview.c:
+	comctl32: listview: Recompute sizes after a column deletion.
+
+2006-05-17  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/ndr_ole.c:
+	rpcrt4: Implement NdrInterfacePointerMemorySize.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Make some functions that aren't used outside of the file static.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Fill out more of the function tables with functions that already exist.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Raise an exception if there is no default handler for a union.
+
+2006-05-17  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user/winproc.c:
+	user: The result for dialog procedures is stored in DWLP_MSGRESULT.
+	So we have to access it using Get/SetWindowLong when unmapping the
+	message results (based on a patch by Troy Rollo).
+
+	* dlls/user/defdlg.c:
+	user: Remove unreachable code in DEFDLG_Proc.
+
+	* dlls/user/class.c, dlls/user/message.c, dlls/user/win.c,
+	  dlls/user/winproc.c, dlls/user/winproc.h:
+	user: Support storing multiple winprocs in a single winproc handle.
+	Allows to remove special cases for window classes being Ascii and
+	Unicode at the same time.
+
+	* dlls/user/winproc.c:
+	user: Allocate 16-bit thunks separately from the window proc structure.
+	Also make sure the thunk memory block has execute permissions.
+
+	* dlls/x11drv/clipboard.c:
+	x11drv: Fixed typo in the clipboard XA_STRING handling.
+
+2006-05-09  Michael Kaufmann <hallo@michael-kaufmann.ch>
+
+	* dlls/gdi/bitmap.c, dlls/gdi/gdi_private.h, dlls/gdi/tests/bitmap.c,
+	  dlls/x11drv/bitmap.c, dlls/x11drv/winex11.drv.spec:
+	gdi: Fix GetObject for bitmaps.
+	- GetObject(): Set the bmBits member of the BITMAP structure to NULL
+	for device-dependent bitmaps.
+	- New test case.
+
+2006-05-11  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/winspool/info.c:
+	winspool: Fix OpenDriverReg on top of validate_envW.
+
+	* dlls/winspool/tests/info.c:
+	winspool/tests: More tests for OpenPrinter.
+
+2006-05-12  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/winspool/info.c:
+	winspool: Do not fail in OpenPrinter on pDefault / local print server.
+
+	* dlls/winspool/info.c:
+	winspool: Show SetPrinter parameters in the FIXME.
+
+	* dlls/winspool/tests/info.c:
+	winspool/tests: A truncated dmDeviceName is 0-terminated.
+
+2006-05-17  Ivan Gyurdiev <ivg2@cornell.edu>
+
+	* dlls/wined3d/pixelshader.c:
+	wined3d: Use COLOROUT/DEPTHOUT for pixel shaders 2.0+.
+	As previously mentioned, RASTOUT is invalid on pixel shaders.
+	On shaders 1.x, r0 is treated as the color output register:
+	http://www.gamedev.net/columns/hardcore/dxshader3/page2.asp
+	That's what we currently do in all cases, change it not to do so
+	for shaders >= 2.0. Support COLOROUT/DEPTHOUT instead.
+
+	* dlls/wined3d/vertexshader.c:
+	wined3d: LRP is not a valid ARBvp code.
+
+	* dlls/wined3d/pixelshader.c:
+	wined3d: Remove detailed traces from map2gl/input_modifiers functions.
+
+	* dlls/wined3d/pixelshader.c, dlls/wined3d/vertexshader.c:
+	wined3d: Write "unrecognized_register" in fallback case for get_register_name().
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/pixelshader.c,
+	  dlls/wined3d/vertexshader.c, dlls/wined3d/wined3d_private.h:
+	wined3d: Modify shader_dump_param() to take into account address token.
+	Currently we hardcode a0.x, which I think is correct for shaders 1.0.
+	However, for shaders 2.0, we must look into the address token, and
+	print the register there. Handle both cases to correct the trace.
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/pixelshader.c,
+	  dlls/wined3d/vertexshader.c, dlls/wined3d/wined3d_private.h:
+	wined3d: Use shader_get_param() in trace pass, reg. count pass, generation pass.
+	Change the trace pass, the register counting pass, and the hw
+	generator pass to take into account the new get_params() function. For
+	hw generation, store the address tokens into the SHADER_OPCODE_ARG
+	structure, so they're available to generator functions.
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/pixelshader.c,
+	  dlls/wined3d/vertexshader.c, dlls/wined3d/wined3d_private.h:
+	wined3d: Add shader_get_param() fn, which processes address tokens.
+	Add a new function to process parameters.
+	On shaders 1.0, processing parameters amounts to *pToken++.
+	On shaders 2.0+, we have a relative addressing token to account for.
+	This function should be used, instead of relying on num_params everywhere.
+
+	* dlls/wined3d/baseshader.c:
+	wined3d: Do not rely on num_params to skip unhandled tokens in shaders 2.0.
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/pixelshader.c:
+	wined3d: Allow multiple output modifiers.
+
+	* dlls/wined3d/pixelshader.c, dlls/wined3d/vertexshader.c:
+	wined3d: Fix SINCOS parameters.
+	SINCOS has 4 parameters in shaders 2.0.
+	It has 2 parameters in shaders 3.0.
+	It's undefined in shaders 1.0.
+
+	* dlls/wined3d/vertexshader.c:
+	wined3d: DEFI takes 5 parameters.
+	According the spec and the Painkiller log, DEFI has 5 parameters on
+	vertex shaders.
+
+2006-05-17  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/user/tests/msg.c, dlls/x11drv/winpos.c:
+	user32: Make all the recently added ShowWindow tests pass in Wine.
+
+2006-05-16  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* dlls/ntdll/tests/info.c:
+	ntdll/tests: Don't fail if a process is not available.
+
+2006-05-16  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/usp10/usp10.c:
+	usp10: Fix ScriptGetProperties so that first pointer can be NULL.
+
+	* programs/winedbg/types.c:
+	winedbg: extract_as_integer
+	- now supporting extract_as_integer on functions (so that,
+	for example, 'disas foo' works as expected)
+	- now properly handling errors when calling extract_as_integer
+
+2006-05-16  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/store.c:
+	crypt32: Get rid of CRYPT_CreateCertificateContext, it's not needed anymore.
+
+2006-05-17  Marcus Meissner <marcus@jet.franken.de>
+
+	* dlls/riched20/tests/editor.c:
+	riched20: Removed useless double casts, just print the DWORD hexmask.
+
+2006-05-15  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/Makefile.in, dlls/crypt32/crypt32_private.h,
+	  dlls/crypt32/decode.c, dlls/crypt32/encode.c:
+	crypt32: Split the unwieldy encode.c into two files.
+
+2006-05-16  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/store.c:
+	crypt32: Support CERT_ISSUER_SERIAL_NUMBER_MD5_HASH_PROP_ID implicit property.
+
+	* dlls/crypt32/store.c:
+	crypt32: Use the caller-supplied encoding type when decoding certs.
+
+	* dlls/crypt32/tests/store.c:
+	crypt32: Add more tests for adding certs to a store.
+
+	* dlls/crypt32/cert.c, dlls/crypt32/crypt32.spec,
+	  dlls/crypt32/tests/cert.c, include/wincrypt.h:
+	crypt32: Implement CertCompare functions, with tests.
+
+2006-05-16  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/comctl32/header.c, dlls/comctl32/tests/header.c:
+	comctl32: header: Fix INSERTITEM on a zero mask and GETITEM on a mask with
+	unknown fields.
+	INSERTITEM should fail on a zero mask. If in GETITEM the mask has an
+	unknown field it should store only the comctl32 4.0 fields (with test
+	case).
+
+	* dlls/comctl32/header.c, dlls/comctl32/tests/header.c:
+	comctl32: header: Copy some fields on INSERTITEM even if they are not in
+	the mask.
+
+	* dlls/comctl32/header.c, dlls/comctl32/tests/header.c:
+	comctl32: header: Automatically set some format fields.
+
+2006-05-16  Peter Beutner <p.beutner@gmx.net>
+
+	* dlls/msvcrt/tests/printf.c, dlls/msvcrt/wcs.c:
+	msvcrt: Fix handling of 'h' prefix in swprintf.
+	- '%hs' in widechar string functions is wrongly recognized as
+	a widechar string. Fix this by always checking the prefix first.
+	- add testcase
+	- remove code duplication in %c/%s handling by moving code into a function.
+
+2006-05-16  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/wininet/tests/Makefile.in, dlls/wininet/tests/http.c:
+	wininet: Add a standalone http test.
+
+	* dlls/wininet/ftp.c:
+	wininet: Make sure hIC is valid before trying to use it. (Coverity)
+
+2006-05-16  Vitaliy Margolen <wine-patch@kievinfo.com>
+
+	* include/d3d9types.h, include/wine/wined3d_types.h:
+	d3d: Add D3DDEVTYPE_NULLREF definition.
+
+2006-05-16  Hans Leidekker <hans@it.vu.nl>
+
+	* dlls/wldap32/modify.c, dlls/wldap32/modrdn.c:
+	wldap32: Document the modify and modrdn functions.
+
+2006-05-15  Andrew Ziem <ahziem1@mailbolt.com>
+
+	* dlls/kernel/tests/path.c:
+	kernel: Properly delete a test file.
+
+2006-05-16  Alexandre Julliard <julliard@winehq.org>
+
+	* tools/config.guess, tools/config.sub, tools/install-sh:
+	tools: Updated the autoconf scripts to more recent versions.
+
+2006-05-16  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/user/tests/msg.c:
+	user32: Add more ShowWindow tests.
+	Move ShowWindow tests for children with an invisible parent into a
+	separate test, add more ShowWindow tests. The tests show that an
+	assumption in dlls/x11drv/winpos.c that SetWindowPos should not be
+	called on a child with an invisible parent is not always true.
+
+2006-05-16  Paul Vriens <Paul.Vriens@xs4all.nl>
+
+	* dlls/wined3d/vertexshader.c:
+	wined3d: Correctly define the number of possible parameters.
+
+2006-05-15  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Implement fixed array functions.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Remove the BUFFER_PARANOIA overestimates for string memory sizes.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Implement computing of conformance from a correlation descriptor for
+	conformant strings.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Fix conformant varying structs to comply to the DCE/RPC spec.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Don't duplicate the conformance calculating code, just use the
+	common ComputeConformance function to store the result in
+	pStubMsg->MaxCount (as this is what callback function store the
+	conformance value into anyway).
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Implement conformant varying struct functions.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Implement more conformance operations and more types.
+
+2006-05-15  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/shdocvw/oleobject.c:
+	shdocvw: Don't release IOleInPlaceSite in DoVerb.
+
+2006-05-15  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/surface.c:
+	wined3d: Unset the ddraw primary when it is released.
+
+	* dlls/wined3d/utils.c:
+	wined3d: Add missing render states to the dumping function.
+
+	* dlls/wined3d/device.c:
+	wined3d: Implement IWineD3DDevice::SetFrontBackBuffers.
+
+2006-05-15  Matt Finnicum <mattfinn@gmail.com>
+
+	* dlls/riched20/editor.c, dlls/riched20/editstr.h,
+	  dlls/riched20/tests/editor.c, dlls/riched20/undo.c:
+	riched20: Implement EM_SETUNDOLIMIT and its conformance tests.
+
+2006-05-15  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/tests/encode.c:
+	crypt32: Test importing public keys from a certificate.
+
+	* dlls/crypt32/tests/store.c:
+	crypt32: Avoid a use-after-free bug in tests.
+
+2006-05-15  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/wininet/internet.c, dlls/wininet/tests/internet.c:
+	wininet: Return correct errors in InternetOpenUrlW.
+
+	* dlls/wininet/internet.c, dlls/wininet/tests/internet.c:
+	wininet: Return correct errors in InternetConnectW
+
+	* dlls/rpcrt4/Makefile.in, dlls/rpcrt4/rpc_binding.c,
+	  dlls/rpcrt4/rpc_binding.h, dlls/rpcrt4/rpc_message.c:
+	rpcrt4: Implemented NTLM authentication for rpcrt4 connections.
+
+	* dlls/rpcrt4/rpc_binding.c:
+	rpcrt4: Use RPCRT4_Receive rather than accessing the transport directly.
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt_lmhash.c,
+	  dlls/advapi32/tests/crypt_lmhash.c:
+	advapi32: Implement and test SystemFunction005.
+
+2006-05-15  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Implement NdrSimpleStructMemorySize.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Fix the conformant struct functions to not call conformant array
+	functions.
+	The conformance has to be the first thing in the buffer, in accordance
+	with the DCE/RPC spec and to be compatible with the pointer layout
+	format strings that MIDL generates.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: In NdrConformantBufferSize, SizeConformance should be called, not
+	SizeVariance.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Save pStubMsg->ActualCount in a local variable in the complex
+	array functions, before calling a function that could change it and
+	cause the wrong number of loop iterations.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Dereference the memory for pointers in NdrNonEncapsulatedUnionUnmarshall.
+	Pointers in a non-encapsulated union behave like embedded pointers, so
+	don't rely on the NdrPointer* functions doing the right thing in this
+	case and call the Pointer* functions directly.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Rename ComplexStructSize to ComplexStructMemorySize to reflect the
+	fact that it increments the buffer.
+	Replace the code in EmbeddedComplexSize that sizes non-encapsulated
+	unions without using a memory sizer routine, since this function
+	shouldn't touch the buffer.
+	Add a new function EmbeddedComplexMemorySize and use it in some memory
+	sizer routines where EmbeddedComplexSize was previously used.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Fix embedded pointers in arrays by taking into account the iteration
+	when calculating the appropriate memory and buffer pointers.
+
+2006-05-14  Ivan Gyurdiev <ivg2@cornell.edu>
+
+	* dlls/wined3d/baseshader.c, dlls/wined3d/pixelshader.c,
+	  dlls/wined3d/vertexshader.c, dlls/wined3d/wined3d_private.h:
+	wined3d: Shaders: share dump_param function, version functions.
+
+	* dlls/wined3d/stateblock.c:
+	wined3d: Fix incorrect sizeof.
+
+2006-05-13  qingdoa daoo <qingdao33122@yahoo.com>
+
+	* dlls/gdi/font.c:
+	gdi: Duplicate extent value for the second byte of a DBCS char.
+
+2006-05-15  Alexandre Julliard <julliard@winehq.org>
+
+	* configure, configure.ac, libs/Makelib.rules.in, libs/wine/Makefile.in:
+	configure: Make libraries properly relocatable on MacOS.
+	Also set the compatibility version.
+
+2006-05-12  Francois Gouget <fgouget@free.fr>
+
+	* dlls/advapi32/security.c, dlls/cfgmgr32/main.c, dlls/gdi/freetype.c,
+	  dlls/mprapi/mprapi.c, dlls/ntdll/sync.c, dlls/ole32/usrmarshal.c,
+	  dlls/usp10/usp10.c:
+	Fix some winapi_check documentation warnings.
+
+	* dlls/d3d9/pixelshader.c, dlls/ddraw/tests/d3d.c,
+	  dlls/gdi/tests/bitmap.c, dlls/kernel/tests/toolhelp.c,
+	  dlls/msi/tests/msi.c, dlls/ole32/tests/moniker.c,
+	  dlls/wined3d/baseshader.c, dlls/winspool/info.c:
+	Various trace fixes.
+	Add trailing '\n's to trace calls.
+	Remove spaces before '\n'.
+
+	* configure, configure.ac, dlls/advpack/tests/install.c,
+	  dlls/msi/action.c, dlls/user/tests/wsprintf.c,
+	  dlls/wined3d/surface.c, dlls/x11drv/dib.c:
+	Assorted spelling fixes.
+
+2006-05-14  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/comctl32/tests/header.c:
+	comctl32: header: Check for HDN_GETDISPINFO not being sent during INSERT/SETITEM.
+
+2006-05-13  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* dlls/comctl32/listview.c:
+	comctl32: listview: Store the iSubItem in header's lParam in LVM_INSERTCOLUMN.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Correct HDN_GETDISPINFO. Use it during drawing.
+	Improve HEADER_SendHeaderDispInfoNotify and rename it to
+	HEADER_PrepareCallbackItems. The new HEADER_FreeCallbackItems frees
+	the buffers allocated by it. GetItemT and DrawItem calls these
+	functions.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Mark the callback items in a mask.
+	Mark the callback items in the callbackMask HEADER_ITEM field. The
+	pszText for callback texts is now NULL what simplifies some
+	checks. Checks for lpItem->pszText==emptyString are also not needed as
+	emptyString is not stored in lpItem but used as a parameter to
+	Str_SetPtr (I haven't noticed it).
+
+	* dlls/comctl32/header.c:
+	comctl32 header: Free the old string also when the new one is LPSTR_TEXTCALLBACK.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Don't modify the user supplied HDITEM during Set/InsertItem.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Move common code from SetItemT/InsertItemT into a new function.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Don't send HDN_GETDISPINFO during HDM_SET/INSERTITEM.
+
+	* dlls/comctl32/header.c:
+	comctl32: header: Don't check lpItem for NULL in GetItemT.
+
+2006-05-11  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/shdocvw/events.c, dlls/shdocvw/ie.c, dlls/shdocvw/iexplore.c,
+	  dlls/shdocvw/navigate.c, dlls/shdocvw/shdocvw.h,
+	  dlls/shdocvw/shdocvw_main.c, dlls/shdocvw/shlinstobj.c,
+	  dlls/shdocvw/webbrowser.c:
+	shdocvw: Wrap Heap* finctions by inline functions.
+
+2006-05-15  Huw Davies <huw@codeweavers.com>
+
+	* dlls/oleaut32/tmarshal.c:
+	oleaut32: Update the marshal state buffer size when resizing (Doh!).
+
+2006-05-14  Vitaliy Margolen <wine-patch@kievinfo.com>
+
+	* dlls/msvcrt/tests/time.c:
+	msvcrt: Fix times tests to pass on windows.
+	Add more tests for daylight-time savings.
+
+2006-05-13  Robert Shearman <rob@codeweavers.com>
+
+	* dlls/ntdll/nt.c, include/wine/server_protocol.h, server/protocol.def,
+	  server/request.h, server/token.c, server/trace.c:
+	server: Retrieve the groups for a token from the server.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: The arm type mask should be comparing the highest byte against 0x80,
+	as documented on MSDN.
+	Fix base type arm handling on little-endian machines, as the current
+	code would always pass in the address to the format char of 0x80
+	instead of the base type format char.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Make ComplexStructSize increment the buffer.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Pass in the buffer value before incrementing to PointerMarshall in
+	NdrPointerMarshall.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Implement NdrComplexStructMemorySize.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Implement NdrComplexArrayMemorySize.
+
+	* dlls/rpcrt4/rpc_defs.h:
+	rpcrt4: Fix the fault packet structure to comply with the DCE/RPC specification.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: The NDR memory sizing functions should increment the buffer pointer,
+	so make sure to save it before calling one of these and restore it afterwards.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Make NdrBaseTypeMemorySize increment the buffer and memory size fields
+	of MIDL_STUB_MESSAGE.
+
+	* dlls/rpcrt4/ndr_marshall.c:
+	rpcrt4: Make NdrConformantStringUnmarshall use the new Read{Variance,Conformance}
+	functions and adapt them to be callable without having a correlation
+	descriptor.
+
+	* dlls/advapi32/tests/security.c:
+	advapi32: Add tests for getting the groups, user and privileges of a token.
+
+2006-05-14  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt.h,
+	  dlls/advapi32/crypt_arc4.c, dlls/advapi32/crypt_lmhash.c,
+	  dlls/advapi32/tests/crypt_lmhash.c:
+	advapi32: Implement and test SystemFunction004.
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt_lmhash.c,
+	  dlls/advapi32/tests/crypt_lmhash.c:
+	advapi32: Implement and test SystemFunction003.
+
+2006-05-12  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/crypt.h,
+	  dlls/advapi32/crypt_des.c, dlls/advapi32/crypt_lmhash.c,
+	  dlls/advapi32/tests/crypt_lmhash.c:
+	advapi32: Implement and test SystemFunction002 (DES decrypt).
+
+2006-05-14  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/wined3d/surface.c:
+	wined3d: Avoid a NULL dereference in RealizePalette.
+
+2006-05-14  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/device.c:
+	wined3d: Render state additions and fixes.
+
+	* dlls/wined3d/surface.c:
+	wined3d: Nonpow2 repacking support for GetDC.
+
+2006-05-13  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/device.c, dlls/wined3d/swapchain.c:
+	wined3d: Support for single buffering.
+
+2006-05-13  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/wined3d/Makefile.in, dlls/wined3d/device.c,
+	  dlls/wined3d/surface_gdi.c, dlls/wined3d/utils.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Implement IWineGDISurface.
+
+2006-05-12  Stefan Dösinger <stefandoesinger@gmx.at>
+
+	* dlls/wined3d/device.c, dlls/wined3d/drawprim.c, dlls/wined3d/utils.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Implement IWineD3DDevice::ProcessVertices.
+
+2006-05-12  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/rpcrt4/rpc_defs.h:
+	rpcrt4: Add missing PKT_AUTH3 packet type.
+
+	* dlls/rpcrt4/rpc_message.c:
+	rpcrt4: Add infrastructure for send authentication data.
+
+	* dlls/rpcrt4/rpc_binding.c:
+	rpcrt4: Forward RpcBindingSetAuthInfo to RpcBindingSetAuthInfoEx.
+
+2006-05-13  Hans Leidekker <hans@it.vu.nl>
+
+	* dlls/dnsapi/tests/name.c:
+	dnsapi: Add tests for DnsValidateName_A.
+
+2006-05-14  Gerald Pfeifer <gerald@pfeifer.com>
+
+	* dlls/gphoto2.ds/gphoto2_i.h:
+	gphoto2.ds: Fix a typo in a #warning, and slight rewording.  Fix grammaro
+	in comment.
+
+2006-05-13  Jacek Caban <jacek@codeweavers.com>
+
+	* tools/widl/write_msft.c:
+	widl: Added RPC_FC_ENUM16 encoding.
+
+	* tools/widl/typelib_struct.h, tools/widl/write_msft.c:
+	widl: res50 is number of impinfos. Fix its usage.
+
+	* dlls/oleaut32/typelib.h, dlls/oleaut32/typelib2.c:
+	oleaut32: res50 is number of impinfos. Fix its usage.
+
+2006-05-12  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/urlmon/tests/protocol.c, dlls/urlmon/tests/url.c:
+	urlmon: Fix tests.
+
+	* dlls/shdocvw/navigate.c:
+	shdocvw: Added support for navigation to application URLs.
+
+	* dlls/mshtml/protocol.c, dlls/mshtml/tests/protocol.c:
+	mshtml: Fix protocol tests on XP. Make Wine match XP implementation.
+
+2006-05-13  Stefan Leichter <Stefan.Leichter@camLine.com>
+
+	* dlls/ntdll/tests/port.c:
+	ntdll: Fix endless loop in port test for users without admin rights.
+
+2006-05-12  Francois Gouget <fgouget@free.fr>
+
+	* dlls/gphoto2.ds/ds_ctrl.c, dlls/gphoto2.ds/ds_image.c,
+	  dlls/gphoto2.ds/gphoto2_i.h, dlls/gphoto2.ds/ui.c:
+	gphoto2.ds: Spelling fix.
+
+	* include/mprapi.h:
+	mprapi: Add FIXME for the missing in6addr.h include.
+
+	* dlls/rpcrt4/rpc_transport.c:
+	rpcrt4: Fix some conditional includes.
+	Check for HAVE_UNISTD_H before including unistd.h.
+	There is no HAVE_SYS_TYPES to check.
+	Tweak the indentation of a few #include directives.
+
+	* include/dmusici.h, include/rpcdce.h:
+	include: Remove uneeded __RPC_FAR references.
+
+	* tools/winapi/c_parser.pm, tools/winapi/winapi_local.pm,
+	  tools/winapi/winapi_parser.pm:
+	winapi: Add support for APIENTRY.
+	Factorize a couple of call convention matching regular expressions.
+
+2006-05-12  Francois Gouget <fgouget@codeweavers.com>
+
+	* dlls/ole32/tests/storage32.c:
+	ole32: Fix compilation with gcc 2.95.
+
+2006-05-12  Thomas Weidenmueller <wine-patches@reactsoft.com>
+
+	* dlls/oleaut32/tmarshal.c:
+	oleaut32: Fix converting file name to Unicode.
+	Fix converting the typelib file name to Unicode by using the correct
+	buffer size.
+
+2006-05-11  Juan Lang <juan_lang@yahoo.com>
+
+	* dlls/crypt32/cert.c, dlls/crypt32/encode.c, dlls/crypt32/oid.c,
+	  dlls/crypt32/serialize.c, dlls/crypt32/store.c,
+	  dlls/crypt32/tests/cert.c, dlls/crypt32/tests/encode.c,
+	  dlls/crypt32/tests/main.c, dlls/crypt32/tests/oid.c,
+	  dlls/crypt32/tests/store.c:
+	crypt32: Use the HRESULT synonyms for converted Win32 error codes.
+
+2006-05-12  Mike McCormack <mike@codeweavers.com>
+
+	* dlls/wininet/http.c:
+	wininet: Remove broken code for HTTP_QUERY_FLAG_COALESCE, which is unimplemented
+	according to MSDN.
+
+	* dlls/wininet/ftp.c:
+	wininet: Check for null parameters in FtpSetCurrentDirectoryW.
+
+2006-05-14  Mike McCormack <mike@codeweavers.com>
+
+	* server/registry.c:
+	server: Avoid a crash if a registry notify event has been set already.
+
+2006-05-14  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* programs/winedbg/stack.c, programs/winedbg/tgt_active.c:
+	winedbg: Fixed regression for command 'bt all'.
+	Don't print 'process has terminated' message when detaching from a
+	process (or backtracing it).
+
+2006-05-12  Eric Pouech <eric.pouech@wanadoo.fr>
+
+	* dlls/ntdll/serial.c:
+	ntdll: Fix serial timeout regression.
+
+2006-05-11  Alexandre Julliard <julliard@winehq.org>
+
+	* ANNOUNCE, ChangeLog, VERSION, configure:
+	Release 0.9.13.
+
+----------------------------------------------------------------
 2006-05-10  Stefan Leichter <Stefan.Leichter@camLine.com>
 
 	* dlls/kernel/tests/toolhelp.c:
