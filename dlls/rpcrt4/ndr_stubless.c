@@ -410,13 +410,6 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
-    /* needed for conformance of top-level objects */
-#ifdef __i386__
-    stubMsg.StackTop = *(unsigned char **)(&pFormat+1);
-#else
-# warning Stack not retrieved for your CPU architecture
-#endif
-
     /* Later NDR language versions probably won't be backwards compatible */
     if (pStubDesc->Version > 0x50002)
     {
@@ -439,8 +432,24 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         current_offset = sizeof(NDR_PROC_HEADER);
     }
 
+    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
+    {
+        /* object is always the first argument */
+        This = *(void **)ARG_FROM_OFFSET(stubMsg, 0);
+        NdrProxyInitialize(This, &rpcMsg, &stubMsg, pStubDesc, procedure_number);
+    }
+    else
+        NdrClientInitializeNew(&rpcMsg, &stubMsg, pStubDesc, procedure_number);
+
     TRACE("Oi_flags = 0x%02x\n", pProcHeader->Oi_flags);
     TRACE("MIDL stub version = 0x%lx\n", pStubDesc->MIDLVersion);
+
+    /* needed for conformance of top-level objects */
+#ifdef __i386__
+    stubMsg.StackTop = *(unsigned char **)(&pFormat+1);
+#else
+# warning Stack not retrieved for your CPU architecture
+#endif
 
     /* we only need a handle if this isn't an object method */
     if (!(pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT))
@@ -546,15 +555,6 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         ext_flags = pExtensions->Flags2;
         current_offset += pExtensions->Size;
     }
-
-    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
-    {
-        /* object is always the first argument */
-        This = *(void **)ARG_FROM_OFFSET(stubMsg, 0);
-        NdrProxyInitialize(This, &rpcMsg, &stubMsg, pStubDesc, procedure_number);
-    }
-    else
-        NdrClientInitializeNew(&rpcMsg, &stubMsg, pStubDesc, procedure_number);
 
     /* create the full pointer translation tables, if requested */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
