@@ -836,6 +836,37 @@ RPC_STATUS WINAPI I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING
 }
 
 /***********************************************************************
+ *             RpcBindingCopy (RPCRT4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcBindingCopy(
+  RPC_BINDING_HANDLE SourceBinding,
+  RPC_BINDING_HANDLE* DestinationBinding)
+{
+  RpcBinding *DestBinding;
+  RpcBinding *SrcBinding = (RpcBinding*)SourceBinding;
+  RPC_STATUS status;
+
+  TRACE("(%p, %p)\n", SourceBinding, DestinationBinding);
+
+  status = RPCRT4_AllocBinding(&DestBinding, SrcBinding->server);
+  if (status != RPC_S_OK) return status;
+
+  DestBinding->ObjectUuid = SrcBinding->ObjectUuid;
+  DestBinding->BlockingFn = SrcBinding->BlockingFn;
+  DestBinding->Protseq = RPCRT4_strndupA(SrcBinding->Protseq, -1);
+  DestBinding->NetworkAddr = RPCRT4_strndupA(SrcBinding->NetworkAddr, -1);
+  DestBinding->Endpoint = RPCRT4_strndupA(SrcBinding->Endpoint, -1);
+
+  DestBinding->FromConn = SrcBinding->FromConn;
+  SrcBinding->FromConn = NULL;
+  if (SrcBinding->AuthInfo) RpcAuthInfo_AddRef(SrcBinding->AuthInfo);
+  DestBinding->AuthInfo = SrcBinding->AuthInfo;
+
+  *DestinationBinding = DestBinding;
+  return RPC_S_OK;
+}
+
+/***********************************************************************
  *             RpcImpersonateClient (RPCRT4.@)
  *
  * Impersonates the client connected via a binding handle so that security
