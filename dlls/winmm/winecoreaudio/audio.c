@@ -171,6 +171,8 @@ typedef struct {
 
 static WINE_WAVEOUT WOutDev   [MAX_WAVEOUTDRV];
 
+static CFStringRef MessageThreadPortName;
+
 static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo);
 static DWORD wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force);
 
@@ -279,7 +281,7 @@ static DWORD WINAPI messageThread(LPVOID p)
     CFRunLoopSourceRef source;
     Boolean info;
     
-    local = CFMessagePortCreateLocal(kCFAllocatorDefault, CFSTR("WaveMessagePort"), 
+    local = CFMessagePortCreateLocal(kCFAllocatorDefault, MessageThreadPortName,
                                         &wodMessageHandler, NULL, &info);
                                         
     source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, local, (CFIndex)0);
@@ -290,6 +292,8 @@ static DWORD WINAPI messageThread(LPVOID p)
     CFRunLoopSourceInvalidate(source);
     CFRelease(source);
     CFRelease(local);
+    CFRelease(MessageThreadPortName);
+    MessageThreadPortName = NULL;
 
     return 0;
 }
@@ -301,7 +305,7 @@ static DWORD wodSendDriverCallbackMessage(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dw
     SInt32 ret;
     
     CFMessagePortRef messagePort;
-    messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, CFSTR("WaveMessagePort"));
+    messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MessageThreadPortName);
         
     buffer = CFAllocatorAllocate(NULL, sizeof(UInt32) * 4, 0);
     if (!buffer)
@@ -525,6 +529,15 @@ LONG CoreAudio_WaveInit(void)
     pthread_mutexattr_destroy(&mutexattr);
     
     /* create mach messages handler */
+    srandomdev();
+    MessageThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL,
+        CFSTR("WaveMessagePort.%d.%lu"), getpid(), (unsigned long)random());
+    if (!MessageThreadPortName)
+    {
+        ERR("Can't create message thread port name\n");
+        return 1;
+    }
+
     hThread = CreateThread(NULL, 0, messageThread, NULL, 0, NULL);
     if ( !hThread )
     {
@@ -543,7 +556,7 @@ void CoreAudio_WaveRelease(void)
 
     TRACE("()\n");
 
-    messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, CFSTR("WaveMessagePort"));
+    messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MessageThreadPortName);
     CFMessagePortSendRequest(messagePort, kStopLoopMessage, NULL, 0.0, 0.0, NULL, NULL);
     CFRelease(messagePort);
 
