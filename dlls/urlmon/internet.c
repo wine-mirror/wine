@@ -61,22 +61,6 @@ static HRESULT parse_schema(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size,
     return S_OK;
 }
 
-static IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
-{
-    IInternetProtocolInfo *ret = NULL;
-    IUnknown *unk;
-    HRESULT hres;
-
-    hres = get_protocol_iface(url, &unk);
-    if(FAILED(hres))
-        return NULL;
-
-    IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&ret);
-    IUnknown_Release(unk);
-
-    return ret;
-}
-
 static HRESULT parse_security_url(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size, DWORD *rsize)
 {
     IInternetProtocolInfo *protocol_info;

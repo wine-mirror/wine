@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -42,11 +42,23 @@ typedef struct name_space {
 
 static name_space *name_space_list = NULL;
 
-HRESULT get_protocol_iface(LPCWSTR url, IUnknown **ret)
+static IClassFactory *find_name_space(LPCWSTR protocol)
 {
-    WCHAR schema[64], str_clsid[64];
+    name_space *iter;
+
+    for(iter = name_space_list; iter; iter = iter->next) {
+        if(!strcmpW(iter->protocol, protocol))
+            return iter->cf;
+    }
+
+    return NULL;
+}
+
+static HRESULT get_protocol_iface(LPCWSTR schema, DWORD schema_len, IUnknown **ret)
+{
+    WCHAR str_clsid[64];
     HKEY hkey = NULL;
-    DWORD res, type, size, schema_len;
+    DWORD res, type, size;
     CLSID clsid;
     LPWSTR wszKey;
     HRESULT hres;
@@ -54,11 +66,6 @@ HRESULT get_protocol_iface(LPCWSTR url, IUnknown **ret)
     static const WCHAR wszProtocolsKey[] =
         {'P','R','O','T','O','C','O','L','S','\\','H','a','n','d','l','e','r','\\'};
     static const WCHAR wszCLSID[] = {'C','L','S','I','D',0};
-
-    hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
-            &schema_len, 0);
-    if(FAILED(hres) || !schema_len)
-        return E_FAIL;
 
     wszKey = HeapAlloc(GetProcessHeap(), 0, sizeof(wszProtocolsKey)+(schema_len+1)*sizeof(WCHAR));
     memcpy(wszKey, wszProtocolsKey, sizeof(wszProtocolsKey));
@@ -86,6 +93,63 @@ HRESULT get_protocol_iface(LPCWSTR url, IUnknown **ret)
     }
 
     return CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)ret);
+}
+
+IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
+{
+    IInternetProtocolInfo *ret = NULL;
+    IClassFactory *cf;
+    IUnknown *unk;
+    WCHAR schema[64];
+    DWORD schema_len;
+    HRESULT hres;
+
+    hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
+            &schema_len, 0);
+    if(FAILED(hres) || !schema_len)
+        return NULL;
+
+    cf = find_name_space(schema);
+    if(cf) {
+        hres = IClassFactory_QueryInterface(cf, &IID_IInternetProtocolInfo, (void**)&ret);
+        if(SUCCEEDED(hres))
+            return ret;
+
+        hres = IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocolInfo, (void**)&ret);
+        if(SUCCEEDED(hres))
+            return ret;
+    }
+
+    hres = get_protocol_iface(schema, schema_len, &unk);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&ret);
+    IUnknown_Release(unk);
+
+    return ret;
+}
+
+HRESULT get_protocol_handler(LPCWSTR url, IUnknown **ret)
+{
+    IClassFactory *cf;
+    WCHAR schema[64];
+    DWORD schema_len;
+    HRESULT hres;
+
+    hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
+            &schema_len, 0);
+    if(FAILED(hres) || !schema_len)
+        return schema_len ? hres : E_FAIL;
+
+    cf = find_name_space(schema);
+    if(cf) {
+        hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)ret);
+        if(SUCCEEDED(hres))
+            return hres;
+    }
+
+    return get_protocol_iface(schema, schema_len, ret);
 }
 
 static HRESULT WINAPI InternetSession_QueryInterface(IInternetSession *iface,
