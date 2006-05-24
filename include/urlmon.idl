@@ -455,6 +455,39 @@ interface IWinInetHttpInfo : IWinInetInfo
         [in, out] DWORD *pdwReserved);
 }
 
+/*****************************************************************************
+ * IWindowForBindingUI interface
+ */
+[
+    local,
+    object,
+    uuid(79eac9d5-bafa-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IWindowForBindingUI : IUnknown
+{
+    typedef [unique] IWindowForBindingUI *LPWINDOWFORBINDINGUI;
+
+    HRESULT GetWindow(
+        [in] REFGUID rguidReason,
+        [out] HWND *phwnd);
+}
+
+/*****************************************************************************
+ * IHttpSecurity interface
+ */
+[
+    object,
+    uuid(79eac9d7-bafa-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IHttpSecurity : IWindowForBindingUI
+{
+    typedef [unique] IHttpSecurity *LPHTTPSECURITY;
+
+    HRESULT OnSecurityProblem(
+        [in] DWORD dwProblem);
+}
 
 
 /*****************************************************************************
@@ -514,6 +547,30 @@ interface IMonikerProp : IUnknown
         [in] MONIKERPROPERTY mkp,
         [in] LPCWSTR val);
 }
+
+cpp_quote("#ifndef _LPBINDPROTOCOL_DEFINED")
+cpp_quote("#define _LPBINDPROTOCOL_DEFINED")
+
+/*****************************************************************************
+ * IBindProtocol interface
+ */
+[
+    local,
+    object,
+    uuid(79EAC9CD-BAF9-11CE-8C82-00AA004BA90B),
+    pointer_default(unique)
+]
+interface IBindProtocol : IUnknown
+{
+    typedef [unique] IBindProtocol *LPBINDPROTOCOL;
+
+    HRESULT CreateBinding(
+        [in] LPCWSTR szUrl,
+        [in] IBindCtx *pbc,
+        [out] IBinding **ppb);
+}
+
+cpp_quote("#endif /* !defined _LPBINDPROTOCOL_DEFINED */")
 
 /*****************************************************************************
  * IInternetBindInfo interface
