@@ -1897,7 +1897,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
     LONG lBufferSize;
     BOOL bFound = FALSE;
     int count;
-    static WCHAR szWWW[] = {'w','w','w',0};
+    static const WCHAR szWWW[] = {'w','w','w',0};
 
     TRACE("(%s, 0x%08lx, %s, %p, 0x%08lx)\n",
         debugstr_w(lpszUrlName),
@@ -1990,7 +1990,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
 
     for (i = 0; i < 255; i++)
     {
-	static WCHAR szFormat[] = {'[','%','u',']','%','s',0};
+	static const WCHAR szFormat[] = {'[','%','u',']','%','s',0};
         HANDLE hFile;
         wsprintfW(lpszFileNameNoPath + countnoextension, szFormat, i, szExtension);
         TRACE("Trying: %s\n", debugstr_w(lpszFileName));

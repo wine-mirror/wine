@@ -2068,7 +2068,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                 urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
         {
             int len;
-            static WCHAR fmt[] = {'%','s',':','%','i',0};
+            static const WCHAR fmt[] = {'%','s',':','%','i',0};
             len = lstrlenW(hostName);
             len += 7; /* 5 for strlen("65535") + 1 for ":" + 1 for '\0' */
             lpwhs->lpszHostName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
