@@ -94,6 +94,8 @@ extern PCWINE_CONTEXT_INTERFACE pCTLInterface;
 const void *CRYPT_ReadSerializedElement(const BYTE *pbElement,
  DWORD cbElement, DWORD dwContextTypeFlags, DWORD *pdwContentType);
 
+DWORD CertStore_GetAccessState(HCERTSTORE hCertStore);
+
 /**
  *  Context functions
  */
