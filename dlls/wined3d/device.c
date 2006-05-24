@@ -3212,46 +3212,55 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
         break;
 
     case WINED3DRS_ALPHATESTENABLE           :
-        if (Value) {
-            glEnable(GL_ALPHA_TEST);
-            checkGLcall("glEnable GL_ALPHA_TEST");
-        } else {
-            glDisable(GL_ALPHA_TEST);
-            checkGLcall("glDisable GL_ALPHA_TEST");
-        }
-        break;
-
     case WINED3DRS_ALPHAFUNC                 :
-        {
-            int glParm = GL_LESS;
-            float ref = ((float) This->stateBlock->renderState[WINED3DRS_ALPHAREF]) / 255.0f;
-
-            switch ((D3DCMPFUNC) Value) {
-            case D3DCMP_NEVER:         glParm = GL_NEVER; break;
-            case D3DCMP_LESS:          glParm = GL_LESS; break;
-            case D3DCMP_EQUAL:         glParm = GL_EQUAL; break;
-            case D3DCMP_LESSEQUAL:     glParm = GL_LEQUAL; break;
-            case D3DCMP_GREATER:       glParm = GL_GREATER; break;
-            case D3DCMP_NOTEQUAL:      glParm = GL_NOTEQUAL; break;
-            case D3DCMP_GREATEREQUAL:  glParm = GL_GEQUAL; break;
-            case D3DCMP_ALWAYS:        glParm = GL_ALWAYS; break;
-            default:
-                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
-            }
-            TRACE("glAlphaFunc with Parm=%x, ref=%f\n", glParm, ref);
-            glAlphaFunc(glParm, ref);
-            This->alphafunc = glParm;
-            checkGLcall("glAlphaFunc");
-        }
-        break;
-
     case WINED3DRS_ALPHAREF                  :
+    case WINED3DRS_COLORKEYENABLE            :
         {
-            int glParm = This->alphafunc;
-            float ref = 1.0f;
+            int glParm = 0.0;
+            float ref = GL_LESS;
+            BOOL enable_ckey = FALSE;
 
-            ref = ((float) Value) / 255.0f;
-            TRACE("glAlphaFunc with Parm=%x, ref=%f\n", glParm, ref);
+            IWineD3DSurfaceImpl *surf;
+
+            /* Find out if the texture on the first stage has a ckey set */
+            if(This->stateBlock->textures[0]) {
+                surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)This->stateBlock->textures[0])->surfaces[0];
+                if(surf->CKeyFlags & DDSD_CKSRCBLT) enable_ckey = TRUE;
+            }
+
+            if (This->stateBlock->renderState[WINED3DRS_ALPHATESTENABLE] ||
+                (This->stateBlock->renderState[WINED3DRS_COLORKEYENABLE] && enable_ckey)) {
+                glEnable(GL_ALPHA_TEST);
+                checkGLcall("glEnable GL_ALPHA_TEST");
+            } else {
+                glDisable(GL_ALPHA_TEST);
+                checkGLcall("glDisable GL_ALPHA_TEST");
+                /* Alpha test is disabled, don't bother setting the params - it will happen on the next
+                 * enable call
+                 */
+                 break;
+            }
+
+            if(This->stateBlock->renderState[WINED3DRS_COLORKEYENABLE] && enable_ckey) {
+                glParm = GL_NOTEQUAL;
+                ref = 0.0;
+            } else {
+                ref = ((float) This->stateBlock->renderState[WINED3DRS_ALPHAREF]) / 255.0f;
+
+                switch ((D3DCMPFUNC) This->stateBlock->renderState[WINED3DRS_ALPHAFUNC]) {
+                case D3DCMP_NEVER:         glParm = GL_NEVER; break;
+                case D3DCMP_LESS:          glParm = GL_LESS; break;
+                case D3DCMP_EQUAL:         glParm = GL_EQUAL; break;
+                case D3DCMP_LESSEQUAL:     glParm = GL_LEQUAL; break;
+                case D3DCMP_GREATER:       glParm = GL_GREATER; break;
+                case D3DCMP_NOTEQUAL:      glParm = GL_NOTEQUAL; break;
+                case D3DCMP_GREATEREQUAL:  glParm = GL_GEQUAL; break;
+                case D3DCMP_ALWAYS:        glParm = GL_ALWAYS; break;
+                default:
+                    FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
+                }
+            }
+            This->alphafunc = glParm;
             glAlphaFunc(glParm, ref);
             checkGLcall("glAlphaFunc");
         }
@@ -5229,6 +5238,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
 
     if (NULL != oldTexture) {
         IWineD3DBaseTexture_Release(oldTexture);
+    }
+
+    /* Reset color keying */
+    if(Stage == 0 && This->stateBlock->renderState[WINED3DRS_COLORKEYENABLE]) {
+        BOOL enable_ckey = FALSE;
+
+        if(pTexture) {
+            IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)pTexture)->surfaces[0];
+            if(surf->CKeyFlags & DDSD_CKSRCBLT) enable_ckey = TRUE;
+        }
+
+        if(enable_ckey) {
+            glAlphaFunc(GL_NOTEQUAL, 0.0);
+            checkGLcall("glAlphaFunc");
+        }
     }
 
     return WINED3D_OK;
