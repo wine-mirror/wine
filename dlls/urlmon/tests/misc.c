@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2006 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,35 @@
 #include "initguid.h"
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
+
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        expect_ ## func = FALSE; \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(ParseUrl);
+DEFINE_EXPECT(QI_IInternetProtocolInfo);
+DEFINE_EXPECT(CreateInstance);
 
 static void test_CreateFormatEnum(void)
 {
@@ -217,6 +246,8 @@ static const WCHAR url5[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i'
 static const WCHAR url6[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 static const WCHAR url7[] = {'f','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g','/',
         'f','i','l','e','.','t','e','s','t',0};
+static const WCHAR url8[] = {'t','e','s','t',':','1','2','3','a','b','c',0};
+
 
 static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
         '.','j','p','g',0};
@@ -555,6 +586,249 @@ static void register_protocols(void)
 
 }
 
+static HRESULT WINAPI InternetProtocolInfo_QueryInterface(IInternetProtocolInfo *iface,
+                                                          REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI InternetProtocolInfo_AddRef(IInternetProtocolInfo *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InternetProtocolInfo_Release(IInternetProtocolInfo *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl,
+        PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
+        DWORD *pcchResult, DWORD dwReserved)
+{
+    CHECK_EXPECT(ParseUrl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
+        LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags,
+        LPWSTR pwzResult, DWORD cchResult, DWORD *pcchResult, DWORD dwReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_CompareUrl(IInternetProtocolInfo *iface,
+        LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCompareFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InternetProtocolInfo_QueryInfo(IInternetProtocolInfo *iface,
+        LPCWSTR pwzUrl, QUERYOPTION OueryOption, DWORD dwQueryFlags, LPVOID pBuffer,
+        DWORD cbBuffer, DWORD *pcbBuf, DWORD dwReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IInternetProtocolInfoVtbl InternetProtocolInfoVtbl = {
+    InternetProtocolInfo_QueryInterface,
+    InternetProtocolInfo_AddRef,
+    InternetProtocolInfo_Release,
+    InternetProtocolInfo_ParseUrl,
+    InternetProtocolInfo_CombineUrl,
+    InternetProtocolInfo_CompareUrl,
+    InternetProtocolInfo_QueryInfo
+};
+
+static IInternetProtocolInfo protocol_info = { &InternetProtocolInfoVtbl };
+
+static HRESULT qiret;
+static IClassFactory *expect_cf;
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IInternetProtocolInfo, riid)) {
+        CHECK_EXPECT(QI_IInternetProtocolInfo);
+        ok(iface == expect_cf, "unexpected iface\n");
+        *ppv = &protocol_info;
+        return qiret;
+    }
+
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+                                        REFIID riid, void **ppv)
+{
+    CHECK_EXPECT(CreateInstance);
+
+    ok(iface == expect_cf, "unexpected iface\n");
+    ok(pOuter == NULL, "pOuter = %p\n", pOuter);
+    ok(IsEqualGUID(&IID_IInternetProtocolInfo, riid), "unexpected riid\n");
+    ok(ppv != NULL, "ppv == NULL\n");
+
+    *ppv = &protocol_info;
+    return S_OK;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    ok(0, "unexpected call\n");
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory test_protocol_cf = { &ClassFactoryVtbl };
+static IClassFactory test_protocol_cf2 = { &ClassFactoryVtbl };
+
+static void test_NameSpace(void)
+{
+    IInternetSession *session;
+    WCHAR buf[200];
+    DWORD size;
+    HRESULT hres;
+
+    static const WCHAR wszTest[] = {'t','e','s','t',0};
+
+    hres = CoInternetGetSession(0, &session, 0);
+    ok(hres == S_OK, "CoInternetGetSession failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IInternetSession_RegisterNameSpace(session, NULL, &IID_NULL,
+                                              wszTest, 0, NULL, 0);
+    ok(hres == E_INVALIDARG, "RegisterNameSpace failed: %08lx\n", hres);
+
+    hres = IInternetSession_RegisterNameSpace(session, &test_protocol_cf, &IID_NULL,
+                                              NULL, 0, NULL, 0);
+    ok(hres == E_INVALIDARG, "RegisterNameSpace failed: %08lx\n", hres);
+
+    hres = IInternetSession_RegisterNameSpace(session, &test_protocol_cf, &IID_NULL,
+                                              wszTest, 0, NULL, 0);
+    ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
+
+    qiret = E_NOINTERFACE;
+    expect_cf = &test_protocol_cf;
+    SET_EXPECT(QI_IInternetProtocolInfo);
+    SET_EXPECT(CreateInstance);
+    SET_EXPECT(ParseUrl);
+
+    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+                              &size, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08lx\n", hres);
+
+    CHECK_CALLED(QI_IInternetProtocolInfo);
+    CHECK_CALLED(CreateInstance);
+    CHECK_CALLED(ParseUrl);
+
+    qiret = S_OK;
+    SET_EXPECT(QI_IInternetProtocolInfo);
+    SET_EXPECT(ParseUrl);
+
+    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+                              &size, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08lx\n", hres);
+
+    CHECK_CALLED(QI_IInternetProtocolInfo);
+    CHECK_CALLED(ParseUrl);
+
+    hres = IInternetSession_UnregisterNameSpace(session, &test_protocol_cf, wszTest);
+    ok(hres == S_OK, "UnregisterNameSpace failed: %08lx\n", hres);
+
+    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+                              &size, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08lx\n", hres);
+
+    hres = IInternetSession_RegisterNameSpace(session, &test_protocol_cf2, &IID_NULL,
+                                              wszTest, 0, NULL, 0);
+    ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
+
+    hres = IInternetSession_RegisterNameSpace(session, &test_protocol_cf, &IID_NULL,
+                                              wszTest, 0, NULL, 0);
+    ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
+
+    hres = IInternetSession_RegisterNameSpace(session, &test_protocol_cf, &IID_NULL,
+                                              wszTest, 0, NULL, 0);
+    ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
+
+    SET_EXPECT(QI_IInternetProtocolInfo);
+    SET_EXPECT(ParseUrl);
+
+    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+                              &size, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08lx\n", hres);
+
+    CHECK_CALLED(QI_IInternetProtocolInfo);
+    CHECK_CALLED(ParseUrl);
+
+    hres = IInternetSession_UnregisterNameSpace(session, &test_protocol_cf, wszTest);
+    ok(hres == S_OK, "UnregisterNameSpace failed: %08lx\n", hres);
+
+    SET_EXPECT(QI_IInternetProtocolInfo);
+    SET_EXPECT(ParseUrl);
+
+    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+                              &size, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08lx\n", hres);
+
+    CHECK_CALLED(QI_IInternetProtocolInfo);
+    CHECK_CALLED(ParseUrl);
+
+    hres = IInternetSession_UnregisterNameSpace(session, &test_protocol_cf, wszTest);
+    ok(hres == S_OK, "UnregisterNameSpace failed: %08lx\n", hres);
+
+    expect_cf = &test_protocol_cf2;
+    SET_EXPECT(QI_IInternetProtocolInfo);
+    SET_EXPECT(ParseUrl);
+
+    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+                              &size, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08lx\n", hres);
+
+    CHECK_CALLED(QI_IInternetProtocolInfo);
+    CHECK_CALLED(ParseUrl);
+
+    hres = IInternetSession_UnregisterNameSpace(session, &test_protocol_cf, wszTest);
+    ok(hres == S_OK, "UnregisterNameSpace failed: %08lx\n", hres);
+    hres = IInternetSession_UnregisterNameSpace(session, &test_protocol_cf, wszTest);
+    ok(hres == S_OK, "UnregisterNameSpace failed: %08lx\n", hres);
+    hres = IInternetSession_UnregisterNameSpace(session, &test_protocol_cf, NULL);
+    ok(hres == E_INVALIDARG, "UnregisterNameSpace failed: %08lx\n", hres);
+    hres = IInternetSession_UnregisterNameSpace(session, NULL, wszTest);
+    ok(hres == E_INVALIDARG, "UnregisterNameSpace failed: %08lx\n", hres);
+
+    hres = IInternetSession_UnregisterNameSpace(session, &test_protocol_cf2, wszTest);
+    ok(hres == S_OK, "UnregisterNameSpace failed: %08lx\n", hres);
+
+    hres = CoInternetParseUrl(url8, PARSE_ENCODE, 0, buf, sizeof(buf)/sizeof(WCHAR),
+                              &size, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08lx\n", hres);
+
+    IInternetSession_Release(session);
+}
+
 START_TEST(misc)
 {
     OleInitialize(NULL);
@@ -567,6 +841,7 @@ START_TEST(misc)
     test_FindMimeFromData();
     test_SecurityManager();
     test_ZoneManager();
+    test_NameSpace();
 
     OleUninitialize();
 }
