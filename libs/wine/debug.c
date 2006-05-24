@@ -29,7 +29,6 @@
 
 #include "wine/debug.h"
 #include "wine/library.h"
-#include "wine/unicode.h"
 
 static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 
@@ -324,7 +323,12 @@ static const char *default_dbgstr_wn( const WCHAR *str, int n )
         sprintf( res, "#%04x", LOWORD(str) );
         return res;
     }
-    if (n == -1) n = strlenW(str);
+    if (n == -1)
+    {
+        const WCHAR *end = str;
+        while (*end) end++;
+        n = end - str;
+    }
     if (n < 0) n = 0;
     size = 12 + min( 300, n * 5 );
     dst = res = funcs.get_temp_buffer( n * 5 + 7 );
