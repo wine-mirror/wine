@@ -782,8 +782,6 @@ static DWORD wodClose(WORD wDevID)
 */
 static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    OSStatus status;
-
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
     
     if (wDevID >= MAX_WAVEOUTDRV) {
@@ -796,17 +794,7 @@ static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     
     lpWaveHdr->dwFlags |= WHDR_PREPARED;
     lpWaveHdr->dwFlags &= ~WHDR_DONE;
-  
-    WOutDev[wDevID].state = WINE_WS_STOPPED;
-    
-    status = AudioOutputUnitStart(WOutDev[wDevID].audioUnit);
-    if (status) {
-        ERR("AudioOutputUnitStart return %c%c%c%c\n", (char) (status >> 24),
-                                                        (char) (status >> 16),
-                                                        (char) (status >> 8),
-                                                        (char) status);
-        return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
-    }
+
     return MMSYSERR_NOERROR;
 }
 
@@ -815,8 +803,6 @@ static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    OSStatus status;
-
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
     
     if (wDevID >= MAX_WAVEOUTDRV) {
@@ -830,11 +816,6 @@ static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
     lpWaveHdr->dwFlags |= WHDR_DONE;
    
-    status = AudioOutputUnitStop(WOutDev[wDevID].audioUnit);
-    if (status) {
-        ERR("AudioOutputUnitStop return %c%c%c%c\n", (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
-        return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
-    }
     return MMSYSERR_NOERROR;
 }
 
@@ -848,11 +829,31 @@ static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 static void wodHelper_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 {
+    OSStatus status;
+
     wwo->lpPlayPtr = lpWaveHdr;
     
     if (!lpWaveHdr)
     {
+        if (wwo->state == WINE_WS_PLAYING)
+        {
+            wwo->state = WINE_WS_STOPPED;
+            status = AudioOutputUnitStop(wwo->audioUnit);
+            if (status)
+                fprintf(stderr, "err:winecoreaudio:wodHelper_BeginWaveHdr AudioOutputUnitStop return %c%c%c%c\n",
+                        (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+        }
         return;
+    }
+
+    if (wwo->state == WINE_WS_STOPPED)
+    {
+        status = AudioOutputUnitStart(wwo->audioUnit);
+        if (status) {
+            fprintf(stderr, "err:winecoreaudio:AudioOutputUnitStart return %c%c%c%c\n",
+                    (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+        }
+        else wwo->state = WINE_WS_PLAYING;
     }
     
     if (lpWaveHdr->dwFlags & WHDR_BEGINLOOP)
@@ -968,8 +969,10 @@ static DWORD wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 *
 * Resets current output stream.
 */
-static  void  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
+static  DWORD  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 {
+    OSStatus status;
+
     FIXME("\n");
    
     /* updates current notify list */
@@ -1017,7 +1020,17 @@ static  void  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
         wwo->state = WINE_WS_PAUSED;
     }
 
+    status = AudioOutputUnitStop(wwo->audioUnit);
+
     pthread_mutex_unlock(&wwo->lock);
+
+    if (status) {
+        ERR( "AudioOutputUnitStop return %c%c%c%c\n",
+             (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+        return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
+    }
+
+    return MMSYSERR_NOERROR;
 }
 
 
@@ -1065,8 +1078,6 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     
     if (!wwo->lpPlayPtr)
         wodHelper_BeginWaveHdr(wwo,lpWaveHdr);
-    if (wwo->state == WINE_WS_STOPPED)
-        wwo->state = WINE_WS_PLAYING;
     pthread_mutex_unlock(&wwo->lock);
     
     return MMSYSERR_NOERROR;
@@ -1077,6 +1088,8 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 static DWORD wodPause(WORD wDevID)
 {
+    OSStatus status;
+
     TRACE("(%u);!\n", wDevID);
     
     if (wDevID >= MAX_WAVEOUTDRV)
@@ -1085,12 +1098,19 @@ static DWORD wodPause(WORD wDevID)
         return MMSYSERR_BADDEVICEID;
     }
     
-    if (WOutDev[wDevID].state == WINE_WS_PLAYING)
+    pthread_mutex_lock(&WOutDev[wDevID].lock);
+    if (WOutDev[wDevID].state == WINE_WS_PLAYING || WOutDev[wDevID].state == WINE_WS_STOPPED)
     {
-        pthread_mutex_lock(&WOutDev[wDevID].lock);
         WOutDev[wDevID].state = WINE_WS_PAUSED;
-        pthread_mutex_unlock(&WOutDev[wDevID].lock);
+        status = AudioOutputUnitStop(WOutDev[wDevID].audioUnit);
+        if (status) {
+            ERR( "AudioOutputUnitStop return %c%c%c%c\n",
+                 (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+            pthread_mutex_unlock(&WOutDev[wDevID].lock);
+            return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
+        }
     }
+    pthread_mutex_unlock(&WOutDev[wDevID].lock);
     
     return MMSYSERR_NOERROR;
 }
@@ -1108,12 +1128,24 @@ static DWORD wodRestart(WORD wDevID)
         return MMSYSERR_BADDEVICEID;
     }
     
+    pthread_mutex_lock(&WOutDev[wDevID].lock);
     if (WOutDev[wDevID].state == WINE_WS_PAUSED)
     {
-        pthread_mutex_lock(&WOutDev[wDevID].lock);
-        WOutDev[wDevID].state = WINE_WS_PLAYING;
-        pthread_mutex_unlock(&WOutDev[wDevID].lock);
+        if (WOutDev[wDevID].lpPlayPtr)
+        {
+            OSStatus status = AudioOutputUnitStart(WOutDev[wDevID].audioUnit);
+            if (status) {
+                ERR("AudioOutputUnitStart return %c%c%c%c\n",
+                    (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+                pthread_mutex_unlock(&WOutDev[wDevID].lock);
+                return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
+            }
+            WOutDev[wDevID].state = WINE_WS_PLAYING;
+        }
+        else
+            WOutDev[wDevID].state = WINE_WS_STOPPED;
     }
+    pthread_mutex_unlock(&WOutDev[wDevID].lock);
     
     return MMSYSERR_NOERROR;
 }
@@ -1131,9 +1163,7 @@ static DWORD wodReset(WORD wDevID)
         return MMSYSERR_BADDEVICEID;
     }
     
-    wodHelper_Reset(&WOutDev[wDevID], TRUE);
-    
-    return MMSYSERR_NOERROR;
+    return wodHelper_Reset(&WOutDev[wDevID], TRUE);
 }
 
 /**************************************************************************
