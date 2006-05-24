@@ -26,7 +26,6 @@
 #include <winnt.h>
 #include <winerror.h>
 
-#include "wine/unicode.h"
 #include "rpc.h"
 #include "rpcdce.h"
 #include "rpcproxy.h"

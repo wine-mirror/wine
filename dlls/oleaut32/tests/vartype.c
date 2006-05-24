@@ -19,7 +19,6 @@
  */
 
 #include "wine/test.h"
-#include "wine/unicode.h"
 #include "oleauto.h"
 #include <math.h>
 
@@ -3470,7 +3469,7 @@ static void test_VarDateChangeTypeEx(void)
 
   hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, VARIANT_NOUSEROVERRIDE, VT_BSTR); 
   ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && V_BSTR(&vDst) &&
-          (!strcmpW(V_BSTR(&vDst), sz25570) || !strcmpW(V_BSTR(&vDst), sz25570_2)),
+          (!lstrcmpW(V_BSTR(&vDst), sz25570) || !lstrcmpW(V_BSTR(&vDst), sz25570_2)),
           "hres=0x%lX, type=%d (should be VT_BSTR), *bstr=%s\n", 
           hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?");
 
@@ -3478,7 +3477,7 @@ static void test_VarDateChangeTypeEx(void)
   if (HAVE_OLEAUT32_LOCALES)
   {
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, VARIANT_NOUSEROVERRIDE|VARIANT_USE_NLS, VT_BSTR);
-    ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && V_BSTR(&vDst) && !strcmpW(V_BSTR(&vDst), sz25570Nls), 
+    ok(hres == S_OK && V_VT(&vDst) == VT_BSTR && V_BSTR(&vDst) && !lstrcmpW(V_BSTR(&vDst), sz25570Nls), 
             "hres=0x%lX, type=%d (should be VT_BSTR), *bstr=%s\n", 
             hres, V_VT(&vDst), V_BSTR(&vDst) ? wtoascii(V_BSTR(&vDst)) : "?");
   }

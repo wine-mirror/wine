@@ -45,7 +45,6 @@
 #include "shlguid.h"
 #include "ole2.h"
 
-#include "wine/unicode.h"
 #include "wine/test.h"
 
 /* The following definitions and helper functions are meant to make the de-/registration

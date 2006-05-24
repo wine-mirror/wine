@@ -36,8 +36,6 @@
 #include "ocidl.h"
 #include "oleauto.h"
 
-
-#include "wine/unicode.h"
 #include "wine/test.h"
 
 
@@ -727,8 +725,8 @@ static void test_GetAttributesOf(void)
     IMalloc_Free(ppM, newPIDL);
 
     /* append testdirectory name to path */
-    strcatW(cCurrDirW, cBackSlash);
-    strcatW(cCurrDirW, cTestDirW);
+    lstrcatW(cCurrDirW, cBackSlash);
+    lstrcatW(cCurrDirW, cTestDirW);
 
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0);
     ok(hr == S_OK, "ParseDisplayName failed %08lx\n", hr);
@@ -890,7 +888,7 @@ static void test_EnumObjects_and_CompareIDs(void)
         cCurrDirA[len-1] = 0;
 
     MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
-    strcatW(cCurrDirW, cTestDirW);
+    lstrcatW(cCurrDirW, cTestDirW);
 
     hr = SHGetDesktopFolder(&IDesktopFolder);
     ok(hr == S_OK, "SHGetDesktopfolder failed %08lx\n", hr);
