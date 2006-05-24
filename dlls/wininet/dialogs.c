@@ -108,19 +108,22 @@ static BOOL WININET_GetAuthRealm( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
      * dealing with 'Basic' Authentication
      */
     p = strchrW( szBuf, ' ' );
-    if( p && !strncmpW( p+1, szRealm, strlenW(szRealm) ) )
+    if( !p || strncmpW( p+1, szRealm, strlenW(szRealm) ) )
     {
-        /* remove quotes */
-        p += 7;
-        if( *p == '"' )
-        {
-            p++;
-            q = strrchrW( p, '"' );
-            if( q )
-                *q = 0;
-        }
+        ERR("proxy response wrong? (%s)\n", debugstr_w(szBuf));
+        return FALSE;
     }
 
+
+    /* remove quotes */
+    p += 7;
+    if( *p == '"' )
+    {
+        p++;
+        q = strrchrW( p, '"' );
+        if( q )
+            *q = 0;
+    }
     strcpyW( szBuf, p );
 
     return TRUE;
