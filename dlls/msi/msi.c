@@ -1610,8 +1610,10 @@ UINT WINAPI MsiProvideQualifiedComponentA( LPCSTR szComponent,
 
     msi_free(szwComponent);
     msi_free(szwQualifier);
-    *pcchPathBuf = WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, pcchwPathBuf,
-                    lpPathBuf, *pcchPathBuf, NULL, NULL);
+
+    if (rc == ERROR_SUCCESS)
+        *pcchPathBuf = WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, pcchwPathBuf,
+                                           lpPathBuf, *pcchPathBuf, NULL, NULL);
 
     msi_free(lpwPathBuf);
     return rc;
