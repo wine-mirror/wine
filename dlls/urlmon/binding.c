@@ -53,6 +53,9 @@ typedef struct {
     DWORD bindf;
     LPWSTR mime;
     LPWSTR url;
+
+    DWORD apartment_thread;
+    HWND notif_hwnd;
 } Binding;
 
 struct ProtocolStream {
@@ -73,6 +76,110 @@ struct ProtocolStream {
 #define SERVPROV(x)  ((IServiceProvider*)       &(x)->lpServiceProviderVtbl)
 
 #define STREAM(x) ((IStream*) &(x)->lpStreamVtbl)
+
+#define WM_MK_ONPROGRESS (WM_USER+100)
+
+typedef struct {
+    Binding *binding;
+    ULONG progress;
+    ULONG progress_max;
+    ULONG status_code;
+    LPWSTR status_text;
+} on_progress_data;
+
+static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch(msg) {
+    case WM_MK_ONPROGRESS: {
+        on_progress_data *data = (on_progress_data*)lParam;
+
+        TRACE("WM_MK_PROGRESS %p\n", data);
+
+        IBindStatusCallback_OnProgress(data->binding->callback, data->progress,
+                data->progress_max, data->status_code, data->status_text);
+
+        IBinding_Release(BINDING(data->binding));
+        HeapFree(GetProcessHeap(), 0, data->status_text);
+        HeapFree(GetProcessHeap(), 0, data);
+
+        return 0;
+    }
+    }
+
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+
+static HWND get_notif_hwnd(void)
+{
+    static ATOM wnd_class = 0;
+    HWND hwnd;
+
+    static const WCHAR wszURLMonikerNotificationWindow[] =
+        {'U','R','L',' ','M','o','n','i','k','e','r',' ',
+         'N','o','t','i','f','i','c','a','t','i','o','n',' ','W','i','n','d','o','w',0};
+
+    if(!wnd_class) {
+        static WNDCLASSEXW wndclass = {
+            sizeof(wndclass), 0,
+            notif_wnd_proc, 0, 0,
+            NULL, NULL, NULL, NULL, NULL,
+            wszURLMonikerNotificationWindow,
+            NULL        
+        };
+
+        wndclass.hInstance = URLMON_hInstance;
+
+        wnd_class = RegisterClassExW(&wndclass);
+    }
+
+    if(!urlmon_tls)
+        urlmon_tls = TlsAlloc();
+
+    hwnd = TlsGetValue(urlmon_tls);
+    if(hwnd)
+        return hwnd;
+
+    hwnd = CreateWindowExW(0, MAKEINTATOMW(wnd_class),
+                           wszURLMonikerNotificationWindow, 0, 0, 0, 0, 0, HWND_MESSAGE,
+                           NULL, URLMON_hInstance, NULL);
+    TlsSetValue(urlmon_tls, hwnd);
+
+    TRACE("hwnd = %p\n", hwnd);
+
+    return hwnd;
+}
+
+static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
+                        ULONG status_code, LPCWSTR status_text)
+{
+    on_progress_data *data;
+
+    if(GetCurrentThreadId() == This->apartment_thread) {
+        IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
+                                       status_code, status_text);
+        return;
+    }
+
+    data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
+
+    IBinding_AddRef(BINDING(This));
+
+    data->binding = This;
+    data->progress = progress;
+    data->progress_max = progress_max;
+    data->status_code = status_code;
+
+    if(status_text) {
+        DWORD size = (strlenW(status_text)+1)*sizeof(WCHAR);
+
+        data->status_text = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(data->status_text, status_text, size);
+    }else {
+        data->status_text = NULL;
+    }
+
+    PostMessageW(This->notif_hwnd, WM_MK_ONPROGRESS, 0, (LPARAM)data);
+}
 
 static HRESULT WINAPI HttpNegotiate_QueryInterface(IHttpNegotiate2 *iface,
                                                    REFIID riid, void **ppv)
@@ -543,12 +650,10 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
         break;
     }
     case BINDSTATUS_SENDINGREQUEST:
-        IBindStatusCallback_OnProgress(This->callback, 0, 0, BINDSTATUS_SENDINGREQUEST,
-                                       szStatusText);
+        on_progress(This, 0, 0, BINDSTATUS_SENDINGREQUEST, szStatusText);
         break;
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
-        IBindStatusCallback_OnProgress(This->callback, 0, 0,
-                                       BINDSTATUS_MIMETYPEAVAILABLE, szStatusText);
+        on_progress(This, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE, szStatusText);
         break;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
         break;
@@ -847,6 +952,8 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->stream = NULL;
     ret->mime = NULL;
     ret->url = NULL;
+    ret->apartment_thread = GetCurrentThreadId();
+    ret->notif_hwnd = get_notif_hwnd();
 
     memset(&ret->bindinfo, 0, sizeof(BINDINFO));
     ret->bindinfo.cbSize = sizeof(BINDINFO);

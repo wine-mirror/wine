@@ -59,4 +59,6 @@ HRESULT get_protocol_handler(LPCWSTR url, IUnknown **ret);
 
 HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
 
+extern DWORD urlmon_tls;
+
 #endif /* __WINE_URLMON_MAIN_H */

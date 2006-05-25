@@ -42,6 +42,8 @@ LONG URLMON_refCount = 0;
 
 HINSTANCE URLMON_hInstance = 0;
 
+DWORD urlmon_tls = 0;
+
 /***********************************************************************
  *		DllMain (URLMON.init)
  */
@@ -56,6 +58,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	break;
 
     case DLL_PROCESS_DETACH:
+        if(urlmon_tls)
+            TlsFree(urlmon_tls);
         URLMON_hInstance = 0;
 	break;
     }
