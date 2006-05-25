@@ -234,6 +234,7 @@ typedef struct {
     DWORD hash;
     LOGFONTW lf;
     FMAT2 matrix;
+    BOOL can_use_bitmap;
 } FONT_DESC;
 
 typedef struct tagHFONTLIST {
@@ -2124,6 +2125,7 @@ static BOOL fontcmp(GdiFont font, FONT_DESC *fd)
     if(font->font_desc.hash != fd->hash) return TRUE;
     if(memcmp(&font->font_desc.matrix, &fd->matrix, sizeof(fd->matrix))) return TRUE;
     if(memcmp(&font->font_desc.lf, &fd->lf, offsetof(LOGFONTW, lfFaceName))) return TRUE;
+    if(!font->font_desc.can_use_bitmap != !fd->can_use_bitmap) return TRUE;
     return strcmpiW(font->font_desc.lf.lfFaceName, fd->lf.lfFaceName);
 }
 
@@ -2147,6 +2149,7 @@ static void calc_hash(FONT_DESC *pfd)
         hash ^= two_chars;
         if(!*pwc) break;
     }
+    hash ^= !pfd->can_use_bitmap;
     pfd->hash = hash;
     return;
 }
@@ -2160,6 +2163,7 @@ static GdiFont find_in_cache(HFONT hfont, LOGFONTW *plf, XFORM *pxf, BOOL can_us
 
     memcpy(&fd.lf, plf, sizeof(LOGFONTW));
     memcpy(&fd.matrix, pxf, sizeof(FMAT2));
+    fd.can_use_bitmap = can_use_bitmap;
     calc_hash(&fd);
 
     /* try the in-use list */
@@ -2286,6 +2290,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
      memcpy(&ret->font_desc.matrix, &dc->xformWorld2Vport, sizeof(FMAT2));
      memcpy(&ret->font_desc.lf, &lf, sizeof(LOGFONTW));
+     ret->font_desc.can_use_bitmap = can_use_bitmap;
      calc_hash(&ret->font_desc);
      hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
      hflist->hfont = hfont;
