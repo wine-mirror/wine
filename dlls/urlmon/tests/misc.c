@@ -58,6 +58,7 @@ DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xA
 DEFINE_EXPECT(ParseUrl);
 DEFINE_EXPECT(QI_IInternetProtocolInfo);
 DEFINE_EXPECT(CreateInstance);
+DEFINE_EXPECT(unk_Release);
 
 static void test_CreateFormatEnum(void)
 {
@@ -829,6 +830,50 @@ static void test_NameSpace(void)
     IInternetSession_Release(session);
 }
 
+static ULONG WINAPI unk_Release(IUnknown *iface)
+{
+    CHECK_EXPECT(unk_Release);
+    return 0;
+}
+
+static const IUnknownVtbl unk_vtbl = {
+    (void*)0xdeadbeef,
+    (void*)0xdeadbeef,
+    unk_Release
+};
+
+static void test_ReleaseBindInfo(void)
+{
+    BINDINFO bi;
+    IUnknown unk = { &unk_vtbl };
+
+    ReleaseBindInfo(NULL); /* shouldn't crash */
+
+    memset(&bi, 0, sizeof(bi));
+    bi.cbSize = sizeof(BINDINFO);
+    bi.pUnk = &unk;
+    SET_EXPECT(unk_Release);
+    ReleaseBindInfo(&bi);
+    ok(bi.cbSize == sizeof(BINDINFO), "bi.cbSize=%ld, expected %d\n",
+       bi.cbSize, sizeof(bi));
+    ok(bi.pUnk == NULL, "bi.pUnk=%p, expected NULL\n", bi.pUnk);
+    CHECK_CALLED(unk_Release);
+
+    memset(&bi, 0, sizeof(bi));
+    bi.cbSize = offsetof(BINDINFO, pUnk);
+    bi.pUnk = &unk;
+    ReleaseBindInfo(&bi);
+    ok(bi.cbSize == offsetof(BINDINFO, pUnk), "bi.cbSize=%ld, expected %d\n",
+       bi.cbSize, sizeof(bi));
+    ok(bi.pUnk == &unk, "bi.pUnk=%p, expected %p\n", bi.pUnk, &unk);
+
+    memset(&bi, 0, sizeof(bi));
+    bi.pUnk = &unk;
+    ReleaseBindInfo(&bi);
+    ok(!bi.cbSize, "bi.cbSize=%ld, expected 0\n", bi.cbSize);
+    ok(bi.pUnk == &unk, "bi.pUnk=%p, expected %p\n", bi.pUnk, &unk);
+}
+
 START_TEST(misc)
 {
     OleInitialize(NULL);
@@ -842,6 +887,7 @@ START_TEST(misc)
     test_SecurityManager();
     test_ZoneManager();
     test_NameSpace();
+    test_ReleaseBindInfo();
 
     OleUninitialize();
 }

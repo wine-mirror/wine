@@ -35,6 +35,7 @@
 #include "winuser.h"
 #include "urlmon.h"
 #include "urlmon_main.h"
+#include "ole2.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
@@ -370,15 +371,25 @@ HRESULT WINAPI CoGetClassObjectFromURL( REFCLSID rclsid, LPCWSTR szCodeURL, DWOR
  */
 void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
 {
+    DWORD size;
+
     TRACE("(%p)\n", pbindinfo);
 
-    if(!pbindinfo)
+    if(!pbindinfo || !(size = pbindinfo->cbSize))
         return;
 
     CoTaskMemFree(pbindinfo->szExtraInfo);
+    ReleaseStgMedium(&pbindinfo->stgmedData);
 
-    if(pbindinfo->pUnk)
+    if(offsetof(BINDINFO, szExtraInfo) < size)
+        CoTaskMemFree(pbindinfo->szCustomVerb);
+
+
+    if(pbindinfo->pUnk && offsetof(BINDINFO, pUnk) < size)
         IUnknown_Release(pbindinfo->pUnk);
+
+    memset(pbindinfo, 0, size);
+    pbindinfo->cbSize = size;
 }
 
 /***********************************************************************
