@@ -199,6 +199,12 @@ HEADER_NextItem(HWND hwnd, INT iItem)
     return HEADER_OrderToIndex(hwnd, HEADER_IndexToOrder(hwnd, iItem)+1);
 }
 
+static INT
+HEADER_PrevItem(HWND hwnd, INT iItem)
+{
+    return HEADER_OrderToIndex(hwnd, HEADER_IndexToOrder(hwnd, iItem)-1);
+}
+
 static void
 HEADER_SetItemBounds (HWND hwnd)
 {
@@ -594,19 +600,19 @@ HEADER_InternalHitTest (HWND hwnd, LPPOINT lpPt, UINT *pFlags, INT *pItem)
 			TRACE("ON HEADER %d\n", iCount);
 			return;
 		    }
-		    if (iCount > 0) {
+                    if (HEADER_IndexToOrder(hwnd, iCount) > 0) {
 			rcTest = rect;
 			rcTest.right = rcTest.left + DIVIDER_WIDTH;
 			if (PtInRect (&rcTest, *lpPt)) {
 			    if (bNoWidth) {
 				*pFlags |= HHT_ONDIVOPEN;
-				*pItem = iCount - 1;
+                                *pItem = HEADER_PrevItem(hwnd, iCount);
 				TRACE("ON DIVOPEN %d\n", *pItem);
 				return;
 			    }
 			    else {
 				*pFlags |= HHT_ONDIVIDER;
-				*pItem = iCount - 1;
+                                *pItem = HEADER_PrevItem(hwnd, iCount);
 				TRACE("ON DIVIDER %d\n", *pItem);
 				return;
 			    }
