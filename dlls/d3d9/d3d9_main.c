@@ -93,3 +93,12 @@ BOOL WINAPI ValidatePixelShader(LPVOID pFunction, int param1, int param2, LPVOID
   FIXME("(%p %d %d %p): stub\n", pFunction, param1, param2, toto);
   return TRUE;
 }
+
+/***********************************************************************
+ *              D3DPERF_SetOptions (D3D9.@)
+ *
+ */
+void WINAPI D3DPERF_SetOptions(DWORD options)
+{
+  FIXME("(%#lx) : stub\n", options);
+}
