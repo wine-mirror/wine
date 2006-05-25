@@ -2100,8 +2100,13 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             /* Unbind the old texture */
             glBindTexture(GL_TEXTURE_2D, 0);
 
+            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
             /* We use texture unit 0 for blts */
-            GLACTIVETEXTURE(0);
+                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+                checkGLcall("glActiveTextureARB");
+            } else {
+                WARN("Multi-texturing is unsupported in the local OpenGL implementation\n");
+            }
 
             /* Disable some fancy graphics effects */
             glDisable(GL_LIGHTING);

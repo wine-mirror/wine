@@ -243,7 +243,8 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
     VTRACE(("Activating appropriate texture state %ld\n", Sampler));
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
         ENTER_GL();
-        GLACTIVETEXTURE(Sampler);
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + Sampler));
+        checkGLcall("glActiveTextureARB");
         LEAVE_GL();
         /* Could we use bindTexture and then apply the states instead of GLACTIVETEXTURE */
     } else if (Sampler > 0) {
@@ -3358,7 +3359,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
                 /* Note the D3DRS value applies to all textures, but GL has one
                    per texture, so apply it now ready to be used!               */
                 if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                    GLACTIVETEXTURE(i);
+                    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+                    checkGLcall("glActiveTextureARB");
                 } else if (i>0) {
                     FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 }

@@ -194,39 +194,8 @@ extern int num_lock;
   (vec)[1] = D3DCOLOR_G(dw); \
   (vec)[2] = D3DCOLOR_B(dw); \
   (vec)[3] = D3DCOLOR_A(dw);
-  
-/* Note: The following is purely to keep the source code as clear from #ifdefs as possible */
-#if defined(GL_VERSION_1_3)
-#define GLACTIVETEXTURE(textureNo)                          \
-            glActiveTexture(GL_TEXTURE0 + textureNo);       \
-            checkGLcall("glActiveTexture");      
-#define GLCLIENTACTIVETEXTURE(textureNo)                    \
-            glClientActiveTexture(GL_TEXTURE0 + textureNo);
-#define GLMULTITEXCOORD1F(a,b)                              \
-            glMultiTexCoord1f(GL_TEXTURE0 + a, b);
-#define GLMULTITEXCOORD2F(a,b,c)                            \
-            glMultiTexCoord2f(GL_TEXTURE0 + a, b, c);
-#define GLMULTITEXCOORD3F(a,b,c,d)                          \
-            glMultiTexCoord3f(GL_TEXTURE0 + a, b, c, d);
-#define GLMULTITEXCOORD4F(a,b,c,d,e)                        \
-            glMultiTexCoord4f(GL_TEXTURE0 + a, b, c, d, e);
-#define GLTEXTURECUBEMAP GL_TEXTURE_CUBE_MAP
-#else 
-#define GLACTIVETEXTURE(textureNo)                             \
-            glActiveTextureARB(GL_TEXTURE0_ARB + textureNo);   \
-            checkGLcall("glActiveTextureARB");
-#define GLCLIENTACTIVETEXTURE(textureNo)                    \
-            glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo);
-#define GLMULTITEXCOORD1F(a,b)                                 \
-            glMultiTexCoord1fARB(GL_TEXTURE0_ARB + a, b);
-#define GLMULTITEXCOORD2F(a,b,c)                               \
-            glMultiTexCoord2fARB(GL_TEXTURE0_ARB + a, b, c);
-#define GLMULTITEXCOORD3F(a,b,c,d)                             \
-            glMultiTexCoord3fARB(GL_TEXTURE0_ARB + a, b, c, d);
-#define GLMULTITEXCOORD4F(a,b,c,d,e)                           \
-            glMultiTexCoord4fARB(GL_TEXTURE0_ARB + a, b, c, d, e);
+
 #define GLTEXTURECUBEMAP GL_TEXTURE_CUBE_MAP_ARB
-#endif
 
 /* DirectX Device Limits */
 /* --------------------- */

@@ -1185,28 +1185,28 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
     /* Texture coords -------------------------------------------*/
 
     for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
+        /* The code below uses glClientActiveTexture and glMultiTexCoord* which are all part of the GL_ARB_multitexture extension. */
+        /* Abort if we don't support the extension. */
+        if (!GL_SUPPORT(ARB_MULTITEXTURE)) {
+            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+            continue;
+        }
 
         /* Select the correct texture stage */
-        GLCLIENTACTIVETEXTURE(textureNo);
+        GL_EXTCALL(glClientActiveTextureARB(textureNo));
         if (This->stateBlock->textures[textureNo] != NULL) {
             int coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
             TRACE("Setting up texture %u, cordindx %u, data %p\n", textureNo, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
-            if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
-                FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                GLMULTITEXCOORD4F(textureNo, 0, 0, 0, 1);
-                continue;
-            }
 
             if (coordIdx >= MAX_TEXTURES) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                GLMULTITEXCOORD4F(textureNo, 0, 0, 0, 1);
+                GL_EXTCALL(glMultiTexCoord4fARB(textureNo, 0, 0, 0, 1));
 
             } else if (sd->u.s.texCoords[coordIdx].lpData == NULL) {
                 VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                GLMULTITEXCOORD4F(textureNo, 0, 0, 0, 1);
+                GL_EXTCALL(glMultiTexCoord4fARB(textureNo, 0, 0, 0, 1));
 
             } else {
 
@@ -1217,7 +1217,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
         } else {
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            GLMULTITEXCOORD4F(textureNo, 0, 0, 0, 1);
+            GL_EXTCALL(glMultiTexCoord4fARB(textureNo, 0, 0, 0, 1));
         }
     }
 }
@@ -1444,7 +1444,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     case D3DTTFF_COUNT1:
                         VTRACE(("tex:%d, s=%f\n", textureNo, s));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GLMULTITEXCOORD1F(textureNo, s);
+                            GL_EXTCALL(glMultiTexCoord1fARB(textureNo, s));
                         } else {
                             glTexCoord1f(s);
                         }
@@ -1452,7 +1452,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     case D3DTTFF_COUNT2:
                         VTRACE(("tex:%d, s=%f, t=%f\n", textureNo, s, t));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GLMULTITEXCOORD2F(textureNo, s, t);
+                            GL_EXTCALL(glMultiTexCoord2fARB(textureNo, s, t));
                         } else {
                             glTexCoord2f(s, t);
                         }
@@ -1460,7 +1460,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     case D3DTTFF_COUNT3:
                         VTRACE(("tex:%d, s=%f, t=%f, r=%f\n", textureNo, s, t, r));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GLMULTITEXCOORD3F(textureNo, s, t, r);
+                            GL_EXTCALL(glMultiTexCoord3fARB(textureNo, s, t, r));
                         } else {
                             glTexCoord3f(s, t, r);
                         }
@@ -1468,7 +1468,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     case D3DTTFF_COUNT4:
                         VTRACE(("tex:%d, s=%f, t=%f, r=%f, q=%f\n", textureNo, s, t, r, q));
                         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GLMULTITEXCOORD4F(textureNo, s, t, r, q);
+                            GL_EXTCALL(glMultiTexCoord4fARB(textureNo, s, t, r, q));
                         } else {
                             glTexCoord4f(s, t, r, q);
                         }
@@ -1968,7 +1968,8 @@ void inline drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
     for (i = 0; i< GL_LIMITS(textures); ++i) {
         /* Bind the texture to the stage here */
         if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            GLACTIVETEXTURE(i);
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+            checkGLcall("glActiveTextureARB");
         } else if (0 < i) {
             /* This isn't so much a warn as a message to the user about lack of hardware support */
             WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
