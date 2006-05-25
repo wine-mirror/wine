@@ -875,8 +875,37 @@ HEADER_SendClickNotify (HWND hwnd, UINT code, INT iItem)
 static LRESULT
 HEADER_CreateDragImage (HWND hwnd, WPARAM wParam)
 {
-    FIXME("empty stub!\n");
-    return 0;
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr(hwnd);
+    HEADER_ITEM *lpItem;
+    HIMAGELIST himl;
+    HBITMAP hMemory, hOldBitmap;
+    HDC hMemoryDC;
+    HDC hDeviceDC;
+    int height, width;
+    
+    if (wParam < 0 || wParam >= infoPtr->uNumItem)
+        return FALSE;
+    lpItem = &infoPtr->items[wParam];
+    width = lpItem->rect.right - lpItem->rect.left;
+    height = lpItem->rect.bottom - lpItem->rect.top;
+    
+    hDeviceDC = GetDC(NULL);
+    hMemoryDC = CreateCompatibleDC(hDeviceDC);
+    hMemory = CreateCompatibleBitmap(hDeviceDC, width, height);
+    ReleaseDC(NULL, hDeviceDC);
+    hOldBitmap = SelectObject(hMemoryDC, hMemory);
+    SetViewportOrgEx(hMemoryDC, -lpItem->rect.left, -lpItem->rect.top, NULL);
+    HEADER_DrawItem(hwnd, hMemoryDC, wParam, FALSE);
+    hMemory = SelectObject(hMemoryDC, hOldBitmap);
+    DeleteDC(hMemoryDC);
+    
+    if (hMemory == NULL)    /* if anything failed */
+        return FALSE;
+    
+    himl = ImageList_Create(width, height, ILC_COLORDDB, 1, 1);
+    ImageList_Add(himl, hMemory, NULL);
+    DeleteObject(hMemory);
+    return (LRESULT)himl;
 }
 
 
