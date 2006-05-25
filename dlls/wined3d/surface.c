@@ -588,7 +588,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
             if ((This->lockedRect.left == 0 &&  This->lockedRect.top == 0 &&
                 This->lockedRect.right == This->currentDesc.Width
                 && This->lockedRect.bottom ==  This->currentDesc.Height)) {
-                    char *row, *top, *bottom;
+                    BYTE *row, *top, *bottom;
                     int i;
 
                     glReadPixels(0, 0,
@@ -606,7 +606,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
                         return E_OUTOFMEMORY;
                     }
                     top = This->resource.allocatedMemory;
-                    bottom = ( (char *) This->resource.allocatedMemory) + pLockedRect->Pitch * ( This->currentDesc.Height - 1);
+                    bottom = ( (BYTE *) This->resource.allocatedMemory) + pLockedRect->Pitch * ( This->currentDesc.Height - 1);
                     for(i = 0; i < This->currentDesc.Height / 2; i++) {
                         memcpy(row, top, pLockedRect->Pitch);
                         memcpy(top, bottom, pLockedRect->Pitch);
