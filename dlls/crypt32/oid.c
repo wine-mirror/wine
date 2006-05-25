@@ -951,7 +951,7 @@ static void init_oid_info(HINSTANCE hinst)
         }
         else
         {
-            int len = LoadStringW(hinst, (UINT)oidInfoConstructors[i].pwszName,
+            int len = LoadStringW(hinst, (UINT_PTR)oidInfoConstructors[i].pwszName,
              NULL, 0);
 
             if (len)
