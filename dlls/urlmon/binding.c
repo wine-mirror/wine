@@ -113,9 +113,11 @@ static ULONG WINAPI HttpNegotiate_Release(IHttpNegotiate2 *iface)
 static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
         LPCWSTR szURL, LPCWSTR szHeaders, DWORD dwReserved, LPWSTR *pszAdditionalHeaders)
 {
-    FIXME("(%s %s %ld %p)\n", debugstr_w(szURL), debugstr_w(szHeaders), dwReserved,
+    TRACE("(%s %s %ld %p)\n", debugstr_w(szURL), debugstr_w(szHeaders), dwReserved,
           pszAdditionalHeaders);
-    return E_NOTIMPL;
+
+    *pszAdditionalHeaders = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HttpNegotiate_OnResponse(IHttpNegotiate2 *iface, DWORD dwResponseCode,
@@ -130,8 +132,10 @@ static HRESULT WINAPI HttpNegotiate_OnResponse(IHttpNegotiate2 *iface, DWORD dwR
 static HRESULT WINAPI HttpNegotiate_GetRootSecurityId(IHttpNegotiate2 *iface,
         BYTE *pbSecurityId, DWORD *pcbSecurityId, DWORD_PTR dwReserved)
 {
-    FIXME("(%p %p %ld)\n", pbSecurityId, pcbSecurityId, dwReserved);
-    return E_NOTIMPL;
+    TRACE("(%p %p %ld)\n", pbSecurityId, pcbSecurityId, dwReserved);
+
+    /* That's all we have to do here */
+    return E_FAIL;
 }
 
 static const IHttpNegotiate2Vtbl HttpNegotiate2Vtbl = {
