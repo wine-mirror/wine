@@ -18,14 +18,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_UNICODE_H
-#define __WINE_UNICODE_H
+#ifndef __WINE_WINE_UNICODE_H
+#define __WINE_WINE_UNICODE_H
 
 #include <stdarg.h>
 
 #include <windef.h>
 #include <winbase.h>
 #include <winnls.h>
+
+#ifdef __WINE_WINE_TEST_H
+#error This file should not be used in Wine tests
+#endif
 
 #ifndef WINE_UNICODE_API
 #define WINE_UNICODE_API DECLSPEC_IMPORT
@@ -284,4 +288,4 @@ extern inline int atoiW( const WCHAR *str )
     return (int)atolW( str );
 }
 
-#endif  /* __WINE_UNICODE_H */
+#endif  /* __WINE_WINE_UNICODE_H */

@@ -27,6 +27,10 @@
 #include <windef.h>
 #include <winbase.h>
 
+#ifdef __WINE_WINE_TEST_H
+#error This file should not be used in Wine tests
+#endif
+
 /* configuration */
 
 extern const char *wine_get_build_dir(void);

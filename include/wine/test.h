@@ -18,13 +18,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_TEST_H
-#define __WINE_TEST_H
+#ifndef __WINE_WINE_TEST_H
+#define __WINE_WINE_TEST_H
 
 #include <stdarg.h>
 #include <stdlib.h>
 #include <windef.h>
 #include <winbase.h>
+
+#ifdef __WINE_WINE_LIBRARY_H
+#error wine/library.h should not be used in Wine tests
+#endif
+#ifdef __WINE_WINE_UNICODE_H
+#error wine/unicode.h should not be used in Wine tests
+#endif
+#ifdef __WINE_WINE_DEBUG_H
+#error wine/debug.h should not be used in Wine tests
+#endif
 
 /* debug level */
 extern int winetest_debug;
@@ -403,4 +413,4 @@ int main( int argc, char **argv )
 
 #endif  /* STANDALONE */
 
-#endif  /* __WINE_TEST_H */
+#endif  /* __WINE_WINE_TEST_H */
