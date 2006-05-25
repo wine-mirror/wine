@@ -226,7 +226,10 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     CHECK_CALLED(OnDataAvailable);
     CHECK_CALLED(OnStopBinding);
 
-    IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
+    SET_EXPECT(Terminate);
+    hres = IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
+    ok(hres == S_OK, "ReportResult failed: %08lx\n", hres);
+    CHECK_CALLED(Terminate);
 
     return S_OK;
 }
@@ -620,7 +623,6 @@ static void test_BindToStorage(void)
     SET_EXPECT(OnStartBinding);
     if(emulate_protocol) {
         SET_EXPECT(Start);
-        SET_EXPECT(Terminate);
         SET_EXPECT(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST) {
@@ -661,7 +663,6 @@ static void test_BindToStorage(void)
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
         CHECK_CALLED(Start);
-        CHECK_CALLED(Terminate);
         CHECK_CALLED(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST) {

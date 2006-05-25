@@ -602,8 +602,11 @@ static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *i
         HRESULT hrResult, DWORD dwError, LPCWSTR szResult)
 {
     Binding *This = PROTSINK_THIS(iface);
-    FIXME("(%p)->(%08lx %ld %s)\n", This, hrResult, dwError, debugstr_w(szResult));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08lx %ld %s)\n", This, hrResult, dwError, debugstr_w(szResult));
+
+    IInternetProtocol_Terminate(This->protocol, 0);
+    return S_OK;
 }
 
 #undef PROTSINK_THIS
@@ -904,7 +907,6 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
 
     hres = IInternetProtocol_Start(binding->protocol, url, PROTSINK(binding),
              BINDINF(binding), 0, 0);
-    IInternetProtocol_Terminate(binding->protocol, 0);
 
     if(SUCCEEDED(hres)) {
         IInternetProtocol_UnlockRequest(binding->protocol);
