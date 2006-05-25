@@ -180,6 +180,49 @@ static GLfloat invymat[16] = {
 	0.0f, 0.0f, 1.0f, 0.0f,
 	0.0f, 0.0f, 0.0f, 1.0f};
 
+void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
+    /* If the last draw was transformed as well, no need to reapply all the matrixes */
+    if ( (!This->last_was_rhw) || (This->viewport_changed) ) {
+
+        double X, Y, height, width, minZ, maxZ;
+        This->last_was_rhw = TRUE;
+        This->viewport_changed = FALSE;
+
+        /* Transformed already into viewport coordinates, so we do not need transform
+            matrices. Reset all matrices to identity and leave the default matrix in world
+            mode.                                                                         */
+        glMatrixMode(GL_MODELVIEW);
+        checkGLcall("glMatrixMode(GL_MODELVIEW)");
+        glLoadIdentity();
+        checkGLcall("glLoadIdentity");
+
+        glMatrixMode(GL_PROJECTION);
+        checkGLcall("glMatrixMode(GL_PROJECTION)");
+        glLoadIdentity();
+        checkGLcall("glLoadIdentity");
+
+        /* Set up the viewport to be full viewport */
+        X      = This->stateBlock->viewport.X;
+        Y      = This->stateBlock->viewport.Y;
+        height = This->stateBlock->viewport.Height;
+        width  = This->stateBlock->viewport.Width;
+        minZ   = This->stateBlock->viewport.MinZ;
+        maxZ   = This->stateBlock->viewport.MaxZ;
+        TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
+        glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
+        checkGLcall("glOrtho");
+
+        /* Window Coord 0 is the middle of the first pixel, so translate by half
+            a pixel (See comment above glTranslate below)                         */
+        glTranslatef(0.375, 0.375, 0);
+        checkGLcall("glTranslatef(0.375, 0.375, 0)");
+        if (This->renderUpsideDown) {
+            glMultMatrixf(invymat);
+            checkGLcall("glMultMatrixf(invymat)");
+        }
+    }
+
+}
 /* Setup views - Transformed & lit if RHW, else untransformed.
        Only unlit if Normals are supplied
     Returns: Whether to restore lighting afterwards           */
@@ -198,48 +241,7 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
     }
 
     if (!useVS && vtx_transformed) {
-
-        /* If the last draw was transformed as well, no need to reapply all the matrixes */
-        if ( (!This->last_was_rhw) || (This->viewport_changed) ) {
-
-            double X, Y, height, width, minZ, maxZ;
-            This->last_was_rhw = TRUE;
-            This->viewport_changed = FALSE;
-
-            /* Transformed already into viewport coordinates, so we do not need transform
-               matrices. Reset all matrices to identity and leave the default matrix in world
-               mode.                                                                         */
-            glMatrixMode(GL_MODELVIEW);
-            checkGLcall("glMatrixMode(GL_MODELVIEW)");
-            glLoadIdentity();
-            checkGLcall("glLoadIdentity");
-
-            glMatrixMode(GL_PROJECTION);
-            checkGLcall("glMatrixMode(GL_PROJECTION)");
-            glLoadIdentity();
-            checkGLcall("glLoadIdentity");
-
-            /* Set up the viewport to be full viewport */
-            X      = This->stateBlock->viewport.X;
-            Y      = This->stateBlock->viewport.Y;
-            height = This->stateBlock->viewport.Height;
-            width  = This->stateBlock->viewport.Width;
-            minZ   = This->stateBlock->viewport.MinZ;
-            maxZ   = This->stateBlock->viewport.MaxZ;
-            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-            glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
-            checkGLcall("glOrtho");
-
-            /* Window Coord 0 is the middle of the first pixel, so translate by half
-               a pixel (See comment above glTranslate below)                         */
-            glTranslatef(0.5, 0.5, 0);
-            checkGLcall("glTranslatef(0.5, 0.5, 0)");
-            if (This->renderUpsideDown) {
-                glMultMatrixf(invymat);
-                checkGLcall("glMultMatrixf(invymat)");
-            }
-        }
-
+        d3ddevice_set_ortho(This);
     } else {
 
         /* Untransformed, so relies on the view and projection matrices */

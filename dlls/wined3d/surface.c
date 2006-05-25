@@ -780,41 +780,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             /* glDrawPixels transforms the raster position as though it was a vertex -
                we want to draw at screen position 0,0 - Set up ortho (rhw) mode as
                per drawprim (and leave set - it will sort itself out due to last_was_rhw */
-            if ( (!myDevice->last_was_rhw) || (myDevice->viewport_changed) ) {
-
-                double X, Y, height, width, minZ, maxZ;
-                myDevice->last_was_rhw = TRUE;
-                myDevice->viewport_changed = FALSE;
-
-                /* Transformed already into viewport coordinates, so we do not need transform
-                   matrices. Reset all matrices to identity and leave the default matrix in world
-                   mode.                                                                         */
-                glMatrixMode(GL_MODELVIEW);
-                checkGLcall("glMatrixMode");
-                glLoadIdentity();
-                checkGLcall("glLoadIdentity");
-
-                glMatrixMode(GL_PROJECTION);
-                checkGLcall("glMatrixMode");
-                glLoadIdentity();
-                checkGLcall("glLoadIdentity");
-
-                /* Set up the viewport to be full viewport */
-                X      = myDevice->stateBlock->viewport.X;
-                Y      = myDevice->stateBlock->viewport.Y;
-                height = myDevice->stateBlock->viewport.Height;
-                width  = myDevice->stateBlock->viewport.Width;
-                minZ   = myDevice->stateBlock->viewport.MinZ;
-                maxZ   = myDevice->stateBlock->viewport.MaxZ;
-                TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-                glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
-                checkGLcall("glOrtho");
-
-                /* Window Coord 0 is the middle of the first pixel, so translate by half
-                   a pixel (See comment above glTranslate below)                         */
-                glTranslatef(0.5, 0.5, 0);
-                checkGLcall("glTranslatef(0.5, 0.5, 0)");
-            }
+            d3ddevice_set_ortho(This->resource.wineD3DDevice);
 
             if (iface ==  implSwapChain->backBuffer || iface == myDevice->renderTarget) {
                 glDrawBuffer(GL_BACK);
@@ -2192,40 +2158,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
             /* Draw a textured quad
              */
-            if ( TRUE ) {
-                double X, Y, height, width, minZ, maxZ;
-                myDevice->last_was_rhw = FALSE;
-                myDevice->viewport_changed = FALSE;
-
-                /* Transformed already into viewport coordinates, so we do not need transform
-                   matrices. Reset all matrices to identity and leave the default matrix in world
-                   mode.                                                                         */
-                glMatrixMode(GL_MODELVIEW);
-                checkGLcall("glMatrixMode");
-                glLoadIdentity();
-                checkGLcall("glLoadIdentity");
-
-                glMatrixMode(GL_PROJECTION);
-                checkGLcall("glMatrixMode");
-                glLoadIdentity();
-                checkGLcall("glLoadIdentity");
-
-                /* Set up the viewport to be full viewport */
-                X      = myDevice->stateBlock->viewport.X;
-                Y      = myDevice->stateBlock->viewport.Y;
-                height = myDevice->stateBlock->viewport.Height;
-                width  = myDevice->stateBlock->viewport.Width;
-                minZ   = myDevice->stateBlock->viewport.MinZ;
-                maxZ   = myDevice->stateBlock->viewport.MaxZ;
-                TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-                glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
-                checkGLcall("glOrtho");
-
-                /* Window Coord 0 is the middle of the first pixel, so translate by half
-                   a pixel (See comment above glTranslate below)                         */
-                glTranslatef(0.375, 0.375, 0);
-                checkGLcall("glTranslatef(0.375, 0.375, 0)");
-            }
+            d3ddevice_set_ortho(This->resource.wineD3DDevice);
 
             glBegin(GL_QUADS);
 

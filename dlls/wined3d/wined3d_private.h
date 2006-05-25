@@ -597,8 +597,7 @@ typedef struct PrivateData
     DWORD size;
 } PrivateData;
 
-/* OpenGL ortho matrix setup */
-void d3ddevice_set_ortho(IWineD3DDeviceImpl *This, BOOL dontclip);
+void d3ddevice_set_ortho(IWineD3DDeviceImpl *This);
 
 /*****************************************************************************
  * IWineD3DResource implementation structure
