@@ -1579,6 +1579,7 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
         switch (stfs.f_type)
         {
         case 0x9660:      /* iso9660 */
+        case 0x9fa1:      /* supermount */
         case 0x15013346:  /* udf */
             info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
             info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
