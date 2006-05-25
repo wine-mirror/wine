@@ -1040,7 +1040,7 @@ static  BOOL    start_console_renderer_helper(const char* appname, STARTUPINFOA*
     PROCESS_INFORMATION	pi;
 
     /* FIXME: use dynamic allocation for most of the buffers below */
-    ret = snprintf(buffer, sizeof(buffer), "%s --use-event=%d", appname, (INT)hEvent);
+    ret = snprintf(buffer, sizeof(buffer), "%s --use-event=%ld", appname, (DWORD_PTR)hEvent);
     if ((ret > -1) && (ret < sizeof(buffer)) &&
         CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS,
                        NULL, NULL, si, &pi))
@@ -1532,7 +1532,7 @@ static WINE_EXCEPTION_FILTER(CONSOLE_CtrlEventHandler)
  */
 static DWORD WINAPI CONSOLE_SendEventThread(void* pmt)
 {
-    DWORD                       event = (DWORD)pmt;
+    DWORD_PTR                   event = (DWORD_PTR)pmt;
     struct ConsoleHandler*      ch;
 
     if (event == CTRL_C_EVENT)
