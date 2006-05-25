@@ -83,6 +83,7 @@ typedef struct
     INT       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */
     INT       nOldWidth;	/* width of a sizing item after the last WM_MOUSEMOVE */
     INT       iHotItem;		/* index of hot item (cursor is over this item) */
+    INT       iHotDivider;      /* index of the hot divider (used while dragging an item or by HDM_SETHOTDIVIDER) */
     INT       iMargin;          /* width of the margin that surrounds a bitmap */
 
     HIMAGELIST  himl;		/* handle to an image list (may be 0) */
@@ -94,6 +95,7 @@ typedef struct
 
 #define VERT_BORDER     4
 #define DIVIDER_WIDTH  10
+#define HOT_DIVIDER_WIDTH 2
 #define MAX_HEADER_TEXT_LEN 260
 #define HDN_UNICODE_OFFSET 20
 #define HDN_FIRST_UNICODE (HDN_FIRST-HDN_UNICODE_OFFSET)
@@ -190,6 +192,13 @@ HEADER_OrderToIndex(HWND hwnd, WPARAM wParam)
     return infoPtr->order[iorder];
 }
 
+/* Note: if iItem is the last item then this function returns infoPtr->uNumItem */
+static INT
+HEADER_NextItem(HWND hwnd, INT iItem)
+{
+    return HEADER_OrderToIndex(hwnd, HEADER_IndexToOrder(hwnd, iItem)+1);
+}
+
 static void
 HEADER_SetItemBounds (HWND hwnd)
 {
@@ -225,6 +234,37 @@ HEADER_Size (HWND hwnd, WPARAM wParam)
     infoPtr->bRectsValid = FALSE;
 
     return 0;
+}
+
+static void HEADER_GetHotDividerRect(HWND hwnd, HEADER_INFO *infoPtr, RECT *r)
+{
+    INT iDivider = infoPtr->iHotDivider;
+    if (infoPtr->uNumItem > 0)
+    {
+        HEADER_ITEM *lpItem;
+        
+        if (iDivider < infoPtr->uNumItem)
+        {
+            lpItem = &infoPtr->items[iDivider];
+            r->left  = lpItem->rect.left - HOT_DIVIDER_WIDTH/2;
+            r->right = lpItem->rect.left + HOT_DIVIDER_WIDTH/2;
+        }
+        else
+        {
+            lpItem = &infoPtr->items[HEADER_OrderToIndex(hwnd, infoPtr->uNumItem-1)];
+            r->left  = lpItem->rect.right - HOT_DIVIDER_WIDTH/2;
+            r->right = lpItem->rect.right + HOT_DIVIDER_WIDTH/2;
+        }
+        r->top    = lpItem->rect.top;
+        r->bottom = lpItem->rect.bottom;
+    }
+    else
+    {
+        RECT clientRect;
+        GetClientRect(hwnd, &clientRect);
+        *r = clientRect;
+        r->right = r->left + HOT_DIVIDER_WIDTH/2;
+    }
 }
 
 
@@ -440,6 +480,18 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
     return phdi->rect.right;
 }
 
+static void
+HEADER_DrawHotDivider(HWND hwnd, HDC hdc)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+    HBRUSH brush;
+    RECT r;
+    
+    HEADER_GetHotDividerRect(hwnd, infoPtr, &r);
+    brush = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT));
+    FillRect(hdc, &r, brush);
+    DeleteObject(brush);
+}
 
 static void
 HEADER_Refresh (HWND hwnd, HDC hdc)
@@ -485,7 +537,9 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
                 DrawEdge (hdc, &rect, EDGE_ETCHED, BF_BOTTOM|BF_MIDDLE);
         }
     }
-
+    
+    if (infoPtr->iHotDivider != -1)
+        HEADER_DrawHotDivider(hwnd, hdc);
     SelectObject (hdc, hOldFont);
 }
 
@@ -871,7 +925,6 @@ HEADER_SendClickNotify (HWND hwnd, UINT code, INT iItem)
 			       (WPARAM)nmhdr.hdr.idFrom, (LPARAM)&nmhdr);
 }
 
-
 static LRESULT
 HEADER_CreateDragImage (HWND hwnd, WPARAM wParam)
 {
@@ -908,6 +961,55 @@ HEADER_CreateDragImage (HWND hwnd, WPARAM wParam)
     return (LRESULT)himl;
 }
 
+static LRESULT
+HEADER_SetHotDivider(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr(hwnd);
+    INT iDivider;
+    RECT r;
+    
+    if (wParam)
+    {
+        POINT pt;
+        UINT flags;
+        pt.x = (INT)(SHORT)LOWORD(lParam);
+        pt.y = 0;
+        HEADER_InternalHitTest (hwnd, &pt, &flags, &iDivider);
+        
+        if (flags & HHT_TOLEFT)
+            iDivider = 0;
+        else if (flags & HHT_NOWHERE || flags & HHT_TORIGHT)
+            iDivider = infoPtr->uNumItem;
+        else
+        {
+            HEADER_ITEM *lpItem = &infoPtr->items[iDivider];
+            if (pt.x > (lpItem->rect.left+lpItem->rect.right)/2)
+                iDivider = HEADER_NextItem(hwnd, iDivider);
+        }
+    }
+    else
+        iDivider = (INT)lParam;
+        
+    /* Note; wParam==FALSE, lParam==-1 is valid and is used to clear the hot divider */
+    if (iDivider<-1 || iDivider>(int)infoPtr->uNumItem)
+        return iDivider;
+
+    if (iDivider != infoPtr->iHotDivider)
+    {
+        if (infoPtr->iHotDivider != -1)
+        {
+            HEADER_GetHotDividerRect(hwnd, infoPtr, &r);
+            InvalidateRect(hwnd, &r, FALSE);
+        }
+        infoPtr->iHotDivider = iDivider;
+        if (iDivider != -1)
+        {
+            HEADER_GetHotDividerRect(hwnd, infoPtr, &r);
+            InvalidateRect(hwnd, &r, FALSE);
+        }
+    }
+    return iDivider;
+}
 
 static LRESULT
 HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
@@ -1390,6 +1492,7 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->iMoveItem = 0;
     infoPtr->himl = 0;
     infoPtr->iHotItem = -1;
+    infoPtr->iHotDivider = -1;
     infoPtr->iMargin = 3*GetSystemMetrics(SM_CXEDGE);
     infoPtr->nNotifyFormat =
 	SendMessageW (infoPtr->hwndNotify, WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
@@ -1901,7 +2004,8 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 /*	case HDM_SETFILTERCHANGETIMEOUT: */
 
-/*	case HDM_SETHOTDIVIDER: */
+        case HDM_SETHOTDIVIDER:
+            return HEADER_SetHotDivider(hwnd, wParam, lParam);
 
 	case HDM_SETIMAGELIST:
 	    return HEADER_SetImageList (hwnd, (HIMAGELIST)lParam);
