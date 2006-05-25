@@ -4369,3 +4369,55 @@ void WINAPI NDRCContextUnmarshall(NDR_CCONTEXT *CContext,
 {
     FIXME("(%p %p %p %08lx): stub\n", CContext, hBinding, pBuff, DataRepresentation);
 }
+
+void WINAPI NDRSContextMarshall(NDR_SCONTEXT CContext,
+                               void *pBuff,
+                               NDR_RUNDOWN userRunDownIn)
+{
+    FIXME("(%p %p %p): stub\n", CContext, pBuff, userRunDownIn);
+}
+
+void WINAPI NDRSContextMarshallEx(RPC_BINDING_HANDLE hBinding,
+                                  NDR_SCONTEXT CContext,
+                                  void *pBuff,
+                                  NDR_RUNDOWN userRunDownIn)
+{
+    FIXME("(%p %p %p %p): stub\n", hBinding, CContext, pBuff, userRunDownIn);
+}
+
+void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
+                                 NDR_SCONTEXT CContext,
+                                 void *pBuff,
+                                 NDR_RUNDOWN userRunDownIn,
+                                 void *CtxGuard,
+                                 unsigned long Flags)
+{
+    FIXME("(%p %p %p %p %p %lu): stub\n",
+          hBinding, CContext, pBuff, userRunDownIn, CtxGuard, Flags);
+}
+
+NDR_SCONTEXT WINAPI NDRSContextUnmarshall(void *pBuff,
+                                          unsigned long DataRepresentation)
+{
+    FIXME("(%p %08lx): stub\n", pBuff, DataRepresentation);
+    return NULL;
+}
+
+NDR_SCONTEXT WINAPI NDRSContextUnmarshallEx(RPC_BINDING_HANDLE hBinding,
+                                            void *pBuff,
+                                            unsigned long DataRepresentation)
+{
+    FIXME("(%p %p %08lx): stub\n", hBinding, pBuff, DataRepresentation);
+    return NULL;
+}
+
+NDR_SCONTEXT WINAPI NDRSContextUnmarshall2(RPC_BINDING_HANDLE hBinding,
+                                           void *pBuff,
+                                           unsigned long DataRepresentation,
+                                           void *CtxGuard,
+                                           unsigned long Flags)
+{
+    FIXME("(%p %p %08lx %p %lu): stub\n",
+          hBinding, pBuff, DataRepresentation, CtxGuard, Flags);
+    return NULL;
+}
