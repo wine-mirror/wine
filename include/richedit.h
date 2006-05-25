@@ -159,7 +159,7 @@ static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','
 #define EN_ALIGNRTL			0x0711
 
 
-typedef DWORD (CALLBACK * EDITSTREAMCALLBACK)( DWORD, LPBYTE, LONG, LONG * );
+typedef DWORD (CALLBACK * EDITSTREAMCALLBACK)( DWORD_PTR, LPBYTE, LONG, LONG * );
 
 /* tab stops number limit */
 #define MAX_TAB_STOPS         0x00000020
