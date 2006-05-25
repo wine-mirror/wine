@@ -28,13 +28,14 @@
 @ stdcall CertDuplicateCTLContext(ptr)
 @ stdcall CertDuplicateCertificateContext(ptr)
 @ stdcall CertDuplicateStore(ptr)
-@ stub CertEnumCRLContextProperties
+@ stdcall CertEnumCRLContextProperties(ptr long)
 @ stdcall CertEnumCRLsInStore(ptr ptr)
 @ stub CertEnumCTLContextProperties
 @ stdcall CertEnumCTLsInStore(ptr ptr)
 @ stdcall CertEnumCertificateContextProperties(ptr long)
 @ stdcall CertEnumCertificatesInStore(long ptr)
 @ stdcall CertFindAttribute(str long ptr)
+@ stdcall CertFindCRLInStore(long long long long ptr ptr)
 @ stub CertFindCTLInStore
 @ stdcall CertFindCertificateInStore(long long long long ptr ptr)
 @ stdcall CertFindExtension(str long ptr)
