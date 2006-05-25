@@ -553,7 +553,12 @@ BOOL WINAPI CertCompareIntegerBlob(PCRYPT_INTEGER_BLOB pInt1,
     cb1 = CRYPT_significantBytes(pInt1);
     cb2 = CRYPT_significantBytes(pInt2);
     if (cb1 == cb2)
-        ret = !memcmp(pInt1->pbData, pInt1->pbData, cb1);
+    {
+        if (cb1)
+            ret = !memcmp(pInt1->pbData, pInt1->pbData, cb1);
+        else
+            ret = TRUE;
+    }
     else
         ret = FALSE;
     return ret;
@@ -634,32 +639,25 @@ static BOOL compare_cert_by_sha1_hash(PCCERT_CONTEXT pCertContext, DWORD dwType,
 static BOOL compare_cert_by_name(PCCERT_CONTEXT pCertContext, DWORD dwType,
  DWORD dwFlags, const void *pvPara)
 {
-    const CERT_NAME_BLOB *blob = (const CERT_NAME_BLOB *)pvPara, *toCompare;
+    CERT_NAME_BLOB *blob = (CERT_NAME_BLOB *)pvPara, *toCompare;
     BOOL ret;
 
     if (dwType & CERT_INFO_SUBJECT_FLAG)
         toCompare = &pCertContext->pCertInfo->Subject;
     else
         toCompare = &pCertContext->pCertInfo->Issuer;
-    if (toCompare->cbData == blob->cbData)
-        ret = !memcmp(toCompare->pbData, blob->pbData, blob->cbData);
-    else
-        ret = FALSE;
+    ret = CertCompareCertificateName(pCertContext->dwCertEncodingType,
+     toCompare, blob);
     return ret;
 }
 
 static BOOL compare_cert_by_subject_cert(PCCERT_CONTEXT pCertContext,
  DWORD dwType, DWORD dwFlags, const void *pvPara)
 {
-    const CERT_INFO *pCertInfo = (const CERT_INFO *)pvPara;
-    BOOL ret;
+    CERT_INFO *pCertInfo = (CERT_INFO *)pvPara;
 
-    if (pCertInfo->Issuer.cbData == pCertContext->pCertInfo->Subject.cbData)
-        ret = !memcmp(pCertInfo->Issuer.pbData,
-         pCertContext->pCertInfo->Subject.pbData, pCertInfo->Issuer.cbData);
-    else
-        ret = FALSE;
-    return ret;
+    return CertCompareCertificateName(pCertContext->dwCertEncodingType,
+     &pCertInfo->Issuer, &pCertContext->pCertInfo->Subject);
 }
 
 static BOOL compare_cert_by_issuer(PCCERT_CONTEXT pCertContext,
