@@ -333,6 +333,7 @@ static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
 {
     ProtocolStream *This = STREAM_THIS(iface);
     DWORD read = 0, pread = 0;
+    HRESULT hres;
 
     TRACE("(%p)->(%p %ld %p)\n", This, pv, cb, pcbRead);
 
@@ -354,8 +355,13 @@ static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
         return S_OK;
     }
 
-    IInternetProtocol_Read(This->protocol, (PBYTE)pv+read, cb-read, &pread);
+    hres = IInternetProtocol_Read(This->protocol, (PBYTE)pv+read, cb-read, &pread);
     *pcbRead = read + pread;
+
+    if(hres == E_PENDING)
+        return E_PENDING;
+    else if(FAILED(hres))
+        FIXME("Read failed: %08lx\n", hres);
 
     return read || pread ? S_OK : S_FALSE;
 }
