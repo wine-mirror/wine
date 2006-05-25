@@ -168,13 +168,13 @@ done
 
 cp "$datadir/wine.inf" "$CROOT/windows/inf/wine.inf"
 export WINEPREFIX
-"${WINELOADER:-wine}" rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 128 wine.inf
+"${WINELOADER:-$bindir/wine}" rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 128 wine.inf
 
 # Wait for the wineserver to finish
 
 if [ $do_wait = 1 ]
 then
-    "${WINESERVER:-wineserver}" -w
+    "${WINESERVER:-$bindir/wineserver}" -w
 fi
 
 if [ $quiet = 0 ]
