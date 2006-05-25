@@ -64,6 +64,7 @@ struct ProtocolStream {
 
     BYTE buf[1024*8];
     DWORD buf_size;
+    BOOL init_buf;
 };
 
 #define BINDING(x)   ((IBinding*)               &(x)->lpBindingVtbl)
@@ -347,6 +348,7 @@ static ProtocolStream *create_stream(IInternetProtocol *protocol)
     ret->lpStreamVtbl = &ProtocolStreamVtbl;
     ret->ref = 1;
     ret->buf_size = 0;
+    ret->init_buf = FALSE;
 
     IInternetProtocol_AddRef(protocol);
     ret->protocol = protocol;
@@ -359,10 +361,14 @@ static ProtocolStream *create_stream(IInternetProtocol *protocol)
 static void fill_stream_buffer(ProtocolStream *This)
 {
     DWORD read = 0;
+    HRESULT hres;
 
-    IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
-                           sizeof(This->buf)-This->buf_size, &read);
-    This->buf_size += read;
+    hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
+                                  sizeof(This->buf)-This->buf_size, &read);
+    if(SUCCEEDED(hres)) {
+        This->buf_size += read;
+        This->init_buf = TRUE;
+    }
 }
 
 static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
@@ -908,15 +914,26 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
     hres = IInternetProtocol_Start(binding->protocol, url, PROTSINK(binding),
              BINDINF(binding), 0, 0);
 
-    if(SUCCEEDED(hres)) {
-        IInternetProtocol_UnlockRequest(binding->protocol);
-    }else {
+    if(FAILED(hres)) {
         WARN("Start failed: %08lx\n", hres);
+
+        IInternetProtocol_Terminate(binding->protocol, 0);
         IBindStatusCallback_OnStopBinding(binding->callback, S_OK, NULL);
+        IBinding_Release(BINDING(binding));
+
+        return hres;
     }
 
-    IStream_AddRef(STREAM(binding->stream));
-    *ppv = binding->stream;
+    if(binding->stream->init_buf) {
+        IInternetProtocol_UnlockRequest(binding->protocol);
+
+        IStream_AddRef(STREAM(binding->stream));
+        *ppv = binding->stream;
+
+        hres = S_OK;
+    }else {
+        hres = MK_S_ASYNCHRONOUS;
+    }
 
     IBinding_Release(BINDING(binding));
 
