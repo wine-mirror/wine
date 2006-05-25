@@ -195,6 +195,32 @@ HEADER_OrderToIndex(HWND hwnd, WPARAM wParam)
     return infoPtr->order[iorder];
 }
 
+static void
+HEADER_ChangeItemOrder(HEADER_INFO *infoPtr, INT iItem, INT iNewOrder)
+{
+    HEADER_ITEM *lpItem = &infoPtr->items[iItem];
+    INT i, nMin, nMax;
+
+    TRACE("%d: %d->%d\n", iItem, lpItem->iOrder, iNewOrder);
+    if (lpItem->iOrder < iNewOrder)
+    {
+        memmove(&infoPtr->order[lpItem->iOrder],
+               &infoPtr->order[lpItem->iOrder + 1],
+               (iNewOrder - lpItem->iOrder) * sizeof(INT));
+    }
+    if (iNewOrder < lpItem->iOrder)
+    {
+        memmove(&infoPtr->order[iNewOrder + 1],
+                &infoPtr->order[iNewOrder],
+                (lpItem->iOrder - iNewOrder) * sizeof(INT));
+    }
+    infoPtr->order[iNewOrder] = iItem;
+    nMin = min(lpItem->iOrder, iNewOrder);
+    nMax = max(lpItem->iOrder, iNewOrder);
+    for (i = nMin; i <= nMax; i++)
+        infoPtr->items[infoPtr->order[i]].iOrder = i;
+}
+
 /* Note: if iItem is the last item then this function returns infoPtr->uNumItem */
 static INT
 HEADER_NextItem(HWND hwnd, INT iItem)
@@ -1434,30 +1460,9 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     lpItem = &infoPtr->items[nItem];
     HEADER_StoreHDItemInHeader(lpItem, phdi->mask, phdi, bUnicode);
 
+    /* FIXME: check it order is not out of bound */
     if (phdi->mask & HDI_ORDER)
-      {
-        INT i, nMin, nMax;
-        
-        if (lpItem->iOrder < phdi->iOrder)
-        {
-            memmove(&infoPtr->order[lpItem->iOrder],
-                   &infoPtr->order[lpItem->iOrder + 1],
-                   (phdi->iOrder - lpItem->iOrder) * sizeof(INT));
-        }
-        if (phdi->iOrder < lpItem->iOrder)
-        {
-            memmove(&infoPtr->order[phdi->iOrder + 1],
-                    &infoPtr->order[phdi->iOrder],
-                    (lpItem->iOrder - phdi->iOrder) * sizeof(INT));
-        }
-        infoPtr->order[phdi->iOrder] = nItem;
-        nMin = min(lpItem->iOrder, phdi->iOrder);
-        nMax = max(lpItem->iOrder, phdi->iOrder);
-        for (i = nMin; i <= nMax; i++)
-        {
-            infoPtr->items[infoPtr->order[i]].iOrder = infoPtr->order[i];
-        }
-      }
+        HEADER_ChangeItemOrder(infoPtr, nItem, phdi->iOrder);
 
     HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMCHANGEDW, nItem, phdi->mask, &hdNotify);
 
@@ -1667,32 +1672,36 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (infoPtr->bPressed) {
 	if (infoPtr->bDragging)
 	{
+            HEADER_ITEM *lpItem = &infoPtr->items[infoPtr->iMoveItem];
+            INT iNewOrder;
+            
 	    ImageList_DragShowNolock(FALSE);
 	    ImageList_EndDrag();
-	    infoPtr->items[infoPtr->iMoveItem].bDown=FALSE;
-	    /* FIXME: the new order field should be sent, not the old one */
-	    if (!HEADER_SendHeaderNotifyT(hwnd, HDN_ENDDRAG, infoPtr->iMoveItem, HDI_ORDER, NULL))
+            lpItem->bDown=FALSE;
+            
+            if (infoPtr->iHotDivider == -1)
+                iNewOrder = -1;
+            else if (infoPtr->iHotDivider == infoPtr->uNumItem)
+                iNewOrder = infoPtr->uNumItem-1;
+            else
 	    {
-		HEADER_ITEM *lpItem;
-		INT newindex = HEADER_IndexToOrder(hwnd,nItem);
-		INT oldindex = HEADER_IndexToOrder(hwnd,infoPtr->iMoveItem);
+                iNewOrder = HEADER_IndexToOrder(hwnd, infoPtr->iHotDivider);
+                if (iNewOrder > lpItem->iOrder)
+                    iNewOrder--;
+            }
 
-		TRACE("Exchanging [index:order] [%d:%d] [%d:%d]\n",
-		    infoPtr->iMoveItem,oldindex,nItem,newindex);
-        	lpItem= &infoPtr->items[nItem];
-		lpItem->iOrder=oldindex;
-
-        	lpItem= &infoPtr->items[infoPtr->iMoveItem];
-		lpItem->iOrder = newindex;
-
-        	infoPtr->order[oldindex] = nItem;
-        	infoPtr->order[newindex] = infoPtr->iMoveItem;
-
+            /* FIXME: the new order field should be sent, not the old one */
+            if (iNewOrder != -1 &&
+                !HEADER_SendHeaderNotifyT(hwnd, HDN_ENDDRAG, infoPtr->iMoveItem, HDI_ORDER, NULL))
+            {
+                HEADER_ChangeItemOrder(infoPtr, infoPtr->iMoveItem, iNewOrder);
 		infoPtr->bRectsValid = FALSE;
 		InvalidateRect(hwnd, NULL, FALSE);
 	    }
 	    else
 		InvalidateRect(hwnd, &infoPtr->items[infoPtr->iMoveItem].rect, FALSE);
+                
+            HEADER_SetHotDivider(hwnd, FALSE, -1);
 	}
 	else if (!(dwStyle&HDS_DRAGDROP) || !HEADER_IsDragDistance(infoPtr, &pt))
 	{
