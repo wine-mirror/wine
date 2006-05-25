@@ -1031,9 +1031,8 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             {
                 /* it appears that Windows always adds an undocumented 0x8000
                  * flag if the state of a window changes.
-                 * FIXME: real SWP_xxxx name?
                  */
-                swp |= 0x8000;
+                swp |= SWP_STATECHANGED;
             }
         }
 

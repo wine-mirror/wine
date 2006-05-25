@@ -1435,9 +1435,19 @@ static void ok_sequence_(const struct message *expected, const char *context, in
 		     "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
 		     context, expected->message, expected->lParam, actual->lParam);
             }
-	    ok_( file, line) ((expected->flags & defwinproc) == (actual->flags & defwinproc),
-		"%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
-		context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
+	    if ((expected->flags & defwinproc) != (actual->flags & defwinproc) && todo)
+	    {
+		    todo_wine {
+                        failcount ++;
+                        ok_( file, line) (FALSE,
+			    "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
+			    context, expected->message, expected->lParam, actual->lParam);
+		    }
+	    }
+	    else
+	        ok_( file, line) ((expected->flags & defwinproc) == (actual->flags & defwinproc),
+		    "%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
+		    context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
 	    ok_( file, line) ((expected->flags & beginpaint) == (actual->flags & beginpaint),
 		"%s: the msg 0x%04x should %shave been sent by BeginPaint\n",
 		context, expected->message, (expected->flags & beginpaint) ? "" : "NOT ");

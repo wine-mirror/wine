@@ -65,7 +65,7 @@ static void DEFWND_HandleWindowPosChanged( HWND hwnd, const WINDOWPOS *winpos )
     if (!(winpos->flags & SWP_NOCLIENTMOVE))
         SendMessageW( hwnd, WM_MOVE, 0, MAKELONG(rect.left, rect.top));
 
-    if (!(winpos->flags & SWP_NOCLIENTSIZE))
+    if (!(winpos->flags & SWP_NOCLIENTSIZE) || (winpos->flags & SWP_STATECHANGED))
     {
         WPARAM wp = SIZE_RESTORED;
         if (IsZoomed(hwnd)) wp = SIZE_MAXIMIZED;

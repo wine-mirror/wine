@@ -30,6 +30,7 @@
 /* undocumented SWP flags - from SDK 3.1 */
 #define SWP_NOCLIENTSIZE	0x0800
 #define SWP_NOCLIENTMOVE	0x1000
+#define SWP_STATECHANGED        0x8000
 
 extern BOOL WINPOS_RedrawIconTitle( HWND hWnd );
 extern BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow );
