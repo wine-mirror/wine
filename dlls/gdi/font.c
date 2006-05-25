@@ -1847,7 +1847,9 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
         for(i = 0; i < count; i++)
         {
-            if(lpDx)
+            if(lpDx && (flags & ETO_PDY))
+                deltas[i] = lpDx[i*2] + char_extra;
+            else if(lpDx)
                 deltas[i] = lpDx[i] + char_extra;
             else
             {
