@@ -208,7 +208,7 @@ UINT WINAPI MsiOpenDatabaseA(LPCSTR szDBPath, LPCSTR szPersist, MSIHANDLE *phDB)
             goto end;
     }
     else
-        szwPersist = (LPWSTR)(DWORD)szPersist;
+        szwPersist = (LPWSTR)(DWORD_PTR)szPersist;
 
     r = MsiOpenDatabaseW( szwDBPath, szwPersist, phDB );
 

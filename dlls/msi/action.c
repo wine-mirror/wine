@@ -2671,7 +2671,7 @@ static BOOL CALLBACK Typelib_EnumResNameProc( HMODULE hModule, LPCWSTR lpszType,
     sz = strlenW(tl_struct->source)+4;
     sz *= sizeof(WCHAR);
 
-    if ((INT)lpszName == 1)
+    if ((INT_PTR)lpszName == 1)
         tl_struct->path = strdupW(tl_struct->source);
     else
     {
