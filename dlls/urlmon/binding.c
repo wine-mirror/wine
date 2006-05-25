@@ -78,6 +78,7 @@ struct ProtocolStream {
 #define STREAM(x) ((IStream*) &(x)->lpStreamVtbl)
 
 #define WM_MK_ONPROGRESS (WM_USER+100)
+#define WM_MK_CONTINUE   (WM_USER+101)
 
 typedef struct {
     Binding *binding;
@@ -86,6 +87,11 @@ typedef struct {
     ULONG status_code;
     LPWSTR status_text;
 } on_progress_data;
+
+typedef struct {
+    Binding *binding;
+    PROTOCOLDATA *data;
+} switch_data;
 
 static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -102,6 +108,15 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         HeapFree(GetProcessHeap(), 0, data->status_text);
         HeapFree(GetProcessHeap(), 0, data);
 
+        return 0;
+    }
+    case WM_MK_CONTINUE: {
+        switch_data *data = (switch_data*)lParam;
+
+        IInternetProtocol_Continue(data->binding->protocol, data->data);
+
+        IBinding_Release(BINDING(data->binding));
+        HeapFree(GetProcessHeap(), 0, data);
         return 0;
     }
     }
@@ -631,8 +646,19 @@ static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
         PROTOCOLDATA *pProtocolData)
 {
     Binding *This = PROTSINK_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pProtocolData);
-    return E_NOTIMPL;
+    switch_data *data;
+
+    TRACE("(%p)->(%p)\n", This, pProtocolData);
+
+    data = HeapAlloc(GetProcessHeap(), 0, sizeof(switch_data));
+
+    IBinding_AddRef(BINDING(This));
+    data->binding = This;
+    data->data = pProtocolData;
+
+    PostMessageW(This->notif_hwnd, WM_MK_CONTINUE, 0, (LPARAM)data);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink *iface,
