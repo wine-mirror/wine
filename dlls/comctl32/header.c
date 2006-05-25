@@ -32,6 +32,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "windef.h"
@@ -77,7 +78,9 @@ typedef struct
     HCURSOR   hcurDivopen;	/* handle to a cursor (used over dividers) <-||-> */
     BOOL      bCaptured;	/* Is the mouse captured? */
     BOOL      bPressed;		/* Is a header item pressed (down)? */
+    BOOL      bDragging;        /* Are we dragging an item? */
     BOOL      bTracking;	/* Is in tracking mode? */
+    POINT     ptLButtonDown;    /* The point where the left button was pressed */
     INT       iMoveItem;	/* index of tracked item. (Tracking mode) */
     INT       xTrackOffset;	/* distance between the right side of the tracked item and the cursor */
     INT       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */
@@ -512,6 +515,9 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
 
     /* get rect for the bar, adjusted for the border */
     GetClientRect (hwnd, &rect);
+    
+    if (infoPtr->bDragging)
+	ImageList_DragShowNolock(FALSE);
 
     hFont = infoPtr->hFont ? infoPtr->hFont : GetStockObject (SYSTEM_FONT);
     hOldFont = SelectObject (hdc, hFont);
@@ -546,6 +552,9 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
     
     if (infoPtr->iHotDivider != -1)
         HEADER_DrawHotDivider(hwnd, hdc);
+
+    if (infoPtr->bDragging)
+	ImageList_DragShowNolock(TRUE);
     SelectObject (hdc, hOldFont);
 }
 
@@ -1556,6 +1565,16 @@ HEADER_GetFont (HWND hwnd)
 }
 
 
+static BOOL
+HEADER_IsDragDistance(HEADER_INFO *infoPtr, POINT *pt)
+{
+    /* Windows allows for a mouse movement before starting the drag. We use the
+     * SM_CXDOUBLECLICK/SM_CYDOUBLECLICK as that distance.
+     */
+    return (abs(infoPtr->ptLButtonDown.x - pt->x)>GetSystemMetrics(SM_CXDOUBLECLK) ||
+            abs(infoPtr->ptLButtonDown.y - pt->y)>GetSystemMetrics(SM_CYDOUBLECLK));
+}
+
 static LRESULT
 HEADER_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -1594,7 +1613,9 @@ HEADER_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	SetCapture (hwnd);
 	infoPtr->bCaptured = TRUE;
 	infoPtr->bPressed  = TRUE;
+	infoPtr->bDragging = FALSE;
 	infoPtr->iMoveItem = nItem;
+	infoPtr->ptLButtonDown = pt;
 
 	infoPtr->items[nItem].bDown = TRUE;
 
@@ -1644,7 +1665,37 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HEADER_InternalHitTest (hwnd, &pt, &flags, &nItem);
 
     if (infoPtr->bPressed) {
-	if ((nItem == infoPtr->iMoveItem) && (flags == HHT_ONHEADER)) {
+	if (infoPtr->bDragging)
+	{
+	    ImageList_DragShowNolock(FALSE);
+	    ImageList_EndDrag();
+	    infoPtr->items[infoPtr->iMoveItem].bDown=FALSE;
+	    /* FIXME: the new order field should be sent, not the old one */
+	    if (!HEADER_SendHeaderNotifyT(hwnd, HDN_ENDDRAG, infoPtr->iMoveItem, HDI_ORDER, NULL))
+	    {
+		HEADER_ITEM *lpItem;
+		INT newindex = HEADER_IndexToOrder(hwnd,nItem);
+		INT oldindex = HEADER_IndexToOrder(hwnd,infoPtr->iMoveItem);
+
+		TRACE("Exchanging [index:order] [%d:%d] [%d:%d]\n",
+		    infoPtr->iMoveItem,oldindex,nItem,newindex);
+        	lpItem= &infoPtr->items[nItem];
+		lpItem->iOrder=oldindex;
+
+        	lpItem= &infoPtr->items[infoPtr->iMoveItem];
+		lpItem->iOrder = newindex;
+
+        	infoPtr->order[oldindex] = nItem;
+        	infoPtr->order[newindex] = infoPtr->iMoveItem;
+
+		infoPtr->bRectsValid = FALSE;
+		InvalidateRect(hwnd, NULL, FALSE);
+	    }
+	    else
+		InvalidateRect(hwnd, &infoPtr->items[infoPtr->iMoveItem].rect, FALSE);
+	}
+	else if (!(dwStyle&HDS_DRAGDROP) || !HEADER_IsDragDistance(infoPtr, &pt))
+	{
 	    infoPtr->items[infoPtr->iMoveItem].bDown = FALSE;
 	    hdc = GetDC (hwnd);
 	    HEADER_RefreshItem (hwnd, hdc, infoPtr->iMoveItem);
@@ -1652,27 +1703,6 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	    HEADER_SendClickNotify (hwnd, HDN_ITEMCLICKA, infoPtr->iMoveItem);
 	}
-	else if (flags == HHT_ONHEADER)
-	  {
-	    HEADER_ITEM *lpItem;
-	    INT newindex = HEADER_IndexToOrder(hwnd,nItem);
-	    INT oldindex = HEADER_IndexToOrder(hwnd,infoPtr->iMoveItem);
-
-	    TRACE("Exchanging [index:order] [%d:%d] [%d:%d]\n",
-		  infoPtr->iMoveItem,oldindex,nItem,newindex);
-            lpItem= &infoPtr->items[nItem];
-	    lpItem->iOrder=oldindex;
-
-            lpItem= &infoPtr->items[infoPtr->iMoveItem];
-	    lpItem->iOrder = newindex;
-
-            infoPtr->order[oldindex] = nItem;
-            infoPtr->order[newindex] = infoPtr->iMoveItem;
-
-	    infoPtr->bRectsValid = FALSE;
-	    InvalidateRect(hwnd, NULL, FALSE);
-	    /* FIXME: Should some WM_NOTIFY be sent */
-	  }
 
 	TRACE("Released item %d!\n", infoPtr->iMoveItem);
 	infoPtr->bPressed = FALSE;
@@ -1735,7 +1765,6 @@ HEADER_NotifyFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-
 static LRESULT
 HEADER_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -1779,7 +1808,36 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     if (infoPtr->bCaptured) {
-	if (infoPtr->bPressed) {
+        /* check if we should drag the header */
+	if (infoPtr->bPressed && !infoPtr->bDragging && dwStyle&HDS_DRAGDROP
+	    && HEADER_IsDragDistance(infoPtr, &pt))
+	{
+	    if (!HEADER_SendHeaderNotifyT(hwnd, HDN_BEGINDRAG, infoPtr->iMoveItem, 0, NULL))
+	    {
+		HIMAGELIST hDragItem = (HIMAGELIST)HEADER_CreateDragImage(hwnd, infoPtr->iMoveItem);
+		if (hDragItem != NULL)
+		{
+		    HEADER_ITEM *lpItem = &infoPtr->items[infoPtr->iMoveItem];
+		    TRACE("Starting item drag\n");
+		    ImageList_BeginDrag(hDragItem, 0, pt.x - lpItem->rect.left, 0);
+		    ImageList_DragShowNolock(TRUE);
+		    ImageList_Destroy(hDragItem);
+		    infoPtr->bDragging = TRUE;
+		}
+	    }
+	}
+	
+	if (infoPtr->bDragging)
+	{
+	    POINT drag;
+	    drag.x = pt.x;
+	    drag.y = 0;
+	    ClientToScreen(hwnd, &drag);
+	    ImageList_DragMove(drag.x, drag.y);
+	    HEADER_SetHotDivider(hwnd, TRUE, lParam);
+	}
+	
+	if (infoPtr->bPressed && !infoPtr->bDragging) {
             BOOL oldState = infoPtr->items[infoPtr->iMoveItem].bDown;
 	    if ((nItem == infoPtr->iMoveItem) && (flags == HHT_ONHEADER))
 		infoPtr->items[infoPtr->iMoveItem].bDown = TRUE;
@@ -1836,7 +1894,7 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (hotTrackEnabled) {
         TRACKMOUSEEVENT tme;
-        if (oldHotItem != infoPtr->iHotItem) {
+        if (oldHotItem != infoPtr->iHotItem && !infoPtr->bDragging) {
 	    hdc = GetDC (hwnd);
 	    if (oldHotItem != -1) HEADER_RefreshItem (hwnd, hdc, oldHotItem);
 	    if (infoPtr->iHotItem != -1) HEADER_RefreshItem (hwnd, hdc, infoPtr->iHotItem);
