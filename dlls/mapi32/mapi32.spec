@@ -186,6 +186,5 @@
 251 stub GetOutlookVersion@0
 252 stub FixMAPI
 253 stub FixMAPI@0
-# This entry point is sometimes used to detect if the mapi dll came from Outlook
-#254 stub FGetComponentPath
-#255 stub FGetComponentPath@20
+254 stdcall FGetComponentPath(str str ptr long long)
+255 stdcall FGetComponentPath@20(str str ptr long long) FGetComponentPath
