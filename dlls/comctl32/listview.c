@@ -6874,6 +6874,16 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
             himl = LISTVIEW_CreateCheckBoxIL(infoPtr);
         LISTVIEW_SetImageList(infoPtr, LVSIL_STATE, himl);
     }
+    
+    if((infoPtr->dwLvExStyle ^ dwOldStyle) & LVS_EX_HEADERDRAGDROP)
+    {
+        DWORD dwStyle = GetWindowLongW(infoPtr->hwndHeader, GWL_STYLE);
+        if (infoPtr->dwLvExStyle & LVS_EX_HEADERDRAGDROP)
+            dwStyle |= HDS_DRAGDROP;
+        else
+            dwStyle &= ~HDS_DRAGDROP;
+        SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE, dwStyle);
+    }
 
     return dwOldStyle;
 }
@@ -8461,6 +8471,10 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 	    infoPtr->xTrackLine = -1;
 	    break;
 	    
+        case HDN_ENDDRAG:
+            FIXME("Changing column order not implemented\n");
+            return TRUE;
+            
         case HDN_ITEMCHANGINGW:
         case HDN_ITEMCHANGINGA:
             return notify_forward_header(infoPtr, lpnmh);
