@@ -1733,6 +1733,16 @@ HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_P
     }
 
 
+    /* Determine shader mode to use based on GL caps */
+    if (GL_SUPPORT(ARB_SHADING_LANGUAGE_100) && wined3d_settings.glslRequested
+        && (wined3d_settings.vs_mode == VS_HW || wined3d_settings.ps_mode == PS_HW))
+        wined3d_settings.shader_mode = SHADER_GLSL;
+    else if ((GL_SUPPORT(ARB_VERTEX_PROGRAM) && wined3d_settings.vs_mode == VS_HW) ||
+              (GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && wined3d_settings.ps_mode == PS_HW))
+        wined3d_settings.shader_mode = SHADER_ARB;
+    else
+        wined3d_settings.shader_mode = SHADER_SW;
+
     /* Initialize the current view state */
     This->modelview_valid = 1;
     This->proj_valid = 0;
