@@ -2481,8 +2481,38 @@ HRESULT WINAPI IWineD3DSurfaceImpl_Restore(IWineD3DSurface *iface) {
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty, IWineD3DSurface *Source, RECT *rsrc, DWORD trans) {
-    FIXME("This is unimplemented for now(d3d7 merge)\n");
-    return WINED3DERR_INVALIDCALL;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    IWineD3DSurfaceImpl *srcImpl = (IWineD3DSurfaceImpl *) Source;
+    TRACE("(%p)->(%ld, %ld, %p, %p, %08lx\n", iface, dstx, dsty, Source, rsrc, trans);
+
+    /* Special cases for RenderTargets */
+    if( (This->resource.usage & WINED3DUSAGE_RENDERTARGET) ||
+        ( srcImpl && (srcImpl->resource.usage & WINED3DUSAGE_RENDERTARGET) )) {
+
+        RECT SrcRect, DstRect;
+
+        if(rsrc) {
+            SrcRect.left = rsrc->left;
+            SrcRect.top= rsrc->top;
+            SrcRect.bottom = rsrc->bottom;
+            SrcRect.right = rsrc->right;
+        } else {
+            SrcRect.left = 0;
+            SrcRect.top = 0;
+            SrcRect.right = srcImpl->currentDesc.Width;
+            SrcRect.bottom = srcImpl->currentDesc.Height;
+        }
+
+        DstRect.left = dstx;
+        DstRect.top=dsty;
+        DstRect.right = dstx + SrcRect.right - SrcRect.left;
+        DstRect.bottom = dsty + SrcRect.bottom - SrcRect.top;
+
+        if(IWineD3DSurfaceImpl_BltOverride(This, &DstRect, Source, &SrcRect, 0, NULL) == WINED3D_OK) return WINED3D_OK;
+    }
+
+
+    return IWineGDISurfaceImpl_BltFast(iface, dstx, dsty, Source, rsrc, trans);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPixelFormat(IWineD3DSurface *iface, WINED3DFORMAT Format, BYTE *Surface, DWORD Size) {
