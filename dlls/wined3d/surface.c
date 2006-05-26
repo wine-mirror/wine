@@ -746,6 +746,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         if (iface ==  implSwapChain->backBuffer || iface ==  implSwapChain->frontBuffer || iface == myDevice->renderTarget) {
             GLint  prev_store;
             GLint  prev_draw;
+            GLint  prev_depth_test;
             GLint  prev_rasterpos[4];
 
             /* Some drivers(radeon dri, others?) don't like exceptions during
@@ -776,6 +777,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             vcheckGLcall("glIntegerv");
             glPixelZoom(1.0, -1.0);
             vcheckGLcall("glPixelZoom");
+            prev_depth_test = glIsEnabled(GL_DEPTH_TEST);
 
             /* glDrawPixels transforms the raster position as though it was a vertex -
                we want to draw at screen position 0,0 - Set up ortho (rhw) mode as
@@ -796,6 +798,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
             /* And back buffers are not blended */
             glDisable(GL_BLEND);
+            glDisable(GL_DEPTH_TEST);
 
             glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
             vcheckGLcall("glRasterPos2f");
@@ -897,6 +900,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             vcheckGLcall("glDrawBuffer");
             glRasterPos3iv(&prev_rasterpos[0]);
             vcheckGLcall("glRasterPos3iv");
+            if(prev_depth_test) glEnable(GL_DEPTH_TEST);
 
             /* Reset to previous pack row length / blending state */
             glPixelStorei(GL_UNPACK_ROW_LENGTH, skipBytes);
