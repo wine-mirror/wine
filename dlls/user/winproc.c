@@ -760,39 +760,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     *pwparam16 = (WPARAM16)LOWORD(wParam32);
     switch(msg32)
     {
-    case EM_GETSEL:
-    case EM_GETRECT:
-    case EM_SETRECT:
-    case EM_SETRECTNP:
-    case EM_SCROLL:
-    case EM_LINESCROLL:
-    case EM_SCROLLCARET:
-    case EM_GETMODIFY:
-    case EM_SETMODIFY:
-    case EM_GETLINECOUNT:
-    case EM_LINEINDEX:
-    case EM_SETHANDLE:
-    case EM_GETHANDLE:
-    case EM_GETTHUMB:
-    case EM_LINELENGTH:
-    case EM_REPLACESEL:
-    case EM_GETLINE:
-    case EM_LIMITTEXT:
-    case EM_CANUNDO:
-    case EM_UNDO:
-    case EM_FMTLINES:
-    case EM_LINEFROMCHAR:
-    case EM_SETTABSTOPS:
-    case EM_SETPASSWORDCHAR:
-    case EM_EMPTYUNDOBUFFER:
-    case EM_GETFIRSTVISIBLELINE:
-    case EM_SETREADONLY:
-    case EM_SETWORDBREAKPROC:
-    case EM_GETWORDBREAKPROC:
-    case EM_GETPASSWORDCHAR:
-        *pmsg16 = (UINT16)msg32 + (EM_GETSEL16 - EM_GETSEL);
-        return 0;
-
     case LB_CARETOFF:
     case LB_CARETON:
     case LB_DELETESTRING:
@@ -918,12 +885,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         *plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
         *pmsg16 = CB_GETLBTEXT16;
         return 1;
-
-    case EM_SETSEL:
-        *pwparam16 = 0;
-        *plparam = MAKELONG( (INT16)(INT)wParam32, (INT16)*plparam );
-        *pmsg16 = EM_SETSEL16;
-        return 0;
 
     case WM_ACTIVATE:
     case WM_CHARTOITEM:
@@ -2245,6 +2206,41 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
     case BM_SETSTATE:
     case BM_SETSTYLE:
         ret = callback( HWND_16(hwnd), msg + BM_GETCHECK16 - BM_GETCHECK, wParam, lParam, result, arg );
+        break;
+    case EM_GETSEL:
+    case EM_GETRECT:
+    case EM_SETRECT:
+    case EM_SETRECTNP:
+    case EM_SCROLL:
+    case EM_LINESCROLL:
+    case EM_SCROLLCARET:
+    case EM_GETMODIFY:
+    case EM_SETMODIFY:
+    case EM_GETLINECOUNT:
+    case EM_LINEINDEX:
+    case EM_SETHANDLE:
+    case EM_GETHANDLE:
+    case EM_GETTHUMB:
+    case EM_LINELENGTH:
+    case EM_REPLACESEL:
+    case EM_GETLINE:
+    case EM_LIMITTEXT:
+    case EM_CANUNDO:
+    case EM_UNDO:
+    case EM_FMTLINES:
+    case EM_LINEFROMCHAR:
+    case EM_SETTABSTOPS:
+    case EM_SETPASSWORDCHAR:
+    case EM_EMPTYUNDOBUFFER:
+    case EM_GETFIRSTVISIBLELINE:
+    case EM_SETREADONLY:
+    case EM_SETWORDBREAKPROC:
+    case EM_GETWORDBREAKPROC:
+    case EM_GETPASSWORDCHAR:
+        ret = callback( HWND_16(hwnd), msg + EM_GETSEL16 - EM_GETSEL, wParam, lParam, result, arg );
+        break;
+    case EM_SETSEL:
+        ret = callback( HWND_16(hwnd), EM_SETSEL16, 0, MAKELPARAM( wParam, lParam ), result, arg );
         break;
     default:
         {
