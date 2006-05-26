@@ -760,24 +760,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     *pwparam16 = (WPARAM16)LOWORD(wParam32);
     switch(msg32)
     {
-    case SBM_SETRANGE:
-        *pmsg16 = SBM_SETRANGE16;
-        *plparam = MAKELPARAM(wParam32, *plparam);
-        *pwparam16 = 0;
-        return 0;
-
-    case SBM_GETRANGE:
-        *pmsg16 = SBM_GETRANGE16;
-        return 1;
-
-    case BM_GETCHECK:
-    case BM_SETCHECK:
-    case BM_GETSTATE:
-    case BM_SETSTATE:
-    case BM_SETSTYLE:
-        *pmsg16 = (UINT16)msg32 + (BM_GETCHECK16 - BM_GETCHECK);
-        return 0;
-
     case EM_GETSEL:
     case EM_GETRECT:
     case EM_SETRECT:
@@ -1024,11 +1006,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 {
     switch(msg)
     {
-    case SBM_GETRANGE:
-        *(LPINT)wParam = LOWORD(*result);
-        *(LPINT)lParam = HIWORD(*result);
-        break;
-
     case LB_ADDFILE:
     case LB_ADDSTRING:
     case LB_DIR:
@@ -2254,6 +2231,21 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
         lParam = convert_handle_32_to_16(lParam, GMEM_DDESHARE);
         ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
         break; /* FIXME don't know how to free allocated memory (handle) !! */
+    case SBM_SETRANGE:
+        ret = callback( HWND_16(hwnd), SBM_SETRANGE16, 0, MAKELPARAM(wParam, lParam), result, arg );
+        break;
+    case SBM_GETRANGE:
+        ret = callback( HWND_16(hwnd), SBM_GETRANGE16, wParam, lParam, result, arg );
+        *(LPINT)wParam = LOWORD(*result);
+        *(LPINT)lParam = HIWORD(*result);
+        break;
+    case BM_GETCHECK:
+    case BM_SETCHECK:
+    case BM_GETSTATE:
+    case BM_SETSTATE:
+    case BM_SETSTYLE:
+        ret = callback( HWND_16(hwnd), msg + BM_GETCHECK16 - BM_GETCHECK, wParam, lParam, result, arg );
+        break;
     default:
         {
             UINT16 msg16;
