@@ -108,8 +108,6 @@ int WINAPI NdrFullPointerQueryPointer(PFULL_PTR_XLAT_TABLES pXlatTables,
     for (i = 0; i < sizeof(pPointer); i++)
         Hash = (Hash * 3) ^ ((unsigned char *)&pPointer)[i];
 
-    TRACE("pXlatTables->PointerToRefId.XlatTable = %p\n", pXlatTables->PointerToRefId.XlatTable);
-    TRACE("Hash = 0x%lx, pXlatTables->PointerToRefId.HashMask = 0x%lx\n", Hash, pXlatTables->PointerToRefId.HashMask);
     XlatTableEntry = pXlatTables->PointerToRefId.XlatTable[Hash & pXlatTables->PointerToRefId.HashMask];
     for (; XlatTableEntry; XlatTableEntry = XlatTableEntry->Next)
         if (pPointer == XlatTableEntry->Pointer)
@@ -128,7 +126,13 @@ int WINAPI NdrFullPointerQueryPointer(PFULL_PTR_XLAT_TABLES pXlatTables,
     XlatTableEntry->State = QueryType;
     pXlatTables->PointerToRefId.XlatTable[Hash & pXlatTables->PointerToRefId.HashMask] = XlatTableEntry;
 
-    /* FIXME: insert pointer into mapping table */
+    /* insert pointer into mapping table */
+    expand_pointer_table_if_necessary(pXlatTables, XlatTableEntry->RefId);
+    if (pXlatTables->RefIdToPointer.NumberOfEntries > XlatTableEntry->RefId)
+    {
+        pXlatTables->RefIdToPointer.XlatTable[XlatTableEntry->RefId] = pPointer;
+        pXlatTables->RefIdToPointer.StateTable[XlatTableEntry->RefId] = QueryType;
+    }
 
     return 0;
 }
@@ -141,14 +145,35 @@ int WINAPI NdrFullPointerQueryRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
 
     expand_pointer_table_if_necessary(pXlatTables, RefId);
 
-    *ppPointer = pXlatTables->RefIdToPointer.XlatTable[RefId];
+    if (pXlatTables->RefIdToPointer.NumberOfEntries > RefId)
+        *ppPointer = pXlatTables->RefIdToPointer.XlatTable[RefId];
     return 0;
 }
 
 void WINAPI NdrFullPointerInsertRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
                                       unsigned long RefId, void *pPointer)
 {
-    FIXME("(%p, 0x%lx, %p)\n", pXlatTables, RefId, pPointer);
+    unsigned long Hash = 0;
+    int i;
+    PFULL_PTR_TO_REFID_ELEMENT XlatTableEntry;
+
+    TRACE("(%p, 0x%lx, %p)\n", pXlatTables, RefId, pPointer);
+
+    /* simple hashing algorithm, don't know whether it matches native */
+    for (i = 0; i < sizeof(pPointer); i++)
+        Hash = (Hash * 3) ^ ((unsigned char *)&pPointer)[i];
+
+    XlatTableEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(*XlatTableEntry));
+    XlatTableEntry->Next = pXlatTables->PointerToRefId.XlatTable[Hash & pXlatTables->PointerToRefId.HashMask];
+    XlatTableEntry->Pointer = pPointer;
+    XlatTableEntry->RefId = RefId;
+    XlatTableEntry->State = 0;
+    pXlatTables->PointerToRefId.XlatTable[Hash & pXlatTables->PointerToRefId.HashMask] = XlatTableEntry;
+
+    /* insert pointer into mapping table */
+    expand_pointer_table_if_necessary(pXlatTables, RefId);
+    if (pXlatTables->RefIdToPointer.NumberOfEntries > RefId)
+        pXlatTables->RefIdToPointer.XlatTable[XlatTableEntry->RefId] = pPointer;
 }
 
 int WINAPI NdrFullPointerFree(PFULL_PTR_XLAT_TABLES pXlatTables, void *Pointer)
