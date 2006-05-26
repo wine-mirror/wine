@@ -1073,11 +1073,71 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
             }
         }
         return status;
+    case ThreadDescriptorTableEntry:
+        {
+#ifdef __i386__
+            THREAD_DESCRIPTOR_INFORMATION*      tdi = data;
+            if (length < sizeof(*tdi))
+                status = STATUS_INFO_LENGTH_MISMATCH;
+            else if (!(tdi->Selector & 4))  /* GDT selector */
+            {
+                unsigned sel = tdi->Selector & ~3;  /* ignore RPL */
+                status = STATUS_SUCCESS;
+                if (!sel)  /* null selector */
+                    memset( &tdi->Entry, 0, sizeof(tdi->Entry) );
+                else
+                {
+                    tdi->Entry.BaseLow                   = 0;
+                    tdi->Entry.HighWord.Bits.BaseMid     = 0;
+                    tdi->Entry.HighWord.Bits.BaseHi      = 0;
+                    tdi->Entry.LimitLow                  = 0xffff;
+                    tdi->Entry.HighWord.Bits.LimitHi     = 0xf;
+                    tdi->Entry.HighWord.Bits.Dpl         = 3;
+                    tdi->Entry.HighWord.Bits.Sys         = 0;
+                    tdi->Entry.HighWord.Bits.Pres        = 1;
+                    tdi->Entry.HighWord.Bits.Granularity = 1;
+                    tdi->Entry.HighWord.Bits.Default_Big = 1;
+                    tdi->Entry.HighWord.Bits.Type        = 0x12;
+                    /* it has to be one of the system GDT selectors */
+                    if (sel != (wine_get_ds() & ~3) && sel != (wine_get_ss() & ~3))
+                    {
+                        if (sel == (wine_get_cs() & ~3))
+                            tdi->Entry.HighWord.Bits.Type |= 8;  /* code segment */
+                        else status = STATUS_ACCESS_DENIED;
+                    }
+                }
+            }
+            else
+            {
+                SERVER_START_REQ( get_selector_entry )
+                {
+                    req->handle = handle;
+                    req->entry = tdi->Selector >> 3;
+                    status = wine_server_call( req );
+                    if (!status)
+                    {
+                        if (!(reply->flags & WINE_LDT_FLAGS_ALLOCATED))
+                            status = STATUS_INVALID_LDT_OFFSET;
+                        else
+                        {
+                            wine_ldt_set_base ( &tdi->Entry, (void *)reply->base );
+                            wine_ldt_set_limit( &tdi->Entry, reply->limit );
+                            wine_ldt_set_flags( &tdi->Entry, reply->flags );
+                        }
+                    }
+                }
+                SERVER_END_REQ;
+            }
+#else
+            status = STATUS_NOT_IMPLEMENTED;
+#endif
+            if (status == STATUS_SUCCESS && ret_len) *ret_len = sizeof(*tdi);
+            return status;
+        }
     case ThreadPriority:
     case ThreadBasePriority:
     case ThreadAffinityMask:
     case ThreadImpersonationToken:
-    case ThreadDescriptorTableEntry:
     case ThreadEnableAlignmentFaultFixup:
     case ThreadEventPair_Reusable:
     case ThreadQuerySetWin32StartAddress:

@@ -573,67 +573,21 @@ __ASM_GLOBAL_FUNC( UnMapSLFixArray, "ret $8" );
 /***********************************************************************
  *           GetThreadSelectorEntry   (KERNEL32.@)
  */
-BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldtent)
+BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldtent )
 {
-#ifdef __i386__
-    BOOL ret;
+    THREAD_DESCRIPTOR_INFORMATION       tdi;
+    NTSTATUS                            status;
 
-    if (!(sel & 4))  /* GDT selector */
+    tdi.Selector = sel;
+    status = NtQueryInformationThread( hthread, ThreadDescriptorTableEntry,
+                                       &tdi, sizeof(tdi), NULL);
+    if (status)
     {
-        sel &= ~3;  /* ignore RPL */
-        if (!sel)  /* null selector */
-        {
-            memset( ldtent, 0, sizeof(*ldtent) );
-            return TRUE;
-        }
-        ldtent->BaseLow                   = 0;
-        ldtent->HighWord.Bits.BaseMid     = 0;
-        ldtent->HighWord.Bits.BaseHi      = 0;
-        ldtent->LimitLow                  = 0xffff;
-        ldtent->HighWord.Bits.LimitHi     = 0xf;
-        ldtent->HighWord.Bits.Dpl         = 3;
-        ldtent->HighWord.Bits.Sys         = 0;
-        ldtent->HighWord.Bits.Pres        = 1;
-        ldtent->HighWord.Bits.Granularity = 1;
-        ldtent->HighWord.Bits.Default_Big = 1;
-        ldtent->HighWord.Bits.Type        = 0x12;
-        /* it has to be one of the system GDT selectors */
-        if (sel == (wine_get_ds() & ~3)) return TRUE;
-        if (sel == (wine_get_ss() & ~3)) return TRUE;
-        if (sel == (wine_get_cs() & ~3))
-        {
-            ldtent->HighWord.Bits.Type |= 8;  /* code segment */
-            return TRUE;
-        }
-        SetLastError( ERROR_NOACCESS );
+        SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
     }
-
-    SERVER_START_REQ( get_selector_entry )
-    {
-        req->handle = hthread;
-        req->entry = sel >> __AHSHIFT;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (!(reply->flags & WINE_LDT_FLAGS_ALLOCATED))
-            {
-                SetLastError( ERROR_MR_MID_NOT_FOUND );  /* sic */
-                ret = FALSE;
-            }
-            else
-            {
-                wine_ldt_set_base( ldtent, (void *)reply->base );
-                wine_ldt_set_limit( ldtent, reply->limit );
-                wine_ldt_set_flags( ldtent, reply->flags );
-            }
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
-#else
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
-#endif
+    *ldtent = tdi.Entry;
+    return TRUE;
 }
 
 
