@@ -746,6 +746,17 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
     GLX_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
+    /* Determine shader mode to use based on GL caps */
+    if (gl_info->supported[ARB_SHADING_LANGUAGE_100] && wined3d_settings.glslRequested
+        && (wined3d_settings.vs_mode == VS_HW || wined3d_settings.ps_mode == PS_HW))
+        wined3d_settings.shader_mode = SHADER_GLSL;
+    else if ((gl_info->supported[ARB_VERTEX_PROGRAM] && wined3d_settings.vs_mode == VS_HW) ||
+              (gl_info->supported[ARB_FRAGMENT_PROGRAM] && wined3d_settings.ps_mode == PS_HW))
+        wined3d_settings.shader_mode = SHADER_ARB;
+    else
+        wined3d_settings.shader_mode = SHADER_SW;
+
+
     /* If we created a dummy context, throw it away */
     if (NULL != fake_ctx) WineD3D_ReleaseFakeGLContext(fake_ctx);
 
