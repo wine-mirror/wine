@@ -30,7 +30,7 @@ extern "C" {
 
 #include <basetsd.h>
 
-/* stupid #if can't handle casts... this __stupidity 
+/* stupid #if can't handle casts... this __stupidity
    is just a workaround for that limitation */
 
 #define __NDR_CHAR_REP_MASK  0x000fL
@@ -451,67 +451,67 @@ typedef struct _SCONTEXT_QUEUE {
 /* Context Handles */
 
 RPCRTAPI RPC_BINDING_HANDLE RPC_ENTRY
-  NDRCContextBinding( IN NDR_CCONTEXT CContext );
+  NDRCContextBinding( NDR_CCONTEXT CContext );
 
 RPCRTAPI void RPC_ENTRY
-  NDRCContextMarshall( IN NDR_CCONTEXT CContext, OUT void *pBuff );
+  NDRCContextMarshall( NDR_CCONTEXT CContext, void *pBuff );
 
 RPCRTAPI void RPC_ENTRY
-  NDRCContextUnmarshall( OUT NDR_CCONTEXT *pCContext, IN RPC_BINDING_HANDLE hBinding,
-                         IN void *pBuff, IN unsigned long DataRepresentation );
+  NDRCContextUnmarshall( NDR_CCONTEXT *pCContext, RPC_BINDING_HANDLE hBinding,
+                         void *pBuff, unsigned long DataRepresentation );
 
 RPCRTAPI void RPC_ENTRY
-  NDRSContextMarshall( IN NDR_SCONTEXT CContext, OUT void *pBuff, IN NDR_RUNDOWN userRunDownIn );
+  NDRSContextMarshall( NDR_SCONTEXT CContext, void *pBuff, NDR_RUNDOWN userRunDownIn );
 
 RPCRTAPI NDR_SCONTEXT RPC_ENTRY
-  NDRSContextUnmarshall( IN void *pBuff, IN unsigned long DataRepresentation );
+  NDRSContextUnmarshall( void *pBuff, unsigned long DataRepresentation );
 
 RPCRTAPI void RPC_ENTRY
-  NDRSContextMarshallEx( IN RPC_BINDING_HANDLE BindingHandle, IN NDR_SCONTEXT CContext, 
-                         OUT void *pBuff, IN NDR_RUNDOWN userRunDownIn );
+  NDRSContextMarshallEx( RPC_BINDING_HANDLE BindingHandle, NDR_SCONTEXT CContext,
+                         void *pBuff, NDR_RUNDOWN userRunDownIn );
 
 RPCRTAPI void RPC_ENTRY
-  NDRSContextMarshall2( IN RPC_BINDING_HANDLE BindingHandle, IN NDR_SCONTEXT CContext,
-                        OUT void *pBuff, IN NDR_RUNDOWN userRunDownIn, IN void * CtxGuard,
-                        IN unsigned long Flags );
+  NDRSContextMarshall2( RPC_BINDING_HANDLE BindingHandle, NDR_SCONTEXT CContext,
+                        void *pBuff, NDR_RUNDOWN userRunDownIn, void * CtxGuard,
+                        unsigned long Flags );
 
 RPCRTAPI NDR_SCONTEXT RPC_ENTRY
-  NDRSContextUnmarshallEx( IN RPC_BINDING_HANDLE BindingHandle, IN void *pBuff, 
-                           IN unsigned long DataRepresentation );
+  NDRSContextUnmarshallEx( RPC_BINDING_HANDLE BindingHandle, void *pBuff,
+                           unsigned long DataRepresentation );
 
 RPCRTAPI NDR_SCONTEXT RPC_ENTRY
-  NDRSContextUnmarshall2( IN RPC_BINDING_HANDLE BindingHandle, IN void *pBuff,
-                          IN unsigned long DataRepresentation, IN void *CtxGuard,
-                          IN unsigned long Flags );
+  NDRSContextUnmarshall2( RPC_BINDING_HANDLE BindingHandle, void *pBuff,
+                          unsigned long DataRepresentation, void *CtxGuard,
+                          unsigned long Flags );
 
 RPCRTAPI void RPC_ENTRY
   NdrClientContextMarshall ( PMIDL_STUB_MESSAGE pStubMsg, NDR_CCONTEXT ContextHandle, int fCheck );
 
 RPCRTAPI void RPC_ENTRY
-  NdrClientContextUnmarshall( IN PMIDL_STUB_MESSAGE pStubMsg, OUT NDR_CCONTEXT* pContextHandle,
-                              IN RPC_BINDING_HANDLE BindHandle );
+  NdrClientContextUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, NDR_CCONTEXT* pContextHandle,
+                              RPC_BINDING_HANDLE BindHandle );
 
 RPCRTAPI void RPC_ENTRY
   NdrServerContextMarshall ( PMIDL_STUB_MESSAGE pStubMsg, NDR_SCONTEXT ContextHandle, NDR_RUNDOWN RundownRoutine );
 
 RPCRTAPI NDR_SCONTEXT RPC_ENTRY
-  NdrServerContextUnmarshall( IN PMIDL_STUB_MESSAGE pStubMsg );
+  NdrServerContextUnmarshall( PMIDL_STUB_MESSAGE pStubMsg );
 
 RPCRTAPI void RPC_ENTRY
   NdrContextHandleSize( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat );
 
 RPCRTAPI NDR_SCONTEXT RPC_ENTRY
-  NdrContextHandleInitialize( IN PMIDL_STUB_MESSAGE pStubMsg, IN PFORMAT_STRING pFormat );
+  NdrContextHandleInitialize( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat );
 
 RPCRTAPI void RPC_ENTRY
   NdrServerContextNewMarshall( PMIDL_STUB_MESSAGE pStubMsg, NDR_SCONTEXT ContextHandle,
                                NDR_RUNDOWN RundownRoutine, PFORMAT_STRING pFormat );
 
 RPCRTAPI NDR_SCONTEXT RPC_ENTRY
-  NdrServerContextNewUnmarshall( IN PMIDL_STUB_MESSAGE pStubMsg, IN PFORMAT_STRING pFormat );
+  NdrServerContextNewUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat );
 
 RPCRTAPI void RPC_ENTRY
-  RpcSsDestroyClientContext( IN void **ContextHandle );
+  RpcSsDestroyClientContext( void **ContextHandle );
 
 RPCRTAPI void RPC_ENTRY
   NdrSimpleTypeMarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar );
@@ -600,10 +600,10 @@ RPCRTAPI void RPC_ENTRY
   NdrOleFree( void* NodeToFree );
 
 RPCRTAPI void RPC_ENTRY
-  NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg, 
+  NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg,
                           PMIDL_STUB_DESC pStubDesc, unsigned int ProcNum );
 RPCRTAPI unsigned char* RPC_ENTRY
-  NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_MESSAGE pStubMsg, PMIDL_STUB_DESC pStubDesc );  
+  NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_MESSAGE pStubMsg, PMIDL_STUB_DESC pStubDesc );
 RPCRTAPI unsigned char* RPC_ENTRY
   NdrGetBuffer( MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle );
 RPCRTAPI void RPC_ENTRY
@@ -638,13 +638,13 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI void RPC_ENTRY
   NdrRpcSmSetClientToOsf( PMIDL_STUB_MESSAGE pMessage );
 RPCRTAPI void * RPC_ENTRY
-  NdrRpcSmClientAllocate( IN size_t Size );
+  NdrRpcSmClientAllocate( size_t Size );
 RPCRTAPI void RPC_ENTRY
-  NdrRpcSmClientFree( IN void *NodeToFree );
+  NdrRpcSmClientFree( void *NodeToFree );
 RPCRTAPI void * RPC_ENTRY
-  NdrRpcSsDefaultAllocate( IN size_t Size );
+  NdrRpcSsDefaultAllocate( size_t Size );
 RPCRTAPI void RPC_ENTRY
-  NdrRpcSsDefaultFree( IN void *NodeToFree );
+  NdrRpcSsDefaultFree( void *NodeToFree );
 
 #ifdef __cplusplus
 }
