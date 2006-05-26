@@ -151,7 +151,11 @@ int WINAPI NdrFullPointerQueryRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
     {
         *ppPointer = pXlatTables->RefIdToPointer.XlatTable[RefId];
         if (QueryType)
-            return pXlatTables->RefIdToPointer.StateTable[RefId];
+        {
+            int ret = pXlatTables->RefIdToPointer.StateTable[RefId];
+            pXlatTables->RefIdToPointer.StateTable[RefId] = QueryType;
+            return ret;
+        }
         else
             return 0;
     }
@@ -187,7 +191,37 @@ void WINAPI NdrFullPointerInsertRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
 
 int WINAPI NdrFullPointerFree(PFULL_PTR_XLAT_TABLES pXlatTables, void *Pointer)
 {
-    FIXME("(%p, %p)\n", pXlatTables, Pointer);
+    unsigned long Hash = 0;
+    int i;
+    PFULL_PTR_TO_REFID_ELEMENT XlatTableEntry;
+    unsigned long RefId = 0;
 
-    return 10;
+    TRACE("(%p, %p)\n", pXlatTables, Pointer);
+
+    if (!Pointer)
+        return 1;
+
+    /* simple hashing algorithm, don't know whether it matches native */
+    for (i = 0; i < sizeof(Pointer); i++)
+        Hash = (Hash * 3) ^ ((unsigned char *)&Pointer)[i];
+
+    XlatTableEntry = pXlatTables->PointerToRefId.XlatTable[Hash & pXlatTables->PointerToRefId.HashMask];
+    for (; XlatTableEntry; XlatTableEntry = XlatTableEntry->Next)
+        if (Pointer == XlatTableEntry->Pointer)
+        {
+            XlatTableEntry->State = 0x20;
+            RefId = XlatTableEntry->RefId;
+            break;
+        }
+
+    if (!XlatTableEntry)
+        return 0;
+
+    if (pXlatTables->RefIdToPointer.NumberOfEntries > RefId)
+    {
+        pXlatTables->RefIdToPointer.StateTable[RefId] = 0x20;
+        return 1;
+    }
+
+    return 0;
 }
