@@ -760,132 +760,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     *pwparam16 = (WPARAM16)LOWORD(wParam32);
     switch(msg32)
     {
-    case LB_CARETOFF:
-    case LB_CARETON:
-    case LB_DELETESTRING:
-    case LB_GETANCHORINDEX:
-    case LB_GETCARETINDEX:
-    case LB_GETCOUNT:
-    case LB_GETCURSEL:
-    case LB_GETHORIZONTALEXTENT:
-    case LB_GETITEMDATA:
-    case LB_GETITEMHEIGHT:
-    case LB_GETSEL:
-    case LB_GETSELCOUNT:
-    case LB_GETTEXTLEN:
-    case LB_GETTOPINDEX:
-    case LB_RESETCONTENT:
-    case LB_SELITEMRANGE:
-    case LB_SELITEMRANGEEX:
-    case LB_SETANCHORINDEX:
-    case LB_SETCARETINDEX:
-    case LB_SETCOLUMNWIDTH:
-    case LB_SETCURSEL:
-    case LB_SETHORIZONTALEXTENT:
-    case LB_SETITEMDATA:
-    case LB_SETITEMHEIGHT:
-    case LB_SETSEL:
-    case LB_SETTOPINDEX:
-        *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING);
-        return 0;
-    case CB_DELETESTRING:
-    case CB_GETCOUNT:
-    case CB_GETLBTEXTLEN:
-    case CB_LIMITTEXT:
-    case CB_RESETCONTENT:
-    case CB_SETEDITSEL:
-    case CB_GETCURSEL:
-    case CB_SETCURSEL:
-    case CB_SHOWDROPDOWN:
-    case CB_SETITEMDATA:
-    case CB_SETITEMHEIGHT:
-    case CB_GETITEMHEIGHT:
-    case CB_SETEXTENDEDUI:
-    case CB_GETEXTENDEDUI:
-    case CB_GETDROPPEDSTATE:
-        *pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL);
-        return 0;
-    case CB_GETEDITSEL:
-        *pmsg16 = CB_GETEDITSEL16;
-        return 1;
-
-    case LB_ADDSTRING:
-    case LB_FINDSTRING:
-    case LB_FINDSTRINGEXACT:
-    case LB_INSERTSTRING:
-    case LB_SELECTSTRING:
-    case LB_DIR:
-    case LB_ADDFILE:
-        *plparam = (LPARAM)MapLS( (LPSTR)*plparam );
-        *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING);
-        return 1;
-
-    case CB_ADDSTRING:
-    case CB_FINDSTRING:
-    case CB_FINDSTRINGEXACT:
-    case CB_INSERTSTRING:
-    case CB_SELECTSTRING:
-    case CB_DIR:
-        *plparam = (LPARAM)MapLS( (LPSTR)*plparam );
-        *pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL);
-        return 1;
-
-    case LB_GETITEMRECT:
-        {
-            RECT16 *rect = HeapAlloc( GetProcessHeap(), 0, sizeof(RECT16) + sizeof(LPARAM) );
-            if (!rect) return -1;
-            *(LPARAM *)(rect + 1) = *plparam;  /* Store the previous lParam */
-            *plparam = MapLS( rect );
-        }
-        *pmsg16 = LB_GETITEMRECT16;
-        return 1;
-    case LB_GETSELITEMS:
-        {
-            LPARAM *items; /* old LPARAM first, then *pwparam16 x INT16 entries */
-
-            *pwparam16 = (WPARAM16)min( wParam32, 0x7f80 ); /* Must be < 64K */
-            if (!(items = HeapAlloc( GetProcessHeap(), 0,
-                                     *pwparam16 * sizeof(INT16) + sizeof(LPARAM)))) return -1;
-            *items++ = *plparam;  /* Store the previous lParam */
-            *plparam = MapLS( items );
-        }
-        *pmsg16 = LB_GETSELITEMS16;
-        return 1;
-    case LB_SETTABSTOPS:
-        if (wParam32)
-        {
-            INT i;
-            LPINT16 stops;
-            *pwparam16 = (WPARAM16)min( wParam32, 0x7f80 ); /* Must be < 64K */
-            if (!(stops = HeapAlloc( GetProcessHeap(), 0,
-                                     *pwparam16 * sizeof(INT16) + sizeof(LPARAM)))) return -1;
-            for (i = 0; i < *pwparam16; i++) stops[i] = *((LPINT)*plparam+i);
-            *plparam = MapLS( stops );
-            return 1;
-        }
-        *pmsg16 = LB_SETTABSTOPS16;
-        return 0;
-
-    case CB_GETDROPPEDCONTROLRECT:
-        {
-            RECT16 *rect = HeapAlloc( GetProcessHeap(), 0, sizeof(RECT16) + sizeof(LPARAM) );
-            if (!rect) return -1;
-            *(LPARAM *)(rect + 1) = *plparam;  /* Store the previous lParam */
-            *plparam = (LPARAM)MapLS(rect);
-        }
-        *pmsg16 = CB_GETDROPPEDCONTROLRECT16;
-        return 1;
-
-    case LB_GETTEXT:
-        *plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
-        *pmsg16 = LB_GETTEXT16;
-        return 1;
-
-    case CB_GETLBTEXT:
-        *plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
-        *pmsg16 = CB_GETLBTEXT16;
-        return 1;
-
     case WM_ACTIVATE:
     case WM_CHARTOITEM:
     case WM_COMMAND:
@@ -953,76 +827,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         return -1;
     default:  /* No translation needed */
         return 0;
-    }
-}
-
-
-/**********************************************************************
- *	     WINPROC_UnmapMsg32ATo16
- *
- * Unmap a message that was mapped from 32-bit Ansi to 16-bit.
- */
-static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                                     WPARAM16 wParam16, LPARAM lParam16, LRESULT *result )
-{
-    switch(msg)
-    {
-    case LB_ADDFILE:
-    case LB_ADDSTRING:
-    case LB_DIR:
-    case LB_FINDSTRING:
-    case LB_FINDSTRINGEXACT:
-    case LB_INSERTSTRING:
-    case LB_SELECTSTRING:
-    case LB_GETTEXT:
-    case CB_ADDSTRING:
-    case CB_FINDSTRING:
-    case CB_FINDSTRINGEXACT:
-    case CB_INSERTSTRING:
-    case CB_SELECTSTRING:
-    case CB_DIR:
-    case CB_GETLBTEXT:
-        UnMapLS( (SEGPTR)lParam16 );
-        break;
-    case LB_SETTABSTOPS:
-        {
-            void *ptr = MapSL( lParam16 );
-            UnMapLS( lParam16 );
-            HeapFree( GetProcessHeap(), 0, ptr );
-        }
-        break;
-    case CB_GETDROPPEDCONTROLRECT:
-    case LB_GETITEMRECT:
-        {
-            RECT *r32;
-            RECT16 *rect = MapSL(lParam16);
-            UnMapLS( lParam16 );
-            lParam16 = *(LPARAM *)(rect + 1);
-            r32 = (RECT *)lParam16;
-            r32->left   = rect->left;
-            r32->top    = rect->top;
-            r32->right  = rect->right;
-            r32->bottom = rect->bottom;
-            HeapFree( GetProcessHeap(), 0, rect );
-        }
-        break;
-    case LB_GETSELITEMS:
-        {
-            INT i;
-            LPINT16 items = MapSL(lParam16);
-            UnMapLS( lParam16 );
-            lParam16 = *((LPARAM *)items - 1);
-            for (i = 0; i < wParam16; i++) *((LPINT)lParam16 + i) = items[i];
-            HeapFree( GetProcessHeap(), 0, (LPARAM *)items - 1 );
-        }
-        break;
-
-    case CB_GETEDITSEL:
-        if( wParam )
-            *((PUINT)(wParam)) = LOWORD(*result);
-        if( lParam )
-            *((PUINT)(lParam)) = HIWORD(*result);  /* FIXME: substract 1? */
-        break;
     }
 }
 
@@ -2242,6 +2046,124 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
     case EM_SETSEL:
         ret = callback( HWND_16(hwnd), EM_SETSEL16, 0, MAKELPARAM( wParam, lParam ), result, arg );
         break;
+    case LB_CARETOFF:
+    case LB_CARETON:
+    case LB_DELETESTRING:
+    case LB_GETANCHORINDEX:
+    case LB_GETCARETINDEX:
+    case LB_GETCOUNT:
+    case LB_GETCURSEL:
+    case LB_GETHORIZONTALEXTENT:
+    case LB_GETITEMDATA:
+    case LB_GETITEMHEIGHT:
+    case LB_GETSEL:
+    case LB_GETSELCOUNT:
+    case LB_GETTEXTLEN:
+    case LB_GETTOPINDEX:
+    case LB_RESETCONTENT:
+    case LB_SELITEMRANGE:
+    case LB_SELITEMRANGEEX:
+    case LB_SETANCHORINDEX:
+    case LB_SETCARETINDEX:
+    case LB_SETCOLUMNWIDTH:
+    case LB_SETCURSEL:
+    case LB_SETHORIZONTALEXTENT:
+    case LB_SETITEMDATA:
+    case LB_SETITEMHEIGHT:
+    case LB_SETSEL:
+    case LB_SETTOPINDEX:
+        ret = callback( HWND_16(hwnd), msg + LB_ADDSTRING16 - LB_ADDSTRING, wParam, lParam, result, arg );
+        break;
+    case LB_ADDSTRING:
+    case LB_FINDSTRING:
+    case LB_FINDSTRINGEXACT:
+    case LB_INSERTSTRING:
+    case LB_SELECTSTRING:
+    case LB_GETTEXT:
+    case LB_DIR:
+    case LB_ADDFILE:
+        lParam = MapLS( (LPSTR)lParam );
+        ret = callback( HWND_16(hwnd), msg + LB_ADDSTRING16 - LB_ADDSTRING, wParam, lParam, result, arg );
+        UnMapLS( lParam );
+        break;
+    case LB_GETSELITEMS:
+        {
+            INT *items32 = (INT *)lParam;
+            INT16 *items, buffer[512];
+            unsigned int i;
+
+            wParam = min( wParam, 0x7f80 ); /* Must be < 64K */
+            if (!(items = get_buffer( buffer, sizeof(buffer), wParam * sizeof(INT16) ))) break;
+            lParam = MapLS( items );
+            ret = callback( HWND_16(hwnd), LB_GETSELITEMS16, wParam, lParam, result, arg );
+            UnMapLS( lParam );
+            for (i = 0; i < wParam; i++) items32[i] = items[i];
+            free_buffer( buffer, items );
+        }
+        break;
+    case LB_SETTABSTOPS:
+        if (wParam)
+        {
+            INT *stops32 = (INT *)lParam;
+            INT16 *stops, buffer[512];
+            unsigned int i;
+
+            wParam = min( wParam, 0x7f80 ); /* Must be < 64K */
+            if (!(stops = get_buffer( buffer, sizeof(buffer), wParam * sizeof(INT16) ))) break;
+            for (i = 0; i < wParam; i++) stops[i] = stops32[i];
+            lParam = MapLS( stops );
+            ret = callback( HWND_16(hwnd), LB_SETTABSTOPS16, wParam, lParam, result, arg );
+            UnMapLS( lParam );
+            free_buffer( buffer, stops );
+        }
+        else ret = callback( HWND_16(hwnd), LB_SETTABSTOPS16, wParam, lParam, result, arg );
+        break;
+    case CB_DELETESTRING:
+    case CB_GETCOUNT:
+    case CB_GETLBTEXTLEN:
+    case CB_LIMITTEXT:
+    case CB_RESETCONTENT:
+    case CB_SETEDITSEL:
+    case CB_GETCURSEL:
+    case CB_SETCURSEL:
+    case CB_SHOWDROPDOWN:
+    case CB_SETITEMDATA:
+    case CB_SETITEMHEIGHT:
+    case CB_GETITEMHEIGHT:
+    case CB_SETEXTENDEDUI:
+    case CB_GETEXTENDEDUI:
+    case CB_GETDROPPEDSTATE:
+        ret = callback( HWND_16(hwnd), msg + CB_GETEDITSEL16 - CB_GETEDITSEL, wParam, lParam, result, arg );
+        break;
+    case CB_GETEDITSEL:
+        ret = callback( HWND_16(hwnd), CB_GETEDITSEL16, wParam, lParam, result, arg );
+        if (wParam) *((PUINT)(wParam)) = LOWORD(*result);
+        if (lParam) *((PUINT)(lParam)) = HIWORD(*result);  /* FIXME: substract 1? */
+        break;
+    case CB_ADDSTRING:
+    case CB_FINDSTRING:
+    case CB_FINDSTRINGEXACT:
+    case CB_INSERTSTRING:
+    case CB_SELECTSTRING:
+    case CB_DIR:
+    case CB_GETLBTEXT:
+        lParam = MapLS( (LPSTR)lParam );
+        ret = callback( HWND_16(hwnd), msg + CB_GETEDITSEL16 - CB_GETEDITSEL, wParam, lParam, result, arg );
+        UnMapLS( lParam );
+        break;
+    case LB_GETITEMRECT:
+    case CB_GETDROPPEDCONTROLRECT:
+        {
+            RECT *r32 = (RECT *)lParam;
+            RECT16 rect;
+            lParam = MapLS( &rect );
+            ret = callback( HWND_16(hwnd),
+                            (msg == LB_GETITEMRECT) ? LB_GETITEMRECT16 : CB_GETDROPPEDCONTROLRECT16,
+                            wParam, lParam, result, arg );
+            UnMapLS( lParam );
+            RECT16to32( &rect, r32 );
+        }
+        break;
     default:
         {
             UINT16 msg16;
@@ -2250,7 +2172,6 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             if (WINPROC_MapMsg32ATo16( hwnd, msg, wParam, &msg16, &wParam16, &lParam16 ) != -1)
             {
                 ret = callback( HWND_16(hwnd), msg16, wParam16, lParam16, result, arg );
-                WINPROC_UnmapMsg32ATo16( hwnd, msg, wParam, lParam, wParam16, lParam16, result );
             }
         }
         break;
