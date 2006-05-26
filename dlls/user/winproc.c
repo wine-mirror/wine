@@ -1057,18 +1057,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             *plparam = MapLS( str );
         }
         return 1;
-    case WM_MDICREATE:
-        {
-            MDICREATESTRUCT16 *cs;
-            MDICREATESTRUCTA *cs32 = (MDICREATESTRUCTA *)*plparam;
-
-            if (!(cs = HeapAlloc( GetProcessHeap(), 0, sizeof(MDICREATESTRUCT16) ))) return -1;
-            MDICREATESTRUCT32Ato16( cs32, cs );
-            cs->szTitle = MapLS( cs32->szTitle );
-            cs->szClass = MapLS( cs32->szClass );
-            *plparam = MapLS( cs );
-        }
-        return 1;
     case WM_MDIGETACTIVE:
         return 1;
     case WM_MDISETMENU:
@@ -1134,35 +1122,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             }
             *(LPARAM *)(nc + 1) = *plparam;  /* Store the previous lParam */
             *plparam = MapLS( nc );
-        }
-        return 1;
-    case WM_NCCREATE:
-    case WM_CREATE:
-        {
-            CREATESTRUCT16 *cs;
-            CREATESTRUCTA *cs32 = (CREATESTRUCTA *)*plparam;
-
-            if (!(cs = HeapAlloc( GetProcessHeap(), 0, sizeof(CREATESTRUCT16) ))) return -1;
-            CREATESTRUCT32Ato16( cs32, cs );
-            cs->lpszName  = MapLS( cs32->lpszName );
-            cs->lpszClass = MapLS( cs32->lpszClass );
-
-            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-            {
-                MDICREATESTRUCT16 *mdi_cs16;
-                MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)cs32->lpCreateParams;
-                mdi_cs16 = HeapAlloc(GetProcessHeap(), 0, sizeof(*mdi_cs16));
-                if (!mdi_cs16)
-                {
-                    HeapFree(GetProcessHeap(), 0, cs);
-                    return -1;
-                }
-                MDICREATESTRUCT32Ato16(mdi_cs, mdi_cs16);
-                mdi_cs16->szTitle = MapLS( mdi_cs->szTitle );
-                mdi_cs16->szClass = MapLS( mdi_cs->szClass );
-                cs->lpCreateParams = MapLS( mdi_cs16 );
-            }
-            *plparam = MapLS( cs );
         }
         return 1;
     case WM_PARENTNOTIFY:
@@ -1414,15 +1373,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
             HeapFree( GetProcessHeap(), 0, (LPARAM *)str - 1 );
         }
         break;
-    case WM_MDICREATE:
-        {
-            MDICREATESTRUCT16 *cs = MapSL(lParam16);
-            UnMapLS( cs->szTitle );
-            UnMapLS( cs->szClass );
-            UnMapLS( lParam16 );
-            HeapFree( GetProcessHeap(), 0, cs );
-        }
-        break;
     case WM_MDIGETACTIVE:
         if (lParam) *(BOOL *)lParam = (BOOL16)HIWORD(*result);
         *result = (LRESULT)WIN_Handle32( LOWORD(*result) );
@@ -1454,24 +1404,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
                 HeapFree( GetProcessHeap(), 0, pos );
             }
             HeapFree( GetProcessHeap(), 0, nc );
-        }
-        break;
-    case WM_NCCREATE:
-    case WM_CREATE:
-        {
-            CREATESTRUCT16 *cs = MapSL(lParam16);
-            UnMapLS( lParam16 );
-            UnMapLS( cs->lpszName );
-            UnMapLS( cs->lpszClass );
-            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-            {
-                MDICREATESTRUCT16 *mdi_cs16 = (MDICREATESTRUCT16 *)MapSL(cs->lpCreateParams);
-                UnMapLS( cs->lpCreateParams );
-                UnMapLS( mdi_cs16->szTitle );
-                UnMapLS( mdi_cs16->szClass );
-                HeapFree(GetProcessHeap(), 0, mdi_cs16);
-            }
-            HeapFree( GetProcessHeap(), 0, cs );
         }
         break;
     case WM_WINDOWPOSCHANGING:
@@ -2370,19 +2302,74 @@ LRESULT WINAPI __wine_call_wndproc( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LP
 LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT msg,
                                  WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg )
 {
-    LRESULT ret;
-    UINT16 msg16;
-    WPARAM16 wParam16;
-    LPARAM lParam16;
+    LRESULT ret = 0;
 
     TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                 hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
-    lParam16 = lParam;
-    if (WINPROC_MapMsg32ATo16( hwnd, msg, wParam, &msg16, &wParam16, &lParam16 ) == -1)
-        return 0;
-    ret = callback( HWND_16(hwnd), msg16, wParam16, lParam16, result, arg );
-    WINPROC_UnmapMsg32ATo16( hwnd, msg, wParam, lParam, wParam16, lParam16, result );
+    switch(msg)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+        {
+            CREATESTRUCTA *cs32 = (CREATESTRUCTA *)lParam;
+            CREATESTRUCT16 cs;
+            MDICREATESTRUCT16 mdi_cs16;
+            BOOL mdi_child = (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD);
+
+            CREATESTRUCT32Ato16( cs32, &cs );
+            cs.lpszName  = MapLS( cs32->lpszName );
+            cs.lpszClass = MapLS( cs32->lpszClass );
+
+            if (mdi_child)
+            {
+                MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)cs32->lpCreateParams;
+                MDICREATESTRUCT32Ato16( mdi_cs, &mdi_cs16 );
+                mdi_cs16.szTitle = MapLS( mdi_cs->szTitle );
+                mdi_cs16.szClass = MapLS( mdi_cs->szClass );
+                cs.lpCreateParams = MapLS( &mdi_cs16 );
+            }
+            lParam = MapLS( &cs );
+            ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+            UnMapLS( lParam );
+            UnMapLS( cs.lpszName );
+            UnMapLS( cs.lpszClass );
+            if (mdi_child)
+            {
+                UnMapLS( cs.lpCreateParams );
+                UnMapLS( mdi_cs16.szTitle );
+                UnMapLS( mdi_cs16.szClass );
+            }
+        }
+        break;
+    case WM_MDICREATE:
+        {
+            MDICREATESTRUCTA *cs32 = (MDICREATESTRUCTA *)lParam;
+            MDICREATESTRUCT16 cs;
+
+            MDICREATESTRUCT32Ato16( cs32, &cs );
+            cs.szTitle = MapLS( cs32->szTitle );
+            cs.szClass = MapLS( cs32->szClass );
+            lParam = MapLS( &cs );
+            ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+            UnMapLS( lParam );
+            UnMapLS( cs.szTitle );
+            UnMapLS( cs.szClass );
+        }
+        break;
+    default:
+        {
+            UINT16 msg16;
+            WPARAM16 wParam16;
+            LPARAM lParam16 = lParam;
+            if (WINPROC_MapMsg32ATo16( hwnd, msg, wParam, &msg16, &wParam16, &lParam16 ) != -1)
+            {
+                ret = callback( HWND_16(hwnd), msg16, wParam16, lParam16, result, arg );
+                WINPROC_UnmapMsg32ATo16( hwnd, msg, wParam, lParam, wParam16, lParam16, result );
+            }
+        }
+        break;
+    }
     return ret;
 }
 
