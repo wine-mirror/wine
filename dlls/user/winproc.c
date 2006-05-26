@@ -964,16 +964,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         *plparam = MAKELPARAM( (HWND16)*plparam,
                                (WORD)msg32 - WM_CTLCOLORMSGBOX );
         return 0;
-    case WM_GETTEXT:
-    case WM_ASKCBFORMATNAME:
-        {
-            LPARAM *str; /* store LPARAM, then *pwparam16 char space */
-            *pwparam16 = (WPARAM16)min( wParam32, 0xff80 ); /* Must be < 64K */
-            if (!(str = HeapAlloc( GetProcessHeap(), 0, *pwparam16 + sizeof(LPARAM)))) return -1;
-            *str++ = *plparam;  /* Store the previous lParam */
-            *plparam = MapLS( str );
-        }
-        return 1;
     case WM_MENUSELECT:
         if(HIWORD(wParam32) & MF_POPUP)
         {
@@ -993,14 +983,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             *plparam = MAKELPARAM( (HWND16)*plparam, HIWORD(wParam32));
         /* else nothing to do */
         return 0;
-    case WM_NOTIFY:
-        *plparam = MapLS( (NMHDR *)*plparam ); /* NMHDR is already 32-bit */
-        return 1;
-    case WM_SETTEXT:
-    case WM_WININICHANGE:
-    case WM_DEVMODECHANGE:
-        *plparam = MapLS( (LPSTR)*plparam );
-        return 1;
     case WM_ACTIVATEAPP:
         if (*plparam) *plparam = HTASK_16( (HANDLE)*plparam );
         return 0;
@@ -1062,9 +1044,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     case CB_SELECTSTRING:
     case CB_DIR:
     case CB_GETLBTEXT:
-    case WM_SETTEXT:
-    case WM_WININICHANGE:
-    case WM_DEVMODECHANGE:
         UnMapLS( (SEGPTR)lParam16 );
         break;
     case LB_SETTABSTOPS:
@@ -1105,20 +1084,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
             *((PUINT)(wParam)) = LOWORD(*result);
         if( lParam )
             *((PUINT)(lParam)) = HIWORD(*result);  /* FIXME: substract 1? */
-        break;
-
-    case WM_GETTEXT:
-    case WM_ASKCBFORMATNAME:
-        {
-            LPSTR str = MapSL(lParam16);
-            UnMapLS( lParam16 );
-            lParam16 = *((LPARAM *)str - 1);
-            lstrcpynA( (LPSTR)lParam16, str, wParam16 );
-            HeapFree( GetProcessHeap(), 0, (LPARAM *)str - 1 );
-        }
-        break;
-    case WM_NOTIFY:
-        UnMapLS(lParam16);
         break;
     }
 }
@@ -2221,6 +2186,18 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             next->hwndNext  = WIN_Handle32( HIWORD(*result) );
             *result = 0;
         }
+        break;
+    case WM_GETTEXT:
+    case WM_ASKCBFORMATNAME:
+        wParam = min( wParam, 0xff80 ); /* Must be < 64K */
+        /* fall through */
+    case WM_NOTIFY:
+    case WM_SETTEXT:
+    case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
+        lParam = MapLS( (void *)lParam );
+        ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+        UnMapLS( lParam );
         break;
     case WM_DDE_INITIATE:
     case WM_DDE_TERMINATE:
