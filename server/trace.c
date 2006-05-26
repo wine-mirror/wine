@@ -2287,6 +2287,7 @@ static void dump_get_named_pipe_info_reply( const struct get_named_pipe_info_rep
 {
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " maxinstances=%08x,", req->maxinstances );
+    fprintf( stderr, " instances=%08x,", req->instances );
     fprintf( stderr, " outsize=%08x,", req->outsize );
     fprintf( stderr, " insize=%08x", req->insize );
 }

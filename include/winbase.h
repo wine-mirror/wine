@@ -688,11 +688,12 @@ typedef struct _BY_HANDLE_FILE_INFORMATION
 #define PIPE_ACCESS_OUTBOUND 2
 #define PIPE_ACCESS_DUPLEX   3
 
-#define PIPE_TYPE_BYTE    0
-#define PIPE_TYPE_MESSAGE 4
-
+#define PIPE_CLIENT_END       0
+#define PIPE_SERVER_END       1
 #define PIPE_READMODE_BYTE    0
 #define PIPE_READMODE_MESSAGE 2
+#define PIPE_TYPE_BYTE        0
+#define PIPE_TYPE_MESSAGE     4
 
 #define PIPE_WAIT   0
 #define PIPE_NOWAIT 1

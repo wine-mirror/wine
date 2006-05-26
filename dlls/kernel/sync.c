@@ -1460,32 +1460,31 @@ BOOL WINAPI GetNamedPipeInfo(
     HANDLE hNamedPipe, LPDWORD lpFlags, LPDWORD lpOutputBufferSize,
     LPDWORD lpInputBufferSize, LPDWORD lpMaxInstances)
 {
-    BOOL ret;
+    FILE_PIPE_LOCAL_INFORMATION fpli;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
 
-    TRACE("%p %p %p %p %p\n", hNamedPipe, lpFlags,
-          lpOutputBufferSize, lpInputBufferSize, lpMaxInstances);
-
-    SERVER_START_REQ( get_named_pipe_info )
+    status = NtQueryInformationFile(hNamedPipe, &iosb, &fpli, sizeof(fpli),
+                                    FilePipeLocalInformation);
+    if (status)
     {
-        req->handle = hNamedPipe;
-        ret = !wine_server_call_err( req );
-        if (lpFlags)
-        {
-            *lpFlags = 0;
-            if (reply->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE)
-                *lpFlags |= PIPE_TYPE_MESSAGE;
-            if (reply->flags & NAMED_PIPE_MESSAGE_STREAM_READ)
-                *lpFlags |= PIPE_READMODE_MESSAGE;
-            if (reply->flags & NAMED_PIPE_NONBLOCKING_MODE)
-                *lpFlags |= PIPE_NOWAIT;
-        }
-        if (lpOutputBufferSize) *lpOutputBufferSize = reply->outsize;
-        if (lpInputBufferSize) *lpInputBufferSize = reply->outsize;
-        if (lpMaxInstances) *lpMaxInstances = reply->maxinstances;
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    SERVER_END_REQ;
 
-    return ret;
+    if (lpFlags)
+    {
+        *lpFlags = (fpli.NamedPipeEnd & FILE_PIPE_SERVER_END) ?
+            PIPE_SERVER_END : PIPE_CLIENT_END;
+        *lpFlags |= (fpli.NamedPipeType & FILE_PIPE_TYPE_MESSAGE) ?
+            PIPE_TYPE_MESSAGE : PIPE_TYPE_BYTE;
+    }
+
+    if (lpOutputBufferSize) *lpOutputBufferSize = fpli.OutboundQuota;
+    if (lpInputBufferSize) *lpInputBufferSize = fpli.InboundQuota;
+    if (lpMaxInstances) *lpMaxInstances = fpli.MaximumInstances;
+
+    return TRUE;
 }
 
 /***********************************************************************

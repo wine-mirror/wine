@@ -1120,7 +1120,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         0,                                             /* FileAlternateNameInformation */
         sizeof(FILE_STREAM_INFORMATION)-sizeof(WCHAR), /* FileStreamInformation */
         0,                                             /* FilePipeInformation */
-        0,                                             /* FilePipeLocalInformation */
+        sizeof(FILE_PIPE_LOCAL_INFORMATION),           /* FilePipeLocalInformation */
         0,                                             /* FilePipeRemoteInformation */
         sizeof(FILE_MAILSLOT_QUERY_INFORMATION),       /* FileMailslotQueryInformation */
         0,                                             /* FileMailslotSetInformation */
@@ -1152,8 +1152,11 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     if (len < info_sizes[class])
         return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
 
-    if ((io->u.Status = wine_server_handle_to_fd( hFile, 0, &fd, NULL )))
-        return io->u.Status;
+    if (class != FilePipeLocalInformation)
+    {
+        if ((io->u.Status = wine_server_handle_to_fd( hFile, 0, &fd, NULL )))
+            return io->u.Status;
+    } else fd = -1;
 
     switch (class)
     {
@@ -1295,12 +1298,38 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
             SERVER_END_REQ;
         }
         break;
+    case FilePipeLocalInformation:
+        {
+            FILE_PIPE_LOCAL_INFORMATION* pli = ptr;
+
+            SERVER_START_REQ( get_named_pipe_info )
+            {
+                req->handle = hFile;
+                if (!(io->u.Status = wine_server_call( req )))
+                {
+                    pli->NamedPipeType = (reply->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) ? 
+                        FILE_PIPE_TYPE_MESSAGE : FILE_PIPE_TYPE_BYTE;
+                    pli->NamedPipeConfiguration = 0; /* FIXME */
+                    pli->MaximumInstances = reply->maxinstances;
+                    pli->CurrentInstances = reply->instances;
+                    pli->InboundQuota = reply->insize;
+                    pli->ReadDataAvailable = 0; /* FIXME */
+                    pli->OutboundQuota = reply->outsize;
+                    pli->WriteQuotaAvailable = 0; /* FIXME */
+                    pli->NamedPipeState = 0; /* FIXME */
+                    pli->NamedPipeEnd = (reply->flags & NAMED_PIPE_SERVER_END) ?
+                        FILE_PIPE_SERVER_END : FILE_PIPE_CLIENT_END;
+                }
+            }
+            SERVER_END_REQ;
+        }
+        break;
     default:
         FIXME("Unsupported class (%d)\n", class);
         io->u.Status = STATUS_NOT_IMPLEMENTED;
         break;
     }
-    wine_server_release_fd( hFile, fd );
+    if (fd != -1) wine_server_release_fd( hFile, fd );
     if (io->u.Status == STATUS_SUCCESS && !io->Information) io->Information = info_sizes[class];
     return io->u.Status;
 }

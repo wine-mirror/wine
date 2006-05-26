@@ -534,8 +534,20 @@ typedef struct _FILE_MAILSLOT_SET_INFORMATION {
     LARGE_INTEGER ReadTimeout;
 } FILE_MAILSLOT_SET_INFORMATION, *PFILE_MAILSLOT_SET_INFORMATION;
 
-typedef struct _FILE_ALL_INFORMATION
-{
+typedef struct _FILE_PIPE_LOCAL_INFORMATION {
+    ULONG NamedPipeType;
+    ULONG NamedPipeConfiguration;
+    ULONG MaximumInstances;
+    ULONG CurrentInstances;
+    ULONG InboundQuota;
+    ULONG ReadDataAvailable;
+    ULONG OutboundQuota;
+    ULONG WriteQuotaAvailable;
+    ULONG NamedPipeState;
+    ULONG NamedPipeEnd;
+} FILE_PIPE_LOCAL_INFORMATION, *PFILE_PIPE_LOCAL_INFORMATION;
+
+typedef struct _FILE_ALL_INFORMATION {
     FILE_BASIC_INFORMATION     BasicInformation;
     FILE_STANDARD_INFORMATION  StandardInformation;
     FILE_INTERNAL_INFORMATION  InternalInformation;
@@ -1409,6 +1421,13 @@ typedef struct _RTL_HANDLE_TABLE
 #define FILE_PIPE_INBOUND               0x00000000
 #define FILE_PIPE_OUTBOUND              0x00000001
 #define FILE_PIPE_FULL_DUPLEX           0x00000002
+
+/* options for pipe's type */
+#define FILE_PIPE_TYPE_MESSAGE          0x00000001
+#define FILE_PIPE_TYPE_BYTE             0x00000000
+/* and client / server end */
+#define FILE_PIPE_SERVER_END            0x00000001
+#define FILE_PIPE_CLIENT_END            0x00000000
 
 #if (_WIN32_WINNT >= 0x0501)
 #define INTERNAL_TS_ACTIVE_CONSOLE_ID ( *((volatile ULONG*)(0x7ffe02d8)) )

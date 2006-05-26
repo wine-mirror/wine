@@ -1736,7 +1736,7 @@ enum message_type
 #define NAMED_PIPE_MESSAGE_STREAM_WRITE 0x0001
 #define NAMED_PIPE_MESSAGE_STREAM_READ  0x0002
 #define NAMED_PIPE_NONBLOCKING_MODE     0x0004
-
+#define NAMED_PIPE_SERVER_END           0x8000
 
 /* Open an existing named pipe */
 @REQ(open_named_pipe)
@@ -1781,6 +1781,7 @@ enum message_type
 @REPLY
     unsigned int   flags;
     unsigned int   maxinstances;
+    unsigned int   instances;
     unsigned int   outsize;
     unsigned int   insize;
 @END

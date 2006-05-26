@@ -721,7 +721,7 @@ DECL_HANDLER(create_named_pipe)
             release_object( pipe );
             return;
         }
-        set_error( 0 );  /* clear the name collision */
+        clear_error(); /* clear the name collision */
     }
 
     server = create_pipe_server( pipe, req->options );
@@ -930,15 +930,29 @@ DECL_HANDLER(disconnect_named_pipe)
 DECL_HANDLER(get_named_pipe_info)
 {
     struct pipe_server *server;
+    struct pipe_client *client = NULL;
 
-    server = get_pipe_server_obj( current->process, req->handle, 0 );
+    server = get_pipe_server_obj( current->process, req->handle, FILE_READ_ATTRIBUTES );
     if (!server)
-        return;
+    {
+        clear_error();
+        client = (struct pipe_client *)get_handle_obj( current->process, req->handle,
+                                                       FILE_READ_ATTRIBUTES, &pipe_client_ops );
+        if (!client) return;
+        server = client->server;
+    }
 
     reply->flags        = server->pipe->flags;
     reply->maxinstances = server->pipe->maxinstances;
+    reply->instances    = server->pipe->instances;
     reply->insize       = server->pipe->insize;
     reply->outsize      = server->pipe->outsize;
 
-    release_object(server);
+    if (client)
+        release_object(client);
+    else
+    {
+        reply->flags |= NAMED_PIPE_SERVER_END;
+        release_object(server);
+    }
 }

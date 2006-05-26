@@ -2435,7 +2435,7 @@ struct create_named_pipe_reply
 #define NAMED_PIPE_MESSAGE_STREAM_WRITE 0x0001
 #define NAMED_PIPE_MESSAGE_STREAM_READ  0x0002
 #define NAMED_PIPE_NONBLOCKING_MODE     0x0004
-
+#define NAMED_PIPE_SERVER_END           0x8000
 
 
 struct open_named_pipe_request
@@ -2507,6 +2507,7 @@ struct get_named_pipe_info_reply
     struct reply_header __header;
     unsigned int   flags;
     unsigned int   maxinstances;
+    unsigned int   instances;
     unsigned int   outsize;
     unsigned int   insize;
 };
@@ -4381,6 +4382,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 233
+#define SERVER_PROTOCOL_VERSION 234
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
