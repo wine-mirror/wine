@@ -748,90 +748,6 @@ static HANDLE16 convert_handle_32_to_16(UINT src, unsigned int flags)
 
 
 /**********************************************************************
- *	     WINPROC_MapMsg32ATo16
- *
- * Map a message from 32-bit Ansi to 16-bit.
- * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
- */
-static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
-                                  UINT16 *pmsg16, WPARAM16 *pwparam16, LPARAM *plparam )
-{
-    *pmsg16 = (UINT16)msg32;
-    *pwparam16 = (WPARAM16)LOWORD(wParam32);
-    switch(msg32)
-    {
-    case WM_ACTIVATE:
-    case WM_CHARTOITEM:
-    case WM_COMMAND:
-    case WM_VKEYTOITEM:
-        *plparam = MAKELPARAM( (HWND16)*plparam, HIWORD(wParam32) );
-        return 0;
-    case WM_HSCROLL:
-    case WM_VSCROLL:
-        *plparam = MAKELPARAM( HIWORD(wParam32), (HWND16)*plparam );
-        return 0;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        *pmsg16  = WM_CTLCOLOR;
-        *plparam = MAKELPARAM( (HWND16)*plparam,
-                               (WORD)msg32 - WM_CTLCOLORMSGBOX );
-        return 0;
-    case WM_MENUSELECT:
-        if(HIWORD(wParam32) & MF_POPUP)
-        {
-            HMENU hmenu;
-            if (((UINT)HIWORD(wParam32) != 0xFFFF) || (*plparam))
-            {
-                if((hmenu = GetSubMenu((HMENU)*plparam, *pwparam16)))
-                    *pwparam16=HMENU_16(hmenu);
-            }
-        }
-        /* fall through */
-    case WM_MENUCHAR:
-        *plparam = MAKELPARAM( HIWORD(wParam32), (HMENU16)*plparam );
-        return 0;
-    case WM_PARENTNOTIFY:
-        if ((LOWORD(wParam32)==WM_CREATE) || (LOWORD(wParam32)==WM_DESTROY))
-            *plparam = MAKELPARAM( (HWND16)*plparam, HIWORD(wParam32));
-        /* else nothing to do */
-        return 0;
-    case WM_ACTIVATEAPP:
-        if (*plparam) *plparam = HTASK_16( (HANDLE)*plparam );
-        return 0;
-    case WM_PAINT:
-        if (IsIconic( hwnd ) && GetClassLongPtrW( hwnd, GCLP_HICON ))
-        {
-            *pmsg16 = WM_PAINTICON;
-            *pwparam16 = 1;
-        }
-        return 0;
-    case WM_ERASEBKGND:
-        if (IsIconic( hwnd ) && GetClassLongPtrW( hwnd, GCLP_HICON ))
-            *pmsg16 = WM_ICONERASEBKGND;
-        return 0;
-    case WM_PAINTCLIPBOARD:
-    case WM_SIZECLIPBOARD:
-        FIXME_(msg)("message %04x needs translation\n", msg32 );
-        return -1;
-    /* following messages should not be sent to 16-bit apps */
-    case WM_SIZING:
-    case WM_MOVING:
-    case WM_CAPTURECHANGED:
-    case WM_STYLECHANGING:
-    case WM_STYLECHANGED:
-        return -1;
-    default:  /* No translation needed */
-        return 0;
-    }
-}
-
-
-/**********************************************************************
  *	     WINPROC_CallProcAtoW
  *
  * Call a window procedure, translating args from Ansi to Unicode.
@@ -1941,6 +1857,67 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
         ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
         UnMapLS( lParam );
         break;
+    case WM_ACTIVATE:
+    case WM_CHARTOITEM:
+    case WM_COMMAND:
+    case WM_VKEYTOITEM:
+        ret = callback( HWND_16(hwnd), msg, wParam, MAKELPARAM( (HWND16)lParam, HIWORD(wParam) ),
+                        result, arg );
+        break;
+    case WM_HSCROLL:
+    case WM_VSCROLL:
+        ret = callback( HWND_16(hwnd), msg, wParam, MAKELPARAM( HIWORD(wParam), (HWND16)lParam ),
+                        result, arg );
+        break;
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSCROLLBAR:
+    case WM_CTLCOLORSTATIC:
+        ret = callback( HWND_16(hwnd), WM_CTLCOLOR, wParam,
+                        MAKELPARAM( (HWND16)lParam, msg - WM_CTLCOLORMSGBOX ), result, arg );
+        break;
+    case WM_MENUSELECT:
+        if(HIWORD(wParam) & MF_POPUP)
+        {
+            HMENU hmenu;
+            if ((HIWORD(wParam) != 0xffff) || lParam)
+            {
+                if ((hmenu = GetSubMenu( (HMENU)lParam, LOWORD(wParam) )))
+                {
+                    ret = callback( HWND_16(hwnd), msg, HMENU_16(hmenu),
+                                    MAKELPARAM( HIWORD(wParam), (HMENU16)lParam ), result, arg );
+                    break;
+                }
+            }
+        }
+        /* fall through */
+    case WM_MENUCHAR:
+        ret = callback( HWND_16(hwnd), msg, wParam,
+                        MAKELPARAM( HIWORD(wParam), (HMENU16)lParam ), result, arg );
+        break;
+    case WM_PARENTNOTIFY:
+        if ((LOWORD(wParam) == WM_CREATE) || (LOWORD(wParam) == WM_DESTROY))
+            ret = callback( HWND_16(hwnd), msg, wParam,
+                            MAKELPARAM( (HWND16)lParam, HIWORD(wParam) ), result, arg );
+        else
+            ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+        break;
+    case WM_ACTIVATEAPP:
+        ret = callback( HWND_16(hwnd), msg, wParam, HTASK_16( (HANDLE)lParam ), result, arg );
+        break;
+    case WM_PAINT:
+        if (IsIconic( hwnd ) && GetClassLongPtrW( hwnd, GCLP_HICON ))
+            ret = callback( HWND_16(hwnd), WM_PAINTICON, 1, lParam, result, arg );
+        else
+            ret = callback( HWND_16(hwnd), WM_PAINT, wParam, lParam, result, arg );
+        break;
+    case WM_ERASEBKGND:
+        if (IsIconic( hwnd ) && GetClassLongPtrW( hwnd, GCLP_HICON )) msg = WM_ICONERASEBKGND;
+        ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+        break;
     case WM_DDE_INITIATE:
     case WM_DDE_TERMINATE:
     case WM_DDE_UNADVISE:
@@ -2164,16 +2141,19 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             RECT16to32( &rect, r32 );
         }
         break;
+    case WM_PAINTCLIPBOARD:
+    case WM_SIZECLIPBOARD:
+        FIXME_(msg)( "message %04x needs translation\n", msg );
+        break;
+    /* the following messages should not be sent to 16-bit apps */
+    case WM_SIZING:
+    case WM_MOVING:
+    case WM_CAPTURECHANGED:
+    case WM_STYLECHANGING:
+    case WM_STYLECHANGED:
+        break;
     default:
-        {
-            UINT16 msg16;
-            WPARAM16 wParam16;
-            LPARAM lParam16 = lParam;
-            if (WINPROC_MapMsg32ATo16( hwnd, msg, wParam, &msg16, &wParam16, &lParam16 ) != -1)
-            {
-                ret = callback( HWND_16(hwnd), msg16, wParam16, lParam16, result, arg );
-            }
-        }
+        ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
         break;
     }
     return ret;
