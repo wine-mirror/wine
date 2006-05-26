@@ -74,8 +74,8 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
 	if (!doTheming) return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
         {
             RECT rc;
-            DLGPROC dlgp = (DLGPROC)GetWindowLongPtrW (hWnd, DWLP_DLGPROC);
-            if (!dlgp (hWnd, msg, wParam, lParam))
+            WNDPROC dlgp = (WNDPROC)GetWindowLongPtrW (hWnd, DWLP_DLGPROC);
+            if (!CallWindowProcW(dlgp, hWnd, msg, wParam, lParam))
             {
                 /* Draw background*/
                 GetClientRect (hWnd, &rc);
@@ -104,8 +104,8 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
     case WM_CTLCOLORSTATIC:
         if (!doTheming) return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
         {
-            DLGPROC dlgp = (DLGPROC)GetWindowLongPtrW (hWnd, DWLP_DLGPROC);
-            LRESULT result = (LRESULT)dlgp (hWnd, msg, wParam, lParam);
+            WNDPROC dlgp = (WNDPROC)GetWindowLongPtrW (hWnd, DWLP_DLGPROC);
+            LRESULT result = CallWindowProcW(dlgp, hWnd, msg, wParam, lParam);
             if (!result)
             {
                 /* Override defaults with more suitable values when themed */
