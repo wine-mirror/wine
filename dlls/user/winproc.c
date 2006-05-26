@@ -974,15 +974,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         *plparam = MAKELPARAM( (HWND16)*plparam,
                                (WORD)msg32 - WM_CTLCOLORMSGBOX );
         return 0;
-    case WM_GETMINMAXINFO:
-        {
-            MINMAXINFO16 *mmi = HeapAlloc( GetProcessHeap(), 0, sizeof(*mmi) + sizeof(LPARAM) );
-            if (!mmi) return -1;
-            MINMAXINFO32to16( (MINMAXINFO *)*plparam, mmi );
-            *(LPARAM *)(mmi + 1) = *plparam;  /* Store the previous lParam */
-            *plparam = MapLS( mmi );
-        }
-        return 1;
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
         {
@@ -1027,39 +1018,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             *plparam = 0;
         }
         return 0;
-    case WM_NCCALCSIZE:
-        {
-            NCCALCSIZE_PARAMS *nc32 = (NCCALCSIZE_PARAMS *)*plparam;
-            NCCALCSIZE_PARAMS16 *nc = HeapAlloc( GetProcessHeap(), 0, sizeof(*nc) + sizeof(LPARAM));
-            if (!nc) return -1;
-
-            nc->rgrc[0].left   = nc32->rgrc[0].left;
-            nc->rgrc[0].top    = nc32->rgrc[0].top;
-            nc->rgrc[0].right  = nc32->rgrc[0].right;
-            nc->rgrc[0].bottom = nc32->rgrc[0].bottom;
-            if (wParam32)
-            {
-                WINDOWPOS16 *wp;
-                nc->rgrc[1].left   = nc32->rgrc[1].left;
-                nc->rgrc[1].top    = nc32->rgrc[1].top;
-                nc->rgrc[1].right  = nc32->rgrc[1].right;
-                nc->rgrc[1].bottom = nc32->rgrc[1].bottom;
-                nc->rgrc[2].left   = nc32->rgrc[2].left;
-                nc->rgrc[2].top    = nc32->rgrc[2].top;
-                nc->rgrc[2].right  = nc32->rgrc[2].right;
-                nc->rgrc[2].bottom = nc32->rgrc[2].bottom;
-                if (!(wp = HeapAlloc( GetProcessHeap(), 0, sizeof(WINDOWPOS16) )))
-                {
-                    HeapFree( GetProcessHeap(), 0, nc );
-                    return -1;
-                }
-                WINDOWPOS32to16( nc32->lppos, wp );
-                nc->lppos = MapLS( wp );
-            }
-            *(LPARAM *)(nc + 1) = *plparam;  /* Store the previous lParam */
-            *plparam = MapLS( nc );
-        }
-        return 1;
     case WM_PARENTNOTIFY:
         if ((LOWORD(wParam32)==WM_CREATE) || (LOWORD(wParam32)==WM_DESTROY))
             *plparam = MAKELPARAM( (HWND16)*plparam, HIWORD(wParam32));
@@ -1072,16 +1030,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_WININICHANGE:
     case WM_DEVMODECHANGE:
         *plparam = MapLS( (LPSTR)*plparam );
-        return 1;
-    case WM_WINDOWPOSCHANGING:
-    case WM_WINDOWPOSCHANGED:
-        {
-            WINDOWPOS16 *wp = HeapAlloc( GetProcessHeap(), 0, sizeof(*wp) + sizeof(LPARAM) );
-            if (!wp) return -1;
-            WINDOWPOS32to16( (WINDOWPOS *)*plparam, wp );
-            *(LPARAM *)(wp + 1) = *plparam;  /* Store the previous lParam */
-            *plparam = MapLS( wp );
-        }
         return 1;
     case WM_GETDLGCODE:
          if (*plparam) {
@@ -1277,15 +1225,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
             *((PUINT)(lParam)) = HIWORD(*result);  /* FIXME: substract 1? */
         break;
 
-    case WM_GETMINMAXINFO:
-        {
-            MINMAXINFO16 *mmi = MapSL(lParam16);
-            UnMapLS( lParam16 );
-            lParam16 = *(LPARAM *)(mmi + 1);
-            MINMAXINFO16to32( mmi, (MINMAXINFO *)lParam16 );
-            HeapFree( GetProcessHeap(), 0, mmi );
-        }
-        break;
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
         {
@@ -1299,45 +1238,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     case WM_MDIGETACTIVE:
         if (lParam) *(BOOL *)lParam = (BOOL16)HIWORD(*result);
         *result = (LRESULT)WIN_Handle32( LOWORD(*result) );
-        break;
-    case WM_NCCALCSIZE:
-        {
-            NCCALCSIZE_PARAMS *nc32;
-            NCCALCSIZE_PARAMS16 *nc = MapSL(lParam16);
-            UnMapLS( lParam16 );
-            lParam16 = *(LPARAM *)(nc + 1);
-            nc32 = (NCCALCSIZE_PARAMS *)lParam16;
-            nc32->rgrc[0].left   = nc->rgrc[0].left;
-            nc32->rgrc[0].top    = nc->rgrc[0].top;
-            nc32->rgrc[0].right  = nc->rgrc[0].right;
-            nc32->rgrc[0].bottom = nc->rgrc[0].bottom;
-            if (wParam16)
-            {
-                WINDOWPOS16 *pos = MapSL(nc->lppos);
-                UnMapLS( nc->lppos );
-                nc32->rgrc[1].left   = nc->rgrc[1].left;
-                nc32->rgrc[1].top    = nc->rgrc[1].top;
-                nc32->rgrc[1].right  = nc->rgrc[1].right;
-                nc32->rgrc[1].bottom = nc->rgrc[1].bottom;
-                nc32->rgrc[2].left   = nc->rgrc[2].left;
-                nc32->rgrc[2].top    = nc->rgrc[2].top;
-                nc32->rgrc[2].right  = nc->rgrc[2].right;
-                nc32->rgrc[2].bottom = nc->rgrc[2].bottom;
-                WINDOWPOS16to32( pos, nc32->lppos );
-                HeapFree( GetProcessHeap(), 0, pos );
-            }
-            HeapFree( GetProcessHeap(), 0, nc );
-        }
-        break;
-    case WM_WINDOWPOSCHANGING:
-    case WM_WINDOWPOSCHANGED:
-        {
-            WINDOWPOS16 *wp = MapSL(lParam16);
-            UnMapLS( lParam16 );
-            lParam16 = *(LPARAM *)(wp + 1);
-            WINDOWPOS16to32( wp, (WINDOWPOS *)lParam16 );
-            HeapFree( GetProcessHeap(), 0, wp );
-        }
         break;
     case WM_NOTIFY:
         UnMapLS(lParam16);
@@ -2278,6 +2178,58 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             UnMapLS( lParam );
             UnMapLS( cs.szTitle );
             UnMapLS( cs.szClass );
+        }
+        break;
+    case WM_GETMINMAXINFO:
+        {
+            MINMAXINFO *mmi32 = (MINMAXINFO *)lParam;
+            MINMAXINFO16 mmi;
+
+            MINMAXINFO32to16( mmi32, &mmi );
+            lParam = MapLS( &mmi );
+            ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+            UnMapLS( lParam );
+            MINMAXINFO16to32( &mmi, mmi32 );
+        }
+        break;
+    case WM_NCCALCSIZE:
+        {
+            NCCALCSIZE_PARAMS *nc32 = (NCCALCSIZE_PARAMS *)lParam;
+            NCCALCSIZE_PARAMS16 nc;
+            WINDOWPOS16 winpos;
+
+            RECT32to16( &nc32->rgrc[0], &nc.rgrc[0] );
+            if (wParam)
+            {
+                RECT32to16( &nc32->rgrc[1], &nc.rgrc[1] );
+                RECT32to16( &nc32->rgrc[2], &nc.rgrc[2] );
+                WINDOWPOS32to16( nc32->lppos, &winpos );
+                nc.lppos = MapLS( &winpos );
+            }
+            lParam = MapLS( &nc );
+            ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+            UnMapLS( lParam );
+            RECT16to32( &nc.rgrc[0], &nc32->rgrc[0] );
+            if (wParam)
+            {
+                RECT16to32( &nc.rgrc[1], &nc32->rgrc[1] );
+                RECT16to32( &nc.rgrc[2], &nc32->rgrc[2] );
+                WINDOWPOS16to32( &winpos, nc32->lppos );
+                UnMapLS( nc.lppos );
+            }
+        }
+        break;
+    case WM_WINDOWPOSCHANGING:
+    case WM_WINDOWPOSCHANGED:
+        {
+            WINDOWPOS *winpos32 = (WINDOWPOS *)lParam;
+            WINDOWPOS16 winpos;
+
+            WINDOWPOS32to16( winpos32, &winpos );
+            lParam = MapLS( &winpos );
+            ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+            UnMapLS( lParam );
+            WINDOWPOS16to32( &winpos, winpos32 );
         }
         break;
     case WM_COMPAREITEM:
