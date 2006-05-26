@@ -729,85 +729,6 @@ static UINT convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
     return (UINT)dst;
 }
 
-/**********************************************************************
- *	     WINPROC_MapMsg16To32A
- *
- * Map a message from 16- to 32-bit Ansi.
- * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
- */
-static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
-                                  WPARAM *pwparam32, LPARAM *plparam )
-{
-    *pmsg32 = (UINT)msg16;
-    *pwparam32 = (WPARAM)wParam16;
-    switch(msg16)
-    {
-    case WM_ACTIVATE:
-    case WM_CHARTOITEM:
-    case WM_COMMAND:
-    case WM_VKEYTOITEM:
-        *pwparam32 = MAKEWPARAM( wParam16, HIWORD(*plparam) );
-        *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
-        return 0;
-    case WM_HSCROLL:
-    case WM_VSCROLL:
-        *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
-        *plparam   = (LPARAM)WIN_Handle32( HIWORD(*plparam) );
-        return 0;
-    case WM_CTLCOLOR:
-        if ( HIWORD(*plparam) > CTLCOLOR_STATIC ) return -1;
-        *pmsg32    = WM_CTLCOLORMSGBOX + HIWORD(*plparam);
-        *pwparam32 = (WPARAM)HDC_32(wParam16);
-        *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
-        return 0;
-    case WM_GETTEXT:
-    case WM_SETTEXT:
-    case WM_WININICHANGE:
-    case WM_DEVMODECHANGE:
-    case WM_ASKCBFORMATNAME:
-        *plparam = (LPARAM)MapSL(*plparam);
-        return 0;
-    case WM_MENUCHAR:
-        *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
-        *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
-        return 0;
-    case WM_MENUSELECT:
-        if((LOWORD(*plparam) & MF_POPUP) && (LOWORD(*plparam) != 0xFFFF))
-        {
-            HMENU hmenu=HMENU_32(HIWORD(*plparam));
-            UINT Pos=MENU_FindSubMenu( &hmenu, HMENU_32(wParam16));
-            if(Pos==0xFFFF) Pos=0; /* NO_SELECTED_ITEM */
-            *pwparam32 = MAKEWPARAM( Pos, LOWORD(*plparam) );
-        }
-        else *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
-        *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
-        return 0;
-    case WM_PARENTNOTIFY:
-        if ((wParam16 == WM_CREATE) || (wParam16 == WM_DESTROY))
-        {
-            *pwparam32 = MAKEWPARAM( wParam16, HIWORD(*plparam) );
-            *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
-        }
-        return 0;
-    case WM_NOTIFY:
-        *plparam = (LPARAM)MapSL(*plparam);
-        return 0;
-    case WM_ACTIVATEAPP:
-        /* We need this when SetActiveWindow sends a Sendmessage16() to
-         * a 32bit window. Might be superflous with 32bit interprocess
-         * message queues. */
-        if (*plparam) *plparam = HTASK_32( *plparam );
-        return 0;
-    case WM_PAINTCLIPBOARD:
-    case WM_SIZECLIPBOARD:
-        FIXME_(msg)("message %04x needs translation\n",msg16 );
-        return -1;
-    default:  /* No translation needed */
-        return 0;
-    }
-}
-
-
 static HANDLE16 convert_handle_32_to_16(UINT src, unsigned int flags)
 {
     HANDLE16    dst;
@@ -2307,6 +2228,60 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             *result = MAKELONG( HMENU_16(next.hmenuNext), HWND_16(next.hwndNext) );
         }
         break;
+    case WM_ACTIVATE:
+    case WM_CHARTOITEM:
+    case WM_COMMAND:
+    case WM_VKEYTOITEM:
+        ret = callback( hwnd32, msg, MAKEWPARAM( wParam, HIWORD(lParam) ),
+                        (LPARAM)WIN_Handle32( LOWORD(lParam) ), result, arg );
+        break;
+    case WM_HSCROLL:
+    case WM_VSCROLL:
+        ret = callback( hwnd32, msg, MAKEWPARAM( wParam, LOWORD(lParam) ),
+                        (LPARAM)WIN_Handle32( HIWORD(lParam) ), result, arg );
+        break;
+    case WM_CTLCOLOR:
+        if (HIWORD(lParam) <= CTLCOLOR_STATIC)
+            ret = callback( hwnd32, WM_CTLCOLORMSGBOX + HIWORD(lParam),
+                            (WPARAM)HDC_32(wParam), (LPARAM)WIN_Handle32( LOWORD(lParam) ),
+                            result, arg );
+        break;
+    case WM_GETTEXT:
+    case WM_SETTEXT:
+    case WM_WININICHANGE:
+    case WM_DEVMODECHANGE:
+    case WM_ASKCBFORMATNAME:
+    case WM_NOTIFY:
+        ret = callback( hwnd32, msg, wParam, (LPARAM)MapSL(lParam), result, arg );
+        break;
+    case WM_MENUCHAR:
+        ret = callback( hwnd32, msg, MAKEWPARAM( wParam, LOWORD(lParam) ),
+                        (LPARAM)HMENU_32(HIWORD(lParam)), result, arg );
+        break;
+    case WM_MENUSELECT:
+        if((LOWORD(lParam) & MF_POPUP) && (LOWORD(lParam) != 0xFFFF))
+        {
+            HMENU hmenu = HMENU_32(HIWORD(lParam));
+            UINT pos = MENU_FindSubMenu( &hmenu, HMENU_32(wParam) );
+            if (pos == 0xffff) pos = 0;  /* NO_SELECTED_ITEM */
+            wParam = pos;
+        }
+        ret = callback( hwnd32, msg, MAKEWPARAM( wParam, LOWORD(lParam) ),
+                        (LPARAM)HMENU_32(HIWORD(lParam)), result, arg );
+        break;
+    case WM_PARENTNOTIFY:
+        if ((wParam == WM_CREATE) || (wParam == WM_DESTROY))
+            ret = callback( hwnd32, msg, MAKEWPARAM( wParam, HIWORD(lParam) ),
+                            (LPARAM)WIN_Handle32( LOWORD(lParam) ), result, arg );
+        else
+            ret = callback( hwnd32, msg, wParam, lParam, result, arg );
+        break;
+    case WM_ACTIVATEAPP:
+        /* We need this when SetActiveWindow sends a Sendmessage16() to
+         * a 32bit window. Might be superflous with 32bit interprocess
+         * message queues. */
+        ret = callback( hwnd32, msg, wParam, HTASK_32(lParam), result, arg );
+        break;
     case WM_DDE_INITIATE:
     case WM_DDE_TERMINATE:
     case WM_DDE_UNADVISE:
@@ -2359,15 +2334,12 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
         lParam = convert_handle_16_to_32( lParam, GMEM_DDESHARE );
         ret = callback( hwnd32, msg, wParam, lParam, result, arg );
         break; /* FIXME don't know how to free allocated memory (handle) !! */
+    case WM_PAINTCLIPBOARD:
+    case WM_SIZECLIPBOARD:
+        FIXME_(msg)( "message %04x needs translation\n", msg );
+        break;
     default:
-        {
-            UINT msg32;
-            WPARAM wParam32;
-            if (WINPROC_MapMsg16To32A( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) != -1)
-            {
-                ret = callback( hwnd32, msg32, wParam32, lParam, result, arg );
-            }
-        }
+        ret = callback( hwnd32, msg, wParam, lParam, result, arg );
         break;
     }
     return ret;
