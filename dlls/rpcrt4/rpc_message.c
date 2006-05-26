@@ -754,8 +754,8 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
     break;
   case PKT_FAULT:
     pMsg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
-    ERR ("we got fault packet with status %lx\n", hdr->fault.status);
-    status = RPC_S_CALL_FAILED; /* ? */
+    ERR ("we got fault packet with status 0x%lx\n", hdr->fault.status);
+    status = hdr->fault.status; /* FIXME: do translation from nca error codes */
     goto fail;
   default:
     WARN("bad packet type %d\n", hdr->common.ptype);
