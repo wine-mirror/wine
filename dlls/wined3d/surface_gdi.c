@@ -1337,64 +1337,100 @@ IWineGDISurfaceImpl_LoadTexture(IWineD3DSurface *iface)
  *  WINED3D_OK on success
  *
  *****************************************************************************/
+static int get_shift(DWORD color_mask) {
+    int shift = 0;
+    while (color_mask > 0xFF) {
+        color_mask >>= 1;
+        shift += 1;
+    }
+    while ((color_mask & 0x80) == 0) {
+        color_mask <<= 1;
+        shift -= 1;
+    }
+    return shift;
+}
+
+
 HRESULT WINAPI
 IWineGDISurfaceImpl_SaveSnapshot(IWineD3DSurface *iface,
 const char* filename)
 {
     FILE* f = NULL;
-    UINT i = 0, y = 0;
+    UINT y = 0, x = 0;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    BYTE *textureRow;
-    DWORD color;
+    static char *output = NULL;
+    static int size = 0;
+
+    if (This->pow2Width > size) {
+        output = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->pow2Width * 3);
+        size = This->pow2Width;
+    }
+
 
     f = fopen(filename, "w+");
-    if (NULL == f)
-    {
+    if (NULL == f) {
         ERR("opening of %s failed with\n", filename);
         return WINED3DERR_INVALIDCALL;
     }
-    /* Save the dat out to a TGA file because 
-     * 1: it's an easy raw format,
-     * 2: it supports an alpha chanel
-     */
-    TRACE("(%p) opened %s with format %s\n", This, filename, debug_d3dformat(This->resource.format));
-    /* TGA header */
-    fputc(0,f);
-    fputc(0,f);
-    fputc(2,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    /* short width*/
-    fwrite(&This->currentDesc.Width,2,1,f);
-    /* short height */
-    fwrite(&This->currentDesc.Height,2,1,f);
-    /* format rgba */
-    fputc(0x20,f);
-    fputc(0x28,f);
-    /* raw data */
-    /* if  the data is upside down if we've fetched it from a back buffer,
-     * so it needs flipping again to make it the correct way u
-     */
+    fprintf(f, "P6\n%d %d\n255\n", This->pow2Width, This->pow2Height);
 
-    textureRow = This->resource.allocatedMemory;
-    for (y = 0 ; y < This->currentDesc.Height; y++) {
-        for (i = 0; i < This->currentDesc.Width;  i++) {
-            color = *((DWORD*)textureRow);
-            fputc((color >> 16) & 0xFF, f); /* B */
-            fputc((color >>  8) & 0xFF, f); /* G */
-            fputc((color >>  0) & 0xFF, f); /* R */
-            fputc((color >> 24) & 0xFF, f); /* A */
-            textureRow += 4;
+    if (This->resource.format == WINED3DFMT_P8) {
+        unsigned char table[256][3];
+        int i;
+
+        if (This->palette == NULL) {
+            fclose(f);
+            return WINED3DERR_INVALIDCALL;
+        }
+        for (i = 0; i < 256; i++) {
+            table[i][0] = This->palette->palents[i].peRed;
+            table[i][1] = This->palette->palents[i].peGreen;
+            table[i][2] = This->palette->palents[i].peBlue;
+        }
+        for (y = 0; y < This->pow2Height; y++) {
+            unsigned char *src = (unsigned char *) This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
+            for (x = 0; x < This->pow2Width; x++) {
+                unsigned char color = *src;
+                src += 1;
+
+                output[3 * x + 0] = table[color][0];
+                output[3 * x + 1] = table[color][1];
+                output[3 * x + 2] = table[color][2];
+            }
+            fwrite(output, 3 * This->pow2Width, 1, f);
+        }
+    } else {
+        int red_shift, green_shift, blue_shift, pix_width;
+
+        pix_width = This->bytesPerPixel;
+
+        red_shift = get_shift(get_bitmask_red(This->resource.format));
+        green_shift = get_shift(get_bitmask_green(This->resource.format));
+        blue_shift = get_shift(get_bitmask_blue(This->resource.format));
+
+        for (y = 0; y < This->pow2Height; y++) {
+            unsigned char *src = (unsigned char *) This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
+            for (x = 0; x < This->pow2Width; x++) {	    
+                unsigned int color;
+                unsigned int comp;
+                int i;
+
+                color = 0;
+                for (i = 0; i < pix_width; i++) {
+                    color |= src[i] << (8 * i);
+                }
+                src += 1 * pix_width;
+
+                comp = color & get_bitmask_red(This->resource.format);
+                output[3 * x + 0] = red_shift > 0 ? comp >> red_shift : comp << -red_shift;
+                comp = color & get_bitmask_green(This->resource.format);
+                output[3 * x + 1] = green_shift > 0 ? comp >> green_shift : comp << -green_shift;
+                comp = color & get_bitmask_blue(This->resource.format);
+                output[3 * x + 2] = blue_shift > 0 ? comp >> blue_shift : comp << -blue_shift;
+            }
+            fwrite(output, 3 * This->pow2Width, 1, f);
         }
     }
-    TRACE("Closing file\n");
     fclose(f);
     return WINED3D_OK;
 }
