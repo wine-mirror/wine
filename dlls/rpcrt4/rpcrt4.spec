@@ -221,12 +221,12 @@
 @ stdcall NdrFixedArrayMemorySize(ptr ptr)
 @ stdcall NdrFixedArrayUnmarshall(ptr ptr ptr long)
 @ stdcall NdrFreeBuffer(ptr)
-@ stub NdrFullPointerFree
-@ stub NdrFullPointerInsertRefId
-@ stub NdrFullPointerQueryPointer
-@ stub NdrFullPointerQueryRefId
-@ stub NdrFullPointerXlatFree
-@ stub NdrFullPointerXlatInit
+@ stdcall NdrFullPointerFree(ptr ptr)
+@ stdcall NdrFullPointerInsertRefId(ptr long ptr)
+@ stdcall NdrFullPointerQueryPointer(ptr ptr long ptr)
+@ stdcall NdrFullPointerQueryRefId(ptr long long ptr)
+@ stdcall NdrFullPointerXlatFree(ptr)
+@ stdcall NdrFullPointerXlatInit(long long) 
 @ stdcall NdrGetBuffer(ptr long ptr)
 @ stub NdrGetDcomProtocolVersion
 @ stub NdrGetPartialBuffer

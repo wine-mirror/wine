@@ -13,6 +13,7 @@ C_SRCS = \
 	cproxy.c \
 	cpsf.c \
 	cstub.c \
+	ndr_fullpointer.c \
 	ndr_marshall.c \
 	ndr_midl.c \
 	ndr_ole.c \
