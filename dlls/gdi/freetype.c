@@ -213,7 +213,7 @@ typedef struct tagFace {
 
 typedef struct tagFamily {
     struct list entry;
-    WCHAR *FamilyName;
+    const WCHAR *FamilyName;
     struct list faces;
 } Family;
 
@@ -275,7 +275,7 @@ struct tagGdiFont {
 
 typedef struct {
     struct list entry;
-    WCHAR *font_name;
+    const WCHAR *font_name;
     struct list links;
 } SYSTEM_LINKS;
 
@@ -319,7 +319,7 @@ static const WCHAR FixedSys_Value[] = {'F','I','X','E','D','F','O','N','.','F','
 static const WCHAR System_Value[] = {'F','O','N','T','S','.','F','O','N','\0'};
 static const WCHAR OEMFont_Value[] = {'O','E','M','F','O','N','T','.','F','O','N','\0'};
 
-static const WCHAR const *SystemFontValues[4] = {
+static const WCHAR * const SystemFontValues[4] = {
     System_Value,
     OEMFont_Value,
     FixedSys_Value,
@@ -348,7 +348,7 @@ static const WCHAR VietnameseW[] = {'V','i','e','t','n','a','m','e','s','e','\0'
 static const WCHAR WesternW[] = {'W','e','s','t','e','r','n','\0'};
 static const WCHAR OEM_DOSW[] = {'O','E','M','/','D','O','S','\0'};
 
-static const WCHAR *ElfScriptsW[32] = { /* these are in the order of the fsCsb[0] bits */
+static const WCHAR * const ElfScriptsW[32] = { /* these are in the order of the fsCsb[0] bits */
     WesternW, /*00*/
     Central_EuropeanW,
     CyrillicW,
@@ -447,7 +447,7 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
 {
     Family *family;
     Face *face;
-    char *file;
+    const char *file;
     DWORD len = WideCharToMultiByte(CP_UNIXCP, 0, file_name, -1, NULL, 0, NULL, NULL);
     char *file_nameA = HeapAlloc(GetProcessHeap(), 0, len);
     Face *ret = NULL;
@@ -1256,7 +1256,7 @@ static void load_system_fonts(void)
 {
     HKEY hkey;
     WCHAR data[MAX_PATH], windowsdir[MAX_PATH], pathW[MAX_PATH];
-    const WCHAR **value;
+    const WCHAR * const *value;
     DWORD dlen, type;
     static const WCHAR fmtW[] = {'%','s','\\','%','s','\0'};
     char *unixname;
