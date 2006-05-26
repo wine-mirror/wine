@@ -367,6 +367,8 @@ static void CREATESTRUCT16to32A( const CREATESTRUCT16* from, CREATESTRUCTA *to )
     to->x              = from->x;
     to->style          = from->style;
     to->dwExStyle      = from->dwExStyle;
+    to->lpszName       = MapSL(from->lpszName);
+    to->lpszClass      = MapSL(from->lpszClass);
 }
 
 /* The strings are not copied */
@@ -390,6 +392,8 @@ static void MDICREATESTRUCT16to32A( const MDICREATESTRUCT16* from, MDICREATESTRU
     to->cy     = from->cy;
     to->style  = from->style;
     to->lParam = from->lParam;
+    to->szTitle = MapSL(from->szTitle);
+    to->szClass = MapSL(from->szClass);
 }
 
 static WPARAM map_wparam_char_AtoW( WPARAM wParam, DWORD len )
@@ -832,18 +836,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
     case WM_ASKCBFORMATNAME:
         *plparam = (LPARAM)MapSL(*plparam);
         return 0;
-    case WM_MDICREATE:
-        {
-            MDICREATESTRUCT16 *cs16 = MapSL(*plparam);
-            MDICREATESTRUCTA *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) + sizeof(LPARAM) );
-            if (!cs) return -1;
-            MDICREATESTRUCT16to32A( cs16, cs );
-            cs->szTitle = MapSL(cs16->szTitle);
-            cs->szClass = MapSL(cs16->szClass);
-            *(LPARAM *)(cs + 1) = *plparam;  /* Store the previous lParam */
-            *plparam = (LPARAM)cs;
-        }
-        return 1;
     case WM_MDIGETACTIVE:
         *plparam = (LPARAM)HeapAlloc( GetProcessHeap(), 0, sizeof(BOOL) );
         *(BOOL*)(*plparam) = 0;
@@ -904,36 +896,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
             }
             *(LPARAM *)(nc + 1) = *plparam;  /* Store the previous lParam */
             *plparam = (LPARAM)nc;
-        }
-        return 1;
-    case WM_NCCREATE:
-    case WM_CREATE:
-        {
-            CREATESTRUCT16 *cs16 = MapSL(*plparam);
-            CREATESTRUCTA *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) + sizeof(LPARAM) );
-            if (!cs) return -1;
-            CREATESTRUCT16to32A( cs16, cs );
-            cs->lpszName  = MapSL(cs16->lpszName);
-            cs->lpszClass = MapSL(cs16->lpszClass);
-
-            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-            {
-                MDICREATESTRUCT16 *mdi_cs16;
-                MDICREATESTRUCTA *mdi_cs = HeapAlloc(GetProcessHeap(), 0, sizeof(*mdi_cs));
-                if (!mdi_cs)
-                {
-                    HeapFree(GetProcessHeap(), 0, cs);
-                    return -1;
-                }
-                mdi_cs16 = (MDICREATESTRUCT16 *)MapSL(cs16->lpCreateParams);
-                MDICREATESTRUCT16to32A(mdi_cs16, mdi_cs);
-                mdi_cs->szTitle = MapSL(mdi_cs16->szTitle);
-                mdi_cs->szClass = MapSL(mdi_cs16->szClass);
-
-                cs->lpCreateParams = mdi_cs;
-            }
-            *(LPARAM *)(cs + 1) = *plparam;  /* Store the previous lParam */
-            *plparam = (LPARAM)cs;
         }
         return 1;
     case WM_PARENTNOTIFY:
@@ -1094,14 +1056,6 @@ static LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPAR
             HeapFree( GetProcessHeap(), 0, mmi );
         }
         break;
-    case WM_MDICREATE:
-        {
-            MDICREATESTRUCTA *cs = (MDICREATESTRUCTA *)lParam;
-            lParam = *(LPARAM *)(cs + 1);
-            MDICREATESTRUCT32Ato16( cs, MapSL(lParam) );
-            HeapFree( GetProcessHeap(), 0, cs );
-        }
-        break;
     case WM_MDIGETACTIVE:
         result = MAKELONG( LOWORD(result), (BOOL16)(*(BOOL *)lParam) );
         HeapFree( GetProcessHeap(), 0, (BOOL *)lParam );
@@ -1133,19 +1087,6 @@ static LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPAR
                 }
             }
             HeapFree( GetProcessHeap(), 0, nc );
-        }
-        break;
-    case WM_NCCREATE:
-    case WM_CREATE:
-        {
-            CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
-            lParam = *(LPARAM *)(cs + 1);
-            CREATESTRUCT32Ato16( cs, MapSL(lParam) );
-
-            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-                HeapFree(GetProcessHeap(), 0, cs->lpCreateParams);
-
-            HeapFree( GetProcessHeap(), 0, cs );
         }
         break;
     case WM_WINDOWPOSCHANGING:
@@ -2477,19 +2418,54 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT16 msg,
                                  WPARAM16 wParam, LPARAM lParam, LRESULT *result, void *arg )
 {
-    LRESULT ret;
-    UINT msg32;
-    WPARAM wParam32;
+    LRESULT ret = 0;
     HWND hwnd32 = WIN_Handle32( hwnd );
 
     TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                  hwnd32, SPY_GetMsgName(msg, hwnd32), wParam, lParam);
 
-    if (WINPROC_MapMsg16To32A( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) == -1)
-        return 0;
+    switch(msg)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+        {
+            CREATESTRUCT16 *cs16 = MapSL(lParam);
+            CREATESTRUCTA cs;
+            MDICREATESTRUCTA mdi_cs;
 
-    ret = callback( hwnd32, msg32, wParam32, lParam, result, arg );
-    *result = WINPROC_UnmapMsg16To32A( hwnd32, msg32, wParam32, lParam, *result );
+            CREATESTRUCT16to32A( cs16, &cs );
+            if (GetWindowLongW(hwnd32, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            {
+                MDICREATESTRUCT16 *mdi_cs16 = MapSL(cs16->lpCreateParams);
+                MDICREATESTRUCT16to32A(mdi_cs16, &mdi_cs);
+                cs.lpCreateParams = &mdi_cs;
+            }
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&cs, result, arg );
+            CREATESTRUCT32Ato16( &cs, cs16 );
+        }
+        break;
+    case WM_MDICREATE:
+        {
+            MDICREATESTRUCT16 *cs16 = MapSL(lParam);
+            MDICREATESTRUCTA cs;
+
+            MDICREATESTRUCT16to32A( cs16, &cs );
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&cs, result, arg );
+            MDICREATESTRUCT32Ato16( &cs, cs16 );
+        }
+        break;
+    default:
+        {
+            UINT msg32;
+            WPARAM wParam32;
+            if (WINPROC_MapMsg16To32A( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) != -1)
+            {
+                ret = callback( hwnd32, msg32, wParam32, lParam, result, arg );
+                *result = WINPROC_UnmapMsg16To32A( hwnd32, msg32, wParam32, lParam, *result );
+            }
+        }
+        break;
+    }
     return ret;
 }
 
