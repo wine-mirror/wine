@@ -878,7 +878,10 @@ BOOL WINAPI FGetComponentPath(LPCSTR component, LPCSTR qualifier, LPSTR dll_path
                 if (pMsiProvideQualifiedComponentA(component, qualifier,
                         install ? INSTALLMODE_DEFAULT : INSTALLMODE_EXISTING,
                         dll_path, &dll_path_length) == ERROR_SUCCESS)
+                {
                     ret = TRUE;
+                    break;
+                }
 
                 if (qualifier != lcid_ver) break;
             }
