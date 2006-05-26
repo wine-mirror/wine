@@ -760,16 +760,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
         *pwparam32 = (WPARAM)HDC_32(wParam16);
         *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
         return 0;
-    case WM_COPYDATA:
-        {
-            PCOPYDATASTRUCT16 pcds16 =  MapSL(*plparam);
-            PCOPYDATASTRUCT pcds = HeapAlloc ( GetProcessHeap(), 0, sizeof(*pcds));
-            pcds->dwData = pcds16->dwData;
-            pcds->cbData = pcds16->cbData;
-            pcds->lpData = MapSL( pcds16->lpData);
-            *plparam = (LPARAM)pcds;
-        }
-        return 1;
     case WM_GETTEXT:
     case WM_SETTEXT:
     case WM_WININICHANGE:
@@ -817,24 +807,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
             *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
         }
         return 0;
-    case WM_GETDLGCODE:
-        if (*plparam)
-        {
-            LPMSG16 msg16 = MapSL(*plparam);
-            LPMSG msg32 = HeapAlloc( GetProcessHeap(), 0, sizeof(MSG) );
-
-            if (!msg32) return -1;
-            msg32->hwnd = WIN_Handle32( msg16->hwnd );
-            msg32->message = msg16->message;
-            msg32->wParam = msg16->wParam;
-            msg32->lParam = msg16->lParam;
-            msg32->time = msg16->time;
-            msg32->pt.x = msg16->pt.x;
-            msg32->pt.y = msg16->pt.y;
-            *plparam = (LPARAM)msg32;
-            return 1;
-        }
-        else return 0;
     case WM_NOTIFY:
         *plparam = (LPARAM)MapSL(*plparam);
         return 0;
@@ -844,16 +816,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
          * message queues. */
         if (*plparam) *plparam = HTASK_32( *plparam );
         return 0;
-    case WM_NEXTMENU:
-        {
-            MDINEXTMENU *next = HeapAlloc( GetProcessHeap(), 0, sizeof(*next) );
-            if (!next) return -1;
-            next->hmenuIn = (HMENU)*plparam;
-            next->hmenuNext = 0;
-            next->hwndNext = 0;
-            *plparam = (LPARAM)next;
-            return 1;
-        }
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %04x needs translation\n",msg16 );
@@ -933,26 +895,9 @@ static LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPAR
 {
     switch(msg)
     {
-    case WM_COPYDATA:
-        HeapFree( GetProcessHeap(), 0, (LPVOID)lParam );
-        break;
     case WM_MDIGETACTIVE:
         result = MAKELONG( LOWORD(result), (BOOL16)(*(BOOL *)lParam) );
         HeapFree( GetProcessHeap(), 0, (BOOL *)lParam );
-        break;
-    case WM_GETDLGCODE:
-        if (lParam)
-        {
-            LPMSG msg32 = (LPMSG)lParam;
-            HeapFree( GetProcessHeap(), 0, msg32 );
-        }
-        break;
-    case WM_NEXTMENU:
-        {
-            MDINEXTMENU *next = (MDINEXTMENU *)lParam;
-            result = MAKELONG( HMENU_16(next->hmenuNext), HWND_16(next->hwndNext) );
-            HeapFree( GetProcessHeap(), 0, next );
-        }
         break;
     }
     return result;
@@ -2400,6 +2345,43 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             dis.rcItem.right  = dis16->rcItem.right;
             dis.rcItem.bottom = dis16->rcItem.bottom;
             ret = callback( hwnd32, msg, wParam, (LPARAM)&dis, result, arg );
+        }
+        break;
+    case WM_COPYDATA:
+        {
+            COPYDATASTRUCT16 *cds16 = MapSL(lParam);
+            COPYDATASTRUCT cds;
+            cds.dwData = cds16->dwData;
+            cds.cbData = cds16->cbData;
+            cds.lpData = MapSL(cds16->lpData);
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&cds, result, arg );
+        }
+        break;
+    case WM_GETDLGCODE:
+        if (lParam)
+        {
+            MSG16 *msg16 = MapSL(lParam);
+            MSG msg32;
+            msg32.hwnd    = WIN_Handle32( msg16->hwnd );
+            msg32.message = msg16->message;
+            msg32.wParam  = msg16->wParam;
+            msg32.lParam  = msg16->lParam;
+            msg32.time    = msg16->time;
+            msg32.pt.x    = msg16->pt.x;
+            msg32.pt.y    = msg16->pt.y;
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&msg32, result, arg );
+        }
+        else
+            ret = callback( hwnd32, msg, wParam, lParam, result, arg );
+        break;
+    case WM_NEXTMENU:
+        {
+            MDINEXTMENU next;
+            next.hmenuIn   = (HMENU)lParam;
+            next.hmenuNext = 0;
+            next.hwndNext  = 0;
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&next, result, arg );
+            *result = MAKELONG( HMENU_16(next.hmenuNext), HWND_16(next.hwndNext) );
         }
         break;
     default:
