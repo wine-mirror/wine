@@ -489,11 +489,9 @@ PFORMAT_STRING ComputeConformanceOrVariance(
 
 done_conf_grab:
   switch (pFormat[1]) {
+  case RPC_FC_DEREFERENCE: /* already handled */
   case 0: /* no op */
     *pCount = data;
-    break;
-  case RPC_FC_DEREFERENCE:
-    /* already handled */
     break;
   case RPC_FC_ADD_1:
     *pCount = data + 1;
