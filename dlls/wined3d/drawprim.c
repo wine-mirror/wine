@@ -1193,7 +1193,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
         }
 
         /* Select the correct texture stage */
-        GL_EXTCALL(glClientActiveTextureARB(textureNo));
+        GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo));
         if (This->stateBlock->textures[textureNo] != NULL) {
             int coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
             TRACE("Setting up texture %u, cordindx %u, data %p\n", textureNo, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
@@ -1201,12 +1201,12 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
             if (coordIdx >= MAX_TEXTURES) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                GL_EXTCALL(glMultiTexCoord4fARB(textureNo, 0, 0, 0, 1));
+                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
 
             } else if (sd->u.s.texCoords[coordIdx].lpData == NULL) {
                 VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                GL_EXTCALL(glMultiTexCoord4fARB(textureNo, 0, 0, 0, 1));
+                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
 
             } else {
 
@@ -1217,7 +1217,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
         } else {
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            GL_EXTCALL(glMultiTexCoord4fARB(textureNo, 0, 0, 0, 1));
+            GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
         }
     }
 }
