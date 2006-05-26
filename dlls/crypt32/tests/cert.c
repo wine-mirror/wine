@@ -836,6 +836,73 @@ void testCompareCert(void)
     ok(!ret, "Expected certs not to be equal\n");
 }
 
+static const BYTE bigCertWithDifferentSubject[] = { 0x30, 0x7a, 0x02, 0x01, 0x02,
+ 0x30, 0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55,
+ 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67,
+ 0x00, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31,
+ 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31,
+ 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15,
+ 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c,
+ 0x65, 0x78, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06,
+ 0x00, 0x03, 0x01, 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55,
+ 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02,
+ 0x01, 0x01 };
+
+static void testVerifySubjectCert(void)
+{
+    BOOL ret;
+    DWORD flags;
+    PCCERT_CONTEXT context1, context2;
+
+    /* Crashes
+    ret = CertVerifySubjectCertificateContext(NULL, NULL, NULL);
+     */
+    flags = 0;
+    ret = CertVerifySubjectCertificateContext(NULL, NULL, &flags);
+    ok(ret, "CertVerifySubjectCertificateContext failed; %08lx\n",
+     GetLastError());
+    flags = CERT_STORE_NO_CRL_FLAG;
+    ret = CertVerifySubjectCertificateContext(NULL, NULL, &flags);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08lx\n", GetLastError());
+
+    flags = 0;
+    context1 = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert));
+    ret = CertVerifySubjectCertificateContext(NULL, context1, &flags);
+    ok(ret, "CertVerifySubjectCertificateContext failed; %08lx\n",
+     GetLastError());
+    ret = CertVerifySubjectCertificateContext(context1, NULL, &flags);
+    ok(ret, "CertVerifySubjectCertificateContext failed; %08lx\n",
+     GetLastError());
+    ret = CertVerifySubjectCertificateContext(context1, context1, &flags);
+    ok(ret, "CertVerifySubjectCertificateContext failed; %08lx\n",
+     GetLastError());
+
+    context2 = CertCreateCertificateContext(X509_ASN_ENCODING,
+     bigCertWithDifferentSubject, sizeof(bigCertWithDifferentSubject));
+    SetLastError(0xdeadbeef);
+    ret = CertVerifySubjectCertificateContext(context1, context2, &flags);
+    ok(ret, "CertVerifySubjectCertificateContext failed; %08lx\n",
+     GetLastError());
+    flags = CERT_STORE_REVOCATION_FLAG;
+    ret = CertVerifySubjectCertificateContext(context1, context2, &flags);
+    ok(ret, "CertVerifySubjectCertificateContext failed; %08lx\n",
+     GetLastError());
+    ok(flags == (CERT_STORE_REVOCATION_FLAG | CERT_STORE_NO_CRL_FLAG),
+     "Expected CERT_STORE_REVOCATION_FLAG | CERT_STORE_NO_CRL_FLAG, got %08lx\n",
+     flags);
+    flags = CERT_STORE_SIGNATURE_FLAG;
+    ret = CertVerifySubjectCertificateContext(context1, context2, &flags);
+    ok(ret, "CertVerifySubjectCertificateContext failed; %08lx\n",
+     GetLastError());
+    ok(flags == CERT_STORE_SIGNATURE_FLAG,
+     "Expected CERT_STORE_SIGNATURE_FLAG, got %08lx\n", flags);
+    CertFreeCertificateContext(context2);
+
+    CertFreeCertificateContext(context1);
+}
+
 START_TEST(cert)
 {
     init_function_pointers();
@@ -847,4 +914,5 @@ START_TEST(cert)
     testCompareIntegerBlob();
     testComparePublicKeyInfo();
     testCompareCert();
+    testVerifySubjectCert();
 }

@@ -195,8 +195,7 @@ static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
     TRACE("(%p, %ld, %p, %p)\n", context, dwPropId, pvData, pcbData);
 
     if (properties)
-        ret = ContextPropertyList_FindProperty(properties, dwPropId,
-         &blob);
+        ret = ContextPropertyList_FindProperty(properties, dwPropId, &blob);
     else
         ret = FALSE;
     if (ret)
@@ -737,44 +736,69 @@ PCCERT_CONTEXT WINAPI CertGetSubjectCertificateFromStore(HCERTSTORE hCertStore,
      CERT_FIND_SUBJECT_CERT, pCertId, NULL);
 }
 
+BOOL WINAPI CertVerifySubjectCertificateContext(PCCERT_CONTEXT pSubject,
+ PCCERT_CONTEXT pIssuer, DWORD *pdwFlags)
+{
+    static const DWORD supportedFlags = CERT_STORE_REVOCATION_FLAG |
+     CERT_STORE_SIGNATURE_FLAG | CERT_STORE_TIME_VALIDITY_FLAG;
+
+    if (*pdwFlags & ~supportedFlags)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (*pdwFlags & CERT_STORE_REVOCATION_FLAG)
+    {
+        PCCRL_CONTEXT crl = CertFindCRLInStore(pSubject->hCertStore,
+         pSubject->dwCertEncodingType, 0, CRL_FIND_ISSUED_BY, pSubject, NULL);
+
+        if (crl)
+        {
+            FIXME("check CRL for subject\n");
+        }
+        else
+            *pdwFlags |= CERT_STORE_NO_CRL_FLAG;
+    }
+    if (*pdwFlags & CERT_STORE_TIME_VALIDITY_FLAG)
+    {
+        if (0 == CertVerifyTimeValidity(NULL, pSubject->pCertInfo))
+            *pdwFlags &= ~CERT_STORE_TIME_VALIDITY_FLAG;
+    }
+    if (*pdwFlags & CERT_STORE_SIGNATURE_FLAG)
+    {
+        if (CryptVerifyCertificateSignatureEx(0, pSubject->dwCertEncodingType,
+         CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT, (void *)pSubject,
+         CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)pIssuer, 0, NULL))
+            *pdwFlags &= ~CERT_STORE_SIGNATURE_FLAG;
+    }
+    return TRUE;
+}
+
 PCCERT_CONTEXT WINAPI CertGetIssuerCertificateFromStore(HCERTSTORE hCertStore,
  PCCERT_CONTEXT pSubjectContext, PCCERT_CONTEXT pPrevIssuerContext,
  DWORD *pdwFlags)
 {
-    static const DWORD supportedFlags = CERT_STORE_REVOCATION_FLAG |
-     CERT_STORE_SIGNATURE_FLAG | CERT_STORE_TIME_VALIDITY_FLAG;
     PCCERT_CONTEXT ret;
 
     TRACE("(%p, %p, %p, %08lx)\n", hCertStore, pSubjectContext,
      pPrevIssuerContext, *pdwFlags);
 
-    if (*pdwFlags & ~supportedFlags)
+    if (!pSubjectContext)
     {
         SetLastError(E_INVALIDARG);
         return NULL;
     }
+
     ret = CertFindCertificateInStore(hCertStore,
      pSubjectContext->dwCertEncodingType, 0, CERT_FIND_ISSUER_OF,
      pSubjectContext, pPrevIssuerContext);
     if (ret)
     {
-        if (*pdwFlags & CERT_STORE_REVOCATION_FLAG)
+        if (!CertVerifySubjectCertificateContext(pSubjectContext, ret,
+         pdwFlags))
         {
-            FIXME("revocation check requires CRL support\n");
-            *pdwFlags |= CERT_STORE_NO_CRL_FLAG;
-        }
-        if (*pdwFlags & CERT_STORE_TIME_VALIDITY_FLAG)
-        {
-            if (0 == CertVerifyTimeValidity(NULL, pSubjectContext->pCertInfo))
-                *pdwFlags &= ~CERT_STORE_TIME_VALIDITY_FLAG;
-        }
-        if (*pdwFlags & CERT_STORE_SIGNATURE_FLAG)
-        {
-            if (CryptVerifyCertificateSignatureEx(0,
-             pSubjectContext->dwCertEncodingType,
-             CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT, (void *)pSubjectContext,
-             CRYPT_VERIFY_CERT_SIGN_ISSUER_CERT, (void *)ret, 0, NULL))
-                *pdwFlags &= ~CERT_STORE_SIGNATURE_FLAG;
+            CertFreeCertificateContext(ret);
+            ret = NULL;
         }
     }
 

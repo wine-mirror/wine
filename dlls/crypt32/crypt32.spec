@@ -81,10 +81,10 @@
 @ stub CertStrToNameA
 @ stub CertStrToNameW
 @ stub CertVerifyCRLRevocation
-@ stub CertVerifyCRLTimeValidity
+@ stdcall CertVerifyCRLTimeValidity(ptr ptr)
 @ stub CertVerifyCTLUsage
 @ stub CertVerifyRevocation
-@ stub CertVerifySubjectCertificateContext
+@ stdcall CertVerifySubjectCertificateContext(ptr ptr ptr)
 @ stdcall CertVerifyTimeValidity(ptr ptr)
 @ stub CertVerifyValidityNesting
 @ stub CreateFileU

@@ -2840,6 +2840,11 @@ PCERT_EXTENSION WINAPI CertFindExtension(LPCSTR pszObjId, DWORD cExtensions,
  CERT_EXTENSION rgExtensions[]);
 PCERT_RDN_ATTR WINAPI CertFindRDNAttr(LPCSTR pszObjId, PCERT_NAME_INFO pName);
 
+BOOL WINAPI CertVerifySubjectCertificateContext(PCCERT_CONTEXT pSubject,
+ PCCERT_CONTEXT pIssuer, DWORD *pdwFlags);
+
+LONG WINAPI CertVerifyCRLTimeValidity(LPFILETIME pTimeToVerify,
+ PCRL_INFO pCrlInfo);
 LONG WINAPI CertVerifyTimeValidity(LPFILETIME pTimeToVerify,
  PCERT_INFO pCertInfo);
 

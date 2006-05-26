@@ -443,3 +443,26 @@ BOOL WINAPI CertSetCRLContextProperty(PCCRL_CONTEXT pCRLContext,
     TRACE("returning %d\n", ret);
     return ret;
 }
+
+LONG WINAPI CertVerifyCRLTimeValidity(LPFILETIME pTimeToVerify,
+ PCRL_INFO pCrlInfo)
+{
+    FILETIME fileTime;
+    LONG ret;
+
+    if (!pTimeToVerify)
+    {
+        SYSTEMTIME sysTime;
+
+        GetSystemTime(&sysTime);
+        SystemTimeToFileTime(&sysTime, &fileTime);
+        pTimeToVerify = &fileTime;
+    }
+    if ((ret = CompareFileTime(pTimeToVerify, &pCrlInfo->ThisUpdate)) >= 0)
+    {
+        ret = CompareFileTime(pTimeToVerify, &pCrlInfo->NextUpdate);
+        if (ret < 0)
+            ret = 0;
+    }
+    return ret;
+}
