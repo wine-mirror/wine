@@ -22,7 +22,7 @@
 #define __WINE_CONTROLS_H
 
 #include "winuser.h"
-#include "winproc.h"
+#include "wine/winbase16.h"
 
 /* Built-in class names (see _Undocumented_Windows_ p.418) */
 #define POPUPMENU_CLASS_ATOMA MAKEINTATOMA(32768)  /* PopupMenu */
@@ -45,6 +45,12 @@ struct builtin_class_descr
     HBRUSH    brush;   /* brush or system color */
 };
 
+/* Class functions */
+struct tagCLASS;  /* opaque structure */
+struct tagWND;
+extern void CLASS_RegisterBuiltinClasses(void);
+extern void CLASS_AddWindow( struct tagCLASS *class, struct tagWND *win, BOOL unicode );
+extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 
 /* defwnd proc */
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );

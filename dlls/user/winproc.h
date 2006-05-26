@@ -49,11 +49,4 @@ extern INT_PTR WINPROC_CallDlgProc16( DLGPROC16 func, HWND16 hwnd, UINT16 msg, W
 extern INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 extern INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
-/* Class functions */
-struct tagCLASS;  /* opaque structure */
-struct tagWND;
-extern void CLASS_RegisterBuiltinClasses(void);
-extern void CLASS_AddWindow( struct tagCLASS *class, struct tagWND *win, BOOL unicode );
-extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
-
 #endif  /* __WINE_WINPROC_H */
