@@ -745,22 +745,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
         *pwparam32 = (WPARAM)HDC_32(wParam16);
         *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
         return 0;
-    case WM_COMPAREITEM:
-        {
-            COMPAREITEMSTRUCT16* cis16 = MapSL(*plparam);
-            COMPAREITEMSTRUCT *cis = HeapAlloc(GetProcessHeap(), 0, sizeof(*cis));
-            if (!cis) return -1;
-            cis->CtlType    = cis16->CtlType;
-            cis->CtlID      = cis16->CtlID;
-            cis->hwndItem   = WIN_Handle32( cis16->hwndItem );
-            cis->itemID1    = cis16->itemID1;
-            cis->itemData1  = cis16->itemData1;
-            cis->itemID2    = cis16->itemID2;
-            cis->itemData2  = cis16->itemData2;
-            cis->dwLocaleId = 0;  /* FIXME */
-            *plparam = (LPARAM)cis;
-        }
-        return 1;
     case WM_COPYDATA:
         {
             PCOPYDATASTRUCT16 pcds16 =  MapSL(*plparam);
@@ -769,55 +753,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
             pcds->cbData = pcds16->cbData;
             pcds->lpData = MapSL( pcds16->lpData);
             *plparam = (LPARAM)pcds;
-        }
-        return 1;
-    case WM_DELETEITEM:
-        {
-            DELETEITEMSTRUCT16* dis16 = MapSL(*plparam);
-            DELETEITEMSTRUCT *dis = HeapAlloc(GetProcessHeap(), 0, sizeof(*dis));
-            if (!dis) return -1;
-            dis->CtlType  = dis16->CtlType;
-            dis->CtlID    = dis16->CtlID;
-            dis->hwndItem = WIN_Handle32( dis16->hwndItem );
-            dis->itemData = dis16->itemData;
-            *plparam = (LPARAM)dis;
-        }
-        return 1;
-    case WM_MEASUREITEM:
-        {
-            MEASUREITEMSTRUCT16* mis16 = MapSL(*plparam);
-            MEASUREITEMSTRUCT *mis = HeapAlloc(GetProcessHeap(), 0,
-                                                sizeof(*mis) + sizeof(LPARAM));
-            if (!mis) return -1;
-            mis->CtlType    = mis16->CtlType;
-            mis->CtlID      = mis16->CtlID;
-            mis->itemID     = mis16->itemID;
-            mis->itemWidth  = mis16->itemWidth;
-            mis->itemHeight = mis16->itemHeight;
-            mis->itemData   = mis16->itemData;
-            *(LPARAM *)(mis + 1) = *plparam;  /* Store the previous lParam */
-            *plparam = (LPARAM)mis;
-        }
-        return 1;
-    case WM_DRAWITEM:
-        {
-            DRAWITEMSTRUCT16* dis16 = MapSL(*plparam);
-            DRAWITEMSTRUCT *dis = HeapAlloc(GetProcessHeap(), 0, sizeof(*dis));
-            if (!dis) return -1;
-            dis->CtlType       = dis16->CtlType;
-            dis->CtlID         = dis16->CtlID;
-            dis->itemID        = dis16->itemID;
-            dis->itemAction    = dis16->itemAction;
-            dis->itemState     = dis16->itemState;
-            dis->hwndItem      = (dis->CtlType == ODT_MENU) ? (HWND)HMENU_32(dis16->hwndItem)
-                                                            : WIN_Handle32( dis16->hwndItem );
-            dis->hDC           = HDC_32(dis16->hDC);
-            dis->itemData      = dis16->itemData;
-            dis->rcItem.left   = dis16->rcItem.left;
-            dis->rcItem.top    = dis16->rcItem.top;
-            dis->rcItem.right  = dis16->rcItem.right;
-            dis->rcItem.bottom = dis16->rcItem.bottom;
-            *plparam = (LPARAM)dis;
         }
         return 1;
     case WM_GETMINMAXINFO:
@@ -1031,22 +966,8 @@ static LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPAR
 {
     switch(msg)
     {
-    case WM_COMPAREITEM:
-    case WM_DELETEITEM:
-    case WM_DRAWITEM:
     case WM_COPYDATA:
         HeapFree( GetProcessHeap(), 0, (LPVOID)lParam );
-        break;
-    case WM_MEASUREITEM:
-        {
-            MEASUREITEMSTRUCT16 *mis16;
-            MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)lParam;
-            lParam = *(LPARAM *)(mis + 1);
-            mis16 = MapSL(lParam);
-            mis16->itemWidth  = (UINT16)mis->itemWidth;
-            mis16->itemHeight = (UINT16)mis->itemHeight;
-            HeapFree( GetProcessHeap(), 0, mis );
-        }
         break;
     case WM_GETMINMAXINFO:
         {
@@ -2452,6 +2373,67 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             MDICREATESTRUCT16to32A( cs16, &cs );
             ret = callback( hwnd32, msg, wParam, (LPARAM)&cs, result, arg );
             MDICREATESTRUCT32Ato16( &cs, cs16 );
+        }
+        break;
+    case WM_COMPAREITEM:
+        {
+            COMPAREITEMSTRUCT16* cis16 = MapSL(lParam);
+            COMPAREITEMSTRUCT cis;
+            cis.CtlType    = cis16->CtlType;
+            cis.CtlID      = cis16->CtlID;
+            cis.hwndItem   = WIN_Handle32( cis16->hwndItem );
+            cis.itemID1    = cis16->itemID1;
+            cis.itemData1  = cis16->itemData1;
+            cis.itemID2    = cis16->itemID2;
+            cis.itemData2  = cis16->itemData2;
+            cis.dwLocaleId = 0;  /* FIXME */
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&cis, result, arg );
+        }
+        break;
+    case WM_DELETEITEM:
+        {
+            DELETEITEMSTRUCT16* dis16 = MapSL(lParam);
+            DELETEITEMSTRUCT dis;
+            dis.CtlType  = dis16->CtlType;
+            dis.CtlID    = dis16->CtlID;
+            dis.hwndItem = WIN_Handle32( dis16->hwndItem );
+            dis.itemData = dis16->itemData;
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&dis, result, arg );
+        }
+        break;
+    case WM_MEASUREITEM:
+        {
+            MEASUREITEMSTRUCT16* mis16 = MapSL(lParam);
+            MEASUREITEMSTRUCT mis;
+            mis.CtlType    = mis16->CtlType;
+            mis.CtlID      = mis16->CtlID;
+            mis.itemID     = mis16->itemID;
+            mis.itemWidth  = mis16->itemWidth;
+            mis.itemHeight = mis16->itemHeight;
+            mis.itemData   = mis16->itemData;
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&mis, result, arg );
+            mis16->itemWidth  = (UINT16)mis.itemWidth;
+            mis16->itemHeight = (UINT16)mis.itemHeight;
+        }
+        break;
+    case WM_DRAWITEM:
+        {
+            DRAWITEMSTRUCT16* dis16 = MapSL(lParam);
+            DRAWITEMSTRUCT dis;
+            dis.CtlType       = dis16->CtlType;
+            dis.CtlID         = dis16->CtlID;
+            dis.itemID        = dis16->itemID;
+            dis.itemAction    = dis16->itemAction;
+            dis.itemState     = dis16->itemState;
+            dis.hwndItem      = (dis.CtlType == ODT_MENU) ? (HWND)HMENU_32(dis16->hwndItem)
+                                                          : WIN_Handle32( dis16->hwndItem );
+            dis.hDC           = HDC_32(dis16->hDC);
+            dis.itemData      = dis16->itemData;
+            dis.rcItem.left   = dis16->rcItem.left;
+            dis.rcItem.top    = dis16->rcItem.top;
+            dis.rcItem.right  = dis16->rcItem.right;
+            dis.rcItem.bottom = dis16->rcItem.bottom;
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&dis, result, arg );
         }
         break;
     default:
