@@ -974,13 +974,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             *plparam = MapLS( str );
         }
         return 1;
-    case WM_MDIGETACTIVE:
-        return 1;
-    case WM_MDISETMENU:
-        *plparam   = MAKELPARAM( (HMENU16)LOWORD(wParam32),
-                                 (HMENU16)LOWORD(*plparam) );
-        *pwparam16 = (*plparam == 0);
-        return 0;
     case WM_MENUSELECT:
         if(HIWORD(wParam32) & MF_POPUP)
         {
@@ -994,19 +987,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         /* fall through */
     case WM_MENUCHAR:
         *plparam = MAKELPARAM( HIWORD(wParam32), (HMENU16)*plparam );
-        return 0;
-    case WM_MDIACTIVATE:
-        if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_MDICHILD)
-        {
-            *pwparam16 = ((HWND)*plparam == hwnd);
-            *plparam = MAKELPARAM( (HWND16)LOWORD(*plparam),
-                                   (HWND16)LOWORD(wParam32) );
-        }
-        else
-        {
-            *pwparam16 = HWND_16( (HWND)wParam32 );
-            *plparam = 0;
-        }
         return 0;
     case WM_PARENTNOTIFY:
         if ((LOWORD(wParam32)==WM_CREATE) || (LOWORD(wParam32)==WM_DESTROY))
@@ -1192,10 +1172,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
             lstrcpynA( (LPSTR)lParam16, str, wParam16 );
             HeapFree( GetProcessHeap(), 0, (LPARAM *)str - 1 );
         }
-        break;
-    case WM_MDIGETACTIVE:
-        if (lParam) *(BOOL *)lParam = (BOOL16)HIWORD(*result);
-        *result = (LRESULT)WIN_Handle32( LOWORD(*result) );
         break;
     case WM_NOTIFY:
         UnMapLS(lParam16);
@@ -2121,6 +2097,22 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             UnMapLS( cs.szTitle );
             UnMapLS( cs.szClass );
         }
+        break;
+    case WM_MDIACTIVATE:
+        if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_MDICHILD)
+            ret = callback( HWND_16(hwnd), msg, ((HWND)lParam == hwnd),
+                            MAKELPARAM( LOWORD(lParam), LOWORD(wParam) ), result, arg );
+        else
+            ret = callback( HWND_16(hwnd), msg, HWND_16( (HWND)wParam ), 0, result, arg );
+        break;
+    case WM_MDIGETACTIVE:
+        ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+        if (lParam) *(BOOL *)lParam = (BOOL16)HIWORD(*result);
+        *result = (LRESULT)WIN_Handle32( LOWORD(*result) );
+        break;
+    case WM_MDISETMENU:
+        ret = callback( HWND_16(hwnd), msg, (lParam == 0),
+                        MAKELPARAM( LOWORD(wParam), LOWORD(lParam) ), result, arg );
         break;
     case WM_GETMINMAXINFO:
         {
