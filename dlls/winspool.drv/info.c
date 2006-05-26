@@ -1825,6 +1825,14 @@ end:
 
 /*****************************************************************************
  *          GetPrintProcessorDirectoryA  [WINSPOOL.@]
+ *
+ * Return the PATH for the Print-Processors
+ *
+ * See GetPrintProcessorDirectoryW.
+ *
+ * NOTES
+ * On NT, the returned ANSI-Data need the same Size as the Unicode-Version
+ *
  */
 BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR env,
                                         DWORD level,  LPBYTE Info,
@@ -1837,6 +1845,33 @@ BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR env,
 
 /*****************************************************************************
  *          GetPrintProcessorDirectoryW  [WINSPOOL.@]
+ *
+ * Return the PATH for the Print-Processors
+ *
+ * PARAMS
+ *   server     [I] Servername (NT only) or NULL (local Computer)
+ *   env        [I] Printing-Environment (see below) or NULL (Default)
+ *   level      [I] Structure-Level (must be 1)
+ *   Info       [O] PTR to Buffer that receives the Result
+ *   cbBuf      [I] Size of Buffer at "Info"
+ *   needed     [O] PTR to DWORD that receives the size in Bytes used / 
+ *                  required for the Buffer at "Info"
+ *
+ * RETURNS
+ *   Success: TRUE  and in pcbNeeded the Bytes used in pPrintProcessorInfo
+ *   Failure: FALSE and in pcbNeeded the Bytes required for pPrintProcessorInfo,
+ *   if cbBuf is too small
+ * 
+ *   Native Values returned in pPrintProcessorInfo on Success:
+ *|  NT(Windows NT x86):  "%winsysdir%\\spool\\PRTPROCS\\w32x86" 
+ *|  NT(Windows 4.0):     "%winsysdir%\\spool\\PRTPROCS\\win40" 
+ *|  win9x(Windows 4.0):  "%winsysdir%" 
+ *
+ *   "%winsysdir%" is the Value from GetSystemDirectoryW()
+ *
+ * BUGS
+ *-  Only NULL or "" is supported for pName
+ *
  */
 BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
                                         DWORD level,  LPBYTE Info,
