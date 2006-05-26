@@ -767,15 +767,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
     case WM_ASKCBFORMATNAME:
         *plparam = (LPARAM)MapSL(*plparam);
         return 0;
-    case WM_MDIGETACTIVE:
-        *plparam = (LPARAM)HeapAlloc( GetProcessHeap(), 0, sizeof(BOOL) );
-        *(BOOL*)(*plparam) = 0;
-        return 1;
-    case WM_MDISETMENU:
-        if(wParam16) *pmsg32=WM_MDIREFRESHMENU;
-        *pwparam32 = (WPARAM)HMENU_32(LOWORD(*plparam));
-        *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
-        return 0;
     case WM_MENUCHAR:
         *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
         *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
@@ -790,15 +781,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
         }
         else *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
         *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
-        return 0;
-    case WM_MDIACTIVATE:
-        if( *plparam )
-        {
-            *pwparam32 = (WPARAM)WIN_Handle32( HIWORD(*plparam) );
-            *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
-        }
-        else /* message sent to MDI client */
-            *pwparam32 = wParam16;
         return 0;
     case WM_PARENTNOTIFY:
         if ((wParam16 == WM_CREATE) || (wParam16 == WM_DESTROY))
@@ -882,25 +864,6 @@ static INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UI
     default:  /* No translation needed */
         return 0;
     }
-}
-
-
-/**********************************************************************
- *	     WINPROC_UnmapMsg16To32A
- *
- * Unmap a message that was mapped from 16- to 32-bit Ansi.
- */
-static LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                                        LRESULT result )
-{
-    switch(msg)
-    {
-    case WM_MDIGETACTIVE:
-        result = MAKELONG( LOWORD(result), (BOOL16)(*(BOOL *)lParam) );
-        HeapFree( GetProcessHeap(), 0, (BOOL *)lParam );
-        break;
-    }
-    return result;
 }
 
 
@@ -2241,6 +2204,25 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             MDICREATESTRUCT32Ato16( &cs, cs16 );
         }
         break;
+    case WM_MDIACTIVATE:
+        if (lParam)
+            ret = callback( hwnd32, msg, (WPARAM)WIN_Handle32( HIWORD(lParam) ),
+                            (LPARAM)WIN_Handle32( LOWORD(lParam) ), result, arg );
+        else /* message sent to MDI client */
+            ret = callback( hwnd32, msg, wParam, lParam, result, arg );
+        break;
+    case WM_MDIGETACTIVE:
+        {
+            BOOL maximized = FALSE;
+            ret = callback( hwnd32, msg, wParam, (LPARAM)&maximized, result, arg );
+            *result = MAKELRESULT( LOWORD(*result), maximized );
+        }
+        break;
+    case WM_MDISETMENU:
+        ret = callback( hwnd32, wParam ? WM_MDIREFRESHMENU : WM_MDISETMENU,
+                        (WPARAM)HMENU_32(LOWORD(lParam)), (LPARAM)HMENU_32(HIWORD(lParam)),
+                        result, arg );
+        break;
     case WM_GETMINMAXINFO:
         {
             MINMAXINFO16 *mmi16 = MapSL(lParam);
@@ -2391,7 +2373,6 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             if (WINPROC_MapMsg16To32A( hwnd32, msg, wParam, &msg32, &wParam32, &lParam ) != -1)
             {
                 ret = callback( hwnd32, msg32, wParam32, lParam, result, arg );
-                *result = WINPROC_UnmapMsg16To32A( hwnd32, msg32, wParam32, lParam, *result );
             }
         }
         break;
