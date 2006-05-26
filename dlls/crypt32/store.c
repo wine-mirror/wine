@@ -47,6 +47,7 @@ static const WINE_CONTEXT_INTERFACE gCertInterface = {
     (AddEncodedContextToStoreFunc)CertAddEncodedCertificateToStore,
     (DuplicateContextFunc)CertDuplicateCertificateContext,
     (EnumContextsInStoreFunc)CertEnumCertificatesInStore,
+    (EnumPropertiesFunc)CertEnumCertificateContextProperties,
     (GetContextPropertyFunc)CertGetCertificateContextProperty,
     (SetContextPropertyFunc)CertSetCertificateContextProperty,
     (SerializeElementFunc)CertSerializeCertificateStoreElement,
@@ -61,6 +62,7 @@ static const WINE_CONTEXT_INTERFACE gCRLInterface = {
     (AddEncodedContextToStoreFunc)CertAddEncodedCRLToStore,
     (DuplicateContextFunc)CertDuplicateCRLContext,
     (EnumContextsInStoreFunc)CertEnumCRLsInStore,
+    (EnumPropertiesFunc)CertEnumCRLContextProperties,
     (GetContextPropertyFunc)CertGetCRLContextProperty,
     (SetContextPropertyFunc)CertSetCRLContextProperty,
     (SerializeElementFunc)CertSerializeCRLStoreElement,
@@ -75,6 +77,7 @@ static const WINE_CONTEXT_INTERFACE gCTLInterface = {
     (AddEncodedContextToStoreFunc)CertAddEncodedCTLToStore,
     (DuplicateContextFunc)CertDuplicateCTLContext,
     (EnumContextsInStoreFunc)CertEnumCTLsInStore,
+    (EnumPropertiesFunc)CertEnumCTLContextProperties,
     (GetContextPropertyFunc)CertGetCTLContextProperty,
     (SetContextPropertyFunc)CertSetCTLContextProperty,
     (SerializeElementFunc)CertSerializeCTLStoreElement,
@@ -2238,6 +2241,13 @@ BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
             ret = TRUE;
     }
     return ret;
+}
+
+DWORD WINAPI CertEnumCTLContextProperties(PCCTL_CONTEXT pCTLContext,
+ DWORD dwPropId)
+{
+    FIXME("(%p, %ld): stub\n", pCTLContext, dwPropId);
+    return 0;
 }
 
 BOOL WINAPI CertGetCTLContextProperty(PCCTL_CONTEXT pCTLContext,

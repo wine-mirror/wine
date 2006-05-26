@@ -56,6 +56,7 @@ typedef BOOL (WINAPI *AddEncodedContextToStoreFunc)(HCERTSTORE hCertStore,
 typedef const void *(WINAPI *DuplicateContextFunc)(const void *context);
 typedef const void *(WINAPI *EnumContextsInStoreFunc)(HCERTSTORE hCertStore,
  const void *pPrevContext);
+typedef DWORD (WINAPI *EnumPropertiesFunc)(const void *context, DWORD dwPropId);
 typedef BOOL (WINAPI *GetContextPropertyFunc)(const void *context,
  DWORD dwPropID, void *pvData, DWORD *pcbData);
 typedef BOOL (WINAPI *SetContextPropertyFunc)(const void *context,
@@ -73,6 +74,7 @@ typedef struct _WINE_CONTEXT_INTERFACE
     AddEncodedContextToStoreFunc addEncodedToStore;
     DuplicateContextFunc         duplicate;
     EnumContextsInStoreFunc      enumContextsInStore;
+    EnumPropertiesFunc           enumProps;
     GetContextPropertyFunc       getProp;
     SetContextPropertyFunc       setProp;
     SerializeElementFunc         serialize;

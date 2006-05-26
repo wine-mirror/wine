@@ -36,45 +36,29 @@ typedef struct _WINE_CERT_PROP_HEADER
     DWORD cb;
 } WINE_CERT_PROP_HEADER, *PWINE_CERT_PROP_HEADER;
 
-BOOL WINAPI CertSerializeCRLStoreElement(PCCRL_CONTEXT pCrlContext,
- DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
-{
-    FIXME("(%p, %08lx, %p, %p): stub\n", pCrlContext, dwFlags, pbElement,
-     pcbElement);
-    return FALSE;
-}
-
-BOOL WINAPI CertSerializeCTLStoreElement(PCCTL_CONTEXT pCtlContext,
- DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
-{
-    FIXME("(%p, %08lx, %p, %p): stub\n", pCtlContext, dwFlags, pbElement,
-     pcbElement);
-    return FALSE;
-}
-
-BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
- DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
+static BOOL CRYPT_SerializeStoreElement(const void *context,
+ const BYTE *encodedContext, DWORD cbEncodedContext, DWORD contextPropID,
+ PCWINE_CONTEXT_INTERFACE contextInterface, DWORD dwFlags, BYTE *pbElement,
+ DWORD *pcbElement)
 {
     BOOL ret;
 
-    TRACE("(%p, %08lx, %p, %p)\n", pCertContext, dwFlags, pbElement,
-     pcbElement);
+    TRACE("(%p, %p, %08lx, %p, %p)\n", context, contextInterface, dwFlags,
+     pbElement, pcbElement);
 
-    if (pCertContext)
+    if (context)
     {
-        DWORD bytesNeeded = sizeof(WINE_CERT_PROP_HEADER) +
-         pCertContext->cbCertEncoded;
+        DWORD bytesNeeded = sizeof(WINE_CERT_PROP_HEADER) + cbEncodedContext;
         DWORD prop = 0;
 
         ret = TRUE;
         do {
-            prop = CertEnumCertificateContextProperties(pCertContext, prop);
+            prop = contextInterface->enumProps(context, prop);
             if (prop)
             {
                 DWORD propSize = 0;
 
-                ret = CertGetCertificateContextProperty(pCertContext,
-                 prop, NULL, &propSize);
+                ret = contextInterface->getProp(context, prop, NULL, &propSize);
                 if (ret)
                     bytesNeeded += sizeof(WINE_CERT_PROP_HEADER) + propSize;
             }
@@ -99,13 +83,13 @@ BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
 
             prop = 0;
             do {
-                prop = CertEnumCertificateContextProperties(pCertContext, prop);
+                prop = contextInterface->enumProps(context, prop);
                 if (prop)
                 {
                     DWORD propSize = 0;
 
-                    ret = CertGetCertificateContextProperty(pCertContext,
-                     prop, NULL, &propSize);
+                    ret = contextInterface->getProp(context, prop, NULL,
+                     &propSize);
                     if (ret)
                     {
                         if (bufSize < propSize)
@@ -118,8 +102,8 @@ BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
                         }
                         if (buf)
                         {
-                            ret = CertGetCertificateContextProperty(
-                             pCertContext, prop, buf, &propSize);
+                            ret = contextInterface->getProp(context, prop, buf,
+                             &propSize);
                             if (ret)
                             {
                                 hdr = (PWINE_CERT_PROP_HEADER)pbElement;
@@ -142,16 +126,40 @@ BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
             CryptMemFree(buf);
 
             hdr = (PWINE_CERT_PROP_HEADER)pbElement;
-            hdr->propID = CERT_CERT_PROP_ID;
+            hdr->propID = contextPropID;
             hdr->unknown = 1;
-            hdr->cb = pCertContext->cbCertEncoded;
+            hdr->cb = cbEncodedContext;
             memcpy(pbElement + sizeof(WINE_CERT_PROP_HEADER),
-             pCertContext->pbCertEncoded, pCertContext->cbCertEncoded);
+             encodedContext, cbEncodedContext);
         }
     }
     else
         ret = FALSE;
     return ret;
+}
+
+BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
+ DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
+{
+    return CRYPT_SerializeStoreElement(pCertContext,
+     pCertContext->pbCertEncoded, pCertContext->cbCertEncoded,
+     CERT_CERT_PROP_ID, pCertInterface, dwFlags, pbElement, pcbElement);
+}
+
+BOOL WINAPI CertSerializeCRLStoreElement(PCCRL_CONTEXT pCrlContext,
+ DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
+{
+    return CRYPT_SerializeStoreElement(pCrlContext,
+     pCrlContext->pbCrlEncoded, pCrlContext->cbCrlEncoded,
+     CERT_CRL_PROP_ID, pCRLInterface, dwFlags, pbElement, pcbElement);
+}
+
+BOOL WINAPI CertSerializeCTLStoreElement(PCCTL_CONTEXT pCtlContext,
+ DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement)
+{
+    return CRYPT_SerializeStoreElement(pCtlContext,
+     pCtlContext->pbCtlEncoded, pCtlContext->cbCtlEncoded,
+     CERT_CTL_PROP_ID, pCRLInterface, dwFlags, pbElement, pcbElement);
 }
 
 /* Looks for the property with ID propID in the buffer buf.  Returns a pointer

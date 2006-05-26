@@ -30,7 +30,7 @@
 @ stdcall CertDuplicateStore(ptr)
 @ stdcall CertEnumCRLContextProperties(ptr long)
 @ stdcall CertEnumCRLsInStore(ptr ptr)
-@ stub CertEnumCTLContextProperties
+@ stdcall CertEnumCTLContextProperties(ptr long)
 @ stdcall CertEnumCTLsInStore(ptr ptr)
 @ stdcall CertEnumCertificateContextProperties(ptr long)
 @ stdcall CertEnumCertificatesInStore(long ptr)
