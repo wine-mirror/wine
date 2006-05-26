@@ -164,6 +164,16 @@ void Context_Release(void *context, size_t contextSize,
         TRACE("%p's ref count is %ld\n", context, base->ref);
 }
 
+void Context_CopyProperties(const void *to, const void *from,
+ size_t contextSize)
+{
+    PCONTEXT_PROPERTY_LIST toProperties, fromProperties;
+
+    toProperties = Context_GetProperties((void *)to, contextSize);
+    fromProperties = Context_GetProperties((void *)from, contextSize);
+    ContextPropertyList_Copy(toProperties, fromProperties);
+}
+
 struct ContextList
 {
     PCWINE_CONTEXT_INTERFACE contextInterface;

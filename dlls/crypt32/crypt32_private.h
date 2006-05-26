@@ -125,6 +125,10 @@ void *Context_GetExtra(const void *context, size_t contextSize);
 /* Gets the context linked to by context, which must be a link context. */
 void *Context_GetLinkedContext(void *context, size_t contextSize);
 
+/* Copies properties from fromContext to toContext. */
+void Context_CopyProperties(const void *to, const void *from,
+ size_t contextSize);
+
 struct _CONTEXT_PROPERTY_LIST;
 typedef struct _CONTEXT_PROPERTY_LIST *PCONTEXT_PROPERTY_LIST;
 
