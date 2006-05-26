@@ -953,16 +953,6 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_VSCROLL:
         *plparam = MAKELPARAM( HIWORD(wParam32), (HWND16)*plparam );
         return 0;
-    case WM_COPYDATA:
-        {
-            PCOPYDATASTRUCT pcds32 = (PCOPYDATASTRUCT) *plparam;
-            PCOPYDATASTRUCT16 pcds = HeapAlloc( GetProcessHeap(), 0, sizeof( *pcds));
-            pcds->dwData = pcds32->dwData;
-            pcds->cbData = pcds32->cbData;
-            pcds->lpData = MapLS( pcds32->lpData);
-            *plparam = MapLS( pcds );
-        }
-        return 1;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
     case WM_CTLCOLORLISTBOX:
@@ -1031,33 +1021,9 @@ static INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_DEVMODECHANGE:
         *plparam = MapLS( (LPSTR)*plparam );
         return 1;
-    case WM_GETDLGCODE:
-         if (*plparam) {
-            LPMSG msg32 = (LPMSG) *plparam;
-            LPMSG16 msg16 = HeapAlloc( GetProcessHeap(), 0, sizeof(MSG16) );
-
-            if (!msg16) return -1;
-            msg16->hwnd = HWND_16( msg32->hwnd );
-            msg16->message = msg32->message;
-            msg16->wParam = msg32->wParam;
-            msg16->lParam = msg32->lParam;
-            msg16->time = msg32->time;
-            msg16->pt.x = msg32->pt.x;
-            msg16->pt.y = msg32->pt.y;
-            *plparam = MapLS( msg16 );
-            return 1;
-        }
-        return 0;
-
     case WM_ACTIVATEAPP:
         if (*plparam) *plparam = HTASK_16( (HANDLE)*plparam );
         return 0;
-    case WM_NEXTMENU:
-        {
-            MDINEXTMENU *next = (MDINEXTMENU *)*plparam;
-            *plparam = (LPARAM)next->hmenuIn;
-            return 1;
-        }
     case WM_PAINT:
         if (IsIconic( hwnd ) && GetClassLongPtrW( hwnd, GCLP_HICON ))
         {
@@ -1184,14 +1150,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
             HeapFree( GetProcessHeap(), 0, ptr );
         }
         break;
-    case WM_COPYDATA:
-        {
-            PCOPYDATASTRUCT16 pcds = MapSL( lParam16 );
-            UnMapLS( lParam16 );
-            UnMapLS( pcds->lpData );
-            HeapFree( GetProcessHeap(), 0, pcds );
-        }
-        break;
     case CB_GETDROPPEDCONTROLRECT:
     case LB_GETITEMRECT:
         {
@@ -1241,22 +1199,6 @@ static void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         break;
     case WM_NOTIFY:
         UnMapLS(lParam16);
-        break;
-    case WM_GETDLGCODE:
-        if (lParam16)
-        {
-            LPMSG16 msg16 = MapSL(lParam16);
-            UnMapLS( lParam16 );
-            HeapFree( GetProcessHeap(), 0, msg16 );
-        }
-        break;
-    case WM_NEXTMENU:
-        {
-            MDINEXTMENU *next = (MDINEXTMENU *)lParam;
-            next->hmenuNext = HMENU_32( LOWORD(*result) );
-            next->hwndNext = WIN_Handle32( HIWORD(*result) );
-            *result = 0;
-        }
         break;
     }
 }
@@ -2299,6 +2241,49 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             UnMapLS( lParam );
             mis32->itemWidth  = mis.itemWidth;
             mis32->itemHeight = mis.itemHeight;
+        }
+        break;
+    case WM_COPYDATA:
+        {
+            COPYDATASTRUCT *cds32 = (COPYDATASTRUCT *)lParam;
+            COPYDATASTRUCT16 cds;
+
+            cds.dwData = cds32->dwData;
+            cds.cbData = cds32->cbData;
+            cds.lpData = MapLS( cds32->lpData );
+            lParam = MapLS( &cds );
+            ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+            UnMapLS( lParam );
+            UnMapLS( cds.lpData );
+        }
+        break;
+    case WM_GETDLGCODE:
+        if (lParam)
+        {
+            MSG *msg32 = (MSG *)lParam;
+            MSG16 msg16;
+
+            msg16.hwnd    = HWND_16( msg32->hwnd );
+            msg16.message = msg32->message;
+            msg16.wParam  = msg32->wParam;
+            msg16.lParam  = msg32->lParam;
+            msg16.time    = msg32->time;
+            msg16.pt.x    = msg32->pt.x;
+            msg16.pt.y    = msg32->pt.y;
+            lParam = MapLS( &msg16 );
+            ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+            UnMapLS( lParam );
+        }
+        else
+            ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+        break;
+    case WM_NEXTMENU:
+        {
+            MDINEXTMENU *next = (MDINEXTMENU *)lParam;
+            ret = callback( HWND_16(hwnd), msg, wParam, (LPARAM)next->hmenuIn, result, arg );
+            next->hmenuNext = HMENU_32( LOWORD(*result) );
+            next->hwndNext  = WIN_Handle32( HIWORD(*result) );
+            *result = 0;
         }
         break;
     default:
