@@ -1282,6 +1282,7 @@ typedef struct SHADER_LIMITS {
     unsigned int constant_float;
     unsigned int constant_bool;
     unsigned int address;
+    unsigned int attributes;
 } SHADER_LIMITS;
 
 /** Keeps track of details for TEX_M#x# shader opcodes which need to 

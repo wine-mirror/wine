@@ -549,8 +549,34 @@ void generate_glsl_declarations(
     shader_reg_maps* reg_maps,
     SHADER_BUFFER* buffer) {
 
+    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    int i;
+
     FIXME("GLSL not fully implemented yet.\n");
 
+    /* Declare the constants (aka uniforms) */
+    shader_addline(buffer, "uniform vec4 C[%u];\n", This->baseShader.limits.constant_float);
+
+    /* Declare address variables */
+    for (i = 0; i < This->baseShader.limits.address; i++) {
+        if (reg_maps->address & (1 << i))
+            shader_addline(buffer, "ivec4 A%ld;\n", i);
+    }
+
+    /* Declare all named attributes (TODO: Add this to the reg_maps
+     * and only declare those that are needed) */
+    for (i = 0; i < This->baseShader.limits.attributes; i++) {
+        shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
+    }
+
+    /* Declare temporary variables */
+    for(i = 0; i < This->baseShader.limits.temporary; i++) {
+        if (reg_maps->temporary & (1 << i))
+            shader_addline(buffer, "vec4 R%lu;\n", i);
+    }
+
+    /* Start the main program */
+    shader_addline(buffer, "void main() {\n");
 }
 
 /** Shared code in order to generate the bulk of the shader string.
@@ -585,7 +611,6 @@ void generate_base_shader(
     /* Pre-declare registers */
     if (wined3d_settings.shader_mode == SHADER_GLSL) {
         generate_glsl_declarations(iface, &reg_maps, buffer);
-        shader_addline(buffer, "void main() {\n");
     } else {
         generate_arb_declarations(iface, &reg_maps, buffer);
     }
@@ -680,8 +705,7 @@ void generate_base_shader(
 /** Prints the GLSL info log which will contain error messages if they exist */
 void print_glsl_info_log(
     WineD3D_GL_Info *gl_info,
-    GLhandleARB obj)
-{
+    GLhandleARB obj) {
     int infologLength = 0;
     char *infoLog;
 
@@ -689,11 +713,13 @@ void print_glsl_info_log(
                GL_OBJECT_INFO_LOG_LENGTH_ARB,
                &infologLength));
 
-    if (infologLength > 0)
+    /* A size of 1 is just a null-terminated string, so the log should be bigger than
+     * that if there are errors. */
+    if (infologLength > 1)
     {
         infoLog = (char *)HeapAlloc(GetProcessHeap(), 0, infologLength);
         GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
-        FIXME("Error received from GLSL shader #%u: %s", obj, debugstr_a(infoLog));
+        FIXME("Error received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
         HeapFree(GetProcessHeap(), 0, infoLog);
     }
 }

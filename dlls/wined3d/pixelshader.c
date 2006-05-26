@@ -941,6 +941,7 @@ void pshader_set_version(
       This->baseShader.version = major * 10 + minor;
       TRACE("ps_%lu_%lu\n", major, minor);
 
+      This->baseShader.limits.attributes = 0;
       This->baseShader.limits.address = 0;
 
       switch (This->baseShader.version) {
@@ -1298,8 +1299,28 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
     buffer.bsize = 0;
     buffer.lineNo = 0;
 
-    /* TODO: Optionally, generate the GLSL shader instead */
-    if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+    if (wined3d_settings.shader_mode == SHADER_GLSL) {
+
+        /* Create the hw GLSL shader object and assign it as the baseShader.prgId */
+        GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
+
+        /* Generate the bulk of the shader code */
+        generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);
+
+        /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
+        if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
+            shader_addline(&buffer, "glFragColor = R0;\n");
+        shader_addline(&buffer, "}\n\0");
+
+        TRACE("Compiling shader object %u\n", shader_obj);
+        GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer.buffer, NULL));
+        GL_EXTCALL(glCompileShaderARB(shader_obj));
+        print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
+
+        /* Store the shader object */
+        This->baseShader.prgId = shader_obj;
+
+    } else if (wined3d_settings.shader_mode == SHADER_ARB) {
         /*  Create the hw ARB shader */
         shader_addline(&buffer, "!!ARBfp1.0\n");
 

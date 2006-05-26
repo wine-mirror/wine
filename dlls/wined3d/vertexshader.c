@@ -842,6 +842,7 @@ void vshader_set_version(
       TRACE("vs_%lu_%lu\n", major, minor);
 
       This->baseShader.limits.texture = 0;
+      This->baseShader.limits.attributes = 16;
 
       /* Must match D3DCAPS9.MaxVertexShaderConst: at least 256 for vs_2_0 */
       This->baseShader.limits.constant_float = WINED3D_VSHADER_MAX_CONSTANTS;
@@ -1063,8 +1064,26 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
     buffer.bsize = 0;
     buffer.lineNo = 0;
 
-    /* TODO: Optionally, generate the GLSL shader instead */
-    if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+    if (wined3d_settings.shader_mode == SHADER_GLSL) {
+
+        /* Create the hw GLSL shader program and assign it as the baseShader.prgId */
+        GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
+
+        /* Generate the bulk of the shader code */
+        generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);
+
+        shader_addline(&buffer, "}\n\0");
+
+        TRACE("Compiling shader object %u\n", shader_obj);
+        GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer.buffer, NULL));
+        GL_EXTCALL(glCompileShaderARB(shader_obj));
+        print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
+
+        /* Store the shader object */
+        This->baseShader.prgId = shader_obj;
+
+    } else if (wined3d_settings.shader_mode == SHADER_ARB) {
+
         /*  Create the hw ARB shader */
         shader_addline(&buffer, "!!ARBvp1.0\n");
 
