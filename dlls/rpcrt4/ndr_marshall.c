@@ -4294,7 +4294,10 @@ void WINAPI NdrClientContextMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                      NDR_CCONTEXT ContextHandle,
                                      int fCheck)
 {
-    FIXME("(%p, %p, %d): stub\n", pStubMsg, ContextHandle, fCheck);
+    TRACE("(%p, %p, %d): stub\n", pStubMsg, ContextHandle, fCheck);
+    /* FIXME: what does fCheck do? */
+    return NDRCContextMarshall(ContextHandle,
+                               pStubMsg->Buffer);
 }
 
 /***********************************************************************
@@ -4304,7 +4307,11 @@ void WINAPI NdrClientContextUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                        NDR_CCONTEXT * pContextHandle,
                                        RPC_BINDING_HANDLE BindHandle)
 {
-    FIXME("(%p, %p, %p): stub\n", pStubMsg, pContextHandle, BindHandle);
+    TRACE("(%p, %p, %p): stub\n", pStubMsg, pContextHandle, BindHandle);
+    return NDRCContextUnmarshall(pContextHandle,
+                                 BindHandle,
+                                 pStubMsg->Buffer,
+                                 pStubMsg->RpcMsg->DataRepresentation);
 }
 
 void WINAPI NdrServerContextMarshall(PMIDL_STUB_MESSAGE pStubMsg,
