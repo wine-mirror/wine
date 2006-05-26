@@ -762,21 +762,17 @@ static void test_fullpointer_xlat(void)
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 1, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    todo_wine {
-    ok(RefId == 0x3, "RefId should be 0x1 instead of 0x%lx\n", RefId);
-    }
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 1, &RefId);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
-    todo_wine {
-    ok(RefId == 0x3, "RefId should be 0x1 instead of 0x%lx\n", RefId);
-    }
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 0, &RefId);
     todo_wine {
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x3, "RefId should be 0x1 instead of 0x%lx\n", RefId);
     }
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebabe, 0, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
@@ -784,9 +780,7 @@ static void test_fullpointer_xlat(void)
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xdeadbeef, 0, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    todo_wine {
     ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%lx\n", RefId);
-    }
 
     /* "freeing" phase */
 
