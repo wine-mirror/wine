@@ -129,69 +129,45 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                     LPWKSTA_USER_INFO_1 ui = NULL;
                     NET_API_STATUS status;
 
-                    if((status = NetWkstaUserGetInfo(NULL, 1, (LPBYTE *)&ui)) !=
-                            NERR_Success)
+                    status = NetWkstaUserGetInfo(NULL, 1, (LPBYTE *)&ui);
+                    if (status != NERR_Success || ui == NULL)
                     {
                         ret = SEC_E_NO_CREDENTIALS;
                         phCredential = NULL;
                         break;
                     }
                     
-                    if(ui != NULL)
-                    {
-                        username = HeapAlloc(GetProcessHeap(), 0, 
-                                (lstrlenW(ui->wkui1_username)+1) * 
-                                sizeof(SEC_WCHAR));
-                        lstrcpyW(username, ui->wkui1_username);
+                    username = HeapAlloc(GetProcessHeap(), 0, 
+                            (lstrlenW(ui->wkui1_username)+1) * 
+                            sizeof(SEC_WCHAR));
+                    lstrcpyW(username, ui->wkui1_username);
                         
-                        /* same for the domain */
-                        domain = HeapAlloc(GetProcessHeap(), 0, 
-                                (lstrlenW(ui->wkui1_logon_domain)+1) * 
-                                sizeof(SEC_WCHAR));
-                        lstrcpyW(domain, ui->wkui1_logon_domain);
-                        NetApiBufferFree(ui);
-                    }
-                    else
-                    {
-                        ret = SEC_E_NO_CREDENTIALS;
-                        phCredential = NULL;
-                        break;
-                    }
-                    
-                                    
+                    /* same for the domain */
+                    domain = HeapAlloc(GetProcessHeap(), 0, 
+                            (lstrlenW(ui->wkui1_logon_domain)+1) * 
+                            sizeof(SEC_WCHAR));
+                    lstrcpyW(domain, ui->wkui1_logon_domain);
+                    NetApiBufferFree(ui);
                 }
                 else
                 {
                     PSEC_WINNT_AUTH_IDENTITY_W auth_data = 
                         (PSEC_WINNT_AUTH_IDENTITY_W)pAuthData;
 
-                    if(auth_data->UserLength != 0)
-                    {
-                        /* Get username and domain from pAuthData */
-                        username = HeapAlloc(GetProcessHeap(), 0, 
-                                (auth_data->UserLength + 1) * sizeof(SEC_WCHAR));
-                        lstrcpyW(username, auth_data->User);
-                    }
-                    else
+                    if (!auth_data->UserLength || !auth_data->DomainLength)
                     {
                         ret = SEC_E_NO_CREDENTIALS;
                         phCredential = NULL;
                         break;
                     }
-                    if(auth_data->DomainLength != 0)
-                    {
-                        domain = HeapAlloc(GetProcessHeap(), 0,
-                                (auth_data->DomainLength + 1) * sizeof(SEC_WCHAR));
-                        lstrcpyW(domain, auth_data->Domain);
+                    /* Get username and domain from pAuthData */
+                    username = HeapAlloc(GetProcessHeap(), 0, 
+                            (auth_data->UserLength + 1) * sizeof(SEC_WCHAR));
+                    lstrcpyW(username, auth_data->User);
 
-                    }
-                    else
-                    {
-                        ret = SEC_E_NO_CREDENTIALS;
-                        phCredential = NULL;
-                        break;
-                    }
-
+                    domain = HeapAlloc(GetProcessHeap(), 0,
+                            (auth_data->DomainLength + 1) * sizeof(SEC_WCHAR));
+                    lstrcpyW(domain, auth_data->Domain);
                 }
                 TRACE("Username is %s\n", debugstr_w(username));
                 unixcp_size =  WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
