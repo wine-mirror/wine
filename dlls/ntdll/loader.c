@@ -1908,6 +1908,7 @@ void WINAPI LdrShutdownThread(void)
     }
 
     RtlLeaveCriticalSection( &loader_section );
+    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->ThreadLocalStoragePointer );
 }
 
 
