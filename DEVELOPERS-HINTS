@@ -27,7 +27,7 @@ DLLs (under dlls/):
 	cfgmgr32/		- Config manager
 	comcat/			- Component category manager
 	comctl32/		- Common controls
-	commdlg/		- Common dialog boxes (both 16 & 32 bit)
+	comdlg32/               - Common dialog boxes (both 16 & 32 bit)
 	crtdll/			- Old C runtime library
 	crypt32/		- Cryptography
 	cryptdll/		- Cryptography Manager
@@ -80,12 +80,15 @@ DLLs (under dlls/):
 	mciavi32/		- MCI video driver
 	mcicda/ 		- MCI audio CD driver
 	mciseq/			- MCI MIDI driver
+	mciwave/                - MCI wave driver
 	midimap/		- MIDI mapper
 	mlang/			- Multi Language Support
 	mmdevldr.vxd/		- MMDEVLDR VxD implementation
 	monodebg.vxd/		- MONODEBG VxD implementation
 	mpr/			- Multi-Protocol Router (networking)
-	msacm/			- Audio Compression Manager (multimedia)
+	mprapi/			- Multi-Protocol Router Administration
+	msacm32/                - Audio Compression Manager (multimedia)
+	msacm32.drv/            - Audio mapper
 	msadp32.acm/		- MS ADPCM Audio Codec
 	mscms/			- Color Management System
 	msdmo/			- DirectX Media Objects
@@ -94,7 +97,7 @@ DLLs (under dlls/):
 	mshtml/			- MS HTML component
 	msi/			- Microsoft Installer
 	msimg32/		- Gradient and transparency (graphics)
-	msisys/			- System information
+	msisys.ocx/             - System information
 	msnet32/		- Network interface
 	msrle32/		- Video codecs
 	msvcrt/			- C runtime library 
@@ -108,6 +111,7 @@ DLLs (under dlls/):
 	netapi32/		- Network interface
 	newdev/			- New Hardware Device Library
 	ntdll/			- NT implementation of kernel calls
+	ntdsapi/                - NT Directory Service Provider
 	objsel/			- Object Picker Dialog
 	odbc32/			- Open DataBase Connectivity driver manager
 	odbccp32/		- Open DataBase Connectivity driver installer
@@ -125,7 +129,7 @@ DLLs (under dlls/):
 	quartz/			- DirectShow runtime
 	rasapi32/		- Remote Access Server interface
 	riched20/		- Rich text editing control (Version 2.0 and 3.0)
-	richedit/		- Rich text editing control
+	riched32/		- Rich text editing control
 	rpcrt4/			- Remote Procedure Call runtime
 	rsabase/		- RSA encryption
 	rsaenh/			- Crypto API (DES, 3DES, RSA, etc.)
@@ -165,12 +169,10 @@ DLLs (under dlls/):
 	wined3d/		- Wine internal Direct3D helper
 	winedos/		- DOS features and BIOS calls (Wine specific)
 	winemp3.acm/		- Mpeg Layer 3 Audio Codec
-	wineps/			- Postscript driver (Wine specific)
+	wineps.drv/             - Postscript driver (Wine specific)
 	wininet/		- Internet extensions
 	winmm/			- Multimedia (16 & 32 bit)
 	winmm/joystick/		- Joystick driver
-	winmm/mciwave/		- MCI wave driver
-	winmm/wavemap/		- Audio mapper
 	winmm/winealsa/		- ALSA audio driver
 	winmm/winearts/		- aRts audio driver
 	winmm/wineaudioio/ 	- audioio audio driver
@@ -178,7 +180,7 @@ DLLs (under dlls/):
 	winmm/winenas/		- NAS audio driver
 	winmm/wineoss/		- OSS audio driver
 	winnls32/		- National Language Support
-	winspool/		- Printing & Print Spooler
+	winspool.drv/           - Printing & Print Spooler
 	wintab32/		- Tablet device interface
 	wintrust/		- Trust verification interface
 	wldap32/		- LDAP support
@@ -192,11 +194,15 @@ DLLs (under dlls/):
 Winelib programs (under programs/):
 -----------------------------------
 
-	avitools/		- AVI information viewer and player
 	clock/			- Graphical clock
 	cmdlgtst/		- Common dialog tests
 	control/		- Control panel
+	eject/                  - Unmount and eject removable Media
 	expand/			- Decompress Lempel-Ziv compressed archive
+	explorer/               - Desktop/Systray/HAL-Manager, Winefile-wrapper
+	hh/                     - HTML Help viewer
+	icinfo/                 - List/Configure installed Video Compressors
+	iexplore/               - Internet Explorer replacement 
 	msiexec/		- Microsoft Installer frontend
 	notepad/		- Notepad replacement 
 	progman/		- Program manager
@@ -210,6 +216,7 @@ Winelib programs (under programs/):
 	view/			- Metafile viewer
 	wcmd/			- Command line interface
 	wineboot/		- Wine bootstrap process
+	winebrowser/            - Frontend for Webbrowsers on the Host
 	winecfg/		- Wine configuration utility
 	wineconsole/		- Console
 	winedbg/		- Debugger
@@ -221,6 +228,7 @@ Winelib programs (under programs/):
 	winevdm/		- Wine virtual DOS machine
 	winhelp/		- Help viewer
 	winver/			- Windows Version Program
+	wordpad/                - Wordpad replacement skeleton
 
 
 Support programs, libraries, etc:
@@ -249,7 +257,6 @@ Support programs, libraries, etc:
 	tools/winedump/		- a .DLL dump utility
 	tools/winegcc/		- a MinGW command line compatible gcc wrapper
 	tools/wmc/		- the message compiler
-	tools/wpp/		- the C pre-processor library
 	tools/wrc/		- the resource compiler
 
 
