@@ -159,3 +159,62 @@ INT WINAPI SetServiceW(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSE
    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
    return SOCKET_ERROR; /* error value */ 
 }
+
+/******************************************************************************
+ *          GetServiceA     [WSOCK32.1119]
+ *
+ * Get information about a network service.
+ *
+ * PARAMETERS
+ *      dwNameSpace        [I] Name space or set of name spaces within which the function 
+ *                             will operate.
+ *      lpGuid             [I] Pointer to GUID of network service type.
+ *      lpServiceName      [I] NUL-terminated ASCII string that uniquely represents the name 
+ *                             of the service.
+ *      dwProperties       [I] Flags specifying which information to return in lpBuffer.
+ *      lpBuffer           [O] Pointer to buffer where the function returns an array
+ *                             of NS_SERVICE_INFO.
+ *      lpdwBufferSize     [I/O] Size of lpBuffer.  A greater number on output
+ *                               indicates an error.
+ *      lpServiceAsyncInfo [O] Reserved.  Set to NULL.
+ *
+ * RETURNS
+ *      Success: 0.
+ *      Failure: SOCKET_ERROR. GetLastError() returns ERROR_INSUFFICIENT_BUFFER
+ *               or ERROR_SERVICE_NOT_FOUND.
+ *
+ * NOTES
+ *      Obsolete Microsoft-specific extension to Winsock 1.1,
+ *      Protocol-independent name resolution provides equivalent functionality in Winsock 2.
+ *
+ * BUGS
+ *      Unimplemented.
+ */
+INT WINAPI GetServiceA(DWORD dwNameSpace, LPGUID lpGuid, LPSTR lpServiceName,
+                       DWORD dwProperties, LPVOID lpBuffer, LPDWORD lpdwBufferSize,
+                       LPSERVICE_ASYNC_INFO lpServiceAsyncInfo)
+{
+   FIXME("(%lu, %p, %s, %lu, %p, %p, %p): stub\n", dwNameSpace,
+         lpGuid, lpServiceName, dwProperties, lpBuffer, lpdwBufferSize, lpServiceAsyncInfo);
+
+   /* some programs may be able to compensate if they know what happened */
+   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+   return SOCKET_ERROR;
+}
+
+/******************************************************************************
+ *          GetServiceW     [WSOCK32.1120]
+ *
+ * See GetServiceA.
+ */
+INT WINAPI GetServiceW(DWORD dwNameSpace, LPGUID lpGuid, LPSTR lpServiceName,
+                       DWORD dwProperties, LPVOID lpBuffer, LPDWORD lpdwBufferSize,
+                       LPSERVICE_ASYNC_INFO lpServiceAsyncInfo)
+{
+   FIXME("(%lu, %p, %s, %lu, %p, %p, %p): stub\n", dwNameSpace,
+         lpGuid, lpServiceName, dwProperties, lpBuffer, lpdwBufferSize, lpServiceAsyncInfo);
+
+   /* some programs may be able to compensate if they know what happened */
+   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+   return SOCKET_ERROR;
+}

@@ -70,8 +70,8 @@
 #1116 stub GetNameByTypeW
 1117 stdcall SetServiceA(long long long ptr ptr ptr)
 1118 stdcall SetServiceW(long long long ptr ptr ptr)
-#1119 stub GetServiceA
-#1120 stub GetServiceW
+1119 stdcall GetServiceA(long ptr ptr long ptr ptr ptr)
+1120 stdcall GetServiceW(long ptr ptr long ptr ptr ptr)
 #1130 stub NPLoadNameSpaces
 #1140 stub TransmitFile
 #1141 stub AcceptEx

@@ -190,6 +190,13 @@ INT WINAPI SetServiceA(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSE
 INT WINAPI SetServiceW(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSERVICE_INFOW lpServiceInfo,
                        LPSERVICE_ASYNC_INFO lpServiceAsyncInfo, LPDWORD lpdwStatusFlags);
 #define SetService WINELIB_NAME_AW(SetService)
+INT WINAPI GetServiceA(DWORD dwNameSpace, LPGUID lpGuid, LPSTR lpServiceName,
+                       DWORD dwProperties, LPVOID lpBuffer, LPDWORD lpdwBufferSize,
+                       LPSERVICE_ASYNC_INFO lpServiceAsyncInfo);
+INT WINAPI GetServiceW(DWORD dwNameSpace, LPGUID lpGuid, LPSTR lpServiceName,
+                       DWORD dwProperties, LPVOID lpBuffer, LPDWORD lpdwBufferSize,
+                       LPSERVICE_ASYNC_INFO lpServiceAsyncInfo);
+#define GetService WINELIB_NAME_AW(GetService)
 
 #ifdef __cplusplus
 }      /* extern "C" */
