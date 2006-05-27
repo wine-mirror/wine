@@ -116,6 +116,17 @@ time_t now;			/* The time of start of wmc */
 int getopt (int argc, char *const *argv, const char *optstring);
 static void segvhandler(int sig);
 
+static void cleanup_files(void)
+{
+    if (output_name) unlink( output_name );
+    if (header_name) unlink( header_name );
+}
+
+static void exit_on_signal( int sig )
+{
+    exit(1);  /* this will call the atexit functions */
+}
+
 int main(int argc,char *argv[])
 {
 	extern char* optarg;
@@ -126,7 +137,13 @@ int main(int argc,char *argv[])
 	int i;
 	int cmdlen;
 
+	atexit( cleanup_files );
 	signal(SIGSEGV, segvhandler);
+	signal( SIGTERM, exit_on_signal );
+	signal( SIGINT, exit_on_signal );
+#ifdef SIGHUP
+	signal( SIGHUP, exit_on_signal );
+#endif
 
 	now = time(NULL);
 
@@ -269,7 +286,8 @@ int main(int argc,char *argv[])
 	write_rc_file(output_name);
 	if(!rcinline)
 		write_bin_files();
-
+	output_name = NULL;
+	header_name = NULL;
 	return 0;
 }
 
