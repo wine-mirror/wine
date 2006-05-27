@@ -220,20 +220,21 @@ static void check_auto_format(void)
 {
     HDITEMA hdiCreate;
     HDITEMA hdiRead;
+    static CHAR text[] = "Test";
     ZeroMemory(&hdiCreate, sizeof(HDITEMA));
 
     /* Windows implicitly sets some format bits in INSERTITEM */
 
     /* HDF_STRING is automaticaly set and cleared for no text */
     hdiCreate.mask = HDI_TEXT|HDI_WIDTH|HDI_FORMAT;
-    hdiCreate.pszText = "Test";
+    hdiCreate.pszText = text;
     hdiCreate.cxy = 100;
     hdiCreate.fmt=HDF_CENTER;
     addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
     ok(hdiRead.fmt == (HDF_STRING|HDF_CENTER), "HDF_STRING not set automatically (fmt=%x)\n", hdiRead.fmt);
 
     hdiCreate.mask = HDI_WIDTH|HDI_FORMAT;
-    hdiCreate.pszText = "Test";
+    hdiCreate.pszText = text;
     hdiCreate.fmt = HDF_CENTER|HDF_STRING;
     addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
     ok(hdiRead.fmt == (HDF_CENTER), "HDF_STRING should be automatically cleared (fmt=%x)\n", hdiRead.fmt);
@@ -273,20 +274,21 @@ static void check_auto_fields(void)
 {
     HDITEMA hdiCreate;
     HDITEMA hdiRead;
+    static CHAR text[] = "Test";
     LRESULT res;
 
     /* Windows stores the format, width, lparam even if they are not in the item's mask */
     ZeroMemory(&hdiCreate, sizeof(HDITEMA));
     hdiCreate.mask = HDI_TEXT;
     hdiCreate.cxy = 100;
-    hdiCreate.pszText = "Test";
+    hdiCreate.pszText = text;
     addReadDelItem(hWndHeader, &hdiCreate, HDI_WIDTH, &hdiRead);
     TEST_GET_ITEMCOUNT(6);
     ok(hdiRead.cxy == hdiCreate.cxy, "cxy should be automatically set\n");
 
     ZeroMemory(&hdiCreate, sizeof(HDITEMA));
     hdiCreate.mask = HDI_TEXT;
-    hdiCreate.pszText = "Test";
+    hdiCreate.pszText = text;
     hdiCreate.lParam = 0x12345678;
     addReadDelItem(hWndHeader, &hdiCreate, HDI_LPARAM, &hdiRead);
     TEST_GET_ITEMCOUNT(6);
@@ -294,7 +296,7 @@ static void check_auto_fields(void)
 
     ZeroMemory(&hdiCreate, sizeof(HDITEMA));
     hdiCreate.mask = HDI_TEXT;
-    hdiCreate.pszText = "Test";
+    hdiCreate.pszText = text;
     hdiCreate.fmt = HDF_STRING|HDF_CENTER;
     addReadDelItem(hWndHeader, &hdiCreate, HDI_FORMAT, &hdiRead);
     TEST_GET_ITEMCOUNT(6);
@@ -303,7 +305,7 @@ static void check_auto_fields(void)
     /* others fields are not set */
     ZeroMemory(&hdiCreate, sizeof(HDITEMA));
     hdiCreate.mask = HDI_TEXT;
-    hdiCreate.pszText = "Test";
+    hdiCreate.pszText = text;
     hdiCreate.hbm = CreateBitmap(16, 16, 1, 8, NULL);
     addReadDelItem(hWndHeader, &hdiCreate, HDI_BITMAP, &hdiRead);
     TEST_GET_ITEMCOUNT(6);
@@ -313,7 +315,7 @@ static void check_auto_fields(void)
     ZeroMemory(&hdiCreate, sizeof(HDITEMA));
     hdiCreate.mask = HDI_IMAGE;
     hdiCreate.iImage = 17;
-    hdiCreate.pszText = "Test";
+    hdiCreate.pszText = text;
     addReadDelItem(hWndHeader, &hdiCreate, HDI_TEXT, &hdiRead);
     TEST_GET_ITEMCOUNT(6);
     ok(hdiRead.pszText==NULL, "pszText shouldn't be automatically set\n");
@@ -324,13 +326,14 @@ static void check_auto_fields(void)
 static void check_mask()
 {
     HDITEMA hdi;
+    static CHAR text[] = "ABC";
     LRESULT ret;
 
     /* don't create items if the mask is zero */
     ZeroMemory(&hdi, sizeof(hdi));
     hdi.mask = 0;
     hdi.cxy = 200;
-    hdi.pszText = "ABC";
+    hdi.pszText = text;
     hdi.fmt = 0;
     hdi.iOrder = 0;
     hdi.lParam = 17;

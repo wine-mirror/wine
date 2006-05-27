@@ -57,6 +57,9 @@ create_tabcontrol (DWORD style, DWORD mask)
 {
     HWND handle;
     TCITEM tcNewTab;
+    static char text1[] = "Tab 1",
+    text2[] = "Wide Tab 2",
+    text3[] = "T 3";
 
     handle = CreateWindow (
 	WC_TABCONTROLA,
@@ -71,13 +74,13 @@ create_tabcontrol (DWORD style, DWORD mask)
     SendMessage (handle, WM_SETFONT, 0, (LPARAM) hFont);
 
     tcNewTab.mask = mask;
-    tcNewTab.pszText = "Tab 1";
+    tcNewTab.pszText = text1;
     tcNewTab.iImage = 0;
     SendMessage (handle, TCM_INSERTITEM, 0, (LPARAM) &tcNewTab);
-    tcNewTab.pszText = "Wide Tab 2";
+    tcNewTab.pszText = text2;
     tcNewTab.iImage = 1;
     SendMessage (handle, TCM_INSERTITEM, 1, (LPARAM) &tcNewTab);
-    tcNewTab.pszText = "T 3";
+    tcNewTab.pszText = text3;
     tcNewTab.iImage = 2;
     SendMessage (handle, TCM_INSERTITEM, 2, (LPARAM) &tcNewTab);
 
