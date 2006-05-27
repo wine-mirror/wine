@@ -56,6 +56,8 @@ typedef struct {
 
     DWORD apartment_thread;
     HWND notif_hwnd;
+
+    STGMEDIUM stgmed;
 } Binding;
 
 struct ProtocolStream {
@@ -707,7 +709,6 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
         DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
 {
     Binding *This = PROTSINK_THIS(iface);
-    STGMEDIUM stgmed;
     FORMATETC formatetc;
 
     TRACE("(%p)->(%ld %lu %lu)\n", This, grfBSCF, ulProgress, ulProgressMax);
@@ -729,9 +730,6 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
 
     fill_stream_buffer(This->stream);
 
-    stgmed.tymed = TYMED_ISTREAM;
-    stgmed.u.pstm = STREAM(This->stream);
-
     formatetc.cfFormat = 0; /* FIXME */
     formatetc.ptd = NULL;
     formatetc.dwAspect = 1;
@@ -739,7 +737,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
     formatetc.tymed = TYMED_ISTREAM;
 
     IBindStatusCallback_OnDataAvailable(This->callback, grfBSCF, This->stream->buf_size,
-            &formatetc, &stgmed);
+            &formatetc, &This->stgmed);
 
     if(grfBSCF & BSCF_LASTDATANOTIFICATION)
         IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
@@ -1026,6 +1024,9 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     memcpy(ret->url, url, len*sizeof(WCHAR));
 
     ret->stream = create_stream(ret->protocol);
+    ret->stgmed.tymed = TYMED_ISTREAM;
+    ret->stgmed.u.pstm = STREAM(ret->stream);
+    ret->stgmed.pUnkForRelease = (IUnknown*)BINDING(ret); /* NOTE: Windows uses other IUnknown */
 
     *binding = ret;
     return S_OK;

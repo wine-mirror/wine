@@ -460,6 +460,24 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
 
     CHECK_EXPECT2(OnDataAvailable);
 
+#if 0 /* Uncomment after removing BindToStorage hack. */
+    ok(pformatetc != NULL, "pformatetx == NULL\n");
+    if(pformatetc) {
+        ok(pformatetc->cfFormat == 0xc02d, "clipformat=%x\n", pformatetc->cfFormat); 
+        ok(pformatetc->ptd == NULL, "ptd = %p\n", pformatetc->ptd);
+        ok(pformatetc->dwAspect == 1, "dwAspect=%ld\n", pformatetc->dwAspect);
+        ok(pformatetc->lindex == -1, "lindex=%ld\n", pformatetc->lindex);
+        ok(pformatetc->tymed == TYMED_ISTREAM, "tymed=%ld\n", pformatetc->tymed);
+    }
+
+    ok(pstgmed != NULL, "stgmeg == NULL\n");
+    if(pstgmed) {
+        ok(pstgmed->tymed == TYMED_ISTREAM, "tymed=%ld\n", pstgmed->tymed);
+        ok(U(*pstgmed).pstm != NULL, "pstm == NULL\n");
+        ok(pstgmed->pUnkForRelease != NULL, "pUnkForRelease == NULL\n");
+    }
+#endif
+
     if(U(*pstgmed).pstm) {
         do hres = IStream_Read(U(*pstgmed).pstm, buf, 512, &readed);
         while(hres == S_OK);
