@@ -480,6 +480,57 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
     return FALSE;
 }
 
+/***********************************************************************
+ *              GetModuleHandleExA         (KERNEL32.@)
+ */
+BOOL WINAPI GetModuleHandleExA( DWORD flags, LPCSTR name, HMODULE *module )
+{
+    WCHAR *nameW;
+
+    if (!name || (flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS))
+        return GetModuleHandleExW( flags, (LPCWSTR)name, module );
+
+    if (!(nameW = FILE_name_AtoW( name, FALSE ))) return FALSE;
+    return GetModuleHandleExW( flags, nameW, module );
+}
+
+/***********************************************************************
+ *              GetModuleHandleExW         (KERNEL32.@)
+ */
+BOOL WINAPI GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    HMODULE ret;
+
+    if (!name)
+    {
+        ret = NtCurrentTeb()->Peb->ImageBaseAddress;
+    }
+    else if (flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)
+    {
+        void *dummy;
+        if (!(ret = RtlPcToFileHeader( (void *)name, &dummy ))) status = STATUS_DLL_NOT_FOUND;
+    }
+    else
+    {
+        UNICODE_STRING wstr;
+        RtlInitUnicodeString( &wstr, name );
+        status = LdrGetDllHandle( 0, 0, &wstr, &ret );
+    }
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+
+    if ((flags & GET_MODULE_HANDLE_EX_FLAG_PIN) ||
+        !(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
+        FIXME( "should update refcount, flags %lx\n", flags );
+
+    if (module) *module = ret;
+    return TRUE;
+}
 
 /***********************************************************************
  *              GetModuleHandleA         (KERNEL32.@)
@@ -496,11 +547,10 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
  */
 HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
-    WCHAR *moduleW;
+    HMODULE ret;
 
-    if (!module) return NtCurrentTeb()->Peb->ImageBaseAddress;
-    if (!(moduleW = FILE_name_AtoW( module, FALSE ))) return 0;
-    return GetModuleHandleW( moduleW );
+    if (!GetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, module, &ret )) ret = 0;
+    return ret;
 }
 
 /***********************************************************************
@@ -510,19 +560,9 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR module)
  */
 HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 {
-    NTSTATUS            nts;
-    HMODULE             ret;
-    UNICODE_STRING      wstr;
+    HMODULE ret;
 
-    if (!module) return NtCurrentTeb()->Peb->ImageBaseAddress;
-
-    RtlInitUnicodeString( &wstr, module );
-    nts = LdrGetDllHandle( 0, 0, &wstr, &ret);
-    if (nts != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError( nts ) );
-        ret = 0;
-    }
+    if (!GetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, module, &ret )) ret = 0;
     return ret;
 }
 
