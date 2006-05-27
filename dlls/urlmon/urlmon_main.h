@@ -55,7 +55,7 @@ HRESULT	UMCreateStreamOnCacheFile(LPCWSTR pszURL, DWORD dwSize, LPWSTR pszFileNa
 void	UMCloseCacheFileStream(IUMCacheStream *pstr);
 
 IInternetProtocolInfo *get_protocol_info(LPCWSTR url);
-HRESULT get_protocol_handler(LPCWSTR url, IUnknown **ret);
+HRESULT get_protocol_handler(LPCWSTR url, IClassFactory **ret);
 
 HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
 

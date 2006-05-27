@@ -130,9 +130,10 @@ IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
     return ret;
 }
 
-HRESULT get_protocol_handler(LPCWSTR url, IUnknown **ret)
+HRESULT get_protocol_handler(LPCWSTR url, IClassFactory **ret)
 {
     IClassFactory *cf;
+    IUnknown *unk;
     WCHAR schema[64];
     DWORD schema_len;
     HRESULT hres;
@@ -144,12 +145,17 @@ HRESULT get_protocol_handler(LPCWSTR url, IUnknown **ret)
 
     cf = find_name_space(schema);
     if(cf) {
-        hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)ret);
-        if(SUCCEEDED(hres))
-            return hres;
+        *ret = cf;
+        return S_OK;
     }
 
-    return get_protocol_iface(schema, schema_len, ret);
+    hres = get_protocol_iface(schema, schema_len, &unk);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)ret);
+    IUnknown_Release(unk);
+    return hres;
 }
 
 static HRESULT WINAPI InternetSession_QueryInterface(IInternetSession *iface,

@@ -929,7 +929,6 @@ static HRESULT get_callback(IBindCtx *pbc, IBindStatusCallback **callback)
 
 static HRESULT get_protocol(Binding *This, LPCWSTR url)
 {
-    IUnknown *unk = NULL;
     IClassFactory *cf = NULL;
     HRESULT hres;
 
@@ -945,12 +944,7 @@ static HRESULT get_protocol(Binding *This, LPCWSTR url)
             return S_OK;
     }
 
-    hres = get_protocol_handler(url, &unk);
-    if(FAILED(hres))
-        return hres;
-
-    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&cf);
-    IUnknown_Release(unk);
+    hres = get_protocol_handler(url, &cf);
     if(FAILED(hres))
         return hres;
 
