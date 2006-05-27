@@ -171,7 +171,7 @@ int yy_flex_debug;
 resource_t *resource_top;	/* The top of the parsed resources */
 
 int getopt (int argc, char *const *argv, const char *optstring);
-static void rm_tempfile(void);
+static void cleanup_files(void);
 static void segvhandler(int sig);
 
 static const char* short_options = 
@@ -226,6 +226,12 @@ static void set_version_defines(void)
     free( version );
 }
 
+/* clean things up when aborting on a signal */
+static void exit_on_signal( int sig )
+{
+    exit(1);  /* this will call the atexit functions */
+}
+
 int main(int argc,char *argv[])
 {
 	extern char* optarg;
@@ -239,6 +245,11 @@ int main(int argc,char *argv[])
 	int cmdlen;
 
 	signal(SIGSEGV, segvhandler);
+        signal( SIGTERM, exit_on_signal );
+        signal( SIGINT, exit_on_signal );
+#ifdef SIGHUP
+        signal( SIGHUP, exit_on_signal );
+#endif
 
 	now = time(NULL);
 
@@ -430,6 +441,7 @@ int main(int argc,char *argv[])
 		output_name = dup_basename(input_name, ".rc");
 		strcat(output_name, ".res");
 	}
+	atexit(cleanup_files);
 
 	/* Run the preprocessor on the input */
 	if(!no_preprocess)
@@ -443,7 +455,6 @@ int main(int argc,char *argv[])
 
                 if (!preprocess_only)
                 {
-                    atexit(rm_tempfile);
                     ret = wpp_parse_temp( input_name, output_name, &temp_name );
                 }
                 else if (output_name)
@@ -464,7 +475,10 @@ int main(int argc,char *argv[])
 			exit(1);	/* Error during preprocess */
 
 		if(preprocess_only)
+		{
+			output_name = NULL;
 			exit(0);
+		}
 
 		input_name = temp_name;
 	}
@@ -495,15 +509,16 @@ int main(int argc,char *argv[])
 
 	chat("Writing .res-file");
 	write_resfile(output_name, resource_top);
+	output_name = NULL;
 
 	return 0;
 }
 
 
-static void rm_tempfile(void)
+static void cleanup_files(void)
 {
-	if(temp_name)
-		unlink(temp_name);
+	if (output_name) unlink(output_name);
+	if (temp_name) unlink(temp_name);
 }
 
 static void segvhandler(int sig)
