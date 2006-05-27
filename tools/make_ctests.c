@@ -24,6 +24,7 @@
 
 #include "config.h"
 
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,16 @@
 
 static const char *output_file;
 
+static void cleanup_files(void)
+{
+    if (output_file) unlink( output_file );
+}
+
+static void exit_on_signal( int sig )
+{
+    exit(1);  /* this will call the atexit functions */
+}
+
 static void fatal_error( const char *msg, ... )
 {
     va_list valist;
@@ -41,7 +52,6 @@ static void fatal_error( const char *msg, ... )
     fprintf( stderr, "make_ctests: " );
     vfprintf( stderr, msg, valist );
     va_end( valist );
-    if (output_file) unlink( output_file );
     exit(1);
 }
 
@@ -108,6 +118,13 @@ int main( int argc, const char** argv )
         tests[count++] = basename( argv[i] );
     }
 
+    atexit( cleanup_files );
+    signal( SIGTERM, exit_on_signal );
+    signal( SIGINT, exit_on_signal );
+#ifdef SIGHUP
+    signal( SIGHUP, exit_on_signal );
+#endif
+
     if (output_file)
     {
         if (!(out = fopen( output_file, "w" )))
@@ -138,5 +155,6 @@ int main( int argc, const char** argv )
     if (output_file && fclose( out ))
         fatal_perror( "error writing to %s", output_file );
 
+    output_file = NULL;
     return 0;
 }
