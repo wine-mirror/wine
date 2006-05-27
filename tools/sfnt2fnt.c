@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -111,6 +112,11 @@ static void usage(char **argv)
 static void cleanup(void)
 {
     if (output_name) unlink( output_name );
+}
+
+static void exit_on_signal( int sig )
+{
+    exit(1);  /* this will call the atexit functions */
 }
 
 static void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
@@ -479,6 +485,12 @@ int main(int argc, char **argv)
     sprintf(output, "%s-%d-%d-%d.fnt", name, enc, dpi, ppem);
 
     atexit( cleanup );
+    signal( SIGTERM, exit_on_signal );
+    signal( SIGINT, exit_on_signal );
+#ifdef SIGHUP
+    signal( SIGHUP, exit_on_signal );
+#endif
+
     fp = fopen(output, "w");
     output_name = output;
 
