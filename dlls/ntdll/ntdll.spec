@@ -753,7 +753,7 @@
 @ stdcall RtlOemStringToUnicodeString(ptr ptr long)
 @ stdcall RtlOemToUnicodeN(ptr long ptr ptr long)
 @ stdcall RtlOpenCurrentUser(long ptr)
-@ stub RtlPcToFileHeader
+@ stdcall RtlPcToFileHeader(ptr ptr)
 @ stdcall RtlPinAtomInAtomTable(ptr long)
 # @ stub RtlPopFrame
 @ stdcall RtlPrefixString(ptr ptr long)

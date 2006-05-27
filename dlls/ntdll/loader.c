@@ -2225,6 +2225,22 @@ PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *nt, HMODULE module,
 
 
 /***********************************************************************
+ *           RtlPcToFileHeader   (NTDLL.@)
+ */
+PVOID WINAPI RtlPcToFileHeader( PVOID pc, PVOID *address )
+{
+    LDR_MODULE *module;
+    PVOID ret = NULL;
+
+    RtlEnterCriticalSection( &loader_section );
+    if (!LdrFindEntryForAddress( pc, &module )) ret = module->BaseAddress;
+    RtlLeaveCriticalSection( &loader_section );
+    *address = ret;
+    return ret;
+}
+
+
+/***********************************************************************
  *           NtLoadDriver   (NTDLL.@)
  *           ZwLoadDriver   (NTDLL.@)
  */
