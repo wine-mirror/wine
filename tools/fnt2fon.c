@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,6 +55,18 @@ static const BYTE MZ_hdr[] = {'M',  'Z',  0x0d, 0x01, 0x01, 0x00, 0x00, 0x00, 0x
                  't',  ' ',  'b',  'e',  ' ',  'r',  'u',  'n',  ' ',  'i',  'n',  ' ',  'D',  'O',  'S',  ' ',
                  'm',  'o',  'd',  'e',  0x0d, 0x0a, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+
+static const char *output_file;
+
+static void cleanup_files(void)
+{
+    if (output_file) unlink( output_file );
+}
+
+static void exit_on_signal( int sig )
+{
+    exit(1);  /* this will call the atexit functions */
+}
 
 static void usage(char **argv)
 {
@@ -177,7 +190,15 @@ int main(int argc, char **argv)
     fontdir_off = (non_resident_name_off + non_resident_name_len + 15) & ~0xf;
     font_off = (fontdir_off + fontdir_len + 15) & ~0x0f;
 
-    ofp = fopen(argv[argc - 1], "wb");
+    atexit( cleanup_files );
+    signal( SIGTERM, exit_on_signal );
+    signal( SIGINT, exit_on_signal );
+#ifdef SIGHUP
+    signal( SIGHUP, exit_on_signal );
+#endif
+
+    output_file = argv[argc - 1];
+    ofp = fopen(output_file, "wb");
 
     fwrite(MZ_hdr, sizeof(MZ_hdr), 1, ofp);
     fwrite(&NE_hdr, sizeof(NE_hdr), 1, ofp);
@@ -288,6 +309,7 @@ int main(int argc, char **argv)
             fputc(0x00, ofp);
     }
     fclose(ofp);
+    output_file = NULL;
 
     return 0;
 }
