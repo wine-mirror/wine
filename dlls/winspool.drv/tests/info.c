@@ -29,7 +29,7 @@
 #include "winreg.h"
 #include "winspool.h"
 
-#define MAGIC_DEAD  0x00dead00
+#define MAGIC_DEAD  0xdeadbeef
 #define DEFAULT_PRINTER_SIZE 1000
 
 static char env_x86[] = "Windows NT x86";
