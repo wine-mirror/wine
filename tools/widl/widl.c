@@ -152,6 +152,12 @@ static char *dup_basename_token(const char *name, const char *ext)
     return ret;
 }
 
+/* clean things up when aborting on a signal */
+static void exit_on_signal( int sig )
+{
+    exit(1);  /* this will call the atexit functions */
+}
+
 int main(int argc,char *argv[])
 {
   extern char* optarg;
@@ -161,6 +167,11 @@ int main(int argc,char *argv[])
   int opti = 0;
 
   signal(SIGSEGV, segvhandler);
+  signal( SIGTERM, exit_on_signal );
+  signal( SIGINT, exit_on_signal );
+#ifdef SIGHUP
+  signal( SIGHUP, exit_on_signal );
+#endif
 
   now = time(NULL);
 
