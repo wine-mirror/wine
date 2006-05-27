@@ -23,6 +23,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -32,6 +33,8 @@
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
+
+static const char *clean_file;
 
 static const char* help =
         "Usage: bin2res [OPTIONS] <rsrc.rc>\n"
@@ -68,6 +71,16 @@ static void usage(void)
 {
     printf(help);
     exit(1);
+}
+
+static void cleanup_files(void)
+{
+    if (clean_file) unlink( clean_file );
+}
+
+static void exit_on_signal( int sig )
+{
+    exit(1);  /* this will call the atexit functions */
 }
 
 static int insert_hexdump (FILE* outfile, FILE* infile)
@@ -148,6 +161,7 @@ static int process_resources(const char* input_file_name, const char* specific_f
 	    strcpy(tmp_file_name, "/tmp/bin2res-XXXXXX.temp");
 	    if ((fd = mkstemps(tmp_file_name, 5)) == -1) return 0;
 	}
+	clean_file = tmp_file_name;
 	if (!(ftmp = fdopen(fd, "w"))) return 0;
     }
 
@@ -167,17 +181,21 @@ static int process_resources(const char* input_file_name, const char* specific_f
 	    if (inserting) fputc(c, ftmp);
 	if (c == EOF) break;
 
-	if (!(fres = fopen(res_file_name, inserting ? "rb" : "wb"))) break;
 	if (inserting)
 	{
+	    if (!(fres = fopen(res_file_name, "rb"))) break;
 	    if (!insert_hexdump(ftmp, fres)) break;
 	    while ( (c = fgetc(fin)) != EOF && c != '}') /**/;
+	    fclose(fres);
 	}
 	else
 	{
+	    clean_file = res_file_name;
+	    if (!(fres = fopen(res_file_name, "wb"))) break;
 	    if (!extract_hexdump(fres, fin)) break;
+	    fclose(fres);
+	    clean_file = NULL;
 	}
-	fclose(fres);
     }
 
     fclose(fin);
@@ -191,13 +209,10 @@ static int process_resources(const char* input_file_name, const char* specific_f
             {
                 /* try unlinking first, Windows rename is brain-damaged */
                 if (unlink(input_file_name) < 0 || rename(tmp_file_name, input_file_name) < 0)
-                {
-                    unlink(tmp_file_name);
                     return 0;
-                }
             }
+            clean_file = NULL;
         }
-	else unlink(tmp_file_name);
     }
 
     return c == EOF;
@@ -209,6 +224,13 @@ int main(int argc, char **argv)
     int force_overwrite = 0, verbose = 0;
     const char* input_file_name = 0;
     const char* specific_file_name = 0;
+
+    atexit( cleanup_files );
+    signal( SIGTERM, exit_on_signal );
+    signal( SIGINT, exit_on_signal );
+#ifdef SIGHUP
+    signal( SIGHUP, exit_on_signal );
+#endif
 
     while((optc = getopt(argc, argv, "axi:o:fhv")) != EOF)
     {
