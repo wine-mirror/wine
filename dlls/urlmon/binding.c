@@ -198,6 +198,50 @@ static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
     PostMessageW(This->notif_hwnd, WM_MK_ONPROGRESS, 0, (LPARAM)data);
 }
 
+static void dump_BINDINFO(BINDINFO *bi)
+{
+    static const char *BINDINFOF_str[] = {
+        "#0",
+        "BINDINFOF_URLENCODESTGMEDDATA",
+        "BINDINFOF_URLENCODEDEXTRAINFO"
+    };
+
+    static const char *BINDVERB_str[] = {
+        "BINDVERB_GET",
+        "BINDVERB_POST",
+        "BINDVERB_PUT",
+        "BINDVERB_CUSTOM"
+    };
+
+    TRACE("\n"
+            "BINDINFO = {\n"
+            "    %ld, %s,\n"
+            "    {%ld, %p, %p},\n"
+            "    %s,\n"
+            "    %s,\n"
+            "    %s,\n"
+            "    %ld, %08lx, %ld, %ld\n"
+            "    {%ld %p %x},\n"
+            "    %s\n"
+            "    %p, %ld\n"
+            "}\n",
+
+            bi->cbSize, debugstr_w(bi->szExtraInfo),
+            bi->stgmedData.tymed, bi->stgmedData.u.hGlobal, bi->stgmedData.pUnkForRelease,
+            bi->grfBindInfoF > BINDINFOF_URLENCODEDEXTRAINFO
+                ? "unknown" : BINDINFOF_str[bi->grfBindInfoF],
+            bi->dwBindVerb > BINDVERB_CUSTOM
+                ? "unknown" : BINDVERB_str[bi->dwBindVerb],
+            debugstr_w(bi->szCustomVerb),
+            bi->cbStgmedData, bi->dwOptions, bi->dwOptionsFlags, bi->dwCodePage,
+            bi->securityAttributes.nLength,
+            bi->securityAttributes.lpSecurityDescriptor,
+            bi->securityAttributes.bInheritHandle,
+            debugstr_guid(&bi->iid),
+            bi->pUnk, bi->dwReserved
+            );
+}
+
 static HRESULT WINAPI HttpNegotiate_QueryInterface(IHttpNegotiate2 *iface,
                                                    REFIID riid, void **ppv)
 {
@@ -1012,6 +1056,8 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
         IBinding_Release(BINDING(ret));
         return hres;
     }
+
+    dump_BINDINFO(&ret->bindinfo);
 
     ret->bindf |= BINDF_FROMURLMON;
 
