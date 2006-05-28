@@ -52,9 +52,12 @@
 #include <poll.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
+#include "winternl.h"
 #include "wine/library.h"
 
 #include "file.h"
@@ -277,23 +280,22 @@ static void call_req_handler( struct thread *thread )
     if (debug_level) trace_request();
 
     if (req < REQ_NB_REQUESTS)
-    {
         req_handlers[req]( &current->req, &reply );
-        if (current)
+    else
+        set_error( STATUS_NOT_IMPLEMENTED );
+
+    if (current)
+    {
+        if (current->reply_fd)
         {
-            if (current->reply_fd)
-            {
-                reply.reply_header.error = current->error;
-                reply.reply_header.reply_size = current->reply_size;
-                if (debug_level) trace_reply( req, &reply );
-                send_reply( &reply );
-            }
-            else fatal_protocol_error( current, "no reply fd for request %d\n", req );
+            reply.reply_header.error = current->error;
+            reply.reply_header.reply_size = current->reply_size;
+            if (debug_level) trace_reply( req, &reply );
+            send_reply( &reply );
         }
-        current = NULL;
-        return;
+        else fatal_protocol_error( current, "no reply fd for request %d\n", req );
     }
-    fatal_protocol_error( current, "bad request %d\n", req );
+    current = NULL;
 }
 
 /* read a request from a thread */
