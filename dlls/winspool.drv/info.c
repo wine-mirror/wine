@@ -162,6 +162,7 @@ static const WCHAR Version3_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','
 static const WCHAR Version3_SubdirW[] = {'\\','3',0};
 
 static const WCHAR spooldriversW[] = {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',0};
+static const WCHAR spoolprtprocsW[] = {'\\','s','p','o','o','l','\\','p','r','t','p','r','o','c','s','\\',0};
 
 static const WCHAR Configuration_FileW[] = {'C','o','n','f','i','g','u','r','a','t',
 				      'i','o','n',' ','F','i','l','e',0};
@@ -1854,15 +1855,15 @@ BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR env,
  *   level      [I] Structure-Level (must be 1)
  *   Info       [O] PTR to Buffer that receives the Result
  *   cbBuf      [I] Size of Buffer at "Info"
- *   needed     [O] PTR to DWORD that receives the size in Bytes used / 
+ *   pcbNeeded  [O] PTR to DWORD that receives the size in Bytes used / 
  *                  required for the Buffer at "Info"
  *
  * RETURNS
- *   Success: TRUE  and in pcbNeeded the Bytes used in pPrintProcessorInfo
- *   Failure: FALSE and in pcbNeeded the Bytes required for pPrintProcessorInfo,
+ *   Success: TRUE  and in pcbNeeded the Bytes used in Info
+ *   Failure: FALSE and in pcbNeeded the Bytes required for Info,
  *   if cbBuf is too small
  * 
- *   Native Values returned in pPrintProcessorInfo on Success:
+ *   Native Values returned in Info on Success:
  *|  NT(Windows NT x86):  "%winsysdir%\\spool\\PRTPROCS\\w32x86" 
  *|  NT(Windows 4.0):     "%winsysdir%\\spool\\PRTPROCS\\win40" 
  *|  win9x(Windows 4.0):  "%winsysdir%" 
@@ -1870,16 +1871,65 @@ BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR env,
  *   "%winsysdir%" is the Value from GetSystemDirectoryW()
  *
  * BUGS
- *-  Only NULL or "" is supported for pName
+ *  Only NULL or "" is supported for server
  *
  */
 BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
                                         DWORD level,  LPBYTE Info,
-                                        DWORD cbBuf, LPDWORD needed)
+                                        DWORD cbBuf,  LPDWORD pcbNeeded)
 {
-    FIXME("(%s,%s,%ld,%p,0x%08lx): stub\n", debugstr_w(server), debugstr_w(env),
-          level, Info, cbBuf);
-    return 0;
+    DWORD needed;
+    const printenv_t * env_t;
+
+    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_w(server),
+            debugstr_w(env), level, Info, cbBuf, pcbNeeded);
+
+    if(server != NULL && server[0]) {
+        FIXME("server not supported: %s\n", debugstr_w(server));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    env_t = validate_envW(env);
+    if(!env_t) return FALSE;  /* environment invalid or unsupported */
+
+    if(level != 1) {
+        WARN("(Level: %ld) is ignored in win9x\n", level);
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    /* GetSystemDirectoryW returns number of WCHAR including the '\0' */
+    needed = GetSystemDirectoryW(NULL, 0);
+    /* add the Size for the Subdirectories */
+    needed += lstrlenW(spoolprtprocsW);
+    needed += lstrlenW(env_t->subdir);
+    needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
+
+    if(pcbNeeded) *pcbNeeded = needed;
+    TRACE ("required: 0x%lx/%ld\n", needed, needed);
+    if (needed > cbBuf) {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+    if(pcbNeeded == NULL) {
+        /* NT: RPC_X_NULL_REF_POINTER, 9x: ignored */
+        WARN("(pcbNeeded == NULL) is ignored in win9x\n");
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+    if(Info == NULL) {
+        /* NT: RPC_X_NULL_REF_POINTER, 9x: ERROR_INVALID_PARAMETER */
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+    
+    GetSystemDirectoryW((LPWSTR) Info, cbBuf/sizeof(WCHAR));
+    /* add the Subdirectories */
+    lstrcatW((LPWSTR) Info, spoolprtprocsW);
+    lstrcatW((LPWSTR) Info, env_t->subdir);
+    TRACE(" => %s\n", debugstr_w((LPWSTR) Info));
+    return TRUE;
 }
 
 /*****************************************************************************
