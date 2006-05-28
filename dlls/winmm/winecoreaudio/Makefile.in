@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winecoreaudio.drv
+IMPORTS   = winmm user32 kernel32
+EXTRALIBS = $(LIBUUID) @COREAUDIO@
+
+C_SRCS = \
+	audio.c \
+	audiounit.c \
+	coreaudio.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

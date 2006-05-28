@@ -160,6 +160,8 @@ AC_SUBST(OPENGL_LIBS,"")
 dnl **** Check for header files ****
 
 AC_CHECK_HEADERS(\
+	AudioUnit/AudioUnit.h \
+	CoreAudio/CoreAudio.h \
 	IOKit/IOKitLib.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
@@ -1133,6 +1135,11 @@ case $host_os in
             AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
             AC_SUBST(IOKITLIB,"-framework IOKit -framework CoreFoundation")
             AC_SUBST(LDEXECFLAGS,["-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7ffe0000"])
+	    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
+            then
+		dnl CoreServices needed by AudioUnit
+		AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices")
+	    fi
             case $host_cpu in
               *powerpc*)
                 CFLAGS="$CFLAGS -ffixed-r13"
@@ -1729,6 +1736,7 @@ dlls/winmm/tests/Makefile
 dlls/winmm/winealsa/Makefile
 dlls/winmm/winearts/Makefile
 dlls/winmm/wineaudioio/Makefile
+dlls/winmm/winecoreaudio/Makefile
 dlls/winmm/wineesd/Makefile
 dlls/winmm/winejack/Makefile
 dlls/winmm/winenas/Makefile

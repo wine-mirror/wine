@@ -170,6 +170,7 @@ BASEDIRS = \
 	winmm/winealsa \
 	winmm/winearts \
 	winmm/wineaudioio \
+	winmm/winecoreaudio \
 	winmm/wineesd \
 	winmm/winejack \
 	winmm/winenas \
@@ -275,6 +276,7 @@ SYMLINKS_SO = \
 	winealsa.drv.so \
 	winearts.drv.so \
 	wineaudioio.drv.so \
+	winecoreaudio.drv.so \
 	wineesd.drv.so \
 	winejack.drv.so \
 	winenas.drv.so \
@@ -318,6 +320,9 @@ winearts.drv.so: winmm/winearts/winearts.drv.so
 
 wineaudioio.drv.so: winmm/wineaudioio/wineaudioio.drv.so
 	$(RM) $@ && $(LN_S) winmm/wineaudioio/wineaudioio.drv.so $@
+
+winecoreaudio.drv.so: winmm/winecoreaudio/winecoreaudio.drv.so
+	$(RM) $@ && $(LN_S) winmm/winecoreaudio/winecoreaudio.drv.so $@
 
 wineesd.drv.so: winmm/wineesd/wineesd.drv.so
 	$(RM) $@ && $(LN_S) winmm/wineesd/wineesd.drv.so $@
@@ -919,6 +924,7 @@ user/user32.dll.so: user
 winmm/winealsa/winealsa.drv.so: winmm/winealsa
 winmm/winearts/winearts.drv.so: winmm/winearts
 winmm/wineaudioio/wineaudioio.drv.so: winmm/wineaudioio
+winmm/winecoreaudio/winecoreaudio.drv.so: winmm/winecoreaudio
 winmm/wineesd/wineesd.drv.so: winmm/wineesd
 winmm/winejack/winejack.drv.so: winmm/winejack
 winmm/winenas/winenas.drv.so: winmm/winenas

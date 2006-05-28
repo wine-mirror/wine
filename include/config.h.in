@@ -26,6 +26,9 @@
 /* Define to 1 if you have the <asm/types.h> header file. */
 #undef HAVE_ASM_TYPES_H
 
+/* Define to 1 if you have the <AudioUnit/AudioUnit.h> header file. */
+#undef HAVE_AUDIOUNIT_AUDIOUNIT_H
+
 /* Define to 1 if you have the <audio/audiolib.h> header file. */
 #undef HAVE_AUDIO_AUDIOLIB_H
 
@@ -46,6 +49,9 @@
 
 /* Define to 1 if you have the `connect' function. */
 #undef HAVE_CONNECT
+
+/* Define to 1 if you have the <CoreAudio/CoreAudio.h> header file. */
+#undef HAVE_COREAUDIO_COREAUDIO_H
 
 /* Define to 1 if you have the <cups/cups.h> header file. */
 #undef HAVE_CUPS_CUPS_H
