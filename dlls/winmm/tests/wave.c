@@ -486,8 +486,9 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
               dev_name(device), wave_time_format(mmtime.wType));
     returned = time_to_bytes(&mmtime, pwfx);
     ok(returned == bytes, "waveOutGetPosition(%s): returned %ld ms, "
-       "should be %ld\n", dev_name(device), bytes_to_ms(returned, pwfx),
-       bytes_to_ms(bytes, pwfx));
+       "(%ld bytes), should be %ld (%ld bytes)\n", dev_name(device),
+       bytes_to_ms(returned, pwfx), returned,
+       bytes_to_ms(bytes, pwfx), bytes);
 
     mmtime.wType = TIME_SMPTE;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
@@ -536,7 +537,9 @@ static DWORD WINAPI callback_thread(LPVOID lpParameter)
 
     while (GetMessage(&msg, 0, 0, 0)) {
         UINT message = msg.message;
-        ok (message == WOM_OPEN || message == WOM_DONE || message == WOM_CLOSE,
+        /* for some reason XP sends a WM_USER message before WOM_OPEN */
+        ok (message == WOM_OPEN || message == WOM_DONE ||
+            message == WOM_CLOSE || message == WM_USER,
             "GetMessage returned unexpected message: %u\n", message);
         if (message == WOM_OPEN || message == WOM_DONE || message == WOM_CLOSE)
             SetEvent((HANDLE)lpParameter);
@@ -546,13 +549,14 @@ static DWORD WINAPI callback_thread(LPVOID lpParameter)
 }
 
 static void wave_out_test_deviceOut(int device, double duration,
+                                    int headers, int loops,
                                     LPWAVEFORMATEX pwfx, DWORD format,
                                     DWORD flags, LPWAVEOUTCAPS pcaps,
                                     BOOL interactive, BOOL sine, BOOL pause)
 {
     HWAVEOUT wout;
     HANDLE hevent;
-    WAVEHDR frag;
+    WAVEHDR *frags;
     MMRESULT rc;
     DWORD volume;
     WORD nChannels = pwfx->nChannels;
@@ -564,6 +568,10 @@ static void wave_out_test_deviceOut(int device, double duration,
     DWORD callback = 0;
     DWORD callback_instance = 0;
     HANDLE thread = 0;
+    BYTE * buffer;
+    DWORD length;
+    DWORD frag_length;
+    int i, j;
 
     hevent=CreateEvent(NULL,FALSE,FALSE,NULL);
     ok(hevent!=NULL,"CreateEvent(): error=%ld\n",GetLastError());
@@ -642,13 +650,12 @@ static void wave_out_test_deviceOut(int device, double duration,
        pwfx->nSamplesPerSec, pwfx->wBitsPerSample,
        pwfx->nChannels, nSamplesPerSec, wBitsPerSample, nChannels);
 
-    if (sine)
-        frag.lpData=wave_generate_la(pwfx,duration,&frag.dwBufferLength);
-    else
-        frag.lpData=wave_generate_silence(pwfx,duration,&frag.dwBufferLength);
+    frags = malloc(headers * sizeof(WAVEHDR));
 
-    frag.dwFlags=0;
-    frag.dwLoops=0;
+    if (sine)
+        buffer=wave_generate_la(pwfx,duration / (loops + 1),&length);
+    else
+        buffer=wave_generate_silence(pwfx,duration / (loops + 1),&length);
 
     rc=waveOutGetVolume(wout,0);
     ok(rc==MMSYSERR_INVALPARAM,"waveOutGetVolume(%s,0) expected "
@@ -657,15 +664,30 @@ static void wave_out_test_deviceOut(int device, double duration,
     ok(has_volume ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED,
        "waveOutGetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
 
-    rc=waveOutPrepareHeader(wout, &frag, sizeof(frag));
-    ok(rc==MMSYSERR_NOERROR,
-       "waveOutPrepareHeader(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+    /* make sure fragment length is a multiple of block size */
+    frag_length = ((length / headers) / pwfx->nBlockAlign) * pwfx->nBlockAlign;
+
+    for (i = 0; i < headers; i++) {
+        frags[i].lpData=buffer + (i * frag_length);
+        if (i != (headers-1))
+            frags[i].dwBufferLength=frag_length;
+        else {
+            /* use remainder of buffer for last fragment */
+            frags[i].dwBufferLength=length - (i * frag_length);
+        }
+        frags[i].dwFlags=0;
+        frags[i].dwLoops=0;
+        rc=waveOutPrepareHeader(wout, &frags[i], sizeof(frags[0]));
+        ok(rc==MMSYSERR_NOERROR,
+           "waveOutPrepareHeader(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+    }
 
     if (interactive && rc==MMSYSERR_NOERROR) {
         DWORD start,end;
-        trace("Playing %g second %s at %5ldx%2dx%d %s %s\n",duration,
+        trace("Playing %g second %s at %5ldx%2dx%d %2d header%s %d loop%s %ld bytes %s %s\n",duration,
               sine ? "440Hz tone" : "silence",pwfx->nSamplesPerSec,
-              pwfx->wBitsPerSample,pwfx->nChannels,
+              pwfx->wBitsPerSample,pwfx->nChannels, headers, headers > 1 ? "s": " ",
+              loops, loops == 1 ? " " : "s", length * (loops + 1),
               get_format_str(pwfx->wFormatTag),
               wave_open_flags(flags));
         if (sine && has_volume && volume == 0)
@@ -684,24 +706,25 @@ static void wave_out_test_deviceOut(int device, double duration,
            "waveOutSetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
 
         start=GetTickCount();
-        rc=waveOutWrite(wout, &frag, sizeof(frag));
+
+        rc=waveOutWrite(wout, &frags[0], sizeof(frags[0]));
         ok(rc==MMSYSERR_NOERROR,"waveOutWrite(%s): rc=%s\n",
            dev_name(device),wave_out_error(rc));
 
-        ok(frag.dwFlags==(WHDR_PREPARED|WHDR_INQUEUE),
+        ok(frags[0].dwFlags==(WHDR_PREPARED|WHDR_INQUEUE),
            "WHDR_INQUEUE WHDR_PREPARED expected, got= %s\n",
-           wave_header_flags(frag.dwFlags));
+           wave_header_flags(frags[0].dwFlags));
 
-        rc=waveOutWrite(wout, &frag, sizeof(frag));
+        rc=waveOutWrite(wout, &frags[0], sizeof(frags[0]));
         ok(rc==WAVERR_STILLPLAYING,
            "waveOutWrite(%s): WAVE_STILLPLAYING expected, got %s\n",
            dev_name(device),wave_out_error(rc));
 
-        ok(frag.dwFlags==(WHDR_PREPARED|WHDR_INQUEUE),
+        ok(frags[0].dwFlags==(WHDR_PREPARED|WHDR_INQUEUE),
            "WHDR_INQUEUE WHDR_PREPARED expected, got %s\n",
-           wave_header_flags(frag.dwFlags));
+           wave_header_flags(frags[0].dwFlags));
 
-        if (pause) {
+        if (headers == 1 && loops == 0 && pause) {
             paused = duration / 2;
             Sleep(paused * 1000);
             rc=waveOutPause(wout);
@@ -714,28 +737,44 @@ static void wave_out_test_deviceOut(int device, double duration,
                dev_name(device),wave_out_error(rc));
         }
 
-        WaitForSingleObject(hevent,INFINITE);
+        for (j = 0; j <= loops; j++) {
+            for (i = 0; i < headers; i++) {
+                /* don't do last one */
+                if (!((j == loops) && (i == (headers - 1)))) {
+                    if (j > 0)
+                        frags[(i+1) % headers].dwFlags = WHDR_PREPARED;
+                    rc=waveOutWrite(wout, &frags[(i+1) % headers], sizeof(frags[0]));
+                    ok(rc==MMSYSERR_NOERROR,"waveOutWrite(%s, header[%d]): rc=%s\n",
+                       dev_name(device),(i+1)%headers,wave_out_error(rc));
+                }
+                WaitForSingleObject(hevent,INFINITE);
+            }
+        }
 
         /* Check the sound duration was between -2% and +10% of the expected value */
         end=GetTickCount();
         actual = (end - start) / 1000.0;
         if (winetest_debug > 1)
             trace("sound duration=%g ms\n",1000*actual);
-        ok((actual > (0.98 * (duration+paused))) &&
+        ok((actual > (0.97 * (duration+paused))) &&
            (actual < (1.1 * (duration+paused))),
            "The sound played for %g ms instead of %g ms\n",
            1000*actual,1000*(duration+paused));
-        ok(frag.dwFlags=(WHDR_DONE|WHDR_PREPARED),
-           "WHDR_DONE WHDR_PREPARED expected, got %s\n",
-           wave_header_flags(frag.dwFlags));
-        check_position(device, wout, frag.dwBufferLength, pwfx);
+        for (i = 0; i < headers; i++) {
+            ok(frags[i].dwFlags=(WHDR_DONE|WHDR_PREPARED),
+               "WHDR_DONE WHDR_PREPARED expected, got %s\n",
+               wave_header_flags(frags[i].dwFlags));
+        }
+        check_position(device, wout, length * (loops + 1), pwfx);
     }
 
-    rc=waveOutUnprepareHeader(wout, &frag, sizeof(frag));
-    ok(rc==MMSYSERR_NOERROR,
-       "waveOutUnprepareHeader(%s): rc=%s\n",dev_name(device),
-       wave_out_error(rc));
-    free(frag.lpData);
+    for (i = 0; i < headers; i++) {
+        rc=waveOutUnprepareHeader(wout, &frags[i], sizeof(frags[0]));
+        ok(rc==MMSYSERR_NOERROR,
+           "waveOutUnprepareHeader(%s): rc=%s\n",dev_name(device),
+           wave_out_error(rc));
+    }
+    free(buffer);
 
     rc=waveOutClose(wout);
     ok(rc==MMSYSERR_NOERROR,"waveOutClose(%s): rc=%s\n",dev_name(device),
@@ -743,6 +782,7 @@ static void wave_out_test_deviceOut(int device, double duration,
     if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD)
         TerminateThread(thread, 0);
     CloseHandle(hevent);
+    free(frags);
 }
 
 static void wave_out_test_device(int device)
@@ -857,12 +897,18 @@ static void wave_out_test_device(int device)
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
-        wave_out_test_deviceOut(device,5.0,&format,WAVE_FORMAT_2M08,
+
+        wave_out_test_deviceOut(device,5.0,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_EVENT,&capsA,TRUE,TRUE,FALSE);
-        wave_out_test_deviceOut(device,5.0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,5.0,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_FUNCTION,&capsA,TRUE,TRUE,FALSE);
-        wave_out_test_deviceOut(device,5.0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,5.0,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_THREAD,&capsA,TRUE,TRUE,FALSE);
+
+        wave_out_test_deviceOut(device,5.0,10,0,&format,WAVE_FORMAT_2M08,
+                                CALLBACK_EVENT,&capsA,TRUE,TRUE,FALSE);
+        wave_out_test_deviceOut(device,5.0,5,1,&format,WAVE_FORMAT_2M08,
+                                CALLBACK_EVENT,&capsA,TRUE,TRUE,FALSE);
     } else {
         format.wFormatTag=WAVE_FORMAT_PCM;
         format.nChannels=1;
@@ -871,18 +917,23 @@ static void wave_out_test_device(int device)
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
-        wave_out_test_deviceOut(device,1.0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_EVENT,&capsA,TRUE,FALSE,FALSE);
-        wave_out_test_deviceOut(device,1.0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_EVENT,&capsA,TRUE,FALSE,TRUE);
-        wave_out_test_deviceOut(device,1.0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_FUNCTION,&capsA,TRUE,FALSE,FALSE);
-        wave_out_test_deviceOut(device,1.0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_FUNCTION,&capsA,TRUE,FALSE,TRUE);
-        wave_out_test_deviceOut(device,1.0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_THREAD,&capsA,TRUE,FALSE,FALSE);
-        wave_out_test_deviceOut(device,1.0,&format,WAVE_FORMAT_2M08,
+        wave_out_test_deviceOut(device,1.0,1,0,&format,WAVE_FORMAT_2M08,
                                 CALLBACK_THREAD,&capsA,TRUE,FALSE,TRUE);
+
+        wave_out_test_deviceOut(device,1.0,10,0,&format,WAVE_FORMAT_2M08,
+                                CALLBACK_EVENT,&capsA,TRUE,FALSE,FALSE);
+        wave_out_test_deviceOut(device,1.0,5,1,&format,WAVE_FORMAT_2M08,
+                                CALLBACK_EVENT,&capsA,TRUE,FALSE,FALSE);
     }
 
     for (f=0;f<NB_WIN_FORMATS;f++) {
@@ -893,45 +944,67 @@ static void wave_out_test_device(int device)
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
-        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+        wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                 CALLBACK_EVENT,&capsA,winetest_interactive,
                                 TRUE,FALSE);
-        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+        wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                 CALLBACK_FUNCTION,&capsA,winetest_interactive,
                                 TRUE,FALSE);
-        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+        wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                 CALLBACK_THREAD,&capsA,winetest_interactive,
                                 TRUE,FALSE);
+
+        wave_out_test_deviceOut(device,1.0,10,0,&format,win_formats[f][0],
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,5,1,&format,win_formats[f][0],
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+
         if (winetest_interactive) {
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+            wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                     CALLBACK_EVENT,&capsA,winetest_interactive,
                                     TRUE,TRUE);
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+            wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                     CALLBACK_FUNCTION,&capsA,winetest_interactive,
                                     TRUE,TRUE);
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+            wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                     CALLBACK_THREAD,&capsA,winetest_interactive,
+                                    TRUE,TRUE);
+
+            wave_out_test_deviceOut(device,1.0,10,0,&format,win_formats[f][0],
+                                    CALLBACK_EVENT,&capsA,winetest_interactive,
+                                    TRUE,TRUE);
+            wave_out_test_deviceOut(device,1.0,5,1,&format,win_formats[f][0],
+                                    CALLBACK_EVENT,&capsA,winetest_interactive,
                                     TRUE,TRUE);
         }
         if (device != WAVE_MAPPER)
         {
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+            wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                     CALLBACK_EVENT|WAVE_FORMAT_DIRECT,&capsA,
                                     winetest_interactive,TRUE,FALSE);
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+            wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                     CALLBACK_EVENT|WAVE_MAPPED,&capsA,
                                     winetest_interactive,TRUE,FALSE);
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+            wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                     CALLBACK_FUNCTION|WAVE_FORMAT_DIRECT,&capsA,
                                     winetest_interactive,TRUE,FALSE);
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+            wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                     CALLBACK_FUNCTION|WAVE_MAPPED,&capsA,
                                     winetest_interactive,TRUE,FALSE);
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+            wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                     CALLBACK_THREAD|WAVE_FORMAT_DIRECT,&capsA,
                                     winetest_interactive,TRUE,FALSE);
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+            wave_out_test_deviceOut(device,1.0,1,0,&format,win_formats[f][0],
                                     CALLBACK_THREAD|WAVE_MAPPED,&capsA,
+                                    winetest_interactive,TRUE,FALSE);
+
+            wave_out_test_deviceOut(device,1.0,10,0,&format,win_formats[f][0],
+                                    CALLBACK_EVENT|WAVE_FORMAT_DIRECT,&capsA,
+                                    winetest_interactive,TRUE,FALSE);
+            wave_out_test_deviceOut(device,1.0,5,1,&format,win_formats[f][0],
+                                    CALLBACK_EVENT|WAVE_FORMAT_DIRECT,&capsA,
                                     winetest_interactive,TRUE,FALSE);
         }
     }
@@ -954,15 +1027,33 @@ static void wave_out_test_device(int device)
             pwfx->nSamplesPerSec=22050;
             pwfx->nBlockAlign=pwfx->nChannels*pwfx->wBitsPerSample/8;
             pwfx->nAvgBytesPerSec=pwfx->nSamplesPerSec*pwfx->nBlockAlign;
-            wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,
+            wave_out_test_deviceOut(device,1.0,1,0,pwfx,WAVE_FORMAT_2M08,
+                                    CALLBACK_EVENT,&capsA,winetest_interactive,
+                                    TRUE,FALSE);
+            wave_out_test_deviceOut(device,1.0,10,0,pwfx,WAVE_FORMAT_2M08,
+                                    CALLBACK_EVENT,&capsA,winetest_interactive,
+                                    TRUE,FALSE);
+            wave_out_test_deviceOut(device,1.0,5,1,pwfx,WAVE_FORMAT_2M08,
                                     CALLBACK_EVENT,&capsA,winetest_interactive,
                                     TRUE,FALSE);
             if (device != WAVE_MAPPER)
             {
-                wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,
+                wave_out_test_deviceOut(device,1.0,1,0,pwfx,WAVE_FORMAT_2M08,
                                         CALLBACK_EVENT|WAVE_FORMAT_DIRECT,
                                         &capsA,winetest_interactive,TRUE,FALSE);
-                wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,
+                wave_out_test_deviceOut(device,1.0,1,0,pwfx,WAVE_FORMAT_2M08,
+                                        CALLBACK_EVENT|WAVE_MAPPED,&capsA,
+                                        winetest_interactive,TRUE,FALSE);
+                wave_out_test_deviceOut(device,1.0,10,0,pwfx,WAVE_FORMAT_2M08,
+                                        CALLBACK_EVENT|WAVE_FORMAT_DIRECT,
+                                        &capsA,winetest_interactive,TRUE,FALSE);
+                wave_out_test_deviceOut(device,1.0,10,0,pwfx,WAVE_FORMAT_2M08,
+                                        CALLBACK_EVENT|WAVE_MAPPED,&capsA,
+                                        winetest_interactive,TRUE,FALSE);
+                wave_out_test_deviceOut(device,1.0,5,1,pwfx,WAVE_FORMAT_2M08,
+                                        CALLBACK_EVENT|WAVE_FORMAT_DIRECT,
+                                        &capsA,winetest_interactive,TRUE,FALSE);
+                wave_out_test_deviceOut(device,1.0,5,1,pwfx,WAVE_FORMAT_2M08,
                                         CALLBACK_EVENT|WAVE_MAPPED,&capsA,
                                         winetest_interactive,TRUE,FALSE);
             }
@@ -1031,7 +1122,11 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveOutClose(wout);
-        wave_out_test_deviceOut(device,1.0,&format,0,CALLBACK_EVENT,
+        wave_out_test_deviceOut(device,1.0,1,0,&format,0,CALLBACK_EVENT,
+                                &capsA,winetest_interactive,TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,10,0,&format,0,CALLBACK_EVENT,
+                                &capsA,winetest_interactive,TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,5,1,&format,0,CALLBACK_EVENT,
                                 &capsA,winetest_interactive,TRUE,FALSE);
     } else
         trace("waveOutOpen(%s): WAVE_FORMAT_MULAW not supported\n",
@@ -1051,7 +1146,11 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveOutClose(wout);
-        wave_out_test_deviceOut(device,1.0,&format,0,CALLBACK_EVENT,
+        wave_out_test_deviceOut(device,1.0,1,0,&format,0,CALLBACK_EVENT,
+                                &capsA,winetest_interactive,TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,10,0,&format,0,CALLBACK_EVENT,
+                                &capsA,winetest_interactive,TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,5,1,&format,0,CALLBACK_EVENT,
                                 &capsA,winetest_interactive,TRUE,FALSE);
     } else
         trace("waveOutOpen(%s): WAVE_FORMAT_ADPCM not supported\n",
@@ -1076,7 +1175,13 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveOutClose(wout);
-        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,
+        wave_out_test_deviceOut(device,1.0,1,0,&wfex.Format,WAVE_FORMAT_2M16,
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,10,0,&wfex.Format,WAVE_FORMAT_2M16,
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,5,1,&wfex.Format,WAVE_FORMAT_2M16,
                                 CALLBACK_EVENT,&capsA,winetest_interactive,
                                 TRUE,FALSE);
     } else
@@ -1102,7 +1207,11 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveOutClose(wout);
-        wave_out_test_deviceOut(device,1.0,&wfex.Format,0,CALLBACK_EVENT,
+        wave_out_test_deviceOut(device,1.0,1,0,&wfex.Format,0,CALLBACK_EVENT,
+                                &capsA,winetest_interactive,TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,10,0,&wfex.Format,0,CALLBACK_EVENT,
+                                &capsA,winetest_interactive,TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,5,1,&wfex.Format,0,CALLBACK_EVENT,
                                 &capsA,winetest_interactive,TRUE,FALSE);
     } else
         trace("waveOutOpen(%s): 4 channels not supported\n",
@@ -1127,7 +1236,13 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveOutClose(wout);
-        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,
+        wave_out_test_deviceOut(device,1.0,1,0,&wfex.Format,WAVE_FORMAT_2M16,
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,10,0,&wfex.Format,WAVE_FORMAT_2M16,
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,5,1,&wfex.Format,WAVE_FORMAT_2M16,
                                 CALLBACK_EVENT,&capsA,winetest_interactive,
                                 TRUE,FALSE);
     } else
@@ -1154,7 +1269,7 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveOutClose(wout);
-        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,
+        wave_out_test_deviceOut(device,1.0,1,0,&wfex.Format,WAVE_FORMAT_2M16,
                                 CALLBACK_EVENT,&capsA,winetest_interactive,
                                 TRUE,FALSE);
     } else
@@ -1181,7 +1296,13 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveOutClose(wout);
-        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,
+        wave_out_test_deviceOut(device,1.0,1,0,&wfex.Format,WAVE_FORMAT_2M16,
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,10,0,&wfex.Format,WAVE_FORMAT_2M16,
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,5,1,&wfex.Format,WAVE_FORMAT_2M16,
                                 CALLBACK_EVENT,&capsA,winetest_interactive,
                                 TRUE,FALSE);
     } else
@@ -1207,7 +1328,13 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveOutClose(wout);
-        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,
+        wave_out_test_deviceOut(device,1.0,1,0,&wfex.Format,WAVE_FORMAT_2M16,
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,10,0,&wfex.Format,WAVE_FORMAT_2M16,
+                                CALLBACK_EVENT,&capsA,winetest_interactive,
+                                TRUE,FALSE);
+        wave_out_test_deviceOut(device,1.0,5,1,&wfex.Format,WAVE_FORMAT_2M16,
                                 CALLBACK_EVENT,&capsA,winetest_interactive,
                                 TRUE,FALSE);
     } else
