@@ -1,7 +1,7 @@
 /*
  * Miscellaneous secur32 tests
  *
- * Copyright 2005 Kai Blin
+ * Copyright 2005, 2006 Kai Blin
  * Copyright 2006 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
@@ -30,9 +30,6 @@
 
 #include "wine/test.h"
 
-#define BUFF_SIZE 2048
-#define MAX_MESSAGE 12000
-
 static HMODULE secdll;
 static PSecurityFunctionTableA (SEC_ENTRY * pInitSecurityInterfaceA)(void);
 static SECURITY_STATUS (SEC_ENTRY * pEnumerateSecurityPackagesA)(PULONG, PSecPkgInfoA*);
@@ -49,6 +46,19 @@ static SECURITY_STATUS (SEC_ENTRY * pAcceptSecurityContext)(PCredHandle, PCtxtHa
                             PULONG, PTimeStamp);
 static SECURITY_STATUS (SEC_ENTRY * pFreeCredentialsHandle)(PCredHandle);
 static SECURITY_STATUS (SEC_ENTRY * pDeleteSecurityContext)(PCtxtHandle);
+
+typedef struct _SspiData {
+    PCredHandle cred;
+    PCtxtHandle ctxt;
+    PSecBufferDesc in_buf;
+    PSecBufferDesc out_buf;
+    PSEC_WINNT_AUTH_IDENTITY id;
+    ULONG max_token;
+} SspiData;
+
+/* Forward declare some functions to avoid moving around the code */
+SECURITY_STATUS setupBuffers(SspiData *sspi_data, SecPkgInfoA *sec_pkg_info);
+void cleanupBuffers(SspiData *sspi_data);
 
 void InitFunctionPtrs(void)
 {
@@ -121,67 +131,57 @@ static SECURITY_STATUS setupPackageA(SEC_CHAR *p_package_name,
 /*---------------------------------------------------------*/
 /* Helper for testAuth* */
 
-SECURITY_STATUS setupClient(PCredHandle cred, const char *user, 
-        const char *pass, const char *domain, char *provider)
+SECURITY_STATUS setupClient(SspiData *sspi_data, SEC_CHAR *provider)
 {
     SECURITY_STATUS ret;
-    PSEC_WINNT_AUTH_IDENTITY identity = NULL;
     TimeStamp ttl;
+    SecPkgInfoA *sec_pkg_info;
 
     trace("Running setupClient\n");
     
-    if(user != NULL)
-    {
-        identity = HeapAlloc(GetProcessHeap(), 0, 
-                sizeof(SEC_WINNT_AUTH_IDENTITY_A));
+    sspi_data->cred = HeapAlloc(GetProcessHeap(), 0, sizeof(CredHandle));
+    sspi_data->ctxt = HeapAlloc(GetProcessHeap(), 0, sizeof(CtxtHandle));
+    
+    ret = pQuerySecurityPackageInfoA(provider, &sec_pkg_info);
 
-        memset( identity, 0, sizeof(identity));
-        identity->Domain = HeapAlloc(GetProcessHeap(), 0, 
-            lstrlenA( domain ? domain :"") + 1);
-        lstrcpyA((char*)identity->Domain, domain ? domain :"");
-        identity->DomainLength = domain ? lstrlenA(domain): 0;
-        identity->User = HeapAlloc(GetProcessHeap(), 0, 
-            lstrlenA( user ? user :"") + 1);
-        lstrcpyA((char*)identity->User, user ? user :"");
-        identity->UserLength = user ? lstrlenA(user) : 0;
-        identity->Password = HeapAlloc(GetProcessHeap(), 0, 
-            lstrlenA( pass ? pass :"") + 1);
-        lstrcpyA((char*)identity->Password, pass ? pass : "");
-        identity->PasswordLength = pass ? lstrlenA(pass): 0;
-        identity->Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-    }
+    ok(ret == SEC_E_OK, "QuerySecurityPackageInfo returned %s\n", getSecError(ret));
 
+    setupBuffers(sspi_data, sec_pkg_info);
+    
     if((ret = pAcquireCredentialsHandleA(NULL, provider, SECPKG_CRED_OUTBOUND,
-            NULL, identity, NULL, NULL, cred, &ttl)) != SEC_E_OK)
+            NULL, sspi_data->id, NULL, NULL, sspi_data->cred, &ttl))
+            != SEC_E_OK)
     {
         trace("AcquireCredentialsHandle() returned %s\n", getSecError(ret));
     }
-    
+
     ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n", 
             getSecError(ret));
-
-    if( identity != NULL)
-    {
-        HeapFree(GetProcessHeap(), 0, identity->Domain);
-        HeapFree(GetProcessHeap(), 0, identity->User);
-        HeapFree(GetProcessHeap(), 0, identity->Password);
-        HeapFree(GetProcessHeap(), 0, identity);
-    }       
 
     return ret;
 }
 
 /**********************************************************************/
 
-SECURITY_STATUS setupServer(PCredHandle cred, char *provider)
+SECURITY_STATUS setupServer(SspiData *sspi_data, SEC_CHAR *provider)
 {
     SECURITY_STATUS ret;
     TimeStamp ttl;
+    SecPkgInfoA *sec_pkg_info;
 
     trace("Running setupServer\n");
-    
+
+    sspi_data->cred = HeapAlloc(GetProcessHeap(), 0, sizeof(CredHandle));
+    sspi_data->ctxt = HeapAlloc(GetProcessHeap(), 0, sizeof(CtxtHandle));
+
+    ret = pQuerySecurityPackageInfoA(provider, &sec_pkg_info);
+
+    ok(ret == SEC_E_OK, "QuerySecurityPackageInfo returned %s\n", getSecError(ret));
+
+    setupBuffers(sspi_data, sec_pkg_info);
+
     if((ret = pAcquireCredentialsHandleA(NULL, provider, SECPKG_CRED_INBOUND, 
-                    NULL, NULL, NULL, NULL, cred, &ttl)) != SEC_E_OK)
+            NULL, NULL, NULL, NULL, sspi_data->cred, &ttl)) != SEC_E_OK)
     {
         trace("AcquireCredentialsHandle() returned %s\n", getSecError(ret));
     }
@@ -194,17 +194,14 @@ SECURITY_STATUS setupServer(PCredHandle cred, char *provider)
  
 /**********************************************************************/
 
-SECURITY_STATUS setupBuffers(PSecBufferDesc *new_in_buf, 
-        PSecBufferDesc *new_out_buf)
+SECURITY_STATUS setupBuffers(SspiData *sspi_data, SecPkgInfoA *sec_pkg_info)
 {
-    int size = MAX_MESSAGE;
-    PBYTE buffer = NULL;
-    PSecBufferDesc in_buf = HeapAlloc(GetProcessHeap(), 0, 
-            sizeof(SecBufferDesc));
-    PSecBufferDesc out_buf = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(SecBufferDesc));
+    
+    sspi_data->in_buf  = HeapAlloc(GetProcessHeap(), 0, sizeof(SecBufferDesc));
+    sspi_data->out_buf = HeapAlloc(GetProcessHeap(), 0, sizeof(SecBufferDesc));
+    sspi_data->max_token = sec_pkg_info->cbMaxToken;
 
-    if(in_buf != NULL)
+    if(sspi_data->in_buf != NULL)
     {
         PSecBuffer sec_buffer = HeapAlloc(GetProcessHeap(), 0,
                 sizeof(SecBuffer));
@@ -213,21 +210,18 @@ SECURITY_STATUS setupBuffers(PSecBufferDesc *new_in_buf,
             return SEC_E_INSUFFICIENT_MEMORY;
         }
         
-        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        sspi_data->in_buf->ulVersion = SECBUFFER_VERSION;
+        sspi_data->in_buf->cBuffers = 1;
+        sspi_data->in_buf->pBuffers = sec_buffer;
 
-        if(buffer == NULL){
-            trace("in_buf: buffer == NULL\n");
+        sec_buffer->cbBuffer = sec_pkg_info->cbMaxToken;
+        sec_buffer->BufferType = SECBUFFER_TOKEN;
+        if((sec_buffer->pvBuffer = HeapAlloc(GetProcessHeap(), 0, 
+                        sec_pkg_info->cbMaxToken)) == NULL)
+        {
+            trace("in_buf: sec_buffer->pvBuffer == NULL\n");
             return SEC_E_INSUFFICIENT_MEMORY;
         }
-
-        in_buf->ulVersion = SECBUFFER_VERSION;
-        in_buf->cBuffers = 1;
-        in_buf->pBuffers = sec_buffer;
-
-        sec_buffer->cbBuffer = size;
-        sec_buffer->BufferType = SECBUFFER_TOKEN;
-        sec_buffer->pvBuffer = buffer;
-        *new_in_buf = in_buf;
     }
     else
     {
@@ -235,32 +229,27 @@ SECURITY_STATUS setupBuffers(PSecBufferDesc *new_in_buf,
         return SEC_E_INSUFFICIENT_MEMORY;
     }
     
-    if(out_buf != NULL)
+    if(sspi_data->out_buf != NULL)
     {
         PSecBuffer sec_buffer = HeapAlloc(GetProcessHeap(), 0,
                 sizeof(SecBuffer));
-        PBYTE buffer = NULL;
         
         if(sec_buffer == NULL){
             trace("out_buf: sec_buffer == NULL\n");
             return SEC_E_INSUFFICIENT_MEMORY;
         }
 
-        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        sspi_data->out_buf->ulVersion = SECBUFFER_VERSION;
+        sspi_data->out_buf->cBuffers = 1;
+        sspi_data->out_buf->pBuffers = sec_buffer;
 
-        if(buffer == NULL){
-            trace("out_buf: buffer == NULL\n");
+        sec_buffer->cbBuffer = sec_pkg_info->cbMaxToken;
+        sec_buffer->BufferType = SECBUFFER_TOKEN;
+        if((sec_buffer->pvBuffer = HeapAlloc(GetProcessHeap(), 0, 
+                        sec_pkg_info->cbMaxToken)) == NULL){
+            trace("out_buf: sec_buffer->pvBuffer == NULL\n");
             return SEC_E_INSUFFICIENT_MEMORY;
         }
-
-        out_buf->ulVersion = SECBUFFER_VERSION;
-        out_buf->cBuffers = 1;
-        out_buf->pBuffers = sec_buffer;
-
-        sec_buffer->cbBuffer = size;
-        sec_buffer->BufferType = SECBUFFER_TOKEN;
-        sec_buffer->pvBuffer = buffer;
-        *new_out_buf = out_buf;
     }
     else
     {
@@ -273,40 +262,41 @@ SECURITY_STATUS setupBuffers(PSecBufferDesc *new_in_buf,
 
 /**********************************************************************/
 
-void cleanupBuffers(PSecBufferDesc in_buf, PSecBufferDesc out_buf)
+void cleanupBuffers(SspiData *sspi_data)
 {
     ULONG i;
 
-    if(in_buf != NULL)
+    if(sspi_data->in_buf != NULL)
     {
-        for(i = 0; i < in_buf->cBuffers; ++i)
+        for(i = 0; i < sspi_data->in_buf->cBuffers; ++i)
         {
-            HeapFree(GetProcessHeap(), 0, in_buf->pBuffers[i].pvBuffer);
+            HeapFree(GetProcessHeap(), 0, sspi_data->in_buf->pBuffers[i].pvBuffer);
         }
-        HeapFree(GetProcessHeap(), 0, in_buf->pBuffers);
-        HeapFree(GetProcessHeap(), 0, in_buf);
+        HeapFree(GetProcessHeap(), 0, sspi_data->in_buf->pBuffers);
+        HeapFree(GetProcessHeap(), 0, sspi_data->in_buf);
     }
     
-    if(out_buf != NULL)
+    if(sspi_data->out_buf != NULL)
     {
-        for(i = 0; i < out_buf->cBuffers; ++i)
+        for(i = 0; i < sspi_data->out_buf->cBuffers; ++i)
         {
-            HeapFree(GetProcessHeap(), 0, out_buf->pBuffers[i].pvBuffer);
+            HeapFree(GetProcessHeap(), 0, sspi_data->out_buf->pBuffers[i].pvBuffer);
         }
-        HeapFree(GetProcessHeap(), 0, out_buf->pBuffers);
-        HeapFree(GetProcessHeap(), 0, out_buf);
+        HeapFree(GetProcessHeap(), 0, sspi_data->out_buf->pBuffers);
+        HeapFree(GetProcessHeap(), 0, sspi_data->out_buf);
     }
 }
 
 /**********************************************************************/
 
-SECURITY_STATUS runClient(PCredHandle cred, PCtxtHandle ctxt, 
-        PSecBufferDesc in_buf, PSecBufferDesc out_buf, BOOL first)
+SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first)
 {
     SECURITY_STATUS ret;
-    ULONG req_attr = ISC_REQ_CONNECTION;
+    ULONG req_attr = ISC_REQ_CONNECTION | ISC_REQ_CONFIDENTIALITY;
     ULONG ctxt_attr;
     TimeStamp ttl;
+    PSecBufferDesc in_buf = sspi_data->in_buf;
+    PSecBufferDesc out_buf = sspi_data->out_buf;
 
     assert(in_buf->cBuffers >= 1);
     assert(in_buf->pBuffers[0].pvBuffer != NULL);
@@ -332,8 +322,8 @@ SECURITY_STATUS runClient(PCredHandle cred, PCtxtHandle ctxt,
         void *old_buf;
 
         /* pass NULL as an output buffer */
-        ret = pInitializeSecurityContextA(cred, NULL, NULL, req_attr, 
-            0, SECURITY_NATIVE_DREP, NULL, 0, ctxt, NULL,
+        ret = pInitializeSecurityContextA(sspi_data->cred, NULL, NULL, req_attr,
+            0, SECURITY_NATIVE_DREP, NULL, 0, sspi_data->ctxt, NULL,
             &ctxt_attr, &ttl);
 
         ok(ret == SEC_E_BUFFER_TOO_SMALL, "expected SEC_E_BUFFER_TOO_SMALL, got %s\n", getSecError(ret));
@@ -342,8 +332,8 @@ SECURITY_STATUS runClient(PCredHandle cred, PCtxtHandle ctxt,
         old_buf = out_buf->pBuffers[0].pvBuffer;
         out_buf->pBuffers[0].pvBuffer = NULL;
 
-        ret = pInitializeSecurityContextA(cred, NULL, NULL, req_attr, 
-            0, SECURITY_NATIVE_DREP, NULL, 0, ctxt, out_buf,
+        ret = pInitializeSecurityContextA(sspi_data->cred, NULL, NULL, req_attr, 
+            0, SECURITY_NATIVE_DREP, NULL, 0, sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
         ok(ret == SEC_E_INTERNAL_ERROR, "expected SEC_E_INTERNAL_ERROR, got %s\n", getSecError(ret));
@@ -353,8 +343,8 @@ SECURITY_STATUS runClient(PCredHandle cred, PCtxtHandle ctxt,
         /* pass an output buffer of 0 size */
         out_buf->pBuffers[0].cbBuffer = 0;
 
-        ret = pInitializeSecurityContextA(cred, NULL, NULL, req_attr, 
-            0, SECURITY_NATIVE_DREP, NULL, 0, ctxt, out_buf,
+        ret = pInitializeSecurityContextA(sspi_data->cred, NULL, NULL, req_attr, 
+            0, SECURITY_NATIVE_DREP, NULL, 0, sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
         ok(ret == SEC_E_BUFFER_TOO_SMALL, "expected SEC_E_BUFFER_TOO_SMALL, got %s\n", getSecError(ret));
@@ -363,22 +353,22 @@ SECURITY_STATUS runClient(PCredHandle cred, PCtxtHandle ctxt,
            "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
     }
 
-    out_buf->pBuffers[0].cbBuffer = MAX_MESSAGE;
+    out_buf->pBuffers[0].cbBuffer = sspi_data->max_token;
 
-    ret = pInitializeSecurityContextA(cred, first?NULL:ctxt, NULL, req_attr, 
-            0, SECURITY_NATIVE_DREP, first?NULL:in_buf, 0, ctxt, out_buf,
+    ret = pInitializeSecurityContextA(sspi_data->cred, first?NULL:sspi_data->ctxt, NULL, req_attr, 
+            0, SECURITY_NATIVE_DREP, first?NULL:in_buf, 0, sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
     if(ret == SEC_I_COMPLETE_AND_CONTINUE || ret == SEC_I_COMPLETE_NEEDED)
     {
-        pCompleteAuthToken(ctxt, out_buf);
+        pCompleteAuthToken(sspi_data->ctxt, out_buf);
         if(ret == SEC_I_COMPLETE_AND_CONTINUE)
             ret = SEC_I_CONTINUE_NEEDED;
         else if(ret == SEC_I_COMPLETE_NEEDED)
             ret = SEC_E_OK;
     }       
 
-    ok(out_buf->pBuffers[0].cbBuffer < MAX_MESSAGE,
+    ok(out_buf->pBuffers[0].cbBuffer < sspi_data->max_token,
        "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
 
     return ret;
@@ -386,8 +376,7 @@ SECURITY_STATUS runClient(PCredHandle cred, PCtxtHandle ctxt,
 
 /**********************************************************************/
 
-SECURITY_STATUS runServer(PCredHandle cred, PCtxtHandle ctxt,
-        PSecBufferDesc in_buf, PSecBufferDesc out_buf, BOOL first)
+SECURITY_STATUS runServer(SspiData *sspi_data, BOOL first)
 {
     SECURITY_STATUS ret;
     ULONG ctxt_attr;
@@ -395,12 +384,13 @@ SECURITY_STATUS runServer(PCredHandle cred, PCtxtHandle ctxt,
 
     trace("Running the server the %s time\n", first?"first":"second");
 
-    ret = pAcceptSecurityContext(cred, first?NULL:ctxt, in_buf, 0,
-            SECURITY_NATIVE_DREP, ctxt, out_buf, &ctxt_attr, &ttl);
+    ret = pAcceptSecurityContext(sspi_data->cred, first?NULL:sspi_data->ctxt, 
+            sspi_data->in_buf, 0, SECURITY_NATIVE_DREP, sspi_data->ctxt, 
+            sspi_data->out_buf, &ctxt_attr, &ttl);
 
     if(ret == SEC_I_COMPLETE_AND_CONTINUE || ret == SEC_I_COMPLETE_NEEDED)
     {
-        pCompleteAuthToken(ctxt, out_buf);
+        pCompleteAuthToken(sspi_data->ctxt, sspi_data->out_buf);
         if(ret == SEC_I_COMPLETE_AND_CONTINUE)
             ret = SEC_I_CONTINUE_NEEDED;
         else if(ret == SEC_I_COMPLETE_NEEDED)
@@ -412,25 +402,25 @@ SECURITY_STATUS runServer(PCredHandle cred, PCtxtHandle ctxt,
 
 /**********************************************************************/
 
-void communicate(PSecBufferDesc in_buf, PSecBufferDesc out_buf)
+void communicate(SspiData *from, SspiData *to)
 {
-    if(in_buf != NULL && out_buf != NULL)
+    if(from->out_buf != NULL && to->in_buf != NULL)
     {
         trace("Running communicate.\n");
-        if((in_buf->cBuffers >= 1) && (out_buf->cBuffers >= 1))
+        if((from->out_buf->cBuffers >= 1) && (to->in_buf->cBuffers >= 1))
         {
-            if((in_buf->pBuffers[0].pvBuffer != NULL) && 
-                    (out_buf->pBuffers[0].pvBuffer != NULL))
+            if((from->out_buf->pBuffers[0].pvBuffer != NULL) && 
+                    (to->in_buf->pBuffers[0].pvBuffer != NULL))
             {
-                memset(out_buf->pBuffers[0].pvBuffer, 0, MAX_MESSAGE);
+                memset(to->in_buf->pBuffers[0].pvBuffer, 0, to->max_token);
                 
-                memcpy(out_buf->pBuffers[0].pvBuffer, 
-                        in_buf->pBuffers[0].pvBuffer,
-                        in_buf->pBuffers[0].cbBuffer);
+                memcpy(to->in_buf->pBuffers[0].pvBuffer, 
+                    from->out_buf->pBuffers[0].pvBuffer,
+                    from->out_buf->pBuffers[0].cbBuffer);
                 
-                out_buf->pBuffers[0].cbBuffer = in_buf->pBuffers[0].cbBuffer;
+                to->in_buf->pBuffers[0].cbBuffer = from->out_buf->pBuffers[0].cbBuffer;
                 
-                memset(in_buf->pBuffers[0].pvBuffer, 0, MAX_MESSAGE);
+                memset(from->out_buf->pBuffers[0].pvBuffer, 0, from->max_token);
             }
         }
     }
@@ -555,109 +545,89 @@ static void testQuerySecurityPackageInfo(void)
         getSecError(sec_status) );
 }
 
-void testAuth(char* sec_pkg_name, const char* domain)
+void testAuth(SEC_CHAR* sec_pkg_name)
 {
-    SECURITY_STATUS     sec_status;
-    PSecPkgInfo         pkg_info = NULL;
-    CredHandle          server_cred;
-    CredHandle          client_cred;
-    CtxtHandle          server_ctxt;
-    CtxtHandle          client_ctxt;
-
-    PSecBufferDesc client_in = NULL, client_out = NULL;
-    PSecBufferDesc server_in = NULL, server_out = NULL;
-
-    BOOL continue_client = FALSE, continue_server = FALSE;
+    SECURITY_STATUS         client_stat = SEC_I_CONTINUE_NEEDED;
+    SECURITY_STATUS         server_stat = SEC_I_CONTINUE_NEEDED;
+    SECURITY_STATUS         sec_status;
+    PSecPkgInfo             pkg_info = NULL;
+    BOOL                    first = TRUE;
+    SspiData                client, server;
+    SEC_WINNT_AUTH_IDENTITY id;
 
     if(setupPackageA(sec_pkg_name, &pkg_info) == SEC_E_OK)
     {
         pFreeContextBuffer(pkg_info);
-        sec_status = setupClient(&client_cred, "testuser", "testpass", domain,
-                sec_pkg_name);
+        id.User = (unsigned char*) "Administrator";
+        id.UserLength = strlen((char *) id.User);
+        id.Domain = (unsigned char *) "WORKGROUP";
+        id.DomainLength = strlen((char *) id.Domain);
+        id.Password = (unsigned char*) "testpass";
+        id.PasswordLength = strlen((char *) id.Password);
+        id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+
+        client.id = &id;
+        
+        sec_status = setupClient(&client, sec_pkg_name);
 
         if(sec_status != SEC_E_OK)
         {
             trace("Error: Setting up the client returned %s, exiting test!\n",
                     getSecError(sec_status));
-            pFreeCredentialsHandle(&client_cred);
+            pFreeCredentialsHandle(client.cred);
             return;
         }
 
-        sec_status = setupServer(&server_cred, sec_pkg_name);
+        sec_status = setupServer(&server, sec_pkg_name);
 
         if(sec_status != SEC_E_OK)
         {
             trace("Error: Setting up the server returned %s, exiting test!\n",
                     getSecError(sec_status));
-            pFreeCredentialsHandle(&server_cred);
-            pFreeCredentialsHandle(&client_cred);
+            pFreeCredentialsHandle(server.cred);
+            pFreeCredentialsHandle(client.cred);
             return;
         }
 
-        setupBuffers(&client_in, &client_out);
-        setupBuffers(&server_in, &server_out);
 
-        sec_status = runClient(&client_cred, &client_ctxt, client_in, client_out, 
-                TRUE);
-
-        ok(sec_status == SEC_E_OK || sec_status == SEC_I_CONTINUE_NEEDED,
-                "Running the client returned %s, more tests will fail from now.\n",
-                getSecError(sec_status));
-        
-        if(sec_status == SEC_I_CONTINUE_NEEDED)
-            continue_client = TRUE;
-
-        communicate(client_out, server_in);
-        
-        sec_status = runServer(&server_cred, &server_ctxt, server_in, server_out, 
-                TRUE);
-
-        ok(sec_status == SEC_E_OK || sec_status == SEC_I_CONTINUE_NEEDED,
-                "Running the server returned %s, more tests will fail from now.\n",
-                getSecError(sec_status));
-        
-        if(sec_status == SEC_I_CONTINUE_NEEDED)
+        while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
         {
-            continue_server = TRUE;
-            communicate(server_out, client_in);
-        }
-        
-        if(continue_client)
-        {
-            sec_status = runClient(&client_cred, &client_ctxt, client_in, client_out,
-                FALSE);
+            client_stat = runClient(&client, first);
 
-            ok(sec_status == SEC_E_OK,
-                "Running the client returned %s, more tests will fail from now.\n",
-                getSecError(sec_status));
+            ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
+                    "Running the client returned %s, more tests will fail.\n",
+                    getSecError(client_stat));
             
-            communicate(client_out, server_in);
-        }
+            communicate(&client, &server);
+            
+            server_stat = runServer(&server, first);
 
-        if(continue_server)
-        {
-            sec_status = runServer(&server_cred, &server_ctxt, server_in, server_out,
-                FALSE);
-            ok(sec_status == SEC_E_OK || SEC_E_LOGON_DENIED,
-                    "Running the server returned %s.\n", getSecError(sec_status));
-        }
+            ok(server_stat == SEC_E_OK || server_stat == SEC_I_CONTINUE_NEEDED ||
+                    server_stat == SEC_E_LOGON_DENIED,
+                    "Running the server returned %s, more tests will fail from now.\n",
+                    getSecError(server_stat));
 
-        cleanupBuffers(client_in, client_out);
-        cleanupBuffers(server_in, server_out);
+            communicate(&server, &client);
+            trace("Looping\n");
+            first = FALSE;
+        }
         
-        sec_status = pDeleteSecurityContext(&server_ctxt);
+        cleanupBuffers(&client);
+        cleanupBuffers(&server);
+        
+        sec_status = pDeleteSecurityContext(server.ctxt);
         ok(sec_status == SEC_E_OK, "DeleteSecurityContext(server) returned %s\n",
                 getSecError(sec_status));
 
-        sec_status = pDeleteSecurityContext(&client_ctxt);
+        sec_status = pDeleteSecurityContext(client.ctxt);
         ok(sec_status == SEC_E_OK, "DeleteSecurityContext(client) returned %s\n",
                 getSecError(sec_status));
            
-        sec_status = pFreeCredentialsHandle(&server_cred);
+        sec_status = pFreeCredentialsHandle(server.cred);
         ok(sec_status == SEC_E_OK, "FreeCredentialsHandle(server) returned %s\n",
                 getSecError(sec_status));
         
-        sec_status = pFreeCredentialsHandle(&client_cred);
+        sec_status = pFreeCredentialsHandle(client.cred);
         ok(sec_status == SEC_E_OK, "FreeCredentialsHandle(client) returned %s\n",
                 getSecError(sec_status));
     }
@@ -666,7 +636,6 @@ void testAuth(char* sec_pkg_name, const char* domain)
         trace("Package not installed, skipping test.\n");
     }
 }
-
 
 START_TEST(main)
 {
@@ -681,7 +650,7 @@ START_TEST(main)
         {
             testQuerySecurityPackageInfo();
             if(pInitSecurityInterfaceA)
-                testAuth("NTLM", "WORKGROUP");
+                testAuth("NTLM");
         }
     }
     if(secdll)
