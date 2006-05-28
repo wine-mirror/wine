@@ -20,7 +20,7 @@ LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
 
 100 DIALOG LOADONCALL MOVEABLE DISCARDABLE  0, 0, 220, 62
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Lade die Mozilla Active X Steuerung"
+CAPTION "Lade das Mozilla ActiveX-Steuerelement"
 FONT 8, "MS Shell Dlg"
 {
  CONTROL "Progress1",1000,"msctls_progress32",WS_BORDER|PBS_SMOOTH,10,10,200,12
@@ -30,7 +30,7 @@ FONT 8, "MS Shell Dlg"
 
 STRINGTABLE
 BEGIN
- 1001	"Diese Anwendung fordert ein ActiveX Browser Objekt an,\n" \
-        "aber die Mozilla Active X Steuerung ist nicht installiert." \
-        "Möchten Sie, dass es aus dem Internet geladen und installiert wird ?"
+ 1001	"Diese Anwendung fordert ein Browser-ActiveX-Objekt an, " \
+        "aber das Mozilla ActiveX-Steuerelement ist nicht installiert.\n" \
+        "Möchten Sie, dass es aus dem Internet geladen und installiert wird?"
 END
