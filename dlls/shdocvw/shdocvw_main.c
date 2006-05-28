@@ -299,7 +299,9 @@ static DWORD WINAPI ThreadFunc( LPVOID info )
     IBindStatusCallback *dl;
     static const WCHAR szUrlVal[] = {'M','o','z','i','l','l','a','U','r','l',0};
     static const WCHAR szFileProtocol[] = {'f','i','l','e',':','/','/','/',0};
+    static const WCHAR szSilentParameter[] = {' ','/','S',0};
     WCHAR path[MAX_PATH], szUrl[MAX_PATH];
+    WCHAR szCommandLine[MAX_PATH+(sizeof( szSilentParameter )/sizeof( WCHAR ))];
     LPWSTR p;
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
@@ -347,7 +349,9 @@ static DWORD WINAPI ThreadFunc( LPVOID info )
     /* run it */
     memset( &si, 0, sizeof si );
     si.cb = sizeof si;
-    r = CreateProcessW( path, NULL, NULL, NULL, 0, 0, NULL, NULL, &si, &pi );
+    strcpyW( szCommandLine, path );
+    strcatW( szCommandLine, szSilentParameter );
+    r = CreateProcessW( path, szCommandLine, NULL, NULL, 0, 0, NULL, NULL, &si, &pi );
     if( !r )
         goto end;
     WaitForSingleObject( pi.hProcess, INFINITE );
