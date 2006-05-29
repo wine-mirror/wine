@@ -767,9 +767,7 @@ static void test_fullpointer_xlat(void)
     ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 0, &RefId);
-    todo_wine {
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    }
     ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebabe, 0, &RefId);
@@ -785,11 +783,34 @@ static void test_fullpointer_xlat(void)
     ret = NdrFullPointerFree(pXlatTables, (void *)0xcafebeef);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
 
+    ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 0x20, &RefId);
+    ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
+
+    ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 1, &RefId);
+    ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
+
     ret = NdrFullPointerFree(pXlatTables, (void *)0xcafebabe);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
 
     ret = NdrFullPointerFree(pXlatTables, (void *)0xdeadbeef);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
+
+    ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xdeadbeef, 0x20, &RefId);
+    ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
+    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%lx\n", RefId);
+
+    ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xdeadbeef, 1, &RefId);
+    ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
+    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%lx\n", RefId);
+
+    ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xdeadbeef, 1, &RefId);
+    ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
+    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%lx\n", RefId);
+
+    ret = NdrFullPointerFree(pXlatTables, (void *)0xdeadbeef);
+    ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
 
     NdrFullPointerXlatFree(pXlatTables);
 }

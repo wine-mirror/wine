@@ -113,10 +113,10 @@ int WINAPI NdrFullPointerQueryPointer(PFULL_PTR_XLAT_TABLES pXlatTables,
         if (pPointer == XlatTableEntry->Pointer)
         {
             *pRefId = XlatTableEntry->RefId;
-            if (pXlatTables->XlatSide == XLAT_SERVER)
-                return XlatTableEntry->State;
-            else
-                return 0;
+            if (XlatTableEntry->State & QueryType)
+                return 1;
+            XlatTableEntry->State |= QueryType;
+            return 0;
         }
 
     XlatTableEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(*XlatTableEntry));
@@ -152,9 +152,10 @@ int WINAPI NdrFullPointerQueryRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
         *ppPointer = pXlatTables->RefIdToPointer.XlatTable[RefId];
         if (QueryType)
         {
-            int ret = pXlatTables->RefIdToPointer.StateTable[RefId];
-            pXlatTables->RefIdToPointer.StateTable[RefId] = QueryType;
-            return ret;
+            if (pXlatTables->RefIdToPointer.StateTable[RefId] & QueryType)
+                return 1;
+            pXlatTables->RefIdToPointer.StateTable[RefId] |= QueryType;
+            return 0;
         }
         else
             return 0;
@@ -209,7 +210,9 @@ int WINAPI NdrFullPointerFree(PFULL_PTR_XLAT_TABLES pXlatTables, void *Pointer)
     for (; XlatTableEntry; XlatTableEntry = XlatTableEntry->Next)
         if (Pointer == XlatTableEntry->Pointer)
         {
-            XlatTableEntry->State = 0x20;
+            if (XlatTableEntry->State & 0x20)
+                return 0;
+            XlatTableEntry->State |= 0x20;
             RefId = XlatTableEntry->RefId;
             break;
         }
@@ -219,7 +222,7 @@ int WINAPI NdrFullPointerFree(PFULL_PTR_XLAT_TABLES pXlatTables, void *Pointer)
 
     if (pXlatTables->RefIdToPointer.NumberOfEntries > RefId)
     {
-        pXlatTables->RefIdToPointer.StateTable[RefId] = 0x20;
+        pXlatTables->RefIdToPointer.StateTable[RefId] |= 0x20;
         return 1;
     }
 
