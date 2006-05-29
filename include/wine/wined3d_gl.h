@@ -672,6 +672,7 @@ typedef unsigned int GLhandleARB;
 #endif
 #ifndef GL_ARB_vertex_shader
 #define GL_ARB_vertex_shader 1
+#define GL_VERTEX_SHADER_ARB              0x8B31
 #define GL_PROGRAM_OBJECT_ARB             0x8B40
 #define GL_SHADER_OBJECT_ARB              0x8B48
 #define GL_OBJECT_TYPE_ARB                0x8B4E
