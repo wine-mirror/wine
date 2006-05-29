@@ -333,6 +333,8 @@ typedef struct IDirect3DSurface9Impl
     /* IDirect3DResource9 fields */
     IWineD3DSurface        *wineD3DSurface;
 
+    /* Parent reference */
+    LPDIRECT3DDEVICE9       parentDevice;
 } IDirect3DSurface9Impl;
 
 /* ---------------------- */

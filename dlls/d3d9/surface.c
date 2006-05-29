@@ -79,6 +79,7 @@ ULONG WINAPI IDirect3DSurface9Impl_Release(LPDIRECT3DSURFACE9 iface) {
 
         if (ref == 0) {
             IWineD3DSurface_Release(This->wineD3DSurface);
+            if (This->parentDevice) IUnknown_Release(This->parentDevice);
             HeapFree(GetProcessHeap(), 0, This);
         }
 

@@ -188,6 +188,8 @@ HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Heig
 
     if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
+        IUnknown_Release(d3dSurface->parentDevice);
+        d3dSurface->parentDevice = NULL;
     } else {
         *ppSurface = NULL;
     }
@@ -220,8 +222,10 @@ HRESULT WINAPI D3D9CB_CreateAdditionalSwapChain(IUnknown *device,
     /*copy the presentation parameters*/
     res = IDirect3DDevice9_CreateAdditionalSwapChain((IDirect3DDevice9 *)device, &localParameters, (IDirect3DSwapChain9 **)&d3dSwapChain);
 
-    if (res == D3D_OK && d3dSwapChain != NULL) {
+    if (SUCCEEDED(res)) {
         *ppSwapChain = d3dSwapChain->wineD3DSwapChain;
+        IUnknown_Release(d3dSwapChain->parentDevice);
+        d3dSwapChain->parentDevice = NULL;
     } else {
         *ppSwapChain = NULL;
     }
@@ -256,8 +260,10 @@ HRESULT WINAPI D3D9CB_CreateDepthStencilSurface(IUnknown *device, UINT Width, UI
     res = IDirect3DDevice9_CreateDepthStencilSurface((IDirect3DDevice9 *)device, Width, Height, 
                                          (D3DFORMAT)Format, MultiSample, MultisampleQuality, Discard, 
                                          (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
-    if (res == D3D_OK) {
+    if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
+        IUnknown_Release(d3dSurface->parentDevice);
+        d3dSurface->parentDevice = NULL;
     }
     return res;
 }

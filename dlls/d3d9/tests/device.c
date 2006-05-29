@@ -33,9 +33,17 @@ static int get_refcount(IUnknown *object)
 #define CHECK_CALL(r,c,d,rc) \
     if (SUCCEEDED(r)) {\
         int tmp1 = get_refcount( (IUnknown *)d ); \
-        ok(rc == tmp1, "Invalid refcount. Expected %d got %d\n", rc, tmp1); \
+        int rc_new = rc; \
+        ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     } else {\
         trace("%s failed: %s\n", c, DXGetErrorString9(r)); \
+    }
+#define CHECK_RELEASE(obj,d,rc) \
+    if (obj) { \
+        int tmp1, rc_new = rc; \
+        IUnknown_Release( obj ); \
+        tmp1 = get_refcount( (IUnknown *)d ); \
+        ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     }
 
 void test_swapchain(void)
@@ -206,7 +214,7 @@ void test_refcount(void)
     IDirect3DQuery9             *pQuery             = NULL;
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm;
-    int                          refcount, tmp;
+    int                          refcount = 0, tmp;
 
     D3DVERTEXELEMENT9 decl[] =
     {
@@ -245,95 +253,82 @@ void test_refcount(void)
     ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
     if (FAILED(hr)) goto cleanup;
 
+    refcount = get_refcount( (IUnknown *)pDevice );
+    ok(refcount == 1, "Invalid device RefCount %d\n", refcount);
 
     /* Buffers */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice9_CreateIndexBuffer( pDevice, 16, 0, D3DFMT_INDEX32, D3DPOOL_DEFAULT, &pIndexBuffer, NULL );
-    CHECK_CALL( hr, "CreateIndexBuffer", pDevice, refcount+1 );
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateIndexBuffer", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreateVertexBuffer( pDevice, 16, 0, D3DFVF_XYZ, D3DPOOL_DEFAULT, &pVertexBuffer, NULL );
-    CHECK_CALL( hr, "CreateVertexBuffer", pDevice, refcount+1 );
+    CHECK_CALL( hr, "CreateVertexBuffer", pDevice, ++refcount );
     /* Shaders */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice9_CreateVertexDeclaration( pDevice, decl, &pVertexDeclaration );
-    CHECK_CALL( hr, "CreateVertexDeclaration", pDevice, refcount+1 );
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateVertexDeclaration", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreateVertexShader( pDevice, simple_vs, &pVertexShader );
-    CHECK_CALL( hr, "CreateVertexShader", pDevice, refcount+1 );
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateVertexShader", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreatePixelShader( pDevice, simple_ps, &pPixelShader );
-    CHECK_CALL( hr, "CreatePixelShader", pDevice, refcount+1 );
+    CHECK_CALL( hr, "CreatePixelShader", pDevice, ++refcount );
     /* Textures */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice9_CreateTexture( pDevice, 32, 32, 3, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pTexture, NULL );
-    CHECK_CALL( hr, "CreateTexture", pDevice, refcount+1 );
+    CHECK_CALL( hr, "CreateTexture", pDevice, ++refcount );
     if (pTexture)
     {
         tmp = get_refcount( (IUnknown *)pTexture );
         /* This should not increment device refcount */
         hr = IDirect3DTexture9_GetSurfaceLevel( pTexture, 1, &pTextureLevel );
-        CHECK_CALL( hr, "GetSurfaceLevel", pDevice, refcount+1 );
+        CHECK_CALL( hr, "GetSurfaceLevel", pDevice, refcount );
         /* But should increment texture's refcount */
         CHECK_CALL( hr, "GetSurfaceLevel", pTexture, tmp+1 );
     }
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice9_CreateCubeTexture( pDevice, 32, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pCubeTexture, NULL );
-    CHECK_CALL( hr, "CreateCubeTexture", pDevice, refcount+1 );
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateCubeTexture", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreateVolumeTexture( pDevice, 32, 32, 2, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pVolumeTexture, NULL );
-    CHECK_CALL( hr, "CreateVolumeTexture", pDevice, refcount+1 );
+    CHECK_CALL( hr, "CreateVolumeTexture", pDevice, ++refcount );
     /* Surfaces */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice9_CreateDepthStencilSurface( pDevice, 32, 32, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &pStencilSurface, NULL );
-    todo_wine {CHECK_CALL( hr, "CreateDepthStencilSurface", pDevice, refcount+1 );}
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateDepthStencilSurface", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pOffscreenSurface, NULL );
-    todo_wine {CHECK_CALL( hr, "CreateOffscreenPlainSurface", pDevice, refcount+1 );}
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateOffscreenPlainSurface", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreateRenderTarget( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &pRenderTarget, NULL );
-    todo_wine {CHECK_CALL( hr, "CreateRenderTarget", pDevice, refcount+1 );}
+    CHECK_CALL( hr, "CreateRenderTarget", pDevice, ++refcount );
     /* Misc */
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice9_CreateStateBlock( pDevice, D3DSBT_ALL, &pStateBlock );
-    CHECK_CALL( hr, "CreateStateBlock", pDevice, refcount+1 );
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateStateBlock", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreateAdditionalSwapChain( pDevice, &d3dpp, &pSwapChain );
-    CHECK_CALL( hr, "CreateAdditionalSwapChain", pDevice, refcount+1 );
-    refcount = get_refcount( (IUnknown *)pDevice );
+    CHECK_CALL( hr, "CreateAdditionalSwapChain", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreateQuery( pDevice, D3DQUERYTYPE_EVENT, &pQuery );
-    CHECK_CALL( hr, "CreateQuery", pDevice, refcount+1 );
+    CHECK_CALL( hr, "CreateQuery", pDevice, ++refcount );
 
-    refcount = get_refcount( (IUnknown *)pDevice );
     hr = IDirect3DDevice9_BeginStateBlock( pDevice );
     CHECK_CALL( hr, "BeginStateBlock", pDevice, refcount );
     hr = IDirect3DDevice9_EndStateBlock( pDevice, &pStateBlock1 );
-    CHECK_CALL( hr, "EndStateBlock", pDevice, refcount+1 );
+    CHECK_CALL( hr, "EndStateBlock", pDevice, ++refcount );
 
 cleanup:
-    if (pDevice)              IUnknown_Release( pDevice );
+    CHECK_RELEASE(pDevice,              pDevice, --refcount);
 
     /* Buffers */
-    if (pVertexBuffer)        IUnknown_Release( pVertexBuffer );
-    if (pIndexBuffer)         IUnknown_Release( pIndexBuffer );
+    CHECK_RELEASE(pVertexBuffer,        pDevice, --refcount);
+    CHECK_RELEASE(pIndexBuffer,         pDevice, --refcount);
     /* Shaders */
-    if (pVertexDeclaration)   IUnknown_Release( pVertexDeclaration );
-    if (pVertexShader)        IUnknown_Release( pVertexShader );
-    if (pPixelShader)         IUnknown_Release( pPixelShader );
+    CHECK_RELEASE(pVertexDeclaration,   pDevice, --refcount);
+    CHECK_RELEASE(pVertexShader,        pDevice, --refcount);
+    CHECK_RELEASE(pPixelShader,         pDevice, --refcount);
     /* Textures */
-    if (pTexture)             IUnknown_Release( pTexture );
-    if (pTextureLevel)        IUnknown_Release( pTextureLevel );
-    if (pCubeTexture)         IUnknown_Release( pCubeTexture );
-    if (pVolumeTexture)       IUnknown_Release( pVolumeTexture );
+    /* pTextureLevel is holding a reference to the pTexture */
+    CHECK_RELEASE(pTexture,             pDevice,   refcount);
+    CHECK_RELEASE(pTextureLevel,        pDevice, --refcount);
+    CHECK_RELEASE(pCubeTexture,         pDevice, --refcount);
+    CHECK_RELEASE(pVolumeTexture,       pDevice, --refcount);
     /* Surfaces */
-    if (pStencilSurface)      IUnknown_Release( pStencilSurface );
-    if (pOffscreenSurface)    IUnknown_Release( pOffscreenSurface );
-    if (pRenderTarget)        IUnknown_Release( pRenderTarget );
+    CHECK_RELEASE(pStencilSurface,      pDevice, --refcount);
+    CHECK_RELEASE(pOffscreenSurface,    pDevice, --refcount);
+    CHECK_RELEASE(pRenderTarget,        pDevice, --refcount);
     /* Misc */
-    if (pStateBlock)          IUnknown_Release( pStateBlock );
-    /* Avoid crash for now.
-    if (pSwapChain)           IUnknown_Release( pSwapChain );
-    */
-    if (pQuery)               IUnknown_Release( pQuery );
+    CHECK_RELEASE(pStateBlock,          pDevice, --refcount);
+    CHECK_RELEASE(pSwapChain,           pDevice, --refcount);
+    CHECK_RELEASE(pQuery,               pDevice, --refcount);
+    /* This will destroy device - can not check the refcount here */
     if (pStateBlock1)         IUnknown_Release( pStateBlock1 );
 
     if (pD3d)                 IUnknown_Release( pD3d );

@@ -277,6 +277,8 @@ HRESULT  WINAPI IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9 iface, UINT
         FIXME("(%p) call to IWineD3DDevice_CreateSurface failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
+        IUnknown_AddRef(iface);
+        object->parentDevice = iface;
         TRACE("(%p) : Created surface %p\n", This, object);
         *ppSurface = (LPDIRECT3DSURFACE9) object;
     }
@@ -951,11 +953,15 @@ HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, UINT Width, UINT Height,
         Lockable = FALSE;
         
     TRACE("relay\n");
-    res = IDirect3DDevice9Impl_CreateSurface((IDirect3DDevice9 *)device, Width, Height, (D3DFORMAT)Format, Lockable, FALSE/*Discard*/, Level,  (IDirect3DSurface9 **)&d3dSurface, D3DRTYPE_SURFACE, Usage, (D3DPOOL) Pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */, pSharedHandle);  
+    res = IDirect3DDevice9Impl_CreateSurface((IDirect3DDevice9 *)device, Width, Height, (D3DFORMAT)Format,
+                Lockable, FALSE/*Discard*/, Level,  (IDirect3DSurface9 **)&d3dSurface, D3DRTYPE_SURFACE,
+                Usage, (D3DPOOL) Pool, D3DMULTISAMPLE_NONE, 0 /* MultisampleQuality */, pSharedHandle);  
 
-    if (res == D3D_OK) {
+    if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
-    }else{
+        IUnknown_Release(d3dSurface->parentDevice);
+        d3dSurface->parentDevice = NULL;
+    } else {
         FIXME("(%p) IDirect3DDevice9_CreateSurface failed\n", device);
     }
     return res;
