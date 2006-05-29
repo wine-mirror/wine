@@ -76,11 +76,11 @@
 @ stub DnsNameCopy
 @ stub DnsNameCopyAllocate
 @ stub DnsNotifyResolver
-@ stub DnsQuery_A
+@ stdcall DnsQuery_A(str long long ptr ptr ptr)
 @ stdcall DnsQueryConfig(long long wstr ptr ptr ptr)
 @ stub DnsQueryEx
-@ stub DnsQuery_UTF8
-@ stub DnsQuery_W
+@ stdcall DnsQuery_UTF8(str long long ptr ptr ptr)
+@ stdcall DnsQuery_W(wstr long long ptr ptr ptr)
 @ stub DnsRecordBuild_UTF8
 @ stub DnsRecordBuild_W
 @ stdcall DnsRecordCompare(ptr ptr)
