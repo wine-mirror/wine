@@ -4040,21 +4040,23 @@ BOOL WINAPI FontIsLinked(HDC hdc)
 
 static BOOL is_hinting_enabled(void)
 {
-    FT_Module mod;
-
     /* Use the >= 2.2.0 function if available */
     if(pFT_Get_TrueType_Engine_Type)
     {
         FT_TrueTypeEngineType type = pFT_Get_TrueType_Engine_Type(library);
         return type == FT_TRUETYPE_ENGINE_TYPE_PATENTED;
     }
-
-    /* otherwise if we've been compiled with < 2.2.0 headers 
-       use the internal macro */
 #ifdef FT_DRIVER_HAS_HINTER
-    mod = pFT_Get_Module(library, "truetype");
-    if(mod && FT_DRIVER_HAS_HINTER(mod))
-        return TRUE;
+    else
+    {
+        FT_Module mod;
+
+        /* otherwise if we've been compiled with < 2.2.0 headers 
+           use the internal macro */
+        mod = pFT_Get_Module(library, "truetype");
+        if(mod && FT_DRIVER_HAS_HINTER(mod))
+            return TRUE;
+    }
 #endif
 
     return FALSE;
