@@ -843,14 +843,10 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
         /* use the callback to create the texture surface */
         hr = D3DCB_CreateSurface(This->parent, tmpW, tmpH, Format, Usage, Pool, i, &object->surfaces[i],NULL);
         if (hr!= WINED3D_OK || ( (IWineD3DSurfaceImpl *) object->surfaces[i])->Flags & SFLAG_OVERSIZE) {
-            int j;
             FIXME("Failed to create surface  %p\n", object);
             /* clean up */
-            for (j = 0 ; j <= i ; j++) {
-                if(object->surfaces[j]) IWineD3DSurface_Release(object->surfaces[j]);
-            }
-            /* heap free object */
-            HeapFree(GetProcessHeap(), 0, object);
+            object->surfaces[i] = NULL;
+            IWineD3DTexture_Release((IWineD3DTexture *)object);
 
             *ppTexture = NULL;
             return hr;
