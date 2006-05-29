@@ -70,25 +70,27 @@ static void IdentifyItem(HTREEITEM hItem)
 static void FillRoot(void)
 {
     TVINSERTSTRUCTA ins;
+    static CHAR root[]  = "Root",
+                child[] = "Child";
 
     Clear();
-    AddItem('A');    
+    AddItem('A');
     ins.hParent = TVI_ROOT;
     ins.hInsertAfter = TVI_ROOT;
     U(ins).item.mask = TVIF_TEXT;
-    U(ins).item.pszText = "Root";
+    U(ins).item.pszText = root;
     hRoot = TreeView_InsertItem(hTree, &ins);
     assert(hRoot);
-  
+
     AddItem('B');
     ins.hParent = hRoot;
     ins.hInsertAfter = TVI_FIRST;
     U(ins).item.mask = TVIF_TEXT;
-    U(ins).item.pszText = "Child";
+    U(ins).item.pszText = child;
     hChild = TreeView_InsertItem(hTree, &ins);
     assert(hChild);
     AddItem('.');
-    
+
     ok(!strcmp(sequence, "AB."), "Item creation\n");
 }
 
