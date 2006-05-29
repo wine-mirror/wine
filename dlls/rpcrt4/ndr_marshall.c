@@ -2576,7 +2576,7 @@ void WINAPI NdrComplexArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
     pMemory = ComplexFree(pStubMsg, pMemory, pFormat, NULL);
 }
 
-unsigned long UserMarshalFlags(PMIDL_STUB_MESSAGE pStubMsg)
+static unsigned long UserMarshalFlags(PMIDL_STUB_MESSAGE pStubMsg)
 {
   return MAKELONG(pStubMsg->dwDestContext,
                   pStubMsg->RpcMsg->DataRepresentation);
