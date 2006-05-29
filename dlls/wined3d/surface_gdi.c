@@ -1459,13 +1459,20 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     HRESULT hr;
     HDC hdc;
 
+    /* Sysmem textures have memory already allocated -
+     * release it, this avoids an unnecessary memcpy
+     */
+    HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+    This->resource.allocatedMemory = NULL;
+
     /* We don't mind the nonpow2 stuff in GDI */
+    This->resource.size = This->currentDesc.Width * D3DFmtGetBpp(This->resource.wineD3DDevice, This->resource.format) * This->currentDesc.Width;
     This->pow2Size = This->resource.size;
     This->pow2Width = This->currentDesc.Width;
     This->pow2Height = This->currentDesc.Height;
     This->Flags &= ~SFLAG_NONPOW2;
 
-    /* Call GetDC to create a DIB section. We will use that 
+    /* Call GetDC to create a DIB section. We will use that
      * DIB section for rendering
      *
      * Release the DC afterwards to allow the app to use it
