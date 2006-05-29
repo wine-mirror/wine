@@ -1042,8 +1042,8 @@ static void test_formatrecord(void)
     r = MsiRecordSetString(hrec, 1, "hoo");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
-    ok( sz == 3, "size wrong\n");
-    ok( 0 == strcmp(buffer,"[1]"), "wrong output\n");
+    ok( sz == 3, "size wrong: got %lu, expected 3\n", sz);
+    ok( 0 == strcmp(buffer,"[1]"), "wrong output: got %s, expected [1]\n", buffer);
     }
     ok( r == ERROR_SUCCESS, "format failed\n");
 
@@ -1052,8 +1052,8 @@ static void test_formatrecord(void)
     r = MsiRecordSetString(hrec, 1, "hoo");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
-    ok( sz == 3, "size wrong\n");
-    ok( 0 == strcmp(buffer,"[1]"), "wrong output\n");
+    ok( sz == 3, "size wrong: got %lu, expected 3\n", sz);
+    ok( 0 == strcmp(buffer,"[1]"), "wrong output: got %s, expected [1]\n", buffer);
     }
     ok( r == ERROR_SUCCESS, "format failed\n");
 
