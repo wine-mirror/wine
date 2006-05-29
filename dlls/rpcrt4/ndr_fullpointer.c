@@ -32,10 +32,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 PFULL_PTR_XLAT_TABLES WINAPI NdrFullPointerXlatInit(unsigned long NumberOfPointers,
                                                     XLAT_SIDE XlatSide)
 {
-    unsigned long NumberOfBuckets = ((NumberOfPointers + 3) & 4) - 1;
+    unsigned long NumberOfBuckets;
     PFULL_PTR_XLAT_TABLES pXlatTables = HeapAlloc(GetProcessHeap(), 0, sizeof(*pXlatTables));
 
     TRACE("(%ld, %d)\n", NumberOfPointers, XlatSide);
+
+    if (!NumberOfPointers) NumberOfPointers = 512;
+    NumberOfBuckets = ((NumberOfPointers + 3) & ~3) - 1;
 
     pXlatTables->RefIdToPointer.XlatTable =
         HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
