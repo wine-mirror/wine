@@ -833,8 +833,10 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     TRACE("pointer_id is 0x%08lx\n", pointer_id);
     if (pointer_id)
       pointer_needs_unmarshaling = 1;
-    else
+    else {
+      *pPointer = NULL;
       pointer_needs_unmarshaling = 0;
+    }
     break;
   case RPC_FC_OP: /* object pointer - we must free data before overwriting it */
     pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
