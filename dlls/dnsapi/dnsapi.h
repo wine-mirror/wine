@@ -137,3 +137,8 @@ static inline LPSTR dns_strdup_ua( const char *src )
     }
     return dst;
 }
+
+int dns_ns_initparse( const u_char *, int, ns_msg * );
+int dns_ns_parserr( ns_msg *, ns_sect, int, ns_rr * );
+int dns_ns_name_skip( const u_char **, const u_char * );
+int dns_ns_name_uncompress( const u_char *, const u_char *, const u_char *, char *, size_t );
