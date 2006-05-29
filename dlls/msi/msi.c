@@ -835,15 +835,27 @@ LANGID WINAPI MsiLoadStringA( MSIHANDLE handle, UINT id, LPSTR lpBuffer,
 INSTALLSTATE WINAPI MsiLocateComponentA(LPCSTR szComponent, LPSTR lpPathBuf,
                 DWORD *pcchBuf)
 {
-    FIXME("%s %p %p\n", debugstr_a(szComponent), lpPathBuf, pcchBuf);
-    return INSTALLSTATE_UNKNOWN;
+    char szProduct[GUID_SIZE];
+
+    TRACE("%s %p %p\n", debugstr_a(szComponent), lpPathBuf, pcchBuf);
+
+    if (MsiGetProductCodeA( szComponent, szProduct ) != ERROR_SUCCESS)
+        return INSTALLSTATE_UNKNOWN;
+
+    return MsiGetComponentPathA( szProduct, szComponent, lpPathBuf, pcchBuf );
 }
 
 INSTALLSTATE WINAPI MsiLocateComponentW(LPCWSTR szComponent, LPWSTR lpPathBuf,
                 DWORD *pcchBuf)
 {
-    FIXME("%s %p %p\n", debugstr_w(szComponent), lpPathBuf, pcchBuf);
-    return INSTALLSTATE_UNKNOWN;
+    WCHAR szProduct[GUID_SIZE];
+
+    TRACE("%s %p %p\n", debugstr_w(szComponent), lpPathBuf, pcchBuf);
+
+    if (MsiGetProductCodeW( szComponent, szProduct ) != ERROR_SUCCESS)
+        return INSTALLSTATE_UNKNOWN;
+
+    return MsiGetComponentPathW( szProduct, szComponent, lpPathBuf, pcchBuf );
 }
 
 UINT WINAPI MsiMessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType,
