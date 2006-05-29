@@ -1698,8 +1698,7 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                          unsigned char *pMemory,
                                          PFORMAT_STRING pFormat,
-                                         PFORMAT_STRING pPointer,
-                                         unsigned char fMustAlloc)
+                                         PFORMAT_STRING pPointer)
 {
   PFORMAT_STRING desc;
   NDR_UNMARSHALL m;
@@ -1745,7 +1744,7 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       TRACE("embedded complex (size=%ld) => %p\n", size, pMemory);
       m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
       memset(pMemory, 0, size); /* just in case */
-      if (m) m(pStubMsg, &pMemory, desc, fMustAlloc);
+      if (m) m(pStubMsg, &pMemory, desc, FALSE);
       else FIXME("no unmarshaller for embedded type %02x\n", *desc);
       pMemory += size;
       pFormat += 2;
@@ -1991,7 +1990,7 @@ unsigned char * WINAPI NdrComplexStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   if (*(const WORD*)pFormat) pointer_desc = pFormat + *(const WORD*)pFormat;
   pFormat += 2;
 
-  pMemory = ComplexUnmarshall(pStubMsg, *ppMemory, pFormat, pointer_desc, fMustAlloc);
+  pMemory = ComplexUnmarshall(pStubMsg, *ppMemory, pFormat, pointer_desc);
 
   if (conf_array)
     NdrConformantArrayUnmarshall(pStubMsg, &pMemory, conf_array, fMustAlloc);
@@ -2449,7 +2448,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pMemory = *ppMemory;
   count = pStubMsg->ActualCount;
   for (i = 0; i < count; i++)
-    pMemory = ComplexUnmarshall(pStubMsg, pMemory, pFormat, NULL, fMustAlloc);
+    pMemory = ComplexUnmarshall(pStubMsg, pMemory, pFormat, NULL);
 
   return NULL;
 }
