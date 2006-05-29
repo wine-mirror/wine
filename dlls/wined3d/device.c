@@ -3943,7 +3943,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
             glEnable(GL_LINE_SMOOTH);
             checkGLcall("glEnable(GL_LINE_SMOOTH)");
         } else {
-            glDisable(GL_BLEND);
+            if(!This->stateBlock->renderState[WINED3DRS_ALPHABLENDENABLE])
+                glDisable(GL_BLEND);
             checkGLcall("glDisable(GL_BLEND)");
             glDisable(GL_LINE_SMOOTH);
             checkGLcall("glDisable(GL_LINE_SMOOTH)");
