@@ -31,8 +31,9 @@
 
 #ifdef HAVE_LDAP_H
 #include <ldap.h>
-static LDAPMod *nullattrs[] = { NULL };
-#else
+#endif
+
+#ifndef LDAP_NOT_SUPPORTED
 #define LDAP_NOT_SUPPORTED  0x5c
 #endif
 
@@ -40,6 +41,10 @@ static LDAPMod *nullattrs[] = { NULL };
 #include "wldap32.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
+
+#ifdef HAVE_LDAP
+static LDAPMod *nullattrs[] = { NULL };
+#endif
 
 /***********************************************************************
  *      ldap_addA     (WLDAP32.@)
