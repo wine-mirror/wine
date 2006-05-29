@@ -749,6 +749,8 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned type = pFormat[0], attr = pFormat[1];
   PFORMAT_STRING desc;
   NDR_MARSHALL m;
+  unsigned long pointer_id;
+  int pointer_needs_marshaling;
 
   TRACE("(%p,%p,%p,%p)\n", pStubMsg, Buffer, Pointer, pFormat);
   TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
@@ -762,21 +764,33 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if (!Pointer)
       RpcRaiseException(RPC_X_NULL_REF_POINTER);
 #endif
+    pointer_needs_marshaling = 1;
     break;
   case RPC_FC_UP: /* unique pointer */
   case RPC_FC_OP: /* object pointer - same as unique here */
-    TRACE("writing %p to buffer\n", Pointer);
-    NDR_LOCAL_UINT32_WRITE(Buffer, (unsigned long)Pointer);
+    if (Pointer)
+      pointer_needs_marshaling = 1;
+    else
+      pointer_needs_marshaling = 0;
+    pointer_id = (unsigned long)Pointer;
+    TRACE("writing 0x%08lx to buffer\n", pointer_id);
+    NDR_LOCAL_UINT32_WRITE(Buffer, pointer_id);
     break;
   case RPC_FC_FP:
+    pointer_needs_marshaling = !NdrFullPointerQueryPointer(
+      pStubMsg->FullPtrXlatTables, Pointer, 1, &pointer_id);
+    TRACE("writing 0x%08lx to buffer\n", pointer_id);
+    NDR_LOCAL_UINT32_WRITE(Buffer, pointer_id);
+    break;
   default:
     FIXME("unhandled ptr type=%02x\n", type);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    return;
   }
 
   TRACE("calling marshaller for type 0x%x\n", (int)*desc);
 
-  if (Pointer) {
+  if (pointer_needs_marshaling) {
     if (attr & RPC_FC_P_DEREF) {
       Pointer = *(unsigned char**)Pointer;
       TRACE("deref => %p\n", Pointer);
@@ -802,6 +816,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   PFORMAT_STRING desc;
   NDR_UNMARSHALL m;
   DWORD pointer_id = 0;
+  int pointer_needs_unmarshaling;
 
   TRACE("(%p,%p,%p,%p,%d)\n", pStubMsg, Buffer, pPointer, pFormat, fMustAlloc);
   TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
@@ -811,25 +826,39 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
-    pointer_id = ~0UL;
+    pointer_needs_unmarshaling = 1;
     break;
   case RPC_FC_UP: /* unique pointer */
     pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
     TRACE("pointer_id is 0x%08lx\n", pointer_id);
+    if (pointer_id)
+      pointer_needs_unmarshaling = 1;
+    else
+      pointer_needs_unmarshaling = 0;
     break;
   case RPC_FC_OP: /* object pointer - we must free data before overwriting it */
     pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
     TRACE("pointer_id is 0x%08lx\n", pointer_id);
     if (!fMustAlloc && *pPointer)
         FIXME("free object pointer %p\n", *pPointer);
+    if (pointer_id)
+      pointer_needs_unmarshaling = 1;
+    else
+      pointer_needs_unmarshaling = 0;
     break;
   case RPC_FC_FP:
+    pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
+    TRACE("pointer_id is 0x%08lx\n", pointer_id);
+    pointer_needs_unmarshaling = !NdrFullPointerQueryRefId(
+      pStubMsg->FullPtrXlatTables, pointer_id, 1, (void **)pPointer);
+    break;
   default:
     FIXME("unhandled ptr type=%02x\n", type);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    return;
   }
 
-  if (pointer_id) {
+  if (pointer_needs_unmarshaling) {
     if (attr & RPC_FC_P_DEREF) {
       if (!*pPointer || fMustAlloc)
         *pPointer = NdrAllocate(pStubMsg, sizeof(void *));
@@ -839,6 +868,10 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
     if (m) m(pStubMsg, pPointer, desc, fMustAlloc);
     else FIXME("no unmarshaller for data type=%02x\n", *desc);
+
+    if (type == RPC_FC_FP)
+      NdrFullPointerInsertRefId(pStubMsg->FullPtrXlatTables, pointer_id,
+                                *pPointer);
   }
 
   TRACE("pointer=%p\n", *pPointer);
@@ -854,6 +887,8 @@ static void PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned type = pFormat[0], attr = pFormat[1];
   PFORMAT_STRING desc;
   NDR_BUFFERSIZE m;
+  int pointer_needs_sizing;
+  unsigned long pointer_id;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, Pointer, pFormat);
   TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
@@ -871,9 +906,15 @@ static void PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
         return;
     break;
   case RPC_FC_FP:
+    pointer_needs_sizing = !NdrFullPointerQueryPointer(
+      pStubMsg->FullPtrXlatTables, Pointer, 0, &pointer_id);
+    if (!pointer_needs_sizing)
+      return;
+    break;
   default:
     FIXME("unhandled ptr type=%02x\n", type);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    return;
   }
 
   if (attr & RPC_FC_P_DEREF) {
@@ -941,6 +982,13 @@ static void PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   else desc = pFormat + *(const SHORT*)pFormat;
 
   if (!Pointer) return;
+
+  if (type == RPC_FC_FP) {
+    int pointer_needs_freeing = NdrFullPointerFree(
+      pStubMsg->FullPtrXlatTables, Pointer);
+    if (!pointer_needs_freeing)
+      return;
+  }
 
   if (attr & RPC_FC_P_DEREF) {
     Pointer = *(unsigned char**)Pointer;
