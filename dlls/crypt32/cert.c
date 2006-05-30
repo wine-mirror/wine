@@ -1647,6 +1647,7 @@ static void CRYPT_MakeCertInfo(PCERT_INFO info,
 {
     /* FIXME: what serial number to use? */
     static const BYTE serialNum[] = { 1 };
+    static CHAR oid[] = szOID_RSA_SHA1RSA;
 
     assert(info);
     assert(pSubjectIssuerBlob);
@@ -1660,7 +1661,7 @@ static void CRYPT_MakeCertInfo(PCERT_INFO info,
          sizeof(info->SignatureAlgorithm));
     else
     {
-        info->SignatureAlgorithm.pszObjId = szOID_RSA_SHA1RSA;
+        info->SignatureAlgorithm.pszObjId = oid;
         info->SignatureAlgorithm.Parameters.cbData = 0;
         info->SignatureAlgorithm.Parameters.pbData = NULL;
     }
