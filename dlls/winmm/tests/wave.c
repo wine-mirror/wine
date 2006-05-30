@@ -535,14 +535,20 @@ static DWORD WINAPI callback_thread(LPVOID lpParameter)
 {
     MSG msg;
 
+    SetEvent((HANDLE)lpParameter);
+
     while (GetMessage(&msg, 0, 0, 0)) {
         UINT message = msg.message;
         /* for some reason XP sends a WM_USER message before WOM_OPEN */
         ok (message == WOM_OPEN || message == WOM_DONE ||
-            message == WOM_CLOSE || message == WM_USER,
+            message == WOM_CLOSE || message == WM_USER || message == WM_APP,
             "GetMessage returned unexpected message: %u\n", message);
         if (message == WOM_OPEN || message == WOM_DONE || message == WOM_CLOSE)
             SetEvent((HANDLE)lpParameter);
+        else if (message == WM_APP) {
+            SetEvent((HANDLE)lpParameter);
+            return 0;
+        }
     }
 
     return 0;
@@ -556,7 +562,7 @@ static void wave_out_test_deviceOut(int device, double duration,
 {
     HWAVEOUT wout;
     HANDLE hevent;
-    WAVEHDR *frags;
+    WAVEHDR *frags = 0;
     MMRESULT rc;
     DWORD volume;
     WORD nChannels = pwfx->nChannels;
@@ -568,7 +574,8 @@ static void wave_out_test_deviceOut(int device, double duration,
     DWORD callback = 0;
     DWORD callback_instance = 0;
     HANDLE thread = 0;
-    BYTE * buffer;
+    DWORD thread_id;
+    char * buffer;
     DWORD length;
     DWORD frag_length;
     int i, j;
@@ -585,9 +592,10 @@ static void wave_out_test_deviceOut(int device, double duration,
         callback = (DWORD)callback_func;
         callback_instance = (DWORD)hevent;
     } else if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD) {
-        DWORD thread_id;
         thread = CreateThread(NULL, 0, callback_thread, hevent, 0, &thread_id);
         if (thread) {
+            /* make sure thread is running */
+            WaitForSingleObject(hevent,INFINITE);
             callback = thread_id;
             callback_instance = 0;
         } else {
@@ -636,12 +644,10 @@ static void wave_out_test_deviceOut(int device, double duration,
               pwfx->wBitsPerSample,pwfx->nChannels,
               flags & WAVE_FORMAT_DIRECT ? "flags=WAVE_FORMAT_DIRECT" :
               flags & WAVE_MAPPED ? "flags=WAVE_MAPPED" : "", mmsys_error(rc));
-    if (rc!=MMSYSERR_NOERROR) {
-        if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD)
-            TerminateThread(thread, 0);
-        CloseHandle(hevent);
-        return;
-    }
+    if (rc!=MMSYSERR_NOERROR)
+        goto EXIT;
+
+    WaitForSingleObject(hevent,INFINITE);
 
     ok(pwfx->nChannels==nChannels &&
        pwfx->wBitsPerSample==wBitsPerSample &&
@@ -699,7 +705,6 @@ static void wave_out_test_deviceOut(int device, double duration,
         rc=waveOutSetVolume(wout,0x20002000);
         ok(has_volume ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED,
            "waveOutSetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
-        WaitForSingleObject(hevent,INFINITE);
 
         rc=waveOutSetVolume(wout,volume);
         ok(has_volume ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED,
@@ -779,8 +784,12 @@ static void wave_out_test_deviceOut(int device, double duration,
     rc=waveOutClose(wout);
     ok(rc==MMSYSERR_NOERROR,"waveOutClose(%s): rc=%s\n",dev_name(device),
        wave_out_error(rc));
-    if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD)
-        TerminateThread(thread, 0);
+    WaitForSingleObject(hevent,INFINITE);
+EXIT:
+    if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD) {
+        PostThreadMessage(thread_id, WM_APP, 0, 0);
+        WaitForSingleObject(hevent,INFINITE);
+    }
     CloseHandle(hevent);
     free(frags);
 }
