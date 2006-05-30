@@ -808,6 +808,13 @@ static const char okmsg[] =
 "Server: winetest\r\n"
 "\r\n";
 
+static const char proxymsg[] =
+"HTTP/1.1 407 Proxy Authentication Required\r\n"
+"Server: winetest\r\n"
+"Proxy-Connection: close\r\n"
+"Proxy-Authenticate: Basic realm=\"placebo\"\r\n"
+"\r\n";
+
 static const char page1[] =
 "<HTML>\r\n"
 "<HEAD><TITLE>wininet test page</TITLE></HEAD>\r\n"
@@ -822,16 +829,20 @@ struct server_info {
 static DWORD CALLBACK server_thread(LPVOID param)
 {
     struct server_info *si = param;
-    int r, s, c, i;
+    int r, s, c, i, on;
     struct sockaddr_in sa;
     char buffer[0x100];
     WSADATA wsaData;
+    int last_request = 0;
 
     WSAStartup(MAKEWORD(1,1), &wsaData);
 
     s = socket(AF_INET, SOCK_STREAM, 0);
     if (s<0)
-        return FALSE;
+        return 1;
+
+    on = 1;
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof on);
 
     memset(&sa, 0, sizeof sa);
     sa.sin_family = AF_INET;
@@ -842,59 +853,72 @@ static DWORD CALLBACK server_thread(LPVOID param)
     if (r<0)
         return 1;
 
-    listen(s, 1);
+    listen(s, 0);
 
     SetEvent(si->hEvent);
 
-    c = accept(s, NULL, NULL);
-
-    memset(buffer, 0, sizeof buffer);
-    for(i=0; i<(sizeof buffer-1); i++)
+    do
     {
-        r = recv(c, &buffer[i], 1, 0);
-        if (r != 1)
-            break;
-        if (i<4) continue;
-        if (buffer[i-2] == '\n' && buffer[i] == '\n' &&
-            buffer[i-3] == '\r' && buffer[i-1] == '\r')
-            break;
-    }
+        c = accept(s, NULL, NULL);
 
-    send(c, okmsg, sizeof okmsg-1, 0);
-    send(c, page1, sizeof page1-1, 0);
+        memset(buffer, 0, sizeof buffer);
+        for(i=0; i<(sizeof buffer-1); i++)
+        {
+            r = recv(c, &buffer[i], 1, 0);
+            if (r != 1)
+                break;
+            if (i<4) continue;
+            if (buffer[i-2] == '\n' && buffer[i] == '\n' &&
+                buffer[i-3] == '\r' && buffer[i-1] == '\r')
+                break;
+        }
 
-    closesocket(c);
+        if (strstr(buffer, "GET /test1"))
+        {
+            send(c, okmsg, sizeof okmsg-1, 0);
+            send(c, page1, sizeof page1-1, 0);
+        }
+
+        if (strstr(buffer, "/test2"))
+        {
+            if (strstr(buffer, "Proxy-Authorization: Basic bWlrZToxMTAx"))
+            {
+                send(c, okmsg, sizeof okmsg-1, 0);
+                send(c, page1, sizeof page1-1, 0);
+            }
+            else
+                send(c, proxymsg, sizeof proxymsg-1, 0);
+        }
+
+        if (strstr(buffer, "/quit"))
+        {
+            send(c, okmsg, sizeof okmsg-1, 0);
+            send(c, page1, sizeof page1-1, 0);
+            last_request = 1;
+        }
+
+        shutdown(c, 2);
+        closesocket(c);
+    } while (!last_request);
+
     closesocket(s);
 
     return 0;
 }
 
-static void test_http_connection(void)
+static void test_basic_request(int port, char *url)
 {
-    struct server_info si;
     HINTERNET hi, hc, hr;
-    HANDLE hThread;
-    DWORD id = 0, r, count;
+    DWORD r, count;
     char buffer[0x100];
-
-    si.hEvent = CreateEvent(NULL, 0, 0, NULL);
-    si.port = 7531;
-
-    hThread = CreateThread(NULL, 0, server_thread, (LPVOID) &si, 0, &id);
-    ok( hThread != NULL, "create thread failed\n");
-
-    r = WaitForSingleObject(si.hEvent, 3000);
-    ok (r == WAIT_OBJECT_0, "failed to start wininet test server\n");
-    if (r != WAIT_OBJECT_0)
-        return;
 
     hi = InternetOpen(NULL, 0, NULL, NULL, 0);
     ok(hi != NULL, "open failed\n");
 
-    hc = InternetConnect(hi, "localhost", si.port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    hc = InternetConnect(hi, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(hc != NULL, "connect failed\n");
 
-    hr = HttpOpenRequest(hc, NULL, "/test", NULL, NULL, NULL, 0, 0);
+    hr = HttpOpenRequest(hc, NULL, url, NULL, NULL, NULL, 0, 0);
     ok(hr != NULL, "HttpOpenRequest failed\n");
 
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
@@ -910,6 +934,139 @@ static void test_http_connection(void)
     InternetCloseHandle(hr);
     InternetCloseHandle(hc);
     InternetCloseHandle(hi);
+}
+
+static void test_proxy_indirect(int port)
+{
+    HINTERNET hi, hc, hr;
+    DWORD r, sz, val;
+    char buffer[0x40];
+
+    hi = InternetOpen(NULL, 0, NULL, NULL, 0);
+    ok(hi != NULL, "open failed\n");
+
+    hc = InternetConnect(hi, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(hc != NULL, "connect failed\n");
+
+    hr = HttpOpenRequest(hc, NULL, "/test2", NULL, NULL, NULL, 0, 0);
+    ok(hr != NULL, "HttpOpenRequest failed\n");
+
+    r = HttpSendRequest(hr, NULL, 0, NULL, 0);
+    ok(r, "HttpSendRequest failed\n");
+
+    sz = sizeof buffer;
+    r = HttpQueryInfo(hr, HTTP_QUERY_PROXY_AUTHENTICATE, buffer, &sz, NULL);
+    ok(r, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "Basic realm=\"placebo\""), "proxy auth info wrong\n");
+
+    sz = sizeof buffer;
+    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &sz, NULL);
+    ok(r, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "407"), "proxy code wrong\n");
+
+    sz = sizeof val;
+    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &val, &sz, NULL);
+    ok(r, "HttpQueryInfo failed\n");
+    ok(val == 407, "proxy code wrong\n");
+
+    sz = sizeof buffer;
+    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_TEXT, buffer, &sz, NULL);
+    ok(r, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "Proxy Authentication Required"), "proxy text wrong\n");
+
+    sz = sizeof buffer;
+    r = HttpQueryInfo(hr, HTTP_QUERY_VERSION, buffer, &sz, NULL);
+    ok(r, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "HTTP/1.1"), "http version wrong\n");
+
+    sz = sizeof buffer;
+    r = HttpQueryInfo(hr, HTTP_QUERY_SERVER, buffer, &sz, NULL);
+    ok(r, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "winetest"), "http server wrong\n");
+
+    sz = sizeof buffer;
+    r = HttpQueryInfo(hr, HTTP_QUERY_CONTENT_ENCODING, buffer, &sz, NULL);
+    ok(GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "HttpQueryInfo should fail\n");
+    ok(r == FALSE, "HttpQueryInfo failed\n");
+
+    InternetCloseHandle(hr);
+    InternetCloseHandle(hc);
+    InternetCloseHandle(hi);
+}
+
+static void test_proxy_direct(int port)
+{
+    HINTERNET hi, hc, hr;
+    DWORD r, sz;
+    char buffer[0x40];
+
+    sprintf(buffer, "localhost:%d\n", port);
+    hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_PROXY, buffer, NULL, 0);
+    ok(hi != NULL, "open failed\n");
+
+    /* try connect without authorization */
+    hc = InternetConnect(hi, "www.winehq.org/", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(hc != NULL, "connect failed\n");
+
+    hr = HttpOpenRequest(hc, NULL, "/test2", NULL, NULL, NULL, 0, 0);
+    ok(hr != NULL, "HttpOpenRequest failed\n");
+
+    r = HttpSendRequest(hr, NULL, 0, NULL, 0);
+    ok(r, "HttpSendRequest failed\n");
+
+    sz = sizeof buffer;
+    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &sz, NULL);
+    ok(r, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "407"), "proxy code wrong\n");
+
+
+    /* set the user + password then try again */
+    todo_wine {
+    r = InternetSetOption(hr, INTERNET_OPTION_PROXY_USERNAME, "mike", 4);
+    ok(r, "failed to set user\n");
+
+    r = InternetSetOption(hr, INTERNET_OPTION_PROXY_PASSWORD, "1101", 4);
+    ok(r, "failed to set password\n");
+    }
+
+    r = HttpSendRequest(hr, NULL, 0, NULL, 0);
+    ok(r, "HttpSendRequest failed\n");
+    sz = sizeof buffer;
+    r = HttpQueryInfo(hr, HTTP_QUERY_STATUS_CODE, buffer, &sz, NULL);
+    ok(r, "HttpQueryInfo failed\n");
+    todo_wine {
+    ok(!strcmp(buffer, "200"), "proxy code wrong\n");
+    }
+
+
+    InternetCloseHandle(hr);
+    InternetCloseHandle(hc);
+    InternetCloseHandle(hi);
+}
+
+static void test_http_connection(void)
+{
+    struct server_info si;
+    HANDLE hThread;
+    DWORD id = 0, r;
+
+    si.hEvent = CreateEvent(NULL, 0, 0, NULL);
+    si.port = 7531;
+
+    hThread = CreateThread(NULL, 0, server_thread, (LPVOID) &si, 0, &id);
+    ok( hThread != NULL, "create thread failed\n");
+
+    r = WaitForSingleObject(si.hEvent, 10000);
+    ok (r == WAIT_OBJECT_0, "failed to start wininet test server\n");
+    if (r != WAIT_OBJECT_0)
+        return;
+
+    test_basic_request(si.port, "/test1");
+    test_proxy_indirect(si.port);
+    test_proxy_direct(si.port);
+
+    /* send the basic request again to shutdown the server thread */
+    test_basic_request(si.port, "/quit");
 
     r = WaitForSingleObject(hThread, 3000);
     ok( r == WAIT_OBJECT_0, "thread wait failed\n");
