@@ -628,7 +628,10 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PIP4_ARRA
     _res.options |= dns_map_options( options );
 
     if (servers && (ret = dns_set_serverlist( servers )))
+    {
+        UNLOCK_RESOLVER();
         return ret;
+    }
 
     ret = dns_do_query( name, type, options, result );
 
