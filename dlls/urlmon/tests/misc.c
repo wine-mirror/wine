@@ -350,6 +350,14 @@ static BYTE data3[] = {0,0,0};
 static BYTE data4[] = {'t','e','s',0xfa,'t',' ','d','a','t','a','\n',0,0};
 static BYTE data5[] = {0xa,0xa,0xa,'x',32,'x',0};
 static BYTE data6[] = {0xfa,0xfa,0xfa,0xfa,'\n','\r','\t','x','x','x',1};
+static BYTE data7[] = "<html>blahblah";
+static BYTE data8[] = {'t','e','s',0xfa,'t',' ','<','h','t','m','l','>','d','a','t','a','\n',0,0};
+static BYTE data9[] = {'t','e',0,'s',0xfa,'t',' ','<','h','t','m','l','>','d','a','t','a','\n',0,0};
+static BYTE data10[] = "<HtmL>blahblah";
+static BYTE data11[] = "blah<HTML>blahblah";
+static BYTE data12[] = "blah<HTMLblahblah";
+static BYTE data13[] = "blahHTML>blahblah";
+static BYTE data14[] = "blah<HTMblahblah";
 
 static const struct {
     BYTE *data;
@@ -361,7 +369,15 @@ static const struct {
     {data3, sizeof(data3), mimeAppOctetStream},
     {data4, sizeof(data4), mimeAppOctetStream},
     {data5, sizeof(data5), mimeTextPlain},
-    {data6, sizeof(data6), mimeTextPlain}
+    {data6, sizeof(data6), mimeTextPlain},
+    {data7, sizeof(data7), mimeTextHtml},
+    {data8, sizeof(data8), mimeTextHtml},
+    {data9, sizeof(data9), mimeTextHtml},
+    {data10, sizeof(data10), mimeTextHtml},
+    {data11, sizeof(data11), mimeTextHtml},
+    {data12, sizeof(data12), mimeTextHtml},
+    {data13, sizeof(data13), mimeTextPlain},
+    {data14, sizeof(data14), mimeTextPlain}
 };
 
 static void test_FindMimeFromData(void)

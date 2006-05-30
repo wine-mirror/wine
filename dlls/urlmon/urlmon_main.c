@@ -28,7 +28,6 @@
 
 #define NO_SHLWAPI_REG
 #include "shlwapi.h"
-
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -397,6 +396,26 @@ void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
  *
  * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
  */
+static BOOL text_html_filter(LPVOID buf, DWORD size)
+{
+    const char *b = buf;
+    int i;
+
+    if(size < 5)
+        return FALSE;
+
+    for(i=0; i < size-5; i++) {
+        if(b[i] == '<'
+           && (b[i+1] == 'h' || b[i+1] == 'H')
+           && (b[i+2] == 't' || b[i+2] == 'T')
+           && (b[i+3] == 'm' || b[i+3] == 'M')
+           && (b[i+4] == 'l' || b[i+4] == 'L'))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 static BOOL text_plain_filter(LPVOID buf, DWORD size)
 {
     UCHAR *ptr;
@@ -448,6 +467,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         LPCWSTR ret = NULL;
         int i = 0;
 
+        static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
         static const WCHAR wszTextPlain[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
         static const WCHAR wszAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
             'o','c','t','e','t','-','s','t','r','e','a','m','\0'};
@@ -456,6 +476,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
             LPCWSTR mime;
             BOOL (*filter)(LPVOID,DWORD);
         } mime_filters[] = {
+            {wszTextHtml,       text_html_filter},
             {wszTextPlain,      text_plain_filter},
             {wszAppOctetStream, application_octet_stream_filter}
         };
