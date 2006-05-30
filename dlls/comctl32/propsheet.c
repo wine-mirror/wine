@@ -2908,8 +2908,8 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
         else
         {
             UINT id = LOWORD(ppsp->pszTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + sizeof(WCHAR);
-            ppsp->pszTitle = Alloc( len );
+            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
+            ppsp->pszTitle = Alloc( len * sizeof(WCHAR) );
             LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszTitle, len );
         }
     }
@@ -2926,8 +2926,8 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
         else
         {
             UINT id = LOWORD(ppsp->pszHeaderTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + sizeof(WCHAR);
-            ppsp->pszHeaderTitle = Alloc( len );
+            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
+            ppsp->pszHeaderTitle = Alloc( len * sizeof(WCHAR) );
             LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszHeaderTitle, len );
         }
     }
@@ -2941,8 +2941,8 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
         else
         {
             UINT id = LOWORD(ppsp->pszHeaderSubTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + sizeof(WCHAR);
-            ppsp->pszHeaderSubTitle = Alloc( len );
+            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
+            ppsp->pszHeaderSubTitle = Alloc( len * sizeof(WCHAR) );
             LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszHeaderSubTitle, len );
         }
     }
@@ -2996,8 +2996,8 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
         else
         {
             UINT id = LOWORD(ppsp->pszTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + sizeof(WCHAR);
-            ppsp->pszTitle = Alloc( len );
+            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
+            ppsp->pszTitle = Alloc( len * sizeof(WCHAR) );
             LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszTitle, len );
         }
     }
@@ -3018,8 +3018,8 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
         else
         {
             UINT id = LOWORD(ppsp->pszHeaderTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + sizeof(WCHAR);
-            ppsp->pszHeaderTitle = Alloc( len );
+            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
+            ppsp->pszHeaderTitle = Alloc( len * sizeof(WCHAR) );
             LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszHeaderTitle, len );
         }
     }
@@ -3037,8 +3037,8 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
         else
         {
             UINT id = LOWORD(ppsp->pszHeaderSubTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + sizeof(WCHAR);
-            ppsp->pszHeaderSubTitle = Alloc( len );
+            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
+            ppsp->pszHeaderSubTitle = Alloc( len * sizeof(WCHAR) );
             LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszHeaderSubTitle, len );
         }
     }
