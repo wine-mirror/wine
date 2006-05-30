@@ -1363,6 +1363,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
             return TRUE;
         }
     case HTTP_QUERY_STATUS_TEXT:
+        if (lpwhr->lpszStatusText)
         {
             DWORD len = strlenW(lpwhr->lpszStatusText);
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
@@ -1378,7 +1379,9 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
 
             return TRUE;
         }
+        break;
     case HTTP_QUERY_VERSION:
+        if (lpwhr->lpszVersion)
         {
             DWORD len = strlenW(lpwhr->lpszVersion);
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
@@ -1394,6 +1397,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
 
             return TRUE;
         }
+        break;
     default:
         assert (LAST_TABLE_HEADER == (HTTP_QUERY_UNLESS_MODIFIED_SINCE + 1));
 
