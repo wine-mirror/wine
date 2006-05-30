@@ -1460,9 +1460,9 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     lpItem = &infoPtr->items[nItem];
     HEADER_StoreHDItemInHeader(lpItem, phdi->mask, phdi, bUnicode);
 
-    /* FIXME: check it order is not out of bound */
     if (phdi->mask & HDI_ORDER)
-        HEADER_ChangeItemOrder(infoPtr, nItem, phdi->iOrder);
+        if (phdi->iOrder >= 0 && phdi->iOrder < infoPtr->uNumItem)
+            HEADER_ChangeItemOrder(infoPtr, nItem, phdi->iOrder);
 
     HEADER_SendHeaderNotifyT (hwnd, HDN_ITEMCHANGEDW, nItem, phdi->mask, &hdNotify);
 
