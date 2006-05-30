@@ -182,6 +182,11 @@ HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE8 
 
     TRACE("(%p) Relay\n", This);
 
+    /* Fix the back buffer count */
+    if(pPresentationParameters->BackBufferCount == 0) {
+        pPresentationParameters->BackBufferCount = 1;
+    }
+
     object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object));
     if (NULL == object) {
         FIXME("Allocation of memory failed\n");
