@@ -2370,8 +2370,6 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
       CBAddStringW(fodInfos->DlgInfos.hwndFileTypeCB, lpstrDisplay);
 
       nFilters++;
-      /* malformed filters are added anyway... */
-      if (!*lpstrPos) break;
 
       /* Copy the extensions */
       if (!(lpstrExt = MemAlloc((strlenW(lpstrPos)+1)*sizeof(WCHAR)))) return E_FAIL;
@@ -2380,6 +2378,9 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
 
       /* Add the item at the end of the combo */
       CBSetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB, nFilters-1, lpstrExt);
+
+      /* malformed filters are added anyway... */
+      if (!*lpstrExt) break;
     }
   }
 
