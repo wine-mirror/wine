@@ -453,7 +453,7 @@ int main(int argc, char **argv)
 
 	DWORD RepairMode = 0;
 
-	DWORD AdvertiseMode = 0;
+	DWORD_PTR AdvertiseMode = 0;
 	struct string_list *transform_list = NULL;
 	LANGID Language = 0;
 
