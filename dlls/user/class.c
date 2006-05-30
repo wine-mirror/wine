@@ -1120,3 +1120,57 @@ BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry )
     return TRUE;
 }
 #endif
+
+/* 64bit versions */
+
+#ifdef GetClassLongPtrA
+#undef GetClassLongPtrA
+#endif
+
+#ifdef GetClassLongPtrW
+#undef GetClassLongPtrW
+#endif
+
+#ifdef SetClassLongPtrA
+#undef SetClassLongPtrA
+#endif
+
+#ifdef SetClassLongPtrW
+#undef SetClassLongPtrW
+#endif
+
+/***********************************************************************
+ *		GetClassLongPtrA (USER32.@)
+ */
+ULONG_PTR WINAPI GetClassLongPtrA( HWND hwnd, INT offset )
+{
+    FIXME("\n");
+    return 0;
+}
+
+/***********************************************************************
+ *		GetClassLongPtrW (USER32.@)
+ */
+ULONG_PTR WINAPI GetClassLongPtrW( HWND hwnd, INT offset )
+{
+    FIXME("\n");
+    return 0;
+}
+
+/***********************************************************************
+ *		SetClassLongPtrW (USER32.@)
+ */
+ULONG_PTR WINAPI SetClassLongPtrW( HWND hwnd, INT offset, LONG_PTR newval )
+{
+    FIXME("\n");
+    return 0;
+}
+
+/***********************************************************************
+ *		SetClassLongPtrA (USER32.@)
+ */
+ULONG_PTR WINAPI SetClassLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
+{
+    FIXME("\n");
+    return 0;
+}

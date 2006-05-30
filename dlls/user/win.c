@@ -3177,3 +3177,57 @@ BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psi
           hwnd, hdcDst, pptDst, psize, hdcSrc, pptSrc, crKey, pblend, dwFlags);
     return 0;
 }
+
+/* 64bit versions */
+
+#ifdef GetWindowLongPtrW
+#undef GetWindowLongPtrW
+#endif
+
+#ifdef GetWindowLongPtrA
+#undef GetWindowLongPtrA
+#endif
+
+#ifdef SetWindowLongPtrW
+#undef SetWindowLongPtrW
+#endif
+
+#ifdef SetWindowLongPtrA
+#undef SetWindowLongPtrA
+#endif
+
+/*****************************************************************************
+ *              GetWindowLongPtrW (USER32.@)
+ */
+LONG_PTR WINAPI GetWindowLongPtrW( HWND hwnd, INT offset )
+{
+    FIXME("\n");
+    return 0;
+}
+
+/*****************************************************************************
+ *              GetWindowLongPtrA (USER32.@)
+ */
+LONG_PTR WINAPI GetWindowLongPtrA( HWND hwnd, INT offset )
+{
+    FIXME("\n");
+    return 0;
+}
+
+/*****************************************************************************
+ *              SetWindowLongPtrW (USER32.@)
+ */
+LONG_PTR WINAPI SetWindowLongPtrW( HWND hwnd, INT offset, LONG_PTR newval )
+{
+    FIXME("\n");
+    return 0;
+}
+
+/*****************************************************************************
+ *              SetWindowLongPtrA (USER32.@)
+ */
+LONG_PTR WINAPI SetWindowLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
+{
+    FIXME("\n");
+    return 0;
+}
