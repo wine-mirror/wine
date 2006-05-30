@@ -397,6 +397,23 @@ void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
  *
  * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
  */
+static BOOL text_plain_filter(LPVOID buf, DWORD size)
+{
+    UCHAR *ptr;
+
+    for(ptr = buf; ptr < (UCHAR*)buf+size-1; ptr++) {
+        if(*ptr < 0x20 && *ptr != '\n' && *ptr != '\r' && *ptr != '\t')
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL application_octet_stream_filter(LPVOID buf, DWORD size)
+{
+    return TRUE;
+}
+
 HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         DWORD cbSize, LPCWSTR pwzMimeProposed, DWORD dwMimeFlags,
         LPWSTR* ppwzMimeOut, DWORD dwReserved)
@@ -427,23 +444,29 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
     }
 
     if(pBuffer) {
-        UCHAR *ptr = pBuffer;
         DWORD len;
-        LPCWSTR ret;
+        LPCWSTR ret = NULL;
+        int i = 0;
 
-        static const WCHAR wszAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
-                'o','c','t','e','t','-','s','t','r','e','a','m','\0'};
         static const WCHAR wszTextPlain[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
+        static const WCHAR wszAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
+            'o','c','t','e','t','-','s','t','r','e','a','m','\0'};
+
+        static const struct {
+            LPCWSTR mime;
+            BOOL (*filter)(LPVOID,DWORD);
+        } mime_filters[] = {
+            {wszTextPlain,      text_plain_filter},
+            {wszAppOctetStream, application_octet_stream_filter}
+        };
 
         if(!cbSize)
             return E_FAIL;
 
-        ret = wszTextPlain;
-        for(ptr = pBuffer; ptr < (UCHAR*)pBuffer+cbSize-1; ptr++) {
-            if(*ptr < 0x20 && *ptr != '\n' && *ptr != '\r' && *ptr != '\t') {
-                ret = wszAppOctetStream;
-                break;
-            }
+        while(!ret) {
+            if(mime_filters[i].filter(pBuffer, cbSize))
+                ret = mime_filters[i].mime;
+            i++;
         }
 
         len = strlenW(ret)+1;
