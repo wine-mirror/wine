@@ -1899,7 +1899,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
         *pptvd=TLB_Alloc(sizeof(TLBVarDesc));
     /* name, eventually add to a hash table */
         MSFT_ReadLEDWords(&nameoffset, sizeof(INT), pcx,
-                          offset + infolen + (cFuncs + cVars + i + 1) * sizeof(INT));
+                          offset + infolen + (2*cFuncs + cVars + i + 1) * sizeof(INT));
         (*pptvd)->Name=MSFT_ReadName(pcx, nameoffset);
     /* read the variable information record */
         MSFT_ReadLEDWords(&reclength, sizeof(INT), pcx, recoffset);
@@ -1915,7 +1915,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
             (*pptvd)->HelpStringContext=pVarRec->HelpStringContext;
     /* fill the VarDesc Structure */
         MSFT_ReadLEDWords(&(*pptvd)->vardesc.memid, sizeof(INT), pcx,
-                          offset + infolen + ( i + 1) * sizeof(INT));
+                          offset + infolen + (cFuncs + i + 1) * sizeof(INT));
         (*pptvd)->vardesc.varkind = pVarRec->VarKind;
         (*pptvd)->vardesc.wVarFlags = pVarRec->Flags;
         MSFT_GetTdesc(pcx, pVarRec->DataType,
@@ -1927,6 +1927,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
                 pVarRec->OffsValue, pcx);
         } else
             (*pptvd)->vardesc.u.oInst=pVarRec->OffsValue;
+        MSFT_ResolveReferencedTypes(pcx, pTI, &(*pptvd)->vardesc.elemdescVar.tdesc);
         pptvd=&((*pptvd)->next);
         recoffset += reclength;
     }
