@@ -754,6 +754,9 @@ static void testComparePublicKeyInfo(void)
 {
     BOOL ret;
     CERT_PUBLIC_KEY_INFO info1 = { { 0 } }, info2 = { { 0 } };
+    static CHAR oid_rsa_rsa[]     = szOID_RSA_RSA;
+    static CHAR oid_rsa_sha1rsa[] = szOID_RSA_SHA1RSA;
+    static CHAR oid_x957_dsa[]    = szOID_X957_DSA;
     static const BYTE bits1[] = { 1, 0 };
     static const BYTE bits2[] = { 0 };
     static const BYTE bits3[] = { 1 };
@@ -765,11 +768,11 @@ static void testComparePublicKeyInfo(void)
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(ret, "CertComparePublicKeyInfo failed: %08lx\n", GetLastError());
     /* Different OIDs appear to compare */
-    info1.Algorithm.pszObjId = szOID_RSA_RSA;
-    info2.Algorithm.pszObjId = szOID_RSA_SHA1RSA;
+    info1.Algorithm.pszObjId = oid_rsa_rsa;
+    info2.Algorithm.pszObjId = oid_rsa_sha1rsa;
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(ret, "CertComparePublicKeyInfo failed: %08lx\n", GetLastError());
-    info2.Algorithm.pszObjId = szOID_X957_DSA;
+    info2.Algorithm.pszObjId = oid_x957_dsa;
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(ret, "CertComparePublicKeyInfo failed: %08lx\n", GetLastError());
     info1.PublicKey.cbData = sizeof(bits1);
