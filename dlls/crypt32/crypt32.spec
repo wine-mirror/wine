@@ -88,6 +88,10 @@
 @ stdcall CertVerifyTimeValidity(ptr ptr)
 @ stub CertVerifyValidityNesting
 @ stub CreateFileU
+@ stdcall CryptBinaryToStringA(ptr long long ptr ptr)
+@ stub CryptBinaryToStringW # (ptr long long ptr ptr)
+@ stdcall CryptStringToBinaryA(str long long ptr ptr ptr ptr)
+@ stub CryptStringToBinaryW # (wstr long long ptr ptr ptr ptr)
 @ stub CryptAcquireContextU
 @ stub CryptCloseAsyncHandle
 @ stub CryptCreateAsyncHandle

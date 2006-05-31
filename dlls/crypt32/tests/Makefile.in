@@ -6,6 +6,7 @@ TESTDLL   = crypt32.dll
 IMPORTS   = crypt32 advapi32 kernel32
 
 CTESTS = \
+	base64.c \
 	cert.c \
 	encode.c \
 	main.c \

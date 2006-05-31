@@ -1968,6 +1968,21 @@ typedef struct _CRL_FIND_ISSUED_FOR_PARA
 #define CERT_STORE_CRL_CONTEXT_FLAG (1 << CERT_STORE_CRL_CONTEXT)
 #define CERT_STORE_CTL_CONTEXT_FLAG (1 << CERT_STORE_CTL_CONTEXT)
 
+/* CryptBinaryToString/CryptStringToBinary flags */
+#define CRYPT_STRING_BASE64HEADER        0x00000000
+#define CRYPT_STRING_BASE64              0x00000001
+#define CRYPT_STRING_BINARY              0x00000002
+#define CRYPT_STRING_BASE64REQUESTHEADER 0x00000003
+#define CRYPT_STRING_HEX                 0x00000004
+#define CRYPT_STRING_HEXASCII            0x00000005
+#define CRYPT_STRING_BASE64_ANY          0x00000006
+#define CRYPT_STRING_ANY                 0x00000007
+#define CRYPT_STRING_HEX_ANY             0x00000008
+#define CRYPT_STRING_BASE64X509CRLHEADER 0x00000009
+#define CRYPT_STRING_HEXADDR             0x0000000a
+#define CRYPT_STRING_HEXASCIIADDR        0x0000000b
+#define CRYPT_STRING_NOCR                0x80000000
+
 /* OIDs */
 #define szOID_RSA                           "1.2.840.113549"
 #define szOID_PKCS                          "1.2.840.113549.1"
@@ -2539,6 +2554,20 @@ BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 LPVOID WINAPI CryptMemAlloc(ULONG cbSize);
 LPVOID WINAPI CryptMemRealloc(LPVOID pv, ULONG cbSize);
 VOID   WINAPI CryptMemFree(LPVOID pv);
+
+BOOL WINAPI CryptBinaryToStringA(const BYTE *pbBinary,
+ DWORD cbBinary, DWORD dwFlags, LPSTR pszString, DWORD *pcchString);
+BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
+ DWORD cbBinary, DWORD dwFlags, LPWSTR pszString, DWORD *pcchString);
+#define CryptBinaryToString WINELIB_NAME_AW(CryptBinaryToString)
+
+BOOL WINAPI CryptStringToBinaryA(LPCSTR pszString,
+ DWORD cchString, DWORD dwFlags, BYTE *pbBinary, DWORD *pcbBinary,
+ DWORD *pdwSkip, DWORD *pdwFlags);
+BOOL WINAPI CryptStringToBinaryW(LPCWSTR pszString,
+ DWORD cchString, DWORD dwFlags, BYTE *pbBinary, DWORD *pcbBinary,
+ DWORD *pdwSkip, DWORD *pdwFlags);
+#define CryptStringToBinary WINELIB_NAME_AW(CryptStringToBinary)
 
 BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD,LPCSTR,DWORD,LPCWSTR);
 BOOL WINAPI CryptRegisterOIDFunction(DWORD,LPCSTR,LPCSTR,LPCWSTR,LPCSTR);
