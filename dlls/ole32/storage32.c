@@ -1867,7 +1867,7 @@ static HRESULT deleteStorageProperty(
         (IStorage*)parentStorage,
         propertyToDelete.name,
         0,
-        STGM_SHARE_EXCLUSIVE,
+        STGM_WRITE | STGM_SHARE_EXCLUSIVE,
         0,
         0,
         &childStorage);
