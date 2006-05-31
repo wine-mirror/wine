@@ -541,9 +541,10 @@ static DNS_STATUS dns_do_query( PCSTR name, WORD type, DWORD options,
         goto exit;
     }
 
-    if (ns_msg_getflag( msg, ns_f_rcode ) != ns_r_noerror)
+#define RCODE_MASK 0x0f
+    if ((msg._flags & RCODE_MASK) != ns_r_noerror)
     {
-        ret = dns_map_error( ns_msg_getflag( msg, ns_f_rcode ) );
+        ret = dns_map_error( msg._flags & RCODE_MASK );
         goto exit;
     }
 

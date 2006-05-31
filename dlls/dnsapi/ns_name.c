@@ -42,9 +42,6 @@ static const char	digits[] = "0123456789";
 
 static int		special(int);
 static int		printable(int);
-static int		dn_find(const u_char *, const u_char *,
-				const u_char * const *,
-				const u_char * const *);
 
 /* Public. */
 
@@ -271,46 +268,6 @@ dns_ns_name_pton(const char *src, u_char *dst, size_t dstsiz) {
 	return (0);
 }
 
-/*
- * ns_name_ntol(src, dst, dstsiz)
- *	Convert a network strings labels into all lowercase.
- * return:
- *	Number of bytes written to buffer, or -1 (with errno set)
- * notes:
- *	Enforces label and domain length limits.
- */
-
-int
-ns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz) {
-	const u_char *cp;
-	u_char *dn, *eom;
-	u_char c;
-	u_int n;
-
-	cp = src;
-	dn = dst;
-	eom = dst + dstsiz;
-
-	while ((n = *cp++) != 0) {
-		if ((n & NS_CMPRSFLGS) != 0) {
-			/* Some kind of compression pointer. */
-			return (-1);
-		}
-		*dn++ = n;
-		if (dn + n >= eom) {
-			return (-1);
-		}
-		for ((void)NULL; n > 0; n--) {
-			c = *cp++;
-			if (isupper(c))
-				*dn++ = tolower(c);
-			else
-				*dn++ = c;
-		}
-	}
-	*dn++ = '\0';
-	return (dn - dst);
-}
 
 /*
  * dns_ns_name_unpack(msg, eom, src, dst, dstsiz)
@@ -392,111 +349,6 @@ dns_ns_name_unpack(const u_char *msg, const u_char *eom, const u_char *src,
 	return (len);
 }
 
-/*
- * ns_name_pack(src, dst, dstsiz, dnptrs, lastdnptr)
- *	Pack domain name 'domain' into 'comp_dn'.
- * return:
- *	Size of the compressed name, or -1.
- * notes:
- *	'dnptrs' is an array of pointers to previous compressed names.
- *	dnptrs[0] is a pointer to the beginning of the message. The array
- *	ends with NULL.
- *	'lastdnptr' is a pointer to the end of the array pointed to
- *	by 'dnptrs'.
- * Side effects:
- *	The list of pointers in dnptrs is updated for labels inserted into
- *	the message as we compress the name.  If 'dnptr' is NULL, we don't
- *	try to compress names. If 'lastdnptr' is NULL, we don't update the
- *	list.
- */
-int
-ns_name_pack(const u_char *src, u_char *dst, int dstsiz,
-	     const u_char **dnptrs, const u_char **lastdnptr)
-{
-	u_char *dstp;
-	const u_char **cpp, **lpp, *eob, *msg;
-	const u_char *srcp;
-	int n, l, first = 1;
-
-	srcp = src;
-	dstp = dst;
-	eob = dstp + dstsiz;
-	lpp = cpp = NULL;
-	if (dnptrs != NULL) {
-		if ((msg = *dnptrs++) != NULL) {
-			for (cpp = dnptrs; *cpp != NULL; cpp++)
-				(void)NULL;
-			lpp = cpp;	/* end of list to search */
-		}
-	} else
-		msg = NULL;
-
-	/* make sure the domain we are about to add is legal */
-	l = 0;
-	do {
-		n = *srcp;
-		if ((n & NS_CMPRSFLGS) != 0 && n != 0x41) {
-			return (-1);
-		}
-		if (n == 0x41)
-			n = *++srcp / 8;
-		l += n + 1;
-		if (l > NS_MAXCDNAME) {
-			return (-1);
-		}
-		srcp += n + 1;
-	} while (n != 0);
-
-	/* from here on we need to reset compression pointer array on error */
-	srcp = src;
-	do {
-		/* Look to see if we can use pointers. */
-		n = *srcp;
-		if (n != 0 && n != 0x41 && msg != NULL) {
-			l = dn_find(srcp, msg, (const u_char * const *)dnptrs,
-				    (const u_char * const *)lpp);
-			if (l >= 0) {
-				if (dstp + 1 >= eob) {
-					goto cleanup;
-				}
-				*dstp++ = (l >> 8) | NS_CMPRSFLGS;
-				*dstp++ = l % 256;
-				return (dstp - dst);
-			}
-			/* Not found, save it. */
-			if (lastdnptr != NULL && cpp < lastdnptr - 1 &&
-			    (dstp - msg) < 0x4000 && first) {
-				*cpp++ = dstp;
-				*cpp = NULL;
-				first = 0;
-			}
-		}
-		/* copy label to buffer */
-		if ((n & NS_CMPRSFLGS) != 0 && n != 0x41) {		/* Should not happen. */
-			goto cleanup;
-		}
-		if (n == 0x41) {
-			n = *++srcp / 8;
-			if (dstp + 1 >= eob)
-				goto cleanup;
-			*dstp++ = 0x41;
-		}
-		if (dstp + 1 + n >= eob) {
-			goto cleanup;
-		}
-		memcpy(dstp, srcp, n + 1);
-		srcp += n + 1;
-		dstp += n + 1;
-	} while (n != 0);
-
-	if (dstp > eob) {
-cleanup:
-		if (msg != NULL)
-			*lpp = NULL;
-		return (-1);
-	}
-	return (dstp - dst);
-}
 
 /*
  * dns_ns_name_uncompress(msg, eom, src, dst, dstsiz)
@@ -520,47 +372,6 @@ dns_ns_name_uncompress(const u_char *msg, const u_char *eom, const u_char *src,
 	return (n);
 }
 
-/*
- * ns_name_compress(src, dst, dstsiz, dnptrs, lastdnptr)
- *	Compress a domain name into wire format, using compression pointers.
- * return:
- *	Number of bytes consumed in `dst' or -1 (with errno set).
- * notes:
- *	'dnptrs' is an array of pointers to previous compressed names.
- *	dnptrs[0] is a pointer to the beginning of the message.
- *	The list ends with NULL.  'lastdnptr' is a pointer to the end of the
- *	array pointed to by 'dnptrs'. Side effect is to update the list of
- *	pointers for labels inserted into the message as we compress the name.
- *	If 'dnptr' is NULL, we don't try to compress names. If 'lastdnptr'
- *	is NULL, we don't update the list.
- */
-int
-ns_name_compress(const char *src, u_char *dst, size_t dstsiz,
-		 const u_char **dnptrs, const u_char **lastdnptr)
-{
-	u_char tmp[NS_MAXCDNAME];
-
-	if (dns_ns_name_pton(src, tmp, sizeof tmp) == -1)
-		return (-1);
-	return (ns_name_pack(tmp, dst, dstsiz, dnptrs, lastdnptr));
-}
-
-/*
- * Reset dnptrs so that there are no active references to pointers at or
- * after src.
- */
-void
-ns_name_rollback(const u_char *src, const u_char **dnptrs,
-		 const u_char **lastdnptr)
-{
-	while (dnptrs < lastdnptr && *dnptrs != NULL) {
-		if (*dnptrs >= src) {
-			*dnptrs = NULL;
-			break;
-		}
-		dnptrs++;
-	}
-}
 
 /*
  * dns_ns_name_skip(ptrptr, eom)
@@ -630,79 +441,4 @@ special(int ch) {
 static int
 printable(int ch) {
 	return (ch > 0x20 && ch < 0x7f);
-}
-
-/*
- *	Thinking in noninternationalized USASCII (per the DNS spec),
- *	convert this character to lower case if it's upper case.
- */
-static int
-mklower(int ch) {
-	if (ch >= 0x41 && ch <= 0x5A)
-		return (ch + 0x20);
-	return (ch);
-}
-
-/*
- * dn_find(domain, msg, dnptrs, lastdnptr)
- *	Search for the counted-label name in an array of compressed names.
- * return:
- *	offset from msg if found, or -1.
- * notes:
- *	dnptrs is the pointer to the first name on the list,
- *	not the pointer to the start of the message.
- */
-static int
-dn_find(const u_char *domain, const u_char *msg,
-	const u_char * const *dnptrs,
-	const u_char * const *lastdnptr)
-{
-	const u_char *dn, *cp, *sp;
-	const u_char * const *cpp;
-	u_int n;
-
-	for (cpp = dnptrs; cpp < lastdnptr; cpp++) {
-		sp = *cpp;
-		/*
-		 * terminate search on:
-		 * root label
-		 * compression pointer
-		 * unusable offset
-		 */
-		while (*sp != 0 && (*sp & NS_CMPRSFLGS) == 0 &&
-		       (sp - msg) < 0x4000) {
-			dn = domain;
-			cp = sp;
-			while ((n = *cp++) != 0) {
-				/*
-				 * check for indirection
-				 */
-				switch (n & NS_CMPRSFLGS) {
-				case 0:		/* normal case, n == len */
-					if (n != *dn++)
-						goto next;
-					for ((void)NULL; n > 0; n--)
-						if (mklower(*dn++) !=
-						    mklower(*cp++))
-							goto next;
-					/* Is next root for both ? */
-					if (*dn == '\0' && *cp == '\0')
-						return (sp - msg);
-					if (*dn)
-						continue;
-					goto next;
-
-				case NS_CMPRSFLGS:	/* indirection */
-					cp = msg + (((n & 0x3f) << 8) | *cp);
-					break;
-
-				default:	/* illegal type */
-					return (-1);
-				}
-			}
- next:
-			sp += *sp + 1;
-		}
-	}
-	return (-1);
 }

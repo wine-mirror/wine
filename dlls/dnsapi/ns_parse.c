@@ -42,28 +42,8 @@ static void	setsection(ns_msg *msg, ns_sect sect);
 
 /* Public. */
 
-/* These need to be in the same order as the nres.h:ns_flag enum. */
-struct _ns_flagdata _ns_flagdata[16] = {
-	{ 0x8000, 15 },		/* qr. */
-	{ 0x7800, 11 },		/* opcode. */
-	{ 0x0400, 10 },		/* aa. */
-	{ 0x0200, 9 },		/* tc. */
-	{ 0x0100, 8 },		/* rd. */
-	{ 0x0080, 7 },		/* ra. */
-	{ 0x0040, 6 },		/* z. */
-	{ 0x0020, 5 },		/* ad. */
-	{ 0x0010, 4 },		/* cd. */
-	{ 0x000f, 0 },		/* rcode. */
-	{ 0x0000, 0 },		/* expansion (1/6). */
-	{ 0x0000, 0 },		/* expansion (2/6). */
-	{ 0x0000, 0 },		/* expansion (3/6). */
-	{ 0x0000, 0 },		/* expansion (4/6). */
-	{ 0x0000, 0 },		/* expansion (5/6). */
-	{ 0x0000, 0 },		/* expansion (6/6). */
-};
-
-int
-ns_skiprr(const u_char *ptr, const u_char *eom, ns_sect section, int count) {
+static int
+dns_ns_skiprr(const u_char *ptr, const u_char *eom, ns_sect section, int count) {
 	const u_char *optr = ptr;
 
 	for ((void)NULL; count > 0; count--) {
@@ -109,7 +89,7 @@ dns_ns_initparse(const u_char *msg, int msglen, ns_msg *handle) {
 		if (handle->_counts[i] == 0)
 			handle->_sections[i] = NULL;
 		else {
-			int b = ns_skiprr(msg, eom, (ns_sect)i,
+			int b = dns_ns_skiprr(msg, eom, (ns_sect)i,
 					  handle->_counts[i]);
 
 			if (b < 0)
@@ -141,7 +121,7 @@ dns_ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	if (rrnum < handle->_rrnum)
 		setsection(handle, section);
 	if (rrnum > handle->_rrnum) {
-		b = ns_skiprr(handle->_ptr, handle->_eom, section,
+		b = dns_ns_skiprr(handle->_ptr, handle->_eom, section,
 			      rrnum - handle->_rrnum);
 
 		if (b < 0)
