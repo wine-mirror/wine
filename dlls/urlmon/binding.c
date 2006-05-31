@@ -107,7 +107,6 @@ struct Binding {
 
 #define STREAM(x) ((IStream*) &(x)->lpStreamVtbl)
 
-#define WM_MK_ONPROGRESS (WM_USER+100)
 #define WM_MK_CONTINUE   (WM_USER+101)
 
 static void push_task(task_t *task)
@@ -175,29 +174,13 @@ static void do_tasks(Binding *This)
 
 static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    switch(msg) {
-    case WM_MK_ONPROGRESS: {
-        on_progress_data *data = (on_progress_data*)lParam;
-
-        TRACE("WM_MK_PROGRESS %p\n", data);
-
-        IBindStatusCallback_OnProgress(data->binding->callback, data->progress,
-                data->progress_max, data->status_code, data->status_text);
-
-        IBinding_Release(BINDING(data->binding));
-        HeapFree(GetProcessHeap(), 0, data->status_text);
-        HeapFree(GetProcessHeap(), 0, data);
-
-        return 0;
-    }
-    case WM_MK_CONTINUE: {
+    if(msg == WM_MK_CONTINUE) {
         Binding *binding = (Binding*)lParam;
 
         do_tasks(binding);
 
         IBinding_Release(BINDING(binding));
         return 0;
-    }
     }
 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
@@ -248,33 +231,7 @@ static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
 {
     task_t *task;
 
-    if(GetCurrentThreadId() != This->apartment_thread) {
-        on_progress_data *data;
-
-        data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
-
-        IBinding_AddRef(BINDING(This));
-
-        data->binding = This;
-        data->progress = progress;
-        data->progress_max = progress_max;
-        data->status_code = status_code;
-
-        if(status_text) {
-            DWORD size = (strlenW(status_text)+1)*sizeof(WCHAR);
-
-            data->status_text = HeapAlloc(GetProcessHeap(), 0, size);
-            memcpy(data->status_text, status_text, size);
-        }else {
-            data->status_text = NULL;
-        }
-
-        PostMessageW(This->notif_hwnd, WM_MK_ONPROGRESS, 0, (LPARAM)data);
-
-        return;
-    }
-
-    if(!This->continue_call) {
+    if(GetCurrentThreadId() == This->apartment_thread && !This->continue_call) {
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                                        status_code, status_text);
         return;
@@ -301,6 +258,11 @@ static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
     }
 
     push_task(task);
+
+    if(GetCurrentThreadId() != This->apartment_thread) {
+        IBinding_AddRef(BINDING(This));
+        PostMessageW(This->notif_hwnd, WM_MK_CONTINUE, 0, (LPARAM)This);
+    }
 }
 
 static void dump_BINDINFO(BINDINFO *bi)
