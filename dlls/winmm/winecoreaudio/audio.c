@@ -96,8 +96,8 @@ typedef struct tagCoreAudio_Device {
     unsigned                    open_count;
     char*                       interface_name;
     
-    WAVEOUTCAPSA                out_caps;
-    WAVEINCAPSA                 in_caps;
+    WAVEOUTCAPSW                out_caps;
+    WAVEINCAPSW                 in_caps;
     DWORD                       in_caps_support;
     int                         sample_rate;
     int                         stereo;
@@ -170,17 +170,13 @@ typedef struct {
 } WINE_WAVEIN;
 
 static WINE_WAVEOUT WOutDev   [MAX_WAVEOUTDRV];
-static WINE_WAVEIN  WInDev    [MAX_WAVEINDRV ];
-
-static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
-static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
 
 static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo);
 static DWORD wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force);
 
 extern int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au);
 extern int AudioUnit_CloseAudioUnit(AudioUnit au);
-extern int AudioUnit_InitializeWithStreamDescription(AudioUnit au, AudioStreamBasicDescription streamFormat);
+extern int AudioUnit_InitializeWithStreamDescription(AudioUnit au, AudioStreamBasicDescription *streamFormat);
 
 extern OSStatus AudioOutputUnitStart(AudioUnit au);
 extern OSStatus AudioOutputUnitStop(AudioUnit au);
@@ -277,7 +273,7 @@ static CFDataRef wodMessageHandler(CFMessagePortRef local, SInt32 msgid, CFDataR
     return NULL;
 }
 
-static DWORD messageThread(LPVOID p)
+static DWORD WINAPI messageThread(LPVOID p)
 {
     CFMessagePortRef local;
     CFRunLoopSourceRef source;
@@ -312,7 +308,7 @@ static DWORD wodSendDriverCallbackMessage(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dw
     buffer[2] = (UInt32) dwParam1;
     buffer[3] = (UInt32) dwParam2;
     
-    data = CFDataCreate(kCFAllocatorDefault, buffer, sizeof(UInt32) * 4);
+    data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)buffer, sizeof(UInt32) * 4);
     if (!data)
     {
         CFAllocatorDeallocate(NULL, buffer);
@@ -410,8 +406,8 @@ BOOL CoreAudio_GetDevCaps (void)
     }
     
     TRACE("Device Stream Description mSampleRate : %f\n mFormatID : %c%c%c%c\n"
-            "mFormatFlags : %lX\n mBytesPerPacket : %u\n mFramesPerPacket : %u\n"
-            "mBytesPerFrame : %u\n mChannelsPerFrame : %u\n mBitsPerChannel : %u\n",
+            "mFormatFlags : %lX\n mBytesPerPacket : %lu\n mFramesPerPacket : %lu\n"
+            "mBytesPerFrame : %lu\n mChannelsPerFrame : %lu\n mBitsPerChannel : %lu\n",
                                CoreAudio_DefaultDevice.streamDescription.mSampleRate,
                                (char) (CoreAudio_DefaultDevice.streamDescription.mFormatID >> 24),
                                (char) (CoreAudio_DefaultDevice.streamDescription.mFormatID >> 16),
@@ -457,7 +453,7 @@ LONG CoreAudio_WaveInit(void)
     /* number of sound cards */
     AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &propertySize, NULL);
     propertySize /= sizeof(AudioDeviceID);
-    TRACE("sound cards : %u\n", propertySize);
+    TRACE("sound cards : %lu\n", propertySize);
     
     /* Get the output device */
     propertySize = sizeof(CoreAudio_DefaultDevice.outputDeviceID);
@@ -528,11 +524,11 @@ LONG CoreAudio_WaveInit(void)
 
 void CoreAudio_WaveRelease(void)
 {
-    TRACE("()\n");
-    
     /* Stop CFRunLoop in messageThread */
     CFMessagePortRef messagePort;
- 
+
+    TRACE("()\n");
+
     messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, CFSTR("WaveMessagePort"));
     CFMessagePortSendRequest(messagePort, kStopLoopMessage, NULL, 0.0, 0.0, NULL, NULL);
     CFRelease(messagePort);
@@ -604,8 +600,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WINE_WAVEOUT*	wwo;
     DWORD retval;
     DWORD               ret;
-    int			audio_fragment;
-    
+    AudioStreamBasicDescription streamFormat;
+
     TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL)
     {
@@ -656,14 +652,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     
     pthread_mutex_init(&wwo->lock, NULL); /* initialize the mutex */
     pthread_mutex_lock(&wwo->lock);
-    
-    AudioStreamBasicDescription streamFormat;
-    
+
     streamFormat.mFormatID = kAudioFormatLinearPCM;
     
     /* FIXME check for 32bits float -> kLinearPCMFormatFlagIsFloat */
     streamFormat.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger
-# ifdef __powerpc__
+# ifdef WORDS_BIGENDIAN
             | kLinearPCMFormatFlagIsBigEndian /* FIXME Wave format is little endian */
 # endif
             | kLinearPCMFormatFlagIsPacked;
@@ -674,8 +668,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     streamFormat.mBitsPerChannel = lpDesc->lpFormat->wBitsPerSample;
     streamFormat.mBytesPerFrame = streamFormat.mBitsPerChannel * streamFormat.mChannelsPerFrame / 8;	
     streamFormat.mBytesPerPacket = streamFormat.mBytesPerFrame * streamFormat.mFramesPerPacket;		
-    
-    ret = AudioUnit_InitializeWithStreamDescription(wwo->audioUnit, streamFormat);
+
+    ret = AudioUnit_InitializeWithStreamDescription(wwo->audioUnit, &streamFormat);
     if (!ret) 
     {
         pthread_mutex_unlock(&wwo->lock);
@@ -1124,8 +1118,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     DWORD		val;
     WINE_WAVEOUT*	wwo;
-    DWORD elapsedMS;
-    
+
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
     
     if (wDevID >= MAX_WAVEOUTDRV)
@@ -1147,31 +1140,6 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 }
 
 /**************************************************************************
-* 				wodBreakLoop			[internal]
-*/
-static DWORD wodBreakLoop(WORD wDevID)
-{
-    FIXME("(%u);\n", wDevID);
-    
-    if (wDevID >= MAX_WAVEOUTDRV)
-    {
-        WARN("bad device ID !\n");
-        return MMSYSERR_BADDEVICEID;
-    }
-    pthread_mutex_lock(&WOutDev[wDevID].lock);
-    
-    if (WOutDev[wDevID].state == WINE_WS_PLAYING && WOutDev[wDevID].lpLoopPtr != NULL)
-    {
-        /* ensure exit at end of current loop */
-        WOutDev[wDevID].dwLoops = 1;
-    }
-    
-    pthread_mutex_unlock(&WOutDev[wDevID].lock);
-    
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
 * 				wodGetVolume			[internal]
 */
 static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
@@ -1185,7 +1153,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
         return MMSYSERR_BADDEVICEID;
     }    
     
-    TRACE("(%u, %08lX);\n", wDevID, lpdwVol);
+    TRACE("(%u, %p);\n", wDevID, lpdwVol);
     
     pthread_mutex_lock(&WOutDev[wDevID].lock);
     
@@ -1340,23 +1308,6 @@ struct IDsDriverBufferImpl
     IDsDriverImpl* drv;
     DWORD buflen;
 };
-
-static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
-{
-    /* we can't perform memory mapping as we don't have a file stream 
-    interface with jack like we do with oss */
-    MESSAGE("This sound card's driver does not support direct access\n");
-    MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
-    return MMSYSERR_NOTSUPPORTED;
-}
-
-static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
-{
-    memset(desc, 0, sizeof(*desc));
-    strcpy(desc->szDesc, "Wine CoreAudio DirectSound Driver");
-    strcpy(desc->szDrvname, "winecoreaudio.drv");
-    return MMSYSERR_NOERROR;
-}
 
 
 /*

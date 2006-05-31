@@ -26,24 +26,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 #ifdef HAVE_AUDIOUNIT_AUDIOUNIT_H
 #include <AudioUnit/AudioUnit.h>
 
-static char streamStr[512] = {0};
-static char *streamDescription(AudioStreamBasicDescription stream)
-{
-    sprintf(streamStr, "\n mSampleRate : %f\n mFormatID : %c%c%c%c\n mFormatFlags : %lX\n mBytesPerPacket : %u\n mFramesPerPacket : %u\n mBytesPerFrame : %u\n mChannelsPerFrame : %u\n mBitsPerChannel : %u\n",
-        stream.mSampleRate,  
-        (char) (stream.mFormatID >> 24),
-        (char) (stream.mFormatID >> 16),
-        (char) (stream.mFormatID >> 8),
-        (char) stream.mFormatID,
-        stream.mFormatFlags, 
-        stream.mBytesPerPacket, 
-        stream.mFramesPerPacket, 
-        stream.mBytesPerFrame, 
-        stream.mChannelsPerFrame, 
-        stream.mBitsPerChannel);
-    return streamStr;
-}
-
 extern OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon, 
 				AudioUnitRenderActionFlags *ioActionFlags, 
 				const AudioTimeStamp *inTimeStamp, 
@@ -54,6 +36,7 @@ extern OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
 int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au)
 {
     OSStatus err;
+    Component comp;
     ComponentDescription desc;
     AURenderCallbackStruct callbackStruct;
     
@@ -62,8 +45,8 @@ int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au)
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
     desc.componentFlags = 0;
     desc.componentFlagsMask = 0;
-       
-    Component comp = FindNextComponent(NULL, &desc);
+
+    comp = FindNextComponent(NULL, &desc);
     if (comp == NULL)
         return 0;
     
@@ -89,13 +72,13 @@ int AudioUnit_CloseAudioUnit(AudioUnit au)
     return (err == noErr);
 }
 
-int AudioUnit_InitializeWithStreamDescription(AudioUnit au, AudioStreamBasicDescription stream)
+int AudioUnit_InitializeWithStreamDescription(AudioUnit au, AudioStreamBasicDescription *stream)
 {
     OSStatus err = noErr;
         
     err = AudioUnitSetProperty(au, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input,
-                                0, &stream, sizeof(AudioStreamBasicDescription));
-                                
+                                0, stream, sizeof(*stream));
+
     if (err != noErr)
     {
         ERR("AudioUnitSetProperty return an error %c%c%c%c\n", (char) (err >> 24), (char) (err >> 16), (char) (err >> 8), (char) err);
