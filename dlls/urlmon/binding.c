@@ -34,9 +34,47 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
-typedef struct ProtocolStream ProtocolStream;
+typedef struct Binding Binding;
+
+enum task_enum {
+    TASK_ON_PROGRESS
+};
 
 typedef struct {
+    Binding *binding;
+    ULONG progress;
+    ULONG progress_max;
+    ULONG status_code;
+    LPWSTR status_text;
+} on_progress_data;
+
+typedef struct {
+    Binding *binding;
+    PROTOCOLDATA *data;
+} switch_data;
+
+typedef struct _task_t {
+    enum task_enum task;
+    Binding *binding;
+    struct _task_t *next;
+    union {
+        on_progress_data on_progress;
+    } data;
+} task_t;
+
+typedef struct {
+    const IStreamVtbl *lpStreamVtbl;
+
+    LONG ref;
+
+    IInternetProtocol *protocol;
+
+    BYTE buf[1024*8];
+    DWORD buf_size;
+    BOOL init_buf;
+} ProtocolStream;
+
+struct Binding {
     const IBindingVtbl               *lpBindingVtbl;
     const IInternetProtocolSinkVtbl  *lpInternetProtocolSinkVtbl;
     const IInternetBindInfoVtbl      *lpInternetBindInfoVtbl;
@@ -54,23 +92,15 @@ typedef struct {
     LPWSTR mime;
     LPWSTR url;
     BOOL verified_mime;
+    DWORD continue_call;
 
     DWORD apartment_thread;
     HWND notif_hwnd;
 
     STGMEDIUM stgmed;
-} Binding;
 
-struct ProtocolStream {
-    const IStreamVtbl *lpStreamVtbl;
-
-    LONG ref;
-
-    IInternetProtocol *protocol;
-
-    BYTE buf[1024*8];
-    DWORD buf_size;
-    BOOL init_buf;
+    task_t *task_queue_head, *task_queue_tail;
+    CRITICAL_SECTION section;
 };
 
 #define BINDING(x)   ((IBinding*)               &(x)->lpBindingVtbl)
@@ -83,18 +113,62 @@ struct ProtocolStream {
 #define WM_MK_ONPROGRESS (WM_USER+100)
 #define WM_MK_CONTINUE   (WM_USER+101)
 
-typedef struct {
-    Binding *binding;
-    ULONG progress;
-    ULONG progress_max;
-    ULONG status_code;
-    LPWSTR status_text;
-} on_progress_data;
+static void push_task(task_t *task)
+{
+    task->next = NULL;
 
-typedef struct {
-    Binding *binding;
-    PROTOCOLDATA *data;
-} switch_data;
+     EnterCriticalSection(&task->binding->section);
+
+    if(task->binding->task_queue_tail)
+        task->binding->task_queue_tail->next = task;
+    else
+        task->binding->task_queue_tail = task->binding->task_queue_head = task;
+
+    LeaveCriticalSection(&task->binding->section);
+}
+
+static task_t *pop_task(Binding *binding)
+{
+    task_t *ret;
+
+     EnterCriticalSection(&binding->section);
+
+     ret = binding->task_queue_head;
+     if(ret) {
+         binding->task_queue_head = ret->next;
+         if(!binding->task_queue_head)
+             binding->task_queue_tail = NULL;
+     }
+
+     LeaveCriticalSection(&binding->section);
+
+     return ret;
+}
+
+static void do_task(task_t *task)
+{
+    switch(task->task) {
+    case TASK_ON_PROGRESS: {
+        on_progress_data *data = &task->data.on_progress;
+
+        IBindStatusCallback_OnProgress(task->binding->callback, data->progress,
+                data->progress_max, data->status_code, data->status_text);
+
+        HeapFree(GetProcessHeap(), 0, data->status_text);
+        HeapFree(GetProcessHeap(), 0, data);
+    }
+    }
+}
+
+static void do_tasks(Binding *This)
+{
+    task_t *task;
+
+    while((task = pop_task(This))) {
+        do_task(task);
+        IBinding_Release(BINDING(task->binding));
+    }
+}
 
 static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -116,7 +190,11 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     case WM_MK_CONTINUE: {
         switch_data *data = (switch_data*)lParam;
 
+        data->binding->continue_call++;
         IInternetProtocol_Continue(data->binding->protocol, data->data);
+        data->binding->continue_call--;
+
+        do_tasks(data->binding);
 
         IBinding_Release(BINDING(data->binding));
         HeapFree(GetProcessHeap(), 0, data);
@@ -170,33 +248,61 @@ static HWND get_notif_hwnd(void)
 static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
                         ULONG status_code, LPCWSTR status_text)
 {
-    on_progress_data *data;
+    task_t *task;
 
-    if(GetCurrentThreadId() == This->apartment_thread) {
+    if(GetCurrentThreadId() != This->apartment_thread) {
+        on_progress_data *data;
+
+        data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
+
+        IBinding_AddRef(BINDING(This));
+
+        data->binding = This;
+        data->progress = progress;
+        data->progress_max = progress_max;
+        data->status_code = status_code;
+
+        if(status_text) {
+            DWORD size = (strlenW(status_text)+1)*sizeof(WCHAR);
+
+            data->status_text = HeapAlloc(GetProcessHeap(), 0, size);
+            memcpy(data->status_text, status_text, size);
+        }else {
+            data->status_text = NULL;
+        }
+
+        PostMessageW(This->notif_hwnd, WM_MK_ONPROGRESS, 0, (LPARAM)data);
+
+        return;
+    }
+
+    if(!This->continue_call) {
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                                        status_code, status_text);
         return;
     }
 
-    data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
+    task = HeapAlloc(GetProcessHeap(), 0, sizeof(task_t));
+
+    task->task = TASK_ON_PROGRESS;
 
     IBinding_AddRef(BINDING(This));
+    task->binding = This;
 
-    data->binding = This;
-    data->progress = progress;
-    data->progress_max = progress_max;
-    data->status_code = status_code;
+    task->data.on_progress.progress = progress;
+    task->data.on_progress.progress_max = progress_max;
+    task->data.on_progress.status_code = status_code;
 
     if(status_text) {
         DWORD size = (strlenW(status_text)+1)*sizeof(WCHAR);
 
-        data->status_text = HeapAlloc(GetProcessHeap(), 0, size);
-        memcpy(data->status_text, status_text, size);
+        task->data.on_progress.status_text = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(task->data.on_progress.status_text, status_text, size);
     }else {
-        data->status_text = NULL;
+        task->data.on_progress.status_text = NULL;
     }
 
-    PostMessageW(This->notif_hwnd, WM_MK_ONPROGRESS, 0, (LPARAM)data);
+    push_task(task);
 }
 
 static void dump_BINDINFO(BINDINFO *bi)
@@ -606,6 +712,7 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
             IStream_Release(STREAM(This->stream));
 
         ReleaseBindInfo(&This->bindinfo);
+        DeleteCriticalSection(&This->section);
         HeapFree(GetProcessHeap(), 0, This->mime);
         HeapFree(GetProcessHeap(), 0, This->url);
 
@@ -1041,10 +1148,14 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->apartment_thread = GetCurrentThreadId();
     ret->notif_hwnd = get_notif_hwnd();
     ret->verified_mime = FALSE;
+    ret->continue_call = 0;
+    ret->task_queue_head = ret->task_queue_tail = NULL;
 
     memset(&ret->bindinfo, 0, sizeof(BINDINFO));
     ret->bindinfo.cbSize = sizeof(BINDINFO);
     ret->bindf = 0;
+
+    InitializeCriticalSection(&ret->section);
 
     hres = get_callback(pbc, &ret->callback);
     if(FAILED(hres)) {
