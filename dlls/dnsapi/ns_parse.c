@@ -40,6 +40,12 @@ static void	setsection(ns_msg *msg, ns_sect sect);
 
 #define RETERR(err) do { return (-1); } while (0)
 
+#ifdef HAVE_NS_MSG__MSG_PTR
+# define NS_PTR(ns_msg) ((ns_msg)->_msg_ptr)
+#else
+# define NS_PTR(ns_msg) ((ns_msg)->_ptr)
+#endif
+
 /* Public. */
 
 static int
@@ -121,38 +127,38 @@ dns_ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	if (rrnum < handle->_rrnum)
 		setsection(handle, section);
 	if (rrnum > handle->_rrnum) {
-		b = dns_ns_skiprr(handle->_ptr, handle->_eom, section,
+		b = dns_ns_skiprr(NS_PTR(handle), handle->_eom, section,
 			      rrnum - handle->_rrnum);
 
 		if (b < 0)
 			return (-1);
-		handle->_ptr += b;
+		NS_PTR(handle) += b;
 		handle->_rrnum = rrnum;
 	}
 
 	/* Do the parse. */
 	b = dn_expand(handle->_msg, handle->_eom,
-		      handle->_ptr, rr->name, NS_MAXDNAME);
+		      NS_PTR(handle), rr->name, NS_MAXDNAME);
 	if (b < 0)
 		return (-1);
-	handle->_ptr += b;
-	if (handle->_ptr + NS_INT16SZ + NS_INT16SZ > handle->_eom)
+	NS_PTR(handle) += b;
+	if (NS_PTR(handle) + NS_INT16SZ + NS_INT16SZ > handle->_eom)
 		RETERR(EMSGSIZE);
-	NS_GET16(rr->type, handle->_ptr);
-	NS_GET16(rr->rr_class, handle->_ptr);
+	NS_GET16(rr->type, NS_PTR(handle));
+	NS_GET16(rr->rr_class, NS_PTR(handle));
 	if (section == ns_s_qd) {
 		rr->ttl = 0;
 		rr->rdlength = 0;
 		rr->rdata = NULL;
 	} else {
-		if (handle->_ptr + NS_INT32SZ + NS_INT16SZ > handle->_eom)
+                if (NS_PTR(handle) + NS_INT32SZ + NS_INT16SZ > handle->_eom)
 			RETERR(EMSGSIZE);
-		NS_GET32(rr->ttl, handle->_ptr);
-		NS_GET16(rr->rdlength, handle->_ptr);
-		if (handle->_ptr + rr->rdlength > handle->_eom)
+		NS_GET32(rr->ttl, NS_PTR(handle));
+		NS_GET16(rr->rdlength, NS_PTR(handle));
+		if (NS_PTR(handle) + rr->rdlength > handle->_eom)
 			RETERR(EMSGSIZE);
-		rr->rdata = handle->_ptr;
-		handle->_ptr += rr->rdlength;
+		rr->rdata = NS_PTR(handle);
+		NS_PTR(handle) += rr->rdlength;
 	}
 	if (++handle->_rrnum > handle->_counts[(int)section])
 		setsection(handle, (ns_sect)((int)section + 1));
@@ -168,9 +174,9 @@ setsection(ns_msg *msg, ns_sect sect) {
 	msg->_sect = sect;
 	if (sect == ns_s_max) {
 		msg->_rrnum = -1;
-		msg->_ptr = NULL;
+		NS_PTR(msg) = NULL;
 	} else {
 		msg->_rrnum = 0;
-		msg->_ptr = msg->_sections[(int)sect];
+		NS_PTR(msg) = msg->_sections[(int)sect];
 	}
 }

@@ -476,6 +476,9 @@
 /* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
 
+/* Define to 1 if `_msg_ptr' is member of `ns_msg'. */
+#undef HAVE_NS_MSG__MSG_PTR
+
 /* Define to 1 if the system has the type `off_t'. */
 #undef HAVE_OFF_T
 

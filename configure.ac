@@ -1455,6 +1455,18 @@ AC_CHECK_MEMBERS([struct sockaddr_in6.sin6_scope_id],,,
 #include <netinet/in.h>
 #endif])
 
+dnl Check for ns_msg ptr member
+AC_CHECK_MEMBERS([ns_msg._msg_ptr],,,
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_NAMESER_H
+# include <arpa/nameser.h>
+#endif])
+
 dnl Check for the external timezone variables timezone and daylight
 AC_CACHE_CHECK([for timezone variable], ac_cv_have_timezone,
                AC_TRY_LINK([#include <time.h>],[timezone;],
