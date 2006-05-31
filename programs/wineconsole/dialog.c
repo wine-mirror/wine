@@ -150,12 +150,12 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
     switch (msg)
     {
     case WM_CREATE:
-        SetWindowLong(hWnd, 0, 0);
+        SetWindowLongPtr(hWnd, 0, 0);
         break;
     case WM_GETFONT:
-        return GetWindowLong(hWnd, 0);
+        return GetWindowLongPtr(hWnd, 0);
     case WM_SETFONT:
-        SetWindowLong(hWnd, 0, wParam);
+        SetWindowLongPtr(hWnd, 0, wParam);
         if (LOWORD(lParam))
         {
             InvalidateRect(hWnd, NULL, TRUE);
@@ -164,7 +164,7 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
         break;
     case WM_DESTROY:
         {
-            HFONT hFont = (HFONT)GetWindowLong(hWnd, 0L);
+            HFONT hFont = (HFONT)GetWindowLongPtr(hWnd, 0L);
             if (hFont) DeleteObject(hFont);
         }
         break;
@@ -182,7 +182,7 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
             font_idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0L, 0L);
             size_idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0L, 0L);
 
-            hFont = (HFONT)GetWindowLong(hWnd, 0L);
+            hFont = (HFONT)GetWindowLongPtr(hWnd, 0L);
             if (hFont)
             {
                 WCHAR	buf1[256];
@@ -440,7 +440,7 @@ static BOOL  select_font(struct dialog_info* di)
                    config.cell_height, di->font[size_idx].height);
     hOldFont = (HFONT)SendDlgItemMessage(di->hDlg, IDC_FNT_PREVIEW, WM_GETFONT, 0L, 0L);
 
-    SendDlgItemMessage(di->hDlg, IDC_FNT_PREVIEW, WM_SETFONT, (DWORD)hFont, TRUE);
+    SendDlgItemMessage(di->hDlg, IDC_FNT_PREVIEW, WM_SETFONT, (WPARAM)hFont, TRUE);
     if (hOldFont) DeleteObject(hOldFont);
 
     LoadString(GetModuleHandle(NULL), IDS_FNT_DISPLAY, fmt, sizeof(fmt) / sizeof(WCHAR));
@@ -764,7 +764,7 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     wndclass.style         = 0;
     wndclass.lpfnWndProc   = WCUSER_FontPreviewProc;
     wndclass.cbClsExtra    = 0;
-    wndclass.cbWndExtra    = 4; /* for hFont */
+    wndclass.cbWndExtra    = sizeof (DWORD_PTR); /* for hFont */
     wndclass.hInstance     = GetModuleHandle(NULL);
     wndclass.hIcon         = 0;
     wndclass.hCursor       = LoadCursor(0, IDC_ARROW);
