@@ -37,7 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 typedef struct Binding Binding;
 
 enum task_enum {
-    TASK_ON_PROGRESS
+    TASK_ON_PROGRESS,
+    TASK_SWITCH
 };
 
 typedef struct {
@@ -48,17 +49,13 @@ typedef struct {
     LPWSTR status_text;
 } on_progress_data;
 
-typedef struct {
-    Binding *binding;
-    PROTOCOLDATA *data;
-} switch_data;
-
 typedef struct _task_t {
     enum task_enum task;
     Binding *binding;
     struct _task_t *next;
     union {
         on_progress_data on_progress;
+        PROTOCOLDATA *protocol_data;
     } data;
 } task_t;
 
@@ -156,7 +153,13 @@ static void do_task(task_t *task)
 
         HeapFree(GetProcessHeap(), 0, data->status_text);
         HeapFree(GetProcessHeap(), 0, data);
+
+        break;
     }
+    case TASK_SWITCH:
+        task->binding->continue_call++;
+        IInternetProtocol_Continue(task->binding->protocol, task->data.protocol_data);
+        task->binding->continue_call--;
     }
 }
 
@@ -188,16 +191,11 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         return 0;
     }
     case WM_MK_CONTINUE: {
-        switch_data *data = (switch_data*)lParam;
+        Binding *binding = (Binding*)lParam;
 
-        data->binding->continue_call++;
-        IInternetProtocol_Continue(data->binding->protocol, data->data);
-        data->binding->continue_call--;
+        do_tasks(binding);
 
-        do_tasks(data->binding);
-
-        IBinding_Release(BINDING(data->binding));
-        HeapFree(GetProcessHeap(), 0, data);
+        IBinding_Release(BINDING(binding));
         return 0;
     }
     }
@@ -806,17 +804,22 @@ static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
         PROTOCOLDATA *pProtocolData)
 {
     Binding *This = PROTSINK_THIS(iface);
-    switch_data *data;
+    task_t *task;
 
     TRACE("(%p)->(%p)\n", This, pProtocolData);
 
-    data = HeapAlloc(GetProcessHeap(), 0, sizeof(switch_data));
+    task = HeapAlloc(GetProcessHeap(), 0, sizeof(task_t));
+    task->task = TASK_SWITCH;
 
     IBinding_AddRef(BINDING(This));
-    data->binding = This;
-    data->data = pProtocolData;
+    task->binding = This;
 
-    PostMessageW(This->notif_hwnd, WM_MK_CONTINUE, 0, (LPARAM)data);
+    task->data.protocol_data = pProtocolData;
+
+    push_task(task);
+
+    IBinding_AddRef(BINDING(This));
+    PostMessageW(This->notif_hwnd, WM_MK_CONTINUE, 0, (LPARAM)This);
 
     return S_OK;
 }
