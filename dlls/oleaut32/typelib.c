@@ -1643,6 +1643,34 @@ static void MSFT_GetTdesc(TLBContext *pcx, INT type, TYPEDESC *pTd,
     TRACE_(typelib)("vt type = %X\n", pTd->vt);
 }
 
+static void MSFT_ResolveReferencedTypes(TLBContext *pcx, ITypeInfoImpl *pTI, TYPEDESC *lpTypeDesc)
+{
+    /* resolve referenced type if any */
+    while (lpTypeDesc)
+    {
+        switch (lpTypeDesc->vt)
+        {
+        case VT_PTR:
+            lpTypeDesc = lpTypeDesc->u.lptdesc;
+            break;
+
+        case VT_CARRAY:
+            lpTypeDesc = & (lpTypeDesc->u.lpadesc->tdescElem);
+            break;
+
+        case VT_USERDEFINED:
+            MSFT_DoRefType(pcx, pTI,
+                           lpTypeDesc->u.hreftype);
+
+            lpTypeDesc = NULL;
+            break;
+
+        default:
+            lpTypeDesc = NULL;
+        }
+    }
+}
+
 static void
 MSFT_DoFuncs(TLBContext*     pcx,
 	    ITypeInfoImpl*  pTI,
@@ -1764,6 +1792,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
 		      pFuncRec->DataType,
 		      &(*pptfd)->funcdesc.elemdescFunc.tdesc,
 		      pTI);
+        MSFT_ResolveReferencedTypes(pcx, pTI, &(*pptfd)->funcdesc.elemdescFunc.tdesc);
 
         /* do the parameters/arguments */
         if(pFuncRec->nrargs)
@@ -1782,7 +1811,6 @@ MSFT_DoFuncs(TLBContext*     pcx,
 
             for ( j = 0 ; j < pFuncRec->nrargs ; j++ )
             {
-                TYPEDESC *lpArgTypeDesc;
                 ELEMDESC *elemdesc = &(*pptfd)->funcdesc.lprgelemdescParam[j];
 
                 MSFT_GetTdesc(pcx,
@@ -1803,32 +1831,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
                         MSFT_ReadName( pcx, paraminfo.oName );
                 TRACE_(typelib)("param[%d] = %s\n", j, debugstr_w((*pptfd)->pParamDesc[j].Name));
 
-                lpArgTypeDesc = &elemdesc->tdesc;
-
-                /* resolve referenced type if any */
-                while ( lpArgTypeDesc != NULL )
-                {
-                    switch ( lpArgTypeDesc->vt )
-                    {
-                    case VT_PTR:
-                        lpArgTypeDesc = lpArgTypeDesc->u.lptdesc;
-                        break;
-
-                    case VT_CARRAY:
-                        lpArgTypeDesc = & (lpArgTypeDesc->u.lpadesc->tdescElem);
-                        break;
-
-                    case VT_USERDEFINED:
-                        MSFT_DoRefType(pcx, pTI,
-				       lpArgTypeDesc->u.hreftype);
-
-                        lpArgTypeDesc = NULL;
-                        break;
-
-                    default:
-                        lpArgTypeDesc = NULL;
-                    }
-                }
+                MSFT_ResolveReferencedTypes(pcx, pTI, &elemdesc->tdesc);
 
                 /* default value */
                 if ( (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) &&
