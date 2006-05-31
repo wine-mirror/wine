@@ -1458,6 +1458,7 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     HRESULT hr;
     HDC hdc;
+    long oldsize = This->resource.size;
 
     /* Sysmem textures have memory already allocated -
      * release it, this avoids an unnecessary memcpy
@@ -1471,6 +1472,9 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     This->pow2Width = This->currentDesc.Width;
     This->pow2Height = This->currentDesc.Height;
     This->Flags &= ~SFLAG_NONPOW2;
+
+    /* Adjust the opengl mem counter */
+    globalChangeGlRam(This->resource.size - oldsize);
 
     /* Call GetDC to create a DIB section. We will use that
      * DIB section for rendering
