@@ -1889,6 +1889,7 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
+    case RPC_FC_ENUM32:
       size += 4;
       pStubMsg->Buffer += 4;
       break;
