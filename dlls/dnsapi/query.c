@@ -44,6 +44,7 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "windns.h"
+#include "nb30.h"
 
 #include "dnsapi.h"
 
@@ -472,6 +473,76 @@ static DNS_STATUS dns_copy_record( ns_msg msg, ns_sect section,
     return ERROR_SUCCESS;
 }
 
+#define DEFAULT_TTL  1200
+
+static DNS_STATUS dns_do_query_netbios( PCSTR name, DNS_RECORDA **recp )
+{
+    NCB ncb;
+    UCHAR ret;
+    DNS_RRSET rrset;
+    FIND_NAME_BUFFER *buffer;
+    FIND_NAME_HEADER *header;
+    DNS_RECORDA *record = NULL;
+    unsigned int i, len;
+
+    len = strlen( name );
+    if (len >= NCBNAMSZ) return DNS_ERROR_RCODE_NAME_ERROR;
+
+    DNS_RRSET_INIT( rrset );
+
+    memset( &ncb, 0, sizeof(ncb) );
+    ncb.ncb_command = NCBFINDNAME;
+
+    memset( ncb.ncb_callname, ' ', sizeof(ncb.ncb_callname) );
+    memcpy( ncb.ncb_callname, name, len );
+    ncb.ncb_callname[NCBNAMSZ] = '\0';
+
+    ret = Netbios( &ncb );
+    if (ret != NRC_GOODRET) return ERROR_INVALID_NAME;
+
+    header = (FIND_NAME_HEADER *)ncb.ncb_buffer;
+    buffer = (FIND_NAME_BUFFER *)((char *)header + sizeof(FIND_NAME_HEADER));
+
+    for (i = 0; i < header->node_count; i++) 
+    {
+        record = dns_zero_alloc( sizeof(DNS_RECORDA) );
+        if (!record)
+        {
+            ret = ERROR_NOT_ENOUGH_MEMORY;
+            goto exit;
+        }
+        else
+        {
+            record->pName = dns_strdup_u( name );
+            if (!record->pName)
+            {
+                ret = ERROR_NOT_ENOUGH_MEMORY;
+                goto exit;
+            }
+
+            record->wType = DNS_TYPE_A;
+            record->Flags.S.Section = DnsSectionAnswer;
+            record->Flags.S.CharSet = DnsCharSetUtf8;
+            record->dwTtl = DEFAULT_TTL;
+
+            /* FIXME: network byte order? */
+            record->Data.A.IpAddress = *(DWORD *)((char *)buffer[i].destination_addr + 2);
+
+            DNS_RRSET_ADD( rrset, (DNS_RECORD *)record );
+        }
+    }
+
+exit:
+    DNS_RRSET_TERMINATE( rrset );
+
+    if (ret != ERROR_SUCCESS)
+        DnsRecordListFree( (DNS_RECORD *)record, DnsFreeRecordList );
+    else
+        *recp = (DNS_RECORDA *)rrset.pFirstRR;
+
+    return ret;
+}
+
 /*  The resolver lock must be held and res_init() must have been
  *  called before calling these three functions.
  */
@@ -635,6 +706,13 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PIP4_ARRA
     }
 
     ret = dns_do_query( name, type, options, result );
+
+    if (ret == DNS_ERROR_RCODE_NAME_ERROR && type == DNS_TYPE_A &&
+        !(options & DNS_QUERY_NO_NETBT))
+    {
+        TRACE( "dns lookup failed, trying netbios query\n" );
+        ret = dns_do_query_netbios( name, result );
+    }
 
     UNLOCK_RESOLVER();
 
