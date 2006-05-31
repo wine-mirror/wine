@@ -53,6 +53,7 @@ typedef struct {
     DWORD bindf;
     LPWSTR mime;
     LPWSTR url;
+    BOOL verified_mime;
 
     DWORD apartment_thread;
     HWND notif_hwnd;
@@ -737,6 +738,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
         on_progress(This, 0, 0, BINDSTATUS_SENDINGREQUEST, szStatusText);
         break;
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
+        This->verified_mime = TRUE;
         on_progress(This, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE, szStatusText);
         break;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
@@ -757,10 +759,25 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
 
     TRACE("(%p)->(%ld %lu %lu)\n", This, grfBSCF, ulProgress, ulProgressMax);
 
-    if(grfBSCF & BSCF_FIRSTDATANOTIFICATION) {
+    fill_stream_buffer(This->stream);
+
+    if(!This->verified_mime) {
+        LPWSTR mime;
+
+        This->verified_mime = TRUE;
+
+        /* FIXME: Always call FindMediaFromData (its implementation is not yet ready for this). */
         if(This->mime)
-            IBindStatusCallback_OnProgress(This->callback, ulProgress, ulProgressMax,
-                                           BINDSTATUS_MIMETYPEAVAILABLE, This->mime);
+            mime = This->mime;
+        else
+            FindMimeFromData(NULL, This->url, This->stream->buf,
+                              min(This->stream->buf_size, 255), This->mime, 0, &mime, 0);
+
+        IBindStatusCallback_OnProgress(This->callback, ulProgress, ulProgressMax,
+                                       BINDSTATUS_MIMETYPEAVAILABLE, mime);
+    }
+
+    if(grfBSCF & BSCF_FIRSTDATANOTIFICATION) {
         IBindStatusCallback_OnProgress(This->callback, ulProgress, ulProgressMax,
                                        BINDSTATUS_BEGINDOWNLOADDATA, This->url);
     }
@@ -771,8 +788,6 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
 
     if(grfBSCF & BSCF_FIRSTDATANOTIFICATION)
         IInternetProtocol_LockRequest(This->protocol, 0);
-
-    fill_stream_buffer(This->stream);
 
     formatetc.cfFormat = 0; /* FIXME */
     formatetc.ptd = NULL;
@@ -1028,6 +1043,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->url = NULL;
     ret->apartment_thread = GetCurrentThreadId();
     ret->notif_hwnd = get_notif_hwnd();
+    ret->verified_mime = FALSE;
 
     memset(&ret->bindinfo, 0, sizeof(BINDINFO));
     ret->bindinfo.cbSize = sizeof(BINDINFO);
