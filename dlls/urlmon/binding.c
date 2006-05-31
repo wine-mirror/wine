@@ -773,18 +773,15 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
             FindMimeFromData(NULL, This->url, This->stream->buf,
                               min(This->stream->buf_size, 255), This->mime, 0, &mime, 0);
 
-        IBindStatusCallback_OnProgress(This->callback, ulProgress, ulProgressMax,
-                                       BINDSTATUS_MIMETYPEAVAILABLE, mime);
+        on_progress(This, ulProgress, ulProgressMax, BINDSTATUS_MIMETYPEAVAILABLE, mime);
     }
 
     if(grfBSCF & BSCF_FIRSTDATANOTIFICATION) {
-        IBindStatusCallback_OnProgress(This->callback, ulProgress, ulProgressMax,
-                                       BINDSTATUS_BEGINDOWNLOADDATA, This->url);
+        on_progress(This, ulProgress, ulProgressMax, BINDSTATUS_BEGINDOWNLOADDATA, This->url);
     }
 
     if(grfBSCF & BSCF_LASTDATANOTIFICATION)
-        IBindStatusCallback_OnProgress(This->callback, ulProgress, ulProgressMax,
-                                       BINDSTATUS_ENDDOWNLOADDATA, This->url);
+        on_progress(This, ulProgress, ulProgressMax, BINDSTATUS_ENDDOWNLOADDATA, This->url);
 
     if(grfBSCF & BSCF_FIRSTDATANOTIFICATION)
         IInternetProtocol_LockRequest(This->protocol, 0);
