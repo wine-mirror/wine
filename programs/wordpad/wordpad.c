@@ -74,7 +74,7 @@ void AddSeparator(HWND hwndToolBar)
 static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HWND hEditorWnd, hToolBarWnd, hReBarWnd;
-    HINSTANCE hInstance = (HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE);
+    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
     HANDLE hDLL;
     TBADDBITMAP ab;
     int nStdBitmaps = 0;
