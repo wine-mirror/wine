@@ -235,7 +235,7 @@ dns_ns_name_pton(const char *src, u_char *dst, size_t dstsiz) {
 					}
 					*bp++ = '\0';
 				}
-				if ((bp - dst) > MAXCDNAME) {
+				if ((bp - dst) > NS_MAXCDNAME) {
 					return (-1);
 				}
 				return (1);
@@ -265,7 +265,7 @@ dns_ns_name_pton(const char *src, u_char *dst, size_t dstsiz) {
 		}
 		*bp++ = 0;
 	}
-	if ((bp - dst) > MAXCDNAME) {	/* src too big */
+	if ((bp - dst) > NS_MAXCDNAME) {	/* src too big */
 		return (-1);
 	}
 	return (0);
@@ -441,7 +441,7 @@ ns_name_pack(const u_char *src, u_char *dst, int dstsiz,
 		if (n == 0x41)
 			n = *++srcp / 8;
 		l += n + 1;
-		if (l > MAXCDNAME) {
+		if (l > NS_MAXCDNAME) {
 			return (-1);
 		}
 		srcp += n + 1;

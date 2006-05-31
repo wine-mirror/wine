@@ -125,17 +125,17 @@ static DNS_STATUS dns_map_error( int error )
 {
     switch (error)
     {
-    case NOERROR:  return ERROR_SUCCESS;
-    case FORMERR:  return DNS_ERROR_RCODE_FORMAT_ERROR;
-    case SERVFAIL: return DNS_ERROR_RCODE_SERVER_FAILURE;
-    case NXDOMAIN: return DNS_ERROR_RCODE_NAME_ERROR;
-    case NOTIMP:   return DNS_ERROR_RCODE_NOT_IMPLEMENTED;
-    case REFUSED:  return DNS_ERROR_RCODE_REFUSED;
-    case YXDOMAIN: return DNS_ERROR_RCODE_YXDOMAIN;
-    case YXRRSET:  return DNS_ERROR_RCODE_YXRRSET;
-    case NXRRSET:  return DNS_ERROR_RCODE_NXRRSET;
-    case NOTAUTH:  return DNS_ERROR_RCODE_NOTAUTH;
-    case NOTZONE:  return DNS_ERROR_RCODE_NOTZONE;
+    case ns_r_noerror:  return ERROR_SUCCESS;
+    case ns_r_formerr:  return DNS_ERROR_RCODE_FORMAT_ERROR;
+    case ns_r_servfail: return DNS_ERROR_RCODE_SERVER_FAILURE;
+    case ns_r_nxdomain: return DNS_ERROR_RCODE_NAME_ERROR;
+    case ns_r_notimpl:  return DNS_ERROR_RCODE_NOT_IMPLEMENTED;
+    case ns_r_refused:  return DNS_ERROR_RCODE_REFUSED;
+    case ns_r_yxdomain: return DNS_ERROR_RCODE_YXDOMAIN;
+    case ns_r_yxrrset:  return DNS_ERROR_RCODE_YXRRSET;
+    case ns_r_nxrrset:  return DNS_ERROR_RCODE_NXRRSET;
+    case ns_r_notauth:  return DNS_ERROR_RCODE_NOTAUTH;
+    case ns_r_notzone:  return DNS_ERROR_RCODE_NOTZONE;
     default:
         FIXME( "unmapped error code: %d\n", error );
         return DNS_ERROR_RCODE_NOT_IMPLEMENTED;
@@ -193,23 +193,23 @@ static unsigned int dns_get_record_size( ns_rr *rr )
 
     switch (rr->type)
     {
-    case T_KEY:
+    case ns_t_key:
     {
         pos += sizeof(WORD) + sizeof(BYTE) + sizeof(BYTE);
         size += rr->rdata + rr->rdlength - pos - 1;
         break;
     }
-    case T_SIG:
+    case ns_t_sig:
     {
         pos += sizeof(PCHAR) + sizeof(WORD) + 2 * sizeof(BYTE);
         pos += 3 * sizeof(DWORD) + 2 * sizeof(WORD);
         size += rr->rdata + rr->rdlength - pos - 1;
         break;
     }
-    case T_HINFO:
-    case T_ISDN:
-    case T_TXT:
-    case T_X25:
+    case ns_t_hinfo:
+    case ns_t_isdn:
+    case ns_t_txt:
+    case ns_t_x25:
     {
         while (pos[0] && pos < rr->rdata + rr->rdlength)
         {
@@ -219,13 +219,13 @@ static unsigned int dns_get_record_size( ns_rr *rr )
         size += (num - 1) * sizeof(PCHAR);
         break;
     }
-    case T_NULL:
+    case ns_t_null:
     {
         size += rr->rdlength - 1;
         break;
     }
-    case T_NXT:
-    case T_WKS:
+    case ns_t_nxt:
+    case ns_t_wks:
     case 0xff01:  /* WINS */
     {
         FIXME( "unhandled type: %s\n", dns_type_to_str( rr->type ) );
@@ -245,13 +245,13 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
 
     switch (rr->type)
     {
-    case T_A:
+    case ns_t_a:
     {
         r->Data.A.IpAddress = *(DWORD *)pos;
         *dlen = sizeof(DNS_A_DATA);
         break; 
     }
-    case T_AAAA:
+    case ns_t_aaaa:
     {
         for (i = 0; i < sizeof(IP6_ADDRESS)/sizeof(DWORD); i++)
         {
@@ -262,7 +262,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_AAAA_DATA);
         break;
     }
-    case T_KEY:
+    case ns_t_key:
     {
         /* FIXME: byte order? */
         r->Data.KEY.wFlags      = *(WORD *)pos;   pos += sizeof(WORD);
@@ -277,8 +277,8 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_KEY_DATA) + (size - 1) * sizeof(BYTE);
         break;
     }
-    case T_RP:
-    case T_MINFO:
+    case ns_t_rp:
+    case ns_t_minfo:
     {
         r->Data.MINFO.pNameMailbox = dns_dname_from_msg( msg, pos );
         if (!r->Data.MINFO.pNameMailbox) return ERROR_NOT_ENOUGH_MEMORY;
@@ -296,9 +296,9 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_MINFO_DATAA);
         break; 
     }
-    case T_AFSDB:
-    case T_RT:
-    case T_MX:
+    case ns_t_afsdb:
+    case ns_t_rt:
+    case ns_t_mx:
     {
         r->Data.MX.wPreference = ntohs( *(WORD *)pos );
         r->Data.MX.pNameExchange = dns_dname_from_msg( msg, pos + sizeof(WORD) );
@@ -307,7 +307,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_MX_DATAA);
         break; 
     }
-    case T_NULL:
+    case ns_t_null:
     {
         r->Data.Null.dwByteCount = rr->rdlength;
         memcpy( r->Data.Null.Data, rr->rdata, rr->rdlength );
@@ -315,14 +315,14 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_NULL_DATA) + rr->rdlength - 1;
         break;
     }
-    case T_CNAME:
-    case T_NS:
-    case T_MB:
-    case T_MD:
-    case T_MF:
-    case T_MG:
-    case T_MR:
-    case T_PTR:
+    case ns_t_cname:
+    case ns_t_ns:
+    case ns_t_mb:
+    case ns_t_md:
+    case ns_t_mf:
+    case ns_t_mg:
+    case ns_t_mr:
+    case ns_t_ptr:
     {
         r->Data.PTR.pNameHost = dns_dname_from_msg( msg, pos );
         if (!r->Data.PTR.pNameHost) return ERROR_NOT_ENOUGH_MEMORY;
@@ -330,7 +330,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_PTR_DATAA);
         break;
     }
-    case T_SIG:
+    case ns_t_sig:
     {
         r->Data.SIG.pNameSigner = dns_dname_from_msg( msg, pos );
         if (!r->Data.SIG.pNameSigner) return ERROR_NOT_ENOUGH_MEMORY;
@@ -355,7 +355,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_SIG_DATAA) + (size - 1) * sizeof(BYTE);
         break; 
     }
-    case T_SOA:
+    case ns_t_soa:
     {
         r->Data.SOA.pNamePrimaryServer = dns_dname_from_msg( msg, pos );
         if (!r->Data.SOA.pNamePrimaryServer) return ERROR_NOT_ENOUGH_MEMORY;
@@ -382,7 +382,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_SOA_DATAA);
         break; 
     }
-    case T_SRV:
+    case ns_t_srv:
     {
         r->Data.SRV.wPriority = ntohs( *(WORD *)pos ); pos += sizeof(WORD);
         r->Data.SRV.wWeight   = ntohs( *(WORD *)pos ); pos += sizeof(WORD);
@@ -394,10 +394,10 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_SRV_DATAA);
         break; 
     }
-    case T_HINFO:
-    case T_ISDN:
-    case T_X25:
-    case T_TXT:
+    case ns_t_hinfo:
+    case ns_t_isdn:
+    case ns_t_x25:
+    case ns_t_txt:
     {
         i = 0;
         while (pos[0] && pos < rr->rdata + rr->rdlength)
@@ -416,11 +416,11 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, ns_rr *rr, DNS_RECORDA *r, WORD *d
         *dlen = sizeof(DNS_TXT_DATAA) + (i - 1) * sizeof(PCHAR);
         break;
     }
-    case T_ATMA:
-    case T_LOC:
-    case T_NXT:
-    case T_TSIG:
-    case T_WKS:
+    case ns_t_atma:
+    case ns_t_loc:
+    case ns_t_nxt:
+    case ns_t_tsig:
+    case ns_t_wks:
     case 0x00f9:  /* TKEY */
     case 0xff01:  /* WINS */
     case 0xff02:  /* WINSR */
@@ -528,7 +528,7 @@ static DNS_STATUS dns_do_query( PCSTR name, WORD type, DWORD options,
 
     DNS_RRSET_INIT( rrset );
 
-    len = __res_query( name, C_IN, type, answer, sizeof(answer) );
+    len = res_query( name, ns_c_in, type, answer, sizeof(answer) );
     if (len < 0)
     {
         ret = dns_map_h_errno( h_errno );
