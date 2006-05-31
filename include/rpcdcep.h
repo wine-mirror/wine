@@ -44,6 +44,11 @@ typedef struct _RPC_MESSAGE
     unsigned long RpcFlags;
 } RPC_MESSAGE, *PRPC_MESSAGE;
 
+#define RPC_NCA_FLAGS_DEFAULT       0x00000000
+#define RPC_NCA_FLAGS_IDEMPOTENT    0x00000001
+#define RPC_NCA_FLAGS_BROADCAST     0x00000002
+#define RPC_NCA_FLAGS_MAYBE         0x00000004
+
 typedef void  (__RPC_STUB *RPC_DISPATCH_FUNCTION)(PRPC_MESSAGE Message);
 
 typedef struct
