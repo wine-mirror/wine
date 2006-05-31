@@ -871,7 +871,7 @@ static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCT lpcs)
     HMENU		hSysMenu;
 
     data = lpcs->lpCreateParams;
-    SetWindowLong(hWnd, 0L, (DWORD)data);
+    SetWindowLongPtr(hWnd, 0L, (DWORD_PTR)data);
     PRIVATE(data)->hWnd = hWnd;
 
     hSysMenu = GetSystemMenu(hWnd, FALSE);
@@ -1081,7 +1081,7 @@ static void    WCUSER_GenerateMouseInputRecord(struct inner_data* data, COORD c,
  */
 static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    struct inner_data*	data = (struct inner_data*)GetWindowLong(hWnd, 0);
+    struct inner_data*	data = (struct inner_data*)GetWindowLongPtr(hWnd, 0);
 
     switch (uMsg)
     {
@@ -1400,7 +1400,7 @@ enum init_return WCUSER_InitBackend(struct inner_data* data)
     wndclass.style         = CS_DBLCLKS;
     wndclass.lpfnWndProc   = WCUSER_Proc;
     wndclass.cbClsExtra    = 0;
-    wndclass.cbWndExtra    = sizeof(DWORD);
+    wndclass.cbWndExtra    = sizeof(DWORD_PTR);
     wndclass.hInstance     = GetModuleHandle(NULL);
     wndclass.hIcon         = LoadIcon(0, IDI_WINLOGO);
     wndclass.hCursor       = LoadCursor(0, IDC_ARROW);
