@@ -539,6 +539,9 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
     INT x;
     HTHEME theme = GetWindowTheme (hwnd);
 
+    if (!infoPtr->bRectsValid)
+        HEADER_SetItemBounds(hwnd);
+
     /* get rect for the bar, adjusted for the border */
     GetClientRect (hwnd, &rect);
     
