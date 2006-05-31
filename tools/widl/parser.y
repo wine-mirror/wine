@@ -568,8 +568,10 @@ ident:	  aIDENTIFIER				{ $$ = make_var($1); }
 	| tASYNC				{ $$ = make_var($<str>1); }
 	| tID					{ $$ = make_var($<str>1); }
 	| tLCID					{ $$ = make_var($<str>1); }
+	| tOBJECT				{ $$ = make_var($<str>1); }
 	| tRANGE				{ $$ = make_var($<str>1); }
 	| tRETVAL				{ $$ = make_var($<str>1); }
+	| tUUID					{ $$ = make_var($<str>1); }
 	| tVERSION				{ $$ = make_var($<str>1); }
 	;
 
