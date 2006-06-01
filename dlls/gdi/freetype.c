@@ -928,7 +928,7 @@ static void DumpFontList(void)
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
 	    TRACE("\t%s\t%08lx", debugstr_w(face->StyleName), face->fs.fsCsb[0]);
             if(!face->scalable)
-                TRACE(" %ld", face->size.y_ppem >> 6);
+                TRACE(" %d", face->size.height);
             TRACE("\n");
 	}
     }
@@ -2440,12 +2440,12 @@ found:
             if(face->scalable)
                 break;
             if(height > 0)
-                newdiff = height - (signed int)(face->size.y_ppem >> 6);
+                newdiff = height - (signed int)(face->size.height);
             else
-                newdiff = -height - ((signed int)(face->size.y_ppem >> 6) - face->size.internal_leading);
+                newdiff = -height - ((signed int)(face->size.height) - face->size.internal_leading);
             if(!best || (diff > 0 && newdiff < diff && newdiff >= 0) ||
                (diff < 0 && newdiff > diff)) {
-                TRACE("%ld is better for %d diff was %d\n", face->size.y_ppem >> 6, height, diff);
+                TRACE("%d is better for %d diff was %d\n", face->size.height, height, diff);
                 diff = newdiff;
                 best = face;
                 if(diff == 0)
@@ -2464,12 +2464,12 @@ found:
                 if(face->scalable)
                     break;
                 if(height > 0)
-                    newdiff = height - (signed int)(face->size.y_ppem >> 6);
+                    newdiff = height - (signed int)(face->size.height);
                 else
-                    newdiff = -height - ((signed int)(face->size.y_ppem >> 6) - face->size.internal_leading);
+                    newdiff = -height - ((signed int)(face->size.height) - face->size.internal_leading);
                 if(!best || (diff > 0 && newdiff < diff && newdiff >= 0) ||
                    (diff < 0 && newdiff > diff)) {
-                    TRACE("%ld is better for %d diff was %d\n", face->size.y_ppem >> 6, height, diff);
+                    TRACE("%d is better for %d diff was %d\n", face->size.height, height, diff);
                     diff = newdiff;
                     best = face;
                     if(diff == 0)
