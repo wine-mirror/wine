@@ -49,6 +49,7 @@
 #include "wine/rpcfc.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -4406,15 +4407,113 @@ NDR_SCONTEXT WINAPI NdrServerContextNewUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     return NULL;
 }
 
+#define NDR_CONTEXT_HANDLE_MAGIC 0x4352444e
+
+typedef struct ndr_context_handle
+{
+    DWORD      attributes;
+    GUID       uuid;
+} ndr_context_handle;
+
+struct context_handle_entry
+{
+    struct list entry;
+    DWORD magic;
+    RPC_BINDING_HANDLE handle;
+    ndr_context_handle wire_data;
+};
+
+static struct list context_handle_list = LIST_INIT(context_handle_list);
+
+static CRITICAL_SECTION ndr_context_cs;
+static CRITICAL_SECTION_DEBUG ndr_context_debug =
+{
+    0, 0, &ndr_context_cs,
+    { &ndr_context_debug.ProcessLocksList, &ndr_context_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": ndr_context") }
+};
+static CRITICAL_SECTION ndr_context_cs = { &ndr_context_debug, -1, 0, 0, 0, 0 };
+
+static struct context_handle_entry *get_context_entry(NDR_CCONTEXT CContext)
+{
+    struct context_handle_entry *che = (struct context_handle_entry*) CContext;
+
+    if (che->magic != NDR_CONTEXT_HANDLE_MAGIC)
+        return NULL;
+    return che;
+}
+
+static struct context_handle_entry *context_entry_from_guid(LPGUID uuid)
+{
+    struct context_handle_entry *che;
+    LIST_FOR_EACH_ENTRY(che, &context_handle_list, struct context_handle_entry, entry)
+        if (IsEqualGUID(&che->wire_data.uuid, uuid))
+            return che;
+    return NULL;
+}
+
 RPC_BINDING_HANDLE WINAPI NDRCContextBinding(NDR_CCONTEXT CContext)
 {
-    FIXME("(%p): stub\n", CContext);
-    return NULL;
+    struct context_handle_entry *che;
+    RPC_BINDING_HANDLE handle = NULL;
+
+    TRACE("%p\n", CContext);
+
+    EnterCriticalSection(&ndr_context_cs);
+    che = get_context_entry(CContext);
+    if (che)
+        handle = che->handle;
+    LeaveCriticalSection(&ndr_context_cs);
+
+    if (!handle)
+        RpcRaiseException(ERROR_INVALID_HANDLE);
+    return handle;
 }
 
 void WINAPI NDRCContextMarshall(NDR_CCONTEXT CContext, void *pBuff)
 {
-    FIXME("(%p %p): stub\n", CContext, pBuff);
+    struct context_handle_entry *che;
+
+    TRACE("%p %p\n", CContext, pBuff);
+
+    EnterCriticalSection(&ndr_context_cs);
+    che = get_context_entry(CContext);
+    memcpy(pBuff, &che->wire_data, sizeof (ndr_context_handle));
+    LeaveCriticalSection(&ndr_context_cs);
+}
+
+static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
+                                      RPC_BINDING_HANDLE hBinding,
+                                      ndr_context_handle *chi)
+{
+    static const GUID zeroguid = {0,0,0,{0,0,0,0,0,0,0,0}};
+    struct context_handle_entry *che = NULL;
+
+    /* a null UUID means we should free the context handle */
+    if (IsEqualGUID(&chi->uuid, &zeroguid))
+    {
+        che = get_context_entry(*CContext);
+        if (!che)
+            return ERROR_INVALID_HANDLE;
+        list_remove(&che->entry);
+        HeapFree(GetProcessHeap(), 0, che);
+        che = NULL;
+    }
+    /* if there's no existing entry matching the GUID, allocate one */
+    else if (!(che = context_entry_from_guid(&chi->uuid)))
+    {
+        che = HeapAlloc(GetProcessHeap(), 0, sizeof *che);
+        if (!che)
+            return ERROR_NOT_ENOUGH_MEMORY;
+        che->magic = NDR_CONTEXT_HANDLE_MAGIC;
+        che->handle = hBinding;
+        list_add_tail(&context_handle_list, &che->entry);
+        memcpy(&che->wire_data, chi, sizeof *chi);
+    }
+
+    *CContext = che;
+
+    return ERROR_SUCCESS;
 }
 
 void WINAPI NDRCContextUnmarshall(NDR_CCONTEXT *CContext,
@@ -4422,7 +4521,16 @@ void WINAPI NDRCContextUnmarshall(NDR_CCONTEXT *CContext,
                                   void *pBuff,
                                   unsigned long DataRepresentation)
 {
-    FIXME("(%p %p %p %08lx): stub\n", CContext, hBinding, pBuff, DataRepresentation);
+    UINT r;
+
+    TRACE("*%p=(%p) %p %p %08lx\n",
+          CContext, *CContext, hBinding, pBuff, DataRepresentation);
+
+    EnterCriticalSection(&ndr_context_cs);
+    r = ndr_update_context_handle(CContext, hBinding, pBuff);
+    LeaveCriticalSection(&ndr_context_cs);
+    if (r)
+        RpcRaiseException(r);
 }
 
 void WINAPI NDRSContextMarshall(NDR_SCONTEXT CContext,
