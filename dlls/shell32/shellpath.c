@@ -932,7 +932,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x14 - CSIDL_FONTS */
         CSIDL_Type_WindowsPath,
-        NULL,
+        FontsW,
         FontsW
     },
     { /* 0x15 - CSIDL_TEMPLATES */
@@ -1818,6 +1818,8 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
                  path);
             else if (CSIDL_Data[folders[i]].type == CSIDL_Type_AllUsers)
                 _SHGetAllUsersProfilePath(SHGFP_TYPE_DEFAULT, folders[i], path);
+            else if (CSIDL_Data[folders[i]].type == CSIDL_Type_WindowsPath)
+                GetWindowsDirectoryW(path, MAX_PATH);
             else
                 hr = E_FAIL;
             if (*path)
@@ -1870,7 +1872,8 @@ static HRESULT _SHRegisterUserShellFolders(BOOL bDefault)
      CSIDL_INTERNET_CACHE,
      CSIDL_COOKIES,
      CSIDL_HISTORY,
-     CSIDL_MYPICTURES
+     CSIDL_MYPICTURES,
+     CSIDL_FONTS
     };
     WCHAR userShellFolderPath[MAX_PATH], shellFolderPath[MAX_PATH];
     LPCWSTR pUserShellFolderPath, pShellFolderPath;
