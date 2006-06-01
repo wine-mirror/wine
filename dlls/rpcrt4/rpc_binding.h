@@ -58,7 +58,8 @@ typedef struct _RpcConnection
 } RpcConnection;
 
 struct protseq_ops {
-  char *name;
+  const char *name;
+  unsigned char epm_protocols[2]; /* only floors 3 and 4. see http://www.opengroup.org/onlinepubs/9629399/apdxl.htm */
   RpcConnection *(*alloc)(void);
   RPC_STATUS (*open_connection)(RpcConnection *conn);
   HANDLE (*get_connect_wait_handle)(RpcConnection *conn);
@@ -66,6 +67,8 @@ struct protseq_ops {
   int (*read)(RpcConnection *conn, void *buffer, unsigned int len);
   int (*write)(RpcConnection *conn, const void *buffer, unsigned int len);
   int (*close)(RpcConnection *conn);
+  size_t (*get_top_of_tower)(unsigned char *tower_data, const char *networkaddr, const char *endpoint);
+  RPC_STATUS (*parse_top_of_tower)(const unsigned char *tower_data, size_t tower_size, char **networkaddr, char **endpoint);
 };
 
 /* don't know what MS's structure looks like */
@@ -150,5 +153,9 @@ static inline RPC_STATUS rpcrt4_conn_handoff(RpcConnection *old_conn, RpcConnect
 {
   return old_conn->ops->handoff(old_conn, new_conn);
 }
+
+/* floors 3 and up */
+RPC_STATUS RpcTransport_GetTopOfTower(unsigned char *tower_data, size_t *tower_size, const char *protseq, const char *networkaddr, const char *endpoint);
+RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data, size_t tower_size, char **protseq, char **networkaddr, char **endpoint);
 
 #endif

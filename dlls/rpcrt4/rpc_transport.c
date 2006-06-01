@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -63,6 +64,7 @@
 
 #include "rpc_binding.h"
 #include "rpc_message.h"
+#include "epm_towers.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
@@ -252,6 +254,167 @@ static int rpcrt4_conn_np_close(RpcConnection *Connection)
   return 0;
 }
 
+static size_t rpcrt4_ncacn_np_get_top_of_tower(unsigned char *tower_data,
+                                               const char *networkaddr,
+                                               const char *endpoint)
+{
+    twr_empty_floor_t *smb_floor;
+    twr_empty_floor_t *nb_floor;
+    size_t size;
+    size_t networkaddr_size;
+    size_t endpoint_size;
+
+    TRACE("(%p, %s, %s)\n", tower_data, networkaddr, endpoint);
+
+    networkaddr_size = strlen(networkaddr) + 1;
+    endpoint_size = strlen(endpoint) + 1;
+    size = sizeof(*smb_floor) + endpoint_size + sizeof(*nb_floor) + networkaddr_size;
+
+    if (!tower_data)
+        return size;
+
+    smb_floor = (twr_empty_floor_t *)tower_data;
+
+    tower_data += sizeof(*smb_floor);
+
+    smb_floor->count_lhs = sizeof(smb_floor->protid);
+    smb_floor->protid = EPM_PROTOCOL_SMB;
+    smb_floor->count_rhs = endpoint_size;
+
+    memcpy(tower_data, endpoint, endpoint_size);
+    tower_data += endpoint_size;
+
+    nb_floor = (twr_empty_floor_t *)tower_data;
+
+    tower_data += sizeof(*nb_floor);
+
+    nb_floor->count_lhs = sizeof(nb_floor->protid);
+    nb_floor->protid = EPM_PROTOCOL_NETBIOS;
+    nb_floor->count_rhs = networkaddr_size;
+
+    memcpy(tower_data, networkaddr, networkaddr_size);
+    tower_data += networkaddr_size;
+
+    return size;
+}
+
+static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_data,
+                                                     size_t tower_size,
+                                                     char **networkaddr,
+                                                     char **endpoint)
+{
+    const twr_empty_floor_t *smb_floor = (const twr_empty_floor_t *)tower_data;
+    const twr_empty_floor_t *nb_floor;
+
+    TRACE("(%p, %d, %p, %p)\n", tower_data, tower_size, networkaddr, endpoint);
+
+    *networkaddr = NULL;
+    *endpoint = NULL;
+
+    if (tower_size < sizeof(*smb_floor))
+        return EPT_S_NOT_REGISTERED;
+
+    tower_data += sizeof(*smb_floor);
+    tower_size -= sizeof(*smb_floor);
+
+    if ((smb_floor->count_lhs != sizeof(smb_floor->protid)) ||
+        (smb_floor->protid != EPM_PROTOCOL_SMB) ||
+        (smb_floor->count_rhs > tower_size))
+        return EPT_S_NOT_REGISTERED;
+    
+    *endpoint = HeapAlloc(GetProcessHeap(), 0, smb_floor->count_rhs);
+    if (!*endpoint)
+        return RPC_S_OUT_OF_RESOURCES;
+    memcpy(*endpoint, tower_data, smb_floor->count_rhs);
+    tower_data += smb_floor->count_rhs;
+    tower_size -= smb_floor->count_rhs;
+
+    if (tower_size < sizeof(*nb_floor))
+        return EPT_S_NOT_REGISTERED;
+
+    nb_floor = (const twr_empty_floor_t *)tower_data;
+
+    tower_data += sizeof(*nb_floor);
+    tower_size -= sizeof(*nb_floor);
+
+    if ((nb_floor->count_lhs != sizeof(nb_floor->protid)) ||
+        (nb_floor->protid != EPM_PROTOCOL_NETBIOS) ||
+        (nb_floor->count_rhs > tower_size))
+        return EPT_S_NOT_REGISTERED;
+
+    *networkaddr = HeapAlloc(GetProcessHeap(), 0, nb_floor->count_rhs);
+    if (!*networkaddr)
+    {
+        HeapFree(GetProcessHeap(), 0, *endpoint);
+        *endpoint = NULL;
+        return RPC_S_OUT_OF_RESOURCES;
+    }
+    memcpy(*networkaddr, tower_data, nb_floor->count_rhs);
+
+    return RPC_S_OK;
+}
+
+static size_t rpcrt4_ncalrpc_get_top_of_tower(unsigned char *tower_data,
+                                              const char *networkaddr,
+                                              const char *endpoint)
+{
+    twr_empty_floor_t *pipe_floor;
+    size_t size;
+    size_t endpoint_size;
+
+    TRACE("(%p, %s, %s)\n", tower_data, networkaddr, endpoint);
+
+    endpoint_size = strlen(networkaddr) + 1;
+    size = sizeof(*pipe_floor) + endpoint_size;
+
+    if (!tower_data)
+        return size;
+
+    pipe_floor = (twr_empty_floor_t *)tower_data;
+
+    tower_data += sizeof(*pipe_floor);
+
+    pipe_floor->count_lhs = sizeof(pipe_floor->protid);
+    pipe_floor->protid = EPM_PROTOCOL_SMB;
+    pipe_floor->count_rhs = endpoint_size;
+
+    memcpy(tower_data, endpoint, endpoint_size);
+    tower_data += endpoint_size;
+
+    return size;
+}
+
+static RPC_STATUS rpcrt4_ncalrpc_parse_top_of_tower(const unsigned char *tower_data,
+                                                    size_t tower_size,
+                                                    char **networkaddr,
+                                                    char **endpoint)
+{
+    const twr_empty_floor_t *pipe_floor = (const twr_empty_floor_t *)tower_data;
+
+    TRACE("(%p, %d, %p, %p)\n", tower_data, tower_size, networkaddr, endpoint);
+
+    *networkaddr = NULL;
+    *endpoint = NULL;
+
+    if (tower_size < sizeof(*pipe_floor))
+        return EPT_S_NOT_REGISTERED;
+
+    tower_data += sizeof(*pipe_floor);
+    tower_size -= sizeof(*pipe_floor);
+
+    if ((pipe_floor->count_lhs != sizeof(pipe_floor->protid)) ||
+        (pipe_floor->protid != EPM_PROTOCOL_SMB) ||
+        (pipe_floor->count_rhs > tower_size))
+        return EPT_S_NOT_REGISTERED;
+    
+    *endpoint = HeapAlloc(GetProcessHeap(), 0, pipe_floor->count_rhs);
+    if (!*endpoint)
+        return RPC_S_OUT_OF_RESOURCES;
+    memcpy(*endpoint, tower_data, pipe_floor->count_rhs);
+
+    return RPC_S_OK;
+}
+
 /**** ncacn_ip_tcp support ****/
 
 typedef struct _RpcConnection_tcp
@@ -383,8 +546,131 @@ static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
   return 0;
 }
 
+static size_t rpcrt4_ncacn_ip_tcp_get_top_of_tower(unsigned char *tower_data,
+                                                   const char *networkaddr,
+                                                   const char *endpoint)
+{
+    twr_tcp_floor_t *tcp_floor;
+    twr_ipv4_floor_t *ipv4_floor;
+    struct addrinfo *ai;
+    struct addrinfo hints;
+    int ret;
+    size_t size = sizeof(*tcp_floor) + sizeof(*ipv4_floor);
+
+    TRACE("(%p, %s, %s)\n", tower_data, networkaddr, endpoint);
+
+    if (!tower_data)
+        return size;
+
+    tcp_floor = (twr_tcp_floor_t *)tower_data;
+    tower_data += sizeof(*tcp_floor);
+
+    ipv4_floor = (twr_ipv4_floor_t *)tower_data;
+
+    tcp_floor->count_lhs = sizeof(tcp_floor->protid);
+    tcp_floor->protid = EPM_PROTOCOL_TCP;
+    tcp_floor->count_rhs = sizeof(tcp_floor->port);
+
+    ipv4_floor->count_lhs = sizeof(ipv4_floor->protid);
+    ipv4_floor->protid = EPM_PROTOCOL_IP;
+    ipv4_floor->count_rhs = sizeof(ipv4_floor->ipv4addr);
+
+    hints.ai_flags          = 0;
+    /* FIXME: only support IPv4 at the moment. how is IPv6 represented by the EPM? */
+    hints.ai_family         = PF_INET;
+    hints.ai_socktype       = SOCK_STREAM;
+    hints.ai_protocol       = IPPROTO_TCP;
+    hints.ai_addrlen        = 0;
+    hints.ai_addr           = NULL;
+    hints.ai_canonname      = NULL;
+    hints.ai_next           = NULL;
+
+    ret = getaddrinfo(networkaddr, endpoint, &hints, &ai);
+    if (ret < 0)
+    {
+        ERR("getaddrinfo failed with %d\n", ret);
+        return 0;
+    }
+
+    if (ai->ai_family == PF_INET)
+    {
+        const struct sockaddr_in *sin = (const struct sockaddr_in *)ai->ai_addr;
+        tcp_floor->port = sin->sin_port;
+        ipv4_floor->ipv4addr = sin->sin_addr.s_addr;
+    }
+    else
+    {
+        ERR("unexpected protocol family %d\n", ai->ai_family);
+        return 0;
+    }
+
+    freeaddrinfo(ai);
+
+    return size;
+}
+
+static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *tower_data,
+                                                         size_t tower_size,
+                                                         char **networkaddr,
+                                                         char **endpoint)
+{
+    const twr_tcp_floor_t *tcp_floor = (const twr_tcp_floor_t *)tower_data;
+    const twr_ipv4_floor_t *ipv4_floor;
+    struct in_addr in_addr;
+
+    TRACE("(%p, %d, %p, %p)\n", tower_data, tower_size, networkaddr, endpoint);
+
+    *networkaddr = NULL;
+    *endpoint = NULL;
+
+    if (tower_size < sizeof(*tcp_floor))
+        return EPT_S_NOT_REGISTERED;
+
+    tower_data += sizeof(*tcp_floor);
+    tower_size -= sizeof(*tcp_floor);
+
+    if (tower_size < sizeof(*ipv4_floor))
+        return EPT_S_NOT_REGISTERED;
+
+    ipv4_floor = (const twr_ipv4_floor_t *)tower_data;
+
+    if ((tcp_floor->count_lhs != sizeof(tcp_floor->protid)) ||
+        (tcp_floor->protid != EPM_PROTOCOL_TCP) ||
+        (tcp_floor->count_rhs != sizeof(tcp_floor->port)) ||
+        (ipv4_floor->count_lhs != sizeof(ipv4_floor->protid)) ||
+        (ipv4_floor->protid != EPM_PROTOCOL_IP) ||
+        (ipv4_floor->count_rhs != sizeof(ipv4_floor->ipv4addr)))
+        return EPT_S_NOT_REGISTERED;
+
+    *endpoint = HeapAlloc(GetProcessHeap(), 0, 6);
+    if (!*endpoint)
+        return RPC_S_OUT_OF_RESOURCES;
+    sprintf(*endpoint, "%u", ntohs(tcp_floor->port));
+
+    *networkaddr = HeapAlloc(GetProcessHeap(), 0, INET_ADDRSTRLEN);
+    if (!*networkaddr)
+    {
+        HeapFree(GetProcessHeap(), 0, *endpoint);
+        *endpoint = NULL;
+        return RPC_S_OUT_OF_RESOURCES;
+    }
+    in_addr.s_addr = ipv4_floor->ipv4addr;
+    if (!inet_ntop(AF_INET, &in_addr, *networkaddr, INET_ADDRSTRLEN))
+    {
+        ERR("inet_ntop: %s\n", strerror(errno));
+        HeapFree(GetProcessHeap(), 0, *endpoint);
+        HeapFree(GetProcessHeap(), 0, *networkaddr);
+        *networkaddr = NULL;
+        *endpoint = NULL;
+        return EPT_S_NOT_REGISTERED;
+    }
+
+    return RPC_S_OK;
+}
+
 struct protseq_ops protseq_list[] = {
   { "ncacn_np",
+    { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_SMB },
     rpcrt4_conn_np_alloc,
     rpcrt4_ncacn_np_open,
     rpcrt4_conn_np_get_connect_event,
@@ -392,8 +678,11 @@ struct protseq_ops protseq_list[] = {
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
+    rpcrt4_ncacn_np_get_top_of_tower,
+    rpcrt4_ncacn_np_parse_top_of_tower,
   },
   { "ncalrpc",
+    { EPM_PROTOCOL_NCALRPC, EPM_PROTOCOL_PIPE },
     rpcrt4_conn_np_alloc,
     rpcrt4_ncalrpc_open,
     rpcrt4_conn_np_get_connect_event,
@@ -401,8 +690,11 @@ struct protseq_ops protseq_list[] = {
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
+    rpcrt4_ncalrpc_get_top_of_tower,
+    rpcrt4_ncalrpc_parse_top_of_tower,
   },
   { "ncacn_ip_tcp",
+    { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_TCP },
     rpcrt4_conn_tcp_alloc,
     rpcrt4_ncacn_ip_tcp_open,
     rpcrt4_conn_tcp_get_wait_handle,
@@ -410,6 +702,8 @@ struct protseq_ops protseq_list[] = {
     rpcrt4_conn_tcp_read,
     rpcrt4_conn_tcp_write,
     rpcrt4_conn_tcp_close,
+    rpcrt4_ncacn_ip_tcp_get_top_of_tower,
+    rpcrt4_ncacn_ip_tcp_parse_top_of_tower,
   }
 };
 
@@ -492,6 +786,96 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
   if (Connection->AuthInfo) RpcAuthInfo_Release(Connection->AuthInfo);
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;
+}
+
+RPC_STATUS RpcTransport_GetTopOfTower(unsigned char *tower_data,
+                                      size_t *tower_size,
+                                      const char *protseq,
+                                      const char *networkaddr,
+                                      const char *endpoint)
+{
+    twr_empty_floor_t *protocol_floor;
+    struct protseq_ops *protseq_ops = rpcrt4_get_protseq_ops(protseq);
+
+    *tower_size = 0;
+
+    if (!protseq_ops)
+        return RPC_S_INVALID_RPC_PROTSEQ;
+
+    if (!tower_data)
+    {
+        *tower_size = sizeof(*protocol_floor);
+        *tower_size += protseq_ops->get_top_of_tower(NULL, networkaddr, endpoint);
+        return RPC_S_OK;
+    }
+
+    protocol_floor = (twr_empty_floor_t *)tower_data;
+    protocol_floor->count_lhs = sizeof(protocol_floor->protid);
+    protocol_floor->protid = protseq_ops->epm_protocols[0];
+    protocol_floor->count_rhs = 0;
+
+    tower_data += sizeof(*protocol_floor);
+
+    *tower_size = protseq_ops->get_top_of_tower(tower_data, networkaddr, endpoint);
+    if (!*tower_size)
+        return EPT_S_NOT_REGISTERED;
+
+    *tower_size += sizeof(*protocol_floor);
+
+    return RPC_S_OK;
+}
+
+RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
+                                        size_t tower_size,
+                                        char **protseq,
+                                        char **networkaddr,
+                                        char **endpoint)
+{
+    twr_empty_floor_t *protocol_floor;
+    twr_empty_floor_t *floor4;
+    struct protseq_ops *protseq_ops = NULL;
+    RPC_STATUS status;
+    int i;
+
+    *protseq = NULL;
+    *networkaddr = NULL;
+    *endpoint = NULL;
+
+    if (tower_size < sizeof(*protocol_floor))
+        return EPT_S_NOT_REGISTERED;
+
+    protocol_floor = (twr_empty_floor_t *)tower_data;
+    tower_data += sizeof(*protocol_floor);
+    tower_size -= sizeof(*protocol_floor);
+    if ((protocol_floor->count_lhs != sizeof(protocol_floor->protid)) ||
+        (protocol_floor->count_rhs > tower_size))
+        return EPT_S_NOT_REGISTERED;
+
+    floor4 = (twr_empty_floor_t *)tower_data;
+    if ((tower_size < sizeof(*floor4)) ||
+        (floor4->count_lhs != sizeof(protocol_floor->protid)))
+        return EPT_S_NOT_REGISTERED;
+
+    for(i = 0; i < MAX_PROTSEQ; i++)
+        if ((protocol_floor->protid == protseq_list[i].epm_protocols[0]) &&
+            (floor4->protid == protseq_list[i].epm_protocols[1]))
+        {
+            protseq_ops = &protseq_list[i];
+            break;
+        }
+
+    if (!protseq_ops)
+        return EPT_S_NOT_REGISTERED;
+
+    status = protseq_ops->parse_top_of_tower(tower_data, tower_size, networkaddr, endpoint);
+
+    if (status == RPC_S_OK)
+    {
+        *protseq = HeapAlloc(GetProcessHeap(), 0, strlen(protseq_ops->name) + 1);
+        strcpy(*protseq, protseq_ops->name);
+    }
+
+    return status;
 }
 
 /***********************************************************************
