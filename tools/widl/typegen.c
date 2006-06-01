@@ -1892,8 +1892,13 @@ size_t get_size_procformatstring(const ifref_t *ifaces)
                     }
                 }
 
+                var = func->def;
                 /* return value size */
-                size += 2; /* FIXME: determine real size */
+                if (is_void(var->type, NULL))
+                    size += 2;
+                else
+                    size += get_size_procformatstring_var(var);
+
                 func = PREV_LINK(func);
             }
         }
