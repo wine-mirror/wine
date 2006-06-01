@@ -84,6 +84,7 @@ static const AUDIO_DRIVER sAudioDrivers[] = {
   {"JACK", "jack"},
   {"NAS", "nas"},
   {"Audio IO(Solaris)", "audioio"},
+  {"CoreAudio", "coreaudio"},
   {"Disable sound", ""},
   {"", ""}
 };
