@@ -1796,8 +1796,9 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
 
     if( x + width > GetSystemMetrics(SM_CXSCREEN ))
     {
-        if( xanchor )
+        if( xanchor && x >= width - xanchor )
             x -= width - xanchor;
+
         if( x + width > GetSystemMetrics(SM_CXSCREEN))
             x = GetSystemMetrics(SM_CXSCREEN) - width;
     }
@@ -1805,8 +1806,9 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
 
     if( y + height > GetSystemMetrics(SM_CYSCREEN ))
     {
-        if( yanchor )
+        if( yanchor && y >= height + yanchor )
             y -= height + yanchor;
+
         if( y + height > GetSystemMetrics(SM_CYSCREEN ))
             y = GetSystemMetrics(SM_CYSCREEN) - height;
     }
@@ -2339,10 +2341,14 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
             RECT rc = item->rect;
 
             MENU_AdjustMenuItemRect(menu, &rc);
+
+	    /* The first item in the popup menu has to be at the
+	       same y position as the focused menu item */
 	    rect.left += rc.right - GetSystemMetrics(SM_CXBORDER);
-	    rect.top += rc.top;
+	    rect.top += rc.top - MENU_TOP_MARGIN;
 	    rect.right = rc.left - rc.right + GetSystemMetrics(SM_CXBORDER);
-	    rect.bottom = rc.top - rc.bottom;
+	    rect.bottom = rc.top - rc.bottom - MENU_TOP_MARGIN
+	                  - MENU_BOTTOM_MARGIN - GetSystemMetrics(SM_CYBORDER);
 	}
 	else
 	{
