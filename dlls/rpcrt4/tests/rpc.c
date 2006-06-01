@@ -265,6 +265,10 @@ static void test_towers(void)
     I_RpcFree(protseq);
     I_RpcFree(endpoint);
     I_RpcFree(address);
+
+    ret = TowerExplode(tower, NULL, NULL, NULL, NULL, NULL);
+    ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
+
     I_RpcFree(tower);
 }
 

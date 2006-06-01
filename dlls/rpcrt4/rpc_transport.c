@@ -308,9 +308,6 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
 
     TRACE("(%p, %d, %p, %p)\n", tower_data, tower_size, networkaddr, endpoint);
 
-    *networkaddr = NULL;
-    *endpoint = NULL;
-
     if (tower_size < sizeof(*smb_floor))
         return EPT_S_NOT_REGISTERED;
 
@@ -321,11 +318,14 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
         (smb_floor->protid != EPM_PROTOCOL_SMB) ||
         (smb_floor->count_rhs > tower_size))
         return EPT_S_NOT_REGISTERED;
-    
-    *endpoint = HeapAlloc(GetProcessHeap(), 0, smb_floor->count_rhs);
-    if (!*endpoint)
-        return RPC_S_OUT_OF_RESOURCES;
-    memcpy(*endpoint, tower_data, smb_floor->count_rhs);
+
+    if (endpoint)
+    {
+        *endpoint = HeapAlloc(GetProcessHeap(), 0, smb_floor->count_rhs);
+        if (!*endpoint)
+            return RPC_S_OUT_OF_RESOURCES;
+        memcpy(*endpoint, tower_data, smb_floor->count_rhs);
+    }
     tower_data += smb_floor->count_rhs;
     tower_size -= smb_floor->count_rhs;
 
@@ -342,14 +342,20 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
         (nb_floor->count_rhs > tower_size))
         return EPT_S_NOT_REGISTERED;
 
-    *networkaddr = HeapAlloc(GetProcessHeap(), 0, nb_floor->count_rhs);
-    if (!*networkaddr)
+    if (networkaddr)
     {
-        HeapFree(GetProcessHeap(), 0, *endpoint);
-        *endpoint = NULL;
-        return RPC_S_OUT_OF_RESOURCES;
+        *networkaddr = HeapAlloc(GetProcessHeap(), 0, nb_floor->count_rhs);
+        if (!*networkaddr)
+        {
+            if (endpoint)
+            {
+                HeapFree(GetProcessHeap(), 0, *endpoint);
+                *endpoint = NULL;
+            }
+            return RPC_S_OUT_OF_RESOURCES;
+        }
+        memcpy(*networkaddr, tower_data, nb_floor->count_rhs);
     }
-    memcpy(*networkaddr, tower_data, nb_floor->count_rhs);
 
     return RPC_S_OK;
 }
@@ -406,11 +412,14 @@ static RPC_STATUS rpcrt4_ncalrpc_parse_top_of_tower(const unsigned char *tower_d
         (pipe_floor->protid != EPM_PROTOCOL_SMB) ||
         (pipe_floor->count_rhs > tower_size))
         return EPT_S_NOT_REGISTERED;
-    
-    *endpoint = HeapAlloc(GetProcessHeap(), 0, pipe_floor->count_rhs);
-    if (!*endpoint)
-        return RPC_S_OUT_OF_RESOURCES;
-    memcpy(*endpoint, tower_data, pipe_floor->count_rhs);
+
+    if (endpoint)
+    {
+        *endpoint = HeapAlloc(GetProcessHeap(), 0, pipe_floor->count_rhs);
+        if (!*endpoint)
+            return RPC_S_OUT_OF_RESOURCES;
+        memcpy(*endpoint, tower_data, pipe_floor->count_rhs);
+    }
 
     return RPC_S_OK;
 }
@@ -620,9 +629,6 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *to
 
     TRACE("(%p, %d, %p, %p)\n", tower_data, tower_size, networkaddr, endpoint);
 
-    *networkaddr = NULL;
-    *endpoint = NULL;
-
     if (tower_size < sizeof(*tcp_floor))
         return EPT_S_NOT_REGISTERED;
 
@@ -642,27 +648,39 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *to
         (ipv4_floor->count_rhs != sizeof(ipv4_floor->ipv4addr)))
         return EPT_S_NOT_REGISTERED;
 
-    *endpoint = HeapAlloc(GetProcessHeap(), 0, 6);
-    if (!*endpoint)
-        return RPC_S_OUT_OF_RESOURCES;
-    sprintf(*endpoint, "%u", ntohs(tcp_floor->port));
-
-    *networkaddr = HeapAlloc(GetProcessHeap(), 0, INET_ADDRSTRLEN);
-    if (!*networkaddr)
+    if (endpoint)
     {
-        HeapFree(GetProcessHeap(), 0, *endpoint);
-        *endpoint = NULL;
-        return RPC_S_OUT_OF_RESOURCES;
+        *endpoint = HeapAlloc(GetProcessHeap(), 0, 6);
+        if (!*endpoint)
+            return RPC_S_OUT_OF_RESOURCES;
+        sprintf(*endpoint, "%u", ntohs(tcp_floor->port));
     }
-    in_addr.s_addr = ipv4_floor->ipv4addr;
-    if (!inet_ntop(AF_INET, &in_addr, *networkaddr, INET_ADDRSTRLEN))
+
+    if (networkaddr)
     {
-        ERR("inet_ntop: %s\n", strerror(errno));
-        HeapFree(GetProcessHeap(), 0, *endpoint);
-        HeapFree(GetProcessHeap(), 0, *networkaddr);
-        *networkaddr = NULL;
-        *endpoint = NULL;
-        return EPT_S_NOT_REGISTERED;
+        *networkaddr = HeapAlloc(GetProcessHeap(), 0, INET_ADDRSTRLEN);
+        if (!*networkaddr)
+        {
+            if (endpoint)
+            {
+                HeapFree(GetProcessHeap(), 0, *endpoint);
+                *endpoint = NULL;
+            }
+            return RPC_S_OUT_OF_RESOURCES;
+        }
+        in_addr.s_addr = ipv4_floor->ipv4addr;
+        if (!inet_ntop(AF_INET, &in_addr, *networkaddr, INET_ADDRSTRLEN))
+        {
+            ERR("inet_ntop: %s\n", strerror(errno));
+            HeapFree(GetProcessHeap(), 0, *networkaddr);
+            *networkaddr = NULL;
+            if (endpoint)
+            {
+                HeapFree(GetProcessHeap(), 0, *endpoint);
+                *endpoint = NULL;
+            }
+            return EPT_S_NOT_REGISTERED;
+        }
     }
 
     return RPC_S_OK;
@@ -837,10 +855,6 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
     RPC_STATUS status;
     int i;
 
-    *protseq = NULL;
-    *networkaddr = NULL;
-    *endpoint = NULL;
-
     if (tower_size < sizeof(*protocol_floor))
         return EPT_S_NOT_REGISTERED;
 
@@ -869,7 +883,7 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
 
     status = protseq_ops->parse_top_of_tower(tower_data, tower_size, networkaddr, endpoint);
 
-    if (status == RPC_S_OK)
+    if ((status == RPC_S_OK) && protseq)
     {
         *protseq = HeapAlloc(GetProcessHeap(), 0, strlen(protseq_ops->name) + 1);
         strcpy(*protseq, protseq_ops->name);

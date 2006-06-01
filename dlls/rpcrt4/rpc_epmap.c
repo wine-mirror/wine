@@ -265,9 +265,12 @@ RPC_STATUS WINAPI TowerExplode(
     const twr_uuid_floor_t *object_floor;
     const twr_uuid_floor_t *syntax_floor;
 
-    *protseq = NULL;
-    *endpoint = NULL;
-    *address = NULL;
+    if (protseq)
+        *protseq = NULL;
+    if (endpoint)
+        *endpoint = NULL;
+    if (address)
+        *address = NULL;
 
     tower_size = tower->tower_length;
 
@@ -305,7 +308,7 @@ RPC_STATUS WINAPI TowerExplode(
         return EPT_S_NOT_REGISTERED;
 
     status = RpcTransport_ParseTopOfTower(p, tower_size, protseq, address, endpoint);
-    if (status == RPC_S_OK)
+    if ((status == RPC_S_OK) && syntax && object)
     {
         syntax->SyntaxGUID = syntax_floor->uuid;
         syntax->SyntaxVersion.MajorVersion = syntax_floor->major_version;
