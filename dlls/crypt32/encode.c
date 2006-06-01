@@ -2400,13 +2400,14 @@ static BOOL WINAPI CRYPT_ExportRsaPublicKeyInfoEx(HCRYPTPROV hCryptProv,
 {
     BOOL ret;
     HCRYPTKEY key;
+    static CHAR oid[] = szOID_RSA_RSA;
 
     TRACE("(%ld, %ld, %08lx, %s, %08lx, %p, %p, %p)\n", hCryptProv, dwKeySpec,
      dwCertEncodingType, debugstr_a(pszPublicKeyObjId), dwFlags, pvAuxInfo,
      pInfo, pcbInfo);
 
     if (!pszPublicKeyObjId)
-        pszPublicKeyObjId = szOID_RSA_RSA;
+        pszPublicKeyObjId = oid;
     if ((ret = CryptGetUserKey(hCryptProv, dwKeySpec, &key)))
     {
         DWORD keySize = 0;
