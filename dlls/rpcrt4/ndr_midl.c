@@ -309,6 +309,7 @@ unsigned char *WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char 
     return NULL;
   }
 
+  stubmsg->RpcMsg->BufferLength = buffer - (unsigned char *)stubmsg->RpcMsg->Buffer;
   status = I_RpcSendReceive(stubmsg->RpcMsg);
   if (status != RPC_S_OK)
     RpcRaiseException(status);
