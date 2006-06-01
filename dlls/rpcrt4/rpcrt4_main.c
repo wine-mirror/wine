@@ -800,3 +800,19 @@ RPC_STATUS RPC_ENTRY DceErrorInqTextA (RPC_STATUS e, unsigned char *buffer)
     }
     return status;
 }
+
+/******************************************************************************
+ * I_RpcAllocate   (rpcrt4.@)
+ */
+void * WINAPI I_RpcAllocate(unsigned int Size)
+{
+    return HeapAlloc(GetProcessHeap(), 0, Size);
+}
+
+/******************************************************************************
+ * I_RpcFree   (rpcrt4.@)
+ */
+void WINAPI I_RpcFree(void *Object)
+{
+    HeapFree(GetProcessHeap(), 0, Object);
+}

@@ -19,7 +19,7 @@
 @ stdcall IUnknown_QueryInterface_Proxy(ptr ptr ptr)
 @ stdcall IUnknown_Release_Proxy(ptr)
 @ stub I_RpcAbortAsyncCall
-@ stub I_RpcAllocate
+@ stdcall I_RpcAllocate(long)
 @ stub I_RpcAsyncAbortCall
 @ stub I_RpcAsyncSendReceive # NT4
 @ stub I_RpcAsyncSetHandle
@@ -45,7 +45,7 @@
 @ stub I_RpcDeleteMutex
 @ stub I_RpcEnableWmiTrace # wxp
 @ stub I_RpcExceptionFilter # wxp
-@ stub I_RpcFree
+@ stdcall I_RpcFree(ptr)
 @ stdcall I_RpcFreeBuffer(ptr)
 @ stub I_RpcFreePipeBuffer
 @ stub I_RpcGetAssociationContext
