@@ -554,24 +554,33 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
 {
     XVisualInfo *visual = NULL;
     /* In order to support OpenGL or D3D, we require a double-buffered visual and stencil buffer support, */
-    int dblBuf[] = {GLX_RGBA,GLX_DEPTH_SIZE, 16, GLX_STENCIL_SIZE, 8, GLX_DOUBLEBUFFER, None};
+    int dblBuf[] = {GLX_RGBA,GLX_DEPTH_SIZE, 24, GLX_STENCIL_SIZE, 8, GLX_ALPHA_SIZE, 8, GLX_DOUBLEBUFFER, None};
     if (!has_opengl()) return NULL;
 
     wine_tsx11_lock();
     visual = pglXChooseVisual(display, DefaultScreen(display), dblBuf);
     wine_tsx11_unlock();
     if (visual == NULL) {
-        /* fallback to no stencil */
-        int dblBuf2[] = {GLX_RGBA,GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
-        WARN("Failed to get a visual with at least 8 bits of stencil\n");
+        /* fallback to 16 bits depth, no alpha */
+        int dblBuf2[] = {GLX_RGBA,GLX_DEPTH_SIZE, 16, GLX_STENCIL_SIZE, 8, GLX_DOUBLEBUFFER, None};
+        WARN("Failed to get a visual with at least 24 bits depth\n");
 
         wine_tsx11_lock();
         visual = pglXChooseVisual(display, DefaultScreen(display), dblBuf2);
         wine_tsx11_unlock();
         if (visual == NULL) {
-            /* This should only happen if we cannot find a match with a depth size 16 */
-            FIXME("Failed to find a suitable visual\n");
-            return visual;
+            /* fallback to no stencil */
+            int dblBuf2[] = {GLX_RGBA,GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
+            WARN("Failed to get a visual with at least 8 bits of stencil\n");
+
+            wine_tsx11_lock();
+            visual = pglXChooseVisual(display, DefaultScreen(display), dblBuf2);
+            wine_tsx11_unlock();
+            if (visual == NULL) {
+                /* This should only happen if we cannot find a match with a depth size 16 */
+                FIXME("Failed to find a suitable visual\n");
+                return visual;
+            }
         }
     }
     TRACE("Visual ID %lx Chosen\n",visual->visualid);
