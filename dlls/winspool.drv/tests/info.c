@@ -119,7 +119,6 @@ static struct monitor_entry * find_installed_monitor(void)
 {
     MONITOR_INFO_2A mi2a; 
     static struct  monitor_entry * entry = NULL;
-    DWORD   res;
     DWORD   num_tests;
     DWORD   i = 0;
 
@@ -144,20 +143,6 @@ static struct monitor_entry * find_installed_monitor(void)
     if (entry) return entry;
 
     num_tests = (sizeof(monitor_table)/sizeof(struct monitor_entry));
-
-    SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, NULL, NULL);
-    if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) {
-        trace("DeleteMonitorA() not implemented yet\n");
-        return NULL;
-    }
-
-    SetLastError(MAGIC_DEAD);
-    res = AddMonitorA(NULL, 0, NULL);
-    if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) {
-        trace("AddMonitorA() not implemented yet\n");
-        return NULL;
-    }
 
     /* cleanup */
     DeleteMonitorA(NULL, env_x86, winetest_monitor);
