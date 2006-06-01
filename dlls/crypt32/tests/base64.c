@@ -132,6 +132,8 @@ static void testBinaryToStringA(void)
     BOOL ret;
     DWORD strLen = 0, i;
 
+    if (!pCryptBinaryToStringA) return;
+
     ret = pCryptBinaryToStringA(NULL, 0, 0, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
@@ -317,6 +319,8 @@ static void testStringToBinaryA(void)
 {
     BOOL ret;
     DWORD bufLen = 0, i;
+
+    if (!pCryptStringToBinaryA) return;
 
     ret = pCryptStringToBinaryA(NULL, 0, 0, NULL, NULL, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
