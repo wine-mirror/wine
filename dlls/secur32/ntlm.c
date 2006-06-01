@@ -1065,6 +1065,34 @@ static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(
     return ret;
 }
 
+/***********************************************************************
+ *             EncryptMessage
+ */
+static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
+        ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
+{
+    TRACE("%p %ld %p %ld stub\n", phContext, fQOP, pMessage, MessageSeqNo);
+
+    if(!phContext)
+        return SEC_E_INVALID_HANDLE;
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+/***********************************************************************
+ *             DecryptMessage
+ */
+static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
+        PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
+{
+    TRACE("%p %p %ld %p stub\n", phContext, pMessage, MessageSeqNo, pfQOP);
+
+    if(!phContext)
+        return SEC_E_INVALID_HANDLE;
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 static SecurityFunctionTableA ntlmTableA = {
     1,
     NULL,   /* EnumerateSecurityPackagesA */
@@ -1091,8 +1119,8 @@ static SecurityFunctionTableA ntlmTableA = {
     NULL,   /* AddCredentialsA */
     NULL,   /* Reserved8 */
     NULL,   /* QuerySecurityContextToken */
-    NULL,   /* EncryptMessage */
-    NULL,   /* DecryptMessage */
+    ntlm_EncryptMessage,                /* EncryptMessage */
+    ntlm_DecryptMessage,                /* DecryptMessage */
     NULL,   /* SetContextAttributesA */
 };
 
@@ -1122,8 +1150,8 @@ static SecurityFunctionTableW ntlmTableW = {
     NULL,   /* AddCredentialsW */
     NULL,   /* Reserved8 */
     NULL,   /* QuerySecurityContextToken */
-    NULL,   /* EncryptMessage */
-    NULL,   /* DecryptMessage */
+    ntlm_EncryptMessage,                /* EncryptMessage */
+    ntlm_DecryptMessage,                /* DecryptMessage */
     NULL,   /* SetContextAttributesW */
 };
 
