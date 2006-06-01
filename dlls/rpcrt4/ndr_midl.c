@@ -188,21 +188,47 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
 
   assert( pRpcMessage && pStubMsg && pStubDesc );
 
-  memset(pRpcMessage, 0, sizeof(RPC_MESSAGE));
-  pRpcMessage->DataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
-
-  /* not everyone allocates stack space for w2kReserved */
-  memset(pStubMsg, 0, FIELD_OFFSET(MIDL_STUB_MESSAGE,pCSInfo));
-
-  pStubMsg->ReuseBuffer = FALSE;
-  pStubMsg->IsClient = TRUE;
-  pStubMsg->StubDesc = pStubDesc;
-  pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
-  pStubMsg->pfnFree = pStubDesc->pfnFree;
-  pStubMsg->RpcMsg = pRpcMessage;
-
+  pRpcMessage->Handle = NULL;
   pRpcMessage->ProcNum = ProcNum;
   pRpcMessage->RpcInterfaceInformation = pStubDesc->RpcInterfaceInformation;
+  pRpcMessage->RpcFlags = 0;
+  pRpcMessage->DataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
+
+  pStubMsg->RpcMsg = pRpcMessage;
+  pStubMsg->BufferStart = NULL;
+  pStubMsg->BufferEnd = NULL;
+  pStubMsg->BufferLength = 0;
+  pStubMsg->IsClient = TRUE;
+  pStubMsg->ReuseBuffer = FALSE;
+  pStubMsg->pAllocAllNodesContext = NULL;
+  pStubMsg->pPointerQueueState = NULL;
+  pStubMsg->IgnoreEmbeddedPointers = 0;
+  pStubMsg->PointerBufferMark = NULL;
+  pStubMsg->fBufferValid = 0;
+  pStubMsg->uFlags = 0;
+  pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
+  pStubMsg->pfnFree = pStubDesc->pfnFree;
+  pStubMsg->StackTop = NULL;
+  pStubMsg->StubDesc = pStubDesc;
+  pStubMsg->FullPtrRefId = 0;
+  pStubMsg->PointerLength = 0;
+  pStubMsg->fInDontFree = 0;
+  pStubMsg->fDontCallFreeInst = 0;
+  pStubMsg->fInOnlyParam = 0;
+  pStubMsg->fHasReturn = 0;
+  pStubMsg->fHasExtensions = 0;
+  pStubMsg->fHasNewCorrDesc = 0;
+  pStubMsg->fUnused = 0;
+  pStubMsg->dwDestContext = MSHCTX_DIFFERENTMACHINE;
+  pStubMsg->pvDestContext = NULL;
+  pStubMsg->pRpcChannelBuffer = NULL;
+  pStubMsg->pArrayInfo = NULL;
+  pStubMsg->dwStubPhase = 0;
+  /* FIXME: LowStackMark */
+  pStubMsg->pAsyncMsg = NULL;
+  pStubMsg->pCorrInfo = NULL;
+  pStubMsg->pCorrMemory = NULL;
+  pStubMsg->pMemoryList = NULL;
 }
 
 /***********************************************************************
