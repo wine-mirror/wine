@@ -155,7 +155,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     struct line_info*           dli;
     void*                       ptr;
     SRCCODEINFO                 sci;
-    char*                       file;
+    const char*                 file;
 
     if (!cb) return FALSE;
     pcs = process_find_by_handle(hProcess);
@@ -186,7 +186,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
         {
             if (dli->is_source_file)
             {
-                file = (char*)source_get(pair.effective, dli->u.source_file);
+                file = source_get(pair.effective, dli->u.source_file);
                 if (regexec(&re, file, 0, NULL, 0) != 0) file = "";
                 strcpy(sci.FileName, file);
             }
