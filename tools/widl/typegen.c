@@ -239,8 +239,9 @@ static size_t write_procformatstring_var(FILE *file, int indent,
     return size;
 }
 
-void write_procformatstring(FILE *file, type_t *iface)
+void write_procformatstring(FILE *file, const ifref_t *ifaces)
 {
+    const ifref_t *iface = ifaces;
     int indent = 0;
     var_t *var;
     unsigned int type_offset = 2;
@@ -252,36 +253,44 @@ void write_procformatstring(FILE *file, type_t *iface)
     print_file(file, indent, "{\n");
     indent++;
 
-    if (iface->funcs)
+    END_OF_LIST(iface);
+
+    for (; iface; iface = PREV_LINK(iface))
     {
-        func_t *func = iface->funcs;
-        while (NEXT_LINK(func)) func = NEXT_LINK(func);
-        for (; func; func = PREV_LINK(func))
+        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+            continue;
+
+        if (iface->iface->funcs)
         {
-            /* emit argument data */
-            if (func->args)
+            func_t *func = iface->iface->funcs;
+            while (NEXT_LINK(func)) func = NEXT_LINK(func);
+            for (; func; func = PREV_LINK(func))
             {
-                var = func->args;
-                while (NEXT_LINK(var)) var = NEXT_LINK(var);
-                while (var)
+                /* emit argument data */
+                if (func->args)
                 {
-                    write_procformatstring_var(file, indent, var, FALSE,
-                                               &type_offset);
+                    var = func->args;
+                    while (NEXT_LINK(var)) var = NEXT_LINK(var);
+                    while (var)
+                    {
+                        write_procformatstring_var(file, indent, var, FALSE,
+                                                   &type_offset);
 
-                    var = PREV_LINK(var);
+                        var = PREV_LINK(var);
+                    }
                 }
-            }
 
-            /* emit return value data */
-            var = func->def;
-            if (is_void(var->type, NULL))
-            {
-                print_file(file, indent, "0x5b,    /* FC_END */\n");
-                print_file(file, indent, "0x5c,    /* FC_PAD */\n");
+                /* emit return value data */
+                var = func->def;
+                if (is_void(var->type, NULL))
+                {
+                    print_file(file, indent, "0x5b,    /* FC_END */\n");
+                    print_file(file, indent, "0x5c,    /* FC_PAD */\n");
+                }
+                else
+                    write_procformatstring_var(file, indent, var, TRUE,
+                                               &type_offset);
             }
-            else
-                write_procformatstring_var(file, indent, var, TRUE,
-                                           &type_offset);
         }
     }
 
@@ -1337,11 +1346,12 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 }
 
 
-void write_typeformatstring(FILE *file, type_t *iface)
+void write_typeformatstring(FILE *file, const ifref_t *ifaces)
 {
     int indent = 0;
     var_t *var;
     size_t typeformat_offset;
+    const ifref_t *iface = ifaces;
 
     print_file(file, indent, "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =\n");
     print_file(file, indent, "{\n");
@@ -1352,22 +1362,30 @@ void write_typeformatstring(FILE *file, type_t *iface)
     print_file(file, indent, "NdrFcShort(0x0),\n");
     typeformat_offset = 2;
 
-    if (iface->funcs)
+    END_OF_LIST(iface);
+
+    for (; iface; iface = PREV_LINK(iface))
     {
-        func_t *func = iface->funcs;
-        while (NEXT_LINK(func)) func = NEXT_LINK(func);
-        for (; func; func = PREV_LINK(func))
+        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+            continue;
+
+        if (iface->iface->funcs)
         {
-            current_func = func;
-            if (func->args)
+            func_t *func = iface->iface->funcs;
+            while (NEXT_LINK(func)) func = NEXT_LINK(func);
+            for (; func; func = PREV_LINK(func))
             {
-                var = func->args;
-                while (NEXT_LINK(var)) var = NEXT_LINK(var);
-                while (var)
+                current_func = func;
+                if (func->args)
                 {
-                    write_typeformatstring_var(file, indent, var,
-                                               &typeformat_offset);
-                    var = PREV_LINK(var);
+                    var = func->args;
+                    while (NEXT_LINK(var)) var = NEXT_LINK(var);
+                    while (var)
+                    {
+                        write_typeformatstring_var(file, indent, var,
+                                                   &typeformat_offset);
+                        var = PREV_LINK(var);
+                    }
                 }
             }
         }
@@ -1842,63 +1860,81 @@ size_t get_size_typeformatstring_var(const var_t *var)
     return type_offset;
 }
 
-size_t get_size_procformatstring(const type_t *iface)
+size_t get_size_procformatstring(const ifref_t *ifaces)
 {
+    const ifref_t *iface = ifaces;
     size_t size = 1;
     func_t *func;
     var_t *var;
 
-    if (iface->funcs)
-    {
-        func = iface->funcs;
-        while (NEXT_LINK(func)) func = NEXT_LINK(func);
-        while (func)
-        {
-            /* argument list size */
-            if (func->args)
-            {
-                var = func->args;
-                while (NEXT_LINK(var)) var = NEXT_LINK(var);
-                while (var)
-                {
-                    size += get_size_procformatstring_var(var);
-                    var = PREV_LINK(var);
-                }
-            }
+    END_OF_LIST(iface);
 
-            /* return value size */
-            size += 2; /* FIXME: determine real size */
-            func = PREV_LINK(func);
+    for (; iface; iface = PREV_LINK(iface))
+    {
+        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+            continue;
+
+        if (iface->iface->funcs)
+        {
+            func = iface->iface->funcs;
+            while (NEXT_LINK(func)) func = NEXT_LINK(func);
+            while (func)
+            {
+                /* argument list size */
+                if (func->args)
+                {
+                    var = func->args;
+                    while (NEXT_LINK(var)) var = NEXT_LINK(var);
+                    while (var)
+                    {
+                        size += get_size_procformatstring_var(var);
+                        var = PREV_LINK(var);
+                    }
+                }
+
+                /* return value size */
+                size += 2; /* FIXME: determine real size */
+                func = PREV_LINK(func);
+            }
         }
     }
     return size;
 }
 
-size_t get_size_typeformatstring(const type_t *iface)
+size_t get_size_typeformatstring(const ifref_t *ifaces)
 {
+    const ifref_t *iface = ifaces;
     size_t size = 3;
     func_t *func;
     var_t *var;
 
-    if (iface->funcs)
-    {
-        func = iface->funcs;
-        while (NEXT_LINK(func)) func = NEXT_LINK(func);
-        while (func)
-        {
-            /* argument list size */
-            if (func->args)
-            {
-                var = func->args;
-                while (NEXT_LINK(var)) var = NEXT_LINK(var);
-                while (var)
-                {
-                    size += get_size_typeformatstring_var(var);
-                    var = PREV_LINK(var);
-                }
-            }
+    END_OF_LIST(iface);
 
-            func = PREV_LINK(func);
+    for (; iface; iface = PREV_LINK(iface))
+    {
+        if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
+            continue;
+
+        if (iface->iface->funcs)
+        {
+            func = iface->iface->funcs;
+            while (NEXT_LINK(func)) func = NEXT_LINK(func);
+            while (func)
+            {
+                /* argument list size */
+                if (func->args)
+                {
+                    var = func->args;
+                    while (NEXT_LINK(var)) var = NEXT_LINK(var);
+                    while (var)
+                    {
+                        size += get_size_typeformatstring_var(var);
+                        var = PREV_LINK(var);
+                    }
+                }
+
+                func = PREV_LINK(func);
+            }
         }
     }
     return size;

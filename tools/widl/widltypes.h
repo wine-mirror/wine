@@ -56,6 +56,14 @@ typedef struct _typelib_t typelib_t;
 #define NEXT_LINK(x) ((x)->l_next)
 #define PREV_LINK(x) ((x)->l_prev)
 
+#define END_OF_LIST(list)       \
+  do {                          \
+    if (list) {                 \
+      while (NEXT_LINK(list))   \
+        list = NEXT_LINK(list); \
+    }                           \
+  } while(0)
+
 enum attr_type
 {
     ATTR_AGGREGATABLE,

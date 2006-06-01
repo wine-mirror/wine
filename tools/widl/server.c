@@ -42,14 +42,6 @@
 #include "typelib_struct.h"
 #include "typegen.h"
 
-#define END_OF_LIST(list)       \
-  do {                          \
-    if (list) {                 \
-      while (NEXT_LINK(list))   \
-        list = NEXT_LINK(list); \
-    }                           \
-  } while(0)
-
 static FILE* server;
 static int indent = 0;
 
@@ -189,15 +181,13 @@ static void assign_out_args(const func_t *func)
 }
 
 
-static void write_function_stubs(type_t *iface)
+static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsigned int *type_offset)
 {
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
     const func_t *func = iface->funcs;
     const var_t *var;
     const var_t* explicit_handle_var;
-    unsigned int proc_offset = 0;
-    unsigned int type_offset = 2;
 
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
@@ -289,7 +279,7 @@ static void write_function_stubs(type_t *iface)
             fprintf(server, "\n");
 
             /* make a copy so we don't increment the type offset twice */
-            type_offset_func = type_offset;
+            type_offset_func = *type_offset;
 
             /* unmarshall arguments */
             write_remoting_arguments(server, indent, func, &type_offset_func, PASS_IN, PHASE_UNMARSHAL);
@@ -377,7 +367,7 @@ static void write_function_stubs(type_t *iface)
             fprintf(server, "\n");
             print_server("_StubMsg.BufferLength = %u;\n", buffer_size);
 
-            type_offset_func = type_offset;
+            type_offset_func = *type_offset;
             write_remoting_arguments(server, indent, func, &type_offset_func, PASS_OUT, PHASE_BUFFERSIZE);
 
             print_server("_pRpcMessage->BufferLength = _StubMsg.BufferLength;\n");
@@ -392,10 +382,10 @@ static void write_function_stubs(type_t *iface)
             fprintf(server, "\n");
         }
 
-        type_offset_func = type_offset;
+        type_offset_func = *type_offset;
 
         /* marshall arguments */
-        write_remoting_arguments(server, indent, func, &type_offset, PASS_OUT, PHASE_MARSHAL);
+        write_remoting_arguments(server, indent, func, type_offset, PASS_OUT, PHASE_MARSHAL);
 
         /* marshall the return value */
         if (!is_void(def->type, NULL))
@@ -570,13 +560,13 @@ static void write_formatdesc( const char *str )
 }
 
 
-static void write_formatstringsdecl(type_t *iface)
+static void write_formatstringsdecl(ifref_t *ifaces)
 {
     print_server("#define TYPE_FORMAT_STRING_SIZE %d\n",
-                 get_size_typeformatstring(iface));
+                 get_size_typeformatstring(ifaces));
 
     print_server("#define PROC_FORMAT_STRING_SIZE %d\n",
-                 get_size_procformatstring(iface));
+                 get_size_procformatstring(ifaces));
 
     fprintf(server, "\n");
     write_formatdesc("TYPE");
@@ -605,6 +595,8 @@ static void init_server(void)
 
 void write_server(ifref_t *ifaces)
 {
+    unsigned int proc_offset = 0;
+    unsigned int type_offset = 2;
     ifref_t *iface = ifaces;
 
     if (!do_server)
@@ -616,6 +608,8 @@ void write_server(ifref_t *ifaces)
     init_server();
     if (!server)
         return;
+
+    write_formatstringsdecl(ifaces);
 
     for (; iface; iface = PREV_LINK(iface))
     {
@@ -631,19 +625,14 @@ void write_server(ifref_t *ifaces)
         {
             int expr_eval_routines;
 
-            write_formatstringsdecl(iface->iface);
             write_serverinterfacedecl(iface->iface);
             write_stubdescdecl(iface->iface);
     
-            write_function_stubs(iface->iface);
+            write_function_stubs(iface->iface, &proc_offset, &type_offset);
     
             print_server("#if !defined(__RPC_WIN32__)\n");
             print_server("#error  Invalid build platform for this stub.\n");
             print_server("#endif\n");
-            fprintf(server, "\n");
-
-            write_procformatstring(server, iface->iface);
-            write_typeformatstring(server, iface->iface);
 
             fprintf(server, "\n");
 
@@ -655,6 +644,11 @@ void write_server(ifref_t *ifaces)
             write_dispatchtable(iface->iface);
         }
     }
+
+    fprintf(server, "\n");
+
+    write_procformatstring(server, ifaces);
+    write_typeformatstring(server, ifaces);
 
     fclose(server);
 }

@@ -41,14 +41,6 @@
 #include "typelib_struct.h"
 #include "typegen.h"
 
-#define END_OF_LIST(list)       \
-  do {                          \
-    if (list) {                 \
-      while (NEXT_LINK(list))   \
-        list = NEXT_LINK(list); \
-    }                           \
-  } while(0)
-
 static FILE* client;
 static int indent = 0;
 
@@ -120,15 +112,13 @@ static void check_pointers(const func_t *func)
     }
 }
 
-static void write_function_stubs(type_t *iface)
+static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsigned int *type_offset)
 {
     const func_t *func = iface->funcs;
     const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
     var_t *var;
     int method_count = 0;
-    unsigned int proc_offset = 0;
-    unsigned int type_offset = 2;
 
     while (NEXT_LINK(func)) func = NEXT_LINK(func);
     while (func)
@@ -219,7 +209,7 @@ static void write_function_stubs(type_t *iface)
         print_message_buffer_size(func);
         fprintf(client, ";\n");
 
-        type_offset_func = type_offset;
+        type_offset_func = *type_offset;
         write_remoting_arguments(client, indent, func, &type_offset_func, PASS_IN, PHASE_BUFFERSIZE);
 
         print_client("NdrGetBuffer(\n");
@@ -235,7 +225,7 @@ static void write_function_stubs(type_t *iface)
 
 
         /* make a copy so we don't increment the type offset twice */
-        type_offset_func = type_offset;
+        type_offset_func = *type_offset;
 
         /* marshal arguments */
         write_remoting_arguments(client, indent, func, &type_offset_func, PASS_IN, PHASE_MARSHAL);
@@ -262,13 +252,13 @@ static void write_function_stubs(type_t *iface)
             print_client("NdrConvert(\n");
             indent++;
             print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
-            print_client("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", proc_offset);
+            print_client("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", *proc_offset);
             indent -= 2;
         }
 
         /* unmarshall arguments */
         fprintf(client, "\n");
-        write_remoting_arguments(client, indent, func, &type_offset, PASS_OUT, PHASE_UNMARSHAL);
+        write_remoting_arguments(client, indent, func, type_offset, PASS_OUT, PHASE_UNMARSHAL);
 
         /* unmarshal return value */
         if (!is_void(def->type, NULL))
@@ -425,13 +415,13 @@ static void write_formatdesc( const char *str )
 }
 
 
-static void write_formatstringsdecl(type_t *iface)
+static void write_formatstringsdecl(ifref_t *ifaces)
 {
     print_client("#define TYPE_FORMAT_STRING_SIZE %d\n",
-                 get_size_typeformatstring(iface));
+                 get_size_typeformatstring(ifaces));
 
     print_client("#define PROC_FORMAT_STRING_SIZE %d\n",
-                 get_size_procformatstring(iface));
+                 get_size_procformatstring(ifaces));
 
     fprintf(client, "\n");
     write_formatdesc("TYPE");
@@ -474,6 +464,8 @@ static void init_client(void)
 
 void write_client(ifref_t *ifaces)
 {
+    unsigned int proc_offset = 0;
+    unsigned int type_offset = 2;
     ifref_t *iface = ifaces;
 
     if (!do_client)
@@ -485,6 +477,8 @@ void write_client(ifref_t *ifaces)
     init_client();
     if (!client)
         return;
+
+    write_formatstringsdecl(ifaces);
 
     for (; iface; iface = PREV_LINK(iface))
     {
@@ -500,22 +494,17 @@ void write_client(ifref_t *ifaces)
         {
             int expr_eval_routines;
 
-            write_formatstringsdecl(iface->iface);
             write_implicithandledecl(iface->iface);
     
             write_clientinterfacedecl(iface->iface);
             write_stubdescdecl(iface->iface);
             write_bindinghandledecl(iface->iface);
     
-            write_function_stubs(iface->iface);
+            write_function_stubs(iface->iface, &proc_offset, &type_offset);
 
             print_client("#if !defined(__RPC_WIN32__)\n");
             print_client("#error  Invalid build platform for this stub.\n");
             print_client("#endif\n");
-            fprintf(client, "\n");
-
-            write_procformatstring(client, iface->iface);
-            write_typeformatstring(client, iface->iface);
 
             fprintf(client, "\n");
 
@@ -525,6 +514,11 @@ void write_client(ifref_t *ifaces)
             write_stubdescriptor(iface->iface, expr_eval_routines);
         }
     }
+
+    fprintf(client, "\n");
+
+    write_procformatstring(client, ifaces);
+    write_typeformatstring(client, ifaces);
 
     fclose(client);
 }
