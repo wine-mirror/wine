@@ -527,8 +527,8 @@
 @ stub SimpleTypeBufferSize # wxp
 @ stub SimpleTypeMemorySize # wxp
 @ stub StartServiceIfNecessary # win9x
-@ stub TowerConstruct
-@ stub TowerExplode
+@ stdcall TowerConstruct(ptr ptr ptr ptr ptr ptr)
+@ stdcall TowerExplode(ptr ptr ptr ptr ptr ptr)
 @ stdcall UuidCompare(ptr ptr ptr)
 @ stdcall UuidCreate(ptr)
 @ stdcall UuidCreateNil(ptr)

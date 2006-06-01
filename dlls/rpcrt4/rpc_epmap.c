@@ -36,6 +36,7 @@
 #include "wine/debug.h"
 
 #include "rpc_binding.h"
+#include "epm_towers.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -244,4 +245,132 @@ RPC_STATUS WINAPI RpcEpResolveBinding( RPC_BINDING_HANDLE Binding, RPC_IF_HANDLE
   
   /* otherwise we fully bind the handle & return RPC_S_OK */
   return RPCRT4_ResolveBinding(Binding, reply.as_string);
+}
+
+typedef unsigned int unsigned32;
+typedef struct twr_t
+    {
+    unsigned32 tower_length;
+    /* [size_is] */ byte tower_octet_string[ 1 ];
+    } 	twr_t;
+
+RPC_STATUS WINAPI TowerExplode(
+    const twr_t *tower, RPC_SYNTAX_IDENTIFIER *object, RPC_SYNTAX_IDENTIFIER *syntax,
+    char **protseq, char **endpoint, char **address)
+{
+    size_t tower_size;
+    RPC_STATUS status;
+    const unsigned char *p;
+    u_int16 floor_count;
+    const twr_uuid_floor_t *object_floor;
+    const twr_uuid_floor_t *syntax_floor;
+
+    *protseq = NULL;
+    *endpoint = NULL;
+    *address = NULL;
+
+    tower_size = tower->tower_length;
+
+    if (tower_size < sizeof(u_int16))
+        return EPT_S_NOT_REGISTERED;
+
+    p = &tower->tower_octet_string[0];
+
+    floor_count = *(const u_int16 *)p;
+    p += sizeof(u_int16);
+    tower_size -= sizeof(u_int16);
+    TRACE("floor_count: %d\n", floor_count);
+    /* FIXME: should we do something with the floor count? at the moment we don't */
+
+    if (tower_size < sizeof(*object_floor) + sizeof(*syntax_floor))
+        return EPT_S_NOT_REGISTERED;
+
+    object_floor = (const twr_uuid_floor_t *)p;
+    p += sizeof(*object_floor);
+    tower_size -= sizeof(*object_floor);
+    syntax_floor = (const twr_uuid_floor_t *)p;
+    p += sizeof(*syntax_floor);
+    tower_size -= sizeof(*syntax_floor);
+
+    if ((object_floor->count_lhs != sizeof(object_floor->protid) +
+        sizeof(object_floor->uuid) + sizeof(object_floor->major_version)) ||
+        (object_floor->protid != EPM_PROTOCOL_UUID) ||
+        (object_floor->count_rhs != sizeof(object_floor->minor_version)))
+        return EPT_S_NOT_REGISTERED;
+
+    if ((syntax_floor->count_lhs != sizeof(syntax_floor->protid) +
+        sizeof(syntax_floor->uuid) + sizeof(syntax_floor->major_version)) ||
+        (syntax_floor->protid != EPM_PROTOCOL_UUID) ||
+        (syntax_floor->count_rhs != sizeof(syntax_floor->minor_version)))
+        return EPT_S_NOT_REGISTERED;
+
+    status = RpcTransport_ParseTopOfTower(p, tower_size, protseq, address, endpoint);
+    if (status == RPC_S_OK)
+    {
+        syntax->SyntaxGUID = syntax_floor->uuid;
+        syntax->SyntaxVersion.MajorVersion = syntax_floor->major_version;
+        syntax->SyntaxVersion.MinorVersion = syntax_floor->minor_version;
+        object->SyntaxGUID = object_floor->uuid;
+        object->SyntaxVersion.MajorVersion = object_floor->major_version;
+        object->SyntaxVersion.MinorVersion = object_floor->minor_version;
+    }
+    return status;
+}
+
+RPC_STATUS WINAPI TowerConstruct(
+    const RPC_SYNTAX_IDENTIFIER *object, const RPC_SYNTAX_IDENTIFIER *syntax,
+    const char *protseq, const char *endpoint, const char *address,
+    twr_t **tower)
+{
+    size_t tower_size;
+    RPC_STATUS status;
+    unsigned char *p;
+    twr_uuid_floor_t *object_floor;
+    twr_uuid_floor_t *syntax_floor;
+
+    *tower = NULL;
+
+    status = RpcTransport_GetTopOfTower(NULL, &tower_size, protseq, address, endpoint);
+
+    if (status != RPC_S_OK)
+        return status;
+
+    tower_size += sizeof(u_int16) + sizeof(*object_floor) + sizeof(*syntax_floor);
+    *tower = I_RpcAllocate(FIELD_OFFSET(twr_t, tower_octet_string[tower_size]));
+    if (!*tower)
+        return RPC_S_OUT_OF_RESOURCES;
+
+    (*tower)->tower_length = tower_size;
+    p = &(*tower)->tower_octet_string[0];
+    *(u_int16 *)p = 5; /* number of floors */
+    p += sizeof(u_int16);
+    object_floor = (twr_uuid_floor_t *)p;
+    p += sizeof(*object_floor);
+    syntax_floor = (twr_uuid_floor_t *)p;
+    p += sizeof(*syntax_floor);
+
+    object_floor->count_lhs = sizeof(object_floor->protid) + sizeof(object_floor->uuid) +
+                              sizeof(object_floor->major_version);
+    object_floor->protid = EPM_PROTOCOL_UUID;
+    object_floor->count_rhs = sizeof(object_floor->minor_version);
+    object_floor->uuid = object->SyntaxGUID;
+    object_floor->major_version = object->SyntaxVersion.MajorVersion;
+    object_floor->minor_version = object->SyntaxVersion.MinorVersion;
+
+    syntax_floor->count_lhs = sizeof(syntax_floor->protid) + sizeof(syntax_floor->uuid) +
+                              sizeof(syntax_floor->major_version);
+    syntax_floor->protid = EPM_PROTOCOL_UUID;
+    syntax_floor->count_rhs = sizeof(syntax_floor->minor_version);
+    syntax_floor->uuid = syntax->SyntaxGUID;
+    syntax_floor->major_version = syntax->SyntaxVersion.MajorVersion;
+    syntax_floor->minor_version = syntax->SyntaxVersion.MinorVersion;
+
+    status = RpcTransport_GetTopOfTower(p, &tower_size, protseq, address, endpoint);
+    if (status != RPC_S_OK)
+    {
+        I_RpcFree(*tower);
+        *tower = NULL;
+        return status;
+    }
+    return RPC_S_OK;
 }

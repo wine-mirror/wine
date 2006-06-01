@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 #include <windef.h>
@@ -28,6 +29,16 @@
 
 #include "rpc.h"
 #include "rpcdce.h"
+
+typedef unsigned int unsigned32;
+typedef struct twr_t
+    {
+    unsigned32 tower_length;
+    /* [size_is] */ byte tower_octet_string[ 1 ];
+    } 	twr_t;
+
+RPC_STATUS WINAPI TowerExplode(const twr_t *tower, RPC_SYNTAX_IDENTIFIER *object, RPC_SYNTAX_IDENTIFIER *syntax, char **protseq, char **endpoint, char **address);
+RPC_STATUS WINAPI TowerConstruct(const RPC_SYNTAX_IDENTIFIER *object, const RPC_SYNTAX_IDENTIFIER *syntax, const char *protseq, const char *endpoint, const char *address, twr_t **tower);
 
 static UUID Uuid_Table[10] = {
   { 0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00} }, /* 0 (null) */
@@ -175,6 +186,88 @@ static void test_rpc_ncacn_ip_tcp(void)
     ok(status == RPC_S_OK, "return wrong\n");
 }
 
+/* this is what's generated with MS/RPC - it includes an extra 2
+ * bytes in the protocol floor */
+static const unsigned char tower_data_tcp_ip1[] =
+{
+    0x05,0x00,0x13,0x00,0x0d,0x00,0xdb,0xf1,
+    0xa4,0x47,0xca,0x67,0x10,0xb3,0x1f,0x00,
+    0xdd,0x01,0x06,0x62,0xda,0x00,0x00,0x02,
+    0x00,0x00,0x00,0x13,0x00,0x0d,0x04,0x5d,
+    0x88,0x8a,0xeb,0x1c,0xc9,0x11,0x9f,0xe8,
+    0x08,0x00,0x2b,0x10,0x48,0x60,0x02,0x00,
+    0x02,0x00,0x00,0x00,0x01,0x00,0x0b,0x02,
+    0x00,0x00,0x00,0x01,0x00,0x07,0x02,0x00,
+    0x00,0x87,0x01,0x00,0x09,0x04,0x00,0x0a,
+    0x00,0x00,0x01,
+};
+/* this is the optimal data that i think should be generated */
+static const unsigned char tower_data_tcp_ip2[] =
+{
+    0x05,0x00,0x13,0x00,0x0d,0x00,0xdb,0xf1,
+    0xa4,0x47,0xca,0x67,0x10,0xb3,0x1f,0x00,
+    0xdd,0x01,0x06,0x62,0xda,0x00,0x00,0x02,
+    0x00,0x00,0x00,0x13,0x00,0x0d,0x04,0x5d,
+    0x88,0x8a,0xeb,0x1c,0xc9,0x11,0x9f,0xe8,
+    0x08,0x00,0x2b,0x10,0x48,0x60,0x02,0x00,
+    0x02,0x00,0x00,0x00,0x01,0x00,0x0b,0x00,
+    0x00,0x01,0x00,0x07,0x02,0x00,0x00,0x87,
+    0x01,0x00,0x09,0x04,0x00,0x0a,0x00,0x00,
+    0x01,
+};
+
+static void test_towers(void)
+{
+    RPC_STATUS ret;
+    twr_t *tower;
+    static const RPC_SYNTAX_IDENTIFIER mapi_if_id = { { 0xa4f1db00, 0xca47, 0x1067, { 0xb3, 0x1f, 0x00, 0xdd, 0x01, 0x06, 0x62, 0xda } }, { 0, 0 } };
+    static const RPC_SYNTAX_IDENTIFIER ndr_syntax = { { 0x8a885d04, 0x1ceb, 0x11c9, { 0x9f, 0xe8, 0x08, 0x00, 0x2b, 0x10, 0x48, 0x60 } }, { 2, 0 } };
+    RPC_SYNTAX_IDENTIFIER object, syntax;
+    char *protseq, *endpoint, *address;
+    BOOL same;
+
+    ret = TowerConstruct(&mapi_if_id, &ndr_syntax, "ncacn_ip_tcp", "135", "10.0.0.1", &tower);
+    ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
+
+    /* first check we have the right amount of data */
+    ok(tower->tower_length == sizeof(tower_data_tcp_ip1) ||
+       tower->tower_length == sizeof(tower_data_tcp_ip2),
+        "Size of tower differs (expected %d or %d, actual %d)\n",
+        sizeof(tower_data_tcp_ip1), sizeof(tower_data_tcp_ip2), tower->tower_length);
+
+    /* then do a byte-by-byte comparison */
+    same = ((tower->tower_length == sizeof(tower_data_tcp_ip1)) &&
+            !memcmp(&tower->tower_octet_string, tower_data_tcp_ip1, sizeof(tower_data_tcp_ip1))) ||
+           ((tower->tower_length == sizeof(tower_data_tcp_ip2)) &&
+            !memcmp(&tower->tower_octet_string, tower_data_tcp_ip2, sizeof(tower_data_tcp_ip2)));
+
+    ok(same, "Tower data differs\n");
+    if (!same)
+    {
+        unsigned32 i;
+        for (i = 0; i < tower->tower_length; i++)
+        {
+            if (i % 8 == 0) printf("    ");
+            printf("0x%02x,", tower->tower_octet_string[i]);
+            if (i % 8 == 7) printf("\n");
+        }
+        printf("\n");
+    }
+
+    ret = TowerExplode(tower, &object, &syntax, &protseq, &endpoint, &address);
+    ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
+    ok(!memcmp(&object, &mapi_if_id, sizeof(mapi_if_id)), "object id didn't match\n");
+    ok(!memcmp(&syntax, &ndr_syntax, sizeof(syntax)), "syntax id didn't match\n");
+    ok(!strcmp(protseq, "ncacn_ip_tcp"), "protseq was \"%s\" instead of \"ncacn_ip_tcp\"\n", protseq);
+    ok(!strcmp(endpoint, "135"), "endpoint was \"%s\" instead of \"135\"\n", endpoint);
+    ok(!strcmp(address, "10.0.0.1"), "address was \"%s\" instead of \"10.0.0.1\"\n", address);
+
+    I_RpcFree(protseq);
+    I_RpcFree(endpoint);
+    I_RpcFree(address);
+    I_RpcFree(tower);
+}
+
 START_TEST( rpc )
 {
     trace ( " ** Uuid Conversion and Comparison Tests **\n" );
@@ -182,4 +275,5 @@ START_TEST( rpc )
     trace ( " ** DceErrorInqText **\n");
     TestDceErrorInqText();
     test_rpc_ncacn_ip_tcp();
+    test_towers();
 }
