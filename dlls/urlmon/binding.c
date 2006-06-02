@@ -38,7 +38,8 @@ typedef struct Binding Binding;
 
 enum task_enum {
     TASK_ON_PROGRESS,
-    TASK_SWITCH
+    TASK_SWITCH,
+    TASK_DATA_AVAILABLE
 };
 
 typedef struct {
@@ -55,6 +56,7 @@ typedef struct _task_t {
     union {
         on_progress_data on_progress;
         PROTOCOLDATA *protocol_data;
+        DWORD bscf;
     } data;
 } task_t;
 
@@ -140,6 +142,46 @@ static task_t *pop_task(Binding *binding)
      return ret;
 }
 
+static void fill_stream_buffer(ProtocolStream *This)
+{
+    DWORD read = 0;
+    HRESULT hres;
+
+    if(sizeof(This->buf) == This->buf_size)
+        return;
+
+    hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
+                                  sizeof(This->buf)-This->buf_size, &read);
+    if(SUCCEEDED(hres)) {
+        This->buf_size += read;
+        This->init_buf = TRUE;
+    }
+}
+
+static void on_data_available(Binding *binding, DWORD bscf)
+{
+    FORMATETC formatetc = {0, NULL, 1, -1, TYMED_ISTREAM};
+
+    if(GetCurrentThreadId() != binding->apartment_thread)
+        FIXME("called from worked hread\n");
+
+    if(binding->continue_call) {
+        task_t *task = HeapAlloc(GetProcessHeap(), 0, sizeof(task_t));
+        task->task = TASK_DATA_AVAILABLE;
+        task->data.bscf = bscf;
+
+        push_task(binding, task);
+
+        return;
+    }
+
+    fill_stream_buffer(binding->stream);
+
+    IBindStatusCallback_OnDataAvailable(binding->callback, bscf, binding->stream->buf_size,
+            &formatetc, &binding->stgmed);
+}
+
+
 static void do_task(Binding *binding, task_t *task)
 {
     switch(task->task) {
@@ -158,6 +200,10 @@ static void do_task(Binding *binding, task_t *task)
         binding->continue_call++;
         IInternetProtocol_Continue(binding->protocol, task->data.protocol_data);
         binding->continue_call--;
+
+        break;
+    case TASK_DATA_AVAILABLE:
+        on_data_available(binding, task->data.bscf);
     }
 }
 
@@ -595,19 +641,6 @@ static ProtocolStream *create_stream(IInternetProtocol *protocol)
     return ret;
 }
 
-static void fill_stream_buffer(ProtocolStream *This)
-{
-    DWORD read = 0;
-    HRESULT hres;
-
-    hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
-                                  sizeof(This->buf)-This->buf_size, &read);
-    if(SUCCEEDED(hres)) {
-        This->buf_size += read;
-        This->init_buf = TRUE;
-    }
-}
-
 static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
 {
     Binding *This = BINDING_THIS(iface);
@@ -819,16 +852,15 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
         DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
 {
     Binding *This = PROTSINK_THIS(iface);
-    FORMATETC formatetc;
 
     TRACE("(%p)->(%ld %lu %lu)\n", This, grfBSCF, ulProgress, ulProgressMax);
-
-    fill_stream_buffer(This->stream);
 
     if(!This->verified_mime) {
         LPWSTR mime;
 
         This->verified_mime = TRUE;
+
+        fill_stream_buffer(This->stream);
 
         /* FIXME: Always call FindMediaFromData (its implementation is not yet ready for this). */
         if(This->mime)
@@ -850,14 +882,7 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
     if(grfBSCF & BSCF_FIRSTDATANOTIFICATION)
         IInternetProtocol_LockRequest(This->protocol, 0);
 
-    formatetc.cfFormat = 0; /* FIXME */
-    formatetc.ptd = NULL;
-    formatetc.dwAspect = 1;
-    formatetc.lindex = -1;
-    formatetc.tymed = TYMED_ISTREAM;
-
-    IBindStatusCallback_OnDataAvailable(This->callback, grfBSCF, This->stream->buf_size,
-            &formatetc, &This->stgmed);
+    on_data_available(This, grfBSCF);
 
     if(grfBSCF & BSCF_LASTDATANOTIFICATION)
         IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
