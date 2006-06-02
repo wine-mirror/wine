@@ -589,7 +589,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             return NS_ERROR_UNEXPECTED;
         }
 
-        if(container->load_call) {
+        if(container->bscallback) {
             nsIWebBrowserChrome_Release(NSWBCHROME(container));
         }else {
             BOOL cont = before_async_open(This, container);

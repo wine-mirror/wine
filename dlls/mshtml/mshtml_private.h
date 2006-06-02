@@ -112,7 +112,7 @@ struct NSContainer {
 
     HWND hwnd;
 
-    BOOL load_call; /* hack */
+    BSCallback *bscallback; /* hack */
 };
 
 struct BSCallback {

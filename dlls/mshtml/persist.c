@@ -154,6 +154,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         IMoniker *pimkName, LPBC pibc, DWORD grfMode)
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
+    BSCallback *bscallback;
     LPOLESTR url;
     HRESULT hres;
     nsresult nsres;
@@ -214,24 +215,27 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
+    bscallback = create_bscallback(This, url);
+
     if(This->nscontainer) {
         nsIInputStream *post_data_stream = get_post_data_stream(pibc);
 
-        This->nscontainer->load_call = TRUE;
+        This->nscontainer->bscallback = bscallback;
         nsres = nsIWebNavigation_LoadURI(This->nscontainer->navigation, url,
                 LOAD_FLAGS_NONE, NULL, post_data_stream, NULL);
-        This->nscontainer->load_call = FALSE;
+        This->nscontainer->bscallback = NULL;
 
         if(post_data_stream)
             nsIInputStream_Release(post_data_stream);
 
         if(NS_SUCCEEDED(nsres)) {
+            IBindStatusCallback_Release(STATUSCLB(bscallback));
             CoTaskMemFree(url);
             return S_OK;
         }else {
             WARN("LoadURI failed: %08lx\n", nsres);
         }
-    }    
+    }
 
     /* FIXME: Use grfMode */
 
@@ -239,6 +243,9 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         FIXME("not supported fFullyAvailable\n");
     if(pibc)
         FIXME("not supported pibc\n");
+
+    IBindStatusCallback_Release(STATUSCLB(bscallback));
+    CoTaskMemFree(url);
 
     return S_OK;
 }

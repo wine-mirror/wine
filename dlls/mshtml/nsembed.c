@@ -1153,7 +1153,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
 
     ret->doc = doc;
     ret->ref = 1;
-    ret->load_call = FALSE;
+    ret->bscallback = NULL;
 
     if(parent)
         nsIWebBrowserChrome_AddRef(NSWBCHROME(parent));
