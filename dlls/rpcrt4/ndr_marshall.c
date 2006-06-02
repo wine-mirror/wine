@@ -4516,6 +4516,7 @@ static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
             if (!che)
                 return ERROR_INVALID_HANDLE;
             list_remove(&che->entry);
+            RpcBindingFree(&che->handle);
             HeapFree(GetProcessHeap(), 0, che);
             che = NULL;
         }
@@ -4527,7 +4528,7 @@ static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
         if (!che)
             return ERROR_NOT_ENOUGH_MEMORY;
         che->magic = NDR_CONTEXT_HANDLE_MAGIC;
-        che->handle = hBinding;
+        RpcBindingCopy(hBinding, &che->handle);
         list_add_tail(&context_handle_list, &che->entry);
         memcpy(&che->wire_data, chi, sizeof *chi);
     }
