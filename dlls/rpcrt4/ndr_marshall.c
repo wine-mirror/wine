@@ -4476,21 +4476,29 @@ void WINAPI NDRCContextMarshall(NDR_CCONTEXT CContext, void *pBuff)
 
     TRACE("%p %p\n", CContext, pBuff);
 
-    EnterCriticalSection(&ndr_context_cs);
-    che = get_context_entry(CContext);
-    memcpy(pBuff, &che->wire_data, sizeof (ndr_context_handle));
-    LeaveCriticalSection(&ndr_context_cs);
+    if (CContext)
+    {
+        EnterCriticalSection(&ndr_context_cs);
+        che = get_context_entry(CContext);
+        memcpy(pBuff, &che->wire_data, sizeof (ndr_context_handle));
+        LeaveCriticalSection(&ndr_context_cs);
+    }
+    else
+    {
+        ndr_context_handle *wire_data = (ndr_context_handle *)pBuff;
+        wire_data->attributes = 0;
+        wire_data->uuid = GUID_NULL;
+    }
 }
 
 static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
                                       RPC_BINDING_HANDLE hBinding,
                                       ndr_context_handle *chi)
 {
-    static const GUID zeroguid = {0,0,0,{0,0,0,0,0,0,0,0}};
     struct context_handle_entry *che = NULL;
 
     /* a null UUID means we should free the context handle */
-    if (IsEqualGUID(&chi->uuid, &zeroguid))
+    if (IsEqualGUID(&chi->uuid, &GUID_NULL))
     {
         che = get_context_entry(*CContext);
         if (!che)
