@@ -125,7 +125,10 @@ static void test_null(void)
   static const WCHAR szServer[] = { 's','e','r','v','e','r',0 };
   static const WCHAR szEmpty[] = { 0 };
   static const WCHAR szUrl[] = { 'h','t','t','p',':','/','/','a','.','b','.','c',0 };
+  static const WCHAR szExpect[] = { 's','e','r','v','e','r',';',' ','s','e','r','v','e','r',0 };
+  WCHAR buffer[0x20];
   BOOL r;
+  DWORD sz;
 
   hi = InternetOpenW(NULL, 0, NULL, NULL, 0);
   ok(hi != NULL, "open failed\n");
@@ -184,6 +187,33 @@ static void test_null(void)
   ok(GetLastError() == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "wrong error\n");
   }
   ok(r == FALSE, "return wrong\n");
+
+  sz = 0;
+  r = InternetGetCookieW(NULL, NULL, NULL, &sz);
+  ok(GetLastError() == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "wrong error\n");
+  ok( r == FALSE, "return wrong\n");
+
+  r = InternetGetCookieW(szServer, NULL, NULL, &sz);
+  todo_wine {
+  ok(GetLastError() == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "wrong error\n");
+  }
+  ok( r == FALSE, "return wrong\n");
+
+  sz = 0;
+  r = InternetGetCookieW(szUrl, szServer, NULL, &sz);
+  ok( r == TRUE, "return wrong\n");
+  todo_wine {
+  ok( sz == 30, "sz wrong\n");
+  }
+
+  sz = 0x20;
+  memset(buffer, 0, sizeof buffer);
+  r = InternetGetCookieW(szUrl, szServer, buffer, &sz);
+  ok( r == TRUE, "return wrong\n");
+  todo_wine {
+  ok( sz == lstrlenW(buffer), "sz wrong\n");
+  ok( !lstrcmpW(szExpect, buffer), "cookie data wrong\n");
+  }
 }
 
 START_TEST(internet)

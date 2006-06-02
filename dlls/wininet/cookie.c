@@ -264,6 +264,12 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     TRACE("(%s, %s, %p, %p)\n", debugstr_w(lpszUrl),debugstr_w(lpszCookieName),
 	  lpCookieData, lpdwSize);
 
+    if (!lpszUrl)
+    {
+        SetLastError(ERROR_INTERNET_UNRECOGNIZED_SCHEME);
+        return FALSE;
+    }
+
     COOKIE_crackUrlSimple(lpszUrl, hostName, sizeof(hostName)/sizeof(hostName[0]), path, sizeof(path)/sizeof(path[0]));
 
     LIST_FOR_EACH(cursor, &domain_list)
