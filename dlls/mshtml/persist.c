@@ -228,7 +228,12 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         if(post_data_stream)
             nsIInputStream_Release(post_data_stream);
 
+        if(!bscallback->nschannel)
+            ERR("bscallback->nschannel == NULL\n");
+
         if(NS_SUCCEEDED(nsres)) {
+            /* FIXME: don't return here (URL Moniker needs to be good enough) */
+
             IBindStatusCallback_Release(STATUSCLB(bscallback));
             CoTaskMemFree(url);
             return S_OK;
@@ -244,10 +249,12 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     if(pibc)
         FIXME("not supported pibc\n");
 
+    hres = start_binding(bscallback, pimkName);
+
     IBindStatusCallback_Release(STATUSCLB(bscallback));
     CoTaskMemFree(url);
 
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI PersistMoniker_Save(IPersistMoniker *iface, IMoniker *pimkName,

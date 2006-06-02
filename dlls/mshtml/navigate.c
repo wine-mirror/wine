@@ -491,3 +491,28 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
     IMoniker_Release(mon);
 
 }
+
+HRESULT start_binding(BSCallback *bscallback, IMoniker *mon)
+{
+    IStream *str = NULL;
+    IBindCtx *bctx;
+    HRESULT hres;
+
+    hres = CreateAsyncBindCtx(0, STATUSCLB(bscallback), NULL, &bctx);
+    if(FAILED(hres)) {
+        WARN("CreateAsyncBindCtx failed: %08lx\n", hres);
+        return hres;
+    }
+
+    hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&str);
+    IBindCtx_Release(bctx);
+    if(FAILED(hres)) {
+        WARN("BindToStorage failed: %08lx\n", hres);
+        return hres;
+    }
+
+    if(str)
+        IStream_Release(str);
+
+    return S_OK;
+}
