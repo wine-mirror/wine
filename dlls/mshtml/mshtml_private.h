@@ -129,6 +129,7 @@ typedef struct {
     nsIInterfaceRequestor *notif_callback;
     nsLoadFlags load_flags;
     nsIURI *original_uri;
+    char *content;
 } nsChannel;
 
 typedef struct {

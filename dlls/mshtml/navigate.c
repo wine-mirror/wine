@@ -268,8 +268,24 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface, 
         ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     BSCallback *This = STATUSCLB_THIS(iface);
+
     TRACE("%p)->(%lu %lu %lu %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
             debugstr_w(szStatusText));
+
+    switch(ulStatusCode) {
+    case BINDSTATUS_MIMETYPEAVAILABLE: {
+        int len;
+
+        if(!This->nschannel)
+            return S_OK;
+        HeapFree(GetProcessHeap(), 0, This->nschannel->content);
+
+        len = WideCharToMultiByte(CP_ACP, 0, szStatusText, -1, NULL, 0, NULL, NULL);
+        This->nschannel->content = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        WideCharToMultiByte(CP_ACP, 0, szStatusText, -1, This->nschannel->content, -1, NULL, NULL);
+    }
+    }
+
     return S_OK;
 }
 

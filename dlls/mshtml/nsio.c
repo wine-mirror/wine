@@ -213,6 +213,7 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIInterfaceRequestor_Release(This->notif_callback);
         if(This->original_uri)
             nsIURI_Release(This->original_uri);
+        HeapFree(GetProcessHeap(), 0, This->content);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -464,6 +465,11 @@ static nsresult NSAPI nsChannel_GetContentType(nsIHttpChannel *iface, nsACString
     nsChannel *This = NSCHANNEL_THIS(iface);
 
     TRACE("(%p)->(%p)\n", This, aContentType);
+
+    if(This->content) {
+        nsACString_Init(aContentType, This->content);
+        return S_OK;
+    }
 
     if(This->channel)
         return nsIChannel_GetContentType(This->channel, aContentType);
@@ -1450,6 +1456,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     ret->load_group = NULL;
     ret->notif_callback = NULL;
     ret->load_flags = 0;
+    ret->content = NULL;
 
     nsIURI_AddRef(aURI);
     ret->original_uri = aURI;
