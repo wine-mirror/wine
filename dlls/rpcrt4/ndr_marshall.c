@@ -1073,7 +1073,7 @@ static unsigned char * EmbeddedPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
-      rep = pStubMsg->MaxCount;
+      rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
       ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
@@ -1145,7 +1145,7 @@ static unsigned char * EmbeddedPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
-      rep = pStubMsg->MaxCount;
+      rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
       ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
@@ -1210,7 +1210,7 @@ static void EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
-      rep = pStubMsg->MaxCount;
+      rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
       ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
@@ -1273,7 +1273,7 @@ static unsigned long EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
-      rep = pStubMsg->MaxCount;
+      rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
       ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
@@ -1333,7 +1333,7 @@ static void EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
       pFormat += 10;
       break;
     case RPC_FC_VARIABLE_REPEAT:
-      rep = pStubMsg->MaxCount;
+      rep = (pFormat[1] == RPC_FC_VARIABLE_OFFSET) ? pStubMsg->ActualCount : pStubMsg->MaxCount;
       stride = *(const WORD*)&pFormat[2];
       ofs = *(const WORD*)&pFormat[4];
       count = *(const WORD*)&pFormat[6];
