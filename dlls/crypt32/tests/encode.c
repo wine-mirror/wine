@@ -602,57 +602,8 @@ static void test_decodeFiletime(DWORD dwEncoding)
     }
 }
 
-struct EncodedName
-{
-    CERT_RDN_ATTR attr;
-    const BYTE *encoded;
-};
-
 static const char commonName[] = "Juan Lang";
 static const char surName[] = "Lang";
-static const char bogusIA5[] = "\x80";
-static const char bogusPrintable[] = "~";
-static const char bogusNumeric[] = "A";
-static const unsigned char bin39[] = {
-    0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,'J','u','a','n',' ','L','a','n','g',0};
-static const unsigned char bin40[] = {
-    0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x16,0x0a,'J','u','a','n',' ','L','a','n','g',0};
-static const unsigned char bin41[] = {
-    0x30,0x10,0x31,0x0e,0x30,0x0c,0x06,0x03,0x55,0x04,0x04,0x16,0x05,'L','a','n','g',0};
-static const unsigned char bin42[] = {
-    0x30,0x12,0x31,0x10,0x30,0x0e,0x06,0x00,0x13,0x0a,'J','u','a','n',' ','L','a','n','g',0};
-static const unsigned char bin43[] = {
-    0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x16,0x02,0x80,0};
-static const unsigned char bin44[] = {
-    0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x13,0x02,0x7e,0};
-static const unsigned char bin45[] = {
-    0x30,0x0d,0x31,0x0b,0x30,0x09,0x06,0x03,0x55,0x04,0x03,0x12,0x02,0x41,0};
-static const struct EncodedName names[] = {
- { { szOID_COMMON_NAME, CERT_RDN_PRINTABLE_STRING,
-   { sizeof(commonName), (BYTE *)commonName } }, bin39 },
- { { szOID_COMMON_NAME, CERT_RDN_IA5_STRING,
-   { sizeof(commonName), (BYTE *)commonName } }, bin40 },
- { { szOID_SUR_NAME, CERT_RDN_IA5_STRING,
-   { sizeof(surName), (BYTE *)surName } }, bin41 },
- { { NULL, CERT_RDN_PRINTABLE_STRING,
-   { sizeof(commonName), (BYTE *)commonName } }, bin42 },
-/* The following test isn't a very good one, because it doesn't encode any
- * Japanese characters.  I'm leaving it out for now.
- { { szOID_COMMON_NAME, CERT_RDN_T61_STRING,
-   { sizeof(commonName), (BYTE *)commonName } },
- "\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x14\x0aJuan Lang" },
- */
- /* The following tests succeed under Windows, but really should fail,
-  * they contain characters that are illegal for the encoding.  I'm
-  * including them to justify my lazy encoding.
-  */
- { { szOID_COMMON_NAME, CERT_RDN_IA5_STRING,
-   { sizeof(bogusIA5), (BYTE *)bogusIA5 } }, bin43 },
- { { szOID_COMMON_NAME, CERT_RDN_PRINTABLE_STRING,
-   { sizeof(bogusPrintable), (BYTE *)bogusPrintable } }, bin44 },
- { { szOID_COMMON_NAME, CERT_RDN_NUMERIC_STRING,
-   { sizeof(bogusNumeric), (BYTE *)bogusNumeric } }, bin45 },
-};
 
 static const BYTE emptySequence[] = { 0x30, 0 };
 static const BYTE emptyRDNs[] = { 0x30, 0x02, 0x31, 0 };
@@ -715,7 +666,7 @@ static void test_encodeName(DWORD dwEncoding)
     CERT_RDN rdn;
     CERT_NAME_INFO info;
     BYTE *buf = NULL;
-    DWORD size = 0, i;
+    DWORD size = 0;
     BOOL ret;
 
     /* Test with NULL pvStructInfo */
@@ -802,22 +753,6 @@ static void test_encodeName(DWORD dwEncoding)
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08lx\n", GetLastError());
-    for (i = 0; i < sizeof(names) / sizeof(names[0]); i++)
-    {
-        rdn.cRDNAttr = 1;
-        rdn.rgRDNAttr = (CERT_RDN_ATTR *)&names[i].attr;
-        ret = CryptEncodeObjectEx(dwEncoding, X509_NAME, &info,
-         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-        ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
-        if (buf)
-        {
-            ok(size == names[i].encoded[1] + 2, "Expected size %d, got %ld\n",
-             names[i].encoded[1] + 2, size);
-            ok(!memcmp(buf, names[i].encoded, names[i].encoded[1] + 2),
-             "Got unexpected encoding\n");
-            LocalFree(buf);
-        }
-    }
     /* Test a more complex name */
     rdn.cRDNAttr = sizeof(rdnAttrs) / sizeof(rdnAttrs[0]);
     rdn.rgRDNAttr = (PCERT_RDN_ATTR)rdnAttrs;
@@ -837,6 +772,20 @@ static void test_encodeName(DWORD dwEncoding)
     }
 }
 
+static void compareNameValues(const CERT_NAME_VALUE *expected,
+ const CERT_NAME_VALUE *got)
+{
+    ok(got->dwValueType == expected->dwValueType,
+     "Expected string type %ld, got %ld\n", expected->dwValueType,
+     got->dwValueType);
+    ok(got->Value.cbData == expected->Value.cbData,
+     "Unexpected data size, got %ld, expected %ld\n", got->Value.cbData,
+     expected->Value.cbData);
+    if (got->Value.cbData && got->Value.pbData)
+        ok(!memcmp(got->Value.pbData, expected->Value.pbData,
+         min(got->Value.cbData, expected->Value.cbData)), "Unexpected value\n");
+}
+
 static void compareRDNAttrs(const CERT_RDN_ATTR *expected,
  const CERT_RDN_ATTR *got)
 {
@@ -851,15 +800,8 @@ static void compareRDNAttrs(const CERT_RDN_ATTR *expected,
              expected->pszObjId);
         }
     }
-    ok(got->dwValueType == expected->dwValueType,
-     "Expected string type %ld, got %ld\n", expected->dwValueType,
-     got->dwValueType);
-    ok(got->Value.cbData == expected->Value.cbData,
-     "Unexpected data size, got %ld, expected %ld\n", got->Value.cbData,
-     expected->Value.cbData);
-    if (got->Value.cbData && got->Value.pbData)
-        ok(!memcmp(got->Value.pbData, expected->Value.pbData,
-         min(got->Value.cbData, expected->Value.cbData)), "Unexpected value\n");
+    compareNameValues((const CERT_NAME_VALUE *)&expected->dwValueType,
+     (const CERT_NAME_VALUE *)&got->dwValueType);
 }
 
 static void compareRDNs(const CERT_RDN *expected, const CERT_RDN *got)
@@ -891,34 +833,12 @@ static void compareNames(const CERT_NAME_INFO *expected,
 
 static void test_decodeName(DWORD dwEncoding)
 {
-    int i;
     BYTE *buf = NULL;
     DWORD bufSize = 0;
     BOOL ret;
     CERT_RDN rdn;
     CERT_NAME_INFO info = { 1, &rdn };
 
-    for (i = 0; i < sizeof(names) / sizeof(names[0]); i++)
-    {
-        /* When the output buffer is NULL, this always succeeds */
-        SetLastError(0xdeadbeef);
-        ret = CryptDecodeObjectEx(dwEncoding, X509_NAME, names[i].encoded,
-         names[i].encoded[1] + 2, 0, NULL, NULL, &bufSize);
-        ok(ret && GetLastError() == NOERROR,
-         "Expected success and NOERROR, got %08lx\n", GetLastError());
-        ret = CryptDecodeObjectEx(dwEncoding, X509_NAME, names[i].encoded,
-         names[i].encoded[1] + 2,
-         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_SHARE_OID_STRING_FLAG, NULL,
-         (BYTE *)&buf, &bufSize);
-        ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
-        rdn.cRDNAttr = 1;
-        rdn.rgRDNAttr = (CERT_RDN_ATTR *)&names[i].attr;
-        if (buf)
-        {
-            compareNames(&info, (CERT_NAME_INFO *)buf);
-            LocalFree(buf);
-        }
-    }
     /* test empty name */
     bufSize = 0;
     ret = CryptDecodeObjectEx(dwEncoding, X509_NAME, emptySequence,
@@ -987,6 +907,90 @@ static void test_decodeName(DWORD dwEncoding)
         rdn.rgRDNAttr = (PCERT_RDN_ATTR)decodedRdnAttrs;
         compareNames(&info, (CERT_NAME_INFO *)buf);
         LocalFree(buf);
+    }
+}
+
+struct EncodedNameValue
+{
+    CERT_NAME_VALUE value;
+    const BYTE *encoded;
+};
+
+static const char bogusIA5[] = "\x80";
+static const char bogusPrintable[] = "~";
+static const char bogusNumeric[] = "A";
+static const char bogusT61[] = "\xff";
+static const BYTE bin39[] = { 0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,
+ 0x67,0x00 };
+static const BYTE bin40[] = { 0x16,0x05,0x4c,0x61,0x6e,0x67,0x00 };
+static const BYTE bin41[] = { 0x14,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,
+ 0x67,0x00 };
+static const BYTE bin42[] = { 0x16,0x02,0x80,0x00 };
+static const BYTE bin43[] = { 0x13,0x02,0x7e,0x00 };
+static const BYTE bin44[] = { 0x12,0x02,0x41,0x00 };
+static const BYTE bin45[] = { 0x14,0x02,0xff,0x00 };
+
+struct EncodedNameValue nameValues[] = {
+ { { CERT_RDN_PRINTABLE_STRING, { sizeof(commonName), (BYTE *)commonName } },
+     bin39 },
+ { { CERT_RDN_IA5_STRING, { sizeof(surName), (BYTE *)surName } }, bin40 },
+ { { CERT_RDN_T61_STRING, { sizeof(commonName), (BYTE *)commonName } }, bin41 },
+ /* The following tests succeed under Windows, but really should fail,
+  * they contain characters that are illegal for the encoding.  I'm
+  * including them to justify my lazy encoding.
+  */
+ { { CERT_RDN_IA5_STRING, { sizeof(bogusIA5), (BYTE *)bogusIA5 } }, bin42 },
+ { { CERT_RDN_PRINTABLE_STRING, { sizeof(bogusPrintable),
+     (BYTE *)bogusPrintable } }, bin43 },
+ { { CERT_RDN_NUMERIC_STRING, { sizeof(bogusNumeric), (BYTE *)bogusNumeric } },
+     bin44 },
+ { { CERT_RDN_T61_STRING, { sizeof(bogusT61), (BYTE *)bogusT61 } }, bin45 },
+};
+
+
+static void test_encodeNameValue(DWORD dwEncoding)
+{
+    BYTE *buf = NULL;
+    DWORD size = 0, i;
+    BOOL ret;
+
+    for (i = 0; i < sizeof(nameValues) / sizeof(nameValues[0]); i++)
+    {
+        ret = CryptEncodeObjectEx(dwEncoding, X509_NAME_VALUE,
+         &nameValues[i].value, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+         &size);
+        ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            ok(size == nameValues[i].encoded[1] + 2,
+             "Expected size %d, got %ld\n", nameValues[i].encoded[1] + 2, size);
+            ok(!memcmp(buf, nameValues[i].encoded, size),
+             "Got unexpected encoding\n");
+            LocalFree(buf);
+        }
+    }
+}
+
+static void test_decodeNameValue(DWORD dwEncoding)
+{
+    int i;
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
+    BOOL ret;
+
+    for (i = 0; i < sizeof(nameValues) / sizeof(nameValues[0]); i++)
+    {
+        ret = CryptDecodeObjectEx(dwEncoding, X509_NAME_VALUE,
+         nameValues[i].encoded, nameValues[i].encoded[1] + 2,
+         CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_SHARE_OID_STRING_FLAG, NULL,
+         (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            compareNameValues(&nameValues[i].value,
+             (const CERT_NAME_VALUE *)buf);
+            LocalFree(buf);
+        }
     }
 }
 
@@ -1495,6 +1499,8 @@ static void test_encodeBasicConstraints(DWORD dwEncoding)
 }
 
 static const unsigned char bin63[] = { 0x30,0x06,0x01,0x01,0x01,0x02,0x01,0x01 };
+static const unsigned char encodedCommonName[] = {
+    0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,'J','u','a','n',' ','L','a','n','g',0};
 
 static void test_decodeBasicConstraints(DWORD dwEncoding)
 {
@@ -1547,8 +1553,8 @@ static void test_decodeBasicConstraints(DWORD dwEncoding)
     }
     /* Check with a non-basic constraints value */
     ret = CryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
-     names[0].encoded, names[0].encoded[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
-     (BYTE *)&buf, &bufSize);
+     (LPBYTE)encodedCommonName, encodedCommonName[1] + 2,
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
      "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
     /* Now check with the more complex CERT_BASIC_CONSTRAINTS_INFO */
@@ -2164,10 +2170,6 @@ static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
  0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
  0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
 
-/* This is the encoded form of the printable string "Juan Lang" */
-static const BYTE encodedCommonName[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11,
- 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c,
- 0x61, 0x6e, 0x67, 0x00 };
 static const BYTE serialNum[] = { 0x01 };
 
 static void test_encodeCertToBeSigned(DWORD dwEncoding)
@@ -3202,6 +3204,10 @@ START_TEST(encode)
         test_decodeFiletime(encodings[i]);
         test_encodeName(encodings[i]);
         test_decodeName(encodings[i]);
+        todo_wine {
+        test_encodeNameValue(encodings[i]);
+        test_decodeNameValue(encodings[i]);
+        }
         test_encodeAltName(encodings[i]);
         test_decodeAltName(encodings[i]);
         test_encodeOctets(encodings[i]);
