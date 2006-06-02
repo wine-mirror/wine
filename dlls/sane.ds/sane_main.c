@@ -51,7 +51,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	}
         case DLL_PROCESS_DETACH:
 #ifdef HAVE_SANE
-		FIXME("calling sane_Exit()\n");
+            TRACE("calling sane_exit()\n");
 	    sane_exit ();
 #endif 
 	    SANE_instance = NULL;
