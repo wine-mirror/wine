@@ -2275,7 +2275,7 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
         return NULL;
     }
 
-    pFormat = ReadConformance(pStubMsg, pFormat);
+    pFormat = ReadConformance(pStubMsg, pFormat+4);
     pFormat = ReadVariance(pStubMsg, pFormat);
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
