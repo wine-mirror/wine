@@ -136,11 +136,11 @@ static void test_enum_value(void)
     ok( val_count == 2 || val_count == 3, "val_count set to %ld\n", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
     ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
-#if 0
-    /* v5.1.2600.0 (XP Home) does not touch value or data in this case */
-    ok( !strcmp( value, "Te" ), "value set to '%s' instead of 'Te'\n", value );
-    ok( !strcmp( data, "foobar" ), "data set to '%s' instead of 'foobar'\n", data );
-#endif
+    /* v5.1.2600.0 (XP Home and Proffesional) does not touch value or data in this case */
+    ok( !strcmp( value, "Te" ) || !strcmp( value, "xxxxxxxxxx" ), 
+        "value set to '%s' instead of 'Te' or 'xxxxxxxxxx'\n", value );
+    ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ), 
+        "data set to '%s' instead of 'foobar' or 'xxxxxxx'\n", data );
 
     /* overflow empty name */
     val_count = 0;
@@ -154,10 +154,9 @@ static void test_enum_value(void)
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
     ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
     ok( !strcmp( value, "xxxxxxxxxx" ), "value set to '%s'\n", value );
-#if 0
-    /* v5.1.2600.0 (XP Home) does not touch data in this case */
-    ok( !strcmp( data, "foobar" ), "data set to '%s' instead of 'foobar'\n", data );
-#endif
+    /* v5.1.2600.0 (XP Home and Professional) does not touch data in this case */
+    ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ), 
+        "data set to '%s' instead of 'foobar' or 'xxxxxxx'\n", data );
 
     /* overflow data */
     val_count = 20;
@@ -379,10 +378,9 @@ static void test_get_value(void)
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-#if 0
-     /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded length + 1 here. */
-     ok(size == strlen(expanded)+1, "strlen(expanded)=%ld size=%ld\n", strlen(expanded), size);
-#endif
+    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath1 length + 1 here. */
+    ok((size == strlen(expanded)+1) || (size == strlen(sTestpath1)+1), 
+        "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%ld\n", strlen(expanded), strlen(sTestpath1), size);
     ok(type == REG_SZ, "type=%ld\n", type);
     ok(!strcmp(expanded, buf), "expanded=\"%s\" buf=\"%s\"\n", expanded, buf);
     
