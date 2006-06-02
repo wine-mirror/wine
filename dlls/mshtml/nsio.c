@@ -143,40 +143,24 @@ static BOOL handle_uri(NSContainer *container, nsChannel *channel, LPCWSTR uri)
     return TRUE;
 }
 
-static BOOL before_async_open(nsChannel *This)
+static BOOL before_async_open(nsChannel *channel, NSContainer *container)
 {
     nsACString uri_str;
-    NSContainer *container;
     const char *uria;
     LPWSTR uri;
     DWORD len;
     BOOL ret;
 
-    if(!(This->load_flags & LOAD_INITIAL_DOCUMENT_URI))
-        return TRUE;
-
-    nsIWineURI_GetNSContainer(This->uri, &container);
-    if(!container) {
-        WARN("container = NULL\n");
-        return TRUE;
-    }
-
-    if(container->load_call) {
-        nsIWebBrowserChrome_Release(NSWBCHROME(container));
-        return TRUE;
-    }
-
     nsACString_Init(&uri_str, NULL);
-    nsIWineURI_GetSpec(This->uri, &uri_str);
+    nsIWineURI_GetSpec(channel->uri, &uri_str);
     nsACString_GetData(&uri_str, &uria, NULL);
     len = MultiByteToWideChar(CP_ACP, 0, uria, -1, NULL, 0);
     uri = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, uria, -1, uri, len);
     nsACString_Finish(&uri_str);
 
-    ret = handle_uri(container, This, uri);
+    ret = handle_uri(container, channel, uri);
 
-    nsIWebBrowserChrome_Release(NSWBCHROME(container));
     HeapFree(GetProcessHeap(), 0, uri);
 
     return ret;
@@ -596,9 +580,26 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
 
-    if(!before_async_open(This)) {
-        TRACE("canceled\n");
-        return NS_ERROR_UNEXPECTED;
+    if(This->load_flags & LOAD_INITIAL_DOCUMENT_URI) {
+        NSContainer *container;
+
+        nsIWineURI_GetNSContainer(This->uri, &container);
+        if(!container) {
+            ERR("container = NULL\n");
+            return NS_ERROR_UNEXPECTED;
+        }
+
+        if(container->load_call) {
+            nsIWebBrowserChrome_Release(NSWBCHROME(container));
+        }else {
+            BOOL cont = before_async_open(This, container);
+            nsIWebBrowserChrome_Release(NSWBCHROME(container));
+
+            if(!cont) {
+                TRACE("canceled\n");
+                return NS_ERROR_UNEXPECTED;
+            }
+        }
     }
 
     if(!This->channel) {
