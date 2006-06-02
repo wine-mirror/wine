@@ -3687,9 +3687,10 @@ HRESULT WINAPI DllRegisterServer(void)
                     'K','e','y',' ','E','x','c','h','a','n','g','e',')',0 },
                   { 'R','S','A',' ','S','C','h','a','n','n','e','l',0 } };
 
-                RegSetValueExW(key, szName, 0, REG_SZ, (LPBYTE)szRSAName[i], sizeof(szRSAName));
+                RegSetValueExW(key, szName, 0, REG_SZ, 
+                                (LPBYTE)szRSAName[i], lstrlenW(szRSAName[i])*sizeof(WCHAR)+sizeof(WCHAR));
                 RegSetValueExW(key, szTypeName, 0, REG_SZ, 
-                                (LPBYTE)szRSATypeName[i],sizeof(szRSATypeName));
+                                (LPBYTE)szRSATypeName[i], lstrlenW(szRSATypeName[i])*sizeof(WCHAR)+sizeof(WCHAR));
             }
         }
         RegCloseKey(key);
