@@ -864,10 +864,12 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
     if ((protocol_floor->count_lhs != sizeof(protocol_floor->protid)) ||
         (protocol_floor->count_rhs > tower_size))
         return EPT_S_NOT_REGISTERED;
+    tower_data += protocol_floor->count_rhs;
+    tower_size -= protocol_floor->count_rhs;
 
     floor4 = (twr_empty_floor_t *)tower_data;
     if ((tower_size < sizeof(*floor4)) ||
-        (floor4->count_lhs != sizeof(protocol_floor->protid)))
+        (floor4->count_lhs != sizeof(floor4->protid)))
         return EPT_S_NOT_REGISTERED;
 
     for(i = 0; i < MAX_PROTSEQ; i++)
