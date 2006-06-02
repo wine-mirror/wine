@@ -41,22 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define STATUSCLB_THIS(iface) DEFINE_THIS(BSCallback, BindStatusCallback, iface)
 
-typedef struct {
-    const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
-    const IServiceProviderVtbl    *lpServiceProviderVtbl;
-    const IHttpNegotiate2Vtbl     *lpHttpNegotiate2Vtbl;
-    const IInternetBindInfoVtbl   *lpInternetBindInfoVtbl;
-
-    LONG ref;
-
-    LPWSTR headers;
-    HGLOBAL post_data;
-    ULONG post_data_len;
-} BSCallback;
-
-#define HTTPNEG(x)   ((IHttpNegotiate2*)    &(x)->lpHttpNegotiate2Vtbl)
-#define BINDINFO(x)  ((IInternetBindInfo*)  &(x)->lpInternetBindInfoVtbl);
-
 static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *iface,
         REFIID riid, void **ppv)
 {
@@ -375,8 +359,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     BSCServiceProvider_QueryService
 };
 
-static IBindStatusCallback *BSCallback_Create(HTMLDocument *doc, LPCOLESTR url,
-        HGLOBAL post_data, ULONG post_data_len, LPWSTR headers)
+BSCallback *create_bscallback(HTMLDocument *doc, LPCOLESTR url)
 {
     BSCallback *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(BSCallback));
 
@@ -385,11 +368,11 @@ static IBindStatusCallback *BSCallback_Create(HTMLDocument *doc, LPCOLESTR url,
     ret->lpHttpNegotiate2Vtbl     = &HttpNegotiate2Vtbl;
     ret->lpInternetBindInfoVtbl   = &InternetBindInfoVtbl;
     ret->ref = 1;
-    ret->post_data = post_data;
-    ret->headers = headers;
-    ret->post_data_len = post_data_len;
+    ret->post_data = NULL;
+    ret->headers = NULL;
+    ret->post_data_len = 0;
 
-    return STATUSCLB(ret);
+    return ret;
 }
 
 static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_ret,
@@ -466,22 +449,21 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
 void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
                           LPCWSTR uri, nsIInputStream *post_data_stream, DWORD hlnf)
 {
-    IBindStatusCallback *callback;
+    BSCallback *callback;
     IBindCtx *bindctx;
     IMoniker *mon;
     IHlink *hlink;
-    PRUint32 post_data_len = 0;
-    HGLOBAL post_data = NULL;
-    LPWSTR headers = NULL;
+
+    callback = create_bscallback(doc, uri);
 
     if(post_data_stream) {
-        parse_post_data(post_data_stream, &headers, &post_data, &post_data_len);
-        TRACE("headers = %s post_data = %s\n", debugstr_w(headers),
-              debugstr_an(post_data, post_data_len));
+        parse_post_data(post_data_stream, &callback->headers, &callback->post_data,
+                        &callback->post_data_len);
+        TRACE("headers = %s post_data = %s\n", debugstr_w(callback->headers),
+              debugstr_an(callback->post_data, callback->post_data_len));
     }
 
-    callback = BSCallback_Create(doc, uri, post_data, post_data_len, headers);
-    CreateAsyncBindCtx(0, callback, NULL, &bindctx);
+    CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &bindctx);
 
     hlink = Hlink_Create();
 
@@ -493,10 +475,10 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
         IHlink_SetTargetFrameName(hlink, wszBlank); /* FIXME */
     }
 
-    IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, callback, hlink);
+    IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(callback), hlink);
 
     IBindCtx_Release(bindctx);
-    IBindStatusCallback_Release(callback);
+    IBindStatusCallback_Release(STATUSCLB(callback));
     IMoniker_Release(mon);
 
 }

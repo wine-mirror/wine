@@ -45,6 +45,7 @@
 
 typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
+typedef struct BSCallback BSCallback;
 
 typedef struct {
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
@@ -112,6 +113,19 @@ struct NSContainer {
     HWND hwnd;
 
     BOOL load_call; /* hack */
+};
+
+struct BSCallback {
+    const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
+    const IServiceProviderVtbl    *lpServiceProviderVtbl;
+    const IHttpNegotiate2Vtbl     *lpHttpNegotiate2Vtbl;
+    const IInternetBindInfoVtbl   *lpInternetBindInfoVtbl;
+
+    LONG ref;
+
+    LPWSTR headers;
+    HGLOBAL post_data;
+    ULONG post_data_len;
 };
 
 struct HTMLDOMNode {
@@ -185,6 +199,10 @@ typedef struct {
 #define NSWEAKREF(x)     ((nsIWeakReference*)             &(x)->lpWeakReferenceVtbl)
 #define NSSUPWEAKREF(x)  ((nsISupportsWeakReference*)     &(x)->lpSupportsWeakReferenceVtbl)
 
+#define HTTPNEG(x)       ((IHttpNegotiate2*)              &(x)->lpHttpNegotiate2Vtbl)
+#define BINDINFO(x)      ((IInternetBindInfo*)            &(x)->lpInternetBindInfoVtbl);
+
+
 #define HTMLELEM(x)      ((IHTMLElement*)                 &(x)->lpHTMLElementVtbl)
 #define HTMLELEM2(x)     ((IHTMLElement2*)                &(x)->lpHTMLElement2Vtbl)
 #define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)
@@ -235,6 +253,7 @@ PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**,PRBool*);
 void nsAString_Finish(nsAString*);
 
 nsIInputStream *create_nsstream(const char*,PRInt32);
+BSCallback *create_bscallback(HTMLDocument*,LPCOLESTR);
 
 IHlink *Hlink_Create(void);
 
