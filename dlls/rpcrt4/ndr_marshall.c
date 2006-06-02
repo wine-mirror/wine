@@ -4504,12 +4504,15 @@ static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
     /* a null UUID means we should free the context handle */
     if (IsEqualGUID(&chi->uuid, &GUID_NULL))
     {
-        che = get_context_entry(*CContext);
-        if (!che)
-            return ERROR_INVALID_HANDLE;
-        list_remove(&che->entry);
-        HeapFree(GetProcessHeap(), 0, che);
-        che = NULL;
+        if (*CContext)
+        {
+            che = get_context_entry(*CContext);
+            if (!che)
+                return ERROR_INVALID_HANDLE;
+            list_remove(&che->entry);
+            HeapFree(GetProcessHeap(), 0, che);
+            che = NULL;
+        }
     }
     /* if there's no existing entry matching the GUID, allocate one */
     else if (!(che = context_entry_from_guid(&chi->uuid)))
