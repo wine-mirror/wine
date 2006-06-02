@@ -156,19 +156,6 @@ static void SHELL32_FreeUnicodeBuf(LPWSTR wPath)
  * Asks for confirmation when bShowUI is true and deletes the directory and
  * all its subdirectories and files if necessary.
  */
-BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
-{
-	LPWSTR wPath;
-	BOOL ret = FALSE;
-
-	if (!SHELL32_AnsiToUnicodeBuf(pszDir, &wPath, 0))
-	{
-	  ret = SHELL_DeleteDirectoryW(wPath, bShowUI);
-	  SHELL32_FreeUnicodeBuf(wPath);
-	}
-	return ret;
-}
-
 BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
 {
 	BOOL    ret = TRUE;
@@ -205,16 +192,8 @@ BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
 }
 
 /**************************************************************************
- *  SHELL_DeleteFileA()      [internal]
+ *  SHELL_DeleteFileW()      [internal]
  */
-BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI)
-{
-	if (bShowUI && !SHELL_ConfirmDialog(ASK_DELETE_FILE, pszFile))
-	  return FALSE;
-
-	return (SHNotifyDeleteFileA(pszFile) == ERROR_SUCCESS);
-}
-
 BOOL SHELL_DeleteFileW(LPCWSTR pszFile, BOOL bShowUI)
 {
 	if (bShowUI && !SHELL_ConfirmDialogW(ASK_DELETE_FILE, pszFile))
