@@ -46,22 +46,6 @@ static const IID NS_IOSERVICE_CID =
 static nsIIOService *nsio = NULL;
 
 typedef struct {
-    const nsIHttpChannelVtbl *lpHttpChannelVtbl;
-    const nsIUploadChannelVtbl *lpUploadChannelVtbl;
-
-    LONG ref;
-
-    nsIChannel *channel;
-    nsIHttpChannel *http_channel;
-    nsIWineURI *uri;
-    nsIInputStream *post_data_stream;
-    nsILoadGroup *load_group;
-    nsIInterfaceRequestor *notif_callback;
-    nsLoadFlags load_flags;
-    nsIURI *original_uri;
-} nsChannel;
-
-typedef struct {
     const nsIWineURIVtbl *lpWineURIVtbl;
 
     LONG ref;
@@ -70,9 +54,6 @@ typedef struct {
     NSContainer *container;
 } nsURI;
 
-#define NSCHANNEL(x)     ((nsIChannel*)        &(x)->lpHttpChannelVtbl)
-#define NSHTTPCHANNEL(x) ((nsIHttpChannel*)    &(x)->lpHttpChannelVtbl)
-#define NSUPCHANNEL(x)   ((nsIUploadChannel*)  &(x)->lpUploadChannelVtbl)
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
 
 static nsresult create_uri(nsIURI*,NSContainer*,nsIURI**);
@@ -590,6 +571,17 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         }
 
         if(container->bscallback) {
+            nsIChannel_AddRef(NSCHANNEL(This));
+            container->bscallback->nschannel = This;
+
+            nsIStreamListener_AddRef(aListener);
+            container->bscallback->nslistener = aListener;
+
+            if(aContext) {
+                nsISupports_AddRef(aContext);
+                container->bscallback->nscontext = aContext;
+            }
+
             nsIWebBrowserChrome_Release(NSWBCHROME(container));
         }else {
             BOOL cont = before_async_open(This, container);

@@ -115,6 +115,22 @@ struct NSContainer {
     BSCallback *bscallback; /* hack */
 };
 
+typedef struct {
+    const nsIHttpChannelVtbl *lpHttpChannelVtbl;
+    const nsIUploadChannelVtbl *lpUploadChannelVtbl;
+
+    LONG ref;
+
+    nsIChannel *channel;
+    nsIHttpChannel *http_channel;
+    nsIWineURI *uri;
+    nsIInputStream *post_data_stream;
+    nsILoadGroup *load_group;
+    nsIInterfaceRequestor *notif_callback;
+    nsLoadFlags load_flags;
+    nsIURI *original_uri;
+} nsChannel;
+
 struct BSCallback {
     const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
     const IServiceProviderVtbl    *lpServiceProviderVtbl;
@@ -126,6 +142,10 @@ struct BSCallback {
     LPWSTR headers;
     HGLOBAL post_data;
     ULONG post_data_len;
+
+    nsChannel *nschannel;
+    nsIStreamListener *nslistener;
+    nsISupports *nscontext;
 };
 
 struct HTMLDOMNode {
@@ -185,7 +205,6 @@ typedef struct {
 #define SERVPROV(x)      ((IServiceProvider*)             &(x)->lpServiceProviderVtbl)
 #define CMDTARGET(x)     ((IOleCommandTarget*)            &(x)->lpOleCommandTargetVtbl)
 #define CONTROL(x)       ((IOleControl*)                  &(x)->lpOleControlVtbl)
-#define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
 #define HLNKTARGET(x)    ((IHlinkTarget*)                 &(x)->lpHlinkTargetVtbl)
 #define CONPTCONT(x)     ((IConnectionPointContainer*)    &(x)->lpConnectionPointContainerVtbl)
 #define PERSTRINIT(x)    ((IPersistStreamInit*)           &(x)->lpPersistStreamInitVtbl)
@@ -199,9 +218,13 @@ typedef struct {
 #define NSWEAKREF(x)     ((nsIWeakReference*)             &(x)->lpWeakReferenceVtbl)
 #define NSSUPWEAKREF(x)  ((nsISupportsWeakReference*)     &(x)->lpSupportsWeakReferenceVtbl)
 
-#define HTTPNEG(x)       ((IHttpNegotiate2*)              &(x)->lpHttpNegotiate2Vtbl)
-#define BINDINFO(x)      ((IInternetBindInfo*)            &(x)->lpInternetBindInfoVtbl);
+#define NSCHANNEL(x)     ((nsIChannel*)        &(x)->lpHttpChannelVtbl)
+#define NSHTTPCHANNEL(x) ((nsIHttpChannel*)    &(x)->lpHttpChannelVtbl)
+#define NSUPCHANNEL(x)   ((nsIUploadChannel*)  &(x)->lpUploadChannelVtbl)
 
+#define HTTPNEG(x)       ((IHttpNegotiate2*)              &(x)->lpHttpNegotiate2Vtbl)
+#define STATUSCLB(x)     ((IBindStatusCallback*)          &(x)->lpBindStatusCallbackVtbl)
+#define BINDINFO(x)      ((IInternetBindInfo*)            &(x)->lpInternetBindInfoVtbl);
 
 #define HTMLELEM(x)      ((IHTMLElement*)                 &(x)->lpHTMLElementVtbl)
 #define HTMLELEM2(x)     ((IHTMLElement2*)                &(x)->lpHTMLElement2Vtbl)
@@ -253,7 +276,9 @@ PRUint32 nsAString_GetData(const nsAString*,const PRUnichar**,PRBool*);
 void nsAString_Finish(nsAString*);
 
 nsIInputStream *create_nsstream(const char*,PRInt32);
+
 BSCallback *create_bscallback(HTMLDocument*,LPCOLESTR);
+HRESULT start_binding(BSCallback*,IMoniker*);
 
 IHlink *Hlink_Create(void);
 

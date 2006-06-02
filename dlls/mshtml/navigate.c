@@ -96,6 +96,12 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     if(!ref) {
         if(This->post_data)
             GlobalFree(This->post_data);
+        if(This->nschannel)
+            nsIChannel_Release(NSCHANNEL(This->nschannel));
+        if(This->nslistener)
+            nsIStreamListener_Release(This->nslistener);
+        if(This->nscontext)
+            nsISupports_Release(This->nscontext);
         HeapFree(GetProcessHeap(), 0, This->headers);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -371,6 +377,9 @@ BSCallback *create_bscallback(HTMLDocument *doc, LPCOLESTR url)
     ret->post_data = NULL;
     ret->headers = NULL;
     ret->post_data_len = 0;
+    ret->nschannel = NULL;
+    ret->nslistener = NULL;
+    ret->nscontext = NULL;
 
     return ret;
 }

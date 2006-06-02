@@ -87,9 +87,7 @@ typedef nsISupports nsIWidget;
 typedef nsISupports nsIProtocolHandler;
 typedef nsISupports nsIDOMEventTarget;
 typedef nsISupports nsIDOMAbstractView;
-typedef nsISupports nsIStreamListener;
 typedef nsISupports nsIHttpHeaderVisitor;
-typedef nsISupports nsIRequestObserver;
 typedef nsISupports nsIDOMBarProp;
 typedef nsISupports nsIDOMWindowCollection;
 typedef nsISupports nsISelection;
@@ -271,6 +269,26 @@ interface nsIRequest : nsISupports
     nsresult SetLoadGroup(nsILoadGroup *aLoadGroup);
     nsresult GetLoadFlags(nsLoadFlags *aLoadFlags);
     nsresult SetLoadFlags(nsLoadFlags aLoadFlags);
+}
+
+[
+    object,
+    uuid(fd91e2e0-1481-11d3-9333-00104ba0fd40)
+]
+interface nsIRequestObserver : nsISupports
+{
+    nsresult OnStartRequest(nsIRequest *aRequest, nsISupports *aContext);
+    nsresult OnStopRequest(nsIRequest *aRequest, nsISupports *aContext, nsresult aStatusCode);
+}
+
+[
+    object,
+    uuid(1a637020-1482-11d3-9333-00104ba0fd40)
+] 
+interface nsIStreamListener : nsIRequestObserver
+{
+    nsresult OnDataAvailable(nsIRequest *aRequest, nsISupports *aContext,
+                             nsIInputStream *aInputStream, PRUint32 aOffset, PRUint32 aCount);
 }
 
 [
