@@ -1141,15 +1141,17 @@ HEADER_GetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     HEADER_ITEM *lpItem;
-    UINT mask = phdi->mask;
+    UINT mask;
 
     if (!phdi)
 	return FALSE;
 
     TRACE("[nItem=%d]\n", nItem);
 
+    mask = phdi->mask;
     if (mask == 0)
 	return TRUE;
+
     if ((nItem < 0) || (nItem >= (INT)infoPtr->uNumItem))
         return FALSE;
 
