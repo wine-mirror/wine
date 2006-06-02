@@ -174,6 +174,8 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site, HWND p
      * IOleInPlaceFrmae_SetMenu
      */
 
+    SetFocus(This->shell_embedding_hwnd);
+
     return S_OK;
 }
 
