@@ -353,9 +353,12 @@ static HRESULT WINAPI HttpNegotiate_OnResponse(IHttpNegotiate2 *iface, DWORD dwR
         LPCWSTR szResponseHeaders, LPCWSTR szRequestHeaders,
         LPWSTR *pszAdditionalRequestHeaders)
 {
-    FIXME("(%ld %s %s %p)\n", dwResponseCode, debugstr_w(szResponseHeaders),
+    TRACE("(%ld %s %s %p)\n", dwResponseCode, debugstr_w(szResponseHeaders),
           debugstr_w(szRequestHeaders), pszAdditionalRequestHeaders);
-    return E_NOTIMPL;
+
+    if(pszAdditionalRequestHeaders)
+        *pszAdditionalRequestHeaders = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HttpNegotiate_GetRootSecurityId(IHttpNegotiate2 *iface,
