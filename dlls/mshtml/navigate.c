@@ -247,7 +247,7 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
 {
     BSCallback *This = STATUSCLB_THIS(iface);
     FIXME("(%p)->(%ld %p)\n", This, dwReserved, pbind);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI BindStatusCallback_GetPriority(IBindStatusCallback *iface, LONG *pnPriority)
@@ -278,7 +278,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 {
     BSCallback *This = STATUSCLB_THIS(iface);
     FIXME("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
