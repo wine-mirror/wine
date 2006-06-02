@@ -19,7 +19,6 @@
 #include "config.h"
 
 #include <stdarg.h>
-#include <stdio.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -38,6 +37,138 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define CONTENT_LENGTH "Content-Length"
+
+#define NSINSTREAM(x) ((nsIInputStream*) &(x)->lpInputStreamVtbl)
+
+#define NSINSTREAM_THIS(iface) DEFINE_THIS(nsProtocolStream, InputStream, iface)
+
+static nsresult NSAPI nsInputStream_QueryInterface(nsIInputStream *iface, nsIIDRef riid,
+                                                   nsQIResult result)
+{
+    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+
+    *result = NULL;
+
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(%p)->(IID_nsISupports %p)\n", This, result);
+        *result  = NSINSTREAM(This);
+    }else if(IsEqualGUID(&IID_nsIInputStream, riid)) {
+        TRACE("(%p)->(IID_nsIInputStream %p)\n", This, result);
+        *result  = NSINSTREAM(This);
+    }
+
+    if(*result) {
+        nsIInputStream_AddRef(NSINSTREAM(This));
+        return NS_OK;
+    }
+
+    WARN("unsupported interface %s\n", debugstr_guid(riid));
+    return NS_NOINTERFACE;
+}
+
+static nsrefcnt NSAPI nsInputStream_AddRef(nsIInputStream *iface)
+{
+    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    return ref;
+}
+
+
+static nsrefcnt NSAPI nsInputStream_Release(nsIInputStream *iface)
+{
+    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static nsresult NSAPI nsInputStream_Close(nsIInputStream *iface)
+{
+    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    FIXME("(%p)\n", This);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsInputStream_Available(nsIInputStream *iface, PRUint32 *_retval)
+{
+    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsInputStream_Read(nsIInputStream *iface, char *aBuf, PRUint32 aCount,
+                                         PRUint32 *_retval)
+{
+    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    FIXME("(%p)->(%p %ld %p)\n", This, aBuf, aCount, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
+        nsresult (NSAPI*aWriter)(nsIInputStream*,void*,const char*,PRUint32,PRUint32,PRUint32*),
+        void *aClousure, PRUint32 aCount, PRUint32 *_retval)
+{
+    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    PRUint32 written = 0;
+    nsresult nsres;
+
+    FIXME("(%p)->(%p %p %ld %p)\n", This, aWriter, aClousure, aCount, _retval);
+
+    if(!This->buf_size)
+        return S_OK;
+
+    if(This->buf_size > aCount)
+        FIXME("buf_size > aCount\n");
+
+    nsres = aWriter(NSINSTREAM(This), aClousure, This->buf, 0, This->buf_size, &written);
+    if(NS_FAILED(nsres))
+        FIXME("aWritter failed: %08lx\n", nsres);
+    if(written != This->buf_size)
+        FIXME("written != buf_size\n");
+
+    This->buf_size -= written; 
+
+    return nsres;
+}
+
+static nsresult NSAPI nsInputStream_IsNonBlocking(nsIInputStream *iface, PRBool *_retval)
+{
+    nsProtocolStream *This = NSINSTREAM_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+#undef NSINSTREAM_THIS
+
+static const nsIInputStreamVtbl nsInputStreamVtbl = {
+    nsInputStream_QueryInterface,
+    nsInputStream_AddRef,
+    nsInputStream_Release,
+    nsInputStream_Close,
+    nsInputStream_Available,
+    nsInputStream_Read,
+    nsInputStream_ReadSegments,
+    nsInputStream_IsNonBlocking
+};
+
+static nsProtocolStream *create_nsprotocol_stream(IStream *stream)
+{
+    nsProtocolStream *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(nsProtocolStream));
+
+    ret->lpInputStreamVtbl = &nsInputStreamVtbl;
+    ret->ref = 1;
+    ret->buf_size = 0;
+
+    return ret;
+}
 
 #define STATUSCLB_THIS(iface) DEFINE_THIS(BSCallback, BindStatusCallback, iface)
 
@@ -102,6 +233,8 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
             nsIStreamListener_Release(This->nslistener);
         if(This->nscontext)
             nsISupports_Release(This->nscontext);
+        if(This->nsstream)
+            nsIInputStream_Release(NSINSTREAM(This->nsstream));
         HeapFree(GetProcessHeap(), 0, This->headers);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -182,8 +315,38 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
         DWORD grfBSCF, DWORD dwSize, FORMATETC *pformatetc, STGMEDIUM *pstgmed)
 {
     BSCallback *This = STATUSCLB_THIS(iface);
-    FIXME("(%p)->(%08lx %ld %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
-    return E_NOTIMPL;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%08lx %ld %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+
+    if(This->nslistener) {
+        if(!This->nsstream) {
+            This->nsstream = create_nsprotocol_stream(pstgmed->u.pstm);
+
+            nsres = nsIStreamListener_OnStartRequest(This->nslistener,
+                    (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
+            if(NS_FAILED(nsres))
+                FIXME("OnStartRequest failed: %08lx\n", nsres);
+        }
+
+        do {
+            hres = IStream_Read(pstgmed->u.pstm, This->nsstream->buf, sizeof(This->nsstream->buf),
+                                &This->nsstream->buf_size);
+            if(This->nsstream->buf_size) {
+                nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
+                        (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext,
+                        NSINSTREAM(This->nsstream), 0 /* FIXME */, dwSize);
+                if(NS_FAILED(nsres))
+                    FIXME("OnDataAvailable failed: %08lx\n", nsres);
+
+                if(This->nsstream->buf_size)
+                    FIXME("buffer is not empty!\n");
+            }
+        }while(hres == S_OK);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,
@@ -380,6 +543,7 @@ BSCallback *create_bscallback(HTMLDocument *doc, LPCOLESTR url)
     ret->nschannel = NULL;
     ret->nslistener = NULL;
     ret->nscontext = NULL;
+    ret->nsstream = NULL;
 
     return ret;
 }

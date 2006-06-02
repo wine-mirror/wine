@@ -131,6 +131,15 @@ typedef struct {
     nsIURI *original_uri;
 } nsChannel;
 
+typedef struct {
+    const nsIInputStreamVtbl *lpInputStreamVtbl;
+
+    LONG ref;
+
+    char buf[1024];
+    DWORD buf_size;
+} nsProtocolStream;
+
 struct BSCallback {
     const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
     const IServiceProviderVtbl    *lpServiceProviderVtbl;
@@ -146,6 +155,8 @@ struct BSCallback {
     nsChannel *nschannel;
     nsIStreamListener *nslistener;
     nsISupports *nscontext;
+
+    nsProtocolStream *nsstream;
 };
 
 struct HTMLDOMNode {
