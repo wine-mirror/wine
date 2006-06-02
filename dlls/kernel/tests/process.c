@@ -429,6 +429,9 @@ static void test_Startup(void)
     char                buffer[MAX_PATH];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup,si;
+    static CHAR title[]   = "I'm the title string",
+                desktop[] = "I'm the desktop string",
+                empty[]   = "";
 
     /* let's start simplistic */
     memset(&startup, 0, sizeof(startup));
@@ -465,8 +468,8 @@ static void test_Startup(void)
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
-    startup.lpTitle = "I'm the title string";
-    startup.lpDesktop = "I'm the desktop string";
+    startup.lpTitle = title;
+    startup.lpDesktop = desktop;
     startup.dwXCountChars = 0x12121212;
     startup.dwYCountChars = 0x23232323;
     startup.dwX = 0x34343434;
@@ -503,7 +506,7 @@ static void test_Startup(void)
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
-    startup.lpTitle = "I'm the title string";
+    startup.lpTitle = title;
     startup.lpDesktop = NULL;
     startup.dwXCountChars = 0x12121212;
     startup.dwYCountChars = 0x23232323;
@@ -541,8 +544,8 @@ static void test_Startup(void)
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
-    startup.lpTitle = "I'm the title string";
-    startup.lpDesktop = "";
+    startup.lpTitle = title;
+    startup.lpDesktop = empty;
     startup.dwXCountChars = 0x12121212;
     startup.dwYCountChars = 0x23232323;
     startup.dwX = 0x34343434;
@@ -580,7 +583,7 @@ static void test_Startup(void)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
     startup.lpTitle = NULL;
-    startup.lpDesktop = "I'm the desktop string";
+    startup.lpDesktop = desktop;
     startup.dwXCountChars = 0x12121212;
     startup.dwYCountChars = 0x23232323;
     startup.dwX = 0x34343434;
@@ -617,8 +620,8 @@ static void test_Startup(void)
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
-    startup.lpTitle = "";
-    startup.lpDesktop = "I'm the desktop string";
+    startup.lpTitle = empty;
+    startup.lpDesktop = desktop;
     startup.dwXCountChars = 0x12121212;
     startup.dwYCountChars = 0x23232323;
     startup.dwX = 0x34343434;
@@ -655,8 +658,8 @@ static void test_Startup(void)
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
-    startup.lpTitle = "";
-    startup.lpDesktop = "";
+    startup.lpTitle = empty;
+    startup.lpDesktop = empty;
     startup.dwXCountChars = 0x12121212;
     startup.dwYCountChars = 0x23232323;
     startup.dwX = 0x34343434;
