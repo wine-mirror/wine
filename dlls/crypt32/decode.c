@@ -1182,7 +1182,7 @@ static BOOL WINAPI CRYPT_AsnDecodeExtensions(DWORD dwCertEncodingType,
  * order to avoid overwriting memory.  (In some cases, it may change it, if it
  * doesn't copy anything to memory.)  Be sure to set it correctly!
  */
-static BOOL WINAPI CRYPT_AsnDecodeNameValue(DWORD dwCertEncodingType,
+static BOOL WINAPI CRYPT_AsnDecodeNameValueInternal(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
@@ -1199,6 +1199,7 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValue(DWORD dwCertEncodingType,
         case ASN_NUMERICSTRING:
         case ASN_PRINTABLESTRING:
         case ASN_IA5STRING:
+        case ASN_T61STRING:
             break;
         default:
             FIXME("Unimplemented string type %02x\n", pbEncoded[0]);
@@ -1214,6 +1215,7 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValue(DWORD dwCertEncodingType,
             case ASN_NUMERICSTRING:
             case ASN_PRINTABLESTRING:
             case ASN_IA5STRING:
+            case ASN_T61STRING:
                 if (!(dwFlags & CRYPT_DECODE_NOCOPY_FLAG))
                     bytesNeeded += dataLen;
                 break;
@@ -1240,6 +1242,9 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValue(DWORD dwCertEncodingType,
                 case ASN_IA5STRING:
                     value->dwValueType = CERT_RDN_IA5_STRING;
                     break;
+                case ASN_T61STRING:
+                    value->dwValueType = CERT_RDN_T61_STRING;
+                    break;
                 }
                 if (dataLen)
                 {
@@ -1248,6 +1253,7 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValue(DWORD dwCertEncodingType,
                     case ASN_NUMERICSTRING:
                     case ASN_PRINTABLESTRING:
                     case ASN_IA5STRING:
+                    case ASN_T61STRING:
                         value->Value.cbData = dataLen;
                         if (dwFlags & CRYPT_DECODE_NOCOPY_FLAG)
                             value->Value.pbData = (BYTE *)pbEncoded + 1 +
@@ -1272,6 +1278,45 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValue(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnDecodeNameValue(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret = TRUE;
+
+    __TRY
+    {
+        ret = CRYPT_AsnDecodeNameValueInternal(dwCertEncodingType,
+         lpszStructType, pbEncoded, cbEncoded,
+         dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, NULL, pcbStructInfo);
+        if (ret && pvStructInfo)
+        {
+            ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara, pvStructInfo,
+             pcbStructInfo, *pcbStructInfo);
+            if (ret)
+            {
+                CERT_NAME_VALUE *value;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                value = (CERT_NAME_VALUE *)pvStructInfo;
+                value->Value.pbData = ((BYTE *)value + sizeof(CERT_NAME_VALUE));
+                ret = CRYPT_AsnDecodeNameValueInternal(dwCertEncodingType,
+                 lpszStructType, pbEncoded, cbEncoded,
+                 dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, pvStructInfo,
+                 pcbStructInfo);
+            }
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnDecodeRdnAttr(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
@@ -1282,7 +1327,7 @@ static BOOL WINAPI CRYPT_AsnDecodeRdnAttr(DWORD dwCertEncodingType,
        CRYPT_AsnDecodeOidInternal, sizeof(LPSTR), FALSE, TRUE,
        offsetof(CERT_RDN_ATTR, pszObjId), 0 },
      { 0, offsetof(CERT_RDN_ATTR, dwValueType),
-       CRYPT_AsnDecodeNameValue, sizeof(CERT_NAME_VALUE),
+       CRYPT_AsnDecodeNameValueInternal, sizeof(CERT_NAME_VALUE),
        FALSE, TRUE, offsetof(CERT_RDN_ATTR, Value.pbData), 0 },
     };
     CERT_RDN_ATTR *attr = (CERT_RDN_ATTR *)pvStructInfo;
@@ -2939,6 +2984,9 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
             break;
         case (WORD)X509_EXTENSIONS:
             decodeFunc = CRYPT_AsnDecodeExtensions;
+            break;
+        case (WORD)X509_NAME_VALUE:
+            decodeFunc = CRYPT_AsnDecodeNameValue;
             break;
         case (WORD)X509_NAME:
             decodeFunc = CRYPT_AsnDecodeName;

@@ -906,58 +906,74 @@ static BOOL WINAPI CRYPT_AsnEncodeOid(DWORD dwCertEncodingType,
 }
 
 static BOOL WINAPI CRYPT_AsnEncodeNameValue(DWORD dwCertEncodingType,
- CERT_NAME_VALUE *value, BYTE *pbEncoded, DWORD *pcbEncoded)
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
-    BYTE tag;
-    DWORD bytesNeeded, lenBytes, encodedLen;
     BOOL ret = TRUE;
 
-    switch (value->dwValueType)
+    __TRY
     {
-    case CERT_RDN_NUMERIC_STRING:
-        tag = ASN_NUMERICSTRING;
-        encodedLen = value->Value.cbData;
-        break;
-    case CERT_RDN_PRINTABLE_STRING:
-        tag = ASN_PRINTABLESTRING;
-        encodedLen = value->Value.cbData;
-        break;
-    case CERT_RDN_IA5_STRING:
-        tag = ASN_IA5STRING;
-        encodedLen = value->Value.cbData;
-        break;
-    case CERT_RDN_ANY_TYPE:
-        /* explicitly disallowed */
-        SetLastError(E_INVALIDARG);
-        return FALSE;
-    default:
-        FIXME("String type %ld unimplemented\n", value->dwValueType);
-        return FALSE;
-    }
-    CRYPT_EncodeLen(encodedLen, NULL, &lenBytes);
-    bytesNeeded = 1 + lenBytes + encodedLen;
-    if (pbEncoded)
-    {
-        if (*pcbEncoded < bytesNeeded)
+        BYTE tag;
+        DWORD bytesNeeded, lenBytes, encodedLen;
+        const CERT_NAME_VALUE *value = (CERT_NAME_VALUE *)pvStructInfo;
+
+        switch (value->dwValueType)
         {
-            SetLastError(ERROR_MORE_DATA);
-            ret = FALSE;
+        case CERT_RDN_NUMERIC_STRING:
+            tag = ASN_NUMERICSTRING;
+            encodedLen = value->Value.cbData;
+            break;
+        case CERT_RDN_PRINTABLE_STRING:
+            tag = ASN_PRINTABLESTRING;
+            encodedLen = value->Value.cbData;
+            break;
+        case CERT_RDN_T61_STRING:
+            tag = ASN_T61STRING;
+            encodedLen = value->Value.cbData;
+            break;
+        case CERT_RDN_IA5_STRING:
+            tag = ASN_IA5STRING;
+            encodedLen = value->Value.cbData;
+            break;
+        case CERT_RDN_ANY_TYPE:
+            /* explicitly disallowed */
+            SetLastError(E_INVALIDARG);
+            return FALSE;
+        default:
+            FIXME("String type %ld unimplemented\n", value->dwValueType);
+            return FALSE;
         }
+        CRYPT_EncodeLen(encodedLen, NULL, &lenBytes);
+        bytesNeeded = 1 + lenBytes + encodedLen;
+        if (!pbEncoded)
+            *pcbEncoded = bytesNeeded;
         else
         {
-            *pbEncoded++ = tag;
-            CRYPT_EncodeLen(encodedLen, pbEncoded, &lenBytes);
-            pbEncoded += lenBytes;
-            switch (value->dwValueType)
+            if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
+             pcbEncoded, bytesNeeded)))
             {
-            case CERT_RDN_NUMERIC_STRING:
-            case CERT_RDN_PRINTABLE_STRING:
-            case CERT_RDN_IA5_STRING:
-                memcpy(pbEncoded, value->Value.pbData, value->Value.cbData);
+                if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                    pbEncoded = *(BYTE **)pbEncoded;
+                *pbEncoded++ = tag;
+                CRYPT_EncodeLen(encodedLen, pbEncoded, &lenBytes);
+                pbEncoded += lenBytes;
+                switch (value->dwValueType)
+                {
+                case CERT_RDN_NUMERIC_STRING:
+                case CERT_RDN_PRINTABLE_STRING:
+                case CERT_RDN_T61_STRING:
+                case CERT_RDN_IA5_STRING:
+                    memcpy(pbEncoded, value->Value.pbData, value->Value.cbData);
+                }
             }
         }
     }
-    *pcbEncoded = bytesNeeded;
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
     return ret;
 }
 
@@ -975,8 +991,8 @@ static BOOL WINAPI CRYPT_AsnEncodeRdnAttr(DWORD dwCertEncodingType,
         /* hack: a CERT_RDN_ATTR is identical to a CERT_NAME_VALUE beginning
          * with dwValueType, so "cast" it to get its encoded size
          */
-        ret = CRYPT_AsnEncodeNameValue(dwCertEncodingType,
-         (CERT_NAME_VALUE *)&attr->dwValueType, NULL, &size);
+        ret = CRYPT_AsnEncodeNameValue(dwCertEncodingType, X509_NAME_VALUE,
+         (CERT_NAME_VALUE *)&attr->dwValueType, 0, NULL, NULL, &size);
         if (ret)
         {
             bytesNeeded += size;
@@ -1003,8 +1019,8 @@ static BOOL WINAPI CRYPT_AsnEncodeRdnAttr(DWORD dwCertEncodingType,
                         pbEncoded += size;
                         size = bytesNeeded - 1 - lenBytes - size;
                         ret = CRYPT_AsnEncodeNameValue(dwCertEncodingType,
-                         (CERT_NAME_VALUE *)&attr->dwValueType, pbEncoded,
-                         &size);
+                         X509_NAME_VALUE, (CERT_NAME_VALUE *)&attr->dwValueType,
+                         0, NULL, pbEncoded, &size);
                     }
                 }
             }
@@ -2263,6 +2279,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
             break;
         case (WORD)X509_EXTENSIONS:
             encodeFunc = CRYPT_AsnEncodeExtensions;
+            break;
+        case (WORD)X509_NAME_VALUE:
+            encodeFunc = CRYPT_AsnEncodeNameValue;
             break;
         case (WORD)X509_NAME:
             encodeFunc = CRYPT_AsnEncodeName;

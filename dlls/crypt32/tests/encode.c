@@ -3204,10 +3204,8 @@ START_TEST(encode)
         test_decodeFiletime(encodings[i]);
         test_encodeName(encodings[i]);
         test_decodeName(encodings[i]);
-        todo_wine {
         test_encodeNameValue(encodings[i]);
         test_decodeNameValue(encodings[i]);
-        }
         test_encodeAltName(encodings[i]);
         test_decodeAltName(encodings[i]);
         test_encodeOctets(encodings[i]);
