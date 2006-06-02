@@ -270,6 +270,16 @@ static void test_towers(void)
     ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
 
     I_RpcFree(tower);
+
+    /* test the behaviour for ip_tcp with name instead of dotted IP notation */
+    ret = TowerConstruct(&mapi_if_id, &ndr_syntax, "ncacn_ip_tcp", "135", "localhost", &tower);
+    ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
+    ret = TowerExplode(tower, NULL, NULL, NULL, NULL, &address);
+    ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
+    ok(!strcmp(address, "0.0.0.0"), "address was \"%s\" instead of \"0.0.0.0\"\n", address);
+
+    I_RpcFree(address);
+    I_RpcFree(tower);
 }
 
 START_TEST( rpc )

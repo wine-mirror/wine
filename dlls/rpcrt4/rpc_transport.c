@@ -584,7 +584,7 @@ static size_t rpcrt4_ncacn_ip_tcp_get_top_of_tower(unsigned char *tower_data,
     ipv4_floor->protid = EPM_PROTOCOL_IP;
     ipv4_floor->count_rhs = sizeof(ipv4_floor->ipv4addr);
 
-    hints.ai_flags          = 0;
+    hints.ai_flags          = AI_NUMERICHOST;
     /* FIXME: only support IPv4 at the moment. how is IPv6 represented by the EPM? */
     hints.ai_family         = PF_INET;
     hints.ai_socktype       = SOCK_STREAM;
@@ -597,8 +597,12 @@ static size_t rpcrt4_ncacn_ip_tcp_get_top_of_tower(unsigned char *tower_data,
     ret = getaddrinfo(networkaddr, endpoint, &hints, &ai);
     if (ret < 0)
     {
-        ERR("getaddrinfo failed: %s\n", gai_strerror(ret));
-        return 0;
+        ret = getaddrinfo("0.0.0.0", endpoint, &hints, &ai);
+        if (ret < 0)
+        {
+            ERR("getaddrinfo failed: %s\n", gai_strerror(ret));
+            return 0;
+        }
     }
 
     if (ai->ai_family == PF_INET)
