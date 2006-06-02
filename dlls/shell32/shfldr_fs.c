@@ -1164,7 +1164,8 @@ ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
 {
     IGenericSFImpl *This = impl_from_ISFHelper(iface);
     UINT i;
-    char szPath[MAX_PATH];
+    WCHAR wszPath[MAX_PATH];
+    int iPathLen;
     BOOL bConfirm = TRUE;
 
     TRACE ("(%p)(%u %p)\n", This, cidl, apidl);
@@ -1179,18 +1180,22 @@ ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
         bConfirm = FALSE;
     }
 
+    if (This->sPathTarget)
+        lstrcpynW(wszPath, This->sPathTarget, MAX_PATH);
+    else
+        wszPath[0] = '\0';
+    PathAddBackslashW(wszPath);
+    iPathLen = lstrlenW(wszPath);
+    
     for (i = 0; i < cidl; i++) {
-        if (!WideCharToMultiByte(CP_ACP, 0, This->sPathTarget, -1, szPath, MAX_PATH, NULL, NULL))
-            szPath[0] = '\0';
-        PathAddBackslashA (szPath);
-        _ILSimpleGetText (apidl[i], szPath + strlen (szPath), MAX_PATH);
+        _ILSimpleGetTextW (apidl[i], wszPath+iPathLen, MAX_PATH-iPathLen);
 
         if (_ILIsFolder (apidl[i])) {
             LPITEMIDLIST pidl;
 
-            TRACE ("delete %s\n", szPath);
-            if (!SHELL_DeleteDirectoryA (szPath, bConfirm)) {
-                TRACE ("delete %s failed, bConfirm=%d\n", szPath, bConfirm);
+            TRACE ("delete %s\n", debugstr_w(wszPath));
+            if (!SHELL_DeleteDirectoryW (wszPath, bConfirm)) {
+                TRACE ("delete %s failed, bConfirm=%d\n", debugstr_w(wszPath), bConfirm);
                 return E_FAIL;
             }
             pidl = ILCombine (This->pidlRoot, apidl[i]);
@@ -1199,9 +1204,9 @@ ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
         } else if (_ILIsValue (apidl[i])) {
             LPITEMIDLIST pidl;
 
-            TRACE ("delete %s\n", szPath);
-            if (!SHELL_DeleteFileA (szPath, bConfirm)) {
-                TRACE ("delete %s failed, bConfirm=%d\n", szPath, bConfirm);
+            TRACE ("delete %s\n", debugstr_w(wszPath));
+            if (!SHELL_DeleteFileW (wszPath, bConfirm)) {
+                TRACE ("delete %s failed, bConfirm=%d\n", debugstr_w(wszPath), bConfirm);
                 return E_FAIL;
             }
             pidl = ILCombine (This->pidlRoot, apidl[i]);

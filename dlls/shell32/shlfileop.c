@@ -55,7 +55,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 static const WCHAR wWildcardFile[] = {'*',0};
 static const WCHAR wWildcardChars[] = {'*','?',0};
 
-static BOOL SHELL_DeleteDirectoryW(LPCWSTR path, BOOL bShowUI);
 static DWORD SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec);
 static DWORD SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec);
 static DWORD SHNotifyRemoveDirectoryA(LPCSTR path);
@@ -170,7 +169,7 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 	return ret;
 }
 
-static BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
+BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
 {
 	BOOL    ret = TRUE;
 	HANDLE  hFind;

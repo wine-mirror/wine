@@ -147,8 +147,8 @@ void FreeChangeNotifications(void);
 #define ASK_CREATE_FOLDER         4
 #define ASK_OVERWRITE_FILE        5
 
-BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI);
-BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI);
+BOOL SHELL_DeleteDirectoryW(LPCWSTR pwszDir, BOOL bShowUI);
+BOOL SHELL_DeleteFileW(LPCWSTR pwszFile, BOOL bShowUI);
 BOOL SHELL_ConfirmDialog(int nKindOfDialog, LPCSTR szDir);
 
 /* 16-bit functions */
