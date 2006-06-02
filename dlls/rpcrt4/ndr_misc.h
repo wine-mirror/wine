@@ -30,11 +30,20 @@
 
 struct IPSFactoryBuffer;
 
-#define ComputeConformance(pStubMsg, pMemory, pFormat, def) ComputeConformanceOrVariance(pStubMsg, pMemory, pFormat, def, &pStubMsg->MaxCount)
-#define ComputeVariance(pStubMsg, pMemory, pFormat, def) ComputeConformanceOrVariance(pStubMsg, pMemory, pFormat, def, &pStubMsg->ActualCount)
 PFORMAT_STRING ComputeConformanceOrVariance(
     MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pMemory,
     PFORMAT_STRING pFormat, ULONG_PTR def, ULONG *pCount);
+
+static inline PFORMAT_STRING ComputeConformance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat, ULONG def)
+{
+    return ComputeConformanceOrVariance(pStubMsg, pMemory, pFormat, def, &pStubMsg->MaxCount);
+}
+
+static inline PFORMAT_STRING ComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat, ULONG def)
+{
+    pStubMsg->Offset = 0;
+    return ComputeConformanceOrVariance(pStubMsg, pMemory, pFormat, def, &pStubMsg->ActualCount);
+}
 
 typedef unsigned char* (WINAPI *NDR_MARSHALL)  (PMIDL_STUB_MESSAGE, unsigned char*, PFORMAT_STRING);
 typedef unsigned char* (WINAPI *NDR_UNMARSHALL)(PMIDL_STUB_MESSAGE, unsigned char**,PFORMAT_STRING, unsigned char);
