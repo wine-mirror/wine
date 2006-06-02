@@ -3147,7 +3147,7 @@ void WINAPI NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
         pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
                                             pCVArrayFormat + 4, 0);
         pCVArrayFormat = ComputeVariance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                         pCVArrayFormat + 4, 0);
+                                         pCVArrayFormat, 0);
         break;
     case RPC_FC_C_CSTRING:
         TRACE("string=%s\n", debugstr_a((char*)pMemory + pCVStructFormat->memory_size));
