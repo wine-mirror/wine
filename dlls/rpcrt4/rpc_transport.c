@@ -472,7 +472,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
   ret = getaddrinfo(Connection->NetworkAddr, Connection->Endpoint, &hints, &ai);
   if (ret < 0)
   {
-    ERR("getaddrinfo failed with %d\n", ret);
+    ERR("getaddrinfo failed: %s\n", gai_strerror(ret));
     return RPC_S_SERVER_UNAVAILABLE;
   }
 
@@ -597,7 +597,7 @@ static size_t rpcrt4_ncacn_ip_tcp_get_top_of_tower(unsigned char *tower_data,
     ret = getaddrinfo(networkaddr, endpoint, &hints, &ai);
     if (ret < 0)
     {
-        ERR("getaddrinfo failed with %d\n", ret);
+        ERR("getaddrinfo failed: %s\n", gai_strerror(ret));
         return 0;
     }
 
