@@ -38,220 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-struct BindStatusCallback {
-    const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
-
-    LONG ref;
-
-    HTMLDocument *doc;
-    IBinding *binding;
-    IStream *stream;
-    LPOLESTR url;
-};
-
-#define STATUSCLB_THIS(iface) DEFINE_THIS(BindStatusCallback, BindStatusCallback, iface)
-
-static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *iface,
-        REFIID riid, void **ppv)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-
-    *ppv = NULL;
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown, %p)\n", This, ppv);
-        *ppv = STATUSCLB(This);
-    }else if(IsEqualGUID(&IID_IBindStatusCallback, riid)) {
-        TRACE("(%p)->(IID_IBindStatusCallback, %p)\n", This, ppv);
-        *ppv = STATUSCLB(This);
-    }
-
-    if(*ppv) {
-        IBindStatusCallback_AddRef(STATUSCLB(This));
-        return S_OK;
-    }
-
-    TRACE("Unsupported riid = %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI BindStatusCallback_AddRef(IBindStatusCallback *iface)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref = %ld\n", This, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref = %ld\n", This, ref);
-
-    if(!ref) {
-        if(This->doc->status_callback == This)
-            This->doc->status_callback = NULL;
-        IHTMLDocument2_Release(HTMLDOC(This->doc));
-        if(This->stream)
-            IStream_Release(This->stream);
-        CoTaskMemFree(This->url);
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-
-    return ref;
-}
-
-static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *iface,
-        DWORD dwReserved, IBinding *pbind)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-
-    TRACE("(%p)->(%ld %p)\n", This, dwReserved, pbind);
-
-    This->binding = pbind;
-    IBinding_AddRef(pbind);
-
-    if(This->doc->nscontainer && This->doc->nscontainer->stream) {
-        nsACString strTextHtml;
-        nsresult nsres;
-        nsIURI *uri = get_nsIURI(This->url);
-
-        /* FIXME: Set it correctly */
-        nsACString_Init(&strTextHtml, "text/html");
-
-        nsres = nsIWebBrowserStream_OpenStream(This->doc->nscontainer->stream, uri, &strTextHtml);
-        if(NS_FAILED(nsres))
-            ERR("OpenStream failed: %08lx\n", nsres);
-
-        nsACString_Finish(&strTextHtml);
-        nsIURI_Release(uri);
-    }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI BindStatusCallback_GetPriority(IBindStatusCallback *iface, LONG *pnPriority)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pnPriority);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI BindStatusCallback_OnLowResource(IBindStatusCallback *iface, DWORD reserved)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, reserved);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface, ULONG ulProgress,
-        ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-    TRACE("%p)->(%lu %lu %lu %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
-            debugstr_w(szStatusText));
-    return S_OK;
-}
-
-static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *iface,
-        HRESULT hresult, LPCWSTR szError)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-
-    TRACE("(%p)->(%08lx %s)\n", This, hresult, debugstr_w(szError));
-
-    if(This->doc->nscontainer && This->doc->nscontainer->stream)
-        nsIWebBrowserStream_CloseStream(This->doc->nscontainer->stream);
-
-    IBinding_Release(This->binding);
-    This->binding = NULL;
-    return S_OK;
-}
-
-static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
-        DWORD *grfBINDF, BINDINFO *pbindinfo)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-    DWORD size;
-
-    TRACE("(%p)->(%p %p)\n", This, grfBINDF, pbindinfo);
-
-    *grfBINDF = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
-    size = pbindinfo->cbSize;
-    memset(pbindinfo, 0, size);
-    pbindinfo->cbSize = size;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *iface,
-        DWORD grfBSCF, DWORD dwSize, FORMATETC *pformatetc, STGMEDIUM *pstgmed)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-
-    TRACE("(%p)->(%08lx %ld %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
-
-    if(!This->stream) {
-        This->stream = pstgmed->u.pstm;
-        IStream_AddRef(This->stream);
-    }
-
-    if(This->doc->nscontainer && This->doc->nscontainer->stream) {
-        BYTE buf[1024];
-        DWORD size;
-        HRESULT hres;
-
-        do {
-            size = sizeof(buf);
-            hres = IStream_Read(This->stream, buf, size, &size);
-            nsIWebBrowserStream_AppendToStream(This->doc->nscontainer->stream, buf, size);
-        }while(hres == S_OK);
-    }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,
-        REFIID riid, IUnknown *punk)
-{
-    BindStatusCallback *This = STATUSCLB_THIS(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), punk);
-    return E_NOTIMPL;
-}
-
-#undef STATUSCLB_THIS
-
-static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
-    BindStatusCallback_QueryInterface,
-    BindStatusCallback_AddRef,
-    BindStatusCallback_Release,
-    BindStatusCallback_OnStartBinding,
-    BindStatusCallback_GetPriority,
-    BindStatusCallback_OnLowResource,
-    BindStatusCallback_OnProgress,
-    BindStatusCallback_OnStopBinding,
-    BindStatusCallback_GetBindInfo,
-    BindStatusCallback_OnDataAvailable,
-    BindStatusCallback_OnObjectAvailable
-};
-
-static BindStatusCallback *BindStatusCallback_Create(HTMLDocument *doc, LPOLESTR url)
-{
-    BindStatusCallback *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(BindStatusCallback));
-
-    ret->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
-    ret->ref = 0;
-    ret->url = url;
-    ret->doc = doc;
-    ret->stream = NULL;
-    IHTMLDocument2_AddRef(HTMLDOC(doc));
-
-    return ret;
-}
-
 /**********************************************************
  * IPersistMoniker implementation
  */
@@ -368,9 +154,6 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         IMoniker *pimkName, LPBC pibc, DWORD grfMode)
 {
     HTMLDocument *This = PERSISTMON_THIS(iface);
-    IBindCtx *pbind;
-    BindStatusCallback *callback;
-    IStream *str = NULL;
     LPOLESTR url;
     HRESULT hres;
     nsresult nsres;
@@ -431,13 +214,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
-    if(This->nscontainer && !This->nscontainer->stream) {
-        /*
-         * This is a workaround for older Gecko that doesn't support nsIWebBrowserStream.
-         * It uses Gecko's LoadURI instead of IMoniker's BindToStorage. Should we improve
-         * it (to do so we'd have to use not frozen interfaces)?
-         */
-
+    if(This->nscontainer) {
         nsIInputStream *post_data_stream = get_post_data_stream(pibc);
 
         This->nscontainer->load_call = TRUE;
@@ -460,29 +237,8 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 
     if(fFullyAvailable)
         FIXME("not supported fFullyAvailable\n");
-
-    if(This->status_callback && This->status_callback->binding)
-        IBinding_Abort(This->status_callback->binding);
-
-    callback = This->status_callback = BindStatusCallback_Create(This, url);
-
-    if(pibc) {
-        pbind = pibc;
-        RegisterBindStatusCallback(pbind, STATUSCLB(callback), NULL, 0);
-    }else {
-        CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &pbind);
-    }
-
-    hres = IMoniker_BindToStorage(pimkName, pbind, NULL, &IID_IStream, (void**)&str);
-
-    if(!pibc)
-        IBindCtx_Release(pbind);
-    if(str)
-        IStream_Release(str);
-    if(FAILED(hres)) {
-        WARN("BindToStorage failed: %08lx\n", hres);
-        return hres;
-    }
+    if(pibc)
+        FIXME("not supported pibc\n");
 
     return S_OK;
 }
@@ -727,6 +483,4 @@ void HTMLDocument_Persist_Init(HTMLDocument *This)
     This->lpPersistFileVtbl = &PersistFileVtbl;
     This->lpMonikerPropVtbl = &MonikerPropVtbl;
     This->lpPersistStreamInitVtbl = &PersistStreamInitVtbl;
-
-    This->status_callback = NULL;
 }

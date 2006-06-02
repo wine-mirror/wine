@@ -1194,15 +1194,6 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     if(NS_FAILED(nsres))
         ERR("Could not get nsIWebBrowserFocus interface: %08lx\n", nsres);
 
-#if 0
-    nsres = nsIWebBrowserStream_QueryInterface(ret->webbrowser, &IID_nsIWebBrowserStream,
-            (void**)&ret->stream);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIWebBrowserStream interface: %08lx\n", nsres);
-#else
-    ret->stream = NULL;
-#endif
-
     if(!nscontainer_class)
         register_nscontainer_class();
 
@@ -1252,11 +1243,6 @@ void NSContainer_Release(NSContainer *This)
 
     nsIWebBrowserFocus_Release(This->focus);
     This->focus = NULL;
-
-    if(This->stream) {
-        nsIWebBrowserStream_Release(This->stream);
-        This->stream = NULL;
-    }
 
     if(This->hwnd) {
         DestroyWindow(This->hwnd);

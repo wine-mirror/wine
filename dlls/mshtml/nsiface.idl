@@ -821,17 +821,6 @@ interface nsIFile : nsISupports
 
 [
     object,
-    uuid(86d02f0e-219b-4cfc-9c88-bd98d2cce0b8)
-]
-interface nsIWebBrowserStream : nsISupports
-{
-    nsresult OpenStream(nsIURI *aBaseURI, nsACString *aContentType);
-    nsresult AppendToStream(PRUint8 *aData, PRUint32 aLen);
-    nsresult CloseStream();
-}
-
-[
-    object,
     uuid(bddeda3f-9020-4d12-8c70-984ee9f7935e)
 ]
 interface nsIIOService : nsISupports

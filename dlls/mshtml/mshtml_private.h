@@ -43,7 +43,6 @@
 #define NS_ELEMENT_NODE   1
 #define NS_DOCUMENT_NODE  9
 
-typedef struct BindStatusCallback BindStatusCallback;
 typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 
@@ -84,8 +83,6 @@ typedef struct {
     BOOL has_key_path;
     BOOL container_locked;
 
-    BindStatusCallback *status_callback;
-
     ConnectionPoint *cp_htmldocevents;
     ConnectionPoint *cp_htmldocevents2;
 
@@ -105,7 +102,6 @@ struct NSContainer {
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
     nsIBaseWindow *window;
-    nsIWebBrowserStream *stream;
     nsIWebBrowserFocus *focus;
 
     LONG ref;
