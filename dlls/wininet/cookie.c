@@ -402,9 +402,9 @@ BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     TRACE("(%s,%s,%s)\n", debugstr_w(lpszUrl),
         debugstr_w(lpszCookieName), debugstr_w(lpCookieData));
 
-    if (!lpCookieData || !strlenW(lpCookieData))
+    if (!lpCookieData)
     {
-        TRACE("no cookie data, not adding\n");
+        SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
     if (!lpszCookieName)

@@ -123,6 +123,9 @@ static void test_null(void)
 {
   HINTERNET hi, hc;
   static const WCHAR szServer[] = { 's','e','r','v','e','r',0 };
+  static const WCHAR szEmpty[] = { 0 };
+  static const WCHAR szUrl[] = { 'h','t','t','p',':','/','/','a','.','b','.','c',0 };
+  BOOL r;
 
   hi = InternetOpenW(NULL, 0, NULL, NULL, 0);
   ok(hi != NULL, "open failed\n");
@@ -152,6 +155,35 @@ static void test_null(void)
   ok(hc == NULL, "connect failed\n");
 
   InternetCloseHandle(hi);
+
+  r = InternetSetCookieW(NULL, NULL, NULL);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error\n");
+  ok(r == FALSE, "return wrong\n");
+
+  r = InternetSetCookieW(szServer, NULL, NULL);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error\n");
+  ok(r == FALSE, "return wrong\n");
+
+  r = InternetSetCookieW(szUrl, szServer, NULL);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error\n");
+  ok(r == FALSE, "return wrong\n");
+
+  r = InternetSetCookieW(szUrl, szServer, szServer);
+  ok(r == TRUE, "return wrong\n");
+
+  todo_wine {
+  r = InternetSetCookieW(szUrl, NULL, szServer);
+  ok(r == TRUE, "return wrong\n");
+  }
+
+  r = InternetSetCookieW(szUrl, szServer, szEmpty);
+  ok(r == TRUE, "return wrong\n");
+
+  r = InternetSetCookieW(szServer, NULL, szServer);
+  todo_wine {
+  ok(GetLastError() == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "wrong error\n");
+  }
+  ok(r == FALSE, "return wrong\n");
 }
 
 START_TEST(internet)
