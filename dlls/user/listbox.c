@@ -1387,7 +1387,7 @@ static LRESULT LISTBOX_SelectItemRange( LB_DESCR *descr, INT first,
 
     if (!descr->nb_items) return LB_OKAY;
 
-    if (last >= descr->nb_items) last = descr->nb_items - 1;
+    if (last == -1 || last >= descr->nb_items) last = descr->nb_items - 1;
     if (first < 0) first = 0;
     if (last < first) return LB_OKAY;
 
