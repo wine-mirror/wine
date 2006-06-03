@@ -1022,6 +1022,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
 {
     BOOL                ret = FALSE;
     unsigned            do_after = 0;
+    static CHAR         dashed_null[] = "--null--";
 
     /* FIXME seems wrong as name, as it demangles a simple data type */
     if (sym->flags & UNDNAME_NO_ARGUMENTS)
@@ -1135,7 +1136,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         {
         case 1: case 2:
             sym->stack.num = sym->stack.max = 1;
-            sym->stack.elts[0] = "--null--";
+            sym->stack.elts[0] = dashed_null;
             break;
         case 4:
             sym->result = (char*)function_name;
