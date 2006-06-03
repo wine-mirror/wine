@@ -25,7 +25,6 @@
 #include <windows.h>
 #include <stdlib.h>
 #include "main.h"
-#include "dialog.h"
 #include "resource.h"
 
 #include <wine/debug.h>

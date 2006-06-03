@@ -22,7 +22,6 @@
 
 #include <windows.h>
 #include "main.h"
-#include "dialog.h"
 #include "resource.h"
 
 BOOL CALLBACK CustomDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
