@@ -289,7 +289,7 @@ void cleanupBuffers(SspiData *sspi_data)
 
 /**********************************************************************/
 
-SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first)
+SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep)
 {
     SECURITY_STATUS ret;
     ULONG req_attr = ISC_REQ_CONNECTION | ISC_REQ_CONFIDENTIALITY;
@@ -323,7 +323,7 @@ SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first)
 
         /* pass NULL as an output buffer */
         ret = pInitializeSecurityContextA(sspi_data->cred, NULL, NULL, req_attr,
-            0, SECURITY_NATIVE_DREP, NULL, 0, sspi_data->ctxt, NULL,
+            0, data_rep, NULL, 0, sspi_data->ctxt, NULL,
             &ctxt_attr, &ttl);
 
         ok(ret == SEC_E_BUFFER_TOO_SMALL, "expected SEC_E_BUFFER_TOO_SMALL, got %s\n", getSecError(ret));
@@ -333,7 +333,7 @@ SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first)
         out_buf->pBuffers[0].pvBuffer = NULL;
 
         ret = pInitializeSecurityContextA(sspi_data->cred, NULL, NULL, req_attr, 
-            0, SECURITY_NATIVE_DREP, NULL, 0, sspi_data->ctxt, out_buf,
+            0, data_rep, NULL, 0, sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
         ok(ret == SEC_E_INTERNAL_ERROR, "expected SEC_E_INTERNAL_ERROR, got %s\n", getSecError(ret));
@@ -344,7 +344,7 @@ SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first)
         out_buf->pBuffers[0].cbBuffer = 0;
 
         ret = pInitializeSecurityContextA(sspi_data->cred, NULL, NULL, req_attr, 
-            0, SECURITY_NATIVE_DREP, NULL, 0, sspi_data->ctxt, out_buf,
+            0, data_rep, NULL, 0, sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
         ok(ret == SEC_E_BUFFER_TOO_SMALL, "expected SEC_E_BUFFER_TOO_SMALL, got %s\n", getSecError(ret));
@@ -356,7 +356,7 @@ SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first)
     out_buf->pBuffers[0].cbBuffer = sspi_data->max_token;
 
     ret = pInitializeSecurityContextA(sspi_data->cred, first?NULL:sspi_data->ctxt, NULL, req_attr, 
-            0, SECURITY_NATIVE_DREP, first?NULL:in_buf, 0, sspi_data->ctxt, out_buf,
+            0, data_rep, first?NULL:in_buf, 0, sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
     if(ret == SEC_I_COMPLETE_AND_CONTINUE || ret == SEC_I_COMPLETE_NEEDED)
@@ -376,7 +376,7 @@ SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first)
 
 /**********************************************************************/
 
-SECURITY_STATUS runServer(SspiData *sspi_data, BOOL first)
+SECURITY_STATUS runServer(SspiData *sspi_data, BOOL first, ULONG data_rep)
 {
     SECURITY_STATUS ret;
     ULONG ctxt_attr;
@@ -385,7 +385,7 @@ SECURITY_STATUS runServer(SspiData *sspi_data, BOOL first)
     trace("Running the server the %s time\n", first?"first":"second");
 
     ret = pAcceptSecurityContext(sspi_data->cred, first?NULL:sspi_data->ctxt, 
-            sspi_data->in_buf, 0, SECURITY_NATIVE_DREP, sspi_data->ctxt, 
+            sspi_data->in_buf, 0, data_rep, sspi_data->ctxt, 
             sspi_data->out_buf, &ctxt_attr, &ttl);
 
     if(ret == SEC_I_COMPLETE_AND_CONTINUE || ret == SEC_I_COMPLETE_NEEDED)
@@ -545,7 +545,7 @@ static void testQuerySecurityPackageInfo(void)
         getSecError(sec_status) );
 }
 
-void testAuth(SEC_CHAR* sec_pkg_name)
+void testAuth(SEC_CHAR* sec_pkg_name, ULONG data_rep)
 {
     SECURITY_STATUS         client_stat = SEC_I_CONTINUE_NEEDED;
     SECURITY_STATUS         server_stat = SEC_I_CONTINUE_NEEDED;
@@ -592,7 +592,7 @@ void testAuth(SEC_CHAR* sec_pkg_name)
 
         while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
         {
-            client_stat = runClient(&client, first);
+            client_stat = runClient(&client, first, data_rep);
 
             ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
                     "Running the client returned %s, more tests will fail.\n",
@@ -600,7 +600,7 @@ void testAuth(SEC_CHAR* sec_pkg_name)
             
             communicate(&client, &server);
             
-            server_stat = runServer(&server, first);
+            server_stat = runServer(&server, first, data_rep);
 
             ok(server_stat == SEC_E_OK || server_stat == SEC_I_CONTINUE_NEEDED ||
                     server_stat == SEC_E_LOGON_DENIED,
@@ -650,7 +650,10 @@ START_TEST(main)
         {
             testQuerySecurityPackageInfo();
             if(pInitSecurityInterfaceA)
-                testAuth("NTLM");
+            {
+                testAuth("NTLM", SECURITY_NATIVE_DREP);
+                testAuth("NTLM", SECURITY_NETWORK_DREP);
+            }
         }
     }
     if(secdll)

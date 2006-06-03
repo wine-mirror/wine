@@ -435,8 +435,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
     /* Done with the flags */
     if(TargetDataRep == SECURITY_NETWORK_DREP){
-        FIXME("Don't know how to do SECURITY_NETWORK_DREP\n");
-        return SEC_E_UNSUPPORTED_FUNCTION;
+        TRACE("Setting SECURITY_NETWORK_DREP\n");
     }
 
     buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(char) * NTLM_MAX_BUF);
@@ -714,10 +713,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
         }
         /* Done with the flags */
         if(TargetDataRep == SECURITY_NETWORK_DREP){
-            FIXME("Don't know how to do SECURITY_NETWORK_DREP\n");
-            HeapFree(GetProcessHeap(), 0, buffer);
-            HeapFree(GetProcessHeap(), 0, bin);
-            return SEC_E_UNSUPPORTED_FUNCTION;
+            TRACE("Using SECURITY_NETWORK_DREP\n");
         }
 
         
