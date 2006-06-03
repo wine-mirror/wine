@@ -35,7 +35,7 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
     {
     case WM_NCLBUTTONDOWN:
       {
-	HLOCAL  hProgram = (HLOCAL) GetWindowLong(hWnd, 0);
+	HLOCAL  hProgram = (HLOCAL) GetWindowLongPtr(hWnd, 0);
 	PROGRAM *program = LocalLock(hProgram);
 	PROGGROUP   *group   = LocalLock(program->hGroup);
 	group->hActiveProgram = hProgram;
@@ -45,7 +45,7 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
       }
     case WM_NCLBUTTONDBLCLK:
       {
-	PROGRAM_ExecuteProgram((HLOCAL) GetWindowLong(hWnd, 0));
+	PROGRAM_ExecuteProgram((HLOCAL) GetWindowLongPtr(hWnd, 0));
 	return(0);
       }
 
@@ -56,7 +56,7 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
 	PAINTSTRUCT      ps;
 	HDC              hdc;
 	hdc     = BeginPaint(hWnd,&ps);
-	program = LocalLock((HLOCAL) GetWindowLong(hWnd, 0));
+	program = LocalLock((HLOCAL) GetWindowLongPtr(hWnd, 0));
 	if (program->hIcon)
 	  DrawIcon(hdc, 0, 0, program->hIcon);
 	EndPaint(hWnd,&ps);
@@ -78,7 +78,7 @@ ATOM PROGRAM_RegisterProgramWinClass()
   class.style         = CS_HREDRAW | CS_VREDRAW;
   class.lpfnWndProc   = PROGRAM_ProgramWndProc;
   class.cbClsExtra    = 0;
-  class.cbWndExtra    = sizeof(LONG);
+  class.cbWndExtra    = sizeof(LONG_PTR);
   class.hInstance     = Globals.hInstance;
   class.hIcon         = 0;
   class.hCursor       = LoadCursor (0, IDC_ARROW);
@@ -220,7 +220,7 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
 		  x, y, CW_USEDEFAULT, CW_USEDEFAULT,
 		  group->hWnd, 0, Globals.hInstance, 0);
 
-  SetWindowLong(program->hWnd, 0, (LONG) hProgram);
+  SetWindowLongPtr(program->hWnd, 0, (LONG_PTR) hProgram);
 
   ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
   SetWindowPos (program->hWnd, 0, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);

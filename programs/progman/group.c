@@ -44,7 +44,7 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
 
     case WM_CHILDACTIVATE:
     case WM_NCLBUTTONDOWN:
-      Globals.hActiveGroup = (HLOCAL) GetWindowLong(hWnd, 0);
+      Globals.hActiveGroup = (HLOCAL) GetWindowLongPtr(hWnd, 0);
       EnableMenuItem(Globals.hFileMenu, PM_MOVE , MF_GRAYED);
       EnableMenuItem(Globals.hFileMenu, PM_COPY , MF_GRAYED);
       break;
@@ -64,7 +64,7 @@ ATOM GROUP_RegisterGroupWinClass()
   class.style         = CS_HREDRAW | CS_VREDRAW;
   class.lpfnWndProc   = GROUP_GroupWndProc;
   class.cbClsExtra    = 0;
-  class.cbWndExtra    = sizeof(LONG);
+  class.cbWndExtra    = sizeof(LONG_PTR);
   class.hInstance     = Globals.hInstance;
   class.hIcon         = LoadIcon (0, IDI_WINLOGO);
   class.hCursor       = LoadCursor (0, IDC_ARROW);
@@ -180,7 +180,7 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
 
   group->hWnd = (HWND)SendMessage(Globals.hMDIWnd, WM_MDICREATE, 0, (LPARAM)&cs);
 
-  SetWindowLong(group->hWnd, 0, (LONG) hGroup);
+  SetWindowLongPtr(group->hWnd, 0, (LONG_PTR) hGroup);
 
 #if 1
   if (!bSuppressShowWindow) /* FIXME shouldn't be necessary */
