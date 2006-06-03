@@ -47,7 +47,7 @@ static size_t last_line_idx = 0;
         /* FIXME: should have a pair of buffers, and switch between the two, instead of
          * reallocating a new one for each line
          */
-        if (len == 0 || (len == 1 && tmp[0] == '\n') || (len == 2 && tmp[0] == '\r' && tmp[1] == '\n'))
+        if (last_line && (len == 0 || (len == 1 && tmp[0] == '\n') || (len == 2 && tmp[0] == '\r' && tmp[1] == '\n')))
         {
             HeapFree(GetProcessHeap(), 0, tmp);
         }
