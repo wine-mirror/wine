@@ -559,7 +559,7 @@ static void mw_PageSetup(HWND hWnd)
  * In particular, we have to set things properly, and get the flags back.
  */
 
-static void mwcd_SetFlags(HWND hWnd, struct FlagTableEntry *table, unsigned long flags)
+static void mwcd_SetFlags(HWND hWnd, struct FlagTableEntry *table, DWORD flags)
 {
 	int i;
 
@@ -569,7 +569,7 @@ static void mwcd_SetFlags(HWND hWnd, struct FlagTableEntry *table, unsigned long
 	}
 }
 
-static unsigned long mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
+static DWORD mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
 {
 	int i;
 	unsigned long l = 0;
@@ -590,8 +590,8 @@ static unsigned long mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
  * not the handlers.  I'll fix that later; this works as of right now.
  */
 
-static BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
-					 struct FlagTableEntry * table, unsigned long * flags)
+static INT_PTR mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
+					 struct FlagTableEntry * table, DWORD* flags)
 {
 	(void) lParam;
 
@@ -629,7 +629,7 @@ static BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	}
 }
 
-static BOOL CALLBACK mwcd_ColorSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK mwcd_ColorSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
 		{I_CC_RGBINIT, CC_RGBINIT},
@@ -645,7 +645,7 @@ static BOOL CALLBACK mwcd_ColorSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &cc.Flags);
 }
 
-static BOOL CALLBACK mwcd_FontSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK mwcd_FontSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
 		{I_CF_APPLY, CF_APPLY},
@@ -676,7 +676,7 @@ static BOOL CALLBACK mwcd_FontSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &cf.Flags);
 }
 
-static BOOL CALLBACK mwcd_FindSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK mwcd_FindSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 
 	static struct FlagTableEntry flagTable[] = {
@@ -703,7 +703,7 @@ static BOOL CALLBACK mwcd_FindSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &frS.Flags);
 }
 
-static BOOL CALLBACK mwcd_PrintSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK mwcd_PrintSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
 		{I_PD_ALLPAGES, PD_ALLPAGES},
@@ -734,7 +734,7 @@ static BOOL CALLBACK mwcd_PrintSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &pd.Flags);
 }
 
-static BOOL CALLBACK mwcd_PageSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK mwcd_PageSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
 		{I_PSD_DEFAULTMINMARGINS, 	PSD_DEFAULTMINMARGINS},
@@ -762,7 +762,7 @@ static BOOL CALLBACK mwcd_PageSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &psd.Flags);
 }
 
-static BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
 		{I_OFN_ALLOWMULTISELECT, OFN_ALLOWMULTISELECT},
@@ -788,7 +788,7 @@ static BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &ofn.Flags);
 }
 
-static BOOL CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	(void) wParam;
 	(void) lParam;
