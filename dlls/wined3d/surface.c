@@ -480,170 +480,173 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
             }
         }
 
-    } else if (WINED3DUSAGE_RENDERTARGET & This->resource.usage && !(Flags&WINED3DLOCK_DISCARD)) { /* render surfaces */
+    } else if (WINED3DUSAGE_RENDERTARGET & This->resource.usage ){ /* render surfaces */
+        if((!(Flags&WINED3DLOCK_DISCARD) && (This->Flags & SFLAG_GLDIRTY)) || !This->resource.allocatedMemory) {
+            GLint  prev_store;
+            GLint  prev_read;
+            BOOL notInContext = FALSE;
+            IWineD3DSwapChainImpl *targetSwapChain = NULL;
 
-        GLint  prev_store;
-        GLint  prev_read;
-        BOOL notInContext = FALSE;
-        IWineD3DSwapChainImpl *targetSwapChain = NULL;
 
+            ENTER_GL();
 
-        ENTER_GL();
+                /**
+                * for render->surface copy begin to begin of allocatedMemory
+                * unlock can be more easy
+                */
 
-            /**
-             * for render->surface copy begin to begin of allocatedMemory
-             * unlock can be more easy
-             */
+            TRACE("locking a render target\n");
 
-        TRACE("locking a render target\n");
+            if (This->resource.allocatedMemory == NULL)
+                    This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 ,This->resource.size);
 
-        if (This->resource.allocatedMemory == NULL)
-                This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 ,This->resource.size);
+            This->Flags |= SFLAG_ACTIVELOCK; /*When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory*/
+            pLockedRect->pBits = This->resource.allocatedMemory;
 
-        This->Flags |= SFLAG_ACTIVELOCK; /*When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory*/
-        pLockedRect->pBits = This->resource.allocatedMemory;
+            glFlush();
+            vcheckGLcall("glFlush");
+            glGetIntegerv(GL_READ_BUFFER, &prev_read);
+            vcheckGLcall("glIntegerv");
+            glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
+            vcheckGLcall("glIntegerv");
 
-        glFlush();
-        vcheckGLcall("glFlush");
-        glGetIntegerv(GL_READ_BUFFER, &prev_read);
-        vcheckGLcall("glIntegerv");
-        glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
-        vcheckGLcall("glIntegerv");
+    /* Here's what we have to do:
+                See if the swapchain has the same context as the renderTarget or the surface is the render target.
+                Otherwise, see if were sharing a context with the implicit swapchain (because we're using a shared context model!)
+                and use the front back buffer as required.
+                if not, we need to switch contexts and then switchback at the end.
+            */
+            IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
+            IWineD3DSurface_GetContainer(myDevice->renderTarget, &IID_IWineD3DSwapChain, (void **)&targetSwapChain);
 
- /* Here's what we have to do:
-            See if the swapchain has the same context as the renderTarget or the surface is the render target.
-            Otherwise, see if were sharing a context with the implicit swapchain (because we're using a shared context model!)
-            and use the front back buffer as required.
-            if not, we need to switch contexts and then switchback at the end.
-         */
-        IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
-        IWineD3DSurface_GetContainer(myDevice->renderTarget, &IID_IWineD3DSwapChain, (void **)&targetSwapChain);
-
-        /* NOTE: In a shared context environment the renderTarget will use the same context as the implicit swapchain (we're not in a shared environment yet! */
-        if ((swapchain == targetSwapChain && targetSwapChain != NULL) || iface == myDevice->renderTarget) {
-                if (iface == myDevice->renderTarget || iface == swapchain->backBuffer) {
-                    TRACE("locking back buffer\n");
-                   glReadBuffer(GL_BACK);
-                } else if (iface == swapchain->frontBuffer) {
-                   TRACE("locking front\n");
-                   glReadBuffer(GL_FRONT);
-                } else if (iface == myDevice->depthStencilBuffer) {
-                    FIXME("Stencil Buffer lock unsupported for now\n");
-                } else {
-                   FIXME("(%p) Shouldn't have got here!\n", This);
-                   glReadBuffer(GL_BACK);
-                }
-        } else if (swapchain != NULL) {
-            IWineD3DSwapChainImpl *implSwapChain;
-            IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
-            if (swapchain->glCtx == implSwapChain->render_ctx && swapchain->drawable == implSwapChain->win) {
-                    /* This will fail for the implicit swapchain, which is why there needs to be a context manager */
-                    if (iface == swapchain->backBuffer) {
-                        glReadBuffer(GL_BACK);
+            /* NOTE: In a shared context environment the renderTarget will use the same context as the implicit swapchain (we're not in a shared environment yet! */
+            if ((swapchain == targetSwapChain && targetSwapChain != NULL) || iface == myDevice->renderTarget) {
+                    if (iface == myDevice->renderTarget || iface == swapchain->backBuffer) {
+                        TRACE("locking back buffer\n");
+                      glReadBuffer(GL_BACK);
                     } else if (iface == swapchain->frontBuffer) {
-                        glReadBuffer(GL_FRONT);
+                      TRACE("locking front\n");
+                      glReadBuffer(GL_FRONT);
                     } else if (iface == myDevice->depthStencilBuffer) {
                         FIXME("Stencil Buffer lock unsupported for now\n");
                     } else {
-                        FIXME("Should have got here!\n");
-                        glReadBuffer(GL_BACK);
+                      FIXME("(%p) Shouldn't have got here!\n", This);
+                      glReadBuffer(GL_BACK);
                     }
-            } else {
-                /* We need to switch contexts to be able to read the buffer!!! */
-                FIXME("The buffer requested isn't in the current openGL context\n");
-                notInContext = TRUE;
-                /* TODO: check the contexts, to see if were shared with the current context */
-            }
-            IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
-        }
-        if (swapchain != NULL)       IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-        if (targetSwapChain != NULL) IWineD3DSwapChain_Release((IWineD3DSwapChain *)targetSwapChain);
-
-
-        /** the depth stencil in openGL has a format of GL_FLOAT
-        * which should be good for WINED3DFMT_D16_LOCKABLE
-        * and WINED3DFMT_D16
-        * it is unclear what format the stencil buffer is in except.
-        * 'Each index is converted to fixed point...
-        * If GL_MAP_STENCIL is GL_TRUE, indices are replaced by their
-        * mappings in the table GL_PIXEL_MAP_S_TO_S.
-        * glReadPixels(This->lockedRect.left,
-        *             This->lockedRect.bottom - j - 1,
-        *             This->lockedRect.right - This->lockedRect.left,
-        *             1,
-        *             GL_DEPTH_COMPONENT,
-        *             type,
-        *             (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
-            *****************************************/
-        if (!notInContext) { /* Only read the buffer if it's in the current context */
-            long j;
-#if 0
-            /* Bizarly it takes 120 millseconds to get an 800x600 region a line at a time, but only 10 to get the whole lot every time,
-            *  This is on an ATI9600, and may be format dependent, anyhow this hack makes this demo dx9_2d_demo_game
-            *  run ten times faster!
-            * ************************************/
-            BOOL ati_performance_hack = FALSE;
-            ati_performance_hack = (This->lockedRect.bottom - This->lockedRect.top > 10) || (This->lockedRect.right - This->lockedRect.left > 10)? TRUE: FALSE;
-#endif
-            if ((This->lockedRect.left == 0 &&  This->lockedRect.top == 0 &&
-                This->lockedRect.right == This->currentDesc.Width
-                && This->lockedRect.bottom ==  This->currentDesc.Height)) {
-                    BYTE *row, *top, *bottom;
-                    int i;
-
-                    glReadPixels(0, 0,
-                    This->currentDesc.Width,
-                    This->currentDesc.Height,
-                    This->glDescription.glFormat,
-                    This->glDescription.glType,
-                    (char *)pLockedRect->pBits);
-
-                    /* glReadPixels returns the image upside down, and there is no way to prevent this.
-                       Flip the lines in software*/
-                    row = HeapAlloc(GetProcessHeap(), 0, pLockedRect->Pitch);
-                    if(!row) {
-                        ERR("Out of memory\n");
-                        return E_OUTOFMEMORY;
-                    }
-                    top = This->resource.allocatedMemory;
-                    bottom = ( (BYTE *) This->resource.allocatedMemory) + pLockedRect->Pitch * ( This->currentDesc.Height - 1);
-                    for(i = 0; i < This->currentDesc.Height / 2; i++) {
-                        memcpy(row, top, pLockedRect->Pitch);
-                        memcpy(top, bottom, pLockedRect->Pitch);
-                        memcpy(bottom, row, pLockedRect->Pitch);
-                        top += pLockedRect->Pitch;
-                        bottom -= pLockedRect->Pitch;
-                    }
-                    HeapFree(GetProcessHeap(), 0, row);
-
-            } else if (This->lockedRect.left == 0 &&  This->lockedRect.right == This->currentDesc.Width) {
-                    glReadPixels(0,
-                    This->lockedRect.top,
-                    This->currentDesc.Width,
-                    This->currentDesc.Height,
-                    This->glDescription.glFormat,
-                    This->glDescription.glType,
-                    (char *)pLockedRect->pBits);
-            } else{
-
-                for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
-                    glReadPixels(This->lockedRect.left, 
-                                 This->lockedRect.bottom - j - 1, 
-                                 This->lockedRect.right - This->lockedRect.left, 
-                                 1,
-                                 This->glDescription.glFormat,
-                                 This->glDescription.glType,
-                                 (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
-
+            } else if (swapchain != NULL) {
+                IWineD3DSwapChainImpl *implSwapChain;
+                IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
+                if (swapchain->glCtx == implSwapChain->render_ctx && swapchain->drawable == implSwapChain->win) {
+                        /* This will fail for the implicit swapchain, which is why there needs to be a context manager */
+                        if (iface == swapchain->backBuffer) {
+                            glReadBuffer(GL_BACK);
+                        } else if (iface == swapchain->frontBuffer) {
+                            glReadBuffer(GL_FRONT);
+                        } else if (iface == myDevice->depthStencilBuffer) {
+                            FIXME("Stencil Buffer lock unsupported for now\n");
+                        } else {
+                            FIXME("Should have got here!\n");
+                            glReadBuffer(GL_BACK);
+                        }
+                } else {
+                    /* We need to switch contexts to be able to read the buffer!!! */
+                    FIXME("The buffer requested isn't in the current openGL context\n");
+                    notInContext = TRUE;
+                    /* TODO: check the contexts, to see if were shared with the current context */
                 }
+                IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
             }
-            vcheckGLcall("glReadPixels");
-            TRACE("Resetting buffer\n");
-            glReadBuffer(prev_read);
-            vcheckGLcall("glReadBuffer");
-        }
-        LEAVE_GL();
+            if (swapchain != NULL)       IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+            if (targetSwapChain != NULL) IWineD3DSwapChain_Release((IWineD3DSwapChain *)targetSwapChain);
 
+            /** the depth stencil in openGL has a format of GL_FLOAT
+            * which should be good for WINED3DFMT_D16_LOCKABLE
+            * and WINED3DFMT_D16
+            * it is unclear what format the stencil buffer is in except.
+            * 'Each index is converted to fixed point...
+            * If GL_MAP_STENCIL is GL_TRUE, indices are replaced by their
+            * mappings in the table GL_PIXEL_MAP_S_TO_S.
+            * glReadPixels(This->lockedRect.left,
+            *             This->lockedRect.bottom - j - 1,
+            *             This->lockedRect.right - This->lockedRect.left,
+            *             1,
+            *             GL_DEPTH_COMPONENT,
+            *             type,
+            *             (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
+                *****************************************/
+            if (!notInContext) { /* Only read the buffer if it's in the current context */
+                long j;
+
+#if 0
+                /* Bizarly it takes 120 millseconds to get an 800x600 region a line at a time, but only 10 to get the whole lot every time,
+                *  This is on an ATI9600, and may be format dependent, anyhow this hack makes this demo dx9_2d_demo_game
+                *  run ten times faster!
+                * ************************************/
+                BOOL ati_performance_hack = FALSE;
+                ati_performance_hack = (This->lockedRect.bottom - This->lockedRect.top > 10) || (This->lockedRect.right - This->lockedRect.left > 10)? TRUE: FALSE;
+#endif
+                if ((This->lockedRect.left == 0 &&  This->lockedRect.top == 0 &&
+                    This->lockedRect.right == This->currentDesc.Width
+                    && This->lockedRect.bottom ==  This->currentDesc.Height)) {
+                        BYTE *row, *top, *bottom;
+                        int i;
+
+                        glReadPixels(0, 0,
+                        This->currentDesc.Width,
+                        This->currentDesc.Height,
+                        This->glDescription.glFormat,
+                        This->glDescription.glType,
+                        (char *)pLockedRect->pBits);
+
+                        /* glReadPixels returns the image upside down, and there is no way to prevent this.
+                          Flip the lines in software*/
+                        row = HeapAlloc(GetProcessHeap(), 0, pLockedRect->Pitch);
+                        if(!row) {
+                            ERR("Out of memory\n");
+                            return E_OUTOFMEMORY;
+                        }
+                        top = This->resource.allocatedMemory;
+                        bottom = ( (BYTE *) This->resource.allocatedMemory) + pLockedRect->Pitch * ( This->currentDesc.Height - 1);
+                        for(i = 0; i < This->currentDesc.Height / 2; i++) {
+                            memcpy(row, top, pLockedRect->Pitch);
+                            memcpy(top, bottom, pLockedRect->Pitch);
+                            memcpy(bottom, row, pLockedRect->Pitch);
+                            top += pLockedRect->Pitch;
+                            bottom -= pLockedRect->Pitch;
+                        }
+                        HeapFree(GetProcessHeap(), 0, row);
+
+                        This->Flags &= ~SFLAG_GLDIRTY;
+
+                } else if (This->lockedRect.left == 0 &&  This->lockedRect.right == This->currentDesc.Width) {
+                        glReadPixels(0,
+                        This->lockedRect.top,
+                        This->currentDesc.Width,
+                        This->currentDesc.Height,
+                        This->glDescription.glFormat,
+                        This->glDescription.glType,
+                        (char *)pLockedRect->pBits);
+                } else{
+
+                    for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
+                        glReadPixels(This->lockedRect.left, 
+                                    This->lockedRect.bottom - j - 1, 
+                                    This->lockedRect.right - This->lockedRect.left, 
+                                    1,
+                                    This->glDescription.glFormat,
+                                    This->glDescription.glType,
+                                    (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
+
+                    }
+                }
+
+                vcheckGLcall("glReadPixels");
+                TRACE("Resetting buffer\n");
+                glReadBuffer(prev_read);
+                vcheckGLcall("glReadBuffer");
+            }
+            LEAVE_GL();
+        }
     } else if (WINED3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
 
         if (!messages & 1) {
@@ -784,13 +787,13 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                per drawprim (and leave set - it will sort itself out due to last_was_rhw */
             d3ddevice_set_ortho(This->resource.wineD3DDevice);
 
-            if (iface ==  implSwapChain->backBuffer || iface == myDevice->renderTarget) {
-                glDrawBuffer(GL_BACK);
-            } else if (iface ==  implSwapChain->frontBuffer) {
+            if (iface ==  implSwapChain->frontBuffer) {
                 glDrawBuffer(GL_FRONT);
+                checkGLcall("glDrawBuffer GL_FRONT");
+            } else if (iface ==  implSwapChain->backBuffer || iface == myDevice->renderTarget) {
+                glDrawBuffer(GL_BACK);
+                checkGLcall("glDrawBuffer GL_BACK");
             }
-
-            vcheckGLcall("glDrawBuffer");
 
             /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
             glGetIntegerv(GL_UNPACK_ROW_LENGTH, &skipBytes);
@@ -2243,6 +2246,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             }
 
             LEAVE_GL();
+
+            /* TODO: If the surface is locked often, perform the Blt in software on the memory instead */
+            This->Flags |= SFLAG_GLDIRTY;
 
             return WINED3D_OK;
         }

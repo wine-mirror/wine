@@ -329,6 +329,9 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
         IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER, 0x00, 1.0, 0);
     }
 
+    ((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags |= SFLAG_GLDIRTY;
+    ((IWineD3DSurfaceImpl *) This->backBuffer)->Flags |= SFLAG_GLDIRTY;
+
     TRACE("returning\n");
     return WINED3D_OK;
 }

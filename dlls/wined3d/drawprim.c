@@ -2069,7 +2069,8 @@ void drawPrimitive(IWineD3DDevice *iface,
     BOOL                          usePixelShaderFunction = FALSE;
     BOOL                          isLightingOn = FALSE;
     WineDirect3DVertexStridedData *dataLocations;
-    int                           useHW = FALSE;
+    IWineD3DSwapChainImpl         *swapchain;
+    int                           useHW = FALSE, i;
 
     if (This->stateBlock->vertexShader != NULL && wined3d_settings.vs_mode != VS_NONE 
             &&((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.function != NULL
@@ -2091,6 +2092,15 @@ void drawPrimitive(IWineD3DDevice *iface,
         if (rc) return;
     } else {
         TRACE("(%p) : using vertex declaration %p\n", iface, This->stateBlock->vertexDecl);
+    }
+
+    /* Invalidate the back buffer memory so LockRect will read it the next time */
+    for(i = 0; i < IWineD3DDevice_GetNumberOfSwapChains(iface); i++) {
+        IWineD3DDevice_GetSwapChain(iface, i, (IWineD3DSwapChain **) &swapchain);
+        if(swapchain) {
+            if(swapchain->backBuffer) ((IWineD3DSurfaceImpl *) swapchain->backBuffer)->Flags |= SFLAG_GLDIRTY;
+            IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
+        }
     }
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
