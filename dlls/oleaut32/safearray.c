@@ -169,25 +169,6 @@ static ULONG SAFEARRAY_GetCellCount(const SAFEARRAY *psa)
   return ulNumCells;
 }
 
-/* Get the 0 based index of an index into a dimension */
-static inline ULONG SAFEARRAY_GetDimensionIndex(SAFEARRAYBOUND *psab, ULONG ulIndex)
-{
-  return ulIndex - psab->lLbound;
-}
-
-/* Get the size of a dimension in cells */
-static inline ULONG SAFEARRAY_GetDimensionCells(SAFEARRAY *psa, ULONG ulDim)
-{
-  ULONG size = psa->rgsabound[0].cElements;
-
-  while (ulDim)
-  {
-    size *= psa->rgsabound[ulDim].cElements;
-    ulDim--;
-  }
-  return size;
-}
-
 /* Allocate a descriptor for an array */
 static HRESULT SAFEARRAY_AllocDescriptor(ULONG ulSize, SAFEARRAY **ppsaOut)
 {
@@ -226,6 +207,7 @@ static void SAFEARRAY_SetFeatures(VARTYPE vt, SAFEARRAY *psa)
 static SAFEARRAY* SAFEARRAY_Create(VARTYPE vt, UINT cDims, SAFEARRAYBOUND *rgsabound, ULONG ulSize)
 {
   SAFEARRAY *psa = NULL;
+  int i;
 
   if (!rgsabound)
     return NULL;
@@ -240,7 +222,8 @@ static SAFEARRAY* SAFEARRAY_Create(VARTYPE vt, UINT cDims, SAFEARRAYBOUND *rgsab
       case VT_VARIANT:  psa->fFeatures |= FADF_VARIANT; break;
     }
 
-    memcpy(psa->rgsabound, rgsabound, cDims * sizeof(SAFEARRAYBOUND));
+    for (i = 0; i < cDims; i++)
+      memcpy(psa->rgsabound + i, rgsabound + cDims - 1 - i, sizeof(SAFEARRAYBOUND));
 
     if (ulSize)
       psa->cbElements = ulSize;
@@ -1027,8 +1010,8 @@ HRESULT WINAPI SafeArrayGetUBound(SAFEARRAY *psa, UINT nDim, LONG *plUbound)
   if(!nDim || nDim > psa->cDims)
     return DISP_E_BADINDEX;
 
-  *plUbound = psa->rgsabound[nDim - 1].lLbound +
-              psa->rgsabound[nDim - 1].cElements - 1;
+  *plUbound = psa->rgsabound[psa->cDims - nDim].lLbound +
+              psa->rgsabound[psa->cDims - nDim].cElements - 1;
 
   return S_OK;
 }
@@ -1060,7 +1043,7 @@ HRESULT WINAPI SafeArrayGetLBound(SAFEARRAY *psa, UINT nDim, LONG *plLbound)
   if(!nDim || nDim > psa->cDims)
     return DISP_E_BADINDEX;
 
-  *plLbound = psa->rgsabound[nDim - 1].lLbound;
+  *plLbound = psa->rgsabound[psa->cDims - nDim].lLbound;
   return S_OK;
 }
 
@@ -1199,7 +1182,7 @@ HRESULT WINAPI SafeArrayPtrOfIndex(SAFEARRAY *psa, LONG *rgIndices, void **ppvDa
   if (!psa || !rgIndices || !ppvData)
     return E_INVALIDARG;
 
-  psab = psa->rgsabound;
+  psab = psa->rgsabound + psa->cDims - 1;
   c1 = *rgIndices++;
 
   if (c1 < psab->lLbound || c1 >= psab->lLbound + (LONG)psab->cElements)
@@ -1209,7 +1192,7 @@ HRESULT WINAPI SafeArrayPtrOfIndex(SAFEARRAY *psa, LONG *rgIndices, void **ppvDa
   {
     dimensionSize *= psab->cElements;
 
-    psab++;
+    psab--;
 
     if (!psab->cElements ||
         *rgIndices < psab->lLbound ||
@@ -1220,7 +1203,7 @@ HRESULT WINAPI SafeArrayPtrOfIndex(SAFEARRAY *psa, LONG *rgIndices, void **ppvDa
     rgIndices++;
   }
 
-  cell += (c1 - psa->rgsabound[0].lLbound);
+  cell += (c1 - psa->rgsabound[psa->cDims - 1].lLbound);
 
   *ppvData = (char*)psa->pvData + cell * psa->cbElements;
   return S_OK;
@@ -1452,7 +1435,7 @@ HRESULT WINAPI SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psabound)
   if (FAILED(SafeArrayLock(psa)))
     return E_UNEXPECTED;
 
-  oldBounds = &psa->rgsabound[psa->cDims - 1];
+  oldBounds = psa->rgsabound;
   oldBounds->lLbound = psabound->lLbound;
 
   if (psabound->cElements != oldBounds->cElements)
@@ -1460,9 +1443,8 @@ HRESULT WINAPI SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psabound)
     if (psabound->cElements < oldBounds->cElements)
     {
       /* Shorten the final dimension. */
-      ULONG ulStartCell = psa->cDims == 1 ? 0 : SAFEARRAY_GetDimensionCells(psa, psa->cDims - 1);
-
-      ulStartCell += psabound->cElements;
+      ULONG ulStartCell = psabound->cElements *
+                          (SAFEARRAY_GetCellCount(psa) / oldBounds->cElements);
       SAFEARRAY_DestroyData(psa, ulStartCell);
     }
     else

@@ -321,6 +321,22 @@ static void test_safearray(void)
 	hres = SafeArrayDestroy(a);
 	ok(hres == S_OK,"SAD of 0 dim array faild with hres %lx\n", hres);
 
+        SafeArrayAllocDescriptor(2, &a);
+        a->rgsabound[0].cElements = 2;
+        a->rgsabound[0].lLbound = 1;
+        a->rgsabound[1].cElements = 4;
+        a->rgsabound[1].lLbound = 1;
+        a->cbElements = 2;
+        SafeArrayAllocData(a);
+
+        indices[0] = 4;
+        indices[1] = 2;
+        hres = SafeArrayPtrOfIndex(a, indices, (void **)&ptr1);
+        ok(hres == S_OK, "SAPOI failed with hres %lx\n", hres);
+        SafeArrayAccessData(a, (void **)&ptr2);
+        ok(ptr1 - ptr2 == 14, "SAPOI got wrong ptr\n");
+        SafeArrayUnaccessData(a);
+
 	bounds[0].cElements = 0;	bounds[0].lLbound =  1;
 	bounds[1].cElements =  2;	bounds[1].lLbound = 23;
     	a = SafeArrayCreate(VT_I4,2,bounds);
