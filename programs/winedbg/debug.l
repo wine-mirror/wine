@@ -89,7 +89,6 @@ STRING     \"[^\n"]+\"
 %s SHOW_CMD
 %s MODE_CMD
 %s MAINT_CMD
-%s NOCMD
 
 %x ASTRING_EXPECTED
 %x NOPROCESS
@@ -135,36 +134,36 @@ STRING     \"[^\n"]+\"
                                           yylval.string = lexeme_alloc(p); return tSTRING; }
 
 <INITIAL,NOPROCESS>info|inf|in		{ BEGIN(INFO_CMD); return tINFO; }
-<INITIAL>up				{ BEGIN(NOCMD); return tUP; }
-<INITIAL>down|dow|do			{ BEGIN(NOCMD); return tDOWN; }
-<INITIAL>frame|fram|fra|fr		{ BEGIN(NOCMD); return tFRAME; }
+<INITIAL>up				{ return tUP; }
+<INITIAL>down|dow|do			{ return tDOWN; }
+<INITIAL>frame|fram|fra|fr		{ return tFRAME; }
 <INITIAL>list|lis|li|l			{ BEGIN(PATH_EXPECTED); return tLIST; }
 <INITIAL>enable|enabl|enab|ena		{ BEGIN(BD_CMD); return tENABLE;}
 <INITIAL>disable|disabl|disab|disa|dis  { BEGIN(BD_CMD); return tDISABLE; }
-<INITIAL>disassemble|disassembl|disassemb|disassem|disasse|disass|disas { BEGIN(NOCMD); return tDISASSEMBLE; }
+<INITIAL>disassemble|disassembl|disassemb|disassem|disasse|disass|disas { return tDISASSEMBLE; }
 <INITIAL>locally|local			{ BEGIN(LOCAL_CMD); return tLOCAL; }
 <INITIAL,LOCAL_CMD>display|displa|displ|disp	{ BEGIN(FORMAT_EXPECTED); return tDISPLAY; }
-<INFO_CMD,BD_CMD>display|displa|displ|disp|dis|di|d	{ BEGIN(NOCMD); return tDISPLAY; }
-<INITIAL>undisplay|undispla|undispl|undisp|undis|undi|und	{ BEGIN(NOCMD); return tUNDISPLAY; }
+<INFO_CMD,BD_CMD>display|displa|displ|disp|dis|di|d	{ return tDISPLAY; }
+<INITIAL>undisplay|undispla|undispl|undisp|undis|undi|und	{ return tUNDISPLAY; }
 <INITIAL>delete|delet|dele|del		{ BEGIN(BD_CMD); return tDELETE; }
-<INITIAL,NOPROCESS>quit|qui|qu|q	{ BEGIN(NOCMD); return tQUIT; }
-<INITIAL>set|se				{ BEGIN(NOCMD); return tSET; }
+<INITIAL,NOPROCESS>quit|qui|qu|q	{ return tQUIT; }
+<INITIAL>set|se				{ return tSET; }
 <INITIAL>x				{ BEGIN(FORMAT_EXPECTED); return tEXAM; }
 <INITIAL,NOPROCESS>help|hel|he|"?"	{ BEGIN(HELP_CMD); return tHELP; }
 
-<INITIAL,NOPROCESS>backtrace|backtrac|backtra|backt|back|bac|ba|bt { BEGIN(NOCMD); return tBACKTRACE; }
-<INITIAL,NOPROCESS>where|wher|whe       { BEGIN(NOCMD); return tBACKTRACE; }
+<INITIAL,NOPROCESS>backtrace|backtrac|backtra|backt|back|bac|ba|bt { return tBACKTRACE; }
+<INITIAL,NOPROCESS>where|wher|whe       { return tBACKTRACE; }
 
-<INITIAL>cont|con|co|c   		{ BEGIN(NOCMD); return tCONT; }
-<INITIAL>pass|pas|pa   			{ BEGIN(NOCMD); return tPASS; }
-<INITIAL>condition|conditio|conditi|condit|condi|cond	{ BEGIN(NOCMD); return tCOND; }
-<INITIAL>step|ste|st|s   		{ BEGIN(NOCMD); return tSTEP; }
-<INITIAL>next|nex|ne|n   		{ BEGIN(NOCMD); return tNEXT; }
-<INITIAL>stepi|si	   		{ BEGIN(NOCMD); return tSTEPI; }
-<INITIAL>nexti|ni	   		{ BEGIN(NOCMD); return tNEXTI; }
-<INITIAL>finish|finis|fini|fin|fi	{ BEGIN(NOCMD); return tFINISH; }
+<INITIAL>cont|con|co|c   		{ return tCONT; }
+<INITIAL>pass|pas|pa   			{ return tPASS; }
+<INITIAL>condition|conditio|conditi|condit|condi|cond	{ return tCOND; }
+<INITIAL>step|ste|st|s   		{ return tSTEP; }
+<INITIAL>next|nex|ne|n   		{ return tNEXT; }
+<INITIAL>stepi|si	   		{ return tSTEPI; }
+<INITIAL>nexti|ni	   		{ return tNEXTI; }
+<INITIAL>finish|finis|fini|fin|fi	{ return tFINISH; }
 
-<INITIAL>abort|abor|abo         	{ BEGIN(NOCMD); return tABORT; }
+<INITIAL>abort|abor|abo         	{ return tABORT; }
 <INITIAL>print|prin|pri|pr|p		{ BEGIN(FORMAT_EXPECTED); return tPRINT; }
 
 <INITIAL>mode				{ BEGIN(MODE_CMD); return tMODE; }
@@ -172,16 +171,16 @@ STRING     \"[^\n"]+\"
 <INITIAL,NOPROCESS>source|sourc|sour|src { BEGIN(PATH_EXPECTED); return tSOURCE; }
 <INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
 
-<INITIAL,INFO_CMD,BD_CMD>break|brea|bre|br|b	{ BEGIN(NOCMD); return tBREAK; }
-<INITIAL,INFO_CMD,BD_CMD>hbreak|hbrea|hbre|hbr|hb { BEGIN(NOCMD); return tHBREAK; }
-<INITIAL>watch|watc|wat			{ BEGIN(NOCMD); return tWATCH; }
-<INITIAL>whatis|whati|what		{ BEGIN(NOCMD); return tWHATIS; }
+<INITIAL,INFO_CMD,BD_CMD>break|brea|bre|br|b	{ return tBREAK; }
+<INITIAL,INFO_CMD,BD_CMD>hbreak|hbrea|hbre|hbr|hb { return tHBREAK; }
+<INITIAL>watch|watc|wat			{ return tWATCH; }
+<INITIAL>whatis|whati|what		{ return tWHATIS; }
 <INITIAL,NOPROCESS>run|ru|r     	{ BEGIN(ASTRING_EXPECTED); return tRUN;}
-<INITIAL>detach|detac|deta|det   	{ BEGIN(NOCMD); return tDETACH; }
+<INITIAL>detach|detac|deta|det   	{ return tDETACH; }
 <INITIAL>maintenance|maint              { BEGIN(MAINT_CMD); return tMAINTENANCE; }
 <INITIAL>minidump|mdmp                  { BEGIN(PATH_EXPECTED); return tMINIDUMP; }
 <INITIAL>echo				{ BEGIN(ASTRING_EXPECTED); return tECHO; }
-<NOPROCESS>attach|attac|atta|att 	{ BEGIN(NOCMD); return tATTACH; }
+<NOPROCESS>attach|attac|atta|att 	{ return tATTACH; }
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
 <INFO_CMD>class|clas|cla                { return tCLASS; }
