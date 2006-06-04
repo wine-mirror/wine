@@ -510,6 +510,11 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         dbg_printf(": ");
         types_print_type(&lvalue->type, FALSE);
         break;
+    case SymTagTypedef:
+        lvalue_field = *lvalue;
+        types_get_info(&lvalue->type, TI_GET_TYPE, &lvalue_field.type.id);
+        print_value(&lvalue_field, format, level);
+        break;
     default:
         WINE_FIXME("Unknown tag (%lu)\n", tag);
         RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
@@ -665,6 +670,9 @@ int types_print_type(const struct dbg_type* type, BOOL details)
             }
         }
         dbg_printf(")");
+        break;
+    case SymTagTypedef:
+        dbg_printf(name);
         break;
     default:
         WINE_ERR("Unknown type %lu for %s\n", tag, name);
