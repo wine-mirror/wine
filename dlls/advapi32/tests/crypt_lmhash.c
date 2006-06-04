@@ -79,7 +79,10 @@ descrypt pSystemFunction025;
 descrypt pSystemFunction026;
 descrypt pSystemFunction027;
 
-fnSystemFunction030 pSystemFunction030;
+typedef int (WINAPI *memcmpfunc)(unsigned char *, unsigned char *);
+memcmpfunc pSystemFunction030;
+memcmpfunc pSystemFunction031;
+
 fnSystemFunction032 pSystemFunction032;
 
 static void test_SystemFunction006(void)
@@ -476,37 +479,40 @@ static void test_SystemFunction_dec32(descrypt func, int num)
     ok( !memcmp( output, des_plaintext, sizeof des_plaintext), "plaintext wrong (%d)\n", num);
 }
 
-static void test_SystemFunction030(void)
+static void test_memcmpfunc(memcmpfunc fn)
 {
     unsigned char arg1[0x20], arg2[0x20];
     int r;
 
-    /* r = pSystemFunction030(NULL, NULL); - crashes */
+    if (!fn)
+        return;
+
+    /* r = fn(NULL, NULL); - crashes */
 
     memset(arg1, 0, sizeof arg1);
     memset(arg2, 0, sizeof arg2);
     arg1[0x10] = 1;
 
-    r = pSystemFunction030(arg1, arg2);
+    r = fn(arg1, arg2);
     ok( r == 1, "wrong error code\n");
 
     memset(arg1, 1, sizeof arg1);
     memset(arg2, 1, sizeof arg2);
     arg1[0x10] = 0;
 
-    r = pSystemFunction030(arg1, arg2);
+    r = fn(arg1, arg2);
     ok( r == 1, "wrong error code\n");
 
     memset(arg1, 0, sizeof arg1);
     memset(arg2, 1, sizeof arg2);
 
-    r = pSystemFunction030(arg1, arg2);
+    r = fn(arg1, arg2);
     ok( r == 0, "wrong error code\n");
 
     memset(arg1, 1, sizeof arg1);
     memset(arg2, 0, sizeof arg2);
 
-    r = pSystemFunction030(arg1, arg2);
+    r = fn(arg1, arg2);
     ok( r == 0, "wrong error code\n");
 }
 
@@ -590,9 +596,11 @@ START_TEST(crypt_lmhash)
     test_SystemFunction_dec32(pSystemFunction025, 25);
     test_SystemFunction_dec32(pSystemFunction027, 27);
 
-    pSystemFunction030 = (fnSystemFunction030)GetProcAddress( module, "SystemFunction030" );
-    if (pSystemFunction030)
-        test_SystemFunction030();
+    pSystemFunction030 = (memcmpfunc) GetProcAddress( module, "SystemFunction030" );
+    pSystemFunction031 = (memcmpfunc) GetProcAddress( module, "SystemFunction031" );
+
+    test_memcmpfunc(pSystemFunction030);
+    test_memcmpfunc(pSystemFunction031);
 
     pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
     if (pSystemFunction032)

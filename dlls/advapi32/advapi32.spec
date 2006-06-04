@@ -625,7 +625,7 @@
 @ stub SystemFunction028
 @ stub SystemFunction029
 @ stdcall SystemFunction030(ptr ptr)
-@ stub SystemFunction031
+@ stdcall SystemFunction031(ptr ptr) SystemFunction030
 @ stdcall SystemFunction032(ptr ptr)
 @ stub SystemFunction033
 @ stub SystemFunction034
