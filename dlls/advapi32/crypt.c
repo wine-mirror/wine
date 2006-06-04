@@ -1969,6 +1969,23 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 /******************************************************************************
  * SystemFunction036   (ADVAPI32.@)
  *
+ * Tests if two blocks of 16 bytes are equal
+ *
+ * PARAMS
+ *  b1,b2   [I] block of 16 bytes
+ *
+ * RETURNS
+ *  TRUE  if blocks are the same
+ *  FALSE if blocks are different
+ */
+BOOL WINAPI SystemFunction030(PVOID b1, PVOID b2)
+{
+    return !memcmp(b1, b2, 0x10);
+}
+
+/******************************************************************************
+ * SystemFunction036   (ADVAPI32.@)
+ *
  * MSDN documents this function as RtlGenRandom and declares it in ntsecapi.h
  *
  * PARAMS

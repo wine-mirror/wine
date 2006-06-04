@@ -43,6 +43,7 @@ typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
 typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction009)(const LPBYTE, const LPBYTE, LPBYTE);
 typedef int (WINAPI *descrypt)(unsigned char *, unsigned char *, unsigned char *);
+typedef NTSTATUS (WINAPI *fnSystemFunction030)(void*, void*);
 typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);
 
 fnSystemFunction001 pSystemFunction001;
@@ -78,6 +79,7 @@ descrypt pSystemFunction025;
 descrypt pSystemFunction026;
 descrypt pSystemFunction027;
 
+fnSystemFunction030 pSystemFunction030;
 fnSystemFunction032 pSystemFunction032;
 
 static void test_SystemFunction006(void)
@@ -474,6 +476,40 @@ static void test_SystemFunction_dec32(descrypt func, int num)
     ok( !memcmp( output, des_plaintext, sizeof des_plaintext), "plaintext wrong (%d)\n", num);
 }
 
+static void test_SystemFunction030(void)
+{
+    unsigned char arg1[0x20], arg2[0x20];
+    int r;
+
+    /* r = pSystemFunction030(NULL, NULL); - crashes */
+
+    memset(arg1, 0, sizeof arg1);
+    memset(arg2, 0, sizeof arg2);
+    arg1[0x10] = 1;
+
+    r = pSystemFunction030(arg1, arg2);
+    ok( r == 1, "wrong error code\n");
+
+    memset(arg1, 1, sizeof arg1);
+    memset(arg2, 1, sizeof arg2);
+    arg1[0x10] = 0;
+
+    r = pSystemFunction030(arg1, arg2);
+    ok( r == 1, "wrong error code\n");
+
+    memset(arg1, 0, sizeof arg1);
+    memset(arg2, 1, sizeof arg2);
+
+    r = pSystemFunction030(arg1, arg2);
+    ok( r == 0, "wrong error code\n");
+
+    memset(arg1, 1, sizeof arg1);
+    memset(arg2, 0, sizeof arg2);
+
+    r = pSystemFunction030(arg1, arg2);
+    ok( r == 0, "wrong error code\n");
+}
+
 START_TEST(crypt_lmhash)
 {
     HMODULE module;
@@ -511,10 +547,6 @@ START_TEST(crypt_lmhash)
     pSystemFunction009 = (fnSystemFunction009)GetProcAddress( module, "SystemFunction009" );
     if (pSystemFunction009)
         test_SystemFunction009();
-
-    pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
-    if (pSystemFunction032)
-        test_SystemFunction032();
 
     pSystemFunction012 = (descrypt) GetProcAddress( module, "SystemFunction012");
     pSystemFunction013 = (descrypt) GetProcAddress( module, "SystemFunction013");
@@ -557,4 +589,12 @@ START_TEST(crypt_lmhash)
     /* these descrypt two DES blocks with a short key */
     test_SystemFunction_dec32(pSystemFunction025, 25);
     test_SystemFunction_dec32(pSystemFunction027, 27);
+
+    pSystemFunction030 = (fnSystemFunction030)GetProcAddress( module, "SystemFunction030" );
+    if (pSystemFunction030)
+        test_SystemFunction030();
+
+    pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
+    if (pSystemFunction032)
+        test_SystemFunction032();
 }
