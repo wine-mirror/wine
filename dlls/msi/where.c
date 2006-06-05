@@ -265,11 +265,17 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
         if ((col_cond->type == EXPR_COL_NUMBER_STRING) && (val_cond->type == EXPR_SVAL))
         {
             col = col_cond->u.col_number;
-            r = msi_string2idW(wv->db->strings, val_cond->u.sval, &value);
-            if (r != ERROR_SUCCESS)
+            /* special case for "" - translate it into nil */
+            if (!val_cond->u.sval[0])
+                value = 0;
+            else
             {
-                TRACE("no id for %s, assuming it doesn't exist in the table\n", debugstr_w(wv->cond->u.expr.right->u.sval));
-                return ERROR_SUCCESS;
+                r = msi_string2idW(wv->db->strings, val_cond->u.sval, &value);
+                if (r != ERROR_SUCCESS)
+                {
+                    TRACE("no id for %s, assuming it doesn't exist in the table\n", debugstr_w(wv->cond->u.expr.right->u.sval));
+                    return ERROR_SUCCESS;
+                }
             }
 
             do
