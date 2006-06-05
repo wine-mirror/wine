@@ -78,14 +78,16 @@ typedef struct
 
 /* ----- internal functions ----- */
 
+static const WCHAR SysIP_W[] = { 'S','y','s','I','P',0 };
+
 static inline INTERNALPOS *get_internal_pos( HWND hwnd )
 {
-    return GetPropA( hwnd, "SysIP" );
+    return GetPropW( hwnd, SysIP_W );
 }
 
 static inline void set_internal_pos( HWND hwnd, INTERNALPOS *pos )
 {
-    SetPropA( hwnd, "SysIP", pos );
+    SetPropW( hwnd, SysIP_W, pos );
 }
 
 /***********************************************************************
