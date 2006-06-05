@@ -17,6 +17,8 @@
 
 #include "config.h"
 
+#ifdef HAVE_RESOLV
+
 #include <sys/types.h>
 
 #ifdef HAVE_NETINET_IN_H
@@ -180,3 +182,5 @@ setsection(ns_msg *msg, ns_sect sect) {
 		NS_PTR(msg) = msg->_sections[(int)sect];
 	}
 }
+
+#endif
