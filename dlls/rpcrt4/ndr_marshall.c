@@ -4153,19 +4153,11 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
 {
     TRACE("pStubMsg: %p, ppMemory: %p, type: 0x%02x, fMustAlloc: %s\n", pStubMsg, ppMemory, *pFormat, fMustAlloc ? "true" : "false");
 
-    if (fMustAlloc || !*ppMemory)
-    {
-        unsigned char *Buffer = pStubMsg->Buffer;
-        unsigned long MemorySize = pStubMsg->MemorySize;
-        *ppMemory = NdrAllocate(pStubMsg, NdrBaseTypeMemorySize(pStubMsg, pFormat));
-        pStubMsg->MemorySize = MemorySize;
-        pStubMsg->Buffer = Buffer;
-    }
-
-    TRACE("*ppMemory: %p\n", *ppMemory);
-
 #define BASE_TYPE_UNMARSHALL(type) \
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(type)); \
+        if (fMustAlloc || !*ppMemory) \
+            *ppMemory = NdrAllocate(pStubMsg, sizeof(type)); \
+        TRACE("*ppMemory: %p\n", *ppMemory); \
         **(type **)ppMemory = *(type *)pStubMsg->Buffer; \
         pStubMsg->Buffer += sizeof(type);
 
@@ -4205,6 +4197,9 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
         break;
     case RPC_FC_ENUM16:
         ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
+        if (fMustAlloc || !*ppMemory)
+            *ppMemory = NdrAllocate(pStubMsg, sizeof(UINT));
+        TRACE("*ppMemory: %p\n", *ppMemory);
         /* 16-bits on the wire, but int in memory */
         **(UINT **)ppMemory = *(USHORT *)pStubMsg->Buffer;
         pStubMsg->Buffer += sizeof(USHORT);
