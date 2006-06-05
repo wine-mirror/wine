@@ -431,7 +431,7 @@ static void pf_rebuild_format_string( char *p, pf_flags *flags )
 static void pf_integer_conv( char *buf, pf_flags *flags, LONGLONG x )
 {
     unsigned int base;
-    char *digits;
+    const char *digits;
 
     int i, j, k;
     char tmp[40];
