@@ -5360,9 +5360,11 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 {
                     if (wParamFlags & PARAMFLAG_FOUT)
                     {
-                        hres = VariantChangeType(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i],
-                                                 &rgvarg[i], 0,
-                                                 V_VT(&pDispParams->rgvarg[pDispParams->cArgs - 1 - i]));
+                        VARIANTARG *arg = &pDispParams->rgvarg[pDispParams->cArgs - 1 - i];
+
+                        if ((rgvt[i] == VT_BYREF) && (V_VT(arg) != VT_BYREF))
+                            hres = VariantChangeType(arg, &rgvarg[i], 0, V_VT(arg));
+
                         if (FAILED(hres))
                         {
                             ERR("failed to convert param %d to vt %d\n", i,
