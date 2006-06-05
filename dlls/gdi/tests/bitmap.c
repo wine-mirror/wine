@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <assert.h>
+#include <string.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -1019,6 +1020,232 @@ static void test_bmBits(void)
     DeleteObject(hbmp);
 }
 
+static void test_GetDIBits_selected_DIB(UINT bpp)
+{
+    HBITMAP dib;
+    BITMAPINFO * info;
+    BITMAPINFO * info2;
+    void * bits;
+    void * bits2;
+    UINT dib_size;
+    HDC dib_dc, dc;
+    HBITMAP old_bmp;
+    BOOL equalContents;
+    UINT i;
+    int res;
+
+    /* Create a DIB section with a color table */
+
+    info  = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + (1 << bpp) * sizeof(RGBQUAD));
+    info2 = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + (1 << bpp) * sizeof(RGBQUAD));
+    assert(info);
+    assert(info2);
+
+    info->bmiHeader.biSize = sizeof(info->bmiHeader);
+
+    /* Choose width and height such that the row length (in bytes)
+       is a multiple of 4 (makes things easier) */
+    info->bmiHeader.biWidth = 32;
+    info->bmiHeader.biHeight = 32;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biBitCount = bpp;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    for (i=0; i < (1 << bpp); i++)
+    {
+        BYTE c = i * (1 << (8 - bpp));
+        info->bmiColors[i].rgbRed = c;
+        info->bmiColors[i].rgbGreen = c;
+        info->bmiColors[i].rgbBlue = c;
+        info->bmiColors[i].rgbReserved = 0;
+    }
+
+    dib = CreateDIBSection(NULL, info, DIB_RGB_COLORS, &bits, NULL, 0);
+    assert(dib);
+    dib_size = bpp * (info->bmiHeader.biWidth * info->bmiHeader.biHeight) / 8;
+
+    /* Set the bits of the DIB section */
+    for (i=0; i < dib_size; i++)
+    {
+        ((BYTE *)bits)[i] = i % 256;
+    }
+
+    /* Select the DIB into a DC */
+    dib_dc = CreateCompatibleDC(NULL);
+    old_bmp = (HBITMAP) SelectObject(dib_dc, dib);
+    dc = CreateCompatibleDC(NULL);
+    bits2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dib_size);
+    assert(bits2);
+
+    /* Copy the DIB attributes but not the color table */
+    memcpy(info2, info, sizeof(BITMAPINFOHEADER));
+
+    res = GetDIBits(dc, dib, 0, info->bmiHeader.biHeight, bits2, info2, DIB_RGB_COLORS);
+    ok(res, "GetDIBits failed\n");
+
+    /* Compare the color table and the bits */
+    equalContents = TRUE;
+    for (i=0; i < (1 << bpp); i++)
+    {
+        if ((info->bmiColors[i].rgbRed != info2->bmiColors[i].rgbRed)
+            || (info->bmiColors[i].rgbGreen != info2->bmiColors[i].rgbGreen)
+            || (info->bmiColors[i].rgbBlue != info2->bmiColors[i].rgbBlue)
+            || (info->bmiColors[i].rgbReserved != info2->bmiColors[i].rgbReserved))
+        {
+            equalContents = FALSE;
+            break;
+        }
+    }
+    todo_wine
+    {
+        ok(equalContents, "GetDIBits with DIB selected in DC: Invalid DIB color table\n");
+    }
+
+    equalContents = TRUE;
+    for (i=0; i < dib_size / sizeof(DWORD); i++)
+    {
+        if (((DWORD *)bits)[i] != ((DWORD *)bits2)[i])
+        {
+            equalContents = FALSE;
+            break;
+        }
+    }
+    todo_wine
+    {
+        ok(equalContents, "GetDIBits with DIB selected in DC: Invalid DIB bits\n");
+    }
+
+    HeapFree(GetProcessHeap(), 0, bits2);
+    DeleteDC(dc);
+
+    SelectObject(dib_dc, old_bmp);
+    DeleteDC(dib_dc);
+    DeleteObject(dib);
+
+    HeapFree(GetProcessHeap(), 0, info2);
+    HeapFree(GetProcessHeap(), 0, info);
+}
+
+static void test_GetDIBits_selected_DDB(BOOL monochrome)
+{
+    HBITMAP ddb;
+    BITMAPINFO * info;
+    BITMAPINFO * info2;
+    void * bits;
+    void * bits2;
+    HDC ddb_dc, dc;
+    HBITMAP old_bmp;
+    BOOL equalContents;
+    UINT width, height;
+    UINT bpp;
+    UINT i, j;
+    int res;
+
+    width = height = 16;
+
+    /* Create a DDB (device-dependent bitmap) */
+    if (monochrome)
+    {
+        bpp = 1;
+        ddb = CreateBitmap(width, height, 1, 1, NULL);
+    }
+    else
+    {
+        HDC screen_dc = GetDC(NULL);
+        bpp = GetDeviceCaps(screen_dc, BITSPIXEL) * GetDeviceCaps(screen_dc, PLANES);
+        ddb = CreateCompatibleBitmap(screen_dc, width, height);
+        ReleaseDC(NULL, screen_dc);
+    }
+
+    /* Set the pixels */
+    ddb_dc = CreateCompatibleDC(NULL);
+    old_bmp = (HBITMAP) SelectObject(ddb_dc, ddb);
+    for (i = 0; i < width; i++)
+    {
+        for (j=0; j < height; j++)
+        {
+            BYTE c = (i * width + j) % 256;
+            SetPixelV(ddb_dc, i, j, RGB(c, c, c));
+        }
+    }
+    SelectObject(ddb_dc, old_bmp);
+
+    info  = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    info2 = (BITMAPINFO *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    assert(info);
+    assert(info2);
+
+    info->bmiHeader.biSize = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth = width;
+    info->bmiHeader.biHeight = height;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biBitCount = bpp;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    dc = CreateCompatibleDC(NULL);
+
+    /* Fill in biSizeImage */
+    GetDIBits(dc, ddb, 0, height, NULL, info, DIB_RGB_COLORS);
+    ok(info->bmiHeader.biSizeImage != 0, "GetDIBits failed to get the DIB attributes\n");
+
+    bits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage);
+    bits2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage);
+    assert(bits);
+    assert(bits2);
+
+    /* Get the bits */
+    res = GetDIBits(dc, ddb, 0, height, bits, info, DIB_RGB_COLORS);
+    ok(res, "GetDIBits failed\n");
+
+    /* Copy the DIB attributes but not the color table */
+    memcpy(info2, info, sizeof(BITMAPINFOHEADER));
+
+    /* Select the DDB into another DC */
+    old_bmp = (HBITMAP) SelectObject(ddb_dc, ddb);
+
+    /* Get the bits */
+    res = GetDIBits(dc, ddb, 0, height, bits2, info2, DIB_RGB_COLORS);
+    ok(res, "GetDIBits failed\n");
+
+    /* Compare the color table and the bits */
+    if (bpp <= 8)
+    {
+        equalContents = TRUE;
+        for (i=0; i < (1 << bpp); i++)
+        {
+            if ((info->bmiColors[i].rgbRed != info2->bmiColors[i].rgbRed)
+                || (info->bmiColors[i].rgbGreen != info2->bmiColors[i].rgbGreen)
+                || (info->bmiColors[i].rgbBlue != info2->bmiColors[i].rgbBlue)
+                || (info->bmiColors[i].rgbReserved != info2->bmiColors[i].rgbReserved))
+            {
+                equalContents = FALSE;
+                break;
+            }
+        }
+        ok(equalContents, "GetDIBits with DDB selected in DC: Got a different color table\n");
+    }
+
+    equalContents = TRUE;
+    for (i=0; i < info->bmiHeader.biSizeImage / sizeof(DWORD); i++)
+    {
+        if (((DWORD *)bits)[i] != ((DWORD *)bits2)[i])
+        {
+            equalContents = FALSE;
+        }
+    }
+    ok(equalContents, "GetDIBits with DDB selected in DC: Got different DIB bits\n");
+
+    HeapFree(GetProcessHeap(), 0, bits2);
+    HeapFree(GetProcessHeap(), 0, bits);
+    DeleteDC(dc);
+
+    SelectObject(ddb_dc, old_bmp);
+    DeleteDC(ddb_dc);
+    DeleteObject(ddb);
+
+    HeapFree(GetProcessHeap(), 0, info2);
+    HeapFree(GetProcessHeap(), 0, info);
+}
 
 START_TEST(bitmap)
 {
@@ -1029,4 +1256,9 @@ START_TEST(bitmap)
     test_mono_dibsection();
     test_bitmap();
     test_bmBits();
+    test_GetDIBits_selected_DIB(1);
+    test_GetDIBits_selected_DIB(4);
+    test_GetDIBits_selected_DIB(8);
+    test_GetDIBits_selected_DDB(TRUE);
+    test_GetDIBits_selected_DDB(FALSE);
 }
