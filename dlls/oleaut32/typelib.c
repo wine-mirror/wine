@@ -5264,6 +5264,11 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         V_BYREF(&rgvarg[i]) = &V_NONE(&missing_arg[i]);
                         V_VT(&rgvarg[i]) = rgvt[i];
                     }
+                    else if ((rgvt[i] & VT_BYREF) && (rgvt[i] == V_VT(src_arg)))
+                    {
+                        V_BYREF(&rgvarg[i]) = V_BYREF(src_arg);
+                        V_VT(&rgvarg[i]) = rgvt[i];
+                    }
                     else
                     {
                         /* FIXME: this doesn't work for VT_BYREF arguments if
