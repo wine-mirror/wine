@@ -45,7 +45,7 @@ static void test_msidatabase(void)
     ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
     res = DeleteFile( msifile );
-    ok( res == TRUE, "Falled to delete database\n" );
+    ok( res == TRUE, "Failed to delete database\n" );
 }
 
 static void test_msiinsert(void)
