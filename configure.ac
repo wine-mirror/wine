@@ -1721,6 +1721,7 @@ dlls/urlmon/Makefile
 dlls/urlmon/tests/Makefile
 dlls/user/Makefile
 dlls/user/tests/Makefile
+dlls/userenv/Makefile
 dlls/usp10/Makefile
 dlls/usp10/tests/Makefile
 dlls/uuid/Makefile

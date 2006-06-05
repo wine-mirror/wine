@@ -150,6 +150,7 @@ BASEDIRS = \
 	url \
 	urlmon \
 	user \
+	userenv \
 	usp10 \
 	uxtheme \
 	vdhcp.vxd \
