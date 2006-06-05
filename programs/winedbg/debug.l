@@ -166,7 +166,6 @@ STRING     \"[^\n"]+\"
 <INITIAL>abort|abor|abo         	{ return tABORT; }
 <INITIAL>print|prin|pri|pr|p		{ BEGIN(FORMAT_EXPECTED); return tPRINT; }
 
-<INITIAL>mode				{ BEGIN(MODE_CMD); return tMODE; }
 <INITIAL>show|sho|sh			{ BEGIN(SHOW_CMD); return tSHOW; }
 <INITIAL,NOPROCESS>source|sourc|sour|src { BEGIN(PATH_EXPECTED); return tSOURCE; }
 <INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
@@ -196,7 +195,6 @@ STRING     \"[^\n"]+\"
 <INFO_CMD>maps|map			{ return tMAPS; }
 <INFO_CMD>window|windo|wind|win|wnd	{ return tWND; }
 <HELP_CMD>info|inf|in                   { return tINFO; }
-<MODE_CMD>vm86                          { return tVM86; }
 <MAINT_CMD>type                         { return tTYPE; }
 
 <INITIAL,SHOW_CMD>directories|directorie|directori|director|directo|direct|direc|direc|dir {

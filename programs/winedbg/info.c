@@ -63,8 +63,8 @@ void print_help(void)
             "  list <lines>                           disassemble [<addr>][,<addr>]",
             "  show dir                               dir <path>",
             "  set <reg> = <expr>                     set *<addr> = <expr>",
-            "  mode [16,32,vm86]                      pass",
-            "  whatis                                 info (see 'help info' for options)",
+            "  pass                                   whatis",
+            "  info (see 'help info' for options)",
 
             "The 'x' command accepts repeat counts and formats (including 'i') in the",
             "same way that gdb does.\n",
