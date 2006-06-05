@@ -1967,7 +1967,7 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 }
 
 /******************************************************************************
- * SystemFunction036   (ADVAPI32.@)
+ * SystemFunction030   (ADVAPI32.@)
  *
  * Tests if two blocks of 16 bytes are equal
  *
