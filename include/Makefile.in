@@ -139,6 +139,7 @@ WINDOWS_INCLUDES = \
 	fci.h \
 	fdi.h \
 	guiddef.h \
+	hlguids.h \
 	htmlhelp.h \
 	icm.h \
 	icmpapi.h \
