@@ -43,7 +43,7 @@ static const WCHAR wszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a',
 
 static HWND hMainWnd = NULL;
 
-void AddButton(HWND hwndToolBar, int nImage, int nCommand)
+static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
 {
     TBBUTTON button;
 
@@ -57,7 +57,7 @@ void AddButton(HWND hwndToolBar, int nImage, int nCommand)
     SendMessage(hwndToolBar, TB_ADDBUTTONS, 1, (LPARAM)&button);
 }
 
-void AddSeparator(HWND hwndToolBar)
+static void AddSeparator(HWND hwndToolBar)
 {
     TBBUTTON button;
 
@@ -435,7 +435,7 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
     return DefWindowProcW(hWnd, WM_SIZE, wParam, lParam);
 }
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg)
     {
