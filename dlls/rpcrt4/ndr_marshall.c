@@ -21,7 +21,6 @@
  * TODO:
  *  - Non-conformant strings
  *  - String structs
- *  - Varying arrays
  *  - Encapsulated unions
  *  - Byte count pointers
  *  - transmit_as/represent as
@@ -3532,7 +3531,59 @@ unsigned char *  WINAPI NdrVaryingArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
+    unsigned char alignment;
+    DWORD elements, esize;
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    if ((pFormat[0] != RPC_FC_SMVARRAY) &&
+        (pFormat[0] != RPC_FC_LGVARRAY))
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+
+    alignment = pFormat[1] + 1;
+
+    if (pFormat[0] == RPC_FC_SMVARRAY)
+    {
+        pFormat += 2;
+        pFormat += sizeof(WORD);
+        elements = *(const WORD*)pFormat;
+        pFormat += sizeof(WORD);
+    }
+    else
+    {
+        pFormat += 2;
+        pFormat += sizeof(DWORD);
+        elements = *(const DWORD*)pFormat;
+        pFormat += sizeof(DWORD);
+    }
+
+    esize = *(const WORD*)pFormat;
+    pFormat += sizeof(WORD);
+
+    pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
+    if ((pStubMsg->ActualCount > elements) ||
+        (pStubMsg->ActualCount + pStubMsg->Offset > elements))
+    {
+        RpcRaiseException(RPC_S_INVALID_BOUND);
+        return NULL;
+    }
+
+    WriteVariance(pStubMsg);
+
+    ALIGN_POINTER(pStubMsg->Buffer, alignment);
+
+    memcpy(pStubMsg->Buffer, pMemory + pStubMsg->Offset, pStubMsg->ActualCount*esize);
+    pStubMsg->BufferMark = pStubMsg->Buffer;
+    pStubMsg->Buffer += pStubMsg->ActualCount*esize;
+
+    EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
+
+    STD_OVERFLOW_CHECK(pStubMsg);
+
     return NULL;
 }
 
@@ -3544,7 +3595,58 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat,
                                 unsigned char fMustAlloc)
 {
-    FIXME("stub\n");
+    unsigned char alignment;
+    DWORD size, elements, esize;
+
+    TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
+
+    if ((pFormat[0] != RPC_FC_SMVARRAY) &&
+        (pFormat[0] != RPC_FC_LGVARRAY))
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return NULL;
+    }
+
+    alignment = pFormat[1] + 1;
+
+    if (pFormat[0] == RPC_FC_SMVARRAY)
+    {
+        pFormat += 2;
+        size = *(const WORD*)pFormat;
+        pFormat += sizeof(WORD);
+        elements = *(const WORD*)pFormat;
+        pFormat += sizeof(WORD);
+    }
+    else
+    {
+        pFormat += 2;
+        size = *(const DWORD*)pFormat;
+        pFormat += sizeof(DWORD);
+        elements = *(const DWORD*)pFormat;
+        pFormat += sizeof(DWORD);
+    }
+
+    esize = *(const WORD*)pFormat;
+    pFormat += sizeof(WORD);
+
+    pFormat = ReadVariance(pStubMsg, pFormat);
+    if ((pStubMsg->ActualCount > elements) ||
+        (pStubMsg->ActualCount + pStubMsg->Offset > elements))
+    {
+        RpcRaiseException(RPC_S_INVALID_BOUND);
+        return NULL;
+    }
+
+    ALIGN_POINTER(pStubMsg->Buffer, alignment);
+
+    if (!*ppMemory || fMustAlloc)
+        *ppMemory = NdrAllocate(pStubMsg, size);
+    memcpy(*ppMemory + pStubMsg->Offset, pStubMsg->Buffer, pStubMsg->ActualCount * esize);
+    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
+
+    EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
+
     return NULL;
 }
 
@@ -3555,7 +3657,54 @@ void WINAPI NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
+    unsigned char alignment;
+    DWORD elements, esize;
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    if ((pFormat[0] != RPC_FC_SMVARRAY) &&
+        (pFormat[0] != RPC_FC_LGVARRAY))
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return;
+    }
+
+    alignment = pFormat[1] + 1;
+
+    if (pFormat[0] == RPC_FC_SMVARRAY)
+    {
+        pFormat += 2;
+        pFormat += sizeof(WORD);
+        elements = *(const WORD*)pFormat;
+        pFormat += sizeof(WORD);
+    }
+    else
+    {
+        pFormat += 2;
+        pFormat += sizeof(DWORD);
+        elements = *(const DWORD*)pFormat;
+        pFormat += sizeof(DWORD);
+    }
+
+    esize = *(const WORD*)pFormat;
+    pFormat += sizeof(WORD);
+
+    pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
+    if ((pStubMsg->ActualCount > elements) ||
+        (pStubMsg->ActualCount + pStubMsg->Offset > elements))
+    {
+        RpcRaiseException(RPC_S_INVALID_BOUND);
+        return;
+    }
+
+    SizeVariance(pStubMsg);
+
+    ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
+
+    pStubMsg->BufferLength += pStubMsg->ActualCount * esize;
+
+    EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
 
 /***********************************************************************
@@ -3564,8 +3713,57 @@ void WINAPI NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 unsigned long WINAPI NdrVaryingArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
-    return 0;
+    unsigned char alignment;
+    DWORD size, elements, esize;
+
+    TRACE("(%p, %p)\n", pStubMsg, pFormat);
+
+    if ((pFormat[0] != RPC_FC_SMVARRAY) &&
+        (pFormat[0] != RPC_FC_LGVARRAY))
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return 0;
+    }
+
+    alignment = pFormat[1] + 1;
+
+    if (pFormat[0] == RPC_FC_SMVARRAY)
+    {
+        pFormat += 2;
+        size = *(const WORD*)pFormat;
+        pFormat += sizeof(WORD);
+        elements = *(const WORD*)pFormat;
+        pFormat += sizeof(WORD);
+    }
+    else
+    {
+        pFormat += 2;
+        size = *(const DWORD*)pFormat;
+        pFormat += sizeof(DWORD);
+        elements = *(const DWORD*)pFormat;
+        pFormat += sizeof(DWORD);
+    }
+
+    esize = *(const WORD*)pFormat;
+    pFormat += sizeof(WORD);
+
+    pFormat = ReadVariance(pStubMsg, pFormat);
+    if ((pStubMsg->ActualCount > elements) ||
+        (pStubMsg->ActualCount + pStubMsg->Offset > elements))
+    {
+        RpcRaiseException(RPC_S_INVALID_BOUND);
+        return 0;
+    }
+
+    ALIGN_POINTER(pStubMsg->Buffer, alignment);
+
+    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
+    pStubMsg->MemorySize += size;
+
+    EmbeddedPointerMemorySize(pStubMsg, pFormat);
+
+    return pStubMsg->MemorySize;
 }
 
 /***********************************************************************
@@ -3575,7 +3773,47 @@ void WINAPI NdrVaryingArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
                                 PFORMAT_STRING pFormat)
 {
-    FIXME("stub\n");
+    unsigned char alignment;
+    DWORD elements;
+
+    TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
+
+    if ((pFormat[0] != RPC_FC_SMVARRAY) &&
+        (pFormat[0] != RPC_FC_LGVARRAY))
+    {
+        ERR("invalid format type %x\n", pFormat[0]);
+        RpcRaiseException(RPC_S_INTERNAL_ERROR);
+        return;
+    }
+
+    alignment = pFormat[1] + 1;
+
+    if (pFormat[0] == RPC_FC_SMVARRAY)
+    {
+        pFormat += 2;
+        pFormat += sizeof(WORD);
+        elements = *(const WORD*)pFormat;
+        pFormat += sizeof(WORD);
+    }
+    else
+    {
+        pFormat += 2;
+        pFormat += sizeof(DWORD);
+        elements = *(const DWORD*)pFormat;
+        pFormat += sizeof(DWORD);
+    }
+
+    pFormat += sizeof(WORD);
+
+    pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
+    if ((pStubMsg->ActualCount > elements) ||
+        (pStubMsg->ActualCount + pStubMsg->Offset > elements))
+    {
+        RpcRaiseException(RPC_S_INVALID_BOUND);
+        return;
+    }
+
+    EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
 
 /***********************************************************************
