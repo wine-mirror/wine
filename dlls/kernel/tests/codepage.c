@@ -25,6 +25,71 @@
 #include "winbase.h"
 #include "winnls.h"
 
+static const WCHAR foobarW[] = {'f','o','o','b','a','r',0};
+
+static void test_destination_buffer(void)
+{
+    LPSTR   buffer;
+    INT     maxsize;
+    INT     needed;
+    INT     len;
+
+    SetLastError(0xdeadbeef);
+    needed = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, NULL, 0, NULL, NULL);
+    ok( (needed > 0), "returned %d with 0x%lx/%ld (expected '> 0')\n",
+        needed, GetLastError(), GetLastError());
+
+    maxsize = needed*2;
+    buffer = HeapAlloc(GetProcessHeap(), 0, maxsize);
+    if (buffer == NULL) return;
+
+    maxsize--;
+    memset(buffer, 'x', maxsize);
+    buffer[maxsize] = '\0';
+    SetLastError(0xdeadbeef);
+    len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, needed+1, NULL, NULL);
+    ok( (len > 0), "returned %d with 0x%lx/%ld and '%s' (expected '> 0')\n",
+        len, GetLastError(), GetLastError(), buffer);
+
+    memset(buffer, 'x', maxsize);
+    buffer[maxsize] = '\0';
+    SetLastError(0xdeadbeef);
+    len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, needed, NULL, NULL);
+    ok( (len > 0), "returned %d with 0x%lx/%ld and '%s' (expected '> 0')\n",
+        len, GetLastError(), GetLastError(), buffer);
+
+    memset(buffer, 'x', maxsize);
+    buffer[maxsize] = '\0';
+    SetLastError(0xdeadbeef);
+    len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, needed-1, NULL, NULL);
+    ok( !len && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "returned %d with 0x%lx/%ld and '%s' (expected '0' with " \
+        "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), GetLastError(), buffer);
+
+    memset(buffer, 'x', maxsize);
+    buffer[maxsize] = '\0';
+    SetLastError(0xdeadbeef);
+    len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, 1, NULL, NULL);
+    ok( !len && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "returned %d with 0x%lx/%ld and '%s' (expected '0' with " \
+        "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), GetLastError(), buffer);
+
+    SetLastError(0xdeadbeef);
+    len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, 0, NULL, NULL);
+    ok( (len > 0), "returned %d with 0x%lx/%ld (expected '> 0')\n",
+        len, GetLastError(), GetLastError());
+
+    SetLastError(0xdeadbeef);
+    len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, NULL, needed, NULL, NULL);
+    ok( !len && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %d with 0x%lx/%ld (expected '0' with " \
+        "ERROR_INVALID_PARAMETER)\n", len, GetLastError(), GetLastError());
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+}
+
+
 static void test_null_source(void)
 {
     int len;
@@ -53,7 +118,6 @@ static void test_negative_source_length(void)
     int len;
     char buf[10];
     WCHAR bufW[10];
-    static const WCHAR foobarW[] = {'f','o','o','b','a','r',0};
 
     /* Test, whether any negative source length works as strlen() + 1 */
     SetLastError( 0xdeadbeef );
@@ -84,6 +148,7 @@ static void test_overlapped_buffers(void)
 
 START_TEST(codepage)
 {
+    test_destination_buffer();
     test_null_source();
     test_negative_source_length();
     test_overlapped_buffers();
