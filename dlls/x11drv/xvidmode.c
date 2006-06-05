@@ -89,7 +89,7 @@ static int XVidModeErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
     return 1;
 }
 
-int X11DRV_XF86VM_GetCurrentMode(void)
+static int X11DRV_XF86VM_GetCurrentMode(void)
 {
   XF86VidModeModeLine line;
   int dotclock;
@@ -112,7 +112,7 @@ int X11DRV_XF86VM_GetCurrentMode(void)
   return 0;
 }
 
-void X11DRV_XF86VM_SetCurrentMode(int mode)
+static void X11DRV_XF86VM_SetCurrentMode(int mode)
 {
   DWORD dwBpp = screen_depth;
   if (dwBpp == 24) dwBpp = 32;
