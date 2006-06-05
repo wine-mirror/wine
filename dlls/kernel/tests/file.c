@@ -1192,20 +1192,64 @@ static void test_FindFirstFileA(void)
     WIN32_FIND_DATAA search_results;
     int err;
     char buffer[5] = "C:\\";
+    char buffer2[100];
 
     /* try FindFirstFileA on "C:\" */
     buffer[0] = get_windows_drive();
-    handle = FindFirstFileA(buffer,&search_results);
+    
+    SetLastError( 0xdeadbeaf );
+    handle = FindFirstFileA(buffer, &search_results);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE , "FindFirstFile on root directory should Fail\n");
-    if (handle == INVALID_HANDLE_VALUE)
-      ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err);
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on root directory should fail\n" );
+    ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "C:\*" */
-    strcat(buffer, "*");
-    handle = FindFirstFileA(buffer,&search_results);
-    ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s should succeed\n", buffer );
-    ok ( FindClose(handle) == TRUE, "Failed to close handle\n");
+    strcpy(buffer2, buffer);
+    strcat(buffer2, "*");
+    handle = FindFirstFileA(buffer2, &search_results);
+    ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s should succeed\n", buffer2 );
+    ok ( FindClose(handle) == TRUE, "Failed to close handle %s\n", buffer2 );
+
+    /* try FindFirstFileA on "C:\foo\" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, buffer);
+    strcat(buffer2, "foo\\");
+    handle = FindFirstFileA(buffer2, &search_results);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err );
+
+    /* try FindFirstFileA on "C:\foo\bar.txt" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, buffer);
+    strcat(buffer2, "foo\\bar.txt");
+    handle = FindFirstFileA(buffer2, &search_results);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    todo_wine {
+	ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
+    }
+
+    /* try FindFirstFileA on "C:\foo\*.*" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, buffer);
+    strcat(buffer2, "foo\\*.*");
+    handle = FindFirstFileA(buffer2, &search_results);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    todo_wine {
+	ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
+    }
+
+    /* try FindFirstFileA on "foo\bar.txt" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, "foo\\bar.txt");
+    handle = FindFirstFileA(buffer2, &search_results);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    todo_wine {
+	ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
+    }
 }
 
 static void test_FindNextFileA(void)
