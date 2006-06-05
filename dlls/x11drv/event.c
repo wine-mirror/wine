@@ -937,8 +937,7 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     switch(msg)
     {
     case WM_X11DRV_ACQUIRE_SELECTION:
-        X11DRV_AcquireClipboard( hwnd );
-        return 0;
+        return X11DRV_AcquireClipboard( hwnd );
     case WM_X11DRV_DELETE_WINDOW:
         return SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     default:

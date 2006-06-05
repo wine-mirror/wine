@@ -98,7 +98,6 @@
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) X11DRV_MsgWaitForMultipleObjectsEx
 @ cdecl RegisterClipboardFormat(wstr) X11DRV_RegisterClipboardFormat
 @ cdecl ReleaseDC(long long long) X11DRV_ReleaseDC
-@ cdecl ResetSelectionOwner(long long) X11DRV_ResetSelectionOwner
 @ cdecl ScrollDC(long long long ptr ptr long ptr) X11DRV_ScrollDC
 @ cdecl SetClipboardData(long long long long) X11DRV_SetClipboardData
 @ cdecl SetFocus(long) X11DRV_SetFocus

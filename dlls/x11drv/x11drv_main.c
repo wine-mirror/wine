@@ -457,6 +457,7 @@ static void thread_detach(void)
 
     if (data)
     {
+        X11DRV_ResetSelectionOwner();
         CloseHandle( data->display_fd );
         wine_tsx11_lock();
         XCloseDisplay( data->display );

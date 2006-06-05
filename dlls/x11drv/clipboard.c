@@ -334,9 +334,14 @@ static Window thread_selection_wnd(void)
 
     if (!w)
     {
+        XSetWindowAttributes attr;
+
+        attr.event_mask = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
+                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
+
         wine_tsx11_lock();
         w = XCreateWindow(thread_display(), root_window, 0, 0, 1, 1, 0, screen_depth,
-                          InputOutput, CopyFromParent, 0, NULL);
+                          InputOutput, CopyFromParent, CWEventMask, &attr);
         wine_tsx11_unlock();
 
         if (w)
@@ -2304,70 +2309,67 @@ INT X11DRV_GetClipboardFormatName(UINT wFormat, LPWSTR retStr, INT maxlen)
 /**************************************************************************
  *		AcquireClipboard (X11DRV.@)
  */
-void X11DRV_AcquireClipboard(HWND hWndClipWindow)
+int X11DRV_AcquireClipboard(HWND hWndClipWindow)
 {
+    DWORD procid;
+    Window owner;
     Display *display = thread_display();
 
+    TRACE(" %p\n", hWndClipWindow);
+
     /*
-     * Acquire X selection if we don't already own it.
-     * Note that we only acquire the selection if it hasn't been already
-     * acquired by us, and ignore the fact that another X window may be
-     * asserting ownership. The reason for this is we need *any* top level
-     * X window to hold selection ownership. The actual clipboard data requests
-     * are made via GetClipboardData from EVENT_SelectionRequest and this
-     * ensures that the real HWND owner services the request.
-     * If the owning X window gets destroyed the selection ownership is
-     * re-cycled to another top level X window in X11DRV_CLIPBOARD_ResetOwner.
-     *
+     * It's important that the selection get acquired from the thread
+     * that owns the clipboard window. The primary reason is that we know 
+     * it is running a message loop and therefore can process the 
+     * X selection events.
      */
-    if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
+    if (hWndClipWindow &&
+        GetCurrentThreadId() != GetWindowThreadProcessId(hWndClipWindow, &procid))
     {
-        Window owner;
-
-        if (!hWndClipWindow)
-            hWndClipWindow = GetActiveWindow();
-
-        hWndClipWindow = GetAncestor(hWndClipWindow, GA_ROOT);
-
-        if (GetCurrentThreadId() != GetWindowThreadProcessId(hWndClipWindow, NULL))
+        if (procid != GetCurrentProcessId())
+        {
+            WARN("Setting clipboard owner to other process is not supported\n");
+            hWndClipWindow = NULL;
+        }
+        else
         {
             TRACE("Thread %lx is acquiring selection with thread %lx's window %p\n",
                 GetCurrentThreadId(),
-                GetWindowThreadProcessId(hWndClipWindow, NULL),
-                hWndClipWindow);
-            if (!SendMessageW(hWndClipWindow, WM_X11DRV_ACQUIRE_SELECTION, 0, 0))
-                ERR("Failed to acquire selection\n");
-            return;
-        }
+                GetWindowThreadProcessId(hWndClipWindow, NULL), hWndClipWindow);
 
-        owner = X11DRV_get_whole_window(hWndClipWindow);
-
-        wine_tsx11_lock();
-        /* Grab PRIMARY selection if not owned */
-        if (use_primary_selection && !(selectionAcquired & S_PRIMARY))
-            XSetSelectionOwner(display, XA_PRIMARY, owner, CurrentTime);
-
-        /* Grab CLIPBOARD selection if not owned */
-        if (!(selectionAcquired & S_CLIPBOARD))
-            XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), owner, CurrentTime);
-
-        if (use_primary_selection && XGetSelectionOwner(display,XA_PRIMARY) == owner)
-	    selectionAcquired |= S_PRIMARY;
-
-        if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == owner)
-	    selectionAcquired |= S_CLIPBOARD;
-        wine_tsx11_unlock();
-
-        if (selectionAcquired)
-        {
-	    selectionWindow = owner;
-	    TRACE("Grabbed X selection, owner=(%08x)\n", (unsigned) owner);
+            return SendMessageW(hWndClipWindow, WM_X11DRV_ACQUIRE_SELECTION, 0, 0);
         }
     }
-    else
+
+    owner = thread_selection_wnd();
+
+    wine_tsx11_lock();
+
+    selectionAcquired = 0;
+    selectionWindow = 0;
+
+    /* Grab PRIMARY selection if not owned */
+    if (use_primary_selection)
+        XSetSelectionOwner(display, XA_PRIMARY, owner, CurrentTime);
+
+    /* Grab CLIPBOARD selection if not owned */
+    XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), owner, CurrentTime);
+
+    if (use_primary_selection && XGetSelectionOwner(display, XA_PRIMARY) == owner)
+        selectionAcquired |= S_PRIMARY;
+
+    if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == owner)
+        selectionAcquired |= S_CLIPBOARD;
+
+    wine_tsx11_unlock();
+
+    if (selectionAcquired)
     {
-        ERR("Received request to acquire selection but process is already owner=(%08x)\n", (unsigned) selectionWindow);
+        selectionWindow = owner;
+        TRACE("Grabbed X selection, owner=(%08x)\n", (unsigned) owner);
     }
+
+    return 1;
 }
 
 
@@ -2610,96 +2612,42 @@ BOOL X11DRV_GetClipboardData(UINT wFormat, HANDLE16* phData16, HANDLE* phData32)
 
 
 /**************************************************************************
- *		ResetSelectionOwner (X11DRV.@)
+ *		ResetSelectionOwner
  *
- * Called from DestroyWindow() to prevent X selection from being lost when
- * a top level window is destroyed, by switching ownership to another top
- * level window.
- * Any top level window can own the selection. See X11DRV_CLIPBOARD_Acquire
- * for a more detailed description of this.
+ * Called when the thread owning the selection is destroyed and we need to
+ * preserve the selection ownership. We look for another top level window
+ * in this process and send it a message to acquire the selection.
  */
-void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
+void X11DRV_ResetSelectionOwner(void)
 {
-    Display *display = thread_display();
-    HWND hWndClipOwner = 0;
-    HWND tmp;
-    Window XWnd = X11DRV_get_whole_window(hwnd);
-    BOOL bLostSelection = FALSE;
-    Window selectionPrevWindow;
+    HWND hwnd;
+    DWORD procid;
 
-    /* There is nothing to do if we don't own the selection,
-     * or if the X window which currently owns the selection is different
-     * from the one passed in.
-     */
-    if (!selectionAcquired || XWnd != selectionWindow
-         || selectionWindow == None )
-       return;
+    TRACE("\n");
 
-    if ((bFooBar && XWnd) || (!bFooBar && !XWnd))
-       return;
+    if (!selectionAcquired  || thread_selection_wnd() != selectionWindow)
+        return;
 
-    hWndClipOwner = GetClipboardOwner();
+    selectionAcquired = S_NOSELECTION;
+    selectionWindow = 0;
 
-    TRACE("clipboard owner = %p, selection window = %08x\n",
-          hWndClipOwner, (unsigned)selectionWindow);
-
-    /* now try to salvage current selection from being destroyed by X */
-    TRACE("checking %08x\n", (unsigned) XWnd);
-
-    selectionPrevWindow = selectionWindow;
-    selectionWindow = None;
-
-    if (!(tmp = GetWindow(hwnd, GW_HWNDNEXT)))
-        tmp = GetWindow(hwnd, GW_HWNDFIRST);
-
-    if (tmp && tmp != hwnd) 
-        selectionWindow = X11DRV_get_whole_window(tmp);
-
-    if (selectionWindow != None)
+    hwnd = GetWindow(GetDesktopWindow(), GW_CHILD);
+    do
     {
-        /* We must pretend that we don't own the selection while making the switch
-         * since a SelectionClear event will be sent to the last owner.
-         * If there is no owner X11DRV_CLIPBOARD_ReleaseSelection will do nothing.
-         */
-        int saveSelectionState = selectionAcquired;
-        selectionAcquired = S_NOSELECTION;
-
-        TRACE("\tswitching selection from %08x to %08x\n",
-                    (unsigned)selectionPrevWindow, (unsigned)selectionWindow);
-
-        wine_tsx11_lock();
-
-        /* Assume ownership for the PRIMARY and CLIPBOARD selection */
-        if (saveSelectionState & S_PRIMARY)
-            XSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
-
-        XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), selectionWindow, CurrentTime);
-
-        /* Restore the selection masks */
-        selectionAcquired = saveSelectionState;
-
-        /* Lose the selection if something went wrong */
-        if (((saveSelectionState & S_PRIMARY) &&
-           (XGetSelectionOwner(display, XA_PRIMARY) != selectionWindow)) || 
-           (XGetSelectionOwner(display, x11drv_atom(CLIPBOARD)) != selectionWindow))
+        if (GetCurrentThreadId() != GetWindowThreadProcessId(hwnd, &procid))
         {
-            bLostSelection = TRUE;
+            if (GetCurrentProcessId() == procid)
+            {
+                if (SendMessageW(hwnd, WM_X11DRV_ACQUIRE_SELECTION, 0, 0))
+                    return;
+            }
         }
-        wine_tsx11_unlock();
-    }
-    else
-    {
-        bLostSelection = TRUE;
-    }
+    } while ((hwnd = GetWindow(hwnd, GW_HWNDNEXT)) != NULL);
 
-    if (bLostSelection)
-    {
-        TRACE("Lost the selection!\n");
+    WARN("Failed to find another thread to take selection ownership. Clipboard data will be lost.\n");
 
-        X11DRV_CLIPBOARD_ReleaseOwnership();
-        selectionAcquired = S_NOSELECTION;
-        selectionWindow = 0;
-    }
+    X11DRV_CLIPBOARD_ReleaseOwnership();
+    X11DRV_EmptyClipboard(FALSE);
 }
 
 
@@ -3091,7 +3039,6 @@ END:
  */
 void X11DRV_SelectionRequest( HWND hWnd, XEvent *event )
 {
-    if (!hWnd) return;
     X11DRV_HandleSelectionRequest( hWnd, &event->xselectionrequest, FALSE );
 }
 
@@ -3102,7 +3049,6 @@ void X11DRV_SelectionRequest( HWND hWnd, XEvent *event )
 void X11DRV_SelectionClear( HWND hWnd, XEvent *xev )
 {
     XSelectionClearEvent *event = &xev->xselectionclear;
-    if (!hWnd) return;
     if (event->selection == XA_PRIMARY || event->selection == x11drv_atom(CLIPBOARD))
         X11DRV_CLIPBOARD_ReleaseSelection( event->selection, event->window, hWnd, event->time );
 }

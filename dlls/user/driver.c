@@ -102,7 +102,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(RegisterClipboardFormat);
         GET_USER_FUNC(GetClipboardFormatName);
         GET_USER_FUNC(EndClipboardUpdate);
-        GET_USER_FUNC(ResetSelectionOwner);
         GET_USER_FUNC(ChangeDisplaySettingsEx);
         GET_USER_FUNC(EnumDisplaySettingsEx);
         GET_USER_FUNC(CreateDesktopWindow);
@@ -239,8 +238,9 @@ static void nulldrv_SetScreenSaveActive( BOOL on )
 {
 }
 
-static void nulldrv_AcquireClipboard( HWND hwnd )
+static INT nulldrv_AcquireClipboard( HWND hwnd )
 {
+    return 0;
 }
 
 static BOOL nulldrv_CountClipboardFormats(void)
@@ -279,10 +279,6 @@ static BOOL nulldrv_IsClipboardFormatAvailable( UINT format )
 static UINT nulldrv_RegisterClipboardFormat( LPCWSTR name )
 {
     return 0;
-}
-
-static void nulldrv_ResetSelectionOwner( HWND hwnd, BOOL flag )
-{
 }
 
 static BOOL nulldrv_SetClipboardData( UINT format, HANDLE16 h16, HANDLE h32, BOOL owner )
@@ -438,7 +434,6 @@ static const USER_DRIVER null_driver =
     nulldrv_GetClipboardFormatName,
     nulldrv_IsClipboardFormatAvailable,
     nulldrv_RegisterClipboardFormat,
-    nulldrv_ResetSelectionOwner,
     nulldrv_SetClipboardData,
     /* display modes */
     nulldrv_ChangeDisplaySettingsEx,
@@ -563,9 +558,9 @@ static void loaderdrv_SetScreenSaveActive( BOOL on )
     load_driver()->pSetScreenSaveActive( on );
 }
 
-static void loaderdrv_AcquireClipboard( HWND hwnd )
+static INT loaderdrv_AcquireClipboard( HWND hwnd )
 {
-    load_driver()->pAcquireClipboard( hwnd );
+    return load_driver()->pAcquireClipboard( hwnd );
 }
 
 static BOOL loaderdrv_CountClipboardFormats(void)
@@ -606,11 +601,6 @@ static BOOL loaderdrv_IsClipboardFormatAvailable( UINT format )
 static UINT loaderdrv_RegisterClipboardFormat( LPCWSTR name )
 {
     return load_driver()->pRegisterClipboardFormat( name );
-}
-
-static void loaderdrv_ResetSelectionOwner( HWND hwnd, BOOL flag )
-{
-    load_driver()->pResetSelectionOwner( hwnd, flag );
 }
 
 static BOOL loaderdrv_SetClipboardData( UINT format, HANDLE16 h16, HANDLE h32, BOOL owner )
@@ -754,7 +744,6 @@ static const USER_DRIVER lazy_load_driver =
     loaderdrv_GetClipboardFormatName,
     loaderdrv_IsClipboardFormatAvailable,
     loaderdrv_RegisterClipboardFormat,
-    loaderdrv_ResetSelectionOwner,
     loaderdrv_SetClipboardData,
     /* display modes */
     loaderdrv_ChangeDisplaySettingsEx,

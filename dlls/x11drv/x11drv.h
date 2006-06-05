@@ -662,7 +662,8 @@ extern void invalidate_dce( HWND hwnd, const RECT *rect );
 extern XContext winContext;
 
 extern void X11DRV_InitClipboard(void);
-extern void X11DRV_AcquireClipboard(HWND hWndClipWindow);
+extern int X11DRV_AcquireClipboard(HWND hWndClipWindow);
+extern void X11DRV_ResetSelectionOwner(void);
 extern void X11DRV_SetFocus( HWND hwnd );
 extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
 extern void X11DRV_InitKeyboard(void);

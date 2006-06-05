@@ -122,7 +122,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pGetScreenSaveActive)(void);
     void   (*pSetScreenSaveActive)(BOOL);
     /* clipboard functions */
-    void   (*pAcquireClipboard)(HWND);                     /* Acquire selection */
+    INT    (*pAcquireClipboard)(HWND);                     /* Acquire selection */
     BOOL   (*pCountClipboardFormats)(void);                /* Count available clipboard formats */
     void   (*pEmptyClipboard)(BOOL);                       /* Empty clipboard data */
     void   (*pEndClipboardUpdate)(void);                   /* End clipboard update */
@@ -131,7 +131,6 @@ typedef struct tagUSER_DRIVER {
     INT    (*pGetClipboardFormatName)(UINT, LPWSTR, UINT); /* Get a clipboard format name */
     BOOL   (*pIsClipboardFormatAvailable)(UINT);           /* Check if specified format is available */
     UINT   (*pRegisterClipboardFormat)(LPCWSTR);           /* Register a clipboard format */
-    void   (*pResetSelectionOwner)(HWND, BOOL);
     BOOL   (*pSetClipboardData)(UINT, HANDLE16, HANDLE, BOOL);   /* Set specified selection data */
     /* display modes */
     LONG   (*pChangeDisplaySettingsEx)(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);

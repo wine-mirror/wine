@@ -1292,7 +1292,6 @@ static void WIN_SendDestroyMsg( HWND hwnd )
         if (hwnd == info.hwndCaret) DestroyCaret();
         if (hwnd == info.hwndActive) WINPOS_ActivateOtherWindow( hwnd );
     }
-    USER_Driver->pResetSelectionOwner( hwnd, TRUE );
 
     /*
      * Send the WM_DESTROY to the window.
@@ -1357,8 +1356,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     }
 
     if (!IsWindow(hwnd)) return TRUE;
-
-    USER_Driver->pResetSelectionOwner( hwnd, FALSE ); /* before the window is unmapped */
 
       /* Hide the window */
     if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)
