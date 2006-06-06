@@ -220,7 +220,7 @@ void test_ScriptGetCMap(unsigned short pwOutGlyphs[256])
     int             cInChars;
     int             cChars;
     unsigned short  pwOutGlyphs3[256];
-    WCHAR           TestItem1[6] = {'T', 'e', 's', 't', 0x0166, 0}; 
+    WCHAR           TestItem1[6] = {'T', 'e', 's', 't', 'a', 0}; 
     DWORD           dwFlags;
     int             cnt;
 
@@ -249,9 +249,16 @@ void test_ScriptGetCMap(unsigned short pwOutGlyphs[256])
     /* Set psc to NULL, to be able to check if a pointer is returned in psc */
     psc = NULL;
     hr = ScriptGetCMap(NULL, &psc, NULL, 0, 0, NULL);
-    ok( hr == E_INVALIDARG, "(NULL,&psc,NULL,0,0NULL), expected E_INVALIDARG, "
-                            "got %08x\n", (unsigned int)hr);
+    ok( hr == E_PENDING, "(NULL,&psc,NULL,0,0NULL), expected E_PENDING, "
+                         "got %08x\n", (unsigned int)hr);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
+
+    /* Set psc to NULL but add hdc, to be able to check if a pointer is returned in psc */
+    psc = NULL;
+    hr = ScriptGetCMap(hdc, &psc, NULL, 0, 0, NULL);
+    ok( hr == S_OK, "ScriptGetCMap(NULL,&psc,NULL,0,0,NULL), expected S_OK, "
+                    "got %08x\n", (unsigned int)hr);
+    ok( psc != NULL, "ScritpGetCMap expected psc to be not NULL\n");
 
     /* Set psc to NULL, to be able to check if a pointer is returned in psc */
     psc = NULL;

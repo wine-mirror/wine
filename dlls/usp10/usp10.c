@@ -555,7 +555,7 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     FIXME("(%p,%p,%s,%d,0x%lx,%p): semi-stub\n", hdc, psc, debugstr_wn(pwcInChars,cChars), 
                                                  cChars, dwFlags, pwOutGlyphs);
 
-    if  (!psc || !pwcInChars || !pwOutGlyphs)
+    if  (!psc)
         return E_INVALIDARG;
 
     if  (!hdc && !*psc) {
