@@ -431,7 +431,7 @@ static inline HRESULT VARIANT_Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags,
     case VT_DATE:     return VarBstrFromDate(V_DATE(ps), lcid, dwFlags, &V_BSTR(pd));
     case VT_CY:       return VarBstrFromCy(V_CY(ps), lcid, dwFlags, &V_BSTR(pd));
     case VT_DECIMAL:  return VarBstrFromDec(&V_DECIMAL(ps), lcid, dwFlags, &V_BSTR(pd));
-/*  case VT_DISPATCH: return VarBstrFromDisp(V_DISPATCH(ps), lcid, dwFlags, &V_BSTR(pd)); */
+    case VT_DISPATCH: return VarBstrFromDisp(V_DISPATCH(ps), lcid, dwFlags, &V_BSTR(pd));
     }
     break;
 
