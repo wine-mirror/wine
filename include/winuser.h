@@ -2877,6 +2877,8 @@ typedef struct tagCBTACTIVATESTRUCT
 #define FE_FONTSMOOTHINGORIENTATIONBGR 0x0000
 #define FE_FONTSMOOTHINGORIENTATIONRGB 0x0001
 
+#define SETWALLPAPER_DEFAULT           ((LPWSTR)-1)
+
 /* SystemParametersInfo flags */
 
 #define SPIF_UPDATEINIFILE              1
