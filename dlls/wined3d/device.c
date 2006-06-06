@@ -4372,7 +4372,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
     if (srcData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->vertexShaderConstantB[start], srcData, cnt);
+    memcpy(&This->updateStateBlock->vertexShaderConstantB[start], srcData, cnt * sizeof(BOOL));
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstantsB[i] = TRUE;
@@ -4397,7 +4397,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantB(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->vertexShaderConstantB[start], cnt);
+    memcpy(dstData, &This->updateStateBlock->vertexShaderConstantB[start], cnt * sizeof(BOOL));
     return WINED3D_OK;
 }
 
@@ -4416,7 +4416,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
     if (srcData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->vertexShaderConstantI[start * 4], srcData, cnt * 16);
+    memcpy(&This->updateStateBlock->vertexShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstantsI[i] = TRUE;
@@ -4441,7 +4441,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantI(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->vertexShaderConstantI[start * 4], cnt * 16);
+    memcpy(dstData, &This->updateStateBlock->vertexShaderConstantI[start * 4], cnt * sizeof(int) * 4);
     return WINED3D_OK;
 }
 
@@ -4460,7 +4460,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
     if (srcData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->vertexShaderConstantF[start * 4], srcData, cnt * 16);
+    memcpy(&This->updateStateBlock->vertexShaderConstantF[start * 4], srcData, cnt * sizeof(float) * 4);
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.vertexShaderConstantsF[i] = TRUE;
@@ -4485,7 +4485,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->vertexShaderConstantF[start * 4], cnt * 16);
+    memcpy(dstData, &This->updateStateBlock->vertexShaderConstantF[start * 4], cnt * sizeof(float) * 4);
     return WINED3D_OK;
 }
 
@@ -4546,7 +4546,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
     if (srcData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->pixelShaderConstantB[start], srcData, cnt);
+    memcpy(&This->updateStateBlock->pixelShaderConstantB[start], srcData, cnt * sizeof(BOOL));
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstantsB[i] = TRUE;
@@ -4571,7 +4571,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantB(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->pixelShaderConstantB[start], cnt);
+    memcpy(dstData, &This->updateStateBlock->pixelShaderConstantB[start], cnt * sizeof(BOOL));
     return WINED3D_OK;
 }
 
@@ -4590,7 +4590,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
     if (srcData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->pixelShaderConstantI[start * 4], srcData, cnt * 16);
+    memcpy(&This->updateStateBlock->pixelShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstantsI[i] = TRUE;
@@ -4615,7 +4615,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantI(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->pixelShaderConstantI[start * 4], cnt * 16);
+    memcpy(dstData, &This->updateStateBlock->pixelShaderConstantI[start * 4], cnt * sizeof(int) * 4);
     return WINED3D_OK;
 }
 
@@ -4634,7 +4634,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
     if (srcData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->pixelShaderConstantF[start * 4], srcData, cnt * 16);
+    memcpy(&This->updateStateBlock->pixelShaderConstantF[start * 4], srcData, cnt * sizeof(float) * 4);
 
     for (i = start; i < cnt + start; ++i) {
         This->updateStateBlock->changed.pixelShaderConstantsF[i] = TRUE;
@@ -4659,7 +4659,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
     if (dstData == NULL || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->updateStateBlock->pixelShaderConstantF[start * 4], cnt * 16);
+    memcpy(dstData, &This->updateStateBlock->pixelShaderConstantF[start * 4], cnt * sizeof(float) * 4);
     return WINED3D_OK;
 }
 
