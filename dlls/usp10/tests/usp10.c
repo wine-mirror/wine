@@ -488,8 +488,9 @@ void test_ScriptTextOut(void)
 static void test_ScriptString(void)
 {
     HRESULT         hr;
+    HWND            hwnd;
     HDC             hdc = 0;
-    WCHAR           teststr[6] = {'T', 'e', 's', 't', '1', '\0'};
+    WCHAR           teststr[6] = {'T', 'e', 's', 't', 'a', '\0'};
     void            *pString = (WCHAR *) &teststr;
     int             cString = 5;
     int             cGlyphs = cString * 2 + 16;
@@ -501,23 +502,61 @@ static void test_ScriptString(void)
     const int       piDx[5] = {10, 10, 10, 10, 10};
     SCRIPT_TABDEF   pTabdef;
     const BYTE      pbInClass = 0;
-    SCRIPT_STRING_ANALYSIS pssa;
+    SCRIPT_STRING_ANALYSIS pssa = NULL;
 
-    int iX = 10; 
-    int iY = 100;
-    UINT uOptions = 0; 
-    const RECT prc = {0, 50, 100, 100}; 
-    int iMinSel = 0; 
-    int iMaxSel = 0;
-    BOOL fDisabled = FALSE;
+    int             iX = 10; 
+    int             iY = 100;
+    UINT            uOptions = 0; 
+    const RECT      prc = {0, 50, 100, 100}; 
+    int             iMinSel = 0; 
+    int             iMaxSel = 0;
+    BOOL            fDisabled = FALSE;
+
+    LOGFONTW        lf;
+    HFONT           zfont;
+
+    /* We need a valid HDC to drive a lot of Script functions which requires the following    *
+     * to set up for the tests.                                                               */
+    hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,
+                           0, 0, 0, NULL);
+    assert(hwnd != 0);
+
+    hdc = GetDC(hwnd);                                      /* We now have a hdc             */
+    ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
+
+    lstrcpyW(lf.lfFaceName, (WCHAR *) "Courier");
+    lf.lfHeight = 10;
+    lf.lfItalic = 0;
+    lf.lfEscapement = 0;
+    lf.lfOrientation = 0;
+    lf.lfUnderline = 0;
+    lf.lfStrikeOut = 0;
+    lf.lfWeight = 3;
+    lf.lfWidth = 10;
+
+    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectW(&lf));
+
+    /* Test without hdc to get E_INVALIDARG */
+    hr = ScriptStringAnalyse( NULL, pString, cString, cGlyphs, iCharset, dwFlags,
+                             iReqWidth, &psControl, &psState, piDx, &pTabdef,
+                             &pbInClass, &pssa);
+    ok(hr == E_PENDING, "ScriptStringAnalyse Stub should return E_PENDING not %08x\n", (unsigned int) hr);
+
+    /* test with hdc, this should be a valid test  */
     hr = ScriptStringAnalyse( hdc, pString, cString, cGlyphs, iCharset, dwFlags,
                               iReqWidth, &psControl, &psState, piDx, &pTabdef,
                               &pbInClass, &pssa);
-    ok(hr == E_INVALIDARG, "ScriptStringAnalyse Stub should return E_INVALIDARG not %08x\n", (unsigned int) hr);
-    hr = ScriptStringOut(pssa, iX, iY, uOptions, &prc, iMinSel, iMaxSel,fDisabled);
-    ok(hr == E_NOTIMPL, "ScriptStringOut Stub should return E_NOTIMPL not %08x\n", (unsigned int) hr);
-    hr = ScriptStringFree(&pssa);
-    ok(hr == S_OK, "ScriptStringFree Stub should return S_OK not %08x\n", (unsigned int) hr);
+    ok(hr == E_NOTIMPL, "ScriptStringAnalyse Stub should return E_NOTIMPL not %08x\n", (unsigned int) hr);
+/*    Commented code it pending new code in ScriptStringAnalysis */
+/*    ok(hr == S_OK, "ScriptStringAnalyse Stub should return S_OK not %08x\n", (unsigned int) hr);*/
+/*    ok(pssa != NULL, "ScriptStringAnalyse pssa should not be NULL\n");*/
+    if  (hr == 0)
+    {
+        hr = ScriptStringOut(pssa, iX, iY, uOptions, &prc, iMinSel, iMaxSel,fDisabled);
+        ok(hr == E_NOTIMPL, "ScriptStringOut Stub should return E_NOTIMPL not %08x\n", (unsigned int) hr);
+        hr = ScriptStringFree(&pssa);
+        ok(hr == S_OK, "ScriptStringFree Stub should return S_OK not %08x\n", (unsigned int) hr);
+    }
 }
 
 START_TEST(usp10)

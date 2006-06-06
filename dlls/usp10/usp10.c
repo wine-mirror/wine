@@ -288,7 +288,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
     return E_INVALIDARG;
   }
   if ((dwFlags & SSA_GLYPHS) && NULL == hdc) {
-    return E_INVALIDARG;
+    return E_PENDING;
   }
 
   return E_NOTIMPL;
