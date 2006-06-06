@@ -963,7 +963,8 @@ void pshader_set_version(
                    break;
                
           /* FIXME: temporaries must match D3DPSHADERCAPS2_0.NumTemps */ 
-          case 20: This->baseShader.limits.temporary = 32;
+          case 20:
+          case 21: This->baseShader.limits.temporary = 32;
                    This->baseShader.limits.constant_float = 32;
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.constant_bool = 16;
