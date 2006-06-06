@@ -323,7 +323,7 @@ EditTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return CallWindowProcA (DefEditProc, hwnd, msg, wParam, lParam);
 }
 
-static BOOL CALLBACK
+static INT_PTR CALLBACK
 AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     int len;
@@ -376,7 +376,7 @@ qAsk (va_list ap)
     return MBdefault (va_arg (ap, int));
 }
 
-static BOOL CALLBACK
+static INT_PTR CALLBACK
 AboutProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
@@ -390,7 +390,7 @@ AboutProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-static BOOL CALLBACK
+static INT_PTR CALLBACK
 DlgProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
