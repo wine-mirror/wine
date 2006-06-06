@@ -717,6 +717,14 @@ coclass ShellNameSpace {
 }
 
 [
+    uuid(2f2f1f96-2bc1-4b1c-be28-ea3774f4676a)
+]
+coclass ShellShellNameSpace {
+    [default] interface IShellNameSpace;
+    [default, source] dispinterface DShellNameSpaceEvents;
+}
+
+[
     odl,
     uuid(f3470f24-15fd-11d2-bb2e-00805ff7efca),
     hidden,
@@ -883,6 +891,15 @@ dispinterface _SearchAssistantEvents {
     hidden
 ]
 coclass SearchAssistantOC {
+    [default] interface ISearchAssistantOC3;
+    [default, source] dispinterface _SearchAssistantEvents;
+}
+
+[
+    uuid(2e71fd0f-aab1-42c0-9146-6d2c4edcf07d),
+    hidden
+]
+coclass ShellSearchAssistantOC {
     [default] interface ISearchAssistantOC3;
     [default, source] dispinterface _SearchAssistantEvents;
 }
