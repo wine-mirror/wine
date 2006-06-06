@@ -46,6 +46,63 @@ static int get_refcount(IUnknown *object)
         ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     }
 
+static void check_mipmap_levels(
+    IDirect3DDevice9* device, 
+    int width, int height, int count) 
+{
+
+    IDirect3DBaseTexture9* texture = NULL;
+    HRESULT hr = IDirect3DDevice9_CreateTexture( device, width, height, 0, 0, 
+        D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DTexture9**) &texture, NULL );
+       
+    if (SUCCEEDED(hr)) {
+        DWORD levels = IDirect3DBaseTexture9_GetLevelCount(texture);
+        ok(levels == count, "Invalid level count. Expected %d got %lu\n", count, levels);
+    } else 
+        trace("CreateTexture failed: %s\n", DXGetErrorString9(hr));
+
+    if (texture) IUnknown_Release( texture );
+}
+
+void test_mipmap_levels(void) 
+{
+
+    HRESULT               hr;
+    HWND                  hwnd = NULL;
+
+    IDirect3D9            *pD3d = NULL;
+    IDirect3DDevice9      *pDevice = NULL;
+    D3DPRESENT_PARAMETERS d3dpp;
+    D3DDISPLAYMODE        d3ddm;
+ 
+    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    if (FAILED(hr)) goto cleanup;
+
+    check_mipmap_levels(pDevice, 32, 32, 6);
+    check_mipmap_levels(pDevice, 256, 1, 9);
+    check_mipmap_levels(pDevice, 1, 256, 9);
+    check_mipmap_levels(pDevice, 1, 1, 1);
+
+    cleanup:
+    if (pD3d)     IUnknown_Release( pD3d );
+    if (pDevice)  IUnknown_Release( pDevice );
+    DestroyWindow( hwnd );
+}
+
 void test_swapchain(void)
 {
     HRESULT                      hr;
@@ -345,5 +402,6 @@ START_TEST(device)
     {
         test_swapchain();
         test_refcount();
+        test_mipmap_levels();
     }
 }
