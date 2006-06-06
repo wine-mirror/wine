@@ -1748,6 +1748,9 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         GDI_ReleaseObj( hdc );
         return ret;
     }
+
+    if (!lprect)
+        flags &= ~ETO_CLIPPED;
         
     if( !(flags & (ETO_GLYPH_INDEX | ETO_IGNORELANGUAGE)) && BidiAvail && count > 0 )
     {
@@ -1800,7 +1803,6 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     {
         if(!lprect)
         {
-            if(flags & ETO_CLIPPED) goto done;
             if(flags & ETO_GLYPH_INDEX)
                 GetTextExtentPointI(hdc, glyphs, count, &sz);
             else
