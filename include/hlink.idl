@@ -18,8 +18,20 @@
 
 import "urlmon.idl";
 
+interface IHlink;
 interface IHlinkSite;
+interface IHlinkFrame;
 interface IHlinkBrowseContext;
+
+cpp_quote("HRESULT WINAPI HlinkCreateFromMoniker(IMoniker*, LPCWSTR, LPCWSTR, IHlinkSite*, DWORD, IUnknown*, REFIID, void**);");
+cpp_quote("HRESULT WINAPI HlinkCreateFromString(LPCWSTR, LPCWSTR, LPCWSTR, IHlinkSite*, DWORD, IUnknown*, REFIID, void**);");
+cpp_quote("HRESULT WINAPI HlinkCreateFromData(IDataObject*, IHlinkSite*, DWORD dwSiteData, IUnknown*, REFIID, void**);");
+cpp_quote("HRESULT WINAPI HlinkQueryCreateFromData(IDataObject*);");
+cpp_quote("HRESULT WINAPI HlinkClone(IHlink*, REFIID, IHlinkSite*, DWORD, void **);");
+cpp_quote("HRESULT WINAPI HlinkCreateBrowseContext(IUnknown*, REFIID, void **);");
+cpp_quote("HRESULT WINAPI HlinkNavigateToStringReference(LPCWSTR, LPCWSTR, IHlinkSite*, DWORD, IHlinkFrame*, DWORD, LPBC, IBindStatusCallback*, IHlinkBrowseContext*);");
+cpp_quote("HRESULT WINAPI HlinkNavigate(IHlink*, IHlinkFrame*, DWORD, LPBC, IBindStatusCallback*, IHlinkBrowseContext*);");
+cpp_quote("HRESULT WINAPI HlinkOnNavigate(IHlinkFrame*, IHlinkBrowseContext*, DWORD, IMoniker*, LPCWSTR, LPCWSTR, ULONG*);");
 
 /*****************************************************************************
  *    IHlink interface
