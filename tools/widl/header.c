@@ -1004,3 +1004,11 @@ void write_coclass(class_t *cocl)
   write_coclass_guid(cocl);
   fprintf(header, "\n");
 }
+
+void write_coclass_forward(class_t *cocl)
+{
+  fprintf(header, "#ifndef __%s_FWD_DEFINED__\n", cocl->name);
+  fprintf(header, "#define __%s_FWD_DEFINED__\n", cocl->name);
+  fprintf(header, "typedef struct %s %s;\n", cocl->name, cocl->name);
+  fprintf(header, "#endif /* defined __%s_FWD_DEFINED__\n\n", cocl->name );
+}

@@ -239,6 +239,7 @@ input:   gbl_statements                        { write_proxies($1); write_client
 gbl_statements:					{ $$ = NULL; }
 	| gbl_statements interfacedec		{ $$ = $1; }
 	| gbl_statements interfacedef		{ $$ = make_ifref($2); LINK($$, $1); }
+	| gbl_statements coclass ';'	{ $$ = $1; if (!parse_only && do_header) write_coclass_forward($2); }
 	| gbl_statements coclassdef		{ $$ = $1; add_coclass($2); }
 	| gbl_statements moduledef		{ $$ = $1; add_module($2); }
 	| gbl_statements librarydef		{ $$ = $1; }
@@ -248,6 +249,7 @@ gbl_statements:					{ $$ = NULL; }
 imp_statements:					{}
 	| imp_statements interfacedec		{ if (!parse_only) add_interface($2); }
 	| imp_statements interfacedef		{ if (!parse_only) add_interface($2); }
+	| imp_statements coclass ';'	{}
 	| imp_statements coclassdef		{ if (!parse_only) add_coclass($2); }
 	| imp_statements moduledef		{ if (!parse_only) add_module($2); }
 	| imp_statements statement		{}

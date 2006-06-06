@@ -37,6 +37,7 @@ extern void write_forward(type_t *iface);
 extern void write_interface(type_t *iface);
 extern void write_dispinterface(type_t *iface);
 extern void write_coclass(class_t *iface);
+extern void write_coclass_forward(class_t *iface);
 extern void write_typedef(type_t *type, const var_t *names);
 extern void write_expr(FILE *h, const expr_t *e, int brackets);
 extern void write_constdef(const var_t *v);
