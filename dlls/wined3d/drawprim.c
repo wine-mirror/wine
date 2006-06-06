@@ -1824,9 +1824,8 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
 
             /* Update the constants */
             for (i = 0; i < WINED3D_VSHADER_MAX_CONSTANTS; ++i) {
-                /* TODO: add support for Integer and Boolean constants */
-                if (WINESHADERCNST_FLOAT == This->stateBlock->vertexShaderConstantT[i]) {
 
+                if (This->stateBlock->set.vertexShaderConstantsF[i]) {
                     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i,
                         &This->stateBlock->vertexShaderConstantF[i * 4]));
 
@@ -1836,8 +1835,11 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
                         This->stateBlock->vertexShaderConstantF[i * 4 + 2],
                         This->stateBlock->vertexShaderConstantF[i * 4 + 3]);
                         checkGLcall("glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB");
+
+                    checkGLcall("glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB");
                 }
             }
+
         }
 
         if (usePixelShaderFunction) {
@@ -1858,16 +1860,19 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
 
              /* Update the constants */
              for (i = 0; i < WINED3D_PSHADER_MAX_CONSTANTS; ++i) {
-                 /* TODO: add support for Integer and Boolean constants */
-                 if (WINESHADERCNST_FLOAT == This->stateBlock->pixelShaderConstantT[i]) {
+
+                 if (This->stateBlock->set.pixelShaderConstantsF[i]) {
+
                      GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, i,
                         &This->stateBlock->pixelShaderConstantF[i * 4]));
+
                      TRACE_(d3d_shader)("Loading constants %u = %f %f %f %f\n", i,
                         This->stateBlock->pixelShaderConstantF[i * 4],
                         This->stateBlock->pixelShaderConstantF[i * 4 + 1],
                         This->stateBlock->pixelShaderConstantF[i * 4 + 2],
                         This->stateBlock->pixelShaderConstantF[i * 4 + 3]);
-                     checkGLcall("glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB");
+
+                     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB");
                  }
             }
         }

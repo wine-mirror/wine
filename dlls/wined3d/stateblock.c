@@ -168,18 +168,38 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
 
         /* Vertex Shader Constants */
         for (i = 0; i < MAX_VSHADER_CONSTANTS; ++i) {
-            if (This->set.vertexShaderConstants[i]) {
-                TRACE("Setting %p from %p %d to %f\n", This, targetStateBlock, i,  targetStateBlock->vertexShaderConstantF[i * 4 + 1]);
-                This->vertexShaderConstantB[i] = targetStateBlock->vertexShaderConstantB[i];
+
+            if (This->set.vertexShaderConstantsF[i]) {
+                TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
+                    targetStateBlock->vertexShaderConstantF[i * 4],
+                    targetStateBlock->vertexShaderConstantF[i * 4 + 1],
+                    targetStateBlock->vertexShaderConstantF[i * 4 + 2],
+                    targetStateBlock->vertexShaderConstantF[i * 4 + 3]);
+
                 This->vertexShaderConstantF[i * 4]      = targetStateBlock->vertexShaderConstantF[i * 4];
                 This->vertexShaderConstantF[i * 4 + 1]  = targetStateBlock->vertexShaderConstantF[i * 4 + 1];
                 This->vertexShaderConstantF[i * 4 + 2]  = targetStateBlock->vertexShaderConstantF[i * 4 + 2];
                 This->vertexShaderConstantF[i * 4 + 3]  = targetStateBlock->vertexShaderConstantF[i * 4 + 3];
+            }
+
+            if (This->set.vertexShaderConstantsI[i]) {
+                TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
+                    targetStateBlock->vertexShaderConstantI[i * 4],
+                    targetStateBlock->vertexShaderConstantI[i * 4 + 1],
+                    targetStateBlock->vertexShaderConstantI[i * 4 + 2],
+                    targetStateBlock->vertexShaderConstantI[i * 4 + 3]);
+
                 This->vertexShaderConstantI[i * 4]      = targetStateBlock->vertexShaderConstantI[i * 4];
                 This->vertexShaderConstantI[i * 4 + 1]  = targetStateBlock->vertexShaderConstantI[i * 4 + 1];
                 This->vertexShaderConstantI[i * 4 + 2]  = targetStateBlock->vertexShaderConstantI[i * 4 + 2];
                 This->vertexShaderConstantI[i * 4 + 3]  = targetStateBlock->vertexShaderConstantI[i * 4 + 3];
-                This->vertexShaderConstantT[i]          = targetStateBlock->vertexShaderConstantT[i];
+            }
+
+            if (This->set.vertexShaderConstantsB[i]) {
+                TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
+                    targetStateBlock->vertexShaderConstantB[i]? "TRUE":"FALSE");
+
+                This->vertexShaderConstantB[i] =  targetStateBlock->vertexShaderConstantB[i];
             }
         }
 
@@ -230,20 +250,39 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
             This->pixelShader = targetStateBlock->pixelShader;
         }
 
-        /* Pixel Shader Constants */
         for (i = 0; i < MAX_PSHADER_CONSTANTS; ++i) {
-            if (This->set.pixelShaderConstants[i]) {
-                TRACE("Setting %p from %p %d to %f\n", This, targetStateBlock, i,  targetStateBlock->pixelShaderConstantF[i * 4 + 1]);
-                This->pixelShaderConstantB[i] = targetStateBlock->pixelShaderConstantB[i];
+
+            if (This->set.pixelShaderConstantsF[i]) {
+                TRACE("Setting %p from %p %d to { %f, %f, %f, %f }\n", This, targetStateBlock, i,
+                    targetStateBlock->pixelShaderConstantF[i * 4],
+                    targetStateBlock->pixelShaderConstantF[i * 4 + 1],
+                    targetStateBlock->pixelShaderConstantF[i * 4 + 2],
+                    targetStateBlock->pixelShaderConstantF[i * 4 + 3]);
+
                 This->pixelShaderConstantF[i * 4]      = targetStateBlock->pixelShaderConstantF[i * 4];
                 This->pixelShaderConstantF[i * 4 + 1]  = targetStateBlock->pixelShaderConstantF[i * 4 + 1];
                 This->pixelShaderConstantF[i * 4 + 2]  = targetStateBlock->pixelShaderConstantF[i * 4 + 2];
                 This->pixelShaderConstantF[i * 4 + 3]  = targetStateBlock->pixelShaderConstantF[i * 4 + 3];
+            }
+
+            if (This->set.pixelShaderConstantsI[i]) {
+                TRACE("Setting %p from %p %d to { %d, %d, %d, %d }\n", This, targetStateBlock, i,
+                    targetStateBlock->pixelShaderConstantI[i * 4],
+                    targetStateBlock->pixelShaderConstantI[i * 4 + 1],
+                    targetStateBlock->pixelShaderConstantI[i * 4 + 2],
+                    targetStateBlock->pixelShaderConstantI[i * 4 + 3]);
+
                 This->pixelShaderConstantI[i * 4]      = targetStateBlock->pixelShaderConstantI[i * 4];
                 This->pixelShaderConstantI[i * 4 + 1]  = targetStateBlock->pixelShaderConstantI[i * 4 + 1];
                 This->pixelShaderConstantI[i * 4 + 2]  = targetStateBlock->pixelShaderConstantI[i * 4 + 2];
                 This->pixelShaderConstantI[i * 4 + 3]  = targetStateBlock->pixelShaderConstantI[i * 4 + 3];
-                This->pixelShaderConstantT[i]          = targetStateBlock->pixelShaderConstantT[i];
+            }
+
+            if (This->set.pixelShaderConstantsB[i]) {
+                TRACE("Setting %p from %p %d to %s\n", This, targetStateBlock, i,
+                    targetStateBlock->pixelShaderConstantB[i]? "TRUE":"FALSE");
+
+                This->pixelShaderConstantB[i] =  targetStateBlock->pixelShaderConstantB[i];
             }
         }
 
@@ -408,24 +447,15 @@ should really perform a delta so that only the changes get updated*/
 
         /* Vertex Shader Constants */
         for (i = 0; i < MAX_VSHADER_CONSTANTS; ++i) {
-            if (This->set.vertexShaderConstants[i] && This->changed.vertexShaderConstants[i]) {
-                switch (This->vertexShaderConstantT[i]) {
-                case WINESHADERCNST_FLOAT:
-                    IWineD3DDevice_SetVertexShaderConstantF(pDevice, i, This->vertexShaderConstantF + i * 4, 1);
-                break;
-                case WINESHADERCNST_BOOL:
-                    IWineD3DDevice_SetVertexShaderConstantB(pDevice, i, This->vertexShaderConstantB + i, 1);
-                break;
-                case WINESHADERCNST_INTEGER:
-                    IWineD3DDevice_SetVertexShaderConstantI(pDevice, i, This->vertexShaderConstantI + i * 4, 1);
-                break;
-                case WINESHADERCNST_NONE:
-                    IWineD3DDevice_SetVertexShaderConstantN(pDevice, i, 1);
-                break;
-                }
-            }
-        }
+            if (This->set.vertexShaderConstantsF[i] && This->changed.vertexShaderConstantsF[i])
+                IWineD3DDevice_SetVertexShaderConstantF(pDevice, i, This->vertexShaderConstantF + i * 4, 1);
 
+            if (This->set.vertexShaderConstantsI[i] && This->changed.vertexShaderConstantsI[i])
+                IWineD3DDevice_SetVertexShaderConstantI(pDevice, i, This->vertexShaderConstantI + i * 4, 1);
+
+            if (This->set.vertexShaderConstantsB[i] && This->changed.vertexShaderConstantsB[i])
+                IWineD3DDevice_SetVertexShaderConstantB(pDevice, i, This->vertexShaderConstantB + i, 1);
+        }
     }
 
     if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */ This->blockType == D3DSBT_ALL || This->blockType == D3DSBT_PIXELSTATE) {
@@ -437,22 +467,14 @@ should really perform a delta so that only the changes get updated*/
 
         /* Pixel Shader Constants */
         for (i = 0; i < MAX_PSHADER_CONSTANTS; ++i) {
-            if (This->set.pixelShaderConstants[i] && This->changed.pixelShaderConstants[i]) {
-                switch (This->pixelShaderConstantT[i]) {
-                case WINESHADERCNST_FLOAT:
-                    IWineD3DDevice_SetPixelShaderConstantF(pDevice, i, This->pixelShaderConstantF + i * 4, 1);
-                break;
-                case WINESHADERCNST_BOOL:
-                    IWineD3DDevice_SetPixelShaderConstantB(pDevice, i, This->pixelShaderConstantB + i, 1);
-                break;
-                case WINESHADERCNST_INTEGER:
-                    IWineD3DDevice_SetPixelShaderConstantI(pDevice, i, This->pixelShaderConstantI + i * 4, 1);
-                break;
-                case WINESHADERCNST_NONE:
-                    IWineD3DDevice_SetPixelShaderConstantN(pDevice, i, 1);
-                break;
-                }
-            }
+            if (This->set.pixelShaderConstantsF[i] && This->changed.pixelShaderConstantsF[i])
+                IWineD3DDevice_SetPixelShaderConstantF(pDevice, i, This->pixelShaderConstantF + i * 4, 1);
+
+            if (This->set.pixelShaderConstantsI[i] && This->changed.pixelShaderConstantsI[i])
+                IWineD3DDevice_SetPixelShaderConstantI(pDevice, i, This->pixelShaderConstantI + i * 4, 1);
+
+            if (This->set.pixelShaderConstantsB[i] && This->changed.pixelShaderConstantsB[i])
+                IWineD3DDevice_SetPixelShaderConstantB(pDevice, i, This->pixelShaderConstantB + i, 1);
         }
     }
 
