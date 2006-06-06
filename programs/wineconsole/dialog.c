@@ -55,7 +55,7 @@ struct dialog_info
  *
  * Dialog prop for the option property sheet
  */
-static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     struct dialog_info*		di;
     unsigned 			idc;
@@ -516,7 +516,7 @@ static BOOL fill_list_font(struct dialog_info* di)
  *
  * Dialog proc for the Font property sheet
  */
-static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     struct dialog_info*		di;
 
@@ -596,7 +596,7 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
  *
  * Dialog proc for the config property sheet
  */
-static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     struct dialog_info*		di;
 
@@ -699,7 +699,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
  *      Dialog Procedure for choosing how to handle modification to the
  * console settings.
  */
-static BOOL WINAPI WCUSER_SaveDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR WINAPI WCUSER_SaveDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
