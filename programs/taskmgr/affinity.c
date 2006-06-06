@@ -38,9 +38,9 @@ HANDLE        hProcessAffinityHandle;
 static INT_PTR CALLBACK
 AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    DWORD    dwProcessAffinityMask = 0;
-    DWORD    dwSystemAffinityMask = 0;
-    TCHAR    strErrorText[260];
+    DWORD_PTR dwProcessAffinityMask = 0;
+    DWORD_PTR dwSystemAffinityMask = 0;
+    TCHAR     strErrorText[260];
 
     switch (message) {
     case WM_INITDIALOG:

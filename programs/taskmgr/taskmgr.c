@@ -649,7 +649,7 @@ static void TaskManager_OnTabWndSelChange(void)
 
         if (GetMenuItemCount(hMenu) <= 4) {
             hSubMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_WINDOWSMENU));
-            InsertMenu(hMenu, 3, MF_BYPOSITION|MF_POPUP, (UINT)hSubMenu, _T("&Windows"));
+            InsertMenu(hMenu, 3, MF_BYPOSITION|MF_POPUP, (UINT_PTR)hSubMenu, _T("&Windows"));
             DrawMenuBar(hMainWnd);
         }
         if (TaskManagerSettings.View_LargeIcons)
@@ -696,7 +696,7 @@ static void TaskManager_OnTabWndSelChange(void)
         hSubMenu = CreatePopupMenu();
         AppendMenu(hSubMenu, MF_STRING, ID_VIEW_CPUHISTORY_ONEGRAPHALL, _T("&One Graph, All CPUs"));
         AppendMenu(hSubMenu, MF_STRING, ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU, _T("One Graph &Per CPU"));
-        AppendMenu(hViewMenu, MF_STRING|MF_POPUP, (UINT)hSubMenu, _T("&CPU History"));
+        AppendMenu(hViewMenu, MF_STRING|MF_POPUP, (UINT_PTR)hSubMenu, _T("&CPU History"));
         AppendMenu(hViewMenu, MF_STRING, ID_VIEW_SHOWKERNELTIMES, _T("&Show Kernel Times"));
         if (TaskManagerSettings.ShowKernelTimes)
             CheckMenuItem(hViewMenu, ID_VIEW_SHOWKERNELTIMES, MF_BYCOMMAND|MF_CHECKED);
