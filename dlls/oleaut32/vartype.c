@@ -64,6 +64,7 @@ static inline void VARIANT_CopyData(const VARIANT *srcVar, VARTYPE vt, void *pOu
   case VT_UI8: memcpy(pOut, &V_UI8(srcVar), sizeof (LONG64)); break;
   case VT_INT_PTR: memcpy(pOut, &V_INT_PTR(srcVar), sizeof (INT_PTR)); break;
   case VT_DECIMAL: memcpy(pOut, &V_DECIMAL(srcVar), sizeof (DECIMAL)); break;
+  case VT_BSTR: memcpy(pOut, &V_BSTR(srcVar), sizeof(BSTR)); break;
   default:
     FIXME("VT_ type %d unhandled, please report!\n", vt);
   }
