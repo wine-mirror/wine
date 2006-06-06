@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "ole2.h"
 #include "unknwn.h"
 
@@ -311,4 +312,45 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
         return CLASS_E_CLASSNOTAVAILABLE;
 
     return IClassFactory_QueryInterface(pcf, iid, ppv);
+}
+
+static HRESULT register_clsid(LPCGUID guid)
+{
+    static const WCHAR clsid[] =
+        {'C','L','S','I','D','\\',0};
+    static const WCHAR ips[] =
+        {'\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
+    static const WCHAR hlink[] =
+        {'h','l','i','n','k','.','d','l','l',0};
+    static const WCHAR threading_model[] =
+        {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
+    static const WCHAR apartment[] =
+        {'A','p','a','r','t','m','e','n','t',0};
+    WCHAR path[80];
+    HKEY key = NULL;
+    LONG r;
+
+    lstrcpyW(path, clsid);
+    StringFromGUID2(guid, &path[6], 80);
+    lstrcatW(path, ips);
+    r = RegCreateKeyW(HKEY_CLASSES_ROOT, path, &key);
+    if (r != ERROR_SUCCESS)
+        return E_FAIL;
+
+    RegSetValueExW(key, NULL, 0, REG_SZ, (LPBYTE)hlink, sizeof hlink);
+    RegSetValueExW(key, threading_model, 0, REG_SZ, (LPBYTE)apartment, sizeof apartment);
+    RegCloseKey(key);
+
+    return S_OK;
+}
+
+HRESULT WINAPI DllRegisterServer(void)
+{
+    HRESULT r;
+
+    r = register_clsid(&CLSID_StdHlink);
+    if (SUCCEEDED(r))
+        r = register_clsid(&CLSID_StdHlinkBrowseContext);
+
+    return S_OK;
 }
