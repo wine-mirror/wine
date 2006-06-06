@@ -29,7 +29,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmds
     DOWINMAIN *doWinMain;
 
     hModule = LoadLibrary("hhctrl.ocx");
-    doWinMain = GetProcAddress(hModule, "doWinMain");
+    doWinMain = (DOWINMAIN*) GetProcAddress(hModule, "doWinMain");
 
     return doWinMain(hInst, cmdline); 
 }
