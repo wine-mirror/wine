@@ -8,7 +8,9 @@ DELAYIMPORTS = urlmon
 EXTRALIBS = -luuid $(LIBUNICODE)
 
 C_SRCS = \
-	hlink_main.c
+	browse_ctx.c \
+	hlink_main.c \
+	link.c
 
 @MAKE_DLL_RULES@
 

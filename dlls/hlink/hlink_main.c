@@ -32,8 +32,21 @@
 #include "wine/debug.h"
 #include "hlink.h"
 
+#include "initguid.h"
+#include "hlguids.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(hlink);
 
+extern HRESULT WINAPI HLink_Constructor(IUnknown *, REFIID, LPVOID*);
+extern HRESULT WINAPI HLinkBrowseContext_Constructor(IUnknown *, REFIID, LPVOID*);
+
+typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown*, REFIID, LPVOID*);
+
+typedef struct
+{
+    const IClassFactoryVtbl *lpVtbl;
+    LPFNCREATEINSTANCE      lpfnCI;
+} CFImpl;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -62,49 +75,136 @@ HRESULT WINAPI HlinkCreateFromMoniker( IMoniker *pimkTrgt, LPCWSTR pwzLocation,
         LPCWSTR pwzFriendlyName, IHlinkSite* pihlsite, DWORD dwSiteData,
         IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
-    FIXME("%p %s %s %p %li %p %s %p\n", pimkTrgt, debugstr_w(pwzLocation),
-          debugstr_w(pwzFriendlyName), pihlsite, dwSiteData, piunkOuter,
-          debugstr_guid(riid), ppvObj);
+    IHlink *hl = NULL;
+    HRESULT r = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %s %p %li %p %s %p\n", pimkTrgt, debugstr_w(pwzLocation),
+            debugstr_w(pwzFriendlyName), pihlsite, dwSiteData, piunkOuter,
+            debugstr_guid(riid), ppvObj);
+
+    r = CoCreateInstance(&CLSID_StdHlink, piunkOuter, CLSCTX_INPROC_SERVER, riid, ppvObj);
+    if (FAILED(r))
+        return r;
+
+    if (pwzLocation)
+        IHlink_SetStringReference(hl, HLINKSETF_LOCATION, NULL, pwzLocation);
+    if (pwzFriendlyName)
+        IHlink_SetFriendlyName(hl, pwzFriendlyName);
+    if (pihlsite)
+        IHlink_SetHlinkSite(hl, pihlsite, dwSiteData);
+    if (pimkTrgt)
+        IHlink_SetMonikerReference(hl, 0, pimkTrgt, pwzLocation);
+
+    *ppvObj = hl;
+
+    TRACE("Returning %li\n",r);
+
+    return r;
 }
 
 HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
         LPCWSTR pwzFriendlyName, IHlinkSite* pihlsite, DWORD dwSiteData,
         IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
-    FIXME("%s %s %s %p %li %p %s %p\n", debugstr_w(pwzTarget),
-          debugstr_w(pwzLocation), debugstr_w(pwzFriendlyName), pihlsite,
-          dwSiteData, piunkOuter, debugstr_guid(riid), ppvObj);
+    IHlink *hl = NULL;
+    HRESULT r = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%s %s %s %p %li %p %s %p\n", debugstr_w(pwzTarget),
+            debugstr_w(pwzLocation), debugstr_w(pwzFriendlyName), pihlsite,
+            dwSiteData, piunkOuter, debugstr_guid(riid), ppvObj);
+
+    r = CoCreateInstance(&CLSID_StdHlink, piunkOuter, CLSCTX_INPROC_SERVER, riid, (LPVOID*)&hl);
+    if (FAILED(r))
+        return r;
+
+    if (pwzLocation)
+        IHlink_SetStringReference(hl, HLINKSETF_LOCATION, NULL, pwzLocation);
+
+    if (pwzTarget)
+    {
+        IMoniker *pTgtMk = NULL;
+        IBindCtx *pbc = NULL;
+        ULONG eaten;
+
+        CreateBindCtx(0, &pbc);
+        r = MkParseDisplayName(pbc, pwzTarget, &eaten, &pTgtMk);
+        IBindCtx_Release(pbc);
+
+        if (FAILED(r))
+        {
+            FIXME("ParseDisplayName failed, falling back to file\n");
+            r = CreateFileMoniker(pwzTarget,&pTgtMk);
+        }
+
+        if (pTgtMk)
+        {
+            IHlink_SetMonikerReference(hl, 0, pTgtMk, pwzLocation);
+            IMoniker_Release(pTgtMk);
+        }
+        else
+            FIXME("Unable to come up with a moniker, expect problems\n");
+
+        IHlink_SetStringReference(hl, HLINKSETF_TARGET, pwzTarget, NULL);
+    }
+
+    if (pwzFriendlyName)
+        IHlink_SetFriendlyName(hl, pwzFriendlyName);
+    if (pihlsite)
+        IHlink_SetHlinkSite(hl, pihlsite, dwSiteData);
+
+    TRACE("Returning %li\n",r);
+    *ppvObj = hl;
+
+    return r;
 }
 
 
 HRESULT WINAPI HlinkCreateBrowseContext( IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
-    FIXME("%p %s %p\n", piunkOuter, debugstr_guid(riid), ppvObj);
+    HRESULT r = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %p\n", piunkOuter, debugstr_guid(riid), ppvObj);
+
+    r = CoCreateInstance(&CLSID_StdHlinkBrowseContext, piunkOuter, CLSCTX_INPROC_SERVER, riid, ppvObj);
+
+    TRACE("returning %li\n",r);
+
+    return r;
 }
 
 HRESULT WINAPI HlinkNavigate(IHlink *phl, IHlinkFrame *phlFrame,
         DWORD grfHLNF, LPBC pbc, IBindStatusCallback *pbsc,
         IHlinkBrowseContext *phlbc)
 {
-    FIXME("%p %p %li %p %p %p\n", phl, phlFrame, grfHLNF, pbc, pbsc, phlbc);
+    HRESULT r = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p %p %li %p %p %p\n", phl, phlFrame, grfHLNF, pbc, pbsc, phlbc);
+
+    if (phlFrame)
+        r = IHlinkFrame_Navigate(phlFrame, grfHLNF, pbc, pbsc, phl);
+    else if (phl)
+        r = IHlink_Navigate(phl, grfHLNF, pbc, pbsc, phlbc);
+
+    return r;
 }
 
 HRESULT WINAPI HlinkOnNavigate( IHlinkFrame *phlFrame,
         IHlinkBrowseContext* phlbc, DWORD grfHLNF, IMoniker *pmkTarget,
         LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName, ULONG* puHLID)
 {
-    FIXME("%p %p %li %p %s %s %p\n",phlFrame, phlbc, grfHLNF, pmkTarget,
-          debugstr_w(pwzLocation), debugstr_w(pwzFriendlyName), puHLID);
+    HRESULT r = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p %p %li %p %s %s %p\n",phlFrame, phlbc, grfHLNF, pmkTarget,
+            debugstr_w(pwzLocation), debugstr_w(pwzFriendlyName), puHLID);
+
+    r = IHlinkBrowseContext_OnNavigateHlink(phlbc, grfHLNF, pmkTarget,
+            pwzLocation, pwzFriendlyName, puHLID);
+
+    if (phlFrame)
+        r = IHlinkFrame_OnNavigate(phlFrame,grfHLNF,pmkTarget, pwzLocation,
+                pwzFriendlyName, 0);
+
+    return r;
 }
 
 HRESULT WINAPI HlinkCreateFromData(IDataObject *piDataObj,
@@ -113,7 +213,13 @@ HRESULT WINAPI HlinkCreateFromData(IDataObject *piDataObj,
 {
     FIXME("%p %p %ld %p %p %p\n",
           piDataObj, pihlsite, dwSiteData, piunkOuter, riid, ppvObj);
+    *ppvObj = NULL;
+    return E_NOTIMPL;
+}
 
+HRESULT WINAPI HlinkQueryCreateFromData(IDataObject* piDataObj)
+{
+    FIXME("%p\n", piDataObj);
     return E_NOTIMPL;
 }
 
@@ -124,17 +230,85 @@ HRESULT WINAPI HlinkCreateExtensionServices(LPCWSTR pwzAdditionalHeaders,
     FIXME("%s %p %s %s %p %s %p\n",debugstr_w(pwzAdditionalHeaders),
             phwnd, debugstr_w(pszUsername), debugstr_w(pszPassword),
             punkOuter, debugstr_guid(riid), ppvObj);
-
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,
+        REFIID riid, LPVOID *ppvObj)
+{
+    CFImpl *This = (CFImpl *)iface;
+
+    TRACE("(%p)->(%s)\n",This,debugstr_guid(riid));
+
+    *ppvObj = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IClassFactory))
+    {
+        *ppvObj = This;
+        return S_OK;
+    }
+
+    TRACE("-- E_NOINTERFACE\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HLinkCF_fnAddRef (LPCLASSFACTORY iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI HLinkCF_fnRelease(LPCLASSFACTORY iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI HLinkCF_fnCreateInstance( LPCLASSFACTORY iface,
+        LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObject)
+{
+    CFImpl *This = (CFImpl *)iface;
+
+    TRACE("%p->(%p,%s,%p)\n", This, pUnkOuter, debugstr_guid(riid), ppvObject);
+
+    *ppvObject = NULL;
+
+    return This->lpfnCI(pUnkOuter, riid, ppvObject);
+}
+
+static HRESULT WINAPI HLinkCF_fnLockServer(LPCLASSFACTORY iface, BOOL fLock)
+{
+    FIXME("%p %d\n", iface, fLock);
+    return E_NOTIMPL;
+}
+
+static const IClassFactoryVtbl hlcfvt =
+{
+    HLinkCF_fnQueryInterface,
+    HLinkCF_fnAddRef,
+    HLinkCF_fnRelease,
+    HLinkCF_fnCreateInstance,
+    HLinkCF_fnLockServer
+};
+
+static CFImpl HLink_cf = { &hlcfvt, &HLink_Constructor };
+static CFImpl HLinkBrowseContext_cf = { &hlcfvt, &HLinkBrowseContext_Constructor };
+
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
-    FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
+    IClassFactory   *pcf = NULL;
+
+    TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
 
     if (!ppv)
         return E_INVALIDARG;
     *ppv = NULL;
 
-    return CLASS_E_CLASSNOTAVAILABLE;
+    if (IsEqualIID(rclsid, &CLSID_StdHlink))
+        pcf = (IClassFactory*) &HLink_cf;
+    else if (IsEqualIID(rclsid, &CLSID_StdHlinkBrowseContext))
+        pcf = (IClassFactory*) &HLinkBrowseContext_cf;
+    else
+        return CLASS_E_CLASSNOTAVAILABLE;
+
+    return IClassFactory_QueryInterface(pcf, iid, ppv);
 }
