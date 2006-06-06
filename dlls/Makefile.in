@@ -62,6 +62,7 @@ BASEDIRS = \
 	gdi \
 	gphoto2.ds \
 	hhctrl.ocx \
+	hlink \
 	iccvid \
 	icmp \
 	ifsmgr.vxd \
