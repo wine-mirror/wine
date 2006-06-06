@@ -594,7 +594,7 @@ char filetorun[MAX_PATH];
 	/* No batch file found, assume executable */
 
   hinst = FindExecutable (param1, NULL, filetorun);
-  if ((int)hinst < 32)
+  if ((INT_PTR)hinst < 32)
     console = 0;
   else
     console = SHGetFileInfo (filetorun, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
