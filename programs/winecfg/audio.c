@@ -118,7 +118,7 @@ static void configureAudioDriver(HWND hDlg)
                 dci.dwDCISize = sizeof (dci);
                 dci.lpszDCISectionName = NULL;
                 dci.lpszDCIAliasName = NULL;
-                lRes = SendDriverMessage(hdrvr, DRV_CONFIGURE, 0, (LONG)&dci);
+                lRes = SendDriverMessage(hdrvr, DRV_CONFIGURE, 0, (LONG_PTR)&dci);
             }
             CloseDriver(hdrvr, 0, 0);
         }
@@ -318,7 +318,7 @@ static void initAudioDeviceTree(HWND hDlg)
                             WAVEOUTCAPSW caps;
                             char szPname[MAXPNAMELEN];
 
-                            wodMessagePtr(j, WODM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps));
+                            wodMessagePtr(j, WODM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
@@ -344,7 +344,7 @@ static void initAudioDeviceTree(HWND hDlg)
                             WAVEINCAPSW caps;
                             char szPname[MAXPNAMELEN];
 
-                            widMessagePtr(j, WIDM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps));
+                            widMessagePtr(j, WIDM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
@@ -370,7 +370,7 @@ static void initAudioDeviceTree(HWND hDlg)
                             MIDIOUTCAPSW caps;
                             char szPname[MAXPNAMELEN];
 
-                            modMessagePtr(j, MODM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps));
+                            modMessagePtr(j, MODM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
@@ -396,7 +396,7 @@ static void initAudioDeviceTree(HWND hDlg)
                             MIDIINCAPSW caps;
                             char szPname[MAXPNAMELEN];
 
-                            midMessagePtr(j, MIDM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps));
+                            midMessagePtr(j, MIDM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
@@ -422,7 +422,7 @@ static void initAudioDeviceTree(HWND hDlg)
                             AUXCAPSW caps;
                             char szPname[MAXPNAMELEN];
 
-                            auxMessagePtr(j, AUXDM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps));
+                            auxMessagePtr(j, AUXDM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
@@ -448,7 +448,7 @@ static void initAudioDeviceTree(HWND hDlg)
                             MIXERCAPSW caps;
                             char szPname[MAXPNAMELEN];
 
-                            mxdMessagePtr(j, MXDM_GETDEVCAPS, 0, (DWORD)&caps, sizeof(caps));
+                            mxdMessagePtr(j, MXDM_GETDEVCAPS, 0, (DWORD_PTR)&caps, sizeof(caps));
                             WideCharToMultiByte(CP_ACP, 0, caps.szPname, -1, szPname, MAXPNAMELEN, 0, 0);
 
                             insert.hParent = type;
