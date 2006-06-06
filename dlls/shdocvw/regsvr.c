@@ -530,6 +530,54 @@ static struct regsvr_coclass const coclass_list[] = {
         "InternetExplorer.Application.1",
         "InternetExplorer.Application"
     },
+    {   &CLSID_ShellSearchAssistantOC,
+        "SearchAssistantOC",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        "SearchAssistantOC.SearchAssistantOC.1",
+        "SearchAssistantOC.SearchAssistantOC"
+    },
+    {   &CLSID_ShellShellNameSpace,
+        "Shell Name Space",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        "ShellNameSpace.ShellNameSpace.1",
+        "ShellNameSpace.ShellNameSpace"
+    },
+    {   &CLSID_ShellNameSpace,
+        "Shell Name Space",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        "ShellNameSpace.ShellNameSpace.1",
+        "ShellNameSpace.ShellNameSpace"
+    },
+    {   &CLSID_ShellUIHelper,
+        "Microsoft Shell UI Helper",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        "Shell.UIHelper.1",
+        NULL
+    },
+    {   &CLSID_ShellWindows,
+        "ShellWindows",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        NULL,
+        NULL
+    },
+    {   &CLSID_SearchAssistantOC,
+        "SearchAssistantOC",
+        NULL,
+        "shdocvw.dll",
+        "Apartment",
+        "SearchAssistantOC.SearchAssistantOC.1",
+        "SearchAssistantOC.SearchAssistantOC"
+    },
     { NULL }			/* list terminator */
 };
 
