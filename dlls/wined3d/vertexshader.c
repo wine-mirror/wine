@@ -671,7 +671,7 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
         if (param & D3DVS_ADDRMODE_RELATIVE) {
             FIXME("Relative addressing not expected for a named constant %lu\n", reg);
         }
-        sprintf(tmpReg, "const%lu", reg);
+        sprintf(tmpReg, "C%lu", reg);
     } else {
         sprintf(tmpReg, "C[%s%lu]", (param & D3DVS_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
     }
@@ -986,7 +986,7 @@ void vshader_hw_def(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst;
 
     shader_addline(buffer, 
-        "PARAM const%lu = { %f, %f, %f, %f };\n", reg & 0xFF, 
+        "PARAM C%lu = { %f, %f, %f, %f };\n", reg & 0xFF,
           *((const float *)(arg->src + 0)), 
           *((const float *)(arg->src + 1)), 
           *((const float *)(arg->src + 2)), 
