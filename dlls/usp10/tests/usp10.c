@@ -44,8 +44,8 @@ static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
     int             cMaxItems;
     SCRIPT_ITEM     pItem[255];
     int             pcItems;
-    WCHAR           TestItem1[6] = {'T', 'e', 's', 't', 0x0166, 0}; 
-    WCHAR           TestItem2[6] = {'T', 'e', 's', 't', 0x0166, 0}; 
+    WCHAR           TestItem1[6] = {'T', 'e', 's', 't', 'a', 0}; 
+    WCHAR           TestItem2[6] = {'T', 'e', 's', 't', 'b', 0}; 
 
     SCRIPT_CACHE    psc;
     int             cChars;
@@ -58,6 +58,8 @@ static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
     int             piAdvance[256];
     GOFFSET         pGoffset[256];
     ABC             pABC[256];
+    LOGFONTW        lf;
+    HFONT           zfont;
     int             cnt;
 
     /* We need a valid HDC to drive a lot of Script functions which requires the following    *
@@ -70,6 +72,18 @@ static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
 
     hdc = GetDC(hwnd);                                      /* We now have a hdc             */
     ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
+
+    lstrcpyW(lf.lfFaceName, (WCHAR *) "Courier");
+    lf.lfHeight = 10;
+    lf.lfItalic = 0;
+    lf.lfEscapement = 0;
+    lf.lfOrientation = 0;
+    lf.lfUnderline = 0;
+    lf.lfStrikeOut = 0;
+    lf.lfWeight = 3;
+    lf.lfWidth = 10;
+
+    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectW(&lf));
 
     /* Start testing usp10 functions                                                         */
     /* This test determines that the pointer returned by ScriptGetProperties is valid
@@ -128,7 +142,7 @@ static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
         ok (hr == E_PENDING, "If psc is NULL (%08x) the E_PENDING should be returned\n",
-                      (unsigned int) hr);
+                        (unsigned int) hr);
         cMaxGlyphs = 4;
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
@@ -144,9 +158,12 @@ static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
         ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
         ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
         if (hr ==0) {
+            hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
+                             pGoffset, pABC);
+            ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", (unsigned int) hr);
             hr = ScriptPlace(NULL, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "Should return 0 not (%08x)\n", (unsigned int) hr);
+            ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", (unsigned int) hr);
             for (cnt=0; cnt < pcGlyphs; cnt++)
                 pwOutGlyphs[cnt] = pwOutGlyphs1[cnt];                 /* Send to next function */
         }
@@ -180,7 +197,7 @@ static void test_ScriptItemIzeShapePlace(unsigned short pwOutGlyphs[256])
              ok (cnt == cChars, "Translation to place when told not to. WCHAR %d - %04x != %04x\n",
                            cnt, TestItem2[cnt], pwOutGlyphs2[cnt]);
              if (hr ==0) {
-                 hr = ScriptPlace(NULL, &psc, pwOutGlyphs2, pcGlyphs, psva, &pItem[0].a, piAdvance,
+                 hr = ScriptPlace(hdc, &psc, pwOutGlyphs2, pcGlyphs, psva, &pItem[0].a, piAdvance,
                                   pGoffset, pABC);
                  ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", (unsigned int) hr);
              }
