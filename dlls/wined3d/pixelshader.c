@@ -586,7 +586,7 @@ void pshader_defb(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_defi(WINED3DSHADERVECTOR* d) {
+void pshader_defi(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
     FIXME(" : Stub\n");
 }
 
@@ -707,7 +707,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     /* Constant definitions */
     {D3DSIO_DEF,      "def",      "undefined",           5, pshader_def,     pshader_hw_def, NULL, 0, 0},
     {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, pshader_defb,    NULL, NULL, 0, 0},
-    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   2, pshader_defi,    NULL, NULL, 0, 0},
+    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   5, pshader_defi,    NULL, NULL, 0, 0},
 
     /* Texture */
     {D3DSIO_TEXCOORD, "texcoord", "undefined",   1, pshader_texcoord,    pshader_hw_texcoord, NULL, 0, D3DPS_VERSION(1,3)},
