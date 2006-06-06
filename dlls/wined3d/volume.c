@@ -142,10 +142,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID rii
     }
 
     TRACE("Relaying to QueryInterface\n");
-    if (IUnknown_QueryInterface(This->container, riid, ppContainer) != S_OK)
-        return WINED3DERR_INVALIDCALL;
-
-    return WINED3D_OK;
+    return IUnknown_QueryInterface(This->container, riid, ppContainer);
 }
 
 HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC* pDesc) {

@@ -236,10 +236,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFIID r
     }
 
     TRACE("Relaying to QueryInterface\n");
-    if (IUnknown_QueryInterface(container, riid, ppContainer) != S_OK)
-        return WINED3DERR_INVALIDCALL;
-
-    return WINED3D_OK;
+    return IUnknown_QueryInterface(container, riid, ppContainer);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC *pDesc) {
