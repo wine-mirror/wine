@@ -1,6 +1,6 @@
-@ stub DnsAcquireContextHandle_A
-@ stub DnsAcquireContextHandle_UTF8
-@ stub DnsAcquireContextHandle_W
+@ stdcall DnsAcquireContextHandle_A(long ptr ptr)
+@ stdcall DnsAcquireContextHandle_UTF8(long ptr ptr)
+@ stdcall DnsAcquireContextHandle_W(long ptr ptr)
 @ stub DnsAddRecordSet_A
 @ stub DnsAddRecordSet_UTF8
 @ stub DnsAddRecordSet_W
@@ -28,8 +28,8 @@
 @ stub DnsEnableAdapterDomainNameRegistration
 @ stub DnsEnableBNodeResolverThread
 @ stub DnsEnableDynamicRegistration
-@ stub DnsExtractRecordsFromMessage_UTF8
-@ stub DnsExtractRecordsFromMessage_W
+@ stdcall DnsExtractRecordsFromMessage_UTF8(ptr long ptr)
+@ stdcall DnsExtractRecordsFromMessage_W(ptr long ptr)
 @ stub DnsFindAuthoritativeZone
 @ stub DnsFlushResolverCache
 @ stub DnsFlushResolverCacheEntry_A
@@ -65,9 +65,9 @@
 @ stub DnsModifyRecordSet_A
 @ stub DnsModifyRecordSet_UTF8
 @ stub DnsModifyRecordSet_W
-@ stub DnsModifyRecordsInSet_A
-@ stub DnsModifyRecordsInSet_UTF8
-@ stub DnsModifyRecordsInSet_W
+@ stdcall DnsModifyRecordsInSet_A(ptr ptr long ptr ptr ptr)
+@ stdcall DnsModifyRecordsInSet_UTF8(ptr ptr long ptr ptr ptr)
+@ stdcall DnsModifyRecordsInSet_W(ptr ptr long ptr ptr ptr)
 @ stdcall DnsNameCompare_A(str str)
 @ stub DnsNameCompareEx_A
 @ stub DnsNameCompareEx_UTF8
@@ -94,13 +94,13 @@
 @ stub DnsRecordTypeForName
 @ stub DnsRelationalCompare_UTF8
 @ stub DnsRelationalCompare_W
-@ stub DnsReleaseContextHandle
+@ stdcall DnsReleaseContextHandle(ptr)
 @ stub DnsRemoveRegistrations
-@ stub DnsReplaceRecordSetA
+@ stdcall DnsReplaceRecordSetA(ptr long ptr ptr ptr)
 @ stub DnsReplaceRecordSet_A
-@ stub DnsReplaceRecordSetUTF8
+@ stdcall DnsReplaceRecordSetUTF8(ptr long ptr ptr ptr)
 @ stub DnsReplaceRecordSet_UTF8
-@ stub DnsReplaceRecordSetW
+@ stdcall DnsReplaceRecordSetW(ptr long ptr ptr ptr)
 @ stub DnsReplaceRecordSet_W
 @ stub DnsServiceNotificationDeregister_A
 @ stub DnsServiceNotificationDeregister_UTF8
