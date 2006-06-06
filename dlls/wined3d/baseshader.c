@@ -160,6 +160,25 @@ int shader_skip_unrecognized(
     return tokens_read;
 }
 
+/* Convert floating point offset relative
+ * to a register file to an absolute offset for float constants */
+
+unsigned int shader_get_float_offset(const DWORD reg) {
+
+     unsigned int regnum = reg & D3DSP_REGNUM_MASK;
+     int regtype = shader_get_regtype(reg);
+
+     switch (regtype) {
+        case D3DSPR_CONST: return regnum;
+        case D3DSPR_CONST2: return 2048 + regnum;
+        case D3DSPR_CONST3: return 4096 + regnum;
+        case D3DSPR_CONST4: return 6144 + regnum;
+        default:
+            FIXME("Unsupported register type: %d\n", regtype);
+            return regnum;
+     }
+}
+
 /* Note that this does not count the loop register
  * as an address register. */
 
@@ -330,21 +349,23 @@ static void shader_dump_arr_entry(
     IWineD3DBaseShader *iface,
     const DWORD param,
     const DWORD addr_token,
+    unsigned int reg,
     int input) {
 
-    DWORD reg = param & D3DSP_REGNUM_MASK;
     char relative =
         ((param & D3DSHADER_ADDRESSMODE_MASK) == D3DSHADER_ADDRMODE_RELATIVE);
 
-    TRACE("[");
     if (relative) {
+        TRACE("[");
         if (addr_token)
             shader_dump_param(iface, addr_token, 0, input);
         else
             TRACE("a0.x");
         TRACE(" + ");
      }
-     TRACE("%lu]", reg);
+     TRACE("%u", reg);
+     if (relative)
+         TRACE("]");
 }
 
 void shader_dump_param(
@@ -388,11 +409,15 @@ void shader_dump_param(
             TRACE("r%lu", reg);
             break;
         case D3DSPR_INPUT:
-            TRACE("v%lu", reg);
+            TRACE("v");
+            shader_dump_arr_entry(iface, param, addr_token, reg, input);
             break;
         case D3DSPR_CONST:
+        case D3DSPR_CONST2:
+        case D3DSPR_CONST3:
+        case D3DSPR_CONST4:
             TRACE("c");
-            shader_dump_arr_entry(iface, param, addr_token, input);
+            shader_dump_arr_entry(iface, param, addr_token, shader_get_float_offset(param), input);
             break;
         case D3DSPR_TEXTURE: /* vs: case D3DSPR_ADDR */
             TRACE("%c%lu", (pshader? 't':'a'), reg);
@@ -416,18 +441,18 @@ void shader_dump_param(
 
             if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3) {
                 TRACE("o");
-                shader_dump_arr_entry(iface, param, addr_token, input);
+                shader_dump_arr_entry(iface, param, addr_token, reg, input);
             }
             else 
                TRACE("oT%lu", reg);
             break;
         case D3DSPR_CONSTINT:
             TRACE("i");
-            shader_dump_arr_entry(iface, param, addr_token, input);
+            shader_dump_arr_entry(iface, param, addr_token, reg, input);
             break;
         case D3DSPR_CONSTBOOL:
             TRACE("b");
-            shader_dump_arr_entry(iface, param, addr_token, input);
+            shader_dump_arr_entry(iface, param, addr_token, reg, input);
             break;
         case D3DSPR_LABEL:
             TRACE("l%lu", reg);

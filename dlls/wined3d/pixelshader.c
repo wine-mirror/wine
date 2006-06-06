@@ -1424,23 +1424,38 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, C
                     pToken += 2;
                     len += 2;
 
-                } else 
-                    if (curOpcode->opcode == D3DSIO_DEF) {
-                        TRACE("def c%lu = ", *pToken & 0xFF);
-                        ++pToken;
-                        ++len;
-                        TRACE("%f ,", *(float *)pToken);
-                        ++pToken;
-                        ++len;
-                        TRACE("%f ,", *(float *)pToken);
-                        ++pToken;
-                        ++len;
-                        TRACE("%f ,", *(float *)pToken);
-                        ++pToken;
-                        ++len;
-                        TRACE("%f", *(float *)pToken);
-                        ++pToken;
-                        ++len;
+                } else if (curOpcode->opcode == D3DSIO_DEF) {
+
+                        unsigned int offset = shader_get_float_offset(*pToken);
+
+                        TRACE("def c%u = %f, %f, %f, %f", offset,
+                            *(float *)(pToken + 1),
+                            *(float *)(pToken + 2),
+                            *(float *)(pToken + 3),
+                            *(float *)(pToken + 4));
+
+                        pToken += 5;
+                        len += 5;
+
+                } else if (curOpcode->opcode == D3DSIO_DEFI) {
+
+                        TRACE("defi i%lu = %ld, %ld, %ld, %ld", *pToken & D3DSP_REGNUM_MASK,
+                            (long) *(pToken + 1),
+                            (long) *(pToken + 2),
+                            (long) *(pToken + 3),
+                            (long) *(pToken + 4));
+
+                        pToken += 5;
+                        len += 5;
+
+                } else if (curOpcode->opcode == D3DSIO_DEFB) {
+
+                        TRACE("defb b%lu = %s", *pToken & D3DSP_REGNUM_MASK,
+                            *(pToken + 1)? "true": "false");
+
+                        pToken += 2;
+                        len += 2;
+
                 } else {
 
                     DWORD param, addr_token;

@@ -1363,6 +1363,8 @@ inline static int shader_get_regtype(const DWORD param) {
             ((param & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2));
 }
 
+extern unsigned int shader_get_float_offset(const DWORD reg);
+
 inline static BOOL shader_is_pshader_version(DWORD token) {
     return 0xFFFF0000 == (token & 0xFFFF0000);
 }
