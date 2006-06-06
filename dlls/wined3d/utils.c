@@ -1020,7 +1020,6 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                 */
                 LEAVE_GL();
                 return;
-                break;
               }
             }
 
