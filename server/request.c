@@ -141,7 +141,7 @@ void fatal_protocol_error( struct thread *thread, const char *err, ... )
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "Protocol error:%p: ", thread );
+    fprintf( stderr, "Protocol error:%04x: ", thread->id );
     vfprintf( stderr, err, args );
     va_end( args );
     thread->exit_code = 1;
@@ -154,7 +154,7 @@ void fatal_protocol_perror( struct thread *thread, const char *err, ... )
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "Protocol error:%p: ", thread );
+    fprintf( stderr, "Protocol error:%04x: ", thread->id );
     vfprintf( stderr, err, args );
     perror( " " );
     va_end( args );
@@ -397,15 +397,15 @@ int receive_fd( struct process *process )
     }
     else if (ret > 0)
     {
-        fprintf( stderr, "Protocol error: process %p: partial recvmsg %d for fd\n",
-                 process, ret );
+        fprintf( stderr, "Protocol error: process %04x: partial recvmsg %d for fd\n",
+                 process->id, ret );
         kill_process( process, NULL, 1 );
     }
     else
     {
         if (errno != EWOULDBLOCK && errno != EAGAIN)
         {
-            fprintf( stderr, "Protocol error: process %p: ", process );
+            fprintf( stderr, "Protocol error: process %04x: ", process->id );
             perror( "recvmsg" );
             kill_process( process, NULL, 1 );
         }
@@ -440,7 +440,7 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
 
     if (ret >= 0)
     {
-        fprintf( stderr, "Protocol error: process %p: partial sendmsg %d\n", process, ret );
+        fprintf( stderr, "Protocol error: process %04x: partial sendmsg %d\n", process->id, ret );
         kill_process( process, NULL, 1 );
     }
     else if (errno == EPIPE)
@@ -449,7 +449,7 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
     }
     else
     {
-        fprintf( stderr, "Protocol error: process %p: ", process );
+        fprintf( stderr, "Protocol error: process %04x: ", process->id );
         perror( "sendmsg" );
         kill_process( process, NULL, 1 );
     }
