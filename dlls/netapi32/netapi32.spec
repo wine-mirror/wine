@@ -172,7 +172,7 @@
 @ stub NetServerComputerNameDel
 @ stub NetServerDiskEnum
 @ stdcall NetServerEnum(wstr long ptr long ptr ptr long wstr ptr)
-@ stub NetServerEnumEx
+@ stdcall NetServerEnumEx(wstr long ptr long ptr ptr long wstr wstr)
 @ stdcall NetServerGetInfo(wstr long ptr)
 @ stub NetServerSetInfo
 @ stub NetServerTransportAdd

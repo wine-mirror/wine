@@ -49,6 +49,9 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+/************************************************************
+ *                NetServerEnum (NETAPI32.@)
+ */
 NET_API_STATUS  WINAPI NetServerEnum(
   LPCWSTR servername,
   DWORD level,
@@ -68,6 +71,26 @@ NET_API_STATUS  WINAPI NetServerEnum(
     return ERROR_NO_BROWSER_SERVERS_FOUND;
 }
 
+/************************************************************
+ *                NetServerEnumEx (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetServerEnumEx(
+    LPCWSTR ServerName,
+    DWORD Level,
+    LPBYTE *Bufptr,
+    DWORD PrefMaxlen,
+    LPDWORD EntriesRead,
+    LPDWORD totalentries,
+    DWORD servertype,
+    LPCWSTR domain,
+    LPCWSTR FirstNameToReturn)
+{
+    FIXME("Stub (%s %ld %p %ld %p %p %ld %s %p)\n", debugstr_w(ServerName),
+     Level, Bufptr, PrefMaxlen, EntriesRead, totalentries, servertype,
+     debugstr_w(domain), debugstr_w(FirstNameToReturn));
+                                                                                
+    return ERROR_NO_BROWSER_SERVERS_FOUND;
+}
 
 /************************************************************
  *                NetServerGetInfo  (NETAPI32.@)
