@@ -559,7 +559,8 @@ int WINAPI SHCreateDirectoryExW(HWND hWnd, LPCWSTR path, LPSECURITY_ATTRIBUTES s
 	{
 	  ret = SHNotifyCreateDirectoryW(path, sec);
 	  /* Refuse to work on certain error codes before trying to create directories recursively */
-	  if (ret != ERROR_FILE_EXISTS &&
+	  if (ret != ERROR_SUCCESS &&
+	      ret != ERROR_FILE_EXISTS &&
 	      ret != ERROR_ALREADY_EXISTS &&
 	      ret != ERROR_FILENAME_EXCED_RANGE)
 	  {
