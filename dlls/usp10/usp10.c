@@ -321,8 +321,66 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
  *
  */
 HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa) {
-  FIXME("(%p): stub\n",pssa);
-  return S_OK;
+    FIXME("(%p): stub\n",pssa);
+    return S_OK;
+}
+
+/***********************************************************************
+ *      ScriptCPtoX (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptCPtoX(int iCP,
+                           BOOL fTrailing,
+                           int cChars,
+                           int cGlyphs,
+                           const WORD *pwLogClust,
+                           const SCRIPT_VISATTR *psva,
+                           const int *piAdvance,
+                           const SCRIPT_ANALYSIS *psa,
+                           int *piX)
+{
+    FIXME("(%d,%d,%d,%d,%p,%p,%p,%p,%p): stub\n",
+          iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance,
+          psa, piX);
+
+    *piX = 1;                    /* Return something in range */
+    return S_OK;
+}
+
+/***********************************************************************
+ *      ScriptXtoCP (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptXtoCP(int iX,
+                           int cChars,
+                           int cGlyphs,
+                           const WORD *pwLogClust,
+                           const SCRIPT_VISATTR *psva,
+                           const int *piAdvance,
+                           const SCRIPT_ANALYSIS *psa,
+                           int *piCP,
+                           int *piTrailing)
+{
+    FIXME("(%d,%d,%d,%p,%p,%p,%p,%p,%p): stub\n",
+          iX, cChars, cGlyphs, pwLogClust, psva, piAdvance,
+          psa, piCP, piTrailing);
+
+    *piCP = 1;                   /* Return something in range */
+    *piTrailing = 0;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      ScriptBreak (USP10.@)
+ *
+ */
+HRESULT WINAPI ScriptBreak(const WCHAR *pwcChars, int cChars,  const SCRIPT_ANALYSIS *psa,
+                    SCRIPT_LOGATTR *psla)
+{
+    FIXME("(%p,%d,%p,%p): stub\n",
+          pwcChars, cChars, psa, psla);
+
+    return S_OK;
 }
 
 /***********************************************************************

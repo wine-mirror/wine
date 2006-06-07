@@ -352,6 +352,11 @@ void test_ScriptTextOut(void)
     GOFFSET         pGoffset[256];
     ABC             pABC[256];
     RECT            rect;
+    int             piX;
+    int             iCP = 1;
+    BOOL            fTrailing = FALSE;
+    SCRIPT_LOGATTR  *psla;
+    SCRIPT_LOGATTR  sla[256];
 
     /* We need a valid HDC to drive a lot of Script functions which requires the following    *
      * to set up for the tests.                                                               */
@@ -437,6 +442,15 @@ void test_ScriptTextOut(void)
                                piAdvance, NULL, pGoffset);
             ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", (unsigned int) hr);
             ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+
+            iCP = 1;
+            hr = ScriptCPtoX(iCP, fTrailing, cChars, pcGlyphs, (const WORD *) &pwLogClust,
+                            (const SCRIPT_VISATTR *) &psva, (const int *)&piAdvance, &pItem[0].a, &piX);
+            ok(hr == S_OK, "ScriptCPtoX Stub should return S_OK not %08x\n", (unsigned int) hr);
+
+            psla = (SCRIPT_LOGATTR *)&sla;
+            hr = ScriptBreak(TestItem1, cChars, &pItem[0].a, psla);
+            ok(hr == S_OK, "ScriptBreak Stub should return S_OK not %08x\n", (unsigned int) hr);
 
             /* Clean up and go   */
             ScriptFreeCache(&psc);

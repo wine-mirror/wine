@@ -1,8 +1,8 @@
 @ stub LpkPresent
 @ stdcall ScriptApplyDigitSubstitution(ptr ptr ptr)
 @ stub ScriptApplyLogicalWidth
-@ stub ScriptBreak
-@ stub ScriptCPtoX
+@ stdcall ScriptBreak(ptr long ptr ptr)
+@ stdcall ScriptCPtoX(long long long long ptr ptr ptr ptr ptr)
 @ stub ScriptCacheGetHeight
 @ stdcall ScriptFreeCache(ptr)
 @ stdcall ScriptGetCMap(ptr ptr ptr long long ptr)
@@ -29,7 +29,7 @@
 @ stub ScriptString_pSize
 @ stub ScriptString_pcOutChars
 @ stdcall ScriptTextOut(ptr ptr long long long ptr ptr ptr long ptr long ptr ptr ptr)
-@ stub ScriptXtoCP
+@ stdcall ScriptXtoCP(long long long ptr ptr ptr ptr ptr ptr)
 @ stub UspAllocCache
 @ stub UspAllocTemp
 @ stub UspFreeMem
