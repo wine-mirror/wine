@@ -103,6 +103,7 @@ static void clean_after_shfo_tests(void)
     RemoveDirectoryA("testdir2\\test4.txt");
     RemoveDirectoryA("testdir2\\nested");
     RemoveDirectoryA("testdir2");
+    RemoveDirectoryA("c:\\testdir3");
     DeleteFileA("nonexistent\\notreal\\test2.txt");
     RemoveDirectoryA("nonexistent\\notreal");
     RemoveDirectoryA("nonexistent");
@@ -839,6 +840,9 @@ static void test_sh_create_dir(void)
 
     ret = pSHCreateDirectoryExA(NULL, path, NULL);
     ok(ERROR_ALREADY_EXISTS == ret, "SHCreateDirectoryEx should fail to create existing directory, ret = %d\n", ret);
+
+    ret = pSHCreateDirectoryExA(NULL, "c:\\testdir3", NULL);
+    ok(file_exists("c:\\testdir3"), "The directory is not created\n");
 }
 
 START_TEST(shlfileop)
