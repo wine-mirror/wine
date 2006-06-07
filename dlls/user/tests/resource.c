@@ -283,17 +283,22 @@ static void test_PrivateExtractIcons(void) {
     ok(cIcons == 4, "Three icons requested, four expected, got cIcons=%d\n", cIcons);
 }
 
-static void test_LoadImage(void) {
+static void test_LoadImage(void)
+{
     HBITMAP bmp;
-    
-    bmp = LoadBitmapA(NULL, MAKEINTRESOURCE(OBM_CHECK));
-    ok(bmp != NULL, "Could not load the OBM_CHECK bitmap\n");
+    HRSRC hres;
+
+    bmp = LoadBitmapA(GetModuleHandle(NULL), MAKEINTRESOURCE(100));
+    ok(bmp != NULL, "Could not load a bitmap resource\n");
     if (bmp) DeleteObject(bmp);
-    
-    bmp = LoadBitmapA(NULL, "#32760"); /* Value of OBM_CHECK */
-    ok(bmp != NULL, "Could not load the OBM_CHECK bitmap\n");
+
+    hres = FindResource(GetModuleHandle(NULL), "#100", RT_BITMAP);
+    ok(hres != NULL, "Could not find a bitmap resource with a numeric string\n");
+
+    bmp = LoadBitmapA(GetModuleHandle(NULL), "#100");
+    ok(bmp != NULL, "Could not load a bitmap resource with a numeric string\n");
     if (bmp) DeleteObject(bmp);
-}    
+}
 
 START_TEST(resource)
 {
