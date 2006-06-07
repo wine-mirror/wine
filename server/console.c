@@ -1311,26 +1311,23 @@ DECL_HANDLER(open_console)
     struct object      *obj = NULL;
 
     reply->handle = 0;
-    switch (req->from)
+    if (req->from == (obj_handle_t)0)
     {
-    case 0:
         if (current->process->console && current->process->console->renderer)
             obj = grab_object( (struct object*)current->process->console );
-        break;
-    case 1:
+    }
+    else if (req->from == (obj_handle_t)1)
+    {
          if (current->process->console && current->process->console->renderer &&
              current->process->console->active)
              obj = grab_object( (struct object*)current->process->console->active );
-        break;
-    default:
-        if ((obj = get_handle_obj( current->process, (obj_handle_t)req->from,
-                                   CONSOLE_READ|CONSOLE_WRITE, &console_input_ops )))
-        {
-            struct console_input* console = (struct console_input*)obj;
-            obj = (console->active) ? grab_object( console->active ) : NULL;
-            release_object( console );
-        }
-        break;
+    }
+    else if ((obj = get_handle_obj( current->process, req->from,
+                                    CONSOLE_READ|CONSOLE_WRITE, &console_input_ops )))
+    {
+        struct console_input *console = (struct console_input *)obj;
+        obj = (console->active) ? grab_object( console->active ) : NULL;
+        release_object( console );
     }
 
     /* FIXME: req->share is not used (as in screen buffer creation)  */

@@ -1245,7 +1245,7 @@ static void dump_get_console_renderer_events_reply( const struct get_console_ren
 
 static void dump_open_console_request( const struct open_console_request *req )
 {
-    fprintf( stderr, " from=%d,", req->from );
+    fprintf( stderr, " from=%p,", req->from );
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );
     fprintf( stderr, " share=%d", req->share );

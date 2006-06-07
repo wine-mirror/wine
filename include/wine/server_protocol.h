@@ -1082,7 +1082,7 @@ struct get_console_renderer_events_reply
 struct open_console_request
 {
     struct request_header __header;
-    int          from;
+    obj_handle_t from;
 
     unsigned int access;
     unsigned int attributes;
@@ -4382,6 +4382,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 235
+#define SERVER_PROTOCOL_VERSION 236
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -822,7 +822,7 @@ struct console_renderer_event
 
 /* Open a handle to the process console */
 @REQ(open_console)
-    int          from;          /* 0 (resp 1) input (resp output) of current process console */
+    obj_handle_t from;          /* 0 (resp 1) input (resp output) of current process console */
                                 /* otherwise console_in handle to get active screen buffer? */
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */

@@ -210,13 +210,13 @@ BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
  */
 HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creation)
 {
-    BOOL        output;
+    HANDLE      output;
     HANDLE      ret;
 
     if (strcmpiW(coninW, name) == 0) 
-        output = FALSE;
+        output = (HANDLE) FALSE;
     else if (strcmpiW(conoutW, name) == 0) 
-        output = TRUE;
+        output = (HANDLE) TRUE;
     else
     {
         SetLastError(ERROR_INVALID_NAME);

@@ -274,7 +274,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	case CONSOLE_RENDERER_ACTIVE_SB_EVENT:
 	    SERVER_START_REQ( open_console )
 	    {
-                req->from       = (int)data->hConIn;
+                req->from       = data->hConIn;
                 req->access     = GENERIC_READ | GENERIC_WRITE;
                 req->attributes = 0;
                 req->share      = FILE_SHARE_READ | FILE_SHARE_WRITE;
