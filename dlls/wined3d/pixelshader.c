@@ -719,7 +719,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_TEXBEM,   "texbem",   "undefined",   2, pshader_texbem,      pshader_hw_texbem, NULL, 0, D3DPS_VERSION(1,3)},
     {D3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL,   2, pshader_texbeml, NULL, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXREG2AR,"texreg2ar","undefined",   2, pshader_texreg2ar,   pshader_hw_texreg2ar, NULL, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
-    {D3DSIO_TEXREG2GB,"texreg2gb","undefined",   2, pshader_texreg2gb,   pshader_hw_texreg2gb, NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
+    {D3DSIO_TEXREG2GB,"texreg2gb","undefined",   2, pshader_texreg2gb,   pshader_hw_texreg2gb, NULL, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL,   2, pshader_texreg2rgb,  NULL, NULL, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x2PAD,   "texm3x2pad",   "undefined",   2, pshader_texm3x2pad,   pshader_hw_texm3x2pad, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
     {D3DSIO_TEXM3x2TEX,   "texm3x2tex",   "undefined",   2, pshader_texm3x2tex,   pshader_hw_texm3x2tex, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
