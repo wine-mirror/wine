@@ -571,6 +571,10 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         pFormat += sizeof(NDR_PROC_HEADER);
     }
 
+    /* create the full pointer translation tables, if requested */
+    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
+        stubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,XLAT_CLIENT);
+
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
     {
         /* object is always the first argument */
@@ -621,14 +625,6 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         ext_flags = pExtensions->Flags2;
         pFormat += pExtensions->Size;
     }
-
-    /* create the full pointer translation tables, if requested */
-    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
-#if 0
-        stubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,XLAT_CLIENT);
-#else
-        FIXME("initialize full pointer translation tables\n");
-#endif
 
     stubMsg.BufferLength = 0;
 
@@ -935,8 +931,6 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         }
     }
 
-    /* FIXME: unbind the binding handle */
-
     if (ext_flags.HasNewCorrDesc)
     {
         /* free extra correlation package */
@@ -948,11 +942,9 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         /* NdrPipesDone(...) */
     }
 
-#if 0
     /* free the full pointer translation tables */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
         NdrFullPointerXlatFree(stubMsg.FullPtrXlatTables);
-#endif
 
     /* free marshalling buffer */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
@@ -1083,6 +1075,10 @@ long WINAPI NdrStubCall2(
         RpcRaiseException(RPC_X_WRONG_STUB_VERSION);
     }
 
+    /* create the full pointer translation tables, if requested */
+    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
+        stubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,XLAT_SERVER);
+
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
     {
         NDR_PROC_HEADER_RPC * pProcHeader = (NDR_PROC_HEADER_RPC *)&pFormat[0];
@@ -1156,14 +1152,6 @@ long WINAPI NdrStubCall2(
         NdrStubInitialize(pRpcMsg, &stubMsg, pStubDesc, pChannel);
     else
         NdrServerInitializeNew(pRpcMsg, &stubMsg, pStubDesc);
-
-    /* create the full pointer translation tables, if requested */
-    if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
-#if 0
-        stubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,XLAT_SERVER);
-#else
-        FIXME("initialize full pointer translation tables\n");
-#endif
 
     /* store the RPC flags away */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_RPCFLAGS)
@@ -1505,11 +1493,9 @@ long WINAPI NdrStubCall2(
         /* NdrPipesDone(...) */
     }
 
-#if 0
     /* free the full pointer translation tables */
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_FULLPTR)
         NdrFullPointerXlatFree(stubMsg.FullPtrXlatTables);
-#endif
 
     /* free server function stack */
     HeapFree(GetProcessHeap(), 0, args);
