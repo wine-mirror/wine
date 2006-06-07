@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-static void CALLBACK
+static INT CALLBACK
 PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
 {
     switch (uMsg)
@@ -54,6 +54,7 @@ PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
     default:
 	break;
     }
+    return 0;
 }
 
 static INT_PTR CALLBACK
@@ -197,8 +198,8 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psh.u.pszIcon = NULL;
     psh.pszCaption =  load_string (IDS_WINECFG_TITLE);
     psh.nPages = NUM_PROPERTY_PAGES;
-    psh.u3.ppsp = (LPCPROPSHEETPAGEW) & psp;
-    psh.pfnCallback = (PFNPROPSHEETCALLBACK) PropSheetCallback;
+    psh.u3.ppsp = psp;
+    psh.pfnCallback = PropSheetCallback;
     psh.u2.nStartPage = 0;
 
     /*
