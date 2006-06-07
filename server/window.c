@@ -114,6 +114,12 @@ inline static struct window *get_window( user_handle_t handle )
     return ret;
 }
 
+/* check if window is the desktop */
+static inline int is_desktop_window( const struct window *win )
+{
+    return !win->parent;  /* only desktop windows have no parent */
+}
+
 /* change the parent of a window (or unlink the window if the new parent is NULL) */
 static int set_parent_window( struct window *win, struct window *parent )
 {
@@ -136,8 +142,9 @@ static int set_parent_window( struct window *win, struct window *parent )
         win->parent = parent;
         list_add_head( &parent->children, &win->entry );
 
-        /* if parent belongs to a different thread, attach the two threads */
-        if (parent->thread && parent->thread != win->thread)
+        /* if parent belongs to a different thread and the window isn't */
+        /* top-level, attach the two threads */
+        if (parent->thread && parent->thread != win->thread && !is_desktop_window(parent))
             attach_thread_input( win->thread, parent->thread );
     }
     else  /* move it to parent unlinked list */
@@ -175,12 +182,6 @@ static inline struct window *get_last_child( struct window *win )
 {
     struct list *ptr = list_tail( &win->children );
     return ptr ? LIST_ENTRY( ptr, struct window, entry ) : NULL;
-}
-
-/* check if window is the desktop */
-static inline int is_desktop_window( const struct window *win )
-{
-    return !win->parent;  /* only desktop windows have no parent */
 }
 
 /* append a user handle to a handle array */
@@ -425,7 +426,8 @@ static struct window *create_window( struct window *parent, struct window *owner
         goto failed;
     }
 
-    /* if parent belongs to a different thread, attach the two threads */
+    /* if parent belongs to a different thread and the window isn't */
+    /* top-level, attach the two threads */
     if (parent && parent->thread && parent->thread != current && !is_desktop_window(parent))
     {
         if (!attach_thread_input( current, parent->thread )) goto failed;
