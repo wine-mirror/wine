@@ -3552,17 +3552,6 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       return TRUE;
 
-    case WM_SYSCOMMAND:
-      switch(wParam & 0xfff0)
-      {
-        case SC_CLOSE:
-          PROPSHEET_Cancel(hwnd, 1);
-          return TRUE;
-
-        default:
-          return FALSE;
-      }
-
     case WM_NOTIFY:
     {
       NMHDR* pnmh = (LPNMHDR) lParam;
