@@ -623,6 +623,9 @@ void generate_base_shader(
     shader_reg_maps reg_maps;
 
     /* Initialize current parsing state */
+    SHADER_OPCODE_ARG hw_arg;
+    hw_arg.shader = iface;
+    hw_arg.buffer = buffer;
     This->baseShader.parse_state.current_row = 0;
 
     /* First pass: figure out which temporary and texture registers are used */
@@ -662,22 +665,19 @@ void generate_base_shader(
             /* Read opcode */
             opcode_token = *pToken++;
             curOpcode = shader_get_opcode(iface, opcode_token);
-            hw_fct = (wined3d_settings.shader_mode == 
-                    SHADER_GLSL ? curOpcode->hw_glsl_fct : curOpcode->hw_fct);
+            hw_fct = (curOpcode == NULL)? NULL:
+                     (wined3d_settings.shader_mode == SHADER_GLSL)?
+                         curOpcode->hw_glsl_fct : curOpcode->hw_fct;
 
             /* Unknown opcode and its parameters */
-           if (NULL == curOpcode) {
-              FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
-              pToken += shader_skip_unrecognized(iface, pToken); 
+            if (NULL == curOpcode) {
+                FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
+                pToken += shader_skip_unrecognized(iface, pToken); 
 
             /* If a generator function is set for current shader target, use it */
             } else if (hw_fct != NULL) {
 
-                SHADER_OPCODE_ARG hw_arg;
-
-                hw_arg.shader = iface;
                 hw_arg.opcode = curOpcode;
-                hw_arg.buffer = buffer;
 
                 if (curOpcode->num_params > 0) {
 
