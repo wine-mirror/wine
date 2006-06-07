@@ -637,7 +637,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     return server;
 }
 
-static struct pipe_client *create_pipe_client( struct pipe_server *server, unsigned int flags )
+static struct pipe_client *create_pipe_client( unsigned int flags )
 {
     struct pipe_client *client;
 
@@ -646,7 +646,7 @@ static struct pipe_client *create_pipe_client( struct pipe_server *server, unsig
         return NULL;
 
     client->fd = NULL;
-    client->server = server;
+    client->server = NULL;
     client->flags = flags;
 
     return client;
@@ -762,7 +762,7 @@ DECL_HANDLER(open_named_pipe)
         return;
     }
 
-    client = create_pipe_client( server, req->flags );
+    client = create_pipe_client( req->flags );
     if (client)
     {
         if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
