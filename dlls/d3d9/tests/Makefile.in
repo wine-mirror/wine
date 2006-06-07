@@ -4,13 +4,15 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = d3d9.dll
 IMPORTS   = user32 kernel32
-EXTRALIBS = -ldxerr9
+EXTRALIBS = -ldxerr9 -luuid -ldxguid
 
 CTESTS = \
 	device.c \
 	shader.c \
 	stateblock.c \
-	vertexdeclaration.c
+	surface.c \
+	vertexdeclaration.c \
+	volume.c
 
 @MAKE_TEST_RULES@
 

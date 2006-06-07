@@ -2,5 +2,7 @@ Makefile
 device.ok
 shader.ok
 stateblock.ok
+surface.ok
 testlist.c
 vertexdeclaration.ok
+volume.ok
