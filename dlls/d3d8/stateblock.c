@@ -34,10 +34,11 @@ HRESULT WINAPI IDirect3DStateBlock8Impl_QueryInterface(IDirect3DStateBlock8 *ifa
         || IsEqualGUID(riid, &IID_IDirect3DStateBlock8)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return S_OK;
     }
 
     WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

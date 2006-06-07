@@ -45,10 +45,11 @@ HRESULT WINAPI IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFII
         || IsEqualGUID(riid, &IID_IDirect3DDevice8)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return S_OK;
     }
 
     WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

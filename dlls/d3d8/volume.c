@@ -31,10 +31,11 @@ HRESULT WINAPI IDirect3DVolume8Impl_QueryInterface(LPDIRECT3DVOLUME8 iface, REFI
         || IsEqualGUID(riid, &IID_IDirect3DVolume8)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return S_OK;
     }
 
     WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

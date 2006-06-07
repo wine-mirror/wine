@@ -32,10 +32,11 @@ HRESULT WINAPI IDirect3DIndexBuffer8Impl_QueryInterface(LPDIRECT3DINDEXBUFFER8 i
         || IsEqualGUID(riid, &IID_IDirect3DIndexBuffer8)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
-        return D3D_OK;
+        return S_OK;
     }
 
     WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 
