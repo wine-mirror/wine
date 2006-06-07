@@ -2098,7 +2098,7 @@ static BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DW
     nResCode = FTP_ReceiveResponse(lpwfs, lpwfs->hdr.dwContext);
     if (nResCode)
     {
-        if (nResCode == 150)
+        if (nResCode == 150 || nResCode == 125)
             bSuccess = TRUE;
 	else
             FTP_SetResponseError(nResCode);
