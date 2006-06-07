@@ -4157,7 +4157,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
     info->bmiHeader.biCompression = 0;
   }
 
-  if(descr.colorMap && descr.colorMap != colorPtr)
+  if(descr.colorMap != colorPtr)
       HeapFree(GetProcessHeap(), 0, descr.colorMap);
   return lines;
 }

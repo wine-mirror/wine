@@ -220,10 +220,10 @@ HRESULT WINAPI AssocQueryKeyA(ASSOCF cfFlags, ASSOCKEY assockey, LPCSTR pszAssoc
     hRet = AssocQueryKeyW(cfFlags, assockey, lpszAssocW, lpszExtraW, phkeyOut);
   }
 
-  if (lpszAssocW && lpszAssocW != szAssocW)
+  if (lpszAssocW != szAssocW)
     HeapFree(GetProcessHeap(), 0, lpszAssocW);
 
-  if (lpszExtraW && lpszExtraW != szExtraW)
+  if (lpszExtraW != szExtraW)
     HeapFree(GetProcessHeap(), 0, lpszExtraW);
 
   return hRet;
@@ -312,14 +312,14 @@ HRESULT WINAPI AssocQueryStringA(ASSOCF cfFlags, ASSOCSTR str, LPCSTR pszAssoc,
         WideCharToMultiByte(CP_ACP,0,szReturnW,-1,pszOut,dwLenOut,0,0);
       *pcchOut = dwLenOut;
 
-      if (lpszReturnW && lpszReturnW != szReturnW)
+      if (lpszReturnW != szReturnW)
         HeapFree(GetProcessHeap(), 0, lpszReturnW);
     }
   }
 
-  if (lpszAssocW && lpszAssocW != szAssocW)
+  if (lpszAssocW != szAssocW)
     HeapFree(GetProcessHeap(), 0, lpszAssocW);
-  if (lpszExtraW && lpszExtraW != szExtraW)
+  if (lpszExtraW != szExtraW)
     HeapFree(GetProcessHeap(), 0, lpszExtraW);
   return hRet;
 }
@@ -406,7 +406,7 @@ HRESULT WINAPI AssocQueryStringByKeyA(ASSOCF cfFlags, ASSOCSTR str, HKEY hkAssoc
     }
   }
 
-  if (lpszExtraW && lpszExtraW != szExtraW)
+  if (lpszExtraW != szExtraW)
     HeapFree(GetProcessHeap(), 0, lpszExtraW);
   return hRet;
 }

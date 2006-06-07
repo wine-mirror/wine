@@ -81,7 +81,7 @@ LPCTSTR GetValueName(HWND hwndLV)
 {
     INT item;
 
-    if (g_valueName && g_valueName != LPSTR_TEXTCALLBACK)
+    if (g_valueName != LPSTR_TEXTCALLBACK)
         HeapFree(GetProcessHeap(), 0,  g_valueName);
     g_valueName = NULL;
 

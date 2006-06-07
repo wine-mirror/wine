@@ -274,7 +274,7 @@ static HRESULT iterate_section_fields(HINF hinf, PCWSTR section, PCWSTR key,
     hr = S_OK;
 
  done:
-    if (buffer && buffer != static_buffer) HeapFree(GetProcessHeap(), 0, buffer);
+    if (buffer != static_buffer) HeapFree(GetProcessHeap(), 0, buffer);
     return hr;
 }
 

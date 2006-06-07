@@ -787,7 +787,7 @@ static BOOL iterate_section_fields( HINF hinf, PCWSTR section, PCWSTR key,
     }
     ret = TRUE;
  done:
-    if (buffer && buffer != static_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+    if (buffer != static_buffer) HeapFree( GetProcessHeap(), 0, buffer );
     return ret;
 }
 
