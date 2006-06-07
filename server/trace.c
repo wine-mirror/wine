@@ -2080,8 +2080,8 @@ static void dump_send_message_request( const struct send_message_request *req )
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " win=%p,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
-    fprintf( stderr, " wparam=%08x,", req->wparam );
-    fprintf( stderr, " lparam=%08x,", req->lparam );
+    fprintf( stderr, " wparam=%lx,", req->wparam );
+    fprintf( stderr, " lparam=%lx,", req->lparam );
     fprintf( stderr, " x=%d,", req->x );
     fprintf( stderr, " y=%d,", req->y );
     fprintf( stderr, " time=%08x,", req->time );
@@ -2111,8 +2111,8 @@ static void dump_get_message_reply( const struct get_message_reply *req )
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " win=%p,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
-    fprintf( stderr, " wparam=%08x,", req->wparam );
-    fprintf( stderr, " lparam=%08x,", req->lparam );
+    fprintf( stderr, " wparam=%lx,", req->wparam );
+    fprintf( stderr, " lparam=%lx,", req->lparam );
     fprintf( stderr, " x=%d,", req->x );
     fprintf( stderr, " y=%d,", req->y );
     fprintf( stderr, " hook=%p,", req->hook );
@@ -2159,7 +2159,7 @@ static void dump_set_win_timer_request( const struct set_win_timer_request *req 
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " id=%08x,", req->id );
     fprintf( stderr, " rate=%08x,", req->rate );
-    fprintf( stderr, " lparam=%08x", req->lparam );
+    fprintf( stderr, " lparam=%lx", req->lparam );
 }
 
 static void dump_set_win_timer_reply( const struct set_win_timer_reply *req )

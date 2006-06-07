@@ -2194,8 +2194,8 @@ struct send_message_request
     int             flags;
     user_handle_t   win;
     unsigned int    msg;
-    unsigned int    wparam;
-    unsigned int    lparam;
+    unsigned long   wparam;
+    unsigned long   lparam;
     int             x;
     int             y;
     unsigned int    time;
@@ -2250,8 +2250,8 @@ struct get_message_reply
     int             type;
     user_handle_t   win;
     unsigned int    msg;
-    unsigned int    wparam;
-    unsigned int    lparam;
+    unsigned long   wparam;
+    unsigned long   lparam;
     int             x;
     int             y;
     user_handle_t   hook;
@@ -2316,7 +2316,7 @@ struct set_win_timer_request
     unsigned int    msg;
     unsigned int    id;
     unsigned int    rate;
-    unsigned int    lparam;
+    unsigned long   lparam;
 };
 struct set_win_timer_reply
 {
@@ -4382,6 +4382,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 234
+#define SERVER_PROTOCOL_VERSION 235
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

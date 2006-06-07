@@ -1566,8 +1566,8 @@ enum char_info_mode
     int             flags;     /* message flags (see below) */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
-    unsigned int    wparam;    /* parameters */
-    unsigned int    lparam;    /* parameters */
+    unsigned long   wparam;    /* parameters */
+    unsigned long   lparam;    /* parameters */
     int             x;         /* x position */
     int             y;         /* y position */
     unsigned int    time;      /* message time */
@@ -1607,8 +1607,8 @@ enum message_type
     int             type;      /* message type */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
-    unsigned int    wparam;    /* parameters (callback function for MSG_CALLBACK_RESULT) */
-    unsigned int    lparam;    /* parameters (result for MSG_CALLBACK_RESULT) */
+    unsigned long   wparam;    /* parameters (callback function for MSG_CALLBACK_RESULT) */
+    unsigned long   lparam;    /* parameters (result for MSG_CALLBACK_RESULT) */
     int             x;         /* x position */
     int             y;         /* y position */
     user_handle_t   hook;      /* winevent hook handle */
@@ -1654,7 +1654,7 @@ enum message_type
     unsigned int    msg;       /* message to post */
     unsigned int    id;        /* timer id */
     unsigned int    rate;      /* timer rate in ms */
-    unsigned int    lparam;    /* message lparam (callback proc) */
+    unsigned long   lparam;    /* message lparam (callback proc) */
 @REPLY
     unsigned int    id;        /* timer id */
 @END

@@ -29,6 +29,7 @@ my %formats =
     "unsigned char" => "%02x",
     "unsigned short"=> "%04x",
     "unsigned int"  => "%08x",
+    "unsigned long" => "%lx",
     "void*"         => "%p",
     "time_t"        => "%ld (long)",
     "size_t"        => "%lu (unsigned long)",
