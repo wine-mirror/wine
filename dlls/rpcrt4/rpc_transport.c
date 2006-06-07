@@ -68,6 +68,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
+static CRITICAL_SECTION connection_pool_cs;
+static CRITICAL_SECTION_DEBUG connection_pool_cs_debug =
+{
+    0, 0, &connection_pool_cs,
+    { &connection_pool_cs_debug.ProcessLocksList, &connection_pool_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": connection_pool") }
+};
+static CRITICAL_SECTION connection_pool_cs = { &connection_pool_cs_debug, -1, 0, 0, 0, 0 };
+
+static struct list connection_pool = LIST_INIT(connection_pool);
+
 /**** ncacn_np support ****/
 
 typedef struct _RpcConnection_np
@@ -777,12 +788,47 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   NewConnection->NextCallId = 1;
   if (AuthInfo) RpcAuthInfo_AddRef(AuthInfo);
   NewConnection->AuthInfo = AuthInfo;
+  list_init(&NewConnection->conn_pool_entry);
 
   TRACE("connection: %p\n", NewConnection);
   *Connection = NewConnection;
 
   return RPC_S_OK;
 }
+
+RpcConnection *RPCRT4_GetIdleConnection(const RPC_SYNTAX_IDENTIFIER *InterfaceId,
+    const RPC_SYNTAX_IDENTIFIER *TransferSyntax, LPCSTR Protseq, LPCSTR NetworkAddr,
+    LPCSTR Endpoint, RpcAuthInfo* AuthInfo)
+{
+  RpcConnection *Connection;
+  /* try to find a compatible connection from the connection pool */
+  EnterCriticalSection(&connection_pool_cs);
+  LIST_FOR_EACH_ENTRY(Connection, &connection_pool, RpcConnection, conn_pool_entry)
+    if ((Connection->AuthInfo == AuthInfo) &&
+        !memcmp(&Connection->ActiveInterface, InterfaceId,
+           sizeof(RPC_SYNTAX_IDENTIFIER)) &&
+        !strcmp(rpcrt4_conn_get_name(Connection), Protseq) &&
+        !strcmp(Connection->NetworkAddr, NetworkAddr) &&
+        !strcmp(Connection->Endpoint, Endpoint))
+    {
+      list_remove(&Connection->conn_pool_entry);
+      LeaveCriticalSection(&connection_pool_cs);
+      TRACE("got connection from pool %p\n", Connection);
+      return Connection;
+    }
+
+  LeaveCriticalSection(&connection_pool_cs);
+  return NULL;
+}
+
+void RPCRT4_ReleaseIdleConnection(RpcConnection *Connection)
+{
+  assert(!Connection->server);
+  EnterCriticalSection(&connection_pool_cs);
+  list_add_head(&connection_pool, &Connection->conn_pool_entry);
+  LeaveCriticalSection(&connection_pool_cs);
+}
+
 
 RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* OldConnection)
 {

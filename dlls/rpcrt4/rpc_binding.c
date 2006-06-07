@@ -237,16 +237,15 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
 
   TRACE("(Binding == ^%p)\n", Binding);
 
-  /* if we try to bind a new interface and the connection is already opened,
-   * close the current connection and create a new with the new binding. */ 
-  if (!Binding->server && Binding->FromConn &&
-      (Binding->AuthInfo == Binding->FromConn->AuthInfo) &&
-      memcmp(&Binding->FromConn->ActiveInterface, InterfaceId,
-             sizeof(RPC_SYNTAX_IDENTIFIER))) {
-
-    TRACE("releasing pre-existing connection\n");
-    RPCRT4_DestroyConnection(Binding->FromConn);
-    Binding->FromConn = NULL;
+  if (!Binding->server) {
+    /* try to find a compatible connection from the connection pool */
+    NewConnection = RPCRT4_GetIdleConnection(InterfaceId, TransferSyntax,
+        Binding->Protseq, Binding->NetworkAddr, Binding->Endpoint,
+        Binding->AuthInfo);
+    if (NewConnection) {
+      *Connection = NewConnection;
+      return RPC_S_OK;
+    }
   } else {
     /* we already have a connection with acceptable binding, so use it */
     if (Binding->FromConn) {
@@ -307,7 +306,8 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
     RPCRT4_FreeHeader(response_hdr);
   }
 
-  Binding->FromConn = NewConnection;
+  if (Binding->server)
+    Binding->FromConn = NewConnection;
   *Connection = NewConnection;
 
   return RPC_S_OK;
@@ -317,8 +317,16 @@ RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)
 {
   TRACE("(Binding == ^%p)\n", Binding);
   if (!Connection) return RPC_S_OK;
-  if (Binding->FromConn == Connection) return RPC_S_OK;
-  return RPCRT4_DestroyConnection(Connection);
+  if (Binding->server) {
+    /* don't destroy a connection that is cached in the binding */
+    if (Binding->FromConn == Connection)
+      return RPC_S_OK;
+    return RPCRT4_DestroyConnection(Connection);
+  }
+  else {
+    RPCRT4_ReleaseIdleConnection(Connection);
+    return RPC_S_OK;
+  }
 }
 
 /* utility functions for string composing and parsing */

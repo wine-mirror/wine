@@ -23,6 +23,7 @@
 
 #include "wine/rpcss_shared.h"
 #include "security.h"
+#include "wine/list.h"
 
 
 typedef struct _RpcAuthInfo
@@ -55,6 +56,9 @@ typedef struct _RpcConnection
   TimeStamp exp;
   ULONG attr;
   RpcAuthInfo *AuthInfo;
+
+  /* client-only */
+  struct list conn_pool_entry;
 } RpcConnection;
 
 struct protseq_ops {
@@ -101,6 +105,8 @@ void RPCRT4_strfree(LPSTR src);
 ULONG RpcAuthInfo_AddRef(RpcAuthInfo *AuthInfo);
 ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo);
 
+RpcConnection *RPCRT4_GetIdleConnection(const RPC_SYNTAX_IDENTIFIER *InterfaceId, const RPC_SYNTAX_IDENTIFIER *TransferSyntax, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, RpcAuthInfo* AuthInfo);
+void RPCRT4_ReleaseIdleConnection(RpcConnection *Connection);
 RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcBinding* Binding);
 RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection);
 RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection);
