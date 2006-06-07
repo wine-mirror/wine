@@ -746,16 +746,29 @@ lend:
 BOOL WINAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirectory,
     LPDWORD lpdwCurrentDirectory)
 {
-    WCHAR dir[MAX_PATH];
+    WCHAR *dir = NULL;
     DWORD len;
     BOOL ret;
 
-    if(lpdwCurrentDirectory) len = *lpdwCurrentDirectory;
+    if(lpdwCurrentDirectory) {
+        len = *lpdwCurrentDirectory;
+        if(lpszCurrentDirectory)
+        {
+            dir = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            if (NULL == dir)
+            {
+                INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+                return FALSE;
+            }
+        }
+    }
     ret = FtpGetCurrentDirectoryW(hFtpSession, lpszCurrentDirectory?dir:NULL, lpdwCurrentDirectory?&len:NULL);
     if(lpdwCurrentDirectory) {
         *lpdwCurrentDirectory = len;
-        if(lpszCurrentDirectory)
+        if(lpszCurrentDirectory) { 
             WideCharToMultiByte(CP_ACP, 0, dir, len, lpszCurrentDirectory, *lpdwCurrentDirectory, NULL, NULL);
+            HeapFree(GetProcessHeap(), 0, dir);
+        }
     }
     return ret;
 }
