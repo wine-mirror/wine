@@ -213,24 +213,23 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
             realLight = targetStateBlock->lights;
             while (realLight != NULL && realLight->OriginalIndex != src->OriginalIndex) realLight = realLight->next;
 
-            if (realLight == NULL) {
-                FIXME("A captured light no longer exists...?\n");
-            } else {
+            /* If 'changed' then its a SetLight command. Rather than comparing to see
+                 if the OriginalParms have changed and then copy them (twice through
+                 memory) just do the copy                                              */
+            if (src->changed) {
 
-                /* If 'changed' then its a SetLight command. Rather than comparing to see
-                     if the OriginalParms have changed and then copy them (twice through
-                     memory) just do the copy                                              */
-                if (src->changed) {
-                    TRACE("Updating lights for light %ld\n", src->OriginalIndex);
-                    memcpy(&src->OriginalParms, &realLight->OriginalParms, sizeof(src->OriginalParms));
-                }
+                /* If the light exists, copy its parameters, otherwise copy the default parameters */
+                const WINED3DLIGHT* params = realLight? &realLight->OriginalParms: &WINED3D_default_light;
+                TRACE("Updating lights for light %ld\n", src->OriginalIndex);
+                memcpy(&src->OriginalParms, params, sizeof(*params));
+            }
 
-                /* If 'enabledchanged' then its a LightEnable command */
-                if (src->enabledChanged) {
-                    TRACE("Updating lightEnabled for light %ld\n", src->OriginalIndex);
-                    src->lightEnabled = realLight->lightEnabled;
-                }
+            /* If 'enabledchanged' then its a LightEnable command */
+            if (src->enabledChanged) {
 
+                /* If the light exists, check if it's enabled, otherwise default is disabled state */
+                TRACE("Updating lightEnabled for light %ld\n", src->OriginalIndex);
+                src->lightEnabled = realLight? realLight->lightEnabled: FALSE;
             }
 
             src = src->next;

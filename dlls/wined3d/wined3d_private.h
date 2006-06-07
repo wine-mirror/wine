@@ -393,6 +393,9 @@ struct PLIGHTINFOEL {
     PLIGHTINFOEL *prev;
 };
 
+/* The default light parameters */
+extern const WINED3DLIGHT WINED3D_default_light;
+
 /*****************************************************************************
  * IWineD3D implementation structure
  */

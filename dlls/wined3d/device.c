@@ -32,6 +32,22 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
 
+/* Define the default light parameters as specified by MSDN */
+const WINED3DLIGHT WINED3D_default_light = {
+
+    D3DLIGHT_DIRECTIONAL,    /* Type */
+    { 1.0, 1.0, 1.0, 0.0 },  /* Diffuse r,g,b,a */
+    { 0.0, 0.0, 0.0, 0.0 },  /* Specular r,g,b,a */
+    { 0.0, 0.0, 0.0, 0.0 },  /* Ambient r,g,b,a, */
+    { 0.0, 0.0, 0.0 },       /* Position x,y,z */
+    { 0.0, 0.0, 1.0 },       /* Direction x,y,z */
+    0.0,                     /* Range */
+    0.0,                     /* Falloff */
+    0.0, 0.0, 0.0,           /* Attenuation 0,1,2 */
+    0.0,                     /* Theta */
+    0.0                      /* Phi */
+};
+
 /* x11drv GDI escapes */
 #define X11DRV_ESCAPE 6789
 enum x11drv_escape_codes
@@ -2515,37 +2531,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD In
 
     /* Special case - enabling an undefined light creates one with a strict set of parms! */
     if (lightInfo == NULL) {
-        D3DLIGHT9 lightParms;
-        /* Warning - untested code :-) Prob safe to change fixme to a trace but
-             wait until someone confirms it seems to work!                     */
+
         TRACE("Light enabled requested but light not defined, so defining one!\n");
-        lightParms.Type         = D3DLIGHT_DIRECTIONAL;
-        lightParms.Diffuse.r    = 1.0;
-        lightParms.Diffuse.g    = 1.0;
-        lightParms.Diffuse.b    = 1.0;
-        lightParms.Diffuse.a    = 0.0;
-        lightParms.Specular.r   = 0.0;
-        lightParms.Specular.g   = 0.0;
-        lightParms.Specular.b   = 0.0;
-        lightParms.Specular.a   = 0.0;
-        lightParms.Ambient.r    = 0.0;
-        lightParms.Ambient.g    = 0.0;
-        lightParms.Ambient.b    = 0.0;
-        lightParms.Ambient.a    = 0.0;
-        lightParms.Position.x   = 0.0;
-        lightParms.Position.y   = 0.0;
-        lightParms.Position.z   = 0.0;
-        lightParms.Direction.x  = 0.0;
-        lightParms.Direction.y  = 0.0;
-        lightParms.Direction.z  = 1.0;
-        lightParms.Range        = 0.0;
-        lightParms.Falloff      = 0.0;
-        lightParms.Attenuation0 = 0.0;
-        lightParms.Attenuation1 = 0.0;
-        lightParms.Attenuation2 = 0.0;
-        lightParms.Theta        = 0.0;
-        lightParms.Phi          = 0.0;
-        IWineD3DDeviceImpl_SetLight(iface, Index, &lightParms);
+        IWineD3DDeviceImpl_SetLight(iface, Index, &WINED3D_default_light);
 
         /* Search for it again! Should be fairly quick as near head of list */
         lightInfo = This->stateBlock->lights;
