@@ -656,6 +656,7 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
     if (class && class->len)
     {
         key->classlen = class->len;
+        if (key->class) free(key->class);
         if (!(key->class = memdup( class->str, key->classlen ))) key->classlen = 0;
     }
     grab_object( key );
