@@ -22,7 +22,7 @@ C_SRCS = \
 C_SRCS16 = \
 	colordlg16.c \
 	filedlg16.c \
-	finddlg.c \
+	finddlg16.c \
 	fontdlg16.c \
 	printdlg16.c
 
