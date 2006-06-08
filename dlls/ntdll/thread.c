@@ -1128,10 +1128,10 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 }
                 SERVER_END_REQ;
             }
+            if (status == STATUS_SUCCESS && ret_len) *ret_len = sizeof(*tdi);
 #else
             status = STATUS_NOT_IMPLEMENTED;
 #endif
-            if (status == STATUS_SUCCESS && ret_len) *ret_len = sizeof(*tdi);
             return status;
         }
     case ThreadPriority:
