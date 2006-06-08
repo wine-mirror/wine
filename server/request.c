@@ -293,7 +293,11 @@ static void call_req_handler( struct thread *thread )
             if (debug_level) trace_reply( req, &reply );
             send_reply( &reply );
         }
-        else fatal_protocol_error( current, "no reply fd for request %d\n", req );
+        else
+        {
+            current->exit_code = 1;
+            kill_thread( current, 1 );  /* no way to continue without reply fd */
+        }
     }
     current = NULL;
 }

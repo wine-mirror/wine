@@ -335,7 +335,7 @@ size_t init_process( struct thread *thread )
     if (!process->handles) process->handles = alloc_handle_table( process, 0 );
     if (!process->handles)
     {
-        fatal_protocol_error( thread, "Failed to allocate handle table\n" );
+        set_error( STATUS_NO_MEMORY );
         return 0;
     }
 
@@ -895,7 +895,7 @@ DECL_HANDLER(init_process_done)
 
     if (is_process_init_done(process))
     {
-        fatal_protocol_error( current, "init_process_done: called twice\n" );
+        set_error( STATUS_INVALID_PARAMETER );
         return;
     }
     if (!(dll = find_process_dll( process, req->module )))

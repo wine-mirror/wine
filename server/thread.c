@@ -842,26 +842,22 @@ DECL_HANDLER(init_thread)
     int reply_fd = thread_get_inflight_fd( current, req->reply_fd );
     int wait_fd = thread_get_inflight_fd( current, req->wait_fd );
 
-    if (current->unix_pid != -1)
+    if (current->reply_fd)  /* already initialised */
     {
-        fatal_protocol_error( current, "init_thread: already running\n" );
+        set_error( STATUS_INVALID_PARAMETER );
         goto error;
     }
-    if (reply_fd == -1 || fcntl( reply_fd, F_SETFL, O_NONBLOCK ) == -1)
-    {
-        fatal_protocol_error( current, "bad reply fd\n" );
-        goto error;
-    }
+
+    if (reply_fd == -1 || fcntl( reply_fd, F_SETFL, O_NONBLOCK ) == -1) goto error;
+
+    current->reply_fd = create_anonymous_fd( &thread_fd_ops, reply_fd, &current->obj );
+    reply_fd = -1;
+    if (!current->reply_fd) goto error;
+
     if (wait_fd == -1)
     {
-        fatal_protocol_error( current, "bad wait fd\n" );
-        goto error;
-    }
-    if (!(current->reply_fd = create_anonymous_fd( &thread_fd_ops, reply_fd, &current->obj )))
-    {
-        reply_fd = -1;
-        fatal_protocol_error( current, "could not allocate reply fd\n" );
-        goto error;
+        set_error( STATUS_TOO_MANY_OPENED_FILES );  /* most likely reason */
+        return;
     }
     if (!(current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj )))
         return;

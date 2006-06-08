@@ -215,7 +215,8 @@ DECL_HANDLER(event_op)
         reset_event( event );
         break;
     default:
-        fatal_protocol_error( current, "event_op: invalid operation %d\n", req->op );
+        set_error( STATUS_INVALID_PARAMETER );
+        break;
     }
     release_object( event );
 }
