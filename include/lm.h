@@ -31,5 +31,6 @@
 #include <lmapibuf.h>
 #include <lmstats.h>
 #include <lmjoin.h>
+#include <lmmsg.h>
 
 #endif

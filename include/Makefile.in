@@ -162,6 +162,7 @@ WINDOWS_INCLUDES = \
 	lmcons.h \
 	lmerr.h \
 	lmjoin.h \
+	lmmsg.h \
 	lmserver.h \
 	lmshare.h \
 	lmstats.h \
