@@ -874,6 +874,10 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
     }
     This->wineD3DDevice->currentPalette = 0;
 
+    /* Set default GLSL program ID to 0.  We won't actually create one
+     * until the app sets a vertex or pixel shader */
+    This->shaderPrgId = 0;
+
     TRACE("-----------------------> Device defaults now set up...\n");
     return WINED3D_OK;
 }

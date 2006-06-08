@@ -1070,6 +1070,8 @@ struct IWineD3DStateBlockImpl
     /* Sampler States */
     DWORD                     samplerState[MAX_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
 
+    /* Current GLSL Shader Program */
+    GLhandleARB               shaderPrgId;
 };
 
 extern const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
