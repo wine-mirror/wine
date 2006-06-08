@@ -2862,6 +2862,42 @@ INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
   return bRet;
 }
 
+static LPWSTR load_string( HINSTANCE instance, LPCWSTR str )
+{
+    LPWSTR ret;
+    UINT len;
+
+    if (IS_INTRESOURCE(str))
+    {
+        HRSRC hrsrc;
+        HGLOBAL hmem;
+        WCHAR *ptr;
+        WORD i, id = LOWORD(str);
+
+        if (!(hrsrc = FindResourceW( instance, MAKEINTRESOURCEW((id >> 4) + 1), (LPWSTR)RT_STRING )))
+            return NULL;
+        if (!(hmem = LoadResource( instance, hrsrc ))) return NULL;
+        if (!(ptr = LockResource( hmem ))) return NULL;
+        for (i = id & 0x0f; i > 0; i--) ptr += *ptr + 1;
+        len = *ptr;
+        if (!len) return NULL;
+        ret = Alloc( (len + 1) * sizeof(WCHAR) );
+        if (ret)
+        {
+            memcpy( ret, ptr + 1, len * sizeof(WCHAR) );
+            ret[len] = 0;
+        }
+    }
+    else
+    {
+        int len = (strlenW(str) + 1) * sizeof(WCHAR);
+        ret = Alloc( len );
+        if (ret) memcpy( ret, str, len );
+    }
+    return ret;
+}
+
+
 /******************************************************************************
  *            CreatePropertySheetPage    (COMCTL32.@)
  *            CreatePropertySheetPageA   (COMCTL32.@)
@@ -2906,12 +2942,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
         if (HIWORD( ppsp->pszTitle ))
             PROPSHEET_AtoW( &ppsp->pszTitle, lpPropSheetPage->pszTitle );
         else
-        {
-            UINT id = LOWORD(ppsp->pszTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
-            ppsp->pszTitle = Alloc( len * sizeof(WCHAR) );
-            LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszTitle, len );
-        }
+            ppsp->pszTitle = load_string( ppsp->hInstance, ppsp->pszTitle );
     }
     else
         ppsp->pszTitle = NULL;
@@ -2924,12 +2955,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
         if (HIWORD( ppsp->pszHeaderTitle ))
             PROPSHEET_AtoW(&ppsp->pszHeaderTitle, lpPropSheetPage->pszHeaderTitle);
         else
-        {
-            UINT id = LOWORD(ppsp->pszHeaderTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
-            ppsp->pszHeaderTitle = Alloc( len * sizeof(WCHAR) );
-            LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszHeaderTitle, len );
-        }
+            ppsp->pszHeaderTitle = load_string( ppsp->hInstance, ppsp->pszHeaderTitle );
     }
     else
         ppsp->pszHeaderTitle = NULL;
@@ -2939,12 +2965,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
         if (HIWORD( ppsp->pszHeaderSubTitle ))
             PROPSHEET_AtoW(&ppsp->pszHeaderSubTitle, lpPropSheetPage->pszHeaderSubTitle);
         else
-        {
-            UINT id = LOWORD(ppsp->pszHeaderSubTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
-            ppsp->pszHeaderSubTitle = Alloc( len * sizeof(WCHAR) );
-            LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszHeaderSubTitle, len );
-        }
+            ppsp->pszHeaderSubTitle = load_string( ppsp->hInstance, ppsp->pszHeaderSubTitle );
     }
     else
         ppsp->pszHeaderSubTitle = NULL;
@@ -2986,21 +3007,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
     }
 
     if (ppsp->dwFlags & PSP_USETITLE)
-    {
-        if (HIWORD( ppsp->pszTitle ))
-        {
-            int len = strlenW(lpPropSheetPage->pszTitle) + 1;
-            ppsp->pszTitle = Alloc( len * sizeof (WCHAR) );
-            strcpyW( (WCHAR *)ppsp->pszTitle, lpPropSheetPage->pszTitle );
-        }
-        else
-        {
-            UINT id = LOWORD(ppsp->pszTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
-            ppsp->pszTitle = Alloc( len * sizeof(WCHAR) );
-            LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszTitle, len );
-        }
-    }
+        ppsp->pszTitle = load_string( ppsp->hInstance, ppsp->pszTitle );
     else
         ppsp->pszTitle = NULL;
 
@@ -3008,40 +3015,12 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
         ppsp->dwFlags &= ~(PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE);
 
     if (ppsp->dwFlags & PSP_USEHEADERTITLE)
-    {
-        if (HIWORD( ppsp->pszHeaderTitle ))
-        {
-            int len = strlenW(lpPropSheetPage->pszHeaderTitle) + 1;
-            ppsp->pszHeaderTitle = Alloc( len * sizeof (WCHAR) );
-            strcpyW( (WCHAR *)ppsp->pszHeaderTitle, lpPropSheetPage->pszHeaderTitle );
-        }
-        else
-        {
-            UINT id = LOWORD(ppsp->pszHeaderTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
-            ppsp->pszHeaderTitle = Alloc( len * sizeof(WCHAR) );
-            LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszHeaderTitle, len );
-        }
-    }
+        ppsp->pszHeaderTitle = load_string( ppsp->hInstance, ppsp->pszHeaderTitle );
     else
         ppsp->pszHeaderTitle = NULL;
 
     if (ppsp->dwFlags & PSP_USEHEADERSUBTITLE)
-    {
-        if (HIWORD( ppsp->pszHeaderSubTitle ))
-        {
-            int len = strlenW(lpPropSheetPage->pszHeaderSubTitle) + 1;
-            ppsp->pszHeaderSubTitle = Alloc( len * sizeof (WCHAR) );
-            strcpyW( (WCHAR *)ppsp->pszHeaderSubTitle, lpPropSheetPage->pszHeaderSubTitle );
-        }
-        else
-        {
-            UINT id = LOWORD(ppsp->pszHeaderSubTitle);
-            int len = LoadStringW( ppsp->hInstance, id, NULL, 0 ) + 1;
-            ppsp->pszHeaderSubTitle = Alloc( len * sizeof(WCHAR) );
-            LoadStringW( ppsp->hInstance, id, (LPWSTR)ppsp->pszHeaderSubTitle, len );
-        }
-    }
+        ppsp->pszHeaderSubTitle = load_string( ppsp->hInstance, ppsp->pszHeaderSubTitle );
     else
         ppsp->pszHeaderSubTitle = NULL;
 
@@ -3533,7 +3512,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_CLOSE:
       PROPSHEET_Cancel(hwnd, 1);
-      return TRUE;
+      return FALSE; /* let DefDlgProc post us WM_COMMAND/IDCANCEL */
 
     case WM_COMMAND:
       if (!PROPSHEET_DoCommand(hwnd, LOWORD(wParam)))
