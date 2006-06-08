@@ -168,6 +168,13 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
                     mdThd->Stack.StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
                 mdThd->Stack.Memory.DataSize = (ULONG_PTR)tib.StackBase - 
                     mdThd->Stack.StartOfMemoryRange;
+#elif defined(__powerpc__)
+                if (ctx->Iar)
+                    mdThd->Stack.StartOfMemoryRange = ctx->Iar - 4;
+                else
+                    mdThd->Stack.StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
+                mdThd->Stack.Memory.DataSize = (ULONG_PTR)tib.StackBase - 
+                    mdThd->Stack.StartOfMemoryRange;
 #else
 #error unsupported CPU                            
 #endif
