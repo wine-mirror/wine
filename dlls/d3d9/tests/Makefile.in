@@ -11,6 +11,7 @@ CTESTS = \
 	shader.c \
 	stateblock.c \
 	surface.c \
+	texture.c \
 	vertexdeclaration.c \
 	volume.c
 
