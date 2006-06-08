@@ -51,13 +51,12 @@
 typedef unsigned char u_int8;
 typedef unsigned short u_int16;
 typedef unsigned int u_int32;
-typedef GUID uuid_t;
 
 typedef struct
 {
     u_int16 count_lhs;
     u_int8 protid;
-    uuid_t uuid;
+    GUID uuid;
     u_int16 major_version;
     u_int16 count_rhs;
     u_int16 minor_version;
