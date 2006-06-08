@@ -39,6 +39,10 @@
 #include <string.h>
 #include "cmdlgtst.h"
 
+#include <wine/debug.h>
+
+WINE_DEFAULT_DEBUG_CHANNEL(cmdlgtst);
+
 /*
  * This structure is to set up flag / control associations for the custom
  * requesters.  The ft_id is the id for the control (usually generated
@@ -124,7 +128,7 @@ static UINT CALLBACK dummyfnHook(HWND hWnd, UINT msg, UINT wParam, UINT lParam)
 	(void) wParam;
 	(void) lParam;
 
-	printf("dummyfnhook\n"); /* visible under Wine, but Windows probably won't see it! */
+	WINE_TRACE("dummyfnhook\n"); /* visible under Wine, but Windows probably won't see it! */
 
 	return 0;
 }
@@ -465,9 +469,9 @@ static void mw_PrintSetup(HWND hWnd)
 
 #define OF(fn, fi, fl)  \
 		if(dm->dmFields & fl){ \
-			printf("        %s  =%hd \n", (fn), dm->fi); \
+			WINE_TRACE("        %s  =%hd \n", (fn), dm->fi); \
 		} else \
-			printf("        %s NOT SET!\n", fn);
+			WINE_TRACE("        %s NOT SET!\n", fn);
 
 
 static void mw_PageSetup(HWND hWnd)
@@ -483,13 +487,13 @@ static void mw_PageSetup(HWND hWnd)
 	if(PageSetupDlg(&psd)){
 		dm = GlobalLock(psd.hDevMode);
 		if(dm) {
-			printf("dm != NULL\nDEVMODEA struct:\n");
-			printf("    dmDeviceName    ='%s'  \n", 	dm->dmDeviceName);
-			printf("    dmSpecVersion   =%#x \n",	dm->dmSpecVersion);
-			printf("    dmDriverVersion =%#x \n",	dm->dmDriverVersion);
-			printf("    dmSize          =%#x \n", 	dm->dmSize);	
-			printf("    dmDriverExtra   =%#x \n",	dm->dmDriverExtra);
-			printf("    dmFields        =%#lx\n", 	dm->dmFields);
+			WINE_TRACE("dm != NULL\nDEVMODEA struct:\n");
+			WINE_TRACE("    dmDeviceName    ='%s'  \n", 	dm->dmDeviceName);
+			WINE_TRACE("    dmSpecVersion   =%#x \n",	dm->dmSpecVersion);
+			WINE_TRACE("    dmDriverVersion =%#x \n",	dm->dmDriverVersion);
+			WINE_TRACE("    dmSize          =%#x \n", 	dm->dmSize);	
+			WINE_TRACE("    dmDriverExtra   =%#x \n",	dm->dmDriverExtra);
+			WINE_TRACE("    dmFields        =%#lx\n", 	dm->dmFields);
 			OF("dmOrientation",	u1.s1.dmOrientation,	DM_ORIENTATION)
 			OF("dmPaperSize",	u1.s1.dmPaperSize,	DM_PAPERSIZE);
 			OF("dmPaperLength",	u1.s1.dmPaperLength,	DM_PAPERLENGTH);
@@ -499,44 +503,44 @@ static void mw_PageSetup(HWND hWnd)
 			OF("dmDefaultSource",	dmDefaultSource,DM_DEFAULTSOURCE);
 			OF("dmPrintQuality",	dmPrintQuality,	DM_PRINTQUALITY);
 			if(dm->dmFields &	DM_POSITION)
-				printf("        dmPosition(%ld, %ld)\n", dm->u1.dmPosition.x, dm->u1.dmPosition.y);
+				WINE_TRACE("        dmPosition(%ld, %ld)\n", dm->u1.dmPosition.x, dm->u1.dmPosition.y);
 			else
-				printf("        dmPosition NOT SET!\n");
+				WINE_TRACE("        dmPosition NOT SET!\n");
 			OF("dmColor",		dmColor,	DM_COLOR);
 			OF("dmDuplex",		dmDuplex,	DM_DUPLEX);
 			OF("dmYResolution",	dmYResolution,	DM_YRESOLUTION);
 			OF("dmTTOption",	dmTTOption,	DM_TTOPTION);
 			OF("dmCollate",		dmCollate,	DM_COLLATE);
 			if(dm->dmFields & DM_FORMNAME)
-				printf("        dmFormName = '%s'\n", dm->dmFormName);
+				WINE_TRACE("        dmFormName = '%s'\n", dm->dmFormName);
 			else 
-				printf("        dmFormName NOT SET!\n");
+				WINE_TRACE("        dmFormName NOT SET!\n");
 			if(dm->dmFields & DM_ICMMETHOD)
-				printf("        dmICMMethod = %#lx\n", dm->dmICMMethod);
+				WINE_TRACE("        dmICMMethod = %#lx\n", dm->dmICMMethod);
 			else
-				printf("        dmICMMethod NOT SET!");
+				WINE_TRACE("        dmICMMethod NOT SET!");
 			
 			GlobalUnlock(psd.hDevMode);
 		}
 		else
-			printf("dm == NULL\n");
+			WINE_TRACE("dm == NULL\n");
 	
-		printf("\nPAGESETUPDLG struct\n");
-		printf("    ptPaperSize(%ld, %ld)\n", psd.ptPaperSize.x, psd.ptPaperSize.y);
-		printf("    rtMargin(%ld, %ld, %ld, %ld)\n", 
+		WINE_TRACE("\nPAGESETUPDLG struct\n");
+		WINE_TRACE("    ptPaperSize(%ld, %ld)\n", psd.ptPaperSize.x, psd.ptPaperSize.y);
+		WINE_TRACE("    rtMargin(%ld, %ld, %ld, %ld)\n", 
 			psd.rtMargin.left, psd.rtMargin.top, psd.rtMargin.right, psd.rtMargin.bottom);
 	
-		printf("\nDEVNAMES struct\n");
+		WINE_TRACE("\nDEVNAMES struct\n");
 		dn = GlobalLock(psd.hDevNames);
 		if(dn){
-			printf("    wDriverOffset='%s'\n", ((char*)dn+dn->wDriverOffset));
-			printf("    wDeviceOffset='%s'\n", ((char*)dn+dn->wDeviceOffset));
-			printf("    wOutputOffset='%s'\n", ((char*)dn+dn->wOutputOffset));
-			printf("    wDefault     ='%s'\n", ((char*)dn+dn->wDefault));
+			WINE_TRACE("    wDriverOffset='%s'\n", ((char*)dn+dn->wDriverOffset));
+			WINE_TRACE("    wDeviceOffset='%s'\n", ((char*)dn+dn->wDeviceOffset));
+			WINE_TRACE("    wOutputOffset='%s'\n", ((char*)dn+dn->wOutputOffset));
+			WINE_TRACE("    wDefault     ='%s'\n", ((char*)dn+dn->wDefault));
 			GlobalUnlock(psd.hDevNames);
 		}else
-			printf(" dn == NULL!\n");		
-		printf("End.\n");
+			WINE_TRACE(" dn == NULL!\n");		
+		WINE_TRACE("End.\n");
 
 		if (psd.hDevMode != NULL)
 			GlobalFree(psd.hDevMode);
