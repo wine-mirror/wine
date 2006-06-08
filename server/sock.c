@@ -276,7 +276,7 @@ static void sock_wake_up( struct sock *sock, int pollev )
             if (sock->pmask & (1 << event))
             {
                 unsigned int lparam = (1 << event) | (sock->errors[event] << 16);
-                post_message( sock->window, sock->message, (unsigned int)sock->wparam, lparam );
+                post_message( sock->window, sock->message, (unsigned long)sock->wparam, lparam );
             }
         }
         sock->pmask = 0;

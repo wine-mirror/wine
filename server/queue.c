@@ -70,8 +70,8 @@ struct message
     enum message_type      type;      /* message type */
     user_handle_t          win;       /* window handle */
     unsigned int           msg;       /* message code */
-    unsigned int           wparam;    /* parameters */
-    unsigned int           lparam;    /* parameters */
+    unsigned long          wparam;    /* parameters */
+    unsigned long          lparam;    /* parameters */
     int                    x;         /* x position */
     int                    y;         /* y position */
     unsigned int           time;      /* message time */
@@ -544,7 +544,7 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
             callback_msg->type      = MSG_CALLBACK_RESULT;
             callback_msg->win       = msg->win;
             callback_msg->msg       = msg->msg;
-            callback_msg->wparam    = (unsigned int)callback;
+            callback_msg->wparam    = (unsigned long)callback;
             callback_msg->lparam    = 0;
             callback_msg->time      = get_tick_count();
             callback_msg->x         = 0;
@@ -1446,7 +1446,7 @@ void queue_cleanup_window( struct thread *thread, user_handle_t win )
 
 /* post a message to a window; used by socket handling */
 void post_message( user_handle_t win, unsigned int message,
-                   unsigned int wparam, unsigned int lparam )
+                   unsigned long wparam, unsigned long lparam )
 {
     struct message *msg;
     struct thread *thread = get_window_thread( win );
