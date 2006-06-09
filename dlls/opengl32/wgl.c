@@ -458,8 +458,9 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 	return ret;
     }
   } else {
+    const char *glx_name = ext_ret->glx_name ? ext_ret->glx_name : ext_ret->name;
     ENTER_GL();
-    local_func = p_glXGetProcAddressARB( (const GLubyte*) ext_ret->glx_name);
+    local_func = p_glXGetProcAddressARB( (const GLubyte*)glx_name);
     LEAVE_GL();
     
     /* After that, look at the extensions defined in the Linux OpenGL library */
@@ -474,15 +475,15 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 	 OpenGL drivers (moreover, it is only useful for old 1.0 apps
 	 that query the glBindTextureEXT extension).
       */
-      memcpy(buf, ext_ret->glx_name, strlen(ext_ret->glx_name) - 3);
-      buf[strlen(ext_ret->glx_name) - 3] = '\0';
+      memcpy(buf, glx_name, strlen(glx_name) - 3);
+      buf[strlen(glx_name) - 3] = '\0';
       TRACE(" extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
 
       ret = GetProcAddress(opengl32_handle, buf);
       if (ret != NULL) {
 	TRACE(" found function in main OpenGL library (%p) !\n", ret);
       } else {
-	WARN("Did not find function %s (%s) in your OpenGL library !\n", lpszProc, ext_ret->glx_name);
+	WARN("Did not find function %s (%s) in your OpenGL library !\n", lpszProc, glx_name);
       }
 
       return ret;

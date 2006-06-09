@@ -168,6 +168,7 @@ sub ConvertType($)
 	      "GLsizeiptr" => "ptrdiff_t",
 	      "GLhandleARB" => "unsigned int",
 	      "GLcharARB" => "char",
+	      "GLchar" => "char",
 	      "GLhalfNV" => "unsigned short" );
 
     foreach my $org (reverse sort keys %hash) {
@@ -713,7 +714,14 @@ print EXT "const OpenGL_extension extension_registry[", ($#tmp + 1), "] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
-    print EXT "  { \"$func_ref->[0]\", \"$func_ref->[3]\", (void *) wine_$func_ref->[0], (void **) (&$ext_prefix$func_ref->[0]) }";
+    if ($func_ref->[0] eq $func_ref->[3])
+    {
+        print EXT "  { \"$func_ref->[0]\", NULL, (void *) wine_$func_ref->[0], (void **) &$ext_prefix$func_ref->[0] }";
+    }
+    else
+    {
+        print EXT "  { \"$func_ref->[0]\", \"$func_ref->[3]\", (void *) wine_$func_ref->[0], (void **) &$ext_prefix$func_ref->[0] }";
+    }
     if ($i != $#tmp) {
 	print EXT ",";
     }
