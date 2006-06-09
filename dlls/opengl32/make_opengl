@@ -202,9 +202,9 @@ sub ConvertVarName($)
 #
 # This functions generates the thunk for a given function.
 #
-sub GenerateThunk($$$$)
+sub GenerateThunk($$$$$)
 {
-    my ($func_ref, $comment, $prefix, $thread_safe) = @_;
+    my ($func_ref, $comment, $prefix, $thread_safe, $local_var) = @_;
     my $ret = "";
     my $call_arg = "";
     my $trace_arg = "";
@@ -244,6 +244,7 @@ sub GenerateThunk($$$$)
     if ($func_ref->[1] ne "void") {
 	$ret = "$ret  " . ConvertType($func_ref->[1]) . " ret_value;\n";
     }
+    $ret .= $local_var;
     if ($gen_traces) {
 	$ret = "$ret  TRACE(\"($trace_arg)\\n\"";
 	if ($trace_arg ne "") {
@@ -660,7 +661,7 @@ print NORM "
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 ";
 foreach (sort keys %norm_functions) {
-    my $string = GenerateThunk($norm_functions{$_}, 1, "", $gen_thread_safe);
+    my $string = GenerateThunk($norm_functions{$_}, 1, "", $gen_thread_safe, "");
 
     print NORM "\n$string";
 }
@@ -681,48 +682,45 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 ";
 
-# First, generate the function pointers
+# The thunks themselves....
+my $count = keys %ext_functions;
+print EXT "const int extension_registry_size = $count;\n";
+print EXT "void *extension_funcs[$count];\n";
+print EXT "\n/* The thunks themselves....*/";
+my $pos = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
-    print EXT "static ", ConvertType($func_ref->[1]), " (*$ext_prefix$func_ref->[0])( ";
+    my $local_var = "  " . ConvertType($func_ref->[1]) . " (*$ext_prefix$func_ref->[0])( ";
     for (my $i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
 	my $type = ConvertType($func_ref->[2]->[$i]->[0]);
-	print EXT "$type";
+	$local_var .= "$type";
 	if ($i != $#{@{$func_ref->[2]}}) {
-	    print EXT ", ";
+	    $local_var .= ", ";
 	} else {
-	    print EXT " ";
+	    $local_var .= " ";
 	}
     }
-    print EXT 'void ' if ($#{@{$func_ref->[2]}} < 0);
-    print EXT ");\n";
-}
-
-# The thunks themselves....
-print EXT "\n/* The thunks themselves....*/";
-foreach (sort keys %ext_functions) {
-    my $string = GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe);
-
-    print EXT "\nstatic $string";
+    $local_var .= 'void ' if ($#{@{$func_ref->[2]}} < 0);
+    $local_var .= ") = extension_funcs[$pos];\n";
+    $pos++;
+    print EXT "\nstatic ", GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe, $local_var);
 }
 
 # Then the table giving the string <-> function correspondance */
 print EXT "\n\n/* The table giving the correspondance between names and functions */\n";
-my @tmp = keys %ext_functions;
-print EXT "const int extension_registry_size = ", ($#tmp + 1), ";\n";
-print EXT "const OpenGL_extension extension_registry[", ($#tmp + 1), "] = {\n";
+print EXT "const OpenGL_extension extension_registry[$count] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
     if ($func_ref->[0] eq $func_ref->[3])
     {
-        print EXT "  { \"$func_ref->[0]\", NULL, (void *) wine_$func_ref->[0], (void **) &$ext_prefix$func_ref->[0] }";
+        print EXT "  { \"$func_ref->[0]\", NULL, (void *) wine_$func_ref->[0] }";
     }
     else
     {
-        print EXT "  { \"$func_ref->[0]\", \"$func_ref->[3]\", (void *) wine_$func_ref->[0], (void **) &$ext_prefix$func_ref->[0] }";
+        print EXT "  { \"$func_ref->[0]\", \"$func_ref->[3]\", (void *) wine_$func_ref->[0] }";
     }
-    if ($i != $#tmp) {
+    if ($i != $count-1) {
 	print EXT ",";
     }
     $i++;

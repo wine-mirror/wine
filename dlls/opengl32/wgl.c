@@ -397,7 +397,7 @@ static int wgl_compar(const void *elt_a, const void *elt_b) {
 PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   void *local_func;
   OpenGL_extension  ext;
-  OpenGL_extension *ext_ret;
+  const OpenGL_extension *ext_ret;
 
   TRACE("(%s)\n", lpszProc);
 
@@ -413,8 +413,8 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   }
   
   /* After that, search in the thunks to find the real name of the extension */
-  ext.name = (char *) lpszProc;
-  ext_ret = (OpenGL_extension *) bsearch(&ext, extension_registry,
+  ext.name = lpszProc;
+  ext_ret = (const OpenGL_extension *) bsearch(&ext, extension_registry,
 					 extension_registry_size, sizeof(OpenGL_extension), compar);
 
   if (ext_ret == NULL) {
@@ -489,7 +489,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
       return ret;
     } else {
       TRACE(" returning function  (%p)\n", ext_ret->func);
-      *(ext_ret->func_ptr) = local_func;
+      extension_funcs[ext_ret - extension_registry] = local_func;
 
       return ext_ret->func;
     }

@@ -67,9 +67,9 @@ typedef struct {
   const char  *name;     /* name of the extension */
   const char  *glx_name; /* name used on Unix's libGL */
   void  *func;     /* pointer to the Wine function for this extension */
-  void **func_ptr; /* where to store the value of glXGetProcAddressARB */
 } OpenGL_extension;
 
+extern void *extension_funcs[];
 extern const OpenGL_extension extension_registry[];
 extern const int extension_registry_size;
 
