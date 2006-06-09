@@ -1831,17 +1831,47 @@ end:
  *
  * See GetPrintProcessorDirectoryW.
  *
- * NOTES
- * On NT, the returned ANSI-Data need the same Size as the Unicode-Version
  *
  */
 BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR env,
                                         DWORD level,  LPBYTE Info,
-                                        DWORD cbBuf, LPDWORD needed)
+                                        DWORD cbBuf,  LPDWORD pcbNeeded)
 {
-    FIXME("(%s,%s,%ld,%p,0x%08lx): stub\n", debugstr_a(server), debugstr_a(env),
-          level, Info, cbBuf);
-    return 0;
+    LPWSTR  serverW = NULL;
+    LPWSTR  envW = NULL;
+    BOOL    ret;
+    INT     len;
+
+    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", debugstr_a(server), 
+          debugstr_a(env), level, Info, cbBuf, pcbNeeded);
+ 
+
+    if (server) {
+        len = MultiByteToWideChar(CP_ACP, 0, server, -1, NULL, 0);
+        serverW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, server, -1, serverW, len);
+    }
+
+    if (env) {
+        len = MultiByteToWideChar(CP_ACP, 0, env, -1, NULL, 0);
+        envW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, env, -1, envW, len);
+    }
+
+    /* NT requires the buffersize from GetPrintProcessorDirectoryW also
+       for GetPrintProcessorDirectoryA and WC2MB is done in-place.
+     */
+    ret = GetPrintProcessorDirectoryW(serverW, envW, level, Info, 
+                                      cbBuf, pcbNeeded);
+
+    if (ret) ret = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)Info, -1, (LPSTR)Info,
+                                       cbBuf, NULL, NULL) > 0;
+
+
+    TRACE(" required: 0x%lx/%ld\n", pcbNeeded ? *pcbNeeded : 0, pcbNeeded ? *pcbNeeded : 0);
+    HeapFree(GetProcessHeap(), 0, envW);
+    HeapFree(GetProcessHeap(), 0, serverW);
+    return ret;
 }
 
 /*****************************************************************************
