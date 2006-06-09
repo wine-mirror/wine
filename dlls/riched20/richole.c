@@ -36,22 +36,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
+/* there is no way to be consistent across different sets of headers - mingw, Wine, Win32 SDK*/
+
+/* FIXME: the next 6 lines should be in textserv.h */
+#include "initguid.h"
+#define TEXTSERV_GUID(name, l, w1, w2, b1, b2) \
+    DEFINE_GUID(name, l, w1, w2, b1, b2, 0x00, 0xaa, 0x00, 0x6c, 0xad, 0xc5)
+
+TEXTSERV_GUID(IID_ITextServices, 0x8d33f740, 0xcf58, 0x11ce, 0xa8, 0x9d);
+TEXTSERV_GUID(IID_ITextHost, 0xc5bdd8d0, 0xd26e, 0x11ce, 0xa8, 0x9e);
+TEXTSERV_GUID(IID_ITextHost2, 0xc5bdd8d0, 0xd26e, 0x11ce, 0xa8, 0x9e);
+
 typedef struct IRichEditOleImpl {
     const IRichEditOleVtbl *lpVtbl;
     LONG ref;
 
     ME_TextEditor *editor;
 } IRichEditOleImpl;
-
-/* there is no way to be consistent across different sets of headers - mingw, Wine, Win32 SDK*/
-
-/* FIXME: the next 6 lines should be in textserv.h */
-#define TEXTSERV_GUID(name, l, w1, w2, b1, b2) \
-  GUID name = { l, w1, w2, {b1, b2, 0x00, 0xaa, 0x00, 0x6c, 0xad, 0xc5}}
-
-TEXTSERV_GUID(IID_ITextServices, 0x8d33f740, 0xcf58, 0x11ce, 0xa8, 0x9d);
-TEXTSERV_GUID(IID_ITextHost, 0xc5bdd8d0, 0xd26e, 0x11ce, 0xa8, 0x9e);
-TEXTSERV_GUID(IID_ITextHost2, 0xc5bdd8d0, 0xd26e, 0x11ce, 0xa8, 0x9e);
 
 static HRESULT WINAPI
 IRichEditOle_fnQueryInterface(IRichEditOle *me, REFIID riid, LPVOID *ppvObj)
