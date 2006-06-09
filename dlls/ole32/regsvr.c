@@ -30,9 +30,10 @@
 #include "winerror.h"
 #include "objbase.h"
 
-#include "compobj_private.h"
 #include "ole2.h"
 #include "olectl.h"
+#include "initguid.h"
+#include "compobj_private.h"
 #include "moniker.h"
 
 #include "wine/debug.h"

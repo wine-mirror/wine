@@ -41,8 +41,9 @@
 struct apartment;
 typedef struct apartment APARTMENT;
 
-extern const CLSID CLSID_PSFactoryBuffer;
-extern const CLSID CLSID_DfMarshal;
+DEFINE_OLEGUID( CLSID_DfMarshal, 0x0000030b, 0, 0 );
+DEFINE_OLEGUID( CLSID_PSFactoryBuffer, 0x00000320, 0, 0 );
+DEFINE_OLEGUID( CLSID_InProcFreeMarshaler, 0x0000033a, 0, 0 );
 
 /* Thread-safety Annotation Legend:
  *

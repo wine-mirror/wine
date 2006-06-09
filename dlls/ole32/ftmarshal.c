@@ -38,8 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-const CLSID CLSID_InProcFreeMarshaler = { 0x33A, 0, 0, {0xC0, 0, 0, 0, 0, 0, 0, 0x46} };
-
 typedef struct _FTMarshalImpl {
 	const IUnknownVtbl *lpVtbl;
 	LONG ref;

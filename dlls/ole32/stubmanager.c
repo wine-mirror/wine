@@ -560,8 +560,6 @@ BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid)
  * interacts with stub managers.
  */
 
-const IID IID_IRemUnknown = { 0x00000131, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
-
 typedef struct rem_unknown
 {
     const IRemUnknownVtbl *lpVtbl;

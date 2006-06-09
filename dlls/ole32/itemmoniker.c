@@ -38,10 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-const CLSID CLSID_ItemMoniker = {
-  0x304, 0, 0, {0xC0, 0, 0, 0, 0, 0, 0, 0x46}
-};
-
 /* ItemMoniker data structure */
 typedef struct ItemMonikerImpl{
 

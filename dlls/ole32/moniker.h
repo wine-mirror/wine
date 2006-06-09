@@ -1,11 +1,33 @@
+/*
+ * Monikers
+ *
+ * Copyright 1998 Marcus Meissner
+ * Copyright 1999 Noomen Hamza
+ * Copyright 2005 Robert Shearman (for CodeWeavers)
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 #ifndef __WINE_MONIKER_H__
 #define __WINE_MONIKER_H__
 
-extern const CLSID CLSID_FileMoniker;
-extern const CLSID CLSID_ItemMoniker;
-extern const CLSID CLSID_AntiMoniker;
-extern const CLSID CLSID_CompositeMoniker;
-extern const CLSID CLSID_ClassMoniker;
+DEFINE_OLEGUID( CLSID_FileMoniker,      0x303, 0, 0 );
+DEFINE_OLEGUID( CLSID_ItemMoniker,      0x304, 0, 0 );
+DEFINE_OLEGUID( CLSID_AntiMoniker,      0x305, 0, 0 );
+DEFINE_OLEGUID( CLSID_CompositeMoniker, 0x309, 0, 0 );
+DEFINE_OLEGUID( CLSID_ClassMoniker,     0x31a, 0, 0 );
 
 HRESULT FileMonikerCF_Create(REFIID riid, LPVOID *ppv);
 HRESULT ItemMonikerCF_Create(REFIID riid, LPVOID *ppv);

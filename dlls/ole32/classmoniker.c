@@ -39,10 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-const GUID CLSID_ClassMoniker = {
-  0x31A, 0, 0, {0xC0, 0, 0, 0, 0, 0, 0, 0x46}
-};
-
 #define CHARS_IN_GUID 39
 
 /* ClassMoniker data structure */

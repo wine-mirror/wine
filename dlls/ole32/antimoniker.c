@@ -35,10 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-const CLSID CLSID_AntiMoniker = {
-  0x305, 0, 0, {0xC0, 0, 0, 0, 0, 0, 0, 0x46}
-};
-
 /* AntiMoniker data structure */
 typedef struct AntiMonikerImpl{
 
