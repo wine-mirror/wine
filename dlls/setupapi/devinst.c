@@ -68,8 +68,22 @@ static const WCHAR DeviceClasses[] = {'S','y','s','t','e','m','\\',
                                   'C','o','n','t','r','o','l','\\',
                                   'D','e','v','i','c','e','C','l','a','s','s','e','s',0};
 
+
 /***********************************************************************
  *              SetupDiBuildClassInfoList  (SETUPAPI.@)
+ *
+ * Returns a list of setup class GUIDs that identify the classes
+ * that are installed on a local machine.
+ *
+ * PARAMS
+ *   Flags [I] control exclusion of classes from the list.
+ *   ClassGuidList [O] pointer to a GUID-typed array that receives a list of setup class GUIDs.
+ *   ClassGuidListSize [I] The number of GUIDs in the array (ClassGuidList).
+ *   RequiredSize [O] pointer, which receives the number of GUIDs that are returned.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FALSE.
  */
 BOOL WINAPI SetupDiBuildClassInfoList(
         DWORD Flags,
@@ -85,6 +99,21 @@ BOOL WINAPI SetupDiBuildClassInfoList(
 
 /***********************************************************************
  *              SetupDiBuildClassInfoListExA  (SETUPAPI.@)
+ *
+ * Returns a list of setup class GUIDs that identify the classes
+ * that are installed on a local or remote macine.
+ *
+ * PARAMS
+ *   Flags [I] control exclusion of classes from the list.
+ *   ClassGuidList [O] pointer to a GUID-typed array that receives a list of setup class GUIDs.
+ *   ClassGuidListSize [I] The number of GUIDs in the array (ClassGuidList).
+ *   RequiredSize [O] pointer, which receives the number of GUIDs that are returned.
+ *   MachineName [I] name of a remote machine.
+ *   Reserved [I] must be NULL.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FALSE.
  */
 BOOL WINAPI SetupDiBuildClassInfoListExA(
         DWORD Flags,
@@ -116,7 +145,22 @@ BOOL WINAPI SetupDiBuildClassInfoListExA(
 }
 
 /***********************************************************************
- *		SetupDiBuildClassInfoListExW  (SETUPAPI.@)
+ *              SetupDiBuildClassInfoListExW  (SETUPAPI.@)
+ *
+ * Returns a list of setup class GUIDs that identify the classes
+ * that are installed on a local or remote macine.
+ *
+ * PARAMS
+ *   Flags [I] control exclusion of classes from the list.
+ *   ClassGuidList [O] pointer to a GUID-typed array that receives a list of setup class GUIDs.
+ *   ClassGuidListSize [I] The number of GUIDs in the array (ClassGuidList).
+ *   RequiredSize [O] pointer, which receives the number of GUIDs that are returned.
+ *   MachineName [I] name of a remote machine.
+ *   Reserved [I] must be NULL.
+ *
+ * RETURNS
+ *   Success: TRUE.
+ *   Failure: FALSE.
  */
 BOOL WINAPI SetupDiBuildClassInfoListExW(
         DWORD Flags,
