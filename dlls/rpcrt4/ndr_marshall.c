@@ -842,7 +842,10 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
     TRACE("pointer_id is 0x%08lx\n", pointer_id);
     if (!fMustAlloc && *pPointer)
+    {
         FIXME("free object pointer %p\n", *pPointer);
+        *pPointer = NULL;
+    }
     if (pointer_id)
       pointer_needs_unmarshaling = 1;
     else
