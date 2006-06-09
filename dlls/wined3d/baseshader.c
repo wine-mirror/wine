@@ -29,13 +29,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
-#define GLINFO_LOCATION      (*gl_info)
-
-typedef struct shader_reg_maps {
-    DWORD texcoord;
-    DWORD temporary;
-    DWORD address;
-} shader_reg_maps;
 
 inline static BOOL shader_is_version_token(DWORD token) {
     return shader_is_pshader_version(token) ||
@@ -626,6 +619,7 @@ void generate_base_shader(
     SHADER_OPCODE_ARG hw_arg;
     hw_arg.shader = iface;
     hw_arg.buffer = buffer;
+    hw_arg.reg_maps = &reg_maps;
     This->baseShader.parse_state.current_row = 0;
 
     /* First pass: figure out which temporary and texture registers are used */
@@ -724,28 +718,6 @@ void generate_base_shader(
         }
         /* TODO: What about result.depth? */
 
-    }
-}
-
-/** Prints the GLSL info log which will contain error messages if they exist */
-void print_glsl_info_log(
-    WineD3D_GL_Info *gl_info,
-    GLhandleARB obj) {
-    int infologLength = 0;
-    char *infoLog;
-
-    GL_EXTCALL(glGetObjectParameterivARB(obj,
-               GL_OBJECT_INFO_LOG_LENGTH_ARB,
-               &infologLength));
-
-    /* A size of 1 is just a null-terminated string, so the log should be bigger than
-     * that if there are errors. */
-    if (infologLength > 1)
-    {
-        infoLog = (char *)HeapAlloc(GetProcessHeap(), 0, infologLength);
-        GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
-        FIXME("Error received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
-        HeapFree(GetProcessHeap(), 0, infoLog);
     }
 }
 

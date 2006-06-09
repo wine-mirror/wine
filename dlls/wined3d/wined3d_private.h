@@ -42,6 +42,7 @@
 #include "ddraw.h"
 #include "wine/wined3d_interface.h"
 #include "wine/wined3d_gl.h"
+#include "wine/list.h"
 
 /* Device caps */
 #define MAX_PALETTES      256
@@ -545,6 +546,9 @@ typedef struct IWineD3DDeviceImpl
     IWineD3DSurface *ddraw_primary;
     DWORD ddraw_width, ddraw_height;
     WINED3DFORMAT ddraw_format;
+
+    /* List of GLSL shader programs and their associated vertex & pixel shaders */
+    struct list glsl_shader_progs;
 
 } IWineD3DDeviceImpl;
 
@@ -1245,6 +1249,25 @@ struct SHADER_OPCODE_ARG;
 typedef void (*shader_fct_t)();
 typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
 
+/* Struct to maintain a list of GLSL shader programs and their associated pixel and
+ * vertex shaders.  A list of this type is maintained on the DeviceImpl, and is only
+ * used if the user is using GLSL shaders. */
+struct glsl_shader_prog_link {
+    struct list             entry;
+    GLhandleARB             programId;
+    IWineD3DVertexShader*   vertexShader;
+    IWineD3DPixelShader*    pixelShader;
+};
+
+typedef struct shader_reg_maps {
+    DWORD texcoord;
+    DWORD temporary;
+    DWORD address;
+    /* Constants */
+    CHAR constantsF[256];  /* TODO: Make this dynamic */
+    /* TODO: Integer and bool constants */
+} shader_reg_maps;
+
 #define SHADER_PGMSIZE 65535
 typedef struct SHADER_BUFFER {
     char* buffer;
@@ -1266,6 +1289,7 @@ typedef struct SHADER_OPCODE {
 
 typedef struct SHADER_OPCODE_ARG {
     IWineD3DBaseShader* shader;
+    shader_reg_maps* reg_maps;
     CONST SHADER_OPCODE* opcode;
     DWORD dst;
     DWORD dst_addr;

@@ -15,6 +15,7 @@ C_SRCS = \
 	device.c \
 	directx.c \
 	drawprim.c \
+	glsl_shader.c \
 	indexbuffer.c \
 	palette.c \
 	pixelshader.c \
