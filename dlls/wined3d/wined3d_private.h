@@ -483,7 +483,6 @@ typedef struct IWineD3DDeviceImpl
     UINT                    srcBlend;
     UINT                    dstBlend;
     UINT                    alphafunc;
-    UINT                    stencilfunc;
     BOOL                    texture_shader_active;  /* TODO: Confirm use is correct */
     BOOL                    last_was_notclipped;
 
@@ -1166,6 +1165,7 @@ const char* debug_d3dpool(WINED3DPOOL pool);
 
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op);
+GLenum StencilFunc(DWORD func);
 void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords);
 

@@ -405,7 +405,23 @@ GLenum StencilOp(DWORD op) {
     case D3DSTENCILOP_INCR    : return GL_INCR_WRAP_EXT;
     case D3DSTENCILOP_DECR    : return GL_DECR_WRAP_EXT;
     default:
-        FIXME("Invalid stencil op %ld\n", op);
+        FIXME("Unrecognized stencil op %ld\n", op);
+        return GL_KEEP;
+    }
+}
+
+GLenum StencilFunc(DWORD func) {
+    switch ((D3DCMPFUNC)func) {
+    case D3DCMP_NEVER        : return GL_NEVER;
+    case D3DCMP_LESS         : return GL_LESS;
+    case D3DCMP_EQUAL        : return GL_EQUAL;
+    case D3DCMP_LESSEQUAL    : return GL_LEQUAL;
+    case D3DCMP_GREATER      : return GL_GREATER;
+    case D3DCMP_NOTEQUAL     : return GL_NOTEQUAL;
+    case D3DCMP_GREATEREQUAL : return GL_GEQUAL;
+    case D3DCMP_ALWAYS       : return GL_ALWAYS;
+    default:
+        FIXME("Unrecognized D3DCMPFUNC value %ld\n", func);
         return GL_ALWAYS;
     }
 }

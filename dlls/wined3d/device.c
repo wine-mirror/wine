@@ -3156,6 +3156,148 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetViewport(IWineD3DDevice *iface, WINE
     return WINED3D_OK;
 }
 
+static void renderstate_stencil_twosided(
+        IWineD3DDeviceImpl *This,
+        GLint face,
+        GLint func,
+        GLint ref,
+        GLuint mask,
+        GLint stencilFail,
+        GLint depthFail,
+        GLint stencilPass ) {
+#if 0 /* Don't use OpenGL 2.0 calls for now */
+            if(GL_EXTCALL(glStencilFuncSeparate) && GL_EXTCALL(glStencilOpSeparate)) {
+                GL_EXTCALL(glStencilFuncSeparate(face, func, ref, mask));
+                checkGLcall("glStencilFuncSeparate(...)");
+                GL_EXTCALL(glStencilOpSeparate(face, stencilFail, depthFail, stencilPass));
+                checkGLcall("glStencilOpSeparate(...)");
+            }
+            else
+#endif
+            if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+                glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+                checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
+                GL_EXTCALL(glActiveStencilFaceEXT(face));
+                checkGLcall("glActiveStencilFaceEXT(...)");
+                glStencilFunc(func, ref, mask);
+                checkGLcall("glStencilFunc(...)");
+                glStencilOp(stencilFail, depthFail, stencilPass);
+                checkGLcall("glStencilOp(...)");
+            } else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
+                GL_EXTCALL(glStencilFuncSeparateATI(face, func, ref, mask));
+                checkGLcall("glStencilFuncSeparateATI(...)");
+                GL_EXTCALL(glStencilOpSeparateATI(face, stencilFail, depthFail, stencilPass));
+                checkGLcall("glStencilOpSeparateATI(...)");
+            } else {
+                ERR("Separate (two sided) stencil not supported on this version of opengl. Caps weren't honored?\n");
+            }
+}
+
+static void renderstate_stencil(IWineD3DDeviceImpl *This, D3DRENDERSTATETYPE State, DWORD Value) {
+    DWORD onesided_enable = FALSE;
+    DWORD twosided_enable = FALSE;
+    GLint func = GL_ALWAYS;
+    GLint func_ccw = GL_ALWAYS;
+    GLint ref = 0;
+    GLuint mask = 0;
+    GLint stencilFail = GL_KEEP;
+    GLint depthFail = GL_KEEP;
+    GLint stencilPass = GL_KEEP;
+    GLint stencilFail_ccw = GL_KEEP;
+    GLint depthFail_ccw = GL_KEEP;
+    GLint stencilPass_ccw = GL_KEEP;
+
+    if( This->stateBlock->set.renderState[WINED3DRS_STENCILENABLE] )
+        onesided_enable = This->stateBlock->renderState[WINED3DRS_STENCILENABLE];
+    if( This->stateBlock->set.renderState[WINED3DRS_TWOSIDEDSTENCILMODE] )
+        twosided_enable = This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE];
+    if( This->stateBlock->set.renderState[WINED3DRS_STENCILFUNC] )
+        func = StencilFunc(This->stateBlock->renderState[WINED3DRS_STENCILFUNC]);
+    if( This->stateBlock->set.renderState[WINED3DRS_CCW_STENCILFUNC] )
+        func_ccw = StencilFunc(This->stateBlock->renderState[WINED3DRS_CCW_STENCILFUNC]);
+    if( This->stateBlock->set.renderState[WINED3DRS_STENCILREF] )
+        ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
+    if( This->stateBlock->set.renderState[WINED3DRS_STENCILMASK] )
+        mask = This->stateBlock->renderState[WINED3DRS_STENCILMASK];
+    if( This->stateBlock->set.renderState[WINED3DRS_STENCILFAIL] )
+        stencilFail = StencilOp(This->stateBlock->renderState[WINED3DRS_STENCILFAIL]);
+    if( This->stateBlock->set.renderState[WINED3DRS_STENCILZFAIL] )
+        depthFail = StencilOp(This->stateBlock->renderState[WINED3DRS_STENCILZFAIL]);
+    if( This->stateBlock->set.renderState[WINED3DRS_STENCILPASS] )
+        stencilPass = StencilOp(This->stateBlock->renderState[WINED3DRS_STENCILPASS]);
+    if( This->stateBlock->set.renderState[WINED3DRS_CCW_STENCILFAIL] )
+        stencilFail_ccw = StencilOp(This->stateBlock->renderState[WINED3DRS_CCW_STENCILFAIL]);
+    if( This->stateBlock->set.renderState[WINED3DRS_CCW_STENCILZFAIL] )
+        depthFail_ccw = StencilOp(This->stateBlock->renderState[WINED3DRS_CCW_STENCILZFAIL]);
+    if( This->stateBlock->set.renderState[WINED3DRS_CCW_STENCILPASS] )
+        stencilPass_ccw = StencilOp(This->stateBlock->renderState[WINED3DRS_CCW_STENCILPASS]);
+
+    switch(State) {
+        case WINED3DRS_STENCILENABLE :
+            onesided_enable = Value;
+            break;
+        case WINED3DRS_TWOSIDEDSTENCILMODE :
+            twosided_enable = Value;
+            break;
+        case WINED3DRS_STENCILFUNC :
+            func = StencilFunc(Value);
+            break;
+        case WINED3DRS_CCW_STENCILFUNC :
+            func_ccw = StencilFunc(Value);
+            break;
+        case WINED3DRS_STENCILREF :
+            ref = Value;
+            break;
+        case WINED3DRS_STENCILMASK :
+            mask = Value;
+            break;
+        case WINED3DRS_STENCILFAIL :
+            stencilFail = StencilOp(Value);
+            break;
+        case WINED3DRS_STENCILZFAIL :
+            depthFail = StencilOp(Value);
+            break;
+        case WINED3DRS_STENCILPASS :
+            stencilPass = StencilOp(Value);
+            break;
+        case WINED3DRS_CCW_STENCILFAIL :
+            stencilFail_ccw = StencilOp(Value);
+            break;
+        case WINED3DRS_CCW_STENCILZFAIL :
+            depthFail_ccw = StencilOp(Value);
+            break;
+        case WINED3DRS_CCW_STENCILPASS :
+            stencilPass_ccw = StencilOp(Value);
+            break;
+        default :
+            ERR("This should not happen!");
+    }
+
+    TRACE("(onesided %ld, twosided %ld, ref %x, mask %x,  \
+        GL_FRONT: func: %x, fail %x, zfail %x, zpass %x  \
+        GL_BACK: func: %x, fail %x, zfail %x, zpass %x )\n",
+            onesided_enable, twosided_enable, ref, mask,
+            func, stencilFail, depthFail, stencilPass,
+            func_ccw, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
+
+    if (twosided_enable) {
+        renderstate_stencil_twosided(This, GL_FRONT, func, ref, mask, stencilFail, depthFail, stencilPass);
+        renderstate_stencil_twosided(This, GL_BACK, func_ccw, ref, mask, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
+    } else {
+        if (onesided_enable) {
+            glEnable(GL_STENCIL_TEST);
+            checkGLcall("glEnable GL_STENCIL_TEST");
+            glStencilFunc(func, ref, mask);
+            checkGLcall("glStencilFunc(...)");
+            glStencilOp(stencilFail, depthFail, stencilPass);
+            checkGLcall("glStencilOp(...)");
+        } else {
+            glDisable(GL_STENCIL_TEST);
+            checkGLcall("glDisable GL_STENCIL_TEST");
+        }
+    }
+}
+
 /*****
  * Get / Set Render States
  * TODO: Verify against dx9 definitions
@@ -3584,145 +3726,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
         }
         break;
 
-    case WINED3DRS_STENCILENABLE             :
-        if (Value) {
-            glEnable(GL_STENCIL_TEST);
-            checkGLcall("glEnable GL_STENCIL_TEST");
-        } else {
-            glDisable(GL_STENCIL_TEST);
-            checkGLcall("glDisable GL_STENCIL_TEST");
-        }
-        break;
-
+    case WINED3DRS_STENCILENABLE :
+    case WINED3DRS_TWOSIDEDSTENCILMODE :
     case WINED3DRS_STENCILFUNC :
-    {
-        GLint func;
-        GLint ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
-        GLuint mask = This->stateBlock->renderState[WINED3DRS_STENCILMASK];
-
-        func = GL_ALWAYS;
-        switch ((D3DCMPFUNC)Value) {
-            case D3DCMP_NEVER: func = GL_NEVER; break;
-            case D3DCMP_LESS: func = GL_LESS; break;
-            case D3DCMP_EQUAL: func = GL_EQUAL; break;
-            case D3DCMP_LESSEQUAL: func = GL_LEQUAL; break;
-            case D3DCMP_GREATER: func = GL_GREATER; break;
-            case D3DCMP_NOTEQUAL: func = GL_NOTEQUAL; break;
-            case D3DCMP_GREATEREQUAL: func = GL_GEQUAL; break;
-            case D3DCMP_ALWAYS: func = GL_ALWAYS; break;
-            default:
-                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
-        }
-        This->stencilfunc = func;
-        if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
-#if 0 /* Don't use OpenGL 2.0 calls for now */
-            if(GL_EXTCALL(glStencilFuncSeparate)) {
-                GL_EXTCALL(glStencilFuncSeparate(GL_FRONT, func, ref, mask));
-                checkGLcall("glStencilFuncSeparate(GL_FRONT,...)");
-            }
-            else
-#endif
-	    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
-                glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-                checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
-                GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
-                checkGLcall("glActiveStencilFaceEXT(GL_FRONT)");
-                glStencilFunc(func, ref, mask);
-                checkGLcall("glStencilFunc(...)");
-            }
-            else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
-                GL_EXTCALL(glStencilFuncSeparateATI(GL_FRONT, func, ref, mask));
-                checkGLcall("glStencilFuncSeparateATI(GL_FRONT,...)");
-            } else {
-                TRACE("Separate stencil function not supported on this version of opengl");
-                glStencilFunc(func, ref, mask);
-                checkGLcall("glStencilFunc(...)");
-            }
-        } else {
-            glStencilFunc(func, ref, mask);
-            checkGLcall("glStencilFunc(...)");
-        }
+    case WINED3DRS_CCW_STENCILFUNC :
+    case WINED3DRS_STENCILREF :
+    case WINED3DRS_STENCILMASK :
+    case WINED3DRS_STENCILFAIL :
+    case WINED3DRS_STENCILZFAIL :
+    case WINED3DRS_STENCILPASS :
+    case WINED3DRS_CCW_STENCILFAIL :
+    case WINED3DRS_CCW_STENCILZFAIL :
+    case WINED3DRS_CCW_STENCILPASS :
+        renderstate_stencil(This, State, Value);
         break;
-    }
-    case WINED3DRS_STENCILREF                :
-        {
-           int glParm = This->stencilfunc;
-           int ref = 0;
-           GLuint mask = This->stateBlock->renderState[WINED3DRS_STENCILMASK];
-
-           ref = Value;
-           TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
-           glStencilFunc(glParm, ref, mask);
-           checkGLcall("glStencilFunc");
-        }
-        break;
-
-    case WINED3DRS_STENCILMASK               :
-        {
-           int glParm = This->stencilfunc;
-           int ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
-           GLuint mask = Value;
-
-           TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
-           glStencilFunc(glParm, ref, mask);
-           checkGLcall("glStencilFunc");
-        }
-        break;
-
-    case WINED3DRS_STENCILFAIL               :
-    case WINED3DRS_STENCILZFAIL              :
-    case WINED3DRS_STENCILPASS               :
-    {
-        GLint stencilFail;
-        GLint depthFail;
-        GLint stencilPass;
-
-        GLint action = StencilOp(Value);
-
-        glGetIntegerv(GL_STENCIL_FAIL, &stencilFail);
-        glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &depthFail);
-        glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &stencilPass);
-
-        if(WINED3DRS_STENCILFAIL == State) {
-            stencilFail = action;
-        }
-        else if(WINED3DRS_STENCILZFAIL == State) {
-            depthFail = action;
-        }
-        else if(WINED3DRS_STENCILPASS == State) {
-            stencilPass = action;
-        }
-
-        if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
-#if 0 /* Don't use OpenGL 2.0 calls for now */
-            if(GL_EXTCALL(glStencilOpSeparate)) {
-                GL_EXTCALL(glStencilOpSeparate(GL_FRONT, stencilFail, depthFail, stencilPass));
-                checkGLcall("glStencilOpSeparate(GL_FRONT,...)");
-            }
-            else
-#endif
-	    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
-                glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-                checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
-                GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
-                checkGLcall("glActiveStencilFaceEXT(GL_FRONT)");
-                glStencilOp(stencilFail, depthFail, stencilPass);
-                checkGLcall("glStencilOp(...)");
-            }
-            else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
-                GL_EXTCALL(glStencilOpSeparateATI(GL_FRONT, stencilFail, depthFail, stencilPass));
-                checkGLcall("glStencilOpSeparateATI(GL_FRONT,...)");
-            } else {
-                TRACE("Separate stencil operation not supported on this version of opengl");
-                glStencilOp(stencilFail, depthFail, stencilPass);
-                checkGLcall("glStencilOp(...)");
-            }
-        } else {
-            glStencilOp(stencilFail, depthFail, stencilPass);
-            checkGLcall("glStencilOp(...)");
-        }
-        break;
-    }
     case WINED3DRS_STENCILWRITEMASK          :
         {
             glStencilMask(Value);
@@ -4207,119 +4224,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
             checkGLcall("glDisable(GL_BLEND)");
             glDisable(GL_LINE_SMOOTH);
             checkGLcall("glDisable(GL_LINE_SMOOTH)");
-        }
-        break;
-    }
-    case WINED3DRS_TWOSIDEDSTENCILMODE :
-    {
-        if(Value) {
-            TRACE("Two-sided stencil mode enabled\n");
-        } else {
-            TRACE("Two-sided stencil mode disabled\n");
-        }
-        break;
-    }
-    case WINED3DRS_CCW_STENCILFAIL :
-    case WINED3DRS_CCW_STENCILZFAIL :
-    case WINED3DRS_CCW_STENCILPASS :
-    {
-        GLint stencilFail;
-        GLint depthFail;
-        GLint stencilPass;
-
-        GLint action = StencilOp(Value);
-
-        glGetIntegerv(GL_STENCIL_BACK_FAIL, &stencilFail);
-        glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_FAIL, &depthFail);
-        glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_PASS, &stencilPass);
-
-        if(WINED3DRS_CCW_STENCILFAIL == State) {
-            stencilFail = action;
-        }
-        else if(WINED3DRS_CCW_STENCILZFAIL == State) {
-            depthFail = action;
-        }
-        else if(WINED3DRS_CCW_STENCILPASS == State) {
-            stencilPass = action;
-        }
-
-        if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
-#if 0 /* Don't use OpenGL 2.0 calls for now */
-            if(GL_EXTCALL(glStencilOpSeparate)) {
-                GL_EXTCALL(glStencilOpSeparate(GL_BACK, stencilFail, depthFail, stencilPass));
-                checkGLcall("glStencilOpSeparate(GL_BACK,...)");
-            }
-            else
-#endif
-	    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
-                glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-                checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
-                GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
-                checkGLcall("glActiveStencilFaceEXT(GL_BACK)");
-                glStencilOp(stencilFail, depthFail, stencilPass);
-                checkGLcall("glStencilOp(...)");
-            }
-            else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
-                GL_EXTCALL(glStencilOpSeparateATI(GL_BACK, stencilFail, depthFail, stencilPass));
-                checkGLcall("glStencilOpSeparateATI(GL_BACK,...)");
-            } else {
-                TRACE("Separate stencil operation not supported on this version of opengl");
-                glStencilOp(stencilFail, depthFail, stencilPass);
-                checkGLcall("glStencilOp(...)");
-            }
-        } else {
-            glStencilOp(stencilFail, depthFail, stencilPass);
-            checkGLcall("glStencilOp(...)");
-        }
-        break;
-    }
-    case WINED3DRS_CCW_STENCILFUNC :
-    {
-        GLint func;
-        GLint ref = This->stateBlock->renderState[WINED3DRS_STENCILREF];
-        GLuint mask = This->stateBlock->renderState[WINED3DRS_STENCILMASK];
-
-        func = GL_ALWAYS;
-        switch ((D3DCMPFUNC)Value) {
-            case D3DCMP_NEVER: func = GL_NEVER; break;
-            case D3DCMP_LESS: func = GL_LESS; break;
-            case D3DCMP_EQUAL: func = GL_EQUAL; break;
-            case D3DCMP_LESSEQUAL: func = GL_LEQUAL; break;
-            case D3DCMP_GREATER: func = GL_GREATER; break;
-            case D3DCMP_NOTEQUAL: func = GL_NOTEQUAL; break;
-            case D3DCMP_GREATEREQUAL: func = GL_GEQUAL; break;
-            case D3DCMP_ALWAYS: func = GL_ALWAYS; break;
-            default:
-                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
-        }
-        This->stencilfunc = func;
-        if(!This->stateBlock->renderState[WINED3DRS_TWOSIDEDSTENCILMODE]) {
-#if 0 /* Don't use OpenGL 2.0 calls for now */
-            if(GL_EXTCALL(glStencilFuncSeparate)) {
-                GL_EXTCALL(glStencilFuncSeparate(GL_BACK, func, ref, mask));
-                checkGLcall("glStencilFuncSeparate(GL_BACK,...)");
-            }
-            else
-#endif
-	    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
-                glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-                checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
-                GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
-                checkGLcall("glActiveStencilFaceEXT(GL_BACK)");
-                glStencilFunc(func, ref, mask);
-                checkGLcall("glStencilFunc(...)");
-            }
-            else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
-                GL_EXTCALL(glStencilFuncSeparateATI(GL_BACK, func, ref, mask));
-                checkGLcall("glStencilFuncSeparateATI(GL_BACK,...)");
-            } else {
-                TRACE("Separate stencil function not supported on this version of opengl");
-                glStencilFunc(func, ref, mask);
-                checkGLcall("glStencilFunc(...)");
-            }
-        } else {
-            glStencilFunc(func, ref, mask);
-            checkGLcall("glStencilFunc(...)");
         }
         break;
     }
