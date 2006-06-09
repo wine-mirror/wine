@@ -604,23 +604,18 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
          hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
          piAdvance, piJustify, pGoffset);
 
-    if  (!psc || !piAdvance || !psa || !pwGlyphs)
+    if  (!hdc || !psc || !piAdvance || !psa || !pwGlyphs)         /* hdc is mandatory                 */
         return E_INVALIDARG;
         
-    if  (!hdc && !*psc) {
-        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
-	return E_PENDING;
-    }   else 
-        if  (hdc && !*psc) {
-            pScriptcache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache) );
-            pScriptcache->hdc = hdc;
-            phdc = hdc;
-            *psc = pScriptcache;
-        }   else
-            if  (*psc) {
-                pScriptcache = *psc;
-                phdc = pScriptcache->hdc;
-            }
+    if  (!*psc) {
+        pScriptcache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache) );
+        pScriptcache->hdc = hdc;
+        phdc = hdc;
+        *psc = pScriptcache;
+    } else {
+        pScriptcache = *psc;
+        phdc = pScriptcache->hdc;
+    }
 
     fuOptions &= ETO_CLIPPED + ETO_OPAQUE;
     if  (!psa->fNoGlyphIndex)                                     /* Have Glyphs?                      */

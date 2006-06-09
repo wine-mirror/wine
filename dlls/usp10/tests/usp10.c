@@ -363,13 +363,13 @@ void test_ScriptTextOut(void)
     int             cMaxItems;
     SCRIPT_ITEM     pItem[255];
     int             pcItems;
-    WCHAR           TestItem1[6] = {'T', 'e', 's', 't', 0x0166, 0}; 
+    WCHAR           TestItem1[6] = {'T', 'e', 's', 't', 'a', 0}; 
 
     SCRIPT_CACHE    psc;
     int             cChars;
     int             cMaxGlyphs;
     unsigned short  pwOutGlyphs1[256];
-    unsigned short  pwLogClust[256];
+    WORD            pwLogClust[256];
     SCRIPT_VISATTR  psva[256];
     int             pcGlyphs;
     int             piAdvance[256];
@@ -422,7 +422,8 @@ void test_ScriptTextOut(void)
         ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
         ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
         if (hr ==0) {
-            hr = ScriptPlace(NULL, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
+            /* Note hdc is needed as glyph info is not yet in psc                  */
+            hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
             ok (hr == 0, "Should return 0 not (%08x)\n", (unsigned int) hr);
             ScriptFreeCache(&psc);              /* Get rid of psc for next test set */
@@ -444,25 +445,26 @@ void test_ScriptTextOut(void)
                                     "got %08x\n", (unsigned int)hr);
             ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
-            /* Set psc to NULL, to be able to check if a pointer is returned in psc */
+            /* Set psc to NULL, to be able to check if a pointer is returned in psc
+             * hdc is required for this one rather than the usual optional          */
             psc = NULL;
             hr = ScriptTextOut(NULL, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
-            ok( hr == E_PENDING, "(NULL,&psc,), expected E_PENDING, got %08x\n", (unsigned int)hr);
+            ok( hr == E_INVALIDARG, "(NULL,&psc,), expected E_INVALIDARG, got %08x\n", (unsigned int)hr);
             ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
-            /* Se that is gets a psc and that returns 0 status */
+            /* Set that is gets a psc and that returns 0 status */
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", (unsigned int) hr);
             ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
 
-            /* Test Rect Rgn is acceptable and that it works without hdc */
+            /* Test Rect Rgn is acceptable */
             rect.top = 10;
             rect.bottom = 20;
             rect.left = 10;
             rect.right = 40;
-            hr = ScriptTextOut(NULL, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
+            hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", (unsigned int) hr);
             ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
