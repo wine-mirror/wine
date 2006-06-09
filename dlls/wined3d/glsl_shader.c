@@ -271,34 +271,26 @@ void shader_glsl_get_register_name(
 
 /* Writes the GLSL writemask for the destination register */
 void shader_glsl_get_output_register_swizzle(
-    IWineD3DBaseShader *shader,
     const DWORD param,
     char *write_mask) {
    
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl*) shader; 
-    BOOL pshader = shader_is_pshader_version(This->baseShader.hex_version);
-    
     *write_mask = 0;
     if ((param & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
         strcat(write_mask, ".");
-        if (param & D3DSP_WRITEMASK_0) strcat(write_mask, pshader ? "r" : "x");
-        if (param & D3DSP_WRITEMASK_1) strcat(write_mask, pshader ? "g" : "y");
-        if (param & D3DSP_WRITEMASK_2) strcat(write_mask, pshader ? "b" : "z");
-        if (param & D3DSP_WRITEMASK_3) strcat(write_mask, pshader ? "a" : "w");
+        if (param & D3DSP_WRITEMASK_0) strcat(write_mask, "x");
+        if (param & D3DSP_WRITEMASK_1) strcat(write_mask, "y");
+        if (param & D3DSP_WRITEMASK_2) strcat(write_mask, "z");
+        if (param & D3DSP_WRITEMASK_3) strcat(write_mask, "w");
     }
 }
 
 void shader_glsl_get_input_register_swizzle(
-    IWineD3DBaseShader *shader,
     const DWORD param,
     BOOL is_color,
     char *reg_mask) {
     
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl*) shader; 
-    BOOL pshader = shader_is_pshader_version(This->baseShader.hex_version);
-    
-    char swizzle_reg_chars_color_fix[5];
-    char swizzle_reg_chars[5];
+    const char swizzle_reg_chars_color_fix[] = "zyxw";
+    const char swizzle_reg_chars[] = "xyzw";
     const char* swizzle_regs = NULL;
    
     /** operand input */
@@ -307,9 +299,6 @@ void shader_glsl_get_input_register_swizzle(
     DWORD swizzle_y = (swizzle >> 2) & 0x03;
     DWORD swizzle_z = (swizzle >> 4) & 0x03;
     DWORD swizzle_w = (swizzle >> 6) & 0x03;
-
-    strcpy(swizzle_reg_chars_color_fix, pshader ? "bgra" : "zyxw");
-    strcpy(swizzle_reg_chars, pshader ? "rgba" : "xyzw");
 
     if (is_color) {
       swizzle_regs = swizzle_reg_chars_color_fix;
@@ -363,10 +352,10 @@ void shader_glsl_add_param(
     shader_glsl_get_register_name(param, addr_token, reg_name, &is_color, arg);
     
     if (is_input) {
-        shader_glsl_get_input_register_swizzle(arg->shader, param, is_color, reg_mask);
+        shader_glsl_get_input_register_swizzle(param, is_color, reg_mask);
         shader_glsl_gen_modifier(param, reg_name, reg_mask, out_str);
     } else {
-        shader_glsl_get_output_register_swizzle(arg->shader, param, reg_mask);
+        shader_glsl_get_output_register_swizzle(param, reg_mask);
         sprintf(out_str, "%s%s", reg_name, reg_mask);
     }
 }

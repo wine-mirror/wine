@@ -1922,17 +1922,14 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
 
         /* Bind the correct GLSL shader program based on the currently set vertex & pixel shaders. */
         if (wined3d_settings.shader_mode == SHADER_GLSL) {
-            GLhandleARB programId;
-            
             set_glsl_shader_program(iface);
-            programId = This->stateBlock->shaderPrgId;    
-
-            if (programId != 0) {
-                /* Start using this program ID */
-                TRACE_(d3d_shader)("Using GLSL program %u\n", programId);
-                GL_EXTCALL(glUseProgramObjectARB(programId));
-                checkGLcall("glUseProgramObjectARB");
-            } 
+            /* Start using this program ID (if it's 0, there is no shader program to use, so 
+             * glUseProgramObjectARB(0) will disable the use of any shaders) */
+            if (This->stateBlock->shaderPrgId) {
+                TRACE_(d3d_shader)("Using GLSL program %u\n", This->stateBlock->shaderPrgId);
+            }
+            GL_EXTCALL(glUseProgramObjectARB(This->stateBlock->shaderPrgId));
+            checkGLcall("glUseProgramObjectARB");
         }
         
         if (useVertexShaderFunction) {
@@ -2016,12 +2013,6 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
         /* Cleanup fragment program */
         if (usePixelShaderFunction && wined3d_settings.shader_mode == SHADER_ARB) {
             glDisable(GL_FRAGMENT_PROGRAM_ARB);
-        }
-
-        /* Cleanup GLSL program */
-        if (wined3d_settings.shader_mode == SHADER_GLSL
-            && (useVertexShaderFunction || usePixelShaderFunction)) {
-            GL_EXTCALL(glUseProgramObjectARB(0));
         }
     }
 }
