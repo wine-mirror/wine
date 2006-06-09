@@ -82,9 +82,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(typelib);
 
-/* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
-const GUID CLSID_PSOAInterface = { 0x00020424, 0, 0, { 0xC0, 0, 0, 0, 0, 0, 0, 0x46 } };
-
 static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, VARTYPE *vt);
 static HRESULT TLB_AllocAndInitVarDesc(const VARDESC *src, VARDESC **dest_ptr);
 

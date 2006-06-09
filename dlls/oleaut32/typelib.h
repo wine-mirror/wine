@@ -607,5 +607,13 @@ extern void dump_Variant(const VARIANT * pvar);
 
 HRESULT TMARSHAL_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv);
 
+/* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
+DEFINE_OLEGUID( CLSID_PSDispatch,    0x00020420, 0x0000, 0x0000 );
+DEFINE_OLEGUID( CLSID_PSEnumVariant, 0x00020421, 0x0000, 0x0000 );
+DEFINE_OLEGUID( CLSID_PSTypeInfo,    0x00020422, 0x0000, 0x0000 );
+DEFINE_OLEGUID( CLSID_PSTypeLib,     0x00020423, 0x0000, 0x0000 );
+DEFINE_OLEGUID( CLSID_PSOAInterface, 0x00020424, 0x0000, 0x0000 );
+DEFINE_OLEGUID( CLSID_PSTypeComp,    0x00020425, 0x0000, 0x0000 );
+
 /*---------------------------END--------------------------------------------*/
 #endif

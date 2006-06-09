@@ -38,15 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-/* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
-extern const GUID CLSID_PSOAInterface;
-
-extern const GUID CLSID_PSDispatch;
-extern const GUID CLSID_PSEnumVariant;
-extern const GUID CLSID_PSTypeInfo;
-extern const GUID CLSID_PSTypeLib;
-extern const GUID CLSID_PSTypeComp;
-
 static BOOL BSTR_bCache = TRUE; /* Cache allocations to minimise alloc calls? */
 
 HMODULE OLEAUT32_hModule = NULL;
