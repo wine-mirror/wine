@@ -155,15 +155,14 @@ FTMarshalImpl_GetMarshalSizeMax (LPMARSHAL iface, REFIID riid, void *pv, DWORD d
     IMarshal *pMarshal = NULL;
     HRESULT hres;
 
-    FTMarshalImpl *This = impl_from_IMarshal(iface);
-
-    FIXME ("(), stub!\n");
+    TRACE("(%s, %p, 0x%lx, %p, 0x%lx, %p)\n", debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags, pSize);
 
     /* if the marshalling happens inside the same process the interface pointer is
        copied between the apartments */
     if (dwDestContext == MSHCTX_INPROC || dwDestContext == MSHCTX_CROSSCTX) {
-	*pSize = sizeof (This);
-	return S_OK;
+        *pSize = sizeof (mshlflags) + sizeof (pv) + sizeof (DWORD) + sizeof (GUID);
+        return S_OK;
     }
 
     /* use the standard marshaller to handle all other cases */
