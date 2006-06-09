@@ -883,12 +883,6 @@ static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
     BOOL run = force;
     int i;
 
-    if (!package)
-    {
-        ERR("package was null!\n");
-        return FALSE;
-    }
-
     if (!run && !package->script->CurrentlyScripting)
         run = TRUE;
    
@@ -1328,9 +1322,6 @@ static UINT load_all_files(MSIPACKAGE *package)
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
          '`','F','i','l','e','`',' ', 'O','R','D','E','R',' ','B','Y',' ',
          '`','S','e','q','u','e','n','c','e','`', 0};
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
 
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
@@ -2247,9 +2238,6 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','R','e','g','i','s','t','r','y','`',0 };
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
