@@ -690,7 +690,7 @@ void shader_glsl_def(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
 
     shader_addline(arg->buffer, 
-                   "const vec4 C%lu = { %f, %f, %f, %f };\n", reg & 0xFF,
+                   "const vec4 C%lu = { %f, %f, %f, %f };\n", reg,
                    *((const float *)(arg->src + 0)),
                    *((const float *)(arg->src + 1)),
                    *((const float *)(arg->src + 2)),

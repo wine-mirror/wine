@@ -767,10 +767,10 @@ void shader_dump_ins_modifiers(const DWORD output) {
  * float constant, and stores it's usage on the regmaps. */
 void shader_hw_def(SHADER_OPCODE_ARG* arg) {
 
-    DWORD reg = arg->dst;
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
 
     shader_addline(arg->buffer, 
-                   "PARAM C%lu = { %f, %f, %f, %f };\n", reg & 0xFF,
+                   "PARAM C%lu = { %f, %f, %f, %f };\n", reg,
                    *((const float *)(arg->src + 0)),
                    *((const float *)(arg->src + 1)),
                    *((const float *)(arg->src + 2)),
