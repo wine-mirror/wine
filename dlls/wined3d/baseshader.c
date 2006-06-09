@@ -614,9 +614,11 @@ void generate_base_shader(
     DWORD opcode_token;
     DWORD i;
     shader_reg_maps reg_maps;
+    SHADER_OPCODE_ARG hw_arg;
+
+    memset(&reg_maps, 0, sizeof(shader_reg_maps));
 
     /* Initialize current parsing state */
-    SHADER_OPCODE_ARG hw_arg;
     hw_arg.shader = iface;
     hw_arg.buffer = buffer;
     hw_arg.reg_maps = &reg_maps;
@@ -744,6 +746,22 @@ void shader_dump_ins_modifiers(const DWORD output) {
     mmask &= ~(D3DSPDM_SATURATE | D3DSPDM_PARTIALPRECISION | D3DSPDM_MSAMPCENTROID);
     if (mmask)
         FIXME("_unrecognized_modifier(%#lx)", mmask >> D3DSP_DSTMOD_SHIFT);
+}
+
+/** Process the D3DSIO_DCL opcode into an ARB string - creates a local vec4
+ * float constant, and stores it's usage on the regmaps. */
+void shader_hw_def(SHADER_OPCODE_ARG* arg) {
+
+    DWORD reg = arg->dst;
+
+    shader_addline(arg->buffer, 
+                   "PARAM C%lu = { %f, %f, %f, %f };\n", reg & 0xFF,
+                   *((const float *)(arg->src + 0)),
+                   *((const float *)(arg->src + 1)),
+                   *((const float *)(arg->src + 2)),
+                   *((const float *)(arg->src + 3)) );
+
+    arg->reg_maps->constantsF[reg] = 1;
 }
 
 /* TODO: Move other shared code here */

@@ -480,7 +480,6 @@ void vshader_texldl(WINED3DSHADERVECTOR* d) {
 /* Prototype */
 void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
 void vshader_hw_dcl(SHADER_OPCODE_ARG* arg);
-void vshader_hw_def(SHADER_OPCODE_ARG* arg);
 void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
 
 /**
@@ -543,7 +542,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_DCL,      "dcl",      NULL,                  2, vshader_dcl,     vshader_hw_dcl, NULL, 0, 0},
 
     /* Constant definitions */
-    {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     vshader_hw_def, NULL, 0, 0},
+    {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     shader_hw_def, NULL, 0, 0},
     {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, vshader_defb,    NULL, NULL, 0, 0},
     {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   5, vshader_defi,    NULL, NULL, 0, 0},
 
@@ -631,7 +630,10 @@ inline static void vshader_program_add_input_param_swizzle(const DWORD param, in
     }
 }
 
-inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, const DWORD param, BOOL is_input, char *hwLine) {
+inline static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param, BOOL is_input, char *hwLine) {
+  
+  IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)arg->shader;
+  
   /* oPos, oFog and oPts in D3D */
   static const char* hwrastout_reg_names[] = { "result.position", "result.fogcoord", "result.pointsize" };
 
@@ -667,7 +669,7 @@ inline static void vshader_program_add_param(IWineD3DVertexShaderImpl *This, con
     break;
   case D3DSPR_CONST:
     /* FIXME: some constants are named so we need a constants map*/
-    if (This->constantsUsedBitmap[reg] == VS_CONSTANT_CONSTANT) {
+    if (arg->reg_maps->constantsF[reg]) {
         if (param & D3DVS_ADDRMODE_RELATIVE) {
             FIXME("Relative addressing not expected for a named constant %lu\n", reg);
         }
@@ -879,7 +881,6 @@ void vshader_set_version(
 /* Map the opcode 1-to-1 to the GL code */
 void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
-    IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) arg->shader;
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD dst = arg->dst;
@@ -895,10 +896,10 @@ void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
         strcpy(tmpLine, curOpcode->glname);
 
     if (curOpcode->num_params > 0) {
-        vshader_program_add_param(This, dst, FALSE, tmpLine);
+        vshader_program_add_param(arg, dst, FALSE, tmpLine);
         for (i = 1; i < curOpcode->num_params; ++i) {
            strcat(tmpLine, ",");
-           vshader_program_add_param(This, src[i-1], TRUE, tmpLine);
+           vshader_program_add_param(arg, src[i-1], TRUE, tmpLine);
         }
     }
    shader_addline(buffer, "%s;\n", tmpLine);
@@ -972,27 +973,11 @@ void vshader_hw_dcl(SHADER_OPCODE_ARG* arg) {
         }
         {
             sprintf(tmpLine, "ATTRIB ");
-            vshader_program_add_param(This, dst, FALSE, tmpLine);
+            vshader_program_add_param(arg, dst, FALSE, tmpLine);
             if (This->namedArrays) 
                 shader_addline(buffer, "%s = %s;\n", tmpLine, attribName);
         }
     }
-}
-
-void vshader_hw_def(SHADER_OPCODE_ARG* arg) {
-    
-    IWineD3DVertexShaderImpl* shader = (IWineD3DVertexShaderImpl*) arg->shader;
-    SHADER_BUFFER* buffer = arg->buffer;
-    DWORD reg = arg->dst;
-
-    shader_addline(buffer, 
-        "PARAM C%lu = { %f, %f, %f, %f };\n", reg & 0xFF,
-          *((const float *)(arg->src + 0)), 
-          *((const float *)(arg->src + 1)), 
-          *((const float *)(arg->src + 2)), 
-          *((const float *)(arg->src + 3)) );
-
-    shader->constantsUsedBitmap[reg & 0xFF] = VS_CONSTANT_CONSTANT;
 }
 
 /** Handles transforming all D3DSIO_M?x? opcodes for 
@@ -1004,10 +989,11 @@ void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
     SHADER_OPCODE_ARG tmpArg;
     
     /* Set constants for the temporary argument */
-    tmpArg.shader = arg->shader;
-    tmpArg.buffer = arg->buffer;
-    tmpArg.src[0] = arg->src[0];
-   
+    tmpArg.shader   = arg->shader;
+    tmpArg.buffer   = arg->buffer;
+    tmpArg.src[0]   = arg->src[0];
+    tmpArg.reg_maps = arg->reg_maps;
+    
     switch(arg->opcode->opcode) {
     case D3DSIO_M4x4:
         nComponents = 4;

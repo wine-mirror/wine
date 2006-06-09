@@ -1233,18 +1233,6 @@ void multiply_matrix(D3DMATRIX *dest, D3DMATRIX *src1, D3DMATRIX *src2);
     /*** class static members ***/
     void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
 
-/* An enum for the type of constants that are used... addressing causes
- * problems with being able to work out what's used and what's not.. so
- * maybe we'll have to rely on the server vertex shader const functions?
- */
-enum vsConstantsEnum {
-    VS_CONSTANT_NOT_USED = 0,
-    VS_CONSTANT_CONSTANT,
-    VS_CONSTANT_INTEGER,
-    VS_CONSTANT_BOOLEAN,
-    VS_CONSTANT_FLOAT
-};
-
 struct SHADER_OPCODE_ARG;
 typedef void (*shader_fct_t)();
 typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
@@ -1325,6 +1313,9 @@ extern int shader_addline(
 extern const SHADER_OPCODE* shader_get_opcode(
     IWineD3DBaseShader *iface, 
     const DWORD code);
+
+/* ARB shader program Prototypes */
+extern void shader_hw_def(SHADER_OPCODE_ARG *arg);
 
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
@@ -1422,9 +1413,7 @@ typedef struct IWineD3DVertexShaderImpl {
     BOOL                        namedArrays;    /* don't map use named functions */
     BOOL                        declaredArrays; /* mapping requires */
     INT                         arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE];    /* lookup table for the maps */
-    INT                         highestConstant;
-    CHAR                        constantsUsedBitmap[256];
-    /* FIXME: This needs to be populated with some flags of VS_CONSTANT_NOT_USED, VS_CONSTANT_CONSTANT, VS_CONSTANT_INTEGER, VS_CONSTANT_BOOLEAN, VS_CONSTANT_FLOAT, a half byte bitmap will be the best option, but I'll keep it as chards for siplicity */
+    
     /* run time datas...  */
     VSHADERDATA                *data;
     IWineD3DVertexDeclaration  *vertexDeclaration;
@@ -1451,8 +1440,6 @@ typedef struct IWineD3DPixelShaderImpl {
     /* IWineD3DPixelShaderImpl */
     IUnknown                   *parent;
     IWineD3DDeviceImpl         *wineD3DDevice;
-
-    CHAR                        constants[WINED3D_PSHADER_MAX_CONSTANTS];
 
     /* run time data */
     PSHADERDATA                *data;
