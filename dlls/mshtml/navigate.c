@@ -113,7 +113,7 @@ static nsresult NSAPI nsInputStream_Read(nsIInputStream *iface, char *aBuf, PRUi
 }
 
 static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
-        nsresult (NSAPI*aWriter)(nsIInputStream*,void*,const char*,PRUint32,PRUint32,PRUint32*),
+        nsresult (WINAPI *aWriter)(nsIInputStream*,void*,const char*,PRUint32,PRUint32,PRUint32*),
         void *aClousure, PRUint32 aCount, PRUint32 *_retval)
 {
     nsProtocolStream *This = NSINSTREAM_THIS(iface);
