@@ -4,44 +4,30 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw.dll
 IMPORTLIB = libddraw.$(IMPLIBEXT)
-IMPORTS   = ole32 user32 gdi32 advapi32 kernel32 ntdll
+IMPORTS   = wined3d ole32 user32 gdi32 advapi32 kernel32 ntdll
 EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = -ldxguid -luuid @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ 
 
-OPENGLFILES = \
-	d3d_utils.c \
-	device_main.c \
-	device_opengl.c \
-	direct3d_main.c \
-	direct3d_opengl.c \
+C_SRCS = \
+	clipper.c \
+	ddraw.c \
+	ddraw_thunks.c \
+	device.c \
+	direct3d.c \
 	executebuffer.c \
+	gamma.c \
 	light.c \
+	main.c \
 	material.c \
-	opengl_utils.c \
+	palette.c \
+	parent.c \
+	regsvr.c \
+	surface.c \
+	surface_thunks.c \
 	texture.c \
+	utils.c \
 	vertexbuffer.c \
 	viewport.c
-
-C_SRCS = \
-	@OPENGLFILES@ \
-	clipper.c \
-	ddraw_hal.c \
-	ddraw_main.c \
-	ddraw_thunks.c \
-	ddraw_user.c \
-	ddraw_utils.c \
-	main.c \
-	palette_hal.c \
-	palette_main.c \
-	regsvr.c \
-	surface_dib.c \
-	surface_fakezbuffer.c \
-	surface_gamma.c \
-	surface_hal.c \
-	surface_main.c \
-	surface_thunks.c \
-	surface_user.c \
-	surface_wndproc.c
 
 RC_SRCS = version.rc
 

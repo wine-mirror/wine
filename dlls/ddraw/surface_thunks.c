@@ -17,6 +17,8 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
+#include "wine/debug.h"
 #include <stdarg.h>
 
 #include "windef.h"
@@ -38,6 +40,8 @@
 					     IDirectDrawSurface3,	\
 					     (pdds))
 
+WINE_DEFAULT_DEBUG_CHANNEL(ddraw_thunk);
+
 static HRESULT WINAPI
 IDirectDrawSurface3Impl_QueryInterface(LPDIRECTDRAWSURFACE3 This, REFIID iid,
 				       LPVOID *ppObj)
@@ -52,9 +56,11 @@ IDirectDrawSurface3Impl_AddRef(LPDIRECTDRAWSURFACE3 This)
 }
 
 static ULONG WINAPI
-IDirectDrawSurface3Impl_Release(LPDIRECTDRAWSURFACE3 This)
+IDirectDrawSurface3Impl_Release(LPDIRECTDRAWSURFACE3 iface)
 {
-    return IDirectDrawSurface7_Release(CONVERT(This));
+    ICOM_THIS_FROM( IDirectDrawSurfaceImpl, IDirectDrawSurface3, iface);
+    TRACE("(%p)\n", This);
+    return IDirectDrawSurface7_Release(CONVERT(iface));
 }
 
 static HRESULT WINAPI
@@ -389,7 +395,7 @@ IDirectDrawSurface3Impl_SetSurfaceDesc(LPDIRECTDRAWSURFACE3 This,
 					      dwFlags);
 }
 
-const IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable =
+const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl =
 {
     IDirectDrawSurface3Impl_QueryInterface,
     IDirectDrawSurface3Impl_AddRef,

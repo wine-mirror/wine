@@ -1,7 +1,8 @@
-/*		DirectDrawClipper implementation
+/* DirectDrawClipper implementation
  *
- * Copyright 2000 Marcus Meissner
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000 (c) Marcus Meissner
+ * Copyright 2000 (c) TransGaming Technologies Inc.
+ * Copyright 2006 (c) Stefan Dösinger
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,52 +37,97 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-/******************************************************************************
- *			DirectDrawCreateClipper (DDRAW.@)
- */
+/*****************************************************************************
+ * IUnknown methods
+ *****************************************************************************/
 
-static const IDirectDrawClipperVtbl DDRAW_Clipper_VTable;
-
-HRESULT WINAPI DirectDrawCreateClipper(
-    DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, LPUNKNOWN pUnkOuter
+/*****************************************************************************
+ * IDirectDrawClipper::QueryInterface
+ *
+ * Can query the IUnknown and IDirectDrawClipper interface from a
+ * Clipper object. The IUnknown Interface is equal to the IDirectDrawClipper
+ * interface. Can't create other interfaces.
+ *
+ * Arguments:
+ *  riid: Interface id asked for
+ *  ppvObj: Returns the pointer to the interface
+ *
+ * Return values:
+ *  DD_OK on success
+ *  E_NOINTERFACE if the requested interface wasn't found.
+ *
+ *****************************************************************************/
+static HRESULT WINAPI IDirectDrawClipperImpl_QueryInterface(
+    LPDIRECTDRAWCLIPPER iface, REFIID riid, LPVOID* ppvObj
 ) {
-    IDirectDrawClipperImpl* This;
-    TRACE("(%08lx,%p,%p)\n", dwFlags, lplpDDClipper, pUnkOuter);
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
 
-    if (pUnkOuter != NULL) return CLASS_E_NOAGGREGATION;
-
-    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-		     sizeof(IDirectDrawClipperImpl));
-    if (This == NULL) return E_OUTOFMEMORY;
-
-    ICOM_INIT_INTERFACE(This, IDirectDrawClipper, DDRAW_Clipper_VTable);
-    This->ref = 1;
-    This->hWnd = 0;
-    This->ddraw_owner = NULL;
-
-    *lplpDDClipper = ICOM_INTERFACE(This, IDirectDrawClipper);
-    return DD_OK;
+    if (IsEqualGUID(&IID_IUnknown, riid)
+	|| IsEqualGUID(&IID_IDirectDrawClipper, riid))
+    {
+	*ppvObj = ICOM_INTERFACE(This, IDirectDrawClipper);
+	InterlockedIncrement(&This->ref);
+	return S_OK;
+    }
+    else
+    {
+	return E_NOINTERFACE;
+    }
 }
 
-/* This is the classfactory implementation. */
-HRESULT DDRAW_CreateDirectDrawClipper(IUnknown* pUnkOuter, REFIID riid,
-				      LPVOID* ppObj)
+/*****************************************************************************
+ * IDirectDrawClipper::AddRef
+ *
+ * Increases the reference count of the interface, returns the new count
+ *
+ *****************************************************************************/
+static ULONG WINAPI IDirectDrawClipperImpl_AddRef( LPDIRECTDRAWCLIPPER iface )
 {
-    HRESULT hr;
-    LPDIRECTDRAWCLIPPER pClip;
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    hr = DirectDrawCreateClipper(0, &pClip, pUnkOuter);
-    if (FAILED(hr)) return hr;
+    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
 
-    hr = IDirectDrawClipper_QueryInterface(pClip, riid, ppObj);
-    IDirectDrawClipper_Release(pClip);
-    return hr;
+    return ref;
 }
 
-/******************************************************************************
- *			IDirectDrawClipper
- */
-HRESULT WINAPI Main_DirectDrawClipper_SetHwnd(
+/*****************************************************************************
+ * IDirectDrawClipper::Release
+ *
+ * Decreases the reference count of the interface, returns the new count
+ * If the refcount is decreased to 0, the interface is destroyed.
+ *
+ *****************************************************************************/
+static ULONG WINAPI IDirectDrawClipperImpl_Release(IDirectDrawClipper *iface) {
+    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+
+    if (ref == 0)
+    {
+	HeapFree(GetProcessHeap(), 0, This);
+	return 0;
+    }
+    else return ref;
+}
+
+/*****************************************************************************
+ * IDirectDrawClipper::SetHwnd
+ *
+ * Assigns a hWnd to the clipper interface.
+ *
+ * Arguments:
+ *  Flags: Unsupported so far
+ *  hWnd: The hWnd to set
+ *
+ * Return values:
+ *  DD_OK on success
+ *  DDERR_INVALIDPARAMS if Flags was != 0
+ *
+ *****************************************************************************/
+
+static HRESULT WINAPI IDirectDrawClipperImpl_SetHwnd(
     LPDIRECTDRAWCLIPPER iface, DWORD dwFlags, HWND hWnd
 ) {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
@@ -96,52 +142,25 @@ HRESULT WINAPI Main_DirectDrawClipper_SetHwnd(
     return DD_OK;
 }
 
-static void Main_DirectDrawClipper_Destroy(IDirectDrawClipperImpl* This)
-{
-    if (This->ddraw_owner != NULL)
-	Main_DirectDraw_RemoveClipper(This->ddraw_owner, This);
-
-    HeapFree(GetProcessHeap(), 0 ,This);
-}
-
-void Main_DirectDrawClipper_ForceDestroy(IDirectDrawClipperImpl* This)
-{
-    WARN("deleting clipper %p with refcnt %lu\n", This, This->ref);
-    Main_DirectDrawClipper_Destroy(This);
-}
-
-ULONG WINAPI Main_DirectDrawClipper_Release(LPDIRECTDRAWCLIPPER iface) {
-    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
-
-    if (ref == 0)
-    {
-	Main_DirectDrawClipper_Destroy(This);
-	return 0;
-    }
-    else return ref;
-}
-
-/***********************************************************************
-*           IDirectDrawClipper::GetClipList
-*
-* Retrieve a copy of the clip list
-*
-* PARAMS
-*  lpRect  Rectangle to be used to clip the clip list or NULL for the
-*          entire clip list
-*  lpClipList structure for the resulting copy of the clip list.
-           If NULL, fills lpdwSize up to the number of bytes necessary to hold
-           the entire clip.
-*  lpdwSize Size of resulting clip list; size of the buffer at lpClipList
-           or, if lpClipList is NULL, receives the required size of the buffer
-           in bytes
-* RETURNS
-*  Either DD_OK or DDERR_*
-*/
-HRESULT WINAPI Main_DirectDrawClipper_GetClipList(
+/*****************************************************************************
+ * IDirectDrawClipper::GetClipList
+ *
+ * Retrieve a copy of the clip list
+ *
+ * Arguments:
+ *  Rect: Rectangle to be used to clip the clip list or NULL for the
+ *        entire clip list
+ *  ClipList: structure for the resulting copy of the clip list.
+ *            If NULL, fills Size up to the number of bytes necessary to hold
+ *            the entire clip.
+ *  Size: Size of resulting clip list; size of the buffer at ClipList
+ *        or, if ClipList is NULL, receives the required size of the buffer
+ *        in bytes
+ *
+ * RETURNS
+ *  Either DD_OK or DDERR_*
+ ************************************************************************/
+static HRESULT WINAPI IDirectDrawClipperImpl_GetClipList(
     LPDIRECTDRAWCLIPPER iface, LPRECT lpRect, LPRGNDATA lpClipList,
     LPDWORD lpdwSize)
 {
@@ -188,18 +207,21 @@ HRESULT WINAPI Main_DirectDrawClipper_GetClipList(
     }
 }
 
-/***********************************************************************
-*           IDirectDrawClipper::SetClipList
-*
-* Sets or deletes (if lprgn is NULL) the clip list
-*
-* PARAMS
-*  lprgn   Pointer to a LRGNDATA structure or NULL
-*  dwFlags not used, must be 0
-* RETURNS
-*  Either DD_OK or DDERR_*
-*/
-HRESULT WINAPI Main_DirectDrawClipper_SetClipList(
+/*****************************************************************************
+ * IDirectDrawClipper::SetClipList
+ *
+ * Sets or deletes (if lprgn is NULL) the clip list
+ *
+ * This implementation is a stup and returns DD_OK always to make the app
+ * happy.
+ *
+ * PARAMS
+ *  lprgn   Pointer to a LRGNDATA structure or NULL
+ *  dwFlags not used, must be 0
+ * RETURNS
+ *  Either DD_OK or DDERR_*
+ *****************************************************************************/
+static HRESULT WINAPI IDirectDrawClipperImpl_SetClipList(
     LPDIRECTDRAWCLIPPER iface,LPRGNDATA lprgn,DWORD dwFlag
 ) {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
@@ -209,35 +231,18 @@ HRESULT WINAPI Main_DirectDrawClipper_SetClipList(
     return DD_OK;
 }
 
-HRESULT WINAPI Main_DirectDrawClipper_QueryInterface(
-    LPDIRECTDRAWCLIPPER iface, REFIID riid, LPVOID* ppvObj
-) {
-    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
-
-    if (IsEqualGUID(&IID_IUnknown, riid)
-	|| IsEqualGUID(&IID_IDirectDrawClipper, riid))
-    {
-	*ppvObj = ICOM_INTERFACE(This, IDirectDrawClipper);
-	InterlockedIncrement(&This->ref);
-	return S_OK;
-    }
-    else
-    {
-	return E_NOINTERFACE;
-    }
-}
-
-ULONG WINAPI Main_DirectDrawClipper_AddRef( LPDIRECTDRAWCLIPPER iface )
-{
-    IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
-    ULONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
-
-    return ref;
-}
-
-HRESULT WINAPI Main_DirectDrawClipper_GetHWnd(
+/*****************************************************************************
+ * IDirectDrawClipper::GetHwnd
+ *
+ * Returns the hwnd assigned with SetHwnd
+ *
+ * Arguments:
+ *  hWndPtr: Address to store the HWND at
+ *
+ * Return values:
+ *  Always returns DD_OK;
+ *****************************************************************************/
+static HRESULT WINAPI IDirectDrawClipperImpl_GetHWnd(
     LPDIRECTDRAWCLIPPER iface, HWND* hWndPtr
 ) {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
@@ -248,7 +253,21 @@ HRESULT WINAPI Main_DirectDrawClipper_GetHWnd(
     return DD_OK;
 }
 
-HRESULT WINAPI Main_DirectDrawClipper_Initialize(
+/*****************************************************************************
+ * IDirectDrawClipper::Initialize
+ *
+ * Initializes the interface. Well, there isn't much to do for this
+ * implementation, but it stores the DirectDraw Interface.
+ *
+ * Arguments:
+ *  DD: Pointer to a IDirectDraw interface
+ *  Flags: Unsupported by now
+ *
+ * Return values:
+ *  DD_OK on success
+ *  DDERR_ALREADYINITIALIZED if this interface isn't initialized allready
+ *****************************************************************************/
+static HRESULT WINAPI IDirectDrawClipperImpl_Initialize(
      LPDIRECTDRAWCLIPPER iface, LPDIRECTDRAW lpDD, DWORD dwFlags
 ) {
     IDirectDrawImpl* pOwner;
@@ -259,12 +278,22 @@ HRESULT WINAPI Main_DirectDrawClipper_Initialize(
 
     pOwner = ICOM_OBJECT(IDirectDrawImpl, IDirectDraw, lpDD);
     This->ddraw_owner = pOwner;
-    Main_DirectDraw_AddClipper(pOwner, This);
 
     return DD_OK;
 }
 
-HRESULT WINAPI Main_DirectDrawClipper_IsClipListChanged(
+/*****************************************************************************
+ * IDirectDrawClipper::IsClipListChanged
+ *
+ * This function is a stub
+ *
+ * Arguments:
+ *  Changed:
+ *
+ * Return values:
+ *  DD_OK, because it's a stub
+ *****************************************************************************/
+static HRESULT WINAPI IDirectDrawClipperImpl_IsClipListChanged(
     LPDIRECTDRAWCLIPPER iface, BOOL* lpbChanged
 ) {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
@@ -276,15 +305,18 @@ HRESULT WINAPI Main_DirectDrawClipper_IsClipListChanged(
     return DD_OK;
 }
 
-static const IDirectDrawClipperVtbl DDRAW_Clipper_VTable =
+/*****************************************************************************
+ * The VTable
+ *****************************************************************************/
+const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl =
 {
-    Main_DirectDrawClipper_QueryInterface,
-    Main_DirectDrawClipper_AddRef,
-    Main_DirectDrawClipper_Release,
-    Main_DirectDrawClipper_GetClipList,
-    Main_DirectDrawClipper_GetHWnd,
-    Main_DirectDrawClipper_Initialize,
-    Main_DirectDrawClipper_IsClipListChanged,
-    Main_DirectDrawClipper_SetClipList,
-    Main_DirectDrawClipper_SetHwnd
+    IDirectDrawClipperImpl_QueryInterface,
+    IDirectDrawClipperImpl_AddRef,
+    IDirectDrawClipperImpl_Release,
+    IDirectDrawClipperImpl_GetClipList,
+    IDirectDrawClipperImpl_GetHWnd,
+    IDirectDrawClipperImpl_Initialize,
+    IDirectDrawClipperImpl_IsClipListChanged,
+    IDirectDrawClipperImpl_SetClipList,
+    IDirectDrawClipperImpl_SetHwnd
 };

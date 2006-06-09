@@ -1,8 +1,9 @@
-/*		DirectDraw Base Functions
+/*        DirectDraw Base Functions
  *
  * Copyright 1997-1999 Marcus Meissner
- * Copyright 1998 Lionel Ulmer (most of Direct3D stuff)
+ * Copyright 1998 Lionel Ulmer
  * Copyright 2000-2001 TransGaming Technologies Inc.
+ * Copyright 2006 Stefan Dösinger
  *
  * This file contains the (internal) driver registration functions,
  * driver enumeration APIs and DirectDraw creation functions.
@@ -22,10 +23,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define GLPRIVATE_NO_REDEFINE
-
 #include "config.h"
 #include "wine/port.h"
+#include "wine/debug.h"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -41,518 +41,603 @@
 #include "wingdi.h"
 #include "wine/exception.h"
 #include "excpt.h"
+#include "winreg.h"
 
 #include "ddraw.h"
 #include "d3d.h"
 
-/* This for all the enumeration and creation of D3D-related objects */
 #include "ddraw_private.h"
-#include "wine/debug.h"
-#include "wine/library.h"
-
-#include "gl_private.h"
-
-#undef GLPRIVATE_NO_REDEFINE
-
-#define MAX_DDRAW_DRIVERS 3
-static const ddraw_driver* DDRAW_drivers[MAX_DDRAW_DRIVERS];
-static int DDRAW_num_drivers; /* = 0 */
-static int DDRAW_default_driver;
-
-void (*wine_tsx11_lock_ptr)(void) = NULL;
-void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-/**********************************************************************/
+/* The driver's guid */
+GUID guid = {0x40c1b248,0x9d7d,0x4a29,{0xd7,0xb7,0x4c,0xd8,0x10,0x9f,0x3d,0x5d}};
 
-typedef struct {
-    LPVOID lpCallback;
-    LPVOID lpContext;
-} DirectDrawEnumerateProcData;
+/* The configured default surface */
+WINED3DSURFTYPE DefaultSurfaceType = SURFACE_UNKNOWN;
 
-BOOL opengl_initialized = 0;
-
-#ifdef HAVE_OPENGL
-
-#include "opengl_private.h"
-
-static void *gl_handle = NULL;
-
-#define GL_API_FUNCTION(f) typeof(f) * p##f;
-#include "gl_api.h"
-#undef GL_API_FUNCTION
-
-#ifndef SONAME_LIBGL
-#define SONAME_LIBGL "libGL.so"
-#endif
-
-static BOOL DDRAW_bind_to_opengl( void )
-{
-    const char *glname = SONAME_LIBGL;
-
-    gl_handle = wine_dlopen(glname, RTLD_NOW, NULL, 0);
-    if (!gl_handle) {
-        WARN("Wine cannot find the OpenGL graphics library (%s).\n",glname);
-	return FALSE;
-    }
-
-#define GL_API_FUNCTION(f)  \
-    if((p##f = wine_dlsym(gl_handle, #f, NULL, 0)) == NULL) \
-    { \
-        WARN("Can't find symbol %s\n", #f); \
-        goto sym_not_found; \
-    }
-#include "gl_api.h"
-#undef GL_API_FUNCTION
-
-    /* And now calls the function to initialize the various fields for the rendering devices */
-    return d3ddevice_init_at_startup(gl_handle);
-    
-sym_not_found:
-    WARN("Wine cannot find certain functions that it needs inside the OpenGL\n"
-	 "graphics library.  To enable Wine to use OpenGL please upgrade\n"
-	 "your OpenGL libraries\n");
-    wine_dlclose(gl_handle, NULL, 0);
-    gl_handle = NULL;
-    return FALSE;
-}
-
-#endif /* HAVE_OPENGL */
-
-BOOL s3tc_initialized = 0;
-
-static void *s3tc_handle = NULL;
-
-FUNC_FETCH_2D_TEXEL_RGBA_DXT1 fetch_2d_texel_rgba_dxt1;
-FUNC_FETCH_2D_TEXEL_RGBA_DXT3 fetch_2d_texel_rgba_dxt3;
-FUNC_FETCH_2D_TEXEL_RGBA_DXT5 fetch_2d_texel_rgba_dxt5;
-
-#ifndef SONAME_LIBTXC_DXTN
-#define SONAME_LIBTXC_DXTN "libtxc_dxtn.so"
-#endif
-
-static BOOL DDRAW_bind_to_s3tc( void )
-{
-    const char * const s3tcname = SONAME_LIBTXC_DXTN;
-
-    s3tc_handle = wine_dlopen(s3tcname, RTLD_NOW, NULL, 0);
-    if (!s3tc_handle) {
-        TRACE("No S3TC software decompression library seems to be present (%s).\n",s3tcname);
-	return FALSE;
-    }
-    TRACE("Found S3TC software decompression library (%s).\n",s3tcname);
-
-#define API_FUNCTION(f)  \
-    if((f = wine_dlsym(s3tc_handle, #f, NULL, 0)) == NULL) \
-    { \
-        WARN("Can't find symbol %s\n", #f); \
-        goto sym_not_found; \
-    }
-    API_FUNCTION(fetch_2d_texel_rgba_dxt1);
-    API_FUNCTION(fetch_2d_texel_rgba_dxt3);
-    API_FUNCTION(fetch_2d_texel_rgba_dxt5);
-#undef API_FUNCTION
-
-    return TRUE;
-    
-sym_not_found:
-    WARN("Wine cannot find functions that are necessary for S3TC software decompression\n");
-    wine_dlclose(s3tc_handle, NULL, 0);
-    s3tc_handle = NULL;
-    return FALSE;
-}
-
-/*******************************************************************************
- * DirectDrawEnumerateExA (DDRAW.@)
+/***********************************************************************
  *
- * Enumerates all DirectDraw devices installed on the system.
+ * Helper function for DirectDrawCreate and friends
+ * Creates a new DDraw interface with the given REFIID
  *
- * PARAMS
- *  lpCallback [I] DDEnumCallbackEx function to be called with a description of 
- *		   each enumerated HAL.
- *  lpContext  [I] application-defined value to be passed to the callback.
- *  dwFlags    [I] Specifies the enumeration scope. see msdn.
+ * Interfaces that can be created:
+ *  IDirectDraw, IDirectDraw2, IDirectDraw4, IDirectDraw7
+ *  IDirect3D, IDirect3D2, IDirect3D3, IDirect3D7. (Does Windows return
+ *  IDirect3D interfaces?)
  *
- * RETURNS
- *  Success: DD_OK.
- *  Failure: DDERR_INVALIDPARAMS
- */
-HRESULT WINAPI DirectDrawEnumerateExA(
-    LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
+ * Arguments:
+ *  guid: ID of the requested driver, NULL for the default driver.
+ *        The GUID can be queried with DirectDrawEnumerate(Ex)A/W
+ *  DD: Used to return the pointer to the created object
+ *  UnkOuter: For aggregation, which is unsupported. Must be NULL
+ *  iid: requested version ID.
+ *
+ * Returns:
+ *  DD_OK if the Interface was created sucessfully
+ *  CLASS_E_NOAGGREGATION if UnkOuter is not NULL
+ *  E_OUTOFMEMORY if some allocation failed
+ *
+ ***********************************************************************/
+static HRESULT
+DDRAW_Create(GUID *guid,
+             void **DD,
+             IUnknown *UnkOuter,
+             REFIID iid)
 {
-    int i;
-    BOOL stop = FALSE;
-    TRACE("(%p,%p, %08lx)\n", lpCallback, lpContext, dwFlags);
+    IDirectDrawImpl *This = NULL;
+    HRESULT hr;
+    IWineD3D *wineD3D = NULL;
+    IWineD3DDevice *wineD3DDevice = NULL;
+    HDC hDC;
+    WINED3DDEVTYPE devicetype;
 
-    if (TRACE_ON(ddraw)) {
-	TRACE("  Flags : ");
-	if (dwFlags & DDENUM_ATTACHEDSECONDARYDEVICES)
-	    TRACE("DDENUM_ATTACHEDSECONDARYDEVICES ");
-	if (dwFlags & DDENUM_DETACHEDSECONDARYDEVICES)
-	    TRACE("DDENUM_DETACHEDSECONDARYDEVICES ");
-	if (dwFlags & DDENUM_NONDISPLAYDEVICES)
-	    TRACE("DDENUM_NONDISPLAYDEVICES ");
-	TRACE("\n");
-    }
+    TRACE("(%s,%p,%p)\n", debugstr_guid(guid), DD, UnkOuter);
 
-    for (i=0; i<DDRAW_num_drivers; i++)
+    /* We don't care about this guids. Well, there's no special guid anyway
+     * OK, we could
+     */
+    if (guid == (GUID *) DDCREATE_EMULATIONONLY)
     {
-        TRACE("Enumerating %s/%s interface\n",
-	      DDRAW_drivers[i]->info->szDriver,
-	      DDRAW_drivers[i]->info->szDescription);
-
-	/* We have to pass NULL from the primary display device.
-	 * RoadRage chapter 6's enumeration routine expects it. */
-        __TRY
-        {
-            if (!lpCallback((DDRAW_default_driver == i) ? NULL
-                            :(LPGUID)&DDRAW_drivers[i]->info->guidDeviceIdentifier,
-                            (LPSTR)DDRAW_drivers[i]->info->szDescription,
-                            (LPSTR)DDRAW_drivers[i]->info->szDriver,
-                            lpContext, 0))
-                stop = TRUE;
-        }
-        __EXCEPT_PAGE_FAULT
-        {
-            return E_INVALIDARG;
-        }
-        __ENDTRY
-        if (stop) return DD_OK;
+        /* Use the reference device id. This doesn't actually change anything,
+         * WineD3D always uses OpenGL for D3D rendering. One could make it request
+         * indirect rendering
+         */
+        devicetype = WINED3DDEVTYPE_REF;
+    }
+    else if(guid == (GUID *) DDCREATE_HARDWAREONLY)
+    {
+        devicetype = WINED3DDEVTYPE_HAL;
+    }
+    else
+    {
+        devicetype = 0;
     }
 
-    /* Unsupported flags */
-    if (dwFlags & DDENUM_NONDISPLAYDEVICES) {
-	FIXME("no non-display devices supported.\n");
-    }
-    if (dwFlags & DDENUM_DETACHEDSECONDARYDEVICES) {
-	FIXME("no detached secondary devices supported.\n");
+    /* DDraw doesn't support aggreation, according to msdn */
+    if (UnkOuter != NULL)
+        return CLASS_E_NOAGGREGATION;
+
+    /* DirectDraw creation comes here */
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectDrawImpl));
+    if(!This)
+    {
+        ERR("Out of memory when creating DirectDraw\n");
+        return E_OUTOFMEMORY;
     }
 
+    /* The interfaces:
+     * IDirectDraw and IDirect3D are the same object,
+     * QueryInterface is used to get other interfaces.
+     */
+    ICOM_INIT_INTERFACE(This, IDirectDraw,  IDirectDraw1_Vtbl);
+    ICOM_INIT_INTERFACE(This, IDirectDraw2, IDirectDraw2_Vtbl);
+    ICOM_INIT_INTERFACE(This, IDirectDraw4, IDirectDraw4_Vtbl);
+    ICOM_INIT_INTERFACE(This, IDirectDraw7, IDirectDraw7_Vtbl);
+    ICOM_INIT_INTERFACE(This, IDirect3D,  IDirect3D1_Vtbl);
+    ICOM_INIT_INTERFACE(This, IDirect3D2, IDirect3D2_Vtbl);
+    ICOM_INIT_INTERFACE(This, IDirect3D3, IDirect3D3_Vtbl);
+    ICOM_INIT_INTERFACE(This, IDirect3D7, IDirect3D7_Vtbl);
+    This->ref = 1;
+
+    /* See comments in IDirectDrawImpl_CreateNewSurface for a description
+     * of this member.
+     * Read from a registry key, should add a winecfg option later
+     */
+    This->ImplType = DefaultSurfaceType;
+
+    /* Get the current screen settings */
+    hDC = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    This->orig_bpp = GetDeviceCaps(hDC, BITSPIXEL) * GetDeviceCaps(hDC, PLANES);
+    DeleteDC(hDC);
+    This->orig_width = GetSystemMetrics(SM_CXSCREEN);
+    This->orig_height = GetSystemMetrics(SM_CYSCREEN);
+
+    /* Initialize WineD3D
+     *
+     * All Rendering (2D and 3D) is relayed to WineD3D,
+     * but DirectDraw specific management, like DDSURFACEDESC and DDPIXELFORMAT
+     * structure handling is handled in this lib.
+     */
+    wineD3D = WineDirect3DCreate(0 /* SDKVersion */, 7 /* DXVersion */, (IUnknown *) This /* Parent */);
+    if(!wineD3D)
+    {
+        ERR("Failed to initialise WineD3D\n");
+        hr = E_OUTOFMEMORY;
+        goto err_out;
+    }
+    This->wineD3D = wineD3D;
+    TRACE("WineD3D created at %p\n", wineD3D);
+
+    /* Initialized member...
+     *
+     * It is set to false at creation time, and set to true in
+     * IDirectDraw7::Initialize. It's sole purpose is to return DD_OK on
+     * initialize only once
+     */
+    This->initialized = FALSE;
+
+    /* Initialize WineD3DDevice
+     *
+     * It is used for screen setup, surface and palette creation
+     * When a Direct3DDevice7 is created, the D3D capatiblities of WineD3D are
+     * initialized
+     */
+    hr = IWineD3D_CreateDevice(wineD3D,
+                               0 /*D3D_ADAPTER_DEFAULT*/,
+                               devicetype,
+                               NULL, /* FocusWindow, don't know yet */
+                               0, /* BehaviorFlags */
+                               &wineD3DDevice,
+                               (IUnknown *) ICOM_INTERFACE(This, IDirectDraw7));
+    if(FAILED(hr))
+    {
+        ERR("Failed to create a wineD3DDevice, result = %lx\n", hr);
+        goto err_out;
+    }
+    This->wineD3DDevice = wineD3DDevice;
+    TRACE("wineD3DDevice created at %p\n", This->wineD3DDevice);
+
+    /* Register the window class
+     *
+     * It is used to create a hidden window for D3D
+     * rendering, if the application didn't pass one.
+     * It can also be used for Creating a device window
+     * from SetCooperativeLevel
+     *
+     * The name: DDRAW_<address>. The classname is
+     * 32 bit long, so a 64 bit address will fit nicely
+     * (Will this be compiled for 64 bit anyway?)
+     *
+     */
+    sprintf(This->classname, "DDRAW_%p", This);
+
+    memset(&This->wnd_class, 0, sizeof(This->wnd_class));
+    This->wnd_class.style = CS_HREDRAW | CS_VREDRAW;
+    This->wnd_class.lpfnWndProc = DefWindowProcA;
+    This->wnd_class.cbClsExtra = 0;
+    This->wnd_class.cbWndExtra = 0;
+    This->wnd_class.hInstance = GetModuleHandleA(0);
+    This->wnd_class.hIcon = 0;
+    This->wnd_class.hCursor = 0;
+    This->wnd_class.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
+    This->wnd_class.lpszMenuName = NULL;
+    This->wnd_class.lpszClassName = This->classname;
+    if(!RegisterClassA(&This->wnd_class))
+    {
+        ERR("RegisterClassA failed!\n");
+        goto err_out;
+    }
+
+    /* Get the amount of video memory */
+    This->total_vidmem = IWineD3DDevice_GetAvailableTextureMem(This->wineD3DDevice);
+
+    /* Initialize the caps */
+    This->caps.dwSize = sizeof(This->caps);
+#define BLIT_CAPS (DDCAPS_BLT | DDCAPS_BLTCOLORFILL | DDCAPS_BLTDEPTHFILL \
+          | DDCAPS_BLTSTRETCH | DDCAPS_CANBLTSYSMEM | DDCAPS_CANCLIP	  \
+          | DDCAPS_CANCLIPSTRETCHED | DDCAPS_COLORKEY			  \
+          | DDCAPS_COLORKEYHWASSIST | DDCAPS_OVERLAY | DDCAPS_OVERLAYSTRETCH |DDCAPS_ALIGNBOUNDARYSRC )
+#define CKEY_CAPS (DDCKEYCAPS_DESTBLT | DDCKEYCAPS_SRCBLT)
+#define FX_CAPS (DDFXCAPS_BLTALPHA | DDFXCAPS_BLTMIRRORLEFTRIGHT	\
+                | DDFXCAPS_BLTMIRRORUPDOWN | DDFXCAPS_BLTROTATION90	\
+                | DDFXCAPS_BLTSHRINKX | DDFXCAPS_BLTSHRINKXN		\
+                | DDFXCAPS_BLTSHRINKY | DDFXCAPS_BLTSHRINKXN		\
+                | DDFXCAPS_BLTSTRETCHX | DDFXCAPS_BLTSTRETCHXN		\
+                | DDFXCAPS_BLTSTRETCHY | DDFXCAPS_BLTSTRETCHYN)
+    This->caps.dwCaps |= DDCAPS_GDI | DDCAPS_PALETTE | BLIT_CAPS;
+
+    This->caps.dwCaps2 |= DDCAPS2_CERTIFIED | DDCAPS2_NOPAGELOCKREQUIRED |
+                          DDCAPS2_PRIMARYGAMMA | DDCAPS2_WIDESURFACES |
+                          DDCAPS2_CANRENDERWINDOWED;
+    This->caps.dwCKeyCaps |= CKEY_CAPS;
+    This->caps.dwFXCaps |= FX_CAPS;
+    This->caps.dwPalCaps |= DDPCAPS_8BIT | DDPCAPS_PRIMARYSURFACE;
+    This->caps.dwVidMemTotal = This->total_vidmem;
+    This->caps.dwVidMemFree = This->total_vidmem;
+    This->caps.dwSVBCaps |= BLIT_CAPS;
+    This->caps.dwSVBCKeyCaps |= CKEY_CAPS;
+    This->caps.dwSVBFXCaps |= FX_CAPS;
+    This->caps.dwVSBCaps |= BLIT_CAPS;
+    This->caps.dwVSBCKeyCaps |= CKEY_CAPS;
+    This->caps.dwVSBFXCaps |= FX_CAPS;
+    This->caps.dwSSBCaps |= BLIT_CAPS;
+    This->caps.dwSSBCKeyCaps |= CKEY_CAPS;
+    This->caps.dwSSBFXCaps |= FX_CAPS;
+    This->caps.ddsCaps.dwCaps |= DDSCAPS_ALPHA | DDSCAPS_BACKBUFFER |
+                                 DDSCAPS_FLIP | DDSCAPS_FRONTBUFFER |
+                                 DDSCAPS_OFFSCREENPLAIN | DDSCAPS_PALETTE |
+                                 DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY |
+                                 DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE;
+    /* Hacks for D3D code */
+    /* TODO: Check if WineD3D has 3D enabled
+       Need opengl surfaces or auto for 3D
+     */
+    if(This->ImplType == 0 || This->ImplType == SURFACE_OPENGL)
+    {
+        This->caps.dwCaps |= DDCAPS_3D;
+        This->caps.ddsCaps.dwCaps |= DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER;
+    }
+    This->caps.ddsOldCaps.dwCaps = This->caps.ddsCaps.dwCaps;
+
+#undef BLIT_CAPS
+#undef CKEY_CAPS
+#undef FX_CAPS
+
+    /* Add the object to the ddraw cleanup list */
+    This->next = ddraw_list;
+    ddraw_list = This;
+
+    /* Call QueryInterface to get the pointer to the requested interface */
+    hr = IDirectDraw7_QueryInterface( ICOM_INTERFACE(This, IDirectDraw7), iid, DD);
+    IDirectDraw7_Release( ICOM_INTERFACE(This, IDirectDraw7) );
+    if(SUCCEEDED(hr)) return DD_OK;
+
+err_out:
+    /* Let's hope we never need this ;) */
+    if(wineD3DDevice) IWineD3DDevice_Release(wineD3DDevice);
+    if(wineD3D) IWineD3D_Release(wineD3D);
+    if(This) HeapFree(GetProcessHeap(), 0, This);
+    return hr;
+}
+
+/***********************************************************************
+ * DirectDrawCreate (DDRAW.@)
+ *
+ * Creates legacy DirectDraw Interfaces. Can't create IDirectDraw7
+ * interfaces in theory
+ *
+ * Arguments, return values: See DDRAW_Create
+ *
+ ***********************************************************************/
+HRESULT WINAPI
+DirectDrawCreate(GUID *GUID,
+                 IDirectDraw **DD,
+                 IUnknown *UnkOuter)
+{
+    TRACE("(%s,%p,%p)\n", debugstr_guid(GUID), DD, UnkOuter);
+
+    return DDRAW_Create(GUID, (void **) DD, UnkOuter, &IID_IDirectDraw);
+}
+
+/***********************************************************************
+ * DirectDrawCreateEx (DDRAW.@)
+ *
+ * Only creates new IDirectDraw7 interfaces, supposed to fail if legacy
+ * interfaces are requested.
+ *
+ * Arguments, return values: See DDRAW_Create
+ *
+ ***********************************************************************/
+HRESULT WINAPI
+DirectDrawCreateEx(GUID *GUID,
+                   void **DD,
+                   REFIID iid,
+                   IUnknown *UnkOuter)
+{
+    TRACE("(%s,%p,%s,%p)\n", debugstr_guid(GUID), DD, debugstr_guid(iid), UnkOuter);
+
+    if (!IsEqualGUID(iid, &IID_IDirectDraw7))
+        return DDERR_INVALIDPARAMS;
+
+    return DDRAW_Create(GUID, DD, UnkOuter, iid);
+}
+
+/***********************************************************************
+ * DirectDrawEnumerateA (DDRAW.@)
+ *
+ * Enumerates legacy ddraw drivers, ascii version. We only have one
+ * driver, which relays to WineD3D. If we were sufficiently cool,
+ * we could offer various interfaces, which use a different default surface
+ * implementation, but I think it's better to offer this choice in
+ * winecfg, because some apps use the default driver, so we would need
+ * a winecfg option anyway, and there shouldn't be 2 ways to set one setting
+ *
+ * Arguments:
+ *  Callback: Callback function from the app
+ *  Context: Argument to the call back.
+ *
+ * Returns:
+ *  DD_OK on success
+ *  E_INVALIDARG if the Callback caused a page fault
+ *
+ *
+ ***********************************************************************/
+HRESULT WINAPI
+DirectDrawEnumerateA(LPDDENUMCALLBACKA Callback,
+                     void *Context)
+{
+    BOOL stop = FALSE;
+
+    TRACE(" Enumerating default DirectDraw HAL interface\n");
+    /* We only have one driver */
+    __TRY
+    {
+        stop = !Callback(NULL, "DirectDraw HAL", "display", Context);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return E_INVALIDARG;
+    }
+    __ENDTRY
+
+    TRACE(" End of enumeration\n");
     return DD_OK;
 }
 
-/*******************************************************************************
+/***********************************************************************
+ * DirectDrawEnumerateExA (DDRAW.@)
+ *
+ * Enumerates DirectDraw7 drivers, ascii version. See
+ * the comments above DirectDrawEnumerateA for more details.
+ *
+ * The Flag member is not supported right now.
+ *
+ ***********************************************************************/
+HRESULT WINAPI
+DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback,
+                       void *Context,
+                       DWORD Flags)
+{
+    BOOL stop = FALSE;
+    TRACE("Enumerating default DirectDraw HAL interface\n");
+
+    /* We only have one driver by now */
+    __TRY
+    {
+        /* QuickTime expects the description "DirectDraw HAL" */
+        stop = !Callback(NULL, "DirectDraw HAL", "display", Context, 0);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return E_INVALIDARG;
+    }
+    __ENDTRY;
+
+    TRACE("End of enumeration\n");
+    return DD_OK;
+}
+
+/***********************************************************************
+ * DirectDrawEnumerateW (DDRAW.@)
+ *
+ * Enumerates legacy drivers, unicode version. See
+ * the comments above DirectDrawEnumerateA for more details.
+ *
+ * The Flag member is not supported right now.
+ *
+ ***********************************************************************/
+
+/***********************************************************************
  * DirectDrawEnumerateExW (DDRAW.@)
- */
-
-static BOOL CALLBACK DirectDrawEnumerateExProcW(
-    GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName,
-    LPVOID lpContext, HMONITOR hm)
-{
-    INT len;
-    BOOL bResult;
-    LPWSTR lpDriverDescriptionW, lpDriverNameW;
-    DirectDrawEnumerateProcData *pEPD = (DirectDrawEnumerateProcData*)lpContext;
-
-    len = MultiByteToWideChar( CP_ACP, 0, lpDriverDescription, -1, NULL, 0 );
-    lpDriverDescriptionW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, lpDriverDescription, -1, lpDriverDescriptionW, len );
-
-    len = MultiByteToWideChar( CP_ACP, 0, lpDriverName, -1, NULL, 0 );
-    lpDriverNameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, lpDriverName, -1, lpDriverNameW, len );
-
-    bResult = (*(LPDDENUMCALLBACKEXW *) pEPD->lpCallback)(lpGUID, lpDriverDescriptionW,
-                                                          lpDriverNameW, pEPD->lpContext, hm);
-
-    HeapFree(GetProcessHeap(), 0, lpDriverDescriptionW);
-    HeapFree(GetProcessHeap(), 0, lpDriverNameW);
-    return bResult;
-}
-
-HRESULT WINAPI DirectDrawEnumerateExW(
-  LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags)
-{
-    DirectDrawEnumerateProcData epd;
-    epd.lpCallback = (LPVOID) lpCallback;
-    epd.lpContext = lpContext;
-
-    return DirectDrawEnumerateExA(DirectDrawEnumerateExProcW, (LPVOID) &epd, 0);
-}
+ *
+ * Enumerates DirectDraw7 drivers, unicode version. See
+ * the comments above DirectDrawEnumerateA for more details.
+ *
+ * The Flag member is not supported right now.
+ *
+ ***********************************************************************/
 
 /***********************************************************************
- *		DirectDrawEnumerateA (DDRAW.@)
- */
-
-static BOOL CALLBACK DirectDrawEnumerateProcA(
-	GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName,
-	LPVOID lpContext, HMONITOR hm)
-{
-    DirectDrawEnumerateProcData *pEPD = (DirectDrawEnumerateProcData*)lpContext;
-
-    return ((LPDDENUMCALLBACKA) pEPD->lpCallback)(
-	lpGUID, lpDriverDescription, lpDriverName, pEPD->lpContext);
-}
-
-HRESULT WINAPI DirectDrawEnumerateA(
-  LPDDENUMCALLBACKA lpCallback, LPVOID lpContext)
-{
-    DirectDrawEnumerateProcData epd;
-    epd.lpCallback = (LPVOID) lpCallback;
-    epd.lpContext = lpContext;
-
-    return DirectDrawEnumerateExA(DirectDrawEnumerateProcA, (LPVOID) &epd, 0);
-}
+ * Classfactory implementation.
+ ***********************************************************************/
 
 /***********************************************************************
- *		DirectDrawEnumerateW (DDRAW.@)
- */
-
-static BOOL WINAPI DirectDrawEnumerateProcW(
-  GUID *lpGUID, LPWSTR lpDriverDescription, LPWSTR lpDriverName,
-  LPVOID lpContext, HMONITOR hm)
+ * CF_CreateDirectDraw
+ *
+ * DDraw creation function for the class factory
+ *
+ * Params:
+ *  UnkOuter: Set to NULL
+ *  iid: ID of the wanted interface
+ *  obj: Address to pass the interface pointer back
+ *
+ * Returns
+ *  DD_OK / DDERR*, see DDRAW_Create
+ *
+ ***********************************************************************/
+static HRESULT
+CF_CreateDirectDraw(IUnknown* UnkOuter, REFIID iid,
+                    void **obj)
 {
-    DirectDrawEnumerateProcData *pEPD = (DirectDrawEnumerateProcData*)lpContext;
-
-    return ((LPDDENUMCALLBACKW) pEPD->lpCallback)(
-	lpGUID, lpDriverDescription, lpDriverName, pEPD->lpContext);
-}
-
-HRESULT WINAPI DirectDrawEnumerateW(
-  LPDDENUMCALLBACKW lpCallback, LPVOID lpContext)
-{
-    DirectDrawEnumerateProcData epd;
-    epd.lpCallback = (LPVOID) lpCallback;
-    epd.lpContext = lpContext;
-
-    return DirectDrawEnumerateExW(DirectDrawEnumerateProcW, (LPVOID) &epd, 0);
-}
-
-/***********************************************************************
- *		DirectDrawCreate (DDRAW.@)
- */
-
-const ddraw_driver* DDRAW_FindDriver(const GUID* pGUID)
-{
-    static const GUID zeroGUID; /* gets zero-inited */
-
-    TRACE("(%s)\n", pGUID ? debugstr_guid(pGUID) : "(null)");
-
-    if (DDRAW_num_drivers == 0) return NULL;
-
-    if (pGUID == (LPGUID)DDCREATE_EMULATIONONLY
-	|| pGUID == (LPGUID)DDCREATE_HARDWAREONLY)
-	pGUID = NULL;
-
-    if (pGUID == NULL || memcmp(pGUID, &zeroGUID, sizeof(GUID)) == 0)
-    {
-	/* Use the default driver. */
-	return DDRAW_drivers[DDRAW_default_driver];
-    }
-    else
-    {
-	/* Look for a matching GUID. */
-
-	int i;
-	for (i=0; i < DDRAW_num_drivers; i++)
-	{
-	    if (IsEqualGUID(pGUID,
-			    &DDRAW_drivers[i]->info->guidDeviceIdentifier))
-		break;
-	}
-
-	if (i < DDRAW_num_drivers)
-	{
-	    return DDRAW_drivers[i];
-	}
-	else
-	{
-	    ERR("(%s): did not recognize requested GUID.\n",debugstr_guid(pGUID));
-	    return NULL;
-	}
-    }
-}
-
-static HRESULT DDRAW_Create(
-	LPGUID lpGUID, LPVOID *lplpDD, LPUNKNOWN pUnkOuter, REFIID iid, BOOL ex
-) {
-    const ddraw_driver* driver;
-    LPDIRECTDRAW7 pDD;
     HRESULT hr;
 
-    TRACE("(%s,%p,%p,%d)\n", debugstr_guid(lpGUID), lplpDD, pUnkOuter, ex);
+    TRACE("(%p,%s,%p)\n", UnkOuter, debugstr_guid(iid), obj);
 
-    if (DDRAW_num_drivers == 0)
-    {
-	WARN("no DirectDraw drivers registered\n");
-	return DDERR_INVALIDDIRECTDRAWGUID;
-    }
-
-    if (lpGUID == (LPGUID)DDCREATE_EMULATIONONLY
-	|| lpGUID == (LPGUID)DDCREATE_HARDWAREONLY)
-	lpGUID = NULL;
-
-    if (pUnkOuter != NULL)
-	return DDERR_INVALIDPARAMS; /* CLASS_E_NOAGGREGATION? */
-
-    driver = DDRAW_FindDriver(lpGUID);
-    if (driver == NULL) return DDERR_INVALIDDIRECTDRAWGUID;
-
-    hr = driver->create(lpGUID, &pDD, pUnkOuter, ex);
-    if (FAILED(hr)) return hr;
-
-    hr = IDirectDraw7_QueryInterface(pDD, iid, lplpDD);
-    IDirectDraw7_Release(pDD);
+    hr = DDRAW_Create(NULL, obj, UnkOuter, iid);
     return hr;
 }
 
 /***********************************************************************
- *		DirectDrawCreate (DDRAW.@)
+ * CF_CreateDirectDraw
  *
- * Only creates legacy IDirectDraw interfaces.
- * Cannot create IDirectDraw7 interfaces.
- * In theory.
- */
-HRESULT WINAPI DirectDrawCreate(
-	LPGUID lpGUID, LPDIRECTDRAW* lplpDD, LPUNKNOWN pUnkOuter
-) {
-    TRACE("(%s,%p,%p)\n", debugstr_guid(lpGUID), lplpDD, pUnkOuter);
-    return DDRAW_Create(lpGUID, (LPVOID*) lplpDD, pUnkOuter, &IID_IDirectDraw, FALSE);
-}
-
-/***********************************************************************
- *		DirectDrawCreateEx (DDRAW.@)
+ * Clipper creation function for the class factory
  *
- * Only creates new IDirectDraw7 interfaces.
- * Supposed to fail if legacy interfaces are requested.
- * In theory.
- */
-HRESULT WINAPI DirectDrawCreateEx(
-	LPGUID lpGUID, LPVOID* lplpDD, REFIID iid, LPUNKNOWN pUnkOuter
-) {
-    TRACE("(%s,%p,%s,%p)\n", debugstr_guid(lpGUID), lplpDD, debugstr_guid(iid), pUnkOuter);
-
-    if (!IsEqualGUID(iid, &IID_IDirectDraw7))
-	return DDERR_INVALIDPARAMS;
-
-    return DDRAW_Create(lpGUID, lplpDD, pUnkOuter, iid, TRUE);
-}
-
-extern HRESULT Uninit_DirectDraw_Create(const GUID*, LPDIRECTDRAW7*,
-					LPUNKNOWN, BOOL);
-
-/* This is for the class factory. */
-static HRESULT DDRAW_CreateDirectDraw(IUnknown* pUnkOuter, REFIID iid,
-				      LPVOID* ppObj)
+ * Params:
+ *  UnkOuter: Set to NULL
+ *  iid: ID of the wanted interface
+ *  obj: Address to pass the interface pointer back
+ *
+ * Returns
+ *  DD_OK / DDERR*, see DDRAW_Create
+ *
+ ***********************************************************************/
+static HRESULT
+CF_CreateDirectDrawClipper(IUnknown* UnkOuter, REFIID riid,
+                              void **obj)
 {
-    LPDIRECTDRAW7 pDD;
     HRESULT hr;
-    BOOL ex;
+    IDirectDrawClipper *Clip;
 
-    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppObj);
-    
-    /* This is a mighty hack :-) */
-    if (IsEqualGUID(iid, &IID_IDirectDraw7))
-	ex = TRUE;
-    else
-        ex = FALSE;
-    
-    hr = Uninit_DirectDraw_Create(NULL, &pDD, pUnkOuter, ex);
-    if (FAILED(hr)) return hr;
+    hr = DirectDrawCreateClipper(0, &Clip, UnkOuter);
+    if (hr != DD_OK) return hr;
 
-    hr = IDirectDraw7_QueryInterface(pDD, iid, ppObj);
-    IDirectDraw_Release(pDD);
+    hr = IDirectDrawClipper_QueryInterface(Clip, riid, obj);
+    IDirectDrawClipper_Release(Clip);
     return hr;
 }
-
-/******************************************************************************
- * DirectDraw ClassFactory
- */
-typedef struct {
-    ICOM_VFIELD_MULTI(IClassFactory);
-
-    LONG ref;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid,
-				 LPVOID *ppObj);
-} IClassFactoryImpl;
-
-struct object_creation_info
-{
-    const CLSID *clsid;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID riid,
-				 LPVOID *ppObj);
-};
-
-/* There should be more, but these are the only ones listed in the header
- * file. */
-extern HRESULT DDRAW_CreateDirectDrawClipper(IUnknown *pUnkOuter, REFIID riid,
-					     LPVOID *ppObj);
 
 static const struct object_creation_info object_creation[] =
 {
-    { &CLSID_DirectDraw,       	DDRAW_CreateDirectDraw },
-    { &CLSID_DirectDraw7,	DDRAW_CreateDirectDraw },
-    { &CLSID_DirectDrawClipper,	DDRAW_CreateDirectDrawClipper }
+    { &CLSID_DirectDraw,        CF_CreateDirectDraw },
+    { &CLSID_DirectDraw7,       CF_CreateDirectDraw },
+    { &CLSID_DirectDrawClipper, CF_CreateDirectDrawClipper }
 };
 
+/*******************************************************************************
+ * IDirectDrawClassFactory::QueryInterface
+ *
+ * QueryInterface for the class factory
+ *
+ * PARAMS
+ *    riid   Reference to identifier of queried interface
+ *    ppv    Address to return the interface pointer at
+ *
+ * RETURNS
+ *    Success: S_OK
+ *    Failure: E_NOINTERFACE
+ *
+ *******************************************************************************/
 static HRESULT WINAPI
-DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+IDirectDrawClassFactoryImpl_QueryInterface(IClassFactory *iface,
+                    REFIID riid,
+                    void **obj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
 
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj);
-    
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), obj);
+
     if (IsEqualGUID(riid, &IID_IUnknown)
-	|| IsEqualGUID(riid, &IID_IClassFactory))
+        || IsEqualGUID(riid, &IID_IClassFactory))
     {
-	IClassFactory_AddRef(iface);
-	*ppobj = This;
-	return S_OK;
+        IClassFactory_AddRef(iface);
+        *obj = This;
+        return S_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),obj);
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI DDCF_AddRef(LPCLASSFACTORY iface)
+/*******************************************************************************
+ * IDirectDrawClassFactory::AddRef
+ *
+ * AddRef for the class factory
+ *
+ * RETURNS
+ *  The new refcount
+ *
+ *******************************************************************************/
+static ULONG WINAPI
+IDirectDrawClassFactoryImpl_AddRef(IClassFactory *iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->() incrementing from %ld.\n", This, ref - 1);
-    
+
     return ref;
 }
 
-static ULONG WINAPI DDCF_Release(LPCLASSFACTORY iface)
+/*******************************************************************************
+ * IDirectDrawClassFactory::Release
+ *
+ * Release for the class factory. If the refcount falls to 0, the object
+ * is destroyed
+ *
+ * RETURNS
+ *  The new refcount
+ *
+ *******************************************************************************/
+static ULONG WINAPI
+IDirectDrawClassFactoryImpl_Release(IClassFactory *iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p)->() decrementing from %ld.\n", This, ref+1);
 
     if (ref == 0)
-	HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, This);
 
     return ref;
 }
 
 
-static HRESULT WINAPI DDCF_CreateInstance(
-	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
-)
+/*******************************************************************************
+ * IDirectDrawClassFactory::CreateInstance
+ *
+ * What is this? Seems to create DirectDraw objects...
+ *
+ * Params
+ *  The ususal things???
+ *
+ * RETURNS
+ *  ???
+ *
+ *******************************************************************************/
+static HRESULT WINAPI
+IDirectDrawClassFactoryImpl_CreateInstance(IClassFactory *iface,
+                                           IUnknown *UnkOuter,
+                                           REFIID riid,
+                                           void **obj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
 
-    TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
+    TRACE("(%p)->(%p,%s,%p)\n",This,UnkOuter,debugstr_guid(riid),obj);
 
-    return This->pfnCreateInstance(pOuter, riid, ppobj);
+    return This->pfnCreateInstance(UnkOuter, riid, obj);
 }
 
-static HRESULT WINAPI DDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+/*******************************************************************************
+ * IDirectDrawClassFactory::LockServer
+ *
+ * What is this?
+ *
+ * Params
+ *  ???
+ *
+ * RETURNS
+ *  S_OK, because it's a stub
+ *
+ *******************************************************************************/
+static HRESULT WINAPI
+IDirectDrawClassFactoryImpl_LockServer(IClassFactory *iface,BOOL dolock)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ICOM_THIS_FROM(IClassFactoryImpl, IClassFactory, iface);
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;
 }
 
-static const IClassFactoryVtbl DDCF_Vtbl =
+/*******************************************************************************
+ * The class factory VTable
+ *******************************************************************************/
+static const IClassFactoryVtbl IClassFactory_Vtbl =
 {
-    DDCF_QueryInterface,
-    DDCF_AddRef,
-    DDCF_Release,
-    DDCF_CreateInstance,
-    DDCF_LockServer
+    IDirectDrawClassFactoryImpl_QueryInterface,
+    IDirectDrawClassFactoryImpl_AddRef,
+    IDirectDrawClassFactoryImpl_Release,
+    IDirectDrawClassFactoryImpl_CreateInstance,
+    IDirectDrawClassFactoryImpl_LockServer
 };
 
 /*******************************************************************************
@@ -595,10 +680,10 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 	return CLASS_E_CLASSNOTAVAILABLE;
     }
 
-    factory = HeapAlloc(GetProcessHeap(), 0, sizeof(*factory));
+    factory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*factory));
     if (factory == NULL) return E_OUTOFMEMORY;
 
-    ICOM_INIT_INTERFACE(factory, IClassFactory, DDCF_Vtbl);
+    ICOM_INIT_INTERFACE(factory, IClassFactory, IClassFactory_Vtbl);
     factory->ref = 1;
 
     factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
@@ -621,103 +706,190 @@ HRESULT WINAPI DllCanUnloadNow(void)
     return S_FALSE;
 }
 
-/******************************************************************************
- * Initialisation
- */
-
-/* Choose which driver is considered the primary display driver. It will
- * be created when we get a NULL guid for the DirectDrawCreate(Ex). */
-static int DDRAW_ChooseDefaultDriver(void)
+/*******************************************************************************
+ * DestroyCallback
+ *
+ * Callback function for the EnumSurfaces call in DllMain.
+ * Dumps some surface info and releases the surface
+ *
+ * Params:
+ *  surf: The enumerated surface
+ *  desc: it's description
+ *  context: Pointer to the ddraw impl
+ *
+ * Returns:
+ *  DDENUMRET_OK;
+ *******************************************************************************/
+HRESULT WINAPI
+DestroyCallback(IDirectDrawSurface7 *surf,
+                DDSURFACEDESC2 *desc,
+                void *context)
 {
-    int i;
-    int best = 0;
-    int best_score = 0;
+    IDirectDrawSurfaceImpl *Impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, surf);
+    IDirectDrawImpl *ddraw = (IDirectDrawImpl *) context;
+    ULONG ref;
 
-    assert(DDRAW_num_drivers > 0);
+    ref = IDirectDrawSurface7_Release(surf);  /* For the EnumSurfaces */
+    WARN("Surface %p has an reference count of %ld\n", Impl, ref);
 
-    /* This algorithm is really stupid. */
-    for (i=0; i < DDRAW_num_drivers; i++)
-    {
-	if (DDRAW_drivers[i]->preference > best_score)
-	{
-	    best_score = DDRAW_drivers[i]->preference;
-	    best = i;
-	}
-    }
+    /* Skip surfaces which are attached somewhere or which are
+     * part of a complex compound. They will get released when destroying
+     * the root
+     */
+    if( (Impl->first_complex != Impl) || (Impl->first_attached != Impl) )
+        return DDENUMRET_OK;
+    /* Skip our depth stencil surface, it will be released with the render target */
+    if( Impl == ddraw->DepthStencilBuffer)
+        return DDENUMRET_OK;
 
-    assert(best_score > 0);
+    /* Destroy the surface */
+    while(ref) ref = IDirectDrawSurface7_Release(surf);
 
-    return best;
+    return DDENUMRET_OK;
 }
 
 /***********************************************************************
- *		DllMain (DDRAW.0)
- */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+ * get_config_key
+ *
+ * Reads a config key from the registry. Taken from WineD3D
+ *
+ ***********************************************************************/
+inline static DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, char* buffer, DWORD size)
 {
-    /* If we were sufficiently cool, DDraw drivers would just be COM
-     * objects, registered with a particular component category. */
+    if (0 != appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
+    if (0 != defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
+    return ERROR_FILE_NOT_FOUND;
+}
 
-    DDRAW_HAL_Init(hInstDLL, fdwReason, lpv);
-    DDRAW_User_Init(hInstDLL, fdwReason, lpv);
+/***********************************************************************
+ * DllMain (DDRAW.0)
+ *
+ * Could be used to register DirectDraw drivers, if we have more than
+ * one. Also used to destroy any objects left at unload if the
+ * app didn't release them properly(Gothic 2, Diablo 2, Moto racer, ...)
+ *
+ ***********************************************************************/
+BOOL WINAPI
+DllMain(HINSTANCE hInstDLL,
+        DWORD Reason,
+        void *lpv)
+{
+    static LONG counter = 0;
 
-    if (fdwReason == DLL_PROCESS_ATTACH)
+    TRACE("(%p,%lx,%p)\n", hInstDLL, Reason, lpv);
+    if (Reason == DLL_PROCESS_ATTACH)
     {
-        HMODULE mod;
+        char buffer[MAX_PATH+10];
+        DWORD size = sizeof(buffer);
+        HKEY hkey = 0;
+        HKEY appkey = 0;
+        DWORD len;
+
+       /* @@ Wine registry key: HKCU\Software\Wine\Direct3D */
+       if ( RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Direct3D", &hkey ) ) hkey = 0;
+
+       len = GetModuleFileNameA( 0, buffer, MAX_PATH );
+       if (len && len < MAX_PATH)
+       {
+            HKEY tmpkey;
+            /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Direct3D */
+            if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey ))
+            {
+                char *p, *appname = buffer;
+                if ((p = strrchr( appname, '/' ))) appname = p + 1;
+                if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+                strcat( appname, "\\Direct3D" );
+                TRACE("appname = [%s]\n", appname);
+                if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
+                RegCloseKey( tmpkey );
+            }
+       }
+
+       if ( 0 != hkey || 0 != appkey )
+       {
+            if ( !get_config_key( hkey, appkey, "DirectDrawRenderer", buffer, size) )
+            {
+                if (!strcmp(buffer,"gdi"))
+                {
+                    TRACE("Defaulting to GDI surfaces\n");
+                    DefaultSurfaceType = SURFACE_GDI;
+                }
+                else if (!strcmp(buffer,"opengl"))
+                {
+                    TRACE("Defaulting to opengl surfaces\n");
+                    DefaultSurfaceType = SURFACE_OPENGL;
+                }
+                else
+                {
+                    ERR("Unknown default surface type. Supported are:\n gdi, opengl");
+                }
+            }
+        }
 
         DisableThreadLibraryCalls(hInstDLL);
+        TRACE("Attach counter: %ld\n", InterlockedIncrement(&counter));
+    }
+    else if (Reason == DLL_PROCESS_DETACH)
+    {
+        TRACE("Attach counter: %ld\n", InterlockedDecrement(&counter));
 
-        mod = GetModuleHandleA( "winex11.drv" );
-        if (mod)
+        if(counter == 0)
         {
-            wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
-            wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
-        }
-#ifdef HAVE_OPENGL
-        opengl_initialized = DDRAW_bind_to_opengl();
-#endif /* HAVE_OPENGL */
-        s3tc_initialized = DDRAW_bind_to_s3tc();
+            if(ddraw_list)
+            {
+                IDirectDrawImpl *ddraw;
+                WARN("There are still existing DirectDraw interfaces. Wine bug or buggy application?\n");
 
-        if (DDRAW_num_drivers > 0)
-            DDRAW_default_driver = DDRAW_ChooseDefaultDriver();
+                for(ddraw = ddraw_list; ddraw; ddraw = ddraw->next)
+                {
+                    HRESULT hr;
+                    DDSURFACEDESC2 desc;
+                    int i;
+
+                    WARN("DDraw %p has a refcount of %ld\n", ddraw, ddraw->ref);
+
+                    ddraw->DoNotDestroy = TRUE; /* Avoid to destroy the object too early */
+
+                    /* Does a D3D device exist? Destroy it
+                     * TODO: Destroy all Vertex buffers, Lights, Materials
+                     * and execture buffers too
+                     */
+                    if(ddraw->d3ddevice)
+                    {
+                        WARN("DDraw %p has d3ddevice %p attached\n", ddraw, ddraw->d3ddevice);
+                        while(IDirect3DDevice7_Release(ICOM_INTERFACE(ddraw->d3ddevice, IDirect3DDevice7)));
+                    }
+
+                    /* Try to release the objects
+                     * Do an EnumSurfaces to find any hanging surfaces
+                     */
+                    memset(&desc, 0, sizeof(desc));
+                    desc.dwSize = sizeof(desc);
+                    for(i = 0; i <= 1; i++)
+                    {
+                        hr = IDirectDraw7_EnumSurfaces(ICOM_INTERFACE(ddraw, IDirectDraw7),
+                                                        DDENUMSURFACES_ALL,
+                                                        &desc,
+                                                        (void *) ddraw,
+                                                        DestroyCallback);
+                        if(hr != D3D_OK)
+                            ERR("(%p) EnumSurfaces failed, prepare for trouble\n", ddraw);
+                    }
+
+                    /* Check the surface count */
+                    if(ddraw->surfaces > 0)
+                        ERR("DDraw %p still has %ld surfaces attached\n", ddraw, ddraw->surfaces);
+
+                    /* Restore the cooperative level */
+                    IDirectDraw7_SetCooperativeLevel(ICOM_INTERFACE(ddraw, IDirectDraw7),
+                                                      NULL,
+                                                      DDSCL_NORMAL);
+                    ddraw->DoNotDestroy = FALSE;
+                    IDirectDrawImpl_Destroy(ddraw);
+                }
+            }
+        }
     }
 
     return TRUE;
-}
-
-/* Register a direct draw driver. This should be called from your init
- * function. (That's why there is no locking: your init func is called from
- * our DllInit, which is serialised.) */
-void DDRAW_register_driver(const ddraw_driver *driver)
-{
-    int i;
-
-    for (i = 0; i < DDRAW_num_drivers; i++)
-    {
-	if (DDRAW_drivers[i] == driver)
-	{
-	    ERR("Driver reregistering %p\n", driver);
-	    return;
-	}
-    }
-
-    if (DDRAW_num_drivers == sizeof(DDRAW_drivers)/sizeof(DDRAW_drivers[0]))
-    {
-	ERR("too many DDRAW drivers\n");
-	return;
-    }
-
-    DDRAW_drivers[DDRAW_num_drivers++] = driver;
-}
-
-/* This totally doesn't belong here. */
-LONG DDRAW_width_bpp_to_pitch(DWORD width, DWORD bpp)
-{
-    LONG pitch;
-
-    assert(bpp != 0); /* keeps happening... */
-
-    if (bpp == 15) bpp = 16;
-    pitch = width * (bpp / 8);
-    return pitch + (8 - (pitch % 8)) % 8;
 }

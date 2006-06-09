@@ -320,53 +320,29 @@ static void ProcessVerticesTest()
     if(!out) goto out;
 
     /* Check the results */
-    if( !comparefloat(out[0].x, 128.0 ) ||
-        !comparefloat(out[0].y, 128.0 ) ||
-        !comparefloat(out[0].z, 0.0 ) ||
-        !comparefloat(out[0].rhw, 1.0 ))
-    {
-        todo_wine ok(FALSE, "Output 0 vertex is (%f , %f , %f , %f)\n", out[0].x, out[0].y, out[0].z, out[0].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 0 vertex is (%f , %f , %f , %f)\n", out[0].x, out[0].y, out[0].z, out[0].rhw);
-    }
+    ok( comparefloat(out[0].x, 128.0 ) &&
+        comparefloat(out[0].y, 128.0 ) &&
+        comparefloat(out[0].z, 0.0 ) &&
+        comparefloat(out[0].rhw, 1.0 ),
+        "Output 0 vertex is (%f , %f , %f , %f)\n", out[0].x, out[0].y, out[0].z, out[0].rhw);
 
-    if( !comparefloat(out[1].x, 256.0 ) ||
-        !comparefloat(out[1].y, 0.0 ) ||
-        !comparefloat(out[1].z, 1.0 ) ||
-        !comparefloat(out[1].rhw, 1.0 ))
-    {
-        todo_wine ok(FALSE, "Output 1 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 1 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
-    }
+    ok( comparefloat(out[1].x, 256.0 ) &&
+        comparefloat(out[1].y, 0.0 ) &&
+        comparefloat(out[1].z, 1.0 ) &&
+        comparefloat(out[1].rhw, 1.0 ),
+        "Output 1 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
 
-    if( !comparefloat(out[2].x, 0.0 ) ||
-        !comparefloat(out[2].y, 256.0 ) ||
-        !comparefloat(out[2].z, 0.5 ) ||
-        !comparefloat(out[2].rhw, 1.0 ))
-    {
-        todo_wine ok(FALSE, "Output 2 vertex is (%f , %f , %f , %f)\n", out[2].x, out[2].y, out[2].z, out[2].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 2 vertex is (%f , %f , %f , %f)\n", out[2].x, out[2].y, out[2].z, out[2].rhw);
-    }
+    ok( comparefloat(out[2].x, 0.0 ) &&
+        comparefloat(out[2].y, 256.0 ) &&
+        comparefloat(out[2].z, 0.5 ) &&
+        comparefloat(out[2].rhw, 1.0 ),
+        "Output 2 vertex is (%f , %f , %f , %f)\n", out[2].x, out[2].y, out[2].z, out[2].rhw);
 
-    if( !comparefloat(out[3].x, 192.0 ) ||
-        !comparefloat(out[3].y, 192.0 ) ||
-        !comparefloat(out[3].z, 0.25 ) ||
-        !comparefloat(out[3].rhw, 1.0 ))
-    {
-        todo_wine ok(FALSE, "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
-    }
+    ok( comparefloat(out[3].x, 192.0 ) &&
+        comparefloat(out[3].y, 192.0 ) &&
+        comparefloat(out[3].z, 0.25 ) &&
+        comparefloat(out[3].rhw, 1.0 ),
+        "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %lx\n", rc);
@@ -379,16 +355,10 @@ static void ProcessVerticesTest()
      * so let's check for it: If the output vertex buffer has to RHW value,
      * The RHW value of the last vertex is written into the next vertex
      */
-    if( !comparefloat(out2[4].x, 1.0 ) ||
-        !comparefloat(out2[4].y, 0.0 ) ||
-        !comparefloat(out2[4].z, 0.0 ) )
-    {
-        todo_wine ok(FALSE, "Output 4 vertex is (%f , %f , %f)\n", out2[4].x, out2[4].y, out2[4].z);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 4 vertex is (%f , %f , %f)\n", out2[4].x, out2[4].y, out2[4].z);
-    }
+    ok( comparefloat(out2[4].x, 1.0 ) &&
+        comparefloat(out2[4].y, 0.0 ) &&
+        comparefloat(out2[4].z, 0.0 ),
+        "Output 4 vertex is (%f , %f , %f)\n", out2[4].x, out2[4].y, out2[4].z);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest2);
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %lx\n", rc);
@@ -414,53 +384,29 @@ static void ProcessVerticesTest()
     if(!out) goto out;
 
     /* Check the results */
-    if( !comparefloat(out[0].x, 133.0 ) ||
-        !comparefloat(out[0].y, 70.0 ) ||
-        !comparefloat(out[0].z, -2.0 ) ||
-        !comparefloat(out[0].rhw, 1.0 ))
-    {
-        todo_wine ok(FALSE, "Output 0 vertex is (%f , %f , %f , %f)\n", out[0].x, out[0].y, out[0].z, out[0].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 0 vertex is (%f , %f , %f , %f)\n", out[0].x, out[0].y, out[0].z, out[0].rhw);
-    }
+    ok( comparefloat(out[0].x, 133.0 ) &&
+        comparefloat(out[0].y, 70.0 ) &&
+        comparefloat(out[0].z, -2.0 ) &&
+        comparefloat(out[0].rhw, 1.0 ),
+        "Output 0 vertex is (%f , %f , %f , %f)\n", out[0].x, out[0].y, out[0].z, out[0].rhw);
 
-    if( !comparefloat(out[1].x, 256.0 ) ||
-        !comparefloat(out[1].y, 5.0 ) ||
-        !comparefloat(out[1].z, 4.0 ) ||
-        !comparefloat(out[1].rhw, 1.0 ))
-    {
-        todo_wine ok(FALSE, "Output 1 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 1 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
-    }
+    ok( comparefloat(out[1].x, 256.0 ) &&
+        comparefloat(out[1].y, 5.0 ) &&
+        comparefloat(out[1].z, 4.0 ) &&
+        comparefloat(out[1].rhw, 1.0 ),
+        "Output 1 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
 
-    if( !comparefloat(out[2].x, 10.0 ) ||
-        !comparefloat(out[2].y, 135.0 ) ||
-        !comparefloat(out[2].z, 1.0 ) ||
-        !comparefloat(out[2].rhw, 1.0 ))
-    {
-        todo_wine ok(FALSE, "Output 2 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 2 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
-    }
+    ok( comparefloat(out[2].x, 10.0 ) &&
+        comparefloat(out[2].y, 135.0 ) &&
+        comparefloat(out[2].z, 1.0 ) &&
+        comparefloat(out[2].rhw, 1.0 ),
+        "Output 2 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
 
-    if( !comparefloat(out[3].x, 194.5 ) ||
-        !comparefloat(out[3].y, 102.5 ) ||
-        !comparefloat(out[3].z, -0.5 ) ||
-        !comparefloat(out[3].rhw, 1.0 ))
-    {
-        todo_wine ok(FALSE, "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
-    }
+    ok( comparefloat(out[3].x, 194.5 ) &&
+        comparefloat(out[3].y, 102.5 ) &&
+        comparefloat(out[3].z, -0.5 ) &&
+        comparefloat(out[3].rhw, 1.0 ),
+        "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %lx\n", rc);
@@ -495,53 +441,29 @@ static void ProcessVerticesTest()
     ok(rc==D3D_OK, "IDirect3DDevice7_SetViewport failed\n");
 
     /* Check the results */
-    if( !comparefloat(out[0].x, 256.0 ) ||    /* X coordinate is cut at the surface edges */
-        !comparefloat(out[0].y, 70.0 ) ||
-        !comparefloat(out[0].z, -2.0 ) ||
-        !comparefloat(out[0].rhw, (1.0 / 3.0)))
-    {
-        todo_wine ok(FALSE, "Output 0 vertex is (%f , %f , %f , %f)\n", out[0].x, out[0].y, out[0].z, out[0].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 0 vertex is (%f , %f , %f , %f)\n", out[0].x, out[0].y, out[0].z, out[0].rhw);
-    }
+    ok( comparefloat(out[0].x, 256.0 ) &&    /* X coordinate is cut at the surface edges */
+        comparefloat(out[0].y, 70.0 ) &&
+        comparefloat(out[0].z, -2.0 ) &&
+        comparefloat(out[0].rhw, (1.0 / 3.0)),
+        "Output 0 vertex is (%f , %f , %f , %f)\n", out[0].x, out[0].y, out[0].z, out[0].rhw);
 
-    if( !comparefloat(out[1].x, 256.0 ) ||
-        !comparefloat(out[1].y, 78.125000 ) ||
-        !comparefloat(out[1].z, -2.750000 ) ||
-        !comparefloat(out[1].rhw, 0.125000 ))
-    {
-        todo_wine ok(FALSE, "Output 1 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 1 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
-    }
+    ok( comparefloat(out[1].x, 256.0 ) &&
+        comparefloat(out[1].y, 78.125000 ) &&
+        comparefloat(out[1].z, -2.750000 ) &&
+        comparefloat(out[1].rhw, 0.125000 ),
+        "Output 1 vertex is (%f , %f , %f , %f)\n", out[1].x, out[1].y, out[1].z, out[1].rhw);
 
-    if( !comparefloat(out[2].x, 256.0 ) ||
-        !comparefloat(out[2].y, 44.000000 ) ||
-        !comparefloat(out[2].z, 0.400000 ) ||
-        !comparefloat(out[2].rhw, 0.400000 ))
-    {
-        todo_wine ok(FALSE, "Output 2 vertex is (%f , %f , %f , %f)\n", out[2].x, out[2].y, out[2].z, out[2].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 2 vertex is (%f , %f , %f , %f)\n", out[2].x, out[2].y, out[2].z, out[2].rhw);
-    }
+    ok( comparefloat(out[2].x, 256.0 ) &&
+        comparefloat(out[2].y, 44.000000 ) &&
+        comparefloat(out[2].z, 0.400000 ) &&
+        comparefloat(out[2].rhw, 0.400000 ),
+        "Output 2 vertex is (%f , %f , %f , %f)\n", out[2].x, out[2].y, out[2].z, out[2].rhw);
 
-    if( !comparefloat(out[3].x, 256.0 ) ||
-        !comparefloat(out[3].y, 81.818184 ) ||
-        !comparefloat(out[3].z, -3.090909 ) ||
-        !comparefloat(out[3].rhw, 0.363636 ))
-    {
-        todo_wine ok(FALSE, "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
-    }
-    else
-    {
-        todo_wine ok(TRUE, "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
-    }
+    ok( comparefloat(out[3].x, 256.0 ) &&
+        comparefloat(out[3].y, 81.818184 ) &&
+        comparefloat(out[3].z, -3.090909 ) &&
+        comparefloat(out[3].rhw, 0.363636 ),
+        "Output 3 vertex is (%f , %f , %f , %f)\n", out[3].x, out[3].y, out[3].z, out[3].rhw);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %lx\n", rc);

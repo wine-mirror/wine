@@ -15,6 +15,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#include "config.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -205,6 +208,7 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
 			      IUnknown *pUnkOuter)
 {
     LPDIRECTDRAWSURFACE7 pSurface7;
+    IDirectDrawSurfaceImpl *impl;
     HRESULT hr;
 
     /* the LPDDSURFACEDESC -> LPDDSURFACEDESC2 conversion should be ok,
@@ -221,6 +225,12 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
 				    IDirectDrawSurface7, IDirectDrawSurface3,
 				    pSurface7);
 
+    impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
+    if(impl)
+    {
+        impl->version = 1;
+    }
+
     return hr;
 }
 
@@ -230,6 +240,7 @@ IDirectDraw2Impl_CreateSurface(LPDIRECTDRAW2 This, LPDDSURFACEDESC pSDesc,
 			       IUnknown *pUnkOuter)
 {
     LPDIRECTDRAWSURFACE7 pSurface7;
+    IDirectDrawSurfaceImpl *impl;
     HRESULT hr;
 
     hr = IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,
@@ -244,6 +255,12 @@ IDirectDraw2Impl_CreateSurface(LPDIRECTDRAW2 This, LPDDSURFACEDESC pSDesc,
 				    IDirectDrawSurface7, IDirectDrawSurface3,
 				    pSurface7);
 
+    impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, pSurface7);
+    if(impl)
+    {
+        impl->version = 2;
+    }
+
     return hr;
 }
 
@@ -252,13 +269,22 @@ IDirectDraw4Impl_CreateSurface(LPDIRECTDRAW4 This, LPDDSURFACEDESC2 pSDesc,
 			       LPDIRECTDRAWSURFACE4 *ppSurface,
 			       IUnknown *pUnkOuter)
 {
-    return IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,
-							 IDirectDraw4,
-							 IDirectDraw7,
-							 This),
-				      pSDesc,
-				      (LPDIRECTDRAWSURFACE7 *)ppSurface,
-				      pUnkOuter);
+    HRESULT hr;
+    IDirectDrawSurfaceImpl *impl;
+
+    hr = IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,
+						       IDirectDraw4,
+						       IDirectDraw7,
+						        This),
+				    pSDesc,
+				    (LPDIRECTDRAWSURFACE7 *)ppSurface,
+				    pUnkOuter);
+    impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurface);
+    if(impl)
+    {
+        impl->version = 4;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -709,10 +735,7 @@ IDirectDrawImpl_Initialize(LPDIRECTDRAW iface, LPGUID pGUID)
     HRESULT ret_value;
 
     ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
-    
-    /* Overwrite the falsely set 'DIRECTDRAW7' flag */
-    This->local.dwLocalFlags &= ~DDRAWILCL_DIRECTDRAW7;
-    
+
     return ret_value;
 }
 
@@ -721,12 +744,9 @@ IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 iface, LPGUID pGUID)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw2, iface);
     HRESULT ret_value;
-    
+
     ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
 
-    /* Overwrite the falsely set 'DIRECTDRAW7' flag */
-    This->local.dwLocalFlags &= ~DDRAWILCL_DIRECTDRAW7;
-    
     return ret_value;
 }
 
@@ -735,12 +755,9 @@ IDirectDraw4Impl_Initialize(LPDIRECTDRAW4 iface, LPGUID pGUID)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw4, iface);
     HRESULT ret_value;
-    
+
     ret_value = IDirectDraw7_Initialize(ICOM_INTERFACE(This, IDirectDraw7), pGUID);
-    
-    /* Overwrite the falsely set 'DIRECTDRAW7' flag */
-    This->local.dwLocalFlags &= ~DDRAWILCL_DIRECTDRAW7;
-    
+
     return ret_value;
 }
 
@@ -942,7 +959,7 @@ IDirectDraw4Impl_GetDeviceIdentifier(LPDIRECTDRAW4 This,
     return hr;
 }
 
-const IDirectDrawVtbl DDRAW_IDirectDraw_VTable =
+const IDirectDrawVtbl IDirectDraw1_Vtbl =
 {
     IDirectDrawImpl_QueryInterface,
     IDirectDrawImpl_AddRef,
@@ -969,7 +986,7 @@ const IDirectDrawVtbl DDRAW_IDirectDraw_VTable =
     IDirectDrawImpl_WaitForVerticalBlank,
 };
 
-const IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable =
+const IDirectDraw2Vtbl IDirectDraw2_Vtbl =
 {
     IDirectDraw2Impl_QueryInterface,
     IDirectDraw2Impl_AddRef,
@@ -997,7 +1014,7 @@ const IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable =
     IDirectDraw2Impl_GetAvailableVidMem
 };
 
-const IDirectDraw4Vtbl DDRAW_IDirectDraw4_VTable =
+const IDirectDraw4Vtbl IDirectDraw4_Vtbl =
 {
     IDirectDraw4Impl_QueryInterface,
     IDirectDraw4Impl_AddRef,

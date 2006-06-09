@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2001 TransGaming Technologies Inc.
+ * Copyright 2006 Stefan Dösinger
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,54 +30,57 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "ddraw.h"
-#include "d3d.h"
-#include "ddcomimpl.h"
 #include "ddrawi.h"
+#include "d3d.h"
 
-/* XXX Put this somewhere proper. */
-#define DD_STRUCT_INIT(x)			\
-	do {					\
-		memset((x), 0, sizeof(*(x)));	\
-		(x)->dwSize = sizeof(*x);	\
-	} while (0)
+#include "ddcomimpl.h"
 
-#define DD_STRUCT_COPY_BYSIZE(to,from)			\
-	do {						\
-	    	DWORD __size = (to)->dwSize;		\
-	    	DWORD __copysize = __size;		\
-	    	DWORD __resetsize = __size;		\
-		assert(to != from);                     \
-	        if (__resetsize > sizeof(*to))		\
-		    __resetsize = sizeof(*to);		\
-	    	memset(to,0,__resetsize);               \
-	        if ((from)->dwSize < __size) 		\
-		    __copysize = (from)->dwSize;	\
-		memcpy(to,from,__copysize);		\
-		(to)->dwSize = __size;/*restore size*/	\
-	} while (0)
+#include "wine/wined3d_interface.h"
 
-#define MAKE_FOURCC(a,b,c,d) ((a << 0) | (b << 8) | (c << 16) | (d << 24))
+/*****************************************************************************
+ * IParent - a helper interface
+ *****************************************************************************/
+DEFINE_GUID(IID_IParent, 0xc20e4c88, 0x74e7, 0x4940, 0xba, 0x9f, 0x2e, 0x32, 0x3f, 0x9d, 0xc9, 0x81);
+typedef struct IParent *LPPARENT, *PPARENT;
+
+#define INTERFACE IParent
+DECLARE_INTERFACE_(IParent,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IParent_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IParent_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IParent_Release(p)            (p)->lpVtbl->Release(p)
+#endif
+
+
+/* Typdef the interfaces */
+typedef struct IDirectDrawImpl            IDirectDrawImpl;
+typedef struct IDirectDrawSurfaceImpl     IDirectDrawSurfaceImpl;
+typedef struct IDirectDrawClipperImpl     IDirectDrawClipperImpl;
+typedef struct IDirectDrawPaletteImpl     IDirectDrawPaletteImpl;
+typedef struct IDirect3DDeviceImpl        IDirect3DDeviceImpl;
+typedef struct IDirect3DLightImpl         IDirect3DLightImpl;
+typedef struct IDirect3DViewportImpl      IDirect3DViewportImpl;
+typedef struct IDirect3DMaterialImpl      IDirect3DMaterialImpl;
+typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
+typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
+typedef struct IParentImpl                IParentImpl;
 
 /*****************************************************************************
  * IDirectDraw implementation structure
- */
-
-typedef struct IDirectDrawImpl IDirectDrawImpl;
-typedef struct IDirectDrawPaletteImpl IDirectDrawPaletteImpl;
-typedef struct IDirectDrawClipperImpl IDirectDrawClipperImpl;
-typedef struct IDirectDrawSurfaceImpl IDirectDrawSurfaceImpl;
-typedef struct IDirect3DDeviceImpl IDirect3DDeviceImpl;
-
-typedef void (*pixel_convert_func)(void *src, void *dst, DWORD width,
-				   DWORD height, LONG pitch,
-				   IDirectDrawPaletteImpl *palette);
-
-typedef void (*palette_convert_func)(LPPALETTEENTRY palent,
-				     void *screen_palette, DWORD start,
-				     DWORD count);
+ *****************************************************************************/
 
 struct IDirectDrawImpl
 {
+    /* IUnknown fields */
     ICOM_VFIELD_MULTI(IDirectDraw7);
     ICOM_VFIELD_MULTI(IDirectDraw4);
     ICOM_VFIELD_MULTI(IDirectDraw2);
@@ -87,144 +90,256 @@ struct IDirectDrawImpl
     ICOM_VFIELD_MULTI(IDirect3D2);
     ICOM_VFIELD_MULTI(IDirect3D);
 
-    LONG ref;
+    LONG              ref;
 
-    /* TRUE if created via DirectDrawCreateEx or CoCreateInstance,
-     * FALSE if created via DirectDrawCreate. */
-    BOOL ex;
+    /* WineD3D linkage */
+    IWineD3D                *wineD3D;
+    IWineD3DDevice          *wineD3DDevice;
+    IDirectDrawSurfaceImpl  *DepthStencilBuffer;
+    BOOL                    d3d_initialized;
 
-    /* Linked list of surfaces, joined by next_ddraw in IDirectSurfaceImpl. */
-    IDirectDrawSurfaceImpl* surfaces;
-    /* Linked list of palettes, joined by next_ddraw. */
-    IDirectDrawPaletteImpl* palettes;
-    /* Linked list of clippers, joined by next_ddraw. */
-    IDirectDrawClipperImpl* clippers;
+    /* misc ddraw fields */
+    UINT                    total_vidmem;
+    DWORD                   cur_scanline;
+    BOOL                    fake_vblank;
+    BOOL                    initialized;
 
-    IDirectDrawSurfaceImpl* primary_surface;
+    /* DirectDraw things, which are not handled by WineD3D */
+    DWORD                   cooperative_level;
 
-    DDRAWI_DIRECTDRAW_LCL local;
-    DDCAPS caps;
+    DWORD                   orig_width, orig_height;
+    DWORD                   orig_bpp;
 
-    HWND window;
-    DWORD cooperative_level;
-    WNDPROC original_wndproc;
+    DDCAPS                  caps;
 
-    DWORD width, height;
-    LONG pitch;
-    DDPIXELFORMAT pixelformat;
-    DWORD cur_scanline;
+    LONG                    style;
+    LONG                    exStyle;
 
-    BOOL fake_vblank;
-    
-    /* Should each of these go into some structure? */
-    DWORD orig_width, orig_height;
-    LONG orig_pitch;
-    DDPIXELFORMAT orig_pixelformat;
+    /* D3D things */
+    IDirectDrawSurfaceImpl  *d3d_target;
+    HWND                    d3d_window;
+    IDirect3DDeviceImpl     *d3ddevice;
 
-    /* Called when the refcount goes to 0. */
-    void (*final_release)(IDirectDrawImpl *This);
+    /* Varios HWNDs */
+    HWND                    focuswindow;
+    HWND                    devicewindow;
 
-    HRESULT (*set_exclusive_mode)(IDirectDrawImpl *This, DWORD dwExcl);
+    /* The surface type to request */
+    WINED3DSURFTYPE ImplType;
 
-    HRESULT (*create_palette)(IDirectDrawImpl* This, DWORD dwFlags,
-			      LPDIRECTDRAWPALETTE* ppPalette,
-			      LPUNKNOWN pUnkOuter);
+    /* The surface list - can't relay this to WineD3D
+     * because of IParent
+     */
+    IDirectDrawSurfaceImpl *surface_list;
 
-    /* Surface creation functions. For all of these, pOuter == NULL. */
+    /* Our private window class */
+    char classname[32];
+    WNDCLASSA wnd_class;
 
-    /* Do not create any backbuffers or the flipping chain. */
-    HRESULT (*create_primary)(IDirectDrawImpl* This,
-			      const DDSURFACEDESC2* pDDSD,
-			      LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter);
+    /* Helpers for surface creation */
+    IDirectDrawSurfaceImpl *tex_root;
+    BOOL                    depthstencil;
 
-    /* Primary may be NULL if we are creating an unattached backbuffer. */
-    HRESULT (*create_backbuffer)(IDirectDrawImpl* This,
-				 const DDSURFACEDESC2* pDDSD,
-				 LPDIRECTDRAWSURFACE7* ppSurf,
-				 LPUNKNOWN pOuter,
-				 IDirectDrawSurfaceImpl* primary);
+    /* For the dll unload cleanup code */
+    IDirectDrawImpl *next;
+    BOOL DoNotDestroy;
+    LONG surfaces;
+};
 
-    /* shiny happy offscreenplain surfaces */
-    HRESULT (*create_offscreen)(IDirectDrawImpl* This,
-				const DDSURFACEDESC2* pDDSD,
-				LPDIRECTDRAWSURFACE7* ppSurf,
-				LPUNKNOWN pOuter);
+/* Declare the VTables. They can be found ddraw.c */
+const IDirectDraw7Vtbl IDirectDraw7_Vtbl;
+const IDirectDraw4Vtbl IDirectDraw4_Vtbl;
+const IDirectDraw2Vtbl IDirectDraw2_Vtbl;
+const IDirectDrawVtbl  IDirectDraw1_Vtbl;
 
-    /* dwMipMapLevel is specified as per OpenGL. (i.e. 0 is base) */
-    HRESULT (*create_texture)(IDirectDrawImpl* This,
-			      const DDSURFACEDESC2* pDDSD,
-			      LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter,
-			      DWORD dwMipMapLevel);
+/* Helper structures */
+typedef struct EnumDisplayModesCBS
+{
+    void *context;
+    LPDDENUMMODESCALLBACK2 callback;
+} EnumDisplayModesCBS;
 
-    HRESULT (*create_zbuffer)(IDirectDrawImpl* This,
-			      const DDSURFACEDESC2* pDDSD,
-			      LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter);
+typedef struct EnumSurfacesCBS
+{
+    void *context;
+    LPDDENUMSURFACESCALLBACK7 callback;
+    LPDDSURFACEDESC2 pDDSD;
+    DWORD Flags;
+} EnumSurfacesCBS;
 
-    LPVOID	private;
+/* Utility functions */
+void
+DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS* pIn,
+                             DDSCAPS2* pOut);
+void
+DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2* pIn,
+                                        DDDEVICEIDENTIFIER* pOut);
+void
+IDirectDrawImpl_Destroy(IDirectDrawImpl *This);
 
-    /* Everything below here is still questionable. */
+HRESULT WINAPI
+IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
+                                         DDSURFACEDESC2 *desc,
+                                         void *Context);
+/* The cleanup list */
+extern IDirectDrawImpl *ddraw_list;
 
-    DDPIXELFORMAT screen_pixelformat;
+/* The default surface type */
+extern WINED3DSURFTYPE DefaultSurfaceType;
 
-    int           pixmap_depth;
-    pixel_convert_func pixel_convert;
-    palette_convert_func palette_convert;
+/*****************************************************************************
+ * IDirectDrawSurface implementation structure
+ *****************************************************************************/
 
-    /* Use to fool some too strict games */
-    INT32 (*allocate_memory)(IDirectDrawImpl *This, DWORD mem);
-    void (*free_memory)(IDirectDrawImpl *This, DWORD mem);
-    DWORD total_vidmem, available_vidmem;
-    
-    /* IDirect3D fields */
-    LPVOID d3d_private;
+struct IDirectDrawSurfaceImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD_MULTI(IDirectDrawSurface7);
+    ICOM_VFIELD_MULTI(IDirectDrawSurface3);
+    ICOM_VFIELD_MULTI(IDirectDrawGammaControl);
+    ICOM_VFIELD_MULTI(IDirect3DTexture2);
+    ICOM_VFIELD_MULTI(IDirect3DTexture);
 
-    /* Used as a callback function to create a texture */
-    HRESULT (*d3d_create_texture)(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *tex, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main);
+    LONG                     ref;
 
-    /* Used as a callback for Devices to tell to the D3D object it's been created */
-    HRESULT (*d3d_added_device)(IDirectDrawImpl *d3d, IDirect3DDeviceImpl *device);
-    HRESULT (*d3d_removed_device)(IDirectDrawImpl *d3d, IDirect3DDeviceImpl *device);
+    int                     version;
 
-    /* This is needed for delayed texture creation and Z buffer blits */
-    IDirect3DDeviceImpl *current_device;
+    /* Connections to other Objects */
+    IDirectDrawImpl         *ddraw;
+    IWineD3DSurface         *WineD3DSurface;
+    IWineD3DTexture         *wineD3DTexture;
 
-    /* This is for the fake mainWindow */
-    ATOM	winclass;
-    PAINTSTRUCT	ps;
-    BOOL	paintable;
+    /* This implementation handles attaching surfaces to other surfaces */
+    IDirectDrawSurfaceImpl  *next_attached;
+    IDirectDrawSurfaceImpl  *first_attached;
+    IDirectDrawSurfaceImpl  *next_complex;
+    IDirectDrawSurfaceImpl  *first_complex;
+
+    /* Surface description, for GetAttachedSurface */
+    DDSURFACEDESC2          surface_desc;
+
+    /* Misc things */
+    DWORD                   uniqueness_value;
+    UINT                    mipmap_level;
+    WINED3DSURFTYPE         ImplType;
+
+    /* For D3DDevice creation */
+    BOOL                    isRenderTarget;
+
+    /* Clipper objects */
+    IDirectDrawClipperImpl  *clipper;
+
+    /* For the ddraw surface list */
+    IDirectDrawSurfaceImpl *next;
+    IDirectDrawSurfaceImpl *prev;
+};
+
+/* VTable declaration. It's located in surface.c / surface_thunks.c */
+const IDirectDrawSurface7Vtbl IDirectDrawSurface7_Vtbl;
+const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl;
+const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl;
+const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl;
+const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl;
+
+/* Get the number of bytes per pixel for a given surface */
+#define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:((pf.dwRGBBitCount+7)/8))
+#define GET_BPP(desc) PFGET_BPP(desc.ddpfPixelFormat)
+
+/*****************************************************************************
+ * IParent Implementation
+ *****************************************************************************/
+struct IParentImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD_MULTI(IParent);
+    LONG                    ref;
+
+    /* IParentImpl fields */
+    IUnknown      *child;
+
+};
+
+const IParentVtbl IParent_Vtbl;
+
+/*****************************************************************************
+ * IDirect3DDevice implementation
+ *****************************************************************************/
+struct IDirect3DDeviceImpl
+{
+    /* IUnknown */
+    ICOM_VFIELD_MULTI(IDirect3DDevice7);
+    ICOM_VFIELD_MULTI(IDirect3DDevice3);
+    ICOM_VFIELD_MULTI(IDirect3DDevice2);
+    ICOM_VFIELD_MULTI(IDirect3DDevice);
+    LONG                    ref;
+
+    /* Other object connections */
+    IWineD3DDevice          *wineD3DDevice;
+    IDirectDrawImpl         *ddraw;
+    IWineD3DIndexBuffer     *indexbuffer;
+    IDirectDrawSurfaceImpl  *target;
+    BOOL                    OffScreenTarget;
+
+    /* Viewport management */
+    IDirect3DViewportImpl *viewport_list;
+    IDirect3DViewportImpl *current_viewport;
+    D3DVIEWPORT7 active_viewport;
+
+    /* Light state */
+    DWORD material;
+
+    /* Rendering functions to wrap D3D(1-3) to D3D7 */
+    D3DPRIMITIVETYPE primitive_type;
+    DWORD vertex_type;
+    DWORD render_flags;
+    DWORD nb_vertices;
+    LPBYTE vertex_buffer;
+    DWORD vertex_size;
+    DWORD buffer_size;
+};
+
+/* Vtables in various versions */
+const IDirect3DDevice7Vtbl IDirect3DDevice7_Vtbl;
+const IDirect3DDevice3Vtbl IDirect3DDevice3_Vtbl;
+const IDirect3DDevice2Vtbl IDirect3DDevice2_Vtbl;
+const IDirect3DDeviceVtbl  IDirect3DDevice1_Vtbl;
+
+/* The IID */
+const GUID IID_D3DDEVICE_WineD3D;
+
+/* Helper functions */
+HRESULT IDirect3DImpl_GetCaps(IWineD3D *WineD3D, D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7);
+
+/* Structures */
+struct EnumTextureFormatsCBS
+{
+    LPD3DENUMTEXTUREFORMATSCALLBACK cbv2;
+    LPD3DENUMPIXELFORMATSCALLBACK cbv7;
+    void *Context;
 };
 
 /*****************************************************************************
- * IDirectDrawPalette implementation structure
- */
-struct IDirectDrawPaletteImpl
+ * IDirect3D implementation
+ *****************************************************************************/
+
+/* No implementation structure as this is only another interface to DirectDraw */
+
+/* the Vtables */
+const IDirect3DVtbl  IDirect3D1_Vtbl;
+const IDirect3D2Vtbl IDirect3D2_Vtbl;
+const IDirect3D3Vtbl IDirect3D3_Vtbl;
+const IDirect3D7Vtbl IDirect3D7_Vtbl;
+
+/* Structure for EnumZBufferFormats */
+struct EnumZBufferFormatsData
 {
-    /* IUnknown fields */
-    ICOM_VFIELD_MULTI(IDirectDrawPalette);
-    LONG ref;
-
-    DDRAWI_DDRAWPALETTE_LCL local;
-    DDRAWI_DDRAWPALETTE_GBL global;
-
-    /* IDirectDrawPalette fields */
-    HPALETTE		hpal;
-    WORD		palVersion, palNumEntries; /* LOGPALETTE */
-    PALETTEENTRY	palents[256];
-    /* This is to store the palette in 'screen format' */
-    int			screen_palents[256];
-
-    VOID (*final_release)(IDirectDrawPaletteImpl* This);
-
-    IDirectDrawImpl* ddraw_owner;
-    IDirectDrawPaletteImpl* prev_ddraw;
-    IDirectDrawPaletteImpl* next_ddraw;
-
-    LPVOID		private;
+    LPD3DENUMPIXELFORMATSCALLBACK Callback;
+    void *Context;
 };
 
 /*****************************************************************************
  * IDirectDrawClipper implementation structure
- */
+ *****************************************************************************/
 struct IDirectDrawClipperImpl
 {
     /* IUnknown fields */
@@ -235,191 +350,235 @@ struct IDirectDrawClipperImpl
     HWND hWnd;
 
     IDirectDrawImpl* ddraw_owner;
-    IDirectDrawClipperImpl* prev_ddraw;
-    IDirectDrawClipperImpl* next_ddraw;
+    struct IDirectDrawClipperImpl* prev_ddraw;
+    struct IDirectDrawClipperImpl* next_ddraw;
 };
 
-/*****************************************************************************
- * IDirectDrawSurface implementation structure
- */
+const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl;
 
-struct IDirectDrawSurfaceImpl
+/*****************************************************************************
+ * IDirectDrawPalette implementation structure
+ *****************************************************************************/
+struct IDirectDrawPaletteImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD_MULTI(IDirectDrawSurface7);
-    ICOM_VFIELD_MULTI(IDirectDrawSurface3);
-    ICOM_VFIELD_MULTI(IDirectDrawGammaControl);
-    ICOM_VFIELD_MULTI(IDirect3DTexture2);
-    ICOM_VFIELD_MULTI(IDirect3DTexture);
+    ICOM_VFIELD_MULTI(IDirectDrawPalette);
     LONG ref;
 
-    struct IDirectDrawSurfaceImpl* attached; /* attached surfaces */
+    /* WineD3D uplink */
+    IWineD3DPalette           *wineD3DPalette;
 
-    struct IDirectDrawSurfaceImpl* next_ddraw; /* ddraw surface chain */
-    struct IDirectDrawSurfaceImpl* prev_ddraw;
-    struct IDirectDrawSurfaceImpl* next_attached; /* attached surface chain */
-    struct IDirectDrawSurfaceImpl* prev_attached;
+    /* IDirectDrawPalette fields */
+    IDirectDrawImpl           *ddraw_owner;
+};
+const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl;
 
-    IDirectDrawImpl* ddraw_owner;
-    IDirectDrawSurfaceImpl* surface_owner;
+/******************************************************************************
+ * DirectDraw ClassFactory Implementation - incomplete
+ ******************************************************************************/
+typedef struct
+{
+    ICOM_VFIELD_MULTI(IClassFactory);
 
-    IDirectDrawPaletteImpl* palette; /* strong ref */
-    IDirectDrawClipperImpl* clipper; /* strong ref */
+    LONG ref;
+    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid, LPVOID *ppObj);
+} IClassFactoryImpl;
 
-    DDRAWI_DDRAWSURFACE_LCL local;
-    DDRAWI_DDRAWSURFACE_MORE more;
-    /* FIXME: since Flip should swap the GBL structures, they should
-     * probably not be embedded into the IDirectDrawSurfaceImpl structure... */
-    LPDDRAWI_DDRAWSURFACE_GBL_MORE gmore;
-    DDRAWI_DDRAWSURFACE_GBL global;
-    DDRAWI_DDRAWSURFACE_GBL_MORE global_more;
-
-    DDSURFACEDESC2 surface_desc;
-
-    HDC hDC;
-    RECT lastlockrect;
-    DWORD lastlocktype;
-    BOOL dc_in_use;
-    BOOL locked;
-
-    HRESULT (*duplicate_surface)(IDirectDrawSurfaceImpl* src,
-				 LPDIRECTDRAWSURFACE7* dst);
-    void (*final_release)(IDirectDrawSurfaceImpl *This);
-    HRESULT (*late_allocate)(IDirectDrawSurfaceImpl *This);
-    BOOL (*attach)(IDirectDrawSurfaceImpl *This, IDirectDrawSurfaceImpl *to);
-    BOOL (*detach)(IDirectDrawSurfaceImpl *This);
-    void (*lock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags);
-    void (*unlock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
-    void (*lose_surface)(IDirectDrawSurfaceImpl* This);
-    BOOL (*flip_data)(IDirectDrawSurfaceImpl* front,
-		      IDirectDrawSurfaceImpl* back,
-		      DWORD dwFlags);
-    void (*flip_update)(IDirectDrawSurfaceImpl* front, DWORD dwFlags);
-    HRESULT (*get_dc)(IDirectDrawSurfaceImpl* This, HDC* phDC);
-    HRESULT (*release_dc)(IDirectDrawSurfaceImpl* This, HDC hDC);
-    void (*set_palette)(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteImpl* pal);
-    void (*update_palette)(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteImpl* pal,
-			   DWORD dwStart, DWORD dwCount, LPPALETTEENTRY palent);
-    HWND (*get_display_window)(IDirectDrawSurfaceImpl *This);
-    HRESULT (*get_gamma_ramp)(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp);
-    HRESULT (*set_gamma_ramp)(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp);
-
-    struct PrivateData* private_data;
-
-    DWORD max_lod;
-    DWORD priority;
-
-    BOOL lost;
-
-    DWORD uniqueness_value;
-
-    LPVOID private;
-
-    /* Everything below here is dodgy. */
-    /* For Direct3D use */
-    LPVOID aux_ctx, aux_data;
-    void (*aux_release)(LPVOID ctx, LPVOID data);
-    BOOL (*aux_flip)(LPVOID ctx, LPVOID data);
-    void (*aux_unlock)(LPVOID ctx, LPVOID data, LPRECT lpRect);
-    HRESULT (*aux_blt)(struct IDirectDrawSurfaceImpl *This, LPRECT rdst, LPDIRECTDRAWSURFACE7 src, LPRECT rsrc, DWORD dwFlags, LPDDBLTFX lpbltfx);
-    HRESULT (*aux_bltfast)(struct IDirectDrawSurfaceImpl *This, DWORD dstx, DWORD dsty, LPDIRECTDRAWSURFACE7 src, LPRECT rsrc, DWORD trans);
-    HRESULT (*aux_setcolorkey_cb)(struct IDirectDrawSurfaceImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey );
-    /* This is to get the D3DDevice object associated to this surface */
-    struct IDirect3DDeviceImpl *d3ddevice;
-    /* This is for texture */
-    IDirectDrawSurfaceImpl *mip_main;
-    int mipmap_level;
-    LPVOID tex_private;
-    void (*lock_update_prev)(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags);
-    void (*unlock_update_prev)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
-    BOOLEAN (*get_dirty_status)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
+/* Helper structures */
+struct object_creation_info
+{
+    const CLSID *clsid;
+    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID riid,
+                                 void **ppObj);
 };
 
+/******************************************************************************
+ * IDirect3DLight implementation structure - Wraps to D3D7
+ ******************************************************************************/
+struct IDirect3DLightImpl
+{
+    ICOM_VFIELD_MULTI(IDirect3DLight);
+    LONG ref;
+
+    /* IDirect3DLight fields */
+    IDirectDrawImpl           *ddraw;
+
+    /* If this light is active for one viewport, put the viewport here */
+    IDirect3DViewportImpl     *active_viewport;
+
+    D3DLIGHT2 light;
+    D3DLIGHT7 light7;
+
+    DWORD dwLightIndex;
+
+    /* Chained list used for adding / removing from viewports */
+    IDirect3DLightImpl        *next;
+
+    /* Activation function */
+    void                      (*activate)(IDirect3DLightImpl*);
+    void                      (*desactivate)(IDirect3DLightImpl*);
+    void                      (*update)(IDirect3DLightImpl*);
+};
+
+/* Vtable */
+const IDirect3DLightVtbl IDirect3DLight_Vtbl;
+
+/* Helper functions */
+void light_update(IDirect3DLightImpl* This);
+void light_activate(IDirect3DLightImpl* This);
+void light_desactivate(IDirect3DLightImpl* This);
+
+/******************************************************************************
+ * IDirect3DMaterial implementation structure - Wraps to D3D7
+ ******************************************************************************/
+struct IDirect3DMaterialImpl
+{
+    ICOM_VFIELD_MULTI(IDirect3DMaterial3);
+    ICOM_VFIELD_MULTI(IDirect3DMaterial2);
+    ICOM_VFIELD_MULTI(IDirect3DMaterial);
+    LONG  ref;
+
+    /* IDirect3DMaterial2 fields */
+    IDirectDrawImpl               *ddraw;
+    IDirect3DDeviceImpl           *active_device;
+
+    D3DMATERIAL mat;
+
+    void (*activate)(IDirect3DMaterialImpl* this);
+};
+
+/* VTables in varios versions */
+const IDirect3DMaterialVtbl IDirect3DMaterial_Vtbl;
+const IDirect3DMaterial2Vtbl IDirect3DMaterial2_Vtbl;
+const IDirect3DMaterial3Vtbl IDirect3DMaterial3_Vtbl;
+
+/* Helper functions */
+void material_activate(IDirect3DMaterialImpl* This);
+
 /*****************************************************************************
- * Driver initialisation functions.
- */
-BOOL DDRAW_HAL_Init(HINSTANCE, DWORD, LPVOID);
-BOOL DDRAW_User_Init(HINSTANCE, DWORD, LPVOID);
+ * IDirect3DViewport - Wraps to D3D7
+ *****************************************************************************/
+struct IDirect3DViewportImpl
+{
+    ICOM_VFIELD_MULTI(IDirect3DViewport3);
+    LONG ref;
 
-typedef struct {
-    const DDDEVICEIDENTIFIER2* info;
-    int	preference;	/* how good we are. dga might get 100, xlib 50*/
-    HRESULT (*create)(const GUID*, LPDIRECTDRAW7*, LPUNKNOWN, BOOL ex);
+    /* IDirect3DViewport fields */
+    IDirectDrawImpl           *ddraw;
 
-    /* For IDirectDraw7::Initialize. */
-    HRESULT (*init)(IDirectDrawImpl *, const GUID*);
-} ddraw_driver;
+    /* If this viewport is active for one device, put the device here */
+    IDirect3DDeviceImpl       *active_device;
 
-void DDRAW_register_driver(const ddraw_driver*);
+    DWORD                     num_lights;
+    DWORD                     map_lights;
 
-const ddraw_driver* DDRAW_FindDriver(const GUID* guid);
+    int                       use_vp2;
 
-/******************************************************************************
- * Random utilities
- */
+    union
+    {
+        D3DVIEWPORT vp1;
+        D3DVIEWPORT2 vp2;
+    } viewports;
 
-/* Get DDSCAPS of surface (shortcutmacro) */
-#define SDDSCAPS(iface) ((iface)->s.surface_desc.ddsCaps.dwCaps)
-/* Get the number of bytes per pixel for a given surface */
-#define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:((pf.u1.dwRGBBitCount+7)/8))
-#define GET_BPP(desc) PFGET_BPP(desc.u4.ddpfPixelFormat)
+    /* Activation function */
+    void                      (*activate)(IDirect3DViewportImpl*);
 
-LONG DDRAW_width_bpp_to_pitch(DWORD width, DWORD bpp);
+    /* Field used to chain viewports together */
+    IDirect3DViewportImpl     *next;
 
-typedef struct {
-    unsigned short	bpp,depth;
-    unsigned int	rmask,gmask,bmask;
-} ConvertMode;
+    /* Lights list */
+    IDirect3DLightImpl        *lights;
 
-typedef struct {
-    void (*pixel_convert)(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette);
-    void (*palette_convert)(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count);
-} ConvertFuncs;
+    /* Background material */
+    IDirect3DMaterialImpl     *background;
+};
 
-typedef struct {
-    ConvertMode screen, dest;
-    ConvertFuncs funcs;
-} Convert;
+/* Vtable */
+const IDirect3DViewport3Vtbl IDirect3DViewport3_Vtbl;
 
-extern Convert ModeEmulations[8];
-extern int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw);
-extern BOOL opengl_initialized;
-extern BOOL s3tc_initialized;
+/* Helper functions */
+void viewport_activate(IDirect3DViewportImpl* This);
 
-typedef void (*FUNC_FETCH_2D_TEXEL_RGBA_DXT1)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
-typedef void (*FUNC_FETCH_2D_TEXEL_RGBA_DXT3)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
-typedef void (*FUNC_FETCH_2D_TEXEL_RGBA_DXT5)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
+/*****************************************************************************
+ * IDirect3DExecuteBuffer - Wraps to D3D7
+ *****************************************************************************/
+struct IDirect3DExecuteBufferImpl
+{
+    /* IUnknown */
+    ICOM_VFIELD_MULTI(IDirect3DExecuteBuffer);
+    LONG                 ref;
 
-extern FUNC_FETCH_2D_TEXEL_RGBA_DXT1 fetch_2d_texel_rgba_dxt1;
-extern FUNC_FETCH_2D_TEXEL_RGBA_DXT3 fetch_2d_texel_rgba_dxt3;
-extern FUNC_FETCH_2D_TEXEL_RGBA_DXT5 fetch_2d_texel_rgba_dxt5;
+    /* IDirect3DExecuteBuffer fields */
+    IDirectDrawImpl      *ddraw;
+    IDirect3DDeviceImpl  *d3ddev;
 
-/******************************************************************************
- * Structure conversion (for thunks)
- */
-void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS* pIn, DDSCAPS2* pOut);
-void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2* pIn,
-					     DDDEVICEIDENTIFIER* pOut);
+    D3DEXECUTEBUFFERDESC desc;
+    D3DEXECUTEDATA       data;
 
-/******************************************************************************
- * Debugging / Flags output functions
- */
-extern void DDRAW_dump_DDBLTFX(DWORD flagmask);
-extern void DDRAW_dump_DDBLTFAST(DWORD flagmask);
-extern void DDRAW_dump_DDBLT(DWORD flagmask);
-extern void DDRAW_dump_DDSCAPS(const DDSCAPS *in);
-extern void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in);
-extern void DDRAW_dump_pixelformat_flag(DWORD flagmask);
-extern void DDRAW_dump_paletteformat(DWORD dwFlags);
-extern void DDRAW_dump_pixelformat(const DDPIXELFORMAT *in);
-extern void DDRAW_dump_colorkeyflag(DWORD ck);
-extern void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd);
-extern void DDRAW_dump_cooperativelevel(DWORD cooplevel);
-extern void DDRAW_dump_lockflag(DWORD lockflag);
-extern void DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *in);
-extern void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps);
-extern void DDRAW_dump_DDENUMSURFACES(DWORD flagmask);
-extern void DDRAW_dump_surface_to_disk(IDirectDrawSurfaceImpl *surface, FILE *f, int scale) ;
+    /* This buffer will store the transformed vertices */
+    void                 *vertex_data;
+    WORD                 *indices;
+    int                  nb_indices;
+
+    /* This flags is set to TRUE if we allocated ourselves the
+     * data buffer
+     */
+    BOOL                 need_free;
+};
+
+/* The VTable */
+const IDirect3DExecuteBufferVtbl IDirect3DExecuteBuffer_Vtbl;
+
+/* The execute function */
+void
+IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
+                                   IDirect3DDeviceImpl *Device,
+                                   IDirect3DViewportImpl *ViewportImpl);
+
+/*****************************************************************************
+ * IDirect3DVertexBuffer
+ *****************************************************************************/
+struct IDirect3DVertexBufferImpl
+{
+    /*** IUnknown Methods ***/
+    ICOM_VFIELD_MULTI(IDirect3DVertexBuffer7);
+    ICOM_VFIELD_MULTI(IDirect3DVertexBuffer);
+    LONG                 ref;
+
+    /*** WineD3D link ***/
+    IWineD3DVertexBuffer *wineD3DVertexBuffer;
+
+    /*** Storage for D3D7 specific things ***/
+    DWORD                Caps;
+};
+
+/* The Vtables */
+const IDirect3DVertexBuffer7Vtbl IDirect3DVertexBuffer7_Vtbl;
+const IDirect3DVertexBufferVtbl IDirect3DVertexBuffer1_Vtbl;
+
+/*****************************************************************************
+ * Helper functions from utils.c
+ *****************************************************************************/
+
+#define GET_TEXCOUNT_FROM_FVF(d3dvtVertexType) \
+    (((d3dvtVertexType) & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT)
+
+#define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
+    (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
+
+void PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat, WINED3DFORMAT WineD3DFormat);
+WINED3DFORMAT PixelFormat_DD2WineD3D(DDPIXELFORMAT *DDPixelFormat);
+void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd);
+void DDRAW_dump_pixelformat(const DDPIXELFORMAT *PixelFormat);
+void dump_D3DMATRIX(D3DMATRIX *mat);
+void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps);
+DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
+void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in);
+void DDRAW_dump_cooperativelevel(DWORD cooplevel);
+
+/* This only needs to be here as long the processvertices functionality of
+ * IDirect3DExecuteBuffer isn't in WineD3D */
+void multiply_matrix(LPD3DMATRIX dest, LPD3DMATRIX src1, LPD3DMATRIX src2);
 
 /* Used for generic dumping */
 typedef struct
@@ -438,701 +597,26 @@ typedef struct
     ptrdiff_t offset;
 } member_info;
 
+/* Structure copy */
 #define DDRAW_dump_flags(flags,names,num_names) DDRAW_dump_flags_(flags, names, num_names, 1)
 #define ME(x,f,e) { x, #x, (void (*)(const void *))(f), offsetof(STRUCT, e) }
 
-extern void DDRAW_dump_flags_(DWORD flags, const flag_info* names, size_t num_names, int newline);
-extern void DDRAW_dump_members(DWORD flags, const void* data, const member_info* mems, size_t num_mems);
-
-void DirectDrawSurface_RegisterClass(void);
-void DirectDrawSurface_UnregisterClass(void);
-
-extern const IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable;
-
-/*****************************************************************************
- * IDirectDrawClipper declarations
- */
-HRESULT DDRAW_CreateClipper(IUnknown* pUnkOuter, REFIID riid, LPVOID* ppObj);
-void Main_DirectDrawClipper_ForceDestroy(IDirectDrawClipperImpl* This);
-
-HRESULT WINAPI
-Main_DirectDrawClipper_SetHwnd(LPDIRECTDRAWCLIPPER iface, DWORD dwFlags,
-			       HWND hWnd);
-ULONG WINAPI Main_DirectDrawClipper_Release(LPDIRECTDRAWCLIPPER iface);
-HRESULT WINAPI
-Main_DirectDrawClipper_GetClipList(LPDIRECTDRAWCLIPPER iface, LPRECT lpRect,
-				   LPRGNDATA lpClipList, LPDWORD lpdwSize);
-HRESULT WINAPI
-Main_DirectDrawClipper_SetClipList(LPDIRECTDRAWCLIPPER iface,LPRGNDATA lprgn,
-				   DWORD dwFlag);
-HRESULT WINAPI
-Main_DirectDrawClipper_QueryInterface(LPDIRECTDRAWCLIPPER iface, REFIID riid,
-				      LPVOID* ppvObj);
-ULONG WINAPI Main_DirectDrawClipper_AddRef( LPDIRECTDRAWCLIPPER iface );
-HRESULT WINAPI
-Main_DirectDrawClipper_GetHWnd(LPDIRECTDRAWCLIPPER iface, HWND* hWndPtr);
-HRESULT WINAPI
-Main_DirectDrawClipper_Initialize(LPDIRECTDRAWCLIPPER iface, LPDIRECTDRAW lpDD,
-				  DWORD dwFlags);
-HRESULT WINAPI
-Main_DirectDrawClipper_IsClipListChanged(LPDIRECTDRAWCLIPPER iface,
-					 BOOL* lpbChanged);
-
-/*****************************************************************************
- * IDirectDrawPalette MAIN declarations
- */
-HRESULT Main_DirectDrawPalette_Construct(IDirectDrawPaletteImpl* This,
-					 IDirectDrawImpl* pDD, DWORD dwFlags);
-void Main_DirectDrawPalette_final_release(IDirectDrawPaletteImpl* This);
-
-HRESULT Main_DirectDrawPalette_Create(IDirectDrawImpl* pDD, DWORD dwFlags,
-				      LPDIRECTDRAWPALETTE* ppPalette,
-				      LPUNKNOWN pUnkOuter);
-void Main_DirectDrawPalette_ForceDestroy(IDirectDrawPaletteImpl* This);
-
-DWORD Main_DirectDrawPalette_Size(DWORD dwFlags);
-
-HRESULT WINAPI
-Main_DirectDrawPalette_GetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
-				  DWORD dwStart, DWORD dwCount,
-				  LPPALETTEENTRY palent);
-HRESULT WINAPI
-Main_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
-				  DWORD dwStart, DWORD dwCount,
-				  LPPALETTEENTRY palent);
-ULONG WINAPI
-Main_DirectDrawPalette_Release(LPDIRECTDRAWPALETTE iface);
-ULONG WINAPI Main_DirectDrawPalette_AddRef(LPDIRECTDRAWPALETTE iface);
-HRESULT WINAPI
-Main_DirectDrawPalette_Initialize(LPDIRECTDRAWPALETTE iface,
-				  LPDIRECTDRAW ddraw, DWORD dwFlags,
-				  LPPALETTEENTRY palent);
-HRESULT WINAPI
-Main_DirectDrawPalette_GetCaps(LPDIRECTDRAWPALETTE iface, LPDWORD lpdwCaps);
-HRESULT WINAPI
-Main_DirectDrawPalette_QueryInterface(LPDIRECTDRAWPALETTE iface,
-				      REFIID refiid, LPVOID *obj);
-
-/*****************************************************************************
- * IDirectDrawPalette HAL declarations
- */
-HRESULT HAL_DirectDrawPalette_Construct(IDirectDrawPaletteImpl* This,
-					 IDirectDrawImpl* pDD, DWORD dwFlags);
-void HAL_DirectDrawPalette_final_release(IDirectDrawPaletteImpl* This);
-
-HRESULT HAL_DirectDrawPalette_Create(IDirectDrawImpl* pDD, DWORD dwFlags,
-				     LPDIRECTDRAWPALETTE* ppPalette,
-				     LPUNKNOWN pUnkOuter);
-
-HRESULT WINAPI
-HAL_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
-				 DWORD dwStart, DWORD dwCount,
-				 LPPALETTEENTRY palent);
-
-/*****************************************************************************
- * IDirectDraw MAIN declarations
- */
-/* internal virtual functions */
-void Main_DirectDraw_final_release(IDirectDrawImpl* This);
-HRESULT Main_create_offscreen(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
-			      LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter);
-HRESULT Main_create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
-			    LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter,
-			    DWORD dwMipMapLevel);
-HRESULT Main_create_zbuffer(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
-			    LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter);
-
-/* internal functions */
-HRESULT Main_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex);
-void Main_DirectDraw_AddSurface(IDirectDrawImpl* This,
-				IDirectDrawSurfaceImpl* surface);
-void Main_DirectDraw_RemoveSurface(IDirectDrawImpl* This,
-				   IDirectDrawSurfaceImpl* surface);
-void Main_DirectDraw_AddClipper(IDirectDrawImpl* This,
-				IDirectDrawClipperImpl* clipper);
-void Main_DirectDraw_RemoveClipper(IDirectDrawImpl* This,
-				   IDirectDrawClipperImpl* clipper);
-void Main_DirectDraw_AddPalette(IDirectDrawImpl* This,
-				IDirectDrawPaletteImpl* palette);
-void Main_DirectDraw_RemovePalette(IDirectDrawImpl* This,
-				   IDirectDrawPaletteImpl* palette);
-
-/* interface functions */
-ULONG WINAPI Main_DirectDraw_AddRef(LPDIRECTDRAW7 iface);
-ULONG WINAPI Main_DirectDraw_Release(LPDIRECTDRAW7 iface);
-HRESULT WINAPI Main_DirectDraw_QueryInterface(LPDIRECTDRAW7 iface,
-					      REFIID refiid,LPVOID *obj);
-HRESULT WINAPI Main_DirectDraw_Compact(LPDIRECTDRAW7 iface);
-HRESULT WINAPI Main_DirectDraw_CreateClipper(LPDIRECTDRAW7 iface,
-					     DWORD dwFlags,
-					     LPDIRECTDRAWCLIPPER *ppClipper,
-					     IUnknown *pUnkOuter);
-HRESULT WINAPI
-Main_DirectDraw_CreatePalette(LPDIRECTDRAW7 iface, DWORD dwFlags,
-			      LPPALETTEENTRY palent,
-			      LPDIRECTDRAWPALETTE* ppPalette,
-			      LPUNKNOWN pUnknown);
-HRESULT WINAPI
-Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
-			      LPDIRECTDRAWSURFACE7 *ppSurf,
-			      IUnknown *pUnkOuter);
-HRESULT WINAPI
-Main_DirectDraw_DuplicateSurface(LPDIRECTDRAW7 iface, LPDIRECTDRAWSURFACE7 src,
-				 LPDIRECTDRAWSURFACE7* dst);
-HRESULT WINAPI
-Main_DirectDraw_EnumSurfaces(LPDIRECTDRAW7 iface, DWORD dwFlags,
-			     LPDDSURFACEDESC2 lpDDSD2, LPVOID context,
-			     LPDDENUMSURFACESCALLBACK7 callback);
-HRESULT WINAPI
-Main_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface,DWORD a,DWORD* b);
-HRESULT WINAPI Main_DirectDraw_FlipToGDISurface(LPDIRECTDRAW7 iface);
-HRESULT WINAPI
-Main_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
-			LPDDCAPS pHELCaps);
-HRESULT WINAPI
-Main_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
-			       LPDWORD pCodes);
-HRESULT WINAPI
-Main_DirectDraw_GetGDISurface(LPDIRECTDRAW7 iface,
-			      LPDIRECTDRAWSURFACE7 *lplpGDIDDSSurface);
-HRESULT WINAPI
-Main_DirectDraw_GetMonitorFrequency(LPDIRECTDRAW7 iface,LPDWORD freq);
-HRESULT WINAPI
-Main_DirectDraw_GetScanLine(LPDIRECTDRAW7 iface, LPDWORD lpdwScanLine);
-HRESULT WINAPI
-Main_DirectDraw_GetSurfaceFromDC(LPDIRECTDRAW7 iface, HDC hdc,
-				 LPDIRECTDRAWSURFACE7 *lpDDS);
-HRESULT WINAPI
-Main_DirectDraw_GetVerticalBlankStatus(LPDIRECTDRAW7 iface, LPBOOL status);
-HRESULT WINAPI
-Main_DirectDraw_Initialize(LPDIRECTDRAW7 iface, LPGUID lpGuid);
-HRESULT WINAPI Main_DirectDraw_RestoreAllSurfaces(LPDIRECTDRAW7 iface);
-HRESULT WINAPI
-Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
-				    DWORD cooplevel);
-HRESULT WINAPI
-Main_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
-			       DWORD dwHeight, LONG lPitch,
-			       DWORD dwRefreshRate, DWORD dwFlags,
-			       const DDPIXELFORMAT* pixelformat);
-HRESULT WINAPI Main_DirectDraw_RestoreDisplayMode(LPDIRECTDRAW7 iface);
-HRESULT WINAPI
-Main_DirectDraw_WaitForVerticalBlank(LPDIRECTDRAW7 iface, DWORD dwFlags,
-				     HANDLE h);
-HRESULT WINAPI
-Main_DirectDraw_GetDisplayMode(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD);
-HRESULT WINAPI
-Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface,LPDDSCAPS2 ddscaps,
-				   LPDWORD total, LPDWORD free);
-HRESULT WINAPI Main_DirectDraw_TestCooperativeLevel(LPDIRECTDRAW7 iface);
-HRESULT WINAPI
-Main_DirectDraw_StartModeTest(LPDIRECTDRAW7 iface, LPSIZE pModes,
-			      DWORD dwNumModes, DWORD dwFlags);
-
-/*****************************************************************************
- * IDirectDraw USER object declarations
- */
-#define USER_DDRAW_PRIV(ddraw) ((User_DirectDrawImpl*)((ddraw)->private))
-#define USER_DDRAW_PRIV_VAR(name,ddraw) \
-	User_DirectDrawImpl* name = USER_DDRAW_PRIV(ddraw)
-
-typedef struct
-{
-    int empty;
-    /* empty */
-} User_DirectDrawImpl_Part;
-
-typedef struct
-{
-    User_DirectDrawImpl_Part user;
-} User_DirectDrawImpl;
-
-void User_DirectDraw_final_release(IDirectDrawImpl* This);
-HRESULT User_DirectDraw_create_primary(IDirectDrawImpl* This,
-				       const DDSURFACEDESC2* pDDSD,
-				       LPDIRECTDRAWSURFACE7* ppSurf,
-				       LPUNKNOWN pOuter);
-HRESULT User_DirectDraw_create_backbuffer(IDirectDrawImpl* This,
-					  const DDSURFACEDESC2* pDDSD,
-					  LPDIRECTDRAWSURFACE7* ppSurf,
-					  LPUNKNOWN pOuter,
-					  IDirectDrawSurfaceImpl* primary);
-HRESULT User_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex);
-HRESULT User_DirectDraw_Create(const GUID* pGUID, LPDIRECTDRAW7* pIface,
-			       IUnknown* pUnkOuter, BOOL ex);
-
-HRESULT WINAPI
-User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
-				 LPDDSURFACEDESC2 pDDSD, LPVOID context,
-				 LPDDENUMMODESCALLBACK2 callback);
-HRESULT WINAPI
-User_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,
-				    LPDDDEVICEIDENTIFIER2 pDDDI,
-				    DWORD dwFlags);
-HRESULT WINAPI
-User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
-			       DWORD dwHeight, DWORD dwBPP,
-			       DWORD dwRefreshRate, DWORD dwFlags);
-
-/*****************************************************************************
- * IDirectDraw HAL declarations
- */
-#define HAL_DDRAW_PRIV(ddraw) \
-	((HAL_DirectDrawImpl*)((ddraw)->private))
-#define HAL_DDRAW_PRIV_VAR(name,ddraw) \
-	HAL_DirectDrawImpl* name = HAL_DDRAW_PRIV(ddraw)
-
-typedef struct
-{
-    DWORD next_vofs;
-} HAL_DirectDrawImpl_Part;
-
-typedef struct
-{
-    User_DirectDrawImpl_Part user;
-    HAL_DirectDrawImpl_Part hal;
-} HAL_DirectDrawImpl;
-
-void HAL_DirectDraw_final_release(IDirectDrawImpl* This);
-HRESULT HAL_DirectDraw_create_primary(IDirectDrawImpl* This,
-				      const DDSURFACEDESC2* pDDSD,
-				      LPDIRECTDRAWSURFACE7* ppSurf,
-				      LPUNKNOWN pOuter);
-HRESULT HAL_DirectDraw_create_backbuffer(IDirectDrawImpl* This,
-					 const DDSURFACEDESC2* pDDSD,
-					 LPDIRECTDRAWSURFACE7* ppSurf,
-					 LPUNKNOWN pOuter,
-					 IDirectDrawSurfaceImpl* primary);
-HRESULT HAL_DirectDraw_create_texture(IDirectDrawImpl* This,
-				      const DDSURFACEDESC2* pDDSD,
-				      LPDIRECTDRAWSURFACE7* ppSurf,
-				      LPUNKNOWN pOuter,
-				      DWORD dwMipMapLevel);
-
-HRESULT HAL_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex);
-HRESULT HAL_DirectDraw_Create(const GUID* pGUID, LPDIRECTDRAW7* pIface,
-				   IUnknown* pUnkOuter, BOOL ex);
-
-HRESULT WINAPI
-HAL_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,
-					LPDDDEVICEIDENTIFIER2 pDDDI,
-					DWORD dwFlags);
-HRESULT WINAPI
-HAL_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
-				   DWORD dwHeight, DWORD dwBPP,
-				   DWORD dwRefreshRate, DWORD dwFlags);
-HRESULT WINAPI HAL_DirectDraw_RestoreDisplayMode(LPDIRECTDRAW7 iface);
-
-/*****************************************************************************
- * IDirectDrawSurface MAIN declarations
- */
-/* Support for IDirectDrawSurface7::Set/Get/FreePrivateData. I don't think
- * anybody uses it for much so a good implementation is optional. */
-typedef struct PrivateData
-{
-    struct PrivateData* next;
-    struct PrivateData* prev;
-
-    GUID tag;
-    DWORD flags; /* DDSPD_* */
-    DWORD uniqueness_value;
-
-    union
-    {
-	LPVOID data;
-	LPUNKNOWN object;
-    } ptr;
-
-    DWORD size;
-} PrivateData;
-
-extern const IDirectDrawGammaControlVtbl DDRAW_IDDGC_VTable;
-
-/* Non-interface functions */
-HRESULT Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
-					 IDirectDrawImpl* pDD,
-					 const DDSURFACEDESC2* pDDSD);
-void Main_DirectDrawSurface_ForceDestroy(IDirectDrawSurfaceImpl* This);
-
-void Main_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
-HRESULT Main_DirectDrawSurface_late_allocate(IDirectDrawSurfaceImpl* This);
-BOOL Main_DirectDrawSurface_attach(IDirectDrawSurfaceImpl *This,
-				   IDirectDrawSurfaceImpl *to);
-BOOL Main_DirectDrawSurface_detach(IDirectDrawSurfaceImpl *This);
-void Main_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
-					LPCRECT pRect, DWORD dwFlags);
-void Main_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
-					  LPCRECT pRect);
-void Main_DirectDrawSurface_lose_surface(IDirectDrawSurfaceImpl* This);
-void Main_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
-					IDirectDrawPaletteImpl* pal);
-void Main_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
-					   IDirectDrawPaletteImpl* pal,
-					   DWORD dwStart, DWORD dwCount,
-			                   LPPALETTEENTRY palent);
-HWND Main_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
-
-HRESULT Main_DirectDrawSurface_get_gamma_ramp(IDirectDrawSurfaceImpl* This,
-					      DWORD dwFlags,
-					      LPDDGAMMARAMP lpGammaRamp);
-HRESULT Main_DirectDrawSurface_set_gamma_ramp(IDirectDrawSurfaceImpl* This,
-					      DWORD dwFlags,
-					      LPDDGAMMARAMP lpGammaRamp);
-
-BOOL Main_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				      IDirectDrawSurfaceImpl* back,
-				      DWORD dwFlags);
-
-#define CHECK_LOST(This)					\
-	do {							\
-		if (This->lost) return DDERR_SURFACELOST;	\
-	} while (0)
-
-#define CHECK_TEXTURE(This)					\
-	do {							\
-		if (!(This->surface_desc.ddsCaps.dwCaps2	\
-		      & DDSCAPS2_TEXTUREMANAGE))		\
-			return DDERR_INVALIDOBJECT;		\
-	} while (0)
-
-#define LOCK_OBJECT(This) do { } while (0)
-#define UNLOCK_OBJECT(This) do { } while (0)
-
-/* IDirectDrawSurface7 (partial) implementation */
-ULONG WINAPI Main_DirectDrawSurface_AddRef(LPDIRECTDRAWSURFACE7 iface);
-ULONG WINAPI Main_DirectDrawSurface_Release(LPDIRECTDRAWSURFACE7 iface);
-HRESULT WINAPI
-Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
-				      LPVOID* ppObj);
-HRESULT WINAPI
-Main_DirectDrawSurface_AddAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
-					  LPDIRECTDRAWSURFACE7 pAttach);
-HRESULT WINAPI
-Main_DirectDrawSurface_AddOverlayDirtyRect(LPDIRECTDRAWSURFACE7 iface,
-					   LPRECT pRect);
-HRESULT WINAPI
-Main_DirectDrawSurface_BltBatch(LPDIRECTDRAWSURFACE7 iface,
-				LPDDBLTBATCH pBatch, DWORD dwCount,
-				DWORD dwFlags);
-HRESULT WINAPI
-Main_DirectDrawSurface_ChangeUniquenessValue(LPDIRECTDRAWSURFACE7 iface);
-HRESULT WINAPI
-Main_DirectDrawSurface_DeleteAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
-					     DWORD dwFlags,
-					     LPDIRECTDRAWSURFACE7 pAttach);
-HRESULT WINAPI
-Main_DirectDrawSurface_EnumAttachedSurfaces(LPDIRECTDRAWSURFACE7 iface,
-					    LPVOID context,
-					    LPDDENUMSURFACESCALLBACK7 cb);
-HRESULT WINAPI
-Main_DirectDrawSurface_EnumOverlayZOrders(LPDIRECTDRAWSURFACE7 iface,
-					  DWORD dwFlags, LPVOID context,
-					  LPDDENUMSURFACESCALLBACK7 cb);
-HRESULT WINAPI
-Main_DirectDrawSurface_Flip(LPDIRECTDRAWSURFACE7 iface,
-			    LPDIRECTDRAWSURFACE7 override, DWORD dwFlags);
-HRESULT WINAPI
-Main_DirectDrawSurface_FreePrivateData(LPDIRECTDRAWSURFACE7 iface,
-				       REFGUID tag);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
-					  LPDDSCAPS2 pCaps,
-					  LPDIRECTDRAWSURFACE7* ppSurface);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetBltStatus(LPDIRECTDRAWSURFACE7 iface,
-				    DWORD dwFlags);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetCaps(LPDIRECTDRAWSURFACE7 iface,
-			       LPDDSCAPS2 pCaps);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetClipper(LPDIRECTDRAWSURFACE7 iface,
-				  LPDIRECTDRAWCLIPPER* ppClipper);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetColorKey(LPDIRECTDRAWSURFACE7 iface,
-				   DWORD dwFlags, LPDDCOLORKEY pCKey);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetDC(LPDIRECTDRAWSURFACE7 iface, HDC *phDC);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetDDInterface(LPDIRECTDRAWSURFACE7 iface,
-				      LPVOID* pDD);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetFlipStatus(LPDIRECTDRAWSURFACE7 iface,
-				     DWORD dwFlags);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetLOD(LPDIRECTDRAWSURFACE7 iface,
-			      LPDWORD pdwMaxLOD);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetOverlayPosition(LPDIRECTDRAWSURFACE7 iface,
-					  LPLONG pX, LPLONG pY);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetPalette(LPDIRECTDRAWSURFACE7 iface,
-				  LPDIRECTDRAWPALETTE* ppPalette);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetPixelFormat(LPDIRECTDRAWSURFACE7 iface,
-				      LPDDPIXELFORMAT pDDPixelFormat);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetPriority(LPDIRECTDRAWSURFACE7 iface,
-				   LPDWORD pdwPriority);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetPrivateData(LPDIRECTDRAWSURFACE7 iface, REFGUID tag,
-				      LPVOID pBuffer, LPDWORD pcbBufferSize);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
-				      LPDDSURFACEDESC2 pDDSD);
-HRESULT WINAPI
-Main_DirectDrawSurface_GetUniquenessValue(LPDIRECTDRAWSURFACE7 iface,
-					  LPDWORD pValue);
-HRESULT WINAPI
-Main_DirectDrawSurface_Initialize(LPDIRECTDRAWSURFACE7 iface,
-				  LPDIRECTDRAW pDD, LPDDSURFACEDESC2 pDDSD);
-HRESULT WINAPI
-Main_DirectDrawSurface_IsLost(LPDIRECTDRAWSURFACE7 iface);
-HRESULT WINAPI
-Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
-			    LPDDSURFACEDESC2 pDDSD, DWORD flags, HANDLE h);
-HRESULT WINAPI
-Main_DirectDrawSurface_PageLock(LPDIRECTDRAWSURFACE7 iface, DWORD dwFlags);
-HRESULT WINAPI
-Main_DirectDrawSurface_PageUnlock(LPDIRECTDRAWSURFACE7 iface, DWORD dwFlags);
-HRESULT WINAPI
-Main_DirectDrawSurface_ReleaseDC(LPDIRECTDRAWSURFACE7 iface, HDC hDC);
-HRESULT WINAPI
-Main_DirectDrawSurface_SetClipper(LPDIRECTDRAWSURFACE7 iface,
-				  LPDIRECTDRAWCLIPPER pDDClipper);
-HRESULT WINAPI
-Main_DirectDrawSurface_SetColorKey(LPDIRECTDRAWSURFACE7 iface,
-				   DWORD dwFlags, LPDDCOLORKEY pCKey);
-HRESULT WINAPI
-Main_DirectDrawSurface_SetLOD(LPDIRECTDRAWSURFACE7 iface, DWORD dwMaxLOD);
-HRESULT WINAPI
-Main_DirectDrawSurface_SetOverlayPosition(LPDIRECTDRAWSURFACE7 iface,
-					  LONG X, LONG Y);
-HRESULT WINAPI
-Main_DirectDrawSurface_SetPalette(LPDIRECTDRAWSURFACE7 iface,
-				  LPDIRECTDRAWPALETTE pPalette);
-HRESULT WINAPI
-Main_DirectDrawSurface_SetPriority(LPDIRECTDRAWSURFACE7 iface,
-				   DWORD dwPriority);
-HRESULT WINAPI
-Main_DirectDrawSurface_SetPrivateData(LPDIRECTDRAWSURFACE7 iface,
-				      REFGUID tag, LPVOID pData,
-				      DWORD cbSize, DWORD dwFlags);
-HRESULT WINAPI
-Main_DirectDrawSurface_Unlock(LPDIRECTDRAWSURFACE7 iface, LPRECT pRect);
-HRESULT WINAPI
-Main_DirectDrawSurface_UpdateOverlay(LPDIRECTDRAWSURFACE7 iface,
-				     LPRECT pSrcRect,
-				     LPDIRECTDRAWSURFACE7 pDstSurface,
-				     LPRECT pDstRect, DWORD dwFlags,
-				     LPDDOVERLAYFX pFX);
-HRESULT WINAPI
-Main_DirectDrawSurface_UpdateOverlayDisplay(LPDIRECTDRAWSURFACE7 iface,
-					    DWORD dwFlags);
-HRESULT WINAPI
-Main_DirectDrawSurface_UpdateOverlayZOrder(LPDIRECTDRAWSURFACE7 iface,
-					   DWORD dwFlags,
-					   LPDIRECTDRAWSURFACE7 pDDSRef);
-
-/*****************************************************************************
- * IDirectDrawSurface DIB declarations
- */
-#define DIB_PRIV(surf) ((DIB_DirectDrawSurfaceImpl*)((surf)->private))
-
-#define DIB_PRIV_VAR(name, surf) \
-	DIB_DirectDrawSurfaceImpl* name = DIB_PRIV(surf)
-
-struct DIB_DirectDrawSurfaceImpl_Part
-{
-    HBITMAP DIBsection;
-    void* bitmap_data;
-    HGDIOBJ holdbitmap;
-    BOOL client_memory;
-    DWORD d3d_data[4]; /* room for Direct3D driver data */
-};
-
-typedef struct
-{
-    struct DIB_DirectDrawSurfaceImpl_Part dib;
-} DIB_DirectDrawSurfaceImpl;
-
-HRESULT
-DIB_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
-				IDirectDrawImpl *pDD,
-				const DDSURFACEDESC2 *pDDSD);
-HRESULT
-DIB_DirectDrawSurface_Create(IDirectDrawImpl *pDD,
-			     const DDSURFACEDESC2 *pDDSD,
-			     LPDIRECTDRAWSURFACE7 *ppSurf,
-			     IUnknown *pUnkOuter);
-
-void DIB_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
-BOOL DIB_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				     IDirectDrawSurfaceImpl* back,
-				     DWORD dwFlags);
-
-void DIB_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
-				       IDirectDrawPaletteImpl* pal);
-void DIB_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
-					  IDirectDrawPaletteImpl* pal,
-					  DWORD dwStart, DWORD dwCount,
-					  LPPALETTEENTRY palent);
-
-HRESULT DIB_DirectDrawSurface_get_dc(IDirectDrawSurfaceImpl* This, HDC* phDC);
-HRESULT DIB_DirectDrawSurface_release_dc(IDirectDrawSurfaceImpl* This,HDC hDC);
-
-HRESULT DIB_DirectDrawSurface_alloc_dc(IDirectDrawSurfaceImpl* This,HDC* phDC);
-HRESULT DIB_DirectDrawSurface_free_dc(IDirectDrawSurfaceImpl* This, HDC hDC);
-
-HRESULT WINAPI
-DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT prcDest,
-			  LPDIRECTDRAWSURFACE7 pSrcSurf, LPRECT prcSrc,
-			  DWORD dwFlags, LPDDBLTFX pBltFx);
-HRESULT WINAPI
-DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dwX,
-			      DWORD dwY, LPDIRECTDRAWSURFACE7 pSrcSurf,
-			      LPRECT prcSrc, DWORD dwTrans);
-HRESULT WINAPI DIB_DirectDrawSurface_Restore(LPDIRECTDRAWSURFACE7 iface);
-HRESULT WINAPI
-DIB_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
-				     LPDDSURFACEDESC2 pDDSD, DWORD dwFlags);
-
-/*****************************************************************************
- * IDirectDrawSurface USER declarations
- */
-#define USER_PRIV(surf) ((User_DirectDrawSurfaceImpl*)((surf)->private))
-
-#define USER_PRIV_VAR(name,surf) \
-	User_DirectDrawSurfaceImpl* name = USER_PRIV(surf)
-
-struct User_DirectDrawSurfaceImpl_Part
-{
-    HWND window;
-    HDC cached_dc;
-    HANDLE update_thread, update_event, refresh_event;
-    volatile int wait_count, in_refresh;
-    CRITICAL_SECTION crit;
-};
-
-typedef struct
-{
-    struct DIB_DirectDrawSurfaceImpl_Part dib;
-    struct User_DirectDrawSurfaceImpl_Part user;
-} User_DirectDrawSurfaceImpl;
-
-HRESULT User_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
-					 IDirectDrawImpl* pDD,
-					 const DDSURFACEDESC2* pDDSD);
-
-HRESULT User_DirectDrawSurface_Create(IDirectDrawImpl *pDD,
-				      const DDSURFACEDESC2 *pDDSD,
-				      LPDIRECTDRAWSURFACE7 *ppSurf,
-				      IUnknown *pUnkOuter);
-
-void User_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
-
-void User_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
-					LPCRECT pRect, DWORD dwFlags);
-void User_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
-					  LPCRECT pRect);
-void User_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
-					IDirectDrawPaletteImpl* pal);
-void User_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
-					   IDirectDrawPaletteImpl* pal,
-					   DWORD dwStart, DWORD dwCount,
-					   LPPALETTEENTRY palent);
-HRESULT User_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
-						 LPDIRECTDRAWSURFACE7* ppDup);
-BOOL User_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				      IDirectDrawSurfaceImpl* back,
-				      DWORD dwFlags);
-void User_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This,
-					DWORD dwFlags);
-HWND User_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
-
-HRESULT User_DirectDrawSurface_get_dc(IDirectDrawSurfaceImpl* This, HDC* phDC);
-HRESULT User_DirectDrawSurface_release_dc(IDirectDrawSurfaceImpl* This,
-					  HDC hDC);
-
-HRESULT User_DirectDrawSurface_get_gamma_ramp(IDirectDrawSurfaceImpl* This,
-					      DWORD dwFlags,
-					      LPDDGAMMARAMP lpGammaRamp);
-HRESULT User_DirectDrawSurface_set_gamma_ramp(IDirectDrawSurfaceImpl* This,
-					      DWORD dwFlags,
-					      LPDDGAMMARAMP lpGammaRamp);
-
-/*****************************************************************************
- * IDirectDrawSurface HAL declarations
- */
-#define HAL_PRIV(surf) ((HAL_DirectDrawSurfaceImpl*)((surf)->private))
-
-#define HAL_PRIV_VAR(name,surf) \
-	HAL_DirectDrawSurfaceImpl* name = HAL_PRIV(surf)
-
-struct HAL_DirectDrawSurfaceImpl_Part
-{
-    DWORD need_late;
-    LPVOID fb_addr;
-    DWORD fb_pitch, fb_vofs;
-};
-
-typedef struct
-{
-    struct DIB_DirectDrawSurfaceImpl_Part dib;
-    struct User_DirectDrawSurfaceImpl_Part user;
-    struct HAL_DirectDrawSurfaceImpl_Part hal;
-} HAL_DirectDrawSurfaceImpl;
-
-HRESULT HAL_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
-					IDirectDrawImpl* pDD,
-					const DDSURFACEDESC2* pDDSD);
-
-HRESULT HAL_DirectDrawSurface_Create(IDirectDrawImpl *pDD,
-				     const DDSURFACEDESC2 *pDDSD,
-				     LPDIRECTDRAWSURFACE7 *ppSurf,
-				     IUnknown *pUnkOuter);
-
-void HAL_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
-HRESULT HAL_DirectDrawSurface_late_allocate(IDirectDrawSurfaceImpl* This);
-
-void HAL_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
-				       IDirectDrawPaletteImpl* pal);
-void HAL_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
-					  IDirectDrawPaletteImpl* pal,
-					  DWORD dwStart, DWORD dwCount,
-					  LPPALETTEENTRY palent);
-HRESULT HAL_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
-						LPDIRECTDRAWSURFACE7* ppDup);
-void HAL_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
-				       LPCRECT pRect, DWORD dwFlags);
-void HAL_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
-					 LPCRECT pRect);
-BOOL HAL_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				     IDirectDrawSurfaceImpl* back,
-				     DWORD dwFlags);
-void HAL_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This,
-				       DWORD dwFlags);
-HWND HAL_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
-
-/*****************************************************************************
- * IDirectDrawSurface FAKEZBUFFER declarations
- */
-typedef struct
-{
-    BOOLEAN in_memory;
-} FakeZBuffer_DirectDrawSurfaceImpl;
-
-HRESULT FakeZBuffer_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
-						IDirectDrawImpl* pDD,
-						const DDSURFACEDESC2* pDDSD);
-
-HRESULT FakeZBuffer_DirectDrawSurface_Create(IDirectDrawImpl* pDD,
-					     const DDSURFACEDESC2* pDDSD,
-					     LPDIRECTDRAWSURFACE7* ppSurf,
-					     IUnknown* pUnkOuter);
-
-void FakeZBuffer_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
-
-HRESULT FakeZBuffer_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
-							LPDIRECTDRAWSURFACE7* ppDup);
-
-#endif /* __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H */
+#define DD_STRUCT_COPY_BYSIZE(to,from)                  \
+        do {                                            \
+                DWORD __size = (to)->dwSize;            \
+                DWORD __copysize = __size;              \
+                DWORD __resetsize = __size;             \
+                assert(to != from);                     \
+                if (__resetsize > sizeof(*to))          \
+                    __resetsize = sizeof(*to);          \
+                memset(to,0,__resetsize);               \
+                if ((from)->dwSize < __size)            \
+                    __copysize = (from)->dwSize;        \
+                memcpy(to,from,__copysize);             \
+                (to)->dwSize = __size;/*restore size*/  \
+        } while (0)
+
+
+#endif
+
+HRESULT hr_ddraw_from_wined3d(HRESULT hr);
