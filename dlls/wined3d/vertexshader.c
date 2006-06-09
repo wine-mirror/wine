@@ -1480,7 +1480,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetDevice(IWineD3DVertexShader* iface, I
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, VOID* pData, UINT* pSizeOfData) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)impl;
-    FIXME("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
+    TRACE("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
 
     if (NULL == pData) {
         *pSizeOfData = This->baseShader.functionLength;

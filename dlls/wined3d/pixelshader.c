@@ -113,7 +113,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_GetDevice(IWineD3DPixelShader* iface, IWi
 
 HRESULT WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* impl, VOID* pData, UINT* pSizeOfData) {
   IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)impl;
-  FIXME("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
+  TRACE("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
 
   if (NULL == pData) {
     *pSizeOfData = This->baseShader.functionLength;
