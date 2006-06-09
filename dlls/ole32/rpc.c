@@ -569,9 +569,14 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
         }
     }
 
+    hr = params->hr;
     HeapFree(GetProcessHeap(), 0, params);
 
     apartment_release(apt);
+
+    /* if IRpcStubBuffer_Invoke fails, we should raise an exception to tell
+     * the RPC runtime that the call failed */
+    if (hr) RpcRaiseException(hr);
 }
 
 /* stub registration */
