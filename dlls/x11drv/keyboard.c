@@ -1367,7 +1367,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 
     Str[ascii_chars] = '\0';
     if (TRACE_ON(key)){
-	char	*ksname;
+	const char *ksname;
 
         wine_tsx11_lock();
         ksname = XKeysymToString(keysym);
@@ -1710,7 +1710,7 @@ void X11DRV_InitKeyboard(void)
                     TRACE("(");
                     for (i = 0; i < keysyms_per_keycode; i += 1)
                     {
-                        char	*ksname;
+                        const char *ksname;
 
                         keysym = XLookupKeysym(&e2, i);
                         ksname = XKeysymToString(keysym);
@@ -1731,7 +1731,7 @@ void X11DRV_InitKeyboard(void)
     /* If some keys still lack scancodes, assign some arbitrary ones to them now */
     for (scan = 0x60, keyc = min_keycode; keyc <= max_keycode; keyc++)
       if (keyc2vkey[keyc]&&!keyc2scan[keyc]) {
-	char *ksname;
+	const char *ksname;
 	keysym = XKeycodeToKeysym(display, keyc, 0);
 	ksname = XKeysymToString(keysym);
 	if (!ksname) ksname = "NoSymbol";
@@ -2445,7 +2445,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 	    }
 	else
 	    {
-	    char	*ksname;
+	    const char *ksname;
 
             wine_tsx11_lock();
 	    ksname = XKeysymToString(keysym);
