@@ -62,6 +62,8 @@ struct msi_control_tag
     HICON hIcon;
     LPWSTR tabnext;
     HMODULE hDll;
+    float progress_current;
+    float progress_max;
     WCHAR name[1];
 };
 
@@ -335,6 +337,8 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     control->hIcon = NULL;
     control->hDll = NULL;
     control->tabnext = strdupW( MSI_RecordGetString( rec, 11) );
+    control->progress_current = 0;
+    control->progress_max = 100;
 
     x = MSI_RecordGetInteger( rec, 4 );
     y = MSI_RecordGetInteger( rec, 5 );
@@ -479,11 +483,29 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     }
     else if( !lstrcmpW(attribute, szProgress) )
     {
-        /* FIXME: should forward to progress bar */
-        static int display_fixme = 1;
-        if (display_fixme)
-            FIXME("Attribute %s not being set\n", debugstr_w(attribute));
-        display_fixme = 0;
+        DWORD func, val;
+
+        func = MSI_RecordGetInteger( rec , 1 );
+        val = MSI_RecordGetInteger( rec , 2 );
+
+        switch (func)
+        {
+        case 0: /* init */
+            ctrl->progress_max = val;
+            ctrl->progress_current = 0;
+            SendMessageW(ctrl->hwnd, PBM_SETRANGE, 0, MAKELPARAM(0,100));
+            SendMessageW(ctrl->hwnd, PBM_SETPOS, 0, 0);
+            break;
+        case 1: /* FIXME: not sure what this is supposed to do */
+            break;
+        case 2: /* move */
+            ctrl->progress_current += val;
+            SendMessageW(ctrl->hwnd, PBM_SETPOS, 100*(ctrl->progress_current/ctrl->progress_max), 0);
+            break;
+        default:
+            ERR("Unknown progress message %ld\n", func);
+            break;
+        }
     }
     else
     {
