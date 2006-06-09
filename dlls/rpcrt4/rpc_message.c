@@ -688,10 +688,9 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   if (!bind->server) {
     /* save the connection, so the response can be read from it */
     pMsg->ReservedForRuntime = conn;
-    return RPC_S_OK;
+    return status;
   }
   RPCRT4_CloseBinding(bind, conn);
-  status = RPC_S_OK;
 
   return status;
 }
