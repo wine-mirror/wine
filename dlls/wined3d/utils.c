@@ -95,7 +95,18 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_CxV8U8);
 #undef FMT_TO_STR
   default:
-    FIXME("Unrecognized %u D3DFORMAT!\n", fmt);
+    {
+      char fourcc[5];
+      fourcc[0] = (char)(fmt);
+      fourcc[1] = (char)(fmt >> 8);
+      fourcc[2] = (char)(fmt >> 16);
+      fourcc[3] = (char)(fmt >> 24);
+      fourcc[4] = 0;
+      if( isprint(fourcc[0]) && isprint(fourcc[1]) && isprint(fourcc[2]) && isprint(fourcc[3]) )
+        FIXME("Unrecognized %u (as fourcc: %s) D3DFORMAT!\n", fmt, fourcc);
+      else
+        FIXME("Unrecognized %u D3DFORMAT!\n", fmt);
+    }
     return "unrecognized";
   }
 }
