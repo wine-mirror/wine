@@ -735,6 +735,134 @@ static void test_GetPrinterDriverDirectory(void)
     HeapFree( GetProcessHeap(), 0, buffer);
 }
 
+/* ##### */
+
+static void test_GetPrintProcessorDirectory(void)
+{
+    LPBYTE  buffer = NULL;
+    DWORD   cbBuf = 0;
+    DWORD   pcbNeeded = 0;
+    BOOL    res;
+
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA(NULL, NULL, 1, NULL, 0, &cbBuf);
+    /* The deactivated Spooler is catched here on NT3.51 */
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "returned %d with %ld (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
+        res, GetLastError());
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, cbBuf*2);
+    if(buffer == NULL)  return;
+
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA(NULL, NULL, 1, buffer, cbBuf, &pcbNeeded);
+    ok(res, "returned %d with %ld (expected '!= 0')\n", res, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    buffer[0] = '\0';
+    res = GetPrintProcessorDirectoryA(NULL, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
+    ok(res, "returned %d with %ld (expected '!= 0')\n", res, GetLastError());
+ 
+    /* Buffer to small */
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA( NULL, NULL, 1, buffer, cbBuf-1, &pcbNeeded);
+    ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        "returned %d with %ld (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
+        res, GetLastError());
+
+#if 0
+    /* XPsp2: the programm will crash here, when the spooler is not running  */
+    /*        GetPrinterDriverDirectory has the same bug */
+    pcbNeeded = 0;
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA( NULL, NULL, 1, NULL, cbBuf, &pcbNeeded);
+#endif
+
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA( NULL, NULL, 1, buffer, cbBuf, NULL);
+    /* NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
+    ok( res || (GetLastError() == RPC_X_NULL_REF_POINTER),
+        "returned %d with %ld (expected '!= 0' or '0' with " \
+        "RPC_X_NULL_REF_POINTER)\n", res, GetLastError());
+
+
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
+    /* NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
+    ok( res || (GetLastError() == RPC_X_NULL_REF_POINTER),
+        "returned %d with %ld (expected '!= 0' or '0' with " \
+        "RPC_X_NULL_REF_POINTER)\n", res, GetLastError());
+
+ 
+    /* with a valid buffer, but level is invalid */
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA(NULL, NULL, 2, buffer, cbBuf, &pcbNeeded);
+    if (res && buffer[0])
+    {
+        /* Level is ignored in win9x*/
+        trace("invalid level (2) was ignored\n");
+    }
+    else
+    {
+        ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
+            "returned %d with %ld (expected '0' with ERROR_INVALID_LEVEL)\n",
+            res, GetLastError());
+    }
+
+    /* Empty environment is the same as the default environment */
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA(NULL, "", 1, buffer, cbBuf*2, &pcbNeeded);
+    ok(res, "returned %d with %ld (expected '!= 0')\n", res, GetLastError());
+
+    /* "Windows 4.0" is valid for win9x and NT */
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA(NULL, env_win9x_case, 1, buffer, cbBuf*2, &pcbNeeded);
+    ok(res, "returned %d with %ld (expected '!= 0')\n", res, GetLastError());
+
+
+    /* "Windows NT x86" is invalid for win9x */
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA(NULL, env_x86, 1, buffer, cbBuf*2, &pcbNeeded);
+    ok( res || (GetLastError() == ERROR_INVALID_ENVIRONMENT), 
+        "returned %d with %ld (expected '!= 0' or '0' with " \
+        "ERROR_INVALID_ENVIRONMENT)\n", res, GetLastError());
+
+    /* invalid on all Systems */
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA(NULL, "invalid_env", 1, buffer, cbBuf*2, &pcbNeeded);
+    ok( !res && (GetLastError() == ERROR_INVALID_ENVIRONMENT), 
+        "returned %d with %ld (expected '0' with ERROR_INVALID_ENVIRONMENT)\n",
+        res, GetLastError());
+
+    /* Empty servername is the same as the local computer */
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA("", NULL, 1, buffer, cbBuf*2, &pcbNeeded);
+    ok(res, "returned %d with %ld (expected '!= 0')\n", res, GetLastError());
+
+    /* invalid on all Systems */
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetPrintProcessorDirectoryA("\\invalid_server", NULL, 1, buffer, cbBuf*2, &pcbNeeded);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER), 
+        "returned %d with %ld (expected '0' with ERROR_INVALID_PARAMETER)\n",
+        res, GetLastError());
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+}
+
+/* ##### */
+
 static void test_OpenPrinter(void)
 {
     PRINTER_DEFAULTSA defaults;
@@ -1172,6 +1300,7 @@ START_TEST(info)
     test_EnumMonitors(); 
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
+    test_GetPrintProcessorDirectory();
     test_OpenPrinter();
     test_GetPrinterDriver();
     test_SetDefaultPrinter();
