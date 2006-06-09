@@ -621,6 +621,8 @@ void pshader_texldl(WINED3DSHADERVECTOR* d) {
 }
 
 /* Prototype */
+void pshader_hw_cnd(SHADER_OPCODE_ARG* arg);
+void pshader_hw_cmp(SHADER_OPCODE_ARG* arg);
 void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
 void pshader_hw_tex(SHADER_OPCODE_ARG* arg);
 void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg);
@@ -662,8 +664,8 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_DST,  "dst",  "DST", 3, pshader_dst, pshader_hw_map2gl, NULL, 0, 0},
     {D3DSIO_LRP,  "lrp",  "LRP", 4, pshader_lrp, pshader_hw_map2gl, shader_glsl_lrp, 0, 0},
     {D3DSIO_FRC,  "frc",  "FRC", 2, pshader_frc, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
-    {D3DSIO_CND,  "cnd",  GLNAME_REQUIRE_GLSL, 4, pshader_cnd, NULL, shader_glsl_cnd, D3DPS_VERSION(1,1), D3DPS_VERSION(1,4)},
-    {D3DSIO_CMP,  "cmp",  GLNAME_REQUIRE_GLSL, 4, pshader_cmp, NULL, shader_glsl_cmp, D3DPS_VERSION(1,1), D3DPS_VERSION(3,0)},
+    {D3DSIO_CND,  "cnd",  NULL, 4, pshader_cnd, pshader_hw_cnd, shader_glsl_cnd, D3DPS_VERSION(1,1), D3DPS_VERSION(1,4)},
+    {D3DSIO_CMP,  "cmp",  NULL, 4, pshader_cmp, pshader_hw_cmp, shader_glsl_cmp, D3DPS_VERSION(1,2), D3DPS_VERSION(3,0)},
     {D3DSIO_POW,  "pow",  "POW", 3, pshader_pow,  NULL, shader_glsl_map2gl, 0, 0},
     {D3DSIO_CRS,  "crs",  "XPS", 3, pshader_crs,  NULL, shader_glsl_map2gl, 0, 0},
     /* TODO: xyz normalise can be performed as VS_ARB using one temporary register,
@@ -992,8 +994,53 @@ void pshader_set_version(
       }
 }
 
+void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
+
+    SHADER_BUFFER* buffer = arg->buffer;
+    char dst_wmask[20];
+    char dst_name[50];
+    char src_name[3][50];
+
+    /* FIXME: support output modifiers */
+
+    /* Handle output register */
+    get_register_name(arg->dst, dst_name, arg->reg_maps->constantsF);
+    get_write_mask(arg->dst, dst_wmask);
+    strcat(dst_name, dst_wmask);
+
+    /* Generate input register names (with modifiers) */
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0], arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[1], 1, src_name[1], arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[2], 2, src_name[2], arg->reg_maps->constantsF);
+    
+    shader_addline(buffer, "ADD TMP, -%s, coefdiv.x;\n", src_name[0]);
+    shader_addline(buffer, "CMP %s, TMP, %s, %s;\n", dst_name, src_name[1], src_name[2]);
+}
+
+void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
+
+    SHADER_BUFFER* buffer = arg->buffer;
+    char dst_wmask[20];
+    char dst_name[50];
+    char src_name[3][50];
+
+    /* FIXME: support output modifiers */
+
+    /* Handle output register */
+    get_register_name(arg->dst, dst_name, arg->reg_maps->constantsF);
+    get_write_mask(arg->dst, dst_wmask);
+    strcat(dst_name, dst_wmask);
+
+    /* Generate input register names (with modifiers) */
+    pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src_name[0], arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[1], 1, src_name[1], arg->reg_maps->constantsF);
+    pshader_gen_input_modifier_line(buffer, arg->src[2], 2, src_name[2], arg->reg_maps->constantsF);
+
+    shader_addline(buffer, "CMP %s, %s, %s, %s;\n", dst_name, 
+        src_name[0], src_name[2], src_name[1]);
+}
+
 /* Map the opcode 1-to-1 to the GL code */
-/* FIXME: fix CMP/CND, get rid of this switch */
 void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
      CONST SHADER_OPCODE* curOpcode = arg->opcode;
@@ -1045,28 +1092,15 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
           get_write_mask(dst, output_wmask);
           strcat(operands[0], output_wmask);
 
-          switch(curOpcode->opcode) {
-              case D3DSIO_CMP:
-                  sprintf(tmpLine, "CMP%s %s, %s, %s, %s;\n", (saturate ? "_SAT" : ""),
-                      operands[0], operands[1], operands[3], operands[2]);
-              break;
-            case D3DSIO_CND:
-                  shader_addline(buffer, "ADD TMP, -%s, coefdiv.x;\n", operands[1]);
-                  sprintf(tmpLine, "CMP%s %s, TMP, %s, %s;\n", (saturate ? "_SAT" : ""),
-                      operands[0], operands[2], operands[3]);
-              break;
-
-              default:
-                  if (saturate && (shift == 0))
-                      strcat(tmpLine, "_SAT");
-                  strcat(tmpLine, " ");
-                  strcat(tmpLine, operands[0]);
-                  for (i = 1; i < curOpcode->num_params; i++) {
-                      strcat(tmpLine, ", ");
-                      strcat(tmpLine, operands[i]);
-                  }
-                  strcat(tmpLine,";\n");
+          if (saturate && (shift == 0))
+             strcat(tmpLine, "_SAT");
+          strcat(tmpLine, " ");
+          strcat(tmpLine, operands[0]);
+          for (i = 1; i < curOpcode->num_params; i++) {
+              strcat(tmpLine, ", ");
+              strcat(tmpLine, operands[i]);
           }
+          strcat(tmpLine,";\n");
           shader_addline(buffer, tmpLine);
 
           /* A shift requires another line. */
