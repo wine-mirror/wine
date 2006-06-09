@@ -1820,23 +1820,9 @@ TMStubImpl_Invoke(
     HeapFree(GetProcessHeap(), 0, args);
 
     xmsg->cbBuffer	= buf.curoff;
-    if (rpcchanbuf)
-    {
-        hres = IRpcChannelBuffer_GetBuffer(rpcchanbuf, xmsg, &This->iid);
-        if (hres != S_OK)
-            ERR("IRpcChannelBuffer_GetBuffer failed with error 0x%08lx\n", hres);
-    }
-    else
-    {
-        /* FIXME: remove this case when we start sending an IRpcChannelBuffer
-         * object with builtin OLE */
-        RPC_STATUS status = I_RpcGetBuffer((RPC_MESSAGE *)xmsg);
-        if (status != RPC_S_OK)
-        {
-            ERR("I_RpcGetBuffer failed with error %ld\n", status);
-            hres = E_FAIL;
-        }
-    }
+    hres = IRpcChannelBuffer_GetBuffer(rpcchanbuf, xmsg, &This->iid);
+    if (hres != S_OK)
+        ERR("IRpcChannelBuffer_GetBuffer failed with error 0x%08lx\n", hres);
 
     if (hres == S_OK)
         memcpy(xmsg->Buffer, buf.base, buf.curoff);
