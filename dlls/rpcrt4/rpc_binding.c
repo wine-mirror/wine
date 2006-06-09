@@ -865,8 +865,6 @@ RPC_STATUS RPC_ENTRY RpcBindingCopy(
   DestBinding->NetworkAddr = RPCRT4_strndupA(SrcBinding->NetworkAddr, -1);
   DestBinding->Endpoint = RPCRT4_strndupA(SrcBinding->Endpoint, -1);
 
-  DestBinding->FromConn = SrcBinding->FromConn;
-  SrcBinding->FromConn = NULL;
   if (SrcBinding->AuthInfo) RpcAuthInfo_AddRef(SrcBinding->AuthInfo);
   DestBinding->AuthInfo = SrcBinding->AuthInfo;
 
