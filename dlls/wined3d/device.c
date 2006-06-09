@@ -4397,13 +4397,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD S
     * Ok GForce say it's ok to use glTexParameter/glGetTexParameter(...).
      ******************/
     /** NOTE: States are appled in IWineD3DBaseTextre ApplyStateChanges and IWineD3DDevice SetupTextureStates**/
-    TRACE("(%p) Sampler(%ld), Type(%d) Value(%ld)\n",This, Sampler ,Type, Value);
-
     if(Sampler >  GL_LIMITS(samplers) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
-         FIXME("out of range %d %d sampler %ld type %u\n", GL_LIMITS(samplers), WINED3D_HIGHEST_SAMPLER_STATE, Sampler, Type);
+         FIXME("sampler %ld type %s(%u) is out of range [max_samplers=%d, highest_state=%d]\n",
+            Sampler, debug_d3dsamplerstate(Type), Type, GL_LIMITS(samplers), WINED3D_HIGHEST_SAMPLER_STATE);
         return WINED3DERR_INVALIDCALL;
     }
-    TRACE("Setting sampler %ld %d to %ld\n", Sampler, Type, Value);
+
+    TRACE("(%p) : Sampler=%ld, Type=%s(%d), Value=%ld\n", This, Sampler,
+        debug_d3dsamplerstate(Type), Type, Value);
     This->updateStateBlock->samplerState[Sampler][Type]         = Value;
     This->updateStateBlock->set.samplerState[Sampler][Type]     = Value;
     This->updateStateBlock->changed.samplerState[Sampler][Type] = Value;
