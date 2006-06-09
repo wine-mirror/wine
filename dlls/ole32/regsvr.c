@@ -501,6 +501,7 @@ static const struct regsvr_interface interface_list[] = {
     STD_INTERFACE_ENTRY(IRemUnknown),
     LCL_INTERFACE_ENTRY(IClientSecurity),
     LCL_INTERFACE_ENTRY(IServerSecurity),
+    STD_INTERFACE_ENTRY(ISequentialStream),
     { NULL }			/* list terminator */
 };
 
