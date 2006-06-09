@@ -89,11 +89,6 @@ static inline void call_freer(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemor
 {
     NDR_FREE m = NdrFreer[pFormat[0] & NDR_TABLE_MASK];
     if (m) m(pStubMsg, pMemory, pFormat);
-    else
-    {
-        FIXME("format type 0x%x not implemented\n", pFormat[0]);
-        RpcRaiseException(RPC_X_BAD_STUB_DATA);
-    }
 }
 
 static inline unsigned long call_memory_sizer(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
