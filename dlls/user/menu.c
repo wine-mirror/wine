@@ -4337,7 +4337,13 @@ HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
 BOOL WINAPI IsMenu(HMENU hmenu)
 {
     LPPOPUPMENU menu = MENU_GetMenu(hmenu);
-    return menu != NULL;
+
+    if (!menu)
+    {
+        SetLastError(ERROR_INVALID_MENU_HANDLE);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /**********************************************************************

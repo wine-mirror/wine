@@ -3604,6 +3604,138 @@ static void test_IsWindowUnicode(void)
     DestroyWindow(hwnd);
 }
 
+static void test_CreateWindow(void)
+{
+    HWND hwnd, parent;
+    HMENU hmenu;
+
+#define expect_menu(window, menu) \
+    SetLastError(0xdeadbeef); \
+    ok(GetMenu(window) == (HMENU)menu, "GetMenu error %ld\n", GetLastError())
+
+#define expect_style(window, style)\
+    ok(GetWindowLong(window, GWL_STYLE) == (style), "expected style %lx != %lx\n", (long)(style), GetWindowLong(window, GWL_STYLE))
+
+#define expect_ex_style(window, ex_style)\
+    ok(GetWindowLong(window, GWL_EXSTYLE) == (ex_style), "expected ex_style %lx != %lx\n", (long)(ex_style), GetWindowLong(window, GWL_EXSTYLE))
+
+    hmenu = CreateMenu();
+    assert(hmenu != 0);
+    parent = GetDesktopWindow();
+    assert(parent != 0);
+
+    SetLastError(0xdeadbeef);
+    ok(IsMenu(hmenu), "IsMenu error %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_CHILD,
+                           0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %ld\n", GetLastError());
+    expect_menu(hwnd, 1);
+    expect_style(hwnd, WS_CHILD);
+    expect_ex_style(hwnd, WS_EX_APPWINDOW);
+    DestroyWindow(hwnd);
+
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_CHILD | WS_CAPTION,
+                           0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %ld\n", GetLastError());
+    expect_menu(hwnd, 1);
+    expect_style(hwnd, WS_CHILD | WS_CAPTION);
+    expect_ex_style(hwnd, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
+    DestroyWindow(hwnd);
+
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(0, "static", NULL, WS_CHILD,
+                           0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %ld\n", GetLastError());
+    expect_menu(hwnd, 1);
+    expect_style(hwnd, WS_CHILD);
+    expect_ex_style(hwnd, 0);
+    DestroyWindow(hwnd);
+
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(0, "static", NULL, WS_CHILD | WS_CAPTION,
+                           0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %ld\n", GetLastError());
+    expect_menu(hwnd, 1);
+    expect_style(hwnd, WS_CHILD | WS_CAPTION);
+    expect_ex_style(hwnd, WS_EX_WINDOWEDGE);
+    DestroyWindow(hwnd);
+
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_POPUP,
+                           0, 0, 100, 100, parent, hmenu, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %ld\n", GetLastError());
+    expect_menu(hwnd, hmenu);
+    expect_style(hwnd, WS_POPUP | WS_CLIPSIBLINGS);
+    expect_ex_style(hwnd, WS_EX_APPWINDOW);
+    DestroyWindow(hwnd);
+    SetLastError(0xdeadbeef);
+    ok(!IsMenu(hmenu), "IsMenu should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %ld\n", GetLastError());
+
+    hmenu = CreateMenu();
+    assert(hmenu != 0);
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_POPUP | WS_CAPTION,
+                           0, 0, 100, 100, parent, hmenu, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %ld\n", GetLastError());
+    expect_menu(hwnd, hmenu);
+    expect_style(hwnd, WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS);
+    expect_ex_style(hwnd, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
+    DestroyWindow(hwnd);
+    SetLastError(0xdeadbeef);
+    ok(!IsMenu(hmenu), "IsMenu should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %ld\n", GetLastError());
+
+    hmenu = CreateMenu();
+    assert(hmenu != 0);
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_POPUP,
+                           0, 0, 100, 100, parent, hmenu, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %ld\n", GetLastError());
+    expect_menu(hwnd, hmenu);
+    expect_style(hwnd, WS_POPUP | WS_CLIPSIBLINGS);
+    expect_ex_style(hwnd, WS_EX_APPWINDOW);
+    DestroyWindow(hwnd);
+    SetLastError(0xdeadbeef);
+    ok(!IsMenu(hmenu), "IsMenu should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %ld\n", GetLastError());
+
+    hmenu = CreateMenu();
+    assert(hmenu != 0);
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(0, "static", NULL, WS_POPUP | WS_CAPTION,
+                           0, 0, 100, 100, parent, hmenu, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %ld\n", GetLastError());
+    expect_menu(hwnd, hmenu);
+    expect_style(hwnd, WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS);
+    expect_ex_style(hwnd, WS_EX_WINDOWEDGE);
+    DestroyWindow(hwnd);
+    SetLastError(0xdeadbeef);
+    ok(!IsMenu(hmenu), "IsMenu should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %ld\n", GetLastError());
+
+    hmenu = CreateMenu();
+    assert(hmenu != 0);
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(0, "static", NULL, WS_POPUP,
+                           0, 0, 100, 100, parent, hmenu, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %ld\n", GetLastError());
+    expect_menu(hwnd, hmenu);
+    expect_style(hwnd, WS_POPUP | WS_CLIPSIBLINGS);
+    expect_ex_style(hwnd, 0);
+    DestroyWindow(hwnd);
+    SetLastError(0xdeadbeef);
+    ok(!IsMenu(hmenu), "IsMenu should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %ld\n", GetLastError());
+
+#undef expect_menu
+#undef expect_style
+#undef expect_ex_style
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -3651,6 +3783,7 @@ START_TEST(win)
     test_capture_2();
     test_capture_3(hwndMain, hwndMain2);
 
+    test_CreateWindow();
     test_parent_owner();
     test_SetParent();
     test_shell_window();
