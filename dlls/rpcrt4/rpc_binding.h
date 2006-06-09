@@ -45,7 +45,7 @@ typedef struct _RpcConnection
   BOOL server;
   LPSTR NetworkAddr;
   LPSTR Endpoint;
-  struct protseq_ops *ops;
+  const struct protseq_ops *ops;
   USHORT MaxTransmissionSize;
   /* The active interface bound to server. */
   RPC_SYNTAX_IDENTIFIER ActiveInterface;
