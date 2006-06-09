@@ -24,12 +24,14 @@
  */
 
 #include "config.h"
+#include <stdio.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
 #endif
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
 
 /* Define the default light parameters as specified by MSDN */
@@ -238,6 +240,183 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
     glPopMatrix();
 }
 
+/**********************************************************
+ * GLSL helper functions follow
+ **********************************************************/
+
+/** Attach a GLSL pixel or vertex shader object to the shader program */
+static void attach_glsl_shader(IWineD3DDevice *iface, IWineD3DBaseShader* shader) {
+
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    GLhandleARB shaderObj = ((IWineD3DBaseShaderImpl*)shader)->baseShader.prgId;
+    if (This->stateBlock->shaderPrgId != 0 && shaderObj != 0) {
+        TRACE_(d3d_shader)("Attaching GLSL shader object %u to program %u\n", shaderObj, This->stateBlock->shaderPrgId);
+        GL_EXTCALL(glAttachObjectARB(This->stateBlock->shaderPrgId, shaderObj));
+        checkGLcall("glAttachObjectARB");
+    }
+}
+
+/** Sets the GLSL program ID for the given pixel and vertex shader combination.
+ * It sets the programId on the current StateBlock (because it should be called
+ * inside of the DrawPrimitive() part of the render loop).
+ *
+ * If a program for the given combination does not exist, create one, and store
+ * the program in the list.  If it creates a program, it will link the given 
+ * objects, too.
+ * 
+ * We keep the shader programs around on a list because linking
+ * shader objects together is an expensive operation.  It's much
+ * faster to loop through a list of pre-compiled & linked programs
+ * each time that the application sets a new pixel or vertex shader
+ * than it is to re-link them together at that time.
+ *
+ * The list will be deleted in IWineD3DDevice::Release().
+ */
+void set_glsl_shader_program(IWineD3DDevice *iface) {
+
+    IWineD3DDeviceImpl *This               = (IWineD3DDeviceImpl *)iface;
+    IWineD3DPixelShader  *pshader          = This->stateBlock->pixelShader;
+    IWineD3DVertexShader *vshader          = This->stateBlock->vertexShader;
+    struct glsl_shader_prog_link *curLink  = NULL;
+    struct glsl_shader_prog_link *newLink  = NULL;
+    struct list *ptr                       = NULL;
+    GLhandleARB programId                  = 0;
+    
+    if (NULL == vshader && NULL == pshader) {
+        /* No pixel or vertex shader specified */
+        This->stateBlock->shaderPrgId = 0;
+        return;
+    }
+    
+    ptr = list_head( &This->glsl_shader_progs );
+    while (ptr) {
+        /* At least one program exists - see if it matches our ps/vs combination */
+        curLink = LIST_ENTRY( ptr, struct glsl_shader_prog_link, entry );
+        if (vshader == curLink->vertexShader && pshader == curLink->pixelShader) {
+            /* Existing Program found, use it */
+            TRACE_(d3d_shader)("Found existing program (%u) for this vertex/pixel shader combination\n", 
+                   curLink->programId);
+            This->stateBlock->shaderPrgId = curLink->programId;
+            return;
+        }
+        /* This isn't the entry we need - try the next one */
+        ptr = list_next( &This->glsl_shader_progs, ptr );
+    }
+    
+    /* If we get to this point, then no matching program exists, so we create one */
+    programId = GL_EXTCALL(glCreateProgramObjectARB());
+    TRACE_(d3d_shader)("Created new GLSL shader program %u\n", programId);
+    This->stateBlock->shaderPrgId = programId;
+    
+    if (NULL != vshader) {
+        int i;
+        int max_attribs = 16;   /* TODO: Will this always be the case? It is at the moment... */
+        char tmp_name[10];
+       
+        attach_glsl_shader(iface, (IWineD3DBaseShader*)vshader);
+        
+        /* Bind vertex attributes to a corresponding index number to match
+         * the same index numbers as ARB_vertex_programs (makes loading
+         * vertex attributes simpler).  With this method, we can use the
+         * exact same code to load the attributes later for both ARB and 
+         * GLSL shaders.
+         * 
+         * We have to do this here because we need to know the Program ID
+         * in order to make the bindings work, and it has to be done prior
+         * to linking the GLSL program. */
+        for (i = 0; i < max_attribs; ++i) {
+             snprintf(tmp_name, sizeof(tmp_name), "attrib%i", i);
+             GL_EXTCALL(glBindAttribLocationARB(programId, i, tmp_name));
+        }
+        checkGLcall("glBindAttribLocationARB");
+    }
+    
+    if (NULL != pshader) {
+        attach_glsl_shader(iface, (IWineD3DBaseShader*)pshader);
+    }
+    
+    /* Link the program */
+    TRACE_(d3d_shader)("Linking GLSL shader program %u\n", programId);
+    GL_EXTCALL(glLinkProgramARB(programId));
+    print_glsl_info_log(&GLINFO_LOCATION, programId);
+    
+    /* Now, we add a list item to associate this program with the vertex and
+     * pixel shaders that it is attached to.
+     * 
+     * These list items will be deleted when the device is released.
+     */
+    newLink = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
+    newLink->programId    = programId;
+    newLink->pixelShader  = pshader;
+    newLink->vertexShader = vshader;
+    list_add_head( &This->glsl_shader_progs, &newLink->entry);
+ 
+    return;
+}
+
+/** Detach the GLSL pixel or vertex shader object from the shader program */
+static void detach_glsl_shader(IWineD3DDevice *iface, GLhandleARB shaderObj, GLhandleARB programId) {
+
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    if (shaderObj != 0 && programId != 0) {
+        TRACE_(d3d_shader)("Detaching GLSL shader object %u from program %u\n", shaderObj, programId);
+        GL_EXTCALL(glDetachObjectARB(programId, shaderObj));
+        checkGLcall("glDetachObjectARB");
+    }
+}
+
+/** Delete a GLSL shader program */
+static void delete_glsl_shader_program(IWineD3DDevice *iface, GLhandleARB obj) {
+
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    
+    if (obj != 0) {
+        TRACE_(d3d_shader)("Deleting GLSL shader program %u\n", obj);
+        GL_EXTCALL(glDeleteObjectARB(obj));
+        checkGLcall("glDeleteObjectARB");
+    }
+}
+
+/** Delete the list of linked programs this shader is associated with.
+ * Also at this point, check to see if there are any objects left attached
+ * to each GLSL program.  If not, delete the GLSL program object.
+ * This will be run when a device is released. */
+static void delete_glsl_shader_list(IWineD3DDevice* iface) {
+    
+    struct list *ptr                       = NULL;
+    struct glsl_shader_prog_link *curLink  = NULL;
+    IWineD3DDeviceImpl *This               = (IWineD3DDeviceImpl *)iface;
+    
+    int numAttached = 0;
+    int i;
+    GLhandleARB objList[2];   /* There should never be more than 2 objects attached 
+                                 (one pixel shader and one vertex shader at most) */
+    
+    ptr = list_head( &This->glsl_shader_progs );
+    while (ptr) {
+        /* First, get the current item,
+         * save the link to the next pointer, 
+         * detach and delete shader objects,
+         * then de-allocate the list item's memory */
+        curLink = LIST_ENTRY( ptr, struct glsl_shader_prog_link, entry );
+        ptr = list_next( &This->glsl_shader_progs, ptr );
+
+        /* See if this object is still attached to the program - it may have been detached already */
+        GL_EXTCALL(glGetAttachedObjectsARB(curLink->programId, 2, &numAttached, objList));
+        TRACE_(d3d_shader)("%i GLSL objects are currently attached to program %u\n", numAttached, curLink->programId);
+        for (i = 0; i < numAttached; i++) {
+            detach_glsl_shader(iface, objList[i], curLink->programId);
+        }
+        
+        delete_glsl_shader_program(iface, curLink->programId);
+
+        /* Free the memory for this list item */    
+        HeapFree(GetProcessHeap(), 0, curLink);
+    }
+}
+
+
 /* Apply the current values to the specified texture stage */
 void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD Sampler, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -387,6 +566,11 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         /* NOTE: You must release the parent if the object was created via a callback
         ** ***************************/
 
+        /* Delete any GLSL shader programs that may exist */
+        if (wined3d_settings.shader_mode == SHADER_GLSL) {
+            delete_glsl_shader_list(iface);
+        }
+    
         /* Release the update stateblock */
         if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
             if(This->updateStateBlock != This->stateBlock)
@@ -1736,6 +1920,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_P
     IWineD3DImpl_CheckGraphicsMemory();
 #endif
     LEAVE_GL();
+
+    /* Initialize our list of GLSL programs */
+    list_init(&This->glsl_shader_progs);
 
     { /* Set a default viewport */
         D3DVIEWPORT9 vp;
