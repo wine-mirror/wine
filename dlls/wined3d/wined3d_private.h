@@ -1317,6 +1317,25 @@ extern const SHADER_OPCODE* shader_get_opcode(
 /* ARB shader program Prototypes */
 extern void shader_hw_def(SHADER_OPCODE_ARG *arg);
 
+/** The following translate DirectX pixel/vertex shader opcodes to GLSL lines */
+extern void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_arith(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_mov(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_mad(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_mnxn(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_lrp(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_dot(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_rcp(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_cnd(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_compare(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_def(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_cmp(SHADER_OPCODE_ARG* arg);
+/** GLSL Pixel Shader Prototypes */
+extern void pshader_glsl_tex(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg);
+
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
  */
