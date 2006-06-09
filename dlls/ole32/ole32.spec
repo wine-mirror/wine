@@ -20,7 +20,7 @@
 @ stdcall CoFreeAllLibraries()
 @ stdcall CoFreeLibrary(long)
 @ stdcall CoFreeUnusedLibraries()
-@ stub CoGetCallContext           #@ stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
+@ stdcall CoGetCallContext(ptr ptr)
 @ stub CoGetCallerTID
 @ stdcall CoGetClassObject(ptr long ptr ptr ptr)
 @ stub CoGetCurrentLogicalThreadId
@@ -36,7 +36,7 @@
 @ stdcall CoGetState(ptr)
 @ stub CoGetTIDFromIPID
 @ stdcall CoGetTreatAsClass(ptr ptr)
-@ stub CoImpersonateClient
+@ stdcall CoImpersonateClient()
 @ stdcall CoInitialize(ptr)
 @ stdcall CoInitializeEx(ptr long)
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr)
@@ -49,7 +49,7 @@
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr)
 @ stdcall CoMarshalInterface(ptr ptr ptr long ptr long)
 @ stub CoQueryAuthenticationServices
-@ stub CoQueryClientBlanket
+@ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub CoQueryReleaseObject
 @ stub CoRegisterChannelHook
@@ -61,7 +61,7 @@
 @ stdcall CoReleaseMarshalData(ptr)
 @ stdcall CoReleaseServerProcess()
 @ stdcall CoResumeClassObjects()
-@ stub CoRevertToSelf             #@ stdcall () return 0,ERR_NOTIMPLEMENTED
+@ stdcall CoRevertToSelf()
 @ stdcall CoRevokeClassObject(long)
 @ stdcall CoRevokeMallocSpy()
 @ stdcall CoSetProxyBlanket(ptr long long wstr long long ptr long)
