@@ -1920,7 +1920,20 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
 
         TRACE("Loaded arrays\n");
 
-        /* TODO: Bind the correct GLSL shader program here. */
+        /* Bind the correct GLSL shader program based on the currently set vertex & pixel shaders. */
+        if (wined3d_settings.shader_mode == SHADER_GLSL) {
+            GLhandleARB programId;
+            
+            set_glsl_shader_program(iface);
+            programId = This->stateBlock->shaderPrgId;    
+
+            if (programId != 0) {
+                /* Start using this program ID */
+                TRACE_(d3d_shader)("Using GLSL program %u\n", programId);
+                GL_EXTCALL(glUseProgramObjectARB(programId));
+                checkGLcall("glUseProgramObjectARB");
+            } 
+        }
         
         if (useVertexShaderFunction) {
 
