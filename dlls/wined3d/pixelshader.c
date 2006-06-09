@@ -1290,7 +1290,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 
         /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
         if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
-            shader_addline(&buffer, "glFragColor = R0;\n");
+            shader_addline(&buffer, "gl_FragColor = R0;\n");
         shader_addline(&buffer, "}\n\0");
 
         TRACE("Compiling shader object %u\n", shader_obj);

@@ -575,10 +575,27 @@ void generate_glsl_declarations(
     /* Declare the constants (aka uniforms) */
     shader_addline(buffer, "uniform vec4 C[%u];\n", This->baseShader.limits.constant_float);
 
+    /* Declare texture samplers 
+     * TODO: Make this work for textures other than 2D */
+    for (i = 0; i < This->baseShader.limits.texture; i++) {
+        shader_addline(buffer, "uniform sampler2D mytex%lu;\n", i);
+    }
+    
     /* Declare address variables */
     for (i = 0; i < This->baseShader.limits.address; i++) {
         if (reg_maps->address & (1 << i))
             shader_addline(buffer, "ivec4 A%ld;\n", i);
+    }
+
+    /* Declare texture temporaries */
+    for (i = 0; i < This->baseShader.limits.texture; i++) {
+        shader_addline(buffer, "vec4 T%lu = gl_TexCoord[%lu];\n", i, i);
+    }
+
+    /* Declare temporary variables */
+    for(i = 0; i < This->baseShader.limits.temporary; i++) {
+        if (reg_maps->temporary & (1 << i))
+            shader_addline(buffer, "vec4 R%lu;\n", i);
     }
 
     /* Declare all named attributes (TODO: Add this to the reg_maps
@@ -587,11 +604,9 @@ void generate_glsl_declarations(
         shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
     }
 
-    /* Declare temporary variables */
-    for(i = 0; i < This->baseShader.limits.temporary; i++) {
-        if (reg_maps->temporary & (1 << i))
-            shader_addline(buffer, "vec4 R%lu;\n", i);
-    }
+    /* Temporary variables for matrix operations */
+    shader_addline(buffer, "vec4 tmp0;\n");
+    shader_addline(buffer, "vec4 tmp1;\n");
 
     /* Start the main program */
     shader_addline(buffer, "void main() {\n");
