@@ -1635,6 +1635,11 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
       *pCaps->StencilCaps |= D3DSTENCILCAPS_DECR  |
                              D3DSTENCILCAPS_INCR;
     }
+    if ( This->dxVersion > 8 &&
+        ( GL_SUPPORT(EXT_STENCIL_TWO_SIDE) ||
+            GL_SUPPORT(ATI_SEPARATE_STENCIL) ) ) {
+        *pCaps->StencilCaps |= D3DSTENCILCAPS_TWOSIDED;
+    }
 
     *pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
 

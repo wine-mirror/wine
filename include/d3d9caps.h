@@ -187,6 +187,7 @@
 #define D3DSTENCILCAPS_INVERT                    0x20
 #define D3DSTENCILCAPS_INCR                      0x40
 #define D3DSTENCILCAPS_DECR                      0x80
+#define D3DSTENCILCAPS_TWOSIDED                  0x100
 
 #define D3DTEXOPCAPS_DISABLE                     0x0000001
 #define D3DTEXOPCAPS_SELECTARG1                  0x0000002
