@@ -2573,6 +2573,7 @@ unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   SavedMemorySize = pStubMsg->MemorySize;
 
   Buffer = pStubMsg->Buffer;
+  pStubMsg->MemorySize = 0;
   esize = ComplexStructMemorySize(pStubMsg, pFormat);
   pStubMsg->Buffer = Buffer;
 
