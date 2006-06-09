@@ -161,7 +161,7 @@ void shader_glsl_get_register_name(
     SHADER_OPCODE_ARG* arg) {
 
     /* oPos, oFog and oPts in D3D */
-    const char* hwrastout_reg_names[] = { "gl_Position", "gl_FogCoord", "gl_PointSize" };
+    const char* hwrastout_reg_names[] = { "gl_Position", "gl_FogFragCoord", "gl_PointSize" };
 
     DWORD reg = param & D3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
