@@ -70,8 +70,8 @@ typedef struct {
   void **func_ptr; /* where to store the value of glXGetProcAddressARB */
 } OpenGL_extension;
 
-extern OpenGL_extension extension_registry[];
-extern int extension_registry_size;
+extern const OpenGL_extension extension_registry[];
+extern const int extension_registry_size;
 
 const GLubyte* internal_glGetString(GLenum name);
 void internal_glGetIntegerv(GLenum pname, GLint* params);

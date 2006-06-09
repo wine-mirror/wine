@@ -683,25 +683,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 # First, generate the function pointers
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
-    print EXT ConvertType($func_ref->[1]), " (*$ext_prefix$func_ref->[0])( ";
-    for (my $i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
-	my $type = ConvertType($func_ref->[2]->[$i]->[0]);
-	print EXT "$type";
-	if ($i != $#{@{$func_ref->[2]}}) {
-	    print EXT ", ";
-	} else {
-	    print EXT " ";
-	}
-    }
-    print EXT 'void ' if ($#{@{$func_ref->[2]}} < 0);
-    print EXT ") = (void *) 0xdeadbeef;\n";
-}
-
-# Then, the function prototypes
-print EXT "\n\n/* The function prototypes */\n";
-foreach (sort keys %ext_functions) {
-    my $func_ref = $ext_functions{$_};
-    print EXT ConvertType($func_ref->[1]), " WINAPI wine_$func_ref->[0]( ";
+    print EXT "static ", ConvertType($func_ref->[1]), " (*$ext_prefix$func_ref->[0])( ";
     for (my $i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
 	my $type = ConvertType($func_ref->[2]->[$i]->[0]);
 	print EXT "$type";
@@ -715,11 +697,19 @@ foreach (sort keys %ext_functions) {
     print EXT ");\n";
 }
 
+# The thunks themselves....
+print EXT "\n/* The thunks themselves....*/";
+foreach (sort keys %ext_functions) {
+    my $string = GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe);
+
+    print EXT "\nstatic $string";
+}
+
 # Then the table giving the string <-> function correspondance */
 print EXT "\n\n/* The table giving the correspondance between names and functions */\n";
 my @tmp = keys %ext_functions;
-print EXT "int extension_registry_size = ", ($#tmp + 1), ";\n";
-print EXT "OpenGL_extension extension_registry[", ($#tmp + 1), "] = {\n";
+print EXT "const int extension_registry_size = ", ($#tmp + 1), ";\n";
+print EXT "const OpenGL_extension extension_registry[", ($#tmp + 1), "] = {\n";
 my $i = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
@@ -732,11 +722,4 @@ foreach (sort keys %ext_functions) {
 }
 print EXT "};\n";
 
-# And, finally, the thunks themselves....
-print EXT "\n/* The thunks themselves....*/";
-foreach (sort keys %ext_functions) {
-    my $string = GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe);
-
-    print EXT "\n$string";
-}
 close(EXT);
