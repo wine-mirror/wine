@@ -1171,13 +1171,12 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     SYSTEM_INFO si;
 #ifdef linux
     FILE *f;
-#endif
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
-    int *tmp;
-    int size_sys;
-    int mib[2] = { CTL_HW };
-#endif
-#ifdef sun
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+    int *tmp, size_sys, mib[2];
+#elif defined(__APPLE__)
+    int *tmp, mib[2];
+    size_t size_sys;
+#elif defined(sun)
     long pagesize,maxpages,freepages,swapspace,swapfree;
     struct anoninfo swapinf;
     int rval;
@@ -1243,7 +1242,8 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
                                       / (TotalPhysical / 100);
         }
     }
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__APPLE__)
+    mib[0] = CTL_HW;
     mib[1] = HW_PHYSMEM;
     sysctl(mib, 2, NULL, &size_sys, NULL, 0);
     tmp = malloc(size_sys * sizeof(int));
