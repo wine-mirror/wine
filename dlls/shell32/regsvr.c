@@ -31,8 +31,9 @@
 #include "ole2.h"
 #include "shlguid.h"
 #include "shell32_main.h"
-#include "shfldr.h"
 #include "shresdef.h"
+#include "initguid.h"
+#include "shfldr.h"
 
 #include "wine/debug.h"
 
