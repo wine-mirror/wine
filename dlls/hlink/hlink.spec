@@ -12,7 +12,7 @@
 15 stub HlinkResolveStringForData
 16 stub OleSaveToStreamEx
 18 stub HlinkParseDisplayName
-20 stub HlinkQueryCreateFromData
+20 stdcall HlinkQueryCreateFromData(ptr)
 21 stub HlinkSetSpecialReference
 22 stub HlinkGetSpecialReference
 23 stub HlinkCreateShortcut
