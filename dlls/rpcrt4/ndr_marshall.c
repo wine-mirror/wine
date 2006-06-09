@@ -1642,6 +1642,16 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   while (*pFormat != RPC_FC_END) {
     switch (*pFormat) {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+      TRACE("byte=%d <= %p\n", *(WORD*)pMemory, pMemory);
+      memcpy(pStubMsg->Buffer, pMemory, 1);
+      pStubMsg->Buffer += 1;
+      pMemory += 1;
+      break;
+    case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
       TRACE("short=%d <= %p\n", *(WORD*)pMemory, pMemory);
@@ -1706,6 +1716,16 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   while (*pFormat != RPC_FC_END) {
     switch (*pFormat) {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+      memcpy(pMemory, pStubMsg->Buffer, 1);
+      TRACE("byte=%d => %p\n", *(WORD*)pMemory, pMemory);
+      pStubMsg->Buffer += 1;
+      pMemory += 1;
+      break;
+    case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
       memcpy(pMemory, pStubMsg->Buffer, 2);
@@ -1771,6 +1791,14 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
   while (*pFormat != RPC_FC_END) {
     switch (*pFormat) {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+      pStubMsg->BufferLength += 1;
+      pMemory += 1;
+      break;
+    case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
       pStubMsg->BufferLength += 2;
@@ -1829,6 +1857,13 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
 
   while (*pFormat != RPC_FC_END) {
     switch (*pFormat) {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+      pMemory += 1;
+      break;
+    case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
       pMemory += 2;
@@ -1882,6 +1917,14 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 
   while (*pFormat != RPC_FC_END) {
     switch (*pFormat) {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+      size += 1;
+      pStubMsg->Buffer += 1;
+      break;
+    case RPC_FC_WCHAR:
     case RPC_FC_SHORT:
     case RPC_FC_USHORT:
       size += 2;
