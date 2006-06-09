@@ -47,7 +47,26 @@ static long working_mask = 0;
 
 static const DEV_NODES sDeviceNodes[] = {
   {"/dev/fd", DRIVE_REMOVABLE},
+  {"/dev/pf", DRIVE_REMOVABLE},
+  {"/dev/aztcd", DRIVE_CDROM},
+  {"/dev/bpcd", DRIVE_CDROM},
   {"/dev/cdrom", DRIVE_CDROM},
+  {"/dev/cdu535", DRIVE_CDROM},
+  {"/dev/cdwriter", DRIVE_CDROM},
+  {"/dev/cm205cd", DRIVE_CDROM},
+  {"/dev/cm206cd", DRIVE_CDROM},
+  {"/dev/gscd", DRIVE_CDROM},
+  {"/dev/hitcd", DRIVE_CDROM},
+  {"/dev/iseries/vcd", DRIVE_CDROM},
+  {"/dev/lmscd", DRIVE_CDROM},
+  {"/dev/mcd", DRIVE_CDROM},
+  {"/dev/optcd", DRIVE_CDROM},
+  {"/dev/pcd", DRIVE_CDROM},
+  {"/dev/sbpcd", DRIVE_CDROM},
+  {"/dev/scd", DRIVE_CDROM},
+  {"/dev/sjcd", DRIVE_CDROM},
+  {"/dev/sonycd", DRIVE_CDROM},
+  {"/dev/sr", DRIVE_CDROM},
   {"",0}
 };
 
