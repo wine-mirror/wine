@@ -284,7 +284,7 @@ static HRESULT SAFEARRAY_DestroyData(SAFEARRAY *psa, ULONG ulStartCell)
 
     if (psa->fFeatures & (FADF_UNKNOWN|FADF_DISPATCH))
     {
-      LPUNKNOWN *lpUnknown = (LPUNKNOWN *)psa->pvData + ulStartCell * psa->cbElements;
+      LPUNKNOWN *lpUnknown = (LPUNKNOWN *)psa->pvData + ulStartCell;
 
       while(ulCellCount--)
       {
@@ -310,7 +310,7 @@ static HRESULT SAFEARRAY_DestroyData(SAFEARRAY *psa, ULONG ulStartCell)
     }
     else if (psa->fFeatures & FADF_BSTR)
     {
-      BSTR* lpBstr = (BSTR*)psa->pvData + ulStartCell * psa->cbElements;
+      BSTR* lpBstr = (BSTR*)psa->pvData + ulStartCell;
 
       while(ulCellCount--)
       {
@@ -321,7 +321,7 @@ static HRESULT SAFEARRAY_DestroyData(SAFEARRAY *psa, ULONG ulStartCell)
     }
     else if (psa->fFeatures & FADF_VARIANT)
     {
-      VARIANT* lpVariant = (VARIANT*)psa->pvData + ulStartCell * psa->cbElements;
+      VARIANT* lpVariant = (VARIANT*)psa->pvData + ulStartCell;
 
       while(ulCellCount--)
       {
@@ -1234,13 +1234,17 @@ HRESULT WINAPI SafeArrayDestroyData(SAFEARRAY *psa)
   if (psa->cLocks)
     return DISP_E_ARRAYISLOCKED; /* Can't delete a locked array */
 
-  /* If static, keep pvData and don't free */
-  if (psa->pvData && !(psa->fFeatures & FADF_STATIC))
-  {
-    /* Delete the actual item data */
-    if (FAILED(SAFEARRAY_DestroyData(psa, 0)))
-      return E_UNEXPECTED;
+  /* Delete the actual item data */
+  if (FAILED(SAFEARRAY_DestroyData(psa, 0)))
+    return E_UNEXPECTED;
 
+  if (psa->pvData)
+  {
+    if (psa->fFeatures & FADF_STATIC)
+    {
+      ZeroMemory(psa->pvData, SAFEARRAY_GetCellCount(psa) * psa->cbElements);
+      return S_OK;
+    }
     /* If this is not a vector, free the data memory block */
     if (!(psa->fFeatures & FADF_CREATEVECTOR))
     {

@@ -335,7 +335,25 @@ static void test_safearray(void)
         ok(hres == S_OK, "SAPOI failed with hres %lx\n", hres);
         SafeArrayAccessData(a, (void **)&ptr2);
         ok(ptr1 - ptr2 == 14, "SAPOI got wrong ptr\n");
+        *(WORD *)ptr1 = 0x55aa;
         SafeArrayUnaccessData(a);
+
+        bound.cElements = 10;
+        bound.lLbound = 1;
+        SafeArrayRedim(a, &bound);
+        ptr1 = NULL;
+        SafeArrayPtrOfIndex(a, indices, (void **)&ptr1);
+        ok(*(WORD *)ptr1 == 0x55aa, "Data not preserved when resizing array\n");
+
+        bound.cElements = 10;
+        bound.lLbound = 0;
+        SafeArrayRedim(a, &bound);
+        SafeArrayPtrOfIndex(a, indices, (void **)&ptr1);
+        ok(*(WORD *)ptr1 == 0, "Expanded area not zero-initialized\n");
+
+        indices[1] = 1;
+        SafeArrayPtrOfIndex(a, indices, (void **)&ptr1);
+        ok(*(WORD *)ptr1 == 0x55aa, "Data not preserved when resizing array\n");
 
 	bounds[0].cElements = 0;	bounds[0].lLbound =  1;
 	bounds[1].cElements =  2;	bounds[1].lLbound = 23;
@@ -1130,6 +1148,39 @@ static void test_SafeArrayGetPutElement_IUnknown(void)
   ok(tunk_xref == 2,"Failed to decrement refcount of iface.\n");
 }
 
+static void test_SafeArrayRedim_IUnknown(void)
+{
+  SAFEARRAYBOUND sab;
+  LONG indices[1];
+  SAFEARRAY *sa;
+  HRESULT hres;
+  LPUNKNOWN value;
+
+  sab.lLbound = 1;
+  sab.cElements = 2;
+  sa = SafeArrayCreate(VT_UNKNOWN, 1, &sab);
+  ok(sa != NULL, "UNKNOWN test couldn't create array\n");
+  if (!sa)
+    return;
+
+  ok(sa->cbElements == sizeof(LPUNKNOWN), "LPUNKNOWN size mismatch\n");
+  if (sa->cbElements != sizeof(LPUNKNOWN))
+    return;
+
+  indices[0] = 2;
+  xtunk_iface.lpvtbl = &xtunk_vtbl;
+  value = (LPUNKNOWN)&xtunk_iface;
+  tunk_xref = 1;
+  hres = SafeArrayPutElement(sa, indices, value);
+  ok(hres == S_OK, "Failed to put IUnknown element hres 0x%lx\n", hres);
+  ok(tunk_xref == 2,"Failed to increment refcount of iface.\n");
+  sab.cElements = 1;
+  hres = SafeArrayRedim(sa, &sab);
+  ok(hres == S_OK, "Failed to shrink array hres 0x%lx\n", hres);
+  ok(tunk_xref == 1, "Failed to decrement refcount\n");
+  SafeArrayDestroy(sa);
+}
+
 static void test_SafeArrayGetPutElement_VARIANT(void)
 {
   SAFEARRAYBOUND sab;
@@ -1597,7 +1648,7 @@ static void test_SafeArrayDestroyData (void)
   SAFEARRAYBOUND sab;
   SAFEARRAY *sa;
   HRESULT hres;
-  int value = 0;
+  int value = 0xdeadbeef;
   long index[1];
   void HUGEP *temp_pvData;
 
@@ -1610,13 +1661,15 @@ static void test_SafeArrayDestroyData (void)
   index[0] = 1;
   SafeArrayPutElement (sa, index, &value);
 
-/* SafeArrayDestroyData shouldn't do anything if FADF_STATIC is set. */
+/* SafeArrayDestroyData shouldn't free pvData if FADF_STATIC is set. */
   sa->fFeatures |= FADF_STATIC;
   temp_pvData = sa->pvData;
   hres = SafeArrayDestroyData(sa);
   ok(hres == S_OK, "SADData FADF_STATIC failed, error code %lx.\n",hres);
   ok(sa->pvData == temp_pvData, "SADData FADF_STATIC: pvData=%p, expected %p (fFeatures = %d).\n",
     sa->pvData, temp_pvData, sa->fFeatures);
+  SafeArrayGetElement (sa, index, &value);
+  ok(value == 0, "Data not cleared after SADData\n");
 
 /* Clear FADF_STATIC, now really destroy the data. */
   sa->fFeatures ^= FADF_STATIC;
@@ -1655,5 +1708,6 @@ START_TEST(safearray)
     test_SafeArrayGetPutElement();
     test_SafeArrayGetPutElement_BSTR();
     test_SafeArrayGetPutElement_IUnknown();
+    test_SafeArrayRedim_IUnknown();
     test_SafeArrayGetPutElement_VARIANT();
 }
