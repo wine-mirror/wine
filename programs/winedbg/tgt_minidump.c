@@ -190,7 +190,8 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     if (MiniDumpReadDumpStream(data->mapping, SystemInfoStream, &dir, &stream, &size))
     {
         MINIDUMP_SYSTEM_INFO*   msi = (MINIDUMP_SYSTEM_INFO*)stream;
-        char                    *str, tmp[128];
+        const char *str;
+        char tmp[128];
 
         dbg_printf("WineDbg starting on minidump on pid %lu\n", pid);
         switch (msi->ProcessorArchitecture)
