@@ -28,6 +28,7 @@
 #include "winerror.h"
 
 static HKEY hkey_main;
+static DWORD GLE;
 
 static const char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
 static const char * sTestpath2 = "%FOO%\\subdir1";
@@ -58,6 +59,82 @@ static void setup_main_key(void)
     if (RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey_main )) delete_key( hkey_main );
 
     assert (!RegCreateKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey_main ));
+}
+
+static void test_hkey_main_Value_A(LPCSTR name, LPCSTR string)
+{
+    DWORD ret, type, cbData;
+    DWORD str_byte_len, full_byte_len;
+
+    ret = RegQueryValueExA(hkey_main, name, NULL, &type, NULL, &cbData);
+    GLE = GetLastError();
+    ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %ld, GLE=%ld\n", ret, GLE);
+    if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return;
+
+    str_byte_len = lstrlenA(string) + 1;
+    full_byte_len = sizeof(string);
+    ok(type == REG_SZ, "RegQueryValueExA returned type %ld\n", type);
+    ok(cbData == full_byte_len || cbData == str_byte_len,
+        "cbData=%ld instead of %ld or %ld\n", cbData, full_byte_len, str_byte_len);
+}
+
+static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string)
+{
+    DWORD ret, type, cbData;
+    DWORD str_byte_len, full_byte_len;
+
+    ret = RegQueryValueExW(hkey_main, name, NULL, &type, NULL, &cbData);
+    GLE = GetLastError();
+    ok(ret == ERROR_SUCCESS, "RegQueryValueExW failed: %ld, GLE=%ld\n", ret, GLE);
+    if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return;
+
+    str_byte_len = (lstrlenW(string) + 1) * sizeof(WCHAR);
+    full_byte_len = sizeof(string);
+    ok(type == REG_SZ, "RegQueryValueExW returned type %ld\n", type);
+    ok(cbData == full_byte_len || cbData == str_byte_len,
+        "cbData=%ld instead of %ld or %ld\n", cbData, full_byte_len, str_byte_len);
+}
+
+static void test_set_value(void)
+{
+    DWORD ret;
+
+    const WCHAR name1W[] =   {'C','l','e','a','n','S','i','n','g','l','e','S','t','r','i','n','g', 0};
+    const WCHAR name2W[] =   {'S','o','m','e','I','n','t','r','a','Z','e','r','o','e','d','S','t','r','i','n','g', 0};
+    const WCHAR string1W[] = {'T','h','i','s','N','e','v','e','r','B','r','e','a','k','s', 0};
+    const WCHAR string2W[] = {'T','h','i','s', 0 ,'B','r','e','a','k','s', 0 , 0 ,'A', 0 , 0 , 0 , 0 ,'L','o','t', 0 , 0 , 0 , 0};
+
+    const char name1A[] =   "CleanSingleString";
+    const char name2A[] =   "SomeIntraZeroedString";
+    const char string1A[] = "ThisNeverBreaks";
+    const char string2A[] = "This\0Breaks\0\0A\0\0\0Lot\0\0\0\0";
+
+    /* test RegSetValueExA with normal string */
+    ret = RegSetValueExA(hkey_main, name1A, 0, REG_SZ, (LPBYTE)string1A, sizeof(string1A));
+    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %ld, GLE=%ld\n", ret, GetLastError());
+    test_hkey_main_Value_A(name1A, string1A);
+    test_hkey_main_Value_W(name1W, string1W);
+
+    /* test RegSetValueExA with intrazeroed string */
+    ret = RegSetValueExA(hkey_main, name2A, 0, REG_SZ, (LPBYTE)string2A, sizeof(string2A));
+    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %ld, GLE=%ld\n", ret, GetLastError());
+    test_hkey_main_Value_A(name1A, string1A);
+    test_hkey_main_Value_W(name1W, string1W);
+
+    /* 9x doesn't support W-calls, so don't test them then */
+    if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return; 
+
+    /* test RegSetValueExW with normal string */
+    ret = RegSetValueExW(hkey_main, name1W, 0, REG_SZ, (LPBYTE)string1W, sizeof(string1W));
+    ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %ld, GLE=%ld\n", ret, GetLastError());
+    test_hkey_main_Value_A(name1A, string1A);
+    test_hkey_main_Value_W(name1W, string1W);
+
+    /* test RegSetValueExW with intrazeroed string */
+    ret = RegSetValueExW(hkey_main, name2W, 0, REG_SZ, (LPBYTE)string2W, sizeof(string2W));
+    ok(ret == ERROR_SUCCESS, "RegSetValueExW failed: %ld, GLE=%ld\n", ret, GetLastError());
+    test_hkey_main_Value_A(name1A, string1A);
+    test_hkey_main_Value_W(name1W, string1W);
 }
 
 static void create_test_entries(void)
@@ -654,6 +731,7 @@ static void test_regconnectregistry( void)
 START_TEST(registry)
 {
     setup_main_key();
+    test_set_value();
     create_test_entries();
     test_enum_value();
     test_query_value_ex();
