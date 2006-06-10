@@ -24,7 +24,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 /* IDirect3DBaseTexture8 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 iface, REFIID riid, LPVOID *ppobj) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -41,7 +41,7 @@ HRESULT WINAPI IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 i
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DBaseTexture8Impl_AddRef(LPDIRECT3DBASETEXTURE8 iface) {
+static ULONG WINAPI IDirect3DBaseTexture8Impl_AddRef(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -50,7 +50,7 @@ ULONG WINAPI IDirect3DBaseTexture8Impl_AddRef(LPDIRECT3DBASETEXTURE8 iface) {
     return ref;
 }
 
-ULONG WINAPI IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 iface) {
+static ULONG WINAPI IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -65,49 +65,49 @@ ULONG WINAPI IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 iface) {
 }
 
 /* IDirect3DBaseTexture8 IDirect3DResource8 Interface follow: */
-HRESULT WINAPI IDirect3DBaseTexture8Impl_GetDevice(LPDIRECT3DBASETEXTURE8 iface, IDirect3DDevice8 **ppDevice) {
+static HRESULT WINAPI IDirect3DBaseTexture8Impl_GetDevice(LPDIRECT3DBASETEXTURE8 iface, IDirect3DDevice8 **ppDevice) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
     return IDirect3DResource8Impl_GetDevice((LPDIRECT3DRESOURCE8) This, ppDevice);
 }
 
-HRESULT WINAPI IDirect3DBaseTexture8Impl_SetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
+static HRESULT WINAPI IDirect3DBaseTexture8Impl_SetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
     return IWineD3DBaseTexture_SetPrivateData(This->wineD3DBaseTexture, refguid, pData, SizeOfData, Flags);
 }
 
-HRESULT WINAPI IDirect3DBaseTexture8Impl_GetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
+static HRESULT WINAPI IDirect3DBaseTexture8Impl_GetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
     return IWineD3DBaseTexture_GetPrivateData(This->wineD3DBaseTexture, refguid, pData, pSizeOfData);
 }
 
-HRESULT WINAPI IDirect3DBaseTexture8Impl_FreePrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid) {
+static HRESULT WINAPI IDirect3DBaseTexture8Impl_FreePrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
     return IWineD3DBaseTexture_FreePrivateData(This->wineD3DBaseTexture, refguid);
 }
 
-DWORD WINAPI IDirect3DBaseTexture8Impl_SetPriority(LPDIRECT3DBASETEXTURE8 iface, DWORD PriorityNew) {
+static DWORD WINAPI IDirect3DBaseTexture8Impl_SetPriority(LPDIRECT3DBASETEXTURE8 iface, DWORD PriorityNew) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
     return IWineD3DBaseTexture_SetPriority(This->wineD3DBaseTexture, PriorityNew);
 }
 
-DWORD WINAPI IDirect3DBaseTexture8Impl_GetPriority(LPDIRECT3DBASETEXTURE8 iface) {
+static DWORD WINAPI IDirect3DBaseTexture8Impl_GetPriority(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
     return IWineD3DBaseTexture_GetPriority(This->wineD3DBaseTexture);
 }
 
-void WINAPI IDirect3DBaseTexture8Impl_PreLoad(LPDIRECT3DBASETEXTURE8 iface) {
+static void WINAPI IDirect3DBaseTexture8Impl_PreLoad(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
@@ -115,7 +115,7 @@ void WINAPI IDirect3DBaseTexture8Impl_PreLoad(LPDIRECT3DBASETEXTURE8 iface) {
     return;
 }
 
-D3DRESOURCETYPE WINAPI IDirect3DBaseTexture8Impl_GetType(LPDIRECT3DBASETEXTURE8 iface) {
+static D3DRESOURCETYPE WINAPI IDirect3DBaseTexture8Impl_GetType(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
@@ -123,21 +123,21 @@ D3DRESOURCETYPE WINAPI IDirect3DBaseTexture8Impl_GetType(LPDIRECT3DBASETEXTURE8 
 }
 
 /* IDirect3DBaseTexture8 Interface follow: */
-DWORD  WINAPI IDirect3DBaseTexture8Impl_SetLOD(LPDIRECT3DBASETEXTURE8 iface, DWORD LODNew) {
+static DWORD WINAPI IDirect3DBaseTexture8Impl_SetLOD(LPDIRECT3DBASETEXTURE8 iface, DWORD LODNew) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
     return IWineD3DBaseTexture_SetLOD(This->wineD3DBaseTexture, LODNew);
 }
 
-DWORD WINAPI IDirect3DBaseTexture8Impl_GetLOD(LPDIRECT3DBASETEXTURE8 iface) {
+static DWORD WINAPI IDirect3DBaseTexture8Impl_GetLOD(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
     return IWineD3DBaseTexture_GetLOD(This->wineD3DBaseTexture);
 }
 
-DWORD WINAPI IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEXTURE8 iface) {
+static DWORD WINAPI IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEXTURE8 iface) {
     IDirect3DBaseTexture8Impl *This = (IDirect3DBaseTexture8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 

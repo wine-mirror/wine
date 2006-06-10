@@ -25,7 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 /* IDirect3DPixelShader8 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DPixelShader8Impl_QueryInterface(IDirect3DPixelShader8 *iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirect3DPixelShader8Impl_QueryInterface(IDirect3DPixelShader8 *iface, REFIID riid, LPVOID *ppobj) {
     IDirect3DPixelShader8Impl *This = (IDirect3DPixelShader8Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -40,7 +40,7 @@ HRESULT WINAPI IDirect3DPixelShader8Impl_QueryInterface(IDirect3DPixelShader8 *i
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DPixelShader8Impl_AddRef(IDirect3DPixelShader8 *iface) {
+static ULONG WINAPI IDirect3DPixelShader8Impl_AddRef(IDirect3DPixelShader8 *iface) {
     IDirect3DPixelShader8Impl *This = (IDirect3DPixelShader8Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -49,7 +49,7 @@ ULONG WINAPI IDirect3DPixelShader8Impl_AddRef(IDirect3DPixelShader8 *iface) {
     return ref;
 }
 
-ULONG WINAPI IDirect3DPixelShader8Impl_Release(IDirect3DPixelShader8 * iface) {
+static ULONG WINAPI IDirect3DPixelShader8Impl_Release(IDirect3DPixelShader8 * iface) {
     IDirect3DPixelShader8Impl *This = (IDirect3DPixelShader8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -63,7 +63,7 @@ ULONG WINAPI IDirect3DPixelShader8Impl_Release(IDirect3DPixelShader8 * iface) {
 }
 
 /* IDirect3DPixelShader8 Interface follow: */
-HRESULT WINAPI IDirect3DPixelShader8Impl_GetDevice(IDirect3DPixelShader8 *iface, IDirect3DDevice8 **ppDevice) {
+static HRESULT WINAPI IDirect3DPixelShader8Impl_GetDevice(IDirect3DPixelShader8 *iface, IDirect3DDevice8 **ppDevice) {
     IDirect3DPixelShader8Impl *This = (IDirect3DPixelShader8Impl *)iface;
     IWineD3DDevice *myDevice = NULL;
 
@@ -76,7 +76,7 @@ HRESULT WINAPI IDirect3DPixelShader8Impl_GetDevice(IDirect3DPixelShader8 *iface,
     return D3D_OK;
 }
 
-HRESULT WINAPI IDirect3DPixelShader8Impl_GetFunction(IDirect3DPixelShader8 *iface, VOID *pData, UINT *pSizeOfData) {
+static HRESULT WINAPI IDirect3DPixelShader8Impl_GetFunction(IDirect3DPixelShader8 *iface, VOID *pData, UINT *pSizeOfData) {
     IDirect3DPixelShader8Impl *This = (IDirect3DPixelShader8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DPixelShader_GetFunction(This->wineD3DPixelShader, pData, pSizeOfData);

@@ -24,7 +24,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 /* IDirect3DResource8 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DResource8Impl_QueryInterface(LPDIRECT3DRESOURCE8 iface, REFIID riid, LPVOID* ppobj) {
+static HRESULT WINAPI IDirect3DResource8Impl_QueryInterface(LPDIRECT3DRESOURCE8 iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -39,7 +39,7 @@ HRESULT WINAPI IDirect3DResource8Impl_QueryInterface(LPDIRECT3DRESOURCE8 iface, 
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DResource8Impl_AddRef(LPDIRECT3DRESOURCE8 iface) {
+static ULONG WINAPI IDirect3DResource8Impl_AddRef(LPDIRECT3DRESOURCE8 iface) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -48,7 +48,7 @@ ULONG WINAPI IDirect3DResource8Impl_AddRef(LPDIRECT3DRESOURCE8 iface) {
     return ref;
 }
 
-ULONG WINAPI IDirect3DResource8Impl_Release(LPDIRECT3DRESOURCE8 iface) {
+static ULONG WINAPI IDirect3DResource8Impl_Release(LPDIRECT3DRESOURCE8 iface) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -74,44 +74,44 @@ HRESULT WINAPI IDirect3DResource8Impl_GetDevice(LPDIRECT3DRESOURCE8 iface, IDire
     return D3D_OK;
 }
 
-HRESULT WINAPI IDirect3DResource8Impl_SetPrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
+static HRESULT WINAPI IDirect3DResource8Impl_SetPrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DResource_SetPrivateData(This->wineD3DResource, refguid, pData, SizeOfData, Flags);
 }
 
-HRESULT WINAPI IDirect3DResource8Impl_GetPrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
+static HRESULT WINAPI IDirect3DResource8Impl_GetPrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DResource_GetPrivateData(This->wineD3DResource, refguid, pData, pSizeOfData);
 }
 
-HRESULT WINAPI IDirect3DResource8Impl_FreePrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid) {
+static HRESULT WINAPI IDirect3DResource8Impl_FreePrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DResource_FreePrivateData(This->wineD3DResource, refguid);
 }
 
-DWORD  WINAPI IDirect3DResource8Impl_SetPriority(LPDIRECT3DRESOURCE8 iface, DWORD PriorityNew) {
+static DWORD  WINAPI IDirect3DResource8Impl_SetPriority(LPDIRECT3DRESOURCE8 iface, DWORD PriorityNew) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DResource_SetPriority(This->wineD3DResource, PriorityNew);
 }
 
-DWORD WINAPI IDirect3DResource8Impl_GetPriority(LPDIRECT3DRESOURCE8 iface) {
+static DWORD WINAPI IDirect3DResource8Impl_GetPriority(LPDIRECT3DRESOURCE8 iface) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DResource_GetPriority(This->wineD3DResource);
 }
 
-void WINAPI IDirect3DResource8Impl_PreLoad(LPDIRECT3DRESOURCE8 iface) {
+static void WINAPI IDirect3DResource8Impl_PreLoad(LPDIRECT3DRESOURCE8 iface) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     IWineD3DResource_PreLoad(This->wineD3DResource);
     return;
 }
 
-D3DRESOURCETYPE WINAPI IDirect3DResource8Impl_GetType(LPDIRECT3DRESOURCE8 iface) {
+static D3DRESOURCETYPE WINAPI IDirect3DResource8Impl_GetType(LPDIRECT3DRESOURCE8 iface) {
     IDirect3DResource8Impl *This = (IDirect3DResource8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DResource_GetType(This->wineD3DResource);

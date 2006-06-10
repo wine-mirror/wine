@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 /* NOTE: DirectX8 doesn't export a IDirect3DStateBlock8, the interface is used internally to keep d3d8 and d3d9 as simila as possible */
 /* IDirect3DStateBlock8 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DStateBlock8Impl_QueryInterface(IDirect3DStateBlock8 *iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirect3DStateBlock8Impl_QueryInterface(IDirect3DStateBlock8 *iface, REFIID riid, LPVOID *ppobj) {
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -42,7 +42,7 @@ HRESULT WINAPI IDirect3DStateBlock8Impl_QueryInterface(IDirect3DStateBlock8 *ifa
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DStateBlock8Impl_AddRef(IDirect3DStateBlock8 *iface) {
+static ULONG WINAPI IDirect3DStateBlock8Impl_AddRef(IDirect3DStateBlock8 *iface) {
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -51,7 +51,7 @@ ULONG WINAPI IDirect3DStateBlock8Impl_AddRef(IDirect3DStateBlock8 *iface) {
     return ref;
 }
 
-ULONG WINAPI IDirect3DStateBlock8Impl_Release(IDirect3DStateBlock8 *iface) {
+static ULONG WINAPI IDirect3DStateBlock8Impl_Release(IDirect3DStateBlock8 *iface) {
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -65,19 +65,19 @@ ULONG WINAPI IDirect3DStateBlock8Impl_Release(IDirect3DStateBlock8 *iface) {
 }
 
 /* IDirect3DStateBlock8 Interface follow: */
-HRESULT WINAPI IDirect3DStateBlock8Impl_GetDevice(IDirect3DStateBlock8 *iface, IDirect3DDevice8 **ppDevice) {
+static HRESULT WINAPI IDirect3DStateBlock8Impl_GetDevice(IDirect3DStateBlock8 *iface, IDirect3DDevice8 **ppDevice) {
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
     TRACE("(%p) Relay\n", This); 
     return IDirect3DResource8Impl_GetDevice((LPDIRECT3DRESOURCE8) This, ppDevice);
 }
 
-HRESULT WINAPI IDirect3DStateBlock8Impl_Capture(IDirect3DStateBlock8 *iface) {
+static HRESULT WINAPI IDirect3DStateBlock8Impl_Capture(IDirect3DStateBlock8 *iface) {
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
     TRACE("(%p) Relay\n", This); 
     return IWineD3DStateBlock_Capture(This->wineD3DStateBlock);
 }
 
-HRESULT WINAPI IDirect3DStateBlock8Impl_Apply(IDirect3DStateBlock8 *iface) {
+static HRESULT WINAPI IDirect3DStateBlock8Impl_Apply(IDirect3DStateBlock8 *iface) {
     IDirect3DStateBlock8Impl *This = (IDirect3DStateBlock8Impl *)iface;
     TRACE("(%p) Relay\n", This); 
     return IWineD3DStateBlock_Apply(This->wineD3DStateBlock);

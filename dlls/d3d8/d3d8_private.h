@@ -192,11 +192,6 @@ struct IDirect3DDevice8Impl
 /* ---------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl;
-
-/*****************************************************************************
  * IDirect3DVolume8 implementation structure
  */
 struct IDirect3DVolume8Impl

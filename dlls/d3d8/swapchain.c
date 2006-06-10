@@ -24,7 +24,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 /* IDirect3DSwapChain IUnknown parts follow: */
-HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface, REFIID riid, LPVOID* ppobj)
+static HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface, REFIID riid, LPVOID* ppobj)
 {
     IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
 
@@ -40,7 +40,7 @@ HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DSwapChain8Impl_AddRef(LPDIRECT3DSWAPCHAIN8 iface) {
+static ULONG WINAPI IDirect3DSwapChain8Impl_AddRef(LPDIRECT3DSWAPCHAIN8 iface) {
     IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -49,7 +49,7 @@ ULONG WINAPI IDirect3DSwapChain8Impl_AddRef(LPDIRECT3DSWAPCHAIN8 iface) {
     return ref;
 }
 
-ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) {
+static ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) {
     IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -64,13 +64,13 @@ ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) {
 }
 
 /* IDirect3DSwapChain8 parts follow: */
-HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion) {
+static HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion) {
     IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DSwapChain_Present(This->wineD3DSwapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, 0);
 }
 
-HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer) {
+static HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer) {
     IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
     HRESULT hrc = D3D_OK;
     IWineD3DSurface *mySurface = NULL;

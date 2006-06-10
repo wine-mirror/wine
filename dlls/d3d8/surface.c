@@ -24,7 +24,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 /* IDirect3DSurface8 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface, REFIID riid, LPVOID *ppobj) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -40,7 +40,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface, RE
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DSurface8Impl_AddRef(LPDIRECT3DSURFACE8 iface) {
+static ULONG WINAPI IDirect3DSurface8Impl_AddRef(LPDIRECT3DSURFACE8 iface) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     IUnknown *containerParent = NULL;
 
@@ -59,7 +59,7 @@ ULONG WINAPI IDirect3DSurface8Impl_AddRef(LPDIRECT3DSURFACE8 iface) {
     }
 }
 
-ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
+static ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     IUnknown *containerParent = NULL;
 
@@ -85,31 +85,31 @@ ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
 }
 
 /* IDirect3DSurface8 IDirect3DResource8 Interface follow: */
-HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect3DDevice8 **ppDevice) {
+static HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect3DDevice8 **ppDevice) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     return IDirect3DResource8Impl_GetDevice((LPDIRECT3DRESOURCE8) This, ppDevice);
 }
 
-HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, CONST void *pData, DWORD SizeOfData, DWORD Flags) {
+static HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, CONST void *pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DSurface_SetPrivateData(This->wineD3DSurface, refguid, pData, SizeOfData, Flags);
 }
 
-HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, void *pData, DWORD *pSizeOfData) {
+static HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, void *pData, DWORD *pSizeOfData) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DSurface_GetPrivateData(This->wineD3DSurface, refguid, pData, pSizeOfData);
 }
 
-HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid) {
+static HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DSurface_FreePrivateData(This->wineD3DSurface, refguid);
 }
 
 /* IDirect3DSurface8 Interface follow: */
-HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFIID riid, void **ppContainer) {
+static HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFIID riid, void **ppContainer) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     HRESULT res;
     IUnknown *IWineContainer = NULL;
@@ -154,7 +154,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFI
     return res;
 }
 
-HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFACE_DESC *pDesc) {
+static HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFACE_DESC *pDesc) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     WINED3DSURFACE_DESC    wined3ddesc;
     TRACE("(%p) Relay\n", This);
@@ -173,14 +173,14 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFAC
     return IWineD3DSurface_GetDesc(This->wineD3DSurface, &wined3ddesc);
 }
 
-HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT *pLockedRect, CONST RECT *pRect, DWORD Flags) {
+static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT *pLockedRect, CONST RECT *pRect, DWORD Flags) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     TRACE("(%p) calling IWineD3DSurface_LockRect %p %p %p %ld\n", This, This->wineD3DSurface, pLockedRect, pRect, Flags);
     return IWineD3DSurface_LockRect(This->wineD3DSurface, (WINED3DLOCKED_RECT *) pLockedRect, pRect, Flags);
 }
 
-HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
+static HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DSurface_UnlockRect(This->wineD3DSurface);
