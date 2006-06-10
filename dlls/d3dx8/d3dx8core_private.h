@@ -54,23 +54,9 @@ struct ID3DXBufferImpl
   DWORD          bufferSize;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI ID3DXBufferImpl_QueryInterface(LPD3DXBUFFER iface, REFIID refiid, LPVOID *obj);
-extern ULONG WINAPI   ID3DXBufferImpl_AddRef(LPD3DXBUFFER iface);
-extern ULONG WINAPI   ID3DXBufferImpl_Release(LPD3DXBUFFER iface);
-
-/* ID3DXBuffer: */
-extern LPVOID WINAPI ID3DXBufferImpl_GetBufferPointer(LPD3DXBUFFER iface);
-extern DWORD WINAPI  ID3DXBufferImpl_GetBufferSize(LPD3DXBUFFER iface);
-
 /* --------- */
 /* ID3DXFont */
 /* --------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const ID3DXFontVtbl D3DXFont_Vtbl;
 
 /*****************************************************************************
  * ID3DXFontImpl implementation structure
@@ -83,13 +69,5 @@ struct ID3DXFontImpl
 
   /* ID3DXFont fields */
 };
-
-/* IUnknown: */
-extern HRESULT WINAPI ID3DXFontImpl_QueryInterface(LPD3DXFONT iface, REFIID refiid, LPVOID *obj);
-extern ULONG WINAPI   ID3DXFontImpl_AddRef(LPD3DXFONT iface);
-extern ULONG WINAPI   ID3DXFontImpl_Release(LPD3DXFONT iface);
-
-/* ID3DXFont: */
-extern INT WINAPI     ID3DXFontImpl_DrawTextA(LPCSTR pString, INT Count, LPRECT pRect, DWORD Format, D3DCOLOR Color); 
 
 #endif /*__WINE_D3DX8CORE_PRIVATE_H */
