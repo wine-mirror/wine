@@ -216,7 +216,7 @@ typedef struct {
 } ITStorageImpl;
 
 
-HRESULT WINAPI ITStorageImpl_QueryInterface(
+static HRESULT WINAPI ITStorageImpl_QueryInterface(
     IITStorage* iface,
     REFIID riid,
     void** ppvObject)
@@ -234,7 +234,7 @@ HRESULT WINAPI ITStorageImpl_QueryInterface(
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI ITStorageImpl_AddRef(
+static ULONG WINAPI ITStorageImpl_AddRef(
     IITStorage* iface)
 {
     ITStorageImpl *This = (ITStorageImpl *)iface;
@@ -242,7 +242,7 @@ ULONG WINAPI ITStorageImpl_AddRef(
     return InterlockedIncrement(&This->ref);
 }
 
-ULONG WINAPI ITStorageImpl_Release(
+static ULONG WINAPI ITStorageImpl_Release(
     IITStorage* iface)
 {
     ITStorageImpl *This = (ITStorageImpl *)iface;
@@ -256,7 +256,7 @@ ULONG WINAPI ITStorageImpl_Release(
     return ref;
 }
 
-HRESULT WINAPI ITStorageImpl_StgCreateDocfile(
+static HRESULT WINAPI ITStorageImpl_StgCreateDocfile(
     IITStorage* iface,
     const WCHAR* pwcsName,
     DWORD grfMode,
@@ -272,7 +272,7 @@ HRESULT WINAPI ITStorageImpl_StgCreateDocfile(
                                 0, reserved, ppstgOpen);
 }
 
-HRESULT WINAPI ITStorageImpl_StgCreateDocfileOnILockBytes(
+static HRESULT WINAPI ITStorageImpl_StgCreateDocfileOnILockBytes(
     IITStorage* iface,
     ILockBytes* plkbyt,
     DWORD grfMode,
@@ -284,7 +284,7 @@ HRESULT WINAPI ITStorageImpl_StgCreateDocfileOnILockBytes(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITStorageImpl_StgIsStorageFile(
+static HRESULT WINAPI ITStorageImpl_StgIsStorageFile(
     IITStorage* iface,
     const WCHAR* pwcsName)
 {
@@ -293,7 +293,7 @@ HRESULT WINAPI ITStorageImpl_StgIsStorageFile(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITStorageImpl_StgIsStorageILockBytes(
+static HRESULT WINAPI ITStorageImpl_StgIsStorageILockBytes(
     IITStorage* iface,
     ILockBytes* plkbyt)
 {
@@ -302,7 +302,7 @@ HRESULT WINAPI ITStorageImpl_StgIsStorageILockBytes(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITStorageImpl_StgOpenStorage(
+static HRESULT WINAPI ITStorageImpl_StgOpenStorage(
     IITStorage* iface,
     const WCHAR* pwcsName,
     IStorage* pstgPriority,
@@ -320,7 +320,7 @@ HRESULT WINAPI ITStorageImpl_StgOpenStorage(
                                 snbExclude, reserved, ppstgOpen);
 }
 
-HRESULT WINAPI ITStorageImpl_StgOpenStorageOnILockBytes(
+static HRESULT WINAPI ITStorageImpl_StgOpenStorageOnILockBytes(
     IITStorage* iface,
     ILockBytes* plkbyt,
     IStorage* pStgPriority,
@@ -334,7 +334,7 @@ HRESULT WINAPI ITStorageImpl_StgOpenStorageOnILockBytes(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITStorageImpl_StgSetTimes(
+static HRESULT WINAPI ITStorageImpl_StgSetTimes(
     IITStorage* iface,
     WCHAR* lpszName,
     FILETIME* pctime,
@@ -346,7 +346,7 @@ HRESULT WINAPI ITStorageImpl_StgSetTimes(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITStorageImpl_SetControlData(
+static HRESULT WINAPI ITStorageImpl_SetControlData(
     IITStorage* iface,
     PITS_Control_Data pControlData)
 {
@@ -355,7 +355,7 @@ HRESULT WINAPI ITStorageImpl_SetControlData(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITStorageImpl_DefaultControlData(
+static HRESULT WINAPI ITStorageImpl_DefaultControlData(
     IITStorage* iface,
     PITS_Control_Data* ppControlData)
 {
@@ -364,7 +364,7 @@ HRESULT WINAPI ITStorageImpl_DefaultControlData(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITStorageImpl_Compact(
+static HRESULT WINAPI ITStorageImpl_Compact(
     IITStorage* iface,
     const WCHAR* pwcsName,
     ECompactionLev iLev)
