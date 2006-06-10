@@ -25,18 +25,26 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "excpt.h"
 
 #include "objbase.h"
-
 #include "rpcproxy.h"
 
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 #include "cpsf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define STUB_HEADER(This) (((CInterfaceStubHeader*)((This)->lpVtbl))[-1])
+
+static WINE_EXCEPTION_FILTER(stub_filter)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_CONTINUE_SEARCH;
+    return EXCEPTION_EXECUTE_HANDLER;
+}
 
 HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
                                        LPUNKNOWN pUnkServer,
@@ -142,13 +150,29 @@ HRESULT WINAPI CStdStubBuffer_Invoke(LPRPCSTUBBUFFER iface,
 {
   CStdStubBuffer *This = (CStdStubBuffer *)iface;
   DWORD dwPhase = STUB_UNMARSHAL;
+  HRESULT hr = S_OK;
+
   TRACE("(%p)->Invoke(%p,%p)\n",This,pMsg,pChannel);
 
-  if (STUB_HEADER(This).pDispatchTable)
-    STUB_HEADER(This).pDispatchTable[pMsg->iMethod](iface, pChannel, (PRPC_MESSAGE)pMsg, &dwPhase);
-  else /* pure interpreted */
-    NdrStubCall2(iface, pChannel, (PRPC_MESSAGE)pMsg, &dwPhase);
-  return S_OK;
+  __TRY
+  {
+    if (STUB_HEADER(This).pDispatchTable)
+      STUB_HEADER(This).pDispatchTable[pMsg->iMethod](iface, pChannel, (PRPC_MESSAGE)pMsg, &dwPhase);
+    else /* pure interpreted */
+      NdrStubCall2(iface, pChannel, (PRPC_MESSAGE)pMsg, &dwPhase);
+  }
+  __EXCEPT(stub_filter)
+  {
+    DWORD dwExceptionCode = GetExceptionCode();
+    WARN("a stub call failed with exception 0x%08lx (%ld)\n", dwExceptionCode, dwExceptionCode);
+    if (FAILED(dwExceptionCode))
+      hr = dwExceptionCode;
+    else
+      hr = HRESULT_FROM_WIN32(dwExceptionCode);
+  }
+  __ENDTRY
+
+  return hr;
 }
 
 LPRPCSTUBBUFFER WINAPI CStdStubBuffer_IsIIDSupported(LPRPCSTUBBUFFER iface,
