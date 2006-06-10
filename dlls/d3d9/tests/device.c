@@ -64,7 +64,7 @@ static void check_mipmap_levels(
     if (texture) IUnknown_Release( texture );
 }
 
-void test_mipmap_levels(void) 
+static void test_mipmap_levels(void)
 {
 
     HRESULT               hr;
@@ -103,7 +103,7 @@ void test_mipmap_levels(void)
     DestroyWindow( hwnd );
 }
 
-void test_swapchain(void)
+static void test_swapchain(void)
 {
     HRESULT                      hr;
     HWND                         hwnd               = NULL;
@@ -247,7 +247,7 @@ void test_swapchain(void)
     DestroyWindow( hwnd );
 }
 
-void test_refcount(void)
+static void test_refcount(void)
 {
     HRESULT                      hr;
     HWND                         hwnd               = NULL;
