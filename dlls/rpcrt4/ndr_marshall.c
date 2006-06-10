@@ -2538,6 +2538,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
 
   Buffer = pStubMsg->Buffer;
+  pStubMsg->MemorySize = 0;
   esize = ComplexStructMemorySize(pStubMsg, pFormat);
   pStubMsg->Buffer = Buffer;
 
