@@ -3202,6 +3202,28 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat);
 
     bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+
+    if ((cvarray_type == RPC_FC_C_CSTRING) ||
+        (cvarray_type == RPC_FC_C_WSTRING))
+    {
+        ULONG i;
+        /* strings must always have null terminating bytes */
+        if (bufsize < esize)
+        {
+            ERR("invalid string length of %ld\n", pStubMsg->ActualCount);
+            RpcRaiseException(RPC_S_INVALID_BOUND);
+            return NULL;
+        }
+        for (i = bufsize - esize; i < bufsize; i++)
+            if (pStubMsg->Buffer[i] != 0)
+            {
+                ERR("string not null-terminated at byte position %ld, data is 0x%x\n",
+                    i, pStubMsg->Buffer[i]);
+                RpcRaiseException(RPC_S_INVALID_BOUND);
+                return NULL;
+            }
+    }
+
     /* copy the array data */
     memcpy(*ppMemory + pCVStructFormat->memory_size, pStubMsg->Buffer,
            bufsize);
