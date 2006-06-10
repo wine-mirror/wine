@@ -54,7 +54,7 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
  ****************************************************************************/
 
 /* Prototypes */
-void shader_glsl_add_param(
+static void shader_glsl_add_param(
     SHADER_OPCODE_ARG* arg,
     const DWORD param,
     const DWORD addr_token,
@@ -84,7 +84,7 @@ static const char* shift_glsl_tab[] = {
 };
 
 /** Print the beginning of the generated GLSL string. example: "reg_name.xyzw = vec4("  */
-void shader_glsl_add_dst(DWORD param, const char* reg_name, const char* reg_mask, char* outStr) {
+static void shader_glsl_add_dst(DWORD param, const char* reg_name, const char* reg_mask, char* outStr) {
 
     int shift = (param & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
 
@@ -97,7 +97,7 @@ void shader_glsl_add_dst(DWORD param, const char* reg_name, const char* reg_mask
 }
 
 /* Generate a GLSL parameter that does the input modifier computation and return the input register/mask to use */
-void shader_glsl_gen_modifier (
+static void shader_glsl_gen_modifier (
     const DWORD instr,
     const char *in_reg,
     const char *in_regswizzle,
@@ -153,7 +153,7 @@ void shader_glsl_gen_modifier (
 
 /** Writes the GLSL variable name that corresponds to the register that the
  * DX opcode parameter is trying to access */
-void shader_glsl_get_register_name(
+static void shader_glsl_get_register_name(
     const DWORD param,
     const DWORD addr_token,
     char* regstr,
@@ -270,7 +270,7 @@ void shader_glsl_get_register_name(
 }
 
 /* Writes the GLSL writemask for the destination register */
-void shader_glsl_get_output_register_swizzle(
+static void shader_glsl_get_output_register_swizzle(
     const DWORD param,
     char *write_mask) {
    
@@ -284,7 +284,7 @@ void shader_glsl_get_output_register_swizzle(
     }
 }
 
-void shader_glsl_get_input_register_swizzle(
+static void shader_glsl_get_input_register_swizzle(
     const DWORD param,
     BOOL is_color,
     char *reg_mask) {
@@ -337,7 +337,7 @@ void shader_glsl_get_input_register_swizzle(
 /** From a given parameter token, generate the corresponding GLSL string.
  * Also, return the actual register name and swizzle in case the 
  * caller needs this information as well. */
-void shader_glsl_add_param(
+static void shader_glsl_add_param(
     SHADER_OPCODE_ARG* arg,
     const DWORD param,
     const DWORD addr_token,

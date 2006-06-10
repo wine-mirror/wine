@@ -85,7 +85,7 @@ because of this the bulk of the software pipeline can be shared between pixel an
  * vshader functions software VM
  */
 
-void vshader_add(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_add(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = s0->x + s1->x;
   d->y = s0->y + s1->y;
   d->z = s0->z + s1->z;
@@ -94,19 +94,19 @@ void vshader_add(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
 	         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_dp3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_dp3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = d->y = d->z = d->w = s0->x * s1->x + s0->y * s1->y + s0->z * s1->z;
   VSTRACE(("executing dp3: s0=(%f, %f, %f, %f) s1=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_dp4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_dp4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = d->y = d->z = d->w = s0->x * s1->x + s0->y * s1->y + s0->z * s1->z + s0->w * s1->w;
   VSTRACE(("executing dp4: s0=(%f, %f, %f, %f) s1=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_dst(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_dst(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = 1.0f;
   d->y = s0->y * s1->y;
   d->z = s0->z;
@@ -115,7 +115,7 @@ void vshader_dst(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
 	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_expp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_expp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
   union {
     float f;
     DWORD d;
@@ -132,7 +132,7 @@ void vshader_expp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
                 s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_lit(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_lit(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
   d->x = 1.0f;
   d->y = (0.0f < s0->x) ? s0->x : 0.0f;
   d->z = (0.0f < s0->x && 0.0f < s0->y) ? powf(s0->y, s0->w) : 0.0f;
@@ -141,14 +141,14 @@ void vshader_lit(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
 	         s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_logp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_logp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
   float tmp_f = fabsf(s0->w);
   d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE_VAL;
   VSTRACE(("executing logp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	         s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_mad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+static void vshader_mad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
   d->x = s0->x * s1->x + s2->x;
   d->y = s0->y * s1->y + s2->y;
   d->z = s0->z * s1->z + s2->z;
@@ -157,7 +157,7 @@ void vshader_mad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
 	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, s2->x, s2->y, s2->z, s2->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_max(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_max(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = (s0->x >= s1->x) ? s0->x : s1->x;
   d->y = (s0->y >= s1->y) ? s0->y : s1->y;
   d->z = (s0->z >= s1->z) ? s0->z : s1->z;
@@ -166,7 +166,7 @@ void vshader_max(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
 	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_min(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_min(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = (s0->x < s1->x) ? s0->x : s1->x;
   d->y = (s0->y < s1->y) ? s0->y : s1->y;
   d->z = (s0->z < s1->z) ? s0->z : s1->z;
@@ -175,7 +175,7 @@ void vshader_min(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
 	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_mov(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_mov(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
   d->x = s0->x;
   d->y = s0->y;
   d->z = s0->z;
@@ -184,7 +184,7 @@ void vshader_mov(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
 	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_mul(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_mul(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = s0->x * s1->x;
   d->y = s0->y * s1->y;
   d->z = s0->z * s1->z;
@@ -193,25 +193,25 @@ void vshader_mul(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
 	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_nop(void) {
+static void vshader_nop(void) {
     /* NOPPPP ahhh too easy ;) */
     VSTRACE(("executing nop\n"));
 }
 
-void vshader_rcp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_rcp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
   d->x = d->y = d->z = d->w = (0.0f == s0->w) ? HUGE_VAL : 1.0f / s0->w;
   VSTRACE(("executing rcp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_rsq(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_rsq(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
   float tmp_f = fabsf(s0->w);
   d->x = d->y = d->z = d->w = (0.0f == tmp_f) ? HUGE_VAL : ((1.0f != tmp_f) ? 1.0f / sqrtf(tmp_f) : 1.0f);
   VSTRACE(("executing rsq: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_sge(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_sge(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = (s0->x >= s1->x) ? 1.0f : 0.0f;
   d->y = (s0->y >= s1->y) ? 1.0f : 0.0f;
   d->z = (s0->z >= s1->z) ? 1.0f : 0.0f;
@@ -220,7 +220,7 @@ void vshader_sge(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
 	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_slt(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_slt(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = (s0->x < s1->x) ? 1.0f : 0.0f;
   d->y = (s0->y < s1->y) ? 1.0f : 0.0f;
   d->z = (s0->z < s1->z) ? 1.0f : 0.0f;
@@ -229,7 +229,7 @@ void vshader_slt(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
 	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_sub(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_sub(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = s0->x - s1->x;
   d->y = s0->y - s1->y;
   d->z = s0->z - s1->z;
@@ -242,20 +242,20 @@ void vshader_sub(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
  * Version 1.1 specific
  */
 
-void vshader_exp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_exp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
   d->x = d->y = d->z = d->w = powf(2.0f, s0->w);
   VSTRACE(("executing exp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_log(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_log(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
   float tmp_f = fabsf(s0->w);
   d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE_VAL;
   VSTRACE(("executing log: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_frc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_frc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
   d->x = s0->x - floorf(s0->x);
   d->y = s0->y - floorf(s0->y);
   d->z = 0.0f;
@@ -270,7 +270,7 @@ typedef FLOAT D3DMATRIX34[3][4];
 typedef FLOAT D3DMATRIX33[3][3];
 typedef FLOAT D3DMATRIX23[2][3];
 
-void vshader_m4x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, /*WINED3DSHADERVECTOR* mat1*/ D3DMATRIX44 mat) {
+static void vshader_m4x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, /*WINED3DSHADERVECTOR* mat1*/ D3DMATRIX44 mat) {
   /*
    * Buggy CODE: here only if cast not work for copy/paste
   WINED3DSHADERVECTOR* mat2 = mat1 + 1;
@@ -291,7 +291,7 @@ void vshader_m4x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, /*WINED3DSHAD
   VSTRACE(("executing m4x4(4): mat=(%f, %f, %f, %f)       (%f)       (%f) \n", mat[3][0], mat[3][1], mat[3][2], mat[3][3], s0->w, d->w));
 }
 
-void vshader_m4x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX34 mat) {
+static void vshader_m4x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX34 mat) {
   d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z + mat[0][3] * s0->w;
   d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z + mat[1][3] * s0->w;
   d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z + mat[2][3] * s0->w;
@@ -302,7 +302,7 @@ void vshader_m4x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX34 m
   VSTRACE(("executing m4x3(4):                            (%f)       (%f) \n", s0->w, d->w));
 }
 
-void vshader_m3x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX43 mat) {
+static void vshader_m3x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX43 mat) {
   d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
   d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
   d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z;
@@ -313,7 +313,7 @@ void vshader_m3x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX43 m
   VSTRACE(("executing m3x4(4): mat=(%f, %f, %f)       (%f)       (%f) \n", mat[3][0], mat[3][1], mat[3][2], s0->w, d->w));
 }
 
-void vshader_m3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX33 mat) {
+static void vshader_m3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX33 mat) {
   d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
   d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
   d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z;
@@ -324,7 +324,7 @@ void vshader_m3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX33 m
   VSTRACE(("executing m3x3(4):                                       (%f) \n", d->w));
 }
 
-void vshader_m3x2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX23 mat) {
+static void vshader_m3x2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX23 mat) {
   FIXME("check\n");
   d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
   d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
@@ -335,14 +335,14 @@ void vshader_m3x2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX23 m
 /**
  * Version 2.0 specific
  */
-void vshader_lrp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+static void vshader_lrp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
   d->x = s0->x * (s1->x - s2->x) + s2->x;
   d->y = s0->y * (s1->y - s2->y) + s2->y;
   d->z = s0->z * (s1->z - s2->z) + s2->z;
   d->w = s0->w * (s1->w - s2->w) + s2->w;
 }
 
-void vshader_crs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_crs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
   d->x = s0->y * s1->z - s0->z * s1->y;
   d->y = s0->z * s1->x - s0->x * s1->z;
   d->z = s0->x * s1->y - s0->y * s1->x;
@@ -352,7 +352,7 @@ void vshader_crs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
              s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void vshader_abs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_abs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
 
   d->x = fabsf(s0->x);
   d->y = fabsf(s0->y);
@@ -365,122 +365,118 @@ void vshader_abs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     /* Stubs */
 
 /* Def is C[n] = {n.nf, n.nf, n.nf, n.nf} */
-void vshader_def(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
+static void vshader_def(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
     FIXME(" : Stub\n");
 }
 
-void vshader_call(WINED3DSHADERVECTOR* d) {
+static void vshader_call(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_callnz(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_callnz(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_loop(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_loop(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_ret(void) {
+static void vshader_ret(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_endloop(void) {
+static void vshader_endloop(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_dcl(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_dcl(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_pow(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void vshader_pow(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
-void vshader_sng(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_sng(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_nrm(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_nrm(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_sincos3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_sincos3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_sincos2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+static void vshader_sincos2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
      FIXME(" : Stub\n");
 }
 
-void vshader_rep(WINED3DSHADERVECTOR* d) {
+static void vshader_rep(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_endrep(void) {
+static void vshader_endrep(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_if(WINED3DSHADERVECTOR* d) {
+static void vshader_if(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_ifc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_ifc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_else(void) {
+static void vshader_else(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_label(WINED3DSHADERVECTOR* d) {
+static void vshader_label(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_endif(void) {
+static void vshader_endif(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_break(void) {
+static void vshader_break(void) {
     FIXME(" : Stub\n");
 }
 
-void vshader_breakc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_breakc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void vshader_breakp(WINED3DSHADERVECTOR* d) {
+static void vshader_breakp(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_mova(WINED3DSHADERVECTOR* d) {
+static void vshader_mova(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_defb(WINED3DSHADERVECTOR* d) {
+static void vshader_defb(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void vshader_defi(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
+static void vshader_defi(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
     FIXME(" : Stub\n");
 }
 
-void vshader_texldd(WINED3DSHADERVECTOR* d) {
+static void vshader_setp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
-void vshader_setp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
-    FIXME(" : Stub\n");
-}
-
-void vshader_texldl(WINED3DSHADERVECTOR* d) {
+static void vshader_texldl(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
 /* Prototype */
-void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
-void vshader_hw_dcl(SHADER_OPCODE_ARG* arg);
-void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
+static void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
+static void vshader_hw_dcl(SHADER_OPCODE_ARG* arg);
+static void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
 
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
@@ -832,7 +828,7 @@ static void vshader_parse_input_decl_usage(IWineD3DVertexShaderImpl *This, INT u
     }
 }
 
-void vshader_set_version(
+static void vshader_set_version(
       IWineD3DVertexShaderImpl *This,
       DWORD version) {
 
@@ -879,7 +875,7 @@ void vshader_set_version(
 }
 
 /* Map the opcode 1-to-1 to the GL code */
-void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
+static void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
     SHADER_BUFFER* buffer = arg->buffer;
@@ -905,7 +901,7 @@ void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
    shader_addline(buffer, "%s;\n", tmpLine);
 }
 
-void vshader_hw_dcl(SHADER_OPCODE_ARG* arg) {
+static void vshader_hw_dcl(SHADER_OPCODE_ARG* arg) {
     
     DWORD dst = arg->dst;
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl*) arg->shader;
@@ -982,7 +978,7 @@ void vshader_hw_dcl(SHADER_OPCODE_ARG* arg) {
 
 /** Handles transforming all D3DSIO_M?x? opcodes for 
     Vertex shaders to ARB_vertex_program codes */
-void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
+static void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
 
     int i;
     int nComponents = 0;

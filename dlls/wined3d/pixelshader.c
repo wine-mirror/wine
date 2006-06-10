@@ -140,7 +140,7 @@ static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* 
  * pshader functions software VM
  */
 
-void pshader_add(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_add(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = s0->x + s1->x;
     d->y = s0->y + s1->y;
     d->z = s0->z + s1->z;
@@ -149,19 +149,19 @@ void pshader_add(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
                 s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_dp3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_dp3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = d->y = d->z = d->w = s0->x * s1->x + s0->y * s1->y + s0->z * s1->z;
     PSTRACE(("executing dp3: s0=(%f, %f, %f, %f) s1=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
                 s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_dp4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_dp4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = d->y = d->z = d->w = s0->x * s1->x + s0->y * s1->y + s0->z * s1->z + s0->w * s1->w;
     PSTRACE(("executing dp4: s0=(%f, %f, %f, %f) s1=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_dst(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_dst(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = 1.0f;
     d->y = s0->y * s1->y;
     d->z = s0->z;
@@ -170,7 +170,7 @@ void pshader_dst(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_expp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_expp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     union {
         float f;
         DWORD d;
@@ -187,14 +187,14 @@ void pshader_expp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
                     s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_logp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_logp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     float tmp_f = fabsf(s0->w);
     d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE_VAL;
     PSTRACE(("executing logp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
                 s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_mad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+static void pshader_mad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
     d->x = s0->x * s1->x + s2->x;
     d->y = s0->y * s1->y + s2->y;
     d->z = s0->z * s1->z + s2->z;
@@ -203,7 +203,7 @@ void pshader_mad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, s2->x, s2->y, s2->z, s2->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_max(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_max(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = (s0->x >= s1->x) ? s0->x : s1->x;
     d->y = (s0->y >= s1->y) ? s0->y : s1->y;
     d->z = (s0->z >= s1->z) ? s0->z : s1->z;
@@ -212,7 +212,7 @@ void pshader_max(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_min(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_min(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = (s0->x < s1->x) ? s0->x : s1->x;
     d->y = (s0->y < s1->y) ? s0->y : s1->y;
     d->z = (s0->z < s1->z) ? s0->z : s1->z;
@@ -221,7 +221,7 @@ void pshader_min(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_mov(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_mov(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     d->x = s0->x;
     d->y = s0->y;
     d->z = s0->z;
@@ -230,7 +230,7 @@ void pshader_mov(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
         s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_mul(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_mul(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = s0->x * s1->x;
     d->y = s0->y * s1->y;
     d->z = s0->z * s1->z;
@@ -239,25 +239,25 @@ void pshader_mul(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_nop(void) {
+static void pshader_nop(void) {
     /* NOPPPP ahhh too easy ;) */
     PSTRACE(("executing nop\n"));
 }
 
-void pshader_rcp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_rcp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     d->x = d->y = d->z = d->w = (0.0f == s0->w) ? HUGE_VAL : 1.0f / s0->w;
     PSTRACE(("executing rcp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
         s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_rsq(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_rsq(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     float tmp_f = fabsf(s0->w);
     d->x = d->y = d->z = d->w = (0.0f == tmp_f) ? HUGE_VAL : ((1.0f != tmp_f) ? 1.0f / sqrtf(tmp_f) : 1.0f);
     PSTRACE(("executing rsq: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
         s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_sge(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_sge(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = (s0->x >= s1->x) ? 1.0f : 0.0f;
     d->y = (s0->y >= s1->y) ? 1.0f : 0.0f;
     d->z = (s0->z >= s1->z) ? 1.0f : 0.0f;
@@ -266,7 +266,7 @@ void pshader_sge(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_slt(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_slt(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = (s0->x < s1->x) ? 1.0f : 0.0f;
     d->y = (s0->y < s1->y) ? 1.0f : 0.0f;
     d->z = (s0->z < s1->z) ? 1.0f : 0.0f;
@@ -275,7 +275,7 @@ void pshader_slt(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
         s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_sub(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_sub(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = s0->x - s1->x;
     d->y = s0->y - s1->y;
     d->z = s0->z - s1->z;
@@ -288,20 +288,20 @@ void pshader_sub(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
  * Version 1.1 specific
  */
 
-void pshader_exp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_exp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     d->x = d->y = d->z = d->w = powf(2.0f, s0->w);
     PSTRACE(("executing exp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
         s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_log(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_log(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     float tmp_f = fabsf(s0->w);
     d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE_VAL;
     PSTRACE(("executing log: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
         s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_frc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_frc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     d->x = s0->x - floorf(s0->x);
     d->y = s0->y - floorf(s0->y);
     d->z = 0.0f;
@@ -316,7 +316,7 @@ typedef FLOAT D3DMATRIX34[3][4];
 typedef FLOAT D3DMATRIX33[3][3];
 typedef FLOAT D3DMATRIX23[2][3];
 
-void pshader_m4x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, /*WINED3DSHADERVECTOR* mat1*/ D3DMATRIX44 mat) {
+static void pshader_m4x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, /*WINED3DSHADERVECTOR* mat1*/ D3DMATRIX44 mat) {
     /*
     * Buggy CODE: here only if cast not work for copy/paste
     WINED3DSHADERVECTOR* mat2 = mat1 + 1;
@@ -337,7 +337,7 @@ void pshader_m4x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, /*WINED3DSHAD
     PSTRACE(("executing m4x4(4): mat=(%f, %f, %f, %f)       (%f)       (%f) \n", mat[3][0], mat[3][1], mat[3][2], mat[3][3], s0->w, d->w));
 }
 
-void pshader_m4x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX34 mat) {
+static void pshader_m4x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX34 mat) {
     d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z + mat[0][3] * s0->w;
     d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z + mat[1][3] * s0->w;
     d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z + mat[2][3] * s0->w;
@@ -348,7 +348,7 @@ void pshader_m4x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX34 m
     PSTRACE(("executing m4x3(4):                            (%f)       (%f) \n", s0->w, d->w));
 }
 
-void pshader_m3x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX43 mat) {
+static void pshader_m3x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX43 mat) {
     d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
     d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
     d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z;
@@ -359,7 +359,7 @@ void pshader_m3x4(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX43 m
     PSTRACE(("executing m3x4(4): mat=(%f, %f, %f)       (%f)       (%f) \n", mat[3][0], mat[3][1], mat[3][2], s0->w, d->w));
 }
 
-void pshader_m3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX33 mat) {
+static void pshader_m3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX33 mat) {
     d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
     d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
     d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z;
@@ -370,7 +370,7 @@ void pshader_m3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX33 m
     PSTRACE(("executing m3x3(4):                                       (%f) \n", d->w));
 }
 
-void pshader_m3x2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX23 mat) {
+static void pshader_m3x2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX23 mat) {
     FIXME("check\n");
     d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
     d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
@@ -381,14 +381,14 @@ void pshader_m3x2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, D3DMATRIX23 m
 /**
  * Version 2.0 specific
  */
-void pshader_lrp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+static void pshader_lrp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
     d->x = s0->x * (s1->x - s2->x) + s2->x;
     d->y = s0->y * (s1->y - s2->y) + s2->y;
     d->z = s0->z * (s1->z - s2->z) + s2->z;
     d->w = s0->w * (s1->w - s2->w) + s2->w;
 }
 
-void pshader_crs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_crs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     d->x = s0->y * s1->z - s0->z * s1->y;
     d->y = s0->z * s1->x - s0->x * s1->z;
     d->z = s0->x * s1->y - s0->y * s1->x;
@@ -398,7 +398,7 @@ void pshader_crs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERV
                 s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w));
 }
 
-void pshader_abs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_abs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     d->x = fabsf(s0->x);
     d->y = fabsf(s0->y);
     d->z = fabsf(s0->z);
@@ -408,233 +408,233 @@ void pshader_abs(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
 }
 
     /* Stubs */
-void pshader_texcoord(WINED3DSHADERVECTOR* d) {
+static void pshader_texcoord(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texkill(WINED3DSHADERVECTOR* d) {
+static void pshader_texkill(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_tex(WINED3DSHADERVECTOR* d) {
+static void pshader_tex(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
-void pshader_texld(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
-    FIXME(" : Stub\n");
-}
-
-void pshader_texbem(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texld(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texbeml(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texbem(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texreg2ar(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texbeml(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texreg2gb(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texreg2ar(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texm3x2pad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texreg2gb(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texm3x2tex(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texm3x2pad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texm3x3tex(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_texm3x2tex(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texm3x3pad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texm3x3tex(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texm3x3diff(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texm3x3pad(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texm3x3spec(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_texm3x3diff(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texm3x3vspec(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texm3x3spec(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
-void pshader_cnd(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+static void pshader_texm3x3vspec(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+    FIXME(" : Stub\n");
+}
+
+static void pshader_cnd(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
     FIXME(" : Stub\n");
 }
 
 /* Def is C[n] = {n.nf, n.nf, n.nf, n.nf} */
-void pshader_def(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
+static void pshader_def(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texreg2rgb(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texreg2rgb(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texdp3tex(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texdp3tex(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texm3x2depth(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texm3x2depth(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texdp3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texdp3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texm3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_texm3x3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texdepth(WINED3DSHADERVECTOR* d) {
+static void pshader_texdepth(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_cmp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+static void pshader_cmp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
     FIXME(" : Stub\n");
 }
 
-void pshader_bem(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_bem(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
-void pshader_call(WINED3DSHADERVECTOR* d) {
+static void pshader_call(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_callnz(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_callnz(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_loop(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_loop(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_ret(void) {
+static void pshader_ret(void) {
     FIXME(" : Stub\n");
 }
 
-void pshader_endloop(void) {
+static void pshader_endloop(void) {
     FIXME(" : Stub\n");
 }
 
-void pshader_dcl(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_dcl(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_pow(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_pow(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
-void pshader_nrm(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_nrm(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_sincos3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_sincos3(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_sincos2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
+static void pshader_sincos2(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
      FIXME(" : Stub\n");
 }
 
-void pshader_rep(WINED3DSHADERVECTOR* d) {
+static void pshader_rep(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_endrep(void) {
+static void pshader_endrep(void) {
     FIXME(" : Stub\n");
 }
 
-void pshader_if(WINED3DSHADERVECTOR* d) {
+static void pshader_if(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_ifc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_ifc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_else(void) {
+static void pshader_else(void) {
     FIXME(" : Stub\n");
 }
 
-void pshader_label(WINED3DSHADERVECTOR* d) {
+static void pshader_label(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_endif(void) {
+static void pshader_endif(void) {
     FIXME(" : Stub\n");
 }
 
-void pshader_break(void) {
+static void pshader_break(void) {
     FIXME(" : Stub\n");
 }
 
-void pshader_breakc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void pshader_breakc(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
-void pshader_breakp(WINED3DSHADERVECTOR* d) {
+static void pshader_breakp(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_defb(WINED3DSHADERVECTOR* d) {
+static void pshader_defb(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_defi(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
+static void pshader_defi(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
     FIXME(" : Stub\n");
 }
 
-void pshader_dp2add(WINED3DSHADERVECTOR* d) {
+static void pshader_dp2add(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_dsx(WINED3DSHADERVECTOR* d) {
+static void pshader_dsx(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_dsy(WINED3DSHADERVECTOR* d) {
+static void pshader_dsy(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texldd(WINED3DSHADERVECTOR* d) {
+static void pshader_texldd(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-void pshader_setp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
+static void pshader_setp(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1) {
     FIXME(" : Stub\n");
 }
 
-void pshader_texldl(WINED3DSHADERVECTOR* d) {
+static void pshader_texldl(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
 /* Prototype */
-void pshader_hw_cnd(SHADER_OPCODE_ARG* arg);
-void pshader_hw_cmp(SHADER_OPCODE_ARG* arg);
-void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
-void pshader_hw_tex(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texbem(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg);
-void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_cnd(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_cmp(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_tex(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texbem(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg);
+static void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg);
 
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
@@ -937,7 +937,7 @@ static void pshader_gen_input_modifier_line (
         sprintf(outregstr, "T%c%s", 'A' + tmpreg, swzstr);
 }
 
-void pshader_set_version(
+static void pshader_set_version(
       IWineD3DPixelShaderImpl *This, 
       DWORD version) {
 
@@ -994,7 +994,7 @@ void pshader_set_version(
       }
 }
 
-void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
 
     SHADER_BUFFER* buffer = arg->buffer;
     char dst_wmask[20];
@@ -1017,7 +1017,7 @@ void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "CMP %s, TMP, %s, %s;\n", dst_name, src_name[1], src_name[2]);
 }
 
-void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
 
     SHADER_BUFFER* buffer = arg->buffer;
     char dst_wmask[20];
@@ -1041,7 +1041,7 @@ void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
 }
 
 /* Map the opcode 1-to-1 to the GL code */
-void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 
      CONST SHADER_OPCODE* curOpcode = arg->opcode;
      SHADER_BUFFER* buffer = arg->buffer;
@@ -1109,7 +1109,7 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
       }
 }
 
-void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD dst = arg->dst;
@@ -1144,7 +1144,7 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
       reg_dest, reg_coord, reg_sampler_code);
 }
 
-void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD dst = arg->dst;
@@ -1164,7 +1164,7 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
    }
 }
 
-void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
  
@@ -1175,7 +1175,7 @@ void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
      shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
 }
 
-void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
  
      SHADER_BUFFER* buffer = arg->buffer;
     
@@ -1186,7 +1186,7 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
      shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
 }
 
-void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
  
@@ -1198,7 +1198,7 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
      shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg1, reg1);
 }
 
-void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
@@ -1208,7 +1208,7 @@ void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "DP3 TMP.x, T%lu, %s;\n", reg, src0_name);
 }
 
-void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
@@ -1219,7 +1219,7 @@ void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "TEX T%lu, TMP, texture[%lu], 2D;\n", reg, reg);
 }
 
-void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
@@ -1232,7 +1232,7 @@ void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
     current_state.texcoord_w[current_state.current_row++] = reg;
 }
 
-void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
@@ -1248,7 +1248,7 @@ void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     current_state.current_row = 0;
 }
 
-void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
@@ -1274,7 +1274,7 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     current_state.current_row = 0;
 }
 
-void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
