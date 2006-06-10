@@ -25,7 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DVolume9 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DVolume9Impl_QueryInterface(LPDIRECT3DVOLUME9 iface, REFIID riid, LPVOID* ppobj) {
+static HRESULT WINAPI IDirect3DVolume9Impl_QueryInterface(LPDIRECT3DVOLUME9 iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -40,7 +40,7 @@ HRESULT WINAPI IDirect3DVolume9Impl_QueryInterface(LPDIRECT3DVOLUME9 iface, REFI
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DVolume9Impl_AddRef(LPDIRECT3DVOLUME9 iface) {
+static ULONG WINAPI IDirect3DVolume9Impl_AddRef(LPDIRECT3DVOLUME9 iface) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     IUnknown *containerParent = NULL;
 
@@ -59,7 +59,7 @@ ULONG WINAPI IDirect3DVolume9Impl_AddRef(LPDIRECT3DVOLUME9 iface) {
     }
 }
 
-ULONG WINAPI IDirect3DVolume9Impl_Release(LPDIRECT3DVOLUME9 iface) {
+static ULONG WINAPI IDirect3DVolume9Impl_Release(LPDIRECT3DVOLUME9 iface) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     IUnknown *containerParent = NULL;
 
@@ -85,7 +85,7 @@ ULONG WINAPI IDirect3DVolume9Impl_Release(LPDIRECT3DVOLUME9 iface) {
 }
 
 /* IDirect3DVolume9 Interface follow: */
-HRESULT WINAPI IDirect3DVolume9Impl_GetDevice(LPDIRECT3DVOLUME9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DVolume9Impl_GetDevice(LPDIRECT3DVOLUME9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     IWineD3DDevice       *myDevice = NULL;
 
@@ -95,25 +95,25 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetDevice(LPDIRECT3DVOLUME9 iface, IDirect3D
     return D3D_OK;
 }
 
-HRESULT WINAPI IDirect3DVolume9Impl_SetPrivateData(LPDIRECT3DVOLUME9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
+static HRESULT WINAPI IDirect3DVolume9Impl_SetPrivateData(LPDIRECT3DVOLUME9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolume_SetPrivateData(This->wineD3DVolume, refguid, pData, SizeOfData, Flags);
 }
 
-HRESULT WINAPI IDirect3DVolume9Impl_GetPrivateData(LPDIRECT3DVOLUME9 iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
+static HRESULT WINAPI IDirect3DVolume9Impl_GetPrivateData(LPDIRECT3DVOLUME9 iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolume_GetPrivateData(This->wineD3DVolume, refguid, pData, pSizeOfData);
 }
 
-HRESULT WINAPI IDirect3DVolume9Impl_FreePrivateData(LPDIRECT3DVOLUME9 iface, REFGUID refguid) {
+static HRESULT WINAPI IDirect3DVolume9Impl_FreePrivateData(LPDIRECT3DVOLUME9 iface, REFGUID refguid) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolume_FreePrivateData(This->wineD3DVolume, refguid);
 }
 
-HRESULT WINAPI IDirect3DVolume9Impl_GetContainer(LPDIRECT3DVOLUME9 iface, REFIID riid, void** ppContainer) {
+static HRESULT WINAPI IDirect3DVolume9Impl_GetContainer(LPDIRECT3DVOLUME9 iface, REFIID riid, void** ppContainer) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     IWineD3DBase *wineD3DContainer = NULL;
     IUnknown *wineD3DContainerParent = NULL;
@@ -150,7 +150,7 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetContainer(LPDIRECT3DVOLUME9 iface, REFIID
     return res;
 }
 
-HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DVOLUME_DESC* pDesc) {
+static HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DVOLUME_DESC* pDesc) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     WINED3DVOLUME_DESC     wined3ddesc;
     UINT                   tmpInt = -1;
@@ -170,19 +170,19 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DVOLUME_D
     return IWineD3DVolume_GetDesc(This->wineD3DVolume, &wined3ddesc);
 }
 
-HRESULT WINAPI IDirect3DVolume9Impl_LockBox(LPDIRECT3DVOLUME9 iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
+static HRESULT WINAPI IDirect3DVolume9Impl_LockBox(LPDIRECT3DVOLUME9 iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) relay %p %p %p %ld\n", This, This->wineD3DVolume, pLockedVolume, pBox, Flags);
     return IWineD3DVolume_LockBox(This->wineD3DVolume, (WINED3DLOCKED_BOX *) pLockedVolume, (WINED3DBOX *) pBox, Flags);
 }
 
-HRESULT WINAPI IDirect3DVolume9Impl_UnlockBox(LPDIRECT3DVOLUME9 iface) {
+static HRESULT WINAPI IDirect3DVolume9Impl_UnlockBox(LPDIRECT3DVOLUME9 iface) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     TRACE("(%p) relay %p\n", This, This->wineD3DVolume);
     return IWineD3DVolume_UnlockBox(This->wineD3DVolume);
 }
 
-const IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl =
+static const IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl =
 {
     /* IUnknown */
     IDirect3DVolume9Impl_QueryInterface,

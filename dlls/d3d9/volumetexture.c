@@ -25,7 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DVolumeTexture9 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_QueryInterface(LPDIRECT3DVOLUMETEXTURE9 iface, REFIID riid, LPVOID* ppobj) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_QueryInterface(LPDIRECT3DVOLUMETEXTURE9 iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -42,7 +42,7 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_QueryInterface(LPDIRECT3DVOLUMETEXTUR
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DVolumeTexture9Impl_AddRef(LPDIRECT3DVOLUMETEXTURE9 iface) {
+static ULONG WINAPI IDirect3DVolumeTexture9Impl_AddRef(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -51,7 +51,7 @@ ULONG WINAPI IDirect3DVolumeTexture9Impl_AddRef(LPDIRECT3DVOLUMETEXTURE9 iface) 
     return ref;
 }
 
-ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9 iface) {
+static ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -66,93 +66,93 @@ ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9 iface)
 }
 
 /* IDirect3DVolumeTexture9 IDirect3DResource9 Interface follow: */
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetDevice(LPDIRECT3DVOLUMETEXTURE9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetDevice(LPDIRECT3DVOLUMETEXTURE9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IDirect3DResource9Impl_GetDevice((LPDIRECT3DRESOURCE9) This, ppDevice);
 }
 
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetPrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetPrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_SetPrivateData(This->wineD3DVolumeTexture, refguid, pData, SizeOfData, Flags);
 }
 
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetPrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetPrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_GetPrivateData(This->wineD3DVolumeTexture, refguid, pData, pSizeOfData);
 }
 
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_FreePrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_FreePrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_FreePrivateData(This->wineD3DVolumeTexture, refguid);
 }
 
-DWORD WINAPI IDirect3DVolumeTexture9Impl_SetPriority(LPDIRECT3DVOLUMETEXTURE9 iface, DWORD PriorityNew) {
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetPriority(LPDIRECT3DVOLUMETEXTURE9 iface, DWORD PriorityNew) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_SetPriority(This->wineD3DVolumeTexture, PriorityNew);
 }
 
-DWORD WINAPI IDirect3DVolumeTexture9Impl_GetPriority(LPDIRECT3DVOLUMETEXTURE9 iface) {
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetPriority(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_GetPriority(This->wineD3DVolumeTexture);
 }
 
-void WINAPI IDirect3DVolumeTexture9Impl_PreLoad(LPDIRECT3DVOLUMETEXTURE9 iface) {
+static void WINAPI IDirect3DVolumeTexture9Impl_PreLoad(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_PreLoad(This->wineD3DVolumeTexture);
 }
 
-D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture9Impl_GetType(LPDIRECT3DVOLUMETEXTURE9 iface) {
+static D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture9Impl_GetType(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_GetType(This->wineD3DVolumeTexture);
 }
 
 /* IDirect3DVolumeTexture9 IDirect3DBaseTexture9 Interface follow: */
-DWORD WINAPI IDirect3DVolumeTexture9Impl_SetLOD(LPDIRECT3DVOLUMETEXTURE9 iface, DWORD LODNew) {
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetLOD(LPDIRECT3DVOLUMETEXTURE9 iface, DWORD LODNew) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_SetLOD(This->wineD3DVolumeTexture, LODNew);
 }
 
-DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLOD(LPDIRECT3DVOLUMETEXTURE9 iface) {
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLOD(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_GetLOD(This->wineD3DVolumeTexture);
 }
 
-DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLevelCount(LPDIRECT3DVOLUMETEXTURE9 iface) {
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLevelCount(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_GetLevelCount(This->wineD3DVolumeTexture);
 }
 
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetAutoGenFilterType(LPDIRECT3DVOLUMETEXTURE9 iface, D3DTEXTUREFILTERTYPE FilterType) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetAutoGenFilterType(LPDIRECT3DVOLUMETEXTURE9 iface, D3DTEXTUREFILTERTYPE FilterType) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_SetAutoGenFilterType(This->wineD3DVolumeTexture, (WINED3DTEXTUREFILTERTYPE) FilterType);
 }
 
-D3DTEXTUREFILTERTYPE WINAPI IDirect3DVolumeTexture9Impl_GetAutoGenFilterType(LPDIRECT3DVOLUMETEXTURE9 iface) {
+static D3DTEXTUREFILTERTYPE WINAPI IDirect3DVolumeTexture9Impl_GetAutoGenFilterType(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return (D3DTEXTUREFILTERTYPE) IWineD3DVolumeTexture_GetAutoGenFilterType(This->wineD3DVolumeTexture);
 }
 
-void WINAPI IDirect3DVolumeTexture9Impl_GenerateMipSubLevels(LPDIRECT3DVOLUMETEXTURE9 iface) {
+static void WINAPI IDirect3DVolumeTexture9Impl_GenerateMipSubLevels(LPDIRECT3DVOLUMETEXTURE9 iface) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_GenerateMipSubLevels(This->wineD3DVolumeTexture);
 }
 
 /* IDirect3DVolumeTexture9 Interface follow: */
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level, D3DVOLUME_DESC* pDesc) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level, D3DVOLUME_DESC* pDesc) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     WINED3DVOLUME_DESC     wined3ddesc;
     UINT                   tmpInt = -1;
@@ -172,7 +172,7 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE9
     return IWineD3DVolumeTexture_GetLevelDesc(This->wineD3DVolumeTexture, Level, &wined3ddesc);
 }
 
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level, IDirect3DVolume9** ppVolumeLevel) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level, IDirect3DVolume9** ppVolumeLevel) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     HRESULT hrc = D3D_OK;
     IWineD3DVolume *myVolume = NULL;
@@ -187,26 +187,26 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTUR
     return hrc;
 }
 
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_LockBox(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_LockBox(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay %p %p %p %ld\n", This, This->wineD3DVolumeTexture, pLockedVolume, pBox,Flags);
     return IWineD3DVolumeTexture_LockBox(This->wineD3DVolumeTexture, Level, (WINED3DLOCKED_BOX *) pLockedVolume, (WINED3DBOX *) pBox, Flags);
 }
 
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_UnlockBox(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_UnlockBox(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay %p %d\n", This, This->wineD3DVolumeTexture, Level);
     return IWineD3DVolumeTexture_UnlockBox(This->wineD3DVolumeTexture, Level);
 }
 
-HRESULT WINAPI IDirect3DVolumeTexture9Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE9 iface, CONST D3DBOX* pDirtyBox) {
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE9 iface, CONST D3DBOX* pDirtyBox) {
     IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DVolumeTexture_AddDirtyBox(This->wineD3DVolumeTexture, (WINED3DBOX *) pDirtyBox);
 }
 
 
-const IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
+static const IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
 {
     /* IUnknown */
     IDirect3DVolumeTexture9Impl_QueryInterface,

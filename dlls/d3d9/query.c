@@ -26,7 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DQuery9 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DQuery9Impl_QueryInterface(LPDIRECT3DQUERY9 iface, REFIID riid, LPVOID* ppobj) {
+static HRESULT WINAPI IDirect3DQuery9Impl_QueryInterface(LPDIRECT3DQUERY9 iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
@@ -42,7 +42,7 @@ HRESULT WINAPI IDirect3DQuery9Impl_QueryInterface(LPDIRECT3DQUERY9 iface, REFIID
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DQuery9Impl_AddRef(LPDIRECT3DQUERY9 iface) {
+static ULONG WINAPI IDirect3DQuery9Impl_AddRef(LPDIRECT3DQUERY9 iface) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -50,7 +50,7 @@ ULONG WINAPI IDirect3DQuery9Impl_AddRef(LPDIRECT3DQUERY9 iface) {
     return ref;
 }
 
-ULONG WINAPI IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface) {
+static ULONG WINAPI IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -64,7 +64,7 @@ ULONG WINAPI IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface) {
 }
 
 /* IDirect3DQuery9 Interface follow: */
-HRESULT WINAPI IDirect3DQuery9Impl_GetDevice(LPDIRECT3DQUERY9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DQuery9Impl_GetDevice(LPDIRECT3DQUERY9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     IWineD3DDevice* pDevice;
     HRESULT hr;
@@ -81,32 +81,32 @@ HRESULT WINAPI IDirect3DQuery9Impl_GetDevice(LPDIRECT3DQUERY9 iface, IDirect3DDe
     return hr;
 }
 
-D3DQUERYTYPE WINAPI IDirect3DQuery9Impl_GetType(LPDIRECT3DQUERY9 iface) {
+static D3DQUERYTYPE WINAPI IDirect3DQuery9Impl_GetType(LPDIRECT3DQUERY9 iface) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DQuery_GetType(This->wineD3DQuery);
 }
 
-DWORD WINAPI IDirect3DQuery9Impl_GetDataSize(LPDIRECT3DQUERY9 iface) {
+static DWORD WINAPI IDirect3DQuery9Impl_GetDataSize(LPDIRECT3DQUERY9 iface) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DQuery_GetDataSize(This->wineD3DQuery);
 }
 
-HRESULT WINAPI IDirect3DQuery9Impl_Issue(LPDIRECT3DQUERY9 iface, DWORD dwIssueFlags) {
+static HRESULT WINAPI IDirect3DQuery9Impl_Issue(LPDIRECT3DQUERY9 iface, DWORD dwIssueFlags) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DQuery_Issue(This->wineD3DQuery, dwIssueFlags);
 }
 
-HRESULT WINAPI IDirect3DQuery9Impl_GetData(LPDIRECT3DQUERY9 iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags) {
+static HRESULT WINAPI IDirect3DQuery9Impl_GetData(LPDIRECT3DQUERY9 iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags) {
     IDirect3DQuery9Impl *This = (IDirect3DQuery9Impl *)iface;
     TRACE("(%p) Relay\n", This);
     return IWineD3DQuery_GetData(This->wineD3DQuery, pData, dwSize, dwGetDataFlags);
 }
 
 
-const IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl =
+static const IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl =
 {
     IDirect3DQuery9Impl_QueryInterface,
     IDirect3DQuery9Impl_AddRef,

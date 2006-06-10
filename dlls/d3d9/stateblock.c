@@ -26,7 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DStateBlock9 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DStateBlock9Impl_QueryInterface(LPDIRECT3DSTATEBLOCK9 iface, REFIID riid, LPVOID* ppobj) {
+static HRESULT WINAPI IDirect3DStateBlock9Impl_QueryInterface(LPDIRECT3DSTATEBLOCK9 iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DStateBlock9Impl *This = (IDirect3DStateBlock9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -41,7 +41,7 @@ HRESULT WINAPI IDirect3DStateBlock9Impl_QueryInterface(LPDIRECT3DSTATEBLOCK9 ifa
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DStateBlock9Impl_AddRef(LPDIRECT3DSTATEBLOCK9 iface) {
+static ULONG WINAPI IDirect3DStateBlock9Impl_AddRef(LPDIRECT3DSTATEBLOCK9 iface) {
     IDirect3DStateBlock9Impl *This = (IDirect3DStateBlock9Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -50,7 +50,7 @@ ULONG WINAPI IDirect3DStateBlock9Impl_AddRef(LPDIRECT3DSTATEBLOCK9 iface) {
     return ref;
 }
 
-ULONG WINAPI IDirect3DStateBlock9Impl_Release(LPDIRECT3DSTATEBLOCK9 iface) {
+static ULONG WINAPI IDirect3DStateBlock9Impl_Release(LPDIRECT3DSTATEBLOCK9 iface) {
     IDirect3DStateBlock9Impl *This = (IDirect3DStateBlock9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -65,26 +65,26 @@ ULONG WINAPI IDirect3DStateBlock9Impl_Release(LPDIRECT3DSTATEBLOCK9 iface) {
 }
 
 /* IDirect3DStateBlock9 Interface follow: */
-HRESULT WINAPI IDirect3DStateBlock9Impl_GetDevice(LPDIRECT3DSTATEBLOCK9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DStateBlock9Impl_GetDevice(LPDIRECT3DSTATEBLOCK9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DStateBlock9Impl *This = (IDirect3DStateBlock9Impl *)iface;
     TRACE("(%p) Relay\n", This); 
     return IDirect3DResource9Impl_GetDevice((LPDIRECT3DRESOURCE9) This, ppDevice);
 }
 
-HRESULT WINAPI IDirect3DStateBlock9Impl_Capture(LPDIRECT3DSTATEBLOCK9 iface) {
+static HRESULT WINAPI IDirect3DStateBlock9Impl_Capture(LPDIRECT3DSTATEBLOCK9 iface) {
     IDirect3DStateBlock9Impl *This = (IDirect3DStateBlock9Impl *)iface;
     TRACE("(%p) Relay\n", This); 
     return IWineD3DStateBlock_Capture(This->wineD3DStateBlock);
 }
 
-HRESULT WINAPI IDirect3DStateBlock9Impl_Apply(LPDIRECT3DSTATEBLOCK9 iface) {
+static HRESULT WINAPI IDirect3DStateBlock9Impl_Apply(LPDIRECT3DSTATEBLOCK9 iface) {
     IDirect3DStateBlock9Impl *This = (IDirect3DStateBlock9Impl *)iface;
     TRACE("(%p) Relay\n", This); 
     return IWineD3DStateBlock_Apply(This->wineD3DStateBlock);
 }
 
 
-const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl =
+static const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl =
 {
     /* IUnknown */
     IDirect3DStateBlock9Impl_QueryInterface,

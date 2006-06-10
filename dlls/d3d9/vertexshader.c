@@ -25,7 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DVertexShader9 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DVertexShader9Impl_QueryInterface(LPDIRECT3DVERTEXSHADER9 iface, REFIID riid, LPVOID* ppobj) {
+static HRESULT WINAPI IDirect3DVertexShader9Impl_QueryInterface(LPDIRECT3DVERTEXSHADER9 iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -40,7 +40,7 @@ HRESULT WINAPI IDirect3DVertexShader9Impl_QueryInterface(LPDIRECT3DVERTEXSHADER9
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirect3DVertexShader9Impl_AddRef(LPDIRECT3DVERTEXSHADER9 iface) {
+static ULONG WINAPI IDirect3DVertexShader9Impl_AddRef(LPDIRECT3DVERTEXSHADER9 iface) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -49,7 +49,7 @@ ULONG WINAPI IDirect3DVertexShader9Impl_AddRef(LPDIRECT3DVERTEXSHADER9 iface) {
     return ref;
 }
 
-ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 iface) {
+static ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 iface) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -64,7 +64,7 @@ ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 iface) {
 }
 
 /* IDirect3DVertexShader9 Interface follow: */
-HRESULT WINAPI IDirect3DVertexShader9Impl_GetDevice(LPDIRECT3DVERTEXSHADER9 iface, IDirect3DDevice9** ppDevice) {
+static HRESULT WINAPI IDirect3DVertexShader9Impl_GetDevice(LPDIRECT3DVERTEXSHADER9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     IWineD3DDevice *myDevice = NULL;
     HRESULT hr = D3D_OK;
@@ -80,7 +80,7 @@ HRESULT WINAPI IDirect3DVertexShader9Impl_GetDevice(LPDIRECT3DVERTEXSHADER9 ifac
     return hr;
 }
 
-HRESULT WINAPI IDirect3DVertexShader9Impl_GetFunction(LPDIRECT3DVERTEXSHADER9 iface, VOID* pData, UINT* pSizeOfData) {
+static HRESULT WINAPI IDirect3DVertexShader9Impl_GetFunction(LPDIRECT3DVERTEXSHADER9 iface, VOID* pData, UINT* pSizeOfData) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
 
     TRACE("(%p) : Relay\n", This);
@@ -88,7 +88,7 @@ HRESULT WINAPI IDirect3DVertexShader9Impl_GetFunction(LPDIRECT3DVERTEXSHADER9 if
 }
 
 
-const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl =
+static const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl =
 {
     /* IUnknown */
     IDirect3DVertexShader9Impl_QueryInterface,

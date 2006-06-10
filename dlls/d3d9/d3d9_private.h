@@ -231,11 +231,6 @@ extern HRESULT  WINAPI  IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface
 /* ---------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl;
-
-/*****************************************************************************
  * IDirect3DVolume9 implementation structure
  */
 typedef struct IDirect3DVolume9Impl
@@ -252,11 +247,6 @@ typedef struct IDirect3DVolume9Impl
 /* ------------------- */
 /* IDirect3DSwapChain9 */
 /* ------------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DSwapChain9Vtbl Direct3DSwapChain9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DSwapChain9 implementation structure
@@ -279,11 +269,6 @@ typedef struct IDirect3DSwapChain9Impl
 /* ------------------ */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DResource9Vtbl Direct3DResource9_Vtbl;
-
-/*****************************************************************************
  * IDirect3DResource9 implementation structure
  */
 typedef struct IDirect3DResource9Impl
@@ -296,20 +281,7 @@ typedef struct IDirect3DResource9Impl
     IWineD3DResource       *wineD3DResource;
 } IDirect3DResource9Impl;
 
-/* IUnknown: */
-extern HRESULT WINAPI         IDirect3DResource9Impl_QueryInterface(LPDIRECT3DRESOURCE9 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI           IDirect3DResource9Impl_AddRef(LPDIRECT3DRESOURCE9 iface);
-extern ULONG WINAPI           IDirect3DResource9Impl_Release(LPDIRECT3DRESOURCE9 iface);
-
-/* IDirect3DResource9: */
 extern HRESULT  WINAPI        IDirect3DResource9Impl_GetDevice(LPDIRECT3DRESOURCE9 iface, IDirect3DDevice9** ppDevice);
-extern HRESULT  WINAPI        IDirect3DResource9Impl_SetPrivateData(LPDIRECT3DRESOURCE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
-extern HRESULT  WINAPI        IDirect3DResource9Impl_GetPrivateData(LPDIRECT3DRESOURCE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
-extern HRESULT  WINAPI        IDirect3DResource9Impl_FreePrivateData(LPDIRECT3DRESOURCE9 iface, REFGUID refguid);
-extern DWORD    WINAPI        IDirect3DResource9Impl_SetPriority(LPDIRECT3DRESOURCE9 iface, DWORD PriorityNew);
-extern DWORD    WINAPI        IDirect3DResource9Impl_GetPriority(LPDIRECT3DRESOURCE9 iface);
-extern void     WINAPI        IDirect3DResource9Impl_PreLoad(LPDIRECT3DRESOURCE9 iface);
-extern D3DRESOURCETYPE WINAPI IDirect3DResource9Impl_GetType(LPDIRECT3DRESOURCE9 iface);
 
 
 /* ----------------- */
@@ -342,11 +314,6 @@ typedef struct IDirect3DSurface9Impl
 /* ---------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl;
-
-/*****************************************************************************
  * IDirect3DVertexBuffer9 implementation structure
  */
 typedef struct IDirect3DVertexBuffer9Impl
@@ -365,11 +332,6 @@ typedef struct IDirect3DVertexBuffer9Impl
 /* --------------------- */
 /* IDirect3DIndexBuffer9 */
 /* --------------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DIndexBuffer9Vtbl Direct3DIndexBuffer9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DIndexBuffer9 implementation structure
@@ -392,11 +354,6 @@ typedef struct IDirect3DIndexBuffer9Impl
 /* --------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DBaseTexture9Vtbl Direct3DBaseTexture9_Vtbl;
-
-/*****************************************************************************
  * IDirect3DBaseTexture9 implementation structure
  */
 typedef struct IDirect3DBaseTexture9Impl
@@ -410,38 +367,11 @@ typedef struct IDirect3DBaseTexture9Impl
     
 } IDirect3DBaseTexture9Impl;
 
-/* IUnknown: */
-extern HRESULT WINAPI         IDirect3DBaseTexture9Impl_QueryInterface(LPDIRECT3DBASETEXTURE9 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI           IDirect3DBaseTexture9Impl_AddRef(LPDIRECT3DBASETEXTURE9 iface);
-extern ULONG WINAPI           IDirect3DBaseTexture9Impl_Release(LPDIRECT3DBASETEXTURE9 iface);
-
-/* IDirect3DBaseTexture9: (Inherited from IDirect3DResource9) */
-extern HRESULT  WINAPI        IDirect3DBaseTexture9Impl_GetDevice(LPDIRECT3DBASETEXTURE9 iface, IDirect3DDevice9** ppDevice);
-extern HRESULT  WINAPI        IDirect3DBaseTexture9Impl_SetPrivateData(LPDIRECT3DBASETEXTURE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
-extern HRESULT  WINAPI        IDirect3DBaseTexture9Impl_GetPrivateData(LPDIRECT3DBASETEXTURE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
-extern HRESULT  WINAPI        IDirect3DBaseTexture9Impl_FreePrivateData(LPDIRECT3DBASETEXTURE9 iface, REFGUID refguid);
-extern DWORD    WINAPI        IDirect3DBaseTexture9Impl_SetPriority(LPDIRECT3DBASETEXTURE9 iface, DWORD PriorityNew);
-extern DWORD    WINAPI        IDirect3DBaseTexture9Impl_GetPriority(LPDIRECT3DBASETEXTURE9 iface);
-extern void     WINAPI        IDirect3DBaseTexture9Impl_PreLoad(LPDIRECT3DBASETEXTURE9 iface);
-extern D3DRESOURCETYPE WINAPI IDirect3DBaseTexture9Impl_GetType(LPDIRECT3DBASETEXTURE9 iface);
-
-/* IDirect3DBaseTexture9: */
-extern DWORD    WINAPI        IDirect3DBaseTexture9Impl_SetLOD(LPDIRECT3DBASETEXTURE9 iface, DWORD LODNew);
 extern DWORD    WINAPI        IDirect3DBaseTexture9Impl_GetLOD(LPDIRECT3DBASETEXTURE9 iface);
-extern DWORD    WINAPI        IDirect3DBaseTexture9Impl_GetLevelCount(LPDIRECT3DBASETEXTURE9 iface);
-extern HRESULT  WINAPI        IDirect3DBaseTexture9Impl_SetAutoGenFilterType(LPDIRECT3DBASETEXTURE9 iface, D3DTEXTUREFILTERTYPE FilterType);
-extern D3DTEXTUREFILTERTYPE WINAPI IDirect3DBaseTexture9Impl_GetAutoGenFilterType(LPDIRECT3DBASETEXTURE9 iface);
-extern void     WINAPI        IDirect3DBaseTexture9Impl_GenerateMipSubLevels(LPDIRECT3DBASETEXTURE9 iface);
-
 
 /* --------------------- */
 /* IDirect3DCubeTexture9 */
 /* --------------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DCubeTexture9Vtbl Direct3DCubeTexture9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DCubeTexture9 implementation structure
@@ -465,11 +395,6 @@ typedef struct IDirect3DCubeTexture9Impl
 /* ----------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl;
-
-/*****************************************************************************
  * IDirect3DTexture9 implementation structure
  */
 typedef struct IDirect3DTexture9Impl
@@ -488,11 +413,6 @@ typedef struct IDirect3DTexture9Impl
 /* ----------------------- */
 /* IDirect3DVolumeTexture9 */
 /* ----------------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVolumeTexture9 implementation structure
@@ -515,11 +435,6 @@ typedef struct IDirect3DVolumeTexture9Impl
 /* ----------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl;
-
-/*****************************************************************************
  * IDirect3DStateBlock9 implementation structure
  */
 typedef struct  IDirect3DStateBlock9Impl {
@@ -538,11 +453,6 @@ typedef struct  IDirect3DStateBlock9Impl {
 /* --------------------------- */
 /* IDirect3DVertexDeclaration9 */
 /* --------------------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVertexDeclaration implementation structure
@@ -564,11 +474,6 @@ typedef struct IDirect3DVertexDeclaration9Impl {
 /* ---------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl;
-
-/*****************************************************************************
  * IDirect3DVertexShader implementation structure
  */
 typedef struct IDirect3DVertexShader9Impl {
@@ -588,11 +493,6 @@ typedef struct IDirect3DVertexShader9Impl {
 /* --------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl;
-
-/*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
 typedef struct IDirect3DPixelShader9Impl {
@@ -610,11 +510,6 @@ typedef struct IDirect3DPixelShader9Impl {
 /* --------------- */
 /* IDirect3DQuery9 */
 /* --------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl;
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
