@@ -27,11 +27,15 @@ WINE_DECLARE_DEBUG_CHANNEL(dmdump);
 #define DMUS_MAX_NAME_SIZE     DMUS_MAX_NAME*sizeof(WCHAR)
 #define DMUS_MAX_FILENAME_SIZE DMUS_MAX_FILENAME*sizeof(WCHAR)
 
+static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_AddRef (LPDIRECTMUSICCONTAINER iface);
+static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
+static ULONG WINAPI IDirectMusicContainerImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
+
 /*****************************************************************************
  * IDirectMusicContainerImpl implementation
  */
 /* IUnknown/IDirectMusicContainer part: */
-HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_QueryInterface (LPDIRECTMUSICCONTAINER iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_QueryInterface (LPDIRECTMUSICCONTAINER iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ContainerVtbl, iface);
 	
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
@@ -54,13 +58,13 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_QueryInterface (L
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_AddRef (LPDIRECTMUSICCONTAINER iface) {
+static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_AddRef (LPDIRECTMUSICCONTAINER iface) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ContainerVtbl, iface);
 	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
-ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_Release (LPDIRECTMUSICCONTAINER iface) {
+static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_Release (LPDIRECTMUSICCONTAINER iface) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ContainerVtbl, iface);
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
@@ -73,7 +77,7 @@ ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_Release (LPDIRECTMU
 	return dwRef;
 }
 
-HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject (LPDIRECTMUSICCONTAINER iface, REFGUID rguidClass, DWORD dwIndex, LPDMUS_OBJECTDESC pDesc, WCHAR* pwszAlias) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject (LPDIRECTMUSICCONTAINER iface, REFGUID rguidClass, DWORD dwIndex, LPDMUS_OBJECTDESC pDesc, WCHAR* pwszAlias) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ContainerVtbl, iface);	
 	struct list *pEntry;
 	LPWINE_CONTAINER_ENTRY pContainedObject;
@@ -135,22 +139,22 @@ static const IDirectMusicContainerVtbl DirectMusicContainer_Container_Vtbl = {
 };
 
 /* IDirectMusicObject part: */
-HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ObjectVtbl, iface);
 	return IDirectMusicContainerImpl_IDirectMusicContainer_QueryInterface ((LPDIRECTMUSICCONTAINER)&This->ContainerVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
+static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ObjectVtbl, iface);
 	return IDirectMusicContainerImpl_IDirectMusicContainer_AddRef ((LPDIRECTMUSICCONTAINER)&This->ContainerVtbl);
 }
 
-ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
+static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ObjectVtbl, iface);
 	return IDirectMusicContainerImpl_IDirectMusicContainer_Release ((LPDIRECTMUSICCONTAINER)&This->ContainerVtbl);
 }
 
-HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ObjectVtbl, iface);
 	TRACE("(%p, %p):\n", This, pDesc);
 	
@@ -174,7 +178,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_GetDescriptor (LPDIR
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	DWORD dwNewFlags = 0;
 	DWORD dwFlagDifference;
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ObjectVtbl, iface);
@@ -230,7 +234,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_SetDescriptor (LPDIR
 	} else return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ObjectVtbl, iface);
 	WINE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
@@ -407,22 +411,22 @@ static const IDirectMusicObjectVtbl DirectMusicContainer_Object_Vtbl = {
 };
 
 /* IPersistStream part: */
-HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, PersistStreamVtbl, iface);
 	return IDirectMusicContainerImpl_IDirectMusicContainer_QueryInterface ((LPDIRECTMUSICCONTAINER)&This->ContainerVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicContainerImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
+static ULONG WINAPI IDirectMusicContainerImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, PersistStreamVtbl, iface);
 	return IDirectMusicContainerImpl_IDirectMusicContainer_AddRef ((LPDIRECTMUSICCONTAINER)&This->ContainerVtbl);
 }
 
-ULONG WINAPI IDirectMusicContainerImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
+static ULONG WINAPI IDirectMusicContainerImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, PersistStreamVtbl, iface);
 	return IDirectMusicContainerImpl_IDirectMusicContainer_Release ((LPDIRECTMUSICCONTAINER)&This->ContainerVtbl);
 }
 
-HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, PersistStreamVtbl, iface);
 	
 	TRACE("(%p, %p)\n", This, pClassID);
@@ -435,12 +439,12 @@ HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_GetClassID (LPPERSISTSTR
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
 	/* FIXME: is implemented (somehow) */
 	return E_NOTIMPL;
 }
 
-HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, PersistStreamVtbl, iface);
 	WINE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
@@ -858,12 +862,12 @@ HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTSTREAM if
 	return result;
 }
 
-HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
 	ERR(": should not be needed\n");
 	return E_NOTIMPL;
 }
 
-HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
+static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
 	ERR(": should not be needed\n");
 	return E_NOTIMPL;
 }

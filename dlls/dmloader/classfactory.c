@@ -25,7 +25,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 /*****************************************************************************
  * IDirectMusicLoaderCF implementation
  */
-HRESULT WINAPI IDirectMusicLoaderCF_QueryInterface (LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj) {
+static ULONG WINAPI IDirectMusicLoaderCF_AddRef (LPCLASSFACTORY iface);
+
+static HRESULT WINAPI IDirectMusicLoaderCF_QueryInterface (LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj) {
 	IDirectMusicLoaderCF *This = (IDirectMusicLoaderCF *)iface;
 	
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
@@ -40,13 +42,13 @@ HRESULT WINAPI IDirectMusicLoaderCF_QueryInterface (LPCLASSFACTORY iface, REFIID
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicLoaderCF_AddRef (LPCLASSFACTORY iface) {
+static ULONG WINAPI IDirectMusicLoaderCF_AddRef (LPCLASSFACTORY iface) {
 	IDirectMusicLoaderCF *This = (IDirectMusicLoaderCF *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
-ULONG WINAPI IDirectMusicLoaderCF_Release (LPCLASSFACTORY iface) {
+static ULONG WINAPI IDirectMusicLoaderCF_Release (LPCLASSFACTORY iface) {
 	IDirectMusicLoaderCF *This = (IDirectMusicLoaderCF *)iface;
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
@@ -60,7 +62,7 @@ ULONG WINAPI IDirectMusicLoaderCF_Release (LPCLASSFACTORY iface) {
 	return dwRef;	
 }
 
-HRESULT WINAPI IDirectMusicLoaderCF_CreateInstance (LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicLoaderCF_CreateInstance (LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	IDirectMusicLoaderCF *This = (IDirectMusicLoaderCF *)iface;
 	
 	TRACE ("(%p, %p, %s, %p)\n", This, pOuter, debugstr_dmguid(riid), ppobj);
@@ -72,7 +74,7 @@ HRESULT WINAPI IDirectMusicLoaderCF_CreateInstance (LPCLASSFACTORY iface, LPUNKN
 	return DMUSIC_CreateDirectMusicLoaderImpl (riid, ppobj, pOuter);
 }
 
-HRESULT WINAPI IDirectMusicLoaderCF_LockServer (LPCLASSFACTORY iface, BOOL dolock) {
+static HRESULT WINAPI IDirectMusicLoaderCF_LockServer (LPCLASSFACTORY iface, BOOL dolock) {
 	IDirectMusicLoaderCF *This = (IDirectMusicLoaderCF *)iface;
 	TRACE("(%p, %d)\n", This, dolock);
 	if (dolock)
@@ -112,7 +114,9 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderCF (LPCGUID lpcGUID, LPVOID *ppobj,
 /*****************************************************************************
  * IDirectMusicContainerCF implementation
  */
-HRESULT WINAPI IDirectMusicContainerCF_QueryInterface (LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj) {
+static ULONG WINAPI IDirectMusicContainerCF_AddRef (LPCLASSFACTORY iface);
+
+static HRESULT WINAPI IDirectMusicContainerCF_QueryInterface (LPCLASSFACTORY iface, REFIID riid, LPVOID *ppobj) {
 	IDirectMusicContainerCF *This = (IDirectMusicContainerCF *)iface;
 	
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
@@ -127,13 +131,13 @@ HRESULT WINAPI IDirectMusicContainerCF_QueryInterface (LPCLASSFACTORY iface, REF
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicContainerCF_AddRef (LPCLASSFACTORY iface) {
+static ULONG WINAPI IDirectMusicContainerCF_AddRef (LPCLASSFACTORY iface) {
 	IDirectMusicContainerCF *This = (IDirectMusicContainerCF *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->dwRef);
 	return InterlockedIncrement (&This->dwRef);
 }
 
-ULONG WINAPI IDirectMusicContainerCF_Release (LPCLASSFACTORY iface) {
+static ULONG WINAPI IDirectMusicContainerCF_Release (LPCLASSFACTORY iface) {
 	IDirectMusicContainerCF *This = (IDirectMusicContainerCF *)iface;
 	
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
@@ -147,7 +151,7 @@ ULONG WINAPI IDirectMusicContainerCF_Release (LPCLASSFACTORY iface) {
 	return dwRef;
 }
 
-HRESULT WINAPI IDirectMusicContainerCF_CreateInstance (LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicContainerCF_CreateInstance (LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
 	IDirectMusicContainerCF *This = (IDirectMusicContainerCF *)iface;
 
 	TRACE ("(%p, %p, %s, %p)\n", This, pOuter, debugstr_dmguid(riid), ppobj);
@@ -159,7 +163,7 @@ HRESULT WINAPI IDirectMusicContainerCF_CreateInstance (LPCLASSFACTORY iface, LPU
 	return DMUSIC_CreateDirectMusicContainerImpl (riid, ppobj, pOuter);
 }
 
-HRESULT WINAPI IDirectMusicContainerCF_LockServer (LPCLASSFACTORY iface, BOOL dolock) {
+static HRESULT WINAPI IDirectMusicContainerCF_LockServer (LPCLASSFACTORY iface, BOOL dolock) {
 	IDirectMusicContainerCF *This = (IDirectMusicContainerCF *)iface;
 	TRACE("(%p, %d)\n", This, dolock);
 	if (dolock)

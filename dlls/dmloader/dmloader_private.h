@@ -73,13 +73,8 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicContainerImpl (LPCGUID lpcGUID, LP
 extern HRESULT WINAPI DMUSIC_DestroyDirectMusicContainerImpl(LPDIRECTMUSICCONTAINER iface);
 
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderFileStream (LPVOID *ppobj);
-extern HRESULT WINAPI DMUSIC_DestroyDirectMusicLoaderFileStream (LPSTREAM iface);
-
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderResourceStream (LPVOID *ppobj);
-extern HRESULT WINAPI DMUSIC_DestroyDirectMusicLoaderResourceStream (LPSTREAM iface);
-
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderGenericStream (LPVOID *ppobj);
-extern HRESULT WINAPI DMUSIC_DestroyDirectMusicLoaderGenericStream (LPSTREAM iface);
 
 /*****************************************************************************
  * IDirectMusicLoaderCF implementation structure
@@ -90,10 +85,6 @@ struct IDirectMusicLoaderCF {
 	LONG dwRef;
 };
 
-/* IUnknown / IClassFactory: */
-extern HRESULT WINAPI IDirectMusicLoaderCF_QueryInterface (LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj);
-extern ULONG   WINAPI IDirectMusicLoaderCF_AddRef (LPCLASSFACTORY iface);
-
 /*****************************************************************************
  * IDirectMusicContainerCF implementation structure
  */
@@ -102,10 +93,6 @@ struct IDirectMusicContainerCF {
 	const IClassFactoryVtbl *lpVtbl;
 	LONG dwRef;
 };
-
-/* IUnknown / IClassFactory: */
-extern HRESULT WINAPI IDirectMusicContainerCF_QueryInterface (LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj);
-extern ULONG   WINAPI IDirectMusicContainerCF_AddRef (LPCLASSFACTORY iface);
 
 /* cache/alias entry */
 typedef struct _WINE_LOADER_ENTRY {
@@ -139,10 +126,6 @@ struct IDirectMusicLoaderImpl {
 	CRITICAL_SECTION CritSect;
 };
 
-/* IUnknown / IDirectMusicLoader(8): */
-extern HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_QueryInterface (LPDIRECTMUSICLOADER8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG   WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_AddRef (LPDIRECTMUSICLOADER8 iface);
-
 /* contained object entry */
 typedef struct _WINE_CONTAINER_ENTRY {
 	struct list entry; /* for listing elements */
@@ -173,16 +156,6 @@ struct IDirectMusicContainerImpl {
 	DMUS_OBJECTDESC Desc;
 };
 
-/* IUnknown / IDirectMusicContainer: */
-extern HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_QueryInterface (LPDIRECTMUSICCONTAINER iface, REFIID riid, LPVOID *ppobj);
-extern ULONG   WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_AddRef (LPDIRECTMUSICCONTAINER iface);
-/* IDirectMusicObject: */
-extern HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj);
-extern ULONG   WINAPI IDirectMusicContainerImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG   WINAPI IDirectMusicContainerImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicLoaderFileStream implementation structure
  */
@@ -202,12 +175,6 @@ struct IDirectMusicLoaderFileStream {
 /* Custom: */
 extern HRESULT WINAPI IDirectMusicLoaderFileStream_Attach (LPSTREAM iface, LPCWSTR wzFile, LPDIRECTMUSICLOADER8 pLoader);
 extern void    WINAPI IDirectMusicLoaderFileStream_Detach (LPSTREAM iface);
-/* IUnknown/IStream: */
-extern HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_QueryInterface (LPSTREAM iface, REFIID riid, void** ppobj);
-extern ULONG   WINAPI IDirectMusicLoaderFileStream_IStream_AddRef (LPSTREAM iface);
-/* IDirectMusicGetLoader: */
-extern HRESULT WINAPI IDirectMusicLoaderFileStream_IDirectMusicGetLoader_QueryInterface (LPDIRECTMUSICGETLOADER iface, REFIID riid, void** ppobj);
-extern ULONG   WINAPI IDirectMusicLoaderFileStream_IDirectMusicGetLoader_AddRef (LPDIRECTMUSICGETLOADER iface);
 
 /*****************************************************************************
  * IDirectMusicLoaderResourceStream implementation structure
@@ -230,12 +197,6 @@ struct IDirectMusicLoaderResourceStream {
 /* Custom: */
 extern HRESULT WINAPI IDirectMusicLoaderResourceStream_Attach (LPSTREAM iface, LPBYTE pbMemData, LONGLONG llMemLength, LONGLONG llPos, LPDIRECTMUSICLOADER8 pLoader);
 extern void    WINAPI IDirectMusicLoaderResourceStream_Detach (LPSTREAM iface);
-/* IUnknown/IStream: */
-extern HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_QueryInterface (LPSTREAM iface, REFIID riid, void** ppobj);
-extern ULONG   WINAPI IDirectMusicLoaderResourceStream_IStream_AddRef (LPSTREAM iface);
-/* IDirectMusicGetLoader: */
-extern HRESULT WINAPI IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_QueryInterface (LPDIRECTMUSICGETLOADER iface, REFIID riid, void** ppobj);
-extern ULONG   WINAPI IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_AddRef (LPDIRECTMUSICGETLOADER iface);
 
 /*****************************************************************************
  * IDirectMusicLoaderGenericStream implementation structure
@@ -255,12 +216,6 @@ struct IDirectMusicLoaderGenericStream {
 /* Custom: */
 extern HRESULT WINAPI IDirectMusicLoaderGenericStream_Attach (LPSTREAM iface, LPSTREAM pStream, LPDIRECTMUSICLOADER8 pLoader);
 extern void    WINAPI IDirectMusicLoaderGenericStream_Detach (LPSTREAM iface);
-/* IUnknown/IStream: */
-extern HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_QueryInterface (LPSTREAM iface, REFIID riid, void** ppobj);
-extern ULONG   WINAPI IDirectMusicLoaderGenericStream_IStream_AddRef (LPSTREAM iface);
-/* IDirectMusicGetLoader: */
-extern HRESULT WINAPI IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_QueryInterface (LPDIRECTMUSICGETLOADER iface, REFIID riid, void** ppobj);
-extern ULONG   WINAPI IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_AddRef (LPDIRECTMUSICGETLOADER iface);
 
 /*****************************************************************************
  * Misc.
@@ -273,7 +228,6 @@ typedef struct _WINE_CHUNK {
 
 extern HRESULT WINAPI DMUSIC_GetDefaultGMPath (WCHAR wszPath[MAX_PATH]);
 extern HRESULT WINAPI DMUSIC_GetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache);
-extern HRESULT WINAPI DMUSIC_SetLoaderSettings (LPDIRECTMUSICLOADER8 iface, REFGUID pClassID, WCHAR* wszSearchPath, LPBOOL pbCache);
 extern HRESULT WINAPI DMUSIC_InitLoaderSettings (LPDIRECTMUSICLOADER8 iface);
 extern HRESULT WINAPI DMUSIC_CopyDescriptor (LPDMUS_OBJECTDESC pDst, LPDMUS_OBJECTDESC pSrc);
 extern BOOL WINAPI DMUSIC_IsValidLoadableClass (REFCLSID pClassID);
