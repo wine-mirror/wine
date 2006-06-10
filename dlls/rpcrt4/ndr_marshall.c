@@ -2308,6 +2308,7 @@ unsigned char* WINAPI NdrConformantVaryingArrayMarshall( PMIDL_STUB_MESSAGE pStu
                                                          unsigned char* pMemory,
                                                          PFORMAT_STRING pFormat )
 {
+    ULONG bufsize;
     unsigned char alignment = pFormat[1] + 1;
     DWORD esize = *(const WORD*)(pFormat+2);
 
@@ -2328,9 +2329,11 @@ unsigned char* WINAPI NdrConformantVaryingArrayMarshall( PMIDL_STUB_MESSAGE pStu
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
-    memcpy(pStubMsg->Buffer, pMemory + pStubMsg->Offset, pStubMsg->ActualCount*esize);
+    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+
+    memcpy(pStubMsg->Buffer, pMemory + pStubMsg->Offset, bufsize);
     pStubMsg->BufferMark = pStubMsg->Buffer;
-    pStubMsg->Buffer += pStubMsg->ActualCount*esize;
+    pStubMsg->Buffer += bufsize;
 
     EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
 
@@ -2348,6 +2351,7 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
                                                            PFORMAT_STRING pFormat,
                                                            unsigned char fMustAlloc )
 {
+    ULONG bufsize, memsize;
     unsigned char alignment = pFormat[1] + 1;
     DWORD esize = *(const WORD*)(pFormat+2);
 
@@ -2365,10 +2369,13 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
+    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+    memsize = safe_multiply(esize, pStubMsg->MaxCount);
+
     if (!*ppMemory || fMustAlloc)
-        *ppMemory = NdrAllocate(pStubMsg, pStubMsg->MaxCount * esize);
-    memcpy(*ppMemory + pStubMsg->Offset, pStubMsg->Buffer, pStubMsg->ActualCount * esize);
-    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
+        *ppMemory = NdrAllocate(pStubMsg, memsize);
+    memcpy(*ppMemory + pStubMsg->Offset, pStubMsg->Buffer, bufsize);
+    pStubMsg->Buffer += bufsize;
 
     EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -2427,7 +2434,7 @@ void WINAPI NdrConformantVaryingArrayBufferSize( PMIDL_STUB_MESSAGE pStubMsg,
 
     ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
-    pStubMsg->BufferLength += pStubMsg->ActualCount*esize;
+    pStubMsg->BufferLength += safe_multiply(esize, pStubMsg->ActualCount);
 
     EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
@@ -2499,7 +2506,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                  PFORMAT_STRING pFormat,
                                                  unsigned char fMustAlloc)
 {
-  ULONG i, count, esize;
+  ULONG i, count, esize, memsize;
   unsigned char alignment;
   unsigned char *pMemory;
   unsigned char *Buffer;
@@ -2524,10 +2531,12 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   esize = ComplexStructMemorySize(pStubMsg, pFormat);
   pStubMsg->Buffer = Buffer;
 
+  /* do multiply here instead of inside if block to verify MaxCount */
+  memsize = safe_multiply(esize, pStubMsg->MaxCount);
   if (fMustAlloc || !*ppMemory)
   {
-    *ppMemory = NdrAllocate(pStubMsg, pStubMsg->MaxCount * esize);
-    memset(*ppMemory, 0, pStubMsg->MaxCount * esize);
+    *ppMemory = NdrAllocate(pStubMsg, memsize);
+    memset(*ppMemory, 0, memsize);
   }
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
@@ -2620,7 +2629,7 @@ unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   esize = ComplexStructMemorySize(pStubMsg, pFormat);
   pStubMsg->Buffer = Buffer;
 
-  MemorySize = esize * pStubMsg->MaxCount;
+  MemorySize = safe_multiply(pStubMsg->MaxCount, esize);
 
   count = pStubMsg->ActualCount;
   for (i = 0; i < count; i++)
@@ -2872,7 +2881,7 @@ unsigned char *  WINAPI NdrConformantStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 {
     const NDR_CSTRUCT_FORMAT * pCStructFormat = (NDR_CSTRUCT_FORMAT*)pFormat;
     PFORMAT_STRING pCArrayFormat;
-    ULONG esize;
+    ULONG esize, bufsize;
 
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
 
@@ -2903,10 +2912,11 @@ unsigned char *  WINAPI NdrConformantStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     TRACE("memory_size = %d\n", pCStructFormat->memory_size);
 
+    bufsize = safe_multiply(esize, pStubMsg->MaxCount);
     /* copy constant sized part of struct */
     pStubMsg->BufferMark = pStubMsg->Buffer;
-    memcpy(pStubMsg->Buffer, pMemory, pCStructFormat->memory_size + pStubMsg->MaxCount * esize);
-    pStubMsg->Buffer += pCStructFormat->memory_size + pStubMsg->MaxCount * esize;
+    memcpy(pStubMsg->Buffer, pMemory, pCStructFormat->memory_size + bufsize);
+    pStubMsg->Buffer += pCStructFormat->memory_size + bufsize;
 
     if (pCStructFormat->type == RPC_FC_CPSTRUCT)
         EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
@@ -2926,7 +2936,7 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
 {
     const NDR_CSTRUCT_FORMAT * pCStructFormat = (NDR_CSTRUCT_FORMAT*)pFormat;
     PFORMAT_STRING pCArrayFormat;
-    ULONG esize;
+    ULONG esize, bufsize;
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -2953,17 +2963,18 @@ unsigned char *  WINAPI NdrConformantStructUnmarshall(PMIDL_STUB_MESSAGE pStubMs
 
     TRACE("memory_size = %d\n", pCStructFormat->memory_size);
 
+    bufsize = safe_multiply(esize, pStubMsg->MaxCount);
     /* work out how much memory to allocate if we need to do so */
     if (!*ppMemory || fMustAlloc)
     {
-        SIZE_T size = pCStructFormat->memory_size + pStubMsg->MaxCount * esize;
+        SIZE_T size = pCStructFormat->memory_size + bufsize;
         *ppMemory = NdrAllocate(pStubMsg, size);
     }
 
     /* now copy the data */
     pStubMsg->BufferMark = pStubMsg->Buffer;
-    memcpy(*ppMemory, pStubMsg->Buffer, pCStructFormat->memory_size + pStubMsg->MaxCount * esize);
-    pStubMsg->Buffer += pCStructFormat->memory_size + pStubMsg->MaxCount * esize;
+    memcpy(*ppMemory, pStubMsg->Buffer, pCStructFormat->memory_size + bufsize);
+    pStubMsg->Buffer += pCStructFormat->memory_size + bufsize;
 
     if (pCStructFormat->type == RPC_FC_CPSTRUCT)
         EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
@@ -3008,7 +3019,8 @@ void WINAPI NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
     TRACE("memory_size = %d\n", pCStructFormat->memory_size);
 
-    pStubMsg->BufferLength += pCStructFormat->memory_size + esize * pStubMsg->MaxCount;
+    pStubMsg->BufferLength += pCStructFormat->memory_size +
+        safe_multiply(pStubMsg->MaxCount, esize);
 
     if (pCStructFormat->type == RPC_FC_CPSTRUCT)
         EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
@@ -3043,7 +3055,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructMarshall(PMIDL_STUB_MESSAGE pS
 {
     const NDR_CVSTRUCT_FORMAT * pCVStructFormat = (NDR_CVSTRUCT_FORMAT*)pFormat;
     PFORMAT_STRING pCVArrayFormat;
-    ULONG esize;
+    ULONG esize, bufsize;
 
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
 
@@ -3106,9 +3118,11 @@ unsigned char *  WINAPI NdrConformantVaryingStructMarshall(PMIDL_STUB_MESSAGE pS
 
     WriteVariance(pStubMsg);
 
+    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+
     /* write array part */
-    memcpy(pStubMsg->Buffer, pMemory + pCVStructFormat->memory_size, pStubMsg->ActualCount * esize);
-    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
+    memcpy(pStubMsg->Buffer, pMemory + pCVStructFormat->memory_size, bufsize);
+    pStubMsg->Buffer += bufsize;
 
     EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
 
@@ -3127,7 +3141,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
 {
     const NDR_CVSTRUCT_FORMAT * pCVStructFormat = (NDR_CVSTRUCT_FORMAT*)pFormat;
     PFORMAT_STRING pCVArrayFormat;
-    ULONG esize;
+    ULONG esize, bufsize;
     unsigned char cvarray_type;
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
@@ -3176,7 +3190,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     /* work out how much memory to allocate if we need to do so */
     if (!*ppMemory || fMustAlloc)
     {
-        SIZE_T size = pCVStructFormat->memory_size + pStubMsg->MaxCount * esize;
+        SIZE_T size = pCVStructFormat->memory_size + safe_multiply(esize, pStubMsg->MaxCount);
         *ppMemory = NdrAllocate(pStubMsg, size);
     }
 
@@ -3187,10 +3201,11 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
 
     pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat);
 
+    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
     /* copy the array data */
     memcpy(*ppMemory + pCVStructFormat->memory_size, pStubMsg->Buffer,
-           pStubMsg->ActualCount * esize);
-    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
+           bufsize);
+    pStubMsg->Buffer += bufsize;
 
     if (cvarray_type == RPC_FC_C_CSTRING)
         TRACE("string=%s\n", debugstr_a((char *)(*ppMemory + pCVStructFormat->memory_size)));
@@ -3269,7 +3284,7 @@ void WINAPI NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
     pStubMsg->BufferLength += pCVStructFormat->memory_size;
     SizeVariance(pStubMsg);
-    pStubMsg->BufferLength += esize * pStubMsg->MaxCount;
+    pStubMsg->BufferLength += safe_multiply(pStubMsg->MaxCount, esize);
 
     EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
@@ -3330,9 +3345,9 @@ unsigned long WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pSt
 
     pStubMsg->Buffer += pCVStructFormat->memory_size;
     pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat);
-    pStubMsg->Buffer += pCVStructFormat->memory_size + pStubMsg->ActualCount * esize;
+    pStubMsg->Buffer += pCVStructFormat->memory_size + safe_multiply(esize, pStubMsg->ActualCount);
 
-    pStubMsg->MemorySize += pCVStructFormat->memory_size + pStubMsg->MaxCount * esize;
+    pStubMsg->MemorySize += pCVStructFormat->memory_size + safe_multiply(esize, pStubMsg->MaxCount);
 
     EmbeddedPointerMemorySize(pStubMsg, pFormat);
 
@@ -3620,6 +3635,7 @@ unsigned char *  WINAPI NdrVaryingArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 {
     unsigned char alignment;
     DWORD elements, esize;
+    ULONG bufsize;
 
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
 
@@ -3663,9 +3679,10 @@ unsigned char *  WINAPI NdrVaryingArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
-    memcpy(pStubMsg->Buffer, pMemory + pStubMsg->Offset, pStubMsg->ActualCount*esize);
+    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+    memcpy(pStubMsg->Buffer, pMemory + pStubMsg->Offset, bufsize);
     pStubMsg->BufferMark = pStubMsg->Buffer;
-    pStubMsg->Buffer += pStubMsg->ActualCount*esize;
+    pStubMsg->Buffer += bufsize;
 
     EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
 
@@ -3684,6 +3701,7 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 {
     unsigned char alignment;
     DWORD size, elements, esize;
+    ULONG bufsize;
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -3727,10 +3745,12 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
+    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+
     if (!*ppMemory || fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, size);
-    memcpy(*ppMemory + pStubMsg->Offset, pStubMsg->Buffer, pStubMsg->ActualCount * esize);
-    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
+    memcpy(*ppMemory + pStubMsg->Offset, pStubMsg->Buffer, bufsize);
+    pStubMsg->Buffer += bufsize;
 
     EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -3789,7 +3809,7 @@ void WINAPI NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
     ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
-    pStubMsg->BufferLength += pStubMsg->ActualCount * esize;
+    pStubMsg->BufferLength += safe_multiply(esize, pStubMsg->ActualCount);
 
     EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
@@ -3845,7 +3865,7 @@ unsigned long WINAPI NdrVaryingArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
-    pStubMsg->Buffer += pStubMsg->ActualCount * esize;
+    pStubMsg->Buffer += safe_multiply(esize, pStubMsg->ActualCount);
     pStubMsg->MemorySize += size;
 
     EmbeddedPointerMemorySize(pStubMsg, pFormat);
