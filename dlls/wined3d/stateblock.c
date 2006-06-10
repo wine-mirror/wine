@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /**********************************************************
  * IWineD3DStateBlockImpl IUnknown parts follows
  **********************************************************/
-HRESULT WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface,REFIID riid,LPVOID *ppobj)
+static HRESULT  WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface,REFIID riid,LPVOID *ppobj)
 {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -44,7 +44,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface,R
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IWineD3DStateBlockImpl_AddRef(IWineD3DStateBlock *iface) {
+static ULONG  WINAPI IWineD3DStateBlockImpl_AddRef(IWineD3DStateBlock *iface) {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
@@ -52,7 +52,7 @@ ULONG WINAPI IWineD3DStateBlockImpl_AddRef(IWineD3DStateBlock *iface) {
     return refCount;
 }
 
-ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
+static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
@@ -108,14 +108,14 @@ ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 /**********************************************************
  * IWineD3DStateBlockImpl parts follows
  **********************************************************/
-HRESULT WINAPI IWineD3DStateBlockImpl_GetParent(IWineD3DStateBlock *iface, IUnknown **pParent) {
+static HRESULT  WINAPI IWineD3DStateBlockImpl_GetParent(IWineD3DStateBlock *iface, IUnknown **pParent) {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     IUnknown_AddRef(This->parent);
     *pParent = This->parent;
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DStateBlockImpl_GetDevice(IWineD3DStateBlock *iface, IWineD3DDevice** ppDevice){
+static HRESULT  WINAPI IWineD3DStateBlockImpl_GetDevice(IWineD3DStateBlock *iface, IWineD3DDevice** ppDevice){
 
     IWineD3DStateBlockImpl *This   = (IWineD3DStateBlockImpl *)iface;
 
@@ -125,7 +125,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_GetDevice(IWineD3DStateBlock *iface, IWine
 
 }
 
-HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
+static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
 
     IWineD3DStateBlockImpl *This             = (IWineD3DStateBlockImpl *)iface;
     IWineD3DStateBlockImpl *targetStateBlock = This->wineD3DDevice->stateBlock;
@@ -412,7 +412,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface){
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface){
+static HRESULT  WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface){
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     IWineD3DDevice*        pDevice     = (IWineD3DDevice*)This->wineD3DDevice;
 
@@ -606,7 +606,7 @@ should really perform a delta so that only the changes get updated*/
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* iface) {
+static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* iface) {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     IWineD3DDevice         *device = (IWineD3DDevice *)This->wineD3DDevice;
     IWineD3DDeviceImpl     *ThisDevice = (IWineD3DDeviceImpl *)device;

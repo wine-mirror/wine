@@ -127,7 +127,7 @@ x11_copy_to_screen(IWineD3DSurfaceImpl *This,
  * wrong in the parent library. Write an informative warning
  *
  *****************************************************************************/
-void WINAPI
+static void WINAPI
 IWineGDISurfaceImpl_PreLoad(IWineD3DSurface *iface)
 {
     ERR("(%p): PreLoad is not supported on X11 surfaces!\n", iface);
@@ -150,7 +150,7 @@ IWineGDISurfaceImpl_PreLoad(IWineD3DSurface *iface)
  *  WINED3DERR_INVALIDCALL on errors
  *
  *****************************************************************************/
-HRESULT WINAPI
+static HRESULT WINAPI
 IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
                              WINED3DLOCKED_RECT* pLockedRect,
                              CONST RECT* pRect,
@@ -233,7 +233,7 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
  *  WINED3DERR_INVALIDCALL on failure
  *
  *****************************************************************************/
-HRESULT WINAPI
+static HRESULT WINAPI
 IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
@@ -291,7 +291,7 @@ IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
  *  WINED3D_OK on success
  *
  *****************************************************************************/
-HRESULT WINAPI
+static HRESULT WINAPI
 IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface,
                          IWineD3DSurface *override,
                          DWORD Flags)

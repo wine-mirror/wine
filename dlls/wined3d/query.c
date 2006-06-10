@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /* *******************************************
    IWineD3DQuery IUnknown parts follow
    ******************************************* */
-HRESULT WINAPI IWineD3DQueryImpl_QueryInterface(IWineD3DQuery *iface, REFIID riid, LPVOID *ppobj)
+static HRESULT  WINAPI IWineD3DQueryImpl_QueryInterface(IWineD3DQuery *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -48,13 +48,13 @@ HRESULT WINAPI IWineD3DQueryImpl_QueryInterface(IWineD3DQuery *iface, REFIID rii
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IWineD3DQueryImpl_AddRef(IWineD3DQuery *iface) {
+static ULONG  WINAPI IWineD3DQueryImpl_AddRef(IWineD3DQuery *iface) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
-ULONG WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
+static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     ULONG ref;
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
@@ -69,7 +69,7 @@ ULONG WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
 /* *******************************************
    IWineD3DQuery IWineD3DQuery parts follow
    ******************************************* */
-HRESULT WINAPI IWineD3DQueryImpl_GetParent(IWineD3DQuery *iface, IUnknown** parent){
+static HRESULT  WINAPI IWineD3DQueryImpl_GetParent(IWineD3DQuery *iface, IUnknown** parent){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
 
     *parent= (IUnknown*) parent;
@@ -78,7 +78,7 @@ HRESULT WINAPI IWineD3DQueryImpl_GetParent(IWineD3DQuery *iface, IUnknown** pare
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DQueryImpl_GetDevice(IWineD3DQuery* iface, IWineD3DDevice **pDevice){
+static HRESULT  WINAPI IWineD3DQueryImpl_GetDevice(IWineD3DQuery* iface, IWineD3DDevice **pDevice){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
     *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
@@ -87,7 +87,7 @@ HRESULT WINAPI IWineD3DQueryImpl_GetDevice(IWineD3DQuery* iface, IWineD3DDevice 
 }
 
 
-HRESULT WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags){
+static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     if(dwSize == 0){
         /*you can use this method to poll the resource for the query status*/
@@ -244,7 +244,7 @@ HRESULT WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWOR
 }
 
 
-DWORD WINAPI IWineD3DQueryImpl_GetDataSize(IWineD3DQuery* iface){
+static DWORD  WINAPI IWineD3DQueryImpl_GetDataSize(IWineD3DQuery* iface){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     int dataSize = 0;
     FIXME("(%p) : stub\n", This);
@@ -304,13 +304,13 @@ DWORD WINAPI IWineD3DQueryImpl_GetDataSize(IWineD3DQuery* iface){
 }
 
 
-WINED3DQUERYTYPE WINAPI IWineD3DQueryImpl_GetType(IWineD3DQuery* iface){
+static WINED3DQUERYTYPE  WINAPI IWineD3DQueryImpl_GetType(IWineD3DQuery* iface){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     return This->type;
 }
 
 
-HRESULT WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags){
+static HRESULT  WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags){
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
     FIXME("(%p) : stub\n", This);
     return WINED3D_OK; /* can be WINED3DERR_INVALIDCALL.    */

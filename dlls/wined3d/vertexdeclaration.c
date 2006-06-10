@@ -394,7 +394,7 @@ static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DVertexDec
 /* *******************************************
    IWineD3DVertexDeclaration IUnknown parts follow
    ******************************************* */
-HRESULT WINAPI IWineD3DVertexDeclarationImpl_QueryInterface(IWineD3DVertexDeclaration *iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IWineD3DVertexDeclarationImpl_QueryInterface(IWineD3DVertexDeclaration *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -409,13 +409,13 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_QueryInterface(IWineD3DVertexDeclar
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IWineD3DVertexDeclarationImpl_AddRef(IWineD3DVertexDeclaration *iface) {
+static ULONG WINAPI IWineD3DVertexDeclarationImpl_AddRef(IWineD3DVertexDeclaration *iface) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
-ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclaration *iface) {
+static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclaration *iface) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     ULONG ref;
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
@@ -434,7 +434,7 @@ ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclaration *if
    IWineD3DVertexDeclaration parts follow
    ******************************************* */
 
-HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetParent(IWineD3DVertexDeclaration *iface, IUnknown** parent){
+static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetParent(IWineD3DVertexDeclaration *iface, IUnknown** parent){
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
 
     *parent= This->parent;
@@ -443,7 +443,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetParent(IWineD3DVertexDeclaration
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDeclaration *iface, IWineD3DDevice** ppDevice) {
+static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDeclaration *iface, IWineD3DDevice** ppDevice) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     TRACE("(%p) : returning %p\n", This, This->wineD3DDevice);
 
@@ -479,7 +479,7 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVert
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDeclaration* iface,  D3DVERTEXELEMENT9* pData, DWORD* pNumElements) {
+static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDeclaration* iface,  D3DVERTEXELEMENT9* pData, DWORD* pNumElements) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
 
     TRACE("(This %p, pData %p, pNumElements %p)\n", This, pData, pNumElements);
@@ -498,7 +498,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDecla
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclaration *iface, VOID *pData, DWORD *pSize) {
+static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclaration *iface, VOID *pData, DWORD *pSize) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     HRESULT hr = WINED3D_OK;
 
@@ -517,7 +517,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclar
     return hr;
 }
 
-HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVertexDeclaration *iface, VOID *pDecl) {
+static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVertexDeclaration *iface, VOID *pDecl) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     HRESULT hr = WINED3D_OK;
 

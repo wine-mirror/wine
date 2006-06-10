@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 /* *******************************************
    IWineD3DPixelShader IUnknown parts follow
    ******************************************* */
-HRESULT WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShader *iface, REFIID riid, LPVOID *ppobj)
+static HRESULT  WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShader *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -60,13 +60,13 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShader *iface
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IWineD3DPixelShaderImpl_AddRef(IWineD3DPixelShader *iface) {
+static ULONG  WINAPI IWineD3DPixelShaderImpl_AddRef(IWineD3DPixelShader *iface) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
-ULONG WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface) {
+static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     ULONG ref;
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
@@ -93,7 +93,7 @@ ULONG WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface) {
    IWineD3DPixelShader IWineD3DPixelShader parts follow
    ******************************************* */
 
-HRESULT WINAPI IWineD3DPixelShaderImpl_GetParent(IWineD3DPixelShader *iface, IUnknown** parent){
+static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetParent(IWineD3DPixelShader *iface, IUnknown** parent){
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
 
     *parent = This->parent;
@@ -102,7 +102,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_GetParent(IWineD3DPixelShader *iface, IUn
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DPixelShaderImpl_GetDevice(IWineD3DPixelShader* iface, IWineD3DDevice **pDevice){
+static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetDevice(IWineD3DPixelShader* iface, IWineD3DDevice **pDevice){
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
     *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
@@ -111,7 +111,7 @@ HRESULT WINAPI IWineD3DPixelShaderImpl_GetDevice(IWineD3DPixelShader* iface, IWi
 }
 
 
-HRESULT WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* impl, VOID* pData, UINT* pSizeOfData) {
+static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* impl, VOID* pData, UINT* pSizeOfData) {
   IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)impl;
   TRACE("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
 
@@ -1387,7 +1387,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 #endif
 }
 
-HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
+static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const DWORD* pToken = pFunction;
     const SHADER_OPCODE *curOpcode = NULL;

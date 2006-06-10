@@ -55,14 +55,14 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_fps);
 
 
 /* IDirect3DSwapChain IUnknown parts follow: */
-ULONG WINAPI IWineD3DSwapChainImpl_AddRef(IWineD3DSwapChain *iface) {
+static ULONG WINAPI IWineD3DSwapChainImpl_AddRef(IWineD3DSwapChain *iface) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     DWORD refCount = InterlockedIncrement(&This->ref);
     TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
     return refCount;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IWineD3DSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj);
@@ -82,7 +82,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, RE
 }
 
 
-ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
+static ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     DWORD refCount;
     refCount = InterlockedDecrement(&This->ref);
@@ -124,7 +124,7 @@ ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
     return refCount;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetParent(IWineD3DSwapChain *iface, IUnknown ** ppParent){
+static HRESULT WINAPI IWineD3DSwapChainImpl_GetParent(IWineD3DSwapChain *iface, IUnknown ** ppParent){
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     *ppParent = This->parent;
     IUnknown_AddRef(*ppParent);
@@ -133,7 +133,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetParent(IWineD3DSwapChain *iface, IUnknow
 }
 
 /*IWineD3DSwapChain parts follow: */
-HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) {
+static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
 
     ENTER_GL();
@@ -336,7 +336,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface, IWineD3DSurface *pDestSurface) {
+static HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface, IWineD3DSurface *pDestSurface) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     WINED3DFORMAT d3dformat;
     UINT width;
@@ -369,7 +369,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UINT iBackBuffer, WINED3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) {
+static HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UINT iBackBuffer, WINED3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) {
 
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
 
@@ -391,7 +391,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UIN
 
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface, WINED3DRASTER_STATUS *pRasterStatus) {
+static HRESULT WINAPI IWineD3DSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface, WINED3DRASTER_STATUS *pRasterStatus) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     static BOOL showFixmes = TRUE;
     pRasterStatus->InVBlank = TRUE;
@@ -404,7 +404,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface, W
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WINED3DDISPLAYMODE*pMode) {
+static HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WINED3DDISPLAYMODE*pMode) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     HDC                 hdc;
     int                 bpp = 0;
@@ -432,7 +432,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WI
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3DDevice**ppDevice) {
+static HRESULT WINAPI IWineD3DSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3DDevice**ppDevice) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
 
     *ppDevice = (IWineD3DDevice *) This->wineD3DDevice;
@@ -444,7 +444,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *iface, WINED3DPRESENT_PARAMETERS *pPresentationParameters) {
+static HRESULT WINAPI IWineD3DSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *iface, WINED3DPRESENT_PARAMETERS *pPresentationParameters) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     TRACE("(%p)\n", This);
     *pPresentationParameters->BackBufferWidth = This->presentParms.BackBufferWidth;
@@ -463,7 +463,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *ifa
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface, DWORD Flags, CONST WINED3DGAMMARAMP *pRamp){
+static HRESULT WINAPI IWineD3DSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface, DWORD Flags, CONST WINED3DGAMMARAMP *pRamp){
 
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     HDC hDC;
@@ -475,7 +475,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface, DWOR
 
 }
 
-HRESULT WINAPI IWineD3DSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface, WINED3DGAMMARAMP *pRamp){
+static HRESULT WINAPI IWineD3DSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface, WINED3DGAMMARAMP *pRamp){
 
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     HDC hDC;

@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /* *******************************************
    IWineD3DVertexBuffer IUnknown parts follow
    ******************************************* */
-HRESULT WINAPI IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuffer *iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuffer *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -45,14 +45,14 @@ HRESULT WINAPI IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuffer *ifa
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IWineD3DVertexBufferImpl_AddRef(IWineD3DVertexBuffer *iface) {
+static ULONG WINAPI IWineD3DVertexBufferImpl_AddRef(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
     TRACE("(%p) : AddRef increasing from %ld\n", This, ref - 1);
     return ref;
 }
 
-ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
+static ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
@@ -66,58 +66,58 @@ ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
 /* ****************************************************
    IWineD3DVertexBuffer IWineD3DResource parts follow
    **************************************************** */
-HRESULT WINAPI IWineD3DVertexBufferImpl_GetDevice(IWineD3DVertexBuffer *iface, IWineD3DDevice** ppDevice) {
+static HRESULT WINAPI IWineD3DVertexBufferImpl_GetDevice(IWineD3DVertexBuffer *iface, IWineD3DDevice** ppDevice) {
     return IWineD3DResourceImpl_GetDevice((IWineD3DResource *)iface, ppDevice);
 }
 
-HRESULT WINAPI IWineD3DVertexBufferImpl_SetPrivateData(IWineD3DVertexBuffer *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
+static HRESULT WINAPI IWineD3DVertexBufferImpl_SetPrivateData(IWineD3DVertexBuffer *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     return IWineD3DResourceImpl_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
 }
 
-HRESULT WINAPI IWineD3DVertexBufferImpl_GetPrivateData(IWineD3DVertexBuffer *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
+static HRESULT WINAPI IWineD3DVertexBufferImpl_GetPrivateData(IWineD3DVertexBuffer *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     return IWineD3DResourceImpl_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
 }
 
-HRESULT WINAPI IWineD3DVertexBufferImpl_FreePrivateData(IWineD3DVertexBuffer *iface, REFGUID refguid) {
+static HRESULT WINAPI IWineD3DVertexBufferImpl_FreePrivateData(IWineD3DVertexBuffer *iface, REFGUID refguid) {
     return IWineD3DResourceImpl_FreePrivateData((IWineD3DResource *)iface, refguid);
 }
 
-DWORD    WINAPI        IWineD3DVertexBufferImpl_SetPriority(IWineD3DVertexBuffer *iface, DWORD PriorityNew) {
+static DWORD    WINAPI IWineD3DVertexBufferImpl_SetPriority(IWineD3DVertexBuffer *iface, DWORD PriorityNew) {
     return IWineD3DResourceImpl_SetPriority((IWineD3DResource *)iface, PriorityNew);
 }
 
-DWORD    WINAPI        IWineD3DVertexBufferImpl_GetPriority(IWineD3DVertexBuffer *iface) {
+static DWORD    WINAPI IWineD3DVertexBufferImpl_GetPriority(IWineD3DVertexBuffer *iface) {
     return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
-void     WINAPI        IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface) {
+static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *iface) {
     return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
-WINED3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface) {
+static WINED3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *iface) {
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 
-HRESULT WINAPI IWineD3DVertexBufferImpl_GetParent(IWineD3DVertexBuffer *iface, IUnknown **pParent) {
+static HRESULT WINAPI IWineD3DVertexBufferImpl_GetParent(IWineD3DVertexBuffer *iface, IUnknown **pParent) {
     return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
 }
 
 /* ******************************************************
    IWineD3DVertexBuffer IWineD3DVertexBuffer parts follow
    ****************************************************** */
-HRESULT  WINAPI        IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags) {
+static HRESULT  WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     TRACE("(%p) : returning memory of %p (base:%p,offset:%u)\n", This, This->resource.allocatedMemory + OffsetToLock, This->resource.allocatedMemory, OffsetToLock);
     /* TODO: check Flags compatibility with This->currentDesc.Usage (see MSDN) */
     *ppbData = This->resource.allocatedMemory + OffsetToLock;
     return WINED3D_OK;
 }
-HRESULT  WINAPI        IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
+static HRESULT  WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     TRACE("(%p) : stub\n", This);
     return WINED3D_OK;
 }
-HRESULT  WINAPI        IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *iface, WINED3DVERTEXBUFFER_DESC *pDesc) {
+static HRESULT  WINAPI IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *iface, WINED3DVERTEXBUFFER_DESC *pDesc) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
 
     TRACE("(%p)\n", This);

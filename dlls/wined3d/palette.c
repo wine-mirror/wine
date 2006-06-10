@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define SIZE_BITS (DDPCAPS_1BIT | DDPCAPS_2BIT | DDPCAPS_4BIT | DDPCAPS_8BIT)
 
-HRESULT WINAPI IWineD3DPaletteImpl_QueryInterface(IWineD3DPalette *iface, REFIID refiid, void **obj) {
+static HRESULT  WINAPI IWineD3DPaletteImpl_QueryInterface(IWineD3DPalette *iface, REFIID refiid, void **obj) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 
@@ -47,7 +47,7 @@ HRESULT WINAPI IWineD3DPaletteImpl_QueryInterface(IWineD3DPalette *iface, REFIID
     }
 }
 
-ULONG WINAPI IWineD3DPaletteImpl_AddRef(IWineD3DPalette *iface) {
+static ULONG  WINAPI IWineD3DPaletteImpl_AddRef(IWineD3DPalette *iface) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -56,7 +56,7 @@ ULONG WINAPI IWineD3DPaletteImpl_AddRef(IWineD3DPalette *iface) {
     return ref;
 }
 
-ULONG WINAPI IWineD3DPaletteImpl_Release(IWineD3DPalette *iface) {
+static ULONG  WINAPI IWineD3DPaletteImpl_Release(IWineD3DPalette *iface) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -81,7 +81,7 @@ DWORD IWineD3DPaletteImpl_Size(DWORD dwFlags) {
     }
 }
 
-HRESULT WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt) {
+static HRESULT  WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
 
     TRACE("(%p)->(%08lx,%ld,%ld,%p)\n",This,Flags,Start,Count,PalEnt);
@@ -104,7 +104,7 @@ HRESULT WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DWORD Flag
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt)
+static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DWORD Flags, DWORD Start, DWORD Count, PALETTEENTRY *PalEnt)
 {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     ResourceList *res;
@@ -156,7 +156,7 @@ HRESULT WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DWORD Flag
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DPaletteImpl_GetCaps(IWineD3DPalette *iface, DWORD *Caps) {
+static HRESULT  WINAPI IWineD3DPaletteImpl_GetCaps(IWineD3DPalette *iface, DWORD *Caps) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     TRACE("(%p)->(%p)\n", This, Caps);
 
@@ -164,7 +164,7 @@ HRESULT WINAPI IWineD3DPaletteImpl_GetCaps(IWineD3DPalette *iface, DWORD *Caps) 
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DPaletteImpl_GetParent(IWineD3DPalette *iface, IUnknown **Parent) {
+static HRESULT  WINAPI IWineD3DPaletteImpl_GetParent(IWineD3DPalette *iface, IUnknown **Parent) {
     IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
     TRACE("(%p)->(%p)\n", This, Parent);
 

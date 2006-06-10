@@ -163,7 +163,7 @@ static void WineD3D_ReleaseFakeGLContext(WineD3D_Context* ctx) {
  * IUnknown parts follows
  **********************************************************/
 
-HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *ppobj)
+static HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *ppobj)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -179,7 +179,7 @@ HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *p
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IWineD3DImpl_AddRef(IWineD3D *iface) {
+static ULONG WINAPI IWineD3DImpl_AddRef(IWineD3D *iface) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
@@ -187,7 +187,7 @@ ULONG WINAPI IWineD3DImpl_AddRef(IWineD3D *iface) {
     return refCount;
 }
 
-ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
+static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     ULONG ref;
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
@@ -772,7 +772,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
  * IWineD3D implementation follows
  **********************************************************/
 
-UINT     WINAPI  IWineD3DImpl_GetAdapterCount (IWineD3D *iface) {
+static UINT     WINAPI IWineD3DImpl_GetAdapterCount (IWineD3D *iface) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
 
     /* FIXME: Set to one for now to imply the display */
@@ -780,13 +780,13 @@ UINT     WINAPI  IWineD3DImpl_GetAdapterCount (IWineD3D *iface) {
     return 1;
 }
 
-HRESULT  WINAPI  IWineD3DImpl_RegisterSoftwareDevice(IWineD3D *iface, void* pInitializeFunction) {
+static HRESULT  WINAPI IWineD3DImpl_RegisterSoftwareDevice(IWineD3D *iface, void* pInitializeFunction) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     FIXME("(%p)->(%p): stub\n", This, pInitializeFunction);
     return WINED3D_OK;
 }
 
-HMONITOR WINAPI  IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adapter) {
+static HMONITOR WINAPI IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adapter) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     FIXME_(d3d_caps)("(%p)->(Adptr:%d)\n", This, Adapter);
     if (Adapter >= IWineD3DImpl_GetAdapterCount(iface)) {
@@ -799,7 +799,7 @@ HMONITOR WINAPI  IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adapter) {
      of the same bpp but different resolutions                                  */
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply D3DFMT_UNKNOWN */
-UINT     WINAPI  IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format) {
+static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p}->(Adapter: %d, Format: %s)\n", This, Adapter, debug_d3dformat(Format));
 
@@ -853,7 +853,7 @@ UINT     WINAPI  IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter,
 }
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply D3DFMT_UNKNOWN */
-HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format, UINT Mode, WINED3DDISPLAYMODE* pMode) {
+static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format, UINT Mode, WINED3DDISPLAYMODE* pMode) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p}->(Adapter:%d, mode:%d, pMode:%p, format:%s)\n", This, Adapter, Mode, pMode, debug_d3dformat(Format));
 
@@ -960,7 +960,7 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT Adapter, WINED3DDISPLAYMODE* pMode) {
+static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT Adapter, WINED3DDISPLAYMODE* pMode) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p}->(Adapter: %d, pMode: %p)\n", This, Adapter, pMode);
 
@@ -1014,7 +1014,7 @@ static Display * WINAPI IWineD3DImpl_GetAdapterDisplay(IWineD3D *iface, UINT Ada
 
 /* NOTE: due to structure differences between dx8 and dx9 D3DADAPTER_IDENTIFIER,
    and fields being inserted in the middle, a new structure is used in place    */
-HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, DWORD Flags,
+static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, DWORD Flags,
                                                    WINED3DADAPTER_IDENTIFIER* pIdentifier) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
 
@@ -1215,7 +1215,7 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(WineD3D_Context* ct
 #endif
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
+static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
                                                    WINED3DFORMAT AdapterFormat,
                                                    WINED3DFORMAT RenderTargetFormat,
                                                    WINED3DFORMAT DepthStencilFormat) {
@@ -1271,7 +1271,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter
     return hr;
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
                                                        WINED3DFORMAT SurfaceFormat,
                                                        BOOL Windowed, WINED3DMULTISAMPLE_TYPE MultiSampleType, DWORD*   pQualityLevels) {
 
@@ -1302,7 +1302,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Ada
     return WINED3DERR_NOTAVAILABLE;
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE CheckType,
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE CheckType,
                                             WINED3DFORMAT DisplayFormat, WINED3DFORMAT BackBufferFormat, BOOL Windowed) {
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
@@ -1343,7 +1343,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, WINED
     return WINED3DERR_NOTAVAILABLE;
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
                                               WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ",
@@ -1435,7 +1435,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WIN
     return WINED3D_OK;
 }
 
-HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
+static HRESULT  WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
                                                           WINED3DFORMAT SourceFormat, WINED3DFORMAT TargetFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
 
@@ -1451,7 +1451,7 @@ HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT 
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true
       subset of a D3DCAPS9 structure. However, it has to come via a void *
       as the d3d8 interface cannot import the d3d9 header                  */
-HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DCAPS* pCaps) {
+static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DCAPS* pCaps) {
 
     IWineD3DImpl    *This = (IWineD3DImpl *)iface;
 
@@ -1794,7 +1794,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, WINED3D
 
 /* Note due to structure differences between dx8 and dx9 D3DPRESENT_PARAMETERS,
    and fields being inserted in the middle, a new structure is used in place    */
-HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, HWND hFocusWindow,
+static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, HWND hFocusWindow,
                                            DWORD BehaviourFlags, IWineD3DDevice** ppReturnedDeviceInterface,
                                            IUnknown *parent) {
 
@@ -1899,7 +1899,7 @@ create_device_error:
 
 }
 
-HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent) {
+static HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     IUnknown_AddRef(This->parent);
     *pParent = This->parent;

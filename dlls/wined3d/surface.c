@@ -123,7 +123,7 @@ DWORD   WINAPI IWineD3DSurfaceImpl_GetPriority(IWineD3DSurface *iface) {
     return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
-void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
+void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     /* TODO: re-write the way textures and managed,
     *  use a 'opengl context manager' to manage RenderTarget surfaces
     ** *********************************************************/
@@ -282,7 +282,7 @@ const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
     return (CONST void*)(This->resource.allocatedMemory);
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain = NULL;
@@ -690,7 +690,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKE
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     GLint skipBytes = 0;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
@@ -1408,7 +1408,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, unsigned long len, CONVERT_
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
     if (This->Flags & SFLAG_INTEXTURE) {
@@ -1917,7 +1917,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL 
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD Flags) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDevice *D3D = (IWineD3DDevice *) This->resource.wineD3DDevice;
     TRACE("(%p)->(%p,%lx)\n", This, override, Flags);
@@ -1938,7 +1938,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface 
 }
 
 /* Not called from the VTable */
-HRESULT WINAPI IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) {
+static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) {
     D3DRECT rect;
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain = NULL;
@@ -2419,7 +2419,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     return WINED3DERR_INVALIDCALL;
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     TRACE("(%p)->(%p,%p,%p,%lx,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
@@ -2684,7 +2684,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Fla
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     /** Check against the maximum texture sizes supported by the video card **/
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
 

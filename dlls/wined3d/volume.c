@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /* *******************************************
    IWineD3DVolume IUnknown parts follow
    ******************************************* */
-HRESULT WINAPI IWineD3DVolumeImpl_QueryInterface(IWineD3DVolume *iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IWineD3DVolumeImpl_QueryInterface(IWineD3DVolume *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -44,13 +44,13 @@ HRESULT WINAPI IWineD3DVolumeImpl_QueryInterface(IWineD3DVolume *iface, REFIID r
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IWineD3DVolumeImpl_AddRef(IWineD3DVolume *iface) {
+static ULONG WINAPI IWineD3DVolumeImpl_AddRef(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
     return InterlockedIncrement(&This->resource.ref);
 }
 
-ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
+static ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     ULONG ref;
     TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
@@ -65,46 +65,46 @@ ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
 /* ****************************************************
    IWineD3DVolume IWineD3DResource parts follow
    **************************************************** */
-HRESULT WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface, IUnknown **pParent) {
+static HRESULT WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface, IUnknown **pParent) {
     return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_GetDevice(IWineD3DVolume *iface, IWineD3DDevice** ppDevice) {
+static HRESULT WINAPI IWineD3DVolumeImpl_GetDevice(IWineD3DVolume *iface, IWineD3DDevice** ppDevice) {
     return IWineD3DResourceImpl_GetDevice((IWineD3DResource *)iface, ppDevice);
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
+static HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     return IWineD3DResourceImpl_SetPrivateData((IWineD3DResource *)iface, refguid, pData, SizeOfData, Flags);
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
+static HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
     return IWineD3DResourceImpl_GetPrivateData((IWineD3DResource *)iface, refguid, pData, pSizeOfData);
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_FreePrivateData(IWineD3DVolume *iface, REFGUID refguid) {
+static HRESULT WINAPI IWineD3DVolumeImpl_FreePrivateData(IWineD3DVolume *iface, REFGUID refguid) {
     return IWineD3DResourceImpl_FreePrivateData((IWineD3DResource *)iface, refguid);
 }
 
-DWORD WINAPI IWineD3DVolumeImpl_SetPriority(IWineD3DVolume *iface, DWORD PriorityNew) {
+static DWORD WINAPI IWineD3DVolumeImpl_SetPriority(IWineD3DVolume *iface, DWORD PriorityNew) {
     return IWineD3DResourceImpl_SetPriority((IWineD3DResource *)iface, PriorityNew);
 }
 
-DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface) {
+static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface) {
     return IWineD3DResourceImpl_GetPriority((IWineD3DResource *)iface);
 }
 
-void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
+static void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
     return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
 }
 
-WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
+static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 
 /* *******************************************
    IWineD3DVolume parts follow
    ******************************************* */
-HRESULT WINAPI IWineD3DVolumeImpl_GetContainerParent(IWineD3DVolume *iface, IUnknown **ppContainerParent) {
+static HRESULT WINAPI IWineD3DVolumeImpl_GetContainerParent(IWineD3DVolume *iface, IUnknown **ppContainerParent) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
 
     TRACE("(%p) : ppContainerParent %p\n", This, ppContainerParent);
@@ -127,7 +127,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_GetContainerParent(IWineD3DVolume *iface, IUnk
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID riid, void** ppContainer) {
+static HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID riid, void** ppContainer) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
 
     TRACE("(This %p, riid %s, ppContainer %p)\n", This, debugstr_guid(riid), ppContainer);
@@ -145,7 +145,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID rii
     return IUnknown_QueryInterface(This->container, riid, ppContainer);
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC* pDesc) {
+static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC* pDesc) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p) : copying into %p\n", This, pDesc);
 
@@ -160,7 +160,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_D
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) {
+static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     FIXME("(%p) : pBox=%p stub\n", This, pBox);
 
@@ -221,7 +221,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DLOCKED_B
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_UnlockBox(IWineD3DVolume *iface) {
+static HRESULT WINAPI IWineD3DVolumeImpl_UnlockBox(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     if (FALSE == This->locked) {
       ERR("trying to lock unlocked volume@%p\n", This);
@@ -235,7 +235,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_UnlockBox(IWineD3DVolume *iface) {
 
 /* Internal use functions follow : */
 
-HRESULT WINAPI IWineD3DVolumeImpl_CleanDirtyBox(IWineD3DVolume *iface) {
+static HRESULT WINAPI IWineD3DVolumeImpl_CleanDirtyBox(IWineD3DVolume *iface) {
   IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
   This->dirty = FALSE;
   This->lockedBox.Left   = This->currentDesc.Width;
@@ -247,7 +247,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_CleanDirtyBox(IWineD3DVolume *iface) {
   return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST WINED3DBOX* pDirtyBox) {
+static HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST WINED3DBOX* pDirtyBox) {
   IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
   This->dirty = TRUE;
    if (NULL != pDirtyBox) {
@@ -268,7 +268,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST WINED
   return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWineD3DBase* container) {
+static HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWineD3DBase* container) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
 
     TRACE("This %p, container %p\n", This, container);
@@ -281,7 +281,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWineD3DBa
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_level) {
+static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_level) {
     IWineD3DVolumeImpl *This     = (IWineD3DVolumeImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
 

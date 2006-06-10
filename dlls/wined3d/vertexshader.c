@@ -1417,7 +1417,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetConstantB(IWineD3DVertexShader *iface
 /* *******************************************
    IWineD3DVertexShader IUnknown parts follow
    ******************************************* */
-HRESULT WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -1433,13 +1433,13 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *ifa
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IWineD3DVertexShaderImpl_AddRef(IWineD3DVertexShader *iface) {
+static ULONG WINAPI IWineD3DVertexShaderImpl_AddRef(IWineD3DVertexShader *iface) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
-ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
+static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     ULONG ref;
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
@@ -1461,7 +1461,7 @@ ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
    IWineD3DVertexShader IWineD3DVertexShader parts follow
    ******************************************* */
 
-HRESULT WINAPI IWineD3DVertexShaderImpl_GetParent(IWineD3DVertexShader *iface, IUnknown** parent){
+static HRESULT WINAPI IWineD3DVertexShaderImpl_GetParent(IWineD3DVertexShader *iface, IUnknown** parent){
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     
     *parent = This->parent;
@@ -1470,7 +1470,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetParent(IWineD3DVertexShader *iface, I
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVertexShaderImpl_GetDevice(IWineD3DVertexShader* iface, IWineD3DDevice **pDevice){
+static HRESULT WINAPI IWineD3DVertexShaderImpl_GetDevice(IWineD3DVertexShader* iface, IWineD3DDevice **pDevice){
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
     *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
@@ -1478,7 +1478,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetDevice(IWineD3DVertexShader* iface, I
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, VOID* pData, UINT* pSizeOfData) {
+static HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, VOID* pData, UINT* pSizeOfData) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)impl;
     TRACE("(%p) : pData(%p), pSizeOfData(%p)\n", This, pData, pSizeOfData);
 
@@ -1503,7 +1503,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, 
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface, CONST DWORD *pFunction) {
+static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface, CONST DWORD *pFunction) {
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
     const DWORD* pToken = pFunction;
     const SHADER_OPCODE* curOpcode = NULL;
