@@ -21,6 +21,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
+static ULONG WINAPI IDirectMusicSignPostTrack_IUnknown_AddRef (LPUNKNOWN iface);
+static ULONG WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
+static ULONG WINAPI IDirectMusicSignPostTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
+
 /*****************************************************************************
  * IDirectMusicSignPostTrack implementation
  */
@@ -48,7 +52,7 @@ static HRESULT WINAPI IDirectMusicSignPostTrack_IUnknown_QueryInterface (LPUNKNO
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicSignPostTrack_IUnknown_AddRef (LPUNKNOWN iface) {
+static ULONG WINAPI IDirectMusicSignPostTrack_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, UnknownVtbl, iface);
         ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -86,7 +90,7 @@ static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_QueryInterface
 	return IDirectMusicSignPostTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface) {
+static ULONG WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
 	return IDirectMusicSignPostTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
@@ -215,7 +219,7 @@ static HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_QueryInterface (L
 	return IDirectMusicSignPostTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicSignPostTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
+static ULONG WINAPI IDirectMusicSignPostTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, PersistStreamVtbl, iface);
 	return IDirectMusicSignPostTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }

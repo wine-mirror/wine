@@ -21,6 +21,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
+static ULONG WINAPI IDirectMusicChordMapTrack_IUnknown_AddRef (LPUNKNOWN iface);
+static ULONG WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
+static ULONG WINAPI IDirectMusicChordMapTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
+
 /*****************************************************************************
  * IDirectMusicChordMapTrack implementation
  */
@@ -48,7 +52,7 @@ static HRESULT WINAPI IDirectMusicChordMapTrack_IUnknown_QueryInterface (LPUNKNO
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicChordMapTrack_IUnknown_AddRef (LPUNKNOWN iface) {
+static ULONG WINAPI IDirectMusicChordMapTrack_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, UnknownVtbl, iface);
         ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -86,7 +90,7 @@ static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_QueryInterface
 	return IDirectMusicChordMapTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface) {
+static ULONG WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, TrackVtbl, iface);
 	return IDirectMusicChordMapTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
@@ -218,7 +222,7 @@ static HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_QueryInterface (L
 	return IDirectMusicChordMapTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicChordMapTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
+static ULONG WINAPI IDirectMusicChordMapTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, PersistStreamVtbl, iface);
 	return IDirectMusicChordMapTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }

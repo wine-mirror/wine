@@ -22,6 +22,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
+static ULONG WINAPI IDirectMusicChordMapImpl_IUnknown_AddRef (LPUNKNOWN iface);
+static ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_AddRef (LPDIRECTMUSICCHORDMAP iface);
+static ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
+static ULONG WINAPI IDirectMusicChordMapImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
+
 /*****************************************************************************
  * IDirectMusicChordMapImpl implementation
  */
@@ -52,7 +57,7 @@ static HRESULT WINAPI IDirectMusicChordMapImpl_IUnknown_QueryInterface (LPUNKNOW
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicChordMapImpl_IUnknown_AddRef (LPUNKNOWN iface) {
+static ULONG WINAPI IDirectMusicChordMapImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, UnknownVtbl, iface);
         ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -90,7 +95,7 @@ static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_QueryInterfa
 	return IDirectMusicChordMapImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_AddRef (LPDIRECTMUSICCHORDMAP iface) {
+static ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_AddRef (LPDIRECTMUSICCHORDMAP iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ChordMapVtbl, iface);
 	return IDirectMusicChordMapImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
@@ -119,7 +124,7 @@ static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_QueryInterface
 	return IDirectMusicChordMapImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
+static ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
 	return IDirectMusicChordMapImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
@@ -334,7 +339,7 @@ static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_QueryInterface (LP
 	return IDirectMusicChordMapImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicChordMapImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
+static ULONG WINAPI IDirectMusicChordMapImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, PersistStreamVtbl, iface);
 	return IDirectMusicChordMapImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }

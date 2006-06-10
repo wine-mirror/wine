@@ -28,7 +28,7 @@ static HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMP
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
 	    IsEqualIID (riid, &IID_IDirectMusicComposer)) {
-		IDirectMusicComposerImpl_AddRef(iface);
+		IUnknown_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
@@ -36,7 +36,7 @@ static HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMP
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicComposerImpl_AddRef (LPDIRECTMUSICCOMPOSER iface) {
+static ULONG WINAPI IDirectMusicComposerImpl_AddRef (LPDIRECTMUSICCOMPOSER iface) {
 	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
         ULONG ref = InterlockedIncrement(&This->ref);
 

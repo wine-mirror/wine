@@ -74,15 +74,6 @@ struct IDirectMusicChordMapImpl {
 
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicChordMapImpl_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicChordMap: */
-extern ULONG WINAPI   IDirectMusicChordMapImpl_IDirectMusicChordMap_AddRef (LPDIRECTMUSICCHORDMAP iface);
-/* IDirectMusicObject: */
-extern ULONG WINAPI   IDirectMusicChordMapImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicChordMapImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicComposerImpl implementation structure
  */
@@ -93,10 +84,6 @@ struct IDirectMusicComposerImpl {
 
   /* IDirectMusicComposerImpl fields */
 };
-
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicComposerImpl_AddRef (LPDIRECTMUSICCOMPOSER iface);
-
 
 /*****************************************************************************
  * IDirectMusicChordMapTrack implementation structure
@@ -112,13 +99,6 @@ struct IDirectMusicChordMapTrack {
   LPDMUS_OBJECTDESC pDesc;
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicChordMapTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern ULONG WINAPI   IDirectMusicChordMapTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicChordMapTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicSignPostTrack implementation structure
  */
@@ -132,13 +112,6 @@ struct IDirectMusicSignPostTrack {
   /* IDirectMusicSignPostTrack fields */
   LPDMUS_OBJECTDESC pDesc;
 };
-
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicSignPostTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern ULONG WINAPI   IDirectMusicSignPostTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicSignPostTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmcompos.dll
