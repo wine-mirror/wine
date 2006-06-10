@@ -113,11 +113,16 @@ static BOOL is_drive_defined(char *path)
 }
 
 /* returns Z + 1 if there are no more available letters */
-static char allocate_letter(void)
+static char allocate_letter(int type)
 {
-    char letter;
+    char letter, start;
 
-    for (letter = 'C'; letter <= 'Z'; letter++)
+    if (type == DRIVE_REMOVABLE)
+	start = 'A';
+    else
+	start = 'C';
+
+    for (letter = start; letter <= 'Z'; letter++)
         if ((DRIVE_MASK_BIT(letter) & working_mask) != 0) break;
 
     return letter;
@@ -303,8 +308,17 @@ int autodetect_drives()
         if (should_ignore_mnt_dir(ent->mnt_dir)) continue;
         if (is_drive_defined(ent->mnt_dir)) continue;
 
+        if (!strcmp(ent->mnt_type, "nfs")) type = DRIVE_REMOTE;
+        else if (!strcmp(ent->mnt_type, "nfs4")) type = DRIVE_REMOTE;
+        else if (!strcmp(ent->mnt_type, "smbfs")) type = DRIVE_REMOTE;
+        else if (!strcmp(ent->mnt_type, "cifs")) type = DRIVE_REMOTE;
+        else if (!strcmp(ent->mnt_type, "coda")) type = DRIVE_REMOTE;
+        else if (!strcmp(ent->mnt_type, "iso9660")) type = DRIVE_CDROM;
+        else if (!strcmp(ent->mnt_type, "ramfs")) type = DRIVE_RAMDISK;
+        else type = try_dev_node(ent->mnt_fsname);
+        
         /* allocate a drive for it */
-        letter = allocate_letter();
+        letter = allocate_letter(type);
         if (letter == ']')
         {
             report_error(NO_MORE_LETTERS);
@@ -317,15 +331,6 @@ int autodetect_drives()
         
         WINE_TRACE("adding drive %c for %s, type %s with label %s\n", letter, ent->mnt_dir, ent->mnt_type,label);
 
-        if (!strcmp(ent->mnt_type, "nfs")) type = DRIVE_REMOTE;
-        else if (!strcmp(ent->mnt_type, "nfs4")) type = DRIVE_REMOTE;
-        else if (!strcmp(ent->mnt_type, "smbfs")) type = DRIVE_REMOTE;
-        else if (!strcmp(ent->mnt_type, "cifs")) type = DRIVE_REMOTE;
-        else if (!strcmp(ent->mnt_type, "coda")) type = DRIVE_REMOTE;
-        else if (!strcmp(ent->mnt_type, "iso9660")) type = DRIVE_CDROM;
-        else if (!strcmp(ent->mnt_type, "ramfs")) type = DRIVE_RAMDISK;
-        else type = try_dev_node(ent->mnt_fsname);
-        
         add_drive(letter, ent->mnt_dir, label, "0", type);
         
         /* working_mask is a map of the drive letters still available. */

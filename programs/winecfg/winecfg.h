@@ -95,7 +95,7 @@ struct drive
     BOOL in_use;
 };
 
-#define DRIVE_MASK_BIT(B) 1 << (toupper(B) - 'A')
+#define DRIVE_MASK_BIT(B) (1 << (toupper(B) - 'A'))
 
 long drive_available_mask(char letter);
 BOOL add_drive(const char letter, const char *targetpath, const char *label, const char *serial, unsigned int type);
