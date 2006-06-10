@@ -76,16 +76,6 @@ struct IDirectMusicScriptImpl {
   WCHAR* pwzSource;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicScriptImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicScriptImpl_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicScript: */
-extern ULONG WINAPI   IDirectMusicScriptImpl_IDirectMusicScript_AddRef (LPDIRECTMUSICSCRIPT iface);
-/* IDirectMusicObject: */
-extern ULONG WINAPI   IDirectMusicScriptImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicScriptImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicScriptTrack implementation structure
  */
@@ -99,14 +89,6 @@ struct IDirectMusicScriptTrack {
   /* IDirectMusicScriptTrack fields */
   LPDMUS_OBJECTDESC pDesc;
 };
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicScriptTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicScriptTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern ULONG WINAPI   IDirectMusicScriptTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicScriptTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmscript.dll
