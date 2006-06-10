@@ -1168,7 +1168,6 @@ const char* debug_d3dpool(WINED3DPOOL pool);
 GLenum StencilOp(DWORD op);
 void   set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords);
-void   GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand);
 
 SHORT  D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
 GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);

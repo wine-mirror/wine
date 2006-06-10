@@ -399,6 +399,44 @@ GLenum StencilOp(DWORD op) {
     }
 }
 
+static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* operand) {
+    /* The D3DTA_ALPHAREPLICATE flag specifies the alpha component of the
+     * input should be used for all input components. The D3DTA_COMPLEMENT
+     * flag specifies the complement of the input should be used. */
+    BOOL from_alpha = is_alpha || arg & D3DTA_ALPHAREPLICATE;
+    BOOL complement = arg & D3DTA_COMPLEMENT;
+
+    /* Calculate the operand */
+    if (complement) {
+        if (from_alpha) *operand = GL_ONE_MINUS_SRC_ALPHA;
+        else *operand = GL_ONE_MINUS_SRC_COLOR;
+    } else {
+        if (from_alpha) *operand = GL_SRC_ALPHA;
+        else *operand = GL_SRC_COLOR;
+    }
+
+    /* Calculate the source */
+    switch (arg & D3DTA_SELECTMASK) {
+        case D3DTA_CURRENT: *source = GL_PREVIOUS_EXT; break;
+        case D3DTA_DIFFUSE: *source = GL_PRIMARY_COLOR_EXT; break;
+        case D3DTA_TEXTURE: *source = GL_TEXTURE; break;
+        case D3DTA_TFACTOR: *source = GL_CONSTANT_EXT; break;
+        case D3DTA_SPECULAR:
+            /*
+             * According to the GL_ARB_texture_env_combine specs, SPECULAR is
+             * 'Secondary color' and isn't supported until base GL supports it
+             * There is no concept of temp registers as far as I can tell
+             */
+            FIXME("Unhandled texture arg D3DTA_SPECULAR\n");
+            *source = GL_TEXTURE;
+            break;
+        default:
+            FIXME("Unrecognized texture arg %#lx\n", arg);
+            *source = GL_TEXTURE;
+            break;
+    }
+}
+
 /* Set texture operations up - The following avoids lots of ifdefs in this routine!*/
 #if defined (GL_VERSION_1_3)
 # define useext(A) A
@@ -475,12 +513,12 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                    then the default argument is D3DTA_DIFFUSE.
                    FIXME? If texture added/removed, may need to reset back as well?    */
         if (isAlpha && This->stateBlock->textures[Stage] == NULL && arg1 == D3DTA_TEXTURE) {
-            GetSrcAndOpFromValue(D3DTA_DIFFUSE, isAlpha, &src1, &opr1);
+            get_src_and_opr(D3DTA_DIFFUSE, isAlpha, &src1, &opr1);
         } else {
-            GetSrcAndOpFromValue(arg1, isAlpha, &src1, &opr1);
+            get_src_and_opr(arg1, isAlpha, &src1, &opr1);
         }
-        GetSrcAndOpFromValue(arg2, isAlpha, &src2, &opr2);
-        GetSrcAndOpFromValue(arg3, isAlpha, &src3, &opr3);
+        get_src_and_opr(arg2, isAlpha, &src2, &opr2);
+        get_src_and_opr(arg3, isAlpha, &src3, &opr3);
 
         TRACE("ct(%x), 1:(%x,%x), 2:(%x,%x), 3:(%x,%x)\n", comb_target, src1, opr1, src2, opr2, src3, opr3);
 
@@ -1568,72 +1606,6 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords)
     glLoadMatrixf(mat);
     checkGLcall("glLoadMatrixf(mat)");
 }
-
-void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand)
-{
-  BOOL isAlphaReplicate = FALSE;
-  BOOL isComplement     = FALSE;
-
-  *operand = GL_SRC_COLOR;
-  *source = GL_TEXTURE;
-
-  /* Catch alpha replicate */
-  if (iValue & D3DTA_ALPHAREPLICATE) {
-    iValue = iValue & ~D3DTA_ALPHAREPLICATE;
-    isAlphaReplicate = TRUE;
-  }
-
-  /* Catch Complement */
-  if (iValue & D3DTA_COMPLEMENT) {
-    iValue = iValue & ~D3DTA_COMPLEMENT;
-    isComplement = TRUE;
-  }
-
-  /* Calculate the operand */
-  if (isAlphaReplicate && !isComplement) {
-    *operand = GL_SRC_ALPHA;
-  } else if (isAlphaReplicate && isComplement) {
-    *operand = GL_ONE_MINUS_SRC_ALPHA;
-  } else if (isComplement) {
-    if (isAlphaArg) {
-      *operand = GL_ONE_MINUS_SRC_ALPHA;
-    } else {
-      *operand = GL_ONE_MINUS_SRC_COLOR;
-    }
-  } else {
-    if (isAlphaArg) {
-      *operand = GL_SRC_ALPHA;
-    } else {
-      *operand = GL_SRC_COLOR;
-    }
-  }
-
-  /* Calculate the source */
-  switch (iValue & D3DTA_SELECTMASK) {
-  case D3DTA_CURRENT:   *source  = GL_PREVIOUS_EXT;
-    break;
-  case D3DTA_DIFFUSE:   *source  = GL_PRIMARY_COLOR_EXT;
-    break;
-  case D3DTA_TEXTURE:   *source  = GL_TEXTURE;
-    break;
-  case D3DTA_TFACTOR:   *source  = GL_CONSTANT_EXT;
-    break;
-  case D3DTA_SPECULAR:
-    /*
-     * According to the GL_ARB_texture_env_combine specs, SPECULAR is
-     * 'Secondary color' and isn't supported until base GL supports it
-     * There is no concept of temp registers as far as I can tell
-     */
-    FIXME("Unhandled texture arg D3DTA_SPECULAR\n");
-    *source = GL_TEXTURE;
-    break;
-
-  default:
-    FIXME("Unrecognized texture arg %ld\n", iValue);
-    *source = GL_TEXTURE;
-  }
-}
-
 
 #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
 GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
