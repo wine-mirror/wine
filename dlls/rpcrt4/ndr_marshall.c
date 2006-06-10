@@ -332,7 +332,7 @@ static PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRIN
     return pFormat+4;
 }
 
-static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
+static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat, ULONG MaxValue)
 {
   if (pFormat && !IsConformanceOrVariancePresent(pFormat))
   {
@@ -348,6 +348,15 @@ static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_S
   pStubMsg->ActualCount = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
   pStubMsg->Buffer += 4;
   TRACE("variance is %ld\n", pStubMsg->ActualCount);
+
+  if ((pStubMsg->ActualCount > MaxValue) ||
+      (pStubMsg->ActualCount + pStubMsg->Offset > MaxValue))
+  {
+    ERR("invalid array bound(s): ActualCount = %ld, Offset = %ld, MaxValue = %ld\n",
+        pStubMsg->ActualCount, pStubMsg->Offset, MaxValue);
+    RpcRaiseException(RPC_S_INVALID_BOUND);
+    return NULL;
+  }
 
 done:
   if (pStubMsg->fHasNewCorrDesc)
@@ -675,7 +684,7 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   assert(pFormat && ppMemory && pStubMsg);
 
   ReadConformance(pStubMsg, NULL);
-  ReadVariance(pStubMsg, NULL);
+  ReadVariance(pStubMsg, NULL, pStubMsg->MaxCount);
 
   if (*pFormat == RPC_FC_C_CSTRING) esize = 1;
   else if (*pFormat == RPC_FC_C_WSTRING) esize = 2;
@@ -2365,11 +2374,12 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
     }
 
     pFormat = ReadConformance(pStubMsg, pFormat+4);
-    pFormat = ReadVariance(pStubMsg, pFormat);
+    pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
     bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+    TRACE("esize = %ld, pStubMsg->MaxCount = %ld, result = %ld\n", esize, pStubMsg->MaxCount, esize * pStubMsg->MaxCount);
     memsize = safe_multiply(esize, pStubMsg->MaxCount);
 
     if (!*ppMemory || fMustAlloc)
@@ -2525,7 +2535,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 4;
 
   pFormat = ReadConformance(pStubMsg, pFormat);
-  pFormat = ReadVariance(pStubMsg, pFormat);
+  pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
 
   Buffer = pStubMsg->Buffer;
   esize = ComplexStructMemorySize(pStubMsg, pFormat);
@@ -2618,7 +2628,7 @@ unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 4;
 
   pFormat = ReadConformance(pStubMsg, pFormat);
-  pFormat = ReadVariance(pStubMsg, pFormat);
+  pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
@@ -3199,7 +3209,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     memcpy(*ppMemory, pStubMsg->Buffer, pCVStructFormat->memory_size);
     pStubMsg->Buffer += pCVStructFormat->memory_size;
 
-    pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat);
+    pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat, pStubMsg->MaxCount);
 
     bufsize = safe_multiply(esize, pStubMsg->ActualCount);
 
@@ -3366,7 +3376,7 @@ unsigned long WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pSt
     TRACE("memory_size = %d\n", pCVStructFormat->memory_size);
 
     pStubMsg->Buffer += pCVStructFormat->memory_size;
-    pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat);
+    pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat, pStubMsg->MaxCount);
     pStubMsg->Buffer += pCVStructFormat->memory_size + safe_multiply(esize, pStubMsg->ActualCount);
 
     pStubMsg->MemorySize += pCVStructFormat->memory_size + safe_multiply(esize, pStubMsg->MaxCount);
@@ -3757,13 +3767,7 @@ unsigned char *  WINAPI NdrVaryingArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     esize = *(const WORD*)pFormat;
     pFormat += sizeof(WORD);
 
-    pFormat = ReadVariance(pStubMsg, pFormat);
-    if ((pStubMsg->ActualCount > elements) ||
-        (pStubMsg->ActualCount + pStubMsg->Offset > elements))
-    {
-        RpcRaiseException(RPC_S_INVALID_BOUND);
-        return NULL;
-    }
+    pFormat = ReadVariance(pStubMsg, pFormat, elements);
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
@@ -3877,13 +3881,7 @@ unsigned long WINAPI NdrVaryingArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     esize = *(const WORD*)pFormat;
     pFormat += sizeof(WORD);
 
-    pFormat = ReadVariance(pStubMsg, pFormat);
-    if ((pStubMsg->ActualCount > elements) ||
-        (pStubMsg->ActualCount + pStubMsg->Offset > elements))
-    {
-        RpcRaiseException(RPC_S_INVALID_BOUND);
-        return 0;
-    }
+    pFormat = ReadVariance(pStubMsg, pFormat, elements);
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
