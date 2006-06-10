@@ -1386,7 +1386,7 @@ exit:
     return hres;
 }
 
-HRESULT WINAPI ProxyIUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI ProxyIUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
     TMProxyImpl *proxy = (TMProxyImpl *)iface;
 
@@ -1399,7 +1399,7 @@ HRESULT WINAPI ProxyIUnknown_QueryInterface(IUnknown *iface, REFIID riid, void *
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI ProxyIUnknown_AddRef(IUnknown *iface)
+static ULONG WINAPI ProxyIUnknown_AddRef(IUnknown *iface)
 {
     TMProxyImpl *proxy = (TMProxyImpl *)iface;
 
@@ -1411,7 +1411,7 @@ ULONG WINAPI ProxyIUnknown_AddRef(IUnknown *iface)
     return 2; /* FIXME */
 }
 
-ULONG WINAPI ProxyIUnknown_Release(IUnknown *iface)
+static ULONG WINAPI ProxyIUnknown_Release(IUnknown *iface)
 {
     TMProxyImpl *proxy = (TMProxyImpl *)iface;
 
