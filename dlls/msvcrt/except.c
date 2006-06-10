@@ -539,7 +539,7 @@ MSVCRT___sighandler_t MSVCRT_signal(int sig, MSVCRT___sighandler_t func)
  */
 int _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
 {
-    TRACE("(%ld,%p)\n", ex, ptr);
+    TRACE("(%08lx,%p)\n", ex, ptr);
     /* I assume ptr->ExceptionRecord->ExceptionCode is the same as ex */
     return msvcrt_exception_filter(ptr);
 }
