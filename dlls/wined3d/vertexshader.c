@@ -538,7 +538,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_DCL,      "dcl",      NULL,                  2, vshader_dcl,     vshader_hw_dcl, NULL, 0, 0},
 
     /* Constant definitions */
-    {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     shader_hw_def, NULL, 0, 0},
+    {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     shader_hw_def, shader_glsl_def, 0, 0},
     {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL,   2, vshader_defb,    NULL, NULL, 0, 0},
     {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL,   5, vshader_defi,    NULL, NULL, 0, 0},
 
