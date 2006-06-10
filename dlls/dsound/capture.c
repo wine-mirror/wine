@@ -46,6 +46,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
 DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS];
 
+static HRESULT DirectSoundCaptureDevice_Create(DirectSoundCaptureDevice ** ppDevice);
+
 static const char * captureStateString[] = {
     "STATE_STOPPED",
     "STATE_STARTING",
@@ -1605,7 +1607,7 @@ HRESULT DirectSoundCaptureDevice_Initialize(
     return err;
 }
 
-HRESULT DirectSoundCaptureDevice_Create(
+static HRESULT DirectSoundCaptureDevice_Create(
     DirectSoundCaptureDevice ** ppDevice)
 {
     DirectSoundCaptureDevice * device;

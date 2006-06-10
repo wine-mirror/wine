@@ -361,13 +361,9 @@ struct DirectSoundCaptureDevice
     CRITICAL_SECTION                   lock;
 };
 
-HRESULT DirectSoundCaptureDevice_Create(
-    DirectSoundCaptureDevice ** ppDevice);
 HRESULT DirectSoundCaptureDevice_Initialize(
     DirectSoundCaptureDevice ** ppDevice,
     LPCGUID lpcGUID);
-ULONG DirectSoundCaptureDevice_AddRef(
-    DirectSoundCaptureDevice * device);
 ULONG DirectSoundCaptureDevice_Release(
     DirectSoundCaptureDevice * device);
 
@@ -426,19 +422,11 @@ struct IDirectSoundFullDuplex_IUnknown {
     IDirectSoundFullDuplexImpl *pdsfd;
 };
 
-HRESULT IDirectSoundFullDuplex_IUnknown_Create(
-    LPDIRECTSOUNDFULLDUPLEX pdsfd,
-    LPUNKNOWN * ppunk);
-
 struct IDirectSoundFullDuplex_IDirectSound {
     const IDirectSoundVtbl     *lpVtbl;
     LONG                        ref;
     IDirectSoundFullDuplexImpl *pdsfd;
 };
-
-HRESULT IDirectSoundFullDuplex_IDirectSound_Create(
-    LPDIRECTSOUNDFULLDUPLEX pdsfd,
-    LPDIRECTSOUND * ppds);
 
 struct IDirectSoundFullDuplex_IDirectSound8 {
     const IDirectSound8Vtbl    *lpVtbl;
@@ -446,19 +434,11 @@ struct IDirectSoundFullDuplex_IDirectSound8 {
     IDirectSoundFullDuplexImpl *pdsfd;
 };
 
-HRESULT IDirectSoundFullDuplex_IDirectSound8_Create(
-    LPDIRECTSOUNDFULLDUPLEX pdsfd,
-    LPDIRECTSOUND8 * ppds8);
-
 struct IDirectSoundFullDuplex_IDirectSoundCapture {
     const IDirectSoundCaptureVtbl *lpVtbl;
     LONG                           ref;
     IDirectSoundFullDuplexImpl    *pdsfd;
 };
-
-HRESULT IDirectSoundFullDuplex_IDirectSoundCapture_Create(
-    LPDIRECTSOUNDFULLDUPLEX pdsfd,
-    LPDIRECTSOUNDCAPTURE8 * ppdsc8);
 
 /*****************************************************************************
  * IDirectSoundNotify implementation structure

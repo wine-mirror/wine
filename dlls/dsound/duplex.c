@@ -82,7 +82,7 @@ static const IUnknownVtbl DirectSoundFullDuplex_Unknown_Vtbl =
     IDirectSoundFullDuplex_IUnknown_Release
 };
 
-HRESULT IDirectSoundFullDuplex_IUnknown_Create(
+static HRESULT IDirectSoundFullDuplex_IUnknown_Create(
     LPDIRECTSOUNDFULLDUPLEX pdsfd,
     LPUNKNOWN * ppunk)
 {
@@ -241,7 +241,7 @@ static const IDirectSoundVtbl DirectSoundFullDuplex_DirectSound_Vtbl =
     IDirectSoundFullDuplex_IDirectSound_Initialize
 };
 
-HRESULT IDirectSoundFullDuplex_IDirectSound_Create(
+static HRESULT IDirectSoundFullDuplex_IDirectSound_Create(
     LPDIRECTSOUNDFULLDUPLEX pdsfd,
     LPDIRECTSOUND * ppds)
 {
@@ -406,7 +406,7 @@ static const IDirectSound8Vtbl DirectSoundFullDuplex_DirectSound8_Vtbl =
     IDirectSoundFullDuplex_IDirectSound8_Initialize
 };
 
-HRESULT IDirectSoundFullDuplex_IDirectSound8_Create(
+static HRESULT IDirectSoundFullDuplex_IDirectSound8_Create(
     LPDIRECTSOUNDFULLDUPLEX pdsfd,
     LPDIRECTSOUND8 * ppds8)
 {
@@ -520,7 +520,7 @@ static const IDirectSoundCaptureVtbl DirectSoundFullDuplex_DirectSoundCapture_Vt
     IDirectSoundFullDuplex_IDirectSoundCapture_Initialize
 };
 
-HRESULT IDirectSoundFullDuplex_IDirectSoundCapture_Create(
+static HRESULT IDirectSoundFullDuplex_IDirectSoundCapture_Create(
     LPDIRECTSOUNDFULLDUPLEX pdsfd,
     LPDIRECTSOUNDCAPTURE8 * ppdsc8)
 {
