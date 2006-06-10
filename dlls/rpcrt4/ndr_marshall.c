@@ -26,7 +26,7 @@
  *  - transmit_as/represent as
  *  - Multi-dimensional arrays
  *  - Conversion functions (NdrConvert)
- *  - Checks for integer overflow when calculating array sizes
+ *  - Checks for integer addition overflow
  *  - Checks for out-of-memory conditions
  */
 
@@ -2196,15 +2196,15 @@ unsigned char * WINAPI NdrConformantArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
-  size = pStubMsg->MaxCount;
 
   WriteConformance(pStubMsg);
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
-  memcpy(pStubMsg->Buffer, pMemory, size*esize);
+  size = safe_multiply(esize, pStubMsg->MaxCount);
+  memcpy(pStubMsg->Buffer, pMemory, size);
   pStubMsg->BufferMark = pStubMsg->Buffer;
-  pStubMsg->Buffer += size*esize;
+  pStubMsg->Buffer += size;
 
   EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
 
@@ -2221,24 +2221,25 @@ unsigned char * WINAPI NdrConformantArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                     PFORMAT_STRING pFormat,
                                                     unsigned char fMustAlloc)
 {
-  DWORD size = 0, esize = *(const WORD*)(pFormat+2);
+  DWORD size, esize = *(const WORD*)(pFormat+2);
   unsigned char alignment = pFormat[1] + 1;
 
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
   pFormat = ReadConformance(pStubMsg, pFormat+4);
-  size = pStubMsg->MaxCount;
+
+  size = safe_multiply(esize, pStubMsg->MaxCount);
 
   if (fMustAlloc || !*ppMemory)
-    *ppMemory = NdrAllocate(pStubMsg, size*esize);
+    *ppMemory = NdrAllocate(pStubMsg, size);
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
-  memcpy(*ppMemory, pStubMsg->Buffer, size*esize);
+  memcpy(*ppMemory, pStubMsg->Buffer, size);
 
   pStubMsg->BufferMark = pStubMsg->Buffer;
-  pStubMsg->Buffer += size*esize;
+  pStubMsg->Buffer += size;
 
   EmbeddedPointerUnmarshall(pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -2252,21 +2253,21 @@ void WINAPI NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                          unsigned char *pMemory,
                                          PFORMAT_STRING pFormat)
 {
-  DWORD size = 0, esize = *(const WORD*)(pFormat+2);
+  DWORD size, esize = *(const WORD*)(pFormat+2);
   unsigned char alignment = pFormat[1] + 1;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
   pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
-  size = pStubMsg->MaxCount;
 
   SizeConformance(pStubMsg);
 
   ALIGN_LENGTH(pStubMsg->BufferLength, alignment);
 
+  size = safe_multiply(esize, pStubMsg->MaxCount);
   /* conformance value plus array */
-  pStubMsg->BufferLength += size*esize;
+  pStubMsg->BufferLength += size;
 
   EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
@@ -2284,12 +2285,12 @@ unsigned long WINAPI NdrConformantArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   if (pFormat[0] != RPC_FC_CARRAY) FIXME("format=%d\n", pFormat[0]);
 
   pFormat = ReadConformance(pStubMsg, pFormat+4);
-  size = pStubMsg->MaxCount;
-  pStubMsg->MemorySize += size*esize;
+  size = safe_multiply(esize, pStubMsg->MaxCount);
+  pStubMsg->MemorySize += size;
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
   pStubMsg->BufferMark = pStubMsg->Buffer;
-  pStubMsg->Buffer += size*esize;
+  pStubMsg->Buffer += size;
 
   EmbeddedPointerMemorySize(pStubMsg, pFormat);
 
@@ -2379,7 +2380,6 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
     bufsize = safe_multiply(esize, pStubMsg->ActualCount);
-    TRACE("esize = %ld, pStubMsg->MaxCount = %ld, result = %ld\n", esize, pStubMsg->MaxCount, esize * pStubMsg->MaxCount);
     memsize = safe_multiply(esize, pStubMsg->MaxCount);
 
     if (!*ppMemory || fMustAlloc)
