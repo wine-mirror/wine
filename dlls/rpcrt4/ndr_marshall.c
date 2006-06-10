@@ -667,7 +667,7 @@ unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
 unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg,
   unsigned char** ppMemory, PFORMAT_STRING pFormat, unsigned char fMustAlloc )
 {
-  unsigned long size, esize;
+  ULONG size, esize, i;
 
   TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
     pStubMsg, *ppMemory, pFormat, fMustAlloc);
@@ -686,6 +686,22 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
   }
 
   size = safe_multiply(esize, pStubMsg->ActualCount);
+
+  /* strings must always have null terminating bytes */
+  if (size < esize)
+  {
+    ERR("invalid string length of %ld\n", pStubMsg->ActualCount);
+    RpcRaiseException(RPC_S_INVALID_BOUND);
+    return NULL;
+  }
+  for (i = size - esize; i < size; i++)
+    if (pStubMsg->Buffer[i] != 0)
+    {
+      ERR("string not null-terminated at byte position %ld, data is 0x%x\n",
+        i, pStubMsg->Buffer[i]);
+      RpcRaiseException(RPC_S_INVALID_BOUND);
+      return NULL;
+    }
 
   if (fMustAlloc || !*ppMemory)
     *ppMemory = NdrAllocate(pStubMsg, size);
