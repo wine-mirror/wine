@@ -53,15 +53,6 @@ struct IDxDiagProviderImpl {
   IDxDiagContainer* pRootContainer;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI IDxDiagProviderImpl_AddRef(PDXDIAGPROVIDER iface);
-extern ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface);
-
-/* IDxDiagProvider: */
-extern HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDIAG_INIT_PARAMS* pParams);
-extern HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDiagContainer** ppInstance);
-
 /* ---------------- */
 /* IDxDiagContainer  */
 /* ---------------- */
@@ -95,8 +86,6 @@ struct IDxDiagContainerImpl {
 
 /* IUnknown: */
 extern HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI IDxDiagContainerImpl_AddRef(PDXDIAGCONTAINER iface);
-
 /** Internal */
 extern HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pVarProp);
 extern HRESULT WINAPI IDxDiagContainerImpl_AddChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pszContName, PDXDIAGCONTAINER pSubCont);

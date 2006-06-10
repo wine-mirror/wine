@@ -20,6 +20,8 @@
  */
 
 #include "config.h"
+
+#define COBJMACROS
 #include "dxdiag_private.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -33,7 +35,7 @@ HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFII
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDxDiagContainer)) {
-        IDxDiagContainerImpl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return S_OK;
     }
@@ -42,7 +44,7 @@ HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFII
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDxDiagContainerImpl_AddRef(PDXDIAGCONTAINER iface) {
+static ULONG WINAPI IDxDiagContainerImpl_AddRef(PDXDIAGCONTAINER iface) {
     IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
@@ -53,7 +55,7 @@ ULONG WINAPI IDxDiagContainerImpl_AddRef(PDXDIAGCONTAINER iface) {
     return refCount;
 }
 
-ULONG WINAPI IDxDiagContainerImpl_Release(PDXDIAGCONTAINER iface) {
+static ULONG WINAPI IDxDiagContainerImpl_Release(PDXDIAGCONTAINER iface) {
     IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
@@ -69,7 +71,7 @@ ULONG WINAPI IDxDiagContainerImpl_Release(PDXDIAGCONTAINER iface) {
 }
 
 /* IDxDiagContainer Interface follow: */
-HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfChildContainers(PDXDIAGCONTAINER iface, DWORD* pdwCount) {
+static HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfChildContainers(PDXDIAGCONTAINER iface, DWORD* pdwCount) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   TRACE("(%p)\n", iface);
   if (NULL == pdwCount) {
@@ -79,7 +81,7 @@ HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfChildContainers(PDXDIAGCONTAINER 
   return S_OK;
 }
 
-HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszContainer, DWORD cchContainer) {
+static HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszContainer, DWORD cchContainer) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_SubContainer* p = NULL;
   DWORD i = 0;
@@ -108,7 +110,7 @@ HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAINER ifa
   return E_INVALIDARG;
 }
 
-HRESULT WINAPI IDxDiagContainerImpl_GetChildContainerInternal(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
+static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainerInternal(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_SubContainer* p = NULL;
 
@@ -123,7 +125,7 @@ HRESULT WINAPI IDxDiagContainerImpl_GetChildContainerInternal(PDXDIAGCONTAINER i
   return E_INVALIDARG;
 }
 
-HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
+static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainer* pContainer = NULL;
   LPWSTR tmp, orig_tmp;
@@ -165,7 +167,7 @@ on_error:
   return hr;
 }
 
-HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfProps(PDXDIAGCONTAINER iface, DWORD* pdwCount) {
+static HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfProps(PDXDIAGCONTAINER iface, DWORD* pdwCount) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   TRACE("(%p)\n", iface);
   if (NULL == pdwCount) {
@@ -175,7 +177,7 @@ HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfProps(PDXDIAGCONTAINER iface, DWO
   return S_OK;
 }
 
-HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) {
+static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_Property* p = NULL;
   DWORD i = 0;
@@ -204,7 +206,7 @@ HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface, DWORD 
   return E_INVALIDARG;
 }
 
-HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pvarProp) {
+static HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pvarProp) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_Property* p = NULL;
   FIXME("(%p, %s, %p)\n", iface, debugstr_w(pwszPropName), pvarProp);

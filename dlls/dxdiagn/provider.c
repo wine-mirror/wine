@@ -35,13 +35,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
 /* IDxDiagProvider IUnknown parts follow: */
-HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj)
 {
     IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDxDiagProvider)) {
-        IDxDiagProviderImpl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return S_OK;
     }
@@ -50,7 +50,7 @@ HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID 
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDxDiagProviderImpl_AddRef(PDXDIAGPROVIDER iface) {
+static ULONG WINAPI IDxDiagProviderImpl_AddRef(PDXDIAGPROVIDER iface) {
     IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
@@ -61,7 +61,7 @@ ULONG WINAPI IDxDiagProviderImpl_AddRef(PDXDIAGPROVIDER iface) {
     return refCount;
 }
 
-ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
+static ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
     IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
@@ -77,7 +77,7 @@ ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
 }
 
 /* IDxDiagProvider Interface follow: */
-HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDIAG_INIT_PARAMS* pParams) {
+static HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDIAG_INIT_PARAMS* pParams) {
     IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
     TRACE("(%p,%p)\n", iface, pParams);
 
@@ -93,7 +93,7 @@ HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDIAG_INIT
     return S_OK;
 }
 
-HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDiagContainer** ppInstance) {
+static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDiagContainer** ppInstance) {
   HRESULT hr = S_OK;
   IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
   TRACE("(%p,%p)\n", iface, ppInstance);
@@ -142,7 +142,7 @@ HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, R
  * @param szFilePath: usually GetSystemDirectoryW
  * @param szFileName: name of the dll without path
  */
-HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCHAR* szFilePath, const WCHAR* szFileName) {
+static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCHAR* szFilePath, const WCHAR* szFileName) {
   HRESULT hr = S_OK;
   /**/
   static const WCHAR szSlashSep[] = {'\\',0};
@@ -229,7 +229,7 @@ HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCHAR* szF
   return hr;
 }
 
-HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   static const WCHAR dwDirectXVersionMajor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','a','j','o','r',0};
   static const WCHAR dwDirectXVersionMinor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','i','n','o','r',0};
@@ -271,7 +271,7 @@ HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) {
   return hr;
 }
 
-HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   /*
   static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
@@ -307,7 +307,7 @@ HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCont) {
   return hr;
 }
 
-HRESULT DXDiag_InitDXDiagLogicalDisksContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagLogicalDisksContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   /*
   static const WCHAR szDriveLetter[] = {'s','z','D','r','i','v','e','L','e','t','t','e','r',0};
@@ -339,7 +339,7 @@ HRESULT DXDiag_InitDXDiagLogicalDisksContainer(IDxDiagContainer* pSubCont) {
   */
   return hr;
 }
-HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   /**/
   static const WCHAR ddraw_dll[] = {'d','d','r','a','w','.','d','l','l',0};
@@ -389,7 +389,7 @@ HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont) {
   return hr;
 }
 
-HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   /*
   static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
@@ -406,7 +406,7 @@ HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont) {
   return hr;
 }
 
-HRESULT DXDiag_InitDXDiagDirectSoundContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDirectSoundContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   static const WCHAR DxDiag_SoundDevices[] = {'D','x','D','i','a','g','_','S','o','u','n','d','D','e','v','i','c','e','s',0};
   static const WCHAR DxDiag_SoundCaptureDevices[] = {'D','x','D','i','a','g','_','S','o','u','n','d','C','a','p','t','u','r','e','D','e','v','i','c','e','s',0};
@@ -423,15 +423,17 @@ HRESULT DXDiag_InitDXDiagDirectSoundContainer(IDxDiagContainer* pSubCont) {
   return hr;
 }
 
-HRESULT DXDiag_InitDXDiagDirectMusicContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDirectMusicContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   return hr;
 }
-HRESULT DXDiag_InitDXDiagDirectInputContainer(IDxDiagContainer* pSubCont) {
+
+static HRESULT DXDiag_InitDXDiagDirectInputContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   return hr;
 }
-HRESULT DXDiag_InitDXDiagDirectPlayContainer(IDxDiagContainer* pSubCont) {
+
+static HRESULT DXDiag_InitDXDiagDirectPlayContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   return hr;
 }
@@ -458,7 +460,7 @@ struct REG_TYPE {
   DWORD dwOffsetMinor;
 };
 
-HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   static const WCHAR szName[] = {'s','z','N','a','m','e',0};
   static const WCHAR szCatName[] = {'s','z','C','a','t','N','a','m','e',0};
