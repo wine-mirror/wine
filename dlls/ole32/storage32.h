@@ -424,13 +424,6 @@ StorageInternalImpl* StorageInternalImpl_Construct(
 void StorageInternalImpl_Destroy(
        	    StorageBaseImpl* This);
 
-HRESULT WINAPI StorageInternalImpl_Commit(
-	    IStorage*            iface,
-	    DWORD                  grfCommitFlags); /* [in] */
-
-HRESULT WINAPI StorageInternalImpl_Revert(
-     	    IStorage*            iface);
-
 
 /****************************************************************************
  * IEnumSTATSTGImpl definitions.

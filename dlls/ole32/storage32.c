@@ -179,7 +179,7 @@ extern const IPropertySetStorageVtbl IPropertySetStorage_Vtbl;
  *
  * See Windows documentation for more details on IUnknown methods.
  */
-HRESULT WINAPI StorageBaseImpl_QueryInterface(
+static HRESULT WINAPI StorageBaseImpl_QueryInterface(
   IStorage*        iface,
   REFIID             riid,
   void**             ppvObject)
@@ -235,7 +235,7 @@ HRESULT WINAPI StorageBaseImpl_QueryInterface(
  *
  * See Windows documentation for more details on IUnknown methods.
  */
-ULONG WINAPI StorageBaseImpl_AddRef(
+static ULONG WINAPI StorageBaseImpl_AddRef(
             IStorage* iface)
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
@@ -254,7 +254,7 @@ ULONG WINAPI StorageBaseImpl_AddRef(
  *
  * See Windows documentation for more details on IUnknown methods.
  */
-ULONG WINAPI StorageBaseImpl_Release(
+static ULONG WINAPI StorageBaseImpl_Release(
       IStorage* iface)
 {
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
@@ -288,7 +288,7 @@ ULONG WINAPI StorageBaseImpl_Release(
  *
  * See Windows documentation for more details on IStorage methods.
  */
-HRESULT WINAPI StorageBaseImpl_OpenStream(
+static HRESULT WINAPI StorageBaseImpl_OpenStream(
   IStorage*        iface,
   const OLECHAR*   pwcsName,  /* [string][in] */
   void*            reserved1, /* [unique][in] */
@@ -421,7 +421,7 @@ end:
  *
  * See Windows documentation for more details on IStorage methods.
  */
-HRESULT WINAPI StorageBaseImpl_OpenStorage(
+static HRESULT WINAPI StorageBaseImpl_OpenStorage(
   IStorage*        iface,
   const OLECHAR*   pwcsName,      /* [string][unique][in] */
   IStorage*        pstgPriority,  /* [unique][in] */
@@ -561,7 +561,7 @@ end:
  *
  * See Windows documentation for more details on IStorage methods.
  */
-HRESULT WINAPI StorageBaseImpl_EnumElements(
+static HRESULT WINAPI StorageBaseImpl_EnumElements(
   IStorage*       iface,
   DWORD           reserved1, /* [in] */
   void*           reserved2, /* [size_is][unique][in] */
@@ -610,7 +610,7 @@ HRESULT WINAPI StorageBaseImpl_EnumElements(
  *
  * See Windows documentation for more details on IStorage methods.
  */
-HRESULT WINAPI StorageBaseImpl_Stat(
+static HRESULT WINAPI StorageBaseImpl_Stat(
   IStorage*        iface,
   STATSTG*         pstatstg,     /* [out] */
   DWORD            grfStatFlag)  /* [in] */
@@ -675,7 +675,7 @@ end:
  *    of the deleted StgProperty object setting it with the new name and to
  *    perform a DestroyElement of the old StgProperty.
  */
-HRESULT WINAPI StorageBaseImpl_RenameElement(
+static HRESULT WINAPI StorageBaseImpl_RenameElement(
             IStorage*        iface,
             const OLECHAR*   pwcsOldName,  /* [in] */
             const OLECHAR*   pwcsNewName)  /* [in] */
@@ -830,7 +830,7 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
  *
  * See Windows documentation for more details on IStorage methods.
  */
-HRESULT WINAPI StorageBaseImpl_CreateStream(
+static HRESULT WINAPI StorageBaseImpl_CreateStream(
             IStorage*        iface,
             const OLECHAR*   pwcsName,  /* [string][in] */
             DWORD            grfMode,   /* [in] */
@@ -1008,7 +1008,7 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
  *
  * See Windows documentation for more details on IStorage methods.
  */
-HRESULT WINAPI StorageBaseImpl_SetClass(
+static HRESULT WINAPI StorageBaseImpl_SetClass(
   IStorage*        iface,
   REFCLSID         clsid) /* [in] */
 {
@@ -1047,7 +1047,7 @@ HRESULT WINAPI StorageBaseImpl_SetClass(
  *
  * See Windows documentation for more details on IStorage methods.
  */
-HRESULT WINAPI StorageImpl_CreateStorage(
+static HRESULT WINAPI StorageImpl_CreateStorage(
   IStorage*      iface,
   const OLECHAR  *pwcsName, /* [string][in] */
   DWORD            grfMode,   /* [in] */
@@ -1446,7 +1446,7 @@ static void updatePropertyChain(
 /*************************************************************************
  * CopyTo (IStorage)
  */
-HRESULT WINAPI StorageImpl_CopyTo(
+static HRESULT WINAPI StorageImpl_CopyTo(
   IStorage*   iface,
   DWORD       ciidExclude,  /* [in] */
   const IID*  rgiidExclude, /* [size_is][unique][in] */
@@ -1612,7 +1612,7 @@ HRESULT WINAPI StorageImpl_CopyTo(
 /*************************************************************************
  * MoveElementTo (IStorage)
  */
-HRESULT WINAPI StorageImpl_MoveElementTo(
+static HRESULT WINAPI StorageImpl_MoveElementTo(
   IStorage*     iface,
   const OLECHAR *pwcsName,   /* [string][in] */
   IStorage      *pstgDest,   /* [unique][in] */
@@ -1633,7 +1633,7 @@ HRESULT WINAPI StorageImpl_MoveElementTo(
  *  Wine doesn't implement transacted mode, which seems to be a basic
  *  optimization, so we can ignore this stub for now.
  */
-HRESULT WINAPI StorageImpl_Commit(
+static HRESULT WINAPI StorageImpl_Commit(
   IStorage*   iface,
   DWORD         grfCommitFlags)/* [in] */
 {
@@ -1646,7 +1646,7 @@ HRESULT WINAPI StorageImpl_Commit(
  *
  * Discard all changes that have been made since the last commit operation
  */
-HRESULT WINAPI StorageImpl_Revert(
+static HRESULT WINAPI StorageImpl_Revert(
   IStorage* iface)
 {
   FIXME("not implemented!\n");
@@ -1664,7 +1664,7 @@ HRESULT WINAPI StorageImpl_Revert(
  *          enumeration strategy that would give all the leaves of a storage
  *          first. (postfix order)
  */
-HRESULT WINAPI StorageImpl_DestroyElement(
+static HRESULT WINAPI StorageImpl_DestroyElement(
   IStorage*     iface,
   const OLECHAR *pwcsName)/* [string][in] */
 {
@@ -1795,7 +1795,7 @@ HRESULT WINAPI StorageImpl_DestroyElement(
  *
  * See Windows documentation for more details on IStorage methods.
  */
-HRESULT WINAPI StorageImpl_Stat( IStorage* iface,
+static HRESULT WINAPI StorageImpl_Stat( IStorage* iface,
                                  STATSTG*  pstatstg,     /* [out] */
                                  DWORD     grfStatFlag)  /* [in] */
 {
@@ -2231,7 +2231,7 @@ static HRESULT adjustPropertyChain(
 /******************************************************************************
  * SetElementTimes (IStorage)
  */
-HRESULT WINAPI StorageImpl_SetElementTimes(
+static HRESULT WINAPI StorageImpl_SetElementTimes(
   IStorage*     iface,
   const OLECHAR *pwcsName,/* [string][in] */
   const FILETIME  *pctime,  /* [in] */
@@ -2245,7 +2245,7 @@ HRESULT WINAPI StorageImpl_SetElementTimes(
 /******************************************************************************
  * SetStateBits (IStorage)
  */
-HRESULT WINAPI StorageImpl_SetStateBits(
+static HRESULT WINAPI StorageImpl_SetStateBits(
   IStorage*   iface,
   DWORD         grfStateBits,/* [in] */
   DWORD         grfMask)     /* [in] */
@@ -3585,7 +3585,7 @@ void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 ** The non-root storages cannot be opened in transacted mode thus this function
 ** does nothing.
 */
-HRESULT WINAPI StorageInternalImpl_Commit(
+static HRESULT WINAPI StorageInternalImpl_Commit(
   IStorage*            iface,
   DWORD                  grfCommitFlags)  /* [in] */
 {
@@ -3599,7 +3599,7 @@ HRESULT WINAPI StorageInternalImpl_Commit(
 ** The non-root storages cannot be opened in transacted mode thus this function
 ** does nothing.
 */
-HRESULT WINAPI StorageInternalImpl_Revert(
+static HRESULT WINAPI StorageInternalImpl_Revert(
   IStorage*            iface)
 {
   return S_OK;
@@ -3612,7 +3612,7 @@ void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This)
   HeapFree(GetProcessHeap(), 0, This);
 }
 
-HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
+static HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
   IEnumSTATSTG*     iface,
   REFIID            riid,
   void**            ppvObject)
@@ -3644,14 +3644,14 @@ HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
   return E_NOINTERFACE;
 }
 
-ULONG   WINAPI IEnumSTATSTGImpl_AddRef(
+static ULONG   WINAPI IEnumSTATSTGImpl_AddRef(
   IEnumSTATSTG* iface)
 {
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
   return InterlockedIncrement(&This->ref);
 }
 
-ULONG   WINAPI IEnumSTATSTGImpl_Release(
+static ULONG   WINAPI IEnumSTATSTGImpl_Release(
   IEnumSTATSTG* iface)
 {
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
@@ -3671,7 +3671,7 @@ ULONG   WINAPI IEnumSTATSTGImpl_Release(
   return newRef;
 }
 
-HRESULT WINAPI IEnumSTATSTGImpl_Next(
+static HRESULT WINAPI IEnumSTATSTGImpl_Next(
   IEnumSTATSTG* iface,
   ULONG             celt,
   STATSTG*          rgelt,
@@ -3754,7 +3754,7 @@ HRESULT WINAPI IEnumSTATSTGImpl_Next(
 }
 
 
-HRESULT WINAPI IEnumSTATSTGImpl_Skip(
+static HRESULT WINAPI IEnumSTATSTGImpl_Skip(
   IEnumSTATSTG* iface,
   ULONG             celt)
 {
@@ -3806,7 +3806,7 @@ HRESULT WINAPI IEnumSTATSTGImpl_Skip(
   return S_FALSE;
 }
 
-HRESULT WINAPI IEnumSTATSTGImpl_Reset(
+static HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   IEnumSTATSTG* iface)
 {
   IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
@@ -3840,7 +3840,7 @@ HRESULT WINAPI IEnumSTATSTGImpl_Reset(
   return S_OK;
 }
 
-HRESULT WINAPI IEnumSTATSTGImpl_Clone(
+static HRESULT WINAPI IEnumSTATSTGImpl_Clone(
   IEnumSTATSTG* iface,
   IEnumSTATSTG**    ppenum)
 {
