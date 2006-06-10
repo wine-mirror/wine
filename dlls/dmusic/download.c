@@ -22,13 +22,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 /* IDirectMusicDownloadImpl IUnknown part: */
-HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface (LPDIRECTMUSICDOWNLOAD iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface (LPDIRECTMUSICDOWNLOAD iface, REFIID riid, LPVOID *ppobj) {
 	IDirectMusicDownloadImpl *This = (IDirectMusicDownloadImpl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) 
 		|| IsEqualIID (riid, &IID_IDirectMusicDownload)) {
-		IDirectMusicDownloadImpl_AddRef(iface);
+		IUnknown_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
@@ -36,7 +36,7 @@ HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface (LPDIRECTMUSICDOWNLOAD if
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicDownloadImpl_AddRef (LPDIRECTMUSICDOWNLOAD iface) {
+static ULONG WINAPI IDirectMusicDownloadImpl_AddRef (LPDIRECTMUSICDOWNLOAD iface) {
 	IDirectMusicDownloadImpl *This = (IDirectMusicDownloadImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
@@ -47,7 +47,7 @@ ULONG WINAPI IDirectMusicDownloadImpl_AddRef (LPDIRECTMUSICDOWNLOAD iface) {
 	return refCount;
 }
 
-ULONG WINAPI IDirectMusicDownloadImpl_Release (LPDIRECTMUSICDOWNLOAD iface) {
+static ULONG WINAPI IDirectMusicDownloadImpl_Release (LPDIRECTMUSICDOWNLOAD iface) {
 	IDirectMusicDownloadImpl *This = (IDirectMusicDownloadImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
@@ -63,7 +63,7 @@ ULONG WINAPI IDirectMusicDownloadImpl_Release (LPDIRECTMUSICDOWNLOAD iface) {
 }
 
 /* IDirectMusicDownloadImpl IDirectMusicDownload part: */
-HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer (LPDIRECTMUSICDOWNLOAD iface, void** ppvBuffer, DWORD* pdwSize) {
+static HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer (LPDIRECTMUSICDOWNLOAD iface, void** ppvBuffer, DWORD* pdwSize) {
 	IDirectMusicDownloadImpl *This = (IDirectMusicDownloadImpl *)iface;
 	FIXME("(%p, %p, %p): stub\n", This, ppvBuffer, pdwSize);
 	return S_OK;

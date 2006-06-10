@@ -21,7 +21,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 /* IDirectMusic8Impl IUnknown part: */
-HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID riid, LPVOID *ppobj) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
@@ -29,7 +29,7 @@ HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID ri
 	    IsEqualIID (riid, &IID_IDirectMusic) ||
 	    IsEqualIID (riid, &IID_IDirectMusic2) ||
 	    IsEqualIID (riid, &IID_IDirectMusic8)) {
-		IDirectMusic8Impl_AddRef(iface);
+		IUnknown_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
@@ -38,7 +38,7 @@ HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID ri
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusic8Impl_AddRef (LPDIRECTMUSIC8 iface) {
+static ULONG WINAPI IDirectMusic8Impl_AddRef (LPDIRECTMUSIC8 iface) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
@@ -49,7 +49,7 @@ ULONG WINAPI IDirectMusic8Impl_AddRef (LPDIRECTMUSIC8 iface) {
 	return refCount;
 }
 
-ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface) {
+static ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
@@ -65,7 +65,7 @@ ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface) {
 }
 
 /* IDirectMusic8Impl IDirectMusic part: */
-HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps) {
+static HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	TRACE("(%p, %ld, %p)\n", This, dwIndex, pPortCaps);
 	if (NULL == pPortCaps) { return E_POINTER; }
@@ -106,13 +106,13 @@ HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD dwIndex, L
 	return S_FALSE;
 }
 
-HRESULT WINAPI IDirectMusic8Impl_CreateMusicBuffer (LPDIRECTMUSIC8 iface, LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER** ppBuffer, LPUNKNOWN pUnkOuter) {
+static HRESULT WINAPI IDirectMusic8Impl_CreateMusicBuffer (LPDIRECTMUSIC8 iface, LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER** ppBuffer, LPUNKNOWN pUnkOuter) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	FIXME("(%p, %p, %p, %p): stub\n", This, pBufferDesc, ppBuffer, pUnkOuter);
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter) {
+static HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	int i/*, j*/;
 	DMUS_PORTCAPS PortCaps;
@@ -142,13 +142,13 @@ HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rcls
 	return E_NOINTERFACE;
 }
 
-HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock (LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_CLOCKINFO lpClockInfo) {
+static HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock (LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_CLOCKINFO lpClockInfo) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, lpClockInfo);
 	return S_FALSE;
 }
 
-HRESULT WINAPI IDirectMusic8Impl_GetMasterClock (LPDIRECTMUSIC8 iface, LPGUID pguidClock, IReferenceClock** ppReferenceClock) {
+static HRESULT WINAPI IDirectMusic8Impl_GetMasterClock (LPDIRECTMUSIC8 iface, LPGUID pguidClock, IReferenceClock** ppReferenceClock) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 
 	TRACE("(%p, %p, %p)\n", This, pguidClock, ppReferenceClock);
@@ -160,13 +160,13 @@ HRESULT WINAPI IDirectMusic8Impl_GetMasterClock (LPDIRECTMUSIC8 iface, LPGUID pg
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusic8Impl_SetMasterClock (LPDIRECTMUSIC8 iface, REFGUID rguidClock) {
+static HRESULT WINAPI IDirectMusic8Impl_SetMasterClock (LPDIRECTMUSIC8 iface, REFGUID rguidClock) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidClock));
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusic8Impl_Activate (LPDIRECTMUSIC8 iface, BOOL fEnable) {
+static HRESULT WINAPI IDirectMusic8Impl_Activate (LPDIRECTMUSIC8 iface, BOOL fEnable) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	int i;
 	
@@ -178,7 +178,7 @@ HRESULT WINAPI IDirectMusic8Impl_Activate (LPDIRECTMUSIC8 iface, BOOL fEnable) {
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusic8Impl_GetDefaultPort (LPDIRECTMUSIC8 iface, LPGUID pguidPort) {
+static HRESULT WINAPI IDirectMusic8Impl_GetDefaultPort (LPDIRECTMUSIC8 iface, LPGUID pguidPort) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	HKEY hkGUID;
 	DWORD returnTypeGUID, sizeOfReturnBuffer = 50;
@@ -202,13 +202,13 @@ HRESULT WINAPI IDirectMusic8Impl_GetDefaultPort (LPDIRECTMUSIC8 iface, LPGUID pg
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusic8Impl_SetDirectSound (LPDIRECTMUSIC8 iface, LPDIRECTSOUND pDirectSound, HWND hWnd) {
+static HRESULT WINAPI IDirectMusic8Impl_SetDirectSound (LPDIRECTMUSIC8 iface, LPDIRECTSOUND pDirectSound, HWND hWnd) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	FIXME("(%p, %p, %p): stub\n", This, pDirectSound, hWnd);
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusic8Impl_SetExternalMasterClock (LPDIRECTMUSIC8 iface, IReferenceClock* pClock) {
+static HRESULT WINAPI IDirectMusic8Impl_SetExternalMasterClock (LPDIRECTMUSIC8 iface, IReferenceClock* pClock) {
 	IDirectMusic8Impl *This = (IDirectMusic8Impl *)iface;
 	FIXME("(%p, %p): stub\n", This, pClock);
 	return S_OK;

@@ -103,9 +103,6 @@ struct IDirectMusic8Impl {
   int nrofports;
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusic8Impl_AddRef (LPDIRECTMUSIC8 iface);
-
 /*****************************************************************************
  * IDirectMusicBufferImpl implementation structure
  */
@@ -116,9 +113,6 @@ struct IDirectMusicBufferImpl {
 
   /* IDirectMusicBufferImpl fields */
 };
-
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicBufferImpl_AddRef (LPDIRECTMUSICBUFFER iface);
 
 /*****************************************************************************
  * IDirectMusicDownloadedInstrumentImpl implementation structure
@@ -131,11 +125,6 @@ struct IDirectMusicDownloadedInstrumentImpl {
   /* IDirectMusicDownloadedInstrumentImpl fields */
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicDownloadedInstrumentImpl_AddRef (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface);
-/* IDirectMusicDownloadedInstrumentImpl: */
-/* none yet */
-
 /*****************************************************************************
  * IDirectMusicDownloadImpl implementation structure
  */
@@ -147,9 +136,6 @@ struct IDirectMusicDownloadImpl {
   /* IDirectMusicDownloadImpl fields */
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicDownloadImpl_AddRef (LPDIRECTMUSICDOWNLOAD iface);
-
 /*****************************************************************************
  * IDirectMusicPortDownloadImpl implementation structure
  */
@@ -160,9 +146,6 @@ struct IDirectMusicPortDownloadImpl {
 
   /* IDirectMusicPortDownloadImpl fields */
 };
-
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicPortDownloadImpl_AddRef (LPDIRECTMUSICPORTDOWNLOAD iface);
 
 /*****************************************************************************
  * IDirectMusicPortImpl implementation structure
@@ -182,8 +165,6 @@ struct IDirectMusicPortImpl {
   DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicPortImpl_AddRef (LPDIRECTMUSICPORT iface);
 extern HRESULT WINAPI IDirectMusicPortImpl_Activate (LPDIRECTMUSICPORT iface, BOOL fActive);
 
 /** Internal factory */
@@ -200,9 +181,6 @@ struct IDirectMusicThruImpl {
   /* IDirectMusicThruImpl fields */
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicThruImpl_AddRef (LPDIRECTMUSICTHRU iface);
-
 /*****************************************************************************
  * IReferenceClockImpl implementation structure
  */
@@ -215,9 +193,6 @@ struct IReferenceClockImpl {
   REFERENCE_TIME rtTime;
   DMUS_CLOCKINFO pClockInfo;
 };
-
-/* IUnknown: */
-extern ULONG WINAPI   IReferenceClockImpl_AddRef (IReferenceClock *iface);
 
 typedef struct _DMUS_PRIVATE_INSTRUMENT_ENTRY {
 	struct list entry; /* for listing elements */
@@ -253,15 +228,6 @@ struct IDirectMusicCollectionImpl {
   struct list Instruments;
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicCollectionImpl_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicCollection: */
-extern ULONG WINAPI   IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef (LPDIRECTMUSICCOLLECTION iface);
-/* IDirectMusicObject: */
-extern ULONG WINAPI   IDirectMusicCollectionImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicCollectionImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicInstrumentImpl implementation structure
  */
@@ -279,10 +245,6 @@ struct IDirectMusicInstrumentImpl {
   /* instrument data */
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicInstrumentImpl_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicInstrumentImpl: */
-extern ULONG WINAPI   IDirectMusicInstrumentImpl_IDirectMusicInstrument_AddRef (LPDIRECTMUSICINSTRUMENT iface);
 /* custom :) */
 extern HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT iface, LPSTREAM pStm);
 

@@ -22,13 +22,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 /* IDirectMusicDownloadedInstrumentImpl IUnknown part: */
-HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface, REFIID riid, LPVOID *ppobj) {
 	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown)
 		|| IsEqualIID (riid, &IID_IDirectMusicDownloadedInstrument)) {
-		IDirectMusicDownloadedInstrumentImpl_AddRef(iface);
+		IUnknown_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
@@ -36,7 +36,7 @@ HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface (LPDIRECTMUSI
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_AddRef (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface) {
+static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_AddRef (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface) {
 	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
@@ -47,7 +47,7 @@ ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_AddRef (LPDIRECTMUSICDOWNLOADE
 	return refCount;
 }
 
-ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface) {
+static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface) {
 	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
