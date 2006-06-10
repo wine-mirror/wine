@@ -67,16 +67,6 @@ struct IDirectMusicWaveImpl {
 
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicWaveImpl_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicSegment(8): */
-extern ULONG WINAPI   IDirectMusicWaveImpl_IDirectMusicSegment8_AddRef (LPDIRECTMUSICSEGMENT8 iface);
-
-/* IDirectMusicObject: */
-extern ULONG WINAPI   IDirectMusicWaveImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicWaveImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /**********************************************************************
  * Dll lifetime tracking declaration for dswave.dll
  */
