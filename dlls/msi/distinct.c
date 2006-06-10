@@ -268,7 +268,7 @@ static UINT DISTINCT_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 }
 
 
-MSIVIEWOPS distinct_ops =
+static const MSIVIEWOPS distinct_ops =
 {
     DISTINCT_fetch_int,
     NULL,

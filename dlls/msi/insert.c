@@ -223,7 +223,7 @@ static UINT INSERT_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 }
 
 
-MSIVIEWOPS insert_ops =
+static const MSIVIEWOPS insert_ops =
 {
     INSERT_fetch_int,
     NULL,

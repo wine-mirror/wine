@@ -268,7 +268,7 @@ static UINT ORDER_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 }
 
 
-MSIVIEWOPS order_ops =
+static const MSIVIEWOPS order_ops =
 {
     ORDER_fetch_int,
     NULL,

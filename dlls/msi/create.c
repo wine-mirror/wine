@@ -207,7 +207,7 @@ static UINT CREATE_delete( struct tagMSIVIEW *view )
 }
 
 
-MSIVIEWOPS create_ops =
+static const MSIVIEWOPS create_ops =
 {
     CREATE_fetch_int,
     NULL,

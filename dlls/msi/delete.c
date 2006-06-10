@@ -191,7 +191,7 @@ static UINT DELETE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 }
 
 
-MSIVIEWOPS delete_ops =
+static const MSIVIEWOPS delete_ops =
 {
     DELETE_fetch_int,
     DELETE_fetch_stream,

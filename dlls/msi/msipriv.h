@@ -189,7 +189,7 @@ typedef struct tagMSIVIEWOPS
 struct tagMSIVIEW
 {
     MSIOBJECTHDR hdr;
-    MSIVIEWOPS   *ops;
+    const MSIVIEWOPS *ops;
 };
 
 struct msi_dialog_tag;

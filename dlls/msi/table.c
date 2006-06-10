@@ -1494,7 +1494,7 @@ static UINT TABLE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 }
 
 
-MSIVIEWOPS table_ops =
+static const MSIVIEWOPS table_ops =
 {
     TABLE_fetch_int,
     TABLE_fetch_stream,

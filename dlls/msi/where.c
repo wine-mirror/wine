@@ -408,7 +408,7 @@ static UINT WHERE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 }
 
 
-MSIVIEWOPS where_ops =
+static const MSIVIEWOPS where_ops =
 {
     WHERE_fetch_int,
     WHERE_fetch_stream,

@@ -215,7 +215,7 @@ static UINT SELECT_find_matching_rows( struct tagMSIVIEW *view, UINT col,
 }
 
 
-MSIVIEWOPS select_ops =
+static const MSIVIEWOPS select_ops =
 {
     SELECT_fetch_int,
     SELECT_fetch_stream,
