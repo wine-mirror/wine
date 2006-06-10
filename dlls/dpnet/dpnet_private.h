@@ -50,9 +50,6 @@ struct IDirectPlay8ClientImpl
   /* IDirectPlay8Client fields */
 };
 
-/* IUnknown: */
-extern ULONG WINAPI IDirectPlay8ClientImpl_AddRef(PDIRECTPLAY8CLIENT iface);
-
 /* ------------------- */
 /* IDirectPlay8Address */
 /* ------------------- */
@@ -69,15 +66,6 @@ struct IDirectPlay8AddressImpl
   GUID SP_guid;
   const WCHAR *url;
 };
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirectPlay8AddressImpl_QueryInterface(PDIRECTPLAY8ADDRESS iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI IDirectPlay8AddressImpl_AddRef(PDIRECTPLAY8ADDRESS iface);
-extern ULONG WINAPI IDirectPlay8AddressImpl_Release(PDIRECTPLAY8ADDRESS iface);
-
-/* IDirectPlay8Address: */
-
-
 
 /**
  * factories

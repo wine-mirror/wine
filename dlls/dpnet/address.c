@@ -23,6 +23,7 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -37,13 +38,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
 
 /* IDirectPlay8Address IUnknown parts follow: */
-HRESULT WINAPI IDirectPlay8AddressImpl_QueryInterface(PDIRECTPLAY8ADDRESS iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IDirectPlay8AddressImpl_QueryInterface(PDIRECTPLAY8ADDRESS iface, REFIID riid, LPVOID *ppobj)
 {
     IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirectPlay8Address)) {
-        IDirectPlay8AddressImpl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return DPN_OK;
     }
@@ -52,7 +53,7 @@ HRESULT WINAPI IDirectPlay8AddressImpl_QueryInterface(PDIRECTPLAY8ADDRESS iface,
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectPlay8AddressImpl_AddRef(PDIRECTPLAY8ADDRESS iface) {
+static ULONG WINAPI IDirectPlay8AddressImpl_AddRef(PDIRECTPLAY8ADDRESS iface) {
     IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
@@ -61,7 +62,7 @@ ULONG WINAPI IDirectPlay8AddressImpl_AddRef(PDIRECTPLAY8ADDRESS iface) {
     return refCount;
 }
 
-ULONG WINAPI IDirectPlay8AddressImpl_Release(PDIRECTPLAY8ADDRESS iface) {
+static ULONG WINAPI IDirectPlay8AddressImpl_Release(PDIRECTPLAY8ADDRESS iface) {
     IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
@@ -75,100 +76,100 @@ ULONG WINAPI IDirectPlay8AddressImpl_Release(PDIRECTPLAY8ADDRESS iface) {
 
 /* IDirectPlay8Address Interface follow: */
 
-HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromURLW(PDIRECTPLAY8ADDRESS iface, WCHAR* pwszSourceURL) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromURLW(PDIRECTPLAY8ADDRESS iface, WCHAR* pwszSourceURL) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %s): stub\n", This, debugstr_w(pwszSourceURL));
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromURLA(PDIRECTPLAY8ADDRESS iface, CHAR* pszSourceURL) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromURLA(PDIRECTPLAY8ADDRESS iface, CHAR* pszSourceURL) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %s): stub\n", This, pszSourceURL);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_Duplicate(PDIRECTPLAY8ADDRESS iface, PDIRECTPLAY8ADDRESS* ppdpaNewAddress) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_Duplicate(PDIRECTPLAY8ADDRESS iface, PDIRECTPLAY8ADDRESS* ppdpaNewAddress) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %p): stub\n", This, ppdpaNewAddress);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_SetEqual(PDIRECTPLAY8ADDRESS iface, PDIRECTPLAY8ADDRESS pdpaAddress) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_SetEqual(PDIRECTPLAY8ADDRESS iface, PDIRECTPLAY8ADDRESS pdpaAddress) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %p): stub\n", This, pdpaAddress);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_IsEqual(PDIRECTPLAY8ADDRESS iface, PDIRECTPLAY8ADDRESS pdpaAddress) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_IsEqual(PDIRECTPLAY8ADDRESS iface, PDIRECTPLAY8ADDRESS pdpaAddress) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %p): stub\n", This, pdpaAddress);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_Clear(PDIRECTPLAY8ADDRESS iface) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_Clear(PDIRECTPLAY8ADDRESS iface) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_GetURLW(PDIRECTPLAY8ADDRESS iface, WCHAR* pwszURL, PDWORD pdwNumChars) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLW(PDIRECTPLAY8ADDRESS iface, WCHAR* pwszURL, PDWORD pdwNumChars) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_GetURLA(PDIRECTPLAY8ADDRESS iface, CHAR* pszURL, PDWORD pdwNumChars) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLA(PDIRECTPLAY8ADDRESS iface, CHAR* pszURL, PDWORD pdwNumChars) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_GetSP(PDIRECTPLAY8ADDRESS iface, GUID* pguidSP) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetSP(PDIRECTPLAY8ADDRESS iface, GUID* pguidSP) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %p)\n", iface, pguidSP);
   memcpy(pguidSP, &This->SP_guid, sizeof(GUID));
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_GetUserData(PDIRECTPLAY8ADDRESS iface, LPVOID pvUserData, PDWORD pdwBufferSize) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetUserData(PDIRECTPLAY8ADDRESS iface, LPVOID pvUserData, PDWORD pdwBufferSize) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_SetSP(PDIRECTPLAY8ADDRESS iface, CONST GUID* CONST pguidSP) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_SetSP(PDIRECTPLAY8ADDRESS iface, CONST GUID* CONST pguidSP) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %s)\n", iface, debugstr_SP(pguidSP));
   memcpy(&This->SP_guid, pguidSP, sizeof(GUID));
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_SetUserData(PDIRECTPLAY8ADDRESS iface, CONST void* CONST pvUserData, CONST DWORD dwDataSize) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_SetUserData(PDIRECTPLAY8ADDRESS iface, CONST void* CONST pvUserData, CONST DWORD dwDataSize) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_GetNumComponents(PDIRECTPLAY8ADDRESS iface, PDWORD pdwNumComponents) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetNumComponents(PDIRECTPLAY8ADDRESS iface, PDWORD pdwNumComponents) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByName(PDIRECTPLAY8ADDRESS iface, CONST WCHAR* CONST pwszName, LPVOID pvBuffer, PDWORD pdwBufferSize, PDWORD pdwDataType) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByName(PDIRECTPLAY8ADDRESS iface, CONST WCHAR* CONST pwszName, LPVOID pvBuffer, PDWORD pdwBufferSize, PDWORD pdwDataType) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByIndex(PDIRECTPLAY8ADDRESS iface, CONST DWORD dwComponentID, WCHAR* pwszName, 
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByIndex(PDIRECTPLAY8ADDRESS iface, CONST DWORD dwComponentID, WCHAR* pwszName, 
 							   PDWORD pdwNameLen, void* pvBuffer, PDWORD pdwBufferSize, PDWORD pdwDataType) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(PDIRECTPLAY8ADDRESS iface, CONST WCHAR* CONST pwszName, 
+static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(PDIRECTPLAY8ADDRESS iface, CONST WCHAR* CONST pwszName, 
 						    CONST void* CONST lpvData, CONST DWORD dwDataSize, CONST DWORD dwDataType) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %s, %p, %lu, %lx): stub\n", This, debugstr_w(pwszName), lpvData, dwDataSize, dwDataType);
@@ -194,19 +195,19 @@ HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(PDIRECTPLAY8ADDRESS iface, C
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_GetDevice(PDIRECTPLAY8ADDRESS iface, GUID* pDevGuid) {   
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetDevice(PDIRECTPLAY8ADDRESS iface, GUID* pDevGuid) {   
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_SetDevice(PDIRECTPLAY8ADDRESS iface, CONST GUID* CONST devGuid) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_SetDevice(PDIRECTPLAY8ADDRESS iface, CONST GUID* CONST devGuid) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %s): stub\n", This, debugstr_guid(devGuid));
   return DPN_OK; 
 }
 
-HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromDirectPlay4Address(PDIRECTPLAY8ADDRESS iface, LPVOID pvAddress, DWORD dwDataSize) { 
+static HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromDirectPlay4Address(PDIRECTPLAY8ADDRESS iface, LPVOID pvAddress, DWORD dwDataSize) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p): stub\n", This);
   return DPN_OK; 
