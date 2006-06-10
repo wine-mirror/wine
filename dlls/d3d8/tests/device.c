@@ -37,7 +37,7 @@ static int get_refcount(IUnknown *object)
         trace("%s failed: %s\n", c, DXGetErrorString8(r)); \
     }
 
-void test_swapchain(void)
+static void test_swapchain(void)
 {
     HRESULT                      hr;
     HWND                         hwnd               = NULL;
@@ -153,7 +153,7 @@ void test_swapchain(void)
     DestroyWindow( hwnd );
 }
 
-void test_refcount(void)
+static void test_refcount(void)
 {
     HRESULT                      hr;
     HWND                         hwnd               = NULL;
