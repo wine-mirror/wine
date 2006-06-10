@@ -67,10 +67,6 @@ struct IDirectMusicSynth8Impl {
   IDirectMusicSynthSinkImpl* pSynthSink;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicSynth8Impl_QueryInterface (LPDIRECTMUSICSYNTH8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSynth8Impl_AddRef (LPDIRECTMUSICSYNTH8 iface);
-
 /*****************************************************************************
  * IDirectMusicSynthSinkImpl implementation structure
  */
@@ -81,9 +77,6 @@ struct IDirectMusicSynthSinkImpl {
 
   /* IDirectMusicSynthSinkImpl fields */
 };
-
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicSynthSinkImpl_AddRef (LPDIRECTMUSICSYNTHSINK iface);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmsynth.dll
