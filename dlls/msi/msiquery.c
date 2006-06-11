@@ -354,6 +354,10 @@ UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
 
     TRACE("%ld %p\n", hView, record);
 
+    if( !record )
+        return ERROR_INVALID_PARAMETER;
+    *record = 0;
+
     query = msihandle2msiinfo( hView, MSIHANDLETYPE_VIEW );
     if( !query )
         return ERROR_INVALID_HANDLE;
