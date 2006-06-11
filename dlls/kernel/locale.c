@@ -443,7 +443,7 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
             /* retry without country name */
             l_data.country[0] = 0;
             EnumResourceLanguagesW(kernel32_handle, (LPCWSTR)RT_STRING, (LPCWSTR)LOCALE_ILANGUAGE,
-                                   find_language_id_proc, (LONG)&l_data);
+                                   find_language_id_proc, (LONG_PTR)&l_data);
             if (!l_data.n_found)
             {
                 MESSAGE("Warning: Language '%s_%s' was not recognized, defaulting to English.\n",
