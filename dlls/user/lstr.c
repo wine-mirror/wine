@@ -288,7 +288,7 @@ LPSTR WINAPI CharUpperA(LPSTR str)
 LPWSTR WINAPI CharLowerW(LPWSTR x)
 {
     if (HIWORD(x)) return strlwrW(x);
-    else return (LPWSTR)((UINT)tolowerW(LOWORD(x)));
+    else return (LPWSTR)((UINT_PTR)tolowerW(LOWORD(x)));
 }
 
 
@@ -298,7 +298,7 @@ LPWSTR WINAPI CharLowerW(LPWSTR x)
 LPWSTR WINAPI CharUpperW(LPWSTR x)
 {
     if (HIWORD(x)) return struprW(x);
-    else return (LPWSTR)((UINT)toupperW(LOWORD(x)));
+    else return (LPWSTR)((UINT_PTR)toupperW(LOWORD(x)));
 }
 
 
