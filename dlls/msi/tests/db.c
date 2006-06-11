@@ -48,7 +48,29 @@ static void test_msidatabase(void)
     ok( res == TRUE, "Failed to delete database\n" );
 }
 
-static void test_msiinsert(void)
+static UINT do_query(MSIHANDLE hdb, const char *query, MSIHANDLE *phrec)
+{
+    MSIHANDLE hview = 0;
+    UINT r, ret;
+
+    /* open a select query */
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    if (r != ERROR_SUCCESS)
+        return r;
+    r = MsiViewExecute(hview, 0);
+    if (r != ERROR_SUCCESS)
+        return r;
+    ret = MsiViewFetch(hview, phrec);
+    r = MsiViewClose(hview);
+    if (r != ERROR_SUCCESS)
+        return r;
+    r = MsiCloseHandle(hview);
+    if (r != ERROR_SUCCESS)
+        return r;
+    return ret;
+}
+
+void test_msiinsert(void)
 {
     MSIHANDLE hdb = 0, hview = 0, hrec = 0;
     UINT r;
@@ -87,17 +109,20 @@ static void test_msiinsert(void)
     r = MsiCloseHandle(hview);
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
 
-    query = "SELECT * FROM `phone`";
-    r = MsiDatabaseOpenView(hdb, query, &hview);
-    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
-    r = MsiViewExecute(hview, 0);
-    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
-    r = MsiViewFetch(hview, &hrec);
+    query = "SELECT * FROM `phone` WHERE `id` = 1";
+    r = do_query(hdb, query, &hrec);
     ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
 
     /* check the record contains what we put in it */
     r = MsiRecordGetFieldCount(hrec);
     ok(r == 3, "record count wrong\n");
+
+    todo_wine {
+    r = MsiRecordIsNull(hrec, 0);
+    ok(r == FALSE, "field 0 not null\n");
+    r = MsiRecordGetInteger(hrec, 0);
+    ok(r == 0x138080, "field 0 contents wrong\n");
+    }
 
     r = MsiRecordGetInteger(hrec, 1);
     ok(r == 1, "field 1 contents wrong\n");
@@ -109,13 +134,38 @@ static void test_msiinsert(void)
     r = MsiRecordGetString(hrec, 3, buf, &sz);
     ok(r == ERROR_SUCCESS, "field 3 content fetch failed\n");
     ok(!strcmp(buf,"8675309"), "field 3 content incorrect\n");
-    
-    r = MsiViewClose(hview);
-    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
-    r = MsiCloseHandle(hview);
-    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* open a select query */
+    hrec = 100;
+    query = "SELECT * FROM `phone` WHERE `id` >= 10";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "MsiViewFetch failed\n");
+    ok(hrec == 0, "hrec should be null\n");
+
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    query = "SELECT * FROM `phone` WHERE `id` < 0";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "MsiViewFetch failed\n");
+
+    query = "SELECT * FROM `phone` WHERE `id` <= 0";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "MsiViewFetch failed\n");
+
+    query = "SELECT * FROM `phone` WHERE `id` <> 1";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "MsiViewFetch failed\n");
+
+    query = "SELECT * FROM `phone` WHERE `id` > 10";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_NO_MORE_ITEMS, "MsiViewFetch failed\n");
+
+    r = MsiViewFetch(0, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "MsiViewFetch failed\n");
 
     r = MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed\n");
@@ -141,7 +191,7 @@ static void test_msidecomposedesc(void)
     hmod = GetModuleHandle("msi.dll");
     if (!hmod)
         return;
-    pMsiDecomposeDescriptorA = (fnMsiDecomposeDescriptorA) 
+    pMsiDecomposeDescriptorA = (fnMsiDecomposeDescriptorA)
         GetProcAddress(hmod, "MsiDecomposeDescriptorA");
     if (!pMsiDecomposeDescriptorA)
         return;
@@ -623,7 +673,7 @@ static UINT get_columns_table_type(MSIHANDLE hdb, const char *table, UINT field)
             if (r == field)
                 type = MsiRecordGetInteger( rec, 4 );
             MsiCloseHandle( rec );
-        }            
+        }
 
         MsiViewClose(hview);
     }
