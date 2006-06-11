@@ -97,14 +97,12 @@ typedef struct _IGetFrameImpl {
 
 static void AVIFILE_CloseCompressor(IGetFrameImpl *This)
 {
-  if (This->lpOutFormat != NULL && This->lpInFormat != This->lpOutFormat) {
+  if (This->lpInFormat != This->lpOutFormat) {
     HeapFree(GetProcessHeap(), 0, This->lpOutFormat);
     This->lpOutFormat = NULL;
   }
-  if (This->lpInFormat != NULL) {
-    HeapFree(GetProcessHeap(), 0, This->lpInFormat);
-    This->lpInFormat = NULL;
-  }
+  HeapFree(GetProcessHeap(), 0, This->lpInFormat);
+  This->lpInFormat = NULL;
   if (This->hic != NULL) {
     if (This->bResize)
       ICDecompressExEnd(This->hic);

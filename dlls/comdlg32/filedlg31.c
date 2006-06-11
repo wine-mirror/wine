@@ -764,7 +764,7 @@ void FD31_FreeOfnW(LPOPENFILENAMEW ofnW)
    HeapFree(GetProcessHeap(), 0, ofnW->lpstrFileTitle);
    HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrInitialDir);
    HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrTitle);
-   if ((ofnW->lpTemplateName) && (HIWORD(ofnW->lpTemplateName)))
+   if (HIWORD(ofnW->lpTemplateName))
        HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpTemplateName);
 }
 

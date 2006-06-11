@@ -1231,10 +1231,8 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     TRACE("Before MIDM_UNPREPARE\n");
     dwRet = midiInUnprepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
     TRACE("After MIDM_UNPREPARE\n");
-    if (midiHdr.lpData != NULL) {
-	HeapFree(GetProcessHeap(), 0, midiHdr.lpData);
-	midiHdr.lpData = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, midiHdr.lpData);
+    midiHdr.lpData = NULL;
     wmm->dwStatus = MCI_MODE_STOP;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);

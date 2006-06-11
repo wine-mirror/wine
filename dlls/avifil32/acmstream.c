@@ -175,14 +175,10 @@ static ULONG WINAPI ACMStream_fnRelease(IAVIStream* iface)
       acmStreamClose(This->has, 0);
       This->has = NULL;
     }
-    if (This->acmStreamHdr.pbSrc != NULL) {
-      HeapFree(GetProcessHeap(), 0, This->acmStreamHdr.pbSrc);
-      This->acmStreamHdr.pbSrc = NULL;
-    }
-    if (This->acmStreamHdr.pbDst != NULL) {
-      HeapFree(GetProcessHeap(), 0, This->acmStreamHdr.pbDst);
-      This->acmStreamHdr.pbDst = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, This->acmStreamHdr.pbSrc);
+    This->acmStreamHdr.pbSrc = NULL;
+    HeapFree(GetProcessHeap(), 0, This->acmStreamHdr.pbDst);
+    This->acmStreamHdr.pbDst = NULL;
     if (This->lpInFormat != NULL) {
       HeapFree(GetProcessHeap(), 0, This->lpInFormat);
       This->lpInFormat = NULL;

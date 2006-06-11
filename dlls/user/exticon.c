@@ -455,7 +455,7 @@ static UINT ICO_ExtractIconExW(
 	    if (nIcons == 0)
 	    {
 	      ret = iconDirCount;
-	      if (lpiID && pCIDir)	/* *.ico file, deallocate heap pointer*/
+              if (lpiID)	/* *.ico file, deallocate heap pointer*/
 	        HeapFree(GetProcessHeap(), 0, pCIDir);
 	    }
 	    else if (nIconIndex < iconDirCount)
@@ -472,7 +472,7 @@ static UINT ICO_ExtractIconExW(
 	        pIconId[i] = LookupIconIdFromDirectoryEx(pCIDir, TRUE, cx1, cy1, flags);
                 if (cx2 && cy2) pIconId[++i] = LookupIconIdFromDirectoryEx(pCIDir, TRUE,  cx2, cy2, flags);
 	      }
-	      if (lpiID && pCIDir)	/* *.ico file, deallocate heap pointer*/
+              if (lpiID)	/* *.ico file, deallocate heap pointer*/
 	        HeapFree(GetProcessHeap(), 0, pCIDir);
 
 	      for (icon = 0; icon < nIcons; icon++)

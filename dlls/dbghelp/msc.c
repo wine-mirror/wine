@@ -370,7 +370,7 @@ static void codeview_clear_type_table(void)
 
     for (i = 0; i < CV_MAX_MODULES; i++)
     {
-        if (cv_zmodules[i].allowed && cv_zmodules[i].defined_types)
+        if (cv_zmodules[i].allowed)
             HeapFree(GetProcessHeap(), 0, cv_zmodules[i].defined_types);
         cv_zmodules[i].allowed = FALSE;
         cv_zmodules[i].defined_types = NULL;

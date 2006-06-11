@@ -802,7 +802,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     if (reqsize) memcpy(buffer, ins_str, reqsize);
     reqsize += deplen;
 
-    if (ins_str && ins_str != tmp && ins_str != cd->Buffer)
+    if (ins_str != tmp && ins_str != cd->Buffer)
         RtlFreeHeap(GetProcessHeap(), 0, ins_str);
 
     collapse_path( buffer, mark );

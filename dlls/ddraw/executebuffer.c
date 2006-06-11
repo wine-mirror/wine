@@ -536,7 +536,7 @@ Main_IDirect3DExecuteBufferImpl_1_Release(LPDIRECT3DEXECUTEBUFFER iface)
     TRACE("(%p/%p)->()decrementing from %lu.\n", This, iface, ref + 1);
 
     if (!ref) {
-        if ((This->desc.lpData != NULL) && This->need_free)
+        if (This->need_free)
 	    HeapFree(GetProcessHeap(),0,This->desc.lpData);
         HeapFree(GetProcessHeap(),0,This->vertex_data);
         HeapFree(GetProcessHeap(),0,This->indices);

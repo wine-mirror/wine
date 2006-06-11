@@ -1652,7 +1652,7 @@ static void LISTBOX_DeleteItem( LB_DESCR *descr, INT index )
         dis.itemData = descr->items[index].data;
         SendMessageW( descr->owner, WM_DELETEITEM, id, (LPARAM)&dis );
     }
-    if (HAS_STRINGS(descr) && descr->items[index].str)
+    if (HAS_STRINGS(descr))
         HeapFree( GetProcessHeap(), 0, descr->items[index].str );
 }
 

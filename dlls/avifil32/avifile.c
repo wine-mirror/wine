@@ -326,10 +326,9 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
       This->fileextra.cb = 0;
     }
 
-    if (This->szFileName != NULL) {
-      HeapFree(GetProcessHeap(), 0, This->szFileName);
-      This->szFileName = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, This->szFileName);
+    This->szFileName = NULL;
+
     if (This->hmmio != NULL) {
       mmioClose(This->hmmio, 0);
       This->hmmio = NULL;
@@ -1565,10 +1564,8 @@ static void    AVIFILE_DestructAVIStream(IAVIStreamImpl *This)
     This->idxFrames  = NULL;
     This->nIdxFrames = 0;
   }
-  if (This->idxFmtChanges != NULL) {
-    HeapFree(GetProcessHeap(), 0, This->idxFmtChanges);
-    This->idxFmtChanges = NULL;
-  }
+  HeapFree(GetProcessHeap(), 0, This->idxFmtChanges);
+  This->idxFmtChanges = NULL;
   if (This->lpBuffer != NULL) {
     HeapFree(GetProcessHeap(), 0, This->lpBuffer);
     This->lpBuffer = NULL;

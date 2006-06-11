@@ -653,7 +653,7 @@ DWORD WINAPI WNetOpenEnumA( DWORD dwScope, DWORD dwType, DWORD dwUsage,
             if (ret == WN_SUCCESS)
                 ret = WNetOpenEnumW(dwScope, dwType, dwUsage, lpNetWide,
                  lphEnum);
-            if (allocated && lpNetWide)
+            if (allocated)
                 HeapFree(GetProcessHeap(), 0, lpNetWide);
         }
         else

@@ -1004,22 +1004,14 @@ void VFWAPI ICCompressorFree(PCOMPVARS pc)
       ICClose(pc->hic);
       pc->hic = NULL;
     }
-    if (pc->lpbiIn != NULL) {
-      HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
-      pc->lpbiIn = NULL;
-    }
-    if (pc->lpBitsOut != NULL) {
-      HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
-      pc->lpBitsOut = NULL;
-    }
-    if (pc->lpBitsPrev != NULL) {
-      HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
-      pc->lpBitsPrev = NULL;
-    }
-    if (pc->lpState != NULL) {
-      HeapFree(GetProcessHeap(), 0, pc->lpState);
-      pc->lpState = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
+    pc->lpbiIn = NULL;
+    HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
+    pc->lpBitsOut = NULL;
+    HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
+    pc->lpBitsPrev = NULL;
+    HeapFree(GetProcessHeap(), 0, pc->lpState);
+    pc->lpState = NULL;
     pc->dwFlags = 0;
   }
 }

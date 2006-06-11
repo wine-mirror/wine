@@ -732,7 +732,7 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
     object->wMagic = 0;  /* Mark it as invalid */
     object->funcs  = NULL;
     i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
-    if (i >= 0 && i < MAX_LARGE_HANDLES && large_handles[i])
+    if (i >= 0 && i < MAX_LARGE_HANDLES)
     {
         HeapFree( GetProcessHeap(), 0, large_handles[i] );
         large_handles[i] = NULL;

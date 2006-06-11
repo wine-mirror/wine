@@ -297,10 +297,8 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
       This->extra.lp = NULL;
       This->extra.cb = 0;
     }
-    if (This->szFileName != NULL) {
-      HeapFree(GetProcessHeap(), 0, This->szFileName);
-      This->szFileName = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, This->szFileName);
+    This->szFileName = NULL;
     if (This->hmmio != NULL) {
       mmioClose(This->hmmio, 0);
       This->hmmio = NULL;
