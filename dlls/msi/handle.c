@@ -188,6 +188,9 @@ UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
 
     TRACE("%lx\n",handle);
 
+    if (!handle)
+        return ERROR_SUCCESS;
+
     EnterCriticalSection( &MSI_handle_cs );
 
     info = msihandle2msiinfo(handle, 0);
