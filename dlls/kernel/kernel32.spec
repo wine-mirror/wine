@@ -1032,7 +1032,7 @@
 @ stdcall SetThreadLocale(long)
 @ stdcall SetThreadPriority(long long)
 @ stdcall SetThreadPriorityBoost(long long)
-# @ stub SetThreadUILanguage
+@ stdcall SetThreadUILanguage(long)
 @ stdcall SetTimeZoneInformation(ptr)
 @ stub SetTimerQueueTimer
 @ stdcall SetUnhandledExceptionFilter(ptr)

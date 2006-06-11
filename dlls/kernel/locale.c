@@ -1717,6 +1717,27 @@ BOOL WINAPI SetThreadLocale( LCID lcid )
     return TRUE;
 }
 
+/**********************************************************************
+ *           SetThreadUILanguage    (KERNEL32.@)
+ *
+ * Set the current threads UI language.
+ *
+ * PARAMS
+ *  langid [I] LANGID of the language to set, or 0 to use
+ *             the available language which is best supported
+ *             for console applications
+ *
+ * RETURNS
+ *  Success: The return value is the same as the input value.
+ *  Failure: The return value differs from the input value.
+ *           Use GetLastError() to determine the cause.
+ */
+LANGID WINAPI SetThreadUILanguage( LANGID langid )
+{
+    TRACE("(0x%04x) stub - returning success\n", langid);
+    return langid;
+}
+
 /******************************************************************************
  *		ConvertDefaultLocale (KERNEL32.@)
  *
