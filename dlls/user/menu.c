@@ -4043,7 +4043,6 @@ BOOL MENU_SetMenu( HWND hWnd, HMENU hMenu )
     if (hMenu && !IsMenu(hMenu))
     {
         WARN("hMenu %p is not a menu handle\n", hMenu);
-        SetLastError(ERROR_INVALID_MENU_HANDLE);
         return FALSE;
     }
     if (!WIN_ALLOWED_MENU(GetWindowLongW( hWnd, GWL_STYLE )))
