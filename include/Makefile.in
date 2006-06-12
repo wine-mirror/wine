@@ -219,6 +219,7 @@ WINDOWS_INCLUDES = \
 	pktdef.h \
 	poppack.h \
 	powrprof.h \
+	profinfo.h \
 	prsht.h \
 	psapi.h \
 	pshpack1.h \

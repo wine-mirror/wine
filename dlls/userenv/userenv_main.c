@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "profinfo.h"
 
 #include "wine/debug.h"
 
@@ -77,17 +78,6 @@ BOOL WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
     FIXME("%p %p\n", lpProfilesDir, lpcchSize );
     return FALSE;
 }
-
-typedef struct _PROFILEINFOA {
-    DWORD dwSize;
-    DWORD dwFlags;
-    LPSTR lpUserName;
-    LPSTR lpProfilePath;
-    LPSTR lpDefaultPath;
-    LPSTR lpServerName;
-    LPSTR lpPolicyPath;
-    HANDLE hProfile;
-} PROFILEINFOA, *LPPROFILEINFOA;
 
 BOOL WINAPI LoadUserProfileA( HANDLE hToken, LPPROFILEINFOA lpProfileInfo )
 {
