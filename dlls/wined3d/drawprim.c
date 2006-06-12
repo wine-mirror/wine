@@ -1723,7 +1723,8 @@ void drawPrimLoadPSamplersGLSL(
 void drawPrimLoadConstantsGLSL_F(IWineD3DDevice* iface,
                                  unsigned max_constants,
                                  float* constants,
-                                 BOOL* constants_set) {
+                                 BOOL* constants_set,
+                                 char is_pshader) {
     
     IWineD3DDeviceImpl* This = (IWineD3DDeviceImpl *)iface;
     GLhandleARB programId = This->stateBlock->shaderPrgId;
@@ -1738,12 +1739,15 @@ void drawPrimLoadConstantsGLSL_F(IWineD3DDevice* iface,
     
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
+
+            const char* prefix = is_pshader? "PC":"VC";
+
             TRACE_(d3d_shader)("Loading constants %i: %f, %f, %f, %f\n",
                    i, constants[i*4], constants[i*4+1], constants[i*4+2], constants[i*4+3]);
 
             /* TODO: Benchmark and see if it would be beneficial to store the 
              * locations of the constants to avoid looking up each time */
-            snprintf(tmp_name, sizeof(tmp_name), "C[%i]", i);
+            snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, i);
             tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
             if (tmp_loc != -1) {
                 /* We found this uniform name in the program - go ahead and send the data */
@@ -1798,13 +1802,13 @@ void drawPrimLoadConstants(IWineD3DDevice *iface,
             if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
                 /* Load DirectX 8 float constants/uniforms for vertex shader */
                 drawPrimLoadConstantsGLSL_F(iface, WINED3D_VSHADER_MAX_CONSTANTS,
-                                            vertexDeclaration->constants, NULL);
+                                            vertexDeclaration->constants, NULL, 0);
             }
 
             /* Load DirectX 9 float constants/uniforms for vertex shader */
             drawPrimLoadConstantsGLSL_F(iface, WINED3D_VSHADER_MAX_CONSTANTS,
                                         This->stateBlock->vertexShaderConstantF, 
-                                        This->stateBlock->set.vertexShaderConstantsF);
+                                        This->stateBlock->set.vertexShaderConstantsF, 0);
 
             /* TODO: Load boolean & integer constants for vertex shader */
         }
@@ -1816,7 +1820,7 @@ void drawPrimLoadConstants(IWineD3DDevice *iface,
             /* Load DirectX 9 float constants/uniforms for pixel shader */
             drawPrimLoadConstantsGLSL_F(iface, WINED3D_PSHADER_MAX_CONSTANTS,
                                         This->stateBlock->pixelShaderConstantF,
-                                        This->stateBlock->set.pixelShaderConstantsF);
+                                        This->stateBlock->set.pixelShaderConstantsF, 1);
 
             /* TODO: Load boolean & integer constants for pixel shader */
         }

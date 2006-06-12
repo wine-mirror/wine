@@ -205,6 +205,9 @@ static void shader_glsl_get_register_name(
         } 
         break;
     case D3DSPR_CONST:
+    {
+        const char* prefix = pshader? "PC":"VC";
+
         if (arg->reg_maps->constantsF[reg]) {
             /* Use a local constant declared by "dcl" */
             
@@ -214,7 +217,7 @@ static void shader_glsl_get_register_name(
                   * local constant. */
                 FIXME("Relative addressing not yet supported on named constants\n");
             } else {
-                sprintf(tmpStr, "C%lu", reg);
+                sprintf(tmpStr, "%s%lu", prefix, reg);
             }
         } else {
             /* Use a global constant declared in Set____ShaderConstantF() */
@@ -224,16 +227,17 @@ static void shader_glsl_get_register_name(
                 if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)  {
                     char relStr[100], relReg[50], relMask[6];
                     shader_glsl_add_param(arg, addr_token, 0, TRUE, relReg, relMask, relStr);
-                    sprintf(tmpStr, "C[%s + %lu]", relStr, reg);
+                    sprintf(tmpStr, "%s[%s + %lu]", prefix, relStr, reg);
                 } else {
-                    sprintf(tmpStr, "C[A0.x + %lu]", reg);
+                    sprintf(tmpStr, "%s[A0.x + %lu]", prefix, reg);
                 }
             } else {
                 /* Just a normal global constant - no relative addressing */
-                sprintf(tmpStr, "C[%lu]", reg);
+                sprintf(tmpStr, "%s[%lu]", prefix, reg);
             }
         }
-    break;
+        break;
+    }
     case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
         if (pshader) {
             sprintf(tmpStr, "T%lu", reg);
@@ -710,8 +714,12 @@ void shader_glsl_def(SHADER_OPCODE_ARG* arg) {
 
     DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
 
+    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) arg->shader;
+    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
+    const char* prefix = pshader? "PC":"VC";
+
     shader_addline(arg->buffer, 
-                   "const vec4 C%lu = { %f, %f, %f, %f };\n", reg,
+                   "const vec4 %s%lu = { %f, %f, %f, %f };\n", prefix, reg,
                    *((const float *)(arg->src + 0)),
                    *((const float *)(arg->src + 1)),
                    *((const float *)(arg->src + 2)),

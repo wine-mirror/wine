@@ -725,7 +725,10 @@ void shader_generate_glsl_declarations(
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
 
     /* Declare the constants (aka uniforms) */
-    shader_addline(buffer, "uniform vec4 C[%u];\n", This->baseShader.limits.constant_float);
+    if (pshader)
+        shader_addline(buffer, "uniform vec4 PC[%u];\n", This->baseShader.limits.constant_float);
+    else
+        shader_addline(buffer, "uniform vec4 VC[%u];\n", This->baseShader.limits.constant_float);
 
     /* Declare texture samplers */ 
     for (i = 0; i < This->baseShader.limits.sampler; i++) {
