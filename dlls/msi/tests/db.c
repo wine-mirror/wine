@@ -162,6 +162,44 @@ static void test_msiinsert(void)
     r = do_query(hdb, query, &hrec);
     ok(r == ERROR_NO_MORE_ITEMS, "MsiViewFetch failed\n");
 
+    todo_wine {
+    /* now try a few bad INSERT xqueries */
+    query = "INSERT INTO `phone` ( `id`, `name`, `number` )"
+        "VALUES(?, ?)";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "MsiDatabaseOpenView failed\n");
+
+    if (r == ERROR_SUCCESS)
+        r = MsiCloseHandle(hview);
+    }
+
+    /* construct a record to insert */
+    hrec = MsiCreateRecord(4);
+    r = MsiRecordSetInteger(hrec, 1, 2);
+    ok(r == ERROR_SUCCESS, "MsiRecordSetInteger failed\n");
+    r = MsiRecordSetString(hrec, 2, "Adam");
+    ok(r == ERROR_SUCCESS, "MsiRecordSetString failed\n");
+    r = MsiRecordSetString(hrec, 3, "96905305");
+    ok(r == ERROR_SUCCESS, "MsiRecordSetString failed\n");
+
+    /* insert another value, using a record and wildcards */
+    query = "INSERT INTO `phone` ( `id`, `name`, `number` )"
+        "VALUES(?, ?, ?)";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+
+    if (r == ERROR_SUCCESS)
+    {
+        r = MsiViewExecute(hview, hrec);
+        ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+        r = MsiViewClose(hview);
+        ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+        r = MsiCloseHandle(hview);
+        ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+    }
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
     r = MsiViewFetch(0, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "MsiViewFetch failed\n");
 
