@@ -646,6 +646,12 @@ typedef GLvoid* (APIENTRY * PGLFNMAPBUFFERARBPROC) (GLenum target, GLenum access
 typedef GLboolean (APIENTRY * PGLFNUNMAPBUFFERARBPROC) (GLenum target);
 typedef void (APIENTRY * PGLFNGETBUFFERPARAMETERIVARBPROC) (GLenum target, GLenum pname, GLint *params);
 typedef void (APIENTRY * PGLFNGETBUFFERPOINTERVARBPROC) (GLenum target, GLenum pname, GLvoid* *params);
+/* GL_EXT_fog_coord */
+typedef void (APIENTRY * PGLFNGLFOGCOORDFEXTPROC) (GLfloat intesity);
+typedef void (APIENTRY * PGLFNGLFOGCOORDFVEXTPROC) (GLfloat intesity);
+typedef void (APIENTRY * PGLFNGLFOGCOORDDEXTPROC) (GLfloat intesity);
+typedef void (APIENTRY * PGLFNGLFOGCOORDDVEXTPROC) (GLfloat intesity);
+typedef void (APIENTRY * PGLFNGLFOGCOORDPOINTEREXTPROC) (GLenum type, GLsizei stride, GLvoid *data);
 /* GL_ARB_shader_objects (GLSL) */
 #ifndef GL_ARB_shader_objects
 #define GL_ARB_shader_objects 1
@@ -1424,6 +1430,11 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGETBUFFERPOINTERVARBPROC,       glGetBufferPointervARB); \
     /** EXT Extensions **/ \
     /* GL_EXT_fog_coord */ \
+    USE_GL_FUNC(PGLFNGLFOGCOORDFEXTPROC,                glFogCoordfEXT); \
+    USE_GL_FUNC(PGLFNGLFOGCOORDFVEXTPROC,               glFogCoordfvEXT); \
+    USE_GL_FUNC(PGLFNGLFOGCOORDDEXTPROC,                glFogCoorddEXT); \
+    USE_GL_FUNC(PGLFNGLFOGCOORDDVEXTPROC,               glFogCoordvEXT); \
+    USE_GL_FUNC(PGLFNGLFOGCOORDPOINTEREXTPROC,          glFogCoordPointerEXT); \
     /* GL_EXT_framebuffer_object */ \
     USE_GL_FUNC(PGLFNGLISRENDERBUFFEREXTPROC,          glIsRenderbufferEXT); \
     USE_GL_FUNC(PGLFNGLBINDRENDERBUFFEREXTPROC,        glBindRenderbufferEXT); \

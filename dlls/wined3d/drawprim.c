@@ -218,8 +218,30 @@ void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
             glMultMatrixf(invymat);
             checkGLcall("glMultMatrixf(invymat)");
         }
-    }
 
+        /* Vertex fog on transformed vertices? Use the calculated fog factor stored in the specular color */
+        if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != D3DFOG_NONE) {
+            if(GL_SUPPORT(EXT_FOG_COORD)) {
+                glFogi(GL_FOG_COORD_SRC, GL_FOG_COORD);
+                checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FOG_COORD)");
+                glFogi(GL_FOG_MODE, GL_LINEAR);
+                checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
+                /* The dx fog range in this case is fixed to 0 - 255,
+                 * but in GL it still depends on the fog start and end (according to the ext)
+                 * Use this to turn around the fog as it's needed. That prevents some
+                 * calculations during drawing :-)
+                 */
+                glFogf(GL_FOG_START, (float) 0xff);
+                checkGLcall("glFogfv GL_FOG_END");
+                glFogf(GL_FOG_END, 0.0);
+                checkGLcall("glFogfv GL_FOG_START");
+            } else {
+                /* Disable GL fog, handle this in software in drawStridedSlow */
+                glDisable(GL_FOG);
+                checkGLcall("glDisable(GL_FOG)");
+            }
+        }
+    }
 }
 /* Setup views - Transformed & lit if RHW, else untransformed.
        Only unlit if Normals are supplied
@@ -240,6 +262,7 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
 
     if (!useVS && vtx_transformed) {
         d3ddevice_set_ortho(This);
+
     } else {
 
         /* Untransformed, so relies on the view and projection matrices */
@@ -311,6 +334,23 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
             This->proj_valid = FALSE;
         }
         This->last_was_rhw = FALSE;
+
+        /* Restore fogging */
+        if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != D3DFOG_NONE) {
+            if(GL_SUPPORT(EXT_FOG_COORD)) {
+                glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH);
+                checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH)\n");
+                /* Reapply the fog range */
+                IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
+                IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
+                /* Restore the fog mode */
+                IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGTABLEMODE, This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE]);
+            } else {
+                /* Enable GL_FOG again because we disabled it above */
+                glEnable(GL_FOG);
+                checkGLcall("glEnable(GL_FOG)");
+            }
+        }
     }
     return isLightingOn;
 }
@@ -1489,6 +1529,22 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
         /* Specular ------------------------------- */
         if (sd->u.s.specular.lpData != NULL) {
+            /* special case where the fog density is stored in the diffuse alpha channel */
+            if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
+              (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == D3DFOG_NONE || sd->u.s.position.dwType == D3DDECLTYPE_FLOAT4 )&&
+              This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
+                if(GL_SUPPORT(EXT_FOG_COORD)) {
+                    GL_EXTCALL(glFogCoordfEXT(specularColor >> 24));
+                } else {
+                    static BOOL warned = FALSE;
+                    if(!warned) {
+                        /* TODO: Use the fog table code from old ddraw */
+                        FIXME("Implement fog for transformed vertices in software\n");
+                        warned = TRUE;
+                    }
+                }
+            }
+
             VTRACE(("glSecondaryColor4ub: r,g,b=%lu,%lu,%lu\n", 
                     D3DCOLOR_B_R(specularColor), 
                     D3DCOLOR_B_G(specularColor), 
