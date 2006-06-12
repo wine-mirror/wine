@@ -844,6 +844,172 @@ static void test_props(void)
     DeleteFile(msifile);
 }
 
+static UINT try_query_param( MSIHANDLE hdb, LPSTR szQuery, MSIHANDLE hrec )
+{
+    MSIHANDLE htab = 0;
+    UINT res;
+
+    res = MsiDatabaseOpenView( hdb, szQuery, &htab );
+    if( res == ERROR_SUCCESS )
+    {
+        UINT r;
+
+        r = MsiViewExecute( htab, hrec );
+        if( r != ERROR_SUCCESS )
+        {
+            res = r;
+            fprintf(stderr,"MsiViewExecute failed %08x\n", res);
+        }
+
+        r = MsiViewClose( htab );
+        if( r != ERROR_SUCCESS )
+            res = r;
+
+        r = MsiCloseHandle( htab );
+        if( r != ERROR_SUCCESS )
+            res = r;
+    }
+    return res;
+}
+
+static UINT try_query( MSIHANDLE hdb, LPSTR szQuery )
+{
+    return try_query_param( hdb, szQuery, 0 );
+}
+
+static void test_msipackage(void)
+{
+    MSIHANDLE hdb = 0, hpack = 100;
+    UINT r;
+    char *query;
+    char name[10];
+
+    DeleteFile(msifile);
+
+    todo_wine {
+    name[0] = 0;
+    r = MsiOpenPackage(name, &hpack);
+    ok(r == ERROR_SUCCESS, "failed to open package with no name\n");
+    r = MsiCloseHandle(hpack);
+    ok(r == ERROR_SUCCESS, "failed to close package\n");
+    }
+
+    /* just MsiOpenDatabase should not create a file */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    name[0]='#';
+    name[1]=0;
+    r = MsiOpenPackage(name, &hpack);
+    ok(r == ERROR_INVALID_HANDLE, "MsiOpenPackage returned wrong code\n");
+
+    todo_wine {
+    /* now try again with our empty database */
+    sprintf(name, "#%ld", hdb);
+    r = MsiOpenPackage(name, &hpack);
+    ok(r == ERROR_INSTALL_PACKAGE_INVALID, "MsiOpenPackage returned wrong code\n");
+    if (!r)    MsiCloseHandle(hpack);
+    }
+
+    /* create a table */
+    query = "CREATE TABLE `Property` ( "
+            "`Property` CHAR(72), `Value` CHAR(0) "
+            "PRIMARY KEY `Property`)";
+    r = try_query(hdb, query);
+    ok(r == ERROR_SUCCESS, "failed to create Properties table\n");
+
+    todo_wine {
+    query = "CREATE TABLE `InstallExecuteSequence` ("
+            "`Action` CHAR(72), `Condition` CHAR(0), `Sequence` INTEGER "
+            "PRIMARY KEY `Action`)";
+    r = try_query(hdb, query);
+    ok(r == ERROR_SUCCESS, "failed to create InstallExecuteSequence table\n");
+
+    sprintf(name, "#%ld", hdb);
+    r = MsiOpenPackage(name, &hpack);
+    ok(r == ERROR_INSTALL_PACKAGE_INVALID, "MsiOpenPackage returned wrong code\n");
+    if (!r)    MsiCloseHandle(hpack);
+    }
+
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle(database) failed\n");
+    DeleteFile(msifile);
+}
+
+static void test_formatrecord2(void)
+{
+    MSIHANDLE hpkg, hrec ;
+    char buffer[0x100];
+    DWORD sz;
+    UINT r;
+
+    hpkg = package_from_db(create_package_db());
+    ok( hpkg, "failed to create package\n");
+
+    r = MsiSetProperty(hpkg, "Manufacturer", " " );
+    ok( r == ERROR_SUCCESS, "set property failed\n");
+
+    hrec = MsiCreateRecord(2);
+    ok(hrec, "create record failed\n");
+
+    r = MsiRecordSetString( hrec, 0, "[ProgramFilesFolder][Manufacturer]\\asdf");
+    ok( r == ERROR_SUCCESS, "format record failed\n");
+
+    buffer[0] = 0;
+    sz = sizeof buffer;
+    r = MsiFormatRecord( hpkg, hrec, buffer, &sz );
+
+    r = MsiRecordSetString(hrec, 0, "[foo][1]");
+    r = MsiRecordSetString(hrec, 1, "hoo");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    ok( sz == 3, "size wrong\n");
+    ok( 0 == strcmp(buffer,"hoo"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "x[~]x");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    ok( sz == 3, "size wrong\n");
+    ok( 0 == strcmp(buffer,"x"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "[foo.$%}][1]");
+    r = MsiRecordSetString(hrec, 1, "hoo");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    ok( sz == 3, "size wrong\n");
+    ok( 0 == strcmp(buffer,"hoo"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "[\\[]");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    ok( sz == 1, "size wrong\n");
+    ok( 0 == strcmp(buffer,"["), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    SetEnvironmentVariable("FOO", "BAR");
+    r = MsiRecordSetString(hrec, 0, "[%FOO]");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    ok( sz == 3, "size wrong\n");
+    ok( 0 == strcmp(buffer,"BAR"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "[[1]]");
+    r = MsiRecordSetString(hrec, 1, "%FOO");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(hpkg, hrec, buffer, &sz);
+    ok( sz == 3, "size wrong\n");
+    ok( 0 == strcmp(buffer,"BAR"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    MsiCloseHandle( hrec );
+    MsiCloseHandle( hpkg );
+    DeleteFile(msifile);
+}
+
 START_TEST(package)
 {
     test_createpackage();
@@ -854,4 +1020,6 @@ START_TEST(package)
     test_settargetpath_bad();
     test_props();
     test_condition();
+    test_msipackage();
+    test_formatrecord2();
 }
