@@ -1567,6 +1567,7 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, REFIID iid, LPVOID *ppv);
     DllGetClassObjectFunc DllGetClassObject;
     WCHAR dllpath[MAX_PATH+1];
+    HRESULT hr;
 
     if (COM_RegReadPath(hkeydll, NULL, NULL, dllpath, ARRAYSIZE(dllpath)) != ERROR_SUCCESS)
     {
@@ -1592,7 +1593,12 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
 
     /* OK: get the ClassObject */
     COMPOBJ_DLLList_Add( hLibrary );
-    return DllGetClassObject(rclsid, riid, ppv);
+    hr = DllGetClassObject(rclsid, riid, ppv);
+
+    if (hr != S_OK)
+        ERR("DllGetClassObject returned error 0x%08lx\n", hr);
+
+    return hr;
 }
 
 /***********************************************************************
