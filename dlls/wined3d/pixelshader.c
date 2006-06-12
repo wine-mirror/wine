@@ -83,12 +83,6 @@ static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface)
     return ref;
 }
 
-/* TODO: At the momeny the function parser is single pass, it achievs this 
-   by passing constants to a couple of functions where they are then modified.
-   At some point the parser need to be made two pass (So that GLSL can be used if it's required by the shader)
-   when happens constants should be worked out in the first pass to tidy up the second pass a bit.
-*/
-
 /* *******************************************
    IWineD3DPixelShader IWineD3DPixelShader parts follow
    ******************************************* */

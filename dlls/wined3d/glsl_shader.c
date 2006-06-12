@@ -42,7 +42,7 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
     {
         infoLog = (char *)HeapAlloc(GetProcessHeap(), 0, infologLength);
         GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
-        TRACE("Error received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
+        FIXME("Error received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
         HeapFree(GetProcessHeap(), 0, infoLog);
     }
 }
@@ -166,7 +166,7 @@ static void shader_glsl_get_register_name(
     DWORD reg = param & D3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) arg->shader;
-    BOOL pshader = shader_is_pshader_version(This->baseShader.hex_version);
+    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
     char tmpStr[50];
 
     *is_color = FALSE;   
