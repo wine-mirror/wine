@@ -1060,18 +1060,127 @@ static void test_formatrecord(void)
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( sz == 13, "size wrong\n");
-    ok( 0 == strcmp(buffer,"{[1{{bo}o}}]}"), "wrong output\n");
+    ok( 0 == strcmp(buffer,"{[1{{bo}o}}]}"), "wrong output %s\n",buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
     r = MsiRecordSetString(hrec, 0, "{[1{{b{o}o}}]}");
-    r = MsiRecordSetString(hrec, 1, "hoo");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( sz == 14, "size wrong\n");
-    ok( 0 == strcmp(buffer,"{[1{{b{o}o}}]}"), "wrong output\n");
+    ok( 0 == strcmp(buffer,"{[1{{b{o}o}}]}"), "wrong output %s\n",buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
-    MsiCloseHandle(hrec);
+    r = MsiRecordSetString(hrec, 0, "{ {[1]}");
+    r = MsiRecordSetString(hrec, 1, "hoo");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 5, "size wrong\n");
+    ok( 0 == strcmp(buffer," {hoo"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    /* {} inside a substitution does strange things... */
+    r = MsiRecordSetString(hrec, 0, "[[1]{}]");
+    r = MsiRecordSetString(hrec, 1, "2");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 5, "size wrong\n");
+    ok( 0 == strcmp(buffer,"[[1]]"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "[[1]{}[1]]");
+    r = MsiRecordSetString(hrec, 1, "2");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 6, "size wrong\n");
+    ok( 0 == strcmp(buffer,"[[1]2]"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "[a[1]b[1]c{}d[1]e]");
+    r = MsiRecordSetString(hrec, 1, "2");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 14, "size wrong\n");
+    ok( 0 == strcmp(buffer,"[a[1]b[1]cd2e]"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "[a[1]b");
+    r = MsiRecordSetString(hrec, 1, "2");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 6, "size wrong\n");
+    ok( 0 == strcmp(buffer,"[a[1]b"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "a[1]b]");
+    r = MsiRecordSetString(hrec, 1, "2");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 4, "size wrong\n");
+    ok( 0 == strcmp(buffer,"a2b]"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "]a[1]b");
+    r = MsiRecordSetString(hrec, 1, "2");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 4, "size wrong\n");
+    ok( 0 == strcmp(buffer,"]a2b"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "]a[1]b");
+    r = MsiRecordSetString(hrec, 1, "2");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 4, "size wrong\n");
+    ok( 0 == strcmp(buffer,"]a2b"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "\\[1]");
+    r = MsiRecordSetString(hrec, 1, "2");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 2, "size wrong\n");
+    ok( 0 == strcmp(buffer,"\\2"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "\\{[1]}");
+    r = MsiRecordSetString(hrec, 1, "2");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 2, "size wrong\n");
+    ok( 0 == strcmp(buffer,"\\2"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "a{b[1]c}d");
+    r = MsiRecordSetString(hrec, 1, NULL);
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 2, "size wrong\n");
+    ok( 0 == strcmp(buffer,"ad"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "{a[0]b}");
+    r = MsiRecordSetString(hrec, 1, "foo");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 9, "size wrong\n");
+    ok( 0 == strcmp(buffer,"a{a[0]b}b"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "[foo]");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 5, "size wrong\n");
+    ok( 0 == strcmp(buffer,"[foo]"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+
+    r = MsiRecordSetString(hrec, 0, "{[1][-1][1]}");
+    r = MsiRecordSetString(hrec, 1, "foo");
+    sz = sizeof buffer;
+    r = MsiFormatRecord(0, hrec, buffer, &sz);
+    ok( sz == 12, "size wrong\n");
+    ok( 0 == strcmp(buffer,"{foo[-1]foo}"), "wrong output %s\n",buffer);
+    ok( r == ERROR_SUCCESS, "format failed\n");
 }
 
 static void test_formatrecord_package(void)
