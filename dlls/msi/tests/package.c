@@ -28,6 +28,8 @@
 
 #include "wine/test.h"
 
+static const char msifile[] = "winetest.msi";
+
 static UINT run_query( MSIHANDLE hdb, const char *query )
 {
     MSIHANDLE hview = 0;
@@ -92,13 +94,12 @@ static UINT set_summary_info(MSIHANDLE hdb)
 MSIHANDLE create_package_db(void)
 {
     MSIHANDLE hdb = 0;
-    CHAR szName[] = "winetest.msi";
     UINT res;
 
-    DeleteFile(szName);
+    DeleteFile(msifile);
 
     /* create an empty database */
-    res = MsiOpenDatabase(szName, MSIDBOPEN_CREATE, &hdb );
+    res = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb );
     ok( res == ERROR_SUCCESS , "Failed to create database\n" );
     if( res != ERROR_SUCCESS )
         return hdb;
@@ -145,6 +146,7 @@ static void test_createpackage(void)
 
     res = MsiCloseHandle( hPackage);
     ok( res == ERROR_SUCCESS , "Failed to close package\n" );
+    DeleteFile(msifile);
 }
 
 static void test_getsourcepath_bad( void )
@@ -270,6 +272,7 @@ static void test_getsourcepath( void )
     }
 
     MsiCloseHandle( hpkg );
+    DeleteFile(msifile);
 }
 
 static void test_doaction( void )
@@ -293,6 +296,7 @@ static void test_doaction( void )
     ok( r == ERROR_FUNCTION_NOT_CALLED, "wrong return val\n");
 
     MsiCloseHandle( hpkg );
+    DeleteFile(msifile);
 }
 
 static void test_gettargetpath_bad(void)
@@ -324,6 +328,7 @@ static void test_gettargetpath_bad(void)
     ok( r == ERROR_DIRECTORY, "wrong return val\n");
 
     MsiCloseHandle( hpkg );
+    DeleteFile(msifile);
 }
 
 static void test_settargetpath_bad(void)
@@ -713,6 +718,7 @@ static void test_condition(void)
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
     MsiCloseHandle( hpkg );
+    DeleteFile(msifile);
 }
 
 static BOOL check_prop_empty( MSIHANDLE hpkg, char * prop)
@@ -835,6 +841,7 @@ static void test_props(void)
     ok( sz == 3, "wrong size returned\n");
 
     MsiCloseHandle( hpkg );
+    DeleteFile(msifile);
 }
 
 START_TEST(package)
