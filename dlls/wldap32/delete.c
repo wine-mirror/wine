@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_deleteW.
  */
-ULONG ldap_deleteA( WLDAP32_LDAP *ld, PCHAR dn )
+ULONG CDECL ldap_deleteA( WLDAP32_LDAP *ld, PCHAR dn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -85,7 +85,7 @@ ULONG ldap_deleteA( WLDAP32_LDAP *ld, PCHAR dn )
  *  the operation. Cancel the operation by calling ldap_abandon
  *  with the message ID.
  */
-ULONG ldap_deleteW( WLDAP32_LDAP *ld, PWCHAR dn )
+ULONG CDECL ldap_deleteW( WLDAP32_LDAP *ld, PWCHAR dn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -119,7 +119,7 @@ ULONG ldap_deleteW( WLDAP32_LDAP *ld, PWCHAR dn )
  *
  * See ldap_delete_extW.
  */
-ULONG ldap_delete_extA( WLDAP32_LDAP *ld, PCHAR dn, PLDAPControlA *serverctrls,
+ULONG CDECL ldap_delete_extA( WLDAP32_LDAP *ld, PCHAR dn, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -179,7 +179,7 @@ exit:
  *  the operation. The serverctrls and clientctrls parameters are
  *  optional and should be set to NULL if not used.
  */
-ULONG ldap_delete_extW( WLDAP32_LDAP *ld, PWCHAR dn, PLDAPControlW *serverctrls,
+ULONG CDECL ldap_delete_extW( WLDAP32_LDAP *ld, PWCHAR dn, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -225,7 +225,7 @@ exit:
  *
  * See ldap_delete_ext_sW.
  */
-ULONG ldap_delete_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PLDAPControlA *serverctrls,
+ULONG CDECL ldap_delete_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -281,7 +281,7 @@ exit:
  *  The serverctrls and clientctrls parameters are optional and
  *  should be set to NULL if not used.
  */
-ULONG ldap_delete_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PLDAPControlW *serverctrls,
+ULONG CDECL ldap_delete_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -323,7 +323,7 @@ exit:
  *
  * See ldap_delete_sW.
  */
-ULONG ldap_delete_sA( WLDAP32_LDAP *ld, PCHAR dn )
+ULONG CDECL ldap_delete_sA( WLDAP32_LDAP *ld, PCHAR dn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -358,7 +358,7 @@ ULONG ldap_delete_sA( WLDAP32_LDAP *ld, PCHAR dn )
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG ldap_delete_sW( WLDAP32_LDAP *ld, PWCHAR dn )
+ULONG CDECL ldap_delete_sW( WLDAP32_LDAP *ld, PWCHAR dn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP

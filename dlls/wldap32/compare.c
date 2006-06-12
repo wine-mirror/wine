@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_compareW.
  */
-ULONG ldap_compareA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
+ULONG CDECL ldap_compareA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -97,7 +97,7 @@ exit:
  *  Success: Message ID of the compare operation.
  *  Failure: An LDAP error code.
  */
-ULONG ldap_compareW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value )
+ULONG CDECL ldap_compareW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -149,7 +149,7 @@ exit:
  *
  * See ldap_compare_extW.
  */
-ULONG ldap_compare_extA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value,
+ULONG CDECL ldap_compare_extA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value,
     struct WLDAP32_berval *data, PLDAPControlA *serverctrls, PLDAPControlA *clientctrls,
     ULONG *message )
 {
@@ -225,7 +225,7 @@ exit:
  *  both are non-NULL, data will be used. The serverctrls and clientctrls
  *  parameters are optional and should be set to NULL if not used.
  */
-ULONG ldap_compare_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
+ULONG CDECL ldap_compare_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
     struct WLDAP32_berval *data, PLDAPControlW *serverctrls, PLDAPControlW *clientctrls,
     ULONG *message )
 {
@@ -289,7 +289,7 @@ exit:
  *
  * See ldap_compare_ext_sW.
  */
-ULONG ldap_compare_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value,
+ULONG CDECL ldap_compare_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value,
     struct WLDAP32_berval *data, PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -363,7 +363,7 @@ exit:
  *  both are non-NULL, data will be used. The serverctrls and clientctrls
  *  parameters are optional and should be set to NULL if not used.
  */
-ULONG ldap_compare_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
+ULONG CDECL ldap_compare_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value,
     struct WLDAP32_berval *data, PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -426,7 +426,7 @@ exit:
  *
  * See ldap_compare_sW.
  */
-ULONG ldap_compare_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
+ULONG CDECL ldap_compare_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -478,7 +478,7 @@ exit:
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG ldap_compare_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value )
+ULONG CDECL ldap_compare_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR attr, PWCHAR value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP

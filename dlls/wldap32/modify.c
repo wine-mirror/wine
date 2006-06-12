@@ -51,7 +51,7 @@ static LDAPMod *nullmods[] = { NULL };
  *
  * See ldap_modifyW.
  */
-ULONG ldap_modifyA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[] )
+ULONG CDECL ldap_modifyA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -103,7 +103,7 @@ exit:
  *  the operation. Cancel the operation by calling ldap_abandon
  *  with the message ID.
  */
-ULONG ldap_modifyW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
+ULONG CDECL ldap_modifyW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -147,7 +147,7 @@ exit:
  *
  * See ldap_modify_extW.
  */
-ULONG ldap_modify_extA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[],
+ULONG CDECL ldap_modify_extA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[],
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls, ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -215,7 +215,7 @@ exit:
  *  the operation. The serverctrls and clientctrls parameters are
  *  optional and should be set to NULL if not used.
  */
-ULONG ldap_modify_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[],
+ULONG CDECL ldap_modify_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[],
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls, ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -267,7 +267,7 @@ exit:
  *
  * See ldap_modify_ext_sW.
  */
-ULONG ldap_modify_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[],
+ULONG CDECL ldap_modify_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[],
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -333,7 +333,7 @@ exit:
  *  The serverctrls and clientctrls parameters are optional and
  *  should be set to NULL if not used.
  */
-ULONG ldap_modify_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[],
+ULONG CDECL ldap_modify_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[],
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -384,7 +384,7 @@ exit:
  *
  * See ldap_modify_sW.
  */
-ULONG ldap_modify_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[] )
+ULONG CDECL ldap_modify_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *mods[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -431,7 +431,7 @@ exit:
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG ldap_modify_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
+ULONG CDECL ldap_modify_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *mods[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP

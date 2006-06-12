@@ -40,7 +40,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
-ULONG ldap_rename_extA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newrdn,
+ULONG CDECL ldap_rename_extA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newrdn,
     PCHAR newparent, INT delete, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, ULONG *message )
 {
@@ -92,7 +92,7 @@ exit:
     return ret;
 }
 
-ULONG ldap_rename_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newrdn,
+ULONG CDECL ldap_rename_extW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newrdn,
     PWCHAR newparent, INT delete, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG *message )
 {
@@ -144,7 +144,7 @@ exit:
     return ret;
 }
 
-ULONG ldap_rename_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newrdn,
+ULONG CDECL ldap_rename_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newrdn,
     PCHAR newparent, INT delete, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls )
 {
@@ -196,7 +196,7 @@ exit:
     return ret;
 }
 
-ULONG ldap_rename_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newrdn,
+ULONG CDECL ldap_rename_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newrdn,
     PWCHAR newparent, INT delete, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls )
 {

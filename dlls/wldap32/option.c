@@ -40,7 +40,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
-ULONG ldap_get_optionA( WLDAP32_LDAP *ld, int option, void *value )
+ULONG CDECL ldap_get_optionA( WLDAP32_LDAP *ld, int option, void *value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -164,7 +164,7 @@ ULONG ldap_get_optionA( WLDAP32_LDAP *ld, int option, void *value )
     return ret;
 }
 
-ULONG ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
+ULONG CDECL ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -288,7 +288,7 @@ ULONG ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
     return ret;
 }
 
-ULONG ldap_set_optionA( WLDAP32_LDAP *ld, int option, void *value )
+ULONG CDECL ldap_set_optionA( WLDAP32_LDAP *ld, int option, void *value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -363,7 +363,7 @@ ULONG ldap_set_optionA( WLDAP32_LDAP *ld, int option, void *value )
     return ret;
 }
 
-ULONG ldap_set_optionW( WLDAP32_LDAP *ld, int option, void *value )
+ULONG CDECL ldap_set_optionW( WLDAP32_LDAP *ld, int option, void *value )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP

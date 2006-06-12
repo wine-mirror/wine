@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_dn2ufnW.
  */
-PCHAR ldap_dn2ufnA( PCHAR dn )
+PCHAR CDECL ldap_dn2ufnA( PCHAR dn )
 {
     PCHAR ret = NULL;
 #ifdef HAVE_LDAP
@@ -81,7 +81,7 @@ PCHAR ldap_dn2ufnA( PCHAR dn )
  * NOTES
  *  Free the string with ldap_memfree.
  */
-PWCHAR ldap_dn2ufnW( PWCHAR dn )
+PWCHAR CDECL ldap_dn2ufnW( PWCHAR dn )
 {
     PWCHAR ret = NULL;
 #ifdef HAVE_LDAP
@@ -107,7 +107,7 @@ PWCHAR ldap_dn2ufnW( PWCHAR dn )
  *
  * See ldap_explode_dnW.
  */
-PCHAR *ldap_explode_dnA( PCHAR dn, ULONG notypes )
+PCHAR * CDECL ldap_explode_dnA( PCHAR dn, ULONG notypes )
 {
     PCHAR *ret = NULL;
 #ifdef HAVE_LDAP
@@ -145,7 +145,7 @@ PCHAR *ldap_explode_dnA( PCHAR dn, ULONG notypes )
  * NOTES
  *  Free the string array with ldap_value_free.
  */
-PWCHAR *ldap_explode_dnW( PWCHAR dn, ULONG notypes )
+PWCHAR * CDECL ldap_explode_dnW( PWCHAR dn, ULONG notypes )
 {
     PWCHAR *ret = NULL;
 #ifdef HAVE_LDAP
@@ -171,7 +171,7 @@ PWCHAR *ldap_explode_dnW( PWCHAR dn, ULONG notypes )
  *
  * See ldap_get_dnW.
  */
-PCHAR ldap_get_dnA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
+PCHAR CDECL ldap_get_dnA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
 {
     PCHAR ret = NULL;
 #ifdef HAVE_LDAP
@@ -206,7 +206,7 @@ PCHAR ldap_get_dnA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
  * NOTES
  *  Free the string with ldap_memfree.
  */
-PWCHAR ldap_get_dnW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
+PWCHAR CDECL ldap_get_dnW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
 {
     PWCHAR ret = NULL;
 #ifdef HAVE_LDAP
@@ -230,7 +230,7 @@ PWCHAR ldap_get_dnW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry )
  *
  * See ldap_ufn2dnW.
  */
-ULONG ldap_ufn2dnA( PCHAR ufn, PCHAR *dn )
+ULONG CDECL ldap_ufn2dnA( PCHAR ufn, PCHAR *dn )
 {
     ULONG ret = LDAP_SUCCESS;
 #ifdef HAVE_LDAP
@@ -277,7 +277,7 @@ ULONG ldap_ufn2dnA( PCHAR ufn, PCHAR *dn )
  * NOTES
  *  Free the string with ldap_memfree.
  */
-ULONG ldap_ufn2dnW( PWCHAR ufn, PWCHAR *dn )
+ULONG CDECL ldap_ufn2dnW( PWCHAR ufn, PWCHAR *dn )
 {
     ULONG ret = LDAP_SUCCESS;
 #ifdef HAVE_LDAP

@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 /***********************************************************************
  *      ber_alloc_t     (WLDAP32.@)
  */
-BerElement *WLDAP32_ber_alloc_t( INT options )
+BerElement * CDECL WLDAP32_ber_alloc_t( INT options )
 {
 #ifdef HAVE_LDAP
     return ber_alloc_t( options );
@@ -48,7 +48,7 @@ BerElement *WLDAP32_ber_alloc_t( INT options )
 /***********************************************************************
  *      ber_bvdup     (WLDAP32.@)
  */
-BERVAL *WLDAP32_ber_bvdup( BERVAL *berval )
+BERVAL * CDECL WLDAP32_ber_bvdup( BERVAL *berval )
 {
 #ifdef HAVE_LDAP
     return ber_bvdup( berval );
@@ -61,7 +61,7 @@ BERVAL *WLDAP32_ber_bvdup( BERVAL *berval )
 /***********************************************************************
  *      ber_bvecfree     (WLDAP32.@)
  */
-void WLDAP32_ber_bvecfree( PBERVAL *berval )
+void CDECL WLDAP32_ber_bvecfree( PBERVAL *berval )
 {
 #ifdef HAVE_LDAP
     ber_bvecfree( berval );
@@ -72,7 +72,7 @@ void WLDAP32_ber_bvecfree( PBERVAL *berval )
 /***********************************************************************
  *      ber_bvfree     (WLDAP32.@)
  */
-void WLDAP32_ber_bvfree( BERVAL *berval )
+void CDECL WLDAP32_ber_bvfree( BERVAL *berval )
 {
 #ifdef HAVE_LDAP
     ber_bvfree( berval );
@@ -83,7 +83,7 @@ void WLDAP32_ber_bvfree( BERVAL *berval )
 /***********************************************************************
  *      ber_first_element     (WLDAP32.@)
  */
-ULONG WLDAP32_ber_first_element( BerElement *berelement, ULONG *len, CHAR **opaque )
+ULONG CDECL WLDAP32_ber_first_element( BerElement *berelement, ULONG *len, CHAR **opaque )
 {
 #ifdef HAVE_LDAP
     return ber_first_element( berelement, len, opaque );
@@ -96,7 +96,7 @@ ULONG WLDAP32_ber_first_element( BerElement *berelement, ULONG *len, CHAR **opaq
 /***********************************************************************
  *      ber_flatten     (WLDAP32.@)
  */
-INT WLDAP32_ber_flatten( BerElement *berelement, PBERVAL *berval )
+INT CDECL WLDAP32_ber_flatten( BerElement *berelement, PBERVAL *berval )
 {
 #ifdef HAVE_LDAP
     return ber_flatten( berelement, berval );
@@ -109,7 +109,7 @@ INT WLDAP32_ber_flatten( BerElement *berelement, PBERVAL *berval )
 /***********************************************************************
  *      ber_free     (WLDAP32.@)
  */
-void WLDAP32_ber_free( BerElement *berelement, INT buf )
+void CDECL WLDAP32_ber_free( BerElement *berelement, INT buf )
 {
 #ifdef HAVE_LDAP
     ber_free( berelement, buf );
@@ -120,7 +120,7 @@ void WLDAP32_ber_free( BerElement *berelement, INT buf )
 /***********************************************************************
  *      ber_init     (WLDAP32.@)
  */
-BerElement *WLDAP32_ber_init( BERVAL *berval )
+BerElement * CDECL WLDAP32_ber_init( BERVAL *berval )
 {
 #ifdef HAVE_LDAP
     return ber_init( berval );
@@ -133,7 +133,7 @@ BerElement *WLDAP32_ber_init( BERVAL *berval )
 /***********************************************************************
  *      ber_next_element     (WLDAP32.@)
  */
-ULONG WLDAP32_ber_next_element( BerElement *berelement, ULONG *len, CHAR *opaque )
+ULONG CDECL WLDAP32_ber_next_element( BerElement *berelement, ULONG *len, CHAR *opaque )
 {
 #ifdef HAVE_LDAP
     return ber_next_element( berelement, len, opaque );
@@ -146,7 +146,7 @@ ULONG WLDAP32_ber_next_element( BerElement *berelement, ULONG *len, CHAR *opaque
 /***********************************************************************
  *      ber_peek_tag     (WLDAP32.@)
  */
-ULONG WLDAP32_ber_peek_tag( BerElement *berelement, ULONG *len )
+ULONG CDECL WLDAP32_ber_peek_tag( BerElement *berelement, ULONG *len )
 {
 #ifdef HAVE_LDAP
     return ber_peek_tag( berelement, len );
@@ -159,7 +159,7 @@ ULONG WLDAP32_ber_peek_tag( BerElement *berelement, ULONG *len )
 /***********************************************************************
  *      ber_skip_tag     (WLDAP32.@)
  */
-ULONG WLDAP32_ber_skip_tag( BerElement *berelement, ULONG *len )
+ULONG CDECL WLDAP32_ber_skip_tag( BerElement *berelement, ULONG *len )
 {
 #ifdef HAVE_LDAP
     return ber_skip_tag( berelement, len );
@@ -172,7 +172,7 @@ ULONG WLDAP32_ber_skip_tag( BerElement *berelement, ULONG *len )
 /***********************************************************************
  *      ber_printf     (WLDAP32.@)
  */
-INT WLDAP32_ber_printf( BerElement *berelement, PCHAR fmt, ... )
+INT CDECL WLDAP32_ber_printf( BerElement *berelement, PCHAR fmt, ... )
 {
 #ifdef HAVE_LDAP
     va_list list;
@@ -251,7 +251,7 @@ INT WLDAP32_ber_printf( BerElement *berelement, PCHAR fmt, ... )
 /***********************************************************************
  *      ber_scanf     (WLDAP32.@)
  */
-INT WLDAP32_ber_scanf( BerElement *berelement, PCHAR fmt, ... )
+INT CDECL WLDAP32_ber_scanf( BerElement *berelement, PCHAR fmt, ... )
 {
 #ifdef HAVE_LDAP
     va_list list;

@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_modrdnW.
  */
-ULONG ldap_modrdnA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn )
+ULONG CDECL ldap_modrdnA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -94,7 +94,7 @@ exit:
  *  the operation. Cancel the operation by calling ldap_abandon
  *  with the message ID.
  */
-ULONG ldap_modrdnW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
+ULONG CDECL ldap_modrdnW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -135,7 +135,7 @@ exit:
  *
  * See ldap_modrdn2W.
  */
-ULONG ldap_modrdn2A( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn, INT delete )
+ULONG CDECL ldap_modrdn2A( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn, INT delete )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -185,7 +185,7 @@ exit:
  *  the operation. Cancel the operation by calling ldap_abandon
  *  with the message ID.
  */
-ULONG ldap_modrdn2W( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT delete )
+ULONG CDECL ldap_modrdn2W( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT delete )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -226,7 +226,7 @@ exit:
  *
  * See ldap_modrdn2_sW.
  */
-ULONG ldap_modrdn2_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn, INT delete )
+ULONG CDECL ldap_modrdn2_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn, INT delete )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -271,7 +271,7 @@ exit:
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG ldap_modrdn2_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT delete )
+ULONG CDECL ldap_modrdn2_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT delete )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -306,7 +306,7 @@ exit:
  *
  * See ldap_modrdn_sW.
  */
-ULONG ldap_modrdn_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn )
+ULONG CDECL ldap_modrdn_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR newdn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -350,7 +350,7 @@ exit:
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG ldap_modrdn_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
+ULONG CDECL ldap_modrdn_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP

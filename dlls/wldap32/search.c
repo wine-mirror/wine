@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_searchW.
  */
-ULONG ldap_searchA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
+ULONG CDECL ldap_searchA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
     PCHAR attrs[], ULONG attrsonly )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -107,7 +107,7 @@ exit:
  *  the operation. Cancel the operation by calling ldap_abandon
  *  with the message ID.
  */
-ULONG ldap_searchW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
+ULONG CDECL ldap_searchW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
     PWCHAR attrs[], ULONG attrsonly )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -157,7 +157,7 @@ exit:
  *
  * See ldap_search_extW.
  */
-ULONG ldap_search_extA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
+ULONG CDECL ldap_search_extA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
     PCHAR filter, PCHAR attrs[], ULONG attrsonly, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, ULONG timelimit, ULONG sizelimit, ULONG *message )
 {
@@ -238,7 +238,7 @@ exit:
  *  the operation. Cancel the operation by calling ldap_abandon
  *  with the message ID.
  */
-ULONG ldap_search_extW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
+ULONG CDECL ldap_search_extW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
     PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG timelimit, ULONG sizelimit, ULONG *message )
 {
@@ -299,7 +299,7 @@ exit:
  *
  * See ldap_search_ext_sW.
  */
-ULONG ldap_search_ext_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
+ULONG CDECL ldap_search_ext_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
     PCHAR filter, PCHAR attrs[], ULONG attrsonly, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, struct l_timeval* timeout, ULONG sizelimit, WLDAP32_LDAPMessage **res )
 {
@@ -377,7 +377,7 @@ exit:
  * NOTES
  *  Call ldap_msgfree to free the results.
  */
-ULONG ldap_search_ext_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
+ULONG CDECL ldap_search_ext_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
     PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, struct l_timeval* timeout, ULONG sizelimit, WLDAP32_LDAPMessage **res )
 {
@@ -434,7 +434,7 @@ exit:
  *
  * See ldap_search_sW.
  */
-ULONG ldap_search_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
+ULONG CDECL ldap_search_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
     PCHAR attrs[], ULONG attrsonly, WLDAP32_LDAPMessage **res )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -494,7 +494,7 @@ exit:
  * NOTES
  *  Call ldap_msgfree to free the results.
  */
-ULONG ldap_search_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
+ULONG CDECL ldap_search_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
     PWCHAR attrs[], ULONG attrsonly, WLDAP32_LDAPMessage **res )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -538,7 +538,7 @@ exit:
  *
  * See ldap_search_stW.
  */
-ULONG ldap_search_stA( WLDAP32_LDAP *ld, const PCHAR base, ULONG scope,
+ULONG CDECL ldap_search_stA( WLDAP32_LDAP *ld, const PCHAR base, ULONG scope,
     const PCHAR filter, PCHAR attrs[], ULONG attrsonly,
     struct l_timeval *timeout, WLDAP32_LDAPMessage **res )
 {
@@ -602,7 +602,7 @@ exit:
  * NOTES
  *  Call ldap_msgfree to free the results.
  */
-ULONG ldap_search_stW( WLDAP32_LDAP *ld, const PWCHAR base, ULONG scope,
+ULONG CDECL ldap_search_stW( WLDAP32_LDAP *ld, const PWCHAR base, ULONG scope,
     const PWCHAR filter, PWCHAR attrs[], ULONG attrsonly,
     struct l_timeval *timeout, WLDAP32_LDAPMessage **res )
 {

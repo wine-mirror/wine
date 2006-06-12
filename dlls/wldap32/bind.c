@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_bindW.
  */
-ULONG ldap_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR cred, ULONG method )
+ULONG CDECL ldap_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR cred, ULONG method )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -95,7 +95,7 @@ exit:
  * NOTES
  *  Only LDAP_AUTH_SIMPLE is supported (just like native).
  */
-ULONG ldap_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
+ULONG CDECL ldap_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -142,7 +142,7 @@ exit:
  *
  * See ldap_bind_sW.
  */
-ULONG ldap_bind_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR cred, ULONG method )
+ULONG CDECL ldap_bind_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR cred, ULONG method )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -188,7 +188,7 @@ exit:
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG ldap_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
+ULONG CDECL ldap_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -229,7 +229,7 @@ exit:
  *
  * See ldap_sasl_bindW.
  */
-ULONG ldap_sasl_bindA( WLDAP32_LDAP *ld, const PCHAR dn,
+ULONG CDECL ldap_sasl_bindA( WLDAP32_LDAP *ld, const PCHAR dn,
     const PCHAR mechanism, const BERVAL *cred, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, int *message )
 {
@@ -295,7 +295,7 @@ exit:
  *  The serverctrls and clientctrls parameters are optional and should
  *  be set to NULL if not used.
  */
-ULONG ldap_sasl_bindW( WLDAP32_LDAP *ld, const PWCHAR dn,
+ULONG CDECL ldap_sasl_bindW( WLDAP32_LDAP *ld, const PWCHAR dn,
     const PWCHAR mechanism, const BERVAL *cred, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, int *message )
 {
@@ -345,7 +345,7 @@ exit:
  *
  * See ldap_sasl_bind_sW.
  */
-ULONG ldap_sasl_bind_sA( WLDAP32_LDAP *ld, const PCHAR dn,
+ULONG CDECL ldap_sasl_bind_sA( WLDAP32_LDAP *ld, const PCHAR dn,
     const PCHAR mechanism, const BERVAL *cred, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, PBERVAL *serverdata )
 {
@@ -411,7 +411,7 @@ exit:
  *  The serverctrls and clientctrls parameters are optional and should
  *  be set to NULL if not used.
  */
-ULONG ldap_sasl_bind_sW( WLDAP32_LDAP *ld, const PWCHAR dn,
+ULONG CDECL ldap_sasl_bind_sW( WLDAP32_LDAP *ld, const PWCHAR dn,
     const PWCHAR mechanism, const BERVAL *cred, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, PBERVAL *serverdata )
 {
@@ -461,7 +461,7 @@ exit:
  *
  * See ldap_simple_bindW.
  */
-ULONG ldap_simple_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
+ULONG CDECL ldap_simple_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -509,7 +509,7 @@ exit:
  * NOTES
  *  Set dn and passwd to NULL to bind as an anonymous user. 
  */
-ULONG ldap_simple_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
+ULONG CDECL ldap_simple_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -555,7 +555,7 @@ exit:
  *
  * See ldap_simple_bind_sW.
  */
-ULONG ldap_simple_bind_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
+ULONG CDECL ldap_simple_bind_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -603,7 +603,7 @@ exit:
  * NOTES
  *  Set dn and passwd to NULL to bind as an anonymous user. 
  */
-ULONG ldap_simple_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
+ULONG CDECL ldap_simple_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -650,7 +650,7 @@ exit:
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG WLDAP32_ldap_unbind( WLDAP32_LDAP *ld )
+ULONG CDECL WLDAP32_ldap_unbind( WLDAP32_LDAP *ld )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -678,7 +678,7 @@ ULONG WLDAP32_ldap_unbind( WLDAP32_LDAP *ld )
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG WLDAP32_ldap_unbind_s( WLDAP32_LDAP *ld )
+ULONG CDECL WLDAP32_ldap_unbind_s( WLDAP32_LDAP *ld )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP

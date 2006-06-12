@@ -374,268 +374,268 @@ DECL_WINELIB_TYPE_AW(LDAPAPIFeatureInfo)
 extern "C" {
 #endif
 
-LDAP *cldap_openA(PCHAR,ULONG);
-LDAP *cldap_openW(PWCHAR,ULONG);
+LDAP * CDECL cldap_openA(PCHAR,ULONG);
+LDAP * CDECL cldap_openW(PWCHAR,ULONG);
 #define    cldap_open WINELIB_NAME_AW(cldap_open)
-ULONG ldap_abandon(LDAP*,ULONG);
-ULONG ldap_addA(LDAP*,PCHAR,LDAPModA*[]);
-ULONG ldap_addW(LDAP*,PWCHAR,LDAPModW*[]);
+ULONG CDECL ldap_abandon(LDAP*,ULONG);
+ULONG CDECL ldap_addA(LDAP*,PCHAR,LDAPModA*[]);
+ULONG CDECL ldap_addW(LDAP*,PWCHAR,LDAPModW*[]);
 #define    ldap_add WINELIB_NAME_AW(ldap_add)
-ULONG ldap_add_extA(LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*,ULONG*);
-ULONG ldap_add_extW(LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*,ULONG*);
+ULONG CDECL ldap_add_extA(LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*,ULONG*);
+ULONG CDECL ldap_add_extW(LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*,ULONG*);
 #define    ldap_add_ext WINELIB_NAME_AW(ldap_add_ext)
-ULONG ldap_add_ext_sA(LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*);
-ULONG ldap_add_ext_sW(LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*);
+ULONG CDECL ldap_add_ext_sA(LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*);
+ULONG CDECL ldap_add_ext_sW(LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*);
 #define    ldap_add_ext_s WINELIB_NAME_AW(ldap_add_ext_s)
-ULONG ldap_add_sA(LDAP*,PCHAR,LDAPModA*[]);
-ULONG ldap_add_sW(LDAP*,PWCHAR,LDAPModW*[]);
+ULONG CDECL ldap_add_sA(LDAP*,PCHAR,LDAPModA*[]);
+ULONG CDECL ldap_add_sW(LDAP*,PWCHAR,LDAPModW*[]);
 #define    ldap_add_s WINELIB_NAME_AW(ldap_add_s)
-ULONG ldap_bindA(LDAP*,PCHAR,PCHAR,ULONG);
-ULONG ldap_bindW(LDAP*,PWCHAR,PWCHAR,ULONG);
+ULONG CDECL ldap_bindA(LDAP*,PCHAR,PCHAR,ULONG);
+ULONG CDECL ldap_bindW(LDAP*,PWCHAR,PWCHAR,ULONG);
 #define    ldap_bind WINELIB_NAME_AW(ldap_bind)
-ULONG ldap_bind_sA(LDAP*,PCHAR,PCHAR,ULONG);
-ULONG ldap_bind_sW(LDAP*,PWCHAR,PWCHAR,ULONG);
+ULONG CDECL ldap_bind_sA(LDAP*,PCHAR,PCHAR,ULONG);
+ULONG CDECL ldap_bind_sW(LDAP*,PWCHAR,PWCHAR,ULONG);
 #define    ldap_bind_s WINELIB_NAME_AW(ldap_bind_s)
-ULONG ldap_check_filterA(LDAP*,PCHAR);
-ULONG ldap_check_filterW(LDAP*,PWCHAR);
+ULONG CDECL ldap_check_filterA(LDAP*,PCHAR);
+ULONG CDECL ldap_check_filterW(LDAP*,PWCHAR);
 #define    ldap_check_filter WINELIB_NAME_AW(ldap_check_filter)
-ULONG ldap_cleanup(HANDLE);
-ULONG ldap_close_extended_op(LDAP*,ULONG);
-LDAP *ldap_conn_from_msg(LDAP*,LDAPMessage*);
-ULONG ldap_compareA(LDAP*,PCHAR,PCHAR,PCHAR);
-ULONG ldap_compareW(LDAP*,PWCHAR,PWCHAR,PWCHAR);
+ULONG CDECL ldap_cleanup(HANDLE);
+ULONG CDECL ldap_close_extended_op(LDAP*,ULONG);
+LDAP* CDECL ldap_conn_from_msg(LDAP*,LDAPMessage*);
+ULONG CDECL ldap_compareA(LDAP*,PCHAR,PCHAR,PCHAR);
+ULONG CDECL ldap_compareW(LDAP*,PWCHAR,PWCHAR,PWCHAR);
 #define    ldap_compare WINELIB_NAME_AW(ldap_compare)
-ULONG ldap_compare_extA(LDAP*,PCHAR,PCHAR,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*,ULONG*);
-ULONG ldap_compare_extW(LDAP*,PWCHAR,PWCHAR,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*,ULONG*);
+ULONG CDECL ldap_compare_extA(LDAP*,PCHAR,PCHAR,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*,ULONG*);
+ULONG CDECL ldap_compare_extW(LDAP*,PWCHAR,PWCHAR,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*,ULONG*);
 #define    ldap_compare_ext WINELIB_NAME_AW(ldap_compare_ext)
-ULONG ldap_compare_ext_sA(LDAP*,PCHAR,PCHAR,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*);
-ULONG ldap_compare_ext_sW(LDAP*,PWCHAR,PWCHAR,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*);
+ULONG CDECL ldap_compare_ext_sA(LDAP*,PCHAR,PCHAR,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*);
+ULONG CDECL ldap_compare_ext_sW(LDAP*,PWCHAR,PWCHAR,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*);
 #define    ldap_compare_ext_s WINELIB_NAME_AW(ldap_compare_ext_s)
-ULONG ldap_compare_sA(LDAP*,PCHAR,PCHAR,PCHAR);
-ULONG ldap_compare_sW(LDAP*,PWCHAR,PWCHAR,PWCHAR);
+ULONG CDECL ldap_compare_sA(LDAP*,PCHAR,PCHAR,PCHAR);
+ULONG CDECL ldap_compare_sW(LDAP*,PWCHAR,PWCHAR,PWCHAR);
 #define    ldap_compare_s WINELIB_NAME_AW(ldap_compare_s)
-ULONG ldap_connect(LDAP*,struct l_timeval*);
-ULONG ldap_control_freeA(LDAPControlA*);
-ULONG ldap_control_freeW(LDAPControlW*);
+ULONG CDECL ldap_connect(LDAP*,struct l_timeval*);
+ULONG CDECL ldap_control_freeA(LDAPControlA*);
+ULONG CDECL ldap_control_freeW(LDAPControlW*);
 #define    ldap_control_free WINELIB_NAME_AW(ldap_control_free)
-ULONG ldap_controls_freeA(LDAPControlA**);
-ULONG ldap_controls_freeW(LDAPControlW**);
+ULONG CDECL ldap_controls_freeA(LDAPControlA**);
+ULONG CDECL ldap_controls_freeW(LDAPControlW**);
 #define    ldap_controls_free WINELIB_NAME_AW(ldap_controls_free)
-ULONG ldap_count_entries(LDAP*,LDAPMessage*);
-ULONG ldap_count_references(LDAP*,LDAPMessage*);
-ULONG ldap_count_values_len(struct berval**);
-ULONG ldap_count_valuesA(PCHAR*);
-ULONG ldap_count_valuesW(PWCHAR*);
+ULONG CDECL ldap_count_entries(LDAP*,LDAPMessage*);
+ULONG CDECL ldap_count_references(LDAP*,LDAPMessage*);
+ULONG CDECL ldap_count_values_len(struct berval**);
+ULONG CDECL ldap_count_valuesA(PCHAR*);
+ULONG CDECL ldap_count_valuesW(PWCHAR*);
 #define    ldap_count_values WINELIB_NAME_AW(ldap_count_values)
-ULONG ldap_create_page_controlA(PLDAP,ULONG,struct berval*,UCHAR,PLDAPControlA*);
-ULONG ldap_create_page_controlW(PLDAP,ULONG,struct berval*,UCHAR,PLDAPControlW*);
+ULONG CDECL ldap_create_page_controlA(PLDAP,ULONG,struct berval*,UCHAR,PLDAPControlA*);
+ULONG CDECL ldap_create_page_controlW(PLDAP,ULONG,struct berval*,UCHAR,PLDAPControlW*);
 #define    ldap_create_page_control WINELIB_NAME_AW(ldap_create_page_control)
-ULONG ldap_create_sort_controlA(PLDAP,PLDAPSortKeyA*,UCHAR,PLDAPControlA*);
-ULONG ldap_create_sort_controlW(PLDAP,PLDAPSortKeyW*,UCHAR,PLDAPControlW*);
+ULONG CDECL ldap_create_sort_controlA(PLDAP,PLDAPSortKeyA*,UCHAR,PLDAPControlA*);
+ULONG CDECL ldap_create_sort_controlW(PLDAP,PLDAPSortKeyW*,UCHAR,PLDAPControlW*);
 #define    ldap_create_sort_control WINELIB_NAME_AW(ldap_create_sort_control)
-INT ldap_create_vlv_controlA(PLDAP,PLDAPVLVInfo,UCHAR,PLDAPControlA*);
-INT ldap_create_vlv_controlW(PLDAP,PLDAPVLVInfo,UCHAR,PLDAPControlW*);
+INT CDECL  ldap_create_vlv_controlA(PLDAP,PLDAPVLVInfo,UCHAR,PLDAPControlA*);
+INT CDECL  ldap_create_vlv_controlW(PLDAP,PLDAPVLVInfo,UCHAR,PLDAPControlW*);
 #define    ldap_create_vlv_control WINELIB_NAME_AW(ldap_create_vlv_control)
-ULONG ldap_deleteA(LDAP*,PCHAR);
-ULONG ldap_deleteW(LDAP*,PWCHAR);
+ULONG CDECL ldap_deleteA(LDAP*,PCHAR);
+ULONG CDECL ldap_deleteW(LDAP*,PWCHAR);
 #define    ldap_delete WINELIB_NAME_AW(ldap_delete)
-ULONG ldap_delete_extA(LDAP*,PCHAR,PLDAPControlA*,PLDAPControlA*,ULONG*);
-ULONG ldap_delete_extW(LDAP*,PWCHAR,PLDAPControlW*,PLDAPControlW*,ULONG*);
+ULONG CDECL ldap_delete_extA(LDAP*,PCHAR,PLDAPControlA*,PLDAPControlA*,ULONG*);
+ULONG CDECL ldap_delete_extW(LDAP*,PWCHAR,PLDAPControlW*,PLDAPControlW*,ULONG*);
 #define    ldap_delete_ext WINELIB_NAME_AW(ldap_delete_ext)
-ULONG ldap_delete_ext_sA(LDAP*,PCHAR,PLDAPControlA*,PLDAPControlA*);
-ULONG ldap_delete_ext_sW(LDAP*,PWCHAR,PLDAPControlW*,PLDAPControlW*);
+ULONG CDECL ldap_delete_ext_sA(LDAP*,PCHAR,PLDAPControlA*,PLDAPControlA*);
+ULONG CDECL ldap_delete_ext_sW(LDAP*,PWCHAR,PLDAPControlW*,PLDAPControlW*);
 #define    ldap_delete_ext_s WINELIB_NAME_AW(ldap_delete_ext_s)
-ULONG ldap_delete_sA(LDAP*,PCHAR);
-ULONG ldap_delete_sW(LDAP*,PWCHAR);
+ULONG CDECL ldap_delete_sA(LDAP*,PCHAR);
+ULONG CDECL ldap_delete_sW(LDAP*,PWCHAR);
 #define    ldap_delete_s WINELIB_NAME_AW(ldap_delete_s)
-PCHAR ldap_dn2ufnA(PCHAR);
-PWCHAR ldap_dn2ufnW(PWCHAR);
+PCHAR CDECL ldap_dn2ufnA(PCHAR);
+PWCHAR CDECL ldap_dn2ufnW(PWCHAR);
 #define    ldap_dn2ufn WINELIB_NAME_AW(ldap_dn2ufn)
-ULONG ldap_encode_sort_controlA(PLDAP,PLDAPSortKeyA*,PLDAPControlA,BOOLEAN);
-ULONG ldap_encode_sort_controlW(PLDAP,PLDAPSortKeyW*,PLDAPControlW,BOOLEAN);
+ULONG CDECL ldap_encode_sort_controlA(PLDAP,PLDAPSortKeyA*,PLDAPControlA,BOOLEAN);
+ULONG CDECL ldap_encode_sort_controlW(PLDAP,PLDAPSortKeyW*,PLDAPControlW,BOOLEAN);
 #define    ldap_encode_sort_control WINELIB_NAME_AW(ldap_encode_sort_control)
-PCHAR ldap_err2stringA(ULONG);
-PWCHAR ldap_err2stringW(ULONG);
+PCHAR CDECL ldap_err2stringA(ULONG);
+PWCHAR CDECL ldap_err2stringW(ULONG);
 #define    ldap_err2string WINELIB_NAME_AW(ldap_err2string)
-ULONG ldap_escape_filter_elementA(PCHAR,ULONG,PCHAR,ULONG);
-ULONG ldap_escape_filter_elementW(PCHAR,ULONG,PWCHAR,ULONG);
+ULONG CDECL ldap_escape_filter_elementA(PCHAR,ULONG,PCHAR,ULONG);
+ULONG CDECL ldap_escape_filter_elementW(PCHAR,ULONG,PWCHAR,ULONG);
 #define    ldap_escape_filter_element WINELIB_NAME_AW(ldap_escape_filter_element)
-PCHAR *ldap_explode_dnA(PCHAR,ULONG);
-PWCHAR *ldap_explode_dnW(PWCHAR,ULONG);
+PCHAR* CDECL ldap_explode_dnA(PCHAR,ULONG);
+PWCHAR* CDECL ldap_explode_dnW(PWCHAR,ULONG);
 #define    ldap_explode_dn WINELIB_NAME_AW(ldap_explode_dn)
-ULONG ldap_extended_operationA(LDAP*,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*,ULONG*);
-ULONG ldap_extended_operationW(LDAP*,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*,ULONG*);
+ULONG CDECL ldap_extended_operationA(LDAP*,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*,ULONG*);
+ULONG CDECL ldap_extended_operationW(LDAP*,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*,ULONG*);
 #define    ldap_extended_operation WINELIB_NAME_AW(ldap_extended_operation)
-ULONG ldap_extended_operation_sA(LDAP*,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*,PCHAR*,struct berval**);
-ULONG ldap_extended_operation_sW(LDAP*,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*,PWCHAR*,struct berval**);
+ULONG CDECL ldap_extended_operation_sA(LDAP*,PCHAR,struct berval*,PLDAPControlA*,PLDAPControlA*,PCHAR*,struct berval**);
+ULONG CDECL ldap_extended_operation_sW(LDAP*,PWCHAR,struct berval*,PLDAPControlW*,PLDAPControlW*,PWCHAR*,struct berval**);
 #define    ldap_extended_operation_s WINELIB_NAME_AW(ldap_extended_operation_s)
-PCHAR ldap_first_attributeA(LDAP*,LDAPMessage*,BerElement**);
-PWCHAR ldap_first_attributeW(LDAP*,LDAPMessage*,BerElement**);
+PCHAR CDECL ldap_first_attributeA(LDAP*,LDAPMessage*,BerElement**);
+PWCHAR CDECL ldap_first_attributeW(LDAP*,LDAPMessage*,BerElement**);
 #define    ldap_first_attribute WINELIB_NAME_AW(ldap_first_attribute)
-LDAPMessage *ldap_first_entry(LDAP*,LDAPMessage*);
-LDAPMessage* ldap_first_reference(LDAP*,LDAPMessage*);
-ULONG ldap_free_controlsA(LDAPControlA**);
-ULONG ldap_free_controlsW(LDAPControlW**);
+LDAPMessage* CDECL ldap_first_entry(LDAP*,LDAPMessage*);
+LDAPMessage* CDECL ldap_first_reference(LDAP*,LDAPMessage*);
+ULONG CDECL ldap_free_controlsA(LDAPControlA**);
+ULONG CDECL ldap_free_controlsW(LDAPControlW**);
 #define    ldap_free_controls WINELIB_NAME_AW(ldap_free_controls)
-PCHAR ldap_get_dnA(LDAP*,LDAPMessage*);
-PWCHAR ldap_get_dnW(LDAP*,LDAPMessage*);
+PCHAR CDECL ldap_get_dnA(LDAP*,LDAPMessage*);
+PWCHAR CDECL ldap_get_dnW(LDAP*,LDAPMessage*);
 #define    ldap_get_dn WINELIB_NAME_AW(ldap_get_dn)
-ULONG ldap_get_next_page(PLDAP,PLDAPSearch,ULONG,ULONG*);
-ULONG ldap_get_next_page_s(PLDAP,PLDAPSearch,struct l_timeval*,ULONG,ULONG*,LDAPMessage**);
-ULONG ldap_get_optionA(LDAP*,int,void*);
-ULONG ldap_get_optionW(LDAP*,int,void*);
+ULONG CDECL ldap_get_next_page(PLDAP,PLDAPSearch,ULONG,ULONG*);
+ULONG CDECL ldap_get_next_page_s(PLDAP,PLDAPSearch,struct l_timeval*,ULONG,ULONG*,LDAPMessage**);
+ULONG CDECL ldap_get_optionA(LDAP*,int,void*);
+ULONG CDECL ldap_get_optionW(LDAP*,int,void*);
 #define    ldap_get_option WINELIB_NAME_AW(ldap_get_option)
-ULONG ldap_get_paged_count(LDAP*,PLDAPSearch,ULONG*,LDAPMessage*);
-PCHAR *ldap_get_valuesA(LDAP*,LDAPMessage*,PCHAR);
-PWCHAR *ldap_get_valuesW(LDAP*,LDAPMessage*,PWCHAR);
+ULONG CDECL ldap_get_paged_count(LDAP*,PLDAPSearch,ULONG*,LDAPMessage*);
+PCHAR* CDECL ldap_get_valuesA(LDAP*,LDAPMessage*,PCHAR);
+PWCHAR* CDECL ldap_get_valuesW(LDAP*,LDAPMessage*,PWCHAR);
 #define    ldap_get_values WINELIB_NAME_AW(ldap_get_values)
-struct berval **ldap_get_values_lenA(LDAP*,LDAPMessage*,PCHAR);
-struct berval **ldap_get_values_lenW(LDAP*,LDAPMessage*,PWCHAR);
+struct berval ** CDECL ldap_get_values_lenA(LDAP*,LDAPMessage*,PCHAR);
+struct berval ** CDECL ldap_get_values_lenW(LDAP*,LDAPMessage*,PWCHAR);
 #define    ldap_get_values_len WINELIB_NAME_AW(ldap_get_values_len)
-LDAP *ldap_initA(const PCHAR,ULONG);
-LDAP *ldap_initW(const PWCHAR,ULONG);
+LDAP* CDECL ldap_initA(const PCHAR,ULONG);
+LDAP* CDECL ldap_initW(const PWCHAR,ULONG);
 #define    ldap_init WINELIB_NAME_AW(ldap_init)
-VOID ldap_memfreeA(PCHAR);
-VOID ldap_memfreeW(PWCHAR);
+VOID CDECL ldap_memfreeA(PCHAR);
+VOID CDECL ldap_memfreeW(PWCHAR);
 #define    ldap_memfree WINELIB_NAME_AW(ldap_memfree)
-ULONG ldap_modifyA(LDAP*,PCHAR,LDAPModA*[]);
-ULONG ldap_modifyW(LDAP*,PWCHAR,LDAPModW*[]);
+ULONG CDECL ldap_modifyA(LDAP*,PCHAR,LDAPModA*[]);
+ULONG CDECL ldap_modifyW(LDAP*,PWCHAR,LDAPModW*[]);
 #define    ldap_modify WINELIB_NAME_AW(ldap_modify)
-ULONG ldap_modify_extA(LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*,ULONG*);
-ULONG ldap_modify_extW(LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*,ULONG*);
+ULONG CDECL ldap_modify_extA(LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*,ULONG*);
+ULONG CDECL ldap_modify_extW(LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*,ULONG*);
 #define    ldap_modify_ext WINELIB_NAME_AW(ldap_modify_ext)
-ULONG ldap_modify_ext_sA(LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*);
-ULONG ldap_modify_ext_sW(LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*);
+ULONG CDECL ldap_modify_ext_sA(LDAP*,PCHAR,LDAPModA*[],PLDAPControlA*,PLDAPControlA*);
+ULONG CDECL ldap_modify_ext_sW(LDAP*,PWCHAR,LDAPModW*[],PLDAPControlW*,PLDAPControlW*);
 #define    ldap_modify_ext_s WINELIB_NAME_AW(ldap_modify_ext_s)
-ULONG ldap_modify_sA(LDAP*,PCHAR,LDAPModA*[]);
-ULONG ldap_modify_sW(LDAP*,PWCHAR,LDAPModW*[]);
+ULONG CDECL ldap_modify_sA(LDAP*,PCHAR,LDAPModA*[]);
+ULONG CDECL ldap_modify_sW(LDAP*,PWCHAR,LDAPModW*[]);
 #define    ldap_modify_s WINELIB_NAME_AW(ldap_modify_s)
-ULONG ldap_modrdnA(LDAP*,PCHAR,PCHAR);
-ULONG ldap_modrdnW(LDAP*,PWCHAR,PWCHAR);
+ULONG CDECL ldap_modrdnA(LDAP*,PCHAR,PCHAR);
+ULONG CDECL ldap_modrdnW(LDAP*,PWCHAR,PWCHAR);
 #define    ldap_modrdn WINELIB_NAME_AW(ldap_modrdn)
-ULONG ldap_modrdn2A(LDAP*,PCHAR,PCHAR,INT);
-ULONG ldap_modrdn2W(LDAP*,PWCHAR,PWCHAR,INT);
+ULONG CDECL ldap_modrdn2A(LDAP*,PCHAR,PCHAR,INT);
+ULONG CDECL ldap_modrdn2W(LDAP*,PWCHAR,PWCHAR,INT);
 #define    ldap_modrdn2 WINELIB_NAME_AW(ldap_modrdn2)
-ULONG ldap_modrdn2_sA(LDAP*,PCHAR,PCHAR,INT);
-ULONG ldap_modrdn2_sW(LDAP*,PWCHAR,PWCHAR,INT);
+ULONG CDECL ldap_modrdn2_sA(LDAP*,PCHAR,PCHAR,INT);
+ULONG CDECL ldap_modrdn2_sW(LDAP*,PWCHAR,PWCHAR,INT);
 #define    ldap_modrdn2_s WINELIB_NAME_AW(ldap_modrdn2_s)
-ULONG ldap_modrdn_sA(LDAP*,PCHAR,PCHAR);
-ULONG ldap_modrdn_sW(LDAP*,PWCHAR,PWCHAR);
+ULONG CDECL ldap_modrdn_sA(LDAP*,PCHAR,PCHAR);
+ULONG CDECL ldap_modrdn_sW(LDAP*,PWCHAR,PWCHAR);
 #define    ldap_modrdn_s WINELIB_NAME_AW(ldap_modrdn_s)
-ULONG ldap_msgfree(LDAPMessage*);
-PCHAR ldap_next_attributeA(LDAP*,LDAPMessage*,BerElement*);
-PWCHAR ldap_next_attributeW(LDAP*,LDAPMessage*,BerElement*);
+ULONG CDECL ldap_msgfree(LDAPMessage*);
+PCHAR CDECL ldap_next_attributeA(LDAP*,LDAPMessage*,BerElement*);
+PWCHAR CDECL ldap_next_attributeW(LDAP*,LDAPMessage*,BerElement*);
 #define    ldap_next_attribute WINELIB_NAME_AW(ldap_next_attribute)
-LDAPMessage *ldap_next_entry(LDAP*,LDAPMessage*);
-LDAP *ldap_openA(PCHAR,ULONG);
-LDAP *ldap_openW(PWCHAR,ULONG);
+LDAPMessage * CDECL ldap_next_entry(LDAP*,LDAPMessage*);
+LDAP * CDECL ldap_openA(PCHAR,ULONG);
+LDAP * CDECL ldap_openW(PWCHAR,ULONG);
 #define    ldap_open WINELIB_NAME_AW(ldap_open)
-ULONG ldap_parse_extended_resultA(LDAP*,LDAPMessage*,PCHAR*,struct berval**,BOOLEAN);
-ULONG ldap_parse_extended_resultW(LDAP*,LDAPMessage*,PWCHAR*,struct berval**,BOOLEAN);
+ULONG CDECL ldap_parse_extended_resultA(LDAP*,LDAPMessage*,PCHAR*,struct berval**,BOOLEAN);
+ULONG CDECL ldap_parse_extended_resultW(LDAP*,LDAPMessage*,PWCHAR*,struct berval**,BOOLEAN);
 #define    ldap_parse_extended_result WINELIB_NAME_AW(ldap_parse_extended_result)
-ULONG ldap_parse_page_controlA(LDAP*,PLDAPControlA*,ULONG*,struct berval**);
-ULONG ldap_parse_page_controlW(LDAP*,PLDAPControlW*,ULONG*,struct berval**);
+ULONG CDECL ldap_parse_page_controlA(LDAP*,PLDAPControlA*,ULONG*,struct berval**);
+ULONG CDECL ldap_parse_page_controlW(LDAP*,PLDAPControlW*,ULONG*,struct berval**);
 #define    ldap_parse_page_control WINELIB_NAME_AW(ldap_parse_page_control)
-ULONG ldap_parse_referenceA(LDAP*,LDAPMessage*,PCHAR**);
-ULONG ldap_parse_referenceW(LDAP*,LDAPMessage*,PWCHAR**);
+ULONG CDECL ldap_parse_referenceA(LDAP*,LDAPMessage*,PCHAR**);
+ULONG CDECL ldap_parse_referenceW(LDAP*,LDAPMessage*,PWCHAR**);
 #define    ldap_parse_reference WINELIB_NAME_AW(ldap_parse_reference)
-ULONG ldap_result2error(LDAP*,LDAPMessage*,ULONG);
-ULONG ldap_parse_resultA(LDAP*,LDAPMessage*,ULONG*,PCHAR*,PCHAR*,PCHAR**,PLDAPControlA**,BOOLEAN);
-ULONG ldap_parse_resultW(LDAP*,LDAPMessage*,ULONG*,PWCHAR*,PWCHAR*,PWCHAR**,PLDAPControlW**,BOOLEAN);
+ULONG CDECL ldap_result2error(LDAP*,LDAPMessage*,ULONG);
+ULONG CDECL ldap_parse_resultA(LDAP*,LDAPMessage*,ULONG*,PCHAR*,PCHAR*,PCHAR**,PLDAPControlA**,BOOLEAN);
+ULONG CDECL ldap_parse_resultW(LDAP*,LDAPMessage*,ULONG*,PWCHAR*,PWCHAR*,PWCHAR**,PLDAPControlW**,BOOLEAN);
 #define    ldap_parse_result WINELIB_NAME_AW(ldap_parse_result)
-ULONG ldap_parse_sort_controlA(LDAP*,PLDAPControlA*,ULONG*,PCHAR*);
-ULONG ldap_parse_sort_controlW(LDAP*,PLDAPControlW*,ULONG*,PWCHAR*);
+ULONG CDECL ldap_parse_sort_controlA(LDAP*,PLDAPControlA*,ULONG*,PCHAR*);
+ULONG CDECL ldap_parse_sort_controlW(LDAP*,PLDAPControlW*,ULONG*,PWCHAR*);
 #define    ldap_parse_sort_control WINELIB_NAME_AW(ldap_parse_sort_control)
-INT ldap_parse_vlv_controlA(PLDAP,PLDAPControlA*,PULONG,PULONG,PBERVAL*,PINT);
-INT ldap_parse_vlv_controlW(PLDAP,PLDAPControlW*,PULONG,PULONG,PBERVAL*,PINT);
+INT CDECL ldap_parse_vlv_controlA(PLDAP,PLDAPControlA*,PULONG,PULONG,PBERVAL*,PINT);
+INT CDECL ldap_parse_vlv_controlW(PLDAP,PLDAPControlW*,PULONG,PULONG,PBERVAL*,PINT);
 #define    ldap_parse_vlv_control WINELIB_NAME_AW(ldap_parse_vlv_control)
-void ldap_perror(LDAP*,const PCHAR);
-ULONG ldap_rename_extA(LDAP*,PCHAR,PCHAR,PCHAR,INT,PLDAPControlA*,PLDAPControlA*,ULONG*);
-ULONG ldap_rename_extW(LDAP*,PWCHAR,PWCHAR,PWCHAR,INT,PLDAPControlW*,PLDAPControlW*,ULONG*);
+void CDECL ldap_perror(LDAP*,const PCHAR);
+ULONG CDECL ldap_rename_extA(LDAP*,PCHAR,PCHAR,PCHAR,INT,PLDAPControlA*,PLDAPControlA*,ULONG*);
+ULONG CDECL ldap_rename_extW(LDAP*,PWCHAR,PWCHAR,PWCHAR,INT,PLDAPControlW*,PLDAPControlW*,ULONG*);
 #define    ldap_rename_ext WINELIB_NAME_AW(ldap_rename_ext)
-ULONG ldap_rename_ext_sA(LDAP*,PCHAR,PCHAR,PCHAR,INT,PLDAPControlA*,PLDAPControlA*);
-ULONG ldap_rename_ext_sW(LDAP*,PWCHAR,PWCHAR,PWCHAR,INT,PLDAPControlW*,PLDAPControlW*);
+ULONG CDECL ldap_rename_ext_sA(LDAP*,PCHAR,PCHAR,PCHAR,INT,PLDAPControlA*,PLDAPControlA*);
+ULONG CDECL ldap_rename_ext_sW(LDAP*,PWCHAR,PWCHAR,PWCHAR,INT,PLDAPControlW*,PLDAPControlW*);
 #define    ldap_rename_ext_s WINELIB_NAME_AW(ldap_rename_ext_s)
-ULONG ldap_result(LDAP*,ULONG,ULONG,struct l_timeval*,LDAPMessage**);
-ULONG ldap_result2error(LDAP*,LDAPMessage*,ULONG);
-ULONG ldap_sasl_bindA(LDAP*,const PCHAR,const PCHAR,const BERVAL*,PLDAPControlA*,PLDAPControlA*,int*);
-ULONG ldap_sasl_bindW(LDAP*,const PWCHAR,const PWCHAR,const BERVAL*,PLDAPControlW*,PLDAPControlW*,int*);
+ULONG CDECL ldap_result(LDAP*,ULONG,ULONG,struct l_timeval*,LDAPMessage**);
+ULONG CDECL ldap_result2error(LDAP*,LDAPMessage*,ULONG);
+ULONG CDECL ldap_sasl_bindA(LDAP*,const PCHAR,const PCHAR,const BERVAL*,PLDAPControlA*,PLDAPControlA*,int*);
+ULONG CDECL ldap_sasl_bindW(LDAP*,const PWCHAR,const PWCHAR,const BERVAL*,PLDAPControlW*,PLDAPControlW*,int*);
 #define    ldap_sasl_bind WINELIB_NAME_AW(ldap_sasl_bind)
-ULONG ldap_sasl_bind_sA(LDAP*,const PCHAR,const PCHAR,const BERVAL*,PLDAPControlA*,PLDAPControlA*,PBERVAL*);
-ULONG ldap_sasl_bind_sW(LDAP*,const PWCHAR,const PWCHAR,const BERVAL*,PLDAPControlW*,PLDAPControlW*,PBERVAL*);
+ULONG CDECL ldap_sasl_bind_sA(LDAP*,const PCHAR,const PCHAR,const BERVAL*,PLDAPControlA*,PLDAPControlA*,PBERVAL*);
+ULONG CDECL ldap_sasl_bind_sW(LDAP*,const PWCHAR,const PWCHAR,const BERVAL*,PLDAPControlW*,PLDAPControlW*,PBERVAL*);
 #define    ldap_sasl_bind_s WINELIB_NAME_AW(ldap_sasl_bind_s)
-ULONG ldap_simple_bindA(LDAP*,PCHAR,PCHAR);
-ULONG ldap_simple_bindW(LDAP*,PWCHAR,PWCHAR);
+ULONG CDECL ldap_simple_bindA(LDAP*,PCHAR,PCHAR);
+ULONG CDECL ldap_simple_bindW(LDAP*,PWCHAR,PWCHAR);
 #define    ldap_simple_bind WINELIB_NAME_AW(ldap_simple_bind)
-ULONG ldap_simple_bind_sA(LDAP*,PCHAR,PCHAR);
-ULONG ldap_simple_bind_sW(LDAP*,PWCHAR,PWCHAR);
+ULONG CDECL ldap_simple_bind_sA(LDAP*,PCHAR,PCHAR);
+ULONG CDECL ldap_simple_bind_sW(LDAP*,PWCHAR,PWCHAR);
 #define    ldap_simple_bind_s WINELIB_NAME_AW(ldap_simple_bind_s)
-ULONG ldap_search_abandon_page(PLDAP,PLDAPSearch);
-ULONG ldap_searchA(LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG);
-ULONG ldap_searchW(LDAP*,PWCHAR,ULONG,PWCHAR,PCHAR[],ULONG);
+ULONG CDECL ldap_search_abandon_page(PLDAP,PLDAPSearch);
+ULONG CDECL ldap_searchA(LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG);
+ULONG CDECL ldap_searchW(LDAP*,PWCHAR,ULONG,PWCHAR,PCHAR[],ULONG);
 #define    ldap_search WINELIB_NAME_AW(ldap_search)
-ULONG ldap_search_extA(LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
+ULONG CDECL ldap_search_extA(LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
     PLDAPControlA*,ULONG,ULONG,ULONG*);
-ULONG ldap_search_extW(LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
+ULONG CDECL ldap_search_extW(LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
     PLDAPControlW*,ULONG,ULONG,ULONG*);
 #define    ldap_search_ext WINELIB_NAME_AW(ldap_search_ext)
-ULONG ldap_search_ext_sA(LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
+ULONG CDECL ldap_search_ext_sA(LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
     PLDAPControlA*,struct l_timeval*,ULONG,LDAPMessage**);
-ULONG ldap_search_ext_sW(LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
+ULONG CDECL ldap_search_ext_sW(LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
     PLDAPControlW*,struct l_timeval*,ULONG,LDAPMessage**);
 #define    ldap_search_ext_s WINELIB_NAME_AW(ldap_search_ext_s)
-PLDAPSearch ldap_search_init_pageA(PLDAP,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
+PLDAPSearch CDECL ldap_search_init_pageA(PLDAP,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,PLDAPControlA*,
     PLDAPControlA*,ULONG,ULONG,PLDAPSortKeyA*);
-PLDAPSearch ldap_search_init_pageW(PLDAP,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
+PLDAPSearch CDECL ldap_search_init_pageW(PLDAP,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,PLDAPControlW*,
     PLDAPControlW*,ULONG,ULONG, PLDAPSortKeyW*);
 #define    ldap_search_init_page WINELIB_NAME_AW(ldap_search_init_page)
-ULONG ldap_search_sA(LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,LDAPMessage**);
-ULONG ldap_search_sW(LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,LDAPMessage**);
+ULONG CDECL ldap_search_sA(LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,LDAPMessage**);
+ULONG CDECL ldap_search_sW(LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,LDAPMessage**);
 #define    ldap_search_s WINELIB_NAME_AW(ldap_search_s)
-ULONG ldap_search_stA(LDAP*,const PCHAR,ULONG,const PCHAR,PCHAR[],ULONG,
+ULONG CDECL ldap_search_stA(LDAP*,const PCHAR,ULONG,const PCHAR,PCHAR[],ULONG,
     struct l_timeval*,LDAPMessage**);
-ULONG ldap_search_stW(LDAP*,const PWCHAR,ULONG,const PWCHAR,PWCHAR[],ULONG,
+ULONG CDECL ldap_search_stW(LDAP*,const PWCHAR,ULONG,const PWCHAR,PWCHAR[],ULONG,
     struct l_timeval*,LDAPMessage**);
 #define    ldap_search_st WINELIB_NAME_AW(ldap_search_st)
-ULONG ldap_set_optionA(LDAP*,int,void*);
-ULONG ldap_set_optionW(LDAP*,int,void*);
+ULONG CDECL ldap_set_optionA(LDAP*,int,void*);
+ULONG CDECL ldap_set_optionW(LDAP*,int,void*);
 #define    ldap_set_option WINELIB_NAME_AW(ldap_set_option)
-LDAP *ldap_sslinitA(PCHAR,ULONG,int);
-LDAP *ldap_sslinitW(PWCHAR,ULONG,int);
+LDAP * CDECL ldap_sslinitA(PCHAR,ULONG,int);
+LDAP * CDECL ldap_sslinitW(PWCHAR,ULONG,int);
 #define    ldap_sslinit WINELIB_NAME_AW(ldap_sslinit)
-ULONG ldap_start_tls_sA(LDAP*,PULONG,LDAPMessage**,PLDAPControlA*,PLDAPControlA*);
-ULONG ldap_start_tls_sW(LDAP*,PULONG,LDAPMessage**,PLDAPControlW*,PLDAPControlW*);
+ULONG CDECL ldap_start_tls_sA(LDAP*,PULONG,LDAPMessage**,PLDAPControlA*,PLDAPControlA*);
+ULONG CDECL ldap_start_tls_sW(LDAP*,PULONG,LDAPMessage**,PLDAPControlW*,PLDAPControlW*);
 #define    ldap_start_tls_s WINELIB_NAME_AW(ldap_start_tls_s)
-ULONG ldap_startup(PLDAP_VERSION_INFO,HANDLE*);
-BOOLEAN ldap_stop_tls_s(LDAP*);
-ULONG ldap_ufn2dnA(PCHAR,PCHAR*);
-ULONG ldap_ufn2dnW(PWCHAR,PWCHAR*);
+ULONG CDECL ldap_startup(PLDAP_VERSION_INFO,HANDLE*);
+BOOLEAN CDECL ldap_stop_tls_s(LDAP*);
+ULONG CDECL ldap_ufn2dnA(PCHAR,PCHAR*);
+ULONG CDECL ldap_ufn2dnW(PWCHAR,PWCHAR*);
 #define    ldap_ufn2dn WINELIB_NAME_AW(ldap_ufn2dn)
-ULONG ldap_unbind(LDAP*);
-ULONG ldap_unbind_s(LDAP*);
-ULONG ldap_value_freeA(PCHAR*);
-ULONG ldap_value_freeW(PWCHAR*);
+ULONG CDECL ldap_unbind(LDAP*);
+ULONG CDECL ldap_unbind_s(LDAP*);
+ULONG CDECL ldap_value_freeA(PCHAR*);
+ULONG CDECL ldap_value_freeW(PWCHAR*);
 #define    ldap_value_free WINELIB_NAME_AW(ldap_value_free)
-ULONG ldap_value_free_len(struct berval**);
+ULONG CDECL ldap_value_free_len(struct berval**);
 
-BerElement *ber_alloc_t(INT);
-BERVAL *ber_bvdup(BERVAL*);
-void ber_bvecfree(PBERVAL*);
-void ber_bvfree(BERVAL*);
-ULONG ber_first_element(BerElement*,ULONG*,CHAR**);
-INT ber_flatten(BerElement*,PBERVAL*);
-void ber_free(BerElement*,INT);
-BerElement *ber_init(BERVAL*);
-ULONG ber_next_element(BerElement*,ULONG*,CHAR*);
-ULONG ber_peek_tag(BerElement*,ULONG*);
-INT ber_printf(BerElement*,PCHAR,...);
-ULONG ber_skip_tag(BerElement*,ULONG*);
-INT ber_scanf(BerElement*,PCHAR,...);
+BerElement* CDECL ber_alloc_t(INT);
+BERVAL* CDECL ber_bvdup(BERVAL*);
+void CDECL ber_bvecfree(PBERVAL*);
+void CDECL ber_bvfree(BERVAL*);
+ULONG CDECL ber_first_element(BerElement*,ULONG*,CHAR**);
+INT CDECL ber_flatten(BerElement*,PBERVAL*);
+void CDECL ber_free(BerElement*,INT);
+BerElement* CDECL ber_init(BERVAL*);
+ULONG CDECL ber_next_element(BerElement*,ULONG*,CHAR*);
+ULONG CDECL ber_peek_tag(BerElement*,ULONG*);
+INT CDECL ber_printf(BerElement*,PCHAR,...);
+ULONG CDECL ber_skip_tag(BerElement*,ULONG*);
+INT CDECL ber_scanf(BerElement*,PCHAR,...);
 
-ULONG LdapGetLastError(void);
-ULONG LdapMapErrorToWin32(ULONG);
-int LdapUnicodeToUTF8(LPCWSTR,int,LPSTR,int);
-int LdapUTF8ToUnicode(LPCSTR,int,LPWSTR,int);
+ULONG CDECL LdapGetLastError(void);
+ULONG CDECL LdapMapErrorToWin32(ULONG);
+int CDECL LdapUnicodeToUTF8(LPCWSTR,int,LPSTR,int);
+int CDECL LdapUTF8ToUnicode(LPCSTR,int,LPWSTR,int);
 
 #ifdef __cplusplus
 }

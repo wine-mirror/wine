@@ -218,7 +218,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See cldap_openW.
  */
-WLDAP32_LDAP *cldap_openA( PCHAR hostname, ULONG portnumber )
+WLDAP32_LDAP * CDECL cldap_openA( PCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
     WLDAP32_LDAP *ld = NULL;
@@ -262,7 +262,7 @@ exit:
  *  will take precedence over the portnumber supplied as a parameter
  *  to this function.
  */
-WLDAP32_LDAP *cldap_openW( PWCHAR hostname, ULONG portnumber )
+WLDAP32_LDAP * CDECL cldap_openW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
     LDAP *ld = NULL;
@@ -311,7 +311,7 @@ exit:
  *  The timeout parameter may be NULL in which case a default timeout
  *  value will be used.
  */
-ULONG ldap_connect( WLDAP32_LDAP *ld, struct l_timeval *timeout )
+ULONG CDECL ldap_connect( WLDAP32_LDAP *ld, struct l_timeval *timeout )
 {
     TRACE( "(%p, %p)\n", ld, timeout );
 
@@ -324,7 +324,7 @@ ULONG ldap_connect( WLDAP32_LDAP *ld, struct l_timeval *timeout )
  *
  * See ldap_initW.
  */
-WLDAP32_LDAP *ldap_initA( PCHAR hostname, ULONG portnumber )
+WLDAP32_LDAP *  CDECL ldap_initA( PCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
     WLDAP32_LDAP *ld = NULL;
@@ -369,7 +369,7 @@ exit:
  *  to this function. The connection will not be made until the first
  *  LDAP function that needs it is called.
  */
-WLDAP32_LDAP *ldap_initW( PWCHAR hostname, ULONG portnumber )
+WLDAP32_LDAP * CDECL ldap_initW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
     LDAP *ld = NULL;
@@ -405,7 +405,7 @@ exit:
  *
  * See ldap_openW.
  */
-WLDAP32_LDAP *ldap_openA( PCHAR hostname, ULONG portnumber )
+WLDAP32_LDAP * CDECL ldap_openA( PCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
     WLDAP32_LDAP *ld = NULL;
@@ -449,7 +449,7 @@ exit:
  *  will take precedence over the portnumber supplied as a parameter
  *  to this function.
  */
-WLDAP32_LDAP *ldap_openW( PWCHAR hostname, ULONG portnumber )
+WLDAP32_LDAP * CDECL ldap_openW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
     LDAP *ld = NULL;
@@ -485,7 +485,7 @@ exit:
  *
  * See ldap_sslinitW.
  */
-WLDAP32_LDAP *ldap_sslinitA( PCHAR hostname, ULONG portnumber, int secure )
+WLDAP32_LDAP * CDECL ldap_sslinitA( PCHAR hostname, ULONG portnumber, int secure )
 {
 #ifdef HAVE_LDAP
     WLDAP32_LDAP *ld;
@@ -530,7 +530,7 @@ WLDAP32_LDAP *ldap_sslinitA( PCHAR hostname, ULONG portnumber, int secure )
  *  to this function. The connection will not be made until the first
  *  LDAP function that needs it is called.
  */
-WLDAP32_LDAP *ldap_sslinitW( PWCHAR hostname, ULONG portnumber, int secure )
+WLDAP32_LDAP * CDECL ldap_sslinitW( PWCHAR hostname, ULONG portnumber, int secure )
 {
 #ifdef HAVE_LDAP
     WLDAP32_LDAP *ld = NULL;
@@ -569,7 +569,7 @@ exit:
  *
  * See ldap_start_tls_sW.
  */
-ULONG ldap_start_tls_sA( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **result,
+ULONG CDECL ldap_start_tls_sA( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **result,
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -620,7 +620,7 @@ exit:
  * NOTES
  *  LDAP function that needs it is called.
  */
-ULONG ldap_start_tls_sW( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **result,
+ULONG CDECL ldap_start_tls_sW( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **result,
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -655,7 +655,7 @@ exit:
 /***********************************************************************
  *      ldap_startup     (WLDAP32.@)
  */
-ULONG ldap_startup( PLDAP_VERSION_INFO version, HANDLE *instance )
+ULONG CDECL ldap_startup( PLDAP_VERSION_INFO version, HANDLE *instance )
 {
     TRACE( "(%p, %p)\n", version, instance );
     return LDAP_SUCCESS;
@@ -673,7 +673,7 @@ ULONG ldap_startup( PLDAP_VERSION_INFO version, HANDLE *instance )
  *  Success: TRUE
  *  Failure: FALSE
  */
-BOOLEAN ldap_stop_tls_s( WLDAP32_LDAP *ld )
+BOOLEAN CDECL ldap_stop_tls_s( WLDAP32_LDAP *ld )
 {
     TRACE( "(%p)\n", ld );
     return TRUE; /* FIXME: find a way to stop tls on a connection */

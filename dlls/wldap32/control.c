@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_control_freeW.
  */
-ULONG ldap_control_freeA( LDAPControlA *control )
+ULONG CDECL ldap_control_freeA( LDAPControlA *control )
 {
     ULONG ret = LDAP_SUCCESS;
 #ifdef HAVE_LDAP
@@ -69,7 +69,7 @@ ULONG ldap_control_freeA( LDAPControlA *control )
  * RETURNS
  *  LDAP_SUCCESS
  */
-ULONG ldap_control_freeW( LDAPControlW *control )
+ULONG CDECL ldap_control_freeW( LDAPControlW *control )
 {
     ULONG ret = LDAP_SUCCESS;
 #ifdef HAVE_LDAP
@@ -86,7 +86,7 @@ ULONG ldap_control_freeW( LDAPControlW *control )
  *
  * See ldap_controls_freeW.
  */
-ULONG ldap_controls_freeA( LDAPControlA **controls )
+ULONG CDECL ldap_controls_freeA( LDAPControlA **controls )
 {
     ULONG ret = LDAP_SUCCESS;
 #ifdef HAVE_LDAP
@@ -109,7 +109,7 @@ ULONG ldap_controls_freeA( LDAPControlA **controls )
  * RETURNS
  *  LDAP_SUCCESS
  */
-ULONG ldap_controls_freeW( LDAPControlW **controls )
+ULONG CDECL ldap_controls_freeW( LDAPControlW **controls )
 {
     ULONG ret = LDAP_SUCCESS;
 #ifdef HAVE_LDAP
@@ -126,7 +126,7 @@ ULONG ldap_controls_freeW( LDAPControlW **controls )
  *
  * See ldap_create_sort_controlW.
  */
-ULONG ldap_create_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkey,
+ULONG CDECL ldap_create_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkey,
     UCHAR critical, PLDAPControlA *control )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -176,7 +176,7 @@ ULONG ldap_create_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkey,
  *  Pass the created control as a server control in subsequent calls
  *  to ldap_search_ext(_s) to obtain sorted search results.
  */
-ULONG ldap_create_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkey,
+ULONG CDECL ldap_create_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkey,
     UCHAR critical, PLDAPControlW *control )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -209,7 +209,7 @@ ULONG ldap_create_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkey,
  *
  * See ldap_create_vlv_controlW.
  */
-INT ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
+INT CDECL ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
     UCHAR critical, LDAPControlA **control )
 {
     INT ret = LDAP_NOT_SUPPORTED;
@@ -255,7 +255,7 @@ INT ldap_create_vlv_controlA( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
  *  server will then return a sorted, contiguous subset of results
  *  that meets the criteria specified in the LDAPVLVInfo structure.
  */
-INT ldap_create_vlv_controlW( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
+INT CDECL ldap_create_vlv_controlW( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
     UCHAR critical, LDAPControlW **control )
 {
     INT ret = LDAP_NOT_SUPPORTED;
@@ -284,7 +284,7 @@ INT ldap_create_vlv_controlW( WLDAP32_LDAP *ld, WLDAP32_LDAPVLVInfo *info,
  *
  * See ldap_encode_sort_controlW.
  */
-ULONG ldap_encode_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkeys,
+ULONG CDECL ldap_encode_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkeys,
     PLDAPControlA control, BOOLEAN critical )
 {
     return ldap_create_sort_controlA( ld, sortkeys, critical, &control );
@@ -312,7 +312,7 @@ ULONG ldap_encode_sort_controlA( WLDAP32_LDAP *ld, PLDAPSortKeyA *sortkeys,
  *  This function is obsolete. Use its equivalent
  *  ldap_create_sort_control instead.
  */
-ULONG ldap_encode_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkeys,
+ULONG CDECL ldap_encode_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkeys,
     PLDAPControlW control, BOOLEAN critical )
 {
     return ldap_create_sort_controlW( ld, sortkeys, critical, &control );
@@ -323,7 +323,7 @@ ULONG ldap_encode_sort_controlW( WLDAP32_LDAP *ld, PLDAPSortKeyW *sortkeys,
  *
  * See ldap_free_controlsW.
  */
-ULONG ldap_free_controlsA( LDAPControlA **controls )
+ULONG CDECL ldap_free_controlsA( LDAPControlA **controls )
 {
     return ldap_controls_freeA( controls );
 }
@@ -342,7 +342,7 @@ ULONG ldap_free_controlsA( LDAPControlA **controls )
  * NOTES
  *  Obsolete, use ldap_controls_freeW.
  */
-ULONG ldap_free_controlsW( LDAPControlW **controls )
+ULONG CDECL ldap_free_controlsW( LDAPControlW **controls )
 {
     return ldap_controls_freeW( controls );
 }

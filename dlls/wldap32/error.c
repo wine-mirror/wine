@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_err2stringW.
  */
-PCHAR ldap_err2stringA( ULONG err )
+PCHAR CDECL ldap_err2stringA( ULONG err )
 {
     static char buf[256] = "";
 
@@ -79,7 +79,7 @@ PCHAR ldap_err2stringA( ULONG err )
  *  The returned string is statically allocated, you must not
  *  free this string.
  */
-PWCHAR ldap_err2stringW( ULONG err )
+PWCHAR CDECL ldap_err2stringW( ULONG err )
 {
     static WCHAR buf[256] = { 0 };
 
@@ -108,7 +108,7 @@ PWCHAR ldap_err2stringW( ULONG err )
  * NOTES
  *  Like native, this function does nothing.
  */
-void WLDAP32_ldap_perror( WLDAP32_LDAP *ld, const PCHAR msg )
+void CDECL WLDAP32_ldap_perror( WLDAP32_LDAP *ld, const PCHAR msg )
 {
     TRACE( "(%p, %s)\n", ld, debugstr_a(msg) );
 }
@@ -130,7 +130,7 @@ void WLDAP32_ldap_perror( WLDAP32_LDAP *ld, const PCHAR msg )
  * NOTES
  *  If not asked for, use ldap_msgfree to free the LDAPMessage.
  */
-ULONG WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res, ULONG free )
+ULONG CDECL WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res, ULONG free )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -162,7 +162,7 @@ ULONG WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *res, ULO
  * RETURNS
  *  An LDAP error code.
  */
-ULONG LdapGetLastError( void )
+ULONG CDECL LdapGetLastError( void )
 {
     TRACE( "\n" );
     return GetLastError();
@@ -280,7 +280,7 @@ static const ULONG WLDAP32_errormap[] = {
  * RETURNS
  *  A Win32 error code.
  */
-ULONG LdapMapErrorToWin32( ULONG err )
+ULONG CDECL LdapMapErrorToWin32( ULONG err )
 {
     TRACE( "(0x%08lx)\n", err );
 

@@ -50,7 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_create_page_controlW.
  */
-ULONG ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
+ULONG CDECL ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
     struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlA *control )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -146,7 +146,7 @@ static ULONG create_page_control( ULONG pagesize, struct WLDAP32_berval *cookie,
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
+ULONG CDECL ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
     struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlW *control )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -164,7 +164,7 @@ ULONG ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
     return ret;
 }
 
-ULONG ldap_get_next_page( WLDAP32_LDAP *ld, PLDAPSearch search, ULONG pagesize,
+ULONG CDECL ldap_get_next_page( WLDAP32_LDAP *ld, PLDAPSearch search, ULONG pagesize,
     ULONG *message )
 {
     FIXME( "(%p, %p, 0x%08lx, %p)\n", ld, search, pagesize, message );
@@ -173,7 +173,7 @@ ULONG ldap_get_next_page( WLDAP32_LDAP *ld, PLDAPSearch search, ULONG pagesize,
     return LDAP_NOT_SUPPORTED;
 }
 
-ULONG ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
+ULONG CDECL ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
     struct l_timeval *timeout, ULONG pagesize, ULONG *count,
     WLDAP32_LDAPMessage **results )
 {
@@ -184,7 +184,7 @@ ULONG ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
     return LDAP_NOT_SUPPORTED;
 }
 
-ULONG ldap_get_paged_count( WLDAP32_LDAP *ld, PLDAPSearch search,
+ULONG CDECL ldap_get_paged_count( WLDAP32_LDAP *ld, PLDAPSearch search,
     ULONG *count, WLDAP32_LDAPMessage *results )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -201,7 +201,7 @@ ULONG ldap_get_paged_count( WLDAP32_LDAP *ld, PLDAPSearch search,
 /***********************************************************************
  *      ldap_parse_page_controlA      (WLDAP32.@)
  */
-ULONG ldap_parse_page_controlA( WLDAP32_LDAP *ld, PLDAPControlA *ctrls,
+ULONG CDECL ldap_parse_page_controlA( WLDAP32_LDAP *ld, PLDAPControlA *ctrls,
     ULONG *count, struct WLDAP32_berval **cookie )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -226,7 +226,7 @@ ULONG ldap_parse_page_controlA( WLDAP32_LDAP *ld, PLDAPControlA *ctrls,
 /***********************************************************************
  *      ldap_parse_page_controlW      (WLDAP32.@)
  */
-ULONG ldap_parse_page_controlW( WLDAP32_LDAP *ld, PLDAPControlW *ctrls,
+ULONG CDECL ldap_parse_page_controlW( WLDAP32_LDAP *ld, PLDAPControlW *ctrls,
     ULONG *count, struct WLDAP32_berval **cookie )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -266,7 +266,7 @@ ULONG ldap_parse_page_controlW( WLDAP32_LDAP *ld, PLDAPControlW *ctrls,
     return ret;
 }
 
-ULONG ldap_search_abandon_page( WLDAP32_LDAP *ld, PLDAPSearch search )
+ULONG CDECL ldap_search_abandon_page( WLDAP32_LDAP *ld, PLDAPSearch search )
 {
     FIXME( "(%p, %p)\n", ld, search );
 
@@ -274,7 +274,7 @@ ULONG ldap_search_abandon_page( WLDAP32_LDAP *ld, PLDAPSearch search )
     return LDAP_SUCCESS;
 }
 
-PLDAPSearch ldap_search_init_pageA( WLDAP32_LDAP *ld, PCHAR dn, ULONG scope,
+PLDAPSearch CDECL ldap_search_init_pageA( WLDAP32_LDAP *ld, PCHAR dn, ULONG scope,
     PCHAR filter, PCHAR attrs[], ULONG attrsonly, PLDAPControlA *serverctrls,
     PLDAPControlA *clientctrls, ULONG timelimit, ULONG sizelimit, PLDAPSortKeyA *sortkeys )
 {
@@ -283,7 +283,7 @@ PLDAPSearch ldap_search_init_pageA( WLDAP32_LDAP *ld, PCHAR dn, ULONG scope,
     return NULL;
 }
 
-PLDAPSearch ldap_search_init_pageW( WLDAP32_LDAP *ld, PWCHAR dn, ULONG scope,
+PLDAPSearch CDECL ldap_search_init_pageW( WLDAP32_LDAP *ld, PWCHAR dn, ULONG scope,
     PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG timelimit, ULONG sizelimit, PLDAPSortKeyW *sortkeys )
 {

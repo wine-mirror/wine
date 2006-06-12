@@ -51,7 +51,7 @@ static LDAPMod *nullattrs[] = { NULL };
  *
  * See ldap_addW.
  */
-ULONG ldap_addA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[] )
+ULONG CDECL ldap_addA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -103,7 +103,7 @@ exit:
  *  the operation. Cancel the operation by calling ldap_abandon
  *  with the message ID.
  */
-ULONG ldap_addW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
+ULONG CDECL ldap_addW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -146,7 +146,7 @@ exit:
  *
  * See ldap_add_extW.
  */
-ULONG ldap_add_extA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[],
+ULONG CDECL ldap_add_extA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[],
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls, ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -214,7 +214,7 @@ exit:
  *  the operation. The serverctrls and clientctrls parameters are
  *  optional and should be set to NULL if not used.
  */
-ULONG ldap_add_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
+ULONG CDECL ldap_add_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls, ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -266,7 +266,7 @@ exit:
  *
  * See ldap_add_ext_sW.
  */
-ULONG ldap_add_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[],
+ULONG CDECL ldap_add_ext_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[],
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -332,7 +332,7 @@ exit:
  *  The serverctrls and clientctrls parameters are optional and
  *  should be set to NULL if not used.
  */
-ULONG ldap_add_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
+ULONG CDECL ldap_add_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -383,7 +383,7 @@ exit:
  *
  * See ldap_add_sW.
  */
-ULONG ldap_add_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[] )
+ULONG CDECL ldap_add_sA( WLDAP32_LDAP *ld, PCHAR dn, LDAPModA *attrs[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
@@ -430,7 +430,7 @@ exit:
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG ldap_add_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
+ULONG CDECL ldap_add_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP

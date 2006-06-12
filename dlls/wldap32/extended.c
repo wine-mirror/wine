@@ -58,7 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *  Contrary to native, OpenLDAP does not require us to close
  *  extended operations, so this is a no-op.
  */
-ULONG ldap_close_extended_op( WLDAP32_LDAP *ld, ULONG msgid )
+ULONG CDECL ldap_close_extended_op( WLDAP32_LDAP *ld, ULONG msgid )
 {
     TRACE( "(%p, 0x%08lx)\n", ld, msgid );
 
@@ -71,7 +71,7 @@ ULONG ldap_close_extended_op( WLDAP32_LDAP *ld, ULONG msgid )
  *
  * See ldap_extended_operationW.
  */
-ULONG ldap_extended_operationA( WLDAP32_LDAP *ld, PCHAR oid, struct WLDAP32_berval *data,
+ULONG CDECL ldap_extended_operationA( WLDAP32_LDAP *ld, PCHAR oid, struct WLDAP32_berval *data,
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls, ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -135,7 +135,7 @@ exit:
  *  are optional and should be set to NULL if not used. Call
  *  ldap_close_extended_op to close the operation.
  */
-ULONG ldap_extended_operationW( WLDAP32_LDAP *ld, PWCHAR oid, struct WLDAP32_berval *data,
+ULONG CDECL ldap_extended_operationW( WLDAP32_LDAP *ld, PWCHAR oid, struct WLDAP32_berval *data,
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls, ULONG *message )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
@@ -180,7 +180,7 @@ exit:
  *
  * See ldap_extended_operation_sW.
  */
-ULONG ldap_extended_operation_sA( WLDAP32_LDAP *ld, PCHAR oid, struct WLDAP32_berval *data,
+ULONG CDECL ldap_extended_operation_sA( WLDAP32_LDAP *ld, PCHAR oid, struct WLDAP32_berval *data,
     PLDAPControlA *serverctrls, PLDAPControlA *clientctrls, PCHAR *retoid,
     struct WLDAP32_berval **retdata )
 {
@@ -251,7 +251,7 @@ exit:
  *  and retdata parameters are also optional. Set to NULL if not
  *  used. Free retoid and retdata after use with ldap_memfree.
  */
-ULONG ldap_extended_operation_sW( WLDAP32_LDAP *ld, PWCHAR oid, struct WLDAP32_berval *data,
+ULONG CDECL ldap_extended_operation_sW( WLDAP32_LDAP *ld, PWCHAR oid, struct WLDAP32_berval *data,
     PLDAPControlW *serverctrls, PLDAPControlW *clientctrls, PWCHAR *retoid,
     struct WLDAP32_berval **retdata )
 {
