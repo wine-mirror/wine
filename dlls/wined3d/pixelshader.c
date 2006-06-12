@@ -590,7 +590,7 @@ static void pshader_defi(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3
     FIXME(" : Stub\n");
 }
 
-static void pshader_dp2add(WINED3DSHADERVECTOR* d) {
+static void pshader_dp2add(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2) {
     FIXME(" : Stub\n");
 }
 
@@ -602,7 +602,7 @@ static void pshader_dsy(WINED3DSHADERVECTOR* d) {
     FIXME(" : Stub\n");
 }
 
-static void pshader_texldd(WINED3DSHADERVECTOR* d) {
+static void pshader_texldd(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3DSHADERVECTOR* s1, WINED3DSHADERVECTOR* s2, WINED3DSHADERVECTOR* s3) {
     FIXME(" : Stub\n");
 }
 
@@ -676,7 +676,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_SINCOS,   "sincos",   NULL, 1, 4, pshader_sincos2, NULL, NULL, D3DPS_VERSION(2,0), D3DPS_VERSION(2,0)},
     {D3DSIO_SINCOS,   "sincos",   NULL, 1, 2, pshader_sincos3, NULL, NULL, D3DPS_VERSION(3,0), -1},
     /* TODO: dp2add can be made out of multiple instuctions */
-    {D3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  1, 2, pshader_dp2add,  NULL, NULL, 0, 0},
+    {D3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  1, 4, pshader_dp2add,  NULL, NULL, D3DPS_VERSION(2,0), -1},
 
     /* Matrix */
     {D3DSIO_M4x4, "m4x4", "undefined", 1, 3, pshader_m4x4, NULL, shader_glsl_mnxn, 0, 0},
@@ -738,7 +738,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     /* TODO: dp2add can be made out of multiple instuctions */
     {D3DSIO_DSX,      "dsx",      GLNAME_REQUIRE_GLSL, 1, 2, pshader_dsx,     NULL, NULL, 0, 0},
     {D3DSIO_DSY,      "dsy",      GLNAME_REQUIRE_GLSL, 1, 2, pshader_dsy,     NULL, NULL, 0, 0},
-    {D3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texldd,  NULL, NULL, 0, 0},
+    {D3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL, 1, 5, pshader_texldd,  NULL, NULL, D3DPS_VERSION(2,1), -1},
     {D3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL, 1, 3, pshader_setp,    NULL, NULL, 0, 0},
     {D3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL, 1, 2, pshader_texldl,  NULL, NULL, 0, 0},
     {D3DSIO_PHASE,    "phase",    GLNAME_REQUIRE_GLSL, 0, 0, pshader_nop,     NULL, NULL, 0, 0},
