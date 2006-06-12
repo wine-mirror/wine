@@ -57,7 +57,7 @@ typedef struct {
   BOOL write;
 } OTTable;
 
-const OTTable tables_templ[] = {
+static const OTTable tables_templ[] = {
       { MS_MAKE_TAG('c','v','t',' '), 0, 0, NULL, TRUE },
       { MS_MAKE_TAG('f','p','g','m'), 0, 0, NULL, TRUE },
       { MS_MAKE_TAG('g','d','i','r'), 0, 0, NULL, TRUE },
