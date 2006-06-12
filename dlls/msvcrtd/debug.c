@@ -36,7 +36,7 @@ extern int _callnewh(unsigned long);
 /*********************************************************************
  *		??2@YAPAXIHPBDH@Z (MSVCRTD.@)
  */
-void *MSVCRTD_operator_new_dbg(
+void * CDECL MSVCRTD_operator_new_dbg(
 	unsigned long nSize,
 	int nBlockUse,
 	const char *szFileName,
@@ -75,7 +75,7 @@ void *MSVCRTD_operator_new_dbg(
 /*********************************************************************
  *		_CrtSetDumpClient (MSVCRTD.@)
  */
-void *_CrtSetDumpClient(void *dumpClient)
+void * CDECL _CrtSetDumpClient(void *dumpClient)
 {
     return NULL;
 }
@@ -84,7 +84,7 @@ void *_CrtSetDumpClient(void *dumpClient)
 /*********************************************************************
  *		_CrtSetReportHook (MSVCRTD.@)
  */
-void *_CrtSetReportHook(void *reportHook)
+void * CDECL _CrtSetReportHook(void *reportHook)
 {
     return NULL;
 }
@@ -93,7 +93,7 @@ void *_CrtSetReportHook(void *reportHook)
 /*********************************************************************
  *		_CrtSetReportMode (MSVCRTD.@)
  */
-int _CrtSetReportMode(int reportType, int reportMode)
+int CDECL _CrtSetReportMode(int reportType, int reportMode)
 {
     return 0;
 }
@@ -102,7 +102,7 @@ int _CrtSetReportMode(int reportType, int reportMode)
 /*********************************************************************
  *		_CrtSetBreakAlloc (MSVCRTD.@)
  */
-int _CrtSetBreakAlloc(int new)
+int CDECL _CrtSetBreakAlloc(int new)
 {
     int old = _crtBreakAlloc;
     _crtBreakAlloc = new;
@@ -112,7 +112,7 @@ int _CrtSetBreakAlloc(int new)
 /*********************************************************************
  *		_CrtSetDbgFlag (MSVCRTD.@)
  */
-int _CrtSetDbgFlag(int new)
+int CDECL _CrtSetDbgFlag(int new)
 {
     int old = _crtDbgFlag;
     _crtDbgFlag = new;
@@ -123,8 +123,8 @@ int _CrtSetDbgFlag(int new)
 /*********************************************************************
  *		_CrtDbgReport (MSVCRTD.@)
  */
-int _CrtDbgReport(int reportType, const char *filename, int linenumber,
-		  const char *moduleName, const char *format, ...)
+int CDECL _CrtDbgReport(int reportType, const char *filename, int linenumber,
+                        const char *moduleName, const char *format, ...)
 {
     return 0;
 }
@@ -132,7 +132,7 @@ int _CrtDbgReport(int reportType, const char *filename, int linenumber,
 /*********************************************************************
  *		_CrtDumpMemoryLeaks (MSVCRTD.@)
  */
-int _CrtDumpMemoryLeaks(void)
+int CDECL _CrtDumpMemoryLeaks(void)
 {
     return 0;
 }
@@ -140,7 +140,7 @@ int _CrtDumpMemoryLeaks(void)
 /*********************************************************************
  *		_CrtCheckMemory (MSVCRTD.@)
  */
-int _CrtCheckMemory(void)
+int CDECL _CrtCheckMemory(void)
 {
     /* Note: maybe we could call here our heap validating functions ? */
     return TRUE;
@@ -150,7 +150,7 @@ int _CrtCheckMemory(void)
 /*********************************************************************
  *		__p__crtAssertBusy (MSVCRTD.@)
  */
-int *__p__crtAssertBusy(void)
+int * CDECL __p__crtAssertBusy(void)
 {
     return &_crtAssertBusy;
 }
@@ -158,7 +158,7 @@ int *__p__crtAssertBusy(void)
 /*********************************************************************
  *		__p__crtBreakAlloc (MSVCRTD.@)
  */
-int *__p__crtBreakAlloc(void)
+int * CDECL __p__crtBreakAlloc(void)
 {
     return &_crtBreakAlloc;
 }
@@ -166,7 +166,7 @@ int *__p__crtBreakAlloc(void)
 /*********************************************************************
  *		__p__crtDbgFlag (MSVCRTD.@)
  */
-int *__p__crtDbgFlag(void)
+int * CDECL __p__crtDbgFlag(void)
 {
     return &_crtDbgFlag;
 }
