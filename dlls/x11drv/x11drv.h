@@ -526,7 +526,6 @@ inline static Display *thread_display(void) { return x11drv_thread_data()->displ
 
 extern Visual *visual;
 extern Window root_window;
-extern DWORD desktop_tid;
 extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern unsigned int screen_depth;

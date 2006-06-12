@@ -71,7 +71,6 @@ unsigned int screen_width;
 unsigned int screen_height;
 unsigned int screen_depth;
 Window root_window;
-DWORD desktop_tid = 0;
 int dxgrab = 0;
 int usedga = 0;
 int usexvidmode = 1;
@@ -542,7 +541,6 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     data->last_focus = 0;
     data->selection_wnd = 0;
     TlsSetValue( thread_data_tls_index, data );
-    if (desktop_tid) AttachThreadInput( GetCurrentThreadId(), desktop_tid, TRUE );
     return data;
 }
 
