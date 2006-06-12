@@ -1857,7 +1857,7 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
     SID_IDENTIFIER_AUTHORITY identifierAuthority = {SECURITY_NT_AUTHORITY};
     BOOL ret;
     PSID pSid;
-    static const WCHAR dm[] = {'D','O','M','A','I','N'};
+    static const WCHAR dm[] = {'D','O','M','A','I','N',0};
 
     FIXME("%s %s %p %p %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpAccountName),
           Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse);
