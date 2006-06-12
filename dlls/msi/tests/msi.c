@@ -27,6 +27,10 @@
 
 typedef INSTALLSTATE (WINAPI *fnMsiUseFeatureExA)(LPCSTR, LPCSTR ,DWORD, DWORD );
 fnMsiUseFeatureExA pMsiUseFeatureExA;
+typedef UINT (WINAPI *fnMsiOpenPackageExA)(LPCSTR, DWORD, MSIHANDLE*);
+fnMsiOpenPackageExA pMsiOpenPackageExA;
+typedef UINT (WINAPI *fnMsiOpenPackageExW)(LPCWSTR, DWORD, MSIHANDLE*);
+fnMsiOpenPackageExW pMsiOpenPackageExW;
 
 static void test_usefeature(void)
 {
@@ -41,29 +45,27 @@ static void test_usefeature(void)
     r = MsiQueryFeatureState("{9085040-6000-11d3-8cfe-0150048383c9}" ,NULL);
     ok( r == INSTALLSTATE_INVALIDARG, "wrong return val\n");
 
-    r = MsiUseFeatureExA(NULL,NULL,0,0);
+    r = pMsiUseFeatureExA(NULL,NULL,0,0);
     ok( r == INSTALLSTATE_INVALIDARG, "wrong return val\n");
 
-    r = MsiUseFeatureExA(NULL, 
-                         "WORDVIEWFiles", -2, 1 );
+    r = pMsiUseFeatureExA(NULL, "WORDVIEWFiles", -2, 1 );
     ok( r == INSTALLSTATE_INVALIDARG, "wrong return val\n");
 
-    r = MsiUseFeatureExA("{90850409-6000-11d3-8cfe-0150048383c9}", 
+    r = pMsiUseFeatureExA("{90850409-6000-11d3-8cfe-0150048383c9}", 
                          NULL, -2, 0 );
     ok( r == INSTALLSTATE_INVALIDARG, "wrong return val\n");
 
-    r = MsiUseFeatureExA("{9085040-6000-11d3-8cfe-0150048383c9}", 
+    r = pMsiUseFeatureExA("{9085040-6000-11d3-8cfe-0150048383c9}", 
                          "WORDVIEWFiles", -2, 0 );
     ok( r == INSTALLSTATE_INVALIDARG, "wrong return val\n");
 
-    r = MsiUseFeatureExA("{0085040-6000-11d3-8cfe-0150048383c9}", 
+    r = pMsiUseFeatureExA("{0085040-6000-11d3-8cfe-0150048383c9}", 
                          "WORDVIEWFiles", -2, 0 );
     ok( r == INSTALLSTATE_INVALIDARG, "wrong return val\n");
 
-    r = MsiUseFeatureExA("{90850409-6000-11d3-8cfe-0150048383c9}", 
+    r = pMsiUseFeatureExA("{90850409-6000-11d3-8cfe-0150048383c9}", 
                          "WORDVIEWFiles", -2, 1 );
     ok( r == INSTALLSTATE_INVALIDARG, "wrong return val\n");
-
 }
 
 static void test_null(void)
@@ -71,7 +73,7 @@ static void test_null(void)
     MSIHANDLE hpkg;
     UINT r;
 
-    r = MsiOpenPackageExW(NULL, 0, &hpkg);
+    r = pMsiOpenPackageExW(NULL, 0, &hpkg);
     ok( r == ERROR_INVALID_PARAMETER,"wrong error\n");
 
     r = MsiQueryProductStateW(NULL);
@@ -86,6 +88,10 @@ START_TEST(msi)
     HMODULE hmod = GetModuleHandle("msi.dll");
     pMsiUseFeatureExA = (fnMsiUseFeatureExA) 
         GetProcAddress(hmod, "MsiUseFeatureExA");
+    pMsiOpenPackageExA = (fnMsiOpenPackageExA) 
+        GetProcAddress(hmod, "MsiOpenPackageExA");
+    pMsiOpenPackageExW = (fnMsiOpenPackageExW) 
+        GetProcAddress(hmod, "MsiOpenPackageExW");
 
     test_usefeature();
     test_null();
