@@ -2228,8 +2228,8 @@ static HRESULT WINAPI fnIMultiLanguage2_SetMimeDBSource(
     IMultiLanguage2* iface,
     MIMECONTF dwSource)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    FIXME("0x%08x\n", dwSource);
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_GetNumberOfScripts(
