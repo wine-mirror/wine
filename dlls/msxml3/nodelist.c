@@ -197,6 +197,7 @@ static HRESULT WINAPI xmlnodelist_QueryInterface(
     else
     {
         FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 
@@ -359,6 +360,8 @@ static HRESULT WINAPI xmlnodelist_nextNode(
     xmlNodePtr *top_level_node = NULL;
 
     TRACE("%p %p\n", This, nextItem );
+
+    *nextItem = NULL;
 
     if(This->enum_children)
         top_level_node = &This->top_level_node;
