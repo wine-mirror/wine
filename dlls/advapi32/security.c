@@ -3346,7 +3346,7 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         TRACE("StringSid is NULL, returning FALSE\n");
-	return FALSE;
+        return FALSE;
     }
 
     *cBytes = ComputeStringSidSize(StringSid);
@@ -3359,7 +3359,7 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
     if (StringSid[0] == 'S' && StringSid[1] == '-') /* S-R-I-S-S */
     {
         DWORD i = 0, identAuth;
-	DWORD csubauth = ((*cBytes - sizeof(SID)) / sizeof(DWORD)) + 1;
+        DWORD csubauth = ((*cBytes - sizeof(SID)) / sizeof(DWORD)) + 1;
 
         StringSid += 2; /* Advance to Revision */
         pisid->Revision = atoiW(StringSid);
@@ -3375,10 +3375,10 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
             goto lend; /* ERROR_INVALID_SID */
         }
 
-	pisid->SubAuthorityCount = csubauth;
+        pisid->SubAuthorityCount = csubauth;
 
         /* Advance to identifier authority */
-	while (*StringSid && *StringSid != '-')
+        while (*StringSid && *StringSid != '-')
             StringSid++;
         if (*StringSid == '-')
             StringSid++;
@@ -3401,14 +3401,14 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
             StringSid++;
 
         while (*StringSid)
-	{	
-	    while (*StringSid && *StringSid != '-')
+        {
+            while (*StringSid && *StringSid != '-')
                 StringSid++;
 
             pisid->SubAuthority[i++] = atoiW(StringSid);
         }
 
-	if (i != pisid->SubAuthorityCount)
+        if (i != pisid->SubAuthorityCount)
             goto lend; /* ERROR_INVALID_SID */
 
         bret = TRUE;
