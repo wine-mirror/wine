@@ -299,7 +299,27 @@ HRESULT WINAPI AtlUnmarshalPtr(IStream *stm, const IID *iid, IUnknown **ppUnk)
 HRESULT WINAPI AtlModuleGetClassObject(_ATL_MODULEW *pm, REFCLSID rclsid,
                                        REFIID riid, LPVOID *ppv)
 {
-    FIXME("%p %p %p %p\n", pm, rclsid, riid, ppv);
+    int i;
+
+    TRACE("%p %s %s %p\n", pm, debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    if (pm == NULL)
+        return E_INVALIDARG;
+
+    for (i = 0; pm->m_pObjMap[i].pclsid != NULL; i++)
+    {
+        if (IsEqualCLSID(pm->m_pObjMap[i].pclsid, rclsid))
+        {
+            _ATL_OBJMAP_ENTRYW *obj = &pm->m_pObjMap[i];
+
+            TRACE("found object %i\n", i);
+            if (obj->pfnGetClassObject)
+                return obj->pfnGetClassObject(obj->pfnCreateInstance, riid, ppv);
+        }
+    }
+
+    WARN("no class object found for %s\n", debugstr_guid(rclsid));
+
     return E_FAIL;
 }
 
