@@ -2344,6 +2344,11 @@ static inline PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVO
 /* If this is not declared, we cannot compile many sources written with C++. */
 int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 
+#ifdef __WINESRC__
+/* shouldn't be here, but is nice for type checking */
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved ) DECLSPEC_HIDDEN;
+#endif
+
 #ifdef __cplusplus
 }
 #endif
