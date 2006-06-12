@@ -50,8 +50,8 @@ void crypt_oid_free(void)
     free_oid_info();
 }
 
-CRITICAL_SECTION funcSetCS;
-struct list funcSets;
+static CRITICAL_SECTION funcSetCS;
+static struct list funcSets;
 
 struct OIDFunctionSet
 {
@@ -578,8 +578,8 @@ BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
     return rc ? FALSE : TRUE;
 }
 
-CRITICAL_SECTION oidInfoCS;
-struct list oidInfo;
+static CRITICAL_SECTION oidInfoCS;
+static struct list oidInfo;
 
 static const WCHAR tripledes[] = { '3','d','e','s',0 };
 static const WCHAR cms3deswrap[] = { 'C','M','S','3','D','E','S','w','r','a',
@@ -677,7 +677,7 @@ static const CRYPT_DATA_BLOB printableStringBlob = { sizeof(printableString),
 static const CRYPT_DATA_BLOB domainCompTypesBlob = { sizeof(domainCompTypes),
  (LPBYTE)domainCompTypes };
 
-struct OIDInfoConstructor {
+static const struct OIDInfoConstructor {
     DWORD   dwGroupId;
     LPCSTR  pszOID;
     UINT    Algid;
