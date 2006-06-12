@@ -104,7 +104,7 @@ struct frame {
 
     /* layer2 stuff */
     int II_sblimit;
-    void *alloc;
+    const struct al_table *alloc;
 };
 
 struct parameter {
@@ -201,9 +201,9 @@ extern void dct64(real *,real *,real *);
 extern void synth_ntom_set_step(long,long);
 
 extern unsigned char *conv16to8;
-extern long freqs[9];
+extern const long freqs[9];
 extern real muls[27][64];
 extern real decwin[512+32];
 extern real *pnts[5];
 
-extern struct parameter param;
+extern const struct parameter param;

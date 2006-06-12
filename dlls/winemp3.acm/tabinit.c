@@ -29,7 +29,7 @@ static unsigned char *conv16to8_buf = NULL;
 unsigned char *conv16to8;
 #endif
 
-static long intwinbase[] = {
+static const long intwinbase[] = {
      0,    -1,    -1,    -1,    -1,    -1,    -1,    -2,    -2,    -2,
     -2,    -3,    -3,    -4,    -4,    -5,    -5,    -6,    -7,    -7,
     -8,    -9,   -10,   -11,   -13,   -14,   -16,   -17,   -19,   -21,

@@ -51,7 +51,7 @@ struct bandInfoStruct {
 int longLimit[9][23];
 int shortLimit[9][14];
 
-struct bandInfoStruct bandInfo[9] = {
+static const struct bandInfoStruct bandInfo[9] = {
 
 /* MPEG 1.0 */
  { {0,4,8,12,16,20,24,30,36,44,52,62,74, 90,110,134,162,196,238,288,342,418,576},
@@ -126,7 +126,7 @@ void init_layer3(int down_sample_sblimit)
 
   for (i=0;i<8;i++)
   {
-    static double Ci[8]={-0.6,-0.535,-0.33,-0.185,-0.095,-0.041,-0.0142,-0.0037};
+    static const double Ci[8]={-0.6,-0.535,-0.33,-0.185,-0.095,-0.041,-0.0142,-0.0037};
     double sq=sqrt(1.0+Ci[i]*Ci[i]);
     aa_cs[i] = 1.0/sq;
     aa_ca[i] = Ci[i]/sq;
@@ -165,7 +165,7 @@ void init_layer3(int down_sample_sblimit)
   }
 
   for(j=0;j<4;j++) {
-    static int len[4] = { 36,36,12,36 };
+    static const int len[4] = { 36,36,12,36 };
     for(i=0;i<len[j];i+=2)
       win1[j][i] = + win[j][i];
     for(i=1;i<len[j];i+=2)
@@ -198,10 +198,10 @@ void init_layer3(int down_sample_sblimit)
 
   for(j=0;j<9;j++)
   {
-   struct bandInfoStruct *bi = &bandInfo[j];
+   const struct bandInfoStruct *bi = &bandInfo[j];
    int *mp;
    int cb,lwin;
-   short *bdf;
+   const short *bdf;
 
    mp = map[j][0] = mapbuf0[j];
    bdf = bi->longDiff;
@@ -555,13 +555,13 @@ static int III_get_scale_factors_1(int *scf,struct gr_info_s *gr_info)
 
 static int III_get_scale_factors_2(int *scf,struct gr_info_s *gr_info,int i_stereo)
 {
-  unsigned char *pnt;
+  const unsigned char *pnt;
   int i,j;
   unsigned int slen;
   int n = 0;
   int numbits = 0;
 
-  static unsigned char stab[3][6][4] = {
+  static const unsigned char stab[3][6][4] = {
    { { 6, 5, 5,5 } , { 6, 5, 7,3 } , { 11,10,0,0} ,
      { 7, 7, 7,0 } , { 6, 6, 6,3 } , {  8, 8,5,0} } ,
    { { 9, 9, 9,9 } , { 9, 9,12,6 } , { 18,18,0,0} ,
@@ -606,8 +606,8 @@ static int III_get_scale_factors_2(int *scf,struct gr_info_s *gr_info,int i_ster
   return numbits;
 }
 
-static int pretab1[22] = {0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,3,3,2,0};
-static int pretab2[22] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+static const int pretab1[22] = {0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,3,3,2,0};
+static const int pretab2[22] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 /*
  * don't forget to apply the same changes to III_dequantize_sample_ms() !!!
@@ -670,7 +670,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
     mc = 0;
     for(i=0;i<2;i++) {
       int lp = l[i];
-      struct newhuff *h = ht+gr_info->table_select[i];
+      const struct newhuff *h = ht+gr_info->table_select[i];
       for(;lp;lp--,mc--) {
         register int x,y;
         if( (!mc) ) {
@@ -688,7 +688,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
           }
         }
         {
-          register short *val = h->table;
+          register const short *val = h->table;
           while((y=*val++)<0) {
             if (get1bit())
               val -= y;
@@ -740,8 +740,9 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
       }
     }
     for(;l3 && (part2remain > 0);l3--) {
-      struct newhuff *h = htc+gr_info->count1table_select;
-      register short *val = h->table,a;
+      const struct newhuff *h = htc+gr_info->count1table_select;
+      const short *val = h->table;
+      short a;
 
       while((a=*val++)<0) {
         part2remain--;
@@ -828,7 +829,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
 	/*
      * decoding with 'long' BandIndex table (block_type != 2)
      */
-    int *pretab = gr_info->preflag ? pretab1 : pretab2;
+    const int *pretab = gr_info->preflag ? pretab1 : pretab2;
     int i,max = -1;
     int cb = 0;
     register int *m = map[sfreq][2];
@@ -843,7 +844,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
      */
     for(i=0;i<3;i++) {
       int lp = l[i];
-      struct newhuff *h = ht+gr_info->table_select[i];
+      const struct newhuff *h = ht+gr_info->table_select[i];
 
       for(;lp;lp--,mc--) {
         int x,y;
@@ -854,7 +855,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
           cb = *m++;
         }
         {
-          register short *val = h->table;
+          register const short *val = h->table;
           while((y=*val++)<0) {
             if (get1bit())
               val -= y;
@@ -909,8 +910,9 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
      * short (count1table) values
      */
     for(;l3 && (part2remain > 0);l3--) {
-      struct newhuff *h = htc+gr_info->count1table_select;
-      register short *val = h->table,a;
+      const struct newhuff *h = htc+gr_info->count1table_select;
+      const short *val = h->table;
+      short a;
 
       while((a=*val++)<0) {
         part2remain--;
@@ -1393,7 +1395,7 @@ static void III_i_stereo(real xr_buf[2][SBLIMIT][SSLIMIT],int *scalefac,
    struct gr_info_s *gr_info,int sfreq,int ms_stereo,int lsf)
 {
       real (*xr)[SBLIMIT*SSLIMIT] = (real (*)[SBLIMIT*SSLIMIT] ) xr_buf;
-      struct bandInfoStruct *bi = &bandInfo[sfreq];
+      const struct bandInfoStruct *bi = &bandInfo[sfreq];
       real *tab1,*tab2;
 
       if(lsf) {

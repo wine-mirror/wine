@@ -30,20 +30,20 @@ real muls[27][64];	/* also used by layer 1 */
 
 void init_layer2(void)
 {
-  static double mulmul[27] = {
+  static const double mulmul[27] = {
     0.0 , -2.0/3.0 , 2.0/3.0 ,
     2.0/7.0 , 2.0/15.0 , 2.0/31.0, 2.0/63.0 , 2.0/127.0 , 2.0/255.0 ,
     2.0/511.0 , 2.0/1023.0 , 2.0/2047.0 , 2.0/4095.0 , 2.0/8191.0 ,
     2.0/16383.0 , 2.0/32767.0 , 2.0/65535.0 ,
     -4.0/5.0 , -2.0/5.0 , 2.0/5.0, 4.0/5.0 ,
     -8.0/9.0 , -4.0/9.0 , -2.0/9.0 , 2.0/9.0 , 4.0/9.0 , 8.0/9.0 };
-  static int base[3][9] = {
+  static const int base[3][9] = {
      { 1 , 0, 2 , } ,
      { 17, 18, 0 , 19, 20 , } ,
      { 21, 1, 22, 23, 0, 24, 25, 2, 26 } };
   int i,j,k,l,len;
   real *table;
-  static int tablen[3] = { 3 , 5 , 9 };
+  static const int tablen[3] = { 3 , 5 , 9 };
   static int *itable,*tables[3] = { grp_3tab , grp_5tab , grp_9tab };
 
   for(i=0;i<3;i++)
@@ -77,7 +77,7 @@ void II_step_one(unsigned int *bit_alloc,int *scale,struct frame *fr)
     int sblimit = fr->II_sblimit;
     int jsbound = fr->jsbound;
     int sblimit2 = fr->II_sblimit<<stereo;
-    struct al_table *alloc1 = fr->alloc;
+    const struct al_table *alloc1 = fr->alloc;
     int i;
     static unsigned int scfsi_buf[64];
     unsigned int *scfsi,*bita;
@@ -150,7 +150,7 @@ void II_step_two(unsigned int *bit_alloc,real fraction[2][4][SBLIMIT],int *scale
     int stereo = fr->stereo;
     int sblimit = fr->II_sblimit;
     int jsbound = fr->jsbound;
-    struct al_table *alloc2,*alloc1 = fr->alloc;
+    const struct al_table *alloc2,*alloc1 = fr->alloc;
     unsigned int *bita=bit_alloc;
     int d1,step;
 
@@ -238,7 +238,7 @@ void II_step_two(unsigned int *bit_alloc,real fraction[2][4][SBLIMIT],int *scale
 
 static void II_select_table(struct frame *fr)
 {
-  static int translate[3][2][16] =
+  static const int translate[3][2][16] =
    { { { 0,2,2,2,2,2,2,0,0,0,1,1,1,1,1,0 } ,
        { 0,2,2,0,0,0,1,1,1,1,1,1,1,1,1,0 } } ,
      { { 0,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0 } ,
@@ -247,9 +247,9 @@ static void II_select_table(struct frame *fr)
        { 0,3,3,0,0,0,1,1,1,1,1,1,1,1,1,0 } } };
 
   int table,sblim;
-  static struct al_table *tables[5] =
+  static const struct al_table *tables[5] =
        { alloc_0, alloc_1, alloc_2, alloc_3 , alloc_4 };
-  static int sblims[5] = { 27 , 30 , 8, 12 , 30 };
+  static const int sblims[5] = { 27 , 30 , 8, 12 , 30 };
 
   if(fr->lsf)
     table = 4;
