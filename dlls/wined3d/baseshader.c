@@ -867,30 +867,35 @@ void shader_generate_main(
 
                 hw_arg.opcode = curOpcode;
 
-                if (curOpcode->num_params > 0) {
+                /* Destination token */
+                if (curOpcode->dst_token) {
 
                     DWORD param, addr_token = 0;
-
                     pToken += shader_get_param(iface, pToken, &param, &addr_token);
                     hw_arg.dst = param;
                     hw_arg.dst_addr = addr_token;
+                }
 
-                    if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) 
-                        hw_arg.predicate = *pToken++;
+                /* Predication token */
+                if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) 
+                    hw_arg.predicate = *pToken++;
 
-                    for (i = 1; i < curOpcode->num_params; i++) {
-                        /* DEF* instructions have constant src parameters, not registers */
-                        if (curOpcode->opcode == D3DSIO_DEF || 
-                            curOpcode->opcode == D3DSIO_DEFI || 
-                            curOpcode->opcode == D3DSIO_DEFB) {
-                            param = *pToken++;
+                /* Other source tokens */
+                for (i = curOpcode->dst_token; i < curOpcode->num_params; i++) {
 
-                        } else
-                            pToken += shader_get_param(iface, pToken, &param, &addr_token);
+                    DWORD param, addr_token = 0; 
 
-                        hw_arg.src[i-1] = param;
-                        hw_arg.src_addr[i-1] = addr_token;
-                    }
+                    /* DEF* instructions have constant src parameters, not registers */
+                    if (curOpcode->opcode == D3DSIO_DEF || 
+                        curOpcode->opcode == D3DSIO_DEFI || 
+                        curOpcode->opcode == D3DSIO_DEFB) {
+                        param = *pToken++;
+
+                    } else
+                        pToken += shader_get_param(iface, pToken, &param, &addr_token);
+
+                    hw_arg.src[i-1] = param;
+                    hw_arg.src_addr[i-1] = addr_token;
                 }
 
                 /* Call appropriate function for output target */
@@ -1052,7 +1057,9 @@ void shader_trace_init(
                     }
 
                     TRACE("%s", curOpcode->name);
-                    if (curOpcode->num_params > 0) {
+
+                    /* Destination token */
+                    if (curOpcode->dst_token) {
 
                         /* Destination token */
                         tokens_read = shader_get_param(iface, pToken, &param, &addr_token);
@@ -1062,22 +1069,23 @@ void shader_trace_init(
                         shader_dump_ins_modifiers(param);
                         TRACE(" ");
                         shader_dump_param(iface, param, addr_token, 0);
+                    }
 
-                        /* Predication token - already printed out, just skip it */
-                        if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
-                            pToken++;
-                            len++;
-                        }
-                        /* Other source tokens */
-                        for (i = 1; i < curOpcode->num_params; ++i) {
+                    /* Predication token - already printed out, just skip it */
+                    if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
+                        pToken++;
+                        len++;
+                    }
 
-                            tokens_read = shader_get_param(iface, pToken, &param, &addr_token);
-                            pToken += tokens_read;
-                            len += tokens_read;
+                    /* Other source tokens */
+                    for (i = curOpcode->dst_token; i < curOpcode->num_params; ++i) {
 
-                            TRACE(", ");
-                            shader_dump_param(iface, param, addr_token, 1);
-                        }
+                        tokens_read = shader_get_param(iface, pToken, &param, &addr_token);
+                        pToken += tokens_read;
+                        len += tokens_read;
+
+                        TRACE((i == 0)? " " : ", ");
+                        shader_dump_param(iface, param, addr_token, 1);
                     }
                 }
                 TRACE("\n");

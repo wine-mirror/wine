@@ -1290,6 +1290,7 @@ typedef struct SHADER_OPCODE {
     unsigned int  opcode;
     const char*   name;
     const char*   glname;
+    char          dst_token;
     CONST UINT    num_params;
     shader_fct_t  soft_fct;
     SHADER_HANDLER hw_fct;
