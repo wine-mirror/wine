@@ -1260,6 +1260,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     BOOL		bAutoOpen = FALSE;
     static const WCHAR  wszNew[] = {'n','e','w',0};
     static const WCHAR  wszSAliasS[] = {' ','a','l','i','a','s',' ',0};
+    static const WCHAR wszTypeS[] = {'t','y','p','e',' ',0};
 
     TRACE("(%s, %p, %d, %p)\n", 
           debugstr_w(lpstrCommand), lpstrRet, uRetLen, hwndCallback);
@@ -1281,18 +1282,26 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	goto errCleanUp;
     }
 
-    /* case dev == 'new' has to be handled */
-    if (!strcmpW(dev, wszNew)) {
-	FIXME("'new': NIY as device name\n");
-	dwRet = MCIERR_MISSING_DEVICE_NAME;
-	goto errCleanUp;
-    }
-
-    /* otherwise, try to grab devType from open */
+    /* Determine devType from open */
     if (!strcmpW(verb, wszOpen)) {
 	LPWSTR	devType, tmp;
 
-	if ((devType = strchrW(dev, '!')) != NULL) {
+	/* case dev == 'new' has to be handled */
+	if (!strcmpW(dev, wszNew)) {
+	    dev = 0;
+	    if ((devType = strstrW(args, wszTypeS)) != NULL) {
+		devType += 5;
+		tmp = strchrW(devType, ' ');
+		if (tmp) *tmp = '\0';
+		devType = str_dup_upper(devType);
+		if (tmp) *tmp = ' ';
+		/* dwFlags and data[2] will be correctly set in ParseOpt loop */
+	    } else {
+		WARN("open new requires device type\n");
+		dwRet = MCIERR_MISSING_DEVICE_NAME;
+		goto errCleanUp;
+	    }
+	} else if ((devType = strchrW(dev, '!')) != NULL) {
 	    *devType++ = '\0';
 	    tmp = devType; devType = dev; dev = tmp;
 
@@ -1309,7 +1318,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    if (tmp) *tmp = ' ';
 	    dwFlags |= MCI_OPEN_TYPE;
 	} else {
-            static const WCHAR wszTypeS[] = {'t','y','p','e',' ',0};
 	    if ((devType = strstrW(args, wszTypeS)) != NULL) {
 		devType += 5;
 		tmp = strchrW(devType, ' ');
@@ -1338,6 +1346,10 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
             data[4] = (DWORD)tmp2;
 	    /* should be done in regular options parsing */
 	    /* dwFlags |= MCI_OPEN_ALIAS; */
+	} else if (dev == 0) {
+	    /* "open new" requires alias */
+	    dwRet = MCIERR_NEW_REQUIRES_ALIAS;
+	    goto errCleanUp;
 	}
 
 	dwRet = MCI_LoadMciDriver(devType, &wmd);
