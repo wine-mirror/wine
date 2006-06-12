@@ -54,7 +54,7 @@ LPCSTR debugstr_us( const UNICODE_STRING *us )
  *	[GNUC && i386]
  */
 #if defined(__GNUC__) && defined(__i386__)
-LONGLONG __cdecl NTDLL__ftol(void)
+LONGLONG CDECL NTDLL__ftol(void)
 {
 	/* don't just do DO_FPU("fistp",retval), because the rounding
 	 * mode must also be set to "round towards zero"... */
@@ -73,7 +73,7 @@ LONGLONG __cdecl NTDLL__ftol(void)
  *	[!GNUC && i386]
  */
 #if !defined(__GNUC__) && defined(__i386__)
-LONGLONG __cdecl NTDLL__ftol(double fl)
+LONGLONG CDECL NTDLL__ftol(double fl)
 {
 	FIXME("should be register function\n");
 	return (LONGLONG)fl;
@@ -86,7 +86,7 @@ LONGLONG __cdecl NTDLL__ftol(double fl)
  *	[!i386]
  */
 #ifndef __i386__
-LONG __cdecl NTDLL__ftol(double fl)
+LONG CDECL NTDLL__ftol(double fl)
 {
 	return (LONG) fl;
 }
@@ -98,7 +98,7 @@ LONG __cdecl NTDLL__ftol(double fl)
  *	[GNUC && i386]
  */
 #if defined(__GNUC__) && defined(__i386__)
-double __cdecl NTDLL__CIpow(void)
+double CDECL NTDLL__CIpow(void)
 {
 	double x,y;
 	POP_FPU(y);
@@ -118,7 +118,7 @@ double __cdecl NTDLL__CIpow(void)
  *	[!GNUC && i386]
  */
 #if !defined(__GNUC__) && defined(__i386__)
-double __cdecl NTDLL__CIpow(double x,double y)
+double CDECL NTDLL__CIpow(double x,double y)
 {
 	FIXME("should be register function\n");
 	return pow(x,y);
@@ -131,7 +131,7 @@ double __cdecl NTDLL__CIpow(double x,double y)
  *	[!i386]
  */
 #ifndef __i386__
-double __cdecl NTDLL__CIpow(double x,double y)
+double CDECL NTDLL__CIpow(double x,double y)
 {
 	return pow(x,y);
 }
@@ -141,7 +141,7 @@ double __cdecl NTDLL__CIpow(double x,double y)
 /*********************************************************************
  *                  abs   (NTDLL.@)
  */
-int NTDLL_abs( int i )
+int CDECL NTDLL_abs( int i )
 {
     return abs( i );
 }
@@ -149,7 +149,7 @@ int NTDLL_abs( int i )
 /*********************************************************************
  *                  labs   (NTDLL.@)
  */
-long int NTDLL_labs( long int i )
+long int CDECL NTDLL_labs( long int i )
 {
     return labs( i );
 }
@@ -157,7 +157,7 @@ long int NTDLL_labs( long int i )
 /*********************************************************************
  *                  atan   (NTDLL.@)
  */
-double NTDLL_atan( double d )
+double CDECL NTDLL_atan( double d )
 {
     return atan( d );
 }
@@ -165,7 +165,7 @@ double NTDLL_atan( double d )
 /*********************************************************************
  *                  ceil   (NTDLL.@)
  */
-double NTDLL_ceil( double d )
+double CDECL NTDLL_ceil( double d )
 {
     return ceil( d );
 }
@@ -173,7 +173,7 @@ double NTDLL_ceil( double d )
 /*********************************************************************
  *                  cos   (NTDLL.@)
  */
-double NTDLL_cos( double d )
+double CDECL NTDLL_cos( double d )
 {
     return cos( d );
 }
@@ -181,7 +181,7 @@ double NTDLL_cos( double d )
 /*********************************************************************
  *                  fabs   (NTDLL.@)
  */
-double NTDLL_fabs( double d )
+double CDECL NTDLL_fabs( double d )
 {
     return fabs( d );
 }
@@ -189,7 +189,7 @@ double NTDLL_fabs( double d )
 /*********************************************************************
  *                  floor   (NTDLL.@)
  */
-double NTDLL_floor( double d )
+double CDECL NTDLL_floor( double d )
 {
     return floor( d );
 }
@@ -197,7 +197,7 @@ double NTDLL_floor( double d )
 /*********************************************************************
  *                  log   (NTDLL.@)
  */
-double NTDLL_log( double d )
+double CDECL NTDLL_log( double d )
 {
     return log( d );
 }
@@ -205,7 +205,7 @@ double NTDLL_log( double d )
 /*********************************************************************
  *                  pow   (NTDLL.@)
  */
-double NTDLL_pow( double x, double y )
+double CDECL NTDLL_pow( double x, double y )
 {
     return pow( x, y );
 }
@@ -213,7 +213,7 @@ double NTDLL_pow( double x, double y )
 /*********************************************************************
  *                  sin   (NTDLL.@)
  */
-double NTDLL_sin( double d )
+double CDECL NTDLL_sin( double d )
 {
     return sin( d );
 }
@@ -221,7 +221,7 @@ double NTDLL_sin( double d )
 /*********************************************************************
  *                  sqrt   (NTDLL.@)
  */
-double NTDLL_sqrt( double d )
+double CDECL NTDLL_sqrt( double d )
 {
     return sqrt( d );
 }
@@ -229,7 +229,7 @@ double NTDLL_sqrt( double d )
 /*********************************************************************
  *                  tan   (NTDLL.@)
  */
-double NTDLL_tan( double d )
+double CDECL NTDLL_tan( double d )
 {
     return tan( d );
 }
