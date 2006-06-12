@@ -99,19 +99,6 @@ void WINAPI DnsReleaseContextHandle( HANDLE context )
 }
 
 /******************************************************************************
- * DnsExtractRecordsFromMessage_A          [DNSAPI.@]
- *
- */
-DNS_STATUS WINAPI DnsExtractRecordsFromMessage_A( PDNS_MESSAGE_BUFFER buffer,
-                                                  WORD len, PDNS_RECORDA *record )
-{
-    FIXME( "(%p,%d,%p) stub\n", buffer, len, record );
-
-    *record = NULL;
-    return ERROR_SUCCESS;
-}
-
-/******************************************************************************
  * DnsExtractRecordsFromMessage_UTF8       [DNSAPI.@]
  *
  */
