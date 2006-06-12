@@ -42,8 +42,8 @@
 @ cdecl _amsg_exit(long) msvcrt._amsg_exit
 @ cdecl _assert(str str long) msvcrt._assert
 @ extern _basemajor_dll CRTDLL__basemajor_dll
-@ extern _baseminor_dll CRTDLL__basemajor_dll
-@ extern _baseversion_dll CRTDLL__basemajor_dll
+@ extern _baseminor_dll CRTDLL__baseminor_dll
+@ extern _baseversion_dll CRTDLL__baseversion_dll
 @ cdecl _beep(long long) msvcrt._beep
 @ cdecl _beginthread(ptr long ptr) msvcrt._beginthread
 @ cdecl _c_exit() msvcrt._c_exit
