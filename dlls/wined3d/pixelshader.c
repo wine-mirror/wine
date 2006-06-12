@@ -1305,6 +1305,17 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     SHADER_BUFFER buffer;
 
+    /* First pass: figure out which registers are used, what the semantics are, etc.. */
+    shader_reg_maps reg_maps;
+    DWORD semantics_in[WINED3DSHADERDECLUSAGE_MAX_USAGE];
+
+    memset(&reg_maps, 0, sizeof(shader_reg_maps));
+    memset(semantics_in, 0, WINED3DSHADERDECLUSAGE_MAX_USAGE * sizeof(DWORD));
+    reg_maps.semantics_in = semantics_in;
+    reg_maps.semantics_out = NULL;
+    shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps, pFunction);
+    /* FIXME: validate against OpenGL */
+
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
     if (This->device->fixupVertexBufferSize < SHADER_PGMSIZE) {
@@ -1325,8 +1336,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         /* Create the hw GLSL shader object and assign it as the baseShader.prgId */
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
 
-        /* Generate the bulk of the shader code */
-        generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);
+        /* Base Shader Body */
+        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
 
         /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
         if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
@@ -1354,9 +1365,8 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         shader_addline(&buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
         shader_addline(&buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
 
-        /** Call the base shader generation routine to generate most 
-            of the pixel shader string for us */
-        generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);
+        /* Base Shader Body */
+        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
 
         if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
             shader_addline(&buffer, "MOV result.color, R0;\n");

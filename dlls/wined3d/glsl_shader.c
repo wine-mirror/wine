@@ -168,7 +168,9 @@ static void shader_glsl_get_register_name(
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) arg->shader;
     BOOL pshader = shader_is_pshader_version(This->baseShader.hex_version);
     char tmpStr[50];
-    
+
+    *is_color = FALSE;   
+ 
     switch (regtype) {
     case D3DSPR_TEMP:
         sprintf(tmpStr, "R%lu", reg);
@@ -182,10 +184,19 @@ static void shader_glsl_get_register_name(
             }
         } else {
             IWineD3DVertexShaderImpl *vshader = (IWineD3DVertexShaderImpl*) arg->shader;
-            if (reg == vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE]
-                || reg == vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR]) {
-                (*is_color) = TRUE;
-            }
+
+            if (vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE] &&
+                reg == (vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE] & D3DSP_REGNUM_MASK))
+                *is_color = TRUE;
+
+            if (vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] &&
+                reg == (vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] & D3DSP_REGNUM_MASK))
+                *is_color = TRUE;
+
+            /* FIXME: Shaders in 8.1 appear to not require a dcl statement - use
+             * the reg value from the vertex declaration. However, arrayUsageMap is not initialized
+              * in that case - how can we know if an input contains color data or not? */
+
             sprintf(tmpStr, "attrib%lu", reg);
         } 
         break;

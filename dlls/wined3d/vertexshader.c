@@ -649,10 +649,19 @@ inline static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_INPUT:
-    if (reg == This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE]
-        || reg == This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR]) {
+
+    if (This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE] &&
+        reg == (This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE] & D3DSP_REGNUM_MASK))
         is_color = TRUE;
-    }
+
+    if (This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] &&
+        reg == (This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] & D3DSP_REGNUM_MASK))
+        is_color = TRUE;
+
+    /* FIXME: Shaders in 8.1 appear to not require a dcl statement - use
+     * the reg value from the vertex declaration. However, arrayUsageMap is not initialized
+     * in that case - how can we know if an input contains color data or not? */
+
     sprintf(tmpReg, "vertex.attrib[%lu]", reg);
     strcat(hwLine, tmpReg);
     break;
@@ -698,109 +707,6 @@ inline static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD
   } else {
     vshader_program_add_input_param_swizzle(param, is_color, hwLine);
   }
-}
-
-static void vshader_parse_input_decl_usage(IWineD3DVertexShaderImpl *This, INT usage, INT arrayNo)
-{
-    switch(usage & 0xFFFF) {
-        case D3DDECLUSAGE_POSITION:
-            if((usage & 0xF0000) >> 16 == 0) { /* tween data */
-                TRACE("Setting position to %d\n", arrayNo);
-                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION]     = arrayNo;
-            } else {
-                /* TODO: position indexes go from 0-8!!*/
-                TRACE("Setting position 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
-                /* robots uses positions up to 8, the position arrays are just packed.*/
-                if ((usage & 0xF0000) >> 16 > 1) {
-                    TRACE("Loaded for position %d (greater than 2)\n", (usage & 0xF0000) >> 16);
-                }
-                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + ((usage & 0xF0000) >> 16) -1] = arrayNo;
-            }
-        break;
-        case D3DDECLUSAGE_BLENDINDICES:
-            /* not supported by openGL */
-            TRACE("Setting BLENDINDICES to %d\n", arrayNo);
-            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDINDICES] = arrayNo;
-            if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended BLENDINDICES\n");
-        break;
-        case D3DDECLUSAGE_BLENDWEIGHT:
-            TRACE("Setting BLENDWEIGHT to %d\n", arrayNo);
-            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDWEIGHT]  = arrayNo;
-            if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended blend weights\n");
-        break;
-        case D3DDECLUSAGE_NORMAL:
-            if((usage & 0xF0000) >> 16 == 0) { /* tween data */
-                TRACE("Setting normal to %d\n", arrayNo);
-                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL]   = arrayNo;
-            } else {
-                TRACE("Setting normal 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
-                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL2]   = arrayNo;
-            }
-        break;
-        case D3DDECLUSAGE_PSIZE:
-            TRACE("Setting PSIZE to %d\n", arrayNo);
-            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_PSIZE]        = arrayNo;
-            if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended PSIZE\n");
-        break;
-        case D3DDECLUSAGE_COLOR:
-            if((usage & 0xF0000) >> 16 == 0)  {
-                TRACE("Setting DIFFUSE to %d\n", arrayNo);
-                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE]  = arrayNo;
-            } else {
-                TRACE("Setting SPECULAR to %d\n", arrayNo);
-                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] = arrayNo;
-            }
-        break;
-        case D3DDECLUSAGE_TEXCOORD:
-            /* only 7 texture coords have been designed for, so run a quick sanity check */
-            if ((usage & 0xF0000) >> 16 > 7) {
-                FIXME("(%p) : Program uses texture coordinate %d but only 0-7 have been implemented\n", This, (usage & 0xF0000) >> 16);
-            } else {
-                TRACE("Setting TEXCOORD %d  to %d\n", ((usage & 0xF0000) >> 16), arrayNo);
-                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TEXCOORD0 + ((usage & 0xF0000) >> 16)] = arrayNo;
-            }
-        break;
-        /* The following aren't supported by openGL,
-            if we get them then everything needs to be mapped to numbered attributes instead of named ones.
-            this should be caught in the first pass */
-        case D3DDECLUSAGE_TANGENT:
-            TRACE("Setting TANGENT to %d\n", arrayNo);
-            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TANGENT]      = arrayNo;
-        break;
-        case D3DDECLUSAGE_BINORMAL:
-            TRACE("Setting BINORMAL to %d\n", arrayNo);
-            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BINORMAL]     = arrayNo;
-        break;
-        case D3DDECLUSAGE_TESSFACTOR:
-            TRACE("Setting TESSFACTOR to %d\n", arrayNo);
-            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TESSFACTOR]   = arrayNo;
-        break;
-        case D3DDECLUSAGE_POSITIONT:
-            if((usage & 0xF0000) >> 16 == 0) { /* tween data */
-                FIXME("Setting positiont to %d\n", arrayNo);
-                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT] = arrayNo;
-            } else {
-                FIXME("Setting positiont 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
-                This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT2] = arrayNo;
-            if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended positiont\n");
-            }
-        break;
-        case D3DDECLUSAGE_FOG:
-            /* supported by OpenGL */
-            TRACE("Setting FOG to %d\n", arrayNo);
-            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_FOG]          = arrayNo;
-        break;
-        case D3DDECLUSAGE_DEPTH:
-            TRACE("Setting DEPTH to %d\n", arrayNo);
-            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DEPTH]        = arrayNo;
-        break;
-        case D3DDECLUSAGE_SAMPLE:
-            TRACE("Setting SAMPLE to %d\n", arrayNo);
-            This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SAMPLE]       = arrayNo;
-        break;
-        default:
-        FIXME("Unrecognised dcl %08x", usage & 0xFFFF);
-    }
 }
 
 static void vshader_set_version(
@@ -931,6 +837,17 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     SHADER_BUFFER buffer;
 
+    /* First pass: figure out which registers are used, what the semantics are, etc.. */
+    shader_reg_maps reg_maps;
+    DWORD semantics_out[WINED3DSHADERDECLUSAGE_MAX_USAGE];
+
+    memset(&reg_maps, 0, sizeof(shader_reg_maps));
+    memset(semantics_out, 0, WINED3DSHADERDECLUSAGE_MAX_USAGE * sizeof(DWORD));
+    reg_maps.semantics_in = This->arrayUsageMap;
+    reg_maps.semantics_out = semantics_out;
+    shader_get_registers_used((IWineD3DBaseShader*) This, &reg_maps, pFunction);
+    /* FIXME: validate against OpenGL */
+
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
     if (This->device->fixupVertexBufferSize < SHADER_PGMSIZE) {
@@ -951,8 +868,8 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
         /* Create the hw GLSL shader program and assign it as the baseShader.prgId */
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
 
-        /* Generate the bulk of the shader code */
-        generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);
+        /* Base Shader Body */
+        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
 
         shader_addline(&buffer, "}\n\0");
 
@@ -974,9 +891,8 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
             This->baseShader.limits.constant_float = 
                 min(95, This->baseShader.limits.constant_float);
 
-        /** Call the base shader generation routine to generate most 
-            of the vertex shader string for us */
-        generate_base_shader( (IWineD3DBaseShader*) This, &buffer, pFunction);
+        /* Base Shader Body */
+        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
 
         shader_addline(&buffer, "END\n\0"); 
 
@@ -1408,10 +1324,6 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     DWORD i;
     TRACE("(%p) : Parsing programme\n", This);
 
-    /* Initialise vertex input arrays */
-    for (i = 0; i < WINED3DSHADERDECLUSAGE_MAX_USAGE; i++)
-        This->arrayUsageMap[i] = -1;
-
     if (NULL != pToken) {
         while (D3DVS_END() != *pToken) {
             if (shader_is_vshader_version(*pToken)) { /** version */
@@ -1446,10 +1358,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
 
                     DWORD usage = *pToken;
                     DWORD param = *(pToken + 1);
-                    DWORD regtype = shader_get_regtype(param);
 
-                    if (regtype == D3DSPR_INPUT)
-                        vshader_parse_input_decl_usage(This, usage, param & D3DSP_REGNUM_MASK);
                     shader_program_dump_decl_usage(usage, param);
                     shader_dump_ins_modifiers(param);
                     TRACE(" ");

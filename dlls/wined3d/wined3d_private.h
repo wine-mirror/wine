@@ -1251,9 +1251,14 @@ typedef struct shader_reg_maps {
     DWORD texcoord;
     DWORD temporary;
     DWORD address;
+
     /* Constants */
     CHAR constantsF[256];  /* TODO: Make this dynamic */
     /* TODO: Integer and bool constants */
+
+    DWORD* semantics_in;
+    DWORD* semantics_out;
+
 } shader_reg_maps;
 
 #define SHADER_PGMSIZE 65535
@@ -1367,9 +1372,15 @@ extern void shader_program_dump_decl_usage(
     DWORD dcl,
     DWORD param);
 
-extern void generate_base_shader(
+extern void shader_get_registers_used(
+    IWineD3DBaseShader *iface,
+    shader_reg_maps* reg_maps,
+    CONST DWORD* pToken);
+
+extern void shader_generate_main(
     IWineD3DBaseShader *iface,
     SHADER_BUFFER* buffer,
+    shader_reg_maps* reg_maps,
     CONST DWORD* pFunction);
 
 extern void shader_dump_ins_modifiers(
@@ -1432,7 +1443,7 @@ typedef struct IWineD3DVertexShaderImpl {
     DWORD usage;
 
     /* vertex declaration array mapping */
-    INT arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE];
+    DWORD arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE];
  
     /* run time datas...  */
     VSHADERDATA                *data;

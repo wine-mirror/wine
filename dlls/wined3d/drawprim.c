@@ -833,33 +833,39 @@ static void draw_vertex(IWineD3DDevice *iface,                         /* interf
 }
 #endif /* TODO: Software shaders */
 
-void loadNumberedArrays(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, INT arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE]) {
+void loadNumberedArrays(
+    IWineD3DDevice *iface, 
+    WineDirect3DVertexStridedData *sd, 
+    DWORD arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE]) {
+
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
 #define LOAD_NUMBERED_ARRAY(_arrayName, _lookupName) \
-    if (sd->u.s._arrayName.lpData != NULL && ((arrayUsageMap[WINED3DSHADERDECLUSAGE_##_lookupName] & 0x7FFF) == arrayUsageMap[WINED3DSHADERDECLUSAGE_##_lookupName])) { \
-       TRACE_(d3d_shader)("Loading array %u with data from %s\n", arrayUsageMap[WINED3DSHADERDECLUSAGE_##_lookupName], #_arrayName); \
-       GL_EXTCALL(glVertexAttribPointerARB(arrayUsageMap[WINED3DSHADERDECLUSAGE_##_lookupName], \
+    if (sd->u.s._arrayName.lpData != NULL && arrayUsageMap[WINED3DSHADERDECLUSAGE_##_lookupName]) { \
+        unsigned int idx = arrayUsageMap[WINED3DSHADERDECLUSAGE_##_lookupName] & D3DSP_REGNUM_MASK; \
+        TRACE_(d3d_shader)("Loading array %u with data from %s\n", idx,  #_arrayName); \
+        GL_EXTCALL(glVertexAttribPointerARB(idx, \
                         WINED3D_ATR_SIZE(_arrayName), \
                         WINED3D_ATR_GLTYPE(_arrayName), \
                         WINED3D_ATR_NORMALIZED(_arrayName), \
                         sd->u.s._arrayName.dwStride, \
                         sd->u.s._arrayName.lpData)); \
-        GL_EXTCALL(glEnableVertexAttribArrayARB(arrayUsageMap[WINED3DSHADERDECLUSAGE_##_lookupName])); \
+        GL_EXTCALL(glEnableVertexAttribArrayARB(idx)); \
     }
 
 
 #define LOAD_NUMBERED_POSITION_ARRAY(_lookupNumber) \
-    if (sd->u.s.position2.lpData != NULL && ((arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + _lookupNumber] & 0x7FFF) == arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + _lookupNumber])) { \
-       FIXME_(d3d_shader)("Loading array %u with data from %s\n", arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + _lookupNumber], "position2"); \
-       GL_EXTCALL(glVertexAttribPointerARB(arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + _lookupNumber], \
+    if (sd->u.s.position2.lpData != NULL && arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + _lookupNumber]) { \
+        unsigned int idx = arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + _lookupNumber] & D3DSP_REGNUM_MASK; \
+        TRACE_(d3d_shader)("Loading array %u with data from %s\n", idx, "position2"); \
+        GL_EXTCALL(glVertexAttribPointerARB(idx, \
                         WINED3D_ATR_SIZE(position2), \
                         WINED3D_ATR_GLTYPE(position2), \
                         WINED3D_ATR_NORMALIZED(position2), \
                         sd->u.s.position2.dwStride, \
                         ((char *)sd->u.s.position2.lpData) + \
                         WINED3D_ATR_SIZE(position2) * WINED3D_ATR_TYPESIZE(position2) * _lookupNumber)); \
-        GL_EXTCALL(glEnableVertexAttribArrayARB(arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + _lookupNumber])); \
+        GL_EXTCALL(glEnableVertexAttribArrayARB(idx)); \
     }
 
 /* Generate some lookup tables */
