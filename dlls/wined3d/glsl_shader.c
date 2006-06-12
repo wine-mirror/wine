@@ -242,7 +242,10 @@ static void shader_glsl_get_register_name(
         }
     break;
     case D3DSPR_SAMPLER:
-        sprintf(tmpStr, "mytex%lu", reg);
+        if (pshader)
+            sprintf(tmpStr, "psampler%lu", reg);
+        else
+            sprintf(tmpStr, "vsampler%lu", reg);
     break;
     case D3DSPR_COLOROUT:
         if (reg == 0)
@@ -729,30 +732,48 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     DWORD hex_version = This->baseShader.hex_version;
 
     char dst_str[100],   dst_reg[50],  dst_mask[6];
-    char src0_str[100], src0_reg[50], src0_mask[6];
-    char src1_str[100], src1_reg[50], src1_mask[6];
+    char coord_str[100], coord_reg[50], coord_mask[6];
+    char sampler_str[100], sampler_reg[50], sampler_mask[6];
     DWORD reg_dest_code = arg->dst & D3DSP_REGNUM_MASK;
+    DWORD sampler_code, sampler_type;
 
     /* All versions have a destination register */
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
-    
+
     /* 1.0-1.3: Use destination register as coordinate source.
+       1.4+: Use provided coordinate source register. */
+    if (hex_version < D3DPS_VERSION(1,4))
+       strcpy(coord_reg, dst_reg);
+    else
+       shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, coord_reg, coord_mask, coord_str);
+
+    /* 1.0-1.4: Use destination register as coordinate source.
      * 2.0+: Use provided coordinate source register. */
-    if (hex_version == D3DPS_VERSION(1,4)) {
-        shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
-        sprintf(src1_str, "mytex%lu", reg_dest_code); 
-    } else if (hex_version > D3DPS_VERSION(1,4)) {
-        shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
-        shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
-    }
-       
-    /* 1.0-1.4: Use destination register number as texture code.
-     * 2.0+: Use provided sampler number as texure code. */
-    if (hex_version < D3DPS_VERSION(1,4)) {
-        shader_addline(buffer, "%s = texture2D(mytex%lu, gl_TexCoord[%lu].st);\n",
-                       dst_str, reg_dest_code, reg_dest_code);
-    } else {
-        shader_addline(buffer, "%s = texture2D(%s, %s.st);\n", dst_str, src1_str, src0_reg);
+    if (hex_version < D3DPS_VERSION(2,0)) {
+        sprintf(sampler_str, "psampler%lu", reg_dest_code); 
+        sampler_code = reg_dest_code;
+    }       
+    else {
+        shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, sampler_reg, sampler_mask, sampler_str);
+        sampler_code = arg->src[1] & D3DSP_REGNUM_MASK;
+    }         
+
+    sampler_type = arg->reg_maps->samplers[sampler_code] & D3DSP_TEXTURETYPE_MASK;
+    switch(sampler_type) {
+
+        case D3DSTT_2D:
+            shader_addline(buffer, "%s = texture2D(%s, %s.st);\n", dst_str, sampler_str, coord_reg);
+            break;
+        case D3DSTT_CUBE:
+            shader_addline(buffer, "%s = textureCube(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
+            break;
+        case D3DSTT_VOLUME:
+            shader_addline(buffer, "%s = texture3D(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
+            break;
+        default:
+            shader_addline(buffer, "%s = unrecognized_stype(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
+            FIXME("Unrecognized sampler type: %#lx;\n", sampler_type);
+            break;
     }
 }
 
@@ -806,7 +827,7 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
     shader_addline(buffer, "tmp0.y = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
-    shader_addline(buffer, "T%lu = texture2D(mytex%lu, tmp0.st);\n", reg, reg);
+    shader_addline(buffer, "T%lu = texture2D(psampler%lu, tmp0.st);\n", reg, reg);
 }
 
 void pshader_glsl_input_pack(

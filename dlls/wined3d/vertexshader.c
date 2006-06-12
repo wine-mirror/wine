@@ -712,7 +712,7 @@ inline static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD
 static void vshader_set_limits(
       IWineD3DVertexShaderImpl *This) {
 
-      This->baseShader.limits.texture = 0;
+      This->baseShader.limits.texcoord = 0;
       This->baseShader.limits.attributes = 16;
       This->baseShader.limits.packed_input = 0;
 
@@ -727,6 +727,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.address = 1;
                    This->baseShader.limits.packed_output = 0;
+                   This->baseShader.limits.sampler = 0;
                    break;
       
           case D3DVS_VERSION(2,0):
@@ -736,6 +737,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.address = 1;
                    This->baseShader.limits.packed_output = 0;
+                   This->baseShader.limits.sampler = 0;
                    break;
 
           case D3DVS_VERSION(3,0):
@@ -744,13 +746,15 @@ static void vshader_set_limits(
                    This->baseShader.limits.constant_int = 32;
                    This->baseShader.limits.address = 1;
                    This->baseShader.limits.packed_output = 12;
+                   This->baseShader.limits.sampler = 4;
                    break;
 
           default: This->baseShader.limits.temporary = 12;
-                   This->baseShader.limits.constant_bool = 0;
-                   This->baseShader.limits.constant_int = 0;
+                   This->baseShader.limits.constant_bool = 16;
+                   This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.address = 1;
                    This->baseShader.limits.packed_output = 0;
+                   This->baseShader.limits.sampler = 0;
                    FIXME("Unrecognized vertex shader version %#lx\n",
                        This->baseShader.hex_version);
       }

@@ -1686,6 +1686,36 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
 #endif
 
+/**
+ * Loads (pixel shader) samplers
+ */
+void drawPrimLoadPSamplersGLSL(
+    IWineD3DDevice* iface) {
+
+    IWineD3DDeviceImpl* This = (IWineD3DDeviceImpl *)iface;
+    GLhandleARB programId = This->stateBlock->shaderPrgId;
+    GLhandleARB name_loc;
+    int i;
+    char sampler_name[20];
+
+    if (programId == 0) {
+        /* No GLSL program set - nothing to do. */
+        return;
+    }
+
+    for (i=0; i< GL_LIMITS(textures); ++i) {
+        if (This->stateBlock->textures[i] != NULL) {
+           snprintf(sampler_name, sizeof(sampler_name), "psampler%d", i);
+           name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
+           if (name_loc != -1) {
+               TRACE_(d3d_shader)("Loading %s for texture %d\n", sampler_name, i);
+               GL_EXTCALL(glUniform1iARB(name_loc, i));
+               checkGLcall("glUniform1iARB");
+           }
+        }
+    }
+}
+
 /** 
  * Loads floating point constants (aka uniforms) into the currently set GLSL program.
  * When @constants_set == NULL, it will load all the constants.
@@ -1779,6 +1809,9 @@ void drawPrimLoadConstants(IWineD3DDevice *iface,
             /* TODO: Load boolean & integer constants for vertex shader */
         }
         if (usePixelShader) {
+
+            /* Load pixel shader samplers */
+            drawPrimLoadPSamplersGLSL(iface);
 
             /* Load DirectX 9 float constants/uniforms for pixel shader */
             drawPrimLoadConstantsGLSL_F(iface, WINED3D_PSHADER_MAX_CONSTANTS,

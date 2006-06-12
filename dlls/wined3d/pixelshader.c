@@ -947,7 +947,8 @@ static void pshader_set_limits(
                    This->baseShader.limits.constant_float = 8;
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.constant_bool = 0;
-                   This->baseShader.limits.texture = 4;
+                   This->baseShader.limits.texcoord = 4;
+                   This->baseShader.limits.sampler = 4;
                    This->baseShader.limits.packed_input = 0;
                    break;
 
@@ -956,7 +957,8 @@ static void pshader_set_limits(
                    This->baseShader.limits.constant_float = 8;
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.constant_bool = 0;
-                   This->baseShader.limits.texture = 6;
+                   This->baseShader.limits.texcoord = 6;
+                   This->baseShader.limits.sampler = 6;
                    This->baseShader.limits.packed_input = 0;
                    break;
                
@@ -967,7 +969,8 @@ static void pshader_set_limits(
                    This->baseShader.limits.constant_float = 32;
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.constant_bool = 16;
-                   This->baseShader.limits.texture = 8;
+                   This->baseShader.limits.texcoord = 8;
+                   This->baseShader.limits.sampler = 16;
                    This->baseShader.limits.packed_input = 0;
                    break;
 
@@ -976,15 +979,17 @@ static void pshader_set_limits(
                    This->baseShader.limits.constant_float = 224;
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.constant_bool = 16;
-                   This->baseShader.limits.texture = 0;
+                   This->baseShader.limits.texcoord = 0;
+                   This->baseShader.limits.sampler = 16;
                    This->baseShader.limits.packed_input = 12;
                    break;
 
           default: This->baseShader.limits.temporary = 32;
-                   This->baseShader.limits.constant_float = 8;
-                   This->baseShader.limits.constant_int = 0;
-                   This->baseShader.limits.constant_bool = 0;
-                   This->baseShader.limits.texture = 8;
+                   This->baseShader.limits.constant_float = 32;
+                   This->baseShader.limits.constant_int = 16;
+                   This->baseShader.limits.constant_bool = 16;
+                   This->baseShader.limits.texcoord = 8;
+                   This->baseShader.limits.sampler = 16;
                    This->baseShader.limits.packed_input = 0;
                    FIXME("Unrecognized pixel shader version %#lx\n", 
                        This->baseShader.hex_version);
@@ -1124,7 +1129,7 @@ static void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
     get_register_name(dst, reg_dest, arg->reg_maps->constantsF);
 
     /* 1.0-1.3: Use destination register as coordinate source.
-       2.0+: Use provided coordinate source register. */
+       1.4+: Use provided coordinate source register. */
    if (hex_version < D3DPS_VERSION(1,4))
       strcpy(reg_coord, reg_dest);
    else

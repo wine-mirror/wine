@@ -339,6 +339,8 @@ void shader_get_registers_used(
             DWORD regtype = shader_get_regtype(param);
             unsigned int regnum = param & D3DSP_REGNUM_MASK;
 
+            /* Vshader: mark attributes used
+               Pshader: mark 3.0 input registers used, save token */
             if (D3DSPR_INPUT == regtype) {
 
                 if (!pshader)
@@ -348,20 +350,35 @@ void shader_get_registers_used(
 
                 shader_parse_decl_usage(reg_maps->semantics_in, usage, param);
 
+            /* Vshader: mark 3.0 output registers used, save token */
             } else if (D3DSPR_OUTPUT == regtype) {
                 reg_maps->packed_output[regnum] = 1;
                 shader_parse_decl_usage(reg_maps->semantics_out, usage, param);
-            }
 
-            /* Handle samplers here */
+            /* Save sampler usage token */
+            } else if (D3DSPR_SAMPLER == regtype)
+                reg_maps->samplers[regnum] = usage;
 
         /* Skip definitions (for now) */
         } else if (D3DSIO_DEF == curOpcode->opcode) {
             pToken += curOpcode->num_params;
 
-        /* Set texture registers, and temporary registers */
+        /* Set texture, address, temporary registers */
         } else {
             int i, limit;
+
+            /* Declare 1.X samplers implicitly, based on the destination reg. number */
+            if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 && 
+                (D3DSIO_TEX == curOpcode->opcode ||
+                 D3DSIO_TEXM3x2TEX == curOpcode->opcode ||
+                 D3DSIO_TEXM3x3TEX == curOpcode->opcode ||
+                 D3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
+                 D3DSIO_TEXM3x3VSPEC == curOpcode->opcode)) {
+
+                /* Fake sampler usage, only set reserved bit and ttype */
+                DWORD sampler_code = *pToken & D3DSP_REGNUM_MASK;
+                reg_maps->samplers[sampler_code] = (0x1 << 31) | D3DSTT_2D;
+            }
 
             /* This will loop over all the registers and try to
              * make a bitmask of the ones we're interested in. 
@@ -511,7 +528,7 @@ void shader_dump_param(
     DWORD regtype = shader_get_regtype(param);
 
     /* There are some minor differences between pixel and vertex shaders */
-    BOOL pshader = shader_is_pshader_version(This->baseShader.hex_version);
+    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
 
     /* For one, we'd prefer color components to be shown for pshaders.
      * FIXME: use the swizzle function for this */
@@ -678,13 +695,13 @@ void shader_generate_arb_declarations(
             shader_addline(buffer, "ADDRESS A%ld;\n", i);
     }
 
-    for(i = 0; i < This->baseShader.limits.texture; i++) {
+    for(i = 0; i < This->baseShader.limits.texcoord; i++) {
         if (reg_maps->texcoord[i])
             shader_addline(buffer,"TEMP T%lu;\n", i);
     }
 
     /* Texture coordinate registers must be pre-loaded */
-    for (i = 0; i < This->baseShader.limits.texture; i++) {
+    for (i = 0; i < This->baseShader.limits.texcoord; i++) {
         if (reg_maps->texcoord[i])
             shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
     }
@@ -704,15 +721,36 @@ void shader_generate_glsl_declarations(
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     int i;
 
-    FIXME("GLSL not fully implemented yet.\n");
+    /* There are some minor differences between pixel and vertex shaders */
+    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
 
     /* Declare the constants (aka uniforms) */
     shader_addline(buffer, "uniform vec4 C[%u];\n", This->baseShader.limits.constant_float);
 
-    /* Declare texture samplers 
-     * TODO: Make this work for textures other than 2D */
-    for (i = 0; i < This->baseShader.limits.texture; i++) {
-        shader_addline(buffer, "uniform sampler2D mytex%lu;\n", i);
+    /* Declare texture samplers */ 
+    for (i = 0; i < This->baseShader.limits.sampler; i++) {
+        if (reg_maps->samplers[i]) {
+
+            const char* prefix = pshader? "psampler": "vsampler";
+
+            DWORD stype = reg_maps->samplers[i] & D3DSP_TEXTURETYPE_MASK;
+            switch (stype) {
+
+                case D3DSTT_2D:
+                    shader_addline(buffer, "uniform sampler2D %s%lu;\n", prefix, i);
+                    break;
+                case D3DSTT_CUBE:
+                    shader_addline(buffer, "uniform samplerCube %s%lu;\n", prefix, i);
+                    break;
+                case D3DSTT_VOLUME:
+                    shader_addline(buffer, "uniform sampler3D %s%lu;\n", prefix, i);
+                    break;
+                default:
+                    shader_addline(buffer, "uniform unsupported_sampler %s%lu;\n", prefix, i);
+                    FIXME("Unrecognized sampler type: %#lx\n", stype);
+                    break;
+            }
+        }
     }
     
     /* Declare address variables */
@@ -722,8 +760,9 @@ void shader_generate_glsl_declarations(
     }
 
     /* Declare texture coordinate temporaries and initialize them */
-    for (i = 0; i < This->baseShader.limits.texture; i++) {
-        shader_addline(buffer, "vec4 T%lu = gl_TexCoord[%lu];\n", i, i);
+    for (i = 0; i < This->baseShader.limits.texcoord; i++) {
+        if (reg_maps->texcoord[i]) 
+            shader_addline(buffer, "vec4 T%lu = gl_TexCoord[%lu];\n", i, i);
     }
 
     /* Declare input register temporaries */

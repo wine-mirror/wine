@@ -1268,8 +1268,14 @@ typedef struct shader_reg_maps {
     char constantsF[MAX_CONST_F];           /* pixel, vertex */
     /* TODO: Integer and bool constants */
 
+    /* Semantics maps (semantic -> reg_token)
+     * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD* semantics_in;                    /* vertex, pixel */
     DWORD* semantics_out;                   /* vertex */
+
+    /* Sampler usage tokens 
+     * Use 0 as default (bit 31 is always 1 on a valid token) */
+    DWORD samplers[MAX_SAMPLERS];
 
 } shader_reg_maps;
 
@@ -1306,7 +1312,8 @@ typedef struct SHADER_OPCODE_ARG {
 
 typedef struct SHADER_LIMITS {
     unsigned int temporary;
-    unsigned int texture;
+    unsigned int texcoord;
+    unsigned int sampler;
     unsigned int constant_int;
     unsigned int constant_float;
     unsigned int constant_bool;
