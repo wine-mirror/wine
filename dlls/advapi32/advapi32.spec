@@ -235,7 +235,7 @@
 @ stdcall GetCurrentHwProfileA(ptr)
 @ stdcall GetCurrentHwProfileW(ptr)
 @ stdcall GetEffectiveRightsFromAclA(ptr ptr ptr)
-# @ stub GetEffectiveRightsFromAclW
+@ stdcall GetEffectiveRightsFromAclW(ptr ptr ptr)
 # @ stub GetEventLogInformation
 @ stdcall GetExplicitEntriesFromAclA(ptr ptr ptr)
 @ stdcall GetExplicitEntriesFromAclW(ptr ptr ptr)
