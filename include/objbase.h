@@ -426,13 +426,13 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 /*****************************************************************************
  *	COM Server dll - exports
  */
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
-HRESULT WINAPI DllCanUnloadNow(void);
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT WINAPI DllCanUnloadNow(void) DECLSPEC_HIDDEN;
 
 /* shouldn't be here, but is nice for type checking */
 #ifdef __WINESRC__
-HRESULT WINAPI DllRegisterServer(void);
-HRESULT WINAPI DllUnregisterServer(void);
+HRESULT WINAPI DllRegisterServer(void) DECLSPEC_HIDDEN;
+HRESULT WINAPI DllUnregisterServer(void) DECLSPEC_HIDDEN;
 #endif
 
 

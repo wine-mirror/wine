@@ -34,6 +34,7 @@
 #include "winreg.h"
 #include "ole2.h"
 #include "advpub.h"
+#include "shlwapi.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
