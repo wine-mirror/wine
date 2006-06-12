@@ -49,10 +49,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 extern HRESULT WINAPI IFSFolder_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
 
-const WCHAR sShell32[12] = {'S','H','E','L','L','3','2','.','D','L','L','\0'};
-const WCHAR sOLE32[10] = {'O','L','E','3','2','.','D','L','L','\0'};
+static const WCHAR sShell32[12] = {'S','H','E','L','L','3','2','.','D','L','L','\0'};
+static const WCHAR sOLE32[10] = {'O','L','E','3','2','.','D','L','L','\0'};
 
-HINSTANCE hShellOle32 = 0;
 /**************************************************************************
  * Default ClassFactory types
  */
@@ -60,7 +59,7 @@ typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown* pUnkOuter, REFIID riid,
 IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pcRefDll, REFIID riidInst);
 
 /* this table contains all CLSID's of shell32 objects */
-struct {
+static const struct {
 	REFIID			riid;
 	LPFNCREATEINSTANCE	lpfnCI;
 } InterfaceTable[] = {

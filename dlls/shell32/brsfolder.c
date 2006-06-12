@@ -64,7 +64,7 @@ static void FillTreeView(browse_info*, LPSHELLFOLDER,
 static HTREEITEM InsertTreeViewItem( browse_info*, IShellFolder *,
                LPCITEMIDLIST, LPCITEMIDLIST, IEnumIDList*, HTREEITEM);
 
-const WCHAR szBrowseFolderInfo[] = {
+static const WCHAR szBrowseFolderInfo[] = {
     '_','_','W','I','N','E','_',
     'B','R','S','F','O','L','D','E','R','D','L','G','_',
     'I','N','F','O',0
