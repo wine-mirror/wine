@@ -252,7 +252,7 @@
 @ stub NtQueryIntervalProfile
 @ stub NtQueryIoCompletion
 @ stdcall NtQueryKey (long long ptr long ptr)
-# @ stub NtQueryMultipleValueKey
+@ stdcall NtQueryMultipleValueKey(long ptr long ptr long ptr)
 @ stdcall NtQueryMutant(long long ptr long ptr)
 @ stdcall NtQueryObject(long long long long long)
 @ stub NtQueryOpenSubKeys
