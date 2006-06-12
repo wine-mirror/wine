@@ -106,10 +106,10 @@ typedef struct
     LPWSTR      propval;
 } radio_button_group_descr;
 
-const WCHAR szMsiDialogClass[] = {
+static const WCHAR szMsiDialogClass[] = {
     'M','s','i','D','i','a','l','o','g','C','l','o','s','e','C','l','a','s','s',0
 };
-const WCHAR szMsiHiddenWindow[] = {
+static const WCHAR szMsiHiddenWindow[] = {
     'M','s','i','H','i','d','d','e','n','W','i','n','d','o','w',0 };
 static const WCHAR szStatic[] = { 'S','t','a','t','i','c',0 };
 static const WCHAR szButton[] = { 'B','U','T','T','O','N', 0 };
@@ -1675,7 +1675,7 @@ static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
-struct control_handler msi_dialog_handler[] =
+static const struct control_handler msi_dialog_handler[] =
 {
     { szText, msi_dialog_text_control },
     { szPushButton, msi_dialog_button_control },

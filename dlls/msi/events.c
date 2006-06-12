@@ -368,7 +368,7 @@ UINT ACTION_DialogBox( MSIPACKAGE* package, LPCWSTR szDialogName )
     return r;
 }
 
-struct _events Events[] = {
+static const struct _events Events[] = {
     { "EndDialog",ControlEvent_EndDialog },
     { "NewDialog",ControlEvent_NewDialog },
     { "SpawnDialog",ControlEvent_SpawnDialog },

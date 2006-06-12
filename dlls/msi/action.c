@@ -113,7 +113,7 @@ static const WCHAR szForceReboot[] =
     {'F','o','r','c','e','R','e','b','o','o','t',0};
 static const WCHAR szResolveSource[] =
     {'R','e','s','o','l','v','e','S','o','u','r','c','e',0};
-const WCHAR szAppSearch[] = 
+static const WCHAR szAppSearch[] = 
     {'A','p','p','S','e','a','r','c','h',0};
 static const WCHAR szAllocateRegistrySpace[] = 
     {'A','l','l','o','c','a','t','e','R','e','g','i','s','t','r','y',
