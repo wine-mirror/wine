@@ -417,7 +417,9 @@ void shader_glsl_arith(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
     shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
     shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    strcat(tmpLine, "vec4(");
     strcat(tmpLine, src0_str);
+    strcat(tmpLine, ")");
 
     /* Determine the GLSL operator to use based on the opcode */
     switch (curOpcode->opcode) {
@@ -428,7 +430,7 @@ void shader_glsl_arith(SHADER_OPCODE_ARG* arg) {
             FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
             break;
     }
-    shader_addline(buffer, "%s%s)%s;\n", tmpLine, src1_str, dst_mask);
+    shader_addline(buffer, "%svec4(%s))%s;\n", tmpLine, src1_str, dst_mask);
 }
 
 /* Process the D3DSIO_MOV opcode using GLSL (dst = src) */
@@ -512,12 +514,15 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
     strcat(tmpLine, "(");
 
     if (curOpcode->num_params > 0) {
+        strcat(tmpLine, "vec4(");
         shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src_reg, src_mask, src_str);
         strcat(tmpLine, src_str);
+        strcat(tmpLine, ")");
         for (i = 2; i < curOpcode->num_params; ++i) {
-            strcat(tmpLine, ", ");
+            strcat(tmpLine, ", vec4(");
             shader_glsl_add_param(arg, arg->src[i-1], arg->src_addr[i-1], TRUE, src_reg, src_mask, src_str);
             strcat(tmpLine, src_str);
+            strcat(tmpLine, ")");
         }
     }
     shader_addline(buffer, "%s))%s;\n", tmpLine, dst_mask);
@@ -620,7 +625,7 @@ void shader_glsl_mad(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[2], arg->src_addr[2], TRUE, src2_reg, src2_mask, src2_str);     
     shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
 
-    shader_addline(arg->buffer, "%s((%s) * (%s)) + (%s))%s;\n",
+    shader_addline(arg->buffer, "%s(vec4(%s) * vec4(%s)) + vec4(%s))%s;\n",
                    tmpLine, src0_str, src1_str, src2_str, dst_mask);
 }
 
