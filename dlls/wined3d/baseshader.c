@@ -68,7 +68,6 @@ const SHADER_OPCODE* shader_get_opcode(
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl*) iface;
 
     DWORD i = 0;
-    DWORD version = This->baseShader.version;
     DWORD hex_version = This->baseShader.hex_version;
     const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
 
@@ -81,8 +80,8 @@ const SHADER_OPCODE* shader_get_opcode(
         }
         ++i;
     }
-    FIXME("Unsupported opcode %lx(%ld) masked %lx version %ld\n", 
-       code, code, code & D3DSI_OPCODE_MASK, version);
+    FIXME("Unsupported opcode %#lx(%ld) masked %#lx, shader version %#lx\n", 
+       code, code, code & D3DSI_OPCODE_MASK, hex_version);
     return NULL;
 }
 
@@ -392,7 +391,7 @@ void shader_get_registers_used(
     }
 }
 
-void shader_program_dump_decl_usage(
+static void shader_dump_decl_usage(
     DWORD decl, 
     DWORD param) {
 
@@ -895,6 +894,146 @@ void shader_hw_def(SHADER_OPCODE_ARG* arg) {
                    *((const float *)(arg->src + 3)) );
 
     arg->reg_maps->constantsF[reg] = 1;
+}
+
+/* First pass: trace shader, initialize length and version */
+void shader_trace_init(
+    IWineD3DBaseShader *iface,
+    const DWORD* pFunction) {
+
+    IWineD3DBaseShaderImpl *This =(IWineD3DBaseShaderImpl *)iface;
+
+    const DWORD* pToken = pFunction;
+    const SHADER_OPCODE* curOpcode = NULL;
+    DWORD opcode_token;
+    unsigned int len = 0;
+    DWORD i;
+
+    TRACE("(%p) : Parsing programme\n", This);
+
+    if (NULL != pToken) {
+        while (D3DVS_END() != *pToken) {
+            if (shader_is_version_token(*pToken)) { /** version */
+                This->baseShader.hex_version = *pToken;
+                TRACE("%s_%lu_%lu\n", shader_is_pshader_version(This->baseShader.hex_version)? "ps": "vs",
+                    D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version),
+                    D3DSHADER_VERSION_MINOR(This->baseShader.hex_version));
+                ++pToken;
+                ++len;
+                continue;
+            }
+            if (shader_is_comment(*pToken)) { /** comment */
+                DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+                ++pToken;
+                TRACE("//%s\n", (char*)pToken);
+                pToken += comment_len;
+                len += comment_len + 1;
+                continue;
+            }
+            opcode_token = *pToken++;
+            curOpcode = shader_get_opcode(iface, opcode_token);
+            len++;
+
+            if (NULL == curOpcode) {
+                int tokens_read;
+                FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
+                tokens_read = shader_skip_unrecognized(iface, pToken);
+                pToken += tokens_read;
+                len += tokens_read;
+
+            } else {
+                if (curOpcode->opcode == D3DSIO_DCL) {
+
+                    DWORD usage = *pToken;
+                    DWORD param = *(pToken + 1);
+
+                    shader_dump_decl_usage(usage, param);
+                    shader_dump_ins_modifiers(param);
+                    TRACE(" ");
+                    shader_dump_param(iface, param, 0, 0);
+                    pToken += 2;
+                    len += 2;
+
+                } else if (curOpcode->opcode == D3DSIO_DEF) {
+
+                        unsigned int offset = shader_get_float_offset(*pToken);
+
+                        TRACE("def c%u = %f, %f, %f, %f", offset,
+                            *(float *)(pToken + 1),
+                            *(float *)(pToken + 2),
+                            *(float *)(pToken + 3),
+                            *(float *)(pToken + 4));
+
+                        pToken += 5;
+                        len += 5;
+                } else if (curOpcode->opcode == D3DSIO_DEFI) {
+
+                        TRACE("defi i%lu = %ld, %ld, %ld, %ld", *pToken & D3DSP_REGNUM_MASK,
+                            (long) *(pToken + 1),
+                            (long) *(pToken + 2),
+                            (long) *(pToken + 3),
+                            (long) *(pToken + 4));
+
+                        pToken += 5;
+                        len += 5;
+
+                } else if (curOpcode->opcode == D3DSIO_DEFB) {
+
+                        TRACE("defb b%lu = %s", *pToken & D3DSP_REGNUM_MASK,
+                            *(pToken + 1)? "true": "false");
+
+                        pToken += 2;
+                        len += 2;
+
+                } else {
+
+                    DWORD param, addr_token;
+                    int tokens_read;
+
+                    /* Print out predication source token first - it follows
+                     * the destination token. */
+                    if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
+                        TRACE("(");
+                        shader_dump_param(iface, *(pToken + 2), 0, 1);
+                        TRACE(") ");
+                    }
+
+                    TRACE("%s", curOpcode->name);
+                    if (curOpcode->num_params > 0) {
+
+                        /* Destination token */
+                        tokens_read = shader_get_param(iface, pToken, &param, &addr_token);
+                        pToken += tokens_read;
+                        len += tokens_read;
+
+                        shader_dump_ins_modifiers(param);
+                        TRACE(" ");
+                        shader_dump_param(iface, param, addr_token, 0);
+
+                        /* Predication token - already printed out, just skip it */
+                        if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
+                            pToken++;
+                            len++;
+                        }
+                        /* Other source tokens */
+                        for (i = 1; i < curOpcode->num_params; ++i) {
+
+                            tokens_read = shader_get_param(iface, pToken, &param, &addr_token);
+                            pToken += tokens_read;
+                            len += tokens_read;
+
+                            TRACE(", ");
+                            shader_dump_param(iface, param, addr_token, 1);
+                        }
+                    }
+                }
+                TRACE("\n");
+            }
+        }
+        This->baseShader.functionLength = (len + 1) * sizeof(DWORD);
+    } else {
+        This->baseShader.functionLength = 1; /* no Function defined use fixed function vertex processing */
+    }
 }
 
 /* TODO: Move other shared code here */

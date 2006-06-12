@@ -709,16 +709,8 @@ inline static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD
   }
 }
 
-static void vshader_set_version(
-      IWineD3DVertexShaderImpl *This,
-      DWORD version) {
-
-      DWORD major = (version >> 8) & 0x0F;
-      DWORD minor = version & 0x0F;
-
-      This->baseShader.hex_version = version;
-      This->baseShader.version = major * 10 + minor;
-      TRACE("vs_%lu_%lu\n", major, minor);
+static void vshader_set_limits(
+      IWineD3DVertexShaderImpl *This) {
 
       This->baseShader.limits.texture = 0;
       This->baseShader.limits.attributes = 16;
@@ -726,22 +718,25 @@ static void vshader_set_version(
       /* Must match D3DCAPS9.MaxVertexShaderConst: at least 256 for vs_2_0 */
       This->baseShader.limits.constant_float = WINED3D_VSHADER_MAX_CONSTANTS;
 
-      switch (This->baseShader.version) {
-          case 10:
-          case 11: This->baseShader.limits.temporary = 12;
+      switch (This->baseShader.hex_version) {
+          case D3DVS_VERSION(1,0):
+          case D3DVS_VERSION(1,1):
+                   This->baseShader.limits.temporary = 12;
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.address = 1;
                    break;
       
-          case 20:
-          case 21: This->baseShader.limits.temporary = 12;
+          case D3DVS_VERSION(2,0):
+          case D3DVS_VERSION(2,1):
+                   This->baseShader.limits.temporary = 12;
                    This->baseShader.limits.constant_bool = 16;
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.address = 1;
                    break;
 
-          case 30: This->baseShader.limits.temporary = 32;
+          case D3DVS_VERSION(3,0):
+                   This->baseShader.limits.temporary = 32;
                    This->baseShader.limits.constant_bool = 32;
                    This->baseShader.limits.constant_int = 32;
                    This->baseShader.limits.address = 1;
@@ -751,7 +746,8 @@ static void vshader_set_version(
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.address = 1;
-                   FIXME("Unrecognized vertex shader version %lx!\n", version);
+                   FIXME("Unrecognized vertex shader version %#lx\n",
+                       This->baseShader.hex_version);
       }
 }
 
@@ -1316,140 +1312,11 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader*
 }
 
 static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader *iface, CONST DWORD *pFunction) {
+
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
-    const DWORD* pToken = pFunction;
-    const SHADER_OPCODE* curOpcode = NULL;
-    DWORD opcode_token;
-    DWORD len = 0;
-    DWORD i;
-    TRACE("(%p) : Parsing programme\n", This);
 
-    if (NULL != pToken) {
-        while (D3DVS_END() != *pToken) {
-            if (shader_is_vshader_version(*pToken)) { /** version */
-                vshader_set_version(This, *pToken);
-                ++pToken;
-                ++len;
-                continue;
-            }
-            if (shader_is_comment(*pToken)) { /** comment */
-                DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
-                ++pToken;
-                TRACE("//%s\n", (char*)pToken);
-                pToken += comment_len;
-                len += comment_len + 1;
-                continue;
-            }
-
-            opcode_token = *pToken++;
-            curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, opcode_token);
-            len++;
-
-            if (NULL == curOpcode) {
-                int tokens_read;
-
-                FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
-                tokens_read = shader_skip_unrecognized((IWineD3DBaseShader*) This, pToken);
-                pToken += tokens_read;
-                len += tokens_read;
-
-            } else {
-                if (curOpcode->opcode == D3DSIO_DCL) {
-
-                    DWORD usage = *pToken;
-                    DWORD param = *(pToken + 1);
-
-                    shader_program_dump_decl_usage(usage, param);
-                    shader_dump_ins_modifiers(param);
-                    TRACE(" ");
-                    shader_dump_param((IWineD3DBaseShader*) This, param, 0, 0);
-                    pToken += 2;
-                    len += 2;
-
-                } else if (curOpcode->opcode == D3DSIO_DEF) {
-
-                        unsigned int offset = shader_get_float_offset(*pToken);
-
-                        TRACE("def c%u = %f, %f, %f, %f", offset,
-                            *(float *)(pToken + 1),
-                            *(float *)(pToken + 2),
-                            *(float *)(pToken + 3),
-                            *(float *)(pToken + 4));
-
-                        pToken += 5;
-                        len += 5;
-
-                } else if (curOpcode->opcode == D3DSIO_DEFI) {
-
-                        TRACE("defi i%lu = %ld, %ld, %ld, %ld", *pToken & D3DSP_REGNUM_MASK,
-                            (long) *(pToken + 1),
-                            (long) *(pToken + 2),
-                            (long) *(pToken + 3),
-                            (long) *(pToken + 4));
-
-                        pToken += 5;
-                        len += 5;
-
-                } else if (curOpcode->opcode == D3DSIO_DEFB) {
-
-                        TRACE("defb b%lu = %s", *pToken & D3DSP_REGNUM_MASK,
-                            *(pToken + 1)? "true": "false");
-
-                        pToken += 2;
-                        len += 2;
-
-                } else {
-
-                    DWORD param, addr_token;
-                    int tokens_read;
-
-                    /* Print out predication source token first - it follows
-                     * the destination token. */
-                    if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
-                        TRACE("(");
-                        shader_dump_param((IWineD3DBaseShader*) This, *(pToken + 2), 0, 1);
-                        TRACE(") ");
-                    }
-
-                    TRACE("%s", curOpcode->name);
-                    if (curOpcode->num_params > 0) {
-
-                        /* Destination token */
-                        tokens_read = shader_get_param((IWineD3DBaseShader*) This,
-                            pToken, &param, &addr_token);
-                        pToken += tokens_read;
-                        len += tokens_read;
-
-                        shader_dump_ins_modifiers(param);
-                        TRACE(" ");
-                        shader_dump_param((IWineD3DBaseShader*) This, param, addr_token, 0);
-
-                        /* Predication token - already printed out, just skip it */
-                        if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
-                            pToken++;
-                            len++;
-                        }
-
-                        /* Other source tokens */
-                        for (i = 1; i < curOpcode->num_params; ++i) {
-
-                            tokens_read = shader_get_param((IWineD3DBaseShader*) This,
-                               pToken, &param, &addr_token);
-                            pToken += tokens_read;
-                            len += tokens_read;
-
-                            TRACE(", ");
-                            shader_dump_param((IWineD3DBaseShader*) This, param, addr_token, 1);
-                        }
-                    }
-                }
-                TRACE("\n");
-            }
-        }
-        This->baseShader.functionLength = (len + 1) * sizeof(DWORD);
-    } else {
-        This->baseShader.functionLength = 1; /* no Function defined use fixed function vertex processing */
-    }
+    shader_trace_init((IWineD3DBaseShader*) This, pFunction);
+    vshader_set_limits(This);
 
     /* Generate HW shader in needed */
     if (NULL != pFunction  && wined3d_settings.vs_mode == VS_HW) 

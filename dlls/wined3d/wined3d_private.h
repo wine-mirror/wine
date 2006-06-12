@@ -1349,7 +1349,6 @@ extern void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg);
  */
 typedef struct IWineD3DBaseShaderClass
 {
-    DWORD                           version;
     DWORD                           hex_version;
     SHADER_LIMITS                   limits;
     SHADER_PARSE_STATE              parse_state;
@@ -1367,10 +1366,6 @@ typedef struct IWineD3DBaseShaderImpl {
     /* IWineD3DBaseShader */
     IWineD3DBaseShaderClass         baseShader;
 } IWineD3DBaseShaderImpl;
-
-extern void shader_program_dump_decl_usage(
-    DWORD dcl,
-    DWORD param);
 
 extern void shader_get_registers_used(
     IWineD3DBaseShader *iface,
@@ -1391,6 +1386,10 @@ extern void shader_dump_param(
     const DWORD param,
     const DWORD addr_token,
     int input);
+
+extern void shader_trace_init(
+    IWineD3DBaseShader *iface,
+    const DWORD* pFunction);
 
 extern int shader_get_param(
     IWineD3DBaseShader* iface,

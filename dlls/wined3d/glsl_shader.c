@@ -217,7 +217,7 @@ static void shader_glsl_get_register_name(
             if (param & D3DVS_ADDRMODE_RELATIVE) {
                 /* Relative addressing on shaders 2.0+ have a relative address token, 
                  * prior to that, it was hard-coded as "A0.x" because there's only 1 register */
-                if (This->baseShader.version >= 20) {
+                if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)  {
                     char relStr[100], relReg[50], relMask[6];
                     shader_glsl_add_param(arg, addr_token, 0, TRUE, relReg, relMask, relStr);
                     sprintf(tmpStr, "C[%s + %lu]", relStr, reg);
@@ -713,7 +713,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     SHADER_BUFFER* buffer = arg->buffer;
-    DWORD version = This->baseShader.version;
+    DWORD hex_version = This->baseShader.hex_version;
 
     char dst_str[100],   dst_reg[50],  dst_mask[6];
     char src0_str[100], src0_reg[50], src0_mask[6];
@@ -724,18 +724,18 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
     
     /* 1.0-1.3: Use destination register as coordinate source.
-    2.0+: Use provided coordinate source register. */
-    if (version == 14) {
+     * 2.0+: Use provided coordinate source register. */
+    if (hex_version == D3DPS_VERSION(1,4)) {
         shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
         sprintf(src1_str, "mytex%lu", reg_dest_code); 
-    } else if (version > 14) {
+    } else if (hex_version > D3DPS_VERSION(1,4)) {
         shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
         shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
     }
        
     /* 1.0-1.4: Use destination register number as texture code.
-    2.0+: Use provided sampler number as texure code. */
-    if (version < 14) {
+     * 2.0+: Use provided sampler number as texure code. */
+    if (hex_version < D3DPS_VERSION(1,4)) {
         shader_addline(buffer, "%s = texture2D(mytex%lu, gl_TexCoord[%lu].st);\n",
                        dst_str, reg_dest_code, reg_dest_code);
     } else {
@@ -749,7 +749,7 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
     
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     SHADER_BUFFER* buffer = arg->buffer;
-    DWORD version = This->baseShader.version;
+    DWORD hex_version = This->baseShader.hex_version;
 
     char tmpStr[100];
     char tmpReg[50];
@@ -758,7 +758,7 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, tmpReg, tmpMask, tmpStr);
 
-    if (version != 14) {
+    if (hex_version != D3DPS_VERSION(1,4)) {
         DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
         shader_addline(buffer, "%s = gl_TexCoord[%lu];\n", tmpReg, reg);
     } else {

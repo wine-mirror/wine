@@ -937,32 +937,26 @@ static void pshader_gen_input_modifier_line (
         sprintf(outregstr, "T%c%s", 'A' + tmpreg, swzstr);
 }
 
-static void pshader_set_version(
-      IWineD3DPixelShaderImpl *This, 
-      DWORD version) {
-
-      DWORD major = (version >> 8) & 0x0F;
-      DWORD minor = version & 0x0F;
-
-      This->baseShader.hex_version = version;
-      This->baseShader.version = major * 10 + minor;
-      TRACE("ps_%lu_%lu\n", major, minor);
+static void pshader_set_limits(
+      IWineD3DPixelShaderImpl *This) { 
 
       This->baseShader.limits.attributes = 0;
       This->baseShader.limits.address = 0;
 
-      switch (This->baseShader.version) {
-          case 10:
-          case 11:
-          case 12:
-          case 13: This->baseShader.limits.temporary = 2;
+      switch (This->baseShader.hex_version) {
+          case D3DPS_VERSION(1,0):
+          case D3DPS_VERSION(1,1):
+          case D3DPS_VERSION(1,2):
+          case D3DPS_VERSION(1,3): 
+                   This->baseShader.limits.temporary = 2;
                    This->baseShader.limits.constant_float = 8;
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.texture = 4;
                    break;
 
-          case 14: This->baseShader.limits.temporary = 6;
+          case D3DPS_VERSION(1,4):
+                   This->baseShader.limits.temporary = 6;
                    This->baseShader.limits.constant_float = 8;
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.constant_bool = 0;
@@ -970,15 +964,17 @@ static void pshader_set_version(
                    break;
                
           /* FIXME: temporaries must match D3DPSHADERCAPS2_0.NumTemps */ 
-          case 20:
-          case 21: This->baseShader.limits.temporary = 32;
+          case D3DPS_VERSION(2,0):
+          case D3DPS_VERSION(2,1):
+                   This->baseShader.limits.temporary = 32;
                    This->baseShader.limits.constant_float = 32;
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.constant_bool = 16;
                    This->baseShader.limits.texture = 8;
                    break;
 
-          case 30: This->baseShader.limits.temporary = 32;
+          case D3DPS_VERSION(3,0):
+                   This->baseShader.limits.temporary = 32;
                    This->baseShader.limits.constant_float = 224;
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.constant_bool = 16;
@@ -990,7 +986,8 @@ static void pshader_set_version(
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.texture = 8;
-                   FIXME("Unrecognized pixel shader version %lx!\n", version);
+                   FIXME("Unrecognized pixel shader version %#lx\n", 
+                       This->baseShader.hex_version);
       }
 }
 
@@ -1115,7 +1112,7 @@ static void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
     DWORD dst = arg->dst;
     DWORD* src = arg->src;
     SHADER_BUFFER* buffer = arg->buffer;
-    DWORD version = This->baseShader.version;
+    DWORD hex_version = This->baseShader.hex_version;
    
     char reg_dest[40];
     char reg_coord[40];
@@ -1128,14 +1125,14 @@ static void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
 
     /* 1.0-1.3: Use destination register as coordinate source.
        2.0+: Use provided coordinate source register. */
-   if (version < 14)
+   if (hex_version < D3DPS_VERSION(1,4))
       strcpy(reg_coord, reg_dest);
    else
       pshader_gen_input_modifier_line(buffer, src[0], 0, reg_coord, arg->reg_maps->constantsF);
 
   /* 1.0-1.4: Use destination register number as texture code.
      2.0+: Use provided sampler number as texure code. */
-  if (version < 20)
+  if (hex_version < D3DPS_VERSION(2,0))
      reg_sampler_code = reg_dest_code;
   else 
      reg_sampler_code = src[1] & D3DSP_REGNUM_MASK;
@@ -1150,11 +1147,11 @@ static void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
     DWORD dst = arg->dst;
     DWORD* src = arg->src;
     SHADER_BUFFER* buffer = arg->buffer;
-    DWORD version = This->baseShader.version;
+    DWORD hex_version = This->baseShader.hex_version;
 
     char tmp[20];
     get_write_mask(dst, tmp);
-    if (version != 14) {
+    if (hex_version != D3DPS_VERSION(1,4)) {
         DWORD reg = dst & D3DSP_REGNUM_MASK;
         shader_addline(buffer, "MOV T%lu%s, fragment.texcoord[%lu];\n", reg, tmp, reg);
     } else {
@@ -1398,158 +1395,19 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 }
 
 static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
-    const DWORD* pToken = pFunction;
-    const SHADER_OPCODE *curOpcode = NULL;
-    DWORD opcode_token;
-    DWORD len = 0;
-    DWORD i;
-    TRACE("(%p) : Parsing programme\n", This);
 
-    if (NULL != pToken) {
-        while (D3DPS_END() != *pToken) {
-            if (shader_is_pshader_version(*pToken)) { /** version */
-                pshader_set_version(This, *pToken);
-                ++pToken;
-                ++len;
-                continue;
-            }
-            if (shader_is_comment(*pToken)) { /** comment */
-                DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
-                ++pToken;
-                TRACE("//%s\n", (char*)pToken);
-                pToken += comment_len;
-                len += comment_len + 1;
-                continue;
-            }
-            if (!This->baseShader.version) {
-                WARN("(%p) : pixel shader doesn't have a valid version identifier\n", This);
-            }
-            opcode_token = *pToken++;
-            curOpcode = shader_get_opcode((IWineD3DBaseShader*) This, opcode_token);
-            len++;
-            if (NULL == curOpcode) {
-                int tokens_read;
+    IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
 
-                FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
-                tokens_read = shader_skip_unrecognized((IWineD3DBaseShader*) This, pToken);
-                pToken += tokens_read;
-                len += tokens_read;
-
-            } else {
-                if (curOpcode->opcode == D3DSIO_DCL) {
-                    DWORD usage = *pToken;
-                    DWORD param = *(pToken + 1);
-                    DWORD regtype = shader_get_regtype(param);
-
-                    /* Only print extended declaration for samplers or 3.0 input registers */
-                    if (regtype == D3DSPR_SAMPLER ||
-                        (This->baseShader.version >= 30 && regtype == D3DSPR_INPUT))
-                         shader_program_dump_decl_usage(usage, param);
-                    else
-                         TRACE("dcl");
-
-                    shader_dump_ins_modifiers(param);
-                    TRACE(" ");
-                    shader_dump_param((IWineD3DBaseShader*) This, param, 0, 0);
-                    pToken += 2;
-                    len += 2;
-
-                } else if (curOpcode->opcode == D3DSIO_DEF) {
-
-                        unsigned int offset = shader_get_float_offset(*pToken);
-
-                        TRACE("def c%u = %f, %f, %f, %f", offset,
-                            *(float *)(pToken + 1),
-                            *(float *)(pToken + 2),
-                            *(float *)(pToken + 3),
-                            *(float *)(pToken + 4));
-
-                        pToken += 5;
-                        len += 5;
-
-                } else if (curOpcode->opcode == D3DSIO_DEFI) {
-
-                        TRACE("defi i%lu = %ld, %ld, %ld, %ld", *pToken & D3DSP_REGNUM_MASK,
-                            (long) *(pToken + 1),
-                            (long) *(pToken + 2),
-                            (long) *(pToken + 3),
-                            (long) *(pToken + 4));
-
-                        pToken += 5;
-                        len += 5;
-
-                } else if (curOpcode->opcode == D3DSIO_DEFB) {
-
-                        TRACE("defb b%lu = %s", *pToken & D3DSP_REGNUM_MASK,
-                            *(pToken + 1)? "true": "false");
-
-                        pToken += 2;
-                        len += 2;
-
-                } else {
-
-                    DWORD param, addr_token;
-                    int tokens_read;
-
-                    /* Print out predication source token first - it follows
-                     * the destination token. */
-                    if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
-                        TRACE("(");
-                        shader_dump_param((IWineD3DBaseShader*) This, *(pToken + 2), 0, 1);
-                        TRACE(") ");
-                    }
-
-                    TRACE("%s", curOpcode->name);
-                    if (curOpcode->num_params > 0) {
-
-                        /* Destination token */
-                        tokens_read = shader_get_param((IWineD3DBaseShader*) This,
-                            pToken, &param, &addr_token);                       
-                        pToken += tokens_read;
-                        len += tokens_read;
-
-                        shader_dump_ins_modifiers(param);
-                        TRACE(" ");
-                        shader_dump_param((IWineD3DBaseShader*) This, param, addr_token, 0);
-
-                        /* Predication token - already printed out, just skip it */
-                        if (opcode_token & D3DSHADER_INSTRUCTION_PREDICATED) {
-                            pToken++;
-                            len++;
-                        }
-
-                        /* Other source tokens */
-                        for (i = 1; i < curOpcode->num_params; ++i) {
-
-                            tokens_read = shader_get_param((IWineD3DBaseShader*) This,
-                               pToken, &param, &addr_token);
-                            pToken += tokens_read;
-                            len += tokens_read;
-
-                            TRACE(", ");
-                            shader_dump_param((IWineD3DBaseShader*) This, param, addr_token, 1);
-                        }
-                    }
-                }
-                TRACE("\n");
-            }
-        }
-        This->baseShader.functionLength = (len + 1) * sizeof(DWORD);
-    } else {
-        This->baseShader.functionLength = 1; /* no Function defined use fixed function vertex processing */
-    }
+    shader_trace_init((IWineD3DBaseShader*) This, pFunction);
+    pshader_set_limits(This);
 
     /* Generate HW shader in needed */
     if (NULL != pFunction  && wined3d_settings.vs_mode == VS_HW) {
         TRACE("(%p) : Generating hardware program\n", This);
-#if 1
         IWineD3DPixelShaderImpl_GenerateShader(iface, pFunction);
-#endif
     }
 
     TRACE("(%p) : Copying the function\n", This);
-    /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {
         This->baseShader.function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->baseShader.functionLength);
         memcpy((void *)This->baseShader.function, pFunction, This->baseShader.functionLength);
