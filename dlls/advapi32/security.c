@@ -59,6 +59,14 @@ typedef struct _ACEFLAG
    DWORD value;
 } ACEFLAG, *LPACEFLAG;
 
+typedef struct WELLKNOWNSID
+{
+    WCHAR wstr[2];
+    SID_IDENTIFIER_AUTHORITY auth;
+    BYTE nSubAuthorityCount;
+    DWORD SubAuthority[8];
+} WELLKNOWNSID;
+
 static SID const sidWorld = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY} , { SECURITY_WORLD_RID } };
 
 /*
@@ -3217,27 +3225,6 @@ BOOL WINAPI CreateProcessAsUserW(
     return TRUE;
 }
 
-/******************************************************************************
- * ComputeStringSidSize
- */
-static DWORD ComputeStringSidSize(LPCWSTR StringSid)
-{
-    int ctok = 0;
-    DWORD size = sizeof(SID);
-
-    while (*StringSid)
-    {
-        if (*StringSid == '-')
-            ctok++;
-        StringSid++;
-    }
-
-    if (ctok > 3)
-        size += (ctok - 3) * sizeof(DWORD);
-
-    return size;
-}
-
 BOOL WINAPI DuplicateTokenEx(
         HANDLE ExistingTokenHandle, DWORD dwDesiredAccess,
         LPSECURITY_ATTRIBUTES lpTokenAttributes,
@@ -3301,6 +3288,49 @@ BOOL WINAPI EnumDependentServicesW(
           lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
 
     return FALSE;
+}
+
+static const WELLKNOWNSID WellKnownSids[] =
+{
+    { {'W','D'}, { SECURITY_WORLD_SID_AUTHORITY }, 1, { SECURITY_WORLD_RID } },
+    { {'B','A'}, { SECURITY_NT_AUTHORITY }, 2, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_GROUP_RID_ADMINS } },
+    { {'B','G'}, { SECURITY_NT_AUTHORITY }, 2, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_GROUP_RID_GUESTS } },
+    { {'B','U'}, { SECURITY_NT_AUTHORITY }, 2, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_GROUP_RID_USERS } },
+    { {'I','U'}, { SECURITY_NT_AUTHORITY }, 1, { SECURITY_INTERACTIVE_RID } },
+    { {'L','S'}, { SECURITY_NT_AUTHORITY }, 1, { SECURITY_SERVICE_RID } },
+    { {'S','Y'}, { SECURITY_NT_AUTHORITY }, 1, { SECURITY_LOCAL_SYSTEM_RID } },
+};
+
+/******************************************************************************
+ * ComputeStringSidSize
+ */
+static DWORD ComputeStringSidSize(LPCWSTR StringSid)
+{
+    DWORD size = sizeof(SID);
+
+    if (StringSid[0] == 'S' && StringSid[1] == '-') /* S-R-I-S-S */
+    {
+        int ctok = 0;
+        while (*StringSid)
+        {
+            if (*StringSid == '-')
+                ctok++;
+            StringSid++;
+        }
+
+        if (ctok > 3)
+            size += (ctok - 3) * sizeof(DWORD);
+    }
+    else /* String constant format  - Only available in winxp and above */
+    {
+        int i;
+
+        for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
+            if (!strncmpW(WellKnownSids[i].wstr, StringSid, 2))
+                size += (WellKnownSids[i].nSubAuthorityCount - 1) * sizeof(DWORD);
+    }
+
+    return size;
 }
 
 /******************************************************************************
@@ -3385,16 +3415,22 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
     }
     else /* String constant format  - Only available in winxp and above */
     {
+        int i;
         pisid->Revision = SDDL_REVISION;
-	pisid->SubAuthorityCount = 1;
 
-	FIXME("String constant not supported: %s\n", debugstr_wn(StringSid, 2));
+        for (i = 0; i < sizeof(WellKnownSids)/sizeof(WellKnownSids[0]); i++)
+            if (!strncmpW(WellKnownSids[i].wstr, StringSid, 2))
+            {
+                DWORD j;
+                pisid->SubAuthorityCount = WellKnownSids[i].nSubAuthorityCount;
+                pisid->IdentifierAuthority = WellKnownSids[i].auth;
+                for (j = 0; j < WellKnownSids[i].nSubAuthorityCount; j++)
+                    pisid->SubAuthority[j] = WellKnownSids[i].SubAuthority[j];
+                bret = TRUE;
+            }
 
-	/* TODO: Lookup string of well-known SIDs in table */
-	pisid->IdentifierAuthority.Value[5] = 0;
-	pisid->SubAuthority[0] = 0;
-
-        bret = TRUE;
+        if (!bret)
+            FIXME("String constant not supported: %s\n", debugstr_wn(StringSid, 2));
     }
 
 lend:
