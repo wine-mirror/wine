@@ -70,7 +70,7 @@ static UINT do_query(MSIHANDLE hdb, const char *query, MSIHANDLE *phrec)
     return ret;
 }
 
-void test_msiinsert(void)
+static void test_msiinsert(void)
 {
     MSIHANDLE hdb = 0, hview = 0, hrec = 0;
     UINT r;
@@ -120,8 +120,6 @@ void test_msiinsert(void)
     todo_wine {
     r = MsiRecordIsNull(hrec, 0);
     ok(r == FALSE, "field 0 not null\n");
-    r = MsiRecordGetInteger(hrec, 0);
-    ok(r == 0x138080, "field 0 contents wrong\n");
     }
 
     r = MsiRecordGetInteger(hrec, 1);
