@@ -1251,6 +1251,8 @@ struct glsl_shader_prog_link {
 #define MAX_REG_ADDR 1
 #define MAX_REG_TEMP 32
 #define MAX_REG_TEXCRD 8
+#define MAX_REG_INPUT 12
+#define MAX_REG_OUTPUT 12
 #define MAX_ATTRIBS 16
 #define MAX_CONST_F 256
 
@@ -1259,6 +1261,8 @@ typedef struct shader_reg_maps {
     char texcoord[MAX_REG_TEXCRD];          /* pixel < 3.0 */
     char temporary[MAX_REG_TEMP];           /* pixel, vertex */
     char address[MAX_REG_ADDR];             /* vertex */
+    char packed_input[MAX_REG_INPUT];       /* pshader >= 3.0 */
+    char packed_output[MAX_REG_OUTPUT];     /* vertex >= 3.0 */
     char attributes[MAX_ATTRIBS];           /* vertex */
 
     char constantsF[MAX_CONST_F];           /* pixel, vertex */
@@ -1307,6 +1311,8 @@ typedef struct SHADER_LIMITS {
     unsigned int constant_float;
     unsigned int constant_bool;
     unsigned int address;
+    unsigned int packed_output;
+    unsigned int packed_input;
     unsigned int attributes;
 } SHADER_LIMITS;
 
@@ -1346,11 +1352,20 @@ extern void shader_glsl_cnd(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_compare(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_def(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_cmp(SHADER_OPCODE_ARG* arg);
+
 /** GLSL Pixel Shader Prototypes */
 extern void pshader_glsl_tex(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg);
+extern void pshader_glsl_input_pack(
+   SHADER_BUFFER* buffer,
+   DWORD* semantics_out);
+
+/** GLSL Vertex Shader Prototypes */
+extern void vshader_glsl_output_unpack(
+   SHADER_BUFFER* buffer,
+   DWORD* semantics_out);
 
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure

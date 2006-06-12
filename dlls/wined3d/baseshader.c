@@ -343,10 +343,13 @@ void shader_get_registers_used(
 
                 if (!pshader)
                     reg_maps->attributes[regnum] = 1;
+                else
+                    reg_maps->packed_input[regnum] = 1;
 
                 shader_parse_decl_usage(reg_maps->semantics_in, usage, param);
 
             } else if (D3DSPR_OUTPUT == regtype) {
+                reg_maps->packed_output[regnum] = 1;
                 shader_parse_decl_usage(reg_maps->semantics_out, usage, param);
             }
 
@@ -721,6 +724,18 @@ void shader_generate_glsl_declarations(
     /* Declare texture coordinate temporaries and initialize them */
     for (i = 0; i < This->baseShader.limits.texture; i++) {
         shader_addline(buffer, "vec4 T%lu = gl_TexCoord[%lu];\n", i, i);
+    }
+
+    /* Declare input register temporaries */
+    for (i=0; i < This->baseShader.limits.packed_input; i++) {
+        if (reg_maps->packed_input[i])
+            shader_addline(buffer, "vec4 IN%lu;\n", i);
+    }
+
+    /* Declare output register temporaries */
+    for (i = 0; i < This->baseShader.limits.packed_output; i++) {
+        if (reg_maps->packed_output[i])
+            shader_addline(buffer, "vec4 OUT%lu;\n", i);
     }
 
     /* Declare temporary variables */

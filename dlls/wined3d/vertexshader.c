@@ -714,6 +714,7 @@ static void vshader_set_limits(
 
       This->baseShader.limits.texture = 0;
       This->baseShader.limits.attributes = 16;
+      This->baseShader.limits.packed_input = 0;
 
       /* Must match D3DCAPS9.MaxVertexShaderConst: at least 256 for vs_2_0 */
       This->baseShader.limits.constant_float = WINED3D_VSHADER_MAX_CONSTANTS;
@@ -725,6 +726,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.address = 1;
+                   This->baseShader.limits.packed_output = 0;
                    break;
       
           case D3DVS_VERSION(2,0):
@@ -733,6 +735,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.constant_bool = 16;
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.address = 1;
+                   This->baseShader.limits.packed_output = 0;
                    break;
 
           case D3DVS_VERSION(3,0):
@@ -740,12 +743,14 @@ static void vshader_set_limits(
                    This->baseShader.limits.constant_bool = 32;
                    This->baseShader.limits.constant_int = 32;
                    This->baseShader.limits.address = 1;
+                   This->baseShader.limits.packed_output = 12;
                    break;
 
           default: This->baseShader.limits.temporary = 12;
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.address = 1;
+                   This->baseShader.limits.packed_output = 0;
                    FIXME("Unrecognized vertex shader version %#lx\n",
                        This->baseShader.hex_version);
       }
@@ -869,6 +874,10 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
 
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
+
+        /* Unpack 3.0 outputs */
+        if (This->baseShader.hex_version >= D3DVS_VERSION(3,0))
+            vshader_glsl_output_unpack(&buffer, semantics_out);
 
         shader_addline(&buffer, "}\n\0");
 

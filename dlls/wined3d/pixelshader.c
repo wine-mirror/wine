@@ -936,6 +936,7 @@ static void pshader_set_limits(
 
       This->baseShader.limits.attributes = 0;
       This->baseShader.limits.address = 0;
+      This->baseShader.limits.packed_output = 0;
 
       switch (This->baseShader.hex_version) {
           case D3DPS_VERSION(1,0):
@@ -947,6 +948,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.texture = 4;
+                   This->baseShader.limits.packed_input = 0;
                    break;
 
           case D3DPS_VERSION(1,4):
@@ -955,6 +957,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.texture = 6;
+                   This->baseShader.limits.packed_input = 0;
                    break;
                
           /* FIXME: temporaries must match D3DPSHADERCAPS2_0.NumTemps */ 
@@ -965,6 +968,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.constant_bool = 16;
                    This->baseShader.limits.texture = 8;
+                   This->baseShader.limits.packed_input = 0;
                    break;
 
           case D3DPS_VERSION(3,0):
@@ -973,6 +977,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.constant_int = 16;
                    This->baseShader.limits.constant_bool = 16;
                    This->baseShader.limits.texture = 0;
+                   This->baseShader.limits.packed_input = 12;
                    break;
 
           default: This->baseShader.limits.temporary = 32;
@@ -980,6 +985,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.constant_int = 0;
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.texture = 8;
+                   This->baseShader.limits.packed_input = 0;
                    FIXME("Unrecognized pixel shader version %#lx\n", 
                        This->baseShader.hex_version);
       }
@@ -1329,6 +1335,10 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 
         /* Base Declarations */
         shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, &reg_maps, &buffer);
+
+        /* Pack 3.0 inputs */
+        if (This->baseShader.hex_version >= D3DPS_VERSION(3,0))
+            pshader_glsl_input_pack(&buffer, semantics_in);
 
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
