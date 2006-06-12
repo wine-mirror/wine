@@ -375,6 +375,11 @@ static const MIME_CP_INFO western_cp[] =
       10079, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
       "x-mac-icelandic", "x-mac-icelandic", "x-mac-icelandic" },
+    { "US-ASCII",
+      20127, MIMECONTF_MAILNEWS | MIMECONTF_IMPORT | MIMECONTF_EXPORT |
+             MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_VALID |
+             MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
+      "us-ascii", "us-ascii", "us-ascii" },
     { "Western European (ISO)",
       28591, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
