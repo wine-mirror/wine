@@ -136,13 +136,13 @@
 # define DECLSPEC_EXPORT __declspec(dllexport)
 #elif defined(__MINGW32__)
 # define DECLSPEC_EXPORT __attribute__((dllexport))
-#elif defined(__GNUC__) && (__GNUC__ > 2)
+#elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
 # define DECLSPEC_EXPORT __attribute__((visibility ("default")))
 #else
 # define DECLSPEC_EXPORT
 #endif
 
-#if defined(__GNUC__) && (__GNUC__ > 2)
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
 # define DECLSPEC_HIDDEN __attribute__((visibility ("hidden")))
 #else
 # define DECLSPEC_HIDDEN
