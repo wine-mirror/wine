@@ -2567,7 +2567,7 @@ static DWORD ParseAclStringFlags(LPCWSTR* StringAcl)
 /******************************************************************************
  * ParseAceStringType
  */
-ACEFLAG AceType[] =
+static const ACEFLAG AceType[] =
 {
     { SDDL_ACCESS_ALLOWED, ACCESS_ALLOWED_ACE_TYPE },
     { SDDL_ALARM,          SYSTEM_ALARM_ACE_TYPE },
@@ -2586,7 +2586,7 @@ static BYTE ParseAceStringType(LPCWSTR* StringAcl)
 {
     UINT len = 0;
     LPCWSTR szAcl = *StringAcl;
-    LPACEFLAG lpaf = AceType;
+    const ACEFLAG *lpaf = AceType;
 
     while (lpaf->wstr &&
         (len = strlenW(lpaf->wstr)) &&
@@ -2604,7 +2604,7 @@ static BYTE ParseAceStringType(LPCWSTR* StringAcl)
 /******************************************************************************
  * ParseAceStringFlags
  */
-ACEFLAG AceFlags[] =
+static const ACEFLAG AceFlags[] =
 {
     { SDDL_CONTAINER_INHERIT, CONTAINER_INHERIT_ACE },
     { SDDL_AUDIT_FAILURE,     FAILED_ACCESS_ACE_FLAG },
@@ -2624,7 +2624,7 @@ static BYTE ParseAceStringFlags(LPCWSTR* StringAcl)
 
     while (*szAcl != ';')
     {
-        LPACEFLAG lpaf = AceFlags;
+        const ACEFLAG *lpaf = AceFlags;
 
         while (lpaf->wstr &&
                (len = strlenW(lpaf->wstr)) &&
@@ -2646,7 +2646,7 @@ static BYTE ParseAceStringFlags(LPCWSTR* StringAcl)
 /******************************************************************************
  * ParseAceStringRights
  */
-ACEFLAG AceRights[] =
+static const ACEFLAG AceRights[] =
 {
     { SDDL_GENERIC_ALL,     GENERIC_ALL },
     { SDDL_GENERIC_READ,    GENERIC_READ },
@@ -2684,7 +2684,7 @@ static DWORD ParseAceStringRights(LPCWSTR* StringAcl)
     {
         while (*szAcl != ';')
         {
-            LPACEFLAG lpaf = AceRights;
+            const ACEFLAG *lpaf = AceRights;
 
             while (lpaf->wstr &&
                (len = strlenW(lpaf->wstr)) &&

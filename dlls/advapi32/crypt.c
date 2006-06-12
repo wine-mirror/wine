@@ -50,7 +50,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-HWND crypt_hWindow = 0;
+static HWND crypt_hWindow;
 
 #define CRYPT_ReturnLastError(err) do {SetLastError(err); return FALSE;} while(0)
 

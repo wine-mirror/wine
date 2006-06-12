@@ -79,7 +79,7 @@ static CRITICAL_SECTION_DEBUG service_cs_debug =
 };
 static CRITICAL_SECTION service_cs = { &service_cs_debug, -1, 0, 0, 0, 0 };
 
-service_data *service_list;
+static service_data *service_list;
 
 /******************************************************************************
  * SC_HANDLEs
