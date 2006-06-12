@@ -69,7 +69,7 @@ typedef struct
 /******************************************************************************
  *		IMalloc16_QueryInterface	[COMPOBJ.500]
  */
-HRESULT IMalloc16_fnQueryInterface(IMalloc16* iface,REFIID refiid,LPVOID *obj) {
+HRESULT CDECL IMalloc16_fnQueryInterface(IMalloc16* iface,REFIID refiid,LPVOID *obj) {
         IMalloc16Impl *This = (IMalloc16Impl *)iface;
 
 	TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
@@ -85,7 +85,7 @@ HRESULT IMalloc16_fnQueryInterface(IMalloc16* iface,REFIID refiid,LPVOID *obj) {
 /******************************************************************************
  *		IMalloc16_AddRef	[COMPOBJ.501]
  */
-ULONG IMalloc16_fnAddRef(IMalloc16* iface) {
+ULONG CDECL IMalloc16_fnAddRef(IMalloc16* iface) {
         IMalloc16Impl *This = (IMalloc16Impl *)iface;
 	TRACE("(%p)->AddRef()\n",This);
 	return 1; /* cannot be freed */
@@ -94,7 +94,7 @@ ULONG IMalloc16_fnAddRef(IMalloc16* iface) {
 /******************************************************************************
  *		IMalloc16_Release	[COMPOBJ.502]
  */
-ULONG IMalloc16_fnRelease(IMalloc16* iface) {
+ULONG CDECL IMalloc16_fnRelease(IMalloc16* iface) {
         IMalloc16Impl *This = (IMalloc16Impl *)iface;
 	TRACE("(%p)->Release()\n",This);
 	return 1; /* cannot be freed */
@@ -103,7 +103,7 @@ ULONG IMalloc16_fnRelease(IMalloc16* iface) {
 /******************************************************************************
  * IMalloc16_Alloc [COMPOBJ.503]
  */
-SEGPTR IMalloc16_fnAlloc(IMalloc16* iface,DWORD cb) {
+SEGPTR CDECL IMalloc16_fnAlloc(IMalloc16* iface,DWORD cb) {
         IMalloc16Impl *This = (IMalloc16Impl *)iface;
 	TRACE("(%p)->Alloc(%ld)\n",This,cb);
         return MapLS( HeapAlloc( GetProcessHeap(), 0, cb ) );
@@ -112,7 +112,7 @@ SEGPTR IMalloc16_fnAlloc(IMalloc16* iface,DWORD cb) {
 /******************************************************************************
  * IMalloc16_Free [COMPOBJ.505]
  */
-VOID IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv)
+VOID CDECL IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv)
 {
     void *ptr = MapSL(pv);
     IMalloc16Impl *This = (IMalloc16Impl *)iface;
@@ -124,7 +124,7 @@ VOID IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv)
 /******************************************************************************
  * IMalloc16_Realloc [COMPOBJ.504]
  */
-SEGPTR IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb)
+SEGPTR CDECL IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb)
 {
     SEGPTR ret;
     IMalloc16Impl *This = (IMalloc16Impl *)iface;
@@ -144,7 +144,7 @@ SEGPTR IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb)
 /******************************************************************************
  * IMalloc16_GetSize [COMPOBJ.506]
  */
-DWORD IMalloc16_fnGetSize(IMalloc16* iface,SEGPTR pv)
+DWORD CDECL IMalloc16_fnGetSize(IMalloc16* iface,SEGPTR pv)
 {
 	IMalloc16Impl *This = (IMalloc16Impl *)iface;
         TRACE("(%p)->GetSize(%08lx)\n",This,pv);
@@ -154,7 +154,7 @@ DWORD IMalloc16_fnGetSize(IMalloc16* iface,SEGPTR pv)
 /******************************************************************************
  * IMalloc16_DidAlloc [COMPOBJ.507]
  */
-INT16 IMalloc16_fnDidAlloc(IMalloc16* iface,LPVOID pv) {
+INT16 CDECL IMalloc16_fnDidAlloc(IMalloc16* iface,LPVOID pv) {
         IMalloc16 *This = (IMalloc16 *)iface;
 	TRACE("(%p)->DidAlloc(%p)\n",This,pv);
 	return (INT16)-1;
@@ -163,7 +163,7 @@ INT16 IMalloc16_fnDidAlloc(IMalloc16* iface,LPVOID pv) {
 /******************************************************************************
  * IMalloc16_HeapMinimize [COMPOBJ.508]
  */
-LPVOID IMalloc16_fnHeapMinimize(IMalloc16* iface) {
+LPVOID CDECL IMalloc16_fnHeapMinimize(IMalloc16* iface) {
         IMalloc16Impl *This = (IMalloc16Impl *)iface;
 	TRACE("(%p)->HeapMinimize()\n",This);
 	return NULL;
