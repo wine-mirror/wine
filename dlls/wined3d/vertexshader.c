@@ -864,6 +864,9 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
         /* Create the hw GLSL shader program and assign it as the baseShader.prgId */
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
 
+        /* Base Declarations */
+        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, &reg_maps, &buffer);
+
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
 
@@ -886,6 +889,9 @@ inline static VOID IWineD3DVertexShaderImpl_GenerateShader(
         if (GL_VEND(MESA) || GL_VEND(WINE))
             This->baseShader.limits.constant_float = 
                 min(95, This->baseShader.limits.constant_float);
+
+        /* Base Declarations */
+        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, &reg_maps, &buffer);
 
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);

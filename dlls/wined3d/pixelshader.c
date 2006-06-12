@@ -1333,6 +1333,9 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         /* Create the hw GLSL shader object and assign it as the baseShader.prgId */
         GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
 
+        /* Base Declarations */
+        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, &reg_maps, &buffer);
+
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);
 
@@ -1361,6 +1364,9 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         shader_addline(&buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
         shader_addline(&buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
         shader_addline(&buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
+
+        /* Base Declarations */
+        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, &reg_maps, &buffer);
 
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, &reg_maps, pFunction);

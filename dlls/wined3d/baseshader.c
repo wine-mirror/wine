@@ -299,12 +299,11 @@ void shader_get_registers_used(
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
 
+    /* There are some minor differences between pixel and vertex shaders */
+    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
+
     if (pToken == NULL)
         return;
-
-    reg_maps->temporary = 0;
-    reg_maps->texcoord = 0;
-    reg_maps->address = 0;
 
     while (D3DVS_END() != *pToken) {
         CONST SHADER_OPCODE* curOpcode;
@@ -331,7 +330,6 @@ void shader_get_registers_used(
         if (NULL == curOpcode) {
            while (*pToken & 0x80000000)
                ++pToken;
-           continue;
 
         /* Handle declarations */
         } else if (D3DSIO_DCL == curOpcode->opcode) {
@@ -339,8 +337,13 @@ void shader_get_registers_used(
             DWORD usage = *pToken++;
             DWORD param = *pToken++;
             DWORD regtype = shader_get_regtype(param);
+            unsigned int regnum = param & D3DSP_REGNUM_MASK;
 
             if (D3DSPR_INPUT == regtype) {
+
+                if (!pshader)
+                    reg_maps->attributes[regnum] = 1;
+
                 shader_parse_decl_usage(reg_maps->semantics_in, usage, param);
 
             } else if (D3DSPR_OUTPUT == regtype) {
@@ -352,7 +355,6 @@ void shader_get_registers_used(
         /* Skip definitions (for now) */
         } else if (D3DSIO_DEF == curOpcode->opcode) {
             pToken += curOpcode->num_params;
-            continue;
 
         /* Set texture registers, and temporary registers */
         } else {
@@ -378,14 +380,17 @@ void shader_get_registers_used(
 
                 if (D3DSPR_TEXTURE == regtype) { /* vs: D3DSPR_ADDR */
 
-                    if (shader_is_pshader_version(This->baseShader.hex_version))
-                        reg_maps->texcoord |= (1 << reg);
+                    if (pshader)
+                        reg_maps->texcoord[reg] = 1;
                     else
-                        reg_maps->address |= (1 << reg);
+                        reg_maps->address[reg] = 1;
                 }
 
-                if (D3DSPR_TEMP == regtype)
-                    reg_maps->temporary |= (1 << reg);
+                else if (D3DSPR_TEMP == regtype)
+                    reg_maps->temporary[reg] = 1;
+
+                else if (D3DSPR_INPUT == regtype && !pshader)
+                    reg_maps->attributes[reg] = 1;
              }
         }
     }
@@ -651,9 +656,8 @@ void shader_dump_param(
     }
 }
 
-/** Generate the variable & register declarations for the ARB_vertex_program
-    output target */
-void generate_arb_declarations(
+/* Generate the variable & register declarations for the ARB_vertex_program output target */
+void shader_generate_arb_declarations(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
     SHADER_BUFFER* buffer) {
@@ -662,23 +666,23 @@ void generate_arb_declarations(
     DWORD i;
 
     for(i = 0; i < This->baseShader.limits.temporary; i++) {
-        if (reg_maps->temporary & (1 << i))
+        if (reg_maps->temporary[i])
             shader_addline(buffer, "TEMP R%lu;\n", i);
     }
 
     for (i = 0; i < This->baseShader.limits.address; i++) {
-        if (reg_maps->address & (1 << i))
+        if (reg_maps->address[i])
             shader_addline(buffer, "ADDRESS A%ld;\n", i);
     }
 
     for(i = 0; i < This->baseShader.limits.texture; i++) {
-        if (reg_maps->texcoord & (1 << i))
+        if (reg_maps->texcoord[i])
             shader_addline(buffer,"TEMP T%lu;\n", i);
     }
 
     /* Texture coordinate registers must be pre-loaded */
     for (i = 0; i < This->baseShader.limits.texture; i++) {
-        if (reg_maps->texcoord & (1 << i))
+        if (reg_maps->texcoord[i])
             shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
     }
 
@@ -688,9 +692,8 @@ void generate_arb_declarations(
                    This->baseShader.limits.constant_float - 1);
 }
 
-/** Generate the variable & register declarations for the GLSL
-    output target */
-void generate_glsl_declarations(
+/** Generate the variable & register declarations for the GLSL output target */
+void shader_generate_glsl_declarations(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
     SHADER_BUFFER* buffer) {
@@ -711,25 +714,25 @@ void generate_glsl_declarations(
     
     /* Declare address variables */
     for (i = 0; i < This->baseShader.limits.address; i++) {
-        if (reg_maps->address & (1 << i))
+        if (reg_maps->address[i])
             shader_addline(buffer, "ivec4 A%ld;\n", i);
     }
 
-    /* Declare texture temporaries */
+    /* Declare texture coordinate temporaries and initialize them */
     for (i = 0; i < This->baseShader.limits.texture; i++) {
         shader_addline(buffer, "vec4 T%lu = gl_TexCoord[%lu];\n", i, i);
     }
 
     /* Declare temporary variables */
     for(i = 0; i < This->baseShader.limits.temporary; i++) {
-        if (reg_maps->temporary & (1 << i))
+        if (reg_maps->temporary[i])
             shader_addline(buffer, "vec4 R%lu;\n", i);
     }
 
-    /* Declare all named attributes (TODO: Add this to the reg_maps
-     * and only declare those that are needed) */
+    /* Declare attributes */
     for (i = 0; i < This->baseShader.limits.attributes; i++) {
-        shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
+        if (reg_maps->attributes[i])
+            shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
     }
 
     /* Temporary variables for matrix operations */
@@ -764,13 +767,6 @@ void shader_generate_main(
     hw_arg.buffer = buffer;
     hw_arg.reg_maps = reg_maps;
     This->baseShader.parse_state.current_row = 0;
-
-    /* Pre-declare registers */
-    if (wined3d_settings.shader_mode == SHADER_GLSL) {
-        generate_glsl_declarations(iface, reg_maps, buffer);
-    } else {
-        generate_arb_declarations(iface, reg_maps, buffer);
-    }
 
     /* Second pass, process opcodes */
     if (NULL != pToken) {

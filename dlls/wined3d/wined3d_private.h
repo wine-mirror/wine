@@ -1247,17 +1247,25 @@ struct glsl_shader_prog_link {
     IWineD3DPixelShader*    pixelShader;
 };
 
-typedef struct shader_reg_maps {
-    DWORD texcoord;
-    DWORD temporary;
-    DWORD address;
+/* TODO: Make this dynamic, based on shader limits ? */
+#define MAX_REG_ADDR 1
+#define MAX_REG_TEMP 32
+#define MAX_REG_TEXCRD 8
+#define MAX_ATTRIBS 16
+#define MAX_CONST_F 256
 
-    /* Constants */
-    CHAR constantsF[256];  /* TODO: Make this dynamic */
+typedef struct shader_reg_maps {
+
+    char texcoord[MAX_REG_TEXCRD];          /* pixel < 3.0 */
+    char temporary[MAX_REG_TEMP];           /* pixel, vertex */
+    char address[MAX_REG_ADDR];             /* vertex */
+    char attributes[MAX_ATTRIBS];           /* vertex */
+
+    char constantsF[MAX_CONST_F];           /* pixel, vertex */
     /* TODO: Integer and bool constants */
 
-    DWORD* semantics_in;
-    DWORD* semantics_out;
+    DWORD* semantics_in;                    /* vertex, pixel */
+    DWORD* semantics_out;                   /* vertex */
 
 } shader_reg_maps;
 
@@ -1371,6 +1379,16 @@ extern void shader_get_registers_used(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
     CONST DWORD* pToken);
+
+extern void shader_generate_glsl_declarations(
+    IWineD3DBaseShader *iface,
+    shader_reg_maps* reg_maps,
+    SHADER_BUFFER* buffer);
+
+extern void shader_generate_arb_declarations(
+    IWineD3DBaseShader *iface,
+    shader_reg_maps* reg_maps,
+    SHADER_BUFFER* buffer);
 
 extern void shader_generate_main(
     IWineD3DBaseShader *iface,
