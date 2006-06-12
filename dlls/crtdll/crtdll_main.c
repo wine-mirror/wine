@@ -33,8 +33,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(crtdll);
 
 /* from msvcrt */
-extern void __getmainargs( int *argc, char ***argv, char ***envp,
-                           int expand_wildcards, int *new_mode );
+extern void CDECL __getmainargs( int *argc, char ***argv, char ***envp,
+                                 int expand_wildcards, int *new_mode );
 
 /* The following data items are not exported from msvcrt */
 unsigned int CRTDLL__basemajor_dll;
@@ -110,7 +110,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 /*********************************************************************
  *                  __GetMainArgs  (CRTDLL.@)
  */
-void __GetMainArgs( int *argc, char ***argv, char ***envp, int expand_wildcards )
+void CDECL __GetMainArgs( int *argc, char ***argv, char ***envp, int expand_wildcards )
 {
     int new_mode = 0;
     __getmainargs( argc, argv, envp, expand_wildcards, &new_mode );
@@ -120,7 +120,7 @@ void __GetMainArgs( int *argc, char ***argv, char ***envp, int expand_wildcards 
 /*********************************************************************
  *		_fstat (CRTDLL.@)
  */
-int CRTDLL__fstat(int fd, struct crtdll_stat* buf)
+int CDECL CRTDLL__fstat(int fd, struct crtdll_stat* buf)
 {
     extern int _fstat(int,struct _stat*);
     struct _stat st;
@@ -134,7 +134,7 @@ int CRTDLL__fstat(int fd, struct crtdll_stat* buf)
 /*********************************************************************
  *		_stat (CRTDLL.@)
  */
-int CRTDLL__stat(const char* path, struct crtdll_stat * buf)
+int CDECL CRTDLL__stat(const char* path, struct crtdll_stat * buf)
 {
     extern int _stat(const char*,struct _stat*);
     struct _stat st;
@@ -148,7 +148,7 @@ int CRTDLL__stat(const char* path, struct crtdll_stat * buf)
 /*********************************************************************
  *		_strdec (CRTDLL.@)
  */
-char *_strdec(const char *str1, const char *str2)
+char * CDECL _strdec(const char *str1, const char *str2)
 {
     return (char *)(str2 - 1);
 }
@@ -157,7 +157,7 @@ char *_strdec(const char *str1, const char *str2)
 /*********************************************************************
  *		_strinc (CRTDLL.@)
  */
-char *_strinc(const char *str)
+char * CDECL _strinc(const char *str)
 {
     return (char *)(str + 1);
 }
@@ -166,7 +166,7 @@ char *_strinc(const char *str)
 /*********************************************************************
  *		_strncnt (CRTDLL.@)
  */
-size_t _strncnt(const char *str, size_t maxlen)
+size_t CDECL _strncnt(const char *str, size_t maxlen)
 {
     size_t len = strlen(str);
     return (len > maxlen) ? maxlen : len;
@@ -176,7 +176,7 @@ size_t _strncnt(const char *str, size_t maxlen)
 /*********************************************************************
  *		_strnextc (CRTDLL.@)
  */
-unsigned int _strnextc(const char *str)
+unsigned int CDECL _strnextc(const char *str)
 {
     return (unsigned int)str[0];
 }
@@ -185,7 +185,7 @@ unsigned int _strnextc(const char *str)
 /*********************************************************************
  *		_strninc (CRTDLL.@)
  */
-char *_strninc(const char *str, size_t len)
+char * CDECL _strninc(const char *str, size_t len)
 {
     return (char *)(str + len);
 }
@@ -194,7 +194,7 @@ char *_strninc(const char *str, size_t len)
 /*********************************************************************
  *		_strspnp (CRTDLL.@)
  */
-char *_strspnp( const char *str1, const char *str2)
+char * CDECL _strspnp( const char *str1, const char *str2)
 {
     str1 += strspn( str1, str2 );
     return *str1 ? (char*)str1 : NULL;
