@@ -685,6 +685,12 @@ void generate_base_shader(
                 FIXME("Unrecognized opcode: token=%08lX\n", opcode_token);
                 pToken += shader_skip_unrecognized(iface, pToken); 
 
+            /* Nothing to do */
+            } else if (D3DSIO_DCL == curOpcode->opcode ||
+                       D3DSIO_NOP == curOpcode->opcode) {
+
+                pToken += shader_skip_opcode(This, curOpcode, opcode_token);
+
             /* If a generator function is set for current shader target, use it */
             } else if (hw_fct != NULL) {
 
@@ -694,12 +700,7 @@ void generate_base_shader(
 
                     DWORD param, addr_token = 0;
 
-                    /* DCL instruction has usage dst parameter, not register */
-                    if (curOpcode->opcode == D3DSIO_DCL)
-                        param = *pToken++;
-                    else
-                        pToken += shader_get_param(iface, pToken, &param, &addr_token);
-
+                    pToken += shader_get_param(iface, pToken, &param, &addr_token);
                     hw_arg.dst = param;
                     hw_arg.dst_addr = addr_token;
 
@@ -724,13 +725,11 @@ void generate_base_shader(
                 /* Call appropriate function for output target */
                 hw_fct(&hw_arg);
 
+            /* Unhandled opcode */
             } else {
 
-                /* Unless we encounter a no-op command, this opcode is unrecognized */
-                if (curOpcode->opcode != D3DSIO_NOP) {
-                    FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
-                    pToken += shader_skip_opcode(This, curOpcode, opcode_token);
-                }
+                FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
+                pToken += shader_skip_opcode(This, curOpcode, opcode_token);
             }
         }
         /* TODO: What about result.depth? */
@@ -763,7 +762,7 @@ void shader_dump_ins_modifiers(const DWORD output) {
         FIXME("_unrecognized_modifier(%#lx)", mmask >> D3DSP_DSTMOD_SHIFT);
 }
 
-/** Process the D3DSIO_DCL opcode into an ARB string - creates a local vec4
+/** Process the D3DSIO_DEF opcode into an ARB string - creates a local vec4
  * float constant, and stores it's usage on the regmaps. */
 void shader_hw_def(SHADER_OPCODE_ARG* arg) {
 

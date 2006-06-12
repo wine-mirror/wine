@@ -315,7 +315,13 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
     return isLightingOn;
 }
 
-void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVertexShaderFunction, WineDirect3DVertexStridedData *strided, LONG BaseVertexIndex, DWORD *fvf, BOOL storeOrder, INT arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE]) {
+void primitiveDeclarationConvertToStridedData(
+     IWineD3DDevice *iface,
+     BOOL useVertexShaderFunction,
+     WineDirect3DVertexStridedData *strided,
+     LONG BaseVertexIndex, 
+     DWORD *fvf) {
+
      /* We need to deal with frequency data!*/
 
     int           textureNo =0;
@@ -374,7 +380,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
                     strided->u.s.position.dwType    = element->Type;
                     strided->u.s.position.dwStride  = stride;
                     TRACE("Set strided %s. data %p, type %d. stride %ld\n", "position", data, element->Type, stride);
-                    if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION] = element->Reg;
                 break;
                 case 1: /* tweened see http://www.gamedev.net/reference/articles/article2017.asp */
                     TRACE("Tweened positions\n");
@@ -382,7 +387,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
                     strided->u.s.position2.dwType    = element->Type;
                     strided->u.s.position2.dwStride  = stride;
                     TRACE("Set strided %s. data %p, type %d. stride %ld\n", "position2", data, element->Type, stride);
-                    if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2] = element->Reg;
                 break;
                 }
         break;
@@ -393,7 +397,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
                     strided->u.s.normal.dwType    = element->Type;
                     strided->u.s.normal.dwStride  = stride;
                     TRACE("Set strided %s. data %p, type %d. stride %ld\n", "normal", data, element->Type, stride);
-                    if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL] = element->Reg;
                 break;
                 case 1: /* skinning */
                     TRACE("Skinning / tween normals\n");
@@ -401,7 +404,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
                     strided->u.s.normal2.dwType    = element->Type;
                     strided->u.s.normal2.dwStride  = stride;
                     TRACE("Set strided %s. data %p, type %d. stride %ld\n", "normal2", data, element->Type, stride);
-                    if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL2] = element->Reg;
                 break;
                 }
                 *fvf |=  D3DFVF_NORMAL;
@@ -414,21 +416,18 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
             strided->u.s.blendMatrixIndices.dwType  = element->Type;
             strided->u.s.blendMatrixIndices.dwStride= stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "blendMatrixIndices", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDINDICES] = element->Reg;
         break;
         case D3DDECLUSAGE_BLENDWEIGHT:
             strided->u.s.blendWeights.lpData        = data;
             strided->u.s.blendWeights.dwType        = element->Type;
             strided->u.s.blendWeights.dwStride      = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "blendWeights", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDWEIGHT] = element->Reg;
         break;
         case D3DDECLUSAGE_PSIZE:
             strided->u.s.pSize.lpData               = data;
             strided->u.s.pSize.dwType               = element->Type;
             strided->u.s.pSize.dwStride             = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "pSize", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_PSIZE] = element->Reg;
         break;
         case D3DDECLUSAGE_COLOR:
         switch (element->UsageIndex) {
@@ -437,14 +436,12 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
             strided->u.s.diffuse.dwType             = element->Type;
             strided->u.s.diffuse.dwStride           = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "diffuse", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE] = element->Reg;
         break;
         case 1: /* specular */
             strided->u.s.specular.lpData            = data;
             strided->u.s.specular.dwType            = element->Type;
             strided->u.s.specular.dwStride          = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "specular", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] = element->Reg;
 
         }
 
@@ -457,7 +454,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
             strided->u.s.texCoords[textureNo].dwType    = element->Type;
             strided->u.s.texCoords[textureNo].dwStride  = stride;
             TRACE("Set strided %s.%d data %p, type %d. stride %ld\n", "texCoords", textureNo, data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_TEXCOORD0 + textureNo] = element->Reg;
 
             ++textureNo;
         break;
@@ -470,7 +466,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
             strided->u.s.tangent.dwType   = element->Type;
             strided->u.s.tangent.dwStride = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "tangent", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_TANGENT] = element->Reg;
         break;
         case D3DDECLUSAGE_BINORMAL:
         /* Binormals are really bitangents perpendicular to the normal but s-aligned to the tangent, basically they are the vectors of any two lines on the plain at right angles to the normal and at right angles to each other, like the x,y,z axis.
@@ -482,7 +477,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
             strided->u.s.binormal.dwType   = element->Type;
             strided->u.s.binormal.dwStride = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "binormal", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_BINORMAL] = element->Reg;
         break;
         case D3DDECLUSAGE_TESSFACTOR:
         /* a google for D3DDECLUSAGE_TESSFACTOR turns up a whopping 36 entries, 7 of which are from MSDN.
@@ -492,7 +486,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
             strided->u.s.tessFactor.dwType   = element->Type;
             strided->u.s.tessFactor.dwStride = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "tessFactor", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_TESSFACTOR] = element->Reg;
         break;
         case D3DDECLUSAGE_POSITIONT:
 
@@ -502,7 +495,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
                     strided->u.s.position.dwType    = element->Type;
                     strided->u.s.position.dwStride  = stride;
                     TRACE("Set strided %s. data %p, type %d. stride %ld\n", "positionT", data, element->Type, stride);
-                    if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT] = element->Reg;
                 break;
                 case 1: /* skinning */
                         /* see http://rsn.gamedev.net/tutorials/ms3danim.asp
@@ -513,7 +505,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
                     strided->u.s.position2.dwType    = element->Type;
                     strided->u.s.position2.dwStride  = stride;
                     TRACE("Set strided %s. data %p, type %d. stride %ld\n", "position2T", data, element->Type, stride);
-                    if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT2] = element->Reg;
                 break;
                 }
                 /* TODO: change fvf usage to a plain boolean flag */
@@ -533,7 +524,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
             strided->u.s.fog.dwType   = element->Type;
             strided->u.s.fog.dwStride = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "fog", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_FOG] = element->Reg;
         break;
         case D3DDECLUSAGE_DEPTH:
             TRACE("depth\n");
@@ -541,7 +531,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
             strided->u.s.depth.dwType   = element->Type;
             strided->u.s.depth.dwStride = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "depth", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_DEPTH] = element->Reg;
             break;
         case D3DDECLUSAGE_SAMPLE: /* VertexShader textures */
             TRACE("depth\n");
@@ -549,7 +538,6 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, BOOL useVer
             strided->u.s.sample.dwType   = element->Type;
             strided->u.s.sample.dwStride = stride;
             TRACE("Set strided %s. data %p, type %d. stride %ld\n", "sample", data, element->Type, stride);
-            if (storeOrder) arrayUsageMap[WINED3DSHADERDECLUSAGE_SAMPLE] = element->Reg;
         break;
         };
 
@@ -1897,22 +1885,21 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
         fixupVertices(This, dataLocations, &transformedDataLocations, 1 + endStride - startStride, startStride);
 #endif
 
-         /* vertex shaders */
-
         /* If the only vertex data used by the shader is supported by OpenGL then*/
-        if ((!useVertexShaderFunction  && dataLocations->u.s.pSize.lpData == NULL
-                && dataLocations->u.s.diffuse.lpData == NULL  && dataLocations->u.s.specular.lpData == NULL) 
-                || (useVertexShaderFunction && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->namedArrays && !((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->declaredArrays)) {
+        if (!useVertexShaderFunction &&
+             dataLocations->u.s.pSize.lpData == NULL &&
+             dataLocations->u.s.diffuse.lpData == NULL &&
+             dataLocations->u.s.specular.lpData == NULL) {
 
             /* Load the vertex data using named arrays */
             TRACE("(%p) Loading vertex data\n", This);
             loadVertexData(iface, dataLocations);
 
-        } else /* Otherwise */
-            if(useVertexShaderFunction && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->declaredArrays) {
+        } else if(useVertexShaderFunction) {
 
             /* load the array data using ordinal mapping */
-            loadNumberedArrays(iface, dataLocations, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->arrayUsageMap);
+            loadNumberedArrays(iface, dataLocations, 
+                ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->arrayUsageMap);
 
         } else { /* If this happens we must drawStridedSlow later on */ 
 		TRACE("Not loading vertex data\n");
@@ -1992,18 +1979,16 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
         /* Cleanup vertex program */
         if (useVertexShaderFunction) {
             /* disable any attribs (this is the same for both GLSL and ARB modes) */
-            if(((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->declaredArrays) {
-                GLint maxAttribs;
-                int i;
-                /* Leave all the attribs disabled */
-                glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &maxAttribs);
-                /* MESA does not support it right not */
-                if (glGetError() != GL_NO_ERROR)
-                    maxAttribs = 16;
-                for (i = 0; i < maxAttribs; ++i) {
-                    GL_EXTCALL(glDisableVertexAttribArrayARB(i));
-                    checkGLcall("glDisableVertexAttribArrayARB(reg);");
-                }
+            GLint maxAttribs;
+            int i;
+            /* Leave all the attribs disabled */
+            glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &maxAttribs);
+            /* MESA does not support it right not */
+            if (glGetError() != GL_NO_ERROR)
+                maxAttribs = 16;
+            for (i = 0; i < maxAttribs; ++i) {
+                GL_EXTCALL(glDisableVertexAttribArrayARB(i));
+                checkGLcall("glDisableVertexAttribArrayARB(reg);");
             }
 
             if (wined3d_settings.shader_mode == SHADER_ARB)
@@ -2213,7 +2198,6 @@ void drawPrimitive(IWineD3DDevice *iface,
         dataLocations = DrawPrimStrideData;
     }
     else if (This->stateBlock->vertexDecl != NULL || (useVertexShaderFunction  && NULL != ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration)) {
-        BOOL storeArrays = useVertexShaderFunction && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->declaredArrays == FALSE && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->namedArrays == FALSE;
 
         TRACE("================ Vertex Declaration  ===================\n");
         dataLocations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dataLocations));
@@ -2221,8 +2205,8 @@ void drawPrimitive(IWineD3DDevice *iface,
             ERR("Out of memory!\n");
             return;
         }
-        primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction, dataLocations, StartVertexIndex, &fvf, storeArrays,
-        ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->arrayUsageMap);
+        primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction, dataLocations, StartVertexIndex, &fvf);
+
     } else {
         TRACE("================ FVF ===================\n");
         dataLocations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dataLocations));

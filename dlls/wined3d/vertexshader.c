@@ -475,7 +475,6 @@ static void vshader_texldl(WINED3DSHADERVECTOR* d) {
 
 /* Prototype */
 static void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
-static void vshader_hw_dcl(SHADER_OPCODE_ARG* arg);
 static void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
 
 /**
@@ -535,7 +534,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_M3x2, "m3x2", "undefined", 3, vshader_m3x2, vshader_hw_mnxn, shader_glsl_mnxn, 0, 0},
 
     /* Declare registers */
-    {D3DSIO_DCL,      "dcl",      NULL,                  2, vshader_dcl,     vshader_hw_dcl, NULL, 0, 0},
+    {D3DSIO_DCL,      "dcl",      NULL,                  2, vshader_dcl,     NULL, NULL, 0, 0},
 
     /* Constant definitions */
     {D3DSIO_DEF,      "def",      NULL,                  5, vshader_def,     shader_hw_def, shader_glsl_def, 0, 0},
@@ -654,13 +653,7 @@ inline static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD
         || reg == This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR]) {
         is_color = TRUE;
     }
-    /* if the attributes come in as named dcl's then use a named vertex (called namedVertexN) */
-    if (This->namedArrays) {
-        sprintf(tmpReg, "namedVertex%lu", reg);
-    } else {
-    /* otherwise the input is on a numbered attribute so use opengl numbered attributes */
-        sprintf(tmpReg, "vertex.attrib[%lu]", reg);
-    }
+    sprintf(tmpReg, "vertex.attrib[%lu]", reg);
     strcat(hwLine, tmpReg);
     break;
   case D3DSPR_CONST:
@@ -714,7 +707,6 @@ static void vshader_parse_input_decl_usage(IWineD3DVertexShaderImpl *This, INT u
             if((usage & 0xF0000) >> 16 == 0) { /* tween data */
                 TRACE("Setting position to %d\n", arrayNo);
                 This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION]     = arrayNo;
-                This->namedArrays = TRUE;
             } else {
                 /* TODO: position indexes go from 0-8!!*/
                 TRACE("Setting position 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
@@ -723,52 +715,43 @@ static void vshader_parse_input_decl_usage(IWineD3DVertexShaderImpl *This, INT u
                     TRACE("Loaded for position %d (greater than 2)\n", (usage & 0xF0000) >> 16);
                 }
                 This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITION2 + ((usage & 0xF0000) >> 16) -1] = arrayNo;
-                This->declaredArrays = TRUE;
             }
         break;
         case D3DDECLUSAGE_BLENDINDICES:
             /* not supported by openGL */
             TRACE("Setting BLENDINDICES to %d\n", arrayNo);
             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDINDICES] = arrayNo;
-            This->declaredArrays = TRUE;
             if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended BLENDINDICES\n");
         break;
         case D3DDECLUSAGE_BLENDWEIGHT:
             TRACE("Setting BLENDWEIGHT to %d\n", arrayNo);
             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BLENDWEIGHT]  = arrayNo;
-            This->namedArrays = TRUE;
             if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended blend weights\n");
         break;
         case D3DDECLUSAGE_NORMAL:
             if((usage & 0xF0000) >> 16 == 0) { /* tween data */
                 TRACE("Setting normal to %d\n", arrayNo);
                 This->arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL]   = arrayNo;
-                This->namedArrays = TRUE;
             } else {
                 TRACE("Setting normal 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
                 This->arrayUsageMap[WINED3DSHADERDECLUSAGE_NORMAL2]   = arrayNo;
-                This->declaredArrays = TRUE;
             }
         break;
         case D3DDECLUSAGE_PSIZE:
             TRACE("Setting PSIZE to %d\n", arrayNo);
             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_PSIZE]        = arrayNo;
-            This->namedArrays = TRUE;
             if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended PSIZE\n");
         break;
         case D3DDECLUSAGE_COLOR:
             if((usage & 0xF0000) >> 16 == 0)  {
                 TRACE("Setting DIFFUSE to %d\n", arrayNo);
                 This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DIFFUSE]  = arrayNo;
-                This->namedArrays = TRUE;
             } else {
                 TRACE("Setting SPECULAR to %d\n", arrayNo);
                 This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR] = arrayNo;
-                This->namedArrays = TRUE;
             }
         break;
         case D3DDECLUSAGE_TEXCOORD:
-            This->namedArrays = TRUE;
             /* only 7 texture coords have been designed for, so run a quick sanity check */
             if ((usage & 0xF0000) >> 16 > 7) {
                 FIXME("(%p) : Program uses texture coordinate %d but only 0-7 have been implemented\n", This, (usage & 0xF0000) >> 16);
@@ -783,27 +766,22 @@ static void vshader_parse_input_decl_usage(IWineD3DVertexShaderImpl *This, INT u
         case D3DDECLUSAGE_TANGENT:
             TRACE("Setting TANGENT to %d\n", arrayNo);
             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TANGENT]      = arrayNo;
-            This->declaredArrays = TRUE;
         break;
         case D3DDECLUSAGE_BINORMAL:
             TRACE("Setting BINORMAL to %d\n", arrayNo);
             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_BINORMAL]     = arrayNo;
-            This->declaredArrays = TRUE;
         break;
         case D3DDECLUSAGE_TESSFACTOR:
             TRACE("Setting TESSFACTOR to %d\n", arrayNo);
             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_TESSFACTOR]   = arrayNo;
-            This->declaredArrays = TRUE;
         break;
         case D3DDECLUSAGE_POSITIONT:
             if((usage & 0xF0000) >> 16 == 0) { /* tween data */
                 FIXME("Setting positiont to %d\n", arrayNo);
                 This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT] = arrayNo;
-                This->namedArrays = TRUE;
             } else {
                 FIXME("Setting positiont 2 to %d because usage = %d\n", arrayNo, (usage & 0xF0000) >> 16);
                 This->arrayUsageMap[WINED3DSHADERDECLUSAGE_POSITIONT2] = arrayNo;
-                This->declaredArrays = TRUE;
             if ((usage & 0xF0000) >> 16 != 0) FIXME("Extended positiont\n");
             }
         break;
@@ -811,17 +789,14 @@ static void vshader_parse_input_decl_usage(IWineD3DVertexShaderImpl *This, INT u
             /* supported by OpenGL */
             TRACE("Setting FOG to %d\n", arrayNo);
             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_FOG]          = arrayNo;
-            This->namedArrays = TRUE;
         break;
         case D3DDECLUSAGE_DEPTH:
             TRACE("Setting DEPTH to %d\n", arrayNo);
             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_DEPTH]        = arrayNo;
-            This->declaredArrays = TRUE;
         break;
         case D3DDECLUSAGE_SAMPLE:
             TRACE("Setting SAMPLE to %d\n", arrayNo);
             This->arrayUsageMap[WINED3DSHADERDECLUSAGE_SAMPLE]       = arrayNo;
-            This->declaredArrays = TRUE;
         break;
         default:
         FIXME("Unrecognised dcl %08x", usage & 0xFFFF);
@@ -899,81 +874,6 @@ static void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
         }
     }
    shader_addline(buffer, "%s;\n", tmpLine);
-}
-
-static void vshader_hw_dcl(SHADER_OPCODE_ARG* arg) {
-    
-    DWORD dst = arg->dst;
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl*) arg->shader;
-    char tmpLine[256];
-    SHADER_BUFFER* buffer = arg->buffer;
-    
-    if (This->namedArrays) {
-        const char* attribName = "undefined";
-        switch(dst & 0xFFFF) {
-            case D3DDECLUSAGE_POSITION:
-            attribName = "vertex.position";
-            break;
-            case D3DDECLUSAGE_BLENDINDICES:
-            /* not supported by openGL */
-            attribName = "vertex.blend";
-            break;
-            case D3DDECLUSAGE_BLENDWEIGHT:
-            attribName = "vertex.weight";
-            break;
-            case D3DDECLUSAGE_NORMAL:
-            attribName = "vertex.normal";
-            break;
-            case D3DDECLUSAGE_PSIZE:
-            attribName = "vertex.psize";
-            break;
-            case D3DDECLUSAGE_COLOR:
-            if((dst & 0xF0000) >> 16 == 0)  {
-                attribName = "vertex.color";
-            } else {
-                attribName = "vertex.color.secondary";
-            }
-            break;
-            case D3DDECLUSAGE_TEXCOORD:
-            {
-                char tmpChar[100];
-                tmpChar[0] = 0;
-                sprintf(tmpChar,"vertex.texcoord[%lu]",(dst & 0xF0000) >> 16);
-                attribName = tmpChar;
-                break;
-            }
-            /* The following aren't directly supported by openGL, so shouldn't come up using namedarrays. */
-            case D3DDECLUSAGE_TANGENT:
-            attribName = "vertex.tangent";
-            break;
-            case D3DDECLUSAGE_BINORMAL:
-            attribName = "vertex.binormal";
-            break;
-            case D3DDECLUSAGE_TESSFACTOR:
-            attribName = "vertex.tessfactor";
-            break;
-            case D3DDECLUSAGE_POSITIONT:
-            attribName = "vertex.possitionT";
-            break;
-            case D3DDECLUSAGE_FOG:
-            attribName = "vertex.fogcoord";
-            break;
-            case D3DDECLUSAGE_DEPTH:
-            attribName = "vertex.depth";
-            break;
-            case D3DDECLUSAGE_SAMPLE:
-            attribName = "vertex.sample";
-            break;
-            default:
-            FIXME("Unrecognised dcl %08lx", dst & 0xFFFF);
-        }
-        {
-            sprintf(tmpLine, "ATTRIB ");
-            vshader_program_add_param(arg, dst, FALSE, tmpLine);
-            if (This->namedArrays) 
-                shader_addline(buffer, "%s = %s;\n", tmpLine, attribName);
-        }
-    }
 }
 
 /** Handles transforming all D3DSIO_M?x? opcodes for 
@@ -1509,8 +1409,6 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     TRACE("(%p) : Parsing programme\n", This);
 
     /* Initialise vertex input arrays */
-    This->namedArrays = FALSE;
-    This->declaredArrays = FALSE;
     for (i = 0; i < WINED3DSHADERDECLUSAGE_MAX_USAGE; i++)
         This->arrayUsageMap[i] = -1;
 
@@ -1644,22 +1542,9 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
         This->baseShader.functionLength = 1; /* no Function defined use fixed function vertex processing */
     }
 
-/* Handy for debugging using numbered arrays instead of named arrays */
-#if 1
-    /* TODO: using numbered arrays for software shaders makes things easier */
-    This->declaredArrays = TRUE;
-#endif
-
-    /* named arrays and declared arrays are mutually exclusive */
-    if (This->declaredArrays) 
-        This->namedArrays = FALSE;
-
     /* Generate HW shader in needed */
-    if (NULL != pFunction  && wined3d_settings.vs_mode == VS_HW) {
-#if 1
+    if (NULL != pFunction  && wined3d_settings.vs_mode == VS_HW) 
         IWineD3DVertexShaderImpl_GenerateShader(iface, pFunction);
-#endif
-    }
 
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {

@@ -186,13 +186,7 @@ static void shader_glsl_get_register_name(
                 || reg == vshader->arrayUsageMap[WINED3DSHADERDECLUSAGE_SPECULAR]) {
                 (*is_color) = TRUE;
             }
-            /* if the attributes come in as named dcl's then use a named vertex (called namedVertexN) */
-            if (vshader->namedArrays) {
-                sprintf(tmpStr, "namedVertex%lu", reg);
-            } else {
-            /* otherwise the input is on a numbered attribute so use opengl numbered attributes */
-                sprintf(tmpStr, "attrib%lu", reg);
-            }
+            sprintf(tmpStr, "attrib%lu", reg);
         } 
         break;
     case D3DSPR_CONST:

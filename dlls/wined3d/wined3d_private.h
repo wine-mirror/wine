@@ -1432,10 +1432,8 @@ typedef struct IWineD3DVertexShaderImpl {
     DWORD usage;
 
     /* vertex declaration array mapping */
-    BOOL                        namedArrays;    /* don't map use named functions */
-    BOOL                        declaredArrays; /* mapping requires */
-    INT                         arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE];    /* lookup table for the maps */
-    
+    INT arrayUsageMap[WINED3DSHADERDECLUSAGE_MAX_USAGE];
+ 
     /* run time datas...  */
     VSHADERDATA                *data;
     IWineD3DVertexDeclaration  *vertexDeclaration;
