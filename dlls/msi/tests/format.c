@@ -1037,14 +1037,12 @@ static void test_formatrecord(void)
     ok( 0 == strcmp(buffer,"hoo{{boo }}"), "wrong output\n");
     ok( r == ERROR_SUCCESS, "format failed\n");
 
-    todo_wine {
     r = MsiRecordSetString(hrec, 0, "{[1{{boo}}]}");
     r = MsiRecordSetString(hrec, 1, "hoo");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
-    ok( sz == 3, "size wrong: got %lu, expected 3\n", sz);
-    ok( 0 == strcmp(buffer,"[1]"), "wrong output: got %s, expected [1]\n", buffer);
-    }
+    ok( sz == 12, "size wrong: got %lu, expected 12\n", sz);
+    ok( 0 == strcmp(buffer,"{[1{{boo}}]}"), "wrong output: got %s, expected [1]\n", buffer);
     ok( r == ERROR_SUCCESS, "format failed\n");
 
     todo_wine {
@@ -1052,8 +1050,8 @@ static void test_formatrecord(void)
     r = MsiRecordSetString(hrec, 1, "hoo");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
-    ok( sz == 3, "size wrong: got %lu, expected 3\n", sz);
-    ok( 0 == strcmp(buffer,"[1]"), "wrong output: got %s, expected [1]\n", buffer);
+    ok( sz == 6, "size wrong: got %lu, expected 3\n", sz);
+    ok( 0 == strcmp(buffer,"{{hoo}"), "wrong output: got %s, expected [1]\n", buffer);
     }
     ok( r == ERROR_SUCCESS, "format failed\n");
 
