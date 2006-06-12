@@ -310,7 +310,8 @@ static void ME_RTFCharAttrHook(RTF_Info *info)
   CHARFORMAT2W fmt;
   fmt.cbSize = sizeof(fmt);
   fmt.dwMask = 0;
-  
+  fmt.dwEffects = 0;
+
   switch(info->rtfMinor)
   {
     case rtfPlain:

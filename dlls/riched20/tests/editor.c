@@ -343,7 +343,8 @@ static void test_EM_SETTEXTMODE(void)
 
   /*Compare the two formattings*/
     ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects == cf2test.dwEffects),
-      "two formats found in plain text mode - cf2.dwEffects: %f cf2test.dwEffects: %f\n",(double) cf2.dwEffects, (double) cf2test.dwEffects);
+      "two formats found in plain text mode - cf2.dwEffects: %lx cf2test.dwEffects: %lx\n",
+       cf2.dwEffects, cf2test.dwEffects);
   /*Test TM_RICHTEXT by: switching back to Rich Text mode
                          printing "wine" in the current format(normal)
                          pasting "wine" from the clipboard(italicized)
@@ -385,7 +386,7 @@ static void test_EM_SETTEXTMODE(void)
                 (LPARAM) &cf2test);
 
   /*Test that the two formattings are not the same*/
-  ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects != cf2test.dwEffects),
+  todo_wine ok((cf2.dwMask == cf2test.dwMask) && (cf2.dwEffects != cf2test.dwEffects),
       "expected different formats - cf2.dwMask: %lx, cf2test.dwMask: %lx, cf2.dwEffects: %lx, cf2test.dwEffects: %lx\n",
       cf2.dwMask, cf2test.dwMask, cf2.dwEffects, cf2test.dwEffects);
 
