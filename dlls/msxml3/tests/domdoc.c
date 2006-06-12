@@ -61,6 +61,20 @@ static const WCHAR szComplete4[] = {
         '<','e','m','p','t','y','>','<','/','e','m','p','t','y','>','\n',
     '<','/','l','c','>','\n',0
 };
+static const WCHAR szComplete5[] = {
+    '<','S',':','s','e','a','r','c','h',' ','x','m','l','n','s',':','D','=','"','D','A','V',':','"',' ',
+    'x','m','l','n','s',':','C','=','"','u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','o','f','f','i','c','e',':','c','l','i','p','g','a','l','l','e','r','y','"',
+    ' ','x','m','l','n','s',':','S','=','"','u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','o','f','f','i','c','e',':','c','l','i','p','g','a','l','l','e','r','y',':','s','e','a','r','c','h','"','>',
+        '<','S',':','s','c','o','p','e','>',
+            '<','S',':','d','e','e','p','>','/','<','/','S',':','d','e','e','p','>',
+        '<','/','S',':','s','c','o','p','e','>',
+        '<','S',':','c','o','n','t','e','n','t','f','r','e','e','t','e','x','t','>',
+            '<','C',':','t','e','x','t','o','r','p','r','o','p','e','r','t','y','/','>',
+            'c','o','m','p','u','t','e','r',
+        '<','/','S',':','c','o','n','t','e','n','t','f','r','e','e','t','e','x','t','>',
+    '<','/','S',':','s','e','a','r','c','h','>',0
+};
+
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -537,6 +551,38 @@ todo_wine
         IXMLDOMNode_Release( node );
     if (list)
         IXMLDOMNodeList_Release( list );
+    if (element)
+        IXMLDOMElement_Release( element );
+
+    b = FALSE;
+    str = SysAllocString( szComplete5 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    b = 1;
+    r = IXMLDOMNode_hasChildNodes( doc, &b );
+    ok( r == S_OK, "hasChildNoes bad return\n");
+    ok( b == VARIANT_TRUE, "hasChildNoes wrong result\n");
+
+    r = IXMLDOMDocument_get_documentElement( doc, &element );
+    ok( r == S_OK, "should be a document element\n");
+    ok( element != NULL, "should be an element\n");
+
+    if (element)
+    {
+        static const WCHAR szSSearch[] = {'S',':','s','e','a','r','c','h',0};
+        BSTR tag = NULL;
+
+        /* check if the tag is correct */
+        r = IXMLDOMElement_get_tagName( element, &tag );
+        ok( r == S_OK, "couldn't get tag name\n");
+        ok( tag != NULL, "tag was null\n");
+        ok( !lstrcmpW( tag, szSSearch ), "incorrect tag name\n");
+        SysFreeString( tag );
+    }
+
     if (element)
         IXMLDOMElement_Release( element );
     if (doc)

@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "ole2.h"
 #include "msxml2.h"
 
@@ -440,6 +441,9 @@ static HRESULT WINAPI domelem_get_tagName(
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
     xmlNodePtr element;
+    DWORD len;
+    DWORD offset = 0;
+    LPWSTR str;
 
     TRACE("%p\n", This );
 
@@ -450,7 +454,20 @@ static HRESULT WINAPI domelem_get_tagName(
     if ( !element )
         return E_FAIL;
 
-    *p = bstr_from_xmlChar( element->name );
+    len = MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) element->name, -1, NULL, 0 );
+    if (element->ns)
+        len += MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) element->ns->prefix, -1, NULL, 0 );
+    str = (LPWSTR) HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+    if ( !str )
+        return E_OUTOFMEMORY;
+    if (element->ns)
+    {
+        offset = MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) element->ns->prefix, -1, str, len );
+        str[offset - 1] = ':';
+    }
+    MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) element->name, -1, str + offset, len - offset );
+    *p = SysAllocString( str );
+    HeapFree( GetProcessHeap(), 0, str );
 
     return S_OK;
 }
