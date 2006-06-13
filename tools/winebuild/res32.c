@@ -428,8 +428,8 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
             output_res_dir( outfile, 0, name->nb_languages );
             for (k = 0, res = name->res; k < name->nb_languages; k++, res++)
             {
-                fprintf( outfile, "\t.long 0x%08x,0x%08x\n", res->lang,
-                         data_offset + (res - spec->resources) * sizeof(IMAGE_RESOURCE_DATA_ENTRY) );
+                unsigned int entry_offset = (res - spec->resources) * sizeof(IMAGE_RESOURCE_DATA_ENTRY);
+                fprintf( outfile, "\t.long 0x%08x,0x%08x\n", res->lang, data_offset + entry_offset );
             }
         }
     }

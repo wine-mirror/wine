@@ -214,7 +214,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     if ( thunk )
     {
         /* Set up registers as expected and call thunk */
-        fprintf( outfile, "\tleal %d(%%edx), %%ebx\n", sizeof(STACK16FRAME)-22 );
+        fprintf( outfile, "\tleal %d(%%edx), %%ebx\n", (int)sizeof(STACK16FRAME)-22 );
         fprintf( outfile, "\tleal -4(%%esp), %%ebp\n" );
 
         fprintf( outfile, "\tcall *%d(%%edx)\n", STACK16OFFSET(entry_point) );
@@ -248,7 +248,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     /* Build register CONTEXT */
     if ( reg_func )
     {
-        fprintf( outfile, "\tsubl $%d, %%esp\n", sizeof(CONTEXT86) );
+        fprintf( outfile, "\tsubl $%d, %%esp\n", (int)sizeof(CONTEXT86) );
 
         fprintf( outfile, "\tmovl %%ecx, %d(%%esp)\n", CONTEXTOFFSET(EFlags) );
 
@@ -301,7 +301,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     }
 
     /* Call relay routine (which will call the API entry point) */
-    fprintf( outfile, "\tleal %d(%%edx), %%eax\n", sizeof(STACK16FRAME) );
+    fprintf( outfile, "\tleal %d(%%edx), %%eax\n", (int)sizeof(STACK16FRAME) );
     fprintf( outfile, "\tpushl %%eax\n" );
     fprintf( outfile, "\tpushl %d(%%edx)\n", STACK16OFFSET(entry_point) );
     fprintf( outfile, "\tcall *%d(%%edx)\n", STACK16OFFSET(relay) );
@@ -309,7 +309,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     if ( reg_func )
     {
         fprintf( outfile, "\tleal -%d(%%ebp), %%ebx\n",
-                 sizeof(CONTEXT) + STACK32OFFSET(ebp) );
+                 (int)sizeof(CONTEXT) + STACK32OFFSET(ebp) );
 
         /* Switch stack back */
         fprintf( outfile, "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
