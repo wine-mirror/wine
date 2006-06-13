@@ -245,7 +245,7 @@ BOOL WINAPI OleUIUpdateLinksW(
 /***********************************************************************
  *           OleUIPromptUserA (OLEDLG.10)
  */
-INT __cdecl OleUIPromptUserA(
+INT WINAPIV OleUIPromptUserA(
   INT nTemplate, HWND hwndParent, ...)
 {
   FIXME("(%d, %p, ...): stub\n", nTemplate, hwndParent);
@@ -256,7 +256,7 @@ INT __cdecl OleUIPromptUserA(
 /***********************************************************************
  *           OleUIPromptUserW (OLEDLG.13)
  */
-INT __cdecl OleUIPromptUserW(
+INT WINAPIV OleUIPromptUserW(
   INT nTemplate, HWND hwndParent, ...)
 {
   FIXME("(%d, %p, ...): stub\n", nTemplate, hwndParent);
