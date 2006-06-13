@@ -135,8 +135,7 @@ BOOL NetBIOSRegisterTransport(ULONG id, NetBIOSTransport *transport)
         ret = FALSE;
     else if (gNumTransports >= sizeof(gTransports) / sizeof(gTransports[0]))
     {
-        FIXME("You tried to add %d transports, but I only have space for %d\n",
-         gNumTransports + 1, sizeof(gTransports) / sizeof(gTransports[0]));
+        FIXME("Too many transports %d\n", gNumTransports + 1);
         ret = FALSE;
     }
     else
