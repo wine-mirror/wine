@@ -105,7 +105,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     ret = IMultiLanguage2_ConvertStringToUnicode(iML2, NULL, CP_UNICODE, stringA, &lenA, bufW, &lenW);
     ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08lx\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
-    ok(lenW == lstrlenW(stringW)/(int)sizeof(WCHAR), "expected lenW %u, got %u\n", lstrlenW(stringW)/sizeof(WCHAR), lenW);
+    ok(lenW == lstrlenW(stringW)/(int)sizeof(WCHAR), "wrong lenW %u\n", lenW);
     ok(bufW[lenW] != 0, "buf should not be 0 terminated\n");
     bufW[lenW] = 0; /* -1 doesn't include 0 terminator */
     ok(!lstrcmpA((LPCSTR)bufW, stringA), "bufW/stringA mismatch\n");
@@ -176,7 +176,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     TRACE_2("Call IMultiLanguage2_ConvertStringFromUnicode\n");
     ret = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, CP_UNICODE, stringW, &lenW, bufA, &lenA);
     ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08lx\n", ret);
-    ok(lenA == lstrlenA(stringA) * (int)sizeof(WCHAR), "expected lenA %u, got %u\n", lstrlenA(stringA) * sizeof(WCHAR), lenA);
+    ok(lenA == lstrlenA(stringA) * (int)sizeof(WCHAR), "wrong lenA %u\n", lenA);
     ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
     ok(bufA[lenA] != 0 && bufA[lenA+1] != 0, "buf should not be 0 terminated\n");
     bufA[lenA] = 0; /* -1 doesn't include 0 terminator */
