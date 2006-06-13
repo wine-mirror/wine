@@ -501,7 +501,7 @@ static BOOL module_nextW( HANDLE hSnapShot, LPMODULEENTRY32W lpme, BOOL first )
     if (lpme->dwSize < sizeof (MODULEENTRY32W))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        WARN("Result buffer too small (req: %d, was: %ld)\n", sizeof(MODULEENTRY32W), lpme->dwSize);
+        WARN("Result buffer too small (was: %ld)\n", lpme->dwSize);
         return FALSE;
     }
     if ((snap = MapViewOfFile( hSnapShot, FILE_MAP_ALL_ACCESS, 0, 0, 0 )))
@@ -553,7 +553,7 @@ static BOOL module_nextA( HANDLE handle, LPMODULEENTRY32 lpme, BOOL first )
     if (lpme->dwSize < sizeof(MODULEENTRY32))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        WARN("Result buffer too small (req: %d, was: %ld)\n", sizeof(MODULEENTRY32), lpme->dwSize);
+        WARN("Result buffer too small (was: %ld)\n", lpme->dwSize);
         return FALSE;
     }
 

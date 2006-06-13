@@ -138,6 +138,7 @@ DWORD WINAPI FormatMessageA(
 	va_list* _args )
 {
     LPDWORD args=(LPDWORD)_args;
+    DWORD ret = 0;
 #if defined(__i386__) || defined(__sparc__)
 /* This implementation is completely dependent on the format of the va_list on x86 CPUs */
     LPSTR	target,t;
@@ -331,13 +332,10 @@ DWORD WINAPI FormatMessageA(
     }
     HeapFree(GetProcessHeap(),0,target);
     HeapFree(GetProcessHeap(),0,from);
-    TRACE("-- returning %d\n", (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?  strlen(*(LPSTR*)lpBuffer):strlen(lpBuffer));
-    return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
-        strlen(*(LPSTR*)lpBuffer):
-            strlen(lpBuffer);
-#else
-    return 0;
+    ret = (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? strlen(*(LPSTR*)lpBuffer) : strlen(lpBuffer);
 #endif /* __i386__ */
+    TRACE("-- returning %ld\n", ret);
+    return ret;
 }
 #undef ADD_TO_T
 
