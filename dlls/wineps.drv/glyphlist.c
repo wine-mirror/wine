@@ -58,11 +58,7 @@ INT PSDRV_GlyphListInit()
     TRACE("glyphList will initially hold %i glyph names\n", i);
 
     glyphList = HeapAlloc(PSDRV_Heap, 0, i * sizeof(GLYPHNAME *));
-    if (glyphList == NULL)
-    {
-	ERR("Failed to allocate %i bytes of memory\n", i * sizeof(GLYPHNAME *));
-	return 1;
-    }
+    if (glyphList == NULL) return 1;
 
     for (i = 0; i < glyphListSize; ++i)
 	glyphList[i] = PSDRV_AGLGlyphNames + i;
@@ -82,12 +78,7 @@ inline static INT GlyphListInsert(LPCSTR szName, INT index)
     GLYPHNAME *g;
 
     g = HeapAlloc(PSDRV_Heap, 0, sizeof(GLYPHNAME) + strlen(szName) + 1);
-    if (g == NULL)
-    {
-	ERR("Failed to allocate %i bytes of memory\n",
-		sizeof(GLYPHNAME) + strlen(szName) + 1);
-	return -1;
-    }
+    if (g == NULL) return -1;
 
     g->index = -1;
     g->sz = (LPSTR)(g + 1);
@@ -101,8 +92,6 @@ inline static INT GlyphListInsert(LPCSTR szName, INT index)
 		(glyphListSize + GLYPHLIST_ALLOCSIZE) * sizeof(GLYPHNAME *));
 	if (newGlyphList == NULL)
 	{
-	    ERR("Failed to allocate %i bytes of memory\n", (glyphListSize +
-		    GLYPHLIST_ALLOCSIZE) * sizeof (GLYPHNAME *));
 	    HeapFree(PSDRV_Heap, 0, g);
 	    return -1;
 	}

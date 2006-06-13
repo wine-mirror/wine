@@ -535,11 +535,7 @@ static INT PSDRV_AddSlot(PPD *ppd, LPSTR szName, LPSTR szFullName,
 	insert = &((*insert)->next);
 
     slot = *insert = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(INPUTSLOT));
-    if (!slot)
-    {
-	ERR("Failed to allocate %i bytes of memory\n", sizeof(INPUTSLOT));
-	return 1;
-    }
+    if (!slot) return 1;
 
     slot->Name = szName;
     slot->FullName = szFullName;
