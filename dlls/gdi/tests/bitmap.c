@@ -69,7 +69,7 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     char buf[512], buf_cmp[512];
 
     ret = GetObject(hbm, sizeof(bm), &bm);
-    ok(ret == sizeof(bm), "GetObject returned %d instead of %d\n", ret, sizeof(bm));
+    ok(ret == sizeof(bm), "GetObject returned %d\n", ret);
 
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
     ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
@@ -96,10 +96,10 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
 
     /* test various buffer sizes for GetObject */
     ret = GetObject(hbm, 0, NULL);
-    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+    ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
     ret = GetObject(hbm, sizeof(bm) * 2, &bm);
-    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+    ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
     ret = GetObject(hbm, sizeof(bm) / 2, &bm);
     ok(ret == 0, "%d != 0\n", ret);
@@ -249,7 +249,7 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     BYTE *buf;
 
     ret = GetObject(hbm, sizeof(bm), &bm);
-    ok(ret == sizeof(bm), "GetObject returned %d instead of %d\n", ret, sizeof(bm));
+    ok(ret == sizeof(bm), "GetObject returned %d\n", ret);
 
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
     ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
@@ -277,7 +277,7 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     /* test various buffer sizes for GetObject */
     memset(&ds, 0xAA, sizeof(ds));
     ret = GetObject(hbm, sizeof(bm) * 2, &bm);
-    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+    ok(ret == sizeof(bm), "wrong size %d\n", ret);
     ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
     ok(bm.bmHeight == bmih->biHeight, "wrong bm.bmHeight %d\n", bm.bmHeight);
     ok(bm.bmBits == bits, "wrong bm.bmBits %p != %p\n", bm.bmBits, bits);
@@ -293,11 +293,11 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
 
     /* test various buffer sizes for GetObject */
     ret = GetObject(hbm, 0, NULL);
-    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+    ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
     memset(&ds, 0xAA, sizeof(ds));
     ret = GetObject(hbm, sizeof(ds) * 2, &ds);
-    ok(ret == sizeof(ds), "%d != %d\n", ret, sizeof(ds));
+    ok(ret == sizeof(ds), "wrong size %d\n", ret);
 
     ok(ds.dsBm.bmBits == bits, "wrong bm.bmBits %p != %p\n", ds.dsBm.bmBits, bits);
     ok(ds.dsBmih.biSizeImage == ds.dsBm.bmWidthBytes * ds.dsBm.bmHeight, "%lu != %u\n",
@@ -317,7 +317,7 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
 
     memset(&ds, 0xAA, sizeof(ds));
     ret = GetObject(hbm, sizeof(ds) - 4, &ds);
-    ok(ret == sizeof(ds.dsBm), "%d != %d\n", ret, sizeof(ds.dsBm));
+    ok(ret == sizeof(ds.dsBm), "wrong size %d\n", ret);
     ok(ds.dsBm.bmWidth == bmih->biWidth, "%lu != %lu\n", ds.dsBmih.biWidth, bmih->biWidth);
     ok(ds.dsBm.bmHeight == bmih->biHeight, "%lu != %lu\n", ds.dsBmih.biHeight, bmih->biHeight);
     ok(ds.dsBm.bmBits == bits, "%p != %p\n", ds.dsBm.bmBits, bits);
@@ -940,7 +940,7 @@ static void test_bitmap(void)
     assert(hbmp != NULL);
 
     ret = GetObject(hbmp, sizeof(bm), &bm);
-    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+    ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
     ok(bm.bmWidth == 15, "wrong bm.bmWidth %d\n", bm.bmWidth);
@@ -967,7 +967,7 @@ static void test_bitmap(void)
     hbmp_old = SelectObject(hdc, hbmp);
 
     ret = GetObject(hbmp, sizeof(bm), &bm);
-    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+    ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
     ok(bm.bmWidth == 15, "wrong bm.bmWidth %d\n", bm.bmWidth);
@@ -987,7 +987,7 @@ static void test_bitmap(void)
 
     /* test various buffer sizes for GetObject */
     ret = GetObject(hbmp, sizeof(bm) * 2, &bm);
-    ok(ret == sizeof(bm), "%d != %d\n", ret, sizeof(bm));
+    ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
     ret = GetObject(hbmp, sizeof(bm) / 2, &bm);
     ok(ret == 0, "%d != 0\n", ret);
