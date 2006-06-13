@@ -717,8 +717,8 @@ string_table *load_string_table( IStorage *stg )
          * and its the high word of the length is inserted in the null string's
          * reference count field.
          */
-        if( pool[i*2-2] == 0 )
-            len += pool[i*2-1] * 0x10000;
+        if( pool[i*2-2] == 0 && pool[i*2-1] )
+            len += pool[i*2+1] * 0x10000;
 
         if( (offset + len) > datasize )
         {
