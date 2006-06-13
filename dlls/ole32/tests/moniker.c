@@ -304,9 +304,9 @@ static const BYTE expected_gc_moniker_comparison_data[] =
 
 static void test_moniker(
     const char *testname, IMoniker *moniker,
-    const BYTE *expected_moniker_marshal_data, size_t sizeof_expected_moniker_marshal_data,
-    const BYTE *expected_moniker_saved_data, size_t sizeof_expected_moniker_saved_data,
-    const BYTE *expected_moniker_comparison_data, size_t sizeof_expected_moniker_comparison_data,
+    const BYTE *expected_moniker_marshal_data, unsigned int sizeof_expected_moniker_marshal_data,
+    const BYTE *expected_moniker_saved_data, unsigned int sizeof_expected_moniker_saved_data,
+    const BYTE *expected_moniker_comparison_data, unsigned int sizeof_expected_moniker_comparison_data,
     LPCWSTR expected_display_name)
 {
     IStream * stream;

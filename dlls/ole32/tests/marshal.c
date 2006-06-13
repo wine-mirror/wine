@@ -1981,7 +1981,7 @@ static void test_marshal_CLIPFORMAT(void)
     CLIPFORMAT cf2;
 
     size = CLIPFORMAT_UserSize(&flags, 0, &cf);
-    ok(size == sizeof(*wirecf) + sizeof(cf_marshaled), "Size should be %d, instead of %ld\n", sizeof(*wirecf) + sizeof(cf_marshaled), size);
+    ok(size == sizeof(*wirecf) + sizeof(cf_marshaled), "Wrong size %ld\n", size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     CLIPFORMAT_UserMarshal(&flags, buffer, &cf);
@@ -2007,7 +2007,7 @@ static void test_marshal_HWND(void)
     wireHWND wirehwnd;
 
     size = HWND_UserSize(&flags, 0, &hwnd);
-    ok(size == sizeof(*wirehwnd), "Size should be %d, instead of %ld\n", sizeof(*wirehwnd), size);
+    ok(size == sizeof(*wirehwnd), "Wrong size %ld\n", size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HWND_UserMarshal(&flags, buffer, &hwnd);
