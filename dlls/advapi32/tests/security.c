@@ -405,7 +405,7 @@ static void test_lookupPrivilegeName(void)
     ok(cchName == strlen("SeCreateTokenPrivilege") + 1,
      "LookupPrivilegeNameA returned an incorrect required length for\n"
      "SeCreateTokenPrivilege (got %ld, expected %d)\n", cchName,
-     strlen("SeCreateTokenPrivilege") + 1);
+     lstrlenA("SeCreateTokenPrivilege") + 1);
     /* check a known value and its returned length on success */
     cchName = sizeof(buf);
     ok(pLookupPrivilegeNameA(NULL, &luid, buf, &cchName) &&

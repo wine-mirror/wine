@@ -439,7 +439,7 @@ static void test_get_value(void)
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_SZ", RRF_RT_REG_SZ, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", strlen(sTestpath1), size);
+    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", lstrlenA(sTestpath1), size);
     ok(type == REG_SZ, "type=%ld\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
 
@@ -447,7 +447,7 @@ static void test_get_value(void)
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_SZ", RRF_RT_REG_SZ|RRF_NOEXPAND, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", strlen(sTestpath1), size);
+    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", lstrlenA(sTestpath1), size);
     ok(type == REG_SZ, "type=%ld\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
 
@@ -457,7 +457,7 @@ static void test_get_value(void)
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
     /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath1 length + 1 here. */
     ok((size == strlen(expanded)+1) || (size == strlen(sTestpath1)+1), 
-        "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%ld\n", strlen(expanded), strlen(sTestpath1), size);
+        "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%ld\n", lstrlenA(expanded), lstrlenA(sTestpath1), size);
     ok(type == REG_SZ, "type=%ld\n", type);
     ok(!strcmp(expanded, buf), "expanded=\"%s\" buf=\"%s\"\n", expanded, buf);
     
@@ -465,7 +465,7 @@ static void test_get_value(void)
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", strlen(sTestpath1), size);
+    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", lstrlenA(sTestpath1), size);
     ok(type == REG_EXPAND_SZ, "type=%ld\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
     
