@@ -2315,7 +2315,7 @@ HRESULT WINAPI AVIPutFileOnClipboard(PAVIFILE pfile)
   return AVIERR_UNSUPPORTED;
 }
 
-HRESULT CDECL AVISaveA(LPCSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK lpfnCallback,
+HRESULT WINAPIV AVISaveA(LPCSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK lpfnCallback,
                         int nStreams, PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...)
 {
     FIXME("(%s,%p,%p,0x%08x,%p,%p), stub!\n", debugstr_a(szFile), pclsidHandler, lpfnCallback,
@@ -2324,7 +2324,7 @@ HRESULT CDECL AVISaveA(LPCSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK lpf
     return AVIERR_UNSUPPORTED;
 }
 
-HRESULT CDECL AVISaveW(LPCWSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK lpfnCallback,
+HRESULT WINAPIV AVISaveW(LPCWSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK lpfnCallback,
                         int nStreams, PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...)
 {
     FIXME("(%s,%p,%p,0x%08x,%p,%p), stub!\n", debugstr_w(szFile), pclsidHandler, lpfnCallback,
