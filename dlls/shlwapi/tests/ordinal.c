@@ -102,12 +102,12 @@ static void test_GetAcceptLanguagesA(void)
                 "last error wrong: got %08lx; expected ERROR_SUCCESS(NT4)/ERROR_CALL_NOT_IMPLEMENTED(98/ME)/"
 		"ERROR_PROC_NOT_FOUND(NT4)/ERROR_NO_IMPERSONATION_TOKEN(XP)\n", GetLastError());
             ok(exactsize == strlen(buffer),
-                 "buffer content (length) wrong: got %08x, expected %08lx\n", strlen(buffer), exactsize);
+                 "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), exactsize);
             } else if((buffersize +1) == buffersize2) {
                 ok(ERROR_SUCCESS == GetLastError(),
                     "last error wrong: got %08lx; expected ERROR_SUCCESS\n", GetLastError());
                 ok(buffersize == strlen(buffer),
-                    "buffer content (length) wrong: got %08x, expected %08lx\n", strlen(buffer), buffersize);
+                    "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), buffersize);
             } else
                 ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
                     retval, buffersize, buffer, GetLastError());
@@ -118,7 +118,7 @@ static void test_GetAcceptLanguagesA(void)
             ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
                "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             ok(buffersize2 == strlen(buffer),
-               "buffer content (length) wrong: got %08x, expected %08lx\n", strlen(buffer), buffersize2);
+               "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), buffersize2);
             break;
         default:
             ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
@@ -137,7 +137,7 @@ static void test_GetAcceptLanguagesA(void)
             if((buffersize == exactsize) /* XP */ ||
                ((buffersize +1)== exactsize) /* 98 */)
                 ok(buffersize == strlen(buffer),
-                    "buffer content (length) wrong: got %08x, expected %08lx\n", strlen(buffer), buffersize);
+                    "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), buffersize);
             else
                 ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
                     retval, buffersize, buffer, GetLastError());
@@ -148,7 +148,7 @@ static void test_GetAcceptLanguagesA(void)
             ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
                "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             ok(buffersize2 == strlen(buffer),
-               "buffer content (length) wrong: got %08x, expected %08lx\n", strlen(buffer), buffersize2);
+               "buffer content (length) wrong: got %08x, expected %08lx\n", lstrlenA(buffer), buffersize2);
             break;
         default:
             ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
