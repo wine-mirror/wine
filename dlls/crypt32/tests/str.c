@@ -223,7 +223,7 @@ static void test_CertRDNValueToStrA(void)
         ret = pCertRDNValueToStrA(attrs[i].dwValueType, &attrs[i].Value,
          buffer, sizeof(buffer));
         ok(ret == strlen(attrs[i].str) + 1, "Expected length %d, got %ld\n",
-         strlen(attrs[i].str) + 1, ret);
+         lstrlenA(attrs[i].str) + 1, ret);
         ok(!strcmp(buffer, attrs[i].str), "Expected %s, got %s\n", attrs[i].str,
          buffer);
     }
@@ -299,7 +299,7 @@ static void test_NameToStrConversionA(PCERT_NAME_BLOB pName, DWORD dwStrType,
     i = pCertNameToStrA(X509_ASN_ENCODING,pName, dwStrType, buffer,
      sizeof(buffer));
     ok(i == strlen(expected) + 1, "Expected %d chars, got %ld\n",
-     strlen(expected) + 1, i);
+     lstrlenA(expected) + 1, i);
     ok(!strcmp(buffer, expected), "Expected %s, got %s\n", expected, buffer);
 }
 

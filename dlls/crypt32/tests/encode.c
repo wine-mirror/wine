@@ -272,7 +272,7 @@ static void test_decodeInt(DWORD dwEncoding)
             CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)buf;
 
             ok(blob->cbData == strlen((const char*)bigInts[i].decoded),
-             "Expected len %d, got %ld\n", strlen((const char*)bigInts[i].decoded),
+             "Expected len %d, got %ld\n", lstrlenA((const char*)bigInts[i].decoded),
              blob->cbData);
             ok(!memcmp(blob->pbData, bigInts[i].decoded, blob->cbData),
              "Unexpected value\n");
@@ -299,7 +299,7 @@ static void test_decodeInt(DWORD dwEncoding)
             CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)buf;
 
             ok(blob->cbData == strlen((const char*)bigUInts[i].val),
-             "Expected len %d, got %ld\n", strlen((const char*)bigUInts[i].val),
+             "Expected len %d, got %ld\n", lstrlenA((const char*)bigUInts[i].val),
              blob->cbData);
             ok(!memcmp(blob->pbData, bigUInts[i].val, blob->cbData),
              "Unexpected value\n");

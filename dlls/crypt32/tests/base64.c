@@ -293,7 +293,7 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
                 ret = pCryptStringToBinaryA(str, 0, useFormat, buf, &bufLen,
                  &skipped, &usedFormat);
                 ok(skipped == strlen(garbage),
-                 "Expected %d characters skipped, got %ld\n", strlen(garbage),
+                 "Expected %d characters skipped, got %ld\n", lstrlenA(garbage),
                  skipped);
                 HeapFree(GetProcessHeap(), 0, buf);
             }
