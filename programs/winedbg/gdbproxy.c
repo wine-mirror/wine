@@ -1273,7 +1273,7 @@ static enum packet_return packet_thread(struct gdb_context* gdbctx)
 static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
 {
     char               *addr;
-    size_t              len, blk_len, nread;
+    unsigned int        len, blk_len, nread;
     char                buffer[32];
     unsigned long       r = 0;
 
@@ -1304,7 +1304,7 @@ static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
 static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
 {
     char*               addr;
-    size_t              len, blk_len;
+    unsigned int        len, blk_len;
     char*               ptr;
     char                buffer[32];
     unsigned long       w;
