@@ -232,8 +232,7 @@ static void test_towers(void)
     /* first check we have the right amount of data */
     ok(tower->tower_length == sizeof(tower_data_tcp_ip1) ||
        tower->tower_length == sizeof(tower_data_tcp_ip2),
-        "Size of tower differs (expected %d or %d, actual %d)\n",
-        sizeof(tower_data_tcp_ip1), sizeof(tower_data_tcp_ip2), tower->tower_length);
+        "Wrong size of tower %d\n", tower->tower_length);
 
     /* then do a byte-by-byte comparison */
     same = ((tower->tower_length == sizeof(tower_data_tcp_ip1)) &&
