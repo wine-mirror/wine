@@ -54,7 +54,7 @@ static void testGetModuleFileName(const char* name)
         ok(len1W > 0, "Getting module filename for handle %p\n", hMod);
     }
 
-    ok(len1A == strlen(bufA), "Unexpected length of GetModuleFilenameA (%ld/%d)\n", len1A, strlen(bufA));
+    ok(len1A == strlen(bufA), "Unexpected length of GetModuleFilenameA (%ld/%d)\n", len1A, lstrlenA(bufA));
 
     if (is_unicode_enabled)
     {

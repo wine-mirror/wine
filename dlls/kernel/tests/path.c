@@ -512,7 +512,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
     rc2=(*pGetLongPathNameA)(curdir,NULL,0);
     ok((rc1-strlen(tmpstr))==(rc2-strlen(curdir)),
        "GetLongPathNameA: wrong return code, %ld instead of %d\n",
-       rc1, strlen(tmpstr)+1);
+       rc1, lstrlenA(tmpstr)+1);
 
     sprintf(dir,"%c:",curDrive);
     rc1=(*pGetLongPathNameA)(dir,tmpstr,sizeof(tmpstr));
