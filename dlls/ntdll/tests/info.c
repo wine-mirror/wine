@@ -92,7 +92,7 @@ static void test_query_basic(void)
     trace("Check with correct parameters\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sbi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sbi), ReturnLength);
+    ok( sizeof(sbi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     /* Check if we have some return values */
     trace("Number of Processors : %d\n", sbi.NumberOfProcessors);
@@ -107,7 +107,7 @@ static void test_query_cpu(void)
 
     status = pNtQuerySystemInformation(SystemCpuInformation, &sci, sizeof(sci), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sci) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sci), ReturnLength);
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     /* Check if we have some return values */
     trace("Processor FeatureSet : %08lx\n", sci.FeatureSet);
@@ -125,11 +125,11 @@ static void test_query_performance(void)
 
     status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, sizeof(spi), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(spi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(spi), ReturnLength);
+    ok( sizeof(spi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, sizeof(spi) + 2, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(spi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(spi), ReturnLength);
+    ok( sizeof(spi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     /* Not return values yet, as struct members are unknown */
 }
@@ -204,7 +204,7 @@ static void test_query_timeofday(void)
     
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, sizeof(sti), &ReturnLength);
         ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-        ok( sizeof(sti) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sti), ReturnLength);
+        ok( sizeof(sti) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
     }
 
     /* Check if we have some return values */
@@ -343,7 +343,7 @@ static void test_query_procperf(void)
                                        sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok( sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) == ReturnLength,
-        "Inconsistent length (%d) <-> (%ld)\n", sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION), ReturnLength);
+        "Inconsistent length %ld\n", ReturnLength);
  
     /* Try it for all processors */
     status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, NeededLength, &ReturnLength);
@@ -440,11 +440,11 @@ static void test_query_cache(void)
 
     status = pNtQuerySystemInformation(SystemCacheInformation, &sci, sizeof(sci), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sci) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sci), ReturnLength);
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     status = pNtQuerySystemInformation(SystemCacheInformation, &sci, sizeof(sci) + 2, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sci) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sci), ReturnLength);
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 }
 
 static void test_query_interrupt(void)
@@ -486,11 +486,11 @@ static void test_query_kerndebug(void)
 
     status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, sizeof(skdi), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(skdi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(skdi), ReturnLength);
+    ok( sizeof(skdi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, sizeof(skdi) + 2, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(skdi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(skdi), ReturnLength);
+    ok( sizeof(skdi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 }
 
 static void test_query_regquota(void)
@@ -504,11 +504,11 @@ static void test_query_regquota(void)
 
     status = pNtQuerySystemInformation(SystemRegistryQuotaInformation, &srqi, sizeof(srqi), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(srqi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(srqi), ReturnLength);
+    ok( sizeof(srqi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     status = pNtQuerySystemInformation(SystemRegistryQuotaInformation, &srqi, sizeof(srqi) + 2, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(srqi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(srqi), ReturnLength);
+    ok( sizeof(srqi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 }
 
 static void test_query_process_basic(void)
@@ -566,13 +566,13 @@ static void test_query_process_basic(void)
     trace("Check with correct parameters\n");
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(pbi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pbi), ReturnLength);
+    ok( sizeof(pbi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     /* Everything is correct except a too large buffersize */
     trace("Too large buffersize\n");
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi) * 2, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(pbi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pbi), ReturnLength);
+    ok( sizeof(pbi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
                                                                                                                                                
     /* Check if we have some return values */
     trace("ProcessID : %ld\n", pbi.UniqueProcessId);
@@ -603,11 +603,11 @@ static void test_query_process_vm(void)
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(pvi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pvi), ReturnLength);
+    ok( sizeof(pvi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, 46, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(pvi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pvi), ReturnLength);
+    ok( sizeof(pvi) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     /* Check if we have some return values */
     trace("WorkingSetSize : %ld\n", pvi.WorkingSetSize);
@@ -643,11 +643,11 @@ static void test_query_process_io(void)
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, sizeof(pii), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(pii) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pii), ReturnLength);
+    ok( sizeof(pii) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, sizeof(pii) * 2, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(pii) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pii), ReturnLength);
+    ok( sizeof(pii) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     /* Check if we have some return values */
     trace("OtherOperationCount : %lld\n", pii.OtherOperationCount);
@@ -687,7 +687,7 @@ static void test_query_process_times(void)
 
     status = pNtQueryInformationProcess( process, ProcessTimes, &spti, sizeof(spti), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(spti) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(spti), ReturnLength);
+    ok( sizeof(spti) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
     CloseHandle(process);
 
     FileTimeToSystemTime((const FILETIME *)&spti.CreateTime, &UTC);
@@ -708,7 +708,7 @@ static void test_query_process_times(void)
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessTimes, &spti, sizeof(spti) * 2, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(spti) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(spti), ReturnLength);
+    ok( sizeof(spti) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 }
 
 static void test_query_process_handlecount(void)
@@ -740,12 +740,12 @@ static void test_query_process_handlecount(void)
 
     status = pNtQueryInformationProcess( process, ProcessHandleCount, &handlecount, sizeof(handlecount), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(handlecount), ReturnLength);
+    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
     CloseHandle(process);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessHandleCount, &handlecount, sizeof(handlecount) * 2, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(handlecount), ReturnLength);
+    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length %ld\n", ReturnLength);
 
     /* Check if we have some return values */
     trace("HandleCount : %ld\n", handlecount);

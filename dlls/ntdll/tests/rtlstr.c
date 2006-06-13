@@ -397,7 +397,7 @@ static void test_RtlDuplicateUnicodeString(void)
     CHAR dest_ansi_buf[257];
     STRING dest_ansi_str;
     NTSTATUS result;
-    size_t test_num;
+    unsigned int test_num;
 
     for (test_num = 0; test_num < NB_DUPL_USTR; test_num++) {
 	source_str.Length        = dupl_ustr[test_num].source_Length;
@@ -754,7 +754,7 @@ static void test_RtlUnicodeStringToAnsiString(void)
     STRING ansi_str;
     UNICODE_STRING uni_str;
     NTSTATUS result;
-    size_t test_num;
+    unsigned int test_num;
 
     for (test_num = 0; test_num < NB_USTR2ASTR; test_num++) {
 	ansi_str.Length        = ustr2astr[test_num].ansi_Length;
@@ -825,7 +825,7 @@ static void test_RtlAppendAsciizToString(void)
     CHAR dest_buf[257];
     STRING dest_str;
     NTSTATUS result;
-    size_t test_num;
+    unsigned int test_num;
 
     for (test_num = 0; test_num < NB_APP_ASC2STR; test_num++) {
 	dest_str.Length        = app_asc2str[test_num].dest_Length;
@@ -897,7 +897,7 @@ static void test_RtlAppendStringToString(void)
     STRING dest_str;
     STRING src_str;
     NTSTATUS result;
-    size_t test_num;
+    unsigned int test_num;
 
     for (test_num = 0; test_num < NB_APP_STR2STR; test_num++) {
 	dest_str.Length        = app_str2str[test_num].dest_Length;
@@ -978,7 +978,7 @@ static void test_RtlAppendUnicodeToString(void)
     WCHAR dest_buf[257];
     UNICODE_STRING dest_str;
     NTSTATUS result;
-    size_t test_num;
+    unsigned int test_num;
 
     for (test_num = 0; test_num < NB_APP_UNI2STR; test_num++) {
 	dest_str.Length        = app_uni2str[test_num].dest_Length;
@@ -1054,7 +1054,7 @@ static void test_RtlAppendUnicodeStringToString(void)
     UNICODE_STRING dest_str;
     UNICODE_STRING src_str;
     NTSTATUS result;
-    size_t test_num;
+    unsigned int test_num;
 
     for (test_num = 0; test_num < NB_APP_USTR2STR; test_num++) {
 	dest_str.Length        = app_ustr2str[test_num].dest_Length;
@@ -1165,8 +1165,8 @@ static void test_RtlFindCharInUnicodeString(void)
     UNICODE_STRING search_chars;
     USHORT pos;
     NTSTATUS result;
-    size_t idx;
-    size_t test_num;
+    unsigned int idx;
+    unsigned int test_num;
 
     for (test_num = 0; test_num < NB_FIND_CH_IN_USTR; test_num++) {
 	if (find_ch_in_ustr[test_num].main_str != NULL) {
@@ -1335,7 +1335,7 @@ static const str2int_t str2int[] = {
 
 static void test_RtlUnicodeStringToInteger(void)
 {
-    size_t test_num;
+    unsigned int test_num;
     int value;
     NTSTATUS result;
     WCHAR *wstr;
@@ -1399,7 +1399,7 @@ static void test_RtlUnicodeStringToInteger(void)
 
 static void test_RtlCharToInteger(void)
 {
-    size_t test_num;
+    unsigned int test_num;
     int value;
     NTSTATUS result;
 

@@ -786,7 +786,7 @@ static const all_accesses_t all_accesses[] = {
 
 static void test_RtlAreAllAccessesGranted(void)
 {
-    size_t test_num;
+    unsigned int test_num;
     BOOLEAN result;
 
     for (test_num = 0; test_num < NB_ALL_ACCESSES; test_num++) {
@@ -823,7 +823,7 @@ static const any_accesses_t any_accesses[] = {
 
 static void test_RtlAreAnyAccessesGranted(void)
 {
-    size_t test_num;
+    unsigned int test_num;
     BOOLEAN result;
 
     for (test_num = 0; test_num < NB_ANY_ACCESSES; test_num++) {
