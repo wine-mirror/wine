@@ -825,7 +825,6 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 if
 
    object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DStateBlock8Impl));
    if (NULL == object) {
-      FIXME("(%p)  Failed to allocate %d bytes\n", This, sizeof(IDirect3DStateBlock8Impl));
       *pToken = 0;
       return E_OUTOFMEMORY;
    }
