@@ -1,4 +1,5 @@
 Makefile
+devinst.ok
 parser.ok
 query.ok
 stringtable.ok

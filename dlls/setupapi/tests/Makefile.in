@@ -6,6 +6,7 @@ TESTDLL   = setupapi.dll
 IMPORTS   = setupapi kernel32
 
 CTESTS = \
+	devinst.c \
 	parser.c \
 	query.c \
 	stringtable.c
