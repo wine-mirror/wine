@@ -1248,6 +1248,7 @@ static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
   const WORD*  p = (const WORD *)pTemplate;
   BOOL  istemplateex = (((MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF);
   WORD nrofitems;
+  UINT ret;
 
   if (istemplateex)
   {
@@ -1363,9 +1364,9 @@ static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
       --nrofitems;
     }
   
-  TRACE("%p %p size 0x%08x\n",p, (WORD*)pTemplate,sizeof(WORD)*(p - (WORD*)pTemplate));
-  return (p - (WORD*)pTemplate)*sizeof(WORD);
-  
+  ret = (p - (WORD*)pTemplate) * sizeof(WORD);
+  TRACE("%p %p size 0x%08x\n", p, pTemplate, ret);
+  return ret;
 }
 
 /******************************************************************************
