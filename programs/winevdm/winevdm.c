@@ -119,9 +119,7 @@ static BOOL read_pif_file( HANDLE hFile, char *progname, char *title,
     pifhead_t pifheader;
     if( !GetFileSizeEx( hFile, &filesize) ||
             filesize.QuadPart <  (sizeof(pifhead_t) + sizeof(recordhead_t))) {
-        WINE_ERR("Invalid pif file: size error %d must be >= %d\n",
-                (int)filesize.QuadPart,
-                (sizeof(pifhead_t) + sizeof(recordhead_t)));
+        WINE_ERR("Invalid pif file: size error %d\n", (int)filesize.QuadPart);
         return FALSE;
     }
     SetFilePointer( hFile, 0, NULL, FILE_BEGIN);
