@@ -255,7 +255,7 @@ INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
     case VREFRESH:
     case DESKTOPVERTRES:
     case DESKTOPHORZRES:
-    case BTLALIGNMENT:
+    case BLTALIGNMENT:
         return 0;
     default:
         FIXME("(%p): unsupported capability %d, will return 0\n", physDev->hdc, cap );

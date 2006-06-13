@@ -1634,7 +1634,7 @@ typedef struct tagEXTLOGPEN
 #define VREFRESH          116
 #define DESKTOPVERTRES    117
 #define DESKTOPHORZRES    118
-#define BTLALIGNMENT      119
+#define BLTALIGNMENT      119
 #define SHADEBLENDCAPS    120
 #define COLORMGMTCAPS     121
 
