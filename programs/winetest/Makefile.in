@@ -61,8 +61,9 @@ TESTBINS = \
 	shell32_test.exe$(DLLEXT) \
 	shlwapi_test.exe$(DLLEXT) \
 	urlmon_test.exe$(DLLEXT) \
-	usp10_test.exe$(DLLEXT) \
 	user32_test.exe$(DLLEXT) \
+	usp10_test.exe$(DLLEXT) \
+	uxtheme_test.exe$(DLLEXT) \
 	version_test.exe$(DLLEXT) \
 	wininet_test.exe$(DLLEXT) \
 	winmm_test.exe$(DLLEXT) \
@@ -182,10 +183,12 @@ shlwapi_test.exe$(DLLEXT): $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 urlmon_test.exe$(DLLEXT): $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT)
 	cp $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT) $@ && $(STRIP) $@
-usp10_test.exe$(DLLEXT): $(DLLDIR)/usp10/tests/usp10_test.exe$(DLLEXT)
-	cp $(DLLDIR)/usp10/tests/usp10_test.exe$(DLLEXT) $@ && $(STRIP) $@
 user32_test.exe$(DLLEXT): $(DLLDIR)/user/tests/user32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/user/tests/user32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+usp10_test.exe$(DLLEXT): $(DLLDIR)/usp10/tests/usp10_test.exe$(DLLEXT)
+	cp $(DLLDIR)/usp10/tests/usp10_test.exe$(DLLEXT) $@ && $(STRIP) $@
+uxtheme_test.exe$(DLLEXT): $(DLLDIR)/uxtheme/tests/uxtheme_test.exe$(DLLEXT)
+	cp $(DLLDIR)/uxtheme/tests/uxtheme_test.exe$(DLLEXT) $@ && $(STRIP) $@
 wininet_test.exe$(DLLEXT): $(DLLDIR)/wininet/tests/wininet_test.exe$(DLLEXT)
 	cp $(DLLDIR)/wininet/tests/wininet_test.exe$(DLLEXT) $@ && $(STRIP) $@
 version_test.exe$(DLLEXT): $(DLLDIR)/version/tests/version_test.exe$(DLLEXT)

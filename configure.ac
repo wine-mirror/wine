@@ -1724,6 +1724,7 @@ dlls/usp10/Makefile
 dlls/usp10/tests/Makefile
 dlls/uuid/Makefile
 dlls/uxtheme/Makefile
+dlls/uxtheme/tests/Makefile
 dlls/vdhcp.vxd/Makefile
 dlls/vdmdbg/Makefile
 dlls/version/Makefile
