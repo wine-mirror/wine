@@ -494,7 +494,7 @@ static void enum_registered_color_profiles(void)
             lstrcpynA(known_colorspaces[i].filename, profile, MAX_PATH);
             known_colorspaces[i].registered = TRUE;
             present++;
-            trace(" found %s, pointing to '%s' (%d chars)\n", known_colorspaces[i].szName, profile, strlen(profile));
+            trace(" found %s, pointing to '%s' (%d chars)\n", known_colorspaces[i].szName, profile, lstrlenA(profile));
         }
     }
     trace("Total profiles found: %ld.\n", present);
@@ -571,7 +571,7 @@ static void check_registry(void)
         }
         ok( dwType == REG_SZ, "RegEnumValueA() returned unexpected value type (%ld)\n", dwType );
         if (dwType != REG_SZ) break;
-        trace(" found '%s' value containing '%s' (%d chars)\n", szName, szData, strlen(szData));
+        trace(" found '%s' value containing '%s' (%d chars)\n", szName, szData, lstrlenA(szData));
     } 
 
     RegCloseKey( hkIcmKey );
