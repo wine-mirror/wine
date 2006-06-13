@@ -1374,7 +1374,7 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
 
     if (pc->cbState != sizeof(ICCOMPRESS))
     {
-       ERR("Invalid cbState (%li should be %i)\n", pc->cbState, sizeof(ICCOMPRESS));
+       ERR("Invalid cbState %li\n", pc->cbState);
        return NULL;
     }
 
