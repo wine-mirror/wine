@@ -317,7 +317,7 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
     const twr_empty_floor_t *smb_floor = (const twr_empty_floor_t *)tower_data;
     const twr_empty_floor_t *nb_floor;
 
-    TRACE("(%p, %d, %p, %p)\n", tower_data, tower_size, networkaddr, endpoint);
+    TRACE("(%p, %d, %p, %p)\n", tower_data, (int)tower_size, networkaddr, endpoint);
 
     if (tower_size < sizeof(*smb_floor))
         return EPT_S_NOT_REGISTERED;
@@ -408,7 +408,7 @@ static RPC_STATUS rpcrt4_ncalrpc_parse_top_of_tower(const unsigned char *tower_d
 {
     const twr_empty_floor_t *pipe_floor = (const twr_empty_floor_t *)tower_data;
 
-    TRACE("(%p, %d, %p, %p)\n", tower_data, tower_size, networkaddr, endpoint);
+    TRACE("(%p, %d, %p, %p)\n", tower_data, (int)tower_size, networkaddr, endpoint);
 
     *networkaddr = NULL;
     *endpoint = NULL;
@@ -642,7 +642,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *to
     const twr_ipv4_floor_t *ipv4_floor;
     struct in_addr in_addr;
 
-    TRACE("(%p, %d, %p, %p)\n", tower_data, tower_size, networkaddr, endpoint);
+    TRACE("(%p, %d, %p, %p)\n", tower_data, (int)tower_size, networkaddr, endpoint);
 
     if (tower_size < sizeof(*tcp_floor))
         return EPT_S_NOT_REGISTERED;

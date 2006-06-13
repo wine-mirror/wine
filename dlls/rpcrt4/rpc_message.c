@@ -485,7 +485,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   /* read packet common header */
   dwRead = rpcrt4_conn_read(Connection, &common_hdr, sizeof(common_hdr));
   if (dwRead != sizeof(common_hdr)) {
-    WARN("Short read of header, %ld/%d bytes\n", dwRead, sizeof(common_hdr));
+    WARN("Short read of header, %ld bytes\n", dwRead);
     status = RPC_S_PROTOCOL_ERROR;
     goto fail;
   }

@@ -145,7 +145,7 @@ BOOL RPCRT4_SendReceiveNPMsg(HANDLE np, PRPCSS_NP_MESSAGE msg, char *vardata, PR
   }
 
   if (count != sizeof(RPCSS_NP_REPLY)) {
-    ERR("read count mismatch. got %ld, expected %u.\n", count, sizeof(RPCSS_NP_REPLY));
+    ERR("read count mismatch. got %ld.\n", count);
     return FALSE;
   }
 
