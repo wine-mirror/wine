@@ -886,6 +886,45 @@ static void test_msiexport(void)
     ok( length == strlen(expected), "length of data wrong\n");
     ok( !lstrcmp(buffer, expected), "data doesn't match\n");
     }
+    DeleteFile(msifile);
+}
+
+static void test_longstrings(void)
+{
+    const char insert_query[] = 
+        "INSERT INTO `strings` ( `id`, `val` ) VALUES('1', 'Z')";
+    char *str;
+    MSIHANDLE hdb;
+    UINT len;
+    UINT r;
+    const int STRING_LENGTH = 0x10005;
+
+    DeleteFile(msifile);
+    /* just MsiOpenDatabase should not create a file */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    /* create a table */
+    r = try_query( hdb, 
+        "CREATE TABLE `strings` ( `id` INT, `val` CHAR(0) PRIMARY KEY `id`)");
+    ok(r == ERROR_SUCCESS, "query failed\n");
+
+    /* try a insert a very long string */
+    str = HeapAlloc(GetProcessHeap(), 0, STRING_LENGTH+sizeof insert_query);
+    len = strchr(insert_query, 'Z') - insert_query;
+    strcpy(str, insert_query);
+    memset(str+len, 'Z', STRING_LENGTH);
+    strcpy(str+len+STRING_LENGTH, insert_query+len+1);
+    r = try_query( hdb, str );
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+
+    HeapFree(GetProcessHeap(), 0, str);
+
+    MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed\n");
+
+    MsiCloseHandle(hdb);
+    DeleteFile(msifile);
 }
 
 START_TEST(db)
@@ -898,4 +937,5 @@ START_TEST(db)
     test_viewgetcolumninfo();
     test_getcolinfo();
     test_msiexport();
+    test_longstrings();
 }
