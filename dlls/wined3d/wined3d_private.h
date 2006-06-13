@@ -1282,7 +1282,7 @@ typedef struct shader_reg_maps {
 #define SHADER_PGMSIZE 65535
 typedef struct SHADER_BUFFER {
     char* buffer;
-    size_t bsize;
+    unsigned int bsize;
     unsigned int lineNo;
 } SHADER_BUFFER;
 
