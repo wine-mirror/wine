@@ -71,8 +71,7 @@ static void testCryptHashCert(void)
     ret = CryptHashCertificate(0, 0, 0, toHash, sizeof(toHash), NULL,
      &hashLen);
     ok(ret, "CryptHashCertificate failed: %08lx\n", GetLastError());
-    ok(hashLen == sizeof(hash),
-     "Got unexpected size of hash %ld, expected %d\n", hashLen, sizeof(hash));
+    ok(hashLen == sizeof(hash), "Got unexpected size of hash %ld\n", hashLen);
     /* Test with empty buffer */
     ret = CryptHashCertificate(0, 0, 0, NULL, 0, hash, &hashLen);
     ok(ret, "CryptHashCertificate failed: %08lx\n", GetLastError());
@@ -89,7 +88,7 @@ static const WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e',
  'm','p',0 };
 
 static void verifySig(HCRYPTPROV csp, const BYTE *toSign, size_t toSignLen,
- const BYTE *sig, size_t sigLen)
+ const BYTE *sig, unsigned int sigLen)
 {
     HCRYPTHASH hash;
     BOOL ret = CryptCreateHash(csp, CALG_SHA1, 0, 0, &hash);
@@ -451,8 +450,7 @@ static void testKeyUsage(void)
              */
             ok(GetLastError() == CRYPT_E_NOT_FOUND,
              "Expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
-            ok(size == sizeof(CERT_ENHKEY_USAGE), "Expected size %d, got %ld\n",
-             sizeof(CERT_ENHKEY_USAGE), size);
+            ok(size == sizeof(CERT_ENHKEY_USAGE), "Wrong size %ld\n", size);
             ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
             ok(ret, "CertGetEnhancedKeyUsage failed: %08lx\n", GetLastError());
             ok(pUsage->cUsageIdentifier == 0, "Expected 0 usages, got %ld\n",

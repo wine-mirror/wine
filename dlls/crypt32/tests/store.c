@@ -331,8 +331,7 @@ static void testDupCert(void)
         if (context)
         {
             ok(context->cbCertEncoded == sizeof(bigCert),
-             "Expected cert of %d bytes, got %ld\n", sizeof(bigCert),
-             context->cbCertEncoded);
+             "Wrong cert size %ld\n", context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert)),
              "Unexpected encoded cert in context\n");
             ok(context->hCertStore == store, "Unexpected store\n");
@@ -685,8 +684,7 @@ static void testMemStore(void)
     if (context)
     {
         ok(context->cbCertEncoded == sizeof(signedBigCert),
-         "Expected cert of %d bytes, got %ld\n", sizeof(signedBigCert),
-         context->cbCertEncoded);
+         "Wrong cert size %ld\n", context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, signedBigCert,
          sizeof(signedBigCert)), "Unexpected encoded cert in context\n");
         /* remove it, the rest of the tests will work on an unsigned cert */
@@ -712,8 +710,7 @@ static void testMemStore(void)
         BYTE *buf;
 
         ok(context->cbCertEncoded == sizeof(bigCert),
-         "Expected cert of %d bytes, got %ld\n", sizeof(bigCert),
-         context->cbCertEncoded);
+         "Wrong cert size %ld\n", context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert)),
          "Unexpected encoded cert in context\n");
         ok(context->hCertStore == store1, "Unexpected store\n");
@@ -732,8 +729,7 @@ static void testMemStore(void)
         if (buf)
         {
             ret = CertSerializeCertificateStoreElement(context, 0, buf, &size);
-            ok(size == sizeof(serializedCert), "Expected size %d, got %ld\n",
-             sizeof(serializedCert), size);
+            ok(size == sizeof(serializedCert), "Wrong size %ld\n", size);
             ok(!memcmp(serializedCert, buf, size),
              "Unexpected serialized cert\n");
             HeapFree(GetProcessHeap(), 0, buf);
@@ -800,8 +796,7 @@ static void testMemStore(void)
     if (context)
     {
         ok(context->cbCertEncoded == sizeof(bigCert),
-         "Expected cert of %d bytes, got %ld\n", sizeof(bigCert),
-         context->cbCertEncoded);
+         "Wrong cert size %ld\n", context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, sizeof(bigCert)),
          "Unexpected encoded cert in context\n");
         ok(context->hCertStore == store1, "Unexpected store\n");
@@ -897,8 +892,7 @@ static void testCollectionStore(void)
     {
         ok(context->hCertStore == collection, "Unexpected store\n");
         ok(context->cbCertEncoded == sizeof(bigCert),
-         "Expected size %d, got %ld\n", sizeof(bigCert),
-         context->cbCertEncoded);
+         "Wrong size %ld\n", context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
          "Unexpected cert\n");
         context = CertEnumCertificatesInStore(collection, context);
@@ -907,8 +901,7 @@ static void testCollectionStore(void)
         {
             ok(context->hCertStore == collection, "Unexpected store\n");
             ok(context->cbCertEncoded == sizeof(bigCert2),
-             "Expected size %d, got %ld\n", sizeof(bigCert2),
-             context->cbCertEncoded);
+             "Wrong size %ld\n", context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert2,
              context->cbCertEncoded), "Unexpected cert\n");
             context = CertEnumCertificatesInStore(collection, context);
@@ -923,8 +916,7 @@ static void testCollectionStore(void)
     {
         ok(context->hCertStore == collection, "Unexpected store\n");
         ok(context->cbCertEncoded == sizeof(bigCert),
-         "Expected size %d, got %ld\n", sizeof(bigCert),
-         context->cbCertEncoded);
+         "Wrong size %ld\n", context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
          "Unexpected cert\n");
         context = CertEnumCertificatesInStore(collection, context);
@@ -933,8 +925,7 @@ static void testCollectionStore(void)
         {
             ok(context->hCertStore == collection, "Unexpected store\n");
             ok(context->cbCertEncoded == sizeof(bigCert2),
-             "Expected size %d, got %ld\n", sizeof(bigCert2),
-             context->cbCertEncoded);
+             "Wrong size %ld\n", context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert2,
              context->cbCertEncoded), "Unexpected cert\n");
             context = CertEnumCertificatesInStore(collection, context);
@@ -955,8 +946,7 @@ static void testCollectionStore(void)
     {
         ok(context->hCertStore == collection2, "Unexpected store\n");
         ok(context->cbCertEncoded == sizeof(bigCert),
-         "Expected size %d, got %ld\n", sizeof(bigCert),
-         context->cbCertEncoded);
+         "Wrong size %ld\n", context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
          "Unexpected cert\n");
         context = CertEnumCertificatesInStore(collection2, context);
@@ -965,8 +955,7 @@ static void testCollectionStore(void)
         {
             ok(context->hCertStore == collection2, "Unexpected store\n");
             ok(context->cbCertEncoded == sizeof(bigCert2),
-             "Expected size %d, got %ld\n", sizeof(bigCert2),
-             context->cbCertEncoded);
+             "Wrong size %ld\n", context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert2,
              context->cbCertEncoded), "Unexpected cert\n");
             context = CertEnumCertificatesInStore(collection2, context);
@@ -1021,8 +1010,7 @@ static void testCollectionStore(void)
     {
         ok(context->hCertStore == collection, "Unexpected store\n");
         ok(context->cbCertEncoded == sizeof(bigCert),
-         "Expected size %d, got %ld\n", sizeof(bigCert),
-         context->cbCertEncoded);
+         "Wrong size %ld\n", context->cbCertEncoded);
         ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
          "Unexpected cert\n");
         context = CertEnumCertificatesInStore(collection, context);
@@ -1031,8 +1019,7 @@ static void testCollectionStore(void)
         {
             ok(context->hCertStore == collection, "Unexpected store\n");
             ok(context->cbCertEncoded == sizeof(bigCert),
-             "Expected size %d, got %ld\n", sizeof(bigCert),
-             context->cbCertEncoded);
+             "Wrong size %ld\n", context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
              "Unexpected cert\n");
             context = CertEnumCertificatesInStore(collection, context);
@@ -1072,8 +1059,7 @@ static void testCollectionStore(void)
         {
             ok(context->hCertStore == collection, "Unexpected store\n");
             ok(context->cbCertEncoded == sizeof(bigCert),
-             "Expected size %d, got %ld\n", sizeof(bigCert),
-             context->cbCertEncoded);
+             "Wrong size %ld\n", context->cbCertEncoded);
             ok(!memcmp(context->pbCertEncoded, bigCert, context->cbCertEncoded),
              "Unexpected cert\n");
         }
@@ -1223,8 +1209,7 @@ static void testRegStore(void)
                     if (hdr)
                     {
                         ok(hdr->cb == sizeof(bigCert2),
-                         "Unexpected size %ld of cert property, expected %d\n",
-                         hdr->cb, sizeof(bigCert2));
+                           "Wrong size %ld of cert property\n", hdr->cb);
                         ok(!memcmp((BYTE *)hdr + sizeof(*hdr), bigCert2,
                          hdr->cb), "Unexpected cert in cert property\n");
                     }
@@ -1233,8 +1218,7 @@ static void testRegStore(void)
                     if (hdr)
                     {
                         ok(hdr->cb == sizeof(hash),
-                         "Unexpected size %ld of hash property, expected %d\n",
-                         hdr->cb, sizeof(hash));
+                           "Wrong size %ld of hash property\n", hdr->cb);
                         ok(!memcmp((BYTE *)hdr + sizeof(*hdr), hash,
                          hdr->cb), "Unexpected hash in cert property\n");
                     }
