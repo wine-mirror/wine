@@ -873,7 +873,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCaps(
 	}
 
 	if (caps->dwSize < sizeof(*caps)) {
-		WARN("invalid parameter: caps->dwSize = %ld < %d\n",caps->dwSize, sizeof(*caps));
+		WARN("invalid parameter: caps->dwSize = %ld\n",caps->dwSize);
 		return DSERR_INVALIDPARAM;
 	}
 

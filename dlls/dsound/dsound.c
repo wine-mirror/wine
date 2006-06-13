@@ -1239,8 +1239,7 @@ HRESULT DirectSoundDevice_GetCaps(
 
     /* check if there is enough room */
     if (lpDSCaps->dwSize < sizeof(*lpDSCaps)) {
-        WARN("invalid parameter: lpDSCaps->dwSize = %ld < %d\n",
-             lpDSCaps->dwSize, sizeof(*lpDSCaps));
+        WARN("invalid parameter: lpDSCaps->dwSize = %ld\n", lpDSCaps->dwSize);
         return DSERR_INVALIDPARAM;
     }
 

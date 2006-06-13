@@ -508,8 +508,7 @@ HRESULT WINAPI IDirectSoundCaptureImpl_GetCaps(
     }
 
     if (lpDSCCaps->dwSize < sizeof(*lpDSCCaps)) {
-	WARN("invalid parameter: lpDSCCaps->dwSize = %ld < %d\n",
-	    lpDSCCaps->dwSize, sizeof(*lpDSCCaps));
+	WARN("invalid parameter: lpDSCCaps->dwSize = %ld\n", lpDSCCaps->dwSize);
 	return DSERR_INVALIDPARAM;
     }
 
@@ -816,8 +815,7 @@ IDirectSoundCaptureBufferImpl_GetCaps(
     }
 
     if (lpDSCBCaps->dwSize < sizeof(DSCBCAPS)) {
-        WARN("invalid parameter: lpDSCBCaps->dwSize = %ld < %d\n",
-	    lpDSCBCaps->dwSize, sizeof(DSCBCAPS));
+        WARN("invalid parameter: lpDSCBCaps->dwSize = %ld\n", lpDSCBCaps->dwSize);
         return DSERR_INVALIDPARAM;
     }
 
