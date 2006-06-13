@@ -75,7 +75,7 @@ static void test_find_file(void)
             switch(ret) {
             case VFF_CURNEDEST:
                 ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
-               "got %d(%s) expected %d\n", dwCur, curdir, strlen(windir)+1);
+               "got %d(%s) expected %d\n", dwCur, curdir, lstrlenA(windir)+1);
             ok(dwOut == 1, "Wrong length of buffer for the recommended installation location: "
                "got %d(%s) expected 1\n", dwOut, outBuf);
                 break;
@@ -97,7 +97,7 @@ static void test_find_file(void)
             switch(ret) {
             case VFF_CURNEDEST:
                 ok(dwCur == 1 + strlen(windir), "Wrong length of buffer for current location: "
-               "got %d(%s) expected %d\n", dwCur, curdir, strlen(windir)+1);
+               "got %d(%s) expected %d\n", dwCur, curdir, lstrlenA(windir)+1);
             ok(dwOut == 1, "Wrong length of buffer for the recommended installation location: "
                "got %d(%s) expected 1\n", dwOut, outBuf);
                 break;
@@ -149,7 +149,7 @@ static void test_find_file(void)
         ret = VerFindFileA(VFFF_ISSHAREDFILE, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
         todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
         ok(dwOut == 1 + strlen(windir), "Wrong length of buffer for current location: "
-           "got %d(%s) expected %d\n", dwOut, outBuf, strlen(windir)+1);
+           "got %d(%s) expected %d\n", dwOut, outBuf, lstrlenA(windir)+1);
 
         dwCur=MAX_PATH;
         dwOut=MAX_PATH;
@@ -158,7 +158,7 @@ static void test_find_file(void)
         ret = VerFindFileA(0, filename, NULL, appdir, curdir, &dwCur, outBuf, &dwOut);
         todo_wine ok(VFF_CURNEDEST == ret, "Wrong return value got %lx expected VFF_CURNEDEST\n", ret);
         ok(dwOut == 1 + strlen(appdir), "Wrong length of buffer for current location: "
-           "got %d(%s) expected %d\n", dwOut, outBuf, strlen(appdir)+1);
+           "got %d(%s) expected %d\n", dwOut, outBuf, lstrlenA(appdir)+1);
     }
 }
 
