@@ -350,15 +350,13 @@ static void test_32bit_win(void)
 
     retA = VerQueryValueA( pVersionInfoA, rootA, (LPVOID *)&pBufA, &uiLengthA );
     ok (retA, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
-    ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct (%d)\n",
-                                                uiLengthA, sizeof(VS_FIXEDFILEINFO));
+    ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct\n", uiLengthA);
 
     if (is_unicode_enabled)
     { 
         retW = VerQueryValueW( pVersionInfoW, rootW, (LPVOID *)&pBufW, &uiLengthW );
         ok (retW, "VerQueryValueW failed: GetLastError = 0x%08lx\n", GetLastError());
-        ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct (%d)\n",
-                                                    uiLengthA, sizeof(VS_FIXEDFILEINFO));
+        ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct\n", uiLengthA);
 
         ok( uiLengthA == uiLengthW, "The size of VS_FIXEDFILEINFO should be the same for both A/W calls, it is (%d) vs. (%d)\n",
                                     uiLengthA, uiLengthW);
