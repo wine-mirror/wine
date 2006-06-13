@@ -867,8 +867,7 @@ HRESULT DPLAYX_SetConnectionSettingsA
   /* Store information */
   if(  lpConn->dwSize != sizeof(DPLCONNECTION) )
   {
-    ERR(": old/new DPLCONNECTION type? Size=%08lx vs. expected=%ul bytes\n",
-         lpConn->dwSize, sizeof( DPLCONNECTION ) );
+    ERR(": old/new DPLCONNECTION type? Size=%08lx\n", lpConn->dwSize );
 
     return DPERR_INVALIDPARAMS;
   }
@@ -888,8 +887,7 @@ HRESULT DPLAYX_SetConnectionSettingsA
   {
     DPLAYX_ReleaseSemaphore();
 
-    ERR("DPSESSIONDESC passed in? Size=%lu vs. expected=%u bytes\n",
-         lpConn->lpSessionDesc->dwSize, sizeof( DPSESSIONDESC2 ) );
+    ERR("DPSESSIONDESC passed in? Size=%lu\n", lpConn->lpSessionDesc->dwSize );
 
     return DPERR_INVALIDPARAMS;
   }
@@ -931,8 +929,7 @@ HRESULT DPLAYX_SetConnectionSettingsW
   /* Store information */
   if(  lpConn->dwSize != sizeof(DPLCONNECTION) )
   {
-    ERR(": old/new DPLCONNECTION type? Size=%lu vs. expected=%u bytes\n",
-         lpConn->dwSize, sizeof( DPLCONNECTION ) );
+    ERR(": old/new DPLCONNECTION type? Size=%lu\n", lpConn->dwSize );
 
     return DPERR_INVALIDPARAMS;
   }
