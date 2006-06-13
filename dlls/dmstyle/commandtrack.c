@@ -264,7 +264,7 @@ static HRESULT WINAPI IDirectMusicCommandTrack_IPersistStream_Load (LPPERSISTSTR
 			TRACE_(dmfile)(": command track chunk\n");
 			IStream_Read (pStm, &dwSizeOfStruct, sizeof(DWORD), NULL);
 			if (dwSizeOfStruct != sizeof(DMUS_IO_COMMAND)) {
-				TRACE_(dmfile)(": declared size of struct (=%ld) != actual size (=%i); indicates older direct music version\n", dwSizeOfStruct, sizeof(DMUS_IO_COMMAND));
+				TRACE_(dmfile)(": declared size of struct (=%ld) != actual size; indicates older direct music version\n", dwSizeOfStruct);
 			}
 			chunkSize -= sizeof(DWORD); /* now chunk size is one DWORD shorter */
 			nrCommands = chunkSize/dwSizeOfStruct; /* and this is the number of commands */

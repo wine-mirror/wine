@@ -588,13 +588,13 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartList (LPPERSISTSTR
     TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) {
     case DMUS_FOURCC_PART_CHUNK: {
-      TRACE_(dmfile)(": Part chunk (skipping for now) (sizeof %u)\n", sizeof(DMUS_IO_STYLEPART));
+      TRACE_(dmfile)(": Part chunk (skipping for now)\n" );
       liMove.QuadPart = Chunk.dwSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
       break;
     }
     case DMUS_FOURCC_NOTE_CHUNK: { 
-      TRACE_(dmfile)(": Note chunk (skipping for now) (sizeof %u)\n", sizeof(DMUS_IO_STYLENOTE));
+      TRACE_(dmfile)(": Note chunk (skipping for now)\n");
       IStream_Read (pStm, &dwSize, sizeof(DWORD), NULL);
       cnt = (Chunk.dwSize - sizeof(DWORD));
       TRACE_(dmfile)(" - dwSize: %lu\n", dwSize);
@@ -610,7 +610,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartList (LPPERSISTSTR
       break;
     }
     case DMUS_FOURCC_CURVE_CHUNK: { 
-      TRACE_(dmfile)(": Curve chunk (skipping for now) (sizeof %u)\n", sizeof(DMUS_IO_STYLECURVE));
+      TRACE_(dmfile)(": Curve chunk (skipping for now)\n");
       IStream_Read (pStm, &dwSize, sizeof(DWORD), NULL);
       cnt = (Chunk.dwSize - sizeof(DWORD));
       TRACE_(dmfile)(" - dwSize: %lu\n", dwSize);
