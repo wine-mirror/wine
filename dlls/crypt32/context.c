@@ -74,7 +74,7 @@ void *Context_CreateDataContext(size_t contextSize)
     return ret;
 }
 
-void *Context_CreateLinkContext(size_t contextSize, void *linked, size_t extra,
+void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned int extra,
  BOOL addRef)
 {
     void *context = CryptMemAlloc(contextSize + sizeof(LINK_CONTEXT) + extra);

@@ -377,7 +377,7 @@ static void *CRYPT_CollectionCreateContextFromChild(PWINE_COLLECTIONSTORE store,
 }
 
 static BOOL CRYPT_CollectionAddContext(PWINE_COLLECTIONSTORE store,
- size_t contextStoreOffset, void *context, void *toReplace, size_t contextSize,
+ unsigned int contextStoreOffset, void *context, void *toReplace, unsigned int contextSize,
  void **pChildContext)
 {
     BOOL ret;

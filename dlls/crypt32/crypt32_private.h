@@ -115,7 +115,7 @@ void *Context_CreateDataContext(size_t contextSize);
  * it should be) linked is addref'd.
  * Free with Context_Release.
  */
-void *Context_CreateLinkContext(size_t contextSize, void *linked, size_t extra,
+void *Context_CreateLinkContext(unsigned int contextSize, void *linked, unsigned int extra,
  BOOL addRef);
 
 /* Returns a pointer to the extra bytes allocated with context, which must be
