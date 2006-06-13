@@ -54,6 +54,9 @@
 #endif
 #ifdef HAVE_LINUX_JOYSTICK_H
 #include <linux/joystick.h>
+#ifdef SW_MAX
+#undef SW_MAX
+#endif
 #define JOYDEV_NEW "/dev/input/js%d"
 #define JOYDEV_OLD "/dev/js%d"
 #endif
