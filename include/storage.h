@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999 François Gouget
+ * Copyright (C) 1999 Francois Gouget
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
