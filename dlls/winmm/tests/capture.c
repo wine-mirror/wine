@@ -375,8 +375,7 @@ static void wave_in_test_device(int device)
         ok(rc==MMSYSERR_NOERROR,"waveInMessage(%s): failed to get interface "
            "name: rc=%s\n",dev_name(device),wave_in_error(rc));
         ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),
-           "got an incorrect size: %ld instead of %d\n",
-           size,(lstrlenW(nameW)+1)*sizeof(WCHAR));
+           "got an incorrect size %ld\n", size);
         if (rc==MMSYSERR_NOERROR) {
             nameA = malloc(size/sizeof(WCHAR));
             WideCharToMultiByte(CP_ACP, 0, nameW, size/sizeof(WCHAR),

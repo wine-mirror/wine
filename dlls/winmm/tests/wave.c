@@ -873,8 +873,7 @@ static void wave_out_test_device(int device)
                           (DWORD_PTR)nameW, size);
         ok(rc==MMSYSERR_NOERROR,"waveOutMessage(%s): failed to get interface "
            "name, rc=%s\n",dev_name(device),wave_out_error(rc));
-        ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),"got an incorrect size: "
-           "%ld instead of %d\n",size,(lstrlenW(nameW)+1)*sizeof(WCHAR));
+        ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),"got an incorrect size %ld\n",size);
         if (rc==MMSYSERR_NOERROR) {
             nameA = malloc(size/sizeof(WCHAR));
             WideCharToMultiByte(CP_ACP, 0, nameW, size/sizeof(WCHAR), nameA,
