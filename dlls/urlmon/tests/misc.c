@@ -870,8 +870,7 @@ static void test_ReleaseBindInfo(void)
     bi.pUnk = &unk;
     SET_EXPECT(unk_Release);
     ReleaseBindInfo(&bi);
-    ok(bi.cbSize == sizeof(BINDINFO), "bi.cbSize=%ld, expected %d\n",
-       bi.cbSize, sizeof(bi));
+    ok(bi.cbSize == sizeof(BINDINFO), "bi.cbSize=%ld\n", bi.cbSize);
     ok(bi.pUnk == NULL, "bi.pUnk=%p, expected NULL\n", bi.pUnk);
     CHECK_CALLED(unk_Release);
 
@@ -879,8 +878,7 @@ static void test_ReleaseBindInfo(void)
     bi.cbSize = offsetof(BINDINFO, pUnk);
     bi.pUnk = &unk;
     ReleaseBindInfo(&bi);
-    ok(bi.cbSize == offsetof(BINDINFO, pUnk), "bi.cbSize=%ld, expected %d\n",
-       bi.cbSize, sizeof(bi));
+    ok(bi.cbSize == offsetof(BINDINFO, pUnk), "bi.cbSize=%ld\n", bi.cbSize);
     ok(bi.pUnk == &unk, "bi.pUnk=%p, expected %p\n", bi.pUnk, &unk);
 
     memset(&bi, 0, sizeof(bi));
