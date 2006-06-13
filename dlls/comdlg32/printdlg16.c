@@ -363,7 +363,7 @@ BOOL16 WINAPI PrintDlg16(
     }
 
     if(lppd->lStructSize != sizeof(PRINTDLG16)) {
-        ERR("structure size (%ld/%d)\n",lppd->lStructSize,sizeof(PRINTDLG16));
+        ERR("structure size %ld\n",lppd->lStructSize);
 	COMDLG32_SetCommDlgExtendedError(CDERR_STRUCTSIZE);
 	return FALSE;
     }
