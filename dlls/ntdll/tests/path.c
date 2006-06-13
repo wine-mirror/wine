@@ -213,7 +213,7 @@ static void test_RtlIsNameLegalDOS8Dot3(void)
             strcpy( str, test->path );
             for (i = 0; str[i]; i++) str[i] = toupper(str[i]);
             ok( oem_ret.Length == strlen(test->path), "Wrong length %d/%d for '%s'\n",
-                oem_ret.Length, strlen(test->path), test->path );
+                oem_ret.Length, lstrlenA(test->path), test->path );
             ok( !memcmp( oem_ret.Buffer, str, oem_ret.Length ),
                 "Wrong string '%.*s'/'%s'\n", oem_ret.Length, oem_ret.Buffer, str );
         }
