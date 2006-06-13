@@ -106,7 +106,7 @@ typedef struct __cxx_type_info
     UINT             flags;        /* flags (see CLASS_* flags below) */
     const type_info *type_info;    /* C++ type info */
     this_ptr_offsets offsets;      /* offsets for computing the this pointer */
-    size_t           size;         /* object size */
+    unsigned int     size;         /* object size */
     cxx_copy_ctor    copy_ctor;    /* copy constructor */
 } cxx_type_info;
 #define CLASS_IS_SIMPLE_TYPE          1
