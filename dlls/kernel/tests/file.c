@@ -895,7 +895,7 @@ static void test_offset_in_overlapped_structure(void)
 {
     HANDLE hFile;
     OVERLAPPED ov;
-    DWORD done;
+    DWORD done, offset;
     BOOL rc;
     BYTE buf[256], pattern[] = "TeSt";
     UINT i;
@@ -925,18 +925,16 @@ static void test_offset_in_overlapped_structure(void)
     if (rc || GetLastError()!=ERROR_INVALID_PARAMETER) {
         ok(rc, "WriteFile error %ld\n", GetLastError());
         ok(done == sizeof(pattern), "expected number of bytes written %lu\n", done);
-        /*trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));*/
-        ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
-           "expected file offset %d\n", PATTERN_OFFSET + sizeof(pattern));
+        offset = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
+        ok(offset == PATTERN_OFFSET + sizeof(pattern), "wrong file offset %ld\n", offset);
 
         S(U(ov)).Offset = sizeof(buf) * 2;
         S(U(ov)).OffsetHigh = 0;
         ret = WriteFile(hFile, pattern, sizeof(pattern), &done, &ov);
         ok( ret, "WriteFile error %ld\n", GetLastError());
         ok(done == sizeof(pattern), "expected number of bytes written %lu\n", done);
-        /*trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));*/
-        ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (sizeof(buf) * 2 + sizeof(pattern)),
-           "expected file offset %d\n", sizeof(buf) * 2 + sizeof(pattern));
+        offset = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
+        ok(offset == sizeof(buf) * 2 + sizeof(pattern), "wrong file offset %ld\n", offset);
     }
 
     CloseHandle(hFile);
@@ -955,9 +953,8 @@ static void test_offset_in_overlapped_structure(void)
     if (rc || GetLastError()!=ERROR_INVALID_PARAMETER) {
         ok(rc, "ReadFile error %ld\n", GetLastError());
         ok(done == sizeof(pattern), "expected number of bytes read %lu\n", done);
-        /*trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));*/
-        ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
-           "expected file offset %d\n", PATTERN_OFFSET + sizeof(pattern));
+        offset = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
+        ok(offset == PATTERN_OFFSET + sizeof(pattern), "wrong file offset %ld\n", offset);
         ok(!memcmp(buf, pattern, sizeof(pattern)), "pattern match failed\n");
     }
 

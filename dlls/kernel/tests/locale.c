@@ -106,7 +106,7 @@ static void InitFunctionPointers(void)
 #define BUFFER_SIZE    128
 #define COUNTOF(x) (sizeof(x)/sizeof(x)[0])
 
-#define EXPECT_LEN(len) ok(ret == (len), "Expected Len %d, got %d\n", (len), ret)
+#define EXPECT_LEN(len) ok(ret == (len), "Expected Len %d, got %d\n", (int)(len), ret)
 #define EXPECT_INVALID  ok(GetLastError() == ERROR_INVALID_PARAMETER, \
  "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError())
 #define EXPECT_BUFFER  ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, \
@@ -1545,7 +1545,7 @@ static void test_FoldStringA(void)
 static void test_FoldStringW(void)
 {
   int ret;
-  size_t i, j;
+  unsigned int i, j;
   WCHAR src[256], dst[256], ch, prev_ch = 1;
   static const DWORD badFlags[] =
   {

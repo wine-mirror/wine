@@ -746,18 +746,18 @@ static void test_CreatePipe(void)
     pipe_attr.lpSecurityDescriptor = NULL; 
     ok(CreatePipe(&piperead, &pipewrite, &pipe_attr, 0) != 0, "CreatePipe failed\n");
     ok(WriteFile(pipewrite,PIPENAME,sizeof(PIPENAME), &written, NULL), "Write to anonymous pipe failed\n");
-    ok(written == sizeof(PIPENAME), "Write to anonymous pipe wrote %ld bytes instead of %d\n", written,sizeof(PIPENAME));
+    ok(written == sizeof(PIPENAME), "Write to anonymous pipe wrote %ld bytes\n", written);
     ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL), "Read from non empty pipe failed\n");
-    ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %ld bytes instead of %d\n", read, sizeof(PIPENAME));
+    ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %ld bytes\n", read);
 
     /* Now write another chunk*/
     ok(CreatePipe(&piperead, &pipewrite, &pipe_attr, 0) != 0, "CreatePipe failed\n");
     ok(WriteFile(pipewrite,PIPENAME,sizeof(PIPENAME), &written, NULL), "Write to anonymous pipe failed\n");
-    ok(written == sizeof(PIPENAME), "Write to anonymous pipe wrote %ld bytes instead of %d\n", written,sizeof(PIPENAME));
+    ok(written == sizeof(PIPENAME), "Write to anonymous pipe wrote %ld bytes\n", written);
     /* and close the write end, read should still succeed*/
     ok(CloseHandle(pipewrite), "CloseHandle for the Write Pipe failed\n");
     ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL), "Read from broken pipe withe with pending data failed\n");
-    ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %ld bytes instead of %d\n", read, sizeof(PIPENAME));
+    ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %ld bytes\n", read);
     /* But now we need to get informed that the pipe is closed */
     ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL) == 0, "Broken pipe not detected\n");
 }

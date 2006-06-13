@@ -765,10 +765,10 @@ static void test_waittxempty(HANDLE hcom)
     after = GetTickCount();
     ok(res_write == TRUE, "WriteFile failed\n");
     ok(written == sizeof(tbuf),
-       "WriteFile: Unexpected write_size %ld , expected %d\n", written, sizeof(tbuf));
+       "WriteFile: Unexpected write_size %ld\n", written);
 
-    trace("WriteFile succeeded, took %ld ms to write %d Bytes at %ld Baud\n",
-	  after - before, sizeof(tbuf), baud);
+    trace("WriteFile succeeded, took %ld ms to write %ld Bytes at %ld Baud\n",
+	  after - before, written, baud);
 
     before = GetTickCount();
     res = WaitCommEvent(hcom, &evtmask, NULL);
@@ -845,8 +845,7 @@ static void test_LoopbackRead(HANDLE hcom)
     before = GetTickCount();
     ok(WriteFile(hcom,tbuf,sizeof(tbuf),&written, NULL), "WriteFile failed\n");
     after = GetTickCount();
-    ok(written == sizeof(tbuf),"WriteFile %ld bytes written, expected %d\n",
-       written, sizeof(tbuf));
+    ok(written == sizeof(tbuf),"WriteFile %ld bytes written\n", written);
     diff = after -before;
 
     /* make sure all bytes are written, so Readfile will succeed in one call*/
@@ -859,7 +858,7 @@ static void test_LoopbackRead(HANDLE hcom)
 
     read=0;
     ok(ReadFile(hcom, rbuf, sizeof(rbuf), &read, NULL), "Readfile failed\n");
-    ok(read == sizeof(tbuf),"ReadFile read %ld bytes, expected %d \"%s\"\n", read, sizeof(tbuf),rbuf);
+    ok(read == sizeof(tbuf),"ReadFile read %ld bytes, expected \"%s\"\n", read,rbuf);
 
     /* Now do the same withe a slower Baud rate.
        As we request more characters then written, we will hit the timeout
@@ -876,8 +875,7 @@ static void test_LoopbackRead(HANDLE hcom)
 
     ok(SetCommMask(hcom, EV_RXCHAR), "SetCommMask failed\n");
     ok(WriteFile(hcom,tbuf,sizeof(tbuf),&written, NULL), "WriteFile failed\n");
-    ok(written == sizeof(tbuf),"WriteFile %ld bytes written, expected %d\n",
-       written, sizeof(tbuf));
+    ok(written == sizeof(tbuf),"WriteFile %ld bytes written\n", written);
 
     trace("WaitCommEventEV_RXCHAR\n");
     ok(WaitCommEvent(hcom, &evtmask, NULL), "WaitCommEvent failed\n");
@@ -888,10 +886,9 @@ static void test_LoopbackRead(HANDLE hcom)
     res = ReadFile(hcom, rbuf, sizeof(rbuf), &read, NULL);
     after = GetTickCount();
     ok(res, "Readfile failed\n");
-    ok(read == sizeof(tbuf),"ReadFile read %ld bytes, expected %d\n", read, sizeof(tbuf));
+    ok(read == sizeof(tbuf),"ReadFile read %ld bytes\n", read);
     diff = after - before;
-    trace("Readfile for %d chars with %d avail took %ld ms\n",
-	  sizeof(rbuf), sizeof(tbuf), diff);
+    trace("Readfile for %ld chars took %ld ms\n", read, diff);
     ok( (diff > TIMEOUT - TIMEDELTA) && (diff < TIMEOUT + TIMEDELTA),
 	"Timedout Wait took %ld ms, expected around %d\n", diff, TIMEOUT);
 
@@ -914,9 +911,8 @@ static void test_LoopbackRead(HANDLE hcom)
     }
     while ((read < sizeof(tbuf)) && (i <10));
     after =  GetTickCount();
-    ok( read == sizeof(tbuf),"ReadFile read %ld bytes, expected %d\n", read, sizeof(tbuf));
-    trace("Plain Read for %d char at %d baud took %ld ms\n", sizeof(tbuf), SLOWBAUD, after-before);
-    
+    ok( read == sizeof(tbuf),"ReadFile read %ld bytes\n", read);
+    trace("Plain Read for %ld char at %d baud took %ld ms\n", read, SLOWBAUD, after-before);
 }
 
 static void test_LoopbackCtsRts(HANDLE hcom)
