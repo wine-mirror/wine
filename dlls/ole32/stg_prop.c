@@ -1159,7 +1159,7 @@ static HRESULT PropertyStorage_ReadHeaderFromStream(IStream *stm,
     {
         if (count != sizeof(buf))
         {
-            WARN("read %ld, expected %d\n", count, sizeof(buf));
+            WARN("read only %ld\n", count);
             hr = STG_E_INVALIDHEADER;
         }
         else
@@ -1194,7 +1194,7 @@ static HRESULT PropertyStorage_ReadFmtIdOffsetFromStream(IStream *stm,
     {
         if (count != sizeof(buf))
         {
-            WARN("read %ld, expected %d\n", count, sizeof(buf));
+            WARN("read only %ld\n", count);
             hr = STG_E_INVALIDHEADER;
         }
         else
@@ -1223,7 +1223,7 @@ static HRESULT PropertyStorage_ReadSectionHeaderFromStream(IStream *stm,
     {
         if (count != sizeof(buf))
         {
-            WARN("read %ld, expected %d\n", count, sizeof(buf));
+            WARN("read only %ld\n", count);
             hr = STG_E_INVALIDHEADER;
         }
         else
@@ -1325,8 +1325,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
     /* The section size includes the section header, so check it */
     if (sectionHdr.cbSection < sizeof(PROPERTYSECTIONHEADER))
     {
-        WARN("section header too small, got %ld, expected at least %d\n",
-         sectionHdr.cbSection, sizeof(PROPERTYSECTIONHEADER));
+        WARN("section header too small, got %ld\n", sectionHdr.cbSection);
         hr = STG_E_INVALIDHEADER;
         goto end;
     }

@@ -159,7 +159,7 @@ CFStub_Invoke(
 	ULONG		res;
 
 	if (msg->cbBuffer < sizeof(IID)) {
-	    FIXME("Not enough bytes in buffer (%ld instead of %d)?\n",msg->cbBuffer,sizeof(IID));
+	    FIXME("Not enough bytes in buffer (%ld)?\n",msg->cbBuffer);
 	    return E_FAIL;
 	}
 	memcpy(&iid,msg->Buffer,sizeof(iid));
