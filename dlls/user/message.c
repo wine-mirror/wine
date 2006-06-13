@@ -1450,7 +1450,6 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
     case WM_DDE_POKE:
 	if ((!buffer || !*buffer) && message != WM_DDE_DATA) return FALSE;
 	uiHi = *lparam;
-	TRACE( "recv ddepack %u %x\n", size, uiHi );
         if (size)
         {
             if (!(hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_DDESHARE, size )))
@@ -2032,9 +2031,6 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
             if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
                                  &info.msg.lParam, &buffer, size ))
             {
-                ERR( "invalid packed message %x (%s) hwnd %p wp %x lp %lx size %d\n",
-                     info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd), info.msg.hwnd,
-                     info.msg.wParam, info.msg.lParam, size );
                 /* ignore it */
                 reply_message( &info, 0, TRUE );
                 goto next;
@@ -2055,12 +2051,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
 	    {
 		if (!unpack_dde_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
                                          &info.msg.lParam, &buffer, size ))
-		{
-		    ERR( "invalid packed dde-message %x (%s) hwnd %p wp %x lp %lx size %d\n",
-			 info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd),
-			 info.msg.hwnd, info.msg.wParam, info.msg.lParam, size );
                     goto next;  /* ignore it */
-		}
 	    }
             *msg = info.msg;
             HeapFree( GetProcessHeap(), 0, buffer );
@@ -2246,7 +2237,7 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
     {
         if (!(reply_data = HeapAlloc( GetProcessHeap(), 0, reply_size )))
         {
-            WARN( "no memory for reply %d bytes, will be truncated\n", reply_size );
+            WARN( "no memory for reply, will be truncated\n" );
             reply_size = 0;
         }
     }

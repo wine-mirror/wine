@@ -1529,7 +1529,7 @@ HDDEDATA        WDML_Global2DataHandle(HGLOBAL hMem, WINE_DDEHEAD* p)
                     }
                     else
                     {
-                        ERR("Wrong count: %lu / %d\n", size, sizeof(BITMAP) + count);
+                        ERR("Wrong count: %lu / %d\n", size, count);
                     }
                 } else ERR("No bitmap header\n");
                 break;
