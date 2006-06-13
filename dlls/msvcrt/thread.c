@@ -71,7 +71,7 @@ static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
 /*********************************************************************
  *		_beginthread (MSVCRT.@)
  */
-MSVCRT_uintptr_t _beginthread(
+MSVCRT_uintptr_t CDECL _beginthread(
   MSVCRT__beginthread_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
   unsigned int stack_size, /* [in] Stack size for new thread or 0 */
   void *arglist)           /* [in] Argument list to be passed to new thread or NULL */
@@ -96,7 +96,7 @@ MSVCRT_uintptr_t _beginthread(
 /*********************************************************************
  *		_beginthreadex (MSVCRT.@)
  */
-MSVCRT_uintptr_t _beginthreadex(
+MSVCRT_uintptr_t CDECL _beginthreadex(
   void *security,          /* [in] Security descriptor for new thread; must be NULL for Windows 9x applications */
   unsigned int stack_size, /* [in] Stack size for new thread or 0 */
   MSVCRT__beginthreadex_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
@@ -115,7 +115,7 @@ MSVCRT_uintptr_t _beginthreadex(
 /*********************************************************************
  *		_endthread (MSVCRT.@)
  */
-void _endthread(void)
+void CDECL _endthread(void)
 {
   TRACE("(void)\n");
 
@@ -126,7 +126,7 @@ void _endthread(void)
 /*********************************************************************
  *		_endthreadex (MSVCRT.@)
  */
-void _endthreadex(
+void CDECL _endthreadex(
   unsigned int retval) /* [in] Thread exit code */
 {
   TRACE("(%d)\n", retval);

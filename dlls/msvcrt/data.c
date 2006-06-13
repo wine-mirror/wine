@@ -135,73 +135,73 @@ typedef void (*_INITTERMFUN)(void);
 /***********************************************************************
  *		__p___argc (MSVCRT.@)
  */
-int* __p___argc(void) { return &MSVCRT___argc; }
+int* CDECL __p___argc(void) { return &MSVCRT___argc; }
 
 /***********************************************************************
  *		__p__commode (MSVCRT.@)
  */
-unsigned int* __p__commode(void) { return &MSVCRT__commode; }
+unsigned int* CDECL __p__commode(void) { return &MSVCRT__commode; }
 
 
 /***********************************************************************
  *              __p__pgmptr (MSVCRT.@)
  */
-char** __p__pgmptr(void) { return &MSVCRT__pgmptr; }
+char** CDECL __p__pgmptr(void) { return &MSVCRT__pgmptr; }
 
 /***********************************************************************
  *              __p__wpgmptr (MSVCRT.@)
  */
-WCHAR** __p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
+WCHAR** CDECL __p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
 
 /***********************************************************************
  *		__p__fmode (MSVCRT.@)
  */
-unsigned int* __p__fmode(void) { return &MSVCRT__fmode; }
+unsigned int* CDECL __p__fmode(void) { return &MSVCRT__fmode; }
 
 /***********************************************************************
  *		__p__osver (MSVCRT.@)
  */
-unsigned int* __p__osver(void) { return &MSVCRT__osver; }
+unsigned int* CDECL __p__osver(void) { return &MSVCRT__osver; }
 
 /***********************************************************************
  *		__p__winmajor (MSVCRT.@)
  */
-unsigned int* __p__winmajor(void) { return &MSVCRT__winmajor; }
+unsigned int* CDECL __p__winmajor(void) { return &MSVCRT__winmajor; }
 
 /***********************************************************************
  *		__p__winminor (MSVCRT.@)
  */
-unsigned int* __p__winminor(void) { return &MSVCRT__winminor; }
+unsigned int* CDECL __p__winminor(void) { return &MSVCRT__winminor; }
 
 /***********************************************************************
  *		__p__winver (MSVCRT.@)
  */
-unsigned int* __p__winver(void) { return &MSVCRT__winver; }
+unsigned int* CDECL __p__winver(void) { return &MSVCRT__winver; }
 
 /*********************************************************************
  *		__p__acmdln (MSVCRT.@)
  */
-char** __p__acmdln(void) { return &MSVCRT__acmdln; }
+char** CDECL __p__acmdln(void) { return &MSVCRT__acmdln; }
 
 /*********************************************************************
  *		__p__wcmdln (MSVCRT.@)
  */
-MSVCRT_wchar_t** __p__wcmdln(void) { return &MSVCRT__wcmdln; }
+MSVCRT_wchar_t** CDECL __p__wcmdln(void) { return &MSVCRT__wcmdln; }
 
 /*********************************************************************
  *		__p___argv (MSVCRT.@)
  */
-char*** __p___argv(void) { return &MSVCRT___argv; }
+char*** CDECL __p___argv(void) { return &MSVCRT___argv; }
 
 /*********************************************************************
  *		__p___wargv (MSVCRT.@)
  */
-MSVCRT_wchar_t*** __p___wargv(void) { return &MSVCRT___wargv; }
+MSVCRT_wchar_t*** CDECL __p___wargv(void) { return &MSVCRT___wargv; }
 
 /*********************************************************************
  *		__p__environ (MSVCRT.@)
  */
-char*** __p__environ(void)
+char*** CDECL __p__environ(void)
 {
   if (!_environ)
     _environ = msvcrt_SnapshotOfEnvironmentA(NULL);
@@ -211,7 +211,7 @@ char*** __p__environ(void)
 /*********************************************************************
  *		__p__wenviron (MSVCRT.@)
  */
-MSVCRT_wchar_t*** __p__wenviron(void)
+MSVCRT_wchar_t*** CDECL __p__wenviron(void)
 {
   if (!_wenviron)
     _wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
@@ -221,12 +221,12 @@ MSVCRT_wchar_t*** __p__wenviron(void)
 /*********************************************************************
  *		__p___initenv (MSVCRT.@)
  */
-char*** __p___initenv(void) { return &MSVCRT___initenv; }
+char*** CDECL __p___initenv(void) { return &MSVCRT___initenv; }
 
 /*********************************************************************
  *		__p___winitenv (MSVCRT.@)
  */
-MSVCRT_wchar_t*** __p___winitenv(void) { return &MSVCRT___winitenv; }
+MSVCRT_wchar_t*** CDECL __p___winitenv(void) { return &MSVCRT___winitenv; }
 
 /* INTERNAL: Create a wide string from an ascii string */
 static MSVCRT_wchar_t *wstrdupa(const char *str)
@@ -311,8 +311,8 @@ void msvcrt_free_args(void)
 /*********************************************************************
  *		__getmainargs (MSVCRT.@)
  */
-void __getmainargs(int *argc, char** *argv, char** *envp,
-                                  int expand_wildcards, int *new_mode)
+void CDECL __getmainargs(int *argc, char** *argv, char** *envp,
+                         int expand_wildcards, int *new_mode)
 {
   TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, envp, expand_wildcards, new_mode);
   *argc = MSVCRT___argc;
@@ -325,8 +325,8 @@ void __getmainargs(int *argc, char** *argv, char** *envp,
 /*********************************************************************
  *		__wgetmainargs (MSVCRT.@)
  */
-void __wgetmainargs(int *argc, MSVCRT_wchar_t** *wargv, MSVCRT_wchar_t** *wenvp,
-                    int expand_wildcards, int *new_mode)
+void CDECL __wgetmainargs(int *argc, MSVCRT_wchar_t** *wargv, MSVCRT_wchar_t** *wenvp,
+                          int expand_wildcards, int *new_mode)
 {
   TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenvp, expand_wildcards, new_mode);
   *argc = MSVCRT___argc;
@@ -339,7 +339,7 @@ void __wgetmainargs(int *argc, MSVCRT_wchar_t** *wargv, MSVCRT_wchar_t** *wenvp,
 /*********************************************************************
  *		_initterm (MSVCRT.@)
  */
-unsigned int _initterm(_INITTERMFUN *start,_INITTERMFUN *end)
+unsigned int CDECL _initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 {
   _INITTERMFUN* current = start;
 
@@ -360,7 +360,7 @@ unsigned int _initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 /*********************************************************************
  *		__set_app_type (MSVCRT.@)
  */
-void MSVCRT___set_app_type(int app_type)
+void CDECL MSVCRT___set_app_type(int app_type)
 {
   TRACE("(%d) %s application\n", app_type, app_type == 2 ? "Gui" : "Console");
   MSVCRT_app_type = app_type;

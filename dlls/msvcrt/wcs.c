@@ -50,7 +50,7 @@ MSVCRT_wchar_t* msvcrt_wstrndup(const MSVCRT_wchar_t *buf, unsigned int size)
 /*********************************************************************
  *		_wcsdup (MSVCRT.@)
  */
-MSVCRT_wchar_t* _wcsdup( const MSVCRT_wchar_t* str )
+MSVCRT_wchar_t* CDECL _wcsdup( const MSVCRT_wchar_t* str )
 {
   MSVCRT_wchar_t* ret = NULL;
   if (str)
@@ -65,7 +65,7 @@ MSVCRT_wchar_t* _wcsdup( const MSVCRT_wchar_t* str )
 /*********************************************************************
  *		_wcsicoll (MSVCRT.@)
  */
-INT _wcsicoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
+INT CDECL _wcsicoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
 {
   /* FIXME: handle collates */
   return strcmpiW( str1, str2 );
@@ -74,7 +74,7 @@ INT _wcsicoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
 /*********************************************************************
  *		_wcsnset (MSVCRT.@)
  */
-MSVCRT_wchar_t* _wcsnset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c, MSVCRT_size_t n )
+MSVCRT_wchar_t* CDECL _wcsnset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c, MSVCRT_size_t n )
 {
   MSVCRT_wchar_t* ret = str;
   while ((n-- > 0) && *str) *str++ = c;
@@ -84,7 +84,7 @@ MSVCRT_wchar_t* _wcsnset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c, MSVCRT_size_t n
 /*********************************************************************
  *		_wcsrev (MSVCRT.@)
  */
-MSVCRT_wchar_t* _wcsrev( MSVCRT_wchar_t* str )
+MSVCRT_wchar_t* CDECL _wcsrev( MSVCRT_wchar_t* str )
 {
   MSVCRT_wchar_t* ret = str;
   MSVCRT_wchar_t* end = str + strlenW(str) - 1;
@@ -100,7 +100,7 @@ MSVCRT_wchar_t* _wcsrev( MSVCRT_wchar_t* str )
 /*********************************************************************
  *		_wcsset (MSVCRT.@)
  */
-MSVCRT_wchar_t* _wcsset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c )
+MSVCRT_wchar_t* CDECL _wcsset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c )
 {
   MSVCRT_wchar_t* ret = str;
   while (*str) *str++ = c;
@@ -110,7 +110,7 @@ MSVCRT_wchar_t* _wcsset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c )
 /*********************************************************************
  *		wcstod (MSVCRT.@)
  */
-double MSVCRT_wcstod(const MSVCRT_wchar_t* lpszStr, MSVCRT_wchar_t** end)
+double CDECL MSVCRT_wcstod(const MSVCRT_wchar_t* lpszStr, MSVCRT_wchar_t** end)
 {
   const MSVCRT_wchar_t* str = lpszStr;
   int negative = 0;
@@ -707,8 +707,8 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
 /*********************************************************************
  *		_vsnprintf (MSVCRT.@)
  */
-int MSVCRT_vsnprintf( char *str, unsigned int len,
-                const char *format, va_list valist )
+int CDECL MSVCRT_vsnprintf( char *str, unsigned int len,
+                            const char *format, va_list valist )
 {
     DWORD sz;
     LPWSTR formatW = NULL;
@@ -737,7 +737,7 @@ int MSVCRT_vsnprintf( char *str, unsigned int len,
 /*********************************************************************
  *		_snprintf (MSVCRT.@)
  */
-int MSVCRT__snprintf(char *str, unsigned int len, const char *format, ...)
+int CDECL MSVCRT__snprintf(char *str, unsigned int len, const char *format, ...)
 {
     int retval;
     va_list valist;
@@ -750,8 +750,8 @@ int MSVCRT__snprintf(char *str, unsigned int len, const char *format, ...)
 /*********************************************************************
  *		_vsnwsprintf (MSVCRT.@)
  */
-int MSVCRT_vsnwprintf( MSVCRT_wchar_t *str, unsigned int len,
-                       const MSVCRT_wchar_t *format, va_list valist )
+int CDECL MSVCRT_vsnwprintf( MSVCRT_wchar_t *str, unsigned int len,
+                             const MSVCRT_wchar_t *format, va_list valist )
 {
     pf_output out;
 
@@ -766,7 +766,7 @@ int MSVCRT_vsnwprintf( MSVCRT_wchar_t *str, unsigned int len,
 /*********************************************************************
  *		_snwprintf (MSVCRT.@)
  */
-int MSVCRT__snwprintf( MSVCRT_wchar_t *str, unsigned int len, const MSVCRT_wchar_t *format, ...)
+int CDECL MSVCRT__snwprintf( MSVCRT_wchar_t *str, unsigned int len, const MSVCRT_wchar_t *format, ...)
 {
     int retval;
     va_list valist;
@@ -779,7 +779,7 @@ int MSVCRT__snwprintf( MSVCRT_wchar_t *str, unsigned int len, const MSVCRT_wchar
 /*********************************************************************
  *		sprintf (MSVCRT.@)
  */
-int MSVCRT_sprintf( char *str, const char *format, ... )
+int CDECL MSVCRT_sprintf( char *str, const char *format, ... )
 {
     va_list ap;
     int r;
@@ -793,7 +793,7 @@ int MSVCRT_sprintf( char *str, const char *format, ... )
 /*********************************************************************
  *		swprintf (MSVCRT.@)
  */
-int MSVCRT_swprintf( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *format, ... )
+int CDECL MSVCRT_swprintf( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *format, ... )
 {
     va_list ap;
     int r;
@@ -807,7 +807,7 @@ int MSVCRT_swprintf( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *format, ... )
 /*********************************************************************
  *		vswprintf (MSVCRT.@)
  */
-int MSVCRT_vswprintf( MSVCRT_wchar_t* str, const MSVCRT_wchar_t* format, va_list args )
+int CDECL MSVCRT_vswprintf( MSVCRT_wchar_t* str, const MSVCRT_wchar_t* format, va_list args )
 {
     return MSVCRT_vsnwprintf( str, INT_MAX, format, args );
 }
@@ -815,7 +815,7 @@ int MSVCRT_vswprintf( MSVCRT_wchar_t* str, const MSVCRT_wchar_t* format, va_list
 /*********************************************************************
  *		wcscoll (MSVCRT.@)
  */
-int MSVCRT_wcscoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
+int CDECL MSVCRT_wcscoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
 {
   /* FIXME: handle collates */
   return strcmpW( str1, str2 );
@@ -824,7 +824,7 @@ int MSVCRT_wcscoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
 /*********************************************************************
  *		wcspbrk (MSVCRT.@)
  */
-MSVCRT_wchar_t* MSVCRT_wcspbrk( const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* accept )
+MSVCRT_wchar_t* CDECL MSVCRT_wcspbrk( const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* accept )
 {
   const MSVCRT_wchar_t* p;
   while (*str)
@@ -838,7 +838,7 @@ MSVCRT_wchar_t* MSVCRT_wcspbrk( const MSVCRT_wchar_t* str, const MSVCRT_wchar_t*
 /*********************************************************************
  *		wcstok  (MSVCRT.@)
  */
-MSVCRT_wchar_t *MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim )
+MSVCRT_wchar_t * CDECL MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim )
 {
     thread_data_t *data = msvcrt_get_thread_data();
     MSVCRT_wchar_t *ret;
@@ -859,7 +859,7 @@ MSVCRT_wchar_t *MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim 
 /*********************************************************************
  *		wctomb (MSVCRT.@)
  */
-INT MSVCRT_wctomb( char *dst, MSVCRT_wchar_t ch )
+INT CDECL MSVCRT_wctomb( char *dst, MSVCRT_wchar_t ch )
 {
   return WideCharToMultiByte( CP_ACP, 0, &ch, 1, dst, 6, NULL, NULL );
 }
@@ -867,7 +867,7 @@ INT MSVCRT_wctomb( char *dst, MSVCRT_wchar_t ch )
 /*********************************************************************
  *		iswalnum (MSVCRT.@)
  */
-INT MSVCRT_iswalnum( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswalnum( MSVCRT_wchar_t wc )
 {
     return isalnumW( wc );
 }
@@ -875,7 +875,7 @@ INT MSVCRT_iswalnum( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswalpha (MSVCRT.@)
  */
-INT MSVCRT_iswalpha( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswalpha( MSVCRT_wchar_t wc )
 {
     return isalphaW( wc );
 }
@@ -883,7 +883,7 @@ INT MSVCRT_iswalpha( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswcntrl (MSVCRT.@)
  */
-INT MSVCRT_iswcntrl( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswcntrl( MSVCRT_wchar_t wc )
 {
     return iscntrlW( wc );
 }
@@ -891,7 +891,7 @@ INT MSVCRT_iswcntrl( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswdigit (MSVCRT.@)
  */
-INT MSVCRT_iswdigit( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswdigit( MSVCRT_wchar_t wc )
 {
     return isdigitW( wc );
 }
@@ -899,7 +899,7 @@ INT MSVCRT_iswdigit( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswgraph (MSVCRT.@)
  */
-INT MSVCRT_iswgraph( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswgraph( MSVCRT_wchar_t wc )
 {
     return isgraphW( wc );
 }
@@ -907,7 +907,7 @@ INT MSVCRT_iswgraph( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswlower (MSVCRT.@)
  */
-INT MSVCRT_iswlower( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswlower( MSVCRT_wchar_t wc )
 {
     return islowerW( wc );
 }
@@ -915,7 +915,7 @@ INT MSVCRT_iswlower( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswprint (MSVCRT.@)
  */
-INT MSVCRT_iswprint( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswprint( MSVCRT_wchar_t wc )
 {
     return isprintW( wc );
 }
@@ -923,7 +923,7 @@ INT MSVCRT_iswprint( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswpunct (MSVCRT.@)
  */
-INT MSVCRT_iswpunct( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswpunct( MSVCRT_wchar_t wc )
 {
     return ispunctW( wc );
 }
@@ -931,7 +931,7 @@ INT MSVCRT_iswpunct( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswspace (MSVCRT.@)
  */
-INT MSVCRT_iswspace( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswspace( MSVCRT_wchar_t wc )
 {
     return isspaceW( wc );
 }
@@ -939,7 +939,7 @@ INT MSVCRT_iswspace( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswupper (MSVCRT.@)
  */
-INT MSVCRT_iswupper( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswupper( MSVCRT_wchar_t wc )
 {
     return isupperW( wc );
 }
@@ -947,7 +947,7 @@ INT MSVCRT_iswupper( MSVCRT_wchar_t wc )
 /*********************************************************************
  *		iswxdigit (MSVCRT.@)
  */
-INT MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
+INT CDECL MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
 {
     return isxdigitW( wc );
 }

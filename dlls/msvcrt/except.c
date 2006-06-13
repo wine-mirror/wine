@@ -115,7 +115,7 @@ __ASM_GLOBAL_FUNC(_EH_prolog,
 /*******************************************************************
  *		_global_unwind2 (MSVCRT.@)
  */
-void _global_unwind2(EXCEPTION_REGISTRATION_RECORD* frame)
+void CDECL _global_unwind2(EXCEPTION_REGISTRATION_RECORD* frame)
 {
     TRACE("(%p)\n",frame);
     RtlUnwind( frame, 0, 0, 0 );
@@ -124,7 +124,7 @@ void _global_unwind2(EXCEPTION_REGISTRATION_RECORD* frame)
 /*******************************************************************
  *		_local_unwind2 (MSVCRT.@)
  */
-void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
+void CDECL _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
 {
   MSVCRT_EXCEPTION_FRAME *curframe = frame;
   EXCEPTION_REGISTRATION_RECORD reg;
@@ -156,10 +156,10 @@ void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
 /*********************************************************************
  *		_except_handler2 (MSVCRT.@)
  */
-int _except_handler2(PEXCEPTION_RECORD rec,
-                     EXCEPTION_REGISTRATION_RECORD* frame,
-                     PCONTEXT context,
-                     EXCEPTION_REGISTRATION_RECORD** dispatcher)
+int CDECL _except_handler2(PEXCEPTION_RECORD rec,
+                           EXCEPTION_REGISTRATION_RECORD* frame,
+                           PCONTEXT context,
+                           EXCEPTION_REGISTRATION_RECORD** dispatcher)
 {
   FIXME("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
@@ -170,9 +170,9 @@ int _except_handler2(PEXCEPTION_RECORD rec,
 /*********************************************************************
  *		_except_handler3 (MSVCRT.@)
  */
-int _except_handler3(PEXCEPTION_RECORD rec,
-                     MSVCRT_EXCEPTION_FRAME* frame,
-                     PCONTEXT context, void* dispatcher)
+int CDECL _except_handler3(PEXCEPTION_RECORD rec,
+                           MSVCRT_EXCEPTION_FRAME* frame,
+                           PCONTEXT context, void* dispatcher)
 {
 #if defined(__GNUC__) && defined(__i386__)
   long retval;
@@ -247,7 +247,7 @@ int _except_handler3(PEXCEPTION_RECORD rec,
 /*********************************************************************
  *		_abnormal_termination (MSVCRT.@)
  */
-int _abnormal_termination(void)
+int CDECL _abnormal_termination(void)
 {
   FIXME("(void)stub\n");
   return 0;
@@ -298,7 +298,7 @@ __ASM_GLOBAL_FUNC( longjmp_set_regs,
  *		_setjmp (MSVCRT.@)
  */
 DEFINE_SETJMP_ENTRYPOINT(MSVCRT__setjmp);
-int __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
+int CDECL __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
 {
     jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
     if (jmp->Registration == TRYLEVEL_END)
@@ -315,7 +315,7 @@ int __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
  *		_setjmp3 (MSVCRT.@)
  */
 DEFINE_SETJMP_ENTRYPOINT( MSVCRT__setjmp3 );
-int __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args)
+int CDECL __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args)
 {
     jmp->Cookie = MSVCRT_JMP_MAGIC;
     jmp->UnwindFunc = 0;
@@ -346,7 +346,7 @@ int __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args)
 /*********************************************************************
  *		longjmp (MSVCRT.@)
  */
-int MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
+int CDECL MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
 {
     unsigned long cur_frame = 0;
 
@@ -506,7 +506,7 @@ void msvcrt_free_signals(void)
  * Some signals may never be generated except through an explicit call to
  * raise.
  */
-MSVCRT___sighandler_t MSVCRT_signal(int sig, MSVCRT___sighandler_t func)
+MSVCRT___sighandler_t CDECL MSVCRT_signal(int sig, MSVCRT___sighandler_t func)
 {
     MSVCRT___sighandler_t ret = MSVCRT_SIG_ERR;
 
@@ -537,7 +537,7 @@ MSVCRT___sighandler_t MSVCRT_signal(int sig, MSVCRT___sighandler_t func)
 /*********************************************************************
  *		_XcptFilter (MSVCRT.@)
  */
-int _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
+int CDECL _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
 {
     TRACE("(%08lx,%p)\n", ex, ptr);
     /* I assume ptr->ExceptionRecord->ExceptionCode is the same as ex */

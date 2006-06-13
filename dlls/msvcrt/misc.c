@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /*********************************************************************
  *		_beep (MSVCRT.@)
  */
-void _beep( unsigned int freq, unsigned int duration)
+void CDECL _beep( unsigned int freq, unsigned int duration)
 {
     TRACE(":Freq %d, Duration %d\n",freq,duration);
     Beep(freq, duration);
@@ -41,7 +41,7 @@ void _beep( unsigned int freq, unsigned int duration)
 /*********************************************************************
  *		srand (MSVCRT.@)
  */
-void MSVCRT_srand( unsigned int seed )
+void CDECL MSVCRT_srand( unsigned int seed )
 {
     thread_data_t *data = msvcrt_get_thread_data();
     data->random_seed = seed;
@@ -50,7 +50,7 @@ void MSVCRT_srand( unsigned int seed )
 /*********************************************************************
  *		rand (MSVCRT.@)
  */
-int MSVCRT_rand(void)
+int CDECL MSVCRT_rand(void)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
@@ -63,7 +63,7 @@ int MSVCRT_rand(void)
 /*********************************************************************
  *		_sleep (MSVCRT.@)
  */
-void _sleep(unsigned long timeout)
+void CDECL _sleep(unsigned long timeout)
 {
   TRACE("_sleep for %ld milliseconds\n",timeout);
   Sleep((timeout)?timeout:1);
@@ -72,9 +72,9 @@ void _sleep(unsigned long timeout)
 /*********************************************************************
  *		_lfind (MSVCRT.@)
  */
-void* _lfind(const void* match, const void* start,
-             unsigned int* array_size, unsigned int elem_size,
-             int (*cf)(const void*,const void*) )
+void* CDECL _lfind(const void* match, const void* start,
+                   unsigned int* array_size, unsigned int elem_size,
+                   int (*cf)(const void*,const void*) )
 {
   unsigned int size = *array_size;
   if (size)
@@ -90,9 +90,9 @@ void* _lfind(const void* match, const void* start,
 /*********************************************************************
  *		_lsearch (MSVCRT.@)
  */
-void* _lsearch(const void* match, void* start,
-               unsigned int* array_size, unsigned int elem_size,
-               int (*cf)(const void*,const void*) )
+void* CDECL _lsearch(const void* match, void* start,
+                     unsigned int* array_size, unsigned int elem_size,
+                     int (*cf)(const void*,const void*) )
 {
   unsigned int size = *array_size;
   if (size)
@@ -150,7 +150,7 @@ __ASM_GLOBAL_FUNC(_chkesp,
                   "leave\n\t"
                   "ret");
 
-void MSVCRT_chkesp_fail(void)
+void CDECL MSVCRT_chkesp_fail(void)
 {
   ERR("Stack pointer incorrect after last function call - Bad prototype/spec entry?\n");
   DebugBreak();
@@ -160,7 +160,7 @@ void MSVCRT_chkesp_fail(void)
 
 /**********************************************************************/
 
-void _chkesp(void)
+void CDECL _chkesp(void)
 {
 }
 

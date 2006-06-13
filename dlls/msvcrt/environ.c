@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /*********************************************************************
  *		getenv (MSVCRT.@)
  */
-char *MSVCRT_getenv(const char *name)
+char * CDECL MSVCRT_getenv(const char *name)
 {
     char **environ;
     unsigned int length=strlen(name);
@@ -50,7 +50,7 @@ char *MSVCRT_getenv(const char *name)
 /*********************************************************************
  *		_wgetenv (MSVCRT.@)
  */
-MSVCRT_wchar_t *_wgetenv(const MSVCRT_wchar_t *name)
+MSVCRT_wchar_t * CDECL _wgetenv(const MSVCRT_wchar_t *name)
 {
     MSVCRT_wchar_t **environ;
     unsigned int length=strlenW(name);
@@ -71,7 +71,7 @@ MSVCRT_wchar_t *_wgetenv(const MSVCRT_wchar_t *name)
 /*********************************************************************
  *		_putenv (MSVCRT.@)
  */
-int _putenv(const char *str)
+int CDECL _putenv(const char *str)
 {
  char *name, *value;
  char *dst;
@@ -118,7 +118,7 @@ finish:
 /*********************************************************************
  *		_wputenv (MSVCRT.@)
  */
-int _wputenv(const MSVCRT_wchar_t *str)
+int CDECL _wputenv(const MSVCRT_wchar_t *str)
 {
  MSVCRT_wchar_t *name, *value;
  MSVCRT_wchar_t *dst;

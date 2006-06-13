@@ -183,7 +183,7 @@ static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
 /*********************************************************************
  *		_cwait (MSVCRT.@)
  */
-MSVCRT_intptr_t _cwait(int *status, MSVCRT_intptr_t pid, int action)
+MSVCRT_intptr_t CDECL _cwait(int *status, MSVCRT_intptr_t pid, int action)
 {
   HANDLE hPid = (HANDLE)pid;
   int doserrno;
@@ -219,7 +219,7 @@ MSVCRT_intptr_t _cwait(int *status, MSVCRT_intptr_t pid, int action)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _execl(const char* name, const char* arg0, ...)
+MSVCRT_intptr_t CDECL _execl(const char* name, const char* arg0, ...)
 {
   va_list ap;
   char * args;
@@ -238,7 +238,7 @@ MSVCRT_intptr_t _execl(const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_execle (MSVCRT.@)
  */
-MSVCRT_intptr_t _execle(const char* name, const char* arg0, ...)
+MSVCRT_intptr_t CDECL _execle(const char* name, const char* arg0, ...)
 {
     FIXME("stub\n");
     return -1;
@@ -250,7 +250,7 @@ MSVCRT_intptr_t _execle(const char* name, const char* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _execlp(const char* name, const char* arg0, ...)
+MSVCRT_intptr_t CDECL _execlp(const char* name, const char* arg0, ...)
 {
   va_list ap;
   char * args;
@@ -272,7 +272,7 @@ MSVCRT_intptr_t _execlp(const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_execlpe (MSVCRT.@)
  */
-MSVCRT_intptr_t _execlpe(const char* name, const char* arg0, ...)
+MSVCRT_intptr_t CDECL _execlpe(const char* name, const char* arg0, ...)
 {
     FIXME("stub\n");
     return -1;
@@ -284,7 +284,7 @@ MSVCRT_intptr_t _execlpe(const char* name, const char* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _execv(const char* name, char* const* argv)
+MSVCRT_intptr_t CDECL _execv(const char* name, char* const* argv)
 {
   return _spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, NULL);
 }
@@ -295,7 +295,7 @@ MSVCRT_intptr_t _execv(const char* name, char* const* argv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _execve(const char* name, char* const* argv, const char* const* envv)
+MSVCRT_intptr_t CDECL _execve(const char* name, char* const* argv, const char* const* envv)
 {
   return _spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, envv);
 }
@@ -306,7 +306,7 @@ MSVCRT_intptr_t _execve(const char* name, char* const* argv, const char* const* 
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _execvpe(const char* name, char* const* argv, const char* const* envv)
+MSVCRT_intptr_t CDECL _execvpe(const char* name, char* const* argv, const char* const* envv)
 {
   char fullname[MAX_PATH];
 
@@ -321,7 +321,7 @@ MSVCRT_intptr_t _execvpe(const char* name, char* const* argv, const char* const*
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _execvp(const char* name, char* const* argv)
+MSVCRT_intptr_t CDECL _execvp(const char* name, char* const* argv)
 {
   return _execvpe(name, argv, NULL);
 }
@@ -332,7 +332,7 @@ MSVCRT_intptr_t _execvp(const char* name, char* const* argv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _spawnl(int flags, const char* name, const char* arg0, ...)
+MSVCRT_intptr_t CDECL _spawnl(int flags, const char* name, const char* arg0, ...)
 {
   va_list ap;
   char * args;
@@ -351,7 +351,7 @@ MSVCRT_intptr_t _spawnl(int flags, const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_spawnle (MSVCRT.@)
  */
-MSVCRT_intptr_t _spawnle(int flags, const char* name, const char* arg0, ...)
+MSVCRT_intptr_t CDECL _spawnle(int flags, const char* name, const char* arg0, ...)
 {
     va_list ap;
     char *args, *envs = NULL;
@@ -382,7 +382,7 @@ MSVCRT_intptr_t _spawnle(int flags, const char* name, const char* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _spawnlp(int flags, const char* name, const char* arg0, ...)
+MSVCRT_intptr_t CDECL _spawnlp(int flags, const char* name, const char* arg0, ...)
 {
   va_list ap;
   char * args;
@@ -404,7 +404,7 @@ MSVCRT_intptr_t _spawnlp(int flags, const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_spawnlpe (MSVCRT.@)
  */
-MSVCRT_intptr_t _spawnlpe(int flags, const char* name, const char* arg0, ...)
+MSVCRT_intptr_t CDECL _spawnlpe(int flags, const char* name, const char* arg0, ...)
 {
     va_list ap;
     char *args, *envs = NULL;
@@ -437,8 +437,8 @@ MSVCRT_intptr_t _spawnlpe(int flags, const char* name, const char* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _spawnve(int flags, const char* name, const char* const* argv,
-                            const char* const* envv)
+MSVCRT_intptr_t CDECL _spawnve(int flags, const char* name, const char* const* argv,
+                               const char* const* envv)
 {
   char * args = msvcrt_argvtos(argv,' ');
   char * envs = msvcrt_argvtos(envv,0);
@@ -494,7 +494,7 @@ MSVCRT_intptr_t _spawnve(int flags, const char* name, const char* const* argv,
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _spawnv(int flags, const char* name, const char* const* argv)
+MSVCRT_intptr_t CDECL _spawnv(int flags, const char* name, const char* const* argv)
 {
   return _spawnve(flags, name, argv, NULL);
 }
@@ -505,8 +505,8 @@ MSVCRT_intptr_t _spawnv(int flags, const char* name, const char* const* argv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _spawnvpe(int flags, const char* name, const char* const* argv,
-                            const char* const* envv)
+MSVCRT_intptr_t CDECL _spawnvpe(int flags, const char* name, const char* const* argv,
+                                const char* const* envv)
 {
   char fullname[MAX_PATH];
   _searchenv(name, "PATH", fullname);
@@ -519,7 +519,7 @@ MSVCRT_intptr_t _spawnvpe(int flags, const char* name, const char* const* argv,
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t _spawnvp(int flags, const char* name, const char* const* argv)
+MSVCRT_intptr_t CDECL _spawnvp(int flags, const char* name, const char* const* argv)
 {
   return _spawnvpe(flags, name, argv, NULL);
 }
@@ -530,7 +530,7 @@ MSVCRT_intptr_t _spawnvp(int flags, const char* name, const char* const* argv)
  * would have to convert the command back to ANSI to call msvcrt_spawn,
  * less than ideal.
  */
-MSVCRT_FILE* MSVCRT__popen(const char* command, const char* mode)
+MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
 {
   static const char wcmd[] = "wcmd", cmdFlag[] = " /C ", comSpec[] = "COMSPEC";
   MSVCRT_FILE *ret;
@@ -627,7 +627,7 @@ error:
 /*********************************************************************
  *		_wpopen (MSVCRT.@)
  */
-MSVCRT_FILE* MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wchar_t* mode)
+MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wchar_t* mode)
 {
   FIXME("(command=%s, mode=%s): stub\n", debugstr_w(command), debugstr_w(mode));
   return NULL;
@@ -636,7 +636,7 @@ MSVCRT_FILE* MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wchar_t*
 /*********************************************************************
  *		_pclose (MSVCRT.@)
  */
-int MSVCRT__pclose(MSVCRT_FILE* file)
+int CDECL MSVCRT__pclose(MSVCRT_FILE* file)
 {
   return MSVCRT_fclose(file);
 }
@@ -644,7 +644,7 @@ int MSVCRT__pclose(MSVCRT_FILE* file)
 /*********************************************************************
  *		system (MSVCRT.@)
  */
-int MSVCRT_system(const char* cmd)
+int CDECL MSVCRT_system(const char* cmd)
 {
     char* cmdcopy;
     int res;
@@ -660,7 +660,7 @@ int MSVCRT_system(const char* cmd)
 /*********************************************************************
  *		_loaddll (MSVCRT.@)
  */
-MSVCRT_intptr_t _loaddll(const char* dllname)
+MSVCRT_intptr_t CDECL _loaddll(const char* dllname)
 {
   return (MSVCRT_intptr_t)LoadLibraryA(dllname);
 }
@@ -668,7 +668,7 @@ MSVCRT_intptr_t _loaddll(const char* dllname)
 /*********************************************************************
  *		_unloaddll (MSVCRT.@)
  */
-int _unloaddll(MSVCRT_intptr_t dll)
+int CDECL _unloaddll(MSVCRT_intptr_t dll)
 {
   if (FreeLibrary((HMODULE)dll))
     return 0;
@@ -683,7 +683,7 @@ int _unloaddll(MSVCRT_intptr_t dll)
 /*********************************************************************
  *		_getdllprocaddr (MSVCRT.@)
  */
-void *_getdllprocaddr(MSVCRT_intptr_t dll, const char *name, int ordinal)
+void * CDECL _getdllprocaddr(MSVCRT_intptr_t dll, const char *name, int ordinal)
 {
     if (name)
     {

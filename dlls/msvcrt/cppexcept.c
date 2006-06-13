@@ -43,10 +43,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 #ifdef __i386__  /* CxxFrameHandler is not supported on non-i386 */
 
-DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
-                         PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
-                         cxx_function_descr *descr, EXCEPTION_REGISTRATION_RECORD* nested_frame,
-                         int nested_trylevel );
+DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
+                               PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
+                               cxx_function_descr *descr, EXCEPTION_REGISTRATION_RECORD* nested_frame,
+                               int nested_trylevel );
 
 /* call a function with a given ebp */
 inline static void *call_ebp_func( void *func, void *ebp )
@@ -355,10 +355,10 @@ inline static void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
  *
  * Implementation of __CxxFrameHandler.
  */
-DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
-                         PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
-                         cxx_function_descr *descr, EXCEPTION_REGISTRATION_RECORD* nested_frame,
-                         int nested_trylevel )
+DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
+                               PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
+                               cxx_function_descr *descr, EXCEPTION_REGISTRATION_RECORD* nested_frame,
+                               int nested_trylevel )
 {
     cxx_exception_type *exc_type;
 
@@ -408,8 +408,8 @@ DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
 /*********************************************************************
  *		__CxxFrameHandler (MSVCRT.@)
  */
-extern DWORD __CxxFrameHandler( PEXCEPTION_RECORD rec, EXCEPTION_REGISTRATION_RECORD* frame,
-                                PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch );
+extern DWORD CDECL __CxxFrameHandler( PEXCEPTION_RECORD rec, EXCEPTION_REGISTRATION_RECORD* frame,
+                                      PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch );
 __ASM_GLOBAL_FUNC( __CxxFrameHandler,
                    "pushl $0\n\t"        /* nested_trylevel */
                    "pushl $0\n\t"        /* nested_frame */
@@ -427,7 +427,7 @@ __ASM_GLOBAL_FUNC( __CxxFrameHandler,
 /*********************************************************************
  *		_CxxThrowException (MSVCRT.@)
  */
-void _CxxThrowException( exception *object, const cxx_exception_type *type )
+void CDECL _CxxThrowException( exception *object, const cxx_exception_type *type )
 {
     ULONG_PTR args[3];
 
@@ -440,7 +440,7 @@ void _CxxThrowException( exception *object, const cxx_exception_type *type )
 /*********************************************************************
  *		__CxxDetectRethrow (MSVCRT.@)
  */
-BOOL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
+BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
 {
   PEXCEPTION_RECORD rec;
 
@@ -463,7 +463,7 @@ BOOL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
 /*********************************************************************
  *		__CxxQueryExceptionSize (MSVCRT.@)
  */
-unsigned int __CxxQueryExceptionSize(void)
+unsigned int CDECL __CxxQueryExceptionSize(void)
 {
   return sizeof(cxx_exception_type);
 }

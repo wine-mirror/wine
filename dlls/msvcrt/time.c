@@ -71,7 +71,7 @@ static inline void msvcrt_tm_to_unix( struct tm *dest, const struct MSVCRT_tm *s
 /**********************************************************************
  *		mktime (MSVCRT.@)
  */
-MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
+MSVCRT_time_t CDECL MSVCRT_mktime(struct MSVCRT_tm *t)
 {
     MSVCRT_time_t secs;
     FILETIME lft, uft;
@@ -144,7 +144,7 @@ MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
 /*********************************************************************
  *      localtime (MSVCRT.@)
  */
-struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs)
+struct MSVCRT_tm* CDECL MSVCRT_localtime(const MSVCRT_time_t* secs)
 {
   thread_data_t * const data = msvcrt_get_thread_data();
   int i;
@@ -192,7 +192,7 @@ struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs)
 /*********************************************************************
  *      gmtime (MSVCRT.@)
  */
-struct MSVCRT_tm* MSVCRT_gmtime(const MSVCRT_time_t* secs)
+struct MSVCRT_tm* CDECL MSVCRT_gmtime(const MSVCRT_time_t* secs)
 {
   thread_data_t * const data = msvcrt_get_thread_data();
   int i;
@@ -228,7 +228,7 @@ struct MSVCRT_tm* MSVCRT_gmtime(const MSVCRT_time_t* secs)
 /**********************************************************************
  *		_strdate (MSVCRT.@)
  */
-char* _strdate(char* date)
+char* CDECL _strdate(char* date)
 {
   LPCSTR format = "MM'/'dd'/'yy";
 
@@ -240,7 +240,7 @@ char* _strdate(char* date)
 /**********************************************************************
  *		_wstrdate (MSVCRT.@)
  */
-MSVCRT_wchar_t* _wstrdate(MSVCRT_wchar_t* date)
+MSVCRT_wchar_t* CDECL _wstrdate(MSVCRT_wchar_t* date)
 {
   static const WCHAR format[] = { 'M','M','\'','/','\'','d','d','\'','/','\'','y','y',0 };
 
@@ -252,7 +252,7 @@ MSVCRT_wchar_t* _wstrdate(MSVCRT_wchar_t* date)
 /*********************************************************************
  *		_strtime (MSVCRT.@)
  */
-char* _strtime(char* time)
+char* CDECL _strtime(char* time)
 {
   LPCSTR format = "HH':'mm':'ss";
 
@@ -264,7 +264,7 @@ char* _strtime(char* time)
 /*********************************************************************
  *		_wstrtime (MSVCRT.@)
  */
-MSVCRT_wchar_t* _wstrtime(MSVCRT_wchar_t* time)
+MSVCRT_wchar_t* CDECL _wstrtime(MSVCRT_wchar_t* time)
 {
   static const WCHAR format[] = { 'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0 };
 
@@ -276,7 +276,7 @@ MSVCRT_wchar_t* _wstrtime(MSVCRT_wchar_t* time)
 /*********************************************************************
  *		clock (MSVCRT.@)
  */
-MSVCRT_clock_t MSVCRT_clock(void)
+MSVCRT_clock_t CDECL MSVCRT_clock(void)
 {
   FILETIME ftc, fte, ftk, ftu;
   ULONGLONG utime, ktime;
@@ -296,7 +296,7 @@ MSVCRT_clock_t MSVCRT_clock(void)
 /*********************************************************************
  *		difftime (MSVCRT.@)
  */
-double MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2)
+double CDECL MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2)
 {
   return (double)(time1 - time2);
 }
@@ -304,7 +304,7 @@ double MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2)
 /*********************************************************************
  *		_ftime (MSVCRT.@)
  */
-void _ftime(struct MSVCRT__timeb *buf)
+void CDECL _ftime(struct MSVCRT__timeb *buf)
 {
   TIME_ZONE_INFORMATION tzinfo;
   FILETIME ft;
@@ -326,7 +326,7 @@ void _ftime(struct MSVCRT__timeb *buf)
 /*********************************************************************
  *		time (MSVCRT.@)
  */
-MSVCRT_time_t MSVCRT_time(MSVCRT_time_t* buf)
+MSVCRT_time_t CDECL MSVCRT_time(MSVCRT_time_t* buf)
 {
   MSVCRT_time_t curtime;
   struct MSVCRT__timeb tb;
@@ -345,7 +345,7 @@ int MSVCRT___daylight = 0;
 /*********************************************************************
  *		__p_daylight (MSVCRT.@)
  */
-int *MSVCRT___p__daylight(void)
+int * CDECL MSVCRT___p__daylight(void)
 {
 	return &MSVCRT___daylight;
 }
@@ -358,7 +358,7 @@ int MSVCRT__dstbias = 0;
 /*********************************************************************
  *		__p_dstbias (MSVCRT.@)
  */
-int *__p__dstbias(void)
+int * CDECL __p__dstbias(void)
 {
     return &MSVCRT__dstbias;
 }
@@ -371,7 +371,7 @@ long MSVCRT___timezone = 0;
 /*********************************************************************
  *		__p_timezone (MSVCRT.@)
  */
-long *MSVCRT___p__timezone(void)
+long * CDECL MSVCRT___p__timezone(void)
 {
 	return &MSVCRT___timezone;
 }
@@ -390,7 +390,7 @@ char *MSVCRT__tzname[2] = { tzname_std, tzname_dst };
 /*********************************************************************
  *		__p_tzname (MSVCRT.@)
  */
-char **__p__tzname(void)
+char ** CDECL __p__tzname(void)
 {
 	return MSVCRT__tzname;
 }
@@ -398,7 +398,7 @@ char **__p__tzname(void)
 /*********************************************************************
  *		_tzset (MSVCRT.@)
  */
-void MSVCRT__tzset(void)
+void CDECL MSVCRT__tzset(void)
 {
     tzset();
 #if defined(HAVE_TIMEZONE) && defined(HAVE_DAYLIGHT)
@@ -430,8 +430,8 @@ void MSVCRT__tzset(void)
 /*********************************************************************
  *		strftime (MSVCRT.@)
  */
-MSVCRT_size_t MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *format,
-                               const struct MSVCRT_tm *mstm )
+MSVCRT_size_t CDECL MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *format,
+                                     const struct MSVCRT_tm *mstm )
 {
     struct tm tm;
 
@@ -442,8 +442,8 @@ MSVCRT_size_t MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *format,
 /*********************************************************************
  *		wcsftime (MSVCRT.@)
  */
-MSVCRT_size_t MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
-                               const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm )
+MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
+                                     const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm )
 {
     char *s, *fmt;
     MSVCRT_size_t len;
@@ -472,7 +472,7 @@ MSVCRT_size_t MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
 /*********************************************************************
  *		asctime (MSVCRT.@)
  */
-char *MSVCRT_asctime(const struct MSVCRT_tm *mstm)
+char * CDECL MSVCRT_asctime(const struct MSVCRT_tm *mstm)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     struct tm tm;
@@ -494,7 +494,7 @@ char *MSVCRT_asctime(const struct MSVCRT_tm *mstm)
 /*********************************************************************
  *		_wasctime (MSVCRT.@)
  */
-MSVCRT_wchar_t *MSVCRT__wasctime(const struct MSVCRT_tm *mstm)
+MSVCRT_wchar_t * CDECL MSVCRT__wasctime(const struct MSVCRT_tm *mstm)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     struct tm tm;
@@ -516,7 +516,7 @@ MSVCRT_wchar_t *MSVCRT__wasctime(const struct MSVCRT_tm *mstm)
 /*********************************************************************
  *		ctime (MSVCRT.@)
  */
-char *MSVCRT_ctime(const MSVCRT_time_t *time)
+char * CDECL MSVCRT_ctime(const MSVCRT_time_t *time)
 {
     return MSVCRT_asctime( MSVCRT_localtime(time) );
 }
@@ -524,7 +524,7 @@ char *MSVCRT_ctime(const MSVCRT_time_t *time)
 /*********************************************************************
  *		_wctime (MSVCRT.@)
  */
-MSVCRT_wchar_t *MSVCRT__wctime(const MSVCRT_time_t *time)
+MSVCRT_wchar_t * CDECL MSVCRT__wctime(const MSVCRT_time_t *time)
 {
     return MSVCRT__wasctime( MSVCRT_localtime(time) );
 }

@@ -1206,9 +1206,9 @@ done:
  *  Success: A string pointing to the unmangled name, allocated with memget.
  *  Failure: NULL.
  */
-char* __unDNameEx(char* buffer, const char* mangled, int buflen,
-                  malloc_func_t memget, free_func_t memfree,
-                  void* unknown, unsigned short int flags)
+char* CDECL __unDNameEx(char* buffer, const char* mangled, int buflen,
+                        malloc_func_t memget, free_func_t memfree,
+                        void* unknown, unsigned short int flags)
 {
     struct parsed_symbol        sym;
     const char*                 result;
@@ -1251,9 +1251,9 @@ char* __unDNameEx(char* buffer, const char* mangled, int buflen,
 /*********************************************************************
  *		__unDName (MSVCRT.@)
  */
-char* __unDName(char* buffer, const char* mangled, int buflen,
-                malloc_func_t memget, free_func_t memfree,
-                unsigned short int flags)
+char* CDECL __unDName(char* buffer, const char* mangled, int buflen,
+                      malloc_func_t memget, free_func_t memfree,
+                      unsigned short int flags)
 {
     return __unDNameEx(buffer, mangled, buflen, memget, memfree, NULL, flags);
 }

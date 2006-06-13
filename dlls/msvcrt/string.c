@@ -48,7 +48,7 @@ char* msvcrt_strndup(const char* buf, unsigned int size)
  *		_mbsdup (MSVCRT.@)
  *		_strdup (MSVCRT.@)
  */
-char* _strdup(const char* str)
+char* CDECL _strdup(const char* str)
 {
     char * ret = MSVCRT_malloc(strlen(str)+1);
     if (ret) strcpy( ret, str );
@@ -58,7 +58,7 @@ char* _strdup(const char* str)
 /*********************************************************************
  *		_strnset (MSVCRT.@)
  */
-char* _strnset(char* str, int value, MSVCRT_size_t len)
+char* CDECL _strnset(char* str, int value, MSVCRT_size_t len)
 {
   if (len > 0 && str)
     while (*str && len--)
@@ -69,7 +69,7 @@ char* _strnset(char* str, int value, MSVCRT_size_t len)
 /*********************************************************************
  *		_strrev (MSVCRT.@)
  */
-char* _strrev(char* str)
+char* CDECL _strrev(char* str)
 {
   char * p1;
   char * p2;
@@ -88,7 +88,7 @@ char* _strrev(char* str)
 /*********************************************************************
  *		_strset (MSVCRT.@)
  */
-char* _strset(char* str, int value)
+char* CDECL _strset(char* str, int value)
 {
   char *ptr = str;
   while (*ptr)
@@ -100,7 +100,7 @@ char* _strset(char* str, int value)
 /*********************************************************************
  *		strtok  (MSVCRT.@)
  */
-char *MSVCRT_strtok( char *str, const char *delim )
+char * CDECL MSVCRT_strtok( char *str, const char *delim )
 {
     thread_data_t *data = msvcrt_get_thread_data();
     char *ret;
@@ -121,7 +121,7 @@ char *MSVCRT_strtok( char *str, const char *delim )
 /*********************************************************************
  *		_swab (MSVCRT.@)
  */
-void MSVCRT__swab(char* src, char* dst, int len)
+void CDECL MSVCRT__swab(char* src, char* dst, int len)
 {
   if (len > 1)
   {
@@ -140,7 +140,7 @@ void MSVCRT__swab(char* src, char* dst, int len)
 /*********************************************************************
  *		atof  (MSVCRT.@)
  */
-double MSVCRT_atof( const char *str )
+double CDECL MSVCRT_atof( const char *str )
 {
     return atof( str );
 }
@@ -148,7 +148,7 @@ double MSVCRT_atof( const char *str )
 /*********************************************************************
  *		strtod  (MSVCRT.@)
  */
-double MSVCRT_strtod( const char *str, char **end )
+double CDECL MSVCRT_strtod( const char *str, char **end )
 {
     return strtod( str, end );
 }
@@ -156,7 +156,7 @@ double MSVCRT_strtod( const char *str, char **end )
 /*********************************************************************
  *		strcoll (MSVCRT.@)
  */
-int MSVCRT_strcoll( const char* str1, const char* str2 )
+int CDECL MSVCRT_strcoll( const char* str1, const char* str2 )
 {
     /* FIXME: handle Windows locale */
     return strcoll( str1, str2 );
@@ -165,7 +165,7 @@ int MSVCRT_strcoll( const char* str1, const char* str2 )
 /*********************************************************************
  *		strxfrm (MSVCRT.@)
  */
-MSVCRT_size_t MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t len )
+MSVCRT_size_t CDECL MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t len )
 {
     /* FIXME: handle Windows locale */
     return strxfrm( dest, src, len );
@@ -174,7 +174,7 @@ MSVCRT_size_t MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t len )
 /*********************************************************************
  *		_stricoll (MSVCRT.@)
  */
-INT MSVCRT__stricoll( const char* str1, const char* str2 )
+int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
 {
   /* FIXME: handle collates */
   TRACE("str1 %s str2 %s\n", debugstr_a(str1), debugstr_a(str2));

@@ -123,7 +123,7 @@ const char* msvcrt_get_reason(DWORD reason)
  *		$I10_OUTPUT (MSVCRT.@)
  * Function not really understood but needed to make the DLL work
  */
-void MSVCRT_I10_OUTPUT(void)
+void CDECL MSVCRT_I10_OUTPUT(void)
 {
   /* FIXME: This is probably data, not a function */
   /* no it is a function. I10 is an Int of 10 bytes */

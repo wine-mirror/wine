@@ -181,7 +181,7 @@ void msvcrt_set_errno(int err)
 /*********************************************************************
  *		_errno (MSVCRT.@)
  */
-int* MSVCRT__errno(void)
+int* CDECL MSVCRT__errno(void)
 {
     return &msvcrt_get_thread_data()->thread_errno;
 }
@@ -189,7 +189,7 @@ int* MSVCRT__errno(void)
 /*********************************************************************
  *		__doserrno (MSVCRT.@)
  */
-unsigned long* MSVCRT___doserrno(void)
+unsigned long* CDECL MSVCRT___doserrno(void)
 {
     return &msvcrt_get_thread_data()->thread_doserrno;
 }
@@ -197,7 +197,7 @@ unsigned long* MSVCRT___doserrno(void)
 /*********************************************************************
  *		strerror (MSVCRT.@)
  */
-char* MSVCRT_strerror(int err)
+char* CDECL MSVCRT_strerror(int err)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
@@ -212,7 +212,7 @@ char* MSVCRT_strerror(int err)
 /**********************************************************************
  *		_strerror	(MSVCRT.@)
  */
-char* _strerror(const char* str)
+char* CDECL _strerror(const char* str)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     int err;
@@ -234,7 +234,7 @@ char* _strerror(const char* str)
 /*********************************************************************
  *		perror (MSVCRT.@)
  */
-void MSVCRT_perror(const char* str)
+void CDECL MSVCRT_perror(const char* str)
 {
     int err = *MSVCRT__errno();
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
@@ -264,7 +264,7 @@ void MSVCRT_perror(const char* str)
  *  This function does not have a proper implementation; the error mode is
  *  never used.
  */
-int _set_error_mode(int mode)
+int CDECL _set_error_mode(int mode)
 {
   static int current_mode = MSVCRT__OUT_TO_DEFAULT;
 
@@ -280,7 +280,7 @@ int _set_error_mode(int mode)
 /******************************************************************************
  *		_seterrormode (MSVCRT.@)
  */
-void _seterrormode(int mode)
+void CDECL _seterrormode(int mode)
 {
     SetErrorMode( mode );
 }

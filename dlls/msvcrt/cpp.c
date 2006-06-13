@@ -950,7 +950,7 @@ static const cxx_exception_type __non_rtti_object_exception_type =
  * RETURNS
  *  The previously installed handler function, if any.
  */
-MSVCRT_terminate_function MSVCRT_set_terminate(MSVCRT_terminate_function func)
+MSVCRT_terminate_function CDECL MSVCRT_set_terminate(MSVCRT_terminate_function func)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     MSVCRT_terminate_function previous = data->terminate_handler;
@@ -970,7 +970,7 @@ MSVCRT_terminate_function MSVCRT_set_terminate(MSVCRT_terminate_function func)
  * RETURNS
  *  The previously installed handler function, if any.
  */
-MSVCRT_unexpected_function MSVCRT_set_unexpected(MSVCRT_unexpected_function func)
+MSVCRT_unexpected_function CDECL MSVCRT_set_unexpected(MSVCRT_unexpected_function func)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     MSVCRT_unexpected_function previous = data->unexpected_handler;
@@ -982,7 +982,7 @@ MSVCRT_unexpected_function MSVCRT_set_unexpected(MSVCRT_unexpected_function func
 /******************************************************************
  *              ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z  (MSVCRT.@)
  */
-MSVCRT__se_translator_function MSVCRT__set_se_translator(MSVCRT__se_translator_function func)
+MSVCRT__se_translator_function CDECL MSVCRT__set_se_translator(MSVCRT__se_translator_function func)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     MSVCRT__se_translator_function previous = data->se_translator;
@@ -1004,7 +1004,7 @@ MSVCRT__se_translator_function MSVCRT__set_se_translator(MSVCRT__se_translator_f
  *  handler installed by calling set_terminate(), or (by default) abort()
  *  is called.
  */
-void MSVCRT_terminate(void)
+void CDECL MSVCRT_terminate(void)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     if (data->terminate_handler) data->terminate_handler();
@@ -1014,7 +1014,7 @@ void MSVCRT_terminate(void)
 /******************************************************************
  *		?unexpected@@YAXXZ (MSVCRT.@)
  */
-void MSVCRT_unexpected(void)
+void CDECL MSVCRT_unexpected(void)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     if (data->unexpected_handler) data->unexpected_handler();
@@ -1040,7 +1040,7 @@ void MSVCRT_unexpected(void)
  *  This function is usually called by compiler generated code as a result
  *  of using one of the C++ dynamic cast statements.
  */
-const type_info* MSVCRT___RTtypeid(void *cppobj)
+const type_info* CDECL MSVCRT___RTtypeid(void *cppobj)
 {
     const type_info *ret;
 
@@ -1090,9 +1090,9 @@ const type_info* MSVCRT___RTtypeid(void *cppobj)
  *  This function is usually called by compiler generated code as a result
  *  of using one of the C++ dynamic cast statements.
  */
-void* MSVCRT___RTDynamicCast(void *cppobj, int unknown,
-                             type_info *src, type_info *dst,
-                             int do_throw)
+void* CDECL MSVCRT___RTDynamicCast(void *cppobj, int unknown,
+                                   type_info *src, type_info *dst,
+                                   int do_throw)
 {
     void *ret;
 
@@ -1170,7 +1170,7 @@ void* MSVCRT___RTDynamicCast(void *cppobj, int unknown,
  *  This function is usually called by compiler generated code as a result
  *  of using one of the C++ dynamic cast statements.
  */
-void* MSVCRT___RTCastToVoid(void *cppobj)
+void* CDECL MSVCRT___RTCastToVoid(void *cppobj)
 {
     void *ret;
 

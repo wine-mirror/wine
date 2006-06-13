@@ -45,7 +45,7 @@ static size_t MSVCRT_sbh_threshold = 0;
 /*********************************************************************
  *		??2@YAPAXI@Z (MSVCRT.@)
  */
-void* MSVCRT_operator_new(unsigned long size)
+void* CDECL MSVCRT_operator_new(unsigned long size)
 {
   void *retval = HeapAlloc(GetProcessHeap(), 0, size);
   TRACE("(%ld) returning %p\n", size, retval);
@@ -59,7 +59,7 @@ void* MSVCRT_operator_new(unsigned long size)
 /*********************************************************************
  *		??3@YAXPAX@Z (MSVCRT.@)
  */
-void MSVCRT_operator_delete(void *mem)
+void CDECL MSVCRT_operator_delete(void *mem)
 {
   TRACE("(%p)\n", mem);
   HeapFree(GetProcessHeap(), 0, mem);
@@ -69,7 +69,7 @@ void MSVCRT_operator_delete(void *mem)
 /*********************************************************************
  *		?_query_new_handler@@YAP6AHI@ZXZ (MSVCRT.@)
  */
-MSVCRT_new_handler_func MSVCRT__query_new_handler(void)
+MSVCRT_new_handler_func CDECL MSVCRT__query_new_handler(void)
 {
   return MSVCRT_new_handler;
 }
@@ -78,7 +78,7 @@ MSVCRT_new_handler_func MSVCRT__query_new_handler(void)
 /*********************************************************************
  *		?_query_new_mode@@YAHXZ (MSVCRT.@)
  */
-int MSVCRT__query_new_mode(void)
+int CDECL MSVCRT__query_new_mode(void)
 {
   return MSVCRT_new_mode;
 }
@@ -86,7 +86,7 @@ int MSVCRT__query_new_mode(void)
 /*********************************************************************
  *		?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z (MSVCRT.@)
  */
-MSVCRT_new_handler_func MSVCRT__set_new_handler(MSVCRT_new_handler_func func)
+MSVCRT_new_handler_func CDECL MSVCRT__set_new_handler(MSVCRT_new_handler_func func)
 {
   MSVCRT_new_handler_func old_handler;
   LOCK_HEAP;
@@ -99,7 +99,7 @@ MSVCRT_new_handler_func MSVCRT__set_new_handler(MSVCRT_new_handler_func func)
 /*********************************************************************
  *		?set_new_handler@@YAP6AXXZP6AXXZ@Z (MSVCRT.@)
  */
-MSVCRT_new_handler_func MSVCRT_set_new_handler(void *func)
+MSVCRT_new_handler_func CDECL MSVCRT_set_new_handler(void *func)
 {
   TRACE("(%p)\n",func);
   MSVCRT__set_new_handler(NULL);
@@ -109,7 +109,7 @@ MSVCRT_new_handler_func MSVCRT_set_new_handler(void *func)
 /*********************************************************************
  *		?_set_new_mode@@YAHH@Z (MSVCRT.@)
  */
-int MSVCRT__set_new_mode(int mode)
+int CDECL MSVCRT__set_new_mode(int mode)
 {
   int old_mode;
   LOCK_HEAP;
@@ -122,7 +122,7 @@ int MSVCRT__set_new_mode(int mode)
 /*********************************************************************
  *		_callnewh (MSVCRT.@)
  */
-int _callnewh(unsigned long size)
+int CDECL _callnewh(unsigned long size)
 {
   if(MSVCRT_new_handler)
     (*MSVCRT_new_handler)(size);
@@ -132,7 +132,7 @@ int _callnewh(unsigned long size)
 /*********************************************************************
  *		_expand (MSVCRT.@)
  */
-void* _expand(void* mem, MSVCRT_size_t size)
+void* CDECL _expand(void* mem, MSVCRT_size_t size)
 {
   return HeapReAlloc(GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, mem, size);
 }
@@ -140,7 +140,7 @@ void* _expand(void* mem, MSVCRT_size_t size)
 /*********************************************************************
  *		_heapchk (MSVCRT.@)
  */
-int _heapchk(void)
+int CDECL _heapchk(void)
 {
   if (!HeapValidate( GetProcessHeap(), 0, NULL))
   {
@@ -153,7 +153,7 @@ int _heapchk(void)
 /*********************************************************************
  *		_heapmin (MSVCRT.@)
  */
-int _heapmin(void)
+int CDECL _heapmin(void)
 {
   if (!HeapCompact( GetProcessHeap(), 0 ))
   {
@@ -167,7 +167,7 @@ int _heapmin(void)
 /*********************************************************************
  *		_heapwalk (MSVCRT.@)
  */
-int _heapwalk(struct MSVCRT__heapinfo* next)
+int CDECL _heapwalk(struct MSVCRT__heapinfo* next)
 {
   PROCESS_HEAP_ENTRY phe;
 
@@ -208,7 +208,7 @@ int _heapwalk(struct MSVCRT__heapinfo* next)
 /*********************************************************************
  *		_heapset (MSVCRT.@)
  */
-int _heapset(unsigned int value)
+int CDECL _heapset(unsigned int value)
 {
   int retval;
   struct MSVCRT__heapinfo heap;
@@ -227,7 +227,7 @@ int _heapset(unsigned int value)
 /*********************************************************************
  *		_heapadd (MSVCRT.@)
  */
-int _heapadd(void* mem, MSVCRT_size_t size)
+int CDECL _heapadd(void* mem, MSVCRT_size_t size)
 {
   TRACE("(%p,%d) unsupported in Win32\n", mem,size);
   *MSVCRT__errno() = MSVCRT_ENOSYS;
@@ -237,7 +237,7 @@ int _heapadd(void* mem, MSVCRT_size_t size)
 /*********************************************************************
  *		_msize (MSVCRT.@)
  */
-MSVCRT_size_t _msize(void* mem)
+MSVCRT_size_t CDECL _msize(void* mem)
 {
   long size = HeapSize(GetProcessHeap(),0,mem);
   if (size == -1)
@@ -251,7 +251,7 @@ MSVCRT_size_t _msize(void* mem)
 /*********************************************************************
  *		calloc (MSVCRT.@)
  */
-void* MSVCRT_calloc(MSVCRT_size_t size, MSVCRT_size_t count)
+void* CDECL MSVCRT_calloc(MSVCRT_size_t size, MSVCRT_size_t count)
 {
   return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size * count );
 }
@@ -259,7 +259,7 @@ void* MSVCRT_calloc(MSVCRT_size_t size, MSVCRT_size_t count)
 /*********************************************************************
  *		free (MSVCRT.@)
  */
-void MSVCRT_free(void* ptr)
+void CDECL MSVCRT_free(void* ptr)
 {
   HeapFree(GetProcessHeap(),0,ptr);
 }
@@ -267,7 +267,7 @@ void MSVCRT_free(void* ptr)
 /*********************************************************************
  *                  malloc (MSVCRT.@)
  */
-void* MSVCRT_malloc(MSVCRT_size_t size)
+void* CDECL MSVCRT_malloc(MSVCRT_size_t size)
 {
   void *ret = HeapAlloc(GetProcessHeap(),0,size);
   if (!ret)
@@ -278,7 +278,7 @@ void* MSVCRT_malloc(MSVCRT_size_t size)
 /*********************************************************************
  *		realloc (MSVCRT.@)
  */
-void* MSVCRT_realloc(void* ptr, MSVCRT_size_t size)
+void* CDECL MSVCRT_realloc(void* ptr, MSVCRT_size_t size)
 {
   if (!ptr) return MSVCRT_malloc(size);
   if (size) return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
@@ -289,7 +289,7 @@ void* MSVCRT_realloc(void* ptr, MSVCRT_size_t size)
 /*********************************************************************
  *		__p__amblksiz (MSVCRT.@)
  */
-unsigned int* __p__amblksiz(void)
+unsigned int* CDECL __p__amblksiz(void)
 {
   return &MSVCRT_amblksiz;
 }
@@ -297,7 +297,7 @@ unsigned int* __p__amblksiz(void)
 /*********************************************************************
  *		_get_sbh_threshold (MSVCRT.@)
  */
-size_t _get_sbh_threshold(void)
+size_t CDECL _get_sbh_threshold(void)
 {
   return MSVCRT_sbh_threshold;
 }
@@ -305,7 +305,7 @@ size_t _get_sbh_threshold(void)
 /*********************************************************************
  *		_set_sbh_threshold (MSVCRT.@)
  */
-int _set_sbh_threshold(size_t threshold)
+int CDECL _set_sbh_threshold(size_t threshold)
 {
   if(threshold > 1016)
      return 0;

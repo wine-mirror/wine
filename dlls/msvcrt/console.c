@@ -64,7 +64,7 @@ void msvcrt_free_console(void)
 /*********************************************************************
  *		_cputs (MSVCRT.@)
  */
-int _cputs(const char* str)
+int CDECL _cputs(const char* str)
 {
   DWORD count;
   int retval = MSVCRT_EOF;
@@ -80,7 +80,7 @@ int _cputs(const char* str)
 /*********************************************************************
  *		_getch (MSVCRT.@)
  */
-int _getch(void)
+int CDECL _getch(void)
 {
   int retval = MSVCRT_EOF;
 
@@ -125,7 +125,7 @@ int _getch(void)
 /*********************************************************************
  *		_putch (MSVCRT.@)
  */
-int _putch(int c)
+int CDECL _putch(int c)
 {
   int retval = MSVCRT_EOF;
   DWORD count;
@@ -139,7 +139,7 @@ int _putch(int c)
 /*********************************************************************
  *		_getche (MSVCRT.@)
  */
-int _getche(void)
+int CDECL _getche(void)
 {
   int retval;
   LOCK_CONSOLE;
@@ -153,7 +153,7 @@ int _getche(void)
 /*********************************************************************
  *		_cgets (MSVCRT.@)
  */
-char* _cgets(char* str)
+char* CDECL _cgets(char* str)
 {
   char *buf = str + 2;
   DWORD got;
@@ -191,7 +191,7 @@ char* _cgets(char* str)
 /*********************************************************************
  *		_ungetch (MSVCRT.@)
  */
-int _ungetch(int c)
+int CDECL _ungetch(int c)
 {
   int retval = MSVCRT_EOF;
   LOCK_CONSOLE;
@@ -204,7 +204,7 @@ int _ungetch(int c)
 /*********************************************************************
  *		_kbhit (MSVCRT.@)
  */
-int _kbhit(void)
+int CDECL _kbhit(void)
 {
   int retval = 0;
 
@@ -242,7 +242,7 @@ int _kbhit(void)
 /*********************************************************************
  *		_cprintf (MSVCRT.@)
  */
-int _cprintf(const char* format, ...)
+int CDECL _cprintf(const char* format, ...)
 {
   char buf[2048], *mem = buf;
   int written, resize = sizeof(buf), retval;

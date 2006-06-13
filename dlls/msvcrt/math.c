@@ -54,7 +54,7 @@ static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 /*********************************************************************
  *		MSVCRT_acos (MSVCRT.@)
  */
-double MSVCRT_acos( double x )
+double CDECL MSVCRT_acos( double x )
 {
   if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return acos(x);
@@ -63,7 +63,7 @@ double MSVCRT_acos( double x )
 /*********************************************************************
  *		MSVCRT_asin (MSVCRT.@)
  */
-double MSVCRT_asin( double x )
+double CDECL MSVCRT_asin( double x )
 {
   if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return asin(x);
@@ -72,7 +72,7 @@ double MSVCRT_asin( double x )
 /*********************************************************************
  *		MSVCRT_atan (MSVCRT.@)
  */
-double MSVCRT_atan( double x )
+double CDECL MSVCRT_atan( double x )
 {
   if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan(x);
@@ -81,7 +81,7 @@ double MSVCRT_atan( double x )
 /*********************************************************************
  *		MSVCRT_atan2 (MSVCRT.@)
  */
-double MSVCRT_atan2( double x, double y )
+double CDECL MSVCRT_atan2( double x, double y )
 {
   if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan2(x,y);
@@ -90,7 +90,7 @@ double MSVCRT_atan2( double x, double y )
 /*********************************************************************
  *		MSVCRT_cos (MSVCRT.@)
  */
-double MSVCRT_cos( double x )
+double CDECL MSVCRT_cos( double x )
 {
   if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return cos(x);
@@ -99,7 +99,7 @@ double MSVCRT_cos( double x )
 /*********************************************************************
  *		MSVCRT_cosh (MSVCRT.@)
  */
-double MSVCRT_cosh( double x )
+double CDECL MSVCRT_cosh( double x )
 {
   if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return cosh(x);
@@ -108,7 +108,7 @@ double MSVCRT_cosh( double x )
 /*********************************************************************
  *		MSVCRT_exp (MSVCRT.@)
  */
-double MSVCRT_exp( double x )
+double CDECL MSVCRT_exp( double x )
 {
   if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return exp(x);
@@ -117,7 +117,7 @@ double MSVCRT_exp( double x )
 /*********************************************************************
  *		MSVCRT_fmod (MSVCRT.@)
  */
-double MSVCRT_fmod( double x, double y )
+double CDECL MSVCRT_fmod( double x, double y )
 {
   if (!finite(x) || !finite(y)) *MSVCRT__errno() = MSVCRT_EDOM;
   return fmod(x,y);
@@ -126,7 +126,7 @@ double MSVCRT_fmod( double x, double y )
 /*********************************************************************
  *		MSVCRT_log (MSVCRT.@)
  */
-double MSVCRT_log( double x)
+double CDECL MSVCRT_log( double x)
 {
   if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
@@ -136,7 +136,7 @@ double MSVCRT_log( double x)
 /*********************************************************************
  *		MSVCRT_log10 (MSVCRT.@)
  */
-double MSVCRT_log10( double x )
+double CDECL MSVCRT_log10( double x )
 {
   if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
@@ -146,7 +146,7 @@ double MSVCRT_log10( double x )
 /*********************************************************************
  *		MSVCRT_pow (MSVCRT.@)
  */
-double MSVCRT_pow( double x, double y )
+double CDECL MSVCRT_pow( double x, double y )
 {
   /* FIXME: If x < 0 and y is not integral, set EDOM */
   double z = pow(x,y);
@@ -157,7 +157,7 @@ double MSVCRT_pow( double x, double y )
 /*********************************************************************
  *		MSVCRT_sin (MSVCRT.@)
  */
-double MSVCRT_sin( double x )
+double CDECL MSVCRT_sin( double x )
 {
   if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sin(x);
@@ -166,7 +166,7 @@ double MSVCRT_sin( double x )
 /*********************************************************************
  *		MSVCRT_sinh (MSVCRT.@)
  */
-double MSVCRT_sinh( double x )
+double CDECL MSVCRT_sinh( double x )
 {
   if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sinh(x);
@@ -175,7 +175,7 @@ double MSVCRT_sinh( double x )
 /*********************************************************************
  *		MSVCRT_sqrt (MSVCRT.@)
  */
-double MSVCRT_sqrt( double x )
+double CDECL MSVCRT_sqrt( double x )
 {
   if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sqrt(x);
@@ -184,7 +184,7 @@ double MSVCRT_sqrt( double x )
 /*********************************************************************
  *		MSVCRT_tan (MSVCRT.@)
  */
-double MSVCRT_tan( double x )
+double CDECL MSVCRT_tan( double x )
 {
   if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return tan(x);
@@ -193,7 +193,7 @@ double MSVCRT_tan( double x )
 /*********************************************************************
  *		MSVCRT_tanh (MSVCRT.@)
  */
-double MSVCRT_tanh( double x )
+double CDECL MSVCRT_tanh( double x )
 {
   if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return tanh(x);
@@ -211,7 +211,7 @@ double MSVCRT_tanh( double x )
 /*********************************************************************
  *		_CIacos (MSVCRT.@)
  */
-double _CIacos(void)
+double CDECL _CIacos(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_acos(x);
@@ -220,7 +220,7 @@ double _CIacos(void)
 /*********************************************************************
  *		_CIasin (MSVCRT.@)
  */
-double _CIasin(void)
+double CDECL _CIasin(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_asin(x);
@@ -229,7 +229,7 @@ double _CIasin(void)
 /*********************************************************************
  *		_CIatan (MSVCRT.@)
  */
-double _CIatan(void)
+double CDECL _CIatan(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_atan(x);
@@ -238,7 +238,7 @@ double _CIatan(void)
 /*********************************************************************
  *		_CIatan2 (MSVCRT.@)
  */
-double _CIatan2(void)
+double CDECL _CIatan2(void)
 {
   FPU_DOUBLES(x,y);
   return MSVCRT_atan2(x,y);
@@ -247,7 +247,7 @@ double _CIatan2(void)
 /*********************************************************************
  *		_CIcos (MSVCRT.@)
  */
-double _CIcos(void)
+double CDECL _CIcos(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_cos(x);
@@ -256,7 +256,7 @@ double _CIcos(void)
 /*********************************************************************
  *		_CIcosh (MSVCRT.@)
  */
-double _CIcosh(void)
+double CDECL _CIcosh(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_cosh(x);
@@ -265,7 +265,7 @@ double _CIcosh(void)
 /*********************************************************************
  *		_CIexp (MSVCRT.@)
  */
-double _CIexp(void)
+double CDECL _CIexp(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_exp(x);
@@ -274,7 +274,7 @@ double _CIexp(void)
 /*********************************************************************
  *		_CIfmod (MSVCRT.@)
  */
-double _CIfmod(void)
+double CDECL _CIfmod(void)
 {
   FPU_DOUBLES(x,y);
   return MSVCRT_fmod(x,y);
@@ -283,7 +283,7 @@ double _CIfmod(void)
 /*********************************************************************
  *		_CIlog (MSVCRT.@)
  */
-double _CIlog(void)
+double CDECL _CIlog(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_log(x);
@@ -292,7 +292,7 @@ double _CIlog(void)
 /*********************************************************************
  *		_CIlog10 (MSVCRT.@)
  */
-double _CIlog10(void)
+double CDECL _CIlog10(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_log10(x);
@@ -301,7 +301,7 @@ double _CIlog10(void)
 /*********************************************************************
  *		_CIpow (MSVCRT.@)
  */
-double _CIpow(void)
+double CDECL _CIpow(void)
 {
   FPU_DOUBLES(x,y);
   return MSVCRT_pow(x,y);
@@ -310,7 +310,7 @@ double _CIpow(void)
 /*********************************************************************
  *		_CIsin (MSVCRT.@)
  */
-double _CIsin(void)
+double CDECL _CIsin(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_sin(x);
@@ -319,7 +319,7 @@ double _CIsin(void)
 /*********************************************************************
  *		_CIsinh (MSVCRT.@)
  */
-double _CIsinh(void)
+double CDECL _CIsinh(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_sinh(x);
@@ -328,7 +328,7 @@ double _CIsinh(void)
 /*********************************************************************
  *		_CIsqrt (MSVCRT.@)
  */
-double _CIsqrt(void)
+double CDECL _CIsqrt(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_sqrt(x);
@@ -337,7 +337,7 @@ double _CIsqrt(void)
 /*********************************************************************
  *		_CItan (MSVCRT.@)
  */
-double _CItan(void)
+double CDECL _CItan(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_tan(x);
@@ -346,7 +346,7 @@ double _CItan(void)
 /*********************************************************************
  *		_CItanh (MSVCRT.@)
  */
-double _CItanh(void)
+double CDECL _CItanh(void)
 {
   FPU_DOUBLE(x);
   return MSVCRT_tanh(x);
@@ -380,7 +380,7 @@ IX86_ONLY(_CItanh)
 /*********************************************************************
  *		_fpclass (MSVCRT.@)
  */
-int _fpclass(double num)
+int CDECL _fpclass(double num)
 {
 #if defined(HAVE_FPCLASS) || defined(fpclass)
   switch (fpclass( num ))
@@ -436,7 +436,7 @@ int _fpclass(double num)
 /*********************************************************************
  *		_rotl (MSVCRT.@)
  */
-unsigned int _rotl(unsigned int num, int shift)
+unsigned int CDECL _rotl(unsigned int num, int shift)
 {
   shift &= 31;
   return (num << shift) | (num >> (32-shift));
@@ -445,7 +445,7 @@ unsigned int _rotl(unsigned int num, int shift)
 /*********************************************************************
  *		_logb (MSVCRT.@)
  */
-double _logb(double num)
+double CDECL _logb(double num)
 {
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   return logb(num);
@@ -454,7 +454,7 @@ double _logb(double num)
 /*********************************************************************
  *		_lrotl (MSVCRT.@)
  */
-unsigned long _lrotl(unsigned long num, int shift)
+unsigned long CDECL _lrotl(unsigned long num, int shift)
 {
   shift &= 0x1f;
   return (num << shift) | (num >> (32-shift));
@@ -463,7 +463,7 @@ unsigned long _lrotl(unsigned long num, int shift)
 /*********************************************************************
  *		_lrotr (MSVCRT.@)
  */
-unsigned long _lrotr(unsigned long num, int shift)
+unsigned long CDECL _lrotr(unsigned long num, int shift)
 {
   shift &= 0x1f;
   return (num >> shift) | (num << (32-shift));
@@ -472,7 +472,7 @@ unsigned long _lrotr(unsigned long num, int shift)
 /*********************************************************************
  *		_rotr (MSVCRT.@)
  */
-unsigned int _rotr(unsigned int num, int shift)
+unsigned int CDECL _rotr(unsigned int num, int shift)
 {
     shift &= 0x1f;
     return (num >> shift) | (num << (32-shift));
@@ -481,7 +481,7 @@ unsigned int _rotr(unsigned int num, int shift)
 /*********************************************************************
  *		_scalb (MSVCRT.@)
  */
-double _scalb(double num, long power)
+double CDECL _scalb(double num, long power)
 {
   /* Note - Can't forward directly as libc expects y as double */
   double dblpower = (double)power;
@@ -492,7 +492,7 @@ double _scalb(double num, long power)
 /*********************************************************************
  *		_hypot (MSVCRT.@)
  */
-double _hypot(double x, double y)
+double CDECL _hypot(double x, double y)
 {
   /* FIXME: errno handling */
   return hypot( x, y );
@@ -501,7 +501,7 @@ double _hypot(double x, double y)
 /*********************************************************************
  *		ceil (MSVCRT.@)
  */
-double MSVCRT_ceil( double x )
+double CDECL MSVCRT_ceil( double x )
 {
   return ceil(x);
 }
@@ -509,7 +509,7 @@ double MSVCRT_ceil( double x )
 /*********************************************************************
  *		floor (MSVCRT.@)
  */
-double MSVCRT_floor( double x )
+double CDECL MSVCRT_floor( double x )
 {
   return floor(x);
 }
@@ -517,7 +517,7 @@ double MSVCRT_floor( double x )
 /*********************************************************************
  *		fabs (MSVCRT.@)
  */
-double MSVCRT_fabs( double x )
+double CDECL MSVCRT_fabs( double x )
 {
   return fabs(x);
 }
@@ -525,7 +525,7 @@ double MSVCRT_fabs( double x )
 /*********************************************************************
  *		frexp (MSVCRT.@)
  */
-double MSVCRT_frexp( double x, int *exp )
+double CDECL MSVCRT_frexp( double x, int *exp )
 {
   return frexp( x, exp );
 }
@@ -533,7 +533,7 @@ double MSVCRT_frexp( double x, int *exp )
 /*********************************************************************
  *		modf (MSVCRT.@)
  */
-double MSVCRT_modf( double x, double *iptr )
+double CDECL MSVCRT_modf( double x, double *iptr )
 {
   return modf( x, iptr );
 }
@@ -541,7 +541,7 @@ double MSVCRT_modf( double x, double *iptr )
 /*********************************************************************
  *		_matherr (MSVCRT.@)
  */
-int MSVCRT__matherr(struct MSVCRT__exception *e)
+int CDECL MSVCRT__matherr(struct MSVCRT__exception *e)
 {
   if (e)
     TRACE("(%p = %d, %s, %g %g %g)\n",e, e->type, e->name, e->arg1, e->arg2,
@@ -557,7 +557,7 @@ int MSVCRT__matherr(struct MSVCRT__exception *e)
 /*********************************************************************
  *		__setusermatherr (MSVCRT.@)
  */
-void MSVCRT___setusermatherr(MSVCRT_matherr_func func)
+void CDECL MSVCRT___setusermatherr(MSVCRT_matherr_func func)
 {
   MSVCRT_default_matherr_func = func;
   TRACE(":new matherr handler %p\n", func);
@@ -566,7 +566,7 @@ void MSVCRT___setusermatherr(MSVCRT_matherr_func func)
 /**********************************************************************
  *		_statusfp (MSVCRT.@)
  */
-unsigned int _statusfp(void)
+unsigned int CDECL _statusfp(void)
 {
    unsigned int retVal = 0;
 #if defined(__GNUC__) && defined(__i386__)
@@ -588,7 +588,7 @@ unsigned int _statusfp(void)
 /*********************************************************************
  *		_clearfp (MSVCRT.@)
  */
-unsigned int _clearfp(void)
+unsigned int CDECL _clearfp(void)
 {
   unsigned int retVal = _statusfp();
 #if defined(__GNUC__) && defined(__i386__)
@@ -602,7 +602,7 @@ unsigned int _clearfp(void)
 /*********************************************************************
  *		__fpecode (MSVCRT.@)
  */
-int *__fpecode(void)
+int * CDECL __fpecode(void)
 {
     return &msvcrt_get_thread_data()->fpecode;
 }
@@ -610,7 +610,7 @@ int *__fpecode(void)
 /*********************************************************************
  *		ldexp (MSVCRT.@)
  */
-double MSVCRT_ldexp(double num, long exp)
+double CDECL MSVCRT_ldexp(double num, long exp)
 {
   double z = ldexp(num,exp);
 
@@ -624,7 +624,7 @@ double MSVCRT_ldexp(double num, long exp)
 /*********************************************************************
  *		_cabs (MSVCRT.@)
  */
-double MSVCRT__cabs(struct MSVCRT__complex num)
+double CDECL MSVCRT__cabs(struct MSVCRT__complex num)
 {
   return sqrt(num.x * num.x + num.y * num.y);
 }
@@ -632,7 +632,7 @@ double MSVCRT__cabs(struct MSVCRT__complex num)
 /*********************************************************************
  *		_chgsign (MSVCRT.@)
  */
-double _chgsign(double num)
+double CDECL _chgsign(double num)
 {
   /* FIXME: +-infinity,Nan not tested */
   return -num;
@@ -641,7 +641,7 @@ double _chgsign(double num)
 /*********************************************************************
  *		_control87 (MSVCRT.@)
  */
-unsigned int _control87(unsigned int newval, unsigned int mask)
+unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
 {
 #if defined(__GNUC__) && defined(__i386__)
   unsigned int fpword = 0;
@@ -711,7 +711,7 @@ unsigned int _control87(unsigned int newval, unsigned int mask)
 /*********************************************************************
  *		_controlfp (MSVCRT.@)
  */
-unsigned int _controlfp(unsigned int newval, unsigned int mask)
+unsigned int CDECL _controlfp(unsigned int newval, unsigned int mask)
 {
 #ifdef __i386__
   return _control87( newval, mask & ~MSVCRT__EM_DENORMAL );
@@ -724,7 +724,7 @@ unsigned int _controlfp(unsigned int newval, unsigned int mask)
 /*********************************************************************
  *		_copysign (MSVCRT.@)
  */
-double _copysign(double num, double sign)
+double CDECL _copysign(double num, double sign)
 {
   /* FIXME: Behaviour for Nan/Inf? */
   if (sign < 0.0)
@@ -735,7 +735,7 @@ double _copysign(double num, double sign)
 /*********************************************************************
  *		_finite (MSVCRT.@)
  */
-int  _finite(double num)
+int CDECL _finite(double num)
 {
   return (finite(num)?1:0); /* See comment for _isnan() */
 }
@@ -743,7 +743,7 @@ int  _finite(double num)
 /*********************************************************************
  *		_fpreset (MSVCRT.@)
  */
-void _fpreset(void)
+void CDECL _fpreset(void)
 {
 #if defined(__GNUC__) && defined(__i386__)
   __asm__ __volatile__( "fninit" );
@@ -755,7 +755,7 @@ void _fpreset(void)
 /*********************************************************************
  *		_isnan (MSVCRT.@)
  */
-INT  _isnan(double num)
+INT CDECL _isnan(double num)
 {
   /* Some implementations return -1 for true(glibc), msvcrt/crtdll return 1.
    * Do the same, as the result may be used in calculations
@@ -766,7 +766,7 @@ INT  _isnan(double num)
 /*********************************************************************
  *		_j0 (MSVCRT.@)
  */
-double _j0(double num)
+double CDECL _j0(double num)
 {
   /* FIXME: errno handling */
   return j0(num);
@@ -775,7 +775,7 @@ double _j0(double num)
 /*********************************************************************
  *		_j1 (MSVCRT.@)
  */
-double _j1(double num)
+double CDECL _j1(double num)
 {
   /* FIXME: errno handling */
   return j1(num);
@@ -784,7 +784,7 @@ double _j1(double num)
 /*********************************************************************
  *		jn (MSVCRT.@)
  */
-double _jn(int n, double num)
+double CDECL _jn(int n, double num)
 {
   /* FIXME: errno handling */
   return jn(n, num);
@@ -793,7 +793,7 @@ double _jn(int n, double num)
 /*********************************************************************
  *		_y0 (MSVCRT.@)
  */
-double _y0(double num)
+double CDECL _y0(double num)
 {
   double retval;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
@@ -809,7 +809,7 @@ double _y0(double num)
 /*********************************************************************
  *		_y1 (MSVCRT.@)
  */
-double _y1(double num)
+double CDECL _y1(double num)
 {
   double retval;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
@@ -825,7 +825,7 @@ double _y1(double num)
 /*********************************************************************
  *		_yn (MSVCRT.@)
  */
-double _yn(int order, double num)
+double CDECL _yn(int order, double num)
 {
   double retval;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
@@ -841,7 +841,7 @@ double _yn(int order, double num)
 /*********************************************************************
  *		_nextafter (MSVCRT.@)
  */
-double _nextafter(double num, double next)
+double CDECL _nextafter(double num, double next)
 {
   double retval;
   if (!finite(num) || !finite(next)) *MSVCRT__errno() = MSVCRT_EDOM;
@@ -852,7 +852,7 @@ double _nextafter(double num, double next)
 /*********************************************************************
  *		_ecvt (MSVCRT.@)
  */
-char *_ecvt( double number, int ndigits, int *decpt, int *sign )
+char * CDECL _ecvt( double number, int ndigits, int *decpt, int *sign )
 {
     thread_data_t *data = msvcrt_get_thread_data();
     char *dec;
@@ -870,7 +870,7 @@ char *_ecvt( double number, int ndigits, int *decpt, int *sign )
 /***********************************************************************
  *		_fcvt  (MSVCRT.@)
  */
-char *_fcvt( double number, int ndigits, int *decpt, int *sign )
+char * CDECL _fcvt( double number, int ndigits, int *decpt, int *sign )
 {
     thread_data_t *data = msvcrt_get_thread_data();
     char *dec;
@@ -890,7 +890,7 @@ char *_fcvt( double number, int ndigits, int *decpt, int *sign )
  *
  * FIXME: uses both E and F.
  */
-char *_gcvt( double number, int ndigit, char *buff )
+char * CDECL _gcvt( double number, int ndigit, char *buff )
 {
     sprintf(buff, "%.*E", ndigit, number);
     return buff;
@@ -904,7 +904,7 @@ char *_gcvt( double number, int ndigit, char *buff )
  *	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-unsigned __int64 MSVCRT_div(int num, int denom)
+unsigned __int64 CDECL MSVCRT_div(int num, int denom)
 {
   div_t dt = div(num,denom);
   return ((unsigned __int64)dt.rem << 32) | (unsigned int)dt.quot;
@@ -915,7 +915,7 @@ unsigned __int64 MSVCRT_div(int num, int denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-MSVCRT_div_t MSVCRT_div(int num, int denom)
+MSVCRT_div_t CDECL MSVCRT_div(int num, int denom)
 {
   div_t dt = div(num,denom);
   MSVCRT_div_t     ret;
@@ -934,7 +934,7 @@ MSVCRT_div_t MSVCRT_div(int num, int denom)
  * 	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-unsigned __int64 MSVCRT_ldiv(long num, long denom)
+unsigned __int64 CDECL MSVCRT_ldiv(long num, long denom)
 {
   ldiv_t ldt = ldiv(num,denom);
   return ((unsigned __int64)ldt.rem << 32) | (unsigned long)ldt.quot;
@@ -945,7 +945,7 @@ unsigned __int64 MSVCRT_ldiv(long num, long denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-MSVCRT_ldiv_t MSVCRT_ldiv(long num, long denom)
+MSVCRT_ldiv_t CDECL MSVCRT_ldiv(long num, long denom)
 {
   ldiv_t result = ldiv(num,denom);
 

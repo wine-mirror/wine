@@ -59,7 +59,7 @@ void __MSVCRT__call_atexit(void)
 /*********************************************************************
  *		__dllonexit (MSVCRT.@)
  */
-MSVCRT__onexit_t __dllonexit(MSVCRT__onexit_t func, MSVCRT__onexit_t **start, MSVCRT__onexit_t **end)
+MSVCRT__onexit_t CDECL __dllonexit(MSVCRT__onexit_t func, MSVCRT__onexit_t **start, MSVCRT__onexit_t **end)
 {
   MSVCRT__onexit_t *tmp;
   int len;
@@ -92,7 +92,7 @@ MSVCRT__onexit_t __dllonexit(MSVCRT__onexit_t func, MSVCRT__onexit_t **start, MS
 /*********************************************************************
  *		_exit (MSVCRT.@)
  */
-void MSVCRT__exit(int exitcode)
+void CDECL MSVCRT__exit(int exitcode)
 {
   TRACE("(%d)\n", exitcode);
   ExitProcess(exitcode);
@@ -128,7 +128,7 @@ static void DoMessageBox(LPCSTR lead, LPCSTR message)
 /*********************************************************************
  *		_amsg_exit (MSVCRT.@)
  */
-void _amsg_exit(int errnum)
+void CDECL _amsg_exit(int errnum)
 {
   TRACE("(%d)\n", errnum);
   /* FIXME: text for the error number. */
@@ -146,7 +146,7 @@ void _amsg_exit(int errnum)
 /*********************************************************************
  *		abort (MSVCRT.@)
  */
-void MSVCRT_abort(void)
+void CDECL MSVCRT_abort(void)
 {
   TRACE("()\n");
   if (MSVCRT_app_type == 2)
@@ -161,7 +161,7 @@ void MSVCRT_abort(void)
 /*********************************************************************
  *		_assert (MSVCRT.@)
  */
-void MSVCRT__assert(const char* str, const char* file, unsigned int line)
+void CDECL MSVCRT__assert(const char* str, const char* file, unsigned int line)
 {
   TRACE("(%s,%s,%d)\n",str,file,line);
   if (MSVCRT_app_type == 2)
@@ -178,7 +178,7 @@ void MSVCRT__assert(const char* str, const char* file, unsigned int line)
 /*********************************************************************
  *		_c_exit (MSVCRT.@)
  */
-void MSVCRT__c_exit(void)
+void CDECL MSVCRT__c_exit(void)
 {
   TRACE("(void)\n");
   /* All cleanup is done on DLL detach; Return to caller */
@@ -187,7 +187,7 @@ void MSVCRT__c_exit(void)
 /*********************************************************************
  *		_cexit (MSVCRT.@)
  */
-void MSVCRT__cexit(void)
+void CDECL MSVCRT__cexit(void)
 {
   TRACE("(void)\n");
   LOCK_EXIT;
@@ -198,7 +198,7 @@ void MSVCRT__cexit(void)
 /*********************************************************************
  *		_onexit (MSVCRT.@)
  */
-MSVCRT__onexit_t MSVCRT__onexit(MSVCRT__onexit_t func)
+MSVCRT__onexit_t CDECL MSVCRT__onexit(MSVCRT__onexit_t func)
 {
   TRACE("(%p)\n",func);
 
@@ -232,7 +232,7 @@ MSVCRT__onexit_t MSVCRT__onexit(MSVCRT__onexit_t func)
 /*********************************************************************
  *		exit (MSVCRT.@)
  */
-void MSVCRT_exit(int exitcode)
+void CDECL MSVCRT_exit(int exitcode)
 {
   TRACE("(%d)\n",exitcode);
   MSVCRT__cexit();
@@ -242,7 +242,7 @@ void MSVCRT_exit(int exitcode)
 /*********************************************************************
  *		atexit (MSVCRT.@)
  */
-int MSVCRT_atexit(void (*func)(void))
+int CDECL MSVCRT_atexit(void (*func)(void))
 {
   TRACE("(%p)\n", func);
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
@@ -252,7 +252,7 @@ int MSVCRT_atexit(void (*func)(void))
 /*********************************************************************
  *		_purecall (MSVCRT.@)
  */
-void _purecall(void)
+void CDECL _purecall(void)
 {
   TRACE("(void)\n");
   _amsg_exit( 25 );

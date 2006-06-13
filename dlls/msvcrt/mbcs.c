@@ -117,7 +117,7 @@ static inline size_t u_strcspn( const unsigned char *s, const unsigned char *rej
 /*********************************************************************
  *		__p__mbctype (MSVCRT.@)
  */
-unsigned char* __p__mbctype(void)
+unsigned char* CDECL __p__mbctype(void)
 {
   return MSVCRT_mbctype;
 }
@@ -125,7 +125,7 @@ unsigned char* __p__mbctype(void)
 /*********************************************************************
  *		__p___mb_cur_max(MSVCRT.@)
  */
-int* __p___mb_cur_max(void)
+int* CDECL __p___mb_cur_max(void)
 {
   return &MSVCRT___mb_cur_max;
 }
@@ -133,7 +133,7 @@ int* __p___mb_cur_max(void)
 /*********************************************************************
  *		_mbsnextc(MSVCRT.@)
  */
-unsigned int _mbsnextc(const unsigned char* str)
+unsigned int CDECL _mbsnextc(const unsigned char* str)
 {
   if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*str))
     return *str << 8 | str[1];
@@ -143,7 +143,7 @@ unsigned int _mbsnextc(const unsigned char* str)
 /*********************************************************************
  *		_mbctolower(MSVCRT.@)
  */
-unsigned int _mbctolower(unsigned int c)
+unsigned int CDECL _mbctolower(unsigned int c)
 {
     if (MSVCRT_isleadbyte(c))
     {
@@ -156,7 +156,7 @@ unsigned int _mbctolower(unsigned int c)
 /*********************************************************************
  *		_mbctoupper(MSVCRT.@)
  */
-unsigned int _mbctoupper(unsigned int c)
+unsigned int CDECL _mbctoupper(unsigned int c)
 {
     if (MSVCRT_isleadbyte(c))
     {
@@ -169,7 +169,7 @@ unsigned int _mbctoupper(unsigned int c)
 /*********************************************************************
  *		_mbsdec(MSVCRT.@)
  */
-unsigned char* _mbsdec(const unsigned char* start, const unsigned char* cur)
+unsigned char* CDECL _mbsdec(const unsigned char* start, const unsigned char* cur)
 {
   if(MSVCRT___mb_cur_max > 1)
     return (unsigned char *)(_ismbstrail(start,cur-1) ? cur - 2 : cur -1);
@@ -180,7 +180,7 @@ unsigned char* _mbsdec(const unsigned char* start, const unsigned char* cur)
 /*********************************************************************
  *		_mbsinc(MSVCRT.@)
  */
-unsigned char* _mbsinc(const unsigned char* str)
+unsigned char* CDECL _mbsinc(const unsigned char* str)
 {
   if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*str))
     return (unsigned char*)str + 2; /* MB char */
@@ -191,7 +191,7 @@ unsigned char* _mbsinc(const unsigned char* str)
 /*********************************************************************
  *		_mbsninc(MSVCRT.@)
  */
-unsigned char* _mbsninc(const unsigned char* str, MSVCRT_size_t num)
+unsigned char* CDECL _mbsninc(const unsigned char* str, MSVCRT_size_t num)
 {
   if(!str || num < 1)
     return NULL;
@@ -207,7 +207,7 @@ unsigned char* _mbsninc(const unsigned char* str, MSVCRT_size_t num)
 /*********************************************************************
  *		_mbclen(MSVCRT.@)
  */
-unsigned int _mbclen(const unsigned char* str)
+unsigned int CDECL _mbclen(const unsigned char* str)
 {
   return MSVCRT_isleadbyte(*str) ? 2 : 1;
 }
@@ -215,7 +215,7 @@ unsigned int _mbclen(const unsigned char* str)
 /*********************************************************************
  *		mblen(MSVCRT.@)
  */
-int MSVCRT_mblen(const char* str, MSVCRT_size_t size)
+int CDECL MSVCRT_mblen(const char* str, MSVCRT_size_t size)
 {
   if (str && *str && size)
   {
@@ -230,7 +230,7 @@ int MSVCRT_mblen(const char* str, MSVCRT_size_t size)
 /*********************************************************************
  *		_mbslen(MSVCRT.@)
  */
-MSVCRT_size_t _mbslen(const unsigned char* str)
+MSVCRT_size_t CDECL _mbslen(const unsigned char* str)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -248,7 +248,7 @@ MSVCRT_size_t _mbslen(const unsigned char* str)
 /*********************************************************************
  *		_mbstrlen(MSVCRT.@)
  */
-MSVCRT_size_t _mbstrlen(const char* str)
+MSVCRT_size_t CDECL _mbstrlen(const char* str)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -269,7 +269,7 @@ MSVCRT_size_t _mbstrlen(const char* str)
 /*********************************************************************
  *		_mbccpy(MSVCRT.@)
  */
-void _mbccpy(unsigned char* dest, const unsigned char* src)
+void CDECL _mbccpy(unsigned char* dest, const unsigned char* src)
 {
   *dest = *src;
   if(MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(*src))
@@ -279,7 +279,7 @@ void _mbccpy(unsigned char* dest, const unsigned char* src)
 /*********************************************************************
  *		_mbsncpy(MSVCRT.@)
  */
-unsigned char* _mbsncpy(unsigned char* dst, const unsigned char* src, MSVCRT_size_t n)
+unsigned char* CDECL _mbsncpy(unsigned char* dst, const unsigned char* src, MSVCRT_size_t n)
 {
   unsigned char* ret = dst;
   if(!n)
@@ -309,7 +309,7 @@ unsigned char* _mbsncpy(unsigned char* dst, const unsigned char* src, MSVCRT_siz
 /*********************************************************************
  *              _mbsnbcpy(MSVCRT.@)
  */
-unsigned char* _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSVCRT_size_t n)
+unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSVCRT_size_t n)
 {
   unsigned char* ret = dst;
   if(!n)
@@ -350,7 +350,7 @@ unsigned char* _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSVCRT_si
 /*********************************************************************
  *		_mbscmp(MSVCRT.@)
  */
-int _mbscmp(const unsigned char* str, const unsigned char* cmp)
+int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -375,7 +375,7 @@ int _mbscmp(const unsigned char* str, const unsigned char* cmp)
  *		_mbsicoll(MSVCRT.@)
  * FIXME: handle locales.
  */
-int _mbsicoll(const unsigned char* str, const unsigned char* cmp)
+int CDECL _mbsicoll(const unsigned char* str, const unsigned char* cmp)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -403,7 +403,7 @@ int _mbsicoll(const unsigned char* str, const unsigned char* cmp)
  *   _NLSCMPERROR if error
  * FIXME: handle locales.
  */
-int _mbscoll(const unsigned char* str, const unsigned char* cmp)
+int CDECL _mbscoll(const unsigned char* str, const unsigned char* cmp)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -428,7 +428,7 @@ int _mbscoll(const unsigned char* str, const unsigned char* cmp)
 /*********************************************************************
  *		_mbsicmp(MSVCRT.@)
  */
-int _mbsicmp(const unsigned char* str, const unsigned char* cmp)
+int CDECL _mbsicmp(const unsigned char* str, const unsigned char* cmp)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -452,7 +452,7 @@ int _mbsicmp(const unsigned char* str, const unsigned char* cmp)
 /*********************************************************************
  *		_mbsncmp(MSVCRT.@)
  */
-int _mbsncmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
+int CDECL _mbsncmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
 {
   if(!len)
     return 0;
@@ -483,7 +483,7 @@ int _mbsncmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t l
 /*********************************************************************
  *              _mbsnbcmp(MSVCRT.@)
  */
-int _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
+int CDECL _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
 {
   if (!len)
     return 0;
@@ -527,7 +527,7 @@ int _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t 
  *
  * Compare two multibyte strings case insensitively to 'len' characters.
  */
-int _mbsnicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
+int CDECL _mbsnicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
 {
   /* FIXME: No tolower() for mb strings yet */
   if(MSVCRT___mb_cur_max > 1)
@@ -554,7 +554,7 @@ int _mbsnicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t 
 /*********************************************************************
  *              _mbsnbicmp(MSVCRT.@)
  */
-int _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
+int CDECL _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
 {
   if (!len)
     return 0;
@@ -598,7 +598,7 @@ int _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t
 /*********************************************************************
  *		_mbscat (MSVCRT.@)
  */
-unsigned char *_mbscat( unsigned char *dst, const unsigned char *src )
+unsigned char * CDECL _mbscat( unsigned char *dst, const unsigned char *src )
 {
     strcat( (char *)dst, (const char *)src );
     return dst;
@@ -607,7 +607,7 @@ unsigned char *_mbscat( unsigned char *dst, const unsigned char *src )
 /*********************************************************************
  *		_mbscpy (MSVCRT.@)
  */
-unsigned char* _mbscpy( unsigned char *dst, const unsigned char *src )
+unsigned char* CDECL _mbscpy( unsigned char *dst, const unsigned char *src )
 {
     strcpy( (char *)dst, (const char *)src );
     return dst;
@@ -616,7 +616,7 @@ unsigned char* _mbscpy( unsigned char *dst, const unsigned char *src )
 /*********************************************************************
  *		_mbsstr (MSVCRT.@)
  */
-unsigned char *_mbsstr(const unsigned char *haystack, const unsigned char *needle)
+unsigned char * CDECL _mbsstr(const unsigned char *haystack, const unsigned char *needle)
 {
     return (unsigned char *)strstr( (const char *)haystack, (const char *)needle );
 }
@@ -626,7 +626,7 @@ unsigned char *_mbsstr(const unsigned char *haystack, const unsigned char *needl
  *
  * Find a multibyte character in a multibyte string.
  */
-unsigned char* _mbschr(const unsigned char* s, unsigned int x)
+unsigned char* CDECL _mbschr(const unsigned char* s, unsigned int x)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -647,7 +647,7 @@ unsigned char* _mbschr(const unsigned char* s, unsigned int x)
 /*********************************************************************
  *		_mbsrchr(MSVCRT.@)
  */
-unsigned char* _mbsrchr(const unsigned char* s, unsigned int x)
+unsigned char* CDECL _mbsrchr(const unsigned char* s, unsigned int x)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -672,7 +672,7 @@ unsigned char* _mbsrchr(const unsigned char* s, unsigned int x)
  *
  * Find and extract tokens from strings
  */
-unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
+unsigned char* CDECL _mbstok(unsigned char *str, const unsigned char *delim)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     unsigned char *ret;
@@ -705,7 +705,7 @@ unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
 /*********************************************************************
  *		mbtowc(MSVCRT.@)
  */
-int MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
+int CDECL MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
 {
     /* temp var needed because MultiByteToWideChar wants non NULL destination */
     MSVCRT_wchar_t tmpdst = '\0';
@@ -727,7 +727,7 @@ int MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
 /*********************************************************************
  *		_mbbtombc(MSVCRT.@)
  */
-unsigned int _mbbtombc(unsigned int c)
+unsigned int CDECL _mbbtombc(unsigned int c)
 {
   if(MSVCRT___mb_cur_max > 1 &&
      ((c >= 0x20 && c <=0x7e) ||(c >= 0xa1 && c <= 0xdf)))
@@ -742,7 +742,7 @@ unsigned int _mbbtombc(unsigned int c)
 /*********************************************************************
  *		_ismbbkana(MSVCRT.@)
  */
-int _ismbbkana(unsigned int c)
+int CDECL _ismbbkana(unsigned int c)
 {
   /* FIXME: use lc_ctype when supported, not lc_all */
   if(msvcrt_current_lc_all_cp == 932)
@@ -756,7 +756,7 @@ int _ismbbkana(unsigned int c)
 /*********************************************************************
  *              _ismbcdigit(MSVCRT.@)
  */
-int _ismbcdigit(unsigned int ch)
+int CDECL _ismbcdigit(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_DIGIT);
@@ -765,7 +765,7 @@ int _ismbcdigit(unsigned int ch)
 /*********************************************************************
  *              _ismbcgraph(MSVCRT.@)
  */
-int _ismbcgraph(unsigned int ch)
+int CDECL _ismbcgraph(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & (C1_UPPER | C1_LOWER | C1_DIGIT | C1_PUNCT | C1_ALPHA));
@@ -774,7 +774,7 @@ int _ismbcgraph(unsigned int ch)
 /*********************************************************************
  *              _ismbcalpha (MSVCRT.@)
  */
-int _ismbcalpha(unsigned int ch)
+int CDECL _ismbcalpha(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_ALPHA);
@@ -783,7 +783,7 @@ int _ismbcalpha(unsigned int ch)
 /*********************************************************************
  *              _ismbclower (MSVCRT.@)
  */
-int _ismbclower(unsigned int ch)
+int CDECL _ismbclower(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_UPPER);
@@ -792,7 +792,7 @@ int _ismbclower(unsigned int ch)
 /*********************************************************************
  *              _ismbcupper (MSVCRT.@)
  */
-int _ismbcupper(unsigned int ch)
+int CDECL _ismbcupper(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_LOWER);
@@ -801,7 +801,7 @@ int _ismbcupper(unsigned int ch)
 /*********************************************************************
  *              _ismbcsymbol(MSVCRT.@)
  */
-int _ismbcsymbol(unsigned int ch)
+int CDECL _ismbcsymbol(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     WORD ctype;
@@ -816,7 +816,7 @@ int _ismbcsymbol(unsigned int ch)
 /*********************************************************************
  *              _ismbcalnum (MSVCRT.@)
  */
-int _ismbcalnum(unsigned int ch)
+int CDECL _ismbcalnum(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & (C1_ALPHA | C1_DIGIT));
@@ -825,7 +825,7 @@ int _ismbcalnum(unsigned int ch)
 /*********************************************************************
  *              _ismbcspace (MSVCRT.@)
  */
-int _ismbcspace(unsigned int ch)
+int CDECL _ismbcspace(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_SPACE);
@@ -834,7 +834,7 @@ int _ismbcspace(unsigned int ch)
 /*********************************************************************
  *              _ismbcprint (MSVCRT.@)
  */
-int _ismbcprint(unsigned int ch)
+int CDECL _ismbcprint(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & (C1_UPPER | C1_LOWER | C1_DIGIT | C1_PUNCT | C1_ALPHA | C1_SPACE));
@@ -843,7 +843,7 @@ int _ismbcprint(unsigned int ch)
 /*********************************************************************
  *              _ismbcpunct(MSVCRT.@)
  */
-int _ismbcpunct(unsigned int ch)
+int CDECL _ismbcpunct(unsigned int ch)
 {
     MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_PUNCT);
@@ -852,7 +852,7 @@ int _ismbcpunct(unsigned int ch)
 /*********************************************************************
  *		_ismbchira(MSVCRT.@)
  */
-int _ismbchira(unsigned int c)
+int CDECL _ismbchira(unsigned int c)
 {
   /* FIXME: use lc_ctype when supported, not lc_all */
   if(msvcrt_current_lc_all_cp == 932)
@@ -866,7 +866,7 @@ int _ismbchira(unsigned int c)
 /*********************************************************************
  *		_ismbckata(MSVCRT.@)
  */
-int _ismbckata(unsigned int c)
+int CDECL _ismbckata(unsigned int c)
 {
   /* FIXME: use lc_ctype when supported, not lc_all */
   if(msvcrt_current_lc_all_cp == 932)
@@ -882,7 +882,7 @@ int _ismbckata(unsigned int c)
 /*********************************************************************
  *		_ismbblead(MSVCRT.@)
  */
-int _ismbblead(unsigned int c)
+int CDECL _ismbblead(unsigned int c)
 {
   /* FIXME: should reference MSVCRT_mbctype */
   return MSVCRT___mb_cur_max > 1 && MSVCRT_isleadbyte(c);
@@ -892,7 +892,7 @@ int _ismbblead(unsigned int c)
 /*********************************************************************
  *		_ismbbtrail(MSVCRT.@)
  */
-int _ismbbtrail(unsigned int c)
+int CDECL _ismbbtrail(unsigned int c)
 {
   /* FIXME: should reference MSVCRT_mbctype */
   return !_ismbblead(c);
@@ -901,7 +901,7 @@ int _ismbbtrail(unsigned int c)
 /*********************************************************************
  *		_ismbslead(MSVCRT.@)
  */
-int _ismbslead(const unsigned char* start, const unsigned char* str)
+int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
 {
   /* Lead bytes can also be trail bytes if caller messed up
    * iterating through the string...
@@ -920,7 +920,7 @@ int _ismbslead(const unsigned char* start, const unsigned char* str)
 /*********************************************************************
  *		_ismbstrail(MSVCRT.@)
  */
-int _ismbstrail(const unsigned char* start, const unsigned char* str)
+int CDECL _ismbstrail(const unsigned char* start, const unsigned char* str)
 {
   /* Must not be a lead, and must be preceded by one */
   return !_ismbslead(start, str) && MSVCRT_isleadbyte(str[-1]);
@@ -929,7 +929,7 @@ int _ismbstrail(const unsigned char* start, const unsigned char* str)
 /*********************************************************************
  *		_mbsset(MSVCRT.@)
  */
-unsigned char* _mbsset(unsigned char* str, unsigned int c)
+unsigned char* CDECL _mbsset(unsigned char* str, unsigned int c)
 {
   unsigned char* ret = str;
 
@@ -952,7 +952,7 @@ unsigned char* _mbsset(unsigned char* str, unsigned int c)
 /*********************************************************************
  *		_mbsnbset(MSVCRT.@)
  */
-unsigned char* _mbsnbset(unsigned char *str, unsigned int c, MSVCRT_size_t len)
+unsigned char* CDECL _mbsnbset(unsigned char *str, unsigned int c, MSVCRT_size_t len)
 {
     unsigned char *ret = str;
 
@@ -982,7 +982,7 @@ unsigned char* _mbsnbset(unsigned char *str, unsigned int c, MSVCRT_size_t len)
 /*********************************************************************
  *		_mbsnset(MSVCRT.@)
  */
-unsigned char* _mbsnset(unsigned char* str, unsigned int c, MSVCRT_size_t len)
+unsigned char* CDECL _mbsnset(unsigned char* str, unsigned int c, MSVCRT_size_t len)
 {
   unsigned char *ret = str;
 
@@ -1009,7 +1009,7 @@ unsigned char* _mbsnset(unsigned char* str, unsigned int c, MSVCRT_size_t len)
  *		_mbsnccnt(MSVCRT.@)
  * 'c' is for 'character'.
  */
-MSVCRT_size_t _mbsnccnt(const unsigned char* str, MSVCRT_size_t len)
+MSVCRT_size_t CDECL _mbsnccnt(const unsigned char* str, MSVCRT_size_t len)
 {
   MSVCRT_size_t ret;
   if(MSVCRT___mb_cur_max > 1)
@@ -1037,7 +1037,7 @@ MSVCRT_size_t _mbsnccnt(const unsigned char* str, MSVCRT_size_t len)
  *		_mbsnbcnt(MSVCRT.@)
  * 'b' is for byte count.
  */
-MSVCRT_size_t _mbsnbcnt(const unsigned char* str, MSVCRT_size_t len)
+MSVCRT_size_t CDECL _mbsnbcnt(const unsigned char* str, MSVCRT_size_t len)
 {
   MSVCRT_size_t ret;
   if(MSVCRT___mb_cur_max > 1)
@@ -1057,7 +1057,7 @@ MSVCRT_size_t _mbsnbcnt(const unsigned char* str, MSVCRT_size_t len)
 /*********************************************************************
  *		_mbsnbcat(MSVCRT.@)
  */
-unsigned char* _mbsnbcat(unsigned char* dst, const unsigned char* src, MSVCRT_size_t len)
+unsigned char* CDECL _mbsnbcat(unsigned char* dst, const unsigned char* src, MSVCRT_size_t len)
 {
     if(MSVCRT___mb_cur_max > 1)
     {
@@ -1084,7 +1084,7 @@ unsigned char* _mbsnbcat(unsigned char* dst, const unsigned char* src, MSVCRT_si
 /*********************************************************************
  *		_mbsncat(MSVCRT.@)
  */
-unsigned char* _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_size_t len)
+unsigned char* CDECL _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_size_t len)
 {
   if(MSVCRT___mb_cur_max > 1)
   {
@@ -1110,7 +1110,7 @@ unsigned char* _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_siz
 /*********************************************************************
  *              _mbslwr(MSVCRT.@)
  */
-unsigned char* _mbslwr(unsigned char* s)
+unsigned char* CDECL _mbslwr(unsigned char* s)
 {
   unsigned char *ret = s;
   if (!s)
@@ -1138,7 +1138,7 @@ unsigned char* _mbslwr(unsigned char* s)
 /*********************************************************************
  *              _mbsupr(MSVCRT.@)
  */
-unsigned char* _mbsupr(unsigned char* s)
+unsigned char* CDECL _mbsupr(unsigned char* s)
 {
   unsigned char *ret = s;
   if (!s)
@@ -1166,7 +1166,7 @@ unsigned char* _mbsupr(unsigned char* s)
 /*********************************************************************
  *              _mbsspn (MSVCRT.@)
  */
-MSVCRT_size_t _mbsspn(const unsigned char* string, const unsigned char* set)
+MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* set)
 {
     const unsigned char *p, *q;
 
@@ -1198,7 +1198,7 @@ MSVCRT_size_t _mbsspn(const unsigned char* string, const unsigned char* set)
 /*********************************************************************
  *		_mbscspn(MSVCRT.@)
  */
-MSVCRT_size_t _mbscspn(const unsigned char* str, const unsigned char* cmp)
+MSVCRT_size_t CDECL _mbscspn(const unsigned char* str, const unsigned char* cmp)
 {
   if (MSVCRT___mb_cur_max > 1)
     FIXME("don't handle double character case\n");
@@ -1208,7 +1208,7 @@ MSVCRT_size_t _mbscspn(const unsigned char* str, const unsigned char* cmp)
 /*********************************************************************
  *              _mbsrev (MSVCRT.@)
  */
-unsigned char* _mbsrev(unsigned char* str)
+unsigned char* CDECL _mbsrev(unsigned char* str)
 {
     int i, len = _mbslen(str);
     unsigned char *p, *temp=MSVCRT_malloc(len*2);
@@ -1255,7 +1255,7 @@ unsigned char* _mbsrev(unsigned char* str)
 /*********************************************************************
  *		_mbspbrk (MSVCRT.@)
  */
-unsigned char* _mbspbrk(const unsigned char* str, const unsigned char* accept)
+unsigned char* CDECL _mbspbrk(const unsigned char* str, const unsigned char* accept)
 {
     const unsigned char* p;
 

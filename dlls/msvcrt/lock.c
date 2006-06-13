@@ -101,7 +101,7 @@ void msvcrt_free_mt_locks(void)
 /**********************************************************************
  *              _lock (MSVCRT.@)
  */
-void _lock( int locknum )
+void CDECL _lock( int locknum )
 {
   TRACE( "(%d)\n", locknum );
 
@@ -130,7 +130,7 @@ void _lock( int locknum )
  *
  * NOTE: There is no error detection to make sure the lock exists and is acquired.
  */
-void _unlock( int locknum )
+void CDECL _unlock( int locknum )
 {
   TRACE( "(%d)\n", locknum );
 
