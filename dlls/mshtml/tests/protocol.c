@@ -296,16 +296,14 @@ static void test_res_protocol(void)
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08lx\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == sizeof(blank_url)/sizeof(WCHAR),
-           "size=%ld, ezpected %d\n", size, sizeof(wrong_url1)/sizeof(WCHAR));
+        ok(size == sizeof(blank_url)/sizeof(WCHAR), "size=%ld\n", size);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url1, PARSE_DOMAIN, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08lx\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == sizeof(wrong_url1)/sizeof(WCHAR),
-           "size=%ld, ezpected %d\n", size, sizeof(wrong_url1)/sizeof(WCHAR));
+        ok(size == sizeof(wrong_url1)/sizeof(WCHAR), "size=%ld\n", size);
 
 #if 0   /* Crashes on win9x */
         size = 0xdeadbeef;
@@ -473,8 +471,7 @@ static void test_about_protocol(void)
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08lx\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == sizeof(blank_url)/sizeof(WCHAR),
-           "size=%ld, expected %d\n", size, sizeof(blank_url)/sizeof(WCHAR));
+        ok(size == sizeof(blank_url)/sizeof(WCHAR), "size=%ld\n", size);
 
 #if 0   /* Crashes on win9x */
         size = 0xdeadbeef;
@@ -521,7 +518,7 @@ static void test_about_protocol(void)
             ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
-            ok(cb == sizeof(blank_html), "cb=%ld, expected %d\n", cb, sizeof(blank_html));
+            ok(cb == sizeof(blank_html), "cb=%ld\n", cb);
             ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
             hres = IInternetProtocol_UnlockRequest(protocol);
             ok(hres == S_OK, "UnlockRequest failed: %08lx\n", hres);
@@ -531,7 +528,7 @@ static void test_about_protocol(void)
             ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
-            ok(cb == sizeof(test_html), "cb=%ld, expected %d\n", cb, sizeof(test_html));
+            ok(cb == sizeof(test_html), "cb=%ld\n", cb);
             ok(!memcmp(buf, test_html, cb), "Readed wrong data\n");
             hres = IInternetProtocol_UnlockRequest(protocol);
             ok(hres == S_OK, "UnlockRequest failed: %08lx\n", hres);
@@ -541,7 +538,7 @@ static void test_about_protocol(void)
             ok(hres == S_OK, "LockRequest failed: %08lx\n", hres);
             hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
             ok(hres == S_OK, "Read failed: %08lx\n", hres);
-            ok(cb == sizeof(blank_html), "cb=%ld, expected %d\n", cb, sizeof(blank_html));
+            ok(cb == sizeof(blank_html), "cb=%ld\n", cb);
             ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
             hres = IInternetProtocol_UnlockRequest(protocol);
             ok(hres == S_OK, "UnlockRequest failed: %08lx\n", hres);
