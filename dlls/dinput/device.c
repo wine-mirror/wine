@@ -189,11 +189,11 @@ void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) {
     TRACE("Dumping DIDATAFORMAT structure:\n");
     TRACE("  - dwSize: %ld\n", df->dwSize);
     if (df->dwSize != sizeof(DIDATAFORMAT)) {
-	WARN("Non-standard DIDATAFORMAT structure size (%ld instead of %d).\n", df->dwSize, sizeof(DIDATAFORMAT));
+	WARN("Non-standard DIDATAFORMAT structure size %ld\n", df->dwSize);
     }
     TRACE("  - dwObjsize: %ld\n", df->dwObjSize);
     if (df->dwObjSize != sizeof(DIOBJECTDATAFORMAT)) {
-	WARN("Non-standard DIOBJECTDATAFORMAT structure size (%ld instead of %d).\n", df->dwObjSize, sizeof(DIOBJECTDATAFORMAT));
+	WARN("Non-standard DIOBJECTDATAFORMAT structure size %ld\n", df->dwObjSize);
     }
     TRACE("  - dwFlags: 0x%08lx (", df->dwFlags);
     switch (df->dwFlags) {
