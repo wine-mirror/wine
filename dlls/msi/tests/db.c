@@ -894,10 +894,10 @@ static void test_longstrings(void)
     const char insert_query[] = 
         "INSERT INTO `strings` ( `id`, `val` ) VALUES('1', 'Z')";
     char *str;
-    MSIHANDLE hdb;
-    UINT len;
+    MSIHANDLE hdb = 0, hview = 0, hrec = 0;
+    DWORD len;
     UINT r;
-    const int STRING_LENGTH = 0x10005;
+    const DWORD STRING_LENGTH = 0x10005;
 
     DeleteFile(msifile);
     /* just MsiOpenDatabase should not create a file */
@@ -922,7 +922,29 @@ static void test_longstrings(void)
 
     MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed\n");
+    MsiCloseHandle(hdb);
 
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_READONLY, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    r = MsiDatabaseOpenView(hdb, "select * from `strings` where `id` = 1", &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+
+    MsiCloseHandle(hview);
+
+    r = MsiRecordGetString(hrec, 2, NULL, &len);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    todo_wine {
+    ok(len == STRING_LENGTH, "string length wrong\n");
+    }
+
+    MsiCloseHandle(hrec);
     MsiCloseHandle(hdb);
     DeleteFile(msifile);
 }
