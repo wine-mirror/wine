@@ -511,7 +511,7 @@ static BOOL service_get_status(HANDLE pipe, LPSERVICE_STATUS status)
     r = ReadFile( pipe, status, sizeof *status, &count, NULL );
     if (!r || count != sizeof *status)
         ERR("service protocol error - failed to read pipe "
-            "r = %d  count = %ld/%d!\n", r, count, sizeof *status);
+            "r = %d  count = %ld!\n", r, count);
     return r;
 }
 
@@ -534,7 +534,7 @@ static BOOL service_send_control(HANDLE pipe, DWORD dwControl, DWORD *result)
     r = ReadFile(pipe, result, sizeof *result, &count, NULL);
     if (!r || count != sizeof *result)
         ERR("service protocol error - failed to read pipe "
-            "r = %d  count = %ld/%d!\n", r, count, sizeof *result);
+            "r = %d  count = %ld!\n", r, count);
     return r;
 }
 
