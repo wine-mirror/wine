@@ -400,7 +400,7 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
 	    len = mmt->wEventLength - HIWORD(mmt->dwEventData);
 
 	    if (len >= sizeof(buf)) {
-		WARN("Buffer for text is too small (%d bytes, when %u are needed)\n", sizeof(buf) - 1, len);
+		WARN("Buffer for text is too small (%u are needed)\n", len);
 		len = sizeof(buf) - 1;
 	    }
 	    if (mmioRead(wmm->hFile, (HPSTR)buf, len) == len) {
@@ -1049,7 +1049,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 		    WORD	idx = HIBYTE(LOWORD(mmt->dwEventData));
 
 		    if (len >= sizeof(buf)) {
-			WARN("Buffer for text is too small (%d bytes, when %u are needed)\n", sizeof(buf) - 1, len);
+			WARN("Buffer for text is too small (%u are needed)\n", len);
 			len = sizeof(buf) - 1;
 		    }
 		    if (mmioRead(wmm->hFile, (HPSTR)buf, len) == len) {
