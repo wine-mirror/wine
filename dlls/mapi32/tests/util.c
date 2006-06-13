@@ -140,7 +140,7 @@ static void test_UlFromSzHex(void)
 static void test_CbOfEncoded(void)
 {
     char buff[129];
-    size_t i;
+    unsigned int i;
 
     pCbOfEncoded = (void*)GetProcAddress(hMapi32, "CbOfEncoded@4");
     if (!pCbOfEncoded)
