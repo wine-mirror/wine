@@ -154,13 +154,15 @@ static void assign_out_args(const func_t *func)
 
             if (has_size)
             {
+                unsigned int size;
                 type_t *type = var->type;
                 while (type->type == 0 && type->ref)
                     type = type->ref;
 
                 fprintf(server, " = NdrAllocate(&_StubMsg, ");
                 write_expr(server, size_is, 1);
-                fprintf(server, " * %u);\n", get_type_memsize(type));
+                size = get_type_memsize(type);
+                fprintf(server, " * %u);\n", size);
             }
             else if (!is_string)
             {
