@@ -31,6 +31,7 @@ CTESTS = \
 	time.c \
 	timer.c \
 	toolhelp.c \
+	version.c \
 	virtual.c \
 	volume.c
 
