@@ -41,6 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _domelem
 {
     const struct IXMLDOMElementVtbl *lpVtbl;
+    const struct IUnknownVtbl *lpInternalUnkVtbl;
+    IUnknown *pUnkOuter;
     LONG ref;
     IUnknown *node_unk;
     IXMLDOMNode *node;
@@ -49,6 +51,11 @@ typedef struct _domelem
 static inline domelem *impl_from_IXMLDOMElement( IXMLDOMElement *iface )
 {
     return (domelem *)((char*)iface - FIELD_OFFSET(domelem, lpVtbl));
+}
+
+static inline domelem *impl_from_InternalUnknown( IUnknown *iface )
+{
+    return (domelem *)((char*)iface - FIELD_OFFSET(domelem, lpInternalUnkVtbl));
 }
 
 static inline xmlNodePtr get_element( domelem *This )
@@ -64,48 +71,21 @@ static HRESULT WINAPI domelem_QueryInterface(
     domelem *This = impl_from_IXMLDOMElement( iface );
     TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
 
-    if ( IsEqualGUID( riid, &IID_IXMLDOMElement ) ||
-         IsEqualGUID( riid, &IID_IUnknown ) )
-    {
-        *ppvObject = iface;
-    }
-    else if ( IsEqualGUID( riid, &IID_IDispatch ) ||
-              IsEqualGUID( riid, &IID_IXMLDOMNode ) )
-    {
-        return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
-    }
-    else
-    {
-        FIXME("interface %s not implemented\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
-    }
-
-    IXMLDOMElement_AddRef( iface );
-
-    return S_OK;
+    return IUnknown_QueryInterface(This->pUnkOuter, riid, ppvObject);
 }
 
 static ULONG WINAPI domelem_AddRef(
     IXMLDOMElement *iface )
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return InterlockedIncrement( &This->ref );
+    return IUnknown_AddRef(This->pUnkOuter);
 }
 
 static ULONG WINAPI domelem_Release(
     IXMLDOMElement *iface )
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    ULONG ref;
-
-    ref = InterlockedDecrement( &This->ref );
-    if ( ref == 0 )
-    {
-        IUnknown_Release( This->node_unk );
-        HeapFree( GetProcessHeap(), 0, This );
-    }
-
-    return ref;
+    return IUnknown_Release(This->pUnkOuter);
 }
 
 static HRESULT WINAPI domelem_GetTypeInfoCount(
@@ -644,7 +624,66 @@ static const struct IXMLDOMElementVtbl domelem_vtbl =
     domelem_normalize,
 };
 
-IUnknown* create_element( xmlNodePtr element )
+static HRESULT WINAPI Internal_QueryInterface(
+    IUnknown *iface,
+    REFIID riid,
+    void** ppvObject )
+{
+    domelem *This = impl_from_InternalUnknown( iface );
+    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+
+    if ( IsEqualGUID( riid, &IID_IXMLDOMElement ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *ppvObject = &This->lpVtbl;
+    }
+    else if ( IsEqualGUID( riid, &IID_IDispatch ) ||
+              IsEqualGUID( riid, &IID_IXMLDOMNode ) )
+    {
+        return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef( (IUnknown*)*ppvObject );
+
+    return S_OK;
+}
+
+static ULONG WINAPI Internal_AddRef(
+    IUnknown *iface )
+{
+    domelem *This = impl_from_InternalUnknown( iface );
+    return InterlockedIncrement( &This->ref );
+}
+
+static ULONG WINAPI Internal_Release(
+    IUnknown *iface )
+{
+    domelem *This = impl_from_InternalUnknown( iface );
+    ULONG ref;
+
+    ref = InterlockedDecrement( &This->ref );
+    if ( ref == 0 )
+    {
+        IUnknown_Release( This->node_unk );
+        HeapFree( GetProcessHeap(), 0, This );
+    }
+
+    return ref;
+}
+
+static const struct IUnknownVtbl internal_unk_vtbl =
+{
+    Internal_QueryInterface,
+    Internal_AddRef,
+    Internal_Release
+};
+
+IUnknown* create_element( xmlNodePtr element, IUnknown *pUnkOuter )
 {
     domelem *This;
     HRESULT hr;
@@ -655,6 +694,12 @@ IUnknown* create_element( xmlNodePtr element )
 
     This->lpVtbl = &domelem_vtbl;
     This->ref = 1;
+    This->lpInternalUnkVtbl = &internal_unk_vtbl;
+
+    if(pUnkOuter)
+        This->pUnkOuter = pUnkOuter; /* Don't take a ref on outer Unknown */
+    else
+        This->pUnkOuter = (IUnknown *)&This->lpInternalUnkVtbl;
 
     This->node_unk = create_basic_node( element, (IUnknown*)&This->lpVtbl );
     if(!This->node_unk)
@@ -673,7 +718,7 @@ IUnknown* create_element( xmlNodePtr element )
     /* The ref on This->node is actually looped back into this object, so release it */
     IXMLDOMNode_Release(This->node);
 
-    return (IUnknown*) &This->lpVtbl;
+    return (IUnknown*) &This->lpInternalUnkVtbl;
 }
 
 #endif

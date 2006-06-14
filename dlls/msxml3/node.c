@@ -868,7 +868,7 @@ IXMLDOMNode *create_node( xmlNodePtr node )
     switch(node->type)
     {
     case XML_ELEMENT_NODE:
-        pUnk = create_element( node );
+        pUnk = create_element( node, NULL );
         break;
     case XML_ATTRIBUTE_NODE:
         pUnk = create_attribute( node );
