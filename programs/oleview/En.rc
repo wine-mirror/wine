@@ -76,6 +76,7 @@ STRINGTABLE
     IDS_APPNAME            "OleView"
     IDS_APPTITLE           "Wine OleView"
     IDS_READY              "Ready"
+    IDS_ABOUT              "OleView - OLE/COM Object Viewer"
 
     IDM_BIND,              "Bind to file via a File Moniker"
     IDM_TYPELIB,           "Open a TypeLib file and view the contents"
@@ -107,4 +108,7 @@ STRINGTABLE
     IDS_TREE_TL,           "Type Libraries"
     IDS_TL_VER,            "ver."
     IDS_TREE_I,            "Interfaces"
+
+    IDS_CGCOFAIL,          "CoGetClassObject failed."
+    IDS_ERROR_UNKN,        "Unknown error"
 }

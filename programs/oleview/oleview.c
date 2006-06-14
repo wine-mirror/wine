@@ -143,6 +143,7 @@ BOOL InitInstance(HINSTANCE hInst, int nCmdShow)
 
     globals.hMainWnd = hWnd;
     globals.hMainInst = hInst;
+    globals.dwClsCtx = CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER;
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);

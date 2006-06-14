@@ -25,6 +25,7 @@
 #define IDA_OLEVIEW                5
 
 #define IDS_READY                  10
+#define IDS_ABOUT                  20
 
 #define IDM_BIND                   100
 #define IDM_TYPELIB                101
@@ -58,3 +59,6 @@
 #define IDS_TREE_TL                220
 #define IDS_TL_VER                 221
 #define IDS_TREE_I                 230
+
+#define IDS_CGCOFAIL               300
+#define IDS_ERROR_UNKN             301

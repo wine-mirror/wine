@@ -50,6 +50,150 @@ LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid)
     return (LPARAM)reg;
 }
 
+void CreateInst(HTREEITEM item)
+{
+    TVITEM tvi;
+    HTREEITEM hCur;
+    TVINSERTSTRUCT tvis;
+    WCHAR wszTitle[MAX_LOAD_STRING];
+    WCHAR wszMessage[MAX_LOAD_STRING];
+    WCHAR wszFlagName[MAX_LOAD_STRING];
+    WCHAR wszTreeName[MAX_LOAD_STRING];
+    WCHAR wszRegPath[MAX_LOAD_STRING];
+    const WCHAR wszFormat[] = { '\n','%','s',' ','(','$','%','x',')','\n','\0' };
+    CLSID clsid;
+    IUnknown *obj, *unk;
+    HRESULT hRes;
+
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.mask = TVIF_TEXT;
+    tvi.hItem = item;
+    tvi.cchTextMax = MAX_LOAD_STRING;
+    tvi.pszText = wszTreeName;
+
+    memset(&tvis, 0, sizeof(TVINSERTSTRUCT));
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.item.pszText = tvi.pszText;
+    tvis.hParent = item;
+    tvis.hInsertAfter = TVI_LAST;
+
+    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
+    if(!tvi.lParam || ((ITEM_INFO *)tvi.lParam)->loaded
+                || !(((ITEM_INFO *)tvi.lParam)->cFlag&SHOWALL)) return;
+
+    if(FAILED(CLSIDFromString(((ITEM_INFO *)tvi.lParam)->clsid, &clsid))) return;
+
+    hRes = CoCreateInstance(&clsid, NULL, globals.dwClsCtx,
+            &IID_IUnknown, (void **)&obj);
+
+    if(FAILED(hRes))
+    {
+        LoadString(globals.hMainInst, IDS_CGCOFAIL, wszMessage,
+                sizeof(WCHAR[MAX_LOAD_STRING]));
+        LoadString(globals.hMainInst, IDS_ABOUT, wszTitle,
+                sizeof(WCHAR[MAX_LOAD_STRING]));
+
+#define CASE_ERR(i) case i: \
+    MultiByteToWideChar(CP_ACP, 0, #i, -1, wszFlagName, MAX_LOAD_STRING); \
+    break
+
+        switch(hRes)
+        {
+            CASE_ERR(REGDB_E_CLASSNOTREG);
+            CASE_ERR(E_NOINTERFACE);
+            CASE_ERR(REGDB_E_READREGDB);
+            CASE_ERR(REGDB_E_KEYMISSING);
+            CASE_ERR(CO_E_DLLNOTFOUND);
+            CASE_ERR(CO_E_APPNOTFOUND);
+            CASE_ERR(E_ACCESSDENIED);
+            CASE_ERR(CO_E_ERRORINDLL);
+            CASE_ERR(CO_E_APPDIDNTREG);
+            CASE_ERR(CLASS_E_CLASSNOTAVAILABLE);
+            default:
+                LoadString(globals.hMainInst, IDS_ERROR_UNKN, wszFlagName, MAX_LOAD_STRING);
+        }
+
+        wsprintfW(&wszMessage[strlenW(wszMessage)], wszFormat,
+                wszFlagName, (unsigned)hRes);
+        MessageBox(globals.hMainWnd, wszMessage, wszTitle, MB_OK|MB_ICONEXCLAMATION);
+        return;
+    }
+
+    ((ITEM_INFO *)tvi.lParam)->loaded = 1;
+    ((ITEM_INFO *)tvi.lParam)->pU = obj;
+
+    tvi.mask = TVIF_STATE;
+    tvi.state = TVIS_BOLD;
+    tvi.stateMask = TVIS_BOLD;
+    SendMessage(globals.hTree, TVM_SETITEM, 0, (LPARAM)&tvi);
+
+    tvi.mask = TVIF_TEXT;
+    hCur = TreeView_GetChild(globals.hTree, tree.hI);
+
+    while(hCur)
+    {
+        tvi.hItem = hCur;
+        SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
+        if(!tvi.lParam)
+        {
+            hCur = TreeView_GetNextSibling(globals.hTree, hCur);
+            continue;
+        }
+
+        CLSIDFromString(((ITEM_INFO *)tvi.lParam)->clsid, &clsid);
+        hRes = IUnknown_QueryInterface(obj, &clsid, (void *)&unk);
+
+        if(SUCCEEDED(hRes))
+        {
+            IUnknown_Release(unk);
+
+            strcpyW(wszRegPath, wszInterface);
+            strcpyW(&wszRegPath[strlenW(wszRegPath)], ((ITEM_INFO *)tvi.lParam)->clsid);
+            tvis.item.lParam = CreateITEM_INFO(REGTOP|INTERFACE|REGPATH,
+                    wszRegPath, ((ITEM_INFO *)tvi.lParam)->clsid);
+            SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+        }
+        hCur = TreeView_GetNextSibling(globals.hTree, hCur);
+    }
+}
+
+void ReleaseInst(HTREEITEM item)
+{
+    TVITEM tvi;
+    HTREEITEM cur;
+    IUnknown *pU;
+
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.hItem = item;
+    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
+    if(!tvi.lParam) return;
+
+    pU = ((ITEM_INFO *)tvi.lParam)->pU;
+
+    if(pU) IUnknown_Release(pU);
+    ((ITEM_INFO *)tvi.lParam)->loaded = 0;
+
+    SendMessage(globals.hTree, TVM_EXPAND, TVE_COLLAPSE, (LPARAM)item);
+
+    cur = TreeView_GetChild(globals.hTree, item);
+    while(cur)
+    {
+        SendMessage(globals.hTree, TVM_DELETEITEM, 0, (LPARAM)cur);
+        cur = TreeView_GetChild(globals.hTree, item);
+    }
+
+    tvi.mask = TVIF_CHILDREN|TVIF_STATE;
+    tvi.state = 0;
+    tvi.stateMask = TVIS_BOLD;
+    tvi.cChildren = 1;
+    SendMessage(globals.hTree, TVM_SETITEM, 0, (LPARAM)&tvi);
+}
+
 BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize)
 {
     TVITEM tvi;
@@ -446,7 +590,10 @@ void EmptyTree(void)
             SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
 
             if(tvi.lParam)
+            {
+                if(((ITEM_INFO *)tvi.lParam)->loaded) ReleaseInst(del);
                 HeapFree(GetProcessHeap(), 0, (ITEM_INFO *)tvi.lParam);
+            }
 
             SendMessage(globals.hTree, TVM_DELETEITEM, 0, (LPARAM)del);
 
@@ -481,6 +628,15 @@ LRESULT CALLBACK TreeProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     WS_CHILD|WS_VISIBLE|TVS_HASLINES|TVS_HASBUTTONS|TVS_LINESATROOT,
                     0, 0, 0, 0, hWnd, (HMENU)TREE_WINDOW, globals.hMainInst, NULL);
             AddTreeEx();
+            break;
+        case WM_NOTIFY:
+            if((int)wParam != TREE_WINDOW) break;
+            switch(((LPNMHDR)lParam)->code)
+            {
+                case TVN_ITEMEXPANDING:
+                    CreateInst(((NMTREEVIEW *)lParam)->itemNew.hItem);
+                    break;
+            }
             break;
         case WM_SIZE:
             MoveWindow(globals.hTree, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);

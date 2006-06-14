@@ -48,6 +48,7 @@ typedef struct
     HWND hStatusBar;
     HWND hToolBar;
     HINSTANCE hMainInst;
+    DWORD dwClsCtx;
 }GLOBALS;
 
 typedef struct
