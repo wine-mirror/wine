@@ -10,7 +10,8 @@ EXTRADEFS = -DUNICODE
 
 C_SRCS = \
 	oleview.c \
-	pane.c
+	pane.c \
+	tree.c
 
 RC_SRCS = rsrc.rc
 RC_BINSRC = rsrc.rc

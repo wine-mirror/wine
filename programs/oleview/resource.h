@@ -48,3 +48,13 @@
 #define IDM_STATUSBAR              123
 #define IDM_REFRESH                124
 #define IDM_ABOUT                  125
+
+#define IDS_TREE_OC                200
+#define IDS_TREE_GBCC              201
+#define IDS_TREE_O1O               202
+#define IDS_TREE_CLO               203
+#define IDS_TREE_AO                204
+#define IDS_TREE_AID               210
+#define IDS_TREE_TL                220
+#define IDS_TL_VER                 221
+#define IDS_TREE_I                 230

@@ -64,13 +64,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
             OleInitialize(NULL);
             if(!CreatePanedWindow(hWnd, &globals.hPaneWnd, globals.hMainInst))
                 PostQuitMessage(0);
+            SetLeft(globals.hPaneWnd, CreateTreeWindow(globals.hMainInst));
+            SetFocus(globals.hTree);
             break;
         case WM_DESTROY:
             OleUninitialize();
+            EmptyTree();
             PostQuitMessage(0);
             break;
         case WM_MENUSELECT:
             UpdateStatusBar(LOWORD(wParam));
+            break;
+        case WM_SETFOCUS:
+            SetFocus(globals.hTree);
             break;
         case WM_SIZE:
             if(wParam == SIZE_MINIMIZED) break;

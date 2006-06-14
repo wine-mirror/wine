@@ -32,11 +32,19 @@
 #define MAX_WINDOW_WIDTH 30000
 
 #define STATUS_WINDOW 2000
+#define TREE_WINDOW 2001
+
+/*ItemInfo flags */
+#define REGTOP 1
+#define REGPATH 2
+#define SHOWALL 4
+#define INTERFACE 8
 
 typedef struct
 {
     HWND hMainWnd;
     HWND hPaneWnd;
+    HWND hTree;
     HWND hStatusBar;
     HWND hToolBar;
     HINSTANCE hMainInst;
@@ -53,8 +61,37 @@ typedef struct
     INT last;
 }PANE;
 
+typedef struct
+{
+    /* Main TreeView entries: */
+    HTREEITEM hOC;    /* Object Classes */
+    HTREEITEM hGBCC;  /* Grouped by Component Category */
+    HTREEITEM hO1O;   /* OLE 1.0 Objects */
+    HTREEITEM hCLO;   /* COM Library Objects */
+    HTREEITEM hAO;    /* All Objects */
+    HTREEITEM hAID;   /* Application IDs */
+    HTREEITEM hTL;    /* Type Libraries */
+    HTREEITEM hI;     /* Interfaces */
+}TREE;
+
+typedef struct
+{
+    CHAR cFlag;
+    WCHAR info[MAX_LOAD_STRING];
+    WCHAR clsid[MAX_LOAD_STRING];
+    BOOL loaded;
+    IUnknown *pU;
+}ITEM_INFO;
+
 extern GLOBALS globals;
+extern TREE tree;
 
 /* Predefinitions: */
 /* pane.c */
 BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst);
+void SetLeft(HWND hParent, HWND hWnd);
+void SetRight(HWND hParent, HWND hWnd);
+
+/* tree.h */
+void EmptyTree(void);
+HWND CreateTreeWindow(HINSTANCE hInst);

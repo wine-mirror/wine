@@ -97,4 +97,14 @@ STRINGTABLE
     IDM_STATUSBAR,         "Show or hide the status bar"
     IDM_REFRESH,           "Refresh all lists"
     IDM_ABOUT,             "Display program information, version namber and copyright"
+
+    IDS_TREE_OC,           "ObjectClasses"
+    IDS_TREE_GBCC,         "Grouped by Component Category"
+    IDS_TREE_O1O,          "OLE 1.0 Objects"
+    IDS_TREE_CLO,          "COM Library Objects"
+    IDS_TREE_AO,           "All Objects"
+    IDS_TREE_AID,          "Application IDs"
+    IDS_TREE_TL,           "Type Libraries"
+    IDS_TL_VER,            "ver."
+    IDS_TREE_I,            "Interfaces"
 }
