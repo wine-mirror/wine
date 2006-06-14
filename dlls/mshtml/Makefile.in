@@ -21,6 +21,7 @@ C_SRCS = \
 	htmlselect.c \
 	htmltextcont.c \
 	htmltextarea.c \
+	install.c \
 	main.c \
 	navigate.c \
 	nsembed.c \

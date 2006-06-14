@@ -266,8 +266,11 @@ static BOOL load_gecko(void)
 
     if(!get_wine_gecko_path(gre_path) && !get_mozctl_path(gre_path)
        && !get_mozilla_path(gre_path)) {
-        MESSAGE("Could not load Mozilla. HTML rendering will be disabled.\n");
-        return FALSE;
+        install_wine_gecko();
+        if(!get_wine_gecko_path(gre_path)) {
+            MESSAGE("Could not load Mozilla. HTML rendering will be disabled.\n");
+            return FALSE;
+        }
     }
 
     TRACE("found path %s\n", debugstr_w(gre_path));

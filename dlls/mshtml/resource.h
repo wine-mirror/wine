@@ -18,6 +18,13 @@
 
 #define IDS_HTMLDISABLED    7500
 #define IDS_HTMLDOCUMENT    7501
+#define IDS_DOWNLOADING     7502
+#define IDS_INSTALLING      7503
+
+#define ID_DWL_DIALOG       7600
+#define ID_DWL_PROGRESS     7601
+#define ID_DWL_INSTALL      7602
+#define ID_DWL_STATUS       7603
 
 #define IDR_BROWSE_CONTEXT_MENU  24641
 
