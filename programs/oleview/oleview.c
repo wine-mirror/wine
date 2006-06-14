@@ -21,6 +21,7 @@
 #include "main.h"
 
 GLOBALS globals;
+static WCHAR wszRegEdit[] = { 'r','e','g','e','d','i','t','.','e','x','e','\0' };
 
 void ResizeChild(void)
 {
@@ -45,6 +46,178 @@ void ResizeChild(void)
             client.right, client.bottom-tool.bottom-stat.bottom, TRUE);
 }
 
+void RefreshMenu(HTREEITEM item)
+{
+    TVITEM tvi;
+    HTREEITEM parent;
+    HMENU hMenu = GetMenu(globals.hMainWnd);
+
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.hItem = item;
+    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
+    SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, FALSE);
+    SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, FALSE);
+    SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_VIEW, FALSE);
+
+    if(tvi.lParam && ((ITEM_INFO *)tvi.lParam)->cFlag&SHOWALL)
+    {
+        EnableMenuItem(hMenu, IDM_COPYCLSID, MF_ENABLED);
+        EnableMenuItem(hMenu, IDM_HTMLTAG, MF_ENABLED);
+        EnableMenuItem(hMenu, IDM_VIEW, MF_GRAYED);
+
+        if(!((ITEM_INFO *)tvi.lParam)->loaded)
+        {
+            EnableMenuItem(hMenu, IDM_CREATEINST, MF_ENABLED);
+            EnableMenuItem(hMenu, IDM_CREATEINSTON, MF_ENABLED);
+            EnableMenuItem(hMenu, IDM_RELEASEINST, MF_GRAYED);
+            SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_CREATEINST, TRUE);
+        }
+        else 
+        {
+            EnableMenuItem(hMenu, IDM_CREATEINST, MF_GRAYED);
+            EnableMenuItem(hMenu, IDM_CREATEINSTON, MF_GRAYED);
+            EnableMenuItem(hMenu, IDM_RELEASEINST, MF_ENABLED);
+            SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_RELEASEINST, TRUE);
+        }
+    }
+    else if(tvi.lParam && ((ITEM_INFO *)tvi.lParam)->cFlag&INTERFACE)
+    {
+        EnableMenuItem(hMenu, IDM_TYPEINFO, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_CREATEINST, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_CREATEINSTON, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_RELEASEINST, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_COPYCLSID, MF_ENABLED);
+        EnableMenuItem(hMenu, IDM_HTMLTAG, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_VIEW, MF_ENABLED);
+        SendMessage(globals.hToolBar, TB_ENABLEBUTTON, IDM_VIEW, TRUE);
+    }
+    else
+    {
+        EnableMenuItem(hMenu, IDM_TYPEINFO, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_CREATEINST, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_CREATEINSTON, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_RELEASEINST, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_COPYCLSID, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_HTMLTAG, MF_GRAYED);
+        EnableMenuItem(hMenu, IDM_VIEW, MF_GRAYED);
+    }
+    parent = TreeView_GetParent(globals.hTree, item);
+    if(parent==tree.hAID || parent==tree.hGBCC)
+        EnableMenuItem(hMenu, IDM_COPYCLSID, MF_ENABLED);
+}
+
+int MenuCommand(WPARAM wParam, HWND hWnd)
+{
+    BOOL vis;
+    HTREEITEM hSelect;
+    WCHAR wszAbout[MAX_LOAD_STRING];
+    WCHAR wszAboutVer[MAX_LOAD_STRING];
+
+    switch(wParam)
+    {
+        case IDM_ABOUT:
+            LoadString(globals.hMainInst, IDS_ABOUT, wszAbout,
+                    sizeof(WCHAR[MAX_LOAD_STRING]));
+            LoadString(globals.hMainInst, IDS_ABOUTVER, wszAboutVer,
+                    sizeof(WCHAR[MAX_LOAD_STRING]));
+            ShellAbout(hWnd, wszAbout, wszAboutVer, NULL);
+            break;
+        case IDM_CREATEINST:
+            hSelect = TreeView_GetSelection(globals.hTree);
+            CreateInst(hSelect);
+            SendMessage(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)hSelect);
+            break;
+        case IDM_RELEASEINST:
+            hSelect = TreeView_GetSelection(globals.hTree);
+            ReleaseInst(hSelect);
+            RefreshMenu(hSelect);
+            break;
+        case IDM_EXPERT:
+            globals.bExpert = !globals.bExpert;
+            CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
+                    globals.bExpert ? MF_CHECKED : MF_UNCHECKED);
+            EmptyTree();
+            if(globals.bExpert) AddTreeEx();
+            else AddTree();
+            hSelect = TreeView_GetChild(globals.hTree, TVI_ROOT);
+            SendMessage(globals.hTree, TVM_SELECTITEM, 0, (LPARAM)hSelect);
+            RefreshMenu(hSelect);
+            break;
+        case IDM_FLAG_INSERV:
+            vis = globals.dwClsCtx&CLSCTX_INPROC_SERVER;
+            globals.dwClsCtx = globals.dwClsCtx&(~CLSCTX_INPROC_SERVER);
+            globals.dwClsCtx = globals.dwClsCtx|((~vis)&CLSCTX_INPROC_SERVER);
+            if(!globals.dwClsCtx) globals.dwClsCtx = vis;
+            else CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
+                    vis ? MF_UNCHECKED : MF_CHECKED);
+            break;
+        case IDM_FLAG_INHANDL:
+            vis = globals.dwClsCtx&CLSCTX_INPROC_HANDLER;
+            globals.dwClsCtx = globals.dwClsCtx&(~CLSCTX_INPROC_HANDLER);
+            globals.dwClsCtx = globals.dwClsCtx|((~vis)&CLSCTX_INPROC_HANDLER);
+            if(!globals.dwClsCtx) globals.dwClsCtx = vis;
+            else CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
+                    vis ? MF_UNCHECKED : MF_CHECKED);
+            break;
+        case IDM_FLAG_LOCSERV:
+            vis = globals.dwClsCtx&CLSCTX_LOCAL_SERVER;
+            globals.dwClsCtx = globals.dwClsCtx&(~CLSCTX_LOCAL_SERVER);
+            globals.dwClsCtx = globals.dwClsCtx|((~vis)&CLSCTX_LOCAL_SERVER);
+            if(!globals.dwClsCtx) globals.dwClsCtx = vis;
+            else CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
+                    vis ? MF_UNCHECKED : MF_CHECKED);
+            break;
+        case IDM_FLAG_REMSERV:
+            vis = globals.dwClsCtx&CLSCTX_REMOTE_SERVER;
+            globals.dwClsCtx = globals.dwClsCtx&(~CLSCTX_REMOTE_SERVER);
+            globals.dwClsCtx = globals.dwClsCtx|((~vis)&CLSCTX_REMOTE_SERVER);
+            if(!globals.dwClsCtx) globals.dwClsCtx = vis;
+            else CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
+                    vis ? MF_UNCHECKED : MF_CHECKED);
+            break;
+        case IDM_REFRESH:
+            EmptyTree();
+            if(globals.bExpert) AddTreeEx();
+            else AddTree();
+            hSelect = TreeView_GetChild(globals.hTree, TVI_ROOT);
+            SendMessage(globals.hTree, TVM_SELECTITEM, 0, (LPARAM)hSelect);
+            RefreshMenu(hSelect);
+            break;
+        case IDM_REGEDIT:
+        {
+            STARTUPINFO si;
+            PROCESS_INFORMATION pi;
+
+            memset(&si, 0, sizeof(si));
+            si.cb = sizeof(si);
+            CreateProcess(NULL, wszRegEdit, NULL, NULL, FALSE, 0,\
+                    NULL, NULL, &si, &pi);
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+            break;
+        }
+        case IDM_STATUSBAR:
+            vis = IsWindowVisible(globals.hStatusBar);
+            ShowWindow(globals.hStatusBar, vis ? SW_HIDE : SW_SHOW);
+            CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
+                    vis ? MF_UNCHECKED : MF_CHECKED);
+            ResizeChild();
+            break;
+        case IDM_TOOLBAR:
+            vis = IsWindowVisible(globals.hToolBar);
+            ShowWindow(globals.hToolBar, vis ? SW_HIDE : SW_SHOW);
+            CheckMenuItem(GetMenu(hWnd), LOWORD(wParam),
+                    vis ? MF_UNCHECKED : MF_CHECKED);
+            ResizeChild();
+            break;
+        case IDM_EXIT:
+            DestroyWindow(hWnd);
+            break;
+    }
+    return 0;
+}
+
 void UpdateStatusBar(int itemID)
 {
     WCHAR info[MAX_LOAD_STRING];
@@ -66,6 +239,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
                 PostQuitMessage(0);
             SetLeft(globals.hPaneWnd, CreateTreeWindow(globals.hMainInst));
             SetFocus(globals.hTree);
+            break;
+        case WM_COMMAND:
+            MenuCommand(LOWORD(wParam), hWnd);
             break;
         case WM_DESTROY:
             OleUninitialize();
@@ -143,6 +319,7 @@ BOOL InitInstance(HINSTANCE hInst, int nCmdShow)
 
     globals.hMainWnd = hWnd;
     globals.hMainInst = hInst;
+    globals.bExpert = TRUE;
     globals.dwClsCtx = CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER;
 
     ShowWindow(hWnd, nCmdShow);

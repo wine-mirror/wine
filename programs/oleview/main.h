@@ -48,6 +48,7 @@ typedef struct
     HWND hStatusBar;
     HWND hToolBar;
     HINSTANCE hMainInst;
+    BOOL bExpert;
     DWORD dwClsCtx;
 }GLOBALS;
 
@@ -88,6 +89,9 @@ extern GLOBALS globals;
 extern TREE tree;
 
 /* Predefinitions: */
+/* oleview.c */
+void RefreshMenu(HTREEITEM item);
+
 /* pane.c */
 BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst);
 void SetLeft(HWND hParent, HWND hWnd);
@@ -95,4 +99,8 @@ void SetRight(HWND hParent, HWND hWnd);
 
 /* tree.h */
 void EmptyTree(void);
+void AddTreeEx(void);
+void AddTree(void);
 HWND CreateTreeWindow(HINSTANCE hInst);
+void CreateInst(HTREEITEM item);
+void ReleaseInst(HTREEITEM item);

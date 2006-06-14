@@ -159,6 +159,8 @@ void CreateInst(HTREEITEM item)
         }
         hCur = TreeView_GetNextSibling(globals.hTree, hCur);
     }
+
+    RefreshMenu(item);
 }
 
 void ReleaseInst(HTREEITEM item)
@@ -635,6 +637,9 @@ LRESULT CALLBACK TreeProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             {
                 case TVN_ITEMEXPANDING:
                     CreateInst(((NMTREEVIEW *)lParam)->itemNew.hItem);
+                    break;
+                case TVN_SELCHANGED:
+                    RefreshMenu(((NMTREEVIEW *)lParam)->itemNew.hItem);
                     break;
             }
             break;

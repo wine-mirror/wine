@@ -26,6 +26,7 @@
 
 #define IDS_READY                  10
 #define IDS_ABOUT                  20
+#define IDS_ABOUTVER               21
 
 #define IDM_BIND                   100
 #define IDM_TYPELIB                101
