@@ -126,7 +126,34 @@ static void test_signalandwait(void)
     CloseHandle(file);
 }
 
+static void test_mutex(void)
+{
+    DWORD wait_ret;
+    BOOL ret;
+    HANDLE hCreated;
+    HANDLE hOpened;
+
+    hCreated = CreateMutex(NULL, FALSE, "WineTestMutex");
+    ok(hCreated != NULL, "CreateMutex failed with error %ld\n", GetLastError());
+    wait_ret = WaitForSingleObject(hCreated, INFINITE);
+    ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error 0x%08lx\n", wait_ret);
+
+    /* yes, opening with just READ_CONTROL access allows us to successfully
+     * call ReleaseMutex */
+    hOpened = OpenMutex(READ_CONTROL, FALSE, "WineTestMutex");
+    ok(hOpened != NULL, "OpenMutex failed with error %ld\n", GetLastError());
+    ret = ReleaseMutex(hOpened);
+    todo_wine ok(ret, "ReleaseMutex failed with error %ld\n", GetLastError());
+    ret = ReleaseMutex(hCreated);
+    todo_wine ok(!ret && (GetLastError() == ERROR_NOT_OWNER),
+        "ReleaseMutex should have failed with ERROR_NOT_OWNER instead of %ld\n", GetLastError());
+
+    CloseHandle(hOpened);
+    CloseHandle(hCreated);
+}
+
 START_TEST(sync)
 {
     test_signalandwait();
+    test_mutex();
 }
