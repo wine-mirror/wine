@@ -480,6 +480,8 @@ static LRESULT WAVE_mciOpen(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_P
     wmw->dwStatus = MCI_MODE_NOT_READY;
     wmw->hFile = 0;
     memcpy(&wmw->openParms, lpOpenParms, sizeof(MCI_WAVE_OPEN_PARMSA));
+    /* will be set by WAVE_mciOpenFile */
+    wmw->openParms.lpstrElementName = NULL;
 
     TRACE("wDevID=%04X (lpParams->wDeviceID=%08X)\n", wDevID, lpOpenParms->wDeviceID);
 
