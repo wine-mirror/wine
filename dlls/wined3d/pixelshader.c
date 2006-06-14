@@ -654,8 +654,8 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_EXP,  "exp",  "EX2", 1, 2, pshader_exp, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_LOG,  "log",  "LG2", 1, 2, pshader_log, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_EXPP, "expp", "EXP", 1, 2, pshader_expp, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
-    {D3DSIO_LOGP, "logp", "LOG", 1, 2, pshader_logp, pshader_hw_map2gl, NULL, 0, 0},
-    {D3DSIO_DST,  "dst",  "DST", 1, 3, pshader_dst, pshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_LOGP, "logp", "LOG", 1, 2, pshader_logp, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
+    {D3DSIO_DST,  "dst",  "DST", 1, 3, pshader_dst, pshader_hw_map2gl, shader_glsl_dst, 0, 0},
     {D3DSIO_LRP,  "lrp",  "LRP", 1, 4, pshader_lrp, pshader_hw_map2gl, shader_glsl_lrp, 0, 0},
     {D3DSIO_FRC,  "frc",  "FRC", 1, 2, pshader_frc, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_CND,  "cnd",  NULL, 1, 4, pshader_cnd, pshader_hw_cnd, shader_glsl_cnd, D3DPS_VERSION(1,1), D3DPS_VERSION(1,4)},
@@ -673,8 +673,8 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 
     */
     {D3DSIO_NRM,      "nrm",      NULL, 1, 2, pshader_nrm,     NULL, shader_glsl_map2gl, 0, 0},
-    {D3DSIO_SINCOS,   "sincos",   NULL, 1, 4, pshader_sincos2, NULL, NULL, D3DPS_VERSION(2,0), D3DPS_VERSION(2,0)},
-    {D3DSIO_SINCOS,   "sincos",   NULL, 1, 2, pshader_sincos3, NULL, NULL, D3DPS_VERSION(3,0), -1},
+    {D3DSIO_SINCOS,   "sincos",   NULL, 1, 4, pshader_sincos2, NULL, shader_glsl_sincos, D3DPS_VERSION(2,0), D3DPS_VERSION(2,0)},
+    {D3DSIO_SINCOS,   "sincos",   NULL, 1, 2, pshader_sincos3, NULL, shader_glsl_sincos, D3DPS_VERSION(3,0), -1},
     /* TODO: dp2add can be made out of multiple instuctions */
     {D3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  1, 4, pshader_dp2add,  NULL, NULL, D3DPS_VERSION(2,0), -1},
 
@@ -700,9 +700,9 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL, 0, 1, pshader_breakp,  NULL, NULL, 0, 0},
     {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL, 0, 1, pshader_call,    NULL, NULL, 0, 0},
     {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL, 0, 2, pshader_callnz,  NULL, NULL, 0, 0},
-    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL, 0, 2, pshader_loop,    NULL, NULL, 0, 0},
+    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL, 0, 2, pshader_loop,    NULL, shader_glsl_loop, 0, 0},
     {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL, 0, 0, pshader_ret,     NULL, NULL, 0, 0},
-    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL, 0, 0, pshader_endloop, NULL, NULL, 0, 0},
+    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL, 0, 0, pshader_endloop, NULL, shader_glsl_endloop, 0, 0},
     {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL, 0, 1, pshader_label,   NULL, NULL, 0, 0},
 
     /* Constant definitions */

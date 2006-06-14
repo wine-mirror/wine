@@ -245,6 +245,9 @@ static void shader_glsl_get_register_name(
             sprintf(tmpStr, "A%lu", reg);
         }
     break;
+    case D3DSPR_LOOP:
+        sprintf(tmpStr, "aL");
+    break;
     case D3DSPR_SAMPLER:
         if (pshader)
             sprintf(tmpStr, "psampler%lu", reg);
@@ -508,11 +511,13 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
             case D3DSIO_POW:    strcat(tmpLine, "pow"); break;
             case D3DSIO_CRS:    strcat(tmpLine, "cross"); break;
             case D3DSIO_NRM:    strcat(tmpLine, "normalize"); break;
+            case D3DSIO_LOGP:
             case D3DSIO_LOG:    strcat(tmpLine, "log2"); break;
             case D3DSIO_EXPP:
             case D3DSIO_EXP:    strcat(tmpLine, "exp2"); break;
             case D3DSIO_SGE:    strcat(tmpLine, "greaterThanEqual"); break;
             case D3DSIO_SLT:    strcat(tmpLine, "lessThan"); break;
+            case D3DSIO_SGN:    strcat(tmpLine, "sign"); break;
         default:
             FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
             break;
@@ -727,6 +732,93 @@ void shader_glsl_def(SHADER_OPCODE_ARG* arg) {
 
     arg->reg_maps->constantsF[reg] = 1;
 }
+
+/** Process the D3DSIO_LIT instruction in GLSL:
+ * dst.x = dst.w = 1.0
+ * dst.y = (src0.x > 0) ? src0.x
+ * dst.z = (src0.x > 0) ? ((src0.y > 0) ? pow(src0.y, src.w) : 0) : 0
+ *                                        where src.w is clamped at +- 128
+ */
+void shader_glsl_lit(SHADER_OPCODE_ARG* arg) {
+
+    char dst_str[100], src0_str[100];
+    char dst_reg[50], src0_reg[50];
+    char dst_mask[6], src0_mask[6];
+   
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+
+    shader_addline(arg->buffer,
+        "%s = vec4(1.0, (%s.x > 0.0 ? %s.x : 0.0), (%s.x > 0.0 ? ((%s.y > 0.0) ? pow(%s.y, clamp(%s.w, -128.0, 128.0)) : 0.0) : 0.0), 1.0)%s;\n",
+        dst_str, src0_reg, src0_reg, src0_reg, src0_reg, src0_reg, src0_reg, dst_mask);
+}
+
+/** Process the D3DSIO_DST instruction in GLSL:
+ * dst.x = 1.0
+ * dst.y = src0.x * src0.y
+ * dst.z = src0.z
+ * dst.w = src1.w
+ */
+void shader_glsl_dst(SHADER_OPCODE_ARG* arg) {
+
+    char dst_str[100], src0_str[100], src1_str[100];
+    char dst_reg[50], src0_reg[50], src1_reg[50];
+    char dst_mask[6], src0_mask[6], src1_mask[6];
+   
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, src1_reg, src1_mask, src1_str);
+
+    shader_addline(arg->buffer, "%s = vec4(1.0, %s.x * %s.y, %s.z, %s.w)%s;\n",
+                   dst_str, src0_reg, src1_reg, src0_reg, src1_reg, dst_mask);
+}
+
+/** Process the D3DSIO_SINCOS instruction in GLSL:
+ * VS 2.0 requires that specific cosine and sine constants be passed to this instruction so the hardware
+ * can handle it.  But, these functions are built-in for GLSL, so we can just ignore the last 2 params.
+ * 
+ * dst.x = cos(src0.?)
+ * dst.y = sin(src0.?)
+ * dst.z = dst.z
+ * dst.w = dst.w
+ */
+void shader_glsl_sincos(SHADER_OPCODE_ARG* arg) {
+    
+    char dst_str[100], src0_str[100];
+    char dst_reg[50], src0_reg[50];
+    char dst_mask[6], src0_mask[6];
+   
+    shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+
+    shader_addline(arg->buffer, "%s = vec4(cos(%s), sin(%s), %s.z, %s.w)%s;\n",
+                   dst_str, src0_str, src0_str, dst_reg, dst_reg, dst_mask);
+}
+
+/** Process the D3DSIO_LOOP instruction in GLSL:
+ * Start a for() loop where src0.y is the initial value of aL,
+ *  increment aL by src0.z while (aL < src0.x).
+ */
+void shader_glsl_loop(SHADER_OPCODE_ARG* arg) {
+    
+    char src0_str[100];
+    char src0_reg[50];
+    char src0_mask[6];
+    
+    shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
+    
+    shader_addline(arg->buffer, "for (aL = %s.y; aL < %s.x; aL += %s.z) {\n",
+            src0_reg, src0_reg, src0_reg);
+}
+
+/** Process the D3DSIO_ENDLOOP instruction in GLSL:
+ * End the for() loop
+ */
+void shader_glsl_endloop(SHADER_OPCODE_ARG* arg) {
+
+    shader_addline(arg->buffer, "}\n");
+}
+
 
 /*********************************************
  * Pixel Shader Specific Code begins here

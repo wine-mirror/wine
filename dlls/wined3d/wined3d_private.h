@@ -1277,6 +1277,9 @@ typedef struct shader_reg_maps {
      * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD samplers[MAX_SAMPLERS];
 
+    /* Whether or not a loop is used in this shader */
+    char loop;
+
 } shader_reg_maps;
 
 #define SHADER_PGMSIZE 65535
@@ -1344,8 +1347,9 @@ extern const SHADER_OPCODE* shader_get_opcode(
 /* ARB shader program Prototypes */
 extern void shader_hw_def(SHADER_OPCODE_ARG *arg);
 
-/* GLSL helper programs */
+/* GLSL helper functions */
 extern void set_glsl_shader_program(IWineD3DDevice *iface);
+extern void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG *arg);
 
 /** The following translate DirectX pixel/vertex shader opcodes to GLSL lines */
 extern void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg);
@@ -1360,6 +1364,11 @@ extern void shader_glsl_cnd(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_compare(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_def(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_cmp(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_lit(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_dst(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_sincos(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_loop(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_endloop(SHADER_OPCODE_ARG* arg);
 
 /** GLSL Pixel Shader Prototypes */
 extern void pshader_glsl_tex(SHADER_OPCODE_ARG* arg);

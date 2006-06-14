@@ -411,6 +411,9 @@ void shader_get_registers_used(
 
                 else if (D3DSPR_INPUT == regtype && !pshader)
                     reg_maps->attributes[reg] = 1;
+
+                else if (D3DSPR_LOOP == regtype)
+                    reg_maps->loop = 1;
              }
         }
     }
@@ -792,6 +795,10 @@ void shader_generate_glsl_declarations(
             shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
     }
 
+    /* Declare loop register aL */
+    if (reg_maps->loop)
+        shader_addline(buffer, "int aL;\n");
+    
     /* Temporary variables for matrix operations */
     shader_addline(buffer, "vec4 tmp0;\n");
     shader_addline(buffer, "vec4 tmp1;\n");
@@ -900,6 +907,10 @@ void shader_generate_main(
 
                 /* Call appropriate function for output target */
                 hw_fct(&hw_arg);
+
+                /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
+                if (wined3d_settings.shader_mode == SHADER_GLSL)
+                    shader_glsl_add_instruction_modifiers(&hw_arg);
 
             /* Unhandled opcode */
             } else {

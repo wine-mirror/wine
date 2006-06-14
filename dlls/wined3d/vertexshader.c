@@ -397,7 +397,7 @@ static void vshader_pow(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0, WINED3D
     FIXME(" : Stub\n");
 }
 
-static void vshader_sng(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
+static void vshader_sgn(WINED3DSHADERVECTOR* d, WINED3DSHADERVECTOR* s0) {
     FIXME(" : Stub\n");
 }
 
@@ -501,9 +501,9 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_EXP,  "exp",  "EX2", 1, 2, vshader_exp,  vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_LOG,  "log",  "LG2", 1, 2, vshader_log,  vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_EXPP, "expp", "EXP", 1, 2, vshader_expp, vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
-    {D3DSIO_LOGP, "logp", "LOG", 1, 2, vshader_logp, vshader_hw_map2gl, NULL, 0, 0},
-    {D3DSIO_LIT,  "lit",  "LIT", 1, 2, vshader_lit,  vshader_hw_map2gl, NULL, 0, 0},
-    {D3DSIO_DST,  "dst",  "DST", 1, 3, vshader_dst,  vshader_hw_map2gl, NULL, 0, 0},
+    {D3DSIO_LOGP, "logp", "LOG", 1, 2, vshader_logp, vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
+    {D3DSIO_LIT,  "lit",  "LIT", 1, 2, vshader_lit,  vshader_hw_map2gl, shader_glsl_lit, 0, 0},
+    {D3DSIO_DST,  "dst",  "DST", 1, 3, vshader_dst,  vshader_hw_map2gl, shader_glsl_dst, 0, 0},
     {D3DSIO_LRP,  "lrp",  "LRP", 1, 4, vshader_lrp,  NULL,              shader_glsl_lrp, 0, 0},
     {D3DSIO_FRC,  "frc",  "FRC", 1, 2, vshader_frc,  vshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
     {D3DSIO_POW,  "pow",  "POW", 1, 3, vshader_pow,  NULL, shader_glsl_map2gl, 0, 0},
@@ -511,7 +511,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     /* TODO: sng can possibly be performed a  s
         RCP tmp, vec
         MUL out, tmp, vec*/
-    {D3DSIO_SGN,  "sng",  NULL, 1, 2, vshader_sng,  NULL,   NULL, 0, 0},
+    {D3DSIO_SGN,  "sgn",  NULL, 1, 2, vshader_sgn,  NULL,   shader_glsl_map2gl, 0, 0},
     /* TODO: xyz normalise can be performed as VS_ARB using one temporary register,
         DP3 tmp , vec, vec;
         RSQ tmp, tmp.x;
@@ -523,8 +523,8 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
 
     */
     {D3DSIO_NRM,      "nrm",      NULL, 1, 2, vshader_nrm,    NULL, shader_glsl_map2gl, 0, 0},
-    {D3DSIO_SINCOS,   "sincos",   NULL, 1, 4, vshader_sincos2, NULL, NULL, D3DVS_VERSION(2,0), D3DVS_VERSION(2,0)},
-    {D3DSIO_SINCOS,   "sincos",   NULL, 1, 2, vshader_sincos3, NULL, NULL, D3DVS_VERSION(3,0), -1},
+    {D3DSIO_SINCOS,   "sincos",   NULL, 1, 4, vshader_sincos2, NULL, shader_glsl_sincos, D3DVS_VERSION(2,0), D3DVS_VERSION(2,0)},
+    {D3DSIO_SINCOS,   "sincos",   NULL, 1, 2, vshader_sincos3, NULL, shader_glsl_sincos, D3DVS_VERSION(3,0), -1},
 
     /* Matrix */
     {D3DSIO_M4x4, "m4x4", "undefined", 1, 3, vshader_m4x4, vshader_hw_mnxn, shader_glsl_mnxn, 0, 0},
@@ -553,9 +553,9 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {D3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL, 0, 1, vshader_breakp,  NULL, NULL, 0, 0},
     {D3DSIO_CALL,     "call",     GLNAME_REQUIRE_GLSL, 0, 1, vshader_call,    NULL, NULL, 0, 0},
     {D3DSIO_CALLNZ,   "callnz",   GLNAME_REQUIRE_GLSL, 0, 2, vshader_callnz,  NULL, NULL, 0, 0},
-    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL, 0, 2, vshader_loop,    NULL, NULL, 0, 0},
+    {D3DSIO_LOOP,     "loop",     GLNAME_REQUIRE_GLSL, 0, 2, vshader_loop,    NULL, shader_glsl_loop, 0, 0},
     {D3DSIO_RET,      "ret",      GLNAME_REQUIRE_GLSL, 0, 0, vshader_ret,     NULL, NULL, 0, 0},
-    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL, 0, 0, vshader_endloop, NULL, NULL, 0, 0},
+    {D3DSIO_ENDLOOP,  "endloop",  GLNAME_REQUIRE_GLSL, 0, 0, vshader_endloop, NULL, shader_glsl_endloop, 0, 0},
     {D3DSIO_LABEL,    "label",    GLNAME_REQUIRE_GLSL, 0, 1, vshader_label,   NULL, NULL, 0, 0},
 
     {D3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL, 1, 2, vshader_mova,    NULL, shader_glsl_mov, 0, 0},
