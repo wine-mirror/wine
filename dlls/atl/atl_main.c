@@ -35,6 +35,8 @@
 #include "atliface.h"
 #include "atlwin.h"
 
+#include "wine/unicode.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
 HINSTANCE hInst;
@@ -363,9 +365,52 @@ HRESULT WINAPI AtlAxCreateControl(LPCOLESTR lpszName, HWND hWnd,
 
 /***********************************************************************
  *           AtlModuleRegisterWndClassInfoW           [ATL.@]
+ *
+ * PARAMS
+ *  pm   [IO] Information about the module registering the window.
+ *  wci  [IO] Information about the window being registered.
+ *  pProc [O] Window procedure of the registered class.
+ *
+ * RETURNS
+ *  Atom representing the registered class.
+ *
+ * NOTES
+ *  Can be called multiple times without error, unlike RegisterClassEx().
+ *
+ *  If the class name is NULL then it a class with a name of "ATLxxxxxxxx" is
+ *  registered, where the x's represent an unique value.
+ *  
  */
 ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW *wci, WNDPROC *pProc)
 {
-    FIXME("%p %p %p)\n", pm, wci, pProc);
-    return 0;
+    ATOM atom;
+
+    FIXME("%p %p %p semi-stub\n", pm, wci, pProc);
+
+    atom = wci->m_atom;
+    if (!atom)
+    {
+        WNDCLASSEXW wc;
+
+        TRACE("wci->m_wc.lpszClassName = %s\n", debugstr_w(wci->m_wc.lpszClassName));
+
+        if (!wci->m_wc.lpszClassName)
+        {
+            static const WCHAR szFormat[] = {'A','T','L','%','0','8','x',0};
+            sprintfW(wci->m_szAutoName, szFormat, (UINT)(UINT_PTR)wci);
+            TRACE("auto-generated class name %s\n", debugstr_w(wci->m_szAutoName));
+            wci->m_wc.lpszClassName = wci->m_szAutoName;
+        }
+
+        atom = GetClassInfoExW(pm->m_hInst, wci->m_wc.lpszClassName, &wc);
+        if (!atom)
+            atom = RegisterClassExW(&wci->m_wc);
+
+        wci->pWndProc = wci->m_wc.lpfnWndProc;
+        wci->m_atom = atom;
+    }
+    *pProc = wci->pWndProc;
+
+    TRACE("returning 0x%04x\n", atom);
+    return atom;
 }
