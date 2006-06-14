@@ -33,6 +33,7 @@
 #include "ole2.h"
 #include "atlbase.h"
 #include "atliface.h"
+#include "atlwin.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
@@ -358,4 +359,13 @@ HRESULT WINAPI AtlAxCreateControl(LPCOLESTR lpszName, HWND hWnd,
 {
     FIXME("%s %p %p %p)\n", debugstr_w(lpszName), hWnd, pStream, ppUnkContainer);
     return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           AtlModuleRegisterWndClassInfoW           [ATL.@]
+ */
+ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW *wci, WNDPROC *pProc)
+{
+    FIXME("%p %p %p)\n", pm, wci, pProc);
+    return 0;
 }
