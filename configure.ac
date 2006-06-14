@@ -1803,6 +1803,7 @@ programs/icinfo/Makefile
 programs/iexplore/Makefile
 programs/msiexec/Makefile
 programs/notepad/Makefile
+programs/oleview/Makefile
 programs/progman/Makefile
 programs/regedit/Makefile
 programs/regsvr32/Makefile

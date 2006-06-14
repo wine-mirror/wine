@@ -17,6 +17,7 @@ SUBDIRS = \
 	iexplore \
 	msiexec \
 	notepad \
+	oleview \
 	progman \
 	regedit \
 	regsvr32 \
@@ -54,6 +55,7 @@ INSTALLSUBDIRS = \
 	iexplore \
 	msiexec \
 	notepad \
+	oleview \
 	progman \
 	regedit \
 	regsvr32 \

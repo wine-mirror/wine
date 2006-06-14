@@ -1,0 +1,100 @@
+/*
+ * OleView (En.rc)
+ * English Language Support
+ *
+ * Copyright 2006 Piotr Caban
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+*/
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+IDM_MENU MENU
+{
+    POPUP "&File"
+    {
+        MENUITEM "&Bind to file...",    IDM_BIND
+        MENUITEM "&View TypeLib...",    IDM_TYPELIB
+        MENUITEM SEPARATOR
+        MENUITEM "&System Configuration",    IDM_SYSCONF
+        MENUITEM "&Run the Registry Editor",    IDM_REGEDIT
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",    IDM_EXIT
+    }
+    POPUP "&Object"
+    {
+        POPUP "&CoCreateInstance Flag"
+        {
+            MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
+            MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
+            MENUITEM "CLSCTX_&LOCAL_SERVER",        IDM_FLAG_LOCSERV,CHECKED
+            MENUITEM "CLSCTX_&REMOTE_SERVER",    IDM_FLAG_REMSERV
+        }
+        MENUITEM SEPARATOR
+        MENUITEM "View &Type information",    IDM_TYPEINFO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Create &Instance",    IDM_CREATEINST, GRAYED
+        MENUITEM "Create Instance &On",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "&Release Instance",    IDM_RELEASEINST, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Copy &CLSID to clipboard",    IDM_COPYCLSID, GRAYED
+        MENUITEM "Copy &HTML object Tag to clipboard", IDM_HTMLTAG, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&View...",    IDM_VIEW, GRAYED
+    }
+    POPUP "&View"
+    {
+        MENUITEM "&Expert mode",    IDM_EXPERT,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&Hidden component cattegories",    IDM_HIDDEN, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Toolbar",    IDM_TOOLBAR,CHECKED
+        MENUITEM "&Status Bar",    IDM_STATUSBAR,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&Refresh\tF5",    IDM_REFRESH
+    }
+    POPUP "&Help"
+    {
+        MENUITEM "&About OleView",    IDM_ABOUT
+    }
+}
+
+STRINGTABLE
+{
+    IDS_APPNAME            "OleView"
+    IDS_APPTITLE           "Wine OleView"
+    IDS_READY              "Ready"
+
+    IDM_BIND,              "Bind to file via a File Moniker"
+    IDM_TYPELIB,           "Open a TypeLib file and view the contents"
+    IDM_SYSCONF,           "Change machine wide Distributed COM settings"
+    IDM_REGEDIT,           "Run the Wine registry editor"
+    IDM_EXIT,              "Quit the application. Prompts to save changes"
+    IDM_CREATEINST,        "Create an instance of the selected object"
+    IDM_CREATEINSTON,      "Create an instance of the selected object on a specyfic machine"
+    IDM_RELEASEINST,       "Release the currently selected object instance"
+    IDM_COPYCLSID,         "Copy the GUID of the currently selected item to the clipboard"
+    IDM_VIEW,              "Display the viewer for the selected item"
+    IDM_FLAG_INSERV,       "Use CLSCTX_INPROC_SERVER when calling CoGetClassObject"
+    IDM_FLAG_INHANDL,      "Use CLSCTX_INPROC_HANDLER when calling CoGetClassObject"
+    IDM_FLAG_LOCSERV,      "Use CLSCTX_LOCAL_SERVER when calling CoGetClassObject"
+    IDM_FLAG_REMSERV,      "Use CLSCTX_REMOTE_SERVER when calling CoGetClassObject"
+    IDM_EXPERT,            "Toggle between expert and novice display mode"
+    IDM_HIDDEN,            "Toggle the display of component categories that are not meant to be visible"
+    IDM_TOOLBAR,           "Show or hide the toolbar"
+    IDM_STATUSBAR,         "Show or hide the status bar"
+    IDM_REFRESH,           "Refresh all lists"
+    IDM_ABOUT,             "Display program information, version namber and copyright"
+}
