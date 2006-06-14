@@ -224,7 +224,6 @@ HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstT
     int i;
     CABINFOW cabinfo;
     WCHAR tmp_ini_path[MAX_PATH];
-    HINF hinf = INVALID_HANDLE_VALUE;
     HRESULT hr = E_FAIL;
 
     TRACE("(%p, %s, %p)\n", hm, debugstr_w(pszSection), pstTable);
@@ -262,8 +261,6 @@ HRESULT WINAPI RegInstallW(HMODULE hm, LPCWSTR pszSection, const STRTABLEW* pstT
     hr = ExecuteCabW(NULL, &cabinfo, NULL);
 
 done:
-    if (hinf != INVALID_HANDLE_VALUE)
-        SetupCloseInfFile(hinf);
 
     DeleteFileW(tmp_ini_path);
 
