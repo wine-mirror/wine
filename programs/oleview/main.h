@@ -29,15 +29,32 @@
 #include "resource.h"
 
 #define MAX_LOAD_STRING 256
+#define MAX_WINDOW_WIDTH 30000
 
 #define STATUS_WINDOW 2000
 
 typedef struct
 {
     HWND hMainWnd;
+    HWND hPaneWnd;
     HWND hStatusBar;
     HWND hToolBar;
     HINSTANCE hMainInst;
 }GLOBALS;
 
+typedef struct
+{
+    HWND left;
+    HWND right;
+    INT pos;
+    INT size;
+    INT width;
+    INT height;
+    INT last;
+}PANE;
+
 extern GLOBALS globals;
+
+/* Predefinitions: */
+/* pane.c */
+BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst);

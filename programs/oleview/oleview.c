@@ -24,7 +24,7 @@ GLOBALS globals;
 
 void ResizeChild(void)
 {
-    RECT stat, tool;
+    RECT client, stat, tool;
 
     MoveWindow(globals.hStatusBar, 0, 0, 0, 0, TRUE);
     MoveWindow(globals.hToolBar, 0, 0, 0, 0, TRUE);
@@ -39,6 +39,10 @@ void ResizeChild(void)
         tool.bottom += 2;
     }
     else tool.bottom = 0;
+
+    GetClientRect(globals.hMainWnd, &client);
+    MoveWindow(globals.hPaneWnd, 0, tool.bottom,
+            client.right, client.bottom-tool.bottom-stat.bottom, TRUE);
 }
 
 void UpdateStatusBar(int itemID)
@@ -58,6 +62,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
     {
         case WM_CREATE:
             OleInitialize(NULL);
+            if(!CreatePanedWindow(hWnd, &globals.hPaneWnd, globals.hMainInst))
+                PostQuitMessage(0);
             break;
         case WM_DESTROY:
             OleUninitialize();

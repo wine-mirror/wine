@@ -9,7 +9,8 @@ EXTRALIBS = -luuid
 EXTRADEFS = -DUNICODE
 
 C_SRCS = \
-	oleview.c
+	oleview.c \
+	pane.c
 
 RC_SRCS = rsrc.rc
 RC_BINSRC = rsrc.rc
