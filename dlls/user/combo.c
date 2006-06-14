@@ -2080,26 +2080,28 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 		if( unicode )
                 {
                     if( lphc->dwStyle & CBS_LOWERCASE )
-                        strlwrW((LPWSTR)lParam);
+                        CharLowerW((LPWSTR)lParam);
                     else if( lphc->dwStyle & CBS_UPPERCASE )
-                        struprW((LPWSTR)lParam);
+                        CharUpperW((LPWSTR)lParam);
                     return SendMessageW(lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
                 }
                 else /* unlike the unicode version, the ansi version does not overwrite
                         the string if converting case */
                 {
-                    char *p, *string = NULL;
+                    char *string = NULL;
                     LRESULT ret;
                     if( lphc->dwStyle & CBS_LOWERCASE )
                     {
                         string = strdupA((LPSTR)lParam);
-                        for (p = string; *p; p++) *p = tolower(*p);
+                        CharLowerA(string);
                     }
+
                     else if( lphc->dwStyle & CBS_UPPERCASE )
                     {
                         string = strdupA((LPSTR)lParam);
-                        for (p = string; *p; p++) *p = toupper(*p);
+                        CharUpperA(string);
                     }
+
                     ret = SendMessageA(lphc->hWndLBox, LB_ADDSTRING, 0, string ? (LPARAM)string : lParam);
                     HeapFree(GetProcessHeap(), 0, string);
                     return ret;
@@ -2112,18 +2114,18 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 		if( unicode )
                 {
                     if( lphc->dwStyle & CBS_LOWERCASE )
-                        strlwrW((LPWSTR)lParam);
+                        CharLowerW((LPWSTR)lParam);
                     else if( lphc->dwStyle & CBS_UPPERCASE )
-                        struprW((LPWSTR)lParam);
+                        CharUpperW((LPWSTR)lParam);
                     return SendMessageW(lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
                 }
                 else
                 {
-                    char *p;
                     if( lphc->dwStyle & CBS_LOWERCASE )
-                        for (p = (LPSTR)lParam; *p; p++) *p = tolower(*p);
+                        CharLowerA((LPSTR)lParam);
                     else if( lphc->dwStyle & CBS_UPPERCASE )
-                        for (p = (LPSTR)lParam; *p; p++) *p = toupper(*p);
+                        CharUpperA((LPSTR)lParam);
+
                     return SendMessageA(lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
                 }
 	case CB_DELETESTRING16:
