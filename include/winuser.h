@@ -3463,10 +3463,23 @@ typedef struct tagCOMPAREITEMSTRUCT
 #define VK_MENU             0x12
 #define VK_PAUSE            0x13
 #define VK_CAPITAL          0x14
-/*                          0x15-0x19  Reserved for Kanji systems */
+
+#define VK_KANA             0x15
+#define VK_HANGEUL          0x15
+#define VK_HANGUL           0x15
+#define VK_JUNJA            0x17
+#define VK_FINAL            0x18
+#define VK_HANJA            0x19
+#define VK_KANJI            0x19
+
 /*                          0x1A       Undefined */
 #define VK_ESCAPE           0x1B
-/*                          0x1C-0x1F  Reserved for Kanji systems */
+
+#define VK_CONVERT          0x1C
+#define VK_NONCONVERT       0x1D
+#define VK_ACCEPT           0x1E
+#define VK_MODECHANGE       0x1F
+
 #define VK_SPACE            0x20
 #define VK_PRIOR            0x21
 #define VK_NEXT             0x22
@@ -3489,7 +3502,8 @@ typedef struct tagCOMPAREITEMSTRUCT
 #define VK_LWIN             0x5B
 #define VK_RWIN             0x5C
 #define VK_APPS             0x5D
-/*                          0x5E-0x5F Unassigned */
+/*                          0x5E Unassigned */
+#define VK_SLEEP            0x5F
 #define VK_NUMPAD0          0x60
 #define VK_NUMPAD1          0x61
 #define VK_NUMPAD2          0x62
@@ -3533,7 +3547,13 @@ typedef struct tagCOMPAREITEMSTRUCT
 /*                          0x88-0x8F  Unassigned */
 #define VK_NUMLOCK          0x90
 #define VK_SCROLL           0x91
-/*                          0x92-0x9F  Unassigned */
+#define VK_OEM_NEC_EQUAL    0x92
+#define VK_OEM_FJ_JISHO     0x92
+#define VK_OEM_FJ_MASSHOU   0x93
+#define VK_OEM_FJ_TOUROKU   0x94
+#define VK_OEM_FJ_LOYA      0x95
+#define VK_OEM_FJ_ROYA      0x96
+/*                          0x97-0x9F  Unassigned */
 /*
  * differencing between right and left shift/control/alt key.
  * Used only by GetAsyncKeyState() and GetKeyState().
