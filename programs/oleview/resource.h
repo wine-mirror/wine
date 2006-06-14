@@ -61,5 +61,9 @@
 #define IDS_TL_VER                 221
 #define IDS_TREE_I                 230
 
+#define IDS_TAB_REG                250
+#define IDS_TAB_IMPL               251
+#define IDS_TAB_ACTIV              252
+
 #define IDS_CGCOFAIL               300
 #define IDS_ERROR_UNKN             301

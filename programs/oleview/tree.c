@@ -161,6 +161,7 @@ void CreateInst(HTREEITEM item)
     }
 
     RefreshMenu(item);
+    RefreshDetails(item);
 }
 
 void ReleaseInst(HTREEITEM item)
@@ -640,6 +641,7 @@ LRESULT CALLBACK TreeProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 case TVN_SELCHANGED:
                     RefreshMenu(((NMTREEVIEW *)lParam)->itemNew.hItem);
+                    RefreshDetails(((NMTREEVIEW *)lParam)->itemNew.hItem);
                     break;
             }
             break;

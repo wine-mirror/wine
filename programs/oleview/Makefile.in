@@ -9,6 +9,7 @@ EXTRALIBS = -luuid
 EXTRADEFS = -DUNICODE
 
 C_SRCS = \
+	details.c \
 	oleview.c \
 	pane.c \
 	tree.c

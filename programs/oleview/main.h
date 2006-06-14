@@ -33,6 +33,7 @@
 
 #define STATUS_WINDOW 2000
 #define TREE_WINDOW 2001
+#define TAB_WINDOW 2002
 
 /*ItemInfo flags */
 #define REGTOP 1
@@ -44,9 +45,10 @@ typedef struct
 {
     HWND hMainWnd;
     HWND hPaneWnd;
-    HWND hTree;
     HWND hStatusBar;
     HWND hToolBar;
+    HWND hTree;
+    HWND hDetails;
     HINSTANCE hMainInst;
     BOOL bExpert;
     DWORD dwClsCtx;
@@ -85,10 +87,21 @@ typedef struct
     IUnknown *pU;
 }ITEM_INFO;
 
+typedef struct
+{
+    HWND hStatic;
+    HWND hTab;
+    HWND hReg;
+}DETAILS;
+
 extern GLOBALS globals;
 extern TREE tree;
 
 /* Predefinitions: */
+/* details.c */
+HWND CreateDetailsWindow(HINSTANCE hInst);
+void RefreshDetails(HTREEITEM item);
+
 /* oleview.c */
 void RefreshMenu(HTREEITEM item);
 
@@ -102,5 +115,6 @@ void EmptyTree(void);
 void AddTreeEx(void);
 void AddTree(void);
 HWND CreateTreeWindow(HINSTANCE hInst);
+BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize);
 void CreateInst(HTREEITEM item);
 void ReleaseInst(HTREEITEM item);

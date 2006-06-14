@@ -132,6 +132,7 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
             hSelect = TreeView_GetSelection(globals.hTree);
             ReleaseInst(hSelect);
             RefreshMenu(hSelect);
+            RefreshDetails(hSelect);
             break;
         case IDM_EXPERT:
             globals.bExpert = !globals.bExpert;
@@ -238,6 +239,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
             if(!CreatePanedWindow(hWnd, &globals.hPaneWnd, globals.hMainInst))
                 PostQuitMessage(0);
             SetLeft(globals.hPaneWnd, CreateTreeWindow(globals.hMainInst));
+            SetRight(globals.hPaneWnd, CreateDetailsWindow(globals.hMainInst));
             SetFocus(globals.hTree);
             break;
         case WM_COMMAND:
