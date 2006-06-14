@@ -968,7 +968,7 @@ static void init_oid_info(HINSTANCE hinst)
                      (LPWSTR)((LPBYTE)info + sizeof(struct OIDInfo));
                     info->info.dwGroupId = oidInfoConstructors[i].dwGroupId;
                     info->info.u.Algid = oidInfoConstructors[i].Algid;
-                    LoadStringW(hinst, (UINT)oidInfoConstructors[i].pwszName,
+                    LoadStringW(hinst, (UINT_PTR)oidInfoConstructors[i].pwszName,
                      (LPWSTR)info->info.pwszName, len + 1);
                     if (oidInfoConstructors[i].blob)
                     {
