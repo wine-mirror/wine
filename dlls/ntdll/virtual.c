@@ -1038,7 +1038,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         const IMAGE_DATA_DIRECTORY *relocs;
 
         relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-        if (!relocs->VirtualAddress || !relocs->Size)
+        if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
         {
             if (nt->OptionalHeader.ImageBase == 0x400000) {
                 ERR("Image was mapped at %p: standard load address for a Win32 program (0x00400000) not available\n", ptr);
