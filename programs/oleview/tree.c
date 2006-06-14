@@ -22,6 +22,14 @@
 
 TREE tree;
 static const WCHAR wszCLSID[] = { 'C','L','S','I','D','\\','\0' };
+static const WCHAR wszInProcServer32[] = 
+    { 'I','n','P','r','o','c','S','e','r','v','e','r','3','2','\0' };
+static const WCHAR wszOle32dll[] = { 'o','l','e','3','2','.','d','l','l','\0' };
+static const WCHAR wszOleAut32dll[] =
+    { 'o','l','e','a','u','t','3','2','.','d','l','l','\0' };
+static const WCHAR wszImplementedCategories[] = 
+    { 'I','m','p','l','e','m','e','n','t','e','d',' ',
+        'C','a','t','e','g','o','r','i','e','s','\0' };
 static const WCHAR wszAppID[] = { 'A','p','p','I','D','\\','\0' };
 static const WCHAR wszTypeLib[] = { 'T','y','p','e','L','i','b','\\','\0' };
 static const WCHAR wszInterface[] = { 'I','n','t','e','r','f','a','c','e','\\','\0' };
@@ -40,6 +48,322 @@ LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid)
     if(clsid) strcpyW(reg->clsid, clsid);
 
     return (LPARAM)reg;
+}
+
+BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize)
+{
+    TVITEM tvi;
+    int bufLen;
+    BOOL ret;
+
+    memset(buffer, 0, sizeof(WCHAR[bufSize]));
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvi.hItem = item;
+
+    SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+    ret = (tvi.lParam && ((ITEM_INFO *)tvi.lParam)->cFlag & REGPATH);
+
+    while(TRUE)
+    {
+        SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
+        if(tvi.lParam && (((ITEM_INFO *)tvi.lParam)->cFlag & (REGPATH|REGTOP)))
+        {
+            bufLen = strlenW(((ITEM_INFO *)tvi.lParam)->info);
+            memmove(&buffer[bufLen], buffer, sizeof(WCHAR[bufSize-bufLen]));
+            memcpy(buffer, ((ITEM_INFO *)tvi.lParam)->info, sizeof(WCHAR[bufLen]));
+        }
+
+        if(tvi.lParam && ((ITEM_INFO *)tvi.lParam)->cFlag & REGTOP) break;
+
+        if(!tvi.lParam) return FALSE;
+
+        tvi.hItem = TreeView_GetParent(globals.hTree, tvi.hItem);
+    }
+    return ret;
+}
+
+void AddCOMandAll(void)
+{
+    TVINSERTSTRUCT tvis;
+    TVITEM tvi;
+    HTREEITEM curSearch;
+    HKEY hKey, hCurKey, hInfo;
+    WCHAR valName[MAX_LOAD_STRING];
+    WCHAR buffer[MAX_LOAD_STRING];
+    WCHAR wszComp[MAX_LOAD_STRING];
+    LONG lenBuffer;
+    int i=-1;
+
+    memset(&tvi, 0, sizeof(TVITEM));
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_CHILDREN;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.cChildren = 1;
+    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+
+    if(RegOpenKey(HKEY_CLASSES_ROOT, wszCLSID, &hKey) != ERROR_SUCCESS) return;
+
+    while(TRUE)
+    {
+        i++;
+
+        if(RegEnumKey(hKey, i, valName, -1) != ERROR_SUCCESS) break;
+
+        if(RegOpenKey(hKey, valName, &hCurKey) != ERROR_SUCCESS) continue;
+
+        lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
+        tvis.hParent = tree.hAO;
+
+        if(RegOpenKey(hCurKey, wszInProcServer32, &hInfo) == ERROR_SUCCESS)
+        {
+            if(RegQueryValue(hInfo, NULL, buffer, &lenBuffer) == ERROR_SUCCESS
+                    && *buffer)
+                if(!memcmp(buffer, wszOle32dll, sizeof(WCHAR[9]))
+                        ||!memcmp(buffer, wszOleAut32dll, sizeof(WCHAR[12])))
+                    tvis.hParent = tree.hCLO;
+
+            RegCloseKey(hInfo);
+        }
+
+        lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+        if(RegQueryValue(hCurKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS && *buffer)
+            tvis.item.pszText = buffer;
+        else tvis.item.pszText = valName;
+    
+        tvis.item.lParam = CreateITEM_INFO(REGPATH|SHOWALL, valName, valName);
+        if(tvis.hParent) SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+
+        if(RegOpenKey(hCurKey, wszImplementedCategories, &hInfo) == ERROR_SUCCESS)
+        {
+            if(RegEnumKey(hInfo, 0, wszComp, -1) != ERROR_SUCCESS) break;
+
+            RegCloseKey(hInfo);
+
+            if(tree.hGBCC) curSearch = TreeView_GetChild(globals.hTree, tree.hGBCC);
+            else curSearch = TreeView_GetChild(globals.hTree, TVI_ROOT);
+
+            while(curSearch)
+            {
+                tvi.hItem = curSearch;
+                SendMessage(globals.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
+
+                if(tvi.lParam && !strcmpW(((ITEM_INFO *)tvi.lParam)->info, wszComp))
+                {
+                    tvis.hParent = curSearch;
+
+                    memmove(&valName[6], valName, sizeof(WCHAR[MAX_LOAD_STRING-6]));
+                    memmove(valName, wszCLSID, sizeof(WCHAR[6]));
+                    tvis.item.lParam = CreateITEM_INFO(REGTOP|REGPATH|SHOWALL,
+                            valName, &valName[6]);
+
+                    SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+                    break;
+                }
+                curSearch = TreeView_GetNextSibling(globals.hTree, curSearch);
+            }
+        }
+        RegCloseKey(hCurKey);
+    }
+    RegCloseKey(hKey);
+
+    SendMessage(globals.hTree, TVM_SORTCHILDREN, FALSE, (LPARAM)tree.hCLO);
+    SendMessage(globals.hTree, TVM_SORTCHILDREN, FALSE, (LPARAM)tree.hAO);
+}
+
+void AddApplicationID(void)
+{
+    TVINSERTSTRUCT tvis;
+    HKEY hKey, hCurKey;
+    WCHAR valName[MAX_LOAD_STRING];
+    WCHAR buffer[MAX_LOAD_STRING];
+    LONG lenBuffer;
+    int i=-1;
+
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hParent = tree.hAID;
+
+    if(RegOpenKey(HKEY_CLASSES_ROOT, wszAppID, &hKey) != ERROR_SUCCESS) return;
+
+    while(TRUE)
+    {
+        i++;
+
+        if(RegEnumKey(hKey, i, valName, -1) != ERROR_SUCCESS) break;
+
+        if(RegOpenKey(hKey, valName, &hCurKey) != ERROR_SUCCESS) continue;
+
+        lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+        if(RegQueryValue(hCurKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS && *buffer)
+            tvis.item.pszText = buffer;
+        else tvis.item.pszText = valName;
+
+        RegCloseKey(hCurKey);
+
+        tvis.item.lParam = CreateITEM_INFO(REGPATH, valName, valName);
+        SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+    }
+    RegCloseKey(hKey);
+
+    SendMessage(globals.hTree, TVM_SORTCHILDREN, FALSE, (LPARAM)tree.hAID);
+}
+
+void AddTypeLib(void)
+{
+    TVINSERTSTRUCT tvis;
+    HKEY hKey, hCurKey, hInfoKey;
+    WCHAR valName[MAX_LOAD_STRING];
+    WCHAR valParent[MAX_LOAD_STRING];
+    WCHAR buffer[MAX_LOAD_STRING];
+    WCHAR wszVer[MAX_LOAD_STRING];
+    const WCHAR wszFormat[] = { ' ','(','%','s',' ','%','s',')','\0' };
+    const WCHAR wszFormat2[] = { '%','s','\\','%','s','\0' };
+    LONG lenBuffer;
+    int i=-1, j;
+
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hParent = tree.hTL;
+
+    if(RegOpenKey(HKEY_CLASSES_ROOT, wszTypeLib, &hKey) != ERROR_SUCCESS) return;
+
+    while(TRUE)
+    {
+        i++;
+
+        if(RegEnumKey(hKey, i, valParent, -1) != ERROR_SUCCESS) break;
+
+        if(RegOpenKey(hKey, valParent, &hCurKey) != ERROR_SUCCESS) continue;
+
+        j = -1;
+        while(TRUE)
+        {
+            j++;
+
+            if(RegEnumKey(hCurKey, j, valName, -1) != ERROR_SUCCESS) break;
+
+            if(RegOpenKey(hCurKey, valName, &hInfoKey) != ERROR_SUCCESS) continue;
+
+            lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+            if(RegQueryValue(hInfoKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS 
+                    && *buffer)
+            {
+                LoadString(globals.hMainInst, IDS_TL_VER, wszVer,
+                        sizeof(WCHAR[MAX_LOAD_STRING]));
+
+                wsprintfW(&buffer[strlenW(buffer)], wszFormat, wszVer, valName);
+                tvis.item.pszText = buffer;
+            }
+            else tvis.item.pszText = valName;
+
+            RegCloseKey(hInfoKey);
+
+            wsprintfW(wszVer, wszFormat2, valParent, valName);
+            tvis.item.lParam = CreateITEM_INFO(REGPATH, wszVer, valParent);
+
+            SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+        }
+        RegCloseKey(hCurKey);
+    }
+
+    RegCloseKey(hKey);
+
+    SendMessage(globals.hTree, TVM_SORTCHILDREN, FALSE, (LPARAM)tree.hTL);
+}
+
+void AddInterfaces(void)
+{
+    TVINSERTSTRUCT tvis;
+    HKEY hKey, hCurKey;
+    WCHAR valName[MAX_LOAD_STRING];
+    WCHAR buffer[MAX_LOAD_STRING];
+    LONG lenBuffer;
+    int i=-1;
+
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    tvis.hParent = tree.hI;
+
+    if(RegOpenKey(HKEY_CLASSES_ROOT, wszInterface, &hKey) != ERROR_SUCCESS) return;
+
+    while(TRUE)
+    {
+        i++;
+
+        if(RegEnumKey(hKey, i, valName, -1) != ERROR_SUCCESS) break;
+
+        if(RegOpenKey(hKey, valName, &hCurKey) != ERROR_SUCCESS) continue;
+
+        lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+        if(RegQueryValue(hCurKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS && *buffer)
+            tvis.item.pszText = buffer;
+        else tvis.item.pszText = valName;
+
+        RegCloseKey(hCurKey);
+
+        tvis.item.lParam = CreateITEM_INFO(REGPATH|INTERFACE, valName, valName);
+        SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+    }
+
+    RegCloseKey(hKey);
+
+    SendMessage(globals.hTree, TVM_SORTCHILDREN, FALSE, (LPARAM)tree.hI);
+}
+
+void AddComponentCategories(void)
+{
+    TVINSERTSTRUCT tvis;
+    HKEY hKey, hCurKey;
+    WCHAR valName[MAX_LOAD_STRING];
+    WCHAR buffer[MAX_LOAD_STRING];
+    LONG lenBuffer;
+    DWORD lenBufferHlp;
+    int i=-1;
+
+    tvis.item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_CHILDREN;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.hInsertAfter = (HTREEITEM)TVI_FIRST;
+    if(tree.hGBCC) tvis.hParent = tree.hGBCC;
+    else tvis.hParent = TVI_ROOT;
+    tvis.item.cChildren = 1;
+
+    if(RegOpenKey(HKEY_CLASSES_ROOT, wszComponentCategories, &hKey) != ERROR_SUCCESS)
+        return;
+
+    while(TRUE)
+    {
+        i++;
+
+        if(RegEnumKey(hKey, i, valName, -1) != ERROR_SUCCESS) break;
+
+        if(RegOpenKey(hKey, valName, &hCurKey) != ERROR_SUCCESS) continue;
+
+        lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
+        lenBufferHlp = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+        if(RegQueryValue(hCurKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS && *buffer)
+            tvis.item.pszText = buffer;
+        else if(RegEnumValue(hCurKey, 0, NULL, NULL, NULL, NULL,
+                    (LPBYTE)buffer, &lenBufferHlp) == ERROR_SUCCESS && *buffer)
+            tvis.item.pszText = buffer;
+        else continue;
+
+        RegCloseKey(hCurKey);
+
+        tvis.item.lParam = CreateITEM_INFO(REGTOP, valName, valName);
+        SendMessage(globals.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+    }
+
+    RegCloseKey(hKey);
+
+    SendMessage(globals.hTree, TVM_SORTCHILDREN, FALSE, (LPARAM)tree.hGBCC);
 }
 
 void AddBaseEntries(void)
@@ -134,6 +458,18 @@ void EmptyTree(void)
 void AddTreeEx(void)
 {
     AddBaseEntries();
+    AddComponentCategories();
+    AddCOMandAll();
+    AddApplicationID();
+    AddTypeLib();
+    AddInterfaces();
+}
+
+void AddTree(void)
+{
+    memset(&tree, 0, sizeof(TREE));
+    AddComponentCategories();
+    AddCOMandAll();
 }
 
 LRESULT CALLBACK TreeProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
