@@ -21,6 +21,253 @@
 #include "main.h"
 
 DETAILS details;
+static const WCHAR wszAppID[] = { 'A','p','p','I','D','\0' };
+static const WCHAR wszCLSID[] = { 'C','L','S','I','D','\0' };
+static const WCHAR wszProgID[] = { 'P','r','o','g','I','D','\0' };
+static const WCHAR wszProxyStubClsid32[] = 
+    { 'P','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2','\0' };
+static const WCHAR wszTypeLib[] = { 'T','y','p','e','L','i','b','\0' };
+
+void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
+{
+    int i=0, j, retEnum;
+    HKEY hCurKey;
+    DWORD lenName, lenData, valType;
+    WCHAR wszName[MAX_LOAD_STRING];
+    WCHAR wszData[MAX_LOAD_STRING];
+    WCHAR wszTree[MAX_LOAD_STRING];
+    const WCHAR wszBinary[] = { '%','0','2','X',' ','\0' };
+    const WCHAR wszDots[] = { '.','.','.','\0' };
+    const WCHAR wszFormat1[] = { '%','s',' ','[','%','s',']',' ','=',' ','%','s','\0' };
+    const WCHAR wszFormat2[] = { '%','s',' ','=',' ','%','s','\0' };
+    TVINSERTSTRUCT tvis;
+    HTREEITEM addPlace = parent;
+
+    tvis.item.mask = TVIF_TEXT;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.pszText = wszTree;
+    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hParent = parent;
+
+    while(TRUE)
+    {
+        lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
+        lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+        retEnum = RegEnumValue(hKey, i, wszName, &lenName,
+                NULL, &valType, (LPBYTE)wszData, &lenData);
+
+        if(retEnum != ERROR_SUCCESS)
+        {
+            if(!i && strlenW(wszKeyName) > 1)
+            {
+                tvis.item.pszText = (LPWSTR)wszKeyName;
+                addPlace = TreeView_InsertItem(details.hReg, &tvis);
+                tvis.item.pszText = wszTree;
+            }
+            break;
+        }
+
+        if(valType == REG_BINARY)
+        {
+            WCHAR wszBuf[MAX_LOAD_STRING];
+
+            for(j=0; j<MAX_LOAD_STRING/3-1; j++)
+                wsprintfW(&wszBuf[3*j], wszBinary, (int)((unsigned char)wszData[j]));
+            wszBuf[(lenData*3>=MAX_LOAD_STRING ? MAX_LOAD_STRING-1 : lenData*3)] = '\0';
+            strcpyW(wszData, wszBuf);
+            strcpyW(&wszData[MAX_LOAD_STRING-5], wszDots);
+        }
+
+        if(lenName) wsprintfW(wszTree, wszFormat1, wszKeyName, wszName, wszData);
+        else wsprintfW(wszTree, wszFormat2, wszKeyName, wszData);
+
+        addPlace = TreeView_InsertItem(details.hReg, &tvis);
+
+        if(addings && !memcmp(wszName, wszAppID, sizeof(WCHAR[6])))
+        {
+            strcpyW(wszTree, wszName);
+            memmove(&wszData[6], wszData, sizeof(WCHAR[MAX_LOAD_STRING-6]));
+            strcpyW(wszData, wszCLSID);
+            wszData[5] = '\\';
+
+            if(RegOpenKey(HKEY_CLASSES_ROOT, wszData, &hCurKey) != ERROR_SUCCESS)
+            {
+                i++;
+                continue;
+            }
+
+            tvis.hParent = TVI_ROOT;
+            tvis.hParent = TreeView_InsertItem(details.hReg, &tvis);
+
+            lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+            RegQueryValue(hCurKey, NULL, wszName, (LONG *)&lenName);
+            RegCloseKey(hCurKey);
+
+            wsprintfW(wszTree, wszFormat2, &wszData[6], wszName);
+
+            SendMessage(details.hReg, TVM_INSERTITEM, 0, (LPARAM)&tvis);
+            SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
+
+            tvis.hParent = parent;
+        }
+        i++;
+    }
+
+    i=-1;
+    lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+    while(TRUE)
+    {
+        i++;
+
+        if(RegEnumKey(hKey, i, wszName, lenName) != ERROR_SUCCESS) break;
+
+        if(RegOpenKey(hKey, wszName, &hCurKey) != ERROR_SUCCESS) continue;
+
+        CreateRegRec(hCurKey, addPlace, wszName, addings);
+        SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)addPlace);
+
+        if(addings && !memcmp(wszName, wszProgID, sizeof(WCHAR[7])))
+        {
+            lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+            RegQueryValue(hCurKey, NULL, wszData, (LONG *)&lenData);
+            RegCloseKey(hCurKey);
+
+            if(RegOpenKey(HKEY_CLASSES_ROOT, wszData, &hCurKey) != ERROR_SUCCESS)
+                continue;
+            CreateRegRec(hCurKey, TVI_ROOT, wszData, FALSE);
+        }
+        else if(addings && !memcmp(wszName, wszProxyStubClsid32, sizeof(WCHAR[17])))
+        {
+            lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+            RegQueryValue(hCurKey, NULL, wszData, (LONG *)&lenData);
+            RegCloseKey(hCurKey);
+
+            RegOpenKey(HKEY_CLASSES_ROOT, wszCLSID, &hCurKey);
+
+            lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
+            RegQueryValue(hCurKey, NULL, wszName, (LONG *)&lenName);
+
+            tvis.hParent = TVI_ROOT;
+            wsprintfW(wszTree, wszFormat2, wszCLSID, wszName);
+            tvis.hParent = TreeView_InsertItem(details.hReg, &tvis);
+
+            RegCloseKey(hCurKey);
+
+            memmove(&wszData[6], wszData, sizeof(WCHAR[lenData]));
+            memcpy(wszData, wszCLSID, sizeof(WCHAR[6]));
+            wszData[5] = '\\';
+
+            RegOpenKey(HKEY_CLASSES_ROOT, wszData, &hCurKey);
+
+            CreateRegRec(hCurKey, tvis.hParent, &wszData[6], FALSE);
+
+            SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
+            tvis.hParent = parent;
+        }
+        else if(addings && !memcmp(wszName, wszTypeLib, sizeof(WCHAR[8])))
+        {
+            lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+            RegQueryValue(hCurKey, NULL, wszData, (LONG *)&lenData);
+            RegCloseKey(hCurKey);
+
+            RegOpenKey(HKEY_CLASSES_ROOT, wszTypeLib, &hCurKey);
+
+            lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
+            RegQueryValue(hCurKey, NULL, wszName, (LONG *)&lenName);
+
+            tvis.hParent = TVI_ROOT;
+            wsprintfW(wszTree, wszFormat2, wszTypeLib, wszName);
+            tvis.hParent = TreeView_InsertItem(details.hReg, &tvis);
+
+            RegCloseKey(hCurKey);
+
+            memmove(&wszData[8], wszData, sizeof(WCHAR[lenData]));
+            memcpy(wszData, wszTypeLib, sizeof(WCHAR[8]));
+            wszData[7] = '\\';
+            RegOpenKey(HKEY_CLASSES_ROOT, wszData, &hCurKey);
+
+            CreateRegRec(hCurKey, tvis.hParent, &wszData[8], FALSE);
+
+            SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
+            tvis.hParent = parent;
+        }
+        RegCloseKey(hCurKey);
+    }
+}
+
+void CreateReg(WCHAR *buffer)
+{
+    HKEY hKey;
+    DWORD lenBuffer=-1, lastLenBuffer, lenTree;
+    WCHAR *path;
+    WCHAR wszTree[MAX_LOAD_STRING];
+    TVINSERTSTRUCT tvis;
+    HTREEITEM addPlace = TVI_ROOT;
+
+    tvis.item.mask = TVIF_TEXT;
+    tvis.item.cchTextMax = MAX_LOAD_STRING;
+    tvis.item.pszText = wszTree;
+    tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
+    tvis.hParent = TVI_ROOT;
+
+    path = buffer;
+    while(TRUE)
+    {
+        while(*path != '\\' && *path != '\0') path += 1;
+
+        if(*path == '\\')
+        {
+            *path = '\0';
+
+            if(RegOpenKey(HKEY_CLASSES_ROOT, (LPWSTR)buffer, &hKey) != ERROR_SUCCESS)
+                return;
+
+            lastLenBuffer = lenBuffer+1;
+            lenBuffer = strlenW(buffer);
+            *path = '\\';
+            path += 1;
+
+            lenTree = sizeof(WCHAR[MAX_LOAD_STRING]);
+
+            if(RegQueryValue(hKey, NULL, wszTree, (LONG *)&lenTree) == ERROR_SUCCESS)
+            {
+                memmove(&wszTree[lenBuffer-lastLenBuffer+3], wszTree,
+                        sizeof(WCHAR[lenTree]));
+                memcpy(wszTree, &buffer[lastLenBuffer],
+                        sizeof(WCHAR[lenBuffer-lastLenBuffer]));
+
+                if(lenTree == 1) wszTree[lenBuffer-lastLenBuffer] = '\0';
+                else
+                {
+                    wszTree[lenBuffer-lastLenBuffer] = ' ';
+                    wszTree[lenBuffer-lastLenBuffer+1] = '=';
+                    wszTree[lenBuffer-lastLenBuffer+2] = ' ';
+                }
+
+                addPlace = TreeView_InsertItem(details.hReg, &tvis);
+            }
+
+            tvis.hParent = addPlace;
+            RegCloseKey(hKey);
+        }
+        else break;
+    }
+
+    if(RegOpenKey(HKEY_CLASSES_ROOT, (LPWSTR)buffer, &hKey) != ERROR_SUCCESS) return;
+
+    CreateRegRec(hKey, addPlace, (LPWSTR)&buffer[lenBuffer+1], TRUE);
+
+    RegCloseKey(hKey);
+
+    SendMessage(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)addPlace);
+    SendMessage(details.hReg, TVM_ENSUREVISIBLE, 0, (LPARAM)addPlace);
+}
 
 void RefreshDetails(HTREEITEM item)
 {
@@ -78,6 +325,7 @@ void RefreshDetails(HTREEITEM item)
     SendMessage(details.hReg, TVM_ENSUREVISIBLE, 0,
             SendMessage(details.hReg, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)TVI_ROOT));
     SendMessage(details.hReg, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
+    if(show) CreateReg(wszBuf);
 }
 
 void CreateTabCtrl(HWND hWnd)
