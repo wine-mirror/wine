@@ -948,6 +948,44 @@ static void test_longstrings(void)
     MsiCloseHandle(hdb);
     DeleteFile(msifile);
 }
+ 
+static void test_streamtable(void)
+{
+    MSIHANDLE hdb = 0, rec;
+    UINT r;
+
+    hdb = create_db();
+    ok( hdb, "failed to create db\n");
+
+    r = run_query( hdb,
+            "CREATE TABLE `Properties` "
+            "( `Property` CHAR(255), `Value` CHAR(1)  PRIMARY KEY `Property`)" );
+    ok( r == ERROR_SUCCESS , "Failed to create table\n" );
+
+    /* check the column types */
+    rec = get_column_info( hdb, "select * from `_Streams`", MSICOLINFO_TYPES );
+    ok( rec, "failed to get column info record\n" );
+
+    todo_wine {
+    ok( check_record( rec, 1, "s62"), "wrong record type\n");
+    ok( check_record( rec, 2, "V0"), "wrong record type\n");
+    }
+
+    MsiCloseHandle( rec );
+
+    /* now try the names */
+    rec = get_column_info( hdb, "select * from `_Streams`", MSICOLINFO_NAMES );
+    ok( rec, "failed to get column info record\n" );
+
+    todo_wine {
+    ok( check_record( rec, 1, "Name"), "wrong record type\n");
+    ok( check_record( rec, 2, "Data"), "wrong record type\n");
+    }
+
+    MsiCloseHandle( rec );
+    MsiCloseHandle( hdb );
+    DeleteFile(msifile);
+}
 
 START_TEST(db)
 {
@@ -960,4 +998,5 @@ START_TEST(db)
     test_getcolinfo();
     test_msiexport();
     test_longstrings();
+    test_streamtable();
 }
