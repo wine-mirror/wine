@@ -298,15 +298,16 @@ StdGlobalInterfaceTable_GetInterfaceFromGlobal(
   
   /* unmarshal the interface */
   hres = CoUnmarshalInterface(entry->stream, riid, ppv);
-  if (hres) {
-    WARN("Failed to unmarshal stream\n");
-    return hres;
-  }
   
   /* rewind stream, in case it's used again */
   move.u.LowPart = 0;
   move.u.HighPart = 0;
   IStream_Seek(entry->stream, move, STREAM_SEEK_SET, NULL);
+
+  if (hres) {
+    WARN("Failed to unmarshal stream\n");
+    return hres;
+  }
 
   /* addref it */
   lpUnk = *ppv;

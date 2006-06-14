@@ -1978,7 +1978,7 @@ static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
 
 	CoInitialize(NULL);
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
-	todo_wine ok_ole_success(hr, IGlobalInterfaceTable_GetInterfaceFromGlobal);
+	ok_ole_success(hr, IGlobalInterfaceTable_GetInterfaceFromGlobal);
 	CoUninitialize();
 
 	return hr;
