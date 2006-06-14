@@ -100,10 +100,42 @@ static void test_CoCreateInstance(void)
     ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
 }
 
+static ATOM register_dummy_class(void)
+{
+    WNDCLASS wc =
+    {
+        0,
+        DefWindowProc,
+        0,
+        0,
+        GetModuleHandle(NULL),
+        NULL,
+        LoadCursor(NULL, IDC_ARROW),
+        (HBRUSH)(COLOR_BTNFACE+1),
+        NULL,
+        TEXT("WineOleTestClass"),
+    };
+    
+    return RegisterClass(&wc);
+}
+
+static void test_ole_menu(void)
+{
+	HWND hwndFrame;
+	HRESULT hr;
+
+	hwndFrame = CreateWindow(MAKEINTATOM(register_dummy_class()), "Test", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+	hr = OleSetMenuDescriptor(NULL, hwndFrame, NULL, NULL, NULL);
+	todo_wine ok_ole_success(hr, "OleSetMenuDescriptor");
+
+	DestroyWindow(hwndFrame);
+}
+
 START_TEST(compobj)
 {
     test_ProgIDFromCLSID();
     test_CLSIDFromProgID();
     test_CLSIDFromString();
     test_CoCreateInstance();
+    test_ole_menu();
 }

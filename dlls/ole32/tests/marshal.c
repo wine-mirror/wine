@@ -1959,6 +1959,65 @@ static void test_ROT(void)
     ok_no_locks();
 }
 
+struct git_params
+{
+	DWORD cookie;
+	IGlobalInterfaceTable *git;
+};
+
+static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
+{
+	HRESULT hr;
+	struct git_params *params = (struct git_params *)pv;
+	IClassFactory *cf;
+
+	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
+	ok(hr == CO_E_NOTINITIALIZED,
+		"IGlobalInterfaceTable_GetInterfaceFromGlobal should have failed with error CO_E_NOTINITIALIZED instead of 0x%08lx\n",
+		hr);
+
+	CoInitialize(NULL);
+	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
+	todo_wine ok_ole_success(hr, IGlobalInterfaceTable_GetInterfaceFromGlobal);
+	CoUninitialize();
+
+	return hr;
+}
+
+static void test_globalinterfacetable(void)
+{
+	HRESULT hr;
+	IGlobalInterfaceTable *git;
+	DWORD cookie;
+	HANDLE thread;
+	DWORD tid;
+	struct git_params params;
+	DWORD ret;
+
+	hr = CoCreateInstance(&CLSID_StdGlobalInterfaceTable, NULL, CLSCTX_INPROC_SERVER, &IID_IGlobalInterfaceTable, (void **)&git);
+	ok_ole_success(hr, CoCreateInstance);
+
+	hr = IGlobalInterfaceTable_RegisterInterfaceInGlobal(git, (IUnknown *)&Test_ClassFactory, &IID_IClassFactory, &cookie);
+	ok_ole_success(hr, IGlobalInterfaceTable_RegisterInterfaceInGlobal);
+
+	params.cookie = cookie;
+	params.git = git;
+	/* note: params is on stack so we MUST wait for get_global_interface_proc
+	 * to exit before we can return */
+	thread = CreateThread(NULL, 0, get_global_interface_proc, &params, 0, &tid);
+
+	ret = MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT);
+	while (ret == WAIT_OBJECT_0 + 1)
+	{
+		MSG msg;
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			DispatchMessage(&msg);
+		ret = MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT);
+	}
+
+	CloseHandle(thread);
+}
+
 static const char cf_marshaled[] =
 {
     0x9, 0x0, 0x0, 0x0,
@@ -2197,7 +2256,7 @@ START_TEST(marshal)
     if (0) test_out_of_process_com();
 
     test_ROT();
-    /* FIXME: test GIT */
+    test_globalinterfacetable();
 
     test_marshal_CLIPFORMAT();
     test_marshal_HWND();
