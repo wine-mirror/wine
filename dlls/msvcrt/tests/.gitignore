@@ -1,5 +1,6 @@
 Makefile
 cpp.ok
+data.ok
 dir.ok
 environ.ok
 file.ok

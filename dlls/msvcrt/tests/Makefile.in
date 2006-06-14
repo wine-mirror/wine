@@ -9,6 +9,7 @@ EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt -I$(SRCDIR)/..
 
 CTESTS = \
 	cpp.c \
+	data.c \
 	dir.c \
 	environ.c \
 	file.c \
