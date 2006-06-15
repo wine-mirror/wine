@@ -287,6 +287,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain = NULL;
     static UINT messages = 0; /* holds flags to disable fixme messages */
+    BOOL backbuf = FALSE;
 
     /* fixme: should we really lock as such? */
     if((This->Flags & (SFLAG_INTEXTURE | SFLAG_INPBUFFER)) ==
@@ -307,7 +308,16 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
 
         if (swapchain != NULL ||  iface == myDevice->renderTarget || iface == myDevice->depthStencilBuffer) {
-            if (swapchain != NULL && iface ==  swapchain->backBuffer) {
+            if(swapchain != NULL) {
+                int i;
+                for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
+                    if(iface == swapchain->backBuffer[i]) {
+                        backbuf = TRUE;
+                        break;
+                    }
+                }
+            }
+            if (backbuf) {
                 TRACE("(%p, backBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
             } else if (swapchain != NULL && iface ==  swapchain->frontBuffer) {
                 TRACE("(%p, frontBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
@@ -518,12 +528,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
             /* NOTE: In a shared context environment the renderTarget will use the same context as the implicit swapchain (we're not in a shared environment yet! */
             if ((swapchain == targetSwapChain && targetSwapChain != NULL) || iface == myDevice->renderTarget) {
-                    if (iface == myDevice->renderTarget || iface == swapchain->backBuffer) {
+                    if (iface == swapchain->frontBuffer) {
+                        TRACE("locking front\n");
+                        glReadBuffer(GL_FRONT);
+                    }
+                    else if (iface == myDevice->renderTarget || backbuf) {
                         TRACE("locking back buffer\n");
-                      glReadBuffer(GL_BACK);
-                    } else if (iface == swapchain->frontBuffer) {
-                      TRACE("locking front\n");
-                      glReadBuffer(GL_FRONT);
+                        glReadBuffer(GL_BACK);
                     } else if (iface == myDevice->depthStencilBuffer) {
                         FIXME("Stencil Buffer lock unsupported for now\n");
                     } else {
@@ -535,7 +546,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
                 IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
                 if (swapchain->glCtx == implSwapChain->render_ctx && swapchain->drawable == implSwapChain->win) {
                         /* This will fail for the implicit swapchain, which is why there needs to be a context manager */
-                        if (iface == swapchain->backBuffer) {
+                        if (backbuf) {
                             glReadBuffer(GL_BACK);
                         } else if (iface == swapchain->frontBuffer) {
                             glReadBuffer(GL_FRONT);
@@ -639,6 +650,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
                 vcheckGLcall("glReadPixels");
                 TRACE("Resetting buffer\n");
+
                 glReadBuffer(prev_read);
                 vcheckGLcall("glReadBuffer");
             }
@@ -696,6 +708,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
     const char *buffername = "";
     IWineD3DSwapChainImpl *swapchain = NULL;
+    BOOL backbuf = FALSE;
 
     if (!(This->Flags & SFLAG_LOCKED)) {
         WARN("trying to Unlock an unlocked surf@%p\n", This);
@@ -705,7 +718,17 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     if (WINED3DUSAGE_RENDERTARGET & This->resource.usage) {
         IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
 
-        if ((swapchain != NULL) &&  iface ==  swapchain->backBuffer) {
+        if(swapchain) {
+            int i;
+            for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
+                if(iface == swapchain->backBuffer[i]) {
+                    backbuf = TRUE;
+                    break;
+                }
+            }
+        }
+
+        if (backbuf) {
                 buffername = "backBuffer";
         } else if ((swapchain != NULL) && iface ==  swapchain->frontBuffer) {
                 buffername = "frontBuffer";
@@ -743,7 +766,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         IWineD3DSwapChainImpl *implSwapChain;
         IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
 
-        if (iface ==  implSwapChain->backBuffer || iface ==  implSwapChain->frontBuffer || iface == myDevice->renderTarget) {
+        if (backbuf || iface ==  implSwapChain->frontBuffer || iface == myDevice->renderTarget) {
             GLint  prev_store;
             GLint  prev_draw;
             GLint  prev_depth_test;
@@ -787,7 +810,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             if (iface ==  implSwapChain->frontBuffer) {
                 glDrawBuffer(GL_FRONT);
                 checkGLcall("glDrawBuffer GL_FRONT");
-            } else if (iface ==  implSwapChain->backBuffer || iface == myDevice->renderTarget) {
+            } else if (backbuf || iface == myDevice->renderTarget) {
                 glDrawBuffer(GL_BACK);
                 checkGLcall("glDrawBuffer GL_BACK");
             }
@@ -802,6 +825,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
             glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
             vcheckGLcall("glRasterPos2f");
+
             switch (This->resource.format) {
 	    case WINED3DFMT_X4R4G4B4:
 	        {
@@ -1996,7 +2020,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             /* These flags are unimportant for the flag check, remove them */
 
             if((Flags & ~(DDBLT_DONOTWAIT | DDBLT_WAIT)) == 0) {
-                if( ((IWineD3DSurface *) This == swapchain->frontBuffer) && ((IWineD3DSurface *) Src == swapchain->backBuffer) ) {
+                if( swapchain->backBuffer && ((IWineD3DSurface *) This == swapchain->frontBuffer) && ((IWineD3DSurface *) Src == swapchain->backBuffer[0]) ) {
 
                     D3DSWAPEFFECT orig_swap = swapchain->presentParms.SwapEffect;
 
@@ -2027,10 +2051,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
         /* Blt from texture to rendertarget? */
         if( ( ( (IWineD3DSurface *) This == swapchain->frontBuffer) ||
-              ((IWineD3DSurface *) This == swapchain->backBuffer) )
+              ( swapchain->backBuffer && (IWineD3DSurface *) This == swapchain->backBuffer[0]) )
               &&
               ( ( (IWineD3DSurface *) Src != swapchain->frontBuffer) &&
-                ( (IWineD3DSurface *) Src != swapchain->backBuffer) ) ) {
+                ( swapchain->backBuffer && (IWineD3DSurface *) Src != swapchain->backBuffer[0]) ) ) {
             float glTexCoord[4];
             DWORD oldCKey;
             GLint oldLight, oldFog, oldDepth, oldBlend, oldCull, oldAlpha;
@@ -2253,9 +2277,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
         /* Blt from rendertarget to texture? */
         if( (SrcSurface == swapchain->frontBuffer) ||
-            (SrcSurface == swapchain->backBuffer) ) {
+            (swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0]) ) {
             if( ( (IWineD3DSurface *) This != swapchain->frontBuffer) &&
-                ( (IWineD3DSurface *) This != swapchain->backBuffer) ) {
+                ( swapchain->backBuffer && (IWineD3DSurface *) This != swapchain->backBuffer[0]) ) {
                 UINT row;
                 D3DRECT srect;
                 float xrel, yrel;
@@ -2282,7 +2306,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 /* Bind the target texture */
                 glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
                 checkGLcall("glBindTexture");
-                if(SrcSurface == swapchain->backBuffer) {
+                if(swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0]) {
                     glReadBuffer(GL_BACK);
                 } else {
                     glReadBuffer(GL_FRONT);
@@ -2385,7 +2409,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         TRACE("Calling GetSwapChain with mydevice = %p\n", myDevice);
         IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
         IWineD3DSwapChain_Release( (IWineD3DSwapChain *) implSwapChain );
-        if(This ==  (IWineD3DSurfaceImpl*) implSwapChain->backBuffer) {
+        if(implSwapChain->backBuffer && This == (IWineD3DSurfaceImpl*) implSwapChain->backBuffer[0]) {
             glDrawBuffer(GL_BACK);
             checkGLcall("glDrawBuffer(GL_BACK)");
         }

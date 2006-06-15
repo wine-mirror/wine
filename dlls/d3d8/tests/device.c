@@ -81,10 +81,9 @@ static void test_swapchain(void)
     hr = IDirect3DDevice8_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain2);
     ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString8(hr));
 
-    /* Unsupported by wine for now */
     d3dpp.BackBufferCount  = 2;
     hr = IDirect3DDevice8_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain3);
-    todo_wine ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString8(hr));
     if(SUCCEEDED(hr)) {
         /* Swapchain 3, created with backbuffercount 2 */
         backbuffer = (void *) 0xdeadbeef;

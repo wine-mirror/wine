@@ -1343,9 +1343,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     *******************************/
 
     /* Check the params */
-    if(*pPresentationParameters->BackBufferCount > 1) {
+    if(*pPresentationParameters->BackBufferCount > D3DPRESENT_BACK_BUFFER_MAX) {
         ERR("App requested %d back buffers, this is not supported for now\n", *pPresentationParameters->BackBufferCount);
         return WINED3DERR_INVALIDCALL;
+    } else if (*pPresentationParameters->BackBufferCount > 1) {
+        FIXME("The app requests more than one back buffer, this can't be supported properly. Please configure the application to use double buffering(=1 back buffer) if possible\n");
     }
 
     D3DCREATEOBJECTINSTANCE(object, SwapChain)
@@ -1581,23 +1583,48 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
                              NULL /* pShared (always null)*/);
     if (object->frontBuffer != NULL)
         IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
+
     if(object->presentParms.BackBufferCount > 0) {
-        TRACE("calling rendertarget CB\n");
-        hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
-                                object->presentParms.BackBufferWidth,
-                                object->presentParms.BackBufferHeight,
-                                object->presentParms.BackBufferFormat,
-                                object->presentParms.MultiSampleType,
-                                object->presentParms.MultiSampleQuality,
-                                TRUE /* Lockable */,
-                                &object->backBuffer,
-                                NULL /* pShared (always null)*/);
+        int i;
+
+        object->backBuffer = HeapAlloc(GetProcessHeap(), 0, sizeof(IWineD3DSurface *) * object->presentParms.BackBufferCount);
+        if(!object->backBuffer) {
+            ERR("Out of memory\n");
+
+            if (object->frontBuffer) {
+                IUnknown *bufferParent;
+                IWineD3DSurface_GetParent(object->frontBuffer, &bufferParent);
+                IUnknown_Release(bufferParent); /* once for the get parent */
+                if (IUnknown_Release(bufferParent) > 0) {
+                    FIXME("(%p) Something's still holding the front buffer\n",This);
+                }
+            }
+            HeapFree(GetProcessHeap(), 0, object);
+            return E_OUTOFMEMORY;
+        }
+
+        for(i = 0; i < object->presentParms.BackBufferCount; i++) {
+            TRACE("calling rendertarget CB\n");
+            hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
+                                    object->presentParms.BackBufferWidth,
+                                    object->presentParms.BackBufferHeight,
+                                    object->presentParms.BackBufferFormat,
+                                    object->presentParms.MultiSampleType,
+                                    object->presentParms.MultiSampleQuality,
+                                    TRUE /* Lockable */,
+                                    &object->backBuffer[i],
+                                    NULL /* pShared (always null)*/);
+            if(hr == WINED3D_OK && object->backBuffer[i]) {
+                IWineD3DSurface_SetContainer(object->backBuffer[i], (IWineD3DBase *)object);
+            } else {
+                break;
+            }
+        }
     } else {
         object->backBuffer = NULL;
     }
 
     if (object->backBuffer != NULL) {
-        IWineD3DSurface_SetContainer(object->backBuffer, (IWineD3DBase *)object);
         ENTER_GL();
         glDrawBuffer(GL_BACK);
         checkGLcall("glDrawBuffer(GL_BACK)");
@@ -1611,7 +1638,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     }
 
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
-    if (pPresentationParameters->EnableAutoDepthStencil) {
+    if (pPresentationParameters->EnableAutoDepthStencil && hr == WINED3D_OK) {
         TRACE("Creating depth stencil buffer\n");
         if (This->depthStencilBuffer == NULL ) {
             hr = D3DCB_CreateDepthStencil((IUnknown *) This->parent,
@@ -1635,7 +1662,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         object->wantsDepthStencilBuffer = FALSE;
     }
 
-    TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil %d\n",object->frontBuffer, object->backBuffer, object->wantsDepthStencilBuffer);
+    TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil %d\n",object->frontBuffer, object->backBuffer ? NULL : object->backBuffer[0], object->wantsDepthStencilBuffer);
 
 
    /*********************
@@ -1704,11 +1731,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
             }
         }
         if (object->backBuffer) {
-            IWineD3DSurface_GetParent(object->backBuffer, &bufferParent);
-            IUnknown_Release(bufferParent); /* once for the get parent */
-            if (IUnknown_Release(bufferParent) > 0) {
-                FIXME("(%p) Something's still holding the back buffer\n",This);
+            int i;
+            for(i = 0; i < object->presentParms.BackBufferCount; i++) {
+                if(object->backBuffer[i]) {
+                    IWineD3DSurface_GetParent(object->backBuffer[i], &bufferParent);
+                    IUnknown_Release(bufferParent); /* once for the get parent */
+                    if (IUnknown_Release(bufferParent) > 0) {
+                        FIXME("(%p) Something's still holding the back buffer\n",This);
+                    }
+                }
             }
+            HeapFree(GetProcessHeap(), 0, object->backBuffer);
+            object->backBuffer = NULL;
         }
         /* NOTE: don't clean up the depthstencil buffer because it belongs to the device */
         /* Clean up the context */
@@ -1891,9 +1925,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     }
     This->swapchains[0] = (IWineD3DSwapChain *) swapchain;
 
-    if(swapchain->backBuffer) {
+    if(swapchain->backBuffer && swapchain->backBuffer[0]) {
         TRACE("Setting rendertarget to %p\n", swapchain->backBuffer);
-        This->renderTarget = swapchain->backBuffer;
+        This->renderTarget = swapchain->backBuffer[0];
     }
     else {
         TRACE("Setting rendertarget to %p\n", swapchain->frontBuffer);
@@ -6027,7 +6061,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTargetData(IWineD3DDevice *i
     ENTER_GL();
     /* TODO: opengl Context switching for swapchains etc... */
     if (NULL != container  || pRenderTarget == This->renderTarget || pRenderTarget == This->depthStencilBuffer) {
-        if (NULL != container  && (pRenderTarget == container->backBuffer)) {
+        if (NULL != container  && (pRenderTarget == container->backBuffer[0])) {
             glReadBuffer(GL_BACK);
             vcheckGLcall("glReadBuffer(GL_BACK)");
         } else if ((NULL != container  && (pRenderTarget == container->frontBuffer)) || (pRenderTarget == This->renderTarget)) {
@@ -6725,28 +6759,44 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
             IWineD3DSurface_SetContainer(Swapchain->frontBuffer, (IWineD3DBase *) Swapchain);
         }
     }
-    if(Swapchain->backBuffer != Back) {
+
+    if(Back && !Swapchain->backBuffer) {
+        /* We need memory for the back buffer array - only one back buffer this way */
+        Swapchain->backBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *));
+        if(!Swapchain->backBuffer) {
+            ERR("Out of memory\n");
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    if(Swapchain->backBuffer[0] != Back) {
         TRACE("Changing the back buffer from %p to %p\n", Swapchain->backBuffer, Back);
         ENTER_GL();
-        if(!Swapchain->backBuffer) {
+        if(!Swapchain->backBuffer[0]) {
             /* GL was told to draw to the front buffer at creation,
              * undo that
              */
             glDrawBuffer(GL_BACK);
             checkGLcall("glDrawBuffer(GL_BACK)");
+            /* Set the backbuffer count to 1 because other code uses it to fing the back buffers */
+            Swapchain->presentParms.BackBufferCount = 1;
         } else if (!Back) {
             /* That makes problems - disable for now */
             /* glDrawBuffer(GL_FRONT); */
             checkGLcall("glDrawBuffer(GL_FRONT)");
+            /* We have lost our back buffer, set this to 0 to avoid confusing other code */
+            Swapchain->presentParms.BackBufferCount = 0;
         }
         LEAVE_GL();
 
-        if(Swapchain->backBuffer)
-            IWineD3DSurface_SetContainer(Swapchain->backBuffer, NULL);
-        Swapchain->backBuffer = Back;
+        if(Swapchain->backBuffer[0])
+            IWineD3DSurface_SetContainer(Swapchain->backBuffer[0], NULL);
+        Swapchain->backBuffer[0] = Back;
 
-        if(Swapchain->backBuffer) {
-            IWineD3DSurface_SetContainer(Swapchain->backBuffer, (IWineD3DBase *) Swapchain);
+        if(Swapchain->backBuffer[0]) {
+            IWineD3DSurface_SetContainer(Swapchain->backBuffer[0], (IWineD3DBase *) Swapchain);
+        } else {
+            HeapFree(GetProcessHeap(), 0, Swapchain->backBuffer);
         }
 
     }
@@ -7072,14 +7122,24 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
 
     /**
     * TODO: remove the use of IWineD3DSwapChainImpl, a context manager will help since it will replace the
-    *  renderTarget = swapchain->backBuffer bit and anything to do with *glContexts
+    *  renderTarget = swapchain->backBuffer[i] bit and anything to do with *glContexts
      **********************************************************************/
     if (IWineD3DSurface_GetContainer(RenderSurface, &IID_IWineD3DSwapChain, (void **)&swapchain) == WINED3D_OK) {
         /* We also need to make sure that the lights &co are also in the context of the swapchains */
         /* FIXME: If the render target gets sent to the frontBuffer should be be presenting it raw? */
         TRACE("making swapchain active\n");
         if (RenderSurface != This->renderTarget) {
-            if (RenderSurface ==  swapchain->backBuffer) {
+            BOOL backbuf = FALSE;
+            int i;
+
+            for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
+                if(RenderSurface == swapchain->backBuffer[i]) {
+                    backbuf = TRUE;
+                    break;
+                }
+            }
+
+            if (backbuf) {
             } else {
                 /* This could be flagged so that some operations work directly with the front buffer */
                 FIXME("Attempting to set the  renderTarget to the frontBuffer\n");

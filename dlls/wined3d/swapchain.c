@@ -101,11 +101,14 @@ static ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
         }
 
         if(This->backBuffer) {
-            IWineD3DSurface_SetContainer(This->backBuffer, 0);
-            IWineD3DSurface_GetParent(This->backBuffer, &bufferParent);
-            IUnknown_Release(bufferParent); /* once for the get parent */
-            if(IUnknown_Release(bufferParent) > 0){
-                FIXME("(%p) Something's still holding the back buffer\n",This);
+            int i;
+            for(i = 0; i < This->presentParms.BackBufferCount; i++) {
+                IWineD3DSurface_SetContainer(This->backBuffer[i], 0);
+                IWineD3DSurface_GetParent(This->backBuffer[i], &bufferParent);
+                IUnknown_Release(bufferParent); /* once for the get parent */
+                if(IUnknown_Release(bufferParent) > 0){
+                    FIXME("(%p) Something's still holding the back buffer\n",This);
+                }
             }
         }
 
@@ -330,7 +333,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     }
 
     ((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags |= SFLAG_GLDIRTY;
-    ((IWineD3DSurfaceImpl *) This->backBuffer)->Flags |= SFLAG_GLDIRTY;
+    ((IWineD3DSurfaceImpl *) This->backBuffer[0])->Flags |= SFLAG_GLDIRTY;
 
     TRACE("returning\n");
     return WINED3D_OK;
@@ -373,9 +376,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *ifa
 
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
 
-    *ppBackBuffer = This->backBuffer;
-    TRACE("(%p) : BackBuf %d Type %d  returning %p\n", This, iBackBuffer, Type, *ppBackBuffer);
-
     if (iBackBuffer > This->presentParms.BackBufferCount - 1) {
         TRACE("Back buffer count out of range\n");
         /* Native d3d9 doesn't set NULL here, just as wine's d3d9. But set it here
@@ -384,6 +384,9 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *ifa
         *ppBackBuffer = NULL;
         return WINED3DERR_INVALIDCALL;
     }
+
+    *ppBackBuffer = This->backBuffer[iBackBuffer];
+    TRACE("(%p) : BackBuf %d Type %d  returning %p\n", This, iBackBuffer, Type, *ppBackBuffer);
 
     /* Note inc ref on returned surface */
     if(*ppBackBuffer) IWineD3DSurface_AddRef(*ppBackBuffer);
