@@ -2032,13 +2032,6 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	SetLastError(ERROR_INVALID_LEVEL);
 	return 0;
     }
-    if (strlenW(pi->pPrinterName) >= CCHDEVICENAME) {
-	ERR("Printername %s must not exceed length of DEVMODE.dmDeviceName !\n",
-		debugstr_w(pi->pPrinterName)
-	);
-	SetLastError(ERROR_INVALID_LEVEL);
-	return 0;
-    }
     if(!pPrinter) {
         SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
@@ -2109,19 +2102,19 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
         dmW = pi->pDevMode;
     else 
     {
-	    dmW = HeapAlloc(GetProcessHeap(), 0, size);
+        dmW = HeapAlloc(GetProcessHeap(), 0, size);
         ZeroMemory(dmW,size);
-	    dmW->dmSize = size;
-	    if (0>DocumentPropertiesW(0,0,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER)) 
+        dmW->dmSize = size;
+        if (0>DocumentPropertiesW(0,0,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER))
         {
-	        WARN("DocumentPropertiesW on printer '%s' failed!\n", debugstr_w(pi->pPrinterName));
+            WARN("DocumentPropertiesW on printer '%s' failed!\n", debugstr_w(pi->pPrinterName));
             HeapFree(GetProcessHeap(),0,dmW);
             dmW=NULL;
-	    }
+        }
         else
         {
-	        /* set devmode to printer name */
-	        strcpyW(dmW->dmDeviceName,pi->pPrinterName);
+            /* set devmode to printer name */
+            lstrcpynW(dmW->dmDeviceName, pi->pPrinterName, CCHDEVICENAME);
         }
     }
 
