@@ -675,7 +675,8 @@ static BOOL WINAPI CRYPT_AsnEncodeCRLInfo(DWORD dwCertEncodingType,
          { &info->ThisUpdate,         CRYPT_AsnEncodeChoiceOfTime, 0 },
          { 0 }
         };
-        DWORD cItem = 4;
+        struct AsnConstructedItem constructed[1] = { { 0 } };
+        DWORD cItem = 4, cConstructed = 0;
 
         if (info->NextUpdate.dwLowDateTime || info->NextUpdate.dwHighDateTime)
         {
@@ -691,8 +692,12 @@ static BOOL WINAPI CRYPT_AsnEncodeCRLInfo(DWORD dwCertEncodingType,
         }
         if (info->cExtension)
         {
-            items[cItem].pvStructInfo = &info->cExtension;
-            items[cItem].encodeFunc = CRYPT_AsnEncodeExtensions;
+            constructed[cConstructed].tag = 0;
+            constructed[cConstructed].pvStructInfo = &info->cExtension;
+            constructed[cConstructed].encodeFunc = CRYPT_AsnEncodeExtensions;
+            items[cItem].pvStructInfo = &constructed[cConstructed];
+            items[cItem].encodeFunc = CRYPT_AsnEncodeConstructed;
+            cConstructed++;
             cItem++;
         }
 

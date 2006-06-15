@@ -957,10 +957,9 @@ static BOOL WINAPI CRYPT_AsnDecodeCRLInfo(DWORD dwCertEncodingType,
          { ASN_SEQUENCEOF, offsetof(CRL_INFO, cCRLEntry),
            CRYPT_AsnDecodeCRLEntries, sizeof(struct GenericArray), TRUE, TRUE,
            offsetof(CRL_INFO, rgCRLEntry), 0 },
-         /* Note that the extensions are ignored by MS, so I'll ignore them too
-          */
-         { 0, offsetof(CRL_INFO, cExtension), NULL,
-           sizeof(CERT_EXTENSIONS), TRUE, FALSE, 0 },
+         { ASN_CONTEXT | ASN_CONSTRUCTOR | 0, offsetof(CRL_INFO, cExtension),
+           CRYPT_AsnDecodeCertExtensions, sizeof(CERT_EXTENSIONS), TRUE, TRUE,
+           offsetof(CRL_INFO, rgExtension), 0 },
         };
 
         ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
