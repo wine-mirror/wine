@@ -160,7 +160,7 @@ inline static void init_thread_structure( struct thread *thread )
 /* check if address looks valid for a client-side data structure (TEB etc.) */
 static inline int is_valid_address( void *addr )
 {
-    return addr && !((unsigned int)addr % sizeof(int));
+    return addr && !((unsigned long)addr % sizeof(int));
 }
 
 /* create a new thread */
