@@ -607,38 +607,9 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
 
     if (*filetype)
     {
-	if (lpOperation)
-	{
-	    /* pass the operation string to SHELL_FindExecutableByOperation() */
-	    filetype[filetypelen] = '\0';
-	    retval = SHELL_FindExecutableByOperation(lpPath, lpFile, lpOperation, key, filetype, command, sizeof(command));
-	}
-	else
-	{
-	    WCHAR operation[MAX_PATH];
-	    HKEY hkey;
-
-	    /* Looking for ...buffer\shell\<operation>\command */
-	    strcatW(filetype, wszShell);
-
-	    /* enumerate the operation subkeys in the registry and search for one with an associated command */
-	    if (RegOpenKeyW(HKEY_CLASSES_ROOT, filetype, &hkey) == ERROR_SUCCESS)
-	    {
-		int idx = 0;
-		for(;; ++idx)
-		{
-		    if (RegEnumKeyW(hkey, idx, operation, MAX_PATH) != ERROR_SUCCESS)
-			break;
-
-		    filetype[filetypelen] = '\0';
-		    retval = SHELL_FindExecutableByOperation(lpPath, lpFile, operation, key, filetype, command, sizeof(command));
-
-		    if (retval > 32)
-			break;
-	    }
-		RegCloseKey(hkey);
-	    }
-	}
+        /* pass the operation string to SHELL_FindExecutableByOperation() */
+        filetype[filetypelen] = '\0';
+        retval = SHELL_FindExecutableByOperation(lpPath, lpFile, lpOperation, key, filetype, command, sizeof(command));
 
 	if (retval > 32)
 	{
