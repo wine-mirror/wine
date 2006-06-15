@@ -5,8 +5,7 @@ VPATH     = @srcdir@
 MODULE    = d3d8.dll
 IMPORTLIB = libd3d8.$(IMPLIBEXT)
 IMPORTS   = wined3d user32 gdi32 advapi32 kernel32
-EXTRAINCL = @X_CFLAGS@
-EXTRALIBS = -ldxguid -luuid @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
+EXTRALIBS = -ldxguid -luuid
 
 C_SRCS = \
 	basetexture.c \

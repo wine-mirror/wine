@@ -23,19 +23,6 @@
 #ifndef __WINE_D3D8_PRIVATE_H
 #define __WINE_D3D8_PRIVATE_H
 
-#ifndef __WINE_CONFIG_H
-# error You must include config.h to use this header
-#endif
-
-#undef APIENTRY
-#undef CALLBACK
-#undef WINAPI
-
-/* Redefines the constants */
-#define CALLBACK    __stdcall
-#define WINAPI      __stdcall
-#define APIENTRY    WINAPI
-
 #include <stdarg.h>
 
 #define NONAMELESSUNION
