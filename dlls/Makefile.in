@@ -9,8 +9,8 @@ VPATH     = @srcdir@
 
 GLU32FILES = glu32
 GLUT32FILES = glut32
-OPENGLFILES = d3d8 d3d9 d3dx8 opengl32 wined3d
-XFILES = ddraw x11drv
+OPENGLFILES = opengl32 wined3d
+XFILES = x11drv
 EXTRADIRS = @GLU32FILES@ @GLUT32FILES@ @OPENGLFILES@ @XFILES@
 
 # Subdir list
@@ -34,11 +34,15 @@ BASEDIRS = \
 	crypt32 \
 	cryptdll \
 	ctl3d32 \
+	d3d8 \
+	d3d9 \
 	d3dim \
 	d3drm \
+	d3dx8 \
 	d3dxof \
 	dbghelp \
 	dciman32 \
+	ddraw \
 	devenum \
 	dinput \
 	dinput8 \
@@ -199,10 +203,6 @@ IMPLIBSUBDIRS = \
 SUBDIRS = \
 	$(BASEDIRS) \
 	$(IMPLIBSUBDIRS) \
-	d3d8 \
-	d3d9 \
-	d3dx8 \
-	ddraw \
 	glu32 \
 	glut32 \
 	opengl32 \
@@ -298,9 +298,6 @@ x11drv.dll.so: winex11.drv.so
 	$(RM) $@ && $(LN_S) winex11.drv.so $@
 
 # Map symlink name to the corresponding library
-
-ddraw.dll.so: ddraw/ddraw.dll.so
-	$(RM) $@ && $(LN_S) ddraw/ddraw.dll.so $@
 
 gdi32.dll.so: gdi/gdi32.dll.so
 	$(RM) $@ && $(LN_S) gdi/gdi32.dll.so $@
@@ -918,7 +915,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
-ddraw/ddraw.dll.so: ddraw
 gdi/gdi32.dll.so: gdi
 winmm/joystick/joystick.drv.so: winmm/joystick
 kernel/kernel32.dll.so: kernel

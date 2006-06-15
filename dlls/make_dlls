@@ -33,13 +33,9 @@ my %altnames = ();
 # list of special dlls that can be switched on or off by configure
 my %special_dlls =
 (
-  "ddraw"    => "XFILES",
   "glu32"    => "GLU32FILES",
   "glut32"   => "GLUT32FILES",
   "opengl32" => "OPENGLFILES",
-  "d3d8"     => "OPENGLFILES",
-  "d3d9"     => "OPENGLFILES",
-  "d3dx8"    => "OPENGLFILES",
   "wined3d"  => "OPENGLFILES",
   "x11drv"   => "XFILES"
 );
@@ -222,7 +218,7 @@ EOF
 print NEWMAKE "# Map symlink name to the corresponding library\n\n";
 foreach my $mod (sort keys %directories)
 {
-    next unless (needs_symlink($mod) || $mod eq "ddraw.dll"); # FIXME: hack because of x11drv
+    next unless needs_symlink($mod);
     printf NEWMAKE "%s.so: %s/%s.so\n", $mod, $directories{$mod}, $mod;
     printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s.so \$@\n\n", $directories{$mod}, $mod;
 }
@@ -303,7 +299,7 @@ print NEWMAKE "# Map library name to the corresponding directory\n\n";
 
 foreach my $mod (sort keys %directories)
 {
-    next unless (needs_symlink($mod) || $mod eq "ddraw.dll"); # FIXME: hack because of x11drv
+    next unless needs_symlink($mod);
     printf NEWMAKE "%s/%s.so: %s\n", $directories{$mod}, $mod, $directories{$mod};
 }
 foreach my $mod (sort keys %staticlib_dirs)
