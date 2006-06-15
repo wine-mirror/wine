@@ -2189,7 +2189,7 @@ HRESULT WINAPI EditStreamSetInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
 
   memcpy(&asiw, asi, sizeof(asiw) - sizeof(asiw.szName));
   MultiByteToWideChar(CP_ACP, 0, asi->szName, -1,
-		      asiw.szName, sizeof(asiw.szName));
+		      asiw.szName, sizeof(asiw.szName)/sizeof(WCHAR));
 
   return EditStreamSetInfoW(pstream, &asiw, sizeof(asiw));
 }
