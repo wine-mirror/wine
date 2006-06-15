@@ -283,7 +283,7 @@ IDirect3DViewportImpl_GetViewport(IDirect3DViewport3 *iface,
  *  DDERR_INVALIDPARAMS if Data is NULL
  *
  *****************************************************************************/
-HRESULT WINAPI
+static HRESULT WINAPI
 IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
                                   D3DVIEWPORT *lpData)
 {

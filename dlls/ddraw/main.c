@@ -50,9 +50,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-/* The driver's guid */
-GUID guid = {0x40c1b248,0x9d7d,0x4a29,{0xd7,0xb7,0x4c,0xd8,0x10,0x9f,0x3d,0x5d}};
-
 /* The configured default surface */
 WINED3DSURFTYPE DefaultSurfaceType = SURFACE_UNKNOWN;
 
@@ -720,7 +717,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
  * Returns:
  *  DDENUMRET_OK;
  *******************************************************************************/
-HRESULT WINAPI
+static HRESULT WINAPI
 DestroyCallback(IDirectDrawSurface7 *surf,
                 DDSURFACEDESC2 *desc,
                 void *context)

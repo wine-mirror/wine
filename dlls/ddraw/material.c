@@ -312,7 +312,7 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
     return DD_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 Thunk_IDirect3DMaterialImpl_2_GetHandle(LPDIRECT3DMATERIAL2 iface,
 					LPDIRECT3DDEVICE2 lpDirect3DDevice2,
 					LPD3DMATERIALHANDLE lpHandle)
@@ -323,7 +323,7 @@ Thunk_IDirect3DMaterialImpl_2_GetHandle(LPDIRECT3DMATERIAL2 iface,
 					lpHandle);
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 Thunk_IDirect3DMaterialImpl_1_GetHandle(LPDIRECT3DMATERIAL iface,
 					LPDIRECT3DDEVICE lpDirect3DDevice,
 					LPD3DMATERIALHANDLE lpHandle)
@@ -334,7 +334,7 @@ Thunk_IDirect3DMaterialImpl_1_GetHandle(LPDIRECT3DMATERIAL iface,
 					lpHandle);
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 Thunk_IDirect3DMaterialImpl_2_QueryInterface(LPDIRECT3DMATERIAL2 iface,
                                              REFIID riid,
                                              LPVOID* obp)
@@ -345,7 +345,7 @@ Thunk_IDirect3DMaterialImpl_2_QueryInterface(LPDIRECT3DMATERIAL2 iface,
                                              obp);
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 Thunk_IDirect3DMaterialImpl_1_QueryInterface(LPDIRECT3DMATERIAL iface,
                                              REFIID riid,
                                              LPVOID* obp)

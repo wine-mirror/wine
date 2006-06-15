@@ -2703,7 +2703,7 @@ D3D7CB_CreateDepthStencilSurface(IUnknown *device,
  * so the WineD3DSwapchain has a parent and can be released when the D3D
  * device is destroyed
  *****************************************************************************/
-HRESULT WINAPI
+static HRESULT WINAPI
 D3D7CB_CreateAdditionalSwapChain(IUnknown *device,
                                  WINED3DPRESENT_PARAMETERS* pPresentationParameters,
                                  IWineD3DSwapChain ** ppSwapChain)

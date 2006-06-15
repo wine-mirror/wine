@@ -124,7 +124,7 @@ Thunk_IDirect3DVertexBufferImpl_1_QueryInterface(IDirect3DVertexBuffer *iface,
  *  The new refcount
  *
  *****************************************************************************/
-ULONG WINAPI
+static ULONG WINAPI
 IDirect3DVertexBufferImpl_AddRef(IDirect3DVertexBuffer7 *iface)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
@@ -135,7 +135,7 @@ IDirect3DVertexBufferImpl_AddRef(IDirect3DVertexBuffer7 *iface)
     return ref;
 }
 
-ULONG WINAPI
+static ULONG WINAPI
 Thunk_IDirect3DVertexBufferImpl_1_AddRef(IDirect3DVertexBuffer *iface)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
@@ -154,7 +154,7 @@ Thunk_IDirect3DVertexBufferImpl_1_AddRef(IDirect3DVertexBuffer *iface)
  *  The new refcount
  *
  *****************************************************************************/
-ULONG WINAPI
+static ULONG WINAPI
 IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
@@ -171,7 +171,7 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
     return ref;
 }
 
-ULONG WINAPI
+static ULONG WINAPI
 Thunk_IDirect3DVertexBufferImpl_1_Release(IDirect3DVertexBuffer *iface)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);

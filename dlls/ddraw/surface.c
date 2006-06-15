@@ -1144,7 +1144,7 @@ IDirectDrawSurfaceImpl_PageUnlock(IDirectDrawSurface7 *iface,
  *  DDERR_UNSUPPORTED
  *
  *****************************************************************************/
-HRESULT WINAPI IDirectDrawSurfaceImpl_BltBatch(IDirectDrawSurface7 *iface, DDBLTBATCH *Batch, DWORD Count, DWORD Flags)
+static HRESULT WINAPI IDirectDrawSurfaceImpl_BltBatch(IDirectDrawSurface7 *iface, DDBLTBATCH *Batch, DWORD Count, DWORD Flags)
 {
     TRACE("(%p)->(%p,%ld,%08lx)\n",iface,Batch,Count,Flags);
 
@@ -1218,7 +1218,7 @@ IDirectDrawSurfaceImpl_EnumAttachedSurfaces(IDirectDrawSurface7 *iface,
  *  DD_OK, because it's a stub
  *
  *****************************************************************************/
-HRESULT WINAPI
+static HRESULT WINAPI
 IDirectDrawSurfaceImpl_EnumOverlayZOrders(IDirectDrawSurface7 *iface,
                                           DWORD Flags,
                                           void *context,
@@ -1628,7 +1628,7 @@ IDirectDrawSurfaceImpl_GetDDInterface(IDirectDrawSurface7 *iface,
 }
 
 /* This seems also windows implementation specific - I don't think WineD3D needs this */
-HRESULT WINAPI IDirectDrawSurfaceImpl_ChangeUniquenessValue(IDirectDrawSurface7 *iface)
+static HRESULT WINAPI IDirectDrawSurfaceImpl_ChangeUniquenessValue(IDirectDrawSurface7 *iface)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
     volatile IDirectDrawSurfaceImpl* vThis = This;
@@ -1653,7 +1653,7 @@ HRESULT WINAPI IDirectDrawSurfaceImpl_ChangeUniquenessValue(IDirectDrawSurface7 
     return DD_OK;
 }
 
-HRESULT WINAPI IDirectDrawSurfaceImpl_GetUniquenessValue(IDirectDrawSurface7 *iface, LPDWORD pValue)
+static HRESULT WINAPI IDirectDrawSurfaceImpl_GetUniquenessValue(IDirectDrawSurface7 *iface, LPDWORD pValue)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
 
