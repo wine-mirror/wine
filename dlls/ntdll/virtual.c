@@ -1203,7 +1203,7 @@ NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
         BYTE vprot = view->prot[((const char *)page - (const char *)view->base) >> page_shift];
         if (vprot & VPROT_GUARD)
         {
-            VIRTUAL_SetProt( view, page, page_mask + 1, vprot & ~VPROT_GUARD );
+            VIRTUAL_SetProt( view, page, page_size, vprot & ~VPROT_GUARD );
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
     }
@@ -1597,7 +1597,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         if (view->protect & VPROT_IMAGE) info->Type = MEM_IMAGE;
         else if (view->flags & VFLAG_VALLOC) info->Type = MEM_PRIVATE;
         else info->Type = MEM_MAPPED;
-        for (size = base - alloc_base; size < view->size; size += page_mask+1)
+        for (size = base - alloc_base; size < view->size; size += page_size)
             if (view->prot[size >> page_shift] != vprot) break;
     }
     RtlLeaveCriticalSection(&csVirtual);
