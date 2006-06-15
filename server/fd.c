@@ -278,7 +278,7 @@ static file_pos_t max_unix_offset = OFF_T_MAX;
 
 #define DUMP_LONG_LONG(val) do { \
     if (sizeof(val) > sizeof(unsigned long) && (val) > ~0UL) \
-        fprintf( stderr, "%lx%08lx", (unsigned long)((val) >> 32), (unsigned long)(val) ); \
+        fprintf( stderr, "%lx%08lx", (unsigned long)((unsigned long long)(val) >> 32), (unsigned long)(val) ); \
     else \
         fprintf( stderr, "%lx", (unsigned long)(val) ); \
   } while (0)
