@@ -647,6 +647,17 @@ typedef GLboolean (APIENTRY * PGLFNUNMAPBUFFERARBPROC) (GLenum target);
 typedef void (APIENTRY * PGLFNGETBUFFERPARAMETERIVARBPROC) (GLenum target, GLenum pname, GLint *params);
 typedef void (APIENTRY * PGLFNGETBUFFERPOINTERVARBPROC) (GLenum target, GLenum pname, GLvoid* *params);
 /* GL_EXT_fog_coord */
+#ifndef GL_EXT_fog_coord
+#define GL_EXT_fog_coord 1
+#define GL_FOG_COORDINATE_SOURCE_EXT            0x8450
+#define GL_FOG_COORDINATE_EXT                   0x8451
+#define GL_FRAGMENT_DEPTH_EXT                   0x8452
+#define GL_CURRENT_FOG_COORDINATE_EXT           0x8453
+#define GL_FOG_COORDINATE_ARRAY_TYPE_EXT        0x8454
+#define GL_FOG_COORDINATE_ARRAY_STRIDE_EXT      0x8455
+#define GL_FOG_COORDINATE_ARRAY_POINTER_EXT     0x8456
+#define GL_FOG_COORDINATE_ARRAY_EXT             0x8457
+#endif /* GL_EXT_fog_coord */
 typedef void (APIENTRY * PGLFNGLFOGCOORDFEXTPROC) (GLfloat intesity);
 typedef void (APIENTRY * PGLFNGLFOGCOORDFVEXTPROC) (GLfloat intesity);
 typedef void (APIENTRY * PGLFNGLFOGCOORDDEXTPROC) (GLfloat intesity);

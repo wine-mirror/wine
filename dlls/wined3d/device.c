@@ -3830,8 +3830,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                           glFogi(GL_FOG_MODE, GL_EXP);
                           checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
                           if(GL_SUPPORT(EXT_FOG_COORD)) {
-                              glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH);
-                              checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH");
+                              glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                              checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
                               IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
                               IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
                           }
@@ -3843,8 +3843,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                           glFogi(GL_FOG_MODE, GL_EXP2);
                           checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
                           if(GL_SUPPORT(EXT_FOG_COORD)) {
-                              glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH);
-                              checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH");
+                              glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                              checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
                               IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
                               IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
                           }
@@ -3856,8 +3856,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                           glFogi(GL_FOG_MODE, GL_LINEAR);
                           checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
                           if(GL_SUPPORT(EXT_FOG_COORD)) {
-                              glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH);
-                              checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH");
+                              glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                              checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
                               IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
                               IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
                           }
@@ -3870,8 +3870,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                        * Same happens with Vertexfog on transformed vertices
                        */
                       if(GL_SUPPORT(EXT_FOG_COORD)) {
-                          glFogi(GL_FOG_COORD_SRC, GL_FOG_COORD);
-                          checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FOG_COORD)\n");
+                          glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
+                          checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)\n");
                           glFogi(GL_FOG_MODE, GL_LINEAR);
                           checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
                           glFogf(GL_FOG_START, (float) 0xff);
@@ -3894,8 +3894,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                   case D3DFOG_EXP:    glFogi(GL_FOG_MODE, GL_EXP);
                                       checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
                                       if(GL_SUPPORT(EXT_FOG_COORD)) {
-                                          glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH);
-                                          checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH");
+                                          glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                                          checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
                                           IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
                                           IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
                                       }
@@ -3903,8 +3903,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                   case D3DFOG_EXP2:   glFogi(GL_FOG_MODE, GL_EXP2);
                                       checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
                                       if(GL_SUPPORT(EXT_FOG_COORD)) {
-                                          glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH);
-                                          checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH");
+                                          glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                                          checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
                                           IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
                                           IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
                                       }
@@ -3912,8 +3912,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D
                   case D3DFOG_LINEAR: glFogi(GL_FOG_MODE, GL_LINEAR);
                                       checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
                                       if(GL_SUPPORT(EXT_FOG_COORD)) {
-                                          glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH);
-                                          checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH");
+                                          glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                                          checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
                                           IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
                                           IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
                                       }

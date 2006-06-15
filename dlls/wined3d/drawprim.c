@@ -222,8 +222,8 @@ void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
         /* Vertex fog on transformed vertices? Use the calculated fog factor stored in the specular color */
         if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != D3DFOG_NONE) {
             if(GL_SUPPORT(EXT_FOG_COORD)) {
-                glFogi(GL_FOG_COORD_SRC, GL_FOG_COORD);
-                checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FOG_COORD)");
+                glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
+                checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)");
                 glFogi(GL_FOG_MODE, GL_LINEAR);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
                 /* The dx fog range in this case is fixed to 0 - 255,
@@ -338,8 +338,8 @@ static BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL
         /* Restore fogging */
         if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != D3DFOG_NONE) {
             if(GL_SUPPORT(EXT_FOG_COORD)) {
-                glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH);
-                checkGLcall("glFogi(GL_FOG_COORD_SRC, GL_FRAGMENT_DEPTH)\n");
+                glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)\n");
                 /* Reapply the fog range */
                 IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
                 IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
@@ -1046,7 +1046,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
     if (sd->u.s.fog.lpData != NULL) {
         /* TODO: fog*/
     if (GL_SUPPORT(EXT_FOG_COORD) {
-             glEnableClientState(GL_FOG_COORD_EXT);
+             glEnableClientState(GL_FOG_COORDINATE_EXT);
             (GL_EXTCALL)(FogCoordPointerEXT)(WINED3D_ATR_GLTYPE(fog),
                         sd->u.s.fog.dwStride,
                         sd->u.s.fog.lpData);
@@ -1058,7 +1058,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
     } else {
         if (GL_SUPPRT(EXT_FOR_COORD) {
              /* make sure fog is disabled */
-             glDisableClientState(GL_FOG_COORD_EXT);
+             glDisableClientState(GL_FOG_COORDINATE_EXT);
         }
     }
 #endif
