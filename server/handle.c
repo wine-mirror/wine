@@ -71,11 +71,11 @@ static struct handle_table *global_table;
 /* handles are a multiple of 4 under NT; handle 0 is not used */
 inline static obj_handle_t index_to_handle( int index )
 {
-    return (obj_handle_t)((index + 1) << 2);
+    return (obj_handle_t)((unsigned long)(index + 1) << 2);
 }
 inline static int handle_to_index( obj_handle_t handle )
 {
-    return ((unsigned int)handle >> 2) - 1;
+    return ((unsigned long)handle >> 2) - 1;
 }
 
 /* global handle conversion */
