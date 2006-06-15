@@ -152,7 +152,7 @@ static void test_swapchain(void)
 
     /* Try to get a nonexistant swapchain */
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 1, &swapchainX);
-    ok(hr == D3DERR_INVALIDCALL, "GetSwapChain on an non-existant swapchain returned (%s)\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "GetSwapChain on an nonexistent swapchain returned (%s)\n", DXGetErrorString9(hr));
     ok(swapchainX == NULL, "Swapchain 1 is %p\n", swapchainX);
     if(swapchainX) IDirect3DSwapChain9_Release(swapchainX);
 
@@ -233,7 +233,7 @@ static void test_swapchain(void)
      */
     swapchainX = (void *) 0xdeadbeef;
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 1, &swapchainX);
-    ok(hr == D3DERR_INVALIDCALL, "Failed to get the secound swapchain (%s)\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "Failed to get the second swapchain (%s)\n", DXGetErrorString9(hr));
     ok(swapchainX == NULL, "The swapchain pointer is %p\n", swapchainX);
     if(swapchainX && swapchainX != (void *) 0xdeadbeef ) IDirect3DSwapChain9_Release(swapchainX);
 
@@ -384,7 +384,7 @@ cleanup:
     CHECK_RELEASE(pStateBlock,          pDevice, --refcount);
     CHECK_RELEASE(pSwapChain,           pDevice, --refcount);
     CHECK_RELEASE(pQuery,               pDevice, --refcount);
-    /* This will destroy device - can not check the refcount here */
+    /* This will destroy device - cannot check the refcount here */
     if (pStateBlock1)         IUnknown_Release( pStateBlock1 );
 
     if (pD3d)                 IUnknown_Release( pD3d );

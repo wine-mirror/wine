@@ -1490,7 +1490,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       editor->nUndoLimit = min(wParam, STACK_SIZE_MAX);
     /* Setting a max stack size keeps wine from getting killed 
       for hogging memory. Windows allocates all this memory at once, so
-      no program would realisticly set a value above our maxiumum. */  
+      no program would realistically set a value above our maxiumum. */  
     return editor->nUndoLimit;
   }
   case EM_CANUNDO:

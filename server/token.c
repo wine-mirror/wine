@@ -1132,7 +1132,7 @@ DECL_HANDLER(access_check)
     }
 }
 
-/* retrives the SID of the user that the token represents */
+/* retrieves the SID of the user that the token represents */
 DECL_HANDLER(get_token_user)
 {
     struct token *token;

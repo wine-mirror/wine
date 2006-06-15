@@ -4977,7 +4977,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
                   ( rhw > eps ) ) ) {
 
                 /* "Normal" viewport transformation (not clipped)
-                 * 1) The values are divided trough rhw
+                 * 1) The values are divided by rhw
                  * 2) The y axis is negative, so multiply it with -1
                  * 3) Screen coordinates go from -(Width/2) to +(Width/2) and
                  *    -(Height/2) to +(Height/2). The z range is MinZ to MaxZ

@@ -413,7 +413,7 @@ void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG* arg) {
  * 
  ****************************************************************************/
 
-/* Generate GLSL arithmatic functions (dst = src1 + src2) */
+/* Generate GLSL arithmetic functions (dst = src1 + src2) */
 void shader_glsl_arith(SHADER_OPCODE_ARG* arg) {
 
     CONST SHADER_OPCODE* curOpcode = arg->opcode;

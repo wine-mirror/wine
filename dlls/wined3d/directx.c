@@ -1739,7 +1739,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     if (wined3d_settings.ps_mode == PS_HW && wined3d_settings.shader_mode == SHADER_GLSL
         && DeviceType != WINED3DDEVTYPE_REF) {
         *pCaps->PixelShaderVersion = D3DPS_VERSION(3,0);
-        /* FIXME: The following line is card dependant. -1.0 to 1.0 is a safe default clamp range for now */
+        /* FIXME: The following line is card dependent. -1.0 to 1.0 is a safe default clamp range for now */
         *pCaps->PixelShader1xMaxValue = 1.0;
         TRACE_(d3d_caps)("Hardware pixel shader versions 2.0+ enabled\n");
         } else if (wined3d_settings.ps_mode == PS_HW
