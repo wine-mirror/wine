@@ -5,8 +5,7 @@ VPATH     = @srcdir@
 MODULE    = d3dx8.dll
 IMPORTLIB = libd3dx8.$(IMPLIBEXT)
 IMPORTS   = d3d8 user32 gdi32 kernel32
-EXTRAINCL = @X_CFLAGS@
-EXTRALIBS = -ldxguid -luuid @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
+EXTRALIBS = -ldxguid -luuid
 
 C_SRCS = \
 	d3dx8_main.c \
