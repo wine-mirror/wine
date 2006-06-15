@@ -806,7 +806,7 @@ static void test_EM_SETUNDOLIMIT()
   SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0); 
   result = SendMessage(hwndRichEdit, EM_SETUNDOLIMIT, -1, 0);
   ok (result == 100, 
-      "EM_SETUNDOLIMIT returned %d when set to -1, instead of 100",result);
+      "EM_SETUNDOLIMIT returned %d when set to -1, instead of 100\n",result);
       
   DestroyWindow(hwndRichEdit);
 }

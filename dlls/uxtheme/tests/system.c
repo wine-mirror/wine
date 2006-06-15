@@ -189,7 +189,7 @@ static void test_CloseThemeData(void)
 
     SetLastError(0xdeadbeef);
     hRes = pCloseThemeData(NULL);
-    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx", hRes);
+    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
     ok( GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got 0x%08lx\n",
         GetLastError());

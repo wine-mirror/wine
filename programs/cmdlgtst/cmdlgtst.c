@@ -469,7 +469,7 @@ static void mw_PrintSetup(HWND hWnd)
 
 #define OF(fn, fi, fl)  \
 		if(dm->dmFields & fl){ \
-			WINE_TRACE("        %s  =%hd \n", (fn), dm->fi); \
+			WINE_TRACE("        %s  =%hd\n", (fn), dm->fi); \
 		} else \
 			WINE_TRACE("        %s NOT SET!\n", fn);
 
@@ -488,11 +488,11 @@ static void mw_PageSetup(HWND hWnd)
 		dm = GlobalLock(psd.hDevMode);
 		if(dm) {
 			WINE_TRACE("dm != NULL\nDEVMODEA struct:\n");
-			WINE_TRACE("    dmDeviceName    ='%s'  \n", 	dm->dmDeviceName);
-			WINE_TRACE("    dmSpecVersion   =%#x \n",	dm->dmSpecVersion);
-			WINE_TRACE("    dmDriverVersion =%#x \n",	dm->dmDriverVersion);
-			WINE_TRACE("    dmSize          =%#x \n", 	dm->dmSize);	
-			WINE_TRACE("    dmDriverExtra   =%#x \n",	dm->dmDriverExtra);
+			WINE_TRACE("    dmDeviceName    ='%s'\n", 	dm->dmDeviceName);
+			WINE_TRACE("    dmSpecVersion   =%#x\n",	dm->dmSpecVersion);
+			WINE_TRACE("    dmDriverVersion =%#x\n",	dm->dmDriverVersion);
+			WINE_TRACE("    dmSize          =%#x\n", 	dm->dmSize);	
+			WINE_TRACE("    dmDriverExtra   =%#x\n",	dm->dmDriverExtra);
 			WINE_TRACE("    dmFields        =%#lx\n", 	dm->dmFields);
 			OF("dmOrientation",	u1.s1.dmOrientation,	DM_ORIENTATION)
 			OF("dmPaperSize",	u1.s1.dmPaperSize,	DM_PAPERSIZE);

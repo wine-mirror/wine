@@ -154,7 +154,7 @@ static void test_missing_light_recording(IDirect3DDevice9 *device_ptr)
     hret = IDirect3DDevice9_GetLightEnable(device_ptr, 0, &result_light_enable);
     ok(hret == D3D_OK, "GetLightEnable returned: hret 0x%lx. Expected hret 0x%lx. Aborting.\n", hret, D3D_OK);
     if (hret != D3D_OK) goto cleanup;
-    ok(result_light_enable == 0, "Light enabled status was %u, instead of 0", result_light_enable);
+    ok(result_light_enable == 0, "Light enabled status was %u, instead of 0\n", result_light_enable);
 
     hret = IDirect3DDevice9_GetLight(device_ptr, 0, &result_light);
     ok(hret == D3D_OK, "GetLight returned: hret 0x%lx. Expected hret 0x%lx. Aborting.\n", hret, D3D_OK);
