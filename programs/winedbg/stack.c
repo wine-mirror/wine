@@ -283,6 +283,7 @@ static void backtrace(void)
     }
     /* reset context to current stack frame */
     dbg_curr_thread->curr_frame = cf;
+    if (!dbg_curr_thread->frames) return;
     stack_get_frame(dbg_curr_thread->curr_frame, &ihsf);
     SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
 }
