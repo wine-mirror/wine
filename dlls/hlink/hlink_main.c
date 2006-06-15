@@ -83,7 +83,7 @@ HRESULT WINAPI HlinkCreateFromMoniker( IMoniker *pimkTrgt, LPCWSTR pwzLocation,
             debugstr_w(pwzFriendlyName), pihlsite, dwSiteData, piunkOuter,
             debugstr_guid(riid), ppvObj);
 
-    r = CoCreateInstance(&CLSID_StdHlink, piunkOuter, CLSCTX_INPROC_SERVER, riid, ppvObj);
+    r = CoCreateInstance(&CLSID_StdHlink, piunkOuter, CLSCTX_INPROC_SERVER, riid, (LPVOID*)&hl);
     if (FAILED(r))
         return r;
 
