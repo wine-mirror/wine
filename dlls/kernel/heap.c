@@ -1172,12 +1172,14 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 #ifdef linux
     FILE *f;
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
-    int *tmp, size_sys, mib[2];
+    unsigned long val;
+    int size_sys, mib[2];
 #elif defined(__APPLE__)
-    int *tmp, mib[2];
+    unsigned int val;
+    int mib[2];
     size_t size_sys;
 #elif defined(sun)
-    long pagesize,maxpages,freepages,swapspace,swapfree;
+    unsigned long pagesize,maxpages,freepages,swapspace,swapfree;
     struct anoninfo swapinf;
     int rval;
 #endif
@@ -1200,36 +1202,37 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     if (f)
     {
         char buffer[256];
-        int total, used, free, shared, buffers, cached;
+        unsigned long total, used, free, shared, buffers, cached;
 
         lpmemex->ullTotalPhys = lpmemex->ullAvailPhys = 0;
         lpmemex->ullTotalPageFile = lpmemex->ullAvailPageFile = 0;
         while (fgets( buffer, sizeof(buffer), f ))
         {
 	    /* old style /proc/meminfo ... */
-            if (sscanf( buffer, "Mem: %d %d %d %d %d %d", &total, &used, &free, &shared, &buffers, &cached ))
+            if (sscanf( buffer, "Mem: %lu %lu %lu %lu %lu %lu",
+                        &total, &used, &free, &shared, &buffers, &cached ))
             {
                 lpmemex->ullTotalPhys += total;
                 lpmemex->ullAvailPhys += free + buffers + cached;
             }
-            if (sscanf( buffer, "Swap: %d %d %d", &total, &used, &free ))
+            if (sscanf( buffer, "Swap: %lu %lu %lu", &total, &used, &free ))
             {
                 lpmemex->ullTotalPageFile += total;
                 lpmemex->ullAvailPageFile += free;
             }
 
             /* new style /proc/meminfo ... */
-            if (sscanf(buffer, "MemTotal: %d", &total))
+            if (sscanf(buffer, "MemTotal: %lu", &total))
                 lpmemex->ullTotalPhys = total*1024;
-            if (sscanf(buffer, "MemFree: %d", &free))
+            if (sscanf(buffer, "MemFree: %lu", &free))
                 lpmemex->ullAvailPhys = free*1024;
-            if (sscanf(buffer, "SwapTotal: %d", &total))
+            if (sscanf(buffer, "SwapTotal: %lu", &total))
                 lpmemex->ullTotalPageFile = total*1024;
-            if (sscanf(buffer, "SwapFree: %d", &free))
+            if (sscanf(buffer, "SwapFree: %lu", &free))
                 lpmemex->ullAvailPageFile = free*1024;
-            if (sscanf(buffer, "Buffers: %d", &buffers))
+            if (sscanf(buffer, "Buffers: %lu", &buffers))
                 lpmemex->ullAvailPhys += buffers*1024;
-            if (sscanf(buffer, "Cached: %d", &cached))
+            if (sscanf(buffer, "Cached: %lu", &cached))
                 lpmemex->ullAvailPhys += cached*1024;
         }
         fclose( f );
@@ -1245,33 +1248,17 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__APPLE__)
     mib[0] = CTL_HW;
     mib[1] = HW_PHYSMEM;
-    sysctl(mib, 2, NULL, &size_sys, NULL, 0);
-    tmp = malloc(size_sys * sizeof(int));
-    sysctl(mib, 2, tmp, &size_sys, NULL, 0);
-    if (tmp && *tmp)
-    {
-        lpmemex->ullTotalPhys = *tmp;
-        free(tmp);
-        mib[1] = HW_USERMEM;
-        sysctl(mib, 2, NULL, &size_sys, NULL, 0);
-	tmp = malloc(size_sys * sizeof(int));
-	sysctl(mib, 2, tmp, &size_sys, NULL, 0);
-	if (tmp && *tmp)
-	{
-	    lpmemex->ullAvailPhys = *tmp;
-            lpmemex->ullTotalPageFile = *tmp;
-	    lpmemex->ullAvailPageFile = *tmp;
-	    lpmemex->dwMemoryLoad = lpmemex->ullTotalPhys - lpmemex->ullAvailPhys;
-	} else
-	{
-	    lpmemex->ullAvailPhys = lpmemex->ullTotalPhys;
-	    lpmemex->ullTotalPageFile = lpmemex->ullTotalPhys;
-	    lpmemex->ullAvailPageFile = lpmemex->ullTotalPhys;
-	    lpmemex->dwMemoryLoad = 0;
-	}
-	free(tmp);
-
-    }
+    size_sys = sizeof(val);
+    sysctl(mib, 2, &val, &size_sys, NULL, 0);
+    if (val) lpmemex->ullTotalPhys = val;
+    mib[1] = HW_USERMEM;
+    size_sys = sizeof(val);
+    sysctl(mib, 2, &val, &size_sys, NULL, 0);
+    if (!val) val = lpmemex->ullTotalPhys;
+    lpmemex->ullAvailPhys = val;
+    lpmemex->ullTotalPageFile = val;
+    lpmemex->ullAvailPageFile = val;
+    lpmemex->dwMemoryLoad = lpmemex->ullTotalPhys - lpmemex->ullAvailPhys;
 #elif defined ( sun )
     pagesize=sysconf(_SC_PAGESIZE);
     maxpages=sysconf(_SC_PHYS_PAGES);
