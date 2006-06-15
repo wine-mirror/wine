@@ -1,6 +1,7 @@
 Makefile
 db.ok
 format.ok
+install.ok
 msi.ok
 package.ok
 record.ok

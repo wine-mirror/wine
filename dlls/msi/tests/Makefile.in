@@ -3,11 +3,12 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msi.dll
-IMPORTS   = msi kernel32
+IMPORTS   = cabinet msi advapi32 kernel32
 
 CTESTS = \
 	db.c \
 	format.c \
+	install.c \
 	msi.c \
 	package.c \
 	record.c \
