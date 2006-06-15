@@ -331,13 +331,58 @@ static void test_gettargetpath_bad(void)
     DeleteFile(msifile);
 }
 
-static void test_settargetpath_bad(void)
+static void test_settargetpath(void)
 {
+    char tempdir[MAX_PATH+8], buffer[MAX_PATH];
+    DWORD sz;
     MSIHANDLE hpkg;
     UINT r;
+    MSIHANDLE hdb;
+    
+    hdb = create_package_db();
+    ok ( hdb, "failed to create package database\n" );
 
-    hpkg = package_from_db(create_package_db());
+    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'" );
+    ok( r == S_OK, "failed to add directory entry: %d\n" , r );
+
+    r = run_query( hdb, /* these tables required by Windows Installer for MsiSetTargetPath */
+            "CREATE TABLE `Component` ( "
+            "`Component` CHAR(72) NOT NULL, "
+            "`ComponentId` CHAR(38), "
+            "`Directory_` CHAR(72) NOT NULL, "
+            "`Attributes` SHORT NOT NULL, "
+            "`Condition` CHAR(255), "
+            "`KeyPath` CHAR(72) "
+            "PRIMARY KEY `Component`)" );
+    ok( r == S_OK, "cannot create Component table: %d\n", r );
+
+    r = run_query( hdb,
+            "INSERT INTO `Component`  "
+            "(`Component`, `ComponentId`, `Directory_`, `Attributes`, `Condition`, `KeyPath`) "
+            "VALUES( 'WinWorkAround', '{83e2694d-0864-4124-9323-6d37630912a1}', 'TARGETDIR', 8, '', 'FL_dummycomponent')" );
+    ok( r == S_OK, "cannot add dummy component: %d\n", r );
+
+    r = run_query( hdb,
+            "CREATE TABLE `Feature` ( "
+            "`Feature` CHAR(38) NOT NULL, "
+            "`Feature_Parent` CHAR(38), "
+            "`Title` CHAR(64), "
+            "`Description` CHAR(255), "
+            "`Display` SHORT NOT NULL, "
+            "`Level` SHORT NOT NULL, "
+            "`Directory_` CHAR(72), "
+            "`Attributes` SHORT NOT NULL "
+            "PRIMARY KEY `Feature`)" );
+    ok( r == S_OK, "cannot create Feature table: %d\n", r );
+
+    hpkg = package_from_db( hdb );
     ok( hpkg, "failed to create package\n");
+
+    r = MsiDoAction( hpkg, "CostInitialize");
+    ok( r == ERROR_SUCCESS, "cost init failed\n");
+
+    r = MsiDoAction( hpkg, "CostFinalize");
+    ok( r == ERROR_SUCCESS, "cost finalize failed\n");
 
     r = MsiSetTargetPath( 0, NULL, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
@@ -351,6 +396,42 @@ static void test_settargetpath_bad(void)
     r = MsiSetTargetPath( hpkg, "boo", "c:\\bogusx" );
     ok( r == ERROR_DIRECTORY, "wrong return val\n");
 
+    sz = sizeof tempdir - 1;
+    r = MsiGetTargetPath( hpkg, "TARGETDIR", tempdir, &sz );
+    if ( r == S_OK )
+    {
+        if ( GetTempFileName( tempdir, "_wt", 0, buffer ) )
+        {
+            sprintf( tempdir, "%s\\subdir", buffer );
+            r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
+            todo_wine {
+            ok( r == ERROR_SUCCESS, "MsiSetTargetPath on file returned %d\n", r );
+            }
+
+            r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
+            todo_wine {
+            ok( r == ERROR_SUCCESS, "MsiSetTargetPath on 'subdir' of file returned %d\n", r );
+            }
+
+            DeleteFile( buffer );
+
+            r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
+            ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
+
+            r = GetFileAttributes( buffer );
+            ok ( r == INVALID_FILE_ATTRIBUTES, "file/directory exists after MsiSetTargetPath. Attributes: %08X\n", r );
+
+            r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
+            todo_wine {
+            ok( r == ERROR_SUCCESS, "MsiSetTargetPath on subsubdir returned %d\n", r );
+            }
+        } else {
+            trace("GetTempFileName failed, cannot do some tests\n");
+        }
+    } else {
+        trace( "MsiGetTargetPath failed: %d\n", r );
+    }
+    
     MsiCloseHandle( hpkg );
 }
 
@@ -1017,7 +1098,7 @@ START_TEST(package)
     test_getsourcepath();
     test_doaction();
     test_gettargetpath_bad();
-    test_settargetpath_bad();
+    test_settargetpath();
     test_props();
     test_condition();
     test_msipackage();
