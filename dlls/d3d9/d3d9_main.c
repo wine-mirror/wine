@@ -71,30 +71,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv) {
 }
 
 /***********************************************************************
- *		ValidateVertexShader (D3D9.@)
- *
- * PARAMS
- * toto       result?
- */
-BOOL WINAPI ValidateVertexShader(LPVOID pFunction, int param1, int param2, LPVOID toto)
-{
-  FIXME("(%p %d %d %p): stub\n", pFunction, param1, param2, toto);
-  return TRUE;
-}
-
-/***********************************************************************
- *		ValidatePixelShader (D3D9.@)
- *
- * PARAMS
- * toto       result?
- */
-BOOL WINAPI ValidatePixelShader(LPVOID pFunction, int param1, int param2, LPVOID toto)
-{
-  FIXME("(%p %d %d %p): stub\n", pFunction, param1, param2, toto);
-  return TRUE;
-}
-
-/***********************************************************************
  *              D3DPERF_SetOptions (D3D9.@)
  *
  */
