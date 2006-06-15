@@ -22808,42 +22808,55 @@ fi
 exitcode=0
 if test "$have_x" = "no"
 then
-  echo
-  echo "*** Warning: X development files not found. Wine will be built without"
-  echo "*** X support, which currently does not work, and would probably not be"
-  echo "*** what you want anyway. You will need to install devel packages of"
-  echo "*** Xlib/Xfree86 at the very least."
+  echo >&2
+  { echo "$as_me:$LINENO: WARNING: X development files not found. Wine will be built without" >&5
+echo "$as_me: WARNING: X development files not found. Wine will be built without" >&2;}
+  { echo "$as_me:$LINENO: WARNING: X support, which currently does not work, and probably" >&5
+echo "$as_me: WARNING: X support, which currently does not work, and probably" >&2;}
+  { echo "$as_me:$LINENO: WARNING: isn't what you want anyway. You will need to install devel" >&5
+echo "$as_me: WARNING: isn't what you want anyway. You will need to install devel" >&2;}
+  { echo "$as_me:$LINENO: WARNING:  packages of Xlib/Xfree86 at the very least." >&5
+echo "$as_me: WARNING:  packages of Xlib/Xfree86 at the very least." >&2;}
   exitcode=1
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"
 then
-  echo
-  echo "*** Warning: old Mesa headers detected. Wine will be built without Direct3D"
-  echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)."
+  echo >&2
+  { echo "$as_me:$LINENO: WARNING: Old Mesa headers detected. Wine will be built without Direct3D" >&5
+echo "$as_me: WARNING: Old Mesa headers detected. Wine will be built without Direct3D" >&2;}
+  { echo "$as_me:$LINENO: WARNING: support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&5
+echo "$as_me: WARNING: support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)." >&2;}
   exitcode=1
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"
 then
-  echo
-  echo "*** Note: Your system appears to have the FreeType 2 runtime libraries"
-  echo "*** installed, but 'freetype-config' is not in your PATH. Install the"
-  echo "*** freetype-devel package (or its equivalent on your distribution) to"
-  echo "*** enable Wine to use TrueType fonts."
+  echo >&2
+  { echo "$as_me:$LINENO: WARNING: Your system appears to have the FreeType 2 runtime libraries" >&5
+echo "$as_me: WARNING: Your system appears to have the FreeType 2 runtime libraries" >&2;}
+  { echo "$as_me:$LINENO: WARNING: installed, but 'freetype-config' is not in your PATH. Install" >&5
+echo "$as_me: WARNING: installed, but 'freetype-config' is not in your PATH. Install" >&2;}
+  { echo "$as_me:$LINENO: WARNING: the freetype-devel package (or its equivalent on your distribution)" >&5
+echo "$as_me: WARNING: the freetype-devel package (or its equivalent on your distribution)" >&2;}
+  { echo "$as_me:$LINENO: WARNING: to enable Wine to use TrueType fonts." >&5
+echo "$as_me: WARNING: to enable Wine to use TrueType fonts." >&2;}
   exitcode=1
 fi
 
 if test -z "$FONTSSUBDIRS"
 then
-  echo
+  echo >&2
   if test "$FONTFORGE" = "false"
   then
-    echo "*** Warning: FontForge is missing."
+    { echo "$as_me:$LINENO: WARNING: FontForge is missing." >&5
+echo "$as_me: WARNING: FontForge is missing." >&2;}
   else
-    echo "*** Warning: FreeType is missing."
+    { echo "$as_me:$LINENO: WARNING: FreeType is missing." >&5
+echo "$as_me: WARNING: FreeType is missing." >&2;}
   fi
-  echo "*** Fonts will not be built. Dialog text may be invisible or unaligned."
+  { echo "$as_me:$LINENO: WARNING: Fonts will not be built. Dialog text may be invisible or unaligned." >&5
+echo "$as_me: WARNING: Fonts will not be built. Dialog text may be invisible or unaligned." >&2;}
   exitcode=1
 fi
 
@@ -22857,9 +22870,13 @@ if test -z "$ALSALIBS" -a \
         "$ac_cv_header_machine_soundcard_h" != "yes" -a \
         "$ac_cv_header_soundcard_h" != "yes"
 then
-  echo "*** No sound system was found. Windows applications will be silent."
-  echo "*** The currently supported sound systems are:"
-  echo "*** ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS"
+  echo >&2
+  { echo "$as_me:$LINENO: WARNING: No sound system was found. Windows applications will be silent." >&5
+echo "$as_me: WARNING: No sound system was found. Windows applications will be silent." >&2;}
+  { echo "$as_me:$LINENO: WARNING: The currently supported sound systems are:" >&5
+echo "$as_me: WARNING: The currently supported sound systems are:" >&2;}
+  { echo "$as_me:$LINENO: WARNING: ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS" >&5
+echo "$as_me: WARNING: ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS" >&2;}
   exitcode=1
 fi
 

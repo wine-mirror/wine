@@ -1826,42 +1826,42 @@ AC_OUTPUT
 exitcode=0
 if test "$have_x" = "no"
 then
-  echo
-  echo "*** Warning: X development files not found. Wine will be built without"
-  echo "*** X support, which currently does not work, and would probably not be"
-  echo "*** what you want anyway. You will need to install devel packages of"
-  echo "*** Xlib/Xfree86 at the very least."
+  echo >&2
+  AC_MSG_WARN([X development files not found. Wine will be built without])
+  AC_MSG_WARN([X support, which currently does not work, and probably])
+  AC_MSG_WARN([isn't what you want anyway. You will need to install devel])
+  AC_MSG_WARN([ packages of Xlib/Xfree86 at the very least.])
   exitcode=1
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"
 then
-  echo
-  echo "*** Warning: old Mesa headers detected. Wine will be built without Direct3D"
-  echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)."
+  echo >&2
+  AC_MSG_WARN([Old Mesa headers detected. Wine will be built without Direct3D])
+  AC_MSG_WARN([support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/).])
   exitcode=1
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"
 then
-  echo
-  echo "*** Note: Your system appears to have the FreeType 2 runtime libraries"
-  echo "*** installed, but 'freetype-config' is not in your PATH. Install the"
-  echo "*** freetype-devel package (or its equivalent on your distribution) to"
-  echo "*** enable Wine to use TrueType fonts."
+  echo >&2
+  AC_MSG_WARN([Your system appears to have the FreeType 2 runtime libraries])
+  AC_MSG_WARN([installed, but 'freetype-config' is not in your PATH. Install])
+  AC_MSG_WARN([the freetype-devel package (or its equivalent on your distribution)])
+  AC_MSG_WARN([to enable Wine to use TrueType fonts.])
   exitcode=1
 fi
 
 if test -z "$FONTSSUBDIRS"
 then
-  echo
+  echo >&2
   if test "$FONTFORGE" = "false"
   then
-    echo "*** Warning: FontForge is missing."
+    AC_MSG_WARN([FontForge is missing.])
   else
-    echo "*** Warning: FreeType is missing."
+    AC_MSG_WARN([FreeType is missing.])
   fi
-  echo "*** Fonts will not be built. Dialog text may be invisible or unaligned."
+  AC_MSG_WARN([Fonts will not be built. Dialog text may be invisible or unaligned.])
   exitcode=1
 fi
 
@@ -1875,9 +1875,10 @@ if test -z "$ALSALIBS" -a \
         "$ac_cv_header_machine_soundcard_h" != "yes" -a \
         "$ac_cv_header_soundcard_h" != "yes"
 then
-  echo "*** No sound system was found. Windows applications will be silent."
-  echo "*** The currently supported sound systems are:"
-  echo "*** ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS"
+  echo >&2
+  AC_MSG_WARN([No sound system was found. Windows applications will be silent.])
+  AC_MSG_WARN([The currently supported sound systems are:])
+  AC_MSG_WARN([ALSA, ARTS, EsounD, AudioIO, Jack, NAS and OSS])
   exitcode=1
 fi
 
