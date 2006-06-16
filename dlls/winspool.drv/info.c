@@ -1480,10 +1480,23 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
         return FALSE;
     }
 
-    if(RegCreateKeyExW(hroot, mi2w->pName, 0, NULL, REG_OPTION_NON_VOLATILE,
-                 KEY_WRITE, NULL, &hentry, &disposition) == ERROR_SUCCESS) {
+    if(RegCreateKeyExW( hroot, mi2w->pName, 0, NULL, REG_OPTION_NON_VOLATILE,
+                        KEY_WRITE | KEY_QUERY_VALUE, NULL, &hentry,
+                        &disposition) == ERROR_SUCCESS) {
 
-        if (disposition == REG_OPENED_EXISTING_KEY) {
+        /* Some installers set options for the port before calling AddMonitor.
+           We query the "Driver" entry to verify that the monitor is installed,
+           before we return an error.
+           When a user installs two print monitors at the same time with the
+           same name but with a different driver DLL and a task switch comes
+           between RegQueryValueExW and RegSetValueExW, a race condition
+           is possible but silently ignored. */
+
+        DWORD   namesize = 0;
+
+        if ((disposition == REG_OPENED_EXISTING_KEY) &&
+            (RegQueryValueExW(hentry, DriverW, NULL, NULL, NULL,
+                              &namesize) == ERROR_SUCCESS)) {
             TRACE("monitor %s already exists\n", debugstr_w(mi2w->pName));
             /* NT: ERROR_PRINT_MONITOR_ALREADY_INSTALLED (3006)
                9x: ERROR_ALREADY_EXISTS (183) */
