@@ -1376,6 +1376,8 @@ extern void shader_glsl_rcp(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_cnd(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_compare(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_def(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_defi(SHADER_OPCODE_ARG* arg);
+extern void shader_glsl_defb(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_cmp(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_lit(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_dst(SHADER_OPCODE_ARG* arg);

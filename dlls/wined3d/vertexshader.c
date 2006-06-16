@@ -536,8 +536,8 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
 
     /* Constant definitions */
     {D3DSIO_DEF,      "def",      NULL,                1, 5, vshader_def,     shader_hw_def, shader_glsl_def, 0, 0},
-    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL, 1, 2, vshader_defb,    NULL, NULL, 0, 0},
-    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, vshader_defi,    NULL, NULL, 0, 0},
+    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL, 1, 2, vshader_defb,    NULL, shader_glsl_defb, 0, 0},
+    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, vshader_defi,    NULL, shader_glsl_defi, 0, 0},
 
     /* Flow control - requires GLSL or software shaders */
     {D3DSIO_REP ,     "rep",      GLNAME_REQUIRE_GLSL, 0, 1, vshader_rep,     NULL, NULL, 0, 0},

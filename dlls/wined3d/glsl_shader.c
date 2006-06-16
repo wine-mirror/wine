@@ -947,7 +947,7 @@ void shader_glsl_lrp(SHADER_OPCODE_ARG* arg) {
                    tmpLine, src2_str, src1_str, src0_str, src0_str, dst_mask);
 }
 
-/** Process the D3DSIO_DCL opcode into a GLSL string - creates a local vec4
+/** Process the D3DSIO_DEF opcode into a GLSL string - creates a local vec4
  * float constant, and stores it's usage on the regmaps. */
 void shader_glsl_def(SHADER_OPCODE_ARG* arg) {
 
@@ -965,6 +965,31 @@ void shader_glsl_def(SHADER_OPCODE_ARG* arg) {
                    *((const float *)(arg->src + 3)) );
 
     arg->reg_maps->constantsF[reg] = 1;
+}
+
+/** Process the D3DSIO_DEFI opcode into a GLSL string - creates a local ivec4
+ * integer constant, and stores it's usage on the regmaps. */
+void shader_glsl_defi(SHADER_OPCODE_ARG* arg) {
+
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+
+    shader_addline(arg->buffer, 
+                   "const ivec4 I%lu = { %ld, %ld, %ld, %ld };\n", reg,
+                   (long)arg->src[0], (long)arg->src[1],
+                   (long)arg->src[2], (long)arg->src[3]);
+
+    arg->reg_maps->constantsI[reg] = 1;
+}
+
+/** Process the D3DSIO_DEFB opcode into a GLSL string - creates a local boolean
+ * constant, and stores it's usage on the regmaps. */
+void shader_glsl_defb(SHADER_OPCODE_ARG* arg) {
+
+    DWORD reg = arg->dst & D3DSP_REGNUM_MASK;
+
+    shader_addline(arg->buffer, "const bool B%lu = %s;\n", reg, (arg->src[0]) ? "true" : "false");
+
+    arg->reg_maps->constantsB[reg] = 1;
 }
 
 /** Process the D3DSIO_LIT instruction in GLSL:

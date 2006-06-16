@@ -707,8 +707,8 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 
     /* Constant definitions */
     {D3DSIO_DEF,      "def",      "undefined",         1, 5, pshader_def,     shader_hw_def, shader_glsl_def, 0, 0},
-    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL, 1, 2, pshader_defb,    NULL, NULL, 0, 0},
-    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, pshader_defi,    NULL, NULL, 0, 0},
+    {D3DSIO_DEFB,     "defb",     GLNAME_REQUIRE_GLSL, 1, 2, pshader_defb,    NULL, shader_glsl_defb, 0, 0},
+    {D3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, pshader_defi,    NULL, shader_glsl_defi, 0, 0},
 
     /* Texture */
     {D3DSIO_TEXCOORD, "texcoord", "undefined", 1, 1, pshader_texcoord,    pshader_hw_texcoord, pshader_glsl_texcoord, 0, D3DPS_VERSION(1,3)},
