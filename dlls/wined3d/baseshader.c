@@ -363,6 +363,11 @@ void shader_get_registers_used(
         } else if (D3DSIO_DEF == curOpcode->opcode) {
             pToken += curOpcode->num_params;
 
+        /* If there's a loop in the shader */
+        } else if (D3DSIO_LOOP == curOpcode->opcode) {
+            reg_maps->loop = 1;
+            pToken += curOpcode->num_params;
+        
         /* Set texture, address, temporary registers */
         } else {
             int i, limit;
@@ -411,9 +416,6 @@ void shader_get_registers_used(
 
                 else if (D3DSPR_INPUT == regtype && !pshader)
                     reg_maps->attributes[reg] = 1;
-
-                else if (D3DSPR_LOOP == regtype)
-                    reg_maps->loop = 1;
              }
         }
     }
