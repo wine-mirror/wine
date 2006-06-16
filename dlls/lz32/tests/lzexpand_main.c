@@ -28,9 +28,7 @@
 #include "wine/test.h"
 
 static char filename_[] = "testfile.xx_";
-#if 0
 static char filename[] = "testfile.xxx";
-#endif
 static char filename2[] = "testfile.yyy";
 
 /* This is the hex string representation of the file created by compressing
@@ -59,6 +57,9 @@ static void test_lzopenfile(void)
   OFSTRUCT test;
   DWORD retval;
   INT file;
+  char expected[MAX_PATH];
+  char filled_0xA5[OFS_MAXPATHNAME];
+
 
   /* Check for nonexistent file. */
   file = LZOpenFile("badfilename_", &test, OF_READ);
@@ -88,20 +89,42 @@ static void test_lzopenfile(void)
   ok(file >= 0, "LZOpenFile failed on read/write\n");
   LZClose(file);
 
-
   /* If the file "foo.xxx" does not exist, LZOpenFile should then
      check for the file "foo.xx_" and open that -- at least on some
      operating systems.  Doesn't seem to on my copy of Win98.   
-     The Wine testing guidelines say we should accept the behavior of
-     any valid version of Windows.  Thus it seems we cannot check this?!
-     Revisit this at some point to see if this can be tested somehow.
    */
-#if 0
+  retval = GetCurrentDirectory(MAX_PATH, expected);
+  ok(retval > 0, "GetCurrentDirectory returned %ld, GLE=0x%lx\n", 
+     retval, GetLastError());
+  lstrcatA(expected, "\\");
+  lstrcatA(expected, filename);
+  /* Compressed file name ends with underscore. */
+  retval = lstrlenA(expected);
+  expected[retval-1] = '_';
+  memset(&filled_0xA5, 0xA5, OFS_MAXPATHNAME);
+  memset(&test, 0xA5, sizeof(test));
+  SetLastError(0xfaceabee);
+
+  /* Try to open compressed file. */
   file = LZOpenFile(filename, &test, OF_EXIST);
-  ok(file != LZERROR_BADINHANDLE, 
-     "LZOpenFile \"filename_\" check failed\n");
-  LZClose(file);
-#endif
+  if(file != LZERROR_BADINHANDLE) {  /* NT */
+    ok(test.cBytes == sizeof(OFSTRUCT),
+       "LZOpenFile set test.cBytes to %d\n", test.cBytes);
+    ok(test.nErrCode == 0,
+       "LZOpenFile set test.nErrCode to %d\n", test.nErrCode);
+    ok(lstrcmpA(test.szPathName, expected) == 0,
+       "LZOpenFile returned '%s', but was expected to return '%s'\n",
+       test.szPathName, expected);
+    LZClose(file);
+  } else {  /* 9x */
+    ok(test.cBytes == 0xA5,
+       "LZOpenFile set test.cBytes to %d\n", test.cBytes);
+    ok(test.nErrCode == ERROR_FILE_NOT_FOUND,
+       "LZOpenFile set test.nErrCode to %d\n", test.nErrCode);
+    ok(strncmp(test.szPathName, filled_0xA5, OFS_MAXPATHNAME) == 0,
+       "LZOpenFile returned '%s', but was expected to return '%s'\n",
+       test.szPathName, filled_0xA5);
+  }
 
   /* Delete the file then make sure it doesn't exist anymore. */
   file = LZOpenFile(filename_, &test, OF_DELETE);
