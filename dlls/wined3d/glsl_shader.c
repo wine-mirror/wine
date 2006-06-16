@@ -110,6 +110,79 @@ void shader_glsl_load_constantsF(
     }
 }
 
+/** 
+ * Loads integer constants (aka uniforms) into the currently set GLSL program.
+ * When @constants_set == NULL, it will load all the constants.
+ */
+void shader_glsl_load_constantsI(
+    WineD3D_GL_Info *gl_info,
+    GLhandleARB programId,
+    unsigned max_constants,
+    int* constants,
+    BOOL* constants_set,
+    char is_pshader) {
+    
+    GLhandleARB tmp_loc;
+    int i;
+    char tmp_name[7];
+    const char* prefix = is_pshader? "PI":"VI";
+
+    for (i=0; i<max_constants; ++i) {
+        if (NULL == constants_set || constants_set[i]) {
+
+            TRACE("Loading constants %i: %i, %i, %i, %i\n",
+                  i, constants[i*4], constants[i*4+1], constants[i*4+2], constants[i*4+3]);
+
+            /* TODO: Benchmark and see if it would be beneficial to store the 
+             * locations of the constants to avoid looking up each time */
+            snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, i);
+            tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
+            if (tmp_loc != -1) {
+                /* We found this uniform name in the program - go ahead and send the data */
+                GL_EXTCALL(glUniform4ivARB(tmp_loc, 1, &constants[i*4]));
+                checkGLcall("glUniform4ivARB");
+            }
+        }
+    }
+}
+
+/** 
+ * Loads boolean constants (aka uniforms) into the currently set GLSL program.
+ * When @constants_set == NULL, it will load all the constants.
+ */
+void shader_glsl_load_constantsB(
+    WineD3D_GL_Info *gl_info,
+    GLhandleARB programId,
+    unsigned max_constants,
+    BOOL* constants,
+    BOOL* constants_set,
+    char is_pshader) {
+    
+    GLhandleARB tmp_loc;
+    int i;
+    char tmp_name[7];
+    const char* prefix = is_pshader? "PB":"VB";
+
+    for (i=0; i<max_constants; ++i) {
+        if (NULL == constants_set || constants_set[i]) {
+
+            TRACE("Loading constants %i: %i;\n", i, constants[i*4]);
+
+            /* TODO: Benchmark and see if it would be beneficial to store the 
+             * locations of the constants to avoid looking up each time */
+            snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, i);
+            tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
+            if (tmp_loc != -1) {
+                /* We found this uniform name in the program - go ahead and send the data */
+                GL_EXTCALL(glUniform1ivARB(tmp_loc, 1, &constants[i*4]));
+                checkGLcall("glUniform1ivARB");
+            }
+        }
+    }
+}
+
+
+
 /**
  * Loads the app-supplied constants into the currently set GLSL program.
  */
@@ -143,7 +216,15 @@ void shader_glsl_load_constants(
                                     stateBlock->vertexShaderConstantF, 
                                     stateBlock->set.vertexShaderConstantsF, 0);
 
-        /* TODO: Load boolean & integer constants for vertex shader */
+        /* Load DirectX 9 integer constants/uniforms for vertex shader */
+        shader_glsl_load_constantsI(gl_info, programId, MAX_CONST_I,
+                                    stateBlock->vertexShaderConstantI,
+                                    stateBlock->set.vertexShaderConstantsI, 0);
+
+        /* Load DirectX 9 boolean constants/uniforms for vertex shader */
+        shader_glsl_load_constantsB(gl_info, programId, MAX_CONST_B,
+                                    stateBlock->vertexShaderConstantB,
+                                    stateBlock->set.vertexShaderConstantsB, 0);
     }
 
     if (usePixelShader) {
@@ -156,7 +237,15 @@ void shader_glsl_load_constants(
                                     stateBlock->pixelShaderConstantF,
                                     stateBlock->set.pixelShaderConstantsF, 1);
 
-        /* TODO: Load boolean & integer constants for pixel shader */
+        /* Load DirectX 9 integer constants/uniforms for pixel shader */
+        shader_glsl_load_constantsI(gl_info, programId, MAX_CONST_I,
+                                    stateBlock->pixelShaderConstantI, 
+                                    stateBlock->set.pixelShaderConstantsI, 1);
+        
+        /* Load DirectX 9 boolean constants/uniforms for pixel shader */
+        shader_glsl_load_constantsB(gl_info, programId, MAX_CONST_B,
+                                    stateBlock->pixelShaderConstantB, 
+                                    stateBlock->set.pixelShaderConstantsB, 1);
     }
 }
 
