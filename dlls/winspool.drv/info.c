@@ -5430,6 +5430,7 @@ BOOL WINAPI EnumFormsA( HANDLE hPrinter, DWORD Level, LPBYTE pForm,
     DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned )
 {
     FIXME("%p %lx %p %lx %p %p\n", hPrinter, Level, pForm, cbBuf, pcbNeeded, pcReturned);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
@@ -5440,6 +5441,7 @@ BOOL WINAPI EnumFormsW( HANDLE hPrinter, DWORD Level, LPBYTE pForm,
     DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned )
 {
     FIXME("%p %lx %p %lx %p %p\n", hPrinter, Level, pForm, cbBuf, pcbNeeded, pcReturned);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 

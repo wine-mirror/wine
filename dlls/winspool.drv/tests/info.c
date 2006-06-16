@@ -400,6 +400,110 @@ static void test_DeleteMonitor(void)
     DeleteMonitorA(NULL, entry->env, winetest_monitor);
 }
 
+/* ######## */
+
+static void test_EnumForms(LPSTR pName)
+{
+    DWORD   res;
+    HANDLE  hprinter = 0;
+    LPBYTE  buffer;
+    DWORD   cbBuf;
+    DWORD   pcbNeeded;
+    DWORD   pcReturned;
+    DWORD   level;
+  
+
+    res = OpenPrinter(pName, &hprinter, NULL);
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    if (!res || !hprinter)
+    {
+        /* Open the local Prinserver is not supported on win9x */
+        if (pName) trace("Failed to open '%s', skiping the test\n", pName);
+        return;
+    }
+
+    /* valid levels are 1 and 2 */
+    for(level = 0; level < 4; level++) {
+        cbBuf = 0xdeadbeef;
+        pcReturned = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res = EnumFormsA(hprinter, level, NULL, 0, &cbBuf, &pcReturned);
+       
+        /* EnumForms is not implemented in win9x */
+        if (!res && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) continue;
+
+        /* EnumForms for the Server not implemented on all NT-Versions */
+        if (!res && (GetLastError() == ERROR_INVALID_HANDLE) && !pName) continue;
+
+        /* Level 2 for EnumForms is not supported on all systems */
+        if (!res && (GetLastError() == ERROR_INVALID_LEVEL) && (level == 2)) continue;
+
+        /* use only a short test, when we test with an invalid level */
+        if(!level || (level > 2)) {
+            ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
+                (res && (pcReturned == 0)),
+                "(%ld) returned %ld with %ld and 0x%08lx (expected '0' with " \
+                "ERROR_INVALID_LEVEL or '!=0' and 0x0)\n",
+                level, res, GetLastError(), pcReturned);
+            continue;
+        }        
+
+        ok((!res) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+            "(%ld) returned %ld with %ld (expected '0' with " \
+            "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
+
+        buffer = HeapAlloc(GetProcessHeap(), 0, cbBuf *2);
+        if (buffer == NULL) continue;
+
+        SetLastError(0xdeadbeef);
+        res = EnumFormsA(hprinter, level, buffer, cbBuf, &pcbNeeded, &pcReturned);
+        ok(res, "(%ld) returned %ld with %ld (expected '!=0')\n",
+                level, res, GetLastError());
+        /* We can dump the returned Data here */
+
+
+        SetLastError(0xdeadbeef);
+        res = EnumFormsA(hprinter, level, buffer, cbBuf+1, &pcbNeeded, &pcReturned);
+        ok( res, "(%ld) returned %ld with %ld (expected '!=0')\n",
+            level, res, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        res = EnumFormsA(hprinter, level, buffer, cbBuf-1, &pcbNeeded, &pcReturned);
+        ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+            "(%ld) returned %ld with %ld (expected '0' with " \
+            "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
+
+
+        SetLastError(0xdeadbeef);
+        res = EnumFormsA(hprinter, level, NULL, cbBuf, &pcbNeeded, &pcReturned);
+        ok( !res && (GetLastError() == ERROR_INVALID_USER_BUFFER) ,
+            "(%ld) returned %ld with %ld (expected '0' with "\
+            "ERROR_INVALID_USER_BUFFER)\n", level, res, GetLastError());
+
+
+        SetLastError(0xdeadbeef);
+        res = EnumFormsA(hprinter, level, buffer, cbBuf, NULL, &pcReturned);
+        ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER) ,
+            "(%ld) returned %ld with %ld (expected '0' with "\
+            "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        res = EnumFormsA(hprinter, level, buffer, cbBuf, &pcbNeeded, NULL);
+        ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER) ,
+            "(%ld) returned %ld with %ld (expected '0' with "\
+            "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        res = EnumFormsA(0, level, buffer, cbBuf, &pcbNeeded, &pcReturned);
+        ok( !res && (GetLastError() == ERROR_INVALID_HANDLE) ,
+            "(%ld) returned %ld with %ld (expected '0' with "\
+            "ERROR_INVALID_HANDLE)\n", level, res, GetLastError());
+
+        HeapFree(GetProcessHeap(), 0, buffer);
+    } /* for(level ... */
+
+    ClosePrinter(hprinter);
+}
 
 /* ########################### */
 
@@ -1288,15 +1392,19 @@ static void test_DocumentProperties(void)
 
 START_TEST(info)
 {
+    LPSTR   default_printer;
+
     hwinspool = GetModuleHandleA("winspool.drv");
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
 
-    find_default_printer();
+    default_printer = find_default_printer();
 
     test_AddMonitor();
     test_DeleteMonitor();
     test_DocumentProperties();
+    test_EnumForms(NULL);
+    if (default_printer) test_EnumForms(default_printer);
     test_EnumMonitors(); 
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
