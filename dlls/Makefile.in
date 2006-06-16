@@ -10,7 +10,7 @@ VPATH     = @srcdir@
 GLU32FILES = glu32
 GLUT32FILES = glut32
 OPENGLFILES = opengl32 wined3d
-XFILES = x11drv
+XFILES = winex11.drv
 EXTRADIRS = @GLU32FILES@ @GLUT32FILES@ @OPENGLFILES@ @XFILES@
 
 # Subdir list
@@ -207,7 +207,7 @@ SUBDIRS = \
 	glut32 \
 	opengl32 \
 	wined3d \
-	x11drv
+	winex11.drv
 
 BUILDSUBDIRS = $(BASEDIRS) $(EXTRADIRS)
 
@@ -269,7 +269,6 @@ WIN16_FILES = \
 	wprocs.dll16
 
 SYMLINKS_SO = \
-	$(XFILES:%=%.dll.so) \
 	@WIN16_FILES@ \
 	gdi32.dll.so \
 	joystick.drv.so \
@@ -293,9 +292,6 @@ all: $(BUILDSUBDIRS) symlinks$(DLLEXT)
 symlinks.so: $(SYMLINKS_SO)
 
 symlinks: $(BUILDSUBDIRS)
-
-x11drv.dll.so: winex11.drv.so
-	$(RM) $@ && $(LN_S) winex11.drv.so $@
 
 # Map symlink name to the corresponding library
 
@@ -334,9 +330,6 @@ winenas.drv.so: winmm/winenas/winenas.drv.so
 
 wineoss.drv.so: winmm/wineoss/wineoss.drv.so
 	$(RM) $@ && $(LN_S) winmm/wineoss/wineoss.drv.so $@
-
-winex11.drv.so: x11drv/winex11.drv.so
-	$(RM) $@ && $(LN_S) x11drv/winex11.drv.so $@
 
 # Placeholders for 16-bit libraries
 
@@ -927,7 +920,6 @@ winmm/wineesd/wineesd.drv.so: winmm/wineesd
 winmm/winejack/winejack.drv.so: winmm/winejack
 winmm/winenas/winenas.drv.so: winmm/winenas
 winmm/wineoss/wineoss.drv.so: winmm/wineoss
-x11drv/winex11.drv.so: x11drv
 dxerr8/libdxerr8.a: dxerr8
 dxerr9/libdxerr9.a: dxerr9
 dxguid/libdxguid.a: dxguid

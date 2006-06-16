@@ -1740,6 +1740,7 @@ dlls/wined3d/Makefile
 dlls/winedos/Makefile
 dlls/winemp3.acm/Makefile
 dlls/wineps.drv/Makefile
+dlls/winex11.drv/Makefile
 dlls/wininet/Makefile
 dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
@@ -1765,7 +1766,6 @@ dlls/ws2_32/Makefile
 dlls/ws2_32/tests/Makefile
 dlls/wsock32/Makefile
 dlls/wtsapi32/Makefile
-dlls/x11drv/Makefile
 documentation/Makefile
 fonts/Makefile
 include/Makefile

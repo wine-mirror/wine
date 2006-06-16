@@ -37,7 +37,7 @@ my %special_dlls =
   "glut32"   => "GLUT32FILES",
   "opengl32" => "OPENGLFILES",
   "wined3d"  => "OPENGLFILES",
-  "x11drv"   => "XFILES"
+  "winex11.drv" => "XFILES"
 );
 
 sub needs_symlink($)
@@ -190,7 +190,6 @@ printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets16 );
 print NEWMAKE <<EOF;
 
 SYMLINKS_SO = \\
-	\$(XFILES:%=%.dll.so) \\
 	\@WIN16_FILES\@ \\
 EOF
 printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets );
@@ -206,9 +205,6 @@ all: \$(BUILDSUBDIRS) symlinks\$(DLLEXT)
 symlinks.so: \$(SYMLINKS_SO)
 
 symlinks: \$(BUILDSUBDIRS)
-
-x11drv.dll.so: winex11.drv.so
-	\$(RM) \$@ && \$(LN_S) winex11.drv.so \$@
 
 EOF
 
