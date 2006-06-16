@@ -925,7 +925,7 @@ static void test_props(void)
     DeleteFile(msifile);
 }
 
-static UINT try_query_param( MSIHANDLE hdb, LPSTR szQuery, MSIHANDLE hrec )
+static UINT try_query_param( MSIHANDLE hdb, LPCSTR szQuery, MSIHANDLE hrec )
 {
     MSIHANDLE htab = 0;
     UINT res;
@@ -953,7 +953,7 @@ static UINT try_query_param( MSIHANDLE hdb, LPSTR szQuery, MSIHANDLE hrec )
     return res;
 }
 
-static UINT try_query( MSIHANDLE hdb, LPSTR szQuery )
+static UINT try_query( MSIHANDLE hdb, LPCSTR szQuery )
 {
     return try_query_param( hdb, szQuery, 0 );
 }
@@ -962,7 +962,7 @@ static void test_msipackage(void)
 {
     MSIHANDLE hdb = 0, hpack = 100;
     UINT r;
-    char *query;
+    const char *query;
     char name[10];
 
     DeleteFile(msifile);

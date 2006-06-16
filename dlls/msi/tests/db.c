@@ -816,7 +816,7 @@ static void test_msiexport(void)
 {
     MSIHANDLE hdb = 0, hview = 0;
     UINT r;
-    char *query;
+    const char *query;
     char path[MAX_PATH];
     const char file[] = "phone.txt";
     HANDLE handle;
