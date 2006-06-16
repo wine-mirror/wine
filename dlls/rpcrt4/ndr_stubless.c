@@ -1014,6 +1014,26 @@ LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, uns
 }
 #endif
 
+static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
+{
+    DWORD size;
+    switch(*pFormat)
+    {
+    case RPC_FC_CARRAY:
+        size = *(const WORD*)(pFormat + 2);
+        ComputeConformance(pStubMsg, NULL, pFormat + 4, 0);
+        size *= pStubMsg->MaxCount;
+        break;
+    default:
+        FIXME("Unhandled type %02x\n", *pFormat);
+        /* fallthrough */
+    case RPC_FC_RP:
+        size = sizeof(void *);
+        break;
+    }
+    return size;
+}
+
 /* FIXME: need to free some stuff in here too */
 long WINAPI NdrStubCall2(
     struct IRpcStubBuffer * pThis,
@@ -1367,8 +1387,13 @@ long WINAPI NdrStubCall2(
                             else if (pParam->param_attributes.IsOut &&
                                      !pParam->param_attributes.IsByValue)
                             {
-                                *(void **)pArg = NdrAllocate(&stubMsg, sizeof(void *));
-                                **(void ***)pArg = 0;
+                                DWORD size = calc_arg_size(&stubMsg, pTypeFormat);
+
+                                if(size)
+                                {
+                                    *(void **)pArg = NdrAllocate(&stubMsg, size);
+                                    memset(*(void **)pArg, 0, size);
+                                }
                             }
                             break;
                         case STUBLESS_CALCSIZE:
