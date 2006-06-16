@@ -45,6 +45,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
+WINE_DECLARE_DEBUG_CHANNEL(ddraw_thunk);
 
 /*****************************************************************************
  * IUnknown interfaces. They are thunks to IDirectDrawSurface7
@@ -218,14 +219,16 @@ IDirect3DTextureImpl_GetHandle(IDirect3DTexture2 *iface,
 
     TRACE("(%p)->(%p,%p)\n", This, d3d, lpHandle);
 
-    /* The handle is the WineD3DTexture interface. SetRenderState depends on this */
-    if(This->ddraw->wineD3DDevice)
-        *lpHandle = (D3DTEXTUREHANDLE) This->wineD3DTexture;
-    else
+    if(!This->Handle)
     {
-        /* This is to fool applications which create a texture without a D3DDevice */
-        *lpHandle = (D3DTEXTUREHANDLE) This;
+        This->Handle = IDirect3DDeviceImpl_CreateHandle(d3d);
+        if(This->Handle)
+        {
+            d3d->Handles[This->Handle - 1].ptr = This;
+            d3d->Handles[This->Handle - 1].type = DDrawHandle_Texture;
+        }
     }
+    *lpHandle = This->Handle;
 
     TRACE(" returning handle %08lx.\n", *lpHandle);
 
@@ -238,10 +241,11 @@ Thunk_IDirect3DTextureImpl_1_GetHandle(IDirect3DTexture *iface,
                                        LPD3DTEXTUREHANDLE lpHandle)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture, iface);
-    TRACE("(%p)->(%p,%p) thunking to IDirect3DTexture2 interface.\n", This, lpDirect3DDevice, lpHandle);
+    IDirect3DDeviceImpl *d3d = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice, lpDirect3DDevice);
+    TRACE_(ddraw_thunk)("(%p)->(%p,%p) thunking to IDirect3DTexture2 interface.\n", This, d3d, lpHandle);
 
-    return IDirect3DTexture2_GetHandle(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirect3DTexture2, iface),
-                                       COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice, IDirect3DDevice2, lpDirect3DDevice),
+    return IDirect3DTexture2_GetHandle(ICOM_INTERFACE(This, IDirect3DTexture2),
+                                       ICOM_INTERFACE(d3d, IDirect3DDevice2),
                                        lpHandle);
 }
 

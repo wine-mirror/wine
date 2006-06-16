@@ -286,6 +286,8 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
     if (ref == 0)
     {
         IParent *IndexBufferParent;
+        DWORD i;
+
         /* Free the index buffer */
         IWineD3DDevice_SetIndices(This->wineD3DDevice,
                                   NULL,
@@ -315,6 +317,38 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         {
             ERR(" (%p) The wineD3D device %p was destroyed unexpectadely. Prepare for trouble\n", This, This->wineD3DDevice);
         }
+
+        /* The texture handles should be unset by now, but there might be some bits
+         * missing in our reference counting(needs test). Do a sanity check
+         */
+        for(i = 0; i < This->numHandles; i++)
+        {
+            if(This->Handles[i].ptr)
+            {
+                switch(This->Handles[i].type)
+                {
+                    case DDrawHandle_Texture:
+                    {
+                        IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *) This->Handles[i].ptr;
+                        FIXME("Texture Handle %ld not unset properly\n", i + 1);
+                        surf->Handle = 0;
+                    }
+                    break;
+
+                    case DDrawHandle_Material:
+                    {
+                        IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) This->Handles[i].ptr;
+                        FIXME("Material handle %ld not unset properly\n", i + 1);
+                        mat->Handle = 0;
+                    }
+
+                    default:
+                        FIXME("Unknown handle %ld not unset properly\n", i + 1);
+                }
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, This->Handles);
 
         /* Release the render target and the WineD3D render target
          * (See IDirect3D7::CreateDevice for more comments on this)
@@ -492,22 +526,17 @@ IDirect3DDeviceImpl_2_SwapTextureHandles(IDirect3DDevice2 *iface,
                                          IDirect3DTexture2 *Tex2)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
-    IWineD3DTexture *tmp;
+    DWORD swap;
     IDirectDrawSurfaceImpl *surf1 = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirect3DTexture2, Tex1);
     IDirectDrawSurfaceImpl *surf2 = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirect3DTexture2, Tex2);
-    FIXME("(%p)->(%p,%p)\n", This, surf1, surf2);
+    TRACE("(%p)->(%p,%p)\n", This, surf1, surf2);
 
+    This->Handles[surf1->Handle - 1].ptr = surf2;
+    This->Handles[surf2->Handle - 1].ptr = surf1;
 
-    /* The texture handle is simply the interface address of the WineD3DTexture
-     * interface. Swap the interface pointers.
-     */
-    tmp = surf1->wineD3DTexture;
-    surf1->wineD3DTexture = surf2->wineD3DTexture;
-    surf2->wineD3DTexture = tmp;
-
-    /* What about the parent? Does it have to change too? This could cause a
-     * problem when Releasing the surfaces, Therefore the fixme
-     */
+    swap = surf2->Handle;
+    surf2->Handle = surf1->Handle;
+    surf1->Handle = swap;
 
     return D3D_OK;
 }
@@ -2029,9 +2058,32 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
     switch(RenderStateType)
     {
         case D3DRENDERSTATE_TEXTUREHANDLE:
-            return IWineD3DDevice_SetTexture(This->wineD3DDevice,
-                                             0,
-                                             (IWineD3DBaseTexture *) Value);
+        {
+            if(Value == 0)
+            {
+                    return IWineD3DDevice_SetTexture(This->wineD3DDevice,
+                                                     0,
+                                                     NULL);
+            }
+
+            if(Value > This->numHandles)
+            {
+                FIXME("Specified handle %ld out of range\n", Value);
+                return DDERR_INVALIDPARAMS;
+            }
+            if(This->Handles[Value - 1].type != DDrawHandle_Texture)
+            {
+                FIXME("Handle %ld isn't a texture handle\n", Value);
+                return DDERR_INVALIDPARAMS;
+            }
+            else
+            {
+                IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *) This->Handles[Value - 1].ptr;
+                return IWineD3DDevice_SetTexture(This->wineD3DDevice,
+                                                 0,
+                                                 (IWineD3DBaseTexture *) surf->wineD3DTexture);
+            }
+        }
 
         case D3DRENDERSTATE_TEXTUREMAG:
         {
@@ -4572,3 +4624,68 @@ const IDirect3DDeviceVtbl IDirect3DDevice1_Vtbl =
     Thunk_IDirect3DDeviceImpl_1_BeginScene,
     Thunk_IDirect3DDeviceImpl_1_GetDirect3D
 };
+
+/*****************************************************************************
+ * IDirect3DDeviceImpl_CreateHandle
+ *
+ * Not called from the VTable
+ *
+ * Some older interface versions operate with handles, which are basically
+ * DWORDs which identify an interface, for example
+ * IDirect3DDevice::SetRenderState with DIRECT3DRENDERSTATE_TEXTUREHANDLE
+ *
+ * Those handle could be just casts to the interface pointers or vice versa,
+ * but that is not 64 bit safe and would mean blindly derefering a DWORD
+ * passed by the app. Instead there is a dynamic array in the device which
+ * keeps a DWORD to pointer information and a type for the handle.
+ *
+ * Basically this array only grows, when a handle is freed its pointer is
+ * just set to NULL. There will be much more reads from the array than
+ * insertion operations, so a dynamic array is fine.
+ *
+ * Params:
+ *  This: D3DDevice implementation for which this handle should be created
+ *
+ * Returns:
+ *  A free handle on success
+ *  0 on failure
+ *
+ *****************************************************************************/
+DWORD
+IDirect3DDeviceImpl_CreateHandle(IDirect3DDeviceImpl *This)
+{
+    DWORD i;
+    struct HandleEntry *oldHandles = This->Handles;
+
+    TRACE("(%p)\n", This);
+
+    for(i = 0; i < This->numHandles; i++)
+    {
+        if(This->Handles[i].ptr == NULL &&
+           This->Handles[i].type == DDrawHandle_Unknown)
+        {
+            TRACE("Reusing freed handle %ld\n", i + 1);
+            return i + 1;
+        }
+    }
+
+    TRACE("Growing the handle array\n");
+
+    This->numHandles++;
+    This->Handles = HeapAlloc(GetProcessHeap(), 0, sizeof(struct HandleEntry) * This->numHandles);
+    if(!This->Handles)
+    {
+        ERR("Out of memory\n");
+        This->Handles = oldHandles;
+        This->numHandles--;
+        return 0;
+    }
+    if(oldHandles)
+    {
+        memcpy(This->Handles, oldHandles, (This->numHandles - 1) * sizeof(struct HandleEntry));
+        HeapFree(GetProcessHeap(), 0, oldHandles);
+    }
+
+    TRACE("Returning %ld\n", This->numHandles);
+    return This->numHandles;
+}

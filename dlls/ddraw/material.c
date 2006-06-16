@@ -147,9 +147,16 @@ IDirect3DMaterialImpl_Release(IDirect3DMaterial3 *iface)
 
     TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
 
-    if (!ref) {
+    if (!ref)
+    {
+        if(This->Handle)
+        {
+            This->ddraw->d3ddevice->Handles[This->Handle - 1].ptr = NULL;
+            This->ddraw->d3ddevice->Handles[This->Handle - 1].type = DDrawHandle_Unknown;
+        }
+
         HeapFree(GetProcessHeap(), 0, This);
-	return 0;
+        return 0;
     }
     return ref;
 }
@@ -301,15 +308,24 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
                                 D3DMATERIALHANDLE *lpHandle)
 {
     ICOM_THIS_FROM(IDirect3DMaterialImpl, IDirect3DMaterial3, iface);
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpDirect3DDevice3, lpHandle);
+    IDirect3DDeviceImpl *device = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, lpDirect3DDevice3);
+    TRACE("(%p/%p)->(%p,%p)\n", This, iface, device, lpHandle);
 
-    This->active_device = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice3, lpDirect3DDevice3);
-    *lpHandle = (DWORD) This; /* Warning: this is not 64 bit clean.
-			         Maybe also we need to store this material somewhere in the device ? */
-
+    if(!This->Handle)
+    {
+        This->Handle = IDirect3DDeviceImpl_CreateHandle(device);
+        if(!This->Handle)
+        {
+            ERR("Error creating a handle\n");
+            return DDERR_INVALIDPARAMS;   /* Unchecked */
+        }
+        device->Handles[This->Handle - 1].ptr = This;
+        device->Handles[This->Handle - 1].type = DDrawHandle_Material;
+    }
+    *lpHandle = This->Handle;
     TRACE(" returning handle %08lx.\n", *lpHandle);
-    
-    return DD_OK;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI

@@ -232,6 +232,8 @@ struct IDirectDrawSurfaceImpl
     /* For the ddraw surface list */
     IDirectDrawSurfaceImpl *next;
     IDirectDrawSurfaceImpl *prev;
+
+    DWORD                   Handle;
 };
 
 /* VTable declaration. It's located in surface.c / surface_thunks.c */
@@ -264,6 +266,19 @@ const IParentVtbl IParent_Vtbl;
 /*****************************************************************************
  * IDirect3DDevice implementation
  *****************************************************************************/
+typedef enum
+{
+    DDrawHandle_Unknown       = 0,
+    DDrawHandle_Texture       = 1,
+    DDrawHandle_Material      = 2
+} DDrawHandleTypes;
+
+struct HandleEntry
+{
+    void    *ptr;
+    DDrawHandleTypes      type;
+};
+
 struct IDirect3DDeviceImpl
 {
     /* IUnknown */
@@ -296,6 +311,10 @@ struct IDirect3DDeviceImpl
     LPBYTE vertex_buffer;
     DWORD vertex_size;
     DWORD buffer_size;
+
+    /* Handle management */
+    struct HandleEntry      *Handles;
+    DWORD                    numHandles;
 };
 
 /* Vtables in various versions */
@@ -309,6 +328,7 @@ const GUID IID_D3DDEVICE_WineD3D;
 
 /* Helper functions */
 HRESULT IDirect3DImpl_GetCaps(IWineD3D *WineD3D, D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7);
+DWORD IDirect3DDeviceImpl_CreateHandle(IDirect3DDeviceImpl *This);
 
 /* Structures */
 struct EnumTextureFormatsCBS
@@ -443,6 +463,7 @@ struct IDirect3DMaterialImpl
     IDirect3DDeviceImpl           *active_device;
 
     D3DMATERIAL mat;
+    DWORD Handle;
 
     void (*activate)(IDirect3DMaterialImpl* this);
 };

@@ -384,14 +384,33 @@ IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
                                     D3DMATERIALHANDLE hMat)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    TRACE("(%p)->(%08lx)\n", This, (DWORD) hMat);
-    
-    This->background = (IDirect3DMaterialImpl *) hMat;
-    TRACE(" setting background color : %f %f %f %f\n",
-	  This->background->mat.u.diffuse.u1.r,
-	  This->background->mat.u.diffuse.u2.g,
-	  This->background->mat.u.diffuse.u3.b,
-	  This->background->mat.u.diffuse.u4.a);
+    TRACE("(%p)->(%ld)\n", This, (DWORD) hMat);
+
+    if(hMat && hMat > This->ddraw->d3ddevice->numHandles)
+    {
+        WARN("Specified Handle %ld out of range\n", hMat);
+        return DDERR_INVALIDPARAMS;
+    }
+    else if(hMat && This->ddraw->d3ddevice->Handles[hMat - 1].type != DDrawHandle_Material)
+    {
+        WARN("Handle %ld is not a material handle\n", hMat);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    if(hMat)
+    {
+        This->background = (IDirect3DMaterialImpl *) This->ddraw->d3ddevice->Handles[hMat - 1].ptr;
+        TRACE(" setting background color : %f %f %f %f\n",
+              This->background->mat.u.diffuse.u1.r,
+              This->background->mat.u.diffuse.u2.g,
+              This->background->mat.u.diffuse.u3.b,
+              This->background->mat.u.diffuse.u4.a);
+    }
+    else
+    {
+        This->background = NULL;
+        TRACE("Setting background to NULL\n");
+    }
 
     return D3D_OK;
 }
@@ -406,8 +425,7 @@ IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
  *  lpValid: is set to FALSE if no background is set, TRUE if one is set
  *
  * Returns:
- *  D3D_OK, because it's a stub
- *  (DDERR_INVALIDPARAMS if Mat or Valid is NULL)
+ *  D3D_OK
  *
  *****************************************************************************/
 static HRESULT WINAPI
@@ -416,7 +434,24 @@ IDirect3DViewportImpl_GetBackground(IDirect3DViewport3 *iface,
                                     BOOL *lpValid)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    FIXME("(%p)->(%p,%p): stub!\n", This, lphMat, lpValid);
+    TRACE("(%p)->(%p,%p)\n", This, lphMat, lpValid);
+
+    if(lpValid)
+    {
+        *lpValid = This->background != NULL;
+    }
+    if(lphMat)
+    {
+        if(This->background)
+        {
+            *lphMat = This->background->Handle;
+        }
+        else
+        {
+            *lphMat = 0;
+        }
+    }
+
     return D3D_OK;
 }
 

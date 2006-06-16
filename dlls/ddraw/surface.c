@@ -229,6 +229,13 @@ static void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
     if(This->WineD3DSurface)
         IWineD3DSurface_Release(This->WineD3DSurface);
 
+    /* Having a texture handle set implies that the device still exists */
+    if(This->Handle)
+    {
+        This->ddraw->d3ddevice->Handles[This->Handle - 1].ptr = NULL;
+        This->ddraw->d3ddevice->Handles[This->Handle - 1].type = DDrawHandle_Unknown;
+    }
+
     /* Reduce the ddraw surface count */
     InterlockedDecrement(&This->ddraw->surfaces);
     if(This->prev)
