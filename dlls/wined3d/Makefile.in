@@ -9,6 +9,7 @@ EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = -luuid @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
 
 C_SRCS = \
+	arb_program_shader.c \
 	baseshader.c \
 	basetexture.c \
 	cubetexture.c \

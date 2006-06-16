@@ -1344,12 +1344,22 @@ extern const SHADER_OPCODE* shader_get_opcode(
     IWineD3DBaseShader *iface, 
     const DWORD code);
 
+/* ARB_[vertex/fragment]_program helper functions */
+extern void shader_arb_load_constants(
+    IWineD3DStateBlock* iface,
+    char usePixelShader,
+    char useVertexShader);
+
 /* ARB shader program Prototypes */
 extern void shader_hw_def(SHADER_OPCODE_ARG *arg);
 
 /* GLSL helper functions */
 extern void set_glsl_shader_program(IWineD3DDevice *iface);
 extern void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG *arg);
+extern void shader_glsl_load_constants(
+    IWineD3DStateBlock* iface,
+    char usePixelShader,
+    char useVertexShader);
 
 /** The following translate DirectX pixel/vertex shader opcodes to GLSL lines */
 extern void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg);

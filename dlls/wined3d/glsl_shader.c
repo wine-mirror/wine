@@ -47,6 +47,119 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
     }
 }
 
+/**
+ * Loads (pixel shader) samplers
+ */
+void shader_glsl_load_psamplers(
+    WineD3D_GL_Info *gl_info,
+    IWineD3DStateBlock* iface) {
+
+    IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
+    GLhandleARB programId = stateBlock->shaderPrgId;
+    GLhandleARB name_loc;
+    int i;
+    char sampler_name[20];
+
+    for (i=0; i< GL_LIMITS(textures); ++i) {
+        if (stateBlock->textures[i] != NULL) {
+           snprintf(sampler_name, sizeof(sampler_name), "psampler%d", i);
+           name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
+           if (name_loc != -1) {
+               TRACE_(d3d_shader)("Loading %s for texture %d\n", sampler_name, i);
+               GL_EXTCALL(glUniform1iARB(name_loc, i));
+               checkGLcall("glUniform1iARB");
+           }
+        }
+    }
+}
+
+/** 
+ * Loads floating point constants (aka uniforms) into the currently set GLSL program.
+ * When @constants_set == NULL, it will load all the constants.
+ */
+void shader_glsl_load_constantsF(
+    WineD3D_GL_Info *gl_info,
+    GLhandleARB programId,
+    unsigned max_constants,
+    float* constants,
+    BOOL* constants_set,
+    char is_pshader) {
+        
+    GLhandleARB tmp_loc;
+    int i;
+    char tmp_name[7];
+    const char* prefix = is_pshader? "PC":"VC";
+
+    for (i=0; i<max_constants; ++i) {
+        if (NULL == constants_set || constants_set[i]) {
+
+            TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
+                  constants[i * sizeof(float) + 0], constants[i * sizeof(float) + 1],
+                  constants[i * sizeof(float) + 2], constants[i * sizeof(float) + 3]);
+
+            /* TODO: Benchmark and see if it would be beneficial to store the 
+             * locations of the constants to avoid looking up each time */
+            snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, i);
+            tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
+            if (tmp_loc != -1) {
+                /* We found this uniform name in the program - go ahead and send the data */
+                GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, &constants[i * sizeof(float)]));
+                checkGLcall("glUniform4fvARB");
+            }
+        }
+    }
+}
+
+/**
+ * Loads the app-supplied constants into the currently set GLSL program.
+ */
+void shader_glsl_load_constants(
+    IWineD3DStateBlock* iface,
+    char usePixelShader,
+    char useVertexShader) {
+    
+    IWineD3DStateBlockImpl* stateBlock = (IWineD3DStateBlockImpl*) iface;
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl*)stateBlock->wineD3DDevice->wineD3D)->gl_info;
+    GLhandleARB programId = stateBlock->shaderPrgId;
+    
+    if (programId == 0) {
+        /* No GLSL program set - nothing to do. */
+        return;
+    }
+
+    if (useVertexShader) {
+        IWineD3DVertexShaderImpl* vshader = (IWineD3DVertexShaderImpl*) stateBlock->vertexShader;
+        IWineD3DVertexDeclarationImpl* vertexDeclaration =
+            (IWineD3DVertexDeclarationImpl*) vshader->vertexDeclaration;
+
+        if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
+            /* Load DirectX 8 float constants/uniforms for vertex shader */
+            shader_glsl_load_constantsF(gl_info, programId, WINED3D_VSHADER_MAX_CONSTANTS,
+                                        vertexDeclaration->constants, NULL, 0);
+        }
+
+        /* Load DirectX 9 float constants/uniforms for vertex shader */
+        shader_glsl_load_constantsF(gl_info, programId, WINED3D_VSHADER_MAX_CONSTANTS,
+                                    stateBlock->vertexShaderConstantF, 
+                                    stateBlock->set.vertexShaderConstantsF, 0);
+
+        /* TODO: Load boolean & integer constants for vertex shader */
+    }
+
+    if (usePixelShader) {
+
+        /* Load pixel shader samplers */
+        shader_glsl_load_psamplers(gl_info, iface);
+
+        /* Load DirectX 9 float constants/uniforms for pixel shader */
+        shader_glsl_load_constantsF(gl_info, programId, WINED3D_PSHADER_MAX_CONSTANTS,
+                                    stateBlock->pixelShaderConstantF,
+                                    stateBlock->set.pixelShaderConstantsF, 1);
+
+        /* TODO: Load boolean & integer constants for pixel shader */
+    }
+}
+
 /*****************************************************************************
  * Functions to generate GLSL strings from DirectX Shader bytecode begin here.
  *

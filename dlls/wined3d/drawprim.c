@@ -1742,174 +1742,6 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
 #endif
 
-/**
- * Loads (pixel shader) samplers
- */
-void drawPrimLoadPSamplersGLSL(
-    IWineD3DDevice* iface) {
-
-    IWineD3DDeviceImpl* This = (IWineD3DDeviceImpl *)iface;
-    GLhandleARB programId = This->stateBlock->shaderPrgId;
-    GLhandleARB name_loc;
-    int i;
-    char sampler_name[20];
-
-    if (programId == 0) {
-        /* No GLSL program set - nothing to do. */
-        return;
-    }
-
-    for (i=0; i< GL_LIMITS(textures); ++i) {
-        if (This->stateBlock->textures[i] != NULL) {
-           snprintf(sampler_name, sizeof(sampler_name), "psampler%d", i);
-           name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
-           if (name_loc != -1) {
-               TRACE_(d3d_shader)("Loading %s for texture %d\n", sampler_name, i);
-               GL_EXTCALL(glUniform1iARB(name_loc, i));
-               checkGLcall("glUniform1iARB");
-           }
-        }
-    }
-}
-
-/** 
- * Loads floating point constants (aka uniforms) into the currently set GLSL program.
- * When @constants_set == NULL, it will load all the constants.
- */
-void drawPrimLoadConstantsGLSL_F(IWineD3DDevice* iface,
-                                 unsigned max_constants,
-                                 float* constants,
-                                 BOOL* constants_set,
-                                 char is_pshader) {
-    
-    IWineD3DDeviceImpl* This = (IWineD3DDeviceImpl *)iface;
-    GLhandleARB programId = This->stateBlock->shaderPrgId;
-    GLhandleARB tmp_loc;
-    int i;
-    char tmp_name[7];
-    
-    if (programId == 0) {
-        /* No GLSL program set - nothing to do. */
-        return;
-    }
-    
-    for (i=0; i<max_constants; ++i) {
-        if (NULL == constants_set || constants_set[i]) {
-
-            const char* prefix = is_pshader? "PC":"VC";
-
-            TRACE_(d3d_shader)("Loading constants %i: %f, %f, %f, %f\n",
-                   i, constants[i*4], constants[i*4+1], constants[i*4+2], constants[i*4+3]);
-
-            /* TODO: Benchmark and see if it would be beneficial to store the 
-             * locations of the constants to avoid looking up each time */
-            snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, i);
-            tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
-            if (tmp_loc != -1) {
-                /* We found this uniform name in the program - go ahead and send the data */
-                GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, &constants[i*4]));
-                checkGLcall("glUniform4fvARB");
-            }
-        }
-    }
-}
-
-/** 
- * Loads floating point constants into the currently set ARB_vertex/fragment_program.
- * When @constants_set == NULL, it will load all the constants.
- *  
- * @target_type should be either GL_VERTEX_PROGRAM_ARB (for vertex shaders)
- *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
- */
-void drawPrimLoadConstantsARB_F(IWineD3DDevice* iface,
-                                GLuint target_type,
-                                unsigned max_constants,
-                                float* constants,
-                                BOOL* constants_set) {
-    
-    IWineD3DDeviceImpl* This = (IWineD3DDeviceImpl *)iface;
-    int i;
-    
-    for (i=0; i<max_constants; ++i) {
-        if (NULL == constants_set || constants_set[i]) {
-            TRACE_(d3d_shader)("Loading constants %i: %f, %f, %f, %f\n",
-                    i, constants[i*4], constants[i*4+1], constants[i*4+2], constants[i*4+3]);
-
-            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, &constants[i*4]));
-            checkGLcall("glProgramEnvParameter4fvARB");
-        }
-    }
-}
- 
-/* Load the constants/uniforms which were passed by the application into either GLSL or ARB shader programs. */
-void drawPrimLoadConstants(IWineD3DDevice *iface,
-                           BOOL useVertexShader,
-                           BOOL usePixelShader) {
-
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexShaderImpl *vshader = (IWineD3DVertexShaderImpl*) This->stateBlock->vertexShader;
-
-    if (wined3d_settings.shader_mode == SHADER_GLSL) {
-        
-        if (useVertexShader) {
-            IWineD3DVertexDeclarationImpl* vertexDeclaration =
-                (IWineD3DVertexDeclarationImpl*) vshader->vertexDeclaration;
-
-            if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
-                /* Load DirectX 8 float constants/uniforms for vertex shader */
-                drawPrimLoadConstantsGLSL_F(iface, WINED3D_VSHADER_MAX_CONSTANTS,
-                                            vertexDeclaration->constants, NULL, 0);
-            }
-
-            /* Load DirectX 9 float constants/uniforms for vertex shader */
-            drawPrimLoadConstantsGLSL_F(iface, WINED3D_VSHADER_MAX_CONSTANTS,
-                                        This->stateBlock->vertexShaderConstantF, 
-                                        This->stateBlock->set.vertexShaderConstantsF, 0);
-
-            /* TODO: Load boolean & integer constants for vertex shader */
-        }
-        if (usePixelShader) {
-
-            /* Load pixel shader samplers */
-            drawPrimLoadPSamplersGLSL(iface);
-
-            /* Load DirectX 9 float constants/uniforms for pixel shader */
-            drawPrimLoadConstantsGLSL_F(iface, WINED3D_PSHADER_MAX_CONSTANTS,
-                                        This->stateBlock->pixelShaderConstantF,
-                                        This->stateBlock->set.pixelShaderConstantsF, 1);
-
-            /* TODO: Load boolean & integer constants for pixel shader */
-        }
-    } else if (wined3d_settings.shader_mode == SHADER_ARB) {
-        
-        /* We only support float constants in ARB at the moment, so don't 
-         * worry about the Integers or Booleans */
-        
-        if (useVertexShader) {
-            IWineD3DVertexDeclarationImpl* vertexDeclaration = 
-                (IWineD3DVertexDeclarationImpl*) vshader->vertexDeclaration;
-
-            if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
-                /* Load DirectX 8 float constants for vertex shader */
-                drawPrimLoadConstantsARB_F(iface, GL_VERTEX_PROGRAM_ARB, WINED3D_VSHADER_MAX_CONSTANTS,
-                                           vertexDeclaration->constants, NULL);
-            }
-
-            /* Load DirectX 9 float constants for vertex shader */
-            drawPrimLoadConstantsARB_F(iface, GL_VERTEX_PROGRAM_ARB, WINED3D_VSHADER_MAX_CONSTANTS,
-                                       This->stateBlock->vertexShaderConstantF,
-                                       This->stateBlock->set.vertexShaderConstantsF);
-        }
-        if (usePixelShader) {
-
-            /* Load DirectX 9 float constants for pixel shader */
-            drawPrimLoadConstantsARB_F(iface, GL_FRAGMENT_PROGRAM_ARB, WINED3D_PSHADER_MAX_CONSTANTS,
-                                       This->stateBlock->pixelShaderConstantF,
-                                       This->stateBlock->set.pixelShaderConstantsF);
-        }
-    }
-}
-   
 void inline  drawPrimitiveDrawStrided(IWineD3DDevice *iface, BOOL useVertexShaderFunction, BOOL usePixelShaderFunction, int useHW, WineDirect3DVertexStridedData *dataLocations,
 UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idxData, short idxSize, int minIndex, long StartIdx) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -2055,7 +1887,11 @@ UINT numberOfvertices, UINT numberOfIndicies, GLenum glPrimType, const void *idx
         }
         
         /* Load any global constants/uniforms that may have been set by the application */
-        drawPrimLoadConstants(iface, useVertexShaderFunction, usePixelShaderFunction);
+        if (wined3d_settings.shader_mode == SHADER_GLSL)
+            shader_glsl_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction); 
+        else if (wined3d_settings.shader_mode == SHADER_ARB)
+            shader_arb_load_constants((IWineD3DStateBlock*)This->stateBlock, usePixelShaderFunction, useVertexShaderFunction);
+        
 
         /* DirectX colours are in a different format to opengl colours
          * so if diffuse or specular are used then we need to use drawStridedSlow
