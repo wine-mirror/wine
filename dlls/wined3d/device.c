@@ -4456,10 +4456,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, R
     ENTER_GL();
     /** FIXME: Windows uses a top,left origin openGL uses a bottom Right? **/
     glGetIntegerv(GL_SCISSOR_BOX, scissorBox);
-    pRect->left = scissorBox[1];
-    pRect->top = scissorBox[2];
-    pRect->right = scissorBox[1] + scissorBox[3];
-    pRect->bottom = scissorBox[2] + scissorBox[4];
+    pRect->left = scissorBox[0];
+    pRect->top = scissorBox[1];
+    pRect->right = scissorBox[0] + scissorBox[2];
+    pRect->bottom = scissorBox[1] + scissorBox[3];
     TRACE("(%p)Returning a Scissor Rect of %ld:%ld-%ld:%ld\n", This, pRect->left, pRect->top, pRect->right, pRect->bottom);
     LEAVE_GL();
     return WINED3D_OK;
