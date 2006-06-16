@@ -396,7 +396,7 @@ static void test_marshal_VARIANT(void)
     MIDL_STUB_MESSAGE stubMsg = { 0 };
     USER_MARSHAL_CB umcb = { 0 };
     unsigned char *buffer, *next;
-    unsigned long ul;
+    ULONG ul;
     short s;
     double d;
     DWORD *wirev;
@@ -914,7 +914,7 @@ static void test_marshal_VARIANT(void)
     check_safearray(wirev, lpsa);
     if (VARIANT_UNMARSHAL_WORKS)
     {
-        long bound, bound2;
+        LONG bound, bound2;
         VARTYPE vt, vt2;
         VariantInit(&v2);
         next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
@@ -955,7 +955,7 @@ static void test_marshal_VARIANT(void)
     check_safearray(wirev, lpsa);
     if (VARIANT_UNMARSHAL_WORKS)
     {
-        long bound, bound2;
+        LONG bound, bound2;
         VARTYPE vt, vt2;
         VariantInit(&v2);
         next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);

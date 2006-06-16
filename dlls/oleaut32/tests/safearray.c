@@ -277,7 +277,7 @@ static void test_safearray(void)
 {
 	SAFEARRAY 	*a, b, *c;
 	unsigned int 	i;
-	long		indices[2];
+	LONG		indices[2];
 	HRESULT 	hres;
 	SAFEARRAYBOUND	bound, bounds[2];
 	VARIANT		v;
@@ -1649,7 +1649,7 @@ static void test_SafeArrayDestroyData (void)
   SAFEARRAY *sa;
   HRESULT hres;
   int value = 0xdeadbeef;
-  long index[1];
+  LONG index[1];
   void HUGEP *temp_pvData;
 
   sab.lLbound = 0;

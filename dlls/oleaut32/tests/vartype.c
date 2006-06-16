@@ -3499,7 +3499,7 @@ static void test_VarDateChangeTypeEx(void)
      "expected " #x "*CY_MULTIPLIER, got (%8lx %8lx); hres=0x%08lx\n", S(out).Hi, S(out).Lo, hres)
 
 #define EXPECTCY64(x,y) \
-  ok(hres == S_OK && S(out).Hi == (long)x && S(out).Lo == y, \
+  ok(hres == S_OK && S(out).Hi == (LONG)x && S(out).Lo == y, \
      "expected " #x #y "(%lu,%lu), got (%lu,%lu); hres=0x%08lx\n", \
       (ULONG)(x), (ULONG)(y), S(out).Hi, S(out).Lo, hres)
 

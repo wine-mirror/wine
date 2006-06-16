@@ -314,7 +314,7 @@ static void test_VariantClear(void)
   VARIANTARG v;
   VARIANT v2;
   size_t i;
-  long i4;
+  LONG i4;
   IUnknown *punk;
 
 #if 0
