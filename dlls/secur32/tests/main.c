@@ -46,6 +46,7 @@ static SECURITY_STATUS (SEC_ENTRY * pAcceptSecurityContext)(PCredHandle, PCtxtHa
                             PULONG, PTimeStamp);
 static SECURITY_STATUS (SEC_ENTRY * pFreeCredentialsHandle)(PCredHandle);
 static SECURITY_STATUS (SEC_ENTRY * pDeleteSecurityContext)(PCtxtHandle);
+static SECURITY_STATUS (SEC_ENTRY * pQueryContextAttributesA)(PCtxtHandle, ULONG, PVOID);
 
 typedef struct _SspiData {
     PCredHandle cred;
@@ -77,6 +78,7 @@ void InitFunctionPtrs(void)
         pAcceptSecurityContext = (PVOID)GetProcAddress(secdll, "AcceptSecurityContext");
         pFreeCredentialsHandle = (PVOID)GetProcAddress(secdll, "FreeCredentialsHandle");
         pDeleteSecurityContext = (PVOID)GetProcAddress(secdll, "DeleteSecurityContext");
+        pQueryContextAttributesA = (PVOID)GetProcAddress(secdll, "QueryContextAttributesA");
     }
 }
 
@@ -554,6 +556,7 @@ void testAuth(SEC_CHAR* sec_pkg_name, ULONG data_rep)
     BOOL                    first = TRUE;
     SspiData                client, server;
     SEC_WINNT_AUTH_IDENTITY id;
+    SecPkgContext_Sizes    ctxt_sizes;
 
     if(setupPackageA(sec_pkg_name, &pkg_info) == SEC_E_OK)
     {
@@ -611,7 +614,31 @@ void testAuth(SEC_CHAR* sec_pkg_name, ULONG data_rep)
             trace("Looping\n");
             first = FALSE;
         }
-        
+
+        if(!strcmp(sec_pkg_name, "NTLM"))
+        {
+            sec_status = pQueryContextAttributesA(server.ctxt,
+                    SECPKG_ATTR_SIZES, &ctxt_sizes);
+
+            ok(sec_status == SEC_E_OK, 
+                    "pQueryContextAttributesA(SECPKG_ATTR_SIZES) returned %s\n",
+                    getSecError(sec_status));
+            ok(ctxt_sizes.cbMaxToken == 1904,
+                    "cbMaxToken should be 1904 but is %lu\n", 
+                    ctxt_sizes.cbMaxToken);
+            ok(ctxt_sizes.cbMaxSignature == 16,
+                    "cbMaxSignature should be 16 but is %lu\n",
+                    ctxt_sizes.cbMaxSignature);
+            ok(ctxt_sizes.cbSecurityTrailer == 16,
+                    "cbSecurityTrailer should be 16 but is  %lu\n",
+                    ctxt_sizes.cbSecurityTrailer);
+            ok(ctxt_sizes.cbBlockSize == 1,
+                    "cbBlockSize should be 1 but is %lu\n", 
+                    ctxt_sizes.cbBlockSize);
+        }
+        else
+            trace("Unknown sec package %s\n", sec_pkg_name);
+
         cleanupBuffers(&client);
         cleanupBuffers(&server);
         

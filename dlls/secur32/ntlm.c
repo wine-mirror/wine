@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
-#define NTLM_MAX_BUF 2010
+#define NTLM_MAX_BUF 1904
 
 
 /***********************************************************************
@@ -935,22 +935,42 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
 static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
  unsigned long ulAttribute, void *pBuffer)
 {
-    SECURITY_STATUS ret;
-
-    /* FIXME: From reading wrapper.h, I think the dwUpper part of a context is
-     * the SecurePackage part and the dwLower part is the actual context 
-     * handle. It should be easy to extract the context attributes from that.
-     */
     TRACE("%p %ld %p\n", phContext, ulAttribute, pBuffer);
-    if (phContext)
+    if (!phContext)
+        return SEC_E_INVALID_HANDLE;
+
+    switch(ulAttribute)
     {
-        ret = SEC_E_UNSUPPORTED_FUNCTION;
+#define _x(x) case (x) : FIXME(#x" stub\n"); break
+        _x(SECPKG_ATTR_ACCESS_TOKEN);
+        _x(SECPKG_ATTR_AUTHORITY);
+        _x(SECPKG_ATTR_DCE_INFO);
+        _x(SECPKG_ATTR_FLAGS);
+        _x(SECPKG_ATTR_KEY_INFO);
+        _x(SECPKG_ATTR_LIFESPAN);
+        _x(SECPKG_ATTR_NAMES);
+        _x(SECPKG_ATTR_NATIVE_NAMES);
+        _x(SECPKG_ATTR_NEGOTIATION_INFO);
+        _x(SECPKG_ATTR_PACKAGE_INFO);
+        _x(SECPKG_ATTR_PASSWORD_EXPIRY);
+        _x(SECPKG_ATTR_SESSION_KEY);
+        case SECPKG_ATTR_SIZES:
+            {
+                PSecPkgContext_Sizes spcs = (PSecPkgContext_Sizes)pBuffer;
+                spcs->cbMaxToken = NTLM_MAX_BUF;
+                spcs->cbMaxSignature = 16;
+                spcs->cbBlockSize = 1;
+                spcs->cbSecurityTrailer = 16;
+                return SEC_E_OK;
+            }
+        _x(SECPKG_ATTR_STREAM_SIZES);
+        _x(SECPKG_ATTR_TARGET_INFORMATION);
+#undef _x
+        default:
+            TRACE("Unknown value %ld passed for ulAttribute\n", ulAttribute);
     }
-    else
-    {
-        ret = SEC_E_INVALID_HANDLE;
-    }
-    return ret;
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 /***********************************************************************
