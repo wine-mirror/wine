@@ -73,6 +73,7 @@ BASEDIRS = \
 	imaadp32.acm \
 	imagehlp \
 	imm32 \
+	inseng \
 	iphlpapi \
 	itss \
 	kernel \
