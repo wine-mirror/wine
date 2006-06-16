@@ -42,8 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 # define TRACE_VSVECTOR(name)
 #endif
 
-#if 1 /* FIXME : Needs sorting when vshader code moved in properly */
-
 /**
  * DirectX9 SDK download
  *  http://msdn.microsoft.com/library/default.asp?url=/downloads/list/directx.asp
@@ -1181,65 +1179,6 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
 #endif
     return WINED3D_OK;
 }
-
-HRESULT WINAPI IWineD3DVertexShaderImpl_SetConstantF(IWineD3DVertexShader *iface, UINT StartRegister, CONST FLOAT *pConstantData, UINT Vector4fCount) {
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return WINED3D_OK;
-}
-
-HRESULT WINAPI IWineD3DVertexShaderImpl_GetConstantF(IWineD3DVertexShader *iface, UINT StartRegister, FLOAT *pConstantData, UINT Vector4fCount) {
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return WINED3D_OK;
-}
-
-HRESULT WINAPI IWineD3DVertexShaderImpl_SetConstantI(IWineD3DVertexShader *iface, UINT StartRegister, CONST int *pConstantData, UINT Vector4iCount) {
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    if (StartRegister + Vector4iCount > WINED3D_VSHADER_MAX_CONSTANTS) {
-        ERR("(%p) : SetVertexShaderConstantI C[%u] invalid\n", This, StartRegister);
-        return WINED3DERR_INVALIDCALL;
-    }
-    if (NULL == pConstantData) {
-        return WINED3DERR_INVALIDCALL;
-    }
-    FIXME("(%p) : stub\n", This);
-    return WINED3D_OK;
-}
-
-HRESULT WINAPI IWineD3DVertexShaderImpl_GetConstantI(IWineD3DVertexShader *iface, UINT StartRegister, int *pConstantData, UINT Vector4iCount) {
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    TRACE("(%p) : C[%u] count=%u\n", This, StartRegister, Vector4iCount);
-    if (StartRegister + Vector4iCount > WINED3D_VSHADER_MAX_CONSTANTS) {
-        return WINED3DERR_INVALIDCALL;
-    }
-    if (NULL == pConstantData) {
-        return WINED3DERR_INVALIDCALL;
-    }
-    FIXME("(%p) : stub\n", This);
-    return WINED3D_OK;
-}
-
-HRESULT WINAPI IWineD3DVertexShaderImpl_SetConstantB(IWineD3DVertexShader *iface, UINT StartRegister, CONST BOOL *pConstantData, UINT BoolCount) {
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    if (StartRegister + BoolCount > WINED3D_VSHADER_MAX_CONSTANTS) {
-        ERR("(%p) : SetVertexShaderConstantB C[%u] invalid\n", This, StartRegister);
-        return WINED3DERR_INVALIDCALL;
-    }
-    if (NULL == pConstantData) {
-        return WINED3DERR_INVALIDCALL;
-    }
-    FIXME("(%p) : stub\n", This);
-    return WINED3D_OK;
-}
-
-HRESULT WINAPI IWineD3DVertexShaderImpl_GetConstantB(IWineD3DVertexShader *iface, UINT StartRegister, BOOL *pConstantData, UINT BoolCount) {
-    IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return WINED3D_OK;
-}
-
-#endif
 
 /* *******************************************
    IWineD3DVertexShader IUnknown parts follow
