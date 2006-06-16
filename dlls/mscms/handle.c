@@ -70,7 +70,7 @@ static struct transform transformtable[CMSMAXHANDLES];
 HPROFILE MSCMS_handle2hprofile( HANDLE file )
 {
     HPROFILE profile = NULL;
-    unsigned int i;
+    DWORD_PTR i;
 
     if (!file) return NULL;
 
@@ -92,11 +92,11 @@ out:
 HANDLE MSCMS_hprofile2handle( HPROFILE profile )
 {
     HANDLE file;
-    unsigned int i;
+    DWORD_PTR i;
 
     EnterCriticalSection( &MSCMS_handle_cs );
 
-    i = (unsigned int)profile - 1;
+    i = (DWORD_PTR)profile - 1;
     file = profiletable[i].file;
 
     LeaveCriticalSection( &MSCMS_handle_cs );
@@ -106,11 +106,11 @@ HANDLE MSCMS_hprofile2handle( HPROFILE profile )
 DWORD MSCMS_hprofile2access( HPROFILE profile )
 {
     DWORD access;
-    unsigned int i;
+    DWORD_PTR i;
 
     EnterCriticalSection( &MSCMS_handle_cs );
 
-    i = (unsigned int)profile - 1;
+    i = (DWORD_PTR)profile - 1;
     access = profiletable[i].access;
 
     LeaveCriticalSection( &MSCMS_handle_cs );
@@ -120,7 +120,7 @@ DWORD MSCMS_hprofile2access( HPROFILE profile )
 HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile )
 {
     HPROFILE profile = NULL;
-    unsigned int i;
+    DWORD_PTR i;
 
     if (!cmsprofile) return NULL;
 
@@ -142,11 +142,11 @@ out:
 cmsHPROFILE MSCMS_hprofile2cmsprofile( HPROFILE profile )
 {
     cmsHPROFILE cmsprofile;
-    unsigned int i;
+    DWORD_PTR i;
 
     EnterCriticalSection( &MSCMS_handle_cs );
 
-    i = (unsigned int)profile - 1;
+    i = (DWORD_PTR)profile - 1;
     cmsprofile = profiletable[i].cmsprofile;
 
     LeaveCriticalSection( &MSCMS_handle_cs );
@@ -156,7 +156,7 @@ cmsHPROFILE MSCMS_hprofile2cmsprofile( HPROFILE profile )
 HPROFILE MSCMS_iccprofile2hprofile( icProfile *iccprofile )
 {
     HPROFILE profile = NULL;
-    unsigned int i;
+    DWORD_PTR i;
 
     if (!iccprofile) return NULL;
 
@@ -178,11 +178,11 @@ out:
 icProfile *MSCMS_hprofile2iccprofile( HPROFILE profile )
 {
     icProfile *iccprofile;
-    unsigned int i;
+    DWORD_PTR i;
 
     EnterCriticalSection( &MSCMS_handle_cs );
 
-    i = (unsigned int)profile - 1;
+    i = (DWORD_PTR)profile - 1;
     iccprofile = profiletable[i].iccprofile;
 
     LeaveCriticalSection( &MSCMS_handle_cs );
@@ -193,7 +193,7 @@ HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile,
                                        cmsHPROFILE cmsprofile, DWORD access )
 {
     HPROFILE profile = NULL;
-    unsigned int i;
+    DWORD_PTR i;
 
     if (!cmsprofile || !iccprofile) return NULL;
 
@@ -219,13 +219,13 @@ out:
 
 void MSCMS_destroy_hprofile_handle( HPROFILE profile )
 {
-    unsigned int i;
+    DWORD_PTR i;
 
     if (profile)
     {
         EnterCriticalSection( &MSCMS_handle_cs );
 
-        i = (unsigned int)profile - 1;
+        i = (DWORD_PTR)profile - 1;
         memset( &profiletable[i], 0, sizeof(struct profile) );
 
         LeaveCriticalSection( &MSCMS_handle_cs );
@@ -235,11 +235,11 @@ void MSCMS_destroy_hprofile_handle( HPROFILE profile )
 cmsHTRANSFORM MSCMS_htransform2cmstransform( HTRANSFORM transform )
 {
     cmsHTRANSFORM cmstransform;
-    unsigned int i;
+    DWORD_PTR i;
 
     EnterCriticalSection( &MSCMS_handle_cs );
 
-    i = (unsigned int)transform - 1;
+    i = (DWORD_PTR)transform - 1;
     cmstransform = transformtable[i].cmstransform;
 
     LeaveCriticalSection( &MSCMS_handle_cs );
@@ -249,7 +249,7 @@ cmsHTRANSFORM MSCMS_htransform2cmstransform( HTRANSFORM transform )
 HTRANSFORM MSCMS_create_htransform_handle( cmsHTRANSFORM cmstransform )
 {
     HTRANSFORM transform = NULL;
-    unsigned int i;
+    DWORD_PTR i;
 
     if (!cmstransform) return NULL;
 
@@ -271,13 +271,13 @@ out:
 
 void MSCMS_destroy_htransform_handle( HTRANSFORM transform )
 {
-    unsigned int i;
+    DWORD_PTR i;
 
     if (transform)
     {
         EnterCriticalSection( &MSCMS_handle_cs );
 
-        i = (unsigned int)transform - 1;
+        i = (DWORD_PTR)transform - 1;
         memset( &transformtable[i], 0, sizeof(struct transform) );
 
         LeaveCriticalSection( &MSCMS_handle_cs );
