@@ -62,7 +62,7 @@ void shader_glsl_load_psamplers(
 
     for (i=0; i< GL_LIMITS(textures); ++i) {
         if (stateBlock->textures[i] != NULL) {
-           snprintf(sampler_name, sizeof(sampler_name), "psampler%d", i);
+           snprintf(sampler_name, sizeof(sampler_name), "Psampler%d", i);
            name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
            if (name_loc != -1) {
                TRACE_(d3d_shader)("Loading %s for texture %d\n", sampler_name, i);
@@ -158,6 +158,101 @@ void shader_glsl_load_constants(
 
         /* TODO: Load boolean & integer constants for pixel shader */
     }
+}
+
+/** Generate the variable & register declarations for the GLSL output target */
+void shader_generate_glsl_declarations(
+    IWineD3DBaseShader *iface,
+    shader_reg_maps* reg_maps,
+    SHADER_BUFFER* buffer) {
+
+    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    int i;
+
+    /* There are some minor differences between pixel and vertex shaders */
+    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
+    char prefix = pshader ? 'P' : 'V';
+
+    /* Declare the constants (aka uniforms) */
+    if (This->baseShader.limits.constant_float > 0)
+        shader_addline(buffer, "uniform vec4 %cC[%u];\n", prefix, This->baseShader.limits.constant_float);
+
+    if (This->baseShader.limits.constant_int > 0)
+        shader_addline(buffer, "uniform ivec4 %cI[%u];\n", prefix, This->baseShader.limits.constant_int);
+
+    if (This->baseShader.limits.constant_bool > 0)
+        shader_addline(buffer, "uniform bool %cB[%u];\n", prefix, This->baseShader.limits.constant_bool);
+
+    /* Declare texture samplers */ 
+    for (i = 0; i < This->baseShader.limits.sampler; i++) {
+        if (reg_maps->samplers[i]) {
+
+            DWORD stype = reg_maps->samplers[i] & D3DSP_TEXTURETYPE_MASK;
+            switch (stype) {
+
+                case D3DSTT_2D:
+                    shader_addline(buffer, "uniform sampler2D %csampler%lu;\n", prefix, i);
+                    break;
+                case D3DSTT_CUBE:
+                    shader_addline(buffer, "uniform samplerCube %csampler%lu;\n", prefix, i);
+                    break;
+                case D3DSTT_VOLUME:
+                    shader_addline(buffer, "uniform sampler3D %csampler%lu;\n", prefix, i);
+                    break;
+                default:
+                    shader_addline(buffer, "uniform unsupported_sampler %csampler%lu;\n", prefix, i);
+                    FIXME("Unrecognized sampler type: %#lx\n", stype);
+                    break;
+            }
+        }
+    }
+    
+    /* Declare address variables */
+    for (i = 0; i < This->baseShader.limits.address; i++) {
+        if (reg_maps->address[i])
+            shader_addline(buffer, "ivec4 A%ld;\n", i);
+    }
+
+    /* Declare texture coordinate temporaries and initialize them */
+    for (i = 0; i < This->baseShader.limits.texcoord; i++) {
+        if (reg_maps->texcoord[i]) 
+            shader_addline(buffer, "vec4 T%lu = gl_TexCoord[%lu];\n", i, i);
+    }
+
+    /* Declare input register temporaries */
+    for (i=0; i < This->baseShader.limits.packed_input; i++) {
+        if (reg_maps->packed_input[i])
+            shader_addline(buffer, "vec4 IN%lu;\n", i);
+    }
+
+    /* Declare output register temporaries */
+    for (i = 0; i < This->baseShader.limits.packed_output; i++) {
+        if (reg_maps->packed_output[i])
+            shader_addline(buffer, "vec4 OUT%lu;\n", i);
+    }
+
+    /* Declare temporary variables */
+    for(i = 0; i < This->baseShader.limits.temporary; i++) {
+        if (reg_maps->temporary[i])
+            shader_addline(buffer, "vec4 R%lu;\n", i);
+    }
+
+    /* Declare attributes */
+    for (i = 0; i < This->baseShader.limits.attributes; i++) {
+        if (reg_maps->attributes[i])
+            shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
+    }
+
+    /* Declare loop register aL */
+    if (reg_maps->loop)
+        shader_addline(buffer, "int aL;\n");
+    
+    /* Temporary variables for matrix operations */
+    shader_addline(buffer, "vec4 tmp0;\n");
+    shader_addline(buffer, "vec4 tmp1;\n");
+
+    /* Start the main program */
+    shader_addline(buffer, "void main() {\n");
 }
 
 /*****************************************************************************
@@ -322,7 +417,7 @@ static void shader_glsl_get_register_name(
         const char* prefix = pshader? "PC":"VC";
 
         if (arg->reg_maps->constantsF[reg]) {
-            /* Use a local constant declared by "dcl" */
+            /* Use a local constant declared by "def" */
             
             if (param & D3DVS_ADDRMODE_RELATIVE) {
                  /* FIXME: Copy all constants (local & global) into a single array
@@ -351,6 +446,32 @@ static void shader_glsl_get_register_name(
         }
         break;
     }
+    case D3DSPR_CONSTINT:
+        if (arg->reg_maps->constantsI[reg]) {
+            /* Integer vector was defined locally using "defi" */
+            sprintf(tmpStr, "I%lu", reg);
+        } else {
+            /* Uniform integer value - pixel or vertex specific */
+            if (pshader) {
+                sprintf(tmpStr, "PI[%lu]", reg);
+            } else {
+                sprintf(tmpStr, "VI[%lu]", reg);
+            }
+        }
+        break;
+    case D3DSPR_CONSTBOOL:
+        if (arg->reg_maps->constantsB[reg]) {
+            /* Boolean was defined locally using "defb" */
+            sprintf(tmpStr, "B%lu", reg);
+        } else {
+            /* Uniform boolean value - pixel or vertex specific */
+            if (pshader) {
+                sprintf(tmpStr, "PB[%lu]", reg);
+            } else {
+                sprintf(tmpStr, "VB[%lu]", reg);
+            }
+        }
+        break;
     case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
         if (pshader) {
             sprintf(tmpStr, "T%lu", reg);
@@ -363,9 +484,9 @@ static void shader_glsl_get_register_name(
     break;
     case D3DSPR_SAMPLER:
         if (pshader)
-            sprintf(tmpStr, "psampler%lu", reg);
+            sprintf(tmpStr, "Psampler%lu", reg);
         else
-            sprintf(tmpStr, "vsampler%lu", reg);
+            sprintf(tmpStr, "Vsampler%lu", reg);
     break;
     case D3DSPR_COLOROUT:
         if (reg == 0)
@@ -963,7 +1084,7 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     /* 1.0-1.4: Use destination register as coordinate source.
      * 2.0+: Use provided coordinate source register. */
     if (hex_version < D3DPS_VERSION(2,0)) {
-        sprintf(sampler_str, "psampler%lu", reg_dest_code); 
+        sprintf(sampler_str, "Psampler%lu", reg_dest_code); 
         sampler_code = reg_dest_code;
     }       
     else {
@@ -1040,7 +1161,7 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
     shader_addline(buffer, "tmp0.y = dot(vec3(T%lu), vec3(%s));\n", reg, src0_str);
-    shader_addline(buffer, "T%lu = texture2D(psampler%lu, tmp0.st);\n", reg, reg);
+    shader_addline(buffer, "T%lu = texture2D(Psampler%lu, tmp0.st);\n", reg, reg);
 }
 
 void pshader_glsl_input_pack(

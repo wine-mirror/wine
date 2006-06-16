@@ -108,4 +108,40 @@ void shader_arb_load_constants(
     }
 }
 
+/* Generate the variable & register declarations for the ARB_vertex_program output target */
+void shader_generate_arb_declarations(
+    IWineD3DBaseShader *iface,
+    shader_reg_maps* reg_maps,
+    SHADER_BUFFER* buffer) {
+
+    IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
+    DWORD i;
+
+    for(i = 0; i < This->baseShader.limits.temporary; i++) {
+        if (reg_maps->temporary[i])
+            shader_addline(buffer, "TEMP R%lu;\n", i);
+    }
+
+    for (i = 0; i < This->baseShader.limits.address; i++) {
+        if (reg_maps->address[i])
+            shader_addline(buffer, "ADDRESS A%ld;\n", i);
+    }
+
+    for(i = 0; i < This->baseShader.limits.texcoord; i++) {
+        if (reg_maps->texcoord[i])
+            shader_addline(buffer,"TEMP T%lu;\n", i);
+    }
+
+    /* Texture coordinate registers must be pre-loaded */
+    for (i = 0; i < This->baseShader.limits.texcoord; i++) {
+        if (reg_maps->texcoord[i])
+            shader_addline(buffer, "MOV T%lu, fragment.texcoord[%lu];\n", i, i);
+    }
+
+    /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
+    shader_addline(buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
+                   This->baseShader.limits.constant_float,
+                   This->baseShader.limits.constant_float - 1);
+}
+
 /* TODO: Add more ARB_[vertex/fragment]_program specific code here */

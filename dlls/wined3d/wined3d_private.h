@@ -1255,6 +1255,8 @@ struct glsl_shader_prog_link {
 #define MAX_REG_OUTPUT 12
 #define MAX_ATTRIBS 16
 #define MAX_CONST_F 256
+#define MAX_CONST_I 16
+#define MAX_CONST_B 16
 
 typedef struct shader_reg_maps {
 
@@ -1266,8 +1268,9 @@ typedef struct shader_reg_maps {
     char attributes[MAX_ATTRIBS];           /* vertex */
 
     char constantsF[MAX_CONST_F];           /* pixel, vertex */
-    /* TODO: Integer and bool constants */
-
+    char constantsI[MAX_CONST_I];           /* pixel & vertex >= 2.0 */
+    char constantsB[MAX_CONST_B];           /* pixel & vertex >= 2.0 */
+    
     /* Semantics maps (semantic -> reg_token)
      * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD* semantics_in;                    /* vertex, pixel */
