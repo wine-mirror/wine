@@ -33,6 +33,7 @@
 #include "Fi.rc"
 #include "Fr.rc"
 #include "It.rc"
+#include "Hu.rc"
 #include "Ko.rc"
 #include "Nl.rc"
 #include "No.rc"
