@@ -333,8 +333,10 @@ void shader_generate_glsl_declarations(
     }
 
     /* Declare loop register aL */
-    if (reg_maps->loop)
+    if (reg_maps->loop) {
         shader_addline(buffer, "int aL;\n");
+        shader_addline(buffer, "int tmpInt;\n");
+    }
     
     /* Temporary variables for matrix operations */
     shader_addline(buffer, "vec4 tmp0;\n");
@@ -1157,7 +1159,8 @@ void shader_glsl_sincos(SHADER_OPCODE_ARG* arg) {
 
 /** Process the D3DSIO_LOOP instruction in GLSL:
  * Start a for() loop where src0.y is the initial value of aL,
- *  increment aL by src0.z while (aL < src0.x).
+ *  increment aL by src0.z for a total of src0.x iterations.
+ *  Need to use a temporary variable for this operation.
  */
 void shader_glsl_loop(SHADER_OPCODE_ARG* arg) {
     
@@ -1166,9 +1169,9 @@ void shader_glsl_loop(SHADER_OPCODE_ARG* arg) {
     char src0_mask[6];
     
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_reg, src0_mask, src0_str);
-    
-    shader_addline(arg->buffer, "for (aL = %s.y; aL < %s.x; aL += %s.z) {\n",
-            src0_reg, src0_reg, src0_reg);
+  
+    shader_addline(arg->buffer, "for (tmpInt = 0, aL = %s.y; tmpInt < %s.x; tmpInt++, aL += %s.z) {\n",
+                   src0_reg, src0_reg, src0_reg);
 }
 
 /** Process the D3DSIO_ENDLOOP instruction in GLSL:
