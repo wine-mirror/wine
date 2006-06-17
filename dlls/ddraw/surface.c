@@ -360,6 +360,10 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
             }
         }
 
+        /* The refcount test shows that the palette is detached when the surface is destroyed */
+        IDirectDrawSurface7_SetPalette(ICOM_INTERFACE(This, IDirectDrawSurface7),
+                                                      NULL);
+
         /* Loop through all complex attached surfaces,
          * and destroy them
          */

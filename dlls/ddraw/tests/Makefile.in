@@ -9,7 +9,8 @@ EXTRALIBS = -ldxguid
 CTESTS = \
 	d3d.c \
 	ddrawmodes.c \
-	dsurface.c
+	dsurface.c \
+	refcount.c
 
 @MAKE_TEST_RULES@
 

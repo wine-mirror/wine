@@ -104,6 +104,7 @@ IDirectDrawPaletteImpl_Release(IDirectDrawPalette *iface)
     if (ref == 0)
     {
         IWineD3DPalette_Release(This->wineD3DPalette);
+        IDirectDraw7_Release(ICOM_INTERFACE(This->ddraw_owner, IDirectDraw7));
         HeapFree(GetProcessHeap(), 0, This);
     }
 

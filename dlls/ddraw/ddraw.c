@@ -2950,13 +2950,29 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
     HRESULT hr = DDERR_GENERIC;
     TRACE("(%p)->(%lx,%p,%p,%p)\n", This, Flags, ColorTable, Palette, pUnkOuter);
 
-    if(pUnkOuter != NULL) return CLASS_E_NOAGGREGATION; /* unchecked */
+    if(pUnkOuter != NULL)
+    {
+        WARN("pUnkOuter is %p, returning CLASS_E_NOAGGREGATION\n", pUnkOuter);
+        return CLASS_E_NOAGGREGATION;
+    }
+
+    /* The refcount test shows that a cooplevel is required for this */
+    if(!This->cooperative_level)
+    {
+        WARN("No cooperative level set, returning DDERR_NOCOOPERATIVELEVELSET\n");
+        return DDERR_NOCOOPERATIVELEVELSET;
+    }
 
     object = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectDrawPaletteImpl));
-    if(!object) return E_OUTOFMEMORY;
+    if(!object)
+    {
+        ERR("Out of memory when allocating memory for a palette implementation\n");
+        return E_OUTOFMEMORY;
+    }
 
     ICOM_INIT_INTERFACE(object, IDirectDrawPalette, IDirectDrawPalette_Vtbl);
     object->ref = 1;
+    object->ddraw_owner = This;
 
     hr = IWineD3DDevice_CreatePalette(This->wineD3DDevice, Flags, ColorTable, &object->wineD3DPalette, (IUnknown *) ICOM_INTERFACE(object, IDirectDrawPalette) );
     if(hr != DD_OK)
@@ -2965,6 +2981,7 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
         return hr;
     }
 
+    IDirectDraw7_AddRef(iface);
     *Palette = ICOM_INTERFACE(object, IDirectDrawPalette);
     return DD_OK;
 }
