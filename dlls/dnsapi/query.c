@@ -88,8 +88,9 @@ static unsigned long dns_map_options( DWORD options )
 {
     unsigned long ret = 0;
             
-    if (options & DNS_QUERY_STANDARD)
-        ret |= RES_DEFAULT;
+    if (options == DNS_QUERY_STANDARD)
+        return RES_DEFAULT;
+
     if (options & DNS_QUERY_ACCEPT_TRUNCATED_RESPONSE)
         ret |= RES_IGNTC;
     if (options & DNS_QUERY_USE_TCP_ONLY)
