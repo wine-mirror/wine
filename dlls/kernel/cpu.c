@@ -333,7 +333,7 @@ VOID WINAPI GetSystemInfo(
 
 	/* FIXME: the two entries below should be computed somehow... */
 	cachedsi.lpMinimumApplicationAddress	= (void *)0x00010000;
-	cachedsi.lpMaximumApplicationAddress	= (void *)0x7FFFFFFF;
+	cachedsi.lpMaximumApplicationAddress	= (void *)0x7FFEFFFF;
 	cachedsi.dwActiveProcessorMask		= 1;
 	cachedsi.dwNumberOfProcessors		= 1;
 	cachedsi.dwProcessorType		= PROCESSOR_INTEL_PENTIUM;
