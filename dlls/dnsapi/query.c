@@ -537,7 +537,7 @@ exit:
     DNS_RRSET_TERMINATE( rrset );
 
     if (ret != ERROR_SUCCESS)
-        DnsRecordListFree( (DNS_RECORD *)record, DnsFreeRecordList );
+        DnsRecordListFree( rrset.pFirstRR, DnsFreeRecordList );
     else
         *recp = (DNS_RECORDA *)rrset.pFirstRR;
 
