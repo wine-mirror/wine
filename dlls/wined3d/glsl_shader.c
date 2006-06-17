@@ -380,17 +380,29 @@ static const char* shift_glsl_tab[] = {
     "0.5 * "      /* 15 (d2)   */ 
 };
 
-/** Print the beginning of the generated GLSL string. example: "reg_name.xyzw = vec4("  */
-static void shader_glsl_add_dst(DWORD param, const char* reg_name, const char* reg_mask, char* outStr) {
+/** Print the beginning of the generated GLSL string. example: "reg_name.xyzw = vec4("
+ * Will also change the reg_mask if necessary (not all register types are equal in DX vs GL)  */
+static void shader_glsl_add_dst(DWORD param, const char* reg_name, char* reg_mask, char* outStr) {
 
     int shift = (param & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
+    char cast[6];
+    
+    if ((shader_get_regtype(param) == D3DSPR_RASTOUT)
+         && ((param & D3DSP_REGNUM_MASK) != 0)) {
+        /* gl_FogFragCoord or glPointSize - both floats */
+        strcpy(cast, "float");
+        strcpy(reg_mask, "");
 
-    /* TODO: determine if destination is anything other than a float vector and accommodate*/
-    if (reg_name[0] == 'A')
-            sprintf(outStr, "%s%s = %sivec4(", reg_name, reg_mask, shift_glsl_tab[shift]);
-    else 
-    sprintf(outStr, "%s%s = %svec4(", reg_name, reg_mask, shift_glsl_tab[shift]); 
-
+    } else if (reg_name[0] == 'A') {
+        /* Address register for vertex shaders (ivec4) */
+        strcpy(cast, "ivec4");
+        
+    } else {
+        /* Everything else should be a 4 component float vector */
+        strcpy(cast, "vec4");
+    }
+    
+    sprintf(outStr, "%s%s = %s%s(", reg_name, reg_mask, shift_glsl_tab[shift], cast); 
 }
 
 /* Generate a GLSL parameter that does the input modifier computation and return the input register/mask to use */
