@@ -506,8 +506,8 @@ NTSTATUS WINAPI NtOpenSymbolicLinkObject(OUT PHANDLE LinkHandle, IN ACCESS_MASK 
     SERVER_START_REQ(open_symlink)
     {
         req->access = DesiredAccess;
-        req->attributes = ObjectAttributes ? ObjectAttributes->Attributes : 0;
-        req->rootdir = ObjectAttributes ? ObjectAttributes->RootDirectory : 0;
+        req->attributes = ObjectAttributes->Attributes;
+        req->rootdir = ObjectAttributes->RootDirectory;
         if (ObjectAttributes->ObjectName)
             wine_server_add_data(req, ObjectAttributes->ObjectName->Buffer,
                                  ObjectAttributes->ObjectName->Length);
