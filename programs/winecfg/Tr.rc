@@ -165,7 +165,11 @@ BEGIN
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Donaným Hýzlandýrmasý: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Sürücü Emülasyonu",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,230,230,10
+    LTEXT           "Öntanýmlý Örnekleme Hýzý:",IDC_STATIC,15,232,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Örnek Baþýna Bit Sayýsý:",IDC_STATIC,137,232,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Sürücü Emülasyonu",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
@@ -209,4 +213,15 @@ BEGIN
     IDS_AUDIO_MISSING       "Sistem kaydýnda belirlenmiþ bir ses sürücüsü yok.\n\nÖnerilen bir sürücü sizin için seçildi.\nBu sürücüyü kullanabilir veya varsa baþka bir sürücüyü seçebilirsiniz.\n\nSeçimin etkili olabilmesi için Uygula'yý týklamalýsýnýz."
     IDS_SHELL_FOLDER        "Klasör"
     IDS_LINKS_TO            "Hedef Dizin"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+IDS_DLL_WARNING         "Bu kitaplýðýn yükleme sýrasýnýn deðiþtirilmesi önerilmez.\nBunu yapmak istediðinizden emin misiniz?"
+IDS_DLL_WARNING_CAPTION "Uyarý: sistem kitaplýðý"
+IDS_DLL_NATIVE          "doðal"
+IDS_DLL_BUILTIN         "yerleþik"
+IDS_DLL_NATIVE_BUILTIN  "doðal, yerleþik"
+IDS_DLL_BUILTIN_NATIVE  "yerleþik, doðal"
+IDS_DLL_DISABLED        "devre dýþý"
 END
