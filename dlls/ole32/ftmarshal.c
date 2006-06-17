@@ -302,6 +302,23 @@ static const IMarshalVtbl ftmvtbl =
 /***********************************************************************
  *          CoCreateFreeThreadedMarshaler [OLE32.@]
  *
+ * Creates a free-threaded marshaler.
+ *
+ * PARAMS
+ *  punkOuter    [I] Optional. Outer unknown.
+ *  ppunkMarshal [O] On return, the inner unknown of the created free-threaded marshaler.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: E_OUTOFMEMORY if no memory available to create object.
+ *
+ * NOTES
+ *  Objects that ensure their state is maintained consistent when used by
+ *  multiple threads and reference no single-threaded objects are known as
+ *  free-threaded. The free-threaded marshaler enables these objects to be
+ *  efficiently marshaled within the same process, by not creating proxies
+ *  (as they aren't needed for the object to be safely used), whilst still
+ *  allowing the object to be used in inter-process and inter-machine contexts.
  */
 HRESULT WINAPI CoCreateFreeThreadedMarshaler (LPUNKNOWN punkOuter, LPUNKNOWN * ppunkMarshal)
 {
