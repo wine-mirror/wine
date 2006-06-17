@@ -100,6 +100,7 @@ typedef struct
     OXID                   oxid; /* apartment in which the channel is valid */
     DWORD                  dest_context; /* returned from GetDestCtx */
     LPVOID                 dest_context_data; /* returned from GetDestCtx */
+    HANDLE                 event; /* cached event handle */
 } ClientRpcChannelBuffer;
 
 struct dispatch_params
@@ -152,6 +153,7 @@ static ULONG WINAPI ClientRpcChannelBuffer_Release(LPRPCCHANNELBUFFER iface)
     if (ref)
         return ref;
 
+    if (This->event) CloseHandle(This->event);
     RpcBindingFree(&This->bind);
     HeapFree(GetProcessHeap(), 0, This);
     return 0;
@@ -205,6 +207,24 @@ static HRESULT WINAPI ServerRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
 {
     FIXME("stub\n");
     return E_NOTIMPL;
+}
+
+static HANDLE ClientRpcChannelBuffer_GetEventHandle(ClientRpcChannelBuffer *This)
+{
+    HANDLE event = InterlockedExchangePointer(&This->event, NULL);
+
+    /* Note: must be auto-reset event so we can reuse it without a call
+     * to ResetEvent */
+    if (!event) event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    return event;
+}
+
+static void ClientRpcChannelBuffer_ReleaseEventHandle(ClientRpcChannelBuffer *This, HANDLE event)
+{
+    if (InterlockedCompareExchangePointer(&This->event, event, NULL))
+        /* already a handle cached in This */
+        CloseHandle(event);
 }
 
 /* this thread runs an outgoing RPC */
@@ -271,7 +291,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
 
     RpcBindingInqObject(msg->Handle, &ipid);
     hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan);
-    params->handle = CreateEventW(NULL, FALSE, FALSE, NULL);
+    params->handle = ClientRpcChannelBuffer_GetEventHandle(This);
     if ((hr == S_OK) && !apt->multi_threaded)
     {
         TRACE("Calling apartment thread 0x%08lx...\n", apt->tid);
@@ -315,7 +335,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
         if (WaitForSingleObject(params->handle, 0))
             hr = CoWaitForMultipleHandles(0, INFINITE, 1, &params->handle, &index);
     }
-    CloseHandle(params->handle);
+    ClientRpcChannelBuffer_ReleaseEventHandle(This, params->handle);
 
     if (hr == S_OK) hr = params->hr;
 
@@ -478,6 +498,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
     apartment_getoxid(COM_CurrentApt(), &This->oxid);
     This->dest_context = dest_context;
     This->dest_context_data = dest_context_data;
+    This->event = NULL;
 
     *chan = (IRpcChannelBuffer*)This;
 
