@@ -207,13 +207,13 @@ static unsigned long dwarf2_leb128_as_unsigned(dwarf2_traverse_context_t* ctx)
 
     assert( NULL != ctx );
 
-    while (1)
+    do
     {
         byte = dwarf2_parse_byte(ctx);
         ret |= (byte & 0x7f) << shift;
         shift += 7;
-        if (0 == (byte & 0x80)) { break ; }
-    }
+    } while (byte & 0x80);
+
     return ret;
 }
 
@@ -226,13 +226,13 @@ static long dwarf2_leb128_as_signed(dwarf2_traverse_context_t* ctx)
 
     assert( NULL != ctx );
 
-    while (1)
+    do
     {
         byte = dwarf2_parse_byte(ctx);
         ret |= (byte & 0x7f) << shift;
         shift += 7;
-        if (0 == (byte & 0x80)) { break ; }
-    }
+    } while (byte & 0x80);
+
     /* as spec: sign bit of byte is 2nd high order bit (80x40)
      *  -> 0x80 is used as flag.
      */
