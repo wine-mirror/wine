@@ -131,6 +131,7 @@ typedef struct dwarf2_debug_info_s
 
 typedef struct dwarf2_parse_context_s {
   struct pool pool;
+  struct module* module;
   struct sparse_array abbrev_table;
   struct sparse_array debug_info_table;
   const unsigned char* data_stream;
@@ -143,7 +144,7 @@ typedef struct dwarf2_parse_context_s {
 } dwarf2_parse_context_t;
 
 /* forward declarations */
-static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx);
+static struct symt_enum* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry);
 
 static unsigned char dwarf2_parse_byte(dwarf2_parse_context_t* ctx)
 {
@@ -614,6 +615,38 @@ static void dwarf2_parse_attr_into_di(dwarf2_parse_context_t* ctx,
     }
 }
 
+static BOOL dwarf2_find_attribute(const dwarf2_debug_info_t* di,
+                                  unsigned at, union attribute* attr)
+{
+    unsigned                    i;
+    dwarf2_abbrev_entry_attr_t* abbrev_attr;
+
+    for (i = 0, abbrev_attr = di->abbrev->attrs; abbrev_attr; i++, abbrev_attr = abbrev_attr->next)
+    {
+        if (abbrev_attr->attribute == at)
+        {
+            *attr = di->attributes[i];
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static void dwarf2_find_name(dwarf2_parse_context_t* ctx,
+                             const dwarf2_debug_info_t* di,
+                             union attribute* attr, const char* pfx)
+                             
+{
+    static      int index;
+
+    if (!dwarf2_find_attribute(di, DW_AT_name, attr))
+    {
+        char* tmp = pool_alloc(&ctx->pool, strlen(pfx) + 16);
+        if (tmp) sprintf(tmp, "%s_%d", pfx, index++);
+        attr->string = tmp;
+    }
+}
+
 static struct symt* dwarf2_find_symt_by_ref(struct module* module, unsigned long ref)
 {
   WARN("want ref<0x%lx>\n", ref); 
@@ -683,7 +716,7 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
     return TRUE;
 }
 
-static struct symt_basic* dwarf2_parse_base_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt_basic* dwarf2_parse_base_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
 {
   struct symt_basic* symt = NULL;
   const char* name = NULL;
@@ -725,7 +758,7 @@ static struct symt_basic* dwarf2_parse_base_type(struct module* module, dwarf2_a
     bt = btNoType;
   }
   /*TRACE("symt_new_basic(%p, %u, %s, %u)", module, bt, name, size);*/
-  symt = symt_new_basic(module, bt, name, size);
+  symt = symt_new_basic(ctx->module, bt, name, size);
 
   if (entry->have_child) {
     FIXME("Unsupported children\n");
@@ -733,7 +766,7 @@ static struct symt_basic* dwarf2_parse_base_type(struct module* module, dwarf2_a
   return symt;
 }
 
-static struct symt_typedef* dwarf2_parse_typedef(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt_typedef* dwarf2_parse_typedef(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
 {
   struct symt_typedef* symt = NULL;
   struct symt* ref_type = NULL;
@@ -751,7 +784,7 @@ static struct symt_typedef* dwarf2_parse_typedef(struct module* module, dwarf2_a
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(module, ref);
+	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
       }
       break;
     case DW_AT_decl_file:
@@ -764,7 +797,7 @@ static struct symt_typedef* dwarf2_parse_typedef(struct module* module, dwarf2_a
     }
   }
   if (NULL != name) {
-    symt = symt_new_typedef(module, ref_type, name);
+    symt = symt_new_typedef(ctx->module, ref_type, name);
   }
 
   if (entry->have_child) {
@@ -773,7 +806,7 @@ static struct symt_typedef* dwarf2_parse_typedef(struct module* module, dwarf2_a
   return symt;
 }
 
-static struct symt_pointer* dwarf2_parse_pointer_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt_pointer* dwarf2_parse_pointer_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
 {
   struct symt_pointer* symt = NULL;
   struct symt* ref_type = NULL;
@@ -790,7 +823,7 @@ static struct symt_pointer* dwarf2_parse_pointer_type(struct module* module, dwa
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(module, ref);
+	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
       }
       break;
     default:
@@ -798,7 +831,7 @@ static struct symt_pointer* dwarf2_parse_pointer_type(struct module* module, dwa
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  symt = symt_new_pointer(module, ref_type);
+  symt = symt_new_pointer(ctx->module, ref_type);
 
   if (entry->have_child) {
     FIXME("Unsupported children\n");
@@ -806,7 +839,7 @@ static struct symt_pointer* dwarf2_parse_pointer_type(struct module* module, dwa
   return symt;
 }
 
-static void dwarf2_parse_array_subrange_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_array* parent)
+static void dwarf2_parse_array_subrange_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_array* parent)
 {
   unsigned min = 0;
   unsigned max = 0;
@@ -820,7 +853,7 @@ static void dwarf2_parse_array_subrange_type(struct module* module, dwarf2_abbre
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	idx_type = dwarf2_find_symt_by_ref(module, ref);
+	idx_type = dwarf2_find_symt_by_ref(ctx->module, ref);
 	/** check if idx_type is a basic_type integer */
       }
       break;
@@ -853,7 +886,7 @@ static void dwarf2_parse_array_subrange_type(struct module* module, dwarf2_abbre
 }
 
 
-static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt_array* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
 {
   struct symt_array* symt = NULL;
   struct symt* ref_type = NULL;
@@ -872,7 +905,7 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(module, ref);
+	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
       }
       break;
     default:
@@ -882,7 +915,7 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
   }
 
   /* FIXME: ugly as hell */
-  symt = symt_new_array(module, min, max, ref_type, NULL);
+  symt = symt_new_array(ctx->module, min, max, ref_type, NULL);
 
   if (entry->have_child) { /** any interest to not have child ? */
     while (ctx->data < ctx->end_data) {
@@ -903,7 +936,7 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
 
       switch (entry->tag) {
       case DW_TAG_subrange_type:
-	dwarf2_parse_array_subrange_type(module, entry, ctx, symt);
+	dwarf2_parse_array_subrange_type(ctx, entry, symt);
 	break;
       default:
 	{
@@ -924,7 +957,7 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
   return symt;
 }
 
-static struct symt* dwarf2_parse_const_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt* dwarf2_parse_const_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
 {
   struct symt* ref_type = NULL;
   dwarf2_abbrev_entry_attr_t* attr = NULL;
@@ -937,7 +970,7 @@ static struct symt* dwarf2_parse_const_type(struct module* module, dwarf2_abbrev
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(module, ref);
+	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
       }
       break;
     default:
@@ -956,7 +989,7 @@ static struct symt* dwarf2_parse_const_type(struct module* module, dwarf2_abbrev
   return ref_type;
 }
 
-static struct symt* dwarf2_parse_reference_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt* dwarf2_parse_reference_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
 {
   struct symt* symt = NULL;
   struct symt* ref_type = NULL;
@@ -973,7 +1006,7 @@ static struct symt* dwarf2_parse_reference_type(struct module* module, dwarf2_ab
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(module, ref);
+	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
       }
       break;
     default:
@@ -982,7 +1015,7 @@ static struct symt* dwarf2_parse_reference_type(struct module* module, dwarf2_ab
     }
   }
   /* FIXME: for now, we hard-wire C++ references to pointers */
-  symt = &symt_new_pointer(module, ref_type)->symt;
+  symt = &symt_new_pointer(ctx->module, ref_type)->symt;
 
   if (entry->have_child) {
     FIXME("Unsupported children\n");
@@ -994,7 +1027,7 @@ static struct symt* dwarf2_parse_reference_type(struct module* module, dwarf2_ab
   return symt;
 }
 
-static void dwarf2_parse_udt_member(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_udt* parent)
+static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_udt* parent)
 {
   struct symt* elt_type = NULL;
   const char* name = NULL; 
@@ -1019,7 +1052,7 @@ static void dwarf2_parse_udt_member(struct module* module, dwarf2_abbrev_entry_t
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	elt_type = dwarf2_find_symt_by_ref(module, ref);
+	elt_type = dwarf2_find_symt_by_ref(ctx->module, ref);
       }
       break;
     case DW_AT_data_member_location:
@@ -1068,7 +1101,7 @@ static void dwarf2_parse_udt_member(struct module* module, dwarf2_abbrev_entry_t
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  symt_add_udt_element(module, parent, name, elt_type, offset, size);
+  symt_add_udt_element(ctx->module, parent, name, elt_type, offset, size);
 
   if (entry->have_child) {
     FIXME("Unsupported children\n");
@@ -1078,7 +1111,7 @@ static void dwarf2_parse_udt_member(struct module* module, dwarf2_abbrev_entry_t
   dwarf2_check_sibling(ctx, next_sibling);
 }
 
-static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_udt* symt)
+static void dwarf2_parse_udt_members(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_udt* symt)
 {
   if (entry->have_child) { /** any interest to not have child ? */
     while (ctx->data < ctx->end_data) {
@@ -1099,10 +1132,10 @@ static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_
 
       switch (entry->tag) {
       case DW_TAG_member:
-	dwarf2_parse_udt_member(module, entry, ctx, symt);
+	dwarf2_parse_udt_member(ctx, entry, symt);
 	break;
       case DW_TAG_enumeration_type:
-        dwarf2_parse_enumeration_type(module, entry, ctx);
+        dwarf2_parse_enumeration_type(ctx, entry);
 	break;
       default:
 	{
@@ -1118,7 +1151,7 @@ static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_
   }
 }
 
-static struct symt_udt* dwarf2_parse_udt_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, enum UdtKind udt)
+static struct symt_udt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, enum UdtKind udt)
 {
   struct symt_udt* symt = NULL;
   const char* name = NULL;
@@ -1149,8 +1182,8 @@ static struct symt_udt* dwarf2_parse_udt_type(struct module* module, dwarf2_abbr
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  symt = symt_new_udt(module, name, size, udt);
-  dwarf2_parse_udt_members(module, entry, ctx, symt);
+  symt = symt_new_udt(ctx->module, name, size, udt);
+  dwarf2_parse_udt_members(ctx, entry, symt);
 
   /** set correct data cursor */
   dwarf2_check_sibling(ctx, next_sibling);
@@ -1158,7 +1191,7 @@ static struct symt_udt* dwarf2_parse_udt_type(struct module* module, dwarf2_abbr
   return symt;
 }
 
-static void dwarf2_parse_enumerator(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_enum* parent)
+static void dwarf2_parse_enumerator(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_enum* parent)
 {
   const char* name = NULL;
   long value = 0;
@@ -1192,14 +1225,14 @@ static void dwarf2_parse_enumerator(struct module* module, dwarf2_abbrev_entry_t
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  symt_add_enum_element(module, parent, name, value);
+  symt_add_enum_element(ctx->module, parent, name, value);
 
   if (entry->have_child) {
     FIXME("Unsupported children\n");
   }
 }
 
-static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt_enum* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
 {
   struct symt_enum* symt = NULL;
   const char* name = NULL;
@@ -1230,7 +1263,7 @@ static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dw
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  symt = symt_new_enum(module, name);
+  symt = symt_new_enum(ctx->module, name);
 
   if (entry->have_child) { /** any interest to not have child ? */
     while (ctx->data < ctx->end_data) {
@@ -1251,7 +1284,7 @@ static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dw
 
       switch (entry->tag) {
       case DW_TAG_enumerator:
-	dwarf2_parse_enumerator(module, entry, ctx, symt);
+	dwarf2_parse_enumerator(ctx, entry, symt);
 	break;
       default:
 	{
@@ -1272,9 +1305,8 @@ static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dw
   return symt;
 }
 
-static void dwarf2_parse_variable(struct module* module, 
-				  dwarf2_abbrev_entry_t* entry, 
-				  dwarf2_parse_context_t* ctx) 
+static void dwarf2_parse_variable(dwarf2_parse_context_t* ctx,
+				  dwarf2_abbrev_entry_t* entry)
 {
   struct symt* var_type = NULL;
   dwarf2_abbrev_entry_attr_t* attr = NULL;
@@ -1291,7 +1323,7 @@ static void dwarf2_parse_variable(struct module* module,
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	var_type = dwarf2_find_symt_by_ref(module, ref);
+	var_type = dwarf2_find_symt_by_ref(ctx->module, ref);
       }
       break;
     case DW_AT_name:
@@ -1316,9 +1348,8 @@ static void dwarf2_parse_variable(struct module* module,
   dwarf2_check_sibling(ctx, next_sibling);  
 }
 
-static void dwarf2_parse_subprogram_parameter(struct module* module, 
+static void dwarf2_parse_subprogram_parameter(dwarf2_parse_context_t* ctx,
 					      dwarf2_abbrev_entry_t* entry, 
-					      dwarf2_parse_context_t* ctx, 
 					      struct symt_function_signature* sig_type,
 					      struct symt_function* func_type)
 {
@@ -1337,7 +1368,7 @@ static void dwarf2_parse_subprogram_parameter(struct module* module,
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	param_type = dwarf2_find_symt_by_ref(module, ref);
+	param_type = dwarf2_find_symt_by_ref(ctx->module, ref);
       }
       break;
     case DW_AT_name:
@@ -1357,7 +1388,7 @@ static void dwarf2_parse_subprogram_parameter(struct module* module,
     }
   }
   if (NULL != sig_type) {
-    symt_add_function_signature_parameter(module, sig_type, param_type);
+    symt_add_function_signature_parameter(ctx->module, sig_type, param_type);
   }
 
   if (entry->have_child) {
@@ -1368,7 +1399,7 @@ static void dwarf2_parse_subprogram_parameter(struct module* module,
   dwarf2_check_sibling(ctx, next_sibling);  
 }
 
-static void dwarf2_parse_inlined_subroutine(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
 {
   const char* name = NULL;
   unsigned long addr = 0;
@@ -1387,7 +1418,7 @@ static void dwarf2_parse_inlined_subroutine(struct module* module, dwarf2_abbrev
       break;
     case DW_AT_low_pc:
       low_pc = dwarf2_parse_attr_as_addr(attr, ctx);
-      addr = module->module.BaseOfImage + low_pc;
+      addr = ctx->module->module.BaseOfImage + low_pc;
       break;
     case DW_AT_high_pc:
       high_pc = dwarf2_parse_attr_as_addr(attr, ctx);
@@ -1426,10 +1457,10 @@ static void dwarf2_parse_inlined_subroutine(struct module* module, dwarf2_abbrev
 
       switch (entry->tag) {
       case DW_TAG_formal_parameter:
-	dwarf2_parse_subprogram_parameter(module, entry, ctx, NULL, NULL);
+	dwarf2_parse_subprogram_parameter(ctx, entry, NULL, NULL);
 	break;
       case DW_TAG_variable:
-	dwarf2_parse_variable(module, entry, ctx);
+	dwarf2_parse_variable(ctx, entry);
 	break;
       case DW_TAG_label:
       default:
@@ -1450,9 +1481,8 @@ static void dwarf2_parse_inlined_subroutine(struct module* module, dwarf2_abbrev
 }
 
 
-static void dwarf2_parse_subprogram_block(struct module* module, 
+static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx, 
 					  dwarf2_abbrev_entry_t* entry, 
-					  dwarf2_parse_context_t* ctx, 
 					  struct symt_function_signature* sig_type,
 					  struct symt_function* func_type)
 {
@@ -1503,10 +1533,10 @@ static void dwarf2_parse_subprogram_block(struct module* module,
 
       switch (entry->tag) {
       case DW_TAG_inlined_subroutine:
-	dwarf2_parse_inlined_subroutine(module, entry, ctx);
+	dwarf2_parse_inlined_subroutine(ctx, entry);
 	break;
       case DW_TAG_variable:
-	dwarf2_parse_variable(module, entry, ctx);
+	dwarf2_parse_variable(ctx, entry);
 	break;
       case DW_TAG_label:
       default:
@@ -1526,9 +1556,8 @@ static void dwarf2_parse_subprogram_block(struct module* module,
   dwarf2_check_sibling(ctx, next_sibling);
 }
 
-static void dwarf2_parse_subprogram_content(struct module* module, 
+static void dwarf2_parse_subprogram_content(dwarf2_parse_context_t* ctx,
 					    dwarf2_abbrev_entry_t* entry, 
-					    dwarf2_parse_context_t* ctx, 
 					    struct symt_function_signature* sig_type,
 					    struct symt_function* func_type)
 {
@@ -1551,13 +1580,13 @@ static void dwarf2_parse_subprogram_content(struct module* module,
 
       switch (entry->tag) {
       case DW_TAG_formal_parameter:
-	dwarf2_parse_subprogram_parameter(module, entry, ctx, sig_type, func_type);
+        dwarf2_parse_subprogram_parameter(ctx, entry, sig_type, func_type);
 	break;
       case DW_TAG_lexical_block:
-	dwarf2_parse_subprogram_block(module, entry, ctx, sig_type, func_type);
+	dwarf2_parse_subprogram_block(ctx, entry, sig_type, func_type);
 	break;
       case DW_TAG_variable:
-	dwarf2_parse_variable(module, entry, ctx);
+	dwarf2_parse_variable(ctx, entry);
 	break;
       case DW_TAG_label:
       default:
@@ -1574,7 +1603,7 @@ static void dwarf2_parse_subprogram_content(struct module* module,
   }
 }
 
-static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_compiland* compiland)
+static struct symt_function* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_compiland* compiland)
 {
   struct symt_function* func_type = NULL;
   const char* name = NULL;
@@ -1602,7 +1631,7 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
       break;
     case DW_AT_low_pc:
       low_pc = dwarf2_parse_attr_as_addr(attr, ctx);
-      addr = module->module.BaseOfImage + low_pc;
+      addr = ctx->module->module.BaseOfImage + low_pc;
       break;
     case DW_AT_high_pc:
       high_pc = dwarf2_parse_attr_as_addr(attr, ctx);
@@ -1615,7 +1644,7 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
     case DW_AT_type:
       {
 	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ret_type = dwarf2_find_symt_by_ref(module, ref);
+	ret_type = dwarf2_find_symt_by_ref(ctx->module, ref);
       }
       break;
     case DW_AT_declaration:
@@ -1645,19 +1674,19 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  sig_type = symt_new_function_signature(module, ret_type, call_conv);
+  sig_type = symt_new_function_signature(ctx->module, ret_type, call_conv);
   if (!is_decl) {
-    func_type = symt_new_function(module, compiland, name, addr, size, &sig_type->symt);
+    func_type = symt_new_function(ctx->module, compiland, name, addr, size, &sig_type->symt);
     if (low_pc && high_pc) {
-      symt_add_function_point(module, func_type, SymTagFuncDebugStart, low_pc, NULL);
-      symt_add_function_point(module, func_type, SymTagFuncDebugEnd, high_pc, NULL);
+      symt_add_function_point(ctx->module, func_type, SymTagFuncDebugStart, low_pc, NULL);
+      symt_add_function_point(ctx->module, func_type, SymTagFuncDebugEnd, high_pc, NULL);
     }
     if (decl_file && decl_line) {
-      symt_add_func_line(module, func_type, decl_file, decl_line, low_pc);
+      symt_add_func_line(ctx->module, func_type, decl_file, decl_line, low_pc);
     }
   }
-  dwarf2_parse_subprogram_content(module, entry, ctx, sig_type, func_type);
-  symt_normalize_function(module, func_type);
+  dwarf2_parse_subprogram_content(ctx, entry, sig_type, func_type);
+  symt_normalize_function(ctx->module, func_type);
 
   /** set correct data cursor */
   dwarf2_check_sibling(ctx, next_sibling);
@@ -1665,7 +1694,7 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
   return func_type;
 }
 
-static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_compiland* compiland)
+static void dwarf2_parse_compiland_content(dwarf2_parse_context_t* ctx, const dwarf2_abbrev_entry_t* entry, struct symt_compiland* compiland)
 {
   if (entry->have_child) { /** any interest to not have child ? */
     while (ctx->data < ctx->end_data) {
@@ -1686,37 +1715,37 @@ static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_a
 
       switch (entry->tag) {
       case DW_TAG_typedef:
-        dwarf2_parse_typedef(module, entry, ctx);
+        dwarf2_parse_typedef(ctx, entry);
 	break;
       case DW_TAG_base_type:
-        dwarf2_parse_base_type(module, entry, ctx);
+        dwarf2_parse_base_type(ctx, entry);
 	break;
       case DW_TAG_pointer_type:
-        dwarf2_parse_pointer_type(module, entry, ctx);
+        dwarf2_parse_pointer_type(ctx, entry);
 	break;
       case DW_TAG_class_type:
-        dwarf2_parse_udt_type(module, entry, ctx, UdtClass);
+        dwarf2_parse_udt_type(ctx, entry, UdtClass);
 	break;
       case DW_TAG_structure_type:
-        dwarf2_parse_udt_type(module, entry, ctx, UdtStruct);
+        dwarf2_parse_udt_type(ctx, entry, UdtStruct);
 	break;
       case DW_TAG_union_type:
-        dwarf2_parse_udt_type(module, entry, ctx, UdtUnion);
+        dwarf2_parse_udt_type(ctx, entry, UdtUnion);
 	break;
       case DW_TAG_array_type:
-        dwarf2_parse_array_type(module, entry, ctx);
+        dwarf2_parse_array_type(ctx, entry);
 	break;
       case DW_TAG_const_type:
-        dwarf2_parse_const_type(module, entry, ctx);
+        dwarf2_parse_const_type(ctx, entry);
 	break;
       case DW_TAG_reference_type:
-        dwarf2_parse_reference_type(module, entry, ctx);
+        dwarf2_parse_reference_type(ctx, entry);
 	break;
       case DW_TAG_enumeration_type:
-        dwarf2_parse_enumeration_type(module, entry, ctx);
+        dwarf2_parse_enumeration_type(ctx, entry);
 	break;
       case DW_TAG_subprogram:
-        dwarf2_parse_subprogram(module, entry, ctx, compiland);
+        dwarf2_parse_subprogram(ctx, entry, compiland);
 	break;
 
       default:
@@ -1733,7 +1762,7 @@ static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_a
   }
 }
 
-static struct symt_compiland* dwarf2_parse_compiland(struct module* module, const dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt_compiland* dwarf2_parse_compiland(dwarf2_parse_context_t* ctx, const dwarf2_abbrev_entry_t* entry)
 {
   struct symt_compiland* compiland = NULL;
   const char* name = NULL;
@@ -1756,8 +1785,8 @@ static struct symt_compiland* dwarf2_parse_compiland(struct module* module, cons
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  compiland = symt_new_compiland(module, name);
-  dwarf2_parse_compiland_content(module, entry, ctx, compiland);
+  compiland = symt_new_compiland(ctx->module, name);
+  dwarf2_parse_compiland_content(ctx, entry, compiland);
 
   dwarf2_check_sibling(ctx, next_sibling);
 
@@ -1794,6 +1823,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     TRACE("- word_size:     %u\n",  comp_unit.word_size);
 
     pool_init(&ctx.pool, 65536);
+    ctx.module = module;
     ctx.data_stream = debug;
     ctx.data = ctx.start_data = comp_unit_cursor + sizeof(dwarf2_comp_unit_stream_t);
     ctx.offset = comp_unit_cursor - debug;
@@ -1840,7 +1870,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 
       switch (entry->tag) {
       case DW_TAG_compile_unit:
-        compiland = dwarf2_parse_compiland(module, entry, &ctx);
+        compiland = dwarf2_parse_compiland(&ctx, entry);
 	break;
       default:
 	{
