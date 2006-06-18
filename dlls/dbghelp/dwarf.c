@@ -620,12 +620,6 @@ static struct symt* dwarf2_find_symt_by_ref(struct module* module, unsigned long
   return NULL;
 }
 
-static struct symt* dwarf2_add_symt_ref(struct module* module, unsigned long ref, struct symt* symt)
-{
-  if (NULL != symt) return NULL;
-  return NULL;
-}
-
 /******************************************************************
  *		dwarf2_read_one_debug_info
  *
@@ -1108,10 +1102,7 @@ static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_
 	dwarf2_parse_udt_member(module, entry, ctx, symt);
 	break;
       case DW_TAG_enumeration_type:
-	{
-	  struct symt_enum* symt = dwarf2_parse_enumeration_type(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_enumeration_type(module, entry, ctx);
 	break;
       default:
 	{
@@ -1695,70 +1686,37 @@ static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_a
 
       switch (entry->tag) {
       case DW_TAG_typedef:
-	{
-	  struct symt_typedef* symt = dwarf2_parse_typedef(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_typedef(module, entry, ctx);
 	break;
       case DW_TAG_base_type:
-	{
-	  struct symt_basic* symt = dwarf2_parse_base_type(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_base_type(module, entry, ctx);
 	break;
       case DW_TAG_pointer_type:
-	{
-	  struct symt_pointer* symt = dwarf2_parse_pointer_type(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_pointer_type(module, entry, ctx);
 	break;
       case DW_TAG_class_type:
-	{
-            struct symt_udt* symt = dwarf2_parse_udt_type(module, entry, ctx, UdtClass);
-	  if (NULL != symt) dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_udt_type(module, entry, ctx, UdtClass);
 	break;
       case DW_TAG_structure_type:
-	{
-            struct symt_udt* symt = dwarf2_parse_udt_type(module, entry, ctx, UdtStruct);
-	  if (NULL != symt) dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_udt_type(module, entry, ctx, UdtStruct);
 	break;
       case DW_TAG_union_type:
-	{
-            struct symt_udt* symt = dwarf2_parse_udt_type(module, entry, ctx, UdtUnion);
-	  if (NULL != symt) dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_udt_type(module, entry, ctx, UdtUnion);
 	break;
       case DW_TAG_array_type:
-	{
-	  struct symt_array* symt = dwarf2_parse_array_type(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_array_type(module, entry, ctx);
 	break;
       case DW_TAG_const_type:
-	{
-	  struct symt* symt = dwarf2_parse_const_type(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, symt);
-	}
+        dwarf2_parse_const_type(module, entry, ctx);
 	break;
       case DW_TAG_reference_type:
-	{
-	  struct symt* symt = dwarf2_parse_reference_type(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, symt);
-	}
+        dwarf2_parse_reference_type(module, entry, ctx);
 	break;
       case DW_TAG_enumeration_type:
-	{
-	  struct symt_enum* symt = dwarf2_parse_enumeration_type(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_enumeration_type(module, entry, ctx);
 	break;
       case DW_TAG_subprogram:
-	{
-	  struct symt_function* symt = dwarf2_parse_subprogram(module, entry, ctx, compiland);
-	  if (NULL != symt) dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	}
+        dwarf2_parse_subprogram(module, entry, ctx, compiland);
 	break;
 
       default:
@@ -1882,11 +1840,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 
       switch (entry->tag) {
       case DW_TAG_compile_unit:
-	{
-	  struct symt_compiland* symt = dwarf2_parse_compiland(module, entry, &ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
-	  compiland = symt;
-	}
+        compiland = dwarf2_parse_compiland(module, entry, &ctx);
 	break;
       default:
 	{
