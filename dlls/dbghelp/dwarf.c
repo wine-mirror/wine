@@ -972,6 +972,22 @@ static void dwarf2_parse_subprogram_parameter(dwarf2_parse_context_t* ctx,
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
 
+static void dwarf2_parse_subprogram_label(dwarf2_parse_context_t* ctx,
+                                          struct symt_function* func,
+                                          dwarf2_debug_info_t* di)
+{
+    union attribute name;
+    union attribute low_pc;
+
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+
+    if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc)) low_pc.uvalue = 0;
+    dwarf2_find_name(ctx, di, &name, "label");
+
+    symt_add_function_point(ctx->module, func, SymTagLabel,
+                            ctx->module->module.BaseOfImage + low_pc.uvalue, name.string);
+}
+
 static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx, 
 					  dwarf2_debug_info_t* di, 
 					  struct symt_function* func);
@@ -1014,6 +1030,11 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx,
             case DW_TAG_inlined_subroutine:
                 /* FIXME */
                 dwarf2_parse_inlined_subroutine(ctx, child);
+                break;
+            case DW_TAG_label:
+                /* FIXME
+                 * dwarf2_parse_subprogram_label(ctx, func, child);
+                 */
                 break;
             default:
                 FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
@@ -1130,6 +1151,9 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
                 /* FIXME: likely a declaration (to be checked)
                  * skip it for now
                  */
+                break;
+            case DW_TAG_label:
+                dwarf2_parse_subprogram_label(ctx, func, child);
                 break;
             case DW_TAG_class_type:
             case DW_TAG_structure_type:
