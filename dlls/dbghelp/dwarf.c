@@ -59,6 +59,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_dwarf);
  *      o unspecified parameters
  *      o inlined functions
  *      o line numbers
+ *      o Debug{Start|End}Point
  * - Udt
  *      o proper types loading (addresses, bitfield, nesting)
  */
@@ -955,20 +956,85 @@ static void dwarf2_parse_variable(dwarf2_parse_context_t* ctx,
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
 
+static unsigned dwarf2_map_register(int regno)
+{
+    unsigned    reg;
+
+    switch (regno)
+    {
+    case -1:
+    /* FIXME: this is a dirty hack */
+    case -2: reg = 0;          break;
+    case  0: reg = CV_REG_EAX; break;
+    case  1: reg = CV_REG_ECX; break;
+    case  2: reg = CV_REG_EDX; break;
+    case  3: reg = CV_REG_EBX; break;
+    case  4: reg = CV_REG_ESP; break;
+    case  5: reg = CV_REG_EBP; break;
+    case  6: reg = CV_REG_ESI; break;
+    case  7: reg = CV_REG_EDI; break;
+    case  8: reg = CV_REG_EIP; break;
+    case  9: reg = CV_REG_EFLAGS; break;
+    case 10: reg = CV_REG_CS;  break;
+    case 11: reg = CV_REG_SS;  break;
+    case 12: reg = CV_REG_DS;  break;
+    case 13: reg = CV_REG_ES;  break;
+    case 14: reg = CV_REG_FS;  break;
+    case 15: reg = CV_REG_GS;  break;
+    case 16: case 17: case 18: case 19:
+    case 20: case 21: case 22: case 23:
+        reg = CV_REG_ST0 + regno - 16; break;
+    case 24: reg = CV_REG_CTRL; break;
+    case 25: reg = CV_REG_STAT; break;
+    case 26: reg = CV_REG_TAG; break;
+/*
+reg: fiseg 27
+reg: fioff 28
+reg: foseg 29
+reg: fooff 30
+reg: fop   31
+*/
+    case 32: case 33: case 34: case 35:
+    case 36: case 37: case 38: case 39:
+        reg = CV_REG_XMM0 + regno - 32; break;
+    case 40: reg = CV_REG_MXCSR; break;
+    default:
+        FIXME("Don't know how to map register %d\n", regno);
+        return 0;
+    }
+    return reg;
+}
+
 static void dwarf2_parse_subprogram_parameter(dwarf2_parse_context_t* ctx,
-					      dwarf2_debug_info_t* di, 
-					      struct symt_function_signature* sig_type)
+                                              struct symt_function* func,
+					      struct symt_block* block,
+					      dwarf2_debug_info_t* di)
 {
     struct symt* param_type;
-    union attribute name;
+    union attribute loc;
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
     param_type = dwarf2_lookup_type(ctx, di);
-    dwarf2_find_name(ctx, di, &name, "parameter");
-    /* DW_AT_location */
-    if (sig_type) symt_add_function_signature_parameter(ctx->module, sig_type, param_type);
-    /* FIXME: add variable to func_type */
+    if (dwarf2_find_attribute(di, DW_AT_location, &loc))
+    {
+        union attribute name;
+        unsigned long offset;
+        int in_reg;
+
+        dwarf2_find_name(ctx, di, &name, "parameter");
+        offset = dwarf2_compute_location(ctx, loc.block, &in_reg);
+	TRACE("found parameter %s/%ld (reg=%d) at %s\n",
+              name.string, offset, in_reg, dwarf2_debug_ctx(ctx));
+        symt_add_func_local(ctx->module, func, 
+                            DataIsParam, dwarf2_map_register(in_reg), offset,
+                            block, param_type, name.string);
+    }
+    if (func && func->type)
+        symt_add_function_signature_parameter(ctx->module,
+                                              (struct symt_function_signature*)func->type,
+                                              param_type);
+
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
 
@@ -1137,7 +1203,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
             switch (child->abbrev->tag)
             {
             case DW_TAG_formal_parameter:
-                dwarf2_parse_subprogram_parameter(ctx, child, sig_type);
+                dwarf2_parse_subprogram_parameter(ctx, func, NULL, child);
                 break;
             case DW_TAG_lexical_block:
                 dwarf2_parse_subprogram_block(ctx, child, func);
