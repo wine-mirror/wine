@@ -2115,7 +2115,6 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 {
   const unsigned char* comp_unit_cursor = debug;
   const unsigned char* end_debug = debug + debug_size;
-  BOOL bRet = TRUE;
 
   while (comp_unit_cursor < end_debug) {
     dwarf2_abbrev_table_t* abbrev_table;
@@ -2203,5 +2202,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     }
     dwarf2_abbrev_table_free(abbrev_table);
   }
-  return bRet;
+  
+  module->module.SymType = SymDia;
+  return TRUE;
 }
