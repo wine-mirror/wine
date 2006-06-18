@@ -756,7 +756,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                                          struct pool* pool,
                                          struct hash_table* ht_symtab)
 {
-    BOOL                ret = FALSE;
+    BOOL                ret = FALSE, lret;
     const char*	        shstrtab;
     int	       	        i;
     int                 symtab_sect, dynsym_sect, stab_sect, stabstr_sect;
@@ -846,22 +846,22 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             if (stab != NO_MAP && stabstr != NO_MAP)
             {
                 /* OK, now just parse all of the stabs. */
-                ret = stabs_parse(module, module->elf_info->elf_addr,
-                                  stab, fmap->sect[stab_sect].shdr.sh_size,
-                                  stabstr, fmap->sect[stabstr_sect].shdr.sh_size);
+                lret = stabs_parse(module, module->elf_info->elf_addr,
+                                   stab, fmap->sect[stab_sect].shdr.sh_size,
+                                   stabstr, fmap->sect[stabstr_sect].shdr.sh_size);
+                if (lret)
+                    /* and fill in the missing information for stabs */
+                    elf_finish_stabs_info(module, ht_symtab);
+                else
+                    WARN("Couldn't correctly read stabs\n");
+                ret = ret || lret;
             }
+            else lret = FALSE;
             elf_unmap_section(fmap, stab_sect);
             elf_unmap_section(fmap, stabstr_sect);
             
-            if (!ret)
-            {
-                WARN("Couldn't correctly read stabs\n");
-                return FALSE;
-            }
-            /* and fill in the missing information for stabs */
-            elf_finish_stabs_info(module, ht_symtab);
         }
-        else if (debug_sect != -1)
+        if (debug_sect != -1)
         {
             /* Dwarf 2 debug information */
             const BYTE* dw2_debug;
@@ -878,23 +878,21 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             if (dw2_debug != NO_MAP && NO_MAP != dw2_debug_abbrev && dw2_debug_str != NO_MAP)
             {
                 /* OK, now just parse dwarf2 debug infos. */
-                ret = dwarf2_parse(module, module->elf_info->elf_addr,
-				   dw2_debug, fmap->sect[debug_sect].shdr.sh_size,
-				   dw2_debug_abbrev, fmap->sect[debug_abbrev_sect].shdr.sh_size,
-				   dw2_debug_str, fmap->sect[debug_str_sect].shdr.sh_size,
-                                   dw2_debug_line, fmap->sect[debug_line_sect].shdr.sh_size);
+                lret = dwarf2_parse(module, module->elf_info->elf_addr,
+                                    dw2_debug, fmap->sect[debug_sect].shdr.sh_size,
+                                    dw2_debug_abbrev, fmap->sect[debug_abbrev_sect].shdr.sh_size,
+                                    dw2_debug_str, fmap->sect[debug_str_sect].shdr.sh_size,
+                                    dw2_debug_line, fmap->sect[debug_line_sect].shdr.sh_size);
+                if (!lret)
+                    WARN("Couldn't correctly read stabs\n");
+                ret = ret || lret;
             }
             elf_unmap_section(fmap, debug_sect);
             elf_unmap_section(fmap, debug_abbrev_sect);
             elf_unmap_section(fmap, debug_str_sect);
             elf_unmap_section(fmap, debug_line_sect);
-            if (!ret)
-            {
-                WARN("Couldn't correctly read stabs\n");
-                return FALSE;
-            }
         }
-        else if (debuglink_sect != -1)
+        if (debuglink_sect != -1)
         {
             const char* dbg_link;
             struct elf_file_map fmap_link;
@@ -910,10 +908,11 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             {
                 fmap_link.crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
                 fmap_link.with_crc = 1;
-                ret = elf_load_debug_info_from_map(module, &fmap_link, pool,
-                                                   ht_symtab);
-                if (!ret)
+                lret = elf_load_debug_info_from_map(module, &fmap_link, pool,
+                                                    ht_symtab);
+                if (!lret)
                     WARN("Couldn't load debug information from %s\n", dbg_link);
+                ret = ret || lret;
             }
             else
                 WARN("Couldn't load linked debug file for %s\n",
