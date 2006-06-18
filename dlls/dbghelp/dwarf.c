@@ -113,11 +113,18 @@ typedef struct dwarf2_abbrev_entry_s
     dwarf2_abbrev_entry_attr_t* attrs;
 } dwarf2_abbrev_entry_t;
 
+struct dwarf2_block
+{
+    unsigned                    size;
+    const unsigned char*        ptr;
+};
+
 union attribute
 {
     unsigned long                   uvalue;
     long                            svalue;
     const char*                     string;
+    struct dwarf2_block*            block;
 };
 
 typedef struct dwarf2_debug_info_s
@@ -391,23 +398,31 @@ static void dwarf2_parse_attr_into_di(dwarf2_parse_context_t* ctx,
         TRACE("strp<%s>\n", attr->string);
         break;
     case DW_FORM_block:
-        attr->uvalue = dwarf2_leb128_as_unsigned(ctx);
-        ctx->data += attr->uvalue;
+        attr->block = pool_alloc(&ctx->pool, sizeof(struct dwarf2_block));
+        attr->block->size = dwarf2_leb128_as_unsigned(ctx);
+        attr->block->ptr  = ctx->data;
+        ctx->data += attr->block->size;
         break;
 
     case DW_FORM_block1:
-        attr->uvalue = dwarf2_parse_byte(ctx);
-        ctx->data += attr->uvalue;
+        attr->block = pool_alloc(&ctx->pool, sizeof(struct dwarf2_block));
+        attr->block->size = dwarf2_parse_byte(ctx);
+        attr->block->ptr  = ctx->data;
+        ctx->data += attr->block->size;
         break;
 
     case DW_FORM_block2:
-        attr->uvalue = dwarf2_parse_u2(ctx);
-        ctx->data += attr->uvalue;
+        attr->block = pool_alloc(&ctx->pool, sizeof(struct dwarf2_block));
+        attr->block->size = dwarf2_parse_u2(ctx);
+        attr->block->ptr  = ctx->data;
+        ctx->data += attr->block->size;
         break;
 
     case DW_FORM_block4:
-        attr->uvalue = dwarf2_parse_u4(ctx);
-        ctx->data += attr->uvalue;
+        attr->block = pool_alloc(&ctx->pool, sizeof(struct dwarf2_block));
+        attr->block->size = dwarf2_parse_u4(ctx);
+        attr->block->ptr  = ctx->data;
+        ctx->data += attr->block->size;
         break;
 
     default:
@@ -449,6 +464,96 @@ static void dwarf2_find_name(dwarf2_parse_context_t* ctx,
 
 static void dwarf2_load_one_entry(dwarf2_parse_context_t*, dwarf2_debug_info_t*,
                                   struct symt_compiland*);
+
+#define Wine_DW_no_register     -1
+#define Wine_DW_frame_register  -2
+
+static unsigned long dwarf2_compute_location(dwarf2_parse_context_t* ctx,
+                                             struct dwarf2_block* block,
+                                             int* in_register)
+{
+    unsigned long loc[64];
+    unsigned stk;
+
+    if (in_register) *in_register = Wine_DW_no_register;
+    loc[stk = 0] = 0;
+
+    if (block->size)
+    {
+        /* FIXME: would require better definition of contexts */
+        dwarf2_parse_context_t  lctx;
+        unsigned char op;
+        BOOL piece_found = FALSE;
+
+        lctx.data = block->ptr;
+        lctx.end_data = block->ptr + block->size;
+        lctx.word_size = ctx->word_size;
+
+        while (lctx.data < lctx.end_data)
+        {
+            op = dwarf2_parse_byte(&lctx);
+            switch (op)
+            {
+            case DW_OP_addr:    loc[++stk] = dwarf2_parse_addr(&lctx); break;
+            case DW_OP_const1u: loc[++stk] = dwarf2_parse_byte(&lctx); break;
+            case DW_OP_const1s: loc[++stk] = (long)(char)dwarf2_parse_byte(&lctx); break;
+            case DW_OP_const2u: loc[++stk] = dwarf2_parse_u2(&lctx); break;
+            case DW_OP_const2s: loc[++stk] = (long)(short)dwarf2_parse_u2(&lctx); break;
+            case DW_OP_const4u: loc[++stk] = dwarf2_parse_u4(&lctx); break;
+            case DW_OP_const4s: loc[++stk] = dwarf2_parse_u4(&lctx); break;
+            case DW_OP_constu:  loc[++stk] = dwarf2_leb128_as_unsigned(&lctx); break;
+            case DW_OP_consts:  loc[++stk] = dwarf2_leb128_as_signed(&lctx); break;
+            case DW_OP_plus_uconst:
+                                loc[stk] += dwarf2_leb128_as_unsigned(&lctx); break;
+            case DW_OP_reg0:  case DW_OP_reg1:  case DW_OP_reg2:  case DW_OP_reg3:
+            case DW_OP_reg4:  case DW_OP_reg5:  case DW_OP_reg6:  case DW_OP_reg7:
+            case DW_OP_reg8:  case DW_OP_reg9:  case DW_OP_reg10: case DW_OP_reg11:
+            case DW_OP_reg12: case DW_OP_reg13: case DW_OP_reg14: case DW_OP_reg15:
+            case DW_OP_reg16: case DW_OP_reg17: case DW_OP_reg18: case DW_OP_reg19:
+            case DW_OP_reg20: case DW_OP_reg21: case DW_OP_reg22: case DW_OP_reg23:
+            case DW_OP_reg24: case DW_OP_reg25: case DW_OP_reg26: case DW_OP_reg27:
+            case DW_OP_reg28: case DW_OP_reg29: case DW_OP_reg30: case DW_OP_reg31:
+                if (in_register)
+                {
+                    /* dbghelp APIs don't know how to cope with this anyway
+                     * (for example 'long long' stored in two registers)
+                     * FIXME: We should tell winedbg how to deal with it (sigh)
+                     */
+                    if (!piece_found || (op - DW_OP_reg0 != *in_register + 1))
+                    {
+                        if (*in_register != Wine_DW_no_register)
+                            FIXME("Only supporting one reg (%d -> %d)\n", 
+                                  *in_register, op - DW_OP_reg0);
+                        *in_register = op - DW_OP_reg0;
+                    }
+                }
+                else FIXME("Found register, while not expecting it\n");
+                break;
+            case DW_OP_fbreg:
+                if (in_register)
+                {
+                    if (*in_register != Wine_DW_no_register)
+                        FIXME("Only supporting one reg (%d -> -2)\n", *in_register);
+                    *in_register = Wine_DW_frame_register;
+                }
+                else FIXME("Found register, while not expecting it\n");
+                loc[++stk] = dwarf2_leb128_as_signed(&lctx);
+                break;
+            case DW_OP_piece:
+                {
+                    unsigned sz = dwarf2_leb128_as_unsigned(&lctx);
+                    WARN("Not handling OP_piece directly (size=%d)\n", sz);
+                    piece_found = TRUE;
+                }
+                break;
+            default:
+                FIXME("Unhandled attr op: %x\n", op);
+                return loc[stk];
+            }
+        }
+    }
+    return loc[stk];
+}
 
 static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
                                        const dwarf2_debug_info_t* di)
@@ -699,8 +804,8 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
 {
     struct symt* elt_type;
     union attribute name;
-/*    union attribute loc; */
-    unsigned long offset;
+    union attribute loc;
+    unsigned long offset = 0;
 
     assert(parent);
 
@@ -708,27 +813,12 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
 
     dwarf2_find_name(ctx, di, &name, "udt_member");
     elt_type = dwarf2_lookup_type(ctx, di);
-#if 0
     if (dwarf2_find_attribute(di, DW_AT_data_member_location, &loc))
     {
-	TRACE("found member_location at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr));
-	if (loc.uvalue) {
-	  unsigned char op = dwarf2_parse_byte(ctx);
-	  --uvalue;
-	  switch (op) {
-	  case DW_OP_plus_uconst:
-	    offset = dwarf2_leb128_as_unsigned(ctx);
-	    break;
-	  default:
-	    WARN("Unhandled attr op at %s, for %s, op:%u\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr), op);
-	    ctx->data += uvalue;
-	  }
-	  TRACE("found offset:%lu\n", offset); 		  
-	}
+	TRACE("found member_location at %s\n", dwarf2_debug_ctx(ctx));
+        offset = dwarf2_compute_location(ctx, loc.block, NULL);
+        TRACE("found offset:%lu\n", offset); 		  
     }
-#endif
-    FIXME("still to be implemented proper member location\n");
-    offset = 0;
     
     symt_add_udt_element(ctx->module, parent, name.string, elt_type, offset, 0);
 
