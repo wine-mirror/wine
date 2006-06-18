@@ -126,7 +126,6 @@ typedef struct dwarf2_parse_context_s {
   const unsigned char* str_section;
   unsigned long offset;
   unsigned char word_size;
-  unsigned char level;
 } dwarf2_parse_context_t;
 
 /* forward declarations */
@@ -198,7 +197,7 @@ static long dwarf2_leb128_as_signed(dwarf2_parse_context_t* ctx)
 static const char* dwarf2_debug_ctx(dwarf2_parse_context_t* ctx) 
 {
   /*return wine_dbg_sprintf("ctx(0x%x,%u)", ctx->data - ctx->start_data, ctx->level); */
-  return wine_dbg_sprintf("ctx(0x%x,%u)", ctx->data - ctx->data_stream, ctx->level); 
+  return wine_dbg_sprintf("ctx(0x%x)", ctx->data - ctx->data_stream); 
 }
 static const char* dwarf2_debug_attr(dwarf2_abbrev_entry_attr_t* attr) 
 {
@@ -735,7 +734,6 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
   symt = symt_new_array(module, min, max, ref_type, NULL);
 
   if (entry->have_child) { /** any interest to not have child ? */
-    ++ctx->level;
     while (ctx->data < ctx->end_data) {
       dwarf2_abbrev_entry_t* entry = NULL;
       unsigned long entry_code;
@@ -767,7 +765,6 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
 	break;
       }
     }
-    --ctx->level;
   }
 
   /** set correct data cursor */
@@ -933,7 +930,6 @@ static void dwarf2_parse_udt_member(struct module* module, dwarf2_abbrev_entry_t
 static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_udt* symt)
 {
   if (entry->have_child) { /** any interest to not have child ? */
-    ++ctx->level;
     while (ctx->data < ctx->end_data) {
       dwarf2_abbrev_entry_t* entry = NULL;
       unsigned long entry_code;
@@ -971,7 +967,6 @@ static void dwarf2_parse_udt_members(struct module* module, dwarf2_abbrev_entry_
 	break;
       }
     }
-    --ctx->level;
   }
 }
 
@@ -1170,7 +1165,6 @@ static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dw
   symt = symt_new_enum(module, name);
 
   if (entry->have_child) { /** any interest to not have child ? */
-    ++ctx->level;
     while (ctx->data < ctx->end_data) {
       dwarf2_abbrev_entry_t* entry = NULL;
       unsigned long entry_code;
@@ -1202,7 +1196,6 @@ static struct symt_enum* dwarf2_parse_enumeration_type(struct module* module, dw
 	break;
       }
     }
-    --ctx->level;
   }
 
   /** set correct data cursor */
@@ -1347,7 +1340,6 @@ static void dwarf2_parse_inlined_subroutine(struct module* module, dwarf2_abbrev
   }
 
   if (entry->have_child) { /** any interest to not have child ? */
-    ++ctx->level;
     while (ctx->data < ctx->end_data) {
       dwarf2_abbrev_entry_t* entry = NULL;
       unsigned long entry_code;
@@ -1383,7 +1375,6 @@ static void dwarf2_parse_inlined_subroutine(struct module* module, dwarf2_abbrev
 	break;
       }
     }
-    --ctx->level;
   }
 
   /** set correct data cursor */
@@ -1426,7 +1417,6 @@ static void dwarf2_parse_subprogram_block(struct module* module,
   }
   
   if (entry->have_child) { /** any interest to not have child ? */
-    ++ctx->level;
     while (ctx->data < ctx->end_data) {
       dwarf2_abbrev_entry_t* entry = NULL;
       unsigned long entry_code;
@@ -1462,7 +1452,6 @@ static void dwarf2_parse_subprogram_block(struct module* module,
 	break;
       }
     }
-    --ctx->level;
   }
 
   /** set correct data cursor */
@@ -1476,7 +1465,6 @@ static void dwarf2_parse_subprogram_content(struct module* module,
 					    struct symt_function* func_type)
 {
   if (entry->have_child) { /** any interest to not have child ? */
-    ++ctx->level;
     while (ctx->data < ctx->end_data) {
       dwarf2_abbrev_entry_t* entry = NULL;
       unsigned long entry_code;
@@ -1515,7 +1503,6 @@ static void dwarf2_parse_subprogram_content(struct module* module,
 	break;
       }
     }
-    --ctx->level;
   }
 }
 
@@ -1613,7 +1600,6 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
 static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_compiland* compiland)
 {
   if (entry->have_child) { /** any interest to not have child ? */
-    ++ctx->level;
     while (ctx->data < ctx->end_data) {
       dwarf2_abbrev_entry_t* entry = NULL;
       unsigned long entry_code;
@@ -1709,7 +1695,6 @@ static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_a
 	break;
       }
     }
-    --ctx->level;
   }
 }
 
@@ -1778,7 +1763,6 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     ctx.offset = comp_unit_cursor - debug;
     ctx.word_size = comp_unit.word_size;
     ctx.str_section = str;
-    ctx.level = 0;
 
     comp_unit_cursor += comp_unit.length + sizeof(unsigned);
     ctx.end_data = comp_unit_cursor;
