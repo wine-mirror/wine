@@ -58,7 +58,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_dwarf);
  *      o local variables
  *      o unspecified parameters
  *      o inlined functions
+ *      o line numbers
+ * - Udt
+ *      o proper types loading (addresses, bitfield, nesting)
  */
+
 #if 0
 static void dump(const void* ptr, unsigned len)
 {
@@ -864,6 +868,11 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
                 break;
             case DW_TAG_enumeration_type:
                 dwarf2_parse_enumeration_type(ctx, child);
+                break;
+            case DW_TAG_structure_type:
+            case DW_TAG_class_type:
+            case DW_TAG_union_type:
+                /* FIXME: we need to handle nested udt definitions */
                 break;
             default:
                 FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
