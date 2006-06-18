@@ -57,7 +57,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_dwarf);
  * - Functions:
  *      o unspecified parameters
  *      o inlined functions
- *      o line numbers
  *      o Debug{Start|End}Point
  *      o CFA
  * - Udt
@@ -527,7 +526,7 @@ static unsigned long dwarf2_compute_location(dwarf2_parse_context_t* ctx,
             {
             case DW_OP_addr:    loc[++stk] = dwarf2_parse_addr(&lctx); break;
             case DW_OP_const1u: loc[++stk] = dwarf2_parse_byte(&lctx); break;
-            case DW_OP_const1s: loc[++stk] = (long)(char)dwarf2_parse_byte(&lctx); break;
+            case DW_OP_const1s: loc[++stk] = (long)(signed char)dwarf2_parse_byte(&lctx); break;
             case DW_OP_const2u: loc[++stk] = dwarf2_parse_u2(&lctx); break;
             case DW_OP_const2s: loc[++stk] = (long)(short)dwarf2_parse_u2(&lctx); break;
             case DW_OP_const4u: loc[++stk] = dwarf2_parse_u4(&lctx); break;
@@ -1380,6 +1379,22 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
     }
 }
 
+static void dwarf2_set_line_number(struct module* module, unsigned long address,
+                                   struct vector* v, unsigned file, unsigned line)
+{
+    struct symt_function*       func;
+    int                         idx;
+    unsigned*                   psrc;
+
+    if (!file || !(psrc = vector_at(v, file - 1))) return;
+
+    TRACE("%s %lx %s %u\n", module->module.ModuleName, address, source_get(module, *psrc), line);
+    if ((idx = symt_find_nearest(module, address)) == -1 ||
+        module->addr_sorttab[idx]->symt.tag != SymTagFunction) return;
+    func = (struct symt_function*)module->addr_sorttab[idx];
+    symt_add_func_line(module, func, *psrc, line, address - func->address);
+}
+
 static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,        
                                       dwarf2_parse_context_t* ctx,
                                       unsigned long offset)
@@ -1390,6 +1405,9 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     unsigned                    line_range, opcode_base;
     int                         line_base;
     const unsigned char*        opcode_len;
+    struct vector               dirs;
+    struct vector               files;
+    const char**                p;
 
     traverse.sections = sections;
     traverse.section = section_line;
@@ -1406,31 +1424,42 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     header_len = dwarf2_parse_u4(&traverse);
     insn_size = dwarf2_parse_byte(&traverse);
     default_stmt = dwarf2_parse_byte(&traverse);
-    line_base = (char)dwarf2_parse_byte(&traverse);
+    line_base = (signed char)dwarf2_parse_byte(&traverse);
     line_range = dwarf2_parse_byte(&traverse);
     opcode_base = dwarf2_parse_byte(&traverse);
 
     opcode_len = traverse.data;
-    traverse.data += opcode_base;
+    traverse.data += opcode_base - 1;
 
+    vector_init(&dirs, sizeof(const char*), 4);
+    p = vector_add(&dirs, &ctx->pool);
+    *p = ".";
     while (*traverse.data)
     {
         TRACE("Got include %s\n", (const char*)traverse.data);
+        p = vector_add(&dirs, &ctx->pool);
+        *p = (const char *)traverse.data;
         traverse.data += strlen((const char *)traverse.data) + 1;
     }
     traverse.data++;
+
+    vector_init(&files, sizeof(unsigned), 16);
     while (*traverse.data)
     {
-        unsigned int dir_index, mod_time, length;
-        const char* name;
+        unsigned int    dir_index, mod_time, length;
+        const char*     name;
+        const char*     dir;
+        unsigned*       psrc;
 
         name = (const char*)traverse.data;
         traverse.data += strlen(name) + 1;
         dir_index = dwarf2_leb128_as_unsigned(&traverse);
         mod_time = dwarf2_leb128_as_unsigned(&traverse);
         length = dwarf2_leb128_as_unsigned(&traverse);
-        TRACE("Got file %s (%u,%u,%u)\n",
-              name, dir_index, mod_time, length);
+        dir = *(const char**)vector_at(&dirs, dir_index);
+        TRACE("Got file %s/%s (%u,%u)\n", dir, name, mod_time, length);
+        psrc = vector_add(&files, &ctx->pool);
+        *psrc = source_new(ctx->module, dir, name);
     }
     traverse.data++;
 
@@ -1455,6 +1484,7 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                 address += (delta / line_range) * insn_size;
                 line += line_base + (delta % line_range);
                 basic_block = TRUE;
+                dwarf2_set_line_number(ctx->module, address, &files, file, line);
             }
             else
             {
@@ -1462,6 +1492,7 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                 {
                 case DW_LNS_copy:
                     basic_block = FALSE;
+                    dwarf2_set_line_number(ctx->module, address, &files, file, line);
                     break;
                 case DW_LNS_advance_pc:
                     address += insn_size * dwarf2_leb128_as_unsigned(&traverse);
@@ -1493,12 +1524,14 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                     switch (extopcode)
                     {
                     case DW_LNE_end_sequence:
+                        dwarf2_set_line_number(ctx->module, address, &files, file, line);
                         end_sequence = TRUE;
                         break;
                     case DW_LNE_set_address:
                         address = ctx->module->module.BaseOfImage + dwarf2_parse_addr(&traverse);
                         break;
                     case DW_LNE_define_file:
+                        FIXME("not handled %s\n", traverse.data);
                         traverse.data += strlen((const char *)traverse.data) + 1;
                         dwarf2_leb128_as_unsigned(&traverse);
                         dwarf2_leb128_as_unsigned(&traverse);
