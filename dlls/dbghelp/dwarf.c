@@ -154,7 +154,7 @@ typedef struct dwarf2_section_s
     unsigned                    size;
 } dwarf2_section_t;
 
-enum dwarf2_sections {section_debug, section_string, section_abbrev, section_max};
+enum dwarf2_sections {section_debug, section_string, section_abbrev, section_line, section_max};
 
 typedef struct dwarf2_traverse_context_s
 {
@@ -1456,7 +1456,8 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
 BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 		  const unsigned char* debug, unsigned int debug_size,
 		  const unsigned char* abbrev, unsigned int abbrev_size,
-		  const unsigned char* str, unsigned int str_size)
+		  const unsigned char* str, unsigned int str_size,
+		  const unsigned char* line, unsigned int line_size)
 {
     dwarf2_section_t    section[section_max];
     const unsigned char*comp_unit_cursor = debug;
@@ -1468,6 +1469,8 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     section[section_abbrev].size = abbrev_size;
     section[section_string].address = str;
     section[section_string].size = str_size;
+    section[section_line].address = line;
+    section[section_line].size = line_size;
 
     while (comp_unit_cursor < end_debug)
     {

@@ -867,23 +867,27 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             const BYTE* dw2_debug;
             const BYTE* dw2_debug_abbrev;
             const BYTE* dw2_debug_str;
+            const BYTE* dw2_debug_line;
 
             FIXME("Alpha-support for Dwarf2 information for %s\n", module->module.ModuleName);
 
             dw2_debug = (const BYTE*) elf_map_section(fmap, debug_sect);
             dw2_debug_abbrev = (const BYTE*) elf_map_section(fmap, debug_abbrev_sect);
             dw2_debug_str = (const BYTE*) elf_map_section(fmap, debug_str_sect);
+            dw2_debug_line = (const BYTE*) elf_map_section(fmap, debug_line_sect);
             if (dw2_debug != NO_MAP && NO_MAP != dw2_debug_abbrev && dw2_debug_str != NO_MAP)
             {
                 /* OK, now just parse dwarf2 debug infos. */
                 ret = dwarf2_parse(module, module->elf_info->elf_addr,
 				   dw2_debug, fmap->sect[debug_sect].shdr.sh_size,
 				   dw2_debug_abbrev, fmap->sect[debug_abbrev_sect].shdr.sh_size,
-				   dw2_debug_str, fmap->sect[debug_str_sect].shdr.sh_size);
+				   dw2_debug_str, fmap->sect[debug_str_sect].shdr.sh_size,
+                                   dw2_debug_line, fmap->sect[debug_line_sect].shdr.sh_size);
             }
             elf_unmap_section(fmap, debug_sect);
             elf_unmap_section(fmap, debug_abbrev_sect);
             elf_unmap_section(fmap, debug_str_sect);
+            elf_unmap_section(fmap, debug_line_sect);
             if (!ret)
             {
                 WARN("Couldn't correctly read stabs\n");

@@ -434,7 +434,8 @@ extern BOOL         stabs_parse(struct module* module, unsigned long load_offset
 extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offset,
 				 const unsigned char* debug, unsigned int debug_size, 
 				 const unsigned char* abbrev, unsigned int abbrev_size, 
-				 const unsigned char* str, unsigned int str_sz);
+				 const unsigned char* str, unsigned int str_size,
+                                 const unsigned char* line, unsigned int line_size);
 
 /* symbol.c */
 extern const char*  symt_get_name(const struct symt* sym);
