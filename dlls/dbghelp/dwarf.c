@@ -144,7 +144,7 @@ typedef struct dwarf2_parse_context_s {
 } dwarf2_parse_context_t;
 
 /* forward declarations */
-static struct symt_enum* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry);
+static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx, dwarf2_debug_info_t* entry);
 
 static unsigned char dwarf2_parse_byte(dwarf2_parse_context_t* ctx)
 {
@@ -225,27 +225,17 @@ static unsigned long dwarf2_parse_addr(dwarf2_parse_context_t* ctx)
     return ret;
 }
 
-static const char* dwarf2_debug_ctx(dwarf2_parse_context_t* ctx) 
+static const char* dwarf2_debug_ctx(const dwarf2_parse_context_t* ctx) 
 {
   /*return wine_dbg_sprintf("ctx(0x%x,%u)", ctx->data - ctx->start_data, ctx->level); */
   return wine_dbg_sprintf("ctx(0x%x)", ctx->data - ctx->data_stream); 
 }
-static const char* dwarf2_debug_attr(dwarf2_abbrev_entry_attr_t* attr) 
+
+static const char* dwarf2_debug_di(dwarf2_debug_info_t* di) 
 {
-  return wine_dbg_sprintf("attr(attr:0x%lx,form:0x%lx)", attr->attribute, attr->form);
+    return wine_dbg_sprintf("debug_info(offset:0x%lx,abbrev:%p,symt:%p)",
+                            di->offset, di->abbrev, di->symt);
 }
-
-static void dwarf2_check_sibling(dwarf2_parse_context_t* ctx, unsigned long next_sibling)
-{ 
-  if (0 < next_sibling && ctx->data != ctx->data_stream + next_sibling) {
-    if ((ctx->data + 1) != ctx->data_stream + next_sibling) {
-      /** padding check */
-      WARN("cursor error for %s should be sibling<0x%lx>\n", dwarf2_debug_ctx(ctx), next_sibling);
-    }
-    ctx->data = ctx->data_stream + next_sibling;
-  }
-}
-
 
 static dwarf2_abbrev_entry_t*
 dwarf2_abbrev_table_find_entry(struct sparse_array* abbrev_table,
@@ -314,195 +304,6 @@ static void dwarf2_parse_abbrev_set(dwarf2_parse_context_t* abbrev_ctx,
         }
     }
     TRACE("found %u entries\n", sparse_array_length(abbrev_table));
-}
-
-static const char* dwarf2_parse_attr_as_string(dwarf2_abbrev_entry_attr_t* attr,
-					       dwarf2_parse_context_t* ctx)
-{
-  const char* ret = NULL;
-  switch (attr->form) {
-  case DW_FORM_string:
-    ret = (const char*) ctx->data;
-    ctx->data += strlen(ret) + 1;
-    break;
-  case DW_FORM_strp:
-    {
-      unsigned long offset = dwarf2_parse_u4(ctx);
-      ret = (const char*) ctx->str_section + offset;
-      /*FIXME("Unsupported indirect string format offset 0x%lx (in .debug_str)\n", offset);*/
-    }
-    break;
-  default:
-    ERR("Unsupported string format 0x%lx for attr 0x%lx\n", attr->form, attr->attribute);
-  }
-  return ret;
-}
-
-static unsigned long dwarf2_parse_attr_as_addr(dwarf2_abbrev_entry_attr_t* attr,
-					       dwarf2_parse_context_t* ctx)
-{
-  unsigned long offset = 0;
-  switch (ctx->word_size) {
-  case 4:
-    offset = *(const unsigned int*) ctx->data;
-    break;
-  case 8:
-  default:
-    FIXME("Unsupported Word Size %u\n", ctx->word_size);
-  }
-  ctx->data += ctx->word_size;
-  return offset;  
-}
-
-static unsigned long dwarf2_parse_attr_as_ref(dwarf2_abbrev_entry_attr_t* attr,
-					      dwarf2_parse_context_t* ctx)
-{
-  unsigned long uvalue = 0;
-  switch (attr->form) {
-  case DW_FORM_ref1:
-    uvalue = ctx->offset + dwarf2_parse_byte(ctx);
-    TRACE("ref1<0x%lx>\n", uvalue);
-    break;
-
-  case DW_FORM_ref2:
-    uvalue = ctx->offset + dwarf2_parse_u2(ctx);
-    TRACE("ref2<0x%lx>\n", uvalue);
-    break;
-
-  case DW_FORM_ref4:
-    uvalue = ctx->offset + dwarf2_parse_u4(ctx);
-    TRACE("ref4<0x%lx>\n", uvalue);
-    break;
-
-  case DW_FORM_ref8:
-    /* FIXME: 64bits support */
-    /*
-    uvalue = ctx->offset + dwarf2_parse_u8(ctx);
-    TRACE("ref8<0x%lx>\n", uvalue);
-    */
-    ctx->data += 8;
-    break;
-  }
-  return uvalue;
-}
-
-
-static unsigned long dwarf2_parse_attr_as_data(dwarf2_abbrev_entry_attr_t* attr,
-					       dwarf2_parse_context_t* ctx)
-{
-  unsigned long uvalue = 0;
-  switch (attr->form) {
-  case DW_FORM_data1:
-    uvalue = dwarf2_parse_byte(ctx);
-    TRACE("data1<%lu>\n", uvalue);
-    break;
-
-  case DW_FORM_data2:
-    uvalue = dwarf2_parse_u2(ctx);
-    TRACE("data2<%lu>\n", uvalue);
-    break;
-
-  case DW_FORM_data4:
-    uvalue = dwarf2_parse_u4(ctx);
-    TRACE("data4<%lu>\n", uvalue);
-    break;
-
-  case DW_FORM_data8:
-    FIXME("Unsupported 64bits support\n");
-    ctx->data += 8;
-    break;
-  }
-  return uvalue;
-}
-
-static void dwarf2_parse_attr(dwarf2_abbrev_entry_attr_t* attr,
-			      dwarf2_parse_context_t* ctx)
-{
-  const unsigned long attribute = attr->attribute;
-  const unsigned long form = attr->form;
-  unsigned long uvalue = 0;
-  long svalue = 0;
-  const char* str = NULL;
-
-  TRACE("(attr:0x%lx,form:0x%lx)\n", attribute, form);
-
-  switch (form) {
-  case DW_FORM_ref_addr:
-  case DW_FORM_addr:
-    uvalue = dwarf2_parse_attr_as_addr(attr, ctx);
-    break;
-
-  case DW_FORM_flag:
-    uvalue = dwarf2_parse_byte(ctx);
-    TRACE("flag<0x%lx>\n", uvalue);
-    break;
-
-  case DW_FORM_data1:
-    uvalue = dwarf2_parse_byte(ctx);
-    TRACE("data1<%lu>\n", uvalue);
-    break;
-
-  case DW_FORM_data2:
-    uvalue = dwarf2_parse_u2(ctx);
-    TRACE("data2<%lu>\n", uvalue);
-    break;
-
-  case DW_FORM_data4:
-    uvalue = dwarf2_parse_u4(ctx);
-    TRACE("data4<%lu>\n", uvalue);
-    break;
-
-  case DW_FORM_ref1:
-  case DW_FORM_ref2:
-  case DW_FORM_ref4:
-  case DW_FORM_ref8:
-    uvalue = dwarf2_parse_attr_as_ref(attr, ctx);
-    /*TRACE("ref<0x%lx>\n", ctx->offset + uvalue);*/
-    break;
-
-  case DW_FORM_data8:
-    FIXME("Unsupported 64bits support\n");
-    ctx->data += 8;
-    break;
-
-  case DW_FORM_sdata:
-    svalue = dwarf2_leb128_as_signed(ctx);
-    break;
-
-  case DW_FORM_ref_udata:
-  case DW_FORM_udata:
-    uvalue = dwarf2_leb128_as_unsigned(ctx);
-    break;
-
-  case DW_FORM_string:
-  case DW_FORM_strp:
-    str = dwarf2_parse_attr_as_string(attr, ctx);
-    TRACE("string<%s>\n", str);
-    break;
-
-  case DW_FORM_block:
-    uvalue = dwarf2_leb128_as_unsigned(ctx);
-    ctx->data += uvalue;
-    break;
-
-  case DW_FORM_block1:
-    uvalue = dwarf2_parse_byte(ctx);
-    ctx->data += uvalue;
-    break;
-
-  case DW_FORM_block2:
-    uvalue = dwarf2_parse_u2(ctx);
-    ctx->data += uvalue;
-    break;
-
-  case DW_FORM_block4:
-    uvalue = dwarf2_parse_u4(ctx);
-    ctx->data += uvalue;
-    break;
-
-  default:
-    break;
-  }
 }
 
 static void dwarf2_parse_attr_into_di(dwarf2_parse_context_t* ctx,
@@ -635,7 +436,6 @@ static BOOL dwarf2_find_attribute(const dwarf2_debug_info_t* di,
 static void dwarf2_find_name(dwarf2_parse_context_t* ctx,
                              const dwarf2_debug_info_t* di,
                              union attribute* attr, const char* pfx)
-                             
 {
     static      int index;
 
@@ -647,10 +447,28 @@ static void dwarf2_find_name(dwarf2_parse_context_t* ctx,
     }
 }
 
-static struct symt* dwarf2_find_symt_by_ref(struct module* module, unsigned long ref)
+static void dwarf2_load_one_entry(dwarf2_parse_context_t*, dwarf2_debug_info_t*,
+                                  struct symt_compiland*);
+
+static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
+                                       const dwarf2_debug_info_t* di)
 {
-  WARN("want ref<0x%lx>\n", ref); 
-  return NULL;
+    union attribute     attr;
+
+    if (dwarf2_find_attribute(di, DW_AT_type, &attr))
+    {
+        dwarf2_debug_info_t*    type;
+        
+        type = sparse_array_find(&ctx->debug_info_table, attr.uvalue);
+        if (!type) FIXME("Unable to find back reference to type %lx\n", attr.uvalue);
+        if (!type->symt)
+        {
+            /* load the debug info entity */
+            dwarf2_load_one_entry(ctx, type, NULL);
+        }
+        return type->symt;
+    }
+    return NULL;
 }
 
 /******************************************************************
@@ -669,6 +487,7 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
     dwarf2_debug_info_t**       where;
     dwarf2_abbrev_entry_attr_t* attr;
     unsigned                    i;
+    union attribute             sibling;
 
     offset = ctx->data - ctx->data_stream;
     entry_code = dwarf2_leb128_as_unsigned(ctx);
@@ -712,372 +531,188 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
             *where = child;
         }
     }
+    if (dwarf2_find_attribute(di, DW_AT_sibling, &sibling) &&
+        ctx->data != ctx->data_stream + sibling.uvalue)
+    {
+        WARN("setting cursor for %s to next sibling <0x%lx>\n",
+             dwarf2_debug_ctx(ctx), sibling.uvalue);
+        ctx->data = ctx->data_stream + sibling.uvalue;
+    }
     *pdi = di;
     return TRUE;
 }
 
-static struct symt_basic* dwarf2_parse_base_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
+static struct symt* dwarf2_parse_base_type(dwarf2_parse_context_t* ctx,
+                                           dwarf2_debug_info_t* di)
 {
-  struct symt_basic* symt = NULL;
-  const char* name = NULL;
-  unsigned size = 0;
-  unsigned encoding = 0;
-  enum BasicType bt;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
+    union attribute name;
+    union attribute size;
+    union attribute encoding;
+    enum BasicType bt;
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    if (di->symt) return di->symt;
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_byte_size:
-      size = dwarf2_parse_attr_as_data(attr, ctx);
-      break;
-    case DW_AT_encoding:
-      encoding = dwarf2_parse_byte(ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+
+    dwarf2_find_name(ctx, di, &name, "base_type");
+    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.uvalue = 0;
+    if (!dwarf2_find_attribute(di, DW_AT_encoding, &encoding)) encoding.uvalue = DW_ATE_void;
+
+    switch (encoding.uvalue)
+    {
+    case DW_ATE_void:           bt = btVoid; break;
+    case DW_ATE_address:        bt = btULong; break;
+    case DW_ATE_boolean:        bt = btBool; break;
+    case DW_ATE_complex_float:  bt = btComplex; break;
+    case DW_ATE_float:          bt = btFloat; break;
+    case DW_ATE_signed:         bt = btInt; break;
+    case DW_ATE_unsigned:       bt = btUInt; break;
+    case DW_ATE_signed_char:    bt = btChar; break;
+    case DW_ATE_unsigned_char:  bt = btChar; break;
+    default:                    bt = btNoType; break;
     }
-  }
-  switch (encoding) {
-  case DW_ATE_void: bt = btVoid; break;
-  case DW_ATE_address: bt = btULong; break;
-  case DW_ATE_boolean: bt = btBool; break;
-  case DW_ATE_complex_float: bt = btComplex; break;
-  case DW_ATE_float: bt = btFloat; break;
-  case DW_ATE_signed: bt = btInt; break;
-  case DW_ATE_unsigned: bt = btUInt; break;
-  case DW_ATE_signed_char: bt = btChar; break;
-  case DW_ATE_unsigned_char: bt = btChar; break;
-  default:
-    bt = btNoType;
-  }
-  /*TRACE("symt_new_basic(%p, %u, %s, %u)", module, bt, name, size);*/
-  symt = symt_new_basic(ctx->module, bt, name, size);
-
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
-  return symt;
+    di->symt = &symt_new_basic(ctx->module, bt, name.string, size.uvalue)->symt;
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
+    return di->symt;
 }
 
-static struct symt_typedef* dwarf2_parse_typedef(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
+static struct symt* dwarf2_parse_typedef(dwarf2_parse_context_t* ctx,
+                                         dwarf2_debug_info_t* di)
 {
-  struct symt_typedef* symt = NULL;
-  struct symt* ref_type = NULL;
-  const char* name = NULL;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
+    struct symt* ref_type;
+    union attribute name;
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    if (di->symt) return di->symt;
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-      }
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
+    TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), di->abbrev->entry_code); 
+
+    dwarf2_find_name(ctx, di, &name, "typedef");
+    ref_type = dwarf2_lookup_type(ctx, di);
+
+    if (name.string)
+    {
+        di->symt = &symt_new_typedef(ctx->module, ref_type, name.string)->symt;
     }
-  }
-  if (NULL != name) {
-    symt = symt_new_typedef(ctx->module, ref_type, name);
-  }
-
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
-  return symt;
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
+    return di->symt;
 }
 
-static struct symt_pointer* dwarf2_parse_pointer_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
+static struct symt* dwarf2_parse_pointer_type(dwarf2_parse_context_t* ctx,
+                                              dwarf2_debug_info_t* di)
 {
-  struct symt_pointer* symt = NULL;
-  struct symt* ref_type = NULL;
-  unsigned size = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
+    struct symt* ref_type;
+    union attribute size;
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    if (di->symt) return di->symt;
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_byte_size:
-      size = dwarf2_parse_attr_as_data(attr, ctx);
-      break;
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-      }
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
-  symt = symt_new_pointer(ctx->module, ref_type);
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
-  return symt;
+    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.uvalue = 0;
+    ref_type = dwarf2_lookup_type(ctx, di);
+
+    di->symt = &symt_new_pointer(ctx->module, ref_type)->symt;
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
+    return di->symt;
 }
 
-static void dwarf2_parse_array_subrange_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_array* parent)
+static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
+                                            dwarf2_debug_info_t* di)
 {
-  unsigned min = 0;
-  unsigned max = 0;
-  struct symt* idx_type = NULL;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
+    struct symt* ref_type;
+    struct symt* idx_type = NULL;
+    union attribute min, max, cnt;
+    dwarf2_debug_info_t** pchild = NULL;
+    dwarf2_debug_info_t* child;
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    if (di->symt) return di->symt;
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	idx_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-	/** check if idx_type is a basic_type integer */
-      }
-      break;
-    case DW_AT_lower_bound:
-      TRACE("%s %s, lower_bound\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      min = dwarf2_parse_attr_as_data(attr, ctx);
-      break;
-    case DW_AT_upper_bound:
-      TRACE("%s %s, upper_bound\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      max = dwarf2_parse_attr_as_data(attr, ctx);
-      break;
-    case DW_AT_count:
-      TRACE("%s %s, count min:%u\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr), min); 
-      max = min + dwarf2_parse_attr_as_data(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+
+    if (!di->abbrev->have_child)
+    {
+        FIXME("array without range information\n");
+        return NULL;
     }
-  }
-  parent->start = min;
-  parent->end = max;
-  parent->index_type = idx_type;
+    ref_type = dwarf2_lookup_type(ctx, di);
 
-  TRACE("found min:%u max:%u\n", min, max);   
-
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
+    while ((pchild = vector_iter_up(&di->children, pchild)))
+    {
+        child = *pchild;
+        switch (child->abbrev->tag)
+        {
+        case DW_TAG_subrange_type:
+            idx_type = dwarf2_lookup_type(ctx, child);
+            if (!dwarf2_find_attribute(child, DW_AT_lower_bound, &min))
+                min.uvalue = 0;
+            if (!dwarf2_find_attribute(child, DW_AT_upper_bound, &max))
+                max.uvalue = 0;
+            if (dwarf2_find_attribute(child, DW_AT_count, &cnt))
+                max.uvalue = min.uvalue + cnt.uvalue;
+            break;
+        default:
+            FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
+                  child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+            break;
+        }
+    }
+    di->symt = &symt_new_array(ctx->module, min.uvalue, max.uvalue, ref_type, idx_type)->symt;
+    return di->symt;
 }
 
-
-static struct symt_array* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
+static struct symt* dwarf2_parse_const_type(dwarf2_parse_context_t* ctx,
+                                            dwarf2_debug_info_t* di)
 {
-  struct symt_array* symt = NULL;
-  struct symt* ref_type = NULL;
-  unsigned min = 0;
-  unsigned max = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
+    struct symt* ref_type;
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    if (di->symt) return di->symt;
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-      }
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-  /* FIXME: ugly as hell */
-  symt = symt_new_array(ctx->module, min, max, ref_type, NULL);
+    ref_type = dwarf2_lookup_type(ctx, di);
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
+    di->symt = ref_type;
 
-  if (entry->have_child) { /** any interest to not have child ? */
-    while (ctx->data < ctx->end_data) {
-      dwarf2_abbrev_entry_t* entry = NULL;
-      unsigned long entry_code;
-      unsigned long entry_ref = 0;
-
-      entry_ref = ctx->data - ctx->data_stream;
-      
-      entry_code = dwarf2_leb128_as_unsigned(ctx);
-      TRACE("found entry_code %lu at 0x%lx\n", entry_code, entry_ref);
-      if (0 == entry_code) {
-	break ;
-      }
-
-      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
-      assert( NULL != entry );
-
-      switch (entry->tag) {
-      case DW_TAG_subrange_type:
-	dwarf2_parse_array_subrange_type(ctx, entry, symt);
-	break;
-      default:
-	{
-	  dwarf2_abbrev_entry_attr_t* attr;
-	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
-	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-	    dwarf2_parse_attr(attr, ctx);
-	  }
-	}
-	break;
-      }
-    }
-  }
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
-
-  return symt;
+    return ref_type;
 }
 
-static struct symt* dwarf2_parse_const_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
+static struct symt* dwarf2_parse_reference_type(dwarf2_parse_context_t* ctx,
+                                                dwarf2_debug_info_t* di)
 {
-  struct symt* ref_type = NULL;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
+    struct symt* ref_type = NULL;
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    if (di->symt) return di->symt;
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-      }
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
+    ref_type = dwarf2_lookup_type(ctx, di);
+    /* FIXME: for now, we hard-wire C++ references to pointers */
+    di->symt = &symt_new_pointer(ctx->module, ref_type)->symt;
 
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
 
-  return ref_type;
+    return di->symt;
 }
 
-static struct symt* dwarf2_parse_reference_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
+static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
+                                    dwarf2_debug_info_t* di,
+                                    struct symt_udt* parent)
 {
-  struct symt* symt = NULL;
-  struct symt* ref_type = NULL;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
+    struct symt* elt_type;
+    union attribute name;
+/*    union attribute loc; */
+    unsigned long offset;
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    assert(parent);
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ref_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-      }
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
-  /* FIXME: for now, we hard-wire C++ references to pointers */
-  symt = &symt_new_pointer(ctx->module, ref_type)->symt;
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
-
-  return symt;
-}
-
-static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_udt* parent)
-{
-  struct symt* elt_type = NULL;
-  const char* name = NULL; 
-  unsigned long offset = 0;
-  unsigned size = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
-
-  assert( NULL != parent );
-
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
-
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	elt_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-      }
-      break;
-    case DW_AT_data_member_location:
-      {
-	unsigned long uvalue = 0;
+    dwarf2_find_name(ctx, di, &name, "udt_member");
+    elt_type = dwarf2_lookup_type(ctx, di);
+#if 0
+    if (dwarf2_find_attribute(di, DW_AT_data_member_location, &loc))
+    {
 	TRACE("found member_location at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr));
-	/*offset = dwarf2_parse_attr_as_data(attr, ctx);*/
-	switch (attr->form) {
-	case DW_FORM_block:
-	  uvalue = dwarf2_leb128_as_unsigned(ctx);
-	  break;
-	case DW_FORM_block1:
-	  uvalue = dwarf2_parse_byte(ctx);
-	  break;
-	case DW_FORM_block2:
-	  uvalue = dwarf2_parse_u2(ctx);
-	  break;
-	case DW_FORM_block4:
-	  uvalue = dwarf2_parse_u4(ctx);
-	  break;
-	default:
-	  WARN("Unhandled attr form at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-	  dwarf2_parse_attr(attr, ctx);
-	}
-	if (uvalue) {
+	if (loc.uvalue) {
 	  unsigned char op = dwarf2_parse_byte(ctx);
 	  --uvalue;
 	  switch (op) {
@@ -1090,707 +725,328 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx, dwarf2_abbrev_e
 	  }
 	  TRACE("found offset:%lu\n", offset); 		  
 	}
-      }
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
     }
-  }
-  symt_add_udt_element(ctx->module, parent, name, elt_type, offset, size);
+#endif
+    FIXME("still to be implemented proper member location\n");
+    offset = 0;
+    
+    symt_add_udt_element(ctx->module, parent, name.string, elt_type, offset, 0);
 
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
 
-static void dwarf2_parse_udt_members(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_udt* symt)
+static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
+                                          dwarf2_debug_info_t* di,
+                                          enum UdtKind udt)
 {
-  if (entry->have_child) { /** any interest to not have child ? */
-    while (ctx->data < ctx->end_data) {
-      dwarf2_abbrev_entry_t* entry = NULL;
-      unsigned long entry_code;
-      unsigned long entry_ref = 0;
+    union attribute name;
+    union attribute size;
 
-      entry_ref = ctx->data - ctx->data_stream;
-      
-      entry_code = dwarf2_leb128_as_unsigned(ctx);
-      TRACE("found entry_code %lu at 0x%lx\n", entry_code, entry_ref);
-      if (0 == entry_code) {
-	break ;
-      }
+    if (di->symt) return di->symt;
 
-      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
-      assert( NULL != entry );
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-      switch (entry->tag) {
-      case DW_TAG_member:
-	dwarf2_parse_udt_member(ctx, entry, symt);
-	break;
-      case DW_TAG_enumeration_type:
-        dwarf2_parse_enumeration_type(ctx, entry);
-	break;
-      default:
-	{
-	  dwarf2_abbrev_entry_attr_t* attr;
-	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
-	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-	    dwarf2_parse_attr(attr, ctx);
-	  }
+    dwarf2_find_name(ctx, di, &name, "udt");
+    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.uvalue = 0;
+
+    di->symt = &symt_new_udt(ctx->module, name.string, size.uvalue, udt)->symt;
+
+    if (di->abbrev->have_child) /** any interest to not have child ? */
+    {
+        dwarf2_debug_info_t**    pchild = NULL;
+        dwarf2_debug_info_t*    child;
+
+        while ((pchild = vector_iter_up(&di->children, pchild)))
+        {
+            child = *pchild;
+
+            switch (child->abbrev->tag)
+            {
+            case DW_TAG_member:
+                /* FIXME: should I follow the sibling stuff ?? */
+                dwarf2_parse_udt_member(ctx, child, (struct symt_udt*)di->symt);
+                break;
+            case DW_TAG_enumeration_type:
+                dwarf2_parse_enumeration_type(ctx, child);
+                break;
+            default:
+                FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
+                      child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+                break;
+            }
+        }
+    }
+
+    return di->symt;
+}
+
+static void dwarf2_parse_enumerator(dwarf2_parse_context_t* ctx,
+                                    dwarf2_debug_info_t* di,
+                                    struct symt_enum* parent)
+{
+    union attribute name;
+    union attribute value;
+
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+
+    dwarf2_find_name(ctx, di, &name, "enum_value");
+    if (!dwarf2_find_attribute(di, DW_AT_const_value, &value)) value.svalue = 0;
+    symt_add_enum_element(ctx->module, parent, name.string, value.svalue);
+
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
+}
+
+static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
+                                                  dwarf2_debug_info_t* di)
+{
+    union attribute name;
+    union attribute size;
+
+    if (di->symt) return di->symt;
+
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+
+    dwarf2_find_name(ctx, di, &name, "enum");
+    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.uvalue = 0;
+
+    di->symt = &symt_new_enum(ctx->module, name.string)->symt;
+
+    if (di->abbrev->have_child) /* any interest to not have child ? */
+    {
+        dwarf2_debug_info_t**   pchild = NULL;
+        dwarf2_debug_info_t*    child;
+
+        /* FIXME: should we use the sibling stuff ?? */
+        while ((pchild = vector_iter_up(&di->children, pchild)))
+        {
+            child = *pchild;
+
+            switch (child->abbrev->tag)
+            {
+            case DW_TAG_enumerator:
+                dwarf2_parse_enumerator(ctx, child, (struct symt_enum*)di->symt);
+                break;
+            default:
+                FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
+                      di->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+            }
 	}
-	break;
-      }
     }
-  }
-}
-
-static struct symt_udt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, enum UdtKind udt)
-{
-  struct symt_udt* symt = NULL;
-  const char* name = NULL;
-  unsigned size = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
-
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
-
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_byte_size:
-      size = dwarf2_parse_attr_as_data(attr, ctx);
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
-  symt = symt_new_udt(ctx->module, name, size, udt);
-  dwarf2_parse_udt_members(ctx, entry, symt);
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
-
-  return symt;
-}
-
-static void dwarf2_parse_enumerator(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_enum* parent)
-{
-  const char* name = NULL;
-  long value = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
-
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_const_value:
-      switch (attr->form) {
-      case DW_FORM_sdata:
-	value = dwarf2_leb128_as_signed(ctx);
-	TRACE("found value %ld\n", value);
-	break;
-      case DW_FORM_udata:
-	value = dwarf2_leb128_as_unsigned(ctx);
-	TRACE("found value %ld\n", value);
-	break;
-      default:
-	WARN("Unhandled attr form at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr));
-	dwarf2_parse_attr(attr, ctx);
-      }
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr));
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
-  symt_add_enum_element(ctx->module, parent, name, value);
-
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
-}
-
-static struct symt_enum* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
-{
-  struct symt_enum* symt = NULL;
-  const char* name = NULL;
-  unsigned long size = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
-
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
-
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_byte_size:
-      size = dwarf2_parse_attr_as_data(attr, ctx);
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
-  symt = symt_new_enum(ctx->module, name);
-
-  if (entry->have_child) { /** any interest to not have child ? */
-    while (ctx->data < ctx->end_data) {
-      dwarf2_abbrev_entry_t* entry = NULL;
-      unsigned long entry_code;
-      unsigned long entry_ref = 0;
-
-      entry_ref = ctx->data - ctx->data_stream;
-      
-      entry_code = dwarf2_leb128_as_unsigned(ctx);
-      TRACE("found entry_code %lu at 0x%lx\n", entry_code, entry_ref);
-      if (0 == entry_code) {
-	break ;
-      }
-
-      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
-      assert( NULL != entry );
-
-      switch (entry->tag) {
-      case DW_TAG_enumerator:
-	dwarf2_parse_enumerator(ctx, entry, symt);
-	break;
-      default:
-	{
-	  dwarf2_abbrev_entry_attr_t* attr;
-	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
-	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-	    dwarf2_parse_attr(attr, ctx);
-	  }
-	}
-	break;
-      }
-    }
-  }
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
-
-  return symt;
+    return di->symt;
 }
 
 static void dwarf2_parse_variable(dwarf2_parse_context_t* ctx,
-				  dwarf2_abbrev_entry_t* entry)
+				  dwarf2_debug_info_t* di)
 {
-  struct symt* var_type = NULL;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  const char* name = NULL;
-  unsigned long next_sibling = 0;
+    struct symt* var_type;
+    union attribute name;
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	var_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-      }
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
+    var_type = dwarf2_lookup_type(ctx, di);
+    dwarf2_find_name(ctx, di, &name, "variable");
+    /* FIXME: still lots to do !!! */
 
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);  
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
 
 static void dwarf2_parse_subprogram_parameter(dwarf2_parse_context_t* ctx,
-					      dwarf2_abbrev_entry_t* entry, 
-					      struct symt_function_signature* sig_type,
-					      struct symt_function* func_type)
+					      dwarf2_debug_info_t* di, 
+					      struct symt_function_signature* sig_type)
 {
-  struct symt* param_type = NULL;
-  const char* name = NULL;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
+    struct symt* param_type;
+    union attribute name;
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	param_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-      }
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    case DW_AT_location:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
-  if (NULL != sig_type) {
-    symt_add_function_signature_parameter(ctx->module, sig_type, param_type);
-  }
-
-  if (entry->have_child) {
-    FIXME("Unsupported children\n");
-  }
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);  
+    param_type = dwarf2_lookup_type(ctx, di);
+    dwarf2_find_name(ctx, di, &name, "parameter");
+    /* DW_AT_location */
+    if (sig_type) symt_add_function_signature_parameter(ctx->module, sig_type, param_type);
+    /* FIXME: add variable to func_type */
+    if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
 
-static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry)
+static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx,
+                                            dwarf2_debug_info_t* di)
 {
-  const char* name = NULL;
-  unsigned long addr = 0;
-  unsigned long low_pc = 0;
-  unsigned long high_pc = 0;
-  unsigned size = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    /* FIXME: attributes to handle:
+       DW_AT_low_pc:
+       DW_AT_high_pc:
+       DW_AT_name:
+    */
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_low_pc:
-      low_pc = dwarf2_parse_attr_as_addr(attr, ctx);
-      addr = ctx->module->module.BaseOfImage + low_pc;
-      break;
-    case DW_AT_high_pc:
-      high_pc = dwarf2_parse_attr_as_addr(attr, ctx);
-      size = high_pc - low_pc;
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
+    if (di->abbrev->have_child) /** any interest to not have child ? */
+    {
+        dwarf2_debug_info_t**   pchild = NULL;
+        dwarf2_debug_info_t*    child;
+
+        while ((pchild = vector_iter_up(&di->children, pchild)))
+        {
+            child = *pchild;
+
+            switch (child->abbrev->tag)
+            {
+            case DW_TAG_formal_parameter:
+                /* FIXME: this is not properly supported yet
+                 * dwarf2_parse_subprogram_parameter(ctx, child, NULL);
+                 */
+                break;
+            case DW_TAG_variable:
+                dwarf2_parse_variable(ctx, child);
+                break;
+            default:
+                FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
+                      child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+            }
+        }
     }
-  }
-
-  if (entry->have_child) { /** any interest to not have child ? */
-    while (ctx->data < ctx->end_data) {
-      dwarf2_abbrev_entry_t* entry = NULL;
-      unsigned long entry_code;
-      unsigned long entry_ref = 0;
-
-      entry_ref = ctx->data - ctx->data_stream;
-      
-      entry_code = dwarf2_leb128_as_unsigned(ctx);
-      TRACE("found entry_code %lu at 0x%lx\n", entry_code, entry_ref);
-      if (0 == entry_code) {
-	break ;
-      }
-
-      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
-      assert( NULL != entry );
-
-      switch (entry->tag) {
-      case DW_TAG_formal_parameter:
-	dwarf2_parse_subprogram_parameter(ctx, entry, NULL, NULL);
-	break;
-      case DW_TAG_variable:
-	dwarf2_parse_variable(ctx, entry);
-	break;
-      case DW_TAG_label:
-      default:
-	{
-	  dwarf2_abbrev_entry_attr_t* attr;
-	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
-	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-	    dwarf2_parse_attr(attr, ctx);
-	  }
-	}
-	break;
-      }
-    }
-  }
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
 }
-
 
 static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx, 
-					  dwarf2_abbrev_entry_t* entry, 
+					  dwarf2_debug_info_t* di, 
 					  struct symt_function_signature* sig_type,
-					  struct symt_function* func_type)
+					  struct symt_function* func)
 {
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  const char* name = NULL;
-  unsigned long next_sibling = 0;
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
+    /* if (!dwarf2_find_attribute(di, DW_AT_ranges, ??)): what to do ? */
 
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_decl_file:
-    case DW_AT_decl_line:
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    case DW_AT_ranges: /** what to do ? */
-      dwarf2_parse_attr(attr, ctx);
-      break;
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
-    }
-  }
-  
-  if (entry->have_child) { /** any interest to not have child ? */
-    while (ctx->data < ctx->end_data) {
-      dwarf2_abbrev_entry_t* entry = NULL;
-      unsigned long entry_code;
-      unsigned long entry_ref = 0;
+    if (di->abbrev->have_child) /** any interest to not have child ? */
+    {
+        dwarf2_debug_info_t**   pchild = NULL;
+        dwarf2_debug_info_t*    child;
 
-      entry_ref = ctx->data - ctx->data_stream;
-      
-      entry_code = dwarf2_leb128_as_unsigned(ctx);
-      TRACE("found entry_code %lu at 0x%lx\n", entry_code, entry_ref);
-      if (0 == entry_code) {
-	break ;
-      }
-
-      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
-      assert( NULL != entry );
-
-      switch (entry->tag) {
-      case DW_TAG_inlined_subroutine:
-	dwarf2_parse_inlined_subroutine(ctx, entry);
-	break;
-      case DW_TAG_variable:
-	dwarf2_parse_variable(ctx, entry);
-	break;
-      case DW_TAG_label:
-      default:
-	{
-	  dwarf2_abbrev_entry_attr_t* attr;
-	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
-	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-	    dwarf2_parse_attr(attr, ctx);
-	  }
-	}
-	break;
-      }
-    }
-  }
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
-}
-
-static void dwarf2_parse_subprogram_content(dwarf2_parse_context_t* ctx,
-					    dwarf2_abbrev_entry_t* entry, 
-					    struct symt_function_signature* sig_type,
-					    struct symt_function* func_type)
-{
-  if (entry->have_child) { /** any interest to not have child ? */
-    while (ctx->data < ctx->end_data) {
-      dwarf2_abbrev_entry_t* entry = NULL;
-      unsigned long entry_code;
-      unsigned long entry_ref = 0;
-
-      entry_ref = ctx->data - ctx->data_stream;
-      
-      entry_code = dwarf2_leb128_as_unsigned(ctx);
-      TRACE("found entry_code %lu at 0x%lx\n", entry_code, entry_ref);
-      if (0 == entry_code) {
-	break ;
-      }
-
-      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
-      assert( NULL != entry );
-
-      switch (entry->tag) {
-      case DW_TAG_formal_parameter:
-        dwarf2_parse_subprogram_parameter(ctx, entry, sig_type, func_type);
-	break;
-      case DW_TAG_lexical_block:
-	dwarf2_parse_subprogram_block(ctx, entry, sig_type, func_type);
-	break;
-      case DW_TAG_variable:
-	dwarf2_parse_variable(ctx, entry);
-	break;
-      case DW_TAG_label:
-      default:
-	{
-	  dwarf2_abbrev_entry_attr_t* attr;
-	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
-	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-	    dwarf2_parse_attr(attr, ctx);
-	  }
-	}
-	break;
-      }
-    }
-  }
-}
-
-static struct symt_function* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx, dwarf2_abbrev_entry_t* entry, struct symt_compiland* compiland)
-{
-  struct symt_function* func_type = NULL;
-  const char* name = NULL;
-  struct symt* ret_type = NULL;
-  struct symt_function_signature* sig_type = NULL;
-  unsigned long addr = 0;
-  unsigned long low_pc = 0;
-  unsigned long high_pc = 0;
-  unsigned size = 0;
-  unsigned char is_decl = 0;
-  unsigned char inl_flags = 0;
-  unsigned char decl_file = 0;
-  unsigned char decl_line = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-  unsigned long next_sibling = 0;
-  enum CV_call_e call_conv = CV_CALL_FAR_C; /* FIXME: assuming C source code */
-  unsigned cc;
-
-  TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), entry->entry_code); 
-
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_low_pc:
-      low_pc = dwarf2_parse_attr_as_addr(attr, ctx);
-      addr = ctx->module->module.BaseOfImage + low_pc;
-      break;
-    case DW_AT_high_pc:
-      high_pc = dwarf2_parse_attr_as_addr(attr, ctx);
-      size = high_pc - low_pc;
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
-    case DW_AT_type:
-      {
-	unsigned long ref = dwarf2_parse_attr_as_ref(attr, ctx);
-	ret_type = dwarf2_find_symt_by_ref(ctx->module, ref);
-      }
-      break;
-    case DW_AT_declaration:
-      is_decl = dwarf2_parse_byte(ctx);
-      break;
-    case DW_AT_inline:
-      inl_flags = dwarf2_parse_byte(ctx);
-      break;
-    case DW_AT_calling_convention:
-        switch (cc = dwarf2_parse_byte(ctx))
+        while ((pchild = vector_iter_up(&di->children, pchild)))
         {
-        case DW_CC_normal: break;
-        case DW_CC_nocall: call_conv = -1;
-        default: FIXME("Unsupported calling convention %d\n", cc);
+            child = *pchild;
+
+            switch (child->abbrev->tag)
+            {
+            case DW_TAG_inlined_subroutine:
+                dwarf2_parse_inlined_subroutine(ctx, child);
+                break;
+            case DW_TAG_variable:
+                dwarf2_parse_variable(ctx, child);
+                break;
+            default:
+                FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
+                      child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+            }
         }
-        break;
-    /* not work yet, need parsing .debug_line and using Compil Unit stmt_list
-    case DW_AT_decl_file:
-      decl_file =  dwarf2_parse_byte(ctx);
-      break;
-    case DW_AT_decl_line:
-      decl_line =  dwarf2_parse_byte(ctx);
-      break;
-    */
-    default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
     }
-  }
-  sig_type = symt_new_function_signature(ctx->module, ret_type, call_conv);
-  if (!is_decl) {
-    func_type = symt_new_function(ctx->module, compiland, name, addr, size, &sig_type->symt);
-    if (low_pc && high_pc) {
-      symt_add_function_point(ctx->module, func_type, SymTagFuncDebugStart, low_pc, NULL);
-      symt_add_function_point(ctx->module, func_type, SymTagFuncDebugEnd, high_pc, NULL);
-    }
-    if (decl_file && decl_line) {
-      symt_add_func_line(ctx->module, func_type, decl_file, decl_line, low_pc);
-    }
-  }
-  dwarf2_parse_subprogram_content(ctx, entry, sig_type, func_type);
-  symt_normalize_function(ctx->module, func_type);
-
-  /** set correct data cursor */
-  dwarf2_check_sibling(ctx, next_sibling);
-
-  return func_type;
 }
 
-static void dwarf2_parse_compiland_content(dwarf2_parse_context_t* ctx, const dwarf2_abbrev_entry_t* entry, struct symt_compiland* compiland)
+static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
+                                            dwarf2_debug_info_t* di,
+                                            struct symt_compiland* compiland)
 {
-  if (entry->have_child) { /** any interest to not have child ? */
-    while (ctx->data < ctx->end_data) {
-      dwarf2_abbrev_entry_t* entry = NULL;
-      unsigned long entry_code;
-      unsigned long entry_ref = 0;
+    union attribute name;
+    union attribute low_pc;
+    union attribute high_pc;
+    union attribute is_decl;
+    union attribute inline_flags;
+    struct symt* ret_type;
+    struct symt_function* func = NULL;
+    struct symt_function_signature* sig_type;
 
-      entry_ref = ctx->data - ctx->data_stream;
-      
-      entry_code = dwarf2_leb128_as_unsigned(ctx);
-      TRACE("found entry_code %lu at 0x%lx\n", entry_code, entry_ref);
-      if (0 == entry_code) {
-	break ;
-      }
+    if (di->symt) return di->symt;
 
-      entry = dwarf2_abbrev_table_find_entry(&ctx->abbrev_table, entry_code);
-      assert( NULL != entry );
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-      switch (entry->tag) {
-      case DW_TAG_typedef:
-        dwarf2_parse_typedef(ctx, entry);
-	break;
-      case DW_TAG_base_type:
-        dwarf2_parse_base_type(ctx, entry);
-	break;
-      case DW_TAG_pointer_type:
-        dwarf2_parse_pointer_type(ctx, entry);
-	break;
-      case DW_TAG_class_type:
-        dwarf2_parse_udt_type(ctx, entry, UdtClass);
-	break;
-      case DW_TAG_structure_type:
-        dwarf2_parse_udt_type(ctx, entry, UdtStruct);
-	break;
-      case DW_TAG_union_type:
-        dwarf2_parse_udt_type(ctx, entry, UdtUnion);
-	break;
-      case DW_TAG_array_type:
-        dwarf2_parse_array_type(ctx, entry);
-	break;
-      case DW_TAG_const_type:
-        dwarf2_parse_const_type(ctx, entry);
-	break;
-      case DW_TAG_reference_type:
-        dwarf2_parse_reference_type(ctx, entry);
-	break;
-      case DW_TAG_enumeration_type:
-        dwarf2_parse_enumeration_type(ctx, entry);
-	break;
-      case DW_TAG_subprogram:
-        dwarf2_parse_subprogram(ctx, entry, compiland);
-	break;
+    if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc)) low_pc.uvalue = 0;
+    if (!dwarf2_find_attribute(di, DW_AT_high_pc, &high_pc)) high_pc.uvalue = 0;
+    if (!dwarf2_find_attribute(di, DW_AT_declaration, &is_decl)) is_decl.uvalue = 0;
+    if (!dwarf2_find_attribute(di, DW_AT_inline, &inline_flags)) inline_flags.uvalue = 0;
+    dwarf2_find_name(ctx, di, &name, "subprogram");
+    ret_type = dwarf2_lookup_type(ctx, di);
 
-      default:
-	{
-	  dwarf2_abbrev_entry_attr_t* attr;
-	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(ctx), entry->entry_code); 
-	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-	    dwarf2_parse_attr(attr, ctx);
-	  }
+    /* FIXME: assuming C source code */
+    sig_type = symt_new_function_signature(ctx->module, ret_type, CV_CALL_FAR_C);
+    if (!is_decl.uvalue)
+    {
+        func = symt_new_function(ctx->module, compiland, name.string,
+                                 low_pc.uvalue, high_pc.uvalue - low_pc.uvalue,
+                                 &sig_type->symt);
+        di->symt = &func->symt;
+    }
+    if (di->abbrev->have_child) /** any interest to not have child ? */
+    {
+        dwarf2_debug_info_t**   pchild = NULL;
+        dwarf2_debug_info_t*    child;
+
+        while ((pchild = vector_iter_up(&di->children, pchild)))
+        {
+            child = *pchild;
+
+            switch (child->abbrev->tag)
+            {
+            case DW_TAG_formal_parameter:
+                dwarf2_parse_subprogram_parameter(ctx, child, sig_type);
+                break;
+            case DW_TAG_lexical_block:
+                dwarf2_parse_subprogram_block(ctx, child, sig_type, func);
+                break;
+            case DW_TAG_variable:
+                dwarf2_parse_variable(ctx, child);
+                break;
+            default:
+                FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
+                      child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+            }
 	}
-	break;
-      }
     }
-  }
+
+    symt_normalize_function(ctx->module, func);
+
+    return di->symt;
 }
 
-static struct symt_compiland* dwarf2_parse_compiland(dwarf2_parse_context_t* ctx, const dwarf2_abbrev_entry_t* entry)
+static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
+                                  dwarf2_debug_info_t* di,
+                                  struct symt_compiland* compiland)
 {
-  struct symt_compiland* compiland = NULL;
-  const char* name = NULL;
-  unsigned long next_sibling = 0;
-  dwarf2_abbrev_entry_attr_t* attr = NULL;
-
-  TRACE("beginning at Ox%x, for %lu\n", ctx->data - ctx->start_data, entry->entry_code); 
-
-  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-    switch (attr->attribute) {
-    case DW_AT_sibling:
-      next_sibling = dwarf2_parse_attr_as_ref(attr, ctx);
-      break;
-    case DW_AT_name:
-      name = dwarf2_parse_attr_as_string(attr, ctx);
-      TRACE("found name %s\n", name);
-      break;
+    switch (di->abbrev->tag)
+    {
+    case DW_TAG_typedef:
+        dwarf2_parse_typedef(ctx, di);
+        break;
+    case DW_TAG_base_type:
+        dwarf2_parse_base_type(ctx, di);
+        break;
+    case DW_TAG_pointer_type:
+        dwarf2_parse_pointer_type(ctx, di);
+        break;
+    case DW_TAG_class_type:
+        dwarf2_parse_udt_type(ctx, di, UdtClass);
+        break;
+    case DW_TAG_structure_type:
+        dwarf2_parse_udt_type(ctx, di, UdtStruct);
+        break;
+    case DW_TAG_union_type:
+        dwarf2_parse_udt_type(ctx, di, UdtUnion);
+        break;
+    case DW_TAG_array_type:
+        dwarf2_parse_array_type(ctx, di);
+        break;
+    case DW_TAG_const_type:
+        dwarf2_parse_const_type(ctx, di);
+        break;
+    case DW_TAG_reference_type:
+        dwarf2_parse_reference_type(ctx, di);
+        break;
+    case DW_TAG_enumeration_type:
+        dwarf2_parse_enumeration_type(ctx, di);
+        break;
+    case DW_TAG_subprogram:
+        dwarf2_parse_subprogram(ctx, di, compiland);
+        break;
     default:
-      WARN("Unhandled attr at %s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_attr(attr)); 
-      dwarf2_parse_attr(attr, ctx);
+        WARN("Unhandled Tag type 0x%lx at %s, for %lu\n",
+             di->abbrev->tag, dwarf2_debug_ctx(ctx), di->abbrev->entry_code); 
     }
-  }
-  compiland = symt_new_compiland(ctx->module, name);
-  dwarf2_parse_compiland_content(ctx, entry, compiland);
-
-  dwarf2_check_sibling(ctx, next_sibling);
-
-  return compiland;
 }
 
 BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
@@ -1806,7 +1062,6 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     dwarf2_comp_unit_t comp_unit;
     dwarf2_parse_context_t ctx;
     dwarf2_parse_context_t abbrev_ctx;
-    struct symt_compiland* compiland = NULL;
     dwarf2_debug_info_t* di;
     
     comp_unit_stream = (const dwarf2_comp_unit_stream_t*) comp_unit_cursor;
@@ -1849,40 +1104,25 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     dwarf2_read_one_debug_info(&ctx, &di);
     ctx.data = ctx.start_data; /* FIXME */
 
-    while (ctx.data < ctx.end_data) {
-      const dwarf2_abbrev_entry_t* entry = NULL;
-      unsigned long entry_code;
-      unsigned long entry_ref = 0;
+    if (di->abbrev->tag == DW_TAG_compile_unit)
+    {
+        union attribute             name;
+        dwarf2_debug_info_t**       pdi = NULL;
 
-      entry_ref = ctx.data - ctx.data_stream;
-      
-      entry_code = dwarf2_leb128_as_unsigned(&ctx);
-      TRACE("found entry_code %lu at 0x%lx\n", entry_code, entry_ref);
-      if (0 == entry_code) {
-	continue ;
-      }
-      entry = dwarf2_abbrev_table_find_entry(&ctx.abbrev_table, entry_code);
-      if (NULL == entry) {
-	WARN("Cannot find abbrev entry for %lu at 0x%lx\n", entry_code, entry_ref);
-	pool_destroy(&ctx.pool);
-	return FALSE;
-      }
+        TRACE("beginning at 0x%lx, for %lu\n", di->offset, di->abbrev->entry_code); 
 
-      switch (entry->tag) {
-      case DW_TAG_compile_unit:
-        compiland = dwarf2_parse_compiland(&ctx, entry);
-	break;
-      default:
-	{
-	  dwarf2_abbrev_entry_attr_t* attr;
-	  WARN("Unhandled Tag type 0x%lx at %s, for %lu\n", entry->tag, dwarf2_debug_ctx(&ctx), entry->entry_code); 
-	  for (attr = entry->attrs; NULL != attr; attr = attr->next) {
-	    dwarf2_parse_attr(attr, &ctx);
-	  }
-	}
-	break;
-      }
+        dwarf2_find_name(&ctx, di, &name, "compiland");
+        di->symt = &symt_new_compiland(module, name.string)->symt;
+
+        if (di->abbrev->have_child)
+        {
+            while ((pdi = vector_iter_up(&di->children, pdi)))
+            {
+                dwarf2_load_one_entry(&ctx, *pdi, (struct symt_compiland*)di->symt);
+            }
+        }
     }
+    else FIXME("Should have a compilation unit here\n");
     pool_destroy(&ctx.pool);
   }
   
