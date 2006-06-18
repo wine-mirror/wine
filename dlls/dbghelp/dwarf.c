@@ -1137,9 +1137,8 @@ static struct symt_array* dwarf2_parse_array_type(struct module* module, dwarf2_
   return symt;
 }
 
-static struct symt_typedef* dwarf2_parse_const_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt* dwarf2_parse_const_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
 {
-  struct symt_typedef* symt = NULL;
   struct symt* ref_type = NULL;
   dwarf2_abbrev_entry_attr_t* attr = NULL;
   unsigned long next_sibling = 0;
@@ -1159,8 +1158,6 @@ static struct symt_typedef* dwarf2_parse_const_type(struct module* module, dwarf
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  FIXME("need to generate a name\n");
-  symt = symt_new_typedef(module, ref_type, "");
 
   if (entry->have_child) {
     FIXME("Unsupported children\n");
@@ -1169,12 +1166,12 @@ static struct symt_typedef* dwarf2_parse_const_type(struct module* module, dwarf
   /** set correct data cursor */
   dwarf2_check_sibling(ctx, next_sibling);
 
-  return symt;
+  return ref_type;
 }
 
-static struct symt_typedef* dwarf2_parse_reference_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt* dwarf2_parse_reference_type(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
 {
-  struct symt_typedef* symt = NULL;
+  struct symt* symt = NULL;
   struct symt* ref_type = NULL;
   dwarf2_abbrev_entry_attr_t* attr = NULL;
   unsigned long next_sibling = 0;
@@ -1197,8 +1194,8 @@ static struct symt_typedef* dwarf2_parse_reference_type(struct module* module, d
       dwarf2_parse_attr(attr, ctx);
     }
   }
-  FIXME("need to generate a name\n");
-  symt = symt_new_typedef(module, ref_type, "");
+  /* FIXME: for now, we hard-wire C++ references to pointers */
+  symt = &symt_new_pointer(module, ref_type)->symt;
 
   if (entry->have_child) {
     FIXME("Unsupported children\n");
@@ -2039,14 +2036,14 @@ static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_a
 	break;
       case DW_TAG_const_type:
 	{
-	  struct symt_typedef* symt = dwarf2_parse_const_type(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
+	  struct symt* symt = dwarf2_parse_const_type(module, entry, ctx);
+	  dwarf2_add_symt_ref(module, entry_ref, symt);
 	}
 	break;
       case DW_TAG_reference_type:
 	{
-	  struct symt_typedef* symt = dwarf2_parse_reference_type(module, entry, ctx);
-	  dwarf2_add_symt_ref(module, entry_ref, &symt->symt);
+	  struct symt* symt = dwarf2_parse_reference_type(module, entry, ctx);
+	  dwarf2_add_symt_ref(module, entry_ref, symt);
 	}
 	break;
       case DW_TAG_enumeration_type:
