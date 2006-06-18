@@ -1120,7 +1120,8 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     if (!is_decl.uvalue)
     {
         func = symt_new_function(ctx->module, compiland, name.string,
-                                 low_pc.uvalue, high_pc.uvalue - low_pc.uvalue,
+                                 ctx->module->module.BaseOfImage + low_pc.uvalue,
+                                 high_pc.uvalue - low_pc.uvalue,
                                  &sig_type->symt);
         di->symt = &func->symt;
     }
