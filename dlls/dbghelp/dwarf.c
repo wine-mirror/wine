@@ -1436,7 +1436,7 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
 
     while (traverse.data < traverse.end_data)
     {
-        unsigned long address;
+        unsigned long address = 0;
         unsigned file = 1;
         unsigned line = 1;
         unsigned is_stmt = default_stmt;
@@ -1467,10 +1467,10 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                     address += insn_size * dwarf2_leb128_as_unsigned(&traverse);
                     break;
                 case DW_LNS_advance_line:
-                    line += dwarf2_leb128_as_unsigned(&traverse);
+                    line += dwarf2_leb128_as_signed(&traverse);
                     break;
                 case DW_LNS_set_file:
-                    file = dwarf2_leb128_as_signed(&traverse);
+                    file = dwarf2_leb128_as_unsigned(&traverse);
                     break;
                 case DW_LNS_set_column:
                     dwarf2_leb128_as_unsigned(&traverse);
@@ -1496,8 +1496,7 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                         end_sequence = TRUE;
                         break;
                     case DW_LNE_set_address:
-                        address = dwarf2_parse_addr(&traverse);
-                        address += ctx->module->module.BaseOfImage;
+                        address = ctx->module->module.BaseOfImage + dwarf2_parse_addr(&traverse);
                         break;
                     case DW_LNE_define_file:
                         traverse.data += strlen((const char *)traverse.data) + 1;
@@ -1579,7 +1578,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         TRACE("beginning at 0x%lx, for %lu\n", di->offset, di->abbrev->entry_code); 
 
         dwarf2_find_name(&ctx, di, &name, "compiland");
-        di->symt = &symt_new_compiland(module, name.string)->symt;
+        di->symt = &symt_new_compiland(module, source_new(module, NULL, name.string))->symt;
 
         if (di->abbrev->have_child)
         {

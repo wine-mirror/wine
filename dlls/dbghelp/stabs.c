@@ -1173,7 +1173,6 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     struct symt_function*       curr_func = NULL;
     struct symt_block*          block = NULL;
     struct symt_compiland*      compiland = NULL;
-    char                        currpath[PATH_MAX]; /* path to current file */
     char                        srcpath[PATH_MAX]; /* path to directory source file is in */
     int                         i;
     int                         nstab;
@@ -1475,30 +1474,16 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                 int len = strlen(ptr);
                 if (ptr[len-1] != '/')
                 {
-		    if (ptr[0] == '/')
-		        strcpy(currpath, ptr);
-		    else
-		    {
-                        strcpy(currpath, srcpath);
-                        strcat(currpath, ptr);
-		    }
                     stabs_reset_includes();
-                    compiland = symt_new_compiland(module, currpath);
-                    source_idx = source_new(module, currpath);
+                    source_idx = source_new(module, srcpath, ptr);
+                    compiland = symt_new_compiland(module, source_idx);
                 }
                 else
                     strcpy(srcpath, ptr);
             }
             break;
         case N_SOL:
-            if (*ptr != '/')
-            {
-                strcpy(currpath, srcpath);
-                strcat(currpath, ptr);
-            }
-            else
-                strcpy(currpath, ptr);
-            source_idx = source_new(module, currpath);
+            source_idx = source_new(module, srcpath, ptr);
             break;
         case N_UNDF:
             strs += strtabinc;
@@ -1518,7 +1503,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             stabs_add_include(stabs_new_include(ptr, stab_ptr->n_value));
             assert(incl_stk < (int)(sizeof(incl) / sizeof(incl[0])) - 1);
             incl[++incl_stk] = source_idx;
-            source_idx = source_new(module, ptr);
+            source_idx = source_new(module, NULL, ptr);
             break;
         case N_EINCL:
             assert(incl_stk >= 0);

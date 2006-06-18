@@ -54,16 +54,30 @@ static unsigned source_find(const struct module* module, const char* name)
  *
  * checks if source exists. if not, add it
  */
-unsigned source_new(struct module* module, const char* name)
+unsigned source_new(struct module* module, const char* base, const char* name)
 {
     int         len;
     unsigned    ret;
+    const char* full;
 
     if (!name) return (unsigned)-1;
-    if (module->sources && (ret = source_find(module, name)) != (unsigned)-1)
+    if (!base || *name == '/')
+        full = name;
+    else
+    {
+        unsigned bsz = strlen(base);
+        char* tmp = HeapAlloc(GetProcessHeap(), 0, bsz + 1 + strlen(name) + 1);
+
+        if (!tmp) return (unsigned)-1;
+        full = tmp;
+        strcpy(tmp, base);
+        if (tmp[bsz - 1] != '/') tmp[bsz++] = '/';
+        strcpy(&tmp[bsz], name);
+    }
+    if (module->sources && (ret = source_find(module, full)) != (unsigned)-1)
         return ret;
 
-    len = strlen(name) + 1;
+    len = strlen(full) + 1;
     if (module->sources_used + len + 1 > module->sources_alloc)
     {
         /* Alloc by block of 256 bytes */
@@ -75,9 +89,10 @@ unsigned source_new(struct module* module, const char* name)
                                           module->sources_alloc);
     }
     ret = module->sources_used;
-    strcpy(module->sources + module->sources_used, name);
+    strcpy(module->sources + module->sources_used, full);
     module->sources_used += len;
     module->sources[module->sources_used] = '\0';
+    if (full != name) HeapFree(GetProcessHeap(), 0, (char*)full);
     return ret;
 }
 

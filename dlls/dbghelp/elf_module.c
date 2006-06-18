@@ -292,7 +292,7 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
 
         if (ELF32_ST_TYPE(symp->st_info) == STT_FILE)
         {
-            compiland = symname ? symt_new_compiland(module, symname) : NULL;
+            compiland = symname ? symt_new_compiland(module, source_new(module, NULL, symname)) : NULL;
             continue;
         }
         for (j = 0; thunks[j].symname; j++)

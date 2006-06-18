@@ -1136,10 +1136,10 @@ static struct codeview_linetab* codeview_snarf_linetab(struct module* module,
             p_fn = (const struct p_string*)(start + file_segcount);
             memset(filename, 0, sizeof(filename));
             memcpy(filename, p_fn->name, p_fn->namelen);
-            source = source_new(module, filename);
+            source = source_new(module, NULL, filename);
         }
         else
-            source = source_new(module, (const char*)(start + file_segcount));
+            source = source_new(module, NULL, (const char*)(start + file_segcount));
         
         for (k = 0; k < file_segcount; k++, this_seg++)
 	{
@@ -1465,7 +1465,9 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 
         case S_OBJNAME_V1:
             TRACE("S-ObjName %s\n", terminate_string(&sym->objname_v1.p_name));
-            compiland = symt_new_compiland(msc_dbg->module, terminate_string(&sym->objname_v1.p_name));
+            compiland = symt_new_compiland(msc_dbg->module, 
+                                           source_new(msc_dbg->module, NULL,
+                                                      terminate_string(&sym->objname_v1.p_name)));
             break;
 
         case S_LABEL_V1:

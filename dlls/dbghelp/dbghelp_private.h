@@ -422,7 +422,7 @@ extern struct module*
 extern BOOL         pe_load_debug_info(const struct process* pcs, 
                                        struct module* module);
 /* source.c */
-extern unsigned     source_new(struct module* module, const char* source);
+extern unsigned     source_new(struct module* module, const char* basedir, const char* source);
 extern const char*  source_get(const struct module* module, unsigned idx);
 
 /* stabs.c */
@@ -442,8 +442,7 @@ extern const char*  symt_get_name(const struct symt* sym);
 extern int          symt_cmp_addr(const void* p1, const void* p2);
 extern int          symt_find_nearest(struct module* module, DWORD addr);
 extern struct symt_compiland*
-                    symt_new_compiland(struct module* module, 
-                                       const char* filename);
+                    symt_new_compiland(struct module* module, unsigned src_idx);
 extern struct symt_public*
                     symt_new_public(struct module* module, 
                                     struct symt_compiland* parent, 

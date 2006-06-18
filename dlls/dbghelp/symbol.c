@@ -125,16 +125,16 @@ static void compile_regex(const char* str, int numchar, regex_t* re, BOOL _case)
     HeapFree(GetProcessHeap(), 0, mask);
 }
 
-struct symt_compiland* symt_new_compiland(struct module* module, const char* name)
+struct symt_compiland* symt_new_compiland(struct module* module, unsigned src_idx)
 {
     struct symt_compiland*    sym;
 
     TRACE_(dbghelp_symt)("Adding compiland symbol %s:%s\n", 
-                         module->module.ModuleName, name);
+                         module->module.ModuleName, source_get(module, src_idx));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagCompiland;
-        sym->source   = source_new(module, name);
+        sym->source   = src_idx;
         vector_init(&sym->vchildren, sizeof(struct symt*), 32);
     }
     return sym;
