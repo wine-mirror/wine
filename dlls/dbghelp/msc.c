@@ -1372,28 +1372,36 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
          * Function parameters and stack variables.
          */
 	case S_BPREL_V1:
-            symt_add_func_local(msc_dbg->module, curr_func, 0, sym->stack_v1.offset,
-                                block, codeview_get_type(sym->stack_v1.symtype, FALSE),
-                                terminate_string(&sym->stack_v1.p_name));
+            symt_add_func_local(msc_dbg->module, curr_func, 
+                                sym->stack_v1.offset > 0 ? DataIsParam : DataIsLocal, 
+                                0, sym->stack_v1.offset, block,
+                                         codeview_get_type(sym->stack_v1.symtype, FALSE),
+                                         terminate_string(&sym->stack_v1.p_name));
             break;
 	case S_BPREL_V2:
-            symt_add_func_local(msc_dbg->module, curr_func, 0, sym->stack_v2.offset,
-                                block, codeview_get_type(sym->stack_v2.symtype, FALSE),
+            symt_add_func_local(msc_dbg->module, curr_func, 
+                                sym->stack_v2.offset > 0 ? DataIsParam : DataIsLocal, 
+                                0, sym->stack_v2.offset, block,
+                                codeview_get_type(sym->stack_v2.symtype, FALSE),
                                 terminate_string(&sym->stack_v2.p_name));
             break;
 	case S_BPREL_V3:
-            symt_add_func_local(msc_dbg->module, curr_func, 0, sym->stack_v3.offset,
-                                block, codeview_get_type(sym->stack_v3.symtype, FALSE),
+            symt_add_func_local(msc_dbg->module, curr_func, 
+                                sym->stack_v3.offset > 0 ? DataIsParam : DataIsLocal, 
+                                0, sym->stack_v3.offset, block,
+                                codeview_get_type(sym->stack_v3.symtype, FALSE),
                                 sym->stack_v3.name);
             break;
 
         case S_REGISTER_V1:
-            symt_add_func_local(msc_dbg->module, curr_func, 0, sym->register_v1.reg,
+            symt_add_func_local(msc_dbg->module, curr_func, 
+                                DataIsLocal, sym->register_v1.reg, 0,
                                 block, codeview_get_type(sym->register_v1.type, FALSE),
                                 terminate_string(&sym->register_v1.p_name));
             break;
         case S_REGISTER_V2:
-            symt_add_func_local(msc_dbg->module, curr_func, 0, sym->register_v2.reg,
+            symt_add_func_local(msc_dbg->module, curr_func, 
+                                DataIsLocal, sym->register_v2.reg, 0,
                                 block, codeview_get_type(sym->register_v2.type, FALSE),
                                 terminate_string(&sym->register_v2.p_name));
             break;

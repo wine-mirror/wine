@@ -470,7 +470,7 @@ extern void         symt_add_func_line(struct module* module,
 extern struct symt_data*
                     symt_add_func_local(struct module* module, 
                                         struct symt_function* func, 
-                                        int regno, int offset,
+                                        enum DataKind dt, int regno, long offset,
                                         struct symt_block* block,
                                         struct symt* type, const char* name);
 extern struct symt_block*

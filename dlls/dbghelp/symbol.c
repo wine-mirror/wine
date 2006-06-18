@@ -287,52 +287,44 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
 }
 
 /******************************************************************
- *		symt_add_func_local
+ *             symt_add_func_local
  *
  * Adds a new local/parameter to a given function:
+ * In any cases, dt tells whether it's a local variable or a parameter
  * If regno it's not 0:
  *      - then variable is stored in a register
- *      - if offset is > 0, then it's a parameter to the function (in a register)
- *      - if offset is = 0, then it's a local variable (in a register)
+ *      - otherwise, value is referenced by register + offset
  * Otherwise, the variable is stored on the stack:
- *      - if offset is > 0, then it's a parameter to the function
- *      - otherwise, it's a local variable
- * FIXME: this is too i386 centric
+ *      - offset is then the offset from the frame register
  */
 struct symt_data* symt_add_func_local(struct module* module, 
                                       struct symt_function* func, 
-                                      int regno, int offset, 
+                                      enum DataKind dt,
+                                      int regno, long offset,
                                       struct symt_block* block, 
                                       struct symt* type, const char* name)
 {
     struct symt_data*   locsym;
     struct symt**       p;
 
-    assert(func);
-    assert(func->symt.tag == SymTagFunction);
-
     TRACE_(dbghelp_symt)("Adding local symbol (%s:%s): %s %p\n", 
                          module->module.ModuleName, func->hash_elt.name, 
                          name, type);
+
+    assert(func);
+    assert(func->symt.tag == SymTagFunction);
+    assert(dt == DataIsParam || dt == DataIsLocal);
+
     locsym = pool_alloc(&module->pool, sizeof(*locsym));
     locsym->symt.tag      = SymTagData;
     locsym->hash_elt.name = pool_strdup(&module->pool, name);
     locsym->hash_elt.next = NULL;
-    locsym->kind          = (offset > 0) ? DataIsParam : DataIsLocal;
+    locsym->kind          = dt;
     locsym->container     = &block->symt;
     locsym->type          = type;
-    if (regno)
-    {
-        locsym->u.s.reg_id = regno;
-        locsym->u.s.offset = 0;
-        locsym->u.s.length = 0;
-    }
-    else
-    {
-        locsym->u.s.reg_id = 0;
-        locsym->u.s.offset = offset * 8;
-        locsym->u.s.length = 0;
-    }
+    locsym->u.s.reg_id    = regno;
+    locsym->u.s.offset    = offset * 8;
+    locsym->u.s.length    = 0;
     if (block)
         p = vector_add(&block->vchildren, &module->pool);
     else
@@ -340,6 +332,7 @@ struct symt_data* symt_add_func_local(struct module* module,
     *p = &locsym->symt;
     return locsym;
 }
+
 
 struct symt_block* symt_open_func_block(struct module* module, 
                                         struct symt_function* func,
