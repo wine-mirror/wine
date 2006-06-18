@@ -1380,6 +1380,147 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
     }
 }
 
+static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,        
+                                      dwarf2_parse_context_t* ctx,
+                                      unsigned long offset)
+{
+    dwarf2_traverse_context_t   traverse;
+    unsigned long               length;
+    unsigned                    version, header_len, insn_size, default_stmt;
+    unsigned                    line_range, opcode_base;
+    int                         line_base;
+    const unsigned char*        opcode_len;
+
+    traverse.sections = sections;
+    traverse.section = section_line;
+    traverse.data = sections[section_line].address + offset;
+    traverse.start_data = traverse.data;
+    traverse.end_data = traverse.data + 4;
+    traverse.offset = offset;
+    traverse.word_size = ctx->word_size;
+
+    length = dwarf2_parse_u4(&traverse);
+    traverse.end_data = traverse.start_data + length;
+
+    version = dwarf2_parse_u2(&traverse);
+    header_len = dwarf2_parse_u4(&traverse);
+    insn_size = dwarf2_parse_byte(&traverse);
+    default_stmt = dwarf2_parse_byte(&traverse);
+    line_base = (char)dwarf2_parse_byte(&traverse);
+    line_range = dwarf2_parse_byte(&traverse);
+    opcode_base = dwarf2_parse_byte(&traverse);
+
+    opcode_len = traverse.data;
+    traverse.data += opcode_base;
+
+    while (*traverse.data)
+    {
+        TRACE("Got include %s\n", (const char*)traverse.data);
+        traverse.data += strlen((const char *)traverse.data) + 1;
+    }
+    traverse.data++;
+    while (*traverse.data)
+    {
+        unsigned int dir_index, mod_time, length;
+        const char* name;
+
+        name = (const char*)traverse.data;
+        traverse.data += strlen(name) + 1;
+        dir_index = dwarf2_leb128_as_unsigned(&traverse);
+        mod_time = dwarf2_leb128_as_unsigned(&traverse);
+        length = dwarf2_leb128_as_unsigned(&traverse);
+        TRACE("Got file %s (%u,%u,%u)\n",
+              name, dir_index, mod_time, length);
+    }
+    traverse.data++;
+
+    while (traverse.data < traverse.end_data)
+    {
+        unsigned long address;
+        unsigned file = 1;
+        unsigned line = 1;
+        unsigned is_stmt = default_stmt;
+        BOOL basic_block = FALSE, end_sequence = FALSE;
+        unsigned opcode, extopcode, i;
+
+        while (!end_sequence)
+        {
+            opcode = dwarf2_parse_byte(&traverse);
+            TRACE("Got opcode %x\n", opcode);
+
+            if (opcode >= opcode_base)
+            {
+                unsigned delta = opcode - opcode_base;
+
+                address += (delta / line_range) * insn_size;
+                line += line_base + (delta % line_range);
+                basic_block = TRUE;
+            }
+            else
+            {
+                switch (opcode)
+                {
+                case DW_LNS_copy:
+                    basic_block = FALSE;
+                    break;
+                case DW_LNS_advance_pc:
+                    address += insn_size * dwarf2_leb128_as_unsigned(&traverse);
+                    break;
+                case DW_LNS_advance_line:
+                    line += dwarf2_leb128_as_unsigned(&traverse);
+                    break;
+                case DW_LNS_set_file:
+                    file = dwarf2_leb128_as_signed(&traverse);
+                    break;
+                case DW_LNS_set_column:
+                    dwarf2_leb128_as_unsigned(&traverse);
+                    break;
+                case DW_LNS_negate_stmt:
+                    is_stmt = !is_stmt;
+                    break;
+                case DW_LNS_set_basic_block:
+                    basic_block = 1;
+                    break;
+                case DW_LNS_const_add_pc:
+                    address += ((255 - opcode_base) / line_range) * insn_size;
+                    break;
+                case DW_LNS_fixed_advance_pc:
+                    address += dwarf2_parse_u2(&traverse);
+                    break;
+                case DW_LNS_extended_op:
+                    dwarf2_leb128_as_unsigned(&traverse);
+                    extopcode = dwarf2_parse_byte(&traverse);
+                    switch (extopcode)
+                    {
+                    case DW_LNE_end_sequence:
+                        end_sequence = TRUE;
+                        break;
+                    case DW_LNE_set_address:
+                        address = dwarf2_parse_addr(&traverse);
+                        address += ctx->module->module.BaseOfImage;
+                        break;
+                    case DW_LNE_define_file:
+                        traverse.data += strlen((const char *)traverse.data) + 1;
+                        dwarf2_leb128_as_unsigned(&traverse);
+                        dwarf2_leb128_as_unsigned(&traverse);
+                        dwarf2_leb128_as_unsigned(&traverse);
+                        break;
+                    default:
+                        FIXME("Unsupported extended opcode %x\n", extopcode);
+                        break;
+                    }
+                    break;
+                default:
+                    WARN("Unsupported opcode %x\n", opcode);
+                    for (i = 0; i < opcode_len[opcode]; i++)
+                        dwarf2_leb128_as_unsigned(&traverse);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
                                           const dwarf2_comp_unit_t* comp_unit,
                                           struct module* module,
@@ -1433,6 +1574,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     {
         union attribute             name;
         dwarf2_debug_info_t**       pdi = NULL;
+        union attribute             stmt_list;
 
         TRACE("beginning at 0x%lx, for %lu\n", di->offset, di->abbrev->entry_code); 
 
@@ -1445,6 +1587,10 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
             {
                 dwarf2_load_one_entry(&ctx, *pdi, (struct symt_compiland*)di->symt);
             }
+        }
+        if (dwarf2_find_attribute(di, DW_AT_stmt_list, &stmt_list))
+        {
+            dwarf2_parse_line_numbers(sections, &ctx, stmt_list.uvalue);
         }
         ret = TRUE;
     }

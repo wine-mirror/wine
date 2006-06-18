@@ -386,3 +386,18 @@ enum dwarf_calling_convention
 
 #define DW_CC_lo_user 0x40
 #define DW_CC_hi_user 0xff
+
+#define DW_LNS_extended_op              0x00
+#define DW_LNS_copy                     0x01
+#define DW_LNS_advance_pc               0x02
+#define DW_LNS_advance_line             0x03
+#define DW_LNS_set_file                 0x04
+#define DW_LNS_set_column               0x05
+#define DW_LNS_negate_stmt              0x06
+#define DW_LNS_set_basic_block          0x07
+#define DW_LNS_const_add_pc             0x08
+#define DW_LNS_fixed_advance_pc         0x09
+
+#define DW_LNE_end_sequence             0x01
+#define DW_LNE_set_address              0x02
+#define DW_LNE_define_file              0x03
