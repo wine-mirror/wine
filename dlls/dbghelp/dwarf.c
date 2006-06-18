@@ -53,6 +53,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_dwarf);
 
+/* FIXME:
+ * - Functions:
+ *      o local variables
+ *      o unspecified parameters
+ *      o inlined functions
+ */
 #if 0
 static void dump(const void* ptr, unsigned len)
 {
@@ -957,6 +963,10 @@ static void dwarf2_parse_subprogram_parameter(dwarf2_parse_context_t* ctx,
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
 
+static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx, 
+					  dwarf2_debug_info_t* di, 
+					  struct symt_function* func);
+
 static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx,
                                             dwarf2_debug_info_t* di)
 {
@@ -987,6 +997,15 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx,
             case DW_TAG_variable:
                 dwarf2_parse_variable(ctx, child);
                 break;
+            case DW_TAG_lexical_block:
+                /* FIXME:
+                   dwarf2_parse_subprogram_block(ctx, child, func);
+                */
+                break;
+            case DW_TAG_inlined_subroutine:
+                /* FIXME */
+                dwarf2_parse_inlined_subroutine(ctx, child);
+                break;
             default:
                 FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
                       child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
@@ -997,7 +1016,6 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_parse_context_t* ctx,
 
 static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx, 
 					  dwarf2_debug_info_t* di, 
-					  struct symt_function_signature* sig_type,
 					  struct symt_function* func)
 {
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
@@ -1020,6 +1038,20 @@ static void dwarf2_parse_subprogram_block(dwarf2_parse_context_t* ctx,
                 break;
             case DW_TAG_variable:
                 dwarf2_parse_variable(ctx, child);
+                break;
+            case DW_TAG_lexical_block:
+                dwarf2_parse_subprogram_block(ctx, child, func);
+                break;
+            case DW_TAG_subprogram:
+                /* FIXME: likely a declaration (to be checked)
+                 * skip it for now
+                 */
+                break;
+            case DW_TAG_class_type:
+            case DW_TAG_structure_type:
+            case DW_TAG_union_type:
+            case DW_TAG_enumeration_type:
+                /* the type referred to will be loaded when we need it, so skip it */
                 break;
             default:
                 FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
@@ -1077,10 +1109,28 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
                 dwarf2_parse_subprogram_parameter(ctx, child, sig_type);
                 break;
             case DW_TAG_lexical_block:
-                dwarf2_parse_subprogram_block(ctx, child, sig_type, func);
+                dwarf2_parse_subprogram_block(ctx, child, func);
                 break;
             case DW_TAG_variable:
                 dwarf2_parse_variable(ctx, child);
+                break;
+            case DW_TAG_inlined_subroutine:
+                dwarf2_parse_inlined_subroutine(ctx, child);
+                break;
+            case DW_TAG_subprogram:
+                /* FIXME: likely a declaration (to be checked)
+                 * skip it for now
+                 */
+                break;
+            case DW_TAG_class_type:
+            case DW_TAG_structure_type:
+            case DW_TAG_union_type:
+            case DW_TAG_enumeration_type:
+            case DW_TAG_typedef:
+                /* the type referred to will be loaded when we need it, so skip it */
+                break;
+            case DW_TAG_unspecified_parameters:
+                /* FIXME: no support in dbghelp's internals so far */
                 break;
             default:
                 FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
