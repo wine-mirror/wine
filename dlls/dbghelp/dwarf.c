@@ -66,27 +66,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_dwarf);
 #if 0
 static void dump(const void* ptr, unsigned len)
 {
-  int         i, j;
-  BYTE        msg[128];
-  static const char hexof[] = "0123456789abcdef";
-  const BYTE* x = (const BYTE*)ptr;
+    int         i, j;
+    BYTE        msg[128];
+    static const char hexof[] = "0123456789abcdef";
+    const       BYTE* x = (const BYTE*)ptr;
 
-  for (i = 0; i < len; i += 16)
-  {
-    sprintf(msg, "%08x: ", i);
-    memset(msg + 10, ' ', 3 * 16 + 1 + 16);
-    for (j = 0; j < min(16, len - i); j++)
+    for (i = 0; i < len; i += 16)
     {
-      msg[10 + 3 * j + 0] = hexof[x[i + j] >> 4];
-      msg[10 + 3 * j + 1] = hexof[x[i + j] & 15];
-      msg[10 + 3 * j + 2] = ' ';
-      msg[10 + 3 * 16 + 1 + j] = (x[i + j] >= 0x20 && x[i + j] < 0x7f) ?
-	x[i + j] : '.';
+        sprintf(msg, "%08x: ", i);
+        memset(msg + 10, ' ', 3 * 16 + 1 + 16);
+        for (j = 0; j < min(16, len - i); j++)
+        {
+            msg[10 + 3 * j + 0] = hexof[x[i + j] >> 4];
+            msg[10 + 3 * j + 1] = hexof[x[i + j] & 15];
+            msg[10 + 3 * j + 2] = ' ';
+            msg[10 + 3 * 16 + 1 + j] = (x[i + j] >= 0x20 && x[i + j] < 0x7f) ?
+                x[i + j] : '.';
+        }
+        msg[10 + 3 * 16] = ' ';
+        msg[10 + 3 * 16 + 1 + 16] = '\0';
+        TRACE("%s\n", msg);
     }
-    msg[10 + 3 * 16] = ' ';
-    msg[10 + 3 * 16 + 1 + 16] = '\0';
-    TRACE("%s\n", msg);
-  }
 }
 #endif
 
@@ -180,65 +180,67 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx, d
 
 static unsigned char dwarf2_parse_byte(dwarf2_traverse_context_t* ctx)
 {
-  unsigned char uvalue = *(const unsigned char*) ctx->data;
-  ctx->data += 1;
-  return uvalue;
+    unsigned char uvalue = *(const unsigned char*) ctx->data;
+    ctx->data += 1;
+    return uvalue;
 }
 
 static unsigned short dwarf2_parse_u2(dwarf2_traverse_context_t* ctx)
 {
-  unsigned short uvalue = *(const unsigned short*) ctx->data;
-  ctx->data += 2;
-  return uvalue;
+    unsigned short uvalue = *(const unsigned short*) ctx->data;
+    ctx->data += 2;
+    return uvalue;
 }
 
 static unsigned long dwarf2_parse_u4(dwarf2_traverse_context_t* ctx)
 {
-  unsigned long uvalue = *(const unsigned int*) ctx->data;
-  ctx->data += 4;
-  return uvalue;
+    unsigned long uvalue = *(const unsigned int*) ctx->data;
+    ctx->data += 4;
+    return uvalue;
 }
 
 static unsigned long dwarf2_leb128_as_unsigned(dwarf2_traverse_context_t* ctx)
 {
-  unsigned long ret = 0;
-  unsigned char byte;
-  unsigned shift = 0;
+    unsigned long ret = 0;
+    unsigned char byte;
+    unsigned shift = 0;
 
-  assert( NULL != ctx );
+    assert( NULL != ctx );
 
-  while (1) {
-    byte = dwarf2_parse_byte(ctx);
-    ret |= (byte & 0x7f) << shift;
-    shift += 7;
-    if (0 == (byte & 0x80)) { break ; }
-  }
-
-  return ret;
+    while (1)
+    {
+        byte = dwarf2_parse_byte(ctx);
+        ret |= (byte & 0x7f) << shift;
+        shift += 7;
+        if (0 == (byte & 0x80)) { break ; }
+    }
+    return ret;
 }
 
 static long dwarf2_leb128_as_signed(dwarf2_traverse_context_t* ctx)
 {
-  long ret = 0;
-  unsigned char byte;
-  unsigned shift = 0;
-  const unsigned size = sizeof(int) * 8;
+    long ret = 0;
+    unsigned char byte;
+    unsigned shift = 0;
+    const unsigned size = sizeof(int) * 8;
 
-  assert( NULL != ctx );
+    assert( NULL != ctx );
 
-  while (1) {
-    byte = dwarf2_parse_byte(ctx);
-    ret |= (byte & 0x7f) << shift;
-    shift += 7;
-    if (0 == (byte & 0x80)) { break ; }
-  }
-  /* as spec: sign bit of byte is 2nd high order bit (80x40)
-   *  -> 0x80 is used as flag.
-   */
-  if ((shift < size) && (byte & 0x40)) {
-    ret |= - (1 << shift);
-  }
-  return ret;
+    while (1)
+    {
+        byte = dwarf2_parse_byte(ctx);
+        ret |= (byte & 0x7f) << shift;
+        shift += 7;
+        if (0 == (byte & 0x80)) { break ; }
+    }
+    /* as spec: sign bit of byte is 2nd high order bit (80x40)
+     *  -> 0x80 is used as flag.
+     */
+    if ((shift < size) && (byte & 0x40))
+    {
+        ret |= - (1 << shift);
+    }
+    return ret;
 }
 
 static unsigned long dwarf2_parse_addr(dwarf2_traverse_context_t* ctx)
